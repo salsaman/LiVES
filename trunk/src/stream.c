@@ -31,7 +31,7 @@ static gboolean has_last_delta_ticks;
 static gchar *hdr=NULL;
 static gboolean fps_can_change;
 
-static inline gint64 abs64(gint64 a) {
+static LIVES_INLINE G_GNUC_CONST gint64 abs64(gint64 a) {
     return ((a>0)?a:-a);
 }
 

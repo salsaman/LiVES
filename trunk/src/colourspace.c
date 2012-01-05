@@ -88,14 +88,14 @@ static struct _swscale_ctx swscale_ctx[N_SWS_CTX];
 
 static pthread_t cthreads[MAX_FX_THREADS];
 
-inline G_GNUC_CONST int gdk_rowstride_value (int rowstride) {
+LIVES_INLINE G_GNUC_CONST int gdk_rowstride_value (int rowstride) {
   // from gdk-pixbuf.c
   /* Always align rows to 32-bit boundaries */
   return (rowstride + 3) & ~3;
 }
 
 
-inline G_GNUC_CONST int gdk_last_rowstride_value (int width, int nchans) {
+LIVES_INLINE G_GNUC_CONST int gdk_last_rowstride_value (int width, int nchans) {
   // from gdk pixbuf docs
   return width*(((nchans<<3)+7)>>3);
 }
@@ -106,7 +106,7 @@ lives_free_buffer (guchar *pixels, gpointer data)
   g_free (pixels);
 }
 
-inline G_GNUC_CONST guchar CLAMP0255(gint32 a)
+LIVES_INLINE G_GNUC_CONST guchar CLAMP0255(gint32 a)
 {
   return a>255?255:(a<0)?0:a;
 }
@@ -685,7 +685,7 @@ static void get_YUV_to_YUV_conversion_arrays(int iclamping, int isubspace, int o
 //////////////////////////
 // pixel conversions
 
-static inline void rgb2yuv (guchar r0, guchar g0, guchar b0, guchar *y, guchar *u, guchar *v) {
+static LIVES_INLINE void rgb2yuv (guchar r0, guchar g0, guchar b0, guchar *y, guchar *u, guchar *v) {
   register short a;
   if ((a=((Y_R[r0]+Y_G[g0]+Y_B[b0])>>FP_BITS))>max_Y) a=max_Y;
   *y=a<min_Y?min_Y:a;
@@ -695,7 +695,7 @@ static inline void rgb2yuv (guchar r0, guchar g0, guchar b0, guchar *y, guchar *
   *v=a<min_UV?min_UV:a;
 }
 
-static inline void rgb2uyvy (guchar r0, guchar g0, guchar b0, guchar r1, guchar g1, guchar b1, uyvy_macropixel *uyvy) {
+static LIVES_INLINE void rgb2uyvy (guchar r0, guchar g0, guchar b0, guchar r1, guchar g1, guchar b1, uyvy_macropixel *uyvy) {
   register short a,b,c;
   if ((a=((Y_R[r0]+Y_G[g0]+Y_B[b0])>>FP_BITS))>max_Y) a=max_Y;
   uyvy->y0=a<min_Y?min_Y:a;
@@ -713,7 +713,7 @@ static inline void rgb2uyvy (guchar r0, guchar g0, guchar b0, guchar r1, guchar 
   uyvy->u0=c<min_UV?min_UV:c;
 }
 
-static inline void rgb2yuyv (guchar r0, guchar g0, guchar b0, guchar r1, guchar g1, guchar b1, yuyv_macropixel *yuyv) {
+static LIVES_INLINE void rgb2yuyv (guchar r0, guchar g0, guchar b0, guchar r1, guchar g1, guchar b1, yuyv_macropixel *yuyv) {
   register short a,b,c;
   if ((a=((Y_R[r0]+Y_G[g0]+Y_B[b0])>>FP_BITS))>max_Y) a=max_Y;
   yuyv->y0=a<min_Y?min_Y:a;
@@ -731,7 +731,7 @@ static inline void rgb2yuyv (guchar r0, guchar g0, guchar b0, guchar r1, guchar 
   yuyv->u0=c<min_UV?min_UV:c;
 }
 
-static inline void rgb2_411 (guchar r0, guchar g0, guchar b0, guchar r1, guchar g1, guchar b1, 
+static LIVES_INLINE void rgb2_411 (guchar r0, guchar g0, guchar b0, guchar r1, guchar g1, guchar b1, 
 			     guchar r2, guchar g2, guchar b2, guchar r3, guchar g3, guchar b3, yuv411_macropixel *yuv) {
   register int a;
   if ((a=((Y_R[r0]+Y_G[g0]+Y_B[b0])>>FP_BITS))>max_Y) a=max_Y;
@@ -751,13 +751,13 @@ static inline void rgb2_411 (guchar r0, guchar g0, guchar b0, guchar r1, guchar 
   yuv->u2=a<min_UV?min_UV:a;
 }
 
-static inline void yuv2rgb (guchar y, guchar u, guchar v, guchar *r, guchar *g, guchar *b) {
+static LIVES_INLINE void yuv2rgb (guchar y, guchar u, guchar v, guchar *r, guchar *g, guchar *b) {
   *r = CLAMP0255((RGB_Y[y] + R_Cr[v]) >> FP_BITS);
   *g = CLAMP0255((RGB_Y[y] + G_Cb[u]+ G_Cr[v]) >> FP_BITS);
   *b = CLAMP0255((RGB_Y[y] + B_Cb[u]) >> FP_BITS);
 }
 
-static inline void uyvy2rgb (uyvy_macropixel *uyvy, guchar *r0, guchar *g0, guchar *b0, 
+static LIVES_INLINE void uyvy2rgb (uyvy_macropixel *uyvy, guchar *r0, guchar *g0, guchar *b0, 
 			     guchar *r1, guchar *g1, guchar *b1) {
   yuv2rgb(uyvy->y0,uyvy->u0,uyvy->v0,r0,g0,b0);
   yuv2rgb(uyvy->y1,uyvy->u0,uyvy->v0,r1,g1,b1);
@@ -765,43 +765,43 @@ static inline void uyvy2rgb (uyvy_macropixel *uyvy, guchar *r0, guchar *g0, guch
 }
 
 
-static inline void yuyv2rgb (yuyv_macropixel *yuyv, guchar *r0, guchar *g0, guchar *b0, 
+static LIVES_INLINE void yuyv2rgb (yuyv_macropixel *yuyv, guchar *r0, guchar *g0, guchar *b0, 
 			     guchar *r1, guchar *g1, guchar *b1) {
   yuv2rgb(yuyv->y0,yuyv->u0,yuyv->v0,r0,g0,b0);
   yuv2rgb(yuyv->y1,yuyv->u0,yuyv->v0,r1,g1,b1);
 }
 
 
-static inline void yuv888_2_rgb (guchar *yuv, guchar *rgb, gboolean add_alpha) {
+static LIVES_INLINE void yuv888_2_rgb (guchar *yuv, guchar *rgb, gboolean add_alpha) {
   yuv2rgb(yuv[0],yuv[1],yuv[2],&(rgb[0]),&(rgb[1]),&(rgb[2]));
   if (add_alpha) rgb[3]=255;
 }
 
 
-static inline void yuva8888_2_rgba (guchar *yuva, guchar *rgba, gboolean del_alpha) {
+static LIVES_INLINE void yuva8888_2_rgba (guchar *yuva, guchar *rgba, gboolean del_alpha) {
   yuv2rgb(yuva[0],yuva[1],yuva[2],&(rgba[0]),&(rgba[1]),&(rgba[2]));
   if (!del_alpha) rgba[3]=yuva[3];
 }
 
-static inline void yuv888_2_bgr (guchar *yuv, guchar *rgb, gboolean add_alpha) {
+static LIVES_INLINE void yuv888_2_bgr (guchar *yuv, guchar *rgb, gboolean add_alpha) {
   yuv2rgb(yuv[0],yuv[1],yuv[2],&(rgb[2]),&(rgb[1]),&(rgb[0]));
   if (add_alpha) rgb[3]=255;
 }
 
 
-static inline void yuva8888_2_bgra (guchar *yuva, guchar *rgba, gboolean del_alpha) {
+static LIVES_INLINE void yuva8888_2_bgra (guchar *yuva, guchar *rgba, gboolean del_alpha) {
   yuv2rgb(yuva[0],yuva[1],yuva[2],&(rgba[2]),&(rgba[1]),&(rgba[0]));
   if (!del_alpha) rgba[3]=yuva[3];
 }
 
-static inline void uyvy_2_yuv422 (uyvy_macropixel *uyvy, guchar *y0, guchar *u0, guchar *v0, guchar *y1) {
+static LIVES_INLINE void uyvy_2_yuv422 (uyvy_macropixel *uyvy, guchar *y0, guchar *u0, guchar *v0, guchar *y1) {
   *u0=uyvy->u0;
   *y0=uyvy->y0;
   *v0=uyvy->v0;
   *y1=uyvy->y1;
 }
 
-static inline void yuyv_2_yuv422 (yuyv_macropixel *yuyv, guchar *y0, guchar *u0, guchar *v0, guchar *y1) {
+static LIVES_INLINE void yuyv_2_yuv422 (yuyv_macropixel *yuyv, guchar *y0, guchar *u0, guchar *v0, guchar *y1) {
   *y0=yuyv->y0;
   *u0=yuyv->u0;
   *y1=yuyv->y1;
@@ -809,7 +809,7 @@ static inline void yuyv_2_yuv422 (yuyv_macropixel *yuyv, guchar *y0, guchar *u0,
 }
 
 
-static inline guchar avg_chroma (size_t x, size_t y) {
+static LIVES_INLINE guchar avg_chroma (size_t x, size_t y) {
   // cavg == cavgc for clamped, cavgu for unclamped
   return *(cavg+(x<<8)+y);
 }
@@ -818,19 +818,19 @@ static inline guchar avg_chroma (size_t x, size_t y) {
 /////////////////////////////////////////////////
 //utilities
 
-inline gboolean weed_palette_is_alpha_palette(int pal) {
+LIVES_INLINE gboolean weed_palette_is_alpha_palette(int pal) {
   return (pal>=1024&&pal<2048)?TRUE:FALSE;
 }
 
-inline gboolean weed_palette_is_rgb_palette(int pal) {
+LIVES_INLINE gboolean weed_palette_is_rgb_palette(int pal) {
   return (pal<512)?TRUE:FALSE;
 }
 
-inline gboolean weed_palette_is_yuv_palette(int pal) {
+LIVES_INLINE gboolean weed_palette_is_yuv_palette(int pal) {
   return (pal>=512&&pal<1024)?TRUE:FALSE;
 }
 
-inline gint weed_palette_get_numplanes(int pal) {
+LIVES_INLINE gint weed_palette_get_numplanes(int pal) {
   if (pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_BGR24||pal==WEED_PALETTE_RGBA32||pal==WEED_PALETTE_BGRA32||
       pal==WEED_PALETTE_ARGB32||pal==WEED_PALETTE_UYVY8888||pal==WEED_PALETTE_YUYV8888||pal==WEED_PALETTE_YUV411||
       pal==WEED_PALETTE_YUV888||pal==WEED_PALETTE_YUVA8888||pal==WEED_PALETTE_AFLOAT||pal==WEED_PALETTE_A8||
@@ -840,12 +840,12 @@ inline gint weed_palette_get_numplanes(int pal) {
   return 0; // unknown palette
 }
 
-inline gboolean weed_palette_is_valid_palette(int pal) {
+LIVES_INLINE gboolean weed_palette_is_valid_palette(int pal) {
   if (weed_palette_get_numplanes(pal)==0) return FALSE;
   return TRUE;
 }
 
-inline gint weed_palette_get_bits_per_macropixel(int pal) {
+LIVES_INLINE gint weed_palette_get_bits_per_macropixel(int pal) {
   if (pal==WEED_PALETTE_A8||pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||
       pal==WEED_PALETTE_YUV422P||pal==WEED_PALETTE_YUV444P||pal==WEED_PALETTE_YUVA4444P) return 8;
   if (pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_BGR24) return 24;
@@ -861,23 +861,23 @@ inline gint weed_palette_get_bits_per_macropixel(int pal) {
 }
 
 
-inline gint weed_palette_get_pixels_per_macropixel(int pal) {
+LIVES_INLINE gint weed_palette_get_pixels_per_macropixel(int pal) {
   if (pal==WEED_PALETTE_UYVY8888||pal==WEED_PALETTE_YUYV8888) return 2;
   if (pal==WEED_PALETTE_YUV411) return 4;
   return 1;
 }
 
-inline gboolean weed_palette_is_float_palette(int pal) {
+LIVES_INLINE gboolean weed_palette_is_float_palette(int pal) {
   return (pal==WEED_PALETTE_RGBAFLOAT||pal==WEED_PALETTE_AFLOAT||pal==WEED_PALETTE_RGBFLOAT)?TRUE:FALSE;
 }
 
-inline gboolean weed_palette_has_alpha_channel(int pal) {
+LIVES_INLINE gboolean weed_palette_has_alpha_channel(int pal) {
   return (pal==WEED_PALETTE_RGBA32||pal==WEED_PALETTE_BGRA32||pal==WEED_PALETTE_ARGB32||
 	  pal==WEED_PALETTE_YUVA4444P||pal==WEED_PALETTE_YUVA8888||pal==WEED_PALETTE_RGBAFLOAT||
 	  weed_palette_is_alpha_palette(pal))?TRUE:FALSE;
 }
 
-inline gdouble weed_palette_get_plane_ratio_horizontal(int pal, int plane) {
+LIVES_INLINE gdouble weed_palette_get_plane_ratio_horizontal(int pal, int plane) {
   // return ratio of plane[n] width/plane[0] width; 
   if (plane==0) return 1.0;
   if (plane==1||plane==2) {
@@ -890,7 +890,7 @@ inline gdouble weed_palette_get_plane_ratio_horizontal(int pal, int plane) {
   return 0.0;
 }
 
-inline gdouble weed_palette_get_plane_ratio_vertical(int pal, int plane) {
+LIVES_INLINE gdouble weed_palette_get_plane_ratio_vertical(int pal, int plane) {
   // return ratio of plane[n] height/plane[n] height
   if (plane==0) return 1.0;
   if (plane==1||plane==2) {
@@ -8000,7 +8000,7 @@ GdkPixbuf *gdk_pixbuf_new_blank(gint width, gint height, int palette) {
 
 
 
-static inline GdkPixbuf *gdk_pixbuf_cheat(GdkColorspace colorspace, gboolean has_alpha, int bits_per_sample, 
+static LIVES_INLINE GdkPixbuf *gdk_pixbuf_cheat(GdkColorspace colorspace, gboolean has_alpha, int bits_per_sample, 
 					  int width, int height, guchar *buf) {
   // we can cheat if our buffer is correctly sized
   GdkPixbuf *pixbuf;
@@ -8096,7 +8096,7 @@ GdkPixbuf *layer_to_pixbuf (weed_plant_t *layer) {
 }
 
 
-inline gboolean weed_palette_is_resizable(int pal) {
+LIVES_INLINE gboolean weed_palette_is_resizable(int pal) {
   // in future we may also have resize candidates/delegates for other palettes
   // we will need to check for these
 

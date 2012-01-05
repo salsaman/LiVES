@@ -776,7 +776,7 @@ gboolean rte_on_off_callback (GtkAccelGroup *group, GObject *obj, guint keyval, 
 
   if (key==EFFECT_NONE) {
     // switch up/down keys to default (fps change)
-    weed_deinit_all();
+    weed_deinit_all(FALSE);
   }
   else {
     mainw->rte^=new_rte;

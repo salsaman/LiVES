@@ -5,8 +5,11 @@
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
+#ifndef HAS_SUPPORT_H
+#define HAS_SUPPORT_H
+
 #ifdef HAVE_CONFIG_H
-#  include <config.h>
+#include <config.h>
 #endif
 
 #include <sys/types.h>
@@ -19,10 +22,18 @@
 
 #include "support.h"
 
+#ifndef LIVES_INLINE
+#ifndef IS_SOLARIS
+#define LIVES_INLINE inline
+#else
+#define LIVES_INLINE
+#endif
+#endif
+
 
 #ifdef ENABLE_NLS
-inline gchar *translate(const char *String) {
-  if (trString!=NULL) g_free(trString);
+LIVES_INLINE gchar *translate(const char *String) {
+  if (trString!=NULL) g_free(trString); // be very careful, as trString is free()d automatically here
   if (strlen(String)) trString=g_locale_to_utf8 (dgettext (PACKAGE, String),-1,NULL,NULL,NULL);
   else trString=g_strdup(String);
   return trString;
@@ -49,8 +60,7 @@ find_pixmap_file                       (const gchar     *filename)
   elem = pixmaps_directories;
   while (elem)
     {
-      gchar *pathname = g_strdup_printf ("%s%s%s", (gchar*)elem->data,
-                                         G_DIR_SEPARATOR_S, filename);
+      gchar *pathname = g_build_filename ((gchar*)elem->data, filename, NULL);
       if (g_file_test (pathname, G_FILE_TEST_EXISTS))
         return pathname;
       g_free (pathname);
@@ -113,3 +123,6 @@ create_pixbuf                          (const gchar     *filename)
   return pixbuf;
 }
 
+
+
+#endif // HAS_SUPPORT_H

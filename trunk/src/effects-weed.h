@@ -102,7 +102,7 @@ void weed_load_all (void); ///< load effects
 void weed_unload_all(void); ///< unload all effects
 int get_next_free_key(void); ///< next free "key" for the multitrack system
 
-void weed_deinit_all(void); ///< deinit all active effects
+void weed_deinit_all(gboolean shutdown); ///< deinit all active effects
 
 weed_plant_t *weed_apply_effects (weed_plant_t **layers, weed_plant_t *filter_map, weed_timecode_t tc, int opwidth, int opheight, void ***pchains);
 lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init_event, weed_plant_t **layers, int opwidth, int opheight, weed_timecode_t tc);

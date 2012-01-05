@@ -49,7 +49,7 @@ void on_warn_mask_toggled (GtkToggleButton *togglebutton, gpointer user_data)
   else prefs->warning_mask^=GPOINTER_TO_INT(user_data);
   set_int_pref("lives_warning_mask",prefs->warning_mask);
 
-  if ((tbutton=g_object_get_data(G_OBJECT(togglebutton),"auto"))!=NULL) {
+  if ((tbutton=(GtkWidget *)g_object_get_data(G_OBJECT(togglebutton),"auto"))!=NULL) {
     // this is for the cds window - disable autoreload if we are not gonna show this window
     if (gtk_toggle_button_get_active(togglebutton)) {
       gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tbutton),FALSE);
@@ -86,7 +86,7 @@ static void add_xlays_widget(GtkBox *box) {
   gtk_text_buffer_insert_at_cursor(textbuffer,"\n",strlen("\n"));
   
   while (xlist!=NULL) {
-    gtk_text_buffer_insert_at_cursor(textbuffer,(const gchar *)xlist->data,strlen(xlist->data));
+    gtk_text_buffer_insert_at_cursor(textbuffer,(const gchar *)xlist->data,strlen((char *)xlist->data));
     gtk_text_buffer_insert_at_cursor(textbuffer,"\n",strlen("\n"));
     xlist=xlist->next;
   }
@@ -726,7 +726,7 @@ gboolean check_storage_space(file *sfile, gboolean is_processing) {
 	    on_cancel_keep_button_clicked(NULL,NULL); // press the cancel button
 	  }
 	  mainw->cancelled=CANCEL_ERROR;
-	  lives_freep((void**)&sfile->op_dir);
+	  if (sfile!=NULL) lives_freep((void**)&cfile->op_dir);
 	  g_free(pausstr);
 	  return FALSE;
 	}
@@ -757,8 +757,9 @@ void cancel_process(gboolean visible) {
     if (mainw->preview_box!=NULL&&!mainw->preview) gtk_widget_set_tooltip_text( mainw->p_playbutton,_ ("Play all"));
     if (accelerators_swapped) {
       if (!mainw->preview) gtk_widget_set_tooltip_text( mainw->m_playbutton,_ ("Play all"));
-      gtk_widget_remove_accelerator (cfile->proc_ptr->preview_button, mainw->accel_group, GDK_p, 0);
-      gtk_widget_add_accelerator (mainw->playall, "activate", mainw->accel_group,GDK_p, 0, GTK_ACCEL_VISIBLE);
+      gtk_widget_remove_accelerator (cfile->proc_ptr->preview_button, mainw->accel_group, GDK_p, (GdkModifierType)0);
+      gtk_widget_add_accelerator (mainw->playall, "activate", mainw->accel_group, GDK_p, (GdkModifierType)0, 
+				  GTK_ACCEL_VISIBLE);
     }
     if (cfile->proc_ptr!=NULL) {
       gtk_widget_destroy(GTK_WIDGET(cfile->proc_ptr->processing));
@@ -1193,7 +1194,7 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
   if (visible) {
     // check we have sufficient storage space
     if (!check_storage_space((mainw->current_file>-1)?cfile:NULL,FALSE)) {
-      int cancelled=mainw->cancelled;
+      lives_cancel_t cancelled=mainw->cancelled;
       on_cancel_keep_button_clicked(NULL,NULL);
       if (mainw->cancelled!=CANCEL_NONE) mainw->cancelled=cancelled;
       d_print_cancelled();
@@ -1278,7 +1279,7 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
 	for (i=cfile->fx_frame_pump;i<=vend;i++) {
 	  gboolean retb=virtual_to_images(mainw->current_file,i,i,FALSE);
 	  if (mainw->cancelled||!retb) {
-	    lives_freep((void**)&cfile->op_dir);
+	    if (mainw->current_file>-1&&cfile!=NULL) lives_freep((void**)&cfile->op_dir);
 	    return FALSE;
 	  }
 	  while (g_main_context_iteration(NULL,FALSE));
@@ -1292,8 +1293,9 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
 			 (prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL))&&mainw->playing_file==-1) {
       if (mainw->preview_box!=NULL) gtk_widget_set_tooltip_text( mainw->p_playbutton,_ ("Preview"));
       gtk_widget_set_tooltip_text( mainw->m_playbutton,_ ("Preview"));
-      gtk_widget_remove_accelerator (mainw->playall, mainw->accel_group, GDK_p, 0);
-      gtk_widget_add_accelerator (cfile->proc_ptr->preview_button, "clicked", mainw->accel_group, GDK_p, 0, 0);
+      gtk_widget_remove_accelerator (mainw->playall, mainw->accel_group, GDK_p, (GdkModifierType)0);
+      gtk_widget_add_accelerator (cfile->proc_ptr->preview_button, "clicked", mainw->accel_group, GDK_p,
+				  (GdkModifierType)0, (GtkAccelFlags)0);
       accelerators_swapped=TRUE;
     }
 
@@ -1430,7 +1432,7 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
       // returns FALSE if playback ended
       if (!process_one(visible)) {
 	lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
-	lives_freep((void**)&cfile->op_dir);
+	if (mainw->current_file>-1&&cfile!=NULL) lives_freep((void**)&cfile->op_dir);
 	return FALSE;
       }
 
@@ -1459,6 +1461,7 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
 
       if (mainw->render_error>=LIVES_RENDER_ERROR) {
 	lives_freep((void**)&cfile->op_dir);
+	if (mainw->current_file>-1&&cfile!=NULL) lives_freep((void**)&cfile->op_dir);
 	return FALSE;
       }
 
@@ -1488,8 +1491,9 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
 	gtk_widget_grab_default (cfile->proc_ptr->preview_button);
 	if (mainw->preview_box!=NULL) gtk_widget_set_tooltip_text( mainw->p_playbutton,_ ("Preview"));
 	gtk_widget_set_tooltip_text( mainw->m_playbutton,_ ("Preview"));
-	gtk_widget_remove_accelerator (mainw->playall, mainw->accel_group, GDK_p, 0);
-	gtk_widget_add_accelerator (cfile->proc_ptr->preview_button, "clicked", mainw->accel_group, GDK_p, 0, 0);
+	gtk_widget_remove_accelerator (mainw->playall, mainw->accel_group, GDK_p, (GdkModifierType)0);
+	gtk_widget_add_accelerator (cfile->proc_ptr->preview_button, "clicked", mainw->accel_group, GDK_p,
+				    (GdkModifierType)0, (GtkAccelFlags)0);
 	accelerators_swapped=TRUE;
       }
     }
@@ -1524,7 +1528,7 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
       }
       if (!process_one(visible)) {
 	lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
-	lives_freep((void**)&cfile->op_dir);
+	if (mainw->current_file>-1&&cfile!=NULL) lives_freep((void**)&cfile->op_dir);
 	return FALSE;
       }
 
@@ -1552,8 +1556,9 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
 									 _("Play all"));
     if (accelerators_swapped) {
       if (!mainw->preview) gtk_widget_set_tooltip_text( mainw->m_playbutton,_ ("Play all"));
-      gtk_widget_remove_accelerator (cfile->proc_ptr->preview_button, mainw->accel_group, GDK_p, 0);
-      gtk_widget_add_accelerator (mainw->playall, "activate", mainw->accel_group, GDK_p, 0, GTK_ACCEL_VISIBLE);
+      gtk_widget_remove_accelerator (cfile->proc_ptr->preview_button, mainw->accel_group, GDK_p, (GdkModifierType)0);
+      gtk_widget_add_accelerator (mainw->playall, "activate", mainw->accel_group, GDK_p, (GdkModifierType)0,
+				  GTK_ACCEL_VISIBLE);
       accelerators_swapped=FALSE;
     }
     if (cfile->proc_ptr!=NULL) {
@@ -1586,8 +1591,8 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
   }
 
   lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
-  lives_freep((void**)&cfile->op_dir);
-  
+  if (mainw->current_file>-1&&cfile!=NULL) lives_freep((void**)&cfile->op_dir);
+
   // get error message (if any)
   if (!strncmp(mainw->msg,"error",5)) {
     handle_backend_errors();
@@ -2134,9 +2139,9 @@ void do_jack_noopen_warn3(void) {
 
 void do_jack_noopen_warn4(void) {
 #ifdef HAVE_PULSE_AUDIO
-  gchar *otherbit="\"lives -aplayer pulse\"";
+  const gchar *otherbit="\"lives -aplayer pulse\"";
 #else
-  gchar *otherbit="\"lives -aplayer sox\"";
+  const gchar *otherbit="\"lives -aplayer sox\"";
 #endif
   gchar *msg=g_strdup_printf(_("\nAlternatively, try to start lives with either:\n\n\"lives -jackopts 16\", or\n\n%s\n"),otherbit);
   do_blocking_error_dialog(msg);
@@ -2476,25 +2481,25 @@ response_cancel (GtkButton *button, gpointer user_data) {
 }
 
 
-inline void d_print_cancelled(void) {
+LIVES_INLINE void d_print_cancelled(void) {
   d_print(_("cancelled.\n"));
 #ifdef ENABLE_OSC
       lives_osc_notify(LIVES_OSC_NOTIFY_CANCELLED,"");
 #endif
 }
 
-inline void d_print_failed(void) {
+LIVES_INLINE void d_print_failed(void) {
   d_print(_("failed.\n"));
 #ifdef ENABLE_OSC
       lives_osc_notify(LIVES_OSC_NOTIFY_FAILED,"");
 #endif
 }
 
-inline void d_print_done(void) {
+LIVES_INLINE void d_print_done(void) {
   d_print(_("done.\n"));
 }
 
-inline void d_print_file_error_failed(void) {
+LIVES_INLINE void d_print_file_error_failed(void) {
   d_print(_("error in file. Failed.\n"));
 }
 

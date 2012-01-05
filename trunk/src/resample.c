@@ -160,7 +160,7 @@ gboolean auto_resample_resize (gint width,gint height,gdouble fps,gint fps_num,g
 
 	  rs_builtin=FALSE;
 	  resize_rfx=mainw->fx_candidates[FX_CANDIDATE_RESIZER].rfx;
-	  first_out=get_enabled_channel(resize_rfx->source,0,FALSE);
+	  first_out=get_enabled_channel((weed_plant_t *)resize_rfx->source,0,FALSE);
 	  ctmpl=weed_get_plantptr_value(first_out,"template",&error);
 	  weed_set_int_value(ctmpl,"host_width",width);
 	  weed_set_int_value(ctmpl,"host_height",height);
@@ -339,7 +339,7 @@ gboolean auto_resample_resize (gint width,gint height,gdouble fps,gint fps_num,g
 	
 	rs_builtin=FALSE;
 	resize_rfx=mainw->fx_candidates[FX_CANDIDATE_RESIZER].rfx;
-	first_out=get_enabled_channel(resize_rfx->source,0,FALSE);
+	first_out=get_enabled_channel((weed_plant_t *)resize_rfx->source,0,FALSE);
 	ctmpl=weed_get_plantptr_value(first_out,"template",&error);
 	weed_set_int_value(ctmpl,"host_width",width);
 	weed_set_int_value(ctmpl,"host_height",height);
@@ -1179,22 +1179,22 @@ create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox) {
   _resaudw *resaudw=(_resaudw*)(g_malloc(sizeof(_resaudw)));
 
   //if (type>2&&type<5) channels=g_list_append(channels,"0");
-  channels = g_list_append (channels, "1");
-  channels = g_list_append (channels, "2");
+  channels = g_list_append (channels, (gpointer)"1");
+  channels = g_list_append (channels, (gpointer)"2");
 
-  sampsize = g_list_append (sampsize, "8");
-  sampsize = g_list_append (sampsize, "16");
+  sampsize = g_list_append (sampsize, (gpointer)"8");
+  sampsize = g_list_append (sampsize, (gpointer)"16");
 
-  rate = g_list_append (rate, "5512");
-  rate = g_list_append (rate, "8000");
-  rate = g_list_append (rate, "11025");
-  rate = g_list_append (rate, "22050");
-  rate = g_list_append (rate, "32000");
-  rate = g_list_append (rate, "44100");
-  rate = g_list_append (rate, "48000");
-  rate = g_list_append (rate, "88200");
-  rate = g_list_append (rate, "96000");
-  rate = g_list_append (rate, "128000");
+  rate = g_list_append (rate, (gpointer)"5512");
+  rate = g_list_append (rate, (gpointer)"8000");
+  rate = g_list_append (rate, (gpointer)"11025");
+  rate = g_list_append (rate, (gpointer)"22050");
+  rate = g_list_append (rate, (gpointer)"32000");
+  rate = g_list_append (rate, (gpointer)"44100");
+  rate = g_list_append (rate, (gpointer)"48000");
+  rate = g_list_append (rate, (gpointer)"88200");
+  rate = g_list_append (rate, (gpointer)"96000");
+  rate = g_list_append (rate, (gpointer)"128000");
 
   if (type<3||type>4) {
     resaudw->dialog = gtk_dialog_new ();
@@ -1978,7 +1978,7 @@ create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox) {
     GTK_WIDGET_SET_FLAGS (cancelbutton13, GTK_CAN_DEFAULT);
     
     gtk_widget_add_accelerator (cancelbutton13, "activate", mainw->accel_group,
-				GDK_Escape, 0, 0);
+                              GDK_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
     
       
     okbutton12 = gtk_button_new_from_stock ("gtk-ok");

@@ -65,13 +65,13 @@ static gboolean using_types;
 static gint osc_header_len;
 static gint offset;
 
-inline gint pad4(gint val) {
+static LIVES_INLINE G_GNUC_CONST gint pad4(gint val) {
   return (gint)((val+4)/4)*4;
 }
 
 static gint lives_osc_get_num_arguments(const void *vargs) {
   // check if using type tags and get num_arguments
-  const char *args=vargs;
+  const char *args=(const char *)vargs;
   if (args[0]!=0x2c) return 0;
   return strlen(args)-1;
 }
@@ -80,7 +80,7 @@ static gint lives_osc_get_num_arguments(const void *vargs) {
 static gboolean lives_osc_check_arguments(int arglen, const void *vargs, const gchar *check_pattern, gboolean calc_header_len) {
   // check if using type tags and get header_len
   // should be called from each cb that uses parameters
-  const char *args=vargs;
+  const char *args=(const char *)vargs;
   gint header_len;
 
   osc_header_len=0;
@@ -409,7 +409,7 @@ void lives_osc_cb_play_reverse(void *context, int arglen, const void *vargs, OSC
 
   if (mainw->multitrack!=NULL) return lives_osc_notify_failure();
   if (mainw->current_file<0||((cfile->clip_type!=CLIP_TYPE_DISK&&cfile->clip_type!=CLIP_TYPE_FILE)||mainw->playing_file==-1)) if (mainw->playing_file==-1) lives_osc_notify_failure();
-  dirchange_callback(NULL,NULL,0,0,GINT_TO_POINTER(TRUE));
+  dirchange_callback(NULL,NULL,0,(GdkModifierType)0,GINT_TO_POINTER(TRUE));
   lives_osc_notify_success(NULL);
 
 }
@@ -440,8 +440,8 @@ void lives_osc_cb_play_forward (void *context, int arglen, const void *vargs, OS
     mainw->osc_auto=FALSE;
   }
   else if (mainw->current_file>0) {
-    if (cfile->pb_fps<0||(cfile->play_paused&&cfile->freeze_fps<0)) dirchange_callback(NULL,NULL,0,0,GINT_TO_POINTER(TRUE));
-    if (cfile->play_paused) freeze_callback(NULL,NULL,0,0,NULL);
+    if (cfile->pb_fps<0||(cfile->play_paused&&cfile->freeze_fps<0)) dirchange_callback(NULL,NULL,0,(GdkModifierType)0,GINT_TO_POINTER(TRUE));
+    if (cfile->play_paused) freeze_callback(NULL,NULL,0,(GdkModifierType)0,NULL);
     lives_osc_notify_success(NULL);
   }
   else lives_osc_notify_failure();
@@ -460,8 +460,8 @@ void lives_osc_cb_play_backward (void *context, int arglen, const void *vargs, O
     on_playall_activate(NULL,NULL);
   }
   else if (mainw->current_file>0) {
-    if (cfile->pb_fps>0||(cfile->play_paused&&cfile->freeze_fps>0)) dirchange_callback(NULL,NULL,0,0,GINT_TO_POINTER(TRUE));
-    if (cfile->play_paused) freeze_callback(NULL,NULL,0,0,NULL);
+    if (cfile->pb_fps>0||(cfile->play_paused&&cfile->freeze_fps>0)) dirchange_callback(NULL,NULL,0,(GdkModifierType)0,GINT_TO_POINTER(TRUE));
+    if (cfile->play_paused) freeze_callback(NULL,NULL,0,(GdkModifierType)0,NULL);
     lives_osc_notify_success(NULL);
   }
   else lives_osc_notify_failure();
@@ -523,9 +523,9 @@ void lives_osc_cb_play_reset (void *context, int arglen, const void *vargs, OSCT
   if (mainw->multitrack!=NULL) return lives_osc_notify_failure();
   if (mainw->playing_file==-1) return lives_osc_notify_failure();
 
-  fps_reset_callback(NULL,NULL,0,0,NULL);
-  if (cfile->pb_fps<0||(cfile->play_paused&&cfile->freeze_fps<0)) dirchange_callback(NULL,NULL,0,0,GINT_TO_POINTER(TRUE));
-  if (cfile->play_paused) freeze_callback(NULL,NULL,0,0,NULL);
+  fps_reset_callback(NULL,NULL,0,(GdkModifierType)0,NULL);
+  if (cfile->pb_fps<0||(cfile->play_paused&&cfile->freeze_fps<0)) dirchange_callback(NULL,NULL,0,(GdkModifierType)0,GINT_TO_POINTER(TRUE));
+  if (cfile->play_paused) freeze_callback(NULL,NULL,0,(GdkModifierType)0,NULL);
 
   lives_osc_notify_success(NULL);
 
@@ -724,7 +724,7 @@ void lives_osc_cb_bgset_fps_ratio(void *context, int arglen, const void *vargs, 
 
 void lives_osc_cb_fx_reset(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
 
-  if (!mainw->osc_block) rte_on_off_callback(NULL,NULL,0,0,GINT_TO_POINTER(0));
+  if (!mainw->osc_block) rte_on_off_callback(NULL,NULL,0,(GdkModifierType)0,GINT_TO_POINTER(0));
   if (prefs->omc_noisy) lives_osc_notify_success(NULL);
 
 }
@@ -762,7 +762,7 @@ void lives_osc_cb_fx_enable(void *context, int arglen, const void *vargs, OSCTim
       count=enabled_in_channels(filter, FALSE);
       if (count!=0) return lives_osc_notify_failure(); // is no generator
     }
-    if (!mainw->osc_block) rte_on_off_callback(NULL,NULL,0,0,GINT_TO_POINTER(effect_key));
+    if (!mainw->osc_block) rte_on_off_callback(NULL,NULL,0,(GdkModifierType)0,GINT_TO_POINTER(effect_key));
   }
   mainw->last_grabable_effect=grab;
   if (prefs->omc_noisy) lives_osc_notify_success(NULL);
@@ -775,7 +775,7 @@ void lives_osc_cb_fx_disable(void *context, int arglen, const void *vargs, OSCTi
   if (!lives_osc_check_arguments (arglen,vargs,"i",TRUE)) return lives_osc_notify_failure();
   lives_osc_parse_int_argument(vargs,&effect_key);
   if (mainw->rte&(GU641<<(effect_key-1))) {
-    if (!mainw->osc_block) rte_on_off_callback(NULL,NULL,0,0,GINT_TO_POINTER(effect_key));
+    if (!mainw->osc_block) rte_on_off_callback(NULL,NULL,0,(GdkModifierType)0,GINT_TO_POINTER(effect_key));
   }
   if (prefs->omc_noisy) lives_osc_notify_success(NULL);
 }
@@ -796,7 +796,7 @@ void lives_osc_cb_fx_toggle(void *context, int arglen, const void *vargs, OSCTim
     count=enabled_in_channels(filter, FALSE);
     if (count!=0) return lives_osc_notify_failure(); // is no generator
   }
-  if (!mainw->osc_block) rte_on_off_callback(NULL,NULL,0,0,GINT_TO_POINTER(effect_key));
+  if (!mainw->osc_block) rte_on_off_callback(NULL,NULL,0,(GdkModifierType)0,GINT_TO_POINTER(effect_key));
   if (prefs->omc_noisy) lives_osc_notify_success(NULL);
 }
 
@@ -1088,7 +1088,9 @@ void lives_osc_cb_fgclipsel_cut(void *context, int arglen, const void *vargs, OS
 
   mainw->ccpd_with_sound=!noaudio;
 
-  on_cut_activate(GINT_TO_POINTER(1),NULL);
+  mainw->osc_auto=TRUE;
+  on_cut_activate(NULL,NULL);
+  mainw->osc_auto=FALSE;
 
   mainw->ccpd_with_sound=ccpd;
 
@@ -1135,7 +1137,9 @@ void lives_osc_cb_fgclipsel_delete(void *context, int arglen, const void *vargs,
 
   mainw->ccpd_with_sound=!noaudio;
 
-  on_delete_activate(GINT_TO_POINTER(1),NULL);
+  mainw->osc_auto=TRUE;
+  on_delete_activate(NULL,NULL);
+  mainw->osc_auto=FALSE;
 
   mainw->ccpd_with_sound=ccpd;
 
@@ -1351,7 +1355,7 @@ void lives_osc_cb_fgclip_select_next(void *context, int arglen, const void *varg
   if (mainw->current_file<1||mainw->preview||mainw->is_processing) return lives_osc_notify_failure(); // TODO
   if (mainw->multitrack!=NULL) return lives_osc_notify_failure();
 
-  nextclip_callback(NULL,NULL,0,0,GINT_TO_POINTER(1));
+  nextclip_callback(NULL,NULL,0,(GdkModifierType)0,GINT_TO_POINTER(1));
 
   if (mainw->playing_file==-1&&prefs->omc_noisy) {
     gchar *msg=g_strdup_printf("%d",mainw->current_file);
@@ -1369,7 +1373,7 @@ void lives_osc_cb_bgclip_select_next(void *context, int arglen, const void *varg
   if (mainw->blend_file<1||mainw->files[mainw->blend_file]==NULL) return lives_osc_notify_failure();
   if (mainw->multitrack!=NULL) return lives_osc_notify_failure();
 
-  nextclip_callback(NULL,NULL,0,0,GINT_TO_POINTER(2));
+  nextclip_callback(NULL,NULL,0,(GdkModifierType)0,GINT_TO_POINTER(2));
 
   if (mainw->playing_file==-1&&prefs->omc_noisy) {
     gchar *msg=g_strdup_printf("%d",mainw->blend_file);
@@ -1387,7 +1391,7 @@ void lives_osc_cb_fgclip_select_previous(void *context, int arglen, const void *
   if (mainw->current_file<1||mainw->preview||mainw->is_processing) return lives_osc_notify_failure(); // TODO
   if (mainw->multitrack!=NULL) return lives_osc_notify_failure();
   
-  prevclip_callback(NULL,NULL,0,0,GINT_TO_POINTER(1));
+  prevclip_callback(NULL,NULL,0,(GdkModifierType)0,GINT_TO_POINTER(1));
 
   if (mainw->playing_file==-1&&prefs->omc_noisy) {
     gchar *msg=g_strdup_printf("%d",mainw->current_file);
@@ -1407,7 +1411,7 @@ void lives_osc_cb_bgclip_select_previous(void *context, int arglen, const void *
 
   if (mainw->blend_file<1||mainw->files[mainw->blend_file]==NULL) return lives_osc_notify_failure();
 
-  prevclip_callback(NULL,NULL,0,0,GINT_TO_POINTER(2));
+  prevclip_callback(NULL,NULL,0,(GdkModifierType)0,GINT_TO_POINTER(2));
 
   if (mainw->playing_file==-1&&prefs->omc_noisy) {
     gchar *msg=g_strdup_printf("%d",mainw->blend_file);
@@ -2340,7 +2344,7 @@ void lives_osc_cb_freeze(void *context, int arglen, const void *vargs, OSCTimeTa
   if (mainw->playing_file<1) return lives_osc_notify_failure();
 
   if (!mainw->osc_block) {
-    freeze_callback(NULL,NULL,0,0,NULL);
+    freeze_callback(NULL,NULL,0,(GdkModifierType)0,NULL);
   }
   if (prefs->omc_noisy) {
     lives_osc_notify_success(NULL);
@@ -2504,7 +2508,7 @@ static gboolean setfx (gint effect_key, gint pnum, int nargs, const void *vargs)
   switch (hint) {
   case WEED_HINT_INTEGER:
     {
-      int *valuesi=g_malloc(nargs*sizint);
+      int *valuesi=(int *)g_malloc(nargs*sizint);
 
       while (pattern[x]!=0) {
 	if (pattern[x]=='f') {
@@ -2546,7 +2550,7 @@ static gboolean setfx (gint effect_key, gint pnum, int nargs, const void *vargs)
 
   case WEED_HINT_SWITCH:
     {
-      int *valuesb=g_malloc(nargs*sizint);
+      int *valuesb=(int *)g_malloc(nargs*sizint);
 
       while (pattern[x]!=0) {
 	if (pattern[x]=='i') {
@@ -2578,7 +2582,7 @@ static gboolean setfx (gint effect_key, gint pnum, int nargs, const void *vargs)
     
   case WEED_HINT_FLOAT:
     {
-      double *valuesd=g_malloc(nargs*sizdbl);
+      double *valuesd=(double *)g_malloc(nargs*sizdbl);
 
       while (pattern[x]!=0) {
 	if (pattern[x]=='i') {
@@ -2622,7 +2626,7 @@ static gboolean setfx (gint effect_key, gint pnum, int nargs, const void *vargs)
 
   case WEED_HINT_TEXT:
     {
-      gchar **valuess=g_malloc(nargs*sizeof(gchar *));
+      gchar **valuess=(gchar **)g_malloc(nargs*sizeof(gchar *));
 
       while (pattern[x]!=0) {
 	if (pattern[x]=='i') {
@@ -2678,7 +2682,7 @@ static gboolean setfx (gint effect_key, gint pnum, int nargs, const void *vargs)
 
       if (weed_leaf_seed_type(tparamtmpl,"default")==WEED_SEED_INT) {
 	// RGB, int type
-	int *valuesi=g_malloc(nargs*sizint);
+	int *valuesi=(int *)g_malloc(nargs*sizint);
 	int nmins=weed_leaf_num_elements(tparamtmpl,"min");
 	int nmaxs=weed_leaf_num_elements(tparamtmpl,"max");
 	int *minis=NULL,*maxis=NULL;
@@ -2768,7 +2772,7 @@ static gboolean setfx (gint effect_key, gint pnum, int nargs, const void *vargs)
       }
       else {
 	// RGB, float type
-	double *valuesd=g_malloc(nargs*sizeof(double));
+	double *valuesd=(double *)g_malloc(nargs*sizeof(double));
 	int nmins=weed_leaf_num_elements(tparamtmpl,"min");
 	int nmaxs=weed_leaf_num_elements(tparamtmpl,"max");
 	double *minds=NULL,*maxds=NULL;
@@ -2867,7 +2871,7 @@ static gboolean setfx (gint effect_key, gint pnum, int nargs, const void *vargs)
 
       if (weed_leaf_seed_type(tparamtmpl,"default")==WEED_SEED_INT) {
 	// RGBA, int type
-	int *valuesi=g_malloc(nargs*sizint);
+	int *valuesi=(int *)g_malloc(nargs*sizint);
 	int nmins=weed_leaf_num_elements(tparamtmpl,"min");
 	int nmaxs=weed_leaf_num_elements(tparamtmpl,"max");
 	int *minis=NULL,*maxis=NULL;
@@ -2964,7 +2968,7 @@ static gboolean setfx (gint effect_key, gint pnum, int nargs, const void *vargs)
       }
       else {
 	// RGBA, float type
-	double *valuesd=g_malloc(nargs*sizdbl);
+	double *valuesd=(double *)g_malloc(nargs*sizdbl);
 	int nmins=weed_leaf_num_elements(tparamtmpl,"min");
 	int nmaxs=weed_leaf_num_elements(tparamtmpl,"max");
 	double *minds=NULL,*maxds=NULL;
@@ -4137,14 +4141,14 @@ void lives_osc_cb_rte_getusermode(void *context, int arglen, const void *vargs, 
 
 void lives_osc_cb_swap(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   if (mainw->multitrack!=NULL) return lives_osc_notify_failure();
-  swap_fg_bg_callback (NULL,NULL,0,0,NULL);
+  swap_fg_bg_callback (NULL,NULL,0,(GdkModifierType)0,NULL);
   lives_osc_notify_success(NULL);
 }
 
 
 void lives_osc_record_start(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   if (mainw->multitrack!=NULL) return lives_osc_notify_failure();
-  record_toggle_callback (NULL,NULL,0,0,GINT_TO_POINTER((gint)TRUE));
+  record_toggle_callback (NULL,NULL,0,(GdkModifierType)0,GINT_TO_POINTER((gint)TRUE));
   lives_osc_notify_success(NULL);
   // TODO - send record start and record stop events
 }
@@ -4152,13 +4156,13 @@ void lives_osc_record_start(void *context, int arglen, const void *vargs, OSCTim
 
 void lives_osc_record_stop(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   if (mainw->multitrack!=NULL) return lives_osc_notify_failure();
-  record_toggle_callback (NULL,NULL,0,0,GINT_TO_POINTER((gint)FALSE));
+  record_toggle_callback (NULL,NULL,0,(GdkModifierType)0,GINT_TO_POINTER((gint)FALSE));
   lives_osc_notify_success(NULL);
 }
 
 void lives_osc_record_toggle(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   if (mainw->multitrack!=NULL) return lives_osc_notify_failure();
-  record_toggle_callback (NULL,NULL,0,0,GINT_TO_POINTER(!mainw->record));
+  record_toggle_callback (NULL,NULL,0,(GdkModifierType)0,GINT_TO_POINTER(!mainw->record));
   lives_osc_notify_success(NULL);
 }
 

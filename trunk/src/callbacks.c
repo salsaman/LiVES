@@ -95,7 +95,7 @@ void lives_exit (void) {
 
     // stop any background processing for the current clip
     if (mainw->current_file>-1) {
-      if (cfile->handle!=NULL) {
+      if (cfile->handle!=NULL&&(cfile->clip_type==CLIP_TYPE_DISK||cfile->clip_type==CLIP_TYPE_FILE)) {
 	com=g_strdup_printf("smogrify stopsubsub \"%s\" 2>/dev/null",cfile->handle);
 	lives_system(com,TRUE);
 	g_free(com);
@@ -3237,9 +3237,9 @@ on_delete_activate                    (GtkMenuItem     *menuitem,
   if (mainw->playing_file>-1) return;
 
   if (cfile->start<=1 && cfile->end==cfile->frames) {
-    if (menuitem!=GTK_MENU_ITEM(mainw->cut) && (cfile->achans==0||
-						((gdouble)frames_cut/cfile->fps>=cfile->laudio_time && 
-						 mainw->ccpd_with_sound))) {
+    if (!mainw->osc_auto&&menuitem!=GTK_MENU_ITEM(mainw->cut) && (cfile->achans==0||
+								  ((gdouble)frames_cut/cfile->fps>=cfile->laudio_time && 
+								   mainw->ccpd_with_sound))) {
       if (do_warning_dialog
 	  (_("\nDeleting all frames will close this file.\nAre you sure ?"))) close_current_file(0);
       return;
@@ -3365,7 +3365,7 @@ on_delete_activate                    (GtkMenuItem     *menuitem,
   cfile->undo_end=cfile->end;
   cfile->undo1_boolean=mainw->ccpd_with_sound;
 
-  if (menuitem!=NULL) {
+  if (menuitem!=NULL||mainw->osc_auto) {
     com=g_strdup_printf(_ ("Deleting frames %d to %d%s..."),cfile->start,cfile->end,
 			mainw->ccpd_with_sound&&cfile->achans>0?" (with sound)":"");
     d_print(""); // force switchtext
@@ -3455,7 +3455,7 @@ on_delete_activate                    (GtkMenuItem     *menuitem,
   g_signal_handler_unblock(mainw->spinbutton_start,mainw->spin_start_func);
 
   // menuitem is NULL if we came here from undo_insert
-  if (menuitem==NULL) return;
+  if (menuitem==NULL&&!mainw->osc_auto) return;
 
   save_clip_value(mainw->current_file,CLIP_DETAILS_FRAMES,&cfile->frames);
   if (mainw->com_failed||mainw->write_failed) bad_header=TRUE;

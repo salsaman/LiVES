@@ -616,7 +616,33 @@ extern capability *capable;
 #include "jack.h"
 #endif
 
+#define __STDC_FORMAT_MACROS
 #include <inttypes.h>
+
+#ifndef PRId64
+
+#ifndef __WORDSIZE
+#if defined __x86_64__
+# define __WORDSIZE	64
+#ifndef __WORDSIZE_COMPAT32
+# define __WORDSIZE_COMPAT32	1
+#endif
+#else
+# define __WORDSIZE	32
+#endif
+#endif // __WORDSIZE
+
+#ifndef __PRI64_PREFIX
+# if __WORDSIZE == 64
+#  define __PRI64_PREFIX	"l"
+# else
+#  define __PRI64_PREFIX	"ll"
+# endif
+#endif
+
+# define PRId64		__PRI64_PREFIX "d"
+#endif // ifndef PRI64d
+
 
 // common defs for mainwindow
 #include "plugins.h"

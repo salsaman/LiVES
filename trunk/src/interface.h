@@ -124,7 +124,7 @@ typedef struct {
   GtkWidget *spinbuttonf;
   GtkWidget *radiobuttond;
 
-} tvcardw_t;
+} lives_tvcardw_t;
 
 
 

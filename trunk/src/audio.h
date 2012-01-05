@@ -119,7 +119,7 @@ typedef struct {
 
   // private fields (used by server)
   uint8_t *_filebuffer; ///< raw data to/from file - can be cast to int16_t
-  size_t _cbytesize; ///< current _filebuffer bytesize; if this changes we need to realloc _filebuffer
+  ssize_t _cbytesize; ///< current _filebuffer bytesize; if this changes we need to realloc _filebuffer
   size_t _csamp_space; ///< current sample buffer size in single channel samples  
   int _fd; ///< file descriptor
   int _cfileno; ///< current fileno

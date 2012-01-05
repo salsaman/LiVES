@@ -433,8 +433,8 @@ gboolean apply_prefs(gboolean skip_warn) {
   gboolean show_recent=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->recent_check));
   gboolean stream_audio_out=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_stream_audio));
 
-  gint ds_warn_level=gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(prefsw->spinbutton_warn_ds));
-  gint ds_crit_level=gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(prefsw->spinbutton_crit_ds));
+  guint64 ds_warn_level=gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(prefsw->spinbutton_warn_ds));
+  guint64 ds_crit_level=gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(prefsw->spinbutton_crit_ds));
 
   gboolean warn_fps=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_warn_fps));
   gboolean warn_save_set=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_warn_save_set));
@@ -531,7 +531,7 @@ gboolean apply_prefs(gboolean skip_warn) {
 #endif
 
 #ifdef ENABLE_OSC
-  gint osc_udp_port=gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(prefsw->spinbutton_osc_udp));
+  guint osc_udp_port=gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(prefsw->spinbutton_osc_udp));
   gboolean osc_start=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->enable_OSC_start));
   gboolean osc_enable=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->enable_OSC));
 #endif
@@ -562,7 +562,7 @@ gboolean apply_prefs(gboolean skip_warn) {
 
   gchar audio_player[256];
   gint listlen=g_list_length (prefs->acodec_list);
-  guint rec_opts=rec_frames*REC_FRAMES+rec_fps*REC_FPS+rec_effects*REC_EFFECTS+rec_clips*REC_CLIPS+rec_audio*REC_AUDIO;
+  gint rec_opts=rec_frames*REC_FRAMES+rec_fps*REC_FPS+rec_effects*REC_EFFECTS+rec_clips*REC_CLIPS+rec_audio*REC_AUDIO;
   guint warn_mask;
 
   unsigned char *new_undo_buf;
@@ -580,7 +580,7 @@ gboolean apply_prefs(gboolean skip_warn) {
 
   gchar *cdplay_device=g_filename_from_utf8(gtk_entry_get_text(GTK_ENTRY(prefsw->cdplay_entry)),-1,NULL,NULL,NULL);
 
-  for (idx=0;idx<listlen&&strcmp(g_list_nth_data (prefs->acodec_list,idx),audio_codec);idx++);
+  for (idx=0;idx<listlen&&strcmp((gchar *)g_list_nth_data (prefs->acodec_list,idx),audio_codec);idx++);
 
   if (idx==listlen) future_prefs->encoder.audio_codec=0;
   else future_prefs->encoder.audio_codec=prefs->acodec_list_to_format[idx];
@@ -876,9 +876,9 @@ gboolean apply_prefs(gboolean skip_warn) {
   }
 
   // pb quality
-  if (!strcmp(pb_quality,g_list_nth_data(prefsw->pbq_list,0))) pbq=PB_QUALITY_LOW;
-  if (!strcmp(pb_quality,g_list_nth_data(prefsw->pbq_list,1))) pbq=PB_QUALITY_MED;
-  if (!strcmp(pb_quality,g_list_nth_data(prefsw->pbq_list,2))) pbq=PB_QUALITY_HIGH;
+  if (!strcmp(pb_quality,(gchar *)g_list_nth_data(prefsw->pbq_list,0))) pbq=PB_QUALITY_LOW;
+  if (!strcmp(pb_quality,(gchar *)g_list_nth_data(prefsw->pbq_list,1))) pbq=PB_QUALITY_MED;
+  if (!strcmp(pb_quality,(gchar *)g_list_nth_data(prefsw->pbq_list,2))) pbq=PB_QUALITY_HIGH;
 
   if (pbq!=prefs->pb_quality) {
     prefs->pb_quality=pbq;
@@ -1251,7 +1251,7 @@ gboolean apply_prefs(gboolean skip_warn) {
   }
   
   if (mt_undo_buf!=prefs->mt_undo_buf) {
-    if ((new_undo_buf=g_try_malloc(mt_undo_buf*1024*1024))==NULL) {
+    if ((new_undo_buf=(unsigned char *)g_try_malloc(mt_undo_buf*1024*1024))==NULL) {
       do_mt_set_mem_error(mainw->multitrack!=NULL,skip_warn);
     }
     else {
@@ -1272,7 +1272,7 @@ gboolean apply_prefs(gboolean skip_warn) {
 	  mainw->multitrack->undo_mem=new_undo_buf;
 	}
 	else {
-	  mainw->multitrack->undo_mem=g_try_malloc(mt_undo_buf*1024*1024);
+	  mainw->multitrack->undo_mem=(unsigned char *)g_try_malloc(mt_undo_buf*1024*1024);
 	  if (mainw->multitrack->undo_mem==NULL) {
 	    do_mt_set_mem_error(TRUE,skip_warn);
 	  }
@@ -1345,7 +1345,7 @@ rdet_acodec_changed (GtkComboBox *acodec_combo, gpointer user_data) {
   const gchar *audio_codec = gtk_combo_box_get_active_text(acodec_combo);
   if (!strcmp(audio_codec,mainw->any_string)) return;
 
-  for (idx=0;idx<listlen&&strcmp(g_list_nth_data (prefs->acodec_list,idx),audio_codec);idx++);
+  for (idx=0;idx<listlen&&strcmp((gchar *)g_list_nth_data (prefs->acodec_list,idx),audio_codec);idx++);
 
   if (idx==listlen) future_prefs->encoder.audio_codec=0;
   else future_prefs->encoder.audio_codec=prefs->acodec_list_to_format[idx];
@@ -3733,8 +3733,8 @@ _prefsw *create_prefs_dialog (void) {
     // reqest formats from the encoder plugin
     if ((ofmt_all=plugin_request_by_line(PLUGIN_ENCODERS,prefs->encoder.name,"get_formats"))!=NULL) {
       for (i=0;i<g_list_length(ofmt_all);i++) {
-	if (get_token_count (g_list_nth_data (ofmt_all,i),'|')>2) {
-	  array=g_strsplit (g_list_nth_data (ofmt_all,i),"|",-1);
+	if (get_token_count ((gchar *)g_list_nth_data (ofmt_all,i),'|')>2) {
+	  array=g_strsplit ((gchar *)g_list_nth_data (ofmt_all,i),"|",-1);
 	  if (!strcmp(array[0],prefs->encoder.of_name)) {
 	    prefs->encoder.of_allowed_acodecs=atoi(array[2]);
 	  } 

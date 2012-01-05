@@ -114,12 +114,13 @@ add_to_special (const gchar *sp_string, lives_rfx_t *rfx) {
       stdwidgets=2;
     }
 
-    if (num_widgets>stdwidgets) framedraw.extra_params=g_malloc(((framedraw.num_extra=(num_widgets-stdwidgets)))*sizint);
+    if (num_widgets>stdwidgets) framedraw.extra_params=
+				  (gint *)g_malloc(((framedraw.num_extra=(num_widgets-stdwidgets)))*sizint);
     if (rfx->status==RFX_STATUS_WEED&&mainw->multitrack!=NULL&&(init_event=mainw->multitrack->init_event)!=NULL) {
       num_in_tracks=weed_leaf_num_elements(init_event,"in_tracks");
       pchains=weed_get_voidptr_array(init_event,"in_parameters",&error);
     }
-    ign=g_malloc(num_in_tracks*sizint);
+    ign=(int *)g_malloc(num_in_tracks*sizint);
     for (i=0;i<num_in_tracks;i++) ign[i]=WEED_FALSE;
     for (i=0;i<num_widgets;i++) {
       pnum=atoi(array[i+2]);
@@ -133,12 +134,12 @@ add_to_special (const gchar *sp_string, lives_rfx_t *rfx) {
 	  }
 	}
 	if (init_event!=NULL) {
-	  param=weed_inst_in_param(rfx->source,pnum,FALSE);
+	  param=weed_inst_in_param((weed_plant_t *)rfx->source,pnum,FALSE);
 	  pchange=pchains[pnum];
 	  paramtmpl=weed_get_plantptr_value(param,"template",&error);
 	  hint=weed_get_int_value(paramtmpl,"hint",&error);
 	  fill_param_vals_to (paramtmpl, (weed_plant_t *)pchange, pnum, hint, num_in_tracks-1);
-	  weed_set_boolean_array(pchange,"ignore",num_in_tracks,ign);
+	  weed_set_boolean_array((weed_plant_t *)pchange,"ignore",num_in_tracks,ign);
 	}
       }
       if (i>=stdwidgets) framedraw.extra_params[i-stdwidgets]=pnum;

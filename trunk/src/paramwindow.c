@@ -69,7 +69,7 @@ static void do_onchange_init(lives_rfx_t *rfx) {
   }
   if ((onchange=plugin_request_by_line (type,rfx->name,"get_onchange"))!=NULL) {
     for (i=0;i<g_list_length (onchange);i++) {
-      array=g_strsplit (g_list_nth_data (onchange,i),rfx->delim,-1);
+      array=g_strsplit ((gchar *)g_list_nth_data (onchange,i),rfx->delim,-1);
       if (!strcmp (array[0],"init")) {
 	// onchange is init
 	// create dummy object with data
@@ -93,7 +93,7 @@ void on_paramwindow_ok_clicked (GtkButton *button, lives_rfx_t *rfx) {
   if (rfx!=NULL&&rfx->status!=RFX_STATUS_SCRAP) mainw->keep_pre=mainw->did_rfx_preview;
 
   if (mainw->textwidget_focus!=NULL) {
-    GtkWidget *textwidget=g_object_get_data (G_OBJECT (mainw->textwidget_focus),"textwidget");
+    GtkWidget *textwidget=(GtkWidget *)g_object_get_data (G_OBJECT (mainw->textwidget_focus),"textwidget");
     after_param_text_changed(textwidget,rfx);
   }
 
@@ -206,8 +206,6 @@ void on_paramwindow_cancel_clicked (GtkButton *button, lives_rfx_t *rfx) {
 
 
 static lives_widget_group_t *get_group(lives_rfx_t *rfx, lives_param_t *param) {
-  lives_widget_group_t *group;
-
   if (rfx->status==RFX_STATUS_WEED) {
     return livesgrp_from_usrgrp (usrgrp_to_livesgrp[1], param->group);
   }
@@ -295,9 +293,9 @@ static void gen_fps_changed (GtkSpinButton *spin, gpointer user_data) {
 
 static void trans_in_out_pressed(lives_rfx_t *rfx, gboolean in) {
   int error;
-  weed_plant_t *filter=weed_get_plantptr_value(rfx->source,"filter_class",&error);
+  weed_plant_t *inst=(weed_plant_t *)rfx->source;
+  weed_plant_t *filter=weed_get_plantptr_value(inst,"filter_class",&error);
   int trans=get_transition_param(filter);
-  weed_plant_t *inst=rfx->source;
   weed_plant_t **in_params=weed_get_plantptr_array(inst,"in_parameters",&error);
   weed_plant_t *tparam=in_params[trans];
   weed_plant_t *tparamtmpl=weed_get_plantptr_value(tparam,"template",&error);
@@ -317,11 +315,11 @@ static void trans_in_out_pressed(lives_rfx_t *rfx, gboolean in) {
 
 
 static void transition_in_pressed(GtkToggleButton *tbut, gpointer rfx) {
-  trans_in_out_pressed(rfx,TRUE);
+  trans_in_out_pressed((lives_rfx_t *)rfx,TRUE);
 }
 
 static void transition_out_pressed(GtkToggleButton *tbut, gpointer rfx) {
-  trans_in_out_pressed(rfx,FALSE);
+  trans_in_out_pressed((lives_rfx_t *)rfx,FALSE);
 }
 
 static void after_transaudio_toggled(GtkToggleButton *togglebutton, gpointer rfx) {
@@ -384,7 +382,7 @@ void transition_add_in_out(GtkBox *vbox, lives_rfx_t *rfx, gboolean add_audio_ch
 
   if (add_audio_check) {
     int error;
-    weed_plant_t *filter=weed_get_plantptr_value(rfx->source,"filter_class",&error);
+    weed_plant_t *filter=weed_get_plantptr_value((weed_plant_t *)rfx->source,"filter_class",&error);
     GtkWidget *checkbutton = gtk_check_button_new ();
 
     if (weed_plant_has_leaf(mainw->multitrack->init_event,"host_audio_transition")&&
@@ -467,7 +465,7 @@ void transition_add_in_out(GtkBox *vbox, lives_rfx_t *rfx, gboolean add_audio_ch
 static gboolean add_sizes(GtkBox *vbox, gboolean add_fps, lives_rfx_t *rfx) {
   // add size settings for generators and resize effects
   int i,error;
-  weed_plant_t *filter=weed_get_plantptr_value(rfx->source,"filter_class",&error);
+  weed_plant_t *filter=weed_get_plantptr_value((weed_plant_t *)rfx->source,"filter_class",&error);
   int num_chans=weed_leaf_num_elements(filter,"out_channel_templates");
   weed_plant_t **ctmpls=weed_get_plantptr_array(filter,"out_channel_templates",&error),*tmpl;
   gchar *cname,*ltxt;
@@ -886,7 +884,7 @@ void on_render_fx_pre_activate (GtkMenuItem *menuitem, lives_rfx_t *rfx) {
     gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area), GTK_BUTTONBOX_END);
     gtk_dialog_add_action_widget (GTK_DIALOG (fx_dialog[n]), cancelbutton, GTK_RESPONSE_CANCEL);
     gtk_widget_add_accelerator (cancelbutton, "activate", fxw_accel_group,
-				GDK_Escape, 0, 0);
+				GDK_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
 
     if (is_defaults) {
       okbutton = gtk_button_new_with_mnemonic (_("Set as default"));
@@ -903,7 +901,7 @@ void on_render_fx_pre_activate (GtkMenuItem *menuitem, lives_rfx_t *rfx) {
       gtk_dialog_add_action_widget (GTK_DIALOG (fx_dialog[n]), okbutton, GTK_RESPONSE_OK);
     gtk_dialog_add_action_widget (GTK_DIALOG (fx_dialog[n]), cancelbutton, GTK_RESPONSE_CANCEL);
     gtk_widget_add_accelerator (cancelbutton, "activate", fxw_accel_group,
-				GDK_Escape, 0, 0);
+				GDK_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
 
   }
 
@@ -1083,7 +1081,7 @@ gboolean make_param_box(GtkVBox *top_vbox, lives_rfx_t *rfx) {
   
   // extras for multitrack
   if (mainw->multitrack!=NULL&&rfx->status==RFX_STATUS_WEED&&!chk_params) {
-    weed_plant_t *filter=weed_get_plantptr_value(rfx->source,"filter_class",&error);
+    weed_plant_t *filter=weed_get_plantptr_value((weed_plant_t *)rfx->source,"filter_class",&error);
     if (enabled_in_channels(filter,FALSE)==2&&get_transition_param(filter)!=-1) {
       // add in/out for multitrack transition
       transition_add_in_out(GTK_BOX(param_vbox),rfx,(mainw->multitrack->opts.pertrack_audio));
@@ -1092,7 +1090,7 @@ gboolean make_param_box(GtkVBox *top_vbox, lives_rfx_t *rfx) {
   }
 
   // extras for converters
-  if (internal&&weed_instance_is_resizer(rfx->source)&&!chk_params) {
+  if (internal&&weed_instance_is_resizer((weed_plant_t *)rfx->source)&&!chk_params) {
     has_param=add_sizes(GTK_BOX(param_vbox),FALSE,rfx);
   }
 
@@ -1105,7 +1103,7 @@ gboolean make_param_box(GtkVBox *top_vbox, lives_rfx_t *rfx) {
     // do onchange|init
     if ((onchange=plugin_request_by_line (type,rfx->name,"get_onchange"))!=NULL) {
       for (i=0;i<g_list_length (onchange);i++) {
-	array=g_strsplit (g_list_nth_data (onchange,i),rfx->delim,-1);
+	array=g_strsplit ((gchar *)g_list_nth_data (onchange,i),rfx->delim,-1);
 	if (strcmp (array[0],"init")) {
 	  // note other onchanges so we don't have to keep parsing the list
 	  gint which=atoi (array[0]);
@@ -1128,10 +1126,10 @@ gboolean make_param_box(GtkVBox *top_vbox, lives_rfx_t *rfx) {
     gchar *lstring=g_strconcat("layout",rfx->delim,NULL);
     gchar *sstring=g_strconcat("special",rfx->delim,NULL);
     for (i=0;i<g_list_length (hints);i++) {
-      if (!strncmp (g_list_nth_data (hints,i),lstring,7)) {
+      if (!strncmp ((gchar *)g_list_nth_data (hints,i),lstring,7)) {
 	layout=g_list_append (layout,g_strdup((gchar *)g_list_nth_data (hints,i)+7));
       }
-      else if (!strncmp (g_list_nth_data (hints,i),sstring,8)) {
+      else if (!strncmp ((gchar *)g_list_nth_data (hints,i),sstring,8)) {
 	add_to_special((gchar *)g_list_nth_data (hints,i)+8,rfx);
       }
     }
@@ -1152,7 +1150,7 @@ gboolean make_param_box(GtkVBox *top_vbox, lives_rfx_t *rfx) {
   for (i=0;i<g_list_length (layout);i++) {
     has_box=FALSE;
     noslid=FALSE;
-    line=g_list_nth_data (layout,i);
+    line=(gchar *)g_list_nth_data (layout,i);
     num_tok=get_token_count (line,(unsigned int)rfx->delim[0]);
     // ignore | inside strings
     array=g_strsplit (line,rfx->delim,num_tok);
@@ -1253,7 +1251,7 @@ gboolean make_param_box(GtkVBox *top_vbox, lives_rfx_t *rfx) {
   }
 
   if (mainw->multitrack==NULL&&rfx->status==RFX_STATUS_WEED&&rfx->is_template) {
-    weed_plant_t *filter=weed_get_plantptr_value(rfx->source,"filter_class",&error);
+    weed_plant_t *filter=weed_get_plantptr_value((weed_plant_t *)rfx->source,"filter_class",&error);
     if (enabled_in_channels(filter,FALSE)==0&&enabled_out_channels(filter,FALSE)>0) {
       // out channel size(s) and target_fps for generators
       if (!chk_params) add_sizes(GTK_BOX(top_vbox),TRUE,rfx);
@@ -1332,7 +1330,7 @@ gboolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, gboolean ad
 	gtk_box_pack_start (GTK_BOX (box), hbox, FALSE, FALSE, 10);
       }
       
-      if (rfx->status==RFX_STATUS_WEED&&(disp_string=get_weed_display_string(rfx->source,pnum))!=NULL) {
+      if (rfx->status==RFX_STATUS_WEED&&(disp_string=get_weed_display_string((weed_plant_t *)rfx->source,pnum))!=NULL) {
 	dlabel=gtk_label_new (g_strdup_printf("(%s)",_ (disp_string)));
 	if (palette->style&STYLE_1) {
 	  gtk_widget_modify_fg(dlabel, GTK_STATE_NORMAL, &palette->normal_fore);
@@ -1363,7 +1361,7 @@ gboolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, gboolean ad
 	gtk_box_pack_start (GTK_BOX (box), hbox, FALSE, FALSE, 10);
       }
       
-      if (rfx->status==RFX_STATUS_WEED&&(disp_string=get_weed_display_string(rfx->source,pnum))!=NULL) {
+      if (rfx->status==RFX_STATUS_WEED&&(disp_string=get_weed_display_string((weed_plant_t *)rfx->source,pnum))!=NULL) {
 	dlabel=gtk_label_new (g_strdup_printf("(%s)",_ (disp_string)));
 	if (palette->style&STYLE_1) {
 	  gtk_widget_modify_fg(dlabel, GTK_STATE_NORMAL, &palette->normal_fore);
@@ -1391,8 +1389,7 @@ gboolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, gboolean ad
 	}
       }
 
-      if (rfx->status==RFX_STATUS_WEED) group=livesgrp_from_usrgrp (usrgrp_to_livesgrp[1], param->group);
-      else group=livesgrp_from_usrgrp (usrgrp_to_livesgrp[0], param->group);
+      group=get_group(rfx,param);
 
       if (group!=NULL) {
 	group->rbgroup=gtk_radio_button_get_group (GTK_RADIO_BUTTON (radiobutton));
@@ -1423,7 +1420,7 @@ gboolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, gboolean ad
       gtk_box_pack_start (GTK_BOX (box), hbox, FALSE, FALSE, 10);
     }
 
-    if (rfx->status==RFX_STATUS_WEED&&(disp_string=get_weed_display_string(rfx->source,pnum))!=NULL) {
+    if (rfx->status==RFX_STATUS_WEED&&(disp_string=get_weed_display_string((weed_plant_t *)rfx->source,pnum))!=NULL) {
       dlabel=gtk_label_new (g_strdup_printf("%s",_ (disp_string)));
       weed_free(disp_string);
       gtk_box_pack_start (GTK_BOX (hbox), dlabel, FALSE, FALSE, 10);
@@ -1567,14 +1564,14 @@ gboolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, gboolean ad
     gtk_box_pack_start (GTK_BOX (box), hbox, FALSE, FALSE, 0);
     gtk_box_set_homogeneous(GTK_BOX(box),FALSE);
 
-    if (rfx->status==RFX_STATUS_WEED&&(disp_string=get_weed_display_string(rfx->source,pnum))!=NULL) {
+    if (rfx->status==RFX_STATUS_WEED&&(disp_string=get_weed_display_string((weed_plant_t *)rfx->source,pnum))!=NULL) {
       if (param->max==0.) txt=g_strdup (disp_string);
       else txt=g_strndup (disp_string,(gint)param->max);
       weed_free(disp_string);
     }
     else {
-      if (param->max==0.) txt=g_strdup (param->value);
-      else txt=g_strndup (param->value,(gint)param->max);
+      if (param->max==0.) txt=g_strdup ((gchar *)param->value);
+      else txt=g_strndup ((gchar *)param->value,(gint)param->max);
     }
 
     if ((gint)param->max>RFX_TEXT_MAGIC||param->max==0.) {
@@ -1666,12 +1663,13 @@ gboolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, gboolean ad
 
     combo=lives_standard_combo_new(name, use_mnemonic, param->list, (LiVESBox *)box, param->desc);
 
-    if (rfx->status==RFX_STATUS_WEED&&(disp_string=get_weed_display_string(rfx->source,pnum))!=NULL) {
+    if (rfx->status==RFX_STATUS_WEED&&(disp_string=get_weed_display_string((weed_plant_t *)rfx->source,pnum))!=NULL) {
       gtk_entry_set_text (GTK_ENTRY((GTK_COMBO(combo))->entry),disp_string);
       weed_free(disp_string);
     }
     else if (param->list!=NULL) {
-      gtk_entry_set_text (GTK_ENTRY((GTK_COMBO(combo))->entry),g_list_nth_data (param->list,get_int_param (param->value)));
+      gtk_entry_set_text (GTK_ENTRY((GTK_COMBO(combo))->entry), 
+			  (gchar *)g_list_nth_data (param->list,get_int_param (param->value)));
     }
 
     blockfunc=g_signal_connect_after (G_OBJECT (GTK_COMBO(combo)->entry), "changed", 
@@ -1728,7 +1726,7 @@ void add_label_to_box (GtkBox *box, gboolean do_trans, const gchar *text) {
 }
 
 GSList *add_usrgrp_to_livesgrp (GSList *u2l, GSList *rbgroup, gint usr_number) {
-  lives_widget_group_t *wgroup=g_malloc (sizeof(lives_widget_group_t));
+  lives_widget_group_t *wgroup=(lives_widget_group_t *)g_malloc (sizeof(lives_widget_group_t));
   wgroup->usr_number=usr_number;
   wgroup->rbgroup=rbgroup;
   wgroup->active_param=0;
@@ -1744,7 +1742,7 @@ lives_widget_group_t *livesgrp_from_usrgrp (GSList *u2l, gint usrgrp) {
   lives_widget_group_t *group;
 
   for (i=0;i<g_slist_length (u2l);i++) {
-    group=g_slist_nth_data (u2l,i);
+    group=(lives_widget_group_t *)g_slist_nth_data (u2l,i);
     if (group->usr_number==usrgrp) return group;
   }
   return NULL;
@@ -1802,7 +1800,7 @@ after_boolean_param_toggled        (GtkToggleButton *togglebutton,
       weed_free(valis);
 
       if (param->reinit||(param->copy_to!=-1&&rfx->params[param->copy_to].reinit)) {
-	weed_reinit_effect(rfx->source,FALSE);
+	weed_reinit_effect((weed_plant_t *)rfx->source,FALSE);
       }
       disp_string=get_weed_display_string(inst,param_number);
       if (disp_string!=NULL) {
@@ -1924,7 +1922,7 @@ after_param_value_changed           (GtkSpinButton   *spinbutton,
       }
 
       if (param->reinit||(param->copy_to!=-1&&rfx->params[param->copy_to].reinit)) {
-	weed_reinit_effect(rfx->source,FALSE);
+	weed_reinit_effect((weed_plant_t *)rfx->source,FALSE);
       }
       disp_string=get_weed_display_string(inst,param_number);
       if (disp_string!=NULL) {
@@ -2087,7 +2085,7 @@ after_param_red_changed           (GtkSpinButton   *spinbutton,
   if (rfx->status==RFX_STATUS_WEED&&mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&
       (prefs->rec_opts&REC_EFFECTS)) {
     // if we are recording, add this change to our event_list
-    rec_param_change(rfx->source,param_number);
+    rec_param_change((weed_plant_t *)rfx->source,param_number);
   }
 
   get_colRGB24_param(param->value,&old_value);
@@ -2118,7 +2116,7 @@ after_param_red_changed           (GtkSpinButton   *spinbutton,
     }
 
     if (param->reinit||(param->copy_to!=-1&&rfx->params[param->copy_to].reinit)) {
-      weed_reinit_effect(rfx->source,FALSE);
+      weed_reinit_effect((weed_plant_t *)rfx->source,FALSE);
     }
   }
   if (new_red!=old_value.red&&param->onchange) {
@@ -2151,7 +2149,7 @@ after_param_green_changed           (GtkSpinButton   *spinbutton,
   if (rfx->status==RFX_STATUS_WEED&&mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&
       (prefs->rec_opts&REC_EFFECTS)) {
     // if we are recording, add this change to our event_list
-    rec_param_change(rfx->source,param_number);
+    rec_param_change((weed_plant_t *)rfx->source,param_number);
   }
 
   get_colRGB24_param(param->value,&old_value);
@@ -2181,7 +2179,7 @@ after_param_green_changed           (GtkSpinButton   *spinbutton,
     }
 
     if (param->reinit||(param->copy_to!=-1&&rfx->params[param->copy_to].reinit)) {
-      weed_reinit_effect(rfx->source,FALSE);
+      weed_reinit_effect((weed_plant_t *)rfx->source,FALSE);
     }
   }
   if (new_green!=old_value.green&&param->onchange) {
@@ -2213,7 +2211,7 @@ after_param_blue_changed           (GtkSpinButton   *spinbutton,
   if (rfx->status==RFX_STATUS_WEED&&mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&
       (prefs->rec_opts&REC_EFFECTS)) {
     // if we are recording, add this change to our event_list
-    rec_param_change(rfx->source,param_number);
+    rec_param_change((weed_plant_t *)rfx->source,param_number);
   }
 
   get_colRGB24_param(param->value,&old_value);
@@ -2244,7 +2242,7 @@ after_param_blue_changed           (GtkSpinButton   *spinbutton,
     }
 
     if (param->reinit||(param->copy_to!=-1&&rfx->params[param->copy_to].reinit)) {
-      weed_reinit_effect(rfx->source,FALSE);
+      weed_reinit_effect((weed_plant_t *)rfx->source,FALSE);
     }
   }
   if (new_blue!=old_value.blue&&param->onchange) {
@@ -2275,7 +2273,7 @@ after_param_alpha_changed           (GtkSpinButton   *spinbutton,
   if (rfx->status==RFX_STATUS_WEED&&mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&
       (prefs->rec_opts&REC_EFFECTS)) {
     // if we are recording, add this change to our event_list
-    rec_param_change(rfx->source,param_number);
+    rec_param_change((weed_plant_t *)rfx->source,param_number);
   }
 
   get_colRGBA32_param(param->value,&old_value);
@@ -2288,7 +2286,7 @@ after_param_alpha_changed           (GtkSpinButton   *spinbutton,
   if (rfx->status==RFX_STATUS_WEED&&mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&
       (prefs->rec_opts&REC_EFFECTS)) {
     // if we are recording, add this change to our event_list
-    rec_param_change(rfx->source,param_number);
+    rec_param_change((weed_plant_t *)rfx->source,param_number);
   }
 
 
@@ -2325,7 +2323,7 @@ gboolean after_param_text_focus_changed (GtkWidget *hbox, GtkWidget *child, live
 
   if (hbox!=NULL) {
     if (mainw->textwidget_focus!=NULL) {
-      textwidget=g_object_get_data (G_OBJECT (mainw->textwidget_focus),"textwidget");
+      textwidget=(GtkWidget *)g_object_get_data (G_OBJECT (mainw->textwidget_focus),"textwidget");
       after_param_text_changed(textwidget,rfx);
     }
     mainw->textwidget_focus=hbox;
@@ -2333,7 +2331,7 @@ gboolean after_param_text_focus_changed (GtkWidget *hbox, GtkWidget *child, live
   }
 
   // for non-realtime, function is only called when focus leaves the textwidget
-  textwidget=g_object_get_data (G_OBJECT (mainw->textwidget_focus),"textwidget");
+  textwidget=(GtkWidget *)g_object_get_data (G_OBJECT (mainw->textwidget_focus),"textwidget");
   after_param_text_changed(textwidget,rfx);
   return FALSE;
 }
@@ -2342,7 +2340,7 @@ void
 after_param_text_changed (GtkWidget *textwidget, lives_rfx_t *rfx) {
   gint param_number=GPOINTER_TO_INT (g_object_get_data (G_OBJECT (textwidget),"param_number"));
   lives_param_t *param=&rfx->params[param_number];
-  gchar *old_text=param->value;
+  gchar *old_text=(gchar *)param->value;
 
   if (mainw->block_param_updates) return; // updates are blocked when we update visually
 
@@ -2392,13 +2390,13 @@ after_param_text_changed (GtkWidget *textwidget, lives_rfx_t *rfx) {
       }
 
       if (param->reinit||(param->copy_to!=-1&&rfx->params[param->copy_to].reinit)) {
-	weed_reinit_effect(rfx->source,FALSE);
+	weed_reinit_effect((weed_plant_t *)rfx->source,FALSE);
       }
       if (disp_string!=NULL) {
 	gulong blockfunc=(gulong)g_object_get_data(G_OBJECT(textwidget),"blockfunc");
 	g_signal_handler_block(textwidget,blockfunc);
 	if ((gint)param->max>RFX_TEXT_MAGIC||param->max==0.) {
-	  gtk_text_buffer_set_text (GTK_TEXT_BUFFER (textwidget), param->value, -1);
+	  gtk_text_buffer_set_text (GTK_TEXT_BUFFER (textwidget), (gchar *)param->value, -1);
 	}
 	else {
 	  gtk_entry_set_text(GTK_ENTRY(textwidget),disp_string);
@@ -2410,7 +2408,7 @@ after_param_text_changed (GtkWidget *textwidget, lives_rfx_t *rfx) {
     }
   }
   
-  if (strcmp (old_text,param->value)&&param->onchange) {
+  if (strcmp (old_text,(gchar *)param->value)&&param->onchange) {
     param->change_blocked=TRUE;
     do_onchange (G_OBJECT (textwidget), rfx);
     while (g_main_context_iteration(NULL,FALSE));
@@ -2470,7 +2468,7 @@ after_string_list_changed (GtkEntry *entry, lives_rfx_t *rfx) {
       weed_free(valis);
       
       if (param->reinit||(param->copy_to!=-1&&rfx->params[param->copy_to].reinit)) {
-	weed_reinit_effect(rfx->source,FALSE);
+	weed_reinit_effect((weed_plant_t *)rfx->source,FALSE);
       }
 
       if (disp_string!=NULL) {
@@ -2519,7 +2517,7 @@ gchar **param_marshall_to_argv (lives_rfx_t *rfx) {
 
     case LIVES_PARAM_STRING:
       // escape strings
-      argv[i]=g_strdup_printf ("%s",(tmp=U82L (rfx->params[i].value)));
+      argv[i]=g_strdup_printf ("%s",(tmp=U82L ((gchar *)rfx->params[i].value)));
       g_free(tmp);
       break;
 
@@ -2579,7 +2577,7 @@ gchar *param_marshall (lives_rfx_t *rfx, gboolean with_min_max) {
 
     case LIVES_PARAM_STRING:
       // we need to doubly escape strings 
-      mysubst=subst(rfx->params[i].value,"\\","\\\\\\\\");
+      mysubst=subst((gchar *)rfx->params[i].value,"\\","\\\\\\\\");
       mysubst2=subst(mysubst,"\"","\\\\\\\"");
       g_free(mysubst);
       mysubst=subst(mysubst2,"`","\\`");
@@ -2681,7 +2679,7 @@ gchar *reconstruct_string (GList *plist, gint start, gint *offs) {
 
   gchar *tmp;
 
-  word=L2U8 (g_list_nth_data (plist,start));
+  word=L2U8 ((gchar *)g_list_nth_data (plist,start));
 
   if (word==NULL||!strlen (word)||word[0]!='\"') {
     if (word!=NULL) g_free (word);
@@ -2708,7 +2706,7 @@ gchar *reconstruct_string (GList *plist, gint start, gint *offs) {
 
     if (lastword) break;
 
-    if (i<g_list_length (plist)-1) word=L2U8 (g_list_nth_data (plist,i+1));
+    if (i<g_list_length (plist)-1) word=L2U8 ((gchar *)g_list_nth_data (plist,i+1));
   }
 
   set_int_param (offs,i-start+1);
@@ -2783,7 +2781,7 @@ gint set_param_from_list(GList *plist, lives_param_t *param, gint pnum, gboolean
       pnum++;
       break;
     }
-    set_bool_param(param->value,(atoi (g_list_nth_data (plist,pnum++))));
+    set_bool_param(param->value,(atoi ((gchar *)g_list_nth_data (plist,pnum++))));
     if (upd) {
       if (param->widgets[0]&&GTK_IS_TOGGLE_BUTTON (param->widgets[0])) {
 	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (param->widgets[0]),get_bool_param(param->value));
@@ -2797,12 +2795,12 @@ gint set_param_from_list(GList *plist, lives_param_t *param, gint pnum, gboolean
       break;
     }
     if (param->dp) {
-      gdouble double_val=g_strtod (g_list_nth_data (plist,pnum++),NULL);
+      gdouble double_val=g_strtod ((gchar *)g_list_nth_data (plist,pnum++),NULL);
       if (with_min_max) {
 	if (ABS(pnum)>maxlen) return 1;
-	param->min=g_strtod (g_list_nth_data (plist,pnum++),NULL);
+	param->min=g_strtod ((gchar *)g_list_nth_data (plist,pnum++),NULL);
 	if (ABS(pnum)>maxlen) return 2;
-	param->max=g_strtod (g_list_nth_data (plist,pnum++),NULL);
+	param->max=g_strtod ((gchar *)g_list_nth_data (plist,pnum++),NULL);
 	if (double_val<param->min) double_val=param->min;
 	if (double_val>param->max) double_val=param->max;
       }
@@ -2820,13 +2818,13 @@ gint set_param_from_list(GList *plist, lives_param_t *param, gint pnum, gboolean
       }
     }
     else {
-      gint int_value=atoi (g_list_nth_data (plist,pnum++));
+      gint int_value=atoi ((gchar *)g_list_nth_data (plist,pnum++));
       if (with_min_max) {
 	gint int_min,int_max;
 	if (ABS(pnum)>maxlen) return 1;
-	int_min=atoi (g_list_nth_data (plist,pnum++));
+	int_min=atoi ((gchar *)g_list_nth_data (plist,pnum++));
 	if (ABS(pnum)>maxlen) return 2;
-	int_max=atoi (g_list_nth_data (plist,pnum++));
+	int_max=atoi ((gchar *)g_list_nth_data (plist,pnum++));
 	if (int_value<int_min) int_value=int_min;
 	if (int_value>int_max) int_value=int_max;
 	param->min=(gdouble)int_min;
@@ -2848,11 +2846,11 @@ gint set_param_from_list(GList *plist, lives_param_t *param, gint pnum, gboolean
     }
     break;
   case LIVES_PARAM_COLRGB24:
-    red=atoi (g_list_nth_data (plist,pnum++)); // red
+    red=atoi ((gchar *)g_list_nth_data (plist,pnum++)); // red
     if (ABS(pnum)>maxlen) return 1;
-    green=atoi (g_list_nth_data (plist,pnum++)); // green
+    green=atoi ((gchar *)g_list_nth_data (plist,pnum++)); // green
     if (ABS(pnum)>maxlen) return 2;
-    blue=atoi (g_list_nth_data (plist,pnum++)); // blue
+    blue=atoi ((gchar *)g_list_nth_data (plist,pnum++)); // blue
     if (param->change_blocked) break;
     set_colRGB24_param(param->value,red,green,blue);
 
@@ -2874,10 +2872,10 @@ gint set_param_from_list(GList *plist, lives_param_t *param, gint pnum, gboolean
       if (param->widgets[0]!=NULL) {
 	if ((gint)param->max>RFX_TEXT_MAGIC||param->max==0.) {
 	  GtkTextBuffer *textbuffer=GTK_TEXT_BUFFER (g_object_get_data(G_OBJECT(param->widgets[0]),"textbuffer"));
-	  gtk_text_buffer_set_text (textbuffer, param->value, -1);
+	  gtk_text_buffer_set_text (textbuffer, (gchar *)param->value, -1);
 	}
 	else {
-	  gtk_entry_set_text (GTK_ENTRY (param->widgets[0]),param->value);
+	  gtk_entry_set_text (GTK_ENTRY (param->widgets[0]),(gchar *)param->value);
 	}
       }
     }
@@ -2885,11 +2883,11 @@ gint set_param_from_list(GList *plist, lives_param_t *param, gint pnum, gboolean
     break;
   case LIVES_PARAM_STRING_LIST:
     {
-      gint int_value=atoi (g_list_nth_data (plist,pnum++));
+      gint int_value=atoi ((gchar *)g_list_nth_data (plist,pnum++));
       if (param->change_blocked) break;
       set_int_param(param->value,int_value);
       if (upd&&param->widgets[0]!=NULL&&GTK_IS_COMBO(param->widgets[0])&&int_value<g_list_length(param->list))
-	gtk_entry_set_text(GTK_ENTRY(GTK_COMBO(param->widgets[0])->entry),g_list_nth_data(param->list,int_value));
+	gtk_entry_set_text(GTK_ENTRY(GTK_COMBO(param->widgets[0])->entry),(gchar *)g_list_nth_data(param->list,int_value));
       break;
     }
   default:
@@ -2994,7 +2992,7 @@ on_pwcolsel (GtkButton *button, lives_rfx_t *rfx)
 void update_visual_params(lives_rfx_t *rfx, gboolean update_hidden) {
   // update parameters visually from an rfx object
   int i,j,error;
-  weed_plant_t *inst=rfx->source;
+  weed_plant_t *inst=(weed_plant_t *)rfx->source;
   weed_plant_t **in_params,*in_param;
   int num_params=0;
   weed_plant_t *paramtmpl;

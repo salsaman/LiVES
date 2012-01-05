@@ -441,7 +441,7 @@ process * create_processing (const gchar *text) {
   GTK_WIDGET_SET_FLAGS (procw->cancel_button, GTK_CAN_DEFAULT);
 
   gtk_widget_add_accelerator (procw->cancel_button, "activate", mainw->accel_group,
-                              GDK_Escape, 0, 0);
+                              GDK_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
 
   g_signal_connect (GTK_OBJECT (procw->stop_button), "clicked",
 		    G_CALLBACK (on_stop_clicked),
@@ -784,7 +784,7 @@ create_info_window (gint audio_channels, gboolean is_mt) {
   gtk_widget_grab_default (button8);
 
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_bg(button8, GTK_STATE_SELECTED|GTK_STATE_ACTIVE, &palette->white);
+    gtk_widget_modify_bg(button8, (GtkStateType)(GTK_STATE_SELECTED|GTK_STATE_ACTIVE), &palette->white);
   }
 
   g_signal_connect (GTK_OBJECT (button8), "clicked",
@@ -799,7 +799,7 @@ create_info_window (gint audio_channels, gboolean is_mt) {
   gtk_window_add_accel_group (GTK_WINDOW (filew->info_window), accel_group);
 
   gtk_widget_add_accelerator (button8, "activate", accel_group,
-                              GDK_Escape, 0, 0);
+                              GDK_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
 
 
   return filew;
@@ -1093,7 +1093,7 @@ text_window *create_text_window (const gchar *title, const gchar *text, GtkTextB
 
   if (text!=NULL) mytext=g_strdup(text);
 
-  textwindow=g_malloc(sizeof(text_window));
+  textwindow=(text_window *)g_malloc(sizeof(text_window));
 
   textwindow->dialog = gtk_dialog_new ();
   gtk_window_set_title (GTK_WINDOW (textwindow->dialog), (tmp=g_strconcat ("LiVES: - ",mytitle,NULL)));
@@ -1530,7 +1530,7 @@ create_insert_dialog (void)
                       NULL);
 
   gtk_widget_add_accelerator (cancelbutton1, "activate", accel_group,
-                              GDK_Escape, 0, 0);
+                              GDK_Escape,  (GdkModifierType)0, (GtkAccelFlags)0);
 
 
   return insertw;
@@ -1904,7 +1904,7 @@ _entryw* create_location_dialog (int type) {
                       NULL);
 
   gtk_widget_add_accelerator (cancelbutton, "activate", accel_group,
-                              GDK_Escape, 0, 0);
+                              GDK_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
 
   return locw;
 }
@@ -2165,7 +2165,7 @@ _entryw* create_rename_dialog (gint type) {
                       NULL);
 
   gtk_widget_add_accelerator (cancelbutton, "activate", accel_group,
-                              GDK_Escape, 0, 0);
+                              GDK_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
 
 
   return renamew;
@@ -2173,7 +2173,7 @@ _entryw* create_rename_dialog (gint type) {
 
 
 void on_liveinp_advanced_clicked (GtkButton *button, gpointer user_data) {
-  tvcardw_t *tvcardw=(tvcardw_t *)(user_data);
+  lives_tvcardw_t *tvcardw=(lives_tvcardw_t *)(user_data);
 
   tvcardw->use_advanced=!tvcardw->use_advanced;
 
@@ -2193,7 +2193,7 @@ void on_liveinp_advanced_clicked (GtkButton *button, gpointer user_data) {
 
 
 static void rb_tvcarddef_toggled(GtkToggleButton *tbut, gpointer user_data) {
-  tvcardw_t *tvcardw=(tvcardw_t *)(user_data);
+  lives_tvcardw_t *tvcardw=(lives_tvcardw_t *)(user_data);
 
   if (!gtk_toggle_button_get_active(tbut)) {
     gtk_widget_set_sensitive(tvcardw->spinbuttonw,TRUE);
@@ -2301,7 +2301,7 @@ GtkWidget *create_combo_dialog (gint type, gpointer user_data) {
   GTK_WIDGET_SET_FLAGS (cancelbutton, GTK_CAN_DEFAULT);
 
   gtk_widget_add_accelerator (cancelbutton, "activate", accel_group,
-                              GDK_Escape, 0, 0);
+                              GDK_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
 
   okbutton = gtk_button_new_from_stock ("gtk-ok");
   gtk_widget_show (okbutton);
@@ -2510,24 +2510,24 @@ create_cdtrack_dialog (gint type, gpointer user_data)
     GList *dlist=NULL;
     GList *olist=NULL;
 
-    tvcardw_t *tvcardw=(tvcardw_t *)g_malloc(sizeof(tvcardw_t));
+    lives_tvcardw_t *tvcardw=(lives_tvcardw_t *)g_malloc(sizeof(lives_tvcardw_t));
     tvcardw->use_advanced=FALSE;
 
-    dlist=g_list_append(dlist,"autodetect");
-    dlist=g_list_append(dlist,"v4l2");
-    dlist=g_list_append(dlist,"v4l");
-    dlist=g_list_append(dlist,"bsdbt848");
-    dlist=g_list_append(dlist,"dummy");
+    dlist=g_list_append(dlist,(gpointer)"autodetect");
+    dlist=g_list_append(dlist,(gpointer)"v4l2");
+    dlist=g_list_append(dlist,(gpointer)"v4l");
+    dlist=g_list_append(dlist,(gpointer)"bsdbt848");
+    dlist=g_list_append(dlist,(gpointer)"dummy");
 
-    olist=g_list_append(olist,"autodetect");
-    olist=g_list_append(olist,"yv12");
-    olist=g_list_append(olist,"rgb32");
-    olist=g_list_append(olist,"rgb24");
-    olist=g_list_append(olist,"rgb16");
-    olist=g_list_append(olist,"rgb15");
-    olist=g_list_append(olist,"uyvy");
-    olist=g_list_append(olist,"yuy2");
-    olist=g_list_append(olist,"i420");
+    olist=g_list_append(olist,(gpointer)"autodetect");
+    olist=g_list_append(olist,(gpointer)"yv12");
+    olist=g_list_append(olist,(gpointer)"rgb32");
+    olist=g_list_append(olist,(gpointer)"rgb24");
+    olist=g_list_append(olist,(gpointer)"rgb16");
+    olist=g_list_append(olist,(gpointer)"rgb15");
+    olist=g_list_append(olist,(gpointer)"uyvy");
+    olist=g_list_append(olist,(gpointer)"yuy2");
+    olist=g_list_append(olist,(gpointer)"i420");
 
 
     gtk_box_set_spacing(GTK_BOX(dialog_vbox),20);
@@ -2736,7 +2736,7 @@ create_cdtrack_dialog (gint type, gpointer user_data)
   GTK_WIDGET_SET_FLAGS (cancelbutton, GTK_CAN_DEFAULT);
 
   gtk_widget_add_accelerator (cancelbutton, "activate", accel_group,
-                              GDK_Escape, 0, 0);
+                              GDK_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
 
   okbutton = gtk_button_new_from_stock ("gtk-ok");
   gtk_widget_show (okbutton);
@@ -3385,7 +3385,7 @@ gchar *choose_file(gchar *dir, gchar *fname, gchar **filt, GtkFileChooserAction 
   GtkFileFilter *filter;
   gchar *filename;
   int i;
-  GtkResponseType response;
+  gint response;
   gchar *mytitle;
   gchar *tmp;
 
@@ -3426,7 +3426,7 @@ gchar *choose_file(gchar *dir, gchar *fname, gchar **filt, GtkFileChooserAction 
     gtk_widget_modify_bg(chooser, GTK_STATE_NORMAL, &palette->normal_back);
     children=gtk_container_get_children(GTK_CONTAINER(chooser));
     while (children!=NULL) {
-      GtkWidget *child=children->data;
+      GtkWidget *child=(GtkWidget *)children->data;
       gtk_widget_modify_fg(child, GTK_STATE_NORMAL, &palette->normal_fore);
       children=children->next;
     }
@@ -3618,7 +3618,7 @@ _entryw* create_cds_dialog (gint type) {
   gtk_widget_show (cancelbutton);
   gtk_dialog_add_action_widget (GTK_DIALOG (cdsw->dialog), cancelbutton, 0);
   gtk_widget_add_accelerator (cancelbutton, "activate", accel_group,
-                              GDK_Escape, 0, 0);
+                              GDK_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
 
   discardbutton = gtk_button_new_from_stock ("gtk-delete");
   gtk_widget_show (discardbutton);

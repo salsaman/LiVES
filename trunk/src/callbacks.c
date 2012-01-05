@@ -1111,7 +1111,7 @@ on_import_proj_activate                      (GtkMenuItem     *menuitem,
   gchar *info_file;
   gchar *new_set;
   int info_fd;
-  size_t bytes;
+  ssize_t bytes;
   gchar *set_dir;
   gchar *msg;
 

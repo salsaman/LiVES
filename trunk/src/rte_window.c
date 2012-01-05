@@ -1,6 +1,6 @@
 // rte_window.c
 // LiVES (lives-exe)
-// (c) G. Finch 2005 - 2010
+// (c) G. Finch 2005 - 2012
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -9,9 +9,9 @@
 #include <sys/stat.h>
 
 #ifdef HAVE_SYSTEM_WEED
-#include "weed/weed.h"
-#include "weed/weed-host.h"
-#include "weed/weed-effects.h"
+#include <weed/weed.h>
+#include <weed/weed-host.h>
+#include <weed/weed-effects.h>
 #else
 #include "../libweed/weed.h"
 #include "../libweed/weed-host.h"
@@ -235,7 +235,7 @@ gboolean on_save_keymap_clicked (GtkButton *button, gpointer user_data) {
       }
       else {
 	for (i=0;i<g_list_length(list);i++) {
-	  lives_fputs(g_list_nth_data(list,i),kfile);
+	  lives_fputs((gchar *)g_list_nth_data(list,i),kfile);
 	}
       }
       
@@ -388,7 +388,7 @@ void load_rte_defs (void) {
 	buf=g_malloc(strlen(msg));
 	bytes=read(fd,buf,strlen(msg));
       
-	if (bytes==strlen(msg)&&!strncmp(buf,msg,strlen(msg))) {
+	if (bytes==strlen(msg)&&!strncmp((gchar *)buf,msg,strlen(msg))) {
 	  if (read_filter_defaults(fd)) {
 	    d_print_done();
 	  }
@@ -433,7 +433,7 @@ void load_rte_defs (void) {
 	msg=g_strdup("LiVES generator default sizes file version 2\n");
 	buf=g_malloc(strlen(msg));
 	bytes=read(fd,buf,strlen(msg));
-	if (bytes==strlen(msg)&&!strncmp(buf,msg,strlen(msg))) {
+	if (bytes==strlen(msg)&&!strncmp((gchar *)buf,msg,strlen(msg))) {
 	  if (read_generator_sizes(fd)) {
 	    d_print_done();
 	  }
@@ -480,7 +480,7 @@ static void check_clear_all_button (void) {
 static gboolean read_perkey_defaults(int kfd, int key, int mode, int version) {
   gboolean ret=TRUE;
   int nparams;
-  size_t bytes=lives_read_le(kfd,&nparams,4,TRUE);
+  ssize_t bytes=lives_read_le(kfd,&nparams,4,TRUE);
 
   if (nparams>65536) {
     g_printerr("Too many params, file is probably broken.\n");
@@ -506,7 +506,8 @@ gboolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
 
   GList *list=NULL,*new_list=NULL;
 
-  size_t linelen,bytes;
+  size_t linelen;
+  ssize_t bytes;
 
   gchar buff[65536];
   gchar *msg,*tmp;
@@ -607,9 +608,9 @@ gboolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
     }
     fclose (kfile);
 
-    if (!strcmp(g_list_nth_data(list,0),"LiVES keymap file version 2")||
-	!strcmp(g_list_nth_data(list,0),"LiVES keymap file version 1")) update=1;
-    if (!strcmp(g_list_nth_data(list,0),"LiVES keymap file version 3")) update=2;
+    if (!strcmp((gchar *)g_list_nth_data(list,0),"LiVES keymap file version 2")||
+	!strcmp((gchar *)g_list_nth_data(list,0),"LiVES keymap file version 1")) update=1;
+    if (!strcmp((gchar *)g_list_nth_data(list,0),"LiVES keymap file version 3")) update=2;
   }
   else {
     // newer style
@@ -689,7 +690,7 @@ gboolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
 	break;
       }
 
-      hashname=g_malloc(hlen+1);
+      hashname=(gchar *)g_malloc(hlen+1);
 
       bytes=read(kfd,hashname,hlen);
       if (bytes<hlen) {
@@ -1031,7 +1032,7 @@ void on_params_clicked (GtkButton *button, gpointer user_data) {
   else weed_instance_ref(inst);
 
   if (fx_dialog[1]!=NULL) {
-    rfx=g_object_get_data (G_OBJECT (fx_dialog[1]),"rfx");
+    rfx=(lives_rfx_t *)g_object_get_data (G_OBJECT (fx_dialog[1]),"rfx");
     gtk_widget_destroy(fx_dialog[1]);
     on_paramwindow_cancel_clicked2(NULL,rfx);
   }
@@ -1043,7 +1044,7 @@ void on_params_clicked (GtkButton *button, gpointer user_data) {
   on_render_fx_pre_activate(NULL,rfx);
 
   // record the key so we know whose parameters to record later
-  weed_set_int_value(rfx->source,"host_hotkey",key);
+  weed_set_int_value((weed_plant_t *)rfx->source,"host_hotkey",key);
 
   g_object_set_data (G_OBJECT (fx_dialog[1]),"key",GINT_TO_POINTER (key));
   g_object_set_data (G_OBJECT (fx_dialog[1]),"mode",GINT_TO_POINTER (mode));
@@ -1109,8 +1110,8 @@ void fx_changed (GtkItem *item, gpointer user_data) {
   int modes=rte_getmodespk();
   gint key=(gint)(key_mode/modes);
   gint mode=key_mode-key*modes;
-  gchar *hashname1=g_strdup(g_object_get_data(G_OBJECT(item),"hashname"));
-  gchar *hashname2=g_strdup(g_object_get_data(G_OBJECT(combo_entries[key_mode]),"hashname"));
+  gchar *hashname1=g_strdup((gchar *)g_object_get_data(G_OBJECT(item),"hashname"));
+  gchar *hashname2=g_strdup((gchar *)g_object_get_data(G_OBJECT(combo_entries[key_mode]),"hashname"));
   gint error;
   gchar *tmp;
 
@@ -1385,14 +1386,14 @@ GtkWidget * create_rte_window (void) {
       gtk_box_pack_start (GTK_BOX (hbox), combo, TRUE, TRUE, 0);
 
       combo_entries[idx] = GTK_COMBO (combo)->entry;
-      g_object_set_data (G_OBJECT(combo_entries[idx]),"hashname","");
+      g_object_set_data (G_OBJECT(combo_entries[idx]), "hashname", (gpointer)"");
 
       // fill names of our effects
       fx_idx=0;
       list=name_type_list;
       
       while (list!=NULL) {
-	weed_plant_t *filter=get_weed_filter(weed_get_idx_for_hashname(g_list_nth_data(hash_list,fx_idx),TRUE));
+	weed_plant_t *filter=get_weed_filter(weed_get_idx_for_hashname((gchar *)g_list_nth_data(hash_list,fx_idx),TRUE));
 	int filter_flags=weed_get_int_value(filter,"flags",&error);
 	if ((weed_plant_has_leaf(filter,"plugin_unstable")&&weed_get_boolean_value(filter,"plugin_unstable",&error)==
 	     WEED_TRUE&&!prefs->unstable_fx)||((enabled_in_channels(filter,FALSE)>1&&
@@ -1408,7 +1409,7 @@ GtkWidget * create_rte_window (void) {
 	gtk_widget_show(item);
 	gtk_container_add (GTK_CONTAINER (GTK_COMBO(combo)->list), item);
 	g_object_set_data (G_OBJECT(item),"hashname",g_list_nth_data(hash_list,fx_idx));
-	gtk_combo_set_item_string(GTK_COMBO(combo),GTK_ITEM(item),g_list_nth_data(name_list,fx_idx));
+	gtk_combo_set_item_string(GTK_COMBO(combo),GTK_ITEM(item),(gchar *)g_list_nth_data(name_list,fx_idx));
 
 	if (fx_idx==rte_keymode_get_filter_idx(i+1,j)) {
 	  g_object_set_data (G_OBJECT(combo_entries[idx]),"hashname",g_list_nth_data(hash_list,fx_idx));
@@ -1494,7 +1495,8 @@ GtkWidget * create_rte_window (void) {
   gtk_window_add_accel_group (GTK_WINDOW (rte_window), rtew_accel_group);
 
   gtk_widget_add_accelerator (ok_button, "activate", rtew_accel_group,
-                              GDK_Escape, 0, 0);
+                              GDK_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
+
   g_signal_connect (GTK_OBJECT (rte_window), "delete_event",
 		    G_CALLBACK (on_rtew_ok_clicked),
 		    NULL);
@@ -1586,7 +1588,7 @@ void redraw_pwindow (gint key, gint mode) {
   lives_rfx_t *rfx;
 
   if (fx_dialog[1]!=NULL) {
-    rfx=g_object_get_data(G_OBJECT(fx_dialog[1]),"rfx");
+    rfx=(lives_rfx_t *)g_object_get_data(G_OBJECT(fx_dialog[1]),"rfx");
     if (!rfx->is_template) {
       keyw=GPOINTER_TO_INT (g_object_get_data (G_OBJECT (fx_dialog[1]),"key"));
       modew=GPOINTER_TO_INT (g_object_get_data (G_OBJECT (fx_dialog[1]),"mode"));
@@ -1596,7 +1598,7 @@ void redraw_pwindow (gint key, gint mode) {
       if (mainw->invis==NULL) mainw->invis=gtk_vbox_new(FALSE,0);
       child_list=gtk_container_get_children(GTK_CONTAINER(lives_dialog_get_content_area(GTK_DIALOG(fx_dialog[1]))));
       for (i=0;i<g_list_length(child_list);i++) {
-	GtkWidget *widget=g_list_nth_data(child_list,i);
+	GtkWidget *widget=(GtkWidget *)g_list_nth_data(child_list,i);
 	if (widget!=GTK_DIALOG (fx_dialog[1])->action_area) {
 	  // we have to do this, because using gtk_widget_destroy() here 
 	  // can causes a crash [bug in gtk+ ???]
@@ -1631,7 +1633,7 @@ void update_pwindow (gint key, gint i, GList *list) {
     modew=GPOINTER_TO_INT (g_object_get_data (G_OBJECT (fx_dialog[1]),"mode"));
     if (key==keyw) {
       if ((inst=rte_keymode_get_instance(key+1,modew))==NULL) return;
-      rfx=g_object_get_data(G_OBJECT(fx_dialog[1]),"rfx");
+      rfx=(lives_rfx_t *)g_object_get_data(G_OBJECT(fx_dialog[1]),"rfx");
       set_param_from_list(list,&rfx->params[i],0,TRUE,TRUE);
     }
   }
@@ -1643,7 +1645,7 @@ void rte_set_defs_activate (GtkMenuItem *menuitem, gpointer user_data) {
   lives_rfx_t *rfx;
 
   if (fx_dialog[1]!=NULL) {
-    rfx=g_object_get_data (G_OBJECT (fx_dialog[1]),"rfx");
+    rfx=(lives_rfx_t *)g_object_get_data (G_OBJECT (fx_dialog[1]),"rfx");
     gtk_widget_destroy(fx_dialog[1]);
     on_paramwindow_cancel_clicked2(NULL,rfx);
   }
@@ -1663,7 +1665,7 @@ void rte_set_key_defs (GtkButton *button, lives_rfx_t *rfx) {
   if (rfx->num_params>0) {
     key=GPOINTER_TO_INT (g_object_get_data (G_OBJECT (fx_dialog[1]),"key"));
     mode=GPOINTER_TO_INT (g_object_get_data (G_OBJECT (fx_dialog[1]),"mode"));
-    set_key_defaults(rfx->source,key,mode);
+    set_key_defaults((weed_plant_t *)rfx->source,key,mode);
   }
 }
 
@@ -1679,27 +1681,28 @@ void rte_set_defs_ok (GtkButton *button, lives_rfx_t *rfx) {
   if (mainw->textwidget_focus!=NULL) after_param_text_changed(mainw->textwidget_focus,rfx);
 
   if (rfx->num_params>0) {
-    filter=weed_get_plantptr_value(rfx->source,"filter_class",&error);
+    filter=weed_get_plantptr_value((weed_plant_t *)rfx->source,"filter_class",&error);
     ptmpls=weed_get_plantptr_array(filter,"in_parameter_templates",&error);
     for (i=0;i<rfx->num_params;i++) {
       switch (rfx->params[i].type) {
       case LIVES_PARAM_COLRGB24:
 	rgbp=(lives_colRGB24_t *)rfx->params[i].value;
-	if (rfx->params[i].copy_to!=-1) copy_param=weed_inst_in_param(rfx->source,rfx->params[i].copy_to,FALSE);
+	if (rfx->params[i].copy_to!=-1) copy_param=weed_inst_in_param((weed_plant_t *)rfx->source,
+								      rfx->params[i].copy_to,FALSE);
 	update_weed_color_value(ptmpls[i],i,copy_param,rgbp->red,rgbp->green,rgbp->blue,0);
 	break;
       case LIVES_PARAM_STRING:
-	weed_set_string_value(ptmpls[i],"host_default",rfx->params[i].value);
+	weed_set_string_value(ptmpls[i],"host_default",(gchar *)rfx->params[i].value);
 	break;
       case LIVES_PARAM_STRING_LIST:
-	weed_set_int_array(ptmpls[i],"host_default",1,rfx->params[i].value);
+	weed_set_int_array(ptmpls[i],"host_default",1,(int *)rfx->params[i].value);
 	break;
       case LIVES_PARAM_NUM:
-	if (rfx->params[i].dp>0) weed_set_double_array(ptmpls[i],"host_default",1,rfx->params[i].value);
-	else weed_set_int_array(ptmpls[i],"host_default",1,rfx->params[i].value);
+	if (rfx->params[i].dp>0) weed_set_double_array(ptmpls[i],"host_default",1,(double *)rfx->params[i].value);
+	else weed_set_int_array(ptmpls[i],"host_default",1,(int *)rfx->params[i].value);
 	break;
       case LIVES_PARAM_BOOL:
-	weed_set_boolean_array(ptmpls[i],"host_default",1,rfx->params[i].value);
+	weed_set_boolean_array(ptmpls[i],"host_default",1,(int *)rfx->params[i].value);
 	break;
       default:
 	break;

@@ -2461,7 +2461,8 @@ static void do_midi_version_error(const gchar *fname) {
 void on_midi_load_activate (GtkMenuItem *menuitem, gpointer user_data) {
   gchar *load_file=NULL;
   int fd;
-  size_t bytes,srchlen;
+  ssize_t bytes;
+  size_t srchlen;
   lives_omc_match_node_t *mnode;
   lives_omc_macro_t omacro;
   gchar tstring[512];

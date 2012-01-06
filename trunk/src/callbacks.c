@@ -167,6 +167,7 @@ void lives_exit (void) {
       g_free(msg);
     }
 
+
     for (i=0;i<=MAX_FILES;i++) {
       if (mainw->files[i]!=NULL) {
 	if ((!mainw->leave_files&&!prefs->crash_recovery&&strlen(mainw->set_name)==0)||
@@ -178,13 +179,13 @@ void lives_exit (void) {
 
 #ifdef HAVE_YUV4MPEG
 	  if (mainw->files[i]->clip_type==CLIP_TYPE_YUV4MPEG) {
-	    lives_yuv_stream_stop_read(mainw->files[i]->ext_src);
+	    lives_yuv_stream_stop_read((lives_yuv4m_t *)mainw->files[i]->ext_src);
 	    g_free (mainw->files[i]->ext_src);
 	  }
 #endif
 #ifdef HAVE_UNICAP
 	  if (mainw->files[i]->clip_type==CLIP_TYPE_VIDEODEV) {
-	    lives_vdev_free(mainw->files[i]->ext_src);
+	    lives_vdev_free((lives_vdev_t *)mainw->files[i]->ext_src);
 	    g_free (mainw->files[i]->ext_src);
 	  }
 #endif
@@ -214,7 +215,7 @@ void lives_exit (void) {
 
 	  if (mainw->files[i]->clip_type==CLIP_TYPE_FILE&&mainw->files[i]->ext_src!=NULL) {
 	    threaded_dialog_spin();
-	    close_decoder_plugin(mainw->files[i]->ext_src);
+	    close_decoder_plugin((lives_decoder_t *)mainw->files[i]->ext_src);
 	    mainw->files[i]->ext_src=NULL;
 	  }
 
@@ -261,7 +262,6 @@ void lives_exit (void) {
       threaded_dialog_spin();
     }
 
-
     for (i=1;i<=MAX_FILES;i++) {
       if (mainw->files[i]!=NULL) {
 	mainw->current_file=i;
@@ -278,18 +278,20 @@ void lives_exit (void) {
 
 	if (mainw->files[i]->clip_type==CLIP_TYPE_FILE&&mainw->files[i]->ext_src!=NULL) {
 	  // must do this before we move it
-	  close_decoder_plugin(mainw->files[i]->ext_src);
+	  close_decoder_plugin((lives_decoder_t *)mainw->files[i]->ext_src);
 	  mainw->files[i]->ext_src=NULL;
 	}
-
+	
 	if (mainw->files[i]->frame_index!=NULL) {
 	  g_free(mainw->files[i]->frame_index);
 	  mainw->files[i]->frame_index=NULL;
 	}
 
 	cfile->layout_map=NULL;
+
       }
     }
+
 
   
     if (mainw->only_close) {
@@ -351,7 +353,7 @@ void lives_exit (void) {
     mainw->current_layouts_map=NULL;
   }
 
-  if (capable->smog_version_correct) {
+  if (capable->smog_version_correct&&!mainw->startup_error) {
     if (capable->has_encoder_plugins) plugin_request("encoders",prefs->encoder.name,"finalise");
 
     weed_unload_all();
@@ -440,7 +442,7 @@ void on_fileread_clicked (GtkFileChooser *fch, gpointer user_data) {
 
   // force update to be recognized
   if (g_object_get_data(G_OBJECT(tentry),"rfx")!=NULL) 
-    after_param_text_changed(tentry,g_object_get_data(G_OBJECT(tentry),"rfx"));
+    after_param_text_changed(tentry,(lives_rfx_t *)g_object_get_data(G_OBJECT(tentry),"rfx"));
 
   g_free(tmp);
   g_free(text);
@@ -791,10 +793,21 @@ void on_utube_select (GtkButton *button, gpointer user_data) {
     return;
   }
   
+  cfile->nopreview=TRUE;
+  cfile->keep_without_preview=TRUE;
+  cfile->no_proc_sys_errors=TRUE;  ///< do not show processing error dialogs, we will show our own msg
   if (!do_progress_dialog(TRUE,TRUE,_("Downloading clip"))||mainw->error) {
     // user cancelled or error
-
-    if (current_file==-1) {
+    cfile->nopreview=FALSE;
+    cfile->no_proc_sys_errors=FALSE;
+    cfile->keep_without_preview=FALSE;
+    
+    if (mainw->cancelled==CANCEL_KEEP&&!mainw->error) {
+      mainw->cancelled=CANCEL_NONE;
+    }
+    else {
+      if (current_file==-1) {
+      // we made a temp file so close it
       com=g_strdup_printf("smogrify close \"%s\"",cfile->handle);
       lives_system(com,TRUE);
       g_free(com);
@@ -802,13 +815,13 @@ void on_utube_select (GtkButton *button, gpointer user_data) {
       cfile=NULL;
       mainw->current_file=-1;
     }
-
+      
     if (mainw->error) {
       d_print_failed();
       do_blocking_error_dialog(_("\nLiVES was unable to download the clip.\nPlease check the clip URL and make sure you have \nthe latest youtube-dl installed.\n"));
       mainw->error=FALSE;
     }
-
+    
     unlink(dfile);
 
     g_free(dirname);
@@ -819,7 +832,12 @@ void on_utube_select (GtkButton *button, gpointer user_data) {
     sensitize();
     mainw->no_switch_dprint=FALSE;
     return;
+    }
   }
+
+  cfile->nopreview=FALSE;
+  cfile->no_proc_sys_errors=FALSE;
+  cfile->keep_without_preview=FALSE;
 
   if (current_file==-1) {
     com=g_strdup_printf("smogrify close \"%s\"",cfile->handle);
@@ -1568,7 +1586,9 @@ on_quit_activate                      (GtkMenuItem     *menuitem,
     do_threaded_dialog(_("Deleting set"),FALSE);
   }
 
+  prefs->crash_recovery=FALSE;
   lives_exit();
+  prefs->crash_recovery=TRUE;
 
   if (strlen(mainw->set_name)>0) {
     msg=g_strdup_printf(_("Set %s was permanently deleted from the disk.\n"),mainw->set_name);
@@ -1748,7 +1768,7 @@ on_undo_activate                      (GtkMenuItem     *menuitem,
 
     if (mainw->com_failed) return;
     
-    mainw->cancelled=FALSE;
+    mainw->cancelled=CANCEL_NONE;
     mainw->error=FALSE;
     
     // show a progress dialog, not cancellable
@@ -1907,7 +1927,7 @@ on_undo_activate                      (GtkMenuItem     *menuitem,
     unlink(cfile->info_file);
     com=g_strdup_printf("smogrify undo_audio \"%s\"",cfile->handle);
     mainw->com_failed=FALSE;
-    mainw->cancelled=FALSE;
+    mainw->cancelled=CANCEL_NONE;
     mainw->error=FALSE;
     lives_system (com,FALSE);
     g_free (com);
@@ -1974,7 +1994,7 @@ on_undo_activate                      (GtkMenuItem     *menuitem,
 
     if (mainw->com_failed) return;
 
-    mainw->cancelled=FALSE;
+    mainw->cancelled=CANCEL_NONE;
     mainw->error=FALSE;
 
     if (!do_auto_dialog(_("Restoring audio..."),0)) {
@@ -4025,15 +4045,15 @@ on_encoder_entry_changed (GtkComboBox *combo, gpointer ptr) {
     g_snprintf(future_prefs->encoder.name,51,"%s",prefs->encoder.name);
     return;
   }
-  prefs->encoder.capabilities = atoi(g_list_nth_data(encoder_capabilities,0));
+  prefs->encoder.capabilities = atoi((gchar *)g_list_nth_data(encoder_capabilities,0));
   g_list_free_strings (encoder_capabilities);
   g_list_free (encoder_capabilities);
 
   // fill list with new formats
   if ((ofmt_all = plugin_request_by_line(PLUGIN_ENCODERS,future_prefs->encoder.name,"get_formats"))!=NULL) {
     for (i=0;i<g_list_length(ofmt_all);i++) {
-      if (get_token_count (g_list_nth_data (ofmt_all,i),'|')>2) {
-	array=g_strsplit (g_list_nth_data (ofmt_all,i),"|",-1);
+      if (get_token_count ((gchar *)g_list_nth_data (ofmt_all,i),'|')>2) {
+	array=g_strsplit ((gchar *)g_list_nth_data (ofmt_all,i),"|",-1);
 	ofmt=g_list_append(ofmt,g_strdup (array[1]));
 	g_strfreev (array);
       }
@@ -4060,7 +4080,7 @@ on_encoder_entry_changed (GtkComboBox *combo, gpointer ptr) {
     g_list_free(ofmt);
 
     // set default (first) output type
-    array=g_strsplit (g_list_nth_data (ofmt_all,0),"|",-1);
+    array=g_strsplit ((gchar *)g_list_nth_data (ofmt_all,0),"|",-1);
 
     if (rdet!=NULL) {
       set_combo_box_active_string(GTK_COMBO_BOX(rdet->ofmt_combo), array[1]);
@@ -4212,7 +4232,7 @@ gboolean prevclip_callback (GtkAccelGroup *group, GObject *obj, guint keyval, Gd
 	mainw->osc_block=TRUE;
 	if (rte_window!=NULL) rtew_set_keych(rte_bg_gen_key(),FALSE);
 	mainw->new_blend_file=i;
-	weed_generator_end (mainw->files[mainw->blend_file]->ext_src);
+	weed_generator_end ((weed_plant_t *)mainw->files[mainw->blend_file]->ext_src);
 	mainw->osc_block=FALSE;
       }
       mainw->blend_file=i;
@@ -4273,7 +4293,7 @@ gboolean nextclip_callback (GtkAccelGroup *group, GObject *obj, guint keyval, Gd
 	mainw->osc_block=TRUE;
 	if (rte_window!=NULL) rtew_set_keych(rte_bg_gen_key(),FALSE);
 	mainw->new_blend_file=i;
-	weed_generator_end (mainw->files[mainw->blend_file]->ext_src);
+	weed_generator_end ((weed_plant_t *)mainw->files[mainw->blend_file]->ext_src);
 	mainw->osc_block=FALSE;
       }
       mainw->blend_file=i;
@@ -4529,7 +4549,7 @@ on_save_set_activate            (GtkMenuItem     *menuitem,
 	    if (mainw->files[i]->clip_type==CLIP_TYPE_FILE&&mainw->files[i]->ext_src!=NULL) {
 	      // must do this before we move it
 	      // otherwise decoder plugin will be pointing at wrong file
-	      close_decoder_plugin(mainw->files[i]->ext_src);
+	      close_decoder_plugin((lives_decoder_t *)mainw->files[i]->ext_src);
 	      mainw->files[i]->ext_src=NULL;
 	    }
 	
@@ -4725,7 +4745,7 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
   gchar set_name[128];
   gboolean skip_threaded_dialog=(gboolean)GPOINTER_TO_INT(user_data);
   const lives_clip_data_t *cdata=NULL;
-  guint img_type;
+  lives_image_type_t img_type;
 
   threaded_dialog_spin();
 
@@ -4980,7 +5000,7 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
 	}
 
 	if (needs_update) {
-	  save_clip_value(mainw->current_file,CLIP_DETAILS_FILENAME,&cfile->file_name);
+	  save_clip_value(mainw->current_file,CLIP_DETAILS_FILENAME,cfile->file_name);
 	  if (mainw->com_failed||mainw->write_failed) do_header_write_error(mainw->current_file);
 	}
 
@@ -5890,7 +5910,7 @@ void drag_from_outside(GtkWidget *widget, GdkDragContext *dcon, gint x, gint y,
   array=g_strsplit(nfilelist,"\n",nfiles);
   g_free(nfilelist);
 
-  fnames=g_malloc((nfiles+1)*sizeof(char *));
+  fnames=(gchar **)g_malloc((nfiles+1)*sizeof(char *));
 
   for (i=0;i<nfiles;i++) {
     fnames[i]=array[i];
@@ -6114,7 +6134,7 @@ on_ok_button4_clicked                  (GtkButton       *button,
   if (!(do_progress_dialog(TRUE,TRUE,_ ("Opening audio")))) {
     gtk_widget_queue_draw(mainw->LiVES);
     while (g_main_context_iteration(NULL,FALSE));
-    mainw->cancelled=FALSE;
+    mainw->cancelled=CANCEL_NONE;
     mainw->error=FALSE;
     mainw->com_failed=FALSE;
     unlink (cfile->info_file);
@@ -6150,7 +6170,7 @@ on_ok_button4_clicked                  (GtkButton       *button,
   if (cfile->afilesize==0) {
     d_print_failed();
       
-    mainw->cancelled=FALSE;
+    mainw->cancelled=CANCEL_NONE;
     mainw->error=FALSE;
     unlink (cfile->info_file);
 
@@ -6184,7 +6204,7 @@ on_ok_button4_clicked                  (GtkButton       *button,
   g_free(mesg);
 
   mainw->com_failed=FALSE;
-  mainw->cancelled=FALSE;
+  mainw->cancelled=CANCEL_NONE;
   mainw->error=FALSE;
   unlink (cfile->info_file);
 
@@ -7821,7 +7841,7 @@ on_load_cdtrack_ok_clicked                (GtkButton     *button,
 
     if (!was_new) {
       mainw->com_failed=FALSE;
-      mainw->cancelled=FALSE;
+      mainw->cancelled=CANCEL_NONE;
       mainw->error=FALSE;
       unlink (cfile->info_file);
 
@@ -7864,7 +7884,7 @@ on_load_cdtrack_ok_clicked                (GtkButton     *button,
 
     if (!was_new) {
       com=g_strdup_printf("smogrify cancel_audio \"%s\"",cfile->handle);
-      mainw->cancelled=FALSE;
+      mainw->cancelled=CANCEL_NONE;
       mainw->error=FALSE;
       unlink (cfile->info_file);
       mainw->com_failed=FALSE;
@@ -7908,7 +7928,7 @@ on_load_cdtrack_ok_clicked                (GtkButton     *button,
     if (!was_new) {
       com=g_strdup_printf("smogrify cancel_audio \"%s\"",cfile->handle);
       mainw->com_failed=FALSE;
-      mainw->cancelled=FALSE;
+      mainw->cancelled=CANCEL_NONE;
       mainw->error=FALSE;
       unlink (cfile->info_file);
       lives_system(com,FALSE);
@@ -7932,7 +7952,7 @@ on_load_cdtrack_ok_clicked                (GtkButton     *button,
 
   cfile->opening=cfile->opening_audio=cfile->opening_only_audio=FALSE;
 
-  mainw->cancelled=FALSE;
+  mainw->cancelled=CANCEL_NONE;
   mainw->error=FALSE;
   mainw->com_failed=FALSE;
   unlink (cfile->info_file);
@@ -8246,14 +8266,13 @@ void on_toy_activate  (GtkMenuItem *menuitem, gpointer user_data) {
     gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mainw->toy_autolives),FALSE);
     g_signal_handler_unblock (mainw->toy_autolives, mainw->toy_func_autolives);
 
-    if (mainw->toy_alives_pid!=0) {
-      pid_t pgid=getpgid(mainw->toy_alives_pid);
-      lives_kill(-pgid,LIVES_SIGTERM);
+    if (mainw->toy_alives_pid>1) {
+      lives_killpg(mainw->toy_alives_pid,LIVES_SIGHUP);
     }
     
     // switch off rte so as not to cause alarm
     if (mainw->autolives_reset_fx) 
-      rte_on_off_callback(NULL,NULL,0,0,GINT_TO_POINTER(0));
+      rte_on_off_callback(NULL,NULL,0,(GdkModifierType)0,GINT_TO_POINTER(0));
     mainw->autolives_reset_fx=FALSE;
     break;
 
@@ -8282,7 +8301,7 @@ void on_toy_activate  (GtkMenuItem *menuitem, gpointer user_data) {
     break;
   }
 
-  mainw->toy_type=GPOINTER_TO_INT(user_data);
+  mainw->toy_type=(lives_toy_t)GPOINTER_TO_INT(user_data);
 
   switch (mainw->toy_type) {
   case LIVES_TOY_NONE:
@@ -8339,17 +8358,14 @@ void on_toy_activate  (GtkMenuItem *menuitem, gpointer user_data) {
       }
     }
 
-    if (mainw->rte==EFFECT_NONE)
+    // TODO *** store full fx state and restore it
+    if (mainw->rte==EFFECT_NONE) {
       mainw->autolives_reset_fx=TRUE;
-    
-    if (!(mainw->toy_alives_pid=fork())) {
-      // fork a process to run autolives
-      setsid(); // create new session id
-      com=g_strdup_printf("autolives.pl localhost %d %d >/dev/null 2>&1",prefs->osc_udp_port,prefs->osc_udp_port-1);
-      lives_system(com,TRUE);
-      g_free(com);
-      _exit(0);
     }
+
+    com=g_strdup_printf("autolives.pl localhost %d %d >/dev/null 2>&1",prefs->osc_udp_port,prefs->osc_udp_port-1);
+    mainw->toy_alives_pid=lives_fork(com);
+    g_free(com);
 
     break;
   case LIVES_TOY_MAD_FRAMES:
@@ -9075,7 +9091,7 @@ on_preview_clicked                     (GtkButton       *button,
     cfile->start=ostart;
     cfile->end=oend;
 
-    mainw->toy_type=toy_type;
+    mainw->toy_type=(lives_toy_t)toy_type;
     gtk_widget_set_sensitive(mainw->toys,TRUE);
     
     if (cfile->proc_ptr!=NULL) {
@@ -9100,7 +9116,8 @@ on_preview_clicked                     (GtkButton       *button,
 	  }}}
       if (mainw->play_window!=NULL) {
 	if (!cfile->opening_audio) {
-	  g_signal_handlers_block_matched(mainw->play_window,G_SIGNAL_MATCH_FUNC|G_SIGNAL_MATCH_UNBLOCKED,
+	  g_signal_handlers_block_matched(mainw->play_window,
+					  (GSignalMatchType)(G_SIGNAL_MATCH_FUNC|G_SIGNAL_MATCH_UNBLOCKED),
 					  0,0,0,(gpointer)expose_play_window,NULL);
 	  if (mainw->pw_exp_is_blocked) g_signal_handler_unblock(mainw->play_window,mainw->pw_exp_func);
 	  mainw->pw_exp_is_blocked=FALSE;
@@ -9186,12 +9203,12 @@ changed_fps_during_pb           (GtkSpinButton   *spinbutton,
 
   if (cfile->play_paused) {
     cfile->freeze_fps=new_fps;
-    freeze_callback(NULL,NULL,0,0,NULL);
+    freeze_callback(NULL,NULL,0,(GdkModifierType)0,NULL);
     return;
   }
 
   if (cfile->pb_fps==0.) {
-    freeze_callback(NULL,NULL,0,0,NULL);
+    freeze_callback(NULL,NULL,0,(GdkModifierType)0,NULL);
     return;
   }
 
@@ -9213,8 +9230,8 @@ on_mouse_scroll           (GtkWidget       *widget,
 	&&(mainw->play_window==NULL||!gtk_window_is_active(GTK_WINDOW(mainw->play_window)))))) return FALSE;
   
   if (mainw->multitrack!=NULL) {
-    if (event->direction==GDK_SCROLL_UP) mt_prevclip(NULL,NULL,0,0,user_data);
-    else if (event->direction==GDK_SCROLL_DOWN) mt_nextclip(NULL,NULL,0,0,user_data);
+    if (event->direction==GDK_SCROLL_UP) mt_prevclip(NULL,NULL,0,(GdkModifierType)0,user_data);
+    else if (event->direction==GDK_SCROLL_DOWN) mt_nextclip(NULL,NULL,0,(GdkModifierType)0,user_data);
     return FALSE;
   }
 
@@ -9224,8 +9241,8 @@ on_mouse_scroll           (GtkWidget       *widget,
   if (kstate==GDK_SHIFT_MASK) type=2; // bg
   else if (kstate==GDK_CONTROL_MASK) type=0; // fg or bg
 
-  if (event->direction==GDK_SCROLL_UP) prevclip_callback(NULL,NULL,0,0,GINT_TO_POINTER(type));
-  else if (event->direction==GDK_SCROLL_DOWN) nextclip_callback(NULL,NULL,0,0,GINT_TO_POINTER(type));
+  if (event->direction==GDK_SCROLL_UP) prevclip_callback(NULL,NULL,0,(GdkModifierType)0,GINT_TO_POINTER(type));
+  else if (event->direction==GDK_SCROLL_DOWN) nextclip_callback(NULL,NULL,0,(GdkModifierType)0,GINT_TO_POINTER(type));
   return FALSE;
 }
 
@@ -10078,8 +10095,8 @@ on_encoder_ofmt_changed (GtkComboBox *combo, gpointer user_data) {
     // get details for the current format
     counter = 0;
     for (i=0;i<g_list_length(ofmt_all);i++) {
-      if (get_token_count (g_list_nth_data (ofmt_all,i),'|')>2) {
-	array=g_strsplit (g_list_nth_data (ofmt_all,i),"|",-1);
+      if (get_token_count ((gchar *)g_list_nth_data (ofmt_all,i),'|')>2) {
+	array=g_strsplit ((gchar *)g_list_nth_data (ofmt_all,i),"|",-1);
 
 	if (!strcmp(array[1],new_fmt)) {
 	  if (prefsw!=NULL) {
@@ -10324,7 +10341,7 @@ on_ok_append_audio_clicked                      (GtkButton *button,
   if (!do_progress_dialog (TRUE, TRUE,_ ("Appending audio"))) {
     gtk_widget_queue_draw(mainw->LiVES);
     while (g_main_context_iteration(NULL,FALSE));
-    mainw->cancelled=FALSE;
+    mainw->cancelled=CANCEL_NONE;
     mainw->error=FALSE;
     mainw->com_failed=FALSE;
     unlink (cfile->info_file);
@@ -10350,7 +10367,7 @@ on_ok_append_audio_clicked                      (GtkButton *button,
     while (g_main_context_iteration(NULL,FALSE));
     com=g_strdup_printf ("smogrify commit_audio \"%s\"",cfile->handle);
     mainw->com_failed=FALSE;
-    mainw->cancelled=FALSE;
+    mainw->cancelled=CANCEL_NONE;
     mainw->error=FALSE;
     unlink (cfile->info_file);
     lives_system (com,FALSE);

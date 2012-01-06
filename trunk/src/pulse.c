@@ -186,13 +186,15 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
      return;
    }
 
+
    while ((msg=(aserver_message_t *)pulsed->msgq)!=NULL) {
      switch (msg->command) {
      case ASERVER_CMD_FILE_OPEN:
        new_file=atoi(msg->data);
        if (pulsed->playing_file!=new_file) {
-	 if (pulsed->is_opening) filename=g_strdup_printf("%s/%s/audiodump.pcm",prefs->tmpdir,mainw->files[new_file]->handle);
-	 else filename=g_strdup_printf("%s/%s/audio",prefs->tmpdir,mainw->files[new_file]->handle);
+	 if (pulsed->is_opening) filename=g_build_filename(prefs->tmpdir,mainw->files[new_file]->handle,
+							   "audiodump.pcm",NULL);
+	 else filename=g_build_filename(prefs->tmpdir,mainw->files[new_file]->handle,"audio",NULL);
 	 pulsed->fd=open(filename,O_RDONLY);
 	 if (pulsed->fd==-1) {
 	   // dont show gui errors - we are running in realtime thread
@@ -489,7 +491,7 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
       if (needs_free&&pulsed->sound_buffer!=pulsed->aPlayPtr->data) g_free(pulsed->sound_buffer);
       
     }
-       
+
     if(pulseFramesAvailable) {
 #ifdef DEBUG_PULSE
       g_printerr("buffer underrun of %ld frames\n", pulseFramesAvailable);

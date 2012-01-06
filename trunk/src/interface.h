@@ -1,6 +1,6 @@
 // interface.h
 // LiVES
-// (c) G. Finch 2003 - 2011 <salsaman@xs4all.nl,salsaman@gmail.com>
+// (c) G. Finch 2003 - 2012 <salsaman@xs4all.nl,salsaman@gmail.com>
 // Released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -9,10 +9,12 @@
 #define DEFAULT_FRAME_HSIZE 320
 #define DEFAULT_FRAME_VSIZE 200
 
-#define PROCW_STRETCHER "                                                                                                                            "
+#define PROCW_STRETCHER "                                                                                                                            " ///< blank label to show so our message dialogs are not too small
 
-#define ENC_DETAILS_WIN_H 200
-#define ENC_DETAILS_WIN_V 200
+#define ENC_DETAILS_WIN_H 200 ///< horizontal size in pixels of the encoder output window
+#define ENC_DETAILS_WIN_V 200 ///< vertical size in pixels of the encoder output window
+
+#define MAX_MSG_WIDTH_CHARS 100 ///< max width of text on warning/error labels
 
 void load_theme (void);
 
@@ -139,5 +141,5 @@ _insertw *insertw;
 text_window *textwindow;
 
 
-#define MAX_FADE_SECS 30.
+#define MAX_FADE_SECS 30. ///< max time to offer fade audio in/out for
 

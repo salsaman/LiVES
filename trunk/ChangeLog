@@ -1,6 +1,7 @@
 Version 1.4.10 a.k.a 1.6.0
 --------------------------
 Handle reconnection to pulse / jack more robustly.
+Clean up diskspace properly on exit. *
 Improved handling of split audio blocks.
 Allow setting of playback start and end times via OSC.
 Implement "autolives" toy.

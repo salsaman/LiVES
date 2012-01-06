@@ -3213,7 +3213,7 @@ void weed_load_all (void) {
   num_weed_filters=0;
 
   threaded_dialog_spin();
-  lives_weed_plugin_path=g_strdup_printf("%s%s%s",prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_WEED_FX_BUILTIN);
+  lives_weed_plugin_path=g_build_filename(prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_WEED_FX_BUILTIN,NULL);
 
 #ifdef DEBUG_WEED
   g_printerr("In weed init\n");
@@ -3335,7 +3335,6 @@ void weed_load_all (void) {
   d_print(msg);
   g_free(msg);
   threaded_dialog_spin();
-
 }
 
 

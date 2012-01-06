@@ -103,9 +103,9 @@ gboolean save_clip_values(gint which) {
 	if (mainw->com_failed||mainw->write_failed) break;
 	save_clip_value(which,CLIP_DETAILS_PB_FRAMENO,&mainw->files[which]->frameno);
 	if (mainw->com_failed||mainw->write_failed) break;
-	save_clip_value(which,CLIP_DETAILS_CLIPNAME,&mainw->files[which]->name);
+	save_clip_value(which,CLIP_DETAILS_CLIPNAME,mainw->files[which]->name);
 	if (mainw->com_failed||mainw->write_failed) break;
-	save_clip_value(which,CLIP_DETAILS_FILENAME,&mainw->files[which]->file_name);
+	save_clip_value(which,CLIP_DETAILS_FILENAME,mainw->files[which]->file_name);
 	if (mainw->com_failed||mainw->write_failed) break;
 	save_clip_value(which,CLIP_DETAILS_KEYWORDS,mainw->files[which]->keywords);
       } while (FALSE);
@@ -3079,6 +3079,8 @@ void create_cfile(void) {
   cfile->subt=NULL;
   cfile->op_dir=NULL;
   cfile->op_ds_warn_level=0;
+  cfile->no_proc_sys_errors=cfile->no_proc_read_errors=cfile->no_proc_write_errors=FALSE;
+  cfile->keep_without_preview=FALSE;
 
   if (!strcmp(prefs->image_ext,"jpg")) cfile->img_type=IMG_TYPE_JPEG;
   else cfile->img_type=IMG_TYPE_PNG;

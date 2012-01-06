@@ -44,6 +44,7 @@ endif
 
 if HAVE_AVFORMAT
 if HAVE_AVCODEC
+if HAVE_AVUTIL
 flv_libs = flv_decoder.la
 FLVDEC_LIBS = @LIBAVCODEC_LIBS@ @LIBAVFORMAT_LIBS@
 FLVDEC_CFLAGS = @LIBAVFORMAT_CFLAGS@ @LIBAVCODEC_CFLAGS@ -Wno-deprecated-declarations
@@ -59,7 +60,6 @@ asf_decoder_la_CFLAGS = $(shared_cflags) $(weed_cflags) $(ASFDEC_CFLAGS)
 asf_decoder_la_LDFLAGS = $(shared_ldflags) $(ASFDEC_LIBS)
 
 
-if HAVE_AVUTIL
 mkv_libs = mkv_decoder.la
 MKVDEC_LIBS = @LIBAVCODEC_LIBS@ @LIBAVFORMAT_LIBS@ @LIBAVUTIL_LIBS@ @LIBZ_LIBS@ @LIBBZ_LIBS@
 MKVDEC_CFLAGS = @LIBAVFORMAT_CFLAGS@ @LIBAVCODEC_CFLAGS@ @LIBAVUTIL_CFLAGS@ @LIBZ_CFLAGS@ @LIBBZ_CFLAGS@ \
@@ -67,7 +67,6 @@ MKVDEC_CFLAGS = @LIBAVFORMAT_CFLAGS@ @LIBAVCODEC_CFLAGS@ @LIBAVUTIL_CFLAGS@ @LIB
 mkv_decoder_la_SOURCES = mkv_decoder.c mkv_decoder.h
 mkv_decoder_la_CFLAGS = $(shared_cflags) $(weed_cflags) $(MKVDEC_CFLAGS)
 mkv_decoder_la_LDFLAGS = $(shared_ldflags) $(MKVDEC_LIBS)
-endif
 
 
 #in progress
@@ -82,7 +81,7 @@ endif
 #avi_decoder_la_LDFLAGS = $(shared_ldflags) $(AVIDEC_LIBS)
 
 
-
+endif
 endif
 endif
 

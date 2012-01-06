@@ -42,7 +42,7 @@
 
 */
 
-/* (C) Gabriel "Salsaman" Finch, 2005 - 2011 */
+/* (C) Gabriel "Salsaman" Finch, 2005 - 2012 */
 
 #ifndef __WEED_COMPAT_H__
 #define __WEED_COMPAT_H__
@@ -53,11 +53,12 @@ extern "C"
 #endif /* __cplusplus */
 
 #ifdef HAVE_AVCODEC
+#ifdef HAVE_AVUTIL
 
   // compatibility with libavcodec
 
 #include <libavcodec/avcodec.h>
-
+#include <libavutil/pixfmt.h>
 
 typedef struct AVCodecTag {
   int id;
@@ -388,7 +389,8 @@ enum PixelFormat weed_palette_to_avi_pix_fmt(int pal, int *clamped) {
 
 }
 
-#endif
+#endif // HAVE_AVUTIL
+#endif // HAVE_AVCODEC
 
 #ifdef __cplusplus
 }

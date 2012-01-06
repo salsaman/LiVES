@@ -1481,11 +1481,11 @@ void lives_osc_cb_open_status_socket(void *context, int arglen, const void *varg
   lives_osc_parse_int_argument(vargs,&port);
 
   if (status_socket!=NULL) {
-    g_printerr("Status socket already opened !\n");
+    LIVES_INFO("OMC status socket already opened");
     return lives_osc_notify_failure();
   }
 
-  if (!(status_socket=OpenHTMSocket (host,port,TRUE))) g_printerr ("Unable to open status socket !\n");
+  if (!(status_socket=OpenHTMSocket (host,port,TRUE))) LIVES_WARN ("Unable to open status socket !");
   else if (prefs->omc_noisy) {
     lives_osc_notify_success(NULL);
   }
@@ -1507,11 +1507,11 @@ void lives_osc_cb_open_notify_socket(void *context, int arglen, const void *varg
   lives_osc_parse_int_argument(vargs,&port);
 
   if (notify_socket!=NULL) {
-    g_printerr("Notify socket already opened !\n");
+    LIVES_INFO("OMC notify socket already opened");
     return;
   }
 
-  if (!(notify_socket=OpenHTMSocket (host,port,TRUE))) g_printerr ("Unable to open notify socket !\n");
+  if (!(notify_socket=OpenHTMSocket (host,port,TRUE))) LIVES_WARN ("Unable to open notify socket !");
   prefs->omc_noisy=FALSE; // default for confirms is OFF
 
 }
@@ -4718,7 +4718,7 @@ static void oscbuf_to_packet(OSCbuf *obuf, OSCPacketBuffer packet) {
   int bufsize=OSC_packetSize(obuf);
 
   if (bufsize>100) {
-    g_printerr("error, OSC msglen > 100 !\n");
+    LIVES_ERROR("error, OSC msglen > 100 !");
   }
 
   memcpy(OSCPacketBufferGetBuffer(packet),OSC_getPacket(obuf),bufsize);

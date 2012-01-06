@@ -91,7 +91,7 @@ gboolean convert_layer_palette(weed_plant_t *layer, int outpl, int op_clamping);
 gboolean convert_layer_palette_with_sampling(weed_plant_t *layer, int outpl, int out_sampling);
 gboolean convert_layer_palette_full(weed_plant_t *layer, int outpl, int osamtype, gboolean oclamping, int osubspace);
 gboolean apply_gamma (weed_plant_t *ilayer, weed_plant_t *olayer, double gamma); ///< not used
-void resize_layer (weed_plant_t *layer, int width, int height, int interp);
+void resize_layer (weed_plant_t *layer, int width, int height, GdkInterpType interp);
 void letterbox_layer (weed_plant_t *layer, int width, int height, int nwidth, int nheight);
 void compact_rowstrides(weed_plant_t *layer);
 void create_empty_pixel_data(weed_plant_t *layer, gboolean black_fill, gboolean may_contig);

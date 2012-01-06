@@ -1002,6 +1002,9 @@ typedef struct {
   gboolean add_clear_ds_adv;
   gboolean tried_ds_recover;
 
+  gboolean has_session_tmpdir;
+  gboolean startup_error;
+
   gchar *read_failed_file;
   gchar *write_failed_file;
   gchar *bad_aud_file;
@@ -1041,6 +1044,7 @@ extern GtkWidget *fx_dialog[2];
 
 
 #define LIVES_SIGKILL SIGKILL
+#define LIVES_SIGHUP  SIGHUP
 #define LIVES_SIGTERM SIGTERM
 #define LIVES_SIGQUIT SIGQUIT
 

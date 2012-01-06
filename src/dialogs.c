@@ -179,6 +179,8 @@ static GtkWidget* create_warn_dialog (gint warn_mask_number, GtkWindow *transien
   GtkWidget *warning_okbutton=NULL;
   GtkWidget *abortbutton=NULL;
 
+  gchar *textx;
+
   switch (diat) {
   case LIVES_DIALOG_WARN:
     dialog = gtk_message_dialog_new (transient,GTK_DIALOG_MODAL,GTK_MESSAGE_WARNING,GTK_BUTTONS_NONE,"%s","");
@@ -230,7 +232,11 @@ static GtkWidget* create_warn_dialog (gint warn_mask_number, GtkWindow *transien
 
   gtk_window_set_deletable(GTK_WINDOW(dialog), FALSE);
 
-  gtk_label_set_text(GTK_LABEL(mainw->warning_label),text);
+  textx=insert_newlines(text,MAX_MSG_WIDTH_CHARS);
+
+  gtk_label_set_text(GTK_LABEL(mainw->warning_label),textx);
+
+  g_free(textx);
 
   dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(dialog));
   gtk_widget_show (dialog_vbox);
@@ -460,30 +466,36 @@ do_error_dialog_with_check_transient(const gchar *text, gboolean is_blocking, gi
 
 gchar *ds_critical_msg(const gchar *dir, guint64 dsval) {
   gchar *msg;
+  gchar *msgx;
   gchar *tmp;
   gchar *dscr=lives_format_storage_space_string(prefs->ds_crit_level); ///< crit level
   gchar *dscu=lives_format_storage_space_string(dsval); ///< current level
   msg=g_strdup_printf(_("FREE SPACE IN THE PARTITION CONTAINING\n%s\nHAS FALLEN BELOW THE CRITICAL LEVEL OF %s\nCURRENT FREE SPACE IS %s\n\n(Disk warning levels can be configured in Preferences.)"),
 		      (tmp=g_filename_to_utf8(dir,-1,NULL,NULL,NULL)),dscr,dscu);
+  msgx=insert_newlines(msg,MAX_MSG_WIDTH_CHARS);
+  g_free(msg);
   g_free(tmp);
   g_free(dscr);
   g_free(dscu);
-  return msg;
+  return msgx;
 }
 
 
 gchar *ds_warning_msg(const gchar *dir, guint64 dsval, guint64 cwarn, guint64 nwarn) {
   gchar *msg;
+  gchar *msgx;
   gchar *tmp;
   gchar *dscw=lives_format_storage_space_string(cwarn); ///< warn level
   gchar *dscu=lives_format_storage_space_string(dsval); ///< current level
   gchar *dscn=lives_format_storage_space_string(nwarn); ///< next warn level
   msg=g_strdup_printf(_("Free space in the partition containing\n%s\nhas fallen below the warning level of %s\nCurrent free space is %s\n\n(Next warning will be shown at %s. Disk warning levels can be configured in Preferences.)"),
 		      (tmp=g_filename_to_utf8(dir,-1,NULL,NULL,NULL)),dscw,dscu,dscn);
+  msgx=insert_newlines(msg,MAX_MSG_WIDTH_CHARS);
+  g_free(msg);
   g_free(dscw);
   g_free(dscu);
   g_free(dscn);
-  return msg;
+  return msgx;
 }
 
 
@@ -518,7 +530,8 @@ void handle_backend_errors(void) {
     // got read error from backend
     if (numtok>3&&strlen(array[3])) addinfo=array[3];
     else addinfo=NULL;
-    do_read_failed_error_s(array[2],addinfo);
+    if (mainw->current_file==-1 || cfile==NULL || !cfile->no_proc_read_errors) 
+      do_read_failed_error_s(array[2],addinfo);
     pxstart=3;
     mainw->read_failed=TRUE;
     mainw->read_failed_file=g_strdup(array[2]);
@@ -529,7 +542,8 @@ void handle_backend_errors(void) {
     // got write error from backend
     if (numtok>3&&strlen(array[3])) addinfo=array[3];
     else addinfo=NULL;
-    do_write_failed_error_s(array[2],addinfo);
+    if (mainw->current_file==-1 || cfile==NULL || !cfile->no_proc_write_errors) 
+      do_write_failed_error_s(array[2],addinfo);
     pxstart=3;
     mainw->write_failed=TRUE;
     mainw->write_failed_file=g_strdup(array[2]);
@@ -541,7 +555,8 @@ void handle_backend_errors(void) {
     // got (sub) system error from backend
     if (numtok>4&&strlen(array[4])) addinfo=array[4];
     else addinfo=NULL;
-    do_system_failed_error(array[2],atoi(array[3]),addinfo);
+    if (mainw->current_file==-1 || cfile==NULL || !cfile->no_proc_sys_errors) 
+      do_system_failed_error(array[2],atoi(array[3]),addinfo);
     pxstart=3;
     mainw->cancelled=CANCEL_ERROR;
   }
@@ -554,6 +569,7 @@ void handle_backend_errors(void) {
     g_strappend(mainw->msg,512,"\n");
   }
   g_strfreev(array);
+
   mainw->error=TRUE;
 
 }
@@ -1474,20 +1490,22 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
       progbar_pulse_or_fraction(cfile,cfile->proc_ptr->frames_done);
     }
 
+
 #ifdef DEBUG
-    g_print("msg %s\n",mainw->msg);
+    if (strlen(mainw->msg)) g_print("msg %s\n",mainw->msg);
 #endif
 
     // we got a message from the backend...
 
-    if (visible&&(!accelerators_swapped||cfile->opening)&&cancellable&&!cfile->nopreview) {
-      if (!cfile->opening||((capable->has_sox||(prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL)||
+    if (visible&&(!accelerators_swapped||cfile->opening)&&cancellable&&(!cfile->nopreview||cfile->keep_without_preview)) {
+      if ((!cfile->opening||((capable->has_sox||(prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL)||
 			     (prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL))&&
-			    mainw->playing_file==-1)) gtk_widget_show (cfile->proc_ptr->preview_button);
+			     mainw->playing_file==-1))&&!cfile->nopreview) 
+	gtk_widget_show (cfile->proc_ptr->preview_button);
       if (cfile->opening_loc) gtk_widget_show (cfile->proc_ptr->stop_button);
       else gtk_widget_show (cfile->proc_ptr->pause_button);
 
-      if (!cfile->opening) {
+      if (!cfile->opening&&!cfile->nopreview) {
 	gtk_widget_grab_default (cfile->proc_ptr->preview_button);
 	if (mainw->preview_box!=NULL) gtk_widget_set_tooltip_text( mainw->p_playbutton,_ ("Preview"));
 	gtk_widget_set_tooltip_text( mainw->m_playbutton,_ ("Preview"));
@@ -2505,7 +2523,7 @@ LIVES_INLINE void d_print_file_error_failed(void) {
 
 
 void do_system_failed_error(const char *com, int retval, const char *addinfo) {
-  gchar *msg,*tmp,*emsg;
+  gchar *msg,*tmp,*emsg,*msgx;
   gchar *bit;
   gchar *retstr=g_strdup_printf("%d",retval>>8);
   gchar *bit2=(retval>255)?g_strdup(""):g_strdup_printf("[%s]",strerror(retval));
@@ -2516,6 +2534,7 @@ void do_system_failed_error(const char *com, int retval, const char *addinfo) {
   guint64 dsval1,dsval2;
 
   lives_storage_status_t ds1=get_storage_status(prefs->tmpdir,prefs->ds_crit_level,&dsval1),ds2;
+
   if (cfile->op_dir!=NULL) {
     ds2=get_storage_status(cfile->op_dir,prefs->ds_crit_level,&dsval2);
     if (ds2==LIVES_STORAGE_STATUS_CRITICAL) {
@@ -2538,6 +2557,7 @@ void do_system_failed_error(const char *com, int retval, const char *addinfo) {
 
   if (retval>0) bit=g_strdup_printf(_("The error value was %d%s\n"),retval,bit2);
     else bit=g_strdup("");
+
   msg=g_strdup_printf(_("\nLiVES failed doing the following:\n%s\nPlease check your system for errors.\n%s%s%s"),
 		      com,bit,addbit,dsmsg1,dsmsg2);
 
@@ -2545,7 +2565,9 @@ void do_system_failed_error(const char *com, int retval, const char *addinfo) {
   LIVES_ERROR(emsg);
   g_free(emsg);
 
-  do_error_dialog(msg);
+  msgx=insert_newlines(msg,MAX_MSG_WIDTH_CHARS);
+  do_error_dialog(msgx);
+  g_free(msgx);
   g_free(msg);
   g_free(dsmsg1);
   g_free(dsmsg2);
@@ -2562,6 +2584,7 @@ void do_write_failed_error_s(const char *s, const char *addinfo) {
   gchar *dsmsg=g_strdup("");
 
   gchar dirname[PATH_MAX];
+  gchar *sutf=g_filename_to_utf8(s,-1,NULL,NULL,NULL);
 
   guint64 dsval;
 
@@ -2582,8 +2605,10 @@ void do_write_failed_error_s(const char *s, const char *addinfo) {
   else addbit=g_strdup("");
 
   msg=g_strdup_printf(_("\nLiVES was unable to write to the file\n%s\nPlease check for possible error causes.\n%s"),
-		      s,addbit,dsmsg);
+		      sutf,addbit,dsmsg);
   emsg=g_strdup_printf("Unable to write to file\n%s\n%s",s,addbit);
+
+  g_free(sutf);
 
   LIVES_ERROR(emsg);
   g_free(emsg);
@@ -2886,6 +2911,13 @@ void do_set_noclips_error(const char *setname) {
 }
 
 
+void get_upd_msg(char *buf, size_t len) {
+  LIVES_DEBUG("upd msg !");
+  // TRANSLATORS: make sure the menu text matches what is in gui.c
+  g_snprintf(buf,len,_("\nWelcome to LiVES version %s\n\nAfter upgrading, you are *strongly* advised to run:\n\nFile -> Clean up Diskspace\n"),LiVES_VERSION);
+}
+
+
 void do_no_autolives_error(void) {
   do_error_dialog(_("\nYou must have autolives.pl installed and in your path to use this toy.\nConsult your package distributor.\n"));
 }
@@ -2922,4 +2954,5 @@ gboolean ask_permission_dialog(int what) {
 
   return FALSE;
 }
+
 

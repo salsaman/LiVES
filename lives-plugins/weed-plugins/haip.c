@@ -107,7 +107,7 @@ inline int calc_luma(unsigned char *pt) {
   return 0.21*(float)pt[0]+0.587*(float)pt[1]+0.114*(float)pt[2];
 }
 
-
+/*
 static int make_eight_table(unsigned char *pt, int row, int luma, int adj) {
   int n=0;
 
@@ -150,7 +150,7 @@ static int make_eight_table(unsigned char *pt, int row, int luma, int adj) {
 
   return n;
 }
-
+*/
 
 static int select_dir(_sdata *sdata) {
   int num_choices=1;
@@ -253,10 +253,8 @@ int haip_process (weed_plant_t *inst, weed_timecode_t timestamp) {
 
   float scalex,scaley;
 
-  unsigned char *pt;
+  //unsigned char *pt;
   int count;
-  int luma;
-  int adj;
 
   sdata=weed_get_voidptr_value(inst,"plugin_internal",&error);
 
@@ -299,10 +297,10 @@ int haip_process (weed_plant_t *inst, weed_timecode_t timestamp) {
       if (sdata->x>width-2) sdata->x=width-2;
       if (sdata->y<1) sdata->y++;
       if (sdata->y>height-2) sdata->y=height-2;
-      pt=&src[sdata->y*irowstride+sdata->x*3];
+      //pt=&src[sdata->y*irowstride+sdata->x*3];
 
-      luma=calc_luma(pt);
-      adj=0;
+      //luma=calc_luma(pt);
+      //adj=0;
 
       //num_pts=make_eight_table(pt,irowstride,luma,adj);
       if (((count<<7)>>7)==count) select_dir(sdata);

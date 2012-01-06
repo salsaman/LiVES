@@ -31,7 +31,7 @@ $convert_command="convert -quiet -colorspace RGB -type truecolor";
 # Do not change these except for testing !
 
 $background=1;
-$version="1.4.10-svn";
+$version="1.6.0-svn";
 #$dyneversion="LIVES-20091209";
 
 
@@ -62,6 +62,14 @@ if (defined($ARGV[0])) {
 		&rc_set("session_tempdir",$tmpdir);
 		$priority=0;
 	    }
+
+            if (! -d $tmpdir) {
+		unless ($command eq "report") {
+		    &mktmpdir;
+		}
+
+	    }
+
 	}
     }
 
@@ -3118,6 +3126,8 @@ if (defined($ARGV[0])) {
 
 	    $com="youtube-dl -o \"$dfile\" -f 43 -q --no-part \"$url\"";
 
+	    &sig_progress(1);
+
 	    $res=smog_system("$com");
 	    if ($res || !(-f $dfile) || -z $dfile) {
 
@@ -5542,7 +5552,7 @@ sub get_image_size {
 	@info=split / /, smog_system_direct($com);
 
 	if ($?) {
-	    smog_system_error("$com",$?);
+	    sig_system_error("$com",$?);
 	    $panic=1;
 	    return;
 	}
@@ -6081,7 +6091,7 @@ sub sig_system_error {
     return 1 if (! -d $curtmpdir);
 
     my ($smcom,$smerrno,$smaddinfo)=@_;
-    my ($status)="error|system|$smcom|$smerrno";
+    my ($smstatus)="error|system|$smcom|$smerrno";
 
     if ($smaddinfo ne "") {
 	$smstatus.="|$smaddinfo";
@@ -6496,6 +6506,7 @@ sub version_check_and_upgrade {
 
     my $old_version=&rc_get("version");
     my $version_hash=&version_hash($old_version);
+    my $new_version_hash=&version_hash($version);
 
     $msg="";
 
@@ -6505,6 +6516,13 @@ sub version_check_and_upgrade {
     }
 
     if ($version_hash>0) {
+
+	if ($new_version_hash>$version_hash) {
+	    $msg="!updmsg";
+	}
+
+	print STDERR "vals $version_hash and $new_version_hash\n";
+
 	if ($version_hash<8005) {
 	    # not used now
 	    &rc_delete("frontend");
@@ -6546,17 +6564,17 @@ sub version_check_and_upgrade {
 	if ($version_hash<9006) {
 	    &rc_delete("osc_opts");
 	}
-	if ($version_hash<10001005) {
+	if ($version_hash<1001005) {
 	    &rc_delete("debug_encoders");
 	}
-	if ($version_hash<10002000) {
+	if ($version_hash<1002000) {
 	    my $wmask=&rc_get("lives_warning_mask");
 	    $wmask|=8192;
 	    &rc_set("lives_warning_mask",$wmask);
 	}
-	if ($version_hash<10003011) {
+	if ($version_hash<1003011) {
 	    &rc_set("osc_port",49999);
-	    $msg1="Default OSC port has been changed to 49999.";
+	    $msg="Default OSC port has been changed to 49999.";
 	}
 	unless ($old_version eq $version) {
 	    $current_keymap=smog_system_direct("grep \"keymap file version 4\" \"$lives_home_dir$default_keymap\" 2>/dev/null");
@@ -6573,6 +6591,7 @@ sub version_check_and_upgrade {
     if ($startup_phase==0) {
 	&rc_set("startup_phase",100);
     }
+
 
     # bless this version
     &rc_set("version",$version);
@@ -6635,7 +6654,7 @@ sub weed {
     my $opts=shift;
 
     # opts: - if unset bit 0 (1)    delete clips not in any set and not marked as "in-use" (protected with set.* file)
-    #         if unset bit 1 (2)    prune (clean up) any non "in-use" clips (remove backup files etc.)
+    #         if unset bit 1 (2)    prune (clean up) any non "in-use" clips (remove backup files etc.) (prot. w. noprune)
     #	      if set   bit 2 (4)    remove any sets (directories) with layouts but no clips (subdirectories)
     #         if unset bit 3 (8)    remove marker files
     #         if unset bit 4 (16)   remove misc. files
@@ -6657,12 +6676,24 @@ sub weed {
                 # remove a set unlesss it has clips OR (layouts AND NOT (opts & 0x04))
           
 		if (&is_non_empty_dir("$tmpdir/$file/clips") || (&is_non_empty_dir("$tmpdir/$file/layouts") && !($opts & 0x04))) {
-		    # new style sets, for now only check /clips subdir
+		    # new style sets, check clips and optionally layouts
 		    unless (!defined($new_temp)||$new_temp eq "") {
-			smog_rename( "$file","$new_temp");
+                    # we are to move this set
+                        if (-d "$new_temp/$file") {
+                            smog_rename( "$new_temp/$file","$new_temp/$file.bak");
+                        }
+                        unless ($opts & 0x02) {
+			  unless (-f "$tmpdir/$file/noprune") {
+			    smog_chdir("$tmpdir/$file");
+			    &prune;
+			    smog_chdir("$tmpdir");
+			  }
+                         }
+			smog_rename( "$tmpdir/$file","$new_temp/$file");
 		    }
 		}
 		else {
+                    # dir is of no interest
 		    $in_set=0;
 		    find (\&fndset,"$tmpdir/$file/");
 		    if (!$in_set && !($opts & 0x01)) {
@@ -6670,15 +6701,22 @@ sub weed {
 		    }
 		    else {
                        unless ($opts & 0x02) {
-			unless (-f "noprune") {
+			unless (-f "$tmpdir/$file/noprune") {
 			    smog_chdir("$tmpdir/$file");
 			    &prune;
 			    smog_chdir("$tmpdir");
 			}
-			unless (!defined($new_temp)||$new_temp eq "") {
-			    smog_rename( "$tmpdir/$file","$new_temp/$file");
-			}
-		    }
+                      }
+		     unless (!defined($new_temp)||$new_temp eq "") {
+                # tempdir was changed, so we move all sets (subdirs) from old tempdir to new 
+                # [TODO - check for set name collision !]
+                       if (-d "$tmpdir/$file") {
+                          if (-d "$new_temp/$file") {
+                               smog_rename( "$new_temp/$file","$new_temp/$file.bak");
+                          }
+			 smog_rename( "$tmpdir/$file","$new_temp/$file");
+		      }
+                    }
                   }
 		}
               unless ($opts & 0x08) {
@@ -6687,8 +6725,7 @@ sub weed {
               }
 	    }
 	    else {
-                # tempdir was changed, so we move all sets (subdirs) from old tempdir to new 
-                # [TODO - check for set name collision !]
+                # move crash recovery files
 		unless (!defined($new_temp)||$new_temp eq "") {
 		    if ($file =~ /^recovery/ || $file =~ /^layout/) {
 			smog_rename( "$tmpdir/$file","$new_temp/$file");
@@ -6702,7 +6739,11 @@ sub weed {
 
     unless ($opts & 0x10) {
       # clean up a few extra remnants
+      smog_chdir("$tmpdir");
       unlink < .* rfx.* /tmp/.smogval* /tmp/lives-symlinks >;
+	 unless (!defined($new_temp)||$new_temp eq "") {
+              unlink < firew.* encoder_log_* stream.* >;
+         }
     }
 
     # total disk space at end

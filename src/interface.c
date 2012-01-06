@@ -986,7 +986,8 @@ create_dialog3 (const gchar *text, gboolean is_blocking, gint mask) {
   GtkWidget *hbox;
   GtkWidget *eventbox;
   gchar *form_text;
-  
+  gchar *textx;
+
   dialog3 = gtk_dialog_new ();
   gtk_window_set_title (GTK_WINDOW (dialog3), "LiVES");
   if (is_blocking) gtk_window_set_modal (GTK_WINDOW (dialog3), TRUE);
@@ -1001,11 +1002,14 @@ create_dialog3 (const gchar *text, gboolean is_blocking, gint mask) {
 
   dialog_vbox3 = lives_dialog_get_content_area(GTK_DIALOG(dialog3));
   gtk_widget_show (dialog_vbox3);
-  
-  form_text=g_strdup_printf("\n\n%s",text);
+
+  textx=insert_newlines(text,MAX_MSG_WIDTH_CHARS);
+
+  form_text=g_strdup_printf("\n\n%s",textx);
 
   info_text = gtk_label_new (form_text);
   g_free(form_text);
+  g_free(textx);
 
   if (mainw!=NULL&&palette->style&STYLE_1) {
     gtk_widget_modify_fg(info_text, GTK_STATE_NORMAL, &palette->normal_fore);

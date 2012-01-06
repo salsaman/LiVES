@@ -549,6 +549,12 @@ typedef struct {
   gchar *op_dir;
   guint64 op_ds_warn_level; ///< current disk space warning level for any output directory
 
+  gboolean no_proc_sys_errors; ///< skip system error dialogs in processing
+  gboolean no_proc_read_errors; ///< skip read error dialogs in processing
+  gboolean no_proc_write_errors; ///< skip write error dialogs in processing
+
+  gboolean keep_without_preview; ///< allow keep, even when nopreview is set - TODO use only nopreview and nokeep
+
   // TODO - change to lives_clip_t
 } file;
 
@@ -750,6 +756,8 @@ gboolean check_backend_return(file *sfile);
 gchar *ds_critical_msg(const gchar *dir, guint64 dsval);
 gchar *ds_warning_msg(const gchar *dir, guint64 dsval, guint64 cwarn, guint64 nwarn);
 gboolean check_storage_space(file *sfile, gboolean is_processing);
+
+void get_upd_msg(char *buf, size_t len);
 
 
 gboolean ask_permission_dialog(int what);
@@ -970,6 +978,7 @@ void lives_freep(void **ptr);
 void lives_free(gpointer ptr);
 void lives_free_with_check(gpointer ptr);
 int lives_kill(pid_t pid, int sig);
+int lives_killpg(int pgrp, int sig);
 int64_t lives_get_current_ticks(void);
 gboolean lives_alarm_get(int alarm_handle);
 int lives_alarm_set(int64_t ticks);
@@ -1097,6 +1106,7 @@ GList *get_set_list(const gchar *dir);
 void combo_set_popdown_strings (GtkCombo *combo, GList *list);
 
 gchar *subst (const gchar *string, const gchar *from, const gchar *to);
+gchar *insert_newlines(const gchar *text, int maxwidth);
 
 gint hextodec (const gchar *string);
 gint get_hex_digit (const gchar *c);

@@ -123,7 +123,7 @@ plugin_poll_keyboard (gpointer data) {
   // we also auto-repeat our cached keys
   if (cached_key&&current_kb_time-last_kb_time>KEY_RPT_INTERVAL*10) {
     last_kb_time=current_kb_time;
-    gtk_accel_groups_activate (G_OBJECT (mainw->LiVES),(guint)cached_key,cached_mod);
+    gtk_accel_groups_activate (G_OBJECT (mainw->LiVES),(guint)cached_key, (GdkModifierType)cached_mod);
   }
 
 
@@ -134,7 +134,8 @@ plugin_poll_keyboard (gpointer data) {
 #endif
 
 
-  if (!mainw->is_processing||(mainw->multitrack!=NULL&&mainw->playing_file==mainw->multitrack->render_file&&!mainw->multitrack->is_rendering)) {
+  if (!mainw->is_processing||(mainw->multitrack!=NULL&&mainw->playing_file==mainw->multitrack->render_file&&
+			      !mainw->multitrack->is_rendering)) {
 
   // check jack transport state
 #ifdef ENABLE_JACK
@@ -158,7 +159,7 @@ gboolean pl_key_function (gboolean down, guint16 unicode, guint16 keymod) {
 #define NEEDS_TRANSLATION 1<<15
 
   // mask for ctrl and alt
-  GdkModifierType state=(keymod&(GDK_CONTROL_MASK|GDK_MOD1_MASK));
+  GdkModifierType state=(GdkModifierType)(keymod&(GDK_CONTROL_MASK|GDK_MOD1_MASK));
 
   if (!down) {
     // up...

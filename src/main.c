@@ -1414,7 +1414,8 @@ static void lives_init(_ign_opts *ign_opts) {
 	  if (mainw->jackd!=NULL) {
 	    if (jack_open_device(mainw->jackd)) mainw->jackd=NULL;
 
-	    if (((!(prefs->jack_opts&JACK_OPTS_START_TSERVER)&&!(prefs->jack_opts&JACK_OPTS_START_ASERVER))||mainw->jackd==NULL)&&prefs->startup_phase==0) {
+	    if (((!(prefs->jack_opts&JACK_OPTS_START_TSERVER)&&!(prefs->jack_opts&JACK_OPTS_START_ASERVER))||
+		 mainw->jackd==NULL)&&prefs->startup_phase==0) {
 #ifdef HAVE_PULSE_AUDIO
 	      gchar *otherbit="\"lives -aplayer pulse\".";
 #else
@@ -1808,12 +1809,18 @@ capability *get_capabilities (void) {
   g_snprintf(future_prefs->tmpdir,PATH_MAX,"%s",prefs->tmpdir);
 
   prefs->startup_phase=atoi (array[2]);
+  get_upd_msg(capable->startup_msg,256);
 
   if (numtok>3&&strlen (array[3])) {
-    g_snprintf(capable->startup_msg,256,"%s\n\n",array[3]);
+    if (!strcmp(array[3],"!updmsg")) {
+      get_upd_msg(capable->startup_msg,256);
+    }
+    else {
+      g_snprintf(capable->startup_msg,256,"%s\n\n",array[3]);
       if (numtok>4&&strlen (array[4])) {
 	g_strappend (capable->startup_msg,256,array[4]);
       }
+    }
   }
   g_strfreev(array);
 
@@ -1887,7 +1894,7 @@ capability *get_capabilities (void) {
 
 void print_notice() {
   g_printerr("\nLiVES %s\n",LiVES_VERSION);
-  g_printerr("Copyright 2002-2011 Gabriel Finch (salsaman@gmail.com) and others.\n");
+  g_printerr("Copyright 2002-2012 Gabriel Finch (salsaman@gmail.com) and others.\n");
   g_printerr("LiVES comes with ABSOLUTELY NO WARRANTY\nThis is free software, and you are welcome to redistribute it\nunder certain conditions; see the file COPYING for details.\n\n");
 }
 
@@ -1962,6 +1969,8 @@ static gboolean lives_startup(gpointer data) {
   gtk_widget_queue_draw(mainw->LiVES);
   while (g_main_context_iteration(NULL,FALSE));
 
+  mainw->startup_error=FALSE;
+
   if (capable->smog_version_correct) {
     if (theme_expected&&palette->style==STYLE_PLAIN&&!mainw->foreign) {
       // non-fatal errors
@@ -2002,8 +2011,19 @@ static gboolean lives_startup(gpointer data) {
 	  }
 	  else {
 	    if (!capable->can_write_to_tempdir) {
-	      gchar *err=g_strdup_printf(_ ("\nLiVES was unable to use the temporary directory\n%s\n\nPlease check the <tempdir> setting in \n%s/.lives\nand try again.\n"),prefs->tmpdir,(tmp=g_filename_to_utf8(capable->home_dir,-1,NULL,NULL,NULL)));
-	      g_free(tmp);
+	      gchar *extrabit;
+	      gchar *err;
+	      if (!mainw->has_session_tmpdir) {
+		extrabit=g_strdup_printf(_("Please check the <tempdir> setting in \n%s/.lives\nand try again.\n"),
+				  (tmp=g_filename_to_utf8(capable->home_dir,-1,NULL,NULL,NULL)));
+		g_free(tmp);
+	      }
+	      else 
+		extrabit=g_strdup("");
+
+	      err=g_strdup_printf(_ ("\nLiVES was unable to use the temporary directory\n%s\n\n%s"),
+				  prefs->tmpdir,extrabit);
+	      g_free(extrabit);
 	      startup_message_fatal(err);
 	      g_free(err);
 	    }
@@ -2212,6 +2232,7 @@ int main (int argc, char *argv[]) {
   // mainw->foreign is set if we are grabbing an external window
   mainw->foreign=FALSE;
   memset (start_file,0,1);
+  mainw->has_session_tmpdir=FALSE;
 
   // what's my name ?
   capable->myname_full=g_find_program_in_path(argv[0]);
@@ -2299,10 +2320,28 @@ int main (int argc, char *argv[]) {
 	  continue;
 	}
 	if (!strcmp(charopt,"tmpdir")) {
+	  gchar *com;
+	  mainw->has_session_tmpdir=TRUE;
 	  // override tempdir setting
 	  g_snprintf(prefs->tmpdir,PATH_MAX,"%s",optarg);
 	  g_snprintf(future_prefs->tmpdir,PATH_MAX,"%s",prefs->tmpdir);
 	  set_pref("session_tempdir",prefs->tmpdir);
+	  com=g_strdup_printf ("/bin/mkdir -p \"%s\" 2>/dev/null",prefs->tmpdir);
+	  mainw->com_failed=FALSE;
+	  lives_system(com,TRUE);
+	  if (mainw->com_failed) {
+	    if (!check_dir_access(prefs->tmpdir)) {
+	      // abort if we cannot create the new subdir
+	      LIVES_ERROR("Could not create directory");
+	      LIVES_ERROR(prefs->tmpdir);
+	    }
+	    capable->can_write_to_tempdir=FALSE;
+	  }
+	  else {
+	    LIVES_INFO("Created directory");
+	    LIVES_INFO(prefs->tmpdir);
+	  }
+	  mainw->com_failed=FALSE;
 	  continue;
 	}
 	if (!strcmp(charopt,"yuvin")) {
@@ -2469,6 +2508,7 @@ int main (int argc, char *argv[]) {
 gboolean startup_message_fatal(const gchar *msg) {
   splash_end();
   do_blocking_error_dialog (msg);
+  mainw->startup_error=TRUE;
   lives_exit();
   return TRUE;
 }
@@ -2700,7 +2740,10 @@ void desensitize(void) {
   }
   gtk_widget_set_sensitive (mainw->rewind,FALSE);
   if (!mainw->foreign) {
-    for (i=0;i<=mainw->num_rendered_effects_builtin+mainw->num_rendered_effects_custom+mainw->num_rendered_effects_test;i++) if (mainw->rendered_fx[i].menuitem!=NULL&&mainw->rendered_fx[i].menuitem!=NULL&&mainw->rendered_fx[i].min_frames>=0) gtk_widget_set_sensitive(mainw->rendered_fx[i].menuitem,FALSE);
+    for (i=0;i<=mainw->num_rendered_effects_builtin+mainw->num_rendered_effects_custom+
+	   mainw->num_rendered_effects_test;i++) 
+      if (mainw->rendered_fx[i].menuitem!=NULL&&mainw->rendered_fx[i].menuitem!=NULL&&mainw->rendered_fx[i].min_frames>=0) 
+	gtk_widget_set_sensitive(mainw->rendered_fx[i].menuitem,FALSE);
   }
 
   gtk_widget_set_sensitive (mainw->export_submenu, FALSE);
@@ -2714,8 +2757,10 @@ void desensitize(void) {
   gtk_widget_set_sensitive (mainw->fade_aud_in, FALSE);
   gtk_widget_set_sensitive (mainw->fade_aud_out, FALSE);
   gtk_widget_set_sensitive (mainw->ins_silence, FALSE);
-  gtk_widget_set_sensitive (mainw->loop_video, (prefs->audio_player==AUD_PLAYER_JACK||prefs->audio_player==AUD_PLAYER_PULSE));
-  if (prefs->audio_player!=AUD_PLAYER_JACK&&prefs->audio_player!=AUD_PLAYER_PULSE) gtk_widget_set_sensitive (mainw->mute_audio, FALSE);
+  gtk_widget_set_sensitive (mainw->loop_video, (prefs->audio_player==AUD_PLAYER_JACK||
+						prefs->audio_player==AUD_PLAYER_PULSE));
+  if (prefs->audio_player!=AUD_PLAYER_JACK&&prefs->audio_player!=AUD_PLAYER_PULSE) 
+    gtk_widget_set_sensitive (mainw->mute_audio, FALSE);
   gtk_widget_set_sensitive (mainw->load_audio, FALSE);
   gtk_widget_set_sensitive (mainw->load_subs, FALSE);
   gtk_widget_set_sensitive (mainw->erase_subs, FALSE);

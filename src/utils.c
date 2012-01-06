@@ -99,16 +99,18 @@ int lives_system(const char *com, gboolean allow_error) {
 pid_t lives_fork(const char *com) {
   // returns a negative number which is the pgid to lives_kill
   // to signal to sub process and all children
+  // TODO *** - error check
+
   pid_t ret;
 
   if (!(ret=fork())) {
     setsid(); // create new session id
+    setpgid(getpid(),0); // create new pgid
     lives_system(com,TRUE);
     _exit(0);
   }
-  // wait a moment to get the child session id
-  g_usleep(prefs->sleep_time);
-  return -getpgid(ret);
+
+  return ret;
 }
 
 
@@ -149,7 +151,7 @@ ssize_t lives_write(int fd, const void *buf, size_t count, gboolean allow_fail) 
 ssize_t lives_write_le(int fd, const void *buf, size_t count, gboolean allow_fail) {
   if (capable->byte_order==G_BIG_ENDIAN&&(prefs->bigendbug!=1)) {
     uint8_t xbuf[count];
-    reverse_bytes(xbuf,buf,count);
+    reverse_bytes(xbuf,(const uint8_t *)buf,count);
     return lives_write(fd,xbuf,count,allow_fail);
   }
   else {
@@ -221,7 +223,7 @@ ssize_t lives_read_le(int fd, void *buf, size_t count, gboolean allow_less) {
     uint8_t xbuf[count];
     ssize_t retval=lives_read(fd,buf,count,allow_less);
     if (retval<count) return retval;
-    reverse_bytes(buf,xbuf,count);
+    reverse_bytes((uint8_t *)buf,(const uint8_t *)xbuf,count);
     return retval;
   }
   else {
@@ -332,6 +334,10 @@ void lives_free_with_check(gpointer ptr) {
 
 LIVES_INLINE int lives_kill(pid_t pid, int sig) {
   return kill(pid,sig);
+};
+
+LIVES_INLINE int lives_killpg(int pgrp, int sig) {
+  return killpg(pgrp,sig);
 };
 
 
@@ -475,8 +481,8 @@ void lives_alarm_clear(int alarm_handle) {
 
 
 
-LIVES_INLINE gchar *g_strappend (gchar *string, gint len, const gchar *new) {
-  gchar *tmp=g_strconcat (string,new,NULL);
+LIVES_INLINE gchar *g_strappend (gchar *string, gint len, const gchar *xnew) {
+  gchar *tmp=g_strconcat (string,xnew,NULL);
   g_snprintf(string,len,"%s",tmp);
   g_free(tmp);
   return string;
@@ -767,7 +773,7 @@ gint calc_new_playback_position(gint fileno, gint64 otc, gint64 *ntc) {
 	nframe+=last_frame; // normal
 	if (nframe>last_frame) {
 	  nframe=last_frame-(nframe-last_frame);
-	  if (mainw->playing_file==fileno) dirchange_callback (NULL,NULL,0,0,GINT_TO_POINTER(FALSE));
+	  if (mainw->playing_file==fileno) dirchange_callback (NULL,NULL,0,(GdkModifierType)0,GINT_TO_POINTER(FALSE));
 	  else sfile->pb_fps=-sfile->pb_fps;
 	}
       }
@@ -777,7 +783,7 @@ gint calc_new_playback_position(gint fileno, gint64 otc, gint64 *ntc) {
       nframe=ABS(nframe)+first_frame;
       if (mainw->ping_pong) {
 	// bounce
-	if (mainw->playing_file==fileno) dirchange_callback (NULL,NULL,0,0,GINT_TO_POINTER(FALSE));
+	if (mainw->playing_file==fileno) dirchange_callback (NULL,NULL,0,(GdkModifierType)0,GINT_TO_POINTER(FALSE));
 	else sfile->pb_fps=-sfile->pb_fps;
       }
     }
@@ -790,7 +796,7 @@ gint calc_new_playback_position(gint fileno, gint64 otc, gint64 *ntc) {
       if (mainw->ping_pong) {
 	// bounce
 	nframe=last_frame-(nframe-(first_frame-1));
-	if (mainw->playing_file==fileno) dirchange_callback (NULL,NULL,0,0,GINT_TO_POINTER(FALSE));
+	if (mainw->playing_file==fileno) dirchange_callback (NULL,NULL,0,(GdkModifierType)0,GINT_TO_POINTER(FALSE));
 	else sfile->pb_fps=-sfile->pb_fps;
       }
     }
@@ -805,7 +811,7 @@ gint calc_new_playback_position(gint fileno, gint64 otc, gint64 *ntc) {
       // scratch or transport backwards
       if (mainw->ping_pong) {
 	nframe=first_frame;
-	if (mainw->playing_file==fileno) dirchange_callback (NULL,NULL,0,0,GINT_TO_POINTER(FALSE));
+	if (mainw->playing_file==fileno) dirchange_callback (NULL,NULL,0,(GdkModifierType)0,GINT_TO_POINTER(FALSE));
 	else sfile->pb_fps=-sfile->pb_fps;
 
       }
@@ -1054,7 +1060,7 @@ gboolean add_lmap_error(lives_lmap_error_t lerror, const gchar *name, gpointer u
   case LMAP_INFO_SETNAME_CHANGED:
     lmap=mainw->current_layouts_map;
     while (lmap!=NULL) {
-      array=g_strsplit(lmap->data,"|",-1);
+      array=g_strsplit((gchar *)lmap->data,"|",-1);
       text=g_strdup_printf("%s\n",array[0]);
       gtk_text_buffer_insert(GTK_TEXT_BUFFER(mainw->layout_textbuffer),&end_iter,text,-1);
       g_free(text);
@@ -1076,7 +1082,7 @@ gboolean add_lmap_error(lives_lmap_error_t lerror, const gchar *name, gpointer u
     }
     lmap=(GList *)user_data;
     while (lmap!=NULL) {
-      array=g_strsplit(lmap->data,"|",-1);
+      array=g_strsplit((gchar *)lmap->data,"|",-1);
       text=g_strdup_printf("%s\n",array[0]);
       gtk_text_buffer_insert(GTK_TEXT_BUFFER(mainw->layout_textbuffer),&end_iter,text,-1);
       g_free(text);
@@ -1098,7 +1104,7 @@ gboolean add_lmap_error(lives_lmap_error_t lerror, const gchar *name, gpointer u
     }
     lmap=(GList *)user_data;
     while (lmap!=NULL) {
-      array=g_strsplit(lmap->data,"|",-1);
+      array=g_strsplit((gchar *)lmap->data,"|",-1);
       orig_fps=strtod(array[3],NULL);
       resampled_frame=count_resampled_frames(frameno,orig_fps,mainw->files[clipno]->fps);
       if (resampled_frame<=atoi(array[2])) {
@@ -1124,7 +1130,7 @@ gboolean add_lmap_error(lives_lmap_error_t lerror, const gchar *name, gpointer u
     }
     lmap=(GList *)user_data;
     while (lmap!=NULL) {
-      array=g_strsplit(lmap->data,"|",-1);
+      array=g_strsplit((gchar *)lmap->data,"|",-1);
       max_time=strtod(array[4],NULL);
       if (max_time>0.&&atime<=max_time) {
 	text=g_strdup_printf("%s\n",array[0]);
@@ -1548,13 +1554,13 @@ void remove_layout_files(GList *map) {
   while (map!=NULL) {
     map_next=map->next;
     if (map->data!=NULL) {
-      if (!strcmp(map->data,mainw->cl_string)) {
+      if (!strcmp((gchar *)map->data,mainw->cl_string)) {
 	is_current=TRUE;
 	fname=g_strdup(mainw->cl_string);
       }
       else {
 	is_current=FALSE;
-	maplen=strlen(map->data);
+	maplen=strlen((gchar *)map->data);
 	
 	// remove from mainw->current_layouts_map
 	cmap=mainw->current_layouts_map;
@@ -1567,7 +1573,7 @@ void remove_layout_files(GList *map) {
 	  cmap=cmap_next;
 	}
 
-	array=g_strsplit(map->data,"|",-1);
+	array=g_strsplit((gchar *)map->data,"|",-1);
 	fname=repl_tmpdir(array[0],FALSE);
 	g_strfreev(array);
       }
@@ -1621,7 +1627,7 @@ void remove_layout_files(GList *map) {
 	      lmap=mainw->files[i]->layout_map;
 	      while (lmap!=NULL) {
 		lmap_next=lmap->next;
-		if (!strncmp(lmap->data,map->data,maplen)) {
+		if (!strncmp((gchar *)lmap->data,(gchar *)map->data,maplen)) {
 		  // remove matching entry
 		  if (lmap->prev!=NULL) lmap->prev->next=lmap_next;
 		  else mainw->files[i]->layout_map=lmap_next;
@@ -3017,7 +3023,7 @@ gint lives_list_index (GList *list, const gchar *data) {
   len=g_list_length (list);
 
   for (i=0;i<len;i++) {
-    if (!strcmp (g_list_nth_data (list,i),data)) return i;
+    if (!strcmp ((gchar *)g_list_nth_data (list,i),data)) return i;
   }
   return -1;
 }
@@ -3333,16 +3339,16 @@ gchar *get_val_from_cached_list(const gchar *key, size_t maxlen) {
 
   while (clist!=NULL) {
     if (gotit) {
-      if (!strncmp(keystr_end,clist->data,kelen)) {
+      if (!strncmp(keystr_end,(gchar *)clist->data,kelen)) {
 	if (clist->prev!=NULL) clist->prev->next=clist->next;
 	break;
       }
-      if (strncmp(clist->data,"#",1)) g_strappend(buff,maxlen,clist->data);
+      if (strncmp((gchar *)clist->data,"#",1)) g_strappend(buff,maxlen,(gchar *)clist->data);
       else {
 	if (clist->prev!=NULL) clist->prev->next=clist->next;
       }
     }
-    else if (!strncmp(keystr_start,clist->data,kslen)) {
+    else if (!strncmp(keystr_start,(gchar *)clist->data,kslen)) {
       gotit=TRUE;
       if (clist->prev!=NULL) clist->prev->next=clist->next;
     }
@@ -3510,7 +3516,7 @@ gboolean get_clip_value(int which, lives_clip_details_t what, void *retval, size
     g_free(lives_header);
     g_free(key);
     
-    val=g_malloc(maxlen);
+    val=(gchar *)g_malloc(maxlen);
     memset(val,0,maxlen);
     
     threaded_dialog_spin();
@@ -3621,10 +3627,10 @@ gboolean get_clip_value(int which, lives_clip_details_t what, void *retval, size
   case CLIP_DETAILS_COMMENT:
   case CLIP_DETAILS_CLIPNAME:
   case CLIP_DETAILS_KEYWORDS:
-    g_snprintf(retval,maxlen,"%s",val);
+    g_snprintf((gchar *)retval,maxlen,"%s",val);
     break;
   case CLIP_DETAILS_FILENAME:
-    g_snprintf(retval,maxlen,"%s",(tmp=g_filename_to_utf8(val,-1,NULL,NULL,NULL)));
+    g_snprintf((gchar *)retval,maxlen,"%s",(tmp=g_filename_to_utf8(val,-1,NULL,NULL,NULL)));
     g_free(tmp);
     break;
   }
@@ -3703,25 +3709,25 @@ void save_clip_value(int which, lives_clip_details_t what, void *val) {
     myval=g_strdup_printf("%d",*(gint *)val);
     break;
   case CLIP_DETAILS_TITLE:
-    myval=g_strdup(val);
+    myval=g_strdup((gchar *)val);
     break;
   case CLIP_DETAILS_AUTHOR:
-    myval=g_strdup(val);
+    myval=g_strdup((gchar *)val);
     break;
   case CLIP_DETAILS_COMMENT:
-    myval=g_strdup(val);
+    myval=g_strdup((gchar *)val);
     break;
   case CLIP_DETAILS_KEYWORDS:
-    myval=g_strdup(val);
+    myval=g_strdup((gchar *)val);
     break;
   case CLIP_DETAILS_PB_FRAMENO:
     myval=g_strdup_printf("%d",*(gint *)val);
     break;
   case CLIP_DETAILS_CLIPNAME:
-    myval=g_strdup(val);
+    myval=g_strdup((gchar *)val);
     break;
   case CLIP_DETAILS_FILENAME:
-    myval=g_filename_from_utf8(val,-1,NULL,NULL,NULL);
+    myval=g_filename_from_utf8((gchar *)val,-1,NULL,NULL,NULL);
     break;
   case CLIP_DETAILS_HEADER_VERSION:
     myval=g_strdup_printf("%d",*(gint *)val);
@@ -3917,17 +3923,98 @@ gchar *subst (const gchar *string, const gchar *from, const gchar *to) {
   return ret;
 }
 
+gchar *insert_newlines(const gchar *text, int maxwidth) {
+  // crude formating of strings, ensure a newline after every run of maxwidth chars
+  // does not take into account for example utf8 multi byte chars
 
+  char newline[]="\n";
+  gchar *retstr;
+  register int i;
+  int xtoffs;
+  gboolean needsnl=FALSE;
+  size_t req_size=1;  // for the terminating \0
+  size_t tlen;
+  size_t nlen=strlen(newline);
+  size_t runlen=0;
+  wchar_t utfsym;
+
+  if (text==NULL) return NULL;
+
+  if (maxwidth<1) return g_strdup("Bad maxwidth, dummy");
+
+  tlen=strlen(text);
+
+  xtoffs=mbtowc(NULL,NULL,0); // reset read state
+
+
+  //pass 1, get the required size
+  for (i=0;i<tlen;i+=xtoffs) {
+    xtoffs=mbtowc(&utfsym,&text[i],4); // get next utf8 wchar
+    if (!strncmp(text+i,"\n",nlen)) runlen=0; // is a newline (in any encoding)
+    else {
+      runlen++;
+      if (needsnl) req_size+=nlen; ///< we will insert a nl here
+    }
+
+    if (runlen==maxwidth) {
+      if (i<tlen-1 && (strncmp(text+i+1,"\n",nlen))) {
+	// needs a newline
+	needsnl=TRUE;
+	runlen=0;
+      }
+    }
+    else needsnl=FALSE;
+    req_size+=xtoffs;
+  }
+
+
+
+
+  retstr=(gchar *)g_malloc(req_size);
+  req_size=0; // reuse as a ptr to offset in retstr
+  runlen=0;
+  needsnl=FALSE;
+
+  //pass 2, copy and insert newlines
+
+
+  for (i=0;i<tlen;i+=xtoffs) {
+    xtoffs=mbtowc(&utfsym,&text[i],4); // get next utf8 wchar
+    if (!strncmp(text+i,"\n",nlen)) runlen=0; // is a newline (in any encoding)
+    else {
+      runlen++;
+      if (needsnl) {
+	memcpy(retstr+req_size,newline,nlen);
+	req_size+=nlen;
+      }
+    }
+
+    if (runlen==maxwidth) {
+      if (i<tlen-1 && (strncmp(text+i+1,"\n",nlen))) {
+	// needs a newline
+	needsnl=TRUE;
+	runlen=0;
+      }
+    }
+    else needsnl=FALSE;
+    memcpy(retstr+req_size,&utfsym,xtoffs);
+    req_size+=xtoffs;
+  }
+
+  memset(retstr+req_size,0,1);
+
+  return retstr;
+}
 
 
 void combo_set_popdown_strings (GtkCombo *combo, GList *list) {
   // this avoids an assert in some versions of GTK+ when list==NULL
   GList *empty_list=NULL;
-  empty_list=g_list_append (empty_list,"");
+  empty_list=g_list_append (empty_list,(gpointer)"");
   if (list==NULL) gtk_combo_set_popdown_strings (combo,empty_list);
   else {
-    gtk_combo_set_popdown_strings (combo,g_list_copy(list));
     g_list_free (empty_list);
+    gtk_combo_set_popdown_strings (combo,g_list_copy(list));
   }
 }
 
@@ -4064,7 +4151,7 @@ gint get_box_child_index (GtkBox *box, GtkWidget *tchild) {
   int i=0;
 
   while (list!=NULL) {
-    child=list->data;
+    child=(GtkBoxChild *)list->data;
     if (child->widget==tchild) return i;
     list=list->next;
     i++;

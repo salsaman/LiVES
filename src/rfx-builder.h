@@ -48,6 +48,10 @@ void on_export_rfx_activate (GtkMenuItem *, gpointer status);
 #define RFXBUILD_MAX_TROWS 512
 
 
+#define PREF_RFXDIALOG_W 800
+#define PREF_RFXDIALOG_H 650
+
+
 /// maximum decimal places allowed (should correspond to precision of a "float")
 #define RFXBUILD_MAX_DP 16
 typedef struct {

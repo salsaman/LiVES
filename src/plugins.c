@@ -324,13 +324,15 @@ void save_vpp_defaults(_vid_playback_plugin *vpp, gchar *vpp_file) {
 
   if ((fd=open(vpp_file,O_WRONLY|O_CREAT|O_TRUNC,S_IRUSR|S_IWUSR))==-1) {
     msg=g_strdup_printf (_("\n\nUnable to write video playback plugin defaults file\n%s\nError code %d\n"),vpp_file,errno);
-    g_printerr ("%s",msg);
+    LIVES_ERROR (msg);
     g_free (msg);
     return;
   }
 
-  g_printerr(_("Updating video playback plugin defaults in %s\n"),vpp_file);
-	     
+  msg=g_strdup_printf(_("Updating video playback plugin defaults in %s\n"),vpp_file);
+  LIVES_INFO(msg);
+  g_free(msg);
+
   msg=g_strdup("LiVES vpp defaults file version 2\n");
   if (!lives_write(fd,msg,strlen(msg),FALSE)) return;
   g_free(msg);

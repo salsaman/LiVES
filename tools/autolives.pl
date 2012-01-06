@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# (c) Salsaman 2004 - 2009
+# (c) Salsaman 2004 - 2012
 
 # released under the GPL 3 or later
 # see file COPYING or www.gnu.org for details
@@ -10,6 +10,10 @@
 # syntax is autolives.pl host cmd_port status_port
 # e.g. autolives.pl localhost 49999 49998
 # or just autolives.pl to use defaults 
+
+$DEBUG=1;
+
+$SIG{'HUP'} = 'HUP_handler';
 
 if (&location("sendOSC") eq "") {
     print "You must have sendOSC installed to run this.\n";
@@ -234,4 +238,16 @@ sub print_layout {
 	}
 	print "\n";
     }
+}
+
+
+sub HUP_handler {
+    # close all files.
+
+    # send error message to log file.
+    if ($DEBUG) {
+	print STDERR "autolives.pl exiting now\n";
+    }
+
+    exit(0);
 }

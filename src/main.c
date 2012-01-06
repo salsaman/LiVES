@@ -552,6 +552,7 @@ static void lives_init(_ign_opts *ign_opts) {
   // init mainwindow data
   int i;
   int randfd;
+  int naudp=0;
   ssize_t randres;
   gchar buff[256];
   uint32_t rseed;
@@ -1364,14 +1365,28 @@ static void lives_init(_ign_opts *ign_opts) {
 	if (!do_tempdir_query()) {
 	  lives_exit();
 	}
-	if (prefs->startup_phase==-1) {
-	  prefs->startup_phase=1;
-	  set_int_pref("startup_phase",1);
-	}
+	prefs->startup_phase=2;
+	set_int_pref("startup_phase",2);
       }
 
-      if (((capable->has_jackd||capable->has_pulse_audio)&&(capable->has_sox||capable->has_mplayer))||(capable->has_jackd&&capable->has_pulse_audio)) {
-	if (prefs->startup_phase>0&&prefs->startup_phase<3) {
+
+      if (prefs->startup_phase>0&&prefs->startup_phase<3) {
+	splash_end();
+	if (!do_startup_tests(FALSE)) {
+	  lives_exit();
+	}
+	prefs->startup_phase=3;
+	set_int_pref("startup_phase",3);
+      }
+
+
+      if (capable->has_jackd) naudp++;
+      if (capable->has_pulse_audio) naudp++;
+      if (capable->has_sox) naudp++;
+      if (capable->has_mplayer) naudp++;
+
+      if (naudp>1) {
+	if (prefs->startup_phase>0&&prefs->startup_phase<=4) {
 	  splash_end();
 	  if (!do_audio_choice_dialog(prefs->startup_phase)) {
 	    lives_exit();
@@ -1380,11 +1395,8 @@ static void lives_init(_ign_opts *ign_opts) {
 	  else future_prefs->jack_opts=prefs->jack_opts=0;
 	  set_int_pref("jack_opts",prefs->jack_opts);
 
-	}
-
-	if (prefs->startup_phase==1) {
-	  prefs->startup_phase=2;
-	  set_int_pref("startup_phase",2);
+	  prefs->startup_phase=4;
+	  set_int_pref("startup_phase",4);
 	}
 
 #ifdef ENABLE_JACK
@@ -1398,7 +1410,7 @@ static void lives_init(_ign_opts *ign_opts) {
 	  if (!lives_jack_init()) {
 	    if ((prefs->jack_opts&JACK_OPTS_START_ASERVER)||(prefs->jack_opts&JACK_OPTS_START_TSERVER)) do_jack_noopen_warn();
 	    else do_jack_noopen_warn3();
-	    if (prefs->startup_phase==2) {
+	    if (prefs->startup_phase==4) {
 	      do_jack_noopen_warn2();
 	    }
 	    future_prefs->jack_opts=0; // jack is causing hassle, get rid of it
@@ -1426,7 +1438,7 @@ static void lives_init(_ign_opts *ign_opts) {
 
 	    if (mainw->jackd==NULL) {
 	      do_jack_noopen_warn3();
-	      if (prefs->startup_phase==2) {
+	      if (prefs->startup_phase==4) {
 		do_jack_noopen_warn2();
 	      }
 	      else do_jack_noopen_warn4();
@@ -1448,7 +1460,7 @@ static void lives_init(_ign_opts *ign_opts) {
 	  splash_msg(_("Starting pulse audio server..."),.8);
 
 	  if (!lives_pulse_init(prefs->startup_phase)) {
-	    if (prefs->startup_phase==2) {
+	    if (prefs->startup_phase==4) {
 	      lives_exit();
 	    }
 	  }
@@ -1468,17 +1480,15 @@ static void lives_init(_ign_opts *ign_opts) {
 
 
     if (prefs->startup_phase!=0) {
-      splash_end();
-      if (prefs->startup_phase<=3) {
-	set_int_pref("startup_phase",3);
-	prefs->startup_phase=3;
-	
-	if (!do_startup_tests(FALSE)) {
-	  lives_exit();
-	}
+      gchar *txt;
 
-	do_startup_interface_query();
-      }
+      splash_end();
+      set_int_pref("startup_phase",5);
+      prefs->startup_phase=5;
+      do_startup_interface_query();
+      txt=get_new_install_msg();
+      startup_message_nonfatal(txt);
+      g_free(txt);
 
       set_int_pref("startup_phase",100); // tell backend to delete this
       prefs->startup_phase=100;
@@ -1812,7 +1822,13 @@ capability *get_capabilities (void) {
 
   if (numtok>3&&strlen (array[3])) {
     if (!strcmp(array[3],"!updmsg")) {
-      get_upd_msg(capable->startup_msg,256);
+      gchar *text=get_upd_msg();
+      g_snprintf(capable->startup_msg,256,"%s\n\n",text);
+      g_free(text);
+
+      if (numtok>4&&strlen (array[4])) {
+	g_strappend (capable->startup_msg,256,array[4]);
+      }
     }
     else {
       g_snprintf(capable->startup_msg,256,"%s\n\n",array[3]);
@@ -1941,12 +1957,12 @@ void print_opthelp(void) {
 }
 
 //// things to do - on startup
-
+#ifdef HAVE_YUV4MPEG
 static gboolean open_yuv4m_startup(gpointer data) {
   on_open_yuv4m_activate(NULL,data);
   return FALSE;
 }
-
+#endif
 
 
 /////////////////////////////////
@@ -1975,7 +1991,7 @@ static gboolean lives_startup(gpointer data) {
       // non-fatal errors
       gchar *err=g_strdup_printf(_ ("\n\nThe theme you requested could not be located. Please make sure you have the themes installed in\n%s/%s.\n(Maybe you need to change the value of <prefix_dir> in your ~/.lives file)\n"),(tmp=g_filename_to_utf8(prefs->prefix_dir,-1,NULL,NULL,NULL)),THEME_DIR);
       g_free(tmp);
-      startup_message_nonfatal (g_strdup (err));
+      startup_message_nonfatal (err);
       g_free(err);
       g_snprintf(prefs->theme,64,"none");
       upgrade_error=TRUE;
@@ -2189,6 +2205,7 @@ static gboolean lives_startup(gpointer data) {
 #ifdef HAVE_YUV4MPEG
   if (strlen(prefs->yuvin)>0) g_idle_add(open_yuv4m_startup,NULL);
 #endif
+
 
   return FALSE;
 }
@@ -2493,7 +2510,6 @@ int main (int argc, char *argv[]) {
 	if (optind<argc) start=g_strtod(argv[optind++],NULL); // start time (seconds)
 	if (optind<argc) end=atoi(argv[optind++]); // number of frames
       }}}
-
 
   g_idle_add(lives_startup,NULL);
 

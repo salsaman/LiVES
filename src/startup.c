@@ -23,7 +23,7 @@ static gboolean prompt_existing_dir(gchar *dirname, guint64 freespace, gboolean 
     gchar *fspstr=lives_format_storage_space_string(freespace);
     msg=g_strdup_printf(_("A directory named\n%s\nalready exists. Do you wish to use this directory ?\n\n(Free space = %s)\n"),dirname,fspstr);
     g_free(fspstr);
-    res=do_warning_dialog(msg);
+    res=do_yesno_dialog(msg);
   }
   else
     {

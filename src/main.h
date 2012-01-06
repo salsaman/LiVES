@@ -85,14 +85,15 @@ POSSIBILITY OF SUCH DAMAGES.
 
 #endif // GUI_GTK
 
-#include "widget-helper.h"
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
 #include <signal.h>
 #include <assert.h>
+#include <errno.h>
+
+#include "widget-helper.h"
 
 #define QUOTEME(x) #x
 
@@ -757,8 +758,8 @@ gchar *ds_critical_msg(const gchar *dir, guint64 dsval);
 gchar *ds_warning_msg(const gchar *dir, guint64 dsval, guint64 cwarn, guint64 nwarn);
 gboolean check_storage_space(file *sfile, gboolean is_processing);
 
-void get_upd_msg(char *buf, size_t len);
-
+gchar *get_upd_msg(void);
+gchar *get_new_install_msg(void);
 
 gboolean ask_permission_dialog(int what);
 gboolean do_abort_check(void);
@@ -1009,7 +1010,8 @@ void set_pref (const gchar *key, const gchar *value);
 void delete_pref (const gchar *key);
 void set_boolean_pref(const gchar *key, gboolean value);
 void set_double_pref(const gchar *key, gdouble value);
-void set_int_pref(const gchar *key, gboolean value);
+void set_int_pref(const gchar *key, gint value);
+void set_int64_pref(const gchar *key, gint64 value);
 void set_list_pref(const char *key, GList *values);
 gboolean apply_prefs(gboolean skip_warnings);
 void save_future_prefs(void);

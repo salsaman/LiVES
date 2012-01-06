@@ -1927,7 +1927,9 @@ void play_file (void) {
   gshort audio_player=prefs->audio_player;
 
   weed_plant_t *pb_start_event=NULL;
+#ifdef RT_AUDIO
   gboolean exact_preview=FALSE;
+#endif
   gboolean has_audio_buffers=FALSE;
 
 #ifdef RT_AUDIO
@@ -1957,7 +1959,9 @@ void play_file (void) {
   if (mainw->multitrack!=NULL) {
     mainw->event_list=mainw->multitrack->event_list;
     pb_start_event=mainw->multitrack->pb_start_event;
+#ifdef RT_AUDIO
     exact_preview=mainw->multitrack->exact_preview;
+#endif
   }
 
   if (mainw->record) {
@@ -2632,7 +2636,7 @@ void play_file (void) {
 #endif
     if (audio_player!=AUD_PLAYER_JACK&&audio_player!=AUD_PLAYER_PULSE&&stopcom!=NULL) {
       // kill sound(if still playing)
-      lives_system(stopcom,FALSE);
+      lives_system(stopcom,TRUE);
       mainw->aud_file_to_kill=-1;
       g_free (stopcom);
     }

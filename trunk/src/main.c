@@ -1809,7 +1809,6 @@ capability *get_capabilities (void) {
   g_snprintf(future_prefs->tmpdir,PATH_MAX,"%s",prefs->tmpdir);
 
   prefs->startup_phase=atoi (array[2]);
-  get_upd_msg(capable->startup_msg,256);
 
   if (numtok>3&&strlen (array[3])) {
     if (!strcmp(array[3],"!updmsg")) {

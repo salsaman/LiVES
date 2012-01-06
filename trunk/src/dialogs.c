@@ -335,7 +335,7 @@ gboolean do_yesno_dialog(const gchar *text) {
 
   if (prefs->show_gui) {
     if (mainw->multitrack==NULL&&mainw->is_ready) transient=GTK_WINDOW(mainw->LiVES);
-    else if (mainw->multitrack->is_ready) transient=GTK_WINDOW(mainw->multitrack->window);
+    else if (mainw->multitrack!=NULL&&mainw->multitrack->is_ready) transient=GTK_WINDOW(mainw->multitrack->window);
   }
 
   mytext=g_strdup(text); // translation issues
@@ -2911,10 +2911,19 @@ void do_set_noclips_error(const char *setname) {
 }
 
 
-void get_upd_msg(char *buf, size_t len) {
+gchar * get_upd_msg(void) {
   LIVES_DEBUG("upd msg !");
   // TRANSLATORS: make sure the menu text matches what is in gui.c
-  g_snprintf(buf,len,_("\nWelcome to LiVES version %s\n\nAfter upgrading, you are *strongly* advised to run:\n\nFile -> Clean up Diskspace\n"),LiVES_VERSION);
+  gchar *msg=g_strdup_printf(_("\nWelcome to LiVES version %s\n\nAfter upgrading, you are *strongly* advised to run:\n\nFile -> Clean up Diskspace\n"),LiVES_VERSION);
+  return msg;
+}
+
+
+gchar * get_new_install_msg(void) {
+  LIVES_DEBUG("upd msg !");
+  // TRANSLATORS: make sure the menu text matches what is in gui.c
+  gchar *msg=g_strdup_printf(_("\n\nWelcome to LiVES version %s !\n\n"),LiVES_VERSION);
+  return msg;
 }
 
 

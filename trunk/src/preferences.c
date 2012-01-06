@@ -260,6 +260,17 @@ set_int_pref(const gchar *key, gint value) {
   g_free(com);
 }
 
+
+void
+set_int64_pref(const gchar *key, gint64 value) {
+  gchar *com=g_strdup_printf("smogrify set_pref \"%s\" %"PRId64,key,value);
+  if (system(com)) {
+    tempdir_warning();
+  }
+  g_free(com);
+}
+
+
 void
 set_double_pref(const gchar *key, gdouble value) {
   gchar *com=g_strdup_printf("smogrify set_pref \"%s\" %.3f",key,value);
@@ -433,8 +444,8 @@ gboolean apply_prefs(gboolean skip_warn) {
   gboolean show_recent=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->recent_check));
   gboolean stream_audio_out=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_stream_audio));
 
-  guint64 ds_warn_level=gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(prefsw->spinbutton_warn_ds));
-  guint64 ds_crit_level=gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(prefsw->spinbutton_crit_ds));
+  guint64 ds_warn_level=gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(prefsw->spinbutton_warn_ds))*1000000;
+  guint64 ds_crit_level=gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(prefsw->spinbutton_crit_ds))*1000000;
 
   gboolean warn_fps=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_warn_fps));
   gboolean warn_save_set=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_warn_save_set));
@@ -990,13 +1001,13 @@ gboolean apply_prefs(gboolean skip_warn) {
   if (ds_warn_level!=prefs->ds_warn_level) {
     prefs->ds_warn_level=ds_warn_level;
     mainw->next_ds_warn_level=prefs->ds_warn_level;
-    set_int_pref("ds_warn_level",ds_warn_level);
+    set_int64_pref("ds_warn_level",ds_warn_level);
   }
 
 
   if (ds_crit_level!=prefs->ds_crit_level) {
     prefs->ds_crit_level=ds_crit_level;
-    set_int_pref("ds_crit_level",ds_crit_level);
+    set_int64_pref("ds_crit_level",ds_crit_level);
   }
 
 
@@ -1757,7 +1768,12 @@ void on_prefDomainChanged(GtkTreeSelection *widget, gpointer dummy)
       prefsw->right_shown = prefsw->scrollw_right_gui;
     }
   }
+
+  // this is needed to force the window to update in some cases
+  if (GTK_WIDGET_VISIBLE(prefsw->prefs_dialog)) gtk_widget_show_all(prefsw->prefs_dialog);
   gtk_widget_queue_draw(prefsw->prefs_dialog);
+  if (dummy==NULL) on_prefDomainChanged(widget,GINT_TO_POINTER(1));
+  
 }
 
 /*
@@ -1852,7 +1868,6 @@ _prefsw *create_prefs_dialog (void) {
   GtkWidget *dialog_vbox_main;
   GtkWidget *dialog_table;
   GtkWidget *dialog_hpaned;
-  GtkTreeSelection *selection;
   GtkWidget *list_scroll;
 
   GdkPixbuf *pixbuf_multitrack;
@@ -4747,6 +4762,8 @@ _prefsw *create_prefs_dialog (void) {
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_warn_no_pulse), !(prefs->warning_mask&WARN_MASK_NO_PULSE_CONNECT));
   // ---
 
+
+
   icon = g_build_filename(prefs->prefix_dir, ICON_DIR, "pref_warning.png", NULL);
   pixbuf_warnings = gdk_pixbuf_new_from_file(icon, NULL);
   g_free(icon);
@@ -5720,6 +5737,9 @@ _prefsw *create_prefs_dialog (void) {
   prefs_add_to_list(prefsw->prefs_list, pixbuf_midi, _("MIDI/Joystick learner"), LIST_ENTRY_MIDI);
   gtk_container_add (GTK_CONTAINER (dialog_table), prefsw->scrollw_right_midi);
 
+  prefsw->selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(prefsw->prefs_list));
+  gtk_tree_selection_set_mode(prefsw->selection, GTK_SELECTION_SINGLE);
+
   // In multitrack mode multitrack/render settings should be selected by default!
   if (mainw->multitrack != NULL){
     select_pref_list_row(LIST_ENTRY_MULTITRACK);
@@ -5728,9 +5748,8 @@ _prefsw *create_prefs_dialog (void) {
   // 
   // end
   //
-  selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(prefsw->prefs_list));
-  gtk_tree_selection_set_mode(selection, GTK_SELECTION_SINGLE);
-  g_signal_connect(selection, "changed", G_CALLBACK(on_prefDomainChanged), NULL);
+
+  g_signal_connect(prefsw->selection, "changed", G_CALLBACK(on_prefDomainChanged), NULL);
   //
 
   dialog_action_area8 = GTK_DIALOG (prefsw->prefs_dialog)->action_area;
@@ -5980,8 +5999,6 @@ _prefsw *create_prefs_dialog (void) {
   g_list_free_strings (audp);
   g_list_free (audp);
 
-  on_prefDomainChanged(selection,NULL);
-
   return prefsw;
 }
 
@@ -5998,7 +6015,12 @@ on_preferences_activate(GtkMenuItem *menuitem, gpointer user_data)
   future_prefs->disabled_decoders=g_list_copy_strings(prefs->disabled_decoders);
 
   prefsw = create_prefs_dialog();
+
+  // need to do exactly this, else the window does not get properly centered on some WMs
   gtk_widget_show(prefsw->prefs_dialog);
+  while (g_main_context_iteration(NULL,FALSE));
+  on_prefDomainChanged(prefsw->selection,NULL);
+
 }
 
 /*!
@@ -6043,7 +6065,6 @@ on_prefs_apply_clicked(GtkButton *button, gpointer user_data)
 
   GtkTreeIter iter;
   GtkTreeModel *model;
-  GtkTreeSelection *selection;
   guint selected_idx;
  
   // Applying preferences, so 'Apply' and 'Revert' buttons are getting disabled
@@ -6053,8 +6074,7 @@ on_prefs_apply_clicked(GtkButton *button, gpointer user_data)
 
   // Get currently selected row number
   model = gtk_tree_view_get_model(GTK_TREE_VIEW(prefsw->prefs_list));
-  selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(prefsw->prefs_list));
-  if (gtk_tree_selection_get_selected(selection, &model, &iter)) {
+  if (gtk_tree_selection_get_selected(prefsw->selection, &model, &iter)) {
     gtk_tree_model_get(model, &iter, LIST_NUM, &selected_idx, -1);
   }
   else{
@@ -6101,7 +6121,6 @@ select_pref_list_row(guint selected_idx)
 {
   GtkTreeIter iter;
   GtkTreeModel *model;
-  GtkTreeSelection *selection;
   gboolean valid;
   guint idx;
 
@@ -6111,8 +6130,7 @@ select_pref_list_row(guint selected_idx)
     gtk_tree_model_get(model, &iter, LIST_NUM, &idx, -1);
     //
     if (idx == selected_idx){
-      selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(prefsw->prefs_list));
-      gtk_tree_selection_select_iter(selection, &iter);
+      gtk_tree_selection_select_iter(prefsw->selection, &iter);
       break;
     }
     //

@@ -8617,7 +8617,7 @@ void letterbox_layer (weed_plant_t *layer, int width, int height, int nwidth, in
   int error;
   int offs_x=0,offs_y=0;
   int pal,nplanes;
-  int interp;
+  GdkInterpType interp;
 
   int *rowstrides,*irowstrides;
 

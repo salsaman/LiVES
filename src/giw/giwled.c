@@ -83,15 +83,15 @@ giw_led_get_type ()
 }
 
 static void
-giw_led_class_init (GiwLedClass *class)
+giw_led_class_init (GiwLedClass *xclass)
 {
   GtkObjectClass *object_class;
   GtkWidgetClass *widget_class;
 
-  object_class = (GtkObjectClass*) class;
-  widget_class = (GtkWidgetClass*) class;
+  object_class = (GtkObjectClass*) xclass;
+  widget_class = (GtkWidgetClass*) xclass;
 
-  parent_class = gtk_type_class (gtk_widget_get_type ());
+  parent_class = (GtkWidgetClass *)gtk_type_class (gtk_widget_get_type ());
 
   object_class->destroy = giw_led_destroy;
 
@@ -102,8 +102,8 @@ giw_led_class_init (GiwLedClass *class)
   widget_class->button_press_event = giw_led_button_press;
   
   giw_led_signals[MODE_CHANGED_SIGNAL] = g_signal_new ("mode_changed",
-					 G_TYPE_FROM_CLASS (class),
-	                                 G_SIGNAL_RUN_FIRST | G_SIGNAL_ACTION,
+					 G_TYPE_FROM_CLASS (xclass),
+						       (GSignalFlags)(G_SIGNAL_RUN_FIRST | G_SIGNAL_ACTION),
 	                                 G_STRUCT_OFFSET (GiwLedClass, mode_changed),
                                          NULL, 
                                          NULL,                
@@ -136,7 +136,7 @@ giw_led_new (void)
 {
   GiwLed *led;
 
-  led = gtk_type_new (giw_led_get_type ());
+  led = (GiwLed *)gtk_type_new (giw_led_get_type ());
   
   return GTK_WIDGET (led);
 }
@@ -255,16 +255,16 @@ giw_led_expose (GtkWidget      *widget,
       
   // Drawing backgorund
   gtk_paint_flat_box (widget->style,
-			widget->window,
-		      widget->parent==NULL?GTK_STATE_NORMAL:widget->parent->state,
-			GTK_SHADOW_NONE,
-			&rect,
-			widget,
-			NULL, 
-			0, 
-			0, 
-			-1,
-			-1);
+		      widget->window,
+		      (GtkStateType)(widget->parent==NULL?GTK_STATE_NORMAL:widget->parent->state),
+		      GTK_SHADOW_NONE,
+		      &rect,
+		      widget,
+		      NULL, 
+		      0, 
+		      0, 
+		      -1,
+		      -1);
   
   
   gc=gdk_gc_new(widget->window); // Allocating memory

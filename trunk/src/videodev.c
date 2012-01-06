@@ -113,7 +113,7 @@ static void new_frame_cb (unicap_event_t event, unicap_handle_t handle,
 
 
 gboolean weed_layer_set_from_lvdev (weed_plant_t *layer, file *sfile, gdouble timeoutsecs) {
-  lives_vdev_t *ldev=sfile->ext_src;
+  lives_vdev_t *ldev=(lives_vdev_t *)sfile->ext_src;
   unicap_data_buffer_t *returned_buffer=NULL;
   void **pixel_data;
   void *odata=ldev->buffer1.data;
@@ -132,7 +132,7 @@ gboolean weed_layer_set_from_lvdev (weed_plant_t *layer, file *sfile, gdouble ti
   if (ldev->buffer_type==UNICAP_BUFFER_TYPE_USER) {
 
     if (weed_palette_get_numplanes(ldev->current_palette)==1||ldev->is_really_grey) {
-      ldev->buffer1.data=weed_get_voidptr_value(layer,"pixel_data",&error);
+      ldev->buffer1.data=(unsigned char *)weed_get_voidptr_value(layer,"pixel_data",&error);
     }
 
     unicap_queue_buffer (ldev->handle, &ldev->buffer1);
@@ -144,7 +144,7 @@ gboolean weed_layer_set_from_lvdev (weed_plant_t *layer, file *sfile, gdouble ti
       unicap_dequeue_buffer (ldev->handle, &returned_buffer);
       unicap_start_capture (ldev->handle);
 #endif
-      ldev->buffer1.data=odata;
+      ldev->buffer1.data=(unsigned char *)odata;
       return FALSE;
     }
   }
@@ -187,7 +187,7 @@ gboolean weed_layer_set_from_lvdev (weed_plant_t *layer, file *sfile, gdouble ti
 
   weed_free(pixel_data);
 
-  ldev->buffer1.data=odata;
+  ldev->buffer1.data=(unsigned char *)odata;
 
   return TRUE;
 }
@@ -326,7 +326,7 @@ static unicap_format_t *lvdev_get_best_format(const unicap_format_t *formats,
 static gboolean open_vdev_inner(unicap_device_t *device) {
   // create a virtual clip
   lives_vdev_t *ldev=(lives_vdev_t *)g_malloc(sizeof(lives_vdev_t));
-  const unicap_format_t formats[MAX_FORMATS];
+  unicap_format_t formats[MAX_FORMATS];
   unicap_format_t *format;
 
   // open dev
@@ -407,10 +407,10 @@ static gboolean open_vdev_inner(unicap_device_t *device) {
 
   cfile->ext_src=ldev;
 
-  ldev->buffer1.data = g_malloc (format->buffer_size);
+  ldev->buffer1.data = (unsigned char *)g_malloc (format->buffer_size);
   ldev->buffer1.buffer_size = format->buffer_size;
 
-  ldev->buffer2.data = g_malloc (format->buffer_size);
+  ldev->buffer2.data = (unsigned char *)g_malloc (format->buffer_size);
   ldev->buffer2.buffer_size = format->buffer_size;
 
   ldev->buffer_ready=0;

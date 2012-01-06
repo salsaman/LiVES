@@ -57,7 +57,7 @@ gboolean lives_pulse_init (short startup_phase) {
 
   pa_mloop=pa_threaded_mainloop_new();
   pcon=pa_context_new(pa_threaded_mainloop_get_api(pa_mloop),"LiVES");
-  pa_context_connect(pcon,NULL,0,NULL);
+  pa_context_connect(pcon,NULL,(pa_context_flags_t)0,NULL);
   pa_threaded_mainloop_start(pa_mloop);
 
   pa_state=pa_context_get_state(pcon);
@@ -136,7 +136,7 @@ static void sample_silence_pulse (pulse_driver_t *pdriver, size_t nbytes, size_t
   if (xbytes<=0) return;
   while (nbytes>0) {
     if (nbytes<xbytes) xbytes=nbytes;
-    buff=g_try_malloc0(xbytes);
+    buff=(guchar *)g_try_malloc0(xbytes);
     if (!buff) return;
     if (pdriver->astream_fd!=-1) audio_stream(buff,xbytes,pdriver->astream_fd);
     pa_stream_write(pdriver->pstream,buff,xbytes,pulse_buff_free,0,PA_SEEK_RELATIVE);
@@ -409,7 +409,7 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
  #ifdef DEBUG_PULSE
 	 g_printerr("%ld inputFramesAvailable == %ld, %ld, %ld %ld,pulseFramesAvailable == %ld\n", pulsed->aPlayPtr->size, inputFramesAvailable, in_frames, pulsed->in_arate,pulsed->out_arate,pulseFramesAvailable);
  #endif
-	 buffer = pulsed->aPlayPtr->data;
+	 buffer = (guchar *)pulsed->aPlayPtr->data;
 
 	 numFramesToWrite = MIN(pulseFramesAvailable, (inputFramesAvailable/ABS(shrink_factor)+.001));
 
@@ -425,7 +425,7 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
 	   pulsed->sound_buffer=buffer;
 	 }
 	 else {
-	   pulsed->sound_buffer=g_try_malloc0(pulsed->chunk_size);
+	   pulsed->sound_buffer=(guchar *)g_try_malloc0(pulsed->chunk_size);
 	   if (!pulsed->sound_buffer) return;
 
 	   if (pulsed->in_asamps==8) {
@@ -464,7 +464,7 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
 	     buffer=pulsed->sound_buffer;
 	   }
 	   else {
-	     buffer=g_try_malloc(xbytes);
+	     buffer=(guchar *)g_try_malloc(xbytes);
 	     if (!buffer) return;
 	     w_memcpy(buffer,pulsed->sound_buffer+offs,xbytes);
 	     offs+=xbytes;
@@ -475,7 +475,7 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
 	 }
 	 else {
 	   if (pulsed->read_abuf>-1&&!pulsed->mute) {
-	     shortbuffer=g_try_malloc0(xbytes);
+	     shortbuffer=(short *)g_try_malloc0(xbytes);
 	     if (!shortbuffer) return;
 	     sample_move_abuf_int16(shortbuffer,pulsed->out_achans,(xbytes>>1)/pulsed->out_achans,pulsed->out_arate);
 	     if (pulsed->astream_fd!=-1) audio_stream(shortbuffer,xbytes,pulsed->astream_fd);
@@ -651,7 +651,7 @@ int pulse_audio_init(void) {
   pulsed.con=pcon;
 
   for (j=0;j<PULSE_MAX_OUTPUT_CHANS;j++) pulsed.volume[j]=1.0f;
-  pulsed.state=PA_STREAM_UNCONNECTED;
+  pulsed.state=(pa_context_state_t)PA_STREAM_UNCONNECTED;
   pulsed.in_arate=44100;
   pulsed.fd=-1;
   pulsed.seek_pos=pulsed.seek_end=0;
@@ -687,7 +687,7 @@ int pulse_audio_read_init(void) {
   pulsed_reader.con=pcon;
 
   for (j=0;j<PULSE_MAX_OUTPUT_CHANS;j++) pulsed_reader.volume[j]=1.0f;
-  pulsed_reader.state=PA_STREAM_UNCONNECTED;
+  pulsed_reader.state=(pa_context_state_t)PA_STREAM_UNCONNECTED;
   pulsed_reader.fd=-1;
   pulsed_reader.seek_pos=pulsed_reader.seek_end=0;
   pulsed_reader.msgq=NULL;
@@ -790,9 +790,10 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
     pa_stream_set_write_callback(pdriver->pstream,pulse_audio_write_process,pdriver);
 
 #ifdef PA_STREAM_START_UNMUTED
-    pa_stream_connect_playback(pdriver->pstream,NULL,&pa_battr,PA_STREAM_START_UNMUTED|PA_STREAM_ADJUST_LATENCY,&out_vol,NULL);
+    pa_stream_connect_playback(pdriver->pstream,NULL,&pa_battr,
+			       (pa_stream_flags_t)(PA_STREAM_START_UNMUTED|PA_STREAM_ADJUST_LATENCY),&out_vol,NULL);
 #else
-    pa_stream_connect_playback(pdriver->pstream,NULL,&pa_battr,PA_STREAM_ADJUST_LATENCY,&out_vol,NULL);
+    pa_stream_connect_playback(pdriver->pstream,NULL,&pa_battr,(pa_stream_flags_t)(PA_STREAM_ADJUST_LATENCY),&out_vol,NULL);
 #endif
 
     while (pa_stream_get_state(pdriver->pstream)!=PA_STREAM_READY) {
@@ -807,7 +808,8 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
 
     pa_stream_set_read_callback(pdriver->pstream,pulse_audio_read_process,pdriver);
 
-    pa_stream_connect_record(pdriver->pstream,NULL,&pa_battr,PA_STREAM_START_CORKED|PA_STREAM_EARLY_REQUESTS);
+    pa_stream_connect_record(pdriver->pstream,NULL,&pa_battr,
+			     (pa_stream_flags_t)(PA_STREAM_START_CORKED|PA_STREAM_EARLY_REQUESTS));
 
     while (pa_stream_get_state(pdriver->pstream)!=PA_STREAM_READY) {
       g_usleep(prefs->sleep_time);

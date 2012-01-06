@@ -2861,7 +2861,7 @@ void load_start_image(gint frame) {
   weed_timecode_t tc;
   gint rwidth,rheight,width,height;
   gboolean noswitch=mainw->noswitch;
-  gint interp;
+  GdkInterpType interp;
 
   if (mainw->multitrack!=NULL) return;
 
@@ -2978,7 +2978,7 @@ void load_end_image(gint frame) {
   weed_timecode_t tc;
   gint rwidth,rheight,width,height;
   gboolean noswitch=mainw->noswitch;
-  gint interp;
+  GdkInterpType interp;
 
   if (mainw->multitrack!=NULL) return;
 
@@ -3176,7 +3176,7 @@ void load_preview_image(gboolean update_always) {
     weed_set_int_value(layer,"frame",mainw->preview_frame);
     if (pull_frame_at_size(layer,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",tc,cfile->hsize,cfile->vsize,
 			   WEED_PALETTE_RGB24)) {
-      int interp=get_interp_value(prefs->pb_quality);
+        GdkInterpType interp=get_interp_value(prefs->pb_quality);
       convert_layer_palette(layer,WEED_PALETTE_RGB24,0);
       resize_layer(layer,cfile->hsize,cfile->vsize,interp);
       pixbuf=layer_to_pixbuf(layer);

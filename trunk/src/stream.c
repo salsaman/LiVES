@@ -524,7 +524,7 @@ void lives2lives_read_stream(const gchar *host, int port) {
     if (lstream->flags&LIVES_VSTREAM_FLAGS_IS_CONTINUATION) done=FALSE;
     if (!done) {
       // wrong packet type or id, or a continuation packet
-      guchar *tmpbuf=g_malloc(lstream->dsize);
+      guchar *tmpbuf=(guchar *)g_malloc(lstream->dsize);
       lives_stream_in_chunks(lstream,lstream->dsize,tmpbuf,lstream->dsize*4);
       // throw this packet away
       g_printerr("unrecognised packet in stream - dropping it.\n");
@@ -725,7 +725,7 @@ void weed_layer_set_from_lives2lives(weed_plant_t *layer, gint clip, lives_vstre
 
 	if (!done) {
 	  // wrong packet type or id, or a continuation of previous frame
-	  guchar *tmpbuf=g_malloc(lstream->dsize);
+	  guchar *tmpbuf=(guchar *)g_malloc(lstream->dsize);
 	  lives_stream_in_chunks(lstream,lstream->dsize,tmpbuf,lstream->dsize*4);
 	  // throw this packet away
 	  g_printerr("unrecognised packet in stream - dropping it.\n");
@@ -760,7 +760,7 @@ void weed_layer_set_from_lives2lives(weed_plant_t *layer, gint clip, lives_vstre
 	if (mainw->record&&!mainw->record_paused) {
 	  if (has_last_delta_ticks&&(abs64(currticks-lstream->timecode))<last_delta_ticks) {
 	    // drop this frame
-	    guchar *tmpbuf=g_malloc(lstream->dsize);
+	    guchar *tmpbuf=(guchar *)g_malloc(lstream->dsize);
 	    lives_stream_in_chunks(lstream,lstream->dsize,tmpbuf,lstream->dsize*4);
 	    // throw this packet away
 #ifdef DEBUG_STREAM_AGING
@@ -889,7 +889,7 @@ void weed_layer_set_from_lives2lives(weed_plant_t *layer, gint clip, lives_vstre
 	}
 	else {
 	  // this packet contains data for multiple planes
-	  guchar *fbuffer=g_malloc(lstream->dsize);
+	  guchar *fbuffer=(guchar *)g_malloc(lstream->dsize);
 	  size_t fbufoffs=0;
 	  size_t dsize=lstream->dsize;
 	  
@@ -934,7 +934,8 @@ void weed_layer_set_from_lives2lives(weed_plant_t *layer, gint clip, lives_vstre
 	else if (framedataread<(lstream->hsize*lstream->vsize*5)>>2) {
 	  target_size=((lstream->hsize*lstream->vsize*5)>>2)-framedataread;
 	  if (target_size>=lstream->dsize) {
-	    lives_stream_in_chunks(lstream,lstream->dsize,pixel_data[1]+framedataread-lstream->hsize*lstream->vsize,0);
+	    lives_stream_in_chunks(lstream,lstream->dsize,
+				   (guchar *)(pixel_data[1]+framedataread-lstream->hsize*lstream->vsize),0);
 	    if (mainw->cancelled) {
 	      weed_free(pixel_data);
 	      return;
@@ -942,7 +943,7 @@ void weed_layer_set_from_lives2lives(weed_plant_t *layer, gint clip, lives_vstre
 	  }
 	  else {
 	    // this packet contains data for multiple planes
-	    guchar *fbuffer=g_malloc(lstream->dsize);
+	    guchar *fbuffer=(guchar *)g_malloc(lstream->dsize);
 	    size_t fbufoffs=0;
 	    size_t dsize=lstream->dsize;
 	    
@@ -979,7 +980,8 @@ void weed_layer_set_from_lives2lives(weed_plant_t *layer, gint clip, lives_vstre
 	else {
 	  target_size=((lstream->hsize*lstream->vsize*3)>>1)-framedataread;
 	  if (target_size>=lstream->dsize) target_size=lstream->dsize;
-	  lives_stream_in_chunks(lstream,target_size,pixel_data[2]+framedataread-((lstream->hsize*lstream->vsize*5)>>2),0);
+	  lives_stream_in_chunks(lstream,target_size,
+				 (guchar *)(pixel_data[2]+framedataread-((lstream->hsize*lstream->vsize*5)>>2)),0);
 	  if (mainw->cancelled) {
 	    weed_free(pixel_data);
 	    return;

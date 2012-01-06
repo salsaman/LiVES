@@ -20,7 +20,7 @@ Alexandre Pereira Bueno - alpebu@yahoo.com.br
 James Scott Jr <skoona@users.sourceforge.net>
 */
 
-// additional code G. Finch (salsaman@gmail.com) 2010 - 
+// additional code G. Finch (salsaman@gmail.com) 2010 - 2012
 
 
 #include <math.h>
@@ -126,15 +126,15 @@ giw_knob_get_type ()
 }
 
 static void
-giw_knob_class_init (GiwKnobClass *class)
+giw_knob_class_init (GiwKnobClass *xclass)
 {
   GtkObjectClass *object_class;
   GtkWidgetClass *widget_class;
 
-  object_class = (GtkObjectClass*) class;
-  widget_class = (GtkWidgetClass*) class;
+  object_class = (GtkObjectClass*) xclass;
+  widget_class = (GtkWidgetClass*) xclass;
 
-  parent_class = gtk_type_class (gtk_widget_get_type ());
+  parent_class = (GtkWidgetClass *)gtk_type_class (gtk_widget_get_type ());
 
   object_class->destroy = giw_knob_destroy;
 
@@ -171,7 +171,7 @@ giw_knob_new (GtkAdjustment *adjustment)
   
   g_return_val_if_fail (adjustment != NULL, NULL);
 
-  knob = gtk_type_new (giw_knob_get_type ());
+  knob = (GiwKnob *)gtk_type_new (giw_knob_get_type ());
   giw_knob_set_adjustment(knob, adjustment);
   
   // Without this, in the first draw, the pointer wouldn't be in the right value
@@ -187,7 +187,7 @@ giw_knob_new_with_adjustment (gdouble value,
 {
   GiwKnob *knob;
 
-  knob = gtk_type_new (giw_knob_get_type ());
+  knob = (GiwKnob *)gtk_type_new (giw_knob_get_type ());
   giw_knob_set_adjustment(knob, (GtkAdjustment*) gtk_adjustment_new (value, lower, upper, 1.0, 1.0, 1.0));
   
   // Without this, in the first draw, the pointer wouldn't be in the right value

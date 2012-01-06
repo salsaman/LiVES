@@ -20,7 +20,7 @@ Alexandre Pereira Bueno - alpebu@yahoo.com.br
 James Scott Jr <skoona@users.sourceforge.net>
 */
 
-// additional code G. Finch (salsaman@gmail.com) 2010 - 
+// additional code G. Finch (salsaman@gmail.com) 2010 - 2012
 
 
 #include <stdio.h>
@@ -106,15 +106,15 @@ giw_vslider_get_type ()
 }
 
 static void
-giw_vslider_class_init (GiwVSliderClass *class)
+giw_vslider_class_init (GiwVSliderClass *xclass)
 {
   GtkObjectClass *object_class;
   GtkWidgetClass *widget_class;
 
-  object_class = (GtkObjectClass*) class;
-  widget_class = (GtkWidgetClass*) class;
+  object_class = (GtkObjectClass*) xclass;
+  widget_class = (GtkWidgetClass*) xclass;
 
-  parent_class = gtk_type_class (gtk_widget_get_type ());
+  parent_class = (GtkWidgetClass *)gtk_type_class (gtk_widget_get_type ());
 
   object_class->destroy = giw_vslider_destroy;
 
@@ -153,7 +153,7 @@ giw_vslider_new (GtkAdjustment *adjustment)
 
   g_return_val_if_fail (adjustment != NULL, NULL);
   
-  vslider = gtk_type_new (giw_vslider_get_type ());
+  vslider = (GiwVSlider *)gtk_type_new (giw_vslider_get_type ());
   
   giw_vslider_set_adjustment(vslider, adjustment);
   
@@ -167,7 +167,7 @@ giw_vslider_new_with_adjustment (gdouble value,
 {
   GiwVSlider *vslider;
   
-  vslider = gtk_type_new (giw_vslider_get_type ());
+  vslider = (GiwVSlider *)gtk_type_new (giw_vslider_get_type ());
   
   giw_vslider_set_adjustment(vslider, (GtkAdjustment*) gtk_adjustment_new (value, lower, upper, 1.0, 1.0, 1.0));
   

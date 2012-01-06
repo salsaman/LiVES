@@ -21,7 +21,7 @@ static size_t zero_buff_count=0;
 
 static gboolean check_zero_buff(size_t check_size) {
   if (check_size>zero_buff_count) {
-    zero_buff=g_try_realloc(zero_buff,check_size);
+    zero_buff=(unsigned char *)g_try_realloc(zero_buff,check_size);
     if (zero_buff) {
       memset(zero_buff+zero_buff_count,0,check_size-zero_buff_count);
       zero_buff_count=check_size;
@@ -74,7 +74,7 @@ gboolean lives_jack_init (void) {
   else {
     unsetenv ("JACK_START_SERVER");
     setenv ("JACK_NO_START_SERVER","1",0);
-    options|=JackNoStartServer;
+    options=(jack_options_t)((int)options | (int)JackNoStartServer);
   }
 
   // startup the server
@@ -557,7 +557,7 @@ static int audio_process (nframes_t nframes, void *arg) {
 	      // need to remap channels to stereo (assumed for now)
 	      size_t bysize=4,tsize=0;
 	      unsigned char *inbuf=(unsigned char *)cache_buffer->buffer16[0];
-	      xbuf=g_try_malloc(nbytes);
+	      xbuf=(unsigned char *)g_try_malloc(nbytes);
 	      if (!xbuf) {
 		for(i = 0; i < jackd->num_output_channels; i++) sample_silence_dS(out_buffer[i], numFramesToWrite);
 		
@@ -613,7 +613,7 @@ static int audio_process (nframes_t nframes, void *arg) {
 	      // need to remap channels to stereo (assumed for now)
 	      size_t bysize=4,tsize=0;
 	      unsigned char *inbuf=(unsigned char *)out_buffer;
-	      xbuf=g_try_malloc(nbytes);
+	      xbuf=(unsigned char *)g_try_malloc(nbytes);
 	      if (!xbuf) {
 		for(i = 0; i < jackd->num_output_channels; i++) sample_silence_dS(out_buffer[i], numFramesToWrite);
 		
@@ -702,7 +702,7 @@ static int audio_process (nframes_t nframes, void *arg) {
     /* if we were told to reset then zero out some variables */
     /* and transition to STOPPED */
     if(jackd->state == JackTReset) {
-      jackd->state = JackTStopped; /* transition to STOPPED */
+      jackd->state = (jack_transport_state_t)JackTStopped; /* transition to STOPPED */
     }
   }
 
@@ -842,7 +842,7 @@ void jack_shutdown(void* arg) {
 static void jack_reset_driver(jack_driver_t *jackd) {
   //g_printerr("resetting jackd->dev_idx(%d)\n", jackd->dev_idx);
   /* tell the callback that we are to reset, the callback will transition this to STOPPED */
-  jackd->state=JackTReset;
+  jackd->state=(jack_transport_state_t)JackTReset;
 }
 
 
@@ -886,7 +886,7 @@ static void jack_error_func(const char *desc) {
 int jack_open_device(jack_driver_t *jackd) {
   const char *client_name="LiVES_audio_out";
   const char *server_name="default";
-  jack_options_t options=JackServerName|JackNoStartServer;
+  jack_options_t options=(jack_options_t)((int)JackServerName|(int)JackNoStartServer);
   jack_status_t status;
   int i;
   
@@ -972,7 +972,7 @@ int jack_open_device_read(jack_driver_t *jackd) {
   // open a device to read audio from jack
   const char *client_name="LiVES_audio_in";
   const char *server_name="default";
-  jack_options_t options=JackServerName|JackNoStartServer;
+  jack_options_t options=(jack_options_t)((int)JackServerName|(int)JackNoStartServer);
   jack_status_t status;
   int i;
 
@@ -1292,7 +1292,7 @@ int jack_audio_init(void) {
     jackd->client=NULL;
     jackd->in_use=FALSE;
     for (j=0;j<JACK_MAX_OUTPUT_PORTS;j++) jackd->volume[j]=1.0f;
-    jackd->state=JackTClosed;
+    jackd->state=(jack_transport_state_t)JackTClosed;
     jackd->sample_out_rate=jackd->sample_in_rate=0;
     jackd->seek_pos=jackd->seek_end=0;
     jackd->msgq=NULL;
@@ -1325,7 +1325,7 @@ int jack_audio_read_init(void) {
     jackd->client=NULL;
     jackd->in_use=FALSE;
     for (j=0;j<JACK_MAX_INPUT_PORTS;j++) jackd->volume[j]=1.0f;
-    jackd->state=JackTClosed;
+    jackd->state=(jack_transport_state_t)JackTClosed;
     jackd->sample_out_rate=jackd->sample_in_rate=0;
     jackd->seek_pos=jackd->seek_end=0;
     jackd->msgq=NULL;

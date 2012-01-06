@@ -1,6 +1,6 @@
 // cvirtual.c
 // LiVES
-// (c) G. Finch 2008 - 2011 <salsaman@xs4all.nl,salsaman@gmail.com>
+// (c) G. Finch 2008 - 2012 <salsaman@xs4all.nl,salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -174,7 +174,7 @@ void del_frame_index(file *sfile) {
 
 gboolean check_clip_integrity(file *sfile, const lives_clip_data_t *cdata) {
   int i;
-  int empirical_img_type;
+  lives_image_type_t empirical_img_type;
 
   // check clip integrity upon loading
 

@@ -486,7 +486,7 @@ static void add_test(GtkWidget *table, gint row, gchar *ttext, gboolean noskip) 
   }
   gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_LEFT);
 
-  gtk_table_attach (GTK_TABLE (table), label, 0, 1, row, row+1, 0, 0, 10, 10);
+  gtk_table_attach (GTK_TABLE (table), label, 0, 1, row, row+1, (GtkAttachOptions)0, (GtkAttachOptions)0, 10, 10);
   gtk_widget_show(label);
 
   if (!noskip) {
@@ -496,10 +496,10 @@ static void add_test(GtkWidget *table, gint row, gchar *ttext, gboolean noskip) 
     if (palette->style&STYLE_1) {
       gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
     }
-    gtk_table_attach (GTK_TABLE (table), label, 1, 2, row, row+1, 0, 0, 10, 10);
+    gtk_table_attach (GTK_TABLE (table), label, 1, 2, row, row+1, (GtkAttachOptions)0, (GtkAttachOptions)0, 10, 10);
     gtk_widget_show(label);
 
-    gtk_table_attach (GTK_TABLE (table), image, 2, 3, row, row+1, 0, 0, 0, 10);
+    gtk_table_attach (GTK_TABLE (table), image, 2, 3, row, row+1, (GtkAttachOptions)0, (GtkAttachOptions)0, 0, 10);
     gtk_widget_show(image);
   }
 
@@ -516,10 +516,10 @@ static gboolean pass_test(GtkWidget *table, gint row) {
     gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
 
-  gtk_table_attach (GTK_TABLE (table), label, 1, 2, row, row+1, 0, 0, 10, 10);
+  gtk_table_attach (GTK_TABLE (table), label, 1, 2, row, row+1, (GtkAttachOptions)0, (GtkAttachOptions)0, 10, 10);
   gtk_widget_show(label);
 
-  gtk_table_attach (GTK_TABLE (table), image, 2, 3, row, row+1, 0, 0, 0, 10);
+  gtk_table_attach (GTK_TABLE (table), image, 2, 3, row, row+1, (GtkAttachOptions)0, (GtkAttachOptions)0, 0, 10);
   gtk_widget_show(image);
 
   while (g_main_context_iteration(NULL,FALSE));
@@ -533,7 +533,7 @@ static gboolean fail_test(GtkWidget *table, gint row, gchar *ftext) {
 
   label=gtk_label_new(ftext);
 
-  gtk_table_attach (GTK_TABLE (table), label, 3, 4, row, row+1, 0, 0, 10, 10);
+  gtk_table_attach (GTK_TABLE (table), label, 3, 4, row, row+1, (GtkAttachOptions)0, (GtkAttachOptions)0, 10, 10);
   gtk_widget_show(label);
   
   if (palette->style&STYLE_1) {
@@ -547,10 +547,10 @@ static gboolean fail_test(GtkWidget *table, gint row, gchar *ftext) {
     gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
 
-  gtk_table_attach (GTK_TABLE (table), label, 1, 2, row, row+1, 0, 0, 10, 10);
+  gtk_table_attach (GTK_TABLE (table), label, 1, 2, row, row+1, (GtkAttachOptions)0, (GtkAttachOptions)0, 10, 10);
   gtk_widget_show(label);
 
-  gtk_table_attach (GTK_TABLE (table), image, 2, 3, row, row+1, 0, 0, 0, 10);
+  gtk_table_attach (GTK_TABLE (table), image, 2, 3, row, row+1, (GtkAttachOptions)0, (GtkAttachOptions)0, 0, 10);
   gtk_widget_show(image);
 
   while (g_main_context_iteration(NULL,FALSE));
@@ -692,7 +692,7 @@ gboolean do_startup_tests(gboolean tshoot) {
     else mainw->write_failed=FALSE;
 
     if (!mainw->write_failed) {
-      abuff=calloc(44100,4);
+      abuff=(guchar *)calloc(44100,4);
       if (!abuff) {
 	tmp=g_strdup(_("Unable to allocate 176400 bytes memory."));
 	fail_test(table,1,tmp);

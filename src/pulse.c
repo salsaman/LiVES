@@ -76,7 +76,7 @@ gboolean lives_pulse_init (short startup_phase) {
     pcon=NULL;
     pulse_shutdown();
 
-    g_printerr("%s",_("\nUnable to connect to pulse audio server\n"));
+    LIVES_WARN("Unable to connect to pulseaudio server");
 
     if (!mainw->foreign) {
       if (startup_phase==0&&capable->has_sox) {
@@ -198,7 +198,8 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
 	 pulsed->fd=open(filename,O_RDONLY);
 	 if (pulsed->fd==-1) {
 	   // dont show gui errors - we are running in realtime thread
-	   g_printerr("pulsed: error opening %s\n",filename);
+	   LIVES_ERROR("pulsed: error opening");
+	   LIVES_ERROR(filename);
 	   pulsed->playing_file=-1;
 	 }
 	 else {
@@ -773,7 +774,7 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
   }
 
   if (pulse_server_rate==0) {
-    g_printerr("Warning - problem getting pulseaudio rate...expect more problems ahead.\n");
+    LIVES_WARN("Problem getting pulseaudio rate...expect more problems ahead.");
     return 1;
   }
 

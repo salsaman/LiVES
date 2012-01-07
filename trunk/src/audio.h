@@ -4,8 +4,8 @@
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
-#ifndef _HAS_LIVES_AUDIO_H
-#define _HAS_LIVES_AUDIO_H
+#ifndef HAS_LIVES_AUDIO_H
+#define HAS_LIVES_AUDIO_H
 
 #define SAMPLE_MAX_16BIT_P  32767.0f
 #define SAMPLE_MAX_16BIT_N  32768.0f

@@ -19,7 +19,7 @@
 #include "support.h"
 #include "main.h"
 #include "paramwindow.h"
-#include "effects-weed.h"
+#include "effects.h"
 #include "interface.h"
 
 #include "omc-learn.h"

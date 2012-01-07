@@ -49,8 +49,8 @@ POSSIBILITY OF SUCH DAMAGES.
 // - Salsaman
 
 
-#ifndef HAS_MAIN_H
-#define HAS_MAIN_H
+#ifndef HAS_LIVES_MAIN_H
+#define HAS_LIVES_MAIN_H
 
 #define GUI_GTK
 
@@ -221,9 +221,15 @@ typedef struct {
   double vel;
 } lives_audio_track_state_t;
 
-
+#if HAVE_SYSTEM_WEED
+#include <weed/weed.h>
+#include <weed/weed-events.h>
+#else
 #include "../libweed/weed.h"
 #include "../libweed/weed-events.h"
+#endif
+
+
 
 // see weed event spec. for more info
 
@@ -1247,5 +1253,5 @@ gchar *dummychar;
 #endif // LIVES_FATAL
 
 
-#endif // #ifndef HAS_MAIN_H
+#endif // #ifndef HAS_LIVES_MAIN_H
 

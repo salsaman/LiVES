@@ -4,8 +4,8 @@
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
-#ifndef _HAS_PLUGINS_H
-#define _HAS_PLUGINS_H
+#ifndef HAS_LIVES_PLUGINS_H
+#define HAS_LIVES_PLUGINS_H
 
 #include <gmodule.h>
 #include <unistd.h>
@@ -440,6 +440,7 @@ typedef struct {
 
 } lives_rfx_t;
 
+
 gboolean check_rfx_for_lives (lives_rfx_t *);
 
 void do_rfx_cleanup(lives_rfx_t *);
@@ -472,6 +473,10 @@ typedef struct {
 #define FX_CANDIDATE_DEINTERLACE 2
 
 #define MAX_FX_CANDIDATE_TYPES 3
+
+
+
+
 
 gboolean get_bool_param(void *value);
 gint get_int_param(void *value);

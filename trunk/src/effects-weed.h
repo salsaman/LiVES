@@ -1,8 +1,12 @@
 // effects-weed.h
 // LiVES (lives-exe)
-// (c) G. Finch 2005 - 2010
+// (c) G. Finch 2005 - 2012 <salsaman@gmail.com>
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
+
+
+#ifndef HAS_LIVES_EFFECTS_WEED_H
+#define HAS_LIVES_EFFECTS_WEED_H
 
 /// filter apply errors
 typedef enum {
@@ -48,9 +52,8 @@ gboolean has_video_chans_out(weed_plant_t *filter, gboolean count_opt);
 gboolean has_audio_chans_out(weed_plant_t *filter, gboolean count_opt);
 gboolean is_pure_audio(weed_plant_t *filter_or_instance, gboolean count_opt); ///< TRUE if audio in or out and no vid in/out
 
-gint weed_filter_categorise (weed_plant_t *pl, int in_channels, int out_channels);
-gint weed_filter_subcategorise (weed_plant_t *pl, int category, gboolean count_opt);
-gchar *weed_category_to_text(int cat, gboolean plural);
+lives_fx_cat_t weed_filter_categorise (weed_plant_t *pl, int in_channels, int out_channels);
+lives_fx_cat_t weed_filter_subcategorise (weed_plant_t *pl, lives_fx_cat_t category, gboolean count_opt);
 gboolean has_usable_palette(weed_plant_t *chantmpl);
 
 void weed_call_init_func(weed_plant_t *instance);
@@ -129,7 +132,8 @@ gboolean rte_keymode_valid (gint key, gint mode, gboolean is_userkey); ///< retu
 gint rte_keymode_get_filter_idx(gint key, gint mode); ///< returns filter_class index of key/mode (or -1 if no filter bound)
 gchar *rte_keymode_get_filter_name (gint key, gint mode); ///< returns name of filter_class bound to key/mode (or "")
 gchar *rte_keymode_get_plugin_name(gint key, gint mode); ///< returns name of plugin package containing filter_class (or "")
-gchar *rte_keymode_get_type (gint key, gint mode); ///< returns a string filter/instance type (or "")
+gchar *rte_keymode_get_type (gint key, gint mode, gboolean get_subtype); ///< returns a string filter/instance type (or "")
+lives_fx_cat_t rte_keymode_get_category (gint key, gint mode);
 weed_plant_t *rte_keymode_get_instance(gint key, gint mode); ///< returns filter_instance bound to key/mode (or NULL)
 weed_plant_t *rte_keymode_get_filter(gint key, gint mode); ///< returns filter_class bound to key/mode (or NULL)
 
@@ -218,3 +222,4 @@ void fill_param_vals_to (weed_plant_t *paramtmpl, weed_plant_t *param, int pnum,
 #define WEED_PLANT_IS_GUI(plant) (weed_get_plant_type(plant)==WEED_PLANT_GUI?1:0)
 
 
+#endif

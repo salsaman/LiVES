@@ -4,6 +4,9 @@
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
+#ifndef HAS_LIVES_CALLBACKS_H
+#define HAS_LIVES_CALLBACKS_H
+
 #include <gtk/gtk.h>
 
 gboolean
@@ -756,3 +759,6 @@ void on_lerrors_delete_clicked (GtkButton *, gpointer);
 void drag_from_outside(GtkWidget *widget, GdkDragContext *dcon, gint x, gint y, 
 		       GtkSelectionData *data, guint info, guint time, gpointer user_data);
 
+
+
+#endif

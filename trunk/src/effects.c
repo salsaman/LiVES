@@ -43,6 +43,77 @@ static weed_plant_t *resize_instance=NULL;
 
 ///////////////////////////////////////////////////
 
+// generic
+
+
+gchar *lives_fx_cat_to_text(lives_fx_cat_t cat, gboolean plural) {
+
+  // return value should be free'd after use
+  switch (cat) {
+
+    // main categories
+  case LIVES_FX_CAT_GENERATOR:
+    if (!plural) return (g_strdup(_("generator")));
+    else return (g_strdup(_("Generators")));
+  case LIVES_FX_CAT_TRANSITION:
+    if (!plural) return (g_strdup(_("transition")));
+    else return (g_strdup(_("Transitions")));
+  case LIVES_FX_CAT_FILTER:
+    if (!plural) return (g_strdup(_("effect")));
+    else return (g_strdup(_("Effects")));
+  case LIVES_FX_CAT_UTILITY:
+    if (!plural) return (g_strdup(_("utility")));
+    else return (g_strdup(_("Utilities")));
+  case LIVES_FX_CAT_COMPOSITOR:
+    if (!plural) return (g_strdup(_("compositor")));
+    else return (g_strdup(_("Compositors")));
+  case LIVES_FX_CAT_TAP:
+    if (!plural) return (g_strdup(_("tap")));
+    else return (g_strdup(_("Taps")));
+  case LIVES_FX_CAT_SPLITTER:
+    if (!plural) return (g_strdup(_("splitter")));
+    else return (g_strdup(_("Splitters")));
+  case LIVES_FX_CAT_CONVERTOR:
+    if (!plural) return (g_strdup(_("converter")));
+    else return (g_strdup(_("Converters")));
+  case LIVES_FX_CAT_ANALYSER:
+    if (!plural) return (g_strdup(_("analyser")));
+    else return (g_strdup(_("Analysers")));
+
+
+    // subcategories
+  case LIVES_FX_CAT_AV_TRANSITION:
+    if (!plural) return (g_strdup(_("audio/video")));
+    else return (g_strdup(_("Audio/Video Transitions")));
+  case LIVES_FX_CAT_VIDEO_TRANSITION:
+    if (!plural) return (g_strdup(_("video only")));
+    else return (g_strdup(_("Video only Transitions")));
+  case LIVES_FX_CAT_AUDIO_TRANSITION:
+    if (!plural) return (g_strdup(_("audio only")));
+    else return (g_strdup(_("Audio only Transitions")));
+  case LIVES_FX_CAT_AUDIO_MIXER:
+    if (!plural) return (g_strdup(_("audio")));
+    else return (g_strdup(_("Audio Mixers")));
+  case LIVES_FX_CAT_AUDIO_FILTER:
+    if (!plural) return (g_strdup(_("audio")));
+    else return (g_strdup(_("Audio Effects")));
+  case LIVES_FX_CAT_AUDIO_VOL:
+    if (!plural) return (g_strdup(_("audio volume controller")));
+    else return (g_strdup(_("Audio Volume Controllers")));
+  case LIVES_FX_CAT_VIDEO_ANALYSER:
+    if (!plural) return (g_strdup(_("video analyser")));
+    else return (g_strdup(_("Video analysers")));
+  case LIVES_FX_CAT_AUDIO_ANALYSER:
+    if (!plural) return (g_strdup(_("audio analyser")));
+    else return (g_strdup(_("Audio analysers")));
+
+
+  default:
+    return (g_strdup(_("unknown")));
+  }
+}
+
+
 
 // Rendered effects
 

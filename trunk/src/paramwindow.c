@@ -30,7 +30,7 @@
 #include "callbacks.h"
 #include "support.h"
 #include "resample.h"
-#include "effects-weed.h"
+#include "effects.h"
 #include "rte_window.h"
 #include "framedraw.h"
 

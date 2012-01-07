@@ -32,8 +32,8 @@ The OSC webpage is http://cnmat.cnmat.berkeley.edu/OpenSoundControl
 */
 
 #ifdef ENABLE_OSC
-#ifndef _HAS_OSC_H
-#define _HAS_OSC_H
+#ifndef HAS_LIVES_OSC_H
+#define HAS_LIVES_OSC_H
 
 #ifndef Boolean
 #define Boolean gboolean
@@ -78,5 +78,5 @@ void lives_osc_dump();
 gboolean lives_osc_act(OSCbuf *msg);
 
 
-#endif //_HAS_OSC_H
+#endif //HAS_LIVES_OSC_H
 #endif //ENABLE_OSC

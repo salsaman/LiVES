@@ -4,8 +4,8 @@
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
-#ifndef _HAS_OMC_LEARN_H
-#define _HAS_OMC_LEARN_H
+#ifndef HAS_LIVES_OMC_LEARN_H
+#define HAS_LIVES_OMC_LEARN_H
 
 /** max number of macros */
 #define N_OMC_MACROS 32
@@ -169,5 +169,5 @@ void on_midi_load_activate (GtkMenuItem *, gpointer);
 OSCbuf *omc_learner_decode(gint type, gint index, const gchar *string);
 
 
-#endif // _HAS_OMC_LEARN_H
+#endif // HAS_LIVES_OMC_LEARN_H
 

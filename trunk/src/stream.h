@@ -4,8 +4,8 @@
 // released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
-#ifndef _HAS_STREAM_H
-#define _HAS_STREAM_H
+#ifndef HAS_LIVES_STREAM_H
+#define HAS_LIVES_STREAM_H
 
 
 typedef struct {
@@ -62,4 +62,4 @@ lives_pandh_w* create_pandh_dialog (gint type);
 
 
 
-#endif // _HAS_STREAM_H
+#endif // HAS_LIVES_STREAM_H

@@ -61,7 +61,7 @@ static gboolean ca_canc;
 void type_label_set_text (gint key, gint mode) {
   int modes=rte_getmodespk();
   int idx=key*modes+mode;
-  gchar *type=rte_keymode_get_type(key+1,mode);
+  gchar *type=rte_keymode_get_type(key+1,mode,FALSE);
 
   if (strlen(type)) {
     gtk_label_set_text (GTK_LABEL(type_labels[idx]),g_strdup_printf(_("Type: %s"),type));
@@ -834,7 +834,7 @@ on_rte_info_clicked (GtkButton *button, gpointer user_data) {
   gint key=(gint)(key_mode/modes);
   gint mode=key_mode-key*modes;
 
-  gchar *type=rte_keymode_get_type(key+1,mode);
+  gchar *type;
   weed_plant_t *filter;
   gchar *plugin_name;
 
@@ -855,9 +855,17 @@ on_rte_info_clicked (GtkButton *button, gpointer user_data) {
   int filter_version;
   int weed_error;
 
+  lives_fx_cat_t cat;
+
   ////////////////////////
 
   if (!rte_keymode_valid(key+1,mode,TRUE)) return;
+
+  cat=rte_keymode_get_category(key+1,mode);
+  if (cat!=LIVES_FX_CAT_TRANSITION) {
+    type=rte_keymode_get_type(key+1,mode,TRUE);
+  }
+  else type=rte_keymode_get_type(key+1,mode,FALSE);
 
   plugin_name=rte_keymode_get_plugin_name(key+1,mode);
   filter=rte_keymode_get_filter(key+1,mode);

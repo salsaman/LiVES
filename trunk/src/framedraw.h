@@ -3,8 +3,8 @@
 // (c) G. Finch (salsaman@xs4all.nl,salsaman@gmail.com)
 // see file COPYING for licensing details : released under the GNU GPL 3 or later
 
-#ifndef _HAS_FRAMEDRAW_H
-#define _HAS_FRAMEDRAW_H
+#ifndef HAS_LIVES_FRAMEDRAW_H
+#define HAS_LIVES_FRAMEDRAW_H
 
 // min and max frame sizes for framedraw preview
 #define MIN_PRE_X 58

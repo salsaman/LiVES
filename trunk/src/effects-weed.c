@@ -22,7 +22,7 @@
 #endif
 
 #include "main.h"
-#include "effects-weed.h"
+#include "effects.h"
 
 ///////////////////////////////////
 
@@ -195,103 +195,53 @@ weed_plant_t *weed_bootstrap_func (weed_default_getter_f *value, int num_version
 // filter library functions
 
 
-gint weed_filter_categorise (weed_plant_t *pl, int in_channels, int out_channels) {
+lives_fx_cat_t weed_filter_categorise (weed_plant_t *pl, int in_channels, int out_channels) {
   weed_plant_t *filt=pl;
   int filter_flags,error;
-  if (WEED_PLANT_IS_FILTER_INSTANCE(pl)) filt=weed_get_plantptr_value(pl,"template",&error);
+  gboolean has_out_params=FALSE;
+  if (WEED_PLANT_IS_FILTER_INSTANCE(pl)) filt=weed_get_plantptr_value(pl,"filter_class",&error);
   filter_flags=weed_get_int_value(filt,"flags",&error);
-  if (filter_flags&WEED_FILTER_IS_CONVERTER) return 8;
-  if (in_channels==0&&out_channels>0) return 1; // generator
-  if (out_channels>1) return 7; // splitter : use optional non-alpha out_channels
-  if (in_channels>2&&out_channels==1) return 5; // compositor : use optional non-alpha in_channels
-  if (in_channels==2&&out_channels==1) return 2; // transition
-  if (in_channels==1&&out_channels==1) return 3; // filter
-  if (in_channels>0&&out_channels==0) return 6; // tap : use optional non-alpha in_channels
-  if (in_channels==0&&out_channels==0) return 4; // utility
-  return 0;
+  if (weed_plant_has_leaf(filt,"out_parameter_templates")) has_out_params=TRUE;
+  if (filter_flags&WEED_FILTER_IS_CONVERTER) return LIVES_FX_CAT_CONVERTOR;
+  if (in_channels==0&&out_channels>0) return LIVES_FX_CAT_GENERATOR;
+  if (out_channels>1) return LIVES_FX_CAT_SPLITTER;
+  if (in_channels>2&&out_channels==1) return LIVES_FX_CAT_COMPOSITOR;
+  if (in_channels==2&&out_channels==1) return LIVES_FX_CAT_TRANSITION;
+  if (in_channels==1&&out_channels==1) return LIVES_FX_CAT_FILTER;
+  if (in_channels>0&&out_channels==0&&has_out_params) return LIVES_FX_CAT_ANALYSER;
+  if (in_channels>0&&out_channels==0) return LIVES_FX_CAT_TAP;
+  if (in_channels==0&&out_channels==0) return LIVES_FX_CAT_UTILITY;
+  return LIVES_FX_CAT_NONE;
 }
 
 
-gint weed_filter_subcategorise (weed_plant_t *pl, int category, gboolean count_opt) {
+lives_fx_cat_t weed_filter_subcategorise (weed_plant_t *pl, lives_fx_cat_t category, gboolean count_opt) {
   weed_plant_t *filt=pl;
   gboolean has_video_chansi;
   int error;
 
-  if (WEED_PLANT_IS_FILTER_INSTANCE(pl)) filt=weed_get_plantptr_value(pl,"template",&error);
+  if (WEED_PLANT_IS_FILTER_INSTANCE(pl)) filt=weed_get_plantptr_value(pl,"filter_class",&error);
 
   has_video_chansi=has_video_chans_in(filt,count_opt);
 
-  if (category==2) {
+  if (category==LIVES_FX_CAT_TRANSITION) {
     if (get_transition_param(filt)!=-1) {
-      if (!has_video_chansi) return 11;
-      return 9;
+      if (!has_video_chansi) return LIVES_FX_CAT_AUDIO_TRANSITION;
+      return LIVES_FX_CAT_AV_TRANSITION;
     }
-    return 10;
+    return LIVES_FX_CAT_VIDEO_TRANSITION;
   }
 
-  if (category==5&&!has_video_chansi) return 12;
-  if (category==1&&!has_video_chansi) return 13;
-  if (category==8&&!has_video_chansi) return 14;
+  if (category==LIVES_FX_CAT_COMPOSITOR&&!has_video_chansi) return LIVES_FX_CAT_AUDIO_MIXER;
+  if (category==LIVES_FX_CAT_FILTER&&!has_video_chansi) return LIVES_FX_CAT_AUDIO_FILTER;
+  if (category==LIVES_FX_CAT_CONVERTOR&&!has_video_chansi) return LIVES_FX_CAT_AUDIO_VOL;
 
-  return 0;
-}
-
-/////////////////////////////////////////////////////////////////////////
-gchar *weed_category_to_text(int cat, gboolean plural) {
-  // return value should be free'd after use
-  switch (cat) {
-
-    // main categories
-  case 1:
-    if (!plural) return (g_strdup(_("generator")));
-    else return (g_strdup(_("Generators")));
-  case 2:
-    if (!plural) return (g_strdup(_("transition")));
-    else return (g_strdup(_("Transitions")));
-  case 3:
-    if (!plural) return (g_strdup(_("effect")));
-    else return (g_strdup(_("Effects")));
-  case 4:
-    if (!plural) return (g_strdup(_("utility")));
-    else return (g_strdup(_("Utilities")));
-  case 5:
-    if (!plural) return (g_strdup(_("compositor")));
-    else return (g_strdup(_("Compositors")));
-  case 6:
-    if (!plural) return (g_strdup(_("tap")));
-    else return (g_strdup(_("Taps")));
-  case 7:
-    if (!plural) return (g_strdup(_("splitter")));
-    else return (g_strdup(_("Splitters")));
-  case 8:
-    if (!plural) return (g_strdup(_("converter")));
-    else return (g_strdup(_("Converters")));
-
-
-    // subcategories
-  case 9:
-    if (!plural) return (g_strdup(_("audio/video")));
-    else return (g_strdup(_("Audio/Video Transitions")));
-  case 10:
-    if (!plural) return (g_strdup(_("video only")));
-    else return (g_strdup(_("Video only Transitions")));
-  case 11:
-    if (!plural) return (g_strdup(_("audio only")));
-    else return (g_strdup(_("Audio only Transitions")));
-  case 12:
-    if (!plural) return (g_strdup(_("audio")));
-    else return (g_strdup(_("Audio Mixers")));
-  case 13:
-    if (!plural) return (g_strdup(_("audio")));
-    else return (g_strdup(_("Audio Effects")));
-  case 14:
-    if (!plural) return (g_strdup(_("audio volume controller")));
-    else return (g_strdup(_("Audio Volume Controllers")));
-
-
-  default:
-    return (g_strdup(_("unknown")));
+  if (category==LIVES_FX_CAT_ANALYSER) {
+    if (!has_video_chansi) return LIVES_FX_CAT_AUDIO_ANALYSER;
+    return LIVES_FX_CAT_VIDEO_ANALYSER;
   }
+
+  return LIVES_FX_CAT_NONE;
 }
 
 
@@ -375,9 +325,28 @@ LIVES_INLINE gint step_val(gint val, gint step) {
 }
 
 
-gchar *weed_filter_get_type(gint idx) {
-  // return value should be free'd after use
-  return weed_category_to_text(weed_filter_categorise(weed_filters[idx],enabled_in_channels(weed_filters[idx],FALSE),enabled_out_channels(weed_filters[idx],FALSE)),FALSE);
+gchar *weed_filter_get_type(weed_plant_t *filter, gboolean getsub) {
+  // return value should be g_free'd after use
+  gchar *tmp1,*tmp2,*ret;
+  int cat=weed_filter_categorise(filter,
+				 enabled_in_channels(filter,FALSE),
+				 enabled_out_channels(filter,FALSE));
+
+  int sub=weed_filter_subcategorise(filter,cat,FALSE);
+
+  if (!getsub||sub==0)
+    return lives_fx_cat_to_text(cat,FALSE);
+
+  tmp1=lives_fx_cat_to_text(cat,FALSE);
+  tmp2=lives_fx_cat_to_text(sub,FALSE);
+
+  ret=g_strdup_printf("%s (%s)",tmp1,tmp2);
+
+  g_free(tmp1);
+  g_free(tmp2);
+
+  return ret;
+
 }
 
 void update_host_info (weed_plant_t *inst) {
@@ -2710,6 +2679,9 @@ static gint check_for_lives(weed_plant_t *filter, int filter_idx) {
   // all filters must take 0, 1 or 2 mandatory/optional inputs and provide 
   // 1 mandatory output or >1 optional outputs (for now)
 
+  // filters can also have 1 mandatory input and no outputs and out parameters
+  // (video analyzer)
+
   // all channels used must support a limited range of palettes (for now)
 
   gint chans_in_mand=0; // number of mandatory channels
@@ -2718,6 +2690,7 @@ static gint check_for_lives(weed_plant_t *filter, int filter_idx) {
   gint chans_out_opt_max=0;
   gint achans_in_mand=0,achans_out_mand=0;
   gboolean is_audio=FALSE;
+  gboolean has_out_params=FALSE;
 
   int error,flags=0;
   int num_elements,i;
@@ -2799,7 +2772,10 @@ static gint check_for_lives(weed_plant_t *filter, int filter_idx) {
   }
   if (num_elements>0) weed_free(array);
 
-  if (chans_out_mand>1||(chans_out_mand+chans_out_opt_max+achans_out_mand<1)) return 11;
+  if (weed_plant_has_leaf(filter,"out_parameter_templates")) has_out_params=TRUE;
+
+  if (chans_out_mand>1||((chans_out_mand+chans_out_opt_max+achans_out_mand<1)&&(chans_in_mand!=1||!has_out_params))) 
+    return 11;
   if (achans_out_mand>1||(achans_out_mand==1&&chans_out_mand>0)) return 14;
   if ((achans_in_mand==1&&achans_out_mand==0)||(achans_in_mand==0&&achans_out_mand==1)) return 15;
 
@@ -3148,7 +3124,7 @@ static void load_weed_plugin (gchar *plugin_name, gchar *plugin_path, gchar *dir
 	      if (key<FX_KEYS_PHYSICAL) {
 		key_to_fx[key][kmode]=idx;
 	      }
-	      filter_type=weed_filter_get_type(idx);
+	      filter_type=weed_filter_get_type(weed_filters[idx],FALSE);
 	      string=g_strdup_printf("%s (%s)",filter_name,filter_type);
 	      menuitem=gtk_menu_item_new_with_label (string);
 	      gtk_widget_show(menuitem);
@@ -3580,7 +3556,6 @@ static void weed_out_parameters_free (weed_plant_t *inst) {
   parameters=weed_get_plantptr_array(inst,"out_parameters",&error);
   for (i=0;i<num_parameters;i++) {
     if (parameters[i]!=NULL) {
-      weed_gui_free(parameters[i]);
       weed_plant_free(parameters[i]);
     }
   }
@@ -3760,7 +3735,7 @@ static weed_plant_t **weed_channels_create (weed_plant_t *filter, gboolean in) {
 weed_plant_t **weed_params_create (weed_plant_t *filter, gboolean in) {
   // return set of parameters with default/host_default values
   // in==TRUE create in parameters for filter
-  // in==FALSE create out parameters for filter (untested)
+  // in==FALSE create out parameters for filter
 
   weed_plant_t **params,**paramtmpls;
   int num_params;
@@ -3778,11 +3753,13 @@ weed_plant_t **weed_params_create (weed_plant_t *filter, gboolean in) {
   for (i=0;i<num_params;i++) {
     params[i]=weed_plant_new(WEED_PLANT_PARAMETER);
     weed_set_plantptr_value(params[i],"template",paramtmpls[i]);
-    if (weed_plant_has_leaf(paramtmpls[i],"host_default")) {
-      weed_leaf_copy(params[i],"value",paramtmpls[i],"host_default");
+    if (in) {
+      if (weed_plant_has_leaf(paramtmpls[i],"host_default")) {
+	weed_leaf_copy(params[i],"value",paramtmpls[i],"host_default");
+      }
+      else weed_leaf_copy(params[i],"value",paramtmpls[i],"default");
+      weed_add_plant_flags(params[i],WEED_LEAF_READONLY_PLUGIN);
     }
-    else weed_leaf_copy(params[i],"value",paramtmpls[i],"default");
-    weed_add_plant_flags(params[i],WEED_LEAF_READONLY_PLUGIN);
   }
   params[num_params]=NULL;
   weed_free(paramtmpls);
@@ -5243,15 +5220,17 @@ gint weed_get_blend_factor(int hotkey) {
 ////////////////////////////////////////////////////////////////////////
 
 
-static LIVES_INLINE gchar *weed_instance_get_type(weed_plant_t *inst) {
+ static LIVES_INLINE gchar *weed_instance_get_type(weed_plant_t *inst, gboolean getsub) {
   // return value should be free'd after use
-  return weed_category_to_text(weed_filter_categorise(inst,enabled_in_channels(inst,FALSE),enabled_out_channels(inst,FALSE)),FALSE);
+   int error;
+   weed_plant_t *filter=weed_get_plantptr_value(inst,"filter_class",&error);
+   return weed_filter_get_type(filter,getsub);
 }
 
 
 
 
-gchar *rte_keymode_get_type (gint key, gint mode) {
+ gchar *rte_keymode_get_type (gint key, gint mode, gboolean get_subtype) {
   // return value should be free'd after use
   gchar *type=g_strdup ("");
   weed_plant_t *filter,*inst;
@@ -5268,13 +5247,35 @@ gchar *rte_keymode_get_type (gint key, gint mode) {
   if ((inst=key_to_instance[key][mode])!=NULL) {
     // return details for instance
     g_free(type);
-    type=weed_instance_get_type(inst);
+    type=weed_instance_get_type(inst,get_subtype);
   }
-  else type=weed_filter_get_type(idx);
+  else type=weed_filter_get_type(filter,get_subtype);
 
   mainw->osc_block=FALSE;
   return type;
 }
+
+
+
+lives_fx_cat_t rte_keymode_get_category (gint key, gint mode) {
+  weed_plant_t *filter;
+  gint idx;
+  lives_fx_cat_t cat;
+
+  key--;
+  if (!rte_keymode_valid(key+1,mode,TRUE)) return LIVES_FX_CAT_NONE;
+
+  if ((idx=key_to_fx[key][mode])==-1) return LIVES_FX_CAT_NONE;
+  if ((filter=weed_filters[idx])==NULL) return LIVES_FX_CAT_NONE;
+
+  else cat=weed_filter_categorise(filter,
+				 enabled_in_channels(filter,FALSE),
+				 enabled_out_channels(filter,FALSE));
+
+  return cat;
+}
+
+
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -5726,7 +5727,7 @@ GList *weed_get_all_names (gshort list_type) {
       break;
     case 2:
       // name and type
-      filter_type=weed_filter_get_type(i);
+      filter_type=weed_filter_get_type(weed_filters[i],FALSE);
 
       if (weed_plant_has_leaf(weed_filters[i],"plugin_unstable")&&
 	  weed_get_boolean_value(weed_filters[i],"plugin_unstable",&error)==WEED_TRUE) {

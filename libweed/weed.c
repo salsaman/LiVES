@@ -46,9 +46,9 @@
 /* (C) Gabriel "Salsaman" Finch, 2005 - 2010*/
 
 
-#include "weed.h"
+#include <weed/weed.h>
 #define _SKIP_WEED_API_
-#include "weed-host.h"
+#include <weed/weed-host.h>
 
 extern weed_default_getter_f weed_default_get;
 extern weed_leaf_get_f weed_leaf_get;

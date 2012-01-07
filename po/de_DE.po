@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: Lives 0.9.5\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2012-01-06 23:47-0300\n"
+"POT-Creation-Date: 2012-01-07 06:40-0300\n"
 "PO-Revision-Date: 2011-06-03 07:11+0000\n"
 "Last-Translator: Dominik Dehning <Unknown>\n"
 "Language-Team: Herbert U. Hübner <herbert.u.huebner@friendglow.net>\n"
@@ -2927,7 +2927,7 @@ msgstr ""
 msgid ""
 "Preview will not work without X11. We need the window id of the preview "
 "window.\n"
-"Please send a patch if youi know how to do this.\n"
+"Please send a patch if you know how to do this.\n"
 msgstr ""
 
 #: src/support.c:87 src/support.c:111
@@ -9436,13 +9436,6 @@ msgid ""
 "Connection to jack audio was reset.\n"
 msgstr ""
 
-#: src/pulse.c:79
-#, fuzzy
-msgid ""
-"\n"
-"Unable to connect to pulse audio server\n"
-msgstr "Starte PulseAudio Server"
-
 #: src/pulse.c:83
 msgid ""
 "\n"
@@ -9471,7 +9464,7 @@ msgstr "Starte PulseAudio Server"
 msgid "LiVES will exit and you can choose another audio player.\n"
 msgstr "LiVES: - Wählen sie einen Audio Player"
 
-#: src/pulse.c:955
+#: src/pulse.c:956
 msgid ""
 "\n"
 "Connection to pulse audio was reset.\n"
@@ -11340,6 +11333,12 @@ msgstr "$plugin_name fehlgeschlagen:"
 #: /usr/bin/smogrify:0
 msgid "$error"
 msgstr "$error"
+
+#, fuzzy
+#~ msgid ""
+#~ "\n"
+#~ "Unable to connect to pulse audio server\n"
+#~ msgstr "Starte PulseAudio Server"
 
 #~ msgid "Red"
 #~ msgstr "Rot"

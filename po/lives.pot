@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: lives 1.6.0-svn\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2012-01-06 23:55-0300\n"
+"POT-Creation-Date: 2012-01-07 06:40-0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -2516,7 +2516,7 @@ msgstr ""
 msgid ""
 "Preview will not work without X11. We need the window id of the preview "
 "window.\n"
-"Please send a patch if youi know how to do this.\n"
+"Please send a patch if you know how to do this.\n"
 msgstr ""
 
 #: src/support.c:87 src/support.c:111
@@ -8887,12 +8887,6 @@ msgid ""
 "Connection to jack audio was reset.\n"
 msgstr ""
 
-#: src/pulse.c:79
-msgid ""
-"\n"
-"Unable to connect to pulse audio server\n"
-msgstr ""
-
 #: src/pulse.c:83
 msgid ""
 "\n"
@@ -8919,7 +8913,7 @@ msgstr ""
 msgid "LiVES will exit and you can choose another audio player.\n"
 msgstr ""
 
-#: src/pulse.c:955
+#: src/pulse.c:956
 msgid ""
 "\n"
 "Connection to pulse audio was reset.\n"

@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: hu\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2012-01-06 23:47-0300\n"
+"POT-Creation-Date: 2012-01-07 06:40-0300\n"
 "PO-Revision-Date: 2011-08-18 11:58+0000\n"
 "Last-Translator: Krasznecz Zoltán <zoltan.krasznecz@gmail.com>\n"
 "Language-Team: Magyar <lisovszki@gmail.com>\n"
@@ -2876,7 +2876,7 @@ msgstr ""
 msgid ""
 "Preview will not work without X11. We need the window id of the preview "
 "window.\n"
-"Please send a patch if youi know how to do this.\n"
+"Please send a patch if you know how to do this.\n"
 msgstr ""
 
 #: src/support.c:87 src/support.c:111
@@ -9994,13 +9994,6 @@ msgid ""
 "Connection to jack audio was reset.\n"
 msgstr ""
 
-#: src/pulse.c:79
-#, fuzzy
-msgid ""
-"\n"
-"Unable to connect to pulse audio server\n"
-msgstr "Nem tudok csatlakozni a JACK szerverre\n"
-
 #: src/pulse.c:83
 #, fuzzy
 msgid ""
@@ -10037,7 +10030,7 @@ msgstr "Nem tudok csatlakozni a JACK szerverre\n"
 msgid "LiVES will exit and you can choose another audio player.\n"
 msgstr "LiVES: - Válassz egy lejátszót"
 
-#: src/pulse.c:955
+#: src/pulse.c:956
 msgid ""
 "\n"
 "Connection to pulse audio was reset.\n"
@@ -11761,6 +11754,12 @@ msgstr "$bővítőmodul_név nem sikerült:"
 #: /usr/bin/smogrify:0
 msgid "$error"
 msgstr "$hiba"
+
+#, fuzzy
+#~ msgid ""
+#~ "\n"
+#~ "Unable to connect to pulse audio server\n"
+#~ msgstr "Nem tudok csatlakozni a JACK szerverre\n"
 
 #~ msgid "Red"
 #~ msgstr "Vörös"

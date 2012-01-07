@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2012-01-06 23:47-0300\n"
+"POT-Creation-Date: 2012-01-07 06:40-0300\n"
 "PO-Revision-Date: 2011-11-01 11:47+0000\n"
 "Last-Translator: milboy <Unknown>\n"
 "Language-Team: Slovak <sk@li.org>\n"
@@ -2892,7 +2892,7 @@ msgstr ""
 msgid ""
 "Preview will not work without X11. We need the window id of the preview "
 "window.\n"
-"Please send a patch if youi know how to do this.\n"
+"Please send a patch if you know how to do this.\n"
 msgstr ""
 
 #: src/support.c:87 src/support.c:111
@@ -9883,13 +9883,6 @@ msgid ""
 "Connection to jack audio was reset.\n"
 msgstr ""
 
-#: src/pulse.c:79
-#, fuzzy
-msgid ""
-"\n"
-"Unable to connect to pulse audio server\n"
-msgstr "Nepodarilo sa pripojiť na JACK server\n"
-
 #: src/pulse.c:83
 #, fuzzy
 msgid ""
@@ -9926,7 +9919,7 @@ msgstr "Nepodarilo sa pripojiť na JACK server\n"
 msgid "LiVES will exit and you can choose another audio player.\n"
 msgstr "LiVES: - Vybrať audio prehrávač"
 
-#: src/pulse.c:955
+#: src/pulse.c:956
 msgid ""
 "\n"
 "Connection to pulse audio was reset.\n"
@@ -11659,6 +11652,12 @@ msgstr "$plugin_name zlyhal:"
 #: /usr/bin/smogrify:0
 msgid "$error"
 msgstr "$chyba"
+
+#, fuzzy
+#~ msgid ""
+#~ "\n"
+#~ "Unable to connect to pulse audio server\n"
+#~ msgstr "Nepodarilo sa pripojiť na JACK server\n"
 
 #~ msgid "Red"
 #~ msgstr "Červená"

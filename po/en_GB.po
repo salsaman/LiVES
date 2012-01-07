@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2012-01-06 23:55-0300\n"
+"POT-Creation-Date: 2012-01-07 06:40-0300\n"
 "PO-Revision-Date: 2012-01-07 02:04+0000\n"
 "Last-Translator: Anthony Harrington <untaintableangel@hotmail.co.uk>\n"
 "Language-Team: English (United Kingdom) <en_GB@li.org>\n"
@@ -2927,10 +2927,11 @@ msgstr ""
 "Delete %d layout(s)...are you sure ?\n"
 
 #: src/callbacks.c:5742
+#, fuzzy
 msgid ""
 "Preview will not work without X11. We need the window id of the preview "
 "window.\n"
-"Please send a patch if youi know how to do this.\n"
+"Please send a patch if you know how to do this.\n"
 msgstr ""
 "Preview will not work without X11. We need the window id of the preview "
 "window.\n"
@@ -10139,14 +10140,6 @@ msgstr ""
 "\n"
 "Connection to jack audio was reset.\n"
 
-#: src/pulse.c:79
-msgid ""
-"\n"
-"Unable to connect to pulse audio server\n"
-msgstr ""
-"\n"
-"Unable to connect to pulse audio server\n"
-
 #: src/pulse.c:83
 msgid ""
 "\n"
@@ -10183,7 +10176,7 @@ msgstr ""
 msgid "LiVES will exit and you can choose another audio player.\n"
 msgstr "LiVES will exit and you can choose another audio player.\n"
 
-#: src/pulse.c:955
+#: src/pulse.c:956
 msgid ""
 "\n"
 "Connection to pulse audio was reset.\n"
@@ -11893,3 +11886,10 @@ msgstr "$plugin_name failed:"
 #: /usr/bin/smogrify:0
 msgid "$error"
 msgstr "$error"
+
+#~ msgid ""
+#~ "\n"
+#~ "Unable to connect to pulse audio server\n"
+#~ msgstr ""
+#~ "\n"
+#~ "Unable to connect to pulse audio server\n"

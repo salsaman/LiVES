@@ -1525,7 +1525,8 @@ static void init_omc_macros(void) {
   omc_macros[2].ptypes[0]=OMC_PARAM_INT;
   omc_macros[2].mini[0]=omc_macros[2].vali[0]=1;
   omc_macros[2].maxi[0]=100000;
-  omc_macros[2].pname[0]=g_strdup(_("clipnum")); // translators - short form of "clip number"
+  // TRANSLATORS: short form of "clip number"
+  omc_macros[2].pname[0]=g_strdup(_("clipnum"));
 
 
   // set fps (will be handled to avoid 0.)
@@ -1533,40 +1534,46 @@ static void init_omc_macros(void) {
   omc_macros[9].mind[0]=-200.;
   omc_macros[9].vald[0]=25.;
   omc_macros[9].maxd[0]=200.;
-  omc_macros[9].pname[0]=g_strdup(_("fps")); // translators - short form of "frames per second"
+  // TRANSLATORS: short form of "frames per second"
+  omc_macros[9].pname[0]=g_strdup(_("fps"));
 
   // effect_key enable,disable, toggle
   omc_macros[15].ptypes[0]=OMC_PARAM_INT;
   omc_macros[15].mini[0]=1;
   omc_macros[15].vali[0]=1;
   omc_macros[15].maxi[0]=prefs->rte_keys_virtual;
-  omc_macros[15].pname[0]=g_strdup(_("key")); // translators - as in keyboard key
+  // TRANSLATORS: as in keyboard key
+  omc_macros[15].pname[0]=g_strdup(_("key"));
 
   omc_macros[16].ptypes[0]=OMC_PARAM_INT;
   omc_macros[16].mini[0]=1;
   omc_macros[16].vali[0]=1;
   omc_macros[16].maxi[0]=prefs->rte_keys_virtual;
-  omc_macros[16].pname[0]=g_strdup(_("key")); // translators - as in keyboard key
+  // TRANSLATORS: as in keyboard key
+  omc_macros[16].pname[0]=g_strdup(_("key"));
 
   omc_macros[17].ptypes[0]=OMC_PARAM_INT;
   omc_macros[17].mini[0]=1;
   omc_macros[17].vali[0]=1;
   omc_macros[17].maxi[0]=prefs->rte_keys_virtual;
-  omc_macros[17].pname[0]=g_strdup(_("key")); // translators - as in keyboard key
+  // TRANSLATORS: as in keyboard key
+  omc_macros[17].pname[0]=g_strdup(_("key"));
 
   // key
   omc_macros[18].ptypes[0]=OMC_PARAM_INT;
   omc_macros[18].mini[0]=1;
   omc_macros[18].vali[0]=1;
   omc_macros[18].maxi[0]=prefs->rte_keys_virtual;
-  omc_macros[18].pname[0]=g_strdup(_("key")); // translators - as in keyboard key
+  // TRANSLATORS: as in keyboard key
+  omc_macros[18].pname[0]=g_strdup(_("key"));
 
   // param (this will be matched with numeric params)
   omc_macros[18].ptypes[1]=OMC_PARAM_INT;
   omc_macros[18].mini[1]=0;
   omc_macros[18].maxi[1]=32;
   omc_macros[18].vali[1]=0;
-  omc_macros[18].pname[1]=g_strdup(_("pnum")); // translators - short form of "parameter number"
+  // TRANSLATORS: short form of "parameter number"
+  omc_macros[18].pname[1]=g_strdup(_("pnum"));
 
   // value (this will get special handling)
   // type conversion and auto offset/scaling will be done
@@ -1581,28 +1588,32 @@ static void init_omc_macros(void) {
   omc_macros[21].mind[0]=-10.;
   omc_macros[21].vald[0]=1.;
   omc_macros[21].maxd[0]=10.;
-  omc_macros[21].pname[0]=g_strdup(_("fps_ratio")); // translators - fps short form of "frames per second"
+  // TRANSLATORS: short form of "frames per second"
+  omc_macros[21].pname[0]=g_strdup(_("fps_ratio"));
 
 
   // clip retrigger 
   omc_macros[22].ptypes[0]=OMC_PARAM_INT;
   omc_macros[22].mini[0]=omc_macros[22].vali[0]=1;
   omc_macros[22].maxi[0]=100000;
-  omc_macros[22].pname[0]=g_strdup(_("clipnum")); // translators - short form of "clip number"
+  // TRANSLATORS: short form of "clip number"
+  omc_macros[22].pname[0]=g_strdup(_("clipnum"));
 
   // key
   omc_macros[23].ptypes[0]=OMC_PARAM_INT;
   omc_macros[23].mini[0]=1;
   omc_macros[23].vali[0]=1;
   omc_macros[23].maxi[0]=prefs->rte_keys_virtual;
-  omc_macros[23].pname[0]=g_strdup(_("key")); // translators - as in keyboard key
+  // TRANSLATORS: as in keyboard key
+  omc_macros[23].pname[0]=g_strdup(_("key"));
 
   // key
   omc_macros[24].ptypes[0]=OMC_PARAM_INT;
   omc_macros[24].mini[0]=1;
   omc_macros[24].vali[0]=1;
   omc_macros[24].maxi[0]=prefs->rte_keys_virtual;
-  omc_macros[24].pname[0]=g_strdup(_("key")); // translators - as in keyboard key
+  // TRANSLATORS: as in keyboard key
+  omc_macros[24].pname[0]=g_strdup(_("key"));
 
 }
 

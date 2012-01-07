@@ -1941,7 +1941,8 @@ void print_opthelp(void) {
 #endif
   g_printerr("%s",_("-aplayer <ap>    : start with selected audio player. <ap> can be mplayer"));
 #ifdef HAVE_PULSE_AUDIO
-  g_printerr("%s",_(", pulse"));  // translators - pulse audio
+  // TRANSLATORS: pulse (audio)
+  g_printerr("%s",_(", pulse"));
 #endif
 #ifdef ENABLE_JACK
   g_printerr("%s",_(", sox or jack\n"));

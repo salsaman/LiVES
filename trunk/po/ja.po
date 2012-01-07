@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: ja\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2012-01-06 23:47-0300\n"
+"POT-Creation-Date: 2012-01-07 06:40-0300\n"
 "PO-Revision-Date: 2011-11-24 01:44+0000\n"
 "Last-Translator: Takashi Sakamoto <Unknown>\n"
 "Language-Team: Japanese <ja@li.org>\n"
@@ -2935,7 +2935,7 @@ msgstr ""
 msgid ""
 "Preview will not work without X11. We need the window id of the preview "
 "window.\n"
-"Please send a patch if youi know how to do this.\n"
+"Please send a patch if you know how to do this.\n"
 msgstr ""
 
 #: src/support.c:87 src/support.c:111
@@ -10137,13 +10137,6 @@ msgid ""
 "Connection to jack audio was reset.\n"
 msgstr "JACKサーバーのトランスポート機能に接続しています..."
 
-#: src/pulse.c:79
-#, fuzzy
-msgid ""
-"\n"
-"Unable to connect to pulse audio server\n"
-msgstr "JACKサーバーに接続できません\n"
-
 #: src/pulse.c:83
 #, fuzzy
 msgid ""
@@ -10180,7 +10173,7 @@ msgstr "JACKサーバーに接続できません\n"
 msgid "LiVES will exit and you can choose another audio player.\n"
 msgstr "LiVES: - オーディオプレイヤーを選んでください"
 
-#: src/pulse.c:955
+#: src/pulse.c:956
 #, fuzzy
 msgid ""
 "\n"
@@ -11889,6 +11882,12 @@ msgstr "$plugin_name は失敗しました:"
 #: /usr/bin/smogrify:0
 msgid "$error"
 msgstr "$error"
+
+#, fuzzy
+#~ msgid ""
+#~ "\n"
+#~ "Unable to connect to pulse audio server\n"
+#~ msgstr "JACKサーバーに接続できません\n"
 
 #~ msgid "Red"
 #~ msgstr "赤"

@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2012-01-06 23:47-0300\n"
+"POT-Creation-Date: 2012-01-07 06:40-0300\n"
 "PO-Revision-Date: 2011-11-07 13:09+0000\n"
 "Last-Translator: Yuri Chornoivan <yurchor@gmail.com>\n"
 "Language-Team: Ukrainian <translation@linux.org.ua>\n"
@@ -2997,7 +2997,7 @@ msgstr ""
 msgid ""
 "Preview will not work without X11. We need the window id of the preview "
 "window.\n"
-"Please send a patch if youi know how to do this.\n"
+"Please send a patch if you know how to do this.\n"
 msgstr ""
 
 #: src/support.c:87 src/support.c:111
@@ -10281,13 +10281,6 @@ msgid ""
 "Connection to jack audio was reset.\n"
 msgstr "Встановлення з’єднання з сервером передавання даних jack…"
 
-#: src/pulse.c:79
-#, fuzzy
-msgid ""
-"\n"
-"Unable to connect to pulse audio server\n"
-msgstr "Не вдалося з’єднатися з сервером JACK\n"
-
 #: src/pulse.c:83
 #, fuzzy
 msgid ""
@@ -10326,7 +10319,7 @@ msgstr "Не вдалося з’єднатися з сервером JACK\n"
 msgid "LiVES will exit and you can choose another audio player.\n"
 msgstr "LiVES: - Вибір звукового програвача"
 
-#: src/pulse.c:955
+#: src/pulse.c:956
 #, fuzzy
 msgid ""
 "\n"
@@ -12039,6 +12032,12 @@ msgstr "Помилка $plugin_name:"
 #: /usr/bin/smogrify:0
 msgid "$error"
 msgstr "$error"
+
+#, fuzzy
+#~ msgid ""
+#~ "\n"
+#~ "Unable to connect to pulse audio server\n"
+#~ msgstr "Не вдалося з’єднатися з сервером JACK\n"
 
 #~ msgid "Red"
 #~ msgstr "Червоний"

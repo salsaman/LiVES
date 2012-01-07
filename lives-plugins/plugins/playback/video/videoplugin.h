@@ -14,7 +14,7 @@ extern "C"
 #include <inttypes.h>
 
 #ifdef HAVE_SYSTEM_WEED
-#include "weed/weed-palettes.h"
+#include <weed/weed-palettes.h>
 #else
 #include "../../../../libweed/weed-palettes.h"
 #endif

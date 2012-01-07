@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2012-01-07 06:40-0300\n"
+"POT-Creation-Date: 2012-01-07 16:07-0300\n"
 "PO-Revision-Date: 2011-08-18 12:01+0000\n"
 "Last-Translator: salsaman <salsaman@gmail.com>\n"
 "Language-Team: Italian <it@li.org>\n"
@@ -5830,37 +5830,37 @@ msgstr ""
 "Informazioni: Non è stato possibile caricare il plugin %s\n"
 "L'errore è stato: %s\n"
 
-#: src/effects-weed.c:3180 src/effects-weed.c:3498
+#: src/effects-weed.c:3180 src/effects-weed.c:3499
 #, fuzzy
 msgid "Some plugin directories"
 msgstr "Includi sotto-directory"
 
-#: src/effects-weed.c:3334
+#: src/effects-weed.c:3335
 #, c-format
 msgid "Successfully loaded %d Weed filters\n"
 msgstr "Caricati con successo %d filtri Weed\n"
 
-#: src/effects-weed.c:4053
+#: src/effects-weed.c:4054
 #, c-format
 msgid "Failed to start instance %s, error code %d\n"
 msgstr "Fallito l'avvio dell'istanza %s, codice errore %d\n"
 
-#: src/effects-weed.c:4091
+#: src/effects-weed.c:4092
 #, c-format
 msgid "Unable to start generator %s\n"
 msgstr "Non è stato possibile avviare il generatore %s\n"
 
-#: src/effects-weed.c:4627
+#: src/effects-weed.c:4628
 #, c-format
 msgid "Failed to start generator %s\n"
 msgstr "Fallito l'avvio del generatore %s\n"
 
-#: src/effects-weed.c:4687
+#: src/effects-weed.c:4688
 #, c-format
 msgid "Failed to start generator %s, error %d\n"
 msgstr "Fallito l'avvio del generatore %s, errore %d\n"
 
-#: src/effects-weed.c:5732
+#: src/effects-weed.c:5733
 #, c-format
 msgid "%s [unstable] (%s)"
 msgstr ""

@@ -3190,7 +3190,8 @@ static void load_weed_plugin (gchar *plugin_name, gchar *plugin_path, gchar *dir
 
 
 void weed_memory_init(void) {
-  weed_init(110,(weed_malloc_f)lives_weed_malloc,(weed_free_f)lives_weed_free,(weed_memcpy_f)lives_weed_memcpy,(weed_memset_f)lives_weed_memset);
+  weed_init(110,(weed_malloc_f)lives_weed_malloc,(weed_free_f)lives_weed_free,(weed_memcpy_f)lives_weed_memcpy,
+	    (weed_memset_f)lives_weed_memset);
 }
 
 

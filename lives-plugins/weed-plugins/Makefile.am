@@ -48,6 +48,7 @@ fxpluginslib_LTLIBRARIES = RGBdelay.la \
 	alien_overlay.la \
 	audio_transition.la \
 	audio_volume.la \
+	blank_frame_detector.la \
 	bump2d.la \
 	blurzoom.la \
 	ccorrect.la \

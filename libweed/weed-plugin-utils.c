@@ -451,6 +451,97 @@ weed_plant_t *weed_colRGBd_init (const char *name, const char *label, double red
 }
 
 
+weed_plant_t *weed_out_param_integer_init (const char *name, int def, int min, int max) {
+  weed_plant_t *paramt=weed_plant_new(WEED_PLANT_PARAMETER_TEMPLATE);
+  int hint=WEED_HINT_INTEGER;
+
+  weed_leaf_set(paramt,"name",WEED_SEED_STRING,1,&name);
+  weed_leaf_set(paramt,"hint",WEED_SEED_INT,1,&hint);
+  weed_leaf_set(paramt,"default",WEED_SEED_INT,1,&def);
+  weed_leaf_set(paramt,"min",WEED_SEED_INT,1,&min);
+  weed_leaf_set(paramt,"max",WEED_SEED_INT,1,&max);
+  return paramt;
+}
+
+
+weed_plant_t *weed_out_param_switch_init (const char *name, int def) {
+  weed_plant_t *paramt=weed_plant_new(WEED_PLANT_PARAMETER_TEMPLATE);
+  int hint=WEED_HINT_SWITCH;
+  weed_leaf_set(paramt,"name",WEED_SEED_STRING,1,&name);
+  weed_leaf_set(paramt,"hint",WEED_SEED_INT,1,&hint);
+  weed_leaf_set(paramt,"default",WEED_SEED_BOOLEAN,1,&def);
+  return paramt;
+}
+
+
+
+weed_plant_t *weed_out_param_float_init (const char *name, double def, double min, double max) {
+  weed_plant_t *paramt=weed_plant_new(WEED_PLANT_PARAMETER_TEMPLATE);
+  int hint=WEED_HINT_FLOAT;
+
+  weed_leaf_set(paramt,"name",WEED_SEED_STRING,1,&name);
+  weed_leaf_set(paramt,"hint",WEED_SEED_INT,1,&hint);
+  weed_leaf_set(paramt,"min",WEED_SEED_DOUBLE,1,&min);
+  weed_leaf_set(paramt,"max",WEED_SEED_DOUBLE,1,&max);
+
+  return paramt;
+}
+
+
+
+weed_plant_t *weed_out_param_text_init (const char *name, const char *def) {
+  weed_plant_t *paramt=weed_plant_new(WEED_PLANT_PARAMETER_TEMPLATE);
+  int hint=WEED_HINT_TEXT;
+
+  weed_leaf_set(paramt,"name",WEED_SEED_STRING,1,&name);
+  weed_leaf_set(paramt,"hint",WEED_SEED_INT,1,&hint);
+  weed_leaf_set(paramt,"default",WEED_SEED_STRING,1,&def);
+
+  return paramt;
+}
+
+
+
+weed_plant_t *weed_out_param_colRGBi_init (const char *name, int red, int green, int blue) {
+  weed_plant_t *paramt=weed_plant_new(WEED_PLANT_PARAMETER_TEMPLATE);
+  int hint=WEED_HINT_COLOR;
+  int cspace=WEED_COLORSPACE_RGB;
+  int def[3]={red,green,blue};
+  int min=0;
+  int max=255;
+
+  weed_leaf_set(paramt,"name",WEED_SEED_STRING,1,&name);
+  weed_leaf_set(paramt,"hint",WEED_SEED_INT,1,&hint);
+  weed_leaf_set(paramt,"colorspace",WEED_SEED_INT,1,&cspace);
+
+  weed_leaf_set(paramt,"default",WEED_SEED_INT,3,def);
+  weed_leaf_set(paramt,"min",WEED_SEED_INT,1,&min);
+  weed_leaf_set(paramt,"max",WEED_SEED_INT,1,&max);
+
+  return paramt;
+}
+
+
+
+weed_plant_t *weed_out_param_colRGBd_init (const char *name, double red, double green, double blue) {
+  weed_plant_t *paramt=weed_plant_new(WEED_PLANT_PARAMETER_TEMPLATE);
+  int hint=WEED_HINT_COLOR;
+  int cspace=WEED_COLORSPACE_RGB;
+  double def[3]={red,green,blue};
+  double min=0.;
+  double max=1.;
+
+  weed_leaf_set(paramt,"name",WEED_SEED_STRING,1,&name);
+  weed_leaf_set(paramt,"hint",WEED_SEED_INT,1,&hint);
+  weed_leaf_set(paramt,"colorspace",WEED_SEED_INT,1,&cspace);
+
+  weed_leaf_set(paramt,"default",WEED_SEED_DOUBLE,3,def);
+  weed_leaf_set(paramt,"min",WEED_SEED_DOUBLE,1,&min);
+  weed_leaf_set(paramt,"max",WEED_SEED_DOUBLE,1,&max);
+
+  return paramt;
+}
+
 
 
 ///////////////////////////////////////////////////////////////////////

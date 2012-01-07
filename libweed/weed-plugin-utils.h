@@ -78,6 +78,13 @@ extern "C"
   weed_plant_t *weed_colRGBi_init (const char *name, const char *label, int red, int green, int blue);
   weed_plant_t *weed_colRGBd_init (const char *name, const char *label, double red, double green, double blue);
 
+  weed_plant_t *weed_out_param_integer_init (const char *name, int def, int min, int max);
+  weed_plant_t *weed_out_param_switch_init (const char *name, int def);
+  weed_plant_t *weed_out_param_float_init (const char *name, double def, double min, double max);
+  weed_plant_t *weed_out_param_text_init (const char *name, const char *def);
+  weed_plant_t *weed_out_param_colRGBi_init (const char *name, int red, int green, int blue);
+  weed_plant_t *weed_out_param_colRGBd_init (const char *name, double red, double green, double blue);
+
   weed_plant_t **weed_clone_plants (weed_plant_t **plants);
 
 #ifdef __cplusplus

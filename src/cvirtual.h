@@ -1,11 +1,14 @@
 // cvirtual.h
 // LiVES
-// (c) G. Finch 2008 - 2009 <salsaman@xs4all.nl,salsaman@gmail.com>
+// (c) G. Finch 2008 - 2012 <salsaman@xs4all.nl,salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
 
 // functions for handling "virtual" clips (CLIP_TYPE_FILE)
+
+#ifndef HAS_LIVES_CVIRTUAL_H
+#define HAS_LIVES_CVIRTUAL_H
 
 
 void create_frame_index(gint fileno, gboolean init, gint start_offset, gint nframes);
@@ -26,3 +29,6 @@ void restore_frame_index_back (gint sfileno);
 gboolean is_virtual_frame(int sfileno, int frame);
 
 gint count_virtual_frames(int *findex, int start, int end);
+
+
+#endif

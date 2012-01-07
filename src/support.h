@@ -5,9 +5,8 @@
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
-#ifdef HAVE_CONFIG_H
-#  include <config.h>
-#endif
+#ifndef HAS_LIVES_SUPPORT_H
+#define HAS_LIVES_SUPPORT_H
 
 #include <gtk/gtk.h>
 
@@ -37,3 +36,4 @@ gchar *translate(const char *String);
 #  define N_(String) (String)
 #endif
 
+#endif

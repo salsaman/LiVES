@@ -5,8 +5,8 @@
 // see file ../COPYING for licensing details
 
 
-#ifndef _HAS_MAINWINDOW_H_
-#define _HAS_MAINWINDOW_H_
+#ifndef HAS_LIVES_MAINWINDOW_H
+#define HAS_LIVES_MAINWINDOW_H
 
 #include <pthread.h>
 
@@ -1059,4 +1059,4 @@ extern GtkWidget *fx_dialog[2];
   volatile aserver_message_t pulse_message2;
 #endif
 
-#endif // HAS_MAINWINDOW_H
+#endif // HAS_LIVES_MAINWINDOW_H

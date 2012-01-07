@@ -4,8 +4,8 @@
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for licensing details
 
-#ifndef _HAS_PARAMWINDOW_H
-#define _HAS_PARAMWINDOW_H
+#ifndef HAS_LIVES_PARAMWINDOW_H
+#define HAS_LIVES_PARAMWINDOW_H
 
 typedef struct {
   gint usr_number;

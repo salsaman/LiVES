@@ -27,7 +27,7 @@
 #include "callbacks.h"
 #include "support.h"
 #include "resample.h"
-#include "effects-weed.h"
+#include "effects.h"
 #include "audio.h"
 #include "htmsocket.h"
 #include "cvirtual.h"

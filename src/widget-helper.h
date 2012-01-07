@@ -4,8 +4,8 @@
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
-#ifndef HAS_WIDGET_HELPER_H
-#define HAS_WIDGET_HELPER_H
+#ifndef HAS_LIVES_WIDGET_HELPER_H
+#define HAS_LIVES_WIDGET_HELPER_H
 
 #ifdef GUI_GTK
 typedef GtkObject                         LiVESObject;

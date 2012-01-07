@@ -7,8 +7,8 @@
 
 // functions/structs for event_lists and events
 
-#ifndef __HAS_EVENTS_H__
-#define __HAS_EVENTS_H__
+#ifndef HAS_LIVES_EVENTS_H
+#define HAS_LIVES_EVENTS_H
 
 weed_plant_t *append_frame_event (weed_plant_t *event_list, weed_timecode_t tc, int numframes, int *clips, int *frames) WARN_UNUSED;
 weed_plant_t *append_filter_init_event (weed_plant_t *event_list, weed_timecode_t tc, int filter_idx, int num_in_tracks) WARN_UNUSED;
@@ -63,8 +63,11 @@ weed_plant_t *get_next_event(weed_plant_t *event);
 
 
 //////////////////////////////////////////////////////////
-
+#if HAVE_SYSTEM_WEED
+#include <weed/weed-utils.h>
+#else
 #include "../libweed/weed-utils.h"
+#endif
 
 weed_timecode_t get_event_timecode (weed_plant_t *);
 int get_event_hint (weed_plant_t *);
@@ -209,4 +212,4 @@ gboolean has_frame_event_at(weed_plant_t *event_list, weed_timecode_t tc, weed_p
 #define WEED_EVENT_IS_PARAM_CHANGE(event) (get_event_hint(event)==WEED_EVENT_HINT_PARAM_CHANGE?1:0)
 #define WEED_EVENT_IS_MARKER(event) (get_event_hint(event)==WEED_EVENT_HINT_MARKER?1:0)
 
-#endif // __HAS_EVENTS_H
+#endif // HAS_LIVES_EVENTS_H

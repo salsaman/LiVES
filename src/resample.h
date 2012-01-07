@@ -7,10 +7,14 @@
 
 // functions/structs for reordering, resampling video and audio
 
-#ifndef __HAS_RESAMPLE_H
-#define __HAS_RESAMPLE_H
+#ifndef HAS_LIVES_RESAMPLE_H
+#define HAS_LIVES_RESAMPLE_H
 
+#if HAVE_SYSTEM_WEED
+#include <weed/weed.h>
+#else
 #include "../libweed/weed.h"
+#endif
 
 /// resample audio window
 typedef struct __resaudw {

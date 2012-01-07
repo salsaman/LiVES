@@ -24,7 +24,7 @@
 #include "main.h"
 #include "resample.h"
 #include "support.h"
-#include "effects-weed.h"
+#include "effects.h"
 
 #include "rfx-builder.h"
 #include "paramwindow.h"

@@ -4,8 +4,8 @@
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
-#ifndef _HAS_PREFS_H
-#define _HAS_PREFS_H
+#ifndef HAS_LIVES_PREFS_H
+#define HAS_LIVES_PREFS_H
 
 #define LIVES_PREFS_TIMEOUT  (10 * U_SEC) // 10 sec timeout
 

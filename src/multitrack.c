@@ -39,7 +39,7 @@
 #include "main.h"
 #include "events.h"
 #include "callbacks.h"
-#include "effects-weed.h"
+#include "effects.h"
 #include "resample.h"
 #include "support.h"
 #include "paramwindow.h"
@@ -3222,7 +3222,7 @@ static void populate_filter_box(GtkWidget *box, gint ninchans, lives_mt *mt) {
   gchar *txt;
   gint nfilts=rte_get_numfilters();
   int i,error;
-  gint cat,subcat;
+  lives_fx_cat_t cat,subcat;
   gchar *tmp;
 
   for (i=0;i<nfilts;i++) {
@@ -3241,7 +3241,7 @@ static void populate_filter_box(GtkWidget *box, gint ninchans, lives_mt *mt) {
 
 	cat=weed_filter_categorise(filter,enabled_in_channels(filter,TRUE),enabled_out_channels(filter,FALSE));
 	if ((subcat=weed_filter_subcategorise(filter,cat,(cat==5)))!=0) {
-	  tmp=g_strdup_printf("%s (%s)",txt,weed_category_to_text(subcat,FALSE));
+	  tmp=g_strdup_printf("%s (%s)",txt,lives_fx_cat_to_text(subcat,FALSE));
 	  g_free(txt);
 	  txt=tmp;
 	}
@@ -5851,7 +5851,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
     gtk_widget_modify_bg(submenu_menu2, GTK_STATE_NORMAL, &palette->menu_and_bars);
   }
 
-  tname=weed_category_to_text(3,TRUE); // effects
+  tname=lives_fx_cat_to_text(LIVES_FX_CAT_FILTER,TRUE); // effects
   cname=g_strdup_printf("_%s...",tname);
   g_free(tname);
 
@@ -5867,7 +5867,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
     gtk_widget_modify_bg(submenu_menu3, GTK_STATE_NORMAL, &palette->menu_and_bars);
   }
 
-  tname=weed_category_to_text(2,TRUE); // transitions
+  tname=lives_fx_cat_to_text(LIVES_FX_CAT_TRANSITION,TRUE); // transitions
   cname=g_strdup_printf("_%s...",tname);
   g_free(tname);
 
@@ -5883,7 +5883,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   }
 
 
-  tname=weed_category_to_text(9,TRUE); //audio/video transitions
+  tname=lives_fx_cat_to_text(LIVES_FX_CAT_AV_TRANSITION,TRUE); //audio/video transitions
   cname=g_strdup_printf("_%s...",tname);
   g_free(tname);
 
@@ -5899,7 +5899,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   }
 
 
-  tname=weed_category_to_text(10,TRUE); //video only transitions
+  tname=lives_fx_cat_to_text(LIVES_FX_CAT_VIDEO_TRANSITION,TRUE); //video only transitions
   cname=g_strdup_printf("_%s...",tname);
   g_free(tname);
 
@@ -5915,7 +5915,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   }
 
 
-  tname=weed_category_to_text(11,TRUE); //audio only transitions
+  tname=lives_fx_cat_to_text(LIVES_FX_CAT_AUDIO_TRANSITION,TRUE); //audio only transitions
   cname=g_strdup_printf("_%s...",tname);
   g_free(tname);
 
@@ -5935,7 +5935,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
 
 
 
-  tname=weed_category_to_text(5,TRUE); // compositors
+  tname=lives_fx_cat_to_text(LIVES_FX_CAT_COMPOSITOR,TRUE); // compositors
   cname=g_strdup_printf("_%s...",tname);
   g_free(tname);
 
@@ -7226,7 +7226,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   gtk_widget_modify_fg (gtk_notebook_get_tab_label(GTK_NOTEBOOK(mt->nb),hbox), GTK_STATE_NORMAL, &palette->normal_fore);
 
 
-  tname=weed_category_to_text(3,TRUE); // effects
+  tname=lives_fx_cat_to_text(LIVES_FX_CAT_FILTER,TRUE); // effects
   label=gtk_label_new (tname);
   g_free(tname);
   hbox = gtk_hbox_new (FALSE, 0);
@@ -7237,7 +7237,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
 
 
 
-  tname=weed_category_to_text(2,TRUE); // transitions
+  tname=lives_fx_cat_to_text(LIVES_FX_CAT_TRANSITION,TRUE); // transitions
   label=gtk_label_new (tname);
   g_free(tname);
   hbox = gtk_hbox_new (FALSE, 0);
@@ -7247,7 +7247,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   gtk_widget_modify_fg (gtk_notebook_get_tab_label(GTK_NOTEBOOK(mt->nb),hbox), GTK_STATE_NORMAL, &palette->normal_fore);
 
 
-  tname=weed_category_to_text(5,TRUE); // compositors
+  tname=lives_fx_cat_to_text(LIVES_FX_CAT_COMPOSITOR,TRUE); // compositors
   label=gtk_label_new (tname);
   g_free(tname);
   hbox = gtk_hbox_new (FALSE, 0);
@@ -14086,18 +14086,18 @@ void mt_add_region_effect (GtkMenuItem *menuitem, gpointer user_data) {
   numtracks=enabled_in_channels(get_weed_filter(mt->current_fx),TRUE);  // count repeated channels
   switch (numtracks) {
   case 1:
-    tname=weed_category_to_text(3,FALSE); // effect
+    tname=lives_fx_cat_to_text(LIVES_FX_CAT_FILTER,FALSE); // effect
     track_desc=g_strdup_printf(_("track %s"),(tmp=get_track_name(mt,tracks[0],FALSE)));
     g_free(tmp);
     break;
   case 2:
-    tname=weed_category_to_text(2,FALSE); // transition
+    tname=lives_fx_cat_to_text(LIVES_FX_CAT_TRANSITION,FALSE); // transition
     track_desc=g_strdup_printf(_("tracks %s and %s"),(tmp1=get_track_name(mt,tracks[0],FALSE)),(tmp=get_track_name(mt,tracks[1],FALSE)));
     g_free(tmp);
     g_free(tmp1);
     break;
   default:
-    tname=weed_category_to_text(5,FALSE); // compositor
+    tname=lives_fx_cat_to_text(LIVES_FX_CAT_COMPOSITOR,FALSE); // compositor
     track_desc=g_strdup(_("selected tracks"));
     break;
   }
@@ -17127,18 +17127,18 @@ void on_set_pvals_clicked  (GtkWidget *button, gpointer user_data) {
 
   switch (numtracks) {
   case 1:
-    tname=weed_category_to_text(3,FALSE); // effect
+    tname=lives_fx_cat_to_text(LIVES_FX_CAT_FILTER,FALSE); // effect
     track_desc=g_strdup_printf(_("track %s"),(tmp=get_track_name(mt,tracks[0],FALSE)));
     g_free(tmp);
     break;
   case 2:
-    tname=weed_category_to_text(2,FALSE); // transition
+    tname=lives_fx_cat_to_text(LIVES_FX_CAT_TRANSITION,FALSE); // transition
     track_desc=g_strdup_printf(_("tracks %s and %s"),(tmp=get_track_name(mt,tracks[0],FALSE)),(tmp2=get_track_name(mt,tracks[1],FALSE)));
     g_free(tmp);
     g_free(tmp2);
     break;
   default:
-    tname=weed_category_to_text(5,FALSE); // compositor
+    tname=lives_fx_cat_to_text(LIVES_FX_CAT_COMPOSITOR,FALSE); // compositor
     if (has_multi) {
       track_desc=g_strdup_printf(_("track %s"),(tmp=get_track_name(mt,mt->current_track,mt->aud_track_selected)));
       g_free(tmp);

@@ -4,6 +4,8 @@
 // Released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
+#ifndef HAS_LIVES_INTERFACE_H
+#define HAS_LIVES_INTERFACE_H
 
 // a few GUI specific settings
 #define DEFAULT_FRAME_HSIZE 320
@@ -143,3 +145,6 @@ text_window *textwindow;
 
 #define MAX_FADE_SECS 30. ///< max time to offer fade audio in/out for
 
+
+
+#endif

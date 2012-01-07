@@ -11,7 +11,7 @@
 #include "audio.h"
 #include "events.h"
 #include "callbacks.h"
-#include "effects-weed.h"
+#include "effects.h"
 #include "support.h"
 
 #ifdef HAVE_SYSTEM_WEED

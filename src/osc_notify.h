@@ -17,8 +17,8 @@
 // when various events happen. The event types are enumerated below. 
 //
 
-#ifndef _HAS_OSC_NOTIFY_H
-#define _HAS_OSC_NOTIFY_H
+#ifndef HAS_LIVES_OSC_NOTIFY_H
+#define HAS_LIVES_OSC_NOTIFY_H
 
 #define LIVES_OSC_NOTIFY_FRAME_SYNCH 1 ///< sent when a frame is displayed
 #define LIVES_OSC_NOTIFY_PLAYBACK_STARTED 2 ///< sent when a/v playback starts or clip is switched

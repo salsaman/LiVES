@@ -19,7 +19,7 @@
 
 #include "main.h"
 #include "resample.h"
-#include "effects-weed.h"
+#include "effects.h"
 #include "support.h"
 #include "paramwindow.h"
 

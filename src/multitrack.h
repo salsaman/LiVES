@@ -6,8 +6,8 @@
 
 // multitrack window
 
-#ifndef __HAS_MULTITRACK_H__
-#define __HAS_MULTITRACK_H__
+#ifndef HAS_LIVES_MULTITRACK_H
+#define HAS_LIVES_MULTITRACK_H
 
 #define CLIP_THUMB_WIDTH 72
 #define CLIP_THUMB_HEIGHT 72

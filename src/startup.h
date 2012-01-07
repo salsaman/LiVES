@@ -4,8 +4,8 @@
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
-#ifndef _HAS_STARTUP_H
-#define _HAS_STARTUP_H
+#ifndef HAS_LIVES_STARTUP_H
+#define HAS_LIVES_STARTUP_H
 
 
 

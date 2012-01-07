@@ -2099,156 +2099,90 @@ _prefsw *create_prefs_dialog (void) {
   // ---
   hbox1 = gtk_hbox_new (FALSE, 0);
   gtk_widget_show (hbox1);
-  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_gui), hbox1, TRUE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_gui), hbox1, TRUE, TRUE, 10);
   // ---
-  prefsw->fs_max_check = gtk_check_button_new();
-  eventbox = gtk_event_box_new();
-  label = gtk_label_new_with_mnemonic(_("Open file selection maximised"));
-  gtk_label_set_mnemonic_widget(GTK_LABEL(label), prefsw->fs_max_check);
-  gtk_container_add(GTK_CONTAINER(eventbox), label);
-  g_signal_connect(GTK_OBJECT(eventbox), "button_press_event", G_CALLBACK(label_act_toggle), prefsw->fs_max_check);
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_bg(eventbox, GTK_STATE_NORMAL, &palette->normal_back);
-  }
+
+
+  // TODO - copy pattern to all other checkboxes
   hbox = gtk_hbox_new(FALSE, 0);
-  gtk_box_pack_start(GTK_BOX(hbox), prefsw->fs_max_check, FALSE, FALSE, 5);
-  gtk_box_pack_start(GTK_BOX(hbox), eventbox, FALSE, FALSE, 5);
+  prefsw->fs_max_check = 
+    lives_standard_check_button_new(_("Open file selection maximised"),TRUE,(LiVESBox *)hbox,NULL);
   gtk_widget_show_all(hbox);
-  gtk_container_set_border_width(GTK_CONTAINER (hbox), 20);
-  gtk_box_pack_start (GTK_BOX (hbox1), hbox, FALSE, FALSE, 0);
+  gtk_box_pack_start (GTK_BOX (hbox1), hbox, TRUE, TRUE, 0);
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->fs_max_check), prefs->fileselmax);
   // ---
-  prefsw->recent_check = gtk_check_button_new();
-  eventbox = gtk_event_box_new();
-  label = gtk_label_new_with_mnemonic(_("Show recent files in the File menu"));
-  gtk_label_set_mnemonic_widget(GTK_LABEL(label), prefsw->recent_check);
-  gtk_container_add(GTK_CONTAINER(eventbox), label);
-  g_signal_connect(GTK_OBJECT(eventbox), "button_press_event", G_CALLBACK(label_act_toggle), prefsw->recent_check);
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_bg(eventbox, GTK_STATE_NORMAL, &palette->normal_back);
-  }
+
+
+
   hbox = gtk_hbox_new(FALSE, 0);
-  gtk_box_pack_start(GTK_BOX(hbox), prefsw->recent_check, FALSE, FALSE, 5);
-  gtk_box_pack_start(GTK_BOX(hbox), eventbox, FALSE, FALSE, 5);
+  prefsw->recent_check = 
+    lives_standard_check_button_new(_("Show recent files in the File menu"),TRUE,(LiVESBox *)hbox,NULL);
   gtk_widget_show_all(hbox);
-  gtk_container_set_border_width(GTK_CONTAINER (hbox), 20);
   gtk_box_pack_start (GTK_BOX (hbox1), hbox, FALSE, FALSE, 0);
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->recent_check), prefs->show_recent);
+
+
+
   // ---
   hbox2 = gtk_hbox_new (FALSE, 0);
   gtk_widget_show (hbox2);
-  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_gui), hbox2, TRUE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_gui), hbox2, TRUE, TRUE, 10);
 
-  prefsw->stop_screensaver_check = gtk_check_button_new();
-  eventbox = gtk_event_box_new();
-  label = gtk_label_new_with_mnemonic(_("Stop screensaver on playback    "));
-  gtk_label_set_mnemonic_widget(GTK_LABEL(label), prefsw->stop_screensaver_check);
-  gtk_container_add(GTK_CONTAINER(eventbox), label);
-  g_signal_connect(GTK_OBJECT(eventbox), "button_press_event", G_CALLBACK(label_act_toggle), prefsw->stop_screensaver_check);
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_bg(eventbox, GTK_STATE_NORMAL, &palette->normal_back);
-  }
   hbox = gtk_hbox_new(FALSE, 0);
-  gtk_box_pack_start(GTK_BOX(hbox), prefsw->stop_screensaver_check, FALSE, FALSE, 5);
-  gtk_box_pack_start(GTK_BOX(hbox), eventbox, FALSE, FALSE, 5);
+  prefsw->stop_screensaver_check = 
+    lives_standard_check_button_new(_("Stop screensaver on playback    "),TRUE,(LiVESBox *)hbox,NULL);
   gtk_widget_show_all(hbox);
-  gtk_container_set_border_width(GTK_CONTAINER (hbox), 20);
   gtk_box_pack_start (GTK_BOX(hbox2), hbox, FALSE, FALSE, 0);
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(prefsw->stop_screensaver_check), prefs->stop_screensaver);
+
+
   // ---
-  prefsw->open_maximised_check = gtk_check_button_new();
-  eventbox = gtk_event_box_new();
-  label = gtk_label_new_with_mnemonic(_("Open main window maximised"));
-  gtk_label_set_mnemonic_widget(GTK_LABEL(label), prefsw->open_maximised_check);
-  gtk_container_add(GTK_CONTAINER(eventbox), label);
-  g_signal_connect(GTK_OBJECT(eventbox), "button_press_event", G_CALLBACK(label_act_toggle), prefsw->open_maximised_check);
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_bg(eventbox, GTK_STATE_NORMAL, &palette->normal_back);
-  }
   hbox = gtk_hbox_new(FALSE, 0);
-  gtk_box_pack_start(GTK_BOX(hbox), prefsw->open_maximised_check, FALSE, FALSE, 5);
-  gtk_box_pack_start(GTK_BOX(hbox), eventbox, FALSE, FALSE, 5);
+  prefsw->open_maximised_check = 
+    lives_standard_check_button_new(_("Open main window maximised"),TRUE,(LiVESBox *)hbox,NULL);
   gtk_widget_show_all(hbox);
-  gtk_container_set_border_width(GTK_CONTAINER (hbox), 20);
   gtk_box_pack_start (GTK_BOX (hbox2), hbox, FALSE, FALSE, 0);
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->open_maximised_check), prefs->open_maximised);
+
   // --
   hbox3 = gtk_hbox_new(FALSE, 0);
   gtk_widget_show (hbox3);
-  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_gui), hbox3, TRUE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_gui), hbox3, TRUE, TRUE, 10);
 
-  prefsw->show_tool = gtk_check_button_new();
-  eventbox = gtk_event_box_new();
-  label = gtk_label_new_with_mnemonic(_("Show toolbar when background is blanked"));
-  gtk_label_set_mnemonic_widget(GTK_LABEL(label), prefsw->show_tool);
-  gtk_container_add(GTK_CONTAINER(eventbox), label);
-  g_signal_connect(GTK_OBJECT(eventbox), "button_press_event", G_CALLBACK(label_act_toggle), prefsw->show_tool);
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_bg(eventbox, GTK_STATE_NORMAL, &palette->normal_back);
-  }
+
   hbox = gtk_hbox_new(FALSE, 0);
-  gtk_box_pack_start(GTK_BOX(hbox), prefsw->show_tool, FALSE, FALSE, 5);
-  gtk_box_pack_start(GTK_BOX(hbox), eventbox, FALSE, FALSE, 5);
+  prefsw->show_tool = 
+    lives_standard_check_button_new(_("Show toolbar when background is blanked"),TRUE,(LiVESBox *)hbox,NULL);
   gtk_widget_show_all(hbox);
-  gtk_container_set_border_width(GTK_CONTAINER (hbox), 20);
   gtk_box_pack_start (GTK_BOX (hbox3), hbox, TRUE, TRUE, 0);
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->show_tool), future_prefs->show_tool);
   // ---
-  prefsw->mouse_scroll = gtk_check_button_new();
-  eventbox = gtk_event_box_new();
-  label = gtk_label_new_with_mnemonic(_("Allow mouse wheel to switch clips"));
-  gtk_label_set_mnemonic_widget(GTK_LABEL(label), prefsw->mouse_scroll);
-  gtk_container_add(GTK_CONTAINER(eventbox), label);
-  g_signal_connect(GTK_OBJECT(eventbox), "button_press_event", G_CALLBACK(label_act_toggle), prefsw->mouse_scroll);
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_bg(eventbox, GTK_STATE_NORMAL, &palette->normal_back);
-  }
+
+
   hbox = gtk_hbox_new(FALSE, 0);
-  gtk_box_pack_start(GTK_BOX(hbox), prefsw->mouse_scroll, FALSE, FALSE, 5);
-  gtk_box_pack_start(GTK_BOX(hbox), eventbox, FALSE, FALSE, 5);
+  prefsw->mouse_scroll = 
+    lives_standard_check_button_new(_("Allow mouse wheel to switch clips"),TRUE,(LiVESBox *)hbox,NULL);
   gtk_widget_show_all(hbox);
-  gtk_container_set_border_width(GTK_CONTAINER (hbox), 20);
   gtk_box_pack_start (GTK_BOX (hbox3), hbox, TRUE, TRUE, 0);
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->mouse_scroll), prefs->mouse_scroll_clips);
+
   // ---
   hbox4 = gtk_hbox_new(FALSE, 0);
   gtk_widget_show (hbox4);
-  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_gui), hbox4, TRUE, FALSE, 0);
+  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_gui), hbox4, TRUE, FALSE, 10);
   // ---
-  prefsw->checkbutton_ce_maxspect = gtk_check_button_new();
-  eventbox = gtk_event_box_new();
-  label = gtk_label_new_with_mnemonic(_("Shrink previews to fit in interface"));
-  gtk_label_set_mnemonic_widget(GTK_LABEL(label), prefsw->checkbutton_ce_maxspect);
-  gtk_container_add(GTK_CONTAINER(eventbox), label);
-  g_signal_connect(GTK_OBJECT(eventbox), "button_press_event", G_CALLBACK(label_act_toggle), prefsw->checkbutton_ce_maxspect);
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_bg(eventbox, GTK_STATE_NORMAL, &palette->normal_back);
-  }
+
   hbox = gtk_hbox_new(FALSE, 0);
-  gtk_box_pack_start(GTK_BOX(hbox), prefsw->checkbutton_ce_maxspect, FALSE, FALSE, 5);
-  gtk_box_pack_start(GTK_BOX(hbox), eventbox, FALSE, FALSE, 5);
+  prefsw->checkbutton_ce_maxspect = 
+    lives_standard_check_button_new(_("Shrink previews to fit in interface"),TRUE,(LiVESBox *)hbox,NULL);
   gtk_widget_show_all(hbox);
-  gtk_container_set_border_width(GTK_CONTAINER (hbox), 20);
   gtk_box_pack_start (GTK_BOX (hbox4), hbox, TRUE, TRUE, 0);
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_ce_maxspect), prefs->ce_maxspect);
+
   // ---
   hbox5 = gtk_hbox_new (FALSE, 0);
   gtk_widget_show (hbox5);
-  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_gui), hbox5, TRUE, FALSE, 0);
+  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_gui), hbox5, TRUE, FALSE, 10);
   // ---
   label = gtk_label_new (_("Startup mode:"));
   if (palette->style&STYLE_1) {

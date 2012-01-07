@@ -6588,10 +6588,6 @@ sub version_check_and_upgrade {
 	}
     }
 
-    if ($startup_phase==0) {
-	&rc_set("startup_phase",100);
-    }
-
 
     # bless this version
     &rc_set("version",$version);

@@ -43,12 +43,12 @@ static gboolean prompt_new_dir(gchar *dirname, guint64 freespace, gboolean wrtab
   gchar *msg;
   if (wrtable) {
     gchar *fspstr=lives_format_storage_space_string(freespace);
-    msg=g_strdup_printf(_("Create the directory\n%s\n?\n\n(Free space = %s)"),dirname,fspstr);
+    msg=g_strdup_printf(_("\nCreate the directory\n%s\n?\n\n(Free space = %s)"),dirname,fspstr);
     g_free(fspstr);
     res=do_warning_dialog(msg);
   }
   else {
-    msg=g_strdup_printf(_("LiVES could not write to the directory\n%s\nPlease try again and choose a different location.\n)"),dirname);
+    msg=g_strdup_printf(_("\nLiVES could not write to the directory\n%s\nPlease try again and choose a different location.\n"),dirname);
     do_error_dialog(msg);
   }
   g_free(msg);

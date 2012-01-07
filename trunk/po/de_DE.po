@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: Lives 0.9.5\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2012-01-07 06:40-0300\n"
+"POT-Creation-Date: 2012-01-07 16:07-0300\n"
 "PO-Revision-Date: 2011-06-03 07:11+0000\n"
 "Last-Translator: Dominik Dehning <Unknown>\n"
 "Language-Team: Herbert U. Hübner <herbert.u.huebner@friendglow.net>\n"
@@ -5573,37 +5573,37 @@ msgid ""
 "Error was: %s\n"
 msgstr ""
 
-#: src/effects-weed.c:3180 src/effects-weed.c:3498
+#: src/effects-weed.c:3180 src/effects-weed.c:3499
 #, fuzzy
 msgid "Some plugin directories"
 msgstr "Unterverzeichisse miteinbeziehen"
 
-#: src/effects-weed.c:3334
+#: src/effects-weed.c:3335
 #, c-format
 msgid "Successfully loaded %d Weed filters\n"
 msgstr ""
 
-#: src/effects-weed.c:4053
+#: src/effects-weed.c:4054
 #, c-format
 msgid "Failed to start instance %s, error code %d\n"
 msgstr ""
 
-#: src/effects-weed.c:4091
+#: src/effects-weed.c:4092
 #, c-format
 msgid "Unable to start generator %s\n"
 msgstr ""
 
-#: src/effects-weed.c:4627
+#: src/effects-weed.c:4628
 #, c-format
 msgid "Failed to start generator %s\n"
 msgstr ""
 
-#: src/effects-weed.c:4687
+#: src/effects-weed.c:4688
 #, c-format
 msgid "Failed to start generator %s, error %d\n"
 msgstr ""
 
-#: src/effects-weed.c:5732
+#: src/effects-weed.c:5733
 #, c-format
 msgid "%s [unstable] (%s)"
 msgstr ""

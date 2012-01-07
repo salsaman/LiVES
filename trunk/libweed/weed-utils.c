@@ -47,7 +47,7 @@
 
 #include <string.h>
 
-#include "weed.h"
+#include <weed/weed.h>
 
  extern weed_leaf_set_f weed_leaf_set;
  extern weed_leaf_get_f weed_leaf_get;

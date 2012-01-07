@@ -50,9 +50,9 @@
 #include <string.h>
 #include <stdio.h>
 
-#include "weed.h"
-#include "weed-palettes.h"
-#include "weed-effects.h"
+#include <weed/weed.h>
+#include <weed/weed-palettes.h>
+#include <weed/weed-effects.h>
 
 extern weed_leaf_get_f weed_leaf_get;
 extern weed_leaf_set_f weed_leaf_set;

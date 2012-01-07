@@ -1,6 +1,6 @@
-// colourspace.h
+// colourspace.c
 // LiVES
-// (c) G. Finch 2004 - 2011 <salsaman@xs4all.nl,salsaman@gmail.com>
+// (c) G. Finch 2004 - 2012 <salsaman@xs4all.nl,salsaman@gmail.com>
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -60,7 +60,7 @@
 #ifdef USE_SWSCALE
 
 #ifdef HAVE_SYSTEM_WEED_COMPAT
-#include "weed/weed-compat.h"
+#include <weed/weed-compat.h>
 #else
 #include "../libweed/weed-compat.h"
 #endif // HAVE_SYSTEM_WEED_COMPAT

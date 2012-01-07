@@ -6,10 +6,10 @@
 // see file COPYING or www.gnu.org for details
 
 #ifdef HAVE_SYSTEM_WEED
-#include "weed/weed.h"
-#include "weed/weed-palettes.h"
-#include "weed/weed-effects.h"
-#include "weed/weed-plugin.h"
+#include <weed/weed.h>
+#include <weed/weed-palettes.h>
+#include <weed/weed-effects.h>
+#include <weed/weed-plugin.h>
 #else
 #include "../../../libweed/weed.h"
 #include "../../../libweed/weed-palettes.h"
@@ -27,8 +27,8 @@ static int package_version=2; // version of this package
 //////////////////////////////////////////////////////////////////
 
 #ifdef HAVE_SYSTEM_WEED
-#include "weed/weed-utils.h" // optional
-#include "weed/weed-plugin-utils.h" // optional
+#include <weed/weed-utils.h> // optional
+#include <weed/weed-plugin-utils.h> // optional
 #else
 #include "../../../libweed/weed-utils.h" // optional
 #include "../../../libweed/weed-plugin-utils.h" // optional

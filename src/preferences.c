@@ -3051,9 +3051,12 @@ _prefsw *create_prefs_dialog (void) {
   gtk_box_pack_start (GTK_BOX (hbox), prefsw->pbq_combo, FALSE, FALSE, 10);
   
   prefsw->pbq_list=NULL;
-  prefsw->pbq_list=g_list_append(prefsw->pbq_list,g_strdup((_("Low - can improve performance on slower machines")))); // translators - video quality, max len 50
-  prefsw->pbq_list=g_list_append(prefsw->pbq_list,g_strdup((_("Normal - recommended for most users"))));  // translators - video quality, max len 50
-  prefsw->pbq_list=g_list_append(prefsw->pbq_list,g_strdup((_("High - can improve quality on very fast machines")))); // translators - video quality, max len 50
+  // TRANSLATORS: video quality, max len 50
+  prefsw->pbq_list=g_list_append(prefsw->pbq_list,g_strdup((_("Low - can improve performance on slower machines"))));
+  // TRANSLATORS: video quality, max len 50
+  prefsw->pbq_list=g_list_append(prefsw->pbq_list,g_strdup((_("Normal - recommended for most users"))));
+  // TRANSLATORS: video quality, max len 50
+  prefsw->pbq_list=g_list_append(prefsw->pbq_list,g_strdup((_("High - can improve quality on very fast machines"))));
 
   populate_combo_box(GTK_COMBO_BOX(prefsw->pbq_combo), prefsw->pbq_list);
   gtk_combo_box_set_active(GTK_COMBO_BOX(prefsw->pbq_combo), 0);

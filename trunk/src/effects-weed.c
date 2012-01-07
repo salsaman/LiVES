@@ -328,13 +328,13 @@ LIVES_INLINE gint step_val(gint val, gint step) {
 gchar *weed_filter_get_type(weed_plant_t *filter, gboolean getsub) {
   // return value should be g_free'd after use
   gchar *tmp1,*tmp2,*ret;
-  int cat=weed_filter_categorise(filter,
-				 enabled_in_channels(filter,FALSE),
-				 enabled_out_channels(filter,FALSE));
+  lives_fx_cat_t cat=weed_filter_categorise(filter,
+					    enabled_in_channels(filter,FALSE),
+					    enabled_out_channels(filter,FALSE));
 
-  int sub=weed_filter_subcategorise(filter,cat,FALSE);
+  lives_fx_cat_t sub=weed_filter_subcategorise(filter,cat,FALSE);
 
-  if (!getsub||sub==0)
+  if (!getsub||sub==LIVES_FX_CAT_NONE)
     return lives_fx_cat_to_text(cat,FALSE);
 
   tmp1=lives_fx_cat_to_text(cat,FALSE);

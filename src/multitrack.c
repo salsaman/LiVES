@@ -1065,7 +1065,8 @@ static gint expose_track_event (GtkWidget *eventbox, GdkEventExpose *event, gpoi
     mt->redraw_block=FALSE;
   }
 
-  bgimage=gdk_pixbuf_get_from_drawable(NULL,GDK_DRAWABLE(eventbox->window),NULL,0,0,0,0,eventbox->allocation.width,eventbox->allocation.height);
+  bgimage=gdk_pixbuf_get_from_drawable(NULL,GDK_DRAWABLE(eventbox->window),NULL,0,0,0,0,
+				       eventbox->allocation.width,eventbox->allocation.height);
   if (gdk_pixbuf_get_width(bgimage)>0) {
     g_object_set_data (G_OBJECT(eventbox), "drawn",GINT_TO_POINTER(TRUE));
     g_object_set_data (G_OBJECT(eventbox), "bgimg",bgimage);
@@ -1077,7 +1078,8 @@ static gint expose_track_event (GtkWidget *eventbox, GdkEventExpose *event, gpoi
     draw_block(mt,mt->block_selected,-1,-1);
   }
 
-  if (is_audio_eventbox(mt,eventbox)&&mt->avol_init_event!=NULL&&mt->aparam_view_list!=NULL) draw_aparams(mt,eventbox,mt->aparam_view_list,mt->avol_init_event,startx,width);
+  if (is_audio_eventbox(mt,eventbox)&&mt->avol_init_event!=NULL&&mt->aparam_view_list!=NULL) 
+    draw_aparams(mt,eventbox,mt->aparam_view_list,mt->avol_init_event,startx,width);
 
   set_cursor_style(mt,LIVES_CURSOR_NORMAL,0,0,0,0,0);
 
@@ -2319,7 +2321,8 @@ gboolean mt_nextclip (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModif
 static void set_time_scrollbar(lives_mt *mt) {
   gdouble page=mt->tl_max-mt->tl_min;
   if (mt->end_secs==0.) mt->end_secs=DEF_TIME;
-  if (mt->end_secs>mt->tl_max) mt->tl_max=mt->end_secs;
+
+  if (mt->tl_max>mt->end_secs) mt->end_secs=mt->tl_max;
 
   gtk_range_set_range(GTK_RANGE(mt->time_scrollbar),0.,mt->end_secs);
   gtk_range_set_increments(GTK_RANGE(mt->time_scrollbar),page/4.,page);
@@ -2747,6 +2750,7 @@ static void mt_zoom (lives_mt *mt, gdouble scale) {
   gdouble tl_span=(mt->tl_max-mt->tl_min)/2.;
   gdouble tl_cur;
 
+
   if (scale>0.) tl_cur=GTK_RULER(mt->timeline)->position;  // center on cursor
   else {
     tl_cur=mt->tl_min+tl_span; // center on middle of screen
@@ -2760,8 +2764,6 @@ static void mt_zoom (lives_mt *mt, gdouble scale) {
     mt->tl_max-=mt->tl_min;
     mt->tl_min=0.;
   }
-
-  if (mt->tl_max>mt->end_secs) mt->end_secs=mt->tl_max;
 
   mt->tl_min=q_gint64(mt->tl_min*U_SEC,mt->fps)/U_SEC;
   mt->tl_max=q_gint64(mt->tl_max*U_SEC,mt->fps)/U_SEC;

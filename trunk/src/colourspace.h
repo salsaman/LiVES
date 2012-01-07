@@ -1,10 +1,14 @@
 // colourspace.h
 // LiVES
-// (c) G. Finch 2004 - 2010 <salsaman@xs4all.nl,salsaman@gmail.com>
+// (c) G. Finch 2004 - 2012 <salsaman@xs4all.nl,salsaman@gmail.com>
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
 // headers for palette conversions
+
+#ifndef HAS_LIVES_COLOURSPACE_H
+#define HAS_LIVES_COLOURSPACE_H
+
 
 typedef struct {
   guchar u0;
@@ -137,4 +141,7 @@ gchar *weed_palette_get_name_full(int pal, int clamped, int subspace);
 
 #ifdef USE_SWSCALE
 void sws_free_context(void);
+#endif
+
+
 #endif

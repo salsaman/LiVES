@@ -68,9 +68,22 @@ int bfd_init (weed_plant_t *inst) {
 
   sdata->count=0;
 
-  weed_set_voidptr_value(inst,"plugin_internal",&sdata);
+  printf("reset bfd\n");
+
+  weed_set_voidptr_value(inst,"plugin_internal",sdata);
 
   weed_free(out_params);
+
+  return WEED_NO_ERROR;
+}
+
+
+
+int bfd_deinit (weed_plant_t *inst) {
+  int error;
+  _sdata *sdata=(_sdata *)weed_get_voidptr_value(inst,"plugin_internal",&error);
+
+  if (sdata!=NULL) weed_free(sdata);
 
   return WEED_NO_ERROR;
 }
@@ -95,6 +108,8 @@ int bfd_process (weed_plant_t *inst, weed_timecode_t timestamp) {
   int luma;
   unsigned char *end=src+height*irowstride;
   register int i;
+
+  printf("1bf is %d count is %d\n",weed_get_boolean_value(blank,"value",&error),sdata->count);
 
   weed_set_boolean_value(blank,"value",WEED_FALSE);
 
@@ -124,8 +139,11 @@ int bfd_process (weed_plant_t *inst, weed_timecode_t timestamp) {
 
   sdata->count++;
 
-  if (sdata->count>=fcount) weed_set_boolean_value(blank,"value",WEED_FALSE);
+  if (sdata->count>=fcount) weed_set_boolean_value(blank,"value",WEED_TRUE);
   else weed_set_boolean_value(blank,"value",WEED_FALSE);
+
+
+  printf("bf is %d count is %d\n",weed_get_boolean_value(blank,"value",&error),sdata->count);
 
   weed_free(in_params);
   weed_free(out_params);
@@ -149,7 +167,7 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 			       weed_integer_init("fcount","Frame _count",1,1,1000),NULL};
     weed_plant_t *in_chantmpls[]={weed_channel_template_init("in channel 0",0,palette_list),NULL};
     weed_plant_t *filter_class=weed_filter_class_init("blank_frame_detector","salsaman",1,0,&bfd_init,
-						      &bfd_process,NULL,in_chantmpls,NULL,in_params,out_params);
+						      &bfd_process,&bfd_deinit,in_chantmpls,NULL,in_params,out_params);
 
     weed_plugin_info_add_filter_class (plugin_info,filter_class);
 

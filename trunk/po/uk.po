@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2012-01-07 20:02-0300\n"
+"POT-Creation-Date: 2012-01-07 21:50-0300\n"
 "PO-Revision-Date: 2011-11-07 13:09+0000\n"
 "Last-Translator: Yuri Chornoivan <yurchor@gmail.com>\n"
 "Language-Team: Ukrainian <translation@linux.org.ua>\n"
@@ -707,12 +707,12 @@ msgid "Closed file %s\n"
 msgstr "Закритий файл %s\n"
 
 #: src/main.c:5108 src/gui.c:622 src/utils.c:3222 src/utils.c:3254
-#: src/saveplay.c:3112 src/multitrack.c:3983 src/multitrack.c:5540
+#: src/saveplay.c:3115 src/multitrack.c:3983 src/multitrack.c:5540
 msgid "_Undo"
 msgstr "В_ернути"
 
 #: src/main.c:5109 src/gui.c:635 src/utils.c:3223 src/utils.c:3255
-#: src/saveplay.c:3113 src/multitrack.c:4004 src/multitrack.c:5563
+#: src/saveplay.c:3116 src/multitrack.c:4004 src/multitrack.c:5563
 msgid "_Redo"
 msgstr "Повт_орити"
 
@@ -1131,7 +1131,7 @@ msgstr ""
 
 #: src/interface.c:190 src/callbacks.c:9100 src/callbacks.c:9130
 #: src/callbacks.c:9131 src/gui.c:3096 src/gui.c:3651 src/saveplay.c:2046
-#: src/saveplay.c:2746 src/dialogs.c:1310 src/dialogs.c:1311
+#: src/saveplay.c:2749 src/dialogs.c:1310 src/dialogs.c:1311
 #: src/dialogs.c:1510 src/dialogs.c:1511 src/framedraw.c:206
 #: src/multitrack.c:7124
 msgid "Preview"
@@ -2061,7 +2061,7 @@ msgid "Copying frames %d to %d%s to the clipboard..."
 msgstr "Копіювання кадрів з %d до %d%s до буфера даних…"
 
 #: src/callbacks.c:2345 src/saveplay.c:1257 src/saveplay.c:1408
-#: src/saveplay.c:1494 src/saveplay.c:3526
+#: src/saveplay.c:1494 src/saveplay.c:3529
 msgid "Pulling frames from clip"
 msgstr "Отримання кадрів з кліпу"
 
@@ -4217,7 +4217,7 @@ msgstr "Відкриття %s"
 msgid "Opening %s start time %.2f sec. frames %d"
 msgstr "Відкриття %s час початку — %.2f с, %d кадрів"
 
-#: src/saveplay.c:303 src/saveplay.c:3513
+#: src/saveplay.c:303 src/saveplay.c:3516
 msgid " without sound"
 msgstr " без звуку"
 
@@ -4382,12 +4382,12 @@ msgstr "запис перервано відтворенням даних з б�
 msgid "Recording performance..."
 msgstr "Виконання запису…"
 
-#: src/saveplay.c:2886
+#: src/saveplay.c:2889
 #, c-format
 msgid "Average FPS was %.4f\n"
 msgstr "Середня частота кадрів — %.4f\n"
 
-#: src/saveplay.c:2892
+#: src/saveplay.c:2895
 msgid ""
 "\n"
 "\n"
@@ -4402,16 +4402,16 @@ msgstr ""
 "кадрів»\n"
 "і змінити розміри всіх кадрів до поточного значення.\n"
 
-#: src/saveplay.c:3042
+#: src/saveplay.c:3045
 msgid "Unknown"
 msgstr "Невідомо"
 
-#: src/saveplay.c:3143 src/saveplay.c:4086
+#: src/saveplay.c:3146 src/saveplay.c:4089
 #, c-format
 msgid "Untitled%d"
 msgstr "Без_назви%d"
 
-#: src/saveplay.c:3177
+#: src/saveplay.c:3180
 #, c-format
 msgid ""
 "\n"
@@ -4419,7 +4419,7 @@ msgid ""
 "Bad things may happen with this clip.\n"
 msgstr ""
 
-#: src/saveplay.c:3264
+#: src/saveplay.c:3267
 #, c-format
 msgid ""
 "\n"
@@ -4432,14 +4432,14 @@ msgstr ""
 "Типову частоту кадрів можна встановити за допомогою пункту меню «Інструменти "
 "| Параметри | Інше».\n"
 
-#: src/saveplay.c:3276
+#: src/saveplay.c:3279
 #, c-format
 msgid "Playback speed was adjusted to %.3f frames per second to fit audio.\n"
 msgstr ""
 "Швидкість відтворення було скориговано до значення %.3f кадрів на секунду, "
 "щоб зберегти відповідність з звуковими даними.\n"
 
-#: src/saveplay.c:3292
+#: src/saveplay.c:3295
 #, c-format
 msgid ""
 "Frames=%d type=%s size=%dx%d *bpp=Greyscale* fps=%.3f\n"
@@ -4449,7 +4449,7 @@ msgstr ""
 "%.3f\n"
 "Звукові дані:"
 
-#: src/saveplay.c:3296 src/saveplay.c:4258
+#: src/saveplay.c:3299 src/saveplay.c:4261
 #, c-format
 msgid ""
 "Frames=%d type=%s size=%dx%d bpp=%d fps=%.3f\n"
@@ -4458,49 +4458,49 @@ msgstr ""
 "Кадрів=%d тип=%s розмір=%dx%d глибина кольорів=%d частота кадрів=%.3f\n"
 "Звукові дані:"
 
-#: src/saveplay.c:3300 src/saveplay.c:4262
+#: src/saveplay.c:3303 src/saveplay.c:4265
 #, c-format
 msgid "%s none\n"
 msgstr "%s немає\n"
 
-#: src/saveplay.c:3303 src/saveplay.c:4265
+#: src/saveplay.c:3306 src/saveplay.c:4268
 #, c-format
 msgid "%s %d Hz %d channel(s) %d bps\n"
 msgstr "%s %d Гц %d каналів %d б/с\n"
 
-#: src/saveplay.c:3311
+#: src/saveplay.c:3314
 #, c-format
 msgid " - Comment: %s\n"
 msgstr " - Коментар: %s\n"
 
-#: src/saveplay.c:3416
+#: src/saveplay.c:3419
 #, c-format
 msgid "Saving frame %d as %s..."
 msgstr "Збереження кадру %d як %s..."
 
-#: src/saveplay.c:3508
+#: src/saveplay.c:3511
 #, c-format
 msgid "Backing up %s to %s"
 msgstr "Створення резервної копії %s на %s"
 
-#: src/saveplay.c:3560
+#: src/saveplay.c:3563
 msgid "Backing up"
 msgstr "Створення резервної копії"
 
-#: src/saveplay.c:3593
+#: src/saveplay.c:3596
 msgid "performance data was backed up..."
 msgstr "було створено резервну копію записаних даних…"
 
-#: src/saveplay.c:4161
+#: src/saveplay.c:4164
 #, c-format
 msgid "Restoring %s..."
 msgstr "Відновлення %s…"
 
-#: src/saveplay.c:4188
+#: src/saveplay.c:4191
 msgid "Restoring"
 msgstr "Відновлення"
 
-#: src/saveplay.c:4210
+#: src/saveplay.c:4213
 #, c-format
 msgid ""
 "\n"
@@ -4514,23 +4514,23 @@ msgstr ""
 "LiVES не вдалося відновити їх.\n"
 
 #. TRANSLATORS: rec(ord) %.2f M(ega)B(ytes)
-#: src/saveplay.c:4670
+#: src/saveplay.c:4673
 #, c-format
 msgid "rec %.2f MB"
 msgstr "зап %.2f МБ"
 
-#: src/saveplay.c:4676
+#: src/saveplay.c:4679
 #, c-format
 msgid "!rec %.2f MB"
 msgstr "!зап %.2f МБ"
 
 #. TRANSLATORS: rec(ord) ?? M(ega)B(ytes)
-#: src/saveplay.c:4679
+#: src/saveplay.c:4682
 #, fuzzy
 msgid "rec ?? MB"
 msgstr "зап %.2f МБ"
 
-#: src/saveplay.c:4704
+#: src/saveplay.c:4707
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -4543,7 +4543,7 @@ msgstr ""
 "Параметри призупинки запису можна встановити за допомогою діалогового вікна "
 "«Параметри».\n"
 
-#: src/saveplay.c:4830
+#: src/saveplay.c:4833
 msgid ""
 "\n"
 "Files from a previous run of LiVES were found.\n"
@@ -4553,11 +4553,11 @@ msgstr ""
 "Було знайдено файли від попереднього запуску LiVES.\n"
 "Бажаєте, щоб програма спробувала їх відновити?\n"
 
-#: src/saveplay.c:4850
+#: src/saveplay.c:4853
 msgid "Recovering files"
 msgstr "Відновлення файлів"
 
-#: src/saveplay.c:4852
+#: src/saveplay.c:4855
 msgid "Recovering files..."
 msgstr "Відновлення файлів…"
 
@@ -6027,17 +6027,17 @@ msgstr ""
 "\n"
 "Не було створено жодного кадру.\n"
 
-#: src/effects-weed.c:3059
+#: src/effects-weed.c:3063
 #, c-format
 msgid "Error: plugin %s has no weed_setup() function.\n"
 msgstr "Помилка: у додатку %s не визначено функції weed_setup().\n"
 
-#: src/effects-weed.c:3073
+#: src/effects-weed.c:3077
 #, c-format
 msgid "No usable filters found in plugin %s\n"
 msgstr "У додатку %s не знайдено придатних до використання фільтрів\n"
 
-#: src/effects-weed.c:3153
+#: src/effects-weed.c:3157
 #, c-format
 msgid ""
 "Info: Unable to load plugin %s\n"
@@ -6046,37 +6046,37 @@ msgstr ""
 "Інформація: не вдалося завантажити додаток %s\n"
 "Повідомлення про помилку: %s\n"
 
-#: src/effects-weed.c:3156 src/effects-weed.c:3475
+#: src/effects-weed.c:3160 src/effects-weed.c:3479
 #, fuzzy
 msgid "Some plugin directories"
 msgstr "Включити підкаталоги"
 
-#: src/effects-weed.c:3311
+#: src/effects-weed.c:3315
 #, c-format
 msgid "Successfully loaded %d Weed filters\n"
 msgstr "Успішно завантажено %d фільтрів Weed\n"
 
-#: src/effects-weed.c:4031
+#: src/effects-weed.c:4035
 #, c-format
 msgid "Failed to start instance %s, error code %d\n"
 msgstr "Не вдалося запустити екземпляр %s, код помилки: %d\n"
 
-#: src/effects-weed.c:4069
+#: src/effects-weed.c:4073
 #, c-format
 msgid "Unable to start generator %s\n"
 msgstr "Не вдалося запустити породжувач %s\n"
 
-#: src/effects-weed.c:4605
+#: src/effects-weed.c:4609
 #, c-format
 msgid "Failed to start generator %s\n"
 msgstr "Не вдалося запустити породжувач %s\n"
 
-#: src/effects-weed.c:4665
+#: src/effects-weed.c:4669
 #, c-format
 msgid "Failed to start generator %s, error %d\n"
 msgstr "Не вдалося запустити породжувач %s, помилка: %d\n"
 
-#: src/effects-weed.c:5734
+#: src/effects-weed.c:5738
 #, c-format
 msgid "%s [unstable] (%s)"
 msgstr "%s [нестабільний] (%s)"

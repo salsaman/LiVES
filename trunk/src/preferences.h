@@ -133,6 +133,7 @@ typedef struct {
 #define REC_EFFECTS (1<<2)
 #define REC_CLIPS (1<<3)
 #define REC_AUDIO (1<<4)
+#define REC_EXT_AUDIO (1<<5)
   
   gboolean no_bandwidth;
   gboolean osc_udp_started;

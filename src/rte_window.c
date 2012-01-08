@@ -276,11 +276,11 @@ void on_save_rte_defs_activate (GtkMenuItem *menuitem, gpointer user_data) {
   gchar *msg;
 
   if (prefs->fxdefsfile==NULL) {
-    prefs->fxdefsfile=g_strdup_printf("%s/%sfxdefs",capable->home_dir,LIVES_CONFIG_DIR);
+    prefs->fxdefsfile=g_build_filename(capable->home_dir,LIVES_CONFIG_DIR,"fxdefs",NULL);
   }
 
   if (prefs->fxsizesfile==NULL) {
-    prefs->fxsizesfile=g_strdup_printf("%s/%sfxsizes",capable->home_dir,LIVES_CONFIG_DIR);
+    prefs->fxsizesfile=g_build_filename(capable->home_dir,LIVES_CONFIG_DIR,"fxsizes",NULL);
   }
 
   msg=g_strdup_printf(_("Saving real time effect defaults to %s..."),prefs->fxdefsfile);

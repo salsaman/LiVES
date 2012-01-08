@@ -7007,33 +7007,39 @@ gboolean write_filter_defaults (int fd, int idx) {
 
 
 gboolean read_filter_defaults(int fd) {
-  void *buf;
-  ssize_t vlen;
-  int i,error,pnum;
   weed_plant_t *filter,**ptmpls;
+  void *buf;
+
+  size_t vlen;
+
+  int vleni,vlenz;
+  int i,error,pnum;
   int num_params=0;
-  gchar *tmp;
   int ntoread;
+
+  gchar *tmp;
 
   mainw->read_failed=FALSE;
 
   while (1) {
-    if (lives_read_le(fd,&vlen,4,TRUE)<4) {
+    if (lives_read_le(fd,&vleni,4,TRUE)<4) {
       // we are allowed to EOF here
       mainw->read_failed=FALSE;
       break;
     }
 
-    if (vlen>65535) {
-      // some files erroneously used a vlen of 8
-      if (lseek(fd,-4,SEEK_CUR)<0) return FALSE;
-      if (lives_read_le(fd,&vlen,8,TRUE)<8) {
-	// we are allowed to EOF here
-	mainw->read_failed=FALSE;
-	break;
-      }
-      if (vlen>65535) return FALSE;
+    // some files erroneously used a vlen of 8
+    if (lives_read_le(fd,&vlenz,4,TRUE)<4) {
+      // we are allowed to EOF here
+      mainw->read_failed=FALSE;
+      break;
     }
+
+    if (vlenz!=0) {
+      if (lseek(fd,-4,SEEK_CUR)<0) return FALSE;
+    }
+
+    vlen=(size_t)vleni;
 
     buf=g_malloc(vlen+1);
     if (lives_read(fd,buf,vlen,TRUE)<vlen) break;
@@ -7068,7 +7074,7 @@ gboolean read_filter_defaults(int fd) {
 	if (ptmpls!=NULL) weed_free(ptmpls);
 	break;
       }
-
+      
       if (pnum<num_params) {
 	weed_leaf_deserialise(fd,ptmpls[pnum],"host_default",NULL,FALSE);
       }
@@ -7077,11 +7083,13 @@ gboolean read_filter_defaults(int fd) {
 	weed_leaf_deserialise(fd,dummyplant,"host_default",NULL,FALSE);
 	weed_plant_free(dummyplant);
       }
-      if (mainw->read_failed) break;
-
+      if (mainw->read_failed) {
+	break;
+      }
     }
     if (mainw->read_failed) {
       if (ptmpls!=NULL) weed_free(ptmpls);
+      LIVES_DEBUG("CC9");
       break;
     }
 
@@ -7089,8 +7097,9 @@ gboolean read_filter_defaults(int fd) {
     lives_read(fd,buf,strlen("\n"),TRUE);
     g_free(buf);
     if (ptmpls!=NULL) weed_free(ptmpls);
-    if (mainw->read_failed) break;
-
+    if (mainw->read_failed) {
+      break;
+    }
   }
 
   if (mainw->read_failed) return FALSE;
@@ -7160,37 +7169,42 @@ gboolean write_generator_sizes (int fd, int idx) {
 
 
 gboolean read_generator_sizes(int fd) {
-  gchar *buf;
+  weed_plant_t *filter,**ctmpls;
   ssize_t bytes;
   size_t vlen;
+
+  gchar *buf;
+  gchar *tmp;
+
+  int vleni,vlenz;
   int i,error;
-  weed_plant_t *filter,**ctmpls;
   int num_chans=0;
   int cnum;
-  gchar *tmp;
 
   mainw->read_failed=FALSE;
 
   while (1) {
-    bytes=lives_read_le(fd,&vlen,4,TRUE);
-    if (bytes<4) {
+    if (lives_read_le(fd,&vleni,4,TRUE)<4) {
+      // we are allowed to EOF here
       mainw->read_failed=FALSE;
       break;
     }
 
-
-    if (vlen>65535) {
-      // some files erroneously used a vlen of 8
-      if (lseek(fd,-4,SEEK_CUR)<0) return FALSE;
-      if (lives_read_le(fd,&vlen,8,TRUE)<8) {
-	// we are allowed to EOF here
-	mainw->read_failed=FALSE;
-	break;
-      }
-      if (vlen>65535) return FALSE;
+    // some files erroneously used a vlen of 8
+    if (lives_read_le(fd,&vlenz,4,TRUE)<4) {
+      // we are allowed to EOF here
+      mainw->read_failed=FALSE;
+      break;
     }
 
-    buf=(gchar *)g_malloc(vlen+1);
+    if (vlenz!=0) {
+      if (lseek(fd,-4,SEEK_CUR)<0) return FALSE;
+    }
+
+    vlen=(size_t)vleni;
+
+    buf=g_malloc(vlen+1);
+
     bytes=lives_read(fd,buf,vlen,TRUE);
     if (bytes<vlen) {
       break;

@@ -5381,7 +5381,11 @@ on_show_file_info_activate            (GtkMenuItem     *menuitem,
     }
     gtk_text_buffer_set_text (gtk_text_view_get_buffer (GTK_TEXT_VIEW (filew->textview28)),buff, -1);
     // file size
-    if (cfile->f_size>=0l) g_snprintf(buff,512,"\n  %.2f MB",cfile->f_size/1000000.);
+    if (cfile->f_size>=0l) {
+      gchar *file_ds=lives_format_storage_space_string((guint64)cfile->f_size);
+      g_snprintf(buff,512,"\n  %s",file_ds);
+      g_free(file_ds);
+    }
     else g_snprintf(buff,512,"%s",_ ("\n  Unknown"));
     gtk_text_buffer_set_text (gtk_text_view_get_buffer (GTK_TEXT_VIEW (filew->textview29)),buff, -1);
   }

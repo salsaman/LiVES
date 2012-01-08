@@ -7203,7 +7203,7 @@ gboolean read_generator_sizes(int fd) {
 
     vlen=(size_t)vleni;
 
-    buf=g_malloc(vlen+1);
+    buf=(gchar *)g_malloc(vlen+1);
 
     bytes=lives_read(fd,buf,vlen,TRUE);
     if (bytes<vlen) {

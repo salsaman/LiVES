@@ -537,7 +537,9 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
       }
     
       if (cfile->f_size>prefs->warn_file_size*1000000.&&mainw->is_ready&&frames==0) {
-	gchar *warn=g_strdup_printf(_ ("\nLiVES is not currently optimised for larger file sizes.\nYou are advised (for now) to start with a smaller file, or to use the 'Open File Selection' option.\n(Filesize=%.2fMB)\n\nAre you sure you wish to continue ?"),cfile->f_size/1000000.);
+	gchar *fsize_ds=lives_format_storage_space_string((guint64)cfile->f_size);
+	gchar *warn=g_strdup_printf(_ ("\nLiVES is not currently optimised for larger file sizes.\nYou are advised (for now) to start with a smaller file, or to use the 'Open File Selection' option.\n(Filesize=%s)\n\nAre you sure you wish to continue ?"),fsize_ds);
+	g_free(fsize_ds);
 	if (!do_warning_dialog_with_check(warn,WARN_MASK_FSIZE)) {
 	  g_free(warn);
 	  close_current_file(old_file);
@@ -1869,13 +1871,16 @@ void save_file (int clip, int start, int end, const char *filename) {
   }
 
   if (not_cancelled) {
+    gchar *fsize_ds;
     mainw->no_switch_dprint=TRUE;
     d_print_done();
 
     // get size of file and show it
 
     fsize=sget_file_size(full_file_name);
-    mesg=g_strdup_printf(_("File size was %.2fMB\n"),(gdouble)fsize/1000000.);
+    fsize_ds=lives_format_storage_space_string(fsize);
+    mesg=g_strdup_printf(_("File size was %s\n"),fsize_ds);
+    g_free(fsize_ds);
     d_print(mesg);
     g_free(mesg);
 

@@ -386,7 +386,7 @@ void set_vpp(gboolean set_in_prefs) {
 
 
 static void set_temp_label_text(GtkLabel *label) {
-  gdouble free_gb;
+  gchar *free_ds;
   gchar *tmpx1,*tmpx2;
   gchar *dir=future_prefs->tmpdir;
   char *markup;
@@ -397,8 +397,9 @@ static void set_temp_label_text(GtkLabel *label) {
     tmpx2=g_strdup(_("\n\n\n(Free space = UNKNOWN)"));
   }
   else {
-    free_gb=(gdouble)get_fs_free(dir)/1000000000.;
-    tmpx2=g_strdup_printf(_("\n\n\n(Free space = %.2f GB)"),free_gb);
+    free_ds=lives_format_storage_space_string(get_fs_free(dir));
+    tmpx2=g_strdup_printf(_("\n\n\n(Free space = %s)"),free_ds);
+    g_free(free_ds);
   }
 
   tmpx1=g_strdup(_("The temp directory is LiVES working directory where opened clips and sets are stored.\nIt should be in a partition with plenty of free disk space.\n\nTip: avoid setting it inside /tmp, since frequently /tmp is cleared on system shutdown."));

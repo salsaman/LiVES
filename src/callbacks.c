@@ -3763,15 +3763,27 @@ void
 on_record_perf_activate                      (GtkMenuItem     *menuitem,
 					      gpointer         user_data)
 {
+  // real time recording
+
 
   if (mainw->multitrack!=NULL) return;
 
   if (mainw->playing_file>-1) {
+    // we are playing a clip
     weed_timecode_t tc;
 
     if (!mainw->record||mainw->record_paused) {
+      // recording is starting
       mainw->record_starting=TRUE;
+
+      if (prefs->rec_opts&REC_EXT_AUDIO) {
+	// remove play head and add record head
+
+	// mark in timeline
+      }
+
       if (prefs->rec_opts&REC_AUDIO) {
+	// recording INTERNAL audio
 #ifdef ENABLE_JACK
 	if (prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL) {
 	  jack_get_rec_avals(mainw->jackd);
@@ -3785,6 +3797,7 @@ on_record_perf_activate                      (GtkMenuItem     *menuitem,
       }
       return;
     }
+
     // end record during playback
       
     if (mainw->event_list!=NULL) {
@@ -3796,6 +3809,13 @@ on_record_perf_activate                      (GtkMenuItem     *menuitem,
 	insert_audio_event_at(mainw->event_list, last_frame, -1, mainw->rec_aclip, 0., 0.);
       }
 #endif
+
+      if (prefs->rec_opts&REC_EXT_AUDIO) {
+	// remove record head and add play head
+
+	// mark in timeline
+      }
+
 
       if (prefs->rec_opts&REC_EFFECTS) {
 	// add deinit events for all active effects
@@ -3812,6 +3832,8 @@ on_record_perf_activate                      (GtkMenuItem     *menuitem,
     return;
   }
 
+
+  // out of playback
  
   // record performance
   if (!mainw->record) {

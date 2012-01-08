@@ -2252,7 +2252,7 @@ void play_file (void) {
   mainw->currticks=0;
 
   // reinit all active effects
-  weed_reinit_all();
+  if (!mainw->preview&&!mainw->is_rendering) weed_reinit_all();
 
   if (!mainw->foreign) {
     // start up our audio player (jack or pulse)
@@ -2391,7 +2391,6 @@ void play_file (void) {
       }
 
       g_free(stfile);
-      if (!mainw->preview&&!mainw->is_rendering) weed_reinit_all();
 
       stfile=g_build_filename(prefs->tmpdir,cfile->handle,".status.play",NULL);
       g_snprintf(cfile->info_file,PATH_MAX,"%s",stfile);

@@ -7035,11 +7035,18 @@ gboolean read_filter_defaults(int fd) {
       break;
     }
 
-    if (vlenz!=0) {
-      if (lseek(fd,-4,SEEK_CUR)<0) return FALSE;
+    vlen=(size_t)vleni;
+
+    if (capable->byte_order==G_BIG_ENDIAN&&prefs->bigendbug) {
+      if (vleni==0&&vlenz!=0) vlen=(size_t)vlenz;
+    }
+    else {
+      if (vlenz!=0) {
+	if (lseek(fd,-4,SEEK_CUR)<0) return FALSE;
+      }
     }
 
-    vlen=(size_t)vleni;
+    if (vlen>65535) return FALSE;
 
     buf=g_malloc(vlen+1);
     if (lives_read(fd,buf,vlen,TRUE)<vlen) break;
@@ -7142,7 +7149,6 @@ gboolean write_generator_sizes (int fd, int idx) {
 	lives_write(fd,hashname,vlen,TRUE);
 	g_free(hashname);
 	wrote_hashname=TRUE;
-
 	if (weed_plant_has_leaf(filter,"host_fps")) {
 	  int j=-1;
 	  lives_write_le(fd,&j,4,TRUE);
@@ -7197,11 +7203,22 @@ gboolean read_generator_sizes(int fd) {
       break;
     }
 
-    if (vlenz!=0) {
-      if (lseek(fd,-4,SEEK_CUR)<0) return FALSE;
+    vlen=(size_t)vleni;
+
+    if (capable->byte_order==G_BIG_ENDIAN&&prefs->bigendbug) {
+      if (vleni==0&&vlenz!=0) vlen=(size_t)vlenz;
+    }
+    else {
+      if (vlenz!=0) {
+	if (lseek(fd,-4,SEEK_CUR)<0) {
+	  return FALSE;
+	}
+      }
     }
 
-    vlen=(size_t)vleni;
+    if (vlen>65535) {
+      return FALSE;
+    }
 
     buf=(gchar *)g_malloc(vlen+1);
 
@@ -7223,36 +7240,44 @@ gboolean read_generator_sizes(int fd) {
     ctmpls=NULL;
 
     if (i<num_weed_filters) {
+      gboolean ready=FALSE;
       filter=weed_filters[i];
       num_chans=weed_leaf_num_elements(filter,"out_channel_templates");
       if (num_chans>0) ctmpls=weed_get_plantptr_array(filter,"out_channel_templates",&error);
 
-      bytes=lives_read_le(fd,&cnum,4,TRUE);
-      if (bytes<4) {
-	break;
-      }
-      
-      if (cnum<num_chans&&cnum>=0) {
-	weed_leaf_deserialise(fd,ctmpls[cnum],"host_width",NULL,FALSE);
-	weed_leaf_deserialise(fd,ctmpls[cnum],"host_height",NULL,FALSE);
-	if (weed_get_int_value(ctmpls[cnum],"host_width",&error)==0) 
-	  weed_set_int_value(ctmpls[cnum],"host_width",DEF_GEN_WIDTH);
-	if (weed_get_int_value(ctmpls[cnum],"host_height",&error)==0) 
-	  weed_set_int_value(ctmpls[cnum],"host_height",DEF_GEN_HEIGHT);
-      }
-      else if (cnum==-1) {
-	weed_leaf_deserialise(fd,filter,"host_fps",NULL,FALSE);
+      while (!ready) {
+	ready=TRUE;
+	bytes=lives_read_le(fd,&cnum,4,TRUE);
+	if (bytes<4) {
+	  break;
+	}
+	
+	if (cnum<num_chans&&cnum>=0) {
+	  weed_leaf_deserialise(fd,ctmpls[cnum],"host_width",NULL,FALSE);
+	  weed_leaf_deserialise(fd,ctmpls[cnum],"host_height",NULL,FALSE);
+	  if (weed_get_int_value(ctmpls[cnum],"host_width",&error)==0) 
+	    weed_set_int_value(ctmpls[cnum],"host_width",DEF_GEN_WIDTH);
+	  if (weed_get_int_value(ctmpls[cnum],"host_height",&error)==0) 
+	    weed_set_int_value(ctmpls[cnum],"host_height",DEF_GEN_HEIGHT);
+	}
+	else if (cnum==-1) {
+	  weed_leaf_deserialise(fd,filter,"host_fps",NULL,FALSE);
+	  ready=FALSE;
+	}
       }
     }
-
     if (ctmpls!=NULL) weed_free(ctmpls);
 
-    if (mainw->read_failed) break;
+    if (mainw->read_failed) {
+      break;
+    }
     buf=(gchar *)g_malloc(strlen("\n"));
     lives_read(fd,buf,strlen("\n"),TRUE);
     g_free(buf);
 
-    if (mainw->read_failed) break;
+    if (mainw->read_failed) {
+      break;
+    }
   }
 
   if (mainw->read_failed) return FALSE;

@@ -21,7 +21,7 @@
 ///////////////////////////////////////////////////////////////////
 
 static int num_versions=1; // number of different weed api versions supported
-static int api_versions[]={131}; // array of weed api versions supported in plugin, in order of preference (most preferred first)
+static int api_versions[]={131}; // array of weed api versions supported in plugin, in order (most preferred first)
 
 static int package_version=1; // version of this package
 
@@ -48,8 +48,11 @@ int calc_luma(int red, int green, int blue) {
   return 0.21*(float)red+0.587*(float)green+0.114*(float)blue;
 }
 
-//oil_conv_s32_f32(&red,s,&redf,d,1)
-
+int stretch_luma(int clamped_luma) {
+  // return luma 0<=x<=256
+  if (clamped_luma==16) return 0;
+  else return (int)(((float)clamped_luma-16.)/221.*255.+.5);
+}
 
 ////////////////////////////////////////////////////////////
 
@@ -104,25 +107,39 @@ int bfd_process (weed_plant_t *inst, weed_timecode_t timestamp) {
   int fcount=weed_get_int_value(in_params[1],"value",&error);
   int psize=4;
   int luma;
+  int clamped=0;
+  int start=0;
   unsigned char *end=src+height*irowstride;
   register int i;
 
-  printf("1bf is %d count is %d\n",weed_get_boolean_value(blank,"value",&error),sdata->count);
-
   weed_set_boolean_value(blank,"value",WEED_FALSE);
 
-  if (pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_BGR24||pal==WEED_PALETTE_YUV888) psize=4;
+  if (pal==WEED_PALETTE_YUV444P||pal==WEED_PALETTE_YUVA4444P||pal==WEED_PALETTE_YUV422P||
+      pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_UYVY||pal==WEED_PALETTE_YUYV||
+      pal==WEED_PALETTE_YUV888||pal==WEED_PALETTE_YUVA8888) {
+
+    if (weed_plant_has_leaf(in_channel,"YUV_Clamping")&&
+	(weed_get_int_value(in_channel,"YUV_Clamping",&error)==WEED_YUV_CLAMPING_CLAMPED))
+      clamped=1;
+  }
+
+  if (pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_BGR24||pal==WEED_PALETTE_YUV888) psize=3;
   if (pal==WEED_PALETTE_YUV444P||pal==WEED_PALETTE_YUVA4444P||pal==WEED_PALETTE_YUV422P||
       pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P) psize=1;
 
   width*=psize;
 
+  // yes this is right to set this here (1 macropixel == 4 bytes == 2 pixels)
+  if (pal==WEED_PALETTE_UYVY||pal==WEED_PALETTE_YUYV) psize=2;
+
+  if (pal==WEED_PALETTE_UYVY) start=1;
+
   for (;src<end;src+=irowstride) {
-    for (i=0;i<width;i+=psize) {
+    for (i=start;i<width;i+=psize) {
       if (pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_RGBA32) luma=calc_luma(src[i],src[i+1],src[i+2]);
       else if (pal==WEED_PALETTE_BGR24||pal==WEED_PALETTE_BGRA32) luma=calc_luma(src[i+2],src[i+1],src[i]);
       else if (pal==WEED_PALETTE_ARGB32) luma=calc_luma(src[i+1],src[i+2],src[i+3]);
-      else luma=src[i];
+      else luma=(clamped?stretch_luma(src[i]):src[i]);
 
       if (luma>threshold) {
 	// is not blank
@@ -156,6 +173,7 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
     int palette_list[]={WEED_PALETTE_BGR24,WEED_PALETTE_RGB24,WEED_PALETTE_RGBA32,WEED_PALETTE_BGRA32,
 			WEED_PALETTE_ARGB32,WEED_PALETTE_YUVA8888,WEED_PALETTE_YUV888,WEED_PALETTE_YUV444P,
 			WEED_PALETTE_YUVA4444P,WEED_PALETTE_YUV422P,WEED_PALETTE_YUV420P,WEED_PALETTE_YVU420P,
+			WEED_PALETTE_UYVY,WEED_PALETTE_YUYV,
 			WEED_PALETTE_END};
     weed_plant_t *out_params[]={weed_out_param_switch_init("blank",WEED_FALSE),NULL};
     weed_plant_t *in_params[]={weed_integer_init("threshold","Luma _threshold",0,0,255),

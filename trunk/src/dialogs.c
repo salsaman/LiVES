@@ -1782,6 +1782,11 @@ void do_layout_scrap_file_error(void) {
 }
 
 
+void do_layout_ascrap_file_error(void) {
+  do_blocking_error_dialog(_("This layout includes generated or recorded audio.\nIt cannot be saved, you must render it to a clip first.\n"));
+}
+
+
 
 
 gboolean rdet_suggest_values (gint width, gint height, gdouble fps, gint fps_num, gint fps_denom, gint arate, gint asigned, gboolean swap_endian, gboolean anr, gboolean ignore_fps) {

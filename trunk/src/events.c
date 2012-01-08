@@ -3990,6 +3990,7 @@ gboolean deal_with_render_choice (gboolean add_deinit) {
     case RENDER_CHOICE_DISCARD:
       if (mainw->current_file>-1) cfile->redoable=FALSE;
       close_scrap_file();
+      close_ascrap_file();
       sensitize();
       break;
     case RENDER_CHOICE_PREVIEW:
@@ -4022,7 +4023,10 @@ gboolean deal_with_render_choice (gboolean add_deinit) {
       }
       mainw->play_start=1;   ///< new clip frames always start  at 1
       if (!render_to_clip (TRUE)) render_choice=RENDER_CHOICE_PREVIEW;
-      else close_scrap_file();
+      else {
+	close_scrap_file();
+	close_ascrap_file();
+      }
       prefs->mt_def_width=dw;
       prefs->mt_def_height=dh;
       prefs->mt_def_fps=df;
@@ -4038,6 +4042,7 @@ gboolean deal_with_render_choice (gboolean add_deinit) {
       if (!render_to_clip (FALSE)) render_choice=RENDER_CHOICE_PREVIEW;
       else {
 	close_scrap_file();
+	close_ascrap_file();
 	d_print_done();
       }
       mainw->is_rendering=FALSE;

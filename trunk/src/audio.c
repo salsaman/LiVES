@@ -1126,10 +1126,10 @@ LIVES_INLINE void aud_fade(gint fileno, gdouble startt, gdouble endt, gdouble st
 
 
 #ifdef ENABLE_JACK
-void jack_rec_audio_to_clip(gint fileno, gint old_file, gshort rec_type) {
+void jack_rec_audio_to_clip(gint fileno, gint old_file, lives_rec_audio_type_t rec_type) {
   // open audio file for writing
   file *outfile=mainw->files[fileno];
-  gchar *outfilename=g_strdup_printf("%s/%s/audio",prefs->tmpdir,outfile->handle);
+  gchar *outfilename=g_build_filename(prefs->tmpdir,outfile->handle,"audio",NULL);
   gint out_bendian=outfile->signed_endian&AFORM_BIG_ENDIAN;
   int retval;
   
@@ -1161,7 +1161,7 @@ void jack_rec_audio_to_clip(gint fileno, gint old_file, gshort rec_type) {
   jack_read_driver_activate(mainw->jackd_read);
 
   // in grab window mode, just return, we will call rec_audio_end on playback end
-  if (rec_type==RECA_WINDOW_GRAB) return;
+  if (rec_type==RECA_WINDOW_GRAB||rec_type==RECA_EXTERNAL) return;
 
   mainw->cancelled=CANCEL_NONE;
   mainw->cancel_type=CANCEL_SOFT;
@@ -1202,10 +1202,10 @@ void jack_rec_audio_end(void) {
 
 
 #ifdef HAVE_PULSE_AUDIO
-void pulse_rec_audio_to_clip(gint fileno, gint old_file, gshort rec_type) {
+void pulse_rec_audio_to_clip(gint fileno, gint old_file, lives_rec_audio_type_t rec_type) {
   // open audio file for writing
   file *outfile=mainw->files[fileno];
-  gchar *outfilename=g_strdup_printf("%s/%s/audio",prefs->tmpdir,outfile->handle);
+  gchar *outfilename=g_build_filename(prefs->tmpdir,outfile->handle,"audio",NULL);
   gint out_bendian=outfile->signed_endian&AFORM_BIG_ENDIAN;
   int retval;
 
@@ -1234,7 +1234,7 @@ void pulse_rec_audio_to_clip(gint fileno, gint old_file, gshort rec_type) {
   pulse_driver_activate(mainw->pulsed_read);
 
   // in grab window mode, just return, we will call rec_audio_end on playback end
-  if (rec_type==RECA_WINDOW_GRAB) return;
+  if (rec_type==RECA_WINDOW_GRAB||rec_type==RECA_EXTERNAL) return;
 
   mainw->cancelled=CANCEL_NONE;
   mainw->cancel_type=CANCEL_SOFT;

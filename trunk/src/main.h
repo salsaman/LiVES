@@ -796,6 +796,7 @@ void do_no_mplayer_sox_error(void);
 void do_aud_during_play_error(void);
 void do_rendered_fx_dialog(void);
 void do_layout_scrap_file_error(void);
+void do_layout_ascrap_file_error(void);
 void do_set_load_lmap_error(void);
 gboolean do_set_duplicate_warning (const gchar *new_set);
 gboolean do_set_rename_old_layouts_warning(const gchar *new_set);
@@ -903,8 +904,10 @@ void open_set_file (const gchar *set_name, gint clipnum);
 
 // saveplay.c scrap file
 gboolean open_scrap_file (void);
+gboolean open_ascrap_file (void);
 gint save_to_scrap_file (weed_plant_t *layer);
 gboolean load_from_scrap_file(weed_plant_t *layer, int frame);
+void close_ascrap_file (void);
 void close_scrap_file (void);
 
 

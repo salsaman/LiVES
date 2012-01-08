@@ -174,6 +174,7 @@ void lives_exit (void) {
 	    (!mainw->only_close&&(i==0||(mainw->files[i]->clip_type!=CLIP_TYPE_DISK&&
 					 mainw->files[i]->clip_type!=CLIP_TYPE_FILE)))||
 	    (i==mainw->scrap_file&&!mainw->leave_recovery)||
+	    (i==mainw->ascrap_file&&!mainw->leave_recovery)||
 	    (mainw->multitrack!=NULL&&i==mainw->multitrack->render_file)) {
 	  // close all open clips, except for ones we want to retain
 
@@ -1479,6 +1480,7 @@ on_quit_activate                      (GtkMenuItem     *menuitem,
   if (!mainw->only_close) mainw->is_exiting=TRUE;
 
   if (mainw->scrap_file>-1) close_scrap_file();
+  if (mainw->ascrap_file>-1) close_ascrap_file();
 
   if (mainw->clips_available>0) {
     gchar *set_name;
@@ -4243,7 +4245,7 @@ gboolean prevclip_callback (GtkAccelGroup *group, GObject *obj, guint keyval, Gd
     if ((list_index=g_list_previous(list_index))==NULL) list_index=g_list_last (mainw->cliplist);
     i=GPOINTER_TO_INT (list_index->data);
   } while ((mainw->files[i]==NULL||mainw->files[i]->opening||mainw->files[i]->restoring||i==mainw->scrap_file||
-	    (!mainw->files[i]->frames&&mainw->playing_file>-1))&&
+	    i==mainw->ascrap_file||(!mainw->files[i]->frames&&mainw->playing_file>-1))&&
 	   i!=((type==2||(mainw->playing_file>0&&mainw->num_tr_applied>0&&type!=1))?
 	       mainw->blend_file:mainw->current_file));
 
@@ -4303,7 +4305,7 @@ gboolean nextclip_callback (GtkAccelGroup *group, GObject *obj, guint keyval, Gd
     if ((list_index=g_list_next(list_index))==NULL) list_index=g_list_first (mainw->cliplist);
     i=GPOINTER_TO_INT (list_index->data);
   } while ((mainw->files[i]==NULL||mainw->files[i]->opening||mainw->files[i]->restoring||i==mainw->scrap_file||
-	    (!mainw->files[i]->frames&&mainw->playing_file>-1))&&
+	    i==mainw->ascrap_file||(!mainw->files[i]->frames&&mainw->playing_file>-1))&&
 	   i!=((type==2||(mainw->playing_file>0&&mainw->num_tr_applied>0&&type!=1))?
 	       mainw->blend_file:mainw->current_file));
   
@@ -10936,7 +10938,7 @@ on_recaudclip_ok_clicked                      (GtkButton *button,
 					       gpointer user_data)
 {
 #ifdef RT_AUDIO
-  weed_timecode_t ins_pt; // TODO - use time_to_weed_timecode
+  weed_timecode_t ins_pt;
   gdouble aud_start,aud_end,vel=1.,vol=1.;
 
   int asigned=1,aendian=1;

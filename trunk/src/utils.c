@@ -2957,8 +2957,8 @@ void reget_afilesize (int fileno) {
 
   if (mainw->multitrack!=NULL) return; // otherwise achans gets set to 0...
 
-  if (!sfile->opening) afile=g_strdup_printf ("%s/%s/audio",prefs->tmpdir,sfile->handle);
-  else afile=g_strdup_printf ("%s/%s/audiodump.pcm",prefs->tmpdir,sfile->handle);
+  if (!sfile->opening) afile=g_build_filename (prefs->tmpdir,sfile->handle,"audio",NULL);
+  else afile=g_strdup_printf (prefs->tmpdir,sfile->handle,"audiodump.pcm",NULL);
   if ((mainw->multitrack==NULL||fileno!=mainw->multitrack->render_file)&&(sfile->afilesize=sget_file_size (afile))==0l) {
     if (!sfile->opening) {
       if (sfile->arate!=0||sfile->achans!=0||sfile->asampsize!=0||sfile->arps!=0) {
@@ -3648,7 +3648,7 @@ void save_clip_value(int which, lives_clip_details_t what, void *val) {
 
   mainw->write_failed=mainw->com_failed=FALSE;
 
-  if (which==0||which==mainw->scrap_file) return;
+  if (which==0||which==mainw->scrap_file||which==mainw->ascrap_file) return;
 
   lives_header=g_build_filename(prefs->tmpdir,mainw->files[which]->handle,"header.lives",NULL);
   key=clip_detail_to_string(what,NULL);

@@ -233,7 +233,6 @@ static GtkWidget* create_warn_dialog (gint warn_mask_number, GtkWindow *transien
   gtk_window_set_deletable(GTK_WINDOW(dialog), FALSE);
 
   textx=insert_newlines(text,MAX_MSG_WIDTH_CHARS);
-
   gtk_label_set_text(GTK_LABEL(mainw->warning_label),textx);
 
   g_free(textx);
@@ -292,7 +291,8 @@ gboolean do_warning_dialog_with_check (const gchar *text, gint warn_mask_number)
   if (!prefs->show_gui) {
     return do_warning_dialog_with_check_transient(text,warn_mask_number,NULL);
   } else {
-    if (mainw->multitrack==NULL) return do_warning_dialog_with_check_transient(text,warn_mask_number,GTK_WINDOW(mainw->LiVES));
+    if (mainw->multitrack==NULL) 
+      return do_warning_dialog_with_check_transient(text,warn_mask_number,GTK_WINDOW(mainw->LiVES));
     return do_warning_dialog_with_check_transient(text,warn_mask_number,GTK_WINDOW(mainw->multitrack->window));
   }
 }

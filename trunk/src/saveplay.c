@@ -2246,6 +2246,9 @@ void play_file (void) {
 
   mainw->currticks=0;
 
+  // reinit all active effects
+  weed_reinit_all();
+
   if (!mainw->foreign) {
     // start up our audio player (jack or pulse)
 

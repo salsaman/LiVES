@@ -5851,7 +5851,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
     gtk_widget_modify_bg(submenu_menu2, GTK_STATE_NORMAL, &palette->menu_and_bars);
   }
 
-  tname=lives_fx_cat_to_text(LIVES_FX_CAT_FILTER,TRUE); // effects
+  tname=lives_fx_cat_to_text(LIVES_FX_CAT_EFFECT,TRUE); // effects
   cname=g_strdup_printf("_%s...",tname);
   g_free(tname);
 
@@ -7226,7 +7226,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   gtk_widget_modify_fg (gtk_notebook_get_tab_label(GTK_NOTEBOOK(mt->nb),hbox), GTK_STATE_NORMAL, &palette->normal_fore);
 
 
-  tname=lives_fx_cat_to_text(LIVES_FX_CAT_FILTER,TRUE); // effects
+  tname=lives_fx_cat_to_text(LIVES_FX_CAT_EFFECT,TRUE); // effects
   label=gtk_label_new (tname);
   g_free(tname);
   hbox = gtk_hbox_new (FALSE, 0);
@@ -14086,7 +14086,7 @@ void mt_add_region_effect (GtkMenuItem *menuitem, gpointer user_data) {
   numtracks=enabled_in_channels(get_weed_filter(mt->current_fx),TRUE);  // count repeated channels
   switch (numtracks) {
   case 1:
-    tname=lives_fx_cat_to_text(LIVES_FX_CAT_FILTER,FALSE); // effect
+    tname=lives_fx_cat_to_text(LIVES_FX_CAT_EFFECT,FALSE); // effect
     track_desc=g_strdup_printf(_("track %s"),(tmp=get_track_name(mt,tracks[0],FALSE)));
     g_free(tmp);
     break;
@@ -17127,7 +17127,7 @@ void on_set_pvals_clicked  (GtkWidget *button, gpointer user_data) {
 
   switch (numtracks) {
   case 1:
-    tname=lives_fx_cat_to_text(LIVES_FX_CAT_FILTER,FALSE); // effect
+    tname=lives_fx_cat_to_text(LIVES_FX_CAT_EFFECT,FALSE); // effect
     track_desc=g_strdup_printf(_("track %s"),(tmp=get_track_name(mt,tracks[0],FALSE)));
     g_free(tmp);
     break;

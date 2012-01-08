@@ -58,7 +58,7 @@ gchar *lives_fx_cat_to_text(lives_fx_cat_t cat, gboolean plural) {
   case LIVES_FX_CAT_TRANSITION:
     if (!plural) return (g_strdup(_("transition")));
     else return (g_strdup(_("Transitions")));
-  case LIVES_FX_CAT_FILTER:
+  case LIVES_FX_CAT_EFFECT:
     if (!plural) return (g_strdup(_("effect")));
     else return (g_strdup(_("Effects")));
   case LIVES_FX_CAT_UTILITY:
@@ -94,7 +94,7 @@ gchar *lives_fx_cat_to_text(lives_fx_cat_t cat, gboolean plural) {
   case LIVES_FX_CAT_AUDIO_MIXER:
     if (!plural) return (g_strdup(_("audio")));
     else return (g_strdup(_("Audio Mixers")));
-  case LIVES_FX_CAT_AUDIO_FILTER:
+  case LIVES_FX_CAT_AUDIO_EFFECT:
     if (!plural) return (g_strdup(_("audio")));
     else return (g_strdup(_("Audio Effects")));
   case LIVES_FX_CAT_AUDIO_VOL:

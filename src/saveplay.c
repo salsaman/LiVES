@@ -2242,7 +2242,10 @@ void play_file (void) {
   mainw->last_blend_file=-1;
 
   // show the framebar
-  if (mainw->multitrack==NULL&&(prefs->show_framecount&&(!mainw->fs||(prefs->gui_monitor!=prefs->play_monitor&&mainw->sep_win!=0)||(mainw->vpp!=NULL&&mainw->sep_win&&!(mainw->vpp->capabilities&VPP_LOCAL_DISPLAY)))&&((!mainw->preview&&(cfile->frames>0||mainw->foreign))||cfile->opening))) {
+  if (mainw->multitrack==NULL&&(prefs->show_framecount&&
+				(!mainw->fs||(prefs->gui_monitor!=prefs->play_monitor&&mainw->sep_win!=0)||
+				 (mainw->vpp!=NULL&&mainw->sep_win&&!(mainw->vpp->capabilities&VPP_LOCAL_DISPLAY)))&&
+				((!mainw->preview&&(cfile->frames>0||mainw->foreign))||cfile->opening))) {
     gtk_widget_show(mainw->framebar);
   }
 
@@ -2254,7 +2257,7 @@ void play_file (void) {
   // reinit all active effects
   if (!mainw->preview&&!mainw->is_rendering) weed_reinit_all();
 
-  if (!mainw->foreign) {
+  if (!mainw->foreign&&!(mainw->record&&(prefs->rec_opts*REC_EXT_AUDIO))) {
     // start up our audio player (jack or pulse)
 
     if (audio_player==AUD_PLAYER_JACK) {
@@ -2263,11 +2266,16 @@ void play_file (void) {
 	mainw->jackd->is_paused=FALSE;
 	mainw->jackd->mute=mainw->mute;
 	if (mainw->loop_cont&&!mainw->preview) {
-	  if (mainw->ping_pong&&prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS&&mainw->multitrack==NULL) mainw->jackd->loop=AUDIO_LOOP_PINGPONG;
+	  if (mainw->ping_pong&&prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS&&mainw->multitrack==NULL) 
+	    mainw->jackd->loop=AUDIO_LOOP_PINGPONG;
 	  else mainw->jackd->loop=AUDIO_LOOP_FORWARD;
 	}
 	else mainw->jackd->loop=AUDIO_LOOP_NONE;
-	if (cfile->achans>0&&(!mainw->preview||(mainw->preview&&mainw->is_processing))&&(cfile->laudio_time>0.||cfile->opening||(mainw->multitrack!=NULL&&mainw->multitrack->is_rendering&&g_file_test((tmpfilename=g_strdup_printf("%s/%s/audio",prefs->tmpdir,cfile->handle)),G_FILE_TEST_EXISTS)))) {
+	if (cfile->achans>0&&(!mainw->preview||(mainw->preview&&mainw->is_processing))&&
+	    (cfile->laudio_time>0.||cfile->opening||
+	     (mainw->multitrack!=NULL&&mainw->multitrack->is_rendering&&
+	      g_file_test((tmpfilename=g_build_filename(prefs->tmpdir,cfile->handle,"audio",NULL)),
+			  G_FILE_TEST_EXISTS)))) {
 	  gboolean timeout;
 	  int alarm_handle;
 
@@ -2278,7 +2286,8 @@ void play_file (void) {
 	  mainw->jackd->usigned=!asigned;
 	  mainw->jackd->seek_end=cfile->afilesize;
 	  
-	  if ((aendian&&(G_BYTE_ORDER==G_BIG_ENDIAN))||(!aendian&&(G_BYTE_ORDER==G_LITTLE_ENDIAN))) mainw->jackd->reverse_endian=TRUE;
+	  if ((aendian&&(G_BYTE_ORDER==G_BIG_ENDIAN))||(!aendian&&(G_BYTE_ORDER==G_LITTLE_ENDIAN))) 
+	    mainw->jackd->reverse_endian=TRUE;
 	  else mainw->jackd->reverse_endian=FALSE;
 
 	  alarm_handle=lives_alarm_set(LIVES_ACONNECT_TIMEOUT);
@@ -2288,7 +2297,8 @@ void play_file (void) {
 	  if (timeout) jack_try_reconnect();
 	  lives_alarm_clear(alarm_handle);
 
-	  if ((mainw->multitrack==NULL||mainw->multitrack->is_rendering)&&(mainw->event_list==NULL||mainw->record||(mainw->preview&&mainw->is_processing))) {
+	  if ((mainw->multitrack==NULL||mainw->multitrack->is_rendering)&&
+	      (mainw->event_list==NULL||mainw->record||(mainw->preview&&mainw->is_processing))) {
 	    // tell jack server to open audio file and start playing it
 	    jack_message.command=ASERVER_CMD_FILE_OPEN;
 	    jack_message.data=g_strdup_printf("%d",mainw->current_file);
@@ -2316,12 +2326,17 @@ void play_file (void) {
 	mainw->pulsed->is_paused=FALSE;
 	mainw->pulsed->mute=mainw->mute;
 	if (mainw->loop_cont&&!mainw->preview) {
-	  if (mainw->ping_pong&&prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS&&mainw->multitrack==NULL) mainw->pulsed->loop=AUDIO_LOOP_PINGPONG;
+	  if (mainw->ping_pong&&prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS&&mainw->multitrack==NULL) 
+	    mainw->pulsed->loop=AUDIO_LOOP_PINGPONG;
 	  else mainw->pulsed->loop=AUDIO_LOOP_FORWARD;
 	}
 	else mainw->pulsed->loop=AUDIO_LOOP_NONE;
-	if (cfile->achans>0&&(!mainw->preview||(mainw->preview&&mainw->is_processing))&&(cfile->laudio_time>0.||cfile->opening||(mainw->multitrack!=NULL&&mainw->multitrack->is_rendering&&g_file_test((tmpfilename=g_strdup_printf("%s/%s/audio",prefs->tmpdir,cfile->handle)),G_FILE_TEST_EXISTS)))) {
-
+	if (cfile->achans>0&&(!mainw->preview||(mainw->preview&&mainw->is_processing))&&
+	    (cfile->laudio_time>0.||cfile->opening||
+	     (mainw->multitrack!=NULL&&mainw->multitrack->is_rendering&&
+	      g_file_test((tmpfilename=g_build_filename(prefs->tmpdir,cfile->handle,"audio",NULL)),
+			  G_FILE_TEST_EXISTS)))) {
+	  
 	  gboolean timeout;
 	  int alarm_handle;
 
@@ -2334,7 +2349,8 @@ void play_file (void) {
 	  if (cfile->opening) mainw->pulsed->is_opening=TRUE;
 	  else mainw->pulsed->is_opening=FALSE;
 	  
-	  if ((aendian&&(G_BYTE_ORDER==G_BIG_ENDIAN))||(!aendian&&(G_BYTE_ORDER==G_LITTLE_ENDIAN))) mainw->pulsed->reverse_endian=TRUE;
+	  if ((aendian&&(G_BYTE_ORDER==G_BIG_ENDIAN))||(!aendian&&(G_BYTE_ORDER==G_LITTLE_ENDIAN))) 
+	    mainw->pulsed->reverse_endian=TRUE;
 	  else mainw->pulsed->reverse_endian=FALSE;
 
 	  alarm_handle=lives_alarm_set(LIVES_ACONNECT_TIMEOUT);
@@ -2346,7 +2362,8 @@ void play_file (void) {
 	  
 	  lives_alarm_clear(alarm_handle);
 
-	  if ((mainw->multitrack==NULL||mainw->multitrack->is_rendering||cfile->opening)&&(mainw->event_list==NULL||mainw->record||(mainw->preview&&mainw->is_processing))) {
+	  if ((mainw->multitrack==NULL||mainw->multitrack->is_rendering||
+	       cfile->opening)&&(mainw->event_list==NULL||mainw->record||(mainw->preview&&mainw->is_processing))) {
 	    // tell pulse server to open audio file and start playing it
 	    pulse_message.command=ASERVER_CMD_FILE_OPEN;
 	    pulse_message.data=g_strdup_printf("%d",mainw->current_file);
@@ -2415,6 +2432,32 @@ void play_file (void) {
   }
 
   g_free (com4);
+
+
+  // if recording, set up recorder (jack or pulse)
+
+  if (!mainw->foreign&&(mainw->record&&(prefs->rec_opts*REC_EXT_AUDIO))) {
+
+
+
+
+
+
+
+  }
+
+
+
+
+
+
+
+
+
+
+
+
+
 
   if (mainw->foreign||weed_playback_gen_start()) {
 

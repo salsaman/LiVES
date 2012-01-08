@@ -40,7 +40,7 @@ gboolean save_clip_values(gint which) {
   int retval;
   mode_t xumask;
 
-  if (which==0||which==mainw->scrap_file) return TRUE;
+  if (which==0||which==mainw->scrap_file||which==mainw->ascrap_file) return TRUE;
 
   xumask=umask(DEF_FILE_UMASK);
 
@@ -2257,7 +2257,10 @@ void play_file (void) {
   // reinit all active effects
   if (!mainw->preview&&!mainw->is_rendering) weed_reinit_all();
 
-  if (!mainw->foreign&&!(mainw->record&&(prefs->rec_opts*REC_EXT_AUDIO))) {
+  if (!mainw->foreign&&(!(mainw->record&&(prefs->rec_opts*REC_EXT_AUDIO))&&
+			((audio_player==AUD_PLAYER_JACK) ||
+			 (audio_player==AUD_PLAYER_PULSE)))) {
+
     // start up our audio player (jack or pulse)
 
     if (audio_player==AUD_PLAYER_JACK) {
@@ -2436,25 +2439,25 @@ void play_file (void) {
 
   // if recording, set up recorder (jack or pulse)
 
-  if (!mainw->foreign&&(mainw->record&&(prefs->rec_opts*REC_EXT_AUDIO))) {
+  if (!mainw->foreign&&(mainw->record&&(prefs->rec_opts*REC_EXT_AUDIO))&&
+      ((audio_player==AUD_PLAYER_JACK) ||
+       (audio_player==AUD_PLAYER_PULSE))) {
 
-
-
-
-
-
-
+    // creat temp clip
+    open_ascrap_file();
+    if (mainw->ascrap_file!=-1) {
+      if (audio_player==AUD_PLAYER_JACK) {
+#ifdef ENABLE_JACK
+	jack_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_EXTERNAL);
+#endif
+      }
+      if (audio_player==AUD_PLAYER_PULSE) {
+#ifdef ENABLE_PULSE
+	pulse_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_EXTERNAL);
+#endif
+      }
+    }
   }
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -4428,11 +4431,18 @@ gint save_event_frames(void) {
 ///  the scrap file is used during recording to dump any streamed (non-disk) clips to
 /// during render/preview we load frames from the scrap file, but only as necessary
 
-static gdouble scrap_mb;  // MB written to file
+
+/// ascrap file
+/// this is used to record external audio during playback with record on (if the user requests this)
+/// afterwards the audio from it can be rendered/played back
+
+
+static gdouble scrap_mb;  // MB written to frame file
+static gdouble ascrap_mb;  // MB written to audio file
 static gulong free_mb; // MB free to write
 
 gboolean open_scrap_file (void) {
-  // create a virtual clip
+  // create a scrap file for recording generated video frames
   gint current_file=mainw->current_file;
   gint new_file=mainw->first_free_file;
   
@@ -4462,6 +4472,70 @@ gboolean open_scrap_file (void) {
   mainw->current_file=current_file;
 
   scrap_mb=0.;
+  if (mainw->ascrap_file==-1) ascrap_mb=0.;
+
+  return TRUE;
+}
+
+
+
+gboolean open_ascrap_file (void) {
+  // create a scrap file for recording audio
+  gboolean bad_header=FALSE;
+
+  gint current_file=mainw->current_file;
+  gint new_file=mainw->first_free_file;
+  gint asigned,aendian;
+  
+  gchar *dir;
+  gchar *ascrap_handle;
+
+  if (!get_temp_handle (new_file,TRUE)) return FALSE;
+  get_next_free_file();
+
+  mainw->ascrap_file=mainw->current_file=new_file;
+
+  g_snprintf(cfile->type,40,"ascrap");
+
+  cfile->frames=0;
+
+  cfile->arate=cfile->arps=prefs->mt_def_arate;
+  cfile->achans=prefs->mt_def_achans;
+  cfile->asampsize=prefs->mt_def_asamps;
+  cfile->signed_endian=prefs->mt_def_signed_endian;
+
+  save_clip_value(mainw->current_file,CLIP_DETAILS_ACHANS,&cfile->achans);
+  if (mainw->com_failed||mainw->write_failed) bad_header=TRUE;
+  save_clip_value(mainw->current_file,CLIP_DETAILS_ARATE,&cfile->arps);
+  if (mainw->com_failed||mainw->write_failed) bad_header=TRUE;
+  save_clip_value(mainw->current_file,CLIP_DETAILS_PB_ARATE,&cfile->arate);
+  if (mainw->com_failed||mainw->write_failed) bad_header=TRUE;
+  save_clip_value(mainw->current_file,CLIP_DETAILS_ASAMPS,&cfile->asampsize);
+  if (mainw->com_failed||mainw->write_failed) bad_header=TRUE;
+  save_clip_value(mainw->current_file,CLIP_DETAILS_AENDIAN,&aendian);
+  if (mainw->com_failed||mainw->write_failed) bad_header=TRUE;
+  save_clip_value(mainw->current_file,CLIP_DETAILS_ASIGNED,&asigned);
+  if (mainw->com_failed||mainw->write_failed) bad_header=TRUE;
+
+
+  if (bad_header) 
+
+  ascrap_handle=g_strdup_printf("ascrap|%s",cfile->handle);
+
+  add_to_recovery_file(ascrap_handle);
+
+  mainw->cliplist = g_list_append (mainw->cliplist, GINT_TO_POINTER (mainw->current_file));
+
+  g_free(ascrap_handle);
+
+  dir=g_build_filename(prefs->tmpdir,cfile->handle,NULL);
+  free_mb=(gdouble)get_fs_free(dir)/1000000.;
+  g_free(dir);
+
+  mainw->current_file=current_file;
+
+  ascrap_mb=0.;
+  if (mainw->scrap_file==-1) scrap_mb=0.;
 
   return TRUE;
 }
@@ -4616,7 +4690,8 @@ gint save_to_scrap_file (weed_plant_t *layer) {
 
   void **pdata;
 
-  gchar *oname=g_strdup_printf ("%s/%s/%08d.scrap",prefs->tmpdir,mainw->files[mainw->scrap_file]->handle,mainw->files[mainw->scrap_file]->frames+1);
+  gchar *oname=g_strdup_printf ("%s/%s/%08d.scrap",prefs->tmpdir,mainw->files[mainw->scrap_file]->handle,
+				mainw->files[mainw->scrap_file]->frames+1);
 
   gchar *buf,*framecount;
 
@@ -4706,7 +4781,7 @@ gint save_to_scrap_file (weed_plant_t *layer) {
 
   scrap_mb+=(gdouble)(filestat.st_size)/1000000.;
 
-  // check free space every 1000 frames
+  // check free space every 1000 frames or every 10 MB of audio (TODO ****)
   if (mainw->files[mainw->scrap_file]->frames%1000==0) {
     gchar *dir=g_build_filename(prefs->tmpdir,mainw->files[mainw->scrap_file]->handle,NULL);
     free_mb=(gdouble)get_fs_free(dir)/1000000.;
@@ -4715,15 +4790,15 @@ gint save_to_scrap_file (weed_plant_t *layer) {
   }
 
   if ((!mainw->fs||prefs->play_monitor!=prefs->gui_monitor)&&prefs->show_framecount) {
-    if (scrap_mb<(gdouble)free_mb*.75) {
+    if ((scrap_mb+ascrap_mb)<(gdouble)free_mb*.75) {
       // TRANSLATORS: rec(ord) %.2f M(ega)B(ytes)
-      framecount=g_strdup_printf(_("rec %.2f MB"),scrap_mb);
+      framecount=g_strdup_printf(_("rec %.2f MB"),scrap_mb+ascrap_mb);
     }
     else {
       // warn if scrap_file > 3/4 of free space
       // TRANSLATORS: !rec(ord) %.2f M(ega)B(ytes)
       if (wrtable)
-	framecount=g_strdup_printf(_("!rec %.2f MB"),scrap_mb);
+	framecount=g_strdup_printf(_("!rec %.2f MB"),scrap_mb+ascrap_mb);
       else
 	// TRANSLATORS: rec(ord) ?? M(ega)B(ytes)
 	framecount=g_strdup(_("rec ?? MB"));
@@ -4741,7 +4816,7 @@ gint save_to_scrap_file (weed_plant_t *layer) {
   g_free(oname);
 
   // check if we have enough free space left on the volume
-  if ((glong)(((gdouble)free_mb-scrap_mb)/1000.)<prefs->rec_stop_gb) {
+  if ((glong)(((gdouble)free_mb-(scrap_mb+ascrap_mb))/1000.)<prefs->rec_stop_gb) {
     // check free space again
     gchar *dir=g_build_filename(prefs->tmpdir,mainw->files[mainw->scrap_file]->handle,NULL);
     free_mb=(gdouble)get_fs_free(dir)/1000000.;
@@ -4749,7 +4824,7 @@ gint save_to_scrap_file (weed_plant_t *layer) {
     else wrtable=TRUE;
 
     if (wrtable) {
-      if ((glong)(((gdouble)free_mb-scrap_mb)/1000.)<prefs->rec_stop_gb) {
+      if ((glong)(((gdouble)free_mb-(scrap_mb+ascrap_mb))/1000.)<prefs->rec_stop_gb) {
 	if (mainw->record&&!mainw->record_paused) {
 	  gchar *msg=g_strdup_printf(_("\nRECORDING WAS PAUSED BECAUSE FREE DISK SPACE in %s IS BELOW %ld GB !\nRecord stop level can be set in Preferences.\n"),dir,prefs->rec_stop_gb);
 	  d_print(msg);
@@ -4779,6 +4854,23 @@ void close_scrap_file (void) {
   if (prefs->crash_recovery) rewrite_recovery_file();
 
   mainw->scrap_file=-1;
+}
+
+
+
+void close_ascrap_file (void) {
+  gint current_file=mainw->current_file;
+
+  if (mainw->ascrap_file==-1) return;
+
+  mainw->current_file=mainw->ascrap_file;
+  close_current_file(current_file);
+
+  mainw->cliplist=g_list_remove (mainw->cliplist, GINT_TO_POINTER (mainw->ascrap_file));
+
+  if (prefs->crash_recovery) rewrite_recovery_file();
+
+  mainw->ascrap_file=-1;
 }
 
 
@@ -4861,6 +4953,7 @@ static gboolean recover_files(gchar *recovery_file, gboolean auto_recover) {
   gint new_file,clipnum=0;
   gboolean last_was_normal_file=FALSE;
   gboolean is_scrap;
+  gboolean is_ascrap;
   gboolean did_set_check=FALSE;
 
   const lives_clip_data_t *cdata=NULL;
@@ -4907,6 +5000,7 @@ static gboolean recover_files(gchar *recovery_file, gboolean auto_recover) {
   while (1) {
     threaded_dialog_spin();
     is_scrap=FALSE;
+    is_ascrap=FALSE;
     
     if (mainw->cached_list!=NULL) {
       g_list_free_strings(mainw->cached_list);
@@ -4964,6 +5058,10 @@ static gboolean recover_files(gchar *recovery_file, gboolean auto_recover) {
       if (!strncmp(buff,"scrap|",6)) {
 	is_scrap=TRUE;
 	buffptr=buff+6;
+      }
+      else if (!strncmp(buff,"ascrap|",7)) {
+	is_ascrap=TRUE;
+	buffptr=buff+7;
       }
       else {
 	buffptr=buff;
@@ -5023,8 +5121,52 @@ static gboolean recover_files(gchar *recovery_file, gboolean auto_recover) {
       threaded_dialog_spin();
 
       if (!is_scrap) {
-	// get file details
-	read_headers(".");
+	if (!is_ascrap) {
+	  // get file details
+	  read_headers(".");
+	}
+	else {
+	  lives_clip_details_t detail;
+	  gint asigned,aendian;
+	  detail=CLIP_DETAILS_ACHANS;
+	  retval=get_clip_value(mainw->current_file,detail,&cfile->achans,0);
+	  if (!retval) cfile->achans=0;
+	  
+	  if (cfile->achans==0) retval=FALSE;
+	  else retval=TRUE;
+	  
+	  if (retval) {
+	    detail=CLIP_DETAILS_ARATE;
+	    retval=get_clip_value(mainw->current_file,detail,&cfile->arps,0);
+	  }
+
+	  if (!retval) cfile->arps=cfile->achans=cfile->arate=cfile->asampsize=0;
+	  if (cfile->arps==0) retval=FALSE; 
+
+	  cfile->arate=cfile->arps;
+	  
+	  if (retval) {
+	    detail=CLIP_DETAILS_ASIGNED;
+	    retval=get_clip_value(mainw->current_file,detail,&asigned,0);
+	  }
+	  if (retval) {
+	    detail=CLIP_DETAILS_AENDIAN;
+	    retval=get_clip_value(mainw->current_file,detail,&aendian,0);
+	  }
+	  
+	  cfile->signed_endian=asigned+aendian;
+	  
+	  if (retval) {
+	    detail=CLIP_DETAILS_ASAMPS;
+	    retval=get_clip_value(mainw->current_file,detail,&cfile->asampsize,0);
+	  }
+
+	  if (!retval) {
+	    mainw->first_free_file=mainw->current_file;
+	    continue;
+	  }
+
+	}
       }
       else {
 	mainw->scrap_file=mainw->current_file;
@@ -5072,9 +5214,10 @@ static gboolean recover_files(gchar *recovery_file, gboolean auto_recover) {
       }
       else {
 	if (is_scrap||!check_frame_count(mainw->current_file)) get_frame_count(mainw->current_file);
+	if (is_ascrap&&cfile->afilesize==0) reget_afilesize(mainw->current_file);
       }
   
-      if (!is_scrap) {
+      if (!is_scrap&&!is_ascrap) {
 	// read the playback fps, play frame, and name
 	threaded_dialog_spin();
 	open_set_file (mainw->set_name,++clipnum);
@@ -5091,7 +5234,8 @@ static gboolean recover_files(gchar *recovery_file, gboolean auto_recover) {
 	if (mainw->current_file<1) continue;
 	
 	get_total_time (cfile);
-	if (cfile->achans) cfile->aseek_pos=(long)((gdouble)(cfile->frameno-1.)/cfile->fps*cfile->arate*cfile->achans*(cfile->asampsize/8));
+	if (cfile->achans) cfile->aseek_pos=(long)((gdouble)(cfile->frameno-1.)/cfile->fps*cfile->arate*
+						   cfile->achans*(cfile->asampsize/8));
 	
 	// add to clip menu
 	threaded_dialog_spin();
@@ -5281,6 +5425,7 @@ gboolean check_for_recovery_files (gboolean auto_recover) {
   }
   else {
     if (mainw->scrap_file!=-1) close_scrap_file();
+    if (mainw->ascrap_file!=-1) close_ascrap_file();
   }
   g_free(recovery_file);
   

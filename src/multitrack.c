@@ -2109,10 +2109,6 @@ static void renumber_clips(void) {
 
   // called once when we enter multitrack mode
 
-  // it would probably be a good idea to use a function in addition to random() to generate the unique id's
-  // for now we rely on it being "random enough" (it should be at least if we are using /dev/urandom)
-
-
   int cclip;
   int i=1,j;
 
@@ -2151,6 +2147,7 @@ static void renumber_clips(void) {
 	mainw->files[i]=NULL;
 	
 	if (mainw->scrap_file==i) mainw->scrap_file=cclip;
+	if (mainw->ascrap_file==i) mainw->ascrap_file=cclip;
 	if (mainw->current_file==i) mainw->current_file=cclip;
 
 	if (mainw->first_free_file==cclip) mainw->first_free_file++;
@@ -2167,7 +2164,9 @@ static void renumber_clips(void) {
       if (i==cclip) i++;
     }
 
-    if (mainw->files[cclip]!=NULL&&cclip!=mainw->scrap_file&&(mainw->files[cclip]->clip_type==CLIP_TYPE_DISK||mainw->files[cclip]->clip_type==CLIP_TYPE_FILE)&&mainw->files[cclip]->unique_id==0l) {
+    if (mainw->files[cclip]!=NULL&&cclip!=mainw->scrap_file&&cclip!=mainw->ascrap_file&&
+	(mainw->files[cclip]->clip_type==CLIP_TYPE_DISK||mainw->files[cclip]->clip_type==CLIP_TYPE_FILE)&&
+	mainw->files[cclip]->unique_id==0l) {
       mainw->files[cclip]->unique_id=random();
       save_clip_value(cclip,CLIP_DETAILS_UNIQUE_ID,&mainw->files[cclip]->unique_id);
       if (mainw->com_failed||mainw->write_failed) bad_header=TRUE;
@@ -4738,10 +4737,12 @@ gboolean check_for_layout_del (lives_mt *mt, gboolean exiting) {
   // save or wipe event_list
   gint resp=2;
 
-  if ((mt==NULL||mt->event_list==NULL||get_first_event(mt->event_list)==NULL)&&(mainw->stored_event_list==NULL||get_first_event(mainw->stored_event_list)==NULL)) return TRUE;
+  if ((mt==NULL||mt->event_list==NULL||get_first_event(mt->event_list)==NULL)&&
+      (mainw->stored_event_list==NULL||get_first_event(mainw->stored_event_list)==NULL)) return TRUE;
 
-  if (((mt!=NULL&&(mt->changed||mainw->scrap_file!=-1))||(mainw->stored_event_list!=NULL&&mainw->stored_event_list_changed))) {
-    gint type=(mainw->scrap_file==-1||mt==NULL)?3*(!exiting):4;
+  if (((mt!=NULL&&(mt->changed||mainw->scrap_file!=-1||mainw->ascrap_file!=-1))||(mainw->stored_event_list!=NULL&&
+										  mainw->stored_event_list_changed))) {
+    gint type=((mainw->scrap_file==-1&&mainw->ascrap_file==-1)||mt==NULL)?3*(!exiting):4;
     _entryw *cdsw=create_cds_dialog(type);
 
     do {
@@ -4787,6 +4788,7 @@ gboolean check_for_layout_del (lives_mt *mt, gboolean exiting) {
     mt->event_list=NULL;
     mt_clear_timeline(mt);
     close_scrap_file();
+    close_ascrap_file();
     d_print(_("Layout was wiped.\n"));
   }
 
@@ -8038,7 +8040,7 @@ gboolean multitrack_delete (lives_mt *mt, gboolean save_layout) {
   if (mt->idlefunc>0) g_source_remove(mt->idlefunc);
   mt->idlefunc=0;
 
-  if (save_layout||mainw->scrap_file!=-1) {
+  if (save_layout||mainw->scrap_file!=-1||mainw->ascrap_file!=-1) {
     gint file_selected=mt->file_selected;
     if (!check_for_layout_del(mt,TRUE)) {
       mt->idlefunc=mt_idle_add(mt);
@@ -9525,7 +9527,7 @@ void mt_init_clips (lives_mt *mt, gint orig_file, gboolean add) {
       continue;
       
     }
-    if (i!=mainw->scrap_file) {
+    if (i!=mainw->scrap_file&&i!=mainw->ascrap_file) {
       if (i==orig_file||(mt->clip_selected==-1&&i==mainw->pre_src_file)) {
 	if (!add) mt->clip_selected=mt_clip_from_file(mt,i);
 	else {
@@ -12241,7 +12243,7 @@ gboolean on_track_click (GtkWidget *eventbox, GdkEventButton *event, gpointer us
 	  if (cfile->achans==0||mt->audio_draws==NULL||!is_audio_eventbox(mt,eventbox)) 
 	    filenum=get_frame_event_clip(block->start_event,track);
 	  else filenum=get_audio_frame_clip(block->start_event,-1);
-	  if (filenum!=mainw->scrap_file) {
+	  if (filenum!=mainw->scrap_file&&filenum!=mainw->ascrap_file) {
 	    mt->clip_selected=mt_clip_from_file(mt,filenum);
 	    mt_clip_select(mt,TRUE);
 	  }
@@ -14428,7 +14430,7 @@ void on_render_activate (GtkMenuItem *menuitem, gpointer user_data) {
     mt->file_selected=orig_file=mainw->current_file;
     d_print ((tmp=g_strdup_printf (_ ("rendered %d frames to new clip.\n"),cfile->frames)));
     g_free(tmp);
-    if (mainw->scrap_file!=-1) mt->changed=FALSE;
+    if (mainw->scrap_file!=-1||mainw->ascrap_file!=-1) mt->changed=FALSE;
     mt->is_rendering=FALSE;
     prefs->render_audio=TRUE;
     prefs->normalise_audio=TRUE;
@@ -17591,6 +17593,16 @@ void on_save_event_list_activate (GtkMenuItem *menuitem, gpointer user_data) {
     return;
   }
 
+  if (mainw->ascrap_file!=-1&&layout_map[mainw->ascrap_file]!=0) {
+    // can't save if we have recorded audio
+    do_layout_ascrap_file_error();
+    g_free(layout_map);
+    g_free(layout_map_audio);
+    mainw->cancelled=CANCEL_USER;
+    if (mt!=NULL) mt_sensitise(mt);
+    return;
+  }
+
   if (mt!=NULL&&mt->idlefunc>0) {
     g_source_remove(mt->idlefunc);
     mt->idlefunc=0;
@@ -19405,6 +19417,7 @@ void wipe_layout(lives_mt *mt) {
   d_print(_("Layout was wiped.\n"));
 
   close_scrap_file();
+  close_ascrap_file();
 
   recover_layout_cancelled(NULL,NULL);
 

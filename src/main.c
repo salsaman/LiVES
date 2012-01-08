@@ -729,6 +729,7 @@ static void lives_init(_ign_opts *ign_opts) {
   mainw->event_list=NULL;
   mainw->clip_switched=FALSE;
   mainw->scrap_file=-1;
+  mainw->ascrap_file=-1;
 
   mainw->multitrack=NULL;
 

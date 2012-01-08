@@ -869,6 +869,7 @@ void lives_osc_cb_fgclip_select(void *context, int arglen, const void *vargs, OS
   if (clip<1||mainw->cliplist==NULL) return lives_osc_notify_failure();
 
   if (mainw->scrap_file!=-1&&clip>=mainw->scrap_file) clip++;
+  if (mainw->ascrap_file!=-1&&clip>=mainw->ascrap_file) clip++;
 
   if (clip>g_list_length(mainw->cliplist)) return lives_osc_notify_failure();
 
@@ -905,6 +906,7 @@ void lives_osc_cb_bgclip_select(void *context, int arglen, const void *vargs, OS
   if (clip<1||mainw->cliplist==NULL) return lives_osc_notify_failure();
 
   if (mainw->scrap_file!=-1&&clip>=mainw->scrap_file) clip++;
+  if (mainw->ascrap_file!=-1&&clip>=mainw->ascrap_file) clip++;
 
   if (clip>g_list_length(mainw->cliplist)) return lives_osc_notify_failure();
 
@@ -1753,7 +1755,7 @@ void lives_osc_cb_blockinsert(void *context, int arglen, const void *vargs, OSCT
   }
   else return lives_osc_notify_failure();
 
-  if (clip<1||mainw->files[clip]==NULL||clip==mainw->current_file||clip==mainw->scrap_file) 
+  if (clip<1||mainw->files[clip]==NULL||clip==mainw->current_file||clip==mainw->scrap_file||clip==mainw->ascrap_file) 
     return lives_osc_notify_failure();
 
   mainw->multitrack->clip_selected=clip-1;

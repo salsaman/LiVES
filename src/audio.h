@@ -167,19 +167,20 @@ long render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdouble *
 
 void aud_fade(gint fileno, gdouble startt, gdouble endt, gdouble startv, gdouble endv); ///< fade in/fade out
 
-
-#define RECA_WINDOW_GRAB 1
-#define RECA_NEW_CLIP 2
-#define RECA_EXISTING 3
-
+typedef enum {
+  RECA_WINDOW_GRAB,
+  RECA_NEW_CLIP,
+  RECA_EXISTING,
+  RECA_EXTERNAL
+} lives_rec_audio_type_t;
 
 #ifdef ENABLE_JACK
-void jack_rec_audio_to_clip(gint fileno, gint oldfileno, gshort rec_type);  ///< record from external source to clip
+void jack_rec_audio_to_clip(gint fileno, gint oldfileno, lives_rec_audio_type_t rec_type);  ///< record from external source to clip
 void jack_rec_audio_end(void);
 #endif
 
 #ifdef HAVE_PULSE_AUDIO
-void pulse_rec_audio_to_clip(gint fileno, gint oldfileno, gshort rec_type);  ///< record from external source to clip
+void pulse_rec_audio_to_clip(gint fileno, gint oldfileno, lives_rec_audio_type_t rec_type);  ///< record from external source to clip
 void pulse_rec_audio_end(void);
 #endif
 

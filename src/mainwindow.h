@@ -317,6 +317,8 @@ typedef struct {
 
   gint scrap_file; ///< we throw odd sized frames here when recording in real time; used if a source is a generator or stream
 
+  gint ascrap_file; ///< scrap file for recording audio scraps
+
   /// which number file we are playing (or -1)
   gint playing_file;
 

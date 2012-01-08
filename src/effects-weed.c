@@ -1940,6 +1940,9 @@ static lives_filter_error_t weed_apply_audio_instance_inner (weed_plant_t *inst,
     }
   }
 
+  // TODO - something like...
+  //if (clip==mainw->ascrap_file&&num_in_tracks==1&&num_out_tracks==1) return FILTER_ERROR_IS_ASCRAP_FILE;
+
   for (i=0;i<num_in_tracks;i++) {
     channel=in_channels[i];
     weed_set_boolean_value(channel,"temp_disabled",WEED_FALSE);

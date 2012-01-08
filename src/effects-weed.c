@@ -207,7 +207,7 @@ lives_fx_cat_t weed_filter_categorise (weed_plant_t *pl, int in_channels, int ou
   if (out_channels>1) return LIVES_FX_CAT_SPLITTER;
   if (in_channels>2&&out_channels==1) return LIVES_FX_CAT_COMPOSITOR;
   if (in_channels==2&&out_channels==1) return LIVES_FX_CAT_TRANSITION;
-  if (in_channels==1&&out_channels==1) return LIVES_FX_CAT_FILTER;
+  if (in_channels==1&&out_channels==1) return LIVES_FX_CAT_EFFECT;
   if (in_channels>0&&out_channels==0&&has_out_params) return LIVES_FX_CAT_ANALYSER;
   if (in_channels>0&&out_channels==0) return LIVES_FX_CAT_TAP;
   if (in_channels==0&&out_channels==0) return LIVES_FX_CAT_UTILITY;
@@ -233,7 +233,7 @@ lives_fx_cat_t weed_filter_subcategorise (weed_plant_t *pl, lives_fx_cat_t categ
   }
 
   if (category==LIVES_FX_CAT_COMPOSITOR&&!has_video_chansi) return LIVES_FX_CAT_AUDIO_MIXER;
-  if (category==LIVES_FX_CAT_FILTER&&!has_video_chansi) return LIVES_FX_CAT_AUDIO_FILTER;
+  if (category==LIVES_FX_CAT_EFFECT&&!has_video_chansi) return LIVES_FX_CAT_AUDIO_EFFECT;
   if (category==LIVES_FX_CAT_CONVERTOR&&!has_video_chansi) return LIVES_FX_CAT_AUDIO_VOL;
 
   if (category==LIVES_FX_CAT_ANALYSER) {
@@ -1270,9 +1270,9 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
 
   gint lcount=0;
 
-
   // here, in_tracks and out_tracks map our layers to in_channels and out_channels in the filter
-  if (!weed_plant_has_leaf(inst,"in_channels")||(in_channels=weed_get_plantptr_array(inst,"in_channels",&error))==NULL) return FILTER_ERROR_NO_IN_CHANNELS;
+  if (!weed_plant_has_leaf(inst,"in_channels")||(in_channels=weed_get_plantptr_array(inst,"in_channels",&error))==NULL) 
+    return FILTER_ERROR_NO_IN_CHANNELS;
 
   if (get_enabled_channel(inst,0,TRUE)==NULL) {
     // we process generators elsewhere
@@ -1290,7 +1290,7 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
     in_tracks=(int *)weed_malloc(2*sizint);
     in_tracks[0]=0;
     in_tracks[1]=1;
-    num_out_tracks=1;
+    num_out_tracks=enabled_out_channels(inst,FALSE);
     out_tracks=(int *)weed_malloc(sizint);
     out_tracks[0]=0;
   }
@@ -1311,7 +1311,9 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
 
   if (num_inc>num_in_tracks) {
     for (i=num_in_tracks;i<num_inc;i++) {
-      if (!weed_plant_has_leaf(in_channels[i],"disabled")||weed_get_boolean_value(in_channels[i],"disabled",&error)==WEED_FALSE) weed_set_boolean_value(in_channels[i],"temp_disabled",WEED_TRUE);
+      if (!weed_plant_has_leaf(in_channels[i],"disabled")||
+	  weed_get_boolean_value(in_channels[i],"disabled",&error)==WEED_FALSE) 
+	weed_set_boolean_value(in_channels[i],"temp_disabled",WEED_TRUE);
       else weed_set_boolean_value(in_channels[i],"temp_disabled",WEED_FALSE);
     }
   }
@@ -1615,7 +1617,9 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
 
   // we may need to disable some channels for the plugin
   for (i=0;i<num_in_tracks;i++) {
-    if (weed_plant_has_leaf(in_channels[i],"temp_disabled")&&weed_get_boolean_value(in_channels[i],"temp_disabled",&error)==WEED_TRUE) weed_set_boolean_value(in_channels[i],"disabled",WEED_TRUE);
+    if (weed_plant_has_leaf(in_channels[i],"temp_disabled")&&
+	weed_get_boolean_value(in_channels[i],"temp_disabled",&error)==WEED_TRUE) 
+      weed_set_boolean_value(in_channels[i],"disabled",WEED_TRUE);
   }
 
   // set up our out channels

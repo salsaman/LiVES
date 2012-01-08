@@ -68,8 +68,6 @@ int bfd_init (weed_plant_t *inst) {
 
   sdata->count=0;
 
-  printf("reset bfd\n");
-
   weed_set_voidptr_value(inst,"plugin_internal",sdata);
 
   weed_free(out_params);
@@ -141,9 +139,6 @@ int bfd_process (weed_plant_t *inst, weed_timecode_t timestamp) {
 
   if (sdata->count>=fcount) weed_set_boolean_value(blank,"value",WEED_TRUE);
   else weed_set_boolean_value(blank,"value",WEED_FALSE);
-
-
-  printf("bf is %d count is %d\n",weed_get_boolean_value(blank,"value",&error),sdata->count);
 
   weed_free(in_params);
   weed_free(out_params);

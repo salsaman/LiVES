@@ -10936,13 +10936,17 @@ on_recaudclip_ok_clicked                      (GtkButton *button,
 					       gpointer user_data)
 {
 #ifdef RT_AUDIO
+  weed_timecode_t ins_pt; // TODO - use time_to_weed_timecode
+  gdouble aud_start,aud_end,vel=1.,vol=1.;
+
   int asigned=1,aendian=1;
   gint old_file=mainw->current_file,new_file;
   gint type=GPOINTER_TO_INT(user_data);
-  weed_timecode_t ins_pt; // TODO - use time_to_weed_timecode
-  gdouble aud_start,aud_end,vel=1.,vol=1.;
-  gchar *com;
   gint oachans=0,oarate=0,oarps=0,ose=0,oasamps=0;
+  gboolean backr=FALSE;
+
+  gchar *com;
+
 
   // type == 0 - new clip
   // type == 1 - existing clip
@@ -11103,6 +11107,8 @@ on_recaudclip_ok_clicked                      (GtkButton *button,
     if (mainw->read_failed_file!=NULL) g_free(mainw->read_failed_file);
     mainw->read_failed_file=NULL;
 
+
+    // copy audio from old clip to current
     render_audio_segment(1,&(mainw->current_file),old_file,&vel,&aud_start,ins_pt,
 			 ins_pt+(weed_timecode_t)((aud_end-aud_start)*U_SEC),&vol,vol,vol,NULL);
 
@@ -11110,13 +11116,28 @@ on_recaudclip_ok_clicked                      (GtkButton *button,
     close_current_file(old_file);
 
     if (mainw->write_failed) {
+      // on failure
       int outfile=(mainw->multitrack!=NULL?mainw->multitrack->render_file:mainw->current_file);
       gchar *outfilename=g_build_filename(prefs->tmpdir,mainw->files[outfile]->handle,"audio",NULL);
       do_write_failed_error_s(outfilename,NULL);
+      
+      if (!prefs->conserve_space&&type==1) {
+	// try to recover backup
+	com=g_strdup_printf("smogrify undo_audio \"%s\"",mainw->files[old_file]->handle);
+	lives_system(com,FALSE);
+	g_free(com);
+	backr=TRUE;
+      }
     }
 
     if (mainw->read_failed) {
       do_read_failed_error_s(mainw->read_failed_file,NULL);
+      if (!prefs->conserve_space&&type==1&&!backr) {
+	// try to recover backup
+	com=g_strdup_printf("smogrify undo_audio \"%s\"",mainw->files[old_file]->handle);
+	lives_system(com,FALSE);
+	g_free(com);
+      }
     }
 
   }

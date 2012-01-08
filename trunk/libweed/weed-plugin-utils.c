@@ -50,9 +50,17 @@
 #include <string.h>
 #include <stdio.h>
 
+#ifdef HAVE_SYSTEM_WEED
 #include <weed/weed.h>
 #include <weed/weed-palettes.h>
 #include <weed/weed-effects.h>
+#else
+#include "weed.h"
+#include "weed-palettes.h"
+#include "weed-effects.h"
+#endif
+
+
 
 extern weed_leaf_get_f weed_leaf_get;
 extern weed_leaf_set_f weed_leaf_set;

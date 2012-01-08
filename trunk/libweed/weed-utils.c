@@ -47,20 +47,25 @@
 
 #include <string.h>
 
+#ifdef HAVE_SYSTEM_WEED
 #include <weed/weed.h>
+#else
+#include "weed.h"
+#endif
 
- extern weed_leaf_set_f weed_leaf_set;
- extern weed_leaf_get_f weed_leaf_get;
- extern weed_plant_new_f weed_plant_new;
- extern weed_plant_list_leaves_f weed_plant_list_leaves;
- extern weed_leaf_num_elements_f weed_leaf_num_elements;
- extern weed_leaf_element_size_f weed_leaf_element_size;
- extern weed_leaf_seed_type_f weed_leaf_seed_type;
- extern weed_leaf_get_flags_f weed_leaf_get_flags;
- extern weed_malloc_f weed_malloc;
- extern weed_free_f weed_free;
- extern weed_memcpy_f weed_memcpy;
- extern weed_memset_f weed_memset;
+
+extern weed_leaf_set_f weed_leaf_set;
+extern weed_leaf_get_f weed_leaf_get;
+extern weed_plant_new_f weed_plant_new;
+extern weed_plant_list_leaves_f weed_plant_list_leaves;
+extern weed_leaf_num_elements_f weed_leaf_num_elements;
+extern weed_leaf_element_size_f weed_leaf_element_size;
+extern weed_leaf_seed_type_f weed_leaf_seed_type;
+extern weed_leaf_get_flags_f weed_leaf_get_flags;
+extern weed_malloc_f weed_malloc;
+extern weed_free_f weed_free;
+extern weed_memcpy_f weed_memcpy;
+extern weed_memset_f weed_memset;
 
 
 

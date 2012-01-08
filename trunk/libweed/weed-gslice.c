@@ -47,10 +47,15 @@
 
 // experimental implementation of libweed using glib's slice allocator
 
-
-#include <weed/weed.h>
 #define _SKIP_WEED_API_
+
+#ifdef HAVE_SYSTEM_WEED
+#include <weed/weed.h>
 #include <weed/weed-host.h>
+#else
+#include "weed.h"
+#include "weed-host.h"
+#endif
 
 #include <glib.h>
 

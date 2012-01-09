@@ -4518,7 +4518,11 @@ gboolean open_ascrap_file (void) {
   if (mainw->com_failed||mainw->write_failed) bad_header=TRUE;
 
 
-  if (bad_header) 
+  if (bad_header) {
+    close_current_file(current_file);
+    mainw->ascrap_file=-1;
+    return FALSE;
+  }
 
   ascrap_handle=g_strdup_printf("ascrap|%s",cfile->handle);
 

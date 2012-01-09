@@ -2244,7 +2244,7 @@ int main (int argc, char *argv[]) {
   gtk_init (&argc, &argv);
 
   // don't crash on GTK+ fatals
-  g_log_set_always_fatal ((GLogLevelFlags)0);
+  //g_log_set_always_fatal ((GLogLevelFlags)0);
   theme_expected=pre_init();
 
   // mainw->foreign is set if we are grabbing an external window

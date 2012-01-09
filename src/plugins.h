@@ -453,6 +453,8 @@ gint find_rfx_plugin_by_name (const gchar *name, gshort status);
 
 void rfx_copy (lives_rfx_t *src, lives_rfx_t *dest, gboolean full);
 
+void rfx_params_free(lives_rfx_t *rfx);
+
 void rfx_free(lives_rfx_t *rfx);
 
 void rfx_free_all (void);
@@ -498,6 +500,7 @@ void rfx_params_store_free (lives_rfx_t *, void **store);
 GList *array_to_string_list (gchar **array, gint offset, gint len);
 
 lives_rfx_t *weed_to_rfx (weed_plant_t *plant, gboolean show_reinits);
+lives_param_t *weed_params_to_rfx(gint npar, weed_plant_t *plant, gboolean show_reinits);
 
 gchar *plugin_run_param_window(const gchar *get_com, GtkVBox *vbox, lives_rfx_t **ret_rfx);
 

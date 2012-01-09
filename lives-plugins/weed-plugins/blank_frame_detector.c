@@ -118,8 +118,8 @@ int bfd_process (weed_plant_t *inst, weed_timecode_t timestamp) {
       pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_UYVY||pal==WEED_PALETTE_YUYV||
       pal==WEED_PALETTE_YUV888||pal==WEED_PALETTE_YUVA8888) {
 
-    if (weed_plant_has_leaf(in_channel,"YUV_Clamping")&&
-	(weed_get_int_value(in_channel,"YUV_Clamping",&error)==WEED_YUV_CLAMPING_CLAMPED))
+    if (weed_plant_has_leaf(in_channel,"YUV_clamping")&&
+	(weed_get_int_value(in_channel,"YUV_clamping",&error)==WEED_YUV_CLAMPING_CLAMPED))
       clamped=1;
   }
 

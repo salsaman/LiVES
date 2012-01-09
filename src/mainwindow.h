@@ -100,7 +100,8 @@ enum {
   LIVES_YES,
   LIVES_CANCEL,
   LIVES_RETRY,
-  LIVES_ABORT
+  LIVES_ABORT,
+  LIVES_RESET
 };
 
 
@@ -1042,6 +1043,7 @@ typedef struct {
 extern _merge_opts* merge_opts;
 
 /// note, we can only have two of these currently, one for rendered effects, one for real time effects
+/// 0 for rfx, 1 for rte
 extern GtkWidget *fx_dialog[2];
 
 

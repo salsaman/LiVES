@@ -2758,7 +2758,7 @@ GList *array_to_string_list (gchar **array, gint offset, gint len) {
 
 void sort_rfx_array (lives_rfx_t *in, gint num) {
   // sort rfx array into UTF-8 order by menu entry
-  int i;
+  register int i;
   int start=1,min_val=0;
   gboolean used[num];
   gint sorted=1;
@@ -2829,12 +2829,8 @@ void rfx_copy (lives_rfx_t *src, lives_rfx_t *dest, gboolean full) {
 }
 
 
-void rfx_free(lives_rfx_t *rfx) {
-  int i;
-
-  if (rfx->name!=NULL) g_free(rfx->name);
-  if (rfx->menu_text!=NULL) g_free(rfx->menu_text);
-  if (rfx->action_desc!=NULL) g_free(rfx->action_desc);
+void rfx_params_free(lives_rfx_t *rfx) {
+  register int i;
   for (i=0;i<rfx->num_params;i++) {
     if (rfx->params[i].type==LIVES_PARAM_UNDISPLAYABLE) continue;
     g_free(rfx->params[i].name);
@@ -2847,7 +2843,18 @@ void rfx_free(lives_rfx_t *rfx) {
       g_list_free(rfx->params[i].list);
     }
   }
+}
+
+
+
+void rfx_free(lives_rfx_t *rfx) {
+
+  if (rfx->name!=NULL) g_free(rfx->name);
+  if (rfx->menu_text!=NULL) g_free(rfx->menu_text);
+  if (rfx->action_desc!=NULL) g_free(rfx->action_desc);
+
   if (rfx->params!=NULL) {
+    rfx_params_free(rfx);
     g_free(rfx->params);
   }
   if (rfx->extra!=NULL) {
@@ -2860,7 +2867,7 @@ void rfx_free(lives_rfx_t *rfx) {
 
 
 void rfx_free_all (void) {
-  int i;
+  register int i;
   for (i=0;i<=mainw->num_rendered_effects_builtin+mainw->num_rendered_effects_custom+mainw->num_rendered_effects_test;i++) {
     rfx_free(&mainw->rendered_fx[i]);
   }

@@ -1731,6 +1731,101 @@ void rte_set_defs_cancel (GtkButton *button, lives_rfx_t *rfx) {
 }
 
 
+
+
+void rte_reset_defs_clicked (GtkButton *button, lives_rfx_t *rfx) {
+  weed_plant_t **ptmpls,**inp,*filter,*inst;
+  weed_plant_t **ctmpls;
+  GList *child_list;
+  GtkWidget *pbox,*fxdialog,*cancelbutton;
+
+  int error;
+  int i,nchans;
+
+  gboolean is_generic_defs=FALSE;
+  gboolean is_keymode_defs=FALSE;
+
+  cancelbutton=(GtkWidget *)g_object_get_data(G_OBJECT(button),"cancelbutton");
+
+  if (cancelbutton==NULL) is_keymode_defs=TRUE;
+  else is_generic_defs=TRUE;
+
+  inst=(weed_plant_t *)rfx->source;
+
+  filter=weed_get_plantptr_value(inst,"filter_class",&error);
+
+  if (rfx->num_params>0) {
+
+    if (is_generic_defs) {
+      // for generic, reset from plugin supplied defs
+      ptmpls=weed_get_plantptr_array(filter,"in_parameter_templates",&error);
+      for (i=0;i<rfx->num_params;i++) {
+	if (weed_plant_has_leaf(ptmpls[i],"host_default")) weed_leaf_delete(ptmpls[i],"host_default");
+      }
+      weed_free(ptmpls);
+    }
+
+    // reset params back to default defaults
+    weed_in_parameters_free(inst);
+    
+    inp=weed_params_create(filter,TRUE);
+    weed_set_plantptr_array(inst,"in_parameters",weed_flagset_array_count(inp,TRUE),inp);
+    weed_free(inp);
+
+    rfx_params_free(rfx);
+    g_free(rfx->params);
+    
+    rfx->params=weed_params_to_rfx(rfx->num_params,inst,FALSE);
+  }
+
+  if (is_generic_defs) {
+    if (weed_plant_has_leaf(filter,"host_fps")) weed_leaf_delete(filter,"host_fps");
+    
+    if (weed_plant_has_leaf(filter,"out_channel_templates")) {
+      ctmpls=weed_get_plantptr_array(filter,"out_channel_templates",&error);
+      nchans=weed_leaf_num_elements(filter,"out_channel_templates");
+      for (i=0;i<nchans;i++) {
+	if (weed_plant_has_leaf(ctmpls[i],"host_width")) weed_leaf_delete(ctmpls[i],"host_width");
+	if (weed_plant_has_leaf(ctmpls[i],"host_height")) weed_leaf_delete(ctmpls[i],"host_height");
+      }
+    }
+  }
+  else {
+    gint key=GPOINTER_TO_INT (g_object_get_data (G_OBJECT (fx_dialog[1]),"key"));
+    gint mode=GPOINTER_TO_INT (g_object_get_data (G_OBJECT (fx_dialog[1]),"mode"));
+    set_key_defaults(inst,key,mode);
+  }
+
+
+  fxdialog=gtk_widget_get_toplevel(GTK_WIDGET(button));
+  pbox=lives_dialog_get_content_area(GTK_DIALOG(fxdialog));
+
+  // redraw the window
+
+  if (mainw->invis==NULL) mainw->invis=gtk_vbox_new(FALSE,0);
+  child_list=gtk_container_get_children(GTK_CONTAINER(lives_dialog_get_content_area(GTK_DIALOG(fxdialog))));
+
+  for (i=0;i<g_list_length(child_list);i++) {
+    GtkWidget *widget=(GtkWidget *)g_list_nth_data(child_list,i);
+    if (widget!=GTK_DIALOG (fxdialog)->action_area) {
+      // we have to do this, because using gtk_widget_destroy() here 
+      // can causes a crash [bug in gtk+ ???]
+      gtk_widget_reparent (widget,mainw->invis);
+    }
+  }
+  
+  if (cancelbutton!=NULL) gtk_widget_set_sensitive(cancelbutton,FALSE);
+
+  make_param_box(GTK_VBOX (pbox), rfx);
+  gtk_widget_show_all(pbox);
+
+  gtk_widget_queue_draw(fxdialog);
+
+}
+
+
+
+
 void load_default_keymap(void) {
   // called on startup
   gchar *keymap_file=g_build_filename(capable->home_dir,LIVES_CONFIG_DIR,"default.keymap",NULL);

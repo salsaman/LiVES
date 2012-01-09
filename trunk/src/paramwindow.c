@@ -711,6 +711,7 @@ void on_render_fx_pre_activate (GtkMenuItem *menuitem, lives_rfx_t *rfx) {
   GtkWidget *dialog_action_area;
   GtkWidget *cancelbutton;
   GtkWidget *okbutton;
+  GtkWidget *resetbutton=NULL;
   GtkWidget *pbox;
   GtkAccelGroup *fxw_accel_group;
 
@@ -889,16 +890,22 @@ void on_render_fx_pre_activate (GtkMenuItem *menuitem, lives_rfx_t *rfx) {
     if (is_defaults) {
       okbutton = gtk_button_new_with_mnemonic (_("Set as default"));
       if (!has_param) gtk_widget_set_sensitive(okbutton,FALSE);
+      resetbutton = gtk_button_new_with_mnemonic (_("Reset"));
+      if (!has_param) gtk_widget_set_sensitive(resetbutton,FALSE);
     }
     else okbutton = gtk_button_new_from_stock ("gtk-ok");
+    gtk_dialog_add_action_widget (GTK_DIALOG (fx_dialog[n]), resetbutton, LIVES_RESET);
     gtk_dialog_add_action_widget (GTK_DIALOG (fx_dialog[n]), okbutton, GTK_RESPONSE_OK);
   }
   else {
     okbutton = gtk_button_new_with_mnemonic (_("Set as default"));
     if (!has_param) gtk_widget_set_sensitive(okbutton,FALSE);
     cancelbutton = gtk_button_new_with_mnemonic (_("Close _window"));
-    if (rfx->status==RFX_STATUS_WEED)
+    if (rfx->status==RFX_STATUS_WEED) {
+      resetbutton = gtk_button_new_with_mnemonic (_("Reset"));
+      gtk_dialog_add_action_widget (GTK_DIALOG (fx_dialog[n]), resetbutton, LIVES_RESET);
       gtk_dialog_add_action_widget (GTK_DIALOG (fx_dialog[n]), okbutton, GTK_RESPONSE_OK);
+    }
     gtk_dialog_add_action_widget (GTK_DIALOG (fx_dialog[n]), cancelbutton, GTK_RESPONSE_CANCEL);
     gtk_widget_add_accelerator (cancelbutton, "activate", fxw_accel_group,
 				GDK_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
@@ -935,10 +942,16 @@ void on_render_fx_pre_activate (GtkMenuItem *menuitem, lives_rfx_t *rfx) {
 	g_signal_connect (GTK_OBJECT (okbutton), "clicked",
 			  G_CALLBACK (on_paramwindow_cancel_clicked2),
 			  rfx);
-      else
+      else {
 	g_signal_connect (GTK_OBJECT (okbutton), "clicked",
 			  G_CALLBACK (rte_set_key_defs),
 			  rfx);
+	if (resetbutton!=NULL) {
+	  g_signal_connect_after (GTK_OBJECT (resetbutton), "clicked",
+				  G_CALLBACK (rte_reset_defs_clicked),
+				  rfx);
+	}
+      }
       g_signal_connect (GTK_OBJECT (fx_dialog[n]), "delete_event",
 			G_CALLBACK (on_paramwindow_cancel_clicked2),
 			rfx);
@@ -961,6 +974,13 @@ void on_render_fx_pre_activate (GtkMenuItem *menuitem, lives_rfx_t *rfx) {
       g_signal_connect_after (GTK_OBJECT (okbutton), "clicked",
 			G_CALLBACK (rte_set_defs_ok),
 			rfx);
+      if (resetbutton!=NULL) {
+	g_signal_connect_after (GTK_OBJECT (resetbutton), "clicked",
+				G_CALLBACK (rte_reset_defs_clicked),
+				rfx);
+	g_object_set_data(G_OBJECT(resetbutton),"cancelbutton",(gpointer)cancelbutton);
+
+      }
       g_signal_connect (GTK_OBJECT (cancelbutton), "clicked",
 			G_CALLBACK (rte_set_defs_cancel),
 			rfx);

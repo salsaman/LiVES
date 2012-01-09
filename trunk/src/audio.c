@@ -850,7 +850,7 @@ long render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdouble *
       zavel=avels[track]*(gdouble)in_arate[track]/(gdouble)out_arate*in_asamps[track]*in_achans[track]/sizeof(float);
       if (ABS(zavel)>zavel_max) zavel_max=ABS(zavel);
       
-      infilename=g_strdup_printf("%s/%s/audio",prefs->tmpdir,infile->handle);
+      infilename=g_build_filename(prefs->tmpdir,infile->handle,"audio",NULL);
 
 
       // try to speed up access by keeping some files open
@@ -985,7 +985,14 @@ long render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdouble *
       if (zavel<0. && in_fd[track]>-1) lseek64(in_fd[track],seekstart[track]-tbytes,SEEK_SET);
 
       bytes_read=0;
-      if (in_fd[track]>-1) bytes_read=lives_read(in_fd[track],in_buff,tbytes,FALSE);
+      if (in_fd[track]>-1) bytes_read=lives_read(in_fd[track],in_buff,tbytes,(from_files[track]==mainw->ascrap_file));
+
+      if (bytes_read<0) bytes_read=0;
+
+      if (from_files[track]==mainw->ascrap_file) {
+	// be forgiving with the ascrap file
+	if (mainw->read_failed) mainw->read_failed=FALSE;
+      }
 
       if (zavel<0.) seekstart[track]-=bytes_read;
 
@@ -1130,7 +1137,6 @@ void jack_rec_audio_to_clip(gint fileno, gint old_file, lives_rec_audio_type_t r
   // open audio file for writing
   file *outfile=mainw->files[fileno];
   gchar *outfilename=g_build_filename(prefs->tmpdir,outfile->handle,"audio",NULL);
-  gint out_bendian=outfile->signed_endian&AFORM_BIG_ENDIAN;
   int retval;
   
   do {
@@ -1151,14 +1157,45 @@ void jack_rec_audio_to_clip(gint fileno, gint old_file, lives_rec_audio_type_t r
   mainw->jackd_read->playing_file=fileno;
   mainw->jackd_read->frames_written=0;
 
-  if ((!out_bendian&&(capable->byte_order==LIVES_BIG_ENDIAN))||
-      (out_bendian&&(capable->byte_order==LIVES_LITTLE_ENDIAN))) 
-    mainw->jackd_read->reverse_endian=TRUE;
-  else mainw->jackd_read->reverse_endian=FALSE;
 
-  // start jack recording
-  jack_open_device_read(mainw->jackd_read);
-  jack_read_driver_activate(mainw->jackd_read);
+  if (rec_type==RECA_EXTERNAL) {
+    gint asigned;
+    gint aendian;
+
+    mainw->jackd_read->reverse_endian=FALSE;
+
+    // start jack recording
+    jack_open_device_read(mainw->jackd_read);
+    jack_read_driver_activate(mainw->jackd_read);
+
+    outfile->arate=outfile->arps=mainw->jackd_read->sample_out_rate;
+    outfile->achans=mainw->jackd_read->num_output_channels;
+    outfile->asampsize=mainw->jackd_read->bytes_per_channel*8;
+    outfile->signed_endian=get_signed_endian(TRUE,TRUE);
+    
+    asigned=!(outfile->signed_endian&AFORM_UNSIGNED);
+    aendian=!(outfile->signed_endian&AFORM_BIG_ENDIAN);
+
+    save_clip_value(mainw->current_file,CLIP_DETAILS_ACHANS,&outfile->achans);
+    save_clip_value(mainw->current_file,CLIP_DETAILS_ARATE,&outfile->arps);
+    save_clip_value(mainw->current_file,CLIP_DETAILS_PB_ARATE,&outfile->arate);
+    save_clip_value(mainw->current_file,CLIP_DETAILS_ASAMPS,&outfile->asampsize);
+    save_clip_value(mainw->current_file,CLIP_DETAILS_AENDIAN,&aendian);
+    save_clip_value(mainw->current_file,CLIP_DETAILS_ASIGNED,&asigned);
+
+  }
+  else {
+    gint out_bendian=outfile->signed_endian&AFORM_BIG_ENDIAN;
+
+    if ((!out_bendian&&(capable->byte_order==LIVES_BIG_ENDIAN))||
+	(out_bendian&&(capable->byte_order==LIVES_LITTLE_ENDIAN))) 
+      mainw->jackd_read->reverse_endian=TRUE;
+    else mainw->jackd_read->reverse_endian=FALSE;
+    
+    // start jack recording
+    jack_open_device_read(mainw->jackd_read);
+    jack_read_driver_activate(mainw->jackd_read);
+  }
 
   // in grab window mode, just return, we will call rec_audio_end on playback end
   if (rec_type==RECA_WINDOW_GRAB||rec_type==RECA_EXTERNAL) return;
@@ -1206,7 +1243,6 @@ void pulse_rec_audio_to_clip(gint fileno, gint old_file, lives_rec_audio_type_t 
   // open audio file for writing
   file *outfile=mainw->files[fileno];
   gchar *outfilename=g_build_filename(prefs->tmpdir,outfile->handle,"audio",NULL);
-  gint out_bendian=outfile->signed_endian&AFORM_BIG_ENDIAN;
   int retval;
 
   do {
@@ -1225,13 +1261,43 @@ void pulse_rec_audio_to_clip(gint fileno, gint old_file, lives_rec_audio_type_t 
   mainw->pulsed_read->playing_file=fileno;
   mainw->pulsed_read->frames_written=0;
 
-  if ((!out_bendian&&(capable->byte_order==LIVES_BIG_ENDIAN))||
-      (out_bendian&&(capable->byte_order==LIVES_LITTLE_ENDIAN))) 
-    mainw->pulsed_read->reverse_endian=TRUE;
-  else mainw->pulsed_read->reverse_endian=FALSE;
 
-  // start pulse recording
-  pulse_driver_activate(mainw->pulsed_read);
+  if (rec_type==RECA_EXTERNAL) {
+    gint asigned;
+    gint aendian;
+
+    mainw->pulsed_read->reverse_endian=FALSE;
+
+    pulse_driver_activate(mainw->pulsed_read);
+
+    outfile->arate=outfile->arps=mainw->pulsed_read->out_arate;
+    outfile->achans=mainw->pulsed_read->out_achans;
+    outfile->asampsize=mainw->pulsed_read->out_asamps;
+    outfile->signed_endian=get_signed_endian(mainw->pulsed_read->out_signed!=AFORM_UNSIGNED,
+					     mainw->pulsed_read->out_endian!=AFORM_BIG_ENDIAN);
+    
+    asigned=!(outfile->signed_endian&AFORM_UNSIGNED);
+    aendian=!(outfile->signed_endian&AFORM_BIG_ENDIAN);
+
+    save_clip_value(mainw->current_file,CLIP_DETAILS_ACHANS,&outfile->achans);
+    save_clip_value(mainw->current_file,CLIP_DETAILS_ARATE,&outfile->arps);
+    save_clip_value(mainw->current_file,CLIP_DETAILS_PB_ARATE,&outfile->arate);
+    save_clip_value(mainw->current_file,CLIP_DETAILS_ASAMPS,&outfile->asampsize);
+    save_clip_value(mainw->current_file,CLIP_DETAILS_AENDIAN,&aendian);
+    save_clip_value(mainw->current_file,CLIP_DETAILS_ASIGNED,&asigned);
+
+  }
+  else {
+    gint out_bendian=outfile->signed_endian&AFORM_BIG_ENDIAN;
+    
+    if ((!out_bendian&&(capable->byte_order==LIVES_BIG_ENDIAN))||
+	(out_bendian&&(capable->byte_order==LIVES_LITTLE_ENDIAN))) 
+      mainw->pulsed_read->reverse_endian=TRUE;
+    else mainw->pulsed_read->reverse_endian=FALSE;
+
+    // start pulse recording
+    pulse_driver_activate(mainw->pulsed_read);
+  }
 
   // in grab window mode, just return, we will call rec_audio_end on playback end
   if (rec_type==RECA_WINDOW_GRAB||rec_type==RECA_EXTERNAL) return;
@@ -1718,6 +1784,9 @@ gboolean resync_audio(gint frameno) {
   // this is only active if "audio follows video rate/fps changes" is set
 
   if (!(prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS)) return FALSE;
+
+  // if recording external audio, we are intrinsically in sync
+  if (mainw->record&&prefs->rec_opts==REC_EXT_AUDIO) return TRUE;
 
 #ifdef ENABLE_JACK
   if (prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL) {

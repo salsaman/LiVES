@@ -2257,7 +2257,7 @@ void play_file (void) {
   // reinit all active effects
   if (!mainw->preview&&!mainw->is_rendering) weed_reinit_all();
 
-  if (!mainw->foreign&&(!(mainw->record&&(prefs->rec_opts*REC_EXT_AUDIO))&&
+  if (!mainw->foreign&&(!(mainw->record&&(prefs->rec_opts&REC_EXT_AUDIO))&&
 			((audio_player==AUD_PLAYER_JACK) ||
 			 (audio_player==AUD_PLAYER_PULSE)))) {
 
@@ -2439,20 +2439,25 @@ void play_file (void) {
 
   // if recording, set up recorder (jack or pulse)
 
-  if (!mainw->foreign&&(mainw->record&&(prefs->rec_opts*REC_EXT_AUDIO))&&
+  if (!mainw->foreign&&(mainw->record&&(prefs->rec_opts&REC_EXT_AUDIO))&&
       ((audio_player==AUD_PLAYER_JACK) ||
        (audio_player==AUD_PLAYER_PULSE))) {
-
     // creat temp clip
     open_ascrap_file();
     if (mainw->ascrap_file!=-1) {
+      mainw->rec_samples=-1; // record unlimited
+      
+      mainw->rec_aclip=mainw->ascrap_file;
+      mainw->rec_avel=1.;
+      mainw->rec_aseek=0;
+
       if (audio_player==AUD_PLAYER_JACK) {
 #ifdef ENABLE_JACK
 	jack_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_EXTERNAL);
 #endif
       }
       if (audio_player==AUD_PLAYER_PULSE) {
-#ifdef ENABLE_PULSE
+#ifdef HAVE_PULSE_AUDIO
 	pulse_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_EXTERNAL);
 #endif
       }
@@ -2627,6 +2632,25 @@ void play_file (void) {
   // play completed
 
   mainw->video_seek_ready=FALSE;
+
+
+  if (!mainw->foreign&&(mainw->record&&(prefs->rec_opts&REC_EXT_AUDIO))&&
+      ((audio_player==AUD_PLAYER_JACK) ||
+       (audio_player==AUD_PLAYER_PULSE))) {
+    if (audio_player==AUD_PLAYER_JACK) {
+#ifdef ENABLE_JACK
+      jack_rec_audio_end();
+#endif
+    }
+    if (audio_player==AUD_PLAYER_PULSE) {
+#ifdef HAVE_PULSE_AUDIO
+      pulse_rec_audio_end();
+#endif
+    }
+  }
+
+
+
 
 #ifdef ENABLE_JACK
   if (audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL) {
@@ -4481,11 +4505,8 @@ gboolean open_scrap_file (void) {
 
 gboolean open_ascrap_file (void) {
   // create a scrap file for recording audio
-  gboolean bad_header=FALSE;
-
   gint current_file=mainw->current_file;
   gint new_file=mainw->first_free_file;
-  gint asigned,aendian;
   
   gchar *dir;
   gchar *ascrap_handle;
@@ -4498,31 +4519,6 @@ gboolean open_ascrap_file (void) {
   g_snprintf(cfile->type,40,"ascrap");
 
   cfile->frames=0;
-
-  cfile->arate=cfile->arps=prefs->mt_def_arate;
-  cfile->achans=prefs->mt_def_achans;
-  cfile->asampsize=prefs->mt_def_asamps;
-  cfile->signed_endian=prefs->mt_def_signed_endian;
-
-  save_clip_value(mainw->current_file,CLIP_DETAILS_ACHANS,&cfile->achans);
-  if (mainw->com_failed||mainw->write_failed) bad_header=TRUE;
-  save_clip_value(mainw->current_file,CLIP_DETAILS_ARATE,&cfile->arps);
-  if (mainw->com_failed||mainw->write_failed) bad_header=TRUE;
-  save_clip_value(mainw->current_file,CLIP_DETAILS_PB_ARATE,&cfile->arate);
-  if (mainw->com_failed||mainw->write_failed) bad_header=TRUE;
-  save_clip_value(mainw->current_file,CLIP_DETAILS_ASAMPS,&cfile->asampsize);
-  if (mainw->com_failed||mainw->write_failed) bad_header=TRUE;
-  save_clip_value(mainw->current_file,CLIP_DETAILS_AENDIAN,&aendian);
-  if (mainw->com_failed||mainw->write_failed) bad_header=TRUE;
-  save_clip_value(mainw->current_file,CLIP_DETAILS_ASIGNED,&asigned);
-  if (mainw->com_failed||mainw->write_failed) bad_header=TRUE;
-
-
-  if (bad_header) {
-    close_current_file(current_file);
-    mainw->ascrap_file=-1;
-    return FALSE;
-  }
 
   ascrap_handle=g_strdup_printf("ascrap|%s",cfile->handle);
 

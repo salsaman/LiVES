@@ -178,6 +178,8 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
 
    pa_volume_t pavol;
 
+   pulsed->pstream=pstream;
+
    if (xbytes>nbytes) xbytes=nbytes;
 
    if (!mainw->is_ready||pulsed==NULL||(mainw->playing_file==-1&&pulsed->msgq==NULL)||nbytes>1000000) {
@@ -494,6 +496,7 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
     }
 
     if(pulseFramesAvailable) {
+#define DEBUG_PULSE
 #ifdef DEBUG_PULSE
       g_printerr("buffer underrun of %ld frames\n", pulseFramesAvailable);
 #endif
@@ -512,7 +515,7 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
   //g_print("pt a7\n");
 
 #ifdef DEBUG_PULSE
-  g_printerr("done\n");
+   // g_printerr("done\n");
 #endif
 
 }

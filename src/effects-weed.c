@@ -1641,7 +1641,6 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
     }
 
     if (cpalette!=inpalette||oclamping!=iclamping||isampling!=osampling||isubspace!=osubspace) {
-      g_print("conv pal %d %d %d %d\n",cpalette,inpalette,oclamping,iclamping);
       if (!convert_layer_palette_full(layer,inpalette,
 				      osampling,oclamping,osubspace)) {
 	weed_free(in_tracks);

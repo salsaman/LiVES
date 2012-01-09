@@ -1203,6 +1203,8 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
   gchar *mytext=NULL;
 
   int frames_done;
+
+  gboolean got_err=FALSE;
   
   // translation issues
   if (visible&&text!=NULL) mytext=g_strdup(text);
@@ -1478,7 +1480,8 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
       if (mainw->render_error>=LIVES_RENDER_ERROR) {
 	lives_freep((void**)&cfile->op_dir);
 	if (mainw->current_file>-1&&cfile!=NULL) lives_freep((void**)&cfile->op_dir);
-	return FALSE;
+	got_err=TRUE;
+	goto finish;
       }
 
       // display progress fraction or pulse bar
@@ -1565,6 +1568,8 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
   g_print ("exit pt 3 %s\n",mainw->msg);
 #endif
 
+ finish:
+
   //play/operation ended
   if (visible) {
     if (cfile->clip_type==CLIP_TYPE_DISK&&(mainw->cancelled!=CANCEL_NO_MORE_PREVIEW||!cfile->opening)) {
@@ -1582,7 +1587,7 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
     if (cfile->proc_ptr!=NULL) {
       const gchar *btext=NULL;
       if (mainw->iochan!=NULL) btext=text_view_get_text(mainw->optextview); 
-      gtk_widget_destroy(cfile->proc_ptr->processing);
+      if (cfile->proc_ptr->processing!=NULL) gtk_widget_destroy(cfile->proc_ptr->processing);
       g_free(cfile->proc_ptr);
       cfile->proc_ptr=NULL;
       if (btext!=NULL) {
@@ -1619,6 +1624,8 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
   else {
     if (!check_storage_space((mainw->current_file>-1)?cfile:NULL,FALSE)) return FALSE;
   }
+
+  if (got_err) return FALSE;
 
 #ifdef DEBUG
   g_print("exiting progress dialogue\n");

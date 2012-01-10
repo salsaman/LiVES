@@ -158,7 +158,7 @@ int videowall_init(weed_plant_t *inst) {
 
   if (sdata == NULL ) return WEED_ERROR_MEMORY_ALLOCATION;
 
-  palette=weed_get_int_value(in_channel,"height",&error);
+  palette=weed_get_int_value(in_channel,"current_palette",&error);
   video_height=weed_get_int_value(in_channel,"height",&error);
   video_width=weed_get_int_value(in_channel,"width",&error);
   video_area=video_width*video_height;
@@ -175,7 +175,7 @@ int videowall_init(weed_plant_t *inst) {
   if (palette==WEED_PALETTE_RGB24||palette==WEED_PALETTE_BGR24) {
     weed_memset(sdata->bgbuf,0,psize);
   }
-  else if (palette==WEED_PALETTE_RGB24||palette==WEED_PALETTE_BGR24) {
+  else if (palette==WEED_PALETTE_RGBA32||palette==WEED_PALETTE_BGRA32) {
     unsigned char *ptr=sdata->bgbuf;
     for (i=0;i<video_height;i++) {
       for (j=0;j<video_width;j++) {
@@ -211,7 +211,7 @@ int videowall_init(weed_plant_t *inst) {
   sdata->count=0;
   sdata->fastrand_val=0;
   sdata->dir=0;
-  sdata->idxno=0;
+  sdata->idxno=-1;
 
   weed_set_voidptr_value(inst,"plugin_internal",sdata);
 
@@ -264,6 +264,8 @@ int videowall_process (weed_plant_t *inst, weed_timecode_t timestamp) {
 
   int row,col,idxno,bdstoffs,rpixoffs;
 
+  int offs_x,offs_y;
+
   xwid=weed_get_int_value(in_params[0],"value",&error);
   xht=weed_get_int_value(in_params[1],"value",&error);
   mode=weed_get_int_value(in_params[2],"value",&error);
@@ -275,11 +277,13 @@ int videowall_process (weed_plant_t *inst, weed_timecode_t timestamp) {
   pwidth=width/xwid;
   pheight=height/xht;
 
-  pwidth=(pwidth<<2)>>2;
-  pheight=(pheight<<2)>>2;
+  pwidth=(pwidth>>1)<<1;
+  pheight=(pheight>>1)<<1;
 
   if (pwidth==0||pheight==0) return WEED_NO_ERROR;
 
+  offs_x=(width-pwidth*xwid)>>1;
+  offs_y=(height-pheight*xht)>>1;
 
   out_pixbuf=gdk_pixbuf_scale_simple(in_pixbuf,pwidth,pheight,down_interp);
 
@@ -303,29 +307,49 @@ int videowall_process (weed_plant_t *inst, weed_timecode_t timestamp) {
     // TODO
 
     idxno=sdata->idxno;
-    row=(int)((float)idxno/(float)xwid);
-    col=idxno-(row*xht);
 
+    if (idxno==-1) {
+      idxno=0;
+      sdata->dir=0;
+      break;
+    }
+
+    row=(int)((float)idxno/(float)xwid);
+    col=idxno-(row*xwid);
 
     if (sdata->dir==0) {
+      if (col>=xwid-1-row) sdata->dir=1; // time to go down
       // go right
-      idxno++;
-      if (col==xwid-1-row) sdata->dir=1; // time to go down
+      else idxno++;
     }
-    else if (sdata->dir==1) {
+    if (sdata->dir==1) {
+      if (row>=col-(xwid-xht)) sdata->dir=2; // time to go left
       // go down
-      idxno+=xwid;
-      if (row==col-1) sdata->dir=2; // time to go left
+      else idxno+=xwid;
     }
-    else if (sdata->dir==2) {
+    if (sdata->dir==2) {
+      if (col<=(xwid-row-1)-(xwid-xht)) {
+	sdata->dir=3; // time to go up
+	if (row<=col+1) {
+	  idxno=0;
+	  sdata->dir=0;
+	  break;
+	}
+      }
       // go left
-      idxno--;
-      if (col==(xwid-row+1)) sdata->dir=3; // time to go up
+      else idxno--;
     }
-    else if (sdata->dir==3) {
+    if (sdata->dir==3) {
+      if (row<=col+1) {
+	sdata->dir=0; // time to go right
+	if (col<xwid-1-row) idxno++;
+      }
       // go up
-      idxno-=xwid;
-      if (row==col+1) sdata->dir=0; // time to go left
+      else idxno-=xwid;
+    }
+    if (idxno==sdata->idxno) {
+      idxno=0;
+      sdata->dir=0;
     }
     break;
   default:
@@ -333,13 +357,15 @@ int videowall_process (weed_plant_t *inst, weed_timecode_t timestamp) {
 
   }
 
+  idxno%=(xwid*xht);
+  
   sdata->idxno=idxno;
 
   row=(int)((float)idxno/(float)xwid);
-  col=idxno-(row*xht);
+  col=idxno-(row*xwid);
 
-  ofh=pheight*row;
-  ofw=pwidth*psize*col;
+  ofh=offs_y+pheight*row;
+  ofw=(offs_x+pwidth*col)*psize;
 
   bdst=sdata->bgbuf+ofh*width*psize+ofw;
 
@@ -389,8 +415,8 @@ int videowall_process (weed_plant_t *inst, weed_timecode_t timestamp) {
 weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
   weed_plant_t *plugin_info=weed_plugin_info_init(weed_boot,num_versions,api_versions);
   if (plugin_info!=NULL) {
-    //const char *modes[]={"Scanner","Random","Spiral",NULL};
     const char *modes[]={"Scanner","Random","Spiral",NULL};
+    //const char *modes[]={"Scanner","Random","Spiral",NULL};
     int palette_list[]={WEED_PALETTE_RGB24,WEED_PALETTE_BGR24,WEED_PALETTE_YUV888,WEED_PALETTE_YUVA8888,WEED_PALETTE_BGRA32,WEED_PALETTE_RGBA32,WEED_PALETTE_END};
 
     weed_plant_t *in_chantmpls[]={weed_channel_template_init("in channel 0",0,palette_list),NULL};

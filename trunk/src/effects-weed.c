@@ -5913,6 +5913,9 @@ gint rte_switch_keymode (gint key, gint mode, const gchar *hashname) {
   else key_to_fx[key][mode]=id;
 
   mainw->osc_block=osc_block;
+
+  if (key_defaults[key][mode]!=NULL) free_key_defaults(key,mode);
+
   return 0;
 }
 
@@ -7666,13 +7669,13 @@ void write_key_defaults(int fd, gint key, gint mode) {
   int i,nparams=0;
 
   if ((key_defs=key_defaults[key][mode])==NULL) {
-    lives_write (fd,&nparams,4,TRUE);
+    lives_write_le (fd,&nparams,4,TRUE);
     return;
   }
 
   filter=weed_filters[key_to_fx[key][mode]];
   nparams=weed_leaf_num_elements(filter,"in_parameter_templates");
-  lives_write (fd,&nparams,4,TRUE);
+  lives_write_le (fd,&nparams,4,TRUE);
 
   for (i=0;i<nparams;i++) {
     if (mainw->write_failed) break;

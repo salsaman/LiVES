@@ -312,7 +312,7 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
     weed_plant_t *filter_class;
     weed_plant_t *in_params[3],*gui;
     char *rfx_strings[]={"special|fileread|0|"};
-    char *modes[]={"normal","stretch",NULL};
+    const char *modes[]={"normal","stretch",NULL};
 
     char *defmaskfile=g_build_filename(g_get_home_dir(), "mask.png", NULL);
     int flags,error;

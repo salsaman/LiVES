@@ -8221,7 +8221,9 @@ GdkPixbuf *layer_to_pixbuf (weed_plant_t *layer) {
       break;
     case WEED_PALETTE_RGBA32:
     case WEED_PALETTE_BGRA32:
+#ifdef USE_SWSCALE
     case WEED_PALETTE_ARGB32:
+#endif
     case WEED_PALETTE_YUVA8888:
       if (irowstride==gdk_rowstride_value(width*4)) {
 	pixbuf=gdk_pixbuf_cheat(GDK_COLORSPACE_RGB, TRUE, 8, width, height, pixel_data);

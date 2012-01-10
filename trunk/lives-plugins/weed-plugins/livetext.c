@@ -1,6 +1,6 @@
 // livetext.c
 // weed plugin
-// (c) G. Finch (salsaman) 2009
+// (c) G. Finch (salsaman) 2009 - 2012
 //
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
@@ -351,14 +351,14 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
   weed_plant_t **clone1,**clone2;
 
   if (plugin_info!=NULL) {
-    char *modes[]={"foreground only","foreground and background","background only",NULL};
+    const char *modes[]={"foreground only","foreground and background","background only",NULL};
     int palette_list[]={WEED_PALETTE_BGR24,WEED_PALETTE_RGB24,WEED_PALETTE_RGBA32,WEED_PALETTE_BGRA32,WEED_PALETTE_END};
     weed_plant_t *in_chantmpls[]={weed_channel_template_init("in channel 0",0,palette_list),NULL};
     weed_plant_t *out_chantmpls[]={weed_channel_template_init("out channel 0",WEED_CHANNEL_CAN_DO_INPLACE,palette_list),NULL};
     weed_plant_t *in_params[8],*pgui;
     weed_plant_t *filter_class;
 
-    char *fonts[NFONTMAPS+1];
+    const char *fonts[NFONTMAPS+1];
     int i;
 
     make_font_tables();

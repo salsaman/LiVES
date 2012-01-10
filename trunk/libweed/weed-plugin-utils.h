@@ -70,7 +70,7 @@ extern "C"
   weed_plant_t *weed_filter_class_get_gui (weed_plant_t *filter);
   
   weed_plant_t *weed_integer_init (const char *name, const char *label, int def, int min, int max);
-  weed_plant_t *weed_string_list_init (const char *name, const char *label, int def, char **list);
+  weed_plant_t *weed_string_list_init (const char *name, const char *label, int def, const char ** const list);
   weed_plant_t *weed_switch_init (const char *name, const char *label, int def);
   weed_plant_t *weed_radio_init (const char *name, const char *label, int def, int group);
   weed_plant_t *weed_float_init (const char *name, const char *label, double def, double min, double max);

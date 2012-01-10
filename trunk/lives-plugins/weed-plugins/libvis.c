@@ -226,7 +226,7 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
     char fullname[256];
     weed_plant_t *filter_class;
     weed_plant_t *in_params[2];
-    char *listeners[]={"None","Alsa","ESD","Jack","Mplayer","Auto",NULL};
+    const char *listeners[]={"None","Alsa","ESD","Jack","Mplayer","Auto",NULL};
 
     instances=0;
     old_input=NULL;

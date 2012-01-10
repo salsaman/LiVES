@@ -325,7 +325,7 @@ weed_plant_t *weed_integer_init (const char *name, const char *label, int def, i
 }
 
 
-weed_plant_t *weed_string_list_init (const char *name, const char *label, int def, char **list) {
+weed_plant_t *weed_string_list_init (const char *name, const char *label, int def, const char ** const list) {
   int i=0;
   weed_plant_t *paramt,*gui;
   int min=0;

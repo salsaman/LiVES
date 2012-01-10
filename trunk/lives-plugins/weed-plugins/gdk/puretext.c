@@ -1028,7 +1028,7 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
     weed_plant_t *filter_class;
     PangoContext *ctx;
 
-    char *modes[]={"Spiral text","Spinning letters","Letter starfield","Word coalesce",NULL};
+    const char *modes[]={"Spiral text","Spinning letters","Letter starfield","Word coalesce",NULL};
     char *rfx_strings[]={"special|fileread|0|"};
 
     char *deftextfile;

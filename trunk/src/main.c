@@ -721,7 +721,7 @@ static void lives_init(_ign_opts *ign_opts) {
     set_int_pref("record_opts",prefs->rec_opts);
   }
 
-  prefs->rec_opts|=(REC_FPS+REC_FRAMES);//+REC_EXT_AUDIO);
+  prefs->rec_opts|=(REC_FPS+REC_FRAMES+REC_EXT_AUDIO);
 
 
   mainw->new_clip=-1;
@@ -2244,7 +2244,7 @@ int main (int argc, char *argv[]) {
   gtk_init (&argc, &argv);
 
   // don't crash on GTK+ fatals
-  //g_log_set_always_fatal ((GLogLevelFlags)0);
+  g_log_set_always_fatal ((GLogLevelFlags)0);
   theme_expected=pre_init();
 
   // mainw->foreign is set if we are grabbing an external window
@@ -2263,7 +2263,10 @@ int main (int argc, char *argv[]) {
   }
 
   // what's my short name (without the path) ?
-  capable->myname=g_strdup(g_path_skip_root(capable->myname_full));
+  g_snprintf(fbuff,PATH_MAX,"%s",capable->myname_full);
+  get_basename(fbuff);
+  capable->myname=g_strdup(fbuff);
+
 
   /* TRANSLATORS: localised name may be used here */
   g_set_application_name(_("LiVES"));

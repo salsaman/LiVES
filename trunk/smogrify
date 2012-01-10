@@ -727,7 +727,7 @@ if (defined($ARGV[0])) {
 
 	    $imresact="bound";
 	    &get_image_size("$file");
-	    if ($panic) {
+	    if ($panic||$hsize==-1) {
 		exit 1;
 	    }
 	    if (!($vsize*$hsize)) {
@@ -822,11 +822,12 @@ if (defined($ARGV[0])) {
 		    unless ($proc eq $pid) {
 			my $exe=smog_system_direct("/bin/readlink -n /proc/$proc/exe");  #allowed to fail
 			my $short_exe=&my_basename($exe);
+
 			if ($short_exe eq $exename) {
 			    # and it's in use
 			    closedir DIR;
 			    print $proc."\n";
-			    exit 1;
+			    exit 0;
 			}
 			unlink "$tmpdir/$setname/$file";
 		    }
@@ -1459,7 +1460,7 @@ if (defined($ARGV[0])) {
 	    $name=&mkname(1);
 	    $imresact="none";
 	    &get_image_size("$name$img_ext");
-	    if ($panic) {
+	    if ($panic||$hsize==-1) {
 		unlink $pidfile;
 		exit 1;
 	    }
@@ -1760,7 +1761,7 @@ if (defined($ARGV[0])) {
 	    $imresact="none";
 	    my $firstframe=&mkname($start);
 	    &get_image_size("$firstframe$img_ext");
-	    if ($panic) {
+	    if ($panic||$hsize==-1) {
 		unlink $pidfile;
 		exit 1;
 	    }
@@ -4352,7 +4353,7 @@ sub trim_center {
 
     $imresact="none";
     &get_image_size("$name$input_ext");
-    return if $panic;
+    return if ($panic||$hsize==-1);
 
     unless ($hsize>=$width&&$vsize>=$height) {
 	#composite over a large enough frame
@@ -4696,6 +4697,9 @@ sub get_file_info {
 	unless (-f "$curtmpdir/$name") {
 	    # see if it is image(s)
 	    &open_images(1);
+	    if ($hsize==-1) {
+		$hsize=$vsize=0;
+	    }
 	    opendir DIR,$curtmpdir;
 	    while ($file2=readdir(DIR)) {
 		if ($file2 =~ /$img_ext$/) {
@@ -5450,27 +5454,31 @@ sub open_single_image {
     # set $hsize and $vsize to force the image size, set to 0 to autoresize
     #identify hangs if the file extension is ".avi" or ".mp4" or ".mpg"
 
+
     my $i=shift;
     my $j;
+
     $name=&mkname($i);
     my $nframes=0;
 
     my $conv_command=$convert_command;
 
+    if ($file =~ /:\/\//) {
+	return 0;
+    }
+
     if (!defined($file_ext)) {
 	$file_ext=&get_ext($file);
     }
 
-    # TODO - return for any streams (anything with a :// in)
-
-    if ($file_ext eq ".avi"||$file_ext eq ".mp4"||$file_ext eq ".mpg"||$file_ext eq ".ogg") {
+    if ($file_ext eq ".avi"||$file_ext eq ".mp4"||$file_ext eq ".mpg"||$file_ext eq ".ogg"||$file_ext eq ".mov"||$file_ext eq ".ogv"||$file_ext eq ".webm"||$file_ext eq ".mkv"||$file_ext eq ".asf"||$file_ext eq ".wmv"||$file_ext eq ".flv"||$file_ext eq ".mng"||$file_ext eq ".dv"||$file_ext eq ".mp3") {
 	# need to set $name before we return
 	return 0;
     }
 
     if ($hsize*$vsize==0) {
 	&get_image_size($file);
-	return if $panic;
+	return if ($panic||$hsize==-1);
     }
 
     smog_system_sync();
@@ -5512,7 +5520,6 @@ sub open_single_image {
 
     if ($hsize*$vsize==0) {
 	&get_image_size("$curtmpdir/$name$img_ext");
-	return if $panic;
     }
 
     if ($hsize*$vsize>0&&$nframes==0) {
@@ -5552,8 +5559,8 @@ sub get_image_size {
 	@info=split / /, smog_system_direct($com);
 
 	if ($?) {
-	    sig_system_error("$com",$?);
-	    $panic=1;
+	    # probably not an image then
+	    $hsize=$vsize=$bpp=-1;
 	    return;
 	}
 

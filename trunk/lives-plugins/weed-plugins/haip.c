@@ -1,6 +1,6 @@
 // haip.c
 // weed plugin
-// (c) G. Finch (salsaman) 2006
+// (c) G. Finch (salsaman) 2006 - 2012
 //
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
@@ -61,6 +61,23 @@ static inline uint32_t fastrand(_sdata *sdata)
 
 static int ress[8];
 
+static unsigned short Y_R[256];
+static unsigned short Y_G[256];
+static unsigned short Y_B[256];
+
+
+static void init_luma_arrays(void) {
+  register int i;
+
+  for (i=0;i<256;i++) {
+    Y_R[i]=.299*(float)i*256.;
+    Y_G[i]=.587*(float)i*256.;
+    Y_B[i]=.114*(float)i*256.;
+  }
+
+}
+
+
 int haip_init(weed_plant_t *inst) {
   _sdata *sdata;
   int i;
@@ -103,11 +120,11 @@ int haip_deinit(weed_plant_t *inst) {
 
 
 inline int calc_luma(unsigned char *pt) {
-  // return luma 0<=x<=256
-  return 0.21*(float)pt[0]+0.587*(float)pt[1]+0.114*(float)pt[2];
+  return (Y_R[pt[0]]+Y_G[pt[1]]+Y_B[pt[2]])>>8;
 }
 
-/*
+
+
 static int make_eight_table(unsigned char *pt, int row, int luma, int adj) {
   int n=0;
 
@@ -150,7 +167,7 @@ static int make_eight_table(unsigned char *pt, int row, int luma, int adj) {
 
   return n;
 }
-*/
+
 
 static int select_dir(_sdata *sdata) {
   int num_choices=1;
@@ -253,8 +270,10 @@ int haip_process (weed_plant_t *inst, weed_timecode_t timestamp) {
 
   float scalex,scaley;
 
-  //unsigned char *pt;
+  unsigned char *pt;
   int count;
+
+  int luma,adj,num_pts;
 
   sdata=weed_get_voidptr_value(inst,"plugin_internal",&error);
 
@@ -297,12 +316,12 @@ int haip_process (weed_plant_t *inst, weed_timecode_t timestamp) {
       if (sdata->x>width-2) sdata->x=width-2;
       if (sdata->y<1) sdata->y++;
       if (sdata->y>height-2) sdata->y=height-2;
-      //pt=&src[sdata->y*irowstride+sdata->x*3];
+      pt=&src[sdata->y*irowstride+sdata->x*3];
 
-      //luma=calc_luma(pt);
-      //adj=0;
+      luma=calc_luma(pt);
+      adj=0;
 
-      //num_pts=make_eight_table(pt,irowstride,luma,adj);
+      num_pts=make_eight_table(pt,irowstride,luma,adj);
       if (((count<<7)>>7)==count) select_dir(sdata);
       count--;
     }
@@ -331,6 +350,7 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
     weed_plugin_info_add_filter_class (plugin_info,filter_class);
 
     weed_set_int_value(plugin_info,"version",package_version);
+    init_luma_arrays();
   }
   return plugin_info;
 }

@@ -319,28 +319,18 @@ long sample_move_float_int(void *holding_buff, float **float_buffer, int nsamps,
   unsigned short *hbuffu=(unsigned short *)holding_buff;
   unsigned char *hbuffc=(guchar *)holding_buff;
 
-#ifdef ENABLE_OIL
-  double x=(SAMPLE_MAX_16BIT_N+SAMPLE_MAX_16BIT_P)/2.;
-  double y=0.f;
-  short val=0;
-  unsigned short valu=0;
-#else
   register short val;
   register unsigned short valu=0;
   register float valf;
-#endif
 
   while ((nsamps-coffs)>0) {
     frames_out++;
     for (i=0;i<chans;i++) {
-#ifdef ENABLE_OIL
-      oil_scaleconv_s16_f32(&val,float_buffer[i]+coffs,1,&y,&x);
-#else
       valf=*(float_buffer[i]+coffs);
+      valf*=vol;
       val=(short)(valf*(valf>0.?SAMPLE_MAX_16BIT_P:SAMPLE_MAX_16BIT_N));
-#endif
-      if (usigned) valu=(val+SAMPLE_MAX_16BITI)*vol;
-      val*=vol;
+
+      if (usigned) valu=(val+SAMPLE_MAX_16BITI);
 
       if (asamps==16) {
 	if (!swap_endian) {
@@ -1168,20 +1158,21 @@ void jack_rec_audio_to_clip(gint fileno, gint old_file, lives_rec_audio_type_t r
     jack_open_device_read(mainw->jackd_read);
     jack_read_driver_activate(mainw->jackd_read);
 
-    outfile->arate=outfile->arps=mainw->jackd_read->sample_out_rate;
-    outfile->achans=mainw->jackd_read->num_output_channels;
-    outfile->asampsize=mainw->jackd_read->bytes_per_channel*8;
+    outfile->arate=outfile->arps=mainw->jackd_read->sample_in_rate;
+    outfile->achans=mainw->jackd_read->num_input_channels;
+
+    outfile->asampsize=16;
     outfile->signed_endian=get_signed_endian(TRUE,TRUE);
     
     asigned=!(outfile->signed_endian&AFORM_UNSIGNED);
     aendian=!(outfile->signed_endian&AFORM_BIG_ENDIAN);
 
-    save_clip_value(mainw->current_file,CLIP_DETAILS_ACHANS,&outfile->achans);
-    save_clip_value(mainw->current_file,CLIP_DETAILS_ARATE,&outfile->arps);
-    save_clip_value(mainw->current_file,CLIP_DETAILS_PB_ARATE,&outfile->arate);
-    save_clip_value(mainw->current_file,CLIP_DETAILS_ASAMPS,&outfile->asampsize);
-    save_clip_value(mainw->current_file,CLIP_DETAILS_AENDIAN,&aendian);
-    save_clip_value(mainw->current_file,CLIP_DETAILS_ASIGNED,&asigned);
+    save_clip_value(fileno,CLIP_DETAILS_ACHANS,&outfile->achans);
+    save_clip_value(fileno,CLIP_DETAILS_ARATE,&outfile->arps);
+    save_clip_value(fileno,CLIP_DETAILS_PB_ARATE,&outfile->arate);
+    save_clip_value(fileno,CLIP_DETAILS_ASAMPS,&outfile->asampsize);
+    save_clip_value(fileno,CLIP_DETAILS_AENDIAN,&aendian);
+    save_clip_value(fileno,CLIP_DETAILS_ASIGNED,&asigned);
 
   }
   else {
@@ -1279,12 +1270,12 @@ void pulse_rec_audio_to_clip(gint fileno, gint old_file, lives_rec_audio_type_t 
     asigned=!(outfile->signed_endian&AFORM_UNSIGNED);
     aendian=!(outfile->signed_endian&AFORM_BIG_ENDIAN);
 
-    save_clip_value(mainw->current_file,CLIP_DETAILS_ACHANS,&outfile->achans);
-    save_clip_value(mainw->current_file,CLIP_DETAILS_ARATE,&outfile->arps);
-    save_clip_value(mainw->current_file,CLIP_DETAILS_PB_ARATE,&outfile->arate);
-    save_clip_value(mainw->current_file,CLIP_DETAILS_ASAMPS,&outfile->asampsize);
-    save_clip_value(mainw->current_file,CLIP_DETAILS_AENDIAN,&aendian);
-    save_clip_value(mainw->current_file,CLIP_DETAILS_ASIGNED,&asigned);
+    save_clip_value(fileno,CLIP_DETAILS_ACHANS,&outfile->achans);
+    save_clip_value(fileno,CLIP_DETAILS_ARATE,&outfile->arps);
+    save_clip_value(fileno,CLIP_DETAILS_PB_ARATE,&outfile->arate);
+    save_clip_value(fileno,CLIP_DETAILS_ASAMPS,&outfile->asampsize);
+    save_clip_value(fileno,CLIP_DETAILS_AENDIAN,&aendian);
+    save_clip_value(fileno,CLIP_DETAILS_ASIGNED,&asigned);
 
   }
   else {
@@ -1786,7 +1777,7 @@ gboolean resync_audio(gint frameno) {
   if (!(prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS)) return FALSE;
 
   // if recording external audio, we are intrinsically in sync
-  if (mainw->record&&prefs->rec_opts==REC_EXT_AUDIO) return TRUE;
+  if (mainw->record&&(prefs->rec_opts&REC_EXT_AUDIO)) return TRUE;
 
 #ifdef ENABLE_JACK
   if (prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL) {

@@ -742,7 +742,7 @@ gboolean check_storage_space(file *sfile, gboolean is_processing) {
 	    on_cancel_keep_button_clicked(NULL,NULL); // press the cancel button
 	  }
 	  mainw->cancelled=CANCEL_ERROR;
-	  if (sfile!=NULL) lives_freep((void**)&cfile->op_dir);
+	  if (sfile!=NULL) lives_freep((void**)&sfile->op_dir);
 	  g_free(pausstr);
 	  return FALSE;
 	}
@@ -1478,7 +1478,6 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
       mainw->render_error=(*mainw->progress_fn)(FALSE);
 
       if (mainw->render_error>=LIVES_RENDER_ERROR) {
-	lives_freep((void**)&cfile->op_dir);
 	if (mainw->current_file>-1&&cfile!=NULL) lives_freep((void**)&cfile->op_dir);
 	got_err=TRUE;
 	goto finish;
@@ -2547,7 +2546,7 @@ void do_system_failed_error(const char *com, int retval, const char *addinfo) {
 
   lives_storage_status_t ds1=get_storage_status(prefs->tmpdir,prefs->ds_crit_level,&dsval1),ds2;
 
-  if (cfile->op_dir!=NULL) {
+  if (mainw->current_file>-1&&cfile!=NULL&&cfile->op_dir!=NULL) {
     ds2=get_storage_status(cfile->op_dir,prefs->ds_crit_level,&dsval2);
     if (ds2==LIVES_STORAGE_STATUS_CRITICAL) {
       g_free(dsmsg2);

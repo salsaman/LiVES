@@ -86,7 +86,7 @@ static void init_RGB_to_YCbCr_tables(void)
    *             
    */
   for (i = 0; i < 256; i++) {
-    Y_R[i] = myround(0.2100 * (double)i 
+    Y_R[i] = myround(0.299 * (double)i 
 		     * 219.0 / 255.0 * (double)(1<<FP_BITS));
     Y_G[i] = myround(0.587 * (double)i 
 		     * 219.0 / 255.0 * (double)(1<<FP_BITS));

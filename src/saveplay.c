@@ -5165,7 +5165,7 @@ static gboolean recover_files(gchar *recovery_file, gboolean auto_recover) {
 	    mainw->first_free_file=mainw->current_file;
 	    continue;
 	  }
-
+	  mainw->ascrap_file=mainw->current_file;
 	}
       }
       else {
@@ -5288,6 +5288,21 @@ static gboolean recover_files(gchar *recovery_file, gboolean auto_recover) {
     mt_sensitise(mainw->multitrack);
     mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
   }
+  else {
+    gint start_file=mainw->current_file;
+    if (mainw->current_file>1&&mainw->current_file==mainw->ascrap_file&&mainw->files[mainw->current_file-1]!=NULL) {
+      start_file--;
+    }
+    if (mainw->current_file>1&&mainw->current_file==mainw->scrap_file&&mainw->files[mainw->current_file-1]!=NULL) {
+      start_file--;
+    }
+    if (mainw->current_file>1&&mainw->current_file==mainw->ascrap_file&&mainw->files[mainw->current_file-1]!=NULL) {
+      start_file--;
+    }
+    if (start_file!=mainw->current_file) {
+      switch_to_file(mainw->current_file,start_file);
+    }
+  }
 
   mainw->suppress_dprint=FALSE;
   d_print_done();
@@ -5373,7 +5388,9 @@ gboolean check_for_recovery_files (gboolean auto_recover) {
   ssize_t bytes;
   int info_fd;
   gchar *info_file=g_strdup_printf("%s/.recovery.%d",prefs->tmpdir,getpid());
-  gchar *com=g_strdup_printf("smogrify get_recovery_file %d %d \"%s\" recovery> \"%s\"",getuid(),getgid(),
+  gchar *com;
+
+  com=g_strdup_printf("smogrify get_recovery_file %d %d \"%s\" recovery> \"%s\"",getuid(),getgid(),
 			     capable->myname,info_file);
   
   unlink(info_file);

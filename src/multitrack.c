@@ -11622,7 +11622,8 @@ void polymorph (lives_mt *mt, lives_mt_poly_state_t poly) {
     mt->prev_fm_button = gtk_button_new_with_mnemonic (_("_Prev filter map")); // Note to translators: previous filter map
     gtk_box_pack_start (GTK_BOX (bbox), mt->prev_fm_button, FALSE, FALSE, 0);
 
-    gtk_widget_set_sensitive(mt->prev_fm_button,(prev_fm_event=get_prev_fm(mt,mt->current_track,frame_event))!=NULL&&(get_event_timecode(prev_fm_event)!=(get_event_timecode(frame_event))));
+    gtk_widget_set_sensitive(mt->prev_fm_button,(prev_fm_event=get_prev_fm(mt,mt->current_track,frame_event))!=NULL&&
+			     (get_event_timecode(prev_fm_event)!=(get_event_timecode(frame_event))));
     
     g_signal_connect (GTK_OBJECT (mt->prev_fm_button), "clicked",
 		      G_CALLBACK (on_prev_fm_clicked),
@@ -11631,7 +11632,9 @@ void polymorph (lives_mt *mt, lives_mt_poly_state_t poly) {
     if (fxcount>1) {
       mt->fx_ibefore_button = gtk_button_new_with_mnemonic (_("Insert _before"));
       gtk_box_pack_start (GTK_BOX (bbox), mt->fx_ibefore_button, FALSE, FALSE, 0);
-      gtk_widget_set_sensitive(mt->fx_ibefore_button,mt->fx_order==FX_ORD_NONE&&get_event_timecode(mt->fm_edit_event)==get_event_timecode(frame_event)&&mt->selected_init_event!=NULL);
+      gtk_widget_set_sensitive(mt->fx_ibefore_button,mt->fx_order==FX_ORD_NONE&&
+			       get_event_timecode(mt->fm_edit_event)==get_event_timecode(frame_event)&&
+			       mt->selected_init_event!=NULL);
       
       g_signal_connect (GTK_OBJECT (mt->fx_ibefore_button), "clicked",
 			G_CALLBACK (on_fx_insb_clicked),
@@ -11639,7 +11642,9 @@ void polymorph (lives_mt *mt, lives_mt_poly_state_t poly) {
       
       mt->fx_iafter_button = gtk_button_new_with_mnemonic (_("Insert _after"));
       gtk_box_pack_start (GTK_BOX (bbox), mt->fx_iafter_button, FALSE, FALSE, 0);
-      gtk_widget_set_sensitive(mt->fx_iafter_button,mt->fx_order==FX_ORD_NONE&&get_event_timecode(mt->fm_edit_event)==get_event_timecode(frame_event)&&mt->selected_init_event!=NULL);
+      gtk_widget_set_sensitive(mt->fx_iafter_button,mt->fx_order==FX_ORD_NONE&&
+			       get_event_timecode(mt->fm_edit_event)==get_event_timecode(frame_event)&&
+			       mt->selected_init_event!=NULL);
       
       g_signal_connect (GTK_OBJECT (mt->fx_iafter_button), "clicked",
 			G_CALLBACK (on_fx_insa_clicked),
@@ -11653,7 +11658,8 @@ void polymorph (lives_mt *mt, lives_mt_poly_state_t poly) {
     mt->next_fm_button = gtk_button_new_with_mnemonic (_("_Next filter map"));
     gtk_box_pack_end (GTK_BOX (bbox), mt->next_fm_button, FALSE, FALSE, 0);
     
-    gtk_widget_set_sensitive(mt->next_fm_button,(next_fm_event=get_next_fm(mt,mt->current_track,frame_event))!=NULL&&(get_event_timecode(next_fm_event)>get_event_timecode(frame_event)));
+    gtk_widget_set_sensitive(mt->next_fm_button,(next_fm_event=get_next_fm(mt,mt->current_track,frame_event))!=NULL&&
+			     (get_event_timecode(next_fm_event)>get_event_timecode(frame_event)));
 
     g_signal_connect (GTK_OBJECT (mt->next_fm_button), "clicked",
 		      G_CALLBACK (on_next_fm_clicked),
@@ -11799,7 +11805,8 @@ static void mouse_select_move(GtkWidget *widget, lives_mt *mt) {
   if (start_x<0) start_x=0;
   if (start_y<0) start_y=0;
 
-  gdk_draw_rectangle (GDK_DRAWABLE(mt->tl_eventbox->window), mt->window->style->black_gc, TRUE, start_x, start_y, width, height);
+  gdk_draw_rectangle (GDK_DRAWABLE(mt->tl_eventbox->window), mt->window->style->black_gc, TRUE, 
+		      start_x, start_y, width, height);
 
   for (i=0;i<mt->num_video_tracks;i++) {
     xeventbox=(GtkWidget *)g_list_nth_data(mt->video_draws,i);
@@ -11832,14 +11839,18 @@ static void mouse_select_move(GtkWidget *widget, lives_mt *mt) {
       offs_y_end=xheight;
       if (start_y<rel_y+xheight) {
 	offs_y_start=start_y-rel_y;
-	gdk_draw_line (xeventbox->window, mt->window->style->black_gc, start_x-rel_x, offs_y_start, start_x+width-rel_x-1, offs_y_start);
+	gdk_draw_line (xeventbox->window, mt->window->style->black_gc, start_x-rel_x, offs_y_start, 
+		       start_x+width-rel_x-1, offs_y_start);
       }
       if (start_y+height<rel_y+xheight) {
 	offs_y_end=start_y-rel_y+height;
-	gdk_draw_line (xeventbox->window, mt->window->style->black_gc, start_x-rel_x, offs_y_end, start_x+width-rel_x-1, offs_y_end);
+	gdk_draw_line (xeventbox->window, mt->window->style->black_gc, start_x-rel_x, offs_y_end, 
+		       start_x+width-rel_x-1, offs_y_end);
       }
-      gdk_draw_line (xeventbox->window, mt->window->style->black_gc, start_x-rel_x, offs_y_start, start_x-rel_x, offs_y_end);
-      gdk_draw_line (xeventbox->window, mt->window->style->black_gc, start_x+width-rel_x-1, offs_y_start, start_x+width-rel_x-1, offs_y_end);
+      gdk_draw_line (xeventbox->window, mt->window->style->black_gc, start_x-rel_x, offs_y_start, start_x-rel_x, 
+		     offs_y_end);
+      gdk_draw_line (xeventbox->window, mt->window->style->black_gc, start_x+width-rel_x-1, offs_y_start, 
+		     start_x+width-rel_x-1, offs_y_end);
 
 #ifdef ENABLE_GIW
       if (!prefs->lamp_buttons) {
@@ -11976,7 +11987,9 @@ void do_track_context (lives_mt *mt, GdkEventButton *event, gdouble timesecs, gi
     gtk_widget_modify_bg(menu, GTK_STATE_NORMAL, &palette->menu_and_bars);
   }
 
-  if (mt->file_selected>0&&((track<0&&mainw->files[mt->file_selected]->achans>0&&mainw->files[mt->file_selected]->laudio_time>0.)||(track>=0&&mainw->files[mt->file_selected]->frames>0))) {
+  if (mt->file_selected>0&&((track<0&&mainw->files[mt->file_selected]->achans>0&&
+			     mainw->files[mt->file_selected]->laudio_time>0.)||
+			    (track>=0&&mainw->files[mt->file_selected]->frames>0))) {
     if (track>=0) {
       insert_here = gtk_menu_item_new_with_mnemonic (_("_Insert here"));
       g_signal_connect (GTK_OBJECT (insert_here), "activate",
@@ -12122,7 +12135,8 @@ gboolean on_track_release (GtkWidget *eventbox, GdkEventButton *event, gpointer 
       tcpp=U_SEC*((mt->tl_max-mt->tl_min)/(gdouble)GTK_WIDGET(g_list_nth_data(mt->video_draws,0))->allocation.width);
 
       // need to move at least 1.5 pixels, or to another track
-      if ((track!=mt->current_track||(tc-start_tc>(tcpp*3/2))||(start_tc-tc>(tcpp*3/2)))&&((old_track<0&&track<0)||(old_track>=0&&track>=0))) {
+      if ((track!=mt->current_track||(tc-start_tc>(tcpp*3/2))||(start_tc-tc>(tcpp*3/2)))&&
+	  ((old_track<0&&track<0)||(old_track>=0&&track>=0))) {
 	move_block(mt,mt->putative_block,timesecs,old_track,track);
 	mt->putative_block=NULL;
 
@@ -12205,7 +12219,8 @@ gboolean on_track_click (GtkWidget *eventbox, GdkEventButton *event, gpointer us
   gdk_window_get_pointer(GDK_WINDOW (eventbox->window), &x, &y, NULL);
   timesecs=get_time_from_x(mt,x+mt->hotspot_x);
 
-  if (cfile->achans==0||mt->audio_draws==NULL||(mt->opts.back_audio_tracks==0||eventbox!=mt->audio_draws->data)) track=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"layer_number"));
+  if (cfile->achans==0||mt->audio_draws==NULL||(mt->opts.back_audio_tracks==0||eventbox!=mt->audio_draws->data)) 
+    track=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"layer_number"));
   else track=-1;
   block=mt->putative_block=get_block_from_time(eventbox,timesecs,mt);
 
@@ -12256,7 +12271,8 @@ gboolean on_track_click (GtkWidget *eventbox, GdkEventButton *event, gpointer us
 	    
 	    gint ebwidth=GTK_WIDGET(mt->timeline)->allocation.width;
 	    
-	    gdouble width=((end_secs=(get_event_timecode(block->end_event)/U_SEC))-(start_secs=(get_event_timecode(block->start_event)/U_SEC))+1./mt->fps);
+	    gdouble width=((end_secs=(get_event_timecode(block->end_event)/U_SEC))-
+			   (start_secs=(get_event_timecode(block->start_event)/U_SEC))+1./mt->fps);
 	    gint height;
 	    
 	    // start point must be on timeline to move a block
@@ -12265,7 +12281,8 @@ gboolean on_track_click (GtkWidget *eventbox, GdkEventButton *event, gpointer us
 	      return TRUE;
 	    }
 
-	    if (cfile->achans==0||!is_audio_eventbox(mt,eventbox)) height=GTK_WIDGET(g_list_nth_data(mt->video_draws,0))->allocation.height;
+	    if (cfile->achans==0||!is_audio_eventbox(mt,eventbox)) 
+	      height=GTK_WIDGET(g_list_nth_data(mt->video_draws,0))->allocation.height;
 	    else height=GTK_WIDGET(mt->audio_draws->data)->allocation.height;
 	    
 	    width=(width/(mt->tl_max-mt->tl_min)*(gdouble)ebwidth);
@@ -12343,7 +12360,8 @@ void unpaint_line(lives_mt *mt, GtkWidget *eventbox) {
     ocurrtime=(bth+btl)/U_SEC;
     xoffset=(ocurrtime-mt->tl_min)/(mt->tl_max-mt->tl_min)*(gdouble)ebwidth;
     if (xoffset>=0&&xoffset<ebwidth) {
-      gdk_draw_image(GDK_DRAWABLE(eventbox->window),mt->window->style->black_gc, st_image, 0, 0, xoffset, 1, xoffset, eventbox->allocation.height-2);
+      gdk_draw_image(GDK_DRAWABLE(eventbox->window),mt->window->style->black_gc, st_image, 0, 0, xoffset, 1, xoffset, 
+		     eventbox->allocation.height-2);
     }
     g_object_unref(st_image);
     g_object_set_data(G_OBJECT(eventbox),"backup_image",NULL);
@@ -12430,11 +12448,15 @@ void animate_multitrack (lives_mt *mt) {
 	offset=(currtime-mt->tl_min)/(mt->tl_max-mt->tl_min)*(gdouble)ebwidth;
       }
       if (offset>0&&offset<ebwidth) {
-	st_image=gdk_drawable_copy_to_image(GDK_DRAWABLE(eventbox->window),NULL,offset,1,0,0,1,eventbox->allocation.height-2);
+	st_image=gdk_drawable_copy_to_image(GDK_DRAWABLE(eventbox->window),NULL,offset,1,0,0,1,
+					    eventbox->allocation.height-2);
 	g_object_set_data(G_OBJECT(eventbox),"backup_image",st_image);
-	g_object_set_data(G_OBJECT(eventbox),"backup_timepos_h",GINT_TO_POINTER((gint)(((guint64)(currtime*U_SEC))>>32))); // upper 4 bytes
-	g_object_set_data(G_OBJECT(eventbox),"backup_timepos_l",GINT_TO_POINTER((guint)(((guint64)(currtime*U_SEC))&0XFFFFFFFF))); // lower 4 bytes
-	gdk_draw_line (GDK_DRAWABLE(eventbox->window), mt->window->style->black_gc, offset, 1, offset, eventbox->allocation.height-2);
+	g_object_set_data(G_OBJECT(eventbox),"backup_timepos_h",
+			  GINT_TO_POINTER((gint)(((guint64)(currtime*U_SEC))>>32))); // upper 4 bytes
+	g_object_set_data(G_OBJECT(eventbox),"backup_timepos_l",
+			  GINT_TO_POINTER((guint)(((guint64)(currtime*U_SEC))&0XFFFFFFFF))); // lower 4 bytes
+	gdk_draw_line (GDK_DRAWABLE(eventbox->window), mt->window->style->black_gc, offset, 1, offset, 
+		       eventbox->allocation.height-2);
       }
     }
     if (expanded) {
@@ -12447,11 +12469,15 @@ void animate_multitrack (lives_mt *mt) {
 	    offset=(currtime-mt->tl_min)/(mt->tl_max-mt->tl_min)*(gdouble)ebwidth;
 	  }
 	  if (offset>0&&offset<ebwidth) {
-	    st_image=gdk_drawable_copy_to_image(GDK_DRAWABLE(aeventbox->window),NULL,offset,1,0,0,1,aeventbox->allocation.height-2);
+	    st_image=gdk_drawable_copy_to_image(GDK_DRAWABLE(aeventbox->window),NULL,offset,1,0,0,1,
+						aeventbox->allocation.height-2);
 	    g_object_set_data(G_OBJECT(aeventbox),"backup_image",st_image);
-	    g_object_set_data(G_OBJECT(aeventbox),"backup_timepos_h",GINT_TO_POINTER((gint)(((guint64)(currtime*U_SEC))>>32))); // upper 4 bytes
-	    g_object_set_data(G_OBJECT(aeventbox),"backup_timepos_l",GINT_TO_POINTER((guint)(((guint64)(currtime*U_SEC))&0XFFFFFFFF))); // lower 4 bytes
-	    gdk_draw_line (GDK_DRAWABLE(aeventbox->window), mt->window->style->black_gc, offset, 1, offset, aeventbox->allocation.height-2);
+	    g_object_set_data(G_OBJECT(aeventbox),"backup_timepos_h",
+			      GINT_TO_POINTER((gint)(((guint64)(currtime*U_SEC))>>32))); // upper 4 bytes
+	    g_object_set_data(G_OBJECT(aeventbox),"backup_timepos_l",
+			      GINT_TO_POINTER((guint)(((guint64)(currtime*U_SEC))&0XFFFFFFFF))); // lower 4 bytes
+	    gdk_draw_line (GDK_DRAWABLE(aeventbox->window), mt->window->style->black_gc, offset, 1, offset, 
+			   aeventbox->allocation.height-2);
 	  }
 	}
       }
@@ -12463,11 +12489,15 @@ void animate_multitrack (lives_mt *mt) {
 	  offset=(currtime-mt->tl_min)/(mt->tl_max-mt->tl_min)*(gdouble)ebwidth;
 	}
 	if (offset>0&&offset<ebwidth) {
-	  st_image=gdk_drawable_copy_to_image(GDK_DRAWABLE(eventbox->window),NULL,offset,1,0,0,1,eventbox->allocation.height-2);
+	  st_image=gdk_drawable_copy_to_image(GDK_DRAWABLE(eventbox->window),NULL,offset,1,0,0,1,
+					      eventbox->allocation.height-2);
 	  g_object_set_data(G_OBJECT(eventbox),"backup_image",st_image);
-	  g_object_set_data(G_OBJECT(eventbox),"backup_timepos_h",GINT_TO_POINTER((gint)(((guint64)(currtime*U_SEC))>>32))); // upper 4 bytes
-	  g_object_set_data(G_OBJECT(eventbox),"backup_timepos_l",GINT_TO_POINTER((guint)(((guint64)(currtime*U_SEC))&0XFFFFFFFF))); // lower 4 bytes
-	  gdk_draw_line (GDK_DRAWABLE(eventbox->window), mt->window->style->black_gc, offset, 1, offset, eventbox->allocation.height-2);
+	  g_object_set_data(G_OBJECT(eventbox),"backup_timepos_h",
+			    GINT_TO_POINTER((gint)(((guint64)(currtime*U_SEC))>>32))); // upper 4 bytes
+	  g_object_set_data(G_OBJECT(eventbox),"backup_timepos_l",
+			    GINT_TO_POINTER((guint)(((guint64)(currtime*U_SEC))&0XFFFFFFFF))); // lower 4 bytes
+	  gdk_draw_line (GDK_DRAWABLE(eventbox->window), mt->window->style->black_gc, offset, 1, offset, 
+			 eventbox->allocation.height-2);
 	}
       }
       // expanded right audio
@@ -12479,11 +12509,15 @@ void animate_multitrack (lives_mt *mt) {
 	  offset=(currtime-mt->tl_min)/(mt->tl_max-mt->tl_min)*(gdouble)ebwidth;
 	}
 	if (offset>0&&offset<ebwidth) {
-	  st_image=gdk_drawable_copy_to_image(GDK_DRAWABLE(eventbox->window),NULL,offset,1,0,0,1,eventbox->allocation.height-2);
+	  st_image=gdk_drawable_copy_to_image(GDK_DRAWABLE(eventbox->window),NULL,offset,1,0,0,1,
+					      eventbox->allocation.height-2);
 	  g_object_set_data(G_OBJECT(eventbox),"backup_image",st_image);
-	  g_object_set_data(G_OBJECT(eventbox),"backup_timepos_h",GINT_TO_POINTER((gint)(((guint64)(currtime*U_SEC))>>32))); // upper 4 bytes
-	  g_object_set_data(G_OBJECT(eventbox),"backup_timepos_l",GINT_TO_POINTER((guint)(((guint64)(currtime*U_SEC))&0XFFFFFFFF))); // lower 4 bytes
-	  gdk_draw_line (GDK_DRAWABLE(eventbox->window), mt->window->style->black_gc, offset, 1, offset, eventbox->allocation.height-2);
+	  g_object_set_data(G_OBJECT(eventbox),"backup_timepos_h",
+			    GINT_TO_POINTER((gint)(((guint64)(currtime*U_SEC))>>32))); // upper 4 bytes
+	  g_object_set_data(G_OBJECT(eventbox),"backup_timepos_l",
+			    GINT_TO_POINTER((guint)(((guint64)(currtime*U_SEC))&0XFFFFFFFF))); // lower 4 bytes
+	  gdk_draw_line (GDK_DRAWABLE(eventbox->window), mt->window->style->black_gc, offset, 1, offset,
+			 eventbox->allocation.height-2);
 	}
       }
     }

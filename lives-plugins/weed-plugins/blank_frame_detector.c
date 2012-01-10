@@ -41,17 +41,48 @@ typedef struct {
   int count;
 } _sdata;
 
+static unsigned short Y_R[256];
+static unsigned short Y_G[256];
+static unsigned short Y_B[256];
+
+static unsigned short conv_luma[256];
+
+
+static void init_luma_arrays(void) {
+  register int i;
+
+  for (i=0;i<256;i++) {
+    Y_R[i]=.299*(float)i*256.;
+    Y_G[i]=.587*(float)i*256.;
+    Y_B[i]=.114*(float)i*256.;
+  }
+
+  for (i=0;i<17;i++) {
+    conv_luma[i]=0;
+  }
+
+  for (i=17;i<235;i++) {
+    conv_luma[i]=(int)((float)(i-16.)/221.*255.+.5);
+  }
+
+  for (i=235;i<256;i++) {
+    conv_luma[i]=255;
+  }
+
+}
+
+
 
 int calc_luma(int red, int green, int blue) {
-  // return luma 0<=x<=256
-  if (red==0&&green==0&&blue==0) return 0;
-  return 0.21*(float)red+0.587*(float)green+0.114*(float)blue;
+  return (Y_R[red]+Y_G[green]+Y_B[blue])>>8;
 }
+
+
 
 int stretch_luma(int clamped_luma) {
   // return luma 0<=x<=256
   if (clamped_luma==16) return 0;
-  else return (int)(((float)clamped_luma-16.)/221.*255.+.5);
+  else return conv_luma[clamped_luma];
 }
 
 ////////////////////////////////////////////////////////////
@@ -185,6 +216,8 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
     weed_plugin_info_add_filter_class (plugin_info,filter_class);
 
     weed_set_int_value(plugin_info,"version",package_version);
+
+    init_luma_arrays();
   }
   return plugin_info;
 }

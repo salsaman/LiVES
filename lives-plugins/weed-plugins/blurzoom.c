@@ -450,7 +450,7 @@ int blurzoom_process (weed_plant_t *inst, weed_timecode_t timecode) {
 weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
   weed_plant_t *plugin_info=weed_plugin_info_init(weed_boot,num_versions,api_versions);
   if (plugin_info!=NULL) {
-    char *modes[]={"normal","strobe","strobe2","trigger",NULL};
+    const char *modes[]={"normal","strobe","strobe2","trigger",NULL};
 
     int palette_list[]={WEED_PALETTE_BGRA32,WEED_PALETTE_RGBA32,WEED_PALETTE_END};
 

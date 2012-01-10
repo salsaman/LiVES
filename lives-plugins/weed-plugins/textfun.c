@@ -328,14 +328,14 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
   weed_plant_t *plugin_info=weed_plugin_info_init(weed_boot,num_versions,api_versions);
 
   if (plugin_info!=NULL) {
-    char *modes[]={"colour pixels","monochrome","greyscale","solid colours",NULL};
+    const char *modes[]={"colour pixels","monochrome","greyscale","solid colours",NULL};
     int palette_list[]={WEED_PALETTE_BGR24,WEED_PALETTE_RGB24,WEED_PALETTE_END};
     weed_plant_t *in_chantmpls[]={weed_channel_template_init("in channel 0",0,palette_list),NULL};
     weed_plant_t *out_chantmpls[]={weed_channel_template_init("out channel 0",0,palette_list),NULL};
     weed_plant_t *in_params[4];
     weed_plant_t *filter_class;
 
-    char *fonts[NFONTMAPS+1];
+    const char *fonts[NFONTMAPS+1];
     int i;
 
     make_font_tables();

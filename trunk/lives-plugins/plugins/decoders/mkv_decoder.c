@@ -1565,7 +1565,24 @@ static int lives_mkv_read_header(lives_clip_data_t *cdata) {
     return -6;
   }
 
-  get_avcodec_codec_name(cdata->video_name,priv->vidst->codec->codec_id);
+  switch (priv->vidst->codec->codec_id) { 	 
+  case CODEC_ID_VP8  : sprintf(cdata->video_name,"%s","vp8"); break; 	 
+  case CODEC_ID_THEORA  : sprintf(cdata->video_name,"%s","theora"); break; 	 
+  case CODEC_ID_SNOW  : sprintf(cdata->video_name,"%s","snow"); break; 	 
+  case CODEC_ID_DIRAC  : sprintf(cdata->video_name,"%s","dirac"); break; 	 
+  case CODEC_ID_MJPEG  : sprintf(cdata->video_name,"%s","mjpeg"); break; 	 
+  case CODEC_ID_MPEG1VIDEO  : sprintf(cdata->video_name,"%s","mpeg1"); break; 	 
+  case CODEC_ID_MPEG2VIDEO  : sprintf(cdata->video_name,"%s","mpeg2"); break; 	 
+  case CODEC_ID_MPEG4  : sprintf(cdata->video_name,"%s","mpeg4"); break; 	 
+  case CODEC_ID_H264  : sprintf(cdata->video_name,"%s","h264"); break; 	 
+  case CODEC_ID_MSMPEG4V3  : sprintf(cdata->video_name,"%s","msmpeg4"); break; 	 
+  case CODEC_ID_RV10  : sprintf(cdata->video_name,"%s","rv10"); break; 	 
+  case CODEC_ID_RV20  : sprintf(cdata->video_name,"%s","rv20"); break; 	 
+  case CODEC_ID_RV30  : sprintf(cdata->video_name,"%s","rv30"); break; 	 
+  case CODEC_ID_RV40  : sprintf(cdata->video_name,"%s","rv40"); break; 	 
+  case CODEC_ID_RAWVIDEO  : sprintf(cdata->video_name,"%s","raw"); break; 	 
+  default  : sprintf(cdata->video_name,"%s","unknown"); break; 	 
+ }
 
 
   return 0;

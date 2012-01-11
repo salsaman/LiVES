@@ -1,0 +1,26 @@
+#!/usr/bin/perl
+
+my $home=$ENV{"HOME"};
+
+my $streamin;
+
+if (!defined($ARGV[0])) {
+   exit 1;
+}
+
+my $vidfile=$ARGV[0];
+
+if (defined($ARGV[1])) {
+   $streamin=$ARGV[1];
+}	
+else {
+     $streamin="$home/lives-stream.yuv";
+}
+
+system "mkfifo \"$streamin\"";
+
+system "mplayer \"$vidfile\" -vo yuv4mpeg:file=\"$streamin\"";
+
+unlink "$streamin";
+
+

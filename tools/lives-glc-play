@@ -1,0 +1,32 @@
+#!/usr/bin/perl
+
+my $home=$ENV{"HOME"};
+
+my $streamout;
+my $streamin;
+
+if (!defined($ARGV[0])) {
+   exit 1;
+}
+
+my $com=shift;
+
+if (defined($ARGV[0])) {
+   $streamout=shift;
+}	
+else {
+     $streamout="/tmp/glcfifo";
+}
+
+
+if (defined($ARGV[0])) {
+   $streamin=shift];
+}	
+else {
+     $streamin="$home/lives-glcstream.yuv";
+}
+
+
+system "lives-glc-play \"$com\" \"$streamout\" \"$streamin\" @ARGV &";
+system "lives -noset -yuvin \"$streamin\"";
+

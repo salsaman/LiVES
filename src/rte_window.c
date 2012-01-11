@@ -1743,12 +1743,10 @@ void rte_reset_defs_clicked (GtkButton *button, lives_rfx_t *rfx) {
   int i,nchans;
 
   gboolean is_generic_defs=FALSE;
-  gboolean is_keymode_defs=FALSE;
 
   cancelbutton=(GtkWidget *)g_object_get_data(G_OBJECT(button),"cancelbutton");
 
-  if (cancelbutton==NULL) is_keymode_defs=TRUE;
-  else is_generic_defs=TRUE;
+  if (cancelbutton!=NULL) is_generic_defs=TRUE;
 
   inst=(weed_plant_t *)rfx->source;
 

@@ -721,7 +721,7 @@ static void lives_init(_ign_opts *ign_opts) {
     set_int_pref("record_opts",prefs->rec_opts);
   }
 
-  prefs->rec_opts|=(REC_FPS+REC_FRAMES+REC_EXT_AUDIO);
+  prefs->rec_opts|=(REC_FPS+REC_FRAMES);//+REC_EXT_AUDIO);
 
 
   mainw->new_clip=-1;
@@ -3940,7 +3940,7 @@ void load_frame_image(gint frame) {
       // add blank frame
       weed_plant_t *event=get_last_event(mainw->event_list);
       weed_plant_t *event_list=insert_blank_frame_event_at(mainw->event_list,mainw->currticks,&event);
-      if (mainw->rec_aclip!=-1&&(prefs->rec_opts&REC_AUDIO)&&!mainw->record_starting) {
+      if (mainw->rec_aclip!=-1&&(prefs->rec_opts&REC_AUDIO)&&!mainw->record_starting&&!(prefs->rec_opts&REC_EXT_AUDIO)) {
 	// we are recording, and the audio clip changed; add audio
 	if (mainw->event_list==NULL) mainw->event_list=event_list;
 	insert_audio_event_at(mainw->event_list,event,-1,mainw->rec_aclip,mainw->rec_aseek,mainw->rec_avel);
@@ -3967,7 +3967,8 @@ void load_frame_image(gint frame) {
 	  frame=mainw->actual_frame;
 #ifdef ENABLE_JACK
 	  if (prefs->audio_player==AUD_PLAYER_JACK&&(prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS)&&
-	      mainw->jackd!=NULL&&cfile->achans>0) {
+	      mainw->jackd!=NULL&&cfile->achans>0 &&
+	    !(mainw->record&&(prefs->rec_opts&REC_EXT_AUDIO))) {
 	    if (!jack_audio_seek_frame(mainw->jackd,frame)) {
 	      if (jack_try_reconnect()) jack_audio_seek_frame(mainw->jackd,frame);
 	    }
@@ -3980,7 +3981,8 @@ void load_frame_image(gint frame) {
 #endif
 #ifdef HAVE_PULSE_AUDIO
 	  if (prefs->audio_player==AUD_PLAYER_PULSE&&(prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS)&&
-	      mainw->pulsed!=NULL&&cfile->achans>0) {
+	      mainw->pulsed!=NULL&&cfile->achans>0 &&
+	      !(mainw->record&&(prefs->rec_opts&REC_EXT_AUDIO))) {
 
 	    if (!pulse_audio_seek_frame(mainw->pulsed,mainw->play_start)) {
 	      if (pulse_try_reconnect()) pulse_audio_seek_frame(mainw->pulsed,mainw->play_start);
@@ -4069,7 +4071,7 @@ void load_frame_image(gint frame) {
 	if (framecount!=NULL) g_free(framecount);
 	if ((event_list=append_frame_event (mainw->event_list,mainw->currticks,numframes,clips,frames))!=NULL) {
 	  if (mainw->event_list==NULL) mainw->event_list=event_list;
-	  if (mainw->rec_aclip!=-1&&(prefs->rec_opts&REC_AUDIO)) {
+	  if (mainw->rec_aclip!=-1&&((prefs->rec_opts&REC_AUDIO)||(prefs->rec_opts&REC_EXT_AUDIO))) {
 	    weed_plant_t *event=get_last_event(mainw->event_list);
 	    insert_audio_event_at(mainw->event_list,event,-1,mainw->rec_aclip,mainw->rec_aseek,mainw->rec_avel);
 	    mainw->rec_aclip=-1;
@@ -5416,12 +5418,15 @@ void do_quick_switch (gint new_file) {
 
   if (mainw->current_file<1||mainw->files[new_file]==NULL) return;
 
-  if (mainw->noswitch||(mainw->record&&!mainw->record_paused&&!(prefs->rec_opts&REC_CLIPS))||mainw->foreign||(mainw->preview&&!mainw->is_rendering&&mainw->multitrack==NULL)) return;
+  if (mainw->noswitch||(mainw->record&&!mainw->record_paused&&!(prefs->rec_opts&REC_CLIPS))||
+      mainw->foreign||(mainw->preview&&!mainw->is_rendering&&mainw->multitrack==NULL)) return;
 
   if (new_file==mainw->current_file) {
-    if (!((mainw->fs&&prefs->gui_monitor==prefs->play_monitor)||(mainw->faded&&mainw->double_size)||mainw->multitrack!=NULL)) {
+    if (!((mainw->fs&&prefs->gui_monitor==prefs->play_monitor)||(mainw->faded&&mainw->double_size)||
+	  mainw->multitrack!=NULL)) {
       switch_to_file (mainw->current_file=0, new_file);
-      if (mainw->play_window!=NULL&&!mainw->double_size&&!mainw->fs&&mainw->current_file!=-1&&cfile!=NULL&&(ohsize!=cfile->hsize||ovsize!=cfile->vsize)) {
+      if (mainw->play_window!=NULL&&!mainw->double_size&&!mainw->fs&&mainw->current_file!=-1&&cfile!=NULL&&
+	  (ohsize!=cfile->hsize||ovsize!=cfile->vsize)) {
 	// for single size sepwin, we resize frames to fit the window
 	mainw->must_resize=TRUE;
 	mainw->pheight=ovsize;
@@ -5441,7 +5446,8 @@ void do_quick_switch (gint new_file) {
   osc_block=mainw->osc_block;
   mainw->osc_block=TRUE;
 
-  if (prefs->audio_player==AUD_PLAYER_JACK&&(prefs->audio_opts&AUDIO_OPTS_FOLLOW_CLIPS)&&!mainw->is_rendering) {
+  if (prefs->audio_player==AUD_PLAYER_JACK&&(prefs->audio_opts&AUDIO_OPTS_FOLLOW_CLIPS)&&!mainw->is_rendering&&
+      !(mainw->record&&(prefs->rec_opts&REC_EXT_AUDIO))) {
 #ifdef ENABLE_JACK
   if (mainw->jackd!=NULL) {
       gboolean timeout;
@@ -5475,8 +5481,11 @@ void do_quick_switch (gint new_file) {
         mainw->jackd->num_input_channels=mainw->files[new_file]->achans;
         mainw->jackd->bytes_per_channel=mainw->files[new_file]->asampsize/8;
         if (prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS) {
-          if (!mainw->files[new_file]->play_paused) mainw->jackd->sample_in_rate=mainw->files[new_file]->arate*mainw->files[new_file]->pb_fps/mainw->files[new_file]->fps;
-          else mainw->jackd->sample_in_rate=mainw->files[new_file]->arate*mainw->files[new_file]->freeze_fps/mainw->files[new_file]->fps;
+          if (!mainw->files[new_file]->play_paused) 
+	    mainw->jackd->sample_in_rate=mainw->files[new_file]->arate*mainw->files[new_file]->pb_fps/
+	      mainw->files[new_file]->fps;
+          else mainw->jackd->sample_in_rate=mainw->files[new_file]->arate*mainw->files[new_file]->freeze_fps/
+		 mainw->files[new_file]->fps;
         }
         else mainw->jackd->sample_in_rate=mainw->files[new_file]->arate;
 	mainw->jackd->usigned=!asigned;
@@ -5511,7 +5520,8 @@ void do_quick_switch (gint new_file) {
 
        mainw->rec_aclip=new_file;
        mainw->rec_avel=mainw->files[new_file]->pb_fps/mainw->files[new_file]->fps;
-       mainw->rec_aseek=(gdouble)mainw->files[new_file]->aseek_pos/(gdouble)(mainw->files[new_file]->arate*mainw->files[new_file]->achans*mainw->files[new_file]->asampsize/8);
+       mainw->rec_aseek=(gdouble)mainw->files[new_file]->aseek_pos/
+	 (gdouble)(mainw->files[new_file]->arate*mainw->files[new_file]->achans*mainw->files[new_file]->asampsize/8);
      }
     else {
       mainw->rec_aclip=mainw->current_file;
@@ -5522,7 +5532,8 @@ void do_quick_switch (gint new_file) {
 #endif
   }
 
-  if (prefs->audio_player==AUD_PLAYER_PULSE&&(prefs->audio_opts&AUDIO_OPTS_FOLLOW_CLIPS)&&!mainw->is_rendering) {
+  if (prefs->audio_player==AUD_PLAYER_PULSE&&(prefs->audio_opts&AUDIO_OPTS_FOLLOW_CLIPS)&&!mainw->is_rendering&&
+      !(mainw->record&&(prefs->rec_opts&REC_EXT_AUDIO))) {
 #ifdef HAVE_PULSE_AUDIO
   if (mainw->pulsed!=NULL) {
       gboolean timeout;
@@ -5555,8 +5566,11 @@ void do_quick_switch (gint new_file) {
         mainw->pulsed->in_achans=mainw->files[new_file]->achans;
         mainw->pulsed->in_asamps=mainw->files[new_file]->asampsize;
         if (prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS) {
-          if (!mainw->files[new_file]->play_paused) mainw->pulsed->in_arate=mainw->files[new_file]->arate*mainw->files[new_file]->pb_fps/mainw->files[new_file]->fps;
-          else mainw->pulsed->in_arate=mainw->files[new_file]->arate*mainw->files[new_file]->freeze_fps/mainw->files[new_file]->fps;
+          if (!mainw->files[new_file]->play_paused) 
+	    mainw->pulsed->in_arate=mainw->files[new_file]->arate*mainw->files[new_file]->pb_fps/
+	      mainw->files[new_file]->fps;
+          else mainw->pulsed->in_arate=mainw->files[new_file]->arate*mainw->files[new_file]->freeze_fps/
+		 mainw->files[new_file]->fps;
         }
         else mainw->pulsed->in_arate=mainw->files[new_file]->arate;
 	mainw->pulsed->usigned=!asigned;
@@ -5594,8 +5608,9 @@ void do_quick_switch (gint new_file) {
 
        mainw->rec_aclip=new_file;
        mainw->rec_avel=mainw->files[new_file]->pb_fps/mainw->files[new_file]->fps;
-       mainw->rec_aseek=(gdouble)mainw->files[new_file]->aseek_pos/(gdouble)(mainw->files[new_file]->arate*mainw->files[new_file]->achans*mainw->files[new_file]->asampsize/8);
-     }
+       mainw->rec_aseek=(gdouble)mainw->files[new_file]->aseek_pos/
+	 (gdouble)(mainw->files[new_file]->arate*mainw->files[new_file]->achans*mainw->files[new_file]->asampsize/8);
+      }
     else {
       mainw->rec_aclip=mainw->current_file;
       mainw->rec_avel=0.;
@@ -5607,8 +5622,10 @@ void do_quick_switch (gint new_file) {
 
   mainw->whentostop=NEVER_STOP;
 
-  if (cfile!=NULL&&cfile->clip_type==CLIP_TYPE_GENERATOR&&new_file!=mainw->current_file&&new_file!=mainw->blend_file&&!mainw->is_rendering) {
-    if (mainw->files[new_file]->clip_type==CLIP_TYPE_DISK||mainw->files[new_file]->clip_type==CLIP_TYPE_FILE) mainw->pre_src_file=new_file;
+  if (cfile!=NULL&&cfile->clip_type==CLIP_TYPE_GENERATOR&&new_file!=mainw->current_file&&
+      new_file!=mainw->blend_file&&!mainw->is_rendering) {
+    if (mainw->files[new_file]->clip_type==CLIP_TYPE_DISK||mainw->files[new_file]->clip_type==CLIP_TYPE_FILE) 
+      mainw->pre_src_file=new_file;
 
     if (rte_window!=NULL) rtew_set_keych(rte_fg_gen_key(),FALSE);
     if (mainw->current_file==mainw->blend_file) mainw->new_blend_file=new_file;
@@ -5649,7 +5666,8 @@ void do_quick_switch (gint new_file) {
   }
   else if (mainw->multitrack==NULL) mainw->must_resize=FALSE;
 
-  if ((cfile->clip_type!=CLIP_TYPE_DISK&&cfile->clip_type!=CLIP_TYPE_FILE)||(mainw->event_list!=NULL&&!mainw->record)) mainw->play_end=INT_MAX;
+  if ((cfile->clip_type!=CLIP_TYPE_DISK&&cfile->clip_type!=CLIP_TYPE_FILE)||(mainw->event_list!=NULL&&!mainw->record)) 
+    mainw->play_end=INT_MAX;
 
   // act like we are not playing a selection (but we will try to keep to 
   // selection bounds)

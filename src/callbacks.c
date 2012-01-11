@@ -9211,7 +9211,9 @@ changed_fps_during_pb           (GtkSpinButton   *spinbutton,
 
   if (prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS) {
 #ifdef ENABLE_JACK
-    if (prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL&&mainw->jackd->playing_file==mainw->current_file) {
+    if (prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL&&mainw->jackd->playing_file==mainw->current_file&&
+	!(mainw->record&&(prefs->rec_opts&REC_EXT_AUDIO))) {
+      
       mainw->jackd->sample_in_rate=cfile->arate*cfile->pb_fps/cfile->fps;
       mainw->rec_aclip=mainw->current_file;
       mainw->rec_avel=cfile->pb_fps/cfile->fps;
@@ -9220,7 +9222,9 @@ changed_fps_during_pb           (GtkSpinButton   *spinbutton,
 #endif
 
 #ifdef HAVE_PULSE_AUDIO
-    if (prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL&&mainw->pulsed->playing_file==mainw->current_file) {
+    if (prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL&&mainw->pulsed->playing_file==mainw->current_file&&
+      !(mainw->record&&(prefs->rec_opts&REC_EXT_AUDIO))) {
+
       mainw->pulsed->in_arate=cfile->arate*cfile->pb_fps/cfile->fps;
       mainw->rec_aclip=mainw->current_file;
       mainw->rec_avel=cfile->pb_fps/cfile->fps;

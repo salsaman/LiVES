@@ -1396,7 +1396,13 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
 
     mainw->rec_aclip=mainw->current_file;
     mainw->rec_avel=cfile->pb_fps/cfile->fps;
-    mainw->rec_aseek=(gdouble)cfile->aseek_pos/(gdouble)(cfile->arate*cfile->achans*(cfile->asampsize/8));
+    if (!(mainw->record&&(prefs->rec_opts&REC_EXT_AUDIO)))
+      mainw->rec_aseek=(gdouble)cfile->aseek_pos/(gdouble)(cfile->arate*cfile->achans*(cfile->asampsize/8));
+    else {
+      mainw->rec_aclip=mainw->ascrap_file;
+      mainw->rec_avel=1.;
+      mainw->rec_aseek=0;
+    }
   }
   if (prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL&&mainw->multitrack!=NULL&&
       !mainw->multitrack->is_rendering&&cfile->achans>0) {
@@ -1407,6 +1413,7 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
 #endif
 #ifdef HAVE_PULSE_AUDIO
 
+  // start audio recording now
   if (mainw->pulsed_read!=NULL) pulse_driver_uncork(mainw->pulsed_read);
 
   if (prefs->audio_player==AUD_PLAYER_PULSE&&cfile->achans>0&&cfile->laudio_time>0.&&
@@ -1418,7 +1425,13 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
 
     mainw->rec_aclip=mainw->current_file;
     mainw->rec_avel=cfile->pb_fps/cfile->fps;
-    mainw->rec_aseek=(gdouble)cfile->aseek_pos/(gdouble)(cfile->arate*cfile->achans*(cfile->asampsize/8));
+    if (!(mainw->record&&(prefs->rec_opts&REC_EXT_AUDIO)))
+      mainw->rec_aseek=(gdouble)cfile->aseek_pos/(gdouble)(cfile->arate*cfile->achans*(cfile->asampsize/8));
+    else {
+      mainw->rec_aclip=mainw->ascrap_file;
+      mainw->rec_avel=1.;
+      mainw->rec_aseek=0;
+    }
   }
   if (prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL&&mainw->multitrack!=NULL&&
       !mainw->multitrack->is_rendering&&cfile->achans>0) {

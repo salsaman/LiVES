@@ -883,7 +883,8 @@ gboolean process_one (gboolean visible) {
     time_source=LIVES_TIME_SOURCE_NONE;
 
 #ifdef ENABLE_JACK_TRANSPORT
-    if (mainw->jack_can_stop&&(prefs->jack_opts&JACK_OPTS_TIMEBASE_CLIENT)&&(prefs->jack_opts&JACK_OPTS_TRANSPORT_CLIENT)&&!(mainw->record&&!(prefs->rec_opts&REC_FRAMES))) {
+    if (mainw->jack_can_stop&&(prefs->jack_opts&JACK_OPTS_TIMEBASE_CLIENT)&&
+	(prefs->jack_opts&JACK_OPTS_TRANSPORT_CLIENT)&&!(mainw->record&&!(prefs->rec_opts&REC_FRAMES))) {
       // calculate the time from jack transport
       mainw->currticks=jack_transport_get_time()*U_SEC;
       time_source=LIVES_TIME_SOURCE_EXTERNAL;
@@ -896,7 +897,10 @@ gboolean process_one (gboolean visible) {
 
 
 #ifdef ENABLE_JACK
-      if (time_source==LIVES_TIME_SOURCE_NONE&&!mainw->foreign&&prefs->audio_player==AUD_PLAYER_JACK&&cfile->achans>0&&(!mainw->is_rendering||(mainw->multitrack!=NULL&&!cfile->opening&&!mainw->multitrack->is_rendering))&&mainw->jackd!=NULL&&mainw->jackd->in_use) {
+      if (!prefs->force_system_clock&&
+	  time_source==LIVES_TIME_SOURCE_NONE&&!mainw->foreign&&prefs->audio_player==AUD_PLAYER_JACK&&cfile->achans>0&&
+	  (!mainw->is_rendering||(mainw->multitrack!=NULL&&!cfile->opening&&!mainw->multitrack->is_rendering))&&
+	  mainw->jackd!=NULL&&mainw->jackd->in_use) {
 	if (!(mainw->fixed_fpsd>0.||(mainw->vpp!=NULL&&mainw->vpp->fixed_fpsd>0.&&mainw->ext_playback))) {
 	  if (mainw->aud_rec_fd!=-1) mainw->currticks=lives_jack_get_time(mainw->jackd_read,TRUE);
 	  else mainw->currticks=lives_jack_get_time(mainw->jackd,TRUE);
@@ -906,7 +910,8 @@ gboolean process_one (gboolean visible) {
 #endif
 
 #ifdef HAVE_PULSE_AUDIO
-      if (time_source==LIVES_TIME_SOURCE_NONE&&!mainw->foreign&&prefs->audio_player==AUD_PLAYER_PULSE&&
+      if (!prefs->force_system_clock&&
+	  time_source==LIVES_TIME_SOURCE_NONE&&!mainw->foreign&&prefs->audio_player==AUD_PLAYER_PULSE&&
 	  cfile->achans>0&&(!mainw->is_rendering||(mainw->multitrack!=NULL&&
 						   !cfile->opening&&!mainw->multitrack->is_rendering))&&
 	  ((mainw->pulsed!=NULL&&mainw->pulsed->in_use)||mainw->pulsed_read!=NULL)) {
@@ -918,6 +923,7 @@ gboolean process_one (gboolean visible) {
       }
 #endif
     }
+
     if (time_source==LIVES_TIME_SOURCE_NONE) {
       // get time from system clock
       gettimeofday(&tv, NULL);
@@ -1467,6 +1473,10 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
 	return FALSE;
       }
 
+      if (!visible&&(mainw->whentostop!=STOP_ON_AUD_END||
+		     prefs->audio_player==AUD_PLAYER_JACK||
+		     prefs->audio_player==AUD_PLAYER_PULSE)) continue;
+
       if (mainw->iochan!=NULL&&progress_count==0) {
 	// pump data from stdout to textbuffer
 	// this is for encoder output
@@ -1478,6 +1488,7 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
     }
 
     if (!mainw->internal_messaging) {
+
       // background processing (e.g. rendered effects)
       if ((infofile=fopen(cfile->info_file,"r"))) {
 	// OK, now we might have some frames
@@ -1569,7 +1580,6 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
 	// pump data from stdout to textbuffer
 	pump_io_chan(mainw->iochan);
       }
-
       g_usleep(prefs->sleep_time);
     }
     else break;

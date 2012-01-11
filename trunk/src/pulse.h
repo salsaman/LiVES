@@ -70,11 +70,11 @@ typedef struct {
   /**< linked list of messages we are sending to the callback process */
   volatile aserver_message_t   *msgq;
 
-  gulong frames_written;
+  volatile gulong frames_written;
 
   gboolean is_paused;
 
-  gint64 audio_ticks; ///< ticks when we did the last seek, used to calculate current ticks from audio
+  volatile gint64 audio_ticks; ///< ticks when we did the last seek, used to calculate current ticks from audio
 
   int fd; /**< if >0 we are playing from a file */
   gboolean is_opening; ///< TRUE if file is opening (audiodump.pcm)

@@ -1049,6 +1049,7 @@ static int get_last_video_dts(lives_clip_data_t *cdata) {
 
   if (priv->idxht==NULL) return 0;
 
+  // jump to last dts in keyframe index
   ldts=priv->idxht->dts;
 
   // never trust the given duration in a video clip.
@@ -1068,7 +1069,7 @@ static int get_last_video_dts(lives_clip_data_t *cdata) {
   priv->expect_eof=TRUE;
 
   while (1) {
-    //read frames until we hit the second seek frame
+    //read frames until we hit EOF
 
     if (priv->avpkt.data!=NULL) {
       free(priv->avpkt.data);
@@ -1564,25 +1565,8 @@ static int lives_mkv_read_header(lives_clip_data_t *cdata) {
     return -6;
   }
 
+  get_avcodec_codec_name(cdata->video_name,priv->vidst->codec->codec_id);
 
-  switch (priv->vidst->codec->codec_id) {
-  case CODEC_ID_VP8  : sprintf(cdata->video_name,"%s","vp8"); break;
-  case CODEC_ID_THEORA  : sprintf(cdata->video_name,"%s","theora"); break;
-  case CODEC_ID_SNOW  : sprintf(cdata->video_name,"%s","snow"); break;
-  case CODEC_ID_DIRAC  : sprintf(cdata->video_name,"%s","dirac"); break;
-  case CODEC_ID_MJPEG  : sprintf(cdata->video_name,"%s","mjpeg"); break;
-  case CODEC_ID_MPEG1VIDEO  : sprintf(cdata->video_name,"%s","mpeg1"); break;
-  case CODEC_ID_MPEG2VIDEO  : sprintf(cdata->video_name,"%s","mpeg2"); break;
-  case CODEC_ID_MPEG4  : sprintf(cdata->video_name,"%s","mpeg4"); break;
-  case CODEC_ID_H264  : sprintf(cdata->video_name,"%s","h264"); break;
-  case CODEC_ID_MSMPEG4V3  : sprintf(cdata->video_name,"%s","msmpeg4"); break;
-  case CODEC_ID_RV10  : sprintf(cdata->video_name,"%s","rv10"); break;
-  case CODEC_ID_RV20  : sprintf(cdata->video_name,"%s","rv20"); break;
-  case CODEC_ID_RV30  : sprintf(cdata->video_name,"%s","rv30"); break;
-  case CODEC_ID_RV40  : sprintf(cdata->video_name,"%s","rv40"); break;
-  case CODEC_ID_RAWVIDEO  : sprintf(cdata->video_name,"%s","raw"); break;
-  default  : sprintf(cdata->video_name,"%s","unknown"); break;
-  }
 
   return 0;
 }
@@ -2545,7 +2529,8 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
     
     if (pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_BGR24) psize=3;
     
-    if (pal==WEED_PALETTE_RGBA32||pal==WEED_PALETTE_BGRA32||pal==WEED_PALETTE_ARGB32||pal==WEED_PALETTE_UYVY8888||pal==WEED_PALETTE_YUYV8888||pal==WEED_PALETTE_YUV888||pal==WEED_PALETTE_YUVA8888) psize=4;
+    if (pal==WEED_PALETTE_RGBA32||pal==WEED_PALETTE_BGRA32||pal==WEED_PALETTE_ARGB32||pal==WEED_PALETTE_UYVY8888||
+	pal==WEED_PALETTE_YUYV8888||pal==WEED_PALETTE_YUV888||pal==WEED_PALETTE_YUVA8888) psize=4;
     
     if (pal==WEED_PALETTE_YUV411) psize=6;
     
@@ -2628,7 +2613,8 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
     for (i=0;i<xheight;i++) {
       if (i<btop||i>bbot) {
 	// top or bottom border, copy black row
-	if (pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P||pal==WEED_PALETTE_YUV444P||pal==WEED_PALETTE_YUVA4444P||pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_BGR24) {
+	if (pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P||
+	    pal==WEED_PALETTE_YUV444P||pal==WEED_PALETTE_YUVA4444P||pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_BGR24) {
 	  memset(dst,black[p],dstwidth+(bleft+bright)*psize);
 	  dst+=dstwidth+(bleft+bright)*psize;
 	}
@@ -2637,7 +2623,8 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
       }
 
       if (bleft>0) {
-	if (pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P||pal==WEED_PALETTE_YUV444P||pal==WEED_PALETTE_YUVA4444P||pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_BGR24) {
+	if (pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P||pal==WEED_PALETTE_YUV444P||
+	    pal==WEED_PALETTE_YUVA4444P||pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_BGR24) {
 	  memset(dst,black[p],bleft*psize);
 	  dst+=bleft*psize;
 	}
@@ -2648,7 +2635,8 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
       dst+=dstwidth;
 
       if (bright>0) {
-	if (pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P||pal==WEED_PALETTE_YUV444P||pal==WEED_PALETTE_YUVA4444P||pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_BGR24) {
+	if (pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_YUV422P||pal==WEED_PALETTE_YUV444P||
+	    pal==WEED_PALETTE_YUVA4444P||pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_BGR24) {
 	  memset(dst,black[p],bright*psize);
 	  dst+=bright*psize;
 	}

@@ -1021,6 +1021,8 @@ static void lives_init(_ign_opts *ign_opts) {
 
     prefs->clear_disk_opts=get_int_pref("clear_disk_opts");
 
+    prefs->force_system_clock=FALSE;  /// prefer soundcard timing
+
     //////////////////////////////////////////////////////////////////
 
     weed_memory_init();

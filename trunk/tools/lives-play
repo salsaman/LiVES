@@ -1,4 +1,26 @@
-mkfifo "$HOME/stream.yuv"
-mplayer "$1" -vo yuv4mpeg:file="$HOME/stream.yuv" &
-lives -noset -yuvin "$HOME/stream.yuv"
-rm "$HOME/stream.yuv"
+#!/usr/bin/perl
+
+
+my $home=$ENV{"HOME"};
+
+my $streamin;
+
+if (!defined($ARGV[0])) {
+   exit 1;
+}
+
+my $vidfile=shift;
+
+if (defined($ARGV[0])) {
+   $streamin=shift;
+}	
+else {
+     $streamin="$home/lives-stream.yuv";
+}
+
+
+system "lives-play-norun \"$vidfile\" \"$streamin\" @ARGV &";
+system "lives -noset -yuvin \"$streamin\"";
+
+
+

@@ -282,6 +282,8 @@ typedef struct {
   gboolean letterbox; ///< playback with letterbox
   gboolean enc_letterbox; ///< encode with letterbox
 
+  gboolean force_system_clock; /// < force system clock (rather than soundcard) for timing ( better for high framerates )
+
   /** default 0; 1==use old (bad) behaviour on bigendian machines (r/w bigend ints/doubles); 2==bad reads, good writes */
   gint bigendbug;
 

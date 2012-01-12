@@ -2959,8 +2959,8 @@ void reget_afilesize (int fileno) {
 
   if (!sfile->opening) afile=g_build_filename (prefs->tmpdir,sfile->handle,"audio",NULL);
   else afile=g_build_filename (prefs->tmpdir,sfile->handle,"audiodump.pcm",NULL);
-  if ((mainw->multitrack==NULL||fileno!=mainw->multitrack->render_file)&&(sfile->afilesize=sget_file_size (afile))==0l) {
-    if (!sfile->opening) {
+  if ((sfile->afilesize=sget_file_size (afile))==0l) {
+    if (!sfile->opening&&fileno!=mainw->ascrap_file&&fileno!=mainw->scrap_file) {
       if (sfile->arate!=0||sfile->achans!=0||sfile->asampsize!=0||sfile->arps!=0) {
 	sfile->arate=sfile->achans=sfile->asampsize=sfile->arps=0;
 	save_clip_value(fileno,CLIP_DETAILS_ACHANS,&sfile->achans);

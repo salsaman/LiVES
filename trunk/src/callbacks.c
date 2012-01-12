@@ -3766,7 +3766,7 @@ on_record_perf_activate                      (GtkMenuItem     *menuitem,
 					      gpointer         user_data)
 {
   // real time recording
-
+  gulong frames_written=0;
 
   if (mainw->multitrack!=NULL) return;
 
@@ -3778,10 +3778,85 @@ on_record_perf_activate                      (GtkMenuItem     *menuitem,
       // recording is starting
       mainw->record_starting=TRUE;
 
-      if (prefs->rec_opts&REC_EXT_AUDIO) {
+      if (prefs->rec_opts&REC_EXT_AUDIO&&
+	  ((prefs->audio_player==AUD_PLAYER_JACK) ||
+	   (prefs->audio_player==AUD_PLAYER_PULSE))) {
 	// remove play head and add record head
+	// creat temp clip
 
-	// mark in timeline
+#ifdef ENABLE_JACK
+	if (prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL) {
+
+	  // tell jack client to close audio file
+	  if (mainw->jackd->playing_file>0) {
+	    gboolean timeout;
+	    int alarm_handle=lives_alarm_set(LIVES_ACONNECT_TIMEOUT);
+	    while (!(timeout=lives_alarm_get(alarm_handle))&&jack_get_msgq(mainw->jackd)!=NULL) {
+	      sched_yield(); // wait for seek
+	    }
+	    if (timeout) jack_try_reconnect();
+	    lives_alarm_clear(alarm_handle);
+	    frames_written=mainw->jackd->frames_written;
+	    
+	    jack_message.command=ASERVER_CMD_FILE_CLOSE;
+	    jack_message.data=NULL;
+	    jack_message.next=NULL;
+	    mainw->jackd->msgq=&jack_message;
+
+	  }
+	}
+#endif
+#ifdef HAVE_PULSE_AUDIO
+	if (prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL) {
+	  
+	  // tell pulse client to close audio file
+	  if (mainw->pulsed->fd>0) {
+	    gboolean timeout;
+	    int alarm_handle=lives_alarm_set(LIVES_ACONNECT_TIMEOUT);
+	    while (!(timeout=lives_alarm_get(alarm_handle))&&pulse_get_msgq(mainw->pulsed)!=NULL) {
+	      sched_yield(); // wait for seek
+	    }
+	    if (timeout) pulse_try_reconnect();
+	    lives_alarm_clear(alarm_handle);
+	    frames_written=mainw->pulsed->frames_written;
+	    
+	    pulse_message.command=ASERVER_CMD_FILE_CLOSE;
+	    pulse_message.data=NULL;
+	    pulse_message.next=NULL;
+	    mainw->pulsed->msgq=&pulse_message;
+	  }
+	  
+	}
+#endif
+
+	if (mainw->ascrap_file==-1) open_ascrap_file();
+	if (mainw->ascrap_file!=-1) {
+	  mainw->rec_samples=-1; // record unlimited
+	  
+	  reget_afilesize(mainw->ascrap_file);
+
+	  mainw->rec_aclip=mainw->ascrap_file;
+	  mainw->rec_avel=1.;
+	  
+	  if (prefs->audio_player==AUD_PLAYER_JACK) {
+#ifdef ENABLE_JACK
+	    jack_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_EXTERNAL);
+	    mainw->rec_aseek=(double)mainw->jackd_read->frames_written/(double)mainw->files[mainw->ascrap_file]->arps;
+	    mainw->jackd_read->frames_written=frames_written;
+#endif
+	  }
+	  if (prefs->audio_player==AUD_PLAYER_PULSE) {
+#ifdef HAVE_PULSE_AUDIO
+	    pulse_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_EXTERNAL);
+	    mainw->rec_aseek=(double)mainw->pulsed_read->frames_written/(double)mainw->files[mainw->ascrap_file]->arps;
+	    mainw->pulsed_read->frames_written=frames_written;
+	    pulse_driver_uncork(mainw->pulsed_read);
+#endif
+	  }
+
+	}
+
+	return;
       }
 
       if (prefs->rec_opts&REC_AUDIO) {
@@ -3814,10 +3889,36 @@ on_record_perf_activate                      (GtkMenuItem     *menuitem,
 
       if (prefs->rec_opts&REC_EXT_AUDIO) {
 	// remove record head and add play head
-
-	// mark in timeline
+#ifdef ENABLE_JACK
+	if (prefs->audio_player==AUD_PLAYER_JACK) {
+	  if (mainw->jackd_read!=NULL) {
+	    frames_written=mainw->jackd_read->frames_written;
+	    jack_rec_audio_end();
+	  }
+	}
+#endif
+#ifdef HAVE_PULSE_AUDIO
+	if (prefs->audio_player==AUD_PLAYER_PULSE) {
+	  if (mainw->pulsed_read!=NULL) {
+	    frames_written=mainw->pulsed_read->frames_written;
+	    pulse_rec_audio_end();
+	  }
+	}
+#endif
       }
 
+      if (prefs->audio_player==AUD_PLAYER_JACK) {
+#ifdef ENABLE_JACK
+	jack_aud_pb_ready(mainw->current_file);
+	mainw->jackd->frames_written=frames_written;
+#endif
+      }
+      else if (prefs->audio_player==AUD_PLAYER_PULSE) {
+#ifdef HAVE_PULSE_AUDIO
+	pulse_aud_pb_ready(mainw->current_file);
+	mainw->pulsed->frames_written=frames_written;
+#endif
+      }
 
       if (prefs->rec_opts&REC_EFFECTS) {
 	// add deinit events for all active effects

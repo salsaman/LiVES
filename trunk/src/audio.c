@@ -1131,7 +1131,7 @@ void jack_rec_audio_to_clip(gint fileno, gint old_file, lives_rec_audio_type_t r
   
   do {
     retval=0;
-    mainw->aud_rec_fd=open(outfilename,O_WRONLY|O_CREAT,S_IRUSR|S_IWUSR);
+    mainw->aud_rec_fd=open(outfilename,O_WRONLY|O_CREAT|O_APPEND,S_IRUSR|S_IWUSR);
     if (mainw->aud_rec_fd<0) {
       retval=do_write_failed_error_s_with_retry(outfilename,g_strerror(errno),NULL);
       if (retval==LIVES_CANCEL) {
@@ -1151,9 +1151,10 @@ void jack_rec_audio_to_clip(gint fileno, gint old_file, lives_rec_audio_type_t r
   if (rec_type==RECA_EXTERNAL) {
     gint asigned;
     gint aendian;
+    gulong fsize=get_file_size(mainw->aud_rec_fd);
 
     mainw->jackd_read->reverse_endian=FALSE;
-
+ 
     // start jack recording
     jack_open_device_read(mainw->jackd_read);
     jack_read_driver_activate(mainw->jackd_read);
@@ -1166,6 +1167,8 @@ void jack_rec_audio_to_clip(gint fileno, gint old_file, lives_rec_audio_type_t r
     
     asigned=!(outfile->signed_endian&AFORM_UNSIGNED);
     aendian=!(outfile->signed_endian&AFORM_BIG_ENDIAN);
+
+    mainw->jackd_read->frames_written=fsize/(outfile->achans*(outfile->asampsize>>3));
 
     save_clip_value(fileno,CLIP_DETAILS_ACHANS,&outfile->achans);
     save_clip_value(fileno,CLIP_DETAILS_ARATE,&outfile->arps);
@@ -1238,7 +1241,7 @@ void pulse_rec_audio_to_clip(gint fileno, gint old_file, lives_rec_audio_type_t 
 
   do {
     retval=0;
-    mainw->aud_rec_fd=open(outfilename,O_WRONLY|O_CREAT,S_IRUSR|S_IWUSR);
+    mainw->aud_rec_fd=open(outfilename,O_WRONLY|O_CREAT|O_APPEND,S_IRUSR|S_IWUSR);
     if (mainw->aud_rec_fd<0) {
       retval=do_write_failed_error_s_with_retry(outfilename,g_strerror(errno),NULL);
       if (retval==LIVES_CANCEL) {
@@ -1252,10 +1255,10 @@ void pulse_rec_audio_to_clip(gint fileno, gint old_file, lives_rec_audio_type_t 
   mainw->pulsed_read->playing_file=fileno;
   mainw->pulsed_read->frames_written=0;
 
-
   if (rec_type==RECA_EXTERNAL) {
     gint asigned;
     gint aendian;
+    gulong fsize=get_file_size(mainw->aud_rec_fd);
 
     mainw->pulsed_read->reverse_endian=FALSE;
 
@@ -1269,6 +1272,8 @@ void pulse_rec_audio_to_clip(gint fileno, gint old_file, lives_rec_audio_type_t 
     
     asigned=!(outfile->signed_endian&AFORM_UNSIGNED);
     aendian=!(outfile->signed_endian&AFORM_BIG_ENDIAN);
+
+    mainw->pulsed_read->frames_written=fsize/(outfile->achans*(outfile->asampsize>>3));
 
     save_clip_value(fileno,CLIP_DETAILS_ACHANS,&outfile->achans);
     save_clip_value(fileno,CLIP_DETAILS_ARATE,&outfile->arps);

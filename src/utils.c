@@ -2958,7 +2958,7 @@ void reget_afilesize (int fileno) {
   if (mainw->multitrack!=NULL) return; // otherwise achans gets set to 0...
 
   if (!sfile->opening) afile=g_build_filename (prefs->tmpdir,sfile->handle,"audio",NULL);
-  else afile=g_strdup_printf (prefs->tmpdir,sfile->handle,"audiodump.pcm",NULL);
+  else afile=g_build_filename (prefs->tmpdir,sfile->handle,"audiodump.pcm",NULL);
   if ((mainw->multitrack==NULL||fileno!=mainw->multitrack->render_file)&&(sfile->afilesize=sget_file_size (afile))==0l) {
     if (!sfile->opening) {
       if (sfile->arate!=0||sfile->achans!=0||sfile->asampsize!=0||sfile->arps!=0) {

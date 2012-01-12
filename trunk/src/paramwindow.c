@@ -892,9 +892,9 @@ void on_render_fx_pre_activate (GtkMenuItem *menuitem, lives_rfx_t *rfx) {
       if (!has_param) gtk_widget_set_sensitive(okbutton,FALSE);
       resetbutton = gtk_button_new_with_mnemonic (_("Reset"));
       if (!has_param) gtk_widget_set_sensitive(resetbutton,FALSE);
+      gtk_dialog_add_action_widget (GTK_DIALOG (fx_dialog[n]), resetbutton, LIVES_RESET);
     }
     else okbutton = gtk_button_new_from_stock ("gtk-ok");
-    gtk_dialog_add_action_widget (GTK_DIALOG (fx_dialog[n]), resetbutton, LIVES_RESET);
     gtk_dialog_add_action_widget (GTK_DIALOG (fx_dialog[n]), okbutton, GTK_RESPONSE_OK);
   }
   else {

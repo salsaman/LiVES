@@ -119,6 +119,8 @@ void pulse_close_client(pulse_driver_t *);
 
 void pulse_shutdown(void); ///< shudown server, mainloop, context
 
+void pulse_aud_pb_ready(gint fileno);
+
 void pulse_flush_read_data(pulse_driver_t *, size_t rbytes, void *data);
 
 void pulse_driver_uncork(pulse_driver_t *);

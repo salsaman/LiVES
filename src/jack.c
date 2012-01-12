@@ -1308,6 +1308,7 @@ int jack_audio_init(void) {
     jackd->is_output=TRUE;
     jackd->read_abuf=-1;
     jackd->playing_file=-1;
+    jackd->frames_written=0;
   }
   return 0;
 }
@@ -1338,6 +1339,7 @@ int jack_audio_read_init(void) {
     jackd->mute=FALSE;
     jackd->in_chans_available=0;
     jackd->is_output=FALSE;
+    jackd->frames_written=0;
   }
   return 0;
 }
@@ -1459,6 +1461,87 @@ gboolean jack_try_reconnect(void) {
   do_jack_lost_conn_error();
   return FALSE;
 }
+
+
+
+
+void jack_aud_pb_ready(gint fileno) {
+  // prepare to play file fileno
+  // - set loop mode
+  // - check if we need to reconnect
+  // - set vals
+
+  // called at pb start and rec stop (after rec_ext_audio)
+  gchar *tmpfilename=NULL;
+  file *sfile=mainw->files[fileno];
+  gint asigned=!(sfile->signed_endian&AFORM_UNSIGNED);
+  gint aendian=!(sfile->signed_endian&AFORM_BIG_ENDIAN);
+
+  if (mainw->jackd!=NULL&&mainw->aud_rec_fd==-1) {
+    mainw->jackd->is_paused=FALSE;
+    mainw->jackd->mute=mainw->mute;
+    if (mainw->loop_cont&&!mainw->preview) {
+      if (mainw->ping_pong&&prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS&&mainw->multitrack==NULL) 
+	mainw->jackd->loop=AUDIO_LOOP_PINGPONG;
+      else mainw->jackd->loop=AUDIO_LOOP_FORWARD;
+    }
+    else mainw->jackd->loop=AUDIO_LOOP_NONE;
+    if (sfile->achans>0&&(!mainw->preview||(mainw->preview&&mainw->is_processing))&&
+	(sfile->laudio_time>0.||sfile->opening||
+	 (mainw->multitrack!=NULL&&mainw->multitrack->is_rendering&&
+	  g_file_test((tmpfilename=g_build_filename(prefs->tmpdir,sfile->handle,"audio",NULL)),
+		      G_FILE_TEST_EXISTS)))) {
+      gboolean timeout;
+      int alarm_handle;
+      
+      if (tmpfilename!=NULL) g_free(tmpfilename);
+      mainw->jackd->num_input_channels=sfile->achans;
+      mainw->jackd->bytes_per_channel=sfile->asampsize/8;
+      mainw->jackd->sample_in_rate=sfile->arate;
+      mainw->jackd->usigned=!asigned;
+      mainw->jackd->seek_end=sfile->afilesize;
+      
+      if ((aendian&&(G_BYTE_ORDER==G_BIG_ENDIAN))||(!aendian&&(G_BYTE_ORDER==G_LITTLE_ENDIAN))) 
+	mainw->jackd->reverse_endian=TRUE;
+      else mainw->jackd->reverse_endian=FALSE;
+      
+      alarm_handle=lives_alarm_set(LIVES_ACONNECT_TIMEOUT);
+      while (!(timeout=lives_alarm_get(alarm_handle))&&jack_get_msgq(mainw->jackd)!=NULL) {
+	sched_yield(); // wait for seek
+      }
+      if (timeout) jack_try_reconnect();
+      lives_alarm_clear(alarm_handle);
+      
+      if ((mainw->multitrack==NULL||mainw->multitrack->is_rendering)&&
+	  (mainw->event_list==NULL||mainw->record||(mainw->preview&&mainw->is_processing))) {
+	// tell jack server to open audio file and start playing it
+	jack_message.command=ASERVER_CMD_FILE_OPEN;
+	jack_message.data=g_strdup_printf("%d",fileno);
+	
+	// TODO ** - use chain messages
+	jack_message.next=NULL;
+	mainw->jackd->msgq=&jack_message;
+	
+	if (!jack_audio_seek_frame(mainw->jackd,mainw->play_start)) {
+	  if (jack_try_reconnect()) jack_audio_seek_frame(mainw->jackd,mainw->play_start);
+	}
+	
+	mainw->jackd->in_use=TRUE;
+	mainw->rec_aclip=fileno;
+	mainw->rec_avel=sfile->pb_fps/sfile->fps;
+	mainw->rec_aseek=(gdouble)sfile->aseek_pos/(gdouble)(sfile->arate*sfile->achans*(sfile->asampsize/8));
+      }
+    }
+  }
+}
+
+
+
+
+
+
+
+
 
 #undef afile
 

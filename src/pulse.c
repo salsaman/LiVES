@@ -614,7 +614,7 @@ static void pulse_audio_read_process (pa_stream *pstream, size_t nbytes, void *a
   size_t frames_out;
   void *data;
   size_t rbytes=nbytes;
-  
+
   if (mainw->effects_paused) return; // pause during record
 
   pa_stream_peek(pulsed->pstream,(const void**)&data,&rbytes);
@@ -991,6 +991,81 @@ gboolean pulse_try_reconnect(void) {
    mainw->pulsed=NULL;
    do_pulse_lost_conn_error();
    return FALSE;
+}
+
+
+
+void pulse_aud_pb_ready(gint fileno) {
+  // prepare to play file fileno
+  // - set loop mode
+  // - check if we need to reconnect
+  // - set vals
+  gchar *tmpfilename=NULL;
+  file *sfile=mainw->files[fileno];
+  gint asigned=!(sfile->signed_endian&AFORM_UNSIGNED);
+  gint aendian=!(sfile->signed_endian&AFORM_BIG_ENDIAN);
+
+
+  // called at pb start and rec stop (after rec_ext_audio)
+  if (mainw->pulsed!=NULL&&mainw->aud_rec_fd==-1) {
+    mainw->pulsed->is_paused=FALSE;
+    mainw->pulsed->mute=mainw->mute;
+    if (mainw->loop_cont&&!mainw->preview) {
+      if (mainw->ping_pong&&prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS&&mainw->multitrack==NULL) 
+	mainw->pulsed->loop=AUDIO_LOOP_PINGPONG;
+      else mainw->pulsed->loop=AUDIO_LOOP_FORWARD;
+    }
+    else mainw->pulsed->loop=AUDIO_LOOP_NONE;
+    if (sfile->achans>0&&(!mainw->preview||(mainw->preview&&mainw->is_processing))&&
+	(sfile->laudio_time>0.||sfile->opening||
+	 (mainw->multitrack!=NULL&&mainw->multitrack->is_rendering&&
+	  g_file_test((tmpfilename=g_build_filename(prefs->tmpdir,sfile->handle,"audio",NULL)),
+		      G_FILE_TEST_EXISTS)))) {
+      
+      gboolean timeout;
+      int alarm_handle;
+      
+      if (tmpfilename!=NULL) g_free(tmpfilename);
+      mainw->pulsed->in_achans=sfile->achans;
+      mainw->pulsed->in_asamps=sfile->asampsize;
+      mainw->pulsed->in_arate=sfile->arate;
+      mainw->pulsed->usigned=!asigned;
+      mainw->pulsed->seek_end=sfile->afilesize;
+      if (sfile->opening) mainw->pulsed->is_opening=TRUE;
+      else mainw->pulsed->is_opening=FALSE;
+      
+      if ((aendian&&(G_BYTE_ORDER==G_BIG_ENDIAN))||(!aendian&&(G_BYTE_ORDER==G_LITTLE_ENDIAN))) 
+	mainw->pulsed->reverse_endian=TRUE;
+      else mainw->pulsed->reverse_endian=FALSE;
+      
+      alarm_handle=lives_alarm_set(LIVES_ACONNECT_TIMEOUT);
+      while (!(timeout=lives_alarm_get(alarm_handle))&&pulse_get_msgq(mainw->pulsed)!=NULL) {
+	sched_yield(); // wait for seek
+      }
+      
+      if (timeout) pulse_try_reconnect();
+      
+      lives_alarm_clear(alarm_handle);
+      
+      if ((mainw->multitrack==NULL||mainw->multitrack->is_rendering||
+	   sfile->opening)&&(mainw->event_list==NULL||mainw->record||(mainw->preview&&mainw->is_processing))) {
+	// tell pulse server to open audio file and start playing it
+	pulse_message.command=ASERVER_CMD_FILE_OPEN;
+	pulse_message.data=g_strdup_printf("%d",fileno);
+	pulse_message.next=NULL;
+	mainw->pulsed->msgq=&pulse_message;
+	
+	if (!pulse_audio_seek_frame(mainw->pulsed,mainw->play_start)) {
+	  if (pulse_try_reconnect()) pulse_audio_seek_frame(mainw->pulsed, mainw->play_start);
+	}
+	
+	mainw->pulsed->in_use=TRUE;
+	mainw->rec_aclip=fileno;
+	mainw->rec_avel=sfile->pb_fps/sfile->fps;
+	mainw->rec_aseek=(gdouble)sfile->aseek_pos/(gdouble)(sfile->arate*sfile->achans*(sfile->asampsize/8));
+      }
+    }
+  }
 }
 
 #undef afile

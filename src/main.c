@@ -721,7 +721,7 @@ static void lives_init(_ign_opts *ign_opts) {
     set_int_pref("record_opts",prefs->rec_opts);
   }
 
-  prefs->rec_opts|=(REC_FPS+REC_FRAMES);//+REC_EXT_AUDIO);
+  prefs->rec_opts|=(REC_FPS+REC_FRAMES+REC_EXT_AUDIO);
 
 
   mainw->new_clip=-1;
@@ -4043,14 +4043,14 @@ void load_frame_image(gint frame) {
 
 #ifdef ENABLE_JACK
 	  if (prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL&&
-	      (prefs->rec_opts&REC_AUDIO||prefs->rec_opts&REC_EXT_AUDIO)&&mainw->rec_aclip!=-1) {
+	      (prefs->rec_opts&REC_AUDIO)&&!(prefs->rec_opts&REC_EXT_AUDIO)&&mainw->rec_aclip!=-1) {
 	    // get current seek postion
 	    jack_get_rec_avals(mainw->jackd);
 	  }
 #endif
 #ifdef HAVE_PULSE_AUDIO
 	  if (prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL&&
-	      (prefs->rec_opts&REC_AUDIO||prefs->rec_opts&REC_EXT_AUDIO)&&mainw->rec_aclip!=-1) {
+	      (prefs->rec_opts&REC_AUDIO)&&!(prefs->rec_opts&REC_EXT_AUDIO)&&mainw->rec_aclip!=-1) {
 	    // get current seek postion
 	    pulse_get_rec_avals(mainw->pulsed);
 	  }

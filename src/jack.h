@@ -137,6 +137,8 @@ void jack_close_device(jack_driver_t*);
 
 gboolean jack_try_reconnect(void);
 
+void jack_aud_pb_ready(gint fileno);
+
 
 // utils
 volatile aserver_message_t *jack_get_msgq(jack_driver_t *); ///< pull last msg from msgq, or return NULL

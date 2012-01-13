@@ -49,7 +49,7 @@ libweed_slice_la_SOURCES = weed-gslice.c
 libweed_utils_la_SOURCES = weed-utils.c 
 
 libweed_plugin_utils_la_SOURCES = weed-plugin-utils.c
-
+y
 libweedinclude_HEADERS = weed.h weed-host.h weed-plugin.h weed-utils.h weed-events.h weed-palettes.h weed-effects.h \
 	weed-plugin-utils.h weed-compat.h
 
@@ -73,7 +73,14 @@ libweed_plugin_utils_la_LDFLAGS = $(extra_ldflags) -version-info $(WEED_SO_VERSI
 
 
 
+uninstall-local:
+	rm -rf $(libweedincludedir)
+	rm -rf $(libweed_ladir)
+	rm -rf $(libdir)/pkgconfig/libweed*
+
+
 install-exec-hook:
 ## The following is removed as it breaks packaging.
 #	/sbin/ldconfig
+
 

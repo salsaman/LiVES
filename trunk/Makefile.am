@@ -41,8 +41,7 @@ EXTRA_DIST = \
 	tools/batchproc.pl \
 	tools/monitorlives.pl \
 	tools/set_shuffle.pl \
-	tools/lives-rte-test.pl \
-	tools/lives-play \
+	tools/lives* \
 	po/pxgettext \
 	po/make_rfx_builtin_list.pl \
 	po/update_with_plugins.sh \
@@ -97,7 +96,6 @@ install-exec-local:
 	cp -f $(srcdir)/midistart $(DESTDIR)$(bindir) && chmod a+rx $(DESTDIR)$(bindir)/midistart
 	cp -f $(srcdir)/midistop $(DESTDIR)$(bindir) && chmod a+rx $(DESTDIR)$(bindir)/midistop
 	cp -f $(srcdir)/tools/autolives.pl $(DESTDIR)$(bindir) && chmod a+rx $(DESTDIR)$(bindir)/autolives.pl
-	cp -f $(srcdir)/tools/lives-play $(DESTDIR)$(bindir) && chmod a+rx $(DESTDIR)$(bindir)/lives-play
 	cp -f $(srcdir)/build-lives-rfx-plugin $(DESTDIR)$(bindir) && chmod a+rx $(DESTDIR)$(bindir)/build-lives-rfx-plugin
 	cp -f $(srcdir)/build-lives-rfx-plugin-multi $(DESTDIR)$(bindir) && chmod a+rx $(DESTDIR)$(bindir)/build-lives-rfx-plugin-multi
 	cp -f $(srcdir)/default.keymap $(DESTDIR)$(datadir)/$(PACKAGE)/
@@ -109,20 +107,20 @@ install-exec-hook:
 
 
 uninstall-local:
-	rm -rf $(DESTDIR)$(bindir)/lives
-	rm -rf $(DESTDIR)$(bindir)/lives-exe
-	rm -rf $(DESTDIR)$(bindir)/smogrify
-	rm -rf $(DESTDIR)$(bindir)/midistart
-	rm -rf $(DESTDIR)$(bindir)/midistop
-	rm -rf $(DESTDIR)$(bindir)/autolives.pl
-	rm -rf $(DESTDIR)$(bindir)/build-lives-rfx-plugin
-	rm -rf $(DESTDIR)$(bindir)/build-lives-rfx-plugin-multi
-	rm -rf $(DESTDIR)$(datadir)/$(PACKAGE)
-	rm -rf $(DESTDIR)$(libdir)/$(PACKAGE)
-	rm -rf $(DESTDIR)$(docdir)
-	rm -rf $(DESTDIR)$(sharedir)/applications/LiVES.desktop
-	rm -rf $(DESTDIR)$(sharedir)/pixmaps/lives.xmp
-	rm -rf $(DESTDIR)$(sharedir)/resources
+	rm -rf $(bindir)/lives
+	rm -rf $(bindir)/lives-exe
+	rm -rf $(bindir)/smogrify
+	rm -rf $(bindir)/midistart
+	rm -rf $(bindir)/midistop
+	rm -rf $(bindir)/autolives.pl
+	rm -rf $(bindir)/build-lives-rfx-plugin
+	rm -rf $(bindir)/build-lives-rfx-plugin-multi
+	rm -rf $(datadir)/$(PACKAGE)
+	rm -rf $(libdir)/$(PACKAGE)
+	rm -rf $(docdir)
+	rm -rf $(sharedir)/applications/LiVES.desktop
+	rm -rf $(sharedir)/pixmaps/lives.xmp
+	rm -rf $(sharedir)/resources
 
 	@echo
 	@echo "		*** WARNING - user specific configuration files have NOT been removed."

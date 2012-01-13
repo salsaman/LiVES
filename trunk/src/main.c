@@ -721,7 +721,7 @@ static void lives_init(_ign_opts *ign_opts) {
     set_int_pref("record_opts",prefs->rec_opts);
   }
 
-  prefs->rec_opts|=(REC_FPS+REC_FRAMES+REC_EXT_AUDIO);
+  prefs->rec_opts|=(REC_FPS+REC_FRAMES);//+REC_EXT_AUDIO);
 
 
   mainw->new_clip=-1;
@@ -3970,7 +3970,7 @@ void load_frame_image(gint frame) {
 #ifdef ENABLE_JACK
 	  if (prefs->audio_player==AUD_PLAYER_JACK&&(prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS)&&
 	      mainw->jackd!=NULL&&cfile->achans>0 &&
-	    !(mainw->record&&(prefs->rec_opts&REC_EXT_AUDIO))) {
+	    !(mainw->record&&!mainw->record_paused&&(prefs->rec_opts&REC_EXT_AUDIO))) {
 	    if (!jack_audio_seek_frame(mainw->jackd,frame)) {
 	      if (jack_try_reconnect()) jack_audio_seek_frame(mainw->jackd,frame);
 	    }
@@ -3984,7 +3984,7 @@ void load_frame_image(gint frame) {
 #ifdef HAVE_PULSE_AUDIO
 	  if (prefs->audio_player==AUD_PLAYER_PULSE&&(prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS)&&
 	      mainw->pulsed!=NULL&&cfile->achans>0 &&
-	      !(mainw->record&&(prefs->rec_opts&REC_EXT_AUDIO))) {
+	      !(mainw->record&&!mainw->record_paused&&(prefs->rec_opts&REC_EXT_AUDIO))) {
 
 	    if (!pulse_audio_seek_frame(mainw->pulsed,mainw->play_start)) {
 	      if (pulse_try_reconnect()) pulse_audio_seek_frame(mainw->pulsed,mainw->play_start);
@@ -5449,7 +5449,7 @@ void do_quick_switch (gint new_file) {
   mainw->osc_block=TRUE;
 
   if (prefs->audio_player==AUD_PLAYER_JACK&&(prefs->audio_opts&AUDIO_OPTS_FOLLOW_CLIPS)&&!mainw->is_rendering&&
-      !(mainw->record&&(prefs->rec_opts&REC_EXT_AUDIO))) {
+      !(mainw->record&&!mainw->record_paused&&(prefs->rec_opts&REC_EXT_AUDIO))) {
 #ifdef ENABLE_JACK
   if (mainw->jackd!=NULL) {
       gboolean timeout;
@@ -5509,7 +5509,7 @@ void do_quick_switch (gint new_file) {
 
 	jack_message2.command=ASERVER_CMD_FILE_SEEK;
 	jack_message.next=&jack_message2;
-        jack_message2.data=g_strdup_printf("%ld",mainw->files[new_file]->aseek_pos);
+        jack_message2.data=g_strdup_printf("%"PRId64,mainw->files[new_file]->aseek_pos);
 	jack_message2.next=NULL;
 
         mainw->jackd->msgq=&jack_message;
@@ -5535,7 +5535,7 @@ void do_quick_switch (gint new_file) {
   }
 
   if (prefs->audio_player==AUD_PLAYER_PULSE&&(prefs->audio_opts&AUDIO_OPTS_FOLLOW_CLIPS)&&!mainw->is_rendering&&
-      !(mainw->record&&(prefs->rec_opts&REC_EXT_AUDIO))) {
+      !(mainw->record&&!mainw->record_paused&&(prefs->rec_opts&REC_EXT_AUDIO))) {
 #ifdef HAVE_PULSE_AUDIO
   if (mainw->pulsed!=NULL) {
       gboolean timeout;
@@ -5599,7 +5599,7 @@ void do_quick_switch (gint new_file) {
 
 	pulse_message2.command=ASERVER_CMD_FILE_SEEK;
 	pulse_message.next=&pulse_message2;
-        pulse_message2.data=g_strdup_printf("%ld",mainw->files[new_file]->aseek_pos);
+        pulse_message2.data=g_strdup_printf("%"PRId64,mainw->files[new_file]->aseek_pos);
 	pulse_message2.next=NULL;
         mainw->pulsed->msgq=&pulse_message;
         mainw->pulsed->in_use=TRUE;

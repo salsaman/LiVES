@@ -30,6 +30,8 @@ static guchar prbuf[PULSE_READ_BYTES];
 
 static size_t prb=0;
 
+static gboolean seek_err;
+
 ///////////////////////////////////////////////////////////////////
 
 
@@ -952,12 +954,19 @@ long pulse_audio_seek_bytes (pulse_driver_t *pulsed, long bytes) {
   int alarm_handle=lives_alarm_set(LIVES_ACONNECT_TIMEOUT);
 
   long seekstart;
+
+  if (alarm_handle==-1) {
+    LIVES_WARN("Invalid alarm handle");
+    return 0;
+  }
+
   do {
     pmsg=pulse_get_msgq(pulsed);
   } while (!(timeout=lives_alarm_get(alarm_handle))&&pmsg!=NULL&&pmsg->command!=ASERVER_CMD_FILE_SEEK);
 
   if (timeout||pulsed->playing_file==-1) {
     lives_alarm_clear(alarm_handle);
+    if (timeout) LIVES_WARN("PA connect timed out");
     return 0;
   }
   lives_alarm_clear(alarm_handle);
@@ -968,7 +977,7 @@ long pulse_audio_seek_bytes (pulse_driver_t *pulsed, long bytes) {
   if (seekstart>afile->afilesize) seekstart=afile->afilesize;
   pulse_message.command=ASERVER_CMD_FILE_SEEK;
   pulse_message.next=NULL;
-  pulse_message.data=g_strdup_printf("%ld",seekstart);
+  pulse_message.data=g_strdup_printf("%"PRId64,seekstart);
   pulsed->msgq=&pulse_message;
   return seekstart;
 }
@@ -1055,10 +1064,10 @@ void pulse_aud_pb_ready(gint fileno) {
 	pulse_message.next=NULL;
 	mainw->pulsed->msgq=&pulse_message;
 	
-	if (!pulse_audio_seek_frame(mainw->pulsed,mainw->play_start)) {
-	  if (pulse_try_reconnect()) pulse_audio_seek_frame(mainw->pulsed, mainw->play_start);
+	pulse_audio_seek_bytes(mainw->pulsed,sfile->aseek_pos);
+	if (seek_err) {
+	  if (pulse_try_reconnect()) pulse_audio_seek_bytes(mainw->pulsed,sfile->aseek_pos);
 	}
-	
 	mainw->pulsed->in_use=TRUE;
 	mainw->rec_aclip=fileno;
 	mainw->rec_avel=sfile->pb_fps/sfile->fps;

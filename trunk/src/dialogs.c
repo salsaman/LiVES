@@ -1402,7 +1402,7 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
 
     mainw->rec_aclip=mainw->current_file;
     mainw->rec_avel=cfile->pb_fps/cfile->fps;
-    if (!(mainw->record&&(prefs->rec_opts&REC_EXT_AUDIO)))
+    if (!(mainw->record&&!mainw->record_paused&&(prefs->rec_opts&REC_EXT_AUDIO)))
       mainw->rec_aseek=(gdouble)cfile->aseek_pos/(gdouble)(cfile->arate*cfile->achans*(cfile->asampsize/8));
     else {
       mainw->rec_aclip=mainw->ascrap_file;
@@ -1431,7 +1431,7 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
 
     mainw->rec_aclip=mainw->current_file;
     mainw->rec_avel=cfile->pb_fps/cfile->fps;
-    if (!(mainw->record&&(prefs->rec_opts&REC_EXT_AUDIO)))
+    if (!(mainw->record&&!mainw->record_paused&&(prefs->rec_opts&REC_EXT_AUDIO)))
       mainw->rec_aseek=(gdouble)cfile->aseek_pos/(gdouble)(cfile->arate*cfile->achans*(cfile->asampsize/8));
     else {
       mainw->rec_aclip=mainw->ascrap_file;

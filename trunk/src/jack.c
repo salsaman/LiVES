@@ -19,6 +19,8 @@ static jack_client_t *jack_transport_client;
 static unsigned char *zero_buff=NULL;
 static size_t zero_buff_count=0;
 
+static gboolean seek_err;
+
 static gboolean check_zero_buff(size_t check_size) {
   if (check_size>zero_buff_count) {
     zero_buff=(unsigned char *)g_try_realloc(zero_buff,check_size);
@@ -1421,11 +1423,20 @@ long jack_audio_seek_bytes (jack_driver_t *jackd, long bytes) {
   gboolean timeout;
   int alarm_handle=lives_alarm_set(LIVES_ACONNECT_TIMEOUT);
 
+  seek_err=FALSE;
+
+  if (alarm_handle==-1) {
+    LIVES_WARN("Invalid alarm handle");
+    return 0;
+  }
+
   do {
     jmsg=jack_get_msgq(jackd);
   } while (!(timeout=lives_alarm_get(alarm_handle))&&jmsg!=NULL&&jmsg->command!=ASERVER_CMD_FILE_SEEK);
   if (timeout||jackd->playing_file==-1) {
     lives_alarm_clear(alarm_handle);
+    if (timeout) LIVES_WARN("PA connect timed out");
+    seek_err=TRUE;
     return 0;
   }
   lives_alarm_clear(alarm_handle);
@@ -1522,8 +1533,9 @@ void jack_aud_pb_ready(gint fileno) {
 	jack_message.next=NULL;
 	mainw->jackd->msgq=&jack_message;
 	
-	if (!jack_audio_seek_frame(mainw->jackd,mainw->play_start)) {
-	  if (jack_try_reconnect()) jack_audio_seek_frame(mainw->jackd,mainw->play_start);
+	jack_audio_seek_bytes(mainw->jackd,sfile->aseek_pos);
+	if (seek_err) {
+	  if (jack_try_reconnect()) jack_audio_seek_bytes(mainw->jackd,sfile->aseek_pos);
 	}
 	
 	mainw->jackd->in_use=TRUE;

@@ -608,7 +608,7 @@ static gboolean check_for_audio_stop (gint fileno, gint first_frame, gint last_f
 }
 
 
-static void calc_aframeno(gint fileno) {
+void calc_aframeno(gint fileno) {
 #ifdef ENABLE_JACK
   if (prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL&&mainw->jackd->playing_file==fileno) {
     // get seek_pos from jack
@@ -664,12 +664,13 @@ gint calc_new_playback_position(gint fileno, gint64 otc, gint64 *ntc) {
 
   gboolean do_resync=FALSE;
 
-  gdouble fps=sfile->pb_fps;
-
-  if (mainw->playing_file==-1) fps=sfile->fps;
+  gdouble fps;
 
   if (sfile==NULL) return 0;
 
+  fps=sfile->pb_fps;
+
+  if (mainw->playing_file==-1) fps=sfile->fps;
 
   cframe=sfile->last_frameno;
 
@@ -679,15 +680,18 @@ gint calc_new_playback_position(gint fileno, gint64 otc, gint64 *ntc) {
     return cframe;
   }
 
+  // dtc is delt ticks, quantise this to the frame rate and round down
   dtc=q_gint64_floor(dtc,fps);
 
+  // ntc is the time when the frame should have been played
   *ntc=otc+dtc;
 
+  // nframe is our new frame
   nframe=cframe+(gint)((gdouble)dtc/U_SEC*fps+(fps>0?.5:-.5));
 
   if (nframe==cframe||mainw->foreign) return nframe;
 
-  // calculate audio "frame"
+  // calculate audio "frame" from the number of samples played
   if (mainw->playing_file==fileno) {
     calc_aframeno(fileno);
   }
@@ -3648,7 +3652,7 @@ void save_clip_value(int which, lives_clip_details_t what, void *val) {
 
   mainw->write_failed=mainw->com_failed=FALSE;
 
-  if (which==0||which==mainw->scrap_file||which==mainw->ascrap_file) return;
+  if (which==0||which==mainw->scrap_file) return;
 
   lives_header=g_build_filename(prefs->tmpdir,mainw->files[which]->handle,"header.lives",NULL);
   key=clip_detail_to_string(what,NULL);

@@ -2256,6 +2256,7 @@ void play_file (void) {
   if (!mainw->foreign&&(!(mainw->record&&(prefs->rec_opts&REC_EXT_AUDIO))&&
 			((audio_player==AUD_PLAYER_JACK) ||
 			 (audio_player==AUD_PLAYER_PULSE)))) {
+    cfile->aseek_pos=(long)((gdouble)(mainw->play_start-1.)/cfile->fps*cfile->arate)*cfile->achans*(cfile->asampsize/8);
 
     // start up our audio player (jack or pulse)
     if (audio_player==AUD_PLAYER_JACK) {
@@ -2542,6 +2543,7 @@ void play_file (void) {
 
     }
     if (mainw->record&&((prefs->rec_opts&REC_AUDIO)||(prefs->rec_opts&REC_EXT_AUDIO))) {
+      // DO NOT REMOVE THIS - or bad things happen when entering MT
       weed_plant_t *event=get_last_frame_event(mainw->event_list);
       insert_audio_event_at(mainw->event_list,event,-1,1,0.,0.); // audio switch off
     }
@@ -2570,6 +2572,7 @@ void play_file (void) {
       mainw->pulsed->msgq=&pulse_message;
     }
     if (mainw->record&&((prefs->rec_opts&REC_AUDIO)||(prefs->rec_opts&REC_EXT_AUDIO))) {
+      // DO NOT REMOVE THIS - or bad things happen when entering MT
       weed_plant_t *event=get_last_frame_event(mainw->event_list);
       insert_audio_event_at(mainw->event_list,event,-1,1,0.,0.); // audio switch off
     }

@@ -186,7 +186,8 @@ static GdkPixbuf *make_thumb (lives_mt *mt, gint file, gint width, gint height, 
   gint nframe,oframe=frame;
 
   if (file<1) {
-    g_printerr("Warning - make thumb for file %d\n",file);
+    LIVES_WARN("Warning - make thumb for file");
+    LIVES_WARN(file);
     return NULL;
   }
 
@@ -198,10 +199,11 @@ static GdkPixbuf *make_thumb (lives_mt *mt, gint file, gint width, gint height, 
 
     if (mainw->files[file]->frames>0) {
       weed_timecode_t tc=(frame-1.)/mainw->files[file]->fps*U_SECL;
-      thumbnail=pull_gdk_pixbuf_at_size(file,frame,mainw->files[file]->img_type==IMG_TYPE_JPEG?"jpg":"png",tc,width,height,GDK_INTERP_HYPER);
+      thumbnail=pull_gdk_pixbuf_at_size(file,frame,mainw->files[file]->img_type==IMG_TYPE_JPEG?"jpg":"png",tc,
+					width,height,GDK_INTERP_HYPER);
     }
     else {
-      buf=g_strdup_printf("%s%s/audio.png",prefs->prefix_dir,ICON_DIR);
+      buf=g_build_filename(prefs->prefix_dir,ICON_DIR,"audio.png",NULL);
       pixbuf=gdk_pixbuf_new_from_file_at_scale(buf,width,height,FALSE,&error);
       // ...at_scale is inaccurate !
       
@@ -18281,9 +18283,9 @@ static void add_missing_atrack_closers(weed_plant_t *event_list, gdouble fps, gc
     aseeks[i+1]=0.;
     g_strfreev(array);
     alist=alist->next;
-    i+=2;
     if (aclips[i]>=0) ebuf=rec_error_add(ebuf,"Added missing audio closure",aclips[i],tc);
     else ebuf=rec_error_add(ebuf,"Added missing audio closure to backing track",-aclips[i],tc);
+    i+=2;
   }
 
   weed_set_int_array(last_frame,"audio_clips",num_atracks,aclips);

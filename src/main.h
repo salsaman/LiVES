@@ -1105,6 +1105,7 @@ gchar *g_strappend (gchar *string, gint len, const gchar *newbit);
 GList *g_list_append_unique(GList *xlist, const gchar *add);
 void find_when_to_stop (void);
 gint calc_new_playback_position(gint fileno, gint64 otc, gint64 *ntc);
+void calc_aframeno(gint fileno);
 void minimise_aspect_delta (gdouble allowed_aspect,gint hblock,gint vblock,gint hsize,gint vsize,gint *width,gint *height);
 GdkInterpType get_interp_value(gshort quality);
 GList *g_list_move_to_first(GList *list, GList *item) WARN_UNUSED;

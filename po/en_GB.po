@@ -8,16 +8,16 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2012-01-14 10:06-0300\n"
-"PO-Revision-Date: 2012-01-07 02:04+0000\n"
+"POT-Creation-Date: 2012-01-14 10:22-0300\n"
+"PO-Revision-Date: 2012-01-10 23:21+0000\n"
 "Last-Translator: Anthony Harrington <untaintableangel@hotmail.co.uk>\n"
 "Language-Team: English (United Kingdom) <en_GB@li.org>\n"
 "Language: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Launchpad-Export-Date: 2012-01-07 02:52+0000\n"
-"X-Generator: Launchpad (build 14640)\n"
+"X-Launchpad-Export-Date: 2012-01-14 13:18+0000\n"
+"X-Generator: Launchpad (build 14664)\n"
 
 #: src/main.c:118
 msgid ""
@@ -745,7 +745,7 @@ msgstr ""
 "Please select another location.\n"
 
 #: src/startup.c:46
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "Create the directory\n"
@@ -754,6 +754,7 @@ msgid ""
 "\n"
 "(Free space = %s)"
 msgstr ""
+"\n"
 "Create the directory\n"
 "%s\n"
 "?\n"
@@ -761,17 +762,17 @@ msgstr ""
 "(Free space = %s)"
 
 #: src/startup.c:51
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "LiVES could not write to the directory\n"
 "%s\n"
 "Please try again and choose a different location.\n"
 msgstr ""
+"\n"
 "LiVES could not write to the directory\n"
 "%s\n"
 "Please try again and choose a different location.\n"
-")"
 
 #: src/startup.c:88
 msgid "Directory name is too long !"
@@ -2927,7 +2928,6 @@ msgstr ""
 "Delete %d layout(s)...are you sure ?\n"
 
 #: src/callbacks.c:5875
-#, fuzzy
 msgid ""
 "Preview will not work without X11. We need the window id of the preview "
 "window.\n"
@@ -4162,7 +4162,7 @@ msgid "Opening audio for %s"
 msgstr "Opening audio for %s"
 
 #: src/saveplay.c:541
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "LiVES is not currently optimised for larger file sizes.\n"
@@ -4176,7 +4176,7 @@ msgstr ""
 "LiVES is not currently optimised for larger file sizes.\n"
 "You are advised (for now) to start with a smaller file, or to use the 'Open "
 "File Selection' option.\n"
-"(Filesize=%.2fMB)\n"
+"(Filesize=%s)\n"
 "\n"
 "Are you sure you wish to continue ?"
 
@@ -4293,9 +4293,9 @@ msgid "Clearing letterbox"
 msgstr "Clearing letterbox..."
 
 #: src/saveplay.c:1882
-#, fuzzy, c-format
+#, c-format
 msgid "File size was %s\n"
-msgstr "File size was %.2fMB\n"
+msgstr "File size was %s\n"
 
 #: src/saveplay.c:1971
 msgid "recording aborted by preview.\n"
@@ -4688,12 +4688,11 @@ msgstr ""
 "It cannot be saved, you must render it to a clip first.\n"
 
 #: src/dialogs.c:1819
-#, fuzzy
 msgid ""
 "This layout includes generated or recorded audio.\n"
 "It cannot be saved, you must render it to a clip first.\n"
 msgstr ""
-"This layout includes generated frames.\n"
+"This layout includes generated or recorded audio.\n"
 "It cannot be saved, you must render it to a clip first.\n"
 
 #: src/dialogs.c:1826 src/dialogs.c:1924
@@ -5698,14 +5697,16 @@ msgstr ""
 
 #. TRANSLATORS: make sure the menu text matches what is in gui.c
 #: src/dialogs.c:2963
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "\n"
 "Welcome to LiVES version %s !\n"
 "\n"
 msgstr ""
-"Welcome to LiVES version %s.\n"
+"\n"
+"\n"
+"Welcome to LiVES version %s !\n"
 "\n"
 
 #: src/dialogs.c:2969
@@ -5826,11 +5827,11 @@ msgstr "Converters"
 
 #: src/effects.c:80
 msgid "analyser"
-msgstr ""
+msgstr "analyser"
 
 #: src/effects.c:81
 msgid "Analysers"
-msgstr ""
+msgstr "Analysers"
 
 #: src/effects.c:86
 msgid "audio/video"
@@ -5877,24 +5878,20 @@ msgid "Audio Volume Controllers"
 msgstr "Audio Volume Controllers"
 
 #: src/effects.c:104
-#, fuzzy
 msgid "video analyser"
-msgstr "video only"
+msgstr "video analyser"
 
 #: src/effects.c:105
-#, fuzzy
 msgid "Video analysers"
-msgstr "video only"
+msgstr "Video analysers"
 
 #: src/effects.c:107
-#, fuzzy
 msgid "audio analyser"
-msgstr "audio only"
+msgstr "audio analyser"
 
 #: src/effects.c:108
-#, fuzzy
 msgid "Audio analysers"
-msgstr "Audio parameters"
+msgstr "Audio analysers"
 
 #: src/effects.c:112 src/plugins.c:2298
 msgid "unknown"
@@ -6112,7 +6109,7 @@ msgstr "Set as default"
 
 #: src/paramwindow.c:893 src/paramwindow.c:905
 msgid "Reset"
-msgstr ""
+msgstr "Reset"
 
 #: src/paramwindow.c:903 src/rte_window.c:1496 src/omc-learn.c:1365
 msgid "Close _window"
@@ -7223,7 +7220,7 @@ msgstr ""
 "(Free space = UNKNOWN)"
 
 #: src/preferences.c:401
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "\n"
@@ -7233,7 +7230,7 @@ msgstr ""
 "\n"
 "\n"
 "\n"
-"(Free space = %.2f GB)"
+"(Free space = %s)"
 
 #: src/preferences.c:405
 msgid ""
@@ -10163,7 +10160,7 @@ msgstr "JACK server started\n"
 
 #: src/jack.c:927 src/jack.c:998
 msgid "Unable to connect to JACK server\n"
-msgstr "Unable to connect to JACK server\n"
+msgstr "Unable to connect to JACK server.\n"
 
 #: src/jack.c:1157
 msgid "Started jack audio subsystem.\n"
@@ -11886,7 +11883,7 @@ msgstr "Error creating new backup."
 
 #: /usr/bin/smogrify:0
 msgid "This does not appear to be a valid backup file"
-msgstr "This does not appear to be a valid backup file"
+msgstr "This does not appear to be a valid backup file."
 
 #: /usr/bin/smogrify:0
 msgid "LiVES was not able to open the file"
@@ -11927,10 +11924,3 @@ msgstr "$plugin_name failed:"
 #: /usr/bin/smogrify:0
 msgid "$error"
 msgstr "$error"
-
-#~ msgid ""
-#~ "\n"
-#~ "Unable to connect to pulse audio server\n"
-#~ msgstr ""
-#~ "\n"
-#~ "Unable to connect to pulse audio server\n"

@@ -1,5 +1,5 @@
-Version 1.6.0
---------------------------
+Version 1.6.0 (14 January 2012)
+-------------------------------
 Handle reconnection to pulse / jack more robustly.
 Clean up diskspace properly on exit. *
 Improved handling of split audio blocks.
@@ -15,7 +15,7 @@ Robustness changes part 1. (check for read/write errors in front end)
 Robustness changes part 2. (check for system errors in front end)
 Robustness changes part 3. (check for read/write/system errors in the back end)
 Major code cleanup for 1.6.0
-
+Updated translations to UK English, Japanese, French, German, Italian, Finnish, Ukranian, Uzbek and Telugu.
 
 
 

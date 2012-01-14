@@ -43,12 +43,13 @@ frei0rpluginslibdir = $(libdir)/$(PACKAGE)/plugins/effects/realtime/weed/frei0r
 frei0rpluginslib_LTLIBRARIES = $(frei0r_libs)
 endif
 
+#	blank_frame_detector.la
+
 
 fxpluginslib_LTLIBRARIES = RGBdelay.la \
 	alien_overlay.la \
 	audio_transition.la \
 	audio_volume.la \
-	blank_frame_detector.la \
 	bump2d.la \
 	blurzoom.la \
 	ccorrect.la \

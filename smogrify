@@ -31,7 +31,7 @@ $convert_command="convert -quiet -colorspace RGB -type truecolor";
 # Do not change these except for testing !
 
 $background=1;
-$version="1.6.0-svn";
+$version="1.6.0";
 #$dyneversion="LIVES-20091209";
 
 

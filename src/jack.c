@@ -773,13 +773,16 @@ static int audio_read (nframes_t nframes, void *arg) {
   int i;
   long frames_out;
 
+  size_t rbytes;
+
   if (mainw->effects_paused) return 0; // pause during record
 
   if (mainw->rec_samples==0) return 0; // wrote enough already, return until main thread stop
 
   frames_out=(long)((gdouble)nframes/out_scale+1.);
 
-  holding_buff=g_try_malloc(frames_out*afile->achans*afile->asampsize/8);
+  rbytes=frames_out*afile->achans*afile->asampsize/8;
+  holding_buff=g_try_malloc(rbytes);
 
   if (!holding_buff) return 0;
 
@@ -791,6 +794,11 @@ static int audio_read (nframes_t nframes, void *arg) {
 				   afile->asampsize,out_unsigned,jackd->reverse_endian,1.);
 
   jackd->frames_written+=nframes;
+
+  if (mainw->record&&(prefs->rec_opts&REC_EXT_AUDIO)&&mainw->ascrap_file!=-1&&mainw->playing_file>0) {
+    mainw->files[mainw->playing_file]->aseek_pos+=rbytes;
+    jackd->seek_pos+=rbytes;
+  }
 
   if (mainw->rec_samples>0) {
     if (frames_out>mainw->rec_samples) frames_out=mainw->rec_samples;

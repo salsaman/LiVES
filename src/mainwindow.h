@@ -913,6 +913,7 @@ typedef struct {
   gboolean opening_multi; ///< flag to indicate multiple file selection
 
   gboolean record_paused; ///< pause during recording
+
   gboolean record_starting; ///< start recording at next frame
 
   gint img_concat_clip;  ///< when opening multiple, image files can get concatenated here (prefs->concat_images)

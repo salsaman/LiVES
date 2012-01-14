@@ -630,6 +630,11 @@ static void pulse_audio_read_process (pa_stream *pstream, size_t nbytes, void *a
   // should really be frames_read here
   pulsed->frames_written+=(size_t)((gdouble)((rbytes/(pulsed->in_asamps>>3)/pulsed->in_achans))/out_scale+.5);
 
+  if (mainw->record&&(prefs->rec_opts&REC_EXT_AUDIO)&&mainw->ascrap_file!=-1&&mainw->playing_file>0) {
+    mainw->files[mainw->playing_file]->aseek_pos+=rbytes;
+    pulsed->seek_pos+=rbytes;
+  }
+
   if (prb<PULSE_READ_BYTES&&(mainw->rec_samples==-1||frames_out<mainw->rec_samples)) {
     // buffer until we have enough
     w_memcpy(&prbuf[prb-rbytes],data,rbytes);
@@ -695,6 +700,7 @@ int pulse_audio_init(void) {
   pulsed.pulsed_died=FALSE;
   pulsed.aPlayPtr=(audio_buffer_t *)g_malloc(sizeof(audio_buffer_t));
   pulsed.aPlayPtr->data=NULL;
+  pulsed.aPlayPtr->size=0;
   gettimeofday(&pulsed.last_reconnect_attempt, 0);
   pulsed.in_achans=2;
   pulsed.out_achans=2;

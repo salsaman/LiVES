@@ -654,6 +654,7 @@ extern capability *capable;
 #endif
 
 # define PRId64		__PRI64_PREFIX "d"
+# define PRIu64		__PRI64_PREFIX "u"
 #endif // ifndef PRI64d
 
 

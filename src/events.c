@@ -2017,7 +2017,7 @@ gint get_render_choice (void) {
 
 
 
-GtkWidget *events_rec_dialog (void) {
+GtkWidget *events_rec_dialog (gboolean allow_mt) {
   GtkWidget *e_rec_dialog;
   GtkWidget *dialog_vbox;
   GtkWidget *vbox;
@@ -2183,6 +2183,8 @@ GtkWidget *events_rec_dialog (void) {
   g_signal_connect (GTK_OBJECT (radiobutton), "toggled",
 		    G_CALLBACK (set_render_choice),
 		    GINT_TO_POINTER (RENDER_CHOICE_MULTITRACK));
+
+  if (!allow_mt) gtk_widget_set_sensitive(radiobutton,FALSE);
 
 
 
@@ -3954,6 +3956,7 @@ gboolean deal_with_render_choice (gboolean add_deinit) {
   gdouble df;
 
   gboolean new_clip=FALSE;
+  gboolean was_paused=mainw->record_paused;
 
   // record end
   mainw->record=FALSE;
@@ -3973,7 +3976,8 @@ gboolean deal_with_render_choice (gboolean add_deinit) {
     return FALSE;
   }
 
-  if (add_deinit&&!mainw->record_paused) mainw->event_list=add_filter_deinit_events (mainw->event_list); // add deinit events for any effects that are left on
+  // add deinit events for any effects that are left on
+  if (add_deinit&&!was_paused) mainw->event_list=add_filter_deinit_events (mainw->event_list);
 
   if (add_deinit) event_list_close_gaps (mainw->event_list);
 
@@ -3981,7 +3985,7 @@ gboolean deal_with_render_choice (gboolean add_deinit) {
   oplay_start=mainw->play_start;
 
   do {
-    e_rec_dialog=events_rec_dialog();
+    e_rec_dialog=events_rec_dialog(!was_paused);
     gtk_widget_show (e_rec_dialog);
     gtk_dialog_run (GTK_DIALOG (e_rec_dialog));
     gtk_widget_destroy (e_rec_dialog);
@@ -4083,10 +4087,7 @@ gboolean deal_with_render_choice (gboolean add_deinit) {
   } while (render_choice==RENDER_CHOICE_PREVIEW);
 
 
-  if (mainw->event_list!=NULL) {
-    event_list_free(mainw->event_list);
-    mainw->event_list=NULL;
-  }
+  lives_freep ((void **)&mainw->event_list);
 
   return new_clip;
 }
@@ -4165,7 +4166,8 @@ gdouble *get_track_visibility_at_tc(weed_plant_t *event_list, gint ntracks, gint
       gint nins=weed_leaf_num_elements(fmap,"init_events");
       for (i=0;i<nins;i++) {
 	weed_plant_t *ievent=iev[i];
-	if (weed_plant_has_leaf(ievent,"host_audio_transition")&&weed_get_boolean_value(ievent,"host_audio_transition",&error)==WEED_TRUE) {
+	if (weed_plant_has_leaf(ievent,"host_audio_transition")&&
+	    weed_get_boolean_value(ievent,"host_audio_transition",&error)==WEED_TRUE) {
 	  int *in_tracks=weed_get_int_array(ievent,"in_tracks",&error);
 	  int *out_tracks=weed_get_int_array(ievent,"out_tracks",&error);
 	  gchar *filter_hash=weed_get_string_value(ievent,"filter",&error);
@@ -4620,8 +4622,10 @@ GtkWidget *create_event_list_dialog (weed_plant_t *event_list, weed_timecode_t s
 		   NULL);
 
  if (prefs->gui_monitor!=0) {
-   gint xcen=mainw->mgeom[prefs->gui_monitor-1].x+(mainw->mgeom[prefs->gui_monitor-1].width-event_dialog->allocation.width)/2;
-   gint ycen=mainw->mgeom[prefs->gui_monitor-1].y+(mainw->mgeom[prefs->gui_monitor-1].height-event_dialog->allocation.height)/2;
+   gint xcen=mainw->mgeom[prefs->gui_monitor-1].x+
+     (mainw->mgeom[prefs->gui_monitor-1].width-event_dialog->allocation.width)/2;
+   gint ycen=mainw->mgeom[prefs->gui_monitor-1].y+
+     (mainw->mgeom[prefs->gui_monitor-1].height-event_dialog->allocation.height)/2;
    gtk_window_set_screen(GTK_WINDOW(event_dialog),mainw->mgeom[prefs->gui_monitor-1].screen);
    gtk_window_move(GTK_WINDOW(event_dialog),xcen,ycen);
  }

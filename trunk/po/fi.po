@@ -8,16 +8,16 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2012-01-14 10:06-0300\n"
-"PO-Revision-Date: 2011-10-18 16:25+0000\n"
+"POT-Creation-Date: 2012-01-14 10:22-0300\n"
+"PO-Revision-Date: 2011-12-12 18:24+0000\n"
 "Last-Translator: Juhani Numminen <juhaninumminen0@gmail.com>\n"
 "Language-Team: Finnish <fi@li.org>\n"
 "Language: fi\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Launchpad-Export-Date: 2011-11-26 11:33+0000\n"
-"X-Generator: Launchpad (build 14381)\n"
+"X-Launchpad-Export-Date: 2012-01-14 13:18+0000\n"
+"X-Generator: Launchpad (build 14664)\n"
 
 #: src/main.c:118
 msgid ""
@@ -253,7 +253,7 @@ msgstr "näyttöjä löydetty: %d\n"
 #: src/main.c:1559
 #, c-format
 msgid "Number of CPUs detected: %d\n"
-msgstr ""
+msgstr "Suorittimia havaittu: %d\n"
 
 #: src/main.c:1562
 #, c-format
@@ -490,22 +490,15 @@ msgstr ""
 "ja yritä uudestaan.\n"
 
 #: src/main.c:2037
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Please check the <tempdir> setting in \n"
 "%s/.lives\n"
 "and try again.\n"
 msgstr ""
-"\n"
-"LiVES ei pystynyt käyttämään tilapäiskansiota\n"
-"%s\n"
-"\n"
-"Tarkista <tempdir>-asetus tiedostosta \n"
-"%s/.lives\n"
-"ja yritä uudelleen.\n"
 
 #: src/main.c:2044
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "LiVES was unable to use the temporary directory\n"
@@ -513,8 +506,6 @@ msgid ""
 "\n"
 "%s"
 msgstr ""
-"LiVES ei pystynyt kaappaamaan tätä kuvaa\n"
-"\n"
 
 #: src/main.c:2052
 msgid ""
@@ -570,6 +561,9 @@ msgid ""
 "LiVES was unable to locate 'sox'. Some audio features may not work. You "
 "should install 'sox'.\n"
 msgstr ""
+"\n"
+"LiVES ei löytänyt ohjelmaa 'sox'. Jotkin ääniominaisuudet eivät välttämättä "
+"toimi. Sinun tulisi asentaa 'sox'.\n"
 
 #: src/main.c:2077
 #, c-format
@@ -680,7 +674,7 @@ msgid ""
 msgstr ""
 
 #: src/startup.c:24
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "A directory named\n"
 "%s\n"
@@ -688,14 +682,9 @@ msgid ""
 "\n"
 "(Free space = %s)\n"
 msgstr ""
-"Kansio nimeltä\n"
-"%s\n"
-"on jo olemassa. Haluatko käyttää tätä kansiota?\n"
-"\n"
-"(vapaata tilaa = %.2f Gt)\n"
 
 #: src/startup.c:30
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "A directory named\n"
 "%s\n"
@@ -703,14 +692,9 @@ msgid ""
 "LiVES could not write to this directory or read its free space.\n"
 "Please select another location.\n"
 msgstr ""
-"Kansio nimeltä\n"
-"%s\n"
-"on jo olemassa. Haluatko käyttää tätä kansiota?\n"
-"\n"
-"(vapaata tilaa = %.2f Gt)\n"
 
 #: src/startup.c:46
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "Create the directory\n"
@@ -719,11 +703,6 @@ msgid ""
 "\n"
 "(Free space = %s)"
 msgstr ""
-"Luodaanko kansio\n"
-"%s\n"
-"?\n"
-"\n"
-"(vapaata tilaa = %.2f Gt)"
 
 #: src/startup.c:51
 #, c-format
@@ -897,7 +876,7 @@ msgstr ""
 
 #: src/startup.c:674
 msgid "Checking if sox can convert audio"
-msgstr ""
+msgstr "Tarkistetaan, voiko sox muuntaa ääntä"
 
 #: src/startup.c:697
 msgid "Unable to allocate 176400 bytes memory."
@@ -929,7 +908,7 @@ msgstr ""
 
 #: src/startup.c:801
 msgid "Checking if mplayer can convert audio"
-msgstr ""
+msgstr "Tarkistetaan, voiko mplayer muuntaa ääntä"
 
 #: src/startup.c:811
 msgid "You should install mplayer with pcm/wav support"
@@ -1258,9 +1237,8 @@ msgid "LiVES: - Open Location"
 msgstr "LiVES: - Avaa sijainti"
 
 #: src/interface.c:1716
-#, fuzzy
 msgid "LiVES: - Open Youtube Clip"
-msgstr "LiVES: - Nimeä leike uudelleen"
+msgstr ""
 
 #: src/interface.c:1722
 msgid ""
@@ -1293,9 +1271,8 @@ msgid "URL : "
 msgstr "URL : "
 
 #: src/interface.c:1751
-#, fuzzy
 msgid "Youtube URL : "
-msgstr "URL : "
+msgstr ""
 
 #: src/interface.c:1771
 msgid "Do not send bandwidth information"
@@ -1360,9 +1337,8 @@ msgid "LiVES: - Enter Set Name"
 msgstr "LiVES: - Nimeä leikesarja"
 
 #: src/interface.c:2027
-#, fuzzy
 msgid "LiVES: - Enter a Set Name to Reload"
-msgstr "LiVES: - Nimeä leikesarja"
+msgstr ""
 
 #: src/interface.c:2030
 msgid "LiVES: - Choose a Working Directory"
@@ -1686,27 +1662,24 @@ msgstr ""
 "Haluatko yrittää sen palautusta?\n"
 
 #: src/interface.c:3727
-#, fuzzy
 msgid "LiVES: - Disk Recovery Options"
-msgstr "LiVES:- Laitteen tiedot"
+msgstr ""
 
 #: src/interface.c:3772
 msgid "Delete _Orphaned Clips"
 msgstr ""
 
 #: src/interface.c:3799
-#, fuzzy
 msgid "Clear _Backup Files from Closed Clips"
-msgstr "Poista aikajanan _merkit"
+msgstr ""
 
 #: src/interface.c:3829
 msgid "Remove Sets which have _Layouts but no Clips"
 msgstr ""
 
 #: src/interface.c:3852
-#, fuzzy
 msgid "_Reset to Defaults"
-msgstr "_Palauta arvot"
+msgstr ""
 
 #: src/interface.c:3859
 msgid "_Accept"
@@ -1730,25 +1703,21 @@ msgid "Please enter a valid URL for the download.\n"
 msgstr ""
 
 #: src/callbacks.c:772
-#, fuzzy, c-format
+#, c-format
 msgid "Downloading %s to %s..."
-msgstr "Ladataan automaattisesti leikesarja %s..."
+msgstr ""
 
 #: src/callbacks.c:800
 msgid "Downloading clip"
 msgstr ""
 
 #: src/callbacks.c:822
-#, fuzzy
 msgid ""
 "\n"
 "LiVES was unable to download the clip.\n"
 "Please check the clip URL and make sure you have \n"
 "the latest youtube-dl installed.\n"
 msgstr ""
-"\n"
-"LiVES ei pystynyt kirjoittamaan pientä tiedostoa /tmp-kansioon\n"
-"Tarkista että sinulla on kirjoitusoikeus /tmp-kansioon ja yritä uudelleen.\n"
 
 #: src/callbacks.c:969 src/callbacks.c:1004
 msgid "This file"
@@ -1847,9 +1816,9 @@ msgstr ""
 "Haluatko varmasti tehdä tämän?\n"
 
 #: src/callbacks.c:1582
-#, fuzzy, c-format
+#, c-format
 msgid "Deleting set %s..."
-msgstr "Poistetaan leikesarja..."
+msgstr ""
 
 #: src/callbacks.c:1584
 msgid "Deleting set..."
@@ -2129,9 +2098,9 @@ msgid "Loading clips from set %s"
 msgstr "Ladataan leikkeet leikesarjasta %s"
 
 #: src/callbacks.c:5004
-#, fuzzy, c-format
+#, c-format
 msgid "%d clips and %d layouts were recovered from set (%s).\n"
-msgstr "%d leike(ttä) palautettiin leikesarjasta (%s).\n"
+msgstr ""
 
 #: src/callbacks.c:5257
 msgid ""
@@ -2150,14 +2119,13 @@ msgid "Cleaning up disk space..."
 msgstr ""
 
 #: src/callbacks.c:5323
-#, fuzzy
 msgid "Recovering disk space"
-msgstr "Palautetaan tiedostoja"
+msgstr ""
 
 #: src/callbacks.c:5367
-#, fuzzy, c-format
+#, c-format
 msgid "%s of disk space was recovered.\n"
-msgstr "Palautettiin %d Mt levytilaa.\n"
+msgstr ""
 
 #: src/callbacks.c:5423
 msgid "Resetting frame rates and frame values..."
@@ -2392,9 +2360,8 @@ msgid "Reversing clipboard"
 msgstr "Käännetään leikepöydän järjestys"
 
 #: src/callbacks.c:7687
-#, fuzzy
 msgid "LiVES: Load subtitles from..."
-msgstr "Lataa _tekstitykset tiedostosta..."
+msgstr ""
 
 #: src/callbacks.c:7750 src/saveplay.c:805
 #, c-format
@@ -2495,18 +2462,16 @@ msgid "Cancel"
 msgstr "Peruuta"
 
 #: src/callbacks.c:9172
-#, fuzzy
 msgid "Stop"
-msgstr "_Pysäytä"
+msgstr ""
 
 #: src/callbacks.c:9657 src/multitrack.c:11985
 msgid "LiVES: Selected frame"
 msgstr ""
 
 #: src/callbacks.c:9664
-#, fuzzy
 msgid "_Save frame as..."
-msgstr "Tallenna kuva %s-tiedostoon..."
+msgstr ""
 
 #: src/callbacks.c:9908
 #, c-format
@@ -3616,33 +3581,33 @@ msgstr "Näytä toistoikkuna"
 
 #. TRANSLATORS: Exabytes
 #: src/utils.c:242
-#, fuzzy, c-format
+#, c-format
 msgid "%.2f EB"
-msgstr "%.2f s"
+msgstr ""
 
 #. TRANSLATORS: Petabytes
 #: src/utils.c:246
-#, fuzzy, c-format
+#, c-format
 msgid "%.2f PB"
-msgstr "%.2f s"
+msgstr ""
 
 #. TRANSLATORS: Terabytes
 #: src/utils.c:250
-#, fuzzy, c-format
+#, c-format
 msgid "%.2f TB"
-msgstr "%.2f s"
+msgstr ""
 
 #. TRANSLATORS: Gigabytes
 #: src/utils.c:254
-#, fuzzy, c-format
+#, c-format
 msgid "%.2f GB"
-msgstr "%.2f s"
+msgstr ""
 
 #. TRANSLATORS: Megabytes
 #: src/utils.c:258
-#, fuzzy, c-format
+#, c-format
 msgid "%.2f MB"
-msgstr "%.2f s"
+msgstr ""
 
 #. TRANSLATORS: Kilobytes (1024 bytes)
 #: src/utils.c:262
@@ -3787,13 +3752,10 @@ msgstr ""
 "Leikesarjalla pitää olla nimi.\n"
 
 #: src/utils.c:1274
-#, fuzzy
 msgid ""
 "\n"
 "Set names may not be longer than 128 characters.\n"
 msgstr ""
-"\n"
-"Leikesarjan nimi ei saa sisältää välilyöntejä tai merkkejä %s.\n"
 
 #: src/utils.c:1279
 #, c-format
@@ -3995,19 +3957,17 @@ msgid "Subtitles were saved as %s\n"
 msgstr ""
 
 #: src/saveplay.c:1018
-#, fuzzy, c-format
+#, c-format
 msgid "LiVES: Save Frame %d as..."
-msgstr "Tallenna kuva %s-tiedostoon..."
+msgstr ""
 
 #: src/saveplay.c:1021
-#, fuzzy
 msgid "LiVES: Save Frame as..."
-msgstr "Tallenna kuva %s-tiedostoon..."
+msgstr ""
 
 #: src/saveplay.c:1125
-#, fuzzy
 msgid "LiVES: Save Clip as..."
-msgstr "LiVES: - Nimeä leike uudelleen"
+msgstr ""
 
 #: src/saveplay.c:1197
 msgid ""
@@ -4063,9 +4023,9 @@ msgid "Clearing letterbox"
 msgstr ""
 
 #: src/saveplay.c:1882
-#, fuzzy, c-format
+#, c-format
 msgid "File size was %s\n"
-msgstr "Tiedostokoko"
+msgstr ""
 
 #: src/saveplay.c:1971
 msgid "recording aborted by preview.\n"
@@ -4271,19 +4231,16 @@ msgid "question"
 msgstr ""
 
 #: src/dialogs.c:211
-#, fuzzy
 msgid "LiVES: - File Error"
-msgstr "LiVES: - Valitse väri"
+msgstr ""
 
 #: src/dialogs.c:212
-#, fuzzy
 msgid "File Error"
-msgstr "$error"
+msgstr ""
 
 #: src/dialogs.c:214
-#, fuzzy
 msgid "_Abort"
-msgstr "_Tietoja ohjelmasta"
+msgstr ""
 
 #: src/dialogs.c:220
 msgid "_Retry"
@@ -4956,7 +4913,7 @@ msgid "The error value was %d%s\n"
 msgstr ""
 
 #: src/dialogs.c:2599
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "LiVES failed doing the following:\n"
@@ -4964,13 +4921,9 @@ msgid ""
 "Please check your system for errors.\n"
 "%s%s%s"
 msgstr ""
-"\n"
-"LiVES ei pystynyt kirjoittamaan tiedostoon:\n"
-"%s\n"
-"Tarkista tiedoston käyttöoikeudet ja yritä uudestaan."
 
 #: src/dialogs.c:2645
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "LiVES was unable to write to the file\n"
@@ -4978,13 +4931,9 @@ msgid ""
 "Please check for possible error causes.\n"
 "%s"
 msgstr ""
-"\n"
-"LiVES ei pystynyt kirjoittamaan tiedostoon:\n"
-"%s\n"
-"Tarkista tiedoston käyttöoikeudet ja yritä uudestaan."
 
 #: src/dialogs.c:2669
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "LiVES was unable to read from the file\n"
@@ -4992,26 +4941,18 @@ msgid ""
 "Please check for possible error causes.\n"
 "%s"
 msgstr ""
-"\n"
-"LiVES ei pystynyt kirjoittamaan tiedostoon:\n"
-"%s\n"
-"Tarkista tiedoston käyttöoikeudet ja yritä uudestaan."
 
 #: src/dialogs.c:2713
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "LiVES was unable to write to the file\n"
 "%s\n"
 "Please check for possible error causes.\n"
 msgstr ""
-"\n"
-"LiVES ei pystynyt kirjoittamaan tiedostoon:\n"
-"%s\n"
-"Tarkista tiedoston käyttöoikeudet ja yritä uudestaan."
 
 #: src/dialogs.c:2717
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "LiVES was unable to write to the file\n"
@@ -5019,26 +4960,18 @@ msgid ""
 "The error was\n"
 "%s.\n"
 msgstr ""
-"\n"
-"LiVES ei pystynyt kirjoittamaan tiedostoon:\n"
-"%s\n"
-"Tarkista tiedoston käyttöoikeudet ja yritä uudestaan."
 
 #: src/dialogs.c:2748
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "LiVES was unable to read from the file\n"
 "%s\n"
 "Please check for possible error causes.\n"
 msgstr ""
-"\n"
-"LiVES ei pystynyt kirjoittamaan tiedostoon:\n"
-"%s\n"
-"Tarkista tiedoston käyttöoikeudet ja yritä uudestaan."
 
 #: src/dialogs.c:2752
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "LiVES was unable to read from the file\n"
@@ -5046,10 +4979,6 @@ msgid ""
 "The error was\n"
 "%s.\n"
 msgstr ""
-"\n"
-"LiVES ei pystynyt kirjoittamaan tiedostoon:\n"
-"%s\n"
-"Tarkista tiedoston käyttöoikeudet ja yritä uudestaan."
 
 #: src/dialogs.c:2820
 #, c-format
@@ -5088,16 +5017,11 @@ msgid ""
 msgstr ""
 
 #: src/dialogs.c:2861
-#, fuzzy
 msgid ""
 "\n"
 "Abort and exit immediately from LiVES\n"
 "Are you sure ?\n"
 msgstr ""
-"\n"
-"\n"
-"Leikesarja poistetaan levyltä.\n"
-"Haluatko varmasti tehdä tämän?\n"
 
 #: src/dialogs.c:2867
 #, c-format
@@ -5211,15 +5135,13 @@ msgstr ""
 
 #. TRANSLATORS: make sure the menu text matches what is in gui.c
 #: src/dialogs.c:2963
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "\n"
 "Welcome to LiVES version %s !\n"
 "\n"
 msgstr ""
-"Tervetuloa LiVES-versioon %s.\n"
-"\n"
 
 #: src/dialogs.c:2969
 msgid ""
@@ -5375,9 +5297,8 @@ msgid "Audio Volume Controllers"
 msgstr ""
 
 #: src/effects.c:104
-#, fuzzy
 msgid "video analyser"
-msgstr "Toista videota nopeammin"
+msgstr ""
 
 #: src/effects.c:105
 msgid "Video analysers"
@@ -5466,9 +5387,8 @@ msgstr ""
 "Virheilmoitus oli: %s\n"
 
 #: src/effects-weed.c:3356 src/effects-weed.c:3676
-#, fuzzy
 msgid "Some plugin directories"
-msgstr "Sisällytä alikansiot"
+msgstr ""
 
 #: src/effects-weed.c:3512
 #, c-format
@@ -5630,27 +5550,24 @@ msgid "Click to set the colour"
 msgstr "Napsauta asettaaksesi värin"
 
 #: src/paramwindow.c:1538
-#, fuzzy
 msgid "_Red"
-msgstr "_Tee uudestaan"
+msgstr ""
 
 #: src/paramwindow.c:1539
 msgid "The red value (0 - 255)"
 msgstr "Punaisen arvo (0 - 255)"
 
 #: src/paramwindow.c:1540
-#, fuzzy
 msgid "_Green"
-msgstr "Vihreä"
+msgstr ""
 
 #: src/paramwindow.c:1541
 msgid "The green value (0 - 255)"
 msgstr "Vihreän arvo (0 - 255)"
 
 #: src/paramwindow.c:1542
-#, fuzzy
 msgid "_Blue"
-msgstr "Sininen"
+msgstr ""
 
 #: src/paramwindow.c:1543
 msgid "The blue value (0 - 255)"
@@ -6606,18 +6523,13 @@ msgid ""
 msgstr ""
 
 #: src/preferences.c:401
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "\n"
 "\n"
 "(Free space = %s)"
 msgstr ""
-"Luodaanko kansio\n"
-"%s\n"
-"?\n"
-"\n"
-"(vapaata tilaa = %.2f Gt)"
 
 #: src/preferences.c:405
 msgid ""
@@ -7525,9 +7437,9 @@ msgid "Resizing frames 1 to %d"
 msgstr ""
 
 #: src/resample.c:139 src/resample.c:315
-#, fuzzy, c-format
+#, c-format
 msgid "Resizing/letterboxing frames 1 to %d"
-msgstr "Poistetaan kuvat %d - %d%s..."
+msgstr ""
 
 #: src/resample.c:358 src/resample.c:382
 msgid "Resize"
@@ -7849,7 +7761,7 @@ msgstr ""
 "Päivitetään näppäinkarttatiedosto %s..."
 
 #: src/rte_window.c:219
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "\n"
@@ -7857,11 +7769,6 @@ msgid ""
 "%s\n"
 "Error was %s\n"
 msgstr ""
-"\n"
-"\n"
-"Ei voitu kirjoittaa näppäinkarttatiedostoon\n"
-"%s\n"
-"Virhekoodi on %d\n"
 
 #: src/rte_window.c:286
 #, c-format
@@ -9413,11 +9320,10 @@ msgid "Started jack audio reader.\n"
 msgstr ""
 
 #: src/jack.c:1474
-#, fuzzy
 msgid ""
 "\n"
 "Connection to jack audio was reset.\n"
-msgstr "Yhdistetään jack-välityspalvelimeen..."
+msgstr ""
 
 #: src/pulse.c:85
 msgid ""
@@ -9436,23 +9342,20 @@ msgid ""
 msgstr ""
 
 #: src/pulse.c:93
-#, fuzzy
 msgid ""
 "\n"
 "Unable to connect to pulse audio server.\n"
-msgstr "JACK-palvelimeen ei voitu muodostaa yhteyttä\n"
+msgstr ""
 
 #: src/pulse.c:98
-#, fuzzy
 msgid "LiVES will exit and you can choose another audio player.\n"
-msgstr "LiVES: - Valitse äänisoitin"
+msgstr ""
 
 #: src/pulse.c:1001
-#, fuzzy
 msgid ""
 "\n"
 "Connection to pulse audio was reset.\n"
-msgstr "Yhdistetään jack-välityspalvelimeen..."
+msgstr ""
 
 #: src/colourspace.c:1007
 msgid "unclamped"
@@ -9839,14 +9742,12 @@ msgid "Adjust contrast"
 msgstr "Kontrastin säätö"
 
 #: /usr/share/lives/plugins/effects/rendered/contrast.script:0
-#, fuzzy
 msgid "Adjusting contrast of"
-msgstr "Kontrastin säätö"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
-#, fuzzy
 msgid "Adjusting noise on"
-msgstr "Kontrastin säätö"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
 msgid "Applying charcoal to"
@@ -9869,38 +9770,32 @@ msgid "B/W thresholding"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/blank_frames.script:0
-#, fuzzy
 msgid "Blank _Colour"
-msgstr "Kuvan _väri"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/blank_frames.script:0
-#, fuzzy
 msgid "Blank frames"
-msgstr "Luo tyhjiä kuvia"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/blank_frames.script:0
-#, fuzzy
 msgid "Blanking"
-msgstr "Varmuuskopioidaan"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
-#, fuzzy
 msgid "Block _height"
-msgstr "Kuvan _korkeus"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
-#, fuzzy
 msgid "Block _width"
-msgstr "Kuvan _korkeus"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
 msgid "Blur"
 msgstr "Pehmennys"
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
-#, fuzzy
 msgid "Bluring"
-msgstr "Pehmennys"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
 msgid "Border _Colour"
@@ -9919,14 +9814,12 @@ msgid "Brightness change"
 msgstr "Kirkkauden säätö"
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
-#, fuzzy
 msgid "Brightness end"
-msgstr "_Lopetuskirkkaus"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
-#, fuzzy
 msgid "Brightness start"
-msgstr "A_loituskirkkaus"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
@@ -9959,24 +9852,20 @@ msgid "Charcoal"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
-#, fuzzy
 msgid "Checkerboard"
-msgstr "Nauhoitus"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
-#, fuzzy
 msgid "Checkerboarding"
-msgstr "Nauhoitus"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
-#, fuzzy
 msgid "Clipboard _over selection"
-msgstr "_Yhdistä leikepöydän sisältö valintaan..."
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
-#, fuzzy
 msgid "Clipboard _under selection"
-msgstr "_Yhdistä leikepöydän sisältö valintaan..."
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 msgid "Colorize"
@@ -9987,24 +9876,20 @@ msgid "Colorizing"
 msgstr "Sävytetään"
 
 #: /usr/share/lives/plugins/effects/rendered/cycle.script:0
-#, fuzzy
 msgid "Colour cycle"
-msgstr "Värin korvaus"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/cycle.script:0
-#, fuzzy
 msgid "Colour cycling"
-msgstr "Sävytetään"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
-#, fuzzy
 msgid "Colour filter"
-msgstr "Värin korvaus"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
-#, fuzzy
 msgid "Colour filtering"
-msgstr "Sävytetään"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
 msgid "Colour replace"
@@ -10015,19 +9900,16 @@ msgid "Constant noise level"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/cycle.script:0
-#, fuzzy
 msgid "Cycle _Step"
-msgstr "_Käynnistä"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/deinterlace.script:0
-#, fuzzy
 msgid "Deinterlace"
-msgstr "Käytä lomituksen poistoa"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/deinterlace.script:0
-#, fuzzy
 msgid "Deinterlacing"
-msgstr "Käytä lomituksen poistoa"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/despekle.script:0
 msgid "Despeckle"
@@ -10079,55 +9961,45 @@ msgid "End pos_Y:"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/enhance.script:0
-#, fuzzy
 msgid "Enhance"
-msgstr "Peruuta"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/enhance.script:0
-#, fuzzy
 msgid "Enhancing"
-msgstr "Peruuta"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
-#, fuzzy
 msgid "Fade _colour"
-msgstr "Salaman _väri"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
-#, fuzzy
 msgid "Fade _end"
-msgstr "_Häivytystaso"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
-#, fuzzy
 msgid "Fade _in"
-msgstr "Häivytä alusta  "
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
-#, fuzzy
 msgid "Fade _out"
-msgstr "Häivytä lopusta  "
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
-#, fuzzy
 msgid "Fade video in or out"
-msgstr "Häivytä alusta  "
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
-#, fuzzy
 msgid "Fade"
-msgstr "Häivytä alusta  "
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
-#, fuzzy
 msgid "Fading video"
-msgstr "Pysäytä nauhoitus"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
-#, fuzzy
 msgid "Fading"
-msgstr "Pysäytä nauhoitus"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 msgid "Fina_l frame"
@@ -10158,14 +10030,12 @@ msgid "Frame _height"
 msgstr "Kuvan _korkeus"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
-#, fuzzy
 msgid "Frame _in frame position of clipboard..."
-msgstr "Luo kuvat leikepöydälle"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
-#, fuzzy
 msgid "Frame _in frame position of top frame..."
-msgstr "Luo kuvat leikepöydälle"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 msgid "Frame _width"
@@ -10176,19 +10046,16 @@ msgid "Frames _per second (FPS)"
 msgstr "Kuvaa _sekunnissa (FPS)"
 
 #: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
-#, fuzzy
 msgid "Gamma _end"
-msgstr "_Häivytystaso"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
-#, fuzzy
 msgid "Gamma _start"
-msgstr "_Käynnistä"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
-#, fuzzy
 msgid "Gamma change"
-msgstr "_Hylkää muutokset"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
 msgid "Generate blank frames"
@@ -10231,34 +10098,28 @@ msgid "Horizontal shifting"
 msgstr "Siirretään vaakasuunnassa"
 
 #: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
-#, fuzzy
 msgid "Hue _end"
-msgstr "_Häivytystaso"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
-#, fuzzy
 msgid "Hue _start"
-msgstr "_Käynnistä"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
-#, fuzzy
 msgid "Hue change"
-msgstr "_Hylkää muutokset"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
-#, fuzzy
 msgid "Hue end"
-msgstr "_Häivytystaso"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
-#, fuzzy
 msgid "Hue start"
-msgstr "_Käynnistä"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
-#, fuzzy
 msgid "Image overlay"
-msgstr "Tekstitys"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
 msgid "Init _Alpha:"
@@ -10281,9 +10142,8 @@ msgid "Jumbling"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
-#, fuzzy
 msgid "Keep _Centered"
-msgstr "_X-keskipiste"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
 msgid "Keep image aspect _ratio"
@@ -10294,34 +10154,28 @@ msgid "L_eft"
 msgstr "_Vasemmalta"
 
 #: /usr/share/lives/plugins/effects/rendered/monochrome.script:0
-#, fuzzy
 msgid "Making monochrome"
-msgstr "harmaasävy"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
-#, fuzzy
 msgid "Modulate (BSH)"
-msgstr "Pikselöidään"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
-#, fuzzy
 msgid "Modulating"
-msgstr "Pikselöidään"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/monochrome.script:0
-#, fuzzy
 msgid "Monochrome"
-msgstr "harmaasävy"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/negate.script:0
-#, fuzzy
 msgid "Negate"
-msgstr "Liitetään"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/negate.script:0
-#, fuzzy
 msgid "Negating"
-msgstr "Liitetään"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
 msgid "Noise type"
@@ -10344,9 +10198,8 @@ msgid "Number of _frames"
 msgstr "Kuvien _määrä"
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
-#, fuzzy
 msgid "Overlaying an image onto video"
-msgstr "Tekstitetään"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
 msgid "Overlaying text on"
@@ -10365,14 +10218,12 @@ msgid "Pixilating"
 msgstr "Pikselöidään"
 
 #: /usr/share/lives/plugins/effects/rendered/posterize.script:0
-#, fuzzy
 msgid "Posterize"
-msgstr "Sävytetään"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/posterize.script:0
-#, fuzzy
 msgid "Posterizing"
-msgstr "Sävytetään"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/randomzoom.script:0
 msgid "Random zoom"
@@ -10403,9 +10254,8 @@ msgid "Rotate Clip"
 msgstr "Kierrä leikettä"
 
 #: /usr/share/lives/plugins/effects/rendered/rotate.script:0
-#, fuzzy
 msgid "Rotating"
-msgstr "Liitetään"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
@@ -10413,29 +10263,24 @@ msgid "S_tart %"
 msgstr "Aloitus-%"
 
 #: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
-#, fuzzy
 msgid "Saturation _end"
-msgstr "Käynnistä OMC LiVESin käynnistyksen yhteydessä"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
-#, fuzzy
 msgid "Saturation _start"
-msgstr "Käynnistä OMC LiVESin käynnistyksen yhteydessä"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
-#, fuzzy
 msgid "Saturation change"
-msgstr "Käynnistä OMC LiVESin käynnistyksen yhteydessä"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
-#, fuzzy
 msgid "Saturation end"
-msgstr "Käynnistä OMC LiVESin käynnistyksen yhteydessä"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
-#, fuzzy
 msgid "Saturation start"
-msgstr "Käynnistä OMC LiVESin käynnistyksen yhteydessä"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/sepia.script:0
 msgid "Sepia"
@@ -10458,19 +10303,16 @@ msgid "Shrinking/Expanding"
 msgstr "Kutistetaan/venytetään"
 
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
-#, fuzzy
 msgid "Skip forward"
-msgstr "Toista eteenpäin"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/solarize.script:0
-#, fuzzy
 msgid "Solarize"
-msgstr "Sävytys"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/solarize.script:0
-#, fuzzy
 msgid "Solarizing"
-msgstr "Sävytetään"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
 msgid "Spin"
@@ -10489,36 +10331,30 @@ msgid "Splicing"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/spread.script:0
-#, fuzzy
 msgid "Spread"
-msgstr "Pysäytä nauhoitus"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/spread.script:0
-#, fuzzy
 msgid "Spreading"
-msgstr "Pysäytä nauhoitus"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/solarize.script:0
-#, fuzzy
 msgid "Step _Value"
-msgstr "A_loitusarvo"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
-#, fuzzy
 msgid "Step per _Frame"
-msgstr "    Kuv_a"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
-#, fuzzy
 msgid "Swirl _start"
-msgstr "Aloitus-%"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
-#, fuzzy
 msgid "Swirl s_tep"
-msgstr "Pyörre"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
 msgid "Swirl"
@@ -10553,14 +10389,12 @@ msgid "Tunneling"
 msgstr "Tunneloidaan"
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
-#, fuzzy
 msgid "Use _Natural Size"
-msgstr "Käytä kuva-alueen _pehmennystä kokoa muutettaessa"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
-#, fuzzy
 msgid "Use _Natural image size"
-msgstr "Käytä kuva-alueen _pehmennystä kokoa muutettaessa"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/flip.script:0
 msgid "Vertical flipping"
@@ -10596,9 +10430,8 @@ msgid "_Black and white camera"
 msgstr "_Mustavalkokamera"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
-#, fuzzy
 msgid "_Black is transparent"
-msgstr "Jack-välityspalvelu"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 msgid "_Bottom"
@@ -10609,9 +10442,8 @@ msgid "_Calculate"
 msgstr "_Laske"
 
 #: /usr/share/lives/plugins/effects/rendered/cycle.script:0
-#, fuzzy
 msgid "_Cycle Start"
-msgstr "_Käynnistä"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/contrast.script:0
 msgid "_Decrease Contrast"
@@ -10636,9 +10468,8 @@ msgid "_End Size Y:"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/spread.script:0
-#, fuzzy
 msgid "_End amount"
-msgstr "Lo_petusväri"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/dream.script:0
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
@@ -10647,9 +10478,8 @@ msgstr "_Häivytystaso"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
-#, fuzzy
 msgid "_Fade start"
-msgstr "_Säde"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
@@ -10684,18 +10514,16 @@ msgid "_Hold for"
 msgstr "_Pysäytyksen kesto"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
-#, fuzzy
 msgid "_Horizontal segments"
-msgstr "Siirretään vaakasuunnassa"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
 msgid "_Image File"
 msgstr "K_uvatiedosto"
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
-#, fuzzy
 msgid "_Image"
-msgstr "K_uvatiedosto"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/contrast.script:0
 msgid "_Increase Contrast"
@@ -10731,9 +10559,8 @@ msgid "_Midtone"
 msgstr "_Keskisävy"
 
 #: /usr/share/lives/plugins/effects/rendered/negate.script:0
-#, fuzzy
 msgid "_Negate"
-msgstr "Liitetään"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
@@ -10742,23 +10569,20 @@ msgid "_Number of frames"
 msgstr "Kuvien _määrä"
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
-#, fuzzy
 msgid "_Offset X"
-msgstr "_X-sijainti"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
-#, fuzzy
 msgid "_Offset Y"
-msgstr "_X-sijainti"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 msgid "_Other Center"
 msgstr "Muu ke_skipiste"
 
 #: /usr/share/lives/plugins/effects/rendered/rotate.script:0
-#, fuzzy
 msgid "_Other"
-msgstr "Muu ke_skipiste"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
@@ -10766,14 +10590,12 @@ msgid "_Point size"
 msgstr "Ki_rjasinkoko"
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
-#, fuzzy
 msgid "_Radius end"
-msgstr "_Säde"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
-#, fuzzy
 msgid "_Radius start"
-msgstr "_Säde"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/emboss.script:0
 #: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
@@ -10783,9 +10605,8 @@ msgstr "_Säde"
 
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
-#, fuzzy
 msgid "_Random colour each frame"
-msgstr "Luodaan värillisiä kuvia"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/dream.script:0
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
@@ -10805,29 +10626,24 @@ msgid "_Shrink rotated window to fit frame size"
 msgstr "_Kutista pyöräytettävä ikkuna ruutuun sopivaksi"
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
-#, fuzzy
 msgid "_Sigma end"
-msgstr "_Käynnistä"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
-#, fuzzy
 msgid "_Sigma start"
-msgstr "_Käynnistä"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
-#, fuzzy
 msgid "_Skip ahead"
-msgstr "Ohitettu"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/negate.script:0
-#, fuzzy
 msgid "_Skip"
-msgstr "Ohitettu"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
-#, fuzzy
 msgid "_Source Colour"
-msgstr "A_loitusväri"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
 msgid "_Splice"
@@ -10845,9 +10661,8 @@ msgid "_Start Value"
 msgstr "A_loitusarvo"
 
 #: /usr/share/lives/plugins/effects/rendered/spread.script:0
-#, fuzzy
 msgid "_Start amount"
-msgstr "A_loitusarvo"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
@@ -10855,9 +10670,8 @@ msgid "_Stroke colour"
 msgstr "P_iirtoväri"
 
 #: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
-#, fuzzy
 msgid "_Target Colour"
-msgstr "A_loitusväri"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
@@ -10869,28 +10683,24 @@ msgid "_Time (seconds)"
 msgstr "_Aika (sekunteja)"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
-#, fuzzy
 msgid "_Top left is clipboard"
-msgstr "Kopioidaan leikepöydälle"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 msgid "_Top"
 msgstr "Yl_häältä"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
-#, fuzzy
 msgid "_Vertical segments"
-msgstr "Siirretään pystysuunnassa"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/wave.script:0
-#, fuzzy
 msgid "_Wavemax"
-msgstr "Aallot"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
-#, fuzzy
 msgid "_White is transparent"
-msgstr "Jack-välityspalvelu"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
@@ -10906,9 +10716,8 @@ msgid "_X End"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
-#, fuzzy
 msgid "_X Start"
-msgstr "_Käynnistä"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
@@ -10924,9 +10733,8 @@ msgid "_Y End"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
-#, fuzzy
 msgid "_Y Start"
-msgstr "_Käynnistä"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
@@ -10942,51 +10750,44 @@ msgid "_then"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/blank_frames.script:0
-#, fuzzy
 msgid "blank_frames"
-msgstr "Luo tyhjiä kuvia"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
 msgid "blur"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/brightness_change.script:0
-#, fuzzy
 msgid "brightness_change"
-msgstr "Kirkkauden säätö"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
 msgid "charcoal"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
-#, fuzzy
 msgid "colorize"
-msgstr "Sävytys"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
-#, fuzzy
 msgid "colour_filter"
-msgstr "Värin korvaus"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
-#, fuzzy
 msgid "colour_replace"
-msgstr "Värin korvaus"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/contrast.script:0
-#, fuzzy
 msgid "contrast"
-msgstr "Kontrastin säätö"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/cycle.script:0
 msgid "cycle"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/deinterlace.script:0
-#, fuzzy
 msgid "deinterlace"
-msgstr "Käytä lomituksen poistoa"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/despekle.script:0
 msgid "despeckle"
@@ -11005,19 +10806,16 @@ msgid "emboss"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/enhance.script:0
-#, fuzzy
 msgid "enhance"
-msgstr "Peruuta"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
-#, fuzzy
 msgid "every"
-msgstr "_Ei koskaan"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
-#, fuzzy
 msgid "fade_in_out"
-msgstr "Häivytä lopusta  "
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
 msgid "fc"
@@ -11032,86 +10830,72 @@ msgid "flop"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
-#, fuzzy
 msgid "frame_calculator"
-msgstr "Kuvalaskuri"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
-#, fuzzy
 msgid "gamma_change"
-msgstr "_FPS-muutokset"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
-#, fuzzy
 msgid "gen_blank_frames"
-msgstr "Luo tyhjiä kuvia"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
-#, fuzzy
 msgid "gen_clip_from_image"
-msgstr "Luo leike kuvatiedostosta"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
-#, fuzzy
 msgid "gen_coloured_frames"
-msgstr "Luo värillisiä kuvia"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 msgid "gen_text"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
-#, fuzzy
 msgid "hue_change"
-msgstr "_FPS-muutokset"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
-#, fuzzy
 msgid "image_overlay"
-msgstr "Tekstitys"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/jumble.script:0
 msgid "jumble"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
-#, fuzzy
 msgid "modulate"
-msgstr "Pikselöidään"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/monochrome.script:0
 msgid "monochrome"
 msgstr "harmaasävy"
 
 #: /usr/share/lives/plugins/effects/rendered/negate.script:0
-#, fuzzy
 msgid "negate"
-msgstr "Liitetään"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
-#, fuzzy
 msgid "noisify"
-msgstr "Kohina"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/normalize.script:0
-#, fuzzy
 msgid "normalize"
-msgstr "Normalisointi"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
-#, fuzzy
 msgid "photo_still"
-msgstr "Valokuva/pysäytyskuva"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
-#, fuzzy
 msgid "pixilate"
-msgstr "Pikselöinti"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/posterize.script:0
-#, fuzzy
 msgid "posterize"
-msgstr "Sävytetään"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/randomzoom.script:0
 msgid "randomzoom"
@@ -11126,81 +10910,68 @@ msgid "rotate"
 msgstr "kiertäminen"
 
 #: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
-#, fuzzy
 msgid "saturation_change"
-msgstr "Käynnistä OMC LiVESin käynnistyksen yhteydessä"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/sepia.script:0
 msgid "sepia"
 msgstr "seepia"
 
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
-#, fuzzy
 msgid "shift_horizontal"
-msgstr "Siirto vaakasuunnassa"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
-#, fuzzy
 msgid "shift_vertical"
-msgstr "Siirto pystysuunnassa"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
-#, fuzzy
 msgid "shrink_expand"
-msgstr "Kutistus/venytys"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
-#, fuzzy
 msgid "skip_forwards"
-msgstr "Toista eteenpäin"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/solarize.script:0
-#, fuzzy
 msgid "solarize"
-msgstr "Sävytys"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
 msgid "spin"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/spread.script:0
-#, fuzzy
 msgid "spread"
-msgstr "Pysäytä nauhoitus"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
-#, fuzzy
 msgid "swirl"
-msgstr "Pyörre"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
 msgid "textover"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
-#, fuzzy
 msgid "transition_bwthresh"
-msgstr "vaihtuma"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
-#, fuzzy
 msgid "transition_checkerboard"
-msgstr "vaihtuma"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
-#, fuzzy
 msgid "transition_fade2"
-msgstr "vaihtuma"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
-#, fuzzy
 msgid "transition_splice"
-msgstr "vaihtuma"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
-#, fuzzy
 msgid "trim_frames"
-msgstr "_Kuvia"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
 msgid "tunnel"
@@ -11211,11 +10982,8 @@ msgid "wave"
 msgstr ""
 
 #: /usr/bin/smogrify:0
-#, fuzzy
 msgid "Unable to open output file !"
 msgstr ""
-"\n"
-"Asettelutiedostoa %s ei voitu ladata\n"
 
 #: /usr/bin/smogrify:0
 msgid "LiVES could not write to $nfile."
@@ -11284,52 +11052,3 @@ msgstr ""
 #: /usr/bin/smogrify:0
 msgid "$error"
 msgstr "$error"
-
-#, fuzzy
-#~ msgid ""
-#~ "\n"
-#~ "Unable to connect to pulse audio server\n"
-#~ msgstr "JACK-palvelimeen ei voitu muodostaa yhteyttä\n"
-
-#~ msgid "Red"
-#~ msgstr "Punainen"
-
-#, fuzzy
-#~ msgid ""
-#~ "\n"
-#~ "LiVES was unable to write %d bytes of %d to the file\n"
-#~ "%s\n"
-#~ "Please check for possible error causes.\n"
-#~ msgstr ""
-#~ "\n"
-#~ "LiVES ei pystynyt kirjoittamaan tiedostoon:\n"
-#~ "%s\n"
-#~ "Tarkista tiedoston käyttöoikeudet ja yritä uudestaan."
-
-#, fuzzy
-#~ msgid ""
-#~ "\n"
-#~ "\n"
-#~ "Unable to write filter defaults file\n"
-#~ "%s\n"
-#~ "Error code %d\n"
-#~ msgstr ""
-#~ "\n"
-#~ "\n"
-#~ "Ei voitu kirjoittaa näppäinkarttatiedostoon\n"
-#~ "%s\n"
-#~ "Virhekoodi on %d\n"
-
-#, fuzzy
-#~ msgid ""
-#~ "\n"
-#~ "\n"
-#~ "Unable to write generator sizes file\n"
-#~ "%s\n"
-#~ "Error code %d\n"
-#~ msgstr ""
-#~ "\n"
-#~ "\n"
-#~ "Ei voitu kirjoittaa näppäinkarttatiedostoon\n"
-#~ "%s\n"
-#~ "Virhekoodi on %d\n"

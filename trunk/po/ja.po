@@ -8,16 +8,16 @@ msgstr ""
 "Project-Id-Version: ja\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2012-01-14 10:06-0300\n"
-"PO-Revision-Date: 2011-11-24 01:44+0000\n"
-"Last-Translator: Takashi Sakamoto <Unknown>\n"
+"POT-Creation-Date: 2012-01-14 10:22-0300\n"
+"PO-Revision-Date: 2012-01-11 23:42+0000\n"
+"Last-Translator: Shushi Kurose <md81bird@hitaki.net>\n"
 "Language-Team: Japanese <ja@li.org>\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Launchpad-Export-Date: 2011-11-26 11:32+0000\n"
-"X-Generator: Launchpad (build 14381)\n"
+"X-Launchpad-Export-Date: 2012-01-14 13:17+0000\n"
+"X-Generator: Launchpad (build 14664)\n"
 
 #: src/main.c:118
 msgid ""
@@ -234,7 +234,7 @@ msgstr "xwininfoは見つかりませんでした..."
 
 #: src/main.c:1550
 msgid "UNKNOWN - please patch me !"
-msgstr ""
+msgstr "不明 - パッチを送ってください！"
 
 #: src/main.c:1553
 #, c-format
@@ -341,7 +341,7 @@ msgstr "-recover : 読み込み時にクラッシュからの復元を強制す�
 
 #: src/main.c:1935
 msgid "-nothreaddialog  : doe nothing - retained for backwards compatibility\n"
-msgstr ""
+msgstr "-nothreaddialog  : 何も行いません - 後方互換性のために残しています\n"
 
 #: src/main.c:1936
 msgid "-nogui           : do not show the gui\n"
@@ -502,22 +502,18 @@ msgstr ""
 "もう一度試してください。\n"
 
 #: src/main.c:2037
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Please check the <tempdir> setting in \n"
 "%s/.lives\n"
 "and try again.\n"
 msgstr ""
-"\n"
-"LiVESは下記の一時ディレクトリを使用できませんでした。\n"
-"%s\n"
-"\n"
-"下記の中にある <tempdir> 設定を確認した上で \n"
-"%s/.lives\n"
+"%s/.lives にある <tempdir> の\n"
+"設定を確認して\n"
 "再度試してください。\n"
 
 #: src/main.c:2044
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "LiVES was unable to use the temporary directory\n"
@@ -525,8 +521,11 @@ msgid ""
 "\n"
 "%s"
 msgstr ""
-"LiVESはこの画像をキャプチャできませんでした\n"
 "\n"
+"LiVES は以下の一時ディレクトリを利用できませんでした\n"
+"%s\n"
+"\n"
+"%s"
 
 #: src/main.c:2052
 msgid ""
@@ -621,7 +620,7 @@ msgstr "セット %s を自動読み込み中..."
 #. TRANSLATORS: localised name may be used here
 #: src/main.c:2278
 msgid "LiVES"
-msgstr ""
+msgstr "LiVES"
 
 #: src/main.c:2440
 #, c-format
@@ -716,7 +715,7 @@ msgstr ""
 "「設定」の再生オプションを調整して、再度試してください。\n"
 
 #: src/startup.c:24
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "A directory named\n"
 "%s\n"
@@ -724,14 +723,14 @@ msgid ""
 "\n"
 "(Free space = %s)\n"
 msgstr ""
-"以下のディレクトリはすでに存在しています。\n"
-"%s \n"
-"このディレクトリを使用しますか？\n"
+"ディレクトリ名\n"
+"%s\n"
+"は既に存在します。このディレクトリを使用しますか？\n"
 "\n"
-"(%.2f GB の空き領域があります)\n"
+"(空き容量 = %s)\n"
 
 #: src/startup.c:30
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "A directory named\n"
 "%s\n"
@@ -739,14 +738,14 @@ msgid ""
 "LiVES could not write to this directory or read its free space.\n"
 "Please select another location.\n"
 msgstr ""
-"以下のディレクトリはすでに存在しています。\n"
-"%s \n"
-"このディレクトリを使用しますか？\n"
-"\n"
-"(%.2f GB の空き領域があります)\n"
+"ディレクトリ名\n"
+"%s\n"
+"はすでに存在します。\n"
+"LiVES はこのディレクトリに書き込んだり、空き領域を読み込めませんでした。\n"
+"他の場所を選択してください。\n"
 
 #: src/startup.c:46
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "Create the directory\n"
@@ -755,11 +754,12 @@ msgid ""
 "\n"
 "(Free space = %s)"
 msgstr ""
-"以下にディレクトリを作成します\n"
-"%s\n"
-"よろしいですか?\n"
 "\n"
-"（%.2f GB の空き領域があります）"
+"ディレクトリ\n"
+"%s\n"
+"を作成しますか？\n"
+"\n"
+"(空き容量 = %s)"
 
 #: src/startup.c:51
 #, c-format
@@ -769,6 +769,10 @@ msgid ""
 "%s\n"
 "Please try again and choose a different location.\n"
 msgstr ""
+"\n"
+"LiVES はディレクトリに書き込めませんでした\n"
+"%s\n"
+"再度試して、他の場所を指定してください。\n"
 
 #: src/startup.c:88
 msgid "Directory name is too long !"
@@ -940,17 +944,17 @@ msgstr "soxの音声変換機能のチェック"
 
 #: src/startup.c:697
 msgid "Unable to allocate 176400 bytes memory."
-msgstr ""
+msgstr "176400 バイトのメモリを割り当てられません。"
 
 #: src/startup.c:709
-#, fuzzy, c-format
+#, c-format
 msgid "Unable to write to: %s"
-msgstr "ジェネレーター%sを開始できません。\n"
+msgstr "以下に書き込めません: %s"
 
 #: src/startup.c:723 src/startup.c:849
 #, c-format
 msgid "Command failed: %s"
-msgstr ""
+msgstr "コマンドの実行に失敗しました: %s"
 
 #: src/startup.c:744
 msgid "You should install sox_fmt_all or similar"
@@ -1056,9 +1060,8 @@ msgid "Start in _Clip Edit mode"
 msgstr "クリップ編集モードで起動(_C)"
 
 #: src/startup.c:1042
-#, fuzzy
 msgid "This is the best choice for simple editing tasks and for VJs\n"
-msgstr "簡単な映像編集やVJを行う場合は、こちらを選択してください。\n"
+msgstr "これは単純な編集作業や VJ 向けに最も良い選択です。\n"
 
 #: src/startup.c:1054
 msgid "Start in _Multitrack mode"
@@ -1311,9 +1314,8 @@ msgid "LiVES: - Open Location"
 msgstr "LiVES: - 場所を開く"
 
 #: src/interface.c:1716
-#, fuzzy
 msgid "LiVES: - Open Youtube Clip"
-msgstr "LiVES: - クリップの名称変更"
+msgstr "LiVES: - Youtube クリップを開く"
 
 #: src/interface.c:1722
 msgid ""
@@ -1339,6 +1341,12 @@ msgid ""
 "Please make sure you have the latest version of that tool installed.\n"
 "\n"
 msgstr ""
+"\n"
+"\n"
+"Youtube からクリップを開くには、LiVES は youtube-dl を使ってまずダウンロード"
+"します。\n"
+"このツールの最新バージョンをインストールしているか確認してください。\n"
+"\n"
 
 #: src/interface.c:1734
 msgid ""
@@ -1346,15 +1354,17 @@ msgid ""
 "E.g: http://www.youtube.com/watch?v=WCR6f6WzjP8\n"
 "\n"
 msgstr ""
+"以下のようなクリップの URL を入力してください。\n"
+"例: http://www.youtube.com/watch?v=WCR6f6WzjP8\n"
+"\n"
 
 #: src/interface.c:1749
 msgid "URL : "
 msgstr "URL : "
 
 #: src/interface.c:1751
-#, fuzzy
 msgid "Youtube URL : "
-msgstr "URL : "
+msgstr "Youtube URL : "
 
 #: src/interface.c:1771
 msgid "Do not send bandwidth information"
@@ -1366,19 +1376,19 @@ msgstr "ストリームの取得に問題がある場合はこの設定を試し
 
 #: src/interface.c:1809
 msgid "Download to _Directory : "
-msgstr ""
+msgstr "ダウンロード先ディレクトリ(_D): "
 
 #: src/interface.c:1823
 msgid "Download Directory..."
-msgstr ""
+msgstr "ディレクトリにダウンロード..."
 
 #: src/interface.c:1846
 msgid "Download _File Name : "
-msgstr ""
+msgstr "ダウンロードファイル名(_F): "
 
 #: src/interface.c:1860
 msgid ".webm"
-msgstr ""
+msgstr ".webm"
 
 #: src/interface.c:1973
 msgid ""
@@ -1434,9 +1444,8 @@ msgid "LiVES: - Enter Set Name"
 msgstr "LiVES: - セット名の入力"
 
 #: src/interface.c:2027
-#, fuzzy
 msgid "LiVES: - Enter a Set Name to Reload"
-msgstr "LiVES: - セット名の入力"
+msgstr "LiVES: - 再読み込みするセット名を入力"
 
 #: src/interface.c:2030
 msgid "LiVES: - Choose a Working Directory"
@@ -1767,31 +1776,28 @@ msgstr ""
 "再度このレイアウトを開き、復元しますか？\n"
 
 #: src/interface.c:3727
-#, fuzzy
 msgid "LiVES: - Disk Recovery Options"
-msgstr "LiVES: - デコーダープラグイン"
+msgstr "LiVES: - ディスク回復オプション"
 
 #: src/interface.c:3772
 msgid "Delete _Orphaned Clips"
-msgstr ""
+msgstr "孤立したクリップを削除(_O)"
 
 #: src/interface.c:3799
-#, fuzzy
 msgid "Clear _Backup Files from Closed Clips"
-msgstr "タイムラインからマークをクリア(_M)"
+msgstr "閉じたクリップのバックアップファイルを消去(_B)"
 
 #: src/interface.c:3829
 msgid "Remove Sets which have _Layouts but no Clips"
-msgstr ""
+msgstr "レイアウトのみでクリップがないセットを削除(_L)"
 
 #: src/interface.c:3852
-#, fuzzy
 msgid "_Reset to Defaults"
-msgstr "値のリセット(_R)"
+msgstr "デフォルトに戻す(_R)"
 
 #: src/interface.c:3859
 msgid "_Accept"
-msgstr ""
+msgstr "承認(_A)"
 
 #: src/callbacks.c:165
 #, c-format
@@ -1804,24 +1810,22 @@ msgstr "ファイルの選択"
 
 #: src/callbacks.c:740
 msgid "Please enter the name of the file to save the clip as.\n"
-msgstr ""
+msgstr "クリップを保存するファイル名を入力してください。\n"
 
 #: src/callbacks.c:748
 msgid "Please enter a valid URL for the download.\n"
-msgstr ""
+msgstr "ダウンロードするには有効な URL を入力してください。\n"
 
 #: src/callbacks.c:772
-#, fuzzy, c-format
+#, c-format
 msgid "Downloading %s to %s..."
-msgstr "セット %s を自動読み込み中..."
+msgstr "%s を %s にダウンロード中..."
 
 #: src/callbacks.c:800
-#, fuzzy
 msgid "Downloading clip"
-msgstr "クリップを消去します"
+msgstr "クリップをダウンロード中"
 
 #: src/callbacks.c:822
-#, fuzzy
 msgid ""
 "\n"
 "LiVES was unable to download the clip.\n"
@@ -1829,9 +1833,9 @@ msgid ""
 "the latest youtube-dl installed.\n"
 msgstr ""
 "\n"
-"\n"
-"LiVESはプログラム %s を見つけられませんでした。\n"
-"このプログラムがパス中にあり、実行可能であることを確認してください。\n"
+"LiVES はクリップをダウンロードできませんでした。\n"
+"クリップの URL を確認した上で、最新の youtube-dl が\n"
+"インストールされているか確認してください。\n"
 
 #: src/callbacks.c:969 src/callbacks.c:1004
 msgid "This file"
@@ -1955,9 +1959,9 @@ msgstr ""
 "よろしいでしょうか?\n"
 
 #: src/callbacks.c:1582
-#, fuzzy, c-format
+#, c-format
 msgid "Deleting set %s..."
-msgstr "セットの削除..."
+msgstr "セット %s を削除しています..."
 
 #: src/callbacks.c:1584
 msgid "Deleting set..."
@@ -2283,9 +2287,10 @@ msgid "Loading clips from set %s"
 msgstr "セット %s からクリップを読み込み"
 
 #: src/callbacks.c:5004
-#, fuzzy, c-format
+#, c-format
 msgid "%d clips and %d layouts were recovered from set (%s).\n"
-msgstr "%d個のクリップがセット(%s)から復元されました。\n"
+msgstr ""
+"セット (%3$s) から %1$d 個のクリップと %2$d 個のレイアウトを回復しました。\n"
 
 #: src/callbacks.c:5257
 msgid ""
@@ -2304,14 +2309,13 @@ msgid "Cleaning up disk space..."
 msgstr "ディスクスペースの消去..."
 
 #: src/callbacks.c:5323
-#, fuzzy
 msgid "Recovering disk space"
-msgstr "ディスクスペースの消去"
+msgstr "ディスク容量を回復"
 
 #: src/callbacks.c:5367
-#, fuzzy, c-format
+#, c-format
 msgid "%s of disk space was recovered.\n"
-msgstr "%d MBのディスクスペースが復元されました。\n"
+msgstr "%s のディスク容量を回復しました。\n"
 
 #: src/callbacks.c:5423
 msgid "Resetting frame rates and frame values..."
@@ -2436,7 +2440,7 @@ msgid "A video editor and VJ program."
 msgstr "映像エディターとVJプログラム"
 
 #: src/callbacks.c:5657
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "LiVES Version %s\n"
 "(c) G. Finch (salsaman) %s\n"
@@ -2448,15 +2452,15 @@ msgid ""
 "salsaman@gmail.com\n"
 "Homepage: http://lives.sourceforge.net"
 msgstr ""
-"LiVES Version %s\n"
+"LiVES バージョン %s\n"
 "(c) G. Finch (salsaman) %s\n"
 "\n"
-"Released under the GPL 3 or later (http://www.gnu.org/licenses/gpl.txt)\n"
-"LiVES is distributed WITHOUT WARRANTY\n"
+"GPL 3 またはそれ以降でリリース (http://www.gnu.org/licenses/gpl.txt)\n"
+"LiVES は\"無保証\"で配布されています。\n"
 "\n"
-"Contact the author at:\n"
-"salsaman@xs4all.nl\n"
-"Homepage: http://lives.sourceforge.net"
+"作者の連絡先:\n"
+"salsaman@gmail.com\n"
+"ホームページ: http://lives.sourceforge.net"
 
 #: src/callbacks.c:5860
 msgid ""
@@ -2583,9 +2587,8 @@ msgid "Reversing clipboard"
 msgstr "クリップボードを反転"
 
 #: src/callbacks.c:7687
-#, fuzzy
 msgid "LiVES: Load subtitles from..."
-msgstr "字幕をファイルから読み込む(_S)..."
+msgstr "LiVES: サブタイトルの読み込み先..."
 
 #: src/callbacks.c:7750 src/saveplay.c:805
 #, c-format
@@ -2693,18 +2696,16 @@ msgid "Cancel"
 msgstr "キャンセル"
 
 #: src/callbacks.c:9172
-#, fuzzy
 msgid "Stop"
-msgstr "停止(_S)"
+msgstr "停止"
 
 #: src/callbacks.c:9657 src/multitrack.c:11985
 msgid "LiVES: Selected frame"
 msgstr "LiVES: 選択したフレーム"
 
 #: src/callbacks.c:9664
-#, fuzzy
 msgid "_Save frame as..."
-msgstr "%s秒のフレームを保存..."
+msgstr "フレームに名前を付けて保存(_S)..."
 
 #: src/callbacks.c:9908
 #, c-format
@@ -2719,6 +2720,11 @@ msgid ""
 "Please send a patch to get it working on other platforms.\n"
 "\n"
 msgstr ""
+"\n"
+"\n"
+"この機能は X11 でしか動作しません。\n"
+"他のプラットフォームで動作させるにはパッチを送ってください。\n"
+"\n"
 
 #: src/callbacks.c:9989
 msgid ""
@@ -2937,6 +2943,9 @@ msgid ""
 "window.\n"
 "Please send a patch if you know how to do this.\n"
 msgstr ""
+"プレビュー機能はX11でなければ動きません。プレビューウィンドウのwindow idが必"
+"要です。\n"
+"やり方をご存知でしたらパッチを送ってください。\n"
 
 #: src/support.c:87 src/support.c:111
 #, c-format
@@ -3041,7 +3050,7 @@ msgstr "場所/ストリームを開く(_L)..."
 
 #: src/gui.c:362 src/multitrack.c:5299
 msgid "Open _Youtube Clip..."
-msgstr ""
+msgstr "Youtube クリップを開く(_Y)..."
 
 #: src/gui.c:373
 msgid "Import from _dvd/vcd..."
@@ -3609,7 +3618,7 @@ msgstr "なし(_N)"
 
 #: src/gui.c:1621
 msgid "_Autolives"
-msgstr ""
+msgstr "Autolives(_A)"
 
 #: src/gui.c:1626
 msgid "_Mad Frames"
@@ -3829,44 +3838,44 @@ msgstr "再生ウィンドウの表示"
 
 #. TRANSLATORS: Exabytes
 #: src/utils.c:242
-#, fuzzy, c-format
+#, c-format
 msgid "%.2f EB"
-msgstr "%.2fMBを記録しました"
+msgstr "%.2f EB"
 
 #. TRANSLATORS: Petabytes
 #: src/utils.c:246
-#, fuzzy, c-format
+#, c-format
 msgid "%.2f PB"
-msgstr "%.2fMBを記録しました"
+msgstr "%.2f PB"
 
 #. TRANSLATORS: Terabytes
 #: src/utils.c:250
-#, fuzzy, c-format
+#, c-format
 msgid "%.2f TB"
-msgstr "%.2fMBを記録しました"
+msgstr "%.2f TB"
 
 #. TRANSLATORS: Gigabytes
 #: src/utils.c:254
-#, fuzzy, c-format
+#, c-format
 msgid "%.2f GB"
-msgstr "%.2fMBを記録しました"
+msgstr "%.2f GB"
 
 #. TRANSLATORS: Megabytes
 #: src/utils.c:258
-#, fuzzy, c-format
+#, c-format
 msgid "%.2f MB"
-msgstr "%.2fMBを記録しました"
+msgstr "%.2f MB"
 
 #. TRANSLATORS: Kilobytes (1024 bytes)
 #: src/utils.c:262
-#, fuzzy, c-format
+#, c-format
 msgid "%.2f KiB"
-msgstr "%.2fMBを記録しました"
+msgstr "%.2f KiB"
 
 #: src/utils.c:265
 #, c-format
 msgid "%d bytes"
-msgstr ""
+msgstr "%d バイト"
 
 #: src/utils.c:930
 msgid "Clearing the clipboard"
@@ -4009,13 +4018,12 @@ msgstr ""
 "セット名は空白にできません。\n"
 
 #: src/utils.c:1274
-#, fuzzy
 msgid ""
 "\n"
 "Set names may not be longer than 128 characters.\n"
 msgstr ""
 "\n"
-"セット名に空白もしくは %s 文字を含まないようにしてください。\n"
+"セット名は128文字以上にはできません。\n"
 
 #: src/utils.c:1279
 #, c-format
@@ -4031,6 +4039,8 @@ msgid ""
 "\n"
 "Set names may not start with a '.' or contain '..'\n"
 msgstr ""
+"\n"
+"セット名は '.' で始まるものや '..' を含むものにはできません。\n"
 
 #: src/utils.c:1302
 #, c-format
@@ -4166,7 +4176,7 @@ msgid "Opening audio for %s"
 msgstr "音声 %s を開く"
 
 #: src/saveplay.c:541
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "LiVES is not currently optimised for larger file sizes.\n"
@@ -4177,12 +4187,12 @@ msgid ""
 "Are you sure you wish to continue ?"
 msgstr ""
 "\n"
-"LiVESは今のところ大きなファイルサイズに最適化されていません。\n"
-"より小さいファイルで始めるか、「ファイル選択を開く」オプションを利用するとよ"
-"いでしょう。\n"
-"(ファイルサイズ=%.2fMB)\n"
+"LiVES は現在、サイズの大きなファイルを扱うよう最適化されていません。\n"
+"もっと小さなファイルで開始するか、'ファイルを選択して開く'オプションの使用を"
+"お奨めします。\n"
+"(ファイルサイズ = %s)\n"
 "\n"
-"続けますか ?"
+"本当に続けますか？"
 
 #: src/saveplay.c:555
 msgid " - please be patient."
@@ -4223,9 +4233,8 @@ msgstr ""
 "「映像ファイルを開くコマンド」の設定を確認してください。\n"
 
 #: src/saveplay.c:847
-#, fuzzy
 msgid "Adding image..."
-msgstr "音声のフェード..."
+msgstr "画像を追加..."
 
 #: src/saveplay.c:934
 #, c-format
@@ -4233,19 +4242,17 @@ msgid "Subtitles were saved as %s\n"
 msgstr "字幕を以下のファイルに保存しました: %s\n"
 
 #: src/saveplay.c:1018
-#, fuzzy, c-format
+#, c-format
 msgid "LiVES: Save Frame %d as..."
-msgstr "%s秒のフレームを保存..."
+msgstr "LiVES: %d フレームに名前を付けて保存..."
 
 #: src/saveplay.c:1021
-#, fuzzy
 msgid "LiVES: Save Frame as..."
-msgstr "%s秒のフレームを保存..."
+msgstr "LiVES: フレームに名前を付けて保存..."
 
 #: src/saveplay.c:1125
-#, fuzzy
 msgid "LiVES: Save Clip as..."
-msgstr "LiVES: - クリップの名称変更"
+msgstr "LiVES: クリップに名前を付けて保存..."
 
 #: src/saveplay.c:1197
 msgid ""
@@ -4302,9 +4309,9 @@ msgid "Clearing letterbox"
 msgstr "レターボックスの消去"
 
 #: src/saveplay.c:1882
-#, fuzzy, c-format
+#, c-format
 msgid "File size was %s\n"
-msgstr "ファイルサイズは %.2fMB です\n"
+msgstr "ファイルサイズ %s\n"
 
 #: src/saveplay.c:1971
 msgid "recording aborted by preview.\n"
@@ -4353,6 +4360,9 @@ msgid ""
 "Error getting file info for clip %s.\n"
 "Bad things may happen with this clip.\n"
 msgstr ""
+"\n"
+"クリップ %s のファイル情報の取得でエラーが発生しました。\n"
+"このクリップに問題が発生している可能性があります。\n"
 
 #: src/saveplay.c:3209
 #, c-format
@@ -4456,20 +4466,19 @@ msgstr "%.2fMBを記録しました"
 
 #. TRANSLATORS: rec(ord) ?? M(ega)B(ytes)
 #: src/saveplay.c:4673
-#, fuzzy
 msgid "rec ?? MB"
-msgstr "%.2fMBを記録しました"
+msgstr "rec ?? MB"
 
 #: src/saveplay.c:4698
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "RECORDING WAS PAUSED BECAUSE FREE DISK SPACE in %s IS BELOW %ld GB !\n"
 "Record stop level can be set in Preferences.\n"
 msgstr ""
 "\n"
-"ディスクの空き容量が%ld GBと少ないため、記録を停止しました。\n"
-"記録の停止レベルは「設定」から変更することができます。\n"
+"%s のディスクの空き領域が %ld GB を切ったため記録を停止しています！\n"
+"記録の停止レベルは「設定」で設定することができます。\n"
 
 #: src/saveplay.c:4842
 msgid ""
@@ -4494,14 +4503,12 @@ msgid "Show affected _layouts"
 msgstr "影響を受けるレイアウト(_L)"
 
 #: src/dialogs.c:140
-#, fuzzy
 msgid "_Recover disk space"
-msgstr "ディスクスペースの消去"
+msgstr "ディスク容量を回復(_R)"
 
 #: src/dialogs.c:155
-#, fuzzy
 msgid " _Advanced Settings >>"
-msgstr "%s 高度な設定"
+msgstr " 詳細設定(_A) >>"
 
 #: src/dialogs.c:193
 msgid "LiVES: - Warning !"
@@ -4520,23 +4527,20 @@ msgid "question"
 msgstr "質問"
 
 #: src/dialogs.c:211
-#, fuzzy
 msgid "LiVES: - File Error"
-msgstr "LiVES:- 色の選択"
+msgstr "LiVES: - ファイルエラー"
 
 #: src/dialogs.c:212
-#, fuzzy
 msgid "File Error"
-msgstr "エラーを消去(_E)"
+msgstr "ファイルエラー"
 
 #: src/dialogs.c:214
-#, fuzzy
 msgid "_Abort"
-msgstr "LiVESについて(_A)"
+msgstr "中止(_A)"
 
 #: src/dialogs.c:220
 msgid "_Retry"
-msgstr ""
+msgstr "再試行(_R)"
 
 #: src/dialogs.c:473
 #, c-format
@@ -4548,6 +4552,12 @@ msgid ""
 "\n"
 "(Disk warning levels can be configured in Preferences.)"
 msgstr ""
+"以下を含むパーティションの空き容量が\n"
+"%s\n"
+"致命的レベルの %s 以下に下がっています\n"
+"現在の空き容量は %s です\n"
+"\n"
+"(ディスク警告のレベルは「設定」で設定することができます。)"
 
 #: src/dialogs.c:491
 #, c-format
@@ -4560,6 +4570,13 @@ msgid ""
 "(Next warning will be shown at %s. Disk warning levels can be configured in "
 "Preferences.)"
 msgstr ""
+"以下を含むパーティションの空き容量が\n"
+"%s\n"
+"警告レベルの %s 以下に下がっています\n"
+"現在の空き容量は %s です\n"
+"\n"
+"(次回の警告は %s になると表示されます。ディスク警告のレベルは「設定」で設定す"
+"ることができます。)"
 
 #: src/dialogs.c:503
 msgid "Audio players cannot be switched during playback."
@@ -4579,7 +4596,7 @@ msgstr ""
 
 #: src/dialogs.c:631
 msgid "Processing has been paused."
-msgstr ""
+msgstr "処理を一時停止しています。"
 
 #: src/dialogs.c:814
 #, c-format
@@ -4690,14 +4707,12 @@ msgstr ""
 "い。\n"
 
 #: src/dialogs.c:1819
-#, fuzzy
 msgid ""
 "This layout includes generated or recorded audio.\n"
 "It cannot be saved, you must render it to a clip first.\n"
 msgstr ""
-"このレイアウトは生成されたフレームを含みます。\n"
-"フレームは保存することができません。先にクリップへレンダリング出力してくださ"
-"い。\n"
+"このレイアウトには、生成または記録された音声が含まれています。\n"
+"保存することができません。まずクリップにレンダリングする必要があります。\n"
 
 #: src/dialogs.c:1826 src/dialogs.c:1924
 #, c-format
@@ -5081,7 +5096,7 @@ msgstr ""
 "."
 
 #: src/dialogs.c:2169
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "The original file\n"
@@ -5093,11 +5108,11 @@ msgstr ""
 "\n"
 "元のファイル\n"
 "%s\n"
-"が見つかりません。\n"
-"もしこのファイルを移動したのであれば、それを元の位置にコピーして\n"
-"'OK' をクリックして再度試してください。\n"
-"そうでない場合は、キャンセルをクリックしてファイルの読み込みをスキップしてく"
-"ださい。\n"
+"が見つかりませんでした。\n"
+"このファイルを移動したのであれば、'OK' をクリックして新しい場所を指定してくだ"
+"さい。\n"
+"そうでなければ、キャンセルをクリックしてこのファイルの読み込みをスキップして"
+"ください。\n"
 
 #: src/dialogs.c:2176
 #, c-format
@@ -5194,7 +5209,7 @@ msgstr ""
 "少なくとも %d MB追加することをお勧めします。"
 
 #: src/dialogs.c:2220
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "Some old layouts for the set %s already exist.\n"
@@ -5202,9 +5217,9 @@ msgid ""
 "Do you wish to delete them ?\n"
 msgstr ""
 "\n"
-"%s セットのための古いレイアウトが既に存在します。\n"
-"それらの削除をお勧めします。\n"
-"削除するならOKを、そのまま残すならキャンセルをクリックしてください。\n"
+"セット %s の一部の古いレイアウトが既に存在しています。\n"
+"これらを削除することをお勧めします。\n"
+"これらを削除しますか？\n"
 
 #: src/dialogs.c:2227
 msgid ""
@@ -5396,15 +5411,15 @@ msgstr "ファイルのエラー。失敗しました。\n"
 #: src/dialogs.c:2593 src/dialogs.c:2642 src/dialogs.c:2666
 #, c-format
 msgid "Additional info: %s\n"
-msgstr ""
+msgstr "追加情報: %s\n"
 
 #: src/dialogs.c:2596
 #, c-format
 msgid "The error value was %d%s\n"
-msgstr ""
+msgstr "エラーの値は %d%s です\n"
 
 #: src/dialogs.c:2599
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "LiVES failed doing the following:\n"
@@ -5413,12 +5428,13 @@ msgid ""
 "%s%s%s"
 msgstr ""
 "\n"
-"LiVESは以下のファイルに書き込みできませんでした:\n"
+"LiVES は以下の実行に失敗しました:\n"
 "%s\n"
-"ファイルパーミッションを確認して、もう一度試してください。"
+"エラーに関してシステムをチェックしてください。\n"
+"%s%s%s"
 
 #: src/dialogs.c:2645
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "LiVES was unable to write to the file\n"
@@ -5427,12 +5443,13 @@ msgid ""
 "%s"
 msgstr ""
 "\n"
-"LiVESは以下のファイルに書き込みできませんでした:\n"
+"LiVES は以下のファイルに書き込めませんでした\n"
 "%s\n"
-"ファイルパーミッションを確認して、もう一度試してください。"
+"考えられるエラー原因を確認してください。\n"
+"%s"
 
 #: src/dialogs.c:2669
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "LiVES was unable to read from the file\n"
@@ -5441,12 +5458,13 @@ msgid ""
 "%s"
 msgstr ""
 "\n"
-"LiVESは以下のファイルに書き込みできませんでした:\n"
+"LiVES は以下のファイルを読み込めませんでした\n"
 "%s\n"
-"ファイルパーミッションを確認して、もう一度試してください。"
+"考えられるエラー原因を確認してください。\n"
+"%s"
 
 #: src/dialogs.c:2713
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "LiVES was unable to write to the file\n"
@@ -5454,12 +5472,12 @@ msgid ""
 "Please check for possible error causes.\n"
 msgstr ""
 "\n"
-"LiVESは以下のファイルに書き込みできませんでした:\n"
+"LiVES は以下のファイルに書き込めませんでした\n"
 "%s\n"
-"ファイルパーミッションを確認して、もう一度試してください。"
+"考えられるエラー原因を確認してください。\n"
 
 #: src/dialogs.c:2717
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "LiVES was unable to write to the file\n"
@@ -5468,12 +5486,13 @@ msgid ""
 "%s.\n"
 msgstr ""
 "\n"
-"LiVESは以下のファイルに書き込みできませんでした:\n"
+"LiVES は以下のファイルに書き込めませんでした\n"
 "%s\n"
-"ファイルパーミッションを確認して、もう一度試してください。"
+"エラーは以下の通りです\n"
+"%s\n"
 
 #: src/dialogs.c:2748
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "LiVES was unable to read from the file\n"
@@ -5481,12 +5500,12 @@ msgid ""
 "Please check for possible error causes.\n"
 msgstr ""
 "\n"
-"LiVESは以下のファイルに書き込みできませんでした:\n"
+"LiVES は以下のファイルを読み込めませんでした\n"
 "%s\n"
-"ファイルパーミッションを確認して、もう一度試してください。"
+"考えられるエラー原因を確認してください。\n"
 
 #: src/dialogs.c:2752
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "LiVES was unable to read from the file\n"
@@ -5495,14 +5514,15 @@ msgid ""
 "%s.\n"
 msgstr ""
 "\n"
-"LiVESは以下のファイルに書き込みできませんでした:\n"
+"LiVES は以下のファイルを読み込めませんでした\n"
 "%s\n"
-"ファイルパーミッションを確認して、もう一度試してください。"
+"エラーは以下の通りです\n"
+"%s\n"
 
 #: src/dialogs.c:2820
 #, c-format
 msgid "Value for \"%s\" could not be read."
-msgstr ""
+msgstr "\"%s\" の値を読み取れませんでした。"
 
 #: src/dialogs.c:2838
 #, c-format
@@ -5512,6 +5532,10 @@ msgid ""
 "%s\n"
 "Please check your system for errors.\n"
 msgstr ""
+"\n"
+"LiVES はディレクトリの変更に失敗しました\n"
+"%s\n"
+"エラーに関してシステムを確認してください。\n"
 
 #: src/dialogs.c:2847
 #, c-format
@@ -5540,16 +5564,14 @@ msgstr ""
 "ディレクトリの権限を確認した上で、再度試してください。"
 
 #: src/dialogs.c:2861
-#, fuzzy
 msgid ""
 "\n"
 "Abort and exit immediately from LiVES\n"
 "Are you sure ?\n"
 msgstr ""
 "\n"
-"\n"
-"セットはディスクから消去されます。\n"
-"よろしいでしょうか?\n"
+"処理を中止しLiVESを終了します\n"
+"よろしいですか？\n"
 
 #: src/dialogs.c:2867
 #, c-format
@@ -5700,17 +5722,25 @@ msgid ""
 "\n"
 "File -> Clean up Diskspace\n"
 msgstr ""
+"\n"
+"LiVES バージョン %s にようこそ\n"
+"\n"
+"アップグレード後は、以下の操作を行うことを*強く*お勧めします:\n"
+"\n"
+"ファイル -> ディスク領域をクリーン\n"
 
 #. TRANSLATORS: make sure the menu text matches what is in gui.c
 #: src/dialogs.c:2963
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "\n"
 "Welcome to LiVES version %s !\n"
 "\n"
 msgstr ""
-"LiVES version %s へようこそ。\n"
+"\n"
+"\n"
+"LiVES バージョン %s にようこそ！\n"
 "\n"
 
 #: src/dialogs.c:2969
@@ -5719,12 +5749,19 @@ msgid ""
 "You must have autolives.pl installed and in your path to use this toy.\n"
 "Consult your package distributor.\n"
 msgstr ""
+"\n"
+"このトイを利用するには、autolives.pl がインストールされ、パス上にある必要があ"
+"ります。\n"
+"パッケージディストリビューターに相談してください。\n"
 
 #: src/dialogs.c:2973
 msgid ""
 "\n"
 "You must have a minimum of one clip loaded to use this toy.\n"
 msgstr ""
+"\n"
+"このトイを利用するには、少なくとも1個のクリップが読み込まれている必要がありま"
+"す。\n"
 
 #: src/dialogs.c:2977
 msgid ""
@@ -5732,6 +5769,9 @@ msgid ""
 "LiVES lost its connection to jack and was unable to reconnect.\n"
 "Restarting LiVES is recommended.\n"
 msgstr ""
+"\n"
+"LiVES は JACK との接続が切れてしまい、再接続できませんでした。\n"
+"LiVES の再起動をお勧めします。\n"
 
 #: src/dialogs.c:2981
 msgid ""
@@ -5739,6 +5779,9 @@ msgid ""
 "LiVES lost its connection to pulseaudio and was unable to reconnect.\n"
 "Restarting LiVES is recommended.\n"
 msgstr ""
+"\n"
+"LiVES は PulseAudio との接続が切れてしまい、再接続できませんでした。\n"
+"LiVES の再起動をお勧めします。\n"
 
 #: src/dialogs.c:2994
 #, c-format
@@ -5748,6 +5791,10 @@ msgid ""
 "to let other applications connect to it.\n"
 "Do you wish to allow this (for this session only) ?\n"
 msgstr ""
+"\n"
+"LiVESは他のソフトウェアと接続するため\n"
+"ローカルネットワーク接続を開こうとしています。 (UDP port %d)\n"
+"許可しますか? (このセッション限定です)\n"
 
 #: src/effects.c:56
 msgid "generator"
@@ -5816,11 +5863,11 @@ msgstr "コンバーター"
 
 #: src/effects.c:80
 msgid "analyser"
-msgstr ""
+msgstr "アナライザー"
 
 #: src/effects.c:81
 msgid "Analysers"
-msgstr ""
+msgstr "アナライザー"
 
 #: src/effects.c:86
 msgid "audio/video"
@@ -5867,24 +5914,20 @@ msgid "Audio Volume Controllers"
 msgstr "音声ボリュームコントローラー"
 
 #: src/effects.c:104
-#, fuzzy
 msgid "video analyser"
-msgstr "映像のみ"
+msgstr "映像アナライザー"
 
 #: src/effects.c:105
-#, fuzzy
 msgid "Video analysers"
-msgstr "映像のみ"
+msgstr "映像アナライザー"
 
 #: src/effects.c:107
-#, fuzzy
 msgid "audio analyser"
-msgstr "音声のみ"
+msgstr "音声アナライザー"
 
 #: src/effects.c:108
-#, fuzzy
 msgid "Audio analysers"
-msgstr "音声パラメータ"
+msgstr "音声アナライザー"
 
 #: src/effects.c:112 src/plugins.c:2298
 msgid "unknown"
@@ -5963,9 +6006,8 @@ msgstr ""
 "エラー: %s\n"
 
 #: src/effects-weed.c:3356 src/effects-weed.c:3676
-#, fuzzy
 msgid "Some plugin directories"
-msgstr "サブディレクトリを含む"
+msgstr "プラグインディレクトリ"
 
 #: src/effects-weed.c:3512
 #, c-format
@@ -6103,7 +6145,7 @@ msgstr "デフォルトに設定"
 
 #: src/paramwindow.c:893 src/paramwindow.c:905
 msgid "Reset"
-msgstr ""
+msgstr "リセット"
 
 #: src/paramwindow.c:903 src/rte_window.c:1496 src/omc-learn.c:1365
 msgid "Close _window"
@@ -6126,27 +6168,24 @@ msgid "Click to set the colour"
 msgstr "クリックでカラーを設定"
 
 #: src/paramwindow.c:1538
-#, fuzzy
 msgid "_Red"
-msgstr "やり直す(_R)"
+msgstr "赤(_R)"
 
 #: src/paramwindow.c:1539
 msgid "The red value (0 - 255)"
 msgstr "赤の値 (0 - 255)"
 
 #: src/paramwindow.c:1540
-#, fuzzy
 msgid "_Green"
-msgstr "緑"
+msgstr "緑(_G)"
 
 #: src/paramwindow.c:1541
 msgid "The green value (0 - 255)"
 msgstr "緑の値 (0 - 255)"
 
 #: src/paramwindow.c:1542
-#, fuzzy
 msgid "_Blue"
-msgstr "青"
+msgstr "青(_B)"
 
 #: src/paramwindow.c:1543
 msgid "The blue value (0 - 255)"
@@ -6290,7 +6329,7 @@ msgstr ""
 #: src/plugins.c:1461
 #, c-format
 msgid "Audio stream unable to use preferred format '%s'\n"
-msgstr ""
+msgstr "音声ストリームは選択したフォーマット '%s' を利用できません\n"
 
 #: src/plugins.c:1469
 #, c-format
@@ -7209,7 +7248,6 @@ msgstr ""
 "分離ウィンドウ (fs) モードでのみ利用可能です。\n"
 
 #: src/preferences.c:397
-#, fuzzy
 msgid ""
 "\n"
 "\n"
@@ -7219,10 +7257,10 @@ msgstr ""
 "\n"
 "\n"
 "\n"
-"（空き領域 %.2f GB）"
+"(空き領域 = 不明)"
 
 #: src/preferences.c:401
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "\n"
@@ -7232,7 +7270,7 @@ msgstr ""
 "\n"
 "\n"
 "\n"
-"（空き領域 %.2f GB）"
+"(空き容量 = %s)"
 
 #: src/preferences.c:405
 msgid ""
@@ -7751,17 +7789,16 @@ msgid "Directories"
 msgstr "ディレクトリ"
 
 #: src/preferences.c:4153
-#, fuzzy
 msgid "Warn if diskspace falls below: "
-msgstr "ディスクの空き容量が以下を下回ったら記録を停止します"
+msgstr "ディスク容量がこれ以下になった場合に警告: "
 
 #: src/preferences.c:4168 src/preferences.c:4200
 msgid " MB [set to 0 to disable]"
-msgstr ""
+msgstr " MB [ 0 にすると無効]"
 
 #: src/preferences.c:4185
 msgid "Diskspace critical level: "
-msgstr ""
+msgstr "ディスク容量が致命的なレベル: "
 
 #: src/preferences.c:4224
 msgid ""
@@ -8199,9 +8236,9 @@ msgid "Resizing frames 1 to %d"
 msgstr "フレーム1を %d にリサイズ"
 
 #: src/resample.c:139 src/resample.c:315
-#, fuzzy, c-format
+#, c-format
 msgid "Resizing/letterboxing frames 1 to %d"
-msgstr "フレーム1を %d にリサイズ"
+msgstr "フレーム1から%dを単純リサイズもしくはレターボックスを用いてリサイズ"
 
 #: src/resample.c:358 src/resample.c:382
 msgid "Resize"
@@ -8441,6 +8478,9 @@ msgid ""
 "Changing the speed will cause frames to shift in some multitrack layouts.\n"
 "Are you sure you wish to continue ?\n"
 msgstr ""
+"\n"
+"スピードを変更すると一部のマルチトラックモードでフレームが移動されます。\n"
+"本当に続行しますか？\n"
 
 #: src/resample.c:2305
 msgid ""
@@ -8448,6 +8488,9 @@ msgid ""
 "Changing the speed will cause audio to shift in some multitrack layouts.\n"
 "Are you sure you wish to continue ?\n"
 msgstr ""
+"\n"
+"スピードを変更すると一部のマルチトラックモードで音声が移動されます。\n"
+"本当に続行しますか？\n"
 
 #: src/resample.c:2351
 msgid "Speed Change"
@@ -8541,7 +8584,7 @@ msgstr ""
 "キーマップファイル %s をアップデート..."
 
 #: src/rte_window.c:219
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "\n"
@@ -8551,9 +8594,9 @@ msgid ""
 msgstr ""
 "\n"
 "\n"
-"キーマップファイル %s に書き込めません。\n"
-"\n"
-"エラーコード %d\n"
+"キーマップファイルを書き込めません\n"
+"%s\n"
+"エラーは %s です。\n"
 
 #: src/rte_window.c:286
 #, c-format
@@ -8903,6 +8946,11 @@ msgid ""
 "in the timeline by\n"
 "right or double clicking on it.\n"
 msgstr ""
+"\n"
+"\n"
+"タイムライン上で右クリックまたは\n"
+"ダブルクリックして\n"
+"ブロックを選択してください。\n"
 
 #: src/multitrack.c:2876
 msgid ""
@@ -8911,6 +8959,10 @@ msgid ""
 "No effect selected.\n"
 "Select an effect in FX stack first to view its parameters.\n"
 msgstr ""
+"\n"
+"\n"
+"エフェクトが選択されていません。\n"
+"パラメーターを確認するには、まずFXスタックでエフェクトを選択してください。\n"
 
 #: src/multitrack.c:2879
 msgid ""
@@ -8931,6 +8983,12 @@ msgid ""
 "Alternately, you can enable Autotransitions from the Effects menu\n"
 "before inserting clips into the timeline."
 msgstr ""
+"トランジションを適用するためには\n"
+"2つの映像トラックと時間帯を\n"
+"選択する必要があります。\n"
+"\n"
+"代わりに、クリップをタイムラインに挿入する前にあらかじめ\n"
+"メニューのエフェクトから、自動トランジションを有効にしてください。"
 
 #: src/multitrack.c:2885
 msgid ""
@@ -8997,7 +9055,7 @@ msgstr "フレームを選択します。"
 
 #: src/multitrack.c:3811
 msgid "Double click or right click on timeline"
-msgstr ""
+msgstr "タイムライン上でダブルクリックまたは右クリックしてください。"
 
 #: src/multitrack.c:3812
 msgid "to select a block."
@@ -9402,9 +9460,8 @@ msgid "Render _audio"
 msgstr "音声のレンダリング(_A)"
 
 #: src/multitrack.c:6371
-#, fuzzy
 msgid "_Normalise rendered audio"
-msgstr "音声のプリレンダリング(_P)"
+msgstr "レンダリングした音声のノーマライズ(_N)"
 
 #: src/multitrack.c:6378
 msgid "_Pre-render audio"
@@ -10173,54 +10230,56 @@ msgid "Started jack audio reader.\n"
 msgstr "JACKサーバーからの音声読み出しの開始\n"
 
 #: src/jack.c:1474
-#, fuzzy
 msgid ""
 "\n"
 "Connection to jack audio was reset.\n"
-msgstr "JACKサーバーのトランスポート機能に接続しています..."
+msgstr ""
+"\n"
+"JACK の音声機能への接続をリセットしました。\n"
 
 #: src/pulse.c:85
-#, fuzzy
 msgid ""
 "\n"
 "Unable to connect to pulse audio server.\n"
 "Falling back to sox audio player.\n"
 "You can change this in Preferences/Playback.\n"
 msgstr ""
-"マルチトラックの音声を再生するには\n"
-"JACKサーバーかPulseAudioサーバーでのみ利用できます。\n"
-"「ツール | 設定 | 再生」で設定を変更してください。"
+"\n"
+"PulseAudio サーバーに接続できませんでした。\n"
+"sox オーディオプレーヤーにフォールバックします。\n"
+"この設定は、設定/プレイバック で変更できます。\n"
 
 #: src/pulse.c:89
-#, fuzzy
 msgid ""
 "\n"
 "Unable to connect to pulse audio server.\n"
 "Falling back to mplayer audio player.\n"
 "You can change this in Preferences/Playback.\n"
 msgstr ""
-"マルチトラックの音声を再生するには\n"
-"JACKサーバーかPulseAudioサーバーでのみ利用できます。\n"
-"「ツール | 設定 | 再生」で設定を変更してください。"
+"\n"
+"PulseAudio サーバーに接続できませんでした。\n"
+"mplayer オーディオプレーヤーにフォールバックします。\n"
+"この設定は、設定/プレイバック で変更できます。\n"
 
 #: src/pulse.c:93
-#, fuzzy
 msgid ""
 "\n"
 "Unable to connect to pulse audio server.\n"
-msgstr "JACKサーバーに接続できません\n"
+msgstr ""
+"\n"
+"PulseAudio サーバーに接続できませんでした。\n"
 
 #: src/pulse.c:98
-#, fuzzy
 msgid "LiVES will exit and you can choose another audio player.\n"
-msgstr "LiVES: - オーディオプレイヤーを選んでください"
+msgstr "LiVES が終了すると、他のオーディオプレーヤーを選択できます。\n"
 
 #: src/pulse.c:1001
-#, fuzzy
 msgid ""
 "\n"
 "Connection to pulse audio was reset.\n"
-msgstr "JACKサーバーのトランスポート機能に接続しています..."
+msgstr ""
+"\n"
+"PulseAudio サーバーへの接続がリセットされました。\n"
 
 #: src/colourspace.c:1007
 msgid "unclamped"
@@ -11924,105 +11983,3 @@ msgstr "$plugin_name は失敗しました:"
 #: /usr/bin/smogrify:0
 msgid "$error"
 msgstr "$error"
-
-#, fuzzy
-#~ msgid ""
-#~ "\n"
-#~ "Unable to connect to pulse audio server\n"
-#~ msgstr "JACKサーバーに接続できません\n"
-
-#~ msgid "Red"
-#~ msgstr "赤"
-
-#~ msgid "error.\n"
-#~ msgstr "エラー。\n"
-
-#~ msgid "Plugin timed out on message %s\n"
-#~ msgstr "プラグインはメッセージ%sでタイムアウトしました。\n"
-
-#~ msgid ""
-#~ "unable to read file\n"
-#~ "%s\n"
-#~ "Error code %d\n"
-#~ msgstr ""
-#~ "ファイル %s を読めません。\n"
-#~ "\n"
-#~ "エラーコード %d\n"
-
-#~ msgid ""
-#~ "Unable to read defaults file\n"
-#~ "%s\n"
-#~ "Error code %d\n"
-#~ msgstr ""
-#~ "デフォルトファイル %s を読み込めません。\n"
-#~ "\n"
-#~ "エラーコード %d\n"
-
-#~ msgid ""
-#~ "\n"
-#~ "\n"
-#~ "Unable to read sizes file\n"
-#~ "%s\n"
-#~ "Error code %d\n"
-#~ msgstr ""
-#~ "\n"
-#~ "\n"
-#~ "サイズファイル %s を読み込めません。\n"
-#~ "\n"
-#~ "エラーコード %d\n"
-
-#, fuzzy
-#~ msgid ""
-#~ "\n"
-#~ "LiVES was unable to write %d bytes of %d to the file\n"
-#~ "%s\n"
-#~ "Please check for possible error causes.\n"
-#~ msgstr ""
-#~ "\n"
-#~ "LiVESは以下のファイルに書き込みできませんでした:\n"
-#~ "%s\n"
-#~ "ファイルパーミッションを確認して、もう一度試してください。"
-
-#~ msgid ""
-#~ "\n"
-#~ "\n"
-#~ "Unable to write script file\n"
-#~ "%s\n"
-#~ "Error code %d\n"
-#~ msgstr ""
-#~ "\n"
-#~ "\n"
-#~ "スクリプトファイルを出力できませんでした。\n"
-#~ "%s\n"
-#~ "エラーコード %d\n"
-
-#, fuzzy
-#~ msgid ""
-#~ "\n"
-#~ "\n"
-#~ "Unable to write filter defaults file\n"
-#~ "%s\n"
-#~ "Error code %d\n"
-#~ msgstr ""
-#~ "\n"
-#~ "\n"
-#~ "デフォルトファイル %s に書き込めません。\n"
-#~ "\n"
-#~ "エラーコード %d\n"
-
-#, fuzzy
-#~ msgid ""
-#~ "\n"
-#~ "\n"
-#~ "Unable to write generator sizes file\n"
-#~ "%s\n"
-#~ "Error code %d\n"
-#~ msgstr ""
-#~ "\n"
-#~ "\n"
-#~ "デフォルトサイズファイル %s に書き込めません。\n"
-#~ "\n"
-#~ "エラーコード %d\n"
-
-#~ msgid "-nothreaddialog  : avoid threaded dialogs\n"
-#~ msgstr "-nothreaddialog  : スレッド化したダイアログを避ける\n"

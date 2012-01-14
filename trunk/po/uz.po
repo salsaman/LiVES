@@ -8,16 +8,16 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2012-01-14 10:06-0300\n"
-"PO-Revision-Date: 2011-11-10 17:30+0000\n"
+"POT-Creation-Date: 2012-01-14 10:22-0300\n"
+"PO-Revision-Date: 2012-01-07 19:27+0000\n"
 "Last-Translator: Akmal Xushvaqov <akmalxster@gmail.com>\n"
 "Language-Team: Uzbek <uz@li.org>\n"
 "Language: uz\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Launchpad-Export-Date: 2011-11-26 11:33+0000\n"
-"X-Generator: Launchpad (build 14381)\n"
+"X-Launchpad-Export-Date: 2012-01-14 13:16+0000\n"
+"X-Generator: Launchpad (build 14664)\n"
 
 #: src/main.c:118
 msgid ""
@@ -27,6 +27,11 @@ msgid ""
 "All translators should read the LiVES translation notes at\n"
 "http://lives.sourceforge.net/TRANS-README.txt"
 msgstr ""
+"Таржимонлар диққатига !\n"
+"Ушбу хабарни таржима қилманг.\n"
+"\n"
+"Барча таржимонлар LiVES таржима эслатмасаларини \n"
+"http://lives.sourceforge.net/TRANS-README.txt файлидан ўқишлари керак."
 
 #: src/main.c:134
 msgid ""
@@ -75,7 +80,7 @@ msgstr ""
 
 #: src/main.c:150
 msgid "Preserving set.\n"
-msgstr ""
+msgstr "Йиғилганларни сақлаш\n"
 
 #: src/main.c:510
 msgid "Resizing"
@@ -88,7 +93,7 @@ msgstr "Барча кадрларнинг _ҳажмини ўзгартириш"
 #. TRANSLATORS: text saying "Any", for encoder and output format (as in "does not matter")
 #: src/main.c:784
 msgid "Any"
-msgstr "Бошқа"
+msgstr "Исталган"
 
 #. TRANSLATORS: text saying "None", for playback plugin name (as in "none specified")
 #: src/main.c:786
@@ -172,43 +177,43 @@ msgstr "конвертлаш...АНИҚЛАНМАДИ..."
 
 #: src/main.c:1530
 msgid "composite...detected..."
-msgstr ""
+msgstr "composite...аниқланди..."
 
 #: src/main.c:1531
 msgid "composite...NOT DETECTED..."
-msgstr ""
+msgstr "composite...АНИҚЛАНМАДИ..."
 
 #: src/main.c:1532
 msgid "sox...detected\n"
-msgstr ""
+msgstr "sox...аниқланди\n"
 
 #: src/main.c:1533
 msgid "sox...NOT DETECTED\n"
-msgstr ""
+msgstr "sox...АНИҚЛАНМАДИ\n"
 
 #: src/main.c:1534
 msgid "cdda2wav...detected..."
-msgstr ""
+msgstr "cdda2wav...аниқланди..."
 
 #: src/main.c:1535
 msgid "cdda2wav...NOT DETECTED..."
-msgstr ""
+msgstr "cdda2wav...АНИҚЛАНМАДИ..."
 
 #: src/main.c:1536
 msgid "jackd...detected..."
-msgstr ""
+msgstr "jackd...аниқланди..."
 
 #: src/main.c:1537
 msgid "jackd...NOT DETECTED..."
-msgstr ""
+msgstr "jackd...АНИҚЛАНМАДИ..."
 
 #: src/main.c:1538
 msgid "pulse audio...detected..."
-msgstr ""
+msgstr "pulse audio...аниқланди..."
 
 #: src/main.c:1539
 msgid "pulse audio...NOT DETECTED..."
-msgstr ""
+msgstr "pulse audio...АНИҚЛАНМАДИ..."
 
 #: src/main.c:1540
 msgid "python...detected..."
@@ -1712,9 +1717,9 @@ msgid ""
 msgstr ""
 
 #: src/callbacks.c:1582
-#, fuzzy, c-format
+#, c-format
 msgid "Deleting set %s..."
-msgstr "Ўчирилмоқда"
+msgstr ""
 
 #: src/callbacks.c:1584
 msgid "Deleting set..."
@@ -2333,9 +2338,8 @@ msgid "Cancel"
 msgstr "Бекор қилиш"
 
 #: src/callbacks.c:9172
-#, fuzzy
 msgid "Stop"
-msgstr "_Тўхтатиш"
+msgstr ""
 
 #: src/callbacks.c:9657 src/multitrack.c:11985
 msgid "LiVES: Selected frame"
@@ -4024,14 +4028,12 @@ msgid "LiVES: - File Error"
 msgstr ""
 
 #: src/dialogs.c:212
-#, fuzzy
 msgid "File Error"
-msgstr "$error"
+msgstr ""
 
 #: src/dialogs.c:214
-#, fuzzy
 msgid "_Abort"
-msgstr "_Ҳақида"
+msgstr ""
 
 #: src/dialogs.c:220
 msgid "_Retry"
@@ -5280,27 +5282,24 @@ msgid "Click to set the colour"
 msgstr ""
 
 #: src/paramwindow.c:1538
-#, fuzzy
 msgid "_Red"
-msgstr "_Қайтариш"
+msgstr ""
 
 #: src/paramwindow.c:1539
 msgid "The red value (0 - 255)"
 msgstr ""
 
 #: src/paramwindow.c:1540
-#, fuzzy
 msgid "_Green"
-msgstr "Яшил"
+msgstr ""
 
 #: src/paramwindow.c:1541
 msgid "The green value (0 - 255)"
 msgstr ""
 
 #: src/paramwindow.c:1542
-#, fuzzy
 msgid "_Blue"
-msgstr "Кўк"
+msgstr ""
 
 #: src/paramwindow.c:1543
 msgid "The blue value (0 - 255)"
@@ -8950,11 +8949,10 @@ msgid "Started jack audio reader.\n"
 msgstr ""
 
 #: src/jack.c:1474
-#, fuzzy
 msgid ""
 "\n"
 "Connection to jack audio was reset.\n"
-msgstr "Jack транспорт серверига уланмоқда..."
+msgstr ""
 
 #: src/pulse.c:85
 msgid ""
@@ -8973,22 +8971,20 @@ msgid ""
 msgstr ""
 
 #: src/pulse.c:93
-#, fuzzy
 msgid ""
 "\n"
 "Unable to connect to pulse audio server.\n"
-msgstr "Аудио сервер пульси ишга туширилмоқда..."
+msgstr ""
 
 #: src/pulse.c:98
 msgid "LiVES will exit and you can choose another audio player.\n"
 msgstr ""
 
 #: src/pulse.c:1001
-#, fuzzy
 msgid ""
 "\n"
 "Connection to pulse audio was reset.\n"
-msgstr "Jack транспорт серверига уланмоқда..."
+msgstr ""
 
 #: src/colourspace.c:1007
 msgid "unclamped"
@@ -9394,14 +9390,12 @@ msgid "B/W thresholding"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/blank_frames.script:0
-#, fuzzy
 msgid "Blank _Colour"
-msgstr "Сўниш"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/blank_frames.script:0
-#, fuzzy
 msgid "Blank frames"
-msgstr "кадрлар"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/blank_frames.script:0
 msgid "Blanking"
@@ -9424,34 +9418,28 @@ msgid "Bluring"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
-#, fuzzy
 msgid "Border _Colour"
-msgstr "Сўниш"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/brightness_change.script:0
-#, fuzzy
 msgid "Brightness _end"
-msgstr "Oʻtishlar"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/brightness_change.script:0
-#, fuzzy
 msgid "Brightness _start"
-msgstr "Oʻtishlar"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/brightness_change.script:0
-#, fuzzy
 msgid "Brightness change"
-msgstr "Oʻtishlar"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
-#, fuzzy
 msgid "Brightness end"
-msgstr "Oʻtishlar"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
-#, fuzzy
 msgid "Brightness start"
-msgstr "Oʻtishlar"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
@@ -9488,62 +9476,52 @@ msgid "Checkerboard"
 msgstr "Shaxmat taxtasi"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
-#, fuzzy
 msgid "Checkerboarding"
-msgstr "Shaxmat taxtasi"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
-#, fuzzy
 msgid "Clipboard _over selection"
-msgstr "_Тескарисига танлаш"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
-#, fuzzy
 msgid "Clipboard _under selection"
-msgstr "_Тескарисига танлаш"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 msgid "Colorize"
 msgstr "Бўяш"
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
-#, fuzzy
 msgid "Colorizing"
-msgstr "Бўяш"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/cycle.script:0
-#, fuzzy
 msgid "Colour cycle"
-msgstr "Бўяш"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/cycle.script:0
-#, fuzzy
 msgid "Colour cycling"
-msgstr "Бўяш"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
-#, fuzzy
 msgid "Colour filter"
-msgstr "Бўяш"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
-#, fuzzy
 msgid "Colour filtering"
-msgstr "Бўяш"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
-#, fuzzy
 msgid "Colour replace"
-msgstr "Бўяш"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
 msgid "Constant noise level"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/cycle.script:0
-#, fuzzy
 msgid "Cycle _Step"
-msgstr "Сўниш"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/deinterlace.script:0
 msgid "Deinterlace"
@@ -9566,9 +9544,8 @@ msgid "Dream"
 msgstr "Дрим"
 
 #: /usr/share/lives/plugins/effects/rendered/dream.script:0
-#, fuzzy
 msgid "Dreamifying"
-msgstr "Дрим"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
@@ -9588,9 +9565,8 @@ msgid "Emboss"
 msgstr "Қавариқ"
 
 #: /usr/share/lives/plugins/effects/rendered/emboss.script:0
-#, fuzzy
 msgid "Embossing"
-msgstr "Қавариқ"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
 msgid "End _Alpha:"
@@ -9609,30 +9585,25 @@ msgid "Enhance"
 msgstr "Яхшилаш"
 
 #: /usr/share/lives/plugins/effects/rendered/enhance.script:0
-#, fuzzy
 msgid "Enhancing"
-msgstr "Яхшилаш"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
-#, fuzzy
 msgid "Fade _colour"
-msgstr "Сўниш"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
-#, fuzzy
 msgid "Fade _end"
-msgstr "Сўниш"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
-#, fuzzy
 msgid "Fade _in"
-msgstr "Сўниш"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
-#, fuzzy
 msgid "Fade _out"
-msgstr "Сўниш"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
 msgid "Fade video in or out"
@@ -9651,14 +9622,12 @@ msgid "Fading"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
-#, fuzzy
 msgid "Fina_l frame"
-msgstr "кадрлар"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
-#, fuzzy
 msgid "Flash _colour"
-msgstr "Сўниш"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/flip.script:0
 msgid "Flip vertically"
@@ -9669,14 +9638,12 @@ msgid "Flop horizontally"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
-#, fuzzy
 msgid "Frame Calculator"
-msgstr "Сўниш"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
-#, fuzzy
 msgid "Frame _Colour"
-msgstr "Сўниш"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 msgid "Frame _height"
@@ -9695,64 +9662,52 @@ msgid "Frame _width"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
-#, fuzzy
 msgid "Frames _per second (FPS)"
-msgstr "сония"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
-#, fuzzy
 msgid "Gamma _end"
-msgstr "Сўниш"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
-#, fuzzy
 msgid "Gamma _start"
-msgstr "Сўниш"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
-#, fuzzy
 msgid "Gamma change"
-msgstr "Сўниш"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
-#, fuzzy
 msgid "Generate blank frames"
-msgstr "кадрлар"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
-#, fuzzy
 msgid "Generate clip from image"
-msgstr "кадрлар"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
-#, fuzzy
 msgid "Generate coloured frames"
-msgstr "кадрлар"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
-#, fuzzy
 msgid "Generate title frames"
-msgstr "кадрлар"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
-#, fuzzy
 msgid "Generating blank frames"
-msgstr "кадрлар"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
-#, fuzzy
 msgid "Generating clip from image"
-msgstr "кадрлар"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
-#, fuzzy
 msgid "Generating coloured frames"
-msgstr "кадрлар"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
-#, fuzzy
 msgid "Generating title frames"
-msgstr "кадрлар"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/flop.script:0
 msgid "Horizontal flopping"
@@ -9763,29 +9718,24 @@ msgid "Horizontal shifting"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
-#, fuzzy
 msgid "Hue _end"
-msgstr "Сўниш"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
-#, fuzzy
 msgid "Hue _start"
-msgstr "Сўниш"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
-#, fuzzy
 msgid "Hue change"
-msgstr "Сўниш"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
-#, fuzzy
 msgid "Hue end"
-msgstr "Сўниш"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
-#, fuzzy
 msgid "Hue start"
-msgstr "Сўниш"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
 msgid "Image overlay"
@@ -9824,33 +9774,28 @@ msgid "L_eft"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/monochrome.script:0
-#, fuzzy
 msgid "Making monochrome"
-msgstr "Монохром"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
-#, fuzzy
 msgid "Modulate (BSH)"
-msgstr "Буриш"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
-#, fuzzy
 msgid "Modulating"
-msgstr "Буриш"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/monochrome.script:0
 msgid "Monochrome"
 msgstr "Монохром"
 
 #: /usr/share/lives/plugins/effects/rendered/negate.script:0
-#, fuzzy
 msgid "Negate"
-msgstr "Буриш"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/negate.script:0
-#, fuzzy
 msgid "Negating"
-msgstr "Буриш"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
 msgid "Noise type"
@@ -9865,9 +9810,8 @@ msgid "Normalize"
 msgstr "Нормаллаштириш"
 
 #: /usr/share/lives/plugins/effects/rendered/normalize.script:0
-#, fuzzy
 msgid "Normalizing"
-msgstr "Нормаллаштириш"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 msgid "Number of _frames"
@@ -9886,23 +9830,20 @@ msgid "Photo/still"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
-#, fuzzy
 msgid "Pixilate"
-msgstr "Буриш"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
-#, fuzzy
 msgid "Pixilating"
-msgstr "Буриш"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/posterize.script:0
 msgid "Posterize"
 msgstr "Plakat"
 
 #: /usr/share/lives/plugins/effects/rendered/posterize.script:0
-#, fuzzy
 msgid "Posterizing"
-msgstr "Plakat"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/randomzoom.script:0
 msgid "Random zoom"
@@ -9925,14 +9866,12 @@ msgid "Replacing colours in"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/resize.script:0
-#, fuzzy
 msgid "Resize All Frames"
-msgstr "Барча кадрларнинг _ҳажмини ўзгартириш"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/rotate.script:0
-#, fuzzy
 msgid "Rotate Clip"
-msgstr "Буриш"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/rotate.script:0
 msgid "Rotating"
@@ -9940,34 +9879,28 @@ msgstr "Буриш"
 
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
-#, fuzzy
 msgid "S_tart %"
-msgstr "Сўниш"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
-#, fuzzy
 msgid "Saturation _end"
-msgstr "Oʻtishlar"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
-#, fuzzy
 msgid "Saturation _start"
-msgstr "Oʻtishlar"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
-#, fuzzy
 msgid "Saturation change"
-msgstr "Oʻtishlar"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
-#, fuzzy
 msgid "Saturation end"
-msgstr "Oʻtishlar"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
-#, fuzzy
 msgid "Saturation start"
-msgstr "Oʻtishlar"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/sepia.script:0
 msgid "Sepia"
@@ -9990,19 +9923,16 @@ msgid "Shrinking/Expanding"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
-#, fuzzy
 msgid "Skip forward"
-msgstr "_Ўтказиб юбориш"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/solarize.script:0
-#, fuzzy
 msgid "Solarize"
-msgstr "Бўяш"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/solarize.script:0
-#, fuzzy
 msgid "Solarizing"
-msgstr "Бўяш"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
 msgid "Spin"
@@ -10029,36 +9959,30 @@ msgid "Spreading"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/solarize.script:0
-#, fuzzy
 msgid "Step _Value"
-msgstr "Сўниш"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
-#, fuzzy
 msgid "Step per _Frame"
-msgstr "Сўниш"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
-#, fuzzy
 msgid "Swirl _start"
-msgstr "Сўниш"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
-#, fuzzy
 msgid "Swirl s_tep"
-msgstr "Сўниш"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
-#, fuzzy
 msgid "Swirl"
-msgstr "Сўниш"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
-#, fuzzy
 msgid "Swirling"
-msgstr "Сўниш"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
 msgid "Text Overlay"
@@ -10114,14 +10038,12 @@ msgstr ""
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
-#, fuzzy
 msgid "_Background Colour"
-msgstr "Сўниш"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
-#, fuzzy
 msgid "_Background colour"
-msgstr "Сўниш"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
 msgid "_Black and white camera"
@@ -10136,14 +10058,12 @@ msgid "_Bottom"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
-#, fuzzy
 msgid "_Calculate"
-msgstr "Сўниш"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/cycle.script:0
-#, fuzzy
 msgid "_Cycle Start"
-msgstr "Сўниш"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/contrast.script:0
 msgid "_Decrease Contrast"
@@ -10156,9 +10076,8 @@ msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
-#, fuzzy
 msgid "_End Colour"
-msgstr "Сўниш"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
 msgid "_End Size X:"
@@ -10169,37 +10088,31 @@ msgid "_End Size Y:"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/spread.script:0
-#, fuzzy
 msgid "_End amount"
-msgstr "Сўниш"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/dream.script:0
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
-#, fuzzy
 msgid "_Fade level"
-msgstr "Сўниш"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
-#, fuzzy
 msgid "_Fade start"
-msgstr "Сўниш"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
-#, fuzzy
 msgid "_Fill colour"
-msgstr "Сўниш"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
-#, fuzzy
 msgid "_First frame"
-msgstr "Freymlar"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
-#, fuzzy
 msgid "_Flash for"
-msgstr "Сўниш"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 msgid "_Font"
@@ -10209,33 +10122,28 @@ msgstr "_Шрифт"
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
-#, fuzzy
 msgid "_Frames per second"
-msgstr "сония"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
-#, fuzzy
 msgid "_Frames"
-msgstr "Freymlar"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
-#, fuzzy
 msgid "_Hold for"
-msgstr "Сўниш"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
 msgid "_Horizontal segments"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
-#, fuzzy
 msgid "_Image File"
-msgstr "_Файл"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
-#, fuzzy
 msgid "_Image"
-msgstr "_Файл"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/contrast.script:0
 msgid "_Increase Contrast"
@@ -10271,9 +10179,8 @@ msgid "_Midtone"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/negate.script:0
-#, fuzzy
 msgid "_Negate"
-msgstr "Буриш"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
@@ -10303,27 +10210,23 @@ msgid "_Point size"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
-#, fuzzy
 msgid "_Radius end"
-msgstr "Сўниш"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
-#, fuzzy
 msgid "_Radius start"
-msgstr "Сўниш"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/emboss.script:0
 #: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
 #: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
-#, fuzzy
 msgid "_Radius"
-msgstr "Сўниш"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
-#, fuzzy
 msgid "_Random colour each frame"
-msgstr "кадрлар"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/dream.script:0
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
@@ -10335,37 +10238,32 @@ msgid "_Right"
 msgstr "_Ўнг томонга"
 
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
-#, fuzzy
 msgid "_Rotate Selection by"
-msgstr "_Тескарисига танлаш"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
 msgid "_Shrink rotated window to fit frame size"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
-#, fuzzy
 msgid "_Sigma end"
-msgstr "Сўниш"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
-#, fuzzy
 msgid "_Sigma start"
-msgstr "Сўниш"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
-#, fuzzy
 msgid "_Skip ahead"
-msgstr "_Ўтказиб юбориш"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/negate.script:0
 msgid "_Skip"
 msgstr "_Ўтказиб юбориш"
 
 #: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
-#, fuzzy
 msgid "_Source Colour"
-msgstr "Сўниш"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
 msgid "_Splice"
@@ -10373,32 +10271,27 @@ msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
-#, fuzzy
 msgid "_Start Colour"
-msgstr "Сўниш"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
 #: /usr/share/lives/plugins/effects/rendered/solarize.script:0
-#, fuzzy
 msgid "_Start Value"
-msgstr "Сўниш"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/spread.script:0
-#, fuzzy
 msgid "_Start amount"
-msgstr "Сўниш"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
-#, fuzzy
 msgid "_Stroke colour"
-msgstr "Сўниш"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
-#, fuzzy
 msgid "_Target Colour"
-msgstr "Сўниш"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
@@ -10406,9 +10299,8 @@ msgid "_Text"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
-#, fuzzy
 msgid "_Time (seconds)"
-msgstr "сония"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
 msgid "_Top left is clipboard"
@@ -10423,9 +10315,8 @@ msgid "_Vertical segments"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/wave.script:0
-#, fuzzy
 msgid "_Wavemax"
-msgstr "Тўлқин"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 msgid "_White is transparent"
@@ -10445,9 +10336,8 @@ msgid "_X End"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
-#, fuzzy
 msgid "_X Start"
-msgstr "Сўниш"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
@@ -10463,9 +10353,8 @@ msgid "_Y End"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
-#, fuzzy
 msgid "_Y Start"
-msgstr "Сўниш"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
@@ -10481,38 +10370,32 @@ msgid "_then"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/blank_frames.script:0
-#, fuzzy
 msgid "blank_frames"
-msgstr "кадрлар"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
 msgid "blur"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/brightness_change.script:0
-#, fuzzy
 msgid "brightness_change"
-msgstr "Oʻtishlar"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
-#, fuzzy
 msgid "charcoal"
-msgstr "Қора қалам"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
-#, fuzzy
 msgid "colorize"
-msgstr "Бўяш"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
-#, fuzzy
 msgid "colour_filter"
-msgstr "Бўяш"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
-#, fuzzy
 msgid "colour_replace"
-msgstr "Бўяш"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/contrast.script:0
 msgid "contrast"
@@ -10531,32 +10414,28 @@ msgid "despeckle"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/dream.script:0
-#, fuzzy
 msgid "dream"
-msgstr "Дрим"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
 msgid "edge_detect"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/emboss.script:0
-#, fuzzy
 msgid "emboss"
-msgstr "Қавариқ"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/enhance.script:0
-#, fuzzy
 msgid "enhance"
-msgstr "Яхшилаш"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
 msgid "every"
 msgstr "har"
 
 #: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
-#, fuzzy
 msgid "fade_in_out"
-msgstr "Сўниш"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
 msgid "fc"
@@ -10571,38 +10450,32 @@ msgid "flop"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
-#, fuzzy
 msgid "frame_calculator"
-msgstr "Сўниш"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
-#, fuzzy
 msgid "gamma_change"
-msgstr "Oʻtishlar"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
-#, fuzzy
 msgid "gen_blank_frames"
-msgstr "кадрлар"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
-#, fuzzy
 msgid "gen_clip_from_image"
-msgstr "кадрлар"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
-#, fuzzy
 msgid "gen_coloured_frames"
-msgstr "кадрлар"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 msgid "gen_text"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
-#, fuzzy
 msgid "hue_change"
-msgstr "Oʻtishlar"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
 msgid "image_overlay"
@@ -10613,60 +10486,52 @@ msgid "jumble"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
-#, fuzzy
 msgid "modulate"
-msgstr "Буриш"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/monochrome.script:0
-#, fuzzy
 msgid "monochrome"
-msgstr "Монохром"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/negate.script:0
-#, fuzzy
 msgid "negate"
-msgstr "Буриш"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
 msgid "noisify"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/normalize.script:0
-#, fuzzy
 msgid "normalize"
-msgstr "Нормаллаштириш"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
 msgid "photo_still"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
-#, fuzzy
 msgid "pixilate"
-msgstr "Буриш"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/posterize.script:0
-#, fuzzy
 msgid "posterize"
-msgstr "Plakat"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/randomzoom.script:0
 msgid "randomzoom"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/resize.script:0
-#, fuzzy
 msgid "resize"
-msgstr "Ўлчамини ўзгартириш"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/rotate.script:0
 msgid "rotate"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
-#, fuzzy
 msgid "saturation_change"
-msgstr "Oʻtishlar"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/sepia.script:0
 msgid "sepia"
@@ -10685,14 +10550,12 @@ msgid "shrink_expand"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
-#, fuzzy
 msgid "skip_forwards"
-msgstr "_Ўтказиб юбориш"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/solarize.script:0
-#, fuzzy
 msgid "solarize"
-msgstr "Бўяш"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
 msgid "spin"
@@ -10703,38 +10566,32 @@ msgid "spread"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
-#, fuzzy
 msgid "swirl"
-msgstr "Сўниш"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
 msgid "textover"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
-#, fuzzy
 msgid "transition_bwthresh"
-msgstr "Oʻtishlar"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
-#, fuzzy
 msgid "transition_checkerboard"
-msgstr "Shaxmat taxtasi"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
-#, fuzzy
 msgid "transition_fade2"
-msgstr "Oʻtishlar"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
-#, fuzzy
 msgid "transition_splice"
-msgstr "Oʻtishlar"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
-#, fuzzy
 msgid "trim_frames"
-msgstr "кадрлар"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
 msgid "tunnel"
@@ -10815,12 +10672,3 @@ msgstr ""
 #: /usr/bin/smogrify:0
 msgid "$error"
 msgstr "$error"
-
-#, fuzzy
-#~ msgid ""
-#~ "\n"
-#~ "Unable to connect to pulse audio server\n"
-#~ msgstr "Аудио сервер пульси ишга туширилмоқда..."
-
-#~ msgid "Red"
-#~ msgstr "Қизил"

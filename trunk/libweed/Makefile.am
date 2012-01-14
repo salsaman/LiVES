@@ -49,7 +49,7 @@ libweed_slice_la_SOURCES = weed-gslice.c
 libweed_utils_la_SOURCES = weed-utils.c 
 
 libweed_plugin_utils_la_SOURCES = weed-plugin-utils.c
-y
+
 libweedinclude_HEADERS = weed.h weed-host.h weed-plugin.h weed-utils.h weed-events.h weed-palettes.h weed-effects.h \
 	weed-plugin-utils.h weed-compat.h
 

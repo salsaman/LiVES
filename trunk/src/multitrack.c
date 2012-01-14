@@ -187,7 +187,6 @@ static GdkPixbuf *make_thumb (lives_mt *mt, gint file, gint width, gint height, 
 
   if (file<1) {
     LIVES_WARN("Warning - make thumb for file");
-    LIVES_WARN(file);
     return NULL;
   }
 
@@ -18282,10 +18281,10 @@ static void add_missing_atrack_closers(weed_plant_t *event_list, gdouble fps, gc
     aseeks[i]=0.;
     aseeks[i+1]=0.;
     g_strfreev(array);
-    alist=alist->next;
     if (aclips[i]>=0) ebuf=rec_error_add(ebuf,"Added missing audio closure",aclips[i],tc);
     else ebuf=rec_error_add(ebuf,"Added missing audio closure to backing track",-aclips[i],tc);
     i+=2;
+    alist=alist->next;
   }
 
   weed_set_int_array(last_frame,"audio_clips",num_atracks,aclips);

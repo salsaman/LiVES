@@ -120,7 +120,8 @@ render_details *rdet;
 ////////////////////////////////////////////////////////
 //// UI stuff ///////
 
-GtkWidget *events_rec_dialog (void);
+
+GtkWidget *events_rec_dialog (gboolean allow_mt);
 gint get_render_choice (void);
 gboolean deal_with_render_choice (gboolean add_deinit);
 

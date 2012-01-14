@@ -1275,10 +1275,6 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
     if (cancellable) {
       gtk_widget_show (cfile->proc_ptr->cancel_button);
     }
-    //else lives_set_cursor_style(LIVES_CURSOR_BUSY,GDK_WINDOW(cfile->proc_ptr->processing->window));
-
-
-
 
 
     // if we have virtual frames make sure the first FX_FRAME_PUMP_VAL are decoded for the backend
@@ -1337,7 +1333,9 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
   mainw->startticks=mainw->currticks=mainw->offsetticks=0;
   last_open_check_ticks=0;
 
+  /***************************************************/
   gettimeofday(&tv, NULL);
+  /***************************************************/
 
   // [IMPORTANT] we subtract these from every calculation to make the numbers smaller
   mainw->origsecs=tv.tv_sec;
@@ -1385,6 +1383,8 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
     mainw->origusecs=((gint64)(origticks/U_SEC_RATIO)-mainw->origsecs*1000000.);
   }
 
+
+  // set initial audio seek position for current file
   if (cfile->achans) cfile->aseek_pos=(long)((gdouble)(mainw->play_start-1.)/
 					     cfile->fps*cfile->arate*cfile->achans*(cfile->asampsize/8));
 
@@ -1473,6 +1473,8 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
 	return FALSE;
       }
 
+
+      // normal playback, wth realtime audio player
       if (!visible&&(mainw->whentostop!=STOP_ON_AUD_END||
 		     prefs->audio_player==AUD_PLAYER_JACK||
 		     prefs->audio_player==AUD_PLAYER_PULSE)) continue;
@@ -1551,7 +1553,7 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
       if (visible) {
 	// last frame processed ->> will go from cfile->start to cfile->end
 	gint numtok=get_token_count (mainw->msg,'|');
-	
+	// get progress count from backend
 	if (numtok>1) {
 	  gchar **array=g_strsplit(mainw->msg,"|",numtok);
 	  cfile->proc_ptr->frames_done=atoi(array[0]);
@@ -1570,6 +1572,8 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
 	}
 	else cfile->proc_ptr->frames_done=atoi(mainw->msg);
       }
+
+      // do a processing pass
       if (!process_one(visible)) {
 	lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
 	if (mainw->current_file>-1&&cfile!=NULL) lives_freep((void**)&cfile->op_dir);

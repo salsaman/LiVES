@@ -2511,6 +2511,7 @@ void play_file (void) {
     mainw->osc_block=TRUE;
     gtk_timeout_remove (mainw->kb_timer);
     mainw->rte_textparm=NULL;
+
     mainw->playing_file=-1;
   }
     
@@ -2543,7 +2544,6 @@ void play_file (void) {
 
     }
     if (mainw->record&&((prefs->rec_opts&REC_AUDIO)||(prefs->rec_opts&REC_EXT_AUDIO))) {
-      // DO NOT REMOVE THIS - or bad things happen when entering MT
       weed_plant_t *event=get_last_frame_event(mainw->event_list);
       insert_audio_event_at(mainw->event_list,event,-1,1,0.,0.); // audio switch off
     }
@@ -2572,7 +2572,6 @@ void play_file (void) {
       mainw->pulsed->msgq=&pulse_message;
     }
     if (mainw->record&&((prefs->rec_opts&REC_AUDIO)||(prefs->rec_opts&REC_EXT_AUDIO))) {
-      // DO NOT REMOVE THIS - or bad things happen when entering MT
       weed_plant_t *event=get_last_frame_event(mainw->event_list);
       insert_audio_event_at(mainw->event_list,event,-1,1,0.,0.); // audio switch off
     }
@@ -2814,8 +2813,6 @@ void play_file (void) {
 
   mainw->filter_map=NULL;
 
-  mainw->record_paused=mainw->record_starting=FALSE;
-  
   // disable the freeze key
   gtk_accel_group_disconnect (GTK_ACCEL_GROUP (mainw->accel_group), freeze_closure);
   
@@ -2904,6 +2901,8 @@ void play_file (void) {
 
   // need to do this here, in case we want to preview a generator which will close to -1
   if (mainw->record) deal_with_render_choice(TRUE);
+  mainw->record_paused=mainw->record_starting=FALSE;
+  
 
   if (!mainw->preview&&cfile->clip_type==CLIP_TYPE_GENERATOR) {
     mainw->osc_block=TRUE;

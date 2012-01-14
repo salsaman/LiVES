@@ -125,7 +125,7 @@ ssize_t lives_write(int fd, const void *buf, size_t count, gboolean allow_fail) 
     gchar *msg=NULL;
     mainw->write_failed=TRUE;
     mainw->write_failed_file=filename_from_fd(mainw->write_failed_file,fd);
-    msg=g_strdup_printf("Write failed %lu of %lu in: %s",(unsigned long)retval,
+    msg=g_strdup_printf("Write failed %"PRIu64" of %"PRIu64" in: %s",(unsigned long)retval,
 			(unsigned long)count,mainw->write_failed_file);
     if (!allow_fail) {
       LIVES_ERROR(msg);
@@ -134,7 +134,7 @@ ssize_t lives_write(int fd, const void *buf, size_t count, gboolean allow_fail) 
 #ifndef LIVES_NO_DEBUG
     else {
       gchar *ffile=filename_from_fd(NULL,fd);
-      msg=g_strdup_printf("Write failed %lu of %lu in: %s (not an error)",(unsigned long)retval,
+      msg=g_strdup_printf("Write failed %"PRIu64" of %"PRIu64" in: %s (not an error)",(unsigned long)retval,
 			  (unsigned long)count,ffile);
       LIVES_DEBUG(msg);
       g_free(ffile);
@@ -197,7 +197,7 @@ ssize_t lives_read(int fd, void *buf, size_t count, gboolean allow_less) {
     if (!allow_less||retval<0) {
       mainw->read_failed=TRUE;
       mainw->read_failed_file=filename_from_fd(mainw->read_failed_file,fd);
-      msg=g_strdup_printf("Read failed %lu of %lu in: %s",(unsigned long)retval,
+      msg=g_strdup_printf("Read failed %"PRIu64" of %"PRIu64" in: %s",(unsigned long)retval,
 			  (unsigned long)count,mainw->read_failed_file);
       LIVES_ERROR(msg);
       close(fd);
@@ -205,7 +205,7 @@ ssize_t lives_read(int fd, void *buf, size_t count, gboolean allow_less) {
 #ifndef LIVES_NO_DEBUG
     else {
       gchar *ffile=filename_from_fd(NULL,fd);
-      msg=g_strdup_printf("Read got %lu of %lu in: %s (not an error)",(unsigned long)retval,
+      msg=g_strdup_printf("Read got %"PRIu64" of %"PRIu64" in: %s (not an error)",(unsigned long)retval,
 			  (unsigned long)count,ffile);
       LIVES_DEBUG(msg);
       g_free(ffile);
@@ -610,15 +610,19 @@ static gboolean check_for_audio_stop (gint fileno, gint first_frame, gint last_f
 
 void calc_aframeno(gint fileno) {
 #ifdef ENABLE_JACK
-  if (prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL&&mainw->jackd->playing_file==fileno) {
+  if (prefs->audio_player==AUD_PLAYER_JACK&&(mainw->jackd!=NULL||mainw->jackd_read!=NULL)&&
+      mainw->jackd->playing_file==fileno) {
     // get seek_pos from jack
-    mainw->aframeno=lives_jack_get_pos(mainw->jackd)/cfile->fps+1.;
+    if (mainw->jackd_read!=NULL) mainw->aframeno=lives_jack_get_pos(mainw->jackd_read)/cfile->fps+1.;
+    else mainw->aframeno=lives_jack_get_pos(mainw->jackd)/cfile->fps+1.;
   }
 #endif
 #ifdef HAVE_PULSE_AUDIO
-  if (prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL&&mainw->pulsed->playing_file==fileno) {
+  if (prefs->audio_player==AUD_PLAYER_PULSE&&(mainw->pulsed!=NULL||mainw->pulsed_read!=NULL)&&
+      mainw->pulsed->playing_file==fileno) {
     // get seek_pos from pulse
-    mainw->aframeno=lives_pulse_get_pos(mainw->pulsed)/cfile->fps+1.;
+    if (mainw->pulsed_read!=NULL) mainw->aframeno=lives_pulse_get_pos(mainw->pulsed_read)/cfile->fps+1.;
+    else mainw->aframeno=lives_pulse_get_pos(mainw->pulsed)/cfile->fps+1.;
   }
 #endif
 }

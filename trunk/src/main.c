@@ -912,6 +912,7 @@ static void lives_init(_ign_opts *ign_opts) {
   mainw->add_clear_ds_adv=FALSE;
   mainw->tried_ds_recover=FALSE;
 
+
   /////////////////////////////////////////////////// add new stuff just above here ^^
 
   // TODO - dirsep
@@ -3937,6 +3938,7 @@ void load_frame_image(gint frame) {
   int pwidth,pheight;
   int lb_width=0,lb_height=0;
 
+
   if (G_UNLIKELY(cfile->frames==0&&!mainw->foreign&&!mainw->is_rendering)) {
     if (mainw->record&&!mainw->record_paused) {
       // add blank frame
@@ -4020,6 +4022,8 @@ void load_frame_image(gint frame) {
 	int numframes;
 	int *clips,*frames;
 	weed_plant_t *event_list;
+
+
 
 	if ((cfile->clip_type!=CLIP_TYPE_DISK&&cfile->clip_type!=CLIP_TYPE_FILE)||
 	    (prefs->rec_opts&REC_EFFECTS&&bg_file!=-1&&(mainw->files[bg_file]->clip_type!=CLIP_TYPE_DISK&&

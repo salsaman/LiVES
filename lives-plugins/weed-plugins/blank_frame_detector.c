@@ -45,7 +45,7 @@ static unsigned short Y_R[256];
 static unsigned short Y_G[256];
 static unsigned short Y_B[256];
 
-static unsigned short conv_luma[256];
+static unsigned short unclamp_luma[256];
 
 
 static void init_luma_arrays(void) {
@@ -58,15 +58,15 @@ static void init_luma_arrays(void) {
   }
 
   for (i=0;i<17;i++) {
-    conv_luma[i]=0;
+    unclamp_luma[i]=0;
   }
 
   for (i=17;i<235;i++) {
-    conv_luma[i]=(int)((float)(i-16.)/221.*255.+.5);
+    unclamp_luma[i]=(int)((float)(i-16.)/219.*255.+.5);
   }
 
   for (i=235;i<256;i++) {
-    conv_luma[i]=255;
+    unclamp_luma[i]=255;
   }
 
 }
@@ -77,13 +77,6 @@ int calc_luma(int red, int green, int blue) {
   return (Y_R[red]+Y_G[green]+Y_B[blue])>>8;
 }
 
-
-
-int stretch_luma(int clamped_luma) {
-  // return luma 0<=x<=256
-  if (clamped_luma==16) return 0;
-  else return conv_luma[clamped_luma];
-}
 
 ////////////////////////////////////////////////////////////
 
@@ -143,8 +136,6 @@ int bfd_process (weed_plant_t *inst, weed_timecode_t timestamp) {
   unsigned char *end=src+height*irowstride;
   register int i;
 
-  weed_set_boolean_value(blank,"value",WEED_FALSE);
-
   if (pal==WEED_PALETTE_YUV444P||pal==WEED_PALETTE_YUVA4444P||pal==WEED_PALETTE_YUV422P||
       pal==WEED_PALETTE_YUV420P||pal==WEED_PALETTE_YVU420P||pal==WEED_PALETTE_UYVY||pal==WEED_PALETTE_YUYV||
       pal==WEED_PALETTE_YUV888||pal==WEED_PALETTE_YUVA8888) {
@@ -170,7 +161,7 @@ int bfd_process (weed_plant_t *inst, weed_timecode_t timestamp) {
       if (pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_RGBA32) luma=calc_luma(src[i],src[i+1],src[i+2]);
       else if (pal==WEED_PALETTE_BGR24||pal==WEED_PALETTE_BGRA32) luma=calc_luma(src[i+2],src[i+1],src[i]);
       else if (pal==WEED_PALETTE_ARGB32) luma=calc_luma(src[i+1],src[i+2],src[i+3]);
-      else luma=(clamped?stretch_luma(src[i]):src[i]);
+      else luma=(clamped?unclamp_luma[src[i]]:src[i]);
 
       if (luma>threshold) {
 	// is not blank

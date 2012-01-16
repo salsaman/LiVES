@@ -437,20 +437,20 @@ framedraw_redraw (lives_special_framedraw_rect_t * framedraw, gboolean reload, G
 void load_rfx_preview(lives_rfx_t *rfx) {
   // load a preview of an rfx (rendered effect) in clip editor
 
-  GdkPixbuf *pixbuf;
+  LiVESPixbuf *pixbuf;
   FILE *infofile=NULL;
 
   int max_frame=0,tot_frames=0;
   int vend=cfile->start;
   int retval;
   int alarm_handle;
-  gint current_file=mainw->current_file;
+  int current_file=mainw->current_file;
 
-  gboolean retb;
-  gboolean timeout;
+  boolean retb;
+  boolean timeout;
 
   weed_timecode_t tc;
-  const gchar *img_ext;
+  const char *img_ext;
 
   if (mainw->framedraw_frame==0) mainw->framedraw_frame=1;
 
@@ -569,9 +569,9 @@ void load_rfx_preview(lives_rfx_t *rfx) {
   }
 
   tc=((mainw->framedraw_frame-1.))/cfile->fps*U_SECL;
-  pixbuf=pull_gdk_pixbuf_at_size(mainw->current_file,mainw->framedraw_frame,(gchar *)img_ext,
-				 tc,(gdouble)cfile->hsize/mainw->fd_scale,
-				 (gdouble)cfile->vsize/mainw->fd_scale,GDK_INTERP_HYPER);
+  pixbuf=pull_lives_pixbuf_at_size(mainw->current_file,mainw->framedraw_frame,(gchar *)img_ext,
+				   tc,(gdouble)cfile->hsize/mainw->fd_scale,
+				   (gdouble)cfile->vsize/mainw->fd_scale,GDK_INTERP_HYPER);
 
   gtk_image_set_from_pixbuf(GTK_IMAGE(mainw->framedraw_image), pixbuf);
   gtk_widget_queue_draw (mainw->framedraw_image);
@@ -599,7 +599,7 @@ after_framedraw_frame_spinbutton_changed (GtkSpinButton *spinbutton, lives_speci
 
 
 
-void load_framedraw_image(GdkPixbuf *pixbuf) {
+void load_framedraw_image(LiVESPixbuf *pixbuf) {
   // this is for the single frame framedraw widget
   // it should be called whenever mainw->framedraw_bitmap changes
 
@@ -621,9 +621,9 @@ void load_framedraw_image(GdkPixbuf *pixbuf) {
   if (pixbuf==NULL) {
     const gchar *img_ext=cfile->img_type==IMG_TYPE_JPEG?"jpg":"png";
     tc=((mainw->framedraw_frame-1.))/cfile->fps*U_SECL;
-    pixbuf=pull_gdk_pixbuf_at_size(mainw->current_file,mainw->framedraw_frame,img_ext,tc,
-				   (gdouble)cfile->hsize/mainw->fd_scale,(gdouble)cfile->vsize/mainw->fd_scale,
-				   GDK_INTERP_HYPER);
+    pixbuf=pull_lives_pixbuf_at_size(mainw->current_file,mainw->framedraw_frame,img_ext,tc,
+				     (gdouble)cfile->hsize/mainw->fd_scale,(gdouble)cfile->vsize/mainw->fd_scale,
+				     GDK_INTERP_HYPER);
     needs_free=TRUE;
   }
 

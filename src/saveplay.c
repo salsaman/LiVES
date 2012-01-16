@@ -1937,6 +1937,7 @@ void play_file (void) {
 #endif
   gboolean has_audio_buffers=FALSE;
 
+
   if (audio_player!=AUD_PLAYER_JACK&&audio_player!=AUD_PLAYER_PULSE) mainw->aud_file_to_kill=mainw->current_file;
   else mainw->aud_file_to_kill=-1;
 
@@ -2251,7 +2252,7 @@ void play_file (void) {
   mainw->currticks=0;
 
   // reinit all active effects
-  if (!mainw->preview&&!mainw->is_rendering) weed_reinit_all();
+  if (!mainw->preview&&!mainw->is_rendering&&!mainw->foreign) weed_reinit_all();
 
   if (!mainw->foreign&&(!(mainw->record&&(prefs->rec_opts&REC_EXT_AUDIO))&&
 			((audio_player==AUD_PLAYER_JACK) ||
@@ -2319,7 +2320,6 @@ void play_file (void) {
 
   g_free (com4);
 
-
   // if recording, set up recorder (jack or pulse)
 
   if (!mainw->foreign&&(mainw->record&&(prefs->rec_opts&REC_EXT_AUDIO))&&
@@ -2346,8 +2346,6 @@ void play_file (void) {
       }
     }
   }
-
-
 
 
   if (mainw->foreign||weed_playback_gen_start()) {
@@ -2603,6 +2601,7 @@ void play_file (void) {
 
   mainw->video_seek_ready=FALSE;
 
+
   // PLAY FINISHED...
   // allow this to fail - not all sub-commands may be present
   if (prefs->stop_screensaver) 
@@ -2640,21 +2639,20 @@ void play_file (void) {
     cfile->hsize=mainw->pwidth;
     cfile->vsize=mainw->pheight;
 
-    g_object_ref(GTK_SOCKET(mainw->playarea)->plug_window);
-    gdk_window_reparent(GTK_SOCKET(mainw->playarea)->plug_window,NULL,0,0);
+    //g_object_ref(GTK_SOCKET(mainw->playarea)->plug_window);
+    //gdk_window_reparent(GTK_SOCKET(mainw->playarea)->plug_window,NULL,0,0);
 
     // return external window to the window manager
 
 #ifdef USE_X11 
-    XMapWindow (GDK_WINDOW_XDISPLAY (GTK_SOCKET(mainw->playarea)->plug_window),
-		  GDK_WINDOW_XID (GTK_SOCKET(mainw->playarea)->plug_window));
+    /*  XMapWindow (GDK_WINDOW_XDISPLAY (GTK_SOCKET(mainw->playarea)->plug_window),
+	GDK_WINDOW_XID (GTK_SOCKET(mainw->playarea)->plug_window));*/
 
 #else
     // need equivalent of XMapWindow on other platforms...
 #endif
 
-
-    // TODO - figure out how to add back to toplevel windows...
+    gdk_window_set_keep_above(mainw->foreign_window,FALSE);
 
     while (g_main_context_iteration(NULL,FALSE));
 

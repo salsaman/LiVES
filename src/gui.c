@@ -2087,11 +2087,11 @@ create_LiVES (void)
   mainw->def_height=DEFAULT_FRAME_HSIZE;
 
   if (!(mainw->imframe==NULL)) {
-    if (gdk_pixbuf_get_width (mainw->imframe)+H_RESIZE_ADJUST<mainw->def_width) {
-      mainw->def_width=gdk_pixbuf_get_width (mainw->imframe)+H_RESIZE_ADJUST;
+    if (lives_pixbuf_get_width (mainw->imframe)+H_RESIZE_ADJUST<mainw->def_width) {
+      mainw->def_width=lives_pixbuf_get_width (mainw->imframe)+H_RESIZE_ADJUST;
     }
-    if (gdk_pixbuf_get_height (mainw->imframe)+V_RESIZE_ADJUST*mainw->foreign<mainw->def_height) {
-      mainw->def_height=gdk_pixbuf_get_height (mainw->imframe)+V_RESIZE_ADJUST*mainw->foreign;
+    if (lives_pixbuf_get_height (mainw->imframe)+V_RESIZE_ADJUST*mainw->foreign<mainw->def_height) {
+      mainw->def_height=lives_pixbuf_get_height (mainw->imframe)+V_RESIZE_ADJUST*mainw->foreign;
     }
   }
 
@@ -3758,8 +3758,8 @@ void resize_play_window (void) {
        (!cfile->is_loaded&&!mainw->preview&&cfile->clip_type!=CLIP_TYPE_GENERATOR))||
       (mainw->multitrack!=NULL&&mainw->playing_file<1&&!mainw->preview)) {
     if (mainw->imframe!=NULL) {
-      mainw->pwidth=gdk_pixbuf_get_width (mainw->imframe);
-      mainw->pheight=gdk_pixbuf_get_height (mainw->imframe);
+      mainw->pwidth=lives_pixbuf_get_width (mainw->imframe);
+      mainw->pheight=lives_pixbuf_get_height (mainw->imframe);
     }
     else {
       if (mainw->multitrack==NULL) {

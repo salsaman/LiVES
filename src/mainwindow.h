@@ -286,9 +286,11 @@ typedef struct {
   unsigned int foreign_id;
   GdkColormap *foreign_cmap;
   GdkPixmap *foreign_map;
+  GdkWindow *foreign_window;
   gint foreign_width;
   gint foreign_height;
   gint foreign_bpp;
+  gchar *foreign_visual;
 
   /// some VJ effects
   gboolean nervous;

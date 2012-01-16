@@ -18,7 +18,7 @@
 // basic functions
 
 
-LiVESWidget *lives_dialog_get_content_area(LiVESDialog *dialog) {
+LIVES_INLINE LiVESWidget *lives_dialog_get_content_area(LiVESDialog *dialog) {
 #ifdef GUI_GTK
 
 #if GTK_CHECK_VERSION(2,14,0)
@@ -33,7 +33,187 @@ LiVESWidget *lives_dialog_get_content_area(LiVESDialog *dialog) {
 
 
 
+LIVES_INLINE LiVESPixbuf *lives_pixbuf_new(boolean has_alpha, int width, int height) {
 
+#ifdef GUI_GTK
+  // alpha fmt is RGBA post mult
+  return gdk_pixbuf_new(GDK_COLORSPACE_RGB,has_alpha,8,width,height);
+#endif
+			
+#ifdef GUI_QT
+  // alpha fmt is ARGB32 premult
+  enum fmt;
+  if (!has_alpha) fmt=QImage::Format_RGB888;
+  else {
+    fmt=QImage::Format_ARGB32_Premultiplied;
+    LIVES_WARN("Image fmt is ARGB pre");
+  }
+  return new QImage(width, height, fmt);
+#endif
+}
+
+
+
+LIVES_INLINE LiVESPixbuf *lives_pixbuf_new_from_data (const unsigned char *buf, boolean has_alpha, int width, int height, 
+						      int rowstride, LiVESPixbufDestroyNotify lives_free_buffer_fn, 
+						      gpointer destroy_fn_data) {
+
+#ifdef GUI_GTK
+  return gdk_pixbuf_new_from_data ((const guchar *)buf, GDK_COLORSPACE_RGB, has_alpha, 8, width, height, rowstride, 
+				   lives_free_buffer_fn, 
+				   destroy_fn_data);
+#endif
+
+
+#ifdef GUI_QT
+  // alpha fmt is ARGB32 premult
+  enum fmt;
+  if (!has_alpha) fmt=QImage::Format_RGB888;
+  else {
+    fmt=QImage::Format_ARGB32_Premultiplied;
+    LIVES_WARN("Image fmt is ARGB pre");
+  }
+  // on destruct, we need to call lives_free_buffer_fn(uchar *pixels, gpointer destroy_fn_data)
+  LIVES_ERROR("Need to set destructor fn for QImage");
+  return new QImage((uchar *)buf, width, height, rowstride, fmt);
+#endif
+
+}
+
+
+
+LIVES_INLINE LiVESPixbuf *lives_pixbuf_new_from_file(const char *filename, GError **error) {
+#ifdef GUI_GTK
+  return gdk_pixbuf_new_from_file(filename, error);
+#endif
+
+#ifdef GUI_QT
+  QImage image = new QImage();
+  if (!image.load(filename)) {
+    // do something with error
+    LIVES_WARN("QImage not loaded");
+    ~image();
+    return NULL;
+  }
+  return image;
+}
+
+#endif
+}
+
+
+
+
+LIVES_INLINE LiVESPixbuf *lives_pixbuf_new_from_file_at_scale(const char *filename, int width, int height, 
+							      boolean preserve_aspect_ratio,
+							      GError **error) {
+
+#ifdef GUI_GTK
+  return gdk_pixbuf_new_from_file_at_scale(filename, width, height, preserve_aspect_ratio, error);
+#endif
+
+#ifdef GUI_QT
+  QImage image = QImage();
+  QImage image2;
+  if (!image.load(filename)) {
+    // do something with error
+    LIVES_WARN("QImage not loaded");
+    return NULL;
+  }
+  if (preserve_aspect_ratio) asp=Qt::KeepAspectRatio;
+  else Qt::IgnoreAspectRatio;
+  image2 = new image.scaled(width, height, asp,  Qt::SmoothTransformation);
+  if (!image2) {
+    LIVES_WARN("QImage not scaled");
+    return NULL;
+  }
+
+  return image2;
+}
+
+#endif
+}
+
+
+
+LIVES_INLINE int lives_pixbuf_get_rowstride(const LiVESPixbuf *pixbuf) {
+#ifdef GUI_GTK
+  return gdk_pixbuf_get_rowstride(pixbuf);
+#endif
+
+#ifdef GUI_QT
+  return pixbuf.bytesPerLine();
+#endif
+}
+
+
+LIVES_INLINE int lives_pixbuf_get_width(const LiVESPixbuf *pixbuf) {
+#ifdef GUI_GTK
+  return gdk_pixbuf_get_width(pixbuf);
+#endif
+
+#ifdef GUI_QT
+  return pixbuf.width();
+#endif
+}
+
+
+LIVES_INLINE int lives_pixbuf_get_height(const LiVESPixbuf *pixbuf) {
+#ifdef GUI_GTK
+  return gdk_pixbuf_get_height(pixbuf);
+#endif
+
+#ifdef GUI_QT
+  return pixbuf.height();
+#endif
+}
+
+
+LIVES_INLINE int lives_pixbuf_get_n_channels(const LiVESPixbuf *pixbuf) {
+#ifdef GUI_GTK
+  return gdk_pixbuf_get_n_channels(pixbuf);
+#endif
+
+#ifdef GUI_QT
+  return pixbuf.depth()>>3;
+#endif
+}
+
+
+
+LIVES_INLINE guchar *lives_pixbuf_get_pixels(const LiVESPixbuf *pixbuf) {
+#ifdef GUI_GTK
+  return gdk_pixbuf_get_pixels(pixbuf);
+#endif
+
+#ifdef GUI_QT
+  return pixbuf.bits();
+#endif
+}
+
+
+LIVES_INLINE const guchar *lives_pixbuf_get_pixels_readonly(const LiVESPixbuf *pixbuf) {
+
+#ifdef GUI_GTK
+  return (const guchar *)gdk_pixbuf_get_pixels(pixbuf);
+#endif
+
+#ifdef GUI_QT
+  return (const uchar *)pixbuf.bits();
+#endif
+}
+
+
+
+LIVES_INLINE boolean lives_pixbuf_get_has_alpha(const LiVESPixbuf *pixbuf) {
+#ifdef GUI_GTK
+  return gdk_pixbuf_get_has_alpha(pixbuf);
+#endif
+
+#ifdef GUI_QT
+  return pixbuf.hasAlphaChannel();
+#endif
+}
 
 
 

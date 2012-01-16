@@ -1,6 +1,6 @@
 // utils.c
 // LiVES
-// (c) G. Finch 2003 - 2011 <salsaman@xs4all.nl,salsaman@gmail.com>
+// (c) G. Finch 2003 - 2012 <salsaman@xs4all.nl,salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -2545,6 +2545,7 @@ void
 prepare_to_play_foreign(void) {
   // here we are going to 'play' a captured external window
   gint new_file=mainw->first_free_file;
+  GdkVisual *vissi;
 
   // create a new 'file' to play into
   if (!get_new_handle(new_file,NULL)) {
@@ -2566,7 +2567,8 @@ prepare_to_play_foreign(void) {
     }
 #endif
 #ifdef ENABLE_JACK
-    if (mainw->rec_achans>0&&prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd_read==NULL) jack_rec_audio_to_clip(mainw->current_file,-1,RECA_WINDOW_GRAB);
+    if (mainw->rec_achans>0&&prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd_read==NULL) 
+      jack_rec_audio_to_clip(mainw->current_file,-1,RECA_WINDOW_GRAB);
 #endif
   }
 
@@ -2588,14 +2590,28 @@ prepare_to_play_foreign(void) {
   cfile->hsize=mainw->pwidth;
   cfile->vsize=mainw->pheight;
 
-  // for some strange reason we now have to do this twice...and now it doesn't
-  // always work
-  gtk_socket_add_id(GTK_SOCKET(mainw->playarea),mainw->foreign_id);
-  gtk_socket_add_id(GTK_SOCKET(mainw->playarea),mainw->foreign_id);
-  while (g_main_context_iteration(NULL,FALSE));
 
-  mainw->foreign_map=gdk_pixmap_foreign_new(mainw->foreign_id);
-  mainw->foreign_cmap=gdk_colormap_get_system();
+  mainw->foreign_window=gdk_window_foreign_new(mainw->foreign_id);
+  gdk_window_set_keep_above(mainw->foreign_window,TRUE);
+
+  // seems not to work
+  //gdk_window_reparent(mainw->foreign_window, mainw->playarea->window, 0, 0);
+  //while (g_main_context_iteration(NULL,FALSE));
+  ////////////////////////
+
+  //vissi=gdk_x11_screen_lookup_visual(gdk_screen_get_default(),hextodec(mainw->foreign_visual));
+
+  vissi=gdk_visual_get_best_with_depth (mainw->foreign_bpp);
+
+#if GTK_CHECK_VERSION(3,0,0)
+  mainw->foreign_cmap=NULL;
+#else
+#ifdef USE_X11
+  mainw->foreign_cmap=gdk_x11_colormap_foreign_new(vissi, 
+						   gdk_x11_colormap_get_xcolormap(gdk_colormap_new(vissi,TRUE)));
+
+#endif
+#endif
 
   mainw->play_start=1;
   if (mainw->rec_vid_frames==-1) mainw->play_end=INT_MAX;
@@ -2660,8 +2676,8 @@ after_foreign_play(void) {
 	  cfile->progress_end=cfile->frames=cfile->end=new_frames;
 	  cfile->pb_fps=cfile->fps=mainw->rec_fps;
 
-	  cfile->hsize=mainw->foreign_width;
-	  cfile->vsize=mainw->foreign_height;
+	  cfile->hsize=CEIL(mainw->foreign_width,4);
+	  cfile->vsize=CEIL(mainw->foreign_height,4);
 	  
 	  if (mainw->rec_achans>0) {
 	    cfile->arate=cfile->arps=mainw->rec_arate;
@@ -2675,7 +2691,7 @@ after_foreign_play(void) {
 	  g_snprintf(file_name,PATH_MAX,"%s/%s/",prefs->tmpdir,cfile->handle);
 	  
 	  com=g_strdup_printf("smogrify fill_and_redo_frames \"%s\" %d %d %d \"%s\" %.4f %d %d %d %d %d",
-			      cfile->handle,cfile->frames,mainw->foreign_width,mainw->foreign_height,
+			      cfile->handle,cfile->frames,cfile->hsize,cfile->vsize,
 			      cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",cfile->fps,cfile->arate,
 			      cfile->achans,cfile->asampsize,!(cfile->signed_endian&AFORM_UNSIGNED),
 			      !(cfile->signed_endian&AFORM_BIG_ENDIAN));
@@ -3197,8 +3213,9 @@ verhash (gchar *version) {
 
 
 #ifdef PRODUCE_LOG
+// disabled by default
 void lives_log(const char *what) {
-  char *lives_log_file=g_strdup_printf("%s/%s",prefs->tmpdir,LIVES_LOG_FILE);
+  char *lives_log_file=g_build_filename(prefs->tmpdir,LIVES_LOG_FILE,NULL);
   if (mainw->log_fd<0) mainw->log_fd=open(lives_log_file,O_WRONLY|O_CREAT,S_IRUSER|S_IWUSER);
   if (mainw->log_fd!=-1) {
     char *msg=g_strdup("%s|%d|",what,mainw->current_file);
@@ -3792,7 +3809,7 @@ GList *get_set_list(const gchar *dir) {
     
     if (!strncmp(tdirent->d_name,"..",strlen(tdirent->d_name))) continue;
 
-    subdirname=g_strdup_printf("%s/%s",dir,tdirent->d_name);
+    subdirname=g_build_filename(dir,tdirent->d_name,NULL);
 
     subdir=opendir(subdirname);
 

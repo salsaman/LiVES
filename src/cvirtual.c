@@ -250,7 +250,7 @@ gboolean check_if_non_virtual(gint fileno, gint start, gint end) {
 
 
 
-gboolean virtual_to_images(gint sfileno, gint sframe, gint eframe, gboolean update_progress) {
+boolean virtual_to_images(int sfileno, int sframe, int eframe, boolean update_progress) {
   // pull frames from a clip to images
   // from sframe to eframe inclusive (first frame is 1)
 
@@ -262,12 +262,12 @@ gboolean virtual_to_images(gint sfileno, gint sframe, gint eframe, gboolean upda
 
   register int i;
   file *sfile=mainw->files[sfileno];
-  GdkPixbuf *pixbuf;
+  LiVESPixbuf *pixbuf;
   GError *error=NULL;
-  gchar *oname;
+  char *oname;
   int retval;
 
-  gint progress=1;
+  int progress=1;
 
   if (sframe<1) sframe=1;
 
@@ -280,7 +280,8 @@ gboolean virtual_to_images(gint sfileno, gint sframe, gint eframe, gboolean upda
 
       while (g_main_context_iteration(NULL,FALSE));
 
-      pixbuf=pull_gdk_pixbuf_at_size(sfileno,i,sfile->img_type==IMG_TYPE_JPEG?"jpg":"png",q_gint64((i-1.)/sfile->fps,sfile->fps),sfile->hsize,sfile->vsize,GDK_INTERP_HYPER);
+      pixbuf=pull_lives_pixbuf_at_size(sfileno,i,sfile->img_type==IMG_TYPE_JPEG?"jpg":"png",
+				       q_gint64((i-1.)/sfile->fps,sfile->fps),sfile->hsize,sfile->vsize,GDK_INTERP_HYPER);
       
       if (sfile->img_type==IMG_TYPE_JPEG) {
 	oname=g_strdup_printf("%s/%s/%08d.jpg",prefs->tmpdir,sfile->handle,i);

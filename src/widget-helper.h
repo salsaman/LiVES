@@ -13,18 +13,51 @@ typedef GtkWidget                         LiVESWidget;
 typedef GtkDialog                         LiVESDialog;
 typedef GtkBox                            LiVESBox;
 
+typedef GdkPixbuf                         LiVESPixbuf;
+
 typedef gboolean                          boolean;
 typedef GList                             LiVESList;
 typedef GSList                            LiVESSList;
+
+
+typedef GdkPixbufDestroyNotify            LiVESPixbufDestroyNotify;
+
 #endif
 
 
+#ifdef GUI_QT
+typedef QImage                            LiVESPixbuf;
+typedef bool                              boolean;
+typedef int                               gint;
+typedef uchar                             guchar;
+typedef (void *)                          gpointer;  
+typedef (void *)(LiVESPixbufDestroyNotify(uchar *, gpointer));
+
+// etc.
+
+#endif
+
 // basic functions (wrappers for Toolkit functions)
 
+
+int lives_pixbuf_get_width(const LiVESPixbuf *pixbuf);
+int lives_pixbuf_get_height(const LiVESPixbuf *pixbuf);
+int lives_pixbuf_get_has_alpha(const LiVESPixbuf *pixbuf);
+int lives_pixbuf_get_rowstride(const LiVESPixbuf *pixbuf);
+int lives_pixbuf_get_n_channels(const LiVESPixbuf *pixbuf);
+guchar *lives_pixbuf_get_pixels(const LiVESPixbuf *pixbuf);
+const guchar *lives_pixbuf_get_pixels_readonly(const LiVESPixbuf *pixbuf);
+LiVESPixbuf *lives_pixbuf_new(boolean has_alpha, int width, int height);
+LiVESPixbuf *lives_pixbuf_new_from_data (const unsigned char *buf, boolean has_alpha, int width, int height, 
+					 int rowstride, LiVESPixbufDestroyNotify lives_free_buffer_fn, 
+					 gpointer destroy_fn_data);
+
+LiVESPixbuf *lives_pixbuf_new_from_file(const char *filename, GError **error);
+LiVESPixbuf *lives_pixbuf_new_from_file_at_scale(const char *filename, int width, int height, boolean preserve_aspect_ratio,
+						 GError **error);
+
+
 LiVESWidget *lives_dialog_get_content_area(LiVESDialog *dialog);
-
-
-
 
 // compound functions (composed of basic functions)
 

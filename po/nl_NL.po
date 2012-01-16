@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: LiVES 0.9.5cvs\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2012-01-14 10:06-0300\n"
+"POT-Creation-Date: 2012-01-14 11:08-0300\n"
 "PO-Revision-Date: 2010-01-12 10:14+0000\n"
 "Last-Translator: cumulus007 <cumulus0007@gmail.com>\n"
 "Language-Team: \n"
@@ -10972,8 +10972,9 @@ msgid "$file"
 msgstr "$file"
 
 #: /usr/bin/smogrify:0
+#, fuzzy
 msgid "LiVES audio error."
-msgstr ""
+msgstr "LiVES: - Waarschuwing !"
 
 #: /usr/bin/smogrify:0
 msgid "cdda2wav is required for this function."

@@ -926,8 +926,8 @@ void load_preview_image(gboolean update_always);
 gboolean pull_frame(weed_plant_t *layer, const gchar *image_ext, weed_timecode_t tc);
 gboolean pull_frame_at_size (weed_plant_t *layer, const gchar *image_ext, weed_timecode_t tc, 
 			     int width, int height, int target_palette);
-GdkPixbuf *pull_gdk_pixbuf_at_size(gint clip, gint frame, const gchar *image_ext, weed_timecode_t tc, 
-				   gint width, gint height, GdkInterpType interp);
+LiVESPixbuf *pull_lives_pixbuf_at_size(int clip, int frame, const char *image_ext, weed_timecode_t tc, 
+				       int width, int height, GdkInterpType interp);
 GError * lives_pixbuf_save(GdkPixbuf *pixbuf, gchar *fname, lives_image_type_t imgtype, 
 			   int quality, gboolean do_chmod, GError **gerrorptr);
 
@@ -1100,7 +1100,7 @@ void set_sel_label (GtkWidget *label);
 void clear_mainw_msg (void);
 gint get_token_count (const gchar *string, int delim);
 GdkPixmap* gdk_pixmap_copy (GdkPixmap *pixmap);
-GdkPixbuf *gdk_pixbuf_new_blank(gint width, gint height, int palette);
+LiVESPixbuf *lives_pixbuf_new_blank(int width, int height, int palette);
 void get_border_size (GtkWidget *win, gint *bx, gint *by);
 gchar *g_strappend (gchar *string, gint len, const gchar *newbit);
 GList *g_list_append_unique(GList *xlist, const gchar *add);
@@ -1217,7 +1217,6 @@ void on_open_fw_activate (GtkMenuItem *menuitem, gpointer format);
 
 gchar *dummychar;
 
-#define LIVES_NO_DEBUG
 
 #ifndef LIVES_DEBUG
 #ifndef LIVES_NO_DEBUG

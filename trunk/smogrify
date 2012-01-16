@@ -31,7 +31,7 @@ $convert_command="convert -quiet -colorspace RGB -type truecolor";
 # Do not change these except for testing !
 
 $background=1;
-$version="1.6.0";
+$version="1.6.1-svn";
 #$dyneversion="LIVES-20091209";
 
 
@@ -44,7 +44,7 @@ $gid=~ s/\W.*//;
 
 $home=$ENV{"HOME"};
 
-#$DEBUG_SMOGRIFY=1;
+$DEBUG_SMOGRIFY=1;
 
 
 ###################################################################
@@ -2951,10 +2951,20 @@ if (defined($ARGV[0])) {
 	$bpp=$bpps[1];
 	chomp($bpp);
 
+
+	smog_system("grep \"Visual:\" \"$curtmpdir/tmpinfo\" > \"$curtmpdir/tmpinfo2\"");
+	if (defined(open IN,"< $curtmpdir/tmpinfo2")) {
+	    read IN,$visual,128;
+	    close IN;
+	}
+	@visuals=split(/Visual: /,$visual);
+	$visual=$visuals[1];
+	chomp($visual);
+
 	unlink "$curtmpdir/tmpinfo";
 	unlink "$curtmpdir/tmpinfo2";
 
-	&sig_complete($win_id,$width,$height,$bpp);
+	&sig_complete($win_id,$width,$height,$bpp,$visual);
 	exit 0;
     }
 
@@ -5611,8 +5621,8 @@ sub get_image_size {
 sub fill_and_redo_frames {
     # resample and fill gaps in frames
 
-    my $conv_command=$convert_command;
     my $next=0;
+    $conv_command=$convert_command;
 
     smog_chdir("$curtmpdir");
 
@@ -5620,6 +5630,7 @@ sub fill_and_redo_frames {
 	$conv_command.=" -alpha on";
     }
     
+
     for ($i=1;$i<=$end;$i++) {
 	$name=&mkname($i);
 
@@ -5636,7 +5647,7 @@ sub fill_and_redo_frames {
 	}
 
 	unless ($fromname eq $name) {
-	    smog_copy("$fromname$img_ext","$name$img_ext");
+	    smog_copy("$curtmpdir/$fromname$img_ext","$curtmpdir/$name$img_ext");
 	    return if $panic;
 	}
 	&sig_progress($i);
@@ -5648,19 +5659,27 @@ sub fill_and_redo_frames {
 sub get_next_frame {
     my $j;
     my $xname;
+    $imresact="none";
 
     for ($j=$i;$j<=$end;$j++) {
 	$xname=&mkname($j);
 	if (-f "$xname$img_ext") {
 	    # found next frame, resize it
-	    $com="$conv_command -crop $width" . "!x" . $height . "! \"$xname$img_ext\" \"$xname.mgk\" >/dev/null 2>&1";
+	    &get_image_size("$xname$img_ext");
+	    return if ($panic||$hsize==-1);
+
+	    if ($hsize<$width||$vsize<$height) {
+		$com="$conv_command -resize $width" . "!x" . $height . "!+0+0 \"$xname$img_ext\" \"$xname.mgk\" >/dev/null 2>&1";
+	    }
+	    else {
+		$com="$conv_command -crop $width" . "!x" . $height . "! \"$xname$img_ext\" \"$xname.mgk\" >/dev/null 2>&1";
+	    }
 	    $smerr=smog_system($com);
 	    if ($smerr) {
 		sig_system_error("$com",$smerr);
 		$panic=1;
 		return;
 	    }
-	    unlink "$xname$img_ext";
 	    smog_rename( "$xname.mgk","$xname$img_ext");
 	    return $j;
 	}

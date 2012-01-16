@@ -38,7 +38,7 @@ void framedraw_add_label(GtkVBox *box);
 
 
 /// reload and redraw the frame
-void load_framedraw_image(GdkPixbuf *);
+void load_framedraw_image(LiVESPixbuf *);
 void load_rfx_preview(lives_rfx_t *rfx); ///< rfx preview
 
 /// just redraw the frame

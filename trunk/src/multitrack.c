@@ -52,6 +52,8 @@
 #include "giw/giwled.h"
 #endif
 
+#define BORD_HEIGHT 10
+
 static int renumbered_clips[MAX_FILES+1]; // used to match clips from the event recorder with renumbered clips (without gaps)
 static gdouble lfps[MAX_FILES+1]; // table of layout fps
 static void **pchain; // param chain for currently being edited filter
@@ -176,14 +178,14 @@ static gboolean save_event_list_inner(lives_mt *mt, int fd, weed_plant_t *event_
 }
 
 
-static GdkPixbuf *make_thumb (lives_mt *mt, gint file, gint width, gint height, gint frame, gboolean noblanks) {
-  GdkPixbuf *thumbnail=NULL,*pixbuf;
+static LiVESPixbuf *make_thumb (lives_mt *mt, int file, int width, int height, int frame, boolean noblanks) {
+  LiVESPixbuf *thumbnail=NULL,*pixbuf;
   GError *error=NULL;
-  gchar *buf;
+  char *buf;
 
-  gboolean tried_all=FALSE;
+  boolean tried_all=FALSE;
 
-  gint nframe,oframe=frame;
+  int nframe,oframe=frame;
 
   if (file<1) {
     LIVES_WARN("Warning - make thumb for file");
@@ -198,12 +200,12 @@ static GdkPixbuf *make_thumb (lives_mt *mt, gint file, gint width, gint height, 
 
     if (mainw->files[file]->frames>0) {
       weed_timecode_t tc=(frame-1.)/mainw->files[file]->fps*U_SECL;
-      thumbnail=pull_gdk_pixbuf_at_size(file,frame,mainw->files[file]->img_type==IMG_TYPE_JPEG?"jpg":"png",tc,
-					width,height,GDK_INTERP_HYPER);
+      thumbnail=pull_lives_pixbuf_at_size(file,frame,mainw->files[file]->img_type==IMG_TYPE_JPEG?"jpg":"png",tc,
+					  width,height,GDK_INTERP_HYPER);
     }
     else {
       buf=g_build_filename(prefs->prefix_dir,ICON_DIR,"audio.png",NULL);
-      pixbuf=gdk_pixbuf_new_from_file_at_scale(buf,width,height,FALSE,&error);
+      pixbuf=lives_pixbuf_new_from_file_at_scale(buf,width,height,FALSE,&error);
       // ...at_scale is inaccurate !
       
       g_free(buf);
@@ -216,7 +218,7 @@ static GdkPixbuf *make_thumb (lives_mt *mt, gint file, gint width, gint height, 
 	return NULL;
       }
       
-      if (gdk_pixbuf_get_width(pixbuf)!=width||gdk_pixbuf_get_height(pixbuf)!=height) {
+      if (lives_pixbuf_get_width(pixbuf)!=width||lives_pixbuf_get_height(pixbuf)!=height) {
 	// ...at_scale is inaccurate
 	thumbnail=gdk_pixbuf_scale_simple(pixbuf,width,height,GDK_INTERP_HYPER);
 	gdk_pixbuf_unref(pixbuf);
@@ -226,7 +228,7 @@ static GdkPixbuf *make_thumb (lives_mt *mt, gint file, gint width, gint height, 
 
     if (tried_all) noblanks=FALSE;
 
-    if (noblanks&&!gdk_pixbuf_is_all_black(thumbnail)) noblanks=FALSE;
+    if (noblanks&&!lives_pixbuf_is_all_black(thumbnail)) noblanks=FALSE;
     if (noblanks) {
       nframe=frame+mainw->files[file]->frames/10.;
       if (nframe==frame) nframe++;
@@ -284,7 +286,7 @@ static void set_cursor_style(lives_mt *mt, gint cstyle, gint width, gint height,
       frame_start=mt->opts.ign_ins_sel?1:sfile->start;
       frames_width=(gdouble)(mt->opts.ign_ins_sel?sfile->frames:sfile->end-sfile->start+1.);
 
-      pixbuf=gdk_pixbuf_new (GDK_COLORSPACE_RGB, TRUE, 8, width, height);
+      pixbuf=lives_pixbuf_new (TRUE, width, height);
 
       for (i=0;i<width;i+=BLOCK_THUMB_WIDTH) {
 	// create a small thumb
@@ -294,12 +296,12 @@ static void set_cursor_style(lives_mt *mt, gint cstyle, gint width, gint height,
 	  thumbnail=make_thumb(mt,clip,twidth,height,frame_start+(gint)((gdouble)i/(gdouble)width*frames_width),FALSE);
 	  // render it in the eventbox
 	  if (thumbnail!=NULL) {
-	    trow=gdk_pixbuf_get_rowstride(thumbnail);
-	    twidth=gdk_pixbuf_get_width(thumbnail);
+	    trow=lives_pixbuf_get_rowstride(thumbnail);
+	    twidth=lives_pixbuf_get_width(thumbnail);
 	    cpixels=gdk_pixbuf_get_pixels(pixbuf)+(i*4);
 	    tpixels=gdk_pixbuf_get_pixels(thumbnail);
 
-	    if (!gdk_pixbuf_get_has_alpha(thumbnail)) {
+	    if (!lives_pixbuf_get_has_alpha(thumbnail)) {
 	      twidth3=twidth*3;
 	      for (j=0;j<height;j++) {
 		for (k=0;k<twidth3;k+=3) {
@@ -327,8 +329,8 @@ static void set_cursor_style(lives_mt *mt, gint cstyle, gint width, gint height,
     }
     // fallthrough
   case LIVES_CURSOR_AUDIO_BLOCK:
-    pixbuf=gdk_pixbuf_new (GDK_COLORSPACE_RGB, TRUE, 8, width, height);
-    trow=gdk_pixbuf_get_rowstride(pixbuf);
+    pixbuf=lives_pixbuf_new (TRUE, width, height);
+    trow=lives_pixbuf_get_rowstride(pixbuf);
     cpixels=gdk_pixbuf_get_pixels(pixbuf);
     for (j=0;j<height;j++) {
       for (k=0;k<width;k++) {
@@ -342,8 +344,8 @@ static void set_cursor_style(lives_mt *mt, gint cstyle, gint width, gint height,
     }
     break;
   case LIVES_CURSOR_FX_BLOCK:
-    pixbuf=gdk_pixbuf_new (GDK_COLORSPACE_RGB, TRUE, 8, width, height);
-    trow=gdk_pixbuf_get_rowstride(pixbuf);
+    pixbuf=lives_pixbuf_new (TRUE, width, height);
+    trow=lives_pixbuf_get_rowstride(pixbuf);
     cpixels=gdk_pixbuf_get_pixels(pixbuf);
     for (j=0;j<height;j++) {
       for (k=0;k<width;k++) {
@@ -784,6 +786,7 @@ static void draw_block (lives_mt *mt,track_rect *block, gint x1, gint x2) {
     }
     else {
       if ((cfile->achans==0||!is_audio_eventbox(mt,eventbox))&&track>-1) {
+	cairo_t *cr = gdk_cairo_create (eventbox->window);
 	filenum=get_frame_event_clip(block->start_event,track);
 	last_framenum=-1;
 	for (i=offset_start;i<offset_end;i+=BLOCK_THUMB_WIDTH) {
@@ -799,12 +802,17 @@ static void draw_block (lives_mt *mt,track_rect *block, gint x1, gint x2) {
 	    if (framenum!=last_framenum) thumbnail=make_thumb(mt,filenum,width,eventbox->allocation.height-1,
 							      framenum,FALSE);
 	    last_framenum=framenum;
-	    if (i+width>offset_end) width=offset_end-i;
 	    // render it in the eventbox
 	    if (thumbnail!=NULL) {
-	      if (width>gdk_pixbuf_get_width(thumbnail)) width=gdk_pixbuf_get_width(thumbnail);
-	      gdk_pixbuf_render_to_drawable (thumbnail,GDK_DRAWABLE (eventbox->window),mainw->gc,0,0,i,0,width,-1,
-					     GDK_RGB_DITHER_NONE,0,0);
+	      gdk_cairo_set_source_pixbuf (cr, thumbnail, i, 0);
+	      if (i+width>offset_end) {
+		width=offset_end-i;
+		// crop to width
+		cairo_new_path(cr);
+		cairo_rectangle(cr,0,0,i+width,eventbox->allocation.height-1);
+		cairo_clip(cr);
+	      }
+	      cairo_paint (cr);
 	    }
 	    if (mainw->playing_file>-1) unpaint_lines(mt);
 	    mt->redraw_block=TRUE; // stop drawing cursor during playback
@@ -813,6 +821,7 @@ static void draw_block (lives_mt *mt,track_rect *block, gint x1, gint x2) {
 	  }
 	}
 	if (thumbnail!=NULL) gdk_pixbuf_unref(thumbnail);
+	cairo_destroy (cr);
       }
       else {
 	set_fg_colour(audcol.red>>8,audcol.green>>8,audcol.blue>>8);
@@ -1032,10 +1041,11 @@ static gint expose_track_event (GtkWidget *eventbox, GdkEventExpose *event, gpoi
 
   if (GPOINTER_TO_INT(g_object_get_data (G_OBJECT(eventbox), "drawn"))) {
     bgimage=(GdkPixbuf *)g_object_get_data (G_OBJECT(eventbox), "bgimg");
-    if (bgimage!=NULL&&gdk_pixbuf_get_width(bgimage)>0) {
-      if (width>gdk_pixbuf_get_width(bgimage)) width=gdk_pixbuf_get_width(bgimage);
-      gdk_pixbuf_render_to_drawable (bgimage,GDK_DRAWABLE (eventbox->window),mainw->gc,startx,0,startx,0,width,-1,
-				     GDK_RGB_DITHER_NONE,0,0);
+    if (bgimage!=NULL&&lives_pixbuf_get_width(bgimage)>0) {
+      cairo_t *cr = gdk_cairo_create (eventbox->window);
+      gdk_cairo_set_source_pixbuf (cr, bgimage, startx, 0);
+      cairo_paint (cr);
+      cairo_destroy (cr);
       if (is_audio_eventbox(mt,eventbox)&&mt->avol_init_event!=NULL&&mt->aparam_view_list!=NULL) 
 	draw_aparams(mt,eventbox,mt->aparam_view_list,mt->avol_init_event,startx,width);
       if (mt->block_selected!=NULL) draw_block(mt,mt->block_selected,-1,-1);
@@ -1068,7 +1078,7 @@ static gint expose_track_event (GtkWidget *eventbox, GdkEventExpose *event, gpoi
 
   bgimage=gdk_pixbuf_get_from_drawable(NULL,GDK_DRAWABLE(eventbox->window),NULL,0,0,0,0,
 				       eventbox->allocation.width,eventbox->allocation.height);
-  if (gdk_pixbuf_get_width(bgimage)>0) {
+  if (lives_pixbuf_get_width(bgimage)>0) {
     g_object_set_data (G_OBJECT(eventbox), "drawn",GINT_TO_POINTER(TRUE));
     g_object_set_data (G_OBJECT(eventbox), "bgimg",bgimage);
   }
@@ -2547,7 +2557,9 @@ void mt_show_current_frame(lives_mt *mt, gboolean return_layer) {
     if (fx_layer_palette!=WEED_PALETTE_RGB24) convert_layer_palette(mainw->frame_layer,WEED_PALETTE_RGB24,0);
 
     if (mainw->play_window==NULL||(mt->poly_state==POLY_PARAMS&&mt->framedraw!=NULL)) {
-      if ((mt->outwidth!=(weed_get_int_value(mainw->frame_layer,"width",&weed_error))||mt->outheight!=weed_get_int_value(mainw->frame_layer,"height",&weed_error))) resize_layer(mainw->frame_layer,mt->outwidth,mt->outheight,GDK_INTERP_HYPER);
+      if ((mt->outwidth!=(weed_get_int_value(mainw->frame_layer,"width",&weed_error))||
+	   mt->outheight!=weed_get_int_value(mainw->frame_layer,"height",&weed_error))) 
+	resize_layer(mainw->frame_layer,mt->outwidth,mt->outheight,GDK_INTERP_HYPER);
     }
     else resize_layer(mainw->frame_layer,cfile->hsize,cfile->vsize,GDK_INTERP_HYPER);
 
@@ -2598,14 +2610,15 @@ void mt_show_current_frame(lives_mt *mt, gboolean return_layer) {
       mt->sepwin_pixbuf=NULL;
     }
     if (mt->framedraw==NULL) mt->sepwin_pixbuf=pixbuf;
-    else if (mainw->imframe!=NULL) mt->sepwin_pixbuf=gdk_pixbuf_scale_simple(mainw->imframe,cfile->hsize,cfile->vsize,GDK_INTERP_HYPER);
+    else if (mainw->imframe!=NULL) 
+      mt->sepwin_pixbuf=gdk_pixbuf_scale_simple(mainw->imframe,cfile->hsize,cfile->vsize,GDK_INTERP_HYPER);
   }
   else {
     // no frame - show blank
     if (mainw->play_window!=NULL&&GDK_IS_WINDOW (mainw->play_window->window)) {
 
-      mainw->pwidth=gdk_pixbuf_get_width(mainw->imframe);
-      mainw->pheight=gdk_pixbuf_get_height(mainw->imframe);
+      mainw->pwidth=lives_pixbuf_get_width(mainw->imframe);
+      mainw->pheight=lives_pixbuf_get_height(mainw->imframe);
 
       gtk_window_resize (GTK_WINDOW (mainw->play_window), mainw->pwidth, mainw->pheight);
 
@@ -7134,7 +7147,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
 
   eventbox=gtk_event_box_new();
   gtk_widget_set_size_request (eventbox, mt->play_window_width, mt->play_window_height);
-  mt->play_box = gtk_vbox_new (FALSE, 10);
+  mt->play_box = gtk_vbox_new (FALSE, BORD_HEIGHT);
   gtk_widget_set_app_paintable(mt->play_box,TRUE);
   gtk_widget_set_size_request (mt->play_box, mt->play_window_width, mt->play_window_height);
 
@@ -12829,9 +12842,9 @@ mt_view_ctx_toggled                (GtkMenuItem     *menuitem,
   set_mt_play_sizes(mt,cfile->hsize,cfile->vsize);
   mt_show_current_frame(mt, FALSE);
 
-  gtk_widget_set_size_request (mt->fd_frame, mt->play_window_width, mt->play_window_height);
+  gtk_widget_set_size_request (mt->fd_frame, mt->play_window_width, mt->play_window_height+2*BORD_HEIGHT);
   gtk_widget_set_size_request (mt->play_box, mt->play_window_width, mt->play_window_height);
-  gtk_widget_set_size_request (mt->hbox, -1, mt->play_window_height);
+  gtk_widget_set_size_request (mt->hbox, -1, mt->play_window_height+2*BORD_HEIGHT);
 
   if (mt->opts.show_ctx) {
     // set text to expanded
@@ -12876,6 +12889,8 @@ mt_view_ctx_toggled                (GtkMenuItem     *menuitem,
     gtk_widget_queue_resize(mt->window);
   }
 
+  mt->play_window_width=mt->play_box->allocation.width;
+  mt->play_window_height=mt->play_box->allocation.height;
 }
 
 
@@ -16240,10 +16255,11 @@ gint mt_expose_laudtrack_event (GtkWidget *ebox, GdkEventExpose *event, gpointer
 
   if (GPOINTER_TO_INT(g_object_get_data (G_OBJECT(ebox), "drawn"))) {
     bgimage=(GdkPixbuf *)g_object_get_data (G_OBJECT(ebox), "bgimg");
-    if (bgimage!=NULL&&gdk_pixbuf_get_width(bgimage)>0) {
-      if (width>gdk_pixbuf_get_width(bgimage)) width=gdk_pixbuf_get_width(bgimage);
-      gdk_pixbuf_render_to_drawable (bgimage,GDK_DRAWABLE (ebox->window),mainw->gc,startx,0,startx,0,width,-1,
-				     GDK_RGB_DITHER_NONE,0,0);
+    if (bgimage!=NULL&&lives_pixbuf_get_width(bgimage)>0) {
+      cairo_t *cr = gdk_cairo_create (ebox->window);
+      gdk_cairo_set_source_pixbuf (cr, bgimage, startx, 0);
+      cairo_paint (cr);
+      cairo_destroy (cr);
       return FALSE;
     }
   }
@@ -16251,9 +16267,25 @@ gint mt_expose_laudtrack_event (GtkWidget *ebox, GdkEventExpose *event, gpointer
   gdk_window_clear_area (ebox->window, startx, 0, width, ebox->allocation.height);
   draw_soundwave(ebox,startx,width,0,mt);
 
+
+#if GTK_CHECK_VERSION(3,0,0)
+  {
+    int xwidth,xheight;
+    gdk_window_get_size(ebox->window,&xwidth,&xheight);
+    if ((bgimage=gdk_pixbuf_get_from_window (ebox->window,
+					     0,0,
+					     xwidth,
+					     xheight
+					     ))!=NULL) {
+#else
   bgimage=gdk_pixbuf_get_from_drawable(NULL,GDK_DRAWABLE(ebox->window),NULL,0,0,0,0,ebox->allocation.width,
 				       ebox->allocation.height);
-  if (gdk_pixbuf_get_width(bgimage)>0) {
+#endif
+#if GTK_CHECK_VERSION(3,0,0)
+    }
+#endif
+
+  if (lives_pixbuf_get_width(bgimage)>0) {
     g_object_set_data (G_OBJECT(ebox), "drawn",GINT_TO_POINTER(TRUE));
     g_object_set_data (G_OBJECT(ebox), "bgimg",bgimage);
   }
@@ -16290,10 +16322,11 @@ gint mt_expose_raudtrack_event (GtkWidget *ebox, GdkEventExpose *event, gpointer
 
   if (GPOINTER_TO_INT(g_object_get_data (G_OBJECT(ebox), "drawn"))) {
     bgimage=(GdkPixbuf *)g_object_get_data (G_OBJECT(ebox), "bgimg");
-    if (bgimage!=NULL&&gdk_pixbuf_get_width(bgimage)>0) {
-      if (width>gdk_pixbuf_get_width(bgimage)) width=gdk_pixbuf_get_width(bgimage);
-      gdk_pixbuf_render_to_drawable (bgimage,GDK_DRAWABLE (ebox->window),mainw->gc,startx,0,startx,0,width,-1,
-				     GDK_RGB_DITHER_NONE,0,0);
+    if (bgimage!=NULL&&lives_pixbuf_get_width(bgimage)>0) {
+      cairo_t *cr = gdk_cairo_create (ebox->window);
+      gdk_cairo_set_source_pixbuf (cr, bgimage, startx, 0);
+      cairo_paint (cr);
+      cairo_destroy (cr);
       return FALSE;
     }
   }
@@ -16301,9 +16334,25 @@ gint mt_expose_raudtrack_event (GtkWidget *ebox, GdkEventExpose *event, gpointer
   gdk_window_clear_area (ebox->window, startx, 0, width, ebox->allocation.height);
   draw_soundwave(ebox,startx,width,1,mt);
 
+#if GTK_CHECK_VERSION(3,0,0)
+  {
+    int xwidth,xheight;
+    gdk_window_get_size(ebox->window,&xwidth,&xheight);
+    if ((bgimage=gdk_pixbuf_get_from_window (ebox->window,
+					     0,0,
+					     xwidth,
+					     xheight
+					     ))!=NULL) {
+#else
   bgimage=gdk_pixbuf_get_from_drawable(NULL,GDK_DRAWABLE(ebox->window),NULL,0,0,0,0,ebox->allocation.width,
 				       ebox->allocation.height);
-  if (gdk_pixbuf_get_width(bgimage)>0) {
+
+#endif
+#if GTK_CHECK_VERSION(3,0,0)
+    }
+#endif
+
+  if (lives_pixbuf_get_width(bgimage)>0) {
     g_object_set_data (G_OBJECT(ebox), "drawn",GINT_TO_POINTER(TRUE));
     g_object_set_data (G_OBJECT(ebox), "bgimg",bgimage);
   }

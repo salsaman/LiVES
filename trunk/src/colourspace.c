@@ -93,16 +93,20 @@ static struct _swscale_ctx swscale_ctx[N_SWS_CTX];
 
 static pthread_t cthreads[MAX_FX_THREADS];
 
-LIVES_INLINE G_GNUC_CONST int gdk_rowstride_value (int rowstride) {
+LIVES_INLINE G_GNUC_CONST int get_rowstride_value (int rowstride) {
   // from gdk-pixbuf.c
   /* Always align rows to 32-bit boundaries */
   return (rowstride + 3) & ~3;
 }
 
 
-LIVES_INLINE G_GNUC_CONST int gdk_last_rowstride_value (int width, int nchans) {
+LIVES_INLINE G_GNUC_CONST int get_last_rowstride_value (int width, int nchans) {
+#ifdef GUI_GTK
   // from gdk pixbuf docs
   return width*(((nchans<<3)+7)>>3);
+#else
+  return get_rowstride_value();
+#endif
 }
 
 static void
@@ -1176,20 +1180,21 @@ int fourccp_to_weedp (unsigned int fourcc, int bpp, lives_interlace_t *interlace
 /////////////////////////////////////////////
 
 
-gboolean gdk_pixbuf_is_all_black(GdkPixbuf *pixbuf) {
-  gint width=gdk_pixbuf_get_width(pixbuf);
-  gint height=gdk_pixbuf_get_height(pixbuf);
-  gint rstride=gdk_pixbuf_get_rowstride(pixbuf);
-  gboolean has_alpha=gdk_pixbuf_get_has_alpha(pixbuf);
-  guchar *pdata=gdk_pixbuf_get_pixels(pixbuf);
+boolean lives_pixbuf_is_all_black(LiVESPixbuf *pixbuf) {
+  int width=lives_pixbuf_get_width(pixbuf);
+  int height=lives_pixbuf_get_height(pixbuf);
+  int rstride=lives_pixbuf_get_rowstride(pixbuf);
+  boolean has_alpha=lives_pixbuf_get_has_alpha(pixbuf);
+  const guchar *pdata=lives_pixbuf_get_pixels_readonly(pixbuf);
 
+  int offs=0;  // TODO *** - if it is a QImage, offs may be 1
   int psize=has_alpha?4:3;
   register int i,j;
 
   width*=psize;
 
   for (j=0;j<height;j++) {
-    for (i=0;i<width;i+=psize) {
+    for (i=offs;i<width;i+=psize) {
       if (pdata[i]>BLACK_THRESH||pdata[i+1]>BLACK_THRESH||pdata[i+2]>BLACK_THRESH) {
 	return FALSE;
       }
@@ -8139,30 +8144,34 @@ gboolean convert_layer_palette (weed_plant_t *layer, int outpl, int op_clamping)
 /////////////////////////////////////////////////////////////////////////////////////
 
 
-GdkPixbuf *gdk_pixbuf_new_blank(gint width, gint height, int palette) {
-  GdkPixbuf *pixbuf;
+LiVESPixbuf *lives_pixbuf_new_blank(gint width, gint height, int palette) {
+  LiVESPixbuf *pixbuf;
+  int rowstride;
   guchar *pixels;
   size_t size;
 
   switch (palette) {
   case WEED_PALETTE_RGB24:
   case WEED_PALETTE_BGR24:
-    pixbuf=gdk_pixbuf_new (GDK_COLORSPACE_RGB, FALSE, 8, width, height);
-    pixels=gdk_pixbuf_get_pixels (pixbuf);
-    size=width*3*(height-1)+gdk_last_rowstride_value(width,3);
+    pixbuf=lives_pixbuf_new (FALSE, width, height);
+    rowstride=lives_pixbuf_get_rowstride(pixbuf);
+    pixels=lives_pixbuf_get_pixels (pixbuf);
+    size=rowstride*(height-1)+get_last_rowstride_value(width,3);
     memset(pixels,0,size);
     break;
   case WEED_PALETTE_RGBA32:
   case WEED_PALETTE_BGRA32:
-    pixbuf=gdk_pixbuf_new (GDK_COLORSPACE_RGB, TRUE, 8, width, height);
-    pixels=gdk_pixbuf_get_pixels (pixbuf);
-    size=width*4*(height-1)+gdk_last_rowstride_value(width,4);
+    pixbuf=lives_pixbuf_new (TRUE, width, height);
+    rowstride=lives_pixbuf_get_rowstride(pixbuf);
+    pixels=lives_pixbuf_get_pixels (pixbuf);
+    size=rowstride*(height-1)+get_last_rowstride_value(width,4);
     memset(pixels,0,size);
     break;
   case WEED_PALETTE_ARGB32:
-    pixbuf=gdk_pixbuf_new (GDK_COLORSPACE_RGB, TRUE, 8, width, height);
-    pixels=gdk_pixbuf_get_pixels (pixbuf);
-    size=width*4*(height-1)+gdk_last_rowstride_value(width,4);
+    pixbuf=lives_pixbuf_new (TRUE, width, height);
+    rowstride=lives_pixbuf_get_rowstride(pixbuf);
+    pixels=lives_pixbuf_get_pixels (pixbuf);
+    size=rowstride*(height-1)+get_last_rowstride_value(width,4);
     memset(pixels,0,size);
     break;
   default:
@@ -8173,30 +8182,30 @@ GdkPixbuf *gdk_pixbuf_new_blank(gint width, gint height, int palette) {
 
 
 
-static LIVES_INLINE GdkPixbuf *gdk_pixbuf_cheat(GdkColorspace colorspace, gboolean has_alpha, int bits_per_sample, 
-					  int width, int height, guchar *buf) {
+static LIVES_INLINE LiVESPixbuf *lives_pixbuf_cheat(gboolean has_alpha, 
+						    int width, int height, guchar *buf) {
   // we can cheat if our buffer is correctly sized
-  GdkPixbuf *pixbuf;
+  LiVESPixbuf *pixbuf;
   int channels=has_alpha?4:3;
-  int rowstride=gdk_rowstride_value(width*channels);
-  pixbuf=gdk_pixbuf_new_from_data (buf, colorspace, has_alpha, bits_per_sample, width, height, rowstride, 
-				   lives_free_buffer, NULL);
+  int rowstride=get_rowstride_value(width*channels);
+  pixbuf=lives_pixbuf_new_from_data (buf, has_alpha, width, height, rowstride, 
+				     lives_free_buffer, NULL);
   threaded_dialog_spin();
   return pixbuf;
 }
 
 
-GdkPixbuf *layer_to_pixbuf (weed_plant_t *layer) {
+LiVESPixbuf *layer_to_pixbuf (weed_plant_t *layer) {
   int error;
-  GdkPixbuf *pixbuf;
+  LiVESPixbuf *pixbuf;
   int palette;
   int width;
   int height;
   int irowstride;
   int rowstride,orowstride;
   guchar *pixel_data,*pixels,*end,*orig_pixel_data;
-  gboolean cheat=FALSE,done;
-  gint n_channels;
+  boolean cheat=FALSE,done;
+  int n_channels;
 
   if (layer==NULL) return NULL;
 
@@ -8212,24 +8221,28 @@ GdkPixbuf *layer_to_pixbuf (weed_plant_t *layer) {
     case WEED_PALETTE_RGB24:
     case WEED_PALETTE_BGR24:
     case WEED_PALETTE_YUV888:
-      if (irowstride==gdk_rowstride_value(width*3)) {
-	pixbuf=gdk_pixbuf_cheat(GDK_COLORSPACE_RGB, FALSE, 8, width, height, pixel_data);
+      if (irowstride==get_rowstride_value(width*3)) {
+	pixbuf=lives_pixbuf_cheat(FALSE, width, height, pixel_data);
 	cheat=TRUE;
       }
-      else pixbuf=gdk_pixbuf_new (GDK_COLORSPACE_RGB, FALSE, 8, width, height);
+      else pixbuf=lives_pixbuf_new (FALSE, width, height);
       n_channels=3;
       break;
     case WEED_PALETTE_RGBA32:
     case WEED_PALETTE_BGRA32:
 #ifdef USE_SWSCALE
     case WEED_PALETTE_ARGB32:
+#else
+#ifdef GUI_QT
+    case WEED_PALETTE_ARGB32:
+#endif
 #endif
     case WEED_PALETTE_YUVA8888:
-      if (irowstride==gdk_rowstride_value(width*4)) {
-	pixbuf=gdk_pixbuf_cheat(GDK_COLORSPACE_RGB, TRUE, 8, width, height, pixel_data);
+      if (irowstride==get_rowstride_value(width*4)) {
+	pixbuf=lives_pixbuf_cheat(TRUE, width, height, pixel_data);
 	cheat=TRUE;
       }
-      else pixbuf=gdk_pixbuf_new (GDK_COLORSPACE_RGB, TRUE, 8, width, height);
+      else pixbuf=lives_pixbuf_new (TRUE, width, height);
       n_channels=4;
       break;
     default:
@@ -8246,9 +8259,9 @@ GdkPixbuf *layer_to_pixbuf (weed_plant_t *layer) {
   } while (!done);
 
   if (!cheat) {
-    gboolean done=FALSE;
-    pixels=gdk_pixbuf_get_pixels (pixbuf);
-    orowstride=gdk_pixbuf_get_rowstride(pixbuf);
+    boolean done=FALSE;
+    pixels=lives_pixbuf_get_pixels (pixbuf);
+    orowstride=lives_pixbuf_get_rowstride(pixbuf);
     
     if (irowstride>orowstride) rowstride=orowstride;
     else rowstride=irowstride;
@@ -8256,7 +8269,7 @@ GdkPixbuf *layer_to_pixbuf (weed_plant_t *layer) {
 
     for (;pixels<end&&!done;pixels+=orowstride) {
       if (pixels+orowstride>=end) {
-	orowstride=rowstride=gdk_last_rowstride_value(width,n_channels);
+	orowstride=rowstride=get_last_rowstride_value(width,n_channels);
 	done=TRUE;
       }
       w_memcpy(pixels,pixel_data,rowstride);
@@ -8281,13 +8294,22 @@ LIVES_INLINE gboolean weed_palette_is_resizable(int pal) {
 }
 
 
-void gdk_pixbuf_set_opaque(GdkPixbuf *pixbuf) {
-  unsigned char *pdata=gdk_pixbuf_get_pixels(pixbuf);
-  int row=gdk_pixbuf_get_rowstride(pixbuf);
-  int height=gdk_pixbuf_get_height(pixbuf);
+void lives_pixbuf_set_opaque(GdkPixbuf *pixbuf) {
+  unsigned char *pdata=lives_pixbuf_get_pixels(pixbuf);
+  int row=lives_pixbuf_get_rowstride(pixbuf);
+  int height=lives_pixbuf_get_height(pixbuf);
+  int offs;
+#ifdef GUI_GTK
+  offs=3;
+#endif
+
+#ifdef GUI_QT
+  offs=0;
+#endif
+
   register int i,j;
   for (i=0;i<height;i++) {
-    for (j=3;j<row;j+=4) {
+    for (j=offs;j<row;j+=4) {
       pdata[j]=255;
     }
     pdata+=row;
@@ -8522,6 +8544,7 @@ void resize_layer (weed_plant_t *layer, int width, int height, GdkInterpType int
 
 
 #ifdef USE_SWSCALE
+    if (iwidth>1&&iheight>1) 
     {
       struct SwsContext *swscale;
       int flags;
@@ -8561,10 +8584,13 @@ void resize_layer (weed_plant_t *layer, int width, int height, GdkInterpType int
 	store_ctx=TRUE;
       }
 
-      sws_scale(swscale, (const uint8_t * const*)in_pixel_data, irowstrides, 0, iheight, 
-		(uint8_t * const *)out_pixel_data, orowstrides);
+      if (swscale==NULL) LIVES_ERROR("swscale is NULL !!");
+      else {
+	sws_scale(swscale, (const uint8_t * const*)in_pixel_data, irowstrides, 0, iheight, 
+		  (uint8_t * const *)out_pixel_data, orowstrides);
+	if (store_ctx) swscale_add_context(iwidth,iheight,width,height,pixfmt,flags,swscale);
+      }
 
-      if (store_ctx) swscale_add_context(iwidth,iheight,width,height,pixfmt,flags,swscale);
 
       g_free(*in_pixel_data);
       g_free(in_pixel_data);
@@ -8582,9 +8608,9 @@ void resize_layer (weed_plant_t *layer, int width, int height, GdkInterpType int
     new_pixbuf=gdk_pixbuf_scale_simple(pixbuf,width,height,interp);
     threaded_dialog_spin();
     if (new_pixbuf!=NULL) {
-      weed_set_int_value(layer,"width",gdk_pixbuf_get_width(new_pixbuf));
-      weed_set_int_value(layer,"height",gdk_pixbuf_get_height(new_pixbuf));
-      weed_set_int_value(layer,"rowstrides",gdk_pixbuf_get_rowstride(new_pixbuf));
+      weed_set_int_value(layer,"width",lives_pixbuf_get_width(new_pixbuf));
+      weed_set_int_value(layer,"height",lives_pixbuf_get_height(new_pixbuf));
+      weed_set_int_value(layer,"rowstrides",lives_pixbuf_get_rowstride(new_pixbuf));
     }
     g_object_unref(pixbuf);
 
@@ -8597,9 +8623,11 @@ void resize_layer (weed_plant_t *layer, int width, int height, GdkInterpType int
 			 height!=weed_get_int_value(layer,"height",&error))) 
     g_printerr("unable to scale layer to %d x %d for palette %d\n",width,height,palette);
 
+
   if (new_pixbuf!=NULL) {
     if (pixbuf_to_layer(layer,new_pixbuf)) {
-      mainw->do_not_free=gdk_pixbuf_get_pixels(new_pixbuf);
+      // TODO - for QImage, cast to parent class and use parent destructor
+      mainw->do_not_free=(gpointer)lives_pixbuf_get_pixels_readonly(new_pixbuf);
       mainw->free_fn=lives_free_with_check;
     }
     g_object_unref(new_pixbuf);
@@ -8924,12 +8952,12 @@ gboolean pixbuf_to_layer(weed_plant_t *layer, GdkPixbuf *pixbuf) {
 
   */
 
-  int rowstride=gdk_pixbuf_get_rowstride(pixbuf);
-  int width=gdk_pixbuf_get_width(pixbuf);
-  int height=gdk_pixbuf_get_height(pixbuf);
-  int nchannels=gdk_pixbuf_get_n_channels(pixbuf);
+  int rowstride=lives_pixbuf_get_rowstride(pixbuf);
+  int width=lives_pixbuf_get_width(pixbuf);
+  int height=lives_pixbuf_get_height(pixbuf);
+  int nchannels=lives_pixbuf_get_n_channels(pixbuf);
   void *pixel_data;
-  void *in_pixel_data=gdk_pixbuf_get_pixels(pixbuf);
+  void *in_pixel_data;
 
   size_t framesize;
 
@@ -8938,11 +8966,19 @@ gboolean pixbuf_to_layer(weed_plant_t *layer, GdkPixbuf *pixbuf) {
   weed_set_int_value(layer,"rowstrides",rowstride);
 
   if (!weed_plant_has_leaf(layer,"current_palette")) {
+#ifdef GUI_GTK
     if (nchannels==4) weed_set_int_value(layer,"current_palette",WEED_PALETTE_RGBA32);
     else weed_set_int_value(layer,"current_palette",WEED_PALETTE_RGB24);
+#endif
+#ifdef GUI_QT
+    // TODO - need to check this, it may be endian dependent
+    if (nchannels==4) weed_set_int_value(layer,"current_palette",WEED_PALETTE_ARGB32);
+    else weed_set_int_value(layer,"current_palette",WEED_PALETTE_RGB24);
+#endif
   }
 
-  if (rowstride==gdk_last_rowstride_value(width,nchannels)) {
+  if (rowstride==get_last_rowstride_value(width,nchannels)) {
+    in_pixel_data=(void *)lives_pixbuf_get_pixels(pixbuf);
     weed_set_voidptr_value(layer,"pixel_data",in_pixel_data);
     return TRUE;
   }
@@ -8952,10 +8988,11 @@ gboolean pixbuf_to_layer(weed_plant_t *layer, GdkPixbuf *pixbuf) {
   pixel_data=calloc(framesize>>2,4);
 
   if (pixel_data!=NULL) {
+    in_pixel_data=(void *)lives_pixbuf_get_pixels_readonly(pixbuf);
     w_memcpy(pixel_data,in_pixel_data,rowstride*(height-1));
     // this part is needed because layers always have a memory size height*rowstride, whereas gdkpixbuf can have
     // a shorter last row
-    w_memcpy(pixel_data+rowstride*(height-1),in_pixel_data+rowstride*(height-1),gdk_last_rowstride_value(width,nchannels));
+    w_memcpy(pixel_data+rowstride*(height-1),in_pixel_data+rowstride*(height-1),get_last_rowstride_value(width,nchannels));
   }
 
   weed_set_voidptr_value(layer,"pixel_data",pixel_data);

@@ -390,6 +390,7 @@ void lives_exit (void) {
   g_free(mainw->recommended_string);
   g_free(mainw->cl_string);
 
+  if (mainw->foreign_visual!=NULL) g_free(mainw->foreign_visual);
   if (mainw->read_failed_file!=NULL) g_free(mainw->read_failed_file);
   if (mainw->write_failed_file!=NULL) g_free(mainw->write_failed_file);
   if (mainw->bad_aud_file!=NULL) g_free(mainw->bad_aud_file);
@@ -5813,7 +5814,7 @@ void on_fs_preview_clicked (GtkButton *button, gpointer user_data) {
       // draw image
       GError *error=NULL;
       gchar *thumb=g_strdup_printf("%s/thm%d/%08d.%s",prefs->tmpdir,pid,1,prefs->image_ext);
-      GdkPixbuf *pixbuf=gdk_pixbuf_new_from_file((tmp=g_filename_from_utf8(thumb,-1,NULL,NULL,NULL)),&error);
+      GdkPixbuf *pixbuf=lives_pixbuf_new_from_file((tmp=g_filename_from_utf8(thumb,-1,NULL,NULL,NULL)),&error);
       g_free(tmp);
 
       if (error==NULL) {
@@ -5821,7 +5822,7 @@ void on_fs_preview_clicked (GtkButton *button, gpointer user_data) {
 	gint fheight=GTK_WIDGET(mainw->fs_playarea)->allocation.height;
 	gint offs_x=(fwidth-width)/2.;
 	gint offs_y=(fheight-height)/2.;
-	GdkPixbuf *blank=gdk_pixbuf_new_blank(fwidth,fheight,WEED_PALETTE_RGB24);
+	GdkPixbuf *blank=lives_pixbuf_new_blank(fwidth,fheight,WEED_PALETTE_RGB24);
 	cairo_t *cr = gdk_cairo_create (mainw->fs_playarea->window);
 
 	gdk_cairo_set_source_pixbuf (cr, blank, 0, 0);
@@ -8913,11 +8914,11 @@ gint expose_play_window (GtkWidget *widget, GdkEventExpose *event) {
     mainw->pw_exp_is_blocked=TRUE;
     block_expose();
 
-    if (rect.width>gdk_pixbuf_get_width(GDK_PIXBUF (mainw->imframe))) {
-      rect.width=gdk_pixbuf_get_width(GDK_PIXBUF (mainw->imframe));
+    if (rect.width>lives_pixbuf_get_width(GDK_PIXBUF (mainw->imframe))) {
+      rect.width=lives_pixbuf_get_width(GDK_PIXBUF (mainw->imframe));
     }
-    if (rect.height>gdk_pixbuf_get_height(GDK_PIXBUF (mainw->imframe))) {
-      rect.height=gdk_pixbuf_get_height(GDK_PIXBUF (mainw->imframe));
+    if (rect.height>lives_pixbuf_get_height(GDK_PIXBUF (mainw->imframe))) {
+      rect.height=lives_pixbuf_get_height(GDK_PIXBUF (mainw->imframe));
     }
 
     if (mainw->current_file>0&&cfile!=NULL&&
@@ -8925,7 +8926,7 @@ gint expose_play_window (GtkWidget *widget, GdkEventExpose *event) {
       if (mainw->camframe==NULL) {
 	GError *error=NULL;
 	gchar *tmp=g_strdup_printf("%s/%s/camera/frame.jpg",prefs->prefix_dir,THEME_DIR);
-	mainw->camframe=gdk_pixbuf_new_from_file(tmp,&error);
+	mainw->camframe=lives_pixbuf_new_from_file(tmp,&error);
 	if (mainw->camframe!=NULL) gdk_pixbuf_saturate_and_pixelate(mainw->camframe,mainw->camframe,0.0,FALSE);
 	g_free(tmp);
       }
@@ -8950,11 +8951,11 @@ gint expose_play_window (GtkWidget *widget, GdkEventExpose *event) {
     if (!mainw->pw_exp_is_blocked) g_signal_handler_block(mainw->play_window,mainw->pw_exp_func);
     mainw->pw_exp_is_blocked=TRUE;
     block_expose();
-    if (rect.width>gdk_pixbuf_get_width(GDK_PIXBUF (mainw->multitrack->sepwin_pixbuf))) {
-      rect.width=gdk_pixbuf_get_width(GDK_PIXBUF (mainw->multitrack->sepwin_pixbuf));
+    if (rect.width>lives_pixbuf_get_width(GDK_PIXBUF (mainw->multitrack->sepwin_pixbuf))) {
+      rect.width=lives_pixbuf_get_width(GDK_PIXBUF (mainw->multitrack->sepwin_pixbuf));
     }
-    if (rect.height>gdk_pixbuf_get_height(GDK_PIXBUF (mainw->multitrack->sepwin_pixbuf))) {
-      rect.height=gdk_pixbuf_get_height(GDK_PIXBUF (mainw->multitrack->sepwin_pixbuf));
+    if (rect.height>lives_pixbuf_get_height(GDK_PIXBUF (mainw->multitrack->sepwin_pixbuf))) {
+      rect.height=lives_pixbuf_get_height(GDK_PIXBUF (mainw->multitrack->sepwin_pixbuf));
     }
     cr = gdk_cairo_create (mainw->play_window->window);
     gdk_cairo_set_source_pixbuf (cr, GDK_PIXBUF(mainw->multitrack->sepwin_pixbuf), 0, 0);
@@ -9980,9 +9981,12 @@ on_capture_activate                (GtkMenuItem     *menuitem,
   gint response;
   gdouble rec_end_time=-1.;
 
+#if GTK_CHECK_VERSION(3,0,0)
+#else
 #ifndef USE_X11
   do_blocking_error_dialog(_("\n\nThis function will only work with X11.\nPlease send a patch to get it working on other platforms.\n\n"));
   return;
+#endif
 #endif
 
   if (!capable->has_xwininfo) {
@@ -10114,11 +10118,22 @@ on_capture_activate                (GtkMenuItem     *menuitem,
 
   do_progress_dialog(TRUE,FALSE,_ ("Click on a Window to Capture it\nPress 'q' to stop recording"));
 
+  if (get_token_count(mainw->msg,'|')<6) {
+    if (prefs->show_gui) gtk_widget_show(mainw->LiVES);
+    while (g_main_context_iteration(NULL,FALSE));
+    if (mainw->multitrack!=NULL) {
+      mt_sensitise(mainw->multitrack);
+      mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
+    }
+    return;
+  }
+
   array=g_strsplit(mainw->msg,"|",5);
   mainw->foreign_id=atoi(array[1]);
   mainw->foreign_width=atoi(array[2]);
   mainw->foreign_height=atoi(array[3]);
   mainw->foreign_bpp=atoi(array[4]);
+  mainw->foreign_visual=g_strdup(array[5]);
   g_strfreev(array);
 
   com=g_strdup_printf("smogrify close \"%s\"",cfile->handle);
@@ -10132,7 +10147,7 @@ on_capture_activate                (GtkMenuItem     *menuitem,
   ////////////////////////////////////////
 
   msg=g_strdup_printf(_ ("\nExternal window captured. Width=%d, height=%d, bpp=%d. *Do not resize*\n\nStop or 'q' to finish.\n(Default of %.3f frames per second will be used.)\n"),
-		      mainw->foreign_width,mainw->foreign_height,mainw->foreign_bpp,prefs->default_fps);
+		      mainw->foreign_width,mainw->foreign_height,mainw->foreign_bpp,mainw->rec_fps);
   d_print(msg);
   g_free (msg);
 

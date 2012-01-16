@@ -1,3 +1,20 @@
+Version 1.6.1
+-------------
+Fix external window capture to work with Compiz.
+Minor multitrack GUI fixes.
+
+
+
+
+
+
+
+
+
+
+
+
+
 Version 1.6.0 (14 January 2012)
 -------------------------------
 Handle reconnection to pulse / jack more robustly.

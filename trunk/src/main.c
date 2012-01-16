@@ -912,7 +912,7 @@ static void lives_init(_ign_opts *ign_opts) {
   mainw->add_clear_ds_adv=FALSE;
   mainw->tried_ds_recover=FALSE;
 
-
+  mainw->foreign_visual=NULL;
   /////////////////////////////////////////////////// add new stuff just above here ^^
 
   // TODO - dirsep
@@ -3427,15 +3427,15 @@ gboolean layer_from_png(FILE *fp, weed_plant_t *layer, gboolean prog) {
 #endif
 
 
-static gboolean weed_layer_new_from_file_progressive(weed_plant_t *layer, 
-						     gchar *fname, gint width, 
-						     gint height, 
-						     const gchar *img_ext, 
-						     GError **gerror) {
+static boolean weed_layer_new_from_file_progressive(weed_plant_t *layer, 
+						    const char *fname, int width, 
+						    int height, 
+						    const char *img_ext, 
+						    GError **gerror) {
 
 
-  GdkPixbuf *pixbuf=NULL;
-  gboolean do_not_free=TRUE;
+  LiVESPixbuf *pixbuf=NULL;
+  boolean do_not_free=TRUE;
 
 #ifndef NO_PROG_LOAD
   GdkPixbufLoader *pbload;
@@ -3449,7 +3449,7 @@ static gboolean weed_layer_new_from_file_progressive(weed_plant_t *layer,
 
   if (!strcmp(img_ext,"png")) {
 #ifdef USE_LIBPNG
-    gboolean ret=layer_from_png(fp,layer,TRUE);
+    boolean ret=layer_from_png(fp,layer,TRUE);
     fclose(fp);
     return ret;
 #endif
@@ -3496,7 +3496,7 @@ static gboolean weed_layer_new_from_file_progressive(weed_plant_t *layer,
   }
 #endif
 
-  pixbuf=gdk_pixbuf_new_from_file_at_scale(fname,width,height,FALSE,gerror);
+  pixbuf=lives_pixbuf_new_from_file_at_scale(fname,width,height,FALSE,gerror);
 
 #endif
 
@@ -3507,9 +3507,9 @@ static gboolean weed_layer_new_from_file_progressive(weed_plant_t *layer,
 
   if (pixbuf==NULL) return FALSE;
 
-  if (gdk_pixbuf_get_has_alpha(pixbuf)) {
+  if (lives_pixbuf_get_has_alpha(pixbuf)) {
     /* unfortunately gdk pixbuf loader does not preserve the original alpha channel, instead it adds its own. We need to hence reset it back to opaque */
-    gdk_pixbuf_set_opaque(pixbuf);
+    lives_pixbuf_set_opaque(pixbuf);
     weed_set_int_value(layer,"current_palette",WEED_PALETTE_RGBA32);
   }
   else weed_set_int_value(layer,"current_palette",WEED_PALETTE_RGB24);
@@ -3705,7 +3705,6 @@ gboolean pull_frame_at_size (weed_plant_t *layer, const gchar *image_ext, weed_t
       else {
 	gboolean ret;
 	gchar *fname=g_strdup_printf("%s/%s/%08d.%s",prefs->tmpdir,sfile->handle,frame,image_ext);
-
 	if (height*width==0) {
 	  ret=weed_layer_new_from_file_progressive(layer,fname,0,0,image_ext,&gerror);
 	}
@@ -3773,14 +3772,14 @@ gboolean pull_frame (weed_plant_t *layer, const gchar *image_ext, weed_timecode_
 }
 
 
-GdkPixbuf *pull_gdk_pixbuf_at_size(gint clip, gint frame, const gchar *image_ext, weed_timecode_t tc, 
-				   gint width, gint height, GdkInterpType interp) {
-  // return a correctly sized GdkPixbuf (RGB24 for jpeg, RGBA32 for png) for the given clip and frame
+LiVESPixbuf *pull_lives_pixbuf_at_size(int clip, int frame, const char *image_ext, weed_timecode_t tc, 
+				       int width, int height, GdkInterpType interp) {
+  // return a correctly sized (Gdk)Pixbuf (RGB24 for jpeg, RGBA32 for png) for the given clip and frame
   // tc is used instead of "frame" for some sources (e.g. generator plugins)
   // image_ext is used if the source is an image file (eg. "jpg" or "png")
   // pixbuf will be sized to width x height pixels using interp
 
-  GdkPixbuf *pixbuf=NULL;
+  LiVESPixbuf *pixbuf=NULL;
   weed_plant_t *layer=weed_plant_new(WEED_PLANT_CHANNEL);
   int palette;
 
@@ -3795,7 +3794,7 @@ GdkPixbuf *pull_gdk_pixbuf_at_size(gint clip, gint frame, const gchar *image_ext
     pixbuf=layer_to_pixbuf(layer);
   }
   weed_plant_free(layer);
-  if (pixbuf!=NULL&&(gdk_pixbuf_get_width(pixbuf)!=width||gdk_pixbuf_get_height(pixbuf)!=height)) {
+  if (pixbuf!=NULL&&(lives_pixbuf_get_width(pixbuf)!=width||lives_pixbuf_get_height(pixbuf)!=height)) {
     GdkPixbuf *pixbuf2;
     threaded_dialog_spin();
     // TODO - could use resize plugin here
@@ -4799,7 +4798,10 @@ void load_frame_image(gint frame) {
 
   // record external window
   if (mainw->record_foreign) {
+    gint xwidth,xheight;
     GError *gerror=NULL;
+    cairo_t *cr = gdk_cairo_create (mainw->playarea->window);
+      
 
     if (mainw->rec_vid_frames==-1) gtk_entry_set_text(GTK_ENTRY(mainw->framecounter),(tmp=g_strdup_printf("%9d",frame)));
     else {
@@ -4813,10 +4815,21 @@ void load_frame_image(gint frame) {
       g_free(tmp);
     }
 
-    if ((pixbuf=gdk_pixbuf_get_from_drawable (NULL,GDK_DRAWABLE(mainw->foreign_map),
+    gdk_window_get_size(mainw->foreign_window,&xwidth,&xheight);
+
+#if GTK_CHECK_VERSION(3,0,0)
+    if ((pixbuf=gdk_pixbuf_get_from_window (mainw->foreign_window,
+					      0,0,
+					      xwidth,
+					      xheight
+					      ))!=NULL) {
+#else
+    if ((pixbuf=gdk_pixbuf_get_from_drawable (NULL,GDK_DRAWABLE(mainw->foreign_window),
 					      mainw->foreign_cmap,0,0,0,0,
-					      mainw->playarea->allocation.width,
-					      mainw->playarea->allocation.height))!=NULL) {
+					      xwidth,
+					      xheight
+					      ))!=NULL) {
+#endif
       gchar fname[PATH_MAX];
       g_snprintf(fname,PATH_MAX,"%s/%s/%08d.%s",prefs->tmpdir,cfile->handle,frame,prefs->image_ext);
       do {
@@ -4825,6 +4838,12 @@ void load_frame_image(gint frame) {
 	else if (!strcmp(prefs->image_ext,"png")) 
 	  lives_pixbuf_save(pixbuf, fname, IMG_TYPE_PNG, 100, FALSE, &gerror);
       } while (gerror!=NULL);
+
+
+      gdk_cairo_set_source_pixbuf (cr, pixbuf, 0, 0);
+      cairo_paint (cr);
+      cairo_destroy (cr);
+
       gdk_pixbuf_unref(pixbuf);
       cfile->frames=frame;
     }
@@ -5718,7 +5737,7 @@ resize (gdouble scale) {
   gint xsize;
   gint bx,by;
   GdkPixbuf *sepbuf;
-  gint hspace=((sepbuf=gtk_image_get_pixbuf (GTK_IMAGE (mainw->sep_image)))!=NULL)?gdk_pixbuf_get_height (sepbuf):0;
+  gint hspace=((sepbuf=gtk_image_get_pixbuf (GTK_IMAGE (mainw->sep_image)))!=NULL)?lives_pixbuf_get_height (sepbuf):0;
   // maximum values
   gint hsize,vsize;
   gint scr_width,scr_height;

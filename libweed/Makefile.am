@@ -53,24 +53,29 @@ libweed_plugin_utils_la_SOURCES = weed-plugin-utils.c
 libweedinclude_HEADERS = weed.h weed-host.h weed-plugin.h weed-utils.h weed-events.h weed-palettes.h weed-effects.h \
 	weed-plugin-utils.h weed-compat.h
 
-libweedincludedir = $(includedir)/weed
+libweedincludedir = "$(includedir)/weed"
 
-libweed_ladir = $(libdir)/weed
+libweed_ladir = "$(libdir)/weed"
 
-libweed_la_LDFLAGS = -version-info $(WEED_SO_VERSION)
+libweed_la_LDFLAGS = -version-info $(WEED_SO_VERSION) --tag=disable-static
 
 libweed_slice_la_CFLAGS = @GLIB_CFLAGS@ 
 
-libweed_slice_la_LDFLAGS = @GLIB_LIBS@ -version-info $(WEED_SO_VERSION)
+libweed_slice_la_LDFLAGS = @GLIB_LIBS@ -version-info $(WEED_SO_VERSION) --tag=disable-static
 
 libweed_utils_la_CFLAGS = $(extra_cflags)
 
-libweed_utils_la_LDFLAGS = $(extra_ldflags) -version-info $(WEED_SO_VERSION) -static
+##########################################################################################
+# -DO NOT- REMOVE THE -static, -DO NOT- add --tag=disable-static. You have been warned ! #
+libweed_utils_la_LDFLAGS = $(extra_ldflags) -version-info $(WEED_SO_VERSION) -static     #
+##########################################################################################
 
 libweed_plugin_utils_la_CFLAGS = $(extra_cflags)
 
-libweed_plugin_utils_la_LDFLAGS = $(extra_ldflags) -version-info $(WEED_SO_VERSION) -static
-
+#################################################################################################
+# -DO NOT- REMOVE THE -static, -DO NOT- add --tag=disable-static. You have been warned !        #
+libweed_plugin_utils_la_LDFLAGS = $(extra_ldflags) -version-info $(WEED_SO_VERSION) -static     #
+#################################################################################################
 
 
 uninstall-local:

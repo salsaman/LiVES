@@ -88,7 +88,7 @@ rfx_build_window_t *make_rfx_build_window (const gchar *script_name, lives_rfx_s
   GtkWidget *cancelbutton;
   GtkWidget *scrollw;
   GtkWidget *top_vbox;
-  GtkObject *spinbutton_adj;
+  GObject *spinbutton_adj;
 
   GSList *radiobutton_type_group = NULL;
   GList *langc=NULL;
@@ -305,7 +305,7 @@ rfx_build_window_t *make_rfx_build_window (const gchar *script_name, lives_rfx_s
     gtk_widget_modify_fg (label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
 
-  spinbutton_adj = gtk_adjustment_new (rfxbuilder->plugin_version, rfxbuilder->plugin_version, 1000000., 1., 1., 0.);
+  spinbutton_adj = (GObject *)gtk_adjustment_new (rfxbuilder->plugin_version, rfxbuilder->plugin_version, 1000000., 1., 1., 0.);
   rfxbuilder->spinbutton_version = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 1, 0);
 
   gtk_widget_show (rfxbuilder->spinbutton_version);
@@ -405,7 +405,7 @@ rfx_build_window_t *make_rfx_build_window (const gchar *script_name, lives_rfx_s
     gtk_widget_modify_fg (rfxbuilder->min_frames_label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
 
-  spinbutton_adj = gtk_adjustment_new (1., 1., 1000., 1., 1., 0);
+  spinbutton_adj = (GObject *)gtk_adjustment_new (1., 1., 1000., 1., 1., 0);
   rfxbuilder->spinbutton_min_frames = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 1, 0);
   gtk_widget_show (rfxbuilder->spinbutton_min_frames);
   gtk_box_pack_start (GTK_BOX (hbox), rfxbuilder->spinbutton_min_frames, TRUE, FALSE, 0);
@@ -1915,7 +1915,7 @@ GtkWidget * make_param_dialog (gint pnum, rfx_build_window_t *rfxbuilder) {
   GtkWidget *label;
   GtkWidget *combo;
   GtkWidget *hseparator;
-  GtkObject *spinbutton_adj;
+  GObject *spinbutton_adj;
 
   GList *typelist=NULL;
 
@@ -2007,7 +2007,7 @@ GtkWidget * make_param_dialog (gint pnum, rfx_build_window_t *rfxbuilder) {
     gtk_widget_modify_fg (rfxbuilder->bg_label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
 
-  spinbutton_adj = gtk_adjustment_new (0., 0., 16., 1., 1., 0.);
+  spinbutton_adj = (GObject *)gtk_adjustment_new (0., 0., 16., 1., 1., 0.);
   rfxbuilder->spinbutton_param_group = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 1, 0);
   gtk_box_pack_start (GTK_BOX (hbox), rfxbuilder->spinbutton_param_group, TRUE, FALSE, 0);
   if (pnum>=0) {
@@ -2084,7 +2084,7 @@ GtkWidget * make_param_dialog (gint pnum, rfx_build_window_t *rfxbuilder) {
     gtk_widget_modify_fg (rfxbuilder->param_dp_label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
 
-  spinbutton_adj = gtk_adjustment_new (0., 0., 16., 1., 1., 0.);
+  spinbutton_adj = (GObject *)gtk_adjustment_new (0., 0., 16., 1., 1., 0.);
   rfxbuilder->spinbutton_param_dp = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 1, 0);
   gtk_widget_show (rfxbuilder->spinbutton_param_dp);
   gtk_box_pack_start (GTK_BOX (hbox), rfxbuilder->spinbutton_param_dp, TRUE, FALSE, 0);
@@ -2112,7 +2112,7 @@ GtkWidget * make_param_dialog (gint pnum, rfx_build_window_t *rfxbuilder) {
     gtk_widget_modify_fg (rfxbuilder->param_def_label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
 
-  spinbutton_adj = gtk_adjustment_new (0., -G_MAXINT, G_MAXINT, 1., 1., 0.);
+  spinbutton_adj = (GObject *)gtk_adjustment_new (0., -G_MAXINT, G_MAXINT, 1., 1., 0.);
   rfxbuilder->spinbutton_param_def = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 1, 0);
   gtk_label_set_mnemonic_widget (GTK_LABEL (rfxbuilder->param_def_label),rfxbuilder->spinbutton_param_def);
 
@@ -2179,7 +2179,7 @@ GtkWidget * make_param_dialog (gint pnum, rfx_build_window_t *rfxbuilder) {
     gtk_widget_modify_fg (rfxbuilder->param_min_label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
 
-  spinbutton_adj = gtk_adjustment_new (0., -G_MAXINT, G_MAXINT, 1., 1., 0.);
+  spinbutton_adj = (GObject *)gtk_adjustment_new (0., -G_MAXINT, G_MAXINT, 1., 1., 0.);
   rfxbuilder->spinbutton_param_min = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 1, 0);
 
   gtk_widget_show (rfxbuilder->spinbutton_param_min);
@@ -2200,7 +2200,7 @@ GtkWidget * make_param_dialog (gint pnum, rfx_build_window_t *rfxbuilder) {
     gtk_widget_modify_fg (rfxbuilder->param_max_label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
 
-  spinbutton_adj = gtk_adjustment_new (RFX_DEF_NUM_MAX, -G_MAXINT, G_MAXINT, 1., 1., 0.);
+  spinbutton_adj = (GObject *)gtk_adjustment_new (RFX_DEF_NUM_MAX, -G_MAXINT, G_MAXINT, 1., 1., 0.);
   rfxbuilder->spinbutton_param_max = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 1, 0);
   gtk_label_set_mnemonic_widget (GTK_LABEL (rfxbuilder->param_max_label),rfxbuilder->spinbutton_param_max);
 
@@ -2222,7 +2222,7 @@ GtkWidget * make_param_dialog (gint pnum, rfx_build_window_t *rfxbuilder) {
     gtk_widget_modify_fg (rfxbuilder->param_step_label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
 
-  spinbutton_adj = gtk_adjustment_new (1., 1., G_MAXINT, 1., 1., 0.);
+  spinbutton_adj = (GObject *)gtk_adjustment_new (1., 1., G_MAXINT, 1., 1., 0.);
   rfxbuilder->spinbutton_param_step = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 1, 0);
 
   gtk_widget_show (rfxbuilder->spinbutton_param_step);

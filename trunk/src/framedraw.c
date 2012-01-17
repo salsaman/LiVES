@@ -168,7 +168,7 @@ widget_add_framedraw (GtkVBox *box, gint start, gint end, gboolean add_preview_b
   GtkWidget *vbox;
   GtkWidget *hbox;
   GtkWidget *label;
-  GtkObject *spinbutton_adj;
+  GObject *spinbutton_adj;
   GtkWidget *label2;
   GtkWidget *frame;
  

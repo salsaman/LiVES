@@ -1151,7 +1151,7 @@ create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox) {
   GtkWidget *hbox2;
   GtkWidget *xvbox;
   GtkWidget *eventbox;
-  GtkObject *spinbutton_adj;
+  GObject *spinbutton_adj;
   GList *channels = NULL;
   GList *sampsize = NULL;
   GList *rate = NULL;
@@ -1826,7 +1826,7 @@ create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox) {
     gtk_box_pack_start (GTK_BOX (hbox25), label98, FALSE, FALSE, 0);
     gtk_label_set_justify (GTK_LABEL (label98), GTK_JUSTIFY_LEFT);
 
-    spinbutton_adj = gtk_adjustment_new (prefs->default_fps, 1., FPS_MAX, 1., 1., 0.);
+    spinbutton_adj = (GObject *)gtk_adjustment_new (prefs->default_fps, 1., FPS_MAX, 1., 1., 0.);
     resaudw->fps_spinbutton = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 1, 3);
     gtk_widget_show (resaudw->fps_spinbutton);
     gtk_box_pack_start (GTK_BOX (hbox25), resaudw->fps_spinbutton, FALSE, FALSE, 20);
@@ -1876,7 +1876,7 @@ create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox) {
 
     gtk_widget_show_all (hbox2);
 
-    spinbutton_adj = gtk_adjustment_new (hours, 0, hours>23?hours:23, 1, 1, 0);
+    spinbutton_adj = (GObject *)gtk_adjustment_new (hours, 0, hours>23?hours:23, 1, 1, 0);
     resaudw->hour_spinbutton = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 1, 0);
     gtk_widget_show (resaudw->hour_spinbutton);
     gtk_box_pack_start (GTK_BOX (hbox), resaudw->hour_spinbutton, TRUE, TRUE, 0);
@@ -1889,7 +1889,7 @@ create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox) {
     }
     gtk_box_pack_start (GTK_BOX (hbox), label, TRUE, TRUE, 0);
 
-    spinbutton_adj = gtk_adjustment_new (mins, 0, 59, 1, 1, 0);
+    spinbutton_adj = (GObject *)gtk_adjustment_new (mins, 0, 59, 1, 1, 0);
     resaudw->minute_spinbutton = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 1, 0);
     gtk_widget_show (resaudw->minute_spinbutton);
     gtk_box_pack_start (GTK_BOX (hbox), resaudw->minute_spinbutton, TRUE, TRUE, 0);
@@ -1902,7 +1902,7 @@ create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox) {
     }
     gtk_box_pack_start (GTK_BOX (hbox), label, TRUE, TRUE, 0);
 
-    spinbutton_adj = gtk_adjustment_new (secs, 0, 59, 1, 1, 0);
+    spinbutton_adj = (GObject *)gtk_adjustment_new (secs, 0, 59, 1, 1, 0);
     resaudw->second_spinbutton = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 1, 2);
     gtk_widget_show (resaudw->second_spinbutton);
     gtk_box_pack_start (GTK_BOX (hbox), resaudw->second_spinbutton, TRUE, TRUE, 0);
@@ -2053,9 +2053,9 @@ create_new_pb_speed (gshort type)
   GtkWidget *radiobutton1=NULL;
   GtkWidget *radiobutton2=NULL;
   GSList *rbgroup = NULL;
-  GtkObject *spinbutton_pb_speed_adj;
+  GObject *spinbutton_pb_speed_adj;
   GtkWidget *spinbutton_pb_speed;
-  GtkObject *spinbutton_pb_time_adj;
+  GObject *spinbutton_pb_time_adj;
   GtkWidget *spinbutton_pb_time=NULL;
   GtkWidget *dialog_action_area6;
   GtkWidget *cancelbutton4;
@@ -2099,7 +2099,7 @@ create_new_pb_speed (gshort type)
   if (palette->style&STYLE_1) {
     gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
-  spinbutton_pb_speed_adj = gtk_adjustment_new (cfile->fps, 1, FPS_MAX, 0.01, .1, 0.);
+  spinbutton_pb_speed_adj = (GObject *)gtk_adjustment_new (cfile->fps, 1, FPS_MAX, 0.01, .1, 0.);
   spinbutton_pb_speed = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_pb_speed_adj), 1, 3);
   gtk_label_set_mnemonic_widget (GTK_LABEL (label), spinbutton_pb_speed);
 
@@ -2131,7 +2131,7 @@ create_new_pb_speed (gshort type)
     gtk_box_pack_start (GTK_BOX (hbox), radiobutton2, TRUE, FALSE, 0);
 
 
-    spinbutton_pb_time_adj = gtk_adjustment_new ((gdouble)((gint)(cfile->frames/cfile->fps*100.))/100., 1./FPS_MAX, cfile->frames, 1., 10., 0.);
+    spinbutton_pb_time_adj = (GObject *)gtk_adjustment_new ((gdouble)((gint)(cfile->frames/cfile->fps*100.))/100., 1./FPS_MAX, cfile->frames, 1., 10., 0.);
     spinbutton_pb_time = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_pb_time_adj), 1, 2);
     gtk_box_pack_start (GTK_BOX (hbox), spinbutton_pb_time, TRUE, TRUE, 10);
     gtk_entry_set_activates_default (GTK_ENTRY ((GtkEntry *)&(GTK_SPIN_BUTTON (spinbutton_pb_time)->entry)), TRUE);

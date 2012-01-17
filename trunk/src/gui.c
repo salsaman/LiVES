@@ -191,8 +191,8 @@ create_LiVES (void)
   GtkWidget *image347;
   GtkWidget *menuitem14;
   GtkWidget *menuitem14_menu;
-  GtkObject *spinbutton_start_adj;
-  GtkObject *spinbutton_end_adj;
+  GObject *spinbutton_start_adj;
+  GObject *spinbutton_end_adj;
   GtkWidget *about;
   GtkWidget *show_manual;
   GtkWidget *email_author;
@@ -213,7 +213,7 @@ create_LiVES (void)
   GtkWidget *menuitem;
 #endif 
 
-  GtkObject *spinbutton_pb_fps_adj;
+  GObject *spinbutton_pb_fps_adj;
 
   GtkWidget *new_test_rfx;
   GtkWidget *edit_test_rfx;
@@ -1973,7 +1973,7 @@ create_LiVES (void)
     gtk_widget_modify_fg(mainw->vps_label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
 
-  spinbutton_pb_fps_adj = gtk_adjustment_new (1, -FPS_MAX, FPS_MAX, 0.1, 0.01, 0.);
+  spinbutton_pb_fps_adj = (GObject *)gtk_adjustment_new (1, -FPS_MAX, FPS_MAX, 0.1, 0.01, 0.);
   mainw->spinbutton_pb_fps = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_pb_fps_adj), (GdkModifierType)0, 3);
   gtk_widget_show (mainw->spinbutton_pb_fps);
   gtk_box_pack_start (GTK_BOX (mainw->framebar), mainw->spinbutton_pb_fps, FALSE, TRUE, 0);
@@ -2117,7 +2117,7 @@ create_LiVES (void)
   gtk_widget_show (hbox3);
   gtk_box_pack_start (GTK_BOX (vbox4), hbox3, FALSE, TRUE, 0);
 
-  spinbutton_start_adj = gtk_adjustment_new (0., 0., 0., 1., 100., 0.);
+  spinbutton_start_adj = (GObject *)gtk_adjustment_new (0., 0., 0., 1., 100., 0.);
   mainw->spinbutton_start = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_start_adj), 1, 0);
 
   gtk_widget_show (mainw->spinbutton_start);
@@ -2146,7 +2146,7 @@ create_LiVES (void)
   gtk_box_pack_start (GTK_BOX (hbox3), mainw->arrow2, FALSE, FALSE, 0);
   gtk_widget_modify_fg(mainw->arrow2, GTK_STATE_NORMAL, &palette->normal_fore);
 
-  spinbutton_end_adj = gtk_adjustment_new (0., 0., 0., 1., 100., 0.);
+  spinbutton_end_adj = (GObject *)gtk_adjustment_new (0., 0., 0., 1., 100., 0.);
   mainw->spinbutton_end = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_end_adj), 1, 0);
   gtk_widget_show (mainw->spinbutton_end);
   gtk_box_pack_start (GTK_BOX (hbox3), mainw->spinbutton_end, TRUE, FALSE, 0);
@@ -3293,7 +3293,7 @@ make_preview_box (void) {
   GtkWidget *hbox;
   GtkWidget *hbox_rb;
   GtkWidget *hbox_buttons;
-  GtkObject *spinbutton_adj;
+  GObject *spinbutton_adj;
   GtkWidget *radiobutton_free;
   GtkWidget *radiobutton_start;
   GtkWidget *radiobutton_end;
@@ -3332,7 +3332,7 @@ make_preview_box (void) {
   gtk_box_pack_start (GTK_BOX (mainw->preview_box), hbox, FALSE, FALSE, 0);
   gtk_container_set_border_width (GTK_CONTAINER (hbox), 10);
 
-  spinbutton_adj = gtk_adjustment_new (1., 1., cfile->frames, 1., 10., 0.);
+  spinbutton_adj = (GObject *)gtk_adjustment_new (1., 1., cfile->frames, 1., 10., 0.);
   mainw->preview_spinbutton = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 1, 0);
   gtk_entry_set_width_chars (GTK_ENTRY (mainw->preview_spinbutton),8);
   gtk_widget_show (mainw->preview_spinbutton);

@@ -781,7 +781,7 @@ _vppaw *on_vpp_advanced_clicked (GtkButton *button, gpointer user_data) {
   GtkWidget *cancelbutton;
   GtkWidget *okbutton;
   GtkWidget *savebutton;
-  GtkObject *spinbutton_adj;
+  GObject *spinbutton_adj;
 
   gchar *title;
 
@@ -937,7 +937,7 @@ _vppaw *on_vpp_advanced_clicked (GtkButton *button, gpointer user_data) {
     }
     gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 10);
     
-    spinbutton_adj = gtk_adjustment_new (tmpvpp->fwidth>0?tmpvpp->fwidth:DEF_VPP_HSIZE, 4., 100000, 4, 4, 0.);
+    spinbutton_adj = (GObject *)gtk_adjustment_new (tmpvpp->fwidth>0?tmpvpp->fwidth:DEF_VPP_HSIZE, 4., 100000, 4, 4, 0.);
     vppa->spinbuttonw = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 4, 0);
 
     gtk_label_set_mnemonic_widget (GTK_LABEL (label),vppa->spinbuttonw);
@@ -952,7 +952,7 @@ _vppaw *on_vpp_advanced_clicked (GtkButton *button, gpointer user_data) {
     }
     gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 10);
     
-    spinbutton_adj = gtk_adjustment_new (tmpvpp->fheight>0?tmpvpp->fheight:DEF_VPP_VSIZE, 4., 100000, 4, 4, 0.);
+    spinbutton_adj = (GObject *)gtk_adjustment_new (tmpvpp->fheight>0?tmpvpp->fheight:DEF_VPP_VSIZE, 4., 100000, 4, 4, 0.);
     vppa->spinbuttonh = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 4, 0);
 
     gtk_label_set_mnemonic_widget (GTK_LABEL (label),vppa->spinbuttonh);

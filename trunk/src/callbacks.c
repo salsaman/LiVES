@@ -7327,7 +7327,7 @@ on_fade_activate               (GtkMenuItem     *menuitem,
 
 
 
-void on_boolean_toggled(GtkObject *obj, gpointer user_data) {
+void on_boolean_toggled(GObject *obj, gpointer user_data) {
   gboolean *ppref=(gboolean *)user_data;
   *ppref=!*ppref;
 }

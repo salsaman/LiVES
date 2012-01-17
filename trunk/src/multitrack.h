@@ -348,13 +348,13 @@ struct _mt {
   GtkWidget *insa_checkbutton;
   GtkWidget *snapo_checkbutton;
 
-  GtkObject *spinbutton_in_adj;
-  GtkObject *spinbutton_out_adj;
+  GObject *spinbutton_in_adj;
+  GObject *spinbutton_out_adj;
 
   GdkCursor *cursor;
 
-  GtkObject *hadjustment;
-  GtkObject *node_adj;
+  GObject *hadjustment;
+  GObject *node_adj;
 
   GList *audio_draws; ///< list of audio boxes, 0 == backing audio, 1 == track 0 audio, etc.
 
@@ -363,7 +363,7 @@ struct _mt {
 
   GtkAccelGroup *accel_group;
   GList *video_draws; ///< list of video timeline eventboxes, in layer order
-  GtkObject *vadjustment;
+  GObject *vadjustment;
 
   GdkDisplay *display;
 

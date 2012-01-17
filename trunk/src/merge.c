@@ -40,7 +40,7 @@ void create_merge_dialog (void) {
   GtkWidget *fit_button;
   GtkWidget *hseparator;
   GtkWidget *transition_combo;
-  GtkObject *spinbutton_adj;
+  GObject *spinbutton_adj;
   GtkWidget *dialog_action_area;
   GtkWidget *cancelbutton;
   GtkWidget *okbutton;
@@ -178,7 +178,7 @@ void create_merge_dialog (void) {
   gtk_widget_show (hbox);
   gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, TRUE, 22);
 
-  spinbutton_adj = gtk_adjustment_new (1, 1, (gint)((cfile->end-cfile->start+1)/cb_frames), 1, 10, 0);
+  spinbutton_adj = (GObject *)gtk_adjustment_new (1, 1, (gint)((cfile->end-cfile->start+1)/cb_frames), 1, 10, 0);
   merge_opts->spinbutton_loops = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 1, 0);
   merge_opts->ins_frame_button = gtk_radio_button_new (NULL);
   merge_opts->drop_frame_button = gtk_radio_button_new (NULL);

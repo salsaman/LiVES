@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2012-01-16 21:20-0300\n"
+"POT-Creation-Date: 2012-01-16 22:59-0300\n"
 "PO-Revision-Date: 2011-08-18 12:02+0000\n"
 "Last-Translator: Tarmo Ilves <tarmo.ilves.001@mail.ee>\n"
 "Language-Team: Estonian <et@li.org>\n"
@@ -5094,53 +5094,53 @@ msgid ""
 "No frames were generated.\n"
 msgstr ""
 
-#: src/effects-weed.c:3258
+#: src/effects-weed.c:3253
 #, c-format
 msgid "Error: plugin %s has no weed_setup() function.\n"
 msgstr ""
 
-#: src/effects-weed.c:3273
+#: src/effects-weed.c:3268
 #, c-format
 msgid "No usable filters found in plugin %s\n"
 msgstr ""
 
-#: src/effects-weed.c:3353
+#: src/effects-weed.c:3348
 #, c-format
 msgid ""
 "Info: Unable to load plugin %s\n"
 "Error was: %s\n"
 msgstr ""
 
-#: src/effects-weed.c:3356 src/effects-weed.c:3676
+#: src/effects-weed.c:3351 src/effects-weed.c:3671
 msgid "Some plugin directories"
 msgstr ""
 
-#: src/effects-weed.c:3512
+#: src/effects-weed.c:3507
 #, c-format
 msgid "Successfully loaded %d Weed filters\n"
 msgstr ""
 
-#: src/effects-weed.c:4238
+#: src/effects-weed.c:4233
 #, c-format
 msgid "Failed to start instance %s, error code %d\n"
 msgstr ""
 
-#: src/effects-weed.c:4276
+#: src/effects-weed.c:4271
 #, c-format
 msgid "Unable to start generator %s\n"
 msgstr ""
 
-#: src/effects-weed.c:4821
+#: src/effects-weed.c:4816
 #, c-format
 msgid "Failed to start generator %s\n"
 msgstr ""
 
-#: src/effects-weed.c:4882
+#: src/effects-weed.c:4877
 #, c-format
 msgid "Failed to start generator %s, error %d\n"
 msgstr ""
 
-#: src/effects-weed.c:5962
+#: src/effects-weed.c:5957
 #, c-format
 msgid "%s [unstable] (%s)"
 msgstr ""

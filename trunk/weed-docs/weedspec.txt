@@ -378,8 +378,6 @@ linked with libweed-utils, and #include <weed/weed-utils.h>
 Static linking is required, because the plugins may also link against
 this library, and they have their own versions of the core functions.
 
-N.B. this limitation may now be resolved with the use of dlopen with RTLD_DEEPBIND in the host - this needs testing.
-
 
 
 

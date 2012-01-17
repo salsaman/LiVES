@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: hu\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2012-01-16 21:20-0300\n"
+"POT-Creation-Date: 2012-01-16 22:59-0300\n"
 "PO-Revision-Date: 2011-08-18 11:58+0000\n"
 "Last-Translator: Krasznecz Zoltán <zoltan.krasznecz@gmail.com>\n"
 "Language-Team: Magyar <lisovszki@gmail.com>\n"
@@ -5795,17 +5795,17 @@ msgstr ""
 "\n"
 "Nincsenek képkockák generálva.\n"
 
-#: src/effects-weed.c:3258
+#: src/effects-weed.c:3253
 #, c-format
 msgid "Error: plugin %s has no weed_setup() function.\n"
 msgstr "Hiba: a(z) %s bővítménynek nincsenek beállításai.\n"
 
-#: src/effects-weed.c:3273
+#: src/effects-weed.c:3268
 #, c-format
 msgid "No usable filters found in plugin %s\n"
 msgstr ""
 
-#: src/effects-weed.c:3353
+#: src/effects-weed.c:3348
 #, c-format
 msgid ""
 "Info: Unable to load plugin %s\n"
@@ -5814,37 +5814,37 @@ msgstr ""
 "Információ: Nem lehet betölteni a következő bővítményt: %s\n"
 "A hiba a következő volt: %s\n"
 
-#: src/effects-weed.c:3356 src/effects-weed.c:3676
+#: src/effects-weed.c:3351 src/effects-weed.c:3671
 #, fuzzy
 msgid "Some plugin directories"
 msgstr "Almappákat is beleértve"
 
-#: src/effects-weed.c:3512
+#: src/effects-weed.c:3507
 #, c-format
 msgid "Successfully loaded %d Weed filters\n"
 msgstr "Sikeresen betöltött %d Weed szűrők\n"
 
-#: src/effects-weed.c:4238
+#: src/effects-weed.c:4233
 #, c-format
 msgid "Failed to start instance %s, error code %d\n"
 msgstr "Nem sikerült elindítani a(z) %s eseményt, hiba kód: %d\n"
 
-#: src/effects-weed.c:4276
+#: src/effects-weed.c:4271
 #, c-format
 msgid "Unable to start generator %s\n"
 msgstr "Nem lehet elindítani a %s generátort\n"
 
-#: src/effects-weed.c:4821
+#: src/effects-weed.c:4816
 #, c-format
 msgid "Failed to start generator %s\n"
 msgstr "Nem lehet elindítani a %s generátort\n"
 
-#: src/effects-weed.c:4882
+#: src/effects-weed.c:4877
 #, c-format
 msgid "Failed to start generator %s, error %d\n"
 msgstr "Nem lehet elindítani a %s generátort, %d hiba\n"
 
-#: src/effects-weed.c:5962
+#: src/effects-weed.c:5957
 #, c-format
 msgid "%s [unstable] (%s)"
 msgstr ""

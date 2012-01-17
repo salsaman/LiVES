@@ -242,7 +242,7 @@ widget_add_framedraw (GtkVBox *box, gint start, gint end, gboolean add_preview_b
   gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 0);
   gtk_container_set_border_width (GTK_CONTAINER (hbox), 10);
 
-  spinbutton_adj = gtk_adjustment_new (start, start, end, 1., 10., 0.);
+  spinbutton_adj = (GObject *)gtk_adjustment_new (start, start, end, 1., 10., 0.);
   mainw->framedraw_spinbutton = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 1, 0);
   gtk_box_pack_start (GTK_BOX (hbox), mainw->framedraw_spinbutton, FALSE, FALSE, 0);
 

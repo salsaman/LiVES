@@ -5,7 +5,7 @@ LIBS =
 #NOTE - install-exec-local MUST go in the first subdir !!
 SUBDIRS = gdk
 
-fxpluginslibdir = $(libdir)/$(PACKAGE)/plugins/effects/realtime/weed
+fxpluginslibdir = "$(libdir)/$(PACKAGE)/plugins/effects/realtime/weed"
 
 if IS_DARWIN
 shared_ldflags = -dynamiclib -module -avoid-version --tag=disable-static
@@ -31,7 +31,7 @@ if HAVE_VISUAL
 libvis_libs = libvis.la
 libvis_la_LDFLAGS = @VISUAL_LIBS@ $(AM_LDFLAGS)
 libvis_la_CFLAGS =  @VISUAL_CFLAGS@ $(AM_CFLAGS)
-libvispluginslibdir = $(libdir)/$(PACKAGE)/plugins/effects/realtime/weed/libvisual
+libvispluginslibdir = "$(libdir)/$(PACKAGE)/plugins/effects/realtime/weed/libvisual"
 libvispluginslib_LTLIBRARIES = $(libvis_libs)
 endif
 
@@ -39,7 +39,7 @@ if HAVE_FREI0R
 frei0r_libs = frei0r.la
 frei0r_la_LDFLAGS = -ldl $(AM_LDFLAGS)
 frei0r_la_CFLAGS = $(AM_CFLAGS)
-frei0rpluginslibdir = $(libdir)/$(PACKAGE)/plugins/effects/realtime/weed/frei0r
+frei0rpluginslibdir = "$(libdir)/$(PACKAGE)/plugins/effects/realtime/weed/frei0r"
 frei0rpluginslib_LTLIBRARIES = $(frei0r_libs)
 endif
 
@@ -87,12 +87,12 @@ fxpluginslib_LTLIBRARIES = RGBdelay.la \
 EXTRA_DIST=data icons
 
 install-data-local:
-	mkdir -p $(DESTDIR)$(fxpluginslibdir)
-	cp -rf data/ $(DESTDIR)$(fxpluginslibdir)
-	cp -rf icons/ $(DESTDIR)$(fxpluginslibdir)
+	mkdir -p "$(DESTDIR)$(fxpluginslibdir)"
+	cp -rf data/ "$(DESTDIR)$(fxpluginslibdir)"
+	cp -rf icons/ "$(DESTDIR)$(fxpluginslibdir)"
 	$(MAKE) -i install-data-local-remove-vcs-files
 
 install-data-local-remove-vcs-files:
-	rm -rf $(DESTDIR)$(fxpluginslibdir)/data/.*
-	rm -rf $(DESTDIR)$(fxpluginslibdir)/icons/.*
+	rm -rf "$(DESTDIR)$(fxpluginslibdir)/data/".*
+	rm -rf "$(DESTDIR)$(fxpluginslibdir)/icons/".*
 

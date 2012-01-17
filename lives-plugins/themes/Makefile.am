@@ -6,7 +6,7 @@ editor \
 crayons \
 crayons-bright
 
-themesdir = $(datadir)/$(PACKAGE)/themes
+themesdir = "$(datadir)/$(PACKAGE)/themes"
 themes_DATA = lives-splash.png
 
 EXTRA_DIST = $(themes_DATA)

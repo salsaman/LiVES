@@ -2,7 +2,7 @@ DEBUG_CFLAGS =
 
 SUBDIRS = . client sendOSC
 
-INCLUDES = -I$(top_srcdir) -I$(top_srcdir)/libOSC -I$(includedir)
+INCLUDES = -I "$(top_srcdir)" -I "$(top_srcdir)/libOSC" -I "$(includedir)"
 
 OSC_LIB_FILE = libOSC.la 
 ALL_LIB_OPTS = -export-dynamic

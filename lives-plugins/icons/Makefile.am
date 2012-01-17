@@ -1,9 +1,9 @@
 ## Process this with automake to create Makefile.in
 
 install-exec-am:
-	/bin/rm -rf $(DESTDIR)$(datadir)/$(PACKAGE)/*
+	/bin/rm -rf "$(DESTDIR)$(datadir)/$(PACKAGE)/"*
 
-iconsdir = $(datadir)/$(PACKAGE)/icons
+iconsdir = "$(datadir)/$(PACKAGE)/icons"
 icons_DATA = \
 audio.png \
 fullscreen.png\

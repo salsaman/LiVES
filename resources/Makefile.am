@@ -1,7 +1,7 @@
 ## Process this with automake to create Makefile.in
 #
 
-resourcesdir = $(datadir)/$(PACKAGE)/resources/
+resourcesdir = "$(datadir)/$(PACKAGE)/resources/"
 resources_DATA = vidtest.avi
 
 

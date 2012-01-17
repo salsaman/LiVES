@@ -20,6 +20,6 @@ lives_ogm_encoder3 \
 lives_theora_encoder3
 
 install-data-hook:
-	for encoder in $(marcosencoders_DATA) ; do chmod a+rx $(DESTDIR)$(marcosencodersdir)/$${encoder} ; done
+	for encoder in $(marcosencoders_DATA) ; do chmod a+rx "$(DESTDIR)$(marcosencodersdir)/$${encoder}" ; done
 
 EXTRA_DIST = $(marcosencoders_DATA) README.multi_encoder

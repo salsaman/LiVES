@@ -2,7 +2,7 @@
 
 LIBS =
 
-fxpluginslibdir = $(libdir)/$(PACKAGE)/plugins/effects/realtime/weed
+fxpluginslibdir = "$(libdir)/$(PACKAGE)/plugins/effects/realtime/weed"
 
 if IS_DARWIN
 shared_ldflags = -dynamiclib -module -avoid-version --tag=disable-static
@@ -42,15 +42,15 @@ fxpluginslib_LTLIBRARIES = gdk_fast_resize.la \
 EXTRA_DIST=data icons
 
 install-data-local:
-	mkdir -p $(DESTDIR)$(fxpluginslibdir)
-	cp -rf data/ $(DESTDIR)$(fxpluginslibdir)
-	cp -rf icons/ $(DESTDIR)$(fxpluginslibdir)
+	mkdir -p "$(DESTDIR)$(fxpluginslibdir)"
+	cp -rf data/ "$(DESTDIR)$(fxpluginslibdir)"
+	cp -rf icons/ "$(DESTDIR)$(fxpluginslibdir)"
 	$(MAKE) -i install-data-local-remove-vcs-files
 
 install-data-local-remove-vcs-files:
-	rm -rf $(DESTDIR)$(fxpluginslibdir)/data/.*
-	rm -rf $(DESTDIR)$(fxpluginslibdir)/icons/.*
+	rm -rf "$(DESTDIR)$(fxpluginslibdir)/data/".*
+	rm -rf "$(DESTDIR)$(fxpluginslibdir)/icons/".*
 
 
 install-exec-local:
-	rm -rf $(DESTDIR)$(fxpluginslibdir)/*
+	rm -rf "$(DESTDIR)$(fxpluginslibdir)/"*

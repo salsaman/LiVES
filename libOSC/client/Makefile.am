@@ -6,7 +6,7 @@ ALL_LIB_OPTS = -export-dynamic
 
 noinst_LTLIBRARIES = $(OSC_CLIENT_LIB_FILE)
 
-libOSC_client_la_CFLAGS = -I$(srcdir)/.. $(DEBUG_CFLAGS)
+libOSC_client_la_CFLAGS = -I "$(srcdir)/.." $(DEBUG_CFLAGS)
 
 if ENABLE_OSC
 libOSC_client_la_SOURCES = OSC-client.c OSC-timetag.c

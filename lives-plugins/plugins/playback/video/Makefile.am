@@ -2,7 +2,7 @@
 
 LIBS=
 
-videopluginslibdir = $(libdir)/$(PACKAGE)/plugins/playback/video
+videopluginslibdir = "$(libdir)/$(PACKAGE)/plugins/playback/video"
 
 if IS_DARWIN
 shared_ldflags =  -dynamiclib -module -avoid-version --tag=disable-static

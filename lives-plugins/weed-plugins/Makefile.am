@@ -17,11 +17,13 @@ shared_ldflags = -shared -fPIC -DPIC -Wl,-Bsymbolic -module -avoid-version --tag
 shared_cflags = -fPIC -DPIC
 endif
 
+
 if HAVE_SYSTEM_WEED
 AM_LDFLAGS = $(shared_ldflags) @WEED_UTILS_LIBS@ 
 weed_CFLAGS = -DHAVE_SYSTEM_WEED
 else
 AM_LDFLAGS = $(shared_ldflags) ../../libweed/libweed-utils.la
+weed_CFLAGS =
 endif
 
 if HAVE_SYSTEM_WEED_PLUGIN_UTILS
@@ -30,6 +32,11 @@ weed_CFLAGS = -DHAVE_SYSTEM_WEED_PLUGIN_UTILS
 else
 AM_LDFLAGS += ../../libweed/libweed-plugin-utils.la
 endif
+
+if HAVE_SYSTEM_WEED_COMPAT
+weed_CFLAGS += -DHAVE_SYSTEM_WEED_COMPAT
+endif
+
 
 AM_CFLAGS = $(shared_cflags) $(weed_CFLAGS) -ffast-math
 AM_CPPFLAGS = $(shared_cflags) $(weed_CFLAGS) -ffast-math

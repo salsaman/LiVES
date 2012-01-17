@@ -16,7 +16,14 @@ endif
 
 if HAVE_SYSTEM_WEED
 weed_cflags = -DHAVE_SYSTEM_WEED=1
+else
+weed_cflags =
 endif
+
+if HAVE_SYSTEM_WEED_COMPAT
+weed_cflags += -DHAVE_SYSTEM_WEED_COMPAT
+endif
+
 
 if HAVE_LIBDV
 dv_libs = dv_decoder.la

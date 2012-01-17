@@ -21,9 +21,18 @@
 #include "../libweed/weed-host.h"
 #endif
 
+#define NEED_FOURCC_COMPAT
+
+#ifdef HAVE_SYSTEM_WEED_COMPAT
+#include <weed/weed-compat.h>
+#else
+#include "../libweed/weed-compat.h"
+#endif
+
 #include <unicap/unicap.h>
 
 ////////////////////////////////////////////////////
+
 
 
 static gboolean lives_wait_user_buffer(lives_vdev_t *ldev, unicap_data_buffer_t **buff, gdouble timeout) {
@@ -365,7 +374,7 @@ static gboolean open_vdev_inner(unicap_device_t *device) {
   ldev->buffer_type = format->buffer_type;
 
   // ignore YUV subspace for now
-  ldev->current_palette=fourccp_to_weedp(format->fourcc, format->bpp, &cfile->interlace, 
+  ldev->current_palette=fourccp_to_weedp(format->fourcc, format->bpp, (int *)&cfile->interlace, 
 					 &ldev->YUV_sampling, &ldev->YUV_subspace, &ldev->YUV_clamping);
 
 #ifdef DEBUG_UNICAP

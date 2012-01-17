@@ -106,6 +106,11 @@ libweed_LDADD = $(abs_top_srcdir)/libweed/libweed_slice.la $(abs_top_srcdir)/lib
 endif
 endif
 
+
+if HAVE_SYSTEM_WEED_COMPAT
+libweed_compat_CFLAGS = -DHAVE_SYSTEM_WEED_COMPAT=1
+endif
+
 if HAVE_PULSE_AUDIO
 pulse_LDADD=@PULSE_LIBS@
 pulse_CFLAGS=@PULSE_LIBS@ -DHAVE_PULSE_AUDIO=1
@@ -190,7 +195,7 @@ lives_exe_LDADD = @GTK_LIBS_NODYNAMIC@ @X11_LIBS@ @MJPEGTOOLS_LIBS@ $(osc_LDADD)
 
 AM_CFLAGS = -Wstrict-aliasing=0 $(yuv4mpeg_CFLAGS) $(ldvgrab_CFLAGS) $(dvgrab_CFLAGS) $(oil_CFLAGS) \
 	$(darwin_CFLAGS) $(irix_CFLAGS) $(linux_CFLAGS) $(solaris_CFLAGS) $(osc_CFLAGS) $(alsa_CFLAGS) $(png_CFLAGS) $(swscale_CFLAGS) \
-	$(jack_CFLAGS) $(pulse_CFLAGS) $(giw_CFLAGS) $(unicap_CFLAGS) $(libweed_CFLAGS) \
+	$(jack_CFLAGS) $(pulse_CFLAGS) $(giw_CFLAGS) $(unicap_CFLAGS) $(libweed_CFLAGS) $(libweed_compat_CFLAGS) \
 	-DLIVES_LIBDIR=\""$(libdir)"\" $(gtk_def)
 
 

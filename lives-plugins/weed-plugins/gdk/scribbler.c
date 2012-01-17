@@ -88,7 +88,7 @@ static void plugin_free_buffer (guchar *pixels, gpointer data) {
   return;
 }
 
-static char **fonts_available = NULL;
+static const char **fonts_available = NULL;
 static int num_fonts_available = 0;
 
 static weed_plant_t *weed_parameter_get_gui(weed_plant_t *param) {
@@ -342,9 +342,9 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
   weed_plant_t *plugin_info=weed_plugin_info_init(weed_boot,num_versions,api_versions);
   weed_plant_t **clone1,**clone2;
 
-  char *def_fonts[] = {"serif", NULL};
+  const char *def_fonts[] = {"serif", NULL};
   if (plugin_info!=NULL) {
-    char *modes[]={"foreground only","foreground and background","background only",NULL};
+    const char *modes[]={"foreground only","foreground and background","background only",NULL};
     // removed palettes with alpha channel
     int palette_list[]={WEED_PALETTE_BGR24,WEED_PALETTE_RGB24,WEED_PALETTE_END};
     weed_plant_t *in_chantmpls[]={weed_channel_template_init("in channel 0",0,palette_list),NULL};
@@ -368,7 +368,7 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
         pango_font_map_list_families(pfm, &pff, &num);
         if(num > 0) {
           // we should reserve num+1 for a final NULL pointer
-          fonts_available = (char **)weed_malloc((num+1)*sizeof(char *));
+          fonts_available = (const char **)weed_malloc((num+1)*sizeof(char *));
           if(fonts_available) {
             register int i;
             num_fonts_available = num;

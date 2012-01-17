@@ -9952,13 +9952,13 @@ msgstr "_Ignorar cambios"
 msgid "Brightness start"
 msgstr "Alineando _Comienzos"
 
-#: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
+#: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 msgid "Centre _X"
 msgstr ""
 
-#: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
+#: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 msgid "Centre _Y"
 msgstr ""
 
@@ -10070,8 +10070,8 @@ msgstr "Sueño"
 msgid "Dreamifying"
 msgstr "Sueño"
 
-#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 msgid "E_nd %"
 msgstr ""
 
@@ -10119,8 +10119,8 @@ msgstr "Realzar"
 msgid "Fade _colour"
 msgstr "Fundido de salida de audio"
 
-#: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
+#: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 #, fuzzy
 msgid "Fade _end"
 msgstr "Desvanecer"
@@ -10450,8 +10450,8 @@ msgstr "Rotar clip"
 msgid "Rotating"
 msgstr "Rotando"
 
-#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #, fuzzy
 msgid "S_tart %"
 msgstr "_Inicio"
@@ -10620,12 +10620,12 @@ msgstr "Onda"
 msgid "Waving"
 msgstr "Ondear"
 
-#: /usr/share/lives/plugins/effects/rendered/rotate.script:0
-#: /usr/share/lives/plugins/effects/rendered/wave.script:0
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
-#: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
+#: /usr/share/lives/plugins/effects/rendered/wave.script:0
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
+#: /usr/share/lives/plugins/effects/rendered/rotate.script:0
+#: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
 #, fuzzy
 msgid "_Background Colour"
 msgstr "_Fondo en Blanco"
@@ -10666,8 +10666,8 @@ msgstr "_Disminuir Contraste"
 msgid "_Diffmax"
 msgstr ""
 
-#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #, fuzzy
 msgid "_End Colour"
 msgstr "_Fondo en Blanco"
@@ -10691,8 +10691,8 @@ msgstr "_Solo Ultimo Fotograma"
 msgid "_Fade level"
 msgstr "Desvanecer"
 
-#: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
+#: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 #, fuzzy
 msgid "_Fade start"
 msgstr "_Radio"
@@ -10717,9 +10717,9 @@ msgstr "Fundido de salida de audio"
 msgid "_Font"
 msgstr "_Tipografía"
 
-#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
+#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
 #, fuzzy
 msgid "_Frames per second"
@@ -10766,8 +10766,8 @@ msgstr ""
 msgid "_Levels"
 msgstr ""
 
-#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 msgid "_Link start and end colours"
 msgstr ""
 
@@ -10827,14 +10827,14 @@ msgstr "_Radio"
 msgid "_Radius start"
 msgstr "_Radio"
 
-#: /usr/share/lives/plugins/effects/rendered/emboss.script:0
 #: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
+#: /usr/share/lives/plugins/effects/rendered/emboss.script:0
 #: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
 msgid "_Radius"
 msgstr "_Radio"
 
-#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #, fuzzy
 msgid "_Random colour each frame"
 msgstr "Borrando cuadros sobrantes"
@@ -10886,15 +10886,15 @@ msgstr "_Inicio"
 msgid "_Splice"
 msgstr "Juntar"
 
-#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #, fuzzy
 msgid "_Start Colour"
 msgstr "_Inicio"
 
+#: /usr/share/lives/plugins/effects/rendered/solarize.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
-#: /usr/share/lives/plugins/effects/rendered/solarize.script:0
 #, fuzzy
 msgid "_Start Value"
 msgstr "Empezar en el fotograma"

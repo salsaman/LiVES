@@ -10912,13 +10912,13 @@ msgstr "Яскравість наприкінці"
 msgid "Brightness start"
 msgstr "Яскравість напочатку"
 
-#: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
+#: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 msgid "Centre _X"
 msgstr "X _центра"
 
-#: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
+#: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 msgid "Centre _Y"
 msgstr "Y ц_ентра"
 
@@ -11018,8 +11018,8 @@ msgstr "Мрія"
 msgid "Dreamifying"
 msgstr "Надання мрійливого вигляду"
 
-#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 msgid "E_nd %"
 msgstr "К_інець %"
 
@@ -11063,8 +11063,8 @@ msgstr "Покращення"
 msgid "Fade _colour"
 msgstr "_Кольорова зміна освітленості"
 
-#: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
+#: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 msgid "Fade _end"
 msgstr "_Кінцеве згасання"
 
@@ -11348,8 +11348,8 @@ msgstr "Обертати кліп"
 msgid "Rotating"
 msgstr "Обертання"
 
-#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 msgid "S_tart %"
 msgstr "S_tart %"
 
@@ -11503,12 +11503,12 @@ msgstr "Хвиля"
 msgid "Waving"
 msgstr "Вигинання"
 
-#: /usr/share/lives/plugins/effects/rendered/rotate.script:0
-#: /usr/share/lives/plugins/effects/rendered/wave.script:0
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
-#: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
+#: /usr/share/lives/plugins/effects/rendered/wave.script:0
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
+#: /usr/share/lives/plugins/effects/rendered/rotate.script:0
+#: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
 msgid "_Background Colour"
 msgstr "Колір _тла"
 
@@ -11545,8 +11545,8 @@ msgstr "З_меншити контрастність"
 msgid "_Diffmax"
 msgstr "_Максимальна різниця"
 
-#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 msgid "_End Colour"
 msgstr "_Кінцевий колір"
 
@@ -11567,8 +11567,8 @@ msgstr "_Кінцева величина"
 msgid "_Fade level"
 msgstr "Рівень з_гасання"
 
-#: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
+#: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 msgid "_Fade start"
 msgstr "П_очаткове згасання"
 
@@ -11589,9 +11589,9 @@ msgstr "Сп_палах протягом"
 msgid "_Font"
 msgstr "_Шрифт"
 
-#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
+#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
 msgid "_Frames per second"
 msgstr "_Кадрів на секунду"
@@ -11632,8 +11632,8 @@ msgstr "По_чатковий розмір за Y:"
 msgid "_Levels"
 msgstr "_Рівні"
 
-#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 msgid "_Link start and end colours"
 msgstr "З’_єднати початковий і кінцевий кольори"
 
@@ -11688,14 +11688,14 @@ msgstr "_Кінцевий радіус"
 msgid "_Radius start"
 msgstr "Початковий _радіус"
 
-#: /usr/share/lives/plugins/effects/rendered/emboss.script:0
 #: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
+#: /usr/share/lives/plugins/effects/rendered/emboss.script:0
 #: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
 msgid "_Radius"
 msgstr "_Радіус"
 
-#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 msgid "_Random colour each frame"
 msgstr "Вип_адкова зміна кольорів кожного кадру"
 
@@ -11740,14 +11740,14 @@ msgstr "_Початковий колір"
 msgid "_Splice"
 msgstr "_Розрізати"
 
-#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 msgid "_Start Colour"
 msgstr "_Початковий колір"
 
+#: /usr/share/lives/plugins/effects/rendered/solarize.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
-#: /usr/share/lives/plugins/effects/rendered/solarize.script:0
 msgid "_Start Value"
 msgstr "_Початкове значення"
 

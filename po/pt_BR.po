@@ -10528,13 +10528,13 @@ msgstr "Fim do brilho"
 msgid "Brightness start"
 msgstr "Início do brilho"
 
-#: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
+#: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 msgid "Centre _X"
 msgstr "Centralizar _X"
 
-#: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
+#: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 msgid "Centre _Y"
 msgstr "Centralizar _Y"
 
@@ -10634,8 +10634,8 @@ msgstr "Sonho"
 msgid "Dreamifying"
 msgstr "Sonhando"
 
-#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 msgid "E_nd %"
 msgstr "Fim [_N] %"
 
@@ -10680,8 +10680,8 @@ msgstr "Realçando"
 msgid "Fade _colour"
 msgstr "Piscar _cor"
 
-#: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
+#: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 msgid "Fade _end"
 msgstr "Fim do fad_e"
 
@@ -10971,8 +10971,8 @@ msgstr "Rodar Clip"
 msgid "Rotating"
 msgstr "Girando"
 
-#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 msgid "S_tart %"
 msgstr "Início [_T] %"
 
@@ -11127,12 +11127,12 @@ msgstr "Onda"
 msgid "Waving"
 msgstr "Ondulando"
 
-#: /usr/share/lives/plugins/effects/rendered/rotate.script:0
-#: /usr/share/lives/plugins/effects/rendered/wave.script:0
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
-#: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
+#: /usr/share/lives/plugins/effects/rendered/wave.script:0
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
+#: /usr/share/lives/plugins/effects/rendered/rotate.script:0
+#: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
 msgid "_Background Colour"
 msgstr "Cor de fundo [_B]"
 
@@ -11169,8 +11169,8 @@ msgstr "_Diminuir contraste"
 msgid "_Diffmax"
 msgstr "_Difmax"
 
-#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 msgid "_End Colour"
 msgstr "Cor Final [_E]"
 
@@ -11191,8 +11191,8 @@ msgstr "Quantidade Final [_E]"
 msgid "_Fade level"
 msgstr "Nível de _Fade"
 
-#: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
+#: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 msgid "_Fade start"
 msgstr "Início do _fade"
 
@@ -11213,9 +11213,9 @@ msgstr "Piscar para [_F]"
 msgid "_Font"
 msgstr "_Fonte"
 
-#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
+#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
 msgid "_Frames per second"
 msgstr "_Frames por segundo (FPS)"
@@ -11257,8 +11257,8 @@ msgstr ""
 msgid "_Levels"
 msgstr "Níveis [_L]"
 
-#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 msgid "_Link start and end colours"
 msgstr "_Ligar cor inicial e final"
 
@@ -11316,14 +11316,14 @@ msgstr "Fim do _raio"
 msgid "_Radius start"
 msgstr "Início do _raio"
 
-#: /usr/share/lives/plugins/effects/rendered/emboss.script:0
 #: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
+#: /usr/share/lives/plugins/effects/rendered/emboss.script:0
 #: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
 msgid "_Radius"
 msgstr "_Raio"
 
-#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 msgid "_Random colour each frame"
 msgstr "Co_r aleatória em cada frame"
 
@@ -11368,14 +11368,14 @@ msgstr "Cor Original [_S]"
 msgid "_Splice"
 msgstr "_Juntar"
 
-#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 msgid "_Start Colour"
 msgstr "Cor inicial [_S]"
 
+#: /usr/share/lives/plugins/effects/rendered/solarize.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
-#: /usr/share/lives/plugins/effects/rendered/solarize.script:0
 msgid "_Start Value"
 msgstr "Valor Inicial [_S]"
 

@@ -9476,13 +9476,13 @@ msgstr "No feu cas dels canvis"
 msgid "Brightness start"
 msgstr "No feu cas dels canvis"
 
-#: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
+#: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 msgid "Centre _X"
 msgstr ""
 
-#: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
+#: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 msgid "Centre _Y"
 msgstr ""
 
@@ -9594,8 +9594,8 @@ msgstr "Somni"
 msgid "Dreamifying"
 msgstr "Somni"
 
-#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 msgid "E_nd %"
 msgstr ""
 
@@ -9643,8 +9643,8 @@ msgstr "Realça"
 msgid "Fade _colour"
 msgstr "Esvaeix"
 
-#: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
+#: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 #, fuzzy
 msgid "Fade _end"
 msgstr "Esvaeix"
@@ -9967,8 +9967,8 @@ msgstr "S'està girant"
 msgid "Rotating"
 msgstr "S'està girant"
 
-#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #, fuzzy
 msgid "S_tart %"
 msgstr "_Inici"
@@ -10139,12 +10139,12 @@ msgstr "Ona"
 msgid "Waving"
 msgstr "S'estan fent ones"
 
-#: /usr/share/lives/plugins/effects/rendered/rotate.script:0
-#: /usr/share/lives/plugins/effects/rendered/wave.script:0
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
-#: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
+#: /usr/share/lives/plugins/effects/rendered/wave.script:0
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
+#: /usr/share/lives/plugins/effects/rendered/rotate.script:0
+#: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
 #, fuzzy
 msgid "_Background Colour"
 msgstr "_Inici"
@@ -10186,8 +10186,8 @@ msgstr "contrast"
 msgid "_Diffmax"
 msgstr ""
 
-#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #, fuzzy
 msgid "_End Colour"
 msgstr "_Inici"
@@ -10211,8 +10211,8 @@ msgstr "_Inici"
 msgid "_Fade level"
 msgstr "Esvaeix"
 
-#: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
+#: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 #, fuzzy
 msgid "_Fade start"
 msgstr "_Radi"
@@ -10237,9 +10237,9 @@ msgstr "Esvaeix"
 msgid "_Font"
 msgstr "_Tipus de lletra"
 
-#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
+#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
 #, fuzzy
 msgid "_Frames per second"
@@ -10286,8 +10286,8 @@ msgstr ""
 msgid "_Levels"
 msgstr ""
 
-#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 msgid "_Link start and end colours"
 msgstr ""
 
@@ -10349,14 +10349,14 @@ msgstr "_Radi"
 msgid "_Radius start"
 msgstr "_Radi"
 
-#: /usr/share/lives/plugins/effects/rendered/emboss.script:0
 #: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
+#: /usr/share/lives/plugins/effects/rendered/emboss.script:0
 #: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
 msgid "_Radius"
 msgstr "_Radi"
 
-#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #, fuzzy
 msgid "_Random colour each frame"
 msgstr "fotogrames"
@@ -10407,15 +10407,15 @@ msgstr "_Inici"
 msgid "_Splice"
 msgstr ""
 
-#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #, fuzzy
 msgid "_Start Colour"
 msgstr "_Inici"
 
+#: /usr/share/lives/plugins/effects/rendered/solarize.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
-#: /usr/share/lives/plugins/effects/rendered/solarize.script:0
 #, fuzzy
 msgid "_Start Value"
 msgstr "_Inici"

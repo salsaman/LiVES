@@ -472,7 +472,7 @@ static gboolean add_sizes(GtkBox *vbox, gboolean add_fps, lives_rfx_t *rfx) {
   GtkWidget *label,*hbox,*hseparator;
   GtkWidget *spinbuttonh=NULL,*spinbuttonw=NULL;
   GtkWidget *spinbuttonf;
-  GtkObject *spinbutton_adj;
+  GObject *spinbutton_adj;
   int def_width=0,max_width,width_step;
   int def_height=0,max_height,height_step;
 
@@ -500,7 +500,7 @@ static gboolean add_sizes(GtkBox *vbox, gboolean add_fps, lives_rfx_t *rfx) {
     
     if (def_fps==0.) def_fps=prefs->default_fps;
     
-    spinbutton_adj = gtk_adjustment_new (def_fps, 1., FPS_MAX, 1., 10., 0.);
+    spinbutton_adj = (GObject *)gtk_adjustment_new (def_fps, 1., FPS_MAX, 1., 10., 0.);
     spinbuttonf = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 1., 3);
     gtk_entry_set_activates_default (GTK_ENTRY ((GtkEntry *)&(GTK_SPIN_BUTTON (spinbuttonf)->entry)), TRUE);
     gtk_label_set_mnemonic_widget (GTK_LABEL (label),spinbuttonf);
@@ -559,7 +559,7 @@ static gboolean add_sizes(GtkBox *vbox, gboolean add_fps, lives_rfx_t *rfx) {
     width_step=1;
     if (weed_plant_has_leaf(tmpl,"hstep")) width_step=weed_get_int_value(tmpl,"hstep",&error);
 
-    spinbutton_adj = gtk_adjustment_new (def_width, 1., max_width, width_step==1?4:width_step, 
+    spinbutton_adj = (GObject *)gtk_adjustment_new (def_width, 1., max_width, width_step==1?4:width_step, 
 					 width_step==1?16:width_step*4, 0.);
     spinbuttonw = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), width_step, 0);
     gtk_entry_set_activates_default (GTK_ENTRY ((GtkEntry *)&(GTK_SPIN_BUTTON (spinbuttonw)->entry)), TRUE);
@@ -586,7 +586,7 @@ static gboolean add_sizes(GtkBox *vbox, gboolean add_fps, lives_rfx_t *rfx) {
     height_step=1;
     if (weed_plant_has_leaf(tmpl,"vstep")) height_step=weed_get_int_value(tmpl,"vstep",&error);
 
-    spinbutton_adj = gtk_adjustment_new (def_height, 1., max_height, height_step==1?4:height_step, 
+    spinbutton_adj = (GObject *)gtk_adjustment_new (def_height, 1., max_height, height_step==1?4:height_step, 
 					 height_step==1?16:height_step*4, 0.);
     spinbuttonh = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), height_step, 0);
     gtk_entry_set_activates_default (GTK_ENTRY ((GtkEntry *)&(GTK_SPIN_BUTTON (spinbuttonh)->entry)), TRUE);

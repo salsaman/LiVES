@@ -1245,7 +1245,7 @@ create_insert_dialog (void)
   GtkWidget *hbox;
   GtkWidget *eventbox;
   GtkWidget *label;
-  GtkObject *spinbutton_times_adj;
+  GObject *spinbutton_times_adj;
   GtkWidget *table2;
   GtkWidget *radiobutton1;
   GSList *radiobutton1_group = NULL;
@@ -1291,7 +1291,7 @@ create_insert_dialog (void)
   }
   gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 10);
 
-  spinbutton_times_adj = gtk_adjustment_new (1, 1, 10000, 1, 10, 0);
+  spinbutton_times_adj = (GObject *)gtk_adjustment_new (1, 1, 10000, 1, 10, 0);
   insertw->spinbutton_times = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_times_adj), 1, 0);
   gtk_spin_button_set_update_policy (GTK_SPIN_BUTTON (insertw->spinbutton_times),GTK_UPDATE_IF_VALID);
   gtk_widget_show (insertw->spinbutton_times);
@@ -1553,9 +1553,9 @@ create_opensel_dialog (void)
   GtkWidget *table5;
   GtkWidget *label46;
   GtkWidget *label47;
-  GtkObject *spinbutton23_adj;
+  GObject *spinbutton23_adj;
   GtkWidget *spinbutton23;
-  GtkObject *spinbutton24_adj;
+  GObject *spinbutton24_adj;
   GtkWidget *spinbutton24;
   GtkWidget *dialog_action_area9;
   GtkWidget *cancelbutton7;
@@ -1611,7 +1611,7 @@ create_opensel_dialog (void)
     gtk_widget_modify_fg(label47, GTK_STATE_NORMAL, &palette->normal_fore);
   }
 
-  spinbutton23_adj = gtk_adjustment_new (0, 0, G_MAXINT, 1, 10, 0);
+  spinbutton23_adj = (GObject *)gtk_adjustment_new (0, 0, G_MAXINT, 1, 10, 0);
   spinbutton23 = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton23_adj), 1, 2);
   gtk_widget_show (spinbutton23);
   gtk_table_attach (GTK_TABLE (table5), spinbutton23, 1, 2, 0, 1,
@@ -1619,7 +1619,7 @@ create_opensel_dialog (void)
                     (GtkAttachOptions) (GTK_EXPAND), 42, 0);
   gtk_spin_button_set_numeric (GTK_SPIN_BUTTON (spinbutton23), TRUE);
 
-  spinbutton24_adj = gtk_adjustment_new (1000, 1, G_MAXINT, 1, 10, 0);
+  spinbutton24_adj = (GObject *)gtk_adjustment_new (1000, 1, G_MAXINT, 1, 10, 0);
   spinbutton24 = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton24_adj), 1, 0);
   gtk_widget_show (spinbutton24);
   gtk_table_attach (GTK_TABLE (table5), spinbutton24, 1, 2, 1, 2,
@@ -2347,18 +2347,18 @@ create_cdtrack_dialog (gint type, gpointer user_data)
   GtkWidget *label;
   GtkWidget *label62=NULL;
   GtkWidget *label62b;
-  GtkObject *spinbutton35_adj=NULL;
+  GObject *spinbutton35_adj=NULL;
   GtkWidget *spinbutton35;
-  GtkObject *spinbutton36_adj;
+  GObject *spinbutton36_adj;
   GtkWidget *spinbutton36=NULL;
-  GtkObject *spinbutton36b_adj;
+  GObject *spinbutton36b_adj;
   GtkWidget *spinbutton36b;
   GtkWidget *radiobutton;
   GtkWidget *eventbox;
   GtkWidget *dialog_action_area;
   GtkWidget *cancelbutton;
   GtkWidget *okbutton;
-  GtkObject *spinbutton_adj;
+  GObject *spinbutton_adj;
 
   gchar *label_text=NULL;
   GtkAccelGroup *accel_group=GTK_ACCEL_GROUP(gtk_accel_group_new ());
@@ -2439,13 +2439,13 @@ create_cdtrack_dialog (gint type, gpointer user_data)
   gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_LEFT);
 
   if (type==0||type==1||type==2) {
-    spinbutton35_adj = gtk_adjustment_new (mainw->fx1_val, 1., 256., 1., 10., 0.);
+    spinbutton35_adj = (GObject *)gtk_adjustment_new (mainw->fx1_val, 1., 256., 1., 10., 0.);
   }
   else if (type==3) {
-    spinbutton35_adj = gtk_adjustment_new (mainw->fx1_val, 4., 8., 1., 1., 0.);
+    spinbutton35_adj = (GObject *)gtk_adjustment_new (mainw->fx1_val, 4., 8., 1., 1., 0.);
   }
   else if (type==4||type==5) {
-    spinbutton35_adj = gtk_adjustment_new (0., 0., 7., 1., 1., 0.);
+    spinbutton35_adj = (GObject *)gtk_adjustment_new (0., 0., 7., 1., 1., 0.);
   }
 
   spinbutton35 = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton35_adj), 1, 0);
@@ -2459,8 +2459,8 @@ create_cdtrack_dialog (gint type, gpointer user_data)
 
     hbox17 = gtk_hbox_new (FALSE, 50);
 
-    if (type==1) spinbutton36_adj = gtk_adjustment_new (mainw->fx2_val, 1, 1024, 1, 10, 0);
-    else spinbutton36_adj = gtk_adjustment_new (1, 1, 69, 1, 1, 0);
+    if (type==1) spinbutton36_adj = (GObject *)gtk_adjustment_new (mainw->fx2_val, 1, 1024, 1, 10, 0);
+    else spinbutton36_adj = (GObject *)gtk_adjustment_new (1, 1, 69, 1, 1, 0);
 
     gtk_widget_show (hbox17);
     gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox17, TRUE, TRUE, 0);
@@ -2483,7 +2483,7 @@ create_cdtrack_dialog (gint type, gpointer user_data)
 
     if (type==1) {
       hbox17b = gtk_hbox_new (FALSE, 50);
-      if (type==1) spinbutton36b_adj = gtk_adjustment_new (mainw->fx3_val, 128, 159, 1, 1, 0);
+      if (type==1) spinbutton36b_adj = (GObject *)gtk_adjustment_new (mainw->fx3_val, 128, 159, 1, 1, 0);
       spinbutton36b = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton36b_adj), 1, 0);
       gtk_entry_set_activates_default (GTK_ENTRY ((GtkEntry *)&(GTK_SPIN_BUTTON (spinbutton36b)->entry)), TRUE);
       
@@ -2564,7 +2564,7 @@ create_cdtrack_dialog (gint type, gpointer user_data)
     }
     gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 10);
     
-    spinbutton_adj = gtk_adjustment_new (0.,0.,16.,1.,1.,0.);
+    spinbutton_adj = (GObject *)gtk_adjustment_new (0.,0.,16.,1.,1.,0.);
     tvcardw->spinbuttoni = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj),1,0);
     gtk_entry_set_activates_default (GTK_ENTRY ((GtkEntry *)&(GTK_SPIN_BUTTON (tvcardw->spinbuttoni)->entry)), TRUE);
     
@@ -2629,7 +2629,7 @@ create_cdtrack_dialog (gint type, gpointer user_data)
     }
     gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 10);
     
-    spinbutton_adj = gtk_adjustment_new (640.,4.,4096.,2.,2.,0.);
+    spinbutton_adj = (GObject *)gtk_adjustment_new (640.,4.,4096.,2.,2.,0.);
     tvcardw->spinbuttonw = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj),1,0);
     gtk_entry_set_activates_default (GTK_ENTRY ((GtkEntry *)&(GTK_SPIN_BUTTON (tvcardw->spinbuttonw)->entry)), TRUE);
     
@@ -2644,7 +2644,7 @@ create_cdtrack_dialog (gint type, gpointer user_data)
     }
     gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 10);
     
-    spinbutton_adj = gtk_adjustment_new (480.,4.,4096.,2.,2.,0.);
+    spinbutton_adj = (GObject *)gtk_adjustment_new (480.,4.,4096.,2.,2.,0.);
     tvcardw->spinbuttonh = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj),1,0);
     gtk_entry_set_activates_default (GTK_ENTRY ((GtkEntry *)&(GTK_SPIN_BUTTON (tvcardw->spinbuttonh)->entry)), TRUE);
     
@@ -2659,7 +2659,7 @@ create_cdtrack_dialog (gint type, gpointer user_data)
     }
     gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 10);
     
-    spinbutton_adj = gtk_adjustment_new (25., 1., FPS_MAX, 1., 10., 0.);
+    spinbutton_adj = (GObject *)gtk_adjustment_new (25., 1., FPS_MAX, 1., 10., 0.);
     tvcardw->spinbuttonf = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj),1,3);
     gtk_entry_set_activates_default (GTK_ENTRY ((GtkEntry *)&(GTK_SPIN_BUTTON (tvcardw->spinbuttonf)->entry)), TRUE);
     
@@ -2817,7 +2817,7 @@ aud_dialog_t *create_audfade_dialog (gint type) {
   GtkWidget *rb_sel;
   GtkWidget *label61;
   GtkWidget *label62;
-  GtkObject *spinbutton35_adj;
+  GObject *spinbutton35_adj;
   GtkWidget *dialog_action_area11;
   GtkWidget *cancelbutton9;
   GtkWidget *okbutton8;
@@ -2897,7 +2897,7 @@ aud_dialog_t *create_audfade_dialog (gint type) {
   max=cfile->laudio_time/2.;
   if (max>MAX_FADE_SECS) max=MAX_FADE_SECS;
 
-  spinbutton35_adj = gtk_adjustment_new (10, .1, max, 1, 10, 0);
+  spinbutton35_adj = (GObject *)gtk_adjustment_new (10, .1, max, 1, 10, 0);
   audd->time_spin = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton35_adj), 1, 1);
   gtk_widget_show (audd->time_spin);
   gtk_box_pack_start (GTK_BOX (hbox), audd->time_spin, FALSE, TRUE, 0);
@@ -2972,7 +2972,7 @@ create_rp_dialog (void)
   GtkWidget *vbox19;
   GtkWidget *hbox21;
   GtkWidget *label89;
-  GtkObject *spinbutton50_adj;
+  GObject *spinbutton50_adj;
   GtkWidget *hbox20;
   GtkWidget *label88;
   GtkWidget *button13;
@@ -2982,10 +2982,10 @@ create_rp_dialog (void)
   GtkWidget *hbox;
   GtkWidget *label;
   GtkWidget *label90;
-  GtkObject *spinbutton51_adj;
+  GObject *spinbutton51_adj;
   GtkWidget *hbox23;
   GtkWidget *label91;
-  GtkObject *spinbutton52_adj;
+  GObject *spinbutton52_adj;
   GtkWidget *dialog_action_area14;
   GtkWidget *cancelbutton12;
   GtkWidget *okbutton11;
@@ -3033,7 +3033,7 @@ create_rp_dialog (void)
     gtk_widget_modify_fg (label89, GTK_STATE_NORMAL, &palette->normal_fore);
   }
 
-  spinbutton50_adj = gtk_adjustment_new (10, 1, 100, 1, 10, 0);
+  spinbutton50_adj = (GObject *)gtk_adjustment_new (10, 1, 100, 1, 10, 0);
   xranw->numtracks = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton50_adj), 1, 0);
   gtk_widget_show (xranw->numtracks);
   gtk_box_pack_start (GTK_BOX (hbox21), xranw->numtracks, FALSE, FALSE, 0);
@@ -3109,7 +3109,7 @@ create_rp_dialog (void)
     gtk_widget_modify_fg (label90, GTK_STATE_NORMAL, &palette->normal_fore);
   }
 
-  spinbutton51_adj = gtk_adjustment_new (2, 0, 100, 1, 10, 0);
+  spinbutton51_adj = (GObject *)gtk_adjustment_new (2, 0, 100, 1, 10, 0);
   xranw->minsize = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton51_adj), 1, 0);
   gtk_widget_show (xranw->minsize);
   gtk_box_pack_start (GTK_BOX (hbox22),xranw->minsize, FALSE, FALSE, 10);
@@ -3129,7 +3129,7 @@ create_rp_dialog (void)
     gtk_widget_modify_fg (label91, GTK_STATE_NORMAL, &palette->normal_fore);
   }
 
-  spinbutton52_adj = gtk_adjustment_new (10, 0, 100, 1, 10, 0);
+  spinbutton52_adj = (GObject *)gtk_adjustment_new (10, 0, 100, 1, 10, 0);
   xranw->maxsize = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton52_adj), 1, 0);
   gtk_widget_show (xranw->maxsize);
   gtk_box_pack_start (GTK_BOX (hbox23), xranw->maxsize, FALSE, FALSE, 10);

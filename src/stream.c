@@ -1103,7 +1103,7 @@ lives_pandh_w* create_pandh_dialog (gint type) {
   GtkWidget *radiobutton;
   GtkWidget *cancelbutton;
   GtkWidget *okbutton;
-  GtkObject *spinbutton_adj;
+  GObject *spinbutton_adj;
   GtkWidget *hseparator;
   GtkWidget *eventbox;
 
@@ -1279,7 +1279,7 @@ lives_pandh_w* create_pandh_dialog (gint type) {
     gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
   gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 0);
-  spinbutton_adj = gtk_adjustment_new (8888, 1., 65535., 1., 1., 0.);
+  spinbutton_adj = (GObject *)gtk_adjustment_new (48888, 1., 65535., 1., 1., 0.);
   pandhw->port_spin = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 1., 0);
   gtk_entry_set_activates_default (GTK_ENTRY ((GtkEntry *)&(GTK_SPIN_BUTTON (pandhw->port_spin)->entry)), TRUE);
   gtk_label_set_mnemonic_widget (GTK_LABEL (label),pandhw->port_spin);

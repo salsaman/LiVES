@@ -652,7 +652,7 @@ static void omc_macro_row_add_params(lives_omc_match_node_t *mnode, gint row, om
   
   GtkTreeIter iter1,iter2;
 
-  GtkObject *spinadj;
+  GObject *spinadj;
 
   mnode->gtkstore2 = gtk_tree_store_new (NUM2_COLUMNS, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING);
 
@@ -710,7 +710,7 @@ static void omc_macro_row_add_params(lives_omc_match_node_t *mnode, gint row, om
   
   renderer = gtk_cell_renderer_spin_new ();
   
-  spinadj=gtk_adjustment_new (0., -100000., 100000., 1., 10., 0);
+  spinadj=(GObject *)gtk_adjustment_new (0., -100000., 100000., 1., 10., 0);
   
   g_object_set (renderer, "width-chars", 7, "mode", GTK_CELL_RENDERER_MODE_EDITABLE,
 		"editable", TRUE, "xalign", 1.0, "adjustment", spinadj, NULL);
@@ -975,7 +975,7 @@ static void omc_learner_add_row(gint type, gint detail, lives_omc_match_node_t *
 
    GtkTreeIter iter1,iter2;
 
-   GtkObject *spinadj;
+   GObject *spinadj;
 
    gint chan;
 
@@ -1118,7 +1118,7 @@ static void omc_learner_add_row(gint type, gint detail, lives_omc_match_node_t *
    renderer = gtk_cell_renderer_spin_new ();
    g_object_set_data(G_OBJECT(renderer), "colnum", GUINT_TO_POINTER(OFFS1_COLUMN));
 
-   spinadj=gtk_adjustment_new (0., -100000., 100000., 1., 10., 0);
+   spinadj=(GObject *)gtk_adjustment_new (0., -100000., 100000., 1., 10., 0);
 
    g_object_set (renderer, "width-chars", 7, "mode", GTK_CELL_RENDERER_MODE_EDITABLE,
 		 "editable", TRUE, "xalign", 1.0, "adjustment", spinadj, NULL);
@@ -1135,7 +1135,7 @@ static void omc_learner_add_row(gint type, gint detail, lives_omc_match_node_t *
 
    renderer = gtk_cell_renderer_spin_new ();
 
-   spinadj=gtk_adjustment_new (1., -100000., 100000., 1., 10., 0);
+   spinadj=(GObject *)gtk_adjustment_new (1., -100000., 100000., 1., 10., 0);
 
    g_object_set (renderer, "width-chars", 12, "mode", GTK_CELL_RENDERER_MODE_EDITABLE,
 		 "editable", TRUE, "xalign", 1.0, "adjustment", spinadj, 
@@ -1154,7 +1154,7 @@ static void omc_learner_add_row(gint type, gint detail, lives_omc_match_node_t *
    renderer = gtk_cell_renderer_spin_new ();
 
 
-   spinadj=gtk_adjustment_new (0., -100000., 100000., 1., 10., 0);
+   spinadj=(GObject *)gtk_adjustment_new (0., -100000., 100000., 1., 10., 0);
 
    g_object_set (renderer, "width-chars", 7, "mode", GTK_CELL_RENDERER_MODE_EDITABLE,
 		 "editable", TRUE, "xalign", 1.0, "adjustment", spinadj, NULL);

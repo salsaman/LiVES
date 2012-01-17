@@ -3719,8 +3719,8 @@ on_clipbox_enter (GtkWidget *widget, GdkEventCrossing *event, gpointer user_data
 
 void mt_init_start_end_spins(lives_mt *mt) {
   GtkWidget *hbox,*btoolbar;
-  GtkObject *spinbutton_start_adj;
-  GtkObject *spinbutton_end_adj;
+  GObject *spinbutton_start_adj;
+  GObject *spinbutton_end_adj;
   
   hbox = gtk_hbox_new (FALSE, 0);
   gtk_widget_show (hbox);
@@ -3757,7 +3757,7 @@ void mt_init_start_end_spins(lives_mt *mt) {
 		    G_CALLBACK (amixer_show),
 		    (gpointer)mt);
 
-  spinbutton_start_adj = gtk_adjustment_new (0., 0., 0., 1./mt->fps, 1./mt->fps, 0.);
+  spinbutton_start_adj = (GObject *)gtk_adjustment_new (0., 0., 0., 1./mt->fps, 1./mt->fps, 0.);
   mt->spinbutton_start = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_start_adj), 1, 3);
 
   gtk_box_pack_start (GTK_BOX (hbox), mt->spinbutton_start, TRUE, FALSE, MAIN_SPIN_SPACER);
@@ -3783,7 +3783,7 @@ void mt_init_start_end_spins(lives_mt *mt) {
   gtk_box_pack_start (GTK_BOX (hbox), mt->r_sel_arrow, FALSE, FALSE, 3);
   gtk_widget_modify_fg(mt->r_sel_arrow, GTK_STATE_NORMAL, &palette->normal_fore);
 
-  spinbutton_end_adj = gtk_adjustment_new (0., 0., 0., 1./mt->fps, 1./mt->fps, 0.);
+  spinbutton_end_adj = (GObject *)gtk_adjustment_new (0., 0., 0., 1./mt->fps, 1./mt->fps, 0.);
   mt->spinbutton_end = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_end_adj), 1, 3);
   gtk_box_pack_start (GTK_BOX (hbox), mt->spinbutton_end, TRUE, FALSE, MAIN_SPIN_SPACER);
   gtk_entry_set_width_chars (GTK_ENTRY (mt->spinbutton_end),12);
@@ -5018,8 +5018,8 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   GtkWidget *help_translate;
 
 
-  GtkObject *vadjustment;
-  GtkObject *spinbutton_adj;
+  GObject *vadjustment;
+  GObject *spinbutton_adj;
   gint num_filters;
   int i,error;
   gchar *cname,*tname,*msg;
@@ -7306,7 +7306,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
 		    (gpointer)mt);
   
 
-  mt->node_adj = gtk_adjustment_new (0., 0., 0., 1./mt->fps, 10./mt->fps, 0.);
+  mt->node_adj = (GObject *)gtk_adjustment_new (0., 0., 0., 1./mt->fps, 10./mt->fps, 0.);
 
   mt->node_scale=gtk_hscale_new(GTK_ADJUSTMENT(mt->node_adj));
   gtk_scale_set_draw_value(GTK_SCALE(mt->node_scale),FALSE);
@@ -7416,7 +7416,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   }
   gtk_box_pack_start(GTK_BOX(hbox),label,FALSE,TRUE,0);
 
-  spinbutton_adj = gtk_adjustment_new (1.,0.5,2.,.1,1.,0.);
+  spinbutton_adj = (GObject *)gtk_adjustment_new (1.,0.5,2.,.1,1.,0.);
   mt->spinbutton_avel = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 0.1, 2);
   gtk_spin_button_set_numeric (GTK_SPIN_BUTTON (mt->spinbutton_avel),TRUE);
   gtk_box_pack_start(GTK_BOX(hbox),mt->spinbutton_avel,FALSE,TRUE,0);
@@ -7439,7 +7439,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   vbox = gtk_vbox_new (FALSE, 0);
   gtk_box_pack_start(GTK_BOX(mt->in_out_box),vbox,FALSE,TRUE,0);
 
-  mt->spinbutton_in_adj = gtk_adjustment_new (0.,0.,0.,1./mt->fps,1.,0.);
+  mt->spinbutton_in_adj = (GObject *)gtk_adjustment_new (0.,0.,0.,1./mt->fps,1.,0.);
   mt->spinbutton_in = gtk_spin_button_new (GTK_ADJUSTMENT (mt->spinbutton_in_adj), 1./mt->fps, 2);
   gtk_spin_button_set_numeric (GTK_SPIN_BUTTON (mt->spinbutton_in),TRUE);
 
@@ -7513,7 +7513,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
 
   vbox = gtk_vbox_new (FALSE, 0);
   gtk_box_pack_end(GTK_BOX(mt->in_out_box),vbox,FALSE,TRUE,0);
-  mt->spinbutton_out_adj = gtk_adjustment_new (0.,0.,0.,1./mt->fps,1.,0.);
+  mt->spinbutton_out_adj = (GObject *)gtk_adjustment_new (0.,0.,0.,1./mt->fps,1.,0.);
   mt->spinbutton_out = gtk_spin_button_new (GTK_ADJUSTMENT (mt->spinbutton_out_adj), 1./mt->fps, 2);
   gtk_spin_button_set_numeric (GTK_SPIN_BUTTON (mt->spinbutton_out),TRUE);
   mt->out_image=gtk_image_new();
@@ -7678,7 +7678,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   hbox = gtk_hbox_new (FALSE, 0);
   gtk_container_add (GTK_CONTAINER (eventbox), hbox);
 
-  vadjustment = gtk_adjustment_new (1.0,1.0,1.0,1.0,1.0,1.0);
+  vadjustment = (GObject *)gtk_adjustment_new (1.0,1.0,1.0,1.0,1.0,1.0);
   scrollbar=gtk_vscrollbar_new(GTK_ADJUSTMENT(vadjustment));
   gtk_widget_set_sensitive(scrollbar,FALSE);
 
@@ -7690,7 +7690,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
     
   gtk_box_pack_start (GTK_BOX (tl_vbox), mt->tl_hbox, TRUE, TRUE, 0);
 
-  mt->vadjustment = gtk_adjustment_new (0.0,0.0,1.0,1.0,mt->max_disp_vtracks,1.0);
+  mt->vadjustment = (GObject *)gtk_adjustment_new (0.0,0.0,1.0,1.0,mt->max_disp_vtracks,1.0);
   mt->scrollbar=gtk_vscrollbar_new(GTK_ADJUSTMENT(mt->vadjustment));
 
   g_signal_connect (GTK_OBJECT (mt->scrollbar), "value_changed",
@@ -7739,7 +7739,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
 
   gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 10);
 
-  mt->hadjustment = gtk_adjustment_new (0.0,0.0,1.,0.25,1.,1.);
+  mt->hadjustment = (GObject *)gtk_adjustment_new (0.0,0.0,1.,0.25,1.,1.);
   mt->time_scrollbar=gtk_hscrollbar_new(GTK_ADJUSTMENT(mt->hadjustment));
   gtk_box_pack_start (GTK_BOX (hbox), mt->time_scrollbar, TRUE, TRUE, 10);
 
@@ -8880,7 +8880,7 @@ void delete_video_track(lives_mt *mt, gint layer, gboolean full) {
 
 GtkWidget *add_audio_track (lives_mt *mt, gint track, gboolean behind) {
   // add float or pertrack audio track to our timeline_table
-  GtkObject *adj;
+  GObject *adj;
   GtkWidget *label;
   GtkWidget *arrow;
   GtkWidget *eventbox;
@@ -9050,7 +9050,7 @@ GtkWidget *add_audio_track (lives_mt *mt, gint track, gboolean behind) {
 	  gtk_label_set_text(GTK_LABEL(label),tname);
 	  g_free(tname);
 	  
-	  adj=(GtkObject *)g_object_get_data(G_OBJECT(mt->amixer->ch_sliders[i]),"adj");
+	  adj=(GObject *)g_object_get_data(G_OBJECT(mt->amixer->ch_sliders[i]),"adj");
 	  g_object_set_data(G_OBJECT(adj),"layer",GINT_TO_POINTER(i));
 	}
 
@@ -20301,7 +20301,7 @@ GtkWidget * amixer_add_channel_slider (lives_mt *mt, gint i) {
   // add a slider to audio mixer for layer i; i<0 are backing audio tracks 
   // automatically sets the track name and layer number
 
-  GtkObject *adj;
+  GObject *adj;
   GtkWidget *spinbutton;
   GtkWidget *label;
   GtkWidget *vbox;
@@ -20310,7 +20310,7 @@ GtkWidget * amixer_add_channel_slider (lives_mt *mt, gint i) {
 
   i+=mt->opts.back_audio_tracks;
 
-  adj = gtk_adjustment_new (0.5, 0., 4., 0.01, 0.1, 0.);
+  adj = (GObject *)gtk_adjustment_new (0.5, 0., 4., 0.01, 0.1, 0.);
     
   spinbutton = gtk_spin_button_new (GTK_ADJUSTMENT (adj), 0.1, 3);
 

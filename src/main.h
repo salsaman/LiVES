@@ -59,15 +59,8 @@ POSSIBILITY OF SUCH DAMAGES.
 #include <gtk/gtk.h>
 #include <gdk/gdkkeysyms.h>
 
-#ifdef IS_LINUX_GNU
+#ifdef GDK_WINDOWING_X11
 #define USE_X11
-#endif
-
-#ifdef IS_DARWIN
-#define USE_X11
-#endif
-
-#ifdef USE_X11
 
 // needed for GDK_WINDOW_XID - for fileselector preview
 

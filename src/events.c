@@ -4671,7 +4671,7 @@ render_details *create_render_details (gint type) {
   GtkWidget *vbox;
   GtkWidget *eventbox;
   GtkWidget *frame;
-  GtkObject *spinbutton_adj;
+  GObject *spinbutton_adj;
   GtkWidget *cancelbutton;
   GtkWidget *alabel;
   GtkWidget *hsep;
@@ -4766,7 +4766,7 @@ render_details *create_render_details (gint type) {
     gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
   
-  spinbutton_adj = gtk_adjustment_new (rdet->width, 2., 100000., 1, 16, 0);
+  spinbutton_adj = (GObject *)gtk_adjustment_new (rdet->width, 2., 100000., 1, 16, 0);
   
   rdet->spinbutton_width = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 1, 0);
   gtk_spin_button_set_numeric (GTK_SPIN_BUTTON (rdet->spinbutton_width),TRUE);
@@ -4785,7 +4785,7 @@ render_details *create_render_details (gint type) {
     gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
   
-  spinbutton_adj = gtk_adjustment_new (rdet->height, 2., 10000., 1, 16, 0);
+  spinbutton_adj = (GObject *)gtk_adjustment_new (rdet->height, 2., 10000., 1, 16, 0);
   
   rdet->spinbutton_height = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 1, 0);
   gtk_spin_button_set_numeric (GTK_SPIN_BUTTON (rdet->spinbutton_height),TRUE);
@@ -4821,7 +4821,7 @@ render_details *create_render_details (gint type) {
     gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
   
-  spinbutton_adj = gtk_adjustment_new (rdet->fps, 1., FPS_MAX, 1, 10, 0);
+  spinbutton_adj = (GObject *)gtk_adjustment_new (rdet->fps, 1., FPS_MAX, 1, 10, 0);
   
   rdet->spinbutton_fps = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 1, 3);
   gtk_spin_button_set_numeric (GTK_SPIN_BUTTON (rdet->spinbutton_fps),TRUE);

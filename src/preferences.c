@@ -1890,9 +1890,9 @@ _prefsw *create_prefs_dialog (void) {
   GtkWidget *ins_resample;
   GtkWidget *hbox100;
   GtkWidget *hbox;
-  GtkObject *spinbutton_adj;
-  GtkObject *spinbutton_warn_fsize_adj;
-  GtkObject *spinbutton_bwidth_adj;
+  GObject *spinbutton_adj;
+  GObject *spinbutton_warn_fsize_adj;
+  GObject *spinbutton_bwidth_adj;
   GtkWidget *label157;
   GtkWidget *hseparator;
   GtkWidget *hbox1;
@@ -1935,7 +1935,7 @@ _prefsw *create_prefs_dialog (void) {
   GtkWidget *label43;
   GtkWidget *hbox13;
   GtkWidget *label44;
-  GtkObject *spinbutton_def_fps_adj;
+  GObject *spinbutton_def_fps_adj;
   GtkWidget *dialog_action_area8;
   GtkWidget *dirbutton1;
   GtkWidget *dirbutton2;
@@ -1958,7 +1958,7 @@ _prefsw *create_prefs_dialog (void) {
   GtkWidget *label159;
   GtkWidget *hbox116;
   GtkWidget *mt_enter_defs;
-  GtkObject *spinbutton_ocp_adj;
+  GObject *spinbutton_ocp_adj;
   GtkWidget *advbutton;
 
 #ifdef ENABLE_OSC
@@ -2292,7 +2292,7 @@ _prefsw *create_prefs_dialog (void) {
   gtk_widget_show (hbox6);
   gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_gui), hbox6, TRUE, TRUE, 20);
   // ---
-  spinbutton_adj = gtk_adjustment_new (prefs->gui_monitor, 1, capable->nmonitors, 1, 1, 0);
+  spinbutton_adj = (GObject *)gtk_adjustment_new (prefs->gui_monitor, 1, capable->nmonitors, 1, 1, 0);
   prefsw->spinbutton_gmoni = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 1, 0);
   label = gtk_label_new (_ (" monitor number for LiVES interface"));
   gtk_label_set_mnemonic_widget(GTK_LABEL(label), prefsw->spinbutton_gmoni);
@@ -2307,7 +2307,7 @@ _prefsw *create_prefs_dialog (void) {
   gtk_container_set_border_width(GTK_CONTAINER (hbox), 20);
   gtk_box_pack_start (GTK_BOX (hbox6), hbox, FALSE, TRUE, 0);
   // ---
-  spinbutton_adj = gtk_adjustment_new (prefs->play_monitor, 0, capable->nmonitors==1?0:capable->nmonitors, 1, 1, 0);
+  spinbutton_adj = (GObject *)gtk_adjustment_new (prefs->play_monitor, 0, capable->nmonitors==1?0:capable->nmonitors, 1, 1, 0);
   prefsw->spinbutton_pmoni = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 1, 0);
   label = gtk_label_new (_ (" monitor number for playback"));
   gtk_label_set_mnemonic_widget(GTK_LABEL(label), prefsw->spinbutton_pmoni);
@@ -2503,7 +2503,7 @@ _prefsw *create_prefs_dialog (void) {
   }
   gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_LEFT);
   // ---
-  spinbutton_adj = gtk_adjustment_new (prefs->mt_def_width, 0, 8192, 1, 10, 0);
+  spinbutton_adj = (GObject *)gtk_adjustment_new (prefs->mt_def_width, 0, 8192, 1, 10, 0);
   prefsw->spinbutton_mt_def_width = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 1, 0);
   gtk_label_set_mnemonic_widget (GTK_LABEL (label), prefsw->spinbutton_mt_def_width);
   hbox = gtk_hbox_new (FALSE, 0);
@@ -2520,7 +2520,7 @@ _prefsw *create_prefs_dialog (void) {
   gtk_widget_show (label);
   gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_LEFT);
   // ---
-  spinbutton_adj = gtk_adjustment_new (prefs->mt_def_height, 0, 8192, 1, 10, 0);
+  spinbutton_adj = (GObject *)gtk_adjustment_new (prefs->mt_def_height, 0, 8192, 1, 10, 0);
   prefsw->spinbutton_mt_def_height = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 1, 0);
   gtk_label_set_mnemonic_widget (GTK_LABEL (label), prefsw->spinbutton_mt_def_height);
   hbox = gtk_hbox_new (FALSE, 0);
@@ -2537,7 +2537,7 @@ _prefsw *create_prefs_dialog (void) {
   gtk_widget_show (label);
   gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_LEFT);
   // ---
-  spinbutton_adj = gtk_adjustment_new (prefs->mt_def_fps, 1, FPS_MAX, .1, 1, 0);
+  spinbutton_adj = (GObject *)gtk_adjustment_new (prefs->mt_def_fps, 1, FPS_MAX, .1, 1, 0);
   prefsw->spinbutton_mt_def_fps = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 1, 3);
   gtk_label_set_mnemonic_widget (GTK_LABEL (label),prefsw->spinbutton_mt_def_fps);
   hbox = gtk_hbox_new (FALSE, 0);
@@ -2618,7 +2618,7 @@ _prefsw *create_prefs_dialog (void) {
   gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_LEFT);
   gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, TRUE, 0);
   // ---
-  spinbutton_adj = gtk_adjustment_new (prefs->mt_undo_buf, 0, G_MAXSIZE/(1024*1024), 1, 1, 0);
+  spinbutton_adj = (GObject *)gtk_adjustment_new (prefs->mt_undo_buf, 0, G_MAXSIZE/(1024*1024), 1, 1, 0);
   prefsw->spinbutton_mt_undo_buf = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 1, 0);
   gtk_widget_show (prefsw->spinbutton_mt_undo_buf);
   gtk_box_pack_start (GTK_BOX (hbox), prefsw->spinbutton_mt_undo_buf, FALSE, TRUE, 0);
@@ -2681,7 +2681,7 @@ _prefsw *create_prefs_dialog (void) {
   }
   gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_LEFT);
   // ---
-  spinbutton_adj = gtk_adjustment_new (30, 10, 1800, 1, 10, 0);
+  spinbutton_adj = (GObject *)gtk_adjustment_new (30, 10, 1800, 1, 10, 0);
   prefsw->spinbutton_mt_ab_time = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 1, 0);
   gtk_label_set_mnemonic_widget (GTK_LABEL (label), prefsw->spinbutton_mt_ab_time);
   hbox = gtk_hbox_new (FALSE, 0);
@@ -2849,7 +2849,7 @@ _prefsw *create_prefs_dialog (void) {
   gtk_label_set_justify (GTK_LABEL (label158), GTK_JUSTIFY_LEFT);
   gtk_box_pack_start (GTK_BOX (hbox116), label158, FALSE, TRUE, 0);
   // ---
-  spinbutton_ocp_adj = gtk_adjustment_new (prefs->ocp, 0, 100, 1, 5, 0);
+  spinbutton_ocp_adj = (GObject *)gtk_adjustment_new (prefs->ocp, 0, 100, 1, 5, 0);
   prefsw->spinbutton_ocp = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_ocp_adj), 1, 0);
   gtk_box_pack_start (GTK_BOX (hbox116), prefsw->spinbutton_ocp, FALSE, TRUE, 0);
 
@@ -3591,7 +3591,7 @@ _prefsw *create_prefs_dialog (void) {
   gtk_widget_show (label);
   gtk_box_pack_start (GTK_BOX (hbox5), label, FALSE, FALSE, 10);
 
-  spinbutton_adj = gtk_adjustment_new (prefs->rec_stop_gb, 0, 1024., 1., 10., 0.);
+  spinbutton_adj = (GObject *)gtk_adjustment_new (prefs->rec_stop_gb, 0, 1024., 1., 10., 0.);
   
   prefsw->spinbutton_rec_gb = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 1, 0);
   gtk_widget_show (prefsw->spinbutton_rec_gb);
@@ -3791,7 +3791,7 @@ _prefsw *create_prefs_dialog (void) {
   gtk_widget_show (label);
   gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 10);
 
-  spinbutton_adj = gtk_adjustment_new (prefs->rte_keys_virtual, FX_KEYS_PHYSICAL, FX_KEYS_MAX_VIRTUAL, 1, 1, 0);
+  spinbutton_adj = (GObject *)gtk_adjustment_new (prefs->rte_keys_virtual, FX_KEYS_PHYSICAL, FX_KEYS_MAX_VIRTUAL, 1, 1, 0);
   
   prefsw->spinbutton_rte_keys = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 1, 0);
   gtk_widget_show (prefsw->spinbutton_rte_keys);
@@ -3832,7 +3832,7 @@ _prefsw *create_prefs_dialog (void) {
   gtk_widget_show (label);
   gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 10);
 
-  spinbutton_adj = gtk_adjustment_new (future_prefs->nfx_threads, 2., 65536, 1, 1, 0);
+  spinbutton_adj = (GObject *)gtk_adjustment_new (future_prefs->nfx_threads, 2., 65536, 1, 1, 0);
   
   prefsw->spinbutton_nfx_threads = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 1, 0);
   gtk_widget_show (prefsw->spinbutton_nfx_threads);
@@ -4157,7 +4157,7 @@ _prefsw *create_prefs_dialog (void) {
     gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
 
-  spinbutton_adj = gtk_adjustment_new ((gdouble)prefs->ds_warn_level/1000000., 
+  spinbutton_adj = (GObject *)gtk_adjustment_new ((gdouble)prefs->ds_warn_level/1000000., 
 				       (gdouble)prefs->ds_crit_level/1000000.,
 				       DS_WARN_CRIT_MAX, 1., 10., 0.);
    
@@ -4190,7 +4190,7 @@ _prefsw *create_prefs_dialog (void) {
     gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
 
-  spinbutton_adj = gtk_adjustment_new ((gdouble)prefs->ds_crit_level/1000000., 0.,
+  spinbutton_adj = (GObject *)gtk_adjustment_new ((gdouble)prefs->ds_crit_level/1000000., 0.,
 				       DS_WARN_CRIT_MAX, 1., 10., 0.);
    
   prefsw->spinbutton_crit_ds = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 1, 0);
@@ -4261,7 +4261,7 @@ _prefsw *create_prefs_dialog (void) {
   gtk_box_pack_start (GTK_BOX (hbox100), hbox, FALSE, TRUE, 0);
    
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_warn_fsize), !(prefs->warning_mask&WARN_MASK_FSIZE));
-  spinbutton_warn_fsize_adj = gtk_adjustment_new (prefs->warn_file_size, 1, 2048, 1, 10, 0);
+  spinbutton_warn_fsize_adj = (GObject *)gtk_adjustment_new (prefs->warn_file_size, 1, 2048, 1, 10, 0);
    
   prefsw->spinbutton_warn_fsize = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_warn_fsize_adj), 1, 0);
   gtk_widget_show (prefsw->spinbutton_warn_fsize);
@@ -4876,7 +4876,7 @@ _prefsw *create_prefs_dialog (void) {
   gtk_box_pack_start (GTK_BOX (hbox13), label44, FALSE, FALSE, 18);
   gtk_label_set_justify (GTK_LABEL (label44), GTK_JUSTIFY_LEFT);
    
-  spinbutton_def_fps_adj = gtk_adjustment_new (prefs->default_fps, 1, 2048, 1, 10, 0);
+  spinbutton_def_fps_adj = (GObject *)gtk_adjustment_new (prefs->default_fps, 1, 2048, 1, 10, 0);
    
   prefsw->spinbutton_def_fps = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_def_fps_adj), 1, 2);
   gtk_widget_show (prefsw->spinbutton_def_fps);
@@ -4985,7 +4985,7 @@ _prefsw *create_prefs_dialog (void) {
   gtk_box_pack_start (GTK_BOX (hbox94), label88, FALSE, FALSE, 0);
   gtk_label_set_justify (GTK_LABEL (label88), GTK_JUSTIFY_LEFT);
    
-  spinbutton_bwidth_adj = gtk_adjustment_new (prefs->dl_bandwidth, 0, 100000, 1, 10, 0);
+  spinbutton_bwidth_adj = (GObject *)gtk_adjustment_new (prefs->dl_bandwidth, 0, 100000, 1, 10, 0);
    
   prefsw->spinbutton_bwidth = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_bwidth_adj), 1, 0);
   gtk_widget_show (prefsw->spinbutton_bwidth);
@@ -5041,7 +5041,7 @@ _prefsw *create_prefs_dialog (void) {
   gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 20);
   gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_LEFT);
    
-  spinbutton_adj = gtk_adjustment_new (prefs->osc_udp_port, 1, 65535, 1, 10, 0);
+  spinbutton_adj = (GObject *)gtk_adjustment_new (prefs->osc_udp_port, 1, 65535, 1, 10, 0);
    
   prefsw->spinbutton_osc_udp = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 1, 0);
   gtk_widget_show (prefsw->spinbutton_osc_udp);
@@ -5622,7 +5622,7 @@ _prefsw *create_prefs_dialog (void) {
   gtk_widget_show (label);
   gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 10);
    
-  spinbutton_adj = gtk_adjustment_new (prefs->midi_check_rate, 1, 2000, 10, 100, 0);
+  spinbutton_adj = (GObject *)gtk_adjustment_new (prefs->midi_check_rate, 1, 2000, 10, 100, 0);
    
   prefsw->spinbutton_midicr = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 10, 0);
   gtk_widget_show (prefsw->spinbutton_midicr);
@@ -5636,7 +5636,7 @@ _prefsw *create_prefs_dialog (void) {
   }
   gtk_widget_show (label);
    
-  spinbutton_adj = gtk_adjustment_new (prefs->midi_rpt, 1, 10000, 100, 1000, 0);
+  spinbutton_adj = (GObject *)gtk_adjustment_new (prefs->midi_rpt, 1, 10000, 100, 1000, 0);
    
   prefsw->spinbutton_midirpt = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 100, 0);
   gtk_widget_show (prefsw->spinbutton_midirpt);

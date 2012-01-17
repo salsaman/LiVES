@@ -4,7 +4,7 @@
 
 LIBS=
 
-decoderpluginslibdir = $(libdir)/$(PACKAGE)/plugins/decoders
+decoderpluginslibdir = "$(libdir)/$(PACKAGE)/plugins/decoders"
 
 if IS_DARWIN
 shared_ldflags =  -dynamiclib -module -avoid-version --tag=disable-static

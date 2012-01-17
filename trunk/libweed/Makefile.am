@@ -13,8 +13,8 @@ DOXYGEN = @DOXYGEN@
 
 install-data-local:
 	make docs-doxygen
-	mkdir -p $(DESTDIR)$(libdir)/pkgconfig/
-	cp -f libweed*.pc $(DESTDIR)$(libdir)/pkgconfig/
+	mkdir -p "$(DESTDIR)$(libdir)/pkgconfig/"
+	cp -f libweed*.pc "$(DESTDIR)$(libdir)/pkgconfig/"
 
 if HAVE_DOXYGEN
 docs-doxygen:
@@ -74,9 +74,9 @@ libweed_plugin_utils_la_LDFLAGS = $(extra_ldflags) -version-info $(WEED_SO_VERSI
 
 
 uninstall-local:
-	rm -rf $(libweedincludedir)
-	rm -rf $(libweed_ladir)
-	rm -rf $(libdir)/pkgconfig/libweed*
+	rm -rf "$(libweedincludedir)"
+	rm -rf "$(libweed_ladir)"
+	rm -rf "$(libdir)/pkgconfig/libweed"*
 
 
 install-exec-hook:

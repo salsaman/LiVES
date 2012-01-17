@@ -3,7 +3,7 @@
 gtk_def =
 
 if ENABLE_OSC
-osc_INCLUDES=-I $(top_srcdir)/libOSC
+osc_INCLUDES=-I "$(top_srcdir)/libOSC"
 endif
 
 if IS_DARWIN

@@ -1,7 +1,7 @@
 ## Process this with automake to create Makefile.in
 THEME_NAME=camera
 
-themesdir = $(datadir)/$(PACKAGE)/themes/$(THEME_NAME)
+themesdir = "$(datadir)/$(PACKAGE)/themes/$(THEME_NAME)"
 themes_DATA = \
 frame.jpg \
 main.jpg

@@ -74,7 +74,7 @@ libweed_plugin_utils_la_CFLAGS = $(extra_cflags)
 
 #################################################################################################
 # -DO NOT- REMOVE THE -static, -DO NOT- add --tag=disable-static. You have been warned !        #
-libweed_plugin_utils_la_LDFLAGS = $(extra_ldflags) -version-info $(WEED_SO_VERSION) -static     #
+libweed_plugin_utils_la_LDFLAGS = $(extra_ldflags) -version-info $(WEED_PSO_VERSION) -static     #
 #################################################################################################
 
 

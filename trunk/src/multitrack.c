@@ -201,7 +201,7 @@ static LiVESPixbuf *make_thumb (lives_mt *mt, int file, int width, int height, i
     if (mainw->files[file]->frames>0) {
       weed_timecode_t tc=(frame-1.)/mainw->files[file]->fps*U_SECL;
       thumbnail=pull_lives_pixbuf_at_size(file,frame,mainw->files[file]->img_type==IMG_TYPE_JPEG?"jpg":"png",tc,
-					  width,height,GDK_INTERP_HYPER);
+					  width,height,LIVES_INTERP_BEST);
     }
     else {
       buf=g_build_filename(prefs->prefix_dir,ICON_DIR,"audio.png",NULL);
@@ -220,7 +220,7 @@ static LiVESPixbuf *make_thumb (lives_mt *mt, int file, int width, int height, i
       
       if (lives_pixbuf_get_width(pixbuf)!=width||lives_pixbuf_get_height(pixbuf)!=height) {
 	// ...at_scale is inaccurate
-	thumbnail=gdk_pixbuf_scale_simple(pixbuf,width,height,GDK_INTERP_HYPER);
+	thumbnail=lives_pixbuf_scale_simple(pixbuf,width,height,LIVES_INTERP_BEST);
 	gdk_pixbuf_unref(pixbuf);
       }
       else thumbnail=pixbuf;
@@ -2453,19 +2453,17 @@ void mt_show_current_frame(lives_mt *mt, gboolean return_layer) {
 	gtk_container_remove (GTK_CONTAINER(mt->play_box),mt->play_blank);
       }
 
-      if (mainw->plug1!=NULL) {
-	gtk_container_remove (GTK_CONTAINER(mainw->plug1),mainw->image274);
-	gtk_widget_destroy (mainw->plug1);
-	mainw->plug1=NULL;
+      if (mainw->plug!=NULL) {
+	gtk_container_remove (GTK_CONTAINER(mainw->plug),mainw->image274);
+	gtk_widget_destroy (mainw->plug);
+	mainw->plug=NULL;
       }
 
       if (GTK_IS_WIDGET(mainw->playarea)) gtk_widget_destroy (mainw->playarea);
-      mainw->playarea = gtk_socket_new ();
+      mainw->playarea = gtk_hbox_new (FALSE,0);
       gtk_widget_show(mainw->playarea);
       gtk_container_add (GTK_CONTAINER (mt->play_box), mainw->playarea);
       //gtk_widget_set_app_paintable(mainw->playarea,TRUE);
-
-      mainw->xwin=0;
 
       if (mt->is_ready)
 	while (g_main_context_iteration(NULL,FALSE));
@@ -2559,9 +2557,9 @@ void mt_show_current_frame(lives_mt *mt, gboolean return_layer) {
     if (mainw->play_window==NULL||(mt->poly_state==POLY_PARAMS&&mt->framedraw!=NULL)) {
       if ((mt->outwidth!=(weed_get_int_value(mainw->frame_layer,"width",&weed_error))||
 	   mt->outheight!=weed_get_int_value(mainw->frame_layer,"height",&weed_error))) 
-	resize_layer(mainw->frame_layer,mt->outwidth,mt->outheight,GDK_INTERP_HYPER);
+	resize_layer(mainw->frame_layer,mt->outwidth,mt->outheight,LIVES_INTERP_BEST);
     }
-    else resize_layer(mainw->frame_layer,cfile->hsize,cfile->vsize,GDK_INTERP_HYPER);
+    else resize_layer(mainw->frame_layer,cfile->hsize,cfile->vsize,LIVES_INTERP_BEST);
 
     pixbuf=layer_to_pixbuf(mainw->frame_layer);
     weed_plant_free(mainw->frame_layer);
@@ -2611,7 +2609,7 @@ void mt_show_current_frame(lives_mt *mt, gboolean return_layer) {
     }
     if (mt->framedraw==NULL) mt->sepwin_pixbuf=pixbuf;
     else if (mainw->imframe!=NULL) 
-      mt->sepwin_pixbuf=gdk_pixbuf_scale_simple(mainw->imframe,cfile->hsize,cfile->vsize,GDK_INTERP_HYPER);
+      mt->sepwin_pixbuf=lives_pixbuf_scale_simple(mainw->imframe,cfile->hsize,cfile->vsize,LIVES_INTERP_BEST);
   }
   else {
     // no frame - show blank
@@ -8229,18 +8227,18 @@ gboolean multitrack_delete (lives_mt *mt, gboolean save_layout) {
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (mainw->gens_submenu), mainw->gens_menu);
 
   if (mt->mt_frame_preview) {
-    if (mainw->plug1!=NULL) {
-      gtk_container_remove (GTK_CONTAINER(mainw->plug1),mainw->image274);
-      gtk_widget_destroy (mainw->plug1);
-      mainw->plug1=NULL;
+    if (mainw->plug!=NULL) {
+      gtk_container_remove (GTK_CONTAINER(mainw->plug),mainw->image274);
+      gtk_widget_destroy (mainw->plug);
+      mainw->plug=NULL;
     }
 
-    mainw->playarea = gtk_socket_new ();
+    mainw->playarea = gtk_hbox_new (FALSE,0);
+
     gtk_container_add (GTK_CONTAINER (mainw->playframe), mainw->playarea);
     gtk_widget_modify_bg (mainw->playframe, GTK_STATE_NORMAL, &palette->normal_back);
     gtk_widget_show(mainw->playarea);
     gtk_widget_set_app_paintable(mainw->playarea,TRUE);
-    mainw->xwin=0;
   }
 
   if (mt->sepwin_pixbuf!=NULL&&mt->sepwin_pixbuf!=mainw->imframe) gdk_pixbuf_unref(mt->sepwin_pixbuf);

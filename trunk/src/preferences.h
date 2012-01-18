@@ -409,6 +409,7 @@ typedef struct {
   GtkWidget *rclips;
   GtkWidget *reffects;
   GtkWidget *raudio;
+  GtkWidget *rextaudio;
   GtkWidget *rdesk_audio;
   GtkWidget *encoder_combo;
   GtkWidget *checkbutton_antialias;
@@ -539,6 +540,7 @@ typedef struct {
   guint jack_opts;
 
   gint nfx_threads;
+
 
   GList *disabled_decoders;
   GList *disabled_decoders_new;

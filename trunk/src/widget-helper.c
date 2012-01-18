@@ -121,7 +121,7 @@ LIVES_INLINE LiVESPixbuf *lives_pixbuf_new_from_file_at_scale(const char *filena
     return NULL;
   }
   if (preserve_aspect_ratio) asp=Qt::KeepAspectRatio;
-  else Qt::IgnoreAspectRatio;
+  else asp=Qt::IgnoreAspectRatio;
   image2 = new image.scaled(width, height, asp,  Qt::SmoothTransformation);
   if (!image2) {
     LIVES_WARN("QImage not scaled");
@@ -216,7 +216,26 @@ LIVES_INLINE boolean lives_pixbuf_get_has_alpha(const LiVESPixbuf *pixbuf) {
 }
 
 
+LIVES_INLINE LiVESPixbuf *lives_pixbuf_scale_simple(const LiVESPixbuf *src, int dest_width, int dest_height, 
+						    LiVESInterpType interp_type) {
+  
+#ifdef GUI_GTK
+  return gdk_pixbuf_scale_simple(src, dest_width, dest_height, interp_type);
+#endif
 
+
+#ifdef GUI_QT
+  QImage *image = new src.scaled(dest_width, dest_height, Qt::IgnoreAspectRatio,  interp_type);
+  if (!image) {
+    LIVES_WARN("QImage not scaled");
+    return NULL;
+  }
+
+  return image;
+
+#endif
+
+}
 
 
 

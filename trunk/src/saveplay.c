@@ -1918,7 +1918,6 @@ void play_file (void) {
   gchar *msg;
   gchar *stfile;
 
-  unsigned int wid;
   gint asigned=!(cfile->signed_endian&AFORM_UNSIGNED);
   gint aendian=!(cfile->signed_endian&AFORM_BIG_ENDIAN);
 
@@ -2078,13 +2077,6 @@ void play_file (void) {
     if (mainw->mute&&!cfile->opening_only_audio) arate=arate?-arate:-1;
   }
 
-  if (mainw->sep_win) {
-    wid=0;
-  }
-  else {
-    wid=(unsigned int)mainw->xwin;
-  }
-  
   cfile->frameno=mainw->play_start;
   cfile->pb_fps=cfile->fps;
   if (mainw->reverse_pb) {
@@ -2304,14 +2296,14 @@ void play_file (void) {
       // PLAY
 
       if (cfile->clip_type==CLIP_TYPE_DISK&&cfile->opening) {
-	  com=g_strdup_printf("smogrify play_opening_preview \"%s\" %.3f %d %d %d %d %d %u %d %d %d %d %d %d",
-			      cfile->handle,cfile->fps,mainw->audio_start,audio_end,mainw->fs,0,wid,
-			      mainw->pwidth,mainw->pheight,arate,cfile->achans,cfile->asampsize,asigned,aendian);
+	  com=g_strdup_printf("smogrify play_opening_preview \"%s\" %.3f %d %d %d %d %d %d %d %d",
+			      cfile->handle,cfile->fps,mainw->audio_start,audio_end,0,
+			      arate,cfile->achans,cfile->asampsize,asigned,aendian);
       }
       else {
 	// this is only used now for sox or mplayer audio player
-	com=g_strdup_printf("smogrify play \"%s\" %.3f %d %d %d %d %u %d %d %d %d %d %d %d",cfile->handle,
-			    cfile->fps,mainw->audio_start,audio_end,mainw->fs,loop,wid,mainw->pwidth,mainw->pheight,
+	com=g_strdup_printf("smogrify play \"%s\" %.3f %d %d %d %d %d %d %d %d",cfile->handle,
+			    cfile->fps,mainw->audio_start,audio_end,loop,
 			    arate,cfile->achans,cfile->asampsize,asigned,aendian);
       }
       if (mainw->multitrack==NULL&&com!=NULL) lives_system(com,FALSE);
@@ -2639,19 +2631,6 @@ void play_file (void) {
     cfile->hsize=mainw->pwidth;
     cfile->vsize=mainw->pheight;
 
-    //g_object_ref(GTK_SOCKET(mainw->playarea)->plug_window);
-    //gdk_window_reparent(GTK_SOCKET(mainw->playarea)->plug_window,NULL,0,0);
-
-    // return external window to the window manager
-
-#ifdef USE_X11 
-    /*  XMapWindow (GDK_WINDOW_XDISPLAY (GTK_SOCKET(mainw->playarea)->plug_window),
-	GDK_WINDOW_XID (GTK_SOCKET(mainw->playarea)->plug_window));*/
-
-#else
-    // need equivalent of XMapWindow on other platforms...
-#endif
-
     gdk_window_set_keep_above(mainw->foreign_window,FALSE);
 
     while (g_main_context_iteration(NULL,FALSE));
@@ -2801,6 +2780,10 @@ void play_file (void) {
     }
   }
   
+  if (!mainw->foreign) {
+    unhide_cursor(mainw->playarea->window);
+  }
+
   if (mainw->current_file>-1) cfile->play_paused=FALSE;
 
   if (mainw->blend_file!=-1&&mainw->blend_file!=mainw->current_file&&mainw->files[mainw->blend_file]!=NULL&&mainw->files[mainw->blend_file]->clip_type==CLIP_TYPE_GENERATOR) {
@@ -3387,12 +3370,12 @@ gboolean save_frame_inner(gint clip, gint frame, const gchar *file_name, gint wi
   else {
     // multitrack mode
     GError *gerr=NULL;
-    GdkPixbuf *pixbuf;
+    LiVESPixbuf *pixbuf;
     int retval;
 
     mt_show_current_frame(mainw->multitrack,TRUE);
     convert_layer_palette(mainw->frame_layer,WEED_PALETTE_RGB24,0);
-    resize_layer(mainw->frame_layer,sfile->hsize,sfile->vsize,GDK_INTERP_HYPER);
+    resize_layer(mainw->frame_layer,sfile->hsize,sfile->vsize,LIVES_INTERP_BEST);
     pixbuf=layer_to_pixbuf(mainw->frame_layer);
     weed_plant_free(mainw->frame_layer);
     mainw->frame_layer=NULL;

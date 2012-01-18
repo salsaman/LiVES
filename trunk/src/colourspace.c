@@ -8074,6 +8074,9 @@ static LIVES_INLINE LiVESPixbuf *lives_pixbuf_cheat(gboolean has_alpha,
 
 
 LiVESPixbuf *layer_to_pixbuf (weed_plant_t *layer) {
+  // create a weed layer from a pixbuf
+  // layer "pixel_data" is then shared with with the pixbuf pixels 
+
   int error;
   LiVESPixbuf *pixbuf;
   int palette;
@@ -8172,7 +8175,7 @@ LIVES_INLINE gboolean weed_palette_is_resizable(int pal) {
 }
 
 
-void lives_pixbuf_set_opaque(GdkPixbuf *pixbuf) {
+void lives_pixbuf_set_opaque(LiVESPixbuf *pixbuf) {
   unsigned char *pdata=lives_pixbuf_get_pixels(pixbuf);
   int row=lives_pixbuf_get_rowstride(pixbuf);
   int height=lives_pixbuf_get_height(pixbuf);
@@ -8360,7 +8363,7 @@ void sws_free_context(void) {
 
 #endif
 
-void resize_layer (weed_plant_t *layer, int width, int height, GdkInterpType interp) {
+void resize_layer (weed_plant_t *layer, int width, int height, LiVESInterpType interp) {
   // resize a layer; width is in macropixels
 
   // TODO ** - see if there is a resize plugin candidate/delegate which supports this palette : 
@@ -8380,8 +8383,8 @@ void resize_layer (weed_plant_t *layer, int width, int height, GdkInterpType int
 
 
   int error;
-  GdkPixbuf *pixbuf=NULL;
-  GdkPixbuf *new_pixbuf=NULL;
+  LiVESPixbuf *pixbuf=NULL;
+  LiVESPixbuf *new_pixbuf=NULL;
   int palette=weed_get_int_value(layer,"current_palette",&error);
 
   // original width and height (in macropixels)
@@ -8433,9 +8436,9 @@ void resize_layer (weed_plant_t *layer, int width, int height, GdkInterpType int
 
       gboolean store_ctx=FALSE;
 
-      if (interp==GDK_INTERP_HYPER) flags=SWS_BICUBIC;
-      if (interp==GDK_INTERP_BILINEAR) flags=SWS_BILINEAR;
-      if (interp==GDK_INTERP_NEAREST) flags=SWS_FAST_BILINEAR;
+      if (interp==LIVES_INTERP_BEST) flags=SWS_BICUBIC;
+      if (interp==LIVES_INTERP_NORMAL) flags=SWS_BILINEAR;
+      if (interp==LIVES_INTERP_FAST) flags=SWS_FAST_BILINEAR;
 
       if (palette==WEED_PALETTE_YUV888) palette=WEED_PALETTE_RGB24;
       if (palette==WEED_PALETTE_YUVA8888) palette=WEED_PALETTE_RGBA32;
@@ -8483,7 +8486,7 @@ void resize_layer (weed_plant_t *layer, int width, int height, GdkInterpType int
 
     pixbuf=layer_to_pixbuf(layer);
     threaded_dialog_spin();
-    new_pixbuf=gdk_pixbuf_scale_simple(pixbuf,width,height,interp);
+    new_pixbuf=lives_pixbuf_scale_simple(pixbuf,width,height,interp);
     threaded_dialog_spin();
     if (new_pixbuf!=NULL) {
       weed_set_int_value(layer,"width",lives_pixbuf_get_width(new_pixbuf));
@@ -8525,7 +8528,7 @@ void letterbox_layer (weed_plant_t *layer, int width, int height, int nwidth, in
   int error;
   int offs_x=0,offs_y=0;
   int pal,nplanes;
-  GdkInterpType interp;
+  LiVESInterpType interp;
 
   int *rowstrides,*irowstrides;
 
@@ -8803,8 +8806,8 @@ void letterbox_layer (weed_plant_t *layer, int width, int height, int nwidth, in
 }
 
 
-gboolean pixbuf_to_layer(weed_plant_t *layer, GdkPixbuf *pixbuf) {
-  // turn a GdkPixbuf into a Weed layer
+boolean pixbuf_to_layer(weed_plant_t *layer, LiVESPixbuf *pixbuf) {
+  // turn a (Gdk)Pixbuf into a Weed layer
 
   // a "layer" is CHANNEL type plant which is not created from a plugin CHANNEL_TEMPLATE. 
   // When we pass this to a plugin, we need to adjust it depending 

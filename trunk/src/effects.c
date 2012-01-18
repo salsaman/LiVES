@@ -559,7 +559,7 @@ lives_render_error_t realfx_progress (gboolean reset) {
   static int i;
   GError *error=NULL;
   gchar oname[PATH_MAX];
-  GdkPixbuf *pixbuf;
+  LiVESPixbuf *pixbuf;
   gchar *com;
   gint64 frameticks;
   weed_plant_t *layer;
@@ -617,7 +617,7 @@ lives_render_error_t realfx_progress (gboolean reset) {
   else if (cfile->img_type==IMG_TYPE_PNG&&layer_palette!=WEED_PALETTE_RGBA32) 
     convert_layer_palette(layer,WEED_PALETTE_RGBA32,0);
 
-  if (resize_instance==NULL) resize_layer(layer,cfile->hsize,cfile->vsize,GDK_INTERP_HYPER);
+  if (resize_instance==NULL) resize_layer(layer,cfile->hsize,cfile->vsize,LIVES_INTERP_BEST);
   pixbuf=layer_to_pixbuf(layer);
   weed_plant_free(layer);
 

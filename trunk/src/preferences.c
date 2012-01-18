@@ -493,6 +493,7 @@ gboolean apply_prefs(gboolean skip_warn) {
   gboolean rec_effects=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->reffects));
   gboolean rec_clips=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->rclips));
   gboolean rec_audio=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->raudio));
+  gboolean rec_ext_audio=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->rextaudio));
 #ifdef RT_AUDIO
   gboolean rec_desk_audio=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->rdesk_audio));
 #endif
@@ -574,7 +575,8 @@ gboolean apply_prefs(gboolean skip_warn) {
 
   gchar audio_player[256];
   gint listlen=g_list_length (prefs->acodec_list);
-  gint rec_opts=rec_frames*REC_FRAMES+rec_fps*REC_FPS+rec_effects*REC_EFFECTS+rec_clips*REC_CLIPS+rec_audio*REC_AUDIO;
+  gint rec_opts=rec_frames*REC_FRAMES+rec_fps*REC_FPS+rec_effects*REC_EFFECTS+rec_clips*REC_CLIPS+rec_audio*REC_AUDIO+
+    rec_ext_audio*REC_EXT_AUDIO;
   guint warn_mask;
 
   unsigned char *new_undo_buf;
@@ -1548,12 +1550,14 @@ static void on_audp_entry_changed (GtkWidget *audp_combo, gpointer ptr) {
   if (!strncmp(audp,"jack",4)||!strncmp(audp,"pulse",5)) {
     gtk_widget_set_sensitive(prefsw->checkbutton_aclips,TRUE);
     gtk_widget_set_sensitive(prefsw->checkbutton_afollow,TRUE);
-    gtk_widget_set_sensitive(prefsw->raudio,TRUE);
+    gtk_widget_set_sensitive(prefsw->raudio,!(prefs->rec_opts&REC_EXT_AUDIO));
+    gtk_widget_set_sensitive(prefsw->rextaudio,!(prefs->rec_opts&REC_AUDIO));
   }
   else {
     gtk_widget_set_sensitive(prefsw->checkbutton_aclips,FALSE);
     gtk_widget_set_sensitive(prefsw->checkbutton_afollow,FALSE);
     gtk_widget_set_sensitive(prefsw->raudio,FALSE);
+    gtk_widget_set_sensitive(prefsw->rextaudio,FALSE);
   }
   if (!strncmp(audp,"jack",4)) {
     gtk_widget_set_sensitive(prefsw->checkbutton_jack_pwp,TRUE);
@@ -1791,6 +1795,12 @@ void apply_button_set_enabled(GtkWidget *widget, gpointer func_data)
 static void toggle_set_sensitive(GtkWidget *widget, gpointer func_data)
 {
   gtk_widget_set_sensitive(GTK_WIDGET(func_data), gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget)));
+}
+
+// toggle sets other widget insensitive/sensitive
+static void toggle_set_insensitive(GtkWidget *widget, gpointer func_data)
+{
+  gtk_widget_set_sensitive(GTK_WIDGET(func_data), !gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget)));
 }
 
 void populate_combo_box(GtkComboBox *combo, GList *data)
@@ -3371,7 +3381,7 @@ _prefsw *create_prefs_dialog (void) {
   // recording      |
   // ---------------'
 
-  prefsw->vbox_right_recording = gtk_vbox_new (FALSE, 10);
+  prefsw->vbox_right_recording = gtk_vbox_new (FALSE, 0);
   gtk_container_set_border_width (GTK_CONTAINER (prefsw->vbox_right_recording), 20);
 
   prefsw->scrollw_right_recording = gtk_scrolled_window_new (NULL, NULL);
@@ -3388,28 +3398,19 @@ _prefsw *create_prefs_dialog (void) {
     gtk_widget_modify_bg(GTK_BIN(prefsw->scrollw_right_recording)->child, GTK_STATE_NORMAL, &palette->normal_back);
   }
 
-  prefsw->rdesk_audio = gtk_check_button_new();
-  eventbox = gtk_event_box_new();
-  label = gtk_label_new_with_mnemonic(_("Record audio when capturing an e_xternal window\n (requires jack or pulse audio)"));
-  gtk_label_set_mnemonic_widget(GTK_LABEL(label), prefsw->rdesk_audio);
-  gtk_container_add(GTK_CONTAINER(eventbox), label);
-  g_signal_connect(GTK_OBJECT(eventbox), "button_press_event", G_CALLBACK(label_act_toggle), prefsw->rdesk_audio);
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_bg(eventbox, GTK_STATE_NORMAL, &palette->normal_back);
-  }
   hbox = gtk_hbox_new(FALSE, 0);
-  gtk_box_pack_start(GTK_BOX(hbox), prefsw->rdesk_audio, FALSE, FALSE, 5);
-  gtk_box_pack_start(GTK_BOX(hbox), eventbox, FALSE, FALSE, 5);
+  prefsw->rdesk_audio = lives_standard_check_button_new(_("Record audio when capturing an e_xternal window\n (requires jack or pulse audio)"),TRUE,(LiVESBox *)hbox,NULL);
+
   gtk_container_set_border_width(GTK_CONTAINER (hbox), 20);
   gtk_widget_show_all(hbox);
+
 #ifndef RT_AUDIO
   gtk_widget_set_sensitive (prefsw->rdesk_audio,FALSE);
-  gtk_widget_set_sensitive (label, FALSE);
 #endif
+
   gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_recording), hbox, TRUE, FALSE, 0);
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->rdesk_audio),prefs->rec_desktop_audio);
+
   // ---
   hseparator = gtk_hseparator_new ();
   gtk_widget_show (hseparator);
@@ -3430,148 +3431,116 @@ _prefsw *create_prefs_dialog (void) {
   gtk_widget_show (hbox2);
   gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_recording), hbox2, TRUE, TRUE, 6);
   // ---
-  prefsw->rframes = gtk_check_button_new();
-  eventbox = gtk_event_box_new();
-  label = gtk_label_new_with_mnemonic(_("_Frame changes"));
-  gtk_label_set_mnemonic_widget(GTK_LABEL(label), prefsw->rframes);
-  gtk_container_add(GTK_CONTAINER(eventbox), label);
-  g_signal_connect(GTK_OBJECT(eventbox), "button_press_event", G_CALLBACK(label_act_toggle), prefsw->rframes);
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_bg(eventbox, GTK_STATE_NORMAL, &palette->normal_back);
-  }
+
   hbox = gtk_hbox_new(FALSE, 0);
-  gtk_box_pack_start(GTK_BOX(hbox), prefsw->rframes, FALSE, FALSE, 5);
-  gtk_box_pack_start(GTK_BOX(hbox), eventbox, FALSE, FALSE, 5);
-  gtk_container_set_border_width(GTK_CONTAINER (hbox), 20);
+
+  prefsw->rframes = lives_standard_check_button_new(_("_Frame changes"),TRUE,(LiVESBox *)hbox,NULL);
+  gtk_container_set_border_width(GTK_CONTAINER (hbox), 0);
   gtk_widget_show_all(hbox);
   gtk_box_pack_start (GTK_BOX (hbox2), hbox, TRUE, FALSE, 0);
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->rframes),prefs->rec_opts&REC_FRAMES);
+
   // ---
   if (prefs->rec_opts&REC_FPS||prefs->rec_opts&REC_CLIPS){
     gtk_widget_set_sensitive (prefsw->rframes,FALSE); // we must record these if recording fps changes or clip switches
-    gtk_widget_set_sensitive (label, FALSE);
   }
   if (mainw->playing_file>0&&mainw->record){
     gtk_widget_set_sensitive (prefsw->rframes,FALSE);
-    gtk_widget_set_sensitive (label, FALSE);
   }
+
   // ---
-  prefsw->rfps = gtk_check_button_new();
-  eventbox = gtk_event_box_new();
-  label = gtk_label_new_with_mnemonic(_("F_PS changes"));
-  gtk_label_set_mnemonic_widget(GTK_LABEL(label), prefsw->rfps);
-  gtk_container_add(GTK_CONTAINER(eventbox), label);
-  g_signal_connect(GTK_OBJECT(eventbox), "button_press_event", G_CALLBACK(label_act_toggle), prefsw->rfps);
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_bg(eventbox, GTK_STATE_NORMAL, &palette->normal_back);
-  }
   hbox = gtk_hbox_new(FALSE, 0);
-  gtk_box_pack_start(GTK_BOX(hbox), prefsw->rfps, FALSE, FALSE, 5);
-  gtk_box_pack_start(GTK_BOX(hbox), eventbox, FALSE, FALSE, 5);
+  prefsw->rfps = lives_standard_check_button_new(_("F_PS changes"),TRUE,(LiVESBox *)hbox,NULL);
   gtk_container_set_border_width(GTK_CONTAINER (hbox), 20);
   gtk_widget_show_all(hbox);
   // ---
   if (prefs->rec_opts&REC_CLIPS) {
     gtk_widget_set_sensitive (prefsw->rfps,FALSE); // we must record these if recording clip switches
-    gtk_widget_set_sensitive (label, FALSE);
   }
 
   if (mainw->playing_file>0&&mainw->record){
     gtk_widget_set_sensitive (prefsw->rfps,FALSE);
-    gtk_widget_set_sensitive (label, FALSE);
   }
   // ---
   gtk_box_pack_start (GTK_BOX (hbox2), hbox, TRUE, FALSE, 0);
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->rfps),prefs->rec_opts&REC_FPS);
+
   // ---
   hbox3 = gtk_hbox_new (FALSE, 0);
   gtk_widget_show (hbox3);
   gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_recording), hbox3, TRUE, TRUE, 6);
   // ---
-  prefsw->reffects = gtk_check_button_new();
-  eventbox = gtk_event_box_new();
-  label = gtk_label_new_with_mnemonic(_("_Real time effects"));
-  gtk_label_set_mnemonic_widget(GTK_LABEL(label), prefsw->reffects);
-  gtk_container_add(GTK_CONTAINER(eventbox), label);
-  g_signal_connect(GTK_OBJECT(eventbox), "button_press_event", G_CALLBACK(label_act_toggle), prefsw->reffects);
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_bg(eventbox, GTK_STATE_NORMAL, &palette->normal_back);
-  }
+
   hbox = gtk_hbox_new(FALSE, 0);
-  gtk_box_pack_start(GTK_BOX(hbox), prefsw->reffects, FALSE, FALSE, 5);
-  gtk_box_pack_start(GTK_BOX(hbox), eventbox, FALSE, FALSE, 5);
-  gtk_container_set_border_width(GTK_CONTAINER (hbox), 20);
+  prefsw->reffects = lives_standard_check_button_new(_("_Real time effects"),TRUE,(LiVESBox *)hbox,NULL);
+  gtk_container_set_border_width(GTK_CONTAINER (hbox), 10);
   gtk_widget_show_all(hbox);
 
   if (mainw->playing_file>0&&mainw->record){
     gtk_widget_set_sensitive (prefsw->reffects,FALSE);
-    gtk_widget_set_sensitive (label, FALSE);
   }
   gtk_box_pack_start (GTK_BOX (hbox3), hbox, TRUE, FALSE, 0);
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->reffects),prefs->rec_opts&REC_EFFECTS);
   // ---
-  prefsw->rclips = gtk_check_button_new();
-  eventbox = gtk_event_box_new();
-  label = gtk_label_new_with_mnemonic(_("_Clip switches"));
-  gtk_label_set_mnemonic_widget(GTK_LABEL(label), prefsw->rclips);
-  gtk_container_add(GTK_CONTAINER(eventbox), label);
-  g_signal_connect(GTK_OBJECT(eventbox), "button_press_event", G_CALLBACK(label_act_toggle), prefsw->rclips);
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_bg(eventbox, GTK_STATE_NORMAL, &palette->normal_back);
-  }
+
   hbox = gtk_hbox_new(FALSE, 0);
-  gtk_box_pack_start(GTK_BOX(hbox), prefsw->rclips, FALSE, FALSE, 5);
-  gtk_box_pack_start(GTK_BOX(hbox), eventbox, FALSE, FALSE, 5);
-  gtk_container_set_border_width(GTK_CONTAINER (hbox), 20);
+  prefsw->rclips = lives_standard_check_button_new(_("_Clip switches"),TRUE,(LiVESBox *)hbox,NULL);
+  gtk_container_set_border_width(GTK_CONTAINER (hbox), 10);
   gtk_widget_show_all(hbox);
   gtk_box_pack_start (GTK_BOX (hbox3), hbox, TRUE, FALSE, 0);
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->rclips),prefs->rec_opts&REC_CLIPS);
 
   if (mainw->playing_file>0&&mainw->record){
     gtk_widget_set_sensitive (prefsw->rclips,FALSE);
-    gtk_widget_set_sensitive (label, FALSE);
   }
-  // ---
-  hbox4 = gtk_hbox_new (FALSE, 0);
-  gtk_widget_show (hbox4);
-  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_recording), hbox4, TRUE, TRUE, 6);
 
-  prefsw->raudio = gtk_check_button_new();
-  eventbox = gtk_event_box_new();
-  label = gtk_label_new_with_mnemonic(_("_Audio (requires jack or pulse audio player)"));
-  gtk_label_set_mnemonic_widget(GTK_LABEL(label), prefsw->raudio);
-  gtk_container_add(GTK_CONTAINER(eventbox), label);
-  g_signal_connect(GTK_OBJECT(eventbox), "button_press_event", G_CALLBACK(label_act_toggle), prefsw->raudio);
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_bg(eventbox, GTK_STATE_NORMAL, &palette->normal_back);
-  }
+  // ---
+
   hbox = gtk_hbox_new(FALSE, 0);
-  gtk_box_pack_start(GTK_BOX(hbox), prefsw->raudio, FALSE, FALSE, 5);
-  gtk_box_pack_start(GTK_BOX(hbox), eventbox, FALSE, FALSE, 5);
-  gtk_container_set_border_width(GTK_CONTAINER (hbox), 20);
+  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_recording), hbox, TRUE, TRUE, 6);
+  prefsw->raudio = lives_standard_check_button_new(_("_Internal Audio (requires jack or pulse audio player)"),
+						   TRUE,(LiVESBox *)hbox,NULL);
+  gtk_container_set_border_width(GTK_CONTAINER (hbox), 10);
   gtk_widget_show_all(hbox);
-  gtk_box_pack_start (GTK_BOX (hbox4), hbox, TRUE, FALSE, 0);
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->raudio),prefs->rec_opts&REC_AUDIO);
+
+
+  if (prefs->rec_opts&REC_EXT_AUDIO) {
+    gtk_widget_set_sensitive (prefsw->raudio,FALSE);
+  }
 
   if (mainw->playing_file>0&&mainw->record){
     gtk_widget_set_sensitive (prefsw->raudio,FALSE);
-    gtk_widget_set_sensitive (label, FALSE);
   }
 
   if (prefs->audio_player!=AUD_PLAYER_JACK&&prefs->audio_player!=AUD_PLAYER_PULSE){
     gtk_widget_set_sensitive (prefsw->raudio,FALSE);
-    gtk_widget_set_sensitive (label, FALSE);
   }
+
+
+  hbox = gtk_hbox_new(FALSE, 0);
+  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_recording), hbox, TRUE, TRUE, 6);
+  prefsw->rextaudio = lives_standard_check_button_new(_("_External Audio (requires jack or pulse audio player)"),
+						   TRUE,(LiVESBox *)hbox,NULL);
+  gtk_container_set_border_width(GTK_CONTAINER (hbox), 10);
+  gtk_widget_show_all(hbox);
+  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->rextaudio),prefs->rec_opts&REC_EXT_AUDIO);
+
+  if (prefs->rec_opts&REC_AUDIO) {
+    gtk_widget_set_sensitive (prefsw->rextaudio,FALSE);
+  }
+
+  if (mainw->playing_file>0&&mainw->record){
+    gtk_widget_set_sensitive (prefsw->rextaudio,FALSE);
+  }
+
+  if (prefs->audio_player!=AUD_PLAYER_JACK&&prefs->audio_player!=AUD_PLAYER_PULSE){
+    gtk_widget_set_sensitive (prefsw->rextaudio,FALSE);
+  }
+
+  g_signal_connect(GTK_OBJECT(prefsw->raudio), "toggled", GTK_SIGNAL_FUNC(toggle_set_insensitive), prefsw->rextaudio);
+  g_signal_connect(GTK_OBJECT(prefsw->rextaudio), "toggled", GTK_SIGNAL_FUNC(toggle_set_insensitive), prefsw->raudio);
+
   // ---
   hseparator = gtk_hseparator_new ();
   gtk_widget_show (hseparator);
@@ -5786,6 +5755,7 @@ _prefsw *create_prefs_dialog (void) {
   g_signal_connect(GTK_OBJECT(prefsw->reffects), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
   g_signal_connect(GTK_OBJECT(prefsw->rclips), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
   g_signal_connect(GTK_OBJECT(prefsw->raudio), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->rextaudio), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
   g_signal_connect(GTK_OBJECT(prefsw->spinbutton_rec_gb), "value_changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
   g_signal_connect(GTK_OBJECT(prefsw->encoder_combo), "changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
   g_signal_connect(GTK_OBJECT(prefsw->ofmt_combo), "changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);

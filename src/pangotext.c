@@ -97,9 +97,9 @@ int font_cmp(const void *p1, const void *p2) {
   return(strcasecmp(s1, s2));
 }
 
-
-gboolean render_text_to_layer(weed_plant_t *layer, const char *text, const char *fontname,\
-  double size, lives_text_mode_t mode, lives_colRGBA32_t *fg_col, lives_colRGBA32_t *bg_col,\
+#if 1
+gboolean render_text_to_layer(weed_plant_t *layer, const char *text, const char *fontname,
+  double size, lives_text_mode_t mode, lives_colRGBA32_t *fg_col, lives_colRGBA32_t *bg_col,
   gboolean center, gboolean rising, double top) {
   int error;
   gboolean ret = FALSE;
@@ -205,10 +205,10 @@ gboolean render_text_to_layer(weed_plant_t *layer, const char *text, const char 
 
           pango_cairo_show_layout(cairo, layout);
 
-          pixbuf_new = gdk_pixbuf_get_from_drawable(pixbuf, pixmap, NULL,\
-              0, 0,\
-              0, 0,\
-              -1, -1);
+          pixbuf_new = gdk_pixbuf_get_from_drawable(pixbuf, pixmap, NULL,
+						    0, 0,
+						    0, 0,
+						    -1, -1);
           result = pixbuf_to_layer(layer, pixbuf_new);
 
 	  // nasty cleanup because of the way we handle pixel_data
@@ -234,6 +234,143 @@ gboolean render_text_to_layer(weed_plant_t *layer, const char *text, const char 
   weed_free(pixel_data);
   return ret;
 }
+
+#endif
+
+#if 0
+gboolean render_text_to_layer(weed_plant_t *layer, const char *text, const char *fontname,
+  double size, lives_text_mode_t mode, lives_colRGBA32_t *fg_col, lives_colRGBA32_t *bg_col,
+  gboolean center, gboolean rising, double top) {
+  int error;
+  gboolean ret = FALSE;
+
+  int cent,rise;
+
+  int width, height, palette;
+
+  double dwidth, dheight;
+  lives_colRGBA32_t *fg, *bg;
+
+  double b_alpha=(double)bg_col->alpha/255.;
+  double f_alpha=(double)fg_col->alpha/255.;
+
+  GdkPixbuf *pixbuf = NULL;
+
+  width=weed_get_int_value(layer,"width",&error);
+  height=weed_get_int_value(layer,"height",&error);
+
+  palette=weed_get_int_value(layer,"current_palette",&error);
+
+ 
+  fg = fg_col;
+  bg = bg_col;
+  if (palette==WEED_PALETTE_BGR24 || palette==WEED_PALETTE_BGRA32) {
+    int tmp=fg->red;
+    fg->red=fg->blue;
+    fg->blue=tmp;
+
+    tmp=bg->red;
+    bg->red=bg->blue;
+    bg->blue=tmp;
+  }
+
+
+  // THINGS TO TO WITH TEXTS AND PANGO
+  pixbuf = layer_to_pixbuf(layer);
+
+  cent = center ? 1 : 0;
+  rise = rising ? 1 : 0;
+
+  if (pixbuf) {
+    // do cairo and pango things
+    cairo_t *cairo;
+    cairo_surface_t *surf;
+    PangoLayout *layout;
+
+    // does not work...will be required for gtk3
+
+    if (palette==WEED_PALETTE_BGR24||palette==WEED_PALETTE_RGB24)
+      surf=cairo_image_surface_create(CAIRO_FORMAT_RGB24, width, height);
+    else
+      surf=cairo_image_surface_create(CAIRO_FORMAT_ARGB32, width, height);
+    cairo=cairo_create(surf);
+    gdk_cairo_set_source_pixbuf(cairo,pixbuf,0,0);
+    layout = pango_cairo_create_layout(cairo);
+    if(layout) { 
+      PangoFontDescription *font;
+      double x_pos, y_pos;
+      double x_text, y_text;
+      gboolean result;
+	
+      font = pango_font_description_new();
+      pango_font_description_set_family(font, fontname);
+      pango_font_description_set_absolute_size(font, size*PANGO_SCALE);
+	
+      pango_layout_set_font_description(layout, font);
+      pango_layout_set_text(layout, text, -1);
+      getxypos(layout, &x_pos, &y_pos, width, height, cent, &dwidth, &dheight);
+	
+      if(!rise)
+	y_pos = y_text = height*top;
+	
+      x_text = x_pos;
+      y_text = y_pos;
+	
+      if (cent) pango_layout_set_alignment(layout, PANGO_ALIGN_CENTER);
+      else pango_layout_set_alignment(layout, PANGO_ALIGN_LEFT);
+	
+      cairo_move_to(cairo, x_text, y_text);
+	
+      switch(mode) {
+      case LIVES_TEXT_MODE_FOREGROUND_AND_BACKGROUND:
+	cairo_set_source_rgba(cairo,bg->red, bg->green, bg->blue, b_alpha);
+	fill_bckg(cairo, x_pos, y_pos, dwidth, dheight);
+	cairo_move_to(cairo, x_text, y_text);
+	cairo_set_source_rgba(cairo,fg->red, fg->green, fg->blue, f_alpha);
+	break;
+      case LIVES_TEXT_MODE_BACKGROUND_ONLY:
+	cairo_set_source_rgba(cairo,bg->red, bg->green, bg->blue, b_alpha);
+	fill_bckg(cairo, x_pos, y_pos, dwidth, dheight);
+	cairo_move_to(cairo, x_pos, y_pos);
+	cairo_set_source_rgba(cairo,fg->red, fg->green, fg->blue, f_alpha);
+	pango_layout_set_text(layout, "", -1);
+	break;
+      case LIVES_TEXT_MODE_FOREGROUND_ONLY:
+      default:
+	cairo_set_source_rgba(cairo,fg->red, fg->green, fg->blue, f_alpha);
+	break;
+      }
+	
+      pango_cairo_show_layout(cairo, layout);
+	
+      cairo_paint(cairo);
+      result = pixbuf_to_layer(layer, pixbuf);
+	
+      // nasty cleanup because of the way we handle pixel_data
+      if (result) {
+	mainw->do_not_free=gdk_pixbuf_get_pixels(pixbuf);
+	mainw->free_fn=lives_free_with_check;
+      }
+      g_object_unref(pixbuf);
+      mainw->do_not_free=NULL;
+      mainw->free_fn=free;
+      ///////////////////////////////////////////
+	
+      g_object_unref(layout);
+      pango_font_description_free(font);
+      ret = TRUE;
+    }
+    cairo_surface_destroy(surf);
+    cairo_destroy(cairo);
+  }
+  
+  return ret;
+}
+#endif
+
+
+
+
 
 
 static const char *cr_str = "\x0D";

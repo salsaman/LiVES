@@ -281,7 +281,7 @@ boolean virtual_to_images(int sfileno, int sframe, int eframe, boolean update_pr
       while (g_main_context_iteration(NULL,FALSE));
 
       pixbuf=pull_lives_pixbuf_at_size(sfileno,i,sfile->img_type==IMG_TYPE_JPEG?"jpg":"png",
-				       q_gint64((i-1.)/sfile->fps,sfile->fps),sfile->hsize,sfile->vsize,GDK_INTERP_HYPER);
+				       q_gint64((i-1.)/sfile->fps,sfile->fps),sfile->hsize,sfile->vsize,LIVES_INTERP_BEST);
       
       if (sfile->img_type==IMG_TYPE_JPEG) {
 	oname=g_strdup_printf("%s/%s/%08d.jpg",prefs->tmpdir,sfile->handle,i);

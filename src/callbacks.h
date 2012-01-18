@@ -1,13 +1,11 @@
 // callbacks.h
 // LiVES
-// (c) G. Finch <salsaman@xs4all.nl,salsaman@gmail.com> 2003 - 2011
+// (c) G. Finch <salsaman@xs4all.nl,salsaman@gmail.com> 2003 - 2012
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
 #ifndef HAS_LIVES_CALLBACKS_H
 #define HAS_LIVES_CALLBACKS_H
-
-#include <gtk/gtk.h>
 
 gboolean
 on_LiVES_delete_event                  (GtkWidget       *widget,

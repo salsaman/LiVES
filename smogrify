@@ -1083,80 +1083,57 @@ if (defined($ARGV[0])) {
 	$start=$ARGV[3];
 	$end=$ARGV[4];
 
-	$fs=" ";
-	if (defined $ARGV[5]) {
-	    if ($ARGV[5]!="0") {
-		$fs=" -fs ";
-		}
-	}
+
 	$loop=0;
-	if ($ARGV[6]!=0) {
-	    $loop=$ARGV[6];
+	if ($ARGV[5]!=0) {
+	    $loop=$ARGV[5];
 	}
-	$wid=" ";
-	if (defined $ARGV[7]) {
-	    if ($ARGV[7]!=0) {
-		$wid=" -wid ".$ARGV[7]." ";
-	    }
-	}
-	if (!defined $ARGV[8]||$ARGV[8]==0||!($fs eq " ")) {
-	    $width="";
-	}
-	else {
-	    $hsize=$ARGV[8];
-	    $width="-x $hsize ";
-	}
-	if (!defined $ARGV[9]||$ARGV[9]==0||!($fs eq " ")) {
-	    $height="";
-	}
-	else {
-	    $vsize=$ARGV[9];
-	    $height="-y $vsize ";
-	}
-	if (!defined $ARGV[10]||$ARGV[10]==0) {
+
+
+	if (!defined $ARGV[6]||$ARGV[6]==0) {
 	    $arate=44100;
 	}
 	else {
-	    $arate=$ARGV[10];
+	    $arate=$ARGV[6];
 	}
-	if (!defined $ARGV[11]||$ARGV[11]==0) {
+	if (!defined $ARGV[7]||$ARGV[7]==0) {
 	    $achans=2;
 	}
 	else {
-	    $achans=$ARGV[11];
+	    $achans=$ARGV[7];
 	}
 
-	if (!defined $ARGV[12]||$ARGV[12]==0) {
+	if (!defined $ARGV[8]||$ARGV[8]==0) {
 	    $asamps=2;
 	    $stype="w";
 	}
 	else {
-	    $asamps=$ARGV[12];
+	    $asamps=$ARGV[8];
 	    if ($asamps>7) {
 		$asamps/=8;
 	    }
 	}
-	if (!defined $ARGV[13]) {
+	if (!defined $ARGV[9]) {
 	    $signed=1;
 	}
 	else {
-	    $signed=$ARGV[13];
+	    $signed=$ARGV[9];
 	}
 
-	if (!defined $ARGV[14]) {
+	if (!defined $ARGV[10]) {
 	    $aendian=$endian;
 	}
 	else {
-	    $aendian=$ARGV[14];
+	    $aendian=$ARGV[10];
 	}
 
 	if (defined($opening_preview)) {
 	    $aformat=".raw";
-	    $audiofile=$curtmpdir."/audiodump.pcm";
+	    $audiofile="$curtmpdir/audiodump.pcm";
 	}
 	else {
 	    $aformat=".raw";
-	    $audiofile=$curtmpdir."/audio";
+	    $audiofile="$curtmpdir/audio";
 	}
 
 

@@ -2056,11 +2056,7 @@ create_LiVES (void)
     gtk_widget_modify_fg(pf_label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
 
-#ifdef USE_X11
-  mainw->playarea = gtk_socket_new ();
-#else
   mainw->playarea = gtk_hbox_new (FALSE,0);
-#endif
 
   gtk_container_add (GTK_CONTAINER (mainw->playframe), mainw->playarea);
 
@@ -2930,7 +2926,7 @@ create_LiVES (void)
   mainw->laudio_drawable=NULL;
   mainw->raudio_drawable=NULL;
   mainw->video_drawable=NULL;
-  mainw->plug1=NULL;
+  mainw->plug=NULL;
 
   GTK_WIDGET_SET_FLAGS (mainw->LiVES, GTK_CAN_FOCUS);
   gtk_widget_grab_focus(mainw->textview1);
@@ -3819,12 +3815,6 @@ void resize_play_window (void) {
 	}
       }
 
-#ifdef USE_X11
-      mainw->xwin=GDK_WINDOW_XWINDOW (mainw->play_window->window);
-#else
-      mainw->xwin=0;
-#endif
-
       if (pmonitor==0) {
 	mainw->pwidth=mainw->scr_width;
 	mainw->pheight=mainw->scr_height;
@@ -3893,7 +3883,11 @@ void resize_play_window (void) {
 
 	if (prefs->play_monitor!=0) {
 	  fullscreen=FALSE;
-	  xwinid=mainw->xwin;
+#ifdef USE_X11
+	  xwinid=(unsigned int)GDK_WINDOW_XID(mainw->play_window->window);
+#else
+	  LIVES_WARN("Tried to get XID for non X11 Window !");
+#endif
 	}
 	if (mainw->ext_playback) {
 #ifdef RT_AUDIO
@@ -3979,7 +3973,6 @@ void resize_play_window (void) {
 void
 kill_play_window (void) {
   // plug our player back into internal window
-  mainw->xwin=0;
 
   if (mainw->play_window!=NULL) {
     if (mainw->preview_box!=NULL&&mainw->preview_box->parent!=NULL) {
@@ -3999,27 +3992,14 @@ add_to_playframe (void) {
 
   gtk_widget_show(mainw->playarea);
 
-#ifdef USE_X11
-  if (!mainw->xwin) mainw->xwin = gtk_socket_get_id(GTK_SOCKET(mainw->playarea));
-#endif
-
-
   ///////////////////////////////////////////////////
-  //
-  // code here is to plug the internal player into our play socket
-  // plug source can be changed by changing prefs->video_player
-  if (mainw->plug1==NULL) {
+  if (mainw->plug==NULL) {
     if (!mainw->foreign&&(!mainw->sep_win||prefs->sepwin_type==0)) {
-#ifdef USE_X11
-      // :-( just creating this stops anything else being shown in the socket
-      mainw->plug1 = gtk_plug_new (mainw->xwin);
-#else
-      mainw->plug1 = gtk_hbox_new (FALSE,0);
-      gtk_container_add(mainw->playarea,mainw->plug1);
-#endif
-      gtk_widget_modify_bg (mainw->plug1, GTK_STATE_NORMAL, &palette->normal_back);
-      gtk_widget_show (mainw->plug1);
-      gtk_container_add (GTK_CONTAINER (mainw->plug1), mainw->image274);
+      mainw->plug = gtk_hbox_new (FALSE,0);
+      gtk_container_add(GTK_CONTAINER(mainw->playarea),mainw->plug);
+      gtk_widget_modify_bg (mainw->plug, GTK_STATE_NORMAL, &palette->normal_back);
+      gtk_widget_show (mainw->plug);
+      gtk_container_add (GTK_CONTAINER (mainw->plug), mainw->image274);
     }
   }
 

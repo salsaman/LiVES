@@ -63,15 +63,7 @@ POSSIBILITY OF SUCH DAMAGES.
 #define USE_X11
 
 // needed for GDK_WINDOW_XID - for fileselector preview
-
-// needed for XMapWindow, GDK_WINDOW_XDISPLAY, GDK_WINDOW_XID, GTK_SOCKET
-// for external window capture
-
 // needed for gdk_x11_screen_get_window_manager_name()
-
-#if GTK_CHECK_VERSION(3,0,0)
-#include <gtk/gtkx.h>
-#endif
 
 #include <gdk/gdkx.h>
 #endif
@@ -920,7 +912,7 @@ gboolean pull_frame(weed_plant_t *layer, const gchar *image_ext, weed_timecode_t
 gboolean pull_frame_at_size (weed_plant_t *layer, const gchar *image_ext, weed_timecode_t tc, 
 			     int width, int height, int target_palette);
 LiVESPixbuf *pull_lives_pixbuf_at_size(int clip, int frame, const char *image_ext, weed_timecode_t tc, 
-				       int width, int height, GdkInterpType interp);
+				       int width, int height, LiVESInterpType interp);
 GError * lives_pixbuf_save(GdkPixbuf *pixbuf, gchar *fname, lives_image_type_t imgtype, 
 			   int quality, gboolean do_chmod, GError **gerrorptr);
 
@@ -1101,7 +1093,7 @@ void find_when_to_stop (void);
 gint calc_new_playback_position(gint fileno, gint64 otc, gint64 *ntc);
 void calc_aframeno(gint fileno);
 void minimise_aspect_delta (gdouble allowed_aspect,gint hblock,gint vblock,gint hsize,gint vsize,gint *width,gint *height);
-GdkInterpType get_interp_value(gshort quality);
+LiVESInterpType get_interp_value(gshort quality);
 GList *g_list_move_to_first(GList *list, GList *item) WARN_UNUSED;
 GList *g_list_delete_string(GList *, char *string) WARN_UNUSED;
 GList *g_list_copy_strings(GList *list);

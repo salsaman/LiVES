@@ -18,8 +18,6 @@
 #include <string.h>
 #include <stdio.h>
 
-#include <gtk/gtk.h>
-
 #include "support.h"
 
 #ifndef LIVES_INLINE

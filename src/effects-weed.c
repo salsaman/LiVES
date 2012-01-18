@@ -1290,7 +1290,7 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
   int *in_tracks,*out_tracks;
   int error,i,j;
   weed_plant_t *filter=weed_get_plantptr_value(inst,"filter_class",&error);
-  weed_plant_t *layer;
+  weed_plant_t *layer=NULL,*copy_layer=NULL;
   weed_plant_t **in_channels,**out_channels,*channel,*chantmpl;
   int frame;
   int inwidth,inheight,inpalette,outpalette,channel_flags,filter_flags=0;
@@ -1640,13 +1640,27 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
       osampling=isampling;
     }
 
+
+
     if (cpalette!=inpalette||oclamping!=iclamping||isampling!=osampling||isubspace!=osubspace) {
+
+      if (num_out_tracks==0&&(weed_palette_is_lower_quality(inpalette,cpalette)||
+			      (weed_palette_is_rgb_palette(inpalette)&&!weed_palette_is_rgb_palette(cpalette))||
+			      (weed_palette_is_rgb_palette(cpalette)&&!weed_palette_is_rgb_palette(inpalette)))) {
+	// for an analyser (no out channels) we copy the layer if it needs lower quality
+	copy_layer=weed_layer_copy(NULL,layer);
+      }
+
       if (!convert_layer_palette_full(layer,inpalette,
 				      osampling,oclamping,osubspace)) {
 	weed_free(in_tracks);
 	weed_free(out_tracks);
 	weed_free(in_channels);
 	weed_free(out_channels);
+	if (copy_layer!=NULL) {
+	  weed_layer_free(layer);
+	  layer=copy_layer;
+	}
 	return FILTER_ERROR_INVALID_PALETTE_CONVERSION;
       }
     }
@@ -1887,6 +1901,10 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
     weed_free(out_tracks);
     weed_free(in_channels);
     weed_free(out_channels);
+    if (copy_layer!=NULL) {
+      weed_layer_free(layer);
+      layer=copy_layer;
+    }
     return retval;
   }
 
@@ -1913,6 +1931,10 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
     weed_free(out_tracks);
     weed_free(in_channels);
     weed_free(out_channels);
+    if (copy_layer!=NULL) {
+      weed_layer_free(layer);
+      layer=copy_layer;
+    }
     return retval;
   }
 
@@ -1978,6 +2000,11 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
   weed_free(out_tracks);
   weed_free(in_channels);
   weed_free(out_channels);
+
+  if (copy_layer!=NULL) {
+    weed_layer_free(layer);
+    layer=copy_layer;
+  }
 
   return retval;
 }

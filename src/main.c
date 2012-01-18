@@ -596,7 +596,6 @@ static void lives_init(_ign_opts *ign_opts) {
   mainw->save_with_sound=TRUE;
   mainw->preview=FALSE;
   mainw->selwidth_locked=FALSE;
-  mainw->xwin=0;
   mainw->untitled_number=mainw->cap_number=1;
   mainw->sel_start=0;
   mainw->sel_move=SEL_MOVE_AUTO;
@@ -721,8 +720,7 @@ static void lives_init(_ign_opts *ign_opts) {
     set_int_pref("record_opts",prefs->rec_opts);
   }
 
-  prefs->rec_opts|=(REC_FPS+REC_FRAMES);//+REC_EXT_AUDIO);
-
+  prefs->rec_opts|=(REC_FPS+REC_FRAMES);
 
   mainw->new_clip=-1;
   mainw->record=FALSE;
@@ -2887,7 +2885,7 @@ void load_start_image(gint frame) {
   weed_timecode_t tc;
   gint rwidth,rheight,width,height;
   gboolean noswitch=mainw->noswitch;
-  GdkInterpType interp;
+  LiVESInterpType interp;
 
   if (mainw->multitrack!=NULL) return;
 
@@ -3004,7 +3002,7 @@ void load_end_image(gint frame) {
   weed_timecode_t tc;
   gint rwidth,rheight,width,height;
   gboolean noswitch=mainw->noswitch;
-  GdkInterpType interp;
+  LiVESInterpType interp;
 
   if (mainw->multitrack!=NULL) return;
 
@@ -3130,7 +3128,7 @@ void load_preview_image(gboolean update_always) {
       if (mainw->camframe!=NULL) gdk_pixbuf_saturate_and_pixelate(mainw->camframe,mainw->camframe,0.0,FALSE);
       g_free(tmp);
     }
-    pixbuf=gdk_pixbuf_scale_simple(mainw->camframe,cfile->hsize,cfile->vsize,GDK_INTERP_HYPER);
+    pixbuf=lives_pixbuf_scale_simple(mainw->camframe,cfile->hsize,cfile->vsize,LIVES_INTERP_BEST);
     if (mainw->preview_frame>cfile->frames) {
       g_signal_handler_block(mainw->play_window,mainw->pw_exp_func);
       mainw->pw_exp_is_blocked=TRUE;
@@ -3146,7 +3144,8 @@ void load_preview_image(gboolean update_always) {
     return;
   }
 
-  if (mainw->current_file<0||cfile==NULL||!cfile->frames||(cfile->clip_type!=CLIP_TYPE_DISK&&cfile->clip_type!=CLIP_TYPE_FILE)) {
+  if (mainw->current_file<0||cfile==NULL||!cfile->frames||(cfile->clip_type!=CLIP_TYPE_DISK&&
+							   cfile->clip_type!=CLIP_TYPE_FILE)) {
     if (mainw->preview_frame>cfile->frames) {
       g_signal_handler_block(mainw->play_window,mainw->pw_exp_func);
       mainw->pw_exp_is_blocked=TRUE;
@@ -3193,7 +3192,7 @@ void load_preview_image(gboolean update_always) {
   }
   
   if (mainw->preview_frame<1||mainw->preview_frame>cfile->frames) {
-    pixbuf=gdk_pixbuf_scale_simple(mainw->imframe,cfile->hsize,cfile->vsize,GDK_INTERP_HYPER);
+    pixbuf=lives_pixbuf_scale_simple(mainw->imframe,cfile->hsize,cfile->vsize,LIVES_INTERP_BEST);
   }
   else {
     weed_plant_t *layer=weed_plant_new(WEED_PLANT_CHANNEL);
@@ -3202,7 +3201,7 @@ void load_preview_image(gboolean update_always) {
     weed_set_int_value(layer,"frame",mainw->preview_frame);
     if (pull_frame_at_size(layer,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",tc,cfile->hsize,cfile->vsize,
 			   WEED_PALETTE_RGB24)) {
-        GdkInterpType interp=get_interp_value(prefs->pb_quality);
+        LiVESInterpType interp=get_interp_value(prefs->pb_quality);
       convert_layer_palette(layer,WEED_PALETTE_RGB24,0);
       resize_layer(layer,cfile->hsize,cfile->vsize,interp);
       pixbuf=layer_to_pixbuf(layer);
@@ -3773,7 +3772,7 @@ gboolean pull_frame (weed_plant_t *layer, const gchar *image_ext, weed_timecode_
 
 
 LiVESPixbuf *pull_lives_pixbuf_at_size(int clip, int frame, const char *image_ext, weed_timecode_t tc, 
-				       int width, int height, GdkInterpType interp) {
+				       int width, int height, LiVESInterpType interp) {
   // return a correctly sized (Gdk)Pixbuf (RGB24 for jpeg, RGBA32 for png) for the given clip and frame
   // tc is used instead of "frame" for some sources (e.g. generator plugins)
   // image_ext is used if the source is an image file (eg. "jpg" or "png")
@@ -3798,7 +3797,7 @@ LiVESPixbuf *pull_lives_pixbuf_at_size(int clip, int frame, const char *image_ex
     GdkPixbuf *pixbuf2;
     threaded_dialog_spin();
     // TODO - could use resize plugin here
-    pixbuf2=gdk_pixbuf_scale_simple(pixbuf,width,height,interp);
+    pixbuf2=lives_pixbuf_scale_simple(pixbuf,width,height,interp);
     gdk_pixbuf_unref(pixbuf);
     threaded_dialog_spin();
     pixbuf=pixbuf2;
@@ -3934,7 +3933,7 @@ void load_frame_image(gint frame) {
   gchar *img_ext=NULL;
   GdkPixbuf *pixbuf=NULL;
   int opwidth=0,opheight=0;
-  GdkInterpType interp;
+  LiVESInterpType interp;
   gboolean noswitch=mainw->noswitch;
   gint pmonitor;
   int pwidth,pheight;

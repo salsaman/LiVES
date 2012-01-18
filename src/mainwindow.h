@@ -518,8 +518,6 @@ typedef struct {
 
   gint new_blend_file;
 
-  // Widgets  -- TODO - move into sub struct mainw->widgets->*
-  GdkNativeWindow xwin;
   GtkWidget *frame1;
   GtkWidget *frame2;
   GtkWidget *playframe;
@@ -696,7 +694,7 @@ typedef struct {
   GtkWidget *image274;
   GtkWidget *play_window;
   weed_plant_t *frame_layer;
-  GtkWidget *plug1;
+  GtkWidget *plug;
   gulong pw_exp_func;
   gboolean pw_exp_is_blocked;
 

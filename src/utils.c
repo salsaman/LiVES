@@ -2302,8 +2302,26 @@ zero_spinbuttons (void) {
 }
 
 
-void 
-hide_cursor(GdkWindow *window) {
+void hide_cursor(GdkWindow *window) {
+  //make the cursor invisible in playback windows
+
+#if GTK_CHECK_VERSION(3,0,0)
+cairo_surface_t *s;
+GdkPixbuf *pixbuf;
+
+ if (hidden_cursor==NULL) {
+   s = cairo_image_surface_create (CAIRO_FORMAT_A1, 1, 1);
+   pixbuf = gdk_pixbuf_get_from_surface (s,
+					 0, 0,
+					 1, 1);
+   
+   cairo_surface_destroy (s);
+   
+   hidden_cursor = gdk_cursor_new_from_pixbuf (gdk_display_get_default(), pixbuf, 0, 0);
+   
+   g_object_unref (pixbuf);
+ }
+#else
   char cursor_bits[] = {0x00};
   char cursormask_bits[] = {0x00};
   GdkPixmap *source, *mask;
@@ -2311,7 +2329,6 @@ hide_cursor(GdkWindow *window) {
   GdkColor bg = { 0, 0, 0, 0 };
 
   if (hidden_cursor==NULL) {
-    //make the cursor invisible in playback windows
     source = gdk_bitmap_create_from_data (NULL, cursor_bits,
 					  1, 1);
     mask = gdk_bitmap_create_from_data (NULL, cursormask_bits,
@@ -2320,8 +2337,9 @@ hide_cursor(GdkWindow *window) {
     gdk_pixmap_unref (source);
     gdk_pixmap_unref (mask);
   }
+#endif 
 
-  gdk_window_set_cursor (window, hidden_cursor);
+ gdk_window_set_cursor (window, hidden_cursor);
 }
 
 
@@ -2598,7 +2616,7 @@ prepare_to_play_foreign(void) {
   //gdk_window_reparent(mainw->foreign_window, mainw->playarea->window, 0, 0);
   //while (g_main_context_iteration(NULL,FALSE));
   ////////////////////////
-
+  
   //vissi=gdk_x11_screen_lookup_visual(gdk_screen_get_default(),hextodec(mainw->foreign_visual));
 
   vissi=gdk_visual_get_best_with_depth (mainw->foreign_bpp);
@@ -4274,10 +4292,10 @@ getfserr:
 
 
 
-LIVES_INLINE GdkInterpType get_interp_value(gshort quality) {
-  if (quality==PB_QUALITY_HIGH) return GDK_INTERP_HYPER;
-  else if (quality==PB_QUALITY_MED) return GDK_INTERP_BILINEAR;
-  return GDK_INTERP_NEAREST;
+LIVES_INLINE LiVESInterpType get_interp_value(gshort quality) {
+  if (quality==PB_QUALITY_HIGH) return LIVES_INTERP_BEST;
+  else if (quality==PB_QUALITY_MED) return LIVES_INTERP_NORMAL;
+  return LIVES_INTERP_FAST;
 }
 
 

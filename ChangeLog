@@ -2,8 +2,8 @@ Version 1.6.1
 -------------
 Fix external window capture to work with Compiz.
 Minor multitrack GUI fixes.
-
-
+Unhide cursor properly after playback (regression).
+Support recording of external audio during playback (in progress).
 
 
 

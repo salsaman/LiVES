@@ -22,6 +22,12 @@ typedef GSList                            LiVESSList;
 
 typedef GdkPixbufDestroyNotify            LiVESPixbufDestroyNotify;
 
+typedef GdkInterpType                     LiVESInterpType;
+
+#define LIVES_INTERP_BEST   GDK_INTERP_HYPER
+#define LIVES_INTERP_NORMAL GDK_INTERP_BILINEAR
+#define LIVES_INTERP_FAST   GDK_INTERP_NEAREST
+
 #endif
 
 
@@ -35,7 +41,27 @@ typedef (void *)(LiVESPixbufDestroyNotify(uchar *, gpointer));
 
 // etc.
 
+
+
+#define LIVES_INTERP_BEST   Qt::SmoothTransformation
+#define LIVES_INTERP_NORMAL Qt::SmoothTransformation
+#define LIVES_INTERP_BEST   Qt::FastTransformation
+
+
 #endif
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 // basic functions (wrappers for Toolkit functions)
 
@@ -55,6 +81,10 @@ LiVESPixbuf *lives_pixbuf_new_from_data (const unsigned char *buf, boolean has_a
 LiVESPixbuf *lives_pixbuf_new_from_file(const char *filename, GError **error);
 LiVESPixbuf *lives_pixbuf_new_from_file_at_scale(const char *filename, int width, int height, boolean preserve_aspect_ratio,
 						 GError **error);
+
+
+LiVESPixbuf *lives_pixbuf_scale_simple(const LiVESPixbuf *src, int dest_width, int dest_height, 
+				       LiVESInterpType interp_type);
 
 
 LiVESWidget *lives_dialog_get_content_area(LiVESDialog *dialog);

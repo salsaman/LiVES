@@ -9,6 +9,7 @@ API Version Changes
 120 - added WEED_YUV_CLAMPING and WEED_YUV_SUBSPACE
 130 - added WEED_CHANNEL_RESIZE_ON_ROWSTRIDES_CHANGE
 131 - added WEED_FILTER_PROCESS_LAST, removed WEED_COLORSPACE_HSV
+132 - added threading hint, and later WEED_CHANNEL_ALPHA_PREMULT
 
 Changelog:
 21/04/06 salsaman.
@@ -104,6 +105,10 @@ Corrected spelling error WEED_HINT_INT -> WEED_HINT_INTEGER
 
 7/01/12 salsaman
 Add clarifying notes about out parameters.
+
+
+19/01/12
+Add channel flag WEED_CHANNEL_ALPHA_PREMULT. API unchanged.
 
 
 (C) Gabriel "Salsaman" Finch 2005 - 2012
@@ -796,6 +801,9 @@ initialisation, channels MUST NOT be added or removed without reinitialising the
 		    "max_repeats" set, in which case a channel from
 		    that template may be disabled at any time between
 		    processing calls.
+
+ * "flags"        : channel flags set by host. e.g WEED_CHANNEL_ALPHA_PREMULT.
+
 
  * Every filter can have its internal data stored in leaves
  inside this plant, and host MUST NOT change their values or make them
@@ -1653,6 +1661,13 @@ Flag bits >=30 are reserved for custom flags.
     conversion routine. Otherwise palette conversion should be left to
     the host.
 
+* WEED_CHANNEL_ALPHA_OUT_PREMULT[[BR]]
+    For out channels only (ignored for in channels).
+    Indicates that alpha is pre-multiplied with the other channels.
+    e.g RGB=0xFFFFFF. We apply an alpha of 0x80 -> we store 0x80808080 (colour vals are stored as C * alpha / 255.)
+    For compatibility with applications. [1]
+
+
  * WEED_CHANNEL_FOLLOWS_OUTPUT[[BR]]
    This flag is deprecated and should not be used in newly written code.
    It will be removed in a future API version.
@@ -1661,6 +1676,21 @@ Flag bits >=30 are reserved for custom flags.
 
 
 Flag bits >=30 are reserved for custom flags.
+
+
+
+
+==== Channel flags =====
+
+* WEED_CHANNEL_ALPHA_PREMULT[[BR]]
+    Indicates that alpha is pre-multiplied with the other channels.
+    e.g RGB=0xFFFFFF. We apply an alpha of 0x80 -> we store 0x80808080 (colour vals are stored as C * alpha / 255.)
+    For compatibility with applications. [1]
+
+
+
+
+
 
 ==== Parameter template flags ====
 
@@ -1727,10 +1757,10 @@ Sampling types >=1024 are reserved for custom samplings.
 ==== YUV clamping ====
 
  * WEED_YUV_CLAMPING_CLAMPED :: the default if not present (clamped to 16-235,
-   16-240, 16-240) [like mpeg]
+   16-240, 16-240) [like mpeg]                                                       [0]
 
  * WEED_YUV_CLAMPING_UNCLAMPED :: Y, U and V are unclamped (0 - 255 range
-   for each) [used in e.g. in jpeg]
+   for each) [used in e.g. in jpeg]                                                  [1]
 
 clamping types >=512 are reserved for custom clampings.
 
@@ -1751,17 +1781,17 @@ subspace types >=512 are reserved for custom subspaces.
 
 ==== Weed errors ====
 
- *  WEED_NO_ERROR				0
+ *  WEED_NO_ERROR				[0]
 
- *  WEED_ERROR_MEMORY_ALLOCATION		1
+ *  WEED_ERROR_MEMORY_ALLOCATION		[1]
 
- *  WEED_ERROR_LEAF_READONLY			2
+ *  WEED_ERROR_LEAF_READONLY			[2]
 
- *  WEED_ERROR_NOSUCH_ELEMENT[[BR]]
+ *  WEED_ERROR_NOSUCH_ELEMENT[[BR]]             [3]
 
- *  WEED_ERROR_NOSUCH_LEAF[[BR]]
+ *  WEED_ERROR_NOSUCH_LEAF[[BR]]                [4]
 
- *  WEED_ERROR_WRONG_SEED_TYPE[[BR]]
+ *  WEED_ERROR_WRONG_SEED_TYPE[[BR]]            [5]
 
 
 

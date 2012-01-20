@@ -54,9 +54,15 @@ typedef enum {
 
 char **get_font_list(void);
 
+weed_plant_t *render_text_to_layer(weed_plant_t *layer, const char *text, const char *fontname,
+				   double size, lives_text_mode_t mode, lives_colRGBA32_t *fg_col, 
+				   lives_colRGBA32_t *bg_col, gboolean center, gboolean rising, double top);
+
+#if 0
 gboolean render_text_to_layer(weed_plant_t *layer, const char *text, const char *fontname,\
   double size, lives_text_mode_t mode, lives_colRGBA32_t *fg_col, lives_colRGBA32_t *bg_col,\
   gboolean center, gboolean rising, double top);
+#endif
 
 #endif
 

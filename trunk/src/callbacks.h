@@ -636,6 +636,9 @@ on_showfct_activate               (GtkMenuItem     *menuitem,
 
 void on_boolean_toggled(GObject *, gpointer user_data);
 
+
+void on_showsubs_toggled(GObject *, gpointer);
+
 void
 on_show_messages_activate            (GtkMenuItem     *menuitem,
 				      gpointer         user_data);

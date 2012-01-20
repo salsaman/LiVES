@@ -95,18 +95,24 @@ extern "C"
 /* API version 131 */
 #define WEED_FILTER_PROCESS_LAST (1<<4)
 
-/* Channel flags */
+/* Channel template flags */
 #define WEED_CHANNEL_REINIT_ON_SIZE_CHANGE    (1<<0)
 
 /* API version 130 */
 #define WEED_CHANNEL_REINIT_ON_ROWSTRIDES_CHANGE    (1<<6)
+#define WEED_CHANNEL_OUT_ALPHA_PREMULT (1<<7)
 
 #define WEED_CHANNEL_REINIT_ON_PALETTE_CHANGE (1<<1)
 #define WEED_CHANNEL_CAN_DO_INPLACE           (1<<2)
 #define WEED_CHANNEL_SIZE_CAN_VARY            (1<<3)
 #define WEED_CHANNEL_PALETTE_CAN_VARY         (1<<4)
 
-/* Parameter flags */
+
+/* Channel flags */
+#define WEED_CHANNEL_ALPHA_PREMULT (1<<0)
+
+
+/* Parameter template flags */
 #define WEED_PARAMETER_REINIT_ON_VALUE_CHANGE (1<<0)
 #define WEED_PARAMETER_VARIABLE_ELEMENTS      (1<<1)
 

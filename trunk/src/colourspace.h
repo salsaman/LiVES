@@ -44,6 +44,7 @@ typedef struct {
   gint irowstrides[4];
   gint orowstrides[4];
   void *dest;
+  void *destp[4];
   boolean in_alpha;
   boolean out_alpha;
   boolean in_clamped;
@@ -62,9 +63,16 @@ void *convert_rgb_to_uyvy_frame_thread(void *data);
 void *convert_bgr_to_uyvy_frame_thread(void *data);
 void *convert_rgb_to_yuyv_frame_thread(void *data);
 void *convert_bgr_to_yuyv_frame_thread(void *data);
+void *convert_argb_to_uyvy_frame_thread(void *data);
+void *convert_argb_to_yuyv_frame_thread(void *data);
+
 
 void *convert_rgb_to_yuv_frame_thread(void *data);
 void *convert_bgr_to_yuv_frame_thread(void *data);
+void *convert_argb_to_yuv_frame_thread(void *data);
+void *convert_rgb_to_yuvp_frame_thread(void *data);
+void *convert_bgr_to_yuvp_frame_thread(void *data);
+void *convert_argb_to_yuvp_frame_thread(void *data);
 
 void *convert_uyvy_to_rgb_frame_thread(void *data);
 void *convert_uyvy_to_bgr_frame_thread(void *data);
@@ -107,6 +115,12 @@ weed_plant_t *weed_layer_copy (weed_plant_t *dlayer, weed_plant_t *slayer);
 void weed_layer_free (weed_plant_t *layer);
 weed_plant_t *weed_layer_new(int width, int height, int *rowstrides, int current_palette);
 int weed_layer_get_palette(weed_plant_t *layer);
+
+cairo_t *layer_to_cairo(weed_plant_t *layer);
+gboolean cairo_to_layer(cairo_t *cairo, weed_plant_t *layer);
+
+void alpha_unpremult(weed_plant_t *layer, boolean un);
+
 
 // palette information functions
 boolean weed_palette_is_valid_palette(int pal);

@@ -58,11 +58,11 @@ libweedincludedir = "$(includedir)/weed"
 
 libweed_ladir = "$(libdir)/weed"
 
-libweed_la_LDFLAGS = -version-info $(WEED_SO_VERSION) --tag=disable-static
+libweed_la_LDFLAGS = -version-info $(WEED_SO_VERSION) -shared --tag=disable-static
 
 libweed_slice_la_CFLAGS = @GLIB_CFLAGS@ 
 
-libweed_slice_la_LDFLAGS = @GLIB_LIBS@ -version-info $(WEED_SO_VERSION) --tag=disable-static
+libweed_slice_la_LDFLAGS = @GLIB_LIBS@ -version-info $(WEED_SO_VERSION) -shared --tag=disable-static
 
 libweed_utils_la_CFLAGS = $(extra_cflags)
 

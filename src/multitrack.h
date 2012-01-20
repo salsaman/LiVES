@@ -292,6 +292,7 @@ struct _mt {
   GtkWidget *fx_ibefore_button;
   GtkWidget *fx_iafter_button;
   GtkWidget *cback_audio;
+  GtkWidget *aload_subs;
   GtkWidget *load_vals;
   GtkWidget *change_vals;
   GtkWidget *aparam_separator;

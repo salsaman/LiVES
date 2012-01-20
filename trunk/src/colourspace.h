@@ -39,6 +39,7 @@ typedef struct {
 
 typedef struct {
   void *src;
+  void *srcp[4];
   gint hsize;
   gint vsize;
   gint irowstrides[4];
@@ -58,42 +59,57 @@ typedef struct {
 } lives_cc_params;
 
 
-// internal thread fns - data points to a lives_cc_params struct
-void *convert_rgb_to_uyvy_frame_thread(void *data);
-void *convert_bgr_to_uyvy_frame_thread(void *data);
-void *convert_rgb_to_yuyv_frame_thread(void *data);
-void *convert_bgr_to_yuyv_frame_thread(void *data);
-void *convert_argb_to_uyvy_frame_thread(void *data);
-void *convert_argb_to_yuyv_frame_thread(void *data);
+// internal thread fns
+void *convert_rgb_to_uyvy_frame_thread(void *cc_params);
+void *convert_bgr_to_uyvy_frame_thread(void *cc_params);
+void *convert_rgb_to_yuyv_frame_thread(void *cc_params);
+void *convert_bgr_to_yuyv_frame_thread(void *cc_params);
+void *convert_argb_to_uyvy_frame_thread(void *cc_params);
+void *convert_argb_to_yuyv_frame_thread(void *cc_params);
 
 
-void *convert_rgb_to_yuv_frame_thread(void *data);
-void *convert_bgr_to_yuv_frame_thread(void *data);
-void *convert_argb_to_yuv_frame_thread(void *data);
-void *convert_rgb_to_yuvp_frame_thread(void *data);
-void *convert_bgr_to_yuvp_frame_thread(void *data);
-void *convert_argb_to_yuvp_frame_thread(void *data);
-
-void *convert_uyvy_to_rgb_frame_thread(void *data);
-void *convert_uyvy_to_bgr_frame_thread(void *data);
-void *convert_yuyv_to_rgb_frame_thread(void *data);
-void *convert_yuyv_to_bgr_frame_thread(void *data);
+void *convert_rgb_to_yuv_frame_thread(void *cc_params);
+void *convert_bgr_to_yuv_frame_thread(void *cc_params);
+void *convert_argb_to_yuv_frame_thread(void *cc_params);
+void *convert_rgb_to_yuvp_frame_thread(void *cc_params);
+void *convert_bgr_to_yuvp_frame_thread(void *cc_params);
+void *convert_argb_to_yuvp_frame_thread(void *cc_params);
 
 
-void *convert_swap3_frame_thread(void *data);
-void *convert_swap4_frame_thread(void *data);
-void *convert_swap3addpost_frame_thread(void *data);
-void *convert_swap3addpre_frame_thread(void *data);
-void *convert_swap3delpost_frame_thread(void *data);
-void *convert_swap3delpre_frame_thread(void *data);
-void *convert_addpre_frame_thread(void *data);
-void *convert_addpost_frame_thread(void *data);
-void *convert_delpre_frame_thread(void *data);
-void *convert_delpost_frame_thread(void *data);
-void *convert_swap3postalpha_frame_thread(void *data);
-void *convert_swapprepost_frame_thread(void *data);
+void *convert_uyvy_to_rgb_frame_thread(void *cc_params);
+void *convert_uyvy_to_bgr_frame_thread(void *cc_params);
+void *convert_uyvy_to_argb_frame_thread(void *cc_params);
+void *convert_yuyv_to_rgb_frame_thread(void *cc_params);
+void *convert_yuyv_to_bgr_frame_thread(void *cc_params);
+void *convert_yuyv_to_argb_frame_thread(void *cc_params);
 
-void *convert_swab_frame_thread(void *data);
+
+void *convert_yuv_planar_to_rgb_frame_thread(void *cc_params);
+void *convert_yuv_planar_to_bgr_frame_thread(void *cc_params);
+void *convert_yuv_planar_to_argb_frame_thread(void *cc_params);
+
+void *convert_yuv888_to_rgb_frame_thread(void *cc_params);
+void *convert_yuv888_to_bgr_frame_thread(void *cc_params);
+void *convert_yuv888_to_argb_frame_thread(void *cc_params);
+void *convert_yuva8888_to_rgba_frame_thread(void *cc_params);
+void *convert_yuva8888_to_bgra_frame_thread(void *cc_params);
+void *convert_yuva8888_to_argb_frame_thread(void *cc_params);
+
+
+void *convert_swap3_frame_thread(void *cc_params);
+void *convert_swap4_frame_thread(void *cc_params);
+void *convert_swap3addpost_frame_thread(void *cc_params);
+void *convert_swap3addpre_frame_thread(void *cc_params);
+void *convert_swap3delpost_frame_thread(void *cc_params);
+void *convert_swap3delpre_frame_thread(void *cc_params);
+void *convert_addpre_frame_thread(void *cc_params);
+void *convert_addpost_frame_thread(void *cc_params);
+void *convert_delpre_frame_thread(void *cc_params);
+void *convert_delpost_frame_thread(void *cc_params);
+void *convert_swap3postalpha_frame_thread(void *cc_params);
+void *convert_swapprepost_frame_thread(void *cc_params);
+
+void *convert_swab_frame_thread(void *cc_params);
 
 
 

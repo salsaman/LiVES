@@ -5528,6 +5528,10 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   gtk_container_add (GTK_CONTAINER (menuitem_menu), mt->load_vals);
   gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mt->load_vals),mt->ignore_load_vals);
 
+  mt->aload_subs = gtk_check_menu_item_new_with_mnemonic (_("Auto load _subtitles with clips"));
+  gtk_container_add (GTK_CONTAINER (menuitem_menu), mt->aload_subs);
+  gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mt->aload_subs),prefs->autoload_subs);
+
   separator = gtk_menu_item_new ();
   gtk_container_add (GTK_CONTAINER (menuitem_menu), separator);
   gtk_widget_set_sensitive (separator, FALSE);
@@ -6660,6 +6664,9 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   g_signal_connect (GTK_OBJECT (mt->load_vals), "activate",
 		    G_CALLBACK (mt_load_vals_toggled),
 		    (gpointer)mt);
+  g_signal_connect (GTK_OBJECT (mt->aload_subs), "activate",
+		    G_CALLBACK (on_boolean_toggled),
+		    &prefs->autoload_subs);
   g_signal_connect (GTK_OBJECT (mt->clipedit), "activate",
 		    G_CALLBACK (multitrack_end_cb),
 		    (gpointer)mt);

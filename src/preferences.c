@@ -1774,11 +1774,15 @@ void on_prefDomainChanged(GtkTreeSelection *widget, gpointer dummy)
     }
   }
 
+#ifdef PREF_FORCE_CENTER
   // this is needed to force the window to update in some cases
   if (GTK_WIDGET_VISIBLE(prefsw->prefs_dialog)) gtk_widget_show_all(prefsw->prefs_dialog);
   gtk_widget_queue_draw(prefsw->prefs_dialog);
   if (dummy==NULL) on_prefDomainChanged(widget,GINT_TO_POINTER(1));
-  
+#endif
+
+  gtk_widget_queue_draw(prefsw->prefs_dialog);
+
 }
 
 /*
@@ -5907,6 +5911,10 @@ _prefsw *create_prefs_dialog (void) {
   g_list_free_strings (audp);
   g_list_free (audp);
 
+#ifndef PREF_FORCE_CENTER
+  on_prefDomainChanged(prefsw->selection,NULL);
+#endif
+
   return prefsw;
 }
 
@@ -5923,11 +5931,13 @@ on_preferences_activate(GtkMenuItem *menuitem, gpointer user_data)
   future_prefs->disabled_decoders=g_list_copy_strings(prefs->disabled_decoders);
 
   prefsw = create_prefs_dialog();
-
-  // need to do exactly this, else the window does not get properly centered on some WMs
   gtk_widget_show(prefsw->prefs_dialog);
+
+#ifdef PREF_FORCE_CENTER
+  // need to do exactly this, else the window does not get properly centered on some WMs
   while (g_main_context_iteration(NULL,FALSE));
   on_prefDomainChanged(prefsw->selection,NULL);
+#endif
 
 }
 

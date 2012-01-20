@@ -7327,6 +7327,20 @@ on_fade_activate               (GtkMenuItem     *menuitem,
 
 
 
+
+void on_showsubs_toggled(GObject *obj, gpointer user_data) {
+  prefs->show_subtitles=!prefs->show_subtitles;
+  if (mainw->current_file>0&&mainw->multitrack==NULL) {
+    if (mainw->play_window!=NULL) {
+      load_preview_image(FALSE);
+    }
+    load_start_image(cfile->start);
+    load_end_image(cfile->end);
+  }
+}
+
+
+
 void on_boolean_toggled(GObject *obj, gpointer user_data) {
   gboolean *ppref=(gboolean *)user_data;
   *ppref=!*ppref;

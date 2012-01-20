@@ -277,6 +277,8 @@ typedef struct {
 
   gint nfx_threads;
 
+  gboolean alpha_post; ///< set to TRUE to force use of post alpha internally
+
   gboolean stream_audio_out;
   gboolean unstable_fx;
   gboolean letterbox; ///< playback with letterbox

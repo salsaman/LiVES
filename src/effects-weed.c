@@ -1315,6 +1315,8 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
   int osubspace=-1;
   int osampling=-1;
   int oclamping=-1;
+  int flags;
+
   weed_plant_t **in_ctmpls;
 
   gboolean def_disabled=FALSE;
@@ -1682,6 +1684,11 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
     nchr=weed_leaf_num_elements(channel,"rowstrides");
     channel_rows=weed_get_int_array(channel,"rowstrides",&error);
 
+    if (weed_plant_has_leaf(layer,"flags")) flags=weed_get_int_value(layer,"flags",&error);
+    else flags=0;
+    if (flags!=0) weed_set_int_value(channel,"flags",flags);
+
+
     // after all resizing and palette conversions, we set the width, height and rowstrides with their final values
 
     width=weed_get_int_value(layer,"width",&error);
@@ -1966,6 +1973,14 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
 			     weed_get_boolean_value(channel,"host_pixel_data_contiguous",&error));
     else if (weed_plant_has_leaf(layer,"host_pixel_data_contiguous")) 
       weed_leaf_delete(layer,"host_pixel_data_contiguous");
+
+    chantmpl=weed_get_plantptr_value(channel,"template",&error);
+
+    if (weed_plant_has_leaf(chantmpl,"flags")) flags=weed_get_int_value(chantmpl,"flags",&error);
+    else flags=0;
+
+    if (flags&WEED_CHANNEL_OUT_ALPHA_PREMULT) weed_set_int_value(layer,"flags",WEED_CHANNEL_ALPHA_PREMULT);
+
 
     weed_set_int_value(layer,"current_palette",weed_get_int_value(channel,"current_palette",&error));
     weed_set_int_value(layer,"width",weed_get_int_value(channel,"width",&error));
@@ -4519,6 +4534,7 @@ weed_plant_t *weed_layer_new_from_generator (weed_plant_t *inst, weed_timecode_t
   weed_process_f process_func;
   int num_channels;
   int error;
+  int flags;
   int palette;
   int filter_flags=0;
   gchar *cwd;
@@ -4577,6 +4593,13 @@ weed_plant_t *weed_layer_new_from_generator (weed_plant_t *inst, weed_timecode_t
 
   lives_chdir(cwd,FALSE);
   g_free(cwd);
+
+  chantmpl=weed_get_plantptr_value(channel,"template",&error);
+
+  if (weed_plant_has_leaf(chantmpl,"flags")) flags=weed_get_int_value(chantmpl,"flags",&error);
+  else flags=0;
+  
+  if (flags&WEED_CHANNEL_OUT_ALPHA_PREMULT) weed_set_int_value(channel,"flags",WEED_CHANNEL_ALPHA_PREMULT);
 
   return channel;
 }

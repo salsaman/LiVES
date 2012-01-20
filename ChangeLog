@@ -4,7 +4,7 @@ Fix external window capture to work with Compiz.
 Minor multitrack GUI fixes.
 Unhide cursor properly after playback (regression).
 Support recording of external audio during playback (in progress).
-
+Fix menu checkbutton for "show subtitles" (regression). *
 
 
 

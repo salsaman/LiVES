@@ -1005,7 +1005,7 @@ create_LiVES (void)
   gtk_widget_show (mainw->letter);
   gtk_container_add (GTK_CONTAINER (menuitem13_menu), mainw->letter);
 
-  gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mainw->showsubs),prefs->letterbox);
+  gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mainw->letter),prefs->letterbox);
 
   effects = gtk_menu_item_new_with_mnemonic (_ ("Effect_s"));
   gtk_widget_show (effects);
@@ -2573,8 +2573,8 @@ create_LiVES (void)
                       G_CALLBACK (on_boolean_toggled),
 		    &mainw->save_with_sound); // TODO - make pref
   g_signal_connect (GTK_OBJECT (mainw->showsubs), "activate",
-                      G_CALLBACK (on_boolean_toggled),
-                      &prefs->show_subtitles);
+                      G_CALLBACK (on_showsubs_toggled),
+                      NULL);
   g_signal_connect (GTK_OBJECT (mainw->letter), "activate",
                       G_CALLBACK (on_boolean_toggled),
                       &prefs->letterbox);

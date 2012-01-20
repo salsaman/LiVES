@@ -1020,8 +1020,9 @@ static void lives_init(_ign_opts *ign_opts) {
 
     prefs->clear_disk_opts=get_int_pref("clear_disk_opts");
 
-    prefs->force_system_clock=FALSE;  /// prefer soundcard timing
+    prefs->force_system_clock=FALSE;  ///< prefer soundcard timing
 
+    prefs->alpha_post=FALSE; ///< allow pre-multiplied alpha internally
     //////////////////////////////////////////////////////////////////
 
     weed_memory_init();
@@ -2887,6 +2888,8 @@ void load_start_image(gint frame) {
   gboolean noswitch=mainw->noswitch;
   LiVESInterpType interp;
 
+  if (!prefs->show_gui) return;
+
   if (mainw->multitrack!=NULL) return;
 
   if (mainw->current_file>-1&&(cfile->clip_type==CLIP_TYPE_YUV4MPEG||cfile->clip_type==CLIP_TYPE_VIDEODEV)) {
@@ -3004,6 +3007,8 @@ void load_end_image(gint frame) {
   gboolean noswitch=mainw->noswitch;
   LiVESInterpType interp;
 
+  if (!prefs->show_gui) return;
+
   if (mainw->multitrack!=NULL) return;
 
   if (mainw->current_file>-1&&(cfile->clip_type==CLIP_TYPE_YUV4MPEG||cfile->clip_type==CLIP_TYPE_VIDEODEV)) {
@@ -3119,6 +3124,8 @@ void load_preview_image(gboolean update_always) {
   // update_always==TRUE = update widgets from mainw->preview_frame
   GdkPixbuf *pixbuf=NULL;
   gint preview_frame;
+
+  if (!prefs->show_gui) return;
 
   if (mainw->current_file>-1&&cfile!=NULL&&(cfile->clip_type==CLIP_TYPE_YUV4MPEG||cfile->clip_type==CLIP_TYPE_VIDEODEV)) {
     if (mainw->camframe==NULL) {
@@ -3331,7 +3338,7 @@ gboolean layer_from_png(FILE *fp, weed_plant_t *layer, gboolean prog) {
   if (prog) png_set_read_status_fn(png_ptr, png_row_callback);
 
 #if PNG_LIBPNG_VER >= 10504
-  //png_set_alpha_mode(png_ptr, PNG_ALPHA_PNG, PNG_DEFAULT_sRGB);
+  png_set_alpha_mode(png_ptr, PNG_ALPHA_STANDARD, PNG_DEFAULT_sRGB);
   png_set_gamma(png_ptr, screen_gamma, 1.0/screen_gamma);
 #else
   png_set_gamma(png_ptr, screen_gamma, 1.0/screen_gamma);
@@ -3358,14 +3365,13 @@ gboolean layer_from_png(FILE *fp, weed_plant_t *layer, gboolean prog) {
        png_set_gray_to_rgb(png_ptr);
 
 
-  if (bit_depth == 16)
+  if (bit_depth == 16) {
 #if PNG_LIBPNG_VER >= 10504
     png_set_scale_16(png_ptr);
 #else
-  png_set_strip_16(png_ptr);
+    png_set_strip_16(png_ptr);
 #endif
-
-  //png_set_expand_16();
+  }
 
   if (color_type != PNG_COLOR_TYPE_RGB_ALPHA && 
       color_type !=PNG_COLOR_TYPE_GRAY_ALPHA ) 
@@ -3387,6 +3393,7 @@ gboolean layer_from_png(FILE *fp, weed_plant_t *layer, gboolean prog) {
   weed_set_int_value(layer,"height",height);
   weed_set_int_value(layer,"rowstrides",*rowstrides);
   weed_set_int_value(layer,"current_palette",WEED_PALETTE_RGBA32);
+
 
   // here we allocate ourselves, instead of calling create_empty_pixel data - in case rowbytes is different
 
@@ -3420,6 +3427,21 @@ gboolean layer_from_png(FILE *fp, weed_plant_t *layer, gboolean prog) {
   png_destroy_read_struct(&png_ptr, &info_ptr,
 			  (png_infopp)NULL);
   
+
+  if (prefs->alpha_post) {
+    // un-premultiply the alpha
+    alpha_unpremult(layer,TRUE);
+  }
+  else {
+    int flags=0,error;
+    if (weed_plant_has_leaf(layer,"flags"))
+      flags=weed_get_int_value(layer,"flags",&error);
+
+    flags|=WEED_CHANNEL_ALPHA_PREMULT;
+    weed_set_int_value(layer,"flags",flags);
+  }
+
+
   return TRUE;
 }
 
@@ -3524,13 +3546,14 @@ static boolean weed_layer_new_from_file_progressive(weed_plant_t *layer,
   mainw->do_not_free=NULL;
   mainw->free_fn=free;
 
+
   return TRUE;
 
 }
 
 
 
-static void render_subs_from_file(file *sfile, double xtime, weed_plant_t *layer) {
+static weed_plant_t *render_subs_from_file(file *sfile, double xtime, weed_plant_t *layer) {
     // render subtitles from whatever (.srt or .sub) file
     // uses default values for colours, fonts, size, etc.
 
@@ -3547,14 +3570,8 @@ static void render_subs_from_file(file *sfile, double xtime, weed_plant_t *layer
     // round to 2 dp
     xtime=(double)((int)(xtime*100.+.5))/100.;
 
-    if (xtime<0.||(sfile->subt->last_time>-1.&&xtime>sfile->subt->last_time)) return;
+    if (xtime<0.||(sfile->subt->last_time>-1.&&xtime>sfile->subt->last_time)) return layer;
 
-    size=weed_get_int_value(layer,"width",&error)/32;
-
-    col_white.red=col_white.green=col_white.blue=col_white.alpha=255;
-    col_black_a.red=col_black_a.green=col_black_a.blue=0;
-    col_black_a.alpha=80;
-    
     switch (sfile->subt->type) {
     case SUBTITLE_TYPE_SRT:
       get_srt_text(sfile,xtime);
@@ -3563,15 +3580,26 @@ static void render_subs_from_file(file *sfile, double xtime, weed_plant_t *layer
       get_sub_text(sfile,xtime);
       break;
     default:
-      return;
+      return layer;
     }
 
+    /////////// use plugin //////////////
+
+    size=weed_get_int_value(layer,"width",&error)/32;
+
+    col_white.red=col_white.green=col_white.blue=col_white.alpha=255;
+    col_black_a.red=col_black_a.green=col_black_a.blue=0;
+    col_black_a.alpha=80;
+    
     if (sfile->subt->text!=NULL) {
       gchar *tmp;
-      render_text_to_layer(layer,(tmp=g_strdup_printf(" %s ",sfile->subt->text)),sfont,size,
-			   LIVES_TEXT_MODE_FOREGROUND_AND_BACKGROUND,&col_white,&col_black_a,TRUE,TRUE,0);
+      layer=render_text_to_layer(layer,(tmp=g_strdup_printf(" %s ",sfile->subt->text)),sfont,size,
+				 LIVES_TEXT_MODE_FOREGROUND_AND_BACKGROUND,&col_white,&col_black_a,TRUE,TRUE,0);
       g_free(tmp);
     }
+
+
+    return layer;
 }
 
 
@@ -3683,18 +3711,8 @@ gboolean pull_frame_at_size (weed_plant_t *layer, const gchar *image_ext, weed_t
 
         // render subtitles from file
 	if (prefs->show_subtitles&&sfile->subt!=NULL&&sfile->subt->tfile!=NULL) {
-	  double xtime;
-	  int palette=dplug->cdata->current_palette;
-
-	  // convert to RGB(A) or leave as BGR(A)
-	  if (palette!=WEED_PALETTE_RGB24&&palette!=WEED_PALETTE_RGBA32&&
-	      palette!=WEED_PALETTE_BGR24&&palette!=WEED_PALETTE_BGRA32) 
-	    convert_layer_palette(layer,weed_palette_has_alpha_channel(palette)?
-				  WEED_PALETTE_RGB24:WEED_PALETTE_RGBA32,0);
-	  
-	  // TODO - alpha channel will be lost
-	  xtime=(double)(frame-1)/sfile->fps;
-	  render_subs_from_file(sfile,xtime,layer);
+	  double xtime=(double)(frame-1)/sfile->fps;
+	  layer=render_subs_from_file(sfile,xtime,layer);
 	}
 
 
@@ -3753,8 +3771,7 @@ gboolean pull_frame_at_size (weed_plant_t *layer, const gchar *image_ext, weed_t
   // render subtitles from file
   if (prefs->show_subtitles&&sfile->subt!=NULL&&sfile->subt->tfile!=NULL) {
     double xtime=(double)(frame-1)/sfile->fps;
-    // TODO - alpha channel will be lost
-    render_subs_from_file(sfile,xtime,layer);
+    layer=render_subs_from_file(sfile,xtime,layer);
   }
 
   return TRUE;

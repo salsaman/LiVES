@@ -1,12 +1,13 @@
 Version 1.6.1
 -------------
 Fix external window capture to work with Compiz.
-Minor multitrack GUI fixes.
-Unhide cursor properly after playback (regression).
+Minor GUI fixes.
 Support recording of external audio during playback (in progress).
 Fix menu checkbutton for "show subtitles" (regression). *
 Tweak pulseaudio settings for improved playback.
 Fix floating point fps bug for mkv decoder. *
+Prevent clip names getting squashed in sets. *
+
 
 
 

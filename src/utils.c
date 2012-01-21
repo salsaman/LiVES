@@ -3386,7 +3386,6 @@ gchar *get_val_from_cached_list(const gchar *key, size_t maxlen) {
   while (clist!=NULL) {
     if (gotit) {
       if (!strncmp(keystr_end,(gchar *)clist->data,kelen)) {
-	if (clist->prev!=NULL) clist->prev->next=clist->next;
 	break;
       }
       if (strncmp((gchar *)clist->data,"#",1)) g_strappend(buff,maxlen,(gchar *)clist->data);
@@ -3396,7 +3395,6 @@ gchar *get_val_from_cached_list(const gchar *key, size_t maxlen) {
     }
     else if (!strncmp(keystr_start,(gchar *)clist->data,kslen)) {
       gotit=TRUE;
-      if (clist->prev!=NULL) clist->prev->next=clist->next;
     }
     clist=clist->next;
   }

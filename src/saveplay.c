@@ -3764,8 +3764,12 @@ gboolean read_headers(const gchar *file_name) {
 	  retval=get_clip_value(mainw->current_file,detail,&cfile->vsize,0);
 	}
 	if (retval) {
+	  detail=CLIP_DETAILS_CLIPNAME;
+	  get_clip_value(mainw->current_file,detail,cfile->name,256);
+	}
+	if (retval) {
 	  detail=CLIP_DETAILS_FILENAME;
-	  get_clip_value(mainw->current_file,detail,cfile->file_name,256);
+	  get_clip_value(mainw->current_file,detail,cfile->file_name,PATH_MAX);
 	}
 
 	if (retval) {
@@ -4007,6 +4011,7 @@ void open_set_file (const gchar *set_name, gint clipnum) {
     if (!retval) {
       cfile->frameno=1;
     }
+
     retval=get_clip_value(mainw->current_file,CLIP_DETAILS_CLIPNAME,name,256);
     if (!retval) {
       g_snprintf(name,256,_ ("Untitled%d"),mainw->untitled_number++);

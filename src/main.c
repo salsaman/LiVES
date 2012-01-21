@@ -2919,7 +2919,7 @@ void load_start_image(gint frame) {
 
   tc=((frame-1.))/cfile->fps*U_SECL;
 
-  if (!prefs->ce_maxspect||mainw->double_size) {
+  if (!prefs->ce_maxspect||(mainw->double_size&&mainw->playing_file>-1)) {
     threaded_dialog_spin();
     layer=weed_plant_new(WEED_PLANT_CHANNEL);
     weed_set_int_value(layer,"clip",mainw->current_file);
@@ -3039,7 +3039,7 @@ void load_end_image(gint frame) {
 
   tc=((frame-1.))/cfile->fps*U_SECL;
 
-  if (!prefs->ce_maxspect||mainw->double_size) {
+  if (!prefs->ce_maxspect||(mainw->double_size&&mainw->playing_file>-1)) {
     threaded_dialog_spin();
     layer=weed_plant_new(WEED_PLANT_CHANNEL);
     weed_set_int_value(layer,"clip",mainw->current_file);

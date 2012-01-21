@@ -2338,14 +2338,15 @@ GdkPixbuf *pixbuf;
     gdk_pixmap_unref (mask);
   }
 #endif 
-
- gdk_window_set_cursor (window, hidden_cursor);
+  if (GDK_IS_WINDOW(window))
+    gdk_window_set_cursor (window, hidden_cursor);
 }
 
 
 void 
 unhide_cursor(GdkWindow *window) {
-  gdk_window_set_cursor(window,NULL);
+  if (GDK_IS_WINDOW(window))
+    gdk_window_set_cursor(window,NULL);
 }
 
 
@@ -3190,11 +3191,13 @@ void lives_set_cursor_style(lives_cursor_t cstyle, GdkWindow *window) {
 
   switch(cstyle) {
   case LIVES_CURSOR_NORMAL:
-    gdk_window_set_cursor (window, NULL);
+    if (GDK_IS_WINDOW(window))
+      gdk_window_set_cursor (window, NULL);
     return;
   case LIVES_CURSOR_BUSY:
     mainw->cursor=gdk_cursor_new(GDK_WATCH);
-    gdk_window_set_cursor (window, mainw->cursor);
+    if (GDK_IS_WINDOW(window))
+      gdk_window_set_cursor (window, mainw->cursor);
     return;
   default:
     return;

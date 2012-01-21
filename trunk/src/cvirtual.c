@@ -174,7 +174,7 @@ void del_frame_index(file *sfile) {
 
 gboolean check_clip_integrity(file *sfile, const lives_clip_data_t *cdata) {
   int i;
-  lives_image_type_t empirical_img_type;
+  lives_image_type_t empirical_img_type=sfile->img_type;
 
   // check clip integrity upon loading
 
@@ -197,14 +197,17 @@ gboolean check_clip_integrity(file *sfile, const lives_clip_data_t *cdata) {
     }
   }
 
+  if (sfile->fps!=cdata->fps) goto mismatch;
 
-  if (sfile->img_type==empirical_img_type);
+  if (sfile->img_type!=empirical_img_type) goto mismatch;
+
   // and all else are equal
-
   return TRUE;
 
-  // something mismatched - trust the disk version
+ mismatch:
+  sfile->fps=sfile->pb_fps=cdata->fps;
 
+  // something mismatched - trust the disk version
   sfile->img_type=empirical_img_type;
 
   return FALSE;

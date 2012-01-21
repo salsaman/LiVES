@@ -38,7 +38,7 @@
 #include <stdlib.h>
 #include <sys/stat.h>
 
-const char *plugin_version="LiVES mkv decoder version 1.0";
+const char *plugin_version="LiVES mkv decoder version 1.1";
 
 #ifdef HAVE_AV_CONFIG_H
 #undef HAVE_AV_CONFIG_H

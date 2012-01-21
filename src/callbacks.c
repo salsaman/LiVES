@@ -5128,9 +5128,10 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
 	  }
 	  next=TRUE;
 	}
-
-	if (!check_clip_integrity(cfile,cdata)) {
-	  needs_update=TRUE;
+	else {
+	  if (!check_clip_integrity(cfile,cdata)) {
+	    needs_update=TRUE;
+	  }
 	}
 
 	if (needs_update) {
@@ -5144,6 +5145,8 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
       if (next) {
 	g_free(cfile);
 	mainw->first_free_file=mainw->current_file;
+	if (mainw->current_file>1) mainw->current_file--;
+	else mainw->current_file=-1;
 	continue;
       }
       cfile->clip_type=CLIP_TYPE_FILE;

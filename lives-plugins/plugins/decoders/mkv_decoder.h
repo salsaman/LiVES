@@ -584,8 +584,6 @@ typedef struct {
     /* What to skip before effectively reading a packet. */
     int skip_to_keyframe;
     uint64_t skip_to_timecode;
-
-    /* File has a CUES element, but we defer parsing until it is needed. */
     int cues_parsing_deferred;
 } MatroskaDemuxContext;
 

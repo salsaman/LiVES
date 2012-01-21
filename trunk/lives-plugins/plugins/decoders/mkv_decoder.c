@@ -38,7 +38,7 @@
 #include <stdlib.h>
 #include <sys/stat.h>
 
-const char *plugin_version="LiVES mkv decoder version 1.1";
+const char *plugin_version="LiVES mkv decoder version 1.2";
 
 #ifdef HAVE_AV_CONFIG_H
 #undef HAVE_AV_CONFIG_H
@@ -1010,6 +1010,7 @@ static void matroska_execute_seekhead(const lives_clip_data_t *cdata) {
       (matroska->ctx->flags & AVFMT_FLAG_IGNIDX))
       return;*/
 
+
   for (i = 0; i < seekhead_list->nb_elem; i++) {
     if (seekhead[i].pos <= before_pos)
       continue;
@@ -1023,6 +1024,7 @@ static void matroska_execute_seekhead(const lives_clip_data_t *cdata) {
     if (matroska_parse_seekhead_entry(cdata, i) < 0)
       break;
   }
+
 
 }
 
@@ -1553,7 +1555,6 @@ static int lives_mkv_read_header(lives_clip_data_t *cdata) {
     fprintf(stderr,"mkv_decoder: no video stream found\n");
     return -5;
   }
-
 
   /* Parse the CUES now since we need the index data to seek. */
   if (priv->matroska.cues_parsing_deferred) {

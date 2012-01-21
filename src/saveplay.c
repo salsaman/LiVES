@@ -399,7 +399,7 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
 
 	cfile->fps=cfile->pb_fps=cdata->fps;
 	d_print("\n");
-	
+
 	if (cfile->achans==0&&capable->has_mplayer&&withsound==1) {
 
 	  mainw->com_failed=FALSE;
@@ -5056,11 +5056,7 @@ static gboolean recover_files(gchar *recovery_file, gboolean auto_recover) {
       }
 
       if (cfile->ext_src!=NULL) {
-	if (!check_clip_integrity(cfile,cdata)) {
-	  g_free(cfile);
-	  mainw->first_free_file=mainw->current_file;
-	  continue;
-	}
+	check_clip_integrity(cfile,cdata);
       }
       else {
 	if (is_scrap||!check_frame_count(mainw->current_file)) get_frame_count(mainw->current_file);

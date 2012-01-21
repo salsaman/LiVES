@@ -5129,9 +5129,12 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
 	  next=TRUE;
 	}
 
+	if (!check_clip_integrity(cfile,cdata)) {
+	  needs_update=TRUE;
+	}
+
 	if (needs_update) {
-	  save_clip_value(mainw->current_file,CLIP_DETAILS_FILENAME,cfile->file_name);
-	  if (mainw->com_failed||mainw->write_failed) do_header_write_error(mainw->current_file);
+	  save_clip_values(mainw->current_file);
 	}
 
 	break;
@@ -5145,14 +5148,6 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
       }
       cfile->clip_type=CLIP_TYPE_FILE;
       get_mime_type(cfile->type,40,cdata);
-    }
-
-    if (cfile->ext_src!=NULL) {
-      if (!check_clip_integrity(cfile,cdata)) {
-	g_free(cfile);
-	mainw->first_free_file=mainw->current_file;
-	continue;
-      }
     }
     else {
       if (!check_frame_count(mainw->current_file)) get_frame_count(mainw->current_file);

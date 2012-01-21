@@ -8128,7 +8128,8 @@ void alpha_unpremult(weed_plant_t *layer, boolean un) {
   if (!un) flags|=WEED_CHANNEL_ALPHA_PREMULT;
   else if (flags&WEED_CHANNEL_ALPHA_PREMULT) flags^=WEED_CHANNEL_ALPHA_PREMULT;
 
-  weed_set_int_value(layer,"flags",flags);
+  if (flags==0) weed_leaf_delete(layer,"flags");
+  else weed_set_int_value(layer,"flags",flags);
 }
 
 
@@ -8168,7 +8169,7 @@ gboolean convert_layer_palette_full(weed_plant_t *layer, int outpl, int osamtype
 
   guchar *gusrc=NULL,**gusrc_array=NULL,*gudest,**gudest_array,*tmp;
   int width,height,orowstride,irowstride;
-  int error,inpl,flags;
+  int error,inpl,flags=0;
   int isamtype,isubspace;
   gboolean iclamped,contig=FALSE;
 
@@ -8230,12 +8231,27 @@ gboolean convert_layer_palette_full(weed_plant_t *layer, int outpl, int osamtype
     }
   }
 
-  flags=weed_get_int_value(layer,"flags",&error);
+  if (weed_plant_has_leaf(layer,"flags"))
+    flags=weed_get_int_value(layer,"flags",&error);
 
-  if (prefs->alpha_post && (flags&WEED_CHANNEL_ALPHA_PREMULT) && 
-      (weed_palette_has_alpha_channel(inpl)&&!(weed_palette_has_alpha_channel(outpl)))) {
-    // if we have pre-multiplied alpha, remove it when removing alpha channel
-    alpha_unpremult(layer,TRUE);
+  if (prefs->alpha_post) {
+    if ((flags&WEED_CHANNEL_ALPHA_PREMULT) && 
+	(weed_palette_has_alpha_channel(inpl)&&!(weed_palette_has_alpha_channel(outpl)))) {
+      // if we have pre-multiplied alpha, remove it when removing alpha channel
+      alpha_unpremult(layer,TRUE);
+    }
+  }
+  else {
+    if (!weed_palette_has_alpha_channel(inpl)&&weed_palette_has_alpha_channel(outpl)) {
+      flags|=WEED_CHANNEL_ALPHA_PREMULT;
+      weed_set_int_value(layer,"flags",flags);
+    }
+  }
+
+  if (weed_palette_has_alpha_channel(inpl)&&!(weed_palette_has_alpha_channel(outpl))&&(flags&WEED_CHANNEL_ALPHA_PREMULT)) {
+    flags^=WEED_CHANNEL_ALPHA_PREMULT;
+    if (flags==0) weed_leaf_delete(layer,"flags");
+    else weed_set_int_value(layer,"flags",flags);
   }
 
   if (weed_plant_has_leaf(layer,"host_pixel_data_contiguous") && 
@@ -10722,7 +10738,7 @@ boolean pixbuf_to_layer(weed_plant_t *layer, LiVESPixbuf *pixbuf) {
 //////////////////////////////////////
 // TODO - move into layers.c
 
-
+#ifdef GUI_GTK
 
 cairo_t *layer_to_cairo(weed_plant_t *layer) {
   // convert a weed layer to cairo
@@ -10732,8 +10748,8 @@ cairo_t *layer_to_cairo(weed_plant_t *layer) {
   // "width","rowstrides" and "current_palette" of layer may all change
 
   int irowstride,orowstride;
-  int width,width4;
-  int height,inpl;
+  int width,widthx;
+  int height,pal;
   int error;
 
   register int i;
@@ -10742,24 +10758,37 @@ cairo_t *layer_to_cairo(weed_plant_t *layer) {
 
   cairo_surface_t *surf;
   cairo_t *cairo;
+  cairo_format_t cform;
 
-  inpl=weed_get_int_value(layer,"current_palette",&error);
-
-  if (capable->byte_order==G_BIG_ENDIAN) {
-    convert_layer_palette(layer,WEED_PALETTE_ARGB32,0);
+  pal=weed_get_int_value(layer,"current_palette",&error);
+  if (pal==WEED_PALETTE_A8) {
+    cform=CAIRO_FORMAT_A8;
+    widthx=width;
+  }
+  else if (pal==WEED_PALETTE_A1) {
+    cform=CAIRO_FORMAT_A1;
+    widthx=width>>3;
   }
   else {
-    convert_layer_palette(layer,WEED_PALETTE_BGRA32,0);
+    if (capable->byte_order==G_BIG_ENDIAN) {
+      convert_layer_palette(layer,WEED_PALETTE_ARGB32,0);
+    }
+    else {
+      convert_layer_palette(layer,WEED_PALETTE_BGRA32,0);
+    }
+    cform=CAIRO_FORMAT_ARGB32;
+    widthx=width<<2;
   }
 
   width=weed_get_int_value(layer,"width",&error);
-  width4=width<<2;
+
 
   height=weed_get_int_value(layer,"height",&error);
 
   irowstride=weed_get_int_value(layer,"rowstrides",&error);
 
-  orowstride=cairo_format_stride_for_width(CAIRO_FORMAT_ARGB32, width);
+  orowstride=cairo_format_stride_for_width(cform,width);
+
   orig_pixel_data=src=(guchar *)weed_get_voidptr_value(layer,"pixel_data",&error);
 
   if (irowstride==orowstride) {
@@ -10769,8 +10798,8 @@ cairo_t *layer_to_cairo(weed_plant_t *layer) {
     dst=pixel_data=(guchar *)g_try_malloc(height*orowstride);
     if (pixel_data==NULL) return NULL;
     for (i=0;i<height;i++) {
-      w_memcpy(dst,src,width4);
-      memset(dst+width4,0,width4-orowstride);
+      w_memcpy(dst,src,widthx);
+      memset(dst+widthx,0,widthx-orowstride);
       dst+=orowstride;
       src+=irowstride;
     }
@@ -10779,7 +10808,7 @@ cairo_t *layer_to_cairo(weed_plant_t *layer) {
     weed_set_int_value(layer,"rowstrides",orowstride);
   }
 
-  if (weed_palette_has_alpha_channel(inpl)) {
+  if (cform==CAIRO_FORMAT_ARGB32 && weed_palette_has_alpha_channel(pal)) {
     int flags=0;
     if (weed_plant_has_leaf(layer,"flags")) flags=weed_get_int_value(layer,"flags",&error);
     if (!(flags&WEED_CHANNEL_ALPHA_PREMULT)) {
@@ -10791,11 +10820,13 @@ cairo_t *layer_to_cairo(weed_plant_t *layer) {
   }
 
   surf=cairo_image_surface_create_for_data(pixel_data,
-					   CAIRO_FORMAT_ARGB32, 
+					   cform, 
 					   width, height,
 					   orowstride);
+
   cairo=cairo_create(surf);
   cairo_surface_destroy(surf);
+
 
   return cairo;
 }
@@ -10855,7 +10886,7 @@ gboolean cairo_to_layer(cairo_t *cairo, weed_plant_t *layer) {
   return TRUE;
 }
 
-
+#endif
 
 weed_plant_t *weed_layer_new(int width, int height, int *rowstrides, int current_palette) {
   weed_plant_t *layer=weed_plant_new(WEED_PLANT_CHANNEL);

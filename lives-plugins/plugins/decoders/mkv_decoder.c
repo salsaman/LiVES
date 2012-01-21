@@ -1525,7 +1525,7 @@ static int lives_mkv_read_header(lives_clip_data_t *cdata) {
       if (track->default_duration)
 	st->avg_frame_rate = av_d2q(1000000000.0/track->default_duration, INT_MAX);
 
-      if (cdata->fps==0.) cdata->fps=st->avg_frame_rate.num/st->avg_frame_rate.den;
+      if (cdata->fps==0.) cdata->fps=(float)st->avg_frame_rate.num/(float)st->avg_frame_rate.den;
 
       /*
 	if (track->video.stereo_mode && track->video.stereo_mode < MATROSKA_VIDEO_STEREO_MODE_COUNT)
@@ -2575,7 +2575,6 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
       idx=matroska_read_seek(cdata,target_pts);
       nextframe=dts_to_frame(cdata,idx->dts);
       avcodec_flush_buffers (priv->ctx);
-
 #ifdef DEBUG_KFRAMES
       if (idx!=NULL) printf("got kframe %ld for frame %ld\n",dts_to_frame(cdata,idx->dts),tframe);
 #endif
@@ -2589,6 +2588,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
     priv->last_frame=tframe;
 
     // do this until we reach target frame //////////////
+
 
     do {
 
@@ -2614,6 +2614,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
       }
 
       nextframe++;
+
       if (nextframe>cdata->nframes) return FALSE;
     } while (nextframe<=tframe);
 

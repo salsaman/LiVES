@@ -5,6 +5,9 @@ Minor multitrack GUI fixes.
 Unhide cursor properly after playback (regression).
 Support recording of external audio during playback (in progress).
 Fix menu checkbutton for "show subtitles" (regression). *
+Tweak pulseaudio settings for improved playback.
+Fix floating point fps bug for mkv decoder. *
+
 
 
 

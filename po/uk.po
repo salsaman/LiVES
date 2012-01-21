@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2012-01-21 01:41-0300\n"
+"POT-Creation-Date: 2012-01-21 02:58-0300\n"
 "PO-Revision-Date: 2012-01-09 21:24+0000\n"
 "Last-Translator: yurchor <Unknown>\n"
 "Language-Team: Ukrainian <translation@linux.org.ua>\n"
@@ -4418,7 +4418,7 @@ msgstr ""
 msgid "Unknown"
 msgstr "Невідомо"
 
-#: src/saveplay.c:3069 src/saveplay.c:4012
+#: src/saveplay.c:3069 src/saveplay.c:4017
 #, c-format
 msgid "Untitled%d"
 msgstr "Без_назви%d"
@@ -4464,7 +4464,7 @@ msgstr ""
 "%.3f\n"
 "Звукові дані:"
 
-#: src/saveplay.c:3222 src/saveplay.c:4184
+#: src/saveplay.c:3222 src/saveplay.c:4189
 #, c-format
 msgid ""
 "Frames=%d type=%s size=%dx%d bpp=%d fps=%.3f\n"
@@ -4473,12 +4473,12 @@ msgstr ""
 "Кадрів=%d тип=%s розмір=%dx%d глибина кольорів=%d частота кадрів=%.3f\n"
 "Звукові дані:"
 
-#: src/saveplay.c:3226 src/saveplay.c:4188
+#: src/saveplay.c:3226 src/saveplay.c:4193
 #, c-format
 msgid "%s none\n"
 msgstr "%s немає\n"
 
-#: src/saveplay.c:3229 src/saveplay.c:4191
+#: src/saveplay.c:3229 src/saveplay.c:4196
 #, c-format
 msgid "%s %d Hz %d channel(s) %d bps\n"
 msgstr "%s %d Гц %d каналів %d б/с\n"
@@ -4506,16 +4506,16 @@ msgstr "Створення резервної копії"
 msgid "performance data was backed up..."
 msgstr "було створено резервну копію записаних даних…"
 
-#: src/saveplay.c:4087
+#: src/saveplay.c:4092
 #, c-format
 msgid "Restoring %s..."
 msgstr "Відновлення %s…"
 
-#: src/saveplay.c:4114
+#: src/saveplay.c:4119
 msgid "Restoring"
 msgstr "Відновлення"
 
-#: src/saveplay.c:4136
+#: src/saveplay.c:4141
 #, c-format
 msgid ""
 "\n"
@@ -4529,22 +4529,22 @@ msgstr ""
 "LiVES не вдалося відновити їх.\n"
 
 #. TRANSLATORS: rec(ord) %.2f M(ega)B(ytes)
-#: src/saveplay.c:4645
+#: src/saveplay.c:4650
 #, c-format
 msgid "rec %.2f MB"
 msgstr "зап %.2f МБ"
 
-#: src/saveplay.c:4651
+#: src/saveplay.c:4656
 #, c-format
 msgid "!rec %.2f MB"
 msgstr "!зап %.2f МБ"
 
 #. TRANSLATORS: rec(ord) ?? M(ega)B(ytes)
-#: src/saveplay.c:4654
+#: src/saveplay.c:4659
 msgid "rec ?? MB"
 msgstr "зап. ?? МБ"
 
-#: src/saveplay.c:4679
+#: src/saveplay.c:4684
 #, c-format
 msgid ""
 "\n"
@@ -4557,7 +4557,7 @@ msgstr ""
 "Параметри призупинки запису можна встановити за допомогою діалогового вікна "
 "«Параметри».\n"
 
-#: src/saveplay.c:4823
+#: src/saveplay.c:4828
 msgid ""
 "\n"
 "Files from a previous run of LiVES were found.\n"
@@ -4567,11 +4567,11 @@ msgstr ""
 "Було знайдено файли від попереднього запуску LiVES.\n"
 "Бажаєте, щоб програма спробувала їх відновити?\n"
 
-#: src/saveplay.c:4843
+#: src/saveplay.c:4848
 msgid "Recovering files"
 msgstr "Відновлення файлів"
 
-#: src/saveplay.c:4845
+#: src/saveplay.c:4850
 msgid "Recovering files..."
 msgstr "Відновлення файлів…"
 

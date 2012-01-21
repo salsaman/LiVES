@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2012-01-21 01:41-0300\n"
+"POT-Creation-Date: 2012-01-21 02:58-0300\n"
 "PO-Revision-Date: 2011-11-01 11:47+0000\n"
 "Last-Translator: milboy <Unknown>\n"
 "Language-Team: Slovak <sk@li.org>\n"
@@ -4293,7 +4293,7 @@ msgstr ""
 msgid "Unknown"
 msgstr "Neznáme"
 
-#: src/saveplay.c:3069 src/saveplay.c:4012
+#: src/saveplay.c:3069 src/saveplay.c:4017
 #, c-format
 msgid "Untitled%d"
 msgstr "Bez názvu %d"
@@ -4335,7 +4335,7 @@ msgstr ""
 "%.3f\n"
 "Zvuk:"
 
-#: src/saveplay.c:3222 src/saveplay.c:4184
+#: src/saveplay.c:3222 src/saveplay.c:4189
 #, c-format
 msgid ""
 "Frames=%d type=%s size=%dx%d bpp=%d fps=%.3f\n"
@@ -4344,12 +4344,12 @@ msgstr ""
 "Snímky=%d typ=%s veľkosť=%dx%d bpp=%d snímkov za sekundu =%.3f\n"
 "Zvuk:"
 
-#: src/saveplay.c:3226 src/saveplay.c:4188
+#: src/saveplay.c:3226 src/saveplay.c:4193
 #, c-format
 msgid "%s none\n"
 msgstr "%s žiadny\n"
 
-#: src/saveplay.c:3229 src/saveplay.c:4191
+#: src/saveplay.c:3229 src/saveplay.c:4196
 #, c-format
 msgid "%s %d Hz %d channel(s) %d bps\n"
 msgstr "%s %d Hz %d kanál(ov) %d bps\n"
@@ -4377,16 +4377,16 @@ msgstr "Zálohujem"
 msgid "performance data was backed up..."
 msgstr "dáta boli zálohované..."
 
-#: src/saveplay.c:4087
+#: src/saveplay.c:4092
 #, c-format
 msgid "Restoring %s..."
 msgstr "Obnovovanie %s..."
 
-#: src/saveplay.c:4114
+#: src/saveplay.c:4119
 msgid "Restoring"
 msgstr "Obnovovanie"
 
-#: src/saveplay.c:4136
+#: src/saveplay.c:4141
 #, c-format
 msgid ""
 "\n"
@@ -4400,23 +4400,23 @@ msgstr ""
 "LiVES ho nemohol obnoviť.\n"
 
 #. TRANSLATORS: rec(ord) %.2f M(ega)B(ytes)
-#: src/saveplay.c:4645
+#: src/saveplay.c:4650
 #, c-format
 msgid "rec %.2f MB"
 msgstr "rec %.2f MB"
 
-#: src/saveplay.c:4651
+#: src/saveplay.c:4656
 #, c-format
 msgid "!rec %.2f MB"
 msgstr "!rec %.2f MB"
 
 #. TRANSLATORS: rec(ord) ?? M(ega)B(ytes)
-#: src/saveplay.c:4654
+#: src/saveplay.c:4659
 #, fuzzy
 msgid "rec ?? MB"
 msgstr "rec %.2f MB"
 
-#: src/saveplay.c:4679
+#: src/saveplay.c:4684
 #, c-format
 msgid ""
 "\n"
@@ -4424,7 +4424,7 @@ msgid ""
 "Record stop level can be set in Preferences.\n"
 msgstr ""
 
-#: src/saveplay.c:4823
+#: src/saveplay.c:4828
 msgid ""
 "\n"
 "Files from a previous run of LiVES were found.\n"
@@ -4434,11 +4434,11 @@ msgstr ""
 "Byly nájdené súbory z predchádzajúceho spustenia LiVES.\n"
 "Chcete sa pokúsit se o ich obnovenie ?\n"
 
-#: src/saveplay.c:4843
+#: src/saveplay.c:4848
 msgid "Recovering files"
 msgstr "Obnovujem súbory"
 
-#: src/saveplay.c:4845
+#: src/saveplay.c:4850
 msgid "Recovering files..."
 msgstr "Obnovenie súborov ..."
 

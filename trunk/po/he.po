@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2012-01-21 01:41-0300\n"
+"POT-Creation-Date: 2012-01-21 02:58-0300\n"
 "PO-Revision-Date: 2011-08-18 12:10+0000\n"
 "Last-Translator: salsaman <salsaman@gmail.com>\n"
 "Language-Team: Hebrew <he@li.org>\n"
@@ -4299,7 +4299,7 @@ msgstr ""
 msgid "Unknown"
 msgstr "לא ידוע"
 
-#: src/saveplay.c:3069 src/saveplay.c:4012
+#: src/saveplay.c:3069 src/saveplay.c:4017
 #, c-format
 msgid "Untitled%d"
 msgstr "חסר כותרת%d"
@@ -4338,7 +4338,7 @@ msgstr ""
 "%.3f\n"
 "שמע:"
 
-#: src/saveplay.c:3222 src/saveplay.c:4184
+#: src/saveplay.c:3222 src/saveplay.c:4189
 #, c-format
 msgid ""
 "Frames=%d type=%s size=%dx%d bpp=%d fps=%.3f\n"
@@ -4347,12 +4347,12 @@ msgstr ""
 "שקופיות=%d סוג=%s גודל=%dx%d סיביות לפיקסל=%d שקופיות לשנייה=%.3f\n"
 "שמע:"
 
-#: src/saveplay.c:3226 src/saveplay.c:4188
+#: src/saveplay.c:3226 src/saveplay.c:4193
 #, c-format
 msgid "%s none\n"
 msgstr "ללא %s\n"
 
-#: src/saveplay.c:3229 src/saveplay.c:4191
+#: src/saveplay.c:3229 src/saveplay.c:4196
 #, c-format
 msgid "%s %d Hz %d channel(s) %d bps\n"
 msgstr "%s %d Hz %d ערוצים %d סיביות לפיקסל\n"
@@ -4380,16 +4380,16 @@ msgstr "מגבה"
 msgid "performance data was backed up..."
 msgstr "נתוני הביצועים גובו..."
 
-#: src/saveplay.c:4087
+#: src/saveplay.c:4092
 #, c-format
 msgid "Restoring %s..."
 msgstr "משחזר את %s..."
 
-#: src/saveplay.c:4114
+#: src/saveplay.c:4119
 msgid "Restoring"
 msgstr "משחזר"
 
-#: src/saveplay.c:4136
+#: src/saveplay.c:4141
 #, c-format
 msgid ""
 "\n"
@@ -4403,23 +4403,23 @@ msgstr ""
 "לא הייתה אפשרות לשחזרו.\n"
 
 #. TRANSLATORS: rec(ord) %.2f M(ega)B(ytes)
-#: src/saveplay.c:4645
+#: src/saveplay.c:4650
 #, c-format
 msgid "rec %.2f MB"
 msgstr "הקלטה %.2f מ\"ב"
 
-#: src/saveplay.c:4651
+#: src/saveplay.c:4656
 #, c-format
 msgid "!rec %.2f MB"
 msgstr "!הקלטה %.2f מ\"ב"
 
 #. TRANSLATORS: rec(ord) ?? M(ega)B(ytes)
-#: src/saveplay.c:4654
+#: src/saveplay.c:4659
 #, fuzzy
 msgid "rec ?? MB"
 msgstr "הקלטה %.2f מ\"ב"
 
-#: src/saveplay.c:4679
+#: src/saveplay.c:4684
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -4430,7 +4430,7 @@ msgstr ""
 "ההקלטה הושהתה מכיוון שהשטח הפנוי בכונן הינו מתחת ל־%ld ג\"ב !\n"
 "ניתן לקבוע את השלב שבו ההקלטה נעצרת בהעדפות.\n"
 
-#: src/saveplay.c:4823
+#: src/saveplay.c:4828
 msgid ""
 "\n"
 "Files from a previous run of LiVES were found.\n"
@@ -4440,11 +4440,11 @@ msgstr ""
 "נמצאו קבצים מהרצה קודמת של LiVES.\n"
 "האם ברצונך לשחזרם ?\n"
 
-#: src/saveplay.c:4843
+#: src/saveplay.c:4848
 msgid "Recovering files"
 msgstr "משחזר קבצים"
 
-#: src/saveplay.c:4845
+#: src/saveplay.c:4850
 msgid "Recovering files..."
 msgstr "משחזר קבצים..."
 

@@ -10760,6 +10760,9 @@ cairo_t *layer_to_cairo(weed_plant_t *layer) {
   cairo_t *cairo;
   cairo_format_t cform;
 
+
+  width=weed_get_int_value(layer,"width",&error);
+
   pal=weed_get_int_value(layer,"current_palette",&error);
   if (pal==WEED_PALETTE_A8) {
     cform=CAIRO_FORMAT_A8;
@@ -10779,9 +10782,6 @@ cairo_t *layer_to_cairo(weed_plant_t *layer) {
     cform=CAIRO_FORMAT_ARGB32;
     widthx=width<<2;
   }
-
-  width=weed_get_int_value(layer,"width",&error);
-
 
   height=weed_get_int_value(layer,"height",&error);
 

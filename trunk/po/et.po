@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2012-01-21 01:41-0300\n"
+"POT-Creation-Date: 2012-01-21 02:58-0300\n"
 "PO-Revision-Date: 2011-08-18 12:02+0000\n"
 "Last-Translator: Tarmo Ilves <tarmo.ilves.001@mail.ee>\n"
 "Language-Team: Estonian <et@li.org>\n"
@@ -3852,7 +3852,7 @@ msgstr ""
 msgid "Unknown"
 msgstr "Tundmatu"
 
-#: src/saveplay.c:3069 src/saveplay.c:4012
+#: src/saveplay.c:3069 src/saveplay.c:4017
 #, c-format
 msgid "Untitled%d"
 msgstr "Pealkirjata%d"
@@ -3885,19 +3885,19 @@ msgid ""
 "Audio:"
 msgstr ""
 
-#: src/saveplay.c:3222 src/saveplay.c:4184
+#: src/saveplay.c:3222 src/saveplay.c:4189
 #, c-format
 msgid ""
 "Frames=%d type=%s size=%dx%d bpp=%d fps=%.3f\n"
 "Audio:"
 msgstr ""
 
-#: src/saveplay.c:3226 src/saveplay.c:4188
+#: src/saveplay.c:3226 src/saveplay.c:4193
 #, c-format
 msgid "%s none\n"
 msgstr ""
 
-#: src/saveplay.c:3229 src/saveplay.c:4191
+#: src/saveplay.c:3229 src/saveplay.c:4196
 #, c-format
 msgid "%s %d Hz %d channel(s) %d bps\n"
 msgstr ""
@@ -3925,16 +3925,16 @@ msgstr ""
 msgid "performance data was backed up..."
 msgstr ""
 
-#: src/saveplay.c:4087
+#: src/saveplay.c:4092
 #, c-format
 msgid "Restoring %s..."
 msgstr ""
 
-#: src/saveplay.c:4114
+#: src/saveplay.c:4119
 msgid "Restoring"
 msgstr "Taastamine"
 
-#: src/saveplay.c:4136
+#: src/saveplay.c:4141
 #, c-format
 msgid ""
 "\n"
@@ -3944,22 +3944,22 @@ msgid ""
 msgstr ""
 
 #. TRANSLATORS: rec(ord) %.2f M(ega)B(ytes)
-#: src/saveplay.c:4645
+#: src/saveplay.c:4650
 #, c-format
 msgid "rec %.2f MB"
 msgstr ""
 
-#: src/saveplay.c:4651
+#: src/saveplay.c:4656
 #, c-format
 msgid "!rec %.2f MB"
 msgstr ""
 
 #. TRANSLATORS: rec(ord) ?? M(ega)B(ytes)
-#: src/saveplay.c:4654
+#: src/saveplay.c:4659
 msgid "rec ?? MB"
 msgstr ""
 
-#: src/saveplay.c:4679
+#: src/saveplay.c:4684
 #, c-format
 msgid ""
 "\n"
@@ -3967,18 +3967,18 @@ msgid ""
 "Record stop level can be set in Preferences.\n"
 msgstr ""
 
-#: src/saveplay.c:4823
+#: src/saveplay.c:4828
 msgid ""
 "\n"
 "Files from a previous run of LiVES were found.\n"
 "Do you want to attempt to recover them ?\n"
 msgstr ""
 
-#: src/saveplay.c:4843
+#: src/saveplay.c:4848
 msgid "Recovering files"
 msgstr ""
 
-#: src/saveplay.c:4845
+#: src/saveplay.c:4850
 msgid "Recovering files..."
 msgstr ""
 

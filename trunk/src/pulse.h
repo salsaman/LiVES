@@ -19,7 +19,7 @@
 #define PULSE_MAX_OUTPUT_CHANS PA_CHANNEL_POSITION_MAX
 
 #define LIVES_PA_BUFF_MAXLEN 1024
-#define LIVES_PA_BUFF_TARGET 1024
+#define LIVES_PA_BUFF_TARGET 16384
 
 typedef struct {
   size_t size;
@@ -32,6 +32,8 @@ typedef struct {
   pa_context *con;
   pa_stream *pstream;
   pa_proplist *pa_props;
+
+  pa_usec_t usec_start;
 
   int str_idx;
 

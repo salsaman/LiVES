@@ -1443,6 +1443,7 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
       !mainw->multitrack->is_rendering&&cfile->achans>0) {
     mainw->pulsed->audio_ticks=mainw->offsetticks;
     mainw->pulsed->frames_written=0;
+    mainw->pulsed->usec_start=0;
   }
 #endif
 

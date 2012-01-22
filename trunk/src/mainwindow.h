@@ -25,7 +25,7 @@
 /// >10**8 is not recommended, since we sometimes store seconds in a gdouble
 #define U_SEC 100000000.
 #define U_SECL (gint64)100000000
-#define U_SEC_RATIO (U_SECL/1000000) ///< how many U_SECs (ticks) in a microsecond
+#define U_SEC_RATIO (U_SECL/1000000) ///< how many U_SECs (ticks) in a microsecond [default 100]
 
 // parameters for resizing the image frames, and for capture
 // TODO - make prefs

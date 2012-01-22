@@ -355,7 +355,7 @@ HAVE_SWSCALE=false
 AC_ARG_ENABLE( ffmpeg, [  --disable-ffmpeg            Disable ffmpeg (avcodec) support.] , disable_ffmpeg=yes)
 if test "x$disable_ffmpeg" != "xyes" ; then
 
-dnl check for avcodec, avformat
+dnl check for avcodec, avformat, avutil, swscale
 
 PKG_CHECK_MODULES(LIBAVCODEC,libavcodec,HAVE_AVCODEC=true,HAVE_AVCODEC=false)
 
@@ -380,6 +380,24 @@ AM_CONDITIONAL(HAVE_AVCODEC,$HAVE_AVCODEC)
 AM_CONDITIONAL(HAVE_AVFORMAT,$HAVE_AVFORMAT)
 AM_CONDITIONAL(HAVE_AVUTIL,$HAVE_AVUTIL)
 AM_CONDITIONAL(HAVE_SWSCALE,$HAVE_SWSCALE)
+
+
+HAVE_OPENCV=false
+
+dnl check for opencv
+
+PKG_CHECK_MODULES(OPENCV, opencv >= 2.3.1, HAVE_OPENCV=true, HAVE_OPENCV=false)
+
+if test "HAVE_OPENCV" == "true" ; then
+OPENCV_LIBS_ONLY_L = `pkg-config opencv --libs-only-L`
+fi
+
+
+AC_SUBST(OPENCV_CFLAGS)
+AC_SUBST(OPENCV_LIBS_ONLY_L)
+
+AM_CONDITIONAL(HAVE_OPENCV,$HAVE_OPENCV)
+
 
 
 

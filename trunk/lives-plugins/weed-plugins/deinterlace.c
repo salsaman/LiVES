@@ -39,8 +39,6 @@ static int package_version=1; // version of this package
 #include <stdlib.h>
 
 
-// TODO ** add support for all palettes
-
 static inline unsigned char *mix(unsigned char *a, unsigned char *b, int pcpy) {
   unsigned char *mixed=(unsigned char *)weed_malloc(pcpy);
   register int i;

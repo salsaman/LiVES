@@ -243,11 +243,11 @@ static gboolean pre_init(void) {
   mainw=(mainwindow*)(g_malloc(sizeof(mainwindow)));
   mainw->is_ready=FALSE;
 
-  mainw->free_fn=free;
+  mainw->free_fn=lives_free_normal;
   mainw->do_not_free=NULL;
-  mainw->alt_vtable.malloc=malloc;
+  mainw->alt_vtable.malloc=lives_malloc;
   mainw->alt_vtable.realloc=realloc;
-  mainw->alt_vtable.free=lives_free;
+  mainw->alt_vtable.free=lives_free;  ///< wrapper for mainw->free_fn
   mainw->alt_vtable.calloc=NULL;
   mainw->alt_vtable.try_malloc=NULL;
   mainw->alt_vtable.try_realloc=NULL;
@@ -3544,7 +3544,7 @@ static boolean weed_layer_new_from_file_progressive(weed_plant_t *layer,
   }
   g_object_unref(pixbuf);
   mainw->do_not_free=NULL;
-  mainw->free_fn=free;
+  mainw->free_fn=lives_free_normal;
 
 
   return TRUE;

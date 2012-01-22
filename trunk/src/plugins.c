@@ -2824,7 +2824,7 @@ void rfx_copy (lives_rfx_t *src, lives_rfx_t *dest, gboolean full) {
   dest->source_type=src->source_type;
   dest->source=src->source;
   dest->is_template=src->is_template;
-  w_memcpy(dest->delim,src->delim,2);
+  lives_memcpy(dest->delim,src->delim,2);
   if (!full) return;
 }
 
@@ -2900,16 +2900,16 @@ void param_copy (lives_param_t *src, lives_param_t *dest, gboolean full) {
   case LIVES_PARAM_NUM:
     if (!dest->dp) {
       dest->def=g_malloc (sizint);
-      w_memcpy (dest->def,src->def,sizint);
+      lives_memcpy (dest->def,src->def,sizint);
     }
     else {
       dest->def=g_malloc (sizdbl);
-      w_memcpy (dest->def,src->def,sizdbl);
+      lives_memcpy (dest->def,src->def,sizdbl);
     }
     break;
   case LIVES_PARAM_COLRGB24:
     dest->def=g_malloc (sizeof(lives_colRGB24_t));
-    w_memcpy (dest->def,src->def,sizeof(lives_colRGB24_t));
+    lives_memcpy (dest->def,src->def,sizeof(lives_colRGB24_t));
     break;
   case LIVES_PARAM_STRING:
     dest->def=g_strdup ((gchar *)src->def);
@@ -2929,28 +2929,28 @@ void param_copy (lives_param_t *src, lives_param_t *dest, gboolean full) {
 
 gboolean get_bool_param(void *value) {
   gboolean ret;
-  w_memcpy(&ret,value,4);
+  lives_memcpy(&ret,value,4);
   return ret;
 }
 
 gint get_int_param(void *value) {
   gint ret;
-  w_memcpy(&ret,value,sizint);
+  lives_memcpy(&ret,value,sizint);
   return ret;
 }
 
 gdouble get_double_param(void *value) {
   gdouble ret;
-  w_memcpy(&ret,value,sizdbl);
+  lives_memcpy(&ret,value,sizdbl);
   return ret;
 }
 
 void get_colRGB24_param(void *value, lives_colRGB24_t *rgb) {
-  w_memcpy(rgb,value,sizeof(lives_colRGB24_t));
+  lives_memcpy(rgb,value,sizeof(lives_colRGB24_t));
 }
 
 void get_colRGBA32_param(void *value, lives_colRGBA32_t *rgba) {
-  w_memcpy(rgba,value,sizeof(lives_colRGBA32_t));
+  lives_memcpy(rgba,value,sizeof(lives_colRGBA32_t));
 }
 
 void set_bool_param(void *value, gboolean _const) {
@@ -2958,10 +2958,10 @@ void set_bool_param(void *value, gboolean _const) {
 }
 
 void set_int_param(void *value, gint _const) {
-  w_memcpy(value,&_const,sizint);
+  lives_memcpy(value,&_const,sizint);
 }
 void set_double_param(void *value, gdouble _const) {
-  w_memcpy(value,&_const,sizdbl);
+  lives_memcpy(value,&_const,sizdbl);
 
 }
 

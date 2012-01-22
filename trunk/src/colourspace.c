@@ -1143,26 +1143,26 @@ void pixel_data_planar_from_membuf(void **pixel_data, void *data, size_t size, i
 
   switch (palette) {
   case WEED_PALETTE_YUV444P:
-    w_memcpy(pixel_data[0],data,size);
-    w_memcpy(pixel_data[1],data+size,size);
-    w_memcpy(pixel_data[2],data+size*2,size);
+    lives_memcpy(pixel_data[0],data,size);
+    lives_memcpy(pixel_data[1],data+size,size);
+    lives_memcpy(pixel_data[2],data+size*2,size);
     break;
   case WEED_PALETTE_YUVA4444P:
-    w_memcpy(pixel_data[0],data,size);
-    w_memcpy(pixel_data[1],data+size,size);
-    w_memcpy(pixel_data[2],data+size*2,size);
-    w_memcpy(pixel_data[3],data+size*2,size);
+    lives_memcpy(pixel_data[0],data,size);
+    lives_memcpy(pixel_data[1],data+size,size);
+    lives_memcpy(pixel_data[2],data+size*2,size);
+    lives_memcpy(pixel_data[3],data+size*2,size);
     break;
   case WEED_PALETTE_YUV422P:
-    w_memcpy(pixel_data[0],data,size);
-    w_memcpy(pixel_data[1],data+size,size/2);
-    w_memcpy(pixel_data[2],data+size*3/2,size/2);
+    lives_memcpy(pixel_data[0],data,size);
+    lives_memcpy(pixel_data[1],data+size,size/2);
+    lives_memcpy(pixel_data[2],data+size*3/2,size/2);
     break;
   case WEED_PALETTE_YUV420P:
   case WEED_PALETTE_YVU420P:
-    w_memcpy(pixel_data[0],data,size);
-    w_memcpy(pixel_data[1],data+size,size/4);
-    w_memcpy(pixel_data[2],data+size*5/4,size/4);
+    lives_memcpy(pixel_data[0],data,size);
+    lives_memcpy(pixel_data[1],data+size,size/4);
+    lives_memcpy(pixel_data[2],data+size*5/4,size/4);
     break;
   }
 }
@@ -4167,9 +4167,9 @@ static void convert_yuvap_to_yuvp_frame(guchar **src, int width, int height, guc
   guchar *ud=dest[1];
   guchar *vd=dest[2];
 
-  if (yd!=ys) w_memcpy(yd,ys,size);
-  if (ud!=us) w_memcpy(ud,us,size);
-  if (vd!=vs) w_memcpy(vd,vs,size);
+  if (yd!=ys) lives_memcpy(yd,ys,size);
+  if (ud!=us) lives_memcpy(ud,us,size);
+  if (vd!=vs) lives_memcpy(vd,vs,size);
 
 }
 
@@ -4198,7 +4198,7 @@ static void convert_yuvp_to_yuv420_frame(guchar **src, int width, int height, gu
 
   set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YCBCR);
 
-  if (dest[0]!=src[0]) w_memcpy(dest[0],src[0],width*height);
+  if (dest[0]!=src[0]) lives_memcpy(dest[0],src[0],width*height);
 
   d_u=dest[1];
   d_v=dest[2];
@@ -6810,8 +6810,8 @@ static void convert_halve_chroma(guchar **src, int width, int height, guchar **d
 
       if (!chroma) {
 	// pass 1, copy row
-	w_memcpy(d_u,s_u,width);
-	w_memcpy(d_v,s_v,width);
+	lives_memcpy(d_u,s_u,width);
+	lives_memcpy(d_v,s_v,width);
       }
       else {
 	// pass 2
@@ -6848,8 +6848,8 @@ static void convert_double_chroma(guchar **src, int width, int height, guchar **
   for (i=0;i<height2;i++) {
     for (j=0;j<width;j++) {
 
-      w_memcpy(d_u,s_u,width);
-      w_memcpy(d_v,s_v,width);
+      lives_memcpy(d_u,s_u,width);
+      lives_memcpy(d_v,s_v,width);
 
       if (!chroma&&i>0) {
 	// pass 2
@@ -7340,7 +7340,7 @@ void create_empty_pixel_data(weed_plant_t *layer, gboolean black_fill, gboolean 
       ptr=pixel_data;
       for (i=0;i<height;i++) {
 	for (j=0;j<width;j++) {
-	  w_memcpy(ptr,black,3);
+	  lives_memcpy(ptr,black,3);
 	  ptr+=3;
 	}
       }
@@ -7364,7 +7364,7 @@ void create_empty_pixel_data(weed_plant_t *layer, gboolean black_fill, gboolean 
       ptr=pixel_data;
       for (i=0;i<height;i++) {
 	for (j=0;j<width;j++) {
-	  w_memcpy(ptr,black,4);
+	  lives_memcpy(ptr,black,4);
 	  ptr+=4;
 	}
       }
@@ -7388,7 +7388,7 @@ void create_empty_pixel_data(weed_plant_t *layer, gboolean black_fill, gboolean 
       ptr=pixel_data;
       for (i=0;i<height;i++) {
 	for (j=0;j<width;j++) {
-	  w_memcpy(ptr,black,4);
+	  lives_memcpy(ptr,black,4);
 	  ptr+=4;
 	}
       }
@@ -7410,7 +7410,7 @@ void create_empty_pixel_data(weed_plant_t *layer, gboolean black_fill, gboolean 
       ptr=pixel_data;
       for (i=0;i<height;i++) {
 	for (j=0;j<width;j++) {
-	  w_memcpy(ptr,black,4);
+	  lives_memcpy(ptr,black,4);
 	  ptr+=4;
 	}
       }
@@ -7432,7 +7432,7 @@ void create_empty_pixel_data(weed_plant_t *layer, gboolean black_fill, gboolean 
       ptr=pixel_data;
       for (i=0;i<height;i++) {
 	for (j=0;j<width;j++) {
-	  w_memcpy(ptr,black,4);
+	  lives_memcpy(ptr,black,4);
 	  ptr+=4;
 	}
       }
@@ -7456,7 +7456,7 @@ void create_empty_pixel_data(weed_plant_t *layer, gboolean black_fill, gboolean 
       ptr=pixel_data;
       for (i=0;i<height;i++) {
 	for (j=0;j<width;j++) {
-	  w_memcpy(ptr,black,4);
+	  lives_memcpy(ptr,black,4);
 	  ptr+=4;
 	}
       }
@@ -7480,7 +7480,7 @@ void create_empty_pixel_data(weed_plant_t *layer, gboolean black_fill, gboolean 
       ptr=pixel_data;
       for (i=0;i<height;i++) {
 	for (j=0;j<width;j++) {
-	  w_memcpy(ptr,black,4);
+	  lives_memcpy(ptr,black,4);
 	  ptr+=4;
 	}
       }
@@ -7862,7 +7862,7 @@ void create_empty_pixel_data(weed_plant_t *layer, gboolean black_fill, gboolean 
       ptr=pixel_data;
       for (i=0;i<height;i++) {
 	for (j=0;j<width;j++) {
-	  w_memcpy(ptr,black,6);
+	  lives_memcpy(ptr,black,6);
 	  ptr+=6;
 	}
       }
@@ -7890,7 +7890,7 @@ void create_empty_pixel_data(weed_plant_t *layer, gboolean black_fill, gboolean 
       ptr=pixel_data;
       for (i=0;i<height;i++) {
 	for (j=0;j<width;j++) {
-	  w_memcpy(ptr,blackf,sizf);
+	  lives_memcpy(ptr,blackf,sizf);
 	  ptr+=sizf;
 	}
       }
@@ -7911,7 +7911,7 @@ void create_empty_pixel_data(weed_plant_t *layer, gboolean black_fill, gboolean 
       blackf[0]=1.;
       for (i=0;i<height;i++) {
 	for (j=0;j<width;j++) {
-	  w_memcpy(ptr,blackf,sizf);
+	  lives_memcpy(ptr,blackf,sizf);
 	  ptr+=sizf;
 	}
       }
@@ -9996,7 +9996,7 @@ LiVESPixbuf *layer_to_pixbuf (weed_plant_t *layer) {
 	orowstride=rowstride=get_last_rowstride_value(width,n_channels);
 	done=TRUE;
       }
-      w_memcpy(pixels,pixel_data,rowstride);
+      lives_memcpy(pixels,pixel_data,rowstride);
       if (rowstride<orowstride) memset (pixels+rowstride,0,orowstride-rowstride);
       pixel_data+=irowstride;
     }
@@ -10096,7 +10096,7 @@ void compact_rowstrides(weed_plant_t *layer) {
     new_pixel_data[i]=npixel_data;
 
     for (j=0;j<xheight;j++) {
-      w_memcpy(new_pixel_data[i]+j*cxrow,pixel_data[i]+j*rowstrides[i],cxrow);
+      lives_memcpy(new_pixel_data[i]+j*cxrow,pixel_data[i]+j*rowstrides[i],cxrow);
     }
 
     framesize=CEIL(cxrow*xheight,32);
@@ -10152,11 +10152,11 @@ static struct SwsContext *swscale_find_context(int iwidth, int iheight,
 	swscale_ctx[i].flags==flags) {
       // move to front
       if (i>0) {
-	w_memcpy(&tmpctx,&swscale_ctx[i],sizeof(struct _swscale_ctx));
+	lives_memcpy(&tmpctx,&swscale_ctx[i],sizeof(struct _swscale_ctx));
 	for (;i>0;i--) {
-	  w_memcpy(&swscale_ctx[i],&swscale_ctx[i-1],sizeof(struct _swscale_ctx));
+	  lives_memcpy(&swscale_ctx[i],&swscale_ctx[i-1],sizeof(struct _swscale_ctx));
 	}
-	w_memcpy(&swscale_ctx[0],&tmpctx,sizeof(struct _swscale_ctx));
+	lives_memcpy(&swscale_ctx[0],&tmpctx,sizeof(struct _swscale_ctx));
       }
       return swscale_ctx[0].ctx;
     }
@@ -10181,7 +10181,7 @@ static void swscale_add_context(int iwidth, int iheight, int width, int height, 
       sws_freeContext(swscale_ctx[i].ctx);
     
     // shift up
-    w_memcpy(&swscale_ctx[i],&swscale_ctx[i-1],sizeof(struct _swscale_ctx));
+    lives_memcpy(&swscale_ctx[i],&swscale_ctx[i-1],sizeof(struct _swscale_ctx));
   }
 
   // add at posn 0
@@ -10356,7 +10356,7 @@ void resize_layer (weed_plant_t *layer, int width, int height, LiVESInterpType i
     }
     g_object_unref(new_pixbuf);
     mainw->do_not_free=NULL;
-    mainw->free_fn=free;
+    mainw->free_fn=lives_free_normal;
   }
 
 
@@ -10439,7 +10439,7 @@ void letterbox_layer (weed_plant_t *layer, int width, int height, int nwidth, in
     dst=(guchar *)(new_pixel_data[0]+offs_y*rowstrides[0]+offs_x*3);
     src=(guchar *)pixel_data[0];
     for (i=0;i<height;i++) {
-      w_memcpy(dst,src,width);
+      lives_memcpy(dst,src,width);
       dst+=rowstrides[0];
       src+=irowstrides[0];
     }
@@ -10455,7 +10455,7 @@ void letterbox_layer (weed_plant_t *layer, int width, int height, int nwidth, in
     dst=(guchar *)(new_pixel_data[0]+offs_y*rowstrides[0]+offs_x*4);
     src=(guchar *)pixel_data[0];
     for (i=0;i<height;i++) {
-      w_memcpy(dst,src,width);
+      lives_memcpy(dst,src,width);
       dst+=rowstrides[0];
       src+=irowstrides[0];
     }
@@ -10466,7 +10466,7 @@ void letterbox_layer (weed_plant_t *layer, int width, int height, int nwidth, in
     dst=(guchar *)(new_pixel_data[0]+offs_y*rowstrides[0]+offs_x*6);
     src=(guchar *)pixel_data[0];
     for (i=0;i<height;i++) {
-      w_memcpy(dst,src,width);
+      lives_memcpy(dst,src,width);
       dst+=rowstrides[0];
       src+=irowstrides[0];
     }
@@ -10476,21 +10476,21 @@ void letterbox_layer (weed_plant_t *layer, int width, int height, int nwidth, in
     dst=(guchar *)(new_pixel_data[0]+offs_y*rowstrides[0]+offs_x);
     src=(guchar *)pixel_data[0];
     for (i=0;i<height;i++) {
-      w_memcpy(dst,src,width);
+      lives_memcpy(dst,src,width);
       dst+=rowstrides[0];
       src+=irowstrides[0];
     }
     dst=(guchar *)(new_pixel_data[1]+offs_y*rowstrides[1]+offs_x);
     src=(guchar *)pixel_data[1];
     for (i=0;i<height;i++) {
-      w_memcpy(dst,src,width);
+      lives_memcpy(dst,src,width);
       dst+=rowstrides[1];
       src+=irowstrides[1];
     }
     dst=(guchar *)(new_pixel_data[2]+offs_y*rowstrides[2]+offs_x);
     src=(guchar *)pixel_data[2];
     for (i=0;i<height;i++) {
-      w_memcpy(dst,src,width);
+      lives_memcpy(dst,src,width);
       dst+=rowstrides[2];
       src+=irowstrides[2];
     }
@@ -10500,28 +10500,28 @@ void letterbox_layer (weed_plant_t *layer, int width, int height, int nwidth, in
     dst=(guchar *)(new_pixel_data[0]+offs_y*rowstrides[0]+offs_x);
     src=(guchar *)pixel_data[0];
     for (i=0;i<height;i++) {
-      w_memcpy(dst,src,width);
+      lives_memcpy(dst,src,width);
       dst+=rowstrides[0];
       src+=irowstrides[0];
     }
     dst=(guchar *)(new_pixel_data[1]+offs_y*rowstrides[1]+offs_x);
     src=(guchar *)pixel_data[1];
     for (i=0;i<height;i++) {
-      w_memcpy(dst,src,width);
+      lives_memcpy(dst,src,width);
       dst+=rowstrides[1];
       src+=irowstrides[1];
     }
     dst=(guchar *)(new_pixel_data[2]+offs_y*rowstrides[2]+offs_x);
     src=(guchar *)pixel_data[2];
     for (i=0;i<height;i++) {
-      w_memcpy(dst,src,width);
+      lives_memcpy(dst,src,width);
       dst+=rowstrides[2];
       src+=irowstrides[2];
     }
     dst=(guchar *)(new_pixel_data[3]+offs_y*rowstrides[3]+offs_x);
     src=(guchar *)pixel_data[3];
     for (i=0;i<height;i++) {
-      w_memcpy(dst,src,width);
+      lives_memcpy(dst,src,width);
       dst+=rowstrides[3];
       src+=irowstrides[3];
     }
@@ -10532,7 +10532,7 @@ void letterbox_layer (weed_plant_t *layer, int width, int height, int nwidth, in
     dst=(guchar *)(new_pixel_data[0]+offs_y*rowstrides[0]+offs_x);
     src=(guchar *)pixel_data[0];
     for (i=0;i<height;i++) {
-      w_memcpy(dst,src,width);
+      lives_memcpy(dst,src,width);
       dst+=rowstrides[0];
       src+=irowstrides[0];
     }
@@ -10541,14 +10541,14 @@ void letterbox_layer (weed_plant_t *layer, int width, int height, int nwidth, in
     dst=(guchar *)(new_pixel_data[1]+offs_y*rowstrides[1]+offs_x);
     src=(guchar *)pixel_data[1];
     for (i=0;i<height;i++) {
-      w_memcpy(dst,src,width);
+      lives_memcpy(dst,src,width);
       dst+=rowstrides[1];
       src+=irowstrides[1];
     }
     dst=(guchar *)(new_pixel_data[2]+offs_y*rowstrides[2]+offs_x);
     src=(guchar *)pixel_data[2];
     for (i=0;i<height;i++) {
-      w_memcpy(dst,src,width);
+      lives_memcpy(dst,src,width);
       dst+=rowstrides[2];
       src+=irowstrides[2];
     }
@@ -10559,7 +10559,7 @@ void letterbox_layer (weed_plant_t *layer, int width, int height, int nwidth, in
     dst=(guchar *)(new_pixel_data[0]+offs_y*rowstrides[0]+offs_x);
     src=(guchar *)pixel_data[0];
     for (i=0;i<height;i++) {
-      w_memcpy(dst,src,width);
+      lives_memcpy(dst,src,width);
       dst+=rowstrides[0];
       src+=irowstrides[0];
     }
@@ -10570,14 +10570,14 @@ void letterbox_layer (weed_plant_t *layer, int width, int height, int nwidth, in
     dst=(guchar *)(new_pixel_data[1]+offs_y*rowstrides[1]+offs_x);
     src=(guchar *)pixel_data[1];
     for (i=0;i<height;i++) {
-      w_memcpy(dst,src,width);
+      lives_memcpy(dst,src,width);
       dst+=rowstrides[1];
       src+=irowstrides[1];
     }
     dst=(guchar *)(new_pixel_data[2]+offs_y*rowstrides[2]+offs_x);
     src=(guchar *)pixel_data[2];
     for (i=0;i<height;i++) {
-      w_memcpy(dst,src,width);
+      lives_memcpy(dst,src,width);
       dst+=rowstrides[2];
       src+=irowstrides[2];
     }
@@ -10588,7 +10588,7 @@ void letterbox_layer (weed_plant_t *layer, int width, int height, int nwidth, in
     dst=(guchar *)(new_pixel_data[0]+offs_y*rowstrides[0]+offs_x*3*sizeof(float));
     src=(guchar *)pixel_data[0];
     for (i=0;i<height;i++) {
-      w_memcpy(dst,src,width);
+      lives_memcpy(dst,src,width);
       dst+=rowstrides[0];
       src+=irowstrides[0];
     }
@@ -10599,7 +10599,7 @@ void letterbox_layer (weed_plant_t *layer, int width, int height, int nwidth, in
     dst=(guchar *)(new_pixel_data[0]+offs_y*rowstrides[0]+offs_x*4*sizeof(float));
     src=(guchar *)pixel_data[0];
     for (i=0;i<height;i++) {
-      w_memcpy(dst,src,width);
+      lives_memcpy(dst,src,width);
       dst+=rowstrides[0];
       src+=irowstrides[0];
     }
@@ -10610,7 +10610,7 @@ void letterbox_layer (weed_plant_t *layer, int width, int height, int nwidth, in
     dst=(guchar *)(new_pixel_data[0]+offs_y*rowstrides[0]+offs_x*sizeof(float));
     src=(guchar *)pixel_data[0];
     for (i=0;i<height;i++) {
-      w_memcpy(dst,src,width);
+      lives_memcpy(dst,src,width);
       dst+=rowstrides[0];
       src+=irowstrides[0];
     }
@@ -10620,7 +10620,7 @@ void letterbox_layer (weed_plant_t *layer, int width, int height, int nwidth, in
     dst=(guchar *)(new_pixel_data[0]+offs_y*rowstrides[0]+offs_x);
     src=(guchar *)pixel_data[0];
     for (i=0;i<height;i++) {
-      w_memcpy(dst,src,width);
+      lives_memcpy(dst,src,width);
       dst+=rowstrides[0];
       src+=irowstrides[0];
     }
@@ -10632,7 +10632,7 @@ void letterbox_layer (weed_plant_t *layer, int width, int height, int nwidth, in
     dst=(guchar *)(new_pixel_data[0]+offs_y*rowstrides[0]+(offs_x>>3));
     src=(guchar *)pixel_data[0];
     for (i=0;i<height;i++) {
-      w_memcpy(dst,src,width);
+      lives_memcpy(dst,src,width);
       dst+=rowstrides[0];
       src+=irowstrides[0];
     }
@@ -10672,7 +10672,7 @@ boolean pixbuf_to_layer(weed_plant_t *layer, LiVESPixbuf *pixbuf) {
     }
     g_object_unref(pixbuf);
     mainw->do_not_free=NULL;
-    mainw->free_fn=free;
+    mainw->free_fn=lives_free_normal;
 
   */
 
@@ -10719,10 +10719,10 @@ boolean pixbuf_to_layer(weed_plant_t *layer, LiVESPixbuf *pixbuf) {
 
   if (pixel_data!=NULL) {
     in_pixel_data=(void *)lives_pixbuf_get_pixels_readonly(pixbuf);
-    w_memcpy(pixel_data,in_pixel_data,rowstride*(height-1));
+    lives_memcpy(pixel_data,in_pixel_data,rowstride*(height-1));
     // this part is needed because layers always have a memory size height*rowstride, whereas gdkpixbuf can have
     // a shorter last row
-    w_memcpy(pixel_data+rowstride*(height-1),in_pixel_data+rowstride*(height-1),get_last_rowstride_value(width,nchannels));
+    lives_memcpy(pixel_data+rowstride*(height-1),in_pixel_data+rowstride*(height-1),get_last_rowstride_value(width,nchannels));
   }
 
   weed_set_voidptr_value(layer,"pixel_data",pixel_data);
@@ -10798,7 +10798,7 @@ cairo_t *layer_to_cairo(weed_plant_t *layer) {
     dst=pixel_data=(guchar *)g_try_malloc(height*orowstride);
     if (pixel_data==NULL) return NULL;
     for (i=0;i<height;i++) {
-      w_memcpy(dst,src,widthx);
+      lives_memcpy(dst,src,widthx);
       memset(dst+widthx,0,widthx-orowstride);
       dst+=orowstride;
       src+=irowstride;
@@ -10857,7 +10857,7 @@ gboolean cairo_to_layer(cairo_t *cairo, weed_plant_t *layer) {
 
   if (pixel_data==NULL) return FALSE;
 
-  w_memcpy(pixel_data,src,height*rowstride);
+  lives_memcpy(pixel_data,src,height*rowstride);
 
   weed_set_int_value(layer,"rowstrides",rowstride);
   weed_set_int_value(layer,"width",width);
@@ -10953,7 +10953,7 @@ weed_plant_t *weed_layer_copy (weed_plant_t *dlayer, weed_plant_t *slayer) {
     for (i=0;i<pd_elements;i++) {
       size=(size_t)((gdouble)height*weed_palette_get_plane_ratio_vertical(palette,i)*(gdouble)rowstrides[i]);
       pd_array[i]=npixel_data;
-      w_memcpy(pd_array[i],pixel_data[i],size);
+      lives_memcpy(pd_array[i],pixel_data[i],size);
       npixel_data+=CEIL(size,32);
     }
     if (pd_elements>1)

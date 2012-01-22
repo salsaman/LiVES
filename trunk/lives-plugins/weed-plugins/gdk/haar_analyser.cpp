@@ -497,7 +497,6 @@ typedef struct {
 
 
 int haar_init (weed_plant_t *inst) {
-  int error;
   _sdata *sdata;
 
   sdata=(_sdata *)weed_malloc(sizeof(_sdata));

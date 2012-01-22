@@ -21,6 +21,14 @@
 #include "../libweed/weed-host.h"
 #endif
 
+
+#ifdef __cplusplus
+#ifdef HAVE_OPENCV
+#include "opencv2/core/core.hpp"
+using namespace cv;
+#endif
+#endif
+
 #include "main.h"
 #include "effects.h"
 
@@ -43,7 +51,7 @@ struct _procvals {
 #define OIL_MEMCPY_MAX_BYTES 1024 // this can be tuned to provide optimal performance
 
 #ifdef ENABLE_OIL
-LIVES_INLINE void *w_memcpy  (void *dest, const void *src, size_t n) {
+LIVES_INLINE void *lives_memcpy  (void *dest, const void *src, size_t n) {
 #ifndef __cplusplus
   if (n>=32&&n<=OIL_MEMCPY_MAX_BYTES) {
     oil_memcpy((uint8_t *)dest,(const uint8_t *)src,n);
@@ -53,24 +61,44 @@ LIVES_INLINE void *w_memcpy  (void *dest, const void *src, size_t n) {
   return memcpy(dest,src,n);
 }
 #else
-LIVES_INLINE void *w_memcpy  (void *dest, const void *src, size_t n) {return memcpy(dest,src,n);}
+LIVES_INLINE void *lives_memcpy  (void *dest, const void *src, size_t n) {return memcpy(dest,src,n);}
 #endif
 
-G_GNUC_MALLOC void * lives_weed_malloc(size_t size) {
+G_GNUC_MALLOC void * lives_malloc(size_t size) {
+#ifdef __cplusplus
+#ifdef HAVE_OPENCV
+  return fastMalloc(size);
+#endif
+#endif
   return malloc(size);
 }
 
-void lives_weed_free(void *ptr) {
+void lives_free_normal(void *ptr) {
+#ifdef __cplusplus
+#ifdef HAVE_OPENCV
+  fastFree(ptr);
+  return;
+#endif
+#endif
   free(ptr);
 }
 
-void *lives_weed_memset(void *s, int c, size_t n) {
+
+// special de-allocators which avoid free()ing mainw->do_not_free...this is necessary to "hack" into gdk-pixbuf
+// do not use this directly in code (use g_free() or weed_free() as appropriate)
+void lives_free_with_check(gpointer ptr) {
+  if (ptr==mainw->do_not_free) return;
+  lives_free_normal(ptr);
+}
+
+void lives_free(gpointer ptr) {
+  (*mainw->free_fn)(ptr);
+}
+
+LIVES_INLINE void *lives_memset(void *s, int c, size_t n) {
   return memset(s,c,n);
 }
 
-void *lives_weed_memcpy(void *dest, const void *src, size_t n) {
-  return w_memcpy(dest,src,n);
-}
 
 ////////////////////////////////////////////////////////////////////////////
 
@@ -194,16 +222,62 @@ weed_plant_t *weed_bootstrap_func (weed_default_getter_f *value, int num_version
 //////////////////////////////////////////////////////////////////////////////
 // filter library functions
 
+static gboolean has_non_alpha_palette(weed_plant_t *ctmpl) {
+  int *plist;
+  int error;
+  int npals=0;
+
+  register int i;
+
+  if (!weed_plant_has_leaf(ctmpl,"palette_list")) return TRUE; ///< most probably audio
+  npals=weed_leaf_num_elements(ctmpl,"palette_list");
+
+  plist=weed_get_int_array(ctmpl,"palette_list",&error);
+  for (i=0;i<npals;i++) {
+    if (!weed_palette_is_alpha_palette(plist[i])) {
+      weed_free(plist);
+      return TRUE;
+    }
+  }
+  weed_free(plist);
+  return FALSE;
+}
+
+
+
 
 lives_fx_cat_t weed_filter_categorise (weed_plant_t *pl, int in_channels, int out_channels) {
   weed_plant_t *filt=pl;
   int filter_flags,error;
   gboolean has_out_params=FALSE;
+  gboolean all_out_alpha=TRUE;
+  register int i;
+
   if (WEED_PLANT_IS_FILTER_INSTANCE(pl)) filt=weed_get_plantptr_value(pl,"filter_class",&error);
+
+  // check mandatory output chans, see if any are non-alpha
+  if (weed_plant_has_leaf(filt,"out_channel_templates")) {
+    int nouts=weed_leaf_num_elements(filt,"out_channel_templates");
+    if (nouts>0) {
+      weed_plant_t **ctmpls=weed_get_plantptr_array(filt,"out_channel_templates",&error);
+      for (i=0;i<nouts;i++) {
+	if (weed_plant_has_leaf(ctmpls[i],"optional")&&
+	    weed_get_boolean_value(ctmpls[i],"optional",&error)==WEED_TRUE) continue; ///< ignore optional channels
+	if (has_non_alpha_palette(ctmpls[i])) {
+	  all_out_alpha=FALSE;
+	  break;
+	}
+      }
+      weed_free(ctmpls);
+    }
+  }
+
   filter_flags=weed_get_int_value(filt,"flags",&error);
   if (weed_plant_has_leaf(filt,"out_parameter_templates")) has_out_params=TRUE;
   if (filter_flags&WEED_FILTER_IS_CONVERTER) return LIVES_FX_CAT_CONVERTOR;
+  if (in_channels==0&&out_channels>0&&all_out_alpha) return LIVES_FX_CAT_DATA_GENERATOR;
   if (in_channels==0&&out_channels>0) return LIVES_FX_CAT_GENERATOR;
+  if (out_channels>1&&all_out_alpha) return LIVES_FX_CAT_ANALYSER;
   if (out_channels>1) return LIVES_FX_CAT_SPLITTER;
   if (in_channels>2&&out_channels==1) return LIVES_FX_CAT_COMPOSITOR;
   if (in_channels==2&&out_channels==1) return LIVES_FX_CAT_TRANSITION;
@@ -2459,7 +2533,7 @@ lives_filter_error_t weed_apply_audio_instance (weed_plant_t *init_event, float 
 
     in_abuf=g_malloc(nchans*nsf);
     for (j=0;j<nchans;j++) {
-      w_memcpy((char *)in_abuf+(j*nsf),abuf[i*nchans+j],nsf);
+      lives_memcpy((char *)in_abuf+(j*nsf),abuf[i*nchans+j],nsf);
     }
     weed_set_voidptr_value(layers[i],"audio_data",in_abuf);
     weed_set_int_value(layers[i],"audio_data_length",nsamps);
@@ -2481,7 +2555,7 @@ lives_filter_error_t weed_apply_audio_instance (weed_plant_t *init_event, float 
   }
 
   for (i=0;i<nchans;i++) {
-    w_memcpy(abuf[i],(char *)out_abuf+(i*nsf),nsf);
+    lives_memcpy(abuf[i],(char *)out_abuf+(i*nsf),nsf);
   }
 
   for (i=0;i<ntracks;i++) {
@@ -2874,6 +2948,8 @@ static gint check_for_lives(weed_plant_t *filter, int filter_idx) {
   // all filters must take 0, 1 or 2 mandatory/optional inputs and provide 
   // 1 mandatory output or >1 optional outputs (for now)
 
+  // or 1 or more mandatory alpha outputs (analysers)
+
   // filters can also have 1 mandatory input and no outputs and out parameters
   // (video analyzer)
 
@@ -2886,6 +2962,7 @@ static gint check_for_lives(weed_plant_t *filter, int filter_idx) {
   gint achans_in_mand=0,achans_out_mand=0;
   gboolean is_audio=FALSE;
   gboolean has_out_params=FALSE;
+  gboolean all_out_alpha=TRUE;
 
   int error,flags=0;
   int num_elements,i;
@@ -2963,7 +3040,10 @@ static gint check_for_lives(weed_plant_t *filter, int filter_idx) {
     }
     else {
       // is mandatory
-      if (!is_audio) chans_out_mand++;
+      if (!is_audio) {
+	chans_out_mand++;
+	if (has_non_alpha_palette(array[i])) all_out_alpha=FALSE;
+      }
       else achans_out_mand++;
     }
   }
@@ -2971,8 +3051,8 @@ static gint check_for_lives(weed_plant_t *filter, int filter_idx) {
 
   if (weed_plant_has_leaf(filter,"out_parameter_templates")) has_out_params=TRUE;
 
-  if (chans_out_mand>1||((chans_out_mand+chans_out_opt_max+achans_out_mand<1)&&(chans_in_mand!=1||!has_out_params))) 
-    return 11;
+  if ((chans_out_mand>1&&!all_out_alpha)||((chans_out_mand+chans_out_opt_max+achans_out_mand<1)
+					   &&(chans_in_mand!=1||!has_out_params))) return 11;
   if (achans_out_mand>1||(achans_out_mand==1&&chans_out_mand>0)) return 14;
   if ((achans_in_mand==1&&achans_out_mand==0)||(achans_in_mand==0&&achans_out_mand==1)) return 15;
 
@@ -3403,8 +3483,8 @@ static void load_weed_plugin (gchar *plugin_name, gchar *plugin_path, gchar *dir
 
 
 void weed_memory_init(void) {
-  weed_init(110,(weed_malloc_f)lives_weed_malloc,(weed_free_f)lives_weed_free,(weed_memcpy_f)lives_weed_memcpy,
-	    (weed_memset_f)lives_weed_memset);
+  weed_init(110,(weed_malloc_f)lives_malloc,(weed_free_f)lives_free,(weed_memcpy_f)lives_memcpy,
+	    (weed_memset_f)lives_memset);
 }
 
 
@@ -6887,22 +6967,22 @@ static void weed_leaf_serialise (int fd, weed_plant_t *plant, const char *key, g
       lives_write(fd,key,(size_t)i,TRUE);
     }
     else {
-      w_memcpy(*mem,&i,4);
+      lives_memcpy(*mem,&i,4);
       *mem+=4;
-      w_memcpy(*mem,key,(size_t)i);
+      lives_memcpy(*mem,key,(size_t)i);
       *mem+=i;
     }
   }
   st=weed_leaf_seed_type(plant,key);
   if (mem==NULL) lives_write_le(fd,&st,4,TRUE);
   else {
-    w_memcpy(*mem,&st,4);
+    lives_memcpy(*mem,&st,4);
     *mem+=4;
   }
   ne=weed_leaf_num_elements(plant,key);
   if (mem==NULL) lives_write_le(fd,&ne,4,TRUE);
   else {
-    w_memcpy(*mem,&ne,4);
+    lives_memcpy(*mem,&ne,4);
     *mem+=4;
   }
 
@@ -6926,9 +7006,9 @@ static void weed_leaf_serialise (int fd, weed_plant_t *plant, const char *key, g
       else lives_write(fd,value,(size_t)vlen,TRUE);
     }
     else {
-      w_memcpy(*mem,&vlen,4);
+      lives_memcpy(*mem,&vlen,4);
       *mem+=4;
-      w_memcpy(*mem,value,(size_t)vlen);
+      lives_memcpy(*mem,value,(size_t)vlen);
       *mem+=vlen;
     }
     g_free(value);
@@ -6951,7 +7031,7 @@ gboolean weed_plant_serialise(int fd, weed_plant_t *plant, unsigned char **mem) 
 
   if (mem==NULL) lives_write_le(fd,&i,4,TRUE); // write number of leaves
   else {
-    w_memcpy(*mem,&i,4);
+    lives_memcpy(*mem,&i,4);
     *mem+=4;
   }
 
@@ -6999,7 +7079,7 @@ gboolean weed_plant_serialise(int fd, weed_plant_t *plant, unsigned char **mem) 
       if (lives_read_le(fd,&len,4,TRUE)<4) return -4;
     }
     else {
-      w_memcpy(&len,*mem,4);
+      lives_memcpy(&len,*mem,4);
       *mem+=4;
     }
 
@@ -7017,7 +7097,7 @@ gboolean weed_plant_serialise(int fd, weed_plant_t *plant, unsigned char **mem) 
       }
     }
     else {
-      w_memcpy(mykey,*mem,(size_t)len);
+      lives_memcpy(mykey,*mem,(size_t)len);
       *mem+=len;
     }
     memset(mykey+(size_t)len,0,1);
@@ -7042,7 +7122,7 @@ gboolean weed_plant_serialise(int fd, weed_plant_t *plant, unsigned char **mem) 
     }
   }
   else {
-    w_memcpy(&st,*mem,4);
+    lives_memcpy(&st,*mem,4);
     *mem+=4;
   }
 
@@ -7066,7 +7146,7 @@ gboolean weed_plant_serialise(int fd, weed_plant_t *plant, unsigned char **mem) 
     }
   }
   else {
-    w_memcpy(&ne,*mem,4);
+    lives_memcpy(&ne,*mem,4);
     *mem+=4;
   }
 
@@ -7093,7 +7173,7 @@ gboolean weed_plant_serialise(int fd, weed_plant_t *plant, unsigned char **mem) 
       }
     }
     else {
-      w_memcpy(&vlen,*mem,4);
+      lives_memcpy(&vlen,*mem,4);
       *mem+=4;
     }
       
@@ -7120,7 +7200,7 @@ gboolean weed_plant_serialise(int fd, weed_plant_t *plant, unsigned char **mem) 
       }
     }
     else {
-      w_memcpy(values[i],*mem,vlen);
+      lives_memcpy(values[i],*mem,vlen);
       *mem+=vlen;
     }
     if (st==WEED_SEED_STRING) {
@@ -7195,7 +7275,7 @@ weed_plant_t *weed_plant_deserialise(int fd, unsigned char **mem) {
     }
   }
   else {
-    w_memcpy(&numleaves,*mem,4);
+    lives_memcpy(&numleaves,*mem,4);
     *mem+=4;
   }
 

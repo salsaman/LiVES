@@ -60,12 +60,12 @@ void *streambuf (void *arg) {
       btowrite=res;
       if (lstream->bufoffs+btowrite>STREAM_BUF_SIZE) {
 	btowrite=STREAM_BUF_SIZE-lstream->bufoffs;
-	w_memcpy(lstream->buffer+lstream->bufoffs,tmpbuf,btowrite);
+	lives_memcpy(lstream->buffer+lstream->bufoffs,tmpbuf,btowrite);
 	tmpbufoffs+=btowrite;
 	res-=btowrite;
 	lstream->bufoffs=0;
       }
-      w_memcpy(lstream->buffer+lstream->bufoffs,tmpbuf+tmpbufoffs,res);
+      lives_memcpy(lstream->buffer+lstream->bufoffs,tmpbuf+tmpbufoffs,res);
       lstream->bufoffs+=res;
       lstream->reading=TRUE;
     }
@@ -92,12 +92,12 @@ static size_t l2l_rcv_packet(lives_vstream_t *lstream, size_t buflen, void *buf)
     if (lstream->reading) {
       if (buflen+bufoffs>STREAM_BUF_SIZE) {
 	btoread=STREAM_BUF_SIZE-bufoffs;
-	w_memcpy(buf,(void *)((guchar *)lstream->buffer+bufoffs),btoread);
+	lives_memcpy(buf,(void *)((guchar *)lstream->buffer+bufoffs),btoread);
 	bufoffs=0;
 	buflen-=btoread;
 	buf=(void *)((guchar *)buf+btoread);
       }
-      w_memcpy(buf,(void *)((guchar *)lstream->buffer+bufoffs),buflen);
+      lives_memcpy(buf,(void *)((guchar *)lstream->buffer+bufoffs),buflen);
       bufoffs+=buflen;
       return buflen+btoread;
     }
@@ -122,7 +122,7 @@ static gboolean lives_stream_in_chunks(lives_vstream_t *lstream, size_t buflen, 
     copied=L2L_PACKET_LEN-pckoffs;
     if (copied>buflen) copied=buflen;
     
-    w_memcpy(buf,pckbuf,copied);
+    lives_memcpy(buf,pckbuf,copied);
 
     buflen-=copied;
     pckoffs+=copied;
@@ -163,7 +163,7 @@ static gboolean lives_stream_in_chunks(lives_vstream_t *lstream, size_t buflen, 
     copied=pcksize-pckoffs;
     if (copied>buflen) copied=buflen;
     
-    w_memcpy(buf,pckbuf,copied);
+    lives_memcpy(buf,pckbuf,copied);
     
     buflen-=copied;
     pckoffs+=copied;
@@ -268,7 +268,7 @@ static gchar *l2l_get_packet_header(lives_vstream_t *lstream) {
 	csize=pcksize;
 	pcksize=(pcksize+1)>>1;
 	csize-=pcksize;
-	w_memcpy(pckbuf,pckbuf+pcksize,csize);
+	lives_memcpy(pckbuf,pckbuf+pcksize,csize);
 	pckoffs-=pcksize;
 	pcksize=csize;
       }
@@ -280,7 +280,7 @@ static gchar *l2l_get_packet_header(lives_vstream_t *lstream) {
       hdr_buf[hdrsize++]=pckbuf[pckoffs];
       if (hdrsize>1000) {
 	if (pckoffs>=L2L_PACKET_LEN) {
-	  w_memcpy(pckbuf,pckbuf+L2L_PACKET_LEN,L2L_PACKET_LEN);
+	  lives_memcpy(pckbuf,pckbuf+L2L_PACKET_LEN,L2L_PACKET_LEN);
 	  pckoffs-=L2L_PACKET_LEN;
 	}
 	return NULL;
@@ -290,7 +290,7 @@ static gchar *l2l_get_packet_header(lives_vstream_t *lstream) {
 	  csize=pcksize;
 	  pcksize=(pcksize+1)>>1;
 	  csize-=pcksize;
-	  w_memcpy(pckbuf,pckbuf+pcksize,csize);
+	  lives_memcpy(pckbuf,pckbuf+pcksize,csize);
 	  pckoffs-=pcksize;
 	  pcksize=csize;
 	}
@@ -304,7 +304,7 @@ static gchar *l2l_get_packet_header(lives_vstream_t *lstream) {
 	csize=pcksize;
 	pcksize=(pcksize+1)>>1;
 	csize-=pcksize;
-	w_memcpy(pckbuf,pckbuf+pcksize,csize);
+	lives_memcpy(pckbuf,pckbuf+pcksize,csize);
 	pckoffs-=pcksize;
 	pcksize=csize;
       }
@@ -313,7 +313,7 @@ static gchar *l2l_get_packet_header(lives_vstream_t *lstream) {
     }
 
     if (strncmp(pckbuf+pckoffs,"A",1)) {
-      w_memcpy (&hdr_buf[hdrsize],pckbuf+pckoffs-1,2);
+      lives_memcpy (&hdr_buf[hdrsize],pckbuf+pckoffs-1,2);
       hdrsize+=2;
       continue;
     }
@@ -323,7 +323,7 @@ static gchar *l2l_get_packet_header(lives_vstream_t *lstream) {
 	csize=pcksize;
 	pcksize=(pcksize+1)>>1;
 	csize-=pcksize;
-	w_memcpy(pckbuf,pckbuf+pcksize,csize);
+	lives_memcpy(pckbuf,pckbuf+pcksize,csize);
 	pckoffs-=pcksize;
 	pcksize=csize;
       }
@@ -332,7 +332,7 @@ static gchar *l2l_get_packet_header(lives_vstream_t *lstream) {
     }
 
     if (strncmp(pckbuf+pckoffs,"T",1)) {
-      w_memcpy (&hdr_buf[hdrsize],pckbuf+pckoffs-2,3);
+      lives_memcpy (&hdr_buf[hdrsize],pckbuf+pckoffs-2,3);
       hdrsize+=3;
       continue;
     }
@@ -342,7 +342,7 @@ static gchar *l2l_get_packet_header(lives_vstream_t *lstream) {
 	csize=pcksize;
 	pcksize=(pcksize+1)>>1;
 	csize-=pcksize;
-	w_memcpy(pckbuf,pckbuf+pcksize,csize);
+	lives_memcpy(pckbuf,pckbuf+pcksize,csize);
 	pckoffs-=pcksize;
 	pcksize=csize;
       }
@@ -351,7 +351,7 @@ static gchar *l2l_get_packet_header(lives_vstream_t *lstream) {
     }
 
     if (strncmp(pckbuf+pckoffs,"A",1)) {
-      w_memcpy (&hdr_buf[hdrsize],pckbuf+pckoffs-3,4);
+      lives_memcpy (&hdr_buf[hdrsize],pckbuf+pckoffs-3,4);
       hdrsize+=4;
       continue;
     }
@@ -359,7 +359,7 @@ static gchar *l2l_get_packet_header(lives_vstream_t *lstream) {
   }
 
   if (pckoffs>=L2L_PACKET_LEN) {
-    w_memcpy(pckbuf,pckbuf+L2L_PACKET_LEN,L2L_PACKET_LEN);
+    lives_memcpy(pckbuf,pckbuf+L2L_PACKET_LEN,L2L_PACKET_LEN);
     pckoffs-=L2L_PACKET_LEN;
     pcksize-=L2L_PACKET_LEN;
   }
@@ -902,14 +902,14 @@ void weed_layer_set_from_lives2lives(weed_plant_t *layer, gint clip, lives_vstre
 	    g_free(fbuffer);
 	    return;
 	  }
-	  w_memcpy((guchar *)pixel_data[0]+framedataread,fbuffer,target_size);
+	  lives_memcpy((guchar *)pixel_data[0]+framedataread,fbuffer,target_size);
 	  dsize-=target_size;
 	  fbufoffs+=target_size;
 	  
 	  target_size=(lstream->hsize*lstream->vsize)>>2;
 	  if (target_size>dsize) target_size=dsize;
 	  
-	  if (target_size>0) w_memcpy((guchar *)pixel_data[1],fbuffer+fbufoffs,target_size);
+	  if (target_size>0) lives_memcpy((guchar *)pixel_data[1],fbuffer+fbufoffs,target_size);
 	  
 	  dsize-=target_size;
 	  fbufoffs+=target_size;
@@ -917,7 +917,7 @@ void weed_layer_set_from_lives2lives(weed_plant_t *layer, gint clip, lives_vstre
 	  target_size=(lstream->hsize*lstream->vsize)>>2;
 	  if (target_size>dsize) target_size=dsize;
 	  
-	  if (target_size>0) w_memcpy((guchar *)pixel_data[2],fbuffer+fbufoffs,target_size);
+	  if (target_size>0) lives_memcpy((guchar *)pixel_data[2],fbuffer+fbufoffs,target_size);
 	  
 	  g_free(fbuffer);
 	}
@@ -953,7 +953,7 @@ void weed_layer_set_from_lives2lives(weed_plant_t *layer, gint clip, lives_vstre
 	      g_free(fbuffer);
 	      return;
 	    }
-	    w_memcpy((guchar *)pixel_data[1]+framedataread-lstream->hsize*lstream->vsize,fbuffer,target_size);
+	    lives_memcpy((guchar *)pixel_data[1]+framedataread-lstream->hsize*lstream->vsize,fbuffer,target_size);
 	    
 	    dsize-=target_size;
 	    fbufoffs+=target_size;
@@ -961,7 +961,7 @@ void weed_layer_set_from_lives2lives(weed_plant_t *layer, gint clip, lives_vstre
 	    target_size=(lstream->hsize*lstream->vsize)>>2;
 	    if (target_size>dsize) target_size=dsize;
 	    
-	    if (target_size>0) w_memcpy((guchar *)pixel_data[2],fbuffer+fbufoffs,target_size);
+	    if (target_size>0) lives_memcpy((guchar *)pixel_data[2],fbuffer+fbufoffs,target_size);
 	    
 	    g_free(fbuffer);
 	  }

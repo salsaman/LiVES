@@ -3668,7 +3668,7 @@ _prefsw *create_prefs_dialog (void) {
 	  g_strfreev (array);
 	}
       }
-      w_memcpy (&future_prefs->encoder,&prefs->encoder,sizeof(_encoder));
+      lives_memcpy (&future_prefs->encoder,&prefs->encoder,sizeof(_encoder));
       populate_combo_box(GTK_COMBO_BOX(prefsw->ofmt_combo), ofmt);
       g_list_free_strings(ofmt);
       g_list_free(ofmt);

@@ -498,7 +498,7 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
 	       if (!pulsed->is_paused) pulsed->frames_written+=nframes;
 	       return;
 	     }
-	     w_memcpy(buffer,pulsed->sound_buffer+offs,xbytes);
+	     lives_memcpy(buffer,pulsed->sound_buffer+offs,xbytes);
 	     offs+=xbytes;
 	     needs_free=TRUE;
 	   }
@@ -565,8 +565,8 @@ void pulse_flush_read_data(pulse_driver_t *pulsed, size_t rbytes, void *data) {
 
   if (!gbuf) return;
 
-  w_memcpy(gbuf,prbuf,prb-rbytes);
-  if (rbytes>0) w_memcpy(gbuf+(prb-rbytes)/sizeof(short),data,rbytes);
+  lives_memcpy(gbuf,prbuf,prb-rbytes);
+  if (rbytes>0) lives_memcpy(gbuf+(prb-rbytes)/sizeof(short),data,rbytes);
 
   frames_out=(size_t)((gdouble)((prb/(pulsed->in_asamps>>3)/pulsed->in_achans))/out_scale+.5);
 
@@ -637,7 +637,7 @@ static void pulse_audio_read_process (pa_stream *pstream, size_t nbytes, void *a
 
   if (prb<PULSE_READ_BYTES&&(mainw->rec_samples==-1||frames_out<mainw->rec_samples)) {
     // buffer until we have enough
-    w_memcpy(&prbuf[prb-rbytes],data,rbytes);
+    lives_memcpy(&prbuf[prb-rbytes],data,rbytes);
     pa_stream_drop(pulsed->pstream);
     return;
   }

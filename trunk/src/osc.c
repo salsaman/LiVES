@@ -57,8 +57,8 @@ static int toInt(const char* b) {
 
 
 // wrapper for correct typing
-void *lives_malloc(int size) {
-  return g_malloc(size);
+static LIVES_INLINE void *lives_size_malloc(int size) {
+  return lives_malloc((size_t)size);
 }
 
 static gboolean using_types;
@@ -4633,8 +4633,8 @@ lives_osc* lives_osc_allocate(int port_id) {
     o->leaves = (OSCcontainer*) g_malloc(sizeof(OSCcontainer) * 1000);
     o->t.initNumContainers = 1000;
     o->t.initNumMethods = 2000;
-    o->t.InitTimeMemoryAllocator = lives_malloc;
-    o->t.RealTimeMemoryAllocator = lives_malloc;
+    o->t.InitTimeMemoryAllocator = lives_size_malloc;
+    o->t.RealTimeMemoryAllocator = lives_size_malloc;
     
     if(!OSCInitReceive( &(o->rt))) {
       d_print( _ ("Cannot initialize OSC receiver\n"));

@@ -146,6 +146,12 @@ giw_LDADD=-lm
 giw_CFLAGS=-DENABLE_GIW=1
 endif
 
+if HAVE_OPENCV
+opencv_CFLAGS = @OPENCV_CFLAGS@ -DHAVE_OPENCV
+opencv_LDFLAGS = @OPENCV_LIBS_ONLY_L@ -lopencv_core -lopencv_video
+endif
+
+
 
 lives_exe_SOURCES = \
 	widget-helper.c widget-helper.h \
@@ -190,13 +196,13 @@ lives_exe_SOURCES = \
 
 lives_exe_LDADD = @GTK_LIBS_NODYNAMIC@ @X11_LIBS@ @MJPEGTOOLS_LIBS@ $(osc_LDADD) $(jack_LDADD) $(ldvgrab_LDADD) \
 	$(oil_LDADD) $(alsa_LDADD) $(pulse_LDADD) $(png_LDADD) $(swscale_LDADD) -lpthread $(libweed_LDADD) \
-	 $(giw_LDADD) $(v4l1_LDADD) $(lives_exe_LDFLAGS) \
+	 $(giw_LDADD) $(v4l1_LDADD) $(opencv_LDFLAGS) $(lives_exe_LDFLAGS) \
 	@UNICAP_LIBS@
 
 AM_CFLAGS = -Wstrict-aliasing=0 $(yuv4mpeg_CFLAGS) $(ldvgrab_CFLAGS) $(dvgrab_CFLAGS) $(oil_CFLAGS) \
 	$(darwin_CFLAGS) $(irix_CFLAGS) $(linux_CFLAGS) $(solaris_CFLAGS) $(osc_CFLAGS) $(alsa_CFLAGS) $(png_CFLAGS) $(swscale_CFLAGS) \
 	$(jack_CFLAGS) $(pulse_CFLAGS) $(giw_CFLAGS) $(unicap_CFLAGS) $(libweed_CFLAGS) $(libweed_compat_CFLAGS) \
-	-DLIVES_LIBDIR=\""$(libdir)"\" $(gtk_def)
+	$(opencv_CFLAGS) -DLIVES_LIBDIR=\""$(libdir)"\" $(gtk_def)
 
 
 if HAVE_AVFORMAT

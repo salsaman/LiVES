@@ -207,6 +207,7 @@ create_LiVES (void)
   GtkWidget *hbox3;
   GtkWidget *t_label;
   GtkWidget *label;
+  GtkWidget *eventbox;
 
 #if defined (HAVE_YUV4MPEG) || defined (HAVE_UNICAP)
   GtkWidget *submenu;
@@ -2056,9 +2057,13 @@ create_LiVES (void)
     gtk_widget_modify_fg(pf_label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
 
+  eventbox = gtk_event_box_new ();
+  gtk_container_add (GTK_CONTAINER (mainw->playframe), eventbox);
+  gtk_widget_show(eventbox);
+
   mainw->playarea = gtk_hbox_new (FALSE,0);
 
-  gtk_container_add (GTK_CONTAINER (mainw->playframe), mainw->playarea);
+  gtk_container_add (GTK_CONTAINER (eventbox), mainw->playarea);
 
   gtk_widget_set_app_paintable(mainw->playarea,TRUE);
 

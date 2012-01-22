@@ -1774,12 +1774,12 @@ void on_prefDomainChanged(GtkTreeSelection *widget, gpointer dummy)
     }
   }
 
-  if (!strcmp(prefs->wm,"Compiz")) {
+  //if (!strcmp(prefs->wm,"Compiz")) {
     // this is needed to force the window to update in some cases
     if (GTK_WIDGET_VISIBLE(prefsw->prefs_dialog)) gtk_widget_show_all(prefsw->prefs_dialog);
     gtk_widget_queue_draw(prefsw->prefs_dialog);
     if (dummy==NULL) on_prefDomainChanged(widget,GINT_TO_POINTER(1));
-  }
+    //}
 
   gtk_widget_queue_draw(prefsw->prefs_dialog);
 
@@ -5931,11 +5931,11 @@ on_preferences_activate(GtkMenuItem *menuitem, gpointer user_data)
   prefsw = create_prefs_dialog();
   gtk_widget_show(prefsw->prefs_dialog);
 
-  if (!strcmp(prefs->wm,"Compiz")) {
+  //if (!strcmp(prefs->wm,"Compiz")) {
     // need to do exactly this, else the window does not get properly centered on some WMs
     while (g_main_context_iteration(NULL,FALSE));
     on_prefDomainChanged(prefsw->selection,NULL);
-  }
+    //}
 
 }
 

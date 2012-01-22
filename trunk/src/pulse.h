@@ -1,6 +1,6 @@
 // pulse.h
 // LiVES (lives-exe)
-// (c) G. Finch 2005 - 2009
+// (c) G. Finch 2005 - 2012
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -18,8 +18,8 @@
 
 #define PULSE_MAX_OUTPUT_CHANS PA_CHANNEL_POSITION_MAX
 
-#define LIVES_PA_BUFF_MAXLEN 1024
-#define LIVES_PA_BUFF_TARGET 16384
+#define LIVES_PA_BUFF_MAXLEN 16384
+#define LIVES_PA_BUFF_TARGET 1024
 
 typedef struct {
   size_t size;

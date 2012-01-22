@@ -211,6 +211,7 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
 	   pulsed->playing_file=new_file;
 	   pulsed->audio_ticks=mainw->currticks;
 	   pulsed->frames_written=0;
+	   pulsed->usec_start=0;
 	   pulsed->aPlayPtr->data=g_try_realloc(pulsed->aPlayPtr->data,nbytes*100);
 	   if (pulsed->aPlayPtr->data!=NULL) {
 	     memset(pulsed->aPlayPtr->data,0,nbytes*100);
@@ -239,6 +240,7 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
        pulsed->seek_pos=seek;
        pulsed->audio_ticks=mainw->currticks;
        pulsed->frames_written=0;
+       pulsed->usec_start=0;
        break;
      default:
        msg->data=NULL;
@@ -830,9 +832,9 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
 
 #ifdef PA_STREAM_START_UNMUTED
     pa_stream_connect_playback(pdriver->pstream,NULL,&pa_battr,
-			       (pa_stream_flags_t)(PA_STREAM_START_UNMUTED|PA_STREAM_ADJUST_LATENCY),&out_vol,NULL);
+			       (pa_stream_flags_t)(PA_STREAM_START_UNMUTED|PA_STREAM_ADJUST_LATENCY|PA_STREAM_INTERPOLATE_TIMING|PA_STREAM_AUTO_TIMING_UPDATE),&out_vol,NULL);
 #else
-    pa_stream_connect_playback(pdriver->pstream,NULL,&pa_battr,(pa_stream_flags_t)(PA_STREAM_ADJUST_LATENCY),&out_vol,NULL);
+    pa_stream_connect_playback(pdriver->pstream,NULL,&pa_battr,(pa_stream_flags_t)(PA_STREAM_ADJUST_LATENCY|PA_STREAM_INTERPOLATE_TIMING|PA_STREAM_AUTO_TIMING_UPDATE),&out_vol,NULL);
 #endif
 
     while (pa_stream_get_state(pdriver->pstream)!=PA_STREAM_READY) {
@@ -843,6 +845,7 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
     // set read callback
     pdriver->audio_ticks=0;
     pdriver->frames_written=0;
+    pdriver->usec_start=0;
     prb=0;
 
     pa_stream_set_read_callback(pdriver->pstream,pulse_audio_read_process,pdriver);
@@ -906,8 +909,16 @@ gint64 lives_pulse_get_time(pulse_driver_t *pulsed, gboolean absolute) {
     lives_alarm_clear(alarm_handle);
   }
 
+#ifdef USE_PA_INTERP_TIME
+  {
+    pa_usec_t usec;
+    pa_stream_get_time(pulsed->pstream,&usec);
+    return pulsed->audio_ticks*absolute+(gint64)((usec-pulsed->usec_start)*U_SEC_RATIO);
+  }
+#else
   if (pulsed->is_output) return pulsed->audio_ticks*absolute+(gint64)(frames_written/(gdouble)pulsed->out_arate*U_SEC);
   return pulsed->audio_ticks*absolute+(gint64)(frames_written/(gdouble)afile->arate*U_SEC);
+#endif
 
 }
 

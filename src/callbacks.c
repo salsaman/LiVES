@@ -3768,6 +3768,9 @@ on_record_perf_activate                      (GtkMenuItem     *menuitem,
 {
   // real time recording
   gulong frames_written=0;
+#ifdef HAVE_PULSE_AUDIO
+  pa_usec_t usec_start=0;
+#endif
   gulong audio_ticks=0;
   gulong seek_pos=0;
 
@@ -3824,6 +3827,7 @@ on_record_perf_activate                      (GtkMenuItem     *menuitem,
 	    if (timeout) pulse_try_reconnect();
 	    lives_alarm_clear(alarm_handle);
 	    frames_written=mainw->pulsed->frames_written;
+	    usec_start=mainw->pulsed->usec_start;
 	    seek_pos=mainw->pulsed->seek_pos;
 	    audio_ticks=mainw->pulsed->audio_ticks;
 
@@ -3857,6 +3861,7 @@ on_record_perf_activate                      (GtkMenuItem     *menuitem,
 	    pulse_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_EXTERNAL);
 	    mainw->rec_aseek=(double)mainw->pulsed_read->frames_written/(double)mainw->files[mainw->ascrap_file]->arps;
 	    mainw->pulsed_read->frames_written=frames_written;
+	    mainw->pulsed_read->usec_start=usec_start;
 	    mainw->pulsed_read->audio_ticks=audio_ticks;
 	    mainw->pulsed_read->seek_pos=seek_pos;
 	    pulse_driver_uncork(mainw->pulsed_read);

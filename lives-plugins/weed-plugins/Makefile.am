@@ -58,6 +58,16 @@ frei0rpluginslib_LTLIBRARIES = $(frei0r_libs)
 endif
 
 
+if HAVE_OPENCV
+farneback_analyser_libs = farneback_analyser.la
+farneback_analyser_la_LDFLAGS = $(AM_LDFLAGS) $(OPENCV_LIBS_ONLY_L) -lopencv_core -lopencv_video
+farneback_analyser_la_CFLAGS = $(AM_CFLAGS)
+farneback_analyser_la_SOURCES = farneback_analyser.cpp
+
+opencvlibdir = "$(libdir)/$(PACKAGE)/plugins/effects/realtime/weed"
+opencvlib_LTLIBRARIES = $(farneback_analyser_libs)
+endif
+
 
 fxpluginslib_LTLIBRARIES = RGBdelay.la \
 	alien_overlay.la \
@@ -71,6 +81,7 @@ fxpluginslib_LTLIBRARIES = RGBdelay.la \
 	comic.la \
 	deinterlace.la \
 	edge.la \
+	$(opencv_LIBS) \
 	fg_bg_removal.la \
 	fireTV.la \
 	haip.la \

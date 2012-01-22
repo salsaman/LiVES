@@ -799,7 +799,7 @@ void cancel_process(gboolean visible) {
 
 
 
-static void disp_fraction(gint done, gint start, gint end, gdouble timesofar, process *proc) {
+static void disp_fraction(gint done, gint start, gint end, gdouble timesofar, xprocess *proc) {
   // display fraction done and estimated time remaining
   gchar *prog_label;
   gdouble est_time;
@@ -1671,7 +1671,7 @@ gboolean do_auto_dialog (const gchar *text, gint type) {
   guint64 time=0,end_time=1;
   gchar *label_text;
   gint time_rem,last_time_rem=10000000;
-  process *proc_ptr;
+  xprocess *proc_ptr;
   gchar *mytext=g_strdup(text);
 
   mainw->error=FALSE;
@@ -2319,7 +2319,7 @@ void do_rmem_max_error (gint size) {
   g_free(msg);
 }
 
-static process *procw=NULL;
+static xprocess *procw=NULL;
 
 
 static void create_threaded_dialog(gchar *text, gboolean has_cancel) {
@@ -2329,7 +2329,7 @@ static void create_threaded_dialog(gchar *text, gboolean has_cancel) {
   GtkWidget *vbox3;
   gchar tmp_label[256];
  
-  procw=(process*)(g_malloc(sizeof(process)));
+  procw=(xprocess*)(g_malloc(sizeof(xprocess)));
 
   procw->processing = gtk_dialog_new ();
   gtk_window_set_position (GTK_WINDOW (procw->processing), GTK_WIN_POS_CENTER_ALWAYS);

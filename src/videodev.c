@@ -108,11 +108,11 @@ static void new_frame_cb (unicap_event_t event, unicap_handle_t handle,
   }
 
   if (ldev->buffer_ready!=1) {
-    w_memcpy(ldev->buffer1.data,buffer->data,ldev->buffer1.buffer_size);
+    lives_memcpy(ldev->buffer1.data,buffer->data,ldev->buffer1.buffer_size);
     ldev->buffer_ready=1;
   }
   else {
-    w_memcpy(ldev->buffer2.data,buffer->data,ldev->buffer2.buffer_size);
+    lives_memcpy(ldev->buffer2.data,buffer->data,ldev->buffer2.buffer_size);
     ldev->buffer_ready=2;
   }
 
@@ -183,7 +183,7 @@ gboolean weed_layer_set_from_lvdev (weed_plant_t *layer, file *sfile, gdouble ti
 #endif
 	bsize=returned_buffer->buffer_size;
       }
-      w_memcpy(pixel_data[0], returned_buffer->data, bsize);
+      lives_memcpy(pixel_data[0], returned_buffer->data, bsize);
     }
   }
 

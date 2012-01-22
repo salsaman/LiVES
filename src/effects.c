@@ -55,6 +55,9 @@ gchar *lives_fx_cat_to_text(lives_fx_cat_t cat, gboolean plural) {
   case LIVES_FX_CAT_GENERATOR:
     if (!plural) return (g_strdup(_("generator")));
     else return (g_strdup(_("Generators")));
+  case LIVES_FX_CAT_DATA_GENERATOR:
+    if (!plural) return (g_strdup(_("data generator")));
+    else return (g_strdup(_("Data generators")));
   case LIVES_FX_CAT_TRANSITION:
     if (!plural) return (g_strdup(_("transition")));
     else return (g_strdup(_("Transitions")));
@@ -490,7 +493,7 @@ gboolean do_effect(lives_rfx_t *rfx, gboolean is_preview) {
       
       init_clipboard();
       
-      w_memcpy(clipboard,cfile,sizeof(file));
+      lives_memcpy(clipboard,cfile,sizeof(file));
       cfile->is_loaded=TRUE;
       mainw->suppress_dprint=TRUE;
       mainw->only_close=TRUE;

@@ -149,7 +149,7 @@ void sample_move_d16_d16(short *dst, short *src,
       ptr=src+src_offset_i;
       ptr=ptr>src?(ptr<src_end?ptr:src_end):src;
 
-      w_memcpy(dst,ptr,nSrcChannels*sizeof(short));
+      lives_memcpy(dst,ptr,nSrcChannels*sizeof(short));
       dst+=nDstCount;
     } 
     else {
@@ -583,7 +583,7 @@ static size_t chunk_to_float_abuf(lives_audio_buf_t *abuf, float **float_buffer,
   register int i;
 
   for (i=0;i<chans;i++) {
-    w_memcpy(&(abuf->bufferf[i][offs]),float_buffer[i],nsamps*sizeof(float));
+    lives_memcpy(&(abuf->bufferf[i][offs]),float_buffer[i],nsamps*sizeof(float));
   }
   return (size_t)nsamps;
 }
@@ -1023,7 +1023,7 @@ long render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdouble *
       for (track=0;track<nfiles;track++) {
 	for (c=0;c<out_achans;c++) {
 	  //g_print("xvals %.4f\n",*(float_buffer[track*out_achans+c]+i));
-	  w_memcpy(chunk_float_buffer[track*out_achans+c],float_buffer[track*out_achans+c]+i,blocksize*sizeof(float));
+	  lives_memcpy(chunk_float_buffer[track*out_achans+c],float_buffer[track*out_achans+c]+i,blocksize*sizeof(float));
 	}
       }
 

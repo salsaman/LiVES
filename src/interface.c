@@ -271,13 +271,13 @@ static gboolean procdets_pressed (GtkWidget *ahbox, GdkEventButton *event, gpoin
 
 
 
-process * create_processing (const gchar *text) {
+xprocess * create_processing (const gchar *text) {
 
   GtkWidget *dialog_vbox1;
   GtkWidget *vbox2;
   GtkWidget *vbox3;
   GtkWidget *dialog_action_area1;
-  process *procw=(process*)(g_malloc(sizeof(process)));
+  xprocess *procw=(xprocess*)(g_malloc(sizeof(xprocess)));
   gchar tmp_label[256];
 
   GtkWidget *hbox;

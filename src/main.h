@@ -195,7 +195,7 @@ typedef struct {
   GtkWidget *cancel_button;
   GtkWidget *scrolledwindow;
   guint frames_done;
-} process;
+} xprocess;
 
 
 
@@ -402,7 +402,7 @@ typedef struct {
   gint rowstride;
 
   /// the processing window
-  process *proc_ptr;
+  xprocess *proc_ptr;
 
   gchar handle[256];
   gint ohsize;
@@ -705,7 +705,7 @@ typedef enum {
 // some useful functions
 
 // interface.c
-process* create_processing (const gchar *text);
+xprocess* create_processing (const gchar *text);
 void add_to_winmenu(void);
 void remove_from_winmenu(void);
 void make_play_window(void);
@@ -1149,7 +1149,14 @@ void add_fill_to_box (GtkBox *);
 void refresh_rte_window (void);
 
 // effects-weed.c
-void *w_memcpy  (void *dest, const void *src, size_t n);
+void * lives_malloc(size_t size);
+void *lives_memcpy(void *dest, const void *src, size_t n);
+void *lives_memset(void *s, int c, size_t n);
+void lives_free(void *ptr); ///< calls mainw->free_fn
+
+/// values of mainw->free_fn
+void lives_free_normal(void *ptr);
+void lives_free_with_check(gpointer ptr); ///< checks if ptr is mainw->do_not_free, otherwise calls lives_free_normal()
 
 // pangotext.c
 gboolean subtitles_init(file *sfile, char * fname, lives_subtitle_type_t);

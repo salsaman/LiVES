@@ -313,25 +313,6 @@ LIVES_INLINE void lives_freep(void **ptr) {
   }
 }
 
-
-
-
-// special de-allocators which avoid free()ing mainw->do_not_free...this is necessary to "hack" into gdk-pixbuf
-// do not use this directly in code (use g_free() or weed_free() as appropriate)
-void lives_free(gpointer ptr) {
-  (*mainw->free_fn)(ptr);
-}
-
-// special de-allocators which avoid free()ing mainw->do_not_free...this is necessary to "hack" into gdk-pixbuf
-// do not use this directly in code (use g_free() or weed_free() as appropriate)
-void lives_free_with_check(gpointer ptr) {
-  if (ptr==mainw->do_not_free) return;
-  free(ptr);
-}
-
-
-
-
 LIVES_INLINE int lives_kill(pid_t pid, int sig) {
   return kill(pid,sig);
 };
@@ -4083,7 +4064,7 @@ gint hextodec (const gchar *string) {
 
   for (i=0;i<strlen (string);i++) {
     tot*=16;
-    w_memcpy (test,&string[i],1);
+    lives_memcpy (test,&string[i],1);
     tot+=get_hex_digit (test);
   }
   return tot;

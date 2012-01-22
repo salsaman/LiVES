@@ -63,7 +63,7 @@ static int package_version=1; // version of this package
 /////////////////////////////////////////////////////////////
 
 #include <stdlib.h>
-
+#include <stdio.h>
 
 #define FP_BITS 16
 
@@ -314,8 +314,9 @@ prevImg (y,x) = nextImg ( y + flow (y,x)[1], x + flow (y,x)[0])
 
   */
 
-
+  fprintf(stderr,"analysing\n");
   calcOpticalFlowFarneback(cvprevgrey, cvgrey, cvflow, 0.5, 3, 15, 3, 5, 1.2, 0);
+  fprintf(stderr,"analysing done\n");
   
 
   weed_free(sdata->prevgrey);

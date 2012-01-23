@@ -57,7 +57,7 @@ gchar *lives_fx_cat_to_text(lives_fx_cat_t cat, gboolean plural) {
     else return (g_strdup(_("Generators")));
   case LIVES_FX_CAT_DATA_GENERATOR:
     if (!plural) return (g_strdup(_("data generator")));
-    else return (g_strdup(_("Data generators")));
+    else return (g_strdup(_("Data Generators")));
   case LIVES_FX_CAT_TRANSITION:
     if (!plural) return (g_strdup(_("transition")));
     else return (g_strdup(_("Transitions")));
@@ -76,7 +76,7 @@ gchar *lives_fx_cat_to_text(lives_fx_cat_t cat, gboolean plural) {
   case LIVES_FX_CAT_SPLITTER:
     if (!plural) return (g_strdup(_("splitter")));
     else return (g_strdup(_("Splitters")));
-  case LIVES_FX_CAT_CONVERTOR:
+  case LIVES_FX_CAT_CONVERTER:
     if (!plural) return (g_strdup(_("converter")));
     else return (g_strdup(_("Converters")));
   case LIVES_FX_CAT_ANALYSER:
@@ -108,7 +108,7 @@ gchar *lives_fx_cat_to_text(lives_fx_cat_t cat, gboolean plural) {
     else return (g_strdup(_("Video analysers")));
   case LIVES_FX_CAT_AUDIO_ANALYSER:
     if (!plural) return (g_strdup(_("audio analyser")));
-    else return (g_strdup(_("Audio analysers")));
+    else return (g_strdup(_("Audio Analysers")));
 
 
   default:

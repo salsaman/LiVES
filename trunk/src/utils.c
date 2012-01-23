@@ -44,8 +44,10 @@ char *filename_from_fd(char *val, int fd) {
   fdpath=g_build_filename("/proc","self","fd",fidi,NULL);
   g_free(fidi);
 
-  if (readlink(fdpath,rfdpath,PATH_MAX)==-1) return val;
+  if ((slen=readlink(fdpath,rfdpath,PATH_MAX))==-1) return val;
   g_free(fdpath);
+
+  memset(rfdpath+slen,0,1);
 
   if (stat(rfdpath,&stb1)) return val;
 

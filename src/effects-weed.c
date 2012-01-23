@@ -1378,6 +1378,7 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
   weed_process_f process_func;
   weed_plant_t *def_channel=NULL;
   gboolean rowstrides_changed;
+  gboolean ignore_palette;
   int nchr;
   int *layer_rows=NULL,*channel_rows;
   lives_filter_error_t retval=FILTER_NO_ERROR;
@@ -1890,6 +1891,8 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
 
     if (weed_get_boolean_value(def_channel,"temp_disabled",&error)==WEED_TRUE) def_disabled=TRUE; 
 
+    ignore_palette=FALSE;
+
     if (!inplace||def_disabled) {
 
       if (!def_disabled) {
@@ -1905,31 +1908,36 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
 	    if (channel_flags&WEED_CHANNEL_REINIT_ON_PALETTE_CHANGE) needs_reinit=TRUE;
 	  }
 	  else {
-	    weed_free(in_tracks);
-	    weed_free(out_tracks);
-	    weed_free(in_channels);
-	    weed_free(out_channels);
-	    weed_free(channel_rows);
-	    return FILTER_ERROR_INVALID_PALETTE_SETTINGS; // plugin author messed up...
+	    if (channel_flags&WEED_CHANNEL_PALETTE_CAN_VARY) ignore_palette=TRUE;
+	    else {
+	      weed_free(in_tracks);
+	      weed_free(out_tracks);
+	      weed_free(in_channels);
+	      weed_free(out_channels);
+	      weed_free(channel_rows);
+	      return FILTER_ERROR_INVALID_PALETTE_SETTINGS; // plugin author messed up...
+	    }
 	  }
 	  weed_free(palettes);
 	}
 	
-	if (weed_plant_has_leaf(def_channel,"YUV_clamping")) {
-	  oclamping=(weed_get_int_value(def_channel,"YUV_clamping",&error));
-	  weed_set_int_value(channel,"YUV_clamping",oclamping);
-	}
-	else weed_leaf_delete(channel,"YUV_clamping");
-	
-	if (weed_plant_has_leaf(def_channel,"YUV_sampling")) 
-	  weed_set_int_value(channel,"YUV_sampling",weed_get_int_value(def_channel,"YUV_sampling",&error));
-	else weed_leaf_delete(channel,"YUV_sampling");
-	
-	if (weed_plant_has_leaf(def_channel,"YUV_subspace")) 
-	  weed_set_int_value(channel,"YUV_subspace",weed_get_int_value(def_channel,"YUV_subspace",&error));
-	else weed_leaf_delete(channel,"YUV_subspace");
-      }
+	if (!ignore_palette) {
 
+	  if (weed_plant_has_leaf(def_channel,"YUV_clamping")) {
+	    oclamping=(weed_get_int_value(def_channel,"YUV_clamping",&error));
+	    weed_set_int_value(channel,"YUV_clamping",oclamping);
+	  }
+	  else weed_leaf_delete(channel,"YUV_clamping");
+	  
+	  if (weed_plant_has_leaf(def_channel,"YUV_sampling")) 
+	    weed_set_int_value(channel,"YUV_sampling",weed_get_int_value(def_channel,"YUV_sampling",&error));
+	  else weed_leaf_delete(channel,"YUV_sampling");
+	
+	  if (weed_plant_has_leaf(def_channel,"YUV_subspace")) 
+	    weed_set_int_value(channel,"YUV_subspace",weed_get_int_value(def_channel,"YUV_subspace",&error));
+	  else weed_leaf_delete(channel,"YUV_subspace");
+	}
+      }
 
       palette=weed_get_int_value(channel,"current_palette",&error);
 
@@ -2686,6 +2694,7 @@ weed_plant_t *weed_apply_effects (weed_plant_t **layers, weed_plant_t *filter_ma
 	  }
 	  filter_error=weed_apply_instance (instance,NULL,layers,opwidth,opheight,tc);
 	  if (filter_error==FILTER_INFO_REINITED) redraw_pwindow(i,key_modes[i]); // redraw our paramwindow
+#define DEBUG_RTE
 #ifdef DEBUG_RTE
 	  if (filter_error!=FILTER_NO_ERROR) g_printerr("Render error was %d\n",filter_error);
 #endif
@@ -2994,6 +3003,7 @@ static gint check_for_lives(weed_plant_t *filter, int filter_idx) {
     if (weed_plant_has_leaf(array[i],"is_audio")&&weed_get_boolean_value(array[i],"is_audio",&error)==WEED_TRUE) 
       is_audio=TRUE;
     if (!weed_plant_has_leaf(array[i],"name")||(!weed_plant_has_leaf(array[i],"palette_list")&&!is_audio)) {
+      g_print("val si %s\n",weed_get_string_value(array[i],"name",&error));
       weed_free(array);
       return 6;
     }
@@ -3363,7 +3373,7 @@ static void load_weed_plugin (gchar *plugin_name, gchar *plugin_path, gchar *dir
   mainw->chdir_failed=FALSE;
 
   // walk list and create fx structures
-
+  //#define DEBUG_WEED
 #ifdef DEBUG_WEED
   g_printerr("Checking plugin %s\n",plugin_path);
 #endif
@@ -3400,7 +3410,7 @@ static void load_weed_plugin (gchar *plugin_name, gchar *plugin_path, gchar *dir
       weed_set_string_value(plugin_info,"name",plugin_name); // for hashname
       weed_set_string_value(plugin_info,"plugin_path",dir);
       weed_add_plant_flags(plugin_info,WEED_LEAF_READONLY_PLUGIN);
-      
+
       filters=weed_get_plantptr_array(plugin_info,"filters",&error);
 
       while (idx<MAX_WEED_FILTERS&&mode<filters_in_plugin-1) {
@@ -3553,6 +3563,7 @@ void weed_load_all (void) {
     hashnames[i]=NULL;
   }
 
+
   threaded_dialog_spin();
   weed_p_path=getenv("WEED_PLUGIN_PATH");
   if (weed_p_path==NULL) weed_plugin_path=g_strdup("");
@@ -3581,7 +3592,7 @@ void weed_load_all (void) {
       threaded_dialog_spin();
       plugin_name=(gchar *)g_list_nth_data(weed_plugin_list,plugin_idx);
       if (!strncmp(plugin_name+strlen(plugin_name)-3,".so",3)) {
-	plugin_path=g_strdup_printf("%s/%s",dirs[i],plugin_name);
+	plugin_path=g_build_filename(dirs[i],plugin_name,NULL);
 	load_weed_plugin(plugin_name,plugin_path,dirs[i]);
 	g_free(plugin_name);
 	g_free(plugin_path);

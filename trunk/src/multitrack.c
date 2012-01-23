@@ -7982,27 +7982,37 @@ static double *update_layout_map_audio(weed_plant_t *event_list) {
 	    atrack=aclip_index[i];
 	    tc=get_event_timecode(event);
 	    if (atrack>=0) {
-	      if (avel[atrack]!=0.) {
-		aval=aseek[atrack]+(tc-atc[atrack])/U_SEC*avel[atrack];
-		last_aclip=last_aclips[atrack];
-		if (aval>used_clips[last_aclip]) used_clips[last_aclip]=aval;
+	      if (atrack>65535) {
+		LIVES_ERROR("invalid atrack");
 	      }
-	      aseek[atrack]=aseek_index[i];
-	      avel[atrack]=aseek_index[i+1];
-	      atc[atrack]=tc;
-	      last_aclips[atrack]=aclip_index[i+1];
+	      else {
+		if (avel[atrack]!=0.) {
+		  aval=aseek[atrack]+(tc-atc[atrack])/U_SEC*avel[atrack];
+		  last_aclip=last_aclips[atrack];
+		  if (aval>used_clips[last_aclip]) used_clips[last_aclip]=aval;
+		}
+		aseek[atrack]=aseek_index[i];
+		avel[atrack]=aseek_index[i+1];
+		atc[atrack]=tc;
+		last_aclips[atrack]=aclip_index[i+1];
+	      }
 	    }
 	    else {
 	      atrack=-atrack;
-	      if (neg_avel[atrack]!=0.) {
-		aval=neg_aseek[atrack]+(tc-neg_atc[atrack])/U_SEC*neg_avel[atrack];
-		last_aclip=neg_last_aclips[atrack];
-		if (aval>used_clips[last_aclip]) used_clips[last_aclip]=aval;
+	      if (atrack>65535) {
+		LIVES_ERROR("invalid back atrack");
 	      }
-	      neg_aseek[atrack]=aseek_index[i];
-	      neg_avel[atrack]=aseek_index[i+1];
-	      neg_atc[atrack]=tc;
-	      neg_last_aclips[atrack]=aclip_index[i+1];
+	      else {
+		if (neg_avel[atrack]!=0.) {
+		  aval=neg_aseek[atrack]+(tc-neg_atc[atrack])/U_SEC*neg_avel[atrack];
+		  last_aclip=neg_last_aclips[atrack];
+		  if (aval>used_clips[last_aclip]) used_clips[last_aclip]=aval;
+		}
+		neg_aseek[atrack]=aseek_index[i];
+		neg_avel[atrack]=aseek_index[i+1];
+		neg_atc[atrack]=tc;
+		neg_last_aclips[atrack]=aclip_index[i+1];
+	      }
 	    }
 	  }
 	}
@@ -8242,7 +8252,7 @@ gboolean multitrack_delete (lives_mt *mt, gboolean save_layout) {
 
     mainw->playarea = gtk_hbox_new (FALSE,0);
 
-    gtk_container_add (GTK_CONTAINER (mainw->playframe), mainw->playarea);
+    gtk_container_add (GTK_CONTAINER (mainw->pl_eventbox), mainw->playarea);
     gtk_widget_modify_bg (mainw->playframe, GTK_STATE_NORMAL, &palette->normal_back);
     gtk_widget_show(mainw->playarea);
     gtk_widget_set_app_paintable(mainw->playarea,TRUE);

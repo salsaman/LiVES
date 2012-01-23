@@ -38,6 +38,8 @@ char *filename_from_fd(char *val, int fd) {
   char rfdpath[PATH_MAX];
   struct stat stb0,stb1;
 
+  ssize_t slen;
+
   if (fstat(fd,&stb0)) return val;
 
   fidi=g_strdup_printf("%d",fd);

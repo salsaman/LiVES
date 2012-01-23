@@ -4087,7 +4087,10 @@ gboolean deal_with_render_choice (gboolean add_deinit) {
   } while (render_choice==RENDER_CHOICE_PREVIEW);
 
 
-  lives_freep ((void **)&mainw->event_list);
+  if (mainw->event_list!=NULL) {
+    event_list_free(mainw->event_list);
+    mainw->event_list=NULL;
+  }
 
   return new_clip;
 }

@@ -1565,13 +1565,18 @@ Packed YUV palette with alpha channel. No subsampling.
 '''Alpha Palettes'''
 Palette numbers >=1024 and <2048
 
-Alpha palettes are generally used as mask channels.
+Alpha palettes are generally used as mask/transparency channels but may be used to store any position dependant data.
 
 {{{
 WEED_PALETTE_A1
 WEED_PALETTE_A8
 WEED_PALETTE_AFLOAT
 }}}
+
+The range for AFLOAT is 0.0 (fully transparent) to 1.0 (fully opaque) for transparency. 
+For other data a different range may be used.
+
+
 Palette numbers >=2048 are reserved for custom palettes.
 
 ==== Filter flags ====

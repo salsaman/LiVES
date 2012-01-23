@@ -274,7 +274,7 @@ lives_fx_cat_t weed_filter_categorise (weed_plant_t *pl, int in_channels, int ou
 
   filter_flags=weed_get_int_value(filt,"flags",&error);
   if (weed_plant_has_leaf(filt,"out_parameter_templates")) has_out_params=TRUE;
-  if (filter_flags&WEED_FILTER_IS_CONVERTER) return LIVES_FX_CAT_CONVERTOR;
+  if (filter_flags&WEED_FILTER_IS_CONVERTER) return LIVES_FX_CAT_CONVERTER;
   if (in_channels==0&&out_channels>0&&all_out_alpha) return LIVES_FX_CAT_DATA_GENERATOR;
   if (in_channels==0&&out_channels>0) return LIVES_FX_CAT_GENERATOR;
   if (out_channels>1&&all_out_alpha) return LIVES_FX_CAT_ANALYSER;
@@ -308,7 +308,7 @@ lives_fx_cat_t weed_filter_subcategorise (weed_plant_t *pl, lives_fx_cat_t categ
 
   if (category==LIVES_FX_CAT_COMPOSITOR&&!has_video_chansi) return LIVES_FX_CAT_AUDIO_MIXER;
   if (category==LIVES_FX_CAT_EFFECT&&!has_video_chansi) return LIVES_FX_CAT_AUDIO_EFFECT;
-  if (category==LIVES_FX_CAT_CONVERTOR&&!has_video_chansi) return LIVES_FX_CAT_AUDIO_VOL;
+  if (category==LIVES_FX_CAT_CONVERTER&&!has_video_chansi) return LIVES_FX_CAT_AUDIO_VOL;
 
   if (category==LIVES_FX_CAT_ANALYSER) {
     if (!has_video_chansi) return LIVES_FX_CAT_AUDIO_ANALYSER;
@@ -1364,7 +1364,7 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
   int *in_tracks,*out_tracks;
   int error,i,j;
   weed_plant_t *filter=weed_get_plantptr_value(inst,"filter_class",&error);
-  weed_plant_t *layer=NULL,*copy_layer=NULL;
+  weed_plant_t *layer=NULL,*orig_layer=NULL;
   weed_plant_t **in_channels,**out_channels,*channel,*chantmpl;
   int frame;
   int inwidth,inheight,inpalette,outpalette,channel_flags,filter_flags=0;
@@ -1395,6 +1395,7 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
   weed_plant_t **in_ctmpls;
 
   gboolean def_disabled=FALSE;
+  gboolean all_outs_alpha=TRUE,all_ins_alpha=TRUE;
 
   gint lcount=0;
 
@@ -1524,6 +1525,17 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
   g_free(mand);
   
   // pull frames for tracks
+
+  for (i=0;i<num_out_tracks;i++) {
+    channel=out_channels[i];
+    if (weed_plant_has_leaf(channel,"temp_disabled")&&
+	weed_get_boolean_value(channel,"temp_disabled",&error)==WEED_TRUE) continue;
+    palette=weed_get_int_value(channel,"current_palette",&error);
+    if (!weed_palette_is_alpha_palette(palette)) {
+      all_outs_alpha=FALSE;
+      break;
+    }
+  }
 
   for (i=0;i<num_in_tracks;i++) {
     if (weed_plant_has_leaf(in_channels[i],"temp_disabled")&&
@@ -1719,13 +1731,16 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
 
 
 
-    if (cpalette!=inpalette||oclamping!=iclamping||isampling!=osampling||isubspace!=osubspace) {
+    if (cpalette!=inpalette||isubspace!=osubspace) {
 
-      if (num_out_tracks==0&&(weed_palette_is_lower_quality(inpalette,cpalette)||
-			      (weed_palette_is_rgb_palette(inpalette)&&!weed_palette_is_rgb_palette(cpalette))||
-			      (weed_palette_is_rgb_palette(cpalette)&&!weed_palette_is_rgb_palette(inpalette)))) {
+      if (all_outs_alpha&&(weed_palette_is_lower_quality(inpalette,cpalette)||
+			   (weed_palette_is_rgb_palette(inpalette)&&
+			    !weed_palette_is_rgb_palette(cpalette))||
+			   (weed_palette_is_rgb_palette(cpalette)&&
+			    !weed_palette_is_rgb_palette(inpalette)))) {
 	// for an analyser (no out channels) we copy the layer if it needs lower quality
-	copy_layer=weed_layer_copy(NULL,layer);
+	orig_layer=layer;
+	layer=weed_layer_copy(NULL,orig_layer);
       }
 
       if (!convert_layer_palette_full(layer,inpalette,
@@ -1734,15 +1749,23 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
 	weed_free(out_tracks);
 	weed_free(in_channels);
 	weed_free(out_channels);
-	if (copy_layer!=NULL) {
+	if (orig_layer!=NULL) {
 	  weed_layer_free(layer);
-	  layer=copy_layer;
 	}
 	return FILTER_ERROR_INVALID_PALETTE_CONVERSION;
       }
     }
 
     if (weed_palette_is_yuv_palette(inpalette)) {
+      if (weed_plant_has_leaf(layer,"YUV_clamping")) 
+	oclamping=(weed_get_int_value(layer,"YUV_clamping",&error));
+
+      if (weed_plant_has_leaf(layer,"YUV_sampling")) 
+	osampling=(weed_get_int_value(layer,"YUV_sampling",&error));
+
+      if (weed_plant_has_leaf(layer,"YUV_clamping")) 
+	osubspace=(weed_get_int_value(layer,"YUV_subspace",&error));
+
       weed_set_int_value(channel,"YUV_clamping",oclamping);
       weed_set_int_value(channel,"YUV_sampling",osampling);
       weed_set_int_value(channel,"YUV_subspace",osubspace);
@@ -1752,6 +1775,8 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
       weed_leaf_delete(channel,"YUV_sampling");
       weed_leaf_delete(channel,"YUV_subspace");
     }
+
+    if (!weed_palette_is_alpha_palette(inpalette)) all_ins_alpha=FALSE;
 
     incwidth=weed_get_int_value(channel,"width",&error);
     incheight=weed_get_int_value(channel,"height",&error);
@@ -1818,15 +1843,19 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
 
   // set up our out channels
   for (i=0;i<num_out_tracks;i++) {
-    if (out_tracks[i]<0) {
+    channel=get_enabled_channel(inst,i,FALSE);
+    palette=weed_get_int_value(channel,"current_palette",&error);
+
+    if (!weed_palette_is_alpha_palette(palette)&&out_tracks[i]<0) {
       weed_free(in_tracks);
       weed_free(out_tracks);
       weed_free(in_channels);
       weed_free(out_channels);
+      if (orig_layer!=NULL) {
+	weed_layer_free(layer);
+      }
       return FILTER_ERROR_INVALID_TRACK; // probably audio
     }
-
-    channel=get_enabled_channel(inst,i,FALSE);
 
     outwidth=weed_get_int_value(channel,"width",&error);
     outheight=weed_get_int_value(channel,"height",&error);
@@ -1915,6 +1944,9 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
 	      weed_free(in_channels);
 	      weed_free(out_channels);
 	      weed_free(channel_rows);
+	      if (orig_layer!=NULL) {
+		weed_layer_free(layer);
+	      }
 	      return FILTER_ERROR_INVALID_PALETTE_SETTINGS; // plugin author messed up...
 	    }
 	  }
@@ -1984,17 +2016,18 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
 	(((outwidth!=width)||(outheight!=height))&&(channel_flags&WEED_CHANNEL_REINIT_ON_SIZE_CHANGE))) 
       needs_reinit=TRUE;
   }
-
-  if (needs_reinit) if ((retval=weed_reinit_effect(inst,TRUE))==FILTER_ERROR_COULD_NOT_REINIT) {
-    weed_free(in_tracks);
-    weed_free(out_tracks);
-    weed_free(in_channels);
-    weed_free(out_channels);
-    if (copy_layer!=NULL) {
-      weed_layer_free(layer);
-      layer=copy_layer;
+  
+  if (needs_reinit) {
+    if ((retval=weed_reinit_effect(inst,TRUE))==FILTER_ERROR_COULD_NOT_REINIT) {
+      weed_free(in_tracks);
+      weed_free(out_tracks);
+      weed_free(in_channels);
+      weed_free(out_channels);
+      if (orig_layer!=NULL) {
+	weed_layer_free(layer);
+      }
+      return retval;
     }
-    return retval;
   }
 
   weed_set_double_value(inst,"fps",cfile->pb_fps);
@@ -2020,9 +2053,8 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
     weed_free(out_tracks);
     weed_free(in_channels);
     weed_free(out_channels);
-    if (copy_layer!=NULL) {
+    if (orig_layer!=NULL) {
       weed_layer_free(layer);
-      layer=copy_layer;
     }
     return retval;
   }
@@ -2031,8 +2063,28 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
   for (i=0;i<num_out_tracks;i++) {
     channel=get_enabled_channel(inst,i,FALSE);
     if (weed_get_boolean_value(channel,"inplace",&error)==WEED_TRUE) continue;
-    layer=layers[out_tracks[i]];
+
     numplanes=weed_leaf_num_elements(channel,"rowstrides");
+    palette=weed_get_int_value(channel,"current_palette",&error);
+
+
+    if (weed_palette_is_alpha_palette(palette)) {
+      // free this for now, but in future we will retain this
+
+      numplanes=weed_leaf_num_elements(channel,"pixel_data");
+      pixel_data=weed_get_voidptr_array(channel,"pixel_data",&error);
+
+      if (weed_plant_has_leaf(channel,"host_pixel_data_contiguous") && 
+	  weed_get_boolean_value(channel,"host_pixel_data_contiguous",&error)==WEED_TRUE)
+	numplanes=1;
+
+      for (j=0;j<numplanes;j++) g_free(pixel_data[j]);
+      weed_free(pixel_data);
+      continue;
+    }
+
+    layer=layers[out_tracks[i]];
+
     rowstrides=weed_get_int_array(channel,"rowstrides",&error);
     weed_set_int_array(layer,"rowstrides",numplanes,rowstrides);
     weed_free(rowstrides);
@@ -2098,9 +2150,8 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
   weed_free(in_channels);
   weed_free(out_channels);
 
-  if (copy_layer!=NULL) {
+  if (orig_layer!=NULL) {
     weed_layer_free(layer);
-    layer=copy_layer;
   }
 
   return retval;
@@ -2694,7 +2745,6 @@ weed_plant_t *weed_apply_effects (weed_plant_t **layers, weed_plant_t *filter_ma
 	  }
 	  filter_error=weed_apply_instance (instance,NULL,layers,opwidth,opheight,tc);
 	  if (filter_error==FILTER_INFO_REINITED) redraw_pwindow(i,key_modes[i]); // redraw our paramwindow
-#define DEBUG_RTE
 #ifdef DEBUG_RTE
 	  if (filter_error!=FILTER_NO_ERROR) g_printerr("Render error was %d\n",filter_error);
 #endif
@@ -3278,19 +3328,19 @@ static gboolean set_out_channel_palettes (gint idx, gint num_channels) {
 	weed_set_int_value(chantmpls[i],"current_palette",WEED_PALETTE_YVU420P);
       else if (check_weed_palette_list (palettes,num_palettes,WEED_PALETTE_YUV411)==WEED_PALETTE_YUV411) 
 	weed_set_int_value(chantmpls[i],"current_palette",WEED_PALETTE_YUV411);
+      else if (check_weed_palette_list (palettes,num_palettes,WEED_PALETTE_A8)==WEED_PALETTE_A8) 
+	weed_set_int_value(chantmpls[i],"current_palette",WEED_PALETTE_A8);
+      else if (check_weed_palette_list (palettes,num_palettes,WEED_PALETTE_A1)==WEED_PALETTE_A1) 
+	weed_set_int_value(chantmpls[i],"current_palette",WEED_PALETTE_A1);
+      else if (check_weed_palette_list (palettes,num_palettes,WEED_PALETTE_AFLOAT)==WEED_PALETTE_AFLOAT) 
+	weed_set_int_value(chantmpls[i],"current_palette",WEED_PALETTE_AFLOAT);
       else if (!weed_plant_has_leaf(chantmpls[i],"optional")) {
 	if (chantmpls!=NULL) weed_free(chantmpls);
 	weed_free(palettes);
 	return FALSE; // mandatory channel; we don't yet handle alpha or float
       }
 
-      /*else if (check_weed_palette_list (palettes,num_palettes,WEED_PALETTE_A8)==WEED_PALETTE_A8) 
-	weed_set_int_value(chantmpls[i],"current_palette",WEED_PALETTE_A8);
-	else if (check_weed_palette_list (palettes,num_palettes,WEED_PALETTE_A1)==WEED_PALETTE_A1) 
-	weed_set_int_value(chantmpls[i],"current_palette",WEED_PALETTE_A1);
-	else if (check_weed_palette_list (palettes,num_palettes,WEED_PALETTE_AFLOAT)==WEED_PALETTE_AFLOAT) 
-	weed_set_int_value(chantmpls[i],"current_palette",WEED_PALETTE_AFLOAT);
-	else if (check_weed_palette_list (palettes,num_palettes,WEED_PALETTE_RGBFLOAT)==WEED_PALETTE_RGBFLOAT) 
+      /*	else if (check_weed_palette_list (palettes,num_palettes,WEED_PALETTE_RGBFLOAT)==WEED_PALETTE_RGBFLOAT) 
 	weed_set_int_value(chantmpls[i],"current_palette",WEED_PALETTE_RGBFLOAT);
 	else if (check_weed_palette_list (palettes,num_palettes,WEED_PALETTE_ARGBFLOAT)==WEED_PALETTE_ARGBFLOAT) 
 	weed_set_int_value(chantmpls[i],"current_palette",WEED_PALETTE_ARGBFLOAT);

@@ -110,6 +110,8 @@ Add clarifying notes about out parameters.
 19/01/12
 Add channel flag WEED_CHANNEL_ALPHA_PREMULT. API unchanged.
 
+23/01/12
+Clarified range for AFLOAT.
 
 (C) Gabriel "Salsaman" Finch 2005 - 2012
 

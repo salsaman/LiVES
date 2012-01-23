@@ -45,7 +45,7 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
 
 ///////////////////////////////////////////////////////////////////
 
-static int num_versions=2; // number of different weed api versions supported
+static int num_versions=1; // number of different weed api versions supported
 static int api_versions[]={131}; // array of weed api versions supported in plugin, in order of preference (most preferred first)
 
 static int package_version=1; // version of this package
@@ -363,7 +363,7 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 							     ipalette_list),NULL};
     weed_plant_t *out_chantmpls[]={weed_channel_template_init("X values",WEED_CHANNEL_PALETTE_CAN_VARY,opalette_list),
 				   weed_channel_template_init("Y values",WEED_CHANNEL_PALETTE_CAN_VARY,opalette_list),NULL};
-    weed_plant_t *filter_class=weed_filter_class_init("farneback_analyser","salsaman",1,0,&farneback_init,
+    weed_plant_t *filter_class=weed_filter_class_init("farneback_analyser","salsaman",1,,&farneback_init,
 						      &farneback_process,&farneback_deinit,
 						      in_chantmpls,out_chantmpls,NULL,NULL);
 

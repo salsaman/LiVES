@@ -212,12 +212,6 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
 	   pulsed->audio_ticks=mainw->currticks;
 	   pulsed->frames_written=0;
 	   pulsed->usec_start=0;
-	   pulsed->aPlayPtr->data=g_try_realloc(pulsed->aPlayPtr->data,nbytes*100);
-	   if (pulsed->aPlayPtr->data!=NULL) {
-	     memset(pulsed->aPlayPtr->data,0,nbytes*100);
-	     pulsed->aPlayPtr->size=nbytes*100;
-	   }
-	   else pulsed->aPlayPtr->size=0;
 	 }
 	 g_free(filename);
        }
@@ -227,6 +221,7 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
        pulsed->fd=-1;
        if (pulsed->aPlayPtr->data!=NULL) g_free(pulsed->aPlayPtr->data);
        pulsed->aPlayPtr->data=NULL;
+       pulsed->aPlayPtr->max_size=0;
        pulsed->aPlayPtr->size=0;
        pulsed->playing_file=-1;
        break;
@@ -252,15 +247,6 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
    }
 
    if (pulsed->chunk_size!=nbytes) pulsed->chunk_size = nbytes;
-
-   if (nbytes*100>pulsed->aPlayPtr->size) {
-     pulsed->aPlayPtr->data=g_try_realloc(pulsed->aPlayPtr->data,nbytes*100);
-     if (pulsed->aPlayPtr->data!=NULL) {
-       memset(pulsed->aPlayPtr->data,0,nbytes*100);
-       pulsed->aPlayPtr->size=nbytes*100;
-     }
-     else pulsed->aPlayPtr->size=0;
-   }
 
    pulsed->state=pa_context_get_state(pulsed->con);
 
@@ -293,7 +279,7 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
      }
 
      if (G_LIKELY(pulseFramesAvailable>0&&(pulsed->read_abuf>-1||
-					   (pulsed->aPlayPtr!=NULL&&pulsed->aPlayPtr->data!=NULL
+					   (pulsed->aPlayPtr!=NULL
 					    &&pulsed->in_achans>0)))) {
 
        if (mainw->playing_file>-1&&pulsed->read_abuf>-1) {
@@ -336,6 +322,16 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
 	     }
 	     // rewind by in_bytes
 	     lseek(pulsed->fd,pulsed->seek_pos,SEEK_SET);
+	   }
+	   if G_UNLIKELY((in_bytes>pulsed->aPlayPtr->max_size && !(*pulsed->cancelled) && ABS(shrink_factor)<=100.f)) {
+	     pulsed->aPlayPtr->data=g_try_realloc(pulsed->aPlayPtr->data,in_bytes);
+	     if (pulsed->aPlayPtr->data!=NULL) {
+	       memset(pulsed->aPlayPtr->data,0,in_bytes);
+	       pulsed->aPlayPtr->max_size=in_bytes;
+	     }
+	   }
+	   else {
+	     pulsed->aPlayPtr->max_size=0;
 	   }
 	   if (pulsed->mute||pulsed->aPlayPtr->data==NULL) {
 	     if (shrink_factor>0.f) pulsed->seek_pos+=in_bytes;
@@ -703,6 +699,7 @@ int pulse_audio_init(void) {
   pulsed.aPlayPtr=(audio_buffer_t *)g_malloc(sizeof(audio_buffer_t));
   pulsed.aPlayPtr->data=NULL;
   pulsed.aPlayPtr->size=0;
+  pulsed.aPlayPtr->max_size=0;
   gettimeofday(&pulsed.last_reconnect_attempt, 0);
   pulsed.in_achans=2;
   pulsed.out_achans=2;

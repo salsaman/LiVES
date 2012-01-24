@@ -23,6 +23,7 @@
 
 typedef struct {
   size_t size;
+  size_t max_size;
   void *data;
 } audio_buffer_t;
 

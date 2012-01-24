@@ -975,7 +975,7 @@ long render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdouble *
       if (zavel<0. && in_fd[track]>-1) lseek64(in_fd[track],seekstart[track]-tbytes,SEEK_SET);
 
       bytes_read=0;
-      if (in_fd[track]>-1) bytes_read=lives_read(in_fd[track],in_buff,tbytes,(from_files[track]==mainw->ascrap_file));
+      if (in_fd[track]>-1) bytes_read=lives_read(in_fd[track],in_buff,tbytes,TRUE);
 
       if (bytes_read<0) bytes_read=0;
 

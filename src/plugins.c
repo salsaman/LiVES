@@ -604,6 +604,7 @@ void on_vppa_ok_clicked (GtkButton *button, gpointer user_data) {
 	  if (!strcmp(cur_pal,weed_palette_get_name(pal_list[i]))) {
 	    vpp->palette=pal_list[i];
 	    if (mainw->ext_playback) {
+	      mainw->ext_keyboard=FALSE;
 	      if (mainw->vpp->exit_screen!=NULL) {
 		(*mainw->vpp->exit_screen)(mainw->ptr_x,mainw->ptr_y);
 	      }
@@ -629,6 +630,7 @@ void on_vppa_ok_clicked (GtkButton *button, gpointer user_data) {
 	      if (vpp->init_screen!=NULL) {
 		(*vpp->init_screen)(mainw->pwidth,mainw->pheight,TRUE,0,vpp->extra_argc,vpp->extra_argv);
 	      }
+	      if (mainw->vpp->capabilities&VPP_LOCAL_DISPLAY&&prefs->play_monitor==0) mainw->ext_keyboard=TRUE;
 	    }
 	    else {
 	      mainw->vpp->palette=pal_list[i];
@@ -1092,7 +1094,9 @@ void close_vid_playback_plugin(_vid_playback_plugin *vpp) {
 
   if (vpp!=NULL) {
     if (vpp==mainw->vpp) {
-      if (mainw->ext_playback&&mainw->vpp->exit_screen!=NULL) (*mainw->vpp->exit_screen)(mainw->ptr_x,mainw->ptr_y);
+      mainw->ext_keyboard=FALSE;
+      if (mainw->ext_playback&&mainw->vpp->exit_screen!=NULL) 
+	(*mainw->vpp->exit_screen)(mainw->ptr_x,mainw->ptr_y);
 #ifdef RT_AUDIO
       stop_audio_stream();
 #endif
@@ -1120,6 +1124,7 @@ _vid_playback_plugin *open_vid_playback_plugin (const gchar *name, gboolean in_u
   // if in_use is TRUE, it is our active vpp
 
   // TODO - if in_use, get fixed_fps,fwidth,fheight,palette,argc and argv from a file
+  // TODO - dirsep
 
   gchar *plugname=g_strdup_printf ("%s%s%s/%s.so",prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_VID_PLAYBACK,name);
   void *handle=dlopen(plugname,RTLD_LAZY);
@@ -1372,6 +1377,7 @@ _vid_playback_plugin *open_vid_playback_plugin (const gchar *name, gboolean in_u
 void vid_playback_plugin_exit (void) {
   // external plugin
   if (mainw->ext_playback) {
+    mainw->ext_keyboard=FALSE;
     if (mainw->vpp->exit_screen!=NULL) (*mainw->vpp->exit_screen)(mainw->ptr_x,mainw->ptr_y);
 #ifdef RT_AUDIO
     stop_audio_stream();
@@ -1379,7 +1385,6 @@ void vid_playback_plugin_exit (void) {
     mainw->ext_playback=FALSE;
   }
   mainw->stream_ticks=-1;
-  mainw->ext_keyboard=FALSE;
 
   if (mainw->playing_file>-1&&mainw->fs&&mainw->sep_win) gtk_window_fullscreen(GTK_WINDOW(mainw->play_window));
   gtk_window_set_title (GTK_WINDOW (mainw->play_window),_("LiVES: - Play Window"));

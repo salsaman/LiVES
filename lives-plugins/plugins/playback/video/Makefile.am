@@ -41,6 +41,17 @@ vjack_output_la_CFLAGS = $(shared_cflags) $(weed_cflags)
 vjack_output_la_LDFLAGS = $(shared_ldflags) -ljack
 endif
 
+if HAVE_X11
+if HAVE_OPENGL
+if HAVE_GLEE
+openGL_libs = openGL.la
+openGL_la_SOURCES = openGL.cpp
+openGL_la_CPPFLAGS = $(shared_cflags) $(weed_cflags) 
+openGL_la_LDFLAGS = $(shared_ldflags) -lX11 -lXrender -lGL -lGLee 
+endif
+endif
+endif
+
 lives2lives_stream_la_CFLAGS = $(shared_cflags) $(weed_cflags)
 lives2lives_stream_la_LDFLAGS = $(shared_ldflags)
 
@@ -69,6 +80,6 @@ vloopback2_la_CFLAGS = $(shared_cflags) $(weed_cflags)
 vloopback2_la_LDFLAGS = $(shared_ldflags)
 endif
 
-videopluginslib_LTLIBRARIES = $(SDL_libs) $(YUV4MPEG_libs) $(oggstream_libs) $(icecast_output_libs) $(vjack_output_libs) lives2lives_stream.la $(vloopback_libs) $(vloopback2_libs)
+videopluginslib_LTLIBRARIES = $(SDL_libs) $(YUV4MPEG_libs) $(oggstream_libs) $(icecast_output_libs) $(vjack_output_libs) lives2lives_stream.la $(vloopback_libs) $(vloopback2_libs) $(openGL_libs)
 
 EXTRA_DIST = videoplugin.h

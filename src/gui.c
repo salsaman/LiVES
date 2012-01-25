@@ -3894,6 +3894,7 @@ void resize_play_window (void) {
 #endif
 	}
 	if (mainw->ext_playback) {
+	  mainw->ext_keyboard=FALSE;
 #ifdef RT_AUDIO
 	  stop_audio_stream();
 #endif

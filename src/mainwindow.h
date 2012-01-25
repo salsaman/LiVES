@@ -222,7 +222,7 @@ typedef struct {
   gint audio_end;
 
   gboolean ext_playback; ///< using external video playback plugin
-  gboolean ext_keyboard; ///< keyboard codes must be polled from video playback plugin
+  volatile gboolean ext_keyboard; ///< keyboard codes must be polled from video playback plugin
 
   gint ptr_x;
   gint ptr_y;

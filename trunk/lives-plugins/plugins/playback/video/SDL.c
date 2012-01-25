@@ -22,6 +22,7 @@ static int mypalette;
 
 static int clampings[2];
 
+static boolean is_ready;
 
 /////////////////////////////////////////////
 // SDL specific stuff
@@ -268,6 +269,7 @@ boolean render_frame_yuv (int hsize, int vsize, void **pixel_data, void **return
 
   SDL_UnlockYUVOverlay (overlay);
   SDL_DisplayYUVOverlay (overlay,rect);
+  is_ready=TRUE;
   return TRUE;
 }
 
@@ -294,6 +296,7 @@ void exit_screen (int16_t mouse_x, int16_t mouse_y) {
     SDL_WarpMouse ((int16_t)mouse_x, (int16_t)mouse_y);
   }
   SDL_Quit();
+  is_ready=FALSE;
 }
 
 
@@ -311,7 +314,7 @@ boolean send_keycodes (keyfunc host_key_fn) {
 
   if (host_key_fn==NULL) return FALSE;
 
-  while(SDL_PollEvent (&event)) {
+  while(is_ready && SDL_PollEvent (&event)) {
     mod_mask=0;
     if (event.type==SDL_KEYDOWN||event.type==SDL_KEYUP) {
       mod=event.key.keysym.mod;

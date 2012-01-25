@@ -72,6 +72,7 @@ void lives_exit (void) {
     }
 
     if (mainw->playing_file>-1) {
+      mainw->ext_keyboard=FALSE;
       gtk_timeout_remove (mainw->kb_timer);
       if (mainw->ext_playback) {
 	if (mainw->vpp->exit_screen!=NULL) (*mainw->vpp->exit_screen)(mainw->ptr_x,mainw->ptr_y);

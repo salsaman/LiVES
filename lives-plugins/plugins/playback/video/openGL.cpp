@@ -304,7 +304,7 @@ boolean init_screen (int width, int height, boolean fullscreen, uint32_t window_
   m_HeightFS = HeightOfScreen(DefaultScreenOfDisplay(dpy));
 
   XA_NET_WM_STATE = XInternAtom(dpy, "_NET_WM_STATE", False);
-  XA_NET_WM_STATE_ABOVE = XInternAtom(dpy, "_NET_WM_ABOVE", False);
+  XA_NET_WM_STATE_ABOVE = XInternAtom(dpy, "_NET_WM_ABOVE", True);
   XA_WIN_LAYER = XInternAtom(dpy, "_WIN_LAYER", False);
 
   if( !XRenderQueryExtension( dpy, &renderEventBase, &renderErrorBase ) ) {
@@ -351,10 +351,14 @@ boolean init_screen (int width, int height, boolean fullscreen, uint32_t window_
     uint32_t depth;
     uint32_t xwidth,xheight;
 
+    // needs fixing...
     xWin = (Window) window_id;
     context = glXCreateContext ( dpy, vInfo, 0, GL_TRUE);
-    glxWin = xWin;
-    glXMakeCurrent ( dpy, xWin, context);
+    //glxWin = xWin;
+    glxWin = glXCreateWindow( dpy, fbConfigs[0], xWin, NULL );
+
+    //glXMakeCurrent ( dpy, xWin, context);
+    glXMakeContextCurrent( dpy, glxWin, glxWin, context );
 
 
     XGetGeometry(dpy, glxWin, &xWin, &xdum, &ydum,

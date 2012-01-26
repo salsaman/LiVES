@@ -2632,9 +2632,13 @@ void sensitize(void) {
   gtk_widget_set_sensitive (mainw->import_proj, mainw->current_file==-1);
 
   if (!mainw->foreign) {
-    for (i=0;i<=mainw->num_rendered_effects_builtin+mainw->num_rendered_effects_custom+mainw->num_rendered_effects_test;i++) if (mainw->rendered_fx[i].menuitem!=NULL) gtk_widget_set_sensitive(mainw->rendered_fx[i].menuitem,mainw->current_file>0&&cfile->frames>0);
+    for (i=0;i<=mainw->num_rendered_effects_builtin+mainw->num_rendered_effects_custom+
+	   mainw->num_rendered_effects_test;i++) 
+      if (mainw->rendered_fx[i].menuitem!=NULL&&mainw->rendered_fx[i].min_frames>=0) 
+	gtk_widget_set_sensitive(mainw->rendered_fx[i].menuitem,mainw->current_file>0&&cfile->frames>0);
   }
 
+  gtk_widget_set_sensitive (mainw->record_perf, TRUE);
   gtk_widget_set_sensitive (mainw->export_submenu, mainw->current_file>0&&(cfile->achans>0));
   gtk_widget_set_sensitive (mainw->recaudio_submenu, TRUE);
   gtk_widget_set_sensitive (mainw->recaudio_sel, mainw->current_file>0&&cfile->frames>0);
@@ -2767,10 +2771,12 @@ void desensitize(void) {
   if (!mainw->foreign) {
     for (i=0;i<=mainw->num_rendered_effects_builtin+mainw->num_rendered_effects_custom+
 	   mainw->num_rendered_effects_test;i++) 
-      if (mainw->rendered_fx[i].menuitem!=NULL&&mainw->rendered_fx[i].menuitem!=NULL&&mainw->rendered_fx[i].min_frames>=0) 
+      if (mainw->rendered_fx[i].menuitem!=NULL&&mainw->rendered_fx[i].menuitem!=NULL&&
+	  mainw->rendered_fx[i].min_frames>=0) 
 	gtk_widget_set_sensitive(mainw->rendered_fx[i].menuitem,FALSE);
   }
 
+  gtk_widget_set_sensitive (mainw->record_perf, FALSE);
   gtk_widget_set_sensitive (mainw->export_submenu, FALSE);
   gtk_widget_set_sensitive (mainw->recaudio_submenu, FALSE);
   gtk_widget_set_sensitive (mainw->append_audio, FALSE);
@@ -2806,14 +2812,15 @@ void desensitize(void) {
   gtk_widget_set_sensitive (mainw->mt_menu,FALSE);
 
   if (mainw->current_file>=0&&(mainw->playing_file==-1||mainw->foreign)) {
-    if (!cfile->opening||mainw->dvgrab_preview||mainw->preview||cfile->opening_only_audio) {
+    //  if (!cfile->opening||mainw->dvgrab_preview||mainw->preview||cfile->opening_only_audio) {
       // disable the 'clips' menu entries
       for (i=1;i<MAX_FILES;i++) {
 	if (!(mainw->files[i]==NULL)) {
 	  if (!(mainw->files[i]->menuentry==NULL)) {
 	    if (!(i==mainw->current_file)) {
 	      gtk_widget_set_sensitive (mainw->files[i]->menuentry, FALSE);
-	    }}}}}}
+	    }}}}}
+  //}
 }
 
 

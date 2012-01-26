@@ -3,8 +3,9 @@ Version 1.6.1
 Optimise playback by tweaking audio settings.
 Fix floating point fps bug for mkv decoder. *
 Fix external window capture to work with Compiz.
+Add openGL playback plugin.
 Minor GUI fixes.
-Support recording of external audio during playback (in progress).
+Support recording of external audio during playback.
 Fix menu checkbutton for "show subtitles" (regression). *
 Prevent clip names getting squashed in sets. *
 Further code cleanup.

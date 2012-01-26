@@ -359,7 +359,8 @@ boolean init_screen (int width, int height, boolean fullscreen, uint32_t window_
 			  fullscreen?m_WidthFS:width, fullscreen?m_HeightFS:height, 
 			  0, vInfo->depth, InputOutput, vInfo->visual,
 			  swaMask, &swa );
-    
+
+    if (fullscreen) setFullScreen();
 
     /* Create a GLX context for OpenGL rendering */
     context = glXCreateNewContext( dpy, fbConfigs[0], GLX_RGBA_TYPE,
@@ -390,7 +391,6 @@ boolean init_screen (int width, int height, boolean fullscreen, uint32_t window_
   wmDelete = XInternAtom(dpy, "WM_DELETE_WINDOW", True);
   XSetWMProtocols(dpy, xWin, &wmDelete, 1);
   
-  if (fullscreen) setFullScreen();
   toggleVSync();
 
   XFree (vInfo);

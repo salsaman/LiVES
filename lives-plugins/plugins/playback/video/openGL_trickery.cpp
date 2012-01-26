@@ -63,6 +63,7 @@ static boolean swapFlag = TRUE;
 static int m_WidthFS;
 static int m_HeightFS;
 
+static int mode=0;
 
 static Bool WaitForNotify( Display *dpy, XEvent *event, XPointer arg ) {
     return (event->type == MapNotify) && (event->xmap.window == (Window) arg);
@@ -80,18 +81,23 @@ const char *module_check_init(void) {
 
   render_fn=&render_frame_unknown;
 
-  glShadeModel( GL_FLAT );
-  glClearDepth( 0.0f );
-  glDisable( GL_BLEND );
-  glDisable( GL_DEPTH_TEST );
-  glDepthFunc( GL_ALWAYS );
-  glDisable( GL_LIGHTING );
-  glFrontFace(GL_CW);
+  //glShadeModel( GL_FLAT );
+  glShadeModel(GL_SMOOTH);  
+
+  glClearDepth( 1.0f );
+  glEnable( GL_DEPTH_TEST );
+
+  glDepthFunc( GL_LEQUAL );
+  glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
+
+  //glDisable( GL_BLEND );
+  //glDisable( GL_LIGHTING );
+  //glFrontFace(GL_CW);
 
   glPixelStorei( GL_PACK_ALIGNMENT,   1 );
   glPixelStorei( GL_UNPACK_ALIGNMENT, 1 );
-  glClearColor( 0.0, 0.0, 0.0, 1.0 );
-  glClear( GL_COLOR_BUFFER_BIT );
+  glClearColor( 0.0, 0.0, 0.0, 0.0 );
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   glGenTextures(1, &texID);
 
@@ -123,6 +129,7 @@ const char *get_rfx (void) {
 0xF0\\n\
 </language_code>\\n\
 <params> \\n\
+mode|_Mode|string_list|0|_Flat|_Super\\n\
 dbuf|Use _double buffering|bool|1|0 \\n\
 fsover|Over-ride _fullscreen setting (for debugging)|bool|0|0 \\n\
 </params> \\n\
@@ -220,7 +227,7 @@ static void setFullScreen(void) {
 
 
 
-void add_perspective(uint32_t width, uint32_t height) {
+static void add_perspective(uint32_t width, uint32_t height) {
   glMatrixMode(GL_PROJECTION);                // Select The Projection Matrix
   glLoadIdentity();                           // Reset The Projection Matrix
  
@@ -248,8 +255,6 @@ boolean init_screen (int width, int height, boolean fullscreen, uint32_t window_
   int renderEventBase;
   int renderErrorBase;
   int error;
-
-  GLXFBConfig     renderFBConfig;
 
   int numElements;
 
@@ -281,21 +286,22 @@ boolean init_screen (int width, int height, boolean fullscreen, uint32_t window_
     None
   };
 
-
   XVisualInfo          *vInfo;
-
   GLXFBConfig          *fbConfigs;
-
   XEvent                event;
   XSetWindowAttributes  swa;
   int                   swaMask;
   int                   numReturned;
 
+  mode=0;
 
   if (argc>0) {
-    dblbuf=atoi(argv[0]);
+    mode=atoi(argv[0]);
     if (argc>1) {
-      fsover=atoi(argv[1]);
+      dblbuf=atoi(argv[1]);
+      if (argc>2) {
+	fsover=atoi(argv[1]);
+      }
     }
   }
 
@@ -368,8 +374,11 @@ boolean init_screen (int width, int height, boolean fullscreen, uint32_t window_
     
   }
   else {
+    width=fullscreen?m_WidthFS:width;
+    height=fullscreen?m_HeightFS:height, 
+
     xWin = XCreateWindow( dpy, RootWindow(dpy, vInfo->screen), 0, 0,
-			  fullscreen?m_WidthFS:width, fullscreen?m_HeightFS:height, 
+			  width,height,
 			  0, vInfo->depth, InputOutput, vInfo->visual,
 			  swaMask, &swa );
     
@@ -425,9 +434,11 @@ boolean init_screen (int width, int height, boolean fullscreen, uint32_t window_
     return FALSE;
   }
 
+  if (mode==1) add_perspective(width,height);
+
   /* OpenGL rendering ... */
-  glClearColor( 0.0, 0.0, 0.0, 1.0 );
-  glClear( GL_COLOR_BUFFER_BIT );
+  glClearColor( 0.0, 0.0, 0.0, 0.0 );
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   glFlush();
   if ( swapFlag ) glXSwapBuffers( dpy, glxWin );
@@ -438,42 +449,90 @@ boolean init_screen (int width, int height, boolean fullscreen, uint32_t window_
 
 
 boolean Upload(uint8_t *src, uint32 imgWidth, uint32 imgHeight, uint32 type) {
-  uint32_t mipMapLevel = 0;
-  GLenum m_TexTarget=GL_TEXTURE_2D;
+  switch (mode) {
+  case 0:
+    {
+      // flat:
+      uint32_t mipMapLevel = 0;
+      GLenum m_TexTarget=GL_TEXTURE_2D;
+      
+      glTexParameteri( m_TexTarget, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
+      glTexParameteri( m_TexTarget, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
+      
+      glTexParameteri( m_TexTarget, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+      glTexParameteri( m_TexTarget, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+      
+      glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+      
+      // Upload it all
+      glBindTexture( m_TexTarget, texID );
+      
+      glEnable( m_TexTarget );
+      
+      glTexImage2D( m_TexTarget, mipMapLevel, type, imgWidth, imgHeight, 0, type, GL_UNSIGNED_BYTE, src );
+      glGenerateMipmap(m_TexTarget);
+      
+      glBegin (GL_QUADS);
+      
+      glTexCoord2f (0.0, 0.0);
+      glVertex3f (-1.0, 1.1, 0.0);
+      
+      glTexCoord2f (1.0, 0.0);
+      glVertex3f (1.0, 1.1, 0.0);
+      
+      glTexCoord2f (1.0, 1.0);
+      glVertex3f (1.0, -1.0, 0.0);
+      
+      glTexCoord2f (0.0, 1.0);
+      glVertex3f (-1.0, -1.0, 0.0);
+      
+      glEnd ();
+      
+      glDisable( m_TexTarget );
+    }
+    break;
 
-  glTexParameteri( m_TexTarget, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
-  glTexParameteri( m_TexTarget, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
-  
-  glTexParameteri( m_TexTarget, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
-  glTexParameteri( m_TexTarget, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+  case 1:
+    {
+      uint32_t mipMapLevel = 0;
+      GLenum m_TexTarget=GL_TEXTURE_2D;
+      
+      glTexParameteri( m_TexTarget, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
+      glTexParameteri( m_TexTarget, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
+    
+      glTexParameteri( m_TexTarget, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+      glTexParameteri( m_TexTarget, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+    
+      glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+      
+      glBindTexture( m_TexTarget, texID );
+      
+      glEnable( m_TexTarget );
+      
+      glTexImage2D( m_TexTarget, mipMapLevel, type, imgWidth, imgHeight, 0, type, GL_UNSIGNED_BYTE, src );
+      glGenerateMipmap(m_TexTarget);
 
-  glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-  // Upload it all
-  glBindTexture( m_TexTarget, texID );
+      glLoadIdentity();
 
-  glEnable( m_TexTarget );
+      glBegin(GL_TRIANGLES);                      // Drawing Using Triangles
 
-  glTexImage2D( m_TexTarget, mipMapLevel, type, imgWidth, imgHeight, 0, type, GL_UNSIGNED_BYTE, src );
-  glGenerateMipmap(m_TexTarget);
-
-  glBegin (GL_QUADS);
-
-  glTexCoord2f (0.0, 0.0);
-  glVertex3f (-1.0, 1.1, 0.0);
-
-  glTexCoord2f (1.0, 0.0);
-  glVertex3f (1.0, 1.1, 0.0);
-
-  glTexCoord2f (1.0, 1.0);
-  glVertex3f (1.0, -1.0, 0.0);
-
-  glTexCoord2f (0.0, 1.0);
-  glVertex3f (-1.0, -1.0, 0.0);
-
-  glEnd ();
-
-  glDisable( m_TexTarget );
+      glTexCoord2f (0.5, 1.0);
+      glVertex3f( 0.0f, 1.0f, 0.0f);              // Top
+      
+      glTexCoord2f (0.0, 0.0);
+      glVertex3f(-1.0f,-1.0f, 0.0f);              // Bottom Left
+      
+      glTexCoord2f (1.0, 0.0);
+      glVertex3f( 1.0f,-1.0f, 0.0f);              // Bottom Right
+      glEnd();     
+      
+      glTranslatef(-1.5f,0.0f,-6.0f);
+      glEnd();
+    }
+    break;
+  }
 
   return TRUE;
 }

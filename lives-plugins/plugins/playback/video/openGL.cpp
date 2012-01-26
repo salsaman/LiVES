@@ -92,7 +92,7 @@ const char *module_check_init(void) {
 
   glPixelStorei( GL_PACK_ALIGNMENT,   1 );
   glPixelStorei( GL_UNPACK_ALIGNMENT, 1 );
-  glClearColor( 0.0, 0.0, 0.0, 1.0 );
+  glClearColor( 0.0, 0.0, 0.0, 0.0 );
   glClear( GL_COLOR_BUFFER_BIT );
 
   glGenTextures(1, &texID);
@@ -235,8 +235,6 @@ boolean init_screen (int width, int height, boolean fullscreen, uint32_t window_
   int renderEventBase;
   int renderErrorBase;
   int error;
-
-  GLXFBConfig     renderFBConfig;
 
   int numElements;
 
@@ -413,7 +411,7 @@ boolean init_screen (int width, int height, boolean fullscreen, uint32_t window_
   }
 
   /* OpenGL rendering ... */
-  glClearColor( 0.0, 0.0, 0.0, 1.0 );
+  glClearColor( 0.0, 0.0, 0.0, 0.0 );
   glClear( GL_COLOR_BUFFER_BIT );
 
   glFlush();

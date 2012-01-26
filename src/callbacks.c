@@ -9091,7 +9091,7 @@ on_preview_clicked                     (GtkButton       *button,
   gshort oaudp=prefs->audio_player;
   gint toy_type=mainw->toy_type;
   gboolean ointernal_messaging=mainw->internal_messaging;
-  int i;
+  //int i;
   guint64 old_rte; //TODO - block better
   gint64 xticks;
   gint current_file=mainw->current_file;

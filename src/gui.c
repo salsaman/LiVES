@@ -3214,7 +3214,12 @@ unfade_background(void) {
     stop_closure=NULL;
     
   }
-  resize(1);
+  if (mainw->double_size) {
+    resize(2);
+  }
+  else {
+    resize(1);
+  }
 }
 
 
@@ -3682,17 +3687,18 @@ make_play_window(void) {
 
   gtk_widget_set_tooltip_text( mainw->m_sepwinbutton,_ ("Hide Play Window"));
 
-  mainw->pw_exp_func=g_signal_connect_after (GTK_OBJECT (mainw->play_window), "expose_event",
+    mainw->pw_exp_func=g_signal_connect_after (GTK_OBJECT (mainw->play_window), "expose_event",
 					     G_CALLBACK (expose_play_window),
 					     NULL);
 
-  g_signal_connect (GTK_OBJECT (mainw->play_window), "delete_event",
-		    G_CALLBACK (on_stop_activate_by_del),
-		    NULL);
+    g_signal_connect (GTK_OBJECT (mainw->play_window), "delete_event",
+		      G_CALLBACK (on_stop_activate_by_del),
+		      NULL);
 
 
-
-  if (((mainw->current_file>-1&&(cfile->is_loaded||(cfile->clip_type!=CLIP_TYPE_DISK&&cfile->clip_type!=CLIP_TYPE_FILE)))||(mainw->preview&&cfile->frames>0))&&(mainw->multitrack!=NULL||mainw->playing_file>-1)) {
+  if (((mainw->current_file>-1&&(cfile->is_loaded||(cfile->clip_type!=CLIP_TYPE_DISK&&
+						    cfile->clip_type!=CLIP_TYPE_FILE)))||
+       (mainw->preview&&cfile->frames>0))&&(mainw->multitrack!=NULL||mainw->playing_file>-1)) {
     g_signal_handler_block(mainw->play_window,mainw->pw_exp_func);
     mainw->pw_exp_is_blocked=TRUE;
   }
@@ -3702,7 +3708,12 @@ make_play_window(void) {
   if (mainw->ext_playback) {
 
     //approximate...we want to move it though, so it is in the right place for later
-    if (prefs->play_monitor==0) gtk_window_move (GTK_WINDOW (mainw->play_window), MAX ((mainw->scr_width-cfile->hsize)/2,0), MAX ((mainw->scr_height-cfile->vsize-bheight)/2,0));
+    if (prefs->play_monitor==0) gtk_window_move (GTK_WINDOW (mainw->play_window), 
+						 MAX ((mainw->scr_width-cfile->hsize)/2,0), 
+						 MAX ((mainw->scr_height-cfile->vsize-bheight)/2,0));
+
+    if (mainw->vpp->capabilities&VPP_LOCAL_DISPLAY) gtk_window_set_keep_below(GTK_WINDOW
+									      (mainw->play_window),TRUE);
   }
   else {
     // be careful, the user could switch out of sepwin here !
@@ -3901,6 +3912,9 @@ void resize_play_window (void) {
 	  if (mainw->vpp->exit_screen!=NULL) {
 	    (*mainw->vpp->exit_screen)(mainw->ptr_x,mainw->ptr_y);
 	  }
+	  if (mainw->vpp->capabilities&VPP_LOCAL_DISPLAY) gtk_window_set_keep_below(GTK_WINDOW
+										    (mainw->play_window),FALSE);
+
 	}
 
 #ifdef RT_AUDIO
@@ -3980,6 +3994,8 @@ kill_play_window (void) {
   // plug our player back into internal window
 
   if (mainw->play_window!=NULL) {
+    if (!mainw->pw_exp_is_blocked)
+      g_signal_handler_block(mainw->play_window,mainw->pw_exp_func);
     if (mainw->preview_box!=NULL&&mainw->preview_box->parent!=NULL) {
       gtk_container_remove (GTK_CONTAINER (mainw->play_window), mainw->preview_box);
     }

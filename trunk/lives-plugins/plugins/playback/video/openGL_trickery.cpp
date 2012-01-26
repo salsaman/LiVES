@@ -129,7 +129,7 @@ const char *get_rfx (void) {
 0xF0\\n\
 </language_code>\\n\
 <params> \\n\
-mode|_Mode|string_list|0|_Flat|_Super\\n\
+mode|_Mode|string_list|0|Flat|Triangle\\n\
 dbuf|Use _double buffering|bool|1|0 \\n\
 fsover|Over-ride _fullscreen setting (for debugging)|bool|0|0 \\n\
 </params> \\n\
@@ -300,7 +300,7 @@ boolean init_screen (int width, int height, boolean fullscreen, uint32_t window_
     if (argc>1) {
       dblbuf=atoi(argv[1]);
       if (argc>2) {
-	fsover=atoi(argv[1]);
+	fsover=atoi(argv[2]);
       }
     }
   }
@@ -381,7 +381,8 @@ boolean init_screen (int width, int height, boolean fullscreen, uint32_t window_
 			  width,height,
 			  0, vInfo->depth, InputOutput, vInfo->visual,
 			  swaMask, &swa );
-    
+
+    if (fullscreen) setFullScreen();
 
     /* Create a GLX context for OpenGL rendering */
     context = glXCreateNewContext( dpy, fbConfigs[0], GLX_RGBA_TYPE,
@@ -412,7 +413,6 @@ boolean init_screen (int width, int height, boolean fullscreen, uint32_t window_
   wmDelete = XInternAtom(dpy, "WM_DELETE_WINDOW", True);
   XSetWMProtocols(dpy, xWin, &wmDelete, 1);
   
-  if (fullscreen) setFullScreen();
   toggleVSync();
 
   XFree (vInfo);
@@ -496,6 +496,9 @@ boolean Upload(uint8_t *src, uint32 imgWidth, uint32 imgHeight, uint32 type) {
     {
       uint32_t mipMapLevel = 0;
       GLenum m_TexTarget=GL_TEXTURE_2D;
+
+      glMatrixMode(GL_PROJECTION);                // Select The Projection Matrix
+      glLoadIdentity();
       
       glTexParameteri( m_TexTarget, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
       glTexParameteri( m_TexTarget, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
@@ -514,22 +517,22 @@ boolean Upload(uint8_t *src, uint32 imgWidth, uint32 imgHeight, uint32 type) {
 
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-      glLoadIdentity();
-
       glBegin(GL_TRIANGLES);                      // Drawing Using Triangles
 
-      glTexCoord2f (0.5, 1.0);
+      glTexCoord2f (0.5, 0.0);
       glVertex3f( 0.0f, 1.0f, 0.0f);              // Top
       
-      glTexCoord2f (0.0, 0.0);
+      glTexCoord2f (0.0, 1.0);
       glVertex3f(-1.0f,-1.0f, 0.0f);              // Bottom Left
       
-      glTexCoord2f (1.0, 0.0);
+      glTexCoord2f (1.0, 1.0);
       glVertex3f( 1.0f,-1.0f, 0.0f);              // Bottom Right
       glEnd();     
       
       glTranslatef(-1.5f,0.0f,-6.0f);
       glEnd();
+
+      glDisable( m_TexTarget );
     }
     break;
   }

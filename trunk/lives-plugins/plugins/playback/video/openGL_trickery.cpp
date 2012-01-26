@@ -358,8 +358,6 @@ boolean init_screen (int width, int height, boolean fullscreen, uint32_t window_
   ** returned framebuffer config */
   vInfo = glXGetVisualFromFBConfig( dpy, fbConfigs[0] );
   
-  swa.border_pixel = 0;
-  swa.event_mask = StructureNotifyMask;
   swa.colormap = XCreateColormap( dpy, RootWindow(dpy, vInfo->screen),
 				  vInfo->visual, AllocNone );
   
@@ -395,7 +393,11 @@ boolean init_screen (int width, int height, boolean fullscreen, uint32_t window_
 			  0, vInfo->depth, InputOutput, vInfo->visual,
 			  swaMask, &swa );
 
+    /* Map the window to the screen, and wait for it to appear */
     if (fullscreen) setFullScreen();
+    else XMapRaised( dpy, xWin );
+
+    XIfEvent( dpy, &event, WaitForNotify, (XPointer) xWin );
 
     /* Create a GLX context for OpenGL rendering */
     context = glXCreateNewContext( dpy, fbConfigs[0], GLX_RGBA_TYPE,
@@ -406,10 +408,6 @@ boolean init_screen (int width, int height, boolean fullscreen, uint32_t window_
     ** with the created X window */
     glxWin = glXCreateWindow( dpy, fbConfigs[0], xWin, NULL );
     
-    /* Map the window to the screen, and wait for it to appear */
-    XMapWindow( dpy, xWin );
-
-    XIfEvent( dpy, &event, WaitForNotify, (XPointer) xWin );
 
     glXMakeContextCurrent( dpy, glxWin, glxWin, context );
 

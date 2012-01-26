@@ -1,3 +1,4 @@
+
 dnl Process this file with autoconf to produce a configure script.
 AC_PREREQ(2.57)
 
@@ -166,8 +167,9 @@ dnl check for jack
 
 dnl PKG_CHECK_MODULES(JACK, [jack >= 0.100.0], HAVE_JACK=true, HAVE_JACK=false)
 
-AC_CHECK_LIB(jack,jack_get_client_name)
-if test "x$ac_cv_lib_jack_jack_get_client_name" = "xyes"; then
+AC_CHECK_LIB(jack,jack_get_client_name,have_jacklib=true,have_jacklib=false)
+if test "$have_jacklib" = "true"; then
+
 AC_CHECK_HEADERS(jack/jack.h, HAVE_JACK=true, HAVE_JACK=false)
 
 
@@ -396,7 +398,7 @@ dnl check for opencv
 
 PKG_CHECK_MODULES(OPENCV, opencv >= 2.3.1, HAVE_OPENCV=true, HAVE_OPENCV=false)
 
-if test "HAVE_OPENCV" == "true" ; then
+if test "HAVE_OPENCV" = "true" ; then
 OPENCV_LIBS_ONLY_L = `pkg-config opencv --libs-only-L`
 fi
 
@@ -417,14 +419,28 @@ AM_CONDITIONAL(HAVE_OPENGL,$HAVE_OPENGL)
 
 
 dnl check for GLee
-AC_MSG_CHECKING(for GLee.h)
-AC_CHECK_HEADERS(GLee.h GL/GLee.h,HAVE_GLEE=true,HAVE_GLEE=false)
-if test "xac_cv_header_GL_GLee_h" = "xyes"; then
-GLEE_CFLAGS = "-I $includedir/GL -I/usr/include/GL"
+
+HAVE_GLEE=false
+AC_MSG_CHECKING(for GLee)
+AC_CHECK_HEADERS(GLee.h GL/GLee.h,HAVE_GLEE=true)
+
+if test "x$ac_cv_header_GL_GLee_h" != "xno"; then
+GLEE_CFLAGS="-I $includedir/GL -I/usr/include/GL"
 fi 
 
-if test "$HAVE_GLEE" == "true" ; then
+if test "$HAVE_GLEE" = "true" ; then
+
+AC_CHECK_LIB(glee,GLeeEnabled,glee_lower_case=true,glee_lower_case=false)
+if test "$glee_lower_case" = "true"; then
+echo "GLee lib is -lglee"
+GLEE_LIBS="-lglee"
+else
+AC_CHECK_LIB(GLee,GLeeEnabled,glee_mixed_case=true,glee_mixed_case=false)
+if test "$glee_mixed_case" = "true"; then
+echo "GLee lib is -lGLee"
 GLEE_LIBS="-lGLee"
+fi
+fi
 fi
 
 AC_SUBST(GLEE_CFLAGS)
@@ -494,7 +510,7 @@ if test "x$disable_libbz" != "xyes" ; then
 dnl check for libz
 AC_CHECK_HEADERS(bzlib.h,HAVE_LIBBZ=true,HAVE_LIBBZ=false)
 
-if test "HAVE_LIBBZ" == "true" ; then
+if test "HAVE_LIBBZ" = "true" ; then
 LIBBZ_LIBS=-lbz
 fi
 fi
@@ -674,7 +690,7 @@ AM_CONDITIONAL(HAVE_SYSTEM_WEED,$HAVE_SYSTEM_WEED)
 
 PKG_CHECK_MODULES(WEED_SLICE, libweed_slice >= 0.7.0, HAVE_SYSTEM_WEED_SLICE=true, HAVE_SYSTEM_WEED_SLICE=false)
 
-if test "$HAVE_SYSTEM_WEED_SLICE" == "true"; then
+if test "$HAVE_SYSTEM_WEED_SLICE" = "true"; then
 HAVE_SYSTEM_WEED=true
 fi
 
@@ -683,7 +699,7 @@ AC_SUBST(WEED_SLICE_LIBS)
 
 AM_CONDITIONAL(HAVE_SYSTEM_WEED_SLICE,$HAVE_SYSTEM_WEED_SLICE)
 
-if test "$HAVE_SYSTEM_WEED" == "false"; then
+if test "$HAVE_SYSTEM_WEED" = "false"; then
 WEED_MAKEFILES=libweed/Makefile
 fi
 

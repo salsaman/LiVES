@@ -2172,8 +2172,10 @@ void play_file (void) {
 	}
 	else {
 	  // this doesn't get called if we don't call resize_play_window()
-	  gtk_window_present (GTK_WINDOW (mainw->play_window));
-	  gdk_window_raise(mainw->play_window->window);
+	  if (mainw->play_window!=NULL) {
+	    gtk_window_present (GTK_WINDOW (mainw->play_window));
+	    gdk_window_raise(mainw->play_window->window);
+	  }
 	}
       }
     }

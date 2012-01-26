@@ -9261,11 +9261,11 @@ on_preview_clicked                     (GtkButton       *button,
       gtk_widget_set_sensitive (mainw->showfct,TRUE);
     }
     else {
-      for (i=1;i<MAX_FILES;i++) {
+      /*      for (i=1;i<MAX_FILES;i++) {
 	if (mainw->files[i]!=NULL) {
 	  if (mainw->files[i]->menuentry!=NULL) {
 	    gtk_widget_set_sensitive (mainw->files[i]->menuentry, TRUE);
-	  }}}
+	    }}}*/
       if (mainw->play_window!=NULL) {
 	if (!cfile->opening_audio) {
 	  g_signal_handlers_block_matched(mainw->play_window,

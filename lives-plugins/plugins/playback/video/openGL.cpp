@@ -65,6 +65,7 @@ static boolean swapFlag = TRUE;
 static int m_WidthFS;
 static int m_HeightFS;
 
+static boolean is_direct;
 
 static Bool WaitForNotify( Display *dpy, XEvent *event, XPointer arg ) {
     return (event->type == MapNotify) && (event->xmap.window == (Window) arg);
@@ -343,18 +344,32 @@ boolean init_screen (int width, int height, boolean fullscreen, uint32_t window_
   
   swa.border_pixel = 0;
   swa.event_mask = StructureNotifyMask | ButtonPressMask | KeyPressMask | KeyReleaseMask;
-  swa.override_redirect = true;
 
   if (window_id) {
+    int xdum,ydum;
+    uint32_t bdum;
+    uint32_t depth;
+    uint32_t xwidth,xheight;
+
     xWin = (Window) window_id;
     context = glXCreateContext ( dpy, vInfo, 0, GL_TRUE);
     glxWin = xWin;
     glXMakeCurrent ( dpy, xWin, context);
-    
+
+
+    XGetGeometry(dpy, glxWin, &xWin, &xdum, &ydum,
+		 &xwidth, &xheight, &bdum, &depth);
+
+    width=xwidth;
+    height=xheight;
+
   }
   else {
+    width=fullscreen?m_WidthFS:width;
+    height=fullscreen?m_HeightFS:height; 
+
     xWin = XCreateWindow( dpy, RootWindow(dpy, vInfo->screen), 0, 0,
-			  fullscreen?m_WidthFS:width, fullscreen?m_HeightFS:height, 
+			  width,height,
 			  0, vInfo->depth, InputOutput, vInfo->visual,
 			  swaMask, &swa );
 
@@ -377,6 +392,11 @@ boolean init_screen (int width, int height, boolean fullscreen, uint32_t window_
     glXMakeContextCurrent( dpy, glxWin, glxWin, context );
 
   }
+
+  if (glXIsDirect(dpy, context)) 
+    is_direct=TRUE;
+  else
+    is_direct=FALSE;
 
   black.red = black.green = black.blue = 0;
   
@@ -411,6 +431,7 @@ boolean init_screen (int width, int height, boolean fullscreen, uint32_t window_
   }
 
   /* OpenGL rendering ... */
+
   glClearColor( 0.0, 0.0, 0.0, 0.0 );
   glClear( GL_COLOR_BUFFER_BIT );
 
@@ -532,6 +553,7 @@ boolean send_keycodes (keyfunc host_key_fn) {
   while (dpy!=NULL && XCheckWindowEvent( dpy, xWin, KeyPressMask | KeyReleaseMask, &xEvent ) ) {
     keySymbol = XKeycodeToKeysym( dpy, xEvent.xkey.keycode, 0 );
     mod_mask=xEvent.xkey.state;
+    //fprintf(stderr,"sending %d %d %d\n",xEvent.type == KeyPress, keySymbol, mod_mask);
     host_key_fn (xEvent.type == KeyPress, keySymbol, mod_mask);
   }
 }

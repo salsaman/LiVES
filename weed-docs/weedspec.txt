@@ -1499,13 +1499,13 @@ may be used in setup_func() in an int *palettes, denotes the end of the palette 
 '''RGB Palettes'''
 Palette numbers >0 and <512
 {{{
-WEED_PALETTE_RGB888         WEED_PALETTE_RGB24
-WEED_PALETTE_BGR888         WEED_PALETTE_BGR24
-WEED_PALETTE_RGBA8888       WEED_PALETTE_RGBA32
-WEED_PALETTE_BGRA8888       WEED_PALETTE_BGRA32
-WEED_PALETTE_ARGB8888       WEED_PALETTE_ARGB32
-WEED_PALETTE_RGBFLOAT       
-WEED_PALETTE_RGBAFLOAT      
+WEED_PALETTE_RGB888         WEED_PALETTE_RGB24  :: packed, 8 bits per colour channel, 24 bits per pixel, RGB
+WEED_PALETTE_BGR888         WEED_PALETTE_BGR24  :: packed, 8 bits per colour channel, 24 bits per pixel, BGR
+WEED_PALETTE_RGBA8888       WEED_PALETTE_RGBA32 :: packed, 8 bits per colour channel, 32 bits per pixel, RGBA
+WEED_PALETTE_BGRA8888       WEED_PALETTE_BGRA32 :: packed, 8 bits per colour channel, 32 bits per pixel, BGRA
+WEED_PALETTE_ARGB8888       WEED_PALETTE_ARGB32 :: packed, 8 bits per colour channel, 32 bits per pixel, ARGB
+WEED_PALETTE_RGBFLOAT                           :: packed, 32 bit float per channel RGB (range is 0. to 1.)
+WEED_PALETTE_RGBAFLOAT                          :: packed, 32 bit float per channel RGBA (range is 0. to 1.)
 
 }}}
 '''YUV Palettes'''
@@ -1513,7 +1513,7 @@ Palette numbers >=512 and <1024
 
 Ranges are 16-235 for Y, 16 - 240 for U and V, unless
 WEED_YUV_CLAMPING_UNCLAMPED is set in "YUV_clamping" for
-channel/channel_template.
+channel/channel_template (in which case the range is 0 - 255 for each component).
 
 Subspace may be any YUV subspace, unless "YUV_subspace" is set for channel/channel_template.
 
@@ -1673,6 +1673,8 @@ Flag bits >=30 are reserved for custom flags.
     Indicates that alpha is pre-multiplied with the other channels.
     e.g RGB=0xFFFFFF. We apply an alpha of 0x80 -> we store 0x80808080 (colour vals are stored as C * alpha / 255.)
     For compatibility with applications. [1]
+
+
 
 
  * WEED_CHANNEL_FOLLOWS_OUTPUT[[BR]]

@@ -59,11 +59,18 @@ static GLuint texID;
 
 
 static boolean swapFlag = TRUE;
+static boolean is_direct;
 
 static int m_WidthFS;
 static int m_HeightFS;
 
 static int mode=0;
+
+
+static float rquad;
+
+
+
 
 static Bool WaitForNotify( Display *dpy, XEvent *event, XPointer arg ) {
     return (event->type == MapNotify) && (event->xmap.window == (Window) arg);
@@ -89,10 +96,6 @@ const char *module_check_init(void) {
 
   glDepthFunc( GL_LEQUAL );
   glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
-
-  //glDisable( GL_BLEND );
-  //glDisable( GL_LIGHTING );
-  //glFrontFace(GL_CW);
 
   glPixelStorei( GL_PACK_ALIGNMENT,   1 );
   glPixelStorei( GL_UNPACK_ALIGNMENT, 1 );
@@ -129,7 +132,7 @@ const char *get_rfx (void) {
 0xF0\\n\
 </language_code>\\n\
 <params> \\n\
-mode|_Mode|string_list|0|Flat|Triangle\\n\
+mode|_Mode|string_list|0|Flat|Triangle|Rotating\\n\
 dbuf|Use _double buffering|bool|1|0 \\n\
 fsover|Over-ride _fullscreen setting (for debugging)|bool|0|0 \\n\
 </params> \\n\
@@ -364,18 +367,28 @@ boolean init_screen (int width, int height, boolean fullscreen, uint32_t window_
   
   swa.border_pixel = 0;
   swa.event_mask = StructureNotifyMask | ButtonPressMask | KeyPressMask | KeyReleaseMask;
-  swa.override_redirect = true;
 
   if (window_id) {
+    int xdum,ydum;
+    uint32_t bdum;
+    uint32_t depth;
+    uint32_t xwidth,xheight;
+
     xWin = (Window) window_id;
     context = glXCreateContext ( dpy, vInfo, 0, GL_TRUE);
     glxWin = xWin;
     glXMakeCurrent ( dpy, xWin, context);
     
+    XGetGeometry(dpy, glxWin, &xWin, &xdum, &ydum,
+		 &xwidth, &xheight, &bdum, &depth);
+
+    width=xwidth;
+    height=xheight;
+
   }
   else {
     width=fullscreen?m_WidthFS:width;
-    height=fullscreen?m_HeightFS:height, 
+    height=fullscreen?m_HeightFS:height; 
 
     xWin = XCreateWindow( dpy, RootWindow(dpy, vInfo->screen), 0, 0,
 			  width,height,
@@ -401,6 +414,11 @@ boolean init_screen (int width, int height, boolean fullscreen, uint32_t window_
     glXMakeContextCurrent( dpy, glxWin, glxWin, context );
 
   }
+
+  if (glXIsDirect(dpy, context)) 
+    is_direct=TRUE;
+  else
+    is_direct=FALSE;
 
   black.red = black.green = black.blue = 0;
   
@@ -434,7 +452,7 @@ boolean init_screen (int width, int height, boolean fullscreen, uint32_t window_
     return FALSE;
   }
 
-  if (mode==1) add_perspective(width,height);
+  if (mode==1||mode==2) add_perspective(width,height);
 
   /* OpenGL rendering ... */
   glClearColor( 0.0, 0.0, 0.0, 0.0 );
@@ -442,6 +460,11 @@ boolean init_screen (int width, int height, boolean fullscreen, uint32_t window_
 
   glFlush();
   if ( swapFlag ) glXSwapBuffers( dpy, glxWin );
+
+
+  rquad=0.;
+
+
 
   return TRUE;
 }
@@ -455,6 +478,7 @@ boolean Upload(uint8_t *src, uint32 imgWidth, uint32 imgHeight, uint32 type) {
       // flat:
       uint32_t mipMapLevel = 0;
       GLenum m_TexTarget=GL_TEXTURE_2D;
+      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
       
       glTexParameteri( m_TexTarget, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
       glTexParameteri( m_TexTarget, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
@@ -496,6 +520,7 @@ boolean Upload(uint8_t *src, uint32 imgWidth, uint32 imgHeight, uint32 type) {
     {
       uint32_t mipMapLevel = 0;
       GLenum m_TexTarget=GL_TEXTURE_2D;
+      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
       glMatrixMode(GL_PROJECTION);                // Select The Projection Matrix
       glLoadIdentity();
@@ -535,6 +560,58 @@ boolean Upload(uint8_t *src, uint32 imgWidth, uint32 imgHeight, uint32 type) {
       glDisable( m_TexTarget );
     }
     break;
+
+  case 2:
+    {
+      uint32_t mipMapLevel = 0;
+      GLenum m_TexTarget=GL_TEXTURE_2D;
+      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+      // rotations
+      glMatrixMode(GL_PROJECTION);                // Select The Projection Matrix
+      glLoadIdentity();
+ 
+      glRotatef(rquad,0.0f,0.0f,1.0f);            // Rotate The Quad On The Z axis
+      
+      glTexParameteri( m_TexTarget, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
+      glTexParameteri( m_TexTarget, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
+    
+      glTexParameteri( m_TexTarget, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+      glTexParameteri( m_TexTarget, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+    
+      glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+      
+      glBindTexture( m_TexTarget, texID );
+      
+      glEnable( m_TexTarget );
+      
+      glTexImage2D( m_TexTarget, mipMapLevel, type, imgWidth, imgHeight, 0, type, GL_UNSIGNED_BYTE, src );
+      glGenerateMipmap(m_TexTarget);
+
+      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+      rquad-=0.5f;                       // Decrease The Rotation Variable For The Quad 
+
+      glBegin (GL_QUADS);
+      
+      glTexCoord2f (0.0, 0.0);
+      glVertex3f (-1.0, 1.1, 0.0);
+      
+      glTexCoord2f (1.0, 0.0);
+      glVertex3f (1.0, 1.1, 0.0);
+      
+      glTexCoord2f (1.0, 1.0);
+      glVertex3f (1.0, -1.0, 0.0);
+      
+      glTexCoord2f (0.0, 1.0);
+      glVertex3f (-1.0, -1.0, 0.0);
+      
+      glEnd ();
+      
+      glDisable( m_TexTarget );
+    }
+    break;
+
   }
 
   return TRUE;

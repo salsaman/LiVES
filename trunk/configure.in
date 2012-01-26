@@ -204,6 +204,13 @@ AC_SUBST(X11_LIBS)
 
 AM_CONDITIONAL(HAVE_X11,$HAVE_X11)
 
+PKG_CHECK_MODULES(XRENDER,xrender,HAVE_XRENDER=true,HAVE_XRENDER=false)
+AC_SUBST(XRENDER_CFLAGS)
+AC_SUBST(XRENDER_LIBS)
+
+AM_CONDITIONAL(HAVE_XRENDER,$HAVE_XRENDER)
+
+
 PKG_CHECK_MODULES(GTK,gtk+-2.0 >= 2.4.0)
 AC_SUBST(GTK_CFLAGS)
 AC_SUBST(GTK_LIBS)
@@ -408,21 +415,37 @@ AC_SUBST(GL_LIBS)
 AM_CONDITIONAL(HAVE_OPENGL,$HAVE_OPENGL)
 
 
+
+dnl check for GLee
 AC_MSG_CHECKING(for GLee.h)
 AC_CHECK_HEADERS(GLee.h GL/GLee.h,HAVE_GLEE=true,HAVE_GLEE=false)
 if test "xac_cv_header_GL_GLee_h" = "xyes"; then
-GLEE_CFLAGS="-I $includedir/GL -I/usr/include/GL"
+GLEE_CFLAGS = -I "$includedir/GL" -I/usr/include/GL
+GLEE_LIBS = -lGLee
 fi 
 
 AC_SUBST(GLEE_CFLAGS)
+AC_SUBST(GLEE_LIBS)
 
 AM_CONDITIONAL(HAVE_GLEE,$HAVE_GLEE)
 
+
+
+dnl check for GLU
+PKG_CHECK_MODULES(GLU,glu,HAVE_GLU=true,HAVE_GLU=false)
+AC_SUBST(GLU_CFLAGS)
+AC_SUBST(GLU_LIBS)
+
+AM_CONDITIONAL(HAVE_GLU,$HAVE_GLU)
+
+
+
+dnl check for mjpegtools
 HAVE_MJPEGTOOLS=false
 AC_ARG_ENABLE( mjpegtools, [  --disable-mjpegtools    Disable mjpegtools (yuv4mpeg) support.] , disable_mjpegtools=yes)
 if test "x$disable_mjpegtools" != "xyes" ; then
 
-dnl check for mjpegtools
+
 PKG_CHECK_MODULES(MJPEGTOOLS,mjpegtools >= 1.6.2,HAVE_MJPEGTOOLS=true,HAVE_MJPEGTOOLS=false)
 fi
 
@@ -432,12 +455,11 @@ AC_SUBST(MJPEGTOOLS_LIBS)
 AM_CONDITIONAL(HAVE_MJPEGTOOLS,$HAVE_MJPEGTOOLS)
 
 
-
+dnl check for libpng
 HAVE_LIBPNG=false
 AC_ARG_ENABLE( libpng, [  --disable-libpng    Disable direct libpng support.] , disable_libpng=yes)
 if test "x$disable_libpng" != "xyes" ; then
 
-dnl check for libpng
 PKG_CHECK_MODULES(PNG,libpng > 1.2.0,HAVE_LIBPNG=true,HAVE_LIBPNG=false)
 fi
 

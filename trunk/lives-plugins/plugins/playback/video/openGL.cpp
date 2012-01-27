@@ -29,7 +29,7 @@ static int mypalette;
 #include <X11/Xatom.h>
 #include <X11/Xlib.h>
 
-#include <GL/GLee.h>
+#include <GLee.h>
 
 #include <GL/gl.h>
 #include <GL/glx.h>

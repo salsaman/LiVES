@@ -377,10 +377,8 @@ boolean init_screen (int width, int height, boolean fullscreen, uint32_t window_
 
     if (fullscreen) setFullScreen();
 
-    else XMapRaised( dpy, xWin );
-
+    XMapRaised( dpy, xWin );
     XIfEvent( dpy, &event, WaitForNotify, (XPointer) xWin );
-
 
     /* Create a GLX context for OpenGL rendering */
     context = glXCreateNewContext( dpy, fbConfigs[0], GLX_RGBA_TYPE,
@@ -391,6 +389,7 @@ boolean init_screen (int width, int height, boolean fullscreen, uint32_t window_
     ** with the created X window */
     glxWin = glXCreateWindow( dpy, fbConfigs[0], xWin, NULL );
     
+
     glXMakeContextCurrent( dpy, glxWin, glxWin, context );
 
   }

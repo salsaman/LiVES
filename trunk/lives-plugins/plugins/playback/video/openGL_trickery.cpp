@@ -395,7 +395,8 @@ boolean init_screen (int width, int height, boolean fullscreen, uint32_t window_
 
     /* Map the window to the screen, and wait for it to appear */
     if (fullscreen) setFullScreen();
-    else XMapRaised( dpy, xWin );
+
+    XMapRaised( dpy, xWin );
 
     XIfEvent( dpy, &event, WaitForNotify, (XPointer) xWin );
 

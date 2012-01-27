@@ -165,7 +165,7 @@ gboolean read_file_details(const gchar *file_name, gboolean is_audio) {
     timeout=FALSE;
     clear_mainw_msg();
 
-#define LIVES_LONGER_TIMEOUT  (120 * U_SEC) // 2 minute timeout
+#define LIVES_LONGER_TIMEOUT  (30 * U_SEC) // 30 second timeout
 
     alarm_handle=lives_alarm_set(LIVES_LONGER_TIMEOUT);
     
@@ -3106,6 +3106,7 @@ gboolean add_file_info(const gchar *check_handle, gboolean aud_only) {
 			   check_handle);
       do_error_dialog(mesg);
       g_free(mesg);
+      g_strfreev(array);
       return FALSE;
     }
     

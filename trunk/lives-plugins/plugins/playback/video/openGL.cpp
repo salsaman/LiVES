@@ -47,7 +47,6 @@ typedef struct {
 #define MWM_HINTS_FUNCTIONS     (1L << 0)
 #define MWM_HINTS_DECORATIONS   (1L << 1)
 
-#define NET_WM_STATE_TOGGLE 2
 static Atom XA_NET_WM_STATE;
 static Atom XA_NET_WM_STATE_ABOVE;
 static Atom XA_WIN_LAYER;
@@ -58,7 +57,6 @@ static Window xWin;
 static GLXWindow glxWin;
 static GLXContext context;
 static GLuint texID;
-
 
 static boolean swapFlag = TRUE;
 
@@ -304,7 +302,7 @@ boolean init_screen (int width, int height, boolean fullscreen, uint64_t window_
   m_HeightFS = HeightOfScreen(DefaultScreenOfDisplay(dpy));
 
   XA_NET_WM_STATE = XInternAtom(dpy, "_NET_WM_STATE", False);
-  XA_NET_WM_STATE_ABOVE = XInternAtom(dpy, "_NET_WM_ABOVE", True);
+  XA_NET_WM_STATE_ABOVE = XInternAtom(dpy, "_NET_WM_ABOVE", False);
   XA_WIN_LAYER = XInternAtom(dpy, "_WIN_LAYER", False);
 
   if( !XRenderQueryExtension( dpy, &renderEventBase, &renderErrorBase ) ) {

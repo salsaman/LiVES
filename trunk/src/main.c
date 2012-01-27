@@ -2571,6 +2571,7 @@ void set_main_title(const gchar *file, gint untitled) {
   }
 
   gtk_window_set_title (GTK_WINDOW (mainw->LiVES), title);
+
   if (mainw->playing_file==-1&&mainw->play_window!=NULL) gtk_window_set_title(GTK_WINDOW(mainw->play_window),title);
 
   g_free(title);
@@ -3142,7 +3143,7 @@ void load_preview_image(gboolean update_always) {
       if (mainw->camframe!=NULL) gdk_pixbuf_saturate_and_pixelate(mainw->camframe,mainw->camframe,0.0,FALSE);
       g_free(tmp);
     }
-    pixbuf=lives_pixbuf_scale_simple(mainw->camframe,cfile->hsize,cfile->vsize,LIVES_INTERP_BEST);
+    pixbuf=lives_pixbuf_scale_simple(mainw->camframe,mainw->pwidth,mainw->pheight,LIVES_INTERP_BEST);
     if (mainw->preview_frame>cfile->frames) {
       g_signal_handler_block(mainw->play_window,mainw->pw_exp_func);
       mainw->pw_exp_is_blocked=TRUE;
@@ -3213,11 +3214,11 @@ void load_preview_image(gboolean update_always) {
     weed_timecode_t tc=((mainw->preview_frame-1.))/cfile->fps*U_SECL;
     weed_set_int_value(layer,"clip",mainw->current_file);
     weed_set_int_value(layer,"frame",mainw->preview_frame);
-    if (pull_frame_at_size(layer,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",tc,cfile->hsize,cfile->vsize,
+    if (pull_frame_at_size(layer,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",tc,mainw->pwidth,mainw->pheight,
 			   WEED_PALETTE_RGB24)) {
         LiVESInterpType interp=get_interp_value(prefs->pb_quality);
       convert_layer_palette(layer,WEED_PALETTE_RGB24,0);
-      resize_layer(layer,cfile->hsize,cfile->vsize,interp);
+      resize_layer(layer,mainw->pwidth,mainw->pheight,interp);
       pixbuf=layer_to_pixbuf(layer);
     }
     weed_plant_free(layer);
@@ -3852,6 +3853,11 @@ static void get_max_opsize(int *opwidth, int *opheight) {
 	  *opwidth=cfile->hsize;
 	  *opheight=cfile->vsize;
 	}
+	
+	if (!mainw->fs&&mainw->play_window!=NULL&&(mainw->pwidth<*opwidth||mainw->pheight<*opheight)) {
+	  *opwidth=mainw->pwidth;
+	  *opheight=mainw->pheight;
+	}
       }
       else {
 	if (prefs->play_monitor==0) {
@@ -3920,8 +3926,27 @@ static void get_max_opsize(int *opwidth, int *opheight) {
       }
     }
     else {
-      if (cfile->hsize>*opwidth) *opwidth=cfile->hsize;
-      if (cfile->vsize>*opheight) *opheight=cfile->vsize;
+      if (mainw->is_rendering) {
+	if (cfile->hsize>*opwidth) *opwidth=cfile->hsize;
+	if (cfile->vsize>*opheight) *opheight=cfile->vsize;
+      }
+      else {
+	if (!mainw->sep_win) {
+	  do {
+	    *opwidth=mainw->playframe->allocation.width;
+	    *opheight=mainw->playframe->allocation.height;
+	    if (*opwidth * *opheight==0) {
+	      while (g_main_context_iteration(NULL,FALSE));
+	    }
+	  } while (*opwidth * *opheight == 0);
+	}
+	else {
+	  if (mainw->pwidth<*opwidth||mainw->pheight<*opheight) {
+	    *opwidth=mainw->pwidth;
+	    *opheight=mainw->pheight;
+	  }
+	}
+      }
     }
   }
 }
@@ -4590,8 +4615,35 @@ void load_frame_image(gint frame) {
       }
     }
     else {
+      gboolean size_ok=FALSE;
+
+      pmonitor=prefs->play_monitor;
+
       mainw->pwidth=cfile->hsize;
       mainw->pheight=cfile->vsize;
+   
+      if (!mainw->is_rendering) {
+	do {
+	  if (pmonitor==0) {
+	    if (mainw->pwidth>mainw->scr_width-DSIZE_SAFETY_H||
+		mainw->pheight>mainw->scr_height-DSIZE_SAFETY_V) { 
+	      mainw->pheight=(mainw->pheight>>2)<<1;
+	      mainw->pwidth=(mainw->pwidth>>2)<<1;
+	      mainw->sepwin_scale/=2.;
+	    }
+	    else size_ok=TRUE;
+	  }
+	  else {
+	    if (mainw->pwidth>mainw->mgeom[pmonitor-1].width-DSIZE_SAFETY_H||
+		mainw->pheight>mainw->mgeom[pmonitor-1].height-DSIZE_SAFETY_V) {
+	      mainw->pheight=(mainw->pheight>>2)<<1;
+	      mainw->pwidth=(mainw->pwidth>>2)<<1;
+	      mainw->sepwin_scale/=2.;
+	    }
+	    else size_ok=TRUE;
+	  }
+	} while (!size_ok);
+      }
 
       if (mainw->multitrack==NULL&&mainw->play_window==NULL&&prefs->ce_maxspect) {
 	gint rwidth=mainw->image274->allocation.width;
@@ -4604,6 +4656,7 @@ void load_frame_image(gint frame) {
 	if (mainw->pwidth<2) mainw->pwidth=weed_get_int_value(mainw->frame_layer,"width",&weed_error);
 	if (mainw->pheight<2) mainw->pheight=weed_get_int_value(mainw->frame_layer,"height",&weed_error);
       }
+
     }
 
 
@@ -4755,6 +4808,12 @@ void load_frame_image(gint frame) {
       }
     }
 
+    if (mainw->play_window!=NULL&&!mainw->fs) {
+      mainw->pwidth=mainw->play_window->allocation.width;
+      mainw->pheight=mainw->play_window->allocation.height;
+    }
+
+
     layer_palette=weed_layer_get_palette(mainw->frame_layer);
 
     pwidth=weed_get_int_value(mainw->frame_layer,"width",&weed_error)*
@@ -4771,6 +4830,13 @@ void load_frame_image(gint frame) {
 			mainw->pheight);
       }
       else {
+	interp=get_interp_value(prefs->pb_quality);
+	resize_layer(mainw->frame_layer,mainw->pwidth/weed_palette_get_pixels_per_macropixel(layer_palette),
+		     mainw->pheight,interp);
+      }
+    }
+    else {
+      if (mainw->play_window!=NULL&&GDK_IS_WINDOW (mainw->play_window->window)) {
 	interp=get_interp_value(prefs->pb_quality);
 	resize_layer(mainw->frame_layer,mainw->pwidth/weed_palette_get_pixels_per_macropixel(layer_palette),
 		     mainw->pheight,interp);
@@ -5228,6 +5294,8 @@ void switch_to_file(gint old_file, gint new_file) {
   GtkWidget *active_image;
   gint orig_file=mainw->current_file;
 
+  gchar *xtrabit,*xtitle;
+
   // should use close_current_file
   if (new_file==-1||new_file>MAX_FILES) {
     g_printerr("warning - attempt to switch to invalid clip %d\n",new_file);
@@ -5302,7 +5370,8 @@ void switch_to_file(gint old_file, gint new_file) {
     sensitize();
   }
 
-  if ((mainw->playing_file==-1&&prefs->sepwin_type==1&&mainw->sep_win&&new_file>0&&cfile->is_loaded)&&orig_file!=new_file) {
+  if ((mainw->playing_file==-1&&prefs->sepwin_type==1&&mainw->sep_win&&new_file>0&&cfile->is_loaded)
+      &&orig_file!=new_file) {
     // if the clip is loaded
     if (mainw->preview_box==NULL) {
       // create the preview box that shows frames...
@@ -5319,6 +5388,14 @@ void switch_to_file(gint old_file, gint new_file) {
     }
     // and resize it
     resize_play_window();
+
+    if (mainw->sepwin_scale!=100.) xtrabit=g_strdup_printf(_(" (%d %% scale)"),(int)mainw->sepwin_scale);
+    else xtrabit=g_strdup("");
+    xtitle=g_strdup_printf(_("LiVES: - Play Window%s"),xtrabit);
+    gtk_window_set_title (GTK_WINDOW (mainw->play_window), xtitle);
+    g_free(xtitle);
+    g_free(xtrabit);
+
     load_preview_image(FALSE);
     gtk_widget_queue_resize(mainw->preview_box);
 
@@ -5709,11 +5786,16 @@ void do_quick_switch (gint new_file) {
   mainw->play_start=1;
   mainw->play_end=cfile->frames;
 
-  if (mainw->play_window!=NULL&&!mainw->double_size&&!mainw->fs&&(ohsize!=cfile->hsize||ovsize!=cfile->vsize)) {
-    // for single size sepwin, we resize frames to fit the window
-    mainw->must_resize=TRUE;
-    mainw->pheight=ovsize;
-    mainw->pwidth=ohsize;
+  if (mainw->play_window!=NULL) {
+    gchar *title=g_strdup_printf(_("LiVES: - Play Window"));
+    gtk_window_set_title (GTK_WINDOW (mainw->play_window), title);
+    g_free(title);
+    if (mainw->double_size&&!mainw->fs&&(ohsize!=cfile->hsize||ovsize!=cfile->vsize)) {
+      // for single size sepwin, we resize frames to fit the window
+      mainw->must_resize=TRUE;
+      mainw->pheight=ovsize;
+      mainw->pwidth=ohsize;
+    }
   }
   else if (mainw->multitrack==NULL) mainw->must_resize=FALSE;
 

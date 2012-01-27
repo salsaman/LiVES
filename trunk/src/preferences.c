@@ -789,7 +789,9 @@ gboolean apply_prefs(gboolean skip_warn) {
 	  gtk_window_maximize (GTK_WINDOW(mainw->multitrack->window));
 	}
       }
-      if (mainw->play_window!=NULL) resize_play_window();
+      if (mainw->play_window!=NULL) {
+	resize_play_window();
+      }
     }
   }
 

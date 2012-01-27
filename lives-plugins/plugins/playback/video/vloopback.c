@@ -239,7 +239,7 @@ const int *get_yuv_palette_clamping(int palette) {
   return clampings;
 }
 
-boolean init_screen (int width, int height, boolean fullscreen, uint32_t window_id, int argc, char **argv) {
+boolean init_screen (int width, int height, boolean fullscreen, uint64_t window_id, int argc, char **argv) {
   int i=0,idx=0;
   char **vdevs;
 

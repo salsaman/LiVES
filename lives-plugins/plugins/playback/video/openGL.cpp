@@ -224,7 +224,7 @@ static void setFullScreen(void) {
 
 
 
-boolean init_screen (int width, int height, boolean fullscreen, uint32_t window_id, int argc, char **argv) {
+boolean init_screen (int width, int height, boolean fullscreen, uint64_t window_id, int argc, char **argv) {
   // screen size is in RGB pixels
   int dblbuf=1;
   int fsover=0;

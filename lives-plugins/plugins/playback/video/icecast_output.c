@@ -261,7 +261,7 @@ boolean set_fps (double in_fps) {
 static int audio;
 #include <errno.h>
 
-boolean init_screen (int width, int height, boolean fullscreen, uint32_t window_id, int argc, char **argv) {
+boolean init_screen (int width, int height, boolean fullscreen, uint64_t window_id, int argc, char **argv) {
   int dummyvar;
   char cmd[8192];
   const char *ics=NULL,*icpw=NULL,*icmp=NULL;

@@ -5726,7 +5726,7 @@ donate_activate                     (GtkMenuItem     *menuitem,
 void on_fs_preview_clicked (GtkButton *button, gpointer user_data) {
   // file selector preview
   gchar *com;
-  unsigned int xwin=0;
+  unsigned long xwin=0;
   gint preview_frames=1000000000;
   gint preview_type=GPOINTER_TO_INT (user_data);
   gdouble start_time=0.;
@@ -5741,6 +5741,7 @@ void on_fs_preview_clicked (GtkButton *button, gpointer user_data) {
     com=g_strdup_printf ("smogrify stopsubsub thm%d 2>/dev/null",pid);
     lives_system (com,TRUE);
     g_free (com);
+    while (g_main_context_iteration (NULL, FALSE));
   }
 
   if (preview_type==3) {
@@ -5779,7 +5780,7 @@ void on_fs_preview_clicked (GtkButton *button, gpointer user_data) {
     lives_system(com,FALSE);
     g_free(com);
 
-#define LIVES_FILE_READ_TIMEOUT  (30 * U_SEC) // 30 sec timeout
+#define LIVES_FILE_READ_TIMEOUT  (5 * U_SEC) // 5 sec timeout
 
     do {
       retval=0;
@@ -5874,7 +5875,7 @@ void on_fs_preview_clicked (GtkButton *button, gpointer user_data) {
 
     if (preview_type==1||preview_type==3) {
 #ifdef USE_X11
-      xwin=(unsigned int)GDK_WINDOW_XID (mainw->fs_playarea->window);
+      xwin=(unsigned long)GDK_WINDOW_XWINDOW (mainw->fs_playarea->window);
 #else
       // need equivalent to get XID of win on other platforms
       do_blocking_error_dialog(_("Preview will not work without X11. We need the window id of the preview window.\nPlease send a patch if you know how to do this.\n"
@@ -5896,12 +5897,12 @@ void on_fs_preview_clicked (GtkButton *button, gpointer user_data) {
     }
 
     if (file_open_params!=NULL) {
-      com=g_strdup_printf("smogrify fs_preview fsp%d %u %d %d %.2f %d \"%s\" \"%s\"",getpid(),
+      com=g_strdup_printf("smogrify fs_preview fsp%d %"PRIu64" %d %d %.2f %d \"%s\" \"%s\"",getpid(),
 			  xwin,DEFAULT_FRAME_HSIZE, DEFAULT_FRAME_VSIZE,start_time,preview_frames,
 			  file_name,file_open_params);
     }
     else {
-      com=g_strdup_printf("smogrify fs_preview fsp%d %u %d %d %.2f %d \"%s\"",getpid(),
+      com=g_strdup_printf("smogrify fs_preview fsp%d %"PRIu64" %d %d %.2f %d \"%s\"",getpid(),
 			  xwin,DEFAULT_FRAME_HSIZE, DEFAULT_FRAME_VSIZE,start_time,preview_frames,file_name);
     }
 
@@ -5960,11 +5961,11 @@ on_ok_button1_clicked                  (GtkButton       *button,
 								      (GTK_WIDGET(button))))),-1,NULL,NULL,NULL)));
     g_free(tmp);
 
-    end_fs_preview();
 				 
     g_snprintf(mainw->vid_load_dir,PATH_MAX,"%s",file_name);
     get_dirname(mainw->vid_load_dir);
     fnames=gtk_file_selection_get_selections(GTK_FILE_SELECTION(filesel));
+    end_fs_preview();
     gtk_widget_destroy(filesel);
   
     if (mainw->multitrack==NULL) gtk_widget_queue_draw(mainw->LiVES);
@@ -6098,6 +6099,8 @@ on_opensel_range_ok_clicked                  (GtkButton       *button,
   // open file selection
   end_fs_preview();
   gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
+  while (g_main_context_iteration(NULL,FALSE));
+
   mainw->fs_playarea=NULL;
   mainw->img_concat_clip=-1;
   open_file_sel(file_name,mainw->fx1_val,(gint)mainw->fx2_val);
@@ -6194,6 +6197,7 @@ on_ok_button4_clicked                  (GtkButton       *button,
   get_dirname(mainw->audio_dir);
   end_fs_preview();
   gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
+  while (g_main_context_iteration(NULL,FALSE));
   mainw->fs_playarea=NULL;
 
   a_type=file_name+strlen(file_name)-3;
@@ -6404,8 +6408,7 @@ on_ok_button4_clicked                  (GtkButton       *button,
 }
 
 
-void 
-end_fs_preview(void) {
+void end_fs_preview(void) {
   // clean up if we were playing a preview - should be called from all callbacks 
   // where there is a possibility of fs preview still playing
   gchar *com;
@@ -6427,7 +6430,6 @@ end_fs_preview(void) {
       gtk_widget_modify_bg (mainw->fs_playarea, GTK_STATE_NORMAL, &palette->normal_back);
       gtk_widget_hide (mainw->fs_playarea);
       gtk_widget_show (mainw->fs_playarea);
-      while (g_main_context_iteration (NULL, FALSE));
     }
   }
 }
@@ -6475,8 +6477,8 @@ void on_save_textview_clicked (GtkButton *button, gpointer user_data) {
 
 void on_cancel_button1_clicked (GtkButton *button, gpointer user_data) {
   // generic cancel callback
-  end_fs_preview();
 
+  end_fs_preview();
   gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
   while (g_main_context_iteration (NULL,FALSE));
 
@@ -6514,6 +6516,7 @@ on_cancel_opensel_clicked              (GtkButton       *button,
 {
   end_fs_preview();
   gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
+  while (g_main_context_iteration(NULL,FALSE));
   mainw->fs_playarea=NULL;
 
   if (mainw->multitrack!=NULL) {

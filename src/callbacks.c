@@ -5878,10 +5878,14 @@ void on_fs_preview_clicked (GtkButton *button, gpointer user_data) {
       xwin=(unsigned long)GDK_WINDOW_XWINDOW (mainw->fs_playarea->window);
 #else
       // need equivalent to get XID of win on other platforms
-      do_blocking_error_dialog(_("Preview will not work without X11. We need the window id of the preview window.\nPlease send a patch if you know how to do this.\n"
+      do_blocking_error_dialog(_("Preview will not work without X11. We need the window id of the preview window.\nPlease send a patch if you know how to do this.\n"));
 #endif
 
     }
+
+    
+
+
 
     if (prefs->audio_player==AUD_PLAYER_JACK) {
       file_open_params=g_strdup_printf("%s %s -ao jack",mainw->file_open_params!=NULL?

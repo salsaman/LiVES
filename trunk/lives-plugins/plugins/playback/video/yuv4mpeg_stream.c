@@ -124,7 +124,7 @@ boolean set_fps (double in_fps) {
   return TRUE;
 }
 
-boolean init_screen (int width, int height, boolean fullscreen, uint32_t window_id, int argc, char **argv) {
+boolean init_screen (int width, int height, boolean fullscreen, uint64_t window_id, int argc, char **argv) {
   if (mypalette==WEED_PALETTE_END) {
     fprintf(stderr,"yuv4mpeg_stream plugin error: No palette was set !\n");
     return FALSE;

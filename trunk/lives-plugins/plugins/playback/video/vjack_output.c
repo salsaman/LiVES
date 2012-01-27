@@ -124,7 +124,7 @@ boolean set_palette (int palette) {
   return FALSE;
 }
 
-boolean init_screen (int width, int height, boolean fullscreen, uint32_t window_id, int argc, char **argv) {
+boolean init_screen (int width, int height, boolean fullscreen, uint64_t window_id, int argc, char **argv) {
   jack_video_set_width_and_height(client,output_port,width,height);
   frame_size=width*height*4;
   rb = jack_ringbuffer_create ( 16 * frame_size);

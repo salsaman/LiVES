@@ -139,7 +139,7 @@ const int *get_yuv_palette_clamping(int palette) {
 
 
 
-boolean init_screen (int width, int height, boolean fullscreen, uint32_t window_id, int argc, char **argv) {
+boolean init_screen (int width, int height, boolean fullscreen, uint64_t window_id, int argc, char **argv) {
   // screen size is in RGB pixels
   int hwaccel=1;
   int yuvdir=1;
@@ -172,7 +172,7 @@ boolean init_screen (int width, int height, boolean fullscreen, uint32_t window_
   snprintf(tmp,32,"%d",yuvhwa);
   setenv ("SDL_VIDEO_YUV_HWACCEL", tmp, 1);
 
-  snprintf(tmp,32,"%u",window_id);
+  snprintf(tmp,32,"%"PRIu64,window_id);
   if (!fullscreen) setenv ("SDL_WINDOWID", tmp, 1);
 
   if (fsover) fullscreen=FALSE;

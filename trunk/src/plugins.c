@@ -537,6 +537,8 @@ void on_vppa_ok_clicked (GtkButton *button, gpointer user_data) {
   const gchar *tmp;
   int *pal_list,i=0;
 
+  unsigned long xwinid=0;
+
   _vid_playback_plugin *vpp=vppw->plugin;
 
   if (vpp==mainw->vpp) {
@@ -627,8 +629,15 @@ void on_vppa_ok_clicked (GtkButton *button, gpointer user_data) {
 		start_audio_stream();
 	      }
 #endif
+
+#ifdef USE_X11
+	      if (mainw->play_window!=NULL)
+		xwinid=(unsigned long)GDK_WINDOW_XWINDOW(mainw->play_window->window);
+#else
+	      LIVES_WARN("Tried to get XID for non X11 Window !");
+#endif
 	      if (vpp->init_screen!=NULL) {
-		(*vpp->init_screen)(mainw->pwidth,mainw->pheight,TRUE,0,vpp->extra_argc,vpp->extra_argv);
+		(*vpp->init_screen)(mainw->pwidth,mainw->pheight,TRUE,xwinid,vpp->extra_argc,vpp->extra_argv);
 	      }
 	      if (mainw->vpp->capabilities&VPP_LOCAL_DISPLAY) {
 		gtk_window_set_keep_below(GTK_WINDOW
@@ -1212,7 +1221,7 @@ _vid_playback_plugin *open_vid_playback_plugin (const gchar *name, gboolean in_u
   vpp->set_yuv_palette_clamping=(int (*)(int))dlsym (handle,"set_yuv_palette_clamping");
   vpp->send_keycodes=(gboolean (*)(plugin_keyfunc))dlsym (handle,"send_keycodes");
   vpp->get_audio_fmts=(int* (*)())dlsym (handle,"get_audio_fmts");
-  vpp->init_screen=(gboolean (*)(int, int, gboolean, guint32, int, gchar**))dlsym (handle,"init_screen");
+  vpp->init_screen=(gboolean (*)(int, int, gboolean, uint64_t, int, gchar**))dlsym (handle,"init_screen");
   vpp->exit_screen=(void (*)(guint16, guint16))dlsym (handle,"exit_screen");
   vpp->module_unload=(void (*)())dlsym (handle,"module_unload");
 

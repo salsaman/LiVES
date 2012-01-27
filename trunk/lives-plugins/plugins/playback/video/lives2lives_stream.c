@@ -255,7 +255,7 @@ boolean set_fps (double in_fps) {
   return TRUE;
 }
 
-boolean init_screen (int width, int height, boolean fullscreen, uint32_t window_id, int argc, char **argv) {
+boolean init_screen (int width, int height, boolean fullscreen, uint64_t window_id, int argc, char **argv) {
   char host[16];
   int port;
 

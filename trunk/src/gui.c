@@ -3757,7 +3757,7 @@ void resize_play_window (void) {
 
   gboolean fullscreen=TRUE;
 
-  guint xwinid=0;
+  unsigned long xwinid=0;
 
 #ifdef DEBUG_HANGS
   fullscreen=FALSE;
@@ -3899,7 +3899,8 @@ void resize_play_window (void) {
 	if (prefs->play_monitor!=0) {
 	  fullscreen=FALSE;
 #ifdef USE_X11
-	  xwinid=(unsigned int)GDK_WINDOW_XID(mainw->play_window->window);
+	  if (mainw->play_window!=NULL)
+	    xwinid=(unsigned long)GDK_WINDOW_XWINDOW(mainw->play_window->window);
 #else
 	  LIVES_WARN("Tried to get XID for non X11 Window !");
 #endif

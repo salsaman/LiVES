@@ -56,7 +56,7 @@ typedef struct {
   gboolean (*render_frame) (int hsize, int vsize, int64_t timecode, void *pixel_data, void *return_data);
 
   // optional
-  gboolean (*init_screen) (int width, int height, gboolean fullscreen, guint32 window_id, int argc, gchar **argv);
+  gboolean (*init_screen) (int width, int height, gboolean fullscreen, uint64_t window_id, int argc, gchar **argv);
   void (*exit_screen) (guint16 mouse_x, guint16 mouse_y);
   void (*module_unload) (void);
   const gchar *(*get_fps_list) (int palette);

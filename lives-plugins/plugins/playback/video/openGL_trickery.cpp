@@ -12,7 +12,7 @@
 
 ////////////////////////////////////////////////////////////////////////////////////
 
-static char plugin_version[64]="LiVES openGL playback engine version 1.0";
+static char plugin_version[64]="LiVES openGL trickery playback engine version 1.0";
 static char error[256];
 
 static int (*render_fn)(int hsize, int vsize, void **pixel_data, void **return_data);
@@ -246,7 +246,7 @@ static void add_perspective(uint32_t width, uint32_t height) {
 
 
 
-boolean init_screen (int width, int height, boolean fullscreen, uint32_t window_id, int argc, char **argv) {
+boolean init_screen (int width, int height, boolean fullscreen, uint64_t window_id, int argc, char **argv) {
   // screen size is in RGB pixels
   int dblbuf=1;
   int fsover=0;

@@ -3053,7 +3053,6 @@ static gint check_for_lives(weed_plant_t *filter, int filter_idx) {
     if (weed_plant_has_leaf(array[i],"is_audio")&&weed_get_boolean_value(array[i],"is_audio",&error)==WEED_TRUE) 
       is_audio=TRUE;
     if (!weed_plant_has_leaf(array[i],"name")||(!weed_plant_has_leaf(array[i],"palette_list")&&!is_audio)) {
-      g_print("val si %s\n",weed_get_string_value(array[i],"name",&error));
       weed_free(array);
       return 6;
     }

@@ -70,6 +70,16 @@ void add_suffix_check(GtkBox *box, const gchar *ext) {
   
 }
 
+static gboolean
+call_cancel                  (GtkWidget       *widget,
+			      GdkEvent        *event,
+		      	      gpointer         user_data)
+{
+  on_cancel_button1_clicked(NULL,user_data);
+  return FALSE;
+}
+
+
 
 
 GtkWidget*
@@ -119,7 +129,16 @@ create_fileselection (const gchar *title, gint preview_type, gpointer free_on_ca
 
   gtk_widget_grab_focus (fileselection);
   
-  if (preview_type==1||preview_type==2) widget_add_preview(GTK_BOX (GTK_FILE_SELECTION(fileselection)->main_vbox),GTK_BOX (GTK_FILE_SELECTION (fileselection)->action_area),GTK_BOX(GTK_FILE_SELECTION(fileselection)->main_vbox),preview_type);
+  if (preview_type==1||preview_type==2) {
+    widget_add_preview(GTK_BOX (GTK_FILE_SELECTION(fileselection)->main_vbox),
+		       GTK_BOX (GTK_FILE_SELECTION (fileselection)->action_area),
+		       GTK_BOX(GTK_FILE_SELECTION(fileselection)->main_vbox),preview_type);
+
+    g_signal_connect (GTK_OBJECT (fileselection), "delete_event",
+                      G_CALLBACK (call_cancel),
+                      free_on_cancel);
+  }
+
   g_signal_connect (cancel_button, "clicked",G_CALLBACK (on_cancel_button1_clicked),free_on_cancel);
 
   gtk_widget_show_all (fileselection);
@@ -164,8 +183,7 @@ static GtkWidget *add_deinterlace_checkbox(GtkBox *for_deint) {
 
 
 
-void
-widget_add_preview(GtkBox *for_preview, GtkBox *for_button, GtkBox *for_deint, gint preview_type) {
+void widget_add_preview(GtkBox *for_preview, GtkBox *for_button, GtkBox *for_deint, gint preview_type) {
   // preview type 1 - video and audio, fileselector
   // preview type 2 - audio only, fileselector
   // preview type 3 - range preview
@@ -175,17 +193,15 @@ widget_add_preview(GtkBox *for_preview, GtkBox *for_button, GtkBox *for_deint, g
   GtkWidget *fs_label;
 
   mainw->fs_playframe = gtk_frame_new (NULL);
-  mainw->fs_playarea = gtk_socket_new ();
+  mainw->fs_playalign = gtk_alignment_new (0.,0.,1.,1.);
+  mainw->fs_playarea = gtk_event_box_new ();
 
   if (preview_type==1||preview_type==3) {
 
     gtk_widget_show (mainw->fs_playframe);
+    gtk_widget_show (mainw->fs_playalign);
 
     gtk_container_set_border_width (GTK_CONTAINER(mainw->fs_playframe), 10);
-    gtk_frame_set_shadow_type (GTK_FRAME(mainw->fs_playframe), GTK_SHADOW_IN);
-    if (palette->style&STYLE_1) {
-      gtk_widget_modify_bg (mainw->fs_playframe, GTK_STATE_NORMAL, &palette->normal_back);
-    }
 
     fs_label = gtk_label_new (_ ("Preview"));
     gtk_widget_show (fs_label);
@@ -199,11 +215,13 @@ widget_add_preview(GtkBox *for_preview, GtkBox *for_button, GtkBox *for_deint, g
     gtk_box_pack_start (for_preview, mainw->fs_playframe, FALSE, FALSE, 0);
     gtk_widget_set_size_request (mainw->fs_playarea, DEFAULT_FRAME_HSIZE, DEFAULT_FRAME_VSIZE);
 
-    gtk_container_add (GTK_CONTAINER (mainw->fs_playframe), mainw->fs_playarea);
+    gtk_container_add (GTK_CONTAINER (mainw->fs_playframe), mainw->fs_playalign);
+    gtk_container_add (GTK_CONTAINER (mainw->fs_playalign), mainw->fs_playarea);
 
-    if (palette->style&STYLE_1) {
-      gtk_widget_modify_bg (mainw->fs_playarea, GTK_STATE_NORMAL, &palette->normal_back);
-    }
+    gtk_widget_modify_bg (mainw->fs_playarea, GTK_STATE_NORMAL, &palette->black);
+    gtk_widget_modify_bg (mainw->fs_playframe, GTK_STATE_NORMAL, &palette->black);
+    gtk_widget_modify_bg (mainw->fs_playalign, GTK_STATE_NORMAL, &palette->black);
+
     gtk_widget_show(mainw->fs_playarea);
    }
 

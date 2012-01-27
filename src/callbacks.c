@@ -5725,16 +5725,29 @@ donate_activate                     (GtkMenuItem     *menuitem,
 
 void on_fs_preview_clicked (GtkButton *button, gpointer user_data) {
   // file selector preview
-  gchar *com;
+  gdouble start_time=0.;
+
   unsigned long xwin=0;
+
+  FILE *ifile=NULL;
+
+  gchar **array;
+
   gint preview_frames=1000000000;
   gint preview_type=GPOINTER_TO_INT (user_data);
-  gdouble start_time=0.;
-  FILE *ifile=NULL;
+
   gint height=0,width=0;
   gint pid=getpid();
+  int alarm_handle;
+  int retval;
+  gboolean timeout;
+
   gchar *info_file=g_strdup_printf ("%s/thm%d/.status",prefs->tmpdir,pid);
   gchar *file_open_params=NULL;
+  gchar *tmp;
+  gchar *com;
+
+  int fwidth,fheight;
 
   if (mainw->in_fs_preview) {
     end_fs_preview();
@@ -5751,7 +5764,6 @@ void on_fs_preview_clicked (GtkButton *button, gpointer user_data) {
   }
   else {
     // open file
-    gchar *tmp;
     g_snprintf(file_name,PATH_MAX,"%s",
 	       (tmp=g_filename_to_utf8(gtk_file_selection_get_filename
 				       (GTK_FILE_SELECTION(gtk_widget_get_toplevel
@@ -5763,11 +5775,6 @@ void on_fs_preview_clicked (GtkButton *button, gpointer user_data) {
   unlink (info_file);
 
   if (preview_type==1) {
-    gchar **array;
-    gchar *tmp;
-    int alarm_handle;
-    int retval;
-    gboolean timeout;
 
     preview_frames=1000000000;
 
@@ -5819,16 +5826,22 @@ void on_fs_preview_clicked (GtkButton *button, gpointer user_data) {
       // draw image
       GError *error=NULL;
       gchar *thumb=g_strdup_printf("%s/thm%d/%08d.%s",prefs->tmpdir,pid,1,prefs->image_ext);
-      GdkPixbuf *pixbuf=lives_pixbuf_new_from_file((tmp=g_filename_from_utf8(thumb,-1,NULL,NULL,NULL)),&error);
+      LiVESPixbuf *pixbuf=lives_pixbuf_new_from_file((tmp=g_filename_from_utf8(thumb,-1,NULL,NULL,NULL)),&error);
       g_free(tmp);
 
       if (error==NULL) {
-	gint fwidth=GTK_WIDGET(mainw->fs_playarea)->allocation.width;
-	gint fheight=GTK_WIDGET(mainw->fs_playarea)->allocation.height;
-	gint offs_x=(fwidth-width)/2.;
-	gint offs_y=(fheight-height)/2.;
-	GdkPixbuf *blank=lives_pixbuf_new_blank(fwidth,fheight,WEED_PALETTE_RGB24);
-	cairo_t *cr = gdk_cairo_create (mainw->fs_playarea->window);
+	int offs_x;
+	int offs_y;
+	LiVESPixbuf *blank;
+	cairo_t *cr;
+
+	fwidth=GTK_WIDGET(mainw->fs_playarea)->allocation.width;
+	fheight=GTK_WIDGET(mainw->fs_playarea)->allocation.height;
+
+	offs_x=(fwidth-width)/2.;
+	offs_y=(fheight-height)/2.;
+	blank=lives_pixbuf_new_blank(fwidth,fheight,WEED_PALETTE_RGB24);
+	cr = gdk_cairo_create (mainw->fs_playarea->window);
 
 	gdk_cairo_set_source_pixbuf (cr, blank, 0, 0);
 	cairo_paint (cr);
@@ -5875,7 +5888,7 @@ void on_fs_preview_clicked (GtkButton *button, gpointer user_data) {
 
     if (preview_type==1||preview_type==3) {
 #ifdef USE_X11
-      xwin=(unsigned long)GDK_WINDOW_XWINDOW (mainw->fs_playarea->window);
+      xwin=(unsigned long)GDK_WINDOW_XID (mainw->fs_playarea->window);
 #else
       // need equivalent to get XID of win on other platforms
       do_blocking_error_dialog(_("Preview will not work without X11. We need the window id of the preview window.\nPlease send a patch if you know how to do this.\n"));
@@ -5883,8 +5896,92 @@ void on_fs_preview_clicked (GtkButton *button, gpointer user_data) {
 
     }
 
-    
+    gtk_widget_modify_bg (mainw->fs_playarea, GTK_STATE_NORMAL, &palette->black);
+    gtk_widget_modify_bg (mainw->fs_playframe, GTK_STATE_NORMAL, &palette->black);
+    gtk_widget_modify_bg (mainw->fs_playalign, GTK_STATE_NORMAL, &palette->black);
 
+
+    mainw->in_fs_preview=TRUE;
+
+    // get width and height of clip
+    com=g_strdup_printf("smogrify get_details fsp%d \"%s\" \"%s\" %d %d",getpid(),
+			(tmp=g_filename_from_utf8(file_name,-1,NULL,NULL,NULL)),
+			prefs->image_ext,FALSE,FALSE);
+
+
+    mainw->com_failed=FALSE;
+    lives_system(com,FALSE);
+    g_free(com);
+    
+    if (mainw->com_failed) {
+      end_fs_preview();
+      g_free(info_file);
+      return;
+    }
+
+    
+    do {
+      retval=0;
+      timeout=FALSE;
+      clear_mainw_msg();
+      
+#define LIVES_LONGER_TIMEOUT  (30 * U_SEC) // 30 second timeout
+
+      alarm_handle=lives_alarm_set(LIVES_LONGER_TIMEOUT);
+    
+      while (!((ifile=fopen(info_file,"r")) || (timeout=lives_alarm_get(alarm_handle)))
+	     &&mainw->in_fs_preview) {
+	while (g_main_context_iteration (NULL,FALSE));
+	threaded_dialog_spin();
+	g_usleep(prefs->sleep_time);
+      }
+      
+      lives_alarm_clear(alarm_handle);
+    
+      if (!mainw->in_fs_preview) {
+	// user cancelled
+	end_fs_preview();
+	g_free(info_file);
+	return;
+      }
+
+      if (!timeout) {
+	mainw->read_failed=FALSE;
+	lives_fgets(mainw->msg,512,ifile);
+	fclose(ifile);
+      }
+
+      if (timeout||mainw->read_failed) {
+	retval=do_read_failed_error_s_with_retry(info_file,NULL,NULL);
+      }
+    } while (retval==LIVES_RETRY);
+    
+    if (mainw->msg!=NULL&&get_token_count(mainw->msg,'|')>6) {
+      array=g_strsplit(mainw->msg,"|",-1);
+      width=atoi(array[4]);
+      height=atoi(array[5]);
+      g_strfreev(array);
+    }
+    else {
+      width=DEFAULT_FRAME_HSIZE;
+      height=DEFAULT_FRAME_VSIZE;
+    }
+
+    unlink(info_file);
+
+    // -20 since border width was set to 10 pixels
+    fwidth=mainw->fs_playalign->allocation.width-20;
+    fheight=mainw->fs_playalign->allocation.height-20;
+
+    calc_maxspect(fwidth,fheight,
+    		  &width,&height);
+
+    width=(width>>1)<<1;
+    height=(height>>1)<<1;
+
+    gtk_alignment_set(GTK_ALIGNMENT(mainw->fs_playalign),0.5,
+		      0.5,(float)width/(float)fwidth,
+		      (float)height/(float)fheight);
 
 
     if (prefs->audio_player==AUD_PLAYER_JACK) {
@@ -5902,19 +5999,21 @@ void on_fs_preview_clicked (GtkButton *button, gpointer user_data) {
 
     if (file_open_params!=NULL) {
       com=g_strdup_printf("smogrify fs_preview fsp%d %"PRIu64" %d %d %.2f %d \"%s\" \"%s\"",getpid(),
-			  xwin,DEFAULT_FRAME_HSIZE, DEFAULT_FRAME_VSIZE,start_time,preview_frames,
-			  file_name,file_open_params);
+			  xwin, width, height, start_time, preview_frames,
+			  (tmp=g_filename_from_utf8(file_name,-1,NULL,NULL,NULL)),file_open_params);
     }
     else {
       com=g_strdup_printf("smogrify fs_preview fsp%d %"PRIu64" %d %d %.2f %d \"%s\"",getpid(),
-			  xwin,DEFAULT_FRAME_HSIZE, DEFAULT_FRAME_VSIZE,start_time,preview_frames,file_name);
+			  xwin, width, height, start_time, preview_frames,
+			  (tmp=g_filename_from_utf8(file_name,-1,NULL,NULL,NULL)));
     }
+    
+    g_free(tmp);
 
     if (prefs->pause_xmms&&capable->has_xmms) lives_system("xmms -u",TRUE);
     
     gtk_widget_set_app_paintable(mainw->fs_playarea,TRUE);
     
-    mainw->in_fs_preview=TRUE;
     mainw->com_failed=FALSE;
     lives_system(com,FALSE);
     g_free(com);
@@ -6429,11 +6528,10 @@ void end_fs_preview(void) {
     lives_system (com,TRUE);
     g_free (com);
 
-    if (mainw->fs_playarea!=NULL) {
+    if (mainw->fs_playarea!=NULL&&(GTK_IS_WIDGET(mainw->fs_playarea))) {
       gtk_widget_set_app_paintable(mainw->fs_playarea,FALSE);
-      gtk_widget_modify_bg (mainw->fs_playarea, GTK_STATE_NORMAL, &palette->normal_back);
-      gtk_widget_hide (mainw->fs_playarea);
-      gtk_widget_show (mainw->fs_playarea);
+      //gtk_widget_hide (mainw->fs_playarea);
+      //gtk_widget_show (mainw->fs_playarea);
     }
   }
 }
@@ -6483,7 +6581,7 @@ void on_cancel_button1_clicked (GtkButton *button, gpointer user_data) {
   // generic cancel callback
 
   end_fs_preview();
-  gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
+  if (button!=NULL) gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
   while (g_main_context_iteration (NULL,FALSE));
 
   if (user_data!=NULL) {

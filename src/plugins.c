@@ -630,12 +630,15 @@ void on_vppa_ok_clicked (GtkButton *button, gpointer user_data) {
 	      }
 #endif
 
+	      if (prefs->play_monitor!=0) {
 #ifdef USE_X11
-	      if (mainw->play_window!=NULL)
-		xwinid=(unsigned long)GDK_WINDOW_XWINDOW(mainw->play_window->window);
+		if (mainw->play_window!=NULL)
+		  xwinid=(unsigned long)GDK_WINDOW_XWINDOW(mainw->play_window->window);
 #else
-	      LIVES_WARN("Tried to get XID for non X11 Window !");
+		LIVES_WARN("Tried to get XID for non X11 Window !");
 #endif
+	      }
+
 	      if (vpp->init_screen!=NULL) {
 		(*vpp->init_screen)(mainw->pwidth,mainw->pheight,TRUE,xwinid,vpp->extra_argc,vpp->extra_argv);
 	      }

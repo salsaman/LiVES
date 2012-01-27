@@ -657,6 +657,7 @@ typedef struct {
 
   /// for the fileselection preview
   GtkWidget *fs_playarea;
+  GtkWidget *fs_playalign;
   GtkWidget *fs_playframe;
 
   /// for the framedraw special widget - TODO - use a sub-struct

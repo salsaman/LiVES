@@ -8320,7 +8320,14 @@ gboolean multitrack_delete (lives_mt *mt, gboolean save_layout) {
   g_free (mt);
 
   if (mainw->play_window!=NULL) {
+    gchar *xtrabit,*title;
     resize_play_window();
+    if (mainw->sepwin_scale!=100.) xtrabit=g_strdup_printf(_(" (%d %% scale)"),(int)mainw->sepwin_scale);
+    else xtrabit=g_strdup("");
+    title=g_strdup_printf("%s%s",gtk_window_get_title(GTK_WINDOW(mainw->LiVES)),xtrabit);
+    gtk_window_set_title(GTK_WINDOW(mainw->play_window),title);
+    g_free(title);
+    g_free(xtrabit);
   }
 
 #ifdef ENABLE_OSC
@@ -9893,13 +9900,23 @@ gboolean on_multitrack_activate (GtkMenuItem *menuitem, weed_plant_t *event_list
   }
 
   if (mainw->play_window!=NULL) {
+    gchar *title,*xtrabit;
     g_signal_handlers_block_matched(mainw->play_window,(GSignalMatchType)(G_SIGNAL_MATCH_FUNC|G_SIGNAL_MATCH_UNBLOCKED),
 				    0,0,0,(gpointer)expose_play_window,NULL);
     g_signal_handler_unblock(mainw->play_window,mainw->pw_exp_func);
     mainw->pw_exp_is_blocked=FALSE;
     gtk_window_remove_accel_group (GTK_WINDOW (mainw->play_window), mainw->accel_group);
     gtk_window_add_accel_group (GTK_WINDOW (mainw->play_window), multi->accel_group);
+
     resize_play_window();
+    if (mainw->sepwin_scale!=100.) xtrabit=g_strdup_printf(_(" (%d %% scale)"),(int)mainw->sepwin_scale);
+    else xtrabit=g_strdup("");
+    title=g_strdup_printf("%s%s",gtk_window_get_title(GTK_WINDOW(multi->window)),xtrabit);
+    gtk_window_set_title(GTK_WINDOW(mainw->play_window),title);
+    g_free(title);
+    g_free(xtrabit);
+
+
   }
   d_print (_ ("\n==============================\nSwitched to Multitrack mode\n"));
 

@@ -661,9 +661,14 @@ boolean render_frame (int hsize, int vsize, int64_t tc, void **pixel_data, void 
 void exit_screen (int16_t mouse_x, int16_t mouse_y) {
   XUnmapWindow (dpy, xWin);
   XDestroyWindow (dpy, xWin);
+
+  glXMakeContextCurrent(dpy, 0, 0, 0);
+  glXDestroyContext(dpy, context);
+
   XCloseDisplay (dpy);
   dpy=NULL;
 }
+
 
 
 void module_unload(void) {

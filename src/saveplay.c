@@ -1917,6 +1917,7 @@ void play_file (void) {
   gchar *stopcom=NULL;
   gchar *msg;
   gchar *stfile;
+  gchar *xtrabit,*title;
 
   gint asigned=!(cfile->signed_endian&AFORM_UNSIGNED);
   gint aendian=!(cfile->signed_endian&AFORM_BIG_ENDIAN);
@@ -2159,7 +2160,14 @@ void play_file (void) {
 	}
 
 	if (mainw->multitrack==NULL||mainw->fs) {
+	  gchar *xtrabit,*title;
 	  resize_play_window();
+	  if (mainw->sepwin_scale!=100.) xtrabit=g_strdup_printf(_(" (%d %% scale)"),(int)mainw->sepwin_scale);
+	  else xtrabit=g_strdup("");
+	  title=g_strdup_printf(_("LiVES: - Play Window%s"),xtrabit);
+	  gtk_window_set_title (GTK_WINDOW (mainw->play_window), title);
+	  g_free(title);
+	  g_free(xtrabit);
 	}
 
 	// needed
@@ -2185,7 +2193,15 @@ void play_file (void) {
       gtk_widget_set_app_paintable(mainw->play_window,TRUE);
       if (mainw->vpp!=NULL&&!(mainw->vpp->capabilities&VPP_LOCAL_DISPLAY)&&mainw->fs) 
 	gtk_window_set_title (GTK_WINDOW (mainw->play_window),_("LiVES: - Streaming"));
-      else gtk_window_set_title (GTK_WINDOW (mainw->play_window),_("LiVES: - Play Window"));
+      else {
+	gchar *title,*xtrabit;
+	if (mainw->sepwin_scale!=100.) xtrabit=g_strdup_printf(_(" (%d %% scale)"),(int)mainw->sepwin_scale);
+	else xtrabit=g_strdup("");
+	title=g_strdup_printf(_("LiVES: - Play Window%s"),xtrabit);
+	gtk_window_set_title (GTK_WINDOW (mainw->play_window), title);
+	g_free(title);
+	g_free(xtrabit);
+      }
       if (!mainw->pw_exp_is_blocked) g_signal_handler_block(mainw->play_window,mainw->pw_exp_func);
       mainw->pw_exp_is_blocked=TRUE;
     }
@@ -2654,6 +2670,15 @@ void play_file (void) {
   // resize out of double size
   if ((mainw->double_size&&!mainw->fs)&&mainw->multitrack==NULL) {
     resize(1);
+    if (mainw->play_window!=NULL) {
+      resize_play_window();
+      if (mainw->sepwin_scale!=100.) xtrabit=g_strdup_printf(_(" (%d %% scale)"),(int)mainw->sepwin_scale);
+      else xtrabit=g_strdup("");
+      title=g_strdup_printf("%s%s",gtk_window_get_title(GTK_WINDOW(mainw->LiVES)),xtrabit);
+      gtk_window_set_title(GTK_WINDOW(mainw->play_window),title);
+      g_free(title);
+      g_free(xtrabit);
+    }
     if (palette->style&STYLE_1) {
       gtk_widget_show(mainw->sep_image);
     }
@@ -2735,7 +2760,8 @@ void play_file (void) {
 	mainw->noswitch=FALSE;
 	unblock_expose();
       }
-      if (mainw->current_file>-1&&cfile->is_loaded&&cfile->frames>0&&!mainw->is_rendering&&(cfile->clip_type!=CLIP_TYPE_GENERATOR)) {
+      if (mainw->current_file>-1&&cfile->is_loaded&&cfile->frames>0&&!mainw->is_rendering&&
+	  (cfile->clip_type!=CLIP_TYPE_GENERATOR)) {
 	if (mainw->preview_box==NULL) {
 	  // create the preview in the sepwin
 	  make_preview_box();
@@ -2751,6 +2777,13 @@ void play_file (void) {
 	if (mainw->multitrack==NULL) {
 	  mainw->playing_file=-2;
 	  resize_play_window();
+	  if (mainw->sepwin_scale!=100.) xtrabit=g_strdup_printf(_(" (%d %% scale)"),(int)mainw->sepwin_scale);
+	  else xtrabit=g_strdup("");
+	  title=g_strdup_printf("%s%s",gtk_window_get_title(GTK_WINDOW(mainw->LiVES)),xtrabit);
+	  gtk_window_set_title(GTK_WINDOW(mainw->play_window),title);
+	  g_free(title);
+	  g_free(xtrabit);
+
 	  mainw->playing_file=-1;
 
 	  gtk_widget_queue_draw (mainw->LiVES);
@@ -2764,8 +2797,23 @@ void play_file (void) {
 	  load_preview_image(FALSE);
 
 	  mainw->noswitch=FALSE;
-	  if (mainw->playing_file==-1&&mainw->play_window!=NULL)
-	    gtk_window_set_title(GTK_WINDOW(mainw->play_window),gtk_window_get_title(GTK_WINDOW(mainw->LiVES)));
+	  if (mainw->playing_file==-1&&mainw->play_window!=NULL) {
+	    gchar *title,*xtrabit;
+	    if (mainw->sepwin_scale!=100.) xtrabit=g_strdup_printf(_(" (%d %% scale)"),(int)mainw->sepwin_scale);
+	    else xtrabit=g_strdup("");
+	    title=g_strdup_printf("%s%s",gtk_window_get_title(GTK_WINDOW(mainw->LiVES)),xtrabit);
+	    gtk_window_set_title(GTK_WINDOW(mainw->play_window),title);
+	    g_free(title);
+	    g_free(xtrabit);
+	  }
+	}
+	else {
+	  if (mainw->sepwin_scale!=100.) xtrabit=g_strdup_printf(_(" (%d %% scale)"),(int)mainw->sepwin_scale);
+	  else xtrabit=g_strdup("");
+	  title=g_strdup_printf("%s%s",gtk_window_get_title(GTK_WINDOW(mainw->multitrack->window)),xtrabit);
+	  gtk_window_set_title(GTK_WINDOW(mainw->play_window),title);
+	  g_free(title);
+	  g_free(xtrabit);
 	}
 	if (mainw->play_window!=NULL) {
 	  gtk_window_present (GTK_WINDOW (mainw->play_window));
@@ -2900,6 +2948,9 @@ void play_file (void) {
   if (mainw->multitrack==NULL) mainw->osc_block=FALSE;
 
   reset_clip_menu();
+
+  if (mainw->multitrack==NULL&&mainw->current_file>-1)
+    set_main_title(cfile->name,0);
 
 }
   

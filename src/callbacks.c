@@ -5731,13 +5731,20 @@ void on_fs_preview_clicked (GtkButton *button, gpointer user_data) {
 
   FILE *ifile=NULL;
 
+  cairo_t *cr;
+
+  LiVESPixbuf *blank;
+
   gchar **array;
 
   gint preview_frames=1000000000;
   gint preview_type=GPOINTER_TO_INT (user_data);
 
   gint height=0,width=0;
-  gint pid=getpid();
+  int fwidth,fheight,owidth,oheight;
+
+  int offs_x,offs_y;
+  int pid=getpid();
   int alarm_handle;
   int retval;
   gboolean timeout;
@@ -5747,7 +5754,6 @@ void on_fs_preview_clicked (GtkButton *button, gpointer user_data) {
   gchar *tmp;
   gchar *com;
 
-  int fwidth,fheight;
 
   if (mainw->in_fs_preview) {
     end_fs_preview();
@@ -5830,29 +5836,44 @@ void on_fs_preview_clicked (GtkButton *button, gpointer user_data) {
       g_free(tmp);
 
       if (error==NULL) {
-	int offs_x;
-	int offs_y;
-	LiVESPixbuf *blank;
-	cairo_t *cr;
+	fwidth=mainw->fs_playalign->allocation.width-20;
+	fheight=mainw->fs_playalign->allocation.height-20;
 
-	fwidth=GTK_WIDGET(mainw->fs_playarea)->allocation.width;
-	fheight=GTK_WIDGET(mainw->fs_playarea)->allocation.height;
+	owidth=width;
+	oheight=height;
 
-	offs_x=(fwidth-width)/2.;
-	offs_y=(fheight-height)/2.;
-	blank=lives_pixbuf_new_blank(fwidth,fheight,WEED_PALETTE_RGB24);
+	calc_maxspect(fwidth,fheight,
+		      &width,&height);
+	
+	width=(width>>1)<<1;
+	height=(height>>1)<<1;
+
+	if (width>owidth && height>oheight) {
+	  width=owidth;
+	  height=oheight;
+	}
+
+	gtk_alignment_set(GTK_ALIGNMENT(mainw->fs_playalign),0.5,
+			  0.5,1.,1.);
+
+	while (g_main_context_iteration(NULL,FALSE));
+
+	blank=lives_pixbuf_new_blank(fwidth+20,fheight+20,WEED_PALETTE_RGB24);
+
 	cr = gdk_cairo_create (mainw->fs_playarea->window);
-
 	gdk_cairo_set_source_pixbuf (cr, blank, 0, 0);
 	cairo_paint (cr);
-
-
+	cairo_destroy (cr);
 	gdk_pixbuf_unref(blank);
 
-	if (offs_x<0) offs_x=0;
-	if (offs_y<0) offs_y=0;
+	while (g_main_context_iteration(NULL,FALSE));
+	
 
-	gdk_cairo_set_source_pixbuf (cr, pixbuf, 0, 0);
+	offs_x=(fwidth-width)/2;
+	offs_y=(fheight-height)/2;
+
+	cr = gdk_cairo_create (mainw->fs_playarea->window);
+	gdk_cairo_set_source_pixbuf (cr, pixbuf, offs_x, offs_y);
 	cairo_paint (cr);
 	cairo_destroy (cr);
       }	
@@ -5899,7 +5920,6 @@ void on_fs_preview_clicked (GtkButton *button, gpointer user_data) {
     gtk_widget_modify_bg (mainw->fs_playarea, GTK_STATE_NORMAL, &palette->black);
     gtk_widget_modify_bg (mainw->fs_playframe, GTK_STATE_NORMAL, &palette->black);
     gtk_widget_modify_bg (mainw->fs_playalign, GTK_STATE_NORMAL, &palette->black);
-
 
     mainw->in_fs_preview=TRUE;
 
@@ -5969,6 +5989,9 @@ void on_fs_preview_clicked (GtkButton *button, gpointer user_data) {
 
     unlink(info_file);
 
+    owidth=width;
+    oheight=height;
+
     // -20 since border width was set to 10 pixels
     fwidth=mainw->fs_playalign->allocation.width-20;
     fheight=mainw->fs_playalign->allocation.height-20;
@@ -5979,10 +6002,28 @@ void on_fs_preview_clicked (GtkButton *button, gpointer user_data) {
     width=(width>>1)<<1;
     height=(height>>1)<<1;
 
+    if (width>owidth && height>oheight) {
+      width=owidth;
+      height=oheight;
+    }
+
     gtk_alignment_set(GTK_ALIGNMENT(mainw->fs_playalign),0.5,
 		      0.5,(float)width/(float)fwidth,
 		      (float)height/(float)fheight);
 
+
+    while (g_main_context_iteration(NULL,FALSE));
+    
+    blank=lives_pixbuf_new_blank(fwidth+20,fheight+20,WEED_PALETTE_RGB24);
+    
+    cr = gdk_cairo_create (mainw->fs_playarea->window);
+    gdk_cairo_set_source_pixbuf (cr, blank, 0, 0);
+    cairo_paint (cr);
+    cairo_destroy (cr);
+    gdk_pixbuf_unref(blank);
+
+    while (g_main_context_iteration(NULL,FALSE));
+	
 
     if (prefs->audio_player==AUD_PLAYER_JACK) {
       file_open_params=g_strdup_printf("%s %s -ao jack",mainw->file_open_params!=NULL?
@@ -6808,13 +6849,11 @@ void on_full_screen_pressed (GtkButton *button,
 }
 
 
-void
-on_full_screen_activate               (GtkMenuItem     *menuitem,
-				       gpointer         user_data)
-{
+void on_full_screen_activate (GtkMenuItem *menuitem, gpointer user_data) {
   gchar buff[PATH_MAX];
   GtkWidget *fs_img;
   gchar *fnamex;
+  gchar *title,*xtrabit;
 
   if (mainw->current_file>-1&&!cfile->frames&&mainw->multitrack==NULL) return;
 
@@ -6930,12 +6969,18 @@ on_full_screen_activate               (GtkMenuItem     *menuitem,
 	unfade_background();
       }
 
-      resize_play_window();
-
       if (mainw->ext_playback) {
 	vid_playback_plugin_exit();
-	  
       }
+
+      resize_play_window();
+
+      if (mainw->sepwin_scale!=100.) xtrabit=g_strdup_printf(_(" (%d %% scale)"),(int)mainw->sepwin_scale);
+      else xtrabit=g_strdup("");
+      title=g_strdup_printf(_("LiVES: - Play Window%s"),xtrabit);
+      gtk_window_set_title (GTK_WINDOW (mainw->play_window), title);
+      g_free(title);
+      g_free(xtrabit);
 
       if (mainw->opwx>-1) {
 	//opwx and opwy were stored when we first switched to full screen
@@ -7074,7 +7119,15 @@ on_double_size_activate               (GtkMenuItem     *menuitem,
 
     if (mainw->sep_win) {
       if (prefs->sepwin_type==1) {
+	gchar *title,*xtrabit;
 	resize_play_window();
+
+	if (mainw->sepwin_scale!=100.) xtrabit=g_strdup_printf(_(" (%d %% scale)"),(int)mainw->sepwin_scale);
+	else xtrabit=g_strdup("");
+	title=g_strdup_printf(_("LiVES: - Play Window%s"),xtrabit);
+	gtk_window_set_title (GTK_WINDOW (mainw->play_window), title);
+	g_free(title);
+	g_free(xtrabit);
       }
       else {
 	if (mainw->play_window!=NULL) {
@@ -7382,19 +7435,26 @@ on_sticky_activate               (GtkMenuItem     *menuitem,
 {
   // type 1 is sticky (shown even when not playing)
   // type 0 is non-sticky (shown only when playing)
+  
+  gchar *title,*xtrabit;
 
   if (prefs->sepwin_type==0) {
     prefs->sepwin_type=1;
-      if (mainw->sep_win) {
-	if (mainw->playing_file==-1) {
-	  make_play_window();
-	}
+    if (mainw->sep_win) {
+      if (mainw->playing_file==-1) {
+	make_play_window();
       }
-      else {
-	if (!(mainw->play_window==NULL)) {
-	  gtk_window_set_title (GTK_WINDOW (mainw->play_window),_ ("LiVES: - Play Window"));
-	}
+    }
+    else {
+      if (!(mainw->play_window==NULL)) {
+	if (mainw->sepwin_scale!=100.) xtrabit=g_strdup_printf(_(" (%d %% scale)"),(int)mainw->sepwin_scale);
+	else xtrabit=g_strdup("");
+	title=g_strdup_printf(_("LiVES: - Play Window%s"),xtrabit);
+	gtk_window_set_title (GTK_WINDOW (mainw->play_window), title);
+	g_free(title);
+	g_free(xtrabit);
       }
+    }
   }
   else {
     if (prefs->sepwin_type==1) {
@@ -7404,7 +7464,14 @@ on_sticky_activate               (GtkMenuItem     *menuitem,
 	  kill_play_window();
 	}
 	else {
-	  gtk_window_set_title(GTK_WINDOW(mainw->play_window),gtk_window_get_title(GTK_WINDOW(mainw->LiVES)));
+	  if (mainw->sepwin_scale!=100.) xtrabit=g_strdup_printf(_(" (%d %% scale)"),(int)mainw->sepwin_scale);
+	  else xtrabit=g_strdup("");
+	  title=g_strdup_printf("%s%s",gtk_window_get_title(GTK_WINDOW
+							    (mainw->multitrack==NULL?mainw->LiVES:
+							     mainw->multitrack->window)),xtrabit);
+	  gtk_window_set_title(GTK_WINDOW(mainw->play_window),title);
+	  g_free(title);
+	  g_free(xtrabit);
 	}
       }
     }

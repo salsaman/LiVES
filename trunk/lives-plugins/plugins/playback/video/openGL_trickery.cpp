@@ -47,7 +47,10 @@ typedef struct {
 #define MWM_HINTS_DECORATIONS   (1L << 1)
 
 static Atom XA_NET_WM_STATE;
-static Atom XA_NET_WM_STATE_ABOVE;
+static Atom XA_NET_WM_STATE_ADD;
+static Atom XA_NET_WM_STATE_MAXIMIZED_VERT;
+static Atom XA_NET_WM_STATE_MAXIMIZED_HORZ;
+static Atom XA_NET_WM_STATE_FULLSCREEN;
 static Atom XA_WIN_LAYER;
 
 static Display *dpy;
@@ -175,20 +178,56 @@ static void setWindowDecorations(void) {
   unsigned long ulBytesAfter;
   Atom typeAtom;
   MotifWmHints newHints;
+
+  Atom WM_HINTS;
+  boolean set=FALSE;
+
+  WM_HINTS = XInternAtom(dpy, "_MOTIF_WM_HINTS", True);
+  if (WM_HINTS != None) {
+
+    XGetWindowProperty (dpy, xWin, WM_HINTS, 0,
+			sizeof (MotifWmHints) / sizeof (long),
+			False, AnyPropertyType, &typeAtom,
+			&iFormat, &ulItems, &ulBytesAfter, &pucData);
   
-  Atom hintsAtom = XInternAtom (dpy, "_MOTIF_WM_HINTS", True);
+    newHints.flags = MWM_HINTS_DECORATIONS;
+    newHints.decorations = 0;
   
-  XGetWindowProperty (dpy, xWin, hintsAtom, 0,
-		      sizeof (MotifWmHints) / sizeof (long),
-		      False, AnyPropertyType, &typeAtom,
-		      &iFormat, &ulItems, &ulBytesAfter, &pucData);
-  
-  newHints.flags = MWM_HINTS_DECORATIONS;
-  newHints.decorations = 0;
-  
-  XChangeProperty (dpy, xWin, hintsAtom, hintsAtom,
-		   32, PropModeReplace, (unsigned char *) &newHints,
-		   sizeof (MotifWmHints) / sizeof (long));
+    XChangeProperty (dpy, xWin, WM_HINTS, WM_HINTS,
+		     32, PropModeReplace, (unsigned char *) &newHints,
+		     sizeof (MotifWmHints) / sizeof (long));
+
+    set = TRUE;
+  }
+
+  /* Now try to set KWM hints */
+  WM_HINTS = XInternAtom(dpy, "KWM_WIN_DECORATION", True);
+  if (WM_HINTS != None) {
+    long KWMHints = 0;
+
+    XChangeProperty(dpy, xWin, WM_HINTS, WM_HINTS, 32,
+		    PropModeReplace,
+		    (unsigned char *) &KWMHints,
+		    sizeof(KWMHints) / 4);
+    set = TRUE;
+  }
+  /* Now try to set GNOME hints */
+  WM_HINTS = XInternAtom(dpy, "_WIN_HINTS", True);
+  if (WM_HINTS != None) {
+    long GNOMEHints = 0;
+
+    XChangeProperty(dpy, xWin, WM_HINTS, WM_HINTS, 32,
+		    PropModeReplace,
+		    (unsigned char *) &GNOMEHints,
+		    sizeof(GNOMEHints) / 4);
+    set = TRUE;
+  }
+  /* Finally set the transient hints if necessary */
+  if (!set) {
+    // screen 0 !
+    XSetTransientForHint(dpy, xWin, RootWindow(dpy, 0));
+  }
+
 }
 
 
@@ -205,7 +244,25 @@ static void toggleVSync() {
 static void alwaysOnTop() {
   long propvalue = 12;
   XChangeProperty( dpy, xWin, XA_WIN_LAYER, XA_CARDINAL, 32, PropModeReplace, (unsigned char *)&propvalue, 1 );
+  XRaiseWindow(dpy, xWin);
 }
+
+
+
+
+static boolean
+isWindowMapped(void)
+{
+  XWindowAttributes attr;
+
+  XGetWindowAttributes(dpy, xWin, &attr);
+  if (attr.map_state != IsUnmapped) {
+    return TRUE;
+  } else {
+    return FALSE;
+  }
+}
+
 
 
 static void setFullScreen(void) {
@@ -213,6 +270,39 @@ static void setFullScreen(void) {
   unsigned int valueMask = CWX | CWY | CWWidth | CWHeight;
   
   setWindowDecorations();
+
+  XA_NET_WM_STATE = XInternAtom(dpy, "_NET_WM_STATE", False);
+  XA_NET_WM_STATE_ADD = XInternAtom(dpy, "_NET_WM_STATE_ADD", False);
+
+  XA_NET_WM_STATE_MAXIMIZED_VERT = XInternAtom(dpy, "_NET_WM_STATE_MAXIMIZED_VERT",False);
+  XA_NET_WM_STATE_MAXIMIZED_HORZ = XInternAtom(dpy,"_NET_WM_STATE_MAXIMIZED_HORZ",False);
+  XA_NET_WM_STATE_FULLSCREEN = XInternAtom(dpy,"_NET_WM_STATE_FULLSCREEN",False);
+  
+
+  if (isWindowMapped()) {
+    XEvent e;
+
+    memset(&e,0,sizeof(e));
+    e.xany.type = ClientMessage; 
+    e.xclient.message_type = XA_NET_WM_STATE;
+    e.xclient.format = 32;
+    e.xclient.window = xWin;
+    e.xclient.data.l[0] = XA_NET_WM_STATE_ADD;
+    e.xclient.data.l[1] = XA_NET_WM_STATE_FULLSCREEN;
+    e.xclient.data.l[3] = 0l;
+
+    XSendEvent(dpy, RootWindow(dpy, 0), 0,
+	       SubstructureNotifyMask | SubstructureRedirectMask, &e);
+  } else {
+    int count = 0;
+    Atom atoms[3];
+
+    atoms[count++] = XA_NET_WM_STATE_FULLSCREEN;
+    atoms[count++] = XA_NET_WM_STATE_MAXIMIZED_VERT;
+    atoms[count++] = XA_NET_WM_STATE_MAXIMIZED_HORZ;
+    XChangeProperty(dpy, xWin, XA_NET_WM_STATE, XA_ATOM, 32,
+		    PropModeReplace, (unsigned char *)atoms, count);
+  }
 
   changes.x = 0;
   changes.y = 0;
@@ -227,6 +317,7 @@ static void setFullScreen(void) {
 
   alwaysOnTop();
 }
+
 
 
 
@@ -326,8 +417,6 @@ boolean init_screen (int width, int height, boolean fullscreen, uint64_t window_
   m_WidthFS = WidthOfScreen(DefaultScreenOfDisplay(dpy));
   m_HeightFS = HeightOfScreen(DefaultScreenOfDisplay(dpy));
 
-  XA_NET_WM_STATE = XInternAtom(dpy, "_NET_WM_STATE", False);
-  XA_NET_WM_STATE_ABOVE = XInternAtom(dpy, "_NET_WM_ABOVE", False);
   XA_WIN_LAYER = XInternAtom(dpy, "_WIN_LAYER", False);
 
   if( !XRenderQueryExtension( dpy, &renderEventBase, &renderErrorBase ) ) {
@@ -360,6 +449,11 @@ boolean init_screen (int width, int height, boolean fullscreen, uint64_t window_
   
   swa.colormap = XCreateColormap( dpy, RootWindow(dpy, vInfo->screen),
 				  vInfo->visual, AllocNone );
+
+  if (!swa.colormap) {
+    fprintf(stderr,"openGL plugin error: No colormap could be set !\n");
+    return FALSE;
+  }
   
   swaMask = CWBorderPixel | CWColormap | CWEventMask;
   

@@ -32,9 +32,6 @@
 #define V_RESIZE_ADJUST 36
 #define H_RESIZE_ADJUST 22
 
-/// vert displacement up from center for sepwin (actual value is half this)
-#define SEPWIN_VADJUST 200
-
 // sepwin/screen size safety margins in pixels
 #define DSIZE_SAFETY_H 100
 #define DSIZE_SAFETY_V 100
@@ -42,6 +39,9 @@
 /// default size for generators
 #define DEF_GEN_WIDTH 640
 #define DEF_GEN_HEIGHT 480
+
+// height of preview widgets in sepwin
+#define PREVIEW_BOX_HT 100
 
 /// number of function keys
 #define FN_KEYS 12

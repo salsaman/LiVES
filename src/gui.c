@@ -3393,7 +3393,6 @@ make_preview_box (void) {
   gtk_widget_show_all (hbox);
 
 
-
   hbox = gtk_hbox_new (FALSE, 0);
   gtk_box_pack_start (GTK_BOX (hbox_rb), hbox, TRUE, FALSE, 0);
 
@@ -3454,7 +3453,6 @@ make_preview_box (void) {
   gtk_widget_show_all (hbox);
 
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (radiobutton_end), mainw->prv_link==PRV_END);
-
 
   hbox = gtk_hbox_new (FALSE, 0);
   gtk_box_pack_start (GTK_BOX (hbox_rb), hbox, TRUE, FALSE, 0);
@@ -3596,6 +3594,7 @@ make_preview_box (void) {
   mainw->preview_spin_func=g_signal_connect_after (GTK_OBJECT (mainw->preview_spinbutton), "value_changed",
 						   G_CALLBACK (on_preview_spinbutton_changed),
 						   NULL);
+
 }
 
 
@@ -3619,7 +3618,6 @@ disable_record (void) {
 
 void make_play_window(void) {
   //  separate window
-  gint bheight=100;  //approx height of preview_box
 
   gchar *xtrabit;
   gchar *title;
@@ -3660,6 +3658,8 @@ void make_play_window(void) {
     if (cfile->is_loaded) {
       //and add it the play window
       gtk_container_add (GTK_CONTAINER (mainw->play_window), mainw->preview_box);
+      gtk_widget_set_size_request(mainw->preview_box,-1,PREVIEW_BOX_HT);
+
       if (mainw->is_processing&&!cfile->nopreview) gtk_widget_set_tooltip_text( mainw->p_playbutton,_ ("Preview")); 
       gtk_widget_grab_focus (mainw->preview_scale);
 
@@ -3678,7 +3678,7 @@ void make_play_window(void) {
       while (g_main_context_iteration(NULL,FALSE));
       mainw->noswitch=FALSE;
       if (mainw->play_window==NULL) return;
-    }
+   }
   }
 
 
@@ -3729,9 +3729,9 @@ void make_play_window(void) {
   if (mainw->ext_playback) {
 
     //approximate...we want to move it though, so it is in the right place for later
-    if (prefs->play_monitor==0) gtk_window_move (GTK_WINDOW (mainw->play_window), 
-						 MAX ((mainw->scr_width-cfile->hsize)/2,0), 
-						 MAX ((mainw->scr_height-cfile->vsize-bheight)/2,0));
+    /*    if (prefs->play_monitor==0) gtk_window_move (GTK_WINDOW (mainw->play_window), 
+						 MAX ((mainw->scr_width-mainw->pwidth)/2,0), 
+						 MAX ((mainw->scr_height-mainw->pheight-PREVIEW_BOX_HT*2)/2,0));*/
   }
   else {
     // be careful, the user could switch out of sepwin here !
@@ -3751,10 +3751,10 @@ void make_play_window(void) {
     mainw->noswitch=FALSE;
     if (mainw->play_window==NULL) return;
     
-    if (prefs->play_monitor==0) gtk_window_move (GTK_WINDOW (mainw->play_window), 
-						 (mainw->scr_width-mainw->play_window->allocation.width)/2, 
-						 (mainw->scr_height-mainw->play_window->allocation.height)/2);
-    gtk_widget_queue_draw(mainw->play_window);
+    /*  if (prefs->play_monitor==0) gtk_window_move (GTK_WINDOW (mainw->play_window), 
+						 (mainw->scr_width-mainw->pwidth)/2, 
+						 (mainw->scr_height-mainw->pheight-PREVIEW_BOX_HT*2)/2);
+						 gtk_widget_queue_draw(mainw->play_window);*/
   }
 
   g_signal_connect (GTK_OBJECT (mainw->play_window), "scroll_event",
@@ -3770,6 +3770,8 @@ void resize_play_window (void) {
 
   gboolean fullscreen=TRUE;
   gboolean size_ok;
+
+  int xht;
 
   unsigned long xwinid=0;
 
@@ -4014,11 +4016,11 @@ void resize_play_window (void) {
 	} while (!size_ok);
       }
       if (pmonitor==0) gtk_window_move (GTK_WINDOW (mainw->play_window), (mainw->scr_width-mainw->pwidth)/2, 
-					(mainw->scr_height-mainw->pheight-SEPWIN_VADJUST)/2);
+					(mainw->scr_height-mainw->pheight)/2);
       else {
 	gint xcen=mainw->mgeom[pmonitor-1].x+(mainw->mgeom[pmonitor-1].width-mainw->pwidth)/2;
 	gtk_window_set_screen(GTK_WINDOW(mainw->play_window),mainw->mgeom[pmonitor-1].screen);
-	gtk_window_move (GTK_WINDOW (mainw->play_window), xcen, (mainw->scr_height-mainw->pheight-SEPWIN_VADJUST)/2);
+	gtk_window_move (GTK_WINDOW (mainw->play_window), xcen, (mainw->scr_height-mainw->pheight)/2);
       }
     }
     gtk_window_present (GTK_WINDOW (mainw->play_window));
@@ -4026,7 +4028,7 @@ void resize_play_window (void) {
   }
   else {
     // not playing
-    if (mainw->fs&&mainw->playing_file==-2&&(mainw->vpp==NULL||mainw->preview)&&mainw->sep_win&&prefs->sepwin_type==1) {
+    if (mainw->fs&&mainw->playing_file==-2&&mainw->sep_win&&prefs->sepwin_type==1) {
       if (mainw->opwx>=0&&mainw->opwy>=0) {
 	// move window back to its old position after play
 	if (pmonitor>0) gtk_window_set_screen(GTK_WINDOW(mainw->play_window),mainw->mgeom[pmonitor-1].screen);
@@ -4034,27 +4036,34 @@ void resize_play_window (void) {
       }
       else {
 	if (pmonitor==0) gtk_window_move (GTK_WINDOW (mainw->play_window), (mainw->scr_width-mainw->pwidth)/2, 
-					  (mainw->scr_height-mainw->pheight-SEPWIN_VADJUST)/2);
+					  (mainw->scr_height-mainw->pheight-PREVIEW_BOX_HT*2)/2);
 	else {
 	  gint xcen=mainw->mgeom[pmonitor-1].x+(mainw->mgeom[pmonitor-1].width-mainw->pwidth)/2;
 	  gtk_window_set_screen(GTK_WINDOW(mainw->play_window),mainw->mgeom[pmonitor-1].screen);
-	  gtk_window_move (GTK_WINDOW (mainw->play_window), xcen, (mainw->scr_height-mainw->pheight-SEPWIN_VADJUST)/2);
+	  gtk_window_move (GTK_WINDOW (mainw->play_window), xcen, (mainw->scr_height-mainw->pheight-PREVIEW_BOX_HT*2)/2);
 	}
       }
     }
     else {
       if (pmonitor==0) gtk_window_move (GTK_WINDOW (mainw->play_window), (mainw->scr_width-mainw->pwidth)/2, 
-					(mainw->scr_height-mainw->pheight-SEPWIN_VADJUST)/2);
+					(mainw->scr_height-mainw->pheight-PREVIEW_BOX_HT*2)/2);
       else {
 	gint xcen=mainw->mgeom[pmonitor-1].x+(mainw->mgeom[pmonitor-1].width-mainw->pwidth)/2;
 	gtk_window_set_screen(GTK_WINDOW(mainw->play_window),mainw->mgeom[pmonitor-1].screen);
-	gtk_window_move (GTK_WINDOW (mainw->play_window), xcen, (mainw->scr_height-mainw->pheight-SEPWIN_VADJUST)/2);
+	gtk_window_move (GTK_WINDOW (mainw->play_window), xcen, (mainw->scr_height-mainw->pheight-PREVIEW_BOX_HT*2)/2);
       }
     }
     mainw->opwx=mainw->opwy=-1;
   }
 
   gtk_window_resize (GTK_WINDOW (mainw->play_window), mainw->pwidth, mainw->pheight);
+
+  // workaround for gtk+ lameness
+  if (mainw->playing_file<0&&(mainw->current_file>-1&&!cfile->opening)) xht=PREVIEW_BOX_HT;
+  else xht=0;
+  
+  gtk_widget_set_size_request (mainw->play_window, mainw->pwidth, mainw->pheight+xht);
+  
 
 }
 
@@ -4068,6 +4077,7 @@ kill_play_window (void) {
     if (!mainw->pw_exp_is_blocked)
       g_signal_handler_block(mainw->play_window,mainw->pw_exp_func);
     if (mainw->preview_box!=NULL&&mainw->preview_box->parent!=NULL) {
+      // preview_box is refed, so it will survive
       gtk_container_remove (GTK_CONTAINER (mainw->play_window), mainw->preview_box);
     }
     if (GTK_IS_WINDOW (mainw->play_window )) gtk_widget_destroy(mainw->play_window);

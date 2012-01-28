@@ -2777,14 +2777,14 @@ void play_file (void) {
 	if (mainw->multitrack==NULL) {
 	  mainw->playing_file=-2;
 	  resize_play_window();
+	  mainw->playing_file=-1;
+
 	  if (mainw->sepwin_scale!=100.) xtrabit=g_strdup_printf(_(" (%d %% scale)"),(int)mainw->sepwin_scale);
 	  else xtrabit=g_strdup("");
 	  title=g_strdup_printf("%s%s",gtk_window_get_title(GTK_WINDOW(mainw->LiVES)),xtrabit);
 	  gtk_window_set_title(GTK_WINDOW(mainw->play_window),title);
 	  g_free(title);
 	  g_free(xtrabit);
-
-	  mainw->playing_file=-1;
 
 	  gtk_widget_queue_draw (mainw->LiVES);
 	  mainw->noswitch=TRUE;
@@ -2793,32 +2793,34 @@ void play_file (void) {
 	  mainw->pw_exp_is_blocked=TRUE;
 
 	  while (g_main_context_iteration (NULL,FALSE));
-
-	  load_preview_image(FALSE);
-
-	  mainw->noswitch=FALSE;
-	  if (mainw->playing_file==-1&&mainw->play_window!=NULL) {
-	    gchar *title,*xtrabit;
+	  if (mainw->play_window!=NULL) {
+	    
+	    load_preview_image(FALSE);
+	    
+	    mainw->noswitch=FALSE;
+	    if (mainw->playing_file==-1&&mainw->play_window!=NULL) {
+	      gchar *title,*xtrabit;
+	      if (mainw->sepwin_scale!=100.) xtrabit=g_strdup_printf(_(" (%d %% scale)"),(int)mainw->sepwin_scale);
+	      else xtrabit=g_strdup("");
+	      title=g_strdup_printf("%s%s",gtk_window_get_title(GTK_WINDOW(mainw->LiVES)),xtrabit);
+	      gtk_window_set_title(GTK_WINDOW(mainw->play_window),title);
+	      g_free(title);
+	      g_free(xtrabit);
+	    }
+	  }
+	  else {
 	    if (mainw->sepwin_scale!=100.) xtrabit=g_strdup_printf(_(" (%d %% scale)"),(int)mainw->sepwin_scale);
 	    else xtrabit=g_strdup("");
-	    title=g_strdup_printf("%s%s",gtk_window_get_title(GTK_WINDOW(mainw->LiVES)),xtrabit);
+	    title=g_strdup_printf("%s%s",gtk_window_get_title(GTK_WINDOW(mainw->multitrack->window)),xtrabit);
 	    gtk_window_set_title(GTK_WINDOW(mainw->play_window),title);
 	    g_free(title);
 	    g_free(xtrabit);
 	  }
-	}
-	else {
-	  if (mainw->sepwin_scale!=100.) xtrabit=g_strdup_printf(_(" (%d %% scale)"),(int)mainw->sepwin_scale);
-	  else xtrabit=g_strdup("");
-	  title=g_strdup_printf("%s%s",gtk_window_get_title(GTK_WINDOW(mainw->multitrack->window)),xtrabit);
-	  gtk_window_set_title(GTK_WINDOW(mainw->play_window),title);
-	  g_free(title);
-	  g_free(xtrabit);
-	}
-	if (mainw->play_window!=NULL) {
-	  gtk_window_present (GTK_WINDOW (mainw->play_window));
-	  gdk_window_raise(mainw->play_window->window);
-	  unhide_cursor (mainw->play_window->window);
+	  if (mainw->play_window!=NULL) {
+	    gtk_window_present (GTK_WINDOW (mainw->play_window));
+	    gdk_window_raise(mainw->play_window->window);
+	    unhide_cursor (mainw->play_window->window);
+	  }
 	}
       }
     }

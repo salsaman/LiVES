@@ -208,25 +208,25 @@ int farneback_process (weed_plant_t *inst, weed_timecode_t tc) {
 
   switch (palette) {
   case WEED_PALETTE_RGB24:
-    srcMat=Mat(width,height,CV_8UC3,src,irow);
+    srcMat=Mat(height,width,CV_8UC3,src,irow);
     cvtColor(srcMat,*cvgrey,CV_RGB2GRAY);
     break;
   case WEED_PALETTE_BGR24:
     {
       int from_to[]={0,2,1,1,2,0}; // convert bgr to rgb
-      srcMat=Mat(width,height,CV_8UC3,src,irow);
+      srcMat=Mat(height,width,CV_8UC3,src,irow);
       mixChannels(&srcMat,1,&mixMat,1,from_to,3);
       cvtColor(mixMat,*cvgrey,CV_RGB2GRAY);
     }
     break;
   case WEED_PALETTE_RGBA32:
-    srcMat=Mat(width,height,CV_8UC4,src,irow);
+    srcMat=Mat(height,width,CV_8UC4,src,irow);
     cvtColor(srcMat,*cvgrey,CV_RGB2GRAY);
     break;
   case WEED_PALETTE_BGRA32:
     {
       int from_to[]={0,2,1,1,2,0,3,3}; // convert bgra to rgba
-      srcMat=Mat(width,height,CV_8UC4,src,irow);
+      srcMat=Mat(height,width,CV_8UC4,src,irow);
       mixChannels(&srcMat,1,&mixMat,1,from_to,4);
       cvtColor(mixMat,*cvgrey,CV_RGB2GRAY);
     }
@@ -234,7 +234,7 @@ int farneback_process (weed_plant_t *inst, weed_timecode_t tc) {
   case WEED_PALETTE_ARGB32:
     {
       int from_to[]={0,3,1,0,2,1,3,2}; // convert argb to rgba
-      srcMat=Mat(width,height,CV_8UC4,src,irow);
+      srcMat=Mat(height,width,CV_8UC4,src,irow);
       mixChannels(&srcMat,1,&mixMat,1,from_to,4);
       cvtColor(mixMat,*cvgrey,CV_RGB2GRAY);
     }
@@ -246,12 +246,12 @@ int farneback_process (weed_plant_t *inst, weed_timecode_t tc) {
   case WEED_PALETTE_YVU420P:
     if (weed_plant_has_leaf(in_channel,"YUV_clamping")&&
 	(weed_get_int_value(in_channel,"YUV_clamping",&error)==WEED_YUV_CLAMPING_CLAMPED)) {
-      srcMat=Mat(width,height,CV_8U,src,irow);
+      srcMat=Mat(height,width,CV_8U,src,irow);
       ucMat=Mat(256,1,CV_8U,UNCLAMP_Y);
       LUT(srcMat,ucMat,*cvgrey);
     }
     else {
-      srcMat=Mat(width,height,CV_8U,src,irow);
+      srcMat=Mat(height,width,CV_8U,src,irow);
       srcMat.copyTo(*cvgrey);
     }
     break;

@@ -3729,6 +3729,7 @@ static void convert_yuv420_to_uyvy_frame(guchar **src, int width, int height, uy
   gboolean chroma=TRUE;
 
   // TODO - handle different in sampling types
+  if (!avg_inited) init_average();
 
   y=src[0];
   u=src[1];
@@ -3770,7 +3771,8 @@ static void convert_yuv420_to_yuyv_frame(guchar **src, int width, int height, yu
   gboolean chroma=TRUE;
 
   // TODO - handle different in sampling types
-  
+  if (!avg_inited) init_average();
+
   y=src[0];
   u=src[1];
   v=src[2];
@@ -5645,6 +5647,7 @@ static void convert_yuv420_to_yuv411_frame(guchar **src, gint hsize, gint vsize,
   size_t qwidth,hwidth;
 
   // TODO - handle different in sampling types
+  set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YCBCR);
   
   y=src[0];
   u=src[1];
@@ -6886,6 +6889,8 @@ static void convert_quad_chroma(guchar **src, int width, int height, guchar **de
   int height2;
   int width2;
 
+  set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YCBCR);
+
   height>>=1;
   width>>=1;
 
@@ -6953,6 +6958,7 @@ static void convert_quad_chroma_packed(guchar **src, int width, int height, guch
   int opsize=3,opsize2;
 
   //int count;
+  set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YCBCR);
 
   if (add_alpha) opsize=4;
 
@@ -7020,6 +7026,8 @@ static void convert_double_chroma_packed(guchar **src, int width, int height, gu
   guchar *s_y=src[0],*s_u=src[1],*s_v=src[2];
   int widthx;
   int opsize=3,opsize2;
+
+  set_conversion_arrays(clamped?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,WEED_YUV_SUBSPACE_YCBCR);
 
   if (add_alpha) opsize=4;
 

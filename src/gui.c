@@ -3853,14 +3853,12 @@ void resize_play_window (void) {
       }
       else {
 	if (pmonitor==0) {
-	  mainw->opwx=(mainw->scr_width-mainw->play_window->allocation.width)/2;
-	  mainw->opwy=(mainw->scr_height-mainw->play_window->allocation.height)/2;
+	  mainw->opwx=(mainw->scr_width-mainw->pwidth)/2;
+	  mainw->opwy=(mainw->scr_height-mainw->pheight)/2;
 	}
 	else {
-	  mainw->opwx=mainw->mgeom[pmonitor-1].x+(mainw->mgeom[pmonitor-1].width-
-						  mainw->play_window->allocation.width)/2;
-	  mainw->opwy=mainw->mgeom[pmonitor-1].y+(mainw->mgeom[pmonitor-1].height-
-						  mainw->play_window->allocation.height)/2;
+	  mainw->opwx=mainw->mgeom[pmonitor-1].x+(mainw->mgeom[pmonitor-1].width-mainw->pwidth)/2;
+	  mainw->opwy=mainw->mgeom[pmonitor-1].y+(mainw->mgeom[pmonitor-1].height-mainw->pheight)/2;
 	}
       }
 
@@ -3891,7 +3889,12 @@ void resize_play_window (void) {
       }
       else {
 	gtk_window_set_screen(GTK_WINDOW(mainw->play_window),mainw->mgeom[pmonitor-1].screen);
-	gtk_window_move(GTK_WINDOW(mainw->play_window),mainw->mgeom[pmonitor-1].x,mainw->mgeom[pmonitor-1].y);
+	if (mainw->vpp!=NULL&&mainw->vpp->fwidth>0) {
+	  gtk_window_move (GTK_WINDOW (mainw->play_window), mainw->mgeom[pmonitor-1].x+
+			   (mainw->mgeom[pmonitor-1].width-mainw->vpp->fwidth)/2,
+			   mainw->mgeom[pmonitor-1].y+(mainw->mgeom[pmonitor-1].height-mainw->vpp->fheight)/2);
+	}
+	else gtk_window_move(GTK_WINDOW(mainw->play_window),mainw->mgeom[pmonitor-1].x,mainw->mgeom[pmonitor-1].y);
       }
       
       // leave this alone * !
@@ -4093,7 +4096,6 @@ add_to_playframe (void) {
       gtk_container_add (GTK_CONTAINER (mainw->plug), mainw->image274);
     }
   }
-
 }
 
 

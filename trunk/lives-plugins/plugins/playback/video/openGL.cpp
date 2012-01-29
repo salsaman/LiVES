@@ -68,8 +68,10 @@ static int m_HeightFS;
 
 static boolean is_direct;
 
+static boolean is_ext;
+
 static Bool WaitForNotify( Display *dpy, XEvent *event, XPointer arg ) {
-    return (event->type == MapNotify) && (event->xmap.window == (Window) arg);
+  return (event->type == MapNotify) && (event->xmap.window == (Window) arg);
 }
 
 
@@ -216,8 +218,7 @@ static void setWindowDecorations(void) {
   }
   /* Finally set the transient hints if necessary */
   if (!set) {
-    // screen 0 !
-    XSetTransientForHint(dpy, xWin, RootWindow(dpy, 0));
+    XSetTransientForHint(dpy, xWin, RootWindow(dpy, DefaultScreen(dpy)));
   }
 
 }
@@ -397,69 +398,74 @@ boolean init_screen (int width, int height, boolean fullscreen, uint64_t window_
     fprintf(stderr, "No RENDER extension found!" );
     return FALSE;
   }
-
-
-  if (dblbuf) {
-    /* Request a suitable framebuffer configuration - try for a double 
-    ** buffered configuration first */
-    fbConfigs = glXChooseFBConfig( dpy, DefaultScreen(dpy),
-				   doubleBufferAttributes, &numReturned );
-  }
-
-  if ( fbConfigs == NULL ) {  /* no double buffered configs available */
-    fbConfigs = glXChooseFBConfig( dpy, DefaultScreen(dpy),
-				   singleBufferAttributess, &numReturned );
-    swapFlag = FALSE;
-  }
-  
-  if (!fbConfigs) {
-    fprintf(stderr,"openGL plugin error: No config could be set !\n");
-    return FALSE;
-  }
-
-  /* Create an X colormap and window with a visual matching the first
-  ** returned framebuffer config */
-  vInfo = glXGetVisualFromFBConfig( dpy, fbConfigs[0] );
-
-  swa.colormap = XCreateColormap( dpy, RootWindow(dpy, vInfo->screen),
-				  vInfo->visual, AllocNone );
-
-  if (!swa.colormap) {
-    fprintf(stderr,"openGL plugin error: No colormap could be set !\n");
-    return FALSE;
-  }
-  
-  swaMask = CWBorderPixel | CWColormap | CWEventMask;
-  
-  swa.border_pixel = 0;
+ 
   swa.event_mask = StructureNotifyMask | ButtonPressMask | KeyPressMask | KeyReleaseMask;
 
   if (window_id) {
-    int xdum,ydum;
-    uint32_t bdum;
-    uint32_t depth;
-    uint32_t xwidth,xheight;
+    XVisualInfo *xvis;
+    XVisualInfo xvtmpl;
+    XWindowAttributes attr;
 
-    // needs fixing...
     xWin = (Window) window_id;
-    context = glXCreateContext ( dpy, vInfo, 0, GL_TRUE);
-    //glxWin = xWin;
-    glxWin = glXCreateWindow( dpy, fbConfigs[0], xWin, NULL );
+    XGetWindowAttributes(dpy, xWin, &attr);
+    glxWin = xWin;
 
-    //glXMakeCurrent ( dpy, xWin, context);
-    glXMakeContextCurrent( dpy, glxWin, glxWin, context );
+    xvtmpl.visual=attr.visual;
+    xvtmpl.visualid=XVisualIDFromVisual(attr.visual);
 
+    xvis=XGetVisualInfo(dpy,VisualIDMask,&xvtmpl,&numReturned);
 
-    XGetGeometry(dpy, glxWin, &xWin, &xdum, &ydum,
-		 &xwidth, &xheight, &bdum, &depth);
+    if (numReturned==0) {
+      fprintf(stderr,"openGL plugin error: No xvis could be set !\n");
+      return FALSE;
+    }
 
-    width=xwidth;
-    height=xheight;
+    context = glXCreateContext ( dpy, &xvis[0], 0, GL_TRUE);
 
+    glXMakeCurrent( dpy, glxWin, context );
+
+    width=attr.width;
+    height=attr.height;
+    glXGetConfig(dpy, xvis, GLX_DOUBLEBUFFER, &swapFlag);
+    is_ext=TRUE;
   }
   else {
     width=fullscreen?m_WidthFS:width;
     height=fullscreen?m_HeightFS:height; 
+
+    if (dblbuf) {
+      /* Request a suitable framebuffer configuration - try for a double 
+      ** buffered configuration first */
+      fbConfigs = glXChooseFBConfig( dpy, DefaultScreen(dpy),
+				     doubleBufferAttributes, &numReturned );
+    }
+    
+    if ( fbConfigs == NULL ) {  /* no double buffered configs available */
+      fbConfigs = glXChooseFBConfig( dpy, DefaultScreen(dpy),
+				     singleBufferAttributess, &numReturned );
+      swapFlag = FALSE;
+    }
+    
+    if (!fbConfigs) {
+      fprintf(stderr,"openGL plugin error: No config could be set !\n");
+      return FALSE;
+    }
+    
+    /* Create an X colormap and window with a visual matching the first
+    ** returned framebuffer config */
+    vInfo = glXGetVisualFromFBConfig( dpy, fbConfigs[0] );
+    
+    swa.colormap = XCreateColormap( dpy, RootWindow(dpy, vInfo->screen),
+				    vInfo->visual, AllocNone );
+    
+    if (!swa.colormap) {
+      fprintf(stderr,"openGL plugin error: No colormap could be set !\n");
+      return FALSE;
+    }
+    
+    swaMask = CWBorderPixel | CWColormap | CWEventMask;
+    
+    swa.border_pixel = 0;
 
     xWin = XCreateWindow( dpy, RootWindow(dpy, vInfo->screen), 0, 0,
 			  width,height,
@@ -475,35 +481,31 @@ boolean init_screen (int width, int height, boolean fullscreen, uint64_t window_
     context = glXCreateNewContext( dpy, fbConfigs[0], GLX_RGBA_TYPE,
 				   NULL, True );
 
-
     /* Create a GLX window to associate the frame buffer configuration
     ** with the created X window */
     glxWin = glXCreateWindow( dpy, fbConfigs[0], xWin, NULL );
     
-
     glXMakeContextCurrent( dpy, glxWin, glxWin, context );
 
+    XFree (vInfo);
+
+    black.red = black.green = black.blue = 0;
+    
+    bitmapNoData = XCreateBitmapFromData( dpy, xWin, noData, 8, 8 );
+    invisibleCursor = XCreatePixmapCursor( dpy, bitmapNoData, bitmapNoData, 
+					   &black, &black, 0, 0 );
+    XDefineCursor( dpy, xWin, invisibleCursor );
+    XFreeCursor( dpy, invisibleCursor );
+
+    is_ext=FALSE;
   }
 
   if (glXIsDirect(dpy, context)) 
     is_direct=TRUE;
   else
     is_direct=FALSE;
-
-  black.red = black.green = black.blue = 0;
-  
-  bitmapNoData = XCreateBitmapFromData( dpy, xWin, noData, 8, 8 );
-  invisibleCursor = XCreatePixmapCursor( dpy, bitmapNoData, bitmapNoData, 
-					 &black, &black, 0, 0 );
-  XDefineCursor( dpy, xWin, invisibleCursor );
-  XFreeCursor( dpy, invisibleCursor );
-
-  wmDelete = XInternAtom(dpy, "WM_DELETE_WINDOW", True);
-  XSetWMProtocols(dpy, xWin, &wmDelete, 1);
-  
+    
   toggleVSync();
-
-  XFree (vInfo);
 
   error = glGetError();
   if( error != GL_NO_ERROR ) {
@@ -624,8 +626,10 @@ static int erhand(Display *dsp) {
 
 
 void exit_screen (int16_t mouse_x, int16_t mouse_y) {
-  XUnmapWindow (dpy, xWin);
-  XDestroyWindow (dpy, xWin);
+  if (!is_ext) {
+    XUnmapWindow (dpy, xWin);
+    XDestroyWindow (dpy, xWin);
+  }
 
   glXMakeContextCurrent(dpy, 0, 0, 0);
   glXDestroyContext(dpy, context);

@@ -259,14 +259,16 @@ gboolean pl_key_function (gboolean down, guint16 unicode, guint16 keymod) {
     }
   }
 
-
   if (mainw->ext_keyboard) {
     if (cached_key) return FALSE;
     if (mainw->multitrack==NULL) gtk_accel_groups_activate (G_OBJECT (mainw->LiVES),(guint)unicode,state);
     else gtk_accel_groups_activate (G_OBJECT (mainw->multitrack->window),(guint)unicode,state);
+    if (!mainw->ext_keyboard) return TRUE; // if user switched out of ext_keyboard, do no further processing *
   }
 
   return FALSE;
+
+  // * function was disabled so we must exit 
 }
 
 

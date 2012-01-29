@@ -642,10 +642,9 @@ void on_vppa_ok_clicked (GtkButton *button, gpointer user_data) {
 	      if (vpp->init_screen!=NULL) {
 		(*vpp->init_screen)(mainw->pwidth,mainw->pheight,TRUE,xwinid,vpp->extra_argc,vpp->extra_argv);
 	      }
-	      if (mainw->vpp->capabilities&VPP_LOCAL_DISPLAY) {
-		gtk_window_set_keep_below(GTK_WINDOW
-					  (mainw->play_window),TRUE);
-		if (prefs->play_monitor==0) mainw->ext_keyboard=TRUE;
+	      if (mainw->vpp->capabilities&VPP_LOCAL_DISPLAY&&prefs->play_monitor==0) {
+		gtk_window_set_keep_below(GTK_WINDOW(mainw->play_window),TRUE);
+		mainw->ext_keyboard=TRUE;
 	      }
 	    }
 	    else {
@@ -1117,9 +1116,8 @@ void close_vid_playback_plugin(_vid_playback_plugin *vpp) {
       stop_audio_stream();
 #endif
       if (mainw->vpp->capabilities&VPP_LOCAL_DISPLAY) 
-	if (mainw->play_window!=NULL)
-	gtk_window_set_keep_below(GTK_WINDOW
-				  (mainw->play_window),FALSE);
+	if (mainw->play_window!=NULL&&prefs->play_monitor==0)
+	  gtk_window_set_keep_below(GTK_WINDOW(mainw->play_window),FALSE);
       mainw->stream_ticks=-1;
       mainw->vpp=NULL;
     }
@@ -1404,9 +1402,8 @@ void vid_playback_plugin_exit (void) {
 #endif
     mainw->ext_playback=FALSE;
     if (mainw->vpp->capabilities&VPP_LOCAL_DISPLAY) 
-      if (mainw->play_window!=NULL)
-	gtk_window_set_keep_below(GTK_WINDOW
-				  (mainw->play_window),FALSE);
+      if (mainw->play_window!=NULL&&prefs->play_monitor==0)
+	gtk_window_set_keep_below(GTK_WINDOW(mainw->play_window),FALSE);
   }
   mainw->stream_ticks=-1;
 

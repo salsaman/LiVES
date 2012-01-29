@@ -3726,14 +3726,7 @@ void make_play_window(void) {
   else mainw->pw_exp_is_blocked=FALSE;
 
 
-  if (mainw->ext_playback) {
-
-    //approximate...we want to move it though, so it is in the right place for later
-    /*    if (prefs->play_monitor==0) gtk_window_move (GTK_WINDOW (mainw->play_window), 
-						 MAX ((mainw->scr_width-mainw->pwidth)/2,0), 
-						 MAX ((mainw->scr_height-mainw->pheight-PREVIEW_BOX_HT*2)/2,0));*/
-  }
-  else {
+  if (!mainw->ext_playback) {
     // be careful, the user could switch out of sepwin here !
     if (mainw->multitrack!=NULL&&mainw->multitrack->idlefunc>0) g_source_remove(mainw->multitrack->idlefunc);
     mainw->noswitch=TRUE;
@@ -3750,11 +3743,6 @@ void make_play_window(void) {
     }
     mainw->noswitch=FALSE;
     if (mainw->play_window==NULL) return;
-    
-    /*  if (prefs->play_monitor==0) gtk_window_move (GTK_WINDOW (mainw->play_window), 
-						 (mainw->scr_width-mainw->pwidth)/2, 
-						 (mainw->scr_height-mainw->pheight-PREVIEW_BOX_HT*2)/2);
-						 gtk_widget_queue_draw(mainw->play_window);*/
   }
 
   g_signal_connect (GTK_OBJECT (mainw->play_window), "scroll_event",
@@ -3918,7 +3906,7 @@ void resize_play_window (void) {
 	gboolean fixed_size=FALSE;
 
 	gdk_window_get_pointer (gdk_get_default_root_window (), &mainw->ptr_x, &mainw->ptr_y, NULL);
-	if (prefs->play_monitor!=0) mainw->ptr_x=mainw->ptr_y=-1;
+	if (pmonitor==0) mainw->ptr_x=mainw->ptr_y=-1;
 	if (mainw->vpp->fheight>-1&&mainw->vpp->fwidth>-1) {	  
 	  // fixed o/p size for stream
 	  if (!(mainw->vpp->fwidth*mainw->vpp->fheight)) {
@@ -3942,7 +3930,7 @@ void resize_play_window (void) {
 	  gtk_widget_queue_resize (mainw->play_window);
 	}
 
-	if (prefs->play_monitor!=0) {
+	if (pmonitor!=0) {
 	  fullscreen=FALSE;
 #ifdef USE_X11
 	  if (mainw->play_window!=NULL)
@@ -3959,9 +3947,8 @@ void resize_play_window (void) {
 	  if (mainw->vpp->exit_screen!=NULL) {
 	    (*mainw->vpp->exit_screen)(mainw->ptr_x,mainw->ptr_y);
 	  }
-	  if (mainw->vpp->capabilities&VPP_LOCAL_DISPLAY) gtk_window_set_keep_below(GTK_WINDOW
-										    (mainw->play_window),FALSE);
-
+	  if (mainw->vpp->capabilities&VPP_LOCAL_DISPLAY&&pmonitor==0) 
+	    gtk_window_set_keep_below(GTK_WINDOW(mainw->play_window),FALSE);
 	}
 
 #ifdef RT_AUDIO
@@ -3973,8 +3960,8 @@ void resize_play_window (void) {
 	}
 #endif
 
-	if (mainw->vpp->capabilities&VPP_LOCAL_DISPLAY) gtk_window_set_keep_below(GTK_WINDOW
-										  (mainw->play_window),TRUE);
+	if (mainw->vpp->capabilities&VPP_LOCAL_DISPLAY&&pmonitor==0) 
+	  gtk_window_set_keep_below(GTK_WINDOW(mainw->play_window),TRUE);
 
 	if ((mainw->vpp->init_screen==NULL)||((*mainw->vpp->init_screen)
 					      (mainw->pwidth,mainw->pheight*(fixed_size?1:prefs->virt_height),
@@ -3982,8 +3969,10 @@ void resize_play_window (void) {
 	  mainw->ext_playback=TRUE;
 	  // the play window is still visible (in case it was 'always on top')
 	  // start key polling from ext plugin
-	  if (mainw->vpp->capabilities&VPP_LOCAL_DISPLAY&&prefs->play_monitor==0) mainw->ext_keyboard=TRUE;
-	  if (prefs->play_monitor==0) return;
+	  if (mainw->vpp->capabilities&VPP_LOCAL_DISPLAY&&pmonitor==0) {
+	    mainw->ext_keyboard=TRUE;
+	    return;
+	  }
 	}
       }
     }

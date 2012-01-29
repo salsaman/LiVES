@@ -2103,6 +2103,7 @@ void play_file (void) {
   mainw->playing_file=mainw->current_file;
 
   if (!mainw->preview||!cfile->opening) {
+    enable_record();
     desensitize();
   }
 
@@ -2950,6 +2951,8 @@ void play_file (void) {
   if (mainw->multitrack==NULL) mainw->osc_block=FALSE;
 
   reset_clip_menu();
+
+  disable_record();
 
   if (mainw->multitrack==NULL&&mainw->current_file>-1)
     set_main_title(cfile->name,0);

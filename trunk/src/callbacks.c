@@ -3785,6 +3785,8 @@ on_record_perf_activate                      (GtkMenuItem     *menuitem,
       // recording is starting
       mainw->record_starting=TRUE;
 
+      toggle_record();
+
       if (prefs->rec_opts&REC_EXT_AUDIO&&
 	  ((prefs->audio_player==AUD_PLAYER_JACK) ||
 	   (prefs->audio_player==AUD_PLAYER_PULSE))) {
@@ -3943,6 +3945,8 @@ on_record_perf_activate                      (GtkMenuItem     *menuitem,
 
     mainw->record_paused=TRUE; // pause recording of further events
 
+    enable_record();
+
     return;
   }
 
@@ -3955,10 +3959,12 @@ on_record_perf_activate                      (GtkMenuItem     *menuitem,
     // TODO - change message depending on rec_opts
     d_print(_ ("Ready to record. Use 'control' and cursor keys during playback to record your performance.\n(To cancel, press 'r' or click on Play|Record Performance again before you play.)\n"));
     mainw->record=TRUE;
+    toggle_record();
     get_play_times();
   }
   else {
     d_print (_("Record cancelled.\n"));
+    enable_record();
     mainw->record=FALSE;
   }
 }

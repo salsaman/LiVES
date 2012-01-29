@@ -97,7 +97,8 @@ key_snooper (GtkWidget *widget, GdkEventKey *event, gpointer data) {
   guint modifiers;
   handle_omc_events();
   modifiers = gtk_accelerator_get_default_mod_mask ();
-  return pl_key_function ((event->type==GDK_KEY_PRESS),event->keyval,event->state&modifiers      );
+
+  return pl_key_function ((event->type==GDK_KEY_PRESS),event->keyval,event->state&modifiers);
 }
 
 
@@ -154,12 +155,15 @@ plugin_poll_keyboard (gpointer data) {
 
 gboolean pl_key_function (gboolean down, guint16 unicode, guint16 keymod) {
   // translate key events
-  // plugins can call this with a unicode key to pass key events to LiVES
+  // plugins can also call this with a unicode key to pass key events to LiVES
+  // (via a polling mechanism)
 
 #define NEEDS_TRANSLATION 1<<15
 
   // mask for ctrl and alt
   GdkModifierType state=(GdkModifierType)(keymod&(GDK_CONTROL_MASK|GDK_MOD1_MASK));
+
+  //g_print("got %d %d %d\n",down,unicode,keymod);
 
   if (!down) {
     // up...
@@ -266,6 +270,7 @@ gboolean pl_key_function (gboolean down, guint16 unicode, guint16 keymod) {
     if (!mainw->ext_keyboard) return TRUE; // if user switched out of ext_keyboard, do no further processing *
   }
 
+
   return FALSE;
 
   // * function was disabled so we must exit 
@@ -351,6 +356,7 @@ gboolean dblsize_callback (GtkAccelGroup *group, GObject *obj, guint keyval, Gdk
 
 gboolean rec_callback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer user_data) {
   gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mainw->record_perf),!gtk_check_menu_item_get_active (GTK_CHECK_MENU_ITEM (mainw->record_perf)));
+  LIVES_DEBUG("rozzz");
   return TRUE;
 }
 

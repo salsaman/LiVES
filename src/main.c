@@ -2777,7 +2777,6 @@ void desensitize(void) {
 	gtk_widget_set_sensitive(mainw->rendered_fx[i].menuitem,FALSE);
   }
 
-  gtk_widget_set_sensitive (mainw->record_perf, FALSE);
   gtk_widget_set_sensitive (mainw->export_submenu, FALSE);
   gtk_widget_set_sensitive (mainw->recaudio_submenu, FALSE);
   gtk_widget_set_sensitive (mainw->append_audio, FALSE);
@@ -2878,6 +2877,7 @@ procw_desensitize(void) {
   gtk_widget_set_sensitive (mainw->delaudio_submenu, FALSE);
   gtk_widget_set_sensitive (mainw->load_cdtrack, FALSE);
   gtk_widget_set_sensitive (mainw->open_lives2lives, FALSE);
+  gtk_widget_set_sensitive (mainw->record_perf, FALSE);
 
   if (mainw->current_file>0&&cfile->nopreview) {
     gtk_widget_set_sensitive (mainw->m_playbutton, FALSE);

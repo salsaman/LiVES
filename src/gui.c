@@ -890,6 +890,7 @@ create_LiVES (void)
   gtk_widget_add_accelerator (mainw->record_perf, "activate", mainw->accel_group,
 			      GDK_r, (GdkModifierType)0,
 			      GTK_ACCEL_VISIBLE);
+
   gtk_widget_show (mainw->record_perf);
 
   gtk_container_add (GTK_CONTAINER (menuitem13_menu), mainw->record_perf);
@@ -3020,9 +3021,7 @@ fade_background(void) {
 
     if (!mainw->foreign) {
       // TODO - do these checks in the end functions
-      if (gtk_check_menu_item_get_active (GTK_CHECK_MENU_ITEM (mainw->record_perf))) {
-	gtk_widget_remove_accelerator (mainw->record_perf, mainw->accel_group, GDK_r, (GdkModifierType)0);
-      }
+      gtk_widget_remove_accelerator (mainw->record_perf, mainw->accel_group, GDK_r, (GdkModifierType)0);
       gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_r, (GdkModifierType)0, (GtkAccelFlags)0, 
 			       (rec_closure=g_cclosure_new (G_CALLBACK (rec_callback),NULL,NULL)));
       
@@ -3062,9 +3061,9 @@ fade_background(void) {
       gtk_widget_remove_accelerator (mainw->dsize, mainw->accel_group, GDK_d, (GdkModifierType)0);
       gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_d, (GdkModifierType)0, (GtkAccelFlags)0, 
 			       (dblsize_closure=g_cclosure_new (G_CALLBACK (dblsize_callback),NULL,NULL)));
-    gtk_widget_remove_accelerator (mainw->fade, mainw->accel_group, GDK_b, (GdkModifierType)0);
-    gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_b, (GdkModifierType)0, (GtkAccelFlags)0, 
-			     (fade_closure=g_cclosure_new (G_CALLBACK (fade_callback),NULL,NULL)));
+      gtk_widget_remove_accelerator (mainw->fade, mainw->accel_group, GDK_b, (GdkModifierType)0);
+      gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_b, (GdkModifierType)0, (GtkAccelFlags)0, 
+			       (fade_closure=g_cclosure_new (G_CALLBACK (fade_callback),NULL,NULL)));
     }
   }
 }
@@ -3154,11 +3153,9 @@ unfade_background(void) {
 				GTK_ACCEL_VISIBLE);
     
     gtk_accel_group_disconnect (GTK_ACCEL_GROUP (mainw->accel_group), rec_closure);
-    if (gtk_check_menu_item_get_active (GTK_CHECK_MENU_ITEM (mainw->record_perf))) {
-      gtk_widget_add_accelerator (mainw->record_perf, "activate", mainw->accel_group,
-				  GDK_r, (GdkModifierType)0,
-				  GTK_ACCEL_VISIBLE);
-    }
+    gtk_widget_add_accelerator (mainw->record_perf, "activate", mainw->accel_group,
+				GDK_r, (GdkModifierType)0,
+				GTK_ACCEL_VISIBLE);
     
     gtk_accel_group_disconnect (GTK_ACCEL_GROUP (mainw->accel_group), fullscreen_closure);
     gtk_widget_add_accelerator (mainw->full_screen, "activate", mainw->accel_group,

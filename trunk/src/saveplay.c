@@ -2675,7 +2675,9 @@ void play_file (void) {
       resize_play_window();
       if (mainw->sepwin_scale!=100.) xtrabit=g_strdup_printf(_(" (%d %% scale)"),(int)mainw->sepwin_scale);
       else xtrabit=g_strdup("");
-      title=g_strdup_printf("%s%s",gtk_window_get_title(GTK_WINDOW(mainw->LiVES)),xtrabit);
+      title=g_strdup_printf("%s%s",gtk_window_get_title(GTK_WINDOW
+							(mainw->multitrack==NULL?mainw->LiVES:
+							 mainw->multitrack->window)),xtrabit);
       gtk_window_set_title(GTK_WINDOW(mainw->play_window),title);
       g_free(title);
       g_free(xtrabit);
@@ -2782,7 +2784,9 @@ void play_file (void) {
 
 	  if (mainw->sepwin_scale!=100.) xtrabit=g_strdup_printf(_(" (%d %% scale)"),(int)mainw->sepwin_scale);
 	  else xtrabit=g_strdup("");
-	  title=g_strdup_printf("%s%s",gtk_window_get_title(GTK_WINDOW(mainw->LiVES)),xtrabit);
+	  title=g_strdup_printf("%s%s",gtk_window_get_title(GTK_WINDOW
+							    (mainw->multitrack==NULL?mainw->LiVES:
+							     mainw->multitrack->window)),xtrabit);
 	  gtk_window_set_title(GTK_WINDOW(mainw->play_window),title);
 	  g_free(title);
 	  g_free(xtrabit);
@@ -2803,7 +2807,9 @@ void play_file (void) {
 	      gchar *title,*xtrabit;
 	      if (mainw->sepwin_scale!=100.) xtrabit=g_strdup_printf(_(" (%d %% scale)"),(int)mainw->sepwin_scale);
 	      else xtrabit=g_strdup("");
-	      title=g_strdup_printf("%s%s",gtk_window_get_title(GTK_WINDOW(mainw->LiVES)),xtrabit);
+	      title=g_strdup_printf("%s%s",gtk_window_get_title(GTK_WINDOW
+								(mainw->multitrack==NULL?mainw->LiVES:
+								 mainw->multitrack->window)),xtrabit);
 	      gtk_window_set_title(GTK_WINDOW(mainw->play_window),title);
 	      g_free(title);
 	      g_free(xtrabit);
@@ -2812,7 +2818,9 @@ void play_file (void) {
 	  else {
 	    if (mainw->sepwin_scale!=100.) xtrabit=g_strdup_printf(_(" (%d %% scale)"),(int)mainw->sepwin_scale);
 	    else xtrabit=g_strdup("");
-	    title=g_strdup_printf("%s%s",gtk_window_get_title(GTK_WINDOW(mainw->multitrack->window)),xtrabit);
+	    title=g_strdup_printf("%s%s",gtk_window_get_title(GTK_WINDOW
+							      (mainw->multitrack==NULL?mainw->LiVES:
+							       mainw->multitrack->window)),xtrabit);
 	    gtk_window_set_title(GTK_WINDOW(mainw->play_window),title);
 	    g_free(title);
 	    g_free(xtrabit);

@@ -34,8 +34,6 @@ static int mypalette;
 #include <GL/gl.h>
 #include <GL/glx.h>
 
-typedef uint32_t uint32;
-
 typedef struct {
     unsigned long flags;
     unsigned long functions;
@@ -65,6 +63,8 @@ static boolean swapFlag = TRUE;
 
 static int m_WidthFS;
 static int m_HeightFS;
+
+static uint32_t type;
 
 static boolean is_direct;
 
@@ -225,12 +225,7 @@ static void setWindowDecorations(void) {
 
 
 static void toggleVSync() {
-  if( GLX_SGI_swap_control ) {
-    if (1)
-      glXSwapIntervalSGI(1);
-    else
-      glXSwapIntervalSGI(2);
-  }
+  if( GLX_SGI_swap_control ) glXSwapIntervalSGI(1);
 }
 
 
@@ -243,16 +238,11 @@ static void alwaysOnTop() {
 
 
 static boolean
-isWindowMapped(void)
-{
+isWindowMapped(void) {
   XWindowAttributes attr;
-
+  
   XGetWindowAttributes(dpy, xWin, &attr);
-  if (attr.map_state != IsUnmapped) {
-    return TRUE;
-  } else {
-    return FALSE;
-  }
+  return (attr.map_state != IsUnmapped);
 }
 
 
@@ -535,12 +525,18 @@ boolean init_screen (int width, int height, boolean fullscreen, uint64_t window_
   glFlush();
   if ( swapFlag ) glXSwapBuffers( dpy, glxWin );
 
+  type=GL_RGBA;
+  if (mypalette==WEED_PALETTE_RGB24) type=GL_RGB;
+  if (mypalette==WEED_PALETTE_BGR24) type=GL_BGR;
+  if (mypalette==WEED_PALETTE_BGRA32) type=GL_BGRA;
+
+
   return TRUE;
 }
 
 
 
-boolean Upload(uint8_t *src, uint32 imgWidth, uint32 imgHeight, uint32 type) {
+static boolean Upload(uint8_t *src, uint32_t imgWidth, uint32_t imgHeight, uint32_t type) {
   uint32_t mipMapLevel = 0;
   GLenum m_TexTarget=GL_TEXTURE_2D;
 
@@ -582,16 +578,9 @@ boolean Upload(uint8_t *src, uint32 imgWidth, uint32 imgHeight, uint32 type) {
 }
 
 
-boolean render_frame_rgba (int hsize, int vsize, void **pixel_data, void **return_data) {
-  uint32_t type=GL_RGBA;
-
-  if (mypalette==WEED_PALETTE_RGB24) type=GL_RGB;
-  if (mypalette==WEED_PALETTE_BGR24) type=GL_BGR;
-  if (mypalette==WEED_PALETTE_BGRA32) type=GL_BGRA;
-
+static boolean render_frame_rgba (int hsize, int vsize, void **pixel_data, void **return_data) {
 
   Upload((uint8_t *)pixel_data[0], hsize, vsize, type);
-
 
   if (return_data!=NULL) {
     glPushAttrib(GL_PIXEL_MODE_BIT);
@@ -611,7 +600,7 @@ boolean render_frame_rgba (int hsize, int vsize, void **pixel_data, void **retur
 }
 
 
-boolean render_frame_unknown (int hsize, int vsize, void **pixel_data, void **return_data) {
+static boolean render_frame_unknown (int hsize, int vsize, void **pixel_data, void **return_data) {
   fprintf(stderr,"openGL plugin error: No palette was set !\n");
   return FALSE;
 }
@@ -620,11 +609,6 @@ boolean render_frame_unknown (int hsize, int vsize, void **pixel_data, void **re
 boolean render_frame (int hsize, int vsize, int64_t tc, void **pixel_data, void **return_data) {
   // call the function which was set in set_palette
   return render_fn (hsize,vsize,pixel_data,return_data);
-}
-
-
-static int erhand(Display *dsp) {
-  _exit(0);
 }
 
 

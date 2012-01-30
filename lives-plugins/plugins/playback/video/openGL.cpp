@@ -618,6 +618,8 @@ void exit_screen (int16_t mouse_x, int16_t mouse_y) {
     XDestroyWindow (dpy, xWin);
   }
 
+  XFlush(dpy);
+
   glXMakeContextCurrent(dpy, 0, 0, 0);
   glXDestroyContext(dpy, context);
 

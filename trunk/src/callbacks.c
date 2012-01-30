@@ -6984,7 +6984,8 @@ void on_full_screen_activate (GtkMenuItem *menuitem, gpointer user_data) {
 	if (mainw->sepwin_scale!=100.) xtrabit=g_strdup_printf(_(" (%d %% scale)"),(int)mainw->sepwin_scale);
 	else xtrabit=g_strdup("");
 	title=g_strdup_printf(_("LiVES: - Play Window%s"),xtrabit);
-	gtk_window_set_title (GTK_WINDOW (mainw->play_window), title);
+	if (mainw->play_window!=NULL)
+	  gtk_window_set_title (GTK_WINDOW (mainw->play_window), title);
 	g_free(title);
 	g_free(xtrabit);
 
@@ -7131,7 +7132,8 @@ on_double_size_activate               (GtkMenuItem     *menuitem,
 	if (mainw->sepwin_scale!=100.) xtrabit=g_strdup_printf(_(" (%d %% scale)"),(int)mainw->sepwin_scale);
 	else xtrabit=g_strdup("");
 	title=g_strdup_printf(_("LiVES: - Play Window%s"),xtrabit);
-	gtk_window_set_title (GTK_WINDOW (mainw->play_window), title);
+	if (mainw->play_window!=NULL)
+	  gtk_window_set_title (GTK_WINDOW (mainw->play_window), title);
 	g_free(title);
 	g_free(xtrabit);
       }
@@ -7475,7 +7477,8 @@ on_sticky_activate               (GtkMenuItem     *menuitem,
 	  title=g_strdup_printf("%s%s",gtk_window_get_title(GTK_WINDOW
 							    (mainw->multitrack==NULL?mainw->LiVES:
 							     mainw->multitrack->window)),xtrabit);
-	  gtk_window_set_title(GTK_WINDOW(mainw->play_window),title);
+	  if (mainw->play_window!=NULL)
+	    gtk_window_set_title(GTK_WINDOW(mainw->play_window),title);
 	  g_free(title);
 	  g_free(xtrabit);
 	}

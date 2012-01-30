@@ -84,6 +84,8 @@ static int m_WidthFS;
 static int m_HeightFS;
 
 static int mode=0;
+static int dblbuf=1;
+static int fsover=0;
 
 static uint32_t type;
 static uint32_t typesize;
@@ -105,7 +107,7 @@ static Bool WaitForNotify( Display *dpy, XEvent *event, XPointer arg ) {
 
 static GLenum m_TexTarget=GL_TEXTURE_2D;
 
-static float tfps=50.;
+static float tfps;
 
 
 typedef struct {
@@ -129,7 +131,6 @@ const char *module_check_init(void) {
 
   render_fn=&render_frame_unknown;
 
-  //glShadeModel( GL_FLAT );
   glShadeModel(GL_SMOOTH);  
 
   glClearDepth( 1.0f );
@@ -174,6 +175,7 @@ const char *get_rfx (void) {
 </language_code>\\n\
 <params> \\n\
 mode|_Mode|string_list|0|Flat|Triangle|Rotating|Wobbler|Landscape|Insider|Cube|Turning|Tunnel\\n\
+tfps|Target _Framerate|num2|50.|1.|200.\\n\
 dbuf|Use _double buffering|bool|1|0 \\n\
 fsover|Over-ride _fullscreen setting (for debugging)|bool|0|0 \\n\
 </params> \\n\
@@ -376,12 +378,36 @@ static void add_perspective(uint32_t width, uint32_t height) {
 
 boolean init_screen (int width, int height, boolean fullscreen, uint64_t window_id, int argc, char **argv) {
   _xparms xparms;
+
+  if (mypalette==WEED_PALETTE_END) {
+    fprintf(stderr,"openGL plugin error: No palette was set !\n");
+    return FALSE;
+  }
+
   xparms.width=width;
   xparms.height=height;
   xparms.fullscreen=fullscreen;
   xparms.window_id=window_id;
   xparms.argc=argc;
   xparms.argv=argv;
+
+  mode=0;
+  tfps=50.;
+  dblbuf=1;
+  fsover=0;
+
+  if (argc>0) {
+    mode=atoi(argv[0]);
+    if (argc>1) {
+      tfps=atof(argv[1]);
+      if (argc>2) {
+	dblbuf=atoi(argv[2]);
+	if (argc>3) {
+	  fsover=atoi(argv[3]);
+	}
+      }
+    }
+  }
 
   playing=TRUE;
 
@@ -411,9 +437,6 @@ boolean init_screen (int width, int height, boolean fullscreen, uint64_t window_
 static boolean init_screen_inner (int width, int height, boolean fullscreen, uint64_t window_id, int argc, char **argv) {
 
   // screen size is in RGB pixels
-  int dblbuf=1;
-  int fsover=0;
-
   char tmp[32];
 
   uint32_t modeopts=0;
@@ -458,23 +481,6 @@ static boolean init_screen_inner (int width, int height, boolean fullscreen, uin
   XSetWindowAttributes  swa;
   int                   swaMask;
   int                   numReturned;
-
-  mode=0;
-
-  if (argc>0) {
-    mode=atoi(argv[0]);
-    if (argc>1) {
-      dblbuf=atoi(argv[1]);
-      if (argc>2) {
-	fsover=atoi(argv[2]);
-      }
-    }
-  }
-
-  if (mypalette==WEED_PALETTE_END) {
-    fprintf(stderr,"openGL plugin error: No palette was set !\n");
-    return FALSE;
-  }
 
   if (fsover) fullscreen=FALSE;
 
@@ -550,6 +556,11 @@ static boolean init_screen_inner (int width, int height, boolean fullscreen, uin
     ** returned framebuffer config */
     vInfo = glXGetVisualFromFBConfig( dpy, fbConfigs[0] );
     
+    if (!vInfo) {
+      fprintf(stderr,"openGL plugin error: No vInfo could be got !\n");
+      return FALSE;
+    }
+
     swa.colormap = XCreateColormap( dpy, RootWindow(dpy, vInfo->screen),
 				    vInfo->visual, AllocNone );
     
@@ -665,6 +676,7 @@ static boolean Upload(void) {
     glDisable( m_TexTarget );
   }
 
+  pthread_mutex_unlock(&rthread_mutex); // re-enable texture thread
 
   switch (mode) {
   case 0:
@@ -1312,9 +1324,9 @@ static boolean Upload(void) {
 
   }
 
-  pthread_mutex_unlock(&rthread_mutex); // re-enable texture thread
-
   pthread_mutex_unlock(&swap_mutex); // allow return of back buffer
+
+  // moment in time where backing buffer can be copied
 
   pthread_mutex_lock(&swap_mutex); // lock out data return
 

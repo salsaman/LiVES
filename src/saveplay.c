@@ -2166,7 +2166,8 @@ void play_file (void) {
 	  if (mainw->sepwin_scale!=100.) xtrabit=g_strdup_printf(_(" (%d %% scale)"),(int)mainw->sepwin_scale);
 	  else xtrabit=g_strdup("");
 	  title=g_strdup_printf(_("LiVES: - Play Window%s"),xtrabit);
-	  gtk_window_set_title (GTK_WINDOW (mainw->play_window), title);
+	  if (mainw->play_window!=NULL)
+	    gtk_window_set_title (GTK_WINDOW (mainw->play_window), title);
 	  g_free(title);
 	  g_free(xtrabit);
 	}
@@ -2678,7 +2679,8 @@ void play_file (void) {
       title=g_strdup_printf("%s%s",gtk_window_get_title(GTK_WINDOW
 							(mainw->multitrack==NULL?mainw->LiVES:
 							 mainw->multitrack->window)),xtrabit);
-      gtk_window_set_title(GTK_WINDOW(mainw->play_window),title);
+      if (mainw->play_window!=NULL)
+	gtk_window_set_title(GTK_WINDOW(mainw->play_window),title);
       g_free(title);
       g_free(xtrabit);
     }
@@ -2799,23 +2801,11 @@ void play_file (void) {
 
 	  while (g_main_context_iteration (NULL,FALSE));
 	  if (mainw->play_window!=NULL) {
+	    gchar *title,*xtrabit;
 	    
 	    load_preview_image(FALSE);
 	    
 	    mainw->noswitch=FALSE;
-	    if (mainw->playing_file==-1&&mainw->play_window!=NULL) {
-	      gchar *title,*xtrabit;
-	      if (mainw->sepwin_scale!=100.) xtrabit=g_strdup_printf(_(" (%d %% scale)"),(int)mainw->sepwin_scale);
-	      else xtrabit=g_strdup("");
-	      title=g_strdup_printf("%s%s",gtk_window_get_title(GTK_WINDOW
-								(mainw->multitrack==NULL?mainw->LiVES:
-								 mainw->multitrack->window)),xtrabit);
-	      gtk_window_set_title(GTK_WINDOW(mainw->play_window),title);
-	      g_free(title);
-	      g_free(xtrabit);
-	    }
-	  }
-	  else {
 	    if (mainw->sepwin_scale!=100.) xtrabit=g_strdup_printf(_(" (%d %% scale)"),(int)mainw->sepwin_scale);
 	    else xtrabit=g_strdup("");
 	    title=g_strdup_printf("%s%s",gtk_window_get_title(GTK_WINDOW
@@ -2824,8 +2814,7 @@ void play_file (void) {
 	    gtk_window_set_title(GTK_WINDOW(mainw->play_window),title);
 	    g_free(title);
 	    g_free(xtrabit);
-	  }
-	  if (mainw->play_window!=NULL) {
+
 	    gtk_window_present (GTK_WINDOW (mainw->play_window));
 	    gdk_window_raise(mainw->play_window->window);
 	    unhide_cursor (mainw->play_window->window);

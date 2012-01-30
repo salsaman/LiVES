@@ -5392,7 +5392,8 @@ void switch_to_file(gint old_file, gint new_file) {
     if (mainw->sepwin_scale!=100.) xtrabit=g_strdup_printf(_(" (%d %% scale)"),(int)mainw->sepwin_scale);
     else xtrabit=g_strdup("");
     xtitle=g_strdup_printf(_("LiVES: - Play Window%s"),xtrabit);
-    gtk_window_set_title (GTK_WINDOW (mainw->play_window), xtitle);
+    if (mainw->play_window!=NULL)
+      gtk_window_set_title (GTK_WINDOW (mainw->play_window), xtitle);
     g_free(xtitle);
     g_free(xtrabit);
 

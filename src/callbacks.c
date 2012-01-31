@@ -5903,7 +5903,9 @@ void on_fs_preview_clicked (GtkButton *button, gpointer user_data) {
   if (!(height*width)) {
     // media preview
     if (!capable->has_mplayer) {
-      do_blocking_error_dialog(_ ("\n\nYou need to install mplayer to be able to preview this file.\n"));
+      gchar *msg=g_strdup(_ ("\n\nYou need to install mplayer to be able to preview this file.\n"));
+      do_blocking_error_dialog(msg);
+      g_free(msg);
       return;
     }
 

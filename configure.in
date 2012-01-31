@@ -367,7 +367,7 @@ if test "x$disable_ffmpeg" != "xyes" ; then
 
 dnl check for avcodec, avformat, avutil, swscale
 
-PKG_CHECK_MODULES(LIBAVCODEC,libavcodec,HAVE_AVCODEC=true,HAVE_AVCODEC=false)
+PKG_CHECK_MODULES(LIBAVCODEC,libavcodec >= 53.0.0,HAVE_AVCODEC=true,HAVE_AVCODEC=false)
 
 PKG_CHECK_MODULES(LIBAVFORMAT,libavformat,HAVE_AVFORMAT=true,HAVE_AVFORMAT=false)
 

@@ -1918,6 +1918,7 @@ void play_file (void) {
   gchar *msg;
   gchar *stfile;
   gchar *xtrabit,*title;
+  gchar *tmp;
 
   gint asigned=!(cfile->signed_endian&AFORM_UNSIGNED);
   gint aendian=!(cfile->signed_endian&AFORM_BIG_ENDIAN);
@@ -1937,6 +1938,9 @@ void play_file (void) {
 #endif
   gboolean has_audio_buffers=FALSE;
 
+#ifdef USE_X11
+  unsigned long awinid=0;
+#endif
 
   if (audio_player!=AUD_PLAYER_JACK&&audio_player!=AUD_PLAYER_PULSE) mainw->aud_file_to_kill=mainw->current_file;
   else mainw->aud_file_to_kill=-1;
@@ -2017,28 +2021,9 @@ void play_file (void) {
     audio_end=mainw->audio_end;
   }
 
-  if (prefs->stop_screensaver) {
-    g_free (com2);
-    com2=g_strdup ("xset s off 2>/dev/null; xset -dpms 2>/dev/null; gconftool-2 --set --type bool /apps/gnome-screensaver/idle_activation_enabled false 2>/dev/null;");
-  }
-  if (prefs->pause_xmms&&cfile->achans>0&&!mainw->mute&&capable->has_xmms) {
-    g_free (com3);
-    com3=g_strdup ("xmms -u;");
-  }
-  if (!mainw->foreign&&prefs->midisynch&&!mainw->preview) {
-    g_free (com4);
-    com4=g_strdup  ("midistart");
-  }
-  com=g_strconcat (com2,com3,com4,NULL);
-  if (strlen (com)) {
-    // allow this to fail - not all sub-commands may be present
-    lives_system (com,TRUE);
-  }
-  g_free (com); g_free (com2); g_free (com3); g_free (com4);
-  com4=g_strdup (" ");
-  com3=NULL;
-  com2=NULL;
-  com=NULL;
+
+
+
 
   if (mainw->multitrack==NULL) {
     if (!mainw->preview) {
@@ -2245,6 +2230,69 @@ void play_file (void) {
     }
 
   }
+
+  // moved down because xdg-screensaver requires a mapped windowID
+  if (prefs->stop_screensaver) {
+    g_free (com2);
+    com2=NULL;
+#ifdef USE_X11
+    if (!prefs->show_gui&&prefs->show_playwin&&mainw->play_window!=NULL) {
+      awinid=(unsigned long)GDK_WINDOW_XID (mainw->play_window->window);
+    }
+    else if (prefs->show_gui) {
+      if (mainw->multitrack!=NULL) {
+	awinid=(unsigned long)GDK_WINDOW_XID (mainw->multitrack->window->window);
+      }
+      else if (mainw->LiVES!=NULL) {
+	awinid=(unsigned long)GDK_WINDOW_XID (mainw->LiVES->window);
+      }
+    }
+    com2=g_strdup("xset s off 2>/dev/null; xset -dpms 2>/dev/null ;");
+    
+    if (capable->has_gconftool_2) {
+      gchar *xnew=g_strdup(" gconftool-2 --set --type bool /apps/gnome-screensaver/idle_activation_enabled false 2>/dev/null ;");
+      tmp=g_strconcat (com2,xnew,NULL);
+      g_free(com2);
+      g_free(xnew);
+      com2=tmp;
+    }
+    if (capable->has_xdg_screensaver) {
+      gchar *xnew=g_strdup_printf(" xdg-screensaver suspend %"PRIu64" 2>/dev/null ;",awinid);
+      tmp=g_strconcat (com2,xnew,NULL);
+      g_free(com2);
+      g_free(xnew);
+      com2=tmp;
+    }
+#else
+    if (capable->has_gconftool_2) {
+      com2=g_strdup("gconftool-2 --set --type bool /apps/gnome-screensaver/idle_activation_enabled false 2>/dev/null ;");
+    }
+    else com2=g_strdup("");
+#endif
+    if (com2==NULL) com2=g_strdup("");
+  }
+
+
+  if (prefs->pause_xmms&&cfile->achans>0&&!mainw->mute&&capable->has_xmms) {
+    g_free (com3);
+    com3=g_strdup ("xmms -u;");
+  }
+  if (!mainw->foreign&&prefs->midisynch&&!mainw->preview) {
+    g_free (com4);
+    com4=g_strdup  ("midistart");
+  }
+  com=g_strconcat (com2,com3,com4,NULL);
+  if (strlen (com)) {
+    // allow this to fail - not all sub-commands may be present
+    lives_system (com,TRUE);
+  }
+  g_free (com); g_free (com2); g_free (com3); g_free (com4);
+  com4=g_strdup (" ");
+  com3=NULL;
+  com2=NULL;
+  com=NULL;
+
+
 
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_pb_fps),cfile->pb_fps);
     
@@ -2616,8 +2664,37 @@ void play_file (void) {
 
   // PLAY FINISHED...
   // allow this to fail - not all sub-commands may be present
-  if (prefs->stop_screensaver) 
-    lives_system("xset s on 2>/dev/null; xset +dpms 2>/dev/null; gconftool-2 --set --type bool /apps/gnome-screensaver/idle_activation_enabled true 2>/dev/null;",TRUE);
+  if (prefs->stop_screensaver) {
+
+#ifdef USE_X11
+    com=g_strdup("xset s on 2>/dev/null; xset +dpms 2>/dev/null ;");
+    
+    if (capable->has_gconftool_2) {
+      gchar *xnew=g_strdup(" gconftool-2 --set --type bool /apps/gnome-screensaver/idle_activation_enabled true 2>/dev/null ;");
+      tmp=g_strconcat (com,xnew,NULL);
+      g_free(com);
+      g_free(xnew);
+      com=tmp;
+    }
+    if (capable->has_xdg_screensaver) {
+      gchar *xnew=g_strdup_printf(" xdg-screensaver resume %"PRIu64" 2>/dev/null ;",awinid);
+      tmp=g_strconcat (com,xnew,NULL);
+      g_free(com);
+      g_free(xnew);
+      com=tmp;
+    }
+#else
+    if (capable->has_gconftool_2) {
+      com=g_strdup("gconftool-2 --set --type bool /apps/gnome-screensaver/idle_activation_enabled true 2>/dev/null ;");
+    }
+    else com=g_strdup("");
+#endif
+    if (com!=NULL) {
+      lives_system(com,TRUE);
+      g_free(com);
+    }
+  }
+
   if (capable->has_xmms&&prefs->pause_xmms&&cfile->achans>0&&!mainw->mute) lives_system("xmms -u",TRUE);
   if (!mainw->foreign&&prefs->midisynch) lives_system ("midistop",TRUE);
 

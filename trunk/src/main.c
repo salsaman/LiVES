@@ -1748,6 +1748,8 @@ capability *get_capabilities (void) {
   capable->has_encoder_plugins=FALSE;
   capable->has_python=FALSE;
   capable->has_stderr=TRUE;
+  capable->has_gconftool_2=FALSE;
+  capable->has_xdg_screensaver=FALSE;
 
   safer_bfile=g_strdup_printf("%s.%d.%d",BOOTSTRAP_NAME,getuid(),getgid());
   unlink (safer_bfile);
@@ -1881,6 +1883,12 @@ capability *get_capabilities (void) {
 
   get_location("xwininfo",string,256);
   if (strlen(string)) capable->has_xwininfo=TRUE;
+
+  get_location("gconftool-2",string,256);
+  if (strlen(string)) capable->has_gconftool_2=TRUE;
+
+  get_location("xdg-screensaver",string,256);
+  if (strlen(string)) capable->has_xdg_screensaver=TRUE;
 
   get_location("midistart",string,256);
   if (strlen(string)) {

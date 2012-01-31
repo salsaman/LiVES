@@ -48,7 +48,6 @@ POSSIBILITY OF SUCH DAMAGES.
 // Have fun, and let's fight for Free Speech, Open Media and True Creativity !
 // - Salsaman
 
-
 #ifndef HAS_LIVES_MAIN_H
 #define HAS_LIVES_MAIN_H
 
@@ -575,6 +574,8 @@ typedef struct {
   gboolean has_pulse_audio;
   gboolean has_xwininfo;
   gboolean has_gdb;
+  gboolean has_gconftool_2;
+  gboolean has_xdg_screensaver;
 
   /// home directory - default location for config file - locale encoding
   gchar home_dir[PATH_MAX];

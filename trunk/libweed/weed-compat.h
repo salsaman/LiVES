@@ -355,9 +355,6 @@ const AVCodecTag codec_bmp_tags[] = {
   { CODEC_ID_RAWVIDEO,     MKTAG('H', 'D', 'Y', 'C') },
   { CODEC_ID_RAWVIDEO,     MKTAG('Y', 'V', 'U', '9') },
   { CODEC_ID_RAWVIDEO,     MKTAG('V', 'D', 'T', 'Z') }, /* SoftLab-NSK VideoTizer */
-  { CODEC_ID_FRWU,         MKTAG('F', 'R', 'W', 'U') },
-  { CODEC_ID_R210,         MKTAG('r', '2', '1', '0') },
-  { CODEC_ID_V210,         MKTAG('v', '2', '1', '0') },
   { CODEC_ID_INDEO3,       MKTAG('I', 'V', '3', '1') },
   { CODEC_ID_INDEO3,       MKTAG('I', 'V', '3', '2') },
   { CODEC_ID_INDEO4,       MKTAG('I', 'V', '4', '1') },
@@ -426,10 +423,6 @@ const AVCodecTag codec_bmp_tags[] = {
   { CODEC_ID_RPZA,         MKTAG('R', 'P', 'Z', 'A') },
   { CODEC_ID_RPZA,         MKTAG('r', 'p', 'z', 'a') },
   { CODEC_ID_SP5X,         MKTAG('S', 'P', '5', '4') },
-  { CODEC_ID_AURA,         MKTAG('A', 'U', 'R', 'A') },
-  { CODEC_ID_AURA2,        MKTAG('A', 'U', 'R', '2') },
-  { CODEC_ID_DPX,          MKTAG('d', 'p', 'x', ' ') },
-  { CODEC_ID_KGV1,         MKTAG('K', 'G', 'V', '1') },
   { CODEC_ID_NONE,         0 }
 };
 
@@ -465,7 +458,6 @@ int avi_pix_fmt_to_weed_palette(enum PixelFormat pix_fmt, int *clamped) {
   case PIX_FMT_UYYVYY411:
     return WEED_PALETTE_YUV411;
   case PIX_FMT_GRAY8:
-  case PIX_FMT_Y400A:
     return WEED_PALETTE_A8;
   case PIX_FMT_MONOWHITE:
   case PIX_FMT_MONOBLACK:

@@ -2549,7 +2549,9 @@ void
 prepare_to_play_foreign(void) {
   // here we are going to 'play' a captured external window
   gint new_file=mainw->first_free_file;
+#ifdef USE_X11
   GdkVisual *vissi;
+#endif
 
   // create a new 'file' to play into
   if (!get_new_handle(new_file,NULL)) {
@@ -2605,12 +2607,12 @@ prepare_to_play_foreign(void) {
   
   //vissi=gdk_x11_screen_lookup_visual(gdk_screen_get_default(),hextodec(mainw->foreign_visual));
 
-  vissi=gdk_visual_get_best_with_depth (mainw->foreign_bpp);
 
 #if GTK_CHECK_VERSION(3,0,0)
   mainw->foreign_cmap=NULL;
 #else
 #ifdef USE_X11
+  vissi=gdk_visual_get_best_with_depth (mainw->foreign_bpp);
   mainw->foreign_cmap=gdk_x11_colormap_foreign_new(vissi, 
 						   gdk_x11_colormap_get_xcolormap(gdk_colormap_new(vissi,TRUE)));
 

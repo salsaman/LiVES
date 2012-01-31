@@ -60,6 +60,7 @@ static GLXContext context;
 static GLuint texID;
 
 static boolean swapFlag = TRUE;
+static boolean has_gl_texture;
 
 static int m_WidthFS;
 static int m_HeightFS;
@@ -306,7 +307,7 @@ static void setFullScreen(void) {
 boolean init_screen (int width, int height, boolean fullscreen, uint64_t window_id, int argc, char **argv) {
   // screen size is in RGB pixels
   int dblbuf=1;
-  int fsover=0;
+  boolean fsover=FALSE;
 
   char tmp[32];
 
@@ -530,6 +531,7 @@ boolean init_screen (int width, int height, boolean fullscreen, uint64_t window_
   if (mypalette==WEED_PALETTE_BGR24) type=GL_BGR;
   if (mypalette==WEED_PALETTE_BGRA32) type=GL_BGRA;
 
+  has_gl_texture=FALSE;
 
   return TRUE;
 }
@@ -574,6 +576,8 @@ static boolean Upload(uint8_t *src, uint32_t imgWidth, uint32_t imgHeight, uint3
 
   glDisable( m_TexTarget );
 
+  has_gl_texture=TRUE;
+
   return TRUE;
 }
 
@@ -613,6 +617,9 @@ boolean render_frame (int hsize, int vsize, int64_t tc, void **pixel_data, void 
 
 
 void exit_screen (int16_t mouse_x, int16_t mouse_y) {
+  if (has_gl_texture)
+    glDeleteTextures(1,&texID);
+
   if (!is_ext) {
     XUnmapWindow (dpy, xWin);
     XDestroyWindow (dpy, xWin);

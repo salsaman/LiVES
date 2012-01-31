@@ -10,6 +10,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <assert.h>
 
 ////////////////////////////////////////////////////////////////////////////////////
 
@@ -41,8 +42,6 @@ static int mypalette;
 #include <GL/glx.h>
 #include <GL/glu.h>
 
-typedef uint32_t uint32;
-
 typedef struct {
   unsigned long flags;
   unsigned long functions;
@@ -66,7 +65,6 @@ static Display *dpy;
 static Window xWin;
 static GLXWindow glxWin;
 static GLXContext context;
-static GLuint texID;
 
 
 static boolean swapFlag = TRUE;
@@ -85,10 +83,8 @@ static int m_HeightFS;
 
 static int mode=0;
 static int dblbuf=1;
-static int fsover=0;
-
-static uint32_t type;
-static uint32_t typesize;
+static int nbuf=32;
+static boolean fsover=FALSE;
 
 static float rquad;
 
@@ -96,8 +92,8 @@ static pthread_t rthread;
 static pthread_mutex_t rthread_mutex;
 static pthread_mutex_t swap_mutex;
 
-static volatile uint32 imgWidth;
-static volatile uint32 imgHeight;
+static volatile uint32_t imgWidth;
+static volatile uint32_t imgHeight;
 
 static void *render_thread_func(void *data);
 
@@ -120,8 +116,63 @@ typedef struct {
 } _xparms;
 
 
+typedef struct {
+  int width;
+  int height;
+  uint32_t type;
+  uint32_t typesize;
+} _texture;
+
+static int ntextures;
+static int ctexture;
+
+static _texture *textures;
+
+static GLuint *texID;
+
+static int type;
+static int typesize;
+
 //////////////////////////////////////////////
 
+static int get_real_tnum(int tnum, bool do_assert) {
+  tnum=ctexture-1-tnum;
+  if (tnum<0) tnum+=nbuf;
+  assert(tnum>=0);
+  if (do_assert) assert (tnum<ntextures);
+  return tnum;
+}
+
+static int get_texture_width(int tnum) {
+  tnum=get_real_tnum(tnum,TRUE);
+  return textures[tnum].width;
+}
+
+
+static int get_texture_height(int tnum) {
+  tnum=get_real_tnum(tnum,TRUE);
+  return textures[tnum].height;
+}
+
+
+static int get_texture_texID(int tnum) {
+  tnum=get_real_tnum(tnum,FALSE);
+  return texID[tnum];
+}
+
+
+static int get_texture_type(int tnum) {
+  tnum=get_real_tnum(tnum,TRUE);
+  return textures[tnum].type;
+}
+
+
+static int get_texture_typesize(int tnum) {
+  tnum=get_real_tnum(tnum,TRUE);
+  return textures[tnum].type;
+}
+
+///////////////////////////////////////////////
 
 const char *module_check_init(void) {
   if( !GL_ARB_texture_non_power_of_two) {
@@ -143,8 +194,6 @@ const char *module_check_init(void) {
   glPixelStorei( GL_UNPACK_ALIGNMENT, 1 );
   glClearColor( 0.0, 0.0, 0.0, 0.0 );
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-  glGenTextures(1, &texID);
 
   mypalette=WEED_PALETTE_END;
 
@@ -176,6 +225,7 @@ const char *get_rfx (void) {
 <params> \\n\
 mode|_Mode|string_list|0|Flat|Triangle|Rotating|Wobbler|Landscape|Insider|Cube|Turning|Tunnel\\n\
 tfps|Target _Framerate|num2|50.|1.|200.\\n\
+nbuf|Number of _buffered frames|num0|32|1|256\\n\
 dbuf|Use _double buffering|bool|1|0 \\n\
 fsover|Over-ride _fullscreen setting (for debugging)|bool|0|0 \\n\
 </params> \\n\
@@ -379,6 +429,8 @@ static void add_perspective(uint32_t width, uint32_t height) {
 boolean init_screen (int width, int height, boolean fullscreen, uint64_t window_id, int argc, char **argv) {
   _xparms xparms;
 
+  register int i;
+
   if (mypalette==WEED_PALETTE_END) {
     fprintf(stderr,"openGL plugin error: No palette was set !\n");
     return FALSE;
@@ -393,21 +445,33 @@ boolean init_screen (int width, int height, boolean fullscreen, uint64_t window_
 
   mode=0;
   tfps=50.;
+  nbuf=32;
   dblbuf=1;
-  fsover=0;
+  fsover=FALSE;
 
   if (argc>0) {
     mode=atoi(argv[0]);
     if (argc>1) {
       tfps=atof(argv[1]);
       if (argc>2) {
-	dblbuf=atoi(argv[2]);
+	nbuf=atoi(argv[2]);
 	if (argc>3) {
-	  fsover=atoi(argv[3]);
-	}
-      }
-    }
+	  dblbuf=atoi(argv[3]);
+	  if (argc>4) {
+	    fsover=atoi(argv[4]);
+	  }}}}}
+
+  texID=(GLuint *)malloc(nbuf * sizeof(GLuint));
+
+  glGenTextures(nbuf, texID);
+
+  textures=(_texture *)malloc(nbuf*sizeof(_texture));
+
+  for (i=0;i<nbuf;i++) {
+    textures[i].width=textures[i].height=0;
   }
+
+  ntextures=ctexture=0;
 
   playing=TRUE;
 
@@ -636,6 +700,7 @@ static boolean init_screen_inner (int width, int height, boolean fullscreen, uin
 
   type=GL_RGBA;
   typesize=4;
+
   if (mypalette==WEED_PALETTE_RGB24) {
     type=GL_RGB;
     typesize=3;
@@ -659,12 +724,48 @@ static boolean init_screen_inner (int width, int height, boolean fullscreen, uin
 }
 
 
-static boolean Upload(void) {
 
-  pthread_mutex_lock(&rthread_mutex); // wait for lockout of texture thread
+static void set_priorities(void) {
+  // prioritise textures so the most recent ones have highest priority
+  // GL should swap oldest out memory and swap newst in memory
+
+  float pri=1.;
+  GLclampf *prios=(GLclampf *)malloc(nbuf * sizeof(GLclampf));
+  int idx=ctexture;
+
+  register int i;
+
+  for (i=0;i<nbuf;i++) {
+    prios[i]=0.;
+  }
+
+  for (i=0;i<nbuf;i++) {
+    prios[idx]=pri;
+    idx--;
+    if (idx<0) idx+=nbuf;
+    if (idx>ntextures) break;
+    pri-=1./(float)nbuf;
+    if (pri<0.) pri=0.;
+  }
+
+  glPrioritizeTextures(nbuf,texID,prios);
+  
+  free(prios);
+
+}
+
+
+
+static boolean Upload(int width, int height) {
+  int imgWidth=width;
+  int imgHeight=height;
+  int texID=get_texture_texID(0);
 
   if (has_new_texture) {
     uint32_t mipMapLevel=0;
+
+    texID=get_texture_texID(-1);
+
     glEnable( m_TexTarget );
 
     has_new_texture=FALSE;
@@ -674,9 +775,24 @@ static boolean Upload(void) {
     glGenerateMipmap(m_TexTarget);
     
     glDisable( m_TexTarget );
+
+    textures[ctexture].width=width;
+    textures[ctexture].height=height;
+    
+    textures[ctexture].type=type;
+    textures[ctexture].typesize=typesize;
+
+    ctexture++;
+    if (ctexture==nbuf) ctexture=0;
+
+    if (ntextures<nbuf) ntextures++;
+
+    set_priorities();
+
   }
 
   pthread_mutex_unlock(&rthread_mutex); // re-enable texture thread
+
 
   switch (mode) {
   case 0:
@@ -1346,8 +1462,7 @@ static void *render_thread_func(void *data) {
     usleep(1000000./tfps);
     pthread_mutex_lock(&rthread_mutex);
     if (has_texture&&playing) {
-      pthread_mutex_unlock(&rthread_mutex);
-      Upload();
+      Upload(imgWidth,imgHeight);
     }
     else pthread_mutex_unlock(&rthread_mutex);
   }
@@ -1422,6 +1537,12 @@ void exit_screen (int16_t mouse_x, int16_t mouse_y) {
   if (texturebuf!=NULL) {
     free(texturebuf);
   }
+
+  if (ntextures>0) glDeleteTextures(ntextures,texID);
+
+  free(textures);
+
+  free(texID);
 
   if (!is_ext) {
     XUnmapWindow (dpy, xWin);

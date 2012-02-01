@@ -228,7 +228,7 @@ const char *get_rfx (void) {
 0xF0\\n\
 </language_code>\\n\
 <params> \\n\
-mode|_Mode|string_list|0|Flat|Triangle|Rotating|Wobbler|Landscape|Insider|Cube|Turning|Tunnel\\n\
+mode|_Mode|string_list|0|Flat|Triangle|Rotating|Wobbler|Landscape|Insider|Cube|Turning|Tunnel|Particles|Dissolve\\n\
 tfps|Target _Framerate|num2|50.|1.|200.\\n\
 nbuf|Number of _buffered frames|num0|32|1|256\\n\
 dbuf|Use _double buffering|bool|1|0 \\n\
@@ -1531,6 +1531,274 @@ static boolean Upload(int width, int height) {
       }
       glDisable( m_TexTarget );
     }
+    break;
+  case 9:
+    {
+      // particles:
+
+      typedef struct {
+	float x,y,z; 	// position coordinate
+	float sx,sy;	// size of the particle square
+	float vx,vy,vz; // speed
+	float tx1,ty1,tx2,ty2; // texture position (color)
+	int start_time; // when was created (tick)
+	int end_time; 	// when will disappear (tick)
+      } PARTICLE;
+
+#define NOT_CREATED -1 	// a flag for a particle that was not created
+#define NOF_PARTS 10000  // the number of particles	
+#define PIXEL_SIZE 1.0	// size of the particle pixels (1.0 = a pixel)
+
+      static PARTICLE parts[NOF_PARTS]; // particle array
+
+      static int parts_init=FALSE; // have been inited?
+
+      if (!parts_init) {
+	for (int i=0; i<NOF_PARTS; i++) parts[i].start_time=NOT_CREATED;
+	parts_init=TRUE;
+      }	
+      // time sync
+      struct timespec now;
+      clock_gettime(CLOCK_MONOTONIC,&now);
+      int ticks=now.tv_sec*1000+now.tv_nsec/1000000;
+
+      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+      glMatrixMode (GL_PROJECTION); // use the projection mode
+      glLoadIdentity ();
+      gluPerspective(60.0, (float)imgWidth/(float)imgHeight, 0.01, 1135.0);
+
+      glMatrixMode (GL_MODELVIEW);
+      glLoadIdentity ();
+      glTranslatef(0.0,0.0,-2.3);
+
+      // turn the place
+      float rotx=sin(ticks*M_PI/5000.0)*5-15;
+      float roty=sin(ticks*M_PI/5000.0)*5+45;
+      float rotz=sin(ticks*M_PI/5000.0)*5;
+
+      glRotatef(rotx,1,0,0);
+      glRotatef(roty,0,1,0);
+      glRotatef(rotz,0,0,1);
+
+      glTexParameteri( m_TexTarget, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
+      glTexParameteri( m_TexTarget, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
+    
+      glTexParameteri( m_TexTarget, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+      glTexParameteri( m_TexTarget, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+    
+      glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+      
+      glBindTexture( m_TexTarget, texID );
+      
+      glEnable( m_TexTarget );
+      
+      glEnable(GL_DEPTH_TEST);
+
+      // draw the emitter with the texture
+
+      glBegin (GL_QUADS);
+      glColor3f(1,1,1);      
+      glTexCoord2f (0.0, 0.0);
+      glVertex3f (-1.0, 1.0, 0.0);
+      
+      glTexCoord2f (1.0, 0.0);
+      glVertex3f (1.0, 1.0, 0.0);
+     
+      glTexCoord2f (1.0, 1.0);
+      glVertex3f (1.0, -1.0, 0.0);
+      
+      glTexCoord2f (0.0, 1.0);
+      glVertex3f (-1.0, -1.0, 0.0);
+
+      glEnd ();
+
+      // draw the particles
+
+      for (int i=0; i<NOF_PARTS; i++) {
+
+	int pos;
+	if ((parts[i].start_time==NOT_CREATED) || (ticks>=parts[i].end_time)) {
+	  parts[i].start_time=ticks;
+	  parts[i].x=(rand() % 2000)/1000.0-1.0;
+	  parts[i].y=(rand() % 2000)/1000.0-1.0;
+	  parts[i].z=0.0;
+	  parts[i].vx=0.001*((rand() % 2000)/1000.0-1.0);
+	  parts[i].vy=0.0;
+	  parts[i].vz=0.01;
+	  parts[i].end_time=4000+parts[i].start_time+rand() % 500;
+
+	  parts[i].sx=PIXEL_SIZE*2.0/imgWidth;
+	  parts[i].sy=PIXEL_SIZE*2.0/imgHeight;
+
+	  parts[i].tx1=((parts[i].x+1.0)/2.0);
+	  parts[i].ty1=(1.0-(parts[i].y+1.0)/2.0);
+	  parts[i].tx2=parts[i].tx1+parts[i].sx/2.0;
+	  parts[i].ty2=parts[i].ty1+parts[i].sy/2.0;
+	}
+	glBegin(GL_QUADS);
+
+	glTexCoord2f (parts[i].tx1, parts[i].ty1);	
+	glVertex3f(parts[i].x,parts[i].y,parts[i].z);
+
+	glTexCoord2f (parts[i].tx2, parts[i].ty1);	
+	glVertex3f(parts[i].x+parts[i].sx,parts[i].y,parts[i].z);
+
+	glTexCoord2f (parts[i].tx2, parts[i].ty2);	
+	glVertex3f(parts[i].x+parts[i].sx,parts[i].y-parts[i].sy,parts[i].z);
+
+	glTexCoord2f (parts[i].tx1, parts[i].ty2);	
+	glVertex3f(parts[i].x,parts[i].y-parts[i].sy,parts[i].z);
+	glEnd();
+		
+	parts[i].x+=parts[i].vx;
+	parts[i].y+=parts[i].vy;
+	parts[i].z+=parts[i].vz;
+	parts[i].vy-=0.0001; // adds a small gravity
+
+
+      }
+      glDisable( m_TexTarget );
+
+    }
+
+    break;
+
+  case 10:
+    {
+      // dissolve:
+
+      typedef struct {
+	float x,y,z; 	// position coordinate
+	float sx,sy;	// size of the particle square
+	float vx,vy,vz; // speed
+	float tx1,ty1,tx2,ty2; // texture position (color)
+	int start_time; // when was created (tick)
+	int end_time; 	// when will disappear (tick)
+      } PARTICLE;
+
+#define NOT_CREATED -1 	// a flag for a particle that was not created
+#define NOF_PARTS2 20000  // the number of particles	
+#define PIXEL_SIZE2 4.0	// size of the particle pixels (1.0 = a pixel)
+
+      static PARTICLE parts[NOF_PARTS2]; // particle array
+
+      static int parts_init=FALSE; // have been inited?
+
+      if (!parts_init) {
+	for (int i=0; i<NOF_PARTS2; i++) parts[i].start_time=NOT_CREATED;
+	parts_init=TRUE;
+      }	
+      // time sync
+      struct timespec now;
+      clock_gettime(CLOCK_MONOTONIC,&now);
+      int ticks=now.tv_sec*1000+now.tv_nsec/1000000;
+
+      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+      glMatrixMode (GL_PROJECTION); // use the projection mode
+      glLoadIdentity ();
+      gluPerspective(60.0, (float)imgWidth/(float)imgHeight, 0.01, 1135.0);
+
+      glMatrixMode (GL_MODELVIEW);
+      glLoadIdentity ();
+      glTranslatef(0.0,0.0,-2.3);
+
+      // turn the place
+      float rotx=sin(ticks*M_PI/5000.0)*5+15;
+      float roty=sin(ticks*M_PI/5000.0)*15+15;
+      float rotz=sin(ticks*M_PI/5000.0)*5;
+
+      glRotatef(rotx,1,0,0);
+      glRotatef(roty,0,1,0);
+      glRotatef(rotz,0,0,1);
+
+      glTexParameteri( m_TexTarget, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
+      glTexParameteri( m_TexTarget, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
+    
+      glTexParameteri( m_TexTarget, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+      glTexParameteri( m_TexTarget, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+    
+      glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+      
+      glBindTexture( m_TexTarget, texID );
+      
+      glEnable( m_TexTarget );
+      
+      glEnable(GL_DEPTH_TEST);
+
+      // draw the emitter with the texture
+      /*
+	glBegin (GL_QUADS);
+	glColor3f(1,1,1);      
+      	glTexCoord2f (0.0, 0.0);
+      	glVertex3f (-1.0, 1.0, 0.0);
+      
+      	glTexCoord2f (1.0, 0.0);
+      	glVertex3f (1.0, 1.0, 0.0);
+     
+      	glTexCoord2f (1.0, 1.0);
+      	glVertex3f (1.0, -1.0, 0.0);
+      
+      	glTexCoord2f (0.0, 1.0);
+      	glVertex3f (-1.0, -1.0, 0.0);
+
+      	glEnd ();
+      */
+      // draw the squares
+
+      glEnable(GL_BLEND);
+      glBlendFunc ( GL_SRC_ALPHA , GL_ONE_MINUS_SRC_ALPHA );
+ 
+      for (int i=0; i<NOF_PARTS2; i++) {
+
+	int pos;
+	if ((parts[i].start_time==NOT_CREATED) || (ticks>=parts[i].end_time)) {
+	  parts[i].start_time=ticks;
+	  parts[i].x=(rand() % 2000)/1000.0-1.0;
+	  parts[i].y=(rand() % 2000)/1000.0-1.0;
+	  parts[i].z=0.0;
+	  parts[i].vx=0.001*((rand() % 2000)/1000.0-1.0);
+	  parts[i].vy=0.001*((rand() % 2000)/1000.0-1.0);
+	  parts[i].vz=0.01;
+	  parts[i].end_time=parts[i].start_time+500+rand() % 500;
+
+	  parts[i].sx=PIXEL_SIZE2*2.0/imgWidth;
+	  parts[i].sy=PIXEL_SIZE2*2.0/imgHeight;
+
+	  parts[i].tx1=((parts[i].x+1.0)/2.0);
+	  parts[i].ty1=(1.0-(parts[i].y+1.0)/2.0);
+	  parts[i].tx2=parts[i].tx1+parts[i].sx/2.0;
+	  parts[i].ty2=parts[i].ty1+parts[i].sy/2.0;
+	}
+	glColor4f(1.0,1.0,1.0,0.5+(float)(parts[i].end_time-ticks)/(parts[i].end_time-parts[i].start_time));
+	glBegin(GL_QUADS);
+
+	glTexCoord2f (parts[i].tx1, parts[i].ty1);	
+	glVertex3f(parts[i].x,parts[i].y,parts[i].z);
+
+	glTexCoord2f (parts[i].tx2, parts[i].ty1);	
+	glVertex3f(parts[i].x+parts[i].sx,parts[i].y,parts[i].z);
+
+	glTexCoord2f (parts[i].tx2, parts[i].ty2);	
+	glVertex3f(parts[i].x+parts[i].sx,parts[i].y-parts[i].sy,parts[i].z);
+
+	glTexCoord2f (parts[i].tx1, parts[i].ty2);	
+	glVertex3f(parts[i].x,parts[i].y-parts[i].sy,parts[i].z);
+	glEnd();
+		
+	parts[i].x+=parts[i].vx;
+	parts[i].y+=parts[i].vy;
+	parts[i].z+=parts[i].vz;
+	parts[i].vy+=0.0004; // adds a small pull up
+
+
+      }
+      glDisable( m_TexTarget );
+      glDisable(GL_BLEND);
+
+    }
+
     break;
 
   }

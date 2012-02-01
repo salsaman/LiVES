@@ -2565,7 +2565,7 @@ void do_system_failed_error(const char *com, int retval, const char *addinfo) {
   gchar *msg,*tmp,*emsg,*msgx;
   gchar *bit;
   gchar *retstr=g_strdup_printf("%d",retval>>8);
-  gchar *bit2=(retval>255)?g_strdup(""):g_strdup_printf("[%s]",strerror(retval));
+  gchar *bit2=(retval>255)?g_strdup(""):g_strdup_printf("[%s]",g_strerror(retval));
   gchar *addbit;
   gchar *dsmsg1=g_strdup("");
   gchar *dsmsg2=g_strdup("");

@@ -2247,6 +2247,7 @@ void play_file (void) {
 	awinid=(unsigned long)GDK_WINDOW_XID (mainw->LiVES->window);
       }
     }
+
     com2=g_strdup("xset s off 2>/dev/null; xset -dpms 2>/dev/null ;");
     
     if (capable->has_gconftool_2) {
@@ -3260,13 +3261,13 @@ gboolean add_file_info(const gchar *check_handle, gboolean aud_only) {
     pieces=get_token_count (mainw->msg,'|');
     
     if (pieces>14&&array[15]!=NULL) {
-      g_snprintf (cfile->title,256,"%s",g_strchomp (g_strchug ((array[15]))));
+      g_snprintf (cfile->title,256,"%s",g_strstrip(array[15]));
     }
     if (pieces>15&&array[16]!=NULL) {
-      g_snprintf (cfile->author,256,"%s",g_strchomp (g_strchug ((array[16]))));
+      g_snprintf (cfile->author,256,"%s",g_strstrip(array[16]));
     }
     if (pieces>16&&array[17]!=NULL) {
-      g_snprintf (cfile->comment,256,"%s",g_strchomp (g_strchug ((array[17]))));
+      g_snprintf (cfile->comment,256,"%s",g_strstrip(array[17]));
     }
     
     g_strfreev(array);
@@ -4110,13 +4111,13 @@ gboolean read_headers(const gchar *file_name) {
   cfile->bpp=(cfile->img_type==IMG_TYPE_JPEG)?24:32;
   
   if (pieces>4&&array[5]!=NULL) {
-    g_snprintf (cfile->title,256,"%s",g_strchomp (g_strchug ((array[4]))));
+    g_snprintf (cfile->title,256,"%s",g_strstrip(array[4]));
   }
   if (pieces>5&&array[6]!=NULL) {
-    g_snprintf (cfile->author,256,"%s",g_strchomp (g_strchug ((array[5]))));
+    g_snprintf (cfile->author,256,"%s",g_strstrip(array[5]));
   }
   if (pieces>6&&array[7]!=NULL) {
-    g_snprintf (cfile->comment,256,"%s",g_strchomp (g_strchug ((array[6]))));
+    g_snprintf (cfile->comment,256,"%s",g_strstrip(array[6]));
   }
   
   g_strfreev(array);

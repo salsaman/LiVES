@@ -670,6 +670,8 @@ static boolean init_screen_inner (int width, int height, boolean fullscreen, uin
     is_ext=FALSE;
   }
 
+  glXMakeCurrent( dpy, glxWin, context );
+
   toggleVSync();
 
   error = glGetError();
@@ -712,8 +714,6 @@ static boolean init_screen_inner (int width, int height, boolean fullscreen, uin
   if (mypalette==WEED_PALETTE_BGRA32) type=GL_BGRA;
 
   rquad=0.;
-
-  glXMakeCurrent( dpy, glxWin, context );
 
   if (glXIsDirect(dpy, context)) 
     is_direct=TRUE;
@@ -759,7 +759,8 @@ static void set_priorities(void) {
 static boolean Upload(int width, int height) {
   int imgWidth=width;
   int imgHeight=height;
-  int texID=get_texture_texID(0);
+
+  int texID;
 
   if (has_new_texture) {
     uint32_t mipMapLevel=0;
@@ -791,6 +792,7 @@ static boolean Upload(int width, int height) {
 
   }
 
+  texID=get_texture_texID(0);
   pthread_mutex_unlock(&rthread_mutex); // re-enable texture thread
 
 
@@ -1582,18 +1584,5 @@ boolean send_keycodes (keyfunc host_key_fn) {
     host_key_fn (xEvent.type == KeyPress, keySymbol, mod_mask);
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 

@@ -2253,10 +2253,10 @@ int main (int argc, char *argv[]) {
 
   gtk_init (&argc, &argv);
 
-  //#ifdef LIVES_NO_DEBUG
+#ifdef LIVES_NO_DEBUG
   // don't crash on GTK+ fatals
   g_log_set_always_fatal ((GLogLevelFlags)0);
-  //#endif
+#endif
 
   theme_expected=pre_init();
 

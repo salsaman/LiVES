@@ -1210,7 +1210,7 @@ void on_open_fw_activate (GtkMenuItem *menuitem, gpointer format);
 
 gchar *dummychar;
 
-
+#define LIVES_NO_DEBUG
 #ifndef LIVES_DEBUG
 #ifndef LIVES_NO_DEBUG
 #define LIVES_DEBUG(x)      fprintf(stderr, "LiVES debug: %s\n", x)

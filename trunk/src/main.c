@@ -3979,18 +3979,23 @@ void load_frame_image(gint frame) {
   // this is because mainw->frame_layer is global and gets freed() before exit from load_frame_image()
   // - we should never call load_frame_image() if mainw->noswitch is TRUE
 
+  void **pd_array,**retdata=NULL;
+
+  LiVESPixbuf *pixbuf=NULL;
 
   gchar *framecount=NULL,*tmp;
-  gboolean was_preview;
   gchar *fname_next=NULL,*info_file=NULL;
+  gchar *img_ext=NULL;
+
+  LiVESInterpType interp;
+
+  gboolean was_preview;
+  gboolean rec_after_pb=FALSE;
   int weed_error;
   int retval;
-  void **pd_array;
   int layer_palette,cpal;
-  gchar *img_ext=NULL;
-  GdkPixbuf *pixbuf=NULL;
+
   int opwidth=0,opheight=0;
-  LiVESInterpType interp;
   gboolean noswitch=mainw->noswitch;
   gint pmonitor;
   int pwidth,pheight;
@@ -4081,9 +4086,13 @@ void load_frame_image(gint frame) {
 	int *clips,*frames;
 	weed_plant_t *event_list;
 
+	// should we record the output from the playback plugin ?
+	if (mainw->record && (prefs->rec_opts&REC_AFTER_PB) && mainw->ext_playback && 
+	    (mainw->vpp->capabilities&VPP_CAN_RETURN)) {
+	  rec_after_pb=TRUE;
+	}
 
-
-	if ((cfile->clip_type!=CLIP_TYPE_DISK&&cfile->clip_type!=CLIP_TYPE_FILE)||
+	if (rec_after_pb||(cfile->clip_type!=CLIP_TYPE_DISK&&cfile->clip_type!=CLIP_TYPE_FILE)||
 	    (prefs->rec_opts&REC_EFFECTS&&bg_file!=-1&&(mainw->files[bg_file]->clip_type!=CLIP_TYPE_DISK&&
 							mainw->files[bg_file]->clip_type!=CLIP_TYPE_FILE))) {
 	  // TODO - handle non-opening of scrap_file
@@ -4095,7 +4104,8 @@ void load_frame_image(gint frame) {
 	}
 
 	if (mainw->record_starting) {
-	  event_list=append_marker_event(mainw->event_list, mainw->currticks, EVENT_MARKER_RECORD_START); // mark record start
+	  // mark record start
+	  event_list=append_marker_event(mainw->event_list, mainw->currticks, EVENT_MARKER_RECORD_START);
 	  if (mainw->event_list==NULL) mainw->event_list=event_list;
 	  
 	  if (prefs->rec_opts&REC_EFFECTS) {
@@ -4262,6 +4272,7 @@ void load_frame_image(gint frame) {
 	    mainw->files[mainw->blend_file]->clip_type!=CLIP_TYPE_FILE)))) {
       get_max_opsize(&opwidth,&opheight);
     }
+
 
     ////////////////////////////////////////////////////////////
     // load a frame from disk buffer
@@ -4489,12 +4500,12 @@ void load_frame_image(gint frame) {
 #endif
 
     // save to scrap_file now if we have to
-    if (mainw->record&&!mainw->record_paused&&(prefs->rec_opts&REC_EFFECTS)&&
+    if (mainw->record&&!rec_after_pb&&!mainw->record_paused&&(prefs->rec_opts&REC_EFFECTS)&&
 	((cfile->clip_type!=CLIP_TYPE_DISK&&cfile->clip_type!=CLIP_TYPE_FILE)||
 	 (mainw->blend_file!=-1&&mainw->files[mainw->blend_file]!=NULL&&
 	  mainw->files[mainw->blend_file]->clip_type!=CLIP_TYPE_DISK&&
 	  mainw->files[mainw->blend_file]->clip_type!=CLIP_TYPE_FILE))) {
-      save_to_scrap_file (mainw->frame_layer);
+      if (!rec_after_pb) save_to_scrap_file (mainw->frame_layer);
       get_max_opsize(&opwidth,&opheight);
     }
  
@@ -4533,7 +4544,8 @@ void load_frame_image(gint frame) {
       // if we want letterboxing we do this ourselves, later in code
 
 
-      weed_plant_t *frame_layer;
+      weed_plant_t *frame_layer=NULL;
+      weed_plant_t *return_layer=NULL;
 
       layer_palette=weed_layer_get_palette(mainw->frame_layer);
 
@@ -4556,15 +4568,54 @@ void load_frame_image(gint frame) {
 
       if (mainw->stream_ticks==-1) mainw->stream_ticks=(mainw->currticks);
 
+      if (rec_after_pb) {
+	// record output from playback plugin
+	int retwidth=mainw->pwidth/weed_palette_get_pixels_per_macropixel(mainw->vpp->palette);
+	int retheight=mainw->pheight;
+
+	// plugin will use smaller of (screeen size, frame_layer size)
+	if (weed_get_int_value(frame_layer,"width",&weed_error)<retwidth) 
+	  retwidth=weed_get_int_value(frame_layer,"width",&weed_error);
+
+	if (weed_get_int_value(frame_layer,"height",&weed_error)<retheight) 
+	  retheight=weed_get_int_value(frame_layer,"height",&weed_error);
+
+	return_layer=weed_layer_new(retwidth,retheight,NULL,mainw->vpp->palette);
+
+	if (weed_palette_is_yuv_palette(mainw->vpp->palette)) {
+	  weed_set_int_value(return_layer,"YUV_clamping",mainw->vpp->YUV_clamping);
+	  weed_set_int_value(return_layer,"YUV_subspace",mainw->vpp->YUV_subspace);
+	  weed_set_int_value(return_layer,"YUV_sampling",mainw->vpp->YUV_sampling);
+	}
+
+	create_empty_pixel_data(return_layer,FALSE,TRUE);
+
+	// vid plugin expects compacted rowstrides (i.e. no padding/alignment after pixel row)
+	compact_rowstrides(return_layer);
+
+	retdata=weed_get_voidptr_array(return_layer,"pixel_data",&weed_error);
+
+      }
+
       if (!(*mainw->vpp->render_frame)(weed_get_int_value(frame_layer,"width",&weed_error),
 				       weed_get_int_value(mainw->frame_layer,"height",&weed_error),
-				       mainw->currticks-mainw->stream_ticks,pd_array,NULL)) {
+				       mainw->currticks-mainw->stream_ticks,pd_array,retdata)) {
 	vid_playback_plugin_exit();
+	if (return_layer!=NULL) weed_layer_free(return_layer);
+	weed_free(retdata);
+	return_layer=NULL;
       }
       weed_free(pd_array);
 
       if (frame_layer!=mainw->frame_layer) {
 	weed_layer_free(frame_layer);
+      }
+
+      if (return_layer!=NULL) {
+	save_to_scrap_file (return_layer);
+	weed_layer_free(return_layer);
+	weed_free(retdata);
+	return_layer=NULL;
       }
 
       if (mainw->vpp->capabilities&VPP_LOCAL_DISPLAY) {      
@@ -4679,6 +4730,7 @@ void load_frame_image(gint frame) {
       // - this is also used if we are letterboxing to fullscreen with an external plugin
 
       weed_plant_t *frame_layer=NULL;
+      weed_plant_t *return_layer=NULL;
 
       layer_palette=weed_layer_get_palette(mainw->frame_layer);
 
@@ -4745,17 +4797,50 @@ void load_frame_image(gint frame) {
       // vid plugin expects compacted rowstrides (i.e. no padding/alignment after pixel row)
       compact_rowstrides(frame_layer);
 
+      if (rec_after_pb) {
+	// record output from playback plugin
+	int retwidth=mainw->pwidth/weed_palette_get_pixels_per_macropixel(mainw->vpp->palette);
+	int retheight=mainw->pheight;
+	
+	return_layer=weed_layer_new(retwidth,retheight,NULL,mainw->vpp->palette);
+
+	if (weed_palette_is_yuv_palette(mainw->vpp->palette)) {
+	  weed_set_int_value(return_layer,"YUV_clamping",mainw->vpp->YUV_clamping);
+	  weed_set_int_value(return_layer,"YUV_subspace",mainw->vpp->YUV_subspace);
+	  weed_set_int_value(return_layer,"YUV_sampling",mainw->vpp->YUV_sampling);
+	}
+
+	create_empty_pixel_data(return_layer,FALSE,TRUE);
+
+	// vid plugin expects compacted rowstrides (i.e. no padding/alignment after pixel row)
+	compact_rowstrides(return_layer);
+
+	retdata=weed_get_voidptr_array(return_layer,"pixel_data",&weed_error);
+      }
+
       if (!(*mainw->vpp->render_frame)(weed_get_int_value(frame_layer,"width",&weed_error),
 				       weed_get_int_value(frame_layer,"height",&weed_error),
 				       mainw->currticks-mainw->stream_ticks,
 				       (pd_array=weed_get_voidptr_array(frame_layer,"pixel_data",&weed_error)),
-				       NULL)) {
+				       retdata)) {
 	vid_playback_plugin_exit();
+	if (return_layer!=NULL) {
+	  weed_layer_free(return_layer);
+	  weed_free(retdata);
+	  return_layer=NULL;
+	}
       }
       g_free(pd_array);
 
       if (frame_layer!=mainw->frame_layer) {
 	weed_layer_free(frame_layer);
+      }
+
+      if (return_layer!=NULL) {
+	save_to_scrap_file (return_layer);
+	weed_layer_free(return_layer);
+	weed_free(retdata);
+	return_layer=NULL;
       }
 
       if (mainw->vpp->capabilities&VPP_LOCAL_DISPLAY) {

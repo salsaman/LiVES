@@ -2394,17 +2394,37 @@ void lives_osc_cb_clip_encodeas(void *context, int arglen, const void *vargs, OS
 
   if (mainw->playing_file>-1||mainw->current_file<1) return lives_osc_notify_failure();
 
-  if (!lives_osc_check_arguments (arglen,vargs,"sii",FALSE)) { 
-    if (!lives_osc_check_arguments (arglen,vargs,"s",TRUE)) 
-      return lives_osc_notify_failure();
-    lives_osc_parse_string_argument(vargs,fname);
-    mainw->osc_enc_width=mainw->osc_enc_height=0;
+  if (mainw->preview||mainw->is_processing||mainw->multitrack!=NULL) return lives_osc_notify_failure();
+
+  if (cfile==NULL || cfile->opening) return lives_osc_notify_failure();
+
+  mainw->osc_enc_width=mainw->osc_enc_height=0;
+  mainw->osc_enc_fps=0.;
+
+  if (!lives_osc_check_arguments (arglen,vargs,"siif",FALSE)) { 
+    if (!lives_osc_check_arguments (arglen,vargs,"sii",FALSE)) { 
+      if (!lives_osc_check_arguments (arglen,vargs,"sf",FALSE)) { 
+	if (!lives_osc_check_arguments (arglen,vargs,"s",TRUE)) 
+	  return lives_osc_notify_failure();
+	lives_osc_parse_string_argument(vargs,fname);
+      }
+      lives_osc_check_arguments (arglen,vargs,"sf",TRUE);
+      lives_osc_parse_string_argument(vargs,fname);
+      lives_osc_parse_float_argument(vargs,&mainw->osc_enc_fps);
+    }
+    else {
+      lives_osc_check_arguments (arglen,vargs,"sii",TRUE);
+      lives_osc_parse_string_argument(vargs,fname);
+      lives_osc_parse_int_argument(vargs,&mainw->osc_enc_width);
+      lives_osc_parse_int_argument(vargs,&mainw->osc_enc_height);
+    }
   }
   else {
-    lives_osc_check_arguments (arglen,vargs,"sii",TRUE);
+    lives_osc_check_arguments (arglen,vargs,"siif",TRUE);
     lives_osc_parse_string_argument(vargs,fname);
     lives_osc_parse_int_argument(vargs,&mainw->osc_enc_width);
     lives_osc_parse_int_argument(vargs,&mainw->osc_enc_height);
+    lives_osc_parse_float_argument(vargs,&mainw->osc_enc_fps);
   }
 
   if (cfile->frames==0) {
@@ -4209,6 +4229,24 @@ void lives_osc_cb_open_file(void *context, int arglen, const void *vargs, OSCTim
 }
 
 
+void lives_osc_cb_new_audio(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+  gchar filename[OSC_STRING_SIZE];
+
+  if (mainw->preview||mainw->is_processing||mainw->multitrack!=NULL) return lives_osc_notify_failure();
+
+  if (mainw->playing_file>-1) return lives_osc_notify_failure();
+
+  if (mainw->current_file<1 || cfile==NULL || cfile->opening || cfile->frames==0) return lives_osc_notify_failure();
+
+  if (!lives_osc_check_arguments (arglen,vargs,"s",TRUE)) return lives_osc_notify_failure();
+
+  lives_osc_parse_string_argument(vargs,filename);
+  on_open_new_audio_clicked(NULL,filename);
+  lives_osc_notify_success(NULL);
+
+}
+
+
 void lives_osc_cb_loadset(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   gchar setname[OSC_STRING_SIZE];
 
@@ -4409,6 +4447,7 @@ static struct
     { "/clip/name/set",	 "set",	        lives_osc_cb_clip_set_name,			59	},
     { "/clip/fps/get",	 "get",	        lives_osc_cb_clip_get_ifps,			113	},
     { "/clip/open/file",	 "file",	        lives_osc_cb_open_file,			33	},
+    { "/clip/audio/new",	 "new", 	        lives_osc_cb_new_audio,			108	},
     { "/output/fullscreen/enable",		"enable",	lives_osc_cb_fssepwin_enable,		28	},
     { "/output/fullscreen/disable",		"disable",	lives_osc_cb_fssepwin_disable,       	28	},
     { "/output/fps/set",		"set",	lives_osc_cb_op_fps_set,       	52	},
@@ -4472,6 +4511,7 @@ static struct
     {	"/clip/selection/", 	        "selection",           55, 1,0	},
     {	"/clip/size/", 	        "size",           58, 1,0	},
     {	"/clip/name/", 	        "name",           59, 1,0	},
+    {	"/clip/audio/", 	"audio",           108, 1,0	},
     {	"/clipboard/", 		"clipboard",		 70, -1,0	},
     {	"/record/", 		"record",	 3, -1,0	},
     {	"/effect/" , 		"effects",	 4, -1,0	},

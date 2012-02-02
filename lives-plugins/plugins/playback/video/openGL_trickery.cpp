@@ -69,6 +69,7 @@ static GLXContext context;
 
 static boolean swapFlag = TRUE;
 static boolean is_direct;
+static boolean pbo_available;
 static boolean is_ext;
 
 static volatile boolean playing;
@@ -91,6 +92,7 @@ static int mode=0;
 static int dblbuf=1;
 static int nbuf=32;
 static boolean fsover=FALSE;
+static boolean use_pbo=FALSE;
 
 static float rquad;
 
@@ -103,7 +105,7 @@ static volatile uint32_t imgHeight;
 
 static void *render_thread_func(void *data);
 
-static Bool WaitForNotify( Display *dpy, XEvent *event, XPointer arg ) {
+static boolean WaitForNotify( Display *dpy, XEvent *event, XPointer arg ) {
   return (event->type == MapNotify) && (event->xmap.window == (Window) arg);
 }
 
@@ -135,6 +137,7 @@ static int ctexture;
 static _texture *textures;
 
 static GLuint *texID;
+static GLuint video_pbo;
 
 static int type;
 static int typesize;
@@ -184,6 +187,13 @@ const char *module_check_init(void) {
   if( !GL_ARB_texture_non_power_of_two) {
     snprintf (error,256,"\n\nGL_ARB_texture_non_power_of_two unavailable.\nCannot use plugin.\n");
     return error;
+  }
+
+  pbo_available=FALSE;
+
+  if (GL_ARB_pixel_buffer_object) {
+    pbo_available=TRUE;
+    use_pbo=TRUE;
   }
 
   render_fn=&render_frame_unknown;
@@ -444,26 +454,59 @@ static int get_size_for_type(int type) {
 }
 
 
+static volatile uint8_t *buffer_free(volatile uint8_t *retbuf) {
+  if (retbuf==NULL) return NULL;
+  if (use_pbo) {
+    GLint binding;
+    glGetIntegerv(GL_PIXEL_PACK_BUFFER_BINDING_ARB, &binding);
+    glBindBuffer(GL_PIXEL_PACK_BUFFER_ARB, video_pbo);
+    glUnmapBuffer(GL_PIXEL_PACK_BUFFER_ARB);
+    glBindBuffer(GL_PIXEL_PACK_BUFFER_ARB, binding);
+  }
+  else {
+    free((void *)retbuf);
+  }
+  return NULL;
+}
+
 
 static uint8_t *render_to_mainmem(int type) {
   // copy GL drawing buffer to main mem
 
-  uint8_t *xretbuf=(uint8_t *)malloc(window_width*window_height*get_size_for_type(type));
-
-  if (!xretbuf) return NULL;
+  uint8_t *xretbuf;
 
   glFlush();
 
   glPushAttrib(GL_PIXEL_MODE_BIT);
   glPushClientAttrib(GL_CLIENT_PIXEL_STORE_BIT);
-  
+
   glReadBuffer(swapFlag?GL_BACK:GL_FRONT);
   glPixelStorei(GL_PACK_ALIGNMENT, 1);
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-  glReadPixels(0, 0, window_width, window_height, type, GL_UNSIGNED_BYTE, xretbuf);
   
-  glPopClientAttrib();
-  glPopAttrib();
+  if (!use_pbo) {
+    xretbuf=(uint8_t *)malloc(window_width*window_height*get_size_for_type(type));
+    if (!xretbuf) {
+      glPopClientAttrib();
+      glPopAttrib();
+      return NULL;
+    }
+    glReadPixels(0, 0, window_width, window_height, type, GL_UNSIGNED_BYTE, xretbuf);
+  }
+  else {
+    GLint binding;
+
+    glGetIntegerv(GL_PIXEL_PACK_BUFFER_BINDING_ARB, &binding);
+    glBindBuffer(GL_PIXEL_PACK_BUFFER_ARB, video_pbo);
+
+    // read pixels into pbo buffer
+    glReadPixels(0, 0, window_width, window_height, type, GL_UNSIGNED_BYTE, NULL);
+
+    // map pbo to main memory
+    xretbuf = (uint8_t *)glMapBuffer(GL_PIXEL_PACK_BUFFER_ARB, GL_READ_ONLY);
+
+    glBindBuffer(GL_PIXEL_PACK_BUFFER_ARB, binding);
+  }
 
   return xretbuf;
 }
@@ -774,6 +817,23 @@ static boolean init_screen_inner (int width, int height, boolean fullscreen, uin
   glClearColor( 0.0, 0.0, 0.0, 0.0 );
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+
+  if (use_pbo) {
+    GLint binding;
+    glGetIntegerv(GL_PIXEL_PACK_BUFFER_BINDING_ARB, &binding);
+    glPushAttrib(GL_ALL_ATTRIB_BITS);
+    
+    glGenBuffers(1, &video_pbo);
+
+    glBindBuffer(GL_PIXEL_PACK_BUFFER_ARB, video_pbo);
+
+    // create a buffer the size of the window
+    glBufferData(GL_PIXEL_PACK_BUFFER_ARB, window_width * window_height * 4, NULL, GL_DYNAMIC_READ );
+    
+    glPopAttrib();
+    glBindBuffer(GL_PIXEL_PACK_BUFFER_ARB, binding);
+  }
+
   glFlush();
   if ( swapFlag ) glXSwapBuffers( dpy, glxWin );
 
@@ -878,11 +938,12 @@ static boolean Upload(int width, int height) {
   pthread_mutex_unlock(&rthread_mutex); // re-enable texture thread
 
   if (!return_ready&&retbuf!=NULL) {
-    free((void *)retbuf);
-    retbuf=NULL;
+    retbuf=buffer_free(retbuf);
   }
 
   texID=get_texture_texID(0);
+
+
 
   ////////////////////////////////////////////////////////////
   // modes
@@ -1804,7 +1865,11 @@ static boolean Upload(int width, int height) {
 
   if (retdata!=NULL) {
     // copy buffer to retbuf
-    if (retbuf!=NULL) free((void *)retbuf);
+
+    if (retbuf!=NULL) {
+      buffer_free(retbuf);
+    }
+
     retbuf=render_to_mainmem(type);
     return_ready=TRUE;
   }
@@ -1833,7 +1898,10 @@ static void *render_thread_func(void *data) {
     else pthread_mutex_unlock(&rthread_mutex);
   }
 
-  if (retbuf!=NULL) free((void *)retbuf);
+  if (retbuf!=NULL) {
+    buffer_free(retbuf);
+  }
+
   retbuf=NULL;
 
   return NULL;
@@ -1927,6 +1995,8 @@ void exit_screen (int16_t mouse_x, int16_t mouse_y) {
   if (texturebuf!=NULL) {
     free((void *)texturebuf);
   }
+
+  if (use_pbo) glDeleteBuffers(1, &video_pbo);
 
   if (ntextures>0) glDeleteTextures(ntextures,texID);
 

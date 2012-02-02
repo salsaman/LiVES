@@ -307,13 +307,9 @@ void
 on_spinbutton_end_value_changed          (GtkSpinButton   *spinbutton,
 					  gpointer         user_data);
 
-void
-on_ok_button4_clicked                     (GtkButton       *button,
-					   gpointer         user_data);
+void on_open_new_audio_clicked (GtkButton *, gpointer opt_filename);
 
-void
-on_load_audio_activate                  (GtkMenuItem     *menuitem,
-                                        gpointer         user_data);
+void on_load_audio_activate (GtkMenuItem *, gpointer user_data);
 
 void on_load_subs_activate (GtkMenuItem *menuitem, gpointer user_data);
 

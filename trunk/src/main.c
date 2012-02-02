@@ -4573,13 +4573,6 @@ void load_frame_image(gint frame) {
 	int retwidth=mainw->pwidth/weed_palette_get_pixels_per_macropixel(mainw->vpp->palette);
 	int retheight=mainw->pheight;
 
-	// plugin will use smaller of (screeen size, frame_layer size)
-	if (weed_get_int_value(frame_layer,"width",&weed_error)<retwidth) 
-	  retwidth=weed_get_int_value(frame_layer,"width",&weed_error);
-
-	if (weed_get_int_value(frame_layer,"height",&weed_error)<retheight) 
-	  retheight=weed_get_int_value(frame_layer,"height",&weed_error);
-
 	return_layer=weed_layer_new(retwidth,retheight,NULL,mainw->vpp->palette);
 
 	if (weed_palette_is_yuv_palette(mainw->vpp->palette)) {
@@ -4612,6 +4605,12 @@ void load_frame_image(gint frame) {
       }
 
       if (return_layer!=NULL) {
+	width=MIN(weed_get_int_value(frame_layer,"width",&weed_error),
+		  weed_get_int_value(return_layer,"width",&weed_error));
+	height=MIN(weed_get_int_value(mainw->frame_layer,"height",&weed_error),
+		   weed_get_int_value(return_layer,"height",&weed_error));
+	resize_layer(return_layer,width,height,LIVES_INTERP_FAST); 
+
 	save_to_scrap_file (return_layer);
 	weed_layer_free(return_layer);
 	weed_free(retdata);
@@ -4837,6 +4836,12 @@ void load_frame_image(gint frame) {
       }
 
       if (return_layer!=NULL) {
+	width=MIN(weed_get_int_value(frame_layer,"width",&weed_error),
+		  weed_get_int_value(return_layer,"width",&weed_error));
+	height=MIN(weed_get_int_value(mainw->frame_layer,"height",&weed_error),
+		   weed_get_int_value(return_layer,"height",&weed_error));
+	resize_layer(return_layer,width,height,LIVES_INTERP_FAST); 
+
 	save_to_scrap_file (return_layer);
 	weed_layer_free(return_layer);
 	weed_free(retdata);

@@ -495,13 +495,9 @@ static void render_to_gpumem_inner(int tnum, int width, int height, int type, in
 
 
 static void render_to_gpumem(int tnum, uint8_t *texturebuf) {
-
-
-
-
-
+  render_to_gpumem_inner(get_real_tnum(tnum,TRUE),get_texture_width(tnum),get_texture_height(tnum),
+			 get_texture_type(tnum),get_size_for_type(get_texture_type(tnum)),texturebuf);
 }
-
 
 
 
@@ -1864,14 +1860,7 @@ boolean render_frame_rgba (int hsize, int vsize, void **pixel_data, void **retur
     texturebuf=NULL;
 
     retdata=(uint8_t *)return_data[0]; // host created space for return data
-
-    if (imgWidth<window_width || imgHeight<window_height) {
-      // downsize retbuf to img size (iff smaller than screen/window size)
-      resize_buffer(retdata,imgWidth,imgHeight,retbuf,window_width,window_height,type);
-    }
-    else {
-      memcpy(retdata,retbuf,window_width*window_height*typesize);
-    }
+    memcpy(retdata,retbuf,window_width*window_height*typesize);
 
     return_ready=FALSE; // let render thread free retbuf
 

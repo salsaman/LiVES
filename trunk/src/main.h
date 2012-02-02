@@ -992,6 +992,7 @@ gchar *get_dir(const gchar *filename);
 void get_basename(gchar *filename);
 void get_filename(gchar *filename, gboolean strip_dir);
 gchar *get_extension(const gchar *filename);
+guint64 get_version_hash(const gchar *exe, const gchar *sep, int piece);
 void d_print(const gchar *text);
 void init_clipboard(void);
 gboolean cache_file_contents(const gchar *filename);

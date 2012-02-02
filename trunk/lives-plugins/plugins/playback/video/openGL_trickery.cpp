@@ -96,6 +96,7 @@ static float rquad;
 
 static pthread_t rthread;
 static pthread_mutex_t rthread_mutex;
+static pthread_mutex_t dpy_mutex;
 
 static volatile uint32_t imgWidth;
 static volatile uint32_t imgHeight;
@@ -447,9 +448,9 @@ static int get_size_for_type(int type) {
 static uint8_t *render_to_mainmem(int type) {
   // copy GL drawing buffer to main mem
 
-  uint8_t *retbuf=(uint8_t *)malloc(window_width*window_height*get_size_for_type(type));
+  uint8_t *xretbuf=(uint8_t *)malloc(window_width*window_height*get_size_for_type(type));
 
-  if (!retbuf) return NULL;
+  if (!xretbuf) return NULL;
 
   glFlush();
 
@@ -459,12 +460,12 @@ static uint8_t *render_to_mainmem(int type) {
   glReadBuffer(swapFlag?GL_BACK:GL_FRONT);
   glPixelStorei(GL_PACK_ALIGNMENT, 1);
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-  glReadPixels(0, 0, window_width, window_height, type, GL_UNSIGNED_BYTE, retbuf);
+  glReadPixels(0, 0, window_width, window_height, type, GL_UNSIGNED_BYTE, xretbuf);
   
   glPopClientAttrib();
   glPopAttrib();
 
-  return retbuf;
+  return xretbuf;
 }
 
 
@@ -1803,6 +1804,7 @@ static boolean Upload(int width, int height) {
 
   if (retdata!=NULL) {
     // copy buffer to retbuf
+    if (retbuf!=NULL) free((void *)retbuf);
     retbuf=render_to_mainmem(type);
     return_ready=TRUE;
   }
@@ -1832,6 +1834,7 @@ static void *render_thread_func(void *data) {
   }
 
   if (retbuf!=NULL) free((void *)retbuf);
+  retbuf=NULL;
 
   return NULL;
 }
@@ -1863,10 +1866,17 @@ boolean render_frame_rgba (int hsize, int vsize, void **pixel_data, void **retur
     retdata=(uint8_t *)return_data[0]; // host created space for return data
 
     pthread_mutex_unlock(&rthread_mutex); // render thread - GO !
+
     while (!return_ready) usleep(1000); // wait for return data
-    texturebuf=NULL;
+    pthread_mutex_lock(&rthread_mutex); // lock render thread while we grab data
 
     dst=(void *)retdata;
+    retdata=NULL;
+
+    pthread_mutex_unlock(&rthread_mutex); // render thread - GO !
+
+    texturebuf=NULL;
+
     src=(void *)retbuf+(window_height-1)*twidth;
 
     // texture is upside-down compared to image
@@ -1875,8 +1885,6 @@ boolean render_frame_rgba (int hsize, int vsize, void **pixel_data, void **retur
       dst+=twidth;
       src-=twidth;
     }
-
-    return_ready=FALSE; // let render thread free retbuf
 
   }
   else {
@@ -1934,11 +1942,13 @@ void exit_screen (int16_t mouse_x, int16_t mouse_y) {
 
   XFlush(dpy);
 
+  pthread_mutex_lock(&dpy_mutex);
   glXMakeContextCurrent(dpy, 0, 0, 0);
   glXDestroyContext(dpy, context);
-
   XCloseDisplay (dpy);
   dpy=NULL;
+  pthread_mutex_unlock(&dpy_mutex);
+
 }
 
 
@@ -1959,11 +1969,19 @@ boolean send_keycodes (keyfunc host_key_fn) {
 
   if (host_key_fn==NULL || dpy == NULL) return FALSE;
 
-  while (dpy!=NULL && XCheckWindowEvent( dpy, xWin, KeyPressMask | KeyReleaseMask, &xEvent ) ) {
-    keySymbol = XKeycodeToKeysym( dpy, xEvent.xkey.keycode, 0 );
-    mod_mask=xEvent.xkey.state;
-    host_key_fn (xEvent.type == KeyPress, keySymbol, mod_mask);
+  while ((volatile Display *)dpy!=NULL) {
+    pthread_mutex_lock(&dpy_mutex);
+    if ((volatile Display *)dpy!=NULL) {
+      if (XCheckWindowEvent( dpy, xWin, KeyPressMask | KeyReleaseMask, &xEvent ) ) {
+	keySymbol = XKeycodeToKeysym( dpy, xEvent.xkey.keycode, 0 );
+	mod_mask=xEvent.xkey.state;
+	host_key_fn (xEvent.type == KeyPress, keySymbol, mod_mask);
+      }
+      else break;
+    }
+    pthread_mutex_unlock(&dpy_mutex);
   }
+  pthread_mutex_unlock(&dpy_mutex);
 }
 
 

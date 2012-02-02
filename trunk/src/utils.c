@@ -1500,6 +1500,21 @@ void get_location(const gchar *exe, gchar *val, gint maxlen) {
 }
 
 
+guint64 get_version_hash(const gchar *exe, const gchar *sep, int piece) {
+  // get version hash output
+  FILE *rfile;
+  ssize_t rlen;
+  char val[16];
+  gchar *com=g_strdup_printf("smogrify get_version_hash \"%s\" \"%s\" %d",exe,sep,piece);
+  rfile=popen(com,"r");
+  rlen=fread(val,1,16,rfile);
+  pclose(rfile);
+  memset(val+rlen,0,1);
+  g_free(com);
+  return strtol(val,NULL,10);
+}
+
+
 gchar *repl_tmpdir(const gchar *entry, gboolean fwd) {
   // replace prefs->tmpdir with string tmpdir or vice-versa. This allows us to relocate tmpdir if necessary.
   // used for layout.map file

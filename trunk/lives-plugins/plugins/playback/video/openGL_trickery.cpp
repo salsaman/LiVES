@@ -1873,8 +1873,6 @@ boolean render_frame_rgba (int hsize, int vsize, void **pixel_data, void **retur
     dst=(void *)retdata;
     retdata=NULL;
 
-    pthread_mutex_unlock(&rthread_mutex); // render thread - GO !
-
     texturebuf=NULL;
 
     src=(void *)retbuf+(window_height-1)*twidth;
@@ -1898,8 +1896,9 @@ boolean render_frame_rgba (int hsize, int vsize, void **pixel_data, void **retur
     memcpy((void *)texturebuf,pixel_data[0],hsize*vsize*typesize);
 
     retdata=NULL;
-    pthread_mutex_unlock(&rthread_mutex); // re-enable render thread
   }
+
+  pthread_mutex_unlock(&rthread_mutex); // re-enable render thread
 
   return TRUE;
 }

@@ -587,8 +587,10 @@ typedef struct {
   gboolean has_encoder_plugins;
 
   gboolean has_python;
+  guint64 python_version;
 
   gshort cpu_bits;
+  
 
   gchar *myname_full;
   gchar *myname;

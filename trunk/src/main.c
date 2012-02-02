@@ -1747,6 +1747,7 @@ capability *get_capabilities (void) {
   capable->has_midistartstop=FALSE;
   capable->has_encoder_plugins=FALSE;
   capable->has_python=FALSE;
+  capable->python_version=0;
   capable->has_stderr=TRUE;
   capable->has_gconftool_2=FALSE;
   capable->has_xdg_screensaver=FALSE;
@@ -1879,7 +1880,10 @@ capability *get_capabilities (void) {
   if (strlen(string)) capable->has_pulse_audio=TRUE;
 
   get_location("python",string,256);
-  if (strlen(string)) capable->has_python=TRUE;
+  if (strlen(string)) {
+    capable->has_python=TRUE;
+    capable->python_version=get_version_hash("python -V 2>&1"," ",1);
+  }
 
   get_location("xwininfo",string,256);
   if (strlen(string)) capable->has_xwininfo=TRUE;

@@ -1580,9 +1580,12 @@ gboolean check_encoder_restrictions (gboolean get_extension, gboolean user_audio
     rdet->suggestion_followed=FALSE;
   }
 
-  if (mainw->osc_auto&&mainw->osc_enc_width>0) {
-    width=mainw->osc_enc_width;
-    height=mainw->osc_enc_height;
+  if (mainw->osc_auto) {
+    if (mainw->osc_enc_width>0) {
+      width=mainw->osc_enc_width;
+      height=mainw->osc_enc_height;
+    }
+    if (mainw->osc_enc_fps!=0.) fps=mainw->osc_enc_fps;
   }
 
   // TODO - allow lists for size

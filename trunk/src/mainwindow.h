@@ -419,9 +419,10 @@ typedef struct {
 
   gboolean osc_auto; ///< bypass user choices automatically
 
-  /// encode width and height set externally
+  /// encode width, height and fps set externally
   gint osc_enc_width;
   gint osc_enc_height;
+  float osc_enc_fps;
 
 
   /// fixed fps playback; usually fixed_fpsd==0.

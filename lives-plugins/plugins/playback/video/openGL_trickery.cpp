@@ -77,9 +77,9 @@ static volatile boolean has_texture;
 static volatile boolean has_new_texture;
 static volatile boolean return_ready;
 
-static uint8_t *texturebuf;
-static uint8_t *retdata;
-static uint8_t *retbuf;
+static volatile uint8_t *texturebuf;
+static volatile uint8_t *retdata;
+static volatile uint8_t *retbuf;
 
 static int m_WidthFS;
 static int m_HeightFS;
@@ -451,6 +451,8 @@ static uint8_t *render_to_mainmem(int type) {
 
   if (!retbuf) return NULL;
 
+  glFlush();
+
   glPushAttrib(GL_PIXEL_MODE_BIT);
   glPushClientAttrib(GL_CLIENT_PIXEL_STORE_BIT);
   
@@ -468,7 +470,7 @@ static uint8_t *render_to_mainmem(int type) {
 
 
 
-static void render_to_gpumem_inner(int tnum, int width, int height, int type, int typesize, uint8_t *texturebuf) {
+static void render_to_gpumem_inner(int tnum, int width, int height, int type, int typesize, volatile uint8_t *texturebuf) {
   int mipMapLevel=0;
   int texID=get_texture_texID(tnum);
   
@@ -476,7 +478,7 @@ static void render_to_gpumem_inner(int tnum, int width, int height, int type, in
   
   glBindTexture( m_TexTarget, texID );
   
-  glTexImage2D( m_TexTarget, mipMapLevel, type, width, height, 0, type, GL_UNSIGNED_BYTE, texturebuf );
+  glTexImage2D( m_TexTarget, mipMapLevel, type, width, height, 0, type, GL_UNSIGNED_BYTE, (const GLvoid*)texturebuf );
   glGenerateMipmap(m_TexTarget);
   
   glDisable( m_TexTarget );
@@ -872,14 +874,14 @@ static boolean Upload(int width, int height) {
 
   }
 
-  texID=get_texture_texID(0);
   pthread_mutex_unlock(&rthread_mutex); // re-enable texture thread
 
-
   if (!return_ready&&retbuf!=NULL) {
-    free(retbuf);
+    free((void *)retbuf);
     retbuf=NULL;
   }
+
+  texID=get_texture_texID(0);
 
   ////////////////////////////////////////////////////////////
   // modes
@@ -1829,7 +1831,7 @@ static void *render_thread_func(void *data) {
     else pthread_mutex_unlock(&rthread_mutex);
   }
 
-  if (retbuf!=NULL) free(retbuf);
+  if (retbuf!=NULL) free((void *)retbuf);
 
   return NULL;
 }
@@ -1838,6 +1840,7 @@ static void *render_thread_func(void *data) {
 
 
 boolean render_frame_rgba (int hsize, int vsize, void **pixel_data, void **return_data) {
+
   pthread_mutex_lock(&rthread_mutex); // wait for lockout of render thread
 
   has_texture=TRUE;
@@ -1847,20 +1850,31 @@ boolean render_frame_rgba (int hsize, int vsize, void **pixel_data, void **retur
   imgHeight=vsize;
 
   if (return_data!=NULL) {
+    size_t twidth=window_width*typesize;
+    void *dst,*src;
+    register int i;
 
     if (texturebuf!=NULL) {
-      free(texturebuf);
+      free((void *)texturebuf);
     }
+
     texturebuf=(uint8_t *)pixel_data[0]; // no memcpy needed, as we will not free pixel_data until render_thread has used it
     return_ready=FALSE;
-    pthread_mutex_unlock(&rthread_mutex); // re-enable render thread
+    retdata=(uint8_t *)return_data[0]; // host created space for return data
 
-
+    pthread_mutex_unlock(&rthread_mutex); // render thread - GO !
     while (!return_ready) usleep(1000); // wait for return data
     texturebuf=NULL;
 
-    retdata=(uint8_t *)return_data[0]; // host created space for return data
-    memcpy(retdata,retbuf,window_width*window_height*typesize);
+    dst=(void *)retdata;
+    src=(void *)retbuf+(window_height-1)*twidth;
+
+    // texture is upside-down compared to image
+    for (i=0;i<window_height;i++) {
+      memcpy(dst,src,twidth);
+      dst+=twidth;
+      src-=twidth;
+    }
 
     return_ready=FALSE; // let render thread free retbuf
 
@@ -1868,12 +1882,12 @@ boolean render_frame_rgba (int hsize, int vsize, void **pixel_data, void **retur
   else {
     if (hsize!=imgWidth || vsize!=imgHeight || texturebuf==NULL) {
       if (texturebuf!=NULL) {
-	free(texturebuf);
+	free((void *)texturebuf);
       }
       texturebuf=(uint8_t *)malloc(hsize*vsize*typesize);
     }
     
-    memcpy(texturebuf,pixel_data[0],hsize*vsize*typesize);
+    memcpy((void *)texturebuf,pixel_data[0],hsize*vsize*typesize);
 
     retdata=NULL;
     pthread_mutex_unlock(&rthread_mutex); // re-enable render thread
@@ -1904,7 +1918,7 @@ void exit_screen (int16_t mouse_x, int16_t mouse_y) {
   pthread_join(rthread,NULL);
 
   if (texturebuf!=NULL) {
-    free(texturebuf);
+    free((void *)texturebuf);
   }
 
   if (ntextures>0) glDeleteTextures(ntextures,texID);

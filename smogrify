@@ -1652,6 +1652,7 @@ if (defined($ARGV[0])) {
 
 	if ($command eq "ext_save") {
 	    shift(@ARGV);
+	    $curtmpdir="$tmpdir/$handle";
 	    $execname=$ARGV[1];
 	    shift(@ARGV);
 
@@ -1672,6 +1673,7 @@ if (defined($ARGV[0])) {
 
 	
 	if ($command eq "save") {
+
 	    $get_rfx=0;
 
 	    if ($handle eq "get_rfx") {
@@ -1882,7 +1884,6 @@ if (defined($ARGV[0])) {
 	    }
 
 	    unless ($plugin eq "") {
-		#non-perl
 		$atype=&rc_get("encoder_acodec");
 		$fields="$fps \"$nfile\" $start $end $img_ext $otype $atype $hsize $vsize";
 		$fields.=" $DEBUG_ENCODERS";
@@ -1919,6 +1920,7 @@ if (defined($ARGV[0])) {
 	    else {
 		$command="get_rfx";
 	    }
+
 	    return 1;
 	    exit 0; # just in case
 	}

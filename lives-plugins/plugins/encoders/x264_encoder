@@ -112,8 +112,6 @@ if ($command eq "encode") {
 	exit 1;
     }
 
-    chdir $curtmpdir;
-
     $err=">/dev/null 2>&1";
     if (defined($DEBUG_ENCODERS)) {
 	$err="1>&2";

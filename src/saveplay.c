@@ -1640,12 +1640,13 @@ void save_file (int clip, int start, int end, const char *filename) {
     g_free(tmp);
   }
   else {
-    // for native plugins we go via the plugin
-    com=g_strdup_printf("smogrify ext_save \"%s\" \"%s\" \"%s\" \"%s\" %d %d %d %d %d %d %.4f %.4f %s %s",
-			cfile->handle, enc_exec_name,
+    // for native (perl) plugins we go via the plugin
+    com=g_strdup_printf("\"%s\" save \"%s\" \"%s\" \"%s\" \"%s\" %d %d %d %d %d %d %.4f %.4f %s %s",
+			enc_exec_name, cfile->handle, "",
 			fps_string,(tmp=g_filename_from_utf8(full_file_name,-1,NULL,NULL,NULL)),
 			startframe,cfile->frames,arate,cfile->achans,cfile->asampsize,
 			asigned|aendian,aud_start,aud_end,(extra_params==NULL?"":extra_params),redir);
+
     g_free(tmp);
   }
   g_free (fps_string);

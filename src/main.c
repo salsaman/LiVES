@@ -720,7 +720,7 @@ static void lives_init(_ign_opts *ign_opts) {
     set_int_pref("record_opts",prefs->rec_opts);
   }
 
-  prefs->rec_opts|=(REC_FPS+REC_FRAMES);
+  prefs->rec_opts|=(REC_FPS+REC_FRAMES+REC_AFTER_PB);
 
   mainw->new_clip=-1;
   mainw->record=FALSE;
@@ -4605,10 +4605,10 @@ void load_frame_image(gint frame) {
       }
 
       if (return_layer!=NULL) {
-	width=MIN(weed_get_int_value(frame_layer,"width",&weed_error),
-		  weed_get_int_value(return_layer,"width",&weed_error));
-	height=MIN(weed_get_int_value(mainw->frame_layer,"height",&weed_error),
-		   weed_get_int_value(return_layer,"height",&weed_error));
+	int width=MIN(weed_get_int_value(frame_layer,"width",&weed_error),
+		      weed_get_int_value(return_layer,"width",&weed_error));
+	int height=MIN(weed_get_int_value(mainw->frame_layer,"height",&weed_error),
+		       weed_get_int_value(return_layer,"height",&weed_error));
 	resize_layer(return_layer,width,height,LIVES_INTERP_FAST); 
 
 	save_to_scrap_file (return_layer);
@@ -4836,10 +4836,10 @@ void load_frame_image(gint frame) {
       }
 
       if (return_layer!=NULL) {
-	width=MIN(weed_get_int_value(frame_layer,"width",&weed_error),
-		  weed_get_int_value(return_layer,"width",&weed_error));
-	height=MIN(weed_get_int_value(mainw->frame_layer,"height",&weed_error),
-		   weed_get_int_value(return_layer,"height",&weed_error));
+	int width=MIN(weed_get_int_value(frame_layer,"width",&weed_error),
+		      weed_get_int_value(return_layer,"width",&weed_error));
+	int height=MIN(weed_get_int_value(mainw->frame_layer,"height",&weed_error),
+		       weed_get_int_value(return_layer,"height",&weed_error));
 	resize_layer(return_layer,width,height,LIVES_INTERP_FAST); 
 
 	save_to_scrap_file (return_layer);

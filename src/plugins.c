@@ -59,6 +59,8 @@ static GList *get_plugin_result (const gchar *command, const gchar *delim, gbool
   threaded_dialog_spin();
 
   outfile=g_strdup_printf ("%s/.smogplugin.%d",prefs->tmpdir,getpid());
+  unlink(outfile);
+
   com=g_strconcat (command," > \"",outfile,"\"",NULL);
 
   mainw->error=FALSE;
@@ -1096,6 +1098,7 @@ _vppaw *on_vpp_advanced_clicked (GtkButton *button, gpointer user_data) {
 		    vppa);
 
 
+
   gtk_widget_show_all(vppa->dialog);
   gtk_window_present (GTK_WINDOW (vppa->dialog));
   gdk_window_raise(vppa->dialog->window);
@@ -1438,22 +1441,15 @@ gint64 get_best_audio(_vid_playback_plugin *vpp) {
     com=g_strdup_printf("\"%s\" get_formats",astreamer);
 
     rfile=popen(com,"r");
-    if (!rfile) {
-      // command failed
-      do_system_failed_error(com,0,NULL);
-      g_free(astreamer);
-      g_free(com);
-      return ret;
-    }
     rlen=fread(buf,1,1023,rfile);
     pclose(rfile);
     memset(buf+rlen,0,1);
     g_free(com);
-    
+
     nfmts=get_token_count(buf,'|');
     array=g_strsplit(buf,"|",nfmts);
-    sfmts=(int *)g_malloc(nfmts*sizint);
-    
+    sfmts=g_malloc(nfmts*sizint);
+
     for (i=0;i<nfmts;i++) {
       if (array[i]!=NULL&&strlen(array[i])>0) sfmts[j++]=atoi(array[i]);
     }
@@ -2024,10 +2020,12 @@ GList *filter_encoders_by_img_ext(GList *encoders, const gchar *img_ext) {
   GList *list=encoders,*listnext;
   int caps;
   char *blacklist[]={
+    NULL,
     NULL
   };
 
-  if (!strcmp(img_ext,"jpg")) return encoders; // jpeg is the default
+  // something broke as of python 2.7.2, and python 3 files now just hang
+  if (capable->python_version<3000000) blacklist[0]=g_strdup("multi_encoder3");
 
   while (list!=NULL) {
     gboolean skip=FALSE;
@@ -2035,7 +2033,7 @@ GList *filter_encoders_by_img_ext(GList *encoders, const gchar *img_ext) {
 
     listnext=list->next;
 
-    while (blacklist[i++]!=NULL) {
+    while (blacklist[i]!=NULL) {
       if (strlen((char *)list->data)==strlen(blacklist[i])&&!strcmp((char *)list->data,blacklist[i])) {
 	// skip blacklisted encoders
 	g_free(list->data);
@@ -2049,6 +2047,8 @@ GList *filter_encoders_by_img_ext(GList *encoders, const gchar *img_ext) {
       list=listnext;
       continue;
     }
+
+    if (!strcmp(img_ext,"jpg")) continue;
 
     if ((encoder_capabilities=plugin_request(PLUGIN_ENCODERS,(gchar *)list->data,"get_capabilities"))==NULL) {
       g_free(list->data);

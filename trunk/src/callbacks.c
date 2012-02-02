@@ -5920,7 +5920,10 @@ void on_fs_preview_clicked (GtkButton *button, gpointer user_data) {
       xwin=(unsigned long)GDK_WINDOW_XID (mainw->fs_playarea->window);
 #else
       // need equivalent to get XID of win on other platforms
-      do_blocking_error_dialog(_("Preview will not work without X11. We need the window id of the preview window.\nPlease send a patch if you know how to do this.\n"));
+      msg=g_strdup(_("Preview will not work without X11. We need the window id of the preview window.\nPlease send a patch if you know how to do this.\n"));
+      do_blocking_error_dialog(msg);
+      g_free(msg);
+
 #endif
 
     }
@@ -6281,10 +6284,7 @@ open_sel_range_activate(void)
 }
 
 
-void
-on_ok_button4_clicked                  (GtkButton       *button,
-                                        gpointer         user_data)
-{
+void on_open_new_audio_clicked (GtkButton *button, gpointer user_data) {
   // open audio file
   gchar *a_type;
   gchar *com,*mesg,*tmp;
@@ -6340,11 +6340,15 @@ on_ok_button4_clicked                  (GtkButton       *button,
   oundo_start=cfile->undo_start;
   oundo_end=cfile->undo_end;
 
-  g_snprintf(file_name,PATH_MAX,"%s",(tmp=g_filename_to_utf8(gtk_file_selection_get_filename
-							     (GTK_FILE_SELECTION(gtk_widget_get_toplevel
-										 (GTK_WIDGET(button)))),
-							     -1,NULL,NULL,NULL)));
-  g_free(tmp);
+  if (user_data==NULL) {
+    g_snprintf(file_name,PATH_MAX,"%s",(tmp=g_filename_to_utf8(gtk_file_selection_get_filename
+							       (GTK_FILE_SELECTION(gtk_widget_get_toplevel
+										   (GTK_WIDGET(button)))),
+							       -1,NULL,NULL,NULL)));
+    g_free(tmp);
+  }
+  else g_snprintf(file_name,PATH_MAX,(char *)user_data);
+
   g_snprintf(mainw->audio_dir,PATH_MAX,"%s",file_name);
   get_dirname(mainw->audio_dir);
   end_fs_preview();
@@ -8034,7 +8038,7 @@ on_load_audio_activate (GtkMenuItem *menuitem, gpointer user_data) {
   if (strlen(mainw->audio_dir)) {
     gtk_file_selection_set_filename(GTK_FILE_SELECTION(fileselection), mainw->audio_dir);
   }
-  g_signal_connect (GTK_FILE_SELECTION(fileselection)->ok_button, "clicked",G_CALLBACK (on_ok_button4_clicked),NULL);
+  g_signal_connect (GTK_FILE_SELECTION(fileselection)->ok_button, "clicked",G_CALLBACK (on_open_new_audio_clicked),NULL);
   gtk_widget_show (fileselection);
 }
 

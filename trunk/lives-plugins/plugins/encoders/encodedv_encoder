@@ -96,11 +96,12 @@ if ($command eq "encode") {
     # encode 
     $encoder_command="encodedv";
 
-    chdir $curtmpdir;
-
     $to_ext=".ppm";
 
     $passes=1;
+
+    $usemp3=$ARGV[13];
+
 
     if ($otype eq "dv_ntsc_medhi"||$otype eq "dv_pal_medhi") {
 	$passes=2;
@@ -138,8 +139,6 @@ if ($command eq "encode") {
 if ($command eq "clear") {
     # this is called after "encode"
     # note that encoding could have been stopped at any time
-
-    chdir $curtmpdir;
 
     $to_ext=".ppm";
 

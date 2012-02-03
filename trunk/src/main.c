@@ -720,7 +720,7 @@ static void lives_init(_ign_opts *ign_opts) {
     set_int_pref("record_opts",prefs->rec_opts);
   }
 
-  prefs->rec_opts|=(REC_FPS+REC_FRAMES+REC_AFTER_PB);
+  prefs->rec_opts|=(REC_FPS+REC_FRAMES);
 
   mainw->new_clip=-1;
   mainw->record=FALSE;

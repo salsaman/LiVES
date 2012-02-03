@@ -2044,11 +2044,12 @@ boolean send_keycodes (keyfunc host_key_fn) {
       if (XCheckWindowEvent( dpy, xWin, KeyPressMask | KeyReleaseMask, &xEvent ) ) {
 	keySymbol = XKeycodeToKeysym( dpy, xEvent.xkey.keycode, 0 );
 	mod_mask=xEvent.xkey.state;
+	pthread_mutex_unlock(&dpy_mutex);
+
 	host_key_fn (xEvent.type == KeyPress, keySymbol, mod_mask);
       }
       else break;
     }
-    pthread_mutex_unlock(&dpy_mutex);
   }
   pthread_mutex_unlock(&dpy_mutex);
 }

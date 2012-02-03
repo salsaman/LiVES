@@ -1517,6 +1517,8 @@ channel/channel_template (in which case the range is 0 - 255 for each component)
 
 Subspace may be any YUV subspace, unless "YUV_subspace" is set for channel/channel_template.
 
+All channels are assumed to be 8 bit.
+
 {{{
 WEED_PALETTE_YUV422P           WEED_PALETTE_YV16
 [Official name 'YV16', 8 bit Y plane followed by 8

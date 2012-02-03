@@ -75,6 +75,9 @@ static Bool WaitForNotify( Display *dpy, XEvent *event, XPointer arg ) {
   return (event->type == MapNotify) && (event->xmap.window == (Window) arg);
 }
 
+static pthread_mutex_t dpy_mutex;
+
+#include <pthread.h>
 
 //////////////////////////////////////////////
 
@@ -627,11 +630,14 @@ void exit_screen (int16_t mouse_x, int16_t mouse_y) {
 
   XFlush(dpy);
 
+  pthread_mutex_lock(&dpy_mutex);
   glXMakeContextCurrent(dpy, 0, 0, 0);
   glXDestroyContext(dpy, context);
 
   XCloseDisplay (dpy);
   dpy=NULL;
+  pthread_mutex_unlock(&dpy_mutex);
+
 }
 
 
@@ -651,12 +657,21 @@ boolean send_keycodes (keyfunc host_key_fn) {
 
   if (host_key_fn==NULL || dpy == NULL) return FALSE;
 
-  while (dpy!=NULL && XCheckWindowEvent( dpy, xWin, KeyPressMask | KeyReleaseMask, &xEvent ) ) {
-    keySymbol = XKeycodeToKeysym( dpy, xEvent.xkey.keycode, 0 );
-    mod_mask=xEvent.xkey.state;
-    //fprintf(stderr,"sending %d %d %d\n",xEvent.type == KeyPress, keySymbol, mod_mask);
-    host_key_fn (xEvent.type == KeyPress, keySymbol, mod_mask);
+  while ((volatile Display *)dpy!=NULL) {
+    pthread_mutex_lock(&dpy_mutex);
+    if ((volatile Display *)dpy!=NULL) {
+      if (XCheckWindowEvent( dpy, xWin, KeyPressMask | KeyReleaseMask, &xEvent ) ) {
+	keySymbol = XKeycodeToKeysym( dpy, xEvent.xkey.keycode, 0 );
+	mod_mask=xEvent.xkey.state;
+	pthread_mutex_unlock(&dpy_mutex);
+
+	host_key_fn (xEvent.type == KeyPress, keySymbol, mod_mask);
+      }
+      else break;
+    }
   }
+  pthread_mutex_unlock(&dpy_mutex);
+
 }
 
 

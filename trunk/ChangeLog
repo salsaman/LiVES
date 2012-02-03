@@ -1,13 +1,15 @@
 Version 1.6.1
 -------------
 Optimise playback by tweaking audio settings.
+Fix regression in backup.
 Fix floating point fps bug for mkv decoder. *
 Fix external window capture to work with Compiz.
-Add (experimental) openGL playback plugin.
+Add (experimental) openGL playback plugins. (Thanks to Antti Silvast).
 Minor GUI fixes.
 Implement recording of external audio during playback.
 Prevent clip names getting squashed in sets. *
 Further code cleanup.
+Updated translations to Ukranian, Finnish and UK English.
 
 
 

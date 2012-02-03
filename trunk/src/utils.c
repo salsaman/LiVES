@@ -3957,7 +3957,7 @@ gchar *subst (const gchar *string, const gchar *from, const gchar *to) {
   gchar *ret=g_strdup(string),*first;
   gchar *search=ret;
 
-  while ((search=strstr (search,from))!=NULL) {
+  while ((search=g_strstr_len (search,-1,from))!=NULL) {
     first=g_strndup(ret,search-ret);
     search=g_strdup(search+strlen(from));
     g_free(ret);

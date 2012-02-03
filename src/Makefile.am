@@ -146,12 +146,6 @@ giw_LDADD=-lm
 giw_CFLAGS=-DENABLE_GIW=1
 endif
 
-if HAVE_OPENCV
-opencv_CFLAGS = @OPENCV_CFLAGS@ -DHAVE_OPENCV
-opencv_LDFLAGS = @OPENCV_LIBS_ONLY_L@ -lopencv_core -lopencv_video
-endif
-
-
 
 lives_exe_SOURCES = \
 	widget-helper.c widget-helper.h \

@@ -251,6 +251,9 @@ static const gchar *get_omc_const(const gchar *cname) {
   if (!strcmp(cname,"LIVES_OSC_NOTIFY_FAILED")) 
     return QUOTEME(LIVES_OSC_NOTIFY_FAILED);
 
+  if (!strcmp(cname,"LIVES_FPS_MAX")) 
+    return QUOTEME(FPS_MAX);
+
   lives_osc_notify_failure();
 
   return "";
@@ -928,9 +931,39 @@ void lives_osc_cb_bgclip_select(void *context, int arglen, const void *vargs, OS
 }
 
 
+void lives_osc_cb_clip_resample(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+  int fps;
+  float fpsf;
+  gdouble fpsd;
 
 
-void lives_osc_cb_clip_close(void *context, int arglen, const void *vargs, OSCTimeTag when,	NetworkReturnAddressPtr ra) {
+  if (mainw->playing_file>-1) return lives_osc_notify_failure();
+
+  if (mainw->current_file<1||mainw->preview||mainw->is_processing) return lives_osc_notify_failure();
+
+  if (!lives_osc_check_arguments (arglen,vargs,"f",FALSE)) {
+    if (!lives_osc_check_arguments (arglen,vargs,"i",TRUE)) return lives_osc_notify_failure();
+    lives_osc_parse_int_argument(vargs,&fps);
+    fpsd=(gdouble)(fps*1.);
+  }
+  else {
+    lives_osc_check_arguments (arglen,vargs,"f",TRUE);
+    lives_osc_parse_float_argument(vargs,&fpsf);
+    fpsd=(gdouble)fpsf;
+  }
+
+  if (fpsd<1.&&fpsd>FPS_MAX) return lives_osc_notify_failure();
+  
+  cfile->undo1_dbl=fpsd;
+
+  on_resample_vid_ok(NULL,NULL);
+
+  return lives_osc_notify_success(NULL);
+}
+
+
+
+void lives_osc_cb_clip_close(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   int noaudio=0;
   int clipno=mainw->current_file;
   gint current_file=clipno;
@@ -4396,6 +4429,7 @@ static struct
     { "/clipboard/insert_before",		"insert_before",	lives_osc_cb_clipbd_insertb,			70	},
     { "/clipboard/insert_after",		"insert_after",	lives_osc_cb_clipbd_inserta,			70	},
     { "/clip/retrigger",		"retrigger",	lives_osc_cb_fgclip_retrigger,			1	},
+    { "/clip/resample",		        "resample",	lives_osc_cb_clip_resample,			1	},
     { "/clip/select/next",		"next",	lives_osc_cb_fgclip_select_next,			54	},
     { "/clip/select/previous",		"previous",	lives_osc_cb_fgclip_select_previous,			54	},
     { "/clip/foreground/select",		"select",	lives_osc_cb_fgclip_select,			47	},

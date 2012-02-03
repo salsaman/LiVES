@@ -954,9 +954,7 @@ on_resample_video_activate (GtkMenuItem     *menuitem,
 
 
 
-void
-on_resample_vid_ok (GtkButton *button, GtkEntry *entry)
-{
+void on_resample_vid_ok (GtkButton *button, GtkEntry *entry) {
   int i;
   gint old_frames;
   gint ostart=cfile->start;

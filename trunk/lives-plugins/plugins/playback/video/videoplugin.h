@@ -65,7 +65,8 @@ typedef int boolean;
 const char *module_check_init (void);
 const char *version (void);
 const char *get_description (void);  ///< optional
-const char *get_rfx (void);  ///< optional
+const char *get_init_rfx (void);  ///< optional
+const void **get_play_params (void);  ///< optional (but should return a weed plantptr array of paramtmpl)
 
 /// plugin send list of palettes, in order of preference
 const int *get_palette_list(void);

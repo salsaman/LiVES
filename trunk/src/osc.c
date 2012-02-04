@@ -4862,7 +4862,6 @@ gboolean lives_osc_init(guint udp_port) {
     if (livesOSC==NULL) return FALSE;
     status_socket=NULL;
     notify_socket=NULL;
-    if (udp_port!=0) gtk_timeout_add(KEY_RPT_INTERVAL,&lives_osc_poll,NULL);
   }
 
   return TRUE;

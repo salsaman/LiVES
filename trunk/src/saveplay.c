@@ -2417,9 +2417,6 @@ void play_file (void) {
     if (mainw->osc_auto) lives_osc_notify_success(NULL);
 #endif
     
-    // add a timer for the keyboard and other realtime events (osc, midi, joystick, etc)
-    mainw->kb_timer=gtk_timeout_add (KEY_RPT_INTERVAL,&plugin_poll_keyboard,NULL);
-
 #ifdef ENABLE_JACK
     if (mainw->event_list!=NULL&&!mainw->record&&audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL&&
 	!(mainw->preview&&mainw->is_processing&&
@@ -2569,7 +2566,6 @@ void play_file (void) {
     } while (mainw->multitrack!=NULL&&(mainw->loop_cont||mainw->scratch!=SCRATCH_NONE)&&
 	     (mainw->cancelled==CANCEL_NONE||mainw->cancelled==CANCEL_EVENT_LIST_END));
     mainw->osc_block=TRUE;
-    gtk_timeout_remove (mainw->kb_timer);
     mainw->rte_textparm=NULL;
 
     mainw->playing_file=-1;

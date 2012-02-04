@@ -1,6 +1,6 @@
 // keyboard.c
 // LiVES
-// (c) G. Finch 2004 - 2011 <salsaman@xs4all.nl,salsaman@gmail.com>
+// (c) G. Finch 2004 - 2012 <salsaman@xs4all.nl,salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -75,15 +75,23 @@ static void handle_omc_events(void) {
 
 
 gboolean ext_triggers_poll(gpointer data) {
+
+  if (mainw->playing_file>-1) plugin_poll_keyboard(); ///< keyboard control during playback
+
   // check for external controller events
 #ifdef ENABLE_JACK
 #ifdef ENABLE_JACK_TRANSPORT
-  if (mainw->jack_trans_poll) lives_jack_poll(); // check for jack transport start
+  if (mainw->jack_trans_poll) lives_jack_poll(); ///<   check for jack transport start
 #endif
 #endif
 
 #ifdef ENABLE_OSC
-  handle_omc_events(); // check for playback start triggered by js, MIDI, etc.
+  handle_omc_events(); ///< check for playback start triggered by js, MIDI, etc.
+#endif
+
+  /// if we have OSC we will poll it here,
+#ifdef ENABLE_OSC
+  if (prefs->osc_udp_started) lives_osc_poll(NULL);
 #endif
 
   return TRUE;
@@ -91,19 +99,27 @@ gboolean ext_triggers_poll(gpointer data) {
 
 
 
-gboolean 
-key_snooper (GtkWidget *widget, GdkEventKey *event, gpointer data) {
-  // this gets called for every keypress - check for cached keys
-  guint modifiers;
-  handle_omc_events();
-  modifiers = gtk_accelerator_get_default_mod_mask ();
 
-  return pl_key_function ((event->type==GDK_KEY_PRESS),event->keyval,event->state&modifiers);
+GdkFilterReturn filter_func(GdkXEvent *xevent, GdkEvent *event, gpointer data) {
+  // filter events at X11 level and act on key press/release
+
+#ifdef USE_X11
+  guint modifiers;
+  XEvent *xev=(XEvent *)xevent;
+  if (xev->type<2||xev->type>3) return GDK_FILTER_CONTINUE;
+  modifiers = gtk_accelerator_get_default_mod_mask() & xev->xkey.state;
+  if (xev->type==2) return pl_key_function(TRUE,xev->xkey.keycode,modifiers)?GDK_FILTER_REMOVE:GDK_FILTER_CONTINUE;
+  return pl_key_function(FALSE,xev->xkey.keycode,modifiers)?GDK_FILTER_REMOVE:GDK_FILTER_CONTINUE;
+#else
+  g_printerr("Do not know how to handle key events for non-X11 window managers.\nPlease send a patch if you know how to do it.\n");
+  return GDK_FILTER_CONTINUE;
+#endif
 }
 
 
-gboolean 
-plugin_poll_keyboard (gpointer data) {
+
+
+gboolean plugin_poll_keyboard (void) {
   static int last_kb_time=0,current_kb_time;
 
   // this is a function which should be called periodically during playback.
@@ -114,10 +130,11 @@ plugin_poll_keyboard (gpointer data) {
   // as of LiVES 1.1.0, this is now called 10 times faster to provide lower latency for
   // OSC and external controllers
 
+
   if (mainw->ext_keyboard) {
-    //let plugin call pl_key_function itself, with any keycodes it has received
+     //let plugin call pl_key_function itself, with any keycodes it has received
     if (mainw->vpp->send_keycodes!=NULL) (*mainw->vpp->send_keycodes)(pl_key_function);
-  }
+   }
   
   current_kb_time=mainw->currticks*(1000/U_SEC_RATIO);
 
@@ -127,27 +144,6 @@ plugin_poll_keyboard (gpointer data) {
     gtk_accel_groups_activate (G_OBJECT (mainw->LiVES),(guint)cached_key, (GdkModifierType)cached_mod);
   }
 
-
-  // if we have OSC we will poll it here, as we seem to only be able to run 1 gtk_timeout 
-  // at a time
-#ifdef ENABLE_OSC
-  if (prefs->osc_udp_started) lives_osc_poll(NULL);
-#endif
-
-
-  if (!mainw->is_processing||(mainw->multitrack!=NULL&&mainw->playing_file==mainw->multitrack->render_file&&
-			      !mainw->multitrack->is_rendering)) {
-
-  // check jack transport state
-#ifdef ENABLE_JACK
-#ifdef ENABLE_JACK_TRANSPORT
-    if (mainw->jack_trans_poll) lives_jack_poll(); // check for jack transport start
-#endif
-#endif
-
-    handle_omc_events();
-
-  }
   return TRUE;
 }
 
@@ -356,7 +352,6 @@ gboolean dblsize_callback (GtkAccelGroup *group, GObject *obj, guint keyval, Gdk
 
 gboolean rec_callback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer user_data) {
   gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mainw->record_perf),!gtk_check_menu_item_get_active (GTK_CHECK_MENU_ITEM (mainw->record_perf)));
-  LIVES_DEBUG("rozzz");
   return TRUE;
 }
 

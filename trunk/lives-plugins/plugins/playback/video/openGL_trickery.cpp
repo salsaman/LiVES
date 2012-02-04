@@ -12,6 +12,13 @@
 #include <unistd.h>
 #include <assert.h>
 
+
+#ifdef HAVE_SYSTEM_WEED
+#include <weed/weed.h>
+#else
+#include "../../../../libweed/weed.h"
+#endif
+
 ////////////////////////////////////////////////////////////////////////////////////
 
 static char plugin_version[64]="LiVES openGL trickery playback engine version 1.0";
@@ -230,7 +237,7 @@ uint64_t get_capabilities (int palette) {
   return VPP_CAN_RESIZE|VPP_CAN_RETURN|VPP_LOCAL_DISPLAY;
 }
 
-const char *get_rfx (void) {
+const char *get_init_rfx (void) {
   return \
     "<define>\\n\
 |1.7\\n\
@@ -250,6 +257,11 @@ fsover|Over-ride _fullscreen setting (for debugging)|bool|0|0 \\n\
 <onchange> \\n\
 </onchange> \\n\
 ";
+}
+
+
+const void **get_play_params (void) {
+
 }
 
 
@@ -1917,8 +1929,6 @@ boolean render_frame_rgba (int hsize, int vsize, void **pixel_data, void **retur
   has_texture=TRUE;
   has_new_texture=TRUE;
 
-  imgWidth=hsize;
-  imgHeight=vsize;
 
   if (return_data!=NULL) {
     size_t twidth=window_width*typesize;
@@ -1932,6 +1942,9 @@ boolean render_frame_rgba (int hsize, int vsize, void **pixel_data, void **retur
     texturebuf=(uint8_t *)pixel_data[0]; // no memcpy needed, as we will not free pixel_data until render_thread has used it
     return_ready=FALSE;
     retdata=(uint8_t *)return_data[0]; // host created space for return data
+
+    imgWidth=hsize;
+    imgHeight=vsize;
 
     pthread_mutex_unlock(&rthread_mutex); // render thread - GO !
 
@@ -1962,6 +1975,9 @@ boolean render_frame_rgba (int hsize, int vsize, void **pixel_data, void **retur
     }
     
     memcpy((void *)texturebuf,pixel_data[0],hsize*vsize*typesize);
+
+    imgWidth=hsize;
+    imgHeight=vsize;
 
     retdata=NULL;
   }

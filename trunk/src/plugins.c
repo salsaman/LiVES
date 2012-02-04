@@ -1041,7 +1041,7 @@ _vppaw *on_vpp_advanced_clicked (GtkButton *button, gpointer user_data) {
 
   // extra params
 
-  if (tmpvpp->get_rfx!=NULL) {
+  if (tmpvpp->get_init_rfx!=NULL) {
     GtkWidget *vbox=gtk_vbox_new (FALSE, 0);
     GtkWidget *scrolledwindow = gtk_scrolled_window_new (NULL, NULL);
     gtk_widget_set_size_request (scrolledwindow, RFX_WINSIZE_H, RFX_WINSIZE_V/2);
@@ -1053,7 +1053,7 @@ _vppaw *on_vpp_advanced_clicked (GtkButton *button, gpointer user_data) {
     gtk_widget_show (vbox);
     gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (scrolledwindow), vbox);
 
-    com=g_strdup_printf("/bin/echo -e \"%s\"",(*tmpvpp->get_rfx)());
+    com=g_strdup_printf("/bin/echo -e \"%s\"",(*tmpvpp->get_init_rfx)());
 
     plugin_run_param_window(com,GTK_VBOX(vbox),&(vppa->rfx));
     g_free(com);
@@ -1185,7 +1185,7 @@ _vid_playback_plugin *open_vid_playback_plugin (const gchar *name, gboolean in_u
   if ((vpp->get_capabilities=(guint64 (*)(int))dlsym (handle,"get_capabilities"))==NULL) {
     OK=FALSE;
   }
-  if ((vpp->render_frame=(gboolean (*)(int, int, int64_t, void*, void*))dlsym (handle,"render_frame"))==NULL) {
+  if ((vpp->render_frame=(gboolean (*)(int, int, int64_t, void**, void**))dlsym (handle,"render_frame"))==NULL) {
     OK=FALSE;
   }
   if ((vpp->get_fps_list=(const gchar* (*)(int))dlsym (handle,"get_fps_list"))!=NULL) {
@@ -1220,7 +1220,8 @@ _vid_playback_plugin *open_vid_playback_plugin (const gchar *name, gboolean in_u
 
   // now check for optional functions
   vpp->get_description=(const char* (*)())dlsym (handle,"get_description");
-  vpp->get_rfx=(const char* (*)())dlsym (handle,"get_rfx");
+  vpp->get_init_rfx=(const char* (*)())dlsym (handle,"get_init_rfx");
+  vpp->get_play_rfx=(const char* (*)())dlsym (handle,"get_play_rfx");
   vpp->get_yuv_palette_clamping=(int* (*)(int))dlsym (handle,"get_yuv_palette_clamping");
   vpp->set_yuv_palette_clamping=(int (*)(int))dlsym (handle,"set_yuv_palette_clamping");
   vpp->send_keycodes=(gboolean (*)(plugin_keyfunc))dlsym (handle,"send_keycodes");
@@ -1367,6 +1368,9 @@ _vid_playback_plugin *open_vid_playback_plugin (const gchar *name, gboolean in_u
       vpp->fixed_fps_numer=0;
     }
   }
+
+  // get the play parameters if any and convert to weed params
+
 
 
   if (vpp->send_keycodes==NULL&&vpp->capabilities&VPP_LOCAL_DISPLAY) {

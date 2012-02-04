@@ -192,7 +192,7 @@ const int *get_audio_fmts() {
 const char rfx[32768];
 
 
-const char *get_rfx (void) {
+const char *get_init_rfx (void) {
   char **vdevs = get_vloopback2_devices();
   char devstr[30000];
   size_t slen=0;

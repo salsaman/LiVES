@@ -692,8 +692,7 @@ static void lives_init(_ign_opts *ign_opts) {
   // can now be set through OSC: /output/nodrop/enable
   mainw->noframedrop=FALSE;
 
-  // install our key_snooper, this will do for ctrl-arrow key autorepeat
-  mainw->ksnoop=gtk_key_snooper_install (key_snooper, NULL);
+  gdk_window_add_filter(NULL, filter_func, NULL);
 
   prefs->omc_noisy=FALSE;
   prefs->omc_events=TRUE;
@@ -2216,7 +2215,7 @@ static gboolean lives_startup(gpointer data) {
 
   mainw->go_away=FALSE;
 
-  gtk_timeout_add(KEY_RPT_INTERVAL,&ext_triggers_poll,NULL);
+  mainw->kb_timer=gtk_timeout_add(KEY_RPT_INTERVAL,&ext_triggers_poll,NULL);
 
 #ifdef HAVE_YUV4MPEG
   if (strlen(prefs->yuvin)>0) g_idle_add(open_yuv4m_startup,NULL);

@@ -49,7 +49,6 @@ typedef struct {
   const char *(*module_check_init)(void);
   const char *(*version) (void);
   const char *(*get_description) (void);
-  const char *(*get_rfx) (void);
   gint *(*get_palette_list) (void);
   gboolean (*set_palette) (int palette);
   guint64 (*get_capabilities) (int palette);
@@ -61,6 +60,9 @@ typedef struct {
   void (*module_unload) (void);
   const gchar *(*get_fps_list) (int palette);
   gboolean (*set_fps) (gdouble fps);
+  
+  const char *(*get_init_rfx) (void);
+  const char *(*get_play_rfx) (void);
 
   // only for display plugins
   gboolean (*send_keycodes) (plugin_keyfunc);

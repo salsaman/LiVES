@@ -126,7 +126,7 @@ uint64_t get_capabilities (int palette) {
   return VPP_CAN_RESIZE|VPP_LOCAL_DISPLAY;
 }
 
-const char *get_rfx (void) {
+const char *get_init_rfx (void) {
   return \
 "<define>\\n\
 |1.7\\n\

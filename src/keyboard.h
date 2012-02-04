@@ -1,6 +1,6 @@
 // keyboard.h
 // LiVES
-// (c) G. Finch 2004 - 2009 <salsaman@xs4all.nl,salsaman@gmail.com>
+// (c) G. Finch 2004 - 2012 <salsaman@xs4all.nl,salsaman@gmail.com>
 // see file ../COPYING for licensing details
 
 // repeating keys
@@ -20,15 +20,11 @@ guint16 cached_mod;
 
 gboolean ext_triggers_poll(gpointer); ///< poll for external playback start
 
+GdkFilterReturn filter_func(GdkXEvent *xevent, GdkEvent *event, gpointer data);
 
-/// smooth key repeat for some keys
-gboolean key_snooper (GtkWidget *widget, GdkEventKey *event, gpointer data);
+gboolean plugin_poll_keyboard (void);
 
-gboolean 
-plugin_poll_keyboard (gpointer data);
-
-gboolean 
-pl_key_function (gboolean down, guint16 unicode, guint16 keymod);
+gboolean pl_key_function (gboolean down, guint16 unicode, guint16 keymod);
 
 gboolean faster_callback (GtkAccelGroup *, GObject *, guint, GdkModifierType, gpointer user_data);
 

@@ -39,8 +39,7 @@ vjack_libs = vjack_rcv.la
 vjack_rcv_la_LDFLAGS = -ljack $(AM_LDFLAGS)
 endif
 
-#haar_analyser_la_SOURCES = haar_analyser.cpp
-#	haar_analyser.la 
+haar_analyser_la_SOURCES = haar_analyser.cpp
 
 
 fxpluginslib_LTLIBRARIES = gdk_fast_resize.la \
@@ -49,6 +48,7 @@ fxpluginslib_LTLIBRARIES = gdk_fast_resize.la \
 	scribbler.la \
 	puretext.la \
 	mask_overlay.la \
+	haar_analyser.la \
 	$(vjack_libs) 
 
 

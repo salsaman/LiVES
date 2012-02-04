@@ -6,7 +6,7 @@ ifdef([m4_pattern_allow],
       [m4_pattern_allow([^AC_.*])])
 
 dnl IMPORTANT !! $version must also be set to exactly the same string in smogrify
-AC_INIT(LiVES,1.6.1,http://www.sourceforge.net/tracker/?group_id=64341&atid=507139)
+AC_INIT(LiVES,1.6.2-svn,http://www.sourceforge.net/tracker/?group_id=64341&atid=507139)
 AC_CANONICAL_HOST
 AC_CANONICAL_TARGET
 
@@ -392,21 +392,21 @@ AM_CONDITIONAL(HAVE_AVUTIL,$HAVE_AVUTIL)
 AM_CONDITIONAL(HAVE_SWSCALE,$HAVE_SWSCALE)
 
 
-dnl HAVE_OPENCV=false
+HAVE_OPENCV=false
 
 dnl check for opencv
 
-dnl PKG_CHECK_MODULES(OPENCV, opencv >= 2.3.1, HAVE_OPENCV=true, HAVE_OPENCV=false)
+PKG_CHECK_MODULES(OPENCV, opencv >= 2.3.1, HAVE_OPENCV=true, HAVE_OPENCV=false)
 
-dnl if test "HAVE_OPENCV" = "true" ; then
-dnl OPENCV_LIBS_ONLY_L = `pkg-config opencv --libs-only-L`
-dnl fi
+if test "HAVE_OPENCV" = "true" ; then
+OPENCV_LIBS_ONLY_L = `pkg-config opencv --libs-only-L`
+fi
 
 
-dnl AC_SUBST(OPENCV_CFLAGS)
-dnl AC_SUBST(OPENCV_LIBS_ONLY_L)
+AC_SUBST(OPENCV_CFLAGS)
+AC_SUBST(OPENCV_LIBS_ONLY_L)
 
-dnl AM_CONDITIONAL(HAVE_OPENCV,$HAVE_OPENCV)
+AM_CONDITIONAL(HAVE_OPENCV,$HAVE_OPENCV)
 
 
 dnl check for openGL
@@ -451,11 +451,11 @@ AM_CONDITIONAL(HAVE_GLEE,$HAVE_GLEE)
 
 
 dnl check for GLU
-dnl PKG_CHECK_MODULES(GLU,glu,HAVE_GLU=true,HAVE_GLU=false)
-dnl AC_SUBST(GLU_CFLAGS)
-dnl AC_SUBST(GLU_LIBS)
+PKG_CHECK_MODULES(GLU,glu,HAVE_GLU=true,HAVE_GLU=false)
+AC_SUBST(GLU_CFLAGS)
+AC_SUBST(GLU_LIBS)
 
-dnl AM_CONDITIONAL(HAVE_GLU,$HAVE_GLU)
+AM_CONDITIONAL(HAVE_GLU,$HAVE_GLU)
 
 
 

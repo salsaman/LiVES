@@ -1,5 +1,5 @@
-Version 1.6.1
--------------
+Version 1.6.1 (04 February 2012)
+--------------------------------
 Optimise playback by tweaking audio settings.
 Fix regression in backup.
 Fix floating point fps bug for mkv decoder. *

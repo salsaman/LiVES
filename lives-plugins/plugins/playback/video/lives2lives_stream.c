@@ -217,7 +217,7 @@ boolean set_palette (int palette) {
   return FALSE;
 }
 
-const char *get_rfx (void) {
+const char *get_init_rfx (void) {
   return \
 "<define>\\n\
 |1.7\\n\

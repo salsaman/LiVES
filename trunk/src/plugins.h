@@ -53,7 +53,7 @@ typedef struct {
   gint *(*get_palette_list) (void);
   gboolean (*set_palette) (int palette);
   guint64 (*get_capabilities) (int palette);
-  gboolean (*render_frame) (int hsize, int vsize, int64_t timecode, void *pixel_data, void *return_data);
+  gboolean (*render_frame) (int hsize, int vsize, int64_t timecode, void **pixel_data, void **return_data);
 
   // optional
   gboolean (*init_screen) (int width, int height, gboolean fullscreen, uint64_t window_id, int argc, gchar **argv);

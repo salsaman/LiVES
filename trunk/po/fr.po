@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: fr\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2012-02-03 16:11-0300\n"
+"POT-Creation-Date: 2012-02-04 10:59-0300\n"
 "PO-Revision-Date: 2012-01-11 01:14+0000\n"
 "Last-Translator: salsaman <salsaman@gmail.com>\n"
 "Language-Team: Français <kwizart@gmail.com>\n"
@@ -10941,8 +10941,9 @@ msgid "_Frames"
 msgstr "_Cadres"
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
+#, fuzzy
 msgid "_Hold for"
-msgstr ""
+msgstr "_Couleur Vide"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
 #, fuzzy

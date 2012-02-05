@@ -390,7 +390,7 @@ boolean init_screen (int width, int height, boolean fullscreen, uint64_t window_
 
 
 
-boolean render_frame (int hsize, int vsize, int64_t tc, void **pixel_data, void **return_data) {
+boolean render_frame (int hsize, int vsize, int64_t tc, void **pixel_data, void **rd, void **pp) {
   // hsize and vsize are in [macro]pixels (n-byte)
   size_t frame_size,bytes;
 

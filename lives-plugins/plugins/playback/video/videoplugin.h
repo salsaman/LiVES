@@ -66,7 +66,9 @@ const char *module_check_init (void);
 const char *version (void);
 const char *get_description (void);  ///< optional
 const char *get_init_rfx (void);  ///< optional
-const void **get_play_params (void);  ///< optional (but should return a weed plantptr array of paramtmpl)
+
+///< optional (but should return a weed plantptr array of paramtmpl and chantmpl, NULL terminated)
+const void **get_play_params (void); 
 
 /// plugin send list of palettes, in order of preference
 const int *get_palette_list(void);
@@ -93,7 +95,9 @@ boolean init_screen (int width, int height, boolean fullscreen, uint64_t window_
 ///
 /// hsize and vsize are width and height of the pixel data (in macropixels)
 /// no extra padding (rowstrides) is allowed
-boolean render_frame (int hsize, int vsize, int64_t timecode, void **pixel_data, void **return_data);
+/// play_params should be cast to weed_plant_t ** (if the plugin exports get_play_paramtmpls() )
+boolean render_frame (int hsize, int vsize, int64_t timecode, void **pixel_data, void **return_data, 
+		      void **play_params);
 
 /// destroy the screen, return mouse to original posn., allow the host GUI to take over (optional)
 void exit_screen (int16_t mouse_x, int16_t mouse_y);

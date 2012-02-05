@@ -15,8 +15,20 @@
 
 #ifdef HAVE_SYSTEM_WEED
 #include <weed/weed.h>
+#include <weed/weed-effects.h>
+#include <weed/weed-utils.h>
+#include <weed/weed-plugin.h>
 #else
 #include "../../../../libweed/weed.h"
+#include "../../../../libweed/weed-effects.h"
+#include "../../../../libweed/weed-utils.h"
+#include "../../../../libweed/weed-plugin.h"
+#endif
+
+#ifdef HAVE_SYSTEM_WEED_PLUGIN_UTILS
+#include <weed/weed-plugin-utils.h>
+#else
+#include "../../../../libweed/weed-plugin-utils.h"
 #endif
 
 ////////////////////////////////////////////////////////////////////////////////////
@@ -120,6 +132,15 @@ static GLenum m_TexTarget=GL_TEXTURE_2D;
 
 static float tfps;
 
+static int num_versions=2; // number of different weed api versions supported
+static int api_versions[]={131}; // array of weed api versions supported in plugin
+static weed_plant_t *plugin_info;
+
+static weed_plant_t *params[7];
+static int zmode;
+static float zfft0;
+static char *zsubtitles;
+
 
 typedef struct {
   int width;
@@ -220,6 +241,19 @@ const char *module_check_init(void) {
 
   mypalette=WEED_PALETTE_END;
 
+
+  // play params
+  params[0]=weed_integer_init ("mode", "Playback _mode", -1, -1, 10);
+  params[1]=weed_float_init ("fft0", "fft value 0", 0., 0., 1.);
+  params[2]=weed_float_init ("fft1", "fft value 1", 0., 0., 1.);
+  params[3]=weed_float_init ("fft2", "fft value 2", 0., 0., 1.);
+  params[4]=weed_float_init ("fft3", "fft value 3", 0., 0., 1.);
+  params[5]=weed_text_init ("subtitles", "_Subtitles", "");
+  params[6]=NULL;
+
+  zsubtitles=NULL;
+  plugin_info=NULL;
+
   return NULL;
 }
 
@@ -260,8 +294,9 @@ fsover|Over-ride _fullscreen setting (for debugging)|bool|0|0 \\n\
 }
 
 
-const void **get_play_params (void) {
-
+const void **get_play_params (weed_bootstrap_f weed_boot) {
+  if (plugin_info==NULL) plugin_info=weed_plugin_info_init(weed_boot,num_versions,api_versions);
+  return (const void **)params;
 }
 
 
@@ -927,12 +962,13 @@ static void resize_buffer(uint8_t *out, int owidth, int oheight, uint8_t *in, in
 
 
 
-
 static boolean Upload(int width, int height) {
   int imgWidth=width;
   int imgHeight=height;
 
   int texID;
+
+  if (zmode!=-1) mode=zmode;
 
   if (has_new_texture) {
     ctexture++;
@@ -1997,8 +2033,58 @@ boolean render_frame_unknown (int hsize, int vsize, void **pixel_data, void **re
 }
 
 
-boolean render_frame (int hsize, int vsize, int64_t tc, void **pixel_data, void **return_data) {
+
+
+void decode_pparams(weed_plant_t **pparams) {
+  register int i;
+  weed_plant_t *ptmpl;
+  char *pname;
+  int error;
+
+  zmode=0;
+  zfft0=0.;
+  if (zsubtitles!=NULL) weed_free(zsubtitles);
+  zsubtitles=NULL;
+
+  if (pparams==NULL) return;
+  while (pparams[i]!=NULL) {
+    type=weed_get_int_value(pparams[i],"type",&error);
+    if (type==WEED_PLANT_PARAMETER) {
+      ptmpl=weed_get_plantptr_value(pparams[i],"template",&error);
+      pname=weed_get_string_value(ptmpl,"name",&error);
+      
+      if (!strcmp(pname,"mode")) {
+	zmode=weed_get_int_value(pparams[i],"value",&error);
+      }
+      else if (!strcmp(pname,"fft0")) {
+	zfft0=(float)weed_get_double_value(pparams[i],"value",&error);
+      }
+      else if (!strcmp(pname,"subtitles")) {
+	zsubtitles=weed_get_string_value(pparams[i],"value",&error);
+      }
+      
+      weed_free(pname);
+    }
+    else {
+      // must be an alpha channel
+
+      
+      
+    }
+  }
+
+
+}
+
+
+boolean render_frame (int hsize, int vsize, int64_t tc, void **pixel_data, void **return_data, void **pp) {
   // call the function which was set in set_palette
+  weed_plant_t **pparams=(weed_plant_t **)pp;
+
+  if (pparams!=NULL) {
+    decode_pparams(pparams);
+  }
+
   return render_fn (hsize,vsize,pixel_data,return_data);
 }
 
@@ -2039,7 +2125,7 @@ void exit_screen (int16_t mouse_x, int16_t mouse_y) {
 
 
 void module_unload(void) {
-
+  if (zsubtitles!=NULL) weed_free(zsubtitles);
 }
 
 

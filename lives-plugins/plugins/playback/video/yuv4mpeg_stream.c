@@ -1,5 +1,5 @@
 // LiVES - yuv4mpeg stream engine
-// (c) G. Finch 2004 - 2008 <salsaman@xs4all.nl,salsaman@gmail.com>
+// (c) G. Finch 2004 - 2012 <salsaman@xs4all.nl,salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
 
@@ -14,9 +14,9 @@ static int clampings[3];
 
 static char plugin_version[64]="LiVES yuv4mpeg playback engine version 1.1";
 
-static boolean (*render_fn)(int hsize, int vsize, void **pixel_data, void **return_data);
-boolean render_frame_yuv420 (int hsize, int vsize, void **pixel_data, void **return_data);
-boolean render_frame_unknown (int hsize, int vsize, void **pixel_data, void **return_data);
+static boolean (*render_fn)(int hsize, int vsize, void **pixel_data);
+boolean render_frame_yuv420 (int hsize, int vsize, void **pixel_data);
+boolean render_frame_unknown (int hsize, int vsize, void **pixel_data);
 
 static int ov_vsize,ov_hsize;
 
@@ -138,12 +138,12 @@ boolean init_screen (int width, int height, boolean fullscreen, uint64_t window_
 }
 
 
-boolean render_frame (int hsize, int vsize, int64_t tc, void **pixel_data, void **return_data) {
+boolean render_frame (int hsize, int vsize, int64_t tc, void **pixel_data, void **rd, void **pp) {
   // call the function which was set in set_palette
-  return render_fn (hsize,vsize,pixel_data,return_data);
+  return render_fn (hsize,vsize,pixel_data);
 }
 
-boolean render_frame_yuv420 (int hsize, int vsize, void **pixel_data, void **return_data) {
+boolean render_frame_yuv420 (int hsize, int vsize, void **pixel_data) {
   int i;
 
   if ((ov_hsize!=hsize||ov_vsize!=vsize)) {
@@ -168,7 +168,7 @@ boolean render_frame_yuv420 (int hsize, int vsize, void **pixel_data, void **ret
   return TRUE;
 }
 
-boolean render_frame_unknown (int hsize, int vsize, void **pixel_data, void **return_data) {
+boolean render_frame_unknown (int hsize, int vsize, void **pixel_data) {
   if (mypalette==WEED_PALETTE_END) {
     fprintf(stderr,"yuv4mpeg_stream plugin error: No palette was set !\n");
   }

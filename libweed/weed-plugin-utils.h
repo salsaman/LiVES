@@ -60,11 +60,13 @@ extern "C"
 {
 #endif /* __cplusplus */
 
+#ifdef __WEED_EFFECTS_H__
   weed_plant_t *weed_plugin_info_init (weed_bootstrap_f weed_boot, int num_versions, int *api_versions);
+  weed_plant_t *weed_filter_class_init (const char *name, const char *author, int version, int flags, weed_init_f init_func, weed_process_f process_func, weed_deinit_f deinit_func, weed_plant_t **in_chantmpls, weed_plant_t **out_chantmpls, weed_plant_t **in_paramtmpls, weed_plant_t **out_paramtmpls);
+#endif
   int weed_get_api_version(weed_plant_t *plugin_info);
   weed_plant_t *weed_channel_template_init (const char *name, int flags, int *palettes);
   weed_plant_t *weed_audio_channel_template_init (const char *name, int flags);
-  weed_plant_t *weed_filter_class_init (const char *name, const char *author, int version, int flags, weed_init_f init_func, weed_process_f process_func, weed_deinit_f deinit_func, weed_plant_t **in_chantmpls, weed_plant_t **out_chantmpls, weed_plant_t **in_paramtmpls, weed_plant_t **out_paramtmpls);
   void weed_plugin_info_add_filter_class (weed_plant_t *plugin_info, weed_plant_t *filter_class);
   weed_plant_t *weed_parameter_template_get_gui (weed_plant_t *paramt);
   weed_plant_t *weed_filter_class_get_gui (weed_plant_t *filter);

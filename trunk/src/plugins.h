@@ -49,10 +49,13 @@ typedef struct {
   const char *(*module_check_init)(void);
   const char *(*version) (void);
   const char *(*get_description) (void);
+
   gint *(*get_palette_list) (void);
   gboolean (*set_palette) (int palette);
   guint64 (*get_capabilities) (int palette);
-  gboolean (*render_frame) (int hsize, int vsize, int64_t timecode, void **pixel_data, void **return_data);
+
+  gboolean (*render_frame) (int hsize, int vsize, int64_t timecode, void **pixel_data, void **return_data,
+			    weed_plant_t **play_params);
 
   // optional
   gboolean (*init_screen) (int width, int height, gboolean fullscreen, uint64_t window_id, int argc, gchar **argv);
@@ -62,8 +65,10 @@ typedef struct {
   gboolean (*set_fps) (gdouble fps);
   
   const char *(*get_init_rfx) (void);
-  const char *(*get_play_rfx) (void);
 
+  ///< optional (but should return a weed plantptr array of paramtmpl and chantmpl, NULL terminated)
+  const weed_plant_t **(*get_play_params) (void); 
+  
   // only for display plugins
   gboolean (*send_keycodes) (plugin_keyfunc);
 
@@ -102,6 +107,11 @@ typedef struct {
   int extra_argc;
   gchar **extra_argv;
 
+  const weed_plant_t **play_paramtmpls;
+  weed_plant_t **play_params;
+  weed_plant_t **alpha_chans;
+  int num_play_params;
+  int num_alpha_chans;
 
 } _vid_playback_plugin;
 

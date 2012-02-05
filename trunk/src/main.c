@@ -234,7 +234,6 @@ static gboolean pre_init(void) {
   gchar buff[256];
   int i;
   gboolean needs_update=FALSE;
-  gchar *rcfile;
 
   sizint=sizeof(gint);
   sizdbl=sizeof(gdouble);
@@ -306,9 +305,8 @@ static gboolean pre_init(void) {
   }
 
   // from here onwards we can use get_pref() and friends  //////
-  rcfile=g_strdup_printf("%s/.lives",capable->home_dir);
-  cache_file_contents(rcfile);
-  g_free(rcfile);
+  capable->rcfile=g_strdup_printf("%s/.lives",capable->home_dir);
+  cache_file_contents(capable->rcfile);
 
   get_pref("gui_theme",prefs->theme,64);
   if (!strlen(prefs->theme)) {
@@ -1435,7 +1433,13 @@ static void lives_init(_ign_opts *ign_opts) {
 #else
 	      gchar *otherbit="\"lives -aplayer sox\".";
 #endif
-	      g_printerr("%s%s\n\n",_("\n\nManual start of jackd required. Please make sure jackd is running, \nor else change the value of <jack_opts> in ~/.lives to 16\nand restart LiVES.\n\nAlternatively, try to start lives with either \"lives -jackopts 16\", or "),otherbit);
+	      gchar *tmp;
+
+	      gchar *msg=g_strdup_printf(_("\n\nManual start of jackd required. Please make sure jackd is running, \nor else change the value of <jack_opts> in %s to 16\nand restart LiVES.\n\nAlternatively, try to start lives with either \"lives -jackopts 16\", or "),(tmp=g_filename_to_utf8(capable->rcfile,-1,NULL,NULL,NULL)));
+	      g_printerr("%s%s\n\n",msg,otherbit);
+	      g_free(msg);
+	      g_free(tmp);
+
 	    }
 
 	    if (mainw->jackd==NULL) {
@@ -2004,7 +2008,9 @@ static gboolean lives_startup(gpointer data) {
   if (capable->smog_version_correct) {
     if (theme_expected&&palette->style==STYLE_PLAIN&&!mainw->foreign) {
       // non-fatal errors
-      gchar *err=g_strdup_printf(_ ("\n\nThe theme you requested could not be located. Please make sure you have the themes installed in\n%s/%s.\n(Maybe you need to change the value of <prefix_dir> in your ~/.lives file)\n"),(tmp=g_filename_to_utf8(prefs->prefix_dir,-1,NULL,NULL,NULL)),THEME_DIR);
+      gchar *tmp2;
+      gchar *err=g_strdup_printf(_ ("\n\nThe theme you requested could not be located. Please make sure you have the themes installed in\n%s/%s.\n(Maybe you need to change the value of <prefix_dir> in your %s file)\n"),(tmp=g_filename_to_utf8(prefs->prefix_dir,-1,NULL,NULL,NULL)),THEME_DIR,(tmp2=g_filename_to_utf8(capable->rcfile,-1,NULL,NULL,NULL)));
+      g_free(tmp2);
       g_free(tmp);
       startup_message_nonfatal (err);
       g_free(err);
@@ -2027,14 +2033,14 @@ static gboolean lives_startup(gpointer data) {
       }
       else {
 	if (!capable->can_read_from_config) {
-	  gchar *err=g_strdup_printf(_ ("\nLiVES was unable to read from its configuration file\n%s/.lives\n\nPlease check the file permissions for this file and try again.\n"),(tmp=g_filename_to_utf8(capable->home_dir,-1,NULL,NULL,NULL)));
+	  gchar *err=g_strdup_printf(_ ("\nLiVES was unable to read from its configuration file\n%s\n\nPlease check the file permissions for this file and try again.\n"),(tmp=g_filename_to_utf8(capable->rcfile,-1,NULL,NULL,NULL)));
 	  g_free(tmp);
 	  startup_message_fatal(err);
 	  g_free(err);
 	}
 	else {
 	  if (!capable->can_write_to_config) {
-	    gchar *err=g_strdup_printf(_ ("\nLiVES was unable to write to its configuration file\n%s/.lives\n\nPlease check the file permissions for this file and directory\nand try again.\n"),(tmp=g_filename_to_utf8(capable->home_dir,-1,NULL,NULL,NULL)));
+	    gchar *err=g_strdup_printf(_ ("\nLiVES was unable to write to its configuration file\n%s\n\nPlease check the file permissions for this file and directory\nand try again.\n"),(tmp=g_filename_to_utf8(capable->rcfile,-1,NULL,NULL,NULL)));
 	    g_free(tmp);
 	    startup_message_fatal(err);
 	    g_free(err);
@@ -2044,8 +2050,8 @@ static gboolean lives_startup(gpointer data) {
 	      gchar *extrabit;
 	      gchar *err;
 	      if (!mainw->has_session_tmpdir) {
-		extrabit=g_strdup_printf(_("Please check the <tempdir> setting in \n%s/.lives\nand try again.\n"),
-				  (tmp=g_filename_to_utf8(capable->home_dir,-1,NULL,NULL,NULL)));
+		extrabit=g_strdup_printf(_("Please check the <tempdir> setting in \n%s\nand try again.\n"),
+				  (tmp=g_filename_to_utf8(capable->rcfile,-1,NULL,NULL,NULL)));
 		g_free(tmp);
 	      }
 	      else 
@@ -2084,7 +2090,8 @@ static gboolean lives_startup(gpointer data) {
 		      startup_message_nonfatal_dismissable (_ ("\nLiVES was unable to locate 'sox'. Some audio features may not work. You should install 'sox'.\n"),WARN_MASK_NO_MPLAYER);
 		    }
 		    if (!capable->has_encoder_plugins) {
-		      gchar *err=g_strdup_printf(_ ("\nLiVES was unable to find any encoder plugins.\nPlease check that you have them installed correctly in\n%s%s%s/\nYou will not be able to 'Save' without them.\nYou may need to change the value of <lib_dir> in ~/.lives\n"),prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_ENCODERS);
+		      gchar *err=g_strdup_printf(_ ("\nLiVES was unable to find any encoder plugins.\nPlease check that you have them installed correctly in\n%s%s%s/\nYou will not be able to 'Save' without them.\nYou may need to change the value of <lib_dir> in %s\n"),prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_ENCODERS,(tmp=g_filename_to_utf8(capable->rcfile,-1,NULL,NULL,NULL)));
+		      g_free(tmp);
 		      startup_message_nonfatal_dismissable (err,WARN_MASK_NO_ENCODERS);
 		      g_free(err);
 		      upgrade_error=TRUE;
@@ -4595,7 +4602,7 @@ void load_frame_image(gint frame) {
 
       if (!(*mainw->vpp->render_frame)(weed_get_int_value(frame_layer,"width",&weed_error),
 				       weed_get_int_value(mainw->frame_layer,"height",&weed_error),
-				       mainw->currticks-mainw->stream_ticks,pd_array,retdata)) {
+				       mainw->currticks-mainw->stream_ticks,pd_array,retdata,NULL)) {
 	vid_playback_plugin_exit();
 	if (return_layer!=NULL) weed_layer_free(return_layer);
 	weed_free(retdata);
@@ -4824,7 +4831,7 @@ void load_frame_image(gint frame) {
 				       weed_get_int_value(frame_layer,"height",&weed_error),
 				       mainw->currticks-mainw->stream_ticks,
 				       (pd_array=weed_get_voidptr_array(frame_layer,"pixel_data",&weed_error)),
-				       retdata)) {
+				       retdata,NULL)) {
 	vid_playback_plugin_exit();
 	if (return_layer!=NULL) {
 	  weed_layer_free(return_layer);

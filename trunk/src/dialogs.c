@@ -2128,17 +2128,23 @@ do_text_window (const gchar *title, const gchar *text) {
 
 
 
-void 
-do_upgrade_error_dialog (void) {
-  startup_message_nonfatal (g_strdup (_("After upgrading/installing, you may need to adjust the <prefix_dir> setting in your ~/.lives file")));
+void do_upgrade_error_dialog (void) {
+  gchar *tmp;
+  gchar *msg=g_strdup_printf (_("After upgrading/installing, you may need to adjust the <prefix_dir> setting in your %s file"),(tmp=g_filename_to_utf8(capable->rcfile,-1,NULL,NULL,NULL)));
+  startup_message_nonfatal (msg);
+  g_free(msg);
+  g_free(tmp);
 }
 
 
 void do_rendered_fx_dialog(void) {
-  gchar *msg=g_strdup_printf(_("\n\nLiVES could not find any rendered effect plugins.\nPlease make sure you have them installed in\n%s%s%s\nor change the value of <lib_dir> in ~/.lives\n"),prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_RENDERED_EFFECTS_BUILTIN);
-    do_error_dialog_with_check(msg,WARN_MASK_RENDERED_FX);
-    g_free(msg);
+  gchar *tmp;
+  gchar *msg=g_strdup_printf(_("\n\nLiVES could not find any rendered effect plugins.\nPlease make sure you have them installed in\n%s%s%s\nor change the value of <lib_dir> in %s\n"),prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_RENDERED_EFFECTS_BUILTIN,(tmp=g_filename_to_utf8(capable->rcfile,-1,NULL,NULL,NULL)));
+  do_error_dialog_with_check(msg,WARN_MASK_RENDERED_FX);
+  g_free(msg);
+  g_free(tmp);
 }
+
 
 void do_audio_import_error(void) {
   do_error_dialog(_ ("Sorry, unknown audio type.\n\n (Filenames must end in .mp3, .ogg, .wav, .mod, .xm or .it)"));

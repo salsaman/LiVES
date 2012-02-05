@@ -21,9 +21,9 @@ static int myclamp;
 
 static char plugin_version[64]="LiVES ogg/theora/vorbis stream engine version 1.0";
 
-static boolean (*render_fn)(int hsize, int vsize, void **pixel_data, void **return_data);
-boolean render_frame_yuv420 (int hsize, int vsize, void **pixel_data, void **return_data);
-boolean render_frame_unknown (int hsize, int vsize, void **pixel_data, void **return_data);
+static boolean (*render_fn)(int hsize, int vsize, void **pixel_data);
+boolean render_frame_yuv420 (int hsize, int vsize, void **pixel_data);
+boolean render_frame_unknown (int hsize, int vsize, void **pixel_data);
 
 static int ov_vsize,ov_hsize;
 
@@ -359,12 +359,12 @@ boolean init_screen (int width, int height, boolean fullscreen, uint64_t window_
  }
 
 
-boolean render_frame (int hsize, int vsize, int64_t tc, void **pixel_data, void **return_data) {
+boolean render_frame (int hsize, int vsize, int64_t tc, void **pixel_data, void **rd, void **pp) {
   // call the function which was set in set_palette
-  return render_fn (hsize,vsize,pixel_data,return_data);
+  return render_fn (hsize,vsize,pixel_data);
 }
 
-boolean render_frame_yuv420 (int hsize, int vsize, void **pixel_data, void **return_data) {
+boolean render_frame_yuv420 (int hsize, int vsize, void **pixel_data) {
   int i,z;
   size_t fsize;
   register int j;
@@ -446,7 +446,7 @@ boolean render_frame_yuv420 (int hsize, int vsize, void **pixel_data, void **ret
   return TRUE;
 }
 
-boolean render_frame_unknown (int hsize, int vsize, void **pixel_data, void **return_data) {
+boolean render_frame_unknown (int hsize, int vsize, void **pixel_data) {
   if (mypalette==WEED_PALETTE_END) {
     fprintf(stderr,"ogg_stream plugin error: No palette was set !\n");
   }

@@ -1108,19 +1108,21 @@ _vppaw *on_vpp_advanced_clicked (GtkButton *button, gpointer user_data) {
 
 
 void close_vid_playback_plugin(_vid_playback_plugin *vpp) {
-  int i;
+  register int i;
 
   if (vpp!=NULL) {
     if (vpp==mainw->vpp) {
       mainw->ext_keyboard=FALSE;
-      if (mainw->ext_playback&&mainw->vpp->exit_screen!=NULL) 
-	(*mainw->vpp->exit_screen)(mainw->ptr_x,mainw->ptr_y);
+      if (mainw->ext_playback) {
+	if (mainw->vpp->exit_screen!=NULL) 
+	  (*mainw->vpp->exit_screen)(mainw->ptr_x,mainw->ptr_y);
 #ifdef RT_AUDIO
-      stop_audio_stream();
+	stop_audio_stream();
 #endif
-      if (mainw->vpp->capabilities&VPP_LOCAL_DISPLAY) 
-	if (mainw->play_window!=NULL&&prefs->play_monitor==0)
-	  gtk_window_set_keep_below(GTK_WINDOW(mainw->play_window),FALSE);
+	if (mainw->vpp->capabilities&VPP_LOCAL_DISPLAY) 
+	  if (mainw->play_window!=NULL&&prefs->play_monitor==0)
+	    gtk_window_set_keep_below(GTK_WINDOW(mainw->play_window),FALSE);
+      }
       mainw->stream_ticks=-1;
       mainw->vpp=NULL;
     }
@@ -1133,6 +1135,15 @@ void close_vid_playback_plugin(_vid_playback_plugin *vpp) {
       }
       g_free(vpp->extra_argv);
     }
+
+    for (i=0;i<vpp->num_play_params;i++) {
+      weed_plant_free(vpp->play_params[i]);
+    }
+    for (i=0;i<vpp->num_alpha_chans;i++) {
+      weed_layer_free(vpp->alpha_chans[i]);
+    }
+
+    if (vpp->play_params!=NULL) g_free(vpp->play_params);
 
     g_free (vpp);
   }
@@ -1168,7 +1179,14 @@ _vid_playback_plugin *open_vid_playback_plugin (const gchar *name, gboolean in_u
     return NULL;
   }
 
+
   vpp=(_vid_playback_plugin *) g_malloc (sizeof(_vid_playback_plugin));
+
+  vpp->play_paramtmpls=NULL;
+  vpp->play_params=NULL;
+  vpp->alpha_chans=NULL;
+  vpp->num_play_params=vpp->num_alpha_chans=0;
+  vpp->extra_argv=NULL;
 
   if ((vpp->module_check_init=(const char* (*)())dlsym (handle,"module_check_init"))==NULL) {
     OK=FALSE;
@@ -1185,13 +1203,29 @@ _vid_playback_plugin *open_vid_playback_plugin (const gchar *name, gboolean in_u
   if ((vpp->get_capabilities=(guint64 (*)(int))dlsym (handle,"get_capabilities"))==NULL) {
     OK=FALSE;
   }
-  if ((vpp->render_frame=(gboolean (*)(int, int, int64_t, void**, void**))dlsym (handle,"render_frame"))==NULL) {
+  if ((vpp->render_frame=(gboolean (*)(int, int, int64_t, void**, void**, weed_plant_t **)) 
+       dlsym (handle,"render_frame"))==NULL) {
     OK=FALSE;
   }
   if ((vpp->get_fps_list=(const gchar* (*)(int))dlsym (handle,"get_fps_list"))!=NULL) {
     if ((vpp->set_fps=(gboolean (*)(gdouble))dlsym (handle,"set_fps"))==NULL) {
       OK=FALSE;
     }
+  }
+
+
+  if (!OK) {
+    gchar *msg=g_strdup_printf 
+      (_("\n\nPlayback module %s\nis missing a mandatory function.\nUnable to use it.\n"),plugname);
+    set_pref ("vid_playback_plugin","none");
+    do_error_dialog_with_check_transient(msg,TRUE,0,prefsw!=NULL?GTK_WINDOW(prefsw->prefs_dialog):
+					 GTK_WINDOW(mainw->LiVES->window));
+    g_free (msg);
+    dlclose (handle);
+    g_free (vpp);
+    vpp=NULL;
+    g_free(plugname);
+    return NULL;
   }
 
   if ((pl_error=(*vpp->module_check_init)())!=NULL) {
@@ -1206,22 +1240,10 @@ _vid_playback_plugin *open_vid_playback_plugin (const gchar *name, gboolean in_u
     return NULL;
   }
 
-  if (!OK) {
-    gchar *msg=g_strdup_printf 
-      (_("\n\nPlayback module %s\nis missing a mandatory function.\nUnable to use it.\n"),plugname);
-    set_pref ("vid_playback_plugin","none");
-    do_error_dialog_with_check_transient(msg,TRUE,0,prefsw!=NULL?GTK_WINDOW(prefsw->prefs_dialog):
-					 GTK_WINDOW(mainw->LiVES->window));
-    g_free (msg);
-    close_vid_playback_plugin(vpp);
-    g_free(plugname);
-    return NULL;
-  }
-
   // now check for optional functions
   vpp->get_description=(const char* (*)())dlsym (handle,"get_description");
   vpp->get_init_rfx=(const char* (*)())dlsym (handle,"get_init_rfx");
-  vpp->get_play_rfx=(const char* (*)())dlsym (handle,"get_play_rfx");
+  vpp->get_play_params=(const weed_plant_t ** (*)())dlsym (handle,"get_play_params");
   vpp->get_yuv_palette_clamping=(int* (*)(int))dlsym (handle,"get_yuv_palette_clamping");
   vpp->set_yuv_palette_clamping=(int (*)(int))dlsym (handle,"set_yuv_palette_clamping");
   vpp->send_keycodes=(gboolean (*)(plugin_keyfunc))dlsym (handle,"send_keycodes");
@@ -1369,8 +1391,28 @@ _vid_playback_plugin *open_vid_playback_plugin (const gchar *name, gboolean in_u
     }
   }
 
-  // get the play parameters if any and convert to weed params
+  // get the play parameters (and alpha channels) if any and convert to weed params
+  if (vpp->get_play_params!=NULL) vpp->play_paramtmpls=(*vpp->get_play_params)();
 
+  // create vpp->play_params
+  if (vpp->play_paramtmpls!=NULL) {
+    weed_plant_t *ptmpl;
+    for (i=0;(ptmpl=(weed_plant_t *)vpp->play_paramtmpls[i])!=NULL;i++) {
+      if (WEED_PLANT_IS_PARAMETER_TEMPLATE(ptmpl)) {
+	// is param template, create a param
+	vpp->play_params=g_realloc(vpp->play_params,(++vpp->num_play_params)*sizeof(weed_plant_t *));
+	vpp->play_params[vpp->num_play_params]=weed_plant_new(WEED_PLANT_PARAMETER);
+	weed_leaf_copy(vpp->play_params[vpp->num_play_params],"value",ptmpl,"default");
+	weed_set_plantptr_value(vpp->play_params[vpp->num_play_params],"template",ptmpl);
+      }
+      else {
+	// must be an alpha channel
+	vpp->alpha_chans=g_realloc(vpp->alpha_chans,(++vpp->num_alpha_chans)*sizeof(weed_plant_t *));
+	vpp->alpha_chans[vpp->num_alpha_chans]=weed_plant_new(WEED_PLANT_CHANNEL);
+	weed_set_plantptr_value(vpp->alpha_chans[vpp->num_alpha_chans],"template",ptmpl);
+      }
+    }
+  }
 
 
   if (vpp->send_keycodes==NULL&&vpp->capabilities&VPP_LOCAL_DISPLAY) {
@@ -1526,12 +1568,12 @@ gint64 get_best_audio(_vid_playback_plugin *vpp) {
 
 
 
-void 
-do_plugin_encoder_error(const gchar *plugin_name) {
-  gchar *msg;
+void do_plugin_encoder_error(const gchar *plugin_name) {
+  gchar *msg,*tmp;
 
   if (plugin_name==NULL) {
-    msg=g_strdup_printf(_("LiVES was unable to find its encoder plugins. Please make sure you have the plugins installed in\n%s%s%s\nor change the value of <lib_dir> in ~/.lives\n"),prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_ENCODERS);
+    msg=g_strdup_printf(_("LiVES was unable to find its encoder plugins. Please make sure you have the plugins installed in\n%s%s%s\nor change the value of <lib_dir> in %s\n"),prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_ENCODERS,(tmp=g_filename_to_utf8(capable->rcfile,-1,NULL,NULL,NULL)));
+    g_free(tmp);
     if (rdet!=NULL) do_error_dialog_with_check_transient(msg,FALSE,0,GTK_WINDOW(rdet->dialog));
     else do_error_dialog(msg);
     g_free(msg);

@@ -580,6 +580,8 @@ typedef struct {
   /// home directory - default location for config file - locale encoding
   gchar home_dir[PATH_MAX];
 
+  gchar *rcfile;
+
   /// used for returning startup messages from the backend
   gchar startup_msg[256];
 

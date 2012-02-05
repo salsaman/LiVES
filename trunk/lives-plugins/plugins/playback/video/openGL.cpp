@@ -17,9 +17,9 @@
 static char plugin_version[64]="LiVES openGL playback engine version 1.0";
 static char error[256];
 
-static int (*render_fn)(int hsize, int vsize, void **pixel_data, void **return_data);
-static boolean render_frame_rgba (int hsize, int vsize, void **pixel_data, void **return_data);
-static boolean render_frame_unknown (int hsize, int vsize, void **pixel_data, void **return_data);
+static int (*render_fn)(int hsize, int vsize, void **pixel_data);
+static boolean render_frame_rgba (int hsize, int vsize, void **pixel_data);
+static boolean render_frame_unknown (int hsize, int vsize, void **pixel_data);
 
 static int palette_list[5];
 static int mypalette;
@@ -585,37 +585,24 @@ static boolean Upload(uint8_t *src, uint32_t imgWidth, uint32_t imgHeight, uint3
 }
 
 
-static boolean render_frame_rgba (int hsize, int vsize, void **pixel_data, void **return_data) {
+static boolean render_frame_rgba (int hsize, int vsize, void **pixel_data) {
 
   Upload((uint8_t *)pixel_data[0], hsize, vsize, type);
-
-  if (return_data!=NULL) {
-    glPushAttrib(GL_PIXEL_MODE_BIT);
-    glPushClientAttrib(GL_CLIENT_PIXEL_STORE_BIT);
-  
-    glReadBuffer(swapFlag?GL_BACK:GL_FRONT);
-    glPixelStorei(GL_PACK_ALIGNMENT, 1);
-    glReadPixels(0, 0, hsize, vsize, type, GL_UNSIGNED_BYTE, return_data[0]);
-  
-    glPopClientAttrib();
-    glPopAttrib();
-  }
-
   if (swapFlag) glXSwapBuffers( dpy, glxWin );
 
   return TRUE;
 }
 
 
-static boolean render_frame_unknown (int hsize, int vsize, void **pixel_data, void **return_data) {
+static boolean render_frame_unknown (int hsize, int vsize, void **pixel_data) {
   fprintf(stderr,"openGL plugin error: No palette was set !\n");
   return FALSE;
 }
 
 
-boolean render_frame (int hsize, int vsize, int64_t tc, void **pixel_data, void **return_data) {
+boolean render_frame (int hsize, int vsize, int64_t tc, void **pixel_data, void **rd, void **pp) {
   // call the function which was set in set_palette
-  return render_fn (hsize,vsize,pixel_data,return_data);
+  return render_fn (hsize,vsize,pixel_data);
 }
 
 

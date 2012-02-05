@@ -17,9 +17,9 @@ static int clampings[3];
 
 static char plugin_version[64]="LiVES to LiVES streaming engine version 1.1";
 
-static boolean (*render_fn)(int hsize, int vsize, int64_t tc, void **pixel_data, void **return_data);
-boolean render_frame_stream (int hsize, int vsize, int64_t tc, void **pixel_data, void **return_data);
-boolean render_frame_unknown (int hsize, int vsize, int64_t tc, void **pixel_data, void **return_data);
+static boolean (*render_fn)(int hsize, int vsize, int64_t tc, void **pixel_data);
+boolean render_frame_stream (int hsize, int vsize, int64_t tc, void **pixel_data);
+boolean render_frame_unknown (int hsize, int vsize, int64_t tc, void **pixel_data);
 
 /////////////////////////////////////////////////////////////////////////
 
@@ -280,12 +280,12 @@ boolean init_screen (int width, int height, boolean fullscreen, uint64_t window_
 }
 
 
-boolean render_frame (int hsize, int vsize, int64_t tc, void **pixel_data, void **return_data) {
+boolean render_frame (int hsize, int vsize, int64_t tc, void **pixel_data, void **rd, void **pp) {
   // call the function which was set in set_palette
-  return render_fn (hsize,vsize,tc,pixel_data,return_data);
+  return render_fn (hsize,vsize,tc,pixel_data);
 }
 
-boolean render_frame_stream (int hsize, int vsize, int64_t tc, void **pixel_data, void **return_data) {
+boolean render_frame_stream (int hsize, int vsize, int64_t tc, void **pixel_data) {
   char hdrstr[128];
   size_t hdrstrlen;
   int mcount;
@@ -338,7 +338,7 @@ boolean render_frame_stream (int hsize, int vsize, int64_t tc, void **pixel_data
 }
 
 
-boolean render_frame_unknown (int hsize, int vsize, int64_t tc, void **pixel_data, void **return_data) {
+boolean render_frame_unknown (int hsize, int vsize, int64_t tc, void **pixel_data) {
   if (lstream->palette==WEED_PALETTE_END) {
     fprintf(stderr,"lives2lives_stream plugin error: No palette was set !\n");
     return 0;

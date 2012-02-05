@@ -12,10 +12,10 @@
 static char plugin_version[64]="LiVES SDL playback engine version 1.2";
 static char error[256];
 
-static int (*render_fn)(int hsize, int vsize, void **pixel_data, void **return_data);
-static boolean render_frame_rgb (int hsize, int vsize, void **pixel_data, void **return_data);
-static boolean render_frame_yuv (int hsize, int vsize, void **pixel_data, void **return_data);
-static boolean render_frame_unknown (int hsize, int vsize, void **pixel_data, void **return_data);
+static int (*render_fn)(int hsize, int vsize, void **pixel_data);
+static boolean render_frame_rgb (int hsize, int vsize, void **pixel_data);
+static boolean render_frame_yuv (int hsize, int vsize, void **pixel_data);
+static boolean render_frame_unknown (int hsize, int vsize, void **pixel_data);
 
 static int palette_list[6];
 static int mypalette;
@@ -214,12 +214,12 @@ boolean init_screen (int width, int height, boolean fullscreen, uint64_t window_
 }
 
 
-boolean render_frame (int hsize, int vsize, int64_t tc, void **pixel_data, void **return_data) {
+boolean render_frame (int hsize, int vsize, int64_t tc, void **pixel_data, void **rd, void **pp) {
   // call the function which was set in set_palette
-  return render_fn (hsize,vsize,pixel_data,return_data);
+  return render_fn (hsize,vsize,pixel_data);
 }
 
-boolean render_frame_rgb (int hsize, int vsize, void **pixel_data, void **return_data) {
+boolean render_frame_rgb (int hsize, int vsize, void **pixel_data) {
   // broken - crashes
   // hsize and vsize are in pixels (n-byte)
   SDL_LockSurface(RGBimage);
@@ -232,7 +232,7 @@ boolean render_frame_rgb (int hsize, int vsize, void **pixel_data, void **return
 }
 
 
-boolean render_frame_yuv (int hsize, int vsize, void **pixel_data, void **return_data) {
+boolean render_frame_yuv (int hsize, int vsize, void **pixel_data) {
   // hsize may be in uyvy-macropixels (2 real pixels per 4 byte macropixel !)
   uint32_t ovtype=SDL_IYUV_OVERLAY;
 
@@ -274,7 +274,7 @@ boolean render_frame_yuv (int hsize, int vsize, void **pixel_data, void **return
 }
 
 
-boolean render_frame_unknown (int hsize, int vsize, void **pixel_data, void **return_data) {
+boolean render_frame_unknown (int hsize, int vsize, void **pixel_data) {
   fprintf(stderr,"SDL plugin error: No palette was set !\n");
   return FALSE;
 }

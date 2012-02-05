@@ -36,6 +36,7 @@ GList *plugin_request_by_line (const gchar *plugin_type, const gchar *plugin_nam
 GList *plugin_request_by_space (const gchar *plugin_type, const gchar *plugin_name, const gchar *request);
 GList *plugin_request_common (const gchar *plugin_type, const gchar *plugin_name, const gchar *request, const gchar *delim, gboolean allow_blanks);
 
+typedef weed_plant_t *(*weed_bootstrap_f) (weed_default_getter_f *value, int num_versions, int *plugin_versions);
 
 /// video playback plugins
 typedef gboolean (*plugin_keyfunc) (gboolean down, guint16 unicode, guint16 keymod);
@@ -67,7 +68,7 @@ typedef struct {
   const char *(*get_init_rfx) (void);
 
   ///< optional (but should return a weed plantptr array of paramtmpl and chantmpl, NULL terminated)
-  const weed_plant_t **(*get_play_params) (void); 
+  const weed_plant_t **(*get_play_params) (weed_bootstrap_f f); 
   
   // only for display plugins
   gboolean (*send_keycodes) (plugin_keyfunc);

@@ -241,16 +241,6 @@ const char *module_check_init(void) {
 
   mypalette=WEED_PALETTE_END;
 
-
-  // play params
-  params[0]=weed_integer_init ("mode", "Playback _mode", -1, -1, 10);
-  params[1]=weed_float_init ("fft0", "fft value 0", 0., 0., 1.);
-  params[2]=weed_float_init ("fft1", "fft value 1", 0., 0., 1.);
-  params[3]=weed_float_init ("fft2", "fft value 2", 0., 0., 1.);
-  params[4]=weed_float_init ("fft3", "fft value 3", 0., 0., 1.);
-  params[5]=weed_text_init ("subtitles", "_Subtitles", "");
-  params[6]=NULL;
-
   zsubtitles=NULL;
   plugin_info=NULL;
 
@@ -294,8 +284,26 @@ fsover|Over-ride _fullscreen setting (for debugging)|bool|0|0 \\n\
 }
 
 
-const void **get_play_params (weed_bootstrap_f weed_boot) {
-  if (plugin_info==NULL) plugin_info=weed_plugin_info_init(weed_boot,num_versions,api_versions);
+const void **get_play_params (func_ptr weed_bootd) {
+  weed_bootstrap_f weed_boot=(weed_bootstrap_f)weed_bootd;
+  int api,error;
+  weed_leaf_set_f owls=weed_leaf_set;
+
+  if (plugin_info==NULL) {
+    plugin_info=weed_plugin_info_init(weed_boot,num_versions,api_versions);
+
+    // play params
+    params[0]=weed_integer_init ("mode", "Playback _mode", -1, -1, 10);
+    params[1]=weed_float_init ("fft0", "fft value 0", -1., 0., 1.);
+    params[2]=weed_float_init ("fft1", "fft value 1", -1., 0., 1.);
+    params[3]=weed_float_init ("fft2", "fft value 2", -1., 0., 1.);
+    params[4]=weed_float_init ("fft3", "fft value 3", -1., 0., 1.);
+    params[5]=weed_text_init ("subtitles", "_Subtitles", "");
+    params[6]=NULL;
+  }
+
+  // not really sure why this is needed, but for some reason it seems to affect the host version too !!!!
+  weed_leaf_set=owls;
   return (const void **)params;
 }
 
@@ -2039,7 +2047,7 @@ void decode_pparams(weed_plant_t **pparams) {
   register int i;
   weed_plant_t *ptmpl;
   char *pname;
-  int error;
+  int error,type;
 
   zmode=0;
   zfft0=0.;
@@ -2048,7 +2056,10 @@ void decode_pparams(weed_plant_t **pparams) {
 
   if (pparams==NULL) return;
   while (pparams[i]!=NULL) {
+    
     type=weed_get_int_value(pparams[i],"type",&error);
+
+
     if (type==WEED_PLANT_PARAMETER) {
       ptmpl=weed_get_plantptr_value(pparams[i],"template",&error);
       pname=weed_get_string_value(ptmpl,"name",&error);
@@ -2071,6 +2082,7 @@ void decode_pparams(weed_plant_t **pparams) {
       
       
     }
+    i++;
   }
 
 

@@ -2528,11 +2528,12 @@ static gboolean setfx (weed_plant_t *inst, weed_plant_t *tparam, int pnum, int n
   weed_plant_t *ptmpl;
   int hint,cspace;
   int x=0;
+  int skip=2;
   int maxi_r=255,maxi_g=255,maxi_b=255,maxi_a=255,mini_r=0,mini_g=0,mini_b=0,mini_a=0,mini,maxi;
   double maxd_r=1.,maxd_g=1.,maxd_b=1.,maxd_a=1.,mind_r=0.,mind_g=0.,mind_b=0.,mind_a=0.,mind,maxd;
   gchar values[OSC_STRING_SIZE];
   char *pattern;
-  
+
   if (nargs<=0) return FALSE; // must set at least one value
 
   ptmpl=weed_get_plantptr_value(tparam,"template",&error);
@@ -2546,10 +2547,11 @@ static gboolean setfx (weed_plant_t *inst, weed_plant_t *tparam, int pnum, int n
 	return FALSE;
       }
     }
+    skip++;
   }
 
   /* get header pattern (type tags) */
-  pattern=g_strdup(((char *)vargs)+3); // skip comma,int,int
+  pattern=g_strdup(((char *)vargs)+skip); // skip comma,int,(int)
 
   switch (hint) {
   case WEED_HINT_INTEGER:
@@ -2594,7 +2596,7 @@ static gboolean setfx (weed_plant_t *inst, weed_plant_t *tparam, int pnum, int n
 	  rec_param_change(inst,pnum);
 	}
       }
-      
+
       break;
     }
 
@@ -3635,7 +3637,7 @@ void lives_osc_cb_rte_setpparam(void *context, int arglen, const void *vargs, OS
 				NetworkReturnAddressPtr ra) {
   // set playback plugin param
   weed_plant_t *param;
-  int pnum,nargs;
+  int pnum,nargs,error;
 
   if (!mainw->ext_playback||mainw->vpp->play_params==NULL) return lives_osc_notify_failure();
 
@@ -3653,10 +3655,10 @@ void lives_osc_cb_rte_setpparam(void *context, int arglen, const void *vargs, OS
   param=mainw->vpp->play_params[pnum];
 
   if (!mainw->osc_block) {
-    if (!setfx(NULL,param,pnum,nargs-2,vargs)) return lives_osc_notify_failure();
+    if (!setfx(NULL,param,pnum,nargs-1,vargs)) return lives_osc_notify_failure();
   }
   else return lives_osc_notify_failure();
-
+  
   lives_osc_notify_success(NULL);
 }
 

@@ -44,6 +44,7 @@ extern "C"
 # define PRIu64		__PRI64_PREFIX "u"
 #endif // ifndef PRI64d
 
+typedef void * (func_ptr)(void *);
 
 typedef int boolean;
 #undef TRUE
@@ -68,7 +69,7 @@ const char *get_description (void);  ///< optional
 const char *get_init_rfx (void);  ///< optional
 
 ///< optional (but should return a weed plantptr array of paramtmpl and chantmpl, NULL terminated)
-const void **get_play_params (void); 
+const void **get_play_params (func_ptr func); 
 
 /// plugin send list of palettes, in order of preference
 const int *get_palette_list(void);

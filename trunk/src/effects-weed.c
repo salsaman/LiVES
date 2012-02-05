@@ -166,7 +166,6 @@ weed_plant_t *weed_bootstrap_func (weed_default_getter_f *value, int num_version
   int host_api_version;
   weed_plant_t *host_info=weed_plant_new(WEED_PLANT_HOST_INFO);
 
-
   // these functions are defined in weed-host.h and set in weed_init()
   wdg=weed_default_get;
 

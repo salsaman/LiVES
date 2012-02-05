@@ -4602,7 +4602,7 @@ void load_frame_image(gint frame) {
 
       if (!(*mainw->vpp->render_frame)(weed_get_int_value(frame_layer,"width",&weed_error),
 				       weed_get_int_value(mainw->frame_layer,"height",&weed_error),
-				       mainw->currticks-mainw->stream_ticks,pd_array,retdata,NULL)) {
+				       mainw->currticks-mainw->stream_ticks,pd_array,retdata,mainw->vpp->play_params)) {
 	vid_playback_plugin_exit();
 	if (return_layer!=NULL) weed_layer_free(return_layer);
 	weed_free(retdata);
@@ -4831,7 +4831,7 @@ void load_frame_image(gint frame) {
 				       weed_get_int_value(frame_layer,"height",&weed_error),
 				       mainw->currticks-mainw->stream_ticks,
 				       (pd_array=weed_get_voidptr_array(frame_layer,"pixel_data",&weed_error)),
-				       retdata,NULL)) {
+				       retdata,mainw->vpp->play_params)) {
 	vid_playback_plugin_exit();
 	if (return_layer!=NULL) {
 	  weed_layer_free(return_layer);

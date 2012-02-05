@@ -32,6 +32,8 @@ typedef enum {
 } lives_filter_error_t;
 
 
+// bootstrap function for weed plugins
+weed_plant_t *weed_bootstrap_func (weed_default_getter_f *value, int num_versions, int *plugin_versions);
 
 weed_plant_t *get_weed_filter(int filter_idx);
 gchar *weed_filter_get_name(int filter_idx);

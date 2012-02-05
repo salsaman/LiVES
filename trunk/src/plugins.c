@@ -1136,11 +1136,8 @@ void close_vid_playback_plugin(_vid_playback_plugin *vpp) {
       g_free(vpp->extra_argv);
     }
 
-    for (i=0;i<vpp->num_play_params;i++) {
+    for (i=0;i<vpp->num_play_params+vpp->num_alpha_chans;i++) {
       weed_plant_free(vpp->play_params[i]);
-    }
-    for (i=0;i<vpp->num_alpha_chans;i++) {
-      weed_layer_free(vpp->alpha_chans[i]);
     }
 
     if (vpp->play_params!=NULL) g_free(vpp->play_params);
@@ -1243,7 +1240,9 @@ _vid_playback_plugin *open_vid_playback_plugin (const gchar *name, gboolean in_u
   // now check for optional functions
   vpp->get_description=(const char* (*)())dlsym (handle,"get_description");
   vpp->get_init_rfx=(const char* (*)())dlsym (handle,"get_init_rfx");
-  vpp->get_play_params=(const weed_plant_t ** (*)())dlsym (handle,"get_play_params");
+
+  vpp->get_play_params=(const weed_plant_t ** (*)(weed_bootstrap_f))dlsym (handle,"get_play_params");
+
   vpp->get_yuv_palette_clamping=(int* (*)(int))dlsym (handle,"get_yuv_palette_clamping");
   vpp->set_yuv_palette_clamping=(int (*)(int))dlsym (handle,"set_yuv_palette_clamping");
   vpp->send_keycodes=(gboolean (*)(plugin_keyfunc))dlsym (handle,"send_keycodes");
@@ -1392,28 +1391,31 @@ _vid_playback_plugin *open_vid_playback_plugin (const gchar *name, gboolean in_u
   }
 
   // get the play parameters (and alpha channels) if any and convert to weed params
-  if (vpp->get_play_params!=NULL) vpp->play_paramtmpls=(*vpp->get_play_params)();
+  if (vpp->get_play_params!=NULL) {
+    vpp->play_paramtmpls=(*vpp->get_play_params)(weed_bootstrap_func);
+  }
 
   // create vpp->play_params
   if (vpp->play_paramtmpls!=NULL) {
     weed_plant_t *ptmpl;
     for (i=0;(ptmpl=(weed_plant_t *)vpp->play_paramtmpls[i])!=NULL;i++) {
+      vpp->play_params=g_realloc(vpp->play_params,(i+2)*sizeof(weed_plant_t *));
       if (WEED_PLANT_IS_PARAMETER_TEMPLATE(ptmpl)) {
 	// is param template, create a param
-	vpp->play_params=g_realloc(vpp->play_params,(++vpp->num_play_params)*sizeof(weed_plant_t *));
-	vpp->play_params[vpp->num_play_params]=weed_plant_new(WEED_PLANT_PARAMETER);
-	weed_leaf_copy(vpp->play_params[vpp->num_play_params],"value",ptmpl,"default");
-	weed_set_plantptr_value(vpp->play_params[vpp->num_play_params],"template",ptmpl);
+	vpp->play_params[i]=weed_plant_new(WEED_PLANT_PARAMETER);
+	weed_leaf_copy(vpp->play_params[i],"value",ptmpl,"default");
+	weed_set_plantptr_value(vpp->play_params[i],"template",ptmpl);
+	vpp->num_play_params++;
       }
       else {
 	// must be an alpha channel
-	vpp->alpha_chans=g_realloc(vpp->alpha_chans,(++vpp->num_alpha_chans)*sizeof(weed_plant_t *));
-	vpp->alpha_chans[vpp->num_alpha_chans]=weed_plant_new(WEED_PLANT_CHANNEL);
-	weed_set_plantptr_value(vpp->alpha_chans[vpp->num_alpha_chans],"template",ptmpl);
+	vpp->play_params[i]=weed_plant_new(WEED_PLANT_CHANNEL);
+	weed_set_plantptr_value(vpp->play_params[i],"template",ptmpl);
+	vpp->num_alpha_chans++;
       }
     }
+    vpp->play_params[i]=NULL;
   }
-
 
   if (vpp->send_keycodes==NULL&&vpp->capabilities&VPP_LOCAL_DISPLAY) {
     d_print

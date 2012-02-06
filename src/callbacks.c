@@ -6347,7 +6347,7 @@ void on_open_new_audio_clicked (GtkButton *button, gpointer user_data) {
 							       -1,NULL,NULL,NULL)));
     g_free(tmp);
   }
-  else g_snprintf(file_name,PATH_MAX,(char *)user_data);
+  else g_snprintf(file_name,PATH_MAX,"%s",(char *)user_data);
 
   g_snprintf(mainw->audio_dir,PATH_MAX,"%s",file_name);
   get_dirname(mainw->audio_dir);

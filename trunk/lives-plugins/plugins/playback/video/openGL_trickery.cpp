@@ -496,19 +496,6 @@ static void setFullScreen(void) {
 
 
 
-static void add_perspective(uint32_t width, uint32_t height) {
-  glMatrixMode(GL_PROJECTION);                // Select The Projection Matrix
-  glLoadIdentity();                           // Reset The Projection Matrix
- 
-  // Calculate The Aspect Ratio Of The Window
-  gluPerspective(45.0f,(GLfloat)width/(GLfloat)height,0.1f,100.0f);
- 
-  glMatrixMode(GL_MODELVIEW);                 // Select The Modelview Matrix
-  glLoadIdentity();                           // Reset The Modelview Matrix
-
-}
-
-
 
 static int get_size_for_type(int type) {
   switch (type) {
@@ -881,7 +868,6 @@ static boolean init_screen_inner (int width, int height, boolean fullscreen, uin
     return FALSE;
   }
 
-  if (mode==1||mode==2) add_perspective(width,height);
 
   /* OpenGL rendering ... */
   glClearColor( 0.0, 0.0, 0.0, 0.0 );
@@ -1024,9 +1010,16 @@ static boolean Upload(int width, int height) {
   case 0:
     {
       // flat:
-      glEnable( m_TexTarget );
-      
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+      
+      glMatrixMode (GL_PROJECTION); // use the projection mode
+      glLoadIdentity ();
+
+      glMatrixMode (GL_MODELVIEW);
+      glLoadIdentity ();
+      glTranslatef(0.0,0.0,-1.);
+      
+      glEnable( m_TexTarget );
       
       glTexParameteri( m_TexTarget, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
       glTexParameteri( m_TexTarget, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
@@ -1062,9 +1055,14 @@ static boolean Upload(int width, int height) {
     {
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-      glMatrixMode(GL_PROJECTION);                // Select The Projection Matrix
-      glLoadIdentity();
-      
+      glMatrixMode (GL_PROJECTION); // use the projection mode
+      glLoadIdentity ();
+      //gluPerspective(60.0f,(GLfloat)window_width/(GLfloat)window_height,0.1f,100.0f);
+
+      glMatrixMode (GL_MODELVIEW);
+      glLoadIdentity ();
+      glTranslatef(0.0,0.0,-1.0);
+
       glTexParameteri( m_TexTarget, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
       glTexParameteri( m_TexTarget, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
     
@@ -1102,9 +1100,14 @@ static boolean Upload(int width, int height) {
     {
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+      glMatrixMode (GL_MODELVIEW);
+      glLoadIdentity ();
+      glTranslatef(0.0,0.0,-1.);
+
       // rotations
       glMatrixMode(GL_PROJECTION);                // Select The Projection Matrix
-      glLoadIdentity();
+      //glLoadIdentity();
+      //gluPerspective(45.0f,(GLfloat)window_width/(GLfloat)window_height,0.1f,100.0f);
  
       glRotatef(rquad,0.0f,0.0f,1.0f);            // Rotate The Quad On The Z axis
       

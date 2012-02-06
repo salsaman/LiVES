@@ -3461,7 +3461,7 @@ void lives_osc_cb_rte_getparamflags(void *context, int arglen, const void *vargs
 
 void lives_osc_cb_rte_getpparamflags(void *context, int arglen, const void *vargs, OSCTimeTag when, 
 				    NetworkReturnAddressPtr ra) {
-  weed_plant_t *ptmpl;
+  weed_plant_t *ptmpl,*param;
   int error;
   int pnum,flags=0;
 
@@ -3481,8 +3481,6 @@ void lives_osc_cb_rte_getpparamflags(void *context, int arglen, const void *varg
 
   if (weed_plant_has_leaf(ptmpl,"flags"))
     flags=weed_get_int_value(ptmpl,"flags",&error);
-
-  weed_free(in_ptmpls);
 
   retval=g_strdup_printf("%d",flags);
   lives_status_send (retval);
@@ -3669,7 +3667,7 @@ void lives_osc_cb_rte_setpparam(void *context, int arglen, const void *vargs, OS
 				NetworkReturnAddressPtr ra) {
   // set playback plugin param
   weed_plant_t *param;
-  int pnum,nargs,error;
+  int pnum,nargs;
 
   if (!mainw->ext_playback||mainw->vpp->play_params==NULL) return lives_osc_notify_failure();
 
@@ -4787,7 +4785,6 @@ static struct
     { "/video/play/reset",		"reset",		lives_osc_cb_play_reset,			36	},	
     { "/video/play/parameter/count",		"set",		lives_osc_cb_rte_pparamcount,			140	},
     { "/video/play/parameter/value/set",		"set",		lives_osc_cb_rte_setpparam,			140	},
-    { "/video/play/parameter/value/count",		"count",	lives_osc_cb_rte_countpparamvals,		        140	},
     { "/video/play/parameter/flags/get",		"get",	lives_osc_cb_rte_getpparamflags,        141	},
     { "/video/play/parameter/min/get",		"get",	lives_osc_cb_rte_getpparammin,		        142	},
     { "/video/play/parameter/max/get",		"get",	lives_osc_cb_rte_getpparammax,		        143	},

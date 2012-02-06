@@ -444,6 +444,7 @@ gboolean apply_prefs(gboolean skip_warn) {
   gboolean fs_maximised=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->fs_max_check));
   gboolean show_recent=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->recent_check));
   gboolean stream_audio_out=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_stream_audio));
+  gboolean rec_after_pb=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_rec_after_pb));
 
   guint64 ds_warn_level=gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(prefsw->spinbutton_warn_ds))*1000000;
   guint64 ds_crit_level=gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(prefsw->spinbutton_crit_ds))*1000000;
@@ -576,7 +577,7 @@ gboolean apply_prefs(gboolean skip_warn) {
   gchar audio_player[256];
   gint listlen=g_list_length (prefs->acodec_list);
   gint rec_opts=rec_frames*REC_FRAMES+rec_fps*REC_FPS+rec_effects*REC_EFFECTS+rec_clips*REC_CLIPS+rec_audio*REC_AUDIO+
-    rec_ext_audio*REC_EXT_AUDIO;
+    rec_ext_audio*REC_EXT_AUDIO+rec_after_pb*REC_AFTER_PB;
   guint warn_mask;
 
   unsigned char *new_undo_buf;
@@ -612,7 +613,6 @@ gboolean apply_prefs(gboolean skip_warn) {
     prefs->rec_opts=rec_opts;
     set_int_pref("record_opts",prefs->rec_opts);
   }
-
 
   warn_mask=!warn_fps*WARN_MASK_FPS+!warn_save_set*WARN_MASK_SAVE_SET+!warn_fsize*WARN_MASK_FSIZE+!warn_mplayer*
     WARN_MASK_NO_MPLAYER+!warn_rendered_fx*WARN_MASK_RENDERED_FX+!warn_encoders*
@@ -1464,6 +1464,7 @@ void after_vpp_changed (GtkWidget *vpp_combo, gpointer advbutton) {
   future_prefs->vpp_argc=0;
 
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_stream_audio),FALSE);
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_rec_after_pb),FALSE);
 
 }
 
@@ -1575,6 +1576,7 @@ static void on_audp_entry_changed (GtkWidget *audp_combo, gpointer ptr) {
   g_free(prefsw->audp_name);
   prefsw->audp_name=g_strdup(gtk_combo_box_get_active_text(GTK_COMBO_BOX(audp_combo)));
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_stream_audio),FALSE);
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_rec_after_pb),FALSE);
 }
 
 
@@ -1645,13 +1647,25 @@ static void stream_audio_toggled(GtkToggleButton *togglebutton,
 
 void prefsw_set_astream_settings(_vid_playback_plugin *vpp) {
 
-  if (vpp==NULL||vpp->audio_codec!=AUDIO_CODEC_NONE) {
+  if (vpp!=NULL&&vpp->audio_codec!=AUDIO_CODEC_NONE) {
     gtk_widget_set_sensitive(prefsw->checkbutton_stream_audio,TRUE);
     //gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_stream_audio),future_prefs->stream_audio_out);
   }
   else {
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_stream_audio),FALSE);
     gtk_widget_set_sensitive(prefsw->checkbutton_stream_audio,FALSE);
+  }
+}
+
+
+void prefsw_set_rec_after_settings(_vid_playback_plugin *vpp) {
+  if (vpp!=NULL&&(vpp->capabilities&VPP_CAN_RETURN)) {
+    gtk_widget_set_sensitive(prefsw->checkbutton_rec_after_pb,TRUE);
+    //gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_stream_audio),future_prefs->stream_audio_out);
+  }
+  else {
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_rec_after_pb),FALSE);
+    gtk_widget_set_sensitive(prefsw->checkbutton_rec_after_pb,FALSE);
   }
 }
 
@@ -2011,7 +2025,7 @@ _prefsw *create_prefs_dialog (void) {
   GList *encoders = NULL;
   GList *vid_playback_plugins = NULL;
   
-  gchar **array,*tmp;
+  gchar **array,*tmp,*tmp2;
 
   int i;
 
@@ -3168,26 +3182,41 @@ _prefsw *create_prefs_dialog (void) {
   gtk_widget_show (hbox);
   gtk_box_pack_start (GTK_BOX (vbox69), hbox, FALSE, FALSE, 0);
 
-  prefsw->checkbutton_stream_audio = gtk_check_button_new();
-  eventbox = gtk_event_box_new();
-  label = gtk_label_new_with_mnemonic(_("Stream audio"));
-  gtk_label_set_mnemonic_widget(GTK_LABEL(label), prefsw->checkbutton_stream_audio);
-  gtk_container_add(GTK_CONTAINER(eventbox), label);
-  g_signal_connect(GTK_OBJECT(eventbox), "button_press_event", G_CALLBACK(label_act_toggle), prefsw->checkbutton_stream_audio);
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_bg(eventbox, GTK_STATE_NORMAL, &palette->normal_back);
-  }
-  gtk_box_pack_start (GTK_BOX (hbox), prefsw->checkbutton_stream_audio, FALSE, FALSE, 5);
-  gtk_box_pack_start(GTK_BOX(hbox), eventbox, FALSE, FALSE, 5);
-  gtk_widget_set_tooltip_text( prefsw->checkbutton_stream_audio, (_("Stream audio to playback plugin")));
+  prefsw->checkbutton_stream_audio = 
+    lives_standard_check_button_new((tmp=g_strdup(_("Stream audio"))),
+				    TRUE,(LiVESBox *)hbox,
+				    (tmp2=g_strdup
+				     (_("Stream audio to playback plugin"))));
+  g_free(tmp);
+  g_free(tmp2);
+
 
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_stream_audio),prefs->stream_audio_out);
 
   prefsw_set_astream_settings(mainw->vpp);
 
   g_signal_connect(GTK_OBJECT(prefsw->checkbutton_stream_audio), "toggled", GTK_SIGNAL_FUNC(stream_audio_toggled), NULL);
+
+
+
+
+  hbox = gtk_hbox_new (FALSE, 0);
+  gtk_widget_show (hbox);
+  gtk_box_pack_start (GTK_BOX (vbox69), hbox, FALSE, FALSE, 0);
+
+  prefsw->checkbutton_rec_after_pb = 
+    lives_standard_check_button_new((tmp=g_strdup(_("Record player output"))),
+				    TRUE,(LiVESBox *)hbox,
+				    (tmp2=g_strdup
+				     (_("Record output from player instead of input to player"))));
+  g_free(tmp);
+  g_free(tmp2);
+								     
+								     
+
+  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_rec_after_pb),(prefs->rec_opts&REC_AFTER_PB));
+
+  prefsw_set_rec_after_settings(mainw->vpp);
 
   label31 = gtk_label_new (_("VIDEO"));
   if (palette->style&STYLE_1) {
@@ -5714,6 +5743,8 @@ _prefsw *create_prefs_dialog (void) {
   g_signal_connect(GTK_OBJECT(prefsw->spinbutton_pmoni), "value_changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
   g_signal_connect(GTK_OBJECT(prefsw->forcesmon), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
   g_signal_connect(GTK_OBJECT(prefsw->checkbutton_stream_audio), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), 
+		   NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_rec_after_pb), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), 
 		   NULL);
   g_signal_connect(GTK_OBJECT(prefsw->spinbutton_warn_ds), "value_changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), 
 		   NULL);

@@ -5896,7 +5896,7 @@ void do_quick_switch (gint new_file) {
   mainw->play_end=cfile->frames;
 
   if (mainw->play_window!=NULL) {
-    gchar *title=g_strdup_printf(_("LiVES: - Play Window"));
+    gchar *title=g_strdup(_("LiVES: - Play Window"));
     gtk_window_set_title (GTK_WINDOW (mainw->play_window), title);
     g_free(title);
     if (mainw->double_size&&!mainw->fs&&(ohsize!=cfile->hsize||ovsize!=cfile->vsize)) {

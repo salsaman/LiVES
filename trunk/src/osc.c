@@ -3218,7 +3218,7 @@ void lives_osc_cb_rte_getpparamtype(void *context, int arglen, const void *vargs
 
   const gchar *retval;
 
-  if (!mainw->ext_playback||mainw->vpp->play_params==NULL) return lives_osc_notify_failure();
+  if (mainw->vpp==NULL||mainw->vpp->num_play_params==0) return lives_osc_notify_failure();
 
   if (!lives_osc_check_arguments (arglen,vargs,"i",TRUE)) return lives_osc_notify_failure();
 
@@ -3343,7 +3343,7 @@ void lives_osc_cb_rte_getpparamcspace(void *context, int arglen, const void *var
 
   const gchar *retval;
 
-  if (!mainw->ext_playback||mainw->vpp->play_params==NULL) return lives_osc_notify_failure();
+  if (mainw->vpp==NULL||mainw->vpp->num_play_params==0) return lives_osc_notify_failure();
 
   if (!lives_osc_check_arguments (arglen,vargs,"i",TRUE)) return lives_osc_notify_failure();
   lives_osc_parse_int_argument(vargs,&pnum);
@@ -3446,6 +3446,38 @@ void lives_osc_cb_rte_getparamflags(void *context, int arglen, const void *vargs
 
   in_ptmpls=weed_get_plantptr_array(filter,"in_parameter_templates",&error);
   ptmpl=in_ptmpls[pnum];
+
+  if (weed_plant_has_leaf(ptmpl,"flags"))
+    flags=weed_get_int_value(ptmpl,"flags",&error);
+
+  weed_free(in_ptmpls);
+
+  retval=g_strdup_printf("%d",flags);
+  lives_status_send (retval);
+  g_free(retval);
+}
+
+
+
+void lives_osc_cb_rte_getpparamflags(void *context, int arglen, const void *vargs, OSCTimeTag when, 
+				    NetworkReturnAddressPtr ra) {
+  weed_plant_t *ptmpl;
+  int error;
+  int pnum,flags=0;
+
+  gchar *retval;
+
+  if (!mainw->ext_playback||mainw->vpp->play_params==NULL) return lives_osc_notify_failure();
+
+  if (!lives_osc_check_arguments (arglen,vargs,"i",TRUE)) return lives_osc_notify_failure();
+
+  lives_osc_parse_int_argument(vargs,&pnum);
+
+  if (pnum>=mainw->vpp->num_play_params) return lives_osc_notify_failure();
+
+  param=mainw->vpp->play_params[pnum];
+
+  ptmpl=weed_get_plantptr_value(param,"template",&error);
 
   if (weed_plant_has_leaf(ptmpl,"flags"))
     flags=weed_get_int_value(ptmpl,"flags",&error);
@@ -3735,28 +3767,16 @@ void lives_osc_cb_rte_paramcount(void *context, int arglen, const void *vargs, O
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 void lives_osc_cb_rte_pparamcount(void *context, int arglen, const void *vargs, OSCTimeTag when,
 				  NetworkReturnAddressPtr ra) {
   // return num playback plugin params
   int count=0;
   gchar *msg;
 
-  if (!mainw->ext_playback||mainw->vpp->play_params==NULL) return lives_osc_notify_failure();
+  if (mainw->vpp==NULL) {
+    lives_status_send("0");
+    return;
+  }
 
   count=mainw->vpp->num_play_params;
 
@@ -4757,11 +4777,12 @@ static struct
     { "/clip/foreground/fps/slower",		"slower",		lives_osc_cb_play_slower,			61	},	
     { "/clip/background/fps/slower",		"slower",		lives_osc_cb_bgplay_slower,			63	},	
     { "/video/play/reset",		"reset",		lives_osc_cb_play_reset,			36	},	
+    { "/video/play/parameter/count",		"set",		lives_osc_cb_rte_pparamcount,			140	},
     { "/video/play/parameter/value/set",		"set",		lives_osc_cb_rte_setpparam,			140	},
-    { "/video/play/parameter/value/count",		"count",	lives_osc_cb_rte_pparamcount,		        140	},
+    { "/video/play/parameter/value/count",		"count",	lives_osc_cb_rte_countpparamvals,		        140	},
+    { "/video/play/parameter/flags/get",		"get",	lives_osc_cb_rte_getpparamflags,        141	},
     { "/video/play/parameter/min/get",		"get",	lives_osc_cb_rte_getpparammin,		        142	},
     { "/video/play/parameter/max/get",		"get",	lives_osc_cb_rte_getpparammax,		        143	},
-
     { "/video/play/parameter/type/get",		"get",	lives_osc_cb_rte_getpparamtype,		        144	},
     { "/video/play/parameter/name/get",		"get",	lives_osc_cb_rte_getpparamname,		        145	},
     { "/video/play/parameter/colorspace/get",		"get",	lives_osc_cb_rte_getpparamcspace,      	        146	},
@@ -4933,6 +4954,7 @@ static struct
     {	"/video/play/time",	 	"time",	         67, 36,0   	},
     {	"/video/play/parameter",	 	"parameter",	         69, 36,0   	},
     {	"/video/play/parameter/value",	 	"value",	         140, 69,0   	},
+    {	"/video/play/parameter/flags",	 	"flags",	         141, 69,0   	},
     {	"/video/play/parameter/min",	 	"min",	         142, 69,0   	},
     {	"/video/play/parameter/max",	 	"max",	         143, 69,0   	},
     {	"/video/play/parameter/type",	 	"type",	         144, 69,0   	},

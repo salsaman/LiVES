@@ -508,6 +508,7 @@ typedef struct {
   GtkWidget *checkbutton_ce_maxspect;
   GtkWidget *temp_label;
   GtkWidget *checkbutton_stream_audio;
+  GtkWidget *checkbutton_rec_after_pb;
   GtkTreeSelection *selection;
   gboolean needs_restart;
 } _prefsw;

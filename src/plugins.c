@@ -1356,7 +1356,10 @@ _vid_playback_plugin *open_vid_playback_plugin (const gchar *name, gboolean in_u
   }
 
   if (vpp->get_audio_fmts!=NULL&&mainw->is_ready) vpp->audio_codec=get_best_audio(vpp);
-  if (prefsw!=NULL) prefsw_set_astream_settings(vpp);
+  if (prefsw!=NULL) {
+    prefsw_set_astream_settings(vpp);
+    prefsw_set_rec_after_settings(vpp);
+  }
 
   if (!in_use) return vpp;
 

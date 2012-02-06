@@ -286,19 +286,34 @@ fsover|Over-ride _fullscreen setting (for debugging)|bool|0|0 \\n\
 
 const void **get_play_params (func_ptr weed_bootd) {
   weed_bootstrap_f weed_boot=(weed_bootstrap_f)weed_bootd;
-  int api,error;
   weed_leaf_set_f owls=weed_leaf_set;
+
+  weed_plant_t *gui;
+
+  int api,error;
 
   if (plugin_info==NULL) {
     plugin_info=weed_plugin_info_init(weed_boot,num_versions,api_versions);
 
     // play params
     params[0]=weed_integer_init ("mode", "Playback _mode", -1, -1, 10);
+    weed_set_int_value(weed_parameter_template_get_gui(params[0]),"hidden",WEED_TRUE);
+
     params[1]=weed_float_init ("fft0", "fft value 0", -1., 0., 1.);
+    weed_set_int_value(weed_parameter_template_get_gui(params[1]),"hidden",WEED_TRUE);
+
     params[2]=weed_float_init ("fft1", "fft value 1", -1., 0., 1.);
+    weed_set_int_value(weed_parameter_template_get_gui(params[2]),"hidden",WEED_TRUE);
+
     params[3]=weed_float_init ("fft2", "fft value 2", -1., 0., 1.);
+    weed_set_int_value(weed_parameter_template_get_gui(params[3]),"hidden",WEED_TRUE);
+
     params[4]=weed_float_init ("fft3", "fft value 3", -1., 0., 1.);
+    weed_set_int_value(weed_parameter_template_get_gui(params[4]),"hidden",WEED_TRUE);
+
     params[5]=weed_text_init ("subtitles", "_Subtitles", "");
+    weed_set_int_value(weed_parameter_template_get_gui(params[5]),"hidden",WEED_TRUE);
+
     params[6]=NULL;
   }
 

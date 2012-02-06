@@ -3876,7 +3876,7 @@ void lives_osc_cb_rte_getparammin(void *context, int arglen, const void *vargs, 
 
   ptmpl=in_ptmpls[pnum];
 
-  if (!weed_plant_has_leaf(ptmpl,"max")) {
+  if (!weed_plant_has_leaf(ptmpl,"min")) {
     weed_free(in_ptmpls);
     return lives_osc_notify_failure();
   }
@@ -3912,6 +3912,10 @@ void lives_osc_cb_rte_getpparammin(void *context, int arglen, const void *vargs,
   param=mainw->vpp->play_params[pnum];
 
   ptmpl=weed_get_plantptr_value(param,"template",&error);
+
+  if (!weed_plant_has_leaf(ptmpl,"min")) {
+    return lives_osc_notify_failure();
+  }
 
   nvals=weed_leaf_num_elements(ptmpl,"min");
 
@@ -3987,6 +3991,10 @@ void lives_osc_cb_rte_getpparammax(void *context, int arglen, const void *vargs,
   param=mainw->vpp->play_params[pnum];
 
   ptmpl=weed_get_plantptr_value(param,"template",&error);
+
+  if (!weed_plant_has_leaf(ptmpl,"max")) {
+    return lives_osc_notify_failure();
+  }
 
   nvals=weed_leaf_num_elements(ptmpl,"max");
 

@@ -121,6 +121,31 @@ void tr_msg(void) {
 
 
 
+static void lives_log_handler (const char *domain, LiVESLogLevelFlags level, const char *message,  gpointer data) {
+  gchar *msg;
+
+#ifdef LIVES_NO_DEBUG
+  if (level>=LIVES_LOG_LEVEL_WARNING ) return;
+#else
+  if ((level&LIVES_LOG_LEVEL_MASK)==LIVES_LOG_LEVEL_WARNING) 
+    msg=g_strdup_printf(_("%s Warning: %s\n"),domain,message);
+#endif
+  else {
+    if ((level&LIVES_LOG_LEVEL_MASK)==LIVES_LOG_LEVEL_CRITICAL) 
+      msg=g_strdup_printf(_("%s Critical error: %s\n"),domain,message);
+    else msg=g_strdup_printf(_("%s Fatal error: %s\n"),domain,message);
+  }
+
+  d_print(msg);
+  g_printerr(msg);
+  g_free(msg);
+
+
+  if (level&LIVES_LOG_FATAL_MASK) raise(LIVES_SIGSEGV);
+}
+
+
+
 void catch_sigint(int signum) {
   // trap for ctrl-C and others 
   if (mainw!=NULL) {
@@ -128,9 +153,9 @@ void catch_sigint(int signum) {
       if (mainw->foreign) {
 	exit (signum);
       }
-      if (signum==SIGABRT||signum==SIGSEGV) {
-	signal (SIGSEGV, SIG_DFL);
-	signal (SIGABRT, SIG_DFL);
+      if (signum==LIVES_SIGABRT||signum==LIVES_SIGSEGV) {
+	signal (LIVES_SIGSEGV, SIG_DFL);
+	signal (LIVES_SIGABRT, SIG_DFL);
 	g_printerr("%s",_("\nUnfortunately LiVES crashed.\nPlease report this bug at http://sourceforge.net/tracker/?group_id=64341&atid=507139\nThanks. Recovery should be possible if you restart LiVES.\n"));
 	g_printerr("%s",_("\n\nWhen reporting crashes, please include details of your operating system, distribution, and the LiVES version (" LiVES_VERSION ")\n"));
 
@@ -561,23 +586,23 @@ static void lives_init(_ign_opts *ign_opts) {
 
   sigemptyset(&smask);
 
-  sigaddset(&smask,SIGINT);
-  sigaddset(&smask,SIGTERM);
-  sigaddset(&smask,SIGSEGV);
-  sigaddset(&smask,SIGABRT);
+  sigaddset(&smask,LIVES_SIGINT);
+  sigaddset(&smask,LIVES_SIGTERM);
+  sigaddset(&smask,LIVES_SIGSEGV);
+  sigaddset(&smask,LIVES_SIGABRT);
 
   sact.sa_handler=catch_sigint;
   sact.sa_flags=0;
   sact.sa_mask=smask;
 
-  signal (SIGHUP,SIG_IGN);
-  signal (SIGPIPE,SIG_IGN);
-  signal (SIGUSR1,SIG_IGN);
+  signal (LIVES_SIGHUP,SIG_IGN);
+  signal (LIVES_SIGPIPE,SIG_IGN);
+  signal (LIVES_SIGUSR1,SIG_IGN);
 
-  sigaction (SIGINT, &sact, NULL);
-  sigaction (SIGTERM, &sact, NULL);
-  sigaction (SIGSEGV, &sact, NULL);
-  sigaction (SIGABRT, &sact, NULL);
+  sigaction (LIVES_SIGINT, &sact, NULL);
+  sigaction (LIVES_SIGTERM, &sact, NULL);
+  sigaction (LIVES_SIGSEGV, &sact, NULL);
+  sigaction (LIVES_SIGABRT, &sact, NULL);
 
   // initialise the mainwindow data
   mainw->scr_width=gdk_screen_width();
@@ -2267,6 +2292,8 @@ int main (int argc, char *argv[]) {
   // don't crash on GTK+ fatals
   g_log_set_always_fatal ((GLogLevelFlags)0);
 #endif
+
+  g_log_set_default_handler(lives_log_handler,NULL);
 
   theme_expected=pre_init();
 

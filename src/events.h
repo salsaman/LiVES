@@ -10,18 +10,25 @@
 #ifndef HAS_LIVES_EVENTS_H
 #define HAS_LIVES_EVENTS_H
 
-weed_plant_t *append_frame_event (weed_plant_t *event_list, weed_timecode_t tc, int numframes, int *clips, int *frames) WARN_UNUSED;
-weed_plant_t *append_filter_init_event (weed_plant_t *event_list, weed_timecode_t tc, int filter_idx, int num_in_tracks) WARN_UNUSED;
-weed_plant_t *append_filter_deinit_event (weed_plant_t *event_list, weed_timecode_t tc, void *init_event, void **pchain) WARN_UNUSED;
+weed_plant_t *append_frame_event (weed_plant_t *event_list, weed_timecode_t tc, int numframes, 
+				  int *clips, int *frames) WARN_UNUSED;
+weed_plant_t *append_filter_init_event (weed_plant_t *event_list, weed_timecode_t tc, 
+					int filter_idx, int num_in_tracks) WARN_UNUSED;
+weed_plant_t *append_filter_deinit_event (weed_plant_t *event_list, weed_timecode_t tc, 
+					  void *init_event, void **pchain) WARN_UNUSED;
 weed_plant_t *append_filter_map_event (weed_plant_t *event_list, weed_timecode_t tc, void **init_events) WARN_UNUSED;
-weed_plant_t *append_param_change_event (weed_plant_t *event_list, weed_timecode_t tc, gint pnum, weed_plant_t *param, void *init_event, void **pchain) WARN_UNUSED;
+weed_plant_t *append_param_change_event (weed_plant_t *event_list, weed_timecode_t tc, gint pnum, 
+					 weed_plant_t *param, void *init_event, void **pchain) WARN_UNUSED;
 weed_plant_t *append_marker_event (weed_plant_t *event_list, weed_timecode_t tc, int marker_type) WARN_UNUSED;
 
 /** will either insert or replace */
-weed_plant_t *insert_frame_event_at (weed_plant_t *event_list, weed_timecode_t tc, int numframes, int *clips, int *frames, weed_plant_t **shortcut) WARN_UNUSED;
-void insert_audio_event_at(weed_plant_t *event_list,weed_plant_t *event, gint track, gint clipnum, gdouble time, gdouble vel);
+weed_plant_t *insert_frame_event_at (weed_plant_t *event_list, weed_timecode_t tc, int numframes, 
+				     int *clips, int *frames, weed_plant_t **shortcut) WARN_UNUSED;
+void insert_audio_event_at(weed_plant_t *event_list,weed_plant_t *event, gint track, gint clipnum, 
+			   gdouble time, gdouble vel);
 void remove_audio_for_track (weed_plant_t *event, int track);
-weed_plant_t *insert_blank_frame_event_at (weed_plant_t *event_list, weed_timecode_t tc, weed_plant_t **shortcut) WARN_UNUSED;
+weed_plant_t *insert_blank_frame_event_at (weed_plant_t *event_list, weed_timecode_t tc, 
+					   weed_plant_t **shortcut) WARN_UNUSED;
 
 void remove_frame_from_event (weed_plant_t *event_list, weed_plant_t *event, gint track);
 void remove_end_blank_frames (weed_plant_t *event_list);
@@ -31,9 +38,17 @@ weed_plant_t *process_events (weed_plant_t *next_event, weed_timecode_t curr_tc)
 void event_list_close_start_gap (weed_plant_t *event_list);
 void event_list_add_track (weed_plant_t *event_list, gint layer);
 void event_list_free (weed_plant_t *event_list);
-void event_list_replace_events (weed_plant_t *event_list, weed_plant_t *new_event_list); ///<replace events in event_list with events in new_event_list
-weed_plant_t *event_copy_and_insert (weed_plant_t *in_event, weed_plant_t *event_list); ///< called during quantisation 
-gint count_events (weed_plant_t *event_list, gboolean all_events, weed_timecode_t start_tc, weed_timecode_t end_tc); ///< if all_events is FALSE we only count FRAME events
+
+/// replace events in event_list with events in new_event_list
+void event_list_replace_events (weed_plant_t *event_list, weed_plant_t *new_event_list);
+
+/// called during quantisation 
+weed_plant_t *event_copy_and_insert (weed_plant_t *in_event, weed_plant_t *event_list);
+
+/// if all_events is FALSE we only count FRAME events
+gint count_events (weed_plant_t *event_list, gboolean all_events, weed_timecode_t start_tc, weed_timecode_t end_tc);
+
+int count_resampled_events (weed_plant_t *event_list, gdouble fps);
 
 gboolean event_list_to_block (weed_plant_t *event_list, gint num_events);
 gdouble event_list_get_end_secs (weed_plant_t *event_list);
@@ -76,7 +91,8 @@ gboolean has_audio_frame(weed_plant_t *event_list);
 int get_frame_event_clip (weed_plant_t *, int layer);
 int get_frame_event_frame (weed_plant_t *, int layer);
 gboolean frame_event_has_frame_for_track (weed_plant_t *event, gint track);
-gdouble *get_track_visibility_at_tc(weed_plant_t *event_list, gint ntracks, gint n_back_tracks, weed_timecode_t tc, weed_plant_t **shortcut, gboolean bleedthru);
+gdouble *get_track_visibility_at_tc(weed_plant_t *event_list, gint ntracks, gint n_back_tracks, 
+				    weed_timecode_t tc, weed_plant_t **shortcut, gboolean bleedthru);
 
 //////////////////////////////////////////////////////////
 ///// render details //////////
@@ -146,7 +162,8 @@ gboolean start_render_effect_events (weed_plant_t *event_list); ///< render to c
 void insert_filter_init_event_at(weed_plant_t *event_list, weed_plant_t *at_event, weed_plant_t *event);
 void **filter_init_add_pchanges (weed_plant_t *event_list, weed_plant_t *filter, weed_plant_t *init_event, int ntracks);
 void insert_filter_deinit_event_at(weed_plant_t *event_list, weed_plant_t *at_event, weed_plant_t *event);
-gboolean insert_filter_map_event_at(weed_plant_t *event_list, weed_plant_t *at_event, weed_plant_t *event, gboolean before_frames);
+gboolean insert_filter_map_event_at(weed_plant_t *event_list, weed_plant_t *at_event, weed_plant_t *event, 
+				    gboolean before_frames);
 weed_plant_t *get_filter_map_before(weed_plant_t *event, gint ctrack, weed_plant_t *stop_event);
 weed_plant_t *get_filter_map_after(weed_plant_t *event, gint ctrack);
 void **get_init_events_before(weed_plant_t *event, weed_plant_t *init_event, gboolean add);
@@ -164,7 +181,8 @@ gboolean move_event_right(weed_plant_t *event_list, weed_plant_t *event, gboolea
 gboolean move_event_left(weed_plant_t *event_list, weed_plant_t *event, gboolean can_stay, gdouble fps);
 
 void move_filter_init_event(weed_plant_t *event_list, weed_timecode_t new_tc, weed_plant_t *init_event, gdouble fps);
-void move_filter_deinit_event(weed_plant_t *event_list, weed_timecode_t new_tc, weed_plant_t *deinit_event, gdouble fps, gboolean rescale_pchanges);
+void move_filter_deinit_event(weed_plant_t *event_list, weed_timecode_t new_tc, weed_plant_t *deinit_event, 
+			      gdouble fps, gboolean rescale_pchanges);
 
 // event deletion
 void unlink_event(weed_plant_t *event_list, weed_plant_t *event);
@@ -185,9 +203,14 @@ gboolean is_init_pchange(weed_plant_t *init_event, weed_plant_t *pchange_event);
 void free_pchains(gint key);
 
 // audio
-int get_audio_frame_clip (weed_plant_t *event, int layer); ///< returns clip number for track layer (layer==-1 is backing audio)
-double get_audio_frame_vel (weed_plant_t *event, int layer); ///< returns velocity for track layer (layer==-1 is backing audio)
-double get_audio_frame_seek (weed_plant_t *event, int layer); ///< returns velocity for track layer (layer==-1 is backing audio)
+/// returns clip number for track layer (layer==-1 is backing audio)
+int get_audio_frame_clip (weed_plant_t *event, int layer);
+ 
+/// returns velocity for track layer (layer==-1 is backing audio)
+double get_audio_frame_vel (weed_plant_t *event, int layer);
+
+/// returns velocity for track layer (layer==-1 is backing audio)
+double get_audio_frame_seek (weed_plant_t *event, int layer);
 
 
 // playback

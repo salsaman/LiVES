@@ -69,13 +69,11 @@ const char *plugin_version="LiVES mkv decoder version 1.2";
 
 #include "mkv_decoder.h"
 
-//#include "mkv_decoder.h"
+#include <libavutil/intfloat_readwrite.h>
+#include <libavutil/intreadwrite.h>
+#include <libavutil/lzo.h>
+#include <libavutil/dict.h>
 
-#include "libavutil/intfloat_readwrite.h"
-#include "libavutil/intreadwrite.h"
-#include "libavutil/avstring.h"
-#include "libavutil/lzo.h"
-#include "libavutil/dict.h"
 #if CONFIG_ZLIB
 #include <zlib.h>
 #endif

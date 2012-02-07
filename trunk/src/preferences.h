@@ -579,6 +579,7 @@ void populate_combo_box(GtkComboBox *combo, GList *data);
 void set_combo_box_active_string(GtkComboBox *, gchar *active_str);
 
 void prefsw_set_astream_settings(_vid_playback_plugin *);
+void prefsw_set_rec_after_settings(_vid_playback_plugin *);
 
 void apply_button_set_enabled(GtkWidget *widget, gpointer func_data);
 

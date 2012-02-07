@@ -1,3 +1,18 @@
+Version 1.6.2
+-------------
+Clean up timer code.
+Show more accurate progress for rendering after recording.
+
+
+
+	
+
+
+
+
+
+
+
 Version 1.6.1 (04 February 2012)
 --------------------------------
 Optimise playback by tweaking audio settings.

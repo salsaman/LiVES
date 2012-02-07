@@ -835,7 +835,7 @@ static void progbar_pulse_or_fraction(file *sfile, int frames_done) {
       gettimeofday(&tv, NULL);
       mainw->currticks=U_SECL*(tv.tv_sec-mainw->origsecs)+tv.tv_usec*U_SEC_RATIO-mainw->origusecs*U_SEC_RATIO;
       timesofar=(mainw->currticks-mainw->timeout_ticks)/U_SEC;
-      
+
       disp_fraction(frames_done,sfile->progress_start,sfile->progress_end,
 		    timesofar,sfile->proc_ptr);
       progress_count=0;

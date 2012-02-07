@@ -48,6 +48,13 @@ endif
 endif
 
 
+# TODO - at least mpegts, mpegps, mp4, mov, mng
+# provided they support frame accurate seeking
+
+# avi is broken and needs a patch for decoding
+
+# h264 does not work and needs a patch
+
 
 if HAVE_AVFORMAT
 if HAVE_AVCODEC
@@ -76,7 +83,18 @@ mkv_decoder_la_CFLAGS = $(shared_cflags) $(weed_cflags) $(MKVDEC_CFLAGS)
 mkv_decoder_la_LDFLAGS = $(shared_ldflags) $(MKVDEC_LIBS)
 
 
+
 #in progress
+
+#mpegts_libs = mpegts_decoder.la
+#MPEGTSDEC_LIBS = @LIBAVCODEC_LIBS@ @LIBAVFORMAT_LIBS@ @LIBAVUTIL_LIBS@
+#MPEGTSDEC_CFLAGS = @LIBAVFORMAT_CFLAGS@ @LIBAVCODEC_CFLAGS@ @LIBAVUTIL_CFLAGS@ \
+	-Wno-deprecated-declarations
+#mpegts_decoder_la_SOURCES = mpegts_decoder.c mpegts_decoder.h
+#mpegts_decoder_la_CFLAGS = $(shared_cflags) $(weed_cflags) $(MPEGTSDEC_CFLAGS)
+#mpegts_decoder_la_LDFLAGS = $(shared_ldflags) $(MPEGTSDEC_LIBS)
+
+
 
 #does not work - unable to parse video packets (patch would be very nice...)
 
@@ -94,6 +112,6 @@ endif
 
 
 
-decoderpluginslib_LTLIBRARIES = $(ogg_libs) $(dv_libs) $(flv_libs) $(asf_libs) $(mkv_libs) #$(avi_libs)
+decoderpluginslib_LTLIBRARIES = $(ogg_libs) $(dv_libs) $(flv_libs) $(asf_libs) $(mkv_libs) $(mpegts_libs) #$(avi_libs)
 
 EXTRA_DIST = decplugin.h

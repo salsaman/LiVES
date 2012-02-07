@@ -1250,7 +1250,7 @@ gchar *dummychar;
 
 #ifndef LIVES_FATAL
 #ifndef LIVES_NO_FATAL
-#define LIVES_FATAL(x)      fprintf(stderr, "LiVES fatal: %s\n", x)
+#define LIVES_FATAL(x)      {fprintf(stderr, "LiVES fatal: %s\n", x); raise (LIVES_SIGSEGV);}
 #else // LIVES_NO_FATAL
 #define LIVES_FATAL(x)      dummychar = x
 #endif // LIVES_NO_FATAL

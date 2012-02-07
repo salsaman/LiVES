@@ -3607,7 +3607,7 @@ gboolean start_render_effect_events (weed_plant_t *event_list) {
   mainw->progress_fn (TRUE);
 
   cfile->progress_start=1;
-  cfile->progress_end=count_events (event_list,FALSE,0,0);
+  cfile->progress_end=count_resampled_events (event_list, cfile->fps);
 
   cfile->pb_fps=1000000.;
 
@@ -3671,10 +3671,55 @@ gint count_events (weed_plant_t *event_list, gboolean all_events, weed_timecode_
 
   while (event!=NULL) {
     tc=get_event_timecode(event);
-    if ((all_events||(get_event_hint(event)==WEED_EVENT_HINT_FRAME&&!weed_plant_has_leaf(event,"audio_clips")))&&(end_tc==0||(tc>=start_tc&&tc<end_tc))) i++;
+    if ((all_events||(get_event_hint(event)==WEED_EVENT_HINT_FRAME&&
+		      !weed_plant_has_leaf(event,"audio_clips")))&&
+	(end_tc==0||(tc>=start_tc&&tc<end_tc))) i++;
     event=get_next_event(event);
   }
   return i;
+}
+
+
+
+int count_resampled_events (weed_plant_t *event_list, gdouble fps) {
+  weed_plant_t *event;
+  weed_timecode_t tc,seg_start_tc=0,seg_end_tc;
+
+  int rframes=0,hint,marker_type,error;
+  
+  gboolean seg_start=FALSE;
+
+  if (event_list==NULL) return 0;
+  event=get_first_event(event_list);
+
+  while (event!=NULL) {
+    hint=get_event_hint(event);
+    if (hint==WEED_EVENT_HINT_FRAME) {
+      tc=get_event_timecode(event);
+      if (!seg_start) {
+	seg_start_tc=seg_end_tc=tc;
+	seg_start=TRUE;
+      }
+      else {
+	seg_end_tc=tc;
+      }
+    }
+    else {
+      if (hint==WEED_EVENT_HINT_MARKER) {
+	marker_type=weed_get_int_value(event,"lives_type",&error);
+	if (marker_type==EVENT_MARKER_RECORD_END) {
+	  // add (resampled) frames for one recording stretch
+	  if (seg_start) rframes+=1+((gdouble)(seg_end_tc-seg_start_tc))/U_SEC*fps;
+	  seg_start=FALSE;
+	}
+      }
+    }
+    event=get_next_event(event);
+  }
+
+  if (seg_start) rframes+=1+((gdouble)(seg_end_tc-seg_start_tc))/U_SEC*fps;
+
+  return rframes;
 }
 
 

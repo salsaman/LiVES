@@ -217,6 +217,13 @@ static gint HG_Cbc[256];
 static gint HG_Crc[256];
 static gint HB_Cbc[256];
 
+// unclamped BT.701
+static gint HRGB_Yu[256];
+static gint HR_Cru[256];
+static gint HG_Cbu[256];
+static gint HG_Cru[256];
+static gint HB_Cbu[256];
+
 static gint conv_YR_inited = 0;
 
 
@@ -401,9 +408,6 @@ static void init_RGB_to_YUV_tables(void) {
 
   }
 
-
-
-
   conv_RY_inited = 1;
 }
 
@@ -411,9 +415,6 @@ static void init_RGB_to_YUV_tables(void) {
 
 
 static void init_YUV_to_RGB_tables(void) {
-  // tables here are currently for Y'CbCr only 
-  // TODO - add tables for BT.709
-
   gint i;
 
   // These values are for what I call YUV_SUBSPACE_YCBCR
@@ -499,13 +500,24 @@ static void init_YUV_to_RGB_tables(void) {
   /* clip Cb/Cr values above 240 */	 
   for (i = 240; i < 256; i++) {
     HR_Crc[i] = myround(1.793 * 127. * (1<<FP_BITS)); // 2*(1-Kr)
-    HG_Crc[i] = myround(-0.213 * 127.  * (1<<FP_BITS));
-    HG_Cbc[i] = myround(-0.533 * 127. * (1<<FP_BITS));
+    HG_Crc[i] = myround(-0.533 * 127.  * (1<<FP_BITS));
+    HG_Cbc[i] = myround(-0.213 * 127. * (1<<FP_BITS));
     HB_Cbc[i] = myround(2.112 * 127. * (1<<FP_BITS)); // 2*(1-Kb)
   }
 
-  // no unclamped for bt.709
+  // unclamped for bt.709
 
+  for (i = 0; i < 255; i++) {
+    HRGB_Yu[i] = i * (1<<FP_BITS);
+  }
+
+
+  for (i = 0; i <= 255; i++) {
+    HR_Cru[i] = myround(1.57503 * ((gdouble)(i)-128.)) * (1<<FP_BITS); // 2*(1-Kr)
+    HG_Cru[i] = myround(-0.468204 * ((gdouble)(i)-128.)) * (1<<FP_BITS); // 
+    HG_Cbu[i] = myround(-0.186375 * ((gdouble)(i)-128.)) * (1<<FP_BITS);
+    HB_Cbu[i] = myround(1.85524 * ((gdouble)(i)-128.)) * (1<<FP_BITS); // 2*(1-Kb)
+  }
 
   conv_YR_inited = 1;
 }
@@ -639,25 +651,47 @@ static void set_conversion_arrays(int clamping, int subspace) {
     }
     break;
   case WEED_YUV_SUBSPACE_BT709:
-    //untested
-    Y_R=HY_Rc;
-    Y_G=HY_Gc;
-    Y_B=HY_Bc;
+    if (clamping==WEED_YUV_CLAMPING_CLAMPED) {
+      Y_R=HY_Rc;
+      Y_G=HY_Gc;
+      Y_B=HY_Bc;
       
-    Cb_R=HCb_Rc;
-    Cb_G=HCb_Gc;
-    Cb_B=HCb_Bc;
+      Cb_R=HCb_Rc;
+      Cb_G=HCb_Gc;
+      Cb_B=HCb_Bc;
       
-    Cr_R=HCr_Rc;
-    Cr_G=HCr_Gc;
-    Cr_B=HCr_Bc;
+      Cr_R=HCr_Rc;
+      Cr_G=HCr_Gc;
+      Cr_B=HCr_Bc;
       
-    RGB_Y=HRGB_Yc;
+      RGB_Y=HRGB_Yc;
       
-    R_Cr=HR_Crc;
-    G_Cr=HG_Crc;
-    G_Cb=HG_Cbc;
-    B_Cb=HB_Cbc;
+      R_Cr=HR_Crc;
+      G_Cr=HG_Crc;
+      G_Cb=HG_Cbc;
+      B_Cb=HB_Cbc;
+    }
+    else {
+      Y_R=HY_Ru;
+      Y_G=HY_Gu;
+      Y_B=HY_Bu;
+      
+      Cb_R=HCb_Ru;
+      Cb_G=HCb_Gu;
+      Cb_B=HCb_Bu;
+      
+      Cr_R=HCr_Ru;
+      Cr_G=HCr_Gu;
+      Cr_B=HCr_Bu;
+      
+      RGB_Y=HRGB_Yu;
+      
+      R_Cr=HR_Cru;
+      G_Cr=HG_Cru;
+      G_Cb=HG_Cbu;
+      B_Cb=HB_Cbu;
+    }
+ 
     break;
   }
 
@@ -8193,14 +8227,6 @@ gboolean convert_layer_palette_full(weed_plant_t *layer, int outpl, int osamtype
 
   if (weed_plant_has_leaf(layer,"YUV_subspace")) isubspace=weed_get_int_value(layer,"YUV_subspace",&error);
   else isubspace=WEED_YUV_SUBSPACE_YUV;
-
-  if (osubspace==WEED_YUV_SUBSPACE_BT709&&oclamping==WEED_YUV_CLAMPING_UNCLAMPED) {
-    LIVES_INFO("bt709 unclamped output not supported !");
-  }
-
-  if (isubspace==WEED_YUV_SUBSPACE_BT709&&iclamped==WEED_YUV_CLAMPING_UNCLAMPED) {
-    LIVES_INFO("bt709 unclamped input not supported !");
-  }
 
   //#define DEBUG_PCONV
 #ifdef DEBUG_PCONV

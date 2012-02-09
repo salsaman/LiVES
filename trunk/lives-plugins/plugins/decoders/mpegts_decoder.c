@@ -552,6 +552,8 @@ static void add_pid_to_pmt(MpegTSContext *ts, unsigned int programid, unsigned i
 
   if(p->nb_pids >= MAX_PIDS_PER_PROGRAM)
     return;
+  
+  fprintf(stderr,"adding pid %d\n",pid);
   p->pids[p->nb_pids++] = pid;
 }
 
@@ -609,6 +611,8 @@ static void write_section_data(lives_clip_data_t *cdata, AVFormatContext *s, Mpe
   MpegTSSectionFilter *tss = &tss1->u.section_filter;
   int len;
 
+  fprintf(stderr,"pt a123\n");
+
   if (is_start) {
     memcpy(tss->section_buf, buf, buf_size);
     tss->section_index = buf_size;
@@ -654,6 +658,8 @@ static MpegTSFilter *mpegts_open_section_filter(MpegTSContext *ts, unsigned int 
   filter = av_mallocz(sizeof(MpegTSFilter));
   if (!filter)
     return NULL;
+
+  fprintf(stderr,"adding filter %d %p\n",pid,filter);
   ts->pids[pid] = filter;
   filter->type = MPEGTS_SECTION;
   filter->pid = pid;
@@ -683,6 +689,7 @@ static MpegTSFilter *mpegts_open_pes_filter(MpegTSContext *ts, unsigned int pid,
   filter = av_mallocz(sizeof(MpegTSFilter));
   if (!filter)
     return NULL;
+  fprintf(stderr,"2adding filter %p\n",filter);
   ts->pids[pid] = filter;
   filter->type = MPEGTS_PES;
   filter->pid = pid;
@@ -1884,7 +1891,7 @@ static void pmt_cb(lives_clip_data_t *cdata, MpegTSFilter *filter, const uint8_t
   int mp4_descr_count = 0;
   int i;
 
-  //av_dlog(ts->stream, "PMT: len %i\n", section_len);
+  fprintf(stderr, "PMT: len %i\n", section_len);
   //hex_dump_debug(ts->stream, (uint8_t *)section, section_len);
   
   p_end = section + section_len - 4;
@@ -2023,7 +2030,7 @@ static void pat_cb(lives_clip_data_t *cdata, MpegTSFilter *filter, const uint8_t
   int sid, pmt_pid;
   AVProgram *program;
 
-  //av_dlog(ts->stream, "PAT:\n");
+  fprintf(stderr, "PAT:\n");
   //hex_dump_debug(ts->stream, (uint8_t *)section, section_len);
 
   p_end = section + section_len - 4;
@@ -2166,22 +2173,27 @@ static int handle_packet(lives_clip_data_t *cdata, const uint8_t *packet) {
   is_start = packet[1] & 0x40;
   tss = ts->pids[pid];
 
+  // TODO - if tss is NULL,  most likely these are invalid after EOF frames - drop them
 
   if (ts->auto_guess && tss == NULL && is_start) {
+    fprintf(stderr,"yipee23 !!\n");
     add_pes_stream(ts, pid, -1);
     tss = ts->pids[pid];
   }
-  if (!tss)
+  if (!tss) {
     return 0;
-  
+  }
+
+
   pes = tss->u.pes_filter.opaque;
   st = pes->st;
 
-  if (st!=priv->vidst) return 0;
+  if (priv->vidst!=NULL&&st!=priv->vidst) return 0;
 
   afc = (packet[3] >> 4) & 3;
   if (afc == 0) /* reserved value */
     return 0;
+
   has_adaptation = afc & 2;
   has_payload = afc & 1;
   is_discontinuity = has_adaptation
@@ -2235,6 +2247,7 @@ static int handle_packet(lives_clip_data_t *cdata, const uint8_t *packet) {
   
   pos = priv->input_position;
   ts->pos47= pos % ts->raw_packet_size;
+
 
   if (tss->type == MPEGTS_SECTION) {
     if (is_start) {
@@ -2473,6 +2486,8 @@ static int lives_mpegts_read_header(lives_clip_data_t *cdata) {
 
   if (1) {//s->iformat == &ff_mpegts_demuxer) {
     /* normal demux */
+
+    fprintf(stderr,"here !!\n");
 
     /* first do a scanning to get all the services */
     /* NOTE: We attempt to seek on non-seekable files as well, as the
@@ -2800,8 +2815,6 @@ static void detach_stream (lives_clip_data_t *cdata) {
     priv->avpkt.size=0;
   }
 
-
-
   close(priv->fd);
 }
 
@@ -2958,7 +2971,7 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
   priv->idxhh=NULL;
   priv->idxht=NULL;
 
-  sprintf(cdata->audio_name,"%s","none");
+  sprintf(cdata->audio_name,"%s","");
 
   priv->s = avformat_alloc_context();
 
@@ -2977,12 +2990,10 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
   fstat(priv->fd,&sb);
   priv->filesize=sb.st_size;
 
-
   if (lives_mpegts_read_header(cdata)) {
     close(priv->fd);
     return FALSE;
   }
-
 
   if (priv->vidst==NULL) {
     fprintf(stderr, "mpegts_decoder: Got no video stream !\n");

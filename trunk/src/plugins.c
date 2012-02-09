@@ -2388,9 +2388,12 @@ void get_mime_type(gchar *text, int maxlen, const lives_clip_data_t *cdata) {
     g_free(vidname);
   }
 
-  if (cdata->audio_name==NULL||!strlen(cdata->audio_name)) return;
-
-  audname=g_strdup_printf("/%s",cdata->audio_name);
+  if (cdata->audio_name==NULL||!strlen(cdata->audio_name)) {
+    if (cfile->achans==0) return;
+    audname=g_strdup_printf("/%s",_("unknown"));
+  }
+  else 
+    audname=g_strdup_printf("/%s",cdata->audio_name);
   g_strappend(text,40,audname);
   g_free(audname);
 }

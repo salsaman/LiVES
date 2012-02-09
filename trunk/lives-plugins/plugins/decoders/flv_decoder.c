@@ -751,7 +751,7 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
 
   priv->ctx=ctx = avcodec_alloc_context();
 
-  sprintf(cdata->audio_name,"none");
+  sprintf(cdata->audio_name,"%s","");
 
   // now we get the stream data
   while (!got_astream || !got_vstream) {
@@ -804,7 +804,7 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
       case 11:
 	sprintf(cdata->audio_name,"%s","speex"); break;
       default:
-	sprintf(cdata->audio_name,"%s","unknown"); break;
+	break;
       }
 
       if (cdata->arate==0) {

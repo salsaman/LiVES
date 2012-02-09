@@ -2984,7 +2984,15 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
 
   priv->data_start=priv->input_position;
 
-
+  switch (priv->vidst->codec->codec_id) {
+  case CODEC_ID_DIRAC: sprintf(cdata->video_name,"%s","dirac"); break;
+  case CODEC_ID_H264: sprintf(cdata->video_name,"%s","h264"); break;
+  case CODEC_ID_MPEG1VIDEO: sprintf(cdata->video_name,"%s","mpeg1"); break;
+  case CODEC_ID_MPEG2VIDEO: sprintf(cdata->video_name,"%s","mpeg2"); break;
+  case CODEC_ID_MPEG4: sprintf(cdata->video_name,"%s","mpeg2"); break;
+  case CODEC_ID_VC1: sprintf(cdata->video_name,"%s","vc1"); break;
+  default: sprintf(cdata->video_name,"%s","unknown"); break;
+  }
 
   //#define DEBUG
 #ifdef DEBUG

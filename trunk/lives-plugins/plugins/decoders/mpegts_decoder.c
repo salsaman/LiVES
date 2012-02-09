@@ -452,13 +452,6 @@ static inline uint16_t lives_rb24(const uint8_t *x) {
 }
 
 
-static uint16_t lives_rbf24(lives_clip_data_t *cdata, int fd) {
-  uint8_t buf[3];
-  lives_read(cdata,fd,&buf,3);
-  return lives_rb24(buf);
-}
-
-
 static inline uint16_t lives_rb32(const uint8_t *x) {
   return (((((x[0]<<8) + x[1])<<8) + x[2])<<8) + x[3];
 }
@@ -657,15 +650,12 @@ static MpegTSFilter *mpegts_open_section_filter(MpegTSContext *ts, unsigned int 
     MpegTSFilter *filter;
     MpegTSSectionFilter *sec;
 
-    fprintf(stderr, "Filter: pid=0x%x\n", pid);
-
     if (pid >= NB_PID_MAX || ts->pids[pid])
         return NULL;
     filter = av_mallocz(sizeof(MpegTSFilter));
     if (!filter)
         return NULL;
     ts->pids[pid] = filter;
-    fprintf(stderr, "Filterx: pid=0x%x\n", pid);
     filter->type = MPEGTS_SECTION;
     filter->pid = pid;
     filter->es_id = -1;
@@ -695,7 +685,6 @@ static MpegTSFilter *mpegts_open_pes_filter(MpegTSContext *ts, unsigned int pid,
     if (!filter)
         return NULL;
     ts->pids[pid] = filter;
-    fprintf(stderr, "Filter2: pid=0x%x\n", pid);
     filter->type = MPEGTS_PES;
     filter->pid = pid;
     filter->es_id = -1;
@@ -929,7 +918,6 @@ static void mpegts_find_stream_type(AVStream *st,
             st->codec->codec_type = types->codec_type;
             st->codec->codec_id   = types->codec_id;
             st->request_probe     = 0;
-	    fprintf(stderr,"pt YY\n");
             return;
         }
     }
@@ -2227,7 +2215,7 @@ static int handle_packet(lives_clip_data_t *cdata, const uint8_t *packet) {
 
       spc=p[sploffs];
       if (spc==0) {
-	fprintf (stderr,"XXX:  Keyframe ?");
+	//fprintf (stderr,"XXX:  Keyframe ?");
       }
 
     }
@@ -2699,7 +2687,7 @@ static uint32_t frame_to_dts(const lives_clip_data_t *cdata, int64_t frame) {
 const char *module_check_init(void) {
   avcodec_init();
   avcodec_register_all();
-  av_log_set_level(AV_LOG_ERROR);
+  av_log_set_level(0);
   return NULL;
 }
 
@@ -2742,10 +2730,6 @@ static index_entry * mpegts_read_seek(const lives_clip_data_t *cdata, uint32_t t
   // use unadj timestamp
 
   lives_mpegts_priv_t *priv=cdata->priv;
-
-  AVFormatContext *s=priv->s;
-
-  AVStream *st = priv->vidst;
 
   index_entry *idx;
 
@@ -2821,7 +2805,6 @@ int get_last_video_dts(lives_clip_data_t *cdata) {
   lives_mpegts_priv_t *priv=cdata->priv;
   boolean got_picture=FALSE;
   int len;
-  int num=0;
   int dts;
   int64_t idxpos;
 
@@ -2914,9 +2897,7 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
   lives_mpegts_priv_t *priv=cdata->priv;
   unsigned char header[MPEGTS_PROBE_SIZE];
   int64_t ldts,dts,pts;
-  double fps,duration=0.;
-
-  int len;
+  double fps;
 
   AVCodec *codec=NULL;
   AVCodecContext *ctx;
@@ -3045,24 +3026,22 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
   avcodec_flush_buffers (priv->ctx);
 
 
-  mpegts_read_packet(cdata,&priv->avpkt);
-
   while (!got_picture&&!got_eof) {
-
-#if LIBAVCODEC_VERSION_MAJOR >= 52
-    len=avcodec_decode_video2(ctx, priv->picture, &got_picture, &priv->avpkt );
-#else 
-    len=avcodec_decode_video(ctx, priv->picture, &got_picture, priv->avpkt.data, priv->avpkt.size );
-#endif
 
     if (priv->avpkt.data!=NULL) {
       free(priv->avpkt.data);
       priv->avpkt.data=NULL;
       priv->avpkt.size=0;
     }
-    
 
     mpegts_read_packet(cdata,&priv->avpkt);
+
+
+#if LIBAVCODEC_VERSION_MAJOR >= 52
+    avcodec_decode_video2(ctx, priv->picture, &got_picture, &priv->avpkt );
+#else 
+    avcodec_decode_video(ctx, priv->picture, &got_picture, priv->avpkt.data, priv->avpkt.size );
+#endif
 
   }
 
@@ -3083,12 +3062,6 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
 
   while (!got_picture&&!got_eof) {
 
-#if LIBAVCODEC_VERSION_MAJOR >= 52
-    len=avcodec_decode_video2(ctx, priv->picture, &got_picture, &priv->avpkt );
-#else 
-    len=avcodec_decode_video(ctx, priv->picture, &got_picture, priv->avpkt.data, priv->avpkt.size );
-#endif
-
     if (priv->avpkt.data!=NULL) {
       free(priv->avpkt.data);
       priv->avpkt.data=NULL;
@@ -3096,6 +3069,12 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
     }
     
     mpegts_read_packet(cdata,&priv->avpkt);
+
+#if LIBAVCODEC_VERSION_MAJOR >= 52
+    avcodec_decode_video2(ctx, priv->picture, &got_picture, &priv->avpkt );
+#else 
+    avcodec_decode_video(ctx, priv->picture, &got_picture, priv->avpkt.data, priv->avpkt.size );
+#endif
 
   }
 
@@ -3146,7 +3125,7 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
     detach_stream(cdata);
     return FALSE;
   }
-#define DEBUG
+  //#define DEBUG
 #ifdef DEBUG
   fprintf(stderr,"using palette %d, size %d x %d\n",
 	  cdata->current_palette,cdata->width,cdata->height);
@@ -3448,7 +3427,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
 
       mpegts_read_packet((lives_clip_data_t *)cdata,&priv->avpkt);
 
-#define DEBUG_KFRAMES
+      //#define DEBUG_KFRAMES
 #ifdef DEBUG_KFRAMES
       if (idx!=NULL) printf("got kframe %ld for frame %ld\n",nextframe,tframe);
 #endif
@@ -3462,7 +3441,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
     priv->last_frame=tframe;
 
     // do this until we reach target frame //////////////
-    int len;
+
     do {
 
       got_picture=FALSE;
@@ -3470,9 +3449,9 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
       while (!got_picture) {
 
 #if LIBAVCODEC_VERSION_MAJOR >= 52
-	len=avcodec_decode_video2(priv->ctx, priv->picture, &got_picture, &priv->avpkt );
+	avcodec_decode_video2(priv->ctx, priv->picture, &got_picture, &priv->avpkt );
 #else 
-	len=avcodec_decode_video(priv->ctx, priv->picture, &got_picture, priv->avpkt.data, priv->avpkt.size );
+	avcodec_decode_video(priv->ctx, priv->picture, &got_picture, priv->avpkt.data, priv->avpkt.size );
 #endif
 
 	if (priv->avpkt.data!=NULL) {

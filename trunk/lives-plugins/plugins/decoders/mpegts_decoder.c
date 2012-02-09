@@ -1,5 +1,5 @@
-// LiVES - mov decoder plugin
-// (c) G. Finch 2011 <salsaman@xs4all.nl,salsaman@gmail.com>
+// LiVES - mpegts decoder plugin (does not work)
+// (c) G. Finch 2012 <salsaman@gmail.com>
 
 /*
  * This file is free software; you can redistribute it and/or
@@ -18,8 +18,7 @@
  */
 
 /* based on code from libavformat
- * Copyright (c) 2001 Fabrice Bellard
- * Copyright (c) 2009 Baptiste Coudurier <baptiste dot coudurier at gmail dot com>
+ * Copyright (c) 2002-2003 Fabrice Bellard
  */
 
 

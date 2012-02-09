@@ -3711,10 +3711,3 @@ void module_unload(void) {
 
 }
 
-
-int main (void) {
-  const char *url="/home/gabriel/Videos/canon_xha1.mpeg";
-  module_check_init();
-  lives_clip_data_t *cdata=get_clip_data(url,NULL);
-  return 1;
-}

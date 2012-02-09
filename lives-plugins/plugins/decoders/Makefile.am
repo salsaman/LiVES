@@ -86,13 +86,13 @@ mkv_decoder_la_LDFLAGS = $(shared_ldflags) $(MKVDEC_LIBS)
 
 #in progress
 
-#mpegts_libs = mpegts_decoder.la
-#MPEGTSDEC_LIBS = @LIBAVCODEC_LIBS@ @LIBAVFORMAT_LIBS@ @LIBAVUTIL_LIBS@
-#MPEGTSDEC_CFLAGS = @LIBAVFORMAT_CFLAGS@ @LIBAVCODEC_CFLAGS@ @LIBAVUTIL_CFLAGS@ \
+mpegts_libs = mpegts_decoder.la
+MPEGTSDEC_LIBS = @LIBAVCODEC_LIBS@ @LIBAVFORMAT_LIBS@ @LIBAVUTIL_LIBS@
+MPEGTSDEC_CFLAGS = @LIBAVFORMAT_CFLAGS@ @LIBAVCODEC_CFLAGS@ @LIBAVUTIL_CFLAGS@ \
 	-Wno-deprecated-declarations
-#mpegts_decoder_la_SOURCES = mpegts_decoder.c mpegts_decoder.h
-#mpegts_decoder_la_CFLAGS = $(shared_cflags) $(weed_cflags) $(MPEGTSDEC_CFLAGS)
-#mpegts_decoder_la_LDFLAGS = $(shared_ldflags) $(MPEGTSDEC_LIBS)
+mpegts_decoder_la_SOURCES = mpegts_decoder.c mpegts_decoder.h
+mpegts_decoder_la_CFLAGS = $(shared_cflags) $(weed_cflags) $(MPEGTSDEC_CFLAGS)
+mpegts_decoder_la_LDFLAGS = $(shared_ldflags) $(MPEGTSDEC_LIBS)
 
 
 

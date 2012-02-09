@@ -149,25 +149,90 @@ static inline void init_get_bits(GetBitContext *s,
 
 
 
+static void index_free(index_entry *idx) {
+  index_entry *cidx=idx,*next;
 
-/*#include <libavutil/avstring.h>
-#include <libavutil/mem.h>
-#include "libavutil/intreadwrite.h"
-#include "libavutil/log.h"
-#include "libavutil/dict.h"
-#include "libavutil/avassert.h"
-#include "avformat.h"
-#include "mpegts.h"
-#include "internal.h"
-#include "avio_internal.h"
-#include "seek.h"
-#include "mpeg.h"
-#include "isom.h"
-*/
+  while (cidx!=NULL) {
+    next=cidx->next;
+    free(cidx);
+    cidx=next;
+  }
+}
+
+//////////////////////////////////////////////////////////////////////////
+
+/// here we assume that pts of interframes > pts of previous keyframe
+// should be true for most formats (except eg. dirac)
+
+// we further assume that pts == dts for all frames
+
+
+static index_entry *index_walk(index_entry *idx, uint32_t pts) {
+  index_entry *xidx=idx;
+  while(xidx!=NULL) {
+    if (xidx->next==NULL || (pts>=xidx->dts && pts<xidx->next->dts)) return xidx;
+    xidx=xidx->next;
+  }
+  /// oops. something went wrong
+  return NULL; 
+}
+
+
+index_entry *lives_add_idx(const lives_clip_data_t *cdata, uint64_t offset, uint32_t pts) {
+  lives_mpegts_priv_t *priv=cdata->priv;
+  index_entry *nidx=priv->idxht;
+  index_entry *nentry;
+
+  nentry=malloc(sizeof(index_entry));
+
+  nentry->dts=pts;
+  nentry->offs=offset;
+  nentry->next=NULL;
+
+  if (nidx==NULL) {
+    // first entry in list
+    priv->idxhh=priv->idxht=nentry;
+    return nentry;
+  }
+
+  if (nidx->dts < pts) {
+    // last entry in list
+    nidx->next=nentry;
+    priv->idxht=nentry;
+    return nentry;
+  }
+
+  if (priv->idxhh->dts>pts) {
+    // before head
+    nentry->next=priv->idxhh;
+    priv->idxhh=nentry;
+    return nentry;
+  }
+
+  nidx=index_walk(priv->idxhh,pts);
+
+  // after nidx in list
+
+  nentry->next=nidx->next;
+  nidx->next=nentry;
+
+  return nentry;
+}
+
+
+
+static index_entry *get_idx_for_pts(const lives_clip_data_t *cdata, uint32_t pts) {
+  lives_mpegts_priv_t *priv=cdata->priv;
+  return index_walk(priv->idxhh,pts);
+}
+
+
+//////////////////////////////////////////////
 
 
 static boolean check_for_eof(lives_clip_data_t *cdata) {
-
+  lives_mpegts_priv_t *priv=cdata->priv;
+  if (priv->input_position>priv->filesize) return TRUE;
   return FALSE;
 }
 
@@ -176,7 +241,8 @@ static boolean check_for_eof(lives_clip_data_t *cdata) {
    synchronisation is lost */
 #define MAX_RESYNC_SIZE 65536
 
-#define MAX_PES_PAYLOAD 200*1024
+// large enough for 1080p
+#define MAX_PES_PAYLOAD 400*1024
 
 #define MAX_MP4_DESCR_COUNT 16
 
@@ -2493,60 +2559,6 @@ static int lives_mpegts_read_header(lives_clip_data_t *cdata) {
   return -1;
 }
 
-#define MAX_PACKET_READAHEAD ((128 * 1024) / 188)
-
-static int mpegts_raw_read_packet(lives_clip_data_t *cdata, AVPacket *pkt) {
-
-  lives_mpegts_priv_t *priv=cdata->priv;
-  AVFormatContext *s=priv->s;
-  MpegTSContext *ts = s->priv_data;
-  int pb = priv->fd;
-
-  int ret, i;
-  int64_t pcr_h, next_pcr_h, pos;
-  int pcr_l, next_pcr_l;
-  uint8_t pcr_buf[12];
-  ssize_t len;
-
-  if (av_new_packet(pkt, TS_PACKET_SIZE) < 0)
-    return -1;
-  pkt->pos= priv->input_position;
-  ret = read_packet(cdata, pkt->data, ts->raw_packet_size);
-  if (ret < 0) {
-    av_free_packet(pkt);
-    return ret;
-  }
-  if (ts->mpeg2ts_compute_pcr) {
-    /* compute exact PCR for each packet */
-    if (parse_pcr(&pcr_h, &pcr_l, pkt->data) == 0) {
-      /* we read the next PCR (XXX: optimize it by using a bigger buffer */
-      pos = priv->input_position;
-      for(i = 0; i < MAX_PACKET_READAHEAD; i++) {
-	priv->input_position=pos + i * ts->raw_packet_size;
-	lseek(pb, priv->input_position, SEEK_SET);
-	len=read(pb, pcr_buf, 12);
-	if (len>0) priv->input_position+=len;
-	if (parse_pcr(&next_pcr_h, &next_pcr_l, pcr_buf) == 0) {
-	  /* XXX: not precise enough */
-	  ts->pcr_incr = ((next_pcr_h - pcr_h) * 300 + (next_pcr_l - pcr_l)) /
-	    (i + 1);
-	  break;
-	}
-      }
-      priv->input_position=pos + i * ts->raw_packet_size;
-      lseek(pb, priv->input_position, SEEK_SET);
-      /* no next PCR found: we use previous increment */
-      ts->cur_pcr = pcr_h * 300 + pcr_l;
-    }
-    pkt->pts = ts->cur_pcr;
-    pkt->duration = ts->pcr_incr;
-    ts->cur_pcr += ts->pcr_incr;
-  }
-  pkt->stream_index = 0;
-  return 0;
-}
-
-
 
 static boolean mpegts_read_packet(lives_clip_data_t *cdata, AVPacket *pkt) {
   lives_mpegts_priv_t *priv=cdata->priv;
@@ -2590,47 +2602,6 @@ static int mpegts_read_close(lives_clip_data_t *cdata) {
   
   return 0;
 }
-
-
-static int64_t mpegts_get_pcr(lives_clip_data_t *cdata, int stream_index, int64_t *ppos, int64_t pos_limit) {
-  lives_mpegts_priv_t *priv=cdata->priv;
-  AVFormatContext *s=priv->s;
-  MpegTSContext *ts = s->priv_data;
-  int64_t pos, timestamp;
-  uint8_t buf[TS_PACKET_SIZE];
-  int pcr_l, pcr_pid = ((PESContext*)s->streams[stream_index]->priv_data)->pcr_pid;
-  ssize_t bytes;
-
-  pos = ((*ppos  + ts->raw_packet_size - 1 - ts->pos47) / ts->raw_packet_size) * ts->raw_packet_size + ts->pos47;
-
-  while(pos < pos_limit) {
-    priv->input_position=pos;
-    if (lseek(priv->fd, pos, SEEK_SET) < 0)
-      return AV_NOPTS_VALUE;
-    if ((bytes=read(priv->fd, buf, TS_PACKET_SIZE)) != TS_PACKET_SIZE) {
-      if (bytes>0) priv->input_position+=bytes;
-      return AV_NOPTS_VALUE;
-    }
-    priv->input_position+=bytes;
-
-    if (buf[0] != 0x47) {
-      if (mpegts_resync(cdata) < 0)
-	return AV_NOPTS_VALUE;
-      pos = priv->input_position;
-      continue;
-    }
-    if ((pcr_pid < 0 || (lives_rb16(buf + 1) & 0x1fff) == pcr_pid) &&
-	parse_pcr(&timestamp, &pcr_l, buf) == 0) {
-      *ppos = pos;
-      return timestamp;
-    }
-    pos += ts->raw_packet_size;
-  }
-  
-  return AV_NOPTS_VALUE;
-}
-
-
 
 
 
@@ -2701,213 +2672,6 @@ void ff_read_frame_flush(AVFormatContext *s)
 
 
 
-void ff_reduce_index(AVFormatContext *s, int stream_index)
-{
-  AVStream *st= s->streams[stream_index];
-  unsigned int max_entries= s->max_index_size / sizeof(AVIndexEntry);
-
-  if((unsigned)st->nb_index_entries >= max_entries){
-    int i;
-    for(i=0; 2*i<st->nb_index_entries; i++)
-      st->index_entries[i]= st->index_entries[2*i];
-    st->nb_index_entries= i;
-  }
-}
-
-
-
-
-
-
-
-
-
-
-static int64_t mpegts_get_dts(lives_clip_data_t *cdata, int stream_index, int64_t *ppos, int64_t pos_limit) {
-  lives_mpegts_priv_t *priv=cdata->priv;
-  AVFormatContext *s=priv->s;
-  MpegTSContext *ts = s->priv_data;
-  int64_t pos;//, timestamp;
-
-  pos = ((*ppos  + ts->raw_packet_size - 1 - ts->pos47) / ts->raw_packet_size) * ts->raw_packet_size + ts->pos47;
-
-  ff_read_frame_flush(s);
-
-  priv->input_position=pos;
-  if (lseek(priv->fd, pos, SEEK_SET) < 0)
-    return AV_NOPTS_VALUE;
-
-  while(pos < pos_limit) {
-    int ret;
-    AVPacket pkt;
-    av_init_packet(&pkt);
-    ret= av_read_frame(s, &pkt);
-    if(ret < 0)
-      return AV_NOPTS_VALUE;
-    av_free_packet(&pkt);
-
-    if(pkt.dts != AV_NOPTS_VALUE && pkt.pos >= 0){
-      ff_reduce_index(s, pkt.stream_index);
-
-      // !!!!!!!!!!!!!!!!!
-      //av_add_index_entry(s->streams[pkt.stream_index], pkt.pos, pkt.dts, 0, 0, AVINDEX_KEYFRAME /* FIXME keyframe? */);
-
-      if(pkt.stream_index == stream_index){
-	*ppos= pkt.pos;
-	return pkt.dts;
-      }
-    }
-    pos = pkt.pos;
-  }
-  
-  return AV_NOPTS_VALUE;
-}
-
-
-
-
-#ifdef USE_SYNCPOINT_SEARCH
-
-static int read_seek2(AVFormatContext *s,
-                      int stream_index,
-                      int64_t min_ts,
-                      int64_t target_ts,
-                      int64_t max_ts,
-                      int flags)
-{
-    int64_t pos;
-
-    int64_t ts_ret, ts_adj;
-    int stream_index_gen_search;
-    AVStream *st;
-    AVParserState *backup;
-
-    backup = ff_store_parser_state(s);
-
-    // detect direction of seeking for search purposes
-    flags |= (target_ts - min_ts > (uint64_t)(max_ts - target_ts)) ?
-             AVSEEK_FLAG_BACKWARD : 0;
-
-    if (flags & AVSEEK_FLAG_BYTE) {
-        // use position directly, we will search starting from it
-        pos = target_ts;
-    } else {
-        // search for some position with good timestamp match
-        if (stream_index < 0) {
-            stream_index_gen_search = av_find_default_stream_index(s);
-            if (stream_index_gen_search < 0) {
-                ff_restore_parser_state(s, backup);
-                return -1;
-            }
-
-            st = s->streams[stream_index_gen_search];
-            // timestamp for default must be expressed in AV_TIME_BASE units
-            ts_adj = av_rescale(target_ts,
-                                st->time_base.den,
-                                AV_TIME_BASE * (int64_t)st->time_base.num);
-        } else {
-            ts_adj = target_ts;
-            stream_index_gen_search = stream_index;
-        }
-        pos = ff_gen_search(s, stream_index_gen_search, ts_adj,
-                            0, INT64_MAX, -1,
-                            AV_NOPTS_VALUE,
-                            AV_NOPTS_VALUE,
-                            flags, &ts_ret, mpegts_get_pcr);
-        if (pos < 0) {
-            ff_restore_parser_state(s, backup);
-            return -1;
-        }
-    }
-
-    // search for actual matching keyframe/starting position for all streams
-    if (ff_gen_syncpoint_search(s, stream_index, pos,
-                                min_ts, target_ts, max_ts,
-                                flags) < 0) {
-        ff_restore_parser_state(s, backup);
-        return -1;
-    }
-
-    ff_free_parser_state(s, backup);
-    return 0;
-}
-
-static int read_seek(AVFormatContext *s, int stream_index, int64_t target_ts, int flags)
-{
-    int ret;
-    if (flags & AVSEEK_FLAG_BACKWARD) {
-        flags &= ~AVSEEK_FLAG_BACKWARD;
-        ret = read_seek2(s, stream_index, INT64_MIN, target_ts, target_ts, flags);
-        if (ret < 0)
-            // for compatibility reasons, seek to the best-fitting timestamp
-            ret = read_seek2(s, stream_index, INT64_MIN, target_ts, INT64_MAX, flags);
-    } else {
-        ret = read_seek2(s, stream_index, target_ts, target_ts, INT64_MAX, flags);
-        if (ret < 0)
-            // for compatibility reasons, seek to the best-fitting timestamp
-            ret = read_seek2(s, stream_index, INT64_MIN, target_ts, INT64_MAX, flags);
-    }
-    return ret;
-}
-
-#endif
-
-/**************************************************************/
-/* parsing functions - called from other demuxers such as RTP */
-
-MpegTSContext *ff_mpegts_parse_open(AVFormatContext *s)
-{
-    MpegTSContext *ts;
-
-    ts = av_mallocz(sizeof(MpegTSContext));
-    if (!ts)
-        return NULL;
-    /* no stream case, currently used by RTP */
-    ts->raw_packet_size = TS_PACKET_SIZE;
-    ts->stream = s;
-    ts->auto_guess = 1;
-    mpegts_open_section_filter(ts, SDT_PID, sdt_cb, ts, 1);
-    mpegts_open_section_filter(ts, PAT_PID, pat_cb, ts, 1);
-
-    return ts;
-}
-
-/* return the consumed length if a packet was output, or -1 if no
-   packet is output */
-int ff_mpegts_parse_packet(lives_clip_data_t *cdata, MpegTSContext *ts, AVPacket *pkt,
-                        const uint8_t *buf, int len)
-{
-    int len1;
-
-    len1 = len;
-    ts->pkt = pkt;
-    for(;;) {
-        ts->stop_parse = 0;
-        if (len < TS_PACKET_SIZE)
-            return -1;
-        if (buf[0] != 0x47) {
-            buf++;
-            len--;
-        } else {
-	  handle_packet(cdata, buf);
-            buf += TS_PACKET_SIZE;
-            len -= TS_PACKET_SIZE;
-            if (ts->stop_parse == 1)
-                break;
-        }
-    }
-    return len1 - len;
-}
-
-void ff_mpegts_parse_close(MpegTSContext *ts)
-{
-    int i;
-
-    for(i=0;i<NB_PID_MAX;i++)
-        av_free(ts->pids[i]);
-    av_free(ts);
-}
-
 
 
 ///////////////////////////////////////////////////////////////////////////
@@ -2915,6 +2679,15 @@ void ff_mpegts_parse_close(MpegTSContext *ts)
 
 
 
+static int64_t dts_to_frame(const lives_clip_data_t *cdata, int dts) {
+  // use ADJUSTED dts (subtract priv->start_dts from it)
+  return (int64_t)((double)dts/90000.*cdata->fps+.5);
+}
+
+static uint32_t frame_to_dts(const lives_clip_data_t *cdata, int64_t frame) {
+  // returns UNADJUSTED dts : add priv->start_dts to it
+  return (uint32_t)((double)frame*90000./cdata->fps+.5);
+}
 
 
 
@@ -2965,6 +2738,38 @@ static lives_clip_data_t *init_cdata (void) {
   return cdata;
 }
 
+static index_entry * mpegts_read_seek(const lives_clip_data_t *cdata, uint32_t timestamp) {
+  // use unadj timestamp
+
+  lives_mpegts_priv_t *priv=cdata->priv;
+
+  AVFormatContext *s=priv->s;
+
+  AVStream *st = priv->vidst;
+
+  index_entry *idx;
+
+  if (!priv->idxhh) return NULL;
+
+  timestamp = FFMIN(timestamp, frame_to_dts(cdata,cdata->nframes));
+  timestamp = FFMAX(timestamp, priv->idxhh->dts);
+
+  idx=get_idx_for_pts(cdata,timestamp);
+
+  priv->input_position=idx->offs;
+  lseek(priv->fd,priv->input_position,SEEK_SET);
+
+  if (priv->avpkt.data!=NULL) {
+    free(priv->avpkt.data);
+    priv->avpkt.data=NULL;
+    priv->avpkt.size=0;
+  }
+
+  avcodec_flush_buffers (priv->ctx);
+
+  return idx;
+}
+
 
 
 
@@ -2992,7 +2797,7 @@ static void detach_stream (lives_clip_data_t *cdata) {
   priv->codec=NULL;
   priv->picture=NULL;
 
-  //if (priv->idxhh!=NULL) index_free(priv->idxhh);
+  if (priv->idxhh!=NULL) index_free(priv->idxhh);
 
   priv->idxhh=NULL;
   priv->idxht=NULL;
@@ -3010,57 +2815,93 @@ static void detach_stream (lives_clip_data_t *cdata) {
   close(priv->fd);
 }
 
-static int64_t dts_to_frame(const lives_clip_data_t *cdata, int dts) {
-  return (int64_t)((double)dts/90000.*cdata->fps+.5);
-}
 
 
 int get_last_video_dts(lives_clip_data_t *cdata) {
   lives_mpegts_priv_t *priv=cdata->priv;
-  int64_t last_pos=0;
-  int count=870;
   boolean got_picture=FALSE;
   int len;
   int num=0;
+  int dts;
+  int64_t idxpos;
 
-  priv->data_start=priv->input_position;
+  priv->input_position=priv->data_start;
+  lseek(priv->fd,priv->input_position,SEEK_SET);
+  avcodec_flush_buffers (priv->ctx);
+  mpegts_read_packet(cdata,&priv->avpkt);
 
-  while (!got_eof) {
-    num++;
-    mpegts_read_packet(cdata,&priv->avpkt);
+  // get each packet and decode just the first frame
 
-    //fprintf(stderr,"%ld %ld\n",priv->input_position, priv->filesize);
+  while (1) {
+    idxpos=priv->input_position;
+    got_picture=FALSE;
 
-    if (--count==0) last_pos=priv->input_position;
+    while (!got_picture) {
 
-    if (priv->input_position>=priv->filesize) got_eof=TRUE;
+#if LIBAVCODEC_VERSION_MAJOR >= 52
+      len=avcodec_decode_video2(priv->ctx, priv->picture, &got_picture, &priv->avpkt );
+#else 
+      len=avcodec_decode_video(priv->ctx, priv->picture, &got_picture, priv->avpkt.data, priv->avpkt.size );
+#endif
+
+      if (got_picture) {
+	dts=priv->avpkt.dts-priv->start_dts;
+	lives_add_idx(cdata,idxpos,dts);
+      }
+
+      if (priv->avpkt.data!=NULL) {
+	free(priv->avpkt.data);
+	priv->avpkt.data=NULL;
+	priv->avpkt.size=0;
+      }
+ 
+      mpegts_read_packet((lives_clip_data_t *)cdata,&priv->avpkt);
+
+      if (priv->input_position>=priv->filesize) break;
+
+    }
+    
+    if (priv->avpkt.data!=NULL) {
+      free(priv->avpkt.data);
+      priv->avpkt.data=NULL;
+      priv->avpkt.size=0;
+    }
+    
+    mpegts_read_packet((lives_clip_data_t *)cdata,&priv->avpkt);
+
+    if (priv->input_position>=priv->filesize) break;
+
   }
 
-  if (last_pos==0) return -1;
+  // rewind back to last pos, and decode up to end now
 
-  avcodec_flush_buffers (priv->ctx);
-  priv->input_position=last_pos;
+
+  priv->input_position=idxpos;
   lseek(priv->fd,priv->input_position,SEEK_SET);
+  avcodec_flush_buffers (priv->ctx);
+  mpegts_read_packet(cdata,&priv->avpkt);
 
-  while (!got_eof) {
 
-    got_picture=FALSE;
+  while (1) {
+
 #if LIBAVCODEC_VERSION_MAJOR >= 52
     len=avcodec_decode_video2(priv->ctx, priv->picture, &got_picture, &priv->avpkt );
 #else 
     len=avcodec_decode_video(priv->ctx, priv->picture, &got_picture, priv->avpkt.data, priv->avpkt.size );
 #endif
 
-    if (!got_picture) {
-      mpegts_read_packet(cdata,&priv->avpkt);
+    if (len==priv->avpkt.size) {
+      if (priv->avpkt.data!=NULL) {
+	free(priv->avpkt.data);
+	priv->avpkt.data=NULL;
+	priv->avpkt.size=0;
+      }
+      mpegts_read_packet((lives_clip_data_t *)cdata,&priv->avpkt);
     }
-
-    if (priv->input_position>=priv->filesize) got_eof=TRUE;
-
+    
+    if (priv->input_position>=priv->filesize) break;
+    
   }
-
-  fprintf(stderr,"got last picture %d\n",num);
-  got_eof=FALSE;
 
   return priv->avpkt.dts;
 
@@ -3199,9 +3040,12 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
 
   //mpegts_read_seek(cdata,0);
 
+  priv->input_position=priv->data_start;
+  lseek(priv->fd,priv->input_position,SEEK_SET);
+  avcodec_flush_buffers (priv->ctx);
+
 
   mpegts_read_packet(cdata,&priv->avpkt);
-    
 
   while (!got_picture&&!got_eof) {
 
@@ -3211,9 +3055,15 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
     len=avcodec_decode_video(ctx, priv->picture, &got_picture, priv->avpkt.data, priv->avpkt.size );
 #endif
 
-    fprintf(stderr,"len is %d\n",len);
+    if (priv->avpkt.data!=NULL) {
+      free(priv->avpkt.data);
+      priv->avpkt.data=NULL;
+      priv->avpkt.size=0;
+    }
+    
 
     mpegts_read_packet(cdata,&priv->avpkt);
+
   }
 
   if (!got_picture) {
@@ -3227,13 +3077,7 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
 
   priv->start_dts=dts;
 
-  fprintf(stderr,"got dts %ld pts %ld\n",dts,pts);
-
-  if (priv->avpkt.data!=NULL) {
-    free(priv->avpkt.data);
-    priv->avpkt.data=NULL;
-    priv->avpkt.size=0;
-  }
+  //fprintf(stderr,"got dts %ld pts %ld\n",dts,pts);
 
   got_picture=0;
 
@@ -3245,7 +3089,14 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
     len=avcodec_decode_video(ctx, priv->picture, &got_picture, priv->avpkt.data, priv->avpkt.size );
 #endif
 
+    if (priv->avpkt.data!=NULL) {
+      free(priv->avpkt.data);
+      priv->avpkt.data=NULL;
+      priv->avpkt.size=0;
+    }
+    
     mpegts_read_packet(cdata,&priv->avpkt);
+
   }
 
   if (got_picture) {
@@ -3254,6 +3105,12 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
     fprintf(stderr,"got second picture %ld %ld\n",pts,dts);
   }
   else pts=dts=0;
+
+  if (priv->avpkt.data!=NULL) {
+    free(priv->avpkt.data);
+    priv->avpkt.data=NULL;
+    priv->avpkt.size=0;
+  }
 
   cdata->YUV_clamping=WEED_YUV_CLAMPING_UNCLAMPED;
   if (ctx->color_range==AVCOL_RANGE_MPEG) cdata->YUV_clamping=WEED_YUV_CLAMPING_CLAMPED;
@@ -3365,7 +3222,7 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
 
   ldts-=priv->start_dts;
   
-  cdata->nframes=dts_to_frame(cdata,ldts)+2;
+  cdata->nframes=dts_to_frame(cdata,ldts);
 
   // double check, sometimes we can be out by one or two frames
   while (1) {
@@ -3516,10 +3373,14 @@ static size_t write_black_pixel(unsigned char *idst, int pal, int npixels, int y
   return idst-dst;
 }
 
+
+
+
+
 boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstrides, int height, void **pixel_data) {
   // seek to frame,
 
-  //int64_t target_pts=frame_to_dts(cdata,tframe);
+  int64_t target_pts=frame_to_dts(cdata,tframe);
   int64_t nextframe=0;
   lives_mpegts_priv_t *priv=cdata->priv;
   int xheight=cdata->frame_height,pal=cdata->current_palette,nplanes=1,dstwidth=cdata->width,psize=1;
@@ -3581,18 +3442,15 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
   if (tframe!=priv->last_frame) {
 
     if (priv->last_frame==-1 || (tframe<priv->last_frame) || (tframe - priv->last_frame > rescan_limit)) {
-      //idx=mov_read_seek(cdata,target_pts);
-      //nextframe=dts_to_frame(cdata,idx->dts);
+      idx=mpegts_read_seek(cdata,target_pts);
 
-      nextframe=tframe;
-      priv->input_position=priv->data_start;
+      nextframe=dts_to_frame(cdata,idx->dts);
 
-      lseek(priv->fd,priv->input_position,SEEK_SET);
+      mpegts_read_packet((lives_clip_data_t *)cdata,&priv->avpkt);
 
-      avcodec_flush_buffers (priv->ctx);
-
+#define DEBUG_KFRAMES
 #ifdef DEBUG_KFRAMES
-      if (idx!=NULL) printf("got kframe %ld for frame %ld\n",dts_to_frame(cdata,idx->dts),tframe);
+      if (idx!=NULL) printf("got kframe %ld for frame %ld\n",nextframe,tframe);
 #endif
     }
     else {
@@ -3604,12 +3462,18 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
     priv->last_frame=tframe;
 
     // do this until we reach target frame //////////////
-
+    int len;
     do {
 
       got_picture=FALSE;
 
       while (!got_picture) {
+
+#if LIBAVCODEC_VERSION_MAJOR >= 52
+	len=avcodec_decode_video2(priv->ctx, priv->picture, &got_picture, &priv->avpkt );
+#else 
+	len=avcodec_decode_video(priv->ctx, priv->picture, &got_picture, priv->avpkt.data, priv->avpkt.size );
+#endif
 
 	if (priv->avpkt.data!=NULL) {
 	  free(priv->avpkt.data);
@@ -3619,17 +3483,9 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
 
 	mpegts_read_packet((lives_clip_data_t *)cdata,&priv->avpkt);
 
-	if (got_eof) return FALSE;
-
-#if LIBAVCODEC_VERSION_MAJOR >= 52
-	avcodec_decode_video2(priv->ctx, priv->picture, &got_picture, &priv->avpkt );
-#else 
-	avcodec_decode_video(priv->ctx, priv->picture, &got_picture, priv->avpkt.data, priv->avpkt.size );
-#endif
-
+	if (priv->input_position>=priv->filesize) return FALSE;
 
       }
-
 
       nextframe++;
       if (nextframe>cdata->nframes) return FALSE;
@@ -3640,7 +3496,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
   }
 
   if (pixel_data==NULL) return TRUE;
-  
+
   for (p=0;p<nplanes;p++) {
     dst=pixel_data[p];
     src=priv->picture->data[p];

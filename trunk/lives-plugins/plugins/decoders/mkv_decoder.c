@@ -1802,6 +1802,12 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
   }
   else pts=dts=0;
 
+  if (priv->avpkt.data!=NULL) {
+    free(priv->avpkt.data);
+    priv->avpkt.data=NULL;
+    priv->avpkt.size=0;
+  }
+
   cdata->YUV_clamping=WEED_YUV_CLAMPING_UNCLAMPED;
   if (ctx->color_range==AVCOL_RANGE_MPEG) cdata->YUV_clamping=WEED_YUV_CLAMPING_CLAMPED;
 

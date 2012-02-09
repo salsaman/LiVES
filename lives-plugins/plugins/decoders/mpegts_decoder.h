@@ -59,9 +59,10 @@
 typedef struct MpegTSContext MpegTSContext;
 
 MpegTSContext *ff_mpegts_parse_open(AVFormatContext *s);
-int ff_mpegts_parse_packet(MpegTSContext *ts, AVPacket *pkt,
-                           const uint8_t *buf, int len);
 void ff_mpegts_parse_close(MpegTSContext *ts);
+
+int ff_mpegts_parse_packet(lives_clip_data_t *cdata, MpegTSContext *ts, AVPacket *pkt,
+			   const uint8_t *buf, int len);
 
 typedef struct {
     int use_au_start;
@@ -100,11 +101,10 @@ typedef struct {
  * @param mp4_dec_config_descr
  * @return <0 to stop processing
  */
-int ff_parse_mpeg2_descriptor(AVFormatContext *fc, AVStream *st, int stream_type,
+int ff_parse_mpeg2_descriptor(lives_clip_data_t *cdata, AVFormatContext *fc, AVStream *st, int stream_type,
                               const uint8_t **pp, const uint8_t *desc_list_end,
                               Mp4Descr *mp4_descr, int mp4_descr_count, int pid,
                               MpegTSContext *ts);
-
 
 
 
@@ -144,6 +144,7 @@ typedef struct GetBitContext {
 } GetBitContext;
 
 
+static uint16_t lives_rb32(const uint8_t *x);
 
 
 
@@ -163,7 +164,7 @@ typedef struct GetBitContext {
 #   define SKIP_CACHE(name, gb, num) name##_cache >>= (num)
 # else
 #   define UPDATE_CACHE(name, gb) \
-    name##_cache = AV_RB32(((const uint8_t *)(gb)->buffer)+(name##_index>>3)) << (name##_index&0x07)
+    name##_cache = lives_rb32(((const uint8_t *)(gb)->buffer)+(name##_index>>3)) << (name##_index&0x07)
 
 #   define SKIP_CACHE(name, gb, num) name##_cache <<= (num)
 # endif
@@ -282,11 +283,6 @@ static inline void skip_bits_long(GetBitContext *s, int n){
 #define MP4DecSpecificDescrTag          0x05
 #define MP4SLDescrTag                   0x06
 
-typedef struct AVCodecTag {
-    enum CodecID id;
-    unsigned int tag;
-} AVCodecTag;
-
 
 #define CODEC_ID_MPEG4SYSTEMS 0x20001
 
@@ -330,5 +326,51 @@ const AVCodecTag ff_mp4_obj_type[] = {
 #define CODEC_ID_FIRST_AUDIO 0x10000
 #define CODEC_ID_FIRST_SUBTITLE 0x17000
 #define CODEC_ID_FIRST_UNKNOWN 0x18000
+
+
+
+typedef struct _index_entry index_entry;
+
+struct _index_entry {
+  index_entry *next; ///< ptr to next entry
+  int32_t dts; ///< dts of keyframe
+  uint64_t offs;  ///< offset in file
+};
+
+
+typedef struct {
+  int fd;
+  boolean has_video;
+  boolean has_audio;
+  int vididx;
+  AVStream *vidst;
+  int64_t input_position;
+  int64_t data_start;
+  off_t filesize;
+
+  int64_t start_dts;
+
+  MpegTSContext *ts;
+
+  AVFormatContext *s;
+  AVCodec *codec;
+  AVCodecContext *ctx;
+  AVFrame *picture;
+  AVPacket avpkt;
+  int64_t last_frame; ///< last frame displayed
+
+  index_entry *idxhh;  ///< head of head list
+  index_entry *idxht; ///< tail of head list
+
+  boolean expect_eof;
+} lives_mpegts_priv_t;
+
+
+
+
+
+
+
+
 
 #endif /* LIVES_MPEGTS_H */

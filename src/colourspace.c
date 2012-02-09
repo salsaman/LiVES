@@ -2460,7 +2460,7 @@ static void convert_rgb_to_yuv_frame(guchar *rgbdata, gint hsize, gint vsize, gi
 
 	ccparams[i].src=rgbdata+dheight*i*rowstride;
 	ccparams[i].hsize=hsize;
-	ccparams[i].dest=u+dheight*i*hsize;
+	ccparams[i].dest=u+dheight*i*hsize*opsize;
 
 	if (dheight*(i+1)>(vsize-4)) {
 	  dheight=vsize-(dheight*i);
@@ -2636,7 +2636,7 @@ static void convert_bgr_to_yuv_frame(guchar *rgbdata, gint hsize, gint vsize, gi
 
 	ccparams[i].src=rgbdata+dheight*i*rowstride;
 	ccparams[i].hsize=hsize;
-	ccparams[i].dest=u+dheight*i*hsize;
+	ccparams[i].dest=u+dheight*i*hsize*opsize;
 
 	if (dheight*(i+1)>(vsize-4)) {
 	  dheight=vsize-(dheight*i);
@@ -2817,7 +2817,7 @@ static void convert_argb_to_yuv_frame(guchar *rgbdata, gint hsize, gint vsize, g
 	ccparams[i].src=rgbdata+dheight*i*rowstride;
 	ccparams[i].hsize=hsize;
 
-	ccparams[i].dest=u+dheight*i*hsize;
+	ccparams[i].dest=u+dheight*i*hsize*opsize;
 
 	if (dheight*(i+1)>(vsize-4)) {
 	  dheight=vsize-(dheight*i);
@@ -8239,13 +8239,35 @@ gboolean convert_layer_palette_full(weed_plant_t *layer, int outpl, int osamtype
 #endif
 
   if (weed_palette_is_yuv_palette(inpl)&&weed_palette_is_yuv_palette(outpl)&&(iclamped!=oclamping||isubspace!=osubspace)) {
+    if (isubspace==osubspace) {
 #ifdef DEBUG_PCONV
-    g_printerr("converting clamping %d to %d\n",!iclamped,!oclamping);
+      g_printerr("converting clamping %d to %d\n",!iclamped,!oclamping);
 #endif
-    switch_yuv_clamping_and_subspace(layer,oclamping?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,osubspace);
-    iclamped=oclamping;
+      switch_yuv_clamping_and_subspace(layer,oclamping?WEED_YUV_CLAMPING_CLAMPED:WEED_YUV_CLAMPING_UNCLAMPED,osubspace);
+      iclamped=oclamping;
+    }
+    else {
+      // convert first to RGB(A)
+      if (weed_palette_has_alpha_channel(inpl)) {
+	convert_layer_palette_full(layer, WEED_PALETTE_RGBA32, WEED_YUV_SAMPLING_DEFAULT, FALSE, WEED_YUV_SUBSPACE_YUV);
+      }
+      else {
+	convert_layer_palette_full(layer, WEED_PALETTE_RGB24, WEED_YUV_SAMPLING_DEFAULT, FALSE, WEED_YUV_SUBSPACE_YUV);
+      }
+      inpl=weed_get_int_value(layer,"current_palette",&error);
+      isubspace=osubspace;
+      isamtype=osamtype;
+      iclamped=oclamping;
+#ifdef DEBUG_PCONV
+      gchar *tmp2,*tmp3;
+      g_print("subspace conversion via palette %s\n",weed_palette_get_name(inpl));
+      g_free(tmp2);
+      g_free(tmp3);
+#endif
+    }
   }
-
+    
+  
   if (inpl==outpl) {
 #ifdef DEBUG_PCONV
     g_printerr("not converting palette\n");

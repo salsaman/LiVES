@@ -241,8 +241,7 @@ static boolean check_for_eof(lives_clip_data_t *cdata) {
    synchronisation is lost */
 #define MAX_RESYNC_SIZE 65536
 
-// large enough for 1080p
-#define MAX_PES_PAYLOAD 400*1024
+#define MAX_PES_PAYLOAD 200*1024
 
 #define MAX_MP4_DESCR_COUNT 16
 
@@ -2813,10 +2812,11 @@ int get_last_video_dts(lives_clip_data_t *cdata) {
   avcodec_flush_buffers (priv->ctx);
   mpegts_read_packet(cdata,&priv->avpkt);
 
+  idxpos=priv->input_position;
+
   // get each packet and decode just the first frame
 
   while (1) {
-    idxpos=priv->input_position;
     got_picture=FALSE;
 
     while (!got_picture) {
@@ -2830,28 +2830,24 @@ int get_last_video_dts(lives_clip_data_t *cdata) {
       if (got_picture) {
 	dts=priv->avpkt.dts-priv->start_dts;
 	lives_add_idx(cdata,idxpos,dts);
+	avcodec_flush_buffers (priv->ctx);
+	idxpos=priv->input_position;
       }
 
-      if (priv->avpkt.data!=NULL) {
-	free(priv->avpkt.data);
-	priv->avpkt.data=NULL;
-	priv->avpkt.size=0;
+      if (len<0||len==priv->avpkt.size||got_picture) {
+	if (priv->avpkt.data!=NULL) {
+	  free(priv->avpkt.data);
+	  priv->avpkt.data=NULL;
+	  priv->avpkt.size=0;
+	}
+	
+	mpegts_read_packet((lives_clip_data_t *)cdata,&priv->avpkt);
       }
- 
-      mpegts_read_packet((lives_clip_data_t *)cdata,&priv->avpkt);
 
       if (priv->input_position>=priv->filesize) break;
 
     }
     
-    if (priv->avpkt.data!=NULL) {
-      free(priv->avpkt.data);
-      priv->avpkt.data=NULL;
-      priv->avpkt.size=0;
-    }
-    
-    mpegts_read_packet((lives_clip_data_t *)cdata,&priv->avpkt);
-
     if (priv->input_position>=priv->filesize) break;
 
   }
@@ -2898,6 +2894,8 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
   unsigned char header[MPEGTS_PROBE_SIZE];
   int64_t ldts,dts,pts;
   double fps;
+
+  int len;
 
   AVCodec *codec=NULL;
   AVCodecContext *ctx;
@@ -3013,6 +3011,9 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
 
   priv->codec=codec;
 
+  if(codec->capabilities&CODEC_CAP_TRUNCATED)
+     ctx->flags|= CODEC_FLAG_TRUNCATED;
+
   // re-scan with avcodec; priv->data_start holds video data start position
 
   av_init_packet(&priv->avpkt);
@@ -3024,24 +3025,27 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
   priv->input_position=priv->data_start;
   lseek(priv->fd,priv->input_position,SEEK_SET);
   avcodec_flush_buffers (priv->ctx);
+  mpegts_read_packet(cdata,&priv->avpkt);
 
 
   while (!got_picture&&!got_eof) {
 
-    if (priv->avpkt.data!=NULL) {
-      free(priv->avpkt.data);
-      priv->avpkt.data=NULL;
-      priv->avpkt.size=0;
+  
+#if LIBAVCODEC_VERSION_MAJOR >= 52
+    len=avcodec_decode_video2(ctx, priv->picture, &got_picture, &priv->avpkt );
+#else 
+    len=avcodec_decode_video(ctx, priv->picture, &got_picture, priv->avpkt.data, priv->avpkt.size );
+#endif
+
+    if (len<0||len==priv->avpkt.size) {
+      if (priv->avpkt.data!=NULL) {
+	free(priv->avpkt.data);
+	priv->avpkt.data=NULL;
+	priv->avpkt.size=0;
+      }
+      mpegts_read_packet(cdata,&priv->avpkt);
     }
 
-    mpegts_read_packet(cdata,&priv->avpkt);
-
-
-#if LIBAVCODEC_VERSION_MAJOR >= 52
-    avcodec_decode_video2(ctx, priv->picture, &got_picture, &priv->avpkt );
-#else 
-    avcodec_decode_video(ctx, priv->picture, &got_picture, priv->avpkt.data, priv->avpkt.size );
-#endif
 
   }
 
@@ -3062,19 +3066,20 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
 
   while (!got_picture&&!got_eof) {
 
-    if (priv->avpkt.data!=NULL) {
-      free(priv->avpkt.data);
-      priv->avpkt.data=NULL;
-      priv->avpkt.size=0;
-    }
-    
-    mpegts_read_packet(cdata,&priv->avpkt);
-
 #if LIBAVCODEC_VERSION_MAJOR >= 52
-    avcodec_decode_video2(ctx, priv->picture, &got_picture, &priv->avpkt );
+    len=avcodec_decode_video2(ctx, priv->picture, &got_picture, &priv->avpkt );
 #else 
-    avcodec_decode_video(ctx, priv->picture, &got_picture, priv->avpkt.data, priv->avpkt.size );
+    len=avcodec_decode_video(ctx, priv->picture, &got_picture, priv->avpkt.data, priv->avpkt.size );
 #endif
+
+    if (len==priv->avpkt.size) {
+      if (priv->avpkt.data!=NULL) {
+	free(priv->avpkt.data);
+	priv->avpkt.data=NULL;
+	priv->avpkt.size=0;
+      }
+      mpegts_read_packet(cdata,&priv->avpkt);
+    }
 
   }
 
@@ -3201,13 +3206,13 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
 
   ldts-=priv->start_dts;
   
-  cdata->nframes=dts_to_frame(cdata,ldts);
+  cdata->nframes=dts_to_frame(cdata,ldts)+2;
 
   // double check, sometimes we can be out by one or two frames
   while (1) {
     priv->expect_eof=TRUE;
     got_eof=FALSE;
-    //get_frame(cdata,cdata->nframes-1,NULL,0,NULL);
+    get_frame(cdata,cdata->nframes-1,NULL,0,NULL);
     if (!got_eof) break;
     cdata->nframes--;
   }
@@ -3358,7 +3363,7 @@ static size_t write_black_pixel(unsigned char *idst, int pal, int npixels, int y
 
 boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstrides, int height, void **pixel_data) {
   // seek to frame,
-
+  int len;
   int64_t target_pts=frame_to_dts(cdata,tframe);
   int64_t nextframe=0;
   lives_mpegts_priv_t *priv=cdata->priv;
@@ -3375,6 +3380,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
 
   got_eof=FALSE;
 
+  //#define DEBUG_KFRAMES
 #ifdef DEBUG_KFRAMES
   fprintf(stderr,"vals %ld %ld\n",tframe,priv->last_frame);
 #endif
@@ -3449,21 +3455,22 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
       while (!got_picture) {
 
 #if LIBAVCODEC_VERSION_MAJOR >= 52
-	avcodec_decode_video2(priv->ctx, priv->picture, &got_picture, &priv->avpkt );
+	len=avcodec_decode_video2(priv->ctx, priv->picture, &got_picture, &priv->avpkt );
 #else 
-	avcodec_decode_video(priv->ctx, priv->picture, &got_picture, priv->avpkt.data, priv->avpkt.size );
+	len=avcodec_decode_video(priv->ctx, priv->picture, &got_picture, priv->avpkt.data, priv->avpkt.size );
 #endif
 
-	if (priv->avpkt.data!=NULL) {
-	  free(priv->avpkt.data);
-	  priv->avpkt.data=NULL;
-	  priv->avpkt.size=0;
+	if (len==priv->avpkt.size) {
+	  if (priv->avpkt.data!=NULL) {
+	    free(priv->avpkt.data);
+	    priv->avpkt.data=NULL;
+	    priv->avpkt.size=0;
+	  }
+
+	  mpegts_read_packet((lives_clip_data_t *)cdata,&priv->avpkt);
+	
+	  if (priv->input_position>=priv->filesize) return FALSE;
 	}
-
-	mpegts_read_packet((lives_clip_data_t *)cdata,&priv->avpkt);
-
-	if (priv->input_position>=priv->filesize) return FALSE;
-
       }
 
       nextframe++;

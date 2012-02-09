@@ -2941,6 +2941,7 @@ void load_start_image(gint frame) {
   gboolean noswitch=mainw->noswitch;
   LiVESInterpType interp;
 
+
   if (!prefs->show_gui) return;
 
   if (mainw->multitrack!=NULL) return;

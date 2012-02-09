@@ -2984,6 +2984,12 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
   }
 
 
+  if (priv->vidst==NULL) {
+    fprintf(stderr, "mpegts_decoder: Got no video stream !\n");
+    detach_stream(cdata);
+    return FALSE;
+  }
+
   cdata->seek_flag=LIVES_SEEK_FAST|LIVES_SEEK_NEEDS_CALCULATION;
 
   cdata->offs_x=0;

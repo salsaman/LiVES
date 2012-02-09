@@ -1371,7 +1371,6 @@ static int lives_mkv_read_header(lives_clip_data_t *cdata) {
 
     } else if (track->type == MATROSKA_TRACK_TYPE_AUDIO) {
       priv->has_audio=TRUE;
-      sprintf(cdata->audio_name,"unknown");
     }
     if (encodings_list->nb_elem > 1) {
       fprintf(stderr,"mkv_decoder: Multiple combined encodings not supported\n");
@@ -1698,7 +1697,7 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
   priv->idxhh=NULL;
   priv->idxht=NULL;
 
-  sprintf(cdata->audio_name,"none");
+  sprintf(cdata->audio_name,"%s","");
 
   priv->s = avformat_alloc_context();
 

@@ -324,8 +324,6 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
 	cfile->opening=TRUE;
 	cfile->clip_type=CLIP_TYPE_FILE;
 	
-	get_mime_type(cfile->type,40,cdata);
-	
 	if (!prefs->auto_nobord) {
 	  cfile->hsize=cdata->frame_width*weed_palette_get_pixels_per_macropixel(cdata->current_palette);
 	  cfile->vsize=cdata->frame_height;
@@ -474,6 +472,10 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
 	    g_free(msgstr);
 	  }
 	}
+
+	get_mime_type(cfile->type,40,cdata);
+	
+
       }
 
       save_frame_index(mainw->current_file);

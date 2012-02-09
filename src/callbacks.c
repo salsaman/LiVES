@@ -5480,10 +5480,10 @@ on_show_file_info_activate            (GtkMenuItem     *menuitem,
   
   if (cfile->frames>0) {
     // type
-    g_snprintf(buff,512,_("\nExternal: %s\nInternal: %s (%d bpp)\n"),cfile->type,
+    g_snprintf(buff,512,_("\nExternal: %s\nInternal: %s (%d bpp) / %s\n"),cfile->type,
 	       (tmp=g_strdup((cfile->clip_type==CLIP_TYPE_YUV4MPEG||
 			      cfile->clip_type==CLIP_TYPE_VIDEODEV)?(_("buffered")):
-			     (cfile->img_type==IMG_TYPE_JPEG?"jpeg":"png"))),cfile->bpp);
+			     (cfile->img_type==IMG_TYPE_JPEG?"jpeg":"png"))),cfile->bpp,"pcm");
     g_free(tmp);
     gtk_text_buffer_set_text (gtk_text_view_get_buffer (GTK_TEXT_VIEW (filew->textview24)),buff, -1);
     // fps

@@ -898,7 +898,7 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
   cdata->arate=0;
   cdata->achans=0;
   cdata->asamps=0;
-  sprintf(cdata->audio_name,"none");
+  sprintf(cdata->audio_name,"%s","");
 
   priv->idx=NULL;
 
@@ -1208,7 +1208,6 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
 
       if (type == LIVES_MEDIA_TYPE_AUDIO) {
 	priv->st->codec->codec_type = AVMEDIA_TYPE_AUDIO;
-	snprintf(cdata->audio_name,16,"unknown");
 
       } else if (type == LIVES_MEDIA_TYPE_VIDEO) {
 	priv->st->codec->codec_type = AVMEDIA_TYPE_VIDEO;

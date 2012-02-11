@@ -137,7 +137,7 @@ static void lives_log_handler (const char *domain, LiVESLogLevelFlags level, con
   }
 
   d_print(msg);
-  g_printerr(msg);
+  g_printerr("%s",msg);
   g_free(msg);
 
 

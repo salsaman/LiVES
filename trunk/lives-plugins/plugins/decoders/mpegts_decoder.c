@@ -3254,6 +3254,7 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
   }
   priv->expect_eof=FALSE;
 
+  cdata->nframes++; ///< because we get dts of start of frame
 
   //#ifdef DEBUG
   fprintf(stderr,"fps is %.4f %ld %ld %ld\n",cdata->fps,cdata->nframes,ldts,priv->start_dts);

@@ -2824,7 +2824,7 @@ int get_last_video_dts(lives_clip_data_t *cdata) {
   boolean got_picture=FALSE;
   int len;
   int dts;
-  int64_t idxpos;
+  int64_t idxpos,idxpos_data=0;
 
   priv->input_position=priv->data_start;
   lseek(priv->fd,priv->input_position,SEEK_SET);
@@ -2847,7 +2847,9 @@ int get_last_video_dts(lives_clip_data_t *cdata) {
 #endif
 
       if (got_picture) {
+	idxpos_data=idxpos;
 	dts=priv->avpkt.dts-priv->start_dts;
+	fprintf(stderr, "dts is %ld %ld\n",priv->avpkt.dts,priv->avpkt.pts);
 	lives_add_idx(cdata,idxpos,dts);
 	avcodec_flush_buffers (priv->ctx);
 	idxpos=priv->input_position;
@@ -2861,6 +2863,7 @@ int get_last_video_dts(lives_clip_data_t *cdata) {
 	}
 	
 	mpegts_read_packet((lives_clip_data_t *)cdata,&priv->avpkt);
+	fprintf(stderr, "4dts is %ld %ld\n",priv->avpkt.dts,priv->avpkt.pts);
       }
 
       if (priv->input_position>=priv->filesize) break;
@@ -2873,10 +2876,12 @@ int get_last_video_dts(lives_clip_data_t *cdata) {
 
   // rewind back to last pos, and decode up to end now
 
-  priv->input_position=idxpos;
+  priv->input_position=idxpos_data;
   lseek(priv->fd,priv->input_position,SEEK_SET);
   avcodec_flush_buffers (priv->ctx);
   mpegts_read_packet(cdata,&priv->avpkt);
+
+  fprintf(stderr, "2dts is %ld %ld %ld %ld\n",priv->avpkt.dts,priv->avpkt.pts,idxpos,idxpos_data);
 
 
   while (1) {
@@ -2899,6 +2904,7 @@ int get_last_video_dts(lives_clip_data_t *cdata) {
     if (priv->input_position>=priv->filesize) break;
     
   }
+  fprintf(stderr, "3dts is %ld %ld\n",priv->avpkt.dts,priv->avpkt.pts);
 
   return priv->avpkt.dts;
 

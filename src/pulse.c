@@ -93,6 +93,7 @@ gboolean lives_pulse_init (short startup_phase) {
 	msg=g_strdup(_("\nUnable to connect to pulse audio server.\n"));
 	if (startup_phase!=2) {
 	  do_blocking_error_dialog(msg);
+	  mainw->aplayer_broken=TRUE;
 	}
 	else {
 	  msg2=g_strdup_printf("%s%s",msg,_("LiVES will exit and you can choose another audio player.\n"));
@@ -136,6 +137,7 @@ static void pulse_buff_free(void *ptr) {
 static void sample_silence_pulse (pulse_driver_t *pdriver, size_t nbytes, size_t xbytes) {
   guchar *buff;
   if (xbytes<=0) return;
+  if (mainw->aplayer_broken) return;
   while (nbytes>0) {
     if (nbytes<xbytes) xbytes=nbytes;
     buff=(guchar *)g_try_malloc0(xbytes);
@@ -501,7 +503,8 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
 	     needs_free=TRUE;
 	   }
 	   if (pulsed->astream_fd!=-1) audio_stream(buffer,xbytes,pulsed->astream_fd);
-	   pa_stream_write(pulsed->pstream,buffer,xbytes,buffer==pulsed->aPlayPtr->data?NULL:pulse_buff_free,0,PA_SEEK_RELATIVE);
+	   pa_stream_write(pulsed->pstream,buffer,xbytes,buffer==pulsed->aPlayPtr->data?NULL:
+			   pulse_buff_free,0,PA_SEEK_RELATIVE);
 	 }
 	 else {
 	   if (pulsed->read_abuf>-1&&!pulsed->mute) {

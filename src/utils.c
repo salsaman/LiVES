@@ -820,7 +820,9 @@ gint calc_new_playback_position(gint fileno, gint64 otc, gint64 *ntc) {
       gboolean is_jump=FALSE;
       if (mainw->scratch==SCRATCH_JUMP) is_jump=TRUE;
       mainw->scratch=SCRATCH_NONE;
-      resync_audio(nframe);
+      if (sfile->achans>0) {
+	resync_audio(nframe);
+      }
       if (is_jump) mainw->video_seek_ready=TRUE;
       if (mainw->whentostop==STOP_ON_AUD_END&&sfile->achans>0) {
 	// we check for audio stop here, but the seek may not have happened yet

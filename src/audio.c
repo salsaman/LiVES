@@ -1779,7 +1779,7 @@ gboolean resync_audio(gint frameno) {
 
   // this is only active if "audio follows video rate/fps changes" is set
 
-  if (!(prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS)) return FALSE;
+    if (!(prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS)) return FALSE;
 
   // if recording external audio, we are intrinsically in sync
   if (mainw->record&&(prefs->rec_opts&REC_EXT_AUDIO)) return TRUE;
@@ -1796,6 +1796,7 @@ gboolean resync_audio(gint frameno) {
       mainw->rec_avel=cfile->pb_fps/cfile->fps;
       mainw->rec_aseek=(gdouble)mainw->jackd->seek_pos/(gdouble)(cfile->arate*cfile->achans*cfile->asampsize/8);
     }
+
     return TRUE;
   }
 #endif

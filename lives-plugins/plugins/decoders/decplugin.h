@@ -99,6 +99,11 @@ typedef struct {
 
   int seek_flag; ///< bitmap of seek properties
 
+#define SYNC_HINT_AUDIO_TRIM_START 1
+
+  int sync_hint;
+
+
   void *priv; ///< private data for demuxer/decoder
 
 } lives_clip_data_t;

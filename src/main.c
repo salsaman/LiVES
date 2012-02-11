@@ -1047,6 +1047,8 @@ static void lives_init(_ign_opts *ign_opts) {
     prefs->force_system_clock=FALSE;  ///< prefer soundcard timing
 
     prefs->alpha_post=FALSE; ///< allow pre-multiplied alpha internally
+
+    prefs->auto_trim_audio=TRUE;
     //////////////////////////////////////////////////////////////////
 
     weed_memory_init();

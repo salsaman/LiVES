@@ -163,10 +163,16 @@ weed_plant_t *pconx_get_out_param(int okey, int omode, int opnum) {
       totcons+=pconx->nconns[i];
       for (;j<totcons;j++) {
 	if (pconx->okey[j]==okey && pconx->omode[j]==omode && pconx->opnum[j]==opnum) {
-	  weed_plant_t **inparams=weed_get_plantptr_array(inst,"in_parameters",&error);
-	  weed_plant_t *param=inparams[pconx->params[i]];
-	  weed_free(inparams);
-	  return param;
+	  if (!weed_plant_has_leaf(inst,"out_parameters")) return NULL;
+	  else {
+	    weed_plant_t **outparams=weed_get_plantptr_array(inst,"out_parameters",&error);
+	    weed_plant_t *param=NULL;
+	    if (i<weed_leaf_num_elements(inst,"out_paramters")) {
+	      param=outparams[pconx->params[i]];
+	    }
+	    weed_free(outparams);
+	    return param;
+	  }
 	}
       }
     }
@@ -180,18 +186,27 @@ weed_plant_t *pconx_get_out_param(int okey, int omode, int opnum) {
 
 
 
-void fx_chain_data(weed_plant_t *inst, int key, int mode) {
+void pconx_chain_data(int key, int mode) {
   int error;
-  int nparams=weed_leaf_num_elements(inst,"in_parameters");
-  weed_plant_t **inparams=weed_get_plantptr_array(inst,"in_parameters",&error);
+  int nparams=0;
+  weed_plant_t **inparams;
   weed_plant_t *oparam;
+  weed_plant_t *inst;
 
   register int i;
-  
-  for (i=0;i<nparams;i++) {
-    if ((oparam=pconx_get_out_param(key,mode,i))!=NULL) {
-      weed_leaf_copy(inparams[i],"value",oparam,"value");
-    }
-  }
 
+  if ((inst=rte_keymode_get_instance(key+1,mode))==NULL) return; ///< effect is not enabled
+ 
+  if (weed_plant_has_leaf(inst,"in_parameters")) nparams=weed_leaf_num_elements(inst,"in_parameters");
+
+  if (nparams>0) {
+    inparams=weed_get_plantptr_array(inst,"in_parameters",&error);
+    
+    for (i=0;i<nparams;i++) {
+      if ((oparam=pconx_get_out_param(key,mode,i))!=NULL) {
+	weed_leaf_copy(inparams[i],"value",oparam,"value");
+      }
+    }
+    weed_free(inparams);
+  }
 }

@@ -2746,7 +2746,7 @@ weed_plant_t *weed_apply_effects (weed_plant_t **layers, weed_plant_t *filter_ma
 	    interpolate_params(instance,mainw->pchains[key],tc); // interpolate parameters during preview
 	  }
 	   // chain any data pipelines
-	  fx_chain_data(instance,i,key_modes[i]);
+	  pconx_chain_data(i,key_modes[i]);
 
 	  filter_error=weed_apply_instance (instance,NULL,layers,opwidth,opheight,tc);
 	  if (filter_error==FILTER_INFO_REINITED) redraw_pwindow(i,key_modes[i]); // redraw our paramwindow

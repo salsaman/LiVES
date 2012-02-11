@@ -49,3 +49,6 @@ weed_plant_t *pconx_get_out_param(int okey, int omode, int opnum);
 
 // free all connections (and set mainw->pconx to NULL)
 void pconx_free_all();
+
+// chain any output data into fx key/mode
+void pconx_chain_data(int key, int mode);

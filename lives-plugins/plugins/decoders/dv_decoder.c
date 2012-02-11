@@ -161,6 +161,8 @@ static lives_clip_data_t *init_cdata (void) {
 
   cdata->seek_flag=LIVES_SEEK_FAST;
   
+  cdata->sync_hint=0;
+
   return cdata;
 }
 

@@ -552,7 +552,7 @@ static void add_pid_to_pmt(MpegTSContext *ts, unsigned int programid, unsigned i
   if(p->nb_pids >= MAX_PIDS_PER_PROGRAM)
     return;
   
-  fprintf(stderr,"adding pid %d\n",pid);
+  //fprintf(stderr,"adding pid %d\n",pid);
   p->pids[p->nb_pids++] = pid;
 }
 
@@ -610,7 +610,7 @@ static void write_section_data(lives_clip_data_t *cdata, AVFormatContext *s, Mpe
   MpegTSSectionFilter *tss = &tss1->u.section_filter;
   int len;
 
-  fprintf(stderr,"pt a123\n");
+  //fprintf(stderr,"pt a123\n");
 
   if (is_start) {
     memcpy(tss->section_buf, buf, buf_size);
@@ -658,7 +658,7 @@ static MpegTSFilter *mpegts_open_section_filter(MpegTSContext *ts, unsigned int 
   if (!filter)
     return NULL;
 
-  fprintf(stderr,"adding filter %d %p\n",pid,filter);
+  //fprintf(stderr,"adding filter %d %p\n",pid,filter);
   ts->pids[pid] = filter;
   filter->type = MPEGTS_SECTION;
   filter->pid = pid;
@@ -688,7 +688,7 @@ static MpegTSFilter *mpegts_open_pes_filter(MpegTSContext *ts, unsigned int pid,
   filter = av_mallocz(sizeof(MpegTSFilter));
   if (!filter)
     return NULL;
-  fprintf(stderr,"2adding filter %p\n",filter);
+  //fprintf(stderr,"2adding filter %p\n",filter);
   ts->pids[pid] = filter;
   filter->type = MPEGTS_PES;
   filter->pid = pid;
@@ -940,9 +940,9 @@ static int mpegts_set_stream_info(lives_clip_data_t *cdata, AVStream *st, PESCon
   pes->st = st;
   pes->stream_type = stream_type;
   
-  fprintf(stderr,
+  /*  fprintf(stderr,
 	  "stream=%d stream_type=%x pid=%x prog_reg_desc=%.4s\n",
-	  st->index, pes->stream_type, pes->pid, (char*)&prog_reg_desc);
+	  st->index, pes->stream_type, pes->pid, (char*)&prog_reg_desc);*/
   
   st->codec->codec_tag = pes->stream_type;
   
@@ -952,7 +952,7 @@ static int mpegts_set_stream_info(lives_clip_data_t *cdata, AVStream *st, PESCon
       st->codec->codec_tag==STREAM_TYPE_VIDEO_H264||
       st->codec->codec_tag==STREAM_TYPE_VIDEO_VC1||
       st->codec->codec_tag==STREAM_TYPE_VIDEO_DIRAC) {
-    fprintf(stderr,"got our vidst %d %p\n",st->codec->codec_tag,st);
+    //    fprintf(stderr,"got our vidst %d %p\n",st->codec->codec_tag,st);
     priv->vidst=st;
   }
 
@@ -1164,7 +1164,6 @@ static int mpegts_push_data(lives_clip_data_t *cdata, MpegTSFilter *filter,
 	  /* stream not present in PMT */
 	  if (!pes->st) {
 	    pes->st = av_new_stream(ts->stream, pes->pid);
-	    fprintf(stderr,"pt a1\n");
 	    if (!pes->st)
 	      return AVERROR(ENOMEM);
 	    pes->st->id = pes->pid;
@@ -1433,7 +1432,7 @@ int ff_mp4_read_dec_config_descr(lives_clip_data_t *cdata, AVFormatContext *fc, 
   p+=4;
 
   st->codec->codec_id= ff_codec_get_id(ff_mp4_obj_type, object_type_id);
-  fprintf(stderr, "esds object type id 0x%02x\n", object_type_id);
+  //fprintf(stderr, "esds object type id 0x%02x\n", object_type_id);
 
   len = ff_mp4_read_descr(cdata, fc, p, &tag);
 
@@ -1691,7 +1690,6 @@ static void m4sl_cb(lives_clip_data_t *cdata, MpegTSFilter *filter, const uint8_
       if (st->codec->codec_id <= CODEC_ID_NONE) {
       } else if (st->codec->codec_id < CODEC_ID_FIRST_AUDIO) {
 	st->codec->codec_type = AVMEDIA_TYPE_VIDEO;
-	fprintf(stderr,"pt XX\n");
       } else if (st->codec->codec_id < CODEC_ID_FIRST_SUBTITLE) {
 	st->codec->codec_type = AVMEDIA_TYPE_AUDIO;
       } else if (st->codec->codec_id < CODEC_ID_FIRST_UNKNOWN) {
@@ -1726,7 +1724,7 @@ int ff_parse_mpeg2_descriptor(lives_clip_data_t *cdata, AVFormatContext *fc, AVS
   if (desc_end > desc_list_end)
     return -1;
 
-  fprintf(stderr, "tag: 0x%02x len=%d\n", desc_tag, desc_len);
+  //fprintf(stderr, "tag: 0x%02x len=%d\n", desc_tag, desc_len);
 
   if (st->codec->codec_id == CODEC_ID_NONE &&
       stream_type == STREAM_TYPE_PRIVATE_DATA)
@@ -1885,7 +1883,7 @@ static void pmt_cb(lives_clip_data_t *cdata, MpegTSFilter *filter, const uint8_t
   int mp4_descr_count = 0;
   int i;
 
-  fprintf(stderr, "PMT: len %i\n", section_len);
+  //fprintf(stderr, "PMT: len %i\n", section_len);
   //hex_dump_debug(ts->stream, (uint8_t *)section, section_len);
   
   p_end = section + section_len - 4;
@@ -1958,7 +1956,6 @@ static void pmt_cb(lives_clip_data_t *cdata, MpegTSFilter *filter, const uint8_t
       pes = ts->pids[pid]->u.pes_filter.opaque;
       if (!pes->st) {
 	pes->st = av_new_stream(pes->stream, pes->pid);
-	fprintf(stderr,"pt a12\n");
 	pes->st->id = pes->pid;
       }
       st = pes->st;
@@ -1967,7 +1964,6 @@ static void pmt_cb(lives_clip_data_t *cdata, MpegTSFilter *filter, const uint8_t
       pes = add_pes_stream(ts, pid, pcr_pid);
       if (pes) {
 	st = av_new_stream(pes->stream, pes->pid);
-	fprintf(stderr,"pt a13\n");
 	st->id = pes->pid;
       }
     } else {
@@ -1975,7 +1971,6 @@ static void pmt_cb(lives_clip_data_t *cdata, MpegTSFilter *filter, const uint8_t
       if (idx >= 0) {
 	st = ts->stream->streams[idx];
       } else {
-	fprintf(stderr,"pt a14\n");
 	st = av_new_stream(pes->stream, pid);
 	st->id = pid;
 	st->codec->codec_type = AVMEDIA_TYPE_DATA;
@@ -2024,7 +2019,7 @@ static void pat_cb(lives_clip_data_t *cdata, MpegTSFilter *filter, const uint8_t
   int sid, pmt_pid;
   //  AVProgram *program;
 
-  fprintf(stderr, "PAT:\n");
+  //fprintf(stderr, "PAT:\n");
   //hex_dump_debug(ts->stream, (uint8_t *)section, section_len);
 
   p_end = section + section_len - 4;
@@ -2170,7 +2165,6 @@ static int handle_packet(lives_clip_data_t *cdata, const uint8_t *packet) {
   // TODO - if tss is NULL,  most likely these are invalid after EOF frames - drop them
 
   if (ts->auto_guess && tss == NULL && is_start) {
-    fprintf(stderr,"yipee23 !!\n");
     add_pes_stream(ts, pid, -1);
     tss = ts->pids[pid];
   }
@@ -2481,8 +2475,6 @@ static int lives_mpegts_read_header(lives_clip_data_t *cdata) {
   if (1) {//s->iformat == &ff_mpegts_demuxer) {
     /* normal demux */
 
-    fprintf(stderr,"here !!\n");
-
     /* first do a scanning to get all the services */
     /* NOTE: We attempt to seek on non-seekable files as well, as the
      * probe buffer usually is big enough. Only warn if the seek failed
@@ -2520,7 +2512,7 @@ static int lives_mpegts_read_header(lives_clip_data_t *cdata) {
     
     if (priv->vidst==NULL) {
       priv->vidst=st;
-      fprintf(stderr,"mpegts_decoder: got video stream\n");
+      //fprintf(stderr,"mpegts_decoder: got video stream\n");
     }
 
 
@@ -2843,7 +2835,6 @@ int64_t get_last_video_dts(lives_clip_data_t *cdata) {
       if (got_picture) {
 	idxpos_data=idxpos;
 	dts=priv->avpkt.dts-priv->start_dts;
-	fprintf(stderr, "dts is %ld %ld\n",priv->avpkt.dts,priv->avpkt.pts);
 	lives_add_idx(cdata,idxpos,dts);
 	avcodec_flush_buffers (priv->ctx);
 	idxpos=priv->input_position;
@@ -2857,7 +2848,6 @@ int64_t get_last_video_dts(lives_clip_data_t *cdata) {
 	}
 	
 	mpegts_read_packet((lives_clip_data_t *)cdata,&priv->avpkt);
-	fprintf(stderr, "4dts is %ld %ld\n",priv->avpkt.dts,priv->avpkt.pts);
       }
 
       if (priv->input_position>=priv->filesize) break;
@@ -2874,9 +2864,6 @@ int64_t get_last_video_dts(lives_clip_data_t *cdata) {
   lseek(priv->fd,priv->input_position,SEEK_SET);
   avcodec_flush_buffers (priv->ctx);
   mpegts_read_packet(cdata,&priv->avpkt);
-
-  fprintf(stderr, "2dts is %ld %ld %ld %ld\n",priv->avpkt.dts,priv->avpkt.pts,idxpos,idxpos_data);
-
 
   while (1) {
 
@@ -2900,7 +2887,6 @@ int64_t get_last_video_dts(lives_clip_data_t *cdata) {
     if (priv->input_position>=priv->filesize) break;
     
   }
-  fprintf(stderr, "3dts is %ld\n",last_dts);
 
   return last_dts;
 
@@ -2972,6 +2958,8 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
   cdata->arate=0;
   cdata->achans=0;
   cdata->asamps=16;
+
+  cdata->sync_hint=SYNC_HINT_AUDIO_TRIM_START;
 
   priv->idxhh=NULL;
   priv->idxht=NULL;
@@ -3120,7 +3108,7 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
   if (got_picture) {
     pts=priv->avpkt.pts-pts;
     dts=priv->avpkt.dts-dts;
-    fprintf(stderr,"got second picture %ld %ld\n",pts,dts);
+    //fprintf(stderr,"got second picture %ld %ld\n",pts,dts);
   }
   else pts=dts=0;
 
@@ -3256,9 +3244,9 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
 
   cdata->nframes++; ///< because we get dts of start of frame
 
-  //#ifdef DEBUG
+#ifdef DEBUG
   fprintf(stderr,"fps is %.4f %ld %ld %ld\n",cdata->fps,cdata->nframes,ldts,priv->start_dts);
-  //#endif
+#endif
 
   return TRUE;
 }

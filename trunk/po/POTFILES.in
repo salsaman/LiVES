@@ -12,6 +12,7 @@ src/saveplay.c
 src/dialogs.c
 src/effects.c
 src/effects-weed.c
+src/effects_data.c
 src/framedraw.c
 src/paramspecial.c
 src/paramwindow.c

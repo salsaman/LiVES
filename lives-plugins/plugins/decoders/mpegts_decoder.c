@@ -180,7 +180,7 @@ static index_entry *index_walk(index_entry *idx, uint32_t pts) {
 }
 
 
-index_entry *lives_add_idx(const lives_clip_data_t *cdata, uint64_t offset, uint32_t pts) {
+index_entry *lives_add_idx(const lives_clip_data_t *cdata, uint64_t offset, int64_t pts) {
   lives_mpegts_priv_t *priv=cdata->priv;
   index_entry *nidx=priv->idxht;
   index_entry *nentry;
@@ -223,7 +223,7 @@ index_entry *lives_add_idx(const lives_clip_data_t *cdata, uint64_t offset, uint
 
 
 
-static index_entry *get_idx_for_pts(const lives_clip_data_t *cdata, uint32_t pts) {
+static index_entry *get_idx_for_pts(const lives_clip_data_t *cdata, int64_t pts) {
   lives_mpegts_priv_t *priv=cdata->priv;
   return index_walk(priv->idxhh,pts);
 }
@@ -2682,14 +2682,14 @@ void ff_read_frame_flush(AVFormatContext *s)
 
 
 
-static int64_t dts_to_frame(const lives_clip_data_t *cdata, int dts) {
+static int64_t dts_to_frame(const lives_clip_data_t *cdata, int64_t dts) {
   // use ADJUSTED dts (subtract priv->start_dts from it)
   return (int64_t)((double)dts/90000.*cdata->fps+.5);
 }
 
-static uint32_t frame_to_dts(const lives_clip_data_t *cdata, int64_t frame) {
+static int64_t frame_to_dts(const lives_clip_data_t *cdata, int64_t frame) {
   // returns UNADJUSTED dts : add priv->start_dts to it
-  return (uint32_t)((double)frame*90000./cdata->fps+.5);
+  return (int64_t)((double)frame*90000./cdata->fps+.5);
 }
 
 
@@ -2813,11 +2813,11 @@ static void detach_stream (lives_clip_data_t *cdata) {
 
 
 
-int get_last_video_dts(lives_clip_data_t *cdata) {
+int64_t get_last_video_dts(lives_clip_data_t *cdata) {
   lives_mpegts_priv_t *priv=cdata->priv;
   boolean got_picture=FALSE;
   int len;
-  int dts;
+  int64_t dts,last_dts=-1;
   int64_t idxpos,idxpos_data=0;
 
   priv->input_position=priv->data_start;
@@ -2886,6 +2886,8 @@ int get_last_video_dts(lives_clip_data_t *cdata) {
     len=avcodec_decode_video(priv->ctx, priv->picture, &got_picture, priv->avpkt.data, priv->avpkt.size );
 #endif
 
+    if (got_picture) last_dts=priv->avpkt.dts;
+
     if (len==priv->avpkt.size) {
       if (priv->avpkt.data!=NULL) {
 	free(priv->avpkt.data);
@@ -2898,9 +2900,9 @@ int get_last_video_dts(lives_clip_data_t *cdata) {
     if (priv->input_position>=priv->filesize) break;
     
   }
-  fprintf(stderr, "3dts is %ld %ld\n",priv->avpkt.dts,priv->avpkt.pts);
+  fprintf(stderr, "3dts is %ld\n",last_dts);
 
-  return priv->avpkt.dts;
+  return last_dts;
 
 }
 

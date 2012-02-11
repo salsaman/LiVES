@@ -330,7 +330,7 @@ typedef struct _index_entry index_entry;
 
 struct _index_entry {
   index_entry *next; ///< ptr to next entry
-  int32_t dts; ///< dts of keyframe
+  int64_t dts; ///< dts of keyframe
   uint64_t offs;  ///< offset in file
 };
 

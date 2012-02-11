@@ -154,6 +154,7 @@ lives_exe_SOURCES = \
 	effects.c\
 	plugins.c plugins.h\
 	effects-weed.c effects-weed.h\
+	effects-data.c effects-data.h \
 	framedraw.c framedraw.h\
 	interface.c interface.h \
 	paramspecial.c paramspecial.h\

@@ -2745,8 +2745,11 @@ weed_plant_t *weed_apply_effects (weed_plant_t **layers, weed_plant_t *filter_ma
 	  if (mainw->pchains!=NULL&&mainw->pchains[key]!=NULL) {
 	    interpolate_params(instance,mainw->pchains[key],tc); // interpolate parameters during preview
 	  }
-	   // chain any data pipelines
-	  pconx_chain_data(i,key_modes[i]);
+
+	  if (mainw->pconx!=NULL) {
+	    // chain any data pipelines
+	    pconx_chain_data(i,key_modes[i]);
+	  }
 
 	  filter_error=weed_apply_instance (instance,NULL,layers,opwidth,opheight,tc);
 	  if (filter_error==FILTER_INFO_REINITED) redraw_pwindow(i,key_modes[i]); // redraw our paramwindow
@@ -3565,6 +3568,8 @@ void weed_load_all (void) {
   gchar *msg;
 
   gint listlen;
+
+  //pconx_add_connection(0,0,0,5,0,0);
 
   key=-1;
 

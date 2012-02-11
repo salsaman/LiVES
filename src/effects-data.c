@@ -5,7 +5,7 @@
 // see file ../COPYING for licensing details
 
 
-// functions for chaining and data passing
+// functions for chaining and data passing between fx plugins
 
 #include "main.h"
 
@@ -42,7 +42,7 @@ static void pconx_append(lives_pconnect_t *pconx) {
   }
 
   if (last_pconx!=NULL) last_pconx->next=pconx;
-
+  if (mainw->pconx==NULL) mainw->pconx=pconx;
 }
 
 
@@ -126,18 +126,20 @@ void pconx_add_connection(int ikey, int imode, int pnum, int okey, int omode, in
   pconx->nparams++;
   totcons=pconx_get_numcons(pconx);
 
+  pconx->nconns=g_realloc(pconx->params,pconx->nparams*sizint);
+  pconx->nconns[pconx->nparams-1]=1;
 
   pconx->params=g_realloc(pconx->params,pconx->nparams*sizint);
   pconx->params[pconx->nparams-1]=pnum;
 
   pconx->okey=g_realloc(pconx->okey,pconx->nparams*sizint);
-  pconx->okey[pconx->nparams-1]=pnum;
+  pconx->okey[pconx->nparams-1]=okey;
 
   pconx->omode=g_realloc(pconx->omode,pconx->nparams*sizint);
-  pconx->omode[pconx->nparams-1]=pnum;
+  pconx->omode[pconx->nparams-1]=omode;
 
   pconx->opnum=g_realloc(pconx->opnum,pconx->nparams*sizint);
-  pconx->opnum[pconx->nparams-1]=pnum;
+  pconx->opnum[pconx->nparams-1]=opnum;
 
 
 }
@@ -163,11 +165,12 @@ weed_plant_t *pconx_get_out_param(int okey, int omode, int opnum) {
       totcons+=pconx->nconns[i];
       for (;j<totcons;j++) {
 	if (pconx->okey[j]==okey && pconx->omode[j]==omode && pconx->opnum[j]==opnum) {
+
 	  if (!weed_plant_has_leaf(inst,"out_parameters")) return NULL;
 	  else {
 	    weed_plant_t **outparams=weed_get_plantptr_array(inst,"out_parameters",&error);
 	    weed_plant_t *param=NULL;
-	    if (i<weed_leaf_num_elements(inst,"out_paramters")) {
+	    if (i<weed_leaf_num_elements(inst,"out_parameters")) {
 	      param=outparams[pconx->params[i]];
 	    }
 	    weed_free(outparams);
@@ -196,12 +199,11 @@ void pconx_chain_data(int key, int mode) {
   register int i;
 
   if ((inst=rte_keymode_get_instance(key+1,mode))==NULL) return; ///< effect is not enabled
- 
   if (weed_plant_has_leaf(inst,"in_parameters")) nparams=weed_leaf_num_elements(inst,"in_parameters");
 
   if (nparams>0) {
     inparams=weed_get_plantptr_array(inst,"in_parameters",&error);
-    
+
     for (i=0;i<nparams;i++) {
       if ((oparam=pconx_get_out_param(key,mode,i))!=NULL) {
 	weed_leaf_copy(inparams[i],"value",oparam,"value");

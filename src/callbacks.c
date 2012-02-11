@@ -51,6 +51,7 @@ void lives_exit (void) {
   if (mainw->is_ready) {
     int i;
     gchar *com;
+    gchar *cwd;
 
     threaded_dialog_spin();
 
@@ -168,6 +169,7 @@ void lives_exit (void) {
       g_free(msg);
     }
 
+    cwd=g_get_current_dir();
 
     for (i=0;i<=MAX_FILES;i++) {
       if (mainw->files[i]!=NULL) {
@@ -216,9 +218,16 @@ void lives_exit (void) {
 	  }
 
 	  if (mainw->files[i]->clip_type==CLIP_TYPE_FILE&&mainw->files[i]->ext_src!=NULL) {
+	    gchar *cwd=g_get_current_dir();
+	    gchar *ppath=g_build_filename(prefs->tmpdir,cfile->handle,NULL);
+	    lives_chdir(ppath,FALSE);
+	    g_free(ppath);
 	    threaded_dialog_spin();
 	    close_decoder_plugin((lives_decoder_t *)mainw->files[i]->ext_src);
 	    mainw->files[i]->ext_src=NULL;
+	    lives_chdir(cwd,FALSE);
+	    g_free(cwd);
+	    threaded_dialog_spin();
 	  }
 
 	  g_free(mainw->files[i]);
@@ -227,6 +236,9 @@ void lives_exit (void) {
 	}
       }
     }
+
+    lives_chdir(cwd,FALSE);
+    g_free(cwd);
 
     if (!mainw->leave_files&&strlen(mainw->set_name)&&!mainw->leave_recovery) {
       gchar *set_layout_dir=g_build_filename(prefs->tmpdir,mainw->set_name,"layouts",NULL);
@@ -264,6 +276,7 @@ void lives_exit (void) {
       threaded_dialog_spin();
     }
 
+
     for (i=1;i<=MAX_FILES;i++) {
       if (mainw->files[i]!=NULL) {
 	mainw->current_file=i;
@@ -280,8 +293,13 @@ void lives_exit (void) {
 
 	if (mainw->files[i]->clip_type==CLIP_TYPE_FILE&&mainw->files[i]->ext_src!=NULL) {
 	  // must do this before we move it
+	  gchar *ppath=g_build_filename(prefs->tmpdir,cfile->handle,NULL);
+	  lives_chdir(ppath,FALSE);
+	  g_free(ppath);
+	  threaded_dialog_spin();
 	  close_decoder_plugin((lives_decoder_t *)mainw->files[i]->ext_src);
 	  mainw->files[i]->ext_src=NULL;
+	  threaded_dialog_spin();
 	}
 	
 	if (mainw->files[i]->frame_index!=NULL) {
@@ -293,8 +311,9 @@ void lives_exit (void) {
 
       }
     }
-
-
+    
+    lives_chdir(cwd,FALSE);
+    g_free(cwd);
   
     if (mainw->only_close) {
       mainw->suppress_dprint=TRUE;
@@ -4479,6 +4498,7 @@ on_save_set_activate            (GtkMenuItem     *menuitem,
   gboolean is_append=FALSE; // we will overwrite the target layout.map file
   gchar *text;
   gchar *new_dir;
+  gchar *cwd;
 
   int ord_fd;
   int retval;
@@ -4642,6 +4662,8 @@ on_save_set_activate            (GtkMenuItem     *menuitem,
 
   ordfile=g_build_filename(prefs->tmpdir,mainw->set_name,"order",NULL);
 
+  cwd=g_get_current_dir();
+
   do {
     // create the orderfile which lists all the clips in order
     retval=0;
@@ -4656,6 +4678,7 @@ on_save_set_activate            (GtkMenuItem     *menuitem,
 	return;
       }
     }
+
     else {
       mainw->write_failed=FALSE;
       cliplist=mainw->cliplist;
@@ -4691,6 +4714,10 @@ on_save_set_activate            (GtkMenuItem     *menuitem,
 	    if (mainw->files[i]->clip_type==CLIP_TYPE_FILE&&mainw->files[i]->ext_src!=NULL) {
 	      // must do this before we move it
 	      // otherwise decoder plugin will be pointing at wrong file
+
+	      gchar *ppath=g_build_filename(prefs->tmpdir,cfile->handle,NULL);
+	      lives_chdir(ppath,FALSE);
+	      g_free(ppath);
 	      close_decoder_plugin((lives_decoder_t *)mainw->files[i]->ext_src);
 	      mainw->files[i]->ext_src=NULL;
 	    }
@@ -4731,9 +4758,12 @@ on_save_set_activate            (GtkMenuItem     *menuitem,
     }
 
   } while (retval==LIVES_RETRY);
-
+  
   close (ord_fd);
   g_free(ordfile);
+
+  lives_chdir(cwd,FALSE);
+  g_free(cwd);
 
   if (retval==LIVES_CANCEL) {
     end_threaded_dialog();
@@ -4888,6 +4918,8 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
   gboolean skip_threaded_dialog=(gboolean)GPOINTER_TO_INT(user_data);
   const lives_clip_data_t *cdata=NULL;
   lives_image_type_t img_type;
+
+  gchar *cwd;
 
   threaded_dialog_spin();
 
@@ -5105,6 +5137,8 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
     read_headers(".");
     threaded_dialog_spin();
 
+    cwd=g_get_current_dir();
+
     // if the clip has a frame_index file, then it is CLIP_TYPE_FILE
     // and we must load the frame_index and locate a suitable decoder plugin
 
@@ -5113,10 +5147,17 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
       gchar *orig_file_name=g_strdup(cfile->file_name);
       gboolean needs_update=FALSE;
 
+      // cd to clip directory - so decoder plugins can read temp files
+      gchar *ppath=g_build_filename(prefs->tmpdir,cfile->handle,NULL);
+
+      lives_chdir(ppath,FALSE);
+      g_free(ppath);
+
       cfile->img_type=img_type; // ignore value from read_headers
 
       while (1) {
 	threaded_dialog_spin();
+
 	if ((cdata=get_decoder_cdata(cfile,NULL))==NULL) {
 	  if (mainw->error) {
 	    if (do_original_lost_warning(orig_file_name)) {
@@ -5163,6 +5204,9 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
       }
       cfile->clip_type=CLIP_TYPE_FILE;
       get_mime_type(cfile->type,40,cdata);
+	
+      lives_chdir(cwd,FALSE);
+      
     }
     else {
       if (!check_frame_count(mainw->current_file)) get_frame_count(mainw->current_file);
@@ -5238,6 +5282,7 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
   recover_layout_map(MAX_FILES);
 
   mainw->suppress_dprint=FALSE;
+  g_free(cwd);
   return TRUE;
 }
 

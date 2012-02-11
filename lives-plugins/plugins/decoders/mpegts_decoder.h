@@ -359,6 +359,7 @@ typedef struct {
   index_entry *idxhh;  ///< head of head list
   index_entry *idxht; ///< tail of head list
 
+  boolean got_eof;
   boolean expect_eof;
 } lives_mpegts_priv_t;
 

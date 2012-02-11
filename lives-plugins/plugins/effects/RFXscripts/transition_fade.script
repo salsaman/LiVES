@@ -33,10 +33,12 @@ h|_Height|num0|0|0|10000|
 cx|Centre _X|num0|0|0|10000|
 cy|Centre _Y|num0|0|0|10000|
 finf|Frame _in frame position of clipboard...|bool|0|
+env|Envelope length|num0|0|0|100000|
 </params>
 
 <param_window>
 layout|p0|"%"|p1|"%"|
+layout|p6|"frames"|
 layout|hseparator|
 layout|p6|
 layout|p2|p3|
@@ -70,12 +72,16 @@ $step=0.;
 if ($end>$start) {
     $step=($p1-$p0)/($end-$start);
 }
+$mystep*=($end-$start+1.)/$p6;
+$myorig_val=$p0;
+$mycount=0;
 </pre>
 
 <loop>
 system("$composite_command -compose plus -dissolve ".int($p0)." -geometry $p2!x$p3!+$x!+$y! $in2 -size $width!x$height! $in $out");
 $p0+=$step;
 if (($p1>0&&$p0>$p1*1.)||($p1<0&&$p0<$p1*1.)) {$p0=$p1*1.;}
+if (++$mycount==$p6) {$p0=$myorig_val; $mycount=$myorig_val;}
 </loop>
 
 <post>
@@ -86,6 +92,7 @@ init|$p2=$width2; $p2_max=$width;
 init|$p3=$height2; $p3_max=$height;
 init|$p4=int($width/2+.5);
 init|$p5=int($height/2+.5);
+init|$p6=($length); $p6_max=$length;
 2|$p4_max=$width-1-int($p2/2+.5);$p4_min=int($p2/2+.5);
 3|$p5_max=$height-1-int($p3/2+.5);$p5_min=int($p3/2+.5);
 6|if ($p6) {$p4_max=$width-1-int($p2/2+.5);$p4_min=int($p2/2+.5);$p5_max=$height-1-int($p3/2+.5);$p5_min=int($p3/2+.5);}

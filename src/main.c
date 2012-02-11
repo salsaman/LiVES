@@ -5225,8 +5225,15 @@ void close_current_file(gint file_to_switch_to) {
     }
 
     if (cfile->clip_type==CLIP_TYPE_FILE&&cfile->ext_src!=NULL) {
+      gchar *cwd=g_get_current_dir();
+      gchar *ppath=g_build_filename(prefs->tmpdir,cfile->handle,NULL);
+      lives_chdir(ppath,FALSE);
+      g_free(ppath);
       close_decoder_plugin((lives_decoder_t *)cfile->ext_src);
       cfile->ext_src=NULL;
+
+      lives_chdir(cwd,FALSE);
+      g_free(cwd);
     }
 
     if (cfile->frame_index!=NULL) g_free(cfile->frame_index);

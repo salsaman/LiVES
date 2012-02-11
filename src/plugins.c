@@ -2164,6 +2164,17 @@ static GList *load_decoders(void) {
 
 
 
+static gboolean sanity_check_cdata(lives_clip_data_t *cdata) {
+  if (cdata->nframes<=0 || cdata->nframes >= INT32_MAX) {
+    return FALSE;
+  }
+
+  // all checks passed - OK
+  return TRUE;
+
+}
+
+
 
 
 
@@ -2213,6 +2224,7 @@ const lives_clip_data_t *get_decoder_cdata(file *sfile, GList *disabled) {
     lives_decoder_sys_t *dpsys=(lives_decoder_sys_t *)decoder_plugin->data;
 
     if (lives_list_index(disabled,dpsys->name)!=-1) {
+      // check if (user) disabled this decoder
       decoder_plugin=decoder_plugin->next;
       continue;
     }
@@ -2224,6 +2236,16 @@ const lives_clip_data_t *get_decoder_cdata(file *sfile, GList *disabled) {
     if ((dplug->cdata=(dpsys->get_clip_data)((tmp=(char *)g_filename_from_utf8 (sfile->file_name,-1,NULL,NULL,NULL)),
 					     NULL))!=NULL) {
       g_free(tmp);
+
+      // check for sanity
+
+      if (!sanity_check_cdata(dplug->cdata)) {
+	decoder_plugin=decoder_plugin->next;
+	continue;
+      }
+
+      //////////////////////
+
       dplug->decoder=dpsys;
       sfile->ext_src=dplug;
       if (strncmp(dpsys->name,"libzz",5)) {

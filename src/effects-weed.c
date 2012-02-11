@@ -154,6 +154,7 @@ weed_leaf_num_elements_f wlne;
 weed_leaf_element_size_f wles;
 weed_leaf_seed_type_f wlst;
 weed_leaf_get_flags_f wlgf;
+weed_leaf_set_f wlsp;
 weed_leaf_set_f wls;
 weed_malloc_f weedmalloc;
 weed_free_f weedfree;
@@ -177,7 +178,7 @@ weed_plant_t *weed_bootstrap_func (weed_default_getter_f *value, int num_version
   wlst=weed_leaf_seed_type;
   wlgf=weed_leaf_get_flags;
 
-  wls=weed_leaf_set_plugin; // we pass the plugin's version to the plugin - an example of overloading with Weed
+  wlsp=weed_leaf_set_plugin; // we pass the plugin's version to the plugin - an example of overloading with Weed
   weedmalloc=weed_malloc;
   weedfree=weed_free;
 
@@ -198,7 +199,7 @@ weed_plant_t *weed_bootstrap_func (weed_default_getter_f *value, int num_version
 
     // here we set (void *)&fn_ptr
     weed_set_voidptr_value(host_info,"weed_leaf_get_func",(void *)&wlg);
-    weed_set_voidptr_value(host_info,"weed_leaf_set_func",&wls);
+    weed_set_voidptr_value(host_info,"weed_leaf_set_func",&wlsp);
     weed_set_voidptr_value(host_info,"weed_plant_new_func",&wpn);
     weed_set_voidptr_value(host_info,"weed_plant_list_leaves_func",&wpll);
     weed_set_voidptr_value(host_info,"weed_leaf_num_elements_func",&wlne);

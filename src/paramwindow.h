@@ -61,6 +61,8 @@ GList *argv_to_marshalled_list (lives_rfx_t *rfx, gint argc, gchar **argv);
 ///
 /// (0 based, -ve for init onchanges)
 void do_onchange (GObject *object, lives_rfx_t *);
+void do_onchange_init(lives_rfx_t *rfx);
+
 
 
 void update_weed_color_value(weed_plant_t *param, int pnum, weed_plant_t *copy_to, int c1, int c2, int c3, int c4);

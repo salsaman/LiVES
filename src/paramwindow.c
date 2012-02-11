@@ -48,7 +48,7 @@ GtkWidget *fx_dialog[2];
 // right now this is single threaded because of this
 static GSList *usrgrp_to_livesgrp[2]={NULL,NULL}; // ordered list of lives_widget_group_t
 
-static void do_onchange_init(lives_rfx_t *rfx) {
+void do_onchange_init(lives_rfx_t *rfx) {
   GList *onchange=NULL;
   gchar **array;
   gchar *type;
@@ -2791,7 +2791,6 @@ gint set_param_from_list(GList *plist, lives_param_t *param, gint pnum, gboolean
   gint red,green,blue;
   gint offs=0;
   gint maxlen=g_list_length(plist)-1;
-
 
   if (ABS(pnum)>maxlen) return 0;
 

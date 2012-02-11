@@ -1402,7 +1402,7 @@ _vid_playback_plugin *open_vid_playback_plugin (const gchar *name, gboolean in_u
   if (vpp->play_paramtmpls!=NULL) {
     weed_plant_t *ptmpl;
     for (i=0;(ptmpl=(weed_plant_t *)vpp->play_paramtmpls[i])!=NULL;i++) {
-      vpp->play_params=g_realloc(vpp->play_params,(i+2)*sizeof(weed_plant_t *));
+      vpp->play_params=(weed_plant_t **)g_realloc(vpp->play_params,(i+2)*sizeof(weed_plant_t *));
       if (WEED_PLANT_IS_PARAMETER_TEMPLATE(ptmpl)) {
 	// is param template, create a param
 	vpp->play_params[i]=weed_plant_new(WEED_PLANT_PARAMETER);
@@ -1499,7 +1499,7 @@ gint64 get_best_audio(_vid_playback_plugin *vpp) {
 
     nfmts=get_token_count(buf,'|');
     array=g_strsplit(buf,"|",nfmts);
-    sfmts=g_malloc(nfmts*sizint);
+    sfmts=(int *)g_malloc(nfmts*sizint);
 
     for (i=0;i<nfmts;i++) {
       if (array[i]!=NULL&&strlen(array[i])>0) sfmts[j++]=atoi(array[i]);
@@ -2165,7 +2165,7 @@ static GList *load_decoders(void) {
 
 
 static gboolean sanity_check_cdata(lives_clip_data_t *cdata) {
-  if (cdata->nframes<=0 || cdata->nframes >= INT32_MAX) {
+  if (cdata->nframes<=0 || cdata->nframes >= INT_MAX) {
     return FALSE;
   }
 

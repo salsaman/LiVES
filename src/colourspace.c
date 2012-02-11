@@ -33,9 +33,6 @@
 #include <math.h>
 #ifdef USE_SWSCALE
 
-
-#define  __STDC_CONSTANT_MACROS
-#include <stdint.h>
 #include <libswscale/swscale.h>
 
 // for libweed-compat.h

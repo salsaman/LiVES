@@ -3144,12 +3144,12 @@ static gboolean setfx (weed_plant_t *inst, weed_plant_t *tparam, int pnum, int n
       }
 
       break;
+      }
 
     default:
       // invalid colorspace
       return FALSE;
-      }
-    break;
+      
     }
 
   default:

@@ -312,9 +312,6 @@ void lives_exit (void) {
       }
     }
     
-    lives_chdir(cwd,FALSE);
-    g_free(cwd);
-  
     if (mainw->only_close) {
       mainw->suppress_dprint=TRUE;
       for (i=1;i<=MAX_FILES;i++) {
@@ -354,10 +351,13 @@ void lives_exit (void) {
     save_future_prefs();
 
     // stop valgrind from complaining
+#ifdef VALG_COMPLAIN
     if (mainw->preview_image!=NULL && GTK_IS_IMAGE(mainw->preview_image)) 
       gtk_image_set_from_pixbuf(GTK_IMAGE(mainw->preview_image), NULL);
+
     if (mainw->image272!=NULL) gtk_image_set_from_pixbuf(GTK_IMAGE(mainw->image272), NULL);
     if (mainw->image273!=NULL) gtk_image_set_from_pixbuf(GTK_IMAGE(mainw->image273), NULL);
+#endif
 
     if (mainw->frame_layer!=NULL) weed_layer_free(mainw->frame_layer);
 

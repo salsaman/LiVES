@@ -561,7 +561,7 @@ static void set_pcr_pid(AVFormatContext *s, unsigned int programid, unsigned int
   int i;
   for(i=0; i<s->nb_programs; i++) {
     if(s->programs[i]->id == programid) {
-      s->programs[i]->pcr_pid = pid;
+      //s->programs[i]->pcr_pid = pid;
       break;
     }
   }
@@ -922,7 +922,6 @@ static void mpegts_find_stream_type(AVStream *st,
     if (stream_type == types->stream_type) {
       st->codec->codec_type = types->codec_type;
       st->codec->codec_id   = types->codec_id;
-      st->request_probe     = 0;
       return;
     }
   }
@@ -1188,11 +1187,6 @@ static int mpegts_push_data(lives_clip_data_t *cdata, MpegTSFilter *filter,
 	      code != 0x1ff && code != 0x1f2 && /* program_stream_directory, DSMCC_stream */
 	      code != 0x1f8) {                  /* ITU-T Rec. H.222.1 type E stream */
 	    pes->state = MPEGTS_PESHEADER;
-	    if (pes->st->codec->codec_id == CODEC_ID_NONE && !pes->st->request_probe) {
-	      fprintf(stderr, "pid=%x stream_type=%x probing\n",
-		      pes->pid, pes->stream_type);
-	      pes->st->request_probe= 1;
-	    }
 	  } else {
 	    pes->state = MPEGTS_PAYLOAD;
 	    pes->data_index = 0;
@@ -1758,12 +1752,12 @@ int ff_parse_mpeg2_descriptor(lives_clip_data_t *cdata, AVFormatContext *fc, AVS
     break;
   case 0x1F: /* FMC descriptor */
     get16(pp, desc_end);
-    if (mp4_descr_count > 0 && (st->codec->codec_id == CODEC_ID_AAC_LATM || st->request_probe>0) &&
+    if (mp4_descr_count > 0 && (st->codec->codec_id == CODEC_ID_AAC_LATM) &&
 	mp4_descr->dec_config_descr_len && mp4_descr->es_id == pid) {
       ff_mp4_read_dec_config_descr(cdata, fc, st, mp4_descr->dec_config_descr);
       if (st->codec->codec_id == CODEC_ID_AAC &&
 	  st->codec->extradata_size > 0){
-	st->request_probe= st->need_parsing = 0;
+	st->need_parsing = 0;
 	st->codec->codec_type= AVMEDIA_TYPE_AUDIO;
       }
     }
@@ -1830,7 +1824,7 @@ int ff_parse_mpeg2_descriptor(lives_clip_data_t *cdata, AVFormatContext *fc, AVS
       mpegts_find_stream_type(st, st->codec->codec_tag, REGD_types);
     break;
   case 0x52: /* stream identifier descriptor */
-    st->stream_identifier = 1 + get8(pp, desc_end);
+    //    st->stream_identifier = 1 + get8(pp, desc_end);
     break;
   default:
     break;
@@ -2028,7 +2022,7 @@ static void pat_cb(lives_clip_data_t *cdata, MpegTSFilter *filter, const uint8_t
   SectionHeader h1, *h = &h1;
   const uint8_t *p, *p_end;
   int sid, pmt_pid;
-  AVProgram *program;
+  //  AVProgram *program;
 
   fprintf(stderr, "PAT:\n");
   //hex_dump_debug(ts->stream, (uint8_t *)section, section_len);
@@ -2040,7 +2034,7 @@ static void pat_cb(lives_clip_data_t *cdata, MpegTSFilter *filter, const uint8_t
   if (h->tid != PAT_TID)
     return;
 
-  ts->stream->ts_id = h->id;
+  //  ts->stream->ts_id = h->id;
 
   clear_programs(ts);
   for(;;) {
@@ -2056,9 +2050,9 @@ static void pat_cb(lives_clip_data_t *cdata, MpegTSFilter *filter, const uint8_t
     if (sid == 0x0000) {
       /* NIT info */
     } else {
-      program = av_new_program(ts->stream, sid);
-      program->program_num = sid;
-      program->pmt_pid = pmt_pid;
+      //      program = av_new_program(ts->stream, sid);
+      //      program->program_num = sid;
+      //program->pmt_pid = pmt_pid;
       if (ts->pids[pmt_pid])
 	mpegts_close_filter(ts, ts->pids[pmt_pid]);
       mpegts_open_section_filter(ts, pmt_pid, pmt_cb, ts, 1);

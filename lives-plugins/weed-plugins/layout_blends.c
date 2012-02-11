@@ -149,7 +149,7 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
     weed_plant_t *in_chantmpls[]={weed_channel_template_init("in channel 0",0,palette_list),weed_channel_template_init("in channel 1",0,palette_list),NULL};
     weed_plant_t *out_chantmpls[]={weed_channel_template_init("out channel 0",WEED_CHANNEL_CAN_DO_INPLACE,palette_list),NULL};
 
-    weed_plant_t *in_params1[]={weed_float_init("start","_Start",0.666667,0.,1.),weed_radio_init("sym","Make s_ymmetrical",1,1),weed_radio_init("usend","Use _end value",0,1),weed_float_init("end","_End",0.333333,0.,1.),weed_switch_init("vert","Split _horizontally",0),weed_float_init("borderw","Border _width",0.,0.,0.5),weed_colRGBi_init("borderc","Border _colour",0,0,0),NULL};
+    weed_plant_t *in_params1[]={weed_float_init("start","_Start",0.666667,0.,1.),weed_radio_init("sym","Make s_ymmetrical",1,1),weed_radio_init("usend","Use _end value",0,1),weed_float_init("end","_End",0.333333,0.,1.),weed_switch_init("vert","Split _horizontally",WEED_FALSE),weed_float_init("borderw","Border _width",0.,0.,0.5),weed_colRGBi_init("borderc","Border _colour",0,0,0),NULL};
 
     weed_plant_t *filter_class=weed_filter_class_init("triple split","salsaman",1,WEED_FILTER_HINT_MAY_THREAD,NULL,&tsplit_process,NULL,in_chantmpls,out_chantmpls,in_params1,NULL);
 

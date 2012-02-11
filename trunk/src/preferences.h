@@ -287,6 +287,8 @@ typedef struct {
 
   gboolean force_system_clock; /// < force system clock (rather than soundcard) for timing ( better for high framerates )
 
+  gboolean auto_trim_audio;
+
   /** default 0; 1==use old (bad) behaviour on bigendian machines (r/w bigend ints/doubles); 2==bad reads, good writes */
   gint bigendbug;
 

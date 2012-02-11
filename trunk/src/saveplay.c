@@ -480,11 +480,23 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
 	    if (mainw->error==0) add_file_info (cfile->handle,TRUE);
 	    mainw->error=0;
 	    g_free(msgstr);
+
+	    cfile->opening=FALSE;
+	    reget_afilesize(mainw->current_file);
+	    get_total_time(cfile);
+
+	    if (prefs->auto_trim_audio&&(cfile->total_time>cfile->video_time)) {
+	      if (cdata->sync_hint&SYNC_HINT_AUDIO_TRIM_START) {
+		cfile->undo1_dbl=0.;
+		cfile->undo2_dbl=cfile->total_time-cfile->video_time;
+		on_del_audio_activate(NULL,NULL);
+		cfile->changed=FALSE;
+	      }
+	    }
 	  }
 	}
 
 	get_mime_type(cfile->type,40,cdata);
-	
 
       }
 
@@ -3282,6 +3294,8 @@ gboolean add_file_info(const gchar *check_handle, gboolean aud_only) {
     g_strfreev(array);
   }
 
+  cfile->video_time=0;
+
   if (aud_only) return TRUE;
 
   test_fps_string1=g_strdup_printf ("%.3f00000",cfile->fps);
@@ -3355,6 +3369,9 @@ gboolean add_file_info(const gchar *check_handle, gboolean aud_only) {
     }
 
   }
+
+  cfile->video_time=(gdouble)cfile->frames/cfile->fps;
+
   if (cfile->opening) return TRUE;
 
   if (cfile->bpp==256) {

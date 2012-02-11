@@ -2229,6 +2229,8 @@ static lives_clip_data_t *init_cdata (void) {
 
   cdata->palettes=NULL;
   
+  cdata->sync_hint=0;
+
   return cdata;
 }
 

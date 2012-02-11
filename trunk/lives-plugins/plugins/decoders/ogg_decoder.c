@@ -1934,6 +1934,8 @@ lives_clip_data_t *init_cdata(void) {
 
   priv->idx=NULL;
 
+  cdata->sync_hint=0;
+
   cdata->palettes=malloc(2*sizeof(int));
   cdata->URI=NULL;
 

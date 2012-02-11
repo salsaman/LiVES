@@ -10699,6 +10699,7 @@ void
 on_ok_append_audio_clicked                      (GtkButton *button,
 						 GtkEntry *entry)
 {
+
   gchar *com,*tmp;
   gchar *a_type;
   gint asigned=!(cfile->signed_endian&AFORM_UNSIGNED);
@@ -10805,6 +10806,9 @@ void
 on_trim_audio_activate (GtkMenuItem     *menuitem,
 			gpointer         user_data)
 {
+  // type 0 == trim selected
+  // type 1 == trim to play pointer
+
   gchar *com,*msg;
   gint type=GPOINTER_TO_INT (user_data);
 
@@ -10819,7 +10823,6 @@ on_trim_audio_activate (GtkMenuItem     *menuitem,
     start=0.;
     end=cfile->pointer_time;
   }
-
 
   if (!(prefs->warning_mask&WARN_MASK_LAYOUT_DELETE_AUDIO)) {
     if (end<cfile->laudio_time&&(mainw->xlays=layout_audio_is_affected(mainw->current_file,end))!=NULL) {

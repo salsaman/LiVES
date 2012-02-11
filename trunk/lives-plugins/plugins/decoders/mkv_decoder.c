@@ -1979,6 +1979,8 @@ static lives_clip_data_t *init_cdata (void) {
 
   cdata->nframes=0;
 
+  cdata->sync_hint=0;
+
   got_eof=FALSE;
   errval=0;
   

@@ -238,6 +238,11 @@ typedef struct {
 
   int seek_flag;
 
+#define SYNC_HINT_AUDIO_TRIM_START 1
+
+  int sync_hint;
+
+
   void *priv; ///< private data for demuxer/decoder - host should not touch this
 
 } lives_clip_data_t;

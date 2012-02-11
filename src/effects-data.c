@@ -15,6 +15,7 @@
 #include <weed/weed.h>
 #include <weed/weed-host.h>
 #else
+#include "../libweed/weed.h"
 #include "../libweed/weed-host.h"
 #endif
 

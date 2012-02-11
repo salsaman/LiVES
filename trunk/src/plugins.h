@@ -150,6 +150,7 @@ typedef struct {
 #define AUDIO_CODEC_RAW 7       // reserved
 #define AUDIO_CODEC_WMA2 8
 
+
 #define AUDIO_CODEC_MAX 31
   //
 #define AUDIO_CODEC_NONE 32
@@ -189,6 +190,8 @@ extern const char *anames[AUDIO_CODEC_MAX];
 #define LIVES_SEEK_QUALITY_LOSS (1<<2)
 
 
+// must be exactly the same as in decplugin.h
+
 typedef struct {
   gchar *URI; ///< the URI of this cdata
 
@@ -211,9 +214,9 @@ typedef struct {
   gint frame_width; // frame width and height are the size of the outer frame
   gint frame_height;
 
-  gfloat par; ///< pixel aspect ratio
+  float par; ///< pixel aspect ratio
 
-  gfloat fps;
+  float fps;
 
   int *palettes;
 

@@ -316,9 +316,19 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
     }
 
     if (!strcmp(prefs->image_ext,"png")) cfile->img_type=IMG_TYPE_PNG;
-
+    
     if (prefs->instant_open) {
+      // cd to clip directory - so decoder plugins can write temp files
+      gchar *ppath=g_build_filename(prefs->tmpdir,cfile->handle,NULL);
+      gchar *cwd=g_get_current_dir();
+      lives_chdir(ppath,FALSE);
+      g_free(ppath);
+	
       cdata=get_decoder_cdata(cfile,prefs->disabled_decoders);
+
+      lives_chdir(cwd,FALSE);
+      g_free(cwd);
+
       if (cfile->ext_src!=NULL) {
 	lives_decoder_t *dplug=(lives_decoder_t *)cfile->ext_src;
 	cfile->opening=TRUE;
@@ -4936,9 +4946,11 @@ static gboolean recover_files(gchar *recovery_file, gboolean auto_recover) {
   FILE *rfile;
   gchar buff[256],*buffptr;
   gchar *clipdir;
+  gchar *cwd=g_get_current_dir();
 
   int retval;
   gint new_file,clipnum=0;
+
   gboolean last_was_normal_file=FALSE;
   gboolean is_scrap;
   gboolean is_ascrap;
@@ -5163,8 +5175,13 @@ static gboolean recover_files(gchar *recovery_file, gboolean auto_recover) {
       if (mainw->current_file<1) continue;
 
       if (load_frame_index(mainw->current_file)) {
-
+	// cd to clip directory - so decoder plugins can write temp files
+	gchar *ppath=g_build_filename(prefs->tmpdir,cfile->handle,NULL);
 	gboolean next=FALSE;
+
+	lives_chdir(ppath,FALSE);
+	g_free(ppath);
+
 	while (1) {
 	  threaded_dialog_spin();
 	  if ((cdata=get_decoder_cdata(cfile,NULL))==NULL) {
@@ -5258,6 +5275,9 @@ static gboolean recover_files(gchar *recovery_file, gboolean auto_recover) {
       }
     }
   }
+
+  lives_chdir(cwd,FALSE);
+  g_free(cwd);
 
   end_threaded_dialog();
 

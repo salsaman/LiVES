@@ -1435,9 +1435,13 @@ if (defined($ARGV[0])) {
 		exit 1;
 	    }
 	    
-	    # double check number of frames
-	    $count=&count_frames;
-
+	    if ($withsound eq "-1") {
+		$count=0;
+	    }
+	    else {
+		# double check number of frames
+		$count=&count_frames;
+	    }
 	}
 
 	# if the last frame has zero size, delete it
@@ -1465,6 +1469,16 @@ if (defined($ARGV[0])) {
 	if ($img_ext eq ".png" || $type eq "png") {
 	    $bpp=32;
 	}
+
+	unless (0||$withsound ne "-1" || $achans==0) {
+	    # try as best we can to sync sound and video for a selection
+	    $audio_out=&clip_audio(0.3,1000000.);
+	    if (!$panic) {
+		smog_rename( "$audio_out","audio");
+	    }
+	    $audio_out="audio";
+	}
+
 
 	if ($count==0||$type eq "jpeg"||$type eq "png"||$type eq "Audio") {
 	    # we could have audio or images
@@ -1519,14 +1533,6 @@ if (defined($ARGV[0])) {
 	    }
 	}
 
-	unless (!defined($MPLAYER_SEL_AUDIO_SYNCH_BUG)||$ss eq ""||$achans==0) {
-	    # try as best we can to sync sound and video for a selection
-	    $audio_out=&clip_audio(0.5,1000000.);
-	    if (!$panic) {
-		smog_rename( "$audio_out","audio");
-	    }
-	    $audio_out="audio";
-	}
 
 	$af_size= -s $audio_out;
 	if (-d $curtmpdir) {

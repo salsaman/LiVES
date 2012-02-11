@@ -281,6 +281,7 @@ void create_merge_dialog (void) {
   gtk_widget_show (hseparator);
   gtk_box_pack_start (GTK_BOX (vbox), hseparator, FALSE, TRUE, 0);
 
+  do_onchange_init(rfx);
 
   // now the dynamic part...
   merge_opts->param_vbox = gtk_vbox_new (FALSE, 0);
@@ -359,6 +360,9 @@ void on_trans_method_changed (GtkWidget *entry, gpointer user_data) {
 
   gtk_container_foreach (GTK_CONTAINER(merge_opts->param_vbox),bang,NULL);
   on_paramwindow_cancel_clicked (NULL,rfx);
+
+  do_onchange_init(rfx);
+
   make_param_box(GTK_VBOX (merge_opts->param_vbox), rfx);
   gtk_widget_show_all (merge_opts->param_vbox);
   merge_opts->align_start=!merge_opts->align_start;

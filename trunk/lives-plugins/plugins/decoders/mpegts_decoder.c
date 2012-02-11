@@ -2873,7 +2873,6 @@ int get_last_video_dts(lives_clip_data_t *cdata) {
 
   // rewind back to last pos, and decode up to end now
 
-
   priv->input_position=idxpos;
   lseek(priv->fd,priv->input_position,SEEK_SET);
   avcodec_flush_buffers (priv->ctx);

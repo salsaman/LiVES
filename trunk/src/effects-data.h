@@ -21,8 +21,6 @@ typedef struct _lives_pconnect_t lives_pconnect_t;
 struct _lives_pconnect_t {
   int ikey; ///< ikey is 0 based
   int imode;
-  
-  weed_plant_t *inst; ///< instance (or NULL if effect is not activated)
 
   int nparams; ///< number of parameters which are linked
 
@@ -42,9 +40,6 @@ struct _lives_pconnect_t {
 };
 
 
-
-/// update instance for ikey/imode
-void pconx_update_inst(weed_plant_t *inst, int ikey, int imode);
 
 /// add a new connection from out_param ikey/imode/ipnum to in_param okey/omode/opnum
 void pconx_add_connection(int ikey, int imode, int ipnum, int okey, int omode, int opnum);

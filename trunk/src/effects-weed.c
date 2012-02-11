@@ -1400,6 +1400,7 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
 
   gint lcount=0;
 
+ 
   // here, in_tracks and out_tracks map our layers to in_channels and out_channels in the filter
   if (!weed_plant_has_leaf(inst,"in_channels")||(in_channels=weed_get_plantptr_array(inst,"in_channels",&error))==NULL) 
     return FILTER_ERROR_NO_IN_CHANNELS;
@@ -2744,6 +2745,9 @@ weed_plant_t *weed_apply_effects (weed_plant_t **layers, weed_plant_t *filter_ma
 	  if (mainw->pchains!=NULL&&mainw->pchains[key]!=NULL) {
 	    interpolate_params(instance,mainw->pchains[key],tc); // interpolate parameters during preview
 	  }
+	   // chain any data pipelines
+	  fx_chain_data(instance,i,key_modes[i]);
+
 	  filter_error=weed_apply_instance (instance,NULL,layers,opwidth,opheight,tc);
 	  if (filter_error==FILTER_INFO_REINITED) redraw_pwindow(i,key_modes[i]); // redraw our paramwindow
 #ifdef DEBUG_RTE

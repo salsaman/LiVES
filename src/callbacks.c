@@ -219,7 +219,7 @@ void lives_exit (void) {
 
 	  if (mainw->files[i]->clip_type==CLIP_TYPE_FILE&&mainw->files[i]->ext_src!=NULL) {
 	    gchar *cwd=g_get_current_dir();
-	    gchar *ppath=g_build_filename(prefs->tmpdir,cfile->handle,NULL);
+	    gchar *ppath=g_build_filename(prefs->tmpdir,mainw->files[i]->handle,NULL);
 	    lives_chdir(ppath,FALSE);
 	    g_free(ppath);
 	    threaded_dialog_spin();

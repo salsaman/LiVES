@@ -403,8 +403,8 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
     in_params[P_FGALPHA]=weed_float_init("fr_alpha","_Alpha _Foreground",1.0,0.0,1.0);
     in_params[P_BGALPHA]=weed_float_init("bg_alpha","_Alpha _Background",1.0,0.0,1.0);
     in_params[P_FONTSIZE]=weed_float_init("fontsize","_Font Size",20.0,10.0,128.0);
-    in_params[P_CENTER]=weed_switch_init("center","_Center text",1);
-    in_params[P_RISE]=weed_switch_init("rising","_Rising text",1);
+    in_params[P_CENTER]=weed_switch_init("center","_Center text",WEED_TRUE);
+    in_params[P_RISE]=weed_switch_init("rising","_Rising text",WEED_TRUE);
     in_params[P_TOP]=weed_float_init("top","_Top",0.0,0.0,1.0);
     in_params[P_END]=NULL;
     

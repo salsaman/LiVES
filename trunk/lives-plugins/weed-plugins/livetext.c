@@ -373,8 +373,8 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
     in_params[2]=weed_string_list_init("font","_Font",0,fonts);
     in_params[3]=weed_colRGBi_init("foreground","_Foreground",255,255,255);
     in_params[4]=weed_colRGBi_init("background","_Background",0,0,0);
-    in_params[5]=weed_switch_init("center","_Center text",1);
-    in_params[6]=weed_switch_init("rising","_Rising text",1);
+    in_params[5]=weed_switch_init("center","_Center text",WEED_TRUE);
+    in_params[6]=weed_switch_init("rising","_Rising text",WEED_TRUE);
     in_params[7]=NULL;
     
     pgui=weed_parameter_template_get_gui(in_params[0]);

@@ -180,7 +180,7 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
     int palette_list[]={WEED_PALETTE_BGR24,WEED_PALETTE_RGB24,WEED_PALETTE_END};
     weed_plant_t *in_chantmpls[]={weed_channel_template_init("in channel 0",0,palette_list),weed_channel_template_init("in channel 1",0,palette_list),NULL};
     weed_plant_t *out_chantmpls[]={weed_channel_template_init("out channel 0",0,palette_list),NULL};
-    weed_plant_t *in_params[]={weed_integer_init("amount","Transition _value",128,0,255),weed_radio_init("dir_rand","_Random",1,1),weed_radio_init("dir_r2l","_Right to left",0,1),weed_radio_init("dir_l2r","_Left to right",0,1),weed_radio_init("dir_b2t","_Bottom to top",0,1),weed_radio_init("dir_t2b","_Top to bottom",0,1),weed_switch_init("mlower","_Slide lower clip",1),weed_switch_init("mupper","_Slide upper clip",0),NULL};
+    weed_plant_t *in_params[]={weed_integer_init("amount","Transition _value",128,0,255),weed_radio_init("dir_rand","_Random",1,1),weed_radio_init("dir_r2l","_Right to left",0,1),weed_radio_init("dir_l2r","_Left to right",0,1),weed_radio_init("dir_b2t","_Bottom to top",0,1),weed_radio_init("dir_t2b","_Top to bottom",0,1),weed_switch_init("mlower","_Slide lower clip",WEED_TRUE),weed_switch_init("mupper","_Slide upper clip",WEED_FALSE),NULL};
 
     weed_plant_t *filter_class=weed_filter_class_init("slide over","salsaman",1,0,&sover_init,&sover_process,NULL,in_chantmpls,out_chantmpls,in_params,NULL);
 

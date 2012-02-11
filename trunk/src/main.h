@@ -77,6 +77,9 @@ POSSIBILITY OF SUCH DAMAGES.
 #include <assert.h>
 #include <errno.h>
 
+#define  __STDC_CONSTANT_MACROS
+#include <stdint.h>
+
 #include "widget-helper.h"
 
 #define QUOTEME(x) #x

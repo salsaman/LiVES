@@ -10,6 +10,8 @@
 
 #include <pthread.h>
 
+#include "effects-data.h"
+
 #ifdef ALSA_MIDI
 #include <alsa/asoundlib.h>
 #endif
@@ -1025,6 +1027,9 @@ typedef struct {
   guint64 next_ds_warn_level; ///< current disk space warning level for the tempdir
 
   float sepwin_scale;
+
+  lives_pconnect_t *pconx; ///< list of out -> in param connections
+
 
 } mainwindow;
 

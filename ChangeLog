@@ -3,6 +3,10 @@ Version 1.6.2
 Clean up timer code.
 Show more accurate progress for rendering after recording.
 Call init triggers for rendered transitions.
+Fix regression in undo cut.
+
+
+
 
 
 

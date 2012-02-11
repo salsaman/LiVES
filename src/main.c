@@ -933,6 +933,8 @@ static void lives_init(_ign_opts *ign_opts) {
   mainw->tried_ds_recover=FALSE;
 
   mainw->foreign_visual=NULL;
+
+  mainw->pconx=NULL;
   /////////////////////////////////////////////////// add new stuff just above here ^^
 
   // TODO - dirsep

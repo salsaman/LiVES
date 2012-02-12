@@ -297,7 +297,6 @@ int lives_chdir(const char *path, gboolean allow_fail) {
     gchar *msg=g_strdup_printf("Chdir failed to: %s",path);
     mainw->chdir_failed=TRUE;
     if (!allow_fail) {
-      free(1);
       LIVES_ERROR(msg);
       do_chdir_failed_error(path);
     }

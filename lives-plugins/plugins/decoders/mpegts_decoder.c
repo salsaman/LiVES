@@ -234,7 +234,7 @@ static index_entry *get_idx_for_pts(const lives_clip_data_t *cdata, int64_t pts)
 
 static boolean check_for_eof(lives_clip_data_t *cdata) {
   lives_mpegts_priv_t *priv=cdata->priv;
-  if (priv->input_position>=priv->filesize) {
+  if (priv->input_position>priv->filesize) {
     priv->got_eof=TRUE;
     return TRUE;
   }
@@ -408,7 +408,12 @@ static boolean lives_seek(lives_clip_data_t *cdata, int fd, off_t pos) {
       return FALSE;
     }
   }
-  else if (lseek(fd, pos, SEEK_SET)==-1) return FALSE;
+  else {
+    struct stat sb;
+    fstat(fd,&sb);
+    if (pos>sb.st_size) priv->got_eof=TRUE;
+    if (lseek(fd, pos, SEEK_SET)==-1) return FALSE;
+  }
   return TRUE;
 }
 
@@ -424,7 +429,10 @@ static boolean lives_skip(lives_clip_data_t *cdata, int fd, off_t offs) {
       return FALSE;
     }
   }
-  else if (lseek(fd, offs, SEEK_CUR)==-1) return FALSE;
+  else {
+    off_t pos=lseek(fd,0,SEEK_CUR)+offs;
+    return lives_seek(cdata,fd,pos);
+  }
   return TRUE;
 }
 
@@ -435,7 +443,7 @@ ssize_t lives_read(lives_clip_data_t *cdata, int fd, void *data, size_t len) {
 
   lives_mpegts_priv_t *priv=cdata->priv;
   ssize_t bytes=read(fd,data,len);
-  if (bytes>0 && fd==priv->fd) priv->input_position+=bytes;
+  if (bytes>=0 && fd==priv->fd) priv->input_position+=len;
   check_for_eof(cdata);
   return bytes;
 }
@@ -2862,17 +2870,15 @@ int64_t get_last_video_dts(lives_clip_data_t *cdata) {
 	  priv->avpkt.data=NULL;
 	  priv->avpkt.size=0;
 	}
-	if (priv->input_position==priv->filesize) break;
+	if (priv->input_position==priv->filesize) goto vts_next;
 	mpegts_read_packet((lives_clip_data_t *)cdata,&priv->avpkt);
-	if (priv->got_eof) break;
+	if (priv->got_eof) goto vts_next;
       }
 
-
     }
-    
-    if (priv->got_eof) break;
-
   }
+
+ vts_next:
 
   // rewind back to last pos, and decode up to end now
 
@@ -2898,12 +2904,14 @@ int64_t get_last_video_dts(lives_clip_data_t *cdata) {
 	priv->avpkt.data=NULL;
 	priv->avpkt.size=0;
       }
-      if (priv->input_position==priv->filesize) break;
+      if (priv->input_position==priv->filesize) goto vts_done;
       mpegts_read_packet((lives_clip_data_t *)cdata,&priv->avpkt);
-      if (priv->got_eof) break;
+      if (priv->got_eof) goto vts_done;
     }
     
   }
+
+ vts_done:
 
   priv->got_eof=FALSE;
   return last_dts;

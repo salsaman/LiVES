@@ -234,7 +234,7 @@ static index_entry *get_idx_for_pts(const lives_clip_data_t *cdata, int64_t pts)
 
 static boolean check_for_eof(lives_clip_data_t *cdata) {
   lives_mpegts_priv_t *priv=cdata->priv;
-  if (priv->input_position>priv->filesize) {
+  if (priv->input_position>=priv->filesize) {
     priv->got_eof=TRUE;
     return TRUE;
   }
@@ -2831,6 +2831,7 @@ int64_t get_last_video_dts(lives_clip_data_t *cdata) {
   lseek(priv->fd,priv->input_position,SEEK_SET);
   avcodec_flush_buffers (priv->ctx);
   mpegts_read_packet(cdata,&priv->avpkt);
+  priv->got_eof=FALSE;
 
   idxpos=priv->input_position;
 
@@ -2861,15 +2862,15 @@ int64_t get_last_video_dts(lives_clip_data_t *cdata) {
 	  priv->avpkt.data=NULL;
 	  priv->avpkt.size=0;
 	}
-	
+	if (priv->input_position==priv->filesize) break;
 	mpegts_read_packet((lives_clip_data_t *)cdata,&priv->avpkt);
+	if (priv->got_eof) break;
       }
 
-      if (priv->input_position>=priv->filesize) break;
 
     }
     
-    if (priv->input_position>=priv->filesize) break;
+    if (priv->got_eof) break;
 
   }
 
@@ -2877,6 +2878,7 @@ int64_t get_last_video_dts(lives_clip_data_t *cdata) {
 
   priv->input_position=idxpos_data;
   lseek(priv->fd,priv->input_position,SEEK_SET);
+  priv->got_eof=FALSE;
   avcodec_flush_buffers (priv->ctx);
   mpegts_read_packet(cdata,&priv->avpkt);
 
@@ -2896,13 +2898,14 @@ int64_t get_last_video_dts(lives_clip_data_t *cdata) {
 	priv->avpkt.data=NULL;
 	priv->avpkt.size=0;
       }
+      if (priv->input_position==priv->filesize) break;
       mpegts_read_packet((lives_clip_data_t *)cdata,&priv->avpkt);
+      if (priv->got_eof) break;
     }
-    
-    if (priv->input_position>=priv->filesize) break;
     
   }
 
+  priv->got_eof=FALSE;
   return last_dts;
 
 }
@@ -3421,6 +3424,8 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
     fprintf(stderr,"vals %ld %ld\n",tframe,priv->last_frame);
 #endif
 
+    priv->got_eof=FALSE;
+
     // calc frame width and height, including any border
 
     if (pixel_data!=NULL) {
@@ -3469,8 +3474,8 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
 
 	nextframe=dts_to_frame(cdata,idx->dts);
 
+	if (priv->input_position==priv->filesize) return FALSE;
 	mpegts_read_packet((lives_clip_data_t *)cdata,&priv->avpkt);
-
 	if (priv->got_eof) return FALSE;
 
 	//#define DEBUG_KFRAMES
@@ -3507,9 +3512,10 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
 	      priv->avpkt.size=0;
 	    }
 
+	    if (priv->input_position==priv->filesize) return FALSE;
 	    mpegts_read_packet((lives_clip_data_t *)cdata,&priv->avpkt);
-	
 	    if (priv->got_eof) return FALSE;
+	
 	  }
 	}
 

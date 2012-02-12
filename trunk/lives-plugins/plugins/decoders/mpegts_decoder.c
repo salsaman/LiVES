@@ -397,6 +397,22 @@ static enum CodecID ff_codec_get_id(const AVCodecTag *tags, unsigned int tag)
 }
 
 
+static boolean lives_seek(lives_clip_data_t *cdata, int fd, off_t pos) {
+  // seek
+
+  lives_mpegts_priv_t *priv=cdata->priv;
+  if (fd==priv->fd) {
+    priv->input_position = pos;
+    check_for_eof(cdata);
+    if (lseek(priv->fd, priv->input_position, SEEK_SET)==-1) {
+      return FALSE;
+    }
+  }
+  else if (lseek(fd, pos, SEEK_SET)==-1) return FALSE;
+  return TRUE;
+}
+
+
 static boolean lives_skip(lives_clip_data_t *cdata, int fd, off_t offs) {
   // skip
 
@@ -1608,7 +1624,7 @@ static int parse_mp4_descr(lives_clip_data_t *cdata, MP4DescrParseContext *d, in
 
  done:
   d->level--;
-  lseek(d->fd, off + len1, SEEK_SET);
+  lives_seek(cdata, d->fd, off + len1);
   return 0;
 }
 
@@ -2326,8 +2342,7 @@ static int read_packet(lives_clip_data_t *cdata, uint8_t *buf, int raw_packet_si
     } else {
       skip = raw_packet_size - TS_PACKET_SIZE;
       if (skip > 0) {
-	priv->input_position += skip;
-	lseek(pb, priv->input_position, SEEK_SET);
+	lives_seek(cdata, pb, priv->input_position+skip);
       }
       break;
     }

@@ -4287,7 +4287,7 @@ gulong get_fs_free(const char *dir) {
   if (sbuf.f_flag&ST_RDONLY) goto getfserr;
 
   // result is block size * blocks available
-  bytes=sbuf.f_bsize*sbuf.f_bavail;
+  bytes=sbuf.f_bsize*sbuf.f_bavail*sbuf.f_frsize;
 
 getfserr:
   if (must_delete) rmdir(dir);

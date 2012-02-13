@@ -74,7 +74,6 @@ void lives_exit (void) {
 
     if (mainw->playing_file>-1) {
       mainw->ext_keyboard=FALSE;
-      gtk_timeout_remove (mainw->kb_timer);
       if (mainw->ext_playback) {
 	if (mainw->vpp->exit_screen!=NULL) (*mainw->vpp->exit_screen)(mainw->ptr_x,mainw->ptr_y);
 	stop_audio_stream();
@@ -108,6 +107,7 @@ void lives_exit (void) {
     mainw->current_file=-1;
 
     if (!mainw->only_close) {
+      gtk_timeout_remove (mainw->kb_timer);
 #ifdef HAVE_PULSE_AUDIO
       if (mainw->pulsed!=NULL) pulse_close_client(mainw->pulsed);
       if (mainw->pulsed_read!=NULL) pulse_close_client(mainw->pulsed_read);
@@ -171,6 +171,44 @@ void lives_exit (void) {
 
     cwd=g_get_current_dir();
 
+    for (i=1;i<=MAX_FILES;i++) {
+      if (mainw->files[i]!=NULL) {
+	mainw->current_file=i;
+	threaded_dialog_spin();
+	if (cfile->event_list_back!=NULL) event_list_free (cfile->event_list_back);
+	if (cfile->event_list!=NULL) event_list_free (cfile->event_list);
+
+	cfile->event_list=cfile->event_list_back=NULL;
+
+	if (cfile->layout_map!=NULL) {
+	  g_list_free_strings(cfile->layout_map);
+	  g_list_free(cfile->layout_map);
+	}
+
+	if (mainw->files[i]->clip_type==CLIP_TYPE_FILE&&mainw->files[i]->ext_src!=NULL) {
+	  // must do this before we move it
+	  gchar *ppath=g_build_filename(prefs->tmpdir,cfile->handle,NULL);
+	  lives_chdir(ppath,FALSE);
+	  g_free(ppath);
+	  threaded_dialog_spin();
+	  close_decoder_plugin((lives_decoder_t *)mainw->files[i]->ext_src);
+	  mainw->files[i]->ext_src=NULL;
+	  threaded_dialog_spin();
+	}
+	
+	if (mainw->files[i]->frame_index!=NULL) {
+	  g_free(mainw->files[i]->frame_index);
+	  mainw->files[i]->frame_index=NULL;
+	}
+
+	cfile->layout_map=NULL;
+
+      }
+    }
+
+    lives_chdir(cwd,FALSE);
+    g_free(cwd);
+
     for (i=0;i<=MAX_FILES;i++) {
       if (mainw->files[i]!=NULL) {
 	if ((!mainw->leave_files&&!prefs->crash_recovery&&strlen(mainw->set_name)==0)||
@@ -211,34 +249,8 @@ void lives_exit (void) {
 	  }
 	  lives_freep((void**)&mainw->files[i]->op_dir);
 	}
-	if (!mainw->only_close) {
-	  if (mainw->files[i]->frame_index!=NULL) {
-	    g_free(mainw->files[i]->frame_index);
-	    mainw->files[i]->frame_index=NULL;
-	  }
-
-	  if (mainw->files[i]->clip_type==CLIP_TYPE_FILE&&mainw->files[i]->ext_src!=NULL) {
-	    gchar *cwd=g_get_current_dir();
-	    gchar *ppath=g_build_filename(prefs->tmpdir,mainw->files[i]->handle,NULL);
-	    lives_chdir(ppath,FALSE);
-	    g_free(ppath);
-	    threaded_dialog_spin();
-	    close_decoder_plugin((lives_decoder_t *)mainw->files[i]->ext_src);
-	    mainw->files[i]->ext_src=NULL;
-	    lives_chdir(cwd,FALSE);
-	    g_free(cwd);
-	    threaded_dialog_spin();
-	  }
-
-	  g_free(mainw->files[i]);
-	  mainw->files[i]=NULL;
-	  threaded_dialog_spin();
-	}
       }
     }
-
-    lives_chdir(cwd,FALSE);
-    g_free(cwd);
 
     if (!mainw->leave_files&&strlen(mainw->set_name)&&!mainw->leave_recovery) {
       gchar *set_layout_dir=g_build_filename(prefs->tmpdir,mainw->set_name,"layouts",NULL);
@@ -274,42 +286,6 @@ void lives_exit (void) {
       unlink(set_lock_file);
       g_free(set_lock_file);
       threaded_dialog_spin();
-    }
-
-
-    for (i=1;i<=MAX_FILES;i++) {
-      if (mainw->files[i]!=NULL) {
-	mainw->current_file=i;
-	threaded_dialog_spin();
-	if (cfile->event_list_back!=NULL) event_list_free (cfile->event_list_back);
-	if (cfile->event_list!=NULL) event_list_free (cfile->event_list);
-
-	cfile->event_list=cfile->event_list_back=NULL;
-
-	if (cfile->layout_map!=NULL) {
-	  g_list_free_strings(cfile->layout_map);
-	  g_list_free(cfile->layout_map);
-	}
-
-	if (mainw->files[i]->clip_type==CLIP_TYPE_FILE&&mainw->files[i]->ext_src!=NULL) {
-	  // must do this before we move it
-	  gchar *ppath=g_build_filename(prefs->tmpdir,cfile->handle,NULL);
-	  lives_chdir(ppath,FALSE);
-	  g_free(ppath);
-	  threaded_dialog_spin();
-	  close_decoder_plugin((lives_decoder_t *)mainw->files[i]->ext_src);
-	  mainw->files[i]->ext_src=NULL;
-	  threaded_dialog_spin();
-	}
-	
-	if (mainw->files[i]->frame_index!=NULL) {
-	  g_free(mainw->files[i]->frame_index);
-	  mainw->files[i]->frame_index=NULL;
-	}
-
-	cfile->layout_map=NULL;
-
-      }
     }
     
     if (mainw->only_close) {
@@ -4711,17 +4687,6 @@ on_save_set_activate            (GtkMenuItem     *menuitem,
 	    // move the files
 
 
-	    if (mainw->files[i]->clip_type==CLIP_TYPE_FILE&&mainw->files[i]->ext_src!=NULL) {
-	      // must do this before we move it
-	      // otherwise decoder plugin will be pointing at wrong file
-
-	      gchar *ppath=g_build_filename(prefs->tmpdir,cfile->handle,NULL);
-	      lives_chdir(ppath,FALSE);
-	      g_free(ppath);
-	      close_decoder_plugin((lives_decoder_t *)mainw->files[i]->ext_src);
-	      mainw->files[i]->ext_src=NULL;
-	    }
-	
 	    mainw->com_failed=FALSE;
 	    com=g_strdup_printf("/bin/mv \"%s/%s\" \"%s/%s\"",
 				prefs->tmpdir,mainw->files[i]->handle,prefs->tmpdir,new_handle);

@@ -8,7 +8,9 @@
 #ifndef HAS_LIVES_MAINWINDOW_H
 #define HAS_LIVES_MAINWINDOW_H
 
+#ifndef IS_MINGW
 #include <pthread.h>
+#endif
 
 #include "effects-data.h"
 

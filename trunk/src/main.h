@@ -58,6 +58,11 @@ POSSIBILITY OF SUCH DAMAGES.
 #include <gtk/gtk.h>
 #include <gdk/gdkkeysyms.h>
 
+#ifdef IS_MINGW
+#undef GDK_WINDOWING_X11
+#endif
+
+
 #ifdef GDK_WINDOWING_X11
 #define USE_X11
 

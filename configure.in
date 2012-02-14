@@ -50,6 +50,7 @@ IS_DARWIN="false"
 IS_IRIX="false"
 IS_SOLARIS="false"
 IS_LINUX_GNU="false"
+IS_MINGW="false"
 
 case "{$target_os}" in
  *darwin*)
@@ -64,6 +65,9 @@ case "{$target_os}" in
  *solaris*)
    IS_SOLARIS="true"
   ;;
+ *mingw*)
+   IS_MINGW="true"
+  ;;
  *)
   ;;
 esac
@@ -72,6 +76,7 @@ AM_CONDITIONAL(IS_DARWIN,$IS_DARWIN)
 AM_CONDITIONAL(IS_IRIX,$IS_IRIX)
 AM_CONDITIONAL(IS_LINUX_GNU,$IS_LINUX_GNU)
 AM_CONDITIONAL(IS_SOLARIS,$IS_SOLARIS)
+AM_CONDITIONAL(IS_MINGW,$IS_MINGW)
 
 GETTEXT_PACKAGE=lives
 AC_SUBST(GETTEXT_PACKAGE)
@@ -86,7 +91,6 @@ dnl Add the languages which your application supports here.
 ALL_LINGUAS="ar fr ca cs da ja nl_NL de_DE pt pt_BR hu es it pl tr ru zh_CN sk he en_GB fi et gl uz te ro uk oc hr ug"
 AM_GNU_GETTEXT
 AM_GNU_GETTEXT_VERSION(0.17)
-
 
 
 dnl Use -Wall if we have gcc.
@@ -147,8 +151,6 @@ HAVE_OSC=false
 ]
 )
 AM_CONDITIONAL(ENABLE_OSC,$HAVE_OSC)
-
-
 
 
 dnl js_header

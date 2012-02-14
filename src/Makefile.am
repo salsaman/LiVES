@@ -23,6 +23,14 @@ if IS_SOLARIS
 solaris_CFLAGS=-DIS_SOLARIS=1
 endif
 
+if IS_MINGW
+mingw_CFLAGS=-DIS_MINGW=1
+pthread_LDADD=
+else
+pthread_LDADD=-lpthread
+endif
+
+
 INCLUDES = \
 	-DPACKAGE_DATA_DIR=\""$(datadir)"\" \
 	-DLIVES_DIR=\""$(livesdir)"\" \
@@ -190,12 +198,12 @@ lives_exe_SOURCES = \
 	$(giw_SOURCES)
 
 lives_exe_LDADD = @GTK_LIBS_NODYNAMIC@ @X11_LIBS@ @MJPEGTOOLS_LIBS@ $(osc_LDADD) $(jack_LDADD) $(ldvgrab_LDADD) \
-	$(oil_LDADD) $(alsa_LDADD) $(pulse_LDADD) $(png_LDADD) $(swscale_LDADD) -lpthread $(libweed_LDADD) \
+	$(oil_LDADD) $(alsa_LDADD) $(pulse_LDADD) $(png_LDADD) $(swscale_LDADD) $(pthread_LDADD) $(libweed_LDADD) \
 	 $(giw_LDADD) $(v4l1_LDADD) $(lives_exe_LDFLAGS) \
 	@UNICAP_LIBS@
 
 AM_CFLAGS = -Wstrict-aliasing=0 $(yuv4mpeg_CFLAGS) $(ldvgrab_CFLAGS) $(dvgrab_CFLAGS) $(oil_CFLAGS) \
-	$(darwin_CFLAGS) $(irix_CFLAGS) $(linux_CFLAGS) $(solaris_CFLAGS) $(osc_CFLAGS) $(alsa_CFLAGS) $(png_CFLAGS) $(swscale_CFLAGS) \
+	$(darwin_CFLAGS) $(irix_CFLAGS) $(linux_CFLAGS) $(solaris_CFLAGS) $(osc_CFLAGS) $(mingw_CFLAGS) $(alsa_CFLAGS) $(png_CFLAGS) $(swscale_CFLAGS) \
 	$(jack_CFLAGS) $(pulse_CFLAGS) $(giw_CFLAGS) $(unicap_CFLAGS) $(libweed_CFLAGS) $(libweed_compat_CFLAGS) \
 	-DLIVES_LIBDIR=\""$(libdir)"\" $(gtk_def)
 

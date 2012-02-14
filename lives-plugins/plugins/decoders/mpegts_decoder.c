@@ -28,6 +28,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <sys/stat.h>
+#include <endian.h>
 
 const char *plugin_version="LiVES mpegts decoder version 1.0";
 
@@ -1373,7 +1374,7 @@ static int init_MP4DescrParseContext(lives_clip_data_t *cdata,
 {
   //    int ret;
   if (size > (1<<30))
-    return AVERROR_INVALIDDATA;
+    return -2;
 
   if ((d->fd=open(cdata->URI,O_RDONLY))==-1) {
     return d->fd;
@@ -1648,6 +1649,9 @@ static int mp4_read_iods(lives_clip_data_t *cdata, AVFormatContext *s, const uin
   parse_mp4_descr(cdata, &d, lseek(d.fd,0,SEEK_CUR), size, MP4IODescrTag);
 
   *descr_count = d.descr_count;
+
+  close(d.fd);
+
   return 0;
 }
 
@@ -1661,6 +1665,9 @@ static int mp4_read_od(lives_clip_data_t *cdata, AVFormatContext *s, const uint8
   parse_mp4_descr_arr(cdata, &d, lseek(d.fd,0,SEEK_CUR), size);
 
   *descr_count = d.descr_count;
+
+  close(d.fd);
+
   return 0;
 }
 
@@ -2826,7 +2833,7 @@ static void detach_stream (lives_clip_data_t *cdata) {
   close(priv->fd);
 }
 
-
+static int64_t mpegts_load_index(lives_clip_data_t *cdata);
 
 int64_t get_last_video_dts(lives_clip_data_t *cdata) {
   lives_mpegts_priv_t *priv=cdata->priv;
@@ -2834,6 +2841,9 @@ int64_t get_last_video_dts(lives_clip_data_t *cdata) {
   int len;
   int64_t dts,last_dts=-1;
   int64_t idxpos,idxpos_data=0;
+
+  // see if we have a file from previous open
+  if ((dts=mpegts_load_index(cdata))>0) return dts+priv->start_dts;
 
   priv->input_position=priv->data_start;
   lseek(priv->fd,priv->input_position,SEEK_SET);
@@ -3595,11 +3605,156 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
 }
 
 
+# if __BYTE_ORDER == __BIG_ENDIAN
+
+static void reverse_bytes(uint8_t *out, const uint8_t *in, size_t count) {
+  register int i;
+  for (i=0;i<count;i++) {
+    out[i]=in[count-i-1];
+  }
+}
+
+#endif 
+
+
+
+static ssize_t lives_write_le(int fd, const void *buf, size_t count) {
+# if __BYTE_ORDER == __BIG_ENDIAN
+    uint8_t xbuf[count];
+    reverse_bytes(xbuf,(const uint8_t *)buf,count);
+    return write(fd,xbuf,count);
+# else
+    return write(fd,buf,count);
+# endif
+
+}
+
+
+ssize_t lives_read_le(int fd, void *buf, size_t count) {
+# if __BYTE_ORDER == __BIG_ENDIAN
+    uint8_t xbuf[count];
+    ssize_t retval=read(fd,buf,count);
+    if (retval<count) return retval;
+    reverse_bytes((uint8_t *)buf,(const uint8_t *)xbuf,count);
+    return retval;
+#else
+    return read(fd,buf,count);
+#endif
+}
+
+
+
+
+
+static void mpegts_save_index(lives_clip_data_t *cdata) {
+
+  lives_mpegts_priv_t *priv=cdata->priv;
+  index_entry *idx=priv->idxhh;
+
+  int fd;
+
+
+  int64_t max_dts=frame_to_dts(cdata,cdata->nframes);
+
+  const char ver[4]="V1.0";
+
+  if (idx==NULL) return;
+
+  if ((fd=open("sync_index",O_CREAT|O_TRUNC|O_WRONLY,S_IRUSR|S_IWUSR))==-1) return;
+
+  if (write(fd,ver,4)<4) goto donewr;
+  
+  if (lives_write_le(fd,&max_dts,8)<8) goto failwr;
+
+
+  // dump index to file in le format
+
+  while (idx!=NULL) {
+    if (lives_write_le(fd,&idx->dts,8)<8) goto failwr;
+    if (lives_write_le(fd,&idx->offs,8)<8) goto failwr;
+    idx=idx->next;
+  }
+
+ donewr:
+  close(fd);
+  return;
+
+ failwr:
+  close(fd);
+  unlink("sync_index");
+  return;
+
+}
+
+
+
+
+static int64_t mpegts_load_index(lives_clip_data_t *cdata) {
+  // returns max_dts
+  char hdr[4];
+
+  lives_mpegts_priv_t *priv=cdata->priv;
+
+  int64_t dts,last_dts=0,max_dts=0;
+  uint64_t offs,last_offs=0;
+
+  int fd;
+  int count=0;
+
+  ssize_t bytes;
+
+  if ((fd=open("sync_index",O_RDONLY))==-1) return 0;
+
+  if (read(fd,hdr,4)<4) goto donerd;
+
+  if (strncmp(hdr,"V1.0",4)) goto donerd;
+
+  bytes=lives_read_le(fd,&max_dts,8);
+  if (bytes<8) goto failrd;
+
+  if (max_dts<last_dts) goto failrd;
+
+  while (1) {
+    bytes=lives_read_le(fd,&dts,8);
+    if (bytes<8) break;
+
+    if (dts<last_dts) goto failrd;
+    if (dts>max_dts) goto failrd;
+
+    bytes=lives_read_le(fd,&offs,8);
+    if (bytes<8) break;
+
+    if (offs<last_offs) goto failrd;
+    if (offs>=priv->filesize) goto failrd;
+
+    lives_add_idx(cdata,offs,dts);
+
+    last_dts=dts;
+    last_offs=offs;
+
+    count++;
+  }
+
+ donerd:
+  close (fd);
+  return max_dts;
+
+ failrd:
+  if (priv->idxhh!=NULL) index_free(priv->idxhh);
+
+  priv->idxhh=NULL;
+  priv->idxht=NULL;
+
+  close (fd);
+  return 0;
+
+}
 
 
 void clip_data_free(lives_clip_data_t *cdata) {
 
   if (cdata->URI!=NULL) {
+    mpegts_save_index(cdata);
     detach_stream(cdata);
     free(cdata->URI);
   }

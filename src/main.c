@@ -16,11 +16,6 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 */
 
-
-#ifdef HAVE_CONFIG_H
-#  include <config.h>
-#endif
-
 #include <glib.h>
 
 #if HAVE_SYSTEM_WEED
@@ -144,7 +139,9 @@ static void lives_log_handler (const char *domain, LiVESLogLevelFlags level, con
   if (level&LIVES_LOG_FATAL_MASK) raise(LIVES_SIGSEGV);
 }
 
-
+#ifdef IS_MINGW
+typedef void (*SignalHandlerPointer)(int);
+#endif
 
 void catch_sigint(int signum) {
   // trap for ctrl-C and others 
@@ -581,8 +578,11 @@ static void lives_init(_ign_opts *ign_opts) {
   uint32_t rseed;
   GList *encoders=NULL;
   GList *encoder_capabilities=NULL;
-  struct sigaction sact;
+
+#ifndef IS_MINGW
   sigset_t smask;
+
+  struct sigaction sact;
 
   sigemptyset(&smask);
 
@@ -595,14 +595,25 @@ static void lives_init(_ign_opts *ign_opts) {
   sact.sa_flags=0;
   sact.sa_mask=smask;
 
-  signal (LIVES_SIGHUP,SIG_IGN);
-  signal (LIVES_SIGPIPE,SIG_IGN);
-  signal (LIVES_SIGUSR1,SIG_IGN);
 
   sigaction (LIVES_SIGINT, &sact, NULL);
   sigaction (LIVES_SIGTERM, &sact, NULL);
   sigaction (LIVES_SIGSEGV, &sact, NULL);
   sigaction (LIVES_SIGABRT, &sact, NULL);
+
+#else
+
+  typedef void (*SignalHandlerPointer)(int);
+
+  SignalHandlerPointer previousHandler;
+
+  previousHandler = signal(LIVES_SIGINT, catch_sigint);
+  previousHandler = signal(LIVES_SIGTERM, catch_sigint);
+  previousHandler = signal(LIVES_SIGSEGV, catch_sigint);
+  previousHandler = signal(LIVES_SIGABRT, catch_sigint);
+
+  previousHandler = previousHandler; // shut gcc up
+#endif
 
   // initialise the mainwindow data
   mainw->scr_width=gdk_screen_width();
@@ -775,7 +786,7 @@ static void lives_init(_ign_opts *ign_opts) {
 
   mainw->affected_layouts_map=mainw->current_layouts_map=NULL;
 
-  mainw->recovery_file=g_strdup_printf("%s/recovery.%d.%d.%d",prefs->tmpdir,getuid(),getgid(),getpid());
+  mainw->recovery_file=g_strdup_printf("%s/recovery.%d.%d.%d",prefs->tmpdir,lives_getuid(),lives_getgid(),lives_getpid());
   mainw->leave_recovery=TRUE;
 
   mainw->pchains=NULL;
@@ -873,9 +884,6 @@ static void lives_init(_ign_opts *ign_opts) {
   mainw->sl_undo_mem=NULL;
   mainw->sl_undo_buffer_used=0;
   mainw->sl_undo_offset=0;
-
-  mainw->sig_pid=0;
-  mainw->sig_file=NULL;
 
   mainw->go_away=TRUE;
 
@@ -1070,7 +1078,7 @@ static void lives_init(_ign_opts *ign_opts) {
 	rseed=tv.tv_sec+tv.tv_usec;
       }
 
-      srandom(rseed);
+      lives_srandom(rseed);
 
       randres=-1;
 
@@ -1784,7 +1792,7 @@ capability *get_capabilities (void) {
   capable->has_gconftool_2=FALSE;
   capable->has_xdg_screensaver=FALSE;
 
-  safer_bfile=g_strdup_printf("%s.%d.%d",BOOTSTRAP_NAME,getuid(),getgid());
+  safer_bfile=g_strdup_printf("%s.%d.%d",BOOTSTRAP_NAME,lives_getuid(),lives_getgid());
   unlink (safer_bfile);
 
   // check that we can write to /tmp
@@ -2166,7 +2174,7 @@ static gboolean lives_startup(gpointer data) {
   else {
   // capture mode
     mainw->foreign_key=atoi(zargv[2]);
-    mainw->foreign_id=atoi(zargv[3]);
+    mainw->foreign_id=(GdkNativeWindow)atoi(zargv[3]);
     mainw->foreign_width=atoi(zargv[4]);
     mainw->foreign_height=atoi(zargv[5]);
     g_snprintf(prefs->image_ext,16,"%s",zargv[6]);
@@ -2309,7 +2317,7 @@ int main (int argc, char *argv[]) {
   // what's my name ?
   capable->myname_full=g_find_program_in_path(argv[0]);
 
-  if ((mynsize=readlink(capable->myname_full,fbuff,PATH_MAX))!=-1) {
+  if ((mynsize=lives_readlink(capable->myname_full,fbuff,PATH_MAX))!=-1) {
     // no. i mean, what's my real name ?
     memset(fbuff+mynsize,0,1);
     g_free(capable->myname_full);
@@ -2349,7 +2357,9 @@ int main (int argc, char *argv[]) {
 	{"yuvin", 1, 0, 0},
 	{"set", 1, 0, 0},
 	{"noset", 0, 0, 0},
+#ifdef ENABLE_OSC
         {"devicemap", 1, 0, 0},
+#endif
         {"vppdefaults", 1, 0, 0},
 	{"recover", 0, 0, 0},
 	{"norecover", 0, 0, 0},
@@ -2443,11 +2453,13 @@ int main (int argc, char *argv[]) {
 	  ign_opts.ign_clipset=TRUE;
 	  continue;
 	}
+#ifdef ENABLE_OSC
         if (!strcmp(charopt,"devicemap")&&optarg!=NULL) {
           // force devicemap loading
           on_midi_load_activate(NULL, optarg);
           continue;
         }
+#endif
         if (!strcmp(charopt,"vppdefaults")&&optarg!=NULL) {
           // load alternate vpp file
 	  g_snprintf(mainw->vpp_defs_file,PATH_MAX,"%s",optarg);
@@ -5098,11 +5110,13 @@ GError *lives_pixbuf_save(GdkPixbuf *pixbuf, gchar *fname, lives_image_type_t im
 
   // if do_chmod, we try to set permissions to default
 
+#ifndef IS_MINGW
   mode_t xumask=0;
 
   if (do_chmod) {
     xumask=umask(DEF_FILE_UMASK);
   }
+#endif
 
   if (imgtype==IMG_TYPE_JPEG) {
     gchar *qstr=g_strdup_printf("%d",quality);
@@ -5118,13 +5132,11 @@ GError *lives_pixbuf_save(GdkPixbuf *pixbuf, gchar *fname, lives_image_type_t im
     //gdk_pixbuf_save_to_callback(...);
   }
 
-  /*  if (do_chmod) {
-    chmod(fname,DEF_FILE_PERMS);
-    }*/
-
+#ifndef IS_MINGW
   if (do_chmod) {
     umask(xumask);
   }
+#endif
 
   return *gerrorptr;
 }

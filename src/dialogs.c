@@ -1385,7 +1385,7 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
 
 
   // set initial audio seek position for current file
-  if (cfile->achans) cfile->aseek_pos=(long)((gdouble)(mainw->play_start-1.)/
+  if (cfile->achans) cfile->aseek_pos=(int64_t)((gdouble)(mainw->play_start-1.)/
 					     cfile->fps*cfile->arate*cfile->achans*(cfile->asampsize/8));
 
 

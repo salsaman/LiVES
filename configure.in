@@ -37,6 +37,9 @@ AC_SYS_LARGEFILE
 
 AM_PROG_AS
 
+dnl AC_DEFINE([LiVES_VERSION],[],[Description])
+dnl AC_CONFIG_HEADERS(config.h)
+
 ACX_PTHREAD(PTHREAD_OK=true,PTHREAD_OK=false)
 
 AC_CHECK_FILE(lives-plugins/Makefile.am,,[
@@ -115,7 +118,13 @@ AC_CHECK_FUNCS(posix_memalign)
 AC_PATH_PROGS(PERL, perl perl5)
 
 # Check for pkg-config
+
+if test "$IS_MINGW" = "true"; then
+AC_PATH_PROG(PKG_CONFIG, i686-pc-mingw32-pkg-config, no)
+else
 AC_PATH_PROG(PKG_CONFIG, pkg-config, no)
+fi
+
 if test x$PKG_CONFIG = xno; then
    AC_MSG_ERROR([Cannot find pkg-config, make sure it is installed and in your PATH])
 fi
@@ -225,6 +234,8 @@ PKG_CHECK_EXISTS([gtk+-2.0 >= 2.6.0],[HAVE_GTK_VERSION206=true],[HAVE_GTK_VERSIO
 
 GTK_LIBS_NODYNAMIC=`echo "$GTK_LIBS" | sed 's/-Wl,--export-dynamic//g'`
 AC_SUBST(GTK_LIBS_NODYNAMIC)
+GTK_LIBS_NODYNAMIC_NOPTHREAD=`echo "$GTK_LIBS" | sed 's/-pthread//g'`
+AC_SUBST(GTK_LIBS_NODYNAMIC_NOPTHREAD)
 
 PKG_CHECK_EXISTS([glib-2.0 >= 2.14.0],[HAVE_GLIB_VERSION214=true],[HAVE_GLIB_VERSION214=false])
 PKG_CHECK_EXISTS([glib-2.0 >= 2.4.0],[HAVE_GLIB_VERSION24=true],[HAVE_GLIB_VERSION24=false])

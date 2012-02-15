@@ -25,11 +25,13 @@
 #include "omc-learn.h"
 #endif
 
+#ifdef ENABLE_OSC
 static void on_osc_enable_toggled (GtkToggleButton *t1, gpointer t2) {
   if (prefs->osc_udp_started) return;
   gtk_widget_set_sensitive (prefsw->spinbutton_osc_udp,gtk_toggle_button_get_active (t1)||
 			    gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (t2)));
 }
+#endif
 
 static void instopen_toggled (GtkToggleButton *t1, GtkWidget *button) {
   gtk_widget_set_sensitive (button,gtk_toggle_button_get_active (t1));
@@ -55,7 +57,7 @@ void get_pref(const gchar *key, gchar *val, gint maxlen) {
     return;
   }
 
-  com=g_strdup_printf("smogrify get_pref \"%s\" %d %d",key,getuid(),getpid());
+  com=g_strdup_printf("smogrify get_pref \"%s\" %d %d",key,lives_getuid(),lives_getpid());
 
   if (system(com)) {
     tempdir_warning();
@@ -63,7 +65,7 @@ void get_pref(const gchar *key, gchar *val, gint maxlen) {
     return;
   }
 
-  vfile=g_strdup_printf("%s/.smogval.%d.%d",prefs->tmpdir,getuid(),getpid());
+  vfile=g_strdup_printf("%s/.smogval.%d.%d",prefs->tmpdir,lives_getuid(),lives_getpid());
 
   do {
     retval=0;
@@ -163,7 +165,7 @@ void get_pref_default(const gchar *key, gchar *val, gint maxlen) {
     return;
   }
 
-  vfile=g_strdup_printf("%s/.smogval.%d.%d",prefs->tmpdir,getuid(),getpid());
+  vfile=g_strdup_printf("%s/.smogval.%d.%d",prefs->tmpdir,lives_getuid(),lives_getpid());
 
   do {
     retval=0;
@@ -1515,7 +1517,8 @@ static void after_jack_tb_start_toggled(GtkToggleButton *tbutton, gpointer user_
 #endif
 
 
-
+#ifdef ENABLE_OSC
+#ifdef OMC_MIDI_IMPL
 #ifdef ALSA_MIDI
 static void on_alsa_midi_toggled (GtkToggleButton *tbutton, gpointer user_data) {
   _prefsw *xprefsw;
@@ -1529,8 +1532,8 @@ static void on_alsa_midi_toggled (GtkToggleButton *tbutton, gpointer user_data) 
   gtk_widget_set_sensitive(xprefsw->spinbutton_midirpt,!gtk_toggle_button_get_active(tbutton));
 }
 #endif
-
-
+#endif
+#endif
 
 
 static void on_audp_entry_changed (GtkWidget *audp_combo, gpointer ptr) {

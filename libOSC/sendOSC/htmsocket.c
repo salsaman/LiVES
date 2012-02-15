@@ -38,22 +38,45 @@ The OSC webpage is http://cnmat.cnmat.berkeley.edu/OpenSoundControl
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+
+#include <sys/param.h>
+#include <sys/time.h>
+
+#ifndef IS_MINGW
 #include <netinet/in.h>
 
 #include <rpc/rpc.h>
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <sys/times.h>
-#include <sys/param.h>
-#include <sys/time.h>
 #include <sys/ioctl.h>
-
-#include <ctype.h>
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <pwd.h>
-#include <signal.h>
 #include <grp.h>
+
+#else
+#include <winsock2.h>
+
+
+#include <fcntl.h>
+#undef _S_IREAD
+#undef _S_IWRITE
+
+#define _S_IREAD 256
+#define _S_IWRITE 128
+int mkstemp(char *tmpl)
+{
+  int ret=-1;
+  mktemp(tmpl);
+  ret=open(tmpl,O_RDWR|O_BINARY|O_CREAT|O_EXCL|_O_SHORT_LIVED, _S_IREAD|_S_IWRITE);
+  return ret;
+}
+
+#endif
+
+#include <ctype.h>
+#include <signal.h>
 #include <sys/fcntl.h>
 #include <sys/file.h>
 #include <sys/time.h>
@@ -64,6 +87,9 @@ The OSC webpage is http://cnmat.cnmat.berkeley.edu/OpenSoundControl
 #define UNIXDG_PATH "/tmp/htm"
 #define UNIXDG_TMP "/tmp/htm.XXXXXX"
 #include "htmsocket.h"                          
+
+#ifndef IS_MINGW
+
 typedef struct
 {
 	float srate;
@@ -76,10 +102,14 @@ typedef struct
 	int id;
 } desc;
 
+#endif
+
+
 /* open a socket for HTM communication to given  host on given portnumber */
 /* if host is 0 then UNIX protocol is used (i.e. local communication */
 void *OpenHTMSocket(char *host, int portnumber)
 {
+#ifndef IS_MINGW
 	int sockfd;
 	struct sockaddr_in  cl_addr;
 	struct sockaddr_un  ucl_addr;
@@ -96,7 +126,7 @@ void *OpenHTMSocket(char *host, int portnumber)
 		         * server that we want to send to.
 		*/
 		
-		bzero((char *) &o->userv_addr, sizeof(o->userv_addr));
+		  memset((char *) &o->userv_addr, 0, sizeof(o->userv_addr));
 		       o->userv_addr.sun_family = AF_UNIX;
 		strcpy(o->userv_addr.sun_path, UNIXDG_PATH);
 			sprintf(o->userv_addr.sun_path+strlen(o->userv_addr.sun_path), "%d", portnumber);
@@ -116,7 +146,7 @@ void *OpenHTMSocket(char *host, int portnumber)
 			 */
 		  int dummy;
 
-			bzero((char *) &ucl_addr, sizeof(ucl_addr));    /* zero out */
+		  memset((char *) &ucl_addr, 0, sizeof(ucl_addr));    /* zero out */
 			ucl_addr.sun_family = AF_UNIX;
 			strcpy(ucl_addr.sun_path, UNIXDG_TMP);
 
@@ -140,7 +170,7 @@ void *OpenHTMSocket(char *host, int portnumber)
 		         * server that we want to send to.
 		*/
 		o->len = sizeof(cl_addr);
-		bzero((char *)&o->serv_addr, sizeof(o->serv_addr));
+		memset((char *)&o->serv_addr, 0, sizeof(o->serv_addr));
 		o->serv_addr.sin_family = AF_INET;
 
 	    /* MW 6/6/96: Call gethostbyname() instead of inet_addr(),
@@ -155,7 +185,6 @@ void *OpenHTMSocket(char *host, int portnumber)
 		if (hostsEntry == NULL) {
 		    fprintf(stderr, "Couldn't decipher host name \"%s\"\n",
 			    host);
-		    herror(NULL);
 		    return 0;
 		}
 		
@@ -174,7 +203,7 @@ void *OpenHTMSocket(char *host, int portnumber)
 		*/
 		if((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) >= 0)
 		{
-			bzero((char *)&cl_addr, sizeof(cl_addr));
+		  memset((char *)&cl_addr, 0, sizeof(cl_addr));
 			cl_addr.sin_family = AF_INET;
 			cl_addr.sin_addr.s_addr = htonl(INADDR_ANY);
 			cl_addr.sin_port = htons(0);
@@ -199,7 +228,11 @@ void *OpenHTMSocket(char *host, int portnumber)
 	else
 		o->sockfd = sockfd;
 	return o;
+#endif
+	return NULL;
 }
+
+
 #include <errno.h>
 
 static  bool sendudp(const struct sockaddr *sp, int sockfd,int length, int count, void  *b)
@@ -215,12 +248,17 @@ static  bool sendudp(const struct sockaddr *sp, int sockfd,int length, int count
 }
 bool SendHTMSocket(void *htmsendhandle, int length_in_bytes, void *buffer)
 {
+#ifndef IS_MINGW
 	desc *o = (desc *)htmsendhandle;
 	return sendudp(o->addr, o->sockfd, o->len, length_in_bytes, buffer);
+#endif
+	return FALSE;
 }
 void CloseHTMSocket(void *htmsendhandle)
 {
+#ifndef IS_MINGW
 	desc *o = (desc *)htmsendhandle;
 	close(o->sockfd);
 	free(o);
+#endif
 }

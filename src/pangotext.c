@@ -217,7 +217,7 @@ static char *srt_read_text(FILE *pf, lives_subtitle_t *title) {
   char data[32768];
   size_t curlen;
 
-  long curpos;
+  int64_t curpos;
 
   if(!pf || !title)
     return(FALSE);
@@ -273,7 +273,7 @@ static char *sub_read_text(FILE *pf, lives_subtitle_t *title) {
   char data[32768];
   size_t curlen;
 
-  long curpos;
+  int64_t curpos;
 
   if(!pf || !title)
     return(FALSE);
@@ -713,7 +713,7 @@ static void parse_double_time(double tim, int *ph, int *pmin, int *psec, int *pm
 
 gboolean save_srt_subtitles(file *sfile, double start_time, double end_time, double offset_time, const char *filename) {
   lives_subtitles_t *subt=NULL;
-  long savepos = 0;
+  int64_t savepos = 0;
   FILE *pf;
   int num_saves;
   lives_subtitle_t *ptr = NULL;
@@ -780,7 +780,7 @@ gboolean save_srt_subtitles(file *sfile, double start_time, double end_time, dou
 
 gboolean save_sub_subtitles(file *sfile, double start_time, double end_time, double offset_time, const char *filename) {
   lives_subtitles_t *subt=NULL;
-  long savepos = 0;
+  int64_t savepos = 0;
   FILE *pf;
   int num_saves;
   lives_subtitle_t *ptr = NULL;

@@ -38,11 +38,15 @@ gboolean save_clip_values(gint which) {
   gint endian;
   gchar *lives_header;
   int retval;
+#ifndef IS_MINGW
   mode_t xumask;
+#endif
 
   if (which==0||which==mainw->scrap_file||which==mainw->ascrap_file) return TRUE;
 
+#ifndef IS_MINGW
   xumask=umask(DEF_FILE_UMASK);
+#endif
 
   asigned=!(mainw->files[which]->signed_endian&AFORM_UNSIGNED);
   endian=mainw->files[which]->signed_endian&AFORM_BIG_ENDIAN;
@@ -55,7 +59,9 @@ gboolean save_clip_values(gint which) {
       retval=do_write_failed_error_s_with_retry(lives_header,g_strerror(errno),NULL);
       if (retval==LIVES_CANCEL) {
 	g_free(lives_header);
+#ifndef IS_MINGW
 	umask(xumask);
+#endif
 	return FALSE;
       }
     }
@@ -119,7 +125,9 @@ gboolean save_clip_values(gint which) {
   } while (retval==LIVES_RETRY);
   
   g_free(lives_header);
+#ifndef IS_MINGW
   umask(xumask);
+#endif
 
   fclose(mainw->clip_header);
   mainw->clip_header=NULL;
@@ -415,7 +423,6 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
 	  // check if we have audio
 	  read_file_details(file_name,FALSE);
 	  unlink (cfile->info_file);
-	  sync();
 	  
 	  if (mainw->com_failed) return;
 
@@ -533,7 +540,6 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
 	return;
       }
       unlink (cfile->info_file);
-      sync();
       
       // we must set this before calling add_file_info
       cfile->opening=TRUE;
@@ -1100,7 +1106,7 @@ void save_file (int clip, int start, int end, const char *filename) {
   struct stat filestat;
   time_t file_mtime=0;
 
-  gulong fsize;
+  uint64_t fsize;
 
   GtkWidget *hbox;
 
@@ -1700,8 +1706,7 @@ void save_file (int clip, int start, int end, const char *filename) {
     if (mainw->iochan!=NULL) {
       // flush last of stdout/stderr from plugin
       
-      fsync(new_stderr);
-      
+      lives_fsync(new_stderr);
       pump_io_chan(mainw->iochan);
       
       g_io_channel_shutdown(mainw->iochan,FALSE,&gerr);
@@ -1880,11 +1885,16 @@ void save_file (int clip, int start, int end, const char *filename) {
   switch_to_file(mainw->current_file,current_file);
 
   if (mainw->iochan!=NULL) {
-    gchar *logfile=g_strdup_printf("%sencoder_log_%d_%d.txt",prefs->tmpdir,getuid(),getgid());
+    gchar *logfile=g_strdup_printf("%sencoder_log_%d_%d.txt",prefs->tmpdir,lives_getuid(),lives_getgid());
     int logfd;
 
     // save the logfile in tempdir
+
+#ifndef IS_MINGW
     if ((logfd=creat(logfile,S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH))!=-1) {
+#else
+    if ((logfd=creat(logfile,S_IRUSR|S_IWUSR))!=-1) {
+#endif
       gchar *btext=text_view_get_text(mainw->optextview);
       lives_write(logfd,btext,strlen(btext),TRUE);  // not really important if it fails
       g_free(btext);
@@ -1943,7 +1953,9 @@ void play_file (void) {
   gchar *msg;
   gchar *stfile;
   gchar *xtrabit,*title;
+#ifdef USE_X11
   gchar *tmp;
+#endif
 
   gint asigned=!(cfile->signed_endian&AFORM_UNSIGNED);
   gint aendian=!(cfile->signed_endian&AFORM_BIG_ENDIAN);
@@ -3151,7 +3163,7 @@ void create_cfile(void) {
   cfile->clip_type=CLIP_TYPE_DISK;
   cfile->ratio_fps=FALSE;
   cfile->aseek_pos=0;
-  cfile->unique_id=(gint64)random();
+  cfile->unique_id=lives_random();
   cfile->layout_map=NULL;
   cfile->frame_index=cfile->frame_index_back=NULL;
   cfile->fx_frame_pump=0;
@@ -4179,7 +4191,7 @@ void open_set_file (const gchar *set_name, gint clipnum) {
     }
     retval=get_clip_value(mainw->current_file,CLIP_DETAILS_UNIQUE_ID,&cfile->unique_id,0);
     if (!retval) {
-      cfile->unique_id=random();
+      cfile->unique_id=lives_random();
       needs_update=TRUE;
     }
     retval=get_clip_value(mainw->current_file,CLIP_DETAILS_INTERLACE,&cfile->interlace,0);
@@ -4477,7 +4489,7 @@ gint save_event_frames(void) {
 
 static gdouble scrap_mb;  // MB written to frame file
 static gdouble ascrap_mb;  // MB written to audio file
-static gulong free_mb; // MB free to write
+static uint64_t free_mb; // MB free to write
 
 gboolean open_scrap_file (void) {
   // create a scrap file for recording generated video frames
@@ -4822,7 +4834,7 @@ gint save_to_scrap_file (weed_plant_t *layer) {
     g_free(framecount);
   }
 
-  fsync(fd); // try to sync file access, to make saving smoother
+  lives_fsync(fd); // try to sync file access, to make saving smoother
   close(fd);
 
   weed_free(rowstrides);
@@ -4831,7 +4843,7 @@ gint save_to_scrap_file (weed_plant_t *layer) {
   g_free(oname);
 
   // check if we have enough free space left on the volume
-  if ((glong)(((gdouble)free_mb-(scrap_mb+ascrap_mb))/1000.)<prefs->rec_stop_gb) {
+  if ((int64_t)(((gdouble)free_mb-(scrap_mb+ascrap_mb))/1000.)<prefs->rec_stop_gb) {
     // check free space again
     gchar *dir=g_build_filename(prefs->tmpdir,mainw->files[mainw->scrap_file]->handle,NULL);
     free_mb=(gdouble)get_fs_free(dir)/1000000.;
@@ -4839,7 +4851,7 @@ gint save_to_scrap_file (weed_plant_t *layer) {
     else wrtable=TRUE;
 
     if (wrtable) {
-      if ((glong)(((gdouble)free_mb-(scrap_mb+ascrap_mb))/1000.)<prefs->rec_stop_gb) {
+      if ((int64_t)(((gdouble)free_mb-(scrap_mb+ascrap_mb))/1000.)<prefs->rec_stop_gb) {
 	if (mainw->record&&!mainw->record_paused) {
 	  gchar *msg=g_strdup_printf(_("\nRECORDING WAS PAUSED BECAUSE FREE DISK SPACE in %s IS BELOW %ld GB !\nRecord stop level can be set in Preferences.\n"),dir,prefs->rec_stop_gb);
 	  d_print(msg);
@@ -5252,7 +5264,7 @@ static gboolean recover_files(gchar *recovery_file, gboolean auto_recover) {
 	if (mainw->current_file<1) continue;
 	
 	get_total_time (cfile);
-	if (cfile->achans) cfile->aseek_pos=(long)((gdouble)(cfile->frameno-1.)/cfile->fps*cfile->arate*
+	if (cfile->achans) cfile->aseek_pos=(int64_t)((gdouble)(cfile->frameno-1.)/cfile->fps*cfile->arate*
 						   cfile->achans*(cfile->asampsize/8));
 	
 	// add to clip menu
@@ -5410,8 +5422,11 @@ gboolean check_for_recovery_files (gboolean auto_recover) {
   int info_fd;
   gchar *info_file=g_strdup_printf("%s/.recovery.%d",prefs->tmpdir,getpid());
   gchar *com;
+  int lgid=lives_getgid();
+  int luid=lives_getuid();
+  pid_t lpid=lives_getpid();
 
-  com=g_strdup_printf("smogrify get_recovery_file %d %d \"%s\" recovery> \"%s\"",getuid(),getgid(),
+  com=g_strdup_printf("smogrify get_recovery_file %d %d \"%s\" recovery> \"%s\"",luid,lgid,
 			     capable->myname,info_file);
   
   unlink(info_file);
@@ -5439,23 +5454,25 @@ gboolean check_for_recovery_files (gboolean auto_recover) {
 
   if (recpid==0) return FALSE;
   
-  retval=recover_files((recovery_file=g_strdup_printf("%s/recovery.%d.%d.%d",prefs->tmpdir,getuid(),
-						      getgid(),recpid)),auto_recover);
+  retval=recover_files((recovery_file=g_strdup_printf("%s/recovery.%d.%d.%d",prefs->tmpdir,luid,
+						      lgid,recpid)),auto_recover);
   unlink(recovery_file);
   g_free(recovery_file);
   
   mainw->com_failed=FALSE;
 
   // check for layout recovery file
-  recovery_file=g_strdup_printf("%s/layout.%d.%d.%d",prefs->tmpdir,getuid(),getgid(),recpid);
+  recovery_file=g_strdup_printf("%s/layout.%d.%d.%d",prefs->tmpdir,luid,lgid,recpid);
   if (g_file_test (recovery_file, G_FILE_TEST_EXISTS)) {
     // move files temporarily to stop them being cleansed
-    com=g_strdup_printf("/bin/mv \"%s\" \"%s/.layout.%d.%d.%d\"",recovery_file,prefs->tmpdir,getuid(),getgid(),getpid());
+    com=g_strdup_printf("/bin/mv \"%s\" \"%s/.layout.%d.%d.%d\"",recovery_file,prefs->tmpdir,luid,
+			lgid,lpid);
     lives_system(com,FALSE);
     g_free(com);
-    recovery_numbering_file=g_strdup_printf("%s/layout_numbering.%d.%d.%d",prefs->tmpdir,getuid(),getgid(),recpid);
+    recovery_numbering_file=g_strdup_printf("%s/layout_numbering.%d.%d.%d",prefs->tmpdir,luid,
+					    lgid,recpid);
     com=g_strdup_printf("/bin/mv \"%s\" \"%s/.layout_numbering.%d.%d.%d\"",recovery_numbering_file,prefs->tmpdir,
-			getuid(),getgid(),getpid());
+			luid,lgid,lpid);
     lives_system(com,FALSE);
     g_free(com);
     g_free(recovery_numbering_file);
@@ -5469,20 +5486,21 @@ gboolean check_for_recovery_files (gboolean auto_recover) {
   
   if (mainw->com_failed) return FALSE;
 
-  com=g_strdup_printf("smogrify clean_recovery_files %d %d \"%s\"",getuid(),getgid(),capable->myname);
+  com=g_strdup_printf("smogrify clean_recovery_files %d %d \"%s\"",luid,lgid,capable->myname);
   lives_system(com,FALSE);
   g_free(com);
 
   if (mainw->recoverable_layout) {
-    recovery_file=g_strdup_printf("%s/.layout.%d.%d.%d",prefs->tmpdir,getuid(),getgid(),getpid());
-    com=g_strdup_printf("/bin/mv \"%s\" \"%s/layout.%d.%d.%d\"",recovery_file,prefs->tmpdir,getuid(),getgid(),getpid());
+    recovery_file=g_strdup_printf("%s/.layout.%d.%d.%d",prefs->tmpdir,luid,lgid,lpid);
+    com=g_strdup_printf("/bin/mv \"%s\" \"%s/layout.%d.%d.%d\"",recovery_file,prefs->tmpdir,luid,
+			lgid,lpid);
     lives_system(com,FALSE);
     g_free(com);
     g_free(recovery_file);
 
-    recovery_numbering_file=g_strdup_printf("%s/.layout_numbering.%d.%d.%d",prefs->tmpdir,getuid(),getgid(),getpid());
-    com=g_strdup_printf("/bin/mv \"%s\" \"%s/layout_numbering.%d.%d.%d\"",recovery_numbering_file,prefs->tmpdir,getuid(),
-			getgid(),getpid());
+    recovery_numbering_file=g_strdup_printf("%s/.layout_numbering.%d.%d.%d",prefs->tmpdir,luid,lgid,lpid);
+    com=g_strdup_printf("/bin/mv \"%s\" \"%s/layout_numbering.%d.%d.%d\"",recovery_numbering_file,prefs->tmpdir,luid,
+			lgid,lpid);
     lives_system(com,FALSE);
     g_free(com);
     g_free(recovery_numbering_file);

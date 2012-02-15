@@ -14,7 +14,9 @@
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#ifndef IS_MINGW
 #include <sys/statvfs.h>
+#endif
 #include <sys/file.h>
 
 #include "main.h"
@@ -25,6 +27,7 @@
 static gboolean  omute,  osepwin,  ofs,  ofaded,  odouble;
 
 
+
 char *filename_from_fd(char *val, int fd) {
   // return filename from an open fd, freeing val first
 
@@ -33,6 +36,7 @@ char *filename_from_fd(char *val, int fd) {
 
   // call like: foo=filename_from_fd(foo,fd);
 
+#ifndef IS_MINGW
   gchar *fdpath;
   gchar *fidi;
   char rfdpath[PATH_MAX];
@@ -46,7 +50,7 @@ char *filename_from_fd(char *val, int fd) {
   fdpath=g_build_filename("/proc","self","fd",fidi,NULL);
   g_free(fidi);
 
-  if ((slen=readlink(fdpath,rfdpath,PATH_MAX))==-1) return val;
+  if ((slen=lives_readlink(fdpath,rfdpath,PATH_MAX))==-1) return val;
   g_free(fdpath);
 
   memset(rfdpath+slen,0,1);
@@ -59,6 +63,9 @@ char *filename_from_fd(char *val, int fd) {
 
   if (val!=NULL) g_free(val);
   return g_strdup(rfdpath);
+#else
+  return g_strdup("unknown");
+#endif
 }
 
 
@@ -73,6 +80,135 @@ static void reverse_bytes(uint8_t *out, const uint8_t *in, size_t count) {
 
 
 // system calls
+
+LIVES_INLINE void lives_srandom(unsigned int seed) {
+#ifdef IS_MINGW
+  srand(seed);
+#else
+  srandom(seed);
+#endif
+}
+
+
+LIVES_INLINE uint64_t lives_random(void) {
+#ifdef IS_MINGW
+  return (uint64_t)rand()*(uint64_t)fastrand();
+#else
+  return random();
+#endif
+}
+
+
+
+LIVES_INLINE pid_t lives_getpid(void) {
+#ifdef IS_MINGW
+  return _getpid();
+#else
+  return getpid();
+#endif
+}
+
+LIVES_INLINE int lives_getuid(void) {
+#ifdef IS_MINGW
+  HANDLE Thandle;
+  DWORD DAmask, size;
+  SID SidInfo;
+
+  DAmask = TOKEN_READ;
+  
+  if (OpenProcessToken(GetCurrentProcess(), DAmask, &Thandle)) {
+    LIVES_ERROR("could not open token");
+    return 0;
+  }
+  
+  if (GetTokenInformation(Thandle, TokenLogonSid, &SidInfo, sizeof(SidInfo), &size) == 0) {
+    LIVES_ERROR("could not open token info");
+    return 0;
+  }
+  return (int)(SidInfo&0xFFFF);
+#endif
+  return getuid();
+}
+
+
+LIVES_INLINE int lives_getgid(void) {
+#ifdef IS_MINGW
+  HANDLE Thandle;
+  DWORD DAmask, gsize, size;
+  SID SidInfo;
+  PTOKEN_GROUPS GInfo = NULL;
+
+  DAmask = TOKEN_READ;
+  
+  if (OpenProcessToken(GetCurrentProcess(), DAmask, &Thandle)) {
+    LIVES_ERROR("could not open token");
+    return 0;
+  }
+
+  /* We will get this twice to get enough space of the groups */
+  gsize = 0;
+  if (GetTokenInformation(Thandle, TokenGroups, &SidInfo, sizeof(SidInfo), &size) == 0) {
+    printf("error: get token information failed\n");
+  }
+  else {
+    gsize = size;
+    GInfo = malloc(gsize * sizeof(TOKEN_GROUPS));
+    if (GetTokenInformation(Thandle, TokenGroups, &SidInfo, sizeof(SidInfo), &size) == 0) {
+      printf("success: the group SID's were obtained from the token\n");
+    }
+  }
+      
+  return (int)((SidInfo>>16)&0xFFFF);
+#endif
+  return getgid();
+}
+
+
+
+LIVES_INLINE ssize_t lives_readlink(const char *path, char *buf, size_t bufsiz) {
+#ifdef IS_MINGW
+  ssize_t sz=strlen(path);
+  if (sz>bufsiz) sz=bufsiz;
+  memcpy(buf,path,sz);
+  return sz;
+#else
+  return readlink(path,buf,bufsiz);
+#endif
+}
+
+
+LIVES_INLINE int lives_fsync(int fd) {
+  // ret TRUE on success
+#ifndef IS_MINGW
+  return !fsync(fd);
+#else
+  return _commit(fd);
+#endif
+}
+
+
+LIVES_INLINE boolean lives_setenv(const char *name, const char *value) {
+  // ret TRUE on success
+#if IS_MINGW
+  return SetEnvironmentVariable(name,value);
+#else
+#if IS_IRIX
+  int len  = strlen(name) + strlen(value) + 2;
+  char *env = malloc(len);
+  if (env != NULL) {
+    strcpy(env, name);
+    strcat(env, "=");
+    strcat(env, val);
+    return !putenv(env);
+  }
+}
+#else
+  return !setenv(name,value,1);
+#endif
+#endif
+}
+
+
 
 int lives_system(const char *com, gboolean allow_error) {
   int retval;
@@ -102,9 +238,13 @@ int lives_system(const char *com, gboolean allow_error) {
 
 pid_t lives_fork(const char *com) {
   // returns a negative number which is the pgid to lives_kill
+
+  // mingw - return (DWORD) dwProcessGroupId to use in GenerateConsoleCtrlEvent ?
+
   // to signal to sub process and all children
   // TODO *** - error check
 
+#ifndef IS_MINGW
   pid_t ret;
 
   if (!(ret=fork())) {
@@ -115,6 +255,13 @@ pid_t lives_fork(const char *com) {
   }
 
   return ret;
+#else
+  STARTUPINFO si;
+  PROCESS_INFORMATION *pi=malloc(sizeof(PROCESS_INFORMATION));
+
+  return CreateProcess(NULL,(char *)com,NULL,NULL,FALSE,CREATE_NEW_PROCESS_GROUP,NULL,NULL,&si,pi);
+  return pi; // TODO ***** !!!
+#endif
 }
 
 
@@ -129,8 +276,8 @@ ssize_t lives_write(int fd, const void *buf, size_t count, gboolean allow_fail) 
     gchar *msg=NULL;
     mainw->write_failed=TRUE;
     mainw->write_failed_file=filename_from_fd(mainw->write_failed_file,fd);
-    msg=g_strdup_printf("Write failed %"PRIu64" of %"PRIu64" in: %s",(unsigned long)retval,
-			(unsigned long)count,mainw->write_failed_file);
+    msg=g_strdup_printf("Write failed %"PRIu64" of %"PRIu64" in: %s",(uint64_t)retval,
+			(uint64_t)count,mainw->write_failed_file);
     if (!allow_fail) {
       LIVES_ERROR(msg);
       close(fd);
@@ -138,8 +285,8 @@ ssize_t lives_write(int fd, const void *buf, size_t count, gboolean allow_fail) 
 #ifndef LIVES_NO_DEBUG
     else {
       gchar *ffile=filename_from_fd(NULL,fd);
-      msg=g_strdup_printf("Write failed %"PRIu64" of %"PRIu64" in: %s (not an error)",(unsigned long)retval,
-			  (unsigned long)count,ffile);
+      msg=g_strdup_printf("Write failed %"PRIu64" of %"PRIu64" in: %s (not an error)",(uint64_t)retval,
+			  (uint64_t)count,ffile);
       LIVES_DEBUG(msg);
       g_free(ffile);
     }
@@ -201,16 +348,16 @@ ssize_t lives_read(int fd, void *buf, size_t count, gboolean allow_less) {
     if (!allow_less||retval<0) {
       mainw->read_failed=TRUE;
       mainw->read_failed_file=filename_from_fd(mainw->read_failed_file,fd);
-      msg=g_strdup_printf("Read failed %"PRIu64" of %"PRIu64" in: %s",(unsigned long)retval,
-			  (unsigned long)count,mainw->read_failed_file);
+      msg=g_strdup_printf("Read failed %"PRIu64" of %"PRIu64" in: %s",(uint64_t)retval,
+			  (uint64_t)count,mainw->read_failed_file);
       LIVES_ERROR(msg);
       close(fd);
     }
 #ifndef LIVES_NO_DEBUG
     else {
       gchar *ffile=filename_from_fd(NULL,fd);
-      msg=g_strdup_printf("Read got %"PRIu64" of %"PRIu64" in: %s (not an error)",(unsigned long)retval,
-			  (unsigned long)count,ffile);
+      msg=g_strdup_printf("Read got %"PRIu64" of %"PRIu64" in: %s (not an error)",(uint64_t)retval,
+			  (uint64_t)count,ffile);
       LIVES_DEBUG(msg);
       g_free(ffile);
     }
@@ -410,7 +557,6 @@ int lives_alarm_set(int64_t ticks) {
 /*** check if alarm time passed yet, if so clear that alarm and return TRUE
  * else return FALSE
  */
-
 gboolean lives_alarm_get(int alarm_handle) {
   int64_t cticks;
 
@@ -480,20 +626,6 @@ LIVES_INLINE GList *g_list_append_unique(GList *xlist, const gchar *add) {
 }
 
 
-
-#ifdef IS_IRIX
-void setenv(const char *name, const char *val, int _xx) {
-  int len  = strlen(name) + strlen(val) + 2;
-  char *env = malloc(len);
-
-  if (env != NULL) {
-    strcpy(env, name);
-    strcat(env, "=");
-    strcat(env, val);
-    putenv(env);
-  }
-}
-#endif
 
 
 
@@ -2242,7 +2374,7 @@ minimise_aspect_delta (gdouble aspect,gint hblock,gint vblock,gint hsize,gint vs
   gint ch=height[0];
 
   gint real_width,real_height;
-  gulong delta,current_delta;
+  uint64_t delta,current_delta;
 
   // minimise d[(x-x1)^2 + (y-y1)^2]/d[x1], to get approximate values
   gint calc_width=(gint)((vsize+aspect*hsize)*aspect/(aspect*aspect+1.));
@@ -2971,15 +3103,15 @@ void show_manual_section (const gchar *lang, const gchar *section) {
 }
 
 
-gulong
+uint64_t
 get_file_size(int fd) {
   // get the size of file fd
   struct stat filestat;
   fstat(fd,&filestat);
-  return (gulong)(filestat.st_size);
+  return (uint64_t)(filestat.st_size);
 }
 
-gulong
+uint64_t
 sget_file_size(const gchar *name) {
   // get the size of file fd
   struct stat filestat;
@@ -2992,7 +3124,7 @@ sget_file_size(const gchar *name) {
   fstat(fd,&filestat);
   close(fd);
 
-  return (gulong)(filestat.st_size);
+  return (uint64_t)(filestat.st_size);
 }
 
 
@@ -4265,7 +4397,7 @@ gboolean is_writeable_dir(const gchar *dir) {
 
 
 
-gulong get_fs_free(const char *dir) {
+uint64_t get_fs_free(const char *dir) {
   // get free space in bytes for volume containing directory dir
   // return 0 if we cannot create/write to dir
 
@@ -4274,7 +4406,7 @@ gulong get_fs_free(const char *dir) {
 
   // dir should be in locale encoding
 
-  gulong bytes=0;
+  uint64_t bytes=0;
   gboolean must_delete=FALSE;
   struct statvfs sbuf;
 

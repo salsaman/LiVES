@@ -133,7 +133,7 @@ weed_plant_t *weed_layer_new(int width, int height, int *rowstrides, int current
 int weed_layer_get_palette(weed_plant_t *layer);
 
 cairo_t *layer_to_cairo(weed_plant_t *layer);
-gboolean cairo_to_layer(cairo_t *cairo, weed_plant_t *layer);
+boolean cairo_to_layer(cairo_t *cairo, weed_plant_t *layer);
 
 void alpha_unpremult(weed_plant_t *layer, boolean un);
 

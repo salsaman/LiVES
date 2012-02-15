@@ -3763,12 +3763,15 @@ on_record_perf_activate                      (GtkMenuItem     *menuitem,
 					      gpointer         user_data)
 {
   // real time recording
-  gulong frames_written=0;
 #ifdef HAVE_PULSE_AUDIO
   pa_usec_t usec_start=0;
 #endif
-  gulong audio_ticks=0;
-  gulong seek_pos=0;
+
+#ifdef RT_AUDIO
+  uint64_t frames_written=0;
+  uint64_t audio_ticks=0;
+  uint64_t seek_pos=0;
+#endif
 
   if (mainw->multitrack!=NULL) return;
 
@@ -5206,7 +5209,7 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
     }
 
     get_total_time (cfile);
-    if (cfile->achans) cfile->aseek_pos=(long)((gdouble)(cfile->frameno-1.)/
+    if (cfile->achans) cfile->aseek_pos=(int64_t)((gdouble)(cfile->frameno-1.)/
 					       cfile->fps*cfile->arate*cfile->achans*cfile->asampsize/8);
 
     // add to clip menu
@@ -5930,7 +5933,7 @@ void on_fs_preview_clicked (GtkButton *button, gpointer user_data) {
       xwin=(unsigned long)GDK_WINDOW_XID (mainw->fs_playarea->window);
 #else
       // need equivalent to get XID of win on other platforms
-      msg=g_strdup(_("Preview will not work without X11. We need the window id of the preview window.\nPlease send a patch if you know how to do this.\n"));
+      gchar *msg=g_strdup(_("Preview will not work without X11. We need the window id of the preview window.\nPlease send a patch if you know how to do this.\n"));
       do_blocking_error_dialog(msg);
       g_free(msg);
 
@@ -6617,7 +6620,11 @@ void on_save_textview_clicked (GtkButton *button, gpointer user_data) {
     return;
   }
 
+#ifndef IS_MINGW
   if ((fd=creat(save_file,S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH))==-1) {
+#else
+  if ((fd=creat(save_file,S_IRUSR|S_IWUSR))==-1) {
+#endif
     gtk_widget_show(gtk_widget_get_toplevel(GTK_WIDGET(button)));
     do_file_perm_error(save_file);
     g_free(save_file);
@@ -8600,8 +8607,10 @@ on_rename_set_name                   (GtkButton       *button,
 
 
 void on_toy_activate  (GtkMenuItem *menuitem, gpointer user_data) {
+#ifdef ENABLE_OSC
   gchar string[PATH_MAX];
   gchar *com;
+#endif
 
   if (menuitem!=NULL&&mainw->toy_type==GPOINTER_TO_INT(user_data)) {
     // switch is off
@@ -8615,10 +8624,12 @@ void on_toy_activate  (GtkMenuItem *menuitem, gpointer user_data) {
     gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mainw->toy_autolives),FALSE);
     g_signal_handler_unblock (mainw->toy_autolives, mainw->toy_func_autolives);
 
+#ifndef IS_MINGW
     if (mainw->toy_alives_pid>1) {
       lives_killpg(mainw->toy_alives_pid,LIVES_SIGHUP);
     }
-    
+#endif    
+
     // switch off rte so as not to cause alarm
     if (mainw->autolives_reset_fx) 
       rte_on_off_callback(NULL,NULL,0,(GdkModifierType)0,GINT_TO_POINTER(0));
@@ -8658,6 +8669,7 @@ void on_toy_activate  (GtkMenuItem *menuitem, gpointer user_data) {
     gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mainw->toy_none),TRUE);
     g_signal_handler_unblock (mainw->toy_none, mainw->toy_func_none);
     return;
+#ifdef ENABLE_OSC
   case LIVES_TOY_AUTOLIVES:
     if (mainw->current_file<1) {
       do_autolives_needs_clips_error();
@@ -8717,6 +8729,7 @@ void on_toy_activate  (GtkMenuItem *menuitem, gpointer user_data) {
     g_free(com);
 
     break;
+#endif
   case LIVES_TOY_MAD_FRAMES:
     break;
   case LIVES_TOY_TV:
@@ -10344,7 +10357,7 @@ on_capture_activate                (GtkMenuItem     *menuitem,
   }
 
   array=g_strsplit(mainw->msg,"|",5);
-  mainw->foreign_id=atoi(array[1]);
+  mainw->foreign_id=(GdkNativeWindow)atoi(array[1]);
   mainw->foreign_width=atoi(array[2]);
   mainw->foreign_height=atoi(array[3]);
   mainw->foreign_bpp=atoi(array[4]);
@@ -10368,7 +10381,7 @@ on_capture_activate                (GtkMenuItem     *menuitem,
 
   // start another copy of LiVES and wait for it to return values
   com=g_strdup_printf("%s -capture %d %u %d %d \"%s\" %d %d %.4f %d %d %d %d",capable->myname_full,getpid(),
-		      mainw->foreign_id,mainw->foreign_width,mainw->foreign_height,prefs->image_ext,
+		      (unsigned int)mainw->foreign_id,mainw->foreign_width,mainw->foreign_height,prefs->image_ext,
 		      mainw->foreign_bpp,mainw->rec_vid_frames,mainw->rec_fps,mainw->rec_arate,
 		      mainw->rec_asamps,mainw->rec_achans,mainw->rec_signed_endian);
 
@@ -10877,6 +10890,7 @@ on_fade_audio_activate (GtkMenuItem     *menuitem,
   gdouble startt,endt,startv,endv,time=0.;
   gchar *msg,*msg2,*utxt,*com;
   gboolean has_lmap_error=FALSE;
+  int alarm_handle;
 
   aud_dialog_t *aud_d=NULL;
 
@@ -10962,6 +10976,7 @@ on_fade_audio_activate (GtkMenuItem     *menuitem,
 
   desensitize();
   do_threaded_dialog(_("Fading audio..."),FALSE);
+  alarm_handle=lives_alarm_set(1);
 
   threaded_dialog_spin();
   while (g_main_context_iteration(NULL,FALSE));
@@ -10974,6 +10989,7 @@ on_fade_audio_activate (GtkMenuItem     *menuitem,
     g_free(com);
 
     if (mainw->error) {
+      lives_alarm_clear(alarm_handle);
       end_threaded_dialog();
       d_print_failed();
       return;
@@ -10982,7 +10998,13 @@ on_fade_audio_activate (GtkMenuItem     *menuitem,
 
   aud_fade(mainw->current_file,startt,endt,startv,endv);
   audio_free_fnames();
-  sleep(1);
+
+  while (!lives_alarm_get(alarm_handle)) {
+    g_usleep(prefs->sleep_time);
+  }
+
+  lives_alarm_clear(alarm_handle);
+
   end_threaded_dialog();
   d_print_done();
 

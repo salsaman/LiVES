@@ -8,9 +8,6 @@
 // and don't forget gtk_box_pack_end (doh)
 // and just use label instead of labelnn, etc.
 
-#ifdef HAVE_CONFIG_H
-#  include <config.h>
-#endif
 
 #include <sys/types.h>
 #include <sys/stat.h>

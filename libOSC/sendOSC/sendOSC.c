@@ -56,12 +56,16 @@ The OSC webpage is http://cnmat.cnmat.berkeley.edu/OpenSoundControl
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
+#ifndef IS_MINGW
 #include <netinet/in.h>
+#else
+#include <winsock2.h>
+#endif
 #include <string.h>
 #include <inttypes.h>
 
 typedef struct {
-    enum {INT, FLOAT, STRING} type;
+    enum {INTx, FLOATx, STRINGx} type;
     union {
         int i;
         float f;
@@ -288,13 +292,13 @@ OSCTimeTag ParseTimeTag(char *s) {
 	while (isspace(*p)) p++;
 
 	arg = ParseToken(p);
-	if (arg.type == STRING) {
+	if (arg.type == STRINGx) {
 	    complain("warning: inscrutable time tag request: %s\n", s);
 	    return OSCTT_Immediately();
-	} else if (arg.type == INT) {
+	} else if (arg.type == INTx) {
 	    return OSCTT_PlusSeconds(OSCTT_CurrentTime(),
 				     (float) arg.datum.i);
-	} else if (arg.type == FLOAT) {
+	} else if (arg.type == FLOATx) {
 	    return OSCTT_PlusSeconds(OSCTT_CurrentTime(), arg.datum.f);
 	} else {
 	    fatal_error("This can't happen!");
@@ -308,7 +312,7 @@ OSCTimeTag ParseTimeTag(char *s) {
 	    complain("warning: couldn't parse time tag %s\n", s);
 	    return OSCTT_Immediately();
 	}
-#ifndef	HAS8BYTEINT
+#ifndef	HAS8BYTEINTx
 	if (ntohl(1) != 1) {
 	    /* tt is a struct of seconds and fractional part,
 	       and this machine is little-endian, so sscanf
@@ -348,11 +352,11 @@ void ParseInteractiveLine(OSCbuf *buf, char *mesg) {
 	    return;
 	}
 
-	arg.type = INT;
+	arg.type = INTx;
 	arg.datum.i = 0;
 	WriteMessage(buf, "/voices/0/tp/timbre_index", 1, &arg);
 
-	arg.type = FLOAT;
+	arg.type = FLOATx;
 	arg.datum.i = 0.0f;
 	WriteMessage(buf, "/voices/0/tm/goto", 1, &arg);
 
@@ -378,7 +382,7 @@ void ParseInteractiveLine(OSCbuf *buf, char *mesg) {
         if (*p == '"') {
             /* A string argument: scan for close quotes */
             p++;
-            args[thisArg].type = STRING;
+            args[thisArg].type = STRINGx;
             args[thisArg].datum.s = p;
 
             while (*p != '"') {
@@ -423,7 +427,7 @@ typedArg ParseToken(char *token) {
     if (isdigit(*p) || *p == '.') {
         while (isdigit(*p)) p++;
         if (*p == '\0') {
-            returnVal.type = INT;
+            returnVal.type = INTx;
             returnVal.datum.i = atoi(token);
             return returnVal;
         }
@@ -431,14 +435,14 @@ typedArg ParseToken(char *token) {
             p++;
             while (isdigit(*p)) p++;
             if (*p == '\0') {
-                returnVal.type = FLOAT;
+                returnVal.type = FLOATx;
                 returnVal.datum.f = atof(token);
                 return returnVal;
             }
         }
     }
 
-    returnVal.type = STRING;
+    returnVal.type = STRINGx;
     returnVal.datum.s = token;
     return returnVal;
 }
@@ -453,15 +457,15 @@ int WriteMessage(OSCbuf *buf, char *messageName, int numArgs, typedArg *args) {
 
      for (j = 0; j < numArgs; j++) {
         switch (args[j].type) {
-            case INT:
+            case INTx:
 	    printf("%d ", args[j].datum.i);
             break;
 
-            case FLOAT:
+            case FLOATx:
 	    printf("%f ", args[j].datum.f);
             break;
 
-            case STRING:
+            case STRINGx:
 	    printf("%s ", args[j].datum.s);
             break;
 
@@ -487,15 +491,15 @@ int WriteMessage(OSCbuf *buf, char *messageName, int numArgs, typedArg *args) {
 
 	for (i = 0; i < numArgs; ++i) {
 	    switch (args[i].type) {
-		case INT:
+		case INTx:
 		typeTags[i+1] = 'i';
 		break;
 
-		case FLOAT:
+		case FLOATx:
 		typeTags[i+1] = 'f';
 		break;
 
-		case STRING:
+		case STRINGx:
 		typeTags[i+1] = 's';
 		break;
 
@@ -514,19 +518,19 @@ int WriteMessage(OSCbuf *buf, char *messageName, int numArgs, typedArg *args) {
 
      for (j = 0; j < numArgs; j++) {
         switch (args[j].type) {
-            case INT:
+            case INTx:
             if ((returnVal = OSC_writeIntArg(buf, args[j].datum.i)) != 0) {
 		return returnVal;
 	    }
             break;
 
-            case FLOAT:
+            case FLOATx:
             if ((returnVal = OSC_writeFloatArg(buf, args[j].datum.f)) != 0) {
 		return returnVal;
 	    }
             break;
 
-            case STRING:
+            case STRINGx:
             if ((returnVal = OSC_writeStringArg(buf, args[j].datum.s)) != 0) {
 		return returnVal;
 	    }
@@ -583,11 +587,11 @@ void complain(char *s, ...) {
 
     for (j = 0; j < numArgs; j++) {
         switch (args[j].type) {
-            case INT: case FLOAT:
+            case INTx: case FLOATx:
             size += 4;
             break;
 
-            case STRING:
+            case STRINGx:
             size += SynthControl_effectiveStringLength(args[j].datum.s);
             break;
 

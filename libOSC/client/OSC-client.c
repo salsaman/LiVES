@@ -45,12 +45,19 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 #include "OSC-client.h"
 
+
+#ifdef IS_MINGW
+#include <winsock2.h>
+#else
+
 #ifdef TARGET_API_MAC_CARBON
 /* KLUDGE for OSX: */
 #define htonl(x) (x)
 #else
 #include <arpa/inet.h>
 #endif 
+
+#endif
 
 #include <string.h>
 

@@ -8,7 +8,7 @@ decoderpluginslibdir = "$(libdir)/$(PACKAGE)/plugins/decoders"
 
 if IS_DARWIN
 shared_ldflags =  -dynamiclib -module -avoid-version --tag=disable-static
-shared_cflags = -fno-common
+shared_cflags = -fno-common -DIS_DARWIN=1 -I /sw/include
 else
 shared_ldflags =  -shared -fPIC -DPIC -module -avoid-version --tag=disable-static
 shared_cflags =  -fPIC -DPIC

@@ -281,7 +281,7 @@ static int audio_process (nframes_t nframes, void *arg) {
   jack_position_t pos;
   register int i;
   aserver_message_t *msg;
-  long xseek;
+  int64_t xseek;
   int new_file;
   gboolean from_memory=FALSE;
   gboolean wait_cache_buffer=FALSE;
@@ -289,7 +289,7 @@ static int audio_process (nframes_t nframes, void *arg) {
   size_t nbytes;
 
 #ifdef DEBUG_AJACK
-  g_printerr("nframes %ld, sizeof(float) == %d\n", (long)nframes, sizeof(float));
+  g_printerr("nframes %ld, sizeof(float) == %d\n", (int64_t)nframes, sizeof(float));
 #endif
 
   if (!mainw->is_ready||jackd==NULL||(mainw->playing_file==-1&&jackd->is_silent&&jackd->msgq==NULL)) return 0;
@@ -360,11 +360,11 @@ static int audio_process (nframes_t nframes, void *arg) {
 
   /* handle playing state */
   if (jackd->state==JackTransportRolling||jackd->play_when_stopped) {
-    gulong jackFramesAvailable = nframes; /* frames we have left to write to jack */
-    gulong inputFramesAvailable;          /* frames we have available this loop */
-    gulong numFramesToWrite;              /* num frames we are writing this loop */
-    glong in_frames=0;
-    gulong in_bytes=0;
+    uint64_t jackFramesAvailable = nframes; /* frames we have left to write to jack */
+    uint64_t inputFramesAvailable;          /* frames we have available this loop */
+    uint64_t numFramesToWrite;              /* num frames we are writing this loop */
+    int64_t in_frames=0;
+    uint64_t in_bytes=0;
     gfloat shrink_factor=1.f;
     gdouble vol;
 
@@ -773,7 +773,7 @@ static int audio_read (nframes_t nframes, void *arg) {
   float out_scale=(float)jackd->sample_in_rate/(float)afile->arate;
   int out_unsigned=afile->signed_endian&AFORM_UNSIGNED;
   int i;
-  long frames_out;
+  int64_t frames_out;
 
   size_t rbytes;
 
@@ -781,7 +781,7 @@ static int audio_read (nframes_t nframes, void *arg) {
 
   if (mainw->rec_samples==0) return 0; // wrote enough already, return until main thread stop
 
-  frames_out=(long)((gdouble)nframes/out_scale+1.);
+  frames_out=(int64_t)((gdouble)nframes/out_scale+1.);
 
   rbytes=frames_out*afile->achans*afile->asampsize/8;
   holding_buff=g_try_malloc(rbytes);
@@ -824,7 +824,7 @@ static int audio_read (nframes_t nframes, void *arg) {
 
 
 int jack_get_srate (nframes_t nframes, void *arg) {
-  //g_printerr("the sample rate is now %ld/sec\n", (long)nframes);
+  //g_printerr("the sample rate is now %ld/sec\n", (int64_t)nframes);
   return 0;
 }
 
@@ -1398,7 +1398,7 @@ gboolean jack_audio_seek_frame (jack_driver_t *jackd, gint frame) {
   // position will be adjusted to (floor) nearest sample
 
   volatile aserver_message_t *jmsg;
-  long seekstart;
+  int64_t seekstart;
   int alarm_handle=lives_alarm_set(LIVES_ACONNECT_TIMEOUT);
   gboolean timeout;
 
@@ -1415,20 +1415,20 @@ gboolean jack_audio_seek_frame (jack_driver_t *jackd, gint frame) {
   }
   lives_alarm_clear(alarm_handle);
   if (frame>afile->frames) frame=afile->frames;
-  seekstart=(long)((gdouble)(frame-1.)/afile->fps*afile->arate)*afile->achans*(afile->asampsize/8);
+  seekstart=(int64_t)((gdouble)(frame-1.)/afile->fps*afile->arate)*afile->achans*(afile->asampsize/8);
   jack_audio_seek_bytes(jackd,seekstart);
   return TRUE;
 }
 
 
-long jack_audio_seek_bytes (jack_driver_t *jackd, long bytes) {
+int64_t jack_audio_seek_bytes (jack_driver_t *jackd, int64_t bytes) {
   // seek to position "bytes" in current audio file
   // position will be adjusted to (floor) nearest sample
 
   // if the position is > size of file, we will seek to the end of the file
 
   volatile aserver_message_t *jmsg;
-  long seekstart;
+  int64_t seekstart;
 
   gboolean timeout;
   int alarm_handle=lives_alarm_set(LIVES_ACONNECT_TIMEOUT);
@@ -1451,7 +1451,7 @@ long jack_audio_seek_bytes (jack_driver_t *jackd, long bytes) {
   }
   lives_alarm_clear(alarm_handle);
 
-  seekstart=((long)(bytes/afile->achans/(afile->asampsize/8)))*afile->achans*(afile->asampsize/8);
+  seekstart=((int64_t)(bytes/afile->achans/(afile->asampsize/8)))*afile->achans*(afile->asampsize/8);
 
   if (seekstart<0) seekstart=0;
   if (seekstart>afile->afilesize) seekstart=afile->afilesize;

@@ -144,26 +144,26 @@ typedef enum lives_audio_loop {
 
 
 
-void sample_silence_dS (float *dst, unsigned long nsamples);
+void sample_silence_dS (float *dst, uint64_t nsamples);
 
 void sample_move_d8_d16(short *dst, guchar *src,
-			unsigned long nsamples, size_t tbytes, float scale, int nDstChannels, int nSrcChannels, int swap_sign);
+			uint64_t nsamples, size_t tbytes, float scale, int nDstChannels, int nSrcChannels, int swap_sign);
 
 void sample_move_d16_d16(short *dst, short *src,
-			 unsigned long nsamples, size_t tbytes, float scale, int nDstChannels, int nSrcChannels, int swap_endian, int swap_sign);
+			 uint64_t nsamples, size_t tbytes, float scale, int nDstChannels, int nSrcChannels, int swap_endian, int swap_sign);
 
 void sample_move_d16_d8(uint8_t *dst, short *src,
-			unsigned long nsamples, size_t tbytes, float scale, int nDstChannels, int nSrcChannels, int swap_sign);
+			uint64_t nsamples, size_t tbytes, float scale, int nDstChannels, int nSrcChannels, int swap_sign);
 
-void sample_move_d16_float (float *dst, short *src, unsigned long nsamples, unsigned long src_skip, int is_unsigned, float vol);
+void sample_move_d16_float (float *dst, short *src, uint64_t nsamples, uint64_t src_skip, int is_unsigned, float vol);
 
-long sample_move_float_int(void *holding_buff, float **float_buffer, int nsamps, float scale, int chans, int asamps, int usigned, gboolean swap_endian, float vol); ///< returns frames output
+int64_t sample_move_float_int(void *holding_buff, float **float_buffer, int nsamps, float scale, int chans, int asamps, int usigned, gboolean swap_endian, float vol); ///< returns frames output
 
-long sample_move_abuf_float (float **obuf, int nchans, int nsamps, int out_arate, float vol);
+int64_t sample_move_abuf_float (float **obuf, int nchans, int nsamps, int out_arate, float vol);
 
-long sample_move_abuf_int16 (short *obuf, int nchans, int nsamps, int out_arate);
+int64_t sample_move_abuf_int16 (short *obuf, int nchans, int nsamps, int out_arate);
 
-long render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdouble *avels, gdouble *fromtime, weed_timecode_t tc_start, weed_timecode_t tc_end, gdouble *chvol, gdouble opvol_start, gdouble opvol_end, lives_audio_buf_t *obuf);
+int64_t render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdouble *avels, gdouble *fromtime, weed_timecode_t tc_start, weed_timecode_t tc_end, gdouble *chvol, gdouble opvol_start, gdouble opvol_end, lives_audio_buf_t *obuf);
 
 void aud_fade(gint fileno, gdouble startt, gdouble endt, gdouble startv, gdouble endv); ///< fade in/fade out
 

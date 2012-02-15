@@ -59,7 +59,17 @@ POSSIBILITY OF SUCH DAMAGES.
 #include <gdk/gdkkeysyms.h>
 
 #ifdef IS_MINGW
+
 #undef GDK_WINDOWING_X11
+
+#undef ENABLE_OSC
+
+#include <windows.h>
+#include <winbase.h>
+#include <sys/stat.h>
+
+#define O_SYNC (FILE_FLAG_NO_BUFFERING|FILE_FLAG_WRITE_THROUGH)
+
 #endif
 
 
@@ -387,7 +397,7 @@ typedef struct {
   guint signed_endian; ///< bitfield
 
   gint arate; ///< audio playback rate
-  gint64 unique_id;    ///< this and the handle can be used to uniquely id a file
+  guint64 unique_id;    ///< this and the handle can be used to uniquely id a file
   gint achans;
   gint asampsize;
 
@@ -414,8 +424,8 @@ typedef struct {
   gchar handle[256];
   gint ohsize;
   gint ovsize;
-  glong f_size;
-  glong afilesize;
+  int64_t f_size;
+  int64_t afilesize;
   gint old_frames; ///< for deordering, etc.
   gchar file_name[PATH_MAX]; ///< input file
   gchar info_file[PATH_MAX];
@@ -526,7 +536,7 @@ typedef struct {
 
   gboolean ratio_fps; ///< if the fps was set by a ratio
 
-  glong aseek_pos; ///< audio seek posn. (bytes) for when we switch clips
+  int64_t aseek_pos; ///< audio seek posn. (bytes) for when we switch clips
 
   // decoder data
 
@@ -961,10 +971,6 @@ void splash_end(void);
 void splash_msg(const gchar *msg, gdouble pct);
 void add_message_scroller(GtkWidget *conter);
 
-// utils.c
-#ifdef IS_IRIX
-void setenv(const char *name, const char *val, int _xx);
-#endif
 
 // system calls in utils.c
 int lives_system(const char *com, gboolean allow_error);
@@ -976,18 +982,26 @@ ssize_t lives_read_le(int fd, void *buf, size_t count, gboolean allow_less);
 int lives_chdir(const char *path, gboolean allow_fail);
 int lives_fputs(const char *s, FILE *stream);
 char *lives_fgets(char *s, int size, FILE *stream);
-
-char *filename_from_fd(char *val, int fd);
-
-
-float LEFloat_to_BEFloat(float f);
-uint64_t lives_10pow(int pow);
-int get_approx_ln(guint val);
+pid_t lives_getpid(void);
+int lives_getgid(void);
+int lives_getuid(void);
 void lives_freep(void **ptr);
 void lives_free(gpointer ptr);
 void lives_free_with_check(gpointer ptr);
 int lives_kill(pid_t pid, int sig);
 int lives_killpg(int pgrp, int sig);
+void lives_srandom(unsigned int seed);
+uint64_t lives_random(void);
+ssize_t lives_readlink(const char *path, char *buf, size_t bufsiz);
+boolean lives_setenv(const char *name, const char *value);
+int lives_fsync(int fd);
+
+char *filename_from_fd(char *val, int fd);
+
+float LEFloat_to_BEFloat(float f);
+uint64_t lives_10pow(int pow);
+int get_approx_ln(guint val);
+
 int64_t lives_get_current_ticks(void);
 gboolean lives_alarm_get(int alarm_handle);
 int lives_alarm_set(int64_t ticks);
@@ -1047,9 +1061,9 @@ void prepare_to_play_foreign(void);
 gboolean after_foreign_play(void);
 gboolean check_file(const gchar *file_name, gboolean check_exists);  ///< check if file exists
 gboolean check_dir_access (const gchar *dir);
-gulong get_file_size(int fd);
-gulong sget_file_size(const gchar *name);
-gulong get_fs_free(const char *dir);
+uint64_t get_file_size(int fd);
+uint64_t sget_file_size(const gchar *name);
+uint64_t get_fs_free(const char *dir);
 gboolean is_writeable_dir(const char *dir);
 gboolean ensure_isdir(gchar *fname);
 gchar *ensure_extension(const gchar *fname, const gchar *ext) WARN_UNUSED;

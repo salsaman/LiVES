@@ -8,9 +8,8 @@
 #ifndef HAS_LIVES_MAINWINDOW_H
 #define HAS_LIVES_MAINWINDOW_H
 
-#ifndef IS_MINGW
+
 #include <pthread.h>
-#endif
 
 #include "effects-data.h"
 
@@ -291,7 +290,7 @@ typedef struct {
 
   // recording from an external window
   guint foreign_key;
-  unsigned int foreign_id;
+  GdkNativeWindow foreign_id;
   GdkColormap *foreign_cmap;
   GdkPixmap *foreign_map;
   GdkWindow *foreign_window;
@@ -895,7 +894,7 @@ typedef struct {
 
   int aud_rec_fd; ///< fd of file we are recording audio to
   gdouble rec_end_time;
-  long rec_samples;
+  int64_t rec_samples;
   gdouble rec_fps;
   gint rec_vid_frames;
   gint rec_arate;
@@ -969,10 +968,6 @@ typedef struct {
   /// encoder text output
   GIOChannel *iochan;
   GtkTextView *optextview;
-
-  /// error signalling during decoder plugin "rip_audio"
-  pthread_t sig_pid;
-  gchar *sig_file;
 
   gboolean has_custom_tools;
   gboolean has_custom_gens;

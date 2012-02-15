@@ -5,13 +5,6 @@
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
-#ifndef HAS_SUPPORT_H
-#define HAS_SUPPORT_H
-
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
-
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -121,6 +114,3 @@ create_pixbuf                          (const gchar     *filename)
   return pixbuf;
 }
 
-
-
-#endif // HAS_SUPPORT_H

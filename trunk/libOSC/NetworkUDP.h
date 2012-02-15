@@ -26,6 +26,7 @@ The OpenSound Control WWW page is
     http://www.cnmat.berkeley.edu/OpenSoundControl
 */
 
+#ifndef IS_MINGW
 #include <netinet/in.h>
 
 struct NetworkReturnAddressStruct {
@@ -33,3 +34,5 @@ struct NetworkReturnAddressStruct {
     socklen_t clilen;
     int sockfd;
 };
+
+#endif

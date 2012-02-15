@@ -7,13 +7,17 @@
 
 #include <stdio.h>
 #include <unistd.h>
-#include <netdb.h>
 #include <errno.h>
 
+#ifndef IS_MINGW
+#include <netdb.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
+#else
+#include <ws2tcpip.h>
+#endif
 
-#if defined(__sun)
+#if IS_SOLARIS
 #include <sys/filio.h>
 #endif
 
@@ -54,7 +58,6 @@ void *OpenHTMSocket(const char *host, int portnumber, gboolean sender) {
     hostsEntry = gethostbyname(host);
     
     if (hostsEntry == NULL) {
-      herror(NULL);
       return NULL;
     }
     
@@ -120,7 +123,7 @@ void *OpenHTMSocket(const char *host, int portnumber, gboolean sender) {
 static ssize_t getudp(struct sockaddr *sp, int sockfd, int length, size_t count, void  *b, int bfsize) {
   int flags=0;
   ssize_t res;
-  int len;
+  unsigned long len;
 
   if (bfsize>0) {
     int xbfsize;
@@ -130,7 +133,12 @@ static ssize_t getudp(struct sockaddr *sp, int sockfd, int length, size_t count,
     if (xbfsize<bfsize) return -2;
   }
 
+#ifdef IS_MINGW
+  ioctlsocket(sockfd,FIONREAD,&len);
+#else
   ioctl(sockfd,FIONREAD,&len);
+#endif
+
   if (len==0) return -1;
 
   do {

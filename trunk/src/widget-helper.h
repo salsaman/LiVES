@@ -15,7 +15,10 @@ typedef GtkBox                            LiVESBox;
 
 typedef GdkPixbuf                         LiVESPixbuf;
 
+#ifndef IS_MINGW
 typedef gboolean                          boolean;
+#endif
+
 typedef GList                             LiVESList;
 typedef GSList                            LiVESSList;
 
@@ -75,7 +78,7 @@ typedef (void *)(LiVESPixbufDestroyNotify(uchar *, gpointer));
 
 int lives_pixbuf_get_width(const LiVESPixbuf *pixbuf);
 int lives_pixbuf_get_height(const LiVESPixbuf *pixbuf);
-int lives_pixbuf_get_has_alpha(const LiVESPixbuf *pixbuf);
+boolean lives_pixbuf_get_has_alpha(const LiVESPixbuf *pixbuf);
 int lives_pixbuf_get_rowstride(const LiVESPixbuf *pixbuf);
 int lives_pixbuf_get_n_channels(const LiVESPixbuf *pixbuf);
 guchar *lives_pixbuf_get_pixels(const LiVESPixbuf *pixbuf);

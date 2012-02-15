@@ -62,13 +62,13 @@ void audio_free_fnames(void) {
 
 
 
-LIVES_INLINE void sample_silence_dS (float *dst, unsigned long nsamples) {
+LIVES_INLINE void sample_silence_dS (float *dst, uint64_t nsamples) {
   memset(dst,0,nsamples*sizeof(float));
 }
 
 
 void sample_move_d8_d16(short *dst, unsigned char *src,
-			unsigned long nsamples, size_t tbytes, float scale, int nDstChannels, int nSrcChannels, int swap_sign) {
+			uint64_t nsamples, size_t tbytes, float scale, int nDstChannels, int nSrcChannels, int swap_sign) {
   // convert 8 bit audio to 16 bit audio
 
   register int nSrcCount, nDstCount;
@@ -123,7 +123,7 @@ void sample_move_d8_d16(short *dst, unsigned char *src,
 
 /* convert from any number of source channels to any number of destination channels */
 void sample_move_d16_d16(short *dst, short *src,
-			 unsigned long nsamples, size_t tbytes, float scale, int nDstChannels, int nSrcChannels, int swap_endian, int swap_sign) {
+			 uint64_t nsamples, size_t tbytes, float scale, int nDstChannels, int nSrcChannels, int swap_endian, int swap_sign) {
   register int nSrcCount, nDstCount;
   register float src_offset_f=0.f;
   register int src_offset_i=0;
@@ -198,7 +198,7 @@ void sample_move_d16_d16(short *dst, short *src,
 
 /* convert from any number of source channels to any number of destination channels - 8 bit output */
 void sample_move_d16_d8(uint8_t *dst, short *src,
-			 unsigned long nsamples, size_t tbytes, float scale, int nDstChannels, int nSrcChannels, int swap_sign) {
+			 uint64_t nsamples, size_t tbytes, float scale, int nDstChannels, int nSrcChannels, int swap_sign) {
   register int nSrcCount, nDstCount;
   register float src_offset_f=0.f;
   register int src_offset_i=0;
@@ -250,7 +250,7 @@ void sample_move_d16_d8(uint8_t *dst, short *src,
 
 
 
-void sample_move_d16_float (float *dst, short *src, unsigned long nsamples, unsigned long src_skip, int is_unsigned, float vol) {
+void sample_move_d16_float (float *dst, short *src, uint64_t nsamples, uint64_t src_skip, int is_unsigned, float vol) {
   // convert 16 bit audio to float audio
 
 
@@ -309,9 +309,9 @@ void sample_move_d16_float (float *dst, short *src, unsigned long nsamples, unsi
 
 
 
-long sample_move_float_int(void *holding_buff, float **float_buffer, int nsamps, float scale, int chans, int asamps, int usigned, gboolean swap_endian, float vol) {
+int64_t sample_move_float_int(void *holding_buff, float **float_buffer, int nsamps, float scale, int chans, int asamps, int usigned, gboolean swap_endian, float vol) {
   // convert float samples back to int
-  long frames_out=0l;
+  int64_t frames_out=0l;
   register int i;
   register int offs=0,coffs=0;
   register float coffs_f=0.f;
@@ -363,7 +363,7 @@ long sample_move_float_int(void *holding_buff, float **float_buffer, int nsamps,
 
 // play from memory buffer
 
-long sample_move_abuf_float (float **obuf, int nchans, int nsamps, int out_arate, float vol) {
+int64_t sample_move_abuf_float (float **obuf, int nchans, int nsamps, int out_arate, float vol) {
 
   int samples_out=0;
 
@@ -468,7 +468,7 @@ long sample_move_abuf_float (float **obuf, int nchans, int nsamps, int out_arate
 
 
 
-long sample_move_abuf_int16 (short *obuf, int nchans, int nsamps, int out_arate) {
+int64_t sample_move_abuf_int16 (short *obuf, int nchans, int nsamps, int out_arate) {
 
   int samples_out=0;
 
@@ -615,7 +615,7 @@ static size_t chunk_to_int16_abuf(lives_audio_buf_t *abuf, float **float_buffer,
 
 //#define DEBUG_ARENDER
 
-static gboolean pad_with_silence(int out_fd, off64_t oins_size, long ins_size, int asamps, int aunsigned, gboolean big_endian) {
+static gboolean pad_with_silence(int out_fd, off64_t oins_size, int64_t ins_size, int asamps, int aunsigned, gboolean big_endian) {
   // fill to ins_pt with zeros (or 0x80.. for unsigned)
   guchar *zero_buff;
   size_t sblocksize=SILENCE_BLOCK_SIZE;
@@ -664,7 +664,7 @@ static gboolean pad_with_silence(int out_fd, off64_t oins_size, long ins_size, i
 
 
 
-long render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdouble *avels, gdouble *fromtime, weed_timecode_t tc_start, weed_timecode_t tc_end, gdouble *chvol, gdouble opvol_start, gdouble opvol_end, lives_audio_buf_t *obuf) {
+int64_t render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdouble *avels, gdouble *fromtime, weed_timecode_t tc_start, weed_timecode_t tc_end, gdouble *chvol, gdouble opvol_start, gdouble opvol_end, lives_audio_buf_t *obuf) {
   // called during multitrack rendering to create the actual audio file
   // (or in-memory buffer for preview playback in multitrack)
 
@@ -715,16 +715,16 @@ long render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdouble *
   register int i,j;
   ssize_t bytes_read;
   int in_fd[nfiles],out_fd=-1;
-  gulong nframes;
+  uint64_t nframes;
   gboolean in_reverse_endian[nfiles],out_reverse_endian=FALSE;
   off64_t seekstart[nfiles];
   gchar *infilename,*outfilename;
   weed_timecode_t tc=tc_start;
   gdouble ins_pt=tc/U_SEC;
-  long ins_size=0l,cur_size;
+  int64_t ins_size=0l,cur_size;
   gdouble time=0.;
   gdouble opvol=opvol_start;
-  long frames_out=0;
+  int64_t frames_out=0;
 
   int track;
 
@@ -737,9 +737,9 @@ long render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdouble *
   gboolean is_silent[nfiles];
   gint first_nonsilent=-1;
 
-  long tsamples=((tc_end-tc_start)/U_SEC*out_arate+.5);
+  int64_t tsamples=((tc_end-tc_start)/U_SEC*out_arate+.5);
 
-  long blocksize,zsamples,xsamples;
+  int64_t blocksize,zsamples,xsamples;
 
   void *finish_buff;
 
@@ -749,7 +749,7 @@ long render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdouble *
   gint max_segments;
   gdouble zavel,zavel_max=0.;
 
-  long tot_frames=0l;
+  int64_t tot_frames=0l;
 
   int render_block_size=RENDER_BLOCK_SIZE;
 
@@ -778,7 +778,7 @@ long render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdouble *
     cur_size=get_file_size(out_fd);
 
     ins_pt*=out_achans*out_arate*out_asamps;
-    ins_size=((long)(ins_pt/out_achans/out_asamps+.5))*out_achans*out_asamps;
+    ins_size=((int64_t)(ins_pt/out_achans/out_asamps+.5))*out_achans*out_asamps;
 
     if ((!out_bendian&&(capable->byte_order==LIVES_BIG_ENDIAN))||
 	(out_bendian&&(capable->byte_order==LIVES_LITTLE_ENDIAN))) 
@@ -879,10 +879,10 @@ long render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdouble *
     // all in tracks are empty
     // output silence
     if (to_file>-1) {
-      long oins_size=ins_size;
+      int64_t oins_size=ins_size;
       ins_pt=tc_end/U_SEC;
       ins_pt*=out_achans*out_arate*out_asamps;
-      ins_size=((long)(ins_pt/out_achans/out_asamps)+.5)*out_achans*out_asamps;
+      ins_size=((int64_t)(ins_pt/out_achans/out_asamps)+.5)*out_achans*out_asamps;
       pad_with_silence(out_fd,oins_size,ins_size,out_asamps,out_unsigned,out_bendian);
       //sync();
       close (out_fd);
@@ -1151,7 +1151,7 @@ void jack_rec_audio_to_clip(gint fileno, gint old_file, lives_rec_audio_type_t r
   if (rec_type==RECA_EXTERNAL) {
     gint asigned;
     gint aendian;
-    gulong fsize=get_file_size(mainw->aud_rec_fd);
+    uint64_t fsize=get_file_size(mainw->aud_rec_fd);
 
     mainw->jackd_read->reverse_endian=FALSE;
  
@@ -1258,7 +1258,7 @@ void pulse_rec_audio_to_clip(gint fileno, gint old_file, lives_rec_audio_type_t 
   if (rec_type==RECA_EXTERNAL) {
     gint asigned;
     gint aendian;
-    gulong fsize=get_file_size(mainw->aud_rec_fd);
+    uint64_t fsize=get_file_size(mainw->aud_rec_fd);
 
     mainw->pulsed_read->reverse_endian=FALSE;
 
@@ -2077,7 +2077,7 @@ static void *cache_my_audio(void *arg) {
     
     if (cbuffer->_cbytesize<cbuffer->bytesize) {
       cbuffer->eof=TRUE;
-      cbuffer->_csamp_space=(long)((double)cbuffer->samp_space/(double)cbuffer->bytesize*(double)cbuffer->_cbytesize);
+      cbuffer->_csamp_space=(int64_t)((double)cbuffer->samp_space/(double)cbuffer->bytesize*(double)cbuffer->_cbytesize);
       cbuffer->samp_space=cbuffer->_csamp_space;
     }
 
@@ -2191,9 +2191,15 @@ lives_audio_buf_t *audio_cache_get_buffer(void) {
 ////////////////////////////////////////
 // audio streaming
 
+#ifndef IS_MINGW
 static int astream_pid=0;
+#endif
 
 gboolean start_audio_stream(void) {
+#ifdef IS_MINGW
+  return FALSE;
+#else
+
   const gchar *playername="audiostreamer.pl";
   gchar *astream_name=NULL;
   gchar *astream_name_out=NULL;
@@ -2209,6 +2215,7 @@ gboolean start_audio_stream(void) {
   gboolean timeout=FALSE;
 
   astream_name=g_build_filename(prefs->tmpdir,astname,NULL);
+
   mkfifo(astream_name,S_IRUSR|S_IWUSR);
 
   astream_name_out=g_build_filename(prefs->tmpdir,astname_out,NULL);
@@ -2277,11 +2284,13 @@ gboolean start_audio_stream(void) {
   g_free(astream_name_out);
 
   return TRUE;
+#endif
 }
 
 
 
 void stop_audio_stream(void) {
+#ifndef IS_MINGW
   if (astream_pid>0) {
     // if we were streaming audio, kill it
     const gchar *playername="audiostreamer.pl";
@@ -2325,7 +2334,7 @@ void stop_audio_stream(void) {
 
   }
 
-
+#endif
 }
 
 

@@ -971,6 +971,10 @@ static gboolean rowstrides_differ(int n1, int *n1_array, int n2, int *n2_array) 
 
 static gboolean align (void **pixel_data, size_t alignment, int numplanes, int height, int *rowstrides, 
 		       int *contiguous) {
+#ifndef HAVE_POSIX_MEMALIGN
+  return FALSE;
+#else
+
   // returns TRUE on success
   int i;
   int memerror;
@@ -979,12 +983,8 @@ static gboolean align (void **pixel_data, size_t alignment, int numplanes, int h
   void **new_pixel_data;
   size_t size,totsize=0;
 
-#ifndef HAVE_POSIX_MEMALIGN
-  return FALSE;
-#endif
-
   for (i=0;i<numplanes;i++) {
-    if (((gulong)(pixel_data[i]))%alignment==0) continue;
+    if (((uint64_t)(pixel_data[i]))%alignment==0) continue;
     needs_change=TRUE;
   }
 
@@ -996,6 +996,8 @@ static gboolean align (void **pixel_data, size_t alignment, int numplanes, int h
   }
 
   // try contiguous first
+
+
   if ((memerror=posix_memalign(&npixel_data,alignment,totsize))) return FALSE;
 
   new_pixel_data=(void **)g_malloc(numplanes*(sizeof(void *)));
@@ -1004,7 +1006,7 @@ static gboolean align (void **pixel_data, size_t alignment, int numplanes, int h
   needs_change=FALSE;
 
   for (i=0;i<numplanes;i++) {
-    if (((gulong)(pixel_data[i]))%alignment==0) continue;
+    if (((uint64_t)(pixel_data[i]))%alignment==0) continue;
     needs_change=TRUE;
   }
 
@@ -1047,6 +1049,7 @@ static gboolean align (void **pixel_data, size_t alignment, int numplanes, int h
   *contiguous=FALSE;
 
   return TRUE;
+#endif
 }
 
 
@@ -2401,7 +2404,7 @@ static lives_filter_error_t weed_apply_audio_instance_inner (weed_plant_t *inst,
 
 
 lives_filter_error_t weed_apply_audio_instance (weed_plant_t *init_event, float **abuf, int nbtracks, int nchans, 
-						long nsamps, gdouble arate, weed_timecode_t tc, double *vis) {
+						int64_t nsamps, gdouble arate, weed_timecode_t tc, double *vis) {
   void *in_abuf,*out_abuf;
   int i,j,error;
   weed_plant_t **layers;
@@ -2818,7 +2821,7 @@ weed_plant_t *weed_apply_effects (weed_plant_t **layers, weed_plant_t *filter_ma
 
 
 
-void weed_apply_audio_effects (weed_plant_t *filter_map, float **abuf, int nbtracks, int nchans, long nsamps, 
+void weed_apply_audio_effects (weed_plant_t *filter_map, float **abuf, int nbtracks, int nchans, int64_t nsamps, 
 			       gdouble arate, weed_timecode_t tc, double *vis) {
   int i,num_inst,error;
   void **init_events;
@@ -3632,7 +3635,7 @@ void weed_load_all (void) {
     gchar *tmp=g_strconcat(strcmp(weed_plugin_path,"")?":":"",lives_weed_plugin_path,NULL);
     g_free(weed_plugin_path);
     weed_plugin_path=tmp;
-    setenv("WEED_PLUGIN_PATH",weed_plugin_path,1);
+    lives_setenv("WEED_PLUGIN_PATH",weed_plugin_path);
   }
   g_free(lives_weed_plugin_path);
 

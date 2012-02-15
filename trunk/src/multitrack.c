@@ -2178,7 +2178,7 @@ static void renumber_clips(void) {
     if (mainw->files[cclip]!=NULL&&cclip!=mainw->scrap_file&&cclip!=mainw->ascrap_file&&
 	(mainw->files[cclip]->clip_type==CLIP_TYPE_DISK||mainw->files[cclip]->clip_type==CLIP_TYPE_FILE)&&
 	mainw->files[cclip]->unique_id==0l) {
-      mainw->files[cclip]->unique_id=random();
+      mainw->files[cclip]->unique_id=lives_random();
       save_clip_value(cclip,CLIP_DETAILS_UNIQUE_ID,&mainw->files[cclip]->unique_id);
       if (mainw->com_failed||mainw->write_failed) bad_header=TRUE;
 
@@ -8062,8 +8062,9 @@ gboolean multitrack_delete (lives_mt *mt, gboolean save_layout) {
   gboolean transfer_focus=FALSE;
   int *layout_map;
   double *layout_map_audio;
+#ifdef ENABLE_OSC
   gchar *tmp;
-
+#endif
   mainw->cancelled=CANCEL_NONE;
 
   if (mt->idlefunc>0) g_source_remove(mt->idlefunc);
@@ -9670,8 +9671,9 @@ gboolean on_multitrack_activate (GtkMenuItem *menuitem, weed_plant_t *event_list
   gint orig_file;
   gboolean response;
   gboolean transfer_focus=FALSE;
+#ifdef ENABLE_OSC
   gchar *tmp;
-
+#endif
   lives_mt *multi;
 
   xachans=xarate=xasamps=xse=0;
@@ -16114,8 +16116,8 @@ gint expose_timeline_reg_event (GtkWidget *timeline, GdkEventExpose *event, gpoi
 
 static float get_float_audio_val_at_time(gint fnum, gdouble secs, gint chnum, gint chans) {
   file *afile=mainw->files[fnum];
-  long bytes=secs*afile->arate*afile->achans*afile->asampsize/8;
-  long apos=((long)(bytes/afile->achans/(afile->asampsize/8)))*afile->achans*(afile->asampsize/8); // quantise
+  int64_t bytes=secs*afile->arate*afile->achans*afile->asampsize/8;
+  int64_t apos=((int64_t)(bytes/afile->achans/(afile->asampsize/8)))*afile->achans*(afile->asampsize/8); // quantise
   gchar *filename;
   uint8_t val8;
   uint8_t val8b;
@@ -17319,7 +17321,7 @@ GList *load_layout_map(void) {
   gchar **array;
   GList *lmap=NULL;
   layout_map *lmap_entry;
-  gint64 unique_id;
+  guint64 unique_id;
   ssize_t bytes;
 
   gchar *lmap_name=g_build_filename(prefs->tmpdir,mainw->set_name,"layouts","layout.map",NULL);

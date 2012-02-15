@@ -4,6 +4,12 @@
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
+#ifdef IS_MINGW
+#undef ENABLE_OSC
+#endif
+
+#ifdef ENABLE_OSC
+
 #ifdef HAVE_SYSTEM_WEED
 #include <weed/weed.h>
 #include <weed/weed-host.h>
@@ -2741,3 +2747,6 @@ void on_midi_load_activate (GtkMenuItem *menuitem, gpointer user_data) {
 #endif
 
 }
+
+
+#endif

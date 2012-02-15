@@ -164,11 +164,11 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
    static float old_volume=-1.;
    pulse_driver_t* pulsed = (pulse_driver_t*)arg;
 
-   gulong nframes=nbytes/pulsed->out_achans/(pulsed->out_asamps>>3);
+   uint64_t nframes=nbytes/pulsed->out_achans/(pulsed->out_asamps>>3);
 
    aserver_message_t *msg;
 
-   long seek,xseek;
+   int64_t seek,xseek;
    int new_file;
    gchar *filename;
    gboolean from_memory=FALSE;
@@ -253,11 +253,11 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
    pulsed->state=pa_context_get_state(pulsed->con);
 
    if (pulsed->state==PA_CONTEXT_READY) {
-     gulong pulseFramesAvailable = nframes;
-     gulong inputFramesAvailable;
-     gulong numFramesToWrite;
-     glong in_frames=0;
-     gulong in_bytes=0;
+     uint64_t pulseFramesAvailable = nframes;
+     uint64_t inputFramesAvailable;
+     uint64_t numFramesToWrite;
+     int64_t in_frames=0;
+     uint64_t in_bytes=0;
      gfloat shrink_factor=1.f;
      int swap_sign;
 
@@ -432,7 +432,7 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
 	 numFramesToWrite = MIN(pulseFramesAvailable, (inputFramesAvailable/ABS(shrink_factor)+.001));
 
  #ifdef DEBUG_PULSE
-	 g_printerr("inputFramesAvailable after conversion %d\n",(gulong)((gdouble)inputFramesAvailable/shrink_factor+.001));
+	 g_printerr("inputFramesAvailable after conversion %d\n",(uint64_t)((gdouble)inputFramesAvailable/shrink_factor+.001));
 	 g_printerr("nframes == %ld, pulseFramesAvailable == %ld,\n\tpulsed->num_input_channels == %ld, pulsed->out_achans == %ld\n",  nframes, pulseFramesAvailable, pulsed->in_achans, pulsed->out_achans);
  #endif
 
@@ -932,7 +932,7 @@ gdouble lives_pulse_get_pos(pulse_driver_t *pulsed) {
 gboolean pulse_audio_seek_frame (pulse_driver_t *pulsed, gint frame) {
   // seek to frame "frame" in current audio file
   // position will be adjusted to (floor) nearest sample
-  long seekstart;
+  int64_t seekstart;
   volatile aserver_message_t *pmsg;
   int alarm_handle=lives_alarm_set(LIVES_ACONNECT_TIMEOUT);
   gboolean timeout;
@@ -954,13 +954,13 @@ gboolean pulse_audio_seek_frame (pulse_driver_t *pulsed, gint frame) {
   }
   lives_alarm_clear(alarm_handle);
   if (frame>afile->frames) frame=afile->frames;
-  seekstart=(long)((gdouble)(frame-1.)/afile->fps*afile->arate)*afile->achans*(afile->asampsize/8);
+  seekstart=(int64_t)((gdouble)(frame-1.)/afile->fps*afile->arate)*afile->achans*(afile->asampsize/8);
   pulse_audio_seek_bytes(pulsed,seekstart);
   return TRUE;
 }
 
 
-long pulse_audio_seek_bytes (pulse_driver_t *pulsed, long bytes) {
+int64_t pulse_audio_seek_bytes (pulse_driver_t *pulsed, int64_t bytes) {
   // seek to position "bytes" in current audio file
   // position will be adjusted to (floor) nearest sample
 
@@ -970,7 +970,7 @@ long pulse_audio_seek_bytes (pulse_driver_t *pulsed, long bytes) {
   gboolean timeout;
   int alarm_handle=lives_alarm_set(LIVES_ACONNECT_TIMEOUT);
 
-  long seekstart;
+  int64_t seekstart;
 
   if (alarm_handle==-1) {
     LIVES_WARN("Invalid alarm handle");
@@ -988,7 +988,7 @@ long pulse_audio_seek_bytes (pulse_driver_t *pulsed, long bytes) {
   }
   lives_alarm_clear(alarm_handle);
 
-  seekstart=((long)(bytes/afile->achans/(afile->asampsize/8)))*afile->achans*(afile->asampsize/8);
+  seekstart=((int64_t)(bytes/afile->achans/(afile->asampsize/8)))*afile->achans*(afile->asampsize/8);
 
   if (seekstart<0) seekstart=0;
   if (seekstart>afile->afilesize) seekstart=afile->afilesize;

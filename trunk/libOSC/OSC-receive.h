@@ -91,13 +91,15 @@ The OpenSound Control WWW page is
   all the messages waiting in the scheduler.
 
 */
-
+#ifndef IS_MINGW
 #include <netinet/in.h>
-#include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <sys/ioctl.h>
 #include <arpa/inet.h>
+#endif
+
+#include <sys/types.h>
 
 struct OSCReceiveMemoryTuner {
     void *(*InitTimeMemoryAllocator)(int numBytes);

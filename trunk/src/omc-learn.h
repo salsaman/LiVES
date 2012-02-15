@@ -1,8 +1,9 @@
 // omc-learn.h
 // LiVES (lives-exe)
-// (c) G. Finch 2003 - 2009
+// (c) G. Finch 2003 - 2012
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
+
 
 #ifndef HAS_LIVES_OMC_LEARN_H
 #define HAS_LIVES_OMC_LEARN_H
@@ -162,6 +163,7 @@ void on_midi_load_activate (GtkMenuItem *, gpointer);
 
 #include "osc.h"
 
+
 #define OSC_BUF_SIZE 1024
 #define OSC_MAX_TYPETAGS 64 
 
@@ -170,4 +172,6 @@ OSCbuf *omc_learner_decode(gint type, gint index, const gchar *string);
 
 
 #endif // HAS_LIVES_OMC_LEARN_H
+
+
 

@@ -50,13 +50,13 @@ typedef jack_nframes_t nframes_t;
 
 typedef struct {
   gint      dev_idx;                      /**< id of this device ??? */ 
-  glong     sample_out_rate;                   /**< samples(frames) per second */
-  glong     sample_in_rate;                   /**< samples(frames) per second */
-  gulong    num_input_channels;            /**< number of input channels(1 is mono, 2 stereo etc..) */
-  gulong    num_output_channels;           /**< number of output channels(1 is mono, 2 stereo etc..) */
-  gulong    bytes_per_channel;
+  int64_t     sample_out_rate;                   /**< samples(frames) per second */
+  int64_t     sample_in_rate;                   /**< samples(frames) per second */
+  uint64_t    num_input_channels;            /**< number of input channels(1 is mono, 2 stereo etc..) */
+  uint64_t    num_output_channels;           /**< number of output channels(1 is mono, 2 stereo etc..) */
+  uint64_t    bytes_per_channel;
 
-  gulong    num_calls;                     /**< count of process_audio() calls */
+  uint64_t    num_calls;                     /**< count of process_audio() calls */
 
   jack_port_t*     output_port[JACK_MAX_OUTPUT_PORTS]; /**< output ports */
   jack_port_t*     input_port[JACK_MAX_INPUT_PORTS]; /**< input ports */
@@ -64,7 +64,7 @@ typedef struct {
 
   gchar             **jack_port_name;              /**< user given strings for the port names, can be NULL */
   unsigned int     jack_port_name_count;          /**< the number of port names given */
-  gulong    jack_port_flags;               /**< flags to be passed to jack when opening the output ports */
+  uint64_t    jack_port_flags;               /**< flags to be passed to jack when opening the output ports */
 
   lives_audio_loop_t loop;
 
@@ -91,7 +91,7 @@ typedef struct {
 
   gboolean play_when_stopped; ///< if we should play audio even when jack transport is stopped
   gint64 audio_ticks; ///< ticks when we did the last seek, used to calculate current ticks from audio
-  gulong frames_written;
+  uint64_t frames_written;
 
   gint out_chans_available;
   gint in_chans_available;
@@ -144,7 +144,7 @@ void jack_aud_pb_ready(gint fileno);
 volatile aserver_message_t *jack_get_msgq(jack_driver_t *); ///< pull last msg from msgq, or return NULL
 gint64 lives_jack_get_time(jack_driver_t *, gboolean absolute); ///< get time from jack, in 10^-8 seconds
 gboolean jack_audio_seek_frame (jack_driver_t *, gint frame); ///< seek to (video) frame
-long jack_audio_seek_bytes (jack_driver_t *, long bytes); ///< seek to byte position
+int64_t jack_audio_seek_bytes (jack_driver_t *, int64_t bytes); ///< seek to byte position
 
 void jack_get_rec_avals(jack_driver_t *);
 

@@ -41,16 +41,16 @@ typedef struct {
   pa_context_state_t state;
 
   // app side
-  glong in_arate; /**< samples(frames) per second */
-  gulong in_achans; /**< number of input channels(1 is mono, 2 stereo etc..) */
-  gulong in_asamps;
+  int64_t in_arate; /**< samples(frames) per second */
+  uint64_t in_achans; /**< number of input channels(1 is mono, 2 stereo etc..) */
+  uint64_t in_asamps;
 
   // server side
-  glong out_arate; /**< samples(frames) per second */
-  gulong out_achans; /**< number of output channels(1 is mono, 2 stereo etc..) */
-  gulong out_asamps;
+  int64_t out_arate; /**< samples(frames) per second */
+  uint64_t out_achans; /**< number of output channels(1 is mono, 2 stereo etc..) */
+  uint64_t out_asamps;
 
-  gulong out_chans_available;
+  uint64_t out_chans_available;
 
   int in_signed;
   int in_endian;
@@ -58,7 +58,7 @@ typedef struct {
   int out_signed;
   int out_endian;
 
-  gulong num_calls; /**< count of process_audio() calls */
+  uint64_t num_calls; /**< count of process_audio() calls */
 
   audio_buffer_t* aPlayPtr; ///< data read from file
   lives_audio_loop_t loop;
@@ -73,7 +73,7 @@ typedef struct {
   /**< linked list of messages we are sending to the callback process */
   volatile aserver_message_t   *msgq;
 
-  volatile gulong frames_written;
+  volatile uint64_t frames_written;
 
   gboolean is_paused;
 
@@ -100,7 +100,7 @@ typedef struct {
   lives_audio_buf_t **abufs;
   volatile gint read_abuf;
 
-  gulong chunk_size;
+  uint64_t chunk_size;
 
   volatile int astream_fd;
 
@@ -133,7 +133,7 @@ gboolean pulse_try_reconnect(void);
 // utils
 volatile aserver_message_t *pulse_get_msgq(pulse_driver_t *); ///< pull last msg from msgq, or return NULL
 
-long pulse_audio_seek_bytes (pulse_driver_t *, long bytes); ///< seek to byte position
+int64_t pulse_audio_seek_bytes (pulse_driver_t *, int64_t bytes); ///< seek to byte position
 
 gint64 lives_pulse_get_time(pulse_driver_t *, gboolean absolute); ///< get time from pa, in 10^-8 seconds
 

@@ -24,6 +24,7 @@
 #include "omc-learn.h"
 #endif
 
+#ifdef ENABLE_OSC
 
 static void handle_omc_events(void) {
   // check for external controller events
@@ -71,7 +72,7 @@ static void handle_omc_events(void) {
 }
 
 
-
+#endif
 
 
 gboolean ext_triggers_poll(gpointer data) {

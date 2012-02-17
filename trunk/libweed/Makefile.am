@@ -58,11 +58,7 @@ libweedincludedir = "$(includedir)/weed"
 
 libweed_ladir = "$(libdir)/weed"
 
-if IS_MINGW
-shared_LDFLAGS = 
-else
 shared_LDFLAGS = -shared --tag=disable-static
-endif
 
 libweed_la_LDFLAGS = -version-info $(WEED_SO_VERSION) $(shared_LDFLAGS)
 

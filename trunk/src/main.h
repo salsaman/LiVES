@@ -64,11 +64,24 @@ POSSIBILITY OF SUCH DAMAGES.
 
 #undef ENABLE_OSC
 
+#ifndef WINVER
+#define WINVER 0x0500
+#endif
+
 #include <windows.h>
 #include <winbase.h>
+#include <sddl.h>
 #include <sys/stat.h>
 
 #define O_SYNC (FILE_FLAG_NO_BUFFERING|FILE_FLAG_WRITE_THROUGH)
+
+typedef PROCESS_INFORMATION * lives_pid_t;
+typedef PROCESS_INFORMATION * lives_pgid_t;
+
+#else
+
+typedef pid_t lives_pid_t;
+typedef int lives_pgid_t;
 
 #endif
 
@@ -974,7 +987,7 @@ void add_message_scroller(GtkWidget *conter);
 
 // system calls in utils.c
 int lives_system(const char *com, gboolean allow_error);
-pid_t lives_fork(const char *com);
+lives_pid_t lives_fork(const char *com);
 ssize_t lives_write(int fd, const void *buf, size_t count, gboolean allow_fail);
 ssize_t lives_write_le(int fd, const void *buf, size_t count, gboolean allow_fail);
 ssize_t lives_read(int fd, void *buf, size_t count, gboolean allow_less);
@@ -988,13 +1001,14 @@ int lives_getuid(void);
 void lives_freep(void **ptr);
 void lives_free(gpointer ptr);
 void lives_free_with_check(gpointer ptr);
-int lives_kill(pid_t pid, int sig);
-int lives_killpg(int pgrp, int sig);
+int lives_kill(lives_pid_t pid, int sig);
+int lives_killpg(lives_pgid_t pgrp, int sig);
 void lives_srandom(unsigned int seed);
 uint64_t lives_random(void);
 ssize_t lives_readlink(const char *path, char *buf, size_t bufsiz);
 boolean lives_setenv(const char *name, const char *value);
-int lives_fsync(int fd);
+boolean lives_fsync(int fd);
+void lives_sync(void);
 
 char *filename_from_fd(char *val, int fd);
 

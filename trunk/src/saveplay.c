@@ -5424,6 +5424,7 @@ gboolean check_for_recovery_files (gboolean auto_recover) {
   gchar *com;
   int lgid=lives_getgid();
   int luid=lives_getuid();
+
   pid_t lpid=lives_getpid();
 
   com=g_strdup_printf("smogrify get_recovery_file %d %d \"%s\" recovery> \"%s\"",luid,lgid,

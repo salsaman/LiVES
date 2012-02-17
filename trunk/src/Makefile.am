@@ -25,7 +25,7 @@ endif
 
 if IS_MINGW
 mingw_CFLAGS= -DIS_MINGW=1
-gtk_LIBFLAGS = @GTK_LIBS_NODYNAMIC_NOPTHREAD@ -lpthread
+gtk_LIBFLAGS = @GTK_LIBS_NODYNAMIC@ -lpthread 
 else
 gtk_LIBFLAGS = @GTK_LIBS_NODYNAMIC@ -pthread
 endif
@@ -84,8 +84,11 @@ endif
 
 
 if ENABLE_LIBOIL
-
-oil_LDADD = @OIL_LIBS@ -loil-0.3
+if IS_MINGW
+oil_LIBFLAGS = @OIL_LIBS@
+else
+oil_LIBFLAGS = @OIL_LIBS@ -loil-0.3
+endif
 oil_CFLAGS =  @OIL_CFLAGS@ -DENABLE_OIL=1
 
 endif
@@ -199,10 +202,10 @@ lives_exe_SOURCES = \
 
 
 
-lives_exe_LDFLAGS = $(gtk_LIBFLAGS)
+lives_exe_LDFLAGS = $(gtk_LIBFLAGS) -shared $(oil_LIBFLAGS)
 
 lives_exe_LDADD = @X11_LIBS@ @MJPEGTOOLS_LIBS@ $(osc_LDADD) $(jack_LDADD) $(ldvgrab_LDADD) \
-	$(oil_LDADD) $(alsa_LDADD) $(pulse_LDADD) $(png_LDADD) $(swscale_LDADD) $(pthread_LDADD) $(libweed_LDADD) \
+	$(alsa_LDADD) $(pulse_LDADD) $(png_LDADD) $(swscale_LDADD) $(pthread_LDADD) $(libweed_LDADD) \
 	 $(giw_LDADD) $(v4l1_LDADD) \
 	@UNICAP_LIBS@
 

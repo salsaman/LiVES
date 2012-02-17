@@ -83,8 +83,12 @@ endif
 endif
 endif
 
+if IS_MINGW
+else
+lives2lives_stream_libs = lives2lives_stream.la 
 lives2lives_stream_la_CFLAGS = $(shared_cflags) $(weed_cflags)
 lives2lives_stream_la_LDFLAGS = $(shared_ldflags)
+endif
 
 yuv4mpeg_stream_la_CFLAGS = @MJPEGTOOLS_CFLAGS@ $(shared_cflags) $(weed_cflags)
 yuv4mpeg_stream_la_LDFLAGS = $(shared_ldflags) @MJPEGTOOLS_LIBS@
@@ -111,6 +115,8 @@ vloopback2_la_CFLAGS = $(shared_cflags) $(weed_cflags)
 vloopback2_la_LDFLAGS = $(shared_ldflags)
 endif
 
-videopluginslib_LTLIBRARIES = $(SDL_libs) $(YUV4MPEG_libs) $(oggstream_libs) $(icecast_output_libs) $(vjack_output_libs) lives2lives_stream.la $(vloopback_libs) $(vloopback2_libs) $(openGL_libs) $(openGL_trickery_libs)
+videopluginslib_LTLIBRARIES = $(SDL_libs) $(YUV4MPEG_libs) $(oggstream_libs) $(icecast_output_libs) \
+	$(vjack_output_libs) $(lives2lives_stream_libs) $(vloopback_libs) $(vloopback2_libs) \
+	$(openGL_libs) $(openGL_trickery_libs)
 
 EXTRA_DIST = videoplugin.h

@@ -1,7 +1,7 @@
 if ENABLE_OSC
 
 if IS_MINGW
-mingw_CFLAGS = -DIS_MINGW=1
+mingw_CFLAGS = -DIS_MINGW=1 -I/usr/i686-pc-mingw32/sys-root/mingw/include
 mingw_LIBFLAGS = -lws2_32
 endif
 

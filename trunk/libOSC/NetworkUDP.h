@@ -28,6 +28,10 @@ The OpenSound Control WWW page is
 
 #ifndef IS_MINGW
 #include <netinet/in.h>
+#else
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#endif
 
 struct NetworkReturnAddressStruct {
     struct sockaddr_in  cl_addr;
@@ -35,4 +39,3 @@ struct NetworkReturnAddressStruct {
     int sockfd;
 };
 
-#endif

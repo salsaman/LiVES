@@ -62,8 +62,6 @@ POSSIBILITY OF SUCH DAMAGES.
 
 #undef GDK_WINDOWING_X11
 
-#undef ENABLE_OSC
-
 #ifndef WINVER
 #define WINVER 0x0500
 #endif

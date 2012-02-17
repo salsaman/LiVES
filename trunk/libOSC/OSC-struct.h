@@ -26,10 +26,14 @@ The OpenSound Control WWW page is
     http://www.cnmat.berkeley.edu/OpenSoundControl
 */
 
+#ifndef IS_MINGW
 #include <netinet/in.h>
 #include <sys/time.h>
-#include <sys/types.h>
 #include <unistd.h>
+#endif
+
+#include <sys/types.h>
+
 
 #ifndef OSCH
 #define OSCH

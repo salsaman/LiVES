@@ -27,7 +27,6 @@ The OpenSound Control WWW page is
 */
 
 
-
 /* OSC-system-dependent.c
 
    Matt Wright, 3/13/98
@@ -49,9 +48,15 @@ The OpenSound Control WWW page is
     - Return error messages via OSC to some client
 */
 
+
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+#ifdef IS_MINGW
+// seems to be a bug in mingw, we need to define stderr ourselves
+#define stderr 2
+#endif
 
 void fatal_error(char *s, ...) {
     va_list ap;

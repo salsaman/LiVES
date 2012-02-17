@@ -48,6 +48,8 @@ static int package_version=2; // version of this package
 #include <gdk/gdk.h>
 #include <pango/pangocairo.h>
 
+
+
 // defines for configure dialog elements
 enum DlgControls {
   P_TEXT=0,
@@ -200,6 +202,18 @@ static void plugin_free_buffer (guchar *pixels, gpointer data) {
 
 static char **fonts_available = NULL;
 static int num_fonts_available = 0;
+
+// work around some **weirdness** with strndup
+static char *stringdup(const char *s, size_t n) {
+  char *ret;
+  size_t len=strlen(s);
+  if (len>=n) len=n-1;
+  ret=malloc(len+1);
+  memcpy(ret,s,len);
+  memset(ret+len,0,1);
+  return ret;
+}
+
 
 
 static size_t utf8len(char *text) {
@@ -889,12 +903,12 @@ int puretext_process (weed_plant_t *inst, weed_timecode_t tc) {
 		case PT_LETTER_MODE:
 		  // letter mode
 		  if (sdata->text_type==TEXT_TYPE_ASCII) {
-		    xtext=strndup(&sdata->text[toffs],1);
+		    xtext=stringdup(&sdata->text[toffs],1);
 		    toffs++;
 		  }
 		  else {
 		    int xlen=mbtowc(NULL,&sdata->text[toffs],4);
-		    xtext=strndup(&sdata->text[toffs],xlen);
+		    xtext=stringdup(&sdata->text[toffs],xlen);
 		    toffs+=xlen;
 		  }
 		  break;
@@ -907,7 +921,7 @@ int puretext_process (weed_plant_t *inst, weed_timecode_t tc) {
 		  else {
 		    xsubst=get_nth_word_utf8(sdata->text,i);
 		  }
-		  xtext=strndup(&sdata->text[xsubst->start],xsubst->length);
+		  xtext=stringdup(&sdata->text[xsubst->start],xsubst->length);
 
 		  weed_free(xsubst);
 		  break;

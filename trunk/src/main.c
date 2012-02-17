@@ -456,6 +456,7 @@ static gboolean pre_init(void) {
 
 #ifdef ENABLE_OSC
 #ifdef OMC_JS_IMPL
+#ifndef IS_MINGW
   if (strlen(prefs->omc_js_fname)==0) {
     const gchar *tmp=get_js_filename();
     if (tmp!=NULL) {
@@ -464,16 +465,19 @@ static gboolean pre_init(void) {
   }
 #endif
 #endif
+#endif
   
   get_pref_utf8("omc_midi_fname",prefs->omc_midi_fname,256);
 #ifdef ENABLE_OSC
 #ifdef OMC_MIDI_IMPL
+#ifndef IS_MINGW
   if (strlen(prefs->omc_midi_fname)==0) {
     const gchar *tmp=get_midi_filename();
     if (tmp!=NULL) {
       g_snprintf(prefs->omc_midi_fname,256,"%s",tmp);
     }
   }
+#endif
 #endif
 #endif
 
@@ -578,42 +582,6 @@ static void lives_init(_ign_opts *ign_opts) {
   uint32_t rseed;
   GList *encoders=NULL;
   GList *encoder_capabilities=NULL;
-
-#ifndef IS_MINGW
-  sigset_t smask;
-
-  struct sigaction sact;
-
-  sigemptyset(&smask);
-
-  sigaddset(&smask,LIVES_SIGINT);
-  sigaddset(&smask,LIVES_SIGTERM);
-  sigaddset(&smask,LIVES_SIGSEGV);
-  sigaddset(&smask,LIVES_SIGABRT);
-
-  sact.sa_handler=catch_sigint;
-  sact.sa_flags=0;
-  sact.sa_mask=smask;
-
-
-  sigaction (LIVES_SIGINT, &sact, NULL);
-  sigaction (LIVES_SIGTERM, &sact, NULL);
-  sigaction (LIVES_SIGSEGV, &sact, NULL);
-  sigaction (LIVES_SIGABRT, &sact, NULL);
-
-#else
-
-  typedef void (*SignalHandlerPointer)(int);
-
-  SignalHandlerPointer previousHandler;
-
-  previousHandler = signal(LIVES_SIGINT, catch_sigint);
-  previousHandler = signal(LIVES_SIGTERM, catch_sigint);
-  previousHandler = signal(LIVES_SIGSEGV, catch_sigint);
-  previousHandler = signal(LIVES_SIGABRT, catch_sigint);
-
-  previousHandler = previousHandler; // shut gcc up
-#endif
 
   // initialise the mainwindow data
   mainw->scr_width=gdk_screen_width();
@@ -2272,8 +2240,50 @@ static gboolean lives_startup(gpointer data) {
 
 
 int main (int argc, char *argv[]) {
+#ifdef ENABLE_OSC
+#ifdef IS_MINGW
+  WSADATA wsaData;
+  int iResult;
+#endif
+#endif
   ssize_t mynsize;
   gchar fbuff[PATH_MAX];
+
+#ifndef IS_MINGW
+  sigset_t smask;
+
+  struct sigaction sact;
+
+  sigemptyset(&smask);
+
+  sigaddset(&smask,LIVES_SIGINT);
+  sigaddset(&smask,LIVES_SIGTERM);
+  sigaddset(&smask,LIVES_SIGSEGV);
+  sigaddset(&smask,LIVES_SIGABRT);
+
+  sact.sa_handler=catch_sigint;
+  sact.sa_flags=0;
+  sact.sa_mask=smask;
+
+
+  sigaction (LIVES_SIGINT, &sact, NULL);
+  sigaction (LIVES_SIGTERM, &sact, NULL);
+  sigaction (LIVES_SIGSEGV, &sact, NULL);
+  sigaction (LIVES_SIGABRT, &sact, NULL);
+
+#else
+
+  typedef void (*SignalHandlerPointer)(int);
+
+  SignalHandlerPointer previousHandler;
+
+  previousHandler = signal(LIVES_SIGINT, catch_sigint);
+  previousHandler = signal(LIVES_SIGTERM, catch_sigint);
+  previousHandler = signal(LIVES_SIGSEGV, catch_sigint);
+  previousHandler = signal(LIVES_SIGABRT, catch_sigint);
+
+  previousHandler = previousHandler; // shut gcc up
+#endif
 
   ign_opts.ign_clipset=ign_opts.ign_osc=ign_opts.ign_aplayer=ign_opts.ign_stmode=ign_opts.ign_vppdefs=FALSE;
 
@@ -2297,6 +2307,19 @@ int main (int argc, char *argv[]) {
 
   // force decimal point to be a "."
   putenv ("LC_NUMERIC=C");
+
+#ifdef ENABLE_OSC
+#ifdef IS_MINGW
+
+  // Initialize Winsock
+  iResult = WSAStartup(MAKEWORD(2,2), &wsaData);
+  if (iResult != 0) {
+    printf("WSAStartup failed: %d\n", iResult);
+    exit (1);
+
+  }
+#endif
+#endif
 
   gtk_init (&argc, &argv);
 

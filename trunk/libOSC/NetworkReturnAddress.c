@@ -35,6 +35,10 @@ The OpenSound Control WWW page is
   9/11/98
 */
 
+#ifdef IS_MINGW
+#define _SYS_SELECT_H 1
+#endif
+
 #include <libOSC/OSC-common.h>
 #include <libOSC/OSC-timetag.h>
 #include <libOSC/OSC-address-space.h>

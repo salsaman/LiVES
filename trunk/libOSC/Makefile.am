@@ -15,7 +15,12 @@ if IS_SOLARIS
 solaris_CFLAGS=-DIS_SOLARIS=1
 endif
 
-libOSC_la_CFLAGS = $(DEBUG_CFLAGS) $(solaris_CFLAGS) -Wstrict-aliasing=0
+if IS_MINGW
+mingw_CFLAGS=-DIS_MINGW=1 -I/usr/i686-pc-mingw32/sys-root/mingw/include
+mingw_LIBFLAGS = -lws2_32
+endif
+
+libOSC_la_CFLAGS = $(DEBUG_CFLAGS) $(solaris_CFLAGS) $(mingw_CFLAGS) -Wstrict-aliasing=0
 
 if ENABLE_OSC
 libOSC_la_SOURCES = OSC-address-space.c OSC-address-space.h\
@@ -36,5 +41,5 @@ libOSC_la_SOURCES = OSC-address-space.c OSC-address-space.h\
 		 OSC-dispatch.h
 endif
 
-libOSC_la_LDFLAGS = $(ALL_LIB_OPTS) -DDYNAMIC -O2 -Wall -rdynamic
+libOSC_la_LDFLAGS = $(ALL_LIB_OPTS) $(mingw_LIBFLAGS) -DDYNAMIC -O2 -Wall -rdynamic
 

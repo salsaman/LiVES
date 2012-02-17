@@ -26,6 +26,9 @@ The OpenSound Control WWW page is
     http://www.cnmat.berkeley.edu/OpenSoundControl
 */
 
+#ifdef IS_MINGW
+#define _SYS_SELECT_H 1
+#endif
 
 #define PARANOID 0
 /*
@@ -36,14 +39,10 @@ The OpenSound Control WWW page is
 
 */
 #include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
 #include <errno.h>
 #include <string.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
+#include <stdlib.h>
+
 #include <libOSC/OSC-common.h>
 #include <libOSC/OSC-timetag.h>
 #include <libOSC/OSC-address-space.h>
@@ -60,7 +59,18 @@ The OpenSound Control WWW page is
 #include <sys/filio.h>
 #endif
 
+#ifdef IS_MINGW
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#else
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
+#endif
 
 struct {
     OSCQueue TheQueue;		/* The Priority Queue */
@@ -783,9 +793,14 @@ Boolean OSCScheduleInternalMessages(OSCTimeTag when, int numMessages,
 }
 
 Boolean NetworkPacketWaiting(OSCPacketBuffer packet) {
-	int n;
+	long unsigned int n;
 	NetworkReturnAddressPtr na = OSCPacketBufferGetClientAddr(packet);
+
+#ifndef IS_MINGW
 	if( ioctl( na->sockfd, FIONREAD, &n, 0)==-1) return FALSE;
+#else
+	if( ioctlsocket( na->sockfd, FIONREAD, &n)==-1) return FALSE;
+#endif
 	if( n==0 ) return FALSE;
 	return TRUE;
 }

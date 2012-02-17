@@ -337,7 +337,7 @@ typedef struct {
   gint scr_width;
   gint scr_height;
   lives_toy_t toy_type;
-  pid_t toy_alives_pid; // 0, or thread for autolives toy
+  lives_pid_t toy_alives_pid; // 0, or thread for autolives toy
   gboolean autolives_reset_fx;
 
   gboolean toy_go_wild;

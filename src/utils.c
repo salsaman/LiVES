@@ -4164,6 +4164,10 @@ gchar *insert_newlines(const gchar *text, int maxwidth) {
   //pass 1, get the required size
   for (i=0;i<tlen;i+=xtoffs) {
     xtoffs=mbtowc(&utfsym,&text[i],4); // get next utf8 wchar
+    if (xtoffs==-1) {
+      return g_strdup(text);
+    }
+
     if (!strncmp(text+i,"\n",nlen)) runlen=0; // is a newline (in any encoding)
     else {
       runlen++;
@@ -4182,8 +4186,6 @@ gchar *insert_newlines(const gchar *text, int maxwidth) {
   }
 
 
-
-
   retstr=(gchar *)g_malloc(req_size);
   req_size=0; // reuse as a ptr to offset in retstr
   runlen=0;
@@ -4191,8 +4193,8 @@ gchar *insert_newlines(const gchar *text, int maxwidth) {
 
   //pass 2, copy and insert newlines
 
-
   for (i=0;i<tlen;i+=xtoffs) {
+
     xtoffs=mbtowc(&utfsym,&text[i],4); // get next utf8 wchar
     if (!strncmp(text+i,"\n",nlen)) runlen=0; // is a newline (in any encoding)
     else {
@@ -4213,10 +4215,11 @@ gchar *insert_newlines(const gchar *text, int maxwidth) {
     else needsnl=FALSE;
     memcpy(retstr+req_size,&utfsym,xtoffs);
     req_size+=xtoffs;
+
   }
 
   memset(retstr+req_size,0,1);
-
+  
   return retstr;
 }
 

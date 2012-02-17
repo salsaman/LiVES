@@ -40,10 +40,10 @@ The OSC webpage is http://cnmat.cnmat.berkeley.edu/OpenSoundControl
 #include <sys/stat.h>
 
 #include <sys/param.h>
-#include <sys/time.h>
 
 #ifndef IS_MINGW
 #include <netinet/in.h>
+#include <sys/time.h>
 
 #include <rpc/rpc.h>
 #include <sys/socket.h>
@@ -57,6 +57,7 @@ The OSC webpage is http://cnmat.cnmat.berkeley.edu/OpenSoundControl
 
 #else
 #include <winsock2.h>
+#include <ws2tcpip.h>
 
 
 #include <fcntl.h>
@@ -75,6 +76,11 @@ int mkstemp(char *tmpl)
 
 #endif
 
+#if IS_SOLARIS
+#include <sys/filio.h>
+#endif
+
+
 #include <ctype.h>
 #include <signal.h>
 #include <sys/fcntl.h>
@@ -88,148 +94,154 @@ int mkstemp(char *tmpl)
 #define UNIXDG_TMP "/tmp/htm.XXXXXX"
 #include "htmsocket.h"                          
 
-#ifndef IS_MINGW
 
 typedef struct
 {
-	float srate;
+  float srate;
 
-	struct sockaddr_in serv_addr; /* udp socket */
-        struct sockaddr_un     userv_addr; /* UNIX socket */
-	int sockfd;		/* socket file descriptor */
-	int index, len,uservlen;
-	void *addr;
-	int id;
-} desc;
-
+  struct sockaddr_in serv_addr; /* udp socket */
+#ifndef IS_MINGW
+  struct sockaddr_un userv_addr; /* UNIX socket */
 #endif
+  int sockfd;		/* socket file descriptor */
+  int index, len,uservlen;
+  void *addr;
+  int id;
+} desc;
 
 
 /* open a socket for HTM communication to given  host on given portnumber */
 /* if host is 0 then UNIX protocol is used (i.e. local communication */
-void *OpenHTMSocket(char *host, int portnumber)
-{
+
+void *OpenHTMSocket(char *host, int portnumber) {
+  //#ifndef IS_MINGW
+  int sockfd;
+  struct sockaddr_in  cl_addr;
 #ifndef IS_MINGW
-	int sockfd;
-	struct sockaddr_in  cl_addr;
-	struct sockaddr_un  ucl_addr;
-	desc *o;
-	o = malloc(sizeof(*o));
-	if(!o)
-		return 0;
-	if(!host)
-	{
-		int clilen;
-		  o->len = sizeof(ucl_addr);
-		/*
-		         * Fill in the structure "userv_addr" with the address of the
-		         * server that we want to send to.
-		*/
-		
-		  memset((char *) &o->userv_addr, 0, sizeof(o->userv_addr));
-		       o->userv_addr.sun_family = AF_UNIX;
-		strcpy(o->userv_addr.sun_path, UNIXDG_PATH);
-			sprintf(o->userv_addr.sun_path+strlen(o->userv_addr.sun_path), "%d", portnumber);
-	        o->uservlen = sizeof(o->userv_addr.sun_family) + strlen(o->userv_addr.sun_path);
-		o->addr = &(o->userv_addr);
-		/*
-		* Open a socket (a UNIX domain datagram socket).
-		*/
-		
-		if ( (sockfd = socket(AF_UNIX, SOCK_DGRAM, 0)) >= 0)
-		{
-			/*
-			 * Bind a local address for us.
-			 * In the UNIX domain we have to choose our own name (that
-			 * should be unique).  We'll use mktemp() to create a unique
-			 * pathname, based on our process id.
-			 */
-		  int dummy;
-
-		  memset((char *) &ucl_addr, 0, sizeof(ucl_addr));    /* zero out */
-			ucl_addr.sun_family = AF_UNIX;
-			strcpy(ucl_addr.sun_path, UNIXDG_TMP);
-
-			dummy=mkstemp(ucl_addr.sun_path);
-			clilen = sizeof(ucl_addr.sun_family) + strlen(ucl_addr.sun_path);
-		
-			if (bind(sockfd, (struct sockaddr *) &ucl_addr, clilen) < 0)
-			{
-				perror("client: can't bind local address");
-				close(sockfd);
-				sockfd = -1;
-			}
-		}
-		else
-			perror("unable to make socket\n");
-
-	}else
-	{
-		/*
-		         * Fill in the structure "serv_addr" with the address of the
-		         * server that we want to send to.
-		*/
-		o->len = sizeof(cl_addr);
-		memset((char *)&o->serv_addr, 0, sizeof(o->serv_addr));
-		o->serv_addr.sin_family = AF_INET;
-
-	    /* MW 6/6/96: Call gethostbyname() instead of inet_addr(),
-	       so that host can be either an Internet host name (e.g.,
-	       "les") or an Internet address in standard dot notation 
-	       (e.g., "128.32.122.13") */
-	    {
-		struct hostent *hostsEntry;
-		unsigned long address;
-
-		hostsEntry = gethostbyname(host);
-		if (hostsEntry == NULL) {
-		    fprintf(stderr, "Couldn't decipher host name \"%s\"\n",
-			    host);
-		    return 0;
-		}
-		
-		address = *((unsigned long *) hostsEntry->h_addr_list[0]);
-		o->serv_addr.sin_addr.s_addr = address;
-	    }
-
-	    /* was: o->serv_addr.sin_addr.s_addr = inet_addr(host); */
-
-	    /* End MW changes */
-
-			o->serv_addr.sin_port = htons(portnumber);
-		o->addr = &(o->serv_addr);
-		/*
-		* Open a socket (a UDP domain datagram socket).
-		*/
-		if((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) >= 0)
-		{
-		  memset((char *)&cl_addr, 0, sizeof(cl_addr));
-			cl_addr.sin_family = AF_INET;
-			cl_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-			cl_addr.sin_port = htons(0);
-			
-			if(bind(sockfd, (struct sockaddr *) &cl_addr, sizeof(cl_addr)) < 0)
-			{
-				perror("could not bind\n");
-				close(sockfd);
-				sockfd = -1;
-			}
-		}
-		else
-		{
-			perror("unable to make socket\n");
-		}
-		
-	}
-	if(sockfd<0)
-	{
-		free(o); o = 0;
-	}
-	else
-		o->sockfd = sockfd;
-	return o;
+  struct sockaddr_un  ucl_addr;
 #endif
-	return NULL;
+  desc *o;
+  o = malloc(sizeof(*o));
+  if(!o)
+    return 0;
+#ifdef IS_MINGW
+  if (!host) host="localhost";
+#else
+  if(!host)
+    {
+      int clilen;
+      o->len = sizeof(ucl_addr);
+      /*
+       * Fill in the structure "userv_addr" with the address of the
+       * server that we want to send to.
+       */
+		
+      memset((char *) &o->userv_addr, 0, sizeof(o->userv_addr));
+      o->userv_addr.sun_family = AF_UNIX;
+      strcpy(o->userv_addr.sun_path, UNIXDG_PATH);
+      sprintf(o->userv_addr.sun_path+strlen(o->userv_addr.sun_path), "%d", portnumber);
+      o->uservlen = sizeof(o->userv_addr.sun_family) + strlen(o->userv_addr.sun_path);
+      o->addr = &(o->userv_addr);
+      /*
+       * Open a socket (a UNIX domain datagram socket).
+       */
+		
+      if ( (sockfd = socket(AF_UNIX, SOCK_DGRAM, 0)) >= 0)
+	{
+	  /*
+	   * Bind a local address for us.
+	   * In the UNIX domain we have to choose our own name (that
+	   * should be unique).  We'll use mktemp() to create a unique
+	   * pathname, based on our process id.
+	   */
+	  int dummy;
+
+	  memset((char *) &ucl_addr, 0, sizeof(ucl_addr));    /* zero out */
+	  ucl_addr.sun_family = AF_UNIX;
+	  strcpy(ucl_addr.sun_path, UNIXDG_TMP);
+
+	  dummy=mkstemp(ucl_addr.sun_path);
+	  clilen = sizeof(ucl_addr.sun_family) + strlen(ucl_addr.sun_path);
+		
+	  if (bind(sockfd, (struct sockaddr *) &ucl_addr, clilen) < 0)
+	    {
+	      perror("client: can't bind local address");
+	      close(sockfd);
+	      sockfd = -1;
+	    }
+	}
+      else
+	perror("unable to make socket\n");
+
+    }else
+    {
+#endif
+      /*
+       * Fill in the structure "serv_addr" with the address of the
+       * server that we want to send to.
+       */
+      o->len = sizeof(cl_addr);
+      memset((char *)&o->serv_addr, 0, sizeof(o->serv_addr));
+      o->serv_addr.sin_family = AF_INET;
+
+      /* MW 6/6/96: Call gethostbyname() instead of inet_addr(),
+	 so that host can be either an Internet host name (e.g.,
+	 "les") or an Internet address in standard dot notation 
+	 (e.g., "128.32.122.13") */
+      {
+	struct hostent *hostsEntry;
+	unsigned long address;
+
+	hostsEntry = gethostbyname(host);
+	if (hostsEntry == NULL) {
+	  fprintf(stderr, "Couldn't decipher host name \"%s\"\n",
+		  host);
+	  return 0;
+	}
+		
+	address = *((unsigned long *) hostsEntry->h_addr_list[0]);
+	o->serv_addr.sin_addr.s_addr = address;
+      }
+
+      /* was: o->serv_addr.sin_addr.s_addr = inet_addr(host); */
+
+      /* End MW changes */
+
+      o->serv_addr.sin_port = htons(portnumber);
+      o->addr = &(o->serv_addr);
+      /*
+       * Open a socket (a UDP domain datagram socket).
+       */
+      if((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) >= 0)
+	{
+	  memset((char *)&cl_addr, 0, sizeof(cl_addr));
+	  cl_addr.sin_family = AF_INET;
+	  cl_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+	  cl_addr.sin_port = htons(0);
+			
+	  if(bind(sockfd, (struct sockaddr *) &cl_addr, sizeof(cl_addr)) < 0)
+	    {
+	      perror("could not bind\n");
+	      close(sockfd);
+	      sockfd = -1;
+	    }
+	}
+      else
+	{
+	  perror("unable to make socket\n");
+	}
+#ifndef IS_MINGW		
+    }
+#endif
+  if(sockfd<0)
+    {
+      free(o); o = 0;
+    }
+  else
+    o->sockfd = sockfd;
+  return o;
+  //#endif
+    return NULL;
 }
 
 
@@ -248,17 +260,17 @@ static  bool sendudp(const struct sockaddr *sp, int sockfd,int length, int count
 }
 bool SendHTMSocket(void *htmsendhandle, int length_in_bytes, void *buffer)
 {
-#ifndef IS_MINGW
+  //#ifndef IS_MINGW
 	desc *o = (desc *)htmsendhandle;
 	return sendudp(o->addr, o->sockfd, o->len, length_in_bytes, buffer);
-#endif
+	//#endif
 	return FALSE;
 }
 void CloseHTMSocket(void *htmsendhandle)
 {
-#ifndef IS_MINGW
+  //#ifndef IS_MINGW
 	desc *o = (desc *)htmsendhandle;
 	close(o->sockfd);
 	free(o);
-#endif
+	//#endif
 }

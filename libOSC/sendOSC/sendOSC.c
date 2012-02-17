@@ -60,6 +60,7 @@ The OSC webpage is http://cnmat.cnmat.berkeley.edu/OpenSoundControl
 #include <netinet/in.h>
 #else
 #include <winsock2.h>
+#include <ws2tcpip.h>
 #endif
 #include <string.h>
 #include <inttypes.h>
@@ -97,9 +98,23 @@ static int exitStatus = 0;
 static int useTypeTags = 1;
 
 int main(int argc, char *argv[]) {
-    int portnumber;
-    char *hostname = 0;
-    void *htmsocket;
+#ifdef IS_MINGW
+  WSADATA wsaData;
+  int iResult;
+#endif
+
+  int portnumber;
+  char *hostname = 0;
+  void *htmsocket;
+
+#ifdef IS_MINGW
+  // Initialize Winsock
+  iResult = WSAStartup(MAKEWORD(2,2), &wsaData);
+  if (iResult != 0) {
+    printf("WSAStartup failed: %d\n", iResult);
+    exit (1);
+  }
+#endif
 
     argc--;
     argv++;
@@ -151,6 +166,11 @@ int main(int argc, char *argv[]) {
         InteractiveMode(htmsocket);
     }
     CloseHTMSocket(htmsocket);
+
+#ifdef IS_MINGW
+    WSACleanup();
+#endif
+    
     exit(exitStatus);
 
 

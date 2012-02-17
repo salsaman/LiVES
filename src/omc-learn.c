@@ -4,9 +4,6 @@
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
-#ifdef IS_MINGW
-#undef ENABLE_OSC
-#endif
 
 #ifdef ENABLE_OSC
 
@@ -151,7 +148,7 @@ static int js_fd;
 
 
 
-
+#ifndef IS_MINGW
 const gchar * get_js_filename(void) {
   gchar *js_fname;
 
@@ -174,7 +171,7 @@ const gchar * get_js_filename(void) {
   }
   return js_fname;
 }
-
+#endif
 
 
 gboolean js_open(void) {
@@ -252,6 +249,8 @@ static LIVES_INLINE int js_msg_type(const gchar *string) {
 
 static int midi_fd;
 
+#ifndef IS_MINGW
+
 
 const gchar *get_midi_filename(void) {
 gchar *midi_fname;
@@ -273,10 +272,14 @@ gchar *midi_fname;
   return midi_fname;
 }
 
+#endif
+
 
 gboolean midi_open(void) {
 
+#ifndef IS_MINGW  
   gchar *msg;
+#endif
 
   if (!(prefs->omc_dev_opts&OMC_DEV_MIDI)) return TRUE;
 
@@ -305,7 +308,8 @@ gboolean midi_open(void) {
   else {
 
 #endif
-  
+
+#ifndef IS_MINGW  
   if (prefs->omc_midi_fname!=NULL) {
     midi_fd = open(prefs->omc_midi_fname, O_RDONLY|O_NONBLOCK);
     if (midi_fd < 0) return FALSE;
@@ -321,6 +325,7 @@ gboolean midi_open(void) {
   msg=g_strdup_printf(_("Responding to MIDI events from %s\n"),prefs->omc_midi_fname);
   d_print(msg);
   g_free(msg);
+#endif
 
 #ifdef ALSA_MIDI
   }

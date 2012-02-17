@@ -361,6 +361,11 @@ void lives_exit (void) {
 
 #ifdef ENABLE_OSC
     if (prefs->osc_udp_started) lives_osc_end();
+
+#ifdef IS_MINGW
+    WSACleanup();
+#endif
+
 #endif
   }
 

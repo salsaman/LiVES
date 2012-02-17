@@ -7,7 +7,10 @@
 #include "main.h"
 
 #ifdef ENABLE_OSC
+
+#ifndef IS_MINGW
 #include <netinet/in.h>
+#endif
 
 #ifdef HAVE_SYSTEM_WEED
 #include <weed/weed.h>

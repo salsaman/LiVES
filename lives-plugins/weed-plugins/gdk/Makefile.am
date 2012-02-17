@@ -12,19 +12,29 @@ shared_ldflags = -shared -fPIC -DPIC -Wl,-Bsymbolic -module -avoid-version --tag
 shared_cflags = -fPIC -DPIC
 endif
 
+
+
 if HAVE_SYSTEM_WEED
-AM_LDFLAGS = $(shared_ldflags) @GTK_LIBS@ @WEED_UTILS_LIBS@
+AM_LDFLAGS = $(shared_ldflags) @GTK_LIBS@ @WEED_UTILS_LIBS@ 
 weed_CFLAGS = -DHAVE_SYSTEM_WEED
 else
-AM_LDFLAGS = $(shared_ldflags) @GTK_LIBS@ ../../../libweed/libweed-utils.la
-weed_CFLAGS = 
+if IS_MINGW
+AM_LDFLAGS = $(shared_ldflags) @GTK_LIBS@ -no-undefined -Wl,../../../libweed/.libs/libweed-utils.a
+else
+AM_LDFLAGS = $(shared_ldflags) @GTK_LIBS@ ../../../libweed/.libs/libweed-utils.la
+endif
+weed_CFLAGS =
 endif
 
 if HAVE_SYSTEM_WEED_PLUGIN_UTILS
 AM_LDFLAGS += @WEED_PLUGIN_UTILS_LIBS@
-weed_CFLAGS += -DHAVE_SYSTEM_WEED_PLUGIN_UTILS
+weed_CFLAGS = -DHAVE_SYSTEM_WEED_PLUGIN_UTILS
+else
+if IS_MINGW
+AM_LDFLAGS += -Wl,../../../libweed/.libs/libweed-plugin-utils.a
 else
 AM_LDFLAGS += ../../../libweed/libweed-plugin-utils.la
+endif
 endif
 
 if HAVE_SYSTEM_WEED_COMPAT

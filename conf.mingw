@@ -1,1 +1,1 @@
-./configure --host=i686-pc-mingw32 --enable-static --disable-shared
+./configure --host=i686-pc-mingw32

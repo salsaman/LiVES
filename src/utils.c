@@ -108,11 +108,28 @@ LIVES_INLINE pid_t lives_getpid(void) {
 #endif
 }
 
+
+#ifdef IS_MINGW
+LIVES_INLINE int sidhash(char *strsid) {
+  gchar **array=g_strsplit((gchar *)strsid,"-",-1);
+  int retval=atoi(array[4])+atoi(array[5]);
+  g_strfreev(array);
+  return retval;
+}
+#endif
+
+
+
+
+
 LIVES_INLINE int lives_getuid(void) {
 #ifdef IS_MINGW
   HANDLE Thandle;
   DWORD DAmask, size;
-  SID SidInfo;
+  TOKEN_USER tuser;
+  SID_AND_ATTRIBUTES SidInfo;
+  char *strsid;
+  int retval;
 
   DAmask = TOKEN_READ;
   
@@ -121,46 +138,34 @@ LIVES_INLINE int lives_getuid(void) {
     return 0;
   }
   
-  if (GetTokenInformation(Thandle, TokenLogonSid, &SidInfo, sizeof(SidInfo), &size) == 0) {
+  if (GetTokenInformation(Thandle, TokenUser, &tuser, sizeof(SidInfo), &size) == 0) {
+    CloseHandle(Thandle);
     LIVES_ERROR("could not open token info");
     return 0;
   }
-  return (int)(SidInfo&0xFFFF);
+
+  SidInfo=tuser.User;
+
+  ConvertSidToStringSid(SidInfo.Sid,&strsid);
+  // string sid is eg: S-1-5-5-X-Y
+  retval=sidhash(strsid);
+  LocalFree(strsid);
+  CloseHandle(Thandle);
+  return retval;
+#else
+  return geteuid();
 #endif
-  return getuid();
+  return 0; // stop gcc complaining
 }
 
 
 LIVES_INLINE int lives_getgid(void) {
 #ifdef IS_MINGW
-  HANDLE Thandle;
-  DWORD DAmask, gsize, size;
-  SID SidInfo;
-  PTOKEN_GROUPS GInfo = NULL;
-
-  DAmask = TOKEN_READ;
-  
-  if (OpenProcessToken(GetCurrentProcess(), DAmask, &Thandle)) {
-    LIVES_ERROR("could not open token");
-    return 0;
-  }
-
-  /* We will get this twice to get enough space of the groups */
-  gsize = 0;
-  if (GetTokenInformation(Thandle, TokenGroups, &SidInfo, sizeof(SidInfo), &size) == 0) {
-    printf("error: get token information failed\n");
-  }
-  else {
-    gsize = size;
-    GInfo = malloc(gsize * sizeof(TOKEN_GROUPS));
-    if (GetTokenInformation(Thandle, TokenGroups, &SidInfo, sizeof(SidInfo), &size) == 0) {
-      printf("success: the group SID's were obtained from the token\n");
-    }
-  }
-      
-  return (int)((SidInfo>>16)&0xFFFF);
+  return lives_getuid();
+#else
+  return getegid();
 #endif
-  return getgid();
+  return 0; // stop gcc complaining
 }
 
 
@@ -177,12 +182,23 @@ LIVES_INLINE ssize_t lives_readlink(const char *path, char *buf, size_t bufsiz) 
 }
 
 
-LIVES_INLINE int lives_fsync(int fd) {
+LIVES_INLINE boolean lives_fsync(int fd) {
   // ret TRUE on success
 #ifndef IS_MINGW
   return !fsync(fd);
 #else
   return _commit(fd);
+#endif
+}
+
+
+LIVES_INLINE void lives_sync(void) {
+  // ret TRUE on success
+#ifndef IS_MINGW
+  sync();
+#else
+  // TODO
+  return;
 #endif
 }
 
@@ -236,10 +252,10 @@ int lives_system(const char *com, gboolean allow_error) {
 
 
 
-pid_t lives_fork(const char *com) {
+lives_pid_t lives_fork(const char *com) {
   // returns a negative number which is the pgid to lives_kill
 
-  // mingw - return (DWORD) dwProcessGroupId to use in GenerateConsoleCtrlEvent ?
+  // mingw - return PROCESS_INFORMATION * to use in GenerateConsoleCtrlEvent (?)
 
   // to signal to sub process and all children
   // TODO *** - error check
@@ -259,8 +275,8 @@ pid_t lives_fork(const char *com) {
   STARTUPINFO si;
   PROCESS_INFORMATION *pi=malloc(sizeof(PROCESS_INFORMATION));
 
-  return CreateProcess(NULL,(char *)com,NULL,NULL,FALSE,CREATE_NEW_PROCESS_GROUP,NULL,NULL,&si,pi);
-  return pi; // TODO ***** !!!
+  CreateProcess(NULL,(char *)com,NULL,NULL,FALSE,CREATE_NEW_PROCESS_GROUP,NULL,NULL,&si,pi);
+  return pi;
 #endif
 }
 
@@ -464,12 +480,27 @@ LIVES_INLINE void lives_freep(void **ptr) {
   }
 }
 
-LIVES_INLINE int lives_kill(pid_t pid, int sig) {
+LIVES_INLINE int lives_kill(lives_pid_t pid, int sig) {
+#ifndef IS_MINGW
   return kill(pid,sig);
+#else
+  CloseHandle( pid->hProcess );
+  CloseHandle( pid->hThread );
+  GenerateConsoleCtrlEvent(CTRL_BREAK_EVENT, pid->dwProcessId);
+#endif
+  return 0;
 };
 
-LIVES_INLINE int lives_killpg(int pgrp, int sig) {
+
+LIVES_INLINE int lives_killpg(lives_pgid_t pgrp, int sig) {
+#ifndef IS_MINGW
   return killpg(pgrp,sig);
+#else
+  CloseHandle( pgrp->hProcess );
+  CloseHandle( pgrp->hThread );
+  GenerateConsoleCtrlEvent(CTRL_BREAK_EVENT, pgrp->dwProcessId);
+#endif
+  return 0;
 };
 
 
@@ -3059,6 +3090,7 @@ gboolean check_dir_access (const gchar *dir) {
 
 
 gboolean check_dev_busy(gchar *devstr) {
+#ifndef IS_MINGW
   int ret;
   int fd=open(devstr,O_RDONLY|O_NONBLOCK);
   if (fd==-1) return FALSE;
@@ -3066,6 +3098,8 @@ gboolean check_dev_busy(gchar *devstr) {
   close(fd);
   if (ret==-1) return FALSE;
   return TRUE;
+#endif
+  return FALSE;
 }
 
 
@@ -3692,7 +3726,7 @@ gboolean get_clip_value(int which, lives_clip_details_t what, void *retval, size
     if (val==NULL) return FALSE;
   }
   else {
-    com=g_strdup_printf("smogrify get_clip_value \"%s\" %d %d \"%s\"",key,getuid(),getpid(),lives_header);
+    com=g_strdup_printf("smogrify get_clip_value \"%s\" %d %d \"%s\"",key,lives_getuid(),lives_getpid(),lives_header);
     g_free(lives_header);
     g_free(key);
     
@@ -3708,7 +3742,7 @@ gboolean get_clip_value(int which, lives_clip_details_t what, void *retval, size
       return FALSE;
     }
     
-    vfile=g_strdup_printf("%s/.smogval.%d.%d",prefs->tmpdir,getuid(),getpid());
+    vfile=g_strdup_printf("%s/.smogval.%d.%d",prefs->tmpdir,lives_getuid(),lives_getpid());
 
     do {
       retval2=0;
@@ -4370,11 +4404,11 @@ void adjustment_configure(GtkAdjustment *adjustment,
 
 
 gboolean is_writeable_dir(const gchar *dir) {
-  // get free space in bytes for volume containing directory dir
   // return 0 if we cannot create/write to dir
 
   // dir should be in locale encoding
 
+#ifndef IS_MINGW
   gchar *com;
   struct statvfs sbuf;
 
@@ -4391,6 +4425,25 @@ gboolean is_writeable_dir(const gchar *dir) {
   if (statvfs(dir,&sbuf)==-1) return FALSE;
   if (sbuf.f_flag&ST_RDONLY) return FALSE;
 
+#else
+  gchar *testname=g_build_filename(dir,"x123test",NULL);
+  HANDLE hTempFile; 
+  hTempFile = CreateFile(testname, // file name 
+			 GENERIC_WRITE,        // open for write 
+			 0,                    // do not share 
+			 NULL,                 // default security 
+			 CREATE_ALWAYS,        // overwrite existing
+			 FILE_ATTRIBUTE_NORMAL,// normal file 
+			 NULL);                // no template 
+  g_free(testname);
+  if (hTempFile == INVALID_HANDLE_VALUE) 
+    { 
+      return FALSE;
+    }
+
+
+#endif
+
   return TRUE;
 }
 
@@ -4406,12 +4459,17 @@ uint64_t get_fs_free(const char *dir) {
 
   // dir should be in locale encoding
 
+#ifndef IS_MINGW
+  struct statvfs sbuf;
+#endif
+
   uint64_t bytes=0;
   gboolean must_delete=FALSE;
-  struct statvfs sbuf;
 
   if (!g_file_test(dir,G_FILE_TEST_IS_DIR)) must_delete=TRUE;
   if (!is_writeable_dir(dir)) goto getfserr;
+
+#ifndef IS_MINGW
 
   // use statvfs to get fs details
   if (statvfs(dir,&sbuf)==-1) goto getfserr;
@@ -4419,6 +4477,10 @@ uint64_t get_fs_free(const char *dir) {
 
   // result is block size * blocks available
   bytes=sbuf.f_bsize*sbuf.f_bavail*sbuf.f_frsize;
+
+#else
+  GetDiskFreeSpaceEx(dir,(PULARGE_INTEGER)&bytes,NULL,NULL);
+#endif
 
 getfserr:
   if (must_delete) rmdir(dir);

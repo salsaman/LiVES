@@ -178,7 +178,7 @@ gboolean do_effect(lives_rfx_t *rfx, gboolean is_preview) {
       mainw->show_procd=FALSE;
     }
     else cmd=g_strdup("fxrender");
-    fxcommand=g_strconcat ("\"",prefs->backend,"\" ",cmd,"_",plugin_name," ", pdefault, 
+    fxcommand=g_strconcat (prefs->backend," ",cmd,"_",plugin_name," ", pdefault, 
 			   (tmp=param_marshall (rfx, FALSE)), NULL);
 
     g_free(plugin_name);
@@ -393,7 +393,7 @@ gboolean do_effect(lives_rfx_t *rfx, gboolean is_preview) {
 
   if (mainw->keep_pre) {
     // this comes from a preview which then turned into processing
-    gchar *com=g_strdup_printf("\"%s\" mv_pre \"%s\" %d %d \"%s\"",prefs->backend, cfile->handle,cfile->progress_start,
+    gchar *com=g_strdup_printf("%s mv_pre \"%s\" %d %d \"%s\"",prefs->backend_sync, cfile->handle,cfile->progress_start,
 			       cfile->progress_end,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
 
     unlink(cfile->info_file);
@@ -648,7 +648,7 @@ lives_render_error_t realfx_progress (gboolean reset) {
   if (++i>cfile->end) {
     mainw->error=FALSE;
     mainw->cancelled=CANCEL_NONE;
-    com=g_strdup_printf ("\"%s\" mv_mgk \"%s\" %d %d \"%s\"",prefs->backend,cfile->handle,cfile->start,
+    com=g_strdup_printf ("%s mv_mgk \"%s\" %d %d \"%s\"",prefs->backend,cfile->handle,cfile->start,
 			 cfile->end,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
     lives_system (com,FALSE);
     g_free (com);

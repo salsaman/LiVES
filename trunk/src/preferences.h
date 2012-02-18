@@ -318,6 +318,7 @@ typedef struct {
 
   GList *disabled_decoders;
 
+  char backend_sync[PATH_MAX];
   char backend[PATH_MAX];
 } _prefs;
 

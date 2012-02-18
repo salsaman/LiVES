@@ -1772,15 +1772,15 @@ capability *get_capabilities (void) {
   capable->can_write_to_tmp=TRUE;
 
 #ifndef IS_MINGW
+  g_snprintf(prefs->backend_sync,PATH_MAX,"%s","smogrify");
   g_snprintf(prefs->backend,PATH_MAX,"%s","smogrify");
   if ((tmp=g_find_program_in_path ("smogrify"))==NULL) return capable;
   g_free(tmp);
 #else
-  // TODO - test
-  g_snprintf(prefs->backend,PATH_MAX,"%s","perl C:\\smogrify");
+  g_snprintf(prefs->backend_sync,PATH_MAX,"%s","perl \"C:\\smogrify\"");
+  g_snprintf(prefs->backend,PATH_MAX,"%s","START /MIN /B perl \"C:\\smogrify\"");
 #endif
-  
-  g_snprintf(string,256,"\"%s\" report \"%s\" 2>/dev/null",prefs->backend,
+  g_snprintf(string,256,"%s report \"%s\" 2>/dev/null",prefs->backend_sync,
 	     (tmp=g_filename_from_utf8 (safer_bfile,-1,NULL,NULL,NULL)));
   g_free(tmp);
 
@@ -5304,7 +5304,7 @@ void close_current_file(gint file_to_switch_to) {
     if (cfile->op_dir!=NULL) g_free(cfile->op_dir);
 
     if (cfile->clip_type!=CLIP_TYPE_GENERATOR&&!mainw->only_close) {
-      com=g_strdup_printf("\"%s\" close \"%s\"",prefs->backend,cfile->handle);
+      com=g_strdup_printf("%s close \"%s\"",prefs->backend,cfile->handle);
       lives_system(com,TRUE);
       g_free(com); 
 

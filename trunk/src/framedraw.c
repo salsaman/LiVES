@@ -42,7 +42,7 @@ static gdouble calc_fd_scale(gint width, gint height) {
 
 static void start_preview (GtkButton *button, lives_rfx_t *rfx) {
   int i;
-  gchar *com=g_strdup_printf("\"%s\" stopsubsub \"%s\" 2>/dev/null",prefs->backend,cfile->handle);
+  gchar *com=g_strdup_printf("%s stopsubsub \"%s\" 2>/dev/null",prefs->backend_sync,cfile->handle);
 
   gtk_widget_set_sensitive(mainw->framedraw_preview,FALSE);
   while (g_main_context_iteration(NULL,FALSE));
@@ -54,7 +54,7 @@ static void start_preview (GtkButton *button, lives_rfx_t *rfx) {
 
   g_free(com);
 
-  com=g_strdup_printf("\"%s\" clear_pre_files \"%s\" 2>/dev/null",prefs->backend,cfile->handle);
+  com=g_strdup_printf("%s clear_pre_files \"%s\" 2>/dev/null",prefs->backend_sync,cfile->handle);
   lives_system(com,TRUE); // clear any .pre files from before
 
   for (i=0;i<rfx->num_params;i++) {

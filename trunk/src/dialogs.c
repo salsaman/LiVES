@@ -381,7 +381,7 @@ int do_abort_cancel_retry_dialog(const gchar *text, GtkWindow *transient) {
 	if (mainw->current_file>-1) {
 	  if (cfile->handle!=NULL) {
 	    // stop any processing processing
-	    gchar *com=g_strdup_printf("\"%s\" stopsubsub \"%s\" 2>/dev/null",prefs->backend,cfile->handle);
+	    gchar *com=g_strdup_printf("%s stopsubsub \"%s\" 2>/dev/null",prefs->backend_sync,cfile->handle);
 	    lives_system(com,TRUE);
 	    g_free(com);
 	  }

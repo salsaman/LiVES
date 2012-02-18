@@ -4072,18 +4072,18 @@ on_rebuild_rfx_activate (GtkMenuItem *menuitem, gpointer user_data) {
   d_print (_("Rebuilding all RFX scripts...builtin...")); 
   do_threaded_dialog(_("Rebuilding scripts"),FALSE);
 
-  com=g_strdup_printf("\"%s\" build_rfx_plugins builtinx \"%s%s%s\" \"%s%s%s\" \"%s/bin\"",prefs->backend,
+  com=g_strdup_printf("%s build_rfx_plugins builtinx \"%s%s%s\" \"%s%s%s\" \"%s/bin\"",prefs->backend_sync,
 		      prefs->prefix_dir,
 		      PLUGIN_SCRIPTS_DIR,PLUGIN_RENDERED_EFFECTS_BUILTIN_SCRIPTS,
 		      prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_RENDERED_EFFECTS_BUILTIN,prefs->prefix_dir);
   lives_system(com,TRUE);
   g_free(com);
   d_print (_ ("custom...")); 
-  com=g_strdup_printf("\"%s\" build_rfx_plugins custom",prefs->backend);
+  com=g_strdup_printf("%s build_rfx_plugins custom",prefs->backend_sync);
   lives_system(com,FALSE);
   g_free(com);
   d_print (_("test...")); 
-  com=g_strdup_printf("\"%s\" build_rfx_plugins test",prefs->backend);
+  com=g_strdup_printf("%s build_rfx_plugins test",prefs->backend_sync);
   lives_system(com,FALSE);
   g_free(com);
 

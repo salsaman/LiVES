@@ -141,7 +141,7 @@ gboolean do_tempdir_query(void) {
 #ifndef IS_MINGW
   com=g_strdup_printf ("/bin/mkdir -p \"%s\" 2>/dev/null",dirname);
 #else
-  com=g_strdup_printf ("mkdir \"%s\" >NUL",dirname);
+  com=g_strdup_printf ("mkdir.exe -p \"%s\" >NUL",dirname);
 #endif
   lives_system (com,FALSE);
   g_free (com);
@@ -149,12 +149,12 @@ gboolean do_tempdir_query(void) {
   if (mainw->com_failed) goto top;
 
 #ifndef IS_MINGW
-  com=g_strdup_printf("/bin/rmdir \"%s\" 2>/dev/null",prefs->tmpdir);
+  com=g_strdup_printf ("/bin/chmod 777 \"%s\" 2>/dev/null",dirname);
 #else
-  com=g_strdup_printf("rmdir \"%s\" 2>/dev/null",prefs->tmpdir);
+  com=g_strdup_printf ("chmod.exe 777 \"%s\" >NUL",dirname);
 #endif
-  lives_system(com,TRUE);
-  g_free(com);
+  lives_system (com,FALSE);
+  g_free (com);
 
   g_snprintf(prefs->tmpdir,PATH_MAX,"%s",dirname);
   g_snprintf(future_prefs->tmpdir,PATH_MAX,"%s",prefs->tmpdir);
@@ -689,6 +689,7 @@ gboolean do_startup_tests(gboolean tshoot) {
   if (success) {
     
     info_fd=-1;
+
     unlink(cfile->info_file);
 
     // write 1 second of silence
@@ -724,7 +725,7 @@ gboolean do_startup_tests(gboolean tshoot) {
       afile=g_build_filename(prefs->tmpdir,cfile->handle,"testout.wav",NULL);
     
       mainw->com_failed=FALSE;
-      com=g_strdup_printf("\"%s\" export_audio \"%s\" 0. 0. 44100 2 16 0 22050 \"%s\"",prefs->backend,cfile->handle,afile);
+      com=g_strdup_printf("%s export_audio \"%s\" 0. 0. 44100 2 16 0 22050 \"%s\"",prefs->backend,cfile->handle,afile);
       lives_system(com,TRUE);
       if (mainw->com_failed) {
 	tmp=g_strdup_printf(_("Command failed: %s"),com);
@@ -752,6 +753,10 @@ gboolean do_startup_tests(gboolean tshoot) {
 	}
 	
 	else pass_test(table,1);
+
+	int ret=unlink(afile);
+	LIVES_DEBUG("\n\n\nGOT RET\n\n\n");
+	g_print("ret is %d\n",ret);
       }
     }
   }
@@ -808,9 +813,12 @@ gboolean do_startup_tests(gboolean tshoot) {
   add_test(table,3,_("Checking if mplayer can convert audio"),success2);
 
   if (success2) {
+
+#ifndef IS_MINGW
     res=system("LANG=en LANGUAGE=en mplayer -ao help | grep pcm >/dev/null 2>&1");
-    
-    
+#else    
+    res=system("mplayer -ao help | grep pcm >/dev/null 2>&1");
+#endif
     if (res==0) {
       pass_test(table,3);
     }
@@ -841,11 +849,13 @@ gboolean do_startup_tests(gboolean tshoot) {
   if (success2&&success4) {
 
     info_fd=-1;
+
     unlink(cfile->info_file);
 
     rname=get_resource("vidtest.avi");
 
-    com=g_strdup_printf("\"%s\" open_test \"%s\" \"%s\" 0 png",prefs->backend,cfile->handle,
+
+    com=g_strdup_printf("%s open_test \"%s\" \"%s\" 0 png",prefs->backend,cfile->handle,
 			(tmp=g_filename_from_utf8 (rname,-1,NULL,NULL,NULL)));
     g_free(tmp);
     g_free(rname);
@@ -865,6 +875,7 @@ gboolean do_startup_tests(gboolean tshoot) {
     }
     
     if (info_fd!=-1) {
+
       close(info_fd);
       
       lives_sync();
@@ -903,7 +914,11 @@ gboolean do_startup_tests(gboolean tshoot) {
 
 
   if (success2) {
+#ifndef IS_MINGW
     res=system("LANG=en LANGUAGE=en mplayer -vo help | grep -i \"jpeg file\" >/dev/null 2>&1");
+#else    
+    res=system("mplayer -vo help | grep -i \"jpeg file\" >/dev/null 2>&1");
+#endif
     
     if (res==0) {
       pass_test(table,5);

@@ -3553,7 +3553,7 @@ lives_render_error_t render_events (gboolean reset) {
 
     if (cfile->old_frames==0) cfile->undo_start=cfile->undo_end=0;
     if (mainw->multitrack==NULL||!mainw->multitrack->pr_audio) {
-      com=g_strdup_printf ("\"%s\" mv_mgk \"%s\" %d %d \"%s\"",prefs->backend,cfile->handle,cfile->undo_start,
+      com=g_strdup_printf ("%s mv_mgk \"%s\" %d %d \"%s\"",prefs->backend,cfile->handle,cfile->undo_start,
 			   cfile->undo_end,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
       unlink(cfile->info_file);
       mainw->error=FALSE;
@@ -3871,7 +3871,7 @@ gboolean render_to_clip (gboolean new_clip) {
     // back up audio to audio.back (in case we overwrite it)
     if (prefs->rec_opts&REC_AUDIO) {
       do_threaded_dialog(_("Backing up audio..."),FALSE);
-      com=g_strdup_printf("\"%s\" backup_audio \"%s\"",prefs->backend,cfile->handle);
+      com=g_strdup_printf("%s backup_audio \"%s\"",prefs->backend_sync,cfile->handle);
       mainw->com_failed=FALSE;
       mainw->error=FALSE;
       mainw->cancelled=CANCEL_NONE;
@@ -3883,7 +3883,7 @@ gboolean render_to_clip (gboolean new_clip) {
     }
     else {
       do_threaded_dialog(_("Clearing up clip..."),FALSE);
-      com=g_strdup_printf("\"%s\" clear_tmp_files \"%s\"",prefs->backend,cfile->handle);
+      com=g_strdup_printf("%s clear_tmp_files \"%s\"",prefs->backend_sync,cfile->handle);
       lives_system(com,FALSE);
       g_free(com);
     }

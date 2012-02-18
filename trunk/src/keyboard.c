@@ -112,7 +112,8 @@ GdkFilterReturn filter_func(GdkXEvent *xevent, GdkEvent *event, gpointer data) {
   if (xev->type==2) return pl_key_function(TRUE,xev->xkey.keycode,modifiers)?GDK_FILTER_REMOVE:GDK_FILTER_CONTINUE;
   return pl_key_function(FALSE,xev->xkey.keycode,modifiers)?GDK_FILTER_REMOVE:GDK_FILTER_CONTINUE;
 #else
-  g_printerr("Do not know how to handle key events for non-X11 window managers.\nPlease send a patch if you know how to do it.\n");
+  //g_printerr("Do not know how to handle key events for non-X11 window managers.\nPlease send a patch if you know how to do it.\n");
+
   return GDK_FILTER_CONTINUE;
 #endif
 }

@@ -137,14 +137,22 @@ gboolean do_tempdir_query(void) {
   g_free(tdentry);
 
   mainw->com_failed=FALSE;
+
+#ifndef IS_MINGW
   com=g_strdup_printf ("/bin/mkdir -p \"%s\" 2>/dev/null",dirname);
+#else
+  com=g_strdup_printf ("mkdir \"%s\" >NUL",dirname);
+#endif
   lives_system (com,FALSE);
   g_free (com);
 
   if (mainw->com_failed) goto top;
 
-
+#ifndef IS_MINGW
   com=g_strdup_printf("/bin/rmdir \"%s\" 2>/dev/null",prefs->tmpdir);
+#else
+  com=g_strdup_printf("rmdir \"%s\" 2>/dev/null",prefs->tmpdir);
+#endif
   lives_system(com,TRUE);
   g_free(com);
 
@@ -154,7 +162,7 @@ gboolean do_tempdir_query(void) {
   set_pref("tempdir",prefs->tmpdir);
   set_pref("session_tempdir",prefs->tmpdir);
 
-  g_snprintf(mainw->first_info_file,PATH_MAX,"%s/.info.%d",prefs->tmpdir,getpid());
+  g_snprintf(mainw->first_info_file,PATH_MAX,"%s"G_DIR_SEPARATOR_S".info.%d",prefs->tmpdir,getpid());
 
   g_free(dirname);
   return TRUE;
@@ -234,7 +242,7 @@ gboolean do_audio_choice_dialog(short startup_phase) {
 
   txt5=g_strdup(_("SOX may be used if neither of the preceding players work, "));
 
-  if (capable->has_sox) {
+  if (capable->has_sox_play) {
     txt6=g_strdup(_("but some audio features will be disabled.\n\n"));
   }
   else {
@@ -357,7 +365,7 @@ gboolean do_audio_choice_dialog(short startup_phase) {
 #endif
 
   radiobutton2 = gtk_radio_button_new (NULL);
-  if (capable->has_sox) {
+  if (capable->has_sox_play) {
 
     eventbox=gtk_event_box_new();
     label=gtk_label_new_with_mnemonic ( _("Use _sox audio player"));
@@ -662,7 +670,7 @@ gboolean do_startup_tests(gboolean tshoot) {
   add_test(table,0,_("Checking for \"sox\" presence"),TRUE);
 
 
-  if (!capable->has_sox) {
+  if (!capable->has_sox_sox) {
     success=fail_test(table,0,_("You should install sox to be able to use all the audio features in LiVES"));
 
   }
@@ -677,7 +685,6 @@ gboolean do_startup_tests(gboolean tshoot) {
   g_snprintf (prefs->image_ext,16,"%s","png");
 
   get_temp_handle(mainw->first_free_file,TRUE);
-
 
   if (success) {
     
@@ -717,7 +724,7 @@ gboolean do_startup_tests(gboolean tshoot) {
       afile=g_build_filename(prefs->tmpdir,cfile->handle,"testout.wav",NULL);
     
       mainw->com_failed=FALSE;
-      com=g_strdup_printf("smogrify export_audio \"%s\" 0. 0. 44100 2 16 0 22050 \"%s\"",cfile->handle,afile);
+      com=g_strdup_printf("\"%s\" export_audio \"%s\" 0. 0. 44100 2 16 0 22050 \"%s\"",prefs->backend,cfile->handle,afile);
       lives_system(com,TRUE);
       if (mainw->com_failed) {
 	tmp=g_strdup_printf(_("Command failed: %s"),com);
@@ -838,7 +845,7 @@ gboolean do_startup_tests(gboolean tshoot) {
 
     rname=get_resource("vidtest.avi");
 
-    com=g_strdup_printf("smogrify open_test \"%s\" \"%s\" 0 png",cfile->handle,
+    com=g_strdup_printf("\"%s\" open_test \"%s\" \"%s\" 0 png",prefs->backend,cfile->handle,
 			(tmp=g_filename_from_utf8 (rname,-1,NULL,NULL,NULL)));
     g_free(tmp);
     g_free(rname);

@@ -57,7 +57,7 @@ void get_pref(const gchar *key, gchar *val, gint maxlen) {
     return;
   }
 
-  com=g_strdup_printf("smogrify get_pref \"%s\" %d %d",key,lives_getuid(),lives_getpid());
+  com=g_strdup_printf("\"%s\" get_pref \"%s\" %d %d",prefs->backend,key,lives_getuid(),lives_getpid());
 
   if (system(com)) {
     tempdir_warning();
@@ -151,7 +151,7 @@ GList *get_list_pref(const gchar *key) {
 void get_pref_default(const gchar *key, gchar *val, gint maxlen) {
   FILE *valfile;
   gchar *vfile;
-  gchar *com=g_strdup_printf("smogrify get_pref_default \"%s\"",key);
+  gchar *com=g_strdup_printf("\"%s\" get_pref_default \"%s\"",prefs->backend,key);
 
   int retval;
   int alarm_handle;
@@ -236,7 +236,7 @@ get_double_pref(const gchar *key) {
 
 void
 delete_pref(const gchar *key) {
-  gchar *com=g_strdup_printf("smogrify delete_pref \"%s\"",key);
+  gchar *com=g_strdup_printf("\"%s\" delete_pref \"%s\"",prefs->backend,key);
   if (system(com)) {
     tempdir_warning();
   }
@@ -245,7 +245,10 @@ delete_pref(const gchar *key) {
 
 void
 set_pref(const gchar *key, const gchar *value) {
-  gchar *com=g_strdup_printf("smogrify set_pref \"%s\" \"%s\"",key,value);
+  gchar *tmp;
+  gchar *com=g_strdup_printf("\"%s\" set_pref \"%s\" %s",prefs->backend,key,(tmp=g_shell_quote(value)));
+  g_free(tmp);
+
   if (system(com)) {
     tempdir_warning();
   }
@@ -255,7 +258,7 @@ set_pref(const gchar *key, const gchar *value) {
 
 void
 set_int_pref(const gchar *key, gint value) {
-  gchar *com=g_strdup_printf("smogrify set_pref \"%s\" %d",key,value);
+  gchar *com=g_strdup_printf("\"%s\" set_pref \"%s\" %d",prefs->backend,key,value);
   if (system(com)) {
     tempdir_warning();
   }
@@ -265,7 +268,7 @@ set_int_pref(const gchar *key, gint value) {
 
 void
 set_int64_pref(const gchar *key, gint64 value) {
-  gchar *com=g_strdup_printf("smogrify set_pref \"%s\" %"PRId64,key,value);
+  gchar *com=g_strdup_printf("\"%s\" set_pref \"%s\" %"PRId64,prefs->backend,key,value);
   if (system(com)) {
     tempdir_warning();
   }
@@ -275,7 +278,7 @@ set_int64_pref(const gchar *key, gint64 value) {
 
 void
 set_double_pref(const gchar *key, gdouble value) {
-  gchar *com=g_strdup_printf("smogrify set_pref \"%s\" %.3f",key,value);
+  gchar *com=g_strdup_printf("\"%s\" set_pref \"%s\" %.3f",prefs->backend,key,value);
   if (system(com)) {
     tempdir_warning();
   }
@@ -288,10 +291,10 @@ set_boolean_pref(const gchar *key, gboolean value) {
   gchar *com;
 
   if (value) {
-    com=g_strdup_printf("smogrify set_pref \"%s\" true",key);
+    com=g_strdup_printf("\"%s\" set_pref \"%s\" true",prefs->backend,key);
   }
   else {
-    com=g_strdup_printf("smogrify set_pref \"%s\" false",key);
+    com=g_strdup_printf("\"%s\" set_pref \"%s\" false",prefs->backend,key);
   }
   if (system(com)) {
     tempdir_warning();
@@ -3263,7 +3266,7 @@ _prefsw *create_prefs_dialog (void) {
   has_ap_rec=TRUE;
 #endif
 
-  if (capable->has_sox) {
+  if (capable->has_sox_play) {
     if (has_ap_rec) audp = g_list_append (audp, g_strdup("sox"));
     else audp = g_list_append (audp, g_strdup_printf("sox (%s)",mainw->recommended_string));
   }

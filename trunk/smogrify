@@ -30,7 +30,6 @@ $background=1;
 $version="1.6.2-svn";
 #$dyneversion="LIVES-20091209";
 
-
 ###################################################################
 
 
@@ -42,11 +41,12 @@ if ($^O eq "MSWin32") {
     $login = getlogin;
     $home="C:\\users\\$login";
     $rc_filename=".lives";
+
     $lives_home_dir="$home/.lives-dir/";
 
 # default temporary directory (can be overridden from the GUI)
-    $default_tmpdir="/tmp/livestmp/";
-
+    $default_tmpdir="C:\\livestmp\\";
+    $is_mingw=1;
 }
 else {
     $home=$ENV{"HOME"};
@@ -59,7 +59,7 @@ else {
 }
 
 
-#$DEBUG_SMOGRIFY=1;
+$DEBUG_SMOGRIFY=1;
 
 
 ###################################################################
@@ -68,9 +68,10 @@ if (defined($ARGV[0])) {
     $command=$ARGV[0];
 
     unless ($command eq "version") {
-	my ($rcfile)=$home."/".$rc_filename;
+	my $rcfile="$home/$rc_filename";
 	if (-f $rcfile) {
 	    $tmpdir=&rc_get("session_tempdir");
+
 	    if ($tmpdir eq ""||$command eq "report") {
 		$tmpdir=&rc_get("tempdir");
 		$priority=1;
@@ -167,6 +168,7 @@ if (defined($ARGV[0])) {
 	}
 	exit 1;
     }
+
 
 
     if ($command eq "new") {
@@ -374,23 +376,23 @@ if (defined($ARGV[0])) {
 
 
     if ($command eq "set_pref") {
-	# WARNING - pref keys should not contain spaces, but values can
 	$key=$ARGV[1];
-	shift(@ARGV);
-	shift(@ARGV);
+	$value=$ARGV[2];
 
-	$value=join(" ",@ARGV);
+	if (substr($value,0,1) eq "'") {
+	    $value=substr($value,1,-1);
+	}
+
 	&rc_set($key,$value);
 	exit 0;
     }
 	
     if ($command eq "set_pref_if_not_set") {
-	# WARNING - pref keys should not contain spaces, but values can
 	$key=$ARGV[1];
-	shift(@ARGV);
-	shift(@ARGV);
-
-	$value=join(" ",@ARGV);
+	$value=$value=$ARGV[2];
+	if (substr($value,0,1) eq "'") {
+	    $value=substr($value,1,-1);
+	}
 	&rc_set_if_not_set($key,$value);
 	exit 0;
     }
@@ -3732,6 +3734,7 @@ sub is_writeable {
     }
     return $ret;
 }
+
 
 
 sub get_img_ext {

@@ -106,7 +106,7 @@ void on_paramwindow_ok_clicked (GtkButton *button, lives_rfx_t *rfx) {
     }
 
     if (!mainw->keep_pre) {
-      gchar *com=g_strdup_printf("smogrify stopsubsub \"%s\" 2>/dev/null",cfile->handle);
+      gchar *com=g_strdup_printf("\"%s\" stopsubsub \"%s\" 2>/dev/null",prefs->backend,cfile->handle);
       lives_system(com,TRUE); // try to stop any current previews / processing
       g_free(com);
       do_rfx_cleanup(rfx);
@@ -160,7 +160,7 @@ void on_paramwindow_cancel_clicked2 (GtkButton *button, lives_rfx_t *rfx) {
 void on_paramwindow_cancel_clicked (GtkButton *button, lives_rfx_t *rfx) {
   mainw->block_param_updates=TRUE;
   if (mainw->did_rfx_preview) {
-    gchar *com=g_strdup_printf("smogrify stopsubsub \"%s\" 2>/dev/null",cfile->handle);
+    gchar *com=g_strdup_printf("\"%s\" stopsubsub \"%s\" 2>/dev/null",prefs->backend,cfile->handle);
     lives_system(com,TRUE); // try to stop processing
     g_free(com);
     mainw->did_rfx_preview=FALSE;
@@ -2949,7 +2949,7 @@ void do_onchange (GObject *object, lives_rfx_t *rfx) {
       handle=cfile->handle;
     }
 
-    com=g_strdup_printf ("smogrify \"fxinit_%s\" \"%s\" \"%s\" %d %d %s",rfx->name,handle,plugdir,
+    com=g_strdup_printf ("\"%s\" \"fxinit_%s\" \"%s\" \"%s\" %d %d %s",prefs->backend,rfx->name,handle,plugdir,
 			 width,height,(tmp=param_marshall (rfx,TRUE)));
     retvals=plugin_request_by_space (NULL,NULL,com);
 

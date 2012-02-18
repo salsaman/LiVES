@@ -381,7 +381,7 @@ int do_abort_cancel_retry_dialog(const gchar *text, GtkWindow *transient) {
 	if (mainw->current_file>-1) {
 	  if (cfile->handle!=NULL) {
 	    // stop any processing processing
-	    gchar *com=g_strdup_printf("smogrify stopsubsub \"%s\" 2>/dev/null",cfile->handle);
+	    gchar *com=g_strdup_printf("\"%s\" stopsubsub \"%s\" 2>/dev/null",prefs->backend,cfile->handle);
 	    lives_system(com,TRUE);
 	    g_free(com);
 	  }
@@ -1309,7 +1309,7 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
     }
 
 
-    if (cfile->opening&&(capable->has_sox||(prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL)||
+    if (cfile->opening&&(capable->has_sox_play||(prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL)||
 			 (prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL))&&mainw->playing_file==-1) {
       if (mainw->preview_box!=NULL) gtk_widget_set_tooltip_text( mainw->p_playbutton,_ ("Preview"));
       gtk_widget_set_tooltip_text( mainw->m_playbutton,_ ("Preview"));
@@ -1527,7 +1527,7 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
     // we got a message from the backend...
 
     if (visible&&(!accelerators_swapped||cfile->opening)&&cancellable&&(!cfile->nopreview||cfile->keep_without_preview)) {
-      if ((!cfile->opening||((capable->has_sox||(prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL)||
+      if ((!cfile->opening||((capable->has_sox_play||(prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL)||
 			     (prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL))&&
 			     mainw->playing_file==-1))&&!cfile->nopreview) 
 	gtk_widget_show (cfile->proc_ptr->preview_button);

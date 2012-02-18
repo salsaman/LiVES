@@ -81,7 +81,7 @@ gboolean lives_pulse_init (short startup_phase) {
     LIVES_WARN("Unable to connect to pulseaudio server");
 
     if (!mainw->foreign) {
-      if (startup_phase==0&&capable->has_sox) {
+      if (startup_phase==0&&capable->has_sox_play) {
 	do_error_dialog_with_check(_("\nUnable to connect to pulse audio server.\nFalling back to sox audio player.\nYou can change this in Preferences/Playback.\n"),WARN_MASK_NO_PULSE_CONNECT);
 	switch_aud_to_sox(prefs->warning_mask&WARN_MASK_NO_PULSE_CONNECT);
       }

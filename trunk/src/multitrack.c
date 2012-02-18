@@ -14375,7 +14375,7 @@ void on_render_activate (GtkMenuItem *menuitem, gpointer user_data) {
       unlink(cfile->info_file);
       mainw->error=FALSE;
       mainw->cancelled=CANCEL_NONE;
-      com=g_strdup_printf("smogrify backup_audio \"%s\"",cfile->handle);
+      com=g_strdup_printf("\"%s\" backup_audio \"%s\"",prefs->backend,cfile->handle);
       lives_system(com,FALSE);
       g_free(com);
       check_backend_return(cfile);
@@ -14598,7 +14598,7 @@ void on_render_activate (GtkMenuItem *menuitem, gpointer user_data) {
     prefs->render_audio=TRUE;
     mainw->event_list=NULL;
     if (mt->pr_audio) {
-      com=g_strdup_printf("smogrify undo_audio \"%s\"",cfile->handle);
+      com=g_strdup_printf("\"%s\" undo_audio \"%s\"",prefs->backend,cfile->handle);
       lives_system(com,FALSE);
       g_free(com);
       mt->has_audio_file=had_audio;

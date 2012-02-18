@@ -4072,15 +4072,20 @@ on_rebuild_rfx_activate (GtkMenuItem *menuitem, gpointer user_data) {
   d_print (_("Rebuilding all RFX scripts...builtin...")); 
   do_threaded_dialog(_("Rebuilding scripts"),FALSE);
 
-  com=g_strdup_printf("smogrify build_rfx_plugins builtinx \"%s%s%s\" \"%s%s%s\" \"%s/bin\"",prefs->prefix_dir,
+  com=g_strdup_printf("\"%s\" build_rfx_plugins builtinx \"%s%s%s\" \"%s%s%s\" \"%s/bin\"",prefs->backend,
+		      prefs->prefix_dir,
 		      PLUGIN_SCRIPTS_DIR,PLUGIN_RENDERED_EFFECTS_BUILTIN_SCRIPTS,
 		      prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_RENDERED_EFFECTS_BUILTIN,prefs->prefix_dir);
   lives_system(com,TRUE);
   g_free(com);
   d_print (_ ("custom...")); 
-  lives_system("smogrify build_rfx_plugins custom",FALSE);
+  com=g_strdup_printf("\"%s\" build_rfx_plugins custom",prefs->backend);
+  lives_system(com,FALSE);
+  g_free(com);
   d_print (_("test...")); 
-  lives_system("smogrify build_rfx_plugins test",FALSE);
+  com=g_strdup_printf("\"%s\" build_rfx_plugins test",prefs->backend);
+  lives_system(com,FALSE);
+  g_free(com);
 
 
   d_print(_("rebuilding dynamic menu entries..."));

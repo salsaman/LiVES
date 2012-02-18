@@ -131,7 +131,10 @@ static void lives_log_handler (const char *domain, LiVESLogLevelFlags level, con
     else msg=g_strdup_printf(_("%s Fatal error: %s\n"),domain,message);
   }
 
-  d_print(msg);
+  if (mainw->is_ready) {
+    d_print(msg);
+  }
+
   g_printerr("%s",msg);
   g_free(msg);
 
@@ -694,8 +697,6 @@ static void lives_init(_ign_opts *ign_opts) {
   // can now be set through OSC: /output/nodrop/enable
   mainw->noframedrop=FALSE;
 
-  gdk_window_add_filter(NULL, filter_func, NULL);
-
   prefs->omc_noisy=FALSE;
   prefs->omc_events=TRUE;
 
@@ -913,9 +914,7 @@ static void lives_init(_ign_opts *ign_opts) {
   mainw->pconx=NULL;
   /////////////////////////////////////////////////// add new stuff just above here ^^
 
-  // TODO - dirsep
 
-  g_snprintf(mainw->first_info_file,PATH_MAX,"%s/.info.%d",prefs->tmpdir,getpid());
   memset (mainw->set_name,0,1);
   mainw->clips_available=0;
 
@@ -1387,7 +1386,7 @@ static void lives_init(_ign_opts *ign_opts) {
 
       if (capable->has_jackd) naudp++;
       if (capable->has_pulse_audio) naudp++;
-      if (capable->has_sox) naudp++;
+      if (capable->has_sox_play) naudp++;
       if (capable->has_mplayer) naudp++;
 
       if (naudp>1) {
@@ -1536,7 +1535,7 @@ void do_start_messages(void) {
   else d_print(_ ("convert...NOT DETECTED..."));
   if (capable->has_composite) d_print(_ ("composite...detected..."));
   else d_print(_ ("composite...NOT DETECTED..."));
-  if (capable->has_sox) d_print(_ ("sox...detected\n"));
+  if (capable->has_sox_sox) d_print(_ ("sox...detected\n"));
   else d_print(_ ("sox...NOT DETECTED\n"));
   if (capable->has_cdda2wav) d_print(_ ("cdda2wav...detected..."));
   else d_print(_ ("cdda2wav...NOT DETECTED..."));
@@ -1554,7 +1553,11 @@ void do_start_messages(void) {
 #ifdef USE_X11
   prefs->wm=g_strdup(gdk_x11_screen_get_window_manager_name (gdk_screen_get_default()));
 #else
+#ifdef IS_MINGW
+  prefs->wm=g_strdup((_("Windows")));
+#else
   prefs->wm=g_strdup((_("UNKNOWN - please patch me !")));
+#endif
 #endif
 
   g_snprintf(mainw->msg,512,_ ("\n\nWindow manager reports as \"%s\"; "),prefs->wm);
@@ -1743,7 +1746,8 @@ capability *get_capabilities (void) {
   capable->has_mplayer=FALSE;
   capable->has_convert=FALSE;
   capable->has_composite=FALSE;
-  capable->has_sox=FALSE;
+  capable->has_sox_play=FALSE;
+  capable->has_sox_sox=FALSE;
   capable->has_xmms=FALSE;
   capable->has_dvgrab=FALSE;
   capable->has_cdda2wav=FALSE;
@@ -1760,17 +1764,24 @@ capability *get_capabilities (void) {
   capable->has_gconftool_2=FALSE;
   capable->has_xdg_screensaver=FALSE;
 
-  safer_bfile=g_strdup_printf("%s.%d.%d",BOOTSTRAP_NAME,lives_getuid(),lives_getgid());
+  safer_bfile=g_strdup_printf("%s"G_DIR_SEPARATOR_S".smogrify.%d.%d",g_get_tmp_dir (),lives_getuid(),lives_getgid());
   unlink (safer_bfile);
 
   // check that we can write to /tmp
   if (!check_file (safer_bfile,FALSE)) return capable;
   capable->can_write_to_tmp=TRUE;
 
+#ifndef IS_MINGW
+  g_snprintf(prefs->backend,PATH_MAX,"%s","smogrify");
   if ((tmp=g_find_program_in_path ("smogrify"))==NULL) return capable;
   g_free(tmp);
+#else
+  // TODO - test
+  g_snprintf(prefs->backend,PATH_MAX,"%s","perl C:\\smogrify");
+#endif
   
-  g_snprintf(string,256,"smogrify report \"%s\" 2>/dev/null",(tmp=g_filename_from_utf8 (safer_bfile,-1,NULL,NULL,NULL)));
+  g_snprintf(string,256,"\"%s\" report \"%s\" 2>/dev/null",prefs->backend,
+	     (tmp=g_filename_from_utf8 (safer_bfile,-1,NULL,NULL,NULL)));
   g_free(tmp);
 
   err=system(string);
@@ -1867,7 +1878,10 @@ capability *get_capabilities (void) {
   ///////////////////////////////////////////////////////
 
   get_location("play",string,256);
-  if (strlen(string)) capable->has_sox=TRUE;
+  if (strlen(string)) capable->has_sox_play=TRUE;
+
+  get_location("sox",string,256);
+  if (strlen(string)) capable->has_sox_sox=TRUE;
 
   get_location("xmms",string,256);
   if (strlen(string)) capable->has_xmms=TRUE;
@@ -2073,9 +2087,15 @@ static gboolean lives_startup(gpointer data) {
 		startup_message_fatal(_ ("\nAn incorrect version of smogrify was found in your path.\n\nPlease review the README file which came with this package\nbefore running LiVES.\n\nThankyou.\n"));
 	      }
 	      else {
-		if (!capable->has_sox&&!capable->has_mplayer){
+		#ifndef IS_MINGW
+		if ((!capable->has_sox_sox||!capable->has_sox_play)&&!capable->has_mplayer){
 		  startup_message_fatal(_ ("\nLiVES currently requires either 'mplayer' or 'sox' to function. Please install one or other of these, and try again.\n"));
 		}
+		#else
+		if (!capable->has_sox_sox||!capable->has_mplayer){
+		  startup_message_fatal(_ ("\nLiVES currently requires both 'mplayer' and 'sox' to function. Please install these, and try again.\n"));
+		}
+		#endif
 		else {
 		  if (strlen(capable->startup_msg)) {
 		    startup_message_nonfatal (capable->startup_msg);
@@ -2091,7 +2111,7 @@ static gboolean lives_startup(gpointer data) {
 		    if (!capable->has_composite) {
 		      startup_message_nonfatal_dismissable (_ ("\nLiVES was unable to locate 'composite'. You should install composite and image-magick if you want to use the merge function.\n"),WARN_MASK_NO_MPLAYER);
 		    }
-		    if (!capable->has_sox) {
+		    if (!capable->has_sox_sox) {
 		      startup_message_nonfatal_dismissable (_ ("\nLiVES was unable to locate 'sox'. Some audio features may not work. You should install 'sox'.\n"),WARN_MASK_NO_MPLAYER);
 		    }
 		    if (!capable->has_encoder_plugins) {
@@ -2233,6 +2253,7 @@ static gboolean lives_startup(gpointer data) {
   if (strlen(prefs->yuvin)>0) g_idle_add(open_yuv4m_startup,NULL);
 #endif
 
+  gdk_window_add_filter(NULL, filter_func, NULL);
 
   return FALSE;
 }
@@ -2336,6 +2357,8 @@ int main (int argc, char *argv[]) {
   mainw->foreign=FALSE;
   memset (start_file,0,1);
   mainw->has_session_tmpdir=FALSE;
+
+  g_snprintf(mainw->first_info_file,PATH_MAX,"%s"G_DIR_SEPARATOR_S".info.%d",prefs->tmpdir,getpid());
 
   // what's my name ?
   capable->myname_full=g_find_program_in_path(argv[0]);
@@ -2735,7 +2758,7 @@ void sensitize(void) {
   gtk_widget_set_sensitive (mainw->trim_to_pstart, mainw->current_file>0&&(cfile->achans&&cfile->pointer_time>0.));
   gtk_widget_set_sensitive (mainw->delaudio_submenu, mainw->current_file>0&&cfile->achans>0);
   gtk_widget_set_sensitive (mainw->delsel_audio, mainw->current_file>0&&cfile->frames>0);
-  gtk_widget_set_sensitive (mainw->resample_audio, mainw->current_file>0&&(cfile->achans>0&&capable->has_sox));
+  gtk_widget_set_sensitive (mainw->resample_audio, mainw->current_file>0&&(cfile->achans>0&&capable->has_sox_sox));
   gtk_widget_set_sensitive (mainw->dsize, !(mainw->fs));
   gtk_widget_set_sensitive (mainw->fade, !(mainw->fs));
   gtk_widget_set_sensitive (mainw->mute_audio, TRUE);
@@ -5281,7 +5304,7 @@ void close_current_file(gint file_to_switch_to) {
     if (cfile->op_dir!=NULL) g_free(cfile->op_dir);
 
     if (cfile->clip_type!=CLIP_TYPE_GENERATOR&&!mainw->only_close) {
-      com=g_strdup_printf("smogrify close \"%s\"",cfile->handle);
+      com=g_strdup_printf("\"%s\" close \"%s\"",prefs->backend,cfile->handle);
       lives_system(com,TRUE);
       g_free(com); 
 
@@ -5632,7 +5655,7 @@ void switch_to_file(gint old_file, gint new_file) {
     gtk_widget_set_sensitive (mainw->trim_to_pstart, (cfile->achans>0&&cfile->pointer_time>0.));
     gtk_widget_set_sensitive (mainw->delaudio_submenu, (cfile->achans>0));
     gtk_widget_set_sensitive (mainw->delsel_audio, (cfile->frames>0));
-    gtk_widget_set_sensitive (mainw->resample_audio, (cfile->achans>0&&capable->has_sox));
+    gtk_widget_set_sensitive (mainw->resample_audio, (cfile->achans>0&&capable->has_sox_sox));
     gtk_widget_set_sensitive (mainw->fade_aud_in, cfile->achans>0);
     gtk_widget_set_sensitive (mainw->fade_aud_out, cfile->achans>0);
     gtk_widget_set_sensitive (mainw->loop_video, (cfile->achans>0&&cfile->frames>0));

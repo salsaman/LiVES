@@ -119,7 +119,8 @@ gboolean auto_resample_resize (gint width,gint height,gdouble fps,gint fps_num,g
 	  }
 
 	  if (!prefs->enc_letterbox) {
-	    com=g_strdup_printf ("smogrify resize_all \"%s\" %d %d %d \"%s\"",cfile->handle,cfile->frames,width,height,
+	    com=g_strdup_printf ("\"%s\" resize_all \"%s\" %d %d %d \"%s\"",prefs->backend,
+				 cfile->handle,cfile->frames,width,height,
 				 cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
 	    msg=g_strdup_printf(_("Resizing frames 1 to %d"),cfile->frames);
 	  }
@@ -133,7 +134,7 @@ gboolean auto_resample_resize (gint width,gint height,gdouble fps,gint fps_num,g
 	    }
 
 	    reorder_leave_back=TRUE;
-	    com=g_strdup_printf ("smogrify resize_all \"%s\" %d %d %d \"%s\" %d %d",cfile->handle,
+	    com=g_strdup_printf ("\"%s\" resize_all \"%s\" %d %d %d \"%s\" %d %d",prefs->backend,cfile->handle,
 				 cfile->frames,width,height,
 				 cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",iwidth,iheight);
 	    msg=g_strdup_printf(_("Resizing/letterboxing frames 1 to %d"),cfile->frames);
@@ -297,7 +298,8 @@ gboolean auto_resample_resize (gint width,gint height,gdouble fps,gint fps_num,g
 	}
 
 	if (!prefs->enc_letterbox) {
-	  com=g_strdup_printf ("smogrify resize_all \"%s\" %d %d %d \"%s\"",cfile->handle,cfile->frames,width,height,
+	  com=g_strdup_printf ("\"%s\" resize_all \"%s\" %d %d %d \"%s\"",prefs->backend,
+			       cfile->handle,cfile->frames,width,height,
 			       cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
 	  msg=g_strdup_printf(_("Resizing frames 1 to %d"),cfile->frames);
 	}
@@ -310,7 +312,8 @@ gboolean auto_resample_resize (gint width,gint height,gdouble fps,gint fps_num,g
 	    iheight=-iheight;
 	  }
 
-	  com=g_strdup_printf ("smogrify resize_all \"%s\" %d %d %d \"%s\" %d %d",cfile->handle,cfile->frames,width,height,
+	  com=g_strdup_printf ("\"%s\" resize_all \"%s\" %d %d %d \"%s\" %d %d",prefs->backend,
+			       cfile->handle,cfile->frames,width,height,
 			       cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",iwidth,iheight);
 	  msg=g_strdup_printf(_("Resizing/letterboxing frames 1 to %d"),cfile->frames);
 	}
@@ -784,7 +787,8 @@ on_resaudio_ok_clicked                      (GtkButton *button,
       gdouble audio_stretch=(gdouble)cfile->arps/(gdouble)cfile->arate;
      // pb rate != real rate - stretch to pb rate and resample 
       unlink (cfile->info_file);
-      com=g_strdup_printf ("smogrify resample_audio \"%s\" %d %d %d %d %d %d %d %d %d %d %.4f",cfile->handle,cfile->arps,
+      com=g_strdup_printf ("\"%s\" resample_audio \"%s\" %d %d %d %d %d %d %d %d %d %d %.4f",prefs->backend,
+			   cfile->handle,cfile->arps,
 			   cfile->achans,cfile->asampsize,cur_signed,cur_endian,arps,cfile->achans,cfile->asampsize,
 			   cur_signed,cur_endian,audio_stretch);
       mainw->com_failed=FALSE;
@@ -796,7 +800,8 @@ on_resaudio_ok_clicked                      (GtkButton *button,
     }
     else {
       unlink (cfile->info_file);
-      com=g_strdup_printf ("smogrify resample_audio \"%s\" %d %d %d %d %d %d %d %d %d %d",cfile->handle,cfile->arps,
+      com=g_strdup_printf ("\"%s\" resample_audio \"%s\" %d %d %d %d %d %d %d %d %d %d",prefs->backend,
+			   cfile->handle,cfile->arps,
 			   cfile->achans,cfile->asampsize,cur_signed,cur_endian,arps,achans,asampsize,asigned,aendian);
       mainw->com_failed=FALSE;
       mainw->cancelled=CANCEL_NONE;
@@ -2395,12 +2400,12 @@ gint reorder_frames(int rwidth, int rheight) {
   gchar **array;
   gchar *com;
 
-  if (rwidth*rheight==0) com=g_strdup_printf("smogrify reorder \"%s\" \"%s\" %d 0 0 %d %d",cfile->handle,
+  if (rwidth*rheight==0) com=g_strdup_printf("\"%s\" reorder \"%s\" \"%s\" %d 0 0 %d %d",prefs->backend,cfile->handle,
 					     cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",!mainw->endian,
 					     reorder_leave_back,cfile->frames);
   else {
     if (!prefs->enc_letterbox) {
-      com=g_strdup_printf("smogrify reorder \"%s\" \"%s\" %d %d %d 0 %d",cfile->handle,
+      com=g_strdup_printf("\"%s\" reorder \"%s\" \"%s\" %d %d %d 0 %d",prefs->backend,cfile->handle,
 			  cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",!mainw->endian,rwidth,rheight,cfile->frames);
     }
     else {
@@ -2412,7 +2417,7 @@ gint reorder_frames(int rwidth, int rheight) {
 	iheight=-iheight;
       }
   
-      com=g_strdup_printf("smogrify reorder \"%s\" \"%s\" %d %d %d %d %d %d %d",cfile->handle,
+      com=g_strdup_printf("\"%s\" reorder \"%s\" \"%s\" %d %d %d %d %d %d %d",prefs->backend,cfile->handle,
 			  cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",!mainw->endian,rwidth,rheight,
 			  reorder_leave_back,cfile->frames,iwidth,iheight);
     }
@@ -2504,7 +2509,8 @@ deorder_frames(gint old_frames, gboolean leave_bak) {
     perf_start=(gint)(cfile->fps*(gdouble)time_start/U_SEC)+1;
     perf_end=perf_start+count_events (cfile->event_list,FALSE,0,0)-1;
   }
-  com=g_strdup_printf("smogrify deorder \"%s\" %d %d %d \"%s\" %d",cfile->handle,perf_start,cfile->frames,perf_end,
+  com=g_strdup_printf("\"%s\" deorder \"%s\" %d %d %d \"%s\" %d",prefs->backend,cfile->handle,
+		      perf_start,cfile->frames,perf_end,
 		      cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",leave_bak);
 
   unlink(cfile->info_file);
@@ -2549,7 +2555,7 @@ gboolean resample_clipboard(gdouble new_fps) {
     mainw->current_file=0;
 
     // copy .mgk to .img_ext and .img_ext to .bak (i.e redo the resample)
-    com=g_strdup_printf("smogrify redo \"%s\" %d %d \"%s\"",cfile->handle,1,new_frames,
+    com=g_strdup_printf("\"%s\" redo \"%s\" %d %d \"%s\"",prefs->backend,cfile->handle,1,new_frames,
 			cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
     unlink(cfile->info_file);
     mainw->com_failed=FALSE;
@@ -2580,7 +2586,7 @@ gboolean resample_clipboard(gdouble new_fps) {
     if (clipboard->undo1_dbl<clipboard->fps) {
       gint old_frames=count_resampled_frames(clipboard->frames,clipboard->fps,clipboard->undo1_dbl);
       mainw->current_file=0;
-      com=g_strdup_printf("smogrify undo \"%s\" %d %d \"%s\"",cfile->handle,old_frames+1,cfile->frames,
+      com=g_strdup_printf("\"%s\" undo \"%s\" %d %d \"%s\"",prefs->backend,cfile->handle,old_frames+1,cfile->frames,
 			  cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
       unlink(cfile->info_file);
       lives_system(com,FALSE);

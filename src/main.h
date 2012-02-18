@@ -61,7 +61,6 @@ POSSIBILITY OF SUCH DAMAGES.
 #ifdef IS_MINGW
 
 #undef GDK_WINDOWING_X11
-
 #ifndef WINVER
 #define WINVER 0x0500
 #endif
@@ -110,9 +109,6 @@ typedef int lives_pgid_t;
 
 #define QUOTEME(x) #x
 
-/// don't change this unless the backend is changed as well
-/// i.e. $GUI_BOOTSTRAP_FILE in smogrify
-#define BOOTSTRAP_NAME "/tmp/.smogrify"
 
 /// max files is actually 1 more than this, since file 0 is the clipboard
 #define MAX_FILES 65535
@@ -592,7 +588,8 @@ typedef struct {
   // the following may need checking before use
   gboolean has_xmms;
   gboolean has_dvgrab;
-  gboolean has_sox;
+  gboolean has_sox_play;
+  gboolean has_sox_sox;
   gboolean has_autolives;
   gboolean has_mplayer;
   gboolean has_convert;
@@ -1249,7 +1246,7 @@ void on_open_fw_activate (GtkMenuItem *menuitem, gpointer format);
 
 gchar *dummychar;
 
-#define LIVES_NO_DEBUG
+//#define LIVES_NO_DEBUG
 #ifndef LIVES_DEBUG
 #ifndef LIVES_NO_DEBUG
 #define LIVES_DEBUG(x)      fprintf(stderr, "LiVES debug: %s\n", x)

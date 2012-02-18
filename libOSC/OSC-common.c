@@ -53,10 +53,6 @@ The OpenSound Control WWW page is
 #include <stdio.h>
 #include <stdlib.h>
 
-#ifdef IS_MINGW
-// seems to be a bug in mingw, we need to define stderr ourselves
-#define stderr 2
-#endif
 
 void fatal_error(char *s, ...) {
     va_list ap;

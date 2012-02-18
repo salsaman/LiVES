@@ -2106,7 +2106,7 @@ _entryw* create_rename_dialog (gint type) {
     }
     if (type==6) {
       gchar *tmpdir;
-      if (prefs->startup_phase==-1) tmpdir=g_strdup_printf("%s/livestmp/",capable->home_dir);
+      if (prefs->startup_phase==-1) tmpdir=g_build_filename(capable->home_dir,"livestmp",NULL);
       else tmpdir=g_strdup(prefs->tmpdir);
       gtk_entry_set_text (GTK_ENTRY (renamew->entry),tmpdir);
       g_free(tmpdir);

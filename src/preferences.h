@@ -317,6 +317,8 @@ typedef struct {
 #endif
 
   GList *disabled_decoders;
+
+  char backend[PATH_MAX];
 } _prefs;
 
 enum {

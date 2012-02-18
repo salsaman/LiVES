@@ -248,31 +248,31 @@ GList *get_plugin_list (const gchar *plugin_type, gboolean allow_nonex, const gc
   const gchar *ext=(filter_ext==NULL)?"":filter_ext;
 
   if (!strcmp(plugin_type,PLUGIN_THEMES)) {
-    com=g_strdup_printf ("smogrify list_plugins 0 1 \"%s%s\" \"\"",prefs->prefix_dir,THEME_DIR);
+    com=g_strdup_printf ("\"%s\" list_plugins 0 1 \"%s%s\" \"\"",prefs->backend,prefs->prefix_dir,THEME_DIR);
   }
   else if (!strcmp (plugin_type,PLUGIN_RENDERED_EFFECTS_CUSTOM_SCRIPTS)||
 	   !strcmp (plugin_type,PLUGIN_RENDERED_EFFECTS_TEST_SCRIPTS)||
 	   !strcmp (plugin_type,PLUGIN_RENDERED_EFFECTS_CUSTOM)||!strcmp (plugin_type,PLUGIN_RENDERED_EFFECTS_TEST)) {
     // look in home
-    com=g_strdup_printf ("smogrify list_plugins %d 0 \"%s/%s%s\" \"%s\"",allow_nonex,capable->home_dir,
+    com=g_strdup_printf ("\"%s\" list_plugins %d 0 \"%s/%s%s\" \"%s\"",prefs->backend,allow_nonex,capable->home_dir,
 			 LIVES_CONFIG_DIR,plugin_type,ext);
   }
   else if (!strcmp(plugin_type,PLUGIN_EFFECTS_WEED)) {
-    com=g_strdup_printf ("smogrify list_plugins 1 1 \"%s\" \"%s\"",
+    com=g_strdup_printf ("\"%s\" list_plugins 1 1 \"%s\" \"%s\"",prefs->backend,
 			 (tmp=g_filename_from_utf8(plugdir,-1,NULL,NULL,NULL)),ext);
     g_free(tmp);
   }
   else if (!strcmp(plugin_type,PLUGIN_DECODERS)) {
-    com=g_strdup_printf ("smogrify list_plugins 1 0 \"%s\" \"%s\"",
+    com=g_strdup_printf ("\"%s\" list_plugins 1 0 \"%s\" \"%s\"",prefs->backend,
 			 (tmp=g_filename_from_utf8(plugdir,-1,NULL,NULL,NULL)),ext);
     g_free(tmp);
   }
   else if (!strcmp(plugin_type,PLUGIN_RENDERED_EFFECTS_BUILTIN_SCRIPTS)) {
-    com=g_strdup_printf ("smogrify list_plugins %d 0 \"%s%s%s\" \"%s\"",allow_nonex,prefs->prefix_dir,
+    com=g_strdup_printf ("\"%s\" list_plugins %d 0 \"%s%s%s\" \"%s\"",prefs->backend,allow_nonex,prefs->prefix_dir,
 			 PLUGIN_SCRIPTS_DIR,plugin_type,ext);
   }
   else {
-    com=g_strdup_printf ("smogrify list_plugins %d 0 \"%s%s%s\" \"%s\"",allow_nonex,prefs->lib_dir,
+    com=g_strdup_printf ("\"%s\" list_plugins %d 0 \"%s%s%s\" \"%s\"",prefs->backend,allow_nonex,prefs->lib_dir,
 			 PLUGIN_EXEC_DIR,plugin_type,ext);
   }
   list_plugins=TRUE;
@@ -1857,7 +1857,7 @@ gboolean check_encoder_restrictions (gboolean get_extension, gboolean user_audio
 	
 	g_strfreev(array);
       
-	if (asigned!=0&&!capable->has_sox) {
+	if (asigned!=0&&!capable->has_sox_sox) {
 	  do_encoder_sox_error();
 	  g_strfreev(checks);
 	  return FALSE;
@@ -1894,7 +1894,7 @@ gboolean check_encoder_restrictions (gboolean get_extension, gboolean user_audio
 	g_strfreev(array2);
 	g_strfreev(array);
 	
-	if (!capable->has_sox) {
+	if (!capable->has_sox_sox) {
 	  do_encoder_sox_error();
 	  g_strfreev(checks);
 	  return FALSE;
@@ -2631,17 +2631,20 @@ void do_rfx_cleanup(lives_rfx_t *rfx) {
   switch (rfx->status) {
   case RFX_STATUS_BUILTIN:
     dir=g_build_filename(prefs->lib_dir,PLUGIN_EXEC_DIR,NULL);
-    com=g_strdup_printf("smogrify plugin_clear \"%s\" %d %d \"%s\" \"%s\" \"%s\"",cfile->handle,cfile->start,cfile->end,dir,
+    com=g_strdup_printf("\"%s\" plugin_clear \"%s\" %d %d \"%s\" \"%s\" \"%s\"",prefs->backend,
+			cfile->handle,cfile->start,cfile->end,dir,
 			PLUGIN_RENDERED_EFFECTS_BUILTIN,rfx->name);
     break;
   case RFX_STATUS_CUSTOM:
     dir=g_build_filename(capable->home_dir,LIVES_CONFIG_DIR,NULL);
-    com=g_strdup_printf("smogrify plugin_clear \"%s\" %d %d \"%s\" \"%s\" \"%s\"",cfile->handle,cfile->start,cfile->end,dir,
+    com=g_strdup_printf("\"%s\" plugin_clear \"%s\" %d %d \"%s\" \"%s\" \"%s\"",prefs->backend,
+			cfile->handle,cfile->start,cfile->end,dir,
 			PLUGIN_RENDERED_EFFECTS_CUSTOM,rfx->name);
     break;
   case RFX_STATUS_TEST:
     dir=g_build_filename(capable->home_dir,LIVES_CONFIG_DIR,NULL);
-    com=g_strdup_printf("smogrify plugin_clear \"%s\" %d %d \"%s\" \"%s\" \"%s\"",cfile->handle,cfile->start,cfile->end,dir,
+    com=g_strdup_printf("\"%s\" plugin_clear \"%s\" %d %d \"%s\" \"%s\" \"%s\"",prefs->backend,
+			cfile->handle,cfile->start,cfile->end,dir,
 			PLUGIN_RENDERED_EFFECTS_TEST,rfx->name);
     break;
   default:

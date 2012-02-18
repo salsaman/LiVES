@@ -1064,7 +1064,7 @@ void init_clipboard(void) {
     // need to set current file to 0 before monitoring progress
     mainw->current_file=0;
     mainw->com_failed=FALSE;
-    com=g_strdup_printf("smogrify delete_all \"%s\"",clipboard->handle);
+    com=g_strdup_printf("\"%s\" delete_all \"%s\"",prefs->backend,clipboard->handle);
     unlink(clipboard->info_file);
     lives_system(com,FALSE);
     g_free(com);
@@ -1348,7 +1348,7 @@ gboolean check_for_lock_file(const gchar *set_name, gint type) {
   ssize_t bytes;
 
   gchar *info_file=g_strdup_printf("%s/.locks.%d",prefs->tmpdir,getpid());
-  gchar *com=g_strdup_printf("smogrify check_for_lock \"%s\" \"%s\" %d >\"%s\"",set_name,capable->myname,
+  gchar *com=g_strdup_printf("\"%s\" check_for_lock \"%s\" \"%s\" %d >\"%s\"",prefs->backend,set_name,capable->myname,
 			     getpid(),info_file);
 
   unlink(info_file);
@@ -1512,7 +1512,7 @@ void get_frame_count(gint idx) {
   int retval;
   ssize_t bytes;
   gchar *info_file=g_strdup_printf("%s/.check.%d",prefs->tmpdir,getpid());
-  gchar *com=g_strdup_printf("smogrify count_frames \"%s\" \"%s\" > \"%s\"",mainw->files[idx]->handle,
+  gchar *com=g_strdup_printf("\"%s\" count_frames \"%s\" \"%s\" > \"%s\"",prefs->backend,mainw->files[idx]->handle,
 			     mainw->files[idx]->img_type==IMG_TYPE_JPEG?"jpg":"png",info_file);
 
   mainw->com_failed=FALSE;
@@ -1670,7 +1670,7 @@ guint64 get_version_hash(const gchar *exe, const gchar *sep, int piece) {
   FILE *rfile;
   ssize_t rlen;
   char val[16];
-  gchar *com=g_strdup_printf("smogrify get_version_hash \"%s\" \"%s\" %d",exe,sep,piece);
+  gchar *com=g_strdup_printf("\"%s\" get_version_hash \"%s\" \"%s\" %d",prefs->backend,exe,sep,piece);
   rfile=popen(com,"r");
   rlen=fread(val,1,16,rfile);
   pclose(rfile);
@@ -2876,7 +2876,8 @@ after_foreign_play(void) {
 
 	  g_snprintf(file_name,PATH_MAX,"%s/%s/",prefs->tmpdir,cfile->handle);
 	  
-	  com=g_strdup_printf("smogrify fill_and_redo_frames \"%s\" %d %d %d \"%s\" %.4f %d %d %d %d %d",
+	  com=g_strdup_printf("\"%s\" fill_and_redo_frames \"%s\" %d %d %d \"%s\" %.4f %d %d %d %d %d",
+			      prefs->backend,
 			      cfile->handle,cfile->frames,cfile->hsize,cfile->vsize,
 			      cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",cfile->fps,cfile->arate,
 			      cfile->achans,cfile->asampsize,!(cfile->signed_endian&AFORM_UNSIGNED),
@@ -3068,14 +3069,22 @@ gboolean check_dir_access (const gchar *dir) {
   gboolean is_OK=FALSE;
 
   if (!exists) {
+#ifndef IS_MINGW
     com=g_strdup_printf ("/bin/mkdir -p %s",dir);
+#else
+    com=g_strdup_printf ("mkdir %s",dir);
+#endif
     lives_system (com,TRUE);
     g_free (com);
   }
   if (!g_file_test(dir, G_FILE_TEST_IS_DIR)) return FALSE;
 
   testfile=g_build_filename (dir,"livestst.txt",NULL);
+#ifndef IS_MINGW
   com=g_strdup_printf ("/bin/touch \"%s\"",testfile);
+#else
+  com=g_strdup_printf ("touch \"%s\"",testfile);
+#endif
   lives_system (com,TRUE);
   g_free (com);
   if ((is_OK=g_file_test(testfile, G_FILE_TEST_EXISTS))) {
@@ -3726,7 +3735,8 @@ gboolean get_clip_value(int which, lives_clip_details_t what, void *retval, size
     if (val==NULL) return FALSE;
   }
   else {
-    com=g_strdup_printf("smogrify get_clip_value \"%s\" %d %d \"%s\"",key,lives_getuid(),lives_getpid(),lives_header);
+    com=g_strdup_printf("\"%s\" get_clip_value \"%s\" %d %d \"%s\"",prefs->backend,key,
+			lives_getuid(),lives_getpid(),lives_header);
     g_free(lives_header);
     g_free(key);
     
@@ -3961,7 +3971,7 @@ void save_clip_value(int which, lives_clip_details_t what, void *val) {
 
   }
   else {
-    com=g_strdup_printf("smogrify set_clip_value \"%s\" \"%s\" \"%s\"",lives_header,key,myval);
+    com=g_strdup_printf("\"%s\" set_clip_value \"%s\" \"%s\" \"%s\"",prefs->backend,lives_header,key,myval);
     lives_system(com,FALSE);
     g_free(com);
   }
@@ -4410,43 +4420,33 @@ gboolean is_writeable_dir(const gchar *dir) {
   // return 0 if we cannot create/write to dir
 
   // dir should be in locale encoding
-
 #ifndef IS_MINGW
-  gchar *com;
   struct statvfs sbuf;
+#else
+  gchar *com;
+#endif
 
   if (!g_file_test(dir,G_FILE_TEST_IS_DIR)) {
-    com=g_strdup_printf("/bin/mkdir -p \"%s\"",dir);
-    lives_system(com,TRUE);
-    g_free(com);
+    g_mkdir_with_parents(dir,S_IRUSR|S_IWUSR);
     if (!g_file_test(dir,G_FILE_TEST_IS_DIR)) {
       return FALSE;
     }
   }
 
+#ifndef IS_MINGW
   // use statvfs to get fs details
   if (statvfs(dir,&sbuf)==-1) return FALSE;
   if (sbuf.f_flag&ST_RDONLY) return FALSE;
-
 #else
-  gchar *testname=g_build_filename(dir,"x123test",NULL);
-  HANDLE hTempFile; 
-  hTempFile = CreateFile(testname, // file name 
-			 GENERIC_WRITE,        // open for write 
-			 0,                    // do not share 
-			 NULL,                 // default security 
-			 CREATE_ALWAYS,        // overwrite existing
-			 FILE_ATTRIBUTE_NORMAL,// normal file 
-			 NULL);                // no template 
-  g_free(testname);
-  if (hTempFile == INVALID_HANDLE_VALUE) 
-    { 
-      return FALSE;
-    }
-
-
+  mainw->com_failed=FALSE;
+  com=g_strdup_printf("touch %s\\xxxxfile.txt",dir);
+  lives_system(com,TRUE);
+  g_free(com);
+  com=g_strdup_printf("%s\\xxxxfile.txt",dir);
+  unlink(com);
+  g_free(com);
+  if (mainw->com_failed) return FALSE;
 #endif
-
   return TRUE;
 }
 
@@ -4479,7 +4479,7 @@ uint64_t get_fs_free(const char *dir) {
   if (sbuf.f_flag&ST_RDONLY) goto getfserr;
 
   // result is block size * blocks available
-  bytes=sbuf.f_bsize*sbuf.f_bavail*sbuf.f_frsize;
+  bytes=sbuf.f_bsize*sbuf.f_bavail;
 
 #else
   GetDiskFreeSpaceEx(dir,(PULARGE_INTEGER)&bytes,NULL,NULL);

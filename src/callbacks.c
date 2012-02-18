@@ -88,7 +88,7 @@ void lives_exit (void) {
 	g_free(lsname);
 	lives_system(com,TRUE);
 	g_free (com);
-	com=g_strdup_printf("smogrify stop_audio \"%s\"",mainw->files[mainw->aud_file_to_kill]->handle);
+	com=g_strdup_printf("\"%s\" stop_audio \"%s\"",prefs->backend,mainw->files[mainw->aud_file_to_kill]->handle);
 	lives_system(com,TRUE);
 	g_free(com);
       }
@@ -97,7 +97,7 @@ void lives_exit (void) {
     // stop any background processing for the current clip
     if (mainw->current_file>-1) {
       if (cfile->handle!=NULL&&(cfile->clip_type==CLIP_TYPE_DISK||cfile->clip_type==CLIP_TYPE_FILE)) {
-	com=g_strdup_printf("smogrify stopsubsub \"%s\" 2>/dev/null",cfile->handle);
+	com=g_strdup_printf("\"%s\" stopsubsub \"%s\" 2>/dev/null",prefs->backend,cfile->handle);
 	lives_system(com,TRUE);
 	g_free(com);
       }
@@ -154,7 +154,7 @@ void lives_exit (void) {
 
 
 	// use backend to move the sets
-	com=g_strdup_printf("smogrify weed \"%s\" &",future_prefs->tmpdir);
+	com=g_strdup_printf("\"%s\" weed \"%s\" &",prefs->backend,future_prefs->tmpdir);
 	lives_system (com,FALSE);
 	g_free (com);
       }
@@ -232,7 +232,7 @@ void lives_exit (void) {
 	  }
 #endif
 	  threaded_dialog_spin();
-	  com=g_strdup_printf("smogrify close \"%s\"",mainw->files[i]->handle);
+	  com=g_strdup_printf("\"%s\" close \"%s\"",prefs->backend,mainw->files[i]->handle);
 	  lives_system(com,FALSE);
 	  g_free(com);
 	  threaded_dialog_spin();
@@ -240,7 +240,7 @@ void lives_exit (void) {
 	else {
 	  threaded_dialog_spin();
 	  // or just clean them up
-	  com=g_strdup_printf("smogrify clear_tmp_files \"%s\"",mainw->files[i]->handle);
+	  com=g_strdup_printf("\"%s\" clear_tmp_files \"%s\"",prefs->backend,mainw->files[i]->handle);
 	  lives_system(com,FALSE);
 	  threaded_dialog_spin();
 	  g_free(com);
@@ -786,7 +786,7 @@ void on_utube_select (GtkButton *button, gpointer user_data) {
 
   unlink(cfile->info_file);
 
-  com=g_strdup_printf("smogrify download_clip \"%s\" \"%s\" \"%s\"",cfile->handle,url,dfile);
+  com=g_strdup_printf("\"%s\" download_clip \"%s\" \"%s\" \"%s\"",prefs->backend,cfile->handle,url,dfile);
   mainw->com_failed=FALSE;
   lives_system(com,FALSE);
   g_free(com);
@@ -811,7 +811,7 @@ void on_utube_select (GtkButton *button, gpointer user_data) {
     else {
       if (current_file==-1) {
       // we made a temp file so close it
-      com=g_strdup_printf("smogrify close \"%s\"",cfile->handle);
+      com=g_strdup_printf("\"%s\" close \"%s\"",prefs->backend,cfile->handle);
       lives_system(com,TRUE);
       g_free(com);
       g_free(cfile);
@@ -843,7 +843,7 @@ void on_utube_select (GtkButton *button, gpointer user_data) {
   cfile->keep_without_preview=FALSE;
 
   if (current_file==-1) {
-    com=g_strdup_printf("smogrify close \"%s\"",cfile->handle);
+    com=g_strdup_printf("\"%s\" close \"%s\"",prefs->backend,cfile->handle);
     lives_system(com,TRUE);
     g_free(com);
     g_free(cfile);
@@ -899,7 +899,7 @@ on_stop_clicked (GtkMenuItem     *menuitem,
   }
 #endif
 
-  com=g_strdup_printf("smogrify stopsubsubs \"%s\" 2>/dev/null",cfile->handle);
+  com=g_strdup_printf("\"%s\" stopsubsubs \"%s\" 2>/dev/null",prefs->backend,cfile->handle);
   lives_system(com,TRUE);
   g_free(com);
 
@@ -911,7 +911,7 @@ on_stop_clicked (GtkMenuItem     *menuitem,
 
   // resume for next time
   if (mainw->effects_paused) {
-    com=g_strdup_printf("smogrify resume \"%s\"",cfile->handle);
+    com=g_strdup_printf("\"%s\" resume \"%s\"",prefs->backend,cfile->handle);
     lives_system(com,FALSE);
     g_free(com);
   }
@@ -1140,7 +1140,7 @@ on_import_proj_activate                      (GtkMenuItem     *menuitem,
   info_file=g_strdup_printf("%s/.impname.%d",prefs->tmpdir,getpid());
   unlink(info_file);
   mainw->com_failed=FALSE;
-  com=g_strdup_printf("smogrify get_proj_set \"%s\">\"%s\"",proj_file,info_file);
+  com=g_strdup_printf("\"%s\" get_proj_set \"%s\">\"%s\"",prefs->backend,proj_file,info_file);
   lives_system(com,FALSE);
   g_free(com);
 
@@ -1193,7 +1193,7 @@ on_import_proj_activate                      (GtkMenuItem     *menuitem,
     return;
   }
 
-  com=g_strdup_printf("smogrify import_project \"%s\" \"%s\"",cfile->handle,proj_file);
+  com=g_strdup_printf("\"%s\" import_project \"%s\" \"%s\"",prefs->backend,cfile->handle,proj_file);
   mainw->com_failed=FALSE;
   lives_system(com,FALSE);
   g_free(com);
@@ -1206,7 +1206,7 @@ on_import_proj_activate                      (GtkMenuItem     *menuitem,
 
   do_progress_dialog(TRUE,FALSE,_("Importing project"));
 
-  com=g_strdup_printf("smogrify close \"%s\"",cfile->handle);
+  com=g_strdup_printf("\"%s\" close \"%s\"",prefs->backend,cfile->handle);
   lives_system(com,TRUE);
   g_free(com);
   g_free(cfile);
@@ -1293,7 +1293,7 @@ on_export_proj_activate                      (GtkMenuItem     *menuitem,
   d_print(msg);
   g_free(msg);
 
-  com=g_strdup_printf("smogrify export_project \"%s\" \"%s\" \"%s\"",cfile->handle,mainw->set_name,proj_file);
+  com=g_strdup_printf("\"%s\" export_project \"%s\" \"%s\" \"%s\"",prefs->backend,cfile->handle,mainw->set_name,proj_file);
   mainw->com_failed=FALSE;
   lives_system(com,FALSE);
   g_free(com);
@@ -1668,11 +1668,12 @@ on_undo_activate                      (GtkMenuItem     *menuitem,
       if (cfile->undo1_dbl==cfile->undo2_dbl&&cfile->undo1_dbl==0.) {
 	// undo delete_all_audio
 	reset_achans=cfile->undo_achans;
-	com=g_strdup_printf("smogrify undo_audio \"%s\"",cfile->handle);
+	com=g_strdup_printf("\"%s\" undo_audio \"%s\"",prefs->backend,cfile->handle);
       }
       // undo delete selected audio
       // (set with with_audio==2 [audio only],therfore start,end,where are is secs.; times==-1)
-      else com=g_strdup_printf("smogrify insert \"%s\" \"%s\" %.8f 0. %.8f \"%s\" 2 0 0 0 0 %d %d %d %d %d -1",
+      else com=g_strdup_printf("\"%s\" insert \"%s\" \"%s\" %.8f 0. %.8f \"%s\" 2 0 0 0 0 %d %d %d %d %d -1",
+			       prefs->backend,
 			       cfile->handle,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",cfile->undo1_dbl,
 			       cfile->undo2_dbl-cfile->undo1_dbl, cfile->handle, cfile->arps, cfile->achans, 
 			       cfile->asampsize,!(cfile->signed_endian&AFORM_UNSIGNED),
@@ -1681,7 +1682,8 @@ on_undo_activate                      (GtkMenuItem     *menuitem,
     else {
       // undo cut or delete (times to insert is -1)
       cfile->undo1_boolean&=mainw->ccpd_with_sound;
-      com=g_strdup_printf("smogrify insert \"%s\" \"%s\" %d %d %d \"%s\" %d %d 0 0 %.3f %d %d %d %d %d -1",cfile->handle,
+      com=g_strdup_printf("\"%s\" insert \"%s\" \"%s\" %d %d %d \"%s\" %d %d 0 0 %.3f %d %d %d %d %d -1",
+			  prefs->backend,cfile->handle,
 			  cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",cfile->undo_start-1,cfile->undo_start,
 			  cfile->undo_end,cfile->handle, cfile->undo1_boolean, cfile->frames, cfile->fps, 
 			  cfile->arps, cfile->achans, cfile->asampsize, !(cfile->signed_endian&AFORM_UNSIGNED),
@@ -1763,7 +1765,7 @@ on_undo_activate                      (GtkMenuItem     *menuitem,
 					cfile->vsize!=cfile->ovsize||cfile->fps!=cfile->undo1_dbl))) {
     gchar *audfile;
 
-    com=g_strdup_printf("smogrify undo \"%s\" %d %d \"%s\"",cfile->handle,cfile->undo_start,cfile->undo_end,
+    com=g_strdup_printf("\"%s\" undo \"%s\" %d %d \"%s\"",prefs->backend,cfile->handle,cfile->undo_start,cfile->undo_end,
 			cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
     unlink(cfile->info_file);
     mainw->com_failed=FALSE;
@@ -1784,7 +1786,7 @@ on_undo_activate                      (GtkMenuItem     *menuitem,
       audfile=g_strdup_printf("%s/%s/audio.bak",prefs->tmpdir,cfile->handle);
       if (g_file_test (audfile, G_FILE_TEST_EXISTS)) {
 	// restore overwritten audio
-	com=g_strdup_printf("smogrify undo_audio %s",cfile->handle);
+	com=g_strdup_printf("\"%s\" undo_audio %s",prefs->backend,cfile->handle);
 	mainw->com_failed=FALSE;
 	unlink (cfile->info_file);
 	lives_system(com,FALSE);
@@ -1824,7 +1826,8 @@ on_undo_activate                      (GtkMenuItem     *menuitem,
 							cfile->hsize!=cfile->ohsize||cfile->vsize!=cfile->ovsize)) {
 
     if (cfile->frames>cfile->old_frames) {
-      com=g_strdup_printf("smogrify cut \"%s\" %d %d %d %d \"%s\" %.3f %d %d %d",cfile->handle,cfile->old_frames+1, 
+      com=g_strdup_printf("\"%s\" cut \"%s\" %d %d %d %d \"%s\" %.3f %d %d %d",
+			  prefs->backend,cfile->handle,cfile->old_frames+1, 
 			  cfile->frames, FALSE, cfile->frames, cfile->img_type==IMG_TYPE_JPEG?"jpg":"png", 
 			  cfile->fps, cfile->arate, cfile->achans, cfile->asampsize);
 
@@ -1929,7 +1932,7 @@ on_undo_activate                      (GtkMenuItem     *menuitem,
       cfile->undo_action==UNDO_TRIM_AUDIO||cfile->undo_action==UNDO_APPEND_AUDIO||
       (cfile->undo_action==UNDO_ATOMIC_RESAMPLE_RESIZE&&cfile->arate!=cfile->undo1_int)) {
     unlink(cfile->info_file);
-    com=g_strdup_printf("smogrify undo_audio \"%s\"",cfile->handle);
+    com=g_strdup_printf("\"%s\" undo_audio \"%s\"",prefs->backend,cfile->handle);
     mainw->com_failed=FALSE;
     mainw->cancelled=CANCEL_NONE;
     mainw->error=FALSE;
@@ -1991,7 +1994,7 @@ on_undo_activate                      (GtkMenuItem     *menuitem,
     
   if (cfile->undo_action==UNDO_NEW_AUDIO) {
     unlink(cfile->info_file);
-    com=g_strdup_printf("smogrify undo_audio \"%s\"",cfile->handle);
+    com=g_strdup_printf("\"%s\" undo_audio \"%s\"",prefs->backend,cfile->handle);
     mainw->com_failed=FALSE;
     lives_system(com,FALSE);
     g_free(com);
@@ -2238,7 +2241,7 @@ on_redo_activate                      (GtkMenuItem     *menuitem,
 
   if (cfile->undo_action==UNDO_REC_AUDIO||cfile->undo_action==UNDO_FADE_AUDIO||cfile->undo_action==UNDO_TRIM_AUDIO||
       cfile->undo_action==UNDO_APPEND_AUDIO) {
-    com=g_strdup_printf("smogrify undo_audio \"%s\"",cfile->handle);
+    com=g_strdup_printf("\"%s\" undo_audio \"%s\"",prefs->backend,cfile->handle);
     unlink(cfile->info_file);
     mainw->com_failed=FALSE;
     lives_system(com,FALSE);
@@ -2263,7 +2266,7 @@ on_redo_activate                      (GtkMenuItem     *menuitem,
     return;
   }
 
-  com=g_strdup_printf("smogrify redo \"%s\" %d %d \"%s\"",cfile->handle,cfile->undo_start,cfile->undo_end,
+  com=g_strdup_printf("\"%s\" redo \"%s\" %d %d \"%s\"",prefs->backend,cfile->handle,cfile->undo_start,cfile->undo_end,
 		      cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
   unlink(cfile->info_file);
   mainw->com_failed=FALSE;
@@ -2362,7 +2365,7 @@ on_copy_activate                      (GtkMenuItem     *menuitem,
 
   clipboard->img_type=cfile->img_type;
 
-  com=g_strdup_printf("smogrify insert \"%s\" \"%s\" 0 %d %d \"%s\" %d 0 0 0 %.3f %d %d %d %d %d",
+  com=g_strdup_printf("\"%s\" insert \"%s\" \"%s\" 0 %d %d \"%s\" %d 0 0 0 %.3f %d %d %d %d %d",prefs->backend,
 		      clipboard->handle, clipboard->img_type==IMG_TYPE_JPEG?"jpg":"png",
 		      start, end, cfile->handle, mainw->ccpd_with_sound, cfile->fps, cfile->arate, 
 		      cfile->achans, cfile->asampsize, !(cfile->signed_endian&AFORM_UNSIGNED),
@@ -2386,7 +2389,7 @@ on_copy_activate                      (GtkMenuItem     *menuitem,
   cfile->nopreview=TRUE;
   if (!do_progress_dialog(TRUE,TRUE,_ ("Copying to the clipboard"))) {
     // close clipboard, it is invalid
-    com=g_strdup_printf ("smogrify close \"%s\"",clipboard->handle);
+    com=g_strdup_printf ("\"%s\" close \"%s\"",prefs->backend,clipboard->handle);
     lives_system (com,FALSE);
     g_free (com);
     clipboard=NULL;
@@ -2486,7 +2489,8 @@ void on_paste_as_new_activate                       (GtkMenuItem     *menuitem,
   g_free (msg);
   mainw->no_switch_dprint=FALSE;
 
-  com=g_strdup_printf("smogrify insert \"%s\" \"%s\" 0 1 %d \"%s\" %d 0 0 0 %.3f %d %d %d %d %d",cfile->handle, 
+  com=g_strdup_printf("\"%s\" insert \"%s\" \"%s\" 0 1 %d \"%s\" %d 0 0 0 %.3f %d %d %d %d %d",
+		      prefs->backend,cfile->handle, 
 		      cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",clipboard->frames, clipboard->handle, 
 		      mainw->ccpd_with_sound, clipboard->fps, clipboard->arate, clipboard->achans, 
 		      clipboard->asampsize, !(cfile->signed_endian&AFORM_UNSIGNED), 
@@ -2639,7 +2643,7 @@ on_insert_activate                    (GtkButton     *button,
 							 cfile->asampsize!=clipboard->asampsize||
 							 cfile_signed!=clipboard_signed||cfile_endian!=clipboard_endian||
 							 cfile->arate!=clipboard->arate)) {
-      if (!(capable->has_sox)) {
+      if (!(capable->has_sox_sox)) {
 	if (cfile->arps!=clipboard->arps) {
 	  do_error_dialog(_ ("LiVES cannot insert because the audio rates do not match.\nPlease install 'sox', and try again."));
 	  mainw->error=TRUE;
@@ -2803,7 +2807,8 @@ on_insert_activate                    (GtkButton     *button,
 	  if ((audio_stretch=(gdouble)clipboard->arps/(gdouble)clipboard->arate*
 	       (gdouble)cfile->arate/(gdouble)cfile->arps)!=1.) {
 	    unlink (clipboard->info_file);
-	    com=g_strdup_printf ("smogrify resample_audio \"%s\" %d %d %d %d %d %d %d %d %d %d %.4f",
+	    com=g_strdup_printf ("\"%s\" resample_audio \"%s\" %d %d %d %d %d %d %d %d %d %d %.4f",
+				 prefs->backend,
 				 clipboard->handle,clipboard->arps,clipboard->achans,clipboard->asampsize,
 				 clipboard_signed,clipboard_endian,cfile->arps,clipboard->achans,
 				 clipboard->asampsize,clipboard_signed,clipboard_endian,audio_stretch);
@@ -2833,7 +2838,8 @@ on_insert_activate                    (GtkButton     *button,
 				  cfile->asampsize!=clipboard->asampsize||cfile_signed!=clipboard_signed||
 				  cfile_endian!=clipboard_endian)) {
 	  unlink (clipboard->info_file);
-	  com=g_strdup_printf ("smogrify resample_audio \"%s\" %d %d %d %d %d %d %d %d %d %d",clipboard->handle,
+	  com=g_strdup_printf ("\"%s\" resample_audio \"%s\" %d %d %d %d %d %d %d %d %d %d",
+			       prefs->backend,clipboard->handle,
 			       clipboard->arps,clipboard->achans,clipboard->asampsize,clipboard_signed,
 			       clipboard_endian,cfile->arps,cfile->achans,cfile->asampsize,cfile_signed,cfile_endian);
 	  mainw->com_failed=FALSE;
@@ -2866,7 +2872,7 @@ on_insert_activate                    (GtkButton     *button,
 	  else {
 	    unlink (clipboard->info_file);
 	    mainw->current_file=0;
-	    com=g_strdup_printf ("smogrify undo_audio \"%s\"",clipboard->handle);
+	    com=g_strdup_printf ("\"%s\" undo_audio \"%s\"",prefs->backend,clipboard->handle);
 	    lives_system (com,FALSE);
 	    g_free (com);
 	    mainw->current_file=current_file;
@@ -2932,7 +2938,8 @@ on_insert_activate                    (GtkButton     *button,
     d_print(msg);
     g_free(msg);
 
-    com=g_strdup_printf("smogrify insert \"%s\" \"%s\" %d %d %d \"%s\" %d %d %d %d %.3f %d %d %d %d %d",cfile->handle, 
+    com=g_strdup_printf("\"%s\" insert \"%s\" \"%s\" %d %d %d \"%s\" %d %d %d %d %.3f %d %d %d %d %d",
+			prefs->backend,cfile->handle, 
 			cfile->img_type==IMG_TYPE_JPEG?"jpg":"png", where, clipboard->frames-remainder_frames+1, 
 			clipboard->frames, clipboard->handle, with_sound, cfile->frames, hsize, vsize, cfile->fps, 
 			cfile->arate, cfile->achans, cfile->asampsize, !(cfile->signed_endian&AFORM_UNSIGNED), 
@@ -3000,7 +3007,8 @@ on_insert_activate                    (GtkButton     *button,
   // this should indicate to the back end to leave our
   // backup frames alone
 
-  com=g_strdup_printf("smogrify insert \"%s\" \"%s\" %d %d %d \"%s\" %d %d %d %d %.3f %d %d %d %d %d %d",cfile->handle, 
+  com=g_strdup_printf("\"%s\" insert \"%s\" \"%s\" %d %d %d \"%s\" %d %d %d %d %.3f %d %d %d %d %d %d",
+		      prefs->backend,cfile->handle, 
 		      cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",where, cb_start*leave_backup, cb_end, 
 		      clipboard->handle, with_sound, cfile->frames, hsize, vsize, cfile->fps, cfile->arate, 
 		      cfile->achans, cfile->asampsize, !(cfile->signed_endian&AFORM_UNSIGNED), 
@@ -3031,7 +3039,8 @@ on_insert_activate                    (GtkButton     *button,
     }
 
     // clean up moved/inserted frames
-    com=g_strdup_printf ("smogrify undo_insert \"%s\" %d %d %d \"%s\"",cfile->handle,where+1,
+    com=g_strdup_printf ("\"%s\" undo_insert \"%s\" %d %d %d \"%s\"",
+			 prefs->backend,cfile->handle,where+1,
 			 where+(cb_end-cb_start+1)*(int)times_to_insert,cfile->frames,
 			 cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
     lives_system (com,FALSE);
@@ -3044,7 +3053,7 @@ on_insert_activate                    (GtkButton     *button,
       // desample clipboard audio
       if (cb_audio_change&&!prefs->conserve_space) {
 	unlink (clipboard->info_file);
-	com=g_strdup_printf ("smogrify undo_audio \"%s\"",clipboard->handle);
+	com=g_strdup_printf ("\"%s\" undo_audio \"%s\"",prefs->backend,clipboard->handle);
 	mainw->current_file=0;
 	lives_system (com,FALSE);
 	g_free (com);
@@ -3099,7 +3108,8 @@ on_insert_activate                    (GtkButton     *button,
     d_print(msg);
     g_free(msg);
 
-    com=g_strdup_printf("smogrify insert \"%s\" \"%s\" %d %d %d \"%s\" %d %d %d %d %3f %d %d %d %d %d",cfile->handle, 
+    com=g_strdup_printf("\"%s\" insert \"%s\" \"%s\" %d %d %d \"%s\" %d %d %d %d %3f %d %d %d %d %d",
+			prefs->backend,cfile->handle, 
 			cfile->img_type==IMG_TYPE_JPEG?"jpg":"png", where, 1, remainder_frames, clipboard->handle, 
 			with_sound, cfile->frames, hsize, vsize, cfile->fps, cfile->arate, cfile->achans, 
 			cfile->asampsize, !(cfile->signed_endian&AFORM_UNSIGNED), 
@@ -3209,7 +3219,7 @@ on_insert_activate                    (GtkButton     *button,
     if (cb_audio_change&&!prefs->conserve_space&&clipboard->achans>0) {
       unlink (clipboard->info_file);
       mainw->current_file=0;
-      com=g_strdup_printf ("smogrify undo_audio \"%s\"",clipboard->handle);
+      com=g_strdup_printf ("\"%s\" undo_audio \"%s\"",prefs->backend,clipboard->handle);
       lives_system (com,FALSE);
       g_free (com);
       mainw->current_file=current_file;
@@ -3397,7 +3407,8 @@ on_delete_activate                    (GtkMenuItem     *menuitem,
     g_free(com);
   }
 
-  com=g_strdup_printf("smogrify cut \"%s\" %d %d %d %d \"%s\" %.3f %d %d %d",cfile->handle,cfile->start,cfile->end, 
+  com=g_strdup_printf("\"%s\" cut \"%s\" %d %d %d %d \"%s\" %.3f %d %d %d",
+		      prefs->backend,cfile->handle,cfile->start,cfile->end, 
 		      mainw->ccpd_with_sound, cfile->frames, cfile->img_type==IMG_TYPE_JPEG?"jpg":"png", 
 		      cfile->fps, cfile->arate, cfile->achans, cfile->asampsize);
   unlink(cfile->info_file);
@@ -4963,7 +4974,7 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
 
     if (orderfile==NULL) {
       // old style (pre 0.9.6)
-      com=g_strdup_printf ("smogrify get_next_in_set \"%s\" \"%s\" %d",mainw->msg,mainw->set_name,getpid());
+      com=g_strdup_printf ("\"%s\" get_next_in_set \"%s\" \"%s\" %d",prefs->backend,mainw->msg,mainw->set_name,getpid());
       lives_system (com,FALSE);
       g_free (com);
 
@@ -5342,7 +5353,7 @@ void on_cleardisk_activate (GtkWidget *widget, gpointer user_data) {
 
   if (retval!=LIVES_CANCEL) {
     mainw->com_failed=FALSE;
-    com=g_strdup_printf("smogrify bg_weed \"%s\" %d",cfile->handle,prefs->clear_disk_opts);
+    com=g_strdup_printf("\"%s\" bg_weed \"%s\" %d",prefs->backend,cfile->handle,prefs->clear_disk_opts);
     lives_system(com,FALSE);
     g_free(com);
     
@@ -5361,7 +5372,7 @@ void on_cleardisk_activate (GtkWidget *widget, gpointer user_data) {
 
 
   // close the temporary clip
-  com=g_strdup_printf("smogrify close \"%s\"",cfile->handle);
+  com=g_strdup_printf("\"%s\" close \"%s\"",prefs->backend,cfile->handle);
   lives_system(com,FALSE);
   g_free(com);
   g_free(cfile);
@@ -5781,7 +5792,7 @@ void on_fs_preview_clicked (GtkButton *button, gpointer user_data) {
 
   if (mainw->in_fs_preview) {
     end_fs_preview();
-    com=g_strdup_printf ("smogrify stopsubsub thm%d 2>/dev/null",pid);
+    com=g_strdup_printf ("\"%s\" stopsubsub thm%d 2>/dev/null",prefs->backend,pid);
     lives_system (com,TRUE);
     g_free (com);
     while (g_main_context_iteration (NULL, FALSE));
@@ -5811,7 +5822,7 @@ void on_fs_preview_clicked (GtkButton *button, gpointer user_data) {
     clear_mainw_msg();
     
     // make thumb from any image file
-    com=g_strdup_printf("smogrify make_thumb thm%d %d %d \"%s\" \"%s\"",pid,DEFAULT_FRAME_HSIZE,
+    com=g_strdup_printf("\"%s\" make_thumb thm%d %d %d \"%s\" \"%s\"",prefs->backend,pid,DEFAULT_FRAME_HSIZE,
 			DEFAULT_FRAME_VSIZE,prefs->image_ext,(tmp=g_filename_from_utf8(file_name,-1,NULL,NULL,NULL)));
     g_free(tmp);
     lives_system(com,FALSE);
@@ -5953,7 +5964,7 @@ void on_fs_preview_clicked (GtkButton *button, gpointer user_data) {
     mainw->in_fs_preview=TRUE;
 
     // get width and height of clip
-    com=g_strdup_printf("smogrify get_details fsp%d \"%s\" \"%s\" %d %d",getpid(),
+    com=g_strdup_printf("\"%s\" get_details fsp%d \"%s\" \"%s\" %d %d",prefs->backend,getpid(),
 			(tmp=g_filename_from_utf8(file_name,-1,NULL,NULL,NULL)),
 			prefs->image_ext,FALSE,FALSE);
 
@@ -6068,12 +6079,12 @@ void on_fs_preview_clicked (GtkButton *button, gpointer user_data) {
     }
 
     if (file_open_params!=NULL) {
-      com=g_strdup_printf("smogrify fs_preview fsp%d %"PRIu64" %d %d %.2f %d \"%s\" \"%s\"",getpid(),
+      com=g_strdup_printf("\"%s\" fs_preview fsp%d %"PRIu64" %d %d %.2f %d \"%s\" \"%s\"",prefs->backend,getpid(),
 			  xwin, width, height, start_time, preview_frames,
 			  (tmp=g_filename_from_utf8(file_name,-1,NULL,NULL,NULL)),file_open_params);
     }
     else {
-      com=g_strdup_printf("smogrify fs_preview fsp%d %"PRIu64" %d %d %.2f %d \"%s\"",getpid(),
+      com=g_strdup_printf("\"%s\" fs_preview fsp%d %"PRIu64" %d %d %.2f %d \"%s\"",prefs->backend,getpid(),
 			  xwin, width, height, start_time, preview_frames,
 			  (tmp=g_filename_from_utf8(file_name,-1,NULL,NULL,NULL)));
     }
@@ -6382,7 +6393,7 @@ void on_open_new_audio_clicked (GtkButton *button, gpointer user_data) {
       !g_ascii_strncasecmp(a_type,"wav",3)||
       !g_ascii_strncasecmp(a_type,"mod",3)||
       !g_ascii_strncasecmp(a_type,".xm",3)) {
-    com=g_strdup_printf("smogrify audioopen \"%s\" \"%s\"",cfile->handle,
+    com=g_strdup_printf("\"%s\" audioopen \"%s\" \"%s\"",prefs->backend,cfile->handle,
 			(tmp=g_filename_from_utf8(file_name,-1,NULL,NULL,NULL)));
     g_free(tmp);
   }
@@ -6454,7 +6465,7 @@ void on_open_new_audio_clicked (GtkButton *button, gpointer user_data) {
     mainw->error=FALSE;
     mainw->com_failed=FALSE;
     unlink (cfile->info_file);
-    com=g_strdup_printf("smogrify cancel_audio \"%s\"",cfile->handle);
+    com=g_strdup_printf("\"%s\" cancel_audio \"%s\"",prefs->backend,cfile->handle);
     lives_system(com,FALSE);
     do_auto_dialog(_("Cancelling"),0);
     g_free(com);
@@ -6490,7 +6501,7 @@ void on_open_new_audio_clicked (GtkButton *button, gpointer user_data) {
     mainw->error=FALSE;
     unlink (cfile->info_file);
 
-    com=g_strdup_printf("smogrify cancel_audio \"%s\"",cfile->handle);
+    com=g_strdup_printf("\"%s\" cancel_audio \"%s\"",prefs->backend,cfile->handle);
 
     mainw->com_failed=FALSE;
     lives_system(com,FALSE);
@@ -6524,7 +6535,7 @@ void on_open_new_audio_clicked (GtkButton *button, gpointer user_data) {
   mainw->error=FALSE;
   unlink (cfile->info_file);
 
-  com=g_strdup_printf("smogrify commit_audio \"%s\" %d",cfile->handle,israw);
+  com=g_strdup_printf("\"%s\" commit_audio \"%s\" %d",prefs->backend,cfile->handle,israw);
   lives_system(com,FALSE);
   g_free(com);
 
@@ -6591,11 +6602,11 @@ void end_fs_preview(void) {
   if (mainw->in_fs_preview) {
     if (prefs->pause_xmms&&capable->has_xmms) lives_system("xmms -u",TRUE);
     mainw->in_fs_preview=FALSE;
-    com=g_strdup_printf ("smogrify stopsubsub fsp%d 2>/dev/null",(mypid=getpid()));
+    com=g_strdup_printf ("\"%s\" stopsubsub fsp%d 2>/dev/null",prefs->backend,(mypid=getpid()));
     lives_system (com,TRUE);
     g_free (com);
 
-    com=g_strdup_printf ("smogrify close fsp%d",mypid);
+    com=g_strdup_printf ("\"%s\" close fsp%d",prefs->backend,mypid);
     lives_system (com,TRUE);
     g_free (com);
 
@@ -6736,7 +6747,7 @@ void on_cancel_keep_button_clicked (GtkButton *button, gpointer user_data) {
     }
     else if (mainw->cancel_type==CANCEL_KILL) {
       // kill processes and subprocesses working on cfile
-      com=g_strdup_printf("smogrify stopsubsub \"%s\" 2>/dev/null",cfile->handle);
+      com=g_strdup_printf("\"%s\" stopsubsub \"%s\" 2>/dev/null",prefs->backend,cfile->handle);
     }
 
     if (!cfile->opening&&!mainw->internal_messaging) {
@@ -6749,7 +6760,7 @@ void on_cancel_keep_button_clicked (GtkButton *button, gpointer user_data) {
       // resume for next time
       if (mainw->effects_paused) {
 	if (com!=NULL) g_free(com);
-	com=g_strdup_printf("smogrify resume \"%s\"",cfile->handle);
+	com=g_strdup_printf("\"%s\" resume \"%s\"",prefs->backend,cfile->handle);
 	lives_system(com,FALSE);
       }
 
@@ -6798,26 +6809,26 @@ void on_cancel_keep_button_clicked (GtkButton *button, gpointer user_data) {
 
       lives_set_cursor_style(LIVES_CURSOR_BUSY,NULL);
       if (!mainw->internal_messaging) {
-	com=g_strdup_printf("smogrify stopsubsub \"%s\" 2>/dev/null",cfile->handle);
+	com=g_strdup_printf("\"%s\" stopsubsub \"%s\" 2>/dev/null",prefs->backend,cfile->handle);
 	lives_system(com,TRUE);
 	g_free(com);
-	com=g_strdup_printf("smogrify resume \"%s\"",cfile->handle);
+	com=g_strdup_printf("\"%s\" resume \"%s\"",prefs->backend,cfile->handle);
 	lives_system(com,FALSE);
 	g_free(com);
-	if (!mainw->keep_pre) com=g_strdup_printf("smogrify mv_mgk \"%s\" %d %d \"%s\"",cfile->handle,
+	if (!mainw->keep_pre) com=g_strdup_printf("\"%s\" mv_mgk \"%s\" %d %d \"%s\"",prefs->backend,cfile->handle,
 						  cfile->start,keep_frames-1,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
 	else {
-	  com=g_strdup_printf("smogrify mv_pre \"%s\" %d %d \"%s\" &",cfile->handle,
+	  com=g_strdup_printf("\"%s\" mv_pre \"%s\" %d %d \"%s\" &",prefs->backend,cfile->handle,
 			      cfile->start,keep_frames-1,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
 	  mainw->keep_pre=FALSE;
 	}
       }
       else {
 	mainw->internal_messaging=FALSE;
-	if (!mainw->keep_pre) com=g_strdup_printf ("smogrify mv_mgk \"%s\" %d %d \"%s\"",cfile->handle,
+	if (!mainw->keep_pre) com=g_strdup_printf ("\"%s\" mv_mgk \"%s\" %d %d \"%s\"",prefs->backend,cfile->handle,
 						   cfile->start,keep_frames,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
 	else {
-	  com=g_strdup_printf("smogrify mv_pre \"%s\" %d %d \"%s\" &",cfile->handle,
+	  com=g_strdup_printf("\"%s\" mv_pre \"%s\" %d %d \"%s\" &",prefs->backend,cfile->handle,
 			      cfile->start,keep_frames,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
 	  mainw->keep_pre=FALSE;
 	}
@@ -6833,11 +6844,11 @@ void on_cancel_keep_button_clicked (GtkButton *button, gpointer user_data) {
     else {
       // no frames there, nothing to keep
       d_print_cancelled();
-      com=g_strdup_printf("smogrify stopsubsub \"%s\" 2>/dev/null",cfile->handle);
+      com=g_strdup_printf("\"%s\" stopsubsub \"%s\" 2>/dev/null",prefs->backend,cfile->handle);
       if (!mainw->internal_messaging&&!mainw->is_rendering) {
 	lives_system(com,TRUE);
 	g_free(com);
-	com=g_strdup_printf("smogrify resume \"%s\"",cfile->handle);
+	com=g_strdup_printf("\"%s\" resume \"%s\"",prefs->backend,cfile->handle);
 	lives_system(com,FALSE);
       }
       mainw->cancelled=CANCEL_USER;
@@ -7871,7 +7882,7 @@ on_rev_clipboard_activate                (GtkMenuItem     *menuitem,
   mainw->current_file=0;
 
   d_print(_ ("Reversing clipboard..."));
-  com=g_strdup_printf("smogrify reverse \"%s\" %d %d \"%s\"",clipboard->handle,1,clipboard->frames,
+  com=g_strdup_printf("\"%s\" reverse \"%s\" %d %d \"%s\"",prefs->backend,clipboard->handle,1,clipboard->frames,
 		      cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
 
   unlink(cfile->info_file);
@@ -8172,7 +8183,7 @@ on_load_cdtrack_ok_clicked                (GtkButton     *button,
     cfile->undo_arps=cfile->arps;
   }
 
-  com=g_strdup_printf("smogrify cdopen \"%s\" %d",cfile->handle,(int)mainw->fx1_val);
+  com=g_strdup_printf("\"%s\" cdopen \"%s\" %d",prefs->backend,cfile->handle,(int)mainw->fx1_val);
 
   unlink(cfile->info_file);
   mainw->com_failed=FALSE;
@@ -8206,7 +8217,7 @@ on_load_cdtrack_ok_clicked                (GtkButton     *button,
       mainw->error=FALSE;
       unlink (cfile->info_file);
 
-      com=g_strdup_printf("smogrify cancel_audio \"%s\"",cfile->handle);
+      com=g_strdup_printf("\"%s\" cancel_audio \"%s\"",prefs->backend,cfile->handle);
       lives_system(com,FALSE);
       g_free(com);
 
@@ -8244,7 +8255,7 @@ on_load_cdtrack_ok_clicked                (GtkButton     *button,
     while (g_main_context_iteration(NULL,FALSE));
 
     if (!was_new) {
-      com=g_strdup_printf("smogrify cancel_audio \"%s\"",cfile->handle);
+      com=g_strdup_printf("\"%s\" cancel_audio \"%s\"",prefs->backend,cfile->handle);
       mainw->cancelled=CANCEL_NONE;
       mainw->error=FALSE;
       unlink (cfile->info_file);
@@ -8287,7 +8298,7 @@ on_load_cdtrack_ok_clicked                (GtkButton     *button,
     d_print(_ ("Error loading CD track\n"));
   
     if (!was_new) {
-      com=g_strdup_printf("smogrify cancel_audio \"%s\"",cfile->handle);
+      com=g_strdup_printf("\"%s\" cancel_audio \"%s\"",prefs->backend,cfile->handle);
       mainw->com_failed=FALSE;
       mainw->cancelled=CANCEL_NONE;
       mainw->error=FALSE;
@@ -8318,7 +8329,7 @@ on_load_cdtrack_ok_clicked                (GtkButton     *button,
   mainw->com_failed=FALSE;
   unlink (cfile->info_file);
 
-  com=g_strdup_printf("smogrify commit_audio \"%s\"",cfile->handle);
+  com=g_strdup_printf("\"%s\" commit_audio \"%s\"",prefs->backend,cfile->handle);
   lives_system(com, FALSE);
   g_free(com);
 
@@ -8423,7 +8434,7 @@ on_xmms_random_audio_activate                (GtkMenuItem     *menuitem,
 void on_xmms_ok_clicked                (GtkButton     *button,
 					gpointer         user_data)
 {
-  gchar *com=g_strdup_printf("smogrify xmmsplay \"%s\"",
+  gchar *com=g_strdup_printf("\"%s\" xmmsplay \"%s\"",prefs->backend,
 			     gtk_file_selection_get_filename(GTK_FILE_SELECTION
 							     (gtk_widget_get_toplevel(GTK_WIDGET(button)))));
   lives_system(com,TRUE);
@@ -8448,7 +8459,7 @@ void on_xmms_ran_ok_clicked                (GtkButton     *button,
     return;
   }
 
-  com=g_strdup_printf("smogrify xmmsrandom \"%s\" %d %d %d %d \"%s\"",cfile->handle,
+  com=g_strdup_printf("\"%s\" xmmsrandom \"%s\" %d %d %d %d \"%s\"",prefs->backend,cfile->handle,
 		      gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(xranw->numtracks)),
 		      gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(xranw->subdir_check)),
 		      gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(xranw->minsize)),
@@ -8468,7 +8479,7 @@ void on_xmms_ran_ok_clicked                (GtkButton     *button,
 
   if (!mainw->com_failed) do_progress_dialog(TRUE,TRUE,_ ("Selecting tracks"));
 
-  com=g_strdup_printf("smogrify close \"%s\"",cfile->handle);
+  com=g_strdup_printf("\"%s\" close \"%s\"",prefs->backend,cfile->handle);
   lives_system(com,FALSE);
   g_free(com);
   g_free(cfile);
@@ -8507,7 +8518,7 @@ void on_xmms_ran_ok_clicked                (GtkButton     *button,
 void on_xmms_stop_audio_activate                (GtkMenuItem     *menuitem,
 						 gpointer         user_data)
 {
-  gchar *com=g_strdup("smogrify xmmsstop");
+  gchar *com=g_strdup_printf("\"%s\" xmmsstop",prefs->backend);
   lives_system(com,TRUE);
   g_free(com);
 }
@@ -8748,7 +8759,7 @@ void on_toy_activate  (GtkMenuItem *menuitem, gpointer user_data) {
     else {
       // keep it
       gint current_file=mainw->current_file;
-      gchar *com=g_strdup_printf("smogrify commit_audio \"%s\"",cfile->handle);
+      gchar *com=g_strdup_printf("\"%s\" commit_audio \"%s\"",prefs->backend,cfile->handle);
       cfile->start=1;
       get_frame_count(mainw->current_file);
       cfile->end=cfile->frames;
@@ -9219,7 +9230,7 @@ void on_effects_paused (GtkButton *button, gpointer user_data) {
 
     if (!mainw->effects_paused) {
       // use effects_paused for this
-      com=g_strdup_printf("smogrify stopsubsub \"%s\" SIGTSTP 2>/dev/null",cfile->handle);
+      com=g_strdup_printf("\"%s\" stopsubsub \"%s\" SIGTSTP 2>/dev/null",prefs->backend,cfile->handle);
       lives_system(com,TRUE);
       if (!cfile->opening) {
 	gtk_button_set_label(GTK_BUTTON(button),_ ("Resume"));
@@ -9229,7 +9240,7 @@ void on_effects_paused (GtkButton *button, gpointer user_data) {
     }
 
     else {
-      com=g_strdup_printf("smogrify stopsubsub \"%s\" SIGCONT 2>/dev/null",cfile->handle);
+      com=g_strdup_printf("\"%s\" stopsubsub \"%s\" SIGCONT 2>/dev/null",prefs->backend,cfile->handle);
       lives_system(com,TRUE);
 
       if (!cfile->opening) {
@@ -9246,7 +9257,7 @@ void on_effects_paused (GtkButton *button, gpointer user_data) {
     
     if (!mainw->effects_paused) {
       mainw->timeout_ticks-=xticks;
-      com=g_strdup_printf("smogrify pause \"%s\"",cfile->handle);
+      com=g_strdup_printf("\"%s\" pause \"%s\"",prefs->backend,cfile->handle);
       if (!mainw->preview) {
 	gtk_button_set_label(GTK_BUTTON(button),_ ("Resume"));
 	if (!cfile->nokeep) {
@@ -9262,7 +9273,7 @@ void on_effects_paused (GtkButton *button, gpointer user_data) {
 #endif
     } else {
       mainw->timeout_ticks+=xticks;
-      com=g_strdup_printf("smogrify resume \"%s\"",cfile->handle);
+      com=g_strdup_printf("\"%s\" resume \"%s\"",prefs->backend,cfile->handle);
       if (!mainw->preview) {
 	if (cfile->opening) gtk_button_set_label(GTK_BUTTON(button),_ ("Pause/_Enough"));
 	else gtk_button_set_label(GTK_BUTTON(button),_ ("Pause"));
@@ -10334,7 +10345,7 @@ on_capture_activate                (GtkMenuItem     *menuitem,
     return;
   }
 
-  com=g_strdup_printf("smogrify get_window_id \"%s\"",cfile->handle);
+  com=g_strdup_printf("\"%s\" get_window_id \"%s\"",prefs->backend,cfile->handle);
   mainw->com_failed=FALSE;
   lives_system(com,FALSE);
   g_free(com);
@@ -10369,7 +10380,7 @@ on_capture_activate                (GtkMenuItem     *menuitem,
   mainw->foreign_visual=g_strdup(array[5]);
   g_strfreev(array);
 
-  com=g_strdup_printf("smogrify close \"%s\"",cfile->handle);
+  com=g_strdup_printf("\"%s\" close \"%s\"",prefs->backend,cfile->handle);
   lives_system(com,TRUE);
   g_free(com);
   g_free(cfile);
@@ -10616,7 +10627,7 @@ on_ok_export_audio_clicked                      (GtkButton *button,
 
   d_print (mainw->msg);
   
-  com=g_strdup_printf ("smogrify export_audio \"%s\" %.8f %.8f %d %d %d %d %d \"%s\"",cfile->handle,
+  com=g_strdup_printf ("\"%s\" export_audio \"%s\" %.8f %.8f %d %d %d %d %d \"%s\"",prefs->backend,cfile->handle,
 		       start,end,cfile->arps,cfile->achans,cfile->asampsize,asigned,nrate,
 		       (tmp=g_filename_from_utf8 (file_name,-1,NULL,NULL,NULL)));
   g_free(tmp);
@@ -10703,7 +10714,8 @@ on_ok_append_audio_clicked                      (GtkButton *button,
 
   if (!g_ascii_strncasecmp(a_type,".it",2)||!g_ascii_strncasecmp(a_type,"mp3",3)||!g_ascii_strncasecmp(a_type,"ogg",3)||
       !g_ascii_strncasecmp(a_type,"wav",3)||!g_ascii_strncasecmp(a_type,"mod",3)||!g_ascii_strncasecmp(a_type,"xm",2)) {
-    com=g_strdup_printf ("smogrify append_audio \"%s\" \"%s\" %d %d %d %d %d \"%s\"",cfile->handle,a_type,cfile->arate,
+    com=g_strdup_printf ("\"%s\" append_audio \"%s\" \"%s\" %d %d %d %d %d \"%s\"",prefs->backend,cfile->handle,
+			 a_type,cfile->arate,
 			 cfile->achans,cfile->asampsize,asigned,aendian,
 			 (tmp=g_filename_from_utf8 (file_name,-1,NULL,NULL,NULL)));
     g_free(tmp);
@@ -10731,7 +10743,7 @@ on_ok_append_audio_clicked                      (GtkButton *button,
     mainw->error=FALSE;
     mainw->com_failed=FALSE;
     unlink (cfile->info_file);
-    com=g_strdup_printf ("smogrify cancel_audio \"%s\"",cfile->handle);
+    com=g_strdup_printf ("\"%s\" cancel_audio \"%s\"",prefs->backend,cfile->handle);
     lives_system (com,FALSE);
     if (!mainw->com_failed) {
       do_auto_dialog(_("Cancelling"),0);
@@ -10751,7 +10763,7 @@ on_ok_append_audio_clicked                      (GtkButton *button,
   else {
     gtk_widget_queue_draw(mainw->LiVES);
     while (g_main_context_iteration(NULL,FALSE));
-    com=g_strdup_printf ("smogrify commit_audio \"%s\"",cfile->handle);
+    com=g_strdup_printf ("\"%s\" commit_audio \"%s\"",prefs->backend,cfile->handle);
     mainw->com_failed=FALSE;
     mainw->cancelled=CANCEL_NONE;
     mainw->error=FALSE;
@@ -10845,7 +10857,8 @@ on_trim_audio_activate (GtkMenuItem     *menuitem,
   d_print(msg);
   g_free(msg);
 
-  com=g_strdup_printf("smogrify trim_audio \"%s\" %.8f %.8f %d %d %d %d %d", cfile->handle, start, end, cfile->arate, 
+  com=g_strdup_printf("\"%s\" trim_audio \"%s\" %.8f %.8f %d %d %d %d %d",prefs->backend, cfile->handle, 
+		      start, end, cfile->arate, 
 		      cfile->achans, cfile->asampsize, !(cfile->signed_endian&AFORM_UNSIGNED),
 		      !(cfile->signed_endian&AFORM_BIG_ENDIAN));
   unlink (cfile->info_file);
@@ -10989,7 +11002,7 @@ on_fade_audio_activate (GtkMenuItem     *menuitem,
 
   if (!prefs->conserve_space) {
     mainw->error=FALSE;
-    com=g_strdup_printf("smogrify backup_audio \"%s\"",cfile->handle);
+    com=g_strdup_printf("\"%s\" backup_audio \"%s\"",prefs->backend,cfile->handle);
     lives_system(com,FALSE);
     g_free(com);
 
@@ -11166,7 +11179,8 @@ on_del_audio_activate (GtkMenuItem     *menuitem,
     g_free(msg);
   }
 
-  com=g_strdup_printf("smogrify delete_audio \"%s\" %.8f %.8f %d %d %d", cfile->handle, start, end, cfile->arps, 
+  com=g_strdup_printf("\"%s\" delete_audio \"%s\" %.8f %.8f %d %d %d", prefs->backend, 
+		      cfile->handle, start, end, cfile->arps, 
 		      cfile->achans, cfile->asampsize);
   unlink (cfile->info_file);
   mainw->com_failed=FALSE;
@@ -11461,7 +11475,7 @@ on_recaudclip_ok_clicked                      (GtkButton *button,
 
     if (!prefs->conserve_space) {
       mainw->error=FALSE;
-      com=g_strdup_printf("smogrify backup_audio \"%s\"",mainw->files[old_file]->handle);
+      com=g_strdup_printf("\"%s\" backup_audio \"%s\"",prefs->backend,mainw->files[old_file]->handle);
       lives_system(com,FALSE);
       g_free(com);
 
@@ -11494,7 +11508,7 @@ on_recaudclip_ok_clicked                      (GtkButton *button,
       
       if (!prefs->conserve_space&&type==1) {
 	// try to recover backup
-	com=g_strdup_printf("smogrify undo_audio \"%s\"",mainw->files[old_file]->handle);
+	com=g_strdup_printf("\"%s\" undo_audio \"%s\"",prefs->backend,mainw->files[old_file]->handle);
 	lives_system(com,FALSE);
 	g_free(com);
 	backr=TRUE;
@@ -11505,7 +11519,7 @@ on_recaudclip_ok_clicked                      (GtkButton *button,
       do_read_failed_error_s(mainw->read_failed_file,NULL);
       if (!prefs->conserve_space&&type==1&&!backr) {
 	// try to recover backup
-	com=g_strdup_printf("smogrify undo_audio \"%s\"",mainw->files[old_file]->handle);
+	com=g_strdup_printf("\"%s\" undo_audio \"%s\"",prefs->backend,mainw->files[old_file]->handle);
 	lives_system(com,FALSE);
 	g_free(com);
       }
@@ -11619,7 +11633,8 @@ on_ins_silence_activate (GtkMenuItem     *menuitem,
   end*=(gdouble)cfile->arate/(gdouble)cfile->arps;
 
   // with_sound is 2 (audio only), therfore start, end, where, are in seconds. rate is -ve to indicate silence
-  com=g_strdup_printf("smogrify insert \"%s\" \"%s\" %.8f 0. %.8f \"%s\" 2 0 0 0 0 %d %d %d %d %d", cfile->handle, 
+  com=g_strdup_printf("\"%s\" insert \"%s\" \"%s\" %.8f 0. %.8f \"%s\" 2 0 0 0 0 %d %d %d %d %d", 
+		      prefs->backend, cfile->handle, 
 		      cfile->img_type==IMG_TYPE_JPEG?"jpg":"png", start, end-start, cfile->handle, -cfile->arps, 
 		      cfile->achans, cfile->asampsize, !(cfile->signed_endian&AFORM_UNSIGNED), 
 		      !(cfile->signed_endian&AFORM_BIG_ENDIAN));

@@ -80,7 +80,7 @@ if (defined($ARGV[0])) {
 	    }
 
             if (! -d $tmpdir) {
-		unless ($command eq "report") {
+		unless ($command eq "report" || $command eq "set_pref") {
 		    &mktmpdir;
 		}
 
@@ -185,7 +185,7 @@ if (defined($ARGV[0])) {
 	} while (-d $curtmpdir);
 	
 	umask 0;
-	unless (mkdir $curtmpdir,0700) {
+	unless (mkdir $curtmpdir,0777) {
 	    sig_system_error("Creating directory \"$curtmpdir\"",0);
 	    exit 1;
 	}
@@ -502,12 +502,26 @@ if (defined($ARGV[0])) {
     }
 
     if ($command eq "pause") {
-	$smres=smog_system("/bin/touch \"$tmpdir/$ARGV[1]/pause\"");
-	if ($smres) {
-	    sig_write_error("$tmpdir/$ARGV[1]/pause"); 
-	    exit 1;
+	if ($^O eq "MSWin32") {
+	    $smres=smog_system("touch.exe \"$tmpdir\\$ARGV[1]\\pause\"");
+	    if ($smres) {
+		sig_write_error("$tmpdir\\$ARGV[1]\\pause"); 
+		exit 1;
+	    }
 	}
-	smog_system("/bin/chmod 600 \"$tmpdir/$ARGV[1]/pause\"");
+	else {
+	    $smres=smog_system("/bin/touch \"$tmpdir/$ARGV[1]/pause\"");
+	    if ($smres) {
+		sig_write_error("$tmpdir/$ARGV[1]/pause"); 
+		exit 1;
+	    }
+	}
+	if ($^O eq "MSWin32") {
+	    smog_system("chmod.exe 600 \"$tmpdir\\$ARGV[1]\\pause\"");
+	}
+	else {
+	    smog_system("/bin/chmod 600 \"$tmpdir/$ARGV[1]/pause\"");
+	}
 	exit 0;
     }
 
@@ -532,7 +546,7 @@ if (defined($ARGV[0])) {
 	    #clear old backups (e.g. when saving a set)
 	    $curtmpdir="$tmpdir/$handle";
 	    smog_chdir("$curtmpdir");
-	    smog_system("/bin/rm *.pre");
+	    unlink <*.pre>;
 	    &sig_complete;
 	    exit 0;
 	}
@@ -836,6 +850,7 @@ if (defined($ARGV[0])) {
 
 
 	if ($command eq "check_for_lock") {
+#TODO - mingw
 	    # check if there is a lock file for a set, and if so is it in use
 	    my $setname=$ARGV[1];
 	    my $exename=$ARGV[2];
@@ -868,7 +883,7 @@ if (defined($ARGV[0])) {
 
 
 
-
+#TODO - mingw
 	if ($command eq "get_recovery_file") {
 	    #find first non-in-use recovery file for given uid, gid and filepart
 	    my $uid=$ARGV[1];
@@ -900,7 +915,7 @@ if (defined($ARGV[0])) {
 	    exit 0;
 	}
 
-
+#TODO - mingw
 	if ($command eq "clean_recovery_files") {
 	    #remove non-in-use recovery/layout files for given uid, gid
 	    my $uid=$ARGV[1];
@@ -1057,13 +1072,14 @@ if (defined($ARGV[0])) {
 	}
 
 
-
     
 ####################################################################    
-    # run the rest in background
-    if ($background==1) {
-	if (fork()) {
-	    exit 0;
+    if ($^O ne "MSWin32") {
+	# run the rest in background
+	if ($background==1) {
+	    if (fork()) {
+		exit 0;
+	    }
 	}
     }
 ####################################################################
@@ -1320,6 +1336,8 @@ if (defined($ARGV[0])) {
 	    $compression=15;
 	}
 
+	print STDERR "\nopen 1 chdir to $curtmpdir\n";
+
 	smog_chdir("$curtmpdir");
 
 	# let get_file_info set this
@@ -1353,6 +1371,7 @@ if (defined($ARGV[0])) {
 	    unlink "$pidfile"; 
 	    exit 1;
 	}
+	print STDERR "\nopen 2 got file info\n";
 
 	$aformnew="";
 	if ($asamps==32) {
@@ -1365,7 +1384,7 @@ if (defined($ARGV[0])) {
 	    }
 	    $asamps=16;
 	}
-
+#TODO - mingw
 	$threads=smog_system_direct("/bin/grep processor /proc/cpuinfo | wc -l");
 	$threads=int($threads);
 	if ($threads==0) {
@@ -1421,9 +1440,12 @@ if (defined($ARGV[0])) {
 	    unless ($opentest==1) {
 		&sig_progress(0);
 	    }
+	    print STDERR "\nopen 3 got cmd $syscom2\n";
 
 	    smog_system("$syscom2"); # this may well fail...we just have to use what we get back
 	    
+	    print STDERR "\nopen 4 finished\n";
+
             if (!-f $curtmpfile) {
 		unlink $pidfile;
 		exit 1;
@@ -1903,7 +1925,7 @@ if (defined($ARGV[0])) {
 		    smog_chdir("$linksdir");
 		}
 
-	    }
+}
 
 	    unless ($plugin eq "") {
 		$atype=&rc_get("encoder_acodec");
@@ -1974,19 +1996,34 @@ if (defined($ARGV[0])) {
 		$linksdir="/tmp/lives-symlinks/$handle/";
 
 		if (-d $linksdir) {
-		    smog_system("/bin/rm -rf \"$linksdir\"");
+		    if ($^O eq "MSWin32") {
+			smog_system("rm.exe -rf \"$linksdir\"");
+		    }
+		    else {
+			smog_system("/bin/rm -rf \"$linksdir\"");
+		    }
 		}
 
-		$com="/bin/mkdir -p \"$linksdir\"";
+		if ($^O eq "MSWin32") {
+		    $com="mkdir.exe -p \"$linksdir\"";
+		}
+		else {
+		    $com="/bin/mkdir -p \"$linksdir\"";
+		}
 		$smerr=smog_system($com);
 		if ($smerr) {
 		    sig_system_error("Creating directory \"$linksdir\"",$smerr); 
 		    unlink "$pidfile"; 
 		    exit 1;
 		}
-
-		smog_system ("/bin/chmod -R 777 \"$linksdir\"");
-	    }
+		
+		if ($^O eq "MSWin32") {
+		    smog_system ("chmod.exe -R 777 \"$linksdir\"");
+		}
+		else {
+		    smog_system ("/bin/chmod -R 777 \"$linksdir\"");
+		}
+}
 	    else {
 		$linksdir=$curtmpdir;
 		$handle=$from_handle;
@@ -2030,12 +2067,23 @@ if (defined($ARGV[0])) {
 		$name=&mkname($i);
 		$from=&mkname($i+$start-1);
 		if (-f "$curtmpdir/$from$img_ext") {
-		    $smerr=smog_system ("/bin/ln \"$curtmpdir/$from$img_ext\" \"$linksdir/$name$img_ext\"");
-		    if ($smerr) {
-			sig_system_error("Linking \"$curtmpdir/$from$img_ext\" to \"$linksdir/$name$img_ext\"",$smerr);
-			unlink "$pidfile"; 
-			exit 1;
+		    if ($^O eq "MSWin32") {
+			$smerr=smog_system ("cp.exe \"$curtmpdir/$from$img_ext\" \"$linksdir/$name$img_ext\"");
+			if ($smerr) {
+			    sig_system_error("Copying \"$curtmpdir/$from$img_ext\" to \"$linksdir/$name$img_ext\"",$smerr);
+			    unlink "$pidfile"; 
+			    exit 1;
+			}
 		    }
+		    else {
+			$smerr=smog_system ("/bin/ln \"$curtmpdir/$from$img_ext\" \"$linksdir/$name$img_ext\"");
+			if ($smerr) {
+			    sig_system_error("Linking \"$curtmpdir/$from$img_ext\" to \"$linksdir/$name$img_ext\"",$smerr);
+			    unlink "$pidfile"; 
+			    exit 1;
+			}
+		    }
+	
 		}
 		&sig_progress($i);
 	    }
@@ -2273,6 +2321,12 @@ if (defined($ARGV[0])) {
 	unless (-f "header.tar"||-f "header"||-f "header.lives") {
 	    &sig_error("This does not appear to be a valid backup file","$GUI_NAME was unable to open it.");
 	}
+
+	if ($^O eq "MSWin32") {
+	}
+	else {
+	}
+#TODO - mingw
 	smog_system("for i in *.tar; do tar -xf \$i 2>/dev/null; /bin/rm -f \$i; done");
 	&sig_complete;
 	exit 0;
@@ -2703,7 +2757,7 @@ if (defined($ARGV[0])) {
 	else {
 	    $asigned="-u";
 	}
-	
+
 	if ($audio_end>0.) {
 	    $audio_in=&clip_audio($audio_start,$audio_end);
 	    if ($panic) {
@@ -2714,8 +2768,10 @@ if (defined($ARGV[0])) {
 	else {
 	    $audio_in="$curtmpdir/audio";
 	}
+
 	# convert raw audio to wav
 	$audio_out=$curtmpdir . "/audiodump.wav";
+
 	&convert_audio_to_wav;
 	if ($panic) {
 	    unlink "$pidfile"; 
@@ -2726,10 +2782,15 @@ if (defined($ARGV[0])) {
 	}
   
 	smog_rename("$audio_out","$nfile");
-	smog_system("/bin/chmod 644 \"$nfile\" >/dev/null 2>&1");
+	if ($^O eq "MSWin32") {
+	    smog_system("chmod.exe 644 \"$nfile\" >/dev/null 2>&1");
+	}
+	else {
+	    smog_system("/bin/chmod 644 \"$nfile\" >/dev/null 2>&1");
+	}
 
 	&sig_complete;
-	exit 0;
+	return 0;
     }
 
 
@@ -2807,7 +2868,12 @@ if (defined($ARGV[0])) {
 	}
 
 	# cat audio audio.new -> audiodump
-	$smerr=smog_system("/bin/cat \"$curtmpdir/audio\" \"$audio_out\" > \"$curtmpdir/audiodump\"");
+	if ($^O eq "MSWin32") {
+	    $smerr=smog_system("cat.exe \"$curtmpdir/audio\" \"$audio_out\" > \"$curtmpdir/audiodump\"");
+	}
+	else {
+	    $smerr=smog_system("/bin/cat \"$curtmpdir/audio\" \"$audio_out\" > \"$curtmpdir/audiodump\"");
+	}
 
 	if ($smerr) {
 	    sig_system_error("Creating \"$curtmpdir\audiodump\"",$smerr);
@@ -3031,7 +3097,12 @@ if (defined($ARGV[0])) {
 		    unlink "$pidfile"; 
 		    exit 1;
 		}
-		smog_system("/bin/cat \"$audio_out\">>\"$audio_in\"");
+		if ($^O eq "MSWin32") {
+		    smog_system("cat.exe \"$audio_out\">>\"$audio_in\"");
+		}
+		else {
+		    smog_system("/bin/cat \"$audio_out\">>\"$audio_in\"");
+		}
 		unlink "$audio_out";
 	    }
 	}
@@ -3062,7 +3133,12 @@ if (defined($ARGV[0])) {
 		    $smres=smog_rename( "$audio_out","$audio_bak");
 		}
 		else {
-		    $smres=smog_system("/bin/touch \"$audio_bak\"");
+		    if ($^O eq "MSWin32") {
+			$smres=smog_system("touch.exe \"$audio_bak\"");
+		    }
+		    else {
+			$smres=smog_system("/bin/touch \"$audio_bak\"");
+		    }
 		    if ($smres) {
 			sig_write_error("$audio_bak"); 
 			unlink "$pidfile"; 
@@ -3100,7 +3176,12 @@ if (defined($ARGV[0])) {
 			$smres=smog_rename( "$audio_out","$audio_bak"); #aborts on failure
 		    }
 		    else {
-			$smres=smog_system("/bin/touch \"$audio_bak\"");
+			if ($^O eq "MSWin32") {
+			    $smres=smog_system("touch.exe \"$audio_bak\"");
+			}
+			else {
+			    $smres=smog_system("/bin/touch \"$audio_bak\"");
+			}
 			if ($smres) {
 			    sig_write_error("$audio_bak"); 
 			    unlink "$pidfile"; 
@@ -3722,9 +3803,19 @@ sub is_writeable {
     $exists=(-f "$nfile");
     if (!$exists) {
 	umask 0;
-	$ret=smog_system("/bin/touch \"$nfile\"");
+	if ($^O eq "MSWin32") {
+	    $ret=smog_system("touch.exe \"$nfile\"");
+	}
+	else {
+	    $ret=smog_system("/bin/touch \"$nfile\"");
+	}
 	if ($ret) {return !$ret;}
-	smog_system("/bin/chmod o+w \"$nfile\"");
+	if ($^O eq "MSWin32") {
+	    smog_system("chmod.exe o+w \"$nfile\"");
+	}
+	else {
+	    smog_system("/bin/chmod o+w \"$nfile\"");
+	}
 	umask $umask;
     }
     smog_system_sync();
@@ -4045,7 +4136,12 @@ sub smog_rename {
 sub smog_copy {
    my ($smfrom,$smto)=@_;
 
-   my $smcomret=system("/bin/cp -f \"$smfrom\" \"$smto\"");
+	if ($^O eq "MSWin32") {
+	    my $smcomret=system("cp.exe -f \"$smfrom\" \"$smto\"");
+	}
+	else {
+	    my $smcomret=system("/bin/cp -f \"$smfrom\" \"$smto\"");
+	}
 
    if ($smcomret!=0 && -f $smfrom) {
        if ($DEBUG_SMOGRIFY) {
@@ -4491,8 +4587,10 @@ sub get_file_info {
 
     $endian="";
 
-    # try to force language to English
-    $mplay_command="LANGUAGE=en LANG=en ";
+    if ($^O ne "MSWin32") {
+	# try to force language to English
+	$mplay_command="LANGUAGE=en LANG=en ";
+    }
 
     $mplay_command.=&rc_get("video_open_command");
     $file_ident="$curtmpdir/file_info";
@@ -4839,15 +4937,12 @@ sub convert_audio_to_wav {
     my ($aasamps)=$asamps/8;
     my $smcom;
 
-
-
     smog_chdir("$curtmpdir");
-    if (&rc_get("audio_player") eq "mplayer") {
+    if (&location("sox") eq "") {
 	$format=&get_mplayer_format;
 	$smcom=&rc_get("video_open_command") . " -quiet -ao pcm -demuxer rawaudio -rawaudio rate=$arate:channels=$achans:samplesize=$aasamps -ao pcm:waveheader $format -vo null \"$audio_in\" >/dev/null 2>&1 </dev/null";
     }
     else {
-
 	if (!defined($sox_version)) {
 	    $sox_version=&get_sox_version;
 	}
@@ -4924,14 +5019,24 @@ sub clip_audio {
     $audio_out=$curtmpdir."/audioclip";
 
     unlink "$audio_out";
-    my $smres=smog_system("/bin/touch \"$audio_out\"");
+    if ($^O eq "MSWin32") {
+	my $smres=smog_system("touch.exe \"$audio_out\"");
+    }
+    else {
+	my $smres=smog_system("/bin/touch \"$audio_out\"");
+    }
     if ($smres) {
 	$panic=sig_write_error("$audio_out"); 
 	return;
     }
 
+    if ($^O eq "MSWin32") {
+	smog_system("chmod.exe 600 \"$audio_out\"");
+    }
+    else {
+	smog_system("/bin/chmod 600 \"$audio_out\"");
+    }
 
-    smog_system("/bin/chmod 600 \"$audio_out\"");
 
     $align=$achans*$asamps/8;
 
@@ -5077,13 +5182,24 @@ sub insert_audio {
     my ($audio_temp)="$curtmpdir/audio.temp";
 
     unlink "$audio_temp";
-    $smres=smog_system("/bin/touch \"$audio_temp\"");
+    if ($^O eq "MSWin32") {
+	$smres=smog_system("touch.exe \"$audio_temp\"");
+    }
+    else {
+	$smres=smog_system("/bin/touch \"$audio_temp\"");
+    }
+    
     if ($smres) {
 	$panic=sig_write_error("$audio_temp"); 
 	return;
     }
 
-    smog_system("/bin/chmod 600 \"$audio_temp\"");
+    if ($^O eq "MSWin32") {
+	smog_system("chmod.exe 600 \"$audio_temp\"");
+    }
+    else {
+	smog_system("/bin/chmod 600 \"$audio_temp\"");
+    }
 
     $silence=0;
     if ($arate<0) {
@@ -5248,12 +5364,22 @@ sub cut_audio {
 	smog_rename("$audio_in","$audio_bak");
     }
     else {
-	$smres=smog_system("/bin/touch \"$audio_temp\"");
+	if ($^O eq "MSWin32") {
+	    $smres=smog_system("touch.exe \"$audio_temp\"");
+	}
+	else {
+	    $smres=smog_system("/bin/touch \"$audio_temp\"");
+	}
 	if ($smres) {
 	    $panic=sig_write_error("$audio_temp"); 
 	    return;
 	}
-	smog_system("/bin/chmod 600 \"$audio_temp\"");
+	if ($^O eq "MSWin32") {
+	    smog_system("chmod.exe 600 \"$audio_temp\"");
+	}
+	else {
+	    smog_system("/bin/chmod 600 \"$audio_temp\"");
+	}
 	
 	$align=$achans*$asamps/8;
 	
@@ -5338,12 +5464,22 @@ sub append_silence {
     }
 
     unless (-f $audio_file) {
-	$smres=smog_system("/bin/touch \"$audio_file\"");
+	if ($^O eq "MSWin32") {
+	    $smres=smog_system("touch.exe \"$audio_file\"");
+	}
+	else {
+	    $smres=smog_system("/bin/touch \"$audio_file\"");
+	}
 	if ($smres) {
 	    $panic=sig_write_error("$audio_file"); 
 	    return;
 	}
-	smog_system("/bin/chmod 600 \"$audio_file\"");
+	if ($^O eq "MSWin32") {
+	    smog_system("chmod.exe 600 \"$audio_file\"");
+	}
+	else {
+	    smog_system("/bin/chmod 600 \"$audio_file\"");
+	}
     }
 
     my $fsize= -s $audio_file;
@@ -5359,7 +5495,12 @@ sub append_silence {
 	    return if $panic;
 	}
 	else {
-	    $smres=smog_system("/bin/touch \"$audio_file\"");
+	    if ($^O eq "MSWin32") {
+		$smres=smog_system("touch.exe \"$audio_file\"");
+	    }
+	    else {
+		$smres=smog_system("/bin/touch \"$audio_file\"");
+	    }
 	    if ($smres) {
 		$panic=sig_write_error("$audio_file"); 
 		return;
@@ -6406,7 +6547,12 @@ sub fast_dd {
     seek FFIN,$skip,SEEK_START or $panic=sig_read_error("$fdd_in");
     return if $panic;
 
-    $smres=smog_system("/bin/touch $fdd_out");
+    if ($^O eq "MSWin32") {
+	$smres=smog_system("touch.exe $fdd_out");
+    }
+    else {
+	$smres=smog_system("/bin/touch $fdd_out");
+    }
     if ($smres) {
 	$panic=sig_write_error("$fdd_out"); 
 	return;
@@ -6468,7 +6614,6 @@ sub count_frames {
 	    $gap/=2;
 	}
     }
-    
     return $count;
 }
     
@@ -6745,7 +6890,13 @@ sub weed {
 		    $in_set=0;
 		    find (\&fndset,"$tmpdir/$file/");
 		    if (!$in_set && !($opts & 0x01)) {
-                       smog_system("/bin/rm -rf \"$tmpdir/$file\"");
+
+    	                if ($^O eq "MSWin32") {
+                           smog_system("rm.exe -rf \"$tmpdir/$file\"");
+	                }
+	                else {
+                           smog_system("/bin/rm -rf \"$tmpdir/$file\"");
+	                }
 		    }
 		    else {
                        unless ($opts & 0x02) {
@@ -6853,14 +7004,29 @@ sub clear_symlinks {
     
     if (-d $linksdir) {
 	# remove directory + contents
-	smog_system("/bin/rm -rf \"$linksdir\"");
+	if ($^O eq "MSWin32") {
+	    smog_system("rm.exe -rf \"$linksdir\"");
+	}
+	else {
+	    smog_system("/bin/rm -rf \"$linksdir\"");
+	}
     }
     
     #create dir so next step works
-    smog_system("/bin/mkdir -p \"$linksdir\"");
+    if ($^O eq "MSWin32") {
+	smog_system("mkdir.exe -p \"$linksdir\"");
+    }
+    else {
+	smog_system("/bin/mkdir -p \"$linksdir\"");
+    }
 
     # remove dir + any empty parents
-    smog_system("/bin/rmdir -p \"$linksdir\" 2>/dev/null");
+    if ($^O eq "MSWin32") {
+	smog_system("rmdir.exe -p \"$linksdir\" 2>/dev/null");
+    }
+    else {
+	smog_system("/bin/rmdir -p \"$linksdir\" 2>/dev/null");
+    }
 }
 
 

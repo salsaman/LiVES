@@ -111,9 +111,21 @@ LIVES_INLINE pid_t lives_getpid(void) {
 
 #ifdef IS_MINGW
 LIVES_INLINE int sidhash(char *strsid) {
-  gchar **array=g_strsplit((gchar *)strsid,"-",-1);
-  int retval=atoi(array[4])+atoi(array[5]);
-  g_strfreev(array);
+  size_t slen;
+  int retval=0;
+  register int i;
+
+  if (strsid==NULL) return 0;
+
+  slen=strlen(strsid);
+
+  g_print("\n\nval is %d %c\n",slen,strsid[0]);
+
+  for (i=4;i<slen;i++) {
+    retval+=(uint8_t)strsid[i];
+  }
+
+  g_print("\n\ngot token value %d\n",retval);
   return retval;
 }
 #endif
@@ -126,31 +138,69 @@ LIVES_INLINE int lives_getuid(void) {
 #ifdef IS_MINGW
   HANDLE Thandle;
   DWORD DAmask, size;
-  TOKEN_USER tuser;
-  SID_AND_ATTRIBUTES SidInfo;
   char *strsid;
-  int retval;
+  int retval=0;
+
+  DWORD dwIndex;
+  PTOKEN_GROUPS ptg = NULL;
+  PSID psid=NULL;
+
 
   DAmask = TOKEN_READ;
   
-  if (OpenProcessToken(GetCurrentProcess(), DAmask, &Thandle)) {
+  if (!OpenProcessToken(GetCurrentProcess(), DAmask, &Thandle)) {
     LIVES_ERROR("could not open token");
     return 0;
   }
   
-  if (GetTokenInformation(Thandle, TokenUser, &tuser, sizeof(SidInfo), &size) == 0) {
+  if (!GetTokenInformation(Thandle, TokenGroups, ptg, 0, &size)) {
     CloseHandle(Thandle);
     LIVES_ERROR("could not open token info");
     return 0;
   }
 
-  SidInfo=tuser.User;
+  ptg = (PTOKEN_GROUPS)HeapAlloc(GetProcessHeap(),
+				 HEAP_ZERO_MEMORY, size);
 
-  ConvertSidToStringSid(SidInfo.Sid,&strsid);
-  // string sid is eg: S-1-5-5-X-Y
-  retval=sidhash(strsid);
-  LocalFree(strsid);
-  CloseHandle(Thandle);
+  if (ptg == NULL)
+    goto Cleanup;
+
+
+// Loop through the groups to find the logon SID.
+
+  for (dwIndex = 0; dwIndex < ptg->GroupCount; dwIndex++) {
+    if ((ptg->Groups[dwIndex].Attributes & SE_GROUP_LOGON_ID)
+	==  SE_GROUP_LOGON_ID) 
+      {
+	// Found the logon SID; make a copy of it.
+
+	size = GetLengthSid(ptg->Groups[dwIndex].Sid);
+	psid = (PSID) HeapAlloc(GetProcessHeap(),
+				  HEAP_ZERO_MEMORY, size);
+	if (psid == NULL)
+	  goto Cleanup;
+	if (!CopySid(size, psid, ptg->Groups[dwIndex].Sid)) 
+	  {
+	    HeapFree(GetProcessHeap(), 0, (LPVOID)psid);
+	    goto Cleanup;
+	  }
+	break;
+      }
+  }
+
+  if (psid!=NULL) {
+    ConvertSidToStringSid(psid,&strsid);
+    // string sid is eg: S-1-5-5-X-Y
+    retval=sidhash(strsid);
+    LocalFree(strsid);
+  }
+
+ Cleanup:
+
+   if (ptg != NULL)
+      HeapFree(GetProcessHeap(), 0, (LPVOID)ptg);
+
+   //CloseHandle(Thandle);
   return retval;
 #else
   return geteuid();
@@ -197,7 +247,7 @@ LIVES_INLINE void lives_sync(void) {
 #ifndef IS_MINGW
   sync();
 #else
-  // TODO
+  system("sync.exe");
   return;
 #endif
 }
@@ -1064,7 +1114,7 @@ void init_clipboard(void) {
     // need to set current file to 0 before monitoring progress
     mainw->current_file=0;
     mainw->com_failed=FALSE;
-    com=g_strdup_printf("\"%s\" delete_all \"%s\"",prefs->backend,clipboard->handle);
+    com=g_strdup_printf("%s delete_all \"%s\"",prefs->backend,clipboard->handle);
     unlink(clipboard->info_file);
     lives_system(com,FALSE);
     g_free(com);
@@ -1348,7 +1398,7 @@ gboolean check_for_lock_file(const gchar *set_name, gint type) {
   ssize_t bytes;
 
   gchar *info_file=g_strdup_printf("%s/.locks.%d",prefs->tmpdir,getpid());
-  gchar *com=g_strdup_printf("\"%s\" check_for_lock \"%s\" \"%s\" %d >\"%s\"",prefs->backend,set_name,capable->myname,
+  gchar *com=g_strdup_printf("%s check_for_lock \"%s\" \"%s\" %d >\"%s\"",prefs->backend_sync,set_name,capable->myname,
 			     getpid(),info_file);
 
   unlink(info_file);
@@ -1512,7 +1562,7 @@ void get_frame_count(gint idx) {
   int retval;
   ssize_t bytes;
   gchar *info_file=g_strdup_printf("%s/.check.%d",prefs->tmpdir,getpid());
-  gchar *com=g_strdup_printf("\"%s\" count_frames \"%s\" \"%s\" > \"%s\"",prefs->backend,mainw->files[idx]->handle,
+  gchar *com=g_strdup_printf("%s count_frames \"%s\" \"%s\" > \"%s\"",prefs->backend_sync,mainw->files[idx]->handle,
 			     mainw->files[idx]->img_type==IMG_TYPE_JPEG?"jpg":"png",info_file);
 
   mainw->com_failed=FALSE;
@@ -1670,7 +1720,7 @@ guint64 get_version_hash(const gchar *exe, const gchar *sep, int piece) {
   FILE *rfile;
   ssize_t rlen;
   char val[16];
-  gchar *com=g_strdup_printf("\"%s\" get_version_hash \"%s\" \"%s\" %d",prefs->backend,exe,sep,piece);
+  gchar *com=g_strdup_printf("%s get_version_hash \"%s\" \"%s\" %d",prefs->backend_sync,exe,sep,piece);
   rfile=popen(com,"r");
   rlen=fread(val,1,16,rfile);
   pclose(rfile);
@@ -2876,7 +2926,7 @@ after_foreign_play(void) {
 
 	  g_snprintf(file_name,PATH_MAX,"%s/%s/",prefs->tmpdir,cfile->handle);
 	  
-	  com=g_strdup_printf("\"%s\" fill_and_redo_frames \"%s\" %d %d %d \"%s\" %.4f %d %d %d %d %d",
+	  com=g_strdup_printf("%s fill_and_redo_frames \"%s\" %d %d %d \"%s\" %.4f %d %d %d %d %d",
 			      prefs->backend,
 			      cfile->handle,cfile->frames,cfile->hsize,cfile->vsize,
 			      cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",cfile->fps,cfile->arate,
@@ -3072,7 +3122,7 @@ gboolean check_dir_access (const gchar *dir) {
 #ifndef IS_MINGW
     com=g_strdup_printf ("/bin/mkdir -p %s",dir);
 #else
-    com=g_strdup_printf ("mkdir %s",dir);
+    com=g_strdup_printf ("mkdir.exe -p %s",dir);
 #endif
     lives_system (com,TRUE);
     g_free (com);
@@ -3735,7 +3785,7 @@ gboolean get_clip_value(int which, lives_clip_details_t what, void *retval, size
     if (val==NULL) return FALSE;
   }
   else {
-    com=g_strdup_printf("\"%s\" get_clip_value \"%s\" %d %d \"%s\"",prefs->backend,key,
+    com=g_strdup_printf("%s get_clip_value \"%s\" %d %d \"%s\"",prefs->backend_sync,key,
 			lives_getuid(),lives_getpid(),lives_header);
     g_free(lives_header);
     g_free(key);
@@ -3971,7 +4021,7 @@ void save_clip_value(int which, lives_clip_details_t what, void *val) {
 
   }
   else {
-    com=g_strdup_printf("\"%s\" set_clip_value \"%s\" \"%s\" \"%s\"",prefs->backend,lives_header,key,myval);
+    com=g_strdup_printf("%s set_clip_value \"%s\" \"%s\" \"%s\"",prefs->backend_sync,lives_header,key,myval);
     lives_system(com,FALSE);
     g_free(com);
   }
@@ -4439,7 +4489,7 @@ gboolean is_writeable_dir(const gchar *dir) {
   if (sbuf.f_flag&ST_RDONLY) return FALSE;
 #else
   mainw->com_failed=FALSE;
-  com=g_strdup_printf("touch %s\\xxxxfile.txt",dir);
+  com=g_strdup_printf("touch.exe \"%s\\xxxxfile.txt\"",dir);
   lives_system(com,TRUE);
   g_free(com);
   com=g_strdup_printf("%s\\xxxxfile.txt",dir);

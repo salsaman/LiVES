@@ -148,7 +148,7 @@ gboolean read_file_details(const gchar *file_name, gboolean is_audio) {
   int alarm_handle;
   int retval;
   gboolean timeout;
-  gchar *tmp,*com=g_strdup_printf("\"%s\" get_details \"%s\" \"%s\" \"%s\" %d %d",prefs->backend,cfile->handle,
+  gchar *tmp,*com=g_strdup_printf("%s get_details \"%s\" \"%s\" \"%s\" %d %d",prefs->backend,cfile->handle,
 				  (tmp=g_filename_from_utf8(file_name,-1,NULL,NULL,NULL)),
 				  cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",mainw->opening_loc,is_audio);
   g_free(tmp);
@@ -431,7 +431,7 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
 	  if (cfile->achans>0) {
 	    // plugin returned no audio, try with mplayer
 	    if (mainw->file_open_params==NULL) mainw->file_open_params=g_strdup("");
-	    com=g_strdup_printf("\"%s\" open \"%s\" \"%s\" %d \"%s\" %.2f %d \"%s\"",prefs->backend,cfile->handle,
+	    com=g_strdup_printf("%s open \"%s\" \"%s\" %d \"%s\" %.2f %d \"%s\"",prefs->backend,cfile->handle,
 				(tmp=g_filename_from_utf8 (file_name,-1,NULL,NULL,NULL)),-1,
 				prefs->image_ext,start,frames,mainw->file_open_params);
 
@@ -473,7 +473,7 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
 
 	      if (mainw->cancelled!=CANCEL_ERROR) {
 		// clean up our temp files
-		com=g_strdup_printf("\"%s\" stopsubsub \"%s\" 2>/dev/null",prefs->backend,cfile->handle);
+		com=g_strdup_printf("%s stopsubsub \"%s\" 2>/dev/null",prefs->backend_sync,cfile->handle);
 		lives_system(com,TRUE);
 		g_free(com);
 	      }
@@ -648,7 +648,7 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
       g_free(mainw->file_open_params);
       mainw->file_open_params=tmp;
       
-      com=g_strdup_printf("\"%s\" open \"%s\" \"%s\" %d \"%s\" %.2f %d \"%s\"",prefs->backend,cfile->handle,
+      com=g_strdup_printf("%s open \"%s\" \"%s\" %d \"%s\" %.2f %d \"%s\"",prefs->backend,cfile->handle,
 			  (tmp=g_filename_from_utf8 (file_name,-1,NULL,NULL,NULL)),withsound,
 			  prefs->image_ext,start,frames,mainw->file_open_params);
       unlink (cfile->info_file);
@@ -705,7 +705,7 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
 	
 	// cancelled
 	// clean up our temp files
-	com=g_strdup_printf("\"%s\" stopsubsub \"%s\" 2>/dev/null",prefs->backend,cfile->handle);
+	com=g_strdup_printf("%s stopsubsub \"%s\" 2>/dev/null",prefs->backend_sync,cfile->handle);
 	lives_system(com,TRUE);
 	g_free(com);
 	if (mainw->file_open_params!=NULL) g_free (mainw->file_open_params);
@@ -858,7 +858,7 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
     else if (prefs->concat_images) {
       // insert this image into our image clip, close this file
 
-      com=g_strdup_printf("\"%s\" insert \"%s\" \"%s\" %d 1 1 \"%s\" 0 %d %d %d",prefs->backend,
+      com=g_strdup_printf("%s insert \"%s\" \"%s\" %d 1 1 \"%s\" 0 %d %d %d",prefs->backend,
 			  mainw->files[mainw->img_concat_clip]->handle,
 			  mainw->files[mainw->img_concat_clip]->img_type==IMG_TYPE_JPEG?"jpg":"png",
 			  mainw->files[mainw->img_concat_clip]->frames,
@@ -1322,7 +1322,7 @@ void save_file (int clip, int start, int end, const char *filename) {
     nfile->signed_endian=sfile->signed_endian;
     nfile->img_type=sfile->img_type;
 
-    com=g_strdup_printf ("\"%s\" link_frames \"%s\" %d %d %.8f %.8f %d %d %d %d %d \"%s\"",prefs->backend,nfile->handle,
+    com=g_strdup_printf ("%s link_frames \"%s\" %d %d %.8f %.8f %d %d %d %d %d \"%s\"",prefs->backend,nfile->handle,
 			 start,end,aud_start,aud_end,nfile->arate,nfile->achans,nfile->asampsize,
 			 !(nfile->signed_endian&AFORM_UNSIGNED),!(nfile->signed_endian&AFORM_BIG_ENDIAN),sfile->handle);
 
@@ -1335,7 +1335,7 @@ void save_file (int clip, int start, int end, const char *filename) {
     mainw->current_file=new_file;
 
     if (mainw->com_failed) {
-      lives_system (g_strdup_printf("\"%s\" close \"%s\"",prefs->backend,cfile->handle),TRUE);
+      lives_system (g_strdup_printf("%s close \"%s\"",prefs->backend,cfile->handle),TRUE);
       g_free (cfile);
       cfile=NULL;
       if (mainw->first_free_file==-1||mainw->first_free_file>new_file) 
@@ -1358,7 +1358,7 @@ void save_file (int clip, int start, int end, const char *filename) {
 
     cfile->nopreview=TRUE;
     if (!(do_progress_dialog(TRUE,TRUE,_("Linking selection")))) {
-      lives_system (g_strdup_printf("\"%s\" close \"%s\"",prefs->backend,cfile->handle),TRUE);
+      lives_system (g_strdup_printf("%s close \"%s\"",prefs->backend,cfile->handle),TRUE);
       g_free (cfile);
       cfile=NULL;
       if (mainw->first_free_file==-1||mainw->first_free_file>new_file) 
@@ -1391,14 +1391,14 @@ void save_file (int clip, int start, int end, const char *filename) {
 
   if (!check_encoder_restrictions(FALSE,FALSE,save_all)) {
     if (!save_all&&!safe_symlinks) {
-      lives_system ((com=g_strdup_printf("\"%s\" close \"%s\"",prefs->backend,nfile->handle)),TRUE);
+      lives_system ((com=g_strdup_printf("%s close \"%s\"",prefs->backend,nfile->handle)),TRUE);
       g_free(com);
       g_free (nfile);
       mainw->files[new_file]=NULL;
       if (mainw->first_free_file==-1||new_file) mainw->first_free_file=new_file;
     }
     else if (!save_all&&safe_symlinks) {
-      com=g_strdup_printf("\"%s\" clear_symlinks \"%s\"",prefs->backend,nfile->handle);
+      com=g_strdup_printf("%s clear_symlinks \"%s\"",prefs->backend_sync,nfile->handle);
       lives_system (com,TRUE);
       g_free (com);
     }
@@ -1458,7 +1458,7 @@ void save_file (int clip, int start, int end, const char *filename) {
       }
     }
 
-    com=g_strdup_printf ("\"%s\" link_frames \"%s\" %d %d %.8f %.8f %d %d %d %d %d",prefs->backend,sfile->handle,
+    com=g_strdup_printf ("%s link_frames \"%s\" %d %d %.8f %.8f %d %d %d %d %d",prefs->backend,sfile->handle,
 			 start,end,aud_start,aud_end,sfile->arate,sfile->achans,sfile->asampsize,
 			 !(sfile->signed_endian&AFORM_UNSIGNED),!(sfile->signed_endian&AFORM_BIG_ENDIAN));
 
@@ -1470,7 +1470,7 @@ void save_file (int clip, int start, int end, const char *filename) {
     mainw->current_file=clip;
 
     if (mainw->com_failed) {
-      com=g_strdup_printf("\"%s\" clear_symlinks \"%s\"",prefs->backend,cfile->handle);
+      com=g_strdup_printf("%s clear_symlinks \"%s\"",prefs->backend_sync,cfile->handle);
       lives_system (com,TRUE);
       g_free (com);
       cfile->nopreview=FALSE;
@@ -1492,7 +1492,7 @@ void save_file (int clip, int start, int end, const char *filename) {
 
     cfile->nopreview=TRUE;
     if (!(do_progress_dialog(TRUE,TRUE,_("Linking selection")))) {
-      com=g_strdup_printf("\"%s\" clear_symlinks \"%s\"",prefs->backend,cfile->handle);
+      com=g_strdup_printf("%s clear_symlinks \"%s\"",prefs->backend_sync,cfile->handle);
       lives_system (com,TRUE);
       g_free (com);
       cfile->nopreview=FALSE;
@@ -1570,7 +1570,7 @@ void save_file (int clip, int start, int end, const char *filename) {
   // get extra parameters for saving
   if (prefs->encoder.capabilities&HAS_RFX) {
     if (prefs->encoder.capabilities&ENCODER_NON_NATIVE) {
-      com=g_strdup_printf("\"%s\" save get_rfx %s \"%s\" %s \"%s\" %d %d %d %d %d %d %.4f %.4f",prefs->backend,
+      com=g_strdup_printf("%s save get_rfx %s \"%s\" %s \"%s\" %d %d %d %d %d %d %.4f %.4f",prefs->backend,
 			  sfile->handle,enc_exec_name,
 			  fps_string,(tmp=g_filename_from_utf8(full_file_name,-1,NULL,NULL,NULL)),
 			  1,sfile->frames,arate,sfile->achans,sfile->asampsize,asigned|aendian,aud_start,aud_end);
@@ -1588,12 +1588,12 @@ void save_file (int clip, int start, int end, const char *filename) {
 
     if (extra_params==NULL) {
       if (!save_all&&safe_symlinks) {
-	com=g_strdup_printf("\"%s\" clear_symlinks \"%s\"",prefs->backend,nfile->handle);
+	com=g_strdup_printf("%s clear_symlinks \"%s\"",prefs->backend_sync,nfile->handle);
 	lives_system (com,TRUE);
 	g_free (com);
       }
       if (!save_all&&!safe_symlinks) {
-	lives_system ((com=g_strdup_printf("\"%s\" close \"%s\"",prefs->backend,nfile->handle)),TRUE);
+	lives_system ((com=g_strdup_printf("%s close \"%s\"",prefs->backend,nfile->handle)),TRUE);
 	g_free(com);
 	g_free(nfile);
 	mainw->files[new_file]=NULL;
@@ -1662,7 +1662,7 @@ void save_file (int clip, int start, int end, const char *filename) {
   // for save_all, cfile will be sfile
 
   if (prefs->encoder.capabilities&ENCODER_NON_NATIVE) {
-    com=g_strdup_printf("\"%s\" save \"%s\" \"%s\" \"%s\" \"%s\" %d %d %d %d %d %d %.4f %.4f %s %s",prefs->backend,
+    com=g_strdup_printf("%s save \"%s\" \"%s\" \"%s\" \"%s\" %d %d %d %d %d %d %.4f %.4f %s %s",prefs->backend,
 			cfile->handle,
 			enc_exec_name,fps_string,(tmp=g_filename_from_utf8(full_file_name,-1,NULL,NULL,NULL)),
 			startframe,cfile->frames,arate,cfile->achans,cfile->asampsize,
@@ -1722,7 +1722,7 @@ void save_file (int clip, int start, int end, const char *filename) {
     mainw->effects_paused=FALSE;
     cfile->nokeep=FALSE;
     
-    com=g_strdup_printf("\"%s\" plugin_clear \"%s\" 1 %d \"%s%s\" \"%s\" \"%s\"",prefs->backend,cfile->handle,
+    com=g_strdup_printf("%s plugin_clear \"%s\" 1 %d \"%s%s\" \"%s\" \"%s\"",prefs->backend_sync,cfile->handle,
 			cfile->frames, prefs->lib_dir, PLUGIN_EXEC_DIR, PLUGIN_ENCODERS, prefs->encoder.name);
 
     lives_system(com,FALSE);
@@ -1738,7 +1738,7 @@ void save_file (int clip, int start, int end, const char *filename) {
       mainw->no_switch_dprint=FALSE;
       g_free(full_file_name);
       if (!save_all&&!safe_symlinks) {
-	lives_system ((com=g_strdup_printf("\"%s\" close \"%s\"",prefs->backend,cfile->handle)),TRUE);
+	lives_system ((com=g_strdup_printf("%s close \"%s\"",prefs->backend,cfile->handle)),TRUE);
 	g_free(com);
 	g_free (cfile);
 	cfile=NULL;
@@ -1746,7 +1746,7 @@ void save_file (int clip, int start, int end, const char *filename) {
 	  mainw->first_free_file=mainw->current_file;
       }
       else if (!save_all&&safe_symlinks) {
-	com=g_strdup_printf("\"%s\" clear_symlinks \"%s\"",prefs->backend,cfile->handle);
+	com=g_strdup_printf("%s clear_symlinks \"%s\"",prefs->backend_sync,cfile->handle);
 	lives_system (com,TRUE);
 	g_free (com);
       }
@@ -1781,7 +1781,7 @@ void save_file (int clip, int start, int end, const char *filename) {
       mainw->no_switch_dprint=FALSE;
       g_free(full_file_name);
       if (!save_all&&!safe_symlinks) {
-	lives_system ((com=g_strdup_printf("\"%s\" close \"%s\"",prefs->backend,cfile->handle)),TRUE);
+	lives_system ((com=g_strdup_printf("%s close \"%s\"",prefs->backend,cfile->handle)),TRUE);
 	g_free(com);
 	g_free (cfile);
 	cfile=NULL;
@@ -1789,7 +1789,7 @@ void save_file (int clip, int start, int end, const char *filename) {
 	  mainw->first_free_file=mainw->current_file;
       }
       else if (!save_all&&safe_symlinks) {
-	com=g_strdup_printf("\"%s\" clear_symlinks \"%s\"",prefs->backend,cfile->handle);
+	com=g_strdup_printf("%s clear_symlinks \"%s\"",prefs->backend_sync,cfile->handle);
 	lives_system (com,TRUE);
 	g_free (com);
       }
@@ -1820,7 +1820,7 @@ void save_file (int clip, int start, int end, const char *filename) {
 	int iheight=sfile->ovsize;
 	gboolean bad_header=FALSE;
 
-	com=g_strdup_printf("\"%s\" mv_mgk \"%s\" %d %d \"%s\" 1",prefs->backend,sfile->handle,1,sfile->frames,
+	com=g_strdup_printf("%s mv_mgk \"%s\" %d %d \"%s\" 1",prefs->backend,sfile->handle,1,sfile->frames,
 			    sfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
 
 	unlink(sfile->info_file);
@@ -1867,7 +1867,7 @@ void save_file (int clip, int start, int end, const char *filename) {
     }
     else {
       if (!safe_symlinks) {
-	lives_system ((com=g_strdup_printf("\"%s\" close \"%s\"",prefs->backend,nfile->handle)),TRUE);
+	lives_system ((com=g_strdup_printf("%s close \"%s\"",prefs->backend,nfile->handle)),TRUE);
 	g_free(com);
 	g_free (nfile);
 	mainw->files[new_file]=NULL;
@@ -1875,7 +1875,7 @@ void save_file (int clip, int start, int end, const char *filename) {
 	  mainw->first_free_file=new_file;
       }
       else {
-	com=g_strdup_printf("\"%s\" clear_symlinks \"%s\"",prefs->backend,cfile->handle);
+	com=g_strdup_printf("%s clear_symlinks \"%s\"",prefs->backend_sync,cfile->handle);
 	lives_system (com,TRUE);
 	g_free (com);
       }
@@ -2386,7 +2386,7 @@ void play_file (void) {
 	}
 	
 	if (cfile->achans>0) {
-	  com2=g_strdup_printf("\"%s\" stop_audio %s",prefs->backend,cfile->handle);
+	  com2=g_strdup_printf("%s stop_audio %s",prefs->backend_sync,cfile->handle);
 	}
     
 	stopcom=g_strconcat (com4,com2,NULL);
@@ -2402,13 +2402,13 @@ void play_file (void) {
       // PLAY
 
       if (cfile->clip_type==CLIP_TYPE_DISK&&cfile->opening) {
-	  com=g_strdup_printf("\"%s\" play_opening_preview \"%s\" %.3f %d %d %d %d %d %d %d %d",prefs->backend,
+	  com=g_strdup_printf("%s play_opening_preview \"%s\" %.3f %d %d %d %d %d %d %d %d",prefs->backend,
 			      cfile->handle,cfile->fps,mainw->audio_start,audio_end,0,
 			      arate,cfile->achans,cfile->asampsize,asigned,aendian);
       }
       else {
 	// this is only used now for sox or mplayer audio player
-	com=g_strdup_printf("\"%s\" play \"%s\" %.3f %d %d %d %d %d %d %d %d",prefs->backend,cfile->handle,
+	com=g_strdup_printf("%s play %s %.3f %d %d %d %d %d %d %d %d",prefs->backend,cfile->handle,
 			    cfile->fps,mainw->audio_start,audio_end,loop,
 			    arate,cfile->achans,cfile->asampsize,asigned,aendian);
       }
@@ -3095,7 +3095,7 @@ gboolean get_temp_handle(gint index, gboolean create) {
 
     is_unique=TRUE;
 
-    com=g_strdup_printf("\"%s\" new %d",prefs->backend,getpid());
+    com=g_strdup_printf("%s new %d",prefs->backend_sync,getpid());
     lives_system(com,TRUE);
     g_free(com);
     // ignore return value here, as it will be dealt with in get_handle_from_info_file()
@@ -3206,6 +3206,7 @@ void create_cfile(void) {
   g_snprintf(cfile->redo_text,32,"%s",_ ("_Redo"));
 
   stfile=g_build_filename(prefs->tmpdir,cfile->handle,".status",NULL);
+
   g_snprintf(cfile->info_file,PATH_MAX,"%s",stfile);
   g_free(stfile);
   
@@ -3524,7 +3525,8 @@ gboolean save_frame_inner(gint clip, gint frame, const gchar *file_name, gint wi
       }
     }
 
-    com=g_strdup_printf("\"%s\" save_frame \"%s\" %d \"%s\" %d %d",prefs->backend,sfile->handle,frame,tmp,width,height);
+    com=g_strdup_printf("%s save_frame %s %d %s %d %d",prefs->backend_sync,sfile->handle,
+			frame,tmp,width,height);
     result=lives_system(com,FALSE);
     g_free(com);
     g_free(tmp);
@@ -3636,7 +3638,7 @@ void backup_file(int clip, int start, int end, const gchar *file_name) {
     }
   }
 
-  com=g_strdup_printf("\"%s\" backup \"%s\" %d %d %d \"%s\"",prefs->backend,sfile->handle,withsound,
+  com=g_strdup_printf("%s backup %s %d %d %d %s",prefs->backend,sfile->handle,withsound,
 		      start,end,(tmp=g_filename_from_utf8 (full_file_name,-1,NULL,NULL,NULL)));
 
   // TODO
@@ -3667,7 +3669,7 @@ void backup_file(int clip, int start, int end, const gchar *file_name) {
     g_free (com);
 
     // using restore details in the 'wrong' way here...it will also clear files
-    com=g_strdup_printf("\"%s\" restore_details \"%s\"",prefs->backend,cfile->handle);
+    com=g_strdup_printf("%s restore_details %s",prefs->backend_sync,cfile->handle);
     unlink (cfile->info_file);
     lives_system(com,FALSE);
     // auto-d
@@ -3835,7 +3837,7 @@ gboolean read_headers(const gchar *file_name) {
 	g_free(old_hdrfile);
 
 	// clean up and get file sizes
-	com=g_strdup_printf("\"%s\" restore_details \"%s\" \"%s\" %d",prefs->backend,cfile->handle,
+	com=g_strdup_printf("%s restore_details %s %s %d",prefs->backend_sync,cfile->handle,
 			    (tmp=g_filename_from_utf8 (file_name,-1,NULL,NULL,NULL)),!strcmp (file_name,"."));
 
 	mainw->com_failed=FALSE;
@@ -4095,7 +4097,7 @@ gboolean read_headers(const gchar *file_name) {
     cfile->signed_endian=mainw->endian;
   }
   
-  com=g_strdup_printf("\"%s\" restore_details \"%s\" \"%s\" %d",prefs->backend,cfile->handle,
+  com=g_strdup_printf("%s restore_details %s %s %d",prefs->backend_sync,cfile->handle,
 		      (tmp=g_filename_from_utf8 (file_name,-1,NULL,NULL,NULL)),!strcmp (file_name,"."));
   mainw->com_failed=FALSE;
   lives_system(com,FALSE);
@@ -4275,7 +4277,7 @@ void restore_file(const gchar *file_name) {
   switch_to_file((mainw->current_file=old_file),new_file);
   set_main_title(cfile->file_name,0);
   
-  com=g_strdup_printf("\"%s\" restore \"%s\" \"%s\"",prefs->backend,cfile->handle,
+  com=g_strdup_printf("%s restore %s %s",prefs->backend,cfile->handle,
 		      (tmp=g_filename_from_utf8(file_name,-1,NULL,NULL,NULL)));
   mainw->com_failed=FALSE;
   lives_system(com,FALSE);
@@ -5349,7 +5351,7 @@ static gboolean recover_files(gchar *recovery_file, gboolean auto_recover) {
 
 
 void add_to_recovery_file (const gchar *handle) {
-  gchar *com=g_strdup_printf("/bin/echo \"%s\" >> \"%s\"",handle,mainw->recovery_file);
+  gchar *com=g_strdup_printf("/bin/echo %s >> %s",handle,mainw->recovery_file);
   mainw->com_failed=FALSE;
   lives_system(com,FALSE);
   g_free(com);
@@ -5429,7 +5431,7 @@ gboolean check_for_recovery_files (gboolean auto_recover) {
 
   pid_t lpid=lives_getpid();
 
-  com=g_strdup_printf("\"%s\" get_recovery_file %d %d \"%s\" recovery> \"%s\"",prefs->backend,luid,lgid,
+  com=g_strdup_printf("%s get_recovery_file %d %d %s recovery> %s",prefs->backend_sync,luid,lgid,
 			     capable->myname,info_file);
   
   unlink(info_file);
@@ -5468,13 +5470,13 @@ gboolean check_for_recovery_files (gboolean auto_recover) {
   recovery_file=g_strdup_printf("%s/layout.%d.%d.%d",prefs->tmpdir,luid,lgid,recpid);
   if (g_file_test (recovery_file, G_FILE_TEST_EXISTS)) {
     // move files temporarily to stop them being cleansed
-    com=g_strdup_printf("/bin/mv \"%s\" \"%s/.layout.%d.%d.%d\"",recovery_file,prefs->tmpdir,luid,
+    com=g_strdup_printf("/bin/mv %s \"%s/.layout.%d.%d.%d\"",recovery_file,prefs->tmpdir,luid,
 			lgid,lpid);
     lives_system(com,FALSE);
     g_free(com);
     recovery_numbering_file=g_strdup_printf("%s/layout_numbering.%d.%d.%d",prefs->tmpdir,luid,
 					    lgid,recpid);
-    com=g_strdup_printf("/bin/mv \"%s\" \"%s/.layout_numbering.%d.%d.%d\"",recovery_numbering_file,prefs->tmpdir,
+    com=g_strdup_printf("/bin/mv %s \"%s/.layout_numbering.%d.%d.%d\"",recovery_numbering_file,prefs->tmpdir,
 			luid,lgid,lpid);
     lives_system(com,FALSE);
     g_free(com);
@@ -5489,7 +5491,7 @@ gboolean check_for_recovery_files (gboolean auto_recover) {
   
   if (mainw->com_failed) return FALSE;
 
-  com=g_strdup_printf("\"%s\" clean_recovery_files %d %d \"%s\"",prefs->backend,luid,lgid,capable->myname);
+  com=g_strdup_printf("%s clean_recovery_files %d %d \"%s\"",prefs->backend_sync,luid,lgid,capable->myname);
   lives_system(com,FALSE);
   g_free(com);
 

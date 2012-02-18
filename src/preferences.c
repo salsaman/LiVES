@@ -57,7 +57,7 @@ void get_pref(const gchar *key, gchar *val, gint maxlen) {
     return;
   }
 
-  com=g_strdup_printf("\"%s\" get_pref \"%s\" %d %d",prefs->backend,key,lives_getuid(),lives_getpid());
+  com=g_strdup_printf("%s get_pref \"%s\" %d %d",prefs->backend_sync,key,lives_getuid(),lives_getpid());
 
   if (system(com)) {
     tempdir_warning();
@@ -151,7 +151,7 @@ GList *get_list_pref(const gchar *key) {
 void get_pref_default(const gchar *key, gchar *val, gint maxlen) {
   FILE *valfile;
   gchar *vfile;
-  gchar *com=g_strdup_printf("\"%s\" get_pref_default \"%s\"",prefs->backend,key);
+  gchar *com=g_strdup_printf("%s get_pref_default \"%s\"",prefs->backend_sync,key);
 
   int retval;
   int alarm_handle;
@@ -236,7 +236,7 @@ get_double_pref(const gchar *key) {
 
 void
 delete_pref(const gchar *key) {
-  gchar *com=g_strdup_printf("\"%s\" delete_pref \"%s\"",prefs->backend,key);
+  gchar *com=g_strdup_printf("%s delete_pref \"%s\"",prefs->backend_sync,key);
   if (system(com)) {
     tempdir_warning();
   }
@@ -246,7 +246,7 @@ delete_pref(const gchar *key) {
 void
 set_pref(const gchar *key, const gchar *value) {
   gchar *tmp;
-  gchar *com=g_strdup_printf("\"%s\" set_pref \"%s\" %s",prefs->backend,key,(tmp=g_shell_quote(value)));
+  gchar *com=g_strdup_printf("%s set_pref \"%s\" %s",prefs->backend_sync,key,(tmp=g_shell_quote(value)));
   g_free(tmp);
 
   if (system(com)) {
@@ -258,7 +258,7 @@ set_pref(const gchar *key, const gchar *value) {
 
 void
 set_int_pref(const gchar *key, gint value) {
-  gchar *com=g_strdup_printf("\"%s\" set_pref \"%s\" %d",prefs->backend,key,value);
+  gchar *com=g_strdup_printf("%s set_pref \"%s\" %d",prefs->backend_sync,key,value);
   if (system(com)) {
     tempdir_warning();
   }
@@ -268,7 +268,7 @@ set_int_pref(const gchar *key, gint value) {
 
 void
 set_int64_pref(const gchar *key, gint64 value) {
-  gchar *com=g_strdup_printf("\"%s\" set_pref \"%s\" %"PRId64,prefs->backend,key,value);
+  gchar *com=g_strdup_printf("%s set_pref \"%s\" %"PRId64,prefs->backend_sync,key,value);
   if (system(com)) {
     tempdir_warning();
   }
@@ -278,7 +278,7 @@ set_int64_pref(const gchar *key, gint64 value) {
 
 void
 set_double_pref(const gchar *key, gdouble value) {
-  gchar *com=g_strdup_printf("\"%s\" set_pref \"%s\" %.3f",prefs->backend,key,value);
+  gchar *com=g_strdup_printf("%s set_pref \"%s\" %.3f",prefs->backend_sync,key,value);
   if (system(com)) {
     tempdir_warning();
   }
@@ -291,10 +291,10 @@ set_boolean_pref(const gchar *key, gboolean value) {
   gchar *com;
 
   if (value) {
-    com=g_strdup_printf("\"%s\" set_pref \"%s\" true",prefs->backend,key);
+    com=g_strdup_printf("%s set_pref \"%s\" true",prefs->backend_sync,key);
   }
   else {
-    com=g_strdup_printf("\"%s\" set_pref \"%s\" false",prefs->backend,key);
+    com=g_strdup_printf("%s set_pref \"%s\" false",prefs->backend_sync,key);
   }
   if (system(com)) {
     tempdir_warning();

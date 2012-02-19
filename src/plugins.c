@@ -1053,8 +1053,11 @@ _vppaw *on_vpp_advanced_clicked (GtkButton *button, gpointer user_data) {
     gtk_widget_show (vbox);
     gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (scrolledwindow), vbox);
 
+#ifndef IS_MINGW
     com=g_strdup_printf("/bin/echo -e \"%s\"",(*tmpvpp->get_init_rfx)());
-
+#else
+    com=g_strdup_printf("echo.exe -e \"%s\"",(*tmpvpp->get_init_rfx)());
+#endif
     plugin_run_param_window(com,GTK_VBOX(vbox),&(vppa->rfx));
     g_free(com);
     if (tmpvpp->extra_argv!=NULL&&tmpvpp->extra_argc>0) {

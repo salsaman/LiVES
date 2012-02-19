@@ -427,9 +427,14 @@ void on_open_yuv4m_activate (GtkMenuItem *menuitem, gpointer user_data) {
     audio_fake=g_build_filename(prefs->tmpdir,cfile->handle,"audiodump.pcm",NULL);
 
 
+#ifndef IS_MINGW
     // fake file will go away when we close the current clip
     lives_system ((tmp=g_strdup_printf ("/bin/ln -s \"%s\" \"%s\" >/dev/null 2>&1",
 					audio_real,audio_fake)),TRUE);
+#else
+    // TODO
+#endif
+
     g_free(audio_real);
     g_free(audio_fake);
 

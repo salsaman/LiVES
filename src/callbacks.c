@@ -84,7 +84,11 @@ void lives_exit (void) {
       if (prefs->audio_player!=AUD_PLAYER_JACK&&prefs->audio_player!=AUD_PLAYER_PULSE&&mainw->aud_file_to_kill>-1&&
 	  mainw->files[mainw->aud_file_to_kill]!=NULL) {
 	gchar *lsname=g_build_filename(prefs->tmpdir,mainw->files[mainw->aud_file_to_kill]->handle,NULL);
+#ifndef IS_MINGW
 	com=g_strdup_printf ("/bin/touch \"%s\" 2>/dev/null",lsname);
+#else
+	com=g_strdup_printf ("touch.exe \"%s\" 2>NUL",lsname);
+#endif
 	g_free(lsname);
 	lives_system(com,TRUE);
 	g_free (com);
@@ -258,7 +262,11 @@ void lives_exit (void) {
 	gchar *sdname=g_build_filename(prefs->tmpdir,mainw->set_name,NULL);
 
 	// note, we do not use the flag -f
+#ifndef IS_MINGW
 	com=g_strdup_printf("/bin/rm -r \"%s/\" 2>/dev/null",sdname);
+#else
+	com=g_strdup_printf("rm.exe -r \"%s/\" 2>NUL",sdname);
+#endif
 	g_free(sdname);
 	lives_system(com,TRUE);
 	threaded_dialog_spin();
@@ -266,13 +274,21 @@ void lives_exit (void) {
       }
       else {
 	gchar *dname=g_build_filename(prefs->tmpdir,mainw->set_name,"clips",NULL);
+#ifndef IS_MINGW
 	com=g_strdup_printf("/bin/rm -r \"%s\" 2>/dev/null",dname);
+#else
+	com=g_strdup_printf("/bin/rm -r \"%s\" 2>NUL",dname);
+#endif
 	g_free(dname);
 	lives_system(com,TRUE);
 	threaded_dialog_spin();
 	g_free(com);
 	dname=g_build_filename(prefs->tmpdir,mainw->set_name,"order",NULL);
+#ifndef IS_MINGW
 	com=g_strdup_printf("/bin/rm \"%s\" 2>/dev/null",dname);
+#else
+	com=g_strdup_printf("/bin/rm \"%s\" 2>NUL",dname);
+#endif
 	g_free(dname);
 	lives_system(com,TRUE);
 	threaded_dialog_spin();
@@ -1072,7 +1088,11 @@ on_close_activate                      (GtkMenuItem     *menuitem,
 	}
 	// delete layout directory
 	laydir=g_build_filename(prefs->tmpdir,mainw->set_name,"layouts",NULL);
+#ifndef IS_MINGW
 	com=g_strdup_printf("/bin/rm -r \"%s/\" 2>/dev/null &",laydir);
+#else
+	com=g_strdup_printf("START /MIN /b rm.exe -r \"%s/\" 2>NUL",laydir);
+#endif
 	lives_system(com,TRUE);
 	g_free(com);
 	g_free(laydir);
@@ -1081,26 +1101,42 @@ on_close_activate                      (GtkMenuItem     *menuitem,
 
     // TODO - dirsep
 
-    cdir=g_build_filename(prefs->tmpdir,mainw->set_name,"clips/",NULL);
+    cdir=g_build_filename(prefs->tmpdir,mainw->set_name,"clips",G_DIR_SEPARATOR_S,NULL);
+#ifndef IS_MINGW
     com=g_strdup_printf("/bin/rmdir \"%s\" 2>/dev/null",cdir);
+#else
+    com=g_strdup_printf("rmdir.exe \"%s\" 2>NUL",cdir);
+#endif
     lives_system(com,TRUE);
     g_free(com);
     g_free(cdir);
 
     lfiles=g_build_filename(prefs->tmpdir,mainw->set_name,"lock",NULL);
+#ifndef IS_MINGW
     com=g_strdup_printf("/bin/rm \"%s\"* 2>/dev/null",lfiles);
+#else
+    com=g_strdup_printf("rm.exe \"%s\"* 2>NUL",lfiles);
+#endif
     lives_system(com,TRUE);
     g_free(com);
     g_free(lfiles);
 
     ofile=g_build_filename(prefs->tmpdir,mainw->set_name,"order",NULL);
+#ifndef IS_MINGW
     com=g_strdup_printf("/bin/rm \"%s\" 2>/dev/null",ofile);
+#else
+    com=g_strdup_printf("rm.exe \"%s\" 2>NUL",ofile);
+#endif
     lives_system(com,TRUE);
     g_free(com);
     g_free(ofile);
 
     sdir=g_build_filename(prefs->tmpdir,mainw->set_name,NULL);
+#ifndef IS_MINGW
     com=g_strdup_printf("/bin/rmdir \"%s/\" 2>/dev/null",sdir);
+#else
+    com=g_strdup_printf("rmdir.exe \"%s/\" 2>NUL",sdir);
+#endif
     lives_system(com,TRUE);
     g_free(com);
     g_free(sdir);
@@ -1566,7 +1602,11 @@ on_quit_activate                      (GtkMenuItem     *menuitem,
 	}
 	// delete layout directory
 	esave_dir=g_build_filename(prefs->tmpdir,mainw->set_name,"layouts",NULL);
+#ifndef IS_MINGW
 	com=g_strdup_printf("/bin/rm -r \"%s/\" 2>/dev/null &",esave_dir);
+#else
+	com=g_strdup_printf("START /MIN /b rm.exe -r \"%s/\" 2>NUL",esave_dir);
+#endif
 	lives_system(com,TRUE);
 	g_free(com);
 	g_free(esave_dir);
@@ -4582,7 +4622,11 @@ on_save_set_activate            (GtkMenuItem     *menuitem,
 	  // user answered "yes" - delete
 	  // clear _old_ layout maps
 	  gchar *dfile=g_build_filename(prefs->tmpdir,mainw->set_name,"layouts",NULL);
+#ifndef IS_MINGW
 	  com=g_strdup_printf("/bin/rm -r \"%s/\" 2>/dev/null",dfile);
+#else
+	  com=g_strdup_printf("rm.exe -r \"%s/\" 2>NUL",dfile);
+#endif
 	  g_free(dfile);
 	  lives_system(com,TRUE);
 	  g_free(com);
@@ -4607,7 +4651,11 @@ on_save_set_activate            (GtkMenuItem     *menuitem,
     if (!is_append) {
       // create new dir, in case it doesn't already exist
       dfile=g_build_filename(prefs->tmpdir,mainw->set_name,"clips",NULL);
+#ifndef IS_MINGW
       com=g_strdup_printf("/bin/mkdir -p \"%s/\" 2>/dev/null",dfile);
+#else
+      com=g_strdup_printf("mkdir.exe -p \"%s/\" 2>NUL",dfile);
+#endif
       mainw->com_failed=FALSE;
       lives_system(com,FALSE);
       g_free(com);
@@ -4633,9 +4681,13 @@ on_save_set_activate            (GtkMenuItem     *menuitem,
     // saving as same name (or as new set)
 
     dfile=g_build_filename(prefs->tmpdir,mainw->set_name,"clips",NULL);
+#ifndef IS_MINGW
     com=g_strdup_printf("/bin/mkdir -p \"%s/\" 2>/dev/null",dfile);
+#else
+    com=g_strdup_printf("mkdir.exe -p \"%s/\" 2>NUL",dfile);
+#endif
     mainw->com_failed=FALSE;
-    lives_system(com,FALSE);
+    lives_system(com,TRUE);
     g_free(com);
 
 
@@ -4707,8 +4759,13 @@ on_save_set_activate            (GtkMenuItem     *menuitem,
 
 
 	    mainw->com_failed=FALSE;
+#ifndef IS_MINGW
 	    com=g_strdup_printf("/bin/mv \"%s/%s\" \"%s/%s\"",
 				prefs->tmpdir,mainw->files[i]->handle,prefs->tmpdir,new_handle);
+#else
+	    com=g_strdup_printf("mv.exe \"%s\\%s\" \"%s\\%s\"",
+				prefs->tmpdir,mainw->files[i]->handle,prefs->tmpdir,new_handle);
+#endif
 	    lives_system(com,FALSE);
 	    g_free(com);
 	
@@ -4757,7 +4814,7 @@ on_save_set_activate            (GtkMenuItem     *menuitem,
   if (got_new_handle&&!strlen(old_set)) migrate_layouts(NULL,mainw->set_name);
 
   if (strlen(old_set)&&strcmp(old_set,mainw->set_name)) {
-    layout_map_dir=g_strdup_printf("%s/%s/layouts/",prefs->tmpdir,old_set);
+    layout_map_dir=g_build_filename(prefs->tmpdir,old_set,"layouts",G_DIR_SEPARATOR_S,NULL);
     layout_map_file=g_build_filename(layout_map_dir,"layout.map",NULL);
     // update details for layouts - needs_set, current_layout_map and affected_layout_map
     if (g_file_test(layout_map_file,G_FILE_TEST_EXISTS)) {
@@ -4776,10 +4833,18 @@ on_save_set_activate            (GtkMenuItem     *menuitem,
       nsetn=g_build_filename(prefs->tmpdir,mainw->set_name,"layouts","layout.map",NULL);
 
       //append current layout.map to target one
+#ifndef IS_MINGW
       com=g_strdup_printf("/bin/cat \"%s\" >> \"%s\" 2>/dev/null",osetn,nsetn);
+#else
+      com=g_strdup_printf("cat.exe \"%s\" >> \"%s\" 2>NUL",osetn,nsetn);
+#endif
       lives_system(com,TRUE);
       g_free(com);
+#ifndef IS_MINGW
       com=g_strdup_printf("/bin/rm \"%s\" 2>/dev/null",osetn);
+#else
+      com=g_strdup_printf("rm.exe \"%s\" 2>NUL",osetn);
+#endif
       lives_system(com,TRUE);
       g_free(com);
       g_free(osetn);
@@ -4790,7 +4855,11 @@ on_save_set_activate            (GtkMenuItem     *menuitem,
     nsetn=g_build_filename(prefs->tmpdir,mainw->set_name,NULL);
 
     // move any layouts from old set to new (including layout.map)
+#ifndef IS_MINGW
     com=g_strdup_printf("/bin/cp -a \"%s\" \"%s/\" 2>/dev/null",osetn,nsetn);
+#else
+    com=g_strdup_printf("cp.exe -a \"%s\" \"%s/\" 2>NUL",osetn,nsetn);
+#endif
     lives_system(com,TRUE);
     g_free(com);
 
@@ -4800,17 +4869,20 @@ on_save_set_activate            (GtkMenuItem     *menuitem,
     osetn=g_build_filename(prefs->tmpdir,old_set,NULL);
 
     // remove old set dir
+#ifndef IS_MINGW
     com=g_strdup_printf("/bin/rm -r \"%s\" 2>/dev/null",osetn);
+#else
+    com=g_strdup_printf("rm.exe -r \"%s\" 2>NUL",osetn);
+#endif
     lives_system(com,TRUE);
     g_free(com);
     g_free(osetn);
   }
 
-  // TODO - dirsep
 
   if (!mainw->was_set&&!strcmp(old_set,mainw->set_name)) {
     // set name was set by export or save layout, now we need to update our layout map
-    layout_map_dir=g_strdup_printf("%s/%s/layouts/",prefs->tmpdir,old_set);
+    layout_map_dir=g_build_filename(prefs->tmpdir,old_set,"layouts",G_DIR_SEPARATOR_S,NULL);
     layout_map_file=g_build_filename(layout_map_dir,"layout.map",NULL);
     if (g_file_test(layout_map_file,G_FILE_TEST_EXISTS)) save_layout_map(NULL,NULL,NULL,layout_map_dir);
     mainw->was_set=TRUE;
@@ -4818,18 +4890,6 @@ on_save_set_activate            (GtkMenuItem     *menuitem,
     g_free(layout_map_dir);
     g_free(layout_map_file);
   }
-
-  /*
-  if (got_new_handle) {
-    // new file(s) were added to an existing set
-    layout_map_dir=g_strdup_printf("%s/%s/layouts/",prefs->tmpdir,mainw->set_name);
-    layout_map_file=g_build_filename(layout_map_dir,"layout.map",NULL);
-    save_layout_map(NULL,NULL,NULL,layout_map_dir);
-    g_free(layout_map_file);
-    g_free(layout_map_dir);
-  }
-  */
-
 
   if (mainw->current_layouts_map!=NULL&&strcmp(old_set,mainw->set_name)&&!mainw->is_exiting) {
     // warn the user about layouts if the set name changed
@@ -5108,7 +5168,11 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
       cfile->clip_type=CLIP_TYPE_DISK; // the default
 
       // lock the set
+#ifndef IS_MINGW
       com=g_strdup_printf("/bin/touch \"%s/%s/lock.%d\"",prefs->tmpdir,mainw->set_name,getpid());
+#else
+      com=g_strdup_printf("touch.exe \"%s\\%s\\lock.%d\"",prefs->tmpdir,mainw->set_name,getpid());
+#endif
       lives_system(com,FALSE);
       g_free(com);
     }
@@ -5939,7 +6003,11 @@ void on_fs_preview_clicked (GtkButton *button, gpointer user_data) {
       return;
     }
 
+#ifndef IS_MINGW
     com=g_strdup_printf("/bin/mkdir -p \"%s/fsp%d/\" 2>/dev/null",prefs->tmpdir,getpid());
+#else
+    com=g_strdup_printf("mkdir.exe -p \"%s/fsp%d/\" 2>NUL",prefs->tmpdir,getpid());
+#endif
     lives_system(com,TRUE);
     g_free(com);
 
@@ -7970,7 +8038,11 @@ void on_load_subs_activate (GtkMenuItem *menuitem, gpointer user_data) {
   }
 
   mainw->com_failed=FALSE;
+#ifndef IS_MINGW
   com=g_strdup_printf("/bin/cp \"%s\" \"%s\"",lfile_name,subfname);
+#else
+  com=g_strdup_printf("cp.exe \"%s\" \"%s\"",lfile_name,subfname);
+#endif
   lives_system(com,FALSE);
   g_free(com);
 

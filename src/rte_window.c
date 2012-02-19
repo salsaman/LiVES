@@ -1837,7 +1837,11 @@ void load_default_keymap(void) {
   do {
     retval=0;
     if (!g_file_test (keymap_file, G_FILE_TEST_EXISTS)) {
+#ifndef IS_MINGW
       com=g_strdup_printf("/bin/cp \"%s\" \"%s\"",keymap_template,keymap_file);
+#else
+      com=g_strdup_printf("cp.exe \"%s\" \"%s\"",keymap_template,keymap_file);
+#endif
       lives_system(com,TRUE); // allow this to fail - we will check for errors below
       g_free(com);
     }

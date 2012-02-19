@@ -99,9 +99,9 @@ void pconx_add_connection(int ikey, int imode, int pnum, int okey, int omode, in
 	}
 
 	// make space for new
-	pconx->okey=g_realloc(pconx->okey,totcons*sizint);
-	pconx->omode=g_realloc(pconx->omode,totcons*sizint);
-	pconx->opnum=g_realloc(pconx->opnum,totcons*sizint);
+	pconx->okey=(int *)g_realloc(pconx->okey,totcons*sizint);
+	pconx->omode=(int *)g_realloc(pconx->omode,totcons*sizint);
+	pconx->opnum=(int *)g_realloc(pconx->opnum,totcons*sizint);
 
 	// move up 1
 	for (j=totcons-1;j>posn;j--) {
@@ -126,19 +126,19 @@ void pconx_add_connection(int ikey, int imode, int pnum, int okey, int omode, in
   pconx->nparams++;
   totcons=pconx_get_numcons(pconx);
 
-  pconx->nconns=g_realloc(pconx->params,pconx->nparams*sizint);
+  pconx->nconns=(int *)g_realloc(pconx->params,pconx->nparams*sizint);
   pconx->nconns[pconx->nparams-1]=1;
 
-  pconx->params=g_realloc(pconx->params,pconx->nparams*sizint);
+  pconx->params=(int *)g_realloc(pconx->params,pconx->nparams*sizint);
   pconx->params[pconx->nparams-1]=pnum;
 
-  pconx->okey=g_realloc(pconx->okey,pconx->nparams*sizint);
+  pconx->okey=(int *)g_realloc(pconx->okey,pconx->nparams*sizint);
   pconx->okey[pconx->nparams-1]=okey;
 
-  pconx->omode=g_realloc(pconx->omode,pconx->nparams*sizint);
+  pconx->omode=(int *)g_realloc(pconx->omode,pconx->nparams*sizint);
   pconx->omode[pconx->nparams-1]=omode;
 
-  pconx->opnum=g_realloc(pconx->opnum,pconx->nparams*sizint);
+  pconx->opnum=(int *)g_realloc(pconx->opnum,pconx->nparams*sizint);
   pconx->opnum[pconx->nparams-1]=opnum;
 
 

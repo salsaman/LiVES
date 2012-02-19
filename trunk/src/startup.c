@@ -734,8 +734,8 @@ gboolean do_startup_tests(gboolean tshoot) {
       }
       
       g_free(com);
-      
-      while (mainw->cancelled==CANCEL_NONE&&(info_fd=open(cfile->info_file,O_RDONLY)==-1)) {
+
+      while (mainw->cancelled==CANCEL_NONE&&(info_fd=open(cfile->info_file,O_RDONLY))==-1) {
 	g_usleep(prefs->sleep_time);
 	while (g_main_context_iteration(NULL,FALSE));
       }
@@ -746,6 +746,7 @@ gboolean do_startup_tests(gboolean tshoot) {
 	lives_sync();
 	
 	fsize=sget_file_size(afile);
+	unlink(afile);
 	g_free(afile);
 	
 	if (fsize==0) {
@@ -754,9 +755,6 @@ gboolean do_startup_tests(gboolean tshoot) {
 	
 	else pass_test(table,1);
 
-	int ret=unlink(afile);
-	LIVES_DEBUG("\n\n\nGOT RET\n\n\n");
-	g_print("ret is %d\n",ret);
       }
     }
   }
@@ -854,7 +852,6 @@ gboolean do_startup_tests(gboolean tshoot) {
 
     rname=get_resource("vidtest.avi");
 
-
     com=g_strdup_printf("%s open_test \"%s\" \"%s\" 0 png",prefs->backend,cfile->handle,
 			(tmp=g_filename_from_utf8 (rname,-1,NULL,NULL,NULL)));
     g_free(tmp);
@@ -870,7 +867,7 @@ gboolean do_startup_tests(gboolean tshoot) {
 
     g_free(com);
 
-    while (mainw->cancelled==CANCEL_NONE&&(info_fd=open(cfile->info_file,O_RDONLY)==-1)) {
+    while (mainw->cancelled==CANCEL_NONE&&(info_fd=open(cfile->info_file,O_RDONLY))==-1) {
       g_usleep(prefs->sleep_time);
     }
     

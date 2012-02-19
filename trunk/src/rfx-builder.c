@@ -3385,7 +3385,11 @@ gboolean rfxbuilder_to_script (rfx_build_window_t *rfxbuilder) {
 
   script_file_dir=g_build_filename (capable->home_dir,LIVES_CONFIG_DIR,PLUGIN_RENDERED_EFFECTS_TEST_SCRIPTS,NULL);
 
+#ifndef IS_MINGW
   lives_system ((tmpx=g_strdup_printf ("/bin/mkdir -p \"%s/\"",script_file_dir)),FALSE);
+#else
+  lives_system ((tmpx=g_strdup_printf ("mkdir.exe -p \"%s/\"",script_file_dir)),FALSE);
+#endif
   g_free(tmpx);
 
   if (mainw->com_failed) return FALSE;
@@ -4277,8 +4281,13 @@ void on_export_rfx_ok (GtkButton *button, gchar *script_name) {
   msg=g_strdup_printf(_ ("Copying %s to %s..."),rfx_script_from,filename);
   d_print(msg);
   g_free(msg);
+#ifndef IS_MINGW
   com=g_strdup_printf("/bin/cp \"%s\" \"%s\"",(tmp=g_filename_from_utf8 (rfx_script_from,-1,NULL,NULL,NULL)),
 		      (tmp2=g_filename_from_utf8 (filename,-1,NULL,NULL,NULL)));
+#else
+  com=g_strdup_printf("cp.exe \"%s\" \"%s\"",(tmp=g_filename_from_utf8 (rfx_script_from,-1,NULL,NULL,NULL)),
+		      (tmp2=g_filename_from_utf8 (filename,-1,NULL,NULL,NULL)));
+#endif
   if (system(com)) d_print_failed();
   else d_print_done();
   g_free(tmp);
@@ -4309,8 +4318,13 @@ void on_import_rfx_ok (GtkButton *button, gpointer user_data) {
   switch (status) {
   case RFX_STATUS_TEST :
     rfx_dir_to=g_build_filename (capable->home_dir,LIVES_CONFIG_DIR,PLUGIN_RENDERED_EFFECTS_TEST_SCRIPTS,NULL);
+#ifndef IS_MINGW
     lives_system ((tmpx=g_strdup_printf ("/bin/mkdir -p \"%s\"",
 					 (tmp=g_filename_from_utf8(rfx_dir_to,-1,NULL,NULL,NULL)))),FALSE);
+#else
+    lives_system ((tmpx=g_strdup_printf ("mkdir.exe -p \"%s\"",
+					 (tmp=g_filename_from_utf8(rfx_dir_to,-1,NULL,NULL,NULL)))),FALSE);
+#endif
     g_free(tmp);
     g_free(tmpx);
     rfx_script_to=g_build_filename(rfx_dir_to,basename,NULL);
@@ -4318,8 +4332,13 @@ void on_import_rfx_ok (GtkButton *button, gpointer user_data) {
     break;
   case RFX_STATUS_CUSTOM :
     rfx_dir_to=g_build_filename (capable->home_dir,LIVES_CONFIG_DIR,PLUGIN_RENDERED_EFFECTS_CUSTOM_SCRIPTS,NULL);
+#ifndef IS_MINGW
     lives_system ((tmpx=g_strdup_printf ("/bin/mkdir -p \"%s\"",
 					 (tmp=g_filename_from_utf8(rfx_dir_to,-1,NULL,NULL,NULL)))),FALSE);
+#else
+    lives_system ((tmpx=g_strdup_printf ("mkdir.exe -p \"%s\"",
+					 (tmp=g_filename_from_utf8(rfx_dir_to,-1,NULL,NULL,NULL)))),FALSE);
+#endif
     g_free(tmpx);
     g_free(tmp);
     rfx_script_to=g_build_filename (rfx_dir_to,basename,NULL);
@@ -4351,8 +4370,13 @@ void on_import_rfx_ok (GtkButton *button, gpointer user_data) {
   msg=g_strdup_printf(_ ("Copying %s to %s..."),filename,rfx_script_to);
   d_print(msg);
   g_free(msg);
+#ifndef IS_MINGW
   com=g_strdup_printf("/bin/cp \"%s\" \"%s\"",(tmp=g_filename_from_utf8(filename,-1,NULL,NULL,NULL)),
 		      (tmp2=g_filename_from_utf8(rfx_script_to,-1,NULL,NULL,NULL)));
+#else
+  com=g_strdup_printf("cp.exe \"%s\" \"%s\"",(tmp=g_filename_from_utf8(filename,-1,NULL,NULL,NULL)),
+		      (tmp2=g_filename_from_utf8(rfx_script_to,-1,NULL,NULL,NULL)));
+#endif
   g_free(tmp);
   g_free(tmp2);
   if (system(com)) d_print_failed();

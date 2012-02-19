@@ -1808,6 +1808,9 @@ void remove_layout_files(GList *map) {
       g_free(msg);
 
       if (!is_current) {
+#ifndef IS_MINGW
+#else
+#endif
 	com=g_strdup_printf("/bin/rm \"%s\" 2>/dev/null",fname);
 	lives_system(com,TRUE);
 	g_free(com);
@@ -1823,6 +1826,9 @@ void remove_layout_files(GList *map) {
 
 	  mainw->com_failed=FALSE;
 	  // touch a file in tpmdir, so we cannot remove tmpdir itself
+#ifndef IS_MINGW
+#else
+#endif
 	  com=g_strdup_printf("/bin/touch \"%s\" >/dev/null 2>&1",protect_file);
 	  lives_system(com,FALSE);
 	  g_free(com);
@@ -1831,6 +1837,9 @@ void remove_layout_files(GList *map) {
 	    // ok, the "touch" worked
 	    // now we call rmdir -p : remove directory + any empty parents
 	    fdir=g_path_get_dirname (fname);
+#ifndef IS_MINGW
+#else
+#endif
 	    com=g_strdup_printf("/bin/rmdir -p \"%s\" 2>/dev/null",fdir);
 	    lives_system(com,TRUE);
 	    g_free(com);
@@ -3133,7 +3142,7 @@ gboolean check_dir_access (const gchar *dir) {
 #ifndef IS_MINGW
   com=g_strdup_printf ("/bin/touch \"%s\"",testfile);
 #else
-  com=g_strdup_printf ("touch \"%s\"",testfile);
+  com=g_strdup_printf ("touch.exe \"%s\"",testfile);
 #endif
   lives_system (com,TRUE);
   g_free (com);

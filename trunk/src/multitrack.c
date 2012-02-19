@@ -633,17 +633,29 @@ static void mt_load_recovery_layout(lives_mt *mt) {
       // failed to load
       // keep the faulty layout for forensic purposes
       gchar *com;
-      gchar *uldir=g_build_filename(prefs->tmpdir,"unrecoverable_layouts/",NULL);
+      gchar *uldir=g_build_filename(prefs->tmpdir,"unrecoverable_layouts",G_DIR_SEPARATOR_S,NULL);
 
+#ifndef IS_MINGW
       com=g_strdup_printf("/bin/mkdir -p \"%s\" 2>/dev/null",uldir);
+#else
+      com=g_strdup_printf("mkdir.exe -p \"%s\" 2>NUL",uldir);
+#endif
       lives_system(com,TRUE);
       g_free(com);
 
+#ifndef IS_MINGW
       com=g_strdup_printf("/bin/mv \"%s\" \"%s\"",eload_file,uldir);
+#else
+      com=g_strdup_printf("mv.exe \"%s\" \"%s\"",eload_file,uldir);
+#endif
       lives_system(com,TRUE);
       g_free(com);
 
+#ifndef IS_MINGW
       com=g_strdup_printf("/bin/mv \"%s\" \"%s\"",aload_file,uldir);
+#else
+      com=g_strdup_printf("mv.exe \"%s\" \"%s\"",aload_file,uldir);
+#endif
       lives_system(com,TRUE);
       g_free(com);
 
@@ -14607,7 +14619,11 @@ void on_render_activate (GtkMenuItem *menuitem, gpointer user_data) {
       // remove subdir
       do_threaded_dialog(_("Cleaning up..."),FALSE);
       curtmpdir=g_build_filename(prefs->tmpdir,cfile->handle,NULL);
+#ifndef IS_MINGW
       com=g_strdup_printf("/bin/rm -rf \"%s/\"*",curtmpdir);
+#else
+      com=g_strdup_printf("rm.exe -rf \"%s/\"*",curtmpdir);
+#endif
       lives_system(com,TRUE);
       g_free(com);
       end_threaded_dialog();
@@ -17480,12 +17496,16 @@ void save_layout_map (int *lmap, double *lmap_audio, const gchar *file, const gc
   if (file!=NULL&&(mainw->current_layouts_map==NULL||
 		   !g_list_find(mainw->current_layouts_map,file))) 
     mainw->current_layouts_map=g_list_append(mainw->current_layouts_map,g_strdup(file));
-  if (dir==NULL) ldir=g_build_filename(prefs->tmpdir,mainw->set_name,"layouts/",NULL);
+  if (dir==NULL) ldir=g_build_filename(prefs->tmpdir,mainw->set_name,"layouts",G_DIR_SEPARATOR_S,NULL);
   else ldir=g_strdup(dir);
 
   map_name=g_build_filename(ldir,"layout.map",NULL);
 
+#ifndef IS_MINGW
   com=g_strdup_printf("/bin/mkdir -p \"%s\" 2>/dev/null",ldir);
+#else
+  com=g_strdup_printf("mkdir.exe -p \"%s\" 2>NUL",ldir);
+#endif
   lives_system(com,FALSE);
   g_free(com);
 
@@ -17582,7 +17602,11 @@ void save_layout_map (int *lmap, double *lmap_audio, const gchar *file, const gc
 
     LIVES_DEBUG("Removing layout dir: ");
     LIVES_DEBUG(ldir);
+#ifndef IS_MINGW
     com=g_strdup_printf("/bin/rmdir \"%s\" 2>/dev/null",ldir);
+#else
+    com=g_strdup_printf("rmdir.exe \"%s\" 2>NUL",ldir);
+#endif
     lives_system(com,TRUE);
     g_free(com);
   }
@@ -17758,8 +17782,12 @@ void on_save_event_list_activate (GtkMenuItem *menuitem, gpointer user_data) {
     g_snprintf(mainw->set_name,128,"%s",new_set_name);
   }
   
-  esave_dir=g_build_filename(prefs->tmpdir,mainw->set_name,"layouts/",NULL);
+  esave_dir=g_build_filename(prefs->tmpdir,mainw->set_name,"layouts",G_DIR_SEPARATOR_S,NULL);
+#ifndef IS_MINGW
   com=g_strdup_printf ("/bin/mkdir -p \"%s\"",esave_dir);
+#else
+  com=g_strdup_printf ("mkdir.exe -p \"%s\"",esave_dir);
+#endif
   lives_system (com,FALSE);
   g_free (com);
 
@@ -17805,12 +17833,20 @@ void on_save_event_list_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
   if (esave_file==NULL||!check_storage_space(NULL,FALSE)) {
     gchar *cdir;
+#ifndef IS_MINGW
     com=g_strdup_printf("/bin/rmdir \"%s\" 2>/dev/null",esave_dir);
+#else
+    com=g_strdup_printf("rmdir.exe \"%s\" 2>NUL",esave_dir);
+#endif
     lives_system(com,TRUE);
     g_free(com);
 
     cdir=g_build_filename(prefs->tmpdir,mainw->set_name,NULL);
+#ifndef IS_MINGW
     com=g_strdup_printf("/bin/rmdir \"%s\" 2>/dev/null",cdir);
+#else
+    com=g_strdup_printf("rmdir.exe \"%s\" 2>NUL",cdir);
+#endif
     lives_system(com,TRUE);
     g_free(com);
 
@@ -19245,10 +19281,14 @@ weed_plant_t *load_event_list(lives_mt *mt, gchar *eload_file) {
       return NULL;
     }
 
-    eload_dir=g_build_filename(prefs->tmpdir,mainw->set_name,"layouts/",NULL);
+    eload_dir=g_build_filename(prefs->tmpdir,mainw->set_name,"layouts",G_DIR_SEPARATOR_S,NULL);
 
     mainw->com_failed=FALSE;
+#ifndef IS_MINGW
     com=g_strdup_printf ("/bin/mkdir -p \"%s\"",eload_dir);
+#else
+    com=g_strdup_printf ("mkdir.exe -p \"%s\"",eload_dir);
+#endif
     lives_system (com,FALSE);
     g_free (com);
     
@@ -19314,12 +19354,20 @@ weed_plant_t *load_event_list(lives_mt *mt, gchar *eload_file) {
     // this will fail if there are any files in the directories
 
     gchar *cdir;
+#ifndef IS_MINGW
     com=g_strdup_printf("/bin/rmdir \"%s\" 2>/dev/null",eload_dir);
+#else
+    com=g_strdup_printf("rmdir.exe \"%s\" 2>/dev/null",eload_dir);
+#endif
     lives_system(com,TRUE);
     g_free(com);
 
     cdir=g_build_filename(prefs->tmpdir,mainw->set_name,NULL);
+#ifndef IS_MINGW
     com=g_strdup_printf("/bin/rmdir \"%s\" 2>/dev/null",cdir);
+#else
+    com=g_strdup_printf("rmdir.exe \"%s\" 2>NUL",cdir);
+#endif
     lives_system(com,TRUE);
     g_free(com);
 
@@ -19814,8 +19862,13 @@ void migrate_layouts (const gchar *old_set_name, const gchar *new_set_name) {
 	gchar *com;
 	// prevent duplication of layouts
 	g_free(tmp);
+#ifndef IS_MINGW
 	tmp=g_strdup_printf("%s/%s/layouts/%s-%s",prefs->tmpdir,new_set_name,old_set_name,(char *)map->data+chlen);
 	com=g_strdup_printf("/bin/mv \"%s\" \"%s\"",(gchar *)map->data,tmp);
+#else
+	tmp=g_strdup_printf("%s\\%s\\layouts\\%s-%s",prefs->tmpdir,new_set_name,old_set_name,(char *)map->data+chlen);
+	com=g_strdup_printf("mv.exe \"%s\" \"%s\"",(gchar *)map->data,tmp);
+#endif
 	lives_system(com,FALSE);
 	g_free(com);
       }

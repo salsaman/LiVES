@@ -145,9 +145,15 @@ void del_frame_index(file *sfile) {
   // only done once all
 
   gchar *idxfile=g_build_filename(prefs->tmpdir,sfile->handle,"file_index",NULL);
-  gchar *com=g_strdup_printf("/bin/rm -f \"%s\"",idxfile);
+  gchar *com;
 
   register int i;
+
+#ifndef IS_MINGW
+  com=g_strdup_printf("/bin/rm -f \"%s\"",idxfile);
+#else
+  com=g_strdup_printf("rm.exe -f \"%s\"",idxfile);
+#endif
 
   // cannot call check_if_non_virtual() else we end up recursing
 
@@ -471,7 +477,11 @@ void clean_images_from_virtual (file *sfile, gint oldframes) {
       //      else {
 	// ...
       //}
+#ifndef IS_MINGW
       com=g_strdup_printf("/bin/rm -f \"%s\"",iname);
+#else
+      com=g_strdup_printf("rm.exe -f \"%s\"",iname);
+#endif
       lives_system(com,FALSE);
       g_free(com);
     }

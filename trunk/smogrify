@@ -47,6 +47,7 @@ if ($^O eq "MSWin32") {
 # default temporary directory (can be overridden from the GUI)
     $default_tmpdir="C:\\livestmp\\";
     $is_mingw=1;
+    $nulfile="NUL";
 }
 else {
     $home=$ENV{"HOME"};
@@ -55,7 +56,7 @@ else {
 
 # default temporary directory (can be overridden from the GUI)
     $default_tmpdir="/tmp/livestmp/";
-
+    $nulfile="/dev/null";
 }
 
 
@@ -452,6 +453,11 @@ if (defined($ARGV[0])) {
 	    $second=$gid;
 	}
 	$value=&rc_get_default($key);
+
+	if ($value eq "") {
+	    $value="NULL";
+	}
+
 	open OUT,"> $tmpdir/.smogval.$first.$second" or exit 1;
 	print OUT $value;
 	close OUT;
@@ -1297,6 +1303,7 @@ if (defined($ARGV[0])) {
 
 
 	if ($command eq "open") {
+
 	unlink "$curtmpdir/pause";
 
 	$file=$ARGV[2];
@@ -1336,8 +1343,6 @@ if (defined($ARGV[0])) {
 	    $compression=15;
 	}
 
-	print STDERR "\nopen 1 chdir to $curtmpdir\n";
-
 	smog_chdir("$curtmpdir");
 
 	# let get_file_info set this
@@ -1371,7 +1376,6 @@ if (defined($ARGV[0])) {
 	    unlink "$pidfile"; 
 	    exit 1;
 	}
-	print STDERR "\nopen 2 got file info\n";
 
 	$aformnew="";
 	if ($asamps==32) {
@@ -1440,12 +1444,9 @@ if (defined($ARGV[0])) {
 	    unless ($opentest==1) {
 		&sig_progress(0);
 	    }
-	    print STDERR "\nopen 3 got cmd $syscom2\n";
 
 	    smog_system("$syscom2"); # this may well fail...we just have to use what we get back
 	    
-	    print STDERR "\nopen 4 finished\n";
-
             if (!-f $curtmpfile) {
 		unlink $pidfile;
 		exit 1;
@@ -1539,8 +1540,12 @@ if (defined($ARGV[0])) {
 		    print STDERR "\nFailed to open file - I tried:\n\n $syscom\n";
 		    print STDERR "\nMaybe you are missing a library in mplayer (or it is not a valid media file) ?\n";
 		}
-		&sig_error("This does not appear to be a valid video or image file","$GUI_NAME was unable to open it.","","Check the terminal window for more details.");
-		
+		if ($^O eq "MSWin32") {
+		    &sig_error("This does not appear to be a valid video or image file","$GUI_NAME was unable to open it."," ");
+		}
+		else {
+		    &sig_error("This does not appear to be a valid video or image file","$GUI_NAME was unable to open it.","","Check the terminal window for more details.");
+		}
 	    }
 	}
 
@@ -2712,7 +2717,12 @@ if (defined($ARGV[0])) {
 	$extra_params=$ARGV[8];
 	$mplayer_command=&location("mplayer");
 
-	smog_system("$mplayer_command -quiet -x $hsize -y $vsize -wid $win -vo x11 -zoom -ss $start_time -frames $preview_frames \"$file\" $extra_params >/dev/null 2>&1 </dev/null");
+	if ($^O ne "MSWin32") {
+	    smog_system("$mplayer_command -quiet -x $hsize -y $vsize -wid $win -vo x11 -zoom -ss $start_time -frames $preview_frames \"$file\" $extra_params >$nulfile 2>&1 <$nulfile");
+	}
+	else {
+	    smog_system("$mplayer_command -quiet -x $hsize -y $vsize -wid $win -vo direct3d -zoom -ss $start_time -frames $preview_frames \"$file\" $extra_params >$nulfile 2>&1 <$nulfile");
+	}
 	&sig_complete;
 	exit 0;
     }
@@ -2786,7 +2796,7 @@ if (defined($ARGV[0])) {
 	    smog_system("chmod.exe 644 \"$nfile\" >/dev/null 2>&1");
 	}
 	else {
-	    smog_system("/bin/chmod 644 \"$nfile\" >/dev/null 2>&1");
+	    smog_system("/bin/chmod 644 \"$nfile\" >NUL 2>&1");
 	}
 
 	&sig_complete;
@@ -4015,7 +4025,6 @@ sub backup_audio {
     &clean_old;
     smog_copy("$curtmpdir/audio", "$curtmpdir/audio.bak"); # may set $panic
 }
-
 
 sub cut {
     my ($start,$end)=@_;
@@ -5655,7 +5664,11 @@ sub open_single_image {
 
     if ($hsize*$vsize==0) {
 	&get_image_size($file);
-	return if ($panic||$hsize==-1);
+	return 0 if ($panic||$hsize==-1);
+    }
+
+    if ($hsize*$vsize==0) {
+	return 0;
     }
 
     smog_system_sync();
@@ -5677,7 +5690,7 @@ sub open_single_image {
     if ($smerr) {
 	sig_system_error("$com",$smerr);
 	$panic=1;
-	return;
+	return 0;
     }
 
 

@@ -75,6 +75,8 @@ POSSIBILITY OF SUCH DAMAGES.
 typedef PROCESS_INFORMATION * lives_pid_t;
 typedef PROCESS_INFORMATION * lives_pgid_t;
 
+#include <gdk/gdkwin32.h>
+
 #else
 
 typedef pid_t lives_pid_t;
@@ -594,6 +596,7 @@ typedef struct {
   gboolean has_mplayer;
   gboolean has_convert;
   gboolean has_composite;
+  gboolean has_identify;
   gboolean has_cdda2wav;
   gboolean has_midistartstop;
   gboolean has_jackd;

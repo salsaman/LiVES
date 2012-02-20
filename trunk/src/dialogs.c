@@ -1527,9 +1527,7 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
     // we got a message from the backend...
 
     if (visible&&(!accelerators_swapped||cfile->opening)&&cancellable&&(!cfile->nopreview||cfile->keep_without_preview)) {
-      if ((!cfile->opening||((capable->has_sox_play||(prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL)||
-			     (prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL))&&
-			     mainw->playing_file==-1))&&!cfile->nopreview) 
+      if (!cfile->nopreview) 
 	gtk_widget_show (cfile->proc_ptr->preview_button);
       if (cfile->opening_loc) gtk_widget_show (cfile->proc_ptr->stop_button);
       else gtk_widget_show (cfile->proc_ptr->pause_button);

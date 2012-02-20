@@ -69,12 +69,12 @@ void get_pref(const gchar *key, gchar *val, gint maxlen) {
 
   do {
     retval=0;
+    alarm_handle=lives_alarm_set(LIVES_PREFS_TIMEOUT);
     timeout=FALSE;
     mainw->read_failed=FALSE;
 
-    alarm_handle=lives_alarm_set(LIVES_PREFS_TIMEOUT);
-
     do {
+
       if (!((valfile=fopen(vfile,"r")) || (timeout=lives_alarm_get(alarm_handle)))) {
 	if (!timeout) {
 	  if (!(mainw==NULL)) {
@@ -87,6 +87,7 @@ void get_pref(const gchar *key, gchar *val, gint maxlen) {
 	}
 	else break;
       }
+      else break;
     } while (!valfile);
 
     lives_alarm_clear(alarm_handle);
@@ -187,6 +188,7 @@ void get_pref_default(const gchar *key, gchar *val, gint maxlen) {
 	}
 	else break;
       }
+      else break;
     } while (!valfile);
 
     lives_alarm_clear(alarm_handle);
@@ -204,6 +206,8 @@ void get_pref_default(const gchar *key, gchar *val, gint maxlen) {
       }
     }
   } while (retval==LIVES_RETRY);
+
+  if (!strcmp(val,"NULL")) memset(val,0,1);
 
   g_free(vfile);
   g_free(com);

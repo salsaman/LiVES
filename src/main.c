@@ -1746,6 +1746,7 @@ capability *get_capabilities (void) {
   capable->has_mplayer=FALSE;
   capable->has_convert=FALSE;
   capable->has_composite=FALSE;
+  capable->has_identify=FALSE;
   capable->has_sox_play=FALSE;
   capable->has_sox_sox=FALSE;
   capable->has_xmms=FALSE;
@@ -1874,6 +1875,9 @@ capability *get_capabilities (void) {
 
   get_location("composite",string,256);
   if (strlen(string)) capable->has_composite=TRUE;
+
+  get_location("identify",string,256);
+  if (strlen(string)) capable->has_identify=TRUE;
 
   ///////////////////////////////////////////////////////
 

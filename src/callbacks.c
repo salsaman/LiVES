@@ -3259,7 +3259,7 @@ on_insert_activate                    (GtkButton     *button,
     if (cb_audio_change&&!prefs->conserve_space&&clipboard->achans>0) {
       unlink (clipboard->info_file);
       mainw->current_file=0;
-      com=g_strdup_printf ("\"%s\" undo_audio \"%s\"",prefs->backend_sync,clipboard->handle);
+      com=g_strdup_printf ("%s undo_audio \"%s\"",prefs->backend_sync,clipboard->handle);
       lives_system (com,FALSE);
       g_free (com);
       mainw->current_file=current_file;
@@ -3447,7 +3447,7 @@ on_delete_activate                    (GtkMenuItem     *menuitem,
     g_free(com);
   }
 
-  com=g_strdup_printf("\"%s\" cut \"%s\" %d %d %d %d \"%s\" %.3f %d %d %d",
+  com=g_strdup_printf("%s cut \"%s\" %d %d %d %d \"%s\" %.3f %d %d %d",
 		      prefs->backend,cfile->handle,cfile->start,cfile->end, 
 		      mainw->ccpd_with_sound, cfile->frames, cfile->img_type==IMG_TYPE_JPEG?"jpg":"png", 
 		      cfile->fps, cfile->arate, cfile->achans, cfile->asampsize);
@@ -5034,7 +5034,7 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
 
     if (orderfile==NULL) {
       // old style (pre 0.9.6)
-      com=g_strdup_printf ("\"%s\" get_next_in_set \"%s\" \"%s\" %d",prefs->backend_sync,mainw->msg,
+      com=g_strdup_printf ("%s get_next_in_set \"%s\" \"%s\" %d",prefs->backend_sync,mainw->msg,
 			   mainw->set_name,getpid());
       lives_system (com,FALSE);
       g_free (com);
@@ -5418,7 +5418,7 @@ void on_cleardisk_activate (GtkWidget *widget, gpointer user_data) {
 
   if (retval!=LIVES_CANCEL) {
     mainw->com_failed=FALSE;
-    com=g_strdup_printf("\"%s\" bg_weed \"%s\" %d",prefs->backend,cfile->handle,prefs->clear_disk_opts);
+    com=g_strdup_printf("%s bg_weed \"%s\" %d",prefs->backend,cfile->handle,prefs->clear_disk_opts);
     lives_system(com,FALSE);
     g_free(com);
     
@@ -5437,7 +5437,7 @@ void on_cleardisk_activate (GtkWidget *widget, gpointer user_data) {
 
 
   // close the temporary clip
-  com=g_strdup_printf("\"%s\" close \"%s\"",prefs->backend,cfile->handle);
+  com=g_strdup_printf("%s close \"%s\"",prefs->backend,cfile->handle);
   lives_system(com,FALSE);
   g_free(com);
   g_free(cfile);
@@ -5827,7 +5827,7 @@ void on_fs_preview_clicked (GtkButton *button, gpointer user_data) {
   // file selector preview
   gdouble start_time=0.;
 
-  unsigned long xwin=0;
+  uint64_t xwin=0;
 
   FILE *ifile=NULL;
 
@@ -5857,7 +5857,7 @@ void on_fs_preview_clicked (GtkButton *button, gpointer user_data) {
 
   if (mainw->in_fs_preview) {
     end_fs_preview();
-    com=g_strdup_printf ("\"%s\" stopsubsub thm%d 2>/dev/null",prefs->backend_sync,pid);
+    com=g_strdup_printf ("%s stopsubsub thm%d 2>/dev/null",prefs->backend_sync,pid);
     lives_system (com,TRUE);
     g_free (com);
     while (g_main_context_iteration (NULL, FALSE));
@@ -5877,6 +5877,8 @@ void on_fs_preview_clicked (GtkButton *button, gpointer user_data) {
     g_free(tmp);
   }
 
+
+
   info_file=g_strdup_printf ("%s/thm%d/.status",prefs->tmpdir,getpid());
   unlink (info_file);
 
@@ -5886,48 +5888,54 @@ void on_fs_preview_clicked (GtkButton *button, gpointer user_data) {
 
     clear_mainw_msg();
     
-    // make thumb from any image file
-    com=g_strdup_printf("\"%s\" make_thumb thm%d %d %d \"%s\" \"%s\"",prefs->backend_sync,pid,DEFAULT_FRAME_HSIZE,
-			DEFAULT_FRAME_VSIZE,prefs->image_ext,(tmp=g_filename_from_utf8(file_name,-1,NULL,NULL,NULL)));
-    g_free(tmp);
-    lives_system(com,FALSE);
-    g_free(com);
 
+    if (capable->has_identify) {
+      // make thumb from any image file
+      com=g_strdup_printf("%s make_thumb thm%d %d %d \"%s\" \"%s\"",prefs->backend_sync,pid,DEFAULT_FRAME_HSIZE,
+			  DEFAULT_FRAME_VSIZE,prefs->image_ext,(tmp=g_filename_from_utf8(file_name,-1,NULL,NULL,NULL)));
+      g_free(tmp);
+      lives_system(com,FALSE);
+      g_free(com);
+      
 #define LIVES_FILE_READ_TIMEOUT  (5 * U_SEC) // 5 sec timeout
-
-    do {
-      retval=0;
-      timeout=FALSE;
-      alarm_handle=lives_alarm_set(LIVES_FILE_READ_TIMEOUT);
- 
-      while (!((ifile=fopen (info_file,"r")) || (timeout=lives_alarm_get(alarm_handle)))) {
-	g_usleep (prefs->sleep_time);
-      }
       
-      lives_alarm_clear(alarm_handle);
+      do {
+	retval=0;
+	timeout=FALSE;
+	alarm_handle=lives_alarm_set(LIVES_FILE_READ_TIMEOUT);
+	
+	while (!((ifile=fopen (info_file,"r")) || (timeout=lives_alarm_get(alarm_handle)))) {
+	  g_usleep (prefs->sleep_time);
+	}
+	
+	lives_alarm_clear(alarm_handle);
+	
+	if (!timeout) {
+	  mainw->read_failed=FALSE;
+	  lives_fgets(mainw->msg,512,ifile);
+	  fclose (ifile);
+	}
+	
+	if (timeout || mainw->read_failed) {
+	  retval=do_read_failed_error_s_with_retry(info_file,NULL,NULL);
+	}
+	
+      } while (retval==LIVES_RETRY);
       
-      if (!timeout) {
+      if (retval==LIVES_CANCEL) {
 	mainw->read_failed=FALSE;
-	lives_fgets(mainw->msg,512,ifile);
-	fclose (ifile);
+	return;
       }
-
-      if (timeout || mainw->read_failed) {
-	retval=do_read_failed_error_s_with_retry(info_file,NULL,NULL);
-      }
-
-    } while (retval==LIVES_RETRY);
-
-    if (retval==LIVES_CANCEL) {
-      mainw->read_failed=FALSE;
-      return;
+      
+      array=g_strsplit(mainw->msg,"|",3);
+      width=atoi(array[1]);
+      height=atoi(array[2]);
+      g_strfreev(array);
+    }
+    else {
+      height=width=0;
     }
 
-    array=g_strsplit(mainw->msg,"|",3);
-    width=atoi(array[1]);
-    height=atoi(array[2]);
-    g_strfreev(array);
-    
     if (height*width) {
       // draw image
       GError *error=NULL;
@@ -5997,7 +6005,13 @@ void on_fs_preview_clicked (GtkButton *button, gpointer user_data) {
   if (!(height*width)) {
     // media preview
     if (!capable->has_mplayer) {
-      gchar *msg=g_strdup(_ ("\n\nYou need to install mplayer to be able to preview this file.\n"));
+      gchar *msg;
+      if (capable->has_identify) {
+	msg=g_strdup(_ ("\n\nYou need to install mplayer to be able to preview this file.\n"));
+      }
+      else {
+	msg=g_strdup(_ ("\n\nYou need to install mplayer or imageMagick to be able to preview this file.\n"));
+      }
       do_blocking_error_dialog(msg);
       g_free(msg);
       return;
@@ -6015,13 +6029,9 @@ void on_fs_preview_clicked (GtkButton *button, gpointer user_data) {
 
     if (preview_type==1||preview_type==3) {
 #ifdef USE_X11
-      xwin=(unsigned long)GDK_WINDOW_XID (mainw->fs_playarea->window);
+      xwin=(uint64_t)GDK_WINDOW_XID (mainw->fs_playarea->window);
 #else
-      // need equivalent to get XID of win on other platforms
-      gchar *msg=g_strdup(_("Preview will not work without X11. We need the window id of the preview window.\nPlease send a patch if you know how to do this.\n"));
-      do_blocking_error_dialog(msg);
-      g_free(msg);
-
+      xwin=(uint64_t)gdk_win32_drawable_get_handle (mainw->fs_playarea->window);
 #endif
 
     }
@@ -6033,7 +6043,7 @@ void on_fs_preview_clicked (GtkButton *button, gpointer user_data) {
     mainw->in_fs_preview=TRUE;
 
     // get width and height of clip
-    com=g_strdup_printf("\"%s\" get_details fsp%d \"%s\" \"%s\" %d %d",prefs->backend,getpid(),
+    com=g_strdup_printf("%s get_details fsp%d \"%s\" \"%s\" %d %d",prefs->backend,getpid(),
 			(tmp=g_filename_from_utf8(file_name,-1,NULL,NULL,NULL)),
 			prefs->image_ext,FALSE,FALSE);
 
@@ -6117,7 +6127,7 @@ void on_fs_preview_clicked (GtkButton *button, gpointer user_data) {
     }
 
     gtk_alignment_set(GTK_ALIGNMENT(mainw->fs_playalign),0.5,
-		      0.5,(float)width/(float)fwidth,
+		      0.5,(float)width/((float)fwidth,
 		      (float)height/(float)fheight);
 
 
@@ -6133,7 +6143,6 @@ void on_fs_preview_clicked (GtkButton *button, gpointer user_data) {
 
     while (g_main_context_iteration(NULL,FALSE));
 	
-
     if (prefs->audio_player==AUD_PLAYER_JACK) {
       file_open_params=g_strdup_printf("%s %s -ao jack",mainw->file_open_params!=NULL?
 				       mainw->file_open_params:"",get_deinterlace_string());
@@ -6143,17 +6152,18 @@ void on_fs_preview_clicked (GtkButton *button, gpointer user_data) {
 				       mainw->file_open_params:"",get_deinterlace_string());
     }
     else {
-      file_open_params=g_strdup_printf("%s %s",mainw->file_open_params!=NULL?
+      file_open_params=g_strdup_printf("%s %s -ao null",mainw->file_open_params!=NULL?
 				       mainw->file_open_params:"",get_deinterlace_string());
     }
 
     if (file_open_params!=NULL) {
-      com=g_strdup_printf("\"%s\" fs_preview fsp%d %"PRIu64" %d %d %.2f %d \"%s\" \"%s\"",prefs->backend,getpid(),
+      com=g_strdup_printf("%s fs_preview fsp%d %"PRIu64" %d %d %.2f %d \"%s\" \"%s\"",prefs->backend,getpid(),
 			  xwin, width, height, start_time, preview_frames,
 			  (tmp=g_filename_from_utf8(file_name,-1,NULL,NULL,NULL)),file_open_params);
+
     }
     else {
-      com=g_strdup_printf("\"%s\" fs_preview fsp%d %"PRIu64" %d %d %.2f %d \"%s\"",prefs->backend,getpid(),
+      com=g_strdup_printf("%s fs_preview fsp%d %"PRIu64" %d %d %.2f %d \"%s\"",prefs->backend,getpid(),
 			  xwin, width, height, start_time, preview_frames,
 			  (tmp=g_filename_from_utf8(file_name,-1,NULL,NULL,NULL)));
     }
@@ -6165,6 +6175,7 @@ void on_fs_preview_clicked (GtkButton *button, gpointer user_data) {
     gtk_widget_set_app_paintable(mainw->fs_playarea,TRUE);
     
     mainw->com_failed=FALSE;
+
     lives_system(com,FALSE);
     g_free(com);
     
@@ -6462,7 +6473,7 @@ void on_open_new_audio_clicked (GtkButton *button, gpointer user_data) {
       !g_ascii_strncasecmp(a_type,"wav",3)||
       !g_ascii_strncasecmp(a_type,"mod",3)||
       !g_ascii_strncasecmp(a_type,".xm",3)) {
-    com=g_strdup_printf("\"%s\" audioopen \"%s\" \"%s\"",prefs->backend,cfile->handle,
+    com=g_strdup_printf("%s audioopen \"%s\" \"%s\"",prefs->backend,cfile->handle,
 			(tmp=g_filename_from_utf8(file_name,-1,NULL,NULL,NULL)));
     g_free(tmp);
   }
@@ -6534,7 +6545,7 @@ void on_open_new_audio_clicked (GtkButton *button, gpointer user_data) {
     mainw->error=FALSE;
     mainw->com_failed=FALSE;
     unlink (cfile->info_file);
-    com=g_strdup_printf("\"%s\" cancel_audio \"%s\"",prefs->backend,cfile->handle);
+    com=g_strdup_printf("%s cancel_audio \"%s\"",prefs->backend,cfile->handle);
     lives_system(com,FALSE);
     do_auto_dialog(_("Cancelling"),0);
     g_free(com);
@@ -6570,7 +6581,7 @@ void on_open_new_audio_clicked (GtkButton *button, gpointer user_data) {
     mainw->error=FALSE;
     unlink (cfile->info_file);
 
-    com=g_strdup_printf("\"%s\" cancel_audio \"%s\"",prefs->backend,cfile->handle);
+    com=g_strdup_printf("%s cancel_audio \"%s\"",prefs->backend,cfile->handle);
 
     mainw->com_failed=FALSE;
     lives_system(com,FALSE);
@@ -6604,7 +6615,7 @@ void on_open_new_audio_clicked (GtkButton *button, gpointer user_data) {
   mainw->error=FALSE;
   unlink (cfile->info_file);
 
-  com=g_strdup_printf("\"%s\" commit_audio \"%s\" %d",prefs->backend,cfile->handle,israw);
+  com=g_strdup_printf("%s commit_audio \"%s\" %d",prefs->backend,cfile->handle,israw);
   lives_system(com,FALSE);
   g_free(com);
 
@@ -6671,11 +6682,11 @@ void end_fs_preview(void) {
   if (mainw->in_fs_preview) {
     if (prefs->pause_xmms&&capable->has_xmms) lives_system("xmms -u",TRUE);
     mainw->in_fs_preview=FALSE;
-    com=g_strdup_printf ("\"%s\" stopsubsub fsp%d 2>/dev/null",prefs->backend_sync,(mypid=getpid()));
+    com=g_strdup_printf ("%s stopsubsub fsp%d 2>/dev/null",prefs->backend_sync,(mypid=getpid()));
     lives_system (com,TRUE);
     g_free (com);
 
-    com=g_strdup_printf ("\"%s\" close fsp%d",prefs->backend,mypid);
+    com=g_strdup_printf ("%s close fsp%d",prefs->backend,mypid);
     lives_system (com,TRUE);
     g_free (com);
 
@@ -6816,7 +6827,7 @@ void on_cancel_keep_button_clicked (GtkButton *button, gpointer user_data) {
     }
     else if (mainw->cancel_type==CANCEL_KILL) {
       // kill processes and subprocesses working on cfile
-      com=g_strdup_printf("\"%s\" stopsubsub \"%s\" 2>/dev/null",prefs->backend_sync,cfile->handle);
+      com=g_strdup_printf("%s stopsubsub \"%s\" 2>/dev/null",prefs->backend_sync,cfile->handle);
     }
 
     if (!cfile->opening&&!mainw->internal_messaging) {
@@ -6829,7 +6840,7 @@ void on_cancel_keep_button_clicked (GtkButton *button, gpointer user_data) {
       // resume for next time
       if (mainw->effects_paused) {
 	if (com!=NULL) g_free(com);
-	com=g_strdup_printf("\"%s\" resume \"%s\"",prefs->backend_sync,cfile->handle);
+	com=g_strdup_printf("%s resume \"%s\"",prefs->backend_sync,cfile->handle);
 	lives_system(com,FALSE);
       }
 
@@ -6878,26 +6889,26 @@ void on_cancel_keep_button_clicked (GtkButton *button, gpointer user_data) {
 
       lives_set_cursor_style(LIVES_CURSOR_BUSY,NULL);
       if (!mainw->internal_messaging) {
-	com=g_strdup_printf("\"%s\" stopsubsub \"%s\" 2>/dev/null",prefs->backend_sync,cfile->handle);
+	com=g_strdup_printf("%s stopsubsub \"%s\" 2>/dev/null",prefs->backend_sync,cfile->handle);
 	lives_system(com,TRUE);
 	g_free(com);
-	com=g_strdup_printf("\"%s\" resume \"%s\"",prefs->backend_sync,cfile->handle);
+	com=g_strdup_printf("%s resume \"%s\"",prefs->backend_sync,cfile->handle);
 	lives_system(com,FALSE);
 	g_free(com);
-	if (!mainw->keep_pre) com=g_strdup_printf("\"%s\" mv_mgk \"%s\" %d %d \"%s\"",prefs->backend,cfile->handle,
+	if (!mainw->keep_pre) com=g_strdup_printf("%s mv_mgk \"%s\" %d %d \"%s\"",prefs->backend,cfile->handle,
 						  cfile->start,keep_frames-1,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
 	else {
-	  com=g_strdup_printf("\"%s\" mv_pre \"%s\" %d %d \"%s\" &",prefs->backend_sync,cfile->handle,
+	  com=g_strdup_printf("%s mv_pre \"%s\" %d %d \"%s\" &",prefs->backend_sync,cfile->handle,
 			      cfile->start,keep_frames-1,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
 	  mainw->keep_pre=FALSE;
 	}
       }
       else {
 	mainw->internal_messaging=FALSE;
-	if (!mainw->keep_pre) com=g_strdup_printf ("\"%s\" mv_mgk \"%s\" %d %d \"%s\"",prefs->backend,cfile->handle,
+	if (!mainw->keep_pre) com=g_strdup_printf ("%s mv_mgk \"%s\" %d %d \"%s\"",prefs->backend,cfile->handle,
 						   cfile->start,keep_frames,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
 	else {
-	  com=g_strdup_printf("\"%s\" mv_pre \"%s\" %d %d \"%s\" &",prefs->backend_sync,cfile->handle,
+	  com=g_strdup_printf("%s mv_pre \"%s\" %d %d \"%s\" &",prefs->backend_sync,cfile->handle,
 			      cfile->start,keep_frames,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
 	  mainw->keep_pre=FALSE;
 	}
@@ -6913,11 +6924,11 @@ void on_cancel_keep_button_clicked (GtkButton *button, gpointer user_data) {
     else {
       // no frames there, nothing to keep
       d_print_cancelled();
-      com=g_strdup_printf("\"%s\" stopsubsub \"%s\" 2>/dev/null",prefs->backend_sync,cfile->handle);
+      com=g_strdup_printf("%s stopsubsub \"%s\" 2>/dev/null",prefs->backend_sync,cfile->handle);
       if (!mainw->internal_messaging&&!mainw->is_rendering) {
 	lives_system(com,TRUE);
 	g_free(com);
-	com=g_strdup_printf("\"%s\" resume \"%s\"",prefs->backend_sync,cfile->handle);
+	com=g_strdup_printf("%s resume \"%s\"",prefs->backend_sync,cfile->handle);
 	lives_system(com,FALSE);
       }
       mainw->cancelled=CANCEL_USER;
@@ -7951,7 +7962,7 @@ on_rev_clipboard_activate                (GtkMenuItem     *menuitem,
   mainw->current_file=0;
 
   d_print(_ ("Reversing clipboard..."));
-  com=g_strdup_printf("\"%s\" reverse \"%s\" %d %d \"%s\"",prefs->backend,clipboard->handle,1,clipboard->frames,
+  com=g_strdup_printf("%s reverse \"%s\" %d %d \"%s\"",prefs->backend,clipboard->handle,1,clipboard->frames,
 		      cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
 
   unlink(cfile->info_file);
@@ -8256,7 +8267,7 @@ on_load_cdtrack_ok_clicked                (GtkButton     *button,
     cfile->undo_arps=cfile->arps;
   }
 
-  com=g_strdup_printf("\"%s\" cdopen \"%s\" %d",prefs->backend,cfile->handle,(int)mainw->fx1_val);
+  com=g_strdup_printf("%s cdopen \"%s\" %d",prefs->backend,cfile->handle,(int)mainw->fx1_val);
 
   unlink(cfile->info_file);
   mainw->com_failed=FALSE;
@@ -8290,7 +8301,7 @@ on_load_cdtrack_ok_clicked                (GtkButton     *button,
       mainw->error=FALSE;
       unlink (cfile->info_file);
 
-      com=g_strdup_printf("\"%s\" cancel_audio \"%s\"",prefs->backend,cfile->handle);
+      com=g_strdup_printf("%s cancel_audio \"%s\"",prefs->backend,cfile->handle);
       lives_system(com,FALSE);
       g_free(com);
 
@@ -8328,7 +8339,7 @@ on_load_cdtrack_ok_clicked                (GtkButton     *button,
     while (g_main_context_iteration(NULL,FALSE));
 
     if (!was_new) {
-      com=g_strdup_printf("\"%s\" cancel_audio \"%s\"",prefs->backend,cfile->handle);
+      com=g_strdup_printf("%s cancel_audio \"%s\"",prefs->backend,cfile->handle);
       mainw->cancelled=CANCEL_NONE;
       mainw->error=FALSE;
       unlink (cfile->info_file);
@@ -8371,7 +8382,7 @@ on_load_cdtrack_ok_clicked                (GtkButton     *button,
     d_print(_ ("Error loading CD track\n"));
   
     if (!was_new) {
-      com=g_strdup_printf("\"%s\" cancel_audio \"%s\"",prefs->backend,cfile->handle);
+      com=g_strdup_printf("%s cancel_audio \"%s\"",prefs->backend,cfile->handle);
       mainw->com_failed=FALSE;
       mainw->cancelled=CANCEL_NONE;
       mainw->error=FALSE;
@@ -8402,7 +8413,7 @@ on_load_cdtrack_ok_clicked                (GtkButton     *button,
   mainw->com_failed=FALSE;
   unlink (cfile->info_file);
 
-  com=g_strdup_printf("\"%s\" commit_audio \"%s\"",prefs->backend,cfile->handle);
+  com=g_strdup_printf("%s commit_audio \"%s\"",prefs->backend,cfile->handle);
   lives_system(com, FALSE);
   g_free(com);
 
@@ -8507,7 +8518,7 @@ on_xmms_random_audio_activate                (GtkMenuItem     *menuitem,
 void on_xmms_ok_clicked                (GtkButton     *button,
 					gpointer         user_data)
 {
-  gchar *com=g_strdup_printf("\"%s\" xmmsplay \"%s\"",prefs->backend_sync,
+  gchar *com=g_strdup_printf("%s xmmsplay \"%s\"",prefs->backend_sync,
 			     gtk_file_selection_get_filename(GTK_FILE_SELECTION
 							     (gtk_widget_get_toplevel(GTK_WIDGET(button)))));
   lives_system(com,TRUE);
@@ -8532,7 +8543,7 @@ void on_xmms_ran_ok_clicked                (GtkButton     *button,
     return;
   }
 
-  com=g_strdup_printf("\"%s\" xmmsrandom \"%s\" %d %d %d %d \"%s\"",prefs->backend,cfile->handle,
+  com=g_strdup_printf("%s xmmsrandom \"%s\" %d %d %d %d \"%s\"",prefs->backend,cfile->handle,
 		      gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(xranw->numtracks)),
 		      gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(xranw->subdir_check)),
 		      gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(xranw->minsize)),
@@ -8552,7 +8563,7 @@ void on_xmms_ran_ok_clicked                (GtkButton     *button,
 
   if (!mainw->com_failed) do_progress_dialog(TRUE,TRUE,_ ("Selecting tracks"));
 
-  com=g_strdup_printf("\"%s\" close \"%s\"",prefs->backend,cfile->handle);
+  com=g_strdup_printf("%s close \"%s\"",prefs->backend,cfile->handle);
   lives_system(com,FALSE);
   g_free(com);
   g_free(cfile);
@@ -8591,7 +8602,7 @@ void on_xmms_ran_ok_clicked                (GtkButton     *button,
 void on_xmms_stop_audio_activate                (GtkMenuItem     *menuitem,
 						 gpointer         user_data)
 {
-  gchar *com=g_strdup_printf("\"%s\" xmmsstop",prefs->backend);
+  gchar *com=g_strdup_printf("%s xmmsstop",prefs->backend);
   lives_system(com,TRUE);
   g_free(com);
 }
@@ -8832,7 +8843,7 @@ void on_toy_activate  (GtkMenuItem *menuitem, gpointer user_data) {
     else {
       // keep it
       gint current_file=mainw->current_file;
-      gchar *com=g_strdup_printf("\"%s\" commit_audio \"%s\"",prefs->backend,cfile->handle);
+      gchar *com=g_strdup_printf("%s commit_audio \"%s\"",prefs->backend,cfile->handle);
       cfile->start=1;
       get_frame_count(mainw->current_file);
       cfile->end=cfile->frames;
@@ -9303,7 +9314,7 @@ void on_effects_paused (GtkButton *button, gpointer user_data) {
 
     if (!mainw->effects_paused) {
       // use effects_paused for this
-      com=g_strdup_printf("\"%s\" stopsubsub \"%s\" SIGTSTP 2>/dev/null",prefs->backend_sync,cfile->handle);
+      com=g_strdup_printf("%s stopsubsub \"%s\" SIGTSTP 2>/dev/null",prefs->backend_sync,cfile->handle);
       lives_system(com,TRUE);
       if (!cfile->opening) {
 	gtk_button_set_label(GTK_BUTTON(button),_ ("Resume"));
@@ -9313,7 +9324,7 @@ void on_effects_paused (GtkButton *button, gpointer user_data) {
     }
 
     else {
-      com=g_strdup_printf("\"%s\" stopsubsub %s SIGCONT 2>/dev/null",prefs->backend_sync,cfile->handle);
+      com=g_strdup_printf("%s stopsubsub %s SIGCONT 2>/dev/null",prefs->backend_sync,cfile->handle);
       lives_system(com,TRUE);
 
       if (!cfile->opening) {
@@ -9422,9 +9433,9 @@ on_preview_clicked                     (GtkButton       *button,
     if (cfile->opening) {
       // set vid player to int, and audio player to sox
       
-      if (prefs->audio_player==AUD_PLAYER_MPLAYER) {
+      /*      if (prefs->audio_player==AUD_PLAYER_MPLAYER) {
 	switch_aud_to_sox(FALSE);
-      }
+	}*/
       if (!cfile->opening_only_audio) {
 	mainw->toy_type=LIVES_TOY_NONE;
 	gtk_widget_set_sensitive(mainw->toys,FALSE);

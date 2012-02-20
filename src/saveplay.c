@@ -655,7 +655,6 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
       lives_system(com,FALSE);
       g_free(com);
       g_free(tmp);
-      mainw->noswitch=FALSE;
       
       if (mainw->toy_type==LIVES_TOY_TV) {
 	// for LiVES TV we do an auto-preview
@@ -673,6 +672,7 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
 	mainw->file_open_params=NULL;
 	mainw->cancelled=CANCEL_NONE;
 	lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
+	mainw->noswitch=FALSE;
 	return;
       }
     }
@@ -700,6 +700,7 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
 	if (mainw->cancelled==CANCEL_NO_PROPOGATE) {
 	  mainw->cancelled=CANCEL_NONE;
 	  lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
+	  mainw->noswitch=FALSE;
 	  return;
 	}
 	
@@ -715,6 +716,7 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
 	  mainw->multitrack->pb_start_event=mt_pb_start_event;
 	  mainw->multitrack->has_audio_file=mt_has_audio_file;
 	}
+	mainw->noswitch=FALSE;
 	lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
 	return;
       }
@@ -748,6 +750,7 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
     do_blocking_error_dialog(mainw->msg);
     d_print_failed();
     close_current_file(old_file);
+    mainw->noswitch=FALSE;
     if (mainw->file_open_params!=NULL) g_free (mainw->file_open_params);
     mainw->file_open_params=NULL;
     lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
@@ -825,6 +828,11 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
       do_error_dialog(msg);
       d_print_failed();
       close_current_file(old_file);
+      mainw->noswitch=FALSE;
+      if (mainw->multitrack!=NULL) {
+	mainw->multitrack->pb_start_event=mt_pb_start_event;
+	mainw->multitrack->has_audio_file=mt_has_audio_file;
+      }
       if (mainw->file_open_params!=NULL) g_free (mainw->file_open_params);
       mainw->file_open_params=NULL;
       lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
@@ -883,6 +891,7 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
 
       if (mainw->cancelled||mainw->error) {
 	lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
+	mainw->noswitch=FALSE;
 	return;
       }
 
@@ -899,6 +908,7 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
       gtk_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_start),cfile->start);
       g_signal_handler_unblock(mainw->spinbutton_start,mainw->spin_start_func);
       lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
+      mainw->noswitch=FALSE;
 
       return;
     }
@@ -907,6 +917,7 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
   // set new style file details
   if (!save_clip_values(current_file)) {
     close_current_file(old_file);
+    mainw->noswitch=FALSE;
     return;
   }
 
@@ -3266,6 +3277,7 @@ gboolean add_file_info(const gchar *check_handle, gboolean aud_only) {
   gchar *test_fps_string1;
   gchar *test_fps_string2;
 
+ 
   if (check_handle!=NULL) {
     if (mainw->msg==NULL||get_token_count(mainw->msg,'|')==1) return FALSE;
 
@@ -5360,9 +5372,9 @@ static gboolean recover_files(gchar *recovery_file, gboolean auto_recover) {
 
 void add_to_recovery_file (const gchar *handle) {
 #ifndef IS_MINGW
-  gchar *com=g_strdup_printf("/bin/echo %s >> %s",handle,mainw->recovery_file);
+  gchar *com=g_strdup_printf("/bin/echo \"%s\" >> %s",handle,mainw->recovery_file);
 #else
-  gchar *com=g_strdup_printf("echo.exe %s >> %s",handle,mainw->recovery_file);
+  gchar *com=g_strdup_printf("echo.exe \"%s\" >> %s",handle,mainw->recovery_file);
 #endif
   mainw->com_failed=FALSE;
   lives_system(com,FALSE);

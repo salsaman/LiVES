@@ -42,17 +42,34 @@ static gdouble calc_fd_scale(gint width, gint height) {
 
 static void start_preview (GtkButton *button, lives_rfx_t *rfx) {
   int i;
-  gchar *com=g_strdup_printf("%s stopsubsub \"%s\" 2>/dev/null",prefs->backend_sync,cfile->handle);
+  gchar *com;
 
   gtk_widget_set_sensitive(mainw->framedraw_preview,FALSE);
   while (g_main_context_iteration(NULL,FALSE));
 
   if (mainw->did_rfx_preview) {
+#ifndef IS_MINGW
+    com=g_strdup_printf("%s stopsubsub \"%s\" 2>/dev/null",prefs->backend_sync,cfile->handle);
     lives_system(com,TRUE); // try to stop any in-progress preview
+#else
+    // get pid from backend
+    FILE *rfile;
+    ssize_t rlen;
+    char val[16];
+    int pid;
+    com=g_strdup_printf("%s get_pid_for_handle \"%s\"",prefs->backend_sync,cfile->handle);
+    rfile=popen(com,"r");
+    rlen=fread(val,1,16,rfile);
+    pclose(rfile);
+    memset(val+rlen,0,1);
+    pid=atoi(val);
+    
+    lives_win32_kill_subprocesses(pid,TRUE);
+#endif
+    g_free(com);
+
     do_rfx_cleanup(rfx);
   }
-
-  g_free(com);
 
   com=g_strdup_printf("%s clear_pre_files \"%s\" 2>/dev/null",prefs->backend_sync,cfile->handle);
   lives_system(com,TRUE); // clear any .pre files from before

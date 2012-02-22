@@ -101,9 +101,26 @@ void lives_exit (void) {
     // stop any background processing for the current clip
     if (mainw->current_file>-1) {
       if (cfile->handle!=NULL&&(cfile->clip_type==CLIP_TYPE_DISK||cfile->clip_type==CLIP_TYPE_FILE)) {
+#ifndef IS_MINGW
 	com=g_strdup_printf("%s stopsubsub \"%s\" 2>/dev/null",prefs->backend_sync,cfile->handle);
 	lives_system(com,TRUE);
+#else
+	// get pid from backend
+	FILE *rfile;
+	ssize_t rlen;
+	char val[16];
+	int pid;
+	com=g_strdup_printf("%s get_pid_for_handle \"%s\"",prefs->backend_sync,cfile->handle);
+	rfile=popen(com,"r");
+	rlen=fread(val,1,16,rfile);
+	pclose(rfile);
+	memset(val+rlen,0,1);
+	pid=atoi(val);
+	
+	lives_win32_kill_subprocesses(pid,TRUE);
+#endif
 	g_free(com);
+
       }
     }
     
@@ -223,6 +240,13 @@ void lives_exit (void) {
 	    (mainw->multitrack!=NULL&&i==mainw->multitrack->render_file)) {
 	  // close all open clips, except for ones we want to retain
 
+#ifdef IS_MINGW
+	  FILE *rfile;
+	  ssize_t rlen;
+	  char val[16];
+	  int pid;
+#endif
+
 #ifdef HAVE_YUV4MPEG
 	  if (mainw->files[i]->clip_type==CLIP_TYPE_YUV4MPEG) {
 	    lives_yuv_stream_stop_read((lives_yuv4m_t *)mainw->files[i]->ext_src);
@@ -236,6 +260,18 @@ void lives_exit (void) {
 	  }
 #endif
 	  threaded_dialog_spin();
+#ifdef IS_MINGW
+	  // kill any active processes: for other OSes the backend does this
+	  // get pid from backend
+	  com=g_strdup_printf("%s get_pid_for_handle \"%s\"",prefs->backend_sync,cfile->handle);
+	  rfile=popen(com,"r");
+	  rlen=fread(val,1,16,rfile);
+	  pclose(rfile);
+	  memset(val+rlen,0,1);
+	  pid=atoi(val);
+	  
+	  lives_win32_kill_subprocesses(pid,TRUE);
+#endif
 	  com=g_strdup_printf("%s close \"%s\"",prefs->backend,mainw->files[i]->handle);
 	  lives_system(com,FALSE);
 	  g_free(com);
@@ -826,6 +862,22 @@ void on_utube_select (GtkButton *button, gpointer user_data) {
     }
     else {
       if (current_file==-1) {
+#ifdef IS_MINGW
+	// kill any active processes: for other OSes the backend does this
+      // get pid from backend
+      FILE *rfile;
+      ssize_t rlen;
+      char val[16];
+      int pid;
+      com=g_strdup_printf("%s get_pid_for_handle \"%s\"",prefs->backend_sync,cfile->handle);
+      rfile=popen(com,"r");
+      rlen=fread(val,1,16,rfile);
+      pclose(rfile);
+      memset(val+rlen,0,1);
+      pid=atoi(val);
+      
+      lives_win32_kill_subprocesses(pid,TRUE);
+#endif
       // we made a temp file so close it
       com=g_strdup_printf("%s close \"%s\"",prefs->backend,cfile->handle);
       lives_system(com,TRUE);
@@ -853,7 +905,7 @@ void on_utube_select (GtkButton *button, gpointer user_data) {
     return;
     }
   }
-
+  
   cfile->nopreview=FALSE;
   cfile->no_proc_sys_errors=FALSE;
   cfile->keep_without_preview=FALSE;
@@ -902,6 +954,13 @@ on_stop_clicked (GtkMenuItem     *menuitem,
 // 'enough' button for open, open location, and record audio
   gchar *com;
 
+#ifdef IS_MINGW
+  FILE *rfile;
+  ssize_t rlen;
+  char val[16];
+  int pid;
+#endif
+
 #ifdef ENABLE_JACK
   if (mainw->jackd!=NULL&&mainw->jackd_read!=NULL) {
     mainw->cancelled=CANCEL_KEEP;
@@ -915,8 +974,20 @@ on_stop_clicked (GtkMenuItem     *menuitem,
   }
 #endif
 
+#ifndef IS_MINGW
   com=g_strdup_printf("%s stopsubsubs \"%s\" 2>/dev/null",prefs->backend_sync,cfile->handle);
   lives_system(com,TRUE);
+#else
+  // get pid from backend
+  com=g_strdup_printf("%s get_pid_for_handle \"%s\"",prefs->backend_sync,cfile->handle);
+  rfile=popen(com,"r");
+  rlen=fread(val,1,16,rfile);
+  pclose(rfile);
+  memset(val+rlen,0,1);
+  pid=atoi(val);
+  
+  lives_win32_kill_subprocesses(pid,FALSE);
+#endif
   g_free(com);
 
   if (mainw->current_file>-1&&cfile!=NULL&&cfile->proc_ptr!=NULL) {
@@ -925,20 +996,40 @@ on_stop_clicked (GtkMenuItem     *menuitem,
     gtk_widget_set_sensitive(cfile->proc_ptr->cancel_button, FALSE);
   }
 
-  // resume for next time
+  // resume to allow return
   if (mainw->effects_paused) {
+#ifndef IS_MINGW
+    com=g_strdup_printf("%s stopsubsub %s SIGCONT 2>/dev/null",prefs->backend_sync,cfile->handle);
+    lives_system(com,TRUE);
+#else
+    FILE *rfile;
+    ssize_t rlen;
+    char val[16];
+    
+    // get pid from backend
+    com=g_strdup_printf("%s get_pid_for_handle \"%s\"",prefs->backend_sync,cfile->handle);
+    rfile=popen(com,"r");
+    rlen=fread(val,1,16,rfile);
+    pclose(rfile);
+    memset(val+rlen,0,1);
+    pid=atoi(val);
+    
+    lives_win32_suspend_resume_process(pid,FALSE);
+#endif
+    g_free(com);
+    
     com=g_strdup_printf("%s resume \"%s\"",prefs->backend_sync,cfile->handle);
     lives_system(com,FALSE);
     g_free(com);
   }
+
 
 }
 
 
 
 
-void
-on_save_as_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void on_save_as_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
   if (cfile->frames==0) {
     on_export_audio_activate (NULL,NULL);
@@ -2428,7 +2519,25 @@ on_copy_activate                      (GtkMenuItem     *menuitem,
   // stop the 'preview' and 'pause' buttons from appearing
   cfile->nopreview=TRUE;
   if (!do_progress_dialog(TRUE,TRUE,_ ("Copying to the clipboard"))) {
+#ifdef IS_MINGW
+    // kill any active processes: for other OSes the backend does this
+    // get pid from backend
+    FILE *rfile;
+    ssize_t rlen;
+    char val[16];
+    int pid;
+    com=g_strdup_printf("%s get_pid_for_handle \"%s\"",prefs->backend_sync,cfile->handle);
+    rfile=popen(com,"r");
+    rlen=fread(val,1,16,rfile);
+    pclose(rfile);
+    memset(val+rlen,0,1);
+    pid=atoi(val);
+    
+    lives_win32_kill_subprocesses(pid,TRUE);
+#endif
+
     // close clipboard, it is invalid
+
     com=g_strdup_printf ("%s close \"%s\"",prefs->backend,clipboard->handle);
     lives_system (com,FALSE);
     g_free (com);
@@ -5844,7 +5953,7 @@ void on_fs_preview_clicked (GtkButton *button, gpointer user_data) {
   int fwidth,fheight,owidth,oheight;
 
   int offs_x,offs_y;
-  int pid=getpid();
+  pid_t pid=lives_getpid();
   int alarm_handle;
   int retval;
   gboolean timeout;
@@ -5856,10 +5965,27 @@ void on_fs_preview_clicked (GtkButton *button, gpointer user_data) {
 
 
   if (mainw->in_fs_preview) {
+#ifndef IS_MINGW
     end_fs_preview();
     com=g_strdup_printf ("%s stopsubsub thm%d 2>/dev/null",prefs->backend_sync,pid);
     lives_system (com,TRUE);
+#else
+    // get pid from backend
+    FILE *rfile;
+    ssize_t rlen;
+    char val[16];
+    int xpid;
+    com=g_strdup_printf("%s get_pid_for_handle thm%d",prefs->backend_sync,pid);
+    rfile=popen(com,"r");
+    rlen=fread(val,1,16,rfile);
+    pclose(rfile);
+    memset(val+rlen,0,1);
+    xpid=atoi(val);
+    
+    lives_win32_kill_subprocesses(xpid,TRUE);
+#endif
     g_free (com);
+
     while (g_main_context_iteration (NULL, FALSE));
   }
 
@@ -5879,7 +6005,7 @@ void on_fs_preview_clicked (GtkButton *button, gpointer user_data) {
 
 
 
-  info_file=g_strdup_printf ("%s/thm%d/.status",prefs->tmpdir,getpid());
+  info_file=g_strdup_printf ("%s/thm%d/.status",prefs->tmpdir,lives_getpid());
   unlink (info_file);
 
   if (preview_type==1) {
@@ -6677,15 +6803,30 @@ void end_fs_preview(void) {
   // clean up if we were playing a preview - should be called from all callbacks 
   // where there is a possibility of fs preview still playing
   gchar *com;
-  gint mypid;
+  pid_t mypid;
 
   if (mainw->in_fs_preview) {
+#ifndef IS_MINGW
     if (prefs->pause_xmms&&capable->has_xmms) lives_system("xmms -u",TRUE);
     mainw->in_fs_preview=FALSE;
-    com=g_strdup_printf ("%s stopsubsub fsp%d 2>/dev/null",prefs->backend_sync,(mypid=getpid()));
+    com=g_strdup_printf ("%s stopsubsub fsp%d 2>/dev/null",prefs->backend_sync,(mypid=lives_getpid()));
     lives_system (com,TRUE);
+#else
+    // get pid from backend
+    FILE *rfile;
+    ssize_t rlen;
+    char val[16];
+    int pid;
+    com=g_strdup_printf("%s get_pid_for_handle fsp%d",prefs->backend_sync,(mypid=lives_getpid()));
+    rfile=popen(com,"r");
+    rlen=fread(val,1,16,rfile);
+    pclose(rfile);
+    memset(val+rlen,0,1);
+    pid=atoi(val);
+    
+    lives_win32_kill_subprocesses(pid,TRUE);
+#endif
     g_free (com);
-
     com=g_strdup_printf ("%s close fsp%d",prefs->backend,mypid);
     lives_system (com,TRUE);
     g_free (com);
@@ -6827,7 +6968,11 @@ void on_cancel_keep_button_clicked (GtkButton *button, gpointer user_data) {
     }
     else if (mainw->cancel_type==CANCEL_KILL) {
       // kill processes and subprocesses working on cfile
+#ifndef IS_MINGW
       com=g_strdup_printf("%s stopsubsub \"%s\" 2>/dev/null",prefs->backend_sync,cfile->handle);
+#else
+      com=g_strdup_printf("%s get_pid_for_handle \"%s\"",prefs->backend_sync,cfile->handle);
+#endif
     }
 
     if (!cfile->opening&&!mainw->internal_messaging) {
@@ -6835,7 +6980,27 @@ void on_cancel_keep_button_clicked (GtkButton *button, gpointer user_data) {
       // otherwise, come here
 
       // kill off the background process
-      if (com!=NULL) lives_system(com,TRUE);
+      if (com!=NULL) {
+#ifndef IS_MINGW
+	lives_system(com,TRUE);
+#else
+	// get pid from backend
+	FILE *rfile;
+	ssize_t rlen;
+	char val[16];
+	int pid;
+	
+	rfile=popen(com,"r");
+	rlen=fread(val,1,16,rfile);
+	pclose(rfile);
+	memset(val+rlen,0,1);
+	g_free(com);
+	com=NULL;
+	pid=atoi(val);
+	
+	lives_win32_kill_subprocesses(pid,TRUE);
+#endif
+      }
 
       // resume for next time
       if (mainw->effects_paused) {
@@ -6889,9 +7054,26 @@ void on_cancel_keep_button_clicked (GtkButton *button, gpointer user_data) {
 
       lives_set_cursor_style(LIVES_CURSOR_BUSY,NULL);
       if (!mainw->internal_messaging) {
+#ifndef IS_MINGW
 	com=g_strdup_printf("%s stopsubsub \"%s\" 2>/dev/null",prefs->backend_sync,cfile->handle);
 	lives_system(com,TRUE);
+#else
+	// get pid from backend
+	FILE *rfile;
+	ssize_t rlen;
+	char val[16];
+	int pid;
+	com=g_strdup_printf("%s get_pid_for_handle \"%s\"",prefs->backend_sync,cfile->handle);
+	rfile=popen(com,"r");
+	rlen=fread(val,1,16,rfile);
+	pclose(rfile);
+	memset(val+rlen,0,1);
+	pid=atoi(val);
+	
+	lives_win32_kill_subprocesses(pid,TRUE);
+#endif
 	g_free(com);
+
 	com=g_strdup_printf("%s resume \"%s\"",prefs->backend_sync,cfile->handle);
 	lives_system(com,FALSE);
 	g_free(com);
@@ -6924,10 +7106,32 @@ void on_cancel_keep_button_clicked (GtkButton *button, gpointer user_data) {
     else {
       // no frames there, nothing to keep
       d_print_cancelled();
+
+#ifndef IS_MINGW
       com=g_strdup_printf("%s stopsubsub \"%s\" 2>/dev/null",prefs->backend_sync,cfile->handle);
+#else
+      com=g_strdup_printf("%s get_pid_for_handle \"%s\"",prefs->backend_sync,cfile->handle);
+#endif
       if (!mainw->internal_messaging&&!mainw->is_rendering) {
+
+#ifndef IS_MINGW
 	lives_system(com,TRUE);
+#else
+	// get pid from backend
+	FILE *rfile;
+	ssize_t rlen;
+	char val[16];
+	int pid;
+	rfile=popen(com,"r");
+	rlen=fread(val,1,16,rfile);
+	pclose(rfile);
+	memset(val+rlen,0,1);
+	pid=atoi(val);
+	
+	lives_win32_kill_subprocesses(pid,TRUE);
+#endif
 	g_free(com);
+	
 	com=g_strdup_printf("%s resume \"%s\"",prefs->backend_sync,cfile->handle);
 	lives_system(com,FALSE);
       }
@@ -9305,17 +9509,36 @@ gint expose_play_window (GtkWidget *widget, GdkEventExpose *event) {
 
 
 void on_effects_paused (GtkButton *button, gpointer user_data) {
-  gchar *com;
+  gchar *com=NULL;
   gint64 xticks;
+  short pid;
 
   if (mainw->iochan!=NULL||cfile->opening) {
     // pause during encoding (if we start using mainw->iochan for other things, this will
     // need changing...)
 
     if (!mainw->effects_paused) {
-      // use effects_paused for this
+#ifndef IS_MINGW
       com=g_strdup_printf("%s stopsubsub \"%s\" SIGTSTP 2>/dev/null",prefs->backend_sync,cfile->handle);
       lives_system(com,TRUE);
+#else
+      FILE *rfile;
+      ssize_t rlen;
+      char val[16];
+
+      // get pid from backend
+      com=g_strdup_printf("%s get_pid_for_handle \"%s\"",prefs->backend_sync,cfile->handle);
+      rfile=popen(com,"r");
+      rlen=fread(val,1,16,rfile);
+      pclose(rfile);
+      memset(val+rlen,0,1);
+      pid=atoi(val);
+
+      lives_win32_suspend_resume_process(pid,TRUE);
+#endif
+      g_free(com);
+      com=NULL;
+
       if (!cfile->opening) {
 	gtk_button_set_label(GTK_BUTTON(button),_ ("Resume"));
 	gtk_label_set_text(GTK_LABEL(cfile->proc_ptr->label2),_ ("\nPaused\n(click Resume to continue processing)"));
@@ -9324,8 +9547,26 @@ void on_effects_paused (GtkButton *button, gpointer user_data) {
     }
 
     else {
+#ifndef IS_MINGW
       com=g_strdup_printf("%s stopsubsub %s SIGCONT 2>/dev/null",prefs->backend_sync,cfile->handle);
       lives_system(com,TRUE);
+#else
+      FILE *rfile;
+      ssize_t rlen;
+      char val[16];
+
+      // get pid from backend
+      com=g_strdup_printf("%s get_pid_for_handle \"%s\"",prefs->backend_sync,cfile->handle);
+      rfile=popen(com,"r");
+      rlen=fread(val,1,16,rfile);
+      pclose(rfile);
+      memset(val+rlen,0,1);
+      pid=atoi(val);
+
+      lives_win32_suspend_resume_process(pid,FALSE);
+#endif
+      g_free(com);
+      com=NULL;
 
       if (!cfile->opening) {
 	gtk_button_set_label(GTK_BUTTON(button),_ ("Pause"));
@@ -9334,6 +9575,7 @@ void on_effects_paused (GtkButton *button, gpointer user_data) {
       }
     }
   }
+
   if (mainw->iochan==NULL) {
     // pause during effects processing
     gettimeofday(&tv, NULL);
@@ -9379,7 +9621,7 @@ void on_effects_paused (GtkButton *button, gpointer user_data) {
       lives_system(com,FALSE);
     }
   }
-  g_free(com);
+  if (com!=NULL) g_free(com);
   mainw->effects_paused=!mainw->effects_paused;
 }
 

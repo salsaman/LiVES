@@ -67,6 +67,7 @@ POSSIBILITY OF SUCH DAMAGES.
 
 #include <windows.h>
 #include <winbase.h>
+#include <tlhelp32.h>
 #include <sddl.h>
 #include <sys/stat.h>
 
@@ -999,6 +1000,10 @@ int lives_getuid(void);
 void lives_freep(void **ptr);
 void lives_free(gpointer ptr);
 void lives_free_with_check(gpointer ptr);
+#ifdef IS_MINGW
+gboolean lives_win32_suspend_resume_process(DWORD pid, gboolean suspend);
+gboolean lives_win32_kill_subprocesses(DWORD pid, gboolean kill_parent);
+#endif
 int lives_kill(lives_pid_t pid, int sig);
 int lives_killpg(lives_pgid_t pgrp, int sig);
 void lives_srandom(unsigned int seed);

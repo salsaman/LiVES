@@ -101,6 +101,23 @@ if (defined($ARGV[0])) {
 
 
 ## blocking calls
+	if ($command eq "get_pid_for_handle") {
+	    $handle=$ARGV[1];
+	    $curtmpdir="$tmpdir/$handle";
+	    $pidfile="$curtmpdir/.pid";
+
+	    if (defined(open IN,"< $pidfile")) {
+		read IN,$target_pid,8;
+		close IN;
+		
+		if ($target_pid eq NULL) {
+		    print " ";
+		    exit 1;
+		}
+	    }
+	    print $target_pid;
+	    exit 0;
+	}
 
 
     if ($command eq "stopsubsub"||$command eq "stopsubsubs"||$command eq "stop_audio") {
@@ -108,13 +125,13 @@ if (defined($ARGV[0])) {
 	$curtmpdir="$tmpdir/$handle";
 	my $sig="KILL";
 	if ($command eq "stop_audio") {
-		$pidfile="$curtmpdir/.pidpb";
+	    $pidfile="$curtmpdir/.pidpb";
 	}
 	else {
-		$pidfile="$curtmpdir/.pid";
-		if (defined($ARGV[2])) {
-		    $sig=$ARGV[2];
-		}
+	    $pidfile="$curtmpdir/.pid";
+	    if (defined($ARGV[2])) {
+		$sig=$ARGV[2];
+	    }
 	}
 	$statusfile="$curtmpdir/.status";
 
@@ -129,6 +146,7 @@ if (defined($ARGV[0])) {
 	    if ($target_pid eq NULL) {
 		exit 1;
 	    }
+
 	    # make sure pidfile has same group and owner, otherwise exit
 	    @stat=stat($pidfile);
 	    if (!($uid==$stat[4]&&$gid==$stat[5])) {
@@ -152,6 +170,8 @@ if (defined($ARGV[0])) {
 		unlink "$tmpdir/.pids.$target_pid";
 	    }
 	    
+	    
+	    
 	    else {
 		print "Attempting to stop process ".$target_pid." with $command\n";
 		if ($sig eq "KILL") {
@@ -161,8 +181,8 @@ if (defined($ARGV[0])) {
 		    smog_system("pkill -$sig -P $target_pid");# must not ! >/dev/null 2>&1");
 		}
 	    }
-	    
-	    if ($command ne "stop_audio" && $sig eq "SIGTERM") {
+
+	    if ($command ne "stop_audio") {
 		&sig_killed;
 	    }
 	    exit 0;
@@ -1687,9 +1707,10 @@ if (defined($ARGV[0])) {
 	    if (defined(open IN,"< $pidfile")) {
 		close IN;
 		# cancel any processing
-		smog_system("smogrify stopsubsub \"$handle\"");
+		if ($^O ne "MSWin32") {
+		    smog_system("smogrify stopsubsub \"$handle\"");
+		}
 	    }
-	    
 	    if (chdir("$curtmpdir")) {
 		unlink <* .*>;
 		smog_chdir("$tmpdir");

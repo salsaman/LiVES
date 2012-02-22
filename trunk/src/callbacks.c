@@ -9511,7 +9511,9 @@ gint expose_play_window (GtkWidget *widget, GdkEventExpose *event) {
 void on_effects_paused (GtkButton *button, gpointer user_data) {
   gchar *com=NULL;
   gint64 xticks;
-  short pid;
+#ifdef IS_MINGW
+  int pid;
+#endif
 
   if (mainw->iochan!=NULL||cfile->opening) {
     // pause during encoding (if we start using mainw->iochan for other things, this will

@@ -103,21 +103,54 @@ gboolean ext_triggers_poll(gpointer data) {
 
 GdkFilterReturn filter_func(GdkXEvent *xevent, GdkEvent *event, gpointer data) {
   // filter events at X11 level and act on key press/release
+  guint modifiers=0;
 
 #ifdef USE_X11
-  guint modifiers;
   XEvent *xev=(XEvent *)xevent;
   if (xev->type<2||xev->type>3) return GDK_FILTER_CONTINUE;
   modifiers = gtk_accelerator_get_default_mod_mask() & xev->xkey.state;
+
+  // key down
   if (xev->type==2) return pl_key_function(TRUE,xev->xkey.keycode,modifiers)?GDK_FILTER_REMOVE:GDK_FILTER_CONTINUE;
+
+  // key up
   return pl_key_function(FALSE,xev->xkey.keycode,modifiers)?GDK_FILTER_REMOVE:GDK_FILTER_CONTINUE;
 #else
-  // windows uses MSGs (???)
+  // windows uses MSGs
+  PMSG msg=(PMSG)xevent;
+  guint16 key;
 
-  //g_printerr("Do not know how to handle key events for non-X11 window managers.\nPlease send a patch if you know how to do it.\n");
+#define KEY_DOWN(vk_code) ((GetAsyncKeyState(vk_code) & 0x8000) ? 1 : 0)
+
+  if (msg->message!=WM_KEYDOWN && msg->message!=WM_KEYUP) return GDK_FILTER_CONTINUE;
+
+  if (KEY_DOWN(VK_CONTROL))
+    modifiers |= LIVES_CONTROL_MASK;
+  
+  if (KEY_DOWN(VK_MENU))
+    modifiers |= LIVES_ALT_MASK;
+  
+  if (KEY_DOWN(VK_SHIFT))
+    modifiers |= LIVES_SHIFT_MASK;
+
+  key = (guint16)msg->wParam;
+  
+  switch (key) {
+  case VK_LEFT: key=GDK_KEY_Left; break;
+  case VK_RIGHT: key=GDK_KEY_Right; break;
+  case VK_UP: key=GDK_KEY_Up; break;
+  case VK_DOWN: key=GDK_KEY_Down; break;
+  default: break;
+  }
+  
+  if (msg->message==WM_KEYDOWN) return pl_key_function(TRUE,key,modifiers)?
+				  GDK_FILTER_REMOVE:GDK_FILTER_CONTINUE;
+
+  return pl_key_function(FALSE,key,modifiers)?GDK_FILTER_REMOVE:GDK_FILTER_CONTINUE;
+
+#endif
 
   return GDK_FILTER_CONTINUE;
-#endif
 }
 
 
@@ -161,9 +194,7 @@ gboolean pl_key_function (gboolean down, guint16 unicode, guint16 keymod) {
 #define NEEDS_TRANSLATION 1<<15
 
   // mask for ctrl and alt
-  GdkModifierType state=(GdkModifierType)(keymod&(GDK_CONTROL_MASK|GDK_MOD1_MASK));
-
-  //g_print("got %d %d %d\n",down,unicode,keymod);
+  GdkModifierType state=(GdkModifierType)(keymod&(LIVES_CONTROL_MASK|LIVES_ALT_MASK));
 
   if (!down) {
     // up...
@@ -171,16 +202,18 @@ gboolean pl_key_function (gboolean down, guint16 unicode, guint16 keymod) {
       switch (unicode) {
 	// some keys need translating when a modifier is held down
       case(key_left) :
-      case (key_left2): if (cached_key==GDK_Left) cached_key=0;return FALSE;
+      case (key_left2): if (cached_key==GDK_KEY_Left) cached_key=0;return FALSE;
       case(key_right) : 
-      case (key_right2): if (cached_key==GDK_Right) cached_key=0;return FALSE;
+      case (key_right2): if (cached_key==GDK_KEY_Right) cached_key=0;return FALSE;
       case(key_up)  :
-      case (key_up2): if (cached_key==GDK_Up) cached_key=0;return FALSE;
+      case (key_up2): if (cached_key==GDK_KEY_Up) cached_key=0;return FALSE;
       case(key_down) : 
-      case (key_down2): if (cached_key==GDK_Down) cached_key=0;return FALSE;
+      case (key_down2): if (cached_key==GDK_KEY_Down) cached_key=0;return FALSE;
       }
     }
-    else if (cached_key==unicode) cached_key=0;
+    else {
+      if (cached_key==unicode) cached_key=0;
+    }
     return FALSE;
   }
 
@@ -188,59 +221,60 @@ gboolean pl_key_function (gboolean down, guint16 unicode, guint16 keymod) {
   if (keymod&NEEDS_TRANSLATION) {
     switch (unicode) {
       // some keys need translating when a modifier is held down
-    case (65) :unicode=GDK_space;break;
-    case (22) :unicode=GDK_BackSpace;break;
-    case (36) :unicode=GDK_Return;break;
-    case (24) :unicode=GDK_q;break;
-    case (10) :unicode=GDK_1;break;
-    case (11) :unicode=GDK_2;break;
-    case (12) :unicode=GDK_3;break;
-    case (13) :unicode=GDK_4;break;
-    case (14) :unicode=GDK_5;break;
-    case (15) :unicode=GDK_6;break;
-    case (16) :unicode=GDK_7;break;
-    case (17) :unicode=GDK_8;break;
-    case (18) :unicode=GDK_9;break;
-    case (19) :unicode=GDK_0;break;
-    case (67) :unicode=GDK_F1;break;
-    case (68) :unicode=GDK_F2;break;
-    case (69) :unicode=GDK_F3;break;
-    case (70) :unicode=GDK_F4;break;
-    case (71) :unicode=GDK_F5;break;
-    case (72) :unicode=GDK_F6;break;
-    case (73) :unicode=GDK_F7;break;
-    case (74) :unicode=GDK_F8;break;
-    case (75) :unicode=GDK_F9;break;
-    case (76) :unicode=GDK_F10;break;
-    case (95) :unicode=GDK_F11;break;
-    case (96) :unicode=GDK_F12;break;
+    case (65) :unicode=GDK_KEY_space;break;
+    case (22) :unicode=GDK_KEY_BackSpace;break;
+    case (36) :unicode=GDK_KEY_Return;break;
+    case (24) :unicode=GDK_KEY_q;break;
+    case (10) :unicode=GDK_KEY_1;break;
+    case (11) :unicode=GDK_KEY_2;break;
+    case (12) :unicode=GDK_KEY_3;break;
+    case (13) :unicode=GDK_KEY_4;break;
+    case (14) :unicode=GDK_KEY_5;break;
+    case (15) :unicode=GDK_KEY_6;break;
+    case (16) :unicode=GDK_KEY_7;break;
+    case (17) :unicode=GDK_KEY_8;break;
+    case (18) :unicode=GDK_KEY_9;break;
+    case (19) :unicode=GDK_KEY_0;break;
+    case (67) :unicode=GDK_KEY_F1;break;
+    case (68) :unicode=GDK_KEY_F2;break;
+    case (69) :unicode=GDK_KEY_F3;break;
+    case (70) :unicode=GDK_KEY_F4;break;
+    case (71) :unicode=GDK_KEY_F5;break;
+    case (72) :unicode=GDK_KEY_F6;break;
+    case (73) :unicode=GDK_KEY_F7;break;
+    case (74) :unicode=GDK_KEY_F8;break;
+    case (75) :unicode=GDK_KEY_F9;break;
+    case (76) :unicode=GDK_KEY_F10;break;
+    case (95) :unicode=GDK_KEY_F11;break;
+    case (96) :unicode=GDK_KEY_F12;break;
     case (99) :
-    case (112) :unicode=GDK_Page_Up;break;
+    case (112) :unicode=GDK_KEY_Page_Up;break;
     case (105) :
-    case (117) :unicode=GDK_Page_Down;break;
+    case (117) :unicode=GDK_KEY_Page_Down;break;
 
       // auto repeat keys
     case(key_left) :
-    case (key_left2): unicode=GDK_Left;break;
+    case (key_left2): unicode=GDK_KEY_Left;break;
     case(key_right) :
-    case (key_right2): unicode=GDK_Right;break;
+    case (key_right2): unicode=GDK_KEY_Right;break;
     case(key_up)  :
-    case (key_up2): unicode=GDK_Up;break;
+    case (key_up2): unicode=GDK_KEY_Up;break;
     case(key_down) :
-    case (key_down2): unicode=GDK_Down;break;
+    case (key_down2): unicode=GDK_KEY_Down;break;
 
     }
   }
-
-  if ((unicode==GDK_Left||unicode==GDK_Right||unicode==GDK_Up||unicode==GDK_Down)&&(keymod&GDK_CONTROL_MASK)) {
+  
+  if ((unicode==GDK_KEY_Left||unicode==GDK_KEY_Right||unicode==GDK_KEY_Up||unicode==GDK_KEY_Down)&&
+      (keymod&LIVES_CONTROL_MASK)) {
     cached_key=unicode;
-    cached_mod=GDK_CONTROL_MASK;
+    cached_mod=LIVES_CONTROL_MASK;
   }
 
-  if (mainw->rte_textparm!=NULL&&(keymod==0||keymod==GDK_SHIFT_MASK||keymod==GDK_LOCK_MASK)) {
-    if (unicode==GDK_Return||unicode==13) unicode='\n'; // CR
-    if (unicode==GDK_BackSpace) unicode=8; // bs
-    if (unicode==GDK_Tab||unicode==9) mainw->rte_textparm=NULL;
+  if (mainw->rte_textparm!=NULL&&(keymod==0||keymod==LIVES_SHIFT_MASK||keymod==GDK_LOCK_MASK)) {
+    if (unicode==GDK_KEY_Return||unicode==13) unicode='\n'; // CR
+    if (unicode==GDK_KEY_BackSpace) unicode=8; // bs
+    if (unicode==GDK_KEY_Tab||unicode==9) mainw->rte_textparm=NULL;
     else if (unicode>0&&unicode<256) {
       int error;
       char *nval;
@@ -269,7 +303,6 @@ gboolean pl_key_function (gboolean down, guint16 unicode, guint16 keymod) {
     else gtk_accel_groups_activate (G_OBJECT (mainw->multitrack->window),(guint)unicode,state);
     if (!mainw->ext_keyboard) return TRUE; // if user switched out of ext_keyboard, do no further processing *
   }
-
 
   return FALSE;
 

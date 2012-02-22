@@ -912,6 +912,9 @@ static void lives_init(_ign_opts *ign_opts) {
   mainw->foreign_visual=NULL;
 
   mainw->pconx=NULL;
+
+  cached_key=cached_mod=0;
+
   /////////////////////////////////////////////////// add new stuff just above here ^^
 
 
@@ -1718,8 +1721,10 @@ capability *get_capabilities (void) {
   natural_t numProcessors = 0U;
   kern_return_t kerr;
 #else
+#ifndef IS_MINGW
   size_t len;
   FILE *tfile;
+#endif
 #endif
 
   capable=(capability *)g_malloc(sizeof(capability));
@@ -1930,9 +1935,18 @@ capability *get_capabilities (void) {
 
   capable->ncpus=0;
 
-#ifdef IS_DARWIN  
-  kerr = host_processor_info(mach_host_self(), PROCESSOR_CPU_LOAD_INFO, &numProcessors, &processorInfo, &numProcessorInfo);
+#ifdef IS_DARWIN
+  kerr = host_processor_info(mach_host_self(), PROCESSOR_BASIC_INFO, &numProcessors, &processorInfo, &numProcessorInfo);
+  if (kerr == KERN_SUCCESS) {
+    vm_deallocate(mach_task_self(), (vm_address_t) processorInfo, numProcessorInfo * sizint);
+  }
   capable->ncpus=(gint)numProcessors;
+#else
+
+#ifdef IS_MINGW
+  // FIXME:
+
+  //capable->ncpus=lives_win32_get_num_logical_cpus();
 #else
 
   tfile=popen("cat /proc/cpuinfo 2>/dev/null | grep processor 2>/dev/null | wc -l 2>/dev/null","r");
@@ -1941,6 +1955,7 @@ capability *get_capabilities (void) {
 
   memset(buffer+len,0,1);
   capable->ncpus=atoi(buffer);
+#endif
 #endif
 
   if (capable->ncpus==0) capable->ncpus=1;

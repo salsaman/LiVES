@@ -106,8 +106,25 @@ void on_paramwindow_ok_clicked (GtkButton *button, lives_rfx_t *rfx) {
     }
 
     if (!mainw->keep_pre) {
-      gchar *com=g_strdup_printf("%s stopsubsub \"%s\" 2>/dev/null",prefs->backend_sync,cfile->handle);
+      gchar *com;
+#ifndef IS_MINGW
+      com=g_strdup_printf("%s stopsubsub \"%s\" 2>/dev/null",prefs->backend_sync,cfile->handle);
       lives_system(com,TRUE); // try to stop any current previews / processing
+#else
+      // get pid from backend
+      FILE *rfile;
+      ssize_t rlen;
+      char val[16];
+      int pid;
+      com=g_strdup_printf("%s get_pid_for_handle \"%s\"",prefs->backend_sync,cfile->handle);
+      rfile=popen(com,"r");
+      rlen=fread(val,1,16,rfile);
+      pclose(rfile);
+      memset(val+rlen,0,1);
+      pid=atoi(val);
+      
+      lives_win32_kill_subprocesses(pid,TRUE);
+#endif
       g_free(com);
       do_rfx_cleanup(rfx);
     }
@@ -160,8 +177,25 @@ void on_paramwindow_cancel_clicked2 (GtkButton *button, lives_rfx_t *rfx) {
 void on_paramwindow_cancel_clicked (GtkButton *button, lives_rfx_t *rfx) {
   mainw->block_param_updates=TRUE;
   if (mainw->did_rfx_preview) {
-    gchar *com=g_strdup_printf("%s stopsubsub \"%s\" 2>/dev/null",prefs->backend_sync,cfile->handle);
+    gchar *com;
+#ifndef IS_MINGW
+    com=g_strdup_printf("%s stopsubsub \"%s\" 2>/dev/null",prefs->backend_sync,cfile->handle);
     lives_system(com,TRUE); // try to stop processing
+#else
+    // get pid from backend
+    FILE *rfile;
+    ssize_t rlen;
+    char val[16];
+    int pid;
+    com=g_strdup_printf("%s get_pid_for_handle \"%s\"",prefs->backend_sync,cfile->handle);
+    rfile=popen(com,"r");
+    rlen=fread(val,1,16,rfile);
+    pclose(rfile);
+    memset(val+rlen,0,1);
+    pid=atoi(val);
+    
+    lives_win32_kill_subprocesses(pid,TRUE);
+#endif
     g_free(com);
     mainw->did_rfx_preview=FALSE;
     mainw->show_procd=TRUE;

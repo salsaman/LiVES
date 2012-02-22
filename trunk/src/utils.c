@@ -530,6 +530,212 @@ LIVES_INLINE void lives_freep(void **ptr) {
   }
 }
 
+
+
+#ifdef IS_MINGW
+
+static gboolean lives_win32_suspend_resume_threads(DWORD pid, gboolean suspend) {
+  HANDLE hThreadSnap;
+  HANDLE hThread;
+  THREADENTRY32 te32;
+
+  // Take a snapshot of all threads in the system.
+  hThreadSnap = CreateToolhelp32Snapshot( TH32CS_SNAPTHREAD, 0 );
+  if( hThreadSnap == INVALID_HANDLE_VALUE ) {
+    LIVES_ERROR("CreateToolhelp32Snapshot (of threades)");
+    return FALSE;
+  }
+
+  // Set the size of the structure before using it.
+  te32.dwSize = sizeof( THREADENTRY32 );
+
+  // Retrieve information about the first thread,
+  // and exit if unsuccessful
+  if( !Thread32First( hThreadSnap, &te32 ) ) {
+    LIVES_ERROR("Thread32First"); // show cause of failure
+    CloseHandle( hThreadSnap );          // clean the snapshot object
+    return( FALSE );
+  }
+
+  // Now walk the snapshot of threads, and suspend/resume any owned by process
+
+  do {
+    hThread = OpenThread( THREAD_SUSPEND_RESUME, FALSE, te32.th32ThreadID );
+    if( hThread == NULL ) continue;
+
+    if (te32.th32OwnerProcessID == pid) {
+      if (suspend) {
+	SuspendThread(hThread);
+      }
+      else {
+	ResumeThread(hThread);
+      }
+    }
+
+    CloseHandle( hThread );
+
+  } while( Thread32Next( hThreadSnap, &te32 ) );
+
+  CloseHandle( hThreadSnap );
+
+  return TRUE;
+ 
+}
+
+
+gboolean lives_win32_suspend_resume_process(DWORD pid, gboolean suspend) {
+  HANDLE hProcessSnap;
+  HANDLE hProcess;
+  PROCESSENTRY32 pe32;
+
+  if (pid==0) return TRUE;
+
+  // Take a snapshot of all processes in the system.
+  hProcessSnap = CreateToolhelp32Snapshot( TH32CS_SNAPPROCESS, 0 );
+  if( hProcessSnap == INVALID_HANDLE_VALUE ) {
+    LIVES_ERROR("CreateToolhelp32Snapshot (of processes)");
+    return FALSE;
+  }
+
+  // Set the size of the structure before using it.
+  pe32.dwSize = sizeof( PROCESSENTRY32 );
+
+  // Retrieve information about the first process,
+  // and exit if unsuccessful
+  if( !Process32First( hProcessSnap, &pe32 ) ) {
+    LIVES_ERROR("Process32First"); // show cause of failure
+    CloseHandle( hProcessSnap );          // clean the snapshot object
+    return( FALSE );
+  }
+
+  // resume this thread first
+  if (!suspend) lives_win32_suspend_resume_threads(pid, FALSE);
+
+  // Now walk the snapshot of processes, and
+  // display information about each process in turn
+
+  do {
+    hProcess = OpenProcess( PROCESS_TERMINATE, FALSE, pe32.th32ProcessID );
+    if( hProcess == NULL ) continue;
+
+    // TODO - find equivalent on "real" windows
+    if (!strcmp(pe32.szExeFile,"wineconsole.exe")) {
+      CloseHandle( hProcess );
+      continue;
+    }
+
+    if (pe32.th32ParentProcessID == pid && pe32.th32ProcessID != pid) {
+      // suspend subprocess
+      lives_win32_suspend_resume_process(pe32.th32ProcessID, suspend);
+    }
+
+    CloseHandle( hProcess );
+
+  } while( Process32Next( hProcessSnap, &pe32 ) );
+ 
+  CloseHandle( hProcessSnap );
+
+  // suspend this thread last
+  if (suspend) lives_win32_suspend_resume_threads(pid, TRUE);
+
+  return TRUE;
+}
+
+
+
+gboolean lives_win32_kill_subprocesses(DWORD pid, gboolean kill_parent) {
+  HANDLE hProcessSnap;
+  HANDLE hProcess;
+  PROCESSENTRY32 pe32;
+
+  if (pid==0) return TRUE;
+
+  // Take a snapshot of all processes in the system.
+  hProcessSnap = CreateToolhelp32Snapshot( TH32CS_SNAPPROCESS, 0 );
+  if( hProcessSnap == INVALID_HANDLE_VALUE ) {
+    LIVES_ERROR("CreateToolhelp32Snapshot (of processes)");
+    return FALSE;
+  }
+
+  // Set the size of the structure before using it.
+  pe32.dwSize = sizeof( PROCESSENTRY32 );
+
+  // Retrieve information about the first process,
+  // and exit if unsuccessful
+  if( !Process32First( hProcessSnap, &pe32 ) ) {
+    LIVES_ERROR("Process32First"); // show cause of failure
+    CloseHandle( hProcessSnap );          // clean the snapshot object
+    return( FALSE );
+  }
+
+  // Now walk the snapshot of processes, and
+  // display information about each process in turn
+
+  do {
+    hProcess = OpenProcess( PROCESS_TERMINATE, FALSE, pe32.th32ProcessID );
+    if( hProcess == NULL ) continue;
+
+    // TODO - find equivalent on "real" windows
+    if (!strcmp(pe32.szExeFile,"wineconsole.exe")) {
+      CloseHandle( hProcess );
+      continue;
+    }
+
+    if (pe32.th32ParentProcessID == pid && pe32.th32ProcessID != pid) {
+      lives_win32_kill_subprocesses(pe32.th32ProcessID, TRUE);
+    }
+
+    CloseHandle( hProcess );
+
+  } while( Process32Next( hProcessSnap, &pe32 ) );
+
+  CloseHandle( hProcessSnap );
+
+  if (kill_parent) {
+
+    hProcessSnap = CreateToolhelp32Snapshot( TH32CS_SNAPPROCESS, 0 );
+    if( hProcessSnap == INVALID_HANDLE_VALUE ) {
+      LIVES_ERROR("CreateToolhelp32Snapshot (of processes)");
+      return FALSE;
+    }
+    
+    // Set the size of the structure before using it.
+    pe32.dwSize = sizeof( PROCESSENTRY32 );
+    
+    // Retrieve information about the first process,
+    // and exit if unsuccessful
+    if( !Process32First( hProcessSnap, &pe32 ) ) {
+      LIVES_ERROR("Process32First"); // show cause of failure
+      CloseHandle( hProcessSnap );          // clean the snapshot object
+      return( FALSE );
+    }
+    
+    // Now walk the snapshot of processes, and
+    // display information about each process in turn
+    
+    do {
+      hProcess = OpenProcess( PROCESS_TERMINATE, FALSE, pe32.th32ProcessID );
+      if( hProcess == NULL ) continue;
+      
+      if (pe32.th32ProcessID == pid) {
+	TerminateProcess(hProcess, 0);
+      }
+
+      CloseHandle( hProcess );
+      
+    } while( Process32Next( hProcessSnap, &pe32 ) );
+    
+    CloseHandle( hProcessSnap );
+
+  }
+
+  return TRUE;
+}
+
+#endif
+
+
+
 LIVES_INLINE int lives_kill(lives_pid_t pid, int sig) {
 #ifndef IS_MINGW
   return kill(pid,sig);

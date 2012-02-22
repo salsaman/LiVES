@@ -472,9 +472,25 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
 	      // cancelled
 
 	      if (mainw->cancelled!=CANCEL_ERROR) {
+#ifndef IS_MINGW
 		// clean up our temp files
 		com=g_strdup_printf("%s stopsubsub \"%s\" 2>/dev/null",prefs->backend_sync,cfile->handle);
 		lives_system(com,TRUE);
+#else
+		// get pid from backend
+		FILE *rfile;
+		ssize_t rlen;
+		char val[16];
+		int pid;
+		com=g_strdup_printf("%s get_pid_for_handle \"%s\"",prefs->backend_sync,cfile->handle);
+		rfile=popen(com,"r");
+		rlen=fread(val,1,16,rfile);
+		pclose(rfile);
+		memset(val+rlen,0,1);
+		pid=atoi(val);
+    
+		lives_win32_kill_subprocesses(pid,TRUE);
+#endif
 		g_free(com);
 	      }
 
@@ -691,7 +707,13 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
     if (cfile->ext_src==NULL&&mainw->toy_type!=LIVES_TOY_TV) {
       if (!do_progress_dialog(TRUE,TRUE,msgstr)) {
 	// user cancelled or switched to another clip
-	
+#ifdef IS_MINGW
+	FILE *rfile;
+	ssize_t rlen;
+	char val[16];
+	int pid;
+#endif
+
 	g_free(msgstr);
 	
 	mainw->opening_frames=-1;
@@ -706,8 +728,20 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
 	
 	// cancelled
 	// clean up our temp files
+#ifndef IS_MINGW
 	com=g_strdup_printf("%s stopsubsub \"%s\" 2>/dev/null",prefs->backend_sync,cfile->handle);
 	lives_system(com,TRUE);
+#else
+	// get pid from backend
+	com=g_strdup_printf("%s get_pid_for_handle \"%s\"",prefs->backend_sync,cfile->handle);
+	rfile=popen(com,"r");
+	rlen=fread(val,1,16,rfile);
+	pclose(rfile);
+	memset(val+rlen,0,1);
+	pid=atoi(val);
+	
+	lives_win32_kill_subprocesses(pid,TRUE);
+#endif
 	g_free(com);
 	if (mainw->file_open_params!=NULL) g_free (mainw->file_open_params);
 	mainw->file_open_params=NULL;
@@ -1350,6 +1384,22 @@ void save_file (int clip, int start, int end, const char *filename) {
     mainw->current_file=new_file;
 
     if (mainw->com_failed) {
+#ifdef IS_MINGW
+      // kill any active processes: for other OSes the backend does this
+      // get pid from backend
+      FILE *rfile;
+      ssize_t rlen;
+      char val[16];
+      int pid;
+      com=g_strdup_printf("%s get_pid_for_handle \"%s\"",prefs->backend_sync,cfile->handle);
+      rfile=popen(com,"r");
+      rlen=fread(val,1,16,rfile);
+      pclose(rfile);
+      memset(val+rlen,0,1);
+      pid=atoi(val);
+      
+      lives_win32_kill_subprocesses(pid,TRUE);
+#endif
       lives_system (g_strdup_printf("%s close \"%s\"",prefs->backend,cfile->handle),TRUE);
       g_free (cfile);
       cfile=NULL;
@@ -1373,7 +1423,24 @@ void save_file (int clip, int start, int end, const char *filename) {
 
     cfile->nopreview=TRUE;
     if (!(do_progress_dialog(TRUE,TRUE,_("Linking selection")))) {
-      lives_system (g_strdup_printf("%s close \"%s\"",prefs->backend,cfile->handle),TRUE);
+#ifdef IS_MINGW
+      // kill any active processes: for other OSes the backend does this
+      // get pid from backend
+      FILE *rfile;
+      ssize_t rlen;
+      char val[16];
+      int pid;
+      com=g_strdup_printf("%s get_pid_for_handle \"%s\"",prefs->backend_sync,cfile->handle);
+      rfile=popen(com,"r");
+      rlen=fread(val,1,16,rfile);
+      pclose(rfile);
+      memset(val+rlen,0,1);
+      pid=atoi(val);
+      
+      lives_win32_kill_subprocesses(pid,TRUE);
+#endif
+      lives_system ((tmp=g_strdup_printf("%s close \"%s\"",prefs->backend,cfile->handle)),TRUE);
+      g_free(tmp);
       g_free (cfile);
       cfile=NULL;
       if (mainw->first_free_file==-1||mainw->first_free_file>new_file) 
@@ -1406,6 +1473,22 @@ void save_file (int clip, int start, int end, const char *filename) {
 
   if (!check_encoder_restrictions(FALSE,FALSE,save_all)) {
     if (!save_all&&!safe_symlinks) {
+#ifdef IS_MINGW
+      // kill any active processes: for other OSes the backend does this
+      // get pid from backend
+      FILE *rfile;
+      ssize_t rlen;
+      char val[16];
+      int pid;
+      com=g_strdup_printf("%s get_pid_for_handle \"%s\"",prefs->backend_sync,nfile->handle);
+      rfile=popen(com,"r");
+      rlen=fread(val,1,16,rfile);
+      pclose(rfile);
+      memset(val+rlen,0,1);
+      pid=atoi(val);
+      
+      lives_win32_kill_subprocesses(pid,TRUE);
+#endif
       lives_system ((com=g_strdup_printf("%s close \"%s\"",prefs->backend,nfile->handle)),TRUE);
       g_free(com);
       g_free (nfile);
@@ -1608,6 +1691,22 @@ void save_file (int clip, int start, int end, const char *filename) {
 	g_free (com);
       }
       if (!save_all&&!safe_symlinks) {
+#ifdef IS_MINGW
+	// kill any active processes: for other OSes the backend does this
+	// get pid from backend
+	FILE *rfile;
+	ssize_t rlen;
+	char val[16];
+	int pid;
+	com=g_strdup_printf("%s get_pid_for_handle \"%s\"",prefs->backend_sync,nfile->handle);
+	rfile=popen(com,"r");
+	rlen=fread(val,1,16,rfile);
+	pclose(rfile);
+	memset(val+rlen,0,1);
+	pid=atoi(val);
+	
+	lives_win32_kill_subprocesses(pid,TRUE);
+#endif
 	lives_system ((com=g_strdup_printf("%s close \"%s\"",prefs->backend,nfile->handle)),TRUE);
 	g_free(com);
 	g_free(nfile);
@@ -1753,6 +1852,22 @@ void save_file (int clip, int start, int end, const char *filename) {
       mainw->no_switch_dprint=FALSE;
       g_free(full_file_name);
       if (!save_all&&!safe_symlinks) {
+#ifdef IS_MINGW
+	// kill any active processes: for other OSes the backend does this
+	// get pid from backend
+	FILE *rfile;
+	ssize_t rlen;
+	char val[16];
+	int pid;
+	com=g_strdup_printf("%s get_pid_for_handle \"%s\"",prefs->backend_sync,cfile->handle);
+	rfile=popen(com,"r");
+	rlen=fread(val,1,16,rfile);
+	pclose(rfile);
+	memset(val+rlen,0,1);
+	pid=atoi(val);
+      
+	lives_win32_kill_subprocesses(pid,TRUE);
+#endif
 	lives_system ((com=g_strdup_printf("%s close \"%s\"",prefs->backend,cfile->handle)),TRUE);
 	g_free(com);
 	g_free (cfile);
@@ -1796,6 +1911,22 @@ void save_file (int clip, int start, int end, const char *filename) {
       mainw->no_switch_dprint=FALSE;
       g_free(full_file_name);
       if (!save_all&&!safe_symlinks) {
+#ifdef IS_MINGW
+	// kill any active processes: for other OSes the backend does this
+	// get pid from backend
+	FILE *rfile;
+	ssize_t rlen;
+	char val[16];
+	int pid;
+	com=g_strdup_printf("%s get_pid_for_handle \"%s\"",prefs->backend_sync,cfile->handle);
+	rfile=popen(com,"r");
+	rlen=fread(val,1,16,rfile);
+	pclose(rfile);
+	memset(val+rlen,0,1);
+	pid=atoi(val);
+	
+	lives_win32_kill_subprocesses(pid,TRUE);
+#endif
 	lives_system ((com=g_strdup_printf("%s close \"%s\"",prefs->backend,cfile->handle)),TRUE);
 	g_free(com);
 	g_free (cfile);
@@ -1882,6 +2013,22 @@ void save_file (int clip, int start, int end, const char *filename) {
     }
     else {
       if (!safe_symlinks) {
+#ifdef IS_MINGW
+	// kill any active processes: for other OSes the backend does this
+	// get pid from backend
+	FILE *rfile;
+	ssize_t rlen;
+	char val[16];
+	int pid;
+	com=g_strdup_printf("%s get_pid_for_handle \"%s\"",prefs->backend_sync,nfile->handle);
+	rfile=popen(com,"r");
+	rlen=fread(val,1,16,rfile);
+	pclose(rfile);
+	memset(val+rlen,0,1);
+	pid=atoi(val);
+	
+	lives_win32_kill_subprocesses(pid,TRUE);
+#endif
 	lives_system ((com=g_strdup_printf("%s close \"%s\"",prefs->backend,nfile->handle)),TRUE);
 	g_free(com);
 	g_free (nfile);

@@ -3758,7 +3758,7 @@ void resize_play_window (void) {
 
   int xht;
 
-  unsigned long xwinid=0;
+  uint64_t xwinid=0;
 
   mainw->sepwin_scale=100.;
 
@@ -3932,12 +3932,13 @@ void resize_play_window (void) {
 
 	if (pmonitor!=0) {
 	  fullscreen=FALSE;
+	  if (mainw->play_window!=NULL) {
 #ifdef USE_X11
-	  if (mainw->play_window!=NULL)
-	    xwinid=(unsigned long)GDK_WINDOW_XWINDOW(mainw->play_window->window);
+	    xwinid=(uint64_t)GDK_WINDOW_XID(mainw->play_window->window);
 #else
-	  LIVES_WARN("Tried to get XID for non X11 Window !");
+	    xwinid=(uint64_t)gdk_win32_drawable_get_handle (mainw->play_window->window);
 #endif
+	  }
 	}
 	if (mainw->ext_playback) {
 	  mainw->ext_keyboard=FALSE;

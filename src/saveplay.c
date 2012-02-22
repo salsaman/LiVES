@@ -2138,7 +2138,7 @@ void play_file (void) {
   gboolean has_audio_buffers=FALSE;
 
 #ifdef USE_X11
-  unsigned long awinid=0;
+  uint64_t awinid=0;
 #endif
 
   if (audio_player!=AUD_PLAYER_JACK&&audio_player!=AUD_PLAYER_PULSE) mainw->aud_file_to_kill=mainw->current_file;
@@ -2436,14 +2436,14 @@ void play_file (void) {
     com2=NULL;
 #ifdef USE_X11
     if (!prefs->show_gui&&prefs->show_playwin&&mainw->play_window!=NULL) {
-      awinid=(unsigned long)GDK_WINDOW_XID (mainw->play_window->window);
+      awinid=(uint64_t)GDK_WINDOW_XID (mainw->play_window->window);
     }
     else if (prefs->show_gui) {
       if (mainw->multitrack!=NULL) {
-	awinid=(unsigned long)GDK_WINDOW_XID (mainw->multitrack->window->window);
+	awinid=(uint64_t)GDK_WINDOW_XID (mainw->multitrack->window->window);
       }
       else if (mainw->LiVES!=NULL) {
-	awinid=(unsigned long)GDK_WINDOW_XID (mainw->LiVES->window);
+	awinid=(uint64_t)GDK_WINDOW_XID (mainw->LiVES->window);
       }
     }
 

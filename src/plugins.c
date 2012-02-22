@@ -539,7 +539,7 @@ void on_vppa_ok_clicked (GtkButton *button, gpointer user_data) {
   const gchar *tmp;
   int *pal_list,i=0;
 
-  unsigned long xwinid=0;
+  uint64_t xwinid=0;
 
   _vid_playback_plugin *vpp=vppw->plugin;
 
@@ -633,14 +633,15 @@ void on_vppa_ok_clicked (GtkButton *button, gpointer user_data) {
 #endif
 
 	      if (prefs->play_monitor!=0) {
+		if (mainw->play_window!=NULL) {
 #ifdef USE_X11
-		if (mainw->play_window!=NULL)
-		  xwinid=(unsigned long)GDK_WINDOW_XWINDOW(mainw->play_window->window);
+		  xwinid=(uint64_t)GDK_WINDOW_XID(mainw->play_window->window);
 #else
-		LIVES_WARN("Tried to get XID for non X11 Window !");
+		  xwinid=(uint64_t)gdk_win32_drawable_get_handle (mainw->play_window->window);
 #endif
+		}
 	      }
-
+	      
 	      if (vpp->init_screen!=NULL) {
 		(*vpp->init_screen)(mainw->pwidth,mainw->pheight,TRUE,xwinid,vpp->extra_argc,vpp->extra_argv);
 	      }

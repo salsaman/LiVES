@@ -1003,6 +1003,7 @@ void lives_free_with_check(gpointer ptr);
 #ifdef IS_MINGW
 gboolean lives_win32_suspend_resume_process(DWORD pid, gboolean suspend);
 gboolean lives_win32_kill_subprocesses(DWORD pid, gboolean kill_parent);
+int lives_win32_get_num_logical_cpus(void);
 #endif
 int lives_kill(lives_pid_t pid, int sig);
 int lives_killpg(lives_pgid_t pgrp, int sig);

@@ -2023,7 +2023,8 @@ if (defined($ARGV[0])) {
 
 		if (-d $linksdir) {
 		    if ($^O eq "MSWin32") {
-			smog_system("rm.exe -rf \"$linksdir\"");
+			smog_system("DEL /q \"$linksdir\"");
+			smog_system("RMDIR \"$linksdir\"");
 		    }
 		    else {
 			smog_system("/bin/rm -rf \"$linksdir\"");
@@ -2240,8 +2241,9 @@ if (defined($ARGV[0])) {
 	    unlink "$pidfile"; 
 	    exit 1;
 	}
-	$img_ext=&get_img_ext($curtmpdir,$start);
 
+	if ($^O ne "MSWin32") {
+	$img_ext=&get_img_ext($curtmpdir,$start);
 	if ($start>0) {
 	    # we have to add frames 100 at a time, otherwise tar complains about 'too many parameters'
 	    # TODO - rewrite using xargs or pattern exclude (like projects)
@@ -2307,13 +2309,48 @@ if (defined($ARGV[0])) {
 		&sig_progress($start+($i-$start));
 	    }
 	}
-	$com="tar -czf \"$nfile\" *.tar 2>.tar_err";
-	$smerr=smog_system ($com);
-	if ($smerr) {
-	    sig_system_error("$com",$smerr);
-	    unlink "$pidfile"; 
-	    exit 1;
+
+
+	    $com="tar -czf \"$nfile\" *.tar 2>.tar_err";
+	    $smerr=smog_system ($com);
+	    if ($smerr) {
+		sig_system_error("$com",$smerr);
+		unlink "$pidfile"; 
+		exit 1;
+	    }
 	}
+	else {
+	    &sig_progress(0);
+
+	    $com="tar -cf temp.tar header.tar 2>.tar_err";
+	    $smerr=smog_system ($com);
+	    if ($smerr) {
+		sig_system_error("$com",$smerr);
+		unlink "$pidfile"; 
+		exit 1;
+	    }
+
+	    $com="tar --exclude=*.bak --exclude=*.tar --exclude=.* --exclude=*.mgk --exclude=*.tmp --exclude=audioclip* -cf temp.tar . 2>>.tar_err";
+	    $smerr=smog_system ($com);
+	    if ($smerr) {
+		sig_system_error("$com",$smerr);
+		unlink "$pidfile"; 
+		exit 1;
+	    }
+
+	    $com="gzip -S .lv1 temp.tar";
+	    $smerr=smog_system ($com);
+	    if ($smerr) {
+		sig_system_error("$com",$smerr);
+		unlink "$pidfile"; 
+		exit 1;
+	    }
+
+	    unlink "temp.tar";
+	    
+	    smog_rename("temp.tar.lv1","$nfile");
+	}
+
 	unlink <header.tar 0*.tar>;
 	if (-f ".tar_err") {
 	    open IN,"< .tar_err";
@@ -2348,10 +2385,7 @@ if (defined($ARGV[0])) {
 	    &sig_error("This does not appear to be a valid backup file","$GUI_NAME was unable to open it.");
 	}
 
-	if ($^O eq "MSWin32") {
-	}
-	else {
-	}
+
 #TODO - mingw
 	smog_system("for i in *.tar; do tar -xf \$i 2>$nulfile; /bin/rm -f \$i; done");
 	&sig_complete;
@@ -3746,6 +3780,7 @@ if (defined($ARGV[0])) {
 	    my $opts=$ARGV[2];
 	    my $bytes_cleaned=&weed($opts);
 	    &sig_complete($bytes_cleaned);
+
 	    exit 0;
 	}
 
@@ -6926,7 +6961,8 @@ sub weed {
 		    if (!$in_set && !($opts & 0x01)) {
 
     	                if ($^O eq "MSWin32") {
-                           smog_system("rm.exe -rf \"$tmpdir/$file\"");
+                           smog_system("DEL /q \"$tmpdir\\$file\"");
+                           smog_system("RMDIR \"$tmpdir\\$file\"");
 	                }
 	                else {
                            smog_system("/bin/rm -rf \"$tmpdir/$file\"");
@@ -6980,7 +7016,7 @@ sub weed {
     }
 
     # total disk space at end
-    my $end_total=(split / /, (smog_system_direct("du -sb 2>$nulfile")))[0];
+    my $end_total=(split / /, (smog_system_direct("du -sb")))[0];
 
     # return disk space gained (in bytes)
     return $start_total-$end_total;
@@ -7039,7 +7075,8 @@ sub clear_symlinks {
     if (-d $linksdir) {
 	# remove directory + contents
 	if ($^O eq "MSWin32") {
-	    smog_system("rm.exe -rf \"$linksdir\"");
+	    smog_system("DEL /q \"$linksdir\"");
+	    smog_system("RMDIR \"$linksdir\"");
 	}
 	else {
 	    smog_system("/bin/rm -rf \"$linksdir\"");

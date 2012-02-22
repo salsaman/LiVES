@@ -1177,6 +1177,7 @@ on_close_activate                      (GtkMenuItem     *menuitem,
 	    }
 	  }
 	}
+
 	// delete layout directory
 	laydir=g_build_filename(prefs->tmpdir,mainw->set_name,"layouts",NULL);
 #ifndef IS_MINGW
@@ -1190,15 +1191,26 @@ on_close_activate                      (GtkMenuItem     *menuitem,
       }
     }
 
-    // TODO - dirsep
+    cdir=g_build_filename(prefs->tmpdir,mainw->set_name,"clips",NULL);
 
-    cdir=g_build_filename(prefs->tmpdir,mainw->set_name,"clips",G_DIR_SEPARATOR_S,NULL);
+
 #ifndef IS_MINGW
     com=g_strdup_printf("/bin/rmdir \"%s\" 2>/dev/null",cdir);
 #else
-    com=g_strdup_printf("rmdir.exe \"%s\" 2>NUL",cdir);
+    com=g_strdup_printf("rmdir.exe \"%s\"",cdir);
 #endif
-    lives_system(com,TRUE);
+    do {
+      // keep trying until backend has deleted the clip
+      mainw->com_failed=FALSE;
+      lives_system(com,TRUE);
+      if (g_file_test(cdir,G_FILE_TEST_IS_DIR)) {
+	while (g_main_context_iteration(NULL,FALSE));
+	g_usleep(prefs->sleep_time);
+      }
+    } while (g_file_test(cdir,G_FILE_TEST_IS_DIR));
+
+    mainw->com_failed=FALSE;
+
     g_free(com);
     g_free(cdir);
 
@@ -1206,7 +1218,7 @@ on_close_activate                      (GtkMenuItem     *menuitem,
 #ifndef IS_MINGW
     com=g_strdup_printf("/bin/rm \"%s\"* 2>/dev/null",lfiles);
 #else
-    com=g_strdup_printf("rm.exe \"%s\"* 2>NUL",lfiles);
+    com=g_strdup_printf("DEL \"%s*\" 2>NUL",lfiles);
 #endif
     lives_system(com,TRUE);
     g_free(com);
@@ -1221,6 +1233,10 @@ on_close_activate                      (GtkMenuItem     *menuitem,
     lives_system(com,TRUE);
     g_free(com);
     g_free(ofile);
+
+
+    lives_sync();
+
 
     sdir=g_build_filename(prefs->tmpdir,mainw->set_name,NULL);
 #ifndef IS_MINGW
@@ -6121,7 +6137,14 @@ void on_fs_preview_clicked (GtkButton *button, gpointer user_data) {
     }
     g_free(info_file);
     info_file=g_strdup_printf ("%s/thm%d/",prefs->tmpdir,getpid());
-    com=g_strdup_printf("rm -rf \"%s\"",info_file);
+#ifndef IS_MINGW
+    com=g_strdup_printf("/bin/rm -rf \"%s\"",info_file);
+#else
+    com=g_strdup_printf("DEL /q \"%s\"",info_file);
+    lives_system(com,TRUE);
+    g_free(com);
+    com=g_strdup_printf("RMDIR \"%s\"",info_file);
+#endif
     lives_system(com,TRUE);
     g_free(com);
     g_free(info_file);

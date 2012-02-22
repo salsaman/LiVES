@@ -125,6 +125,8 @@ static GList *get_plugin_result (const gchar *command, const gchar *delim, gbool
       bytes=read (outfile_fd,&buffer,65535);
       close (outfile_fd);
       unlink (outfile);
+      g_print("\n\nunlink %s\n",outfile);
+
       if (bytes<0) {
 	retval=do_read_failed_error_s_with_retry(outfile,NULL,NULL);
       }

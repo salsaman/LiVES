@@ -14622,7 +14622,10 @@ void on_render_activate (GtkMenuItem *menuitem, gpointer user_data) {
 #ifndef IS_MINGW
       com=g_strdup_printf("/bin/rm -rf \"%s/\"*",curtmpdir);
 #else
-      com=g_strdup_printf("rm.exe -rf \"%s/\"*",curtmpdir);
+      com=g_strdup_printf("DEL /q \"%s/\"*",curtmpdir);
+      lives_system(com,TRUE);
+      g_free(com);
+      com=g_strdup_printf("RMDIR \"%s/\"*",curtmpdir);
 #endif
       lives_system(com,TRUE);
       g_free(com);

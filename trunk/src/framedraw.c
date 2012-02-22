@@ -71,7 +71,11 @@ static void start_preview (GtkButton *button, lives_rfx_t *rfx) {
     do_rfx_cleanup(rfx);
   }
 
+#ifndef IS_MINGW
   com=g_strdup_printf("%s clear_pre_files \"%s\" 2>/dev/null",prefs->backend_sync,cfile->handle);
+#else
+  com=g_strdup_printf("%s clear_pre_files \"%s\" 2>NUL",prefs->backend_sync,cfile->handle);
+#endif
   lives_system(com,TRUE); // clear any .pre files from before
 
   for (i=0;i<rfx->num_params;i++) {

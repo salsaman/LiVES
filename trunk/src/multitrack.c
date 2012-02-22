@@ -19357,7 +19357,7 @@ weed_plant_t *load_event_list(lives_mt *mt, gchar *eload_file) {
 #ifndef IS_MINGW
     com=g_strdup_printf("/bin/rmdir \"%s\" 2>/dev/null",eload_dir);
 #else
-    com=g_strdup_printf("rmdir.exe \"%s\" 2>/dev/null",eload_dir);
+    com=g_strdup_printf("rmdir.exe \"%s\" 2>NUL",eload_dir);
 #endif
     lives_system(com,TRUE);
     g_free(com);

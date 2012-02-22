@@ -220,7 +220,9 @@ gchar *find_free_camfile(gint format) {
   if (format==CAM_FORMAT_HDV) {
     for (i=1;i<10000;i++) {
       fname=g_strdup_printf("%s%04d.mpg",filename,i);
-      if (!g_file_test((tmp=g_strdup_printf("%s/%s",(tmp2=g_filename_from_utf8(dvgrabw->dirname,-1,NULL,NULL,NULL)),(tmp3=g_filename_from_utf8(fname,-1,NULL,NULL,NULL)))),G_FILE_TEST_EXISTS)) break;
+      if (!g_file_test((tmp=g_build_filename((tmp2=g_filename_from_utf8(dvgrabw->dirname,-1,NULL,NULL,NULL)),
+					     (tmp3=g_filename_from_utf8(fname,-1,NULL,NULL,NULL))),NULL),
+		       G_FILE_TEST_EXISTS)) break;
       g_free(tmp);
       g_free(tmp2);
       g_free(tmp3);
@@ -230,7 +232,9 @@ gchar *find_free_camfile(gint format) {
   else {
     for (i=1;i<1000;i++) {
       fname=g_strdup_printf("%s%03d.dv",filename,i);
-      if (!g_file_test((tmp=g_strdup_printf("%s/%s",(tmp2=g_filename_from_utf8(dvgrabw->dirname,-1,NULL,NULL,NULL)),(tmp3=g_filename_from_utf8(fname,-1,NULL,NULL,NULL)))),G_FILE_TEST_EXISTS)) break;
+      if (!g_file_test((tmp=g_build_filename((tmp2=g_filename_from_utf8(dvgrabw->dirname,-1,NULL,NULL,NULL)),
+					     (tmp3=g_filename_from_utf8(fname,-1,NULL,NULL,NULL))),NULL),
+		       G_FILE_TEST_EXISTS)) break;
       g_free(tmp);
       g_free(tmp2);
       g_free(tmp3);
@@ -257,9 +261,15 @@ gboolean rec(s_cam *cam) {
 
   if (cam->format==CAM_FORMAT_DV) {
     // dv format
+#ifndef IS_MINGW
     com=g_strdup_printf("dvgrab -format raw %s\"%s/%s\" >/dev/null 2>&1 &",splits,
 			(tmp2=g_filename_from_utf8(dvgrabw->dirname,-1,NULL,NULL,NULL)),
 			(tmp3=g_filename_from_utf8(dvgrabw->filename,-1,NULL,NULL,NULL)));
+#else
+    com=g_strdup_printf("dvgrab.exe -format raw %s\"%s/%s\" >NUL 2>&1 &",splits,
+			(tmp2=g_filename_from_utf8(dvgrabw->dirname,-1,NULL,NULL,NULL)),
+			(tmp3=g_filename_from_utf8(dvgrabw->filename,-1,NULL,NULL,NULL)));
+#endif
     cam->pgid=lives_fork (com);
     g_free(com);
     g_free(tmp2);
@@ -269,9 +279,15 @@ gboolean rec(s_cam *cam) {
   }
 
   // hdv format
+#ifndef IS_MINGW
   com=g_strdup_printf("dvgrab -format mpeg2 %s\"%s/%s\" >/dev/null 2>&1 &",splits,
 		      (tmp2=g_filename_from_utf8(dvgrabw->dirname,-1,NULL,NULL,NULL)),
 		      (tmp3=g_filename_from_utf8(dvgrabw->filename,-1,NULL,NULL,NULL)));
+#else
+  com=g_strdup_printf("dvgrab.exe -format mpeg2 %s\"%s/%s\" >NUL 2>&1 &",splits,
+		      (tmp2=g_filename_from_utf8(dvgrabw->dirname,-1,NULL,NULL,NULL)),
+		      (tmp3=g_filename_from_utf8(dvgrabw->filename,-1,NULL,NULL,NULL)));
+#endif
   cam->pgid=lives_fork (com);
   g_free(com);
   g_free(tmp2);

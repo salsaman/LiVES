@@ -313,7 +313,7 @@ void lives_exit (void) {
 #ifndef IS_MINGW
 	com=g_strdup_printf("/bin/rm -r \"%s\" 2>/dev/null",dname);
 #else
-	com=g_strdup_printf("/bin/rm -r \"%s\" 2>NUL",dname);
+	com=g_strdup_printf("rm.exe -r \"%s\" 2>NUL",dname);
 #endif
 	g_free(dname);
 	lives_system(com,TRUE);
@@ -323,7 +323,7 @@ void lives_exit (void) {
 #ifndef IS_MINGW
 	com=g_strdup_printf("/bin/rm \"%s\" 2>/dev/null",dname);
 #else
-	com=g_strdup_printf("/bin/rm \"%s\" 2>NUL",dname);
+	com=g_strdup_printf("rm.exe \"%s\" 2>NUL",dname);
 #endif
 	g_free(dname);
 	lives_system(com,TRUE);

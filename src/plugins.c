@@ -217,7 +217,11 @@ GList * plugin_request_common (const gchar *plugin_type, const gchar *plugin_nam
 #ifdef DEBUG_PLUGINS
     com=g_strdup_printf ("\"%s\" \"%s\"",comfile,request);
 #else
+#ifndef IS_MINGW
     com=g_strdup_printf ("\"%s\" \"%s\" 2>/dev/null",comfile,request);
+#else
+    com=g_strdup_printf ("\"%s\" \"%s\" 2>NUL",comfile,request);
+#endif
 #endif
     g_free(comfile);
   }
@@ -3658,7 +3662,11 @@ gchar *plugin_run_param_window(const gchar *get_com, GtkVBox *vbox, lives_rfx_t 
   // OK, we should now have an RFX fragment in a file, we can compile it, then build a parameter window from it
     
   // call RFX_BUILDER program to compile the script, passing parameters input_filename and output_directory
+#ifndef IS_MINGW
   com=g_strdup_printf("\"%s\" \"%s\" \"%s\" >/dev/null",RFX_BUILDER,rfxfile,prefs->tmpdir);
+#else
+  com=g_strdup_printf("\"%s\" \"%s\" \"%s\" >NUL",RFX_BUILDER,rfxfile,prefs->tmpdir);
+#endif
   res=system(com);
   g_free(com);
     

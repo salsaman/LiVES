@@ -1134,7 +1134,11 @@ void save_file (int clip, int start, int end, const char *filename) {
   const char *n_file_name;
   gchar *fps_string;
   gchar *extra_params=NULL;
+#ifndef IS_MINGW
   gchar *redir=g_strdup("1>&2 2>/dev/null");
+#else
+  gchar *redir=g_strdup("1>&2 2>NUL");
+#endif
   gchar *new_stderr_name=NULL;
   gchar *mesg,*bit,*tmp;
   gchar *com;

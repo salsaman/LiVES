@@ -815,7 +815,7 @@ gboolean do_startup_tests(gboolean tshoot) {
 #ifndef IS_MINGW
     res=system("LANG=en LANGUAGE=en mplayer -ao help | grep pcm >/dev/null 2>&1");
 #else    
-    res=system("mplayer -ao help | grep pcm >/dev/null 2>&1");
+    res=system("mplayer -ao help | grep pcm >NUL 2>&1");
 #endif
     if (res==0) {
       pass_test(table,3);
@@ -914,7 +914,7 @@ gboolean do_startup_tests(gboolean tshoot) {
 #ifndef IS_MINGW
     res=system("LANG=en LANGUAGE=en mplayer -vo help | grep -i \"jpeg file\" >/dev/null 2>&1");
 #else    
-    res=system("mplayer -vo help | grep -i \"jpeg file\" >/dev/null 2>&1");
+    res=system("mplayer -vo help | grep -i \"jpeg file\" >NUL 2>&1");
 #endif
     
     if (res==0) {

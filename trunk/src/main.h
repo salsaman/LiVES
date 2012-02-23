@@ -119,7 +119,12 @@ typedef int lives_pgid_t;
 /// this must match AC_PREFIX_DEFAULT in configure.in
 /// TODO - when lives-plugins is a separate package, use pkg-config to get PREFIX and remove PREFIX_DEFAULT
 #ifndef PREFIX_DEFAULT
+#ifndef IS_MINGW
 #define PREFIX_DEFAULT "/usr"
+#else
+// TODO - get this from the installer
+#define PREFIX_DEFAULT "C:\\Program Files\\LiVES"
+#endif
 #endif
 
 /// if --prefix= was not set, this is set to "NONE"
@@ -127,6 +132,9 @@ typedef int lives_pgid_t;
 #define PREFIX PREFIX_DEFAULT
 #endif
 
+
+
+#ifndef IS_MINGW
 #define DOC_DIR "/share/doc/lives-"
 
 #define THEME_DIR "/share/lives/themes/"
@@ -135,6 +143,19 @@ typedef int lives_pgid_t;
 #define ICON_DIR "/share/lives/icons/"
 #define DATA_DIR "/share/lives/"
 #define LIVES_CONFIG_DIR ".lives-dir/"
+#define LIVES_TMP_NAME "livestmp"
+
+#else // IS_MINGW
+#define DOC_DIR "\\Documents\\"
+
+#define THEME_DIR "\\Themes\\"
+#define PLUGIN_SCRIPTS_DIR "\\Plugin-scripts\\"
+#define PLUGIN_EXEC_DIR "\\Plugins\\"
+#define ICON_DIR "\\Icons\\"
+#define DATA_DIR "\\Data\\"
+#define LIVES_CONFIG_DIR "\\Config\\"
+#define LIVES_TMP_NAME "livescache"
+#endif
 
 #define LIVES_DEVICE_DIR "/dev/"
 
@@ -187,7 +208,11 @@ typedef int lives_pgid_t;
 #include <limits.h>
 
 #ifndef PATH_MAX
+#ifdef MAX_PATH
+#define PATH_MAX MAX_PATH
+#else
 #define PATH_MAX 4096
+#endif
 #endif
 
 #ifdef __GNUC__
@@ -609,6 +634,9 @@ typedef struct {
 
   /// home directory - default location for config file - locale encoding
   gchar home_dir[PATH_MAX];
+
+  /// system tempdir (e.g /tmp for linux, C:\TEMP for win32)
+  gchar system_tmpdir[PATH_MAX];  ///< kept in locale encoding
 
   gchar *rcfile;
 
@@ -1241,17 +1269,14 @@ void on_open_fw_activate (GtkMenuItem *menuitem, gpointer format);
 #define L2U8(String) ( g_locale_to_utf8 (String,-1,NULL,NULL,NULL) ) 
 
 
-#define PREFS_TIMEOUT 10000000 ///< 10 seconds // TODO !
+#define PREFS_TIMEOUT 10000000 ///< 10 seconds
 
 #define LIVES_TV_CHANNEL1 "http://www.serverwillprovide.com/sorteal/livestvclips/livestv.ogm"
 
 
 // round (double) a up to next (integer) multiple of (double) b
-// haha
 #define CEIL(a,b) ((int)(((double)a+(double)b-.000000001)/((double)b))*b)
 
-
-// should sprinkle some of these around
 
 gchar *dummychar;
 

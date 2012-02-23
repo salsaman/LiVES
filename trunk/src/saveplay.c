@@ -556,7 +556,7 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
 	return;
       }
       unlink (cfile->info_file);
-      
+
       // we must set this before calling add_file_info
       cfile->opening=TRUE;
       mainw->opening_frames=-1;
@@ -2564,7 +2564,12 @@ void play_file (void) {
 
       g_free(stfile);
 
+#ifndef IS_MINGW
       stfile=g_build_filename(prefs->tmpdir,cfile->handle,".status.play",NULL);
+#else
+      stfile=g_build_filename(prefs->tmpdir,cfile->handle,"status.play",NULL);
+#endif
+
       g_snprintf(cfile->info_file,PATH_MAX,"%s",stfile);
       g_free(stfile);
       if (cfile->clip_type==CLIP_TYPE_DISK) unlink(cfile->info_file);
@@ -2918,7 +2923,11 @@ void play_file (void) {
   }
 
   if (mainw->current_file>-1) {
+#ifndef IS_MINGW
     stfile=g_build_filename(prefs->tmpdir,cfile->handle,".status",NULL);
+#else
+    stfile=g_build_filename(prefs->tmpdir,cfile->handle,"status",NULL);
+#endif
     g_snprintf(cfile->info_file,PATH_MAX,"%s",stfile);
     g_free(stfile);
   }
@@ -3375,7 +3384,11 @@ void create_cfile(void) {
   g_snprintf(cfile->undo_text,32,"%s",_ ("_Undo"));
   g_snprintf(cfile->redo_text,32,"%s",_ ("_Redo"));
 
+#ifndef IS_MINGW
   stfile=g_build_filename(prefs->tmpdir,cfile->handle,".status",NULL);
+#else
+  stfile=g_build_filename(prefs->tmpdir,cfile->handle,"status",NULL);
+#endif
 
   g_snprintf(cfile->info_file,PATH_MAX,"%s",stfile);
   g_free(stfile);
@@ -3840,8 +3853,9 @@ void backup_file(int clip, int start, int end, const gchar *file_name) {
     g_free (com);
 
     // using restore details in the 'wrong' way here...it will also clear files
-    com=g_strdup_printf("%s restore_details %s",prefs->backend_sync,cfile->handle);
+    com=g_strdup_printf("%s restore_details %s",prefs->backend,cfile->handle);
     unlink (cfile->info_file);
+
     lives_system(com,FALSE);
     // auto-d
     g_free(com);
@@ -4451,10 +4465,11 @@ void restore_file(const gchar *file_name) {
   com=g_strdup_printf("%s restore %s %s",prefs->backend,cfile->handle,
 		      (tmp=g_filename_from_utf8(file_name,-1,NULL,NULL,NULL)));
   mainw->com_failed=FALSE;
+  unlink (cfile->info_file);
+
   lives_system(com,FALSE);
   g_free(tmp);
   g_free(com);
-  unlink (cfile->info_file);
   
   if (mainw->com_failed) {
     mainw->com_failed=FALSE;

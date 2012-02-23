@@ -138,13 +138,16 @@ gboolean do_tempdir_query(void) {
 
   mainw->com_failed=FALSE;
 
+  if (!g_file_test(dirname,G_FILE_TEST_IS_DIR)) {
+
 #ifndef IS_MINGW
-  com=g_strdup_printf ("/bin/mkdir -p \"%s\" 2>/dev/null",dirname);
+    com=g_strdup_printf ("/bin/mkdir -p \"%s\" 2>/dev/null",dirname);
 #else
-  com=g_strdup_printf ("mkdir.exe -p \"%s\" >NUL",dirname);
+    com=g_strdup_printf ("mkdir.exe /p \"%s\" 2>NUL",dirname);
 #endif
-  lives_system (com,FALSE);
-  g_free (com);
+    lives_system (com,FALSE);
+    g_free (com);
+  }
 
   if (mainw->com_failed) goto top;
 
@@ -162,7 +165,11 @@ gboolean do_tempdir_query(void) {
   set_pref("tempdir",prefs->tmpdir);
   set_pref("session_tempdir",prefs->tmpdir);
 
+#ifndef IS_MINGW
   g_snprintf(mainw->first_info_file,PATH_MAX,"%s"G_DIR_SEPARATOR_S".info.%d",prefs->tmpdir,getpid());
+#else
+  g_snprintf(mainw->first_info_file,PATH_MAX,"%s"G_DIR_SEPARATOR_S"info.%d",prefs->tmpdir,getpid());
+#endif
 
   g_free(dirname);
   return TRUE;
@@ -725,7 +732,7 @@ gboolean do_startup_tests(gboolean tshoot) {
       afile=g_build_filename(prefs->tmpdir,cfile->handle,"testout.wav",NULL);
     
       mainw->com_failed=FALSE;
-      com=g_strdup_printf("%s export_audio \"%s\" 0. 0. 44100 2 16 0 22050 \"%s\"",prefs->backend,cfile->handle,afile);
+      com=g_strdup_printf("%s export_audio \"%s\" 0. 0. 44100 2 16 0 22050 \"%s\"",prefs->backend_sync,cfile->handle,afile);
       lives_system(com,TRUE);
       if (mainw->com_failed) {
 	tmp=g_strdup_printf(_("Command failed: %s"),com);

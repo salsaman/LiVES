@@ -638,7 +638,7 @@ static void mt_load_recovery_layout(lives_mt *mt) {
 #ifndef IS_MINGW
       com=g_strdup_printf("/bin/mkdir -p \"%s\" 2>/dev/null",uldir);
 #else
-      com=g_strdup_printf("mkdir.exe -p \"%s\" 2>NUL",uldir);
+      com=g_strdup_printf("mkdir.exe /p \"%s\" 2>NUL",uldir);
 #endif
       lives_system(com,TRUE);
       g_free(com);
@@ -17507,7 +17507,7 @@ void save_layout_map (int *lmap, double *lmap_audio, const gchar *file, const gc
 #ifndef IS_MINGW
   com=g_strdup_printf("/bin/mkdir -p \"%s\" 2>/dev/null",ldir);
 #else
-  com=g_strdup_printf("mkdir.exe -p \"%s\" 2>NUL",ldir);
+  com=g_strdup_printf("mkdir.exe /p \"%s\" 2>NUL",ldir);
 #endif
   lives_system(com,FALSE);
   g_free(com);
@@ -17789,7 +17789,7 @@ void on_save_event_list_activate (GtkMenuItem *menuitem, gpointer user_data) {
 #ifndef IS_MINGW
   com=g_strdup_printf ("/bin/mkdir -p \"%s\"",esave_dir);
 #else
-  com=g_strdup_printf ("mkdir.exe -p \"%s\"",esave_dir);
+  com=g_strdup_printf ("mkdir.exe /p \"%s\"",esave_dir);
 #endif
   lives_system (com,FALSE);
   g_free (com);
@@ -19290,7 +19290,7 @@ weed_plant_t *load_event_list(lives_mt *mt, gchar *eload_file) {
 #ifndef IS_MINGW
     com=g_strdup_printf ("/bin/mkdir -p \"%s\"",eload_dir);
 #else
-    com=g_strdup_printf ("mkdir.exe -p \"%s\"",eload_dir);
+    com=g_strdup_printf ("mkdir.exe /p \"%s\"",eload_dir);
 #endif
     lives_system (com,FALSE);
     g_free (com);

@@ -281,7 +281,11 @@ int lives_system(const char *com, gboolean allow_error) {
 
   retval=system(com);
 
-  if (retval) {
+  if (retval
+#ifdef IS_MINGW
+      &&retval!=9009
+#endif
+      ) {
     gchar *msg=NULL;
     mainw->com_failed=TRUE;
     if (!allow_error) {
@@ -2193,7 +2197,7 @@ void remove_layout_files(GList *map) {
 #ifndef IS_MINGW
 	    com=g_strdup_printf("/bin/rmdir -p \"%s\" 2>/dev/null",fdir);
 #else
-	    com=g_strdup_printf("rmdir.exe -p \"%s\" 2>NUL",fdir);
+	    com=g_strdup_printf("rmdir.exe /p \"%s\" 2>NUL",fdir);
 #endif
 	    lives_system(com,TRUE);
 	    g_free(com);
@@ -3483,9 +3487,9 @@ gboolean check_dir_access (const gchar *dir) {
 
   if (!exists) {
 #ifndef IS_MINGW
-    com=g_strdup_printf ("/bin/mkdir -p %s",dir);
+    com=g_strdup_printf ("/bin/mkdir -p \"%s\"",dir);
 #else
-    com=g_strdup_printf ("mkdir.exe -p %s",dir);
+    com=g_strdup_printf ("mkdir.exe /p \"%s\"",dir);
 #endif
     lives_system (com,TRUE);
     g_free (com);
@@ -3980,7 +3984,7 @@ gchar *get_val_from_cached_list(const gchar *key, size_t maxlen) {
       if (!strncmp(keystr_end,(gchar *)clist->data,kelen)) {
 	break;
       }
-      if (strncmp((gchar *)clist->data,"#",1)) g_strappend(buff,maxlen,(gchar *)clist->data);
+      if (strncmp((gchar *)clist->data,"|",1)) g_strappend(buff,maxlen,(gchar *)clist->data);
       else {
 	if (clist->prev!=NULL) clist->prev->next=clist->next;
       }
@@ -4165,7 +4169,11 @@ gboolean get_clip_value(int which, lives_clip_details_t what, void *retval, size
       return FALSE;
     }
     
+#ifndef IS_MINGW
     vfile=g_strdup_printf("%s/.smogval.%d.%d",prefs->tmpdir,lives_getuid(),lives_getpid());
+#else
+    vfile=g_strdup_printf("%s/smogval.%d.%d",prefs->tmpdir,lives_getuid(),lives_getpid());
+#endif
 
     do {
       retval2=0;

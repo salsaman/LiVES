@@ -3388,7 +3388,7 @@ gboolean rfxbuilder_to_script (rfx_build_window_t *rfxbuilder) {
 #ifndef IS_MINGW
   lives_system ((tmpx=g_strdup_printf ("/bin/mkdir -p \"%s/\"",script_file_dir)),FALSE);
 #else
-  lives_system ((tmpx=g_strdup_printf ("mkdir.exe -p \"%s/\"",script_file_dir)),FALSE);
+  lives_system ((tmpx=g_strdup_printf ("mkdir.exe /p \"%s/\"",script_file_dir)),FALSE);
 #endif
   g_free(tmpx);
 
@@ -4322,7 +4322,7 @@ void on_import_rfx_ok (GtkButton *button, gpointer user_data) {
     lives_system ((tmpx=g_strdup_printf ("/bin/mkdir -p \"%s\"",
 					 (tmp=g_filename_from_utf8(rfx_dir_to,-1,NULL,NULL,NULL)))),FALSE);
 #else
-    lives_system ((tmpx=g_strdup_printf ("mkdir.exe -p \"%s\"",
+    lives_system ((tmpx=g_strdup_printf ("mkdir.exe /p \"%s\"",
 					 (tmp=g_filename_from_utf8(rfx_dir_to,-1,NULL,NULL,NULL)))),FALSE);
 #endif
     g_free(tmp);
@@ -4336,7 +4336,7 @@ void on_import_rfx_ok (GtkButton *button, gpointer user_data) {
     lives_system ((tmpx=g_strdup_printf ("/bin/mkdir -p \"%s\"",
 					 (tmp=g_filename_from_utf8(rfx_dir_to,-1,NULL,NULL,NULL)))),FALSE);
 #else
-    lives_system ((tmpx=g_strdup_printf ("mkdir.exe -p \"%s\"",
+    lives_system ((tmpx=g_strdup_printf ("mkdir.exe /p \"%s\"",
 					 (tmp=g_filename_from_utf8(rfx_dir_to,-1,NULL,NULL,NULL)))),FALSE);
 #endif
     g_free(tmpx);
@@ -4713,9 +4713,6 @@ void add_rfx_effects(void) {
   GList *rfx_custom_list=NULL;
   GList *rfx_test_list=NULL;
 
-  gint tool_posn=RFX_TOOL_MENU_POSN;
-
-  gint rfx_builtin_list_length=0,rfx_custom_list_length=0,rfx_test_list_length=0,rfx_list_length=0;
 
   lives_rfx_t *rfx=NULL;
   lives_rfx_t *rendered_fx;
@@ -4728,6 +4725,11 @@ void add_rfx_effects(void) {
   int i,plugin_idx,rfx_slot_count=1;
 
   int rc_child=0;
+
+  gint tool_posn=RFX_TOOL_MENU_POSN;
+  gint rfx_builtin_list_length=0,rfx_custom_list_length=0,rfx_test_list_length=0,rfx_list_length=0;
+
+  gboolean allow_nonex;
 
   mainw->has_custom_tools=FALSE;
   mainw->has_custom_gens=FALSE;
@@ -4795,13 +4797,19 @@ void add_rfx_effects(void) {
 
 
   // scan rendered effect directories
-  rfx_custom_list=get_plugin_list (PLUGIN_RENDERED_EFFECTS_CUSTOM,FALSE,NULL,NULL);
+#ifndef IS_MINGW
+  allow_nonex=FALSE;
+#else
+  allow_nonex=TRUE;
+#endif
+
+  rfx_custom_list=get_plugin_list (PLUGIN_RENDERED_EFFECTS_CUSTOM,allow_nonex,NULL,NULL);
   rfx_custom_list_length=g_list_length(rfx_custom_list);
 
-  rfx_test_list=get_plugin_list (PLUGIN_RENDERED_EFFECTS_TEST,FALSE,NULL,NULL);
+  rfx_test_list=get_plugin_list (PLUGIN_RENDERED_EFFECTS_TEST,allow_nonex,NULL,NULL);
   rfx_test_list_length=g_list_length(rfx_test_list);
     
-  if ((rfx_builtin_list=get_plugin_list (PLUGIN_RENDERED_EFFECTS_BUILTIN,FALSE,NULL,NULL))==NULL) {
+  if ((rfx_builtin_list=get_plugin_list (PLUGIN_RENDERED_EFFECTS_BUILTIN,allow_nonex,NULL,NULL))==NULL) {
     do_rendered_fx_dialog();
   }
   else {

@@ -3640,20 +3640,29 @@ void weed_load_all (void) {
   g_free(lives_weed_plugin_path);
 
   // first we parse the weed_plugin_path
+#ifndef IS_MINGW
   numdirs=get_token_count(weed_plugin_path,':');
   dirs=g_strsplit(weed_plugin_path,":",-1);
+#else
+  numdirs=get_token_count(weed_plugin_path,';');
+  dirs=g_strsplit(weed_plugin_path,";",-1);
+#endif
   threaded_dialog_spin();
 
   for (i=0;i<numdirs;i++) {
     // get list of all files
     weed_plugin_list=get_plugin_list(PLUGIN_EFFECTS_WEED,TRUE,dirs[i],NULL);
     listlen=g_list_length(weed_plugin_list);
-    
+
     // parse twice, first we get the plugins, then 1 level of subdirs
     for (plugin_idx=0;plugin_idx<listlen;plugin_idx++) {
       threaded_dialog_spin();
       plugin_name=(gchar *)g_list_nth_data(weed_plugin_list,plugin_idx);
+#ifndef IS_MINGW
       if (!strncmp(plugin_name+strlen(plugin_name)-3,".so",3)) {
+#else
+      if (!strncmp(plugin_name+strlen(plugin_name)-4,".dll",4)) {
+#endif
 	plugin_path=g_build_filename(dirs[i],plugin_name,NULL);
 	load_weed_plugin(plugin_name,plugin_path,dirs[i]);
 	g_free(plugin_name);
@@ -3675,8 +3684,12 @@ void weed_load_all (void) {
 	g_free(subdir_path);
 	continue;
       }
+#ifndef IS_MINGW
       weed_plugin_sublist=get_plugin_list(PLUGIN_EFFECTS_WEED,TRUE,subdir_path,"so");
-      
+#else
+      weed_plugin_sublist=get_plugin_list(PLUGIN_EFFECTS_WEED,TRUE,subdir_path,"dll");
+#endif      
+
       for (plugin_idx=0;plugin_idx<g_list_length(weed_plugin_sublist);plugin_idx++) {
 	plugin_name=(gchar *)g_list_nth_data(weed_plugin_sublist,plugin_idx);
 	plugin_path=g_build_filename(subdir_path,plugin_name,NULL);
@@ -3715,7 +3728,7 @@ void weed_filter_free(weed_plant_t *filter) {
     func=weed_get_voidptr_value(filter,"init_func",&error);
     if (func!=NULL) weed_free(func);
   }
-
+  
   if (weed_plant_has_leaf(filter,"deinit_func")) {
     func=weed_get_voidptr_value(filter,"deinit_func",&error);
     if (func!=NULL) weed_free(func);

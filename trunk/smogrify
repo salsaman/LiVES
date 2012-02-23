@@ -33,19 +33,22 @@ $version="1.6.2-svn";
 ###################################################################
 
 
+
 $uid=$>;
 $gid=$);
 $gid=~ s/\W.*//;
 
 if ($^O eq "MSWin32") {
     $login = getlogin;
-    $home="C:\\users\\$login";
-    $rc_filename=".lives";
 
-    $lives_home_dir="$home/.lives-dir/";
+#TODO - get this from the registry when needed
+    $home="C:\\users\\$login\\Application Data\\LiVES";
+    $rc_filename="LiVES.ini";
+    $lives_home_dir="$home\\Config";
+
 
 # default temporary directory (can be overridden from the GUI)
-    $default_tmpdir="C:\\livestmp\\";
+    $default_tmpdir="$home\\livescache\\";
     $is_mingw=1;
     $nulfile="NUL";
 }
@@ -55,7 +58,7 @@ else {
     $lives_home_dir="$home/.lives-dir/";
 
 # default temporary directory (can be overridden from the GUI)
-    $default_tmpdir="/tmp/livestmp/";
+    $default_tmpdir="$home/livestmp/";
     $nulfile="/dev/null";
 }
 
@@ -76,7 +79,7 @@ if (defined($ARGV[0])) {
 	    if ($tmpdir eq ""||$command eq "report") {
 		$tmpdir=&rc_get("tempdir");
 		$priority=1;
-		&rc_set("session_tempdir",$tmpdir);
+		&rc_set("session_tempdir","$tmpdir");
 		$priority=0;
 	    }
 
@@ -104,7 +107,13 @@ if (defined($ARGV[0])) {
 	if ($command eq "get_pid_for_handle") {
 	    $handle=$ARGV[1];
 	    $curtmpdir="$tmpdir/$handle";
-	    $pidfile="$curtmpdir/.pid";
+
+	    if ($^O eq "MSWin32") {
+		$pidfile="$curtmpdir/pid";
+	    }
+	    else {
+		$pidfile="$curtmpdir/.pid";
+	    }
 
 	    if (defined(open IN,"< $pidfile")) {
 		read IN,$target_pid,8;
@@ -198,8 +207,13 @@ if (defined($ARGV[0])) {
 	$key=$ARGV[1];
 
 	# write mini-info file
-	$infofile="$tmpdir/.info.$key";
-	
+
+	if ($^O eq "MSWin32") {
+	    $infofile="$tmpdir/info.$key";
+	}
+	else {
+	    $infofile="$tmpdir/.info.$key";
+	}
 	do {
 	    $handle=int(rand 1000000000)+65536;
 	    $curtmpdir="$tmpdir/$handle";
@@ -224,9 +238,16 @@ if (defined($ARGV[0])) {
     
 
     if ($command eq "get_tempdir") {
+	# TODO - take dirname as second param
 	if (defined($ARGV[1])) {
 	    $id=$ARGV[1];
-	    open OUT,"> /tmp/.smogrify.$id" or exit 1;
+
+	    if ($^O ne "MSWin32") {
+		open OUT,"> /tmp/.smogrify.$id" or exit 1;
+	    }
+	    else {
+		open OUT,"> C:\\smogrify.$id" or exit 1;
+	    }
 	    print OUT "$tmpdir";
 	    close OUT;
 	}
@@ -248,9 +269,20 @@ if (defined($ARGV[0])) {
 	}
 
     if ($command eq "report") {
+
 	$gui_bootstrap_file="";
 	if (defined($ARGV[1])) {
 	    $gui_bootstrap_file=$ARGV[1];
+	}
+
+	if (! -d "$lives_home_dir") {
+	    # this can fail here, but succeed later
+	    if ($^O ne "MSWin32") {
+		lives_system("/bin/mkdir -p -mode=777 \"$lives_home_dir\"");
+	    }
+	    else {
+		lives_system("mkdir.exe /p \"$lives_home_dir\"");
+	    }
 	}
 
 	$startup_phase=0;
@@ -284,21 +316,16 @@ if (defined($ARGV[0])) {
 
 	$default_keymap="default.keymap";
 
-	if (! -d "$lives_home_dir") {
-	    # this can fail here, but succeed later
-	    mkdir ("$lives_home_dir",0700);
-	}
-
-	&rc_set_if_not_set("version",$version);
-	&rc_set_if_not_set("tempdir",$default_tmpdir);
+	&rc_set_if_not_set("version","$version");
+	&rc_set_if_not_set("tempdir","$default_tmpdir");
 
 	if (defined($dyneversion)) {
 	    &rc_set_if_not_set("lib_dir","/opt/$dyneversion/lib/");
 	    &rc_set_if_not_set("prefix_dir","/opt/$dyneversion/");
 	}
 
-	&rc_set_if_not_set("video_open_command",$video_open_command);
-	&rc_set_if_not_set("audio_play_command",$audio_play_command);
+	&rc_set_if_not_set("video_open_command","$video_open_command");
+	&rc_set_if_not_set("audio_play_command","$audio_play_command");
 	&rc_set_if_not_set("audio_player",$audio_player);
 	&rc_set_if_not_set("midisynch","false");
 	&rc_set_if_not_set("pb_quality",2);
@@ -373,8 +400,6 @@ if (defined($ARGV[0])) {
 	}
 	&version_check_and_upgrade;
 
-
-
 	unless ($gui_bootstrap_file eq "") {
 	    open OUT,"> $gui_bootstrap_file" or exit 4;
 	    print OUT "$version|$tmpdir|$startup_phase|$msg|$msg2";
@@ -382,9 +407,9 @@ if (defined($ARGV[0])) {
 	}
 
 	#make sure we can write to tempir
-	open OUT,"> $tmpdir/.test" or exit 5;
+	open OUT,"> $tmpdir/testfile" or exit 5;
 	close OUT;
-	unlink "$tmpdir/.test";
+	unlink "$tmpdir/testfile";
 
 	exit 0;
     }
@@ -400,21 +425,14 @@ if (defined($ARGV[0])) {
 	$key=$ARGV[1];
 	$value=$ARGV[2];
 
-	if (substr($value,0,1) eq "'") {
-	    $value=substr($value,1,-1);
-	}
-
-	&rc_set($key,$value);
+	&rc_set("$key","$value");
 	exit 0;
     }
 	
     if ($command eq "set_pref_if_not_set") {
 	$key=$ARGV[1];
 	$value=$value=$ARGV[2];
-	if (substr($value,0,1) eq "'") {
-	    $value=substr($value,1,-1);
-	}
-	&rc_set_if_not_set($key,$value);
+	&rc_set_if_not_set("$key","$value");
 	exit 0;
     }
 	
@@ -451,8 +469,12 @@ if (defined($ARGV[0])) {
 	    print $value;
 	    exit 0;
 	}
-
-	open OUT,"> $tmpdir/.smogval.$first.$second" or exit 1;
+	if ($^O eq "MSWin32") {
+	    open OUT,"> $tmpdir/smogval.$first.$second" or exit 1;
+	}
+	else {
+	    open OUT,"> $tmpdir/.smogval.$first.$second" or exit 1;
+	}
 	print OUT $value;
 	close OUT;
 	exit 0;
@@ -478,7 +500,12 @@ if (defined($ARGV[0])) {
 	    $value="NULL";
 	}
 
-	open OUT,"> $tmpdir/.smogval.$first.$second" or exit 1;
+	if ($^O eq "MSWin32") {
+	    open OUT,"> $tmpdir/smogval.$first.$second" or exit 1;
+	}
+	else {
+	    open OUT,"> $tmpdir/.smogval.$first.$second" or exit 1;
+	}
 	print OUT $value;
 	close OUT;
 	exit 0;
@@ -504,7 +531,14 @@ if (defined($ARGV[0])) {
 	    $second=$gid;
 	}
 	$value=&location($exe);
-	open OUT,"> $tmpdir/.smogval.$first.$second" or exit 1;
+
+	if ($^O eq "MSWin32") {
+	    open OUT,"> $tmpdir/smogval.$first.$second" or exit 1;
+	}
+	else {
+	    open OUT,"> $tmpdir/.smogval.$first.$second" or exit 1;
+	}
+
 	print OUT $value;
 	close OUT;
 	exit 0;
@@ -581,7 +615,13 @@ if (defined($ARGV[0])) {
     if ($command eq "undo_audio") {
 	$handle=$ARGV[1];
 	$curtmpdir="$tmpdir/$handle";
-	$statusfile="$curtmpdir/.status";
+	if ($^O eq "MSWin32") {
+	    $statusfile="$curtmpdir/status";
+	}
+	else {
+	    $statusfile="$curtmpdir/.status";
+	}
+
 	&undo_audio; # will abort on failure
 	&sig_complete;
 	exit 0;
@@ -590,7 +630,12 @@ if (defined($ARGV[0])) {
     if ($command eq "backup_audio") {
 	$handle=$ARGV[1];
 	$curtmpdir="$tmpdir/$handle";
-	$statusfile="$curtmpdir/.status";
+	if ($^O eq "MSWin32") {
+	    $statusfile="$curtmpdir/status";
+	}
+	else {
+	    $statusfile="$curtmpdir/.status";
+	}
 	smog_chdir("$curtmpdir");
 	&backup_audio;
 	if ($panic) {
@@ -616,7 +661,13 @@ if (defined($ARGV[0])) {
 	if (defined $ARGV[5]) {
 	    $vsize=$ARGV[5];
 	}
-	$statusfile="$curtmpdir/.status";
+
+	if ($^O eq "MSWin32") {
+	    $statusfile="$curtmpdir/status";
+	}
+	else {
+	    $statusfile="$curtmpdir/.status";
+	}
 
 	# check the file is writable
 	unless (&is_writeable($nfile)) {
@@ -655,7 +706,13 @@ if (defined($ARGV[0])) {
 	$leave_headers=$ARGV[3];
 
 	$curtmpdir="$tmpdir/$handle";
-	$statusfile="$curtmpdir/.status";
+
+	if ($^O eq "MSWin32") {
+	    $statusfile="$curtmpdir/status";
+	}
+	else {
+	    $statusfile="$curtmpdir/.status";
+	}
 
 	smog_chdir("$curtmpdir");
 	$fsize= -s "$nfile";
@@ -715,6 +772,7 @@ if (defined($ARGV[0])) {
     }
 
     if ($command eq "list_plugins") {
+
 	# prefix_dir pref should be set first
 	# plugins are returned in sort() order
 	my $allow_nonex=$ARGV[1];
@@ -781,7 +839,12 @@ if (defined($ARGV[0])) {
 	if ($command eq "make_thumb") {
 	    $handle=$ARGV[1];
 	    $curtmpdir="$tmpdir/$handle";
-	    $statusfile="$curtmpdir/.status";
+	    if ($^O eq "MSWin32") {
+		$statusfile="$curtmpdir/status";
+	    }
+	    else {
+		$statusfile="$curtmpdir/.status";
+	    }
 	    $dwidth=$ARGV[2];
 	    $dheight=$ARGV[3];
 	    $img_ext=".".$ARGV[4];
@@ -831,7 +894,12 @@ if (defined($ARGV[0])) {
 	    #
 	    $handle=$ARGV[1];
 	    $curtmpdir="$tmpdir/$handle";
-	    $statusfile=$curtmpdir."/.status";
+	    if ($^O eq "MSWin32") {
+		$statusfile="$curtmpdir/status";
+	    }
+	    else {
+		$statusfile="$curtmpdir/.status";
+	    }
 	    smog_chdir("$curtmpdir");
 	    $start=$ARGV[2];
 	    $end=$ARGV[3];
@@ -863,7 +931,13 @@ if (defined($ARGV[0])) {
 	    #need this again - something resets us
 	    smog_chdir("$curtmpdir");
 
-	    $com="\"$plugin\" clear $start $end $img_ext";
+	    if ($^O eq "MSWin32") {
+		# TODO - filter by file ext
+		$com="perl \"$plugin\" clear $start $end $img_ext";
+	    }
+	    else {
+		$com="\"$plugin\" clear $start $end $img_ext";
+	    }
 	    $smerr=smog_system($com);
 	    if ($smerr) {
 		sig_system_error("Command failed: $com",$smerr); 
@@ -877,6 +951,7 @@ if (defined($ARGV[0])) {
 
 	if ($command eq "check_for_lock") {
 #TODO - mingw
+
 	    # check if there is a lock file for a set, and if so is it in use
 	    my $setname=$ARGV[1];
 	    my $exename=$ARGV[2];
@@ -994,7 +1069,12 @@ if (defined($ARGV[0])) {
                 $found="none";
             }
 
-            $infofile="$tmpdir/.info.$pid";
+	    if ($^O eq "MSWin32") {
+		$infofile="$tmpdir/info.$pid";
+	    }
+	    else {
+		$infofile="$tmpdir/.info.$pid";
+	    }
             smog_system_sync();
 
             if (-d $tmpdir) {
@@ -1010,7 +1090,9 @@ if (defined($ARGV[0])) {
 	    smog_chdir("$tmpdir");
 	    print "Cleaning up temporary space for $GUI_NAME.\n";
 	    if ($command eq "cleanup") {
-		unlink "/tmp/.smogval*";
+		if ($^O ne "MSWin32") {
+		    unlink "/tmp/.smogval*";  # TODO *** !!!!!!!!!!
+		}
 		unlink <* .*>;  # will not remove directories
 	    }
 	    else {
@@ -1076,7 +1158,12 @@ if (defined($ARGV[0])) {
         if ($command eq "mv_pre") {
 	    $handle=$ARGV[1];
 	    $curtmpdir="$tmpdir/$handle";
-            $statusfile=$curtmpdir."/.status";
+	    if ($^O eq "MSWin32") {
+		$statusfile="$curtmpdir/status";
+	    }
+	    else {
+		$statusfile="$curtmpdir/.status";
+	    }
 	    unlink "$curtmpdir/pause";
 	    $start=$ARGV[2];
 	    $end=$ARGV[3];
@@ -1119,13 +1206,29 @@ if (defined($ARGV[0])) {
     $handle=$ARGV[1];
 
     $curtmpdir="$tmpdir/$handle";
-    $statusfile=$curtmpdir."/.status";
 
-    if ($command eq "play"||$command eq "play_opening_preview") {
-	$pidfile=$curtmpdir."/.pidpb";
+    if ($^O eq "MSWin32") {
+	$statusfile=$curtmpdir."/status";
     }
     else {
-	$pidfile=$curtmpdir."/.pid";
+	$statusfile=$curtmpdir."/.status";
+    }
+
+    if ($command eq "play"||$command eq "play_opening_preview") {
+	if ($^O eq "MSWin32") {
+	    $pidfile=$curtmpdir."/pidpb";
+	}
+	else {
+	    $pidfile=$curtmpdir."/.pidpb";
+	}
+    }
+    else {
+	if ($^O eq "MSWin32") {
+	    $pidfile=$curtmpdir."/pid";
+	}
+	else {
+	    $pidfile=$curtmpdir."/.pid";
+	}
     }
 
     if ($command eq "play_opening_preview") {
@@ -1292,7 +1395,7 @@ if (defined($ARGV[0])) {
 	$showed_err=0;
 
 	do {
-	    if (! -d "$curtmpdir" || -f "$curtmpdir/.stoploop" || ! -f $audiofile) {
+	    if (! -d "$curtmpdir" || -f "$curtmpdir/.stoploop" || -f "$curtmpdir/stoploop" || ! -f $audiofile) {
 		$loop=0;
 	    }
 	    else {
@@ -1311,6 +1414,7 @@ if (defined($ARGV[0])) {
 	&sig_complete_audio;
 
 	unlink "$curtmpdir/.stoploop";
+	unlink "$curtmpdir/stoploop";
 
 	exit 0;
     }
@@ -1371,7 +1475,7 @@ if (defined($ARGV[0])) {
 	# process video
 
 	# 3 other files we will use
-	$curtmpfile=".temp";
+	$curtmpfile="tempresult";
 	$audio_out="audio";
 	$audio_in="audiodump.pcm";
 
@@ -1605,9 +1709,10 @@ if (defined($ARGV[0])) {
     }
 
     if ($command eq "get_details") {
+
 	$handle=$ARGV[1];
 	$curtmpdir="$tmpdir/$handle";
-	$statusfile="$curtmpdir/.status";
+
 
 	#attempt to get file details
 	$file=$ARGV[2];
@@ -1632,7 +1737,10 @@ if (defined($ARGV[0])) {
 	    $asamps=16;
 	}
 
+	smog_chdir("$curtmpdir");
+
 	&sig_complete($handle,$count,$type,$hsize,$vsize,$bpp,$fps,$f_size,$arate,$achans,$asamps,$signed,$endian,$af_size,$title,$author,$comment);
+
 	exit 0;
     }
 
@@ -1712,7 +1820,7 @@ if (defined($ARGV[0])) {
 		}
 	    }
 	    if (chdir("$curtmpdir")) {
-		unlink <* .*>;
+		unlink glob <* .*>;
 		smog_chdir("$tmpdir");
 		rmdir $curtmpdir;
 	    }
@@ -1752,8 +1860,15 @@ if (defined($ARGV[0])) {
 		$handle=$ARGV[1];
 
 		$curtmpdir="$tmpdir/$handle";
-		$statusfile=$curtmpdir."/.status";
-		$pidfile=$curtmpdir."/.pid";
+		if ($^O eq "MSWin32") {
+		    $statusfile="$curtmpdir/status";
+		    $pidfile=$curtmpdir."/pid";
+		}
+		else {
+		    $statusfile="$curtmpdir/.status";
+		    $pidfile=$curtmpdir."/.pid";
+		}
+
 	    }
 
 	    unlink "$curtmpdir/pause";
@@ -1979,6 +2094,7 @@ if (defined($ARGV[0])) {
 		unlink ".comment";
 	    }
 	    @tmp=split(/\|\|\%/,$string);
+
 	    $title=$tmp[0];
 	    $author=$tmp[1];
 	    $comment=$tmp[2];
@@ -2035,7 +2151,7 @@ if (defined($ARGV[0])) {
 		    $com="mkdir.exe -p \"$linksdir\"";
 		}
 		else {
-		    $com="/bin/mkdir -p \"$linksdir\"";
+		    $com="/bin/mkdir /p \"$linksdir\"";
 		}
 		$smerr=smog_system($com);
 		if ($smerr) {
@@ -2242,121 +2358,42 @@ if (defined($ARGV[0])) {
 	    exit 1;
 	}
 
-	if ($^O ne "MSWin32") {
-	$img_ext=&get_img_ext($curtmpdir,$start);
-	if ($start>0) {
-	    # we have to add frames 100 at a time, otherwise tar complains about 'too many parameters'
-	    # TODO - rewrite using xargs or pattern exclude (like projects)
-	    $oend=$end;
-	    $nexthundred=int($start/100)+1;
-	    if ($end>$nexthundred*100-1) {
-		$end=$nexthundred*100-1;
-	    }
-	    
-	    $tarcount=1;
-	    $tarname=&mkname($tarcount).".tar";
-	    
-	    for ($i=$start;$i<=$end;$i++) {
-		$name=&mkname($i);
-		$com="tar -rf \"$tarname\" \"$name$img_ext\"";
-		$smerr=smog_system ($com);
-		if ($smerr) {
-		    sig_system_error("$com",$smerr);
-		    unlink "$pidfile"; 
-		    exit 1;
-		}
-		&sig_progress(int($start+($i-$start)/4));
-	    }
-	    
-	    while (($nexthundred+1)*100<=$oend) {
-		$end=$nexthundred*100;
-		$len=length ($nexthundred);
-		$name=substr("000000",$len) . $nexthundred . "\"*\"";
-		$tarname=&mkname(++$tarcount).".tar";
-		$com="tar -cf \"$tarname\" \"$name$img_ext\"";
-		$smerr=smog_system ($com);
-		if ($smerr) {
-		    sig_system_error("$com",$smerr);
-		    unlink "$pidfile"; 
-		    exit 1;
-		}
-		$nexthundred++;
-		&sig_progress(int($start+($end-$start)/4));
-	    }
-	    
-	    $tarname=&mkname(++$tarcount).".tar";
-	    
-	    for ($i=$end;$i<=$oend;$i++) {
-		$name=&mkname($i);
-		$com="tar -rf $tarname $name$img_ext 2>.tar_err";
-		$smerr=smog_system ($com);
-		if ($smerr) {
-		    sig_system_error("$com",$smerr);
-		    unlink "$pidfile"; 
-		    exit 1;
-		}
-		if (-f ".tar_err") {
-		    open IN,"< .tar_err";
-		    read IN,$tarerr,255;
-		    close IN;
-		    unless ($tarerr eq "") {
-			&sig_err("Error creating new backup - temp dir may be full.",$tarerr);
-			unlink <*.tar .tar_err>;
-			unlink "$pidfile";
-			exit 1;
-		    }
-		}
-		&sig_progress($start+($i-$start));
-	    }
+	&sig_progress(0);
+	
+	$com="tar -cf temp.tar header.tar 2>.tar_err";
+	$smerr=smog_system ($com);
+	if ($smerr) {
+	    sig_system_error("$com",$smerr);
+	    unlink "$pidfile"; 
+	    exit 1;
 	}
-
-
-	    $com="tar -czf \"$nfile\" *.tar 2>.tar_err";
-	    $smerr=smog_system ($com);
-	    if ($smerr) {
-		sig_system_error("$com",$smerr);
-		unlink "$pidfile"; 
-		exit 1;
-	    }
+	
+	$com="tar --exclude=*.bak --exclude=*.tar --exclude=.* --exclude=*.mgk --exclude=*.tmp --exclude=audioclip* -rf temp.tar . 2>>.tar_err";
+	$smerr=smog_system ($com);
+	if ($smerr) {
+	    sig_system_error("$com",$smerr);
+	    unlink "$pidfile"; 
+	    exit 1;
 	}
-	else {
-	    &sig_progress(0);
-
-	    $com="tar -cf temp.tar header.tar 2>.tar_err";
-	    $smerr=smog_system ($com);
-	    if ($smerr) {
-		sig_system_error("$com",$smerr);
-		unlink "$pidfile"; 
-		exit 1;
-	    }
-
-	    $com="tar --exclude=*.bak --exclude=*.tar --exclude=.* --exclude=*.mgk --exclude=*.tmp --exclude=audioclip* -cf temp.tar . 2>>.tar_err";
-	    $smerr=smog_system ($com);
-	    if ($smerr) {
-		sig_system_error("$com",$smerr);
-		unlink "$pidfile"; 
-		exit 1;
-	    }
-
-	    $com="gzip -S .lv1 temp.tar";
-	    $smerr=smog_system ($com);
-	    if ($smerr) {
-		sig_system_error("$com",$smerr);
-		unlink "$pidfile"; 
-		exit 1;
-	    }
-
-	    unlink "temp.tar";
-	    
-	    smog_rename("temp.tar.lv1","$nfile");
+	
+	$com="gzip.exe -S .lv1 temp.tar";
+	$smerr=smog_system ($com);
+	if ($smerr) {
+	    sig_system_error("$com",$smerr);
+	    unlink "$pidfile"; 
+	    exit 1;
 	}
-
+	
+	unlink "temp.tar";
+	
+	smog_rename("temp.tar.lv1","$nfile");
+ 
+	
 	unlink <header.tar 0*.tar>;
 	if (-f ".tar_err") {
 	    open IN,"< .tar_err";
 	    read IN,$tarerr,255;
 	    close IN;
-	    # TODO - check this, it is not working
 	    unless ($tarerr eq "") {
 		&sig_error("Error creating new backup.",$tarerr);
 		unlink <*.tar .tar_err>;
@@ -2371,23 +2408,56 @@ if (defined($ARGV[0])) {
 
 
     if ($command eq "restore") {
+
 	$nfile=$ARGV[2];
 	smog_chdir("$curtmpdir");
-
-	$com="tar -zxf \"$nfile\" 2>$nulfile";
-	smog_system ($com);
-	if ($smerr) {
-	    sig_system_error("$com",$smerr);
-	    unlink "$pidfile"; 
-	    exit 1;
+	
+	if ($^O ne "MSWin32") {
+	    $com="tar -zxf \"$nfile\" 2>$nulfile";
+	    smog_system ($com);
+	    if ($smerr) {
+		sig_system_error("$com",$smerr);
+		unlink "$pidfile"; 
+		exit 1;
+	    }
 	}
+	else {
+	    smog_copy("$nfile","$curtmpdir\\temp.gz");
+	    if ($panic) {
+		unlink "$pidfile"; 
+		exit 1;
+	    }
+	    $com="gzip.exe -d temp.gz";
+	    smog_system ($com);
+	    if ($smerr) {
+		sig_system_error("$com",$smerr);
+		unlink "$pidfile"; 
+		exit 1;
+	    }
+	    $com="tar.exe -xf temp";
+	    smog_system ($com);
+	    if ($smerr) {
+		sig_system_error("$com",$smerr);
+		unlink "$pidfile"; 
+		exit 1;
+	    }
+	    unlink "temp";
+	}
+
 	unless (-f "header.tar"||-f "header"||-f "header.lives") {
 	    &sig_error("This does not appear to be a valid backup file","$GUI_NAME was unable to open it.");
 	}
 
+	
+	opendir DIR,$curtmpdir;
+	while ($file=readdir(DIR)) {
+	    if ($file =~ /.tar$/) {
+		smog_system("tar -xf $file 2>$nulfile");
+		unlink ($file);
+	    }
+	}
+	close DIR;
 
-#TODO - mingw
-	smog_system("for i in *.tar; do tar -xf \$i 2>$nulfile; /bin/rm -f \$i; done");
 	&sig_complete;
 	exit 0;
     }
@@ -2855,7 +2925,7 @@ if (defined($ARGV[0])) {
 	}
 
 	&sig_complete;
-	return 0;
+	exit 0;
     }
 
 
@@ -3620,7 +3690,13 @@ if (defined($ARGV[0])) {
 	    else {
 		$plugin_name="$home/.lives-dir/plugins/effects/rendered/test/$command";
 	    }
-	    $smcom="\"$plugin_name\" get_description";
+	    if ($^O eq "MSWin32") {
+		# TODO *** adjust depending on file ext
+		$smcom="perl \"$plugin_name\" get_description";
+	    }
+	    else {
+		$smcom="\"$plugin_name\" get_description";
+	    }
 	    $fx_desc=smog_system_direct($smcom);
 	    if ($?) {
 		sig_system_error($smcom,$?);
@@ -3648,7 +3724,13 @@ if (defined($ARGV[0])) {
 
 	    $fps=0;
 
-	    $fx_caps=smog_system_direct("\"$plugin_name\" get_capabilities");
+	    if ($^O eq "MSWin32") {
+		# TODO *** adjust depending on file ext
+		$fx_caps=smog_system_direct("perl \"$plugin_name\" get_capabilities");
+	    }
+	    else {
+		$fx_caps=smog_system_direct("\"$plugin_name\" get_capabilities");
+	    }
 	    if ($?) {
 		sig_system_error($smcom,$?);
 		unlink $pidfile;
@@ -4200,19 +4282,21 @@ sub smog_rename {
 
 sub smog_copy {
    my ($smfrom,$smto)=@_;
+   my $smcomret;
 
-	if ($^O eq "MSWin32") {
-	    my $smcomret=system("cp.exe -f \"$smfrom\" \"$smto\"");
-	}
-	else {
-	    my $smcomret=system("/bin/cp -f \"$smfrom\" \"$smto\"");
-	}
+   if ($^O eq "MSWin32") {
+       $smcomret=system("cp.exe -f \"$smfrom\" \"$smto\"");
+       
+   }
+   else {
+       $smcomret=system("/bin/cp -f \"$smfrom\" \"$smto\"");
+   }
 
    if ($smcomret!=0 && -f $smfrom) {
        if ($DEBUG_SMOGRIFY) {
 	   print STDERR "smogrify debug - copy failed ($!): $smfrom $smto\n";
        }
-       $panic=sig_system_error("Copying \"$smfrom\" to \"$smto\"",$!);
+       $panic=sig_system_error("Copying $smcomret \"$smfrom\" to \"$smto\"",$!);
    }
 
    $smcomret;
@@ -4658,7 +4742,7 @@ sub get_file_info {
     }
 
     $mplay_command.=&rc_get("video_open_command");
-    $file_ident="$curtmpdir/file_info";
+    $file_ident="file_info";
 
     if ($mplay_command eq "") {
 	$mplay_command=&get_location("mplayer");
@@ -4675,6 +4759,8 @@ sub get_file_info {
 	$type="Audio";
     }
 
+    smog_chdir("$curtmpdir");
+
     # if mplayer supports the -identify command, use that
     # the format changed for 1.0pre1 so now we use -vo null -ao null -frames 0
 
@@ -4688,8 +4774,8 @@ sub get_file_info {
 	    $com="$mplay_command -identify -vo null -ao null -frames 0 \"$file\">\"$file_ident\" 2>$nulfile <$nulfile";
 	}
 
-
 	$smerr=smog_system($com);
+
 	if ($smerr) {
 	    do_system_error("$com",$smerr);
 	    $panic=1;
@@ -6217,6 +6303,7 @@ sub clean_old {
 
 
 sub sig_complete {
+
     return if (! -d "$curtmpdir");
     my($status)="completed";
     foreach (@_) {
@@ -6225,9 +6312,10 @@ sub sig_complete {
     smog_system_sync();
 
     if (-d $curtmpdir) {
-	open OUT,"> $statusfile";
+	open OUT,">","$statusfile";
 	print OUT "$status";
 	close OUT;
+
 	unlink "$pidfile";
     }
 }
@@ -6415,11 +6503,9 @@ sub location {
 
 
 sub rc_set_if_not_set {
-    my ($key)=$_[0];
-    shift (@_);
-    my ($value)=join(" ",@_);
+    my ($key,$value)=@_;
     $skip_if_exist=1;
-    &rc_set($key,$value);
+    &rc_set("$key","$value");
 }
 
 sub rc_delete {
@@ -6432,10 +6518,8 @@ sub rc_delete {
 
 
 sub rc_set {
-    # set/mdoify/delete a value in the .rc file
-    my ($key)=$_[0];
-    shift (@_);
-    my ($value)=join(" ",@_);
+    # set/modify/delete a value in the .rc file
+    my ($key,$value)=@_;
 
     my ($rcfile)=$home."/".$rc_filename;
 
@@ -6445,6 +6529,10 @@ sub rc_set {
 
     if (!defined(open OUT,"> $rcfile.new") && -e $rcfile) {
 	exit 3;
+    }
+
+    if (substr($value,-1,1) eq "\"" && substr($value,0,1) ne "\"") {
+	$value=substr($value,0,length($value)-1);
     }
 
     # autoflush output
@@ -6532,7 +6620,7 @@ sub rc_set {
 	if ($found==0&&$delpref==0) {
 	    if ($priority==1) {
 		$priority=2;
-		&rc_set($key,$value);
+		&rc_set("$key","$value");
 	    }
 	    else {
 		print OUT "\n<$key>\n$value\n</$key>\n";
@@ -6713,7 +6801,7 @@ sub mktmpdir {
 	unless (mkdir $tmpdir,0777) {
 	    unless ($gui_bootstrap_file eq "") {
 		open OUT,"> $gui_bootstrap_file" or exit 4;
-		print OUT "$version|$tmpdir|$msg|$msg2";
+		print OUT "$version#$tmpdir#$msg#$msg2";
 		close OUT;
 	    }
 	    exit 5;
@@ -6777,7 +6865,7 @@ sub version_check_and_upgrade {
     $msg="";
 
     # throw a warning if using png and convert_version < 6.0.0
-    if (&rc_get("default_image_format") eq "png" && $convert_version_hash<6000) {
+    if (&rc_get("default_image_format") eq "png" && $convert_version_hash<6000 && $convert_version_hash>0) {
 	$msg="You are advised to upgrade to at least version 6.0 of Image Magick if using png files";
     }
 
@@ -6856,7 +6944,7 @@ sub version_check_and_upgrade {
 
 
     # bless this version
-    &rc_set("version",$version);
+    &rc_set("version","$version");
 }
 
 
@@ -6934,9 +7022,10 @@ sub weed {
     opendir DIR,$tmpdir;
     while ($file=readdir(DIR)) {
 	unless ($file =~ /^\./) {
+
+
 	    if (-d "$tmpdir/$file") {
                 # remove a set unlesss it has clips OR (layouts AND NOT (opts & 0x04))
-          
 		if (&is_non_empty_dir("$tmpdir/$file/clips") || (&is_non_empty_dir("$tmpdir/$file/layouts") && !($opts & 0x04))) {
 		    # new style sets, check clips and optionally layouts
 		    unless (!defined($new_temp)||$new_temp eq "") {
@@ -6955,14 +7044,16 @@ sub weed {
 		    }
 		}
 		else {
+
+
                     # dir is of no interest
 		    $in_set=0;
 		    find (\&fndset,"$tmpdir/$file/");
 		    if (!$in_set && !($opts & 0x01)) {
-
     	                if ($^O eq "MSWin32") {
-                           smog_system("DEL /q \"$tmpdir\\$file\"");
-                           smog_system("RMDIR \"$tmpdir\\$file\"");
+                            smog_system("DEL /q \"$tmpdir\\$file\"");
+                            smog_system("RMDIR \"$tmpdir\\$file\"");
+
 	                }
 	                else {
                            smog_system("/bin/rm -rf \"$tmpdir/$file\"");
@@ -7085,7 +7176,7 @@ sub clear_symlinks {
     
     #create dir so next step works
     if ($^O eq "MSWin32") {
-	smog_system("mkdir.exe -p \"$linksdir\"");
+	smog_system("mkdir.exe /p \"$linksdir\"");
     }
     else {
 	smog_system("/bin/mkdir -p \"$linksdir\"");
@@ -7093,7 +7184,7 @@ sub clear_symlinks {
 
     # remove dir + any empty parents
     if ($^O eq "MSWin32") {
-	smog_system("rmdir.exe -p \"$linksdir\" 2>$nulfile");
+	smog_system("rmdir.exe /p \"$linksdir\" 2>$nulfile");
     }
     else {
 	smog_system("/bin/rmdir -p \"$linksdir\" 2>$nulfile");

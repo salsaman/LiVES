@@ -2013,7 +2013,7 @@ _entryw* create_rename_dialog (gint type) {
     if (palette->style&STYLE_1) {
       gtk_widget_modify_fg (label, GTK_STATE_NORMAL, &palette->normal_fore);
     }
-    label = gtk_label_new (_("\nFirst of all you need to choose a working directory for LiVES.\nThis should be a directory with plenty of disk space available.\nNote, on many systems, /tmp is cleared on shutdown, so it may be inadvisable to create it in /tmp.\n"));
+    label = gtk_label_new (_("\nFirst of all you need to choose a working directory for LiVES.\nThis should be a directory with plenty of disk space available.\n"));
     gtk_widget_show (label);
     gtk_box_pack_start (GTK_BOX (dialog_vbox), label, FALSE, FALSE, 0);
     gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_LEFT);
@@ -2106,7 +2106,7 @@ _entryw* create_rename_dialog (gint type) {
     }
     if (type==6) {
       gchar *tmpdir;
-      if (prefs->startup_phase==-1) tmpdir=g_build_filename(capable->home_dir,"livestmp",NULL);
+      if (prefs->startup_phase==-1) tmpdir=g_build_filename(capable->home_dir,LIVES_TMP_NAME,NULL);
       else tmpdir=g_strdup(prefs->tmpdir);
       gtk_entry_set_text (GTK_ENTRY (renamew->entry),tmpdir);
       g_free(tmpdir);

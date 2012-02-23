@@ -24,8 +24,6 @@
 #include "main.h"
 #include "support.h"
 
-#define UNIXDG_PATH "/tmp/lives"
-#define UNIXDG_TMP "/tmp/lives.XXXXXX"
 #include "htmsocket.h"                          
 
 typedef struct {

@@ -298,6 +298,12 @@ static gboolean pre_init(void) {
   mainw->threaded_dialog=FALSE;
   clear_mainw_msg();
 
+  
+#ifdef IS_MINGW
+  // TODO - for mingw we will get from the registry, whatever was set at install time
+  g_snprintf (prefs->prefix_dir,PATH_MAX,"%s",PREFIX_DEFAULT);
+#endif
+
   // check the backend is there, get some system details and prefs
   capable=get_capabilities();
 
@@ -330,7 +336,11 @@ static gboolean pre_init(void) {
   }
 
   // from here onwards we can use get_pref() and friends  //////
+#ifndef IS_MINGW
   capable->rcfile=g_strdup_printf("%s/.lives",capable->home_dir);
+#else
+  capable->rcfile=g_strdup_printf("%s/LiVES.ini",capable->home_dir);
+#endif
   cache_file_contents(capable->rcfile);
 
   get_pref("gui_theme",prefs->theme,64);
@@ -339,7 +349,8 @@ static gboolean pre_init(void) {
   }
   // get some prefs we need to set menu options
   future_prefs->show_recent=prefs->show_recent=get_boolean_pref ("show_recent_files");
-  
+
+#ifndef IS_MINGW  
   get_pref ("prefix_dir",prefs->prefix_dir,PATH_MAX);
   
   if (!strlen (prefs->prefix_dir)) {
@@ -353,19 +364,26 @@ static gboolean pre_init(void) {
   }
   
   if (ensure_isdir(prefs->prefix_dir)) needs_update=TRUE;
+
+
   if (needs_update) set_pref("prefix_dir",prefs->prefix_dir);
-  
+
   needs_update=FALSE;
-  
+
   get_pref ("lib_dir",prefs->lib_dir,PATH_MAX);
   
   if (!strlen (prefs->lib_dir)) {
+
     g_snprintf (prefs->lib_dir,PATH_MAX,"%s",LIVES_LIBDIR);
     needs_update=TRUE;
   }
-  
+
   if (ensure_isdir(prefs->lib_dir)) needs_update=TRUE;
   if (needs_update) set_pref("lib_dir",prefs->lib_dir);
+
+#else
+    g_snprintf (prefs->lib_dir,PATH_MAX,"%s",prefs->prefix_dir);
+#endif
   
   needs_update=FALSE;
 
@@ -508,7 +526,10 @@ static gboolean pre_init(void) {
     mainw->alarms[i]=LIVES_NO_ALARM_TICKS;
   }
 
+  needs_update=needs_update; // stop compiler warnings
+
   if (!strcasecmp(prefs->theme,"none")) return FALSE;
+
   return TRUE;
 
 }
@@ -1743,7 +1764,15 @@ capability *get_capabilities (void) {
   capable->can_write_to_config=FALSE;
   capable->can_read_from_config=FALSE;
 
+#ifndef IS_MINGW
   g_snprintf(capable->home_dir,PATH_MAX,"%s",g_get_home_dir());
+#else
+  // TODO/REG - we will get from registry
+
+  g_snprintf(capable->home_dir,PATH_MAX,"%s\\Application Data\\LiVES",g_get_home_dir());
+#endif
+
+  g_snprintf(capable->system_tmpdir,PATH_MAX,"%s",g_get_tmp_dir());
 
   memset(capable->startup_msg,0,1);
 
@@ -1770,7 +1799,11 @@ capability *get_capabilities (void) {
   capable->has_gconftool_2=FALSE;
   capable->has_xdg_screensaver=FALSE;
 
-  safer_bfile=g_strdup_printf("%s"G_DIR_SEPARATOR_S".smogrify.%d.%d",g_get_tmp_dir (),lives_getuid(),lives_getgid());
+#ifndef IS_MINGW
+  safer_bfile=g_strdup_printf("%s"G_DIR_SEPARATOR_S".smogrify.%d.%d",capable->system_tmpdir,lives_getuid(),lives_getgid());
+#else
+  safer_bfile=g_strdup_printf("%s"G_DIR_SEPARATOR_S"smogrify.%d.%d",capable->system_tmpdir,lives_getuid(),lives_getgid());
+#endif
   unlink (safer_bfile);
 
   // check that we can write to /tmp
@@ -1782,14 +1815,19 @@ capability *get_capabilities (void) {
   g_snprintf(prefs->backend,PATH_MAX,"%s","smogrify");
   if ((tmp=g_find_program_in_path ("smogrify"))==NULL) return capable;
   g_free(tmp);
+
   g_snprintf(string,256,"%s report \"%s\" 2>/dev/null",prefs->backend_sync,
 	     (tmp=g_filename_from_utf8 (safer_bfile,-1,NULL,NULL,NULL)));
 #else
-  g_snprintf(prefs->backend_sync,PATH_MAX,"%s","perl \"C:\\smogrify\"");
-  g_snprintf(prefs->backend,PATH_MAX,"%s","START /MIN /B perl \"C:\\smogrify\"");
+
+  g_snprintf(prefs->backend_sync,PATH_MAX,"perl \"%s\\smogrify\"",prefs->prefix_dir);
+  g_snprintf(prefs->backend,PATH_MAX,"START /MIN /B perl \"%s\\smogrify\"",prefs->prefix_dir);
+
+#endif
+
   g_snprintf(string,256,"%s report \"%s\" 2>NUL",prefs->backend_sync,
 	     (tmp=g_filename_from_utf8 (safer_bfile,-1,NULL,NULL,NULL)));
-#endif
+
   g_free(tmp);
 
   err=system(string);
@@ -2063,7 +2101,8 @@ static gboolean lives_startup(gpointer data) {
   if (!mainw->foreign) {
     // fatal errors
     if (!capable->can_write_to_tmp) {
-      startup_message_fatal(_ ("\nLiVES was unable to write a small file to /tmp\nPlease make sure you have write access to /tmp and try again.\n"));
+      startup_message_fatal((tmp=g_strdup_printf(_ ("\nLiVES was unable to write a small file to %s\nPlease make sure you have write access to %s and try again.\n"),capable->system_tmpdir)));
+      g_free(tmp);
     }
     else {
       if (!capable->has_smogrify) {
@@ -2227,9 +2266,11 @@ static gboolean lives_startup(gpointer data) {
   if (!prefs->show_gui) gtk_widget_hide(mainw->LiVES);
 
   if (prefs->startup_phase==100) {
+#ifndef IS_MINGW
     if (upgrade_error) {
       do_upgrade_error_dialog();
     }
+#endif
     prefs->startup_phase=0;
   }
 
@@ -2379,7 +2420,11 @@ int main (int argc, char *argv[]) {
   memset (start_file,0,1);
   mainw->has_session_tmpdir=FALSE;
 
+#ifndef IS_MINGW
   g_snprintf(mainw->first_info_file,PATH_MAX,"%s"G_DIR_SEPARATOR_S".info.%d",prefs->tmpdir,getpid());
+#else
+  g_snprintf(mainw->first_info_file,PATH_MAX,"%s"G_DIR_SEPARATOR_S"info.%d",prefs->tmpdir,getpid());
+#endif
 
   // what's my name ?
   capable->myname_full=g_find_program_in_path(argv[0]);
@@ -2481,7 +2526,7 @@ int main (int argc, char *argv[]) {
 #ifndef IS_MINGW
 	  com=g_strdup_printf ("/bin/mkdir -p \"%s\" 2>/dev/null",prefs->tmpdir);
 #else
-	  com=g_strdup_printf ("mkdir.exe -p \"%s\" 2>NUL",prefs->tmpdir);
+	  com=g_strdup_printf ("mkdir.exe /p \"%s\" 2>NUL",prefs->tmpdir);
 #endif
 	  mainw->com_failed=FALSE;
 	  lives_system(com,TRUE);
@@ -4317,7 +4362,11 @@ void load_frame_image(gint frame) {
     }
 
     if (was_preview) {
+#ifndef IS_MINGW
       info_file=g_build_filename(prefs->tmpdir,cfile->handle,".status",NULL);
+#else
+      info_file=g_build_filename(prefs->tmpdir,cfile->handle,"status",NULL);
+#endif
       // preview
       if (prefs->safer_preview&&cfile->proc_ptr!=NULL&&cfile->proc_ptr->frames_done>0&&
 	  frame>=(cfile->proc_ptr->frames_done-cfile->progress_start+cfile->start)) {
@@ -5815,7 +5864,12 @@ void do_quick_switch (gint new_file) {
 
   // reset old info file
   if (cfile!=NULL) {
-    gchar *tmp=g_build_filename(prefs->tmpdir,cfile->handle,".status",NULL);
+    gchar *tmp;
+#ifndef IS_MINGW
+      tmp=g_build_filename(prefs->tmpdir,cfile->handle,".status",NULL);
+#else
+      tmp=g_build_filename(prefs->tmpdir,cfile->handle,"status",NULL);
+#endif
     g_snprintf(cfile->info_file,PATH_MAX,"%s",tmp);
     g_free(tmp);
   }

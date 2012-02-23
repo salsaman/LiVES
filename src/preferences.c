@@ -65,7 +65,11 @@ void get_pref(const gchar *key, gchar *val, gint maxlen) {
     return;
   }
 
+#ifndef IS_MINGW
   vfile=g_strdup_printf("%s/.smogval.%d.%d",prefs->tmpdir,lives_getuid(),lives_getpid());
+#else
+  vfile=g_strdup_printf("%s/smogval.%d.%d",prefs->tmpdir,lives_getuid(),lives_getpid());
+#endif
 
   do {
     retval=0;
@@ -166,7 +170,11 @@ void get_pref_default(const gchar *key, gchar *val, gint maxlen) {
     return;
   }
 
+#ifndef IS_MINGW
   vfile=g_strdup_printf("%s/.smogval.%d.%d",prefs->tmpdir,lives_getuid(),lives_getpid());
+#else
+  vfile=g_strdup_printf("%s/smogval.%d.%d",prefs->tmpdir,lives_getuid(),lives_getpid());
+#endif
 
   do {
     retval=0;
@@ -247,12 +255,8 @@ delete_pref(const gchar *key) {
   g_free(com);
 }
 
-void
-set_pref(const gchar *key, const gchar *value) {
-  gchar *tmp;
-  gchar *com=g_strdup_printf("%s set_pref \"%s\" %s",prefs->backend_sync,key,(tmp=g_shell_quote(value)));
-  g_free(tmp);
-
+void set_pref(const gchar *key, const gchar *value) {
+  gchar *com=g_strdup_printf("%s set_pref \"%s\" \"%s\"",prefs->backend_sync,key,value);
   if (system(com)) {
     tempdir_warning();
   }
@@ -411,7 +415,7 @@ static void set_temp_label_text(GtkLabel *label) {
     g_free(free_ds);
   }
 
-  tmpx1=g_strdup(_("The temp directory is LiVES working directory where opened clips and sets are stored.\nIt should be in a partition with plenty of free disk space.\n\nTip: avoid setting it inside /tmp, since frequently /tmp is cleared on system shutdown."));
+  tmpx1=g_strdup(_("The temp directory is LiVES working directory where opened clips and sets are stored.\nIt should be in a partition with plenty of free disk space.\n"));
 
   markup = g_markup_printf_escaped ("<span background=\"white\" foreground=\"red\"><b>%s</b></span>%s",tmpx1,tmpx2);
   gtk_label_set_markup (GTK_LABEL (label), markup);
@@ -680,8 +684,8 @@ gboolean apply_prefs(gboolean skip_warn) {
 
   if (strcmp(prefs->tmpdir,tmpdir)||strcmp (future_prefs->tmpdir,tmpdir)) {
     if (g_file_test (tmpdir, G_FILE_TEST_EXISTS)&&(strlen (tmpdir)<10||
-						   strncmp (tmpdir+strlen (tmpdir)-10,"/livestmp/",10))) 
-      g_strappend (tmpdir,PATH_MAX,"livestmp/");
+						   strncmp (tmpdir+strlen (tmpdir)-10,"/"LIVES_TMP_NAME"/",10))) 
+      g_strappend (tmpdir,PATH_MAX,LIVES_TMP_NAME"/");
 
     if (strcmp(prefs->tmpdir,tmpdir)||strcmp (future_prefs->tmpdir,tmpdir)) {
       gchar *msg;

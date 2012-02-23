@@ -510,17 +510,29 @@ void
 on_filesel_complex_clicked                      (GtkButton *button,
 						 GtkEntry *entry)
 {
+  size_t chklen=strlen(LIVES_TMP_NAME);
+
   // append /livestmp
   on_filesel_simple_clicked (NULL,entry);
 
   // TODO - dirsep
 
+
+
+#ifndef IS_MINGW
   if (strcmp(file_name+strlen(file_name)-1,"/")) {
     g_strappend(file_name,PATH_MAX,"/");
   }
+  if (strlen (file_name)<chklen+2||strncmp (file_name+strlen (file_name)-chklen-2,"/"LIVES_TMP_NAME"/",chklen-2)) 
+    g_strappend (file_name,PATH_MAX,LIVES_TMP_NAME"/");
+#else
+  if (strcmp(file_name+strlen(file_name)-1,"\\")) {
+    g_strappend(file_name,PATH_MAX,"\\");
+  }
+  if (strlen (file_name)<chklen-2||strncmp (file_name+strlen (file_name)-chklen-2,"\\"LIVES_TMP_NAME"\\",chklen-2)) 
+    g_strappend (file_name,PATH_MAX,LIVES_TMP_NAME"\\");
+#endif
 
-  if (strlen (file_name)<10||strncmp (file_name+strlen (file_name)-10,"/livestmp/",10)) 
-    g_strappend (file_name,PATH_MAX,"livestmp/");
   gtk_entry_set_text(entry,file_name);
 
 }
@@ -4022,6 +4034,8 @@ on_record_perf_activate                      (GtkMenuItem     *menuitem,
 	}
 #endif
 
+
+
 	if (mainw->ascrap_file==-1) open_ascrap_file();
 	if (mainw->ascrap_file!=-1) {
 	  mainw->rec_samples=-1; // record unlimited
@@ -4054,6 +4068,7 @@ on_record_perf_activate                      (GtkMenuItem     *menuitem,
 
 	return;
       }
+
 
       if (prefs->rec_opts&REC_AUDIO) {
 	// recording INTERNAL audio
@@ -4779,7 +4794,7 @@ on_save_set_activate            (GtkMenuItem     *menuitem,
 #ifndef IS_MINGW
       com=g_strdup_printf("/bin/mkdir -p \"%s/\" 2>/dev/null",dfile);
 #else
-      com=g_strdup_printf("mkdir.exe -p \"%s/\" 2>NUL",dfile);
+      com=g_strdup_printf("mkdir.exe /p \"%s/\" 2>NUL",dfile);
 #endif
       mainw->com_failed=FALSE;
       lives_system(com,FALSE);
@@ -4809,7 +4824,7 @@ on_save_set_activate            (GtkMenuItem     *menuitem,
 #ifndef IS_MINGW
     com=g_strdup_printf("/bin/mkdir -p \"%s/\" 2>/dev/null",dfile);
 #else
-    com=g_strdup_printf("mkdir.exe -p \"%s/\" 2>NUL",dfile);
+    com=g_strdup_printf("mkdir.exe /p \"%s/\" 2>NUL",dfile);
 #endif
     mainw->com_failed=FALSE;
     lives_system(com,TRUE);
@@ -4903,7 +4918,11 @@ on_save_set_activate            (GtkMenuItem     *menuitem,
 	    got_new_handle=TRUE;
 	
 	    g_snprintf(mainw->files[i]->handle,256,"%s",new_handle);
+#ifndef IS_MINGW
 	    dfile=g_build_filename(prefs->tmpdir,mainw->files[i]->handle,".status",NULL);
+#else
+	    dfile=g_build_filename(prefs->tmpdir,mainw->files[i]->handle,"status",NULL);
+#endif
 	    g_snprintf(mainw->files[i]->info_file,PATH_MAX,"%s",dfile);
 	    g_free(dfile);
 	  }
@@ -5543,7 +5562,7 @@ void on_cleardisk_activate (GtkWidget *widget, gpointer user_data) {
 
   if (retval!=LIVES_CANCEL) {
     mainw->com_failed=FALSE;
-    com=g_strdup_printf("%s bg_weed \"%s\" %d",prefs->backend,cfile->handle,prefs->clear_disk_opts);
+    com=g_strdup_printf("%s bg_weed \"%s\" %d",prefs->backend_sync,cfile->handle,prefs->clear_disk_opts);
     lives_system(com,FALSE);
     g_free(com);
     
@@ -5974,11 +5993,16 @@ void on_fs_preview_clicked (GtkButton *button, gpointer user_data) {
   int retval;
   gboolean timeout;
 
-  gchar *info_file=g_strdup_printf ("%s/thm%d/.status",prefs->tmpdir,pid);
+  gchar *info_file;
   gchar *file_open_params=NULL;
   gchar *tmp;
   gchar *com;
 
+#ifndef IS_MINGW
+  info_file=g_strdup_printf ("%s/thm%d/.status",prefs->tmpdir,pid);
+#else
+  info_file=g_strdup_printf ("%s/thm%d/status",prefs->tmpdir,pid);
+#endif
 
   if (mainw->in_fs_preview) {
 #ifndef IS_MINGW
@@ -6020,8 +6044,11 @@ void on_fs_preview_clicked (GtkButton *button, gpointer user_data) {
   }
 
 
-
+#ifndef IS_MINGW
   info_file=g_strdup_printf ("%s/thm%d/.status",prefs->tmpdir,lives_getpid());
+#else
+  info_file=g_strdup_printf ("%s/thm%d/status",prefs->tmpdir,lives_getpid());
+#endif
   unlink (info_file);
 
   if (preview_type==1) {
@@ -6169,12 +6196,16 @@ void on_fs_preview_clicked (GtkButton *button, gpointer user_data) {
 #ifndef IS_MINGW
     com=g_strdup_printf("/bin/mkdir -p \"%s/fsp%d/\" 2>/dev/null",prefs->tmpdir,getpid());
 #else
-    com=g_strdup_printf("mkdir.exe -p \"%s/fsp%d/\" 2>NUL",prefs->tmpdir,getpid());
+    com=g_strdup_printf("mkdir.exe /p \"%s/fsp%d/\" 2>NUL",prefs->tmpdir,getpid());
 #endif
     lives_system(com,TRUE);
     g_free(com);
 
+#ifndef IS_MINGW
     info_file=g_strdup_printf ("%s/fsp%d/.status",prefs->tmpdir,getpid());
+#else
+    info_file=g_strdup_printf ("%s/fsp%d/status",prefs->tmpdir,getpid());
+#endif
 
     if (preview_type==1||preview_type==3) {
 #ifdef USE_X11

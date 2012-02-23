@@ -58,7 +58,12 @@ static GList *get_plugin_result (const gchar *command, const gchar *delim, gbool
 
   threaded_dialog_spin();
 
+#ifndef IS_MINGW
   outfile=g_strdup_printf ("%s/.smogplugin.%d",prefs->tmpdir,getpid());
+#else
+  outfile=g_strdup_printf ("%s/smogplugin.%d",prefs->tmpdir,getpid());
+#endif
+
   unlink(outfile);
 
   com=g_strconcat (command," > \"",outfile,"\"",NULL);
@@ -91,6 +96,7 @@ static GList *get_plugin_result (const gchar *command, const gchar *delim, gbool
     }
     g_free (outfile);
     threaded_dialog_spin();
+    unlink(outfile);
     return list;
   }
   g_free (com);
@@ -125,7 +131,6 @@ static GList *get_plugin_result (const gchar *command, const gchar *delim, gbool
       bytes=read (outfile_fd,&buffer,65535);
       close (outfile_fd);
       unlink (outfile);
-      g_print("\n\nunlink %s\n",outfile);
 
       if (bytes<0) {
 	retval=do_read_failed_error_s_with_retry(outfile,NULL,NULL);
@@ -137,6 +142,7 @@ static GList *get_plugin_result (const gchar *command, const gchar *delim, gbool
     }
   } while (retval==LIVES_RETRY);
 
+  unlink (outfile);
   g_free (outfile);
 
   if (retval==LIVES_CANCEL) {
@@ -216,15 +222,23 @@ GList * plugin_request_common (const gchar *plugin_type, const gchar *plugin_nam
     else {
       comfile=g_build_filename (prefs->lib_dir,PLUGIN_EXEC_DIR,plugin_type,plugin_name,NULL);
     }
+
+#ifndef IS_MINGW
 #ifdef DEBUG_PLUGINS
     com=g_strdup_printf ("\"%s\" \"%s\"",comfile,request);
 #else
-#ifndef IS_MINGW
     com=g_strdup_printf ("\"%s\" \"%s\" 2>/dev/null",comfile,request);
+#endif
+
 #else
-    com=g_strdup_printf ("\"%s\" \"%s\" 2>NUL",comfile,request);
+    // TODO - check by file extension
+#ifdef DEBUG_PLUGINS
+    com=g_strdup_printf ("perl \"%s\" \"%s\"",comfile,request);
+#else
+    com=g_strdup_printf ("perl \"%s\" \"%s\" 2>NUL",comfile,request);
 #endif
 #endif
+
     g_free(comfile);
   }
   else com=g_strdup (request);
@@ -282,6 +296,9 @@ GList *get_plugin_list (const gchar *plugin_type, gboolean allow_nonex, const gc
 			 PLUGIN_EXEC_DIR,plugin_type,ext);
   }
   list_plugins=TRUE;
+
+  //g_print("\n\n\nLIST CMD: %s\n",com);
+
   pluglist=get_plugin_result (com,"|",FALSE);
   g_free(com);
   threaded_dialog_spin();

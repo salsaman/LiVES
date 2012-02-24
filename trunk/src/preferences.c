@@ -2057,7 +2057,6 @@ _prefsw *create_prefs_dialog (void) {
   gboolean has_ap_rec = FALSE;
 
   GdkGeometry hints;
-  LIVES_DEBUG("p1");
 
   // Allocate memory for the preferences structure
   prefsw = (_prefsw*)(g_malloc(sizeof(_prefsw)));
@@ -3688,7 +3687,6 @@ _prefsw *create_prefs_dialog (void) {
   }
 
   gtk_widget_show(prefsw->encoder_combo);
-  LIVES_DEBUG("p13");
 
   hseparator = gtk_hseparator_new ();
   gtk_widget_show (hseparator);
@@ -4726,8 +4724,6 @@ _prefsw *create_prefs_dialog (void) {
   gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_warnings), hbox, FALSE, TRUE, 0);
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_warn_no_pulse), !(prefs->warning_mask&WARN_MASK_NO_PULSE_CONNECT));
   // ---
-
-  LIVES_DEBUG("p15");
 
 
   icon = g_build_filename(prefs->prefix_dir, ICON_DIR, "pref_warning.png", NULL);
@@ -5969,10 +5965,8 @@ _prefsw *create_prefs_dialog (void) {
 
   g_list_free_strings (audp);
   g_list_free (audp);
-  LIVES_DEBUG("p16");
 
   on_prefDomainChanged(prefsw->selection,NULL);
-  LIVES_DEBUG("p18");
 
   return prefsw;
 }

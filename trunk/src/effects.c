@@ -178,7 +178,7 @@ gboolean do_effect(lives_rfx_t *rfx, gboolean is_preview) {
       mainw->show_procd=FALSE;
     }
     else cmd=g_strdup("fxrender");
-    fxcommand=g_strconcat (prefs->backend," ",cmd,"_",plugin_name," ", pdefault, 
+    fxcommand=g_strconcat (prefs->backend," \"",cmd,"_",plugin_name,"\" ", pdefault, 
 			   (tmp=param_marshall (rfx, FALSE)), NULL);
 
     g_free(plugin_name);
@@ -194,7 +194,6 @@ gboolean do_effect(lives_rfx_t *rfx, gboolean is_preview) {
       g_free(cfile->frame_index_back);
       cfile->frame_index_back=NULL;
     }
-
     lives_system(fxcommand,FALSE);
     g_free (fxcommand);
   }

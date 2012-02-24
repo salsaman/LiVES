@@ -442,7 +442,7 @@ gboolean apply_prefs(gboolean skip_warn) {
   gchar tmpdir[PATH_MAX];
   const gchar *theme = gtk_combo_box_get_active_text( GTK_COMBO_BOX(prefsw->theme_combo) );
   const gchar *audp = gtk_combo_box_get_active_text( GTK_COMBO_BOX(prefsw->audp_combo) );
-  const gchar *audio_codec = gtk_combo_box_get_active_text( GTK_COMBO_BOX(prefsw->acodec_combo) );
+  const gchar *audio_codec=NULL;
   const gchar *pb_quality = gtk_combo_box_get_active_text( GTK_COMBO_BOX(prefsw->pbq_combo) );
 
   gint pbq=PB_QUALITY_MED;
@@ -608,10 +608,16 @@ gboolean apply_prefs(gboolean skip_warn) {
 
   gchar *cdplay_device=g_filename_from_utf8(gtk_entry_get_text(GTK_ENTRY(prefsw->cdplay_entry)),-1,NULL,NULL,NULL);
 
-  for (idx=0;idx<listlen&&strcmp((gchar *)g_list_nth_data (prefs->acodec_list,idx),audio_codec);idx++);
 
-  if (idx==listlen) future_prefs->encoder.audio_codec=0;
-  else future_prefs->encoder.audio_codec=prefs->acodec_list_to_format[idx];
+  if (capable->has_encoder_plugins) {
+    audio_codec = gtk_combo_box_get_active_text( GTK_COMBO_BOX(prefsw->acodec_combo) );
+
+    for (idx=0;idx<listlen&&strcmp((gchar *)g_list_nth_data (prefs->acodec_list,idx),audio_codec);idx++);
+
+    if (idx==listlen) future_prefs->encoder.audio_codec=0;
+    else future_prefs->encoder.audio_codec=prefs->acodec_list_to_format[idx];
+  }
+  else future_prefs->encoder.audio_codec=0;
 
   g_snprintf (tmpdir,PATH_MAX,"%s",(tmp=g_filename_from_utf8(gtk_entry_get_text(GTK_ENTRY(prefsw->tmpdir_entry)),
 							     -1,NULL,NULL,NULL)));
@@ -2051,6 +2057,7 @@ _prefsw *create_prefs_dialog (void) {
   gboolean has_ap_rec = FALSE;
 
   GdkGeometry hints;
+  LIVES_DEBUG("p1");
 
   // Allocate memory for the preferences structure
   prefsw = (_prefsw*)(g_malloc(sizeof(_prefsw)));
@@ -3681,6 +3688,7 @@ _prefsw *create_prefs_dialog (void) {
   }
 
   gtk_widget_show(prefsw->encoder_combo);
+  LIVES_DEBUG("p13");
 
   hseparator = gtk_hseparator_new ();
   gtk_widget_show (hseparator);
@@ -3749,6 +3757,7 @@ _prefsw *create_prefs_dialog (void) {
     add_fill_to_box (GTK_BOX (hbox));
     gtk_widget_show_all (hbox);
   }
+  else prefsw->acodec_combo=NULL;
 
   icon = g_build_filename(prefs->prefix_dir, ICON_DIR, "pref_encoding.png", NULL);
   pixbuf_encoding = gdk_pixbuf_new_from_file(icon, NULL);
@@ -4718,6 +4727,7 @@ _prefsw *create_prefs_dialog (void) {
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_warn_no_pulse), !(prefs->warning_mask&WARN_MASK_NO_PULSE_CONNECT));
   // ---
 
+  LIVES_DEBUG("p15");
 
 
   icon = g_build_filename(prefs->prefix_dir, ICON_DIR, "pref_warning.png", NULL);
@@ -5810,7 +5820,9 @@ _prefsw *create_prefs_dialog (void) {
   g_signal_connect(GTK_OBJECT(prefsw->spinbutton_rec_gb), "value_changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
   g_signal_connect(GTK_OBJECT(prefsw->encoder_combo), "changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
   g_signal_connect(GTK_OBJECT(prefsw->ofmt_combo), "changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->acodec_combo), "changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+
+  if (prefsw->acodec_combo!=NULL) 
+    g_signal_connect(GTK_OBJECT(prefsw->acodec_combo), "changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
   g_signal_connect(GTK_OBJECT(prefsw->checkbutton_antialias), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
   g_signal_connect(GTK_OBJECT(prefsw->spinbutton_rte_keys), "value_changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), 
 		   NULL);
@@ -5957,8 +5969,10 @@ _prefsw *create_prefs_dialog (void) {
 
   g_list_free_strings (audp);
   g_list_free (audp);
+  LIVES_DEBUG("p16");
 
   on_prefDomainChanged(prefsw->selection,NULL);
+  LIVES_DEBUG("p18");
 
   return prefsw;
 }
@@ -6072,7 +6086,9 @@ on_prefs_apply_clicked(GtkButton *button, gpointer user_data)
 
   mainw->prefs_changed = 0;
   // Select row, that was previously selected
+
   select_pref_list_row(selected_idx);
+
 }
 
 /*

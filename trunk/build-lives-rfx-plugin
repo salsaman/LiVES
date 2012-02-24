@@ -411,6 +411,7 @@ print OUT "\n";
 if (@post) {
     &gen_post;
 }
+print OUT "    exit 0;\n";
 print OUT "}\n";
 
 

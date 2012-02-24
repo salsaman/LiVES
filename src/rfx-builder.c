@@ -4803,6 +4803,8 @@ void add_rfx_effects(void) {
   allow_nonex=TRUE;
 #endif
 
+#define NO_RFX
+#ifndef NO_RFX
   rfx_custom_list=get_plugin_list (PLUGIN_RENDERED_EFFECTS_CUSTOM,allow_nonex,NULL,NULL);
   rfx_custom_list_length=g_list_length(rfx_custom_list);
 
@@ -4815,6 +4817,8 @@ void add_rfx_effects(void) {
   else {
     rfx_builtin_list_length=g_list_length(rfx_builtin_list);
   }
+#endif
+
   rfx_list_length=rfx_builtin_list_length+rfx_custom_list_length+rfx_test_list_length;
 
   threaded_dialog_spin();

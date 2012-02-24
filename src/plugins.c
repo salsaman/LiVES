@@ -2680,8 +2680,11 @@ void do_rfx_cleanup(lives_rfx_t *rfx) {
 
   if (dir!=NULL) g_free(dir);
 
+  g_print("\n\n\nClear com is %s\n",com);
+
   // if the command fails we just give a warning
   lives_system(com,FALSE);
+
   g_free(com);
 }
 

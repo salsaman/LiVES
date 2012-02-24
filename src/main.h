@@ -146,14 +146,14 @@ typedef int lives_pgid_t;
 #define LIVES_TMP_NAME "livestmp"
 
 #else // IS_MINGW
-#define DOC_DIR "\\Documents\\"
+#define DOC_DIR "\\Documents/"
 
-#define THEME_DIR "\\Themes\\"
-#define PLUGIN_SCRIPTS_DIR "\\Plugin-scripts\\"
-#define PLUGIN_EXEC_DIR "\\Plugins\\"
-#define ICON_DIR "\\Icons\\"
-#define DATA_DIR "\\Data\\"
-#define LIVES_CONFIG_DIR "\\Config\\"
+#define THEME_DIR "\\Themes/"
+#define PLUGIN_SCRIPTS_DIR "\\Plugin-scripts/"
+#define PLUGIN_EXEC_DIR "\\Plugins/"
+#define ICON_DIR "\\Icons/"
+#define DATA_DIR "\\Data/"
+#define LIVES_CONFIG_DIR "\\Config/"
 #define LIVES_TMP_NAME "livescache"
 #endif
 

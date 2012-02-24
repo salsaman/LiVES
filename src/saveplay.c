@@ -1818,6 +1818,8 @@ void save_file (int clip, int start, int end, const char *filename) {
 
 
   if (!mainw->error) {
+    gchar *pluginstr;
+
     not_cancelled=do_progress_dialog(TRUE,TRUE,_ ("Saving [can take a long time]"));
     mesg=g_strdup (mainw->msg);
     
@@ -1840,8 +1842,11 @@ void save_file (int clip, int start, int end, const char *filename) {
     mainw->effects_paused=FALSE;
     cfile->nokeep=FALSE;
     
-    com=g_strdup_printf("%s plugin_clear \"%s\" 1 %d \"%s%s\" \"%s\" \"%s\"",prefs->backend_sync,cfile->handle,
-			cfile->frames, prefs->lib_dir, PLUGIN_EXEC_DIR, PLUGIN_ENCODERS, prefs->encoder.name);
+    pluginstr=g_build_filename(prefs->lib_dir, PLUGIN_EXEC_DIR, NULL);
+
+    com=g_strdup_printf("%s plugin_clear \"%s\" 1 %d \"%s\" \"%s\" \"%s\"",prefs->backend_sync,cfile->handle,
+			cfile->frames, pluginstr, PLUGIN_ENCODERS, prefs->encoder.name);
+    g_free(pluginstr);
 
     lives_system(com,FALSE);
     g_free(com);

@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2012-02-23 19:56-0300\n"
+"POT-Creation-Date: 2012-02-23 22:11-0300\n"
 "PO-Revision-Date: 2011-08-18 12:10+0000\n"
 "Last-Translator: salsaman <salsaman@gmail.com>\n"
 "Language-Team: Hebrew <he@li.org>\n"
@@ -5844,52 +5844,52 @@ msgstr "פרמטרי שמע"
 msgid "unknown"
 msgstr "לא ידוע"
 
-#: src/effects.c:217
+#: src/effects.c:216
 #, c-format
 msgid "%s all frames..."
 msgstr "%s כל השקופיות..."
 
-#: src/effects.c:222
+#: src/effects.c:221
 #, c-format
 msgid "%s clipboard into frames %d to %d..."
 msgstr "%s מלוח הגזירים לשקופיות %d ל־%d..."
 
-#: src/effects.c:229
+#: src/effects.c:228
 #, c-format
 msgid "%s to clipboard..."
 msgstr "%s ללוח הגזירים..."
 
-#: src/effects.c:233
+#: src/effects.c:232
 #, c-format
 msgid "%s to new clip..."
 msgstr "%s לקטע חדש..."
 
-#: src/effects.c:238
+#: src/effects.c:237
 #, c-format
 msgid "%s frames %d to %d..."
 msgstr "%s שקופיות %d ל־%d"
 
-#: src/effects.c:269
+#: src/effects.c:268
 #, c-format
 msgid "%s clipboard with selection"
 msgstr "%s לוח הגזירים עם בחירה"
 
-#: src/effects.c:274
+#: src/effects.c:273
 #, c-format
 msgid "%s to clipboard"
 msgstr "%s ללוח הגזירים"
 
-#: src/effects.c:278
+#: src/effects.c:277
 #, c-format
 msgid "%s to new clip"
 msgstr "%s לקטע חדש"
 
-#: src/effects.c:283
+#: src/effects.c:282
 #, c-format
 msgid "%s frames %d to %d"
 msgstr "%s שקופיות %d ל־%d"
 
-#: src/effects.c:409 src/effects.c:476
+#: src/effects.c:408 src/effects.c:475
 msgid ""
 "\n"
 "No frames were generated.\n"
@@ -6325,7 +6325,7 @@ msgstr ""
 msgid "Failed to load %s, transitions may not resize.\n"
 msgstr "נכשל בטעינת %s, המעברים עלולים לא לשנות גודל.\n"
 
-#: src/plugins.c:3745
+#: src/plugins.c:3748
 #, c-format
 msgid "%s advanced settings"
 msgstr "הגדרות %s מתקדמות"

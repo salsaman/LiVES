@@ -7985,6 +7985,11 @@ static double *update_layout_map_audio(weed_plant_t *event_list) {
     avel[i]=neg_avel[i]=0.;
   }
 
+#ifdef IS_MINGW
+  // temp fix for mingw strangeness
+  return used_clips;
+#endif
+
   while (event!=NULL) {
     if (WEED_EVENT_IS_FRAME(event)) {
       if (weed_plant_has_leaf(event,"audio_clips")) {
@@ -8076,7 +8081,7 @@ gboolean multitrack_delete (lives_mt *mt, gboolean save_layout) {
   int i;
   gboolean transfer_focus=FALSE;
   int *layout_map;
-  double *layout_map_audio;
+  double *layout_map_audio=NULL;
 #ifdef ENABLE_OSC
   gchar *tmp;
 #endif
@@ -8101,24 +8106,26 @@ gboolean multitrack_delete (lives_mt *mt, gboolean save_layout) {
       mt->event_list=NULL;
       mainw->stored_event_list_changed=mt->changed;
       memcpy(mainw->stored_layout_name,mt->layout_name,(strlen(mt->layout_name)+1));
-      
       mainw->stored_layout_undos=mt->undos;
       mainw->sl_undo_mem=mt->undo_mem;
       mainw->sl_undo_buffer_used=mt->undo_buffer_used;
       mainw->sl_undo_offset=mt->undo_offset;
-      
       mt->undos=NULL;
       mt->undo_mem=NULL;
 
       // update layout maps (kind of) with the stored_event_list
       
       layout_map=update_layout_map(mainw->stored_event_list);
+
       layout_map_audio=update_layout_map_audio(mainw->stored_event_list);
       
       for (i=0;i<MAX_FILES;i++) {
-	if (mainw->files[i]!=NULL&&(layout_map[i]!=0||layout_map_audio[i]!=0.)) {
+	if (mainw->files[i]!=NULL&&(layout_map[i]!=0||(layout_map_audio!=NULL&&layout_map_audio[i]!=0.))) {
 	  mainw->files[i]->stored_layout_frame=layout_map[i];
-	  mainw->files[i]->stored_layout_audio=layout_map_audio[i];
+	  if (layout_map_audio!=NULL) 
+	    mainw->files[i]->stored_layout_audio=layout_map_audio[i];
+	  else
+	    mainw->files[i]->stored_layout_audio=0.;
 	  mainw->files[i]->stored_layout_fps=mainw->files[i]->fps;
 	  mainw->files[i]->stored_layout_idx=i;
 	}

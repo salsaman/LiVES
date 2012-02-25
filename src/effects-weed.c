@@ -3572,7 +3572,7 @@ void weed_load_all (void) {
 
   gint listlen;
 
-  //pconx_add_connection(0,0,0,5,0,0);
+  pconx_add_connection(0,0,0,5,0,0);
 
   key=-1;
 

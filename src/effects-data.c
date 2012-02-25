@@ -14,9 +14,11 @@
 #if HAVE_SYSTEM_WEED
 #include <weed/weed.h>
 #include <weed/weed-host.h>
+#include <weed/weed-effects.h>
 #else
 #include "../libweed/weed.h"
 #include "../libweed/weed-host.h"
+#include "../libweed/weed-effects.h"
 #endif
 
 
@@ -187,6 +189,178 @@ weed_plant_t *pconx_get_out_param(int okey, int omode, int opnum) {
 
 
 
+gboolean pconx_convert_value_data(weed_plant_t *dparam, weed_plant_t *sparam) {
+  // try to convert values of various type, if we succeed, copy the "value" and return TRUE
+  weed_plant_t *dptmpl;
+
+  int dtype,stype,nsvals,ndvals,error,dflags;
+
+  register int i;
+
+  // allowed conversions
+  // type -> type
+
+  // bool -> int, bool -> float, bool -> string, (bool -> int64)
+  // int -> float, int -> string,  (int -> int64)
+  // float -> string
+  // (int64 -> string)
+
+  // TODO : int[3]/float[3] -> colourRGB
+  //        int[4]/float[4] -> colourRGBA
+  //
+  // provided we have min/max on output (for scaling)
+
+
+
+
+  nsvals=weed_leaf_num_elements(sparam,"value");
+  ndvals=weed_leaf_num_elements(dparam,"value");
+  
+  dptmpl=weed_get_plantptr_value(dparam,"template",&error);
+  //sptmpl=weed_get_plantptr_value(sparam,"template",&error);
+
+  //  sflags=weed_get_int_value(sptmpl,"flags",&error);
+  dflags=weed_get_int_value(dptmpl,"flags",&error);
+
+  if (((dtype=weed_leaf_seed_type(dparam,"value"))==(stype=weed_leaf_seed_type(sparam,"value"))) &&
+      ((nsvals==ndvals) || (dflags&WEED_PARAMETER_VARIABLE_ELEMENTS))) {
+    // values of same type and number, -> simpĺe copy
+    weed_leaf_copy(dparam,"value",sparam,"value");
+    return TRUE;
+  }
+
+  if (!((ndvals==1)||(ndvals==nsvals&&stype==WEED_SEED_INT&&dtype==WEED_SEED_DOUBLE))) return FALSE;
+
+  switch (stype) {
+  case WEED_SEED_DOUBLE:
+    switch (dtype) {
+    case WEED_SEED_STRING:
+      {
+	char *opstring=g_strdup(""),*tmp,*bit;
+	double *valsd=weed_get_double_array(sparam,"value",&error);
+	for (i=0;i<nsvals;i++) {
+	  bit=g_strdup_printf("%.4f",valsd[i]);
+	  if (strlen(opstring)==0) 
+	    tmp=g_strconcat (opstring,bit,NULL);
+	  else 
+	    tmp=g_strconcat (opstring," ",bit,NULL);
+	  g_free(opstring);
+	  opstring=tmp;
+	}
+	weed_set_string_value(dparam,"value",opstring);
+	weed_free(valsd);
+	g_free(opstring);
+      }
+      return TRUE;
+    default:
+      break;
+    }
+
+    break;
+
+  case WEED_SEED_INT:
+    switch (dtype) {
+    case WEED_SEED_STRING:
+      {
+	char *opstring=g_strdup(""),*tmp,*bit;
+	int *valsi=weed_get_int_array(sparam,"value",&error);
+	for (i=0;i<nsvals;i++) {
+	  bit=g_strdup_printf("%d",valsi[i]);
+	  if (strlen(opstring)==0) 
+	    tmp=g_strconcat (opstring,bit,NULL);
+	  else 
+	    tmp=g_strconcat (opstring," ",bit,NULL);
+	  g_free(opstring);
+	  opstring=tmp;
+	}
+	weed_set_string_value(dparam,"value",opstring);
+	weed_free(valsi);
+	g_free(opstring);
+      }
+      return TRUE;
+    case WEED_SEED_DOUBLE:
+      {
+	int *valsi=weed_get_int_array(sparam,"value",&error);
+	double * valsd=g_try_malloc(ndvals*sizdbl);
+	
+	if (valsd==NULL) {
+	  LIVES_WARN("Could not assign memory for dest value");
+	  return TRUE;
+	}
+	
+	for (i=0;i<nsvals;i++) {
+	  valsd[i]=(double)valsi[i];
+	}
+	weed_set_double_array(dparam,"value",ndvals,valsd);
+	weed_free(valsi);
+	g_free(valsd);
+      }
+      return TRUE;
+
+    }
+    break;
+
+  case WEED_SEED_BOOLEAN:
+    switch (dtype) {
+    case WEED_SEED_STRING:
+      {
+	char *opstring=g_strdup(""),*tmp,*bit;
+	int *valsi=weed_get_boolean_array(sparam,"value",&error);
+	for (i=0;i<nsvals;i++) {
+	  bit=g_strdup_printf("%d",valsi[i]);
+	  if (strlen(opstring)==0) 
+	    tmp=g_strconcat (opstring,bit,NULL);
+	  else 
+	    tmp=g_strconcat (opstring," ",bit,NULL);
+	  g_free(opstring);
+	  opstring=tmp;
+	}
+	weed_set_string_value(dparam,"value",opstring);
+	weed_free(valsi);
+	g_free(opstring);
+      }
+      return TRUE;
+    case WEED_SEED_DOUBLE:
+      {
+	int *valsi=weed_get_boolean_array(sparam,"value",&error);
+	double * valsd=g_try_malloc(ndvals*sizdbl);
+	
+	if (valsd==NULL) {
+	  LIVES_WARN("Could not assign memory for dest value");
+	  return TRUE;
+	}
+	
+	for (i=0;i<nsvals;i++) {
+	  valsd[i]=(double)valsi[i];
+	}
+	weed_set_double_array(dparam,"value",ndvals,valsd);
+	weed_free(valsi);
+	g_free(valsd);
+      }
+      return TRUE;
+    case WEED_SEED_INT:
+      {
+	int *valsi=weed_get_boolean_array(sparam,"value",&error);
+	weed_set_int_array(dparam,"value",ndvals,valsi);
+	weed_free(valsi);
+      }
+      return TRUE;
+    default:
+      break;
+    }
+
+    break;
+
+  default:
+    break;
+    }
+
+
+  return FALSE;
+}
+
+
+
 
 
 void pconx_chain_data(int key, int mode) {
@@ -206,7 +380,7 @@ void pconx_chain_data(int key, int mode) {
 
     for (i=0;i<nparams;i++) {
       if ((oparam=pconx_get_out_param(key,mode,i))!=NULL) {
-	weed_leaf_copy(inparams[i],"value",oparam,"value");
+	pconx_convert_value_data(inparams[i],oparam);
       }
     }
     weed_free(inparams);

@@ -6,10 +6,11 @@
 # see file COPYING or www.gnu.org for details
 
 #######################################################################
-# LiVES pdf plugin v1.0
+# LiVES pdf plugin v1.2
 
 # version 1.0 original - salsaman
 # version 1.1 - add support for png, correct requires error text
+# version 1.2 - add support for Win32
 
 #######################################################################
 
@@ -27,7 +28,7 @@ else {
 
 
 if ($command eq "version") {
-    print "pdf encoder plugin v1.1\n";
+    print "pdf encoder plugin v1.2\n";
     exit 0;
 }
 
@@ -41,7 +42,7 @@ if ($command eq "init") {
 	print "Convert was not found. Please install imagemagick and try again.";
 	exit 1;
     }
-    if (&location("gs") eq "") {
+    if (($^O ne "MSWin32" && &location("gs") eq "") || ($^O eq "MSWin32" && &location("gswin32.exe") eq "")) {
 	print "Ghostscript was not found. Please install ghostscript and try again.";
 	exit 1;
     }
@@ -84,7 +85,15 @@ if ($command eq "encode") {
 	$name=&mkname($i);
 	`convert $name$img_ext $name.pdf`;
     }
-    $syscom="gs -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -sOutputFile=\"$nfile\" *.pdf";
+
+    if ($^O eq "MSWin32") {
+	$gscom="gswin32.exe";
+    }
+    else {
+	$gscom="gs";
+    }
+    
+    $syscom="$gscom -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -sOutputFile=\"$nfile\" *.pdf";
 
     if (defined($DEBUG_ENCODERS)) {
 	print STDERR "Debug: pdf_encoder command is $syscom\n";

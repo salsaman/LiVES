@@ -1173,7 +1173,11 @@ static void lives_init(_ign_opts *ign_opts) {
       }
 
       // scan for encoder plugins
+#ifndef IS_MINGW
       if ((encoders=get_plugin_list (PLUGIN_ENCODERS,FALSE,NULL,NULL))!=NULL) {
+#else
+      if ((encoders=get_plugin_list (PLUGIN_ENCODERS,TRUE,NULL,NULL))!=NULL) {
+#endif
 	capable->has_encoder_plugins=TRUE;
 	g_list_free_strings (encoders);
 	g_list_free (encoders);
@@ -2355,6 +2359,8 @@ int main (int argc, char *argv[]) {
   sigaction (LIVES_SIGABRT, &sact, NULL);
 
 #else
+  printf(stderr,"starting...\n");
+
 
   typedef void (*SignalHandlerPointer)(int);
 

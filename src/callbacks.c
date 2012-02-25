@@ -4320,7 +4320,11 @@ on_encoder_entry_changed (GtkComboBox *combo, gpointer ptr) {
     }
 
     if (mainw->is_ready){
-        do_blocking_error_dialog (msg);
+      GtkWindow *twindow=GTK_WINDOW(mainw->LiVES);
+      if (prefsw!=NULL) twindow=GTK_WINDOW(prefsw->prefs_dialog);
+      else if (mainw->multitrack!=NULL) twindow=GTK_WINDOW(mainw->multitrack->window);
+      if (!prefs->show_gui) twindow=(GtkWindow *)NULL;
+      do_error_dialog_with_check_transient(msg,TRUE,0,twindow);
     }
 
     g_free (msg);

@@ -397,7 +397,12 @@ void lives_osc_cb_play (void *context, int arglen, const void *vargs, OSCTimeTag
 
   }
 
+  // re - add the timer, as we will hang here, and we want to receive messages still during playback
+  gtk_timeout_remove (mainw->kb_timer);
+  mainw->kb_timer=gtk_timeout_add(KEY_RPT_INTERVAL,&ext_triggers_poll,NULL);
+
   on_playall_activate(NULL,NULL);
+
   mainw->osc_auto=FALSE;
 }
 
@@ -405,6 +410,11 @@ void lives_osc_cb_playsel (void *context, int arglen, const void *vargs, OSCTime
   if (mainw->go_away) return lives_osc_notify_failure();
   if (mainw->playing_file==-1&&mainw->current_file>0) {
     mainw->osc_auto=TRUE; ///< request early notifiction of success
+
+    // re - add the timer, as we will hang here, and we want to receive messages still during playback
+    gtk_timeout_remove (mainw->kb_timer);
+    mainw->kb_timer=gtk_timeout_add(KEY_RPT_INTERVAL,&ext_triggers_poll,NULL);
+
     if (mainw->multitrack==NULL) on_playsel_activate(NULL,NULL);
     else multitrack_play_sel(NULL, mainw->multitrack);
     mainw->osc_auto=FALSE; ///< request early notifiction of success
@@ -442,6 +452,11 @@ void lives_osc_cb_play_forward (void *context, int arglen, const void *vargs, OS
 
   if (mainw->playing_file==-1&&mainw->current_file>0) {
     mainw->osc_auto=TRUE; ///< request early notifiction of success
+
+    // re - add the timer, as we will hang here, and we want to receive messages still during playback
+    gtk_timeout_remove (mainw->kb_timer);
+    mainw->kb_timer=gtk_timeout_add(KEY_RPT_INTERVAL,&ext_triggers_poll,NULL);
+
     on_playall_activate(NULL,NULL);
     mainw->osc_auto=FALSE;
   }
@@ -463,6 +478,12 @@ void lives_osc_cb_play_backward (void *context, int arglen, const void *vargs, O
 
   if (mainw->playing_file==-1&&mainw->current_file>0) {
     mainw->reverse_pb=TRUE;
+
+    // re - add the timer, as we will hang here, and we want to receive messages still during playback
+    gtk_timeout_remove (mainw->kb_timer);
+    mainw->kb_timer=gtk_timeout_add(KEY_RPT_INTERVAL,&ext_triggers_poll,NULL);
+
+
     on_playall_activate(NULL,NULL);
   }
   else if (mainw->current_file>0) {
@@ -5311,7 +5332,6 @@ gboolean lives_osc_init(guint udp_port) {
     status_socket=NULL;
     notify_socket=NULL;
   }
-
   return TRUE;
 }
 

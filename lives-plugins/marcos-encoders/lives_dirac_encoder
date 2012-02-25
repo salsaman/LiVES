@@ -36,10 +36,17 @@ Updated by G. Finch (salsaman) 2010
 """
 
 version = '0.1'
-convert = 'convert'
-mencoder = 'mencoder'
-dirac_encoder = 'dirac_encoder'
-identify = 'identify'
+import os
+if os.name == 'nt':
+	convert = 'convert.exe'
+	mencoder = 'mencoder.exe'
+	dirac_encoder = 'dirac_encoder.exe'
+	identify = 'identify.exe'
+else:
+	convert = 'convert'
+	mencoder = 'mencoder'
+	dirac_encoder = 'dirac_encoder'
+	identify = 'identify'
 
 usage = \
       """

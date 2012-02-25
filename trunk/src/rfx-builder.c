@@ -4800,10 +4800,10 @@ void add_rfx_effects(void) {
 #ifndef IS_MINGW
   allow_nonex=FALSE;
 #else
+#define NO_RFX
   allow_nonex=TRUE;
 #endif
 
-#define NO_RFX
 #ifndef NO_RFX
   rfx_custom_list=get_plugin_list (PLUGIN_RENDERED_EFFECTS_CUSTOM,allow_nonex,NULL,NULL);
   rfx_custom_list_length=g_list_length(rfx_custom_list);

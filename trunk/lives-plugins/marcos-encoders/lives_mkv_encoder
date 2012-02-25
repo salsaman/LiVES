@@ -23,13 +23,24 @@ See my vids at http://amv.reimeika.ca !
 """
 
 version = '0.1.7'
-convert = 'convert'
-mencoder = 'mencoder'
-x264 = 'x264'
-oggenc = 'oggenc'
-sox = 'sox'
-mkvplex = 'mkvmerge'
-identify = 'identify'
+
+import os
+if os.name == 'nt':
+    convert = 'convert.exe'
+    mencoder = 'mencoder.exe'
+    x264 = 'x264.exe'
+    oggenc = 'oggenc.exe'
+    sox = 'sox.exe'
+    mkvplex = 'mkvmerge.exe'
+    identify = 'identify.exe'
+else:
+    convert = 'convert'
+    mencoder = 'mencoder'
+    x264 = 'x264'
+    oggenc = 'oggenc'
+    sox = 'sox'
+    mkvplex = 'mkvmerge'
+    identify = 'identify'
 
 usage = \
       """

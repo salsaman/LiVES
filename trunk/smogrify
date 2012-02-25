@@ -39,10 +39,14 @@ $gid=$);
 $gid=~ s/\W.*//;
 
 if ($^O eq "MSWin32") {
-    $login = getlogin;
-
 #TODO - get this from the registry when needed
+#only if we installed perl ourselves
+    BEGIN { push @INC,"C:\\Program Files\\LiVES\\perl\\lib";}
+
+
+    $login = getlogin;
     $home="C:\\users\\$login\\Application Data\\LiVES";
+
     $rc_filename="LiVES.ini";
     $lives_home_dir="$home\\Config";
 
@@ -278,10 +282,10 @@ if (defined($ARGV[0])) {
 	if (! -d "$lives_home_dir") {
 	    # this can fail here, but succeed later
 	    if ($^O ne "MSWin32") {
-		lives_system("/bin/mkdir -p -mode=777 \"$lives_home_dir\"");
+		smog_system("/bin/mkdir -p -mode=777 \"$lives_home_dir\"");
 	    }
 	    else {
-		lives_system("mkdir.exe /p \"$lives_home_dir\"");
+		smog_system("mkdir.exe /p \"$lives_home_dir\"");
 	    }
 	}
 

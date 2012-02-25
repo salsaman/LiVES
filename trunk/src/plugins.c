@@ -85,6 +85,7 @@ static GList *get_plugin_result (const gchar *command, const gchar *delim, gbool
 	msg=g_strdup_printf (_("\nPlugin error: %s failed with code %d"),command,error/256);
 	if (bytes) {
 	  msg2=g_strconcat (msg,g_strdup_printf (_ (" : message was %s\n"),buffer),NULL);
+	  g_snprintf(mainw->msg,512,"%s",buffer);
 	}
 	else {
 	  msg2=g_strconcat (msg,"\n",NULL);

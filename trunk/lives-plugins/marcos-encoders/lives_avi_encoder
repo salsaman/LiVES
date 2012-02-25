@@ -2,7 +2,7 @@
 
 
 import locale
-locale.setlocale(locale.LC_NUMERIC,"")
+locale.setlocale(locale.LC_NUMERIC,"C")
 
 """
 avi_encoder.py
@@ -25,12 +25,19 @@ http://www.gnu.org/copyleft/gpl.html for license.
 
 See my vids at http://amv.reimeika.ca !
 """
-
 version = '0.0.10'
-convert = 'convert'
-mencoder = 'mencoder'
-lameenc = 'lame'
-sox = 'sox'
+
+import os
+if os.name == 'nt':
+    convert = 'convert.exe'
+    mencoder = 'mencoder.exe'
+    lameenc = 'lame.exe'
+    sox = 'sox.exe'
+else:
+    convert = 'convert'
+    mencoder = 'mencoder'
+    lameenc = 'lame'
+    sox = 'sox'
 
 usage = \
       """

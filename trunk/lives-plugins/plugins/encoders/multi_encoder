@@ -177,11 +177,11 @@ def is_installed(prog):
 
     if found:
 	if hassubproc:	
-		p = subprocess.Popen([prog, '-C'],stdout=subprocess.PIPE)
+		p = subprocess.Popen(['python', prog, '-C'],stdout=subprocess.PIPE)
 		std_out_err=p.stdout
 
 	else:
-        	(std_in, std_out_err) = os.popen4(prog  + ' -C')
+        	(std_in, std_out_err) = os.popen4('python ' + prog  + ' -C')
         	std_in.close()
 	
 

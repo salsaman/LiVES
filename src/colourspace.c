@@ -9878,6 +9878,7 @@ boolean convert_layer_palette_full(weed_plant_t *layer, int outpl, int osamtype,
   }
   if (gusrc!=NULL) g_free(gusrc);
 
+
   if (weed_palette_is_rgb_palette(outpl)) {
     weed_leaf_delete(layer,"YUV_clamping");
     weed_leaf_delete(layer,"YUV_subspace");
@@ -10287,6 +10288,8 @@ void resize_layer (weed_plant_t *layer, int width, int height, LiVESInterpType i
   int iwidth=weed_get_int_value(layer,"width",&error);
   int iheight=weed_get_int_value(layer,"height",&error);
 
+  boolean keep_in_pixel_data=FALSE;
+
   if (iwidth==width&&iheight==height) return; // no resize needed
 
   if (width<=0||height<=0) {
@@ -10307,6 +10310,11 @@ void resize_layer (weed_plant_t *layer, int width, int height, LiVESInterpType i
       convert_layer_palette(layer,WEED_PALETTE_YUV888,oclamping);
     }
     palette=weed_get_int_value(layer,"current_palette",&error);
+  }
+
+  if (weed_plant_has_leaf(layer,"host_orig_pdata")&&weed_get_boolean_value(layer,"host_orig_pdata",&error)==WEED_TRUE) {
+    keep_in_pixel_data=TRUE;
+    weed_leaf_delete(layer,"host_orig_pdata");
   }
 
   switch (palette) {
@@ -10368,8 +10376,8 @@ void resize_layer (weed_plant_t *layer, int width, int height, LiVESInterpType i
 	if (store_ctx) swscale_add_context(iwidth,iheight,width,height,pixfmt,flags,swscale);
       }
 
+      if (!keep_in_pixel_data) g_free(*in_pixel_data);
 
-      g_free(*in_pixel_data);
       g_free(in_pixel_data);
       g_free(out_pixel_data);
 
@@ -10389,7 +10397,15 @@ void resize_layer (weed_plant_t *layer, int width, int height, LiVESInterpType i
       weed_set_int_value(layer,"height",lives_pixbuf_get_height(new_pixbuf));
       weed_set_int_value(layer,"rowstrides",lives_pixbuf_get_rowstride(new_pixbuf));
     }
+
+    if (keep_in_pixel_data) {
+     // TODO - for QImage, cast to parent class and use parent destructor
+      mainw->do_not_free=(gpointer)lives_pixbuf_get_pixels_readonly(pixbuf);
+      mainw->free_fn=lives_free_with_check;
+    }
     g_object_unref(pixbuf);
+    mainw->do_not_free=NULL;
+    mainw->free_fn=lives_free_normal;
 
     break;
   default:
@@ -10399,6 +10415,10 @@ void resize_layer (weed_plant_t *layer, int width, int height, LiVESInterpType i
   if (new_pixbuf==NULL||(width!=weed_get_int_value(layer,"width",&error)||
 			 height!=weed_get_int_value(layer,"height",&error))) 
     g_printerr("unable to scale layer to %d x %d for palette %d\n",width,height,palette);
+  else {
+    if (weed_plant_has_leaf(layer,"host_orig_pdata"))
+      weed_leaf_delete(layer,"host_orig_pdata");
+  }
 
 
   if (new_pixbuf!=NULL) {

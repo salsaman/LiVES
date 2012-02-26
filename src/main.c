@@ -933,6 +933,7 @@ static void lives_init(_ign_opts *ign_opts) {
   mainw->foreign_visual=NULL;
 
   mainw->pconx=NULL;
+  mainw->cconx=NULL;
 
   cached_key=cached_mod=0;
 

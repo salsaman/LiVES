@@ -57,6 +57,7 @@ gboolean is_pure_audio(weed_plant_t *filter_or_instance, gboolean count_opt); //
 lives_fx_cat_t weed_filter_categorise (weed_plant_t *pl, int in_channels, int out_channels);
 lives_fx_cat_t weed_filter_subcategorise (weed_plant_t *pl, lives_fx_cat_t category, gboolean count_opt);
 gboolean has_usable_palette(weed_plant_t *chantmpl);
+int check_weed_palette_list (int *palette_list, int num_palettes, int palette);
 
 void weed_call_init_func(weed_plant_t *instance);
 void weed_call_deinit_func(weed_plant_t *instance);

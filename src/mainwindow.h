@@ -1026,6 +1026,7 @@ typedef struct {
   float sepwin_scale;
 
   lives_pconnect_t *pconx; ///< list of out -> in param connections
+  lives_cconnect_t *cconx; ///< list of out -> in alpha channel connections
 
 
 } mainwindow;

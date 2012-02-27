@@ -260,7 +260,7 @@ int farneback_process (weed_plant_t *inst, weed_timecode_t tc) {
   }
 
 
-  if (!sdata->inited) {
+  if (sdata->inited==WEED_FALSE) {
     sdata->prevgrey=cvgrey;
     sdata->inited=WEED_TRUE;
     return WEED_NO_ERROR;
@@ -318,8 +318,9 @@ int farneback_process (weed_plant_t *inst, weed_timecode_t tc) {
 
   // copy cvflow to float outputs
 
-  height=cvflow.size().width;
-  width=cvflow.size().height;
+  width=cvflow.size().width;
+  height=cvflow.size().height;
+
   irow=(cvflow.step[0]>>3)-width;
   orow1=(orow1>>2)-width;
   orow2=(orow2>>2)-width;

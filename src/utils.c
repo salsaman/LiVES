@@ -370,7 +370,7 @@ ssize_t lives_write(int fd, const void *buf, size_t count, gboolean allow_fail) 
 
 
 ssize_t lives_write_le(int fd, const void *buf, size_t count, gboolean allow_fail) {
-  if (capable->byte_order==G_BIG_ENDIAN&&(prefs->bigendbug!=1)) {
+  if (capable->byte_order==LIVES_BIG_ENDIAN&&(prefs->bigendbug!=1)) {
     uint8_t xbuf[count];
     reverse_bytes(xbuf,(const uint8_t *)buf,count);
     return lives_write(fd,xbuf,count,allow_fail);
@@ -440,7 +440,7 @@ ssize_t lives_read(int fd, void *buf, size_t count, gboolean allow_less) {
 
 
 ssize_t lives_read_le(int fd, void *buf, size_t count, gboolean allow_less) {
-  if (capable->byte_order==G_BIG_ENDIAN&&!prefs->bigendbug) {
+  if (capable->byte_order==LIVES_BIG_ENDIAN&&!prefs->bigendbug) {
     uint8_t xbuf[count];
     ssize_t retval=lives_read(fd,buf,count,allow_less);
     if (retval<count) return retval;
@@ -1068,7 +1068,7 @@ LIVES_INLINE GList *g_list_append_unique(GList *xlist, const gchar *add) {
 /* convert to/from a big endian 32 bit float for internal use */
 LIVES_INLINE float LEFloat_to_BEFloat(float f) {
   char *b=(char *)(&f);
-  if (G_BYTE_ORDER==G_LITTLE_ENDIAN) {
+  if (capable->byte_order==LIVES_LITTLE_ENDIAN) {
     float fl;
     guchar rev[4];
     rev[0]=b[3];

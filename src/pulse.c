@@ -789,7 +789,7 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
   pdriver->in_asamps=pdriver->out_asamps=16;
   pdriver->out_signed=0;
 
-  if (G_BYTE_ORDER==G_BIG_ENDIAN) pdriver->out_endian=AFORM_BIG_ENDIAN;
+  if (capable->byte_order==LIVES_BIG_ENDIAN) pdriver->out_endian=AFORM_BIG_ENDIAN;
   else pdriver->out_endian=AFORM_LITTLE_ENDIAN;
 
   if (pdriver->is_output) {
@@ -1060,7 +1060,7 @@ void pulse_aud_pb_ready(gint fileno) {
       if (sfile->opening) mainw->pulsed->is_opening=TRUE;
       else mainw->pulsed->is_opening=FALSE;
       
-      if ((aendian&&(G_BYTE_ORDER==G_BIG_ENDIAN))||(!aendian&&(G_BYTE_ORDER==G_LITTLE_ENDIAN))) 
+      if ((aendian&&(capable->byte_order==LIVES_BIG_ENDIAN))||(!aendian&&(capable->byte_order==LIVES_LITTLE_ENDIAN))) 
 	mainw->pulsed->reverse_endian=TRUE;
       else mainw->pulsed->reverse_endian=FALSE;
       

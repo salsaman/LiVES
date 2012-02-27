@@ -1728,6 +1728,14 @@ void set_palette_colours (void) {
 }
 
 
+static boolean is_big_endian() {
+  int32_t testint = 0x12345678;
+  char *pMem;
+  pMem = (char *) &testint;
+  if (pMem[0] == 0x78) return FALSE;
+  return TRUE;
+}
+
 
 capability *get_capabilities (void) {
   // get capabilities of backend system
@@ -1758,7 +1766,10 @@ capability *get_capabilities (void) {
   capable->cpu_bits=32;
   if (sizeof(void *)==8) capable->cpu_bits=64;
 
-  capable->byte_order=G_BYTE_ORDER;
+  if (is_big_endian()) 
+    capable->byte_order=LIVES_BIG_ENDIAN;
+  else 
+    capable->byte_order=LIVES_LITTLE_ENDIAN;
 
   capable->has_smogrify=FALSE;
   capable->smog_version_correct=FALSE;

@@ -1493,7 +1493,9 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
 	if (weed_palette_is_alpha_palette(weed_get_int_value(in_channels[j],"current_palette",&error))) continue;
 	channel=in_channels[j];
 	chantmpl=weed_get_plantptr_value(channel,"template",&error);
-	if (weed_plant_has_leaf(chantmpl,"max_repeats")) weed_set_boolean_value(channel,"temp_disabled",WEED_TRUE);
+	if (weed_plant_has_leaf(chantmpl,"max_repeats")||(weed_plant_has_leaf(chantmpl,"option")&&
+							  weed_get_boolean_value(chantmpl,"optional",&error)==WEED_TRUE))
+	  weed_set_boolean_value(channel,"temp_disabled",WEED_TRUE);
 	else {
 	  weed_free(in_tracks);
 	  weed_free(out_tracks);
@@ -1509,8 +1511,11 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
       frame=weed_get_int_value(layer,"frame",&error);
       if (frame==0) {
 	// temp disable channels if we can
+	channel=in_channels[j];
 	chantmpl=weed_get_plantptr_value(channel,"template",&error);
-	if (weed_plant_has_leaf(chantmpl,"max_repeats")) weed_set_boolean_value(channel,"temp_disabled",WEED_TRUE);
+	if (weed_plant_has_leaf(chantmpl,"max_repeats")||(weed_plant_has_leaf(chantmpl,"option")&&
+							  weed_get_boolean_value(chantmpl,"optional",&error)==WEED_TRUE))
+	  weed_set_boolean_value(channel,"temp_disabled",WEED_TRUE);
 	else {
 	  weed_free(in_tracks);
 	  weed_free(out_tracks);
@@ -1521,6 +1526,23 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
       }
     }
     k++;
+  }
+
+
+  // make sure we have pixel_data for all mandatory in alpha channels (from alpha chains)
+  // if not, if the ctmpl is optnl mark as temp_disabled; else return with error
+
+  for (i=0;i<num_inc+num_in_alpha;i++) {
+    if (!weed_palette_is_alpha_palette(weed_get_int_value(in_channels[i],"current_palette",&error))) continue;
+    if (weed_get_voidptr_value(in_channels[i],"pixel_data",&error)==NULL) {
+      chantmpl=weed_get_plantptr_value(in_channels[i],"template",&error);
+      if (weed_plant_has_leaf(chantmpl,"max_repeats")||(weed_plant_has_leaf(chantmpl,"option")&&
+							weed_get_boolean_value(chantmpl,"optional",&error)==WEED_TRUE))
+	weed_set_boolean_value(channel,"temp_disabled",WEED_TRUE);
+      else {
+	return FILTER_ERROR_MISSING_CHANNEL;
+      }
+    }
   }
 
   // ensure all chantmpls not marked "optional" have at least one corresponding enabled channel
@@ -1559,8 +1581,8 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
 
   weed_free(in_ctmpls);
   g_free(mand);
-  
 
+  
   num_outc=weed_leaf_num_elements(inst,"out_channels");
 
   for (i=0;i<num_outc;i++) {
@@ -3164,6 +3186,10 @@ static gint check_for_lives(weed_plant_t *filter, int filter_idx) {
 
   // all channels used must support a limited range of palettes (for now)
 
+  // filters can now have any number of mandatory in alphas, the effect will not be run unless the channels are filled 
+  // (by chaining to output of another fx)
+
+
   gint chans_in_mand=0; // number of mandatory channels
   gint chans_in_opt_max=0; // number of usable (by LiVES) optional channels
   gint chans_out_mand=0;
@@ -3215,8 +3241,10 @@ static gint check_for_lives(weed_plant_t *filter, int filter_idx) {
       weed_set_boolean_value(array[i],"disabled",WEED_TRUE);
     }
     else {
-      if (!is_audio) chans_in_mand++;
-      else achans_in_mand++;
+      if (has_non_alpha_palette(array[i])) {
+	if (!is_audio) chans_in_mand++;
+	else achans_in_mand++;
+      }
     }
   }
   if (num_elements>0) weed_free(array);
@@ -3363,18 +3391,18 @@ static gboolean set_in_channel_palettes (gint idx, gint num_channels) {
 	weed_set_int_value(chantmpls[i],"current_palette",WEED_PALETTE_YVU420P);
       else if (check_weed_palette_list (palettes,num_palettes,WEED_PALETTE_YUV411)==WEED_PALETTE_YUV411) 
 	weed_set_int_value(chantmpls[i],"current_palette",WEED_PALETTE_YUV411);
+      else if (check_weed_palette_list (palettes,num_palettes,WEED_PALETTE_AFLOAT)==WEED_PALETTE_AFLOAT) 
+	weed_set_int_value(chantmpls[i],"current_palette",WEED_PALETTE_AFLOAT);
+      else if (check_weed_palette_list (palettes,num_palettes,WEED_PALETTE_A8)==WEED_PALETTE_A8) 
+	weed_set_int_value(chantmpls[i],"current_palette",WEED_PALETTE_A8);
+      else if (check_weed_palette_list (palettes,num_palettes,WEED_PALETTE_A1)==WEED_PALETTE_A1) 
+	weed_set_int_value(chantmpls[i],"current_palette",WEED_PALETTE_A1);
       else if (!weed_plant_has_leaf(chantmpls[i],"optional")) {
 	if (chantmpls!=NULL) weed_free(chantmpls);
 	weed_free(palettes);
-	return FALSE; // mandatory channel; we don't yet handle alpha or float
+	return FALSE; // mandatory channel; we don't yet handle rgb float
       }
-      /*      else if (check_weed_palette_list (palettes,num_palettes,WEED_PALETTE_A8)==WEED_PALETTE_A8) 
-	      weed_set_int_value(chantmpls[i],"current_palette",WEED_PALETTE_A8);
-	      else if (check_weed_palette_list (palettes,num_palettes,WEED_PALETTE_A1)==WEED_PALETTE_A1) 
-	      weed_set_int_value(chantmpls[i],"current_palette",WEED_PALETTE_A1);
-	      else if (check_weed_palette_list (palettes,num_palettes,WEED_PALETTE_AFLOAT)==WEED_PALETTE_AFLOAT) 
-	      weed_set_int_value(chantmpls[i],"current_palette",WEED_PALETTE_AFLOAT);
-	      else if (check_weed_palette_list (palettes,num_palettes,WEED_PALETTE_RGBFLOAT)==WEED_PALETTE_RGBFLOAT) 
+	      /*else if (check_weed_palette_list (palettes,num_palettes,WEED_PALETTE_RGBFLOAT)==WEED_PALETTE_RGBFLOAT) 
 	      weed_set_int_value(chantmpls[i],"current_palette",WEED_PALETTE_RGBFLOAT);
 	      else if (check_weed_palette_list (palettes,num_palettes,WEED_PALETTE_ARGBFLOAT)==WEED_PALETTE_ARGBFLOAT) 
 	      weed_set_int_value(chantmpls[i],"current_palette",WEED_PALETTE_ARGBFLOAT);
@@ -3477,16 +3505,16 @@ static gboolean set_out_channel_palettes (gint idx, gint num_channels) {
 	weed_set_int_value(chantmpls[i],"current_palette",WEED_PALETTE_YVU420P);
       else if (check_weed_palette_list (palettes,num_palettes,WEED_PALETTE_YUV411)==WEED_PALETTE_YUV411) 
 	weed_set_int_value(chantmpls[i],"current_palette",WEED_PALETTE_YUV411);
+      else if (check_weed_palette_list (palettes,num_palettes,WEED_PALETTE_AFLOAT)==WEED_PALETTE_AFLOAT) 
+	weed_set_int_value(chantmpls[i],"current_palette",WEED_PALETTE_AFLOAT);
       else if (check_weed_palette_list (palettes,num_palettes,WEED_PALETTE_A8)==WEED_PALETTE_A8) 
 	weed_set_int_value(chantmpls[i],"current_palette",WEED_PALETTE_A8);
       else if (check_weed_palette_list (palettes,num_palettes,WEED_PALETTE_A1)==WEED_PALETTE_A1) 
 	weed_set_int_value(chantmpls[i],"current_palette",WEED_PALETTE_A1);
-      else if (check_weed_palette_list (palettes,num_palettes,WEED_PALETTE_AFLOAT)==WEED_PALETTE_AFLOAT) 
-	weed_set_int_value(chantmpls[i],"current_palette",WEED_PALETTE_AFLOAT);
       else if (!weed_plant_has_leaf(chantmpls[i],"optional")) {
 	if (chantmpls!=NULL) weed_free(chantmpls);
 	weed_free(palettes);
-	return FALSE; // mandatory channel; we don't yet handle alpha or float
+	return FALSE; // mandatory channel; we don't yet handle rgb float
       }
 
       /*	else if (check_weed_palette_list (palettes,num_palettes,WEED_PALETTE_RGBFLOAT)==WEED_PALETTE_RGBFLOAT) 
@@ -4354,6 +4382,7 @@ static void set_default_channel_sizes (weed_plant_t **in_channels, weed_plant_t 
 	numplanes=1;
       for (j=0;j<numplanes;j++) g_free(pixel_data[j]);
       weed_free(pixel_data);
+      weed_set_voidptr_value(channel,"pixel_data",NULL);
     }
     else {
       if (mainw->current_file==-1) {
@@ -4396,6 +4425,7 @@ static void set_default_channel_sizes (weed_plant_t **in_channels, weed_plant_t 
 	numplanes=1;
       for (j=0;j<numplanes;j++) g_free(pixel_data[j]);
       weed_free(pixel_data);
+      weed_set_voidptr_value(channel,"pixel_data",NULL);
     }
     else {
       if (mainw->current_file==-1) {
@@ -7612,7 +7642,7 @@ gboolean read_filter_defaults(int fd) {
 
     vlen=(size_t)vleni;
 
-    if (capable->byte_order==G_BIG_ENDIAN&&prefs->bigendbug) {
+    if (capable->byte_order==LIVES_BIG_ENDIAN&&prefs->bigendbug) {
       if (vleni==0&&vlenz!=0) vlen=(size_t)vlenz;
     }
     else {
@@ -7779,7 +7809,7 @@ gboolean read_generator_sizes(int fd) {
 
     vlen=(size_t)vleni;
 
-    if (capable->byte_order==G_BIG_ENDIAN&&prefs->bigendbug) {
+    if (capable->byte_order==LIVES_BIG_ENDIAN&&prefs->bigendbug) {
       if (vleni==0&&vlenz!=0) vlen=(size_t)vlenz;
     }
     else {

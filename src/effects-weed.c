@@ -2236,6 +2236,7 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
     if (weed_plant_has_leaf(chantmpl,"flags")) flags=weed_get_int_value(chantmpl,"flags",&error);
     else flags=0;
 
+    if (weed_plant_has_leaf(channel,"YUV_clamping")) { 
       oclamping=(weed_get_int_value(channel,"YUV_clamping",&error));
       weed_set_int_value(layer,"YUV_clamping",oclamping);
     }

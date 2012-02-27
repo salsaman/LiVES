@@ -61,6 +61,6 @@ install-data-local-remove-vcs-files:
 
 
 install-exec-local:
-	rm -rf "$(DESTDIR)$(fxpluginslibdir)/"*
+
 
 

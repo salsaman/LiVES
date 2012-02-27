@@ -121,6 +121,35 @@ void pconx_add_connection(int ikey, int imode, int ipnum, int okey, int omode, i
       }
       
     }
+
+    // so, we have data for key/mode but this is a new channel to be mapped
+    
+    for (i=0;i<pconx->nparams;i++) {
+      totcons+=pconx->nconns[i];
+    }
+    
+    totcons++;
+    
+    pconx->nparams++;
+    posn=pconx->nparams;
+    
+    // make space for new
+    pconx->nconns=(int *)g_realloc(pconx->nconns,posn*sizint);
+    pconx->okey=(int *)g_realloc(pconx->okey,totcons*sizint);
+    pconx->omode=(int *)g_realloc(pconx->omode,totcons*sizint);
+    pconx->opnum=(int *)g_realloc(pconx->opnum,totcons*sizint);
+    
+    pconx->nconns[posn-1]=1;
+    
+    posn=totcons-1;
+    
+    // insert at posn
+    pconx->okey[posn]=okey;
+    pconx->omode[posn]=omode;
+    pconx->opnum[posn]=opnum;
+
+    return;
+
   }
 
   // add new
@@ -497,6 +526,34 @@ void cconx_add_connection(int ikey, int imode, int icnum, int okey, int omode, i
       }
       
     }
+
+    // so, we have data for key/mode but this is a new channel to be mapped
+
+    for (i=0;i<cconx->nchans;i++) {
+      totcons+=cconx->nconns[i];
+    }
+    
+    totcons++;
+    
+    cconx->nchans++;
+    posn=cconx->nchans;
+    
+    // make space for new
+    cconx->nconns=(int *)g_realloc(cconx->nconns,posn*sizint);
+    cconx->okey=(int *)g_realloc(cconx->okey,totcons*sizint);
+    cconx->omode=(int *)g_realloc(cconx->omode,totcons*sizint);
+    cconx->ocnum=(int *)g_realloc(cconx->ocnum,totcons*sizint);
+    
+    cconx->nconns[posn-1]=1;
+    
+    posn=totcons-1;
+    
+    // insert at posn
+    cconx->okey[posn]=okey;
+    cconx->omode[posn]=omode;
+    cconx->ocnum[posn]=ocnum;
+
+    return;
   }
 
   // add new
@@ -542,8 +599,9 @@ weed_plant_t *cconx_get_out_alpha(int okey, int omode, int ocnum) {
     for (i=0;i<cconx->nchans;i++) {
       totcons+=cconx->nconns[i];
       for (;j<totcons;j++) {
-	if (cconx->okey[j]==okey && cconx->omode[j]==omode && cconx->ocnum[j]==ocnum) {
+	g_print("cf %d %d %d with %d %d %d\n",cconx->okey[j],okey,cconx->omode[j],omode,cconx->ocnum[j],ocnum);
 
+	if (cconx->okey[j]==okey && cconx->omode[j]==omode && cconx->ocnum[j]==ocnum) {
 	  if (!weed_plant_has_leaf(inst,"out_channels")) return NULL;
 	  else {
 	    weed_plant_t **outchans=weed_get_plantptr_array(inst,"out_channels",&error);
@@ -583,7 +641,7 @@ gboolean cconx_convert_pixel_data(weed_plant_t *dchan, weed_plant_t *schan) {
 
   register int i;
 
-   iwidth=weed_get_int_value(schan,"width",&error);
+  iwidth=weed_get_int_value(schan,"width",&error);
   iheight=weed_get_int_value(schan,"height",&error);
   ipal=weed_get_int_value(schan,"current_palette",&error);
   irow=weed_get_int_value(schan,"rowstrides",&error);
@@ -591,6 +649,7 @@ gboolean cconx_convert_pixel_data(weed_plant_t *dchan, weed_plant_t *schan) {
   owidth=weed_get_int_value(dchan,"width",&error);
   oheight=weed_get_int_value(dchan,"height",&error);
   opal=weed_get_int_value(dchan,"current_palette",&error);
+  orow=weed_get_int_value(dchan,"rowstrides",&error);
 
   spdata=weed_get_voidptr_value(schan,"pixel_data",&error);
 
@@ -661,16 +720,20 @@ gboolean cconx_chain_data(int key, int mode) {
   weed_plant_t *ichan,*ochan;
   weed_plant_t *inst;
 
+  gboolean needs_reinit=FALSE;
+
   register int i=0;
 
   if ((inst=rte_keymode_get_instance(key+1,mode))==NULL) return FALSE; ///< effect is not enabled
 
   while ((ichan=get_enabled_channel(inst,i,TRUE))!=NULL) {
+    g_print("chk chan %d\n",i);
     if ((ochan=cconx_get_out_alpha(key,mode,i++))!=NULL) {
-       return cconx_convert_pixel_data(ichan,ochan);
+      LIVES_DEBUG("got checking...");
+      if (cconx_convert_pixel_data(ichan,ochan)) needs_reinit=TRUE;
     }
   }
-  return FALSE;
+  return needs_reinit;
 }
  
 

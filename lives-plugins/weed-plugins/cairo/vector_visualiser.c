@@ -339,11 +339,9 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
     weed_plugin_info_add_filter_class (plugin_info,filter_class);
 
     if (is_big_endian()) {
-      fprintf(stderr, "oik2 here !\n");
       weed_set_int_value(in_chantmpls[0],"palette_list",WEED_PALETTE_ARGB32);
       weed_set_int_value(out_chantmpls[0],"palette_list",WEED_PALETTE_ARGB32);
     }
-    fprintf(stderr, "oik42 here !\n");
 
     weed_set_int_value(plugin_info,"version",package_version);
 

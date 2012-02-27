@@ -1511,7 +1511,7 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
       frame=weed_get_int_value(layer,"frame",&error);
       if (frame==0) {
 	// temp disable channels if we can
-	channel=in_channels[j];
+	channel=in_channels[k];
 	chantmpl=weed_get_plantptr_value(channel,"template",&error);
 	if (weed_plant_has_leaf(chantmpl,"max_repeats")||(weed_plant_has_leaf(chantmpl,"option")&&
 							  weed_get_boolean_value(chantmpl,"optional",&error)==WEED_TRUE))
@@ -1538,7 +1538,7 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
       chantmpl=weed_get_plantptr_value(in_channels[i],"template",&error);
       if (weed_plant_has_leaf(chantmpl,"max_repeats")||(weed_plant_has_leaf(chantmpl,"option")&&
 							weed_get_boolean_value(chantmpl,"optional",&error)==WEED_TRUE))
-	weed_set_boolean_value(channel,"temp_disabled",WEED_TRUE);
+	weed_set_boolean_value(in_channels[i],"temp_disabled",WEED_TRUE);
       else {
 	return FILTER_ERROR_MISSING_CHANNEL;
       }
@@ -2180,9 +2180,10 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
       if (!weed_plant_has_leaf(channel,"host_orig_pdata")||
 	  weed_get_boolean_value(channel,"host_orig_pdata",&error)!=WEED_FALSE) {
 	void *pdata=weed_get_voidptr_value(channel,"pixel_data",&error);
-	g_free(pdata);
+	if (pdata!=NULL) g_free(pdata);
 	weed_set_voidptr_value(channel,"pixel_data",NULL);
-	weed_leaf_delete(channel,"host_orig_pdata");
+	if (weed_plant_has_leaf(channel,"host_orig_pdata")) 
+	  weed_leaf_delete(channel,"host_orig_pdata");
       }
     }
   }
@@ -2235,13 +2236,6 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
     if (weed_plant_has_leaf(chantmpl,"flags")) flags=weed_get_int_value(chantmpl,"flags",&error);
     else flags=0;
 
-    if (flags&WEED_CHANNEL_OUT_ALPHA_PREMULT) weed_set_int_value(layer,"flags",WEED_CHANNEL_ALPHA_PREMULT);
-
-    weed_set_int_value(layer,"current_palette",weed_get_int_value(channel,"current_palette",&error));
-    weed_set_int_value(layer,"width",weed_get_int_value(channel,"width",&error));
-    weed_set_int_value(layer,"height",weed_get_int_value(channel,"height",&error));
-
-    if (weed_plant_has_leaf(channel,"YUV_clamping")) {
       oclamping=(weed_get_int_value(channel,"YUV_clamping",&error));
       weed_set_int_value(layer,"YUV_clamping",oclamping);
     }
@@ -3740,6 +3734,9 @@ void weed_load_all (void) {
   gint listlen;
 
   pconx_add_connection(0,0,0,5,0,0);
+
+  cconx_add_connection(0,0,0,1,0,1);
+  cconx_add_connection(0,0,1,1,0,2);
 
   key=-1;
 

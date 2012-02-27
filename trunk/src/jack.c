@@ -1522,7 +1522,7 @@ void jack_aud_pb_ready(gint fileno) {
       mainw->jackd->usigned=!asigned;
       mainw->jackd->seek_end=sfile->afilesize;
       
-      if ((aendian&&(G_BYTE_ORDER==G_BIG_ENDIAN))||(!aendian&&(G_BYTE_ORDER==G_LITTLE_ENDIAN))) 
+      if ((aendian&&(capable->byte_order==LIVES_BIG_ENDIAN))||(!aendian&&(capable->byte_order==LIVES_LITTLE_ENDIAN))) 
 	mainw->jackd->reverse_endian=TRUE;
       else mainw->jackd->reverse_endian=FALSE;
       

@@ -1690,7 +1690,7 @@ create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox) {
     if (type==7||!is_8bit) gtk_widget_set_sensitive(resaudw->rb_unsigned,FALSE);
 
     if (type<3||(type>4&&type<8)) aendian=mainw->fx4_val;
-    else if (type==8) aendian=DEFAULT_AUDIO_SIGNED16|((G_BYTE_ORDER==G_BIG_ENDIAN)&AFORM_BIG_ENDIAN);
+    else if (type==8) aendian=DEFAULT_AUDIO_SIGNED16|((capable->byte_order==LIVES_BIG_ENDIAN)&AFORM_BIG_ENDIAN);
     else if (type==3) aendian=rdet->aendian;
     else aendian=prefs->mt_def_signed_endian;
 

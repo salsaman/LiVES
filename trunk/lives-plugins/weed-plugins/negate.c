@@ -1,6 +1,6 @@
 // negate.c
 // weed plugin
-// (c) G. Finch (salsaman) 2005
+// (c) G. Finch (salsaman) 2005 - 2012
 //
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
@@ -51,13 +51,13 @@ int negate_process (weed_plant_t *inst, weed_timecode_t timestamp) {
   register int i;
 
   int enabled=weed_get_boolean_value(in_params[0],"value",&error);
+  weed_free(in_params);
 
   if (enabled==WEED_FALSE) {
-    weed_free(in_params);
     return WEED_NO_ERROR;
   }
 
-  weed_free(in_params);
+
 
   // new threading arch
   if (weed_plant_has_leaf(out_channel,"offset")) {

@@ -363,7 +363,7 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
 	cfile->achans=cdata->achans;
 	cfile->asampsize=cdata->asamps;
 	
-	cfile->signed_endian=get_signed_endian(cdata->asigned, G_BYTE_ORDER==G_LITTLE_ENDIAN);
+	cfile->signed_endian=get_signed_endian(cdata->asigned, capable->byte_order==LIVES_LITTLE_ENDIAN);
 
 	if (cfile->achans>0&&(dplug->decoder->rip_audio)!=NULL&&withsound==1) {
 	  // call rip_audio() in the decoder plugin

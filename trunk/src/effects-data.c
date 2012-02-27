@@ -603,7 +603,6 @@ gboolean cconx_convert_pixel_data(weed_plant_t *dchan, weed_plant_t *schan) {
     return FALSE;
   }
 
-
   /// check first if we can set the in-channel palette to match 
   if (ipal==opal) pal_ok=TRUE;
   else {
@@ -617,15 +616,22 @@ gboolean cconx_convert_pixel_data(weed_plant_t *dchan, weed_plant_t *schan) {
     weed_free(palettes);
   }
 
+  dpdata=weed_get_voidptr_value(dchan,"pixel_data",&error);
+  if (ipal!=opal) {
+    g_free(dpdata);
+    dpdata=NULL;
+  }
+
   weed_set_int_value(dchan,"width",iwidth);
   weed_set_int_value(dchan,"height",iheight);
   weed_set_int_value(dchan,"current_palette",ipal);
 
-  create_empty_pixel_data(dchan,FALSE,TRUE);
-
+  if (dpdata==NULL) {
+    create_empty_pixel_data(dchan,FALSE,TRUE);
+    dpdata=weed_get_voidptr_value(dchan,"pixel_data",&error);
+  }
+  
   orow=weed_get_int_value(dchan,"rowstrides",&error);
-
-  dpdata=weed_get_voidptr_value(dchan,"pixel_data",&error);
 
   if (irow==orow) {
     memcpy(dpdata,spdata,irow*iheight);

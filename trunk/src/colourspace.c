@@ -8038,7 +8038,7 @@ void alpha_unpremult(weed_plant_t *layer, boolean un) {
   case WEED_PALETTE_ARGB32:
     widthx=width*4;
     psize=4;
-    psizel=3;
+    psizel=4;
     coffs=1;
     aoffs=0;
     clamped=FALSE;
@@ -8115,8 +8115,8 @@ void alpha_unpremult(weed_plant_t *layer, boolean un) {
     if (un) {
       for (i=0;i<height;i++) {
 	for (j=0;j<widthx;j+=psize) {
-	  alpha=ptr[aoffs];
-	  for (p=0;p<psizel;p++) {
+	  alpha=ptr[j+aoffs];
+	  for (p=coffs;p<psizel;p++) {
 	    ptr[j+p]=unal[alpha][ptr[j+p]];
 	  }
 	}
@@ -8126,9 +8126,9 @@ void alpha_unpremult(weed_plant_t *layer, boolean un) {
     else {
       for (i=0;i<height;i++) {
 	for (j=0;j<widthx;j+=psize) {
-	  alpha=ptr[aoffs];
+	  alpha=ptr[j+aoffs];
 	  for (p=coffs;p<psizel;p++) {
-	    ptr[j+p]=unal[alpha][ptr[j+p]];
+	    ptr[j+p]=al[alpha][ptr[j+p]];
 	  }
 	}
 	ptr+=rowstride;
@@ -10846,7 +10846,7 @@ cairo_t *layer_to_cairo(weed_plant_t *layer) {
     widthx=width>>3;
   }
   else {
-    if (capable->byte_order==G_BIG_ENDIAN) {
+    if (capable->byte_order==LIVES_BIG_ENDIAN) {
       convert_layer_palette(layer,WEED_PALETTE_ARGB32,0);
     }
     else {
@@ -10915,6 +10915,7 @@ boolean cairo_to_layer(cairo_t *cairo, weed_plant_t *layer) {
   int width,height,rowstride;
 
   cairo_surface_t *surface=cairo_get_target(cairo);
+  cairo_format_t  cform;
 
   // flush to ensure all writing to the image was done
   cairo_surface_flush (surface);
@@ -10924,7 +10925,7 @@ boolean cairo_to_layer(cairo_t *cairo, weed_plant_t *layer) {
   height = cairo_image_surface_get_height (surface);
   rowstride = cairo_image_surface_get_stride (surface);
 
-  pixel_data=g_try_malloc(height*rowstride);
+  pixel_data=g_try_malloc(CEIL(height*rowstride,32));
 
   weed_set_voidptr_value(layer,"pixel_data",pixel_data);
 
@@ -10936,24 +10937,41 @@ boolean cairo_to_layer(cairo_t *cairo, weed_plant_t *layer) {
   weed_set_int_value(layer,"width",width);
   weed_set_int_value(layer,"height",height);
 
-  if (capable->byte_order==G_BIG_ENDIAN) {
-    weed_set_int_value(layer,"current_palette",WEED_PALETTE_ARGB32);
-  }
-  else {
-    weed_set_int_value(layer,"current_palette",WEED_PALETTE_BGRA32);
-  }
+  cform = cairo_image_surface_get_format (surface);
 
-  if (prefs->alpha_post) {
-    // un-premultiply the alpha
-    alpha_unpremult(layer,TRUE);
-  }
-  else {
-    int flags=0,error;
-    if (weed_plant_has_leaf(layer,"flags"))
-      flags=weed_get_int_value(layer,"flags",&error);
+  switch (cform) {
+  case CAIRO_FORMAT_ARGB32:
+    if (capable->byte_order==LIVES_BIG_ENDIAN) {
+      weed_set_int_value(layer,"current_palette",WEED_PALETTE_ARGB32);
+    }
+    else {
+      weed_set_int_value(layer,"current_palette",WEED_PALETTE_BGRA32);
+    }
+    
+    if (prefs->alpha_post) {
+      // un-premultiply the alpha
+      alpha_unpremult(layer,TRUE);
+    }
+    else {
+      int flags=0,error;
+      if (weed_plant_has_leaf(layer,"flags"))
+	flags=weed_get_int_value(layer,"flags",&error);
+      
+      flags|=WEED_CHANNEL_ALPHA_PREMULT;
+      weed_set_int_value(layer,"flags",flags);
+    }
+    break;
 
-    flags|=WEED_CHANNEL_ALPHA_PREMULT;
-    weed_set_int_value(layer,"flags",flags);
+  case CAIRO_FORMAT_A8:
+    weed_set_int_value(layer,"current_palette",WEED_PALETTE_A8);
+    break;
+
+  case CAIRO_FORMAT_A1:
+    weed_set_int_value(layer,"current_palette",WEED_PALETTE_A1);
+    break;
+
+  default:
+    break;
   }
 
   return TRUE;

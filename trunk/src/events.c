@@ -3683,7 +3683,7 @@ gint count_events (weed_plant_t *event_list, gboolean all_events, weed_timecode_
 
 int count_resampled_events (weed_plant_t *event_list, gdouble fps) {
   weed_plant_t *event;
-  weed_timecode_t tc,seg_start_tc=0,seg_end_tc;
+  weed_timecode_t tc,seg_start_tc=0,seg_end_tc=0;
 
   int rframes=0,hint,marker_type,error;
   

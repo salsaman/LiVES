@@ -714,7 +714,7 @@ gboolean cconx_convert_pixel_data(weed_plant_t *dchan, weed_plant_t *schan) {
 
 
 
-gboolean cconx_chain_data(int key, int mode) {
+boolean cconx_chain_data(int key, int mode) {
   // ret TRUE if we should reinit inst (because of palette change)
 
   weed_plant_t *ichan,*ochan;

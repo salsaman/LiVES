@@ -2371,9 +2371,6 @@ int main (int argc, char *argv[]) {
   sigaction (LIVES_SIGABRT, &sact, NULL);
 
 #else
-  printf(stderr,"starting...\n");
-
-
   typedef void (*SignalHandlerPointer)(int);
 
   SignalHandlerPointer previousHandler;

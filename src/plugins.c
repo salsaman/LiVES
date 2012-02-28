@@ -205,6 +205,9 @@ GList * plugin_request_common (const gchar *plugin_type, const gchar *plugin_nam
   GList *reslist=NULL;
   gchar *com,*comfile;
 
+#ifdef IS_MINGW
+  gchar *ext,*cmd;
+#endif
 
   if (plugin_type!=NULL) {
 
@@ -232,12 +235,29 @@ GList * plugin_request_common (const gchar *plugin_type, const gchar *plugin_nam
 #endif
 
 #else
-    // TODO - check by file extension
+    // check by file extension
+
+    ext=get_extension(comfile);
+    if (!strcmp(ext,"py")) {
+      if (!capable->has_python) {
+	g_free(ext);
+	g_free(comfile);
+	return reslist;
+      }
+      cmd=g_strdup("python");
+    }
+
+    else cmd=g_strdup("perl");
+
 #ifdef DEBUG_PLUGINS
-    com=g_strdup_printf ("perl \"%s\" \"%s\"",comfile,request);
+    com=g_strdup_printf ("%s \"%s\" \"%s\"",cmd,comfile,request);
 #else
-    com=g_strdup_printf ("perl \"%s\" \"%s\" 2>NUL",comfile,request);
+    com=g_strdup_printf ("%s \"%s\" \"%s\" 2>NUL",cmd,comfile,request);
 #endif
+
+    g_free(ext);
+    g_free(cmd);
+
 #endif
 
     g_free(comfile);

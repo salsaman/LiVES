@@ -4729,7 +4729,9 @@ void add_rfx_effects(void) {
   gint tool_posn=RFX_TOOL_MENU_POSN;
   gint rfx_builtin_list_length=0,rfx_custom_list_length=0,rfx_test_list_length=0,rfx_list_length=0;
 
+#ifndef NO_RFX
   gboolean allow_nonex;
+#endif
 
   mainw->has_custom_tools=FALSE;
   mainw->has_custom_gens=FALSE;
@@ -4795,6 +4797,7 @@ void add_rfx_effects(void) {
     gtk_widget_modify_bg(mainw->custom_tools_menu, GTK_STATE_NORMAL, &palette->menu_and_bars);
   }
 
+#ifndef NO_RFX
 
   // scan rendered effect directories
 #ifndef IS_MINGW
@@ -4804,7 +4807,6 @@ void add_rfx_effects(void) {
   allow_nonex=TRUE;
 #endif
 
-#ifndef NO_RFX
   rfx_custom_list=get_plugin_list (PLUGIN_RENDERED_EFFECTS_CUSTOM,allow_nonex,NULL,NULL);
   rfx_custom_list_length=g_list_length(rfx_custom_list);
 

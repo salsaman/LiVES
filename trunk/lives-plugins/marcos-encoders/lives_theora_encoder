@@ -23,14 +23,24 @@ See my vids at http://amv.reimeika.ca !
 """
 
 version = '0.1.7'
-convert = 'convert'
-mplayer = 'mplayer'
-theora_encoder  = 'encoder_example'
-theora_encoder2 = 'theora_encoder_example'
-theora_encoder3 = 'theora_encode'
-    
-sox = 'sox'
-identify = 'identify'
+import os
+if os.name == 'nt':
+    convert = 'convert.exe'
+    mplayer = 'mplayer.exe'
+    theora_encoder  = 'encoder_example.exe'
+    theora_encoder2 = 'theora_encoder_example.exe'
+    theora_encoder3 = 'theora_encode.exe'
+    sox = 'sox.exe'
+    identify = 'identify.exe'
+
+else:
+    convert = 'convert'
+    mplayer = 'mplayer'
+    theora_encoder  = 'encoder_example'
+    theora_encoder2 = 'theora_encoder_example'
+    theora_encoder3 = 'theora_encode'
+    sox = 'sox'
+    identify = 'identify'
 
 usage = \
       """

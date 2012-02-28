@@ -23,11 +23,19 @@ See my vids at http://amv.reimeika.ca !
 """
 
 version = '0.1.6'
-convert = 'convert'
-mencoder = 'mencoder'
-oggenc = 'oggenc'
-sox = 'sox'
-ogmplex = 'ogmmerge'
+import os
+if os.name == 'nt':
+    convert = 'convert.exe'
+    mencoder = 'mencoder.exe'
+    oggenc = 'oggenc.exe'
+    sox = 'sox.exe'
+    ogmplex = 'ogmmerge.exe'
+else:
+    convert = 'convert'
+    mencoder = 'mencoder'
+    oggenc = 'oggenc'
+    sox = 'sox'
+    ogmplex = 'ogmmerge'
 
 usage = \
       """

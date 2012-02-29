@@ -7224,7 +7224,7 @@ sub weed {
     unless ($opts & 0x10) {
       # clean up a few extra remnants
       smog_chdir("$tmpdir");
-      unlink glob ".* rfx.*";
+      unlink glob ".* rfx.* smogplugin.*";
       if ($^O ne "MSWin32") {
 	  unlink glob "/tmp/.smogval* /tmp/lives-symlinks";
       }

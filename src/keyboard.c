@@ -19,6 +19,8 @@
 #include "../libweed/weed-host.h"
 #endif
 
+#define NEEDS_TRANSLATION 1<<15
+
 
 #ifdef ENABLE_OSC
 #include "omc-learn.h"
@@ -108,7 +110,7 @@ GdkFilterReturn filter_func(GdkXEvent *xevent, GdkEvent *event, gpointer data) {
 #ifdef USE_X11
   XEvent *xev=(XEvent *)xevent;
   if (xev->type<2||xev->type>3) return GDK_FILTER_CONTINUE;
-  modifiers = gtk_accelerator_get_default_mod_mask() & xev->xkey.state;
+  modifiers = (gtk_accelerator_get_default_mod_mask() & xev->xkey.state)|NEEDS_TRANSLATION;
 
   // key down
   if (xev->type==2) return pl_key_function(TRUE,xev->xkey.keycode,modifiers)?GDK_FILTER_REMOVE:GDK_FILTER_CONTINUE;
@@ -191,8 +193,6 @@ gboolean pl_key_function (gboolean down, guint16 unicode, guint16 keymod) {
   // plugins can also call this with a unicode key to pass key events to LiVES
   // (via a polling mechanism)
 
-#define NEEDS_TRANSLATION 1<<15
-
   // mask for ctrl and alt
   GdkModifierType state=(GdkModifierType)(keymod&(LIVES_CONTROL_MASK|LIVES_ALT_MASK));
 
@@ -264,9 +264,12 @@ gboolean pl_key_function (gboolean down, guint16 unicode, guint16 keymod) {
 
     }
   }
+
   
   if ((unicode==GDK_KEY_Left||unicode==GDK_KEY_Right||unicode==GDK_KEY_Up||unicode==GDK_KEY_Down)&&
       (keymod&LIVES_CONTROL_MASK)) {
+    g_print("cahcing key\n");
+
     cached_key=unicode;
     cached_mod=LIVES_CONTROL_MASK;
   }

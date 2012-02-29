@@ -4017,9 +4017,6 @@ gboolean read_headers(const gchar *file_name) {
   if (!stat(lives_header,&mystat)) new_time=mystat.st_mtime;
   ///////////////
 
-  g_print("got old %ld %ld\n",old_time,new_time);
-
-
   if (old_time<=new_time) {
     do {
       retval2=0;

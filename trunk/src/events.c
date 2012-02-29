@@ -4953,7 +4953,11 @@ render_details *create_render_details (gint type) {
   }
   
   
+#ifndef IS_MINGW
   if (capable->has_encoder_plugins) encoders=get_plugin_list (PLUGIN_ENCODERS,FALSE,NULL,NULL);
+#else
+  if (capable->has_encoder_plugins) encoders=get_plugin_list (PLUGIN_ENCODERS,TRUE,NULL,NULL);
+#endif
   
   if (!specified) encoders=filter_encoders_by_img_ext(encoders,prefs->image_ext);
   else {

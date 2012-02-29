@@ -427,10 +427,18 @@ def do_encode():
     all_vars.update(globals())
     all_vars.update(locals())
 
-    command = """cd %(source_dir)s ; \\
+    if os.name == 'nt':
+        command = """cd %(source_dir)s ; \\
+%(mencoder.exe)s "mf://%(syml)s%(img_pre)s*%(ext)s" %(mencoder_opts)s1 -o /dev/null %(std)s ; \\
+%(mencoder.exe)s "mf://%(syml)s%(img_pre)s*%(ext)s" %(mencoder_opts)s2 -o %(mpegv)s %(std)s
+""" % all_vars
+    else:
+        command = """cd %(source_dir)s ; \\
 %(mencoder)s "mf://%(syml)s%(img_pre)s*%(ext)s" %(mencoder_opts)s1 -o /dev/null %(std)s ; \\
 %(mencoder)s "mf://%(syml)s%(img_pre)s*%(ext)s" %(mencoder_opts)s2 -o %(mpegv)s %(std)s
 """ % all_vars
+
+
     run(command)
     if os.path.exists(os.path.join(source_dir, 'divx2pass.log')):
         os.remove(os.path.join(source_dir, 'divx2pass.log'))

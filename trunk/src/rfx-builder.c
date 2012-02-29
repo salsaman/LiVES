@@ -4797,13 +4797,17 @@ void add_rfx_effects(void) {
     gtk_widget_modify_bg(mainw->custom_tools_menu, GTK_STATE_NORMAL, &palette->menu_and_bars);
   }
 
+#ifdef IS_MINGW
+#define NO_RFX
+#endif
+
+
 #ifndef NO_RFX
 
   // scan rendered effect directories
 #ifndef IS_MINGW
   allow_nonex=FALSE;
 #else
-#define NO_RFX
   allow_nonex=TRUE;
 #endif
 

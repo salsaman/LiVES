@@ -292,10 +292,15 @@ def do_enhance():
             run(command)
         else:
             if os.path.exists(rimg_fname): os.remove(rimg_fname)
-	    try:
-            	os.symlink(eimg_fname, rimg_fname)
-	    except (IOError, OSError):
+
+            if os.name == 'nt':
 		shutil.copy(eimg_fname, rimg_fname)
+            else:
+                try:
+                    os.symlink(eimg_fname, rimg_fname)
+                except (IOError, OSError):
+                    shutil.copy(eimg_fname, rimg_fname)
+
         iframe+=1
 
 
@@ -327,10 +332,15 @@ def do_encode():
             frfile = os.path.join(source_dir, iframe)
             frlink = os.path.join(source_dir, syml + iframe)
             if os.path.islink(frlink): os.remove(frlink)
-	    try:
-            	os.symlink(frfile, frlink)
-	    except (IOError, OSError):
-		shutil.copy(frfile, frlink)
+
+            if os.name == 'nt':
+                shutil.copy(frfile, frlink)
+            else:
+                try:
+                    os.symlink(frfile, frlink)
+                except (IOError, OSError):
+                    shutil.copy(frfile, frlink)
+
     else:
         syml = ''
         numframes = len(glob.glob(os.path.join(source_dir, \
@@ -349,8 +359,9 @@ def do_encode():
         print 'Creating GIF file'
 
     command = """cd %(source_dir)s ; \\
-%(convert)s -delay %(spf)s %(syml)s%(img_pre)s*%(ext)s %(gifv)s
+%(convert)s -delay %(spf)s %(syml)s%(img_pre)s*%(ext)s \"%(gifv)s\"
 """ % all_vars
+
     run(command)
 
     shutil.move(gifv, vidname)
@@ -482,12 +493,28 @@ if __name__ == '__main__':
     img_dir = opts.get('-d', '.')
     img_dir = os.path.abspath(img_dir)
     if ' ' in img_dir:
-        temp_dir = tempfile.mkdtemp('', '.lives-', '/tmp/')
-        try:
-            os.symlink(img_dir, temp_dir + '/img_dir')
-        except (IOError, OSError):
-            shutil.copy(img_dir, temp_dir + '/img_dir')
-        img_dir = temp_dir + '/img_dir'
+
+        if os.name == 'nt':
+            temp_dir = tempfile.mkdtemp('', 'lives-')
+            os.makedirs(temp_dir + '\\img_dir')
+            names = os.listdir(img_dir)
+            for name in names:
+                srcname = os.path.join(img_dir, name)
+                dstname = os.path.join(temp_dir, 'img_dir', name)
+                try:
+                    shutil.copy(srcname,dstname)
+                except:
+                    pass
+            img_dir = temp_dir + '\\img_dir'
+
+
+        else:
+            temp_dir = tempfile.mkdtemp('', '.lives-')
+            try:
+                os.symlink(img_dir, temp_dir + '/img_dir')
+            except (IOError, OSError):
+                shutil.copytree(img_dir, temp_dir + '/img_dir')
+                img_dir = temp_dir + '/img_dir'
 
     if not os.path.isdir(img_dir):
         print 'The image source directory: '  + img_dir + \
@@ -603,6 +630,7 @@ if __name__ == '__main__':
         ext = '.png'
     else:
         print 'Cannot find any appropriate %s or %s files!' % ('.jpg','.png')
+        print 'I checked ' + test_file+'.png'
         raise SystemExit, 1
     first_frame = test_file + ext
     last_frame = os.path.join(img_dir, img_pre + last_frame_num + ext)
@@ -622,12 +650,31 @@ if __name__ == '__main__':
             raise SystemExit, 1
     if ' ' in work_dir:
         if temp_dir == '':
-            temp_dir = tempfile.mkdtemp('', '.lives-', '/tmp/')
-        try:
-            os.symlink(work_dir, temp_dir + '/work_dir')
-        except (IOError, OSError):
-            shutil.copy(work_dir, temp_dir + '/work_dir')
-        work_dir = temp_dir + '/work_dir'
+
+
+            if os.name == 'nt':
+                temp_dir = tempfile.mkdtemp('', 'lives-')
+                os.makedirs(temp_dir + '\\work_dir')
+                names = os.listdir(work_dir)
+                for name in names:
+                    srcname = os.path.join(work_dir, name)
+                    dstname = os.path.join(temp_dir, 'work_dir', name)
+                    try:
+                        shutil.copy(srcname,dstname)
+                    except:
+                        pass
+                    work_dir = temp_dir + '\\work_dir'
+
+
+                else:
+                    temp_dir = tempfile.mkdtemp('', '.lives-')
+                    try:
+                        os.symlink(work_dir, temp_dir + '/work_dir')
+                    except (IOError, OSError):
+                        shutil.copytree(work_dir, temp_dir + '/work_dir')
+                        work_dir = temp_dir + '/work_dir'
+
+
 
     # Audio is not used
     sndf = opts.get('-s', os.path.join(img_dir, 'audio'))

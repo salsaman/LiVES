@@ -148,7 +148,7 @@ gboolean read_file_details(const gchar *file_name, gboolean is_audio) {
   int alarm_handle;
   int retval;
   gboolean timeout;
-  gchar *tmp,*com=g_strdup_printf("%s get_details \"%s\" \"%s\" \"%s\" %d %d",prefs->backend,cfile->handle,
+  gchar *tmp,*com=g_strdup_printf("%s get_details \"%s\" \"%s\" \"%s\" %d %d",prefs->backend_sync,cfile->handle,
 				  (tmp=g_filename_from_utf8(file_name,-1,NULL,NULL,NULL)),
 				  cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",mainw->opening_loc,is_audio);
   g_free(tmp);
@@ -1740,7 +1740,11 @@ void save_file (int clip, int start, int end, const char *filename) {
   if (prefs->show_gui) {
     // open a file for stderr
 
+#ifndef IS_MINGW
     new_stderr_name=g_strdup_printf("%s%s/.debug_out",prefs->tmpdir,cfile->handle);
+#else
+    new_stderr_name=g_strdup_printf("%s%s/debug_out",prefs->tmpdir,cfile->handle);
+#endif
     g_free(redir);
 
     do {
@@ -5543,9 +5547,9 @@ static gboolean recover_files(gchar *recovery_file, gboolean auto_recover) {
 
 void add_to_recovery_file (const gchar *handle) {
 #ifndef IS_MINGW
-  gchar *com=g_strdup_printf("/bin/echo \"%s\" >> %s",handle,mainw->recovery_file);
+  gchar *com=g_strdup_printf("/bin/echo \"%s\" >> \"%s\"",handle,mainw->recovery_file);
 #else
-  gchar *com=g_strdup_printf("echo.exe \"%s\" >> %s",handle,mainw->recovery_file);
+  gchar *com=g_strdup_printf("echo.exe \"%s\" >> \"%s\"",handle,mainw->recovery_file);
 #endif
   mainw->com_failed=FALSE;
   lives_system(com,FALSE);
@@ -5626,7 +5630,7 @@ gboolean check_for_recovery_files (gboolean auto_recover) {
 
   pid_t lpid=lives_getpid();
 
-  com=g_strdup_printf("%s get_recovery_file %d %d %s recovery> %s",prefs->backend_sync,luid,lgid,
+  com=g_strdup_printf("%s get_recovery_file %d %d %s recovery> \"%s\"",prefs->backend_sync,luid,lgid,
 			     capable->myname,info_file);
   
   unlink(info_file);
@@ -5666,10 +5670,10 @@ gboolean check_for_recovery_files (gboolean auto_recover) {
   if (g_file_test (recovery_file, G_FILE_TEST_EXISTS)) {
     // move files temporarily to stop them being cleansed
 #ifndef IS_MINGW
-    com=g_strdup_printf("/bin/mv %s \"%s/.layout.%d.%d.%d\"",recovery_file,prefs->tmpdir,luid,
+    com=g_strdup_printf("/bin/mv \"%s\" \"%s/.layout.%d.%d.%d\"",recovery_file,prefs->tmpdir,luid,
 			lgid,lpid);
 #else
-    com=g_strdup_printf("mv.exe %s \"%s/.layout.%d.%d.%d\"",recovery_file,prefs->tmpdir,luid,
+    com=g_strdup_printf("mv.exe \"%s\" \"%s/.layout.%d.%d.%d\"",recovery_file,prefs->tmpdir,luid,
 			lgid,lpid);
 #endif
     lives_system(com,FALSE);
@@ -5677,10 +5681,10 @@ gboolean check_for_recovery_files (gboolean auto_recover) {
     recovery_numbering_file=g_strdup_printf("%s/layout_numbering.%d.%d.%d",prefs->tmpdir,luid,
 					    lgid,recpid);
 #ifndef IS_MINGW
-    com=g_strdup_printf("/bin/mv %s \"%s/.layout_numbering.%d.%d.%d\"",recovery_numbering_file,prefs->tmpdir,
+    com=g_strdup_printf("/bin/mv \"%s\" \"%s/.layout_numbering.%d.%d.%d\"",recovery_numbering_file,prefs->tmpdir,
 			luid,lgid,lpid);
 #else
-    com=g_strdup_printf("mv.exe %s \"%s/.layout_numbering.%d.%d.%d\"",recovery_numbering_file,prefs->tmpdir,
+    com=g_strdup_printf("mv.exe \"%s\" \"%s/.layout_numbering.%d.%d.%d\"",recovery_numbering_file,prefs->tmpdir,
 			luid,lgid,lpid);
 #endif
     lives_system(com,FALSE);

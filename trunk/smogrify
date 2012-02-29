@@ -17,11 +17,6 @@ $GUI_NAME="LiVES";
 ###################################################################
 
 # default values
-$encoder="mencoder_encoder";
-
-$composite_command="composite -quiet -colorspace RGB -type truecolor";
-
-$convert_command="convert -quiet -colorspace RGB -type truecolor";
 
 ###################################################################
 # Do not change these except for testing !
@@ -41,8 +36,7 @@ $gid=~ s/\W.*//;
 if ($^O eq "MSWin32") {
 #TODO - get this from the registry when needed
 #only if we installed perl ourselves
-    BEGIN { push @INC,"C:\\Program Files\\LiVES\\perl\\lib";}
-
+    BEGIN { push @INC,"C:\\Program Files\\LiVES\\lib";}
 
     $login = getlogin;
     $home="C:\\users\\$login\\Application Data\\LiVES";
@@ -55,6 +49,11 @@ if ($^O eq "MSWin32") {
     $default_tmpdir="$home\\livescache\\";
     $is_mingw=1;
     $nulfile="NUL";
+
+    $encoder="ffmpeg_encoder";
+    $composite_command="composite.exe -quiet -colorspace RGB -type truecolor";
+    $convert_command="convert.exe -quiet -colorspace RGB -type truecolor";
+
 }
 else {
     $home=$ENV{"HOME"};
@@ -64,6 +63,11 @@ else {
 # default temporary directory (can be overridden from the GUI)
     $default_tmpdir="$home/livestmp/";
     $nulfile="/dev/null";
+
+    $encoder="mencoder_encoder";
+    $composite_command="composite -quiet -colorspace RGB -type truecolor";
+    $convert_command="convert -quiet -colorspace RGB -type truecolor";
+
 }
 
 
@@ -291,7 +295,7 @@ if (defined($ARGV[0])) {
 
 	$startup_phase=0;
 
-	$video_open_command=&location("mplayer");
+	$video_open_command="\"".&location("mplayer")."\"";
 
 	$audio_player="sox";
 	$audio_play_command=&rc_get_default("sox_command");
@@ -552,7 +556,7 @@ if (defined($ARGV[0])) {
 	if ($command eq "xmmsstop") {
 	$xmms_command=&location("xmms");
 	unless ($xmms_command eq "") {
-	    smog_system("$xmms_command -s");
+	    smog_system("\"$xmms_command\" -s");
 	}
 	exit 0;
     }
@@ -560,7 +564,7 @@ if (defined($ARGV[0])) {
     if ($command eq "xmmsplay") {
 	$xmms_command=&location("xmms");
 	unless ($xmms_command eq "") {
-	    smog_system("$xmms_command -p \"$ARGV[1]\" &");
+	    smog_system("\"$xmms_command\" -p \"$ARGV[1]\" &");
 	}
 	exit 0;
     }
@@ -610,7 +614,7 @@ if (defined($ARGV[0])) {
 	    #clear old backups (e.g. when saving a set)
 	    $curtmpdir="$tmpdir/$handle";
 	    smog_chdir("$curtmpdir");
-	    unlink <*.pre>;
+	    unlink glob "*.pre";
 	    &sig_complete;
 	    exit 0;
 	}
@@ -721,8 +725,8 @@ if (defined($ARGV[0])) {
 	smog_chdir("$curtmpdir");
 	$fsize= -s "$nfile";
 	$afsize = -s "audio";
-	unlink <*.tar>;
-	unlink <event.*>;
+	unlink glob "*.tar";
+	unlink glob "event.*";
 	unlink "extended";
 
 	$img_type="jpg";
@@ -747,7 +751,7 @@ if (defined($ARGV[0])) {
 	    # very old backups didn't have a header2
 	    if (! -f "header2") {
 		unless ($nfile eq "") {
-		    unlink <event.*>;
+		    unlink glob "event.*";
 		    $img_ext=&get_img_ext($curtmpdir);
 		    $frames=&count_frames;
 		}
@@ -929,7 +933,10 @@ if (defined($ARGV[0])) {
 			unlink <audiodump.wav audioclip>;
 		    }
 		    if ($areq&4) {
-			&clear_symlinks;
+			if ($^O ne "MSWin32") {
+			    # TODO **** !!!!!
+			    &clear_symlinks;
+			}
 		    }
 		}
 	    }
@@ -938,12 +945,20 @@ if (defined($ARGV[0])) {
 	    smog_chdir("$curtmpdir");
 
 	    if ($^O eq "MSWin32") {
-		# TODO - filter by file ext
-		$com="perl \"$plugin\" clear $start $end $img_ext";
+		# filter by file ext
+		my $ext=&get_ext("$plugin");
+		if ($ext eq ".py") {
+		    $cmd="python";
+		}
+		else {
+		    $cmd="perl";
+		}
+		$com="$cmd \"$plugin\" clear $start $end $img_ext";
 	    }
 	    else {
 		$com="\"$plugin\" clear $start $end $img_ext";
 	    }
+
 	    $smerr=smog_system($com);
 	    if ($smerr) {
 		sig_system_error("Command failed: $com",$smerr); 
@@ -1099,7 +1114,7 @@ if (defined($ARGV[0])) {
 		if ($^O ne "MSWin32") {
 		    unlink "/tmp/.smogval*";  # TODO *** !!!!!!!!!!
 		}
-		unlink <* .*>;  # will not remove directories
+		unlink glob "* .* *.*";  # will not remove directories
 	    }
 	    else {
 		$new_temp=$ARGV[1];
@@ -1434,6 +1449,7 @@ if (defined($ARGV[0])) {
 
 	if ($command eq "open") {
 
+	    print STDERR "pt a1\n";
 	unlink "$curtmpdir/pause";
 
 	$file=$ARGV[2];
@@ -1475,6 +1491,8 @@ if (defined($ARGV[0])) {
 
 	smog_chdir("$curtmpdir");
 
+	    print STDERR "pt b1 ($curtmpdir)\n";
+
 	# let get_file_info set this
 	#$mplay_command=&rc_get("video_open_command");
 
@@ -1502,11 +1520,13 @@ if (defined($ARGV[0])) {
 	                 # quitting, thus we won't send full info
 	}
 	&get_file_info;
+
 	if ($panic) {
 	    unlink "$pidfile"; 
 	    exit 1;
 	}
 
+	    print STDERR "pt a12\n";
 	$aformnew="";
 	if ($asamps==32) {
 	    # cannot handle this yet, need to resample to s16
@@ -1574,9 +1594,11 @@ if (defined($ARGV[0])) {
 	    unless ($opentest==1) {
 		&sig_progress(0);
 	    }
+	    print STDERR "pt a14\n";
 
 	    smog_system("$syscom2"); # this may well fail...we just have to use what we get back
 	    
+	    print STDERR "pt a15\n";
             if (!-f $curtmpfile) {
 		unlink $pidfile;
 		exit 1;
@@ -1638,6 +1660,7 @@ if (defined($ARGV[0])) {
 	if ($img_ext eq ".png" || $type eq "png") {
 	    $bpp=32;
 	}
+	    print STDERR "pt a16\n";
 
 	unless (0||$withsound ne "-1" || $achans==0) {
 	    # try as best we can to sync sound and video for a selection
@@ -1659,6 +1682,7 @@ if (defined($ARGV[0])) {
 		#curtmpdir can be removed by cancel
 		exit 1;
 	    }
+	    print STDERR "pt a1677\n";
 
 	    if ($af_size>0||$count>0) {
 		&sig_complete($handle,$count,$type,$hsize,$vsize,$bpp,$fps,$f_size,$arate,$achans,$asamps,$signed,$endian,$af_size,$title,$author,$comment);
@@ -1678,6 +1702,7 @@ if (defined($ARGV[0])) {
 		}
 	    }
 	}
+	    print STDERR "pt a1888\n";
 
 	# mplayer seems to sometimes output one extra frame for jpg
 	if (defined($MPLAYER_EXTRA_OPEN_FRAME_BUG)&&($count==$xframes+1)&&(($frames eq "")||(!($frames eq "") && ($count<$ARGV[4])||($ARGV[3]==0)))) {
@@ -1706,6 +1731,7 @@ if (defined($ARGV[0])) {
 	    }
 	}
 
+	    print STDERR "pt a1888888888888888888\n";
 
 	$af_size= -s $audio_out;
 	if (-d $curtmpdir) {
@@ -1715,6 +1741,8 @@ if (defined($ARGV[0])) {
     }
 
     if ($command eq "get_details") {
+
+	print STDERR "\n\ngetdet\n";
 
 	$handle=$ARGV[1];
 	$curtmpdir="$tmpdir/$handle";
@@ -1744,6 +1772,7 @@ if (defined($ARGV[0])) {
 	}
 
 	smog_chdir("$curtmpdir");
+	print STDERR "\n\ngetdet done\n";
 
 	&sig_complete($handle,$count,$type,$hsize,$vsize,$bpp,$fps,$f_size,$arate,$achans,$asamps,$signed,$endian,$af_size,$title,$author,$comment);
 
@@ -1826,7 +1855,7 @@ if (defined($ARGV[0])) {
 		}
 	    }
 	    if (chdir("$curtmpdir")) {
-		unlink glob <* .*>;
+		unlink glob "* .* *.*";
 		smog_chdir("$tmpdir");
 		rmdir $curtmpdir;
 	    }
@@ -1857,6 +1886,7 @@ if (defined($ARGV[0])) {
 
 	
 	if ($command eq "save") {
+	    my $cmd="";
 
 	    $get_rfx=0;
 
@@ -2079,12 +2109,34 @@ if (defined($ARGV[0])) {
 		$fields="$fps \"$nfile\" $start $end $img_ext $otype $atype $hsize $vsize";
 		$fields.=" $DEBUG_ENCODERS";
 		$fields.=" $arate $achans $asamps $ssigned";
-		if ($get_rfx==0) {
-		    $fields.=@ARGV[13..$#ARGV];
-		    $com="\"$plugin\" encode $fields";
+		if ($^O eq "MSWin32") {
+		    # adjust depending on file ext
+		    my $ext=&get_ext("$plugin");
+		    if ($ext eq ".py") {
+			$cmd="python";
+		    }
+		    else {
+			$cmd="perl";
+		    }
+		    if ($get_rfx==0) {
+			$fields.=@ARGV[13..$#ARGV];
+			$com="$cmd \"$plugin\" encode $fields";
+
+			print STDERR "\n\n\n\nCOM IS $com\n";
+
+		    }
+		    else {
+			$com="$cmd \"$plugin\" get_rfx $fields";
+		    }
 		}
 		else {
-		    $com="\"$plugin\" get_rfx $fields";
+		    if ($get_rfx==0) {
+			$fields.=@ARGV[13..$#ARGV];
+			$com="\"$plugin\" encode $fields";
+		    }
+		    else {
+			$com="\"$plugin\" get_rfx $fields";
+		    }
 		}
 
 		$smerr=smog_system("$com");
@@ -2355,7 +2407,7 @@ if (defined($ARGV[0])) {
 	    &sig_error("Unable to open output file !","$GUI_NAME could not write to $nfile.");
 	}
 
-	unlink <*.tar>;
+	unlink glob "*.tar";
 	$com="tar -cf header.tar \"$audio\" header* extended* event.* subs.* file* 2>$nulfile";
 	smog_system ($com);
 	if ($smerr) {
@@ -2402,7 +2454,7 @@ if (defined($ARGV[0])) {
 	    close IN;
 	    unless ($tarerr eq "") {
 		&sig_error("Error creating new backup.",$tarerr);
-		unlink <*.tar .tar_err>;
+		unlink glob "*.tar .tar_err";
 		unlink "$pidfile";
 		exit 1;
 	    }
@@ -2459,7 +2511,7 @@ if (defined($ARGV[0])) {
 	while ($file=readdir(DIR)) {
 	    if ($file =~ /.tar$/) {
 		smog_system("tar -xf $file 2>$nulfile");
-		unlink ($file);
+		unlink "$file";
 	    }
 	}
 	close DIR;
@@ -2787,7 +2839,7 @@ if (defined($ARGV[0])) {
 		exit 1;
 	    }
 	    smog_chdir("$curtmpdir");
-	    unlink <*>;
+	    unlink glob "* *.* .*";
 	    if ($GUI_NAME eq "LiVES") {
 		# LiVES needs this to stop the progress dialog from flickering 
 		sleep(1);
@@ -2849,10 +2901,10 @@ if (defined($ARGV[0])) {
 	$mplayer_command=&location("mplayer");
 
 	if ($^O ne "MSWin32") {
-	    smog_system("$mplayer_command -quiet -x $hsize -y $vsize -wid $win -vo x11 -zoom -ss $start_time -frames $preview_frames \"$file\" $extra_params >$nulfile 2>&1 <$nulfile");
+	    smog_system("\"$mplayer_command\" -quiet -x $hsize -y $vsize -wid $win -vo x11 -zoom -ss $start_time -frames $preview_frames \"$file\" $extra_params >$nulfile 2>&1 <$nulfile");
 	}
 	else {
-	    smog_system("$mplayer_command -quiet -x $hsize -y $vsize -wid $win -vo direct3d -zoom -ss $start_time -frames $preview_frames \"$file\" $extra_params >$nulfile 2>&1 <$nulfile");
+	    smog_system("\"$mplayer_command\" -quiet -x $hsize -y $vsize -wid $win -vo direct3d -zoom -ss $start_time -frames $preview_frames \"$file\" $extra_params >$nulfile 2>&1 <$nulfile");
 	}
 	&sig_complete;
 	exit 0;
@@ -3339,7 +3391,7 @@ if (defined($ARGV[0])) {
 		&sig_error("$GUI_NAME audio error.");
 	    }
 	}
-	unlink <audiodump.*>;
+	unlink glob "audiodump.*";
 
 	$f_size=-s $audio_out;
 	&sig_complete($arate,$achans,$asamps,$signed,$endian,$f_size);
@@ -3351,7 +3403,7 @@ if (defined($ARGV[0])) {
 	# plus any audio.new files (e.g. from append audio)
 
 	smog_chdir("$curtmpdir");
-	unlink <audiodump* audio.new>;
+	unlink glob "audiodump* audio.new";
 
 	&sig_complete;
 	exit 0;
@@ -3416,7 +3468,7 @@ if (defined($ARGV[0])) {
 	    unlink "$audiofile";
 	}
 
-	$com="$cdda2wav_command -q -x -D \"$cdplay_device\" -t $track \"$audiofile\"| >$nulfile 2>&1";
+	$com="\"$cdda2wav_command\" -q -x -D \"$cdplay_device\" -t $track \"$audiofile\"| >$nulfile 2>&1";
 	$smerr=smog_system($com);
 	if ($smerr) {
 	    sig_system_error("$com",$smerr);
@@ -3444,7 +3496,7 @@ if (defined($ARGV[0])) {
 	$file=$ARGV[2];
 	$audio_in=$curtmpdir."/audiodump.wav";
 
-	$ext=&get_ext($file);
+	$ext=&get_ext("$file");
 	if ($ext eq ".mp3") {
 	    &mp3_open;
 	}
@@ -3502,17 +3554,17 @@ if (defined($ARGV[0])) {
 		    elsif (-f "$dir$file") {
 			$size=-s "$dir$file";
 			if (($size>$minmeg*$meg)&&($size<$maxmeg*$meg)) {
-			    $ext=&get_ext($file);
+			    $ext=&get_ext("$file");
 			    # TODO - add more extensions (and allow editing thru prefs...)
 			    if (($ext eq ".mp3")||($ext eq ".ogg")||($ext=".mod")) {
 				$tracks++;
 				$giveup=200;
 				if ($first==1) {
-				    smog_system("$xmms_command -p \"$dir$file\"");
+				    smog_system("\"$xmms_command\" -p \"$dir$file\"");
 				    $first=0;
 				}
 				else {
-				    smog_system("$xmms_command -p -e \"$dir$file\"");
+				    smog_system("\"$xmms_command\" -p -e \"$dir$file\"");
 				}
 			    }
 			}
@@ -3697,8 +3749,15 @@ if (defined($ARGV[0])) {
 		$plugin_name="$home/.lives-dir/plugins/effects/rendered/test/$command";
 	    }
 	    if ($^O eq "MSWin32") {
-		# TODO *** adjust depending on file ext
-		$smcom="perl \"$plugin_name\" get_description";
+		# adjust depending on file ext
+		my $ext=&get_ext("$plugin_name");
+		if ($ext eq ".py") {
+		    $cmd="python";
+		}
+		else {
+		    $cmd="perl";
+		}
+		$smcom="$cmd \"$plugin_name\" get_description";
 	    }
 	    else {
 		$smcom="\"$plugin_name\" get_description";
@@ -3731,8 +3790,15 @@ if (defined($ARGV[0])) {
 	    $fps=0;
 
 	    if ($^O eq "MSWin32") {
-		# TODO *** adjust depending on file ext
-		$fx_caps=smog_system_direct("perl \"$plugin_name\" get_capabilities");
+		# adjust depending on file ext
+		my $ext=&get_ext("$plugin_name");
+		if ($ext eq ".py") {
+		    $cmd="python";
+		}
+		else {
+		    $cmd="perl";
+		}
+		$fx_caps=smog_system_direct("$cmd \"$plugin_name\" get_capabilities");
 	    }
 	    else {
 		$fx_caps=smog_system_direct("\"$plugin_name\" get_capabilities");
@@ -3792,13 +3858,52 @@ if (defined($ARGV[0])) {
 		#img_ext is also in ARGV, but never mind
 
 		if ($num_in_channels==2) {
-		    $err=smog_system("\"$plugin_name\" process \"$curtmpdir\" $img_ext $img_ext2 $out_ext @ARGV > \"$res_file\"");
+		    if ($^O eq "MSWin32") {
+			# adjust depending on file ext
+			my $ext=&get_ext("$plugin_name");
+			if ($ext eq ".py") {
+			    $cmd="python";
+			}
+			else {
+			    $cmd="perl";
+			}
+			$err=smog_system("$cmd \"$plugin_name\" process \"$curtmpdir\" $img_ext $img_ext2 $out_ext @ARGV > \"$res_file\"");
+		    }
+		    else {
+			$err=smog_system("\"$plugin_name\" process \"$curtmpdir\" $img_ext $img_ext2 $out_ext @ARGV > \"$res_file\"");
+		    }
 		}
 		elsif ($num_in_channels==1) {
-		    $err=smog_system("\"$plugin_name\" process \"$curtmpdir\" $img_ext $out_ext @ARGV > \"$res_file\"");
+		    if ($^O eq "MSWin32") {
+			# adjust depending on file ext
+			my $ext=&get_ext("$plugin_name");
+			if ($ext eq ".py") {
+			    $cmd="python";
+			}
+			else {
+			    $cmd="perl";
+			}
+			$err=smog_system("$cmd \"$plugin_name\" process \"$curtmpdir\" $img_ext $out_ext @ARGV > \"$res_file\"");
+		    }
+		    else {
+			$err=smog_system("\"$plugin_name\" process \"$curtmpdir\" $img_ext $out_ext @ARGV > \"$res_file\"");
+		    }
 		}
 		else {
-		    $err=smog_system("\"$plugin_name\" process \"$curtmpdir\" $out_ext @ARGV > \"$res_file\"");
+		    if ($^O eq "MSWin32") {
+			# adjust depending on file ext
+			my $ext=&get_ext("$plugin_name");
+			if ($ext eq ".py") {
+			    $cmd="python";
+			}
+			else {
+			    $cmd="perl";
+			}
+			$err=smog_system("$cmd \"$plugin_name\" process \"$curtmpdir\" $out_ext @ARGV > \"$res_file\"");
+		    }
+		    else {
+			$err=smog_system("\"$plugin_name\" process \"$curtmpdir\" $out_ext @ARGV > \"$res_file\"");
+		    }
 		}
 		if (!$err) {
 		    if (defined(open IN,"< $res_file")) {
@@ -3868,7 +3973,6 @@ if (defined($ARGV[0])) {
 	    my $opts=$ARGV[2];
 	    my $bytes_cleaned=&weed($opts);
 	    &sig_complete($bytes_cleaned);
-
 	    exit 0;
 	}
 
@@ -4094,7 +4198,7 @@ sub mv_pre {
     }
 
     smog_chdir("$curtmpdir");
-    unlink <*.mgk>;
+    unlink glob "*.mgk";
 
     for ($i=$start;$i<=$end;$i++) {
 	$name=&mkname($i);
@@ -4108,7 +4212,7 @@ sub mv_pre {
 			print STDERR "smogrify debug - rename failed ($!): \"$curtmpdir/$name$img_ext\",\"$curtmpdir/$name.bak\"\n";
 		    }
 		    sig_system_error("Renaming \"$curtmpdir/$name$img_ext\" to \"$curtmpdir/$name.bak\"");
-		    unlink $pidfile;
+		    unlink "$pidfile";
 		    exit 1;
 		}
 	    }
@@ -4119,7 +4223,7 @@ sub mv_pre {
 		    print STDERR "smogrify debug - rename failed ($!): \"$curtmpdir/$name.pre\",\"$curtmpdir/$name$img_ext\"\n";
 		}
 		sig_system_error("Renaming \"$curtmpdir/$name.pre\" to \"$curtmpdir/$name$img_ext\"");
-		unlink $pidfile;
+		unlink "$pidfile";
 		exit 1;
 	    }
 	}
@@ -4276,7 +4380,7 @@ sub smog_rename {
 	   print STDERR "smogrify debug - rename failed ($!): $smfrom $smto\n";
        }
        sig_system_error("Renaming \"$smfrom\" to \"$smto\"",$!);
-       unlink $pidfile;
+       unlink "$pidfile";
        exit 1;
    }
 
@@ -4323,7 +4427,7 @@ sub smog_chdir {
 	}
 
 	sig_system_error("Changing to directory \"$smdir\"",$!);
-	unlink $pidfile;
+	unlink "$pidfile";
 	exit 1;
     }
 }
@@ -4696,13 +4800,6 @@ sub trim_center {
 }
 
 
-sub get_ext {
-    # return the extension of a file (including the '.')
-    my ($file)=shift;
-    return substr($file,-4);
-}
-
-
 
 sub get_formats {
     if ($asamps==8){
@@ -4751,7 +4848,7 @@ sub get_file_info {
     $file_ident="file_info";
 
     if ($mplay_command eq "") {
-	$mplay_command=&get_location("mplayer");
+	$mplay_command="\"".&location("mplayer")."\"";
     }
 
     if ($mplay_command eq "") {
@@ -4773,17 +4870,17 @@ sub get_file_info {
     unless ($mplay_command eq "") {
 	if (defined($is_remote)&&($is_remote>0)) {
 	    # remote files might be streams, so we need to cache a bit before we can identify them
-	    $com="$mplay_command -identify -vo null -ao null -frames 0 -cache 32 \"$file\">\"$file_ident\" 2>$nulfile <$nulfile";
+	    $com="$mplay_command -identify -vo null -ao null -frames 0 -cache 32 \"$file\" > $file_ident 2>$nulfile <$nulfile";
 	    
 	}
 	else {
-	    $com="$mplay_command -identify -vo null -ao null -frames 0 \"$file\">\"$file_ident\" 2>$nulfile <$nulfile";
+	    $com="$mplay_command -identify -vo null -ao null -frames 0 \"$file\" > $file_ident 2>$nulfile <$nulfile";
 	}
 
 	$smerr=smog_system($com);
 
 	if ($smerr) {
-	    do_system_error("$com",$smerr);
+	    sig_system_error("$com",$smerr);
 	    $panic=1;
 	    return;
 	}
@@ -4997,7 +5094,7 @@ sub get_file_info {
 		    $count++;
 		    $imresact="none";
 		    if ($only_first) {
-			unlink <$curtmpdir/*$img_ext>;
+			unlink glob "$curtmpdir/*$img_ext";
 			last;
 		    }
 		    else {
@@ -5299,6 +5396,17 @@ sub resample_audio {
     }
 }
 
+sub get_ext {
+    my $fname=shift;
+
+    my $ext=(split(/\./,$fname))[-1];
+
+    if ($ext=~/(.*)\"$/) {
+	$ext=$1;
+    }
+
+    return ".".$ext;
+}
 
 
 
@@ -5802,7 +5910,7 @@ sub open_single_image {
     }
 
     if (!defined($file_ext)) {
-	$file_ext=&get_ext($file);
+	$file_ext=&get_ext("$file");
     }
 
     if ($file_ext eq ".avi"||$file_ext eq ".mp4"||$file_ext eq ".mpg"||$file_ext eq ".ogg"||$file_ext eq ".mov"||$file_ext eq ".ogv"||$file_ext eq ".webm"||$file_ext eq ".mkv"||$file_ext eq ".asf"||$file_ext eq ".wmv"||$file_ext eq ".flv"||$file_ext eq ".mng"||$file_ext eq ".dv"||$file_ext eq ".mp3") {
@@ -5876,7 +5984,7 @@ sub get_image_size {
     my ($i);
 
     #identify hangs if the file extension is ".avi" or ".mp4"...maybe more...
-    my ($file_ext)=&get_ext($file);
+    my ($file_ext)=&get_ext("$file");
 
     if ($file_ext eq ".avi"||$file_ext eq ".mp4"||$file_ext eq ".mpg") {
 	$height=$width=$bpp=0;
@@ -5893,7 +6001,7 @@ sub get_image_size {
     my ($id_cmd)=&location("identify");
 
     unless ($id_cmd eq "") {
-	$com="$id_cmd \"$file\" 2>$nulfile";
+	$com="\"$id_cmd\" \"$file\" 2>$nulfile";
 	@info=split / /, smog_system_direct($com);
 
 	if ($?) {
@@ -6302,22 +6410,32 @@ sub clean_old {
     # clear away any old backup files, etc.
     return if (! -d "$tmpdir/$handle");
     smog_chdir("$tmpdir/$handle");
-    unlink <*.mgk *.bak *.pre *.tmp pause audio.* audiodump*>;
+    unlink glob "*.mgk *.bak *.pre *.tmp pause audio.* audiodump*";
     smog_system_sync();
 }
 
 
 
 sub sig_complete {
+    print STDERR "\n\nWRITING xxxx :$status: to ($curtmpdir)\n";
+
 
     return if (! -d "$curtmpdir");
     my($status)="completed";
     foreach (@_) {
 	$status.="|".$_;
     }
+    print STDERR "\n\nWRITING11 :$status: to $statusfile\n";
+
     smog_system_sync();
+	print STDERR "\n\nWRITING22 :$status: to $statusfile\n";
+
+	print STDERR "\n\nWRITING :$status: to $curtmpdir\n";
 
     if (-d $curtmpdir) {
+
+	print STDERR "\n\nWRITING :$status: to $statusfile\n";
+
 	open OUT,">","$statusfile";
 	print OUT "$status";
 	close OUT;
@@ -6502,8 +6620,14 @@ sub sig_clear {
 sub location {
     # return the location of an executable
     my ($command)=shift;
+
+    if ($^O eq "MSWin32") {
+	return "$command.exe";
+    }
+
     my ($location)=smog_system_direct("which \"$command\" 2>$nulfile");
     chomp($location);
+
     $location;
 }
 
@@ -6820,7 +6944,14 @@ sub mktmpdir {
 sub fndset {
     # check if a directory is in a set (old style)
     # but useful for frontend marking the currently opened clips, so we do not prune them by accident
-    /^set\./ or return;
+
+    if ($^O eq "MSWin32") {
+	/^set/ or return;
+    }
+    else {
+	/^set\./ or return;
+    }
+
     $in_set=1;
 }
 
@@ -6839,18 +6970,18 @@ sub rc_get_default {
     my ($ret)="";
 
     if ($key eq "mplayer_play_video_command") {
-	$ret=&location("mplayer");
+	$ret="\"".&location("mplayer")."\"";
 	if (!($ret eq "")) {
 	    $ret.=" -double";
 	}
     }
 
     elsif ($key eq "sox_command") {
-	$ret=&location("play");
+	$ret="\"".&location("play")."\"";
     }
 
     elsif ($key eq "mplayer_audio_command") {
-	$ret=&location("mplayer");
+	$ret="\"".&location("mplayer")."\"";
     }
 
     $ret;
@@ -6986,6 +7117,18 @@ sub get_form_request {
 	return &get_format_request;
     }
     else {
+	
+	if ($^O eq "MSWin32") {
+	    # filter by file ext
+	    my $ext=&get_ext("$plugin");
+	    if ($ext eq ".py") {
+		$cmd="python";
+	    }
+	    else {
+		$cmd="perl";
+	    }
+	    return smog_system_direct("$cmd \"$plugin\" get_format_request");
+	}
 	return smog_system_direct("\"$plugin\" get_format_request");
     }
 }
@@ -7029,7 +7172,6 @@ sub weed {
     while ($file=readdir(DIR)) {
 	unless ($file =~ /^\./) {
 
-
 	    if (-d "$tmpdir/$file") {
                 # remove a set unlesss it has clips OR (layouts AND NOT (opts & 0x04))
 		if (&is_non_empty_dir("$tmpdir/$file/clips") || (&is_non_empty_dir("$tmpdir/$file/layouts") && !($opts & 0x04))) {
@@ -7057,8 +7199,11 @@ sub weed {
 		    find (\&fndset,"$tmpdir/$file/");
 		    if (!$in_set && !($opts & 0x01)) {
     	                if ($^O eq "MSWin32") {
-                            smog_system("DEL /q \"$tmpdir\\$file\"");
-                            smog_system("RMDIR \"$tmpdir\\$file\"");
+	                  if (chdir("$tmpdir/$file")) {
+		            unlink glob "* *.* .*";
+		            smog_chdir("$tmpdir");
+		            rmdir "$tmpdir/$file";
+	                  }
 
 	                }
 	                else {
@@ -7106,10 +7251,13 @@ sub weed {
     unless ($opts & 0x10) {
       # clean up a few extra remnants
       smog_chdir("$tmpdir");
-      unlink < .* rfx.* /tmp/.smogval* /tmp/lives-symlinks >;
-	 unless (!defined($new_temp)||$new_temp eq "") {
-              unlink < firew.* encoder_log_* stream.* >;
-         }
+      unlink glob ".* rfx.*";
+      if ($^O ne "MSWin32") {
+	  unlink glob "/tmp/.smogval* /tmp/lives-symlinks";
+      }
+      unless (!defined($new_temp)||$new_temp eq "") {
+	  unlink glob "firew.* encoder_log_* stream.*";
+      }
     }
 
     # total disk space at end

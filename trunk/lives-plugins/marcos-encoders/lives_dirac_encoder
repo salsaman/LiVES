@@ -441,14 +441,25 @@ def do_encode():
     if not quiet:
         print('Creating "%s"-quality Dirac file' % vtype)
 
-    yuvcommand = """cd %(source_dir)s ; \\
+    if os.name == 'nt':
+	    yuvcommand = """cd %(source_dir)s ; \\
+%(mencoder.exe)s mf://%(syml)s%(img_pre)s*%(ext)s %(mencoder_opts)s%(yuvv)s %(std)s
+    """ % all_vars
+	    run(yuvcommand)
+	    command = """cd %(source_dir)s ; \\
+%(dirac_encoder.exe)s -width %(fx)s -height %(fy)s -fr %(ffps)s %(be_verbose)s %(dirac_opts)s %(yuvv)s %(dyuvv)s.drc %(std)s
+""" % all_vars
+	    run(command)
+    else:
+	    yuvcommand = """cd %(source_dir)s ; \\
 %(mencoder)s mf://%(syml)s%(img_pre)s*%(ext)s %(mencoder_opts)s%(yuvv)s %(std)s
     """ % all_vars
-    run(yuvcommand)
-    command = """cd %(source_dir)s ; \\
+	    run(yuvcommand)
+	    command = """cd %(source_dir)s ; \\
 %(dirac_encoder)s -width %(fx)s -height %(fy)s -fr %(ffps)s %(be_verbose)s %(dirac_opts)s %(yuvv)s %(dyuvv)s.drc %(std)s
 """ % all_vars
-    run(command)
+	    run(command)
+
     os.remove(yuvv)
 
     for tfile in [dyuvv, dyuvv + '.yuv', dyuvv + '.imt']:

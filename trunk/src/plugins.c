@@ -151,9 +151,9 @@ static GList *get_plugin_result (const gchar *command, const gchar *delim, gbool
     return list;
   }
 
-
+  //#define DEBUG_PLUGINS
 #ifdef DEBUG_PLUGINS
-  g_print("plugin msg: %s %d\n",buffer,error);
+  g_printerr("plugin msg: %s %d\n",buffer,error);
 #endif
   
   if (error==256) {
@@ -230,6 +230,7 @@ GList * plugin_request_common (const gchar *plugin_type, const gchar *plugin_nam
 #ifndef IS_MINGW
 #ifdef DEBUG_PLUGINS
     com=g_strdup_printf ("\"%s\" \"%s\"",comfile,request);
+    g_printerr("will run: %s\n",com);
 #else
     com=g_strdup_printf ("\"%s\" \"%s\" 2>/dev/null",comfile,request);
 #endif
@@ -249,8 +250,10 @@ GList * plugin_request_common (const gchar *plugin_type, const gchar *plugin_nam
 
     else cmd=g_strdup("perl");
 
+    //#define DEBUG_PLUGINS
 #ifdef DEBUG_PLUGINS
     com=g_strdup_printf ("%s \"%s\" \"%s\"",cmd,comfile,request);
+    g_printerr("will run: %s\n",com);
 #else
     com=g_strdup_printf ("%s \"%s\" \"%s\" 2>NUL",cmd,comfile,request);
 #endif
@@ -2158,7 +2161,6 @@ GList *filter_encoders_by_img_ext(GList *encoders, const gchar *img_ext) {
     }
     else {
       caps=atoi ((char *)g_list_nth_data (encoder_capabilities,0));
-      
       if (!(caps&CAN_ENCODE_PNG)&&!strcmp(img_ext,"png")) {
 	g_free(list->data);
 	encoders=g_list_delete_link(encoders,list);

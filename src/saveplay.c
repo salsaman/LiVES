@@ -4017,7 +4017,10 @@ gboolean read_headers(const gchar *file_name) {
   if (!stat(lives_header,&mystat)) new_time=mystat.st_mtime;
   ///////////////
 
-  if (old_time<new_time) {
+  g_print("got old %ld %ld\n",old_time,new_time);
+
+
+  if (old_time<=new_time) {
     do {
       retval2=0;
 
@@ -4459,6 +4462,7 @@ void restore_file(const gchar *file_name) {
     return;
   }
   
+
   mesg=g_strdup_printf(_ ("Restoring %s..."),file_name);
   d_print(mesg);
   g_free(mesg);
@@ -4471,12 +4475,15 @@ void restore_file(const gchar *file_name) {
   switch_to_file((mainw->current_file=old_file),new_file);
   set_main_title(cfile->file_name,0);
   
+  
   com=g_strdup_printf("%s restore %s %s",prefs->backend,cfile->handle,
 		      (tmp=g_filename_from_utf8(file_name,-1,NULL,NULL,NULL)));
+
   mainw->com_failed=FALSE;
   unlink (cfile->info_file);
 
   lives_system(com,FALSE);
+
   g_free(tmp);
   g_free(com);
   
@@ -4494,6 +4501,7 @@ void restore_file(const gchar *file_name) {
     if (mainw->error && mainw->cancelled!=CANCEL_ERROR) {
       do_blocking_error_dialog (mainw->msg);
     }
+    g_print("\n\nCANC3 %s %d!!!\n",cfile->handle,mainw->error);
     close_current_file(old_file);
     return;
   }

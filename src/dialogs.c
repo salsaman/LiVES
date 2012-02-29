@@ -1477,9 +1477,9 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
   // from the mainw->progress_fn function
 
   while (1) {
-    while (!mainw->internal_messaging&&((!visible&&(mainw->whentostop!=STOP_ON_AUD_END||
+    while (!mainw->internal_messaging&&(((!visible&&(mainw->whentostop!=STOP_ON_AUD_END||
 						    prefs->audio_player==AUD_PLAYER_JACK||
-						    prefs->audio_player==AUD_PLAYER_PULSE))||
+						     prefs->audio_player==AUD_PLAYER_PULSE)))||
 					!g_file_test(cfile->info_file,G_FILE_TEST_EXISTS))) {
 
 
@@ -1508,7 +1508,6 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
     }
 
     if (!mainw->internal_messaging) {
-
       // background processing (e.g. rendered effects)
       if ((infofile=fopen(cfile->info_file,"r"))) {
 	// OK, now we might have some frames
@@ -1536,7 +1535,7 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
       progbar_pulse_or_fraction(cfile,cfile->proc_ptr->frames_done);
     }
 
-
+    //#define DEBUG
 #ifdef DEBUG
     if (strlen(mainw->msg)) g_print("msg %s\n",mainw->msg);
 #endif

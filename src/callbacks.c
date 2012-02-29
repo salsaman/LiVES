@@ -5529,12 +5529,15 @@ void on_cleardisk_activate (GtkWidget *widget, gpointer user_data) {
     mt_desensitise(mainw->multitrack);
   }
 
+
   for (i=0;i<MAX_FILES;i++) {
     // mark all free-floating files (directories) which we do not want to remove
     // we do error checking here
 
-    if (mainw->files[i]!=NULL&&mainw->files[i]->clip_type==CLIP_TYPE_DISK) {
+    if ((i==mainw->current_file)||(mainw->files[i]!=NULL&&(mainw->files[i]->clip_type==CLIP_TYPE_DISK||
+							   mainw->files[i]->clip_type==CLIP_TYPE_FILE))) {
       markerfile=g_build_filename(prefs->tmpdir,mainw->files[i]->handle,"set.",NULL);
+
       do {
 	retval=0;
 	marker_fd=creat(markerfile,S_IRUSR|S_IWUSR);
@@ -5566,7 +5569,8 @@ void on_cleardisk_activate (GtkWidget *widget, gpointer user_data) {
 
   if (retval!=LIVES_CANCEL) {
     mainw->com_failed=FALSE;
-    com=g_strdup_printf("%s bg_weed \"%s\" %d",prefs->backend_sync,cfile->handle,prefs->clear_disk_opts);
+    unlink(cfile->info_file);
+    com=g_strdup_printf("%s bg_weed \"%s\" %d",prefs->backend,cfile->handle,prefs->clear_disk_opts);
     lives_system(com,FALSE);
     g_free(com);
     

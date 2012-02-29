@@ -461,15 +461,29 @@ def do_encode():
 
     # mplayer with "-vo yuv4mpeg" always outputs to "stream.yuv"
     # maybe create the pipe pythonically?
-    command = """cd %(source_dir)s ; \\
+
+    if os.name == 'nt':
+        command = """cd %(source_dir)s ; \\
+mkfifo.exe /m 0600 stream.yuv ; \\
+%(mplayer.exe)s mf://%(syml)s%(img_pre)s*%(ext)s %(mplayer_opts)s %(std)s &
+""" % all_vars
+        run(command)
+        command = """cd %(source_dir)s ; \\
+%(theora_encoder.exe)s %(theora_opts)s -o "%(vidname)s" %(wav)s stream.yuv %(std)s
+""" % all_vars
+        run(command)
+    else:
+        command = """cd %(source_dir)s ; \\
 mkfifo -m 0600 stream.yuv ; \\
 %(mplayer)s mf://%(syml)s%(img_pre)s*%(ext)s %(mplayer_opts)s %(std)s &
 """ % all_vars
-    run(command)
-    command = """cd %(source_dir)s ; \\
+        run(command)
+        command = """cd %(source_dir)s ; \\
 %(theora_encoder)s %(theora_opts)s -o "%(vidname)s" %(wav)s stream.yuv %(std)s
 """ % all_vars
-    run(command)
+        run(command)
+
+
 
     if os.path.exists(os.path.join(source_dir, 'stream.yuv')):
         os.remove(os.path.join(source_dir, 'stream.yuv'))

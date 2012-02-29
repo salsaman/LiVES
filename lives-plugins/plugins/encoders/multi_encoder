@@ -37,6 +37,9 @@ Copyright (C) 2008 - 2010 Salsaman (salsaman@xs4all.nl,salsaman@gmail.com)
 
 
 version = '0.2.14'
+
+import os
+
 mpeg = 'lives_mpeg_encoder'
 ogm = 'lives_ogm_encoder'
 mkv = 'lives_mkv_encoder'
@@ -484,11 +487,25 @@ if __name__ == '__main__':
             quiet = '-q'
             tonull = '2> /dev/null'
 
-        encode_command = ' '.join(['lives_' + prog + '_encoder', '-o', \
-                                   outfile, '-w', tempdir, '-a', arc, \
-                                   '-f', fpsc, quiet, '-t', \
-                                   type, '-s ./audiodump.wav', \
-                                   start, end, tonull])
+        if os.name == 'nt':
+            xenc = 'lives_' + prog + '_encoder'
+            rxenc = which(xenc)
+
+            encode_command = ' '.join(['python','"' + rxenc + '"', '-o', \
+                                           outfile, '-w', '"' + tempdir + '"', '-a', arc, \
+                                           '-f', fpsc, quiet, '-t', \
+                                           type, '-s ./audiodump.wav', \
+                                           start, end, tonull])
+
+        else:
+            encode_command = ' '.join(['lives_' + prog + '_encoder', '-o', \
+                                           outfile, '-w', '"' + tempdir + '"', '-a', arc, \
+                                           '-f', fpsc, quiet, '-t', \
+                                           type, '-s ./audiodump.wav', \
+                                           start, end, tonull])
+
+
+
 
         message = """
         I got the following arguments:
@@ -523,7 +540,10 @@ if __name__ == '__main__':
             print >> sys.stderr, message
 
         os.system(encode_command)
-        os.chmod(outfile_orig,stat.S_IRUSR|stat.S_IWUSR|stat.S_IRGRP|stat.S_IROTH)
+
+        
+        if os.name != 'nt':
+            os.chmod(outfile_orig,stat.S_IRUSR|stat.S_IWUSR|stat.S_IRGRP|stat.S_IROTH)
 
         raise SystemExit
 

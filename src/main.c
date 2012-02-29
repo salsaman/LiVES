@@ -5410,7 +5410,7 @@ void close_current_file(gint file_to_switch_to) {
   
 #endif
 
-      com=g_strdup_printf("%s close \"%s\"",prefs->backend,cfile->handle);
+      com=g_strdup_printf("%s close \"%s\"",prefs->backend_sync,cfile->handle);
       lives_system(com,TRUE);
       g_free(com); 
 

@@ -471,16 +471,29 @@ def do_encode():
     all_vars.update(locals())
 
     if not quiet: print 'Encoding and multiplexing...'
-    if vtype[-1] == 's':
-        command = """cd %(source_dir)s ; \\
-%(mencoder)s %(aviopts)s %(avimp3)s "mf://%(syml)s%(img_pre)s*%(ext)s" %(mencoder_opts)s -o "%(vidname)s" %(std)s""" % all_vars
-        run(command)
+    if os.name == 'nt':
+
+        if vtype[-1] == 's':
+            command = """cd %(source_dir)s ; \\
+%(mencoder.exe)s %(aviopts)s %(avimp3)s "mf://%(syml)s%(img_pre)s*%(ext)s" %(mencoder_opts)s -o "%(vidname)s" %(std)s""" % all_vars
+            run(command)
+        else:
+            command = """cd %(source_dir)s ; \\
+%(mencoder.exe)s %(aviopts)s -nosound "mf://%(syml)s%(img_pre)s*%(ext)s" %(mencoder_opts)s1 -o /dev/null %(std)s ; \\
+%(mencoder.exe)s %(aviopts)s %(avimp3)s "mf://%(syml)s%(img_pre)s*%(ext)s" %(mencoder_opts)s2 -o "%(vidname)s" %(std)s
+""" % all_vars
+            run(command)
     else:
-        command = """cd %(source_dir)s ; \\
+        if vtype[-1] == 's':
+            command = """cd %(source_dir)s ; \\
+%(mencoder)s %(aviopts)s %(avimp3)s "mf://%(syml)s%(img_pre)s*%(ext)s" %(mencoder_opts)s -o "%(vidname)s" %(std)s""" % all_vars
+            run(command)
+        else:
+            command = """cd %(source_dir)s ; \\
 %(mencoder)s %(aviopts)s -nosound "mf://%(syml)s%(img_pre)s*%(ext)s" %(mencoder_opts)s1 -o /dev/null %(std)s ; \\
 %(mencoder)s %(aviopts)s %(avimp3)s "mf://%(syml)s%(img_pre)s*%(ext)s" %(mencoder_opts)s2 -o "%(vidname)s" %(std)s
 """ % all_vars
-        run(command)
+            run(command)
 
     if os.path.exists(os.path.join(source_dir, 'divx2pass.log')):
         os.remove(os.path.join(source_dir, 'divx2pass.log'))

@@ -6171,7 +6171,7 @@ void on_fs_preview_clicked (GtkButton *button, gpointer user_data) {
       g_free(thumb);
     }
     g_free(info_file);
-    info_file=g_strdup_printf ("%s/thm%d/",prefs->tmpdir,getpid());
+    info_file=g_strdup_printf ("%s/thm%d",prefs->tmpdir,getpid());
 #ifndef IS_MINGW
     com=g_strdup_printf("/bin/rm -rf \"%s\"",info_file);
 #else
@@ -6886,7 +6886,9 @@ void end_fs_preview(void) {
     memset(val+rlen,0,1);
     pid=atoi(val);
     
+    g_print("\n\nKILLING PID %d\n",pid);
     lives_win32_kill_subprocesses(pid,TRUE);
+    g_print("DONE\n");
 #endif
     g_free (com);
     com=g_strdup_printf ("%s close fsp%d",prefs->backend,mypid);

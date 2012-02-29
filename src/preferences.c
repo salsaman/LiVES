@@ -608,7 +608,6 @@ gboolean apply_prefs(gboolean skip_warn) {
 
   gchar *cdplay_device=g_filename_from_utf8(gtk_entry_get_text(GTK_ENTRY(prefsw->cdplay_entry)),-1,NULL,NULL,NULL);
 
-
   if (capable->has_encoder_plugins) {
     audio_codec = gtk_combo_box_get_active_text( GTK_COMBO_BOX(prefsw->acodec_combo) );
 
@@ -616,6 +615,7 @@ gboolean apply_prefs(gboolean skip_warn) {
 
     if (idx==listlen) future_prefs->encoder.audio_codec=0;
     else future_prefs->encoder.audio_codec=prefs->acodec_list_to_format[idx];
+
   }
   else future_prefs->encoder.audio_codec=0;
 
@@ -623,7 +623,8 @@ gboolean apply_prefs(gboolean skip_warn) {
 							     -1,NULL,NULL,NULL)));
   g_free(tmp);
 
-  if (!strncmp(audp,"mplayer",7)) g_snprintf(audio_player,256,"mplayer");
+  if (audp==NULL) memset(audio_player,0,1);
+  else if (!strncmp(audp,"mplayer",7)) g_snprintf(audio_player,256,"mplayer");
   else if (!strncmp(audp,"jack",4)) g_snprintf(audio_player,256,"jack");
   else if (!strncmp(audp,"sox",3)) g_snprintf(audio_player,256,"sox");
   else if (!strncmp(audp,"pulse audio",11)) g_snprintf(audio_player,256,"pulse");
@@ -813,7 +814,6 @@ gboolean apply_prefs(gboolean skip_warn) {
       }
     }
   }
-
 
   // fps stats
   if (prefs->show_player_stats!=show_player_stats) {
@@ -1033,8 +1033,6 @@ gboolean apply_prefs(gboolean skip_warn) {
     prefs->ds_crit_level=ds_crit_level;
     set_int64_pref("ds_crit_level",ds_crit_level);
   }
-
-
 
 
 #ifdef ENABLE_OSC

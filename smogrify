@@ -2419,7 +2419,13 @@ if (defined($ARGV[0])) {
 	    exit 1;
 	}
 	
-	$com="gzip.exe -S .lv1 temp.tar";
+	if ($^O eq "MSWin32") {
+	    $com="gzip.exe -S .lv1 temp.tar";
+	}
+	else {
+	    $com="gzip -S .lv1 temp.tar";
+	}
+
 	$smerr=smog_system ($com);
 	if ($smerr) {
 	    sig_system_error("$com",$smerr);
@@ -2430,7 +2436,6 @@ if (defined($ARGV[0])) {
 	unlink "temp.tar";
 	
 	smog_rename("temp.tar.lv1","$nfile");
- 
 	
 	unlink <header.tar 0*.tar>;
 	if (-f ".tar_err") {
@@ -3633,8 +3638,7 @@ if (defined($ARGV[0])) {
 	    $asigned=$ARGV[15];
 	    $aendian=$ARGV[16];
 
-
-	    if ($arate*$achans*$asamp>0) {
+	    if ($arate*$achans*$asamps>0) {
 		if (!$undo_cut) {
 		    if ($with_audio<2) {
 			$end/=$fps;
@@ -3659,7 +3663,7 @@ if (defined($ARGV[0])) {
 			$where/=$fps;
 		    }
 		}
-		
+
 		&insert_audio($asamps,$achans,$asigned,$aendian,$undo_cut);
 		if ($panic) {
 		    unlink "$pidfile"; 

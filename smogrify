@@ -1449,7 +1449,6 @@ if (defined($ARGV[0])) {
 
 	if ($command eq "open") {
 
-	    print STDERR "pt a1\n";
 	unlink "$curtmpdir/pause";
 
 	$file=$ARGV[2];
@@ -1491,8 +1490,6 @@ if (defined($ARGV[0])) {
 
 	smog_chdir("$curtmpdir");
 
-	    print STDERR "pt b1 ($curtmpdir)\n";
-
 	# let get_file_info set this
 	#$mplay_command=&rc_get("video_open_command");
 
@@ -1526,7 +1523,6 @@ if (defined($ARGV[0])) {
 	    exit 1;
 	}
 
-	    print STDERR "pt a12\n";
 	$aformnew="";
 	if ($asamps==32) {
 	    # cannot handle this yet, need to resample to s16
@@ -1594,11 +1590,9 @@ if (defined($ARGV[0])) {
 	    unless ($opentest==1) {
 		&sig_progress(0);
 	    }
-	    print STDERR "pt a14\n";
 
 	    smog_system("$syscom2"); # this may well fail...we just have to use what we get back
 	    
-	    print STDERR "pt a15\n";
             if (!-f $curtmpfile) {
 		unlink $pidfile;
 		exit 1;
@@ -1660,7 +1654,6 @@ if (defined($ARGV[0])) {
 	if ($img_ext eq ".png" || $type eq "png") {
 	    $bpp=32;
 	}
-	    print STDERR "pt a16\n";
 
 	unless (0||$withsound ne "-1" || $achans==0) {
 	    # try as best we can to sync sound and video for a selection
@@ -1682,7 +1675,6 @@ if (defined($ARGV[0])) {
 		#curtmpdir can be removed by cancel
 		exit 1;
 	    }
-	    print STDERR "pt a1677\n";
 
 	    if ($af_size>0||$count>0) {
 		&sig_complete($handle,$count,$type,$hsize,$vsize,$bpp,$fps,$f_size,$arate,$achans,$asamps,$signed,$endian,$af_size,$title,$author,$comment);
@@ -1702,7 +1694,6 @@ if (defined($ARGV[0])) {
 		}
 	    }
 	}
-	    print STDERR "pt a1888\n";
 
 	# mplayer seems to sometimes output one extra frame for jpg
 	if (defined($MPLAYER_EXTRA_OPEN_FRAME_BUG)&&($count==$xframes+1)&&(($frames eq "")||(!($frames eq "") && ($count<$ARGV[4])||($ARGV[3]==0)))) {
@@ -1731,7 +1722,6 @@ if (defined($ARGV[0])) {
 	    }
 	}
 
-	    print STDERR "pt a1888888888888888888\n";
 
 	$af_size= -s $audio_out;
 	if (-d $curtmpdir) {
@@ -1741,8 +1731,6 @@ if (defined($ARGV[0])) {
     }
 
     if ($command eq "get_details") {
-
-	print STDERR "\n\ngetdet\n";
 
 	$handle=$ARGV[1];
 	$curtmpdir="$tmpdir/$handle";
@@ -1772,7 +1760,6 @@ if (defined($ARGV[0])) {
 	}
 
 	smog_chdir("$curtmpdir");
-	print STDERR "\n\ngetdet done\n";
 
 	&sig_complete($handle,$count,$type,$hsize,$vsize,$bpp,$fps,$f_size,$arate,$achans,$asamps,$signed,$endian,$af_size,$title,$author,$comment);
 
@@ -2121,8 +2108,6 @@ if (defined($ARGV[0])) {
 		    if ($get_rfx==0) {
 			$fields.=@ARGV[13..$#ARGV];
 			$com="$cmd \"$plugin\" encode $fields";
-
-			print STDERR "\n\n\n\nCOM IS $com\n";
 
 		    }
 		    else {
@@ -6417,29 +6402,19 @@ sub clean_old {
 
 
 sub sig_complete {
-    print STDERR "\n\nWRITING xxxx :$status: to ($curtmpdir)\n";
-
 
     return if (! -d "$curtmpdir");
     my($status)="completed";
     foreach (@_) {
 	$status.="|".$_;
     }
-    print STDERR "\n\nWRITING11 :$status: to $statusfile\n";
 
     smog_system_sync();
-	print STDERR "\n\nWRITING22 :$status: to $statusfile\n";
-
-	print STDERR "\n\nWRITING :$status: to $curtmpdir\n";
 
     if (-d $curtmpdir) {
-
-	print STDERR "\n\nWRITING :$status: to $statusfile\n";
-
 	open OUT,">","$statusfile";
 	print OUT "$status";
 	close OUT;
-
 	unlink "$pidfile";
     }
 }
@@ -7011,8 +6986,6 @@ sub version_check_and_upgrade {
 	if ($new_version_hash>$version_hash) {
 	    $msg="!updmsg";
 	}
-
-	print STDERR "vals $version_hash and $new_version_hash\n";
 
 	if ($version_hash<8005) {
 	    # not used now

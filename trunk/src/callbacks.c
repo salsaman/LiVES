@@ -6314,8 +6314,8 @@ void on_fs_preview_clicked (GtkButton *button, gpointer user_data) {
       height=oheight;
     }
 
-    gtk_alignment_set(GTK_ALIGNMENT(mainw->fs_playalign),0.5,
-		      0.5,(float)width/(float)fwidth,
+    gtk_alignment_set(GTK_ALIGNMENT(mainw->fs_playalign),0.1,
+		      0.5,0.,
 		      (float)height/(float)fheight);
 
 

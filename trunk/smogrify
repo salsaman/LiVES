@@ -3639,22 +3639,24 @@ if (defined($ARGV[0])) {
 	    $asigned=$ARGV[15];
 	    $aendian=$ARGV[16];
 
-	    if ($arate*$achans*$asamps>0) {
+	    if ($arate*$achans*$asamps!=0) {
 		if (!$undo_cut) {
 		    if ($with_audio<2) {
 			$end/=$fps;
 			$start=($start-1.)/$fps;
 			$where/=$fps;
 		    }
-		    
-		    if (-f "audio") {
-			smog_copy("audio", "audio.bak");
-			if ($panic) {
-			    unlink "$pidfile"; 
-			    exit 1;
-			}
-			smog_system_sync();
+		    if (! -f "audio") {
+			unlink "audio.bak";
 		    }
+		    else {
+			smog_copy("audio", "audio.bak");
+		    }
+		    if ($panic) {
+			unlink "$pidfile"; 
+			exit 1;
+		    }
+		    smog_system_sync();
 		}
 		else {
 		    $end=-s "$curtmpdir/audio.bak";
@@ -3664,7 +3666,6 @@ if (defined($ARGV[0])) {
 			$where/=$fps;
 		    }
 		}
-
 		&insert_audio($asamps,$achans,$asigned,$aendian,$undo_cut);
 		if ($panic) {
 		    unlink "$pidfile"; 
@@ -4252,9 +4253,15 @@ sub undo_audio {
     }
     else {
 	unlink "$curtmpdir/audio.new";
-	smog_rename( "$curtmpdir/audio","$curtmpdir/audio.new");
-	smog_rename( "$curtmpdir/audio.bak","$curtmpdir/audio");
-	smog_rename( "$curtmpdir/audio.new","$curtmpdir/audio.bak");
+	if (-f "$curtmpdir/audio") {
+	    smog_rename( "$curtmpdir/audio","$curtmpdir/audio.new");
+	}
+	if (-f "$curtmpdir/audio.bak") {
+	    smog_rename( "$curtmpdir/audio.bak","$curtmpdir/audio");
+	}
+	if (-f "$curtmpdir/audio.new") {
+	    smog_rename( "$curtmpdir/audio.new","$curtmpdir/audio.bak");
+	}
     }
 }
 
@@ -5903,7 +5910,7 @@ sub open_single_image {
 	$file_ext=&get_ext("$file");
     }
 
-    if ($file_ext eq ".avi"||$file_ext eq ".mp4"||$file_ext eq ".mpg"||$file_ext eq ".ogg"||$file_ext eq ".mov"||$file_ext eq ".ogv"||$file_ext eq ".webm"||$file_ext eq ".mkv"||$file_ext eq ".asf"||$file_ext eq ".wmv"||$file_ext eq ".flv"||$file_ext eq ".mng"||$file_ext eq ".dv"||$file_ext eq ".mp3") {
+    if ($file_ext eq ".avi"||$file_ext eq ".mp4"||$file_ext eq ".mpg"||$file_ext eq ".ogg"||$file_ext eq ".mov"||$file_ext eq ".ogv"||$file_ext eq ".webm"||$file_ext eq ".mkv"||$file_ext eq ".asf"||$file_ext eq ".wmv"||$file_ext eq ".flv"||$file_ext eq ".mng"||$file_ext eq ".dv"||$file_ext eq ".mp3" || $file_ext eq ".mpeg") {
 	# need to set $name before we return
 	return 0;
     }
@@ -5976,7 +5983,7 @@ sub get_image_size {
     #identify hangs if the file extension is ".avi" or ".mp4"...maybe more...
     my ($file_ext)=&get_ext("$file");
 
-    if ($file_ext eq ".avi"||$file_ext eq ".mp4"||$file_ext eq ".mpg") {
+    if ($file_ext eq ".avi"||$file_ext eq ".mp4"||$file_ext eq ".mpg"||$file_ext eq ".mpeg") {
 	$height=$width=$bpp=0;
 	return;
     }

@@ -1826,7 +1826,8 @@ void rte_reset_defs_clicked (GtkButton *button, lives_rfx_t *rfx) {
 
 void load_default_keymap(void) {
   // called on startup
-  gchar *keymap_file=g_build_filename(capable->home_dir,LIVES_CONFIG_DIR,"default.keymap",NULL);
+  gchar *dir=g_build_filename(capable->home_dir,LIVES_CONFIG_DIR,NULL);
+  gchar *keymap_file=g_build_filename(dir,"default.keymap",NULL);
   gchar *keymap_template=g_build_filename(prefs->prefix_dir,DATA_DIR,"default.keymap",NULL);
   gchar *com,*tmp;
 
@@ -1837,11 +1838,17 @@ void load_default_keymap(void) {
   do {
     retval=0;
     if (!g_file_test (keymap_file, G_FILE_TEST_EXISTS)) {
+
+      if (!g_file_test(dir,G_FILE_TEST_IS_DIR)) {
+	g_mkdir_with_parents(dir,S_IRWXU);
+      }
+	
 #ifndef IS_MINGW
       com=g_strdup_printf("/bin/cp \"%s\" \"%s\"",keymap_template,keymap_file);
 #else
       com=g_strdup_printf("cp.exe \"%s\" \"%s\"",keymap_template,keymap_file);
 #endif
+
       lives_system(com,TRUE); // allow this to fail - we will check for errors below
       g_free(com);
     }
@@ -1858,7 +1865,8 @@ void load_default_keymap(void) {
       if (retval==LIVES_CANCEL) {
 	g_free(keymap_file);
 	g_free(keymap_template);
-      
+	g_free(dir);
+
 	threaded_dialog_spin();
 	return;
       }
@@ -1869,5 +1877,6 @@ void load_default_keymap(void) {
 
   g_free(keymap_file);
   g_free(keymap_template);
+  g_free(dir);
   threaded_dialog_spin();
 }

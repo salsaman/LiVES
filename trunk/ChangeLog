@@ -3,8 +3,9 @@ Version 1.6.2
 Clean up timer code.
 Show more accurate progress for rendering after recording.
 Call init triggers for rendered transitions.
+Fix triggers for rendered effects (regression).
 Fix regression in undo cut.
-Instant opening of mpegts files.
+Quick opening of mpegts files.
 Faster backup/restore.
 
 

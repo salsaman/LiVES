@@ -1986,7 +1986,7 @@ after_param_value_changed           (GtkSpinButton   *spinbutton,
 
     }
   }
-    
+
   if (((param->dp>0&&(get_double_param(param->value)!=old_double))||(param->dp==0&&
 								     (get_int_param(param->value)!=old_int)))&&
       param->onchange) {

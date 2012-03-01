@@ -202,6 +202,11 @@ GList * plugin_request_common (const gchar *plugin_type, const gchar *plugin_nam
 			       const gchar *delim, gboolean allow_blanks) {
   // returns a GList of responses to -request, or NULL on error
   // by_line says whether we split on '\n' or on '|'
+
+  // NOTE: request must not be quoted here, since it contains a list of parameters
+  // instead, caller should ensure that any strings in *request are suitably escaped and quoted
+  // e.g. by calling param_marshall()
+
   GList *reslist=NULL;
   gchar *com,*comfile;
 
@@ -228,11 +233,12 @@ GList * plugin_request_common (const gchar *plugin_type, const gchar *plugin_nam
     }
 
 #ifndef IS_MINGW
+    //#define DEBUG_PLUGINS
 #ifdef DEBUG_PLUGINS
-    com=g_strdup_printf ("\"%s\" \"%s\"",comfile,request);
+    com=g_strdup_printf ("\"%s\" %s",comfile,request);
     g_printerr("will run: %s\n",com);
 #else
-    com=g_strdup_printf ("\"%s\" \"%s\" 2>/dev/null",comfile,request);
+    com=g_strdup_printf ("\"%s\" %s 2>/dev/null",comfile,request);
 #endif
 
 #else
@@ -252,10 +258,10 @@ GList * plugin_request_common (const gchar *plugin_type, const gchar *plugin_nam
 
     //#define DEBUG_PLUGINS
 #ifdef DEBUG_PLUGINS
-    com=g_strdup_printf ("%s \"%s\" \"%s\"",cmd,comfile,request);
+    com=g_strdup_printf ("%s \"%s\" %s",cmd,comfile,request);
     g_printerr("will run: %s\n",com);
 #else
-    com=g_strdup_printf ("%s \"%s\" \"%s\" 2>NUL",cmd,comfile,request);
+    com=g_strdup_printf ("%s \"%s\" %s 2>NUL",cmd,comfile,request);
 #endif
 
     g_free(ext);

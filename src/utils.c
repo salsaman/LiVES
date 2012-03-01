@@ -4848,7 +4848,7 @@ gboolean is_writeable_dir(const gchar *dir) {
 #endif
 
   if (!g_file_test(dir,G_FILE_TEST_IS_DIR)) {
-    g_mkdir_with_parents(dir,S_IRUSR|S_IWUSR);
+    g_mkdir_with_parents(dir,S_IRWXU);
     if (!g_file_test(dir,G_FILE_TEST_IS_DIR)) {
       return FALSE;
     }

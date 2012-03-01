@@ -290,6 +290,17 @@ gboolean do_effect(lives_rfx_t *rfx, gboolean is_preview) {
   }
   else cfile->fx_frame_pump=0;
 
+  if (rfx->props&RFX_PROPS_MAY_RESIZE||rfx->num_in_channels==0) {
+    if (rfx->status==RFX_STATUS_WEED) { 
+      // set out_channel dimensions for resizers / generators
+      int error;
+      weed_plant_t *first_out=get_enabled_channel((weed_plant_t *)rfx->source,0,FALSE);
+      weed_plant_t *first_ot=weed_get_plantptr_value(first_out,"template",&error);
+      weed_set_int_value(first_out,"width",weed_get_int_value(first_ot,"host_width",&error));
+      weed_set_int_value(first_out,"height",weed_get_int_value(first_ot,"host_height",&error));
+    }
+  }
+
   if (!do_progress_dialog(TRUE,TRUE,effectstring)||mainw->error) {
     mainw->last_dprint_file=ldfile;
     do_rfx_cleanup(rfx);
@@ -337,7 +348,7 @@ gboolean do_effect(lives_rfx_t *rfx, gboolean is_preview) {
     cfile->pb_fps=old_pb_fps;
     mainw->internal_messaging=FALSE;
     if (rfx->num_in_channels>0) gtk_widget_set_sensitive (mainw->select_last, TRUE);
-    if (rfx->num_in_channels>0) set_undoable (_ (rfx->menu_text),TRUE);
+    if (rfx->num_in_channels>0) set_undoable (rfx->menu_text,TRUE);
   }
 
   mainw->show_procd=TRUE;

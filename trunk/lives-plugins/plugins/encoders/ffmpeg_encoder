@@ -20,7 +20,9 @@
 if (!defined($standalone)) {
     my $smogrify=`which smogrify`;
     chomp($smogrify);
-    require $smogrify;
+    if ($smogrify ne "") {
+	require $smogrify;
+    }
 }
 else {
     $command=$ARGV[0];
@@ -128,11 +130,15 @@ if ($command eq "encode") {
     # encode
     $encoder_command="ffmpeg";
 
-    $ffver=`ffmpeg 2>&1|grep libavformat | grep -v configuration`;
+    `ffmpeg 2>testfile`;
+
+    $ffver=`grep libavformat testfile | grep -v configuration`;
 
     $ffver=(split(/\./,$ffver))[0];
 
     $ffver=(split(" ",$ffver))[-1];
+
+    unlink "testfile";
 
     $usemp3=$ARGV[13];
     $usemp3lame=$ARGV[14];

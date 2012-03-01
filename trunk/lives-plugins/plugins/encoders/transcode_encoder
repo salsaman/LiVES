@@ -13,8 +13,10 @@
 if (!defined($standalone)) {
     my $smogrify=`which smogrify`;
     chomp($smogrify);
-    require $smogrify;
-}
+    if ($smogrify ne "") {
+	require $smogrify;
+    }
+}g
 else {
     $command=$ARGV[0];
 }

@@ -369,6 +369,7 @@ xprocess * create_processing (const gchar *text) {
   procw->label3 = gtk_label_new (PROCW_STRETCHER);
   gtk_widget_show (procw->label3);
   gtk_box_pack_start (GTK_BOX (vbox3), procw->label3, FALSE, FALSE, 0);
+
   //gtk_widget_set_size_request (procw->label3, PROG_LABEL_WIDTH, -1);
 
   gtk_label_set_justify (GTK_LABEL (procw->label3), GTK_JUSTIFY_CENTER);

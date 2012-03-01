@@ -824,6 +824,8 @@ gboolean lives_win32_kill_subprocesses(DWORD pid, gboolean kill_parent) {
     hProcess = OpenProcess( PROCESS_TERMINATE, FALSE, pe32.th32ProcessID );
     if( hProcess == NULL ) continue;
 
+    //g_print("handling process %d %d : %s\n",pe32.th32ParentProcessID,pe32.th32ProcessID,pe32.szExeFile);
+
     // TODO - find equivalent on "real" windows
     if (!strcmp(pe32.szExeFile,"wineconsole.exe")) {
       CloseHandle( hProcess );
@@ -867,6 +869,7 @@ gboolean lives_win32_kill_subprocesses(DWORD pid, gboolean kill_parent) {
       if( hProcess == NULL ) continue;
       
       if (pe32.th32ProcessID == pid) {
+	//g_print("killing %d\n", pe32.th32ProcessID);
 	TerminateProcess(hProcess, 0);
       }
 
@@ -4596,6 +4599,7 @@ gchar *insert_newlines(const gchar *text, int maxwidth) {
   for (i=0;i<tlen;i+=xtoffs) {
     xtoffs=mbtowc(&utfsym,&text[i],4); // get next utf8 wchar
     if (xtoffs==-1) {
+      LIVES_WARN("mbtowc returned -1");
       return g_strdup(text);
     }
 

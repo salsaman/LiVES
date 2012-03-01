@@ -1409,6 +1409,9 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
   gint lcount=0;
 
   register int i,j,k;
+
+  if (weed_plant_has_leaf(filter,"flags")) 
+    filter_flags=weed_get_int_value(filter,"flags",&error);
  
   // here, in_tracks and out_tracks map our layers to in_channels and out_channels in the filter
   if (!weed_plant_has_leaf(inst,"in_channels")||(in_channels=weed_get_plantptr_array(inst,"in_channels",&error))==NULL) 
@@ -1985,10 +1988,12 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
 	  if (check_weed_palette_list(palettes,num_palettes,palette)==palette) {
 	    weed_set_int_value(channel,"current_palette",palette);
 	    if (outpalette!=palette&&(channel_flags&WEED_CHANNEL_REINIT_ON_PALETTE_CHANGE)) needs_reinit=TRUE;
+
 	    width=weed_get_int_value(def_channel,"width",&error);
 	    height=weed_get_int_value(def_channel,"height",&error);
 	    weed_set_int_value(channel,"width",width);
 	    weed_set_int_value(channel,"height",height);
+
 	    weed_set_int_value(channel,"current_palette",palette);
 	    if (weed_plant_has_leaf(def_channel,"YUV_clamping")) {
 	      oclamping=(weed_get_int_value(def_channel,"YUV_clamping",&error));
@@ -2147,10 +2152,8 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
   //...finally we are ready to apply the filter
 
   // see if we can multithread
-  if ((prefs->nfx_threads=future_prefs->nfx_threads)>1 && weed_plant_has_leaf(filter,"flags")) 
-    filter_flags=weed_get_int_value(filter,"flags",&error);
-
-  if (filter_flags&WEED_FILTER_HINT_MAY_THREAD) retval=process_func_threaded(inst,out_channels,tc);
+  if ((prefs->nfx_threads=future_prefs->nfx_threads)>1 && 
+      filter_flags&WEED_FILTER_HINT_MAY_THREAD) retval=process_func_threaded(inst,out_channels,tc);
   else {
     // normal single threaded version
     int ret;
@@ -2159,7 +2162,7 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
     ret=(*process_func)(inst,tc);
     if (ret==WEED_ERROR_PLUGIN_INVALID) retval=FILTER_ERROR_MUST_RELOAD;
   }
-
+  
   if (retval==FILTER_ERROR_MUST_RELOAD) {
     weed_free(in_tracks);
     weed_free(out_tracks);
@@ -2223,6 +2226,12 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
     weed_set_voidptr_array(layer,"pixel_data",numplanes,pixel_data);
     weed_free(pixel_data);
     
+    // set this in case it was a resize plugin
+    width=weed_get_int_value(channel,"width",&error);
+    height=weed_get_int_value(channel,"height",&error);
+    weed_set_int_value(layer,"width",width);
+    weed_set_int_value(layer,"height",height);
+
     i++;
 
     if (weed_plant_has_leaf(channel,"host_pixel_data_contiguous")) 

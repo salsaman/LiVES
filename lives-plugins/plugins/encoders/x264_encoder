@@ -19,7 +19,9 @@ $queuefile="264stream.y4m";
 if (!defined($standalone)) {
     my $smogrify=`which smogrify`;
     chomp($smogrify);
-    require $smogrify;
+    if ($smogrify ne "") {
+	require $smogrify;
+    }
 }
 else {
     $command=$ARGV[0];

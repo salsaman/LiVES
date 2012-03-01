@@ -822,13 +822,15 @@ static void disp_fraction(gint done, gint start, gint end, gdouble timesofar, xp
   gdouble est_time;
   gdouble fraction_done=(done-start)/(end-start+1.);
 
+  const char *stretch="                                         ";
+
   if (fraction_done>1.) fraction_done=1.;
   if (fraction_done<0.) fraction_done=0.;
 
   if (done>disp_frames_done) gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(proc->progressbar),fraction_done);
 
   est_time=timesofar/fraction_done-timesofar;
-  prog_label=g_strdup_printf(_("\n%d%% done. Time remaining: %u sec\n"),(gint)(fraction_done*100.),(guint)(est_time+.5));
+  prog_label=g_strdup_printf(_("\n%s%d%% done. Time remaining: %u sec%s\n"),stretch,(gint)(fraction_done*100.),(guint)(est_time+.5),stretch);
   gtk_label_set_text(GTK_LABEL(proc->label3),prog_label);
   g_free(prog_label);
 

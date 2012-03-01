@@ -1143,7 +1143,7 @@ void save_file (int clip, int start, int end, const char *filename) {
   gchar *mesg,*bit,*tmp;
   gchar *com;
   gchar *full_file_name=NULL;
-  gchar *enc_exec_name;
+  gchar *enc_exec_name,*cmd;
 
   int new_stderr=-1;
   int retval;
@@ -1669,6 +1669,13 @@ void save_file (int clip, int start, int end, const char *filename) {
 
   enc_exec_name=g_build_filename(prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_ENCODERS,prefs->encoder.name,NULL);
 
+#ifdef IS_MINGW
+  //cmd=g_strdup_printf("START perl ");
+  cmd=g_strdup("perl ");
+#else
+  cmd=g_strdup("");
+#endif
+
   // get extra parameters for saving
   if (prefs->encoder.capabilities&HAS_RFX) {
     if (prefs->encoder.capabilities&ENCODER_NON_NATIVE) {
@@ -1679,8 +1686,8 @@ void save_file (int clip, int start, int end, const char *filename) {
       g_free(tmp);
     }
     else {
-      com=g_strdup_printf("\"%s\" save get_rfx %s \"\" %s \"%s\" %d %d %d %d %d %d %.4f %.4f",
-			  enc_exec_name,sfile->handle,
+      com=g_strdup_printf("%s\"%s\" save get_rfx %s \"\" %s \"%s\" %d %d %d %d %d %d %.4f %.4f",
+			  cmd, enc_exec_name,sfile->handle,
 			  fps_string,(tmp=g_filename_from_utf8(full_file_name,-1,NULL,NULL,NULL)),
 			  1,sfile->frames,arate,sfile->achans,sfile->asampsize,asigned|aendian,aud_start,aud_end);
       g_free(tmp);
@@ -1793,8 +1800,8 @@ void save_file (int clip, int start, int end, const char *filename) {
   }
   else {
     // for native (perl) plugins we go via the plugin
-    com=g_strdup_printf("\"%s\" save \"%s\" \"%s\" \"%s\" \"%s\" %d %d %d %d %d %d %.4f %.4f %s %s",
-			enc_exec_name, cfile->handle, "",
+    com=g_strdup_printf("%s\"%s\" save \"%s\" \"%s\" \"%s\" \"%s\" %d %d %d %d %d %d %.4f %.4f %s %s",
+			cmd, enc_exec_name, cfile->handle, "",
 			fps_string,(tmp=g_filename_from_utf8(full_file_name,-1,NULL,NULL,NULL)),
 			startframe,cfile->frames,arate,cfile->achans,cfile->asampsize,
 			asigned|aendian,aud_start,aud_end,(extra_params==NULL?"":extra_params),redir);
@@ -1812,6 +1819,9 @@ void save_file (int clip, int start, int end, const char *filename) {
   unlink(cfile->info_file);
   mainw->write_failed=FALSE;
   save_file_comments(current_file);
+
+  g_print("\n\nenc cmd is %s\n",com);
+
   lives_system(com,FALSE);
   g_free(com);
 
@@ -1857,6 +1867,7 @@ void save_file (int clip, int start, int end, const char *filename) {
   }
 
   g_free(enc_exec_name);
+  g_free(cmd);
 
   if (not_cancelled) {
     if (mainw->error) {

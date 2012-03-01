@@ -547,7 +547,8 @@ static void replace_with_delegates (void) {
 
   if (mainw->fx_candidates[FX_CANDIDATE_RESIZER].delegate!=-1) {
     
-    resize_fx=GPOINTER_TO_INT(g_list_nth_data(mainw->fx_candidates[FX_CANDIDATE_RESIZER].list,mainw->fx_candidates[FX_CANDIDATE_RESIZER].delegate));
+    resize_fx=GPOINTER_TO_INT(g_list_nth_data(mainw->fx_candidates[FX_CANDIDATE_RESIZER].list,
+					      mainw->fx_candidates[FX_CANDIDATE_RESIZER].delegate));
     filter=get_weed_filter(resize_fx);
     rfx=weed_to_rfx(filter,TRUE);
     
@@ -562,7 +563,8 @@ static void replace_with_delegates (void) {
     g_free(rfx->menu_text);
 
     if (mainw->resize_menuitem==NULL) {
-      mainw->resize_menuitem = gtk_menu_item_new_with_mnemonic(_("_Resize All Frames"));
+      rfx->menu_text=g_strdup(_("_Resize All Frames"));
+      mainw->resize_menuitem = gtk_menu_item_new_with_mnemonic(rfx->menu_text);
       gtk_widget_show(mainw->resize_menuitem);
       gtk_menu_shell_insert (GTK_MENU_SHELL (mainw->tools_menu), mainw->resize_menuitem, RFX_TOOL_MENU_POSN);
     }
@@ -573,7 +575,7 @@ static void replace_with_delegates (void) {
       for (i=strlen(mtext)-1;i>0&&!strncmp(&mtext[i],".",1);i--) memset(&mtext[i],0,1);
       
       rfx->menu_text=g_strdup(mtext);
-      
+
       // disconnect old menu entry
       g_signal_handler_disconnect(mainw->resize_menuitem,mainw->fx_candidates[FX_CANDIDATE_RESIZER].func);
       
@@ -5410,7 +5412,6 @@ void close_current_file(gint file_to_switch_to) {
   
 #endif
 
-      g_print("smog to close %s\n",cfile->handle);
       com=g_strdup_printf("%s close \"%s\"",prefs->backend_sync,cfile->handle);
       lives_system(com,TRUE);
       g_free(com); 

@@ -1456,7 +1456,9 @@ static int64_t find_last_sync_frame (lives_clip_data_t *cdata, lives_in_stream *
 static int64_t get_last_granulepos (lives_clip_data_t *cdata, int serialno) {
   // granulepos here is actually a frame - TODO ** fix for audio !
 
+#ifdef HAVE_DIRAC
   int64_t pos;
+#endif
   lives_in_stream *stream;
 
   lives_ogg_priv_t *priv=(lives_ogg_priv_t *)cdata->priv;
@@ -1533,9 +1535,16 @@ static double granulepos_2_time(lives_in_stream *s, int64_t pos) {
 }
 
 
-static int stream_peek(int fd, char *str, size_t len) {
+static ssize_t stream_peek(int fd, char *str, size_t len) {
   off_t cpos=lseek(fd,0,SEEK_CUR); // get current posn 
+
+#ifndef IS_MINGW
   return pread(fd,str,len,cpos); // read len bytes without changing cpos
+#else
+  ssize_t ret=read(fd,str,len);
+  lseek(fd,cpos,SEEK_SET);
+  return ret;
+#endif
 }
 
 

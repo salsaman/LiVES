@@ -649,8 +649,8 @@ static gboolean add_sizes(GtkBox *vbox, gboolean add_fps, lives_rfx_t *rfx) {
       add_to_special("aspect|-100|-101|",rfx); // use virtual parameter numbers -100 and -101
       param.widgets[0]=spinbuttonw;
       check_for_special (&param,-100,vbox,rfx);
-    param.widgets[0]=spinbuttonh;
-    check_for_special (&param,-101,vbox,rfx);
+      param.widgets[0]=spinbuttonh;
+      check_for_special (&param,-101,vbox,rfx);
     }
   }
 

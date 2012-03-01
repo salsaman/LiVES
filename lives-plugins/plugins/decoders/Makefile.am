@@ -14,6 +14,12 @@ shared_ldflags =  -shared -fPIC -DPIC -module -avoid-version --tag=disable-stati
 shared_cflags =  -fPIC -DPIC
 endif
 
+
+if IS_MINGW
+shared_cflags =  -DIS_MINGW
+endif
+
+
 if HAVE_SYSTEM_WEED
 weed_cflags = -DHAVE_SYSTEM_WEED=1
 else

@@ -6013,8 +6013,9 @@ void on_fs_preview_clicked (GtkButton *button, gpointer user_data) {
 #endif
 
   if (mainw->in_fs_preview) {
-#ifndef IS_MINGW
     end_fs_preview();
+
+#ifndef IS_MINGW
     com=g_strdup_printf ("%s stopsubsub thm%d 2>/dev/null",prefs->backend_sync,pid);
     lives_system (com,TRUE);
 #else
@@ -6029,8 +6030,8 @@ void on_fs_preview_clicked (GtkButton *button, gpointer user_data) {
     pclose(rfile);
     memset(val+rlen,0,1);
     xpid=atoi(val);
-    
-    lives_win32_kill_subprocesses(xpid,TRUE);
+    if (xpid!=0) 
+      lives_win32_kill_subprocesses(xpid,TRUE);
 #endif
     g_free (com);
 
@@ -6870,7 +6871,6 @@ void end_fs_preview(void) {
   if (mainw->in_fs_preview) {
 #ifndef IS_MINGW
     if (prefs->pause_xmms&&capable->has_xmms) lives_system("xmms -u",TRUE);
-    mainw->in_fs_preview=FALSE;
     com=g_strdup_printf ("%s stopsubsub fsp%d 2>/dev/null",prefs->backend_sync,(mypid=lives_getpid()));
     lives_system (com,TRUE);
 #else
@@ -6886,19 +6886,17 @@ void end_fs_preview(void) {
     memset(val+rlen,0,1);
     pid=atoi(val);
     
-    g_print("\n\nKILLING PID %d\n",pid);
     lives_win32_kill_subprocesses(pid,TRUE);
-    g_print("DONE\n");
 #endif
     g_free (com);
     com=g_strdup_printf ("%s close fsp%d",prefs->backend,mypid);
     lives_system (com,TRUE);
     g_free (com);
 
+    mainw->in_fs_preview=FALSE;
+
     if (mainw->fs_playarea!=NULL&&(GTK_IS_WIDGET(mainw->fs_playarea))) {
       gtk_widget_set_app_paintable(mainw->fs_playarea,FALSE);
-      //gtk_widget_hide (mainw->fs_playarea);
-      //gtk_widget_show (mainw->fs_playarea);
     }
   }
 }

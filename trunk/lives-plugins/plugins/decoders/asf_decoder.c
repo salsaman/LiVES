@@ -30,7 +30,9 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdlib.h>
+#ifndef IS_MINGW
 #include <endian.h>
+#endif
 #include <sys/stat.h>
 
 const char *plugin_version="LiVES asf/wmv decoder version 1.0";
@@ -253,7 +255,9 @@ static boolean get_tag(const lives_clip_data_t *cdata, AVFormatContext *s, const
     fprintf(stderr, "asf_decoder: Unsupported value type %d len %d in tag %s.\n", type, len, key);
     return TRUE;
   }
+#ifndef IS_MINGW
   av_metadata_set2(&s->metadata, key, value, 0);
+#endif
   free(value);
   return TRUE;
 }
@@ -1320,6 +1324,7 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
 	  if (priv->st->codec->extradata_size && (priv->st->codec->bits_per_coded_sample <= 8)) {
 	    priv->st->codec->palctrl = av_mallocz(sizeof(AVPaletteControl));
 
+#ifndef IS_MINGW
 # if __BYTE_ORDER == __BIG_ENDIAN
 	    for (i = 0; i < FFMIN(priv->st->codec->extradata_size, AVPALETTE_SIZE)/4; i++)
 	      
@@ -1328,6 +1333,11 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
 	    memcpy(priv->st->codec->palctrl->palette, priv->st->codec->extradata,
 		   FFMIN(priv->st->codec->extradata_size, AVPALETTE_SIZE));
 #endif
+#else
+	    memcpy(priv->st->codec->palctrl->palette, priv->st->codec->extradata,
+		   FFMIN(priv->st->codec->extradata_size, AVPALETTE_SIZE));
+#endif
+
 	    priv->st->codec->palctrl->palette_changed = 1;
 	  }
 	  
@@ -2136,6 +2146,9 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
     if (fps!=1000.) cdata->fps=fps;
   }
 
+
+#ifndef IS_MINGW
+
   if (cdata->fps==0.||cdata->fps==1000.) {
     // use mplayer to get fps if we can...it seems to have some magical way
     char cmd[1024];
@@ -2162,6 +2175,8 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
       unlink(tmpfname);
     }
   }
+
+#endif
 
   if (cdata->fps==0.&&ctx->time_base.num==0) {
     if (ctx->time_base.den==1) cdata->fps=25.;
@@ -2202,7 +2217,9 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
 
 
 const char *module_check_init(void) {
+#ifndef IS_MINGW
   avcodec_init();
+#endif
   avcodec_register_all();
   return NULL;
 }

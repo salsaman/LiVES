@@ -1212,7 +1212,11 @@ _vid_playback_plugin *open_vid_playback_plugin (const gchar *name, gboolean in_u
   // TODO - if in_use, get fixed_fps,fwidth,fheight,palette,argc and argv from a file
   // TODO - dirsep
 
+#ifndef IS_MINGW
   gchar *plugname=g_strdup_printf ("%s%s%s/%s.so",prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_VID_PLAYBACK,name);
+#else
+  gchar *plugname=g_strdup_printf ("%s%s%s/%s.dll",prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_VID_PLAYBACK,name);
+#endif
   void *handle=dlopen(plugname,RTLD_LAZY);
   gboolean OK=TRUE;
   gchar *msg,*tmp;
@@ -2203,8 +2207,14 @@ static GList *load_decoders(void) {
   lives_decoder_sys_t *dplug;
   gchar *decplugdir=g_strdup_printf("%s%s%s",prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_DECODERS);
   GList *dlist=NULL;
-  GList *decoder_plugins_o=get_plugin_list (PLUGIN_DECODERS,TRUE,decplugdir,"-so"),*decoder_plugins=decoder_plugins_o;
+#ifndef IS_MINGW
+  GList *decoder_plugins_o=get_plugin_list (PLUGIN_DECODERS,TRUE,decplugdir,"-so");
+#else
+  GList *decoder_plugins_o=get_plugin_list (PLUGIN_DECODERS,TRUE,decplugdir,"-dll");
+#endif
+  GList *decoder_plugins=decoder_plugins_o;
   g_free(decplugdir);
+
 
   while (decoder_plugins!=NULL) {
     dplug=open_decoder_plugin((gchar *)decoder_plugins->data);
@@ -2390,7 +2400,12 @@ lives_decoder_sys_t *open_decoder_plugin(const gchar *plname) {
 
   dplug->name=NULL;
 
+#ifndef IS_MINGW
   plugname=g_strdup_printf ("%s%s%s/%s.so",prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_DECODERS,plname);
+#else
+  plugname=g_strdup_printf ("%s%s%s/%s.dll",prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_DECODERS,plname);
+#endif
+
   dplug->handle=dlopen(plugname,RTLD_LAZY);
   g_free (plugname);
 

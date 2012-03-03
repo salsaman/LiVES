@@ -3,6 +3,10 @@
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
 
+#if IS_MINGW
+#include <windows.h>
+#endif
+
 #include "videoplugin.h"
 
 #include <stdlib.h>
@@ -12,7 +16,7 @@
 static char plugin_version[64]="LiVES SDL playback engine version 1.2";
 static char error[256];
 
-static int (*render_fn)(int hsize, int vsize, void **pixel_data);
+static boolean (*render_fn)(int hsize, int vsize, void **pixel_data);
 static boolean render_frame_rgb (int hsize, int vsize, void **pixel_data);
 static boolean render_frame_yuv (int hsize, int vsize, void **pixel_data);
 static boolean render_frame_unknown (int hsize, int vsize, void **pixel_data);
@@ -38,6 +42,28 @@ static  SDL_Event event;
 static  SDLMod mod;
 
 //////////////////////////////////////////////
+
+
+static boolean my_setenv(const char *name, const char *value) {
+  // ret TRUE on success
+#if IS_MINGW
+  return SetEnvironmentVariable(name,value);
+#else
+#if IS_IRIX
+  int len  = strlen(name) + strlen(value) + 2;
+  char *env = malloc(len);
+  if (env != NULL) {
+    strcpy(env, name);
+    strcat(env, "=");
+    strcat(env, val);
+    return !putenv(env);
+  }
+}
+#else
+  return !setenv(name,value,1);
+#endif
+#endif
+}
 
 
 const char *module_check_init(void) {
@@ -167,13 +193,13 @@ boolean init_screen (int width, int height, boolean fullscreen, uint64_t window_
   }
 
   snprintf(tmp,32,"%d",yuvdir);
-  setenv ("SDL_VIDEO_YUV_DIRECT", tmp, 1);
+  my_setenv ("SDL_VIDEO_YUV_DIRECT", tmp);
 
   snprintf(tmp,32,"%d",yuvhwa);
-  setenv ("SDL_VIDEO_YUV_HWACCEL", tmp, 1);
+  my_setenv ("SDL_VIDEO_YUV_HWACCEL", tmp);
 
   snprintf(tmp,32,"%"PRIu64,window_id);
-  if (!fullscreen) setenv ("SDL_WINDOWID", tmp, 1);
+  if (!fullscreen) my_setenv ("SDL_WINDOWID", tmp);
 
   if (fsover) fullscreen=FALSE;
 

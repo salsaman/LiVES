@@ -6,15 +6,25 @@ videopluginslibdir = "$(libdir)/$(PACKAGE)/plugins/playback/video"
 
 if IS_DARWIN
 shared_ldflags =  -dynamiclib -module -avoid-version --tag=disable-static
-shared_cflags = -fno-common
+shared_cflags = -fno-common -DIS_DARWIN=1
 else
 shared_ldflags =  -shared -fPIC -DPIC -module -avoid-version --tag=disable-static
 shared_cflags =  -fPIC -DPIC
 endif
 
-if HAVE_SYSTEM_WEED
-weed_cflags = -DHAVE_SYSTEM_WEED=1
+
+
+if IS_IRIX
+shared_cflags +=-DIS_IRIX=1
 endif
+
+if IS_MINGW
+shared_cflags += -DIS_MINGW=1
+shared_ldflags += -no-undefined -Wl,/usr/i686-pc-mingw32/sys-root/mingw/lib/libSDL.dll.a -Wl,/usr/i686-pc-mingw32/sys-root/mingw/lib/libSDLmain.a -mwindows -Wl,/usr/i686-pc-mingw32/sys-root/mingw/lib/libmingw32.a
+SDL_libs = SDL.la
+CFLAGS_SDL = @SDL_CFLAGS@
+
+else
 
 if HAVE_SDL
 SDL_libs = SDL.la
@@ -28,6 +38,13 @@ CFLAGS_SDL = -I $(SDL_PREFIX)
 LDFLAGS_SDL = -lSDL
 endif
 endif
+
+endif
+
+if HAVE_SYSTEM_WEED
+weed_cflags = -DHAVE_SYSTEM_WEED=1
+endif
+
 
 if HAVE_MJPEGTOOLS
 YUV4MPEG_libs = yuv4mpeg_stream.la

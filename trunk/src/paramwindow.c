@@ -1094,6 +1094,7 @@ gboolean make_param_box(GtkVBox *top_vbox, lives_rfx_t *rfx) {
   gboolean chk_params=FALSE;
 
   if (top_vbox==NULL) {
+    // I think this means we just check some things with params without displaying them
     chk_params=TRUE;
   }
   else {

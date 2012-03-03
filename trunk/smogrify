@@ -585,7 +585,7 @@ if (defined($ARGV[0])) {
 	    }
 	}
 	if ($^O eq "MSWin32") {
-	    smog_system("chmod.exe 600 \"$tmpdir\\$ARGV[1]\\pause\"");
+	    #smog_system("chmod.exe 600 \"$tmpdir\\$ARGV[1]\\pause\"");
 	}
 	else {
 	    smog_system("/bin/chmod 600 \"$tmpdir/$ARGV[1]/pause\"");
@@ -2465,7 +2465,6 @@ if (defined($ARGV[0])) {
 
 
     if ($command eq "restore") {
-	print STDERR "\n\nIN RESTORE\n";
 	$nfile=$ARGV[2];
 
 	smog_chdir("$curtmpdir");
@@ -3085,41 +3084,64 @@ if (defined($ARGV[0])) {
     if ($command eq "trim_audio") {
 	$audio_start=$ARGV[2];
 	$audio_end=$ARGV[3];
+
 	$arate=$ARGV[4];
 	$achans=$ARGV[5];
 	$asamps=$ARGV[6];
 	$asigned=$ARGV[7];
 	$aendian=$ARGV[8];
 
+	smog_chdir("$curtmpdir");
+
 	unless (&rc_get("conserve_space") eq "true") {
-	    &backup_audio;
+	    &backup_audio; #audio -> audio.bak
 	    if ($panic) {
 		unlink "$pidfile"; 
 		exit 1;
 	    }
 	}
 
-	# $audio_from is the new clip
+	#trim audio to selection
+	
+	# $audio_from is the new clip ("audioclip")
 	$audio_from=&clip_audio($audio_start,$audio_end);
 	if ($panic) {
 	    unlink "$pidfile"; 
 	    exit 1;
 	}
-	unlink "$audio_in";
+	
+	$align=$achans*$asamps/8;
+	$acsize=-s $audio_from;
+	$acsize/=$align*$arate;
+
+	unlink "$audio_in"; # audio_in is "audio"
+	
 	$where=$audio_start;
 	$end=$audio_end-$audio_start;
 	$start=0;
-	# insert_audio will insert silence at start
+	
+	if ($end>$acsize) {
+	    #the part we cliṕped may have been *shorter* than the selection
+	    # need to check for this now, as we are more careful with reads and writes
+	    $end=$acsize;
+	}
+
+	# insert_audio will insert silence at start, and should recreate "audio" from "audioclip" ($audio_from)
+
 	&insert_audio($asamps,$achans,$asigned,$aendian,1);
 	if ($panic) {
 	    unlink "$pidfile"; 
 	    exit 1;
+	    $panic=0;
 	}
-	unlink "$audio_out";
+
+	#append silence to pad to end
+	
 	&append_silence(0,&align($audio_end*$arate*$align),$asamps,$achans,$asigned,$aendian);
 	if ($panic) {
 	    unlink "$pidfile"; 
 	    exit 1;
+	    $panic=0;
 	}
 
 	&sig_complete;
@@ -5270,6 +5292,7 @@ sub convert_audio_to_wav {
 #clip (actually, trim) the audio from $start seconds to $end seconds
 sub clip_audio {
     my ($start,$end)=@_;
+    my $smres;
 
     if ($achans==0) {
 	return;
@@ -5280,10 +5303,10 @@ sub clip_audio {
 
     unlink "$audio_out";
     if ($^O eq "MSWin32") {
-	my $smres=smog_system("touch.exe \"$audio_out\"");
+	$smres=smog_system("touch.exe \"$audio_out\"");
     }
     else {
-	my $smres=smog_system("/bin/touch \"$audio_out\"");
+	$smres=smog_system("/bin/touch \"$audio_out\"");
     }
     if ($smres) {
 	$panic=sig_write_error("$audio_out"); 
@@ -5291,12 +5314,11 @@ sub clip_audio {
     }
 
     if ($^O eq "MSWin32") {
-	smog_system("chmod.exe 600 \"$audio_out\"");
+	#smog_system("chmod.exe 600 \"$audio_out\"");
     }
     else {
 	smog_system("/bin/chmod 600 \"$audio_out\"");
     }
-
 
     $align=$achans*$asamps/8;
 
@@ -5461,12 +5483,12 @@ sub insert_audio {
     }
     
     if ($smres) {
-	$panic=sig_write_error("$audio_temp"); 
+	$panic=sig_write_error("$audio_temp");
 	return;
     }
 
     if ($^O eq "MSWin32") {
-	smog_system("chmod.exe 600 \"$audio_temp\"");
+	#smog_system("chmod.exe 600 \"$audio_temp\"");
     }
     else {
 	smog_system("/bin/chmod 600 \"$audio_temp\"");
@@ -5536,7 +5558,7 @@ sub insert_audio {
 		return if ($panic);
 	    }
 	}
-	
+
 	$times_inserted+=$factor;
 	# pad with silence if necessary
 	if (-s $audio_temp||$times_inserted<$times) {
@@ -5574,6 +5596,7 @@ sub insert_audio {
 		$nepos-=$silence_remembered;
 	    }
 	}
+
     }
 
 
@@ -5646,7 +5669,7 @@ sub cut_audio {
 	    return;
 	}
 	if ($^O eq "MSWin32") {
-	    smog_system("chmod.exe 600 \"$audio_temp\"");
+	    #smog_system("chmod.exe 600 \"$audio_temp\"");
 	}
 	else {
 	    smog_system("/bin/chmod 600 \"$audio_temp\"");
@@ -5728,7 +5751,7 @@ sub align {
 
 
 sub append_silence {
-    #pad from end of file to byte $end-1 with zeros
+    #pad from end of $audio_file to byte $end-1 with zeros
     my ($offset,$end,$asamps,$achans,$asigned,$aendian,$audio_file)=@_;
     if ($audio_file eq "") {
 	$audio_file="$curtmpdir/audio";
@@ -5746,7 +5769,7 @@ sub append_silence {
 	    return;
 	}
 	if ($^O eq "MSWin32") {
-	    smog_system("chmod.exe 600 \"$audio_file\"");
+	    #smog_system("chmod.exe 600 \"$audio_file\"");
 	}
 	else {
 	    smog_system("/bin/chmod 600 \"$audio_file\"");
@@ -5759,10 +5782,26 @@ sub append_silence {
 
     if ($size>0) {
 	if ($asigned==1) {
-	    $fdd_in="/dev/zero";
 	    $fdd_out=$audio_file;
-
-	    &fast_dd($size,0,$fsize);
+	    if ($^O eq "MSWin32") {
+		$smres=smog_system("touch.exe \"$audio_file\"");
+		if ($smres) {
+		    $panic=sig_write_error("$audio_file"); 
+		    return;
+		}
+		open AUD,">>","$audio_file" or $panic=sig_write_error("$audio_file");
+		return if $panic;
+		seek AUD,-$offset,SEEK_END or $panic=sig_write_error("$audio_file");
+		return if $panic;
+		for ($i=0;$i<$size;$i++) {
+		    print AUD chr(0) or $panic=sig_write_error("$audio_file");
+		    return if $panic;
+		}
+	    }
+	    else {
+		$fdd_in="/dev/zero";
+		&fast_dd($size,0,$fsize);
+	    }
 	    return if $panic;
 	}
 	else {
@@ -5776,7 +5815,7 @@ sub append_silence {
 		$panic=sig_write_error("$audio_file"); 
 		return;
 	    }
-	    open AUD,"+<$audio_file" or $panic=sig_write_error("$audio_file");
+	    open AUD,">>","$audio_file" or $panic=sig_write_error("$audio_file");
 	    return if $panic;
 	    seek AUD,-$offset,SEEK_END or $panic=sig_write_error("$audio_file");
 	    return if $panic;
@@ -6416,7 +6455,7 @@ sub clean_old {
     # clear away any old backup files, etc.
     return if (! -d "$tmpdir/$handle");
     smog_chdir("$tmpdir/$handle");
-    unlink glob "*.mgk *.bak *.pre *.tmp pause audio.* audiodump*";
+    unlink glob "*.mgk *.bak *.pre *.tmp pause audio.* audiodump* audioclip";
     smog_system_sync();
 }
 
@@ -6821,7 +6860,16 @@ sub fast_dd {
 
     my $data,$i;
 
-    if (! open FFIN,"<$fdd_in") {
+    my $sizecheck = -s $fdd_in;
+
+    if ($fdd_in ne "/dev/zero" && $size > $sizecheck) {
+	if ($DEBUG_SMOGRIFY) {
+	    print STDERR "smogrify debug - fast_dd was asked to read $size bytes from a $sizecheck byte file\n$fdd_in\n";
+	}
+	$size=$sizecheck;
+    }
+
+    if (! open FFIN,"<","$fdd_in") {
 	if (-f "$fdd_in") {
 	    $panic=sig_read_error("$fdd_in");
 	}
@@ -6842,8 +6890,7 @@ sub fast_dd {
 	return;
     }
     
-
-    open FFOUT,"+<$fdd_out" or $panic=sig_write_error("$fdd_out");
+    open FFOUT,">>","$fdd_out" or $panic=sig_write_error("$fdd_out");
     return if $panic;
     seek FFOUT,$seek,SEEK_START or $panic=sig_write_error("$fdd_out");
     return if $panic;

@@ -5,9 +5,11 @@ Show more accurate progress for rendering after recording.
 Call init triggers for rendered transitions.
 Fix triggers for rendered effects (regression).
 Fix regression in undo cut.
+Fix regression for pad audio.
 Quick opening of mpegts files.
 Faster backup/restore.
 
+	
 
 
 

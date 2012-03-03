@@ -297,6 +297,9 @@ void on_save_rte_defs_activate (GtkMenuItem *menuitem, gpointer user_data) {
       g_free (msg);
     }
     else {
+#ifdef IS_MINGW
+      setmode(fd, O_BINARY);
+#endif
       msg=g_strdup("LiVES filter defaults file version 1.1\n");
       mainw->write_failed=FALSE;
       lives_write(fd,msg,strlen(msg),TRUE);
@@ -328,6 +331,9 @@ void on_save_rte_defs_activate (GtkMenuItem *menuitem, gpointer user_data) {
       g_free (msg);
     }
     else {
+#ifdef IS_MINGW
+      setmode(fd, O_BINARY);
+#endif
       msg=g_strdup("LiVES generator default sizes file version 2\n");
       mainw->write_failed=FALSE;
       lives_write(fd,msg,strlen(msg),TRUE);
@@ -379,6 +385,9 @@ void load_rte_defs (void) {
 	retval=do_read_failed_error_s_with_retry(prefs->fxdefsfile,g_strerror(errno),NULL);
       }
       else {
+#ifdef IS_MINGW
+	setmode(fd, O_BINARY);
+#endif
 	mainw->read_failed=FALSE;
 	msg2=g_strdup_printf(_("Loading real time effect defaults from %s..."),prefs->fxdefsfile);
 	d_print(msg2);
@@ -426,6 +435,9 @@ void load_rte_defs (void) {
 	if (retval==LIVES_CANCEL) return;
       }
       else {
+#ifdef IS_MINGW
+	setmode(fd, O_BINARY);
+#endif
 	msg2=g_strdup_printf(_("Loading generator default sizes from %s..."),prefs->fxsizesfile);
 	d_print(msg2);
 	g_free(msg2);
@@ -558,6 +570,12 @@ gboolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
 
     if (keymap_file2!=NULL) {
       if ((kfd=open(keymap_file,O_RDONLY))==-1) has_error=TRUE;
+#ifdef IS_MINGW
+      else {
+	setmode(kfd, O_BINARY);
+      }
+#endif
+
     }
     else {
       if (!(kfile=fopen (keymap_file,"r"))) {

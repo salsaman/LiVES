@@ -509,6 +509,9 @@ static void save_mt_autoback(lives_mt *mt, int64_t stime) {
 
     fd=creat(asave_file,DEF_FILE_PERMS);
     if (fd>=0) {
+#ifdef IS_MINGW
+      setmode(fd,O_BINARY);
+#endif
       add_markers(mt,mt->event_list);
       do_threaded_dialog(_("Auto backup"),FALSE);
       retval=save_event_list_inner(mt,fd,mt->event_list,NULL);
@@ -4420,11 +4423,13 @@ static weed_plant_t *load_event_list_inner (lives_mt *mt, int fd, gboolean show_
   gdouble fps=-1;
   gchar *msg;
 
+  LIVES_DEBUG("pt AAAA");
   if (fd>0||mem!=NULL) event_list=weed_plant_deserialise(fd,mem);
   else event_list=mainw->stored_event_list;
+  LIVES_DEBUG("pt AAAA3");
 
   if (mt!=NULL) mt->layout_set_properties=FALSE;
-
+  
   if (event_list==NULL||!WEED_PLANT_IS_EVENT_LIST(event_list)) {
     if (show_errors) d_print(_("invalid event list. Failed.\n"));
     return NULL;
@@ -5059,6 +5064,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   lives_mt *mt=(lives_mt *)g_malloc(sizeof(lives_mt));
   mt->is_ready=FALSE;
   mt->tl_marks=NULL;
+
 
   mt->idlefunc=0; // idle function for auto backup
   mt->auto_back_time=0;
@@ -17522,7 +17528,7 @@ void save_layout_map (int *lmap, double *lmap_audio, const gchar *file, const gc
   if (file!=NULL&&(mainw->current_layouts_map==NULL||
 		   !g_list_find(mainw->current_layouts_map,file))) 
     mainw->current_layouts_map=g_list_append(mainw->current_layouts_map,g_strdup(file));
-  if (dir==NULL) ldir=g_build_filename(prefs->tmpdir,mainw->set_name,"layouts",G_DIR_SEPARATOR_S,NULL);
+  if (dir==NULL) ldir=g_build_filename(prefs->tmpdir,mainw->set_name,"layouts",NULL);
   else ldir=g_strdup(dir);
 
   map_name=g_build_filename(ldir,"layout.map",NULL);
@@ -17906,6 +17912,9 @@ void on_save_event_list_activate (GtkMenuItem *menuitem, gpointer user_data) {
     fd=creat(esave_file,DEF_FILE_PERMS);
 
     if (fd>=0) {
+#ifdef IS_MINGW
+      setmode(fd,O_BINARY);
+#endif
       retval=save_event_list_inner(mt,fd,event_list,NULL);
       close(fd);
     }
@@ -17978,7 +17987,7 @@ static gchar *rec_error_add(gchar *ebuf, gchar *msg, int num, weed_timecode_t tc
     else xnew=g_strdup_printf("%s %d at timecode %"PRId64"\n",msg,num,tc);
   }
   tmp=g_strconcat (ebuf,xnew,NULL);
-  //#define SILENT_EVENT_LIST_LOAD
+#define SILENT_EVENT_LIST_LOAD
 #ifndef SILENT_EVENT_LIST_LOAD
   g_printerr("Rec error: %s",xnew);
 #endif
@@ -19379,11 +19388,6 @@ weed_plant_t *load_event_list(lives_mt *mt, gchar *eload_file) {
     lives_system (com,TRUE);
     g_free (com);
     
-    if (mainw->com_failed) {
-      g_free(eload_dir);
-      return NULL;
-    }
-    
     if (mt->idlefunc>0) {
       g_source_remove(mt->idlefunc);
       mt->idlefunc=0;
@@ -19475,6 +19479,11 @@ weed_plant_t *load_event_list(lives_mt *mt, gchar *eload_file) {
     g_free(eload_name);
     return NULL;
   }
+
+#ifdef IS_MINGW
+  setmode(fd, O_BINARY);
+#endif
+
 
   event_list_free_undos(mt);
 
@@ -19571,6 +19580,9 @@ weed_plant_t *load_event_list(lives_mt *mt, gchar *eload_file) {
 	  // resave with corrections/updates
 	  fd=creat(eload_file,DEF_FILE_PERMS);
 	  if (fd>=0) {
+#ifdef IS_MINGW
+	    setmode(fd,O_BINARY);
+#endif
 	    retval=save_event_list_inner(NULL,fd,event_list,NULL);
 	    close(fd);
 	  }
@@ -19924,7 +19936,12 @@ void migrate_layouts (const gchar *old_set_name, const gchar *new_set_name) {
 	    do {
 	      retval2=0;
 	      fd=creat((char *)map->data,DEF_FILE_PERMS);
-	      if (fd>=0) retval=save_event_list_inner(NULL,fd,event_list,NULL);
+	      if (fd>=0) {
+#ifdef IS_MINGW
+		setmode(fd,O_BINARY);
+#endif
+		retval=save_event_list_inner(NULL,fd,event_list,NULL);
+	      }
 	      if (fd<0||!retval) {
 		if (fd>0) close(fd);
 		retval2=do_write_failed_error_s_with_retry((char *)map->data,(fd<0)?g_strerror(errno):NULL,NULL);

@@ -714,6 +714,9 @@ gboolean do_startup_tests(gboolean tshoot) {
 	g_free(tmp);
       }
       else {
+#ifdef IS_MINGW
+	setmode(out_fd, O_BINARY);
+#endif
 	lives_write (out_fd,abuff,176400,TRUE);
 	close(out_fd);
 	g_free(abuff);

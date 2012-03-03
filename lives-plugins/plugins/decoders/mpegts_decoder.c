@@ -28,7 +28,10 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <sys/stat.h>
+
+#ifndef IS_MINGW
 #include <endian.h>
+#endif
 
 const char *plugin_version="LiVES mpegts decoder version 1.0";
 
@@ -2722,7 +2725,9 @@ static int64_t frame_to_dts(const lives_clip_data_t *cdata, int64_t frame) {
 
 
 const char *module_check_init(void) {
+#ifndef IS_MINGW
   avcodec_init();
+#endif
   avcodec_register_all();
   av_log_set_level(0);
   return NULL;
@@ -3207,6 +3212,8 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
     else if (dts!=0) cdata->fps=180000./(double)dts;
   }
 
+#ifndef IS_MINGW
+
   if (cdata->fps==0.||cdata->fps==1000.) {
     // use mplayer to get fps if we can...it seems to have some magical way
     char cmd[1024];
@@ -3234,6 +3241,8 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
       unlink(tmpfname);
     }
   }
+
+#endif
 
   if (cdata->fps==0.||cdata->fps==1000.) {
     // if mplayer fails, count the frames between index entries
@@ -3604,6 +3613,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
     return TRUE;
 }
 
+#ifndef IS_MINGW
 
 # if __BYTE_ORDER == __BIG_ENDIAN
 
@@ -3616,9 +3626,10 @@ static void reverse_bytes(uint8_t *out, const uint8_t *in, size_t count) {
 
 #endif 
 
-
+#endif
 
 static ssize_t lives_write_le(int fd, const void *buf, size_t count) {
+#ifndef IS_MINGW
 # if __BYTE_ORDER == __BIG_ENDIAN
     uint8_t xbuf[count];
     reverse_bytes(xbuf,(const uint8_t *)buf,count);
@@ -3626,17 +3637,24 @@ static ssize_t lives_write_le(int fd, const void *buf, size_t count) {
 # else
     return write(fd,buf,count);
 # endif
+#else
+    return write(fd,buf,count);
+#endif
 
 }
 
 
 ssize_t lives_read_le(int fd, void *buf, size_t count) {
+#ifndef IS_MINGW
 # if __BYTE_ORDER == __BIG_ENDIAN
     uint8_t xbuf[count];
     ssize_t retval=read(fd,buf,count);
     if (retval<count) return retval;
     reverse_bytes((uint8_t *)buf,(const uint8_t *)xbuf,count);
     return retval;
+#else
+    return read(fd,buf,count);
+#endif
 #else
     return read(fd,buf,count);
 #endif

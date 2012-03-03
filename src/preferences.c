@@ -3169,7 +3169,11 @@ _prefsw *create_prefs_dialog (void) {
   pp_combo = gtk_combo_box_new_text();
   gtk_box_pack_start (GTK_BOX (hbox31), pp_combo, FALSE, FALSE, 20);
   // ---
+#ifndef IS_MINGW
   vid_playback_plugins = get_plugin_list(PLUGIN_VID_PLAYBACK, TRUE, NULL, "-so");
+#else
+  vid_playback_plugins = get_plugin_list(PLUGIN_VID_PLAYBACK, TRUE, NULL, "-dll");
+#endif
   vid_playback_plugins = g_list_prepend (vid_playback_plugins, g_strdup(mainw->none_string));
 
   populate_combo_box(GTK_COMBO_BOX(pp_combo), vid_playback_plugins);

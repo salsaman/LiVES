@@ -46,7 +46,9 @@ extern "C"
 
 typedef void * (func_ptr)(void *);
 
+#ifndef IS_MINGW
 typedef int boolean;
+#endif
 #undef TRUE
 #undef FALSE
 

@@ -36,7 +36,7 @@
 static char plugin_version[64]="LiVES openGL trickery playback engine version 1.0";
 static char error[256];
 
-static int (*render_fn)(int hsize, int vsize, void **pixel_data, void **return_data);
+static boolean (*render_fn)(int hsize, int vsize, void **pixel_data, void **return_data);
 static boolean render_frame_rgba (int hsize, int vsize, void **pixel_data, void **return_data);
 static boolean render_frame_unknown (int hsize, int vsize, void **pixel_data, void **return_data);
 

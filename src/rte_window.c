@@ -1721,6 +1721,7 @@ void rte_set_defs_ok (GtkButton *button, lives_rfx_t *rfx) {
 
   on_paramwindow_cancel_clicked(button,rfx);
   fx_dialog[1]=NULL;
+
 }
 
 

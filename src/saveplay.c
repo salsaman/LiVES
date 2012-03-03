@@ -2071,14 +2071,15 @@ void save_file (int clip, int start, int end, const char *filename) {
   switch_to_file(mainw->current_file,current_file);
 
   if (mainw->iochan!=NULL) {
-    gchar *logfile=g_strdup_printf("%sencoder_log_%d_%d.txt",prefs->tmpdir,lives_getuid(),lives_getgid());
     int logfd;
 
     // save the logfile in tempdir
 
 #ifndef IS_MINGW
+    gchar *logfile=g_strdup_printf("%s/encoder_log_%d_%d.txt",prefs->tmpdir,lives_getuid(),lives_getgid());
     if ((logfd=creat(logfile,S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH))!=-1) {
 #else
+    gchar *logfile=g_strdup_printf("%s\\encoder_log_%d_%d.txt",prefs->tmpdir,lives_getuid(),lives_getgid());
     if ((logfd=creat(logfile,S_IRUSR|S_IWUSR))!=-1) {
 #endif
       gchar *btext=text_view_get_text(mainw->optextview);

@@ -1646,10 +1646,11 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
   AVCodec *codec=NULL;
   AVCodecContext *ctx;
 
+  int err;
+
   boolean got_picture=FALSE;
 
   struct stat sb;
-
   //#define DEBUG
 #ifdef DEBUG
   fprintf(stderr,"\n");
@@ -1664,10 +1665,17 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
     return FALSE;
   }
 
-  if (read (priv->fd, header, MKV_PROBE_SIZE) < MKV_PROBE_SIZE) {
+
+  fstat(priv->fd,&sb);
+  priv->filesize=sb.st_size;
+
+  lseek(priv->fd,0,SEEK_SET);
+
+  if ((err=read (priv->fd, header, MKV_PROBE_SIZE)) < MKV_PROBE_SIZE) {
     // for example, might be a directory
 #ifdef DEBUG
-    fprintf(stderr, "mkv_decoder: unable to read header for %s\n",cdata->URI);
+    fprintf(stderr, "mkv_decoder: unable to read header %d %d for %s\n",err,MKV_PROBE_SIZE,cdata->URI);
+    if (err==0)  fprintf(stderr,"err was %s %d\n",strerror(errno),priv->filesize);
 #endif
     close(priv->fd);
     return FALSE;
@@ -1709,14 +1717,10 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
   priv->avpkt.data=NULL;
   priv->ctx=NULL;
 
-  fstat(priv->fd,&sb);
-  priv->filesize=sb.st_size;
-
   if (lives_mkv_read_header(cdata)) {
     close(priv->fd);
     return FALSE;
   }
-
 
   cdata->seek_flag=LIVES_SEEK_FAST|LIVES_SEEK_NEEDS_CALCULATION;
 
@@ -1860,6 +1864,8 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
     else if (dts!=0) cdata->fps=1000./(double)dts;
   }
 
+#ifndef IS_MINGW
+
   if (cdata->fps==0.||cdata->fps==1000.) {
     // use mplayer to get fps if we can...it seems to have some magical way
     char cmd[1024];
@@ -1886,6 +1892,8 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
       unlink(tmpfname);
     }
   }
+
+#endif
 
   if (cdata->fps==0.||cdata->fps==1000.) {
     // if mplayer fails, count the frames between index entries
@@ -1944,7 +1952,9 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
 
 
 const char *module_check_init(void) {
+#ifndef IS_MINGW
   avcodec_init();
+#endif
   avcodec_register_all();
   av_log_set_level(AV_LOG_ERROR);
   return NULL;
@@ -2007,6 +2017,8 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
 
   got_eof=FALSE;
   errval=0;
+
+  fprintf (stderr, "\n\n\nIN CDATA FOR MKV !\n");
 
   if (cdata!=NULL&&cdata->current_clip>0) {
     // currently we only support one clip per container

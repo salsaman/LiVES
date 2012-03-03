@@ -16,7 +16,8 @@ endif
 
 
 if IS_MINGW
-shared_cflags =  -DIS_MINGW
+shared_cflags =  -DIS_MINGW -I /usr/include/ffmpeg -I /usr/i686-pc-mingw32/sys-root/mingw/include
+shared_ldflags += -no-undefined -Wl,/home/gabriel/lives-wine-test/ffmpeg/avcodec-54.dll -Wl,/home/gabriel/lives-wine-test/ffmpeg/avformat-54.dll -Wl,/home/gabriel/lives-wine-test/ffmpeg/avutil-51.dll
 endif
 
 
@@ -53,8 +54,17 @@ ogg_decoder_la_LDFLAGS += @DIRAC_LIBS@
 endif
 endif
 
+if IS_MINGW
 
-# TODO - at least mpegts, mpegps, mp4, mov, mng
+HAVE_AVFORMAT = true
+HAVE_AVCODEC = true
+HAVE_AVUTIL = true
+
+ogg_decoder_la_LDFLAGS = $(shared_ldflags) -Wl,/usr/i686-pc-mingw32/sys-root/mingw/lib/libogg.dll.a
+
+endif
+
+# TODO - at least  mpegps, mp4, mov, mng
 # provided they support frame accurate seeking
 
 # avi is broken and needs a patch for decoding
@@ -62,9 +72,9 @@ endif
 # h264 does not work and needs a patch
 
 
-if HAVE_AVFORMAT
-if HAVE_AVCODEC
-if HAVE_AVUTIL
+#if HAVE_AVFORMAT
+#if HAVE_AVCODEC
+#if HAVE_AVUTIL
 flv_libs = flv_decoder.la
 FLVDEC_LIBS = @LIBAVCODEC_LIBS@ @LIBAVFORMAT_LIBS@
 FLVDEC_CFLAGS = @LIBAVFORMAT_CFLAGS@ @LIBAVCODEC_CFLAGS@ -Wno-deprecated-declarations
@@ -90,8 +100,6 @@ mkv_decoder_la_LDFLAGS = $(shared_ldflags) $(MKVDEC_LIBS)
 
 
 
-#in progress
-
 mpegts_libs = mpegts_decoder.la
 MPEGTSDEC_LIBS = @LIBAVCODEC_LIBS@ @LIBAVFORMAT_LIBS@ @LIBAVUTIL_LIBS@
 MPEGTSDEC_CFLAGS = @LIBAVFORMAT_CFLAGS@ @LIBAVCODEC_CFLAGS@ @LIBAVUTIL_CFLAGS@ \
@@ -112,9 +120,9 @@ mpegts_decoder_la_LDFLAGS = $(shared_ldflags) $(MPEGTSDEC_LIBS)
 #avi_decoder_la_LDFLAGS = $(shared_ldflags) $(AVIDEC_LIBS)
 
 
-endif
-endif
-endif
+#endif
+#endif
+#endif
 
 
 

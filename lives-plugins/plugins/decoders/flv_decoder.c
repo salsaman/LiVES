@@ -58,6 +58,7 @@ const char *plugin_version="LiVES flv decoder version 1.0";
 
 #include <libavformat/avformat.h>
 #include <libavutil/avstring.h>
+#include <libavcodec/avcodec.h>
 
 #include "decplugin.h"
 #include "flv_decoder.h"
@@ -1124,6 +1125,7 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
     if (fps!=1000.) cdata->fps=fps;
   }
 
+#ifndef IS_MINGW
   if (cdata->fps==0.||cdata->fps==1000.) {
     // use mplayer to get fps if we can...it seems to have some magical way
     char cmd[1024];
@@ -1150,6 +1152,7 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
       unlink(tmpfname);
     }
   }
+#endif
 
   if (cdata->fps==0.&&ctx->time_base.num==0) {
     // not sure about this
@@ -1202,7 +1205,9 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
 
 
 const char *module_check_init(void) {
+#ifndef IS_MINGW
   avcodec_init();
+#endif
   avcodec_register_all();
   return NULL;
 }

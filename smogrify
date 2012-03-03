@@ -2998,10 +2998,11 @@ if (defined($ARGV[0])) {
 	$nsigned=$ARGV[6];
 	$nendian=$ARGV[7];
 	$file=$ARGV[8];
-	$audio_in="$curtmpdir/audiodump.wav";
+	$audio_in="audiodump.wav";
 
 	smog_chdir("$curtmpdir");
-	$audiofile="$curtmpdir/audio";
+
+	$audiofile="audio";
 
 	if ($type eq "mp3") {
 	    &mp3_open;
@@ -3027,7 +3028,7 @@ if (defined($ARGV[0])) {
 	    &sig_error("$GUI_NAME was not able to open the file","$file");
 	}
 	
-	$audio_out="$curtmpdir/audio.new";
+	$audio_out="audio.new";
 	&convert_audio_to_raw;
 	if ($panic) {
 	    unlink "$pidfile"; 
@@ -3035,7 +3036,7 @@ if (defined($ARGV[0])) {
 	}
 	unlink "$audio_in";
 
-	$audio_bak="$curtmpdir/audio.bak";
+	$audio_bak="audio.bak";
 
 	# resample $audio_out (if required)
 	unless ($arate==$nrate&&$achans==$nchans&&$asamps==$nsamps&&$nsigned==$signed&&$nendian==$endian) {
@@ -3516,7 +3517,10 @@ if (defined($ARGV[0])) {
 	# TODO - allow front end to specify rate/channels, etc.
 
 	$file=$ARGV[2];
-	$audio_in=$curtmpdir."/audiodump.wav";
+
+	smog_chdir("$curtmpdir");
+
+	$audio_in="audiodump.wav";
 
 	$ext=&get_ext("$file");
 	if ($ext eq ".mp3") {
@@ -6318,6 +6322,7 @@ sub othera_open {
     $format=&get_mplayer_format;
 
     $com=&rc_get("video_open_command") . " -quiet \"$file\" -ao pcm:waveheader:file=\"$audio_in\" $format >$nulfile 2>&1 <$nulfile";
+
     $smerr=smog_system($com);
 
     if ($smerr) {

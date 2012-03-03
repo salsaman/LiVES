@@ -16,7 +16,7 @@ if (!defined($standalone)) {
     if ($smogrify ne "") {
 	require $smogrify;
     }
-}g
+}
 else {
     $command=$ARGV[0];
 }

@@ -11251,11 +11251,10 @@ on_trim_audio_activate (GtkMenuItem     *menuitem,
   d_print(msg);
   g_free(msg);
 
-  com=g_strdup_printf("%s trim_audio %s %.8f %.8f %d %d %d %d %d",prefs->backend_sync, cfile->handle, 
+  com=g_strdup_printf("%s trim_audio %s %.8f %.8f %d %d %d %d %d",prefs->backend, cfile->handle, 
 		      start, end, cfile->arate, 
 		      cfile->achans, cfile->asampsize, !(cfile->signed_endian&AFORM_UNSIGNED),
 		      !(cfile->signed_endian&AFORM_BIG_ENDIAN));
-
   unlink (cfile->info_file);
   mainw->com_failed=FALSE;
   lives_system (com,FALSE);

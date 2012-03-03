@@ -1051,6 +1051,9 @@ static void lives_init(_ign_opts *ign_opts) {
     prefs->alpha_post=FALSE; ///< allow pre-multiplied alpha internally
 
     prefs->auto_trim_audio=TRUE;
+
+    prefs->force64bit=FALSE;
+
     //////////////////////////////////////////////////////////////////
 
     weed_memory_init();
@@ -1765,9 +1768,12 @@ capability *get_capabilities (void) {
 
   capable=(capability *)g_malloc(sizeof(capability));
 
+
+  // this is _compile time_ bits, not runtime bits
   capable->cpu_bits=32;
   if (sizeof(void *)==8) capable->cpu_bits=64;
 
+  // _runtime_ byte order
   if (is_big_endian()) 
     capable->byte_order=LIVES_BIG_ENDIAN;
   else 

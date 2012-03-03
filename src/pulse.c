@@ -209,6 +209,9 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
 	   pulsed->playing_file=-1;
 	 }
 	 else {
+#ifdef IS_MINGW
+	   setmode(pulsed->fd, O_BINARY);
+#endif
 	   pulsed->seek_pos=0;
 	   pulsed->playing_file=new_file;
 	   pulsed->audio_ticks=mainw->currticks;

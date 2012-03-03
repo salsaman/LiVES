@@ -775,6 +775,10 @@ int64_t render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdoubl
       return 0l;
     }
 
+#ifdef IS_MINGW
+    setmode(out_fd, O_BINARY);
+#endif
+
     cur_size=get_file_size(out_fd);
 
     ins_pt*=out_achans*out_arate*out_asamps;
@@ -856,6 +860,9 @@ int64_t render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdoubl
 	  mainw->read_failed=TRUE;
 	}
 
+#ifdef IS_MINGW
+	setmode(in_fd[track], O_BINARY);
+#endif
 	if (track<NSTOREDFDS) {
 	  storedfds[track]=in_fd[track];
 	  storedfnames[track]=g_strdup(infilename);
@@ -1147,6 +1154,9 @@ void jack_rec_audio_to_clip(gint fileno, gint old_file, lives_rec_audio_type_t r
   mainw->jackd_read->playing_file=fileno;
   mainw->jackd_read->frames_written=0;
 
+#ifdef IS_MINGW
+  setmode(mainw->aud_rec_fd, O_BINARY);
+#endif
 
   if (rec_type==RECA_EXTERNAL) {
     gint asigned;
@@ -1254,6 +1264,10 @@ void pulse_rec_audio_to_clip(gint fileno, gint old_file, lives_rec_audio_type_t 
   mainw->pulsed_read=pulse_get_driver(FALSE);
   mainw->pulsed_read->playing_file=fileno;
   mainw->pulsed_read->frames_written=0;
+
+#ifdef IS_MINGW
+  setmode(mainw->aud_rec_fd, O_BINARY);
+#endif
 
   if (rec_type==RECA_EXTERNAL) {
     gint asigned;
@@ -2040,6 +2054,10 @@ static void *cache_my_audio(void *arg) {
 	  continue;
 	}
 
+#ifdef IS_MINGW
+	setmode(cbuffer->_fd, O_BINARY);
+#endif
+
 	g_free(filename);
     }
 
@@ -2268,6 +2286,10 @@ gboolean start_audio_stream(void) {
 
   lives_alarm_clear(alarm_handle);
 
+#ifdef IS_MINGW
+  setmode(afd, O_BINARY);
+#endif
+
   if (prefs->audio_player==AUD_PLAYER_PULSE) {
 #ifdef HAVE_PULSE_AUDIO
     mainw->pulsed->astream_fd=afd;
@@ -2279,6 +2301,10 @@ gboolean start_audio_stream(void) {
     mainw->jackd->astream_fd=afd;
 #endif
   }
+
+#ifdef IS_MINGW
+  setmode(afd, O_BINARY);
+#endif
 
   g_free(astream_name);
   g_free(astream_name_out);

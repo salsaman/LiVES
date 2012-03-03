@@ -60,6 +60,11 @@ gboolean save_frame_index(gint fileno) {
       retval=do_write_failed_error_s_with_retry(fname,g_strerror(errno),NULL);
     }
     else {
+
+#ifdef IS_MINGW
+  setmode(fd, O_BINARY);
+#endif
+
       mainw->write_failed=FALSE;
       for (i=0;i<sfile->frames;i++) {
 	lives_write_le(fd,&sfile->frame_index[i],4,TRUE);
@@ -116,6 +121,10 @@ gboolean load_frame_index(gint fileno) {
       }
     }
     else {
+
+#ifdef IS_MINGW
+  setmode(fd, O_BINARY);
+#endif
       create_frame_index(fileno,FALSE,0,sfile->frames);
 
       mainw->read_failed=FALSE;

@@ -7355,7 +7355,9 @@ gboolean weed_plant_serialise(int fd, weed_plant_t *plant, unsigned char **mem) 
 
   if (key==NULL || check_key) {
     if (mem==NULL) {
-      if (lives_read_le(fd,&len,4,TRUE)<4) return -4;
+      if (lives_read_le(fd,&len,4,TRUE)<4) {
+	return -4;
+      }
     }
     else {
       lives_memcpy(&len,*mem,4);
@@ -7406,9 +7408,9 @@ gboolean weed_plant_serialise(int fd, weed_plant_t *plant, unsigned char **mem) 
   }
 
   if (st!=WEED_SEED_INT&&st!=WEED_SEED_BOOLEAN&&st!=WEED_SEED_DOUBLE&&st!=WEED_SEED_INT64&&
-      st!=WEED_SEED_STRING&&st!=WEED_SEED_VOIDPTR&&st!=WEED_SEED_PLANTPTR)
+      st!=WEED_SEED_STRING&&st!=WEED_SEED_VOIDPTR&&st!=WEED_SEED_PLANTPTR) {
     return -6;
-
+  }
 
   if (check_key&&!strcmp(key,"type")) {
     // for the "type" leaf perform some extra checks
@@ -7428,7 +7430,6 @@ gboolean weed_plant_serialise(int fd, weed_plant_t *plant, unsigned char **mem) 
     lives_memcpy(&ne,*mem,4);
     *mem+=4;
   }
-
 
 
   if (ne>0) values=(void **)g_malloc(ne*sizeof(void *));
@@ -7455,7 +7456,7 @@ gboolean weed_plant_serialise(int fd, weed_plant_t *plant, unsigned char **mem) 
       lives_memcpy(&vlen,*mem,4);
       *mem+=4;
     }
-      
+
     if (st==WEED_SEED_STRING) {
       values[i]=g_malloc((size_t)vlen+1);
     }

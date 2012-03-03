@@ -384,6 +384,10 @@ void save_vpp_defaults(_vid_playback_plugin *vpp, gchar *vpp_file) {
     return;
   }
 
+#ifdef IS_MINGW
+  setmode(fd, O_BINARY);
+#endif
+
   msg=g_strdup_printf(_("Updating video playback plugin defaults in %s\n"),vpp_file);
   LIVES_INFO(msg);
   g_free(msg);
@@ -454,6 +458,11 @@ void load_vpp_defaults(_vid_playback_plugin *vpp, gchar *vpp_file) {
     }
     else {
       do {
+
+#ifdef IS_MINGW
+  setmode(fd, O_BINARY);
+#endif
+
 	mainw->read_failed=FALSE;
 	msg=g_strdup("LiVES vpp defaults file version 2\n");
 	len=lives_read(fd,buf,strlen(msg),FALSE);

@@ -7214,8 +7214,9 @@ int weed_get_idx_for_hashname (const gchar *hashname, gboolean fullname) {
 
 
 
+
 static void weed_leaf_serialise (int fd, weed_plant_t *plant, const char *key, gboolean write_all, unsigned char **mem) {
-  void *value;
+  void *value,*valuer;
   guint32 vlen;
   int st,ne;
   int j;
@@ -7224,6 +7225,7 @@ static void weed_leaf_serialise (int fd, weed_plant_t *plant, const char *key, g
   // write errors will be checked for by the calling function
 
   if (write_all) {
+    // write byte length of key, followed by key in utf-8
     if (mem==NULL) {
       lives_write_le(fd,&i,4,TRUE);
       lives_write(fd,key,(size_t)i,TRUE);
@@ -7235,7 +7237,10 @@ static void weed_leaf_serialise (int fd, weed_plant_t *plant, const char *key, g
       *mem+=i;
     }
   }
+
+  // write seed type and number of elements
   st=weed_leaf_seed_type(plant,key);
+
   if (mem==NULL) lives_write_le(fd,&st,4,TRUE);
   else {
     lives_memcpy(*mem,&st,4);
@@ -7250,6 +7255,8 @@ static void weed_leaf_serialise (int fd, weed_plant_t *plant, const char *key, g
 
   // write errors will be checked for by the calling function
 
+
+  // for each element, write the data size followed by the data
   for (j=0;j<ne;j++) {
     vlen=(guint32)weed_leaf_element_size(plant,key,j);
     if (st!=WEED_SEED_STRING) {
@@ -7260,12 +7267,21 @@ static void weed_leaf_serialise (int fd, weed_plant_t *plant, const char *key, g
       value=g_malloc((size_t)(vlen+1));
       weed_leaf_get(plant,key,j,&value);
     }
+
+    if (weed_leaf_seed_type(plant,key)>=64) {
+      // save voidptr as 64 bit values (**NEW**)
+      valuer=(uint64_t *)g_malloc(sizeof(uint64_t));
+      *((uint64_t *)valuer)=(uint64_t)(*((void **)value));
+      vlen=sizeof(uint64_t);
+    }
+    else valuer=value;
+
     if (mem==NULL) {
       lives_write_le(fd,&vlen,4,TRUE);
       if (st!=WEED_SEED_STRING) {
-	lives_write_le(fd,value,(size_t)vlen,TRUE);
+	lives_write_le(fd,valuer,(size_t)vlen,TRUE);
       }
-      else lives_write(fd,value,(size_t)vlen,TRUE);
+      else lives_write(fd,valuer,(size_t)vlen,TRUE);
     }
     else {
       lives_memcpy(*mem,&vlen,4);
@@ -7274,6 +7290,7 @@ static void weed_leaf_serialise (int fd, weed_plant_t *plant, const char *key, g
       *mem+=vlen;
     }
     g_free(value);
+    if (valuer!=value) g_free(valuer);
   }
 
   // write errors will be checked for by the calling function
@@ -7502,14 +7519,24 @@ gboolean weed_plant_serialise(int fd, weed_plant_t *plant, unsigned char **mem) 
 	break;
       default:
 	if (plant!=NULL) {
-	  void **voids=(void **)g_malloc(ne*sizeof(void *));
-	  for (j=0;j<ne;j++) voids[j]=*(void **)values[j];
-	  weed_leaf_set (plant, key, st, ne, (void *)voids);
-	  g_free(voids);
+	  if (prefs->force64bit) {
+	    // force pointers to uint64_t
+	    uint64_t *voids=(uint64_t *)g_malloc(ne*sizeof(uint64_t));
+	    for (j=0;j<ne;j++) voids[j]=(uint64_t)(*(void **)values[j]);
+	    weed_leaf_set (plant, key, WEED_SEED_INT64, ne, (void *)voids);
+	    g_free(voids);
+	  }
+	  else {
+	    void **voids=(void **)g_malloc(ne*sizeof(void *));
+	    for (j=0;j<ne;j++) voids[j]=*(void **)values[j];
+	    weed_leaf_set (plant, key, st, ne, (void *)voids);
+	    g_free(voids);
+	  }
 	}
       }
     }
   }
+
   if (values!=NULL) {
     for (i=0;i<ne;i++) g_free(values[i]);
     g_free(values);

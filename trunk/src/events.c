@@ -1486,6 +1486,8 @@ static void rescale_param_changes(weed_plant_t *event_list, weed_plant_t *init_e
   num_inits=weed_leaf_num_elements(init_event,"in_parameters");
   init_events=weed_get_voidptr_array(init_event,"in_parameters",&error);
 
+  if (init_events==NULL) num_inits=0;
+
   for (i=0;i<num_inits;i++) {
     pchain=init_events[i];
     while (pchain!=NULL) {
@@ -1516,7 +1518,7 @@ static void rescale_param_changes(weed_plant_t *event_list, weed_plant_t *init_e
     }
   }
 
-  weed_free(init_events);
+  if (init_events!=NULL) weed_free(init_events);
 }
 
 
@@ -1805,9 +1807,12 @@ void move_filter_deinit_event(weed_plant_t *event_list, weed_timecode_t new_tc, 
     
     // move deinit event
     event=deinit_event;
-    while (get_event_timecode(event)<new_tc) event=get_next_event(event);
+    while (event!=NULL&&get_event_timecode(event)<new_tc) event=get_next_event(event);
 
     unlink_event(event_list,deinit_event);
+
+    if (event==NULL) return;
+
     insert_filter_deinit_event_at(event_list,event,deinit_event);
 
     if (is_on) {
@@ -3042,9 +3047,10 @@ weed_plant_t *process_events (weed_plant_t *next_event, weed_timecode_t curr_tc)
 
 	  pchains[key]=weed_get_voidptr_array(next_event,"in_parameters",&error);
 	  for (i=0;i<num_params;i++) {
-	    if (source_params[i]!=NULL&&is_init_pchange(next_event,source_params[i])) weed_leaf_copy(in_params[i],"value",source_params[i],"value");
+	    if (source_params!=NULL&&source_params[i]!=NULL&&is_init_pchange(next_event,source_params[i])) 
+	      weed_leaf_copy(in_params[i],"value",source_params[i],"value");
 	  }
-	  weed_free(source_params);
+	  if (source_params!=NULL) weed_free(source_params);
 	  weed_free(in_params);
 	}
 	else pchains[key]=NULL;

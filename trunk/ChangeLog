@@ -8,8 +8,9 @@ Fix regression in undo cut.
 Fix regression for pad audio.
 Quick opening of mpegts files.
 Faster backup/restore.
-
+Enable exchange of layouts between 32 bit and 64 bit systems (in progress).
 	
+
 
 
 

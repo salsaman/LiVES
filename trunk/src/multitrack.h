@@ -639,7 +639,7 @@ struct _track_rect {
 
 /* translation table for matching event_id to init_event */
 typedef struct {
-  void *in;
+  uint64_t in;
   void *out;
 } ttable;
 

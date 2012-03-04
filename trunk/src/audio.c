@@ -1430,7 +1430,8 @@ static lives_audio_track_state_t *aframe_to_atstate(weed_plant_t *event) {
 
 
 
-lives_audio_track_state_t *get_audio_and_effects_state_at(weed_plant_t *event_list, weed_plant_t *st_event, gboolean get_audstate, gboolean exact) {
+lives_audio_track_state_t *get_audio_and_effects_state_at(weed_plant_t *event_list, weed_plant_t *st_event, 
+							  gboolean get_audstate, gboolean exact) {
 
   // if exact is set, we must rewind back to first active stateful effect, 
   // and play forwards from there (not yet implemented - TODO)
@@ -1498,7 +1499,6 @@ lives_audio_track_state_t *get_audio_and_effects_state_at(weed_plant_t *event_li
     }
     nevent=get_next_event(event);
   } while (event!=st_event);
-
 
   if (audstate!=NULL) {
     for (nfiles=0;audstate[nfiles].afile!=-1;nfiles++);

@@ -7268,7 +7268,7 @@ static void weed_leaf_serialise (int fd, weed_plant_t *plant, const char *key, g
       weed_leaf_get(plant,key,j,&value);
     }
 
-    if (weed_leaf_seed_type(plant,key)>=64) {
+    if (mem==NULL && weed_leaf_seed_type(plant,key)>=64) {
       // save voidptr as 64 bit values (**NEW**)
       valuer=(uint64_t *)g_malloc(sizeof(uint64_t));
       *((uint64_t *)valuer)=(uint64_t)(*((void **)value));
@@ -7520,7 +7520,7 @@ gboolean weed_plant_serialise(int fd, weed_plant_t *plant, unsigned char **mem) 
 	break;
       default:
 	if (plant!=NULL) {
-	  if (prefs->force64bit) {
+	  if (mem==NULL && prefs->force64bit) {
 	    // force pointers to uint64_t
 	    uint64_t *voids=(uint64_t *)g_malloc(ne*sizeof(uint64_t));
 	    for (j=0;j<ne;j++) voids[j]=(uint64_t)(*(void **)values[j]);

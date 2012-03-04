@@ -1762,6 +1762,11 @@ void save_file (int clip, int start, int end, const char *filename) {
 	if (retval==LIVES_CANCEL) redir=g_strdup("1>&2");
       }
       else {
+
+#ifdef IS_MINGW
+      setmode(new_stderr,O_BINARY);
+#endif
+
 	redir=g_strdup_printf("1>&2 2>%s",new_stderr_name);
 	
 	mainw->iochan=g_io_channel_unix_new(new_stderr);
@@ -4815,6 +4820,10 @@ gboolean load_from_scrap_file(weed_plant_t *layer, int frame) {
 
   if (fd==-1) return FALSE;
 
+#ifdef IS_MINGW
+      setmode(fd,O_BINARY);
+#endif
+
   memset(&buf[sizint],0,1);
 
   bytes=read(fd,buf,sizint);
@@ -4950,6 +4959,10 @@ gint save_to_scrap_file (weed_plant_t *layer) {
     g_free(oname);
     return mainw->files[mainw->scrap_file]->frames;
   }
+
+#ifdef IS_MINGW
+      setmode(fd,O_BINARY);
+#endif
 
   mainw->write_failed=FALSE;
 

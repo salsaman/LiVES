@@ -3142,10 +3142,10 @@ lives_render_error_t render_events (gboolean reset) {
   gboolean is_blank=TRUE;
   gboolean firstframe=TRUE;
   gboolean completed=FALSE;
-  gdouble chvols[65536];
+  gdouble chvols[MAX_AUDIO_TRACKS];
 
-  static gint xaclips[65536];
-  static gdouble xaseek[65536],xavel[65536],atime; // TODO **
+  static gint xaclips[MAX_AUDIO_TRACKS];
+  static gdouble xaseek[MAX_AUDIO_TRACKS],xavel[MAX_AUDIO_TRACKS],atime; // TODO **
   static gboolean has_audio;
   static lives_render_error_t read_write_error;
 
@@ -3168,7 +3168,7 @@ lives_render_error_t render_events (gboolean reset) {
 
     clear_mainw_msg();
     mainw->filter_map=NULL;
-    for (i=0;i<65536;i++) {
+    for (i=0;i<MAX_AUDIO_TRACKS;i++) {
       xaclips[i]=-1;
       xaseek[i]=xavel[i]=0;
     }

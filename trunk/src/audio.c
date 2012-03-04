@@ -1529,7 +1529,7 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
 
   lives_audio_track_state_t *atstate;
   int nnfiles,i;
-  gdouble chvols[65536]; // TODO - use list
+  gdouble chvols[MAX_AUDIO_TRACKS]; // TODO - use list
 
   static weed_timecode_t last_tc;
   static weed_timecode_t fill_tc;

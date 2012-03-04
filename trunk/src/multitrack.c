@@ -7983,15 +7983,15 @@ static double *update_layout_map_audio(weed_plant_t *event_list) {
   int i;
 
   // TODO - use linked lists
-  double aseek[65536];
-  double avel[65536];
-  weed_timecode_t atc[65536];
-  int last_aclips[65536];
+  double aseek[MAX_AUDIO_TRACKS];
+  double avel[MAX_AUDIO_TRACKS];
+  weed_timecode_t atc[MAX_AUDIO_TRACKS];
+  int last_aclips[MAX_AUDIO_TRACKS];
 
-  double neg_aseek[65536];
-  double neg_avel[65536];
-  weed_timecode_t neg_atc[65536];
-  int neg_last_aclips[65536];
+  double neg_aseek[MAX_AUDIO_TRACKS];
+  double neg_avel[MAX_AUDIO_TRACKS];
+  weed_timecode_t neg_atc[MAX_AUDIO_TRACKS];
+  int neg_last_aclips[MAX_AUDIO_TRACKS];
 
   int atrack;
   double aval;
@@ -8001,14 +8001,11 @@ static double *update_layout_map_audio(weed_plant_t *event_list) {
   used_clips=(double *)g_malloc((MAX_FILES+1)*sizdbl);
   for (i=1;i<=MAX_FILES;i++) used_clips[i]=0.;
 
-  for (i=0;i<65536;i++) {
+
+  for (i=0;i<MAX_AUDIO_TRACKS;i++) {
     avel[i]=neg_avel[i]=0.;
   }
 
-#ifdef IS_MINGW
-  // temp fix for mingw strangeness
-  return used_clips;
-#endif
 
   while (event!=NULL) {
     if (WEED_EVENT_IS_FRAME(event)) {
@@ -8022,7 +8019,7 @@ static double *update_layout_map_audio(weed_plant_t *event_list) {
 	    atrack=aclip_index[i];
 	    tc=get_event_timecode(event);
 	    if (atrack>=0) {
-	      if (atrack>65535) {
+	      if (atrack>=MAX_AUDIO_TRACKS) {
 		LIVES_ERROR("invalid atrack");
 	      }
 	      else {
@@ -8036,10 +8033,11 @@ static double *update_layout_map_audio(weed_plant_t *event_list) {
 		atc[atrack]=tc;
 		last_aclips[atrack]=aclip_index[i+1];
 	      }
+
 	    }
 	    else {
 	      atrack=-atrack;
-	      if (atrack>65535) {
+	      if (atrack>MAX_AUDIO_TRACKS) {
 		LIVES_ERROR("invalid back atrack");
 	      }
 	      else {
@@ -8062,10 +8060,11 @@ static double *update_layout_map_audio(weed_plant_t *event_list) {
     }
     event=get_next_event(event);
   }
+
   return used_clips;
 }
 
-
+ 
 
 gboolean used_in_current_layout(lives_mt *mt, gint file) {
   // see if <file> is used in current layout
@@ -8136,10 +8135,9 @@ gboolean multitrack_delete (lives_mt *mt, gboolean save_layout) {
       // update layout maps (kind of) with the stored_event_list
       
       layout_map=update_layout_map(mainw->stored_event_list);
-
       layout_map_audio=update_layout_map_audio(mainw->stored_event_list);
       
-      for (i=0;i<MAX_FILES;i++) {
+      for (i=1;i<MAX_FILES;i++) {
 	if (mainw->files[i]!=NULL&&(layout_map[i]!=0||(layout_map_audio!=NULL&&layout_map_audio[i]!=0.))) {
 	  mainw->files[i]->stored_layout_frame=layout_map[i];
 	  if (layout_map_audio!=NULL) 
@@ -8629,8 +8627,8 @@ void mt_init_tracks (lives_mt *mt, gboolean set_min_max) {
     int *clip_index,*new_clip_index,*new_frame_index;
     weed_plant_t *event,*last_event=NULL,*next_frame_event;
     gint num_tracks;
-    int tracks[65536]; // TODO - use linked list
-    double avels[65536]; // ditto
+    int tracks[MAX_VIDEO_TRACKS]; // TODO - use linked list
+    double avels[MAX_AUDIO_TRACKS]; // ditto
     int j,error;
     weed_timecode_t tc,last_tc;
     gint last_valid_frame;
@@ -8656,7 +8654,7 @@ void mt_init_tracks (lives_mt *mt, gboolean set_min_max) {
 
     if (mt->avol_fx!=-1) locate_avol_init_event(mt,mt->event_list,mt->avol_fx);
 
-    for (j=0;j<65536;j++) {
+    for (j=0;j<MAX_TRACKS;j++) {
       tracks[j]=0;
       avels[j]=0.;
     }
@@ -8714,7 +8712,7 @@ void mt_init_tracks (lives_mt *mt, gboolean set_min_max) {
 	    if (tc==block_marker_tc&&int_array_contains_value(block_marker_tracks,block_marker_num_tracks,j)) 
 	      forced_end=TRUE;
 	    if ((tracks[j]!=renumbered_clips[clip_index[j]])||forced_end) {
-	      // handling fro block end or split blocks
+	      // handling for block end or split blocks
 	      if (tracks[j]>0) {
 		add_block_end_point (GTK_WIDGET(g_list_nth_data(mt->video_draws,j)),last_event); // end of previous rectangle
 	      }

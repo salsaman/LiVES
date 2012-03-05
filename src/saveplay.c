@@ -1767,7 +1767,7 @@ void save_file (int clip, int start, int end, const char *filename) {
       setmode(new_stderr,O_BINARY);
 #endif
 
-	redir=g_strdup_printf("1>&2 2>%s",new_stderr_name);
+	redir=g_strdup_printf("1>&2 2>\"%s\"",new_stderr_name);
 	
 	mainw->iochan=g_io_channel_unix_new(new_stderr);
 	g_io_channel_set_encoding (mainw->iochan, NULL, NULL);
@@ -1824,8 +1824,6 @@ void save_file (int clip, int start, int end, const char *filename) {
   unlink(cfile->info_file);
   mainw->write_failed=FALSE;
   save_file_comments(current_file);
-
-  g_print("\n\nenc cmd is %s\n",com);
 
   lives_system(com,FALSE);
   g_free(com);
@@ -4515,7 +4513,6 @@ void restore_file(const gchar *file_name) {
     if (mainw->error && mainw->cancelled!=CANCEL_ERROR) {
       do_blocking_error_dialog (mainw->msg);
     }
-    g_print("\n\nCANC3 %s %d!!!\n",cfile->handle,mainw->error);
     close_current_file(old_file);
     return;
   }

@@ -5491,13 +5491,14 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
 void on_cleardisk_activate (GtkWidget *widget, gpointer user_data) {
   // recover disk space
 
+  gint64 bytes=0,fspace;
 
-  gint current_file=mainw->current_file;
   gchar *markerfile;
   gchar **array;
-  int marker_fd;
-  guint64 bytes=0;
   gchar *com;
+
+  gint current_file=mainw->current_file;
+  int marker_fd;
   int i;
   int retval=0;
 
@@ -5567,6 +5568,9 @@ void on_cleardisk_activate (GtkWidget *widget, gpointer user_data) {
   }
 
 
+  // get space before
+  fspace=get_fs_free(prefs->tmpdir);
+
   // call "smogrify bg_weed" to do the actual cleanup
   // its parameters are the handle of a temp file, and opts mask
 
@@ -5621,6 +5625,14 @@ void on_cleardisk_activate (GtkWidget *widget, gpointer user_data) {
     mt_sensitise(mainw->multitrack);
     mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
   }
+
+
+  if (bytes==0) {
+    // get after
+    bytes=get_fs_free(prefs->tmpdir)-fspace;
+  }
+
+  if (bytes<0) bytes=0;
 
   if (retval!=LIVES_CANCEL&&!mainw->com_failed) {
     d_print_done();
@@ -7023,7 +7035,8 @@ void on_cancel_keep_button_clicked (GtkButton *button, gpointer user_data) {
   }
   while (g_main_context_iteration(NULL,FALSE));
 
-  if (!mainw->effects_paused||cfile->nokeep) {
+  if ((!mainw->effects_paused||cfile->nokeep)&&(!mainw->is_rendering||
+						(mainw->multitrack!=NULL&&!mainw->multitrack->is_rendering))) {
     // Cancel
     if (mainw->cancel_type==CANCEL_SOFT) {
       // cancel in record audio

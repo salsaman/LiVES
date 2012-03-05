@@ -18595,7 +18595,7 @@ gboolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list) {
 
     switch (hint) {
     case WEED_EVENT_HINT_FILTER_INIT:
-#define DEBUG_TTABLE
+      //#define DEBUG_TTABLE
 #ifdef DEBUG_TTABLE
 	    g_print("\n\ngot filter init %p\n",event);
 #endif

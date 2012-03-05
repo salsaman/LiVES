@@ -4814,10 +4814,10 @@ render_details *create_render_details (gint type) {
   gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrollw), GTK_POLICY_AUTOMATIC, 
 				  GTK_POLICY_AUTOMATIC);
   
-  top_vbox = gtk_vbox_new (FALSE, 10);
+  top_vbox = gtk_vbox_new (FALSE, 8);
 
   gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (scrollw), top_vbox);
-  gtk_box_pack_start (GTK_BOX (dialog_vbox), scrollw, TRUE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (dialog_vbox), scrollw, TRUE, TRUE, 10);
   
   // Apply theme background to scrolled window
   if (palette->style&STYLE_1) {
@@ -4827,7 +4827,7 @@ render_details *create_render_details (gint type) {
 
   gtk_widget_show (top_vbox);
   gtk_widget_show (scrollw);
-  gtk_container_set_border_width (GTK_CONTAINER (top_vbox), 20);
+  gtk_container_set_border_width (GTK_CONTAINER (top_vbox), 0);
 
   frame = gtk_frame_new (NULL);
   gtk_widget_show (frame);

@@ -830,7 +830,6 @@ static void draw_block (lives_mt *mt,track_rect *block, gint x1, gint x2) {
 	    last_framenum=framenum;
 	    // render it in the eventbox
 	    if (thumbnail!=NULL) {
-	      LIVES_DEBUG("draw block");
 	      gdk_cairo_set_source_pixbuf (cr, thumbnail, i, 0);
 	      if (i+width>offset_end) {
 		width=offset_end-i;

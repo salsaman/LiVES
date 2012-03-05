@@ -1523,11 +1523,11 @@ gboolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, gboolean ad
 	gtk_widget_set_size_request(scale,GIW_KNOB_WIDTH,GIW_KNOB_HEIGHT);
 	giw_knob_set_legends_digits(GIW_KNOB(scale),0);
 	if (palette->style&STYLE_1) {
+	  gtk_widget_modify_bg (scale, GTK_STATE_NORMAL, &palette->normal_back);
 	  gtk_widget_modify_text(scale, GTK_STATE_NORMAL, &palette->normal_back);
 	  gtk_widget_modify_fg(scale, GTK_STATE_NORMAL, &palette->normal_fore);
-	  gtk_widget_modify_bg (scale, GTK_STATE_NORMAL, &palette->normal_back);
 	}
-	gtk_box_pack_start (GTK_BOX (hbox), scale, FALSE, FALSE, 0);
+	gtk_box_pack_start (GTK_BOX (hbox), scale, FALSE, FALSE, 10);
 	add_fill_to_box (GTK_BOX (hbox));
       }
 #endif

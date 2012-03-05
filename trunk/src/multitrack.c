@@ -830,6 +830,7 @@ static void draw_block (lives_mt *mt,track_rect *block, gint x1, gint x2) {
 	    last_framenum=framenum;
 	    // render it in the eventbox
 	    if (thumbnail!=NULL) {
+	      LIVES_DEBUG("draw block");
 	      gdk_cairo_set_source_pixbuf (cr, thumbnail, i, 0);
 	      if (i+width>offset_end) {
 		width=offset_end-i;
@@ -891,26 +892,37 @@ static void draw_block (lives_mt *mt,track_rect *block, gint x1, gint x2) {
 
 
 
-static void draw_aparams(lives_mt *mt, GtkWidget *eventbox, GList *param_list, weed_plant_t *init_event, gint startx, gint width) {
+static void draw_aparams(lives_mt *mt, GtkWidget *eventbox, GList *param_list, weed_plant_t *init_event, 
+			 gint startx, gint width) {
   // draw audio parameters : currently we overlay coloured lines on the audio track to show the level of 
   // parameters in the audio_volume plugin
   // we only display whichever parameters the user has elected to show
 
+  cairo_t *cr;
 
-  gdouble dtime;
+  GdkPixbuf *pixbuf;
+
+  GList *plist;
+
+  weed_plant_t **in_params,*param,*ptmpl;
   weed_plant_t *filter,*inst,*deinit_event;
+
+  weed_timecode_t tc,start_tc,end_tc;
+
+  gdouble tl_span=mt->tl_max-mt->tl_min;
+  gdouble dtime;
   gdouble ratio;
   double vald,mind,maxd,*valds;
+
+  double y;
+
   int vali,mini,maxi,*valis;
   int i,error,pnum;
-  weed_plant_t **in_params,*param,*ptmpl;
-  weed_timecode_t tc,start_tc,end_tc;
-  int hint;
-  gdouble tl_span=mt->tl_max-mt->tl_min;
+  int hint,xwidth,xheight;
   gint offset_start,offset_end,startpos;
-  GList *plist;
-  gchar *fhash;
   gint track;
+
+  gchar *fhash;
 
   void **pchainx=weed_get_voidptr_array(init_event,"in_parameters",&error);
 
@@ -946,6 +958,31 @@ static void draw_aparams(lives_mt *mt, GtkWidget *eventbox, GList *param_list, w
 
   track=GPOINTER_TO_INT(g_object_get_data (G_OBJECT(eventbox),"layer_number"))+1;
 
+
+  // TODO - make one function
+  cr = gdk_cairo_create (eventbox->window);
+
+  gdk_window_get_size(eventbox->window,&xwidth,&xheight);
+
+#if GTK_CHECK_VERSION(3,0,0)
+  gdk_window_get_size(eventbox->window,&xwidth,&xheight);
+  pixbuf=gdk_pixbuf_get_from_window (eventbox->window,
+				     0,0,
+				     xwidth,
+				     xheight
+				     );
+#else
+  pixbuf=gdk_pixbuf_get_from_drawable(NULL,GDK_DRAWABLE(eventbox->window),NULL,0,0,0,0,eventbox->allocation.width,
+				      eventbox->allocation.height);
+#endif
+  
+  gdk_cairo_set_source_pixbuf (cr, pixbuf, 0, 0);
+  cairo_paint (cr);
+
+  cairo_set_line_width(cr,1.);
+  cairo_set_source_rgba(cr, 0., 0., 0., 1.); ///< opaque black
+
+  //cairo_set_operator (cr, CAIRO_OPERATOR_DEST_OVER);
   for (i=startpos;i<startx+width;i++) {
     dtime=get_time_from_x(mt,i);
     tc=dtime*U_SEC;
@@ -979,10 +1016,20 @@ static void draw_aparams(lives_mt *mt, GtkWidget *eventbox, GList *param_list, w
       default:
 	continue;
       }
-      gdk_draw_point(GDK_DRAWABLE(eventbox->window),mt->window->style->fg_gc[0],i,(1.-ratio)*eventbox->allocation.height);
+
+      y=(1.-ratio)*(double)eventbox->allocation.height;
+
+      cairo_move_to(cr, i-1, y-1);
+      cairo_line_to(cr, i, y);
+ 
       plist=plist->next;
     }
   }
+
+  cairo_stroke (cr);
+  cairo_surface_flush (cairo_get_target(cr));
+
+  cairo_destroy (cr);
 
   weed_free(pchainx);
   weed_free(in_params);
@@ -1102,8 +1149,23 @@ static gint expose_track_event (GtkWidget *eventbox, GdkEventExpose *event, gpoi
     mt->redraw_block=FALSE;
   }
 
-  bgimage=gdk_pixbuf_get_from_drawable(NULL,GDK_DRAWABLE(eventbox->window),NULL,0,0,0,0,
-				       eventbox->allocation.width,eventbox->allocation.height);
+#if GTK_CHECK_VERSION(3,0,0)
+  {
+    int xwidth,xheight;
+    gdk_window_get_size(eventbox->window,&xwidth,&xheight);
+    if ((bgimage=gdk_pixbuf_get_from_window (eventbox->window,
+					     0,0,
+					     xwidth,
+					     xheight
+					     ))!=NULL) {
+#else
+  bgimage=gdk_pixbuf_get_from_drawable(NULL,GDK_DRAWABLE(eventbox->window),NULL,0,0,0,0,eventbox->allocation.width,
+				       eventbox->allocation.height);
+#endif
+#if GTK_CHECK_VERSION(3,0,0)
+    }
+#endif
+
   if (lives_pixbuf_get_width(bgimage)>0) {
     g_object_set_data (G_OBJECT(eventbox), "drawn",GINT_TO_POINTER(TRUE));
     g_object_set_data (G_OBJECT(eventbox), "bgimg",bgimage);
@@ -9283,12 +9345,16 @@ void on_mt_fx_edit_activate (GtkMenuItem *menuitem, gpointer user_data) {
   gtk_widget_set_sensitive(mt->apply_fx_button,FALSE);
 }
 
-void mt_avol_quick(GtkMenuItem *menuitem, gpointer user_data) {
+static void mt_avol_quick(GtkMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   mt->selected_init_event=mt->avol_init_event;
   on_mt_fx_edit_activate(menuitem,user_data);
 }
 
+static void rdrw_cb(GtkMenuItem *menuitem, gpointer user_data) {
+  lives_mt *mt=(lives_mt *)user_data;
+  redraw_all_event_boxes(mt);
+}
 
 void do_effect_context (lives_mt *mt, GdkEventButton *event) {
   // pop up a context menu when a selected block is right clicked on
@@ -12122,6 +12188,13 @@ void do_track_context (lives_mt *mt, GdkEventButton *event, gdouble timesecs, gi
   if (has_something) {
     gtk_widget_show_all (menu);
     gtk_menu_popup (GTK_MENU(menu), NULL, NULL, NULL, NULL, event->button, event->time);
+
+
+    g_signal_connect (GTK_OBJECT (menu), "unmap",
+		      G_CALLBACK (rdrw_cb),
+		      (gpointer)mt);
+
+
   }
   else gtk_widget_destroy(menu);
 
@@ -18277,7 +18350,7 @@ static gchar *filter_map_check(ttable *trans_table,weed_plant_t *filter_map, wee
   else {
     if (num_init_events==1&&weed_get_voidptr_value(filter_map,"init_events",&error)==NULL) return ebuf;
     pinit_events=weed_get_voidptr_array(filter_map,"init_events",&error);
-    init_events=weed_malloc(num_init_events*sizeof(uint64_t));
+    init_events=(uint64_t *)weed_malloc(num_init_events*sizeof(uint64_t));
     for (i=0;i<num_init_events;i++) init_events[i]=(uint64_t)pinit_events[i];
     weed_free(pinit_events);
   }
@@ -18818,7 +18891,7 @@ gboolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list) {
 	  was_deleted=TRUE;
 	}
 	else {
-	  weed_leaf_delete(init_event,"deinit_event");
+	  weed_leaf_delete((weed_plant_t *)init_event,"deinit_event");
 	  weed_set_voidptr_value((weed_plant_t *)init_event,"deinit_event",event);
 
 	  host_tag_s=weed_get_string_value((weed_plant_t *)init_event,"host_tag",&error);
@@ -18859,7 +18932,7 @@ gboolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list) {
 	  init_events=(uint64_t *)weed_get_int64_array(event,"init_events",&error);
 	else  {
 	  void **pinit_events=weed_get_voidptr_array(event,"init_events",&error);
-	  init_events=weed_malloc(num_init_events*sizeof(uint64_t));
+	  init_events=(uint64_t *)weed_malloc(num_init_events*sizeof(uint64_t));
 	  for (i=0;i<num_init_events;i++) init_events[i]=(uint64_t)pinit_events[i];
 	  weed_free(pinit_events);
 	}

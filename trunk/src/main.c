@@ -5182,6 +5182,7 @@ void load_frame_image(gint frame) {
 
   // record external window
   if (mainw->record_foreign) {
+    gchar fname[PATH_MAX];
     gint xwidth,xheight;
     GError *gerror=NULL;
     cairo_t *cr = gdk_cairo_create (mainw->playarea->window);
@@ -5214,7 +5215,6 @@ void load_frame_image(gint frame) {
 					      xheight
 					      ))!=NULL) {
 #endif
-      gchar fname[PATH_MAX];
       g_snprintf(fname,PATH_MAX,"%s/%s/%08d.%s",prefs->tmpdir,cfile->handle,frame,prefs->image_ext);
       do {
 	if (gerror!=NULL) g_error_free(gerror);

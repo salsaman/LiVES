@@ -1231,7 +1231,6 @@ create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox) {
     gtk_widget_show (vbox21);
     gtk_box_pack_start (GTK_BOX (dialog_vbox), vbox21, TRUE, TRUE, 0);
   }
-  else if (type==3) vbox21 = lives_dialog_get_content_area(GTK_DIALOG(rdet->dialog));
   else vbox21=top_vbox;
 
   frame6 = gtk_frame_new (NULL);

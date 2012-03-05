@@ -314,7 +314,7 @@ gboolean pconx_convert_value_data(weed_plant_t *dparam, weed_plant_t *sparam) {
     case WEED_SEED_DOUBLE:
       {
 	int *valsi=weed_get_int_array(sparam,"value",&error);
-	double * valsd=g_try_malloc(ndvals*sizdbl);
+	double * valsd=(double *)g_try_malloc(ndvals*sizdbl);
 	
 	if (valsd==NULL) {
 	  LIVES_WARN("Could not assign memory for dest value");
@@ -356,7 +356,7 @@ gboolean pconx_convert_value_data(weed_plant_t *dparam, weed_plant_t *sparam) {
     case WEED_SEED_DOUBLE:
       {
 	int *valsi=weed_get_boolean_array(sparam,"value",&error);
-	double * valsd=g_try_malloc(ndvals*sizdbl);
+	double * valsd=(double *)g_try_malloc(ndvals*sizdbl);
 	
 	if (valsd==NULL) {
 	  LIVES_WARN("Could not assign memory for dest value");

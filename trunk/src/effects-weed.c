@@ -2117,7 +2117,7 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
 
       width=weed_get_int_value(channel,"width",&error);
       height=weed_get_int_value(channel,"height",&error);
-      pixel_data=weed_get_voidptr_value(channel,"pixel_data",&error);
+      //pdata=weed_get_voidptr_value(channel,"pixel_data",&error);
 
       set_channel_size(channel,opwidth/weed_palette_get_pixels_per_macropixel(palette),opheight,1,NULL);
 

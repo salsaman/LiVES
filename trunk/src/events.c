@@ -4721,23 +4721,32 @@ render_details *create_render_details (gint type) {
 
   GtkWidget *label;
   GtkWidget *top_vbox;
+  GtkWidget *dialog_vbox;
+  GtkWidget *scrollw;
   GtkWidget *hbox;
   GtkWidget *vbox;
   GtkWidget *eventbox;
   GtkWidget *frame;
-  GObject *spinbutton_adj;
   GtkWidget *cancelbutton;
   GtkWidget *alabel;
   GtkWidget *hsep;
+
+  GObject *spinbutton_adj;
+
   GtkAccelGroup *rdet_accel_group;
-  GList *encoders=NULL;
-  gboolean specified=FALSE;
+
   GList *ofmt_all=NULL;
   GList *ofmt=NULL;
+  GList *encoders=NULL;
+
+  gboolean specified=FALSE;
+  gboolean needs_new_encoder=FALSE;
+
   int i;
+  int scrw,scrh;
+
   gchar **array;
 
-  gboolean needs_new_encoder=FALSE;
 
   if (type==1) specified=TRUE;
 
@@ -4786,12 +4795,39 @@ render_details *create_render_details (gint type) {
   rdet_accel_group = GTK_ACCEL_GROUP(gtk_accel_group_new ());
   gtk_window_add_accel_group (GTK_WINDOW (rdet->dialog), rdet_accel_group);
 
-  top_vbox = GTK_DIALOG(rdet->dialog)->vbox;
+  dialog_vbox = GTK_DIALOG(rdet->dialog)->vbox;
 
 
+  scrollw = gtk_scrolled_window_new (NULL, NULL);
+   
+  if (prefs->gui_monitor!=0) {
+    scrw=mainw->mgeom[prefs->gui_monitor-1].width;
+    scrh=mainw->mgeom[prefs->gui_monitor-1].height;
+  }
+  else {
+    scrw=mainw->scr_width;
+    scrh=mainw->scr_height;
+  }
 
+  gtk_widget_set_size_request (scrollw, scrw*.8, scrh*.75);
 
+  gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrollw), GTK_POLICY_AUTOMATIC, 
+				  GTK_POLICY_AUTOMATIC);
+  
+  top_vbox = gtk_vbox_new (FALSE, 10);
 
+  gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (scrollw), top_vbox);
+  gtk_box_pack_start (GTK_BOX (dialog_vbox), scrollw, TRUE, TRUE, 0);
+  
+  // Apply theme background to scrolled window
+  if (palette->style&STYLE_1) {
+    gtk_widget_modify_fg(GTK_BIN(scrollw)->child, GTK_STATE_NORMAL, &palette->normal_fore);
+    gtk_widget_modify_bg(GTK_BIN(scrollw)->child, GTK_STATE_NORMAL, &palette->normal_back);
+  }
+
+  gtk_widget_show (top_vbox);
+  gtk_widget_show (scrollw);
+  gtk_container_set_border_width (GTK_CONTAINER (top_vbox), 20);
 
   frame = gtk_frame_new (NULL);
   gtk_widget_show (frame);
@@ -4893,7 +4929,7 @@ render_details *create_render_details (gint type) {
   rdet->pertrack_checkbutton = gtk_check_button_new ();
   rdet->backaudio_checkbutton = gtk_check_button_new ();
   
-  if (type==3) resaudw=create_resaudw(3,rdet,NULL);
+  if (type==3) resaudw=create_resaudw(3,rdet,top_vbox);
   else if (type!=1) resaudw=create_resaudw(10,rdet,NULL);
 
   if (type==3) {

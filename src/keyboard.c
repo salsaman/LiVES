@@ -268,7 +268,6 @@ gboolean pl_key_function (gboolean down, guint16 unicode, guint16 keymod) {
   
   if ((unicode==GDK_KEY_Left||unicode==GDK_KEY_Right||unicode==GDK_KEY_Up||unicode==GDK_KEY_Down)&&
       (keymod&LIVES_CONTROL_MASK)) {
-
     cached_key=unicode;
     cached_mod=LIVES_CONTROL_MASK;
   }

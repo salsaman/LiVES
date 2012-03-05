@@ -221,7 +221,7 @@ gchar *find_free_camfile(gint format) {
     for (i=1;i<10000;i++) {
       fname=g_strdup_printf("%s%04d.mpg",filename,i);
       if (!g_file_test((tmp=g_build_filename((tmp2=g_filename_from_utf8(dvgrabw->dirname,-1,NULL,NULL,NULL)),
-					     (tmp3=g_filename_from_utf8(fname,-1,NULL,NULL,NULL)),NULL),NULL),
+					     (tmp3=g_filename_from_utf8(fname,-1,NULL,NULL,NULL)),NULL)),
 		       G_FILE_TEST_EXISTS)) break;
       g_free(tmp);
       g_free(tmp2);
@@ -233,7 +233,7 @@ gchar *find_free_camfile(gint format) {
     for (i=1;i<1000;i++) {
       fname=g_strdup_printf("%s%03d.dv",filename,i);
       if (!g_file_test((tmp=g_build_filename((tmp2=g_filename_from_utf8(dvgrabw->dirname,-1,NULL,NULL,NULL)),
-					     (tmp3=g_filename_from_utf8(fname,-1,NULL,NULL,NULL)),NULL),NULL),
+					     (tmp3=g_filename_from_utf8(fname,-1,NULL,NULL,NULL)),NULL)),
 		       G_FILE_TEST_EXISTS)) break;
       g_free(tmp);
       g_free(tmp2);

@@ -30,6 +30,7 @@ static lives_pconnect_t *pconx_new (int ikey, int imode) {
   pconx->next=NULL;
   pconx->ikey=ikey;
   pconx->imode=imode;
+  pconx->nparams=0;
   return pconx;
 }
 
@@ -255,7 +256,7 @@ gboolean pconx_convert_value_data(weed_plant_t *dparam, weed_plant_t *sparam) {
     return TRUE;
   }
 
-  if (!((ndvals==1)||(ndvals==nsvals&&stype==WEED_SEED_INT&&dtype==WEED_SEED_DOUBLE))) return FALSE;
+  if (ndvals>nsvals) return FALSE;
 
   switch (stype) {
   case WEED_SEED_DOUBLE:
@@ -290,7 +291,7 @@ gboolean pconx_convert_value_data(weed_plant_t *dparam, weed_plant_t *sparam) {
       {
 	char *opstring=g_strdup(""),*tmp,*bit;
 	int *valsi=weed_get_int_array(sparam,"value",&error);
-	for (i=0;i<nsvals;i++) {
+	for (i=0;i<ndvals;i++) {
 	  bit=g_strdup_printf("%d",valsi[i]);
 	  if (strlen(opstring)==0) 
 	    tmp=g_strconcat (opstring,bit,NULL);
@@ -314,7 +315,7 @@ gboolean pconx_convert_value_data(weed_plant_t *dparam, weed_plant_t *sparam) {
 	  return TRUE;
 	}
 	
-	for (i=0;i<nsvals;i++) {
+	for (i=0;i<ndvals;i++) {
 	  valsd[i]=(double)valsi[i];
 	}
 	weed_set_double_array(dparam,"value",ndvals,valsd);
@@ -332,7 +333,7 @@ gboolean pconx_convert_value_data(weed_plant_t *dparam, weed_plant_t *sparam) {
       {
 	char *opstring=g_strdup(""),*tmp,*bit;
 	int *valsi=weed_get_boolean_array(sparam,"value",&error);
-	for (i=0;i<nsvals;i++) {
+	for (i=0;i<ndvals;i++) {
 	  bit=g_strdup_printf("%d",valsi[i]);
 	  if (strlen(opstring)==0) 
 	    tmp=g_strconcat (opstring,bit,NULL);
@@ -356,7 +357,7 @@ gboolean pconx_convert_value_data(weed_plant_t *dparam, weed_plant_t *sparam) {
 	  return TRUE;
 	}
 	
-	for (i=0;i<nsvals;i++) {
+	for (i=0;i<ndvals;i++) {
 	  valsd[i]=(double)valsi[i];
 	}
 	weed_set_double_array(dparam,"value",ndvals,valsd);
@@ -435,6 +436,7 @@ static lives_cconnect_t *cconx_new (int ikey, int imode) {
   cconx->next=NULL;
   cconx->ikey=ikey;
   cconx->imode=imode;
+  cconx->nchans=0;
   return cconx;
 }
 
@@ -544,6 +546,7 @@ void cconx_add_connection(int ikey, int imode, int icnum, int okey, int omode, i
     cconx->omode=(int *)g_realloc(cconx->omode,totcons*sizint);
     cconx->ocnum=(int *)g_realloc(cconx->ocnum,totcons*sizint);
     
+    cconx->chans[posn-1]=icnum;
     cconx->nconns[posn-1]=1;
     
     posn=totcons-1;
@@ -606,8 +609,9 @@ weed_plant_t *cconx_get_out_alpha(int okey, int omode, int ocnum) {
 	  else {
 	    weed_plant_t **outchans=weed_get_plantptr_array(inst,"out_channels",&error);
 	    weed_plant_t *channel=NULL;
-	    if (i<weed_leaf_num_elements(inst,"out_channels")) {
+	    if (cconx->chans[i]<weed_leaf_num_elements(inst,"out_channels")) {
 	      channel=outchans[cconx->chans[i]];
+
 	    }
 	    weed_free(outchans);
 	    return channel;
@@ -653,6 +657,8 @@ gboolean cconx_convert_pixel_data(weed_plant_t *dchan, weed_plant_t *schan) {
 
   spdata=weed_get_voidptr_value(schan,"pixel_data",&error);
 
+  g_print("vals are %p %d %d and %d %d\n",dchan,iwidth,iheight,owidth,oheight);
+
   if (ipal==opal&&iwidth==owidth&&iheight==oheight&&irow==orow) {
     /// everything matches - we can just do a steal
     weed_set_voidptr_value(dchan,"pixel_data",spdata);
@@ -676,6 +682,7 @@ gboolean cconx_convert_pixel_data(weed_plant_t *dchan, weed_plant_t *schan) {
   }
 
   dpdata=weed_get_voidptr_value(dchan,"pixel_data",&error);
+
   if (ipal!=opal) {
     g_free(dpdata);
     dpdata=NULL;

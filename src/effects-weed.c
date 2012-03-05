@@ -1693,21 +1693,26 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
 
     // try to set our target width height - the channel may have restrictions
     set_channel_size(channel,width,height,0,NULL);
+
+    if (weed_palette_is_alpha_palette(weed_get_int_value(channel,"current_palette",&error))) continue;
+
     width=weed_get_int_value(channel,"width",&error)*weed_palette_get_pixels_per_macropixel(cpalette)/
       weed_palette_get_pixels_per_macropixel(palette);
     height=weed_get_int_value(channel,"height",&error);
 
     // restore channel to original size for now
+
     set_channel_size(channel,incwidth,incheight,0,NULL);
+
 
     // check if we need to resize
     if ((inwidth!=width)||(inheight!=height)) {
      // layer needs resizing
       if (prefs->pb_quality==PB_QUALITY_HIGH||opwidth==0||opheight==0) {
-	resize_layer(layer,width,height,GDK_INTERP_HYPER);
+	if (!resize_layer(layer,width,height,GDK_INTERP_HYPER)) return FILTER_ERROR_UNABLE_TO_RESIZE;
       }
       else {
-	resize_layer(layer,width,height,get_interp_value(prefs->pb_quality));
+	if (!resize_layer(layer,width,height,get_interp_value(prefs->pb_quality))) return FILTER_ERROR_UNABLE_TO_RESIZE;
       }
 
       inwidth=weed_get_int_value(layer,"width",&error);
@@ -1722,7 +1727,6 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
       }
     }
     
-    if (weed_palette_is_alpha_palette(weed_get_int_value(channel,"current_palette",&error))) continue;
 
     i++;
 
@@ -1770,13 +1774,41 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
     }
   }
 
+  if (weed_plant_has_leaf(inst,"host_key")) {
+    // pull from alpha chain
+    int key=weed_get_int_value(inst,"host_key",&error);
+    // need to do this AFTER setting in-channel size
+    if (mainw->cconx!=NULL) {
+      // chain any alpha channels
+      if (cconx_chain_data(key,key_modes[key])) needs_reinit=TRUE;
+    }
+  }
+
   // now we do a second pass, and we change the palettes of in layers to match the channel, if necessary
 
 
   for (j=i=0;i<num_in_tracks;i++) {
 
+
     do {
-      channel=get_enabled_channel(inst,j++,TRUE);
+      channel=get_enabled_channel(inst,i,TRUE);
+      chantmpl=weed_get_plantptr_value(channel,"template",&error);
+      
+      inpalette=weed_get_int_value(channel,"current_palette",&error);
+      
+      channel_flags=0;
+      if (weed_plant_has_leaf(chantmpl,"flags")) channel_flags=weed_get_int_value(chantmpl,"flags",&error);
+
+      if (weed_palette_is_alpha_palette(inpalette)) {
+	if (!(channel_flags&WEED_CHANNEL_SIZE_CAN_VARY)) {
+	  width=weed_get_int_value(channel,"width",&error);
+	  height=weed_get_int_value(channel,"height",&error);
+	  if (width != opwidth || height != opheight) {
+	    if (!resize_layer(channel,opwidth,opheight,GDK_INTERP_HYPER)) return FILTER_ERROR_UNABLE_TO_RESIZE;
+
+	  }
+	}
+      }
     } while (weed_palette_is_alpha_palette(weed_get_int_value(channel,"current_palette",&error)));
 
 
@@ -1784,13 +1816,6 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
 	weed_get_boolean_value(in_channels[i],"temp_disabled",&error)==WEED_TRUE) continue;
     
     layer=layers[in_tracks[i]];
-    channel=get_enabled_channel(inst,i,TRUE);
-    chantmpl=weed_get_plantptr_value(channel,"template",&error);
-
-    inpalette=weed_get_int_value(channel,"current_palette",&error);
-
-    channel_flags=0;
-    if (weed_plant_has_leaf(chantmpl,"flags")) channel_flags=weed_get_int_value(chantmpl,"flags",&error);
 
     if (weed_plant_has_leaf(layer,"YUV_clamping")) iclamping=(weed_get_int_value(layer,"YUV_clamping",&error));
     else iclamping=WEED_YUV_CLAMPING_CLAMPED;
@@ -2090,12 +2115,15 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
 
       palette=weed_get_int_value(channel,"current_palette",&error);
 
+      width=weed_get_int_value(channel,"width",&error);
+      height=weed_get_int_value(channel,"height",&error);
+      pixel_data=weed_get_voidptr_value(channel,"pixel_data",&error);
+
       set_channel_size(channel,opwidth/weed_palette_get_pixels_per_macropixel(palette),opheight,1,NULL);
 
-
       // this will look at width, height, current_palette, and create an empty pixel_data and set rowstrides
-      create_empty_pixel_data(channel,FALSE,TRUE);
       // and update width and height if necessary
+      create_empty_pixel_data(channel,FALSE,TRUE);
 
       numplanes=weed_leaf_num_elements(channel,"rowstrides");
       layer_rows=weed_get_int_array(channel,"rowstrides",&error);
@@ -2174,14 +2202,13 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
     return retval;
   }
 
-
   for (k=0;k<num_inc+num_in_alpha;k++) {
     channel=get_enabled_channel(inst,k,TRUE);
     if (weed_palette_is_alpha_palette(weed_get_int_value(channel,"current_palette",&error))) {
       // free pdata for all alpha in channels, unless orig pdata was passed from a prior fx
 
       if (!weed_plant_has_leaf(channel,"host_orig_pdata")||
-	  weed_get_boolean_value(channel,"host_orig_pdata",&error)!=WEED_FALSE) {
+	  weed_get_boolean_value(channel,"host_orig_pdata",&error)!=WEED_TRUE) {
 	void *pdata=weed_get_voidptr_value(channel,"pixel_data",&error);
 	if (pdata!=NULL) g_free(pdata);
 	weed_set_voidptr_value(channel,"pixel_data",NULL);
@@ -2215,12 +2242,16 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
     numplanes=weed_leaf_num_elements(layer,"pixel_data");
       
     pixel_data=weed_get_voidptr_array(layer,"pixel_data",&error);
-    if (weed_plant_has_leaf(layer,"host_pixel_data_contiguous") && 
+    if (pixel_data!=NULL) {
+      if (weed_plant_has_leaf(layer,"host_pixel_data_contiguous") && 
 	weed_get_boolean_value(layer,"host_pixel_data_contiguous",&error)==WEED_TRUE)
-      numplanes=1;
-    
-    for (j=0;j<numplanes;j++) g_free(pixel_data[j]);
-    weed_free(pixel_data);
+	numplanes=1;
+      
+      for (j=0;j<numplanes;j++) if (pixel_data[j]!=NULL) g_free(pixel_data[j]);
+      weed_free(pixel_data);
+    }
+
+
     numplanes=weed_leaf_num_elements(channel,"pixel_data");
     pixel_data=weed_get_voidptr_array(channel,"pixel_data",&error);
     weed_set_voidptr_array(layer,"pixel_data",numplanes,pixel_data);
@@ -2875,15 +2906,7 @@ weed_plant_t *weed_apply_effects (weed_plant_t **layers, weed_plant_t *filter_ma
 	    // chain any data pipelines
 	    pconx_chain_data(i,key_modes[i]);
 	  }
-
-	  if (mainw->cconx!=NULL) {
-	    // chain any alpha channels
-	    if (cconx_chain_data(i,key_modes[i])) {
-	      // channel palette changed and we need to reinit
-	      if (weed_reinit_effect(instance,TRUE)==FILTER_ERROR_COULD_NOT_REINIT) continue;
-	    }
-	  }
-
+	  weed_set_int_value(instance,"host_key",i);
 	  filter_error=weed_apply_instance (instance,NULL,layers,opwidth,opheight,tc);
 	  if (filter_error==FILTER_INFO_REINITED) redraw_pwindow(i,key_modes[i]); // redraw our paramwindow
 #ifdef DEBUG_RTE
@@ -2901,6 +2924,7 @@ weed_plant_t *weed_apply_effects (weed_plant_t **layers, weed_plant_t *filter_ma
 
 
     // free pixel_data for all instance out_channels with alpha palettes
+    // alpha in_channels were freed after each effect, unless they reffed an out_channel padata directly
     for (i=0;i<FX_KEYS_MAX_VIRTUAL;i++) {
       if (rte_key_valid(i+1,TRUE)) {
 	if (mainw->rte&(GU641<<i)) {
@@ -2914,7 +2938,8 @@ weed_plant_t *weed_apply_effects (weed_plant_t **layers, weed_plant_t *filter_ma
 	  ochans=weed_get_plantptr_array(instance,"out_channels",&error);
 	  for (j=0;j<nchans;j++) {
 	    int pal=weed_get_int_value(ochans[j],"current_palette",&error);
-	    if (weed_palette_is_alpha_palette(pal) && weed_plant_has_leaf(ochans[j],"pixel_data") && 
+	    if (weed_plant_has_leaf(ochans[j],"pixel_data")&&weed_palette_is_alpha_palette(pal) && 
+		weed_plant_has_leaf(ochans[j],"pixel_data") && 
 		(pdata=weed_get_voidptr_value(ochans[j],"pixel_data",&error))!=NULL) {
 	      weed_free(pdata);
 	      weed_set_voidptr_value(ochans[j],"pixel_data",NULL);
@@ -2944,7 +2969,7 @@ weed_plant_t *weed_apply_effects (weed_plant_t **layers, weed_plant_t *filter_ma
 	void **pixel_data;
 	if (!weed_plant_has_leaf(layers[i],"pixel_data")) continue;
 	pixel_data=weed_get_voidptr_array(layers[i],"pixel_data",&error);
-	if (pixel_data!=NULL) {
+	if (pixel_data!=NULL&&pixel_data[0]!=NULL) {
 	  int j;
 	  int numplanes=weed_leaf_num_elements(layers[i],"pixel_data");
 	  if (weed_plant_has_leaf(layers[i],"host_pixel_data_contiguous") && 
@@ -3743,10 +3768,10 @@ void weed_load_all (void) {
 
   gint listlen;
 
-  pconx_add_connection(0,0,0,5,0,0);
+  pconx_add_connection(0,0,0, 5,0,0);
 
-  cconx_add_connection(0,0,0,1,0,1);
-  cconx_add_connection(0,0,1,1,0,2);
+  cconx_add_connection(0,0,0, 1,0,1);
+  cconx_add_connection(0,0,1, 1,0,2);
 
   key=-1;
 
@@ -4286,6 +4311,8 @@ static weed_plant_t **weed_channels_create (weed_plant_t *filter, gboolean in) {
     for (j=0;j<num_repeats;j++) {
       channels[ccount]=weed_plant_new(WEED_PLANT_CHANNEL);
       weed_set_plantptr_value(channels[ccount],"template",chantmpls[i]);
+
+      weed_set_voidptr_value(channels[ccount],"pixel_data",NULL);
 
       if (weed_plant_has_leaf(chantmpls[i],"current_palette")) {
 	// audio only channels dont have a "current_palette" !

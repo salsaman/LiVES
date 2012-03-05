@@ -10260,7 +10260,7 @@ void sws_free_context(void) {
 
 #endif
 
-void resize_layer (weed_plant_t *layer, int width, int height, LiVESInterpType interp) {
+boolean resize_layer (weed_plant_t *layer, int width, int height, LiVESInterpType interp) {
   // resize a layer; width is in macropixels
 
   // TODO ** - see if there is a resize plugin candidate/delegate which supports this palette : 
@@ -10277,7 +10277,7 @@ void resize_layer (weed_plant_t *layer, int width, int height, LiVESInterpType i
 
   // don't forget also - layer "width" is in *macro-pixels* so it may not come back exactly as expected
 
-
+  // return FALSE if we were unable to resize
 
   int error;
   LiVESPixbuf *pixbuf=NULL;
@@ -10289,12 +10289,13 @@ void resize_layer (weed_plant_t *layer, int width, int height, LiVESInterpType i
   int iheight=weed_get_int_value(layer,"height",&error);
 
   boolean keep_in_pixel_data=FALSE;
+  boolean retval=TRUE;
 
-  if (iwidth==width&&iheight==height) return; // no resize needed
+  if (iwidth==width&&iheight==height) return TRUE; // no resize needed
 
   if (width<=0||height<=0) {
     g_printerr("unable to scale layer to %d x %d for palette %d\n",width,height,palette);
-    return;
+    return FALSE;
   }
 
   if (weed_palette_is_yuv_palette(palette)&&!weed_palette_is_resizable(palette)) {
@@ -10384,7 +10385,7 @@ void resize_layer (weed_plant_t *layer, int width, int height, LiVESInterpType i
       g_free(orowstrides);
       g_free(irowstrides);
 
-      return;
+      return TRUE;
     }
 #endif
 
@@ -10410,11 +10411,14 @@ void resize_layer (weed_plant_t *layer, int width, int height, LiVESInterpType i
     break;
   default:
     g_printerr("Warning: resizing unknown palette %d\n",palette);
+    retval=FALSE;
   }
 
   if (new_pixbuf==NULL||(width!=weed_get_int_value(layer,"width",&error)||
-			 height!=weed_get_int_value(layer,"height",&error))) 
+			 height!=weed_get_int_value(layer,"height",&error)))  {
     g_printerr("unable to scale layer to %d x %d for palette %d\n",width,height,palette);
+    retval=FALSE;
+  }
   else {
     if (weed_plant_has_leaf(layer,"host_orig_pdata"))
       weed_leaf_delete(layer,"host_orig_pdata");
@@ -10433,7 +10437,7 @@ void resize_layer (weed_plant_t *layer, int width, int height, LiVESInterpType i
   }
 
 
-  return;
+  return retval;
 }
 
 

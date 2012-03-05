@@ -31,6 +31,7 @@ static lives_pconnect_t *pconx_new (int ikey, int imode) {
   pconx->ikey=ikey;
   pconx->imode=imode;
   pconx->nparams=0;
+  pconx->nconns=NULL;
   return pconx;
 }
 
@@ -90,7 +91,10 @@ void pconx_add_connection(int ikey, int imode, int ipnum, int okey, int omode, i
     for (i=0;i<pconx->nparams;i++) {
       
       if (pconx->params[i]==ipnum) {
+	// located !
 	// add connection to existing
+
+	// increment nconns for this param
 	pconx->nconns[i]++;
 
 	for (j=0;j<pconx->nparams;j++) {
@@ -136,6 +140,8 @@ void pconx_add_connection(int ikey, int imode, int ipnum, int okey, int omode, i
     
     // make space for new
     pconx->nconns=(int *)g_realloc(pconx->nconns,posn*sizint);
+
+
     pconx->okey=(int *)g_realloc(pconx->okey,totcons*sizint);
     pconx->omode=(int *)g_realloc(pconx->omode,totcons*sizint);
     pconx->opnum=(int *)g_realloc(pconx->opnum,totcons*sizint);
@@ -437,6 +443,7 @@ static lives_cconnect_t *cconx_new (int ikey, int imode) {
   cconx->ikey=ikey;
   cconx->imode=imode;
   cconx->nchans=0;
+  cconx->nconns=NULL;
   return cconx;
 }
 
@@ -542,11 +549,13 @@ void cconx_add_connection(int ikey, int imode, int icnum, int okey, int omode, i
     
     // make space for new
     cconx->nconns=(int *)g_realloc(cconx->nconns,posn*sizint);
+
     cconx->okey=(int *)g_realloc(cconx->okey,totcons*sizint);
     cconx->omode=(int *)g_realloc(cconx->omode,totcons*sizint);
     cconx->ocnum=(int *)g_realloc(cconx->ocnum,totcons*sizint);
     
     cconx->chans[posn-1]=icnum;
+
     cconx->nconns[posn-1]=1;
     
     posn=totcons-1;
@@ -602,8 +611,6 @@ weed_plant_t *cconx_get_out_alpha(int okey, int omode, int ocnum) {
     for (i=0;i<cconx->nchans;i++) {
       totcons+=cconx->nconns[i];
       for (;j<totcons;j++) {
-	g_print("cf %d %d %d with %d %d %d\n",cconx->okey[j],okey,cconx->omode[j],omode,cconx->ocnum[j],ocnum);
-
 	if (cconx->okey[j]==okey && cconx->omode[j]==omode && cconx->ocnum[j]==ocnum) {
 	  if (!weed_plant_has_leaf(inst,"out_channels")) return NULL;
 	  else {
@@ -657,8 +664,6 @@ gboolean cconx_convert_pixel_data(weed_plant_t *dchan, weed_plant_t *schan) {
 
   spdata=weed_get_voidptr_value(schan,"pixel_data",&error);
 
-  g_print("vals are %p %d %d and %d %d\n",dchan,iwidth,iheight,owidth,oheight);
-
   if (ipal==opal&&iwidth==owidth&&iheight==oheight&&irow==orow) {
     /// everything matches - we can just do a steal
     weed_set_voidptr_value(dchan,"pixel_data",spdata);
@@ -683,7 +688,7 @@ gboolean cconx_convert_pixel_data(weed_plant_t *dchan, weed_plant_t *schan) {
 
   dpdata=weed_get_voidptr_value(dchan,"pixel_data",&error);
 
-  if (ipal!=opal) {
+  if (dpdata!=NULL) {
     g_free(dpdata);
     dpdata=NULL;
   }
@@ -692,10 +697,15 @@ gboolean cconx_convert_pixel_data(weed_plant_t *dchan, weed_plant_t *schan) {
   weed_set_int_value(dchan,"height",iheight);
   weed_set_int_value(dchan,"current_palette",ipal);
 
-  if (dpdata==NULL) {
-    create_empty_pixel_data(dchan,FALSE,TRUE);
-    dpdata=weed_get_voidptr_value(dchan,"pixel_data",&error);
+  if (pal_ok) {
+    weed_set_voidptr_value(dchan,"pixel_data",spdata);
+    
+    /// caller - do not free in dchan
+    weed_set_boolean_value(dchan,"host_orig_pdata",WEED_TRUE);
+    return FALSE;
   }
+  create_empty_pixel_data(dchan,FALSE,TRUE);
+  dpdata=weed_get_voidptr_value(dchan,"pixel_data",&error);
   
   orow=weed_get_int_value(dchan,"rowstrides",&error);
 
@@ -711,7 +721,7 @@ gboolean cconx_convert_pixel_data(weed_plant_t *dchan, weed_plant_t *schan) {
     }
   }
 
-  if (!pal_ok) convert_layer_palette(dchan,opal,0);
+  convert_layer_palette(dchan,opal,0);
 
   if (needs_reinit) return TRUE;
 
@@ -734,9 +744,7 @@ boolean cconx_chain_data(int key, int mode) {
   if ((inst=rte_keymode_get_instance(key+1,mode))==NULL) return FALSE; ///< effect is not enabled
 
   while ((ichan=get_enabled_channel(inst,i,TRUE))!=NULL) {
-    g_print("chk chan %d\n",i);
     if ((ochan=cconx_get_out_alpha(key,mode,i++))!=NULL) {
-      LIVES_DEBUG("got checking...");
       if (cconx_convert_pixel_data(ichan,ochan)) needs_reinit=TRUE;
     }
   }

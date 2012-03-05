@@ -501,7 +501,7 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
 	       if (!pulsed->is_paused) pulsed->frames_written+=nframes;
 	       return;
 	     }
-	     lives_memcpy(buffer,pulsed->sound_buffer+offs,xbytes);
+	     if (pulsed->sound_buffer) lives_memcpy(buffer,pulsed->sound_buffer+offs,xbytes);
 	     offs+=xbytes;
 	     needs_free=TRUE;
 	   }
@@ -524,8 +524,10 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
 	nbytes-=xbytes;
       }
       
-      if (needs_free&&pulsed->sound_buffer!=pulsed->aPlayPtr->data) g_free(pulsed->sound_buffer);
-      
+       if (needs_free&&pulsed->sound_buffer!=pulsed->aPlayPtr->data&&pulsed->sound_buffer!=NULL) {
+	 g_free(pulsed->sound_buffer);
+	 pulsed->sound_buffer=NULL;
+       }
     }
 
     if(pulseFramesAvailable) {
@@ -718,6 +720,7 @@ int pulse_audio_init(void) {
   pulsed.pstream=NULL;
   pulsed.pa_props=NULL;
   pulsed.playing_file=-1;
+  pulsed.sound_buffer=NULL;
   return 0;
 }
 
@@ -747,6 +750,7 @@ int pulse_audio_read_init(void) {
   pulsed_reader.is_paused=FALSE;
   pulsed_reader.pstream=NULL;
   pulsed_reader.pa_props=NULL;
+  pulsed_reader.sound_buffer=NULL;
 
   return 0;
 }

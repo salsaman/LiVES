@@ -5170,6 +5170,9 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
 
   g_snprintf(vid_open_dir,PATH_MAX,"%s",mainw->vid_load_dir);
 
+  cwd=g_get_current_dir();
+
+
   while (1) {
     if (!skip_threaded_dialog&&prefs->show_gui) {
       threaded_dialog_spin();
@@ -5202,6 +5205,7 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
 	    mt_sensitise(mainw->multitrack);
 	    mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
 	  }
+	  g_free(cwd);
 	  return !skip_threaded_dialog;
 	}
 	mainw->current_file=new_file;
@@ -5269,6 +5273,7 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
       threaded_dialog_spin();
 
       if (!skip_threaded_dialog) end_threaded_dialog();
+      g_free(cwd);
       return TRUE;
     }
 
@@ -5307,7 +5312,7 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
 	}
 
 	recover_layout_map(MAX_FILES);
-
+	g_free(cwd);
 	return !skip_threaded_dialog;
       }
       mainw->current_file=new_file;
@@ -5324,7 +5329,7 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
       lives_system(com,FALSE);
       g_free(com);
     }
-
+  
     //create a new cfile and fill in the details
     create_cfile();
     threaded_dialog_spin();
@@ -5333,9 +5338,7 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
     // get file details
     read_headers(".");
     threaded_dialog_spin();
-
-    cwd=g_get_current_dir();
-
+    
     // if the clip has a frame_index file, then it is CLIP_TYPE_FILE
     // and we must load the frame_index and locate a suitable decoder plugin
 

@@ -118,8 +118,8 @@ void *convert_swab_frame_thread(void *cc_params);
 boolean convert_layer_palette(weed_plant_t *layer, int outpl, int op_clamping);
 boolean convert_layer_palette_with_sampling(weed_plant_t *layer, int outpl, int out_sampling);
 boolean convert_layer_palette_full(weed_plant_t *layer, int outpl, int osamtype, boolean oclamping, int osubspace);
-boolean apply_gamma (weed_plant_t *ilayer, weed_plant_t *olayer, double gamma); ///< not used
-void resize_layer (weed_plant_t *layer, int width, int height, LiVESInterpType interp);
+//boolean apply_gamma (weed_plant_t *ilayer, weed_plant_t *olayer, double gamma); ///< not used
+boolean resize_layer (weed_plant_t *layer, int width, int height, LiVESInterpType interp);
 void letterbox_layer (weed_plant_t *layer, int width, int height, int nwidth, int nheight);
 void compact_rowstrides(weed_plant_t *layer);
 void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean may_contig);

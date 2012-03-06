@@ -3379,20 +3379,21 @@ gboolean rfxbuilder_to_script (rfx_build_window_t *rfxbuilder) {
     script_name=new_name;
   }
 
-  /////
-
   mainw->com_failed=FALSE;
 
   script_file_dir=g_build_filename (capable->home_dir,LIVES_CONFIG_DIR,PLUGIN_RENDERED_EFFECTS_TEST_SCRIPTS,NULL);
 
-#ifndef IS_MINGW
-  lives_system ((tmpx=g_strdup_printf ("/bin/mkdir -p \"%s/\"",script_file_dir)),FALSE);
-#else
-  lives_system ((tmpx=g_strdup_printf ("mkdir.exe /p \"%s/\"",script_file_dir)),FALSE);
-#endif
-  g_free(tmpx);
 
-  if (mainw->com_failed) return FALSE;
+  if (!g_file_test(script_file_dir,G_FILE_TEST_IS_DIR)) {
+#ifndef IS_MINGW
+    lives_system ((tmpx=g_strdup_printf ("/bin/mkdir -p \"%s/\"",script_file_dir)),FALSE);
+#else
+    lives_system ((tmpx=g_strdup_printf ("mkdir.exe /p \"%s/\"",script_file_dir)),FALSE);
+#endif
+    g_free(tmpx);
+    
+    if (mainw->com_failed) return FALSE;
+  }
 
   script_file=g_strdup_printf ("%s%s",script_file_dir,script_name);
   g_free (script_file_dir);
@@ -3407,7 +3408,7 @@ gboolean rfxbuilder_to_script (rfx_build_window_t *rfxbuilder) {
     d_print_failed();
     return FALSE;
   }
-
+  
   do {
     retval=0;
     if (!(sfile=fopen(script_file,"w"))) {
@@ -4025,8 +4026,14 @@ GList *get_script_section (const gchar *section, const gchar *file, gboolean str
   gchar *whole=g_strdup (""),*whole2;
   size_t linelen;
 
+#ifndef IS_MINGW
   gchar *outfile=g_strdup_printf ("%s/rfxsec.%d",g_get_tmp_dir(),getpid());
   gchar *com=g_strdup_printf ("\"%s\" -get \"%s\" \"%s\" > \"%s\"",RFX_BUILDER,section,file,outfile);
+#else
+  gchar *outfile=g_strdup_printf ("%s\\rfxsec.%d",g_get_tmp_dir(),getpid());
+  gchar *com=g_strdup_printf ("perl \"%s\\%s\" -get \"%s\" \"%s\" > \"%s\"",prefs->prefix_dir,RFX_BUILDER,
+			      section,file,outfile);
+#endif
 
   mainw->com_failed=FALSE;
 
@@ -4109,6 +4116,10 @@ on_rebuild_rfx_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
 
 gboolean check_builder_programs (void) {
+#ifdef IS_MINGW
+  return TRUE;
+#endif
+
   // check our plugin builder routines are executable
   gchar loc[32];
   gchar *msg;
@@ -4623,8 +4634,10 @@ gchar *prompt_for_script_name(const gchar *sname, lives_rfx_status_t status) {
 	  gchar *tmp;
 
 	  from_name=g_strdup(gtk_entry_get_text (GTK_ENTRY (script_combo_entry)));
-	  rfx_script_from=g_strdup_printf ("%s/%s/%s",capable->home_dir,PLUGIN_RENDERED_EFFECTS_TEST_SCRIPTS,from_name);
-	  rfx_script_to=g_strdup_printf ("%s/%s/%s",capable->home_dir,PLUGIN_RENDERED_EFFECTS_TEST_SCRIPTS,name);
+	  rfx_script_from=g_build_filename (capable->home_dir,LIVES_CONFIG_DIR,
+					    PLUGIN_RENDERED_EFFECTS_TEST_SCRIPTS,from_name,NULL);
+	  rfx_script_to=g_build_filename (capable->home_dir,LIVES_CONFIG_DIR,
+					  PLUGIN_RENDERED_EFFECTS_TEST_SCRIPTS,name,NULL);
 	  d_print ((tmp=g_strdup_printf (_ ("Renaming RFX test script %s to %s..."),from_name,name)));
 	  g_free(tmp);
 	  g_free (from_name);

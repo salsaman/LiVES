@@ -149,7 +149,7 @@ typedef int lives_pgid_t;
 #define DOC_DIR "\\Documents/"
 
 #define THEME_DIR "\\Themes/"
-#define PLUGIN_SCRIPTS_DIR "\\Plugin-scripts/"
+#define PLUGIN_SCRIPTS_DIR "\\Plugins/"
 #define PLUGIN_EXEC_DIR "\\Plugins/"
 #define ICON_DIR "\\Icons/"
 #define DATA_DIR "\\Data/"

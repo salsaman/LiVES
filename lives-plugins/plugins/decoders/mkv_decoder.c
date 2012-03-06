@@ -1692,7 +1692,7 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
   priv->input_position=0;
   lseek(priv->fd,priv->input_position,SEEK_SET);
 
-  cdata->fps=25.;
+  cdata->fps=0.;
   cdata->width=cdata->frame_width=cdata->height=cdata->frame_height=0;
   cdata->offs_x=cdata->offs_y=0;
 
@@ -1751,7 +1751,7 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
   priv->ctx = ctx = avcodec_alloc_context();
 
   if (avcodec_open(ctx, codec) < 0) {
-    fprintf(stderr, "mkv_decoder: Could not open avcodec context for codec %p\n");
+    fprintf(stderr, "mkv_decoder: Could not open avcodec context for codec\n");
     detach_stream(cdata);
     return FALSE;
   }
@@ -1883,7 +1883,8 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
       ssize_t bytes;
       int ofd=open(tmpfname,O_RDONLY);
       if (ofd>-1) {
-#ifndef IS_MINGW
+
+#ifdef IS_MINGW
 	setmode(ofd,O_BINARY);
 #endif
 	bytes=read(ofd,buffer,1024);

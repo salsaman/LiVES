@@ -36,7 +36,9 @@ $gid=~ s/\W.*//;
 if ($^O eq "MSWin32") {
 #TODO - get this from the registry when needed
 #only if we installed perl ourselves
-    BEGIN { push @INC,"C:\\Program Files\\LiVES\\lib";}
+    $installdir="C:\\Program Files\\LiVES";
+
+    BEGIN { push @INC,"$installdir\\lib";}
 
     $login = getlogin;
     $home="C:\\users\\$login\\Application Data\\LiVES";
@@ -830,15 +832,22 @@ if (defined($ARGV[0])) {
 
 
 	if ($command eq "build_rfx_plugins") {
-	    if (&location($rfx_builder_multi) eq "") {
-		&sig_error("Unable to locate the program $rfx_builder_multi");
-		exit 1;
+	    if ($^O ne "MSWin32") {
+		if (&location($rfx_builder_multi) eq "") {
+		    &sig_error("Unable to locate the program $rfx_builder_multi");
+		    exit 1;
+		}
 	    }
 
 	    $type=$ARGV[1];
             $script_dir=$ARGV[2];
             $exec_dir=$ARGV[3];
-	    smog_system("$rfx_builder_multi \"$type\" \"$script_dir\" \"$exec_dir\"");
+	    if ($^O ne "MSWin32") {
+		smog_system("$rfx_builder_multi \"$type\" \"$script_dir\" \"$exec_dir\"");
+	    }
+	    else {
+		smog_system("perl \"$installdir\\$rfx_builder_multi\" \"$type\" \"$script_dir\" \"$exec_dir\"");
+	    }
 	    exit 0;
 	}
 

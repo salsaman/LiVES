@@ -2967,6 +2967,11 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
     return FALSE;
   }
 
+#ifdef IS_MINGW
+  setmode(priv->fd,O_BINARY);
+#endif
+
+
   fstat(priv->fd,&sb);
   priv->filesize=sb.st_size;
 

@@ -1591,6 +1591,10 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
     return FALSE;
   }
 
+#ifdef IS_MINGW
+  setmode(opriv->fd,O_BINARY);
+#endif
+
   stat(cdata->URI,&sb);
 
   opriv->total_bytes=sb.st_size;

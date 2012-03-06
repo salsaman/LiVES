@@ -70,6 +70,12 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
     return FALSE;
   }
 
+
+#ifdef IS_MINGW
+  setmode(priv->fd,O_BINARY);
+#endif
+
+
   if (read (priv->fd, header, DV_HEADER_SIZE) < DV_HEADER_SIZE) {
     fprintf(stderr, "dv_decoder: unable to read header for %s\n",cdata->URI);
     close(priv->fd);

@@ -869,6 +869,12 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
     return FALSE;
   }
 
+#ifdef IS_MINGW
+  setmode(priv->fd,O_BINARY);
+#endif
+
+
+
   if (read (priv->fd, header, ASF_PROBE_SIZE) < ASF_PROBE_SIZE) {
     // for example, might be a directory
 #ifdef DEBUG

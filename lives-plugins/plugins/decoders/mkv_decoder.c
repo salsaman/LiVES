@@ -1653,7 +1653,7 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
   struct stat sb;
   //#define DEBUG
 #ifdef DEBUG
-  fprintf(stderr,"\n");
+  fprintf(stderr,"\n\n\n\nDEBUG MKV");
 #endif
 
   priv->has_audio=priv->has_video=FALSE;
@@ -1665,11 +1665,9 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
     return FALSE;
   }
 
-
-  fstat(priv->fd,&sb);
-  priv->filesize=sb.st_size;
-
-  lseek(priv->fd,0,SEEK_SET);
+#ifdef IS_MINGW
+  setmode(priv->fd,O_BINARY);
+#endif
 
   if ((err=read (priv->fd, header, MKV_PROBE_SIZE)) < MKV_PROBE_SIZE) {
     // for example, might be a directory
@@ -1694,7 +1692,7 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
   priv->input_position=0;
   lseek(priv->fd,priv->input_position,SEEK_SET);
 
-  cdata->fps=0.;
+  cdata->fps=25.;
   cdata->width=cdata->frame_width=cdata->height=cdata->frame_height=0;
   cdata->offs_x=cdata->offs_y=0;
 
@@ -1704,6 +1702,9 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
 
   priv->idxhh=NULL;
   priv->idxht=NULL;
+
+  fstat(priv->fd,&sb);
+  priv->filesize=sb.st_size;
 
   sprintf(cdata->audio_name,"%s","");
 
@@ -1750,7 +1751,7 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
   priv->ctx = ctx = avcodec_alloc_context();
 
   if (avcodec_open(ctx, codec) < 0) {
-    fprintf(stderr, "mkv_decoder: Could not open avcodec context\n");
+    fprintf(stderr, "mkv_decoder: Could not open avcodec context for codec %p\n");
     detach_stream(cdata);
     return FALSE;
   }
@@ -1764,7 +1765,6 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
   priv->picture = avcodec_alloc_frame();
 
   matroska_read_seek(cdata,0);
-
 
   while (!got_picture&&!got_eof) {
     matroska_read_packet(cdata,&priv->avpkt);
@@ -1864,36 +1864,38 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
     else if (dts!=0) cdata->fps=1000./(double)dts;
   }
 
-#ifndef IS_MINGW
-
   if (cdata->fps==0.||cdata->fps==1000.) {
     // use mplayer to get fps if we can...it seems to have some magical way
     char cmd[1024];
     char tmpfname[32];
-    int ofd;
+    int res;
 
-    sprintf(tmpfname,"/tmp/mkvdec=XXXXXX");
-    ofd=mkstemp(tmpfname);
-    if (ofd!=-1) {
-      int res;
-      snprintf(cmd,1024,"LANGUAGE=en LANG=en mplayer \"%s\" -identify -frames 0 2>/dev/null | grep ID_VIDEO_FPS > %s",cdata->URI,tmpfname);
+    sprintf(tmpfname,"mkvdec=XXXXXX");
+#ifndef IS_MINGW
+    snprintf(cmd,1024,"LANGUAGE=en LANG=en mplayer \"%s\" -identify -frames 0 2>/dev/null | grep ID_VIDEO_FPS > %s",cdata->URI,tmpfname);
+#else
+    snprintf(cmd,1024,"mplayer.exe \"%s\" -identify -frames 0 2>NUL | grep.exe ID_VIDEO_FPS > %s",cdata->URI,tmpfname);
+#endif 
+    res=system(cmd);
       
-      res=system(cmd);
-      
-      if (!res) {
-	char buffer[1024];
-	ssize_t bytes=read(ofd,buffer,1024);
+    if (!res) {
+      char buffer[1024];
+      ssize_t bytes;
+      int ofd=open(tmpfname,O_RDONLY);
+      if (ofd>-1) {
+#ifndef IS_MINGW
+	setmode(ofd,O_BINARY);
+#endif
+	bytes=read(ofd,buffer,1024);
 	memset(buffer+bytes,0,1);
 	if (!(strncmp(buffer,"ID_VIDEO_FPS=",13))) {
 	  cdata->fps=strtod (buffer+13,NULL);
 	}
+	close(ofd);
       }
-      close(ofd);
-      unlink(tmpfname);
     }
+    unlink(tmpfname);
   }
-
-#endif
 
   if (cdata->fps==0.||cdata->fps==1000.) {
     // if mplayer fails, count the frames between index entries
@@ -2017,8 +2019,6 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
 
   got_eof=FALSE;
   errval=0;
-
-  fprintf (stderr, "\n\n\nIN CDATA FOR MKV !\n");
 
   if (cdata!=NULL&&cdata->current_clip>0) {
     // currently we only support one clip per container
@@ -2476,8 +2476,10 @@ static index_entry * matroska_read_seek(const lives_clip_data_t *cdata,
 
   if (!priv->idxhh) return NULL;
 
-  timestamp = FFMIN(timestamp, frame_to_dts(cdata,cdata->nframes));
-  timestamp = FFMAX(timestamp, priv->idxhh->dts);
+  if (timestamp!=0) {
+    timestamp = FFMIN(timestamp, frame_to_dts(cdata,cdata->nframes));
+    timestamp = FFMAX(timestamp, priv->idxhh->dts);
+  }
 
   idx=get_idx_for_pts(cdata,timestamp);
 
@@ -2498,7 +2500,7 @@ static index_entry * matroska_read_seek(const lives_clip_data_t *cdata,
   matroska->skip_to_timecode = idx->dts;
   matroska->done = 0;
 
-  ff_update_cur_dts(s, st, idx->dts);
+  //ff_update_cur_dts(s, st, idx->dts);
 
   return idx;
 }

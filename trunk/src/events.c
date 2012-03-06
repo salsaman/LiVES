@@ -2823,6 +2823,7 @@ weed_plant_t *process_events (weed_plant_t *next_event, weed_timecode_t curr_tc)
   weed_plant_t **source_params,**in_params;
   int num_in_count=0;
 
+
   if (next_event==NULL) return NULL;
 
   tc=get_event_timecode (next_event);
@@ -3093,7 +3094,7 @@ weed_plant_t *process_events (weed_plant_t *next_event, weed_timecode_t curr_tc)
   case WEED_EVENT_HINT_FILTER_MAP:
     mainw->filter_map=next_event;
 #ifdef DEBUG_EVENTS
-    g_print ("got new effect map with %d keys\n",num_elems);
+    g_print ("got new effect map\n");
 #endif
     break;
   case WEED_EVENT_HINT_PARAM_CHANGE:

@@ -16261,7 +16261,7 @@ static float get_float_audio_val_at_time(gint fnum, gdouble secs, gint chnum, gi
   }
 
 #ifdef IS_MINGW
-      setmode(afd,O_BINARY);
+  setmode(afd,O_BINARY);
 #endif
 
   apos+=afile->asampsize/8*chnum;

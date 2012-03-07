@@ -4811,7 +4811,7 @@ void add_rfx_effects(void) {
   }
 
 #ifdef IS_MINGW
-#define NO_RFX
+  //#define NO_RFX
 #endif
 
 

@@ -1,27 +1,35 @@
 #!/usr/bin/perl
 
 
-# build-lives-rfx-plugin-multi - Copyright G. Finch (salsaman) 2005
+# build-lives-rfx-plugin-multi - Copyright G. Finch (salsaman) 2005 - 2012
 # Released under the GPL 3 or later - see file COPYING or www.gnu.org for details
 
 
 #########################################################
 
 if ($^O eq "MSWin32") {
-    $smogcmd="perl smogrify";
-    my ($home_dir_extra)="/.lives-dir/plugins/effects/";
+    use File::Path qw(make_path);
+
+
+    $installdir="C:\\Program Files\\LiVES";
+
+    $login = getlogin;
+    $home="C:\\users\\$login\\Application Data\\LiVES";
+
+    $smogcmd="perl \"$installdir\\smogrify\"";
+    $home_dir_extra="\\Config\\Plugins\\effects\\";
+    $dir_extra="\\Plugins\\effects\\";
+    $builder="$installdir\\build-lives-rfx-plugin";
 }
 else {
     $smogcmd="smogrify";
-    my ($home_dir_extra)="/.lives-dir/plugins/effects/";
+    $home_dir_extra="/.lives-dir/plugins/effects/";
+    $dir_extra="/lives/plugins/effects/";
+    $builder="build-lives-rfx-plugin";
 }
 
 
-
-
-my ($dir_extra)="/lives/plugins/effects/";
-my ($builder)="build-lives-rfx-plugin";
-my ($type)="builtin"; # default
+my $type="builtin"; # default
 
 #########################################################
 
@@ -33,19 +41,23 @@ if (defined $ARGV[0]) {
     $type=$ARGV[0];
 }
 
-if (defined $ARGV[1]) {
+
+if (defined $ARGV[1] && $ARGV[1] ne "") {
     $scripts_dir=$ARGV[1];
 }
 
-if (defined $ARGV[2]) {
+if (defined $ARGV[2] && $ARGV[2] ne "") {
     $exec_dir=$ARGV[2];
 }
 
-if (defined $ARGV[3]) {
+if (defined $ARGV[3] && $ARGV[3] ne "") {
     $build_bindir=$ARGV[3];
 }
 
 if (!defined($scripts_dir)) {
+    if ($^O ne "MSWin32") {
+
+
 #get <tempdir>
     `\"$smogcmd\" get_tempdir rfx_builder`;
     open IN,"< /tmp/.smogrify.rfx_builder";
@@ -70,7 +82,8 @@ if (!defined($scripts_dir)) {
 	exit 3;
     }
     
-    
+    }
+
     if ($type eq "builtin") {
 # get the prefix_dir from ~/.lives
 	`\"$smogcmd\" get_pref prefix_dir rfx builder`;
@@ -81,11 +94,11 @@ if (!defined($scripts_dir)) {
 	chomp($dir);
 	$scripts_dir="$dir/share";
 	$exec_dir="$dir/lib";  # guessing
-   }
+    }
     else {
 	if ($^O eq "MSWin32") {
 	    $login = getlogin;
-	    $scripts_dir="C:\\users\\$login";
+	    $scripts_dir=$home;
 	}
 	else {
 	    $scripts_dir=$ENV{"HOME"};
@@ -95,33 +108,35 @@ if (!defined($scripts_dir)) {
     }
 }
 
-
+print "\n\nSCRI is $scripts_dir, for $type\n";
 
 if ($type eq "builtin") {
     $scripts_dir.=$dir_extra;
     $indir=$scripts_dir."RFXscripts/";
-    unlink <$indir/*~>;
+    unlink glob "$indir/*~";
     $exec_dir.=$dir_extra;
     $outdir=$exec_dir."rendered/";
 }
 elsif ($type eq "custom") {
     $scripts_dir.=$home_dir_extra;
     $indir=$scripts_dir."RFXscripts/custom/";
-    unlink <$indir/*~>;
+    unlink glob "$indir/*~";
     $exec_dir.=$home_dir_extra;
     $outdir=$exec_dir."rendered/custom/";
 }
 elsif ($type eq "test") {
     $scripts_dir.=$home_dir_extra;
     $indir=$scripts_dir."RFXscripts/test/";
-    unlink <$indir/*~>;
+    unlink glob "$indir/*~";
     $exec_dir.=$home_dir_extra;
     $outdir=$exec_dir."rendered/test/";
+    print "\n\nSCRI2 is $scripts_dir\n";
+    print "\n\nSCRI3 is $indir\n";
 }
 elsif ($type eq "builtinx") {
     $indir=$scripts_dir;
     $outdir=$exec_dir;
-    unlink <$indir/*~>;
+    unlink glob "$indir/*~";
 }
 
 else {
@@ -134,18 +149,29 @@ print "Deleting scripted plugins from $outdir\n";
 
 print "Building all in $indir\n";
 
-
-`/bin/mkdir -p $outdir`;
+if ($^O eq "MSWin32") {
+    make_path("$outdir");
+} else {
+    `/bin/mkdir -p $outdir`;
+}
 
 opendir DIR,$indir;
 while ($plugin=readdir(DIR)) {
     unless ($plugin =~ /^\./) {
 	print "building $indir$plugin \n";
 	if (defined $build_bindir) {
-	    system("$build_bindir/build-lives-rfx-plugin $indir$plugin $outdir");
+	    if ($^O eq "MSWin32") {
+		system("perl \"$build_bindir\\$builder\" \"$indir$plugin\" \"$outdir\"");
+	    } else {
+		system("\"$build_bindir/$builder\" \"$indir$plugin\" \"$outdir\"");
+	    }
 	}
 	else {
-	    system("build-lives-rfx-plugin $indir$plugin $outdir");
+	    if ($^O eq "MSWin32") {
+		system("perl \"$builder\" \"$indir$plugin\" \"$outdir\"");
+	    } else {
+		system("$builder \"$indir$plugin\" \"$outdir\"");
+	    }
 	}
     }
 }
@@ -163,7 +189,7 @@ sub remove_scripted_plugins {
     while ($file=readdir(DIR)) {
 	unless ($file =~ /^\./) {
 	    if (-x "$outdir$file") {
-		my ($fx_caps)=`$outdir$file get_capabilities`;
+		my ($fx_caps)=`\"$outdir$file\" get_capabilities`;
 		if ($fx_caps&0x8000||$fx_caps eq "") {
 		    unlink "$outdir$file";
 		}
@@ -177,6 +203,9 @@ sub remove_scripted_plugins {
 sub location {
     # return the location of an executable
     my ($command)=@_;
+    if ($^O eq "MSWin32") {
+	return "$command.exe";
+    }
     my ($location)=`which $command 2>/dev/null`;
     chomp($location);
     $location;

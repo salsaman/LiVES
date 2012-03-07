@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-# build-lives-rfx-plugin - Copyright G. Finch (salsaman) 2005 - 2009
+# build-lives-rfx-plugin - Copyright G. Finch (salsaman) 2005 - 2012
 # Released under the GPL 3 or later - see file COPYING or www.gnu.org for details
 
 #usage : build-lives-rfx-plugin <script_file> <output_directory>
@@ -100,13 +100,22 @@ if ($in_channels>0) {
 # LiVES will call this to generate in plugins/effects/rendered/test
 
 if (!defined($ARGV[1])) {
-    $prefix_dir="/tmp";
+    if ($^O eq "MSWin32") {
+	$prefix_dir="C:\\";
+    } else {
+	$prefix_dir="/tmp";
+    }
 }
 else {
     $prefix_dir=$ARGV[1];
 }
 
-my $plugin_file="$prefix_dir/$plugin_name";
+if ($^O eq "MSWin32") {
+    $plugin_file="$prefix_dir\\$plugin_name";
+}
+else {
+    $plugin_file="$prefix_dir/$plugin_name";
+}
 
 if (defined($DEBUG)) {
     print "Creating plugin file $plugin_file\n";
@@ -114,7 +123,7 @@ if (defined($DEBUG)) {
 
 ########################################################
 
-open OUT,"> $plugin_file";
+open OUT,">","$plugin_file";
 
 print OUT "#!/usr/bin/perl\n\n";
 print OUT "#######################################################################\n";
@@ -422,7 +431,7 @@ if (@onchange) {
 
 close OUT;
 
-system ("chmod 755 $plugin_file");
+system ("chmod 755 \"$plugin_file\"");
 
 ####################################3
 

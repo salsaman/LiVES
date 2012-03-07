@@ -40,6 +40,7 @@ if ($^O eq "MSWin32") {
 
     BEGIN { push @INC,"$installdir\\lib";}
 
+#TODO - get this from the registry when needed
     $login = getlogin;
     $home="C:\\users\\$login\\Application Data\\LiVES";
 
@@ -60,7 +61,7 @@ if ($^O eq "MSWin32") {
 else {
     $home=$ENV{"HOME"};
     $rc_filename=".lives";
-    $lives_home_dir="$home/.lives-dir/";
+    $lives_home_dir="$home/.lives-dir";
 
 # default temporary directory (can be overridden from the GUI)
     $default_tmpdir="$home/livestmp/";
@@ -3778,10 +3779,12 @@ if (defined($ARGV[0])) {
 		$plugin_name="$command";
 	    }
 	    elsif ($status==1) {
-		$plugin_name="$home/.lives-dir/plugins/effects/rendered/custom/$command";
+		$plugin_dir="$lives_home_dir/plugins/effects/rendered/custom";
+		$plugin_name="$plugin_dir/$command";
 	    }
 	    else {
-		$plugin_name="$home/.lives-dir/plugins/effects/rendered/test/$command";
+		$plugin_dir="$lives_home_dir/plugins/effects/rendered/test";
+		$plugin_name="$plugin_dir/$command";
 	    }
 	    if ($^O eq "MSWin32") {
 		# adjust depending on file ext
@@ -3854,20 +3857,35 @@ if (defined($ARGV[0])) {
 		    shift; shift;
 		}
 
+		if ($^O eq "MSWin32") {
+		    push @INC,"$plugin_dir";
+		}
+
 		$ARGV[0]="process";
 		if ($status>1) {
 		    $error="";
-		    unless (eval "require (\"$plugin_name\")") {
-			$error=$@;
+		    if ($^O eq "MSWin32") {
+			unless (eval "require (\"$command\")") {
+			    $error=$@;
+			}
+		    }
+		    else {
+			unless (eval "require (\"$plugin_name\")") {
+			    $error=$@;
+			}
 		    }
 		    unless ($error eq "") {
 			&sig_error("$plugin_name failed:","$error");
 		    }
 		}
 		else {
-		    require("$plugin_name");
+		    if ($^O eq "MSWin32") {
+			require("$command");
+		    }
+		    else {
+			require("$plugin_name");
+		    }
 		}
-
 		if ($num_in_channels>0) {
 		    unless (defined($fx_prev)) {
 			&mv_mgk;
@@ -7125,9 +7143,9 @@ sub version_check_and_upgrade {
 	    $msg="Default OSC port has been changed to 49999.";
 	}
 	unless ($old_version eq $version) {
-	    $current_keymap=smog_system_direct("grep \"keymap file version 4\" \"$lives_home_dir$default_keymap\" 2>$nulfile");
+	    $current_keymap=smog_system_direct("grep \"keymap file version 4\" \"$lives_home_dir/$default_keymap\" 2>$nulfile");
 	    if ($current_keymap eq "") {
-		unlink "$lives_home_dir$default_keymap";
+		unlink "$lives_home_dir/$default_keymap";
 	    }
 	    unless (&location("build-lives-plugin-multi") eq "") {
 		smog_system("build-lives-plugin-multi custom");

@@ -4790,21 +4790,12 @@ on_save_set_activate            (GtkMenuItem     *menuitem,
 
   current_clips_dir=g_build_filename(prefs->tmpdir,old_set,"clips/",NULL);
   if (strlen(old_set)&&strcmp(mainw->set_name,old_set)&&g_file_test(current_clips_dir,G_FILE_TEST_IS_DIR)) {
-    // set name was chenged for an existing set
+    // set name was changed for an existing set
 
     if (!is_append) {
       // create new dir, in case it doesn't already exist
       dfile=g_build_filename(prefs->tmpdir,mainw->set_name,"clips",NULL);
-#ifndef IS_MINGW
-      com=g_strdup_printf("/bin/mkdir -p \"%s/\" 2>/dev/null",dfile);
-#else
-      com=g_strdup_printf("mkdir.exe /p \"%s/\" 2>NUL",dfile);
-#endif
-      mainw->com_failed=FALSE;
-      lives_system(com,FALSE);
-      g_free(com);
-
-      if (mainw->com_failed) {
+      if (g_mkdir_with_parents(dfile,S_IRWXU)==-1) {
 	if (!check_dir_access(dfile)) {
 	  // abort if we cannot create the new subdir
 	  LIVES_ERROR("Could not create directory");
@@ -4817,25 +4808,13 @@ on_save_set_activate            (GtkMenuItem     *menuitem,
 	}
       }
       g_free(dfile);
-
-
     }
   }
   else {
     // saving as same name (or as new set)
 
     dfile=g_build_filename(prefs->tmpdir,mainw->set_name,"clips",NULL);
-#ifndef IS_MINGW
-    com=g_strdup_printf("/bin/mkdir -p \"%s/\" 2>/dev/null",dfile);
-#else
-    com=g_strdup_printf("mkdir.exe /p \"%s/\" 2>NUL",dfile);
-#endif
-    mainw->com_failed=FALSE;
-    lives_system(com,TRUE);
-    g_free(com);
-
-
-    if (mainw->com_failed) {
+    if (g_mkdir_with_parents(dfile,S_IRWXU)==-1) {
       if (!check_dir_access(dfile)) {
 	// abort if we cannot create the new subdir
 	LIVES_ERROR("Could not create directory");
@@ -6020,6 +5999,7 @@ void on_fs_preview_clicked (GtkButton *button, gpointer user_data) {
   gchar *file_open_params=NULL;
   gchar *tmp;
   gchar *com;
+  gchar *dfile;
 
 #ifndef IS_MINGW
   info_file=g_strdup_printf ("%s/thm%d/.status",prefs->tmpdir,pid);
@@ -6218,18 +6198,20 @@ void on_fs_preview_clicked (GtkButton *button, gpointer user_data) {
     }
 
 #ifndef IS_MINGW
-    com=g_strdup_printf("/bin/mkdir -p \"%s/fsp%d/\" 2>/dev/null",prefs->tmpdir,getpid());
+    dfile=g_strdup_printf("%s/fsp%d/",prefs->tmpdir,getpid());
 #else
-    com=g_strdup_printf("mkdir.exe /p \"%s/fsp%d/\" 2>NUL",prefs->tmpdir,getpid());
+    dfile=g_strdup_printf("%s\\fsp%d\\",prefs->tmpdir,getpid());
 #endif
-    lives_system(com,TRUE);
-    g_free(com);
+
+    g_mkdir_with_parents(dfile,S_IRWXU);
 
 #ifndef IS_MINGW
-    info_file=g_strdup_printf ("%s/fsp%d/.status",prefs->tmpdir,getpid());
+    info_file=g_strdup_printf ("%s.status",dfile);
 #else
-    info_file=g_strdup_printf ("%s/fsp%d/status",prefs->tmpdir,getpid());
+    info_file=g_strdup_printf ("%sstatus",dfile);
 #endif
+
+    g_free(dfile);
 
     if (preview_type==1||preview_type==3) {
 #ifdef USE_X11

@@ -18,7 +18,7 @@
 // the multitrack window is designed to be more-or-less standalone
 // it relies on functions in other files for applying effects and rendering
 // we use a Weed event list to store our timeline
-// (see weed events extension in weed-docs directory
+// (see weed events extension in weed-docs directory)
 
 // future plans include timeline plugins, which would generate event lists 
 // or adjust the currently playing one
@@ -54,9 +54,10 @@
 
 #define BORD_HEIGHT 10
 
-static int renumbered_clips[MAX_FILES+1]; // used to match clips from the event recorder with renumbered clips (without gaps)
-static gdouble lfps[MAX_FILES+1]; // table of layout fps
-static void **pchain; // param chain for currently being edited filter
+/// used to match clips from the event recorder with renumbered clips (without gaps)
+static int renumbered_clips[MAX_FILES+1];
+static gdouble lfps[MAX_FILES+1]; ///< table of layout fps
+static void **pchain; ///< param chain for currently being edited filter
 
 static GdkColor audcol;
 static GdkColor fxcol;
@@ -98,7 +99,6 @@ static LIVES_INLINE gint mt_clip_from_file(lives_mt *mt, gint file) {
 }
 
 /// return track number for a given block
-///
 static LIVES_INLINE int get_track_for_block(track_rect *block) {
   return GPOINTER_TO_INT(g_object_get_data(G_OBJECT(block->eventbox),"layer_number"));  
 }
@@ -646,13 +646,7 @@ static void mt_load_recovery_layout(lives_mt *mt) {
       gchar *com;
       gchar *uldir=g_build_filename(prefs->tmpdir,"unrecoverable_layouts",G_DIR_SEPARATOR_S,NULL);
 
-#ifndef IS_MINGW
-      com=g_strdup_printf("/bin/mkdir -p \"%s\" 2>/dev/null",uldir);
-#else
-      com=g_strdup_printf("mkdir.exe /p \"%s\" 2>NUL",uldir);
-#endif
-      lives_system(com,TRUE);
-      g_free(com);
+      g_mkdir_with_parents(uldir,S_IRWXU);
 
 #ifndef IS_MINGW
       com=g_strdup_printf("/bin/mv \"%s\" \"%s\"",eload_file,uldir);
@@ -17608,13 +17602,7 @@ void save_layout_map (int *lmap, double *lmap_audio, const gchar *file, const gc
 
   map_name=g_build_filename(ldir,"layout.map",NULL);
 
-#ifndef IS_MINGW
-  com=g_strdup_printf("/bin/mkdir -p \"%s\" 2>/dev/null",ldir);
-#else
-  com=g_strdup_printf("mkdir.exe /p \"%s\" 2>NUL",ldir);
-#endif
-  lives_system(com,TRUE);
-  g_free(com);
+  g_mkdir_with_parents(ldir,S_IRWXU);
 
   do {
     retval=0;
@@ -17890,13 +17878,7 @@ void on_save_event_list_activate (GtkMenuItem *menuitem, gpointer user_data) {
   }
   
   esave_dir=g_build_filename(prefs->tmpdir,mainw->set_name,"layouts",G_DIR_SEPARATOR_S,NULL);
-#ifndef IS_MINGW
-  com=g_strdup_printf ("/bin/mkdir -p \"%s\"",esave_dir);
-#else
-  com=g_strdup_printf ("mkdir.exe /p \"%s\"",esave_dir);
-#endif
-  lives_system (com,TRUE);
-  g_free (com);
+  g_mkdir_with_parents(esave_dir,S_IRWXU);
 
   ar_checkbutton = gtk_check_button_new ();
   eventbox=gtk_event_box_new();
@@ -19499,22 +19481,16 @@ weed_plant_t *load_event_list(lives_mt *mt, gchar *eload_file) {
       return NULL;
     }
 
-    eload_dir=g_build_filename(prefs->tmpdir,mainw->set_name,"layouts",G_DIR_SEPARATOR_S,NULL);
-
-    mainw->com_failed=FALSE;
-#ifndef IS_MINGW
-    com=g_strdup_printf ("/bin/mkdir -p \"%s\"",eload_dir);
-#else
-    com=g_strdup_printf ("mkdir.exe /p \"%s\"",eload_dir);
-#endif
-    lives_system (com,TRUE);
-    g_free (com);
-    
     if (mt->idlefunc>0) {
       g_source_remove(mt->idlefunc);
       mt->idlefunc=0;
     }
-    
+
+    eload_dir=g_build_filename(prefs->tmpdir,mainw->set_name,"layouts",G_DIR_SEPARATOR_S,NULL);
+
+    mainw->com_failed=FALSE;
+    g_mkdir_with_parents(eload_dir,S_IRWXU);
+
     if (!mainw->recoverable_layout&&!g_file_test(eload_dir,G_FILE_TEST_IS_DIR)) {
       g_free(eload_dir);
       mt->idlefunc=mt_idle_add(mt);

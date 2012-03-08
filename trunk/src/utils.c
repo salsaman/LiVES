@@ -3489,14 +3489,9 @@ gboolean check_dir_access (const gchar *dir) {
   gboolean is_OK=FALSE;
 
   if (!exists) {
-#ifndef IS_MINGW
-    com=g_strdup_printf ("/bin/mkdir -p \"%s\"",dir);
-#else
-    com=g_strdup_printf ("mkdir.exe /p \"%s\"",dir);
-#endif
-    lives_system (com,TRUE);
-    g_free (com);
+    g_mkdir_with_parents(dir,S_IRWXU);
   }
+
   if (!g_file_test(dir, G_FILE_TEST_IS_DIR)) return FALSE;
 
   testfile=g_build_filename (dir,"livestst.txt",NULL);

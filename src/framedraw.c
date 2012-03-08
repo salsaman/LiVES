@@ -115,6 +115,7 @@ void framedraw_connect_spinbutton(lives_special_framedraw_rect_t *framedraw, liv
 
 
 void framedraw_connect(lives_special_framedraw_rect_t *framedraw, gint width, gint height, lives_rfx_t *rfx) {
+
   mainw->framedraw_bitmap = gdk_pixmap_new (NULL, width, height, 1);
   if (mainw->framedraw_bitmap!=NULL) mainw->framedraw_bitmapgc=gdk_gc_new (mainw->framedraw_bitmap);
 

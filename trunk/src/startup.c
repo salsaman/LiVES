@@ -65,6 +65,9 @@ gboolean do_tempdir_query(void) {
   gchar *dirname;
   guint64 freesp;
 
+#ifndef IS_MINGW
+  gchar *com;
+#endif
 
  top:
 

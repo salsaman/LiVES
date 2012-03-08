@@ -1157,6 +1157,7 @@ void save_file (int clip, int start, int end, const char *filename) {
   GError *gerr=NULL;
 
   struct stat filestat;
+
   time_t file_mtime=0;
 
   uint64_t fsize;

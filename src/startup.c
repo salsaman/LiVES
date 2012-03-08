@@ -62,7 +62,7 @@ gboolean do_tempdir_query(void) {
   gint response;
   gboolean ok=FALSE;
   _entryw *tdentry;
-  gchar *com,*dirname;
+  gchar *dirname;
   guint64 freesp;
 
 
@@ -139,25 +139,14 @@ gboolean do_tempdir_query(void) {
   mainw->com_failed=FALSE;
 
   if (!g_file_test(dirname,G_FILE_TEST_IS_DIR)) {
-
-#ifndef IS_MINGW
-    com=g_strdup_printf ("/bin/mkdir -p \"%s\" 2>/dev/null",dirname);
-#else
-    com=g_strdup_printf ("mkdir.exe /p \"%s\" 2>NUL",dirname);
-#endif
-    lives_system (com,FALSE);
-    g_free (com);
+    if (g_mkdir_with_parents(dirname,S_IRWXU)==-1) goto top;
   }
-
-  if (mainw->com_failed) goto top;
 
 #ifndef IS_MINGW
   com=g_strdup_printf ("/bin/chmod 777 \"%s\" 2>/dev/null",dirname);
-#else
-  com=g_strdup_printf ("chmod.exe 777 \"%s\" >NUL",dirname);
-#endif
   lives_system (com,FALSE);
   g_free (com);
+#endif
 
   g_snprintf(prefs->tmpdir,PATH_MAX,"%s",dirname);
   g_snprintf(future_prefs->tmpdir,PATH_MAX,"%s",prefs->tmpdir);

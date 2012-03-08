@@ -699,7 +699,12 @@ gboolean apply_prefs(gboolean skip_warn) {
 
       if (!check_dir_access (tmpdir)) {
 	tmp=g_filename_to_utf8(tmpdir,-1,NULL,NULL,NULL);
-	msg=g_strdup_printf (_ ("Unable to create or write to the new temporary directory.\nYou may need to create it as the root user first, e.g:\n\nmkdir %s; chmod 777 %s\n\nThe directory will not be changed now.\n"),tmp,tmp);
+#ifndef IS_MINGW
+	msg=g_strdup_printf (_ ("Unable to create or write to the new temporary directory.\nYou may need to create it as the root user first, e.g:\n\nsudo mkdir -p %s; sudo chmod 777 %s\n\nThe directory will not be changed now.\n"),tmp,tmp);
+#else
+	msg=g_strdup_printf (_ ("Unable to create or write to the new temporary directory.\n%s\nPlease try another directory or contact your system administrator.\n\nThe directory will not be changed now.\n"),tmp);
+#endif
+
 	g_free(tmp);
 	do_blocking_error_dialog (msg);
       }

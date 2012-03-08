@@ -3371,7 +3371,7 @@ gboolean rfxbuilder_to_script (rfx_build_window_t *rfxbuilder) {
   gchar *new_name;
   gchar *buf;
   gchar *msg;
-  gchar *tmp,*tmp2,*tmpx;
+  gchar *tmp,*tmp2;
 
   if (rfxbuilder->mode!=RFX_BUILDER_MODE_EDIT) {
     if (!(new_name=prompt_for_script_name (script_name,RFX_STATUS_TEST))) return FALSE;
@@ -3385,14 +3385,7 @@ gboolean rfxbuilder_to_script (rfx_build_window_t *rfxbuilder) {
 
 
   if (!g_file_test(script_file_dir,G_FILE_TEST_IS_DIR)) {
-#ifndef IS_MINGW
-    lives_system ((tmpx=g_strdup_printf ("/bin/mkdir -p \"%s/\"",script_file_dir)),FALSE);
-#else
-    lives_system ((tmpx=g_strdup_printf ("mkdir.exe /p \"%s/\"",script_file_dir)),FALSE);
-#endif
-    g_free(tmpx);
-    
-    if (mainw->com_failed) return FALSE;
+    if (g_mkdir_with_parents(script_file_dir,S_IRWXU)==-1) return FALSE;
   }
 
   script_file=g_strdup_printf ("%s%s",script_file_dir,script_name);
@@ -4147,7 +4140,7 @@ void
 on_delete_rfx_activate (GtkMenuItem *menuitem, gpointer user_data) {
   lives_rfx_status_t status=(lives_rfx_status_t)GPOINTER_TO_INT (user_data);
   gint ret;
-  gchar *rfx_script_file;
+  gchar *rfx_script_file,*rfx_script_dir;
   gchar *script_name=prompt_for_script_name (NULL,status);
   gchar *msg;
 
@@ -4156,12 +4149,14 @@ on_delete_rfx_activate (GtkMenuItem *menuitem, gpointer user_data) {
   if (strlen (script_name)) {
     switch (status) {
     case RFX_STATUS_TEST:
-      rfx_script_file=g_build_filename (capable->home_dir,LIVES_CONFIG_DIR,
-					PLUGIN_RENDERED_EFFECTS_TEST_SCRIPTS,script_name,NULL);
+      rfx_script_dir=g_build_filename (capable->home_dir,LIVES_CONFIG_DIR,
+					PLUGIN_RENDERED_EFFECTS_TEST_SCRIPTS,NULL);
+      rfx_script_file=g_build_filename (rfx_script_dir,script_name,NULL);
       break;
     case RFX_STATUS_CUSTOM:
-      rfx_script_file=g_build_filename (capable->home_dir,LIVES_CONFIG_DIR,
+      rfx_script_dir=g_build_filename (capable->home_dir,LIVES_CONFIG_DIR,
 					PLUGIN_RENDERED_EFFECTS_CUSTOM_SCRIPTS,script_name,NULL);
+      rfx_script_file=g_build_filename (rfx_script_dir,script_name,NULL);
       break;
     default:
       // we will not delete builtins
@@ -4174,6 +4169,8 @@ on_delete_rfx_activate (GtkMenuItem *menuitem, gpointer user_data) {
     msg=g_strdup_printf (_ ("\n\nReally delete RFX script\n%s ?\n\n"),rfx_script_file);
     if (!do_warning_dialog (msg)) {
       g_free (msg);
+      g_free (rfx_script_file);
+      g_free (rfx_script_dir);
       return;
     }
     g_free (msg);
@@ -4182,6 +4179,7 @@ on_delete_rfx_activate (GtkMenuItem *menuitem, gpointer user_data) {
     d_print (msg);
     g_free (msg);
     if (!(ret=unlink (rfx_script_file))) {
+      rmdir(rfx_script_dir);
       d_print_done();
       on_rebuild_rfx_activate (NULL,NULL);
     }
@@ -4192,6 +4190,7 @@ on_delete_rfx_activate (GtkMenuItem *menuitem, gpointer user_data) {
       g_free (msg);
     }
     g_free (rfx_script_file);
+    g_free (rfx_script_dir);
   }
 }
 
@@ -4200,6 +4199,8 @@ void
 on_promote_rfx_activate (GtkMenuItem *menuitem, gpointer user_data) {
   gchar *rfx_script_from=NULL;
   gchar *rfx_script_to=NULL;
+  gchar *rfx_dir_from=NULL;
+  gchar *rfx_dir_to=NULL;
   gchar *script_name=prompt_for_script_name (NULL,RFX_STATUS_TEST);
   gchar *msg;
   gint ret=0;
@@ -4208,16 +4209,25 @@ on_promote_rfx_activate (GtkMenuItem *menuitem, gpointer user_data) {
   if (script_name==NULL) return;  // user cancelled
 
   if (strlen (script_name)) {
-    rfx_script_from=g_build_filename (capable->home_dir,LIVES_CONFIG_DIR,
-				      PLUGIN_RENDERED_EFFECTS_TEST_SCRIPTS,script_name,NULL);
-    rfx_script_to=g_build_filename (capable->home_dir,LIVES_CONFIG_DIR,
-				    PLUGIN_RENDERED_EFFECTS_CUSTOM_SCRIPTS,script_name,NULL);
+    rfx_dir_from=g_build_filename (capable->home_dir,LIVES_CONFIG_DIR,
+				   PLUGIN_RENDERED_EFFECTS_TEST_SCRIPTS,NULL);
+
+    rfx_script_from=g_build_filename (rfx_dir_from,script_name,NULL);
+
+
+    rfx_dir_to=g_build_filename (capable->home_dir,LIVES_CONFIG_DIR,
+				 PLUGIN_RENDERED_EFFECTS_CUSTOM_SCRIPTS,NULL);
+
+
+    rfx_script_to=g_build_filename (rfx_dir_to,script_name,NULL);
 
     if (g_file_test (rfx_script_to, G_FILE_TEST_EXISTS)) {
       gchar *msg=g_strdup_printf (_ ("\nCustom script file:\n%s\nalready exists.\nPlease delete it first, or rename the test script.\n"),script_name);
       do_blocking_error_dialog (msg);
       g_free (msg);
+      g_free (rfx_dir_from);
       g_free (rfx_script_from);
+      g_free (rfx_dir_to);
       g_free (rfx_script_to);
       g_free (script_name);
       return;
@@ -4228,21 +4238,29 @@ on_promote_rfx_activate (GtkMenuItem *menuitem, gpointer user_data) {
     g_free (script_name);
     g_free (msg);
 
+    g_mkdir_with_parents(rfx_dir_to,S_IRWXU);
+
     if (!(ret=rename (rfx_script_from,rfx_script_to))) {
       d_print_done();
       on_rebuild_rfx_activate (NULL,NULL);
       failed=FALSE;
     }
   }
+
   if (failed) {
+    rmdir(rfx_dir_to);
     d_print_failed();
-    msg=g_strdup_printf(_ ("\n\nFailed to move the plugin script from\n%s to\n%s\nReturn code was %d\n"),
-			rfx_script_from,rfx_script_to,ret);
+    msg=g_strdup_printf(_ ("\n\nFailed to move the plugin script from\n%s to\n%s\nReturn code was %d (%s)\n"),
+			rfx_script_from,rfx_script_to,errno,strerror(errno));
     do_error_dialog (msg);
     g_free (msg);
   }
+  else rmdir(rfx_dir_from);
+
   if (rfx_script_from!=NULL) {
+    g_free (rfx_dir_from);
     g_free (rfx_script_from);
+    g_free (rfx_dir_to);
     g_free (rfx_script_to);
   }
 }
@@ -4329,28 +4347,18 @@ void on_import_rfx_ok (GtkButton *button, gpointer user_data) {
   switch (status) {
   case RFX_STATUS_TEST :
     rfx_dir_to=g_build_filename (capable->home_dir,LIVES_CONFIG_DIR,PLUGIN_RENDERED_EFFECTS_TEST_SCRIPTS,NULL);
-#ifndef IS_MINGW
-    lives_system ((tmpx=g_strdup_printf ("/bin/mkdir -p \"%s\"",
-					 (tmp=g_filename_from_utf8(rfx_dir_to,-1,NULL,NULL,NULL)))),FALSE);
-#else
-    lives_system ((tmpx=g_strdup_printf ("mkdir.exe /p \"%s\"",
-					 (tmp=g_filename_from_utf8(rfx_dir_to,-1,NULL,NULL,NULL)))),FALSE);
-#endif
+
+    g_mkdir_with_parents((tmp=g_filename_from_utf8(rfx_dir_to,-1,NULL,NULL,NULL)),S_IRWXU);
+
     g_free(tmp);
-    g_free(tmpx);
     rfx_script_to=g_build_filename(rfx_dir_to,basename,NULL);
     g_free (rfx_dir_to);
     break;
   case RFX_STATUS_CUSTOM :
     rfx_dir_to=g_build_filename (capable->home_dir,LIVES_CONFIG_DIR,PLUGIN_RENDERED_EFFECTS_CUSTOM_SCRIPTS,NULL);
-#ifndef IS_MINGW
-    lives_system ((tmpx=g_strdup_printf ("/bin/mkdir -p \"%s\"",
-					 (tmp=g_filename_from_utf8(rfx_dir_to,-1,NULL,NULL,NULL)))),FALSE);
-#else
-    lives_system ((tmpx=g_strdup_printf ("mkdir.exe /p \"%s\"",
-					 (tmp=g_filename_from_utf8(rfx_dir_to,-1,NULL,NULL,NULL)))),FALSE);
-#endif
-    g_free(tmpx);
+
+    g_mkdir_with_parents((tmp=g_filename_from_utf8(rfx_dir_to,-1,NULL,NULL,NULL)),S_IRWXU);
+
     g_free(tmp);
     rfx_script_to=g_build_filename (rfx_dir_to,basename,NULL);
     g_free (rfx_dir_to);

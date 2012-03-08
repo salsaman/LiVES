@@ -2546,14 +2546,8 @@ int main (int argc, char *argv[]) {
 	  g_snprintf(prefs->tmpdir,PATH_MAX,"%s",optarg);
 	  g_snprintf(future_prefs->tmpdir,PATH_MAX,"%s",prefs->tmpdir);
 	  set_pref("session_tempdir",prefs->tmpdir);
-#ifndef IS_MINGW
-	  com=g_strdup_printf ("/bin/mkdir -p \"%s\" 2>/dev/null",prefs->tmpdir);
-#else
-	  com=g_strdup_printf ("mkdir.exe /p \"%s\" 2>NUL",prefs->tmpdir);
-#endif
-	  mainw->com_failed=FALSE;
-	  lives_system(com,TRUE);
-	  if (mainw->com_failed) {
+
+	  if (g_mkdir_with_parents(prefs->tmpdir,S_IRWXU)==-1) {
 	    if (!check_dir_access(prefs->tmpdir)) {
 	      // abort if we cannot create the new subdir
 	      LIVES_ERROR("Could not create directory");

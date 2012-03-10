@@ -5445,7 +5445,8 @@ void close_current_file(gint file_to_switch_to) {
       mt_delete_clips(mainw->multitrack,mainw->current_file);
     }
 
-    if (mainw->first_free_file==-1||mainw->first_free_file>mainw->current_file) mainw->first_free_file=mainw->current_file;
+    if (mainw->first_free_file==-1||mainw->first_free_file>mainw->current_file) 
+      mainw->first_free_file=mainw->current_file;
 
     if (!mainw->only_close) {
       if (file_to_switch_to>0&&mainw->files[file_to_switch_to]!=NULL) {
@@ -5636,13 +5637,15 @@ void switch_to_file(gint old_file, gint new_file) {
       changed_fps_during_pb (GTK_SPIN_BUTTON(mainw->spinbutton_pb_fps), NULL);
     }
 
-    if ((cfile->clip_type!=CLIP_TYPE_DISK&&cfile->clip_type!=CLIP_TYPE_FILE)||(mainw->event_list!=NULL&&!mainw->record)) mainw->play_end=INT_MAX;
+    if ((cfile->clip_type!=CLIP_TYPE_DISK&&cfile->clip_type!=CLIP_TYPE_FILE)||(mainw->event_list!=NULL&&!mainw->record)) 
+      mainw->play_end=INT_MAX;
   }
 
   if (old_file!=new_file) {
     if (old_file*new_file) mainw->preview_frame=0;
     if (old_file!=-1) {
-      if (old_file>0&&mainw->files[old_file]!=NULL&&mainw->files[old_file]->menuentry!=NULL&&(mainw->files[old_file]->clip_type==CLIP_TYPE_DISK||mainw->files[old_file]->clip_type==CLIP_TYPE_FILE)) {
+      if (old_file>0&&mainw->files[old_file]!=NULL&&mainw->files[old_file]->menuentry!=NULL&&
+	  (mainw->files[old_file]->clip_type==CLIP_TYPE_DISK||mainw->files[old_file]->clip_type==CLIP_TYPE_FILE)) {
 	gchar menutext[32768];
 	get_menu_text_long(mainw->files[old_file]->menuentry,menutext);
 

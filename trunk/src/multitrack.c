@@ -3333,7 +3333,7 @@ static void populate_filter_box(GtkWidget *box, gint ninchans, lives_mt *mt) {
 	else txt=weed_filter_get_name(i);
 
 	cat=weed_filter_categorise(filter,enabled_in_channels(filter,TRUE),enabled_out_channels(filter,FALSE));
-	if ((subcat=weed_filter_subcategorise(filter,cat,(cat==5)))!=0) {
+	if ((subcat=weed_filter_subcategorise(filter,cat,(cat==LIVES_FX_CAT_COMPOSITOR)))!=0) {
 	  tmp=g_strdup_printf("%s (%s)",txt,lives_fx_cat_to_text(subcat,FALSE));
 	  g_free(txt);
 	  txt=tmp;
@@ -15467,7 +15467,8 @@ void mt_post_playback(lives_mt *mt) {
     
   mainw->must_resize=FALSE;
 
-  if (mainw->cancelled!=CANCEL_USER_PAUSED&&!((mainw->cancelled==CANCEL_NONE||mainw->cancelled==CANCEL_NO_MORE_PREVIEW)&&mt->is_paused)) {
+  if (mainw->cancelled!=CANCEL_USER_PAUSED&&!((mainw->cancelled==CANCEL_NONE||mainw->cancelled==CANCEL_NO_MORE_PREVIEW)&&
+					      mt->is_paused)) {
     gtk_widget_set_sensitive (mt->stop,FALSE);
     mt_tl_move(mt,mt->ptr_time-GTK_RULER (mt->timeline)->position);
   }
@@ -15486,7 +15487,8 @@ void mt_post_playback(lives_mt *mt) {
   if (!mt->is_rendering) {
     if (mt->poly_state==POLY_PARAMS) {
       if (mt->init_event!=NULL) {
-	gtk_spin_button_set_value(GTK_SPIN_BUTTON(mt->node_spinbutton),(GTK_RULER(mt->timeline)->position-get_event_timecode(mt->init_event)/U_SEC));
+	gtk_spin_button_set_value(GTK_SPIN_BUTTON(mt->node_spinbutton),
+				  (GTK_RULER(mt->timeline)->position-get_event_timecode(mt->init_event)/U_SEC));
 	gtk_widget_set_sensitive(mt->apply_fx_button,FALSE);
       }
     }
@@ -15561,7 +15563,8 @@ void multitrack_playall (lives_mt *mt) {
       if (mainw->cancelled!=CANCEL_VID_END) {
 	// otherwise jack transport set us out of range
 
-	if (mt->playing_sel) mt->pb_loop_event=get_frame_event_at(mt->event_list,q_gint64(mt->region_start*U_SEC,mt->fps),NULL,TRUE);
+	if (mt->playing_sel) 
+	  mt->pb_loop_event=get_frame_event_at(mt->event_list,q_gint64(mt->region_start*U_SEC,mt->fps),NULL,TRUE);
 	else if (mt->is_paused) mt->pb_loop_event=pb_loop_event;
 	
 	on_preview_clicked (NULL,GINT_TO_POINTER(1));
@@ -15674,7 +15677,8 @@ void multitrack_insert (GtkMenuItem *menuitem, gpointer user_data) {
 
   block=(track_rect *)g_object_get_data(G_OBJECT(eventbox),"block_last");
 
-  if (block!=NULL&&(mt->opts.grav_mode==GRAV_MODE_LEFT||(block->next!=NULL&&mt->opts.grav_mode==GRAV_MODE_RIGHT))&&!(did_backup||mt->moving_block)) {
+  if (block!=NULL&&(mt->opts.grav_mode==GRAV_MODE_LEFT||(block->next!=NULL&&mt->opts.grav_mode==GRAV_MODE_RIGHT))&&
+      !(did_backup||mt->moving_block)) {
     gdouble oldr_start=mt->region_start;
     gdouble oldr_end=mt->region_end;
     GList *tracks_sel;
@@ -15722,8 +15726,10 @@ void multitrack_insert (GtkMenuItem *menuitem, gpointer user_data) {
     redraw_eventbox(mt,eventbox);
   }
 
-  if (!did_backup&&mt->framedraw!=NULL&&mt->current_rfx!=NULL&&mt->init_event!=NULL&&mt->poly_state==POLY_PARAMS&&weed_plant_has_leaf(mt->init_event,"in_tracks")) {
-    weed_timecode_t tc=q_gint64(gtk_spin_button_get_value(GTK_SPIN_BUTTON(mt->node_spinbutton))*U_SEC+get_event_timecode(mt->init_event),mt->fps);
+  if (!did_backup&&mt->framedraw!=NULL&&mt->current_rfx!=NULL&&mt->init_event!=NULL&&mt->poly_state==POLY_PARAMS&&
+      weed_plant_has_leaf(mt->init_event,"in_tracks")) {
+    weed_timecode_t tc=q_gint64(gtk_spin_button_get_value(GTK_SPIN_BUTTON(mt->node_spinbutton))*
+				U_SEC+get_event_timecode(mt->init_event),mt->fps);
     get_track_index(mt,tc);
   }
 

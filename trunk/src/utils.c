@@ -4720,27 +4720,6 @@ void fastsrand(guint32 seed)
 }
 
 
-
-
-GdkPixmap*
-gdk_pixmap_copy (GdkPixmap *pixmap)
-{
-  GdkPixmap *pixmap_out;
-  GdkGC *gc;
-  gint width, height, depth;
-  
-  if (pixmap==NULL) return NULL;
-  
-  gdk_drawable_get_size (pixmap, &width, &height);
-  depth = gdk_drawable_get_depth (pixmap);
-  pixmap_out = gdk_pixmap_new (NULL, width, height, depth);
-  gc = gdk_gc_new (pixmap);
-  gdk_draw_drawable (pixmap_out, gc, pixmap, 0, 0, 0, 0, width, height);
-  g_object_unref (gc);
-  return pixmap_out;
-}
-
-
 void set_fg_colour(gint red, gint green, gint blue) {
   GdkColor col;
   col.red=red*255;

@@ -38,7 +38,9 @@ if ($^O eq "MSWin32") {
 #only if we installed perl ourselves
     $installdir="C:\\Program Files\\LiVES";
 
-    BEGIN { push @INC,"$installdir\\lib";}
+    push @INC,"$installdir\\lib";
+
+    use File::Path qw(make_path);
 
 #TODO - get this from the registry when needed
     $login = getlogin;
@@ -292,7 +294,7 @@ if (defined($ARGV[0])) {
 		smog_system("/bin/mkdir -p -mode=777 \"$lives_home_dir\"");
 	    }
 	    else {
-		smog_system("mkdir.exe /p \"$lives_home_dir\"");
+		make_path("$lives_home_dir");
 	    }
 	}
 
@@ -7408,7 +7410,7 @@ sub clear_symlinks {
 	smog_system("mkdir.exe /p \"$linksdir\"");
     }
     else {
-	smog_system("/bin/mkdir -p \"$linksdir\"");
+	make_path("$linksdir");
     }
 
     # remove dir + any empty parents

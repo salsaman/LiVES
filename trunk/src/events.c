@@ -4815,10 +4815,10 @@ render_details *create_render_details (gint type) {
   gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrollw), GTK_POLICY_AUTOMATIC, 
 				  GTK_POLICY_AUTOMATIC);
   
-  top_vbox = gtk_vbox_new (FALSE, 8);
+  top_vbox = gtk_vbox_new (FALSE, 0);
 
   gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (scrollw), top_vbox);
-  gtk_box_pack_start (GTK_BOX (dialog_vbox), scrollw, TRUE, TRUE, 10);
+  gtk_box_pack_start (GTK_BOX (dialog_vbox), scrollw, TRUE, TRUE, 0);
   
   // Apply theme background to scrolled window
   if (palette->style&STYLE_1) {
@@ -4968,7 +4968,8 @@ render_details *create_render_details (gint type) {
     
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (rdet->backaudio_checkbutton), prefs->mt_backaudio>0);
     
-    gtk_widget_set_sensitive(rdet->backaudio_checkbutton,gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(resaudw->aud_checkbutton)));
+    gtk_widget_set_sensitive(rdet->backaudio_checkbutton, 
+			     gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(resaudw->aud_checkbutton)));
 
     eventbox=gtk_event_box_new();
     label=gtk_label_new_with_mnemonic (_("Audio track _per video track"));
@@ -4991,7 +4992,8 @@ render_details *create_render_details (gint type) {
     
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (rdet->pertrack_checkbutton), prefs->mt_pertrack_audio);
 
-    gtk_widget_set_sensitive(rdet->pertrack_checkbutton,gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(resaudw->aud_checkbutton)));
+    gtk_widget_set_sensitive(rdet->pertrack_checkbutton, 
+			     gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(resaudw->aud_checkbutton)));
 
   }
   
@@ -5048,7 +5050,8 @@ render_details *create_render_details (gint type) {
 
   populate_combo_box(GTK_COMBO_BOX(rdet->encoder_combo), encoders);
 
-  rdet->encoder_name_fn = g_signal_connect_after(GTK_COMBO_BOX(rdet->encoder_combo), "changed", G_CALLBACK(on_encoder_entry_changed), rdet);
+  rdet->encoder_name_fn = g_signal_connect_after(GTK_COMBO_BOX(rdet->encoder_combo), "changed",
+						 G_CALLBACK(on_encoder_entry_changed), rdet);
   g_signal_handler_block(rdet->encoder_combo, rdet->encoder_name_fn);
   set_combo_box_active_string(GTK_COMBO_BOX(rdet->encoder_combo), rdet->encoder_name);
   g_signal_handler_unblock(rdet->encoder_combo, rdet->encoder_name_fn);
@@ -5098,7 +5101,8 @@ render_details *create_render_details (gint type) {
   g_list_free_strings(ofmt);
   g_list_free(ofmt);
   
-  rdet->encoder_ofmt_fn=g_signal_connect_after (GTK_COMBO_BOX(rdet->ofmt_combo), "changed", G_CALLBACK (on_encoder_ofmt_changed), rdet);
+  rdet->encoder_ofmt_fn=g_signal_connect_after (GTK_COMBO_BOX(rdet->ofmt_combo), "changed", 
+						G_CALLBACK (on_encoder_ofmt_changed), rdet);
   gtk_box_pack_start (GTK_BOX (top_vbox), label, FALSE, FALSE, 0);
   gtk_box_pack_start (GTK_BOX (top_vbox), rdet->ofmt_combo, FALSE, FALSE, 10);
   

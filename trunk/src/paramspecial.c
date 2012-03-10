@@ -230,22 +230,7 @@ void check_for_special (lives_param_t *param, gint num, GtkBox *pbox, lives_rfx_
 	framedraw_add_reset(GTK_VBOX(GTK_WIDGET(pbox)),&framedraw);
       }
       else {
-	mainw->framedraw_image=mainw->image274;
-	
-	// create a blank bitmap mask
-	if (mainw->framedraw_bitmap!=NULL) {
-	  gdk_pixmap_unref (mainw->framedraw_bitmap);
-	}
-	
-	mainw->framedraw_bitmap = gdk_pixmap_new (NULL, cfile->hsize, cfile->vsize, 1);
-	framedraw_add_label(GTK_VBOX(GTK_WIDGET(pbox)));
-	
-	if (mainw->framedraw_bitmapgc!=NULL) {
-	  g_object_unref (mainw->framedraw_bitmapgc);
-	}
-	
-	if (mainw->framedraw_bitmap!=NULL) mainw->framedraw_bitmapgc=gdk_gc_new (mainw->framedraw_bitmap);
-	
+	mainw->framedraw=mainw->image274;
       }
       framedraw.added=TRUE;
     }
@@ -450,27 +435,16 @@ void after_aspect_height_changed (GtkToggleButton *spinbutton, gpointer user_dat
 
 void special_cleanup (void) {
   // free some memory now
-  if (!(mainw->framedraw_copy_pixmap==NULL)) {
-    gdk_pixmap_unref (mainw->framedraw_copy_pixmap);
-    mainw->framedraw_copy_pixmap=NULL;
-  }
 
-  if (!(mainw->framedraw_bitmap==NULL)) {
-    gdk_pixmap_unref (mainw->framedraw_bitmap);
-    mainw->framedraw_bitmap=NULL;
-  }
-
-  if (!(mainw->framedraw_bitmapgc==NULL)) {
-    g_object_unref (mainw->framedraw_bitmapgc);
-    mainw->framedraw_bitmapgc=NULL;
-  }
-
-  if (mainw->framedraw_colourgc!=NULL) {
-    g_object_unref (mainw->framedraw_colourgc);
-    mainw->framedraw_colourgc=NULL;
-  }
-  mainw->framedraw_image=mainw->framedraw_reset=NULL;
+  mainw->framedraw=mainw->framedraw_reset=NULL;
   mainw->framedraw_spinbutton=NULL;
+
+
+  if (mainw->fd_layer!=NULL) weed_layer_free(mainw->fd_layer);
+  mainw->fd_layer=NULL;
+
+  if (mainw->fd_layer_orig!=NULL) weed_layer_free(mainw->fd_layer_orig);
+  mainw->fd_layer_orig=NULL;
 
   mainw->framedraw_preview=NULL;
 

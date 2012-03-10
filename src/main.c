@@ -637,9 +637,8 @@ static void lives_init(_ign_opts *ign_opts) {
   mainw->opening_loc=FALSE;
   mainw->toy_type=LIVES_TOY_NONE;
   mainw->framedraw=mainw->framedraw_spinbutton=NULL;
-  mainw->framedraw_copy_pixmap=mainw->framedraw_orig_pixmap=mainw->framedraw_bitmap=NULL;
-  mainw->framedraw_bitmapgc=NULL;
-  mainw->framedraw_colourgc=NULL;
+  mainw->fd_layer=NULL;
+  mainw->fd_layer_orig=NULL;
   mainw->is_processing=FALSE;
   mainw->is_rendering=FALSE;
   mainw->is_generating=FALSE;
@@ -2540,7 +2539,6 @@ int main (int argc, char *argv[]) {
 	  continue;
 	}
 	if (!strcmp(charopt,"tmpdir")) {
-	  gchar *com;
 	  mainw->has_session_tmpdir=TRUE;
 	  // override tempdir setting
 	  g_snprintf(prefs->tmpdir,PATH_MAX,"%s",optarg);
@@ -5148,8 +5146,6 @@ void load_frame_image(gint frame) {
       cairo_paint (cr);
       cairo_destroy (cr);
 
-      //gdk_draw_pixbuf (GDK_DRAWABLE (mainw->play_window->window),mainw->gc,GDK_PIXBUF (pixbuf),
-      //	       0,0,0,0,-1,-1,GDK_RGB_DITHER_NONE,0,0);
       unblock_expose();
     }
     else gtk_image_set_from_pixbuf(GTK_IMAGE(mainw->image274),pixbuf);

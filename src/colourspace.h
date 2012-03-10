@@ -154,6 +154,8 @@ boolean weed_palette_is_lower_quality(int p1, int p2);  ///< return TRUE if p1 i
 boolean weed_palette_is_resizable(int pal);
 gdouble weed_palette_get_compression_ratio (int pal);
 
+int get_weed_palette_for_cairo(void);
+
 #define BLACK_THRESH 20 ///< if R,G and B values are all <= this, we consider it a "black" pixel
 boolean lives_pixbuf_is_all_black(LiVESPixbuf *pixbuf);
 

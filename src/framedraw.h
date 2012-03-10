@@ -1,6 +1,6 @@
 // LiVES
 // framedraw.h
-// (c) G. Finch (salsaman@xs4all.nl,salsaman@gmail.com)
+// (c) G. Finch (salsaman@gmail.com) 2002 - 2012
 // see file COPYING for licensing details : released under the GNU GPL 3 or later
 
 #ifndef HAS_LIVES_FRAMEDRAW_H
@@ -13,10 +13,12 @@
 #define MAX_PRE_X 320
 #define MAX_PRE_Y 240
 
+// internal padding in pixels for GtkFrame
+#define FD_HT_ADJ 12
+
 
 /// call this to add framedraw widget to an hbox
-void
-widget_add_framedraw (GtkVBox *box, gint start, gint end, gboolean add_preview_button, gint width, gint height);
+void widget_add_framedraw (GtkVBox *, gint start, gint end, gboolean add_preview_button, gint width, gint height);
 
 /// redraw when exposed/frame number changes
 void framedraw_redraw (lives_special_framedraw_rect_t *, gboolean reload_image, GdkPixbuf *);
@@ -27,6 +29,7 @@ void after_framedraw_widget_changed (GtkWidget *, lives_special_framedraw_rect_t
 
 /// activate the image for clicks and draws
 void framedraw_connect(lives_special_framedraw_rect_t *, gint width, gint height, lives_rfx_t *);
+
 /// connect spinbutton to preview
 void framedraw_connect_spinbutton(lives_special_framedraw_rect_t *, lives_rfx_t *);
 
@@ -61,7 +64,7 @@ gboolean on_framedraw_enter (GtkWidget *, GdkEventCrossing *, lives_special_fram
 
 // graphics routines
 
-void draw_rect_demask (GdkColor *col, gint x1, gint y1, gint x2, gint y2, gboolean filled);
+void draw_rect_demask (lives_colRGBA32_t *col, int x1, int y1, int x2, int y2, boolean filled);
 
 
 #endif

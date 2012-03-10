@@ -1158,7 +1158,6 @@ void draw_little_bars (gdouble ptrtime);
 void set_sel_label (GtkWidget *label);
 void clear_mainw_msg (void);
 gint get_token_count (const gchar *string, int delim);
-GdkPixmap* gdk_pixmap_copy (GdkPixmap *pixmap);
 LiVESPixbuf *lives_pixbuf_new_blank(int width, int height, int palette);
 void get_border_size (GtkWidget *win, gint *bx, gint *by);
 gchar *g_strappend (gchar *string, gint len, const gchar *newbit);

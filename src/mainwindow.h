@@ -674,14 +674,10 @@ typedef struct {
   GtkWidget *framedraw_preview; ///< the 'redraw' button
   GtkWidget *framedraw_spinbutton; ///< the frame number button
   GtkWidget *framedraw_scale; ///< the slider
-  GtkWidget *framedraw_image; ///< the image
   GtkWidget *fd_frame; ///< surrounding frame widget
 
-  GdkPixmap *framedraw_orig_pixmap; ///< the original frame pixmap
-  GdkPixmap *framedraw_copy_pixmap; ///< the altered frame pixmap
-  GdkBitmap *framedraw_bitmap; ///< and its mask
-  GdkGC *framedraw_bitmapgc;  ///< the GC for the bitmap
-  GdkGC *framedraw_colourgc;  ///< the GC for the pixmap, we can draw in colours !
+  weed_plant_t *fd_layer_orig; ///< original layer uneffected
+  weed_plant_t *fd_layer; ///< framedraw preview layer
 
   // bars here -> actually text above bars
   GtkWidget *vidbar;
@@ -915,8 +911,6 @@ typedef struct {
 
   gboolean block_param_updates; ///< block visual param changes from updating real values
   gboolean no_interp; ///< block interpolation (for single frame previews)
-
-  gdouble fd_scale; ///< framedraw scale (image scaling downsize factor)
 
   weed_timecode_t cevent_tc; ///< timecode of currently processing event
 

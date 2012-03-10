@@ -108,8 +108,6 @@ if (!defined($scripts_dir)) {
     }
 }
 
-print "\n\nSCRI is $scripts_dir, for $type\n";
-
 if ($type eq "builtin") {
     $scripts_dir.=$dir_extra;
     $indir=$scripts_dir."RFXscripts/";
@@ -130,8 +128,6 @@ elsif ($type eq "test") {
     unlink glob "$indir/*~";
     $exec_dir.=$home_dir_extra;
     $outdir=$exec_dir."rendered/test/";
-    print "\n\nSCRI2 is $scripts_dir\n";
-    print "\n\nSCRI3 is $indir\n";
 }
 elsif ($type eq "builtinx") {
     $indir=$scripts_dir;
@@ -177,6 +173,10 @@ while ($plugin=readdir(DIR)) {
 }
 close DIR;
 
+if ($type eq "test" || $type eq "custom") {
+    rmdir $outdir;
+}
+
 exit 0;
 
 ######################################################################
@@ -184,13 +184,29 @@ exit 0;
 sub remove_scripted_plugins {
     # remove only plugins with properties&0x8000, and "broken" plugins
     my ($outdir)=@_;
-    my ($file);
+    my $file;
+    my $cmd;
+
+    if ($^O eq "MSWin32") {
+	# filter by file ext
+	my $ext=&get_ext("$plugin");
+	if ($ext eq ".py") {
+	    $cmd="python";
+	}
+	else {
+	    $cmd="perl";
+	}
+    }
+    else {
+	$cmd="";
+    }
+
     opendir DIR,$outdir;
     while ($file=readdir(DIR)) {
 	unless ($file =~ /^\./) {
-	    if (-x "$outdir$file") {
-		my ($fx_caps)=`\"$outdir$file\" get_capabilities`;
-		if ($fx_caps&0x8000||$fx_caps eq "") {
+	    if (-x "$outdir$file" || $^O eq "MSWin32") {
+		my ($fx_caps)=`$cmd \"$outdir$file\" get_capabilities`;
+		if ($fx_caps&0x8000||$fx_caps eq ""||$? != 0) {
 		    unlink "$outdir$file";
 		}
 	    }
@@ -210,3 +226,18 @@ sub location {
     chomp($location);
     $location;
 }
+
+
+sub get_ext {
+    my $fname=shift;
+
+    my $ext=(split(/\./,$fname))[-1];
+
+    if ($ext=~/(.*)\"$/) {
+	$ext=$1;
+    }
+
+    return ".".$ext;
+}
+
+

@@ -10744,13 +10744,13 @@ boolean pixbuf_to_layer(weed_plant_t *layer, LiVESPixbuf *pixbuf) {
 
   if (pixbuf!=NULL) {
     if (pixbuf_to_layer(layer,pixbuf)) {
-      mainw->do_not_free=gdk_pixbuf_get_pixels(pixbuf);
+      mainw->do_not_free=(gpointer)lives_pixbuf_get_pixels_readonly(pixbuf);
       mainw->free_fn=lives_free_with_check;
     }
     g_object_unref(pixbuf);
     mainw->do_not_free=NULL;
     mainw->free_fn=lives_free_normal;
-
+  }
   */
 
   int rowstride=lives_pixbuf_get_rowstride(pixbuf);
@@ -10770,6 +10770,7 @@ boolean pixbuf_to_layer(weed_plant_t *layer, LiVESPixbuf *pixbuf) {
 #ifdef GUI_GTK
     if (nchannels==4) weed_set_int_value(layer,"current_palette",WEED_PALETTE_RGBA32);
     else weed_set_int_value(layer,"current_palette",WEED_PALETTE_RGB24);
+
 #endif
 #ifdef GUI_QT
     // TODO - need to check this, it may be endian dependent
@@ -10816,6 +10817,14 @@ boolean pixbuf_to_layer(weed_plant_t *layer, LiVESPixbuf *pixbuf) {
 // TODO - move into layers.c
 
 #ifdef GUI_GTK
+
+
+LIVES_INLINE int get_weed_palette_for_cairo(void) {
+  // TODO - should move to weed-compat.h
+  return (capable->byte_order==LIVES_BIG_ENDIAN)?WEED_PALETTE_ARGB32:WEED_PALETTE_BGRA32;
+}
+
+
 
 cairo_t *layer_to_cairo(weed_plant_t *layer) {
   // convert a weed layer to cairo

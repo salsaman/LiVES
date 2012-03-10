@@ -1358,7 +1358,7 @@ gboolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, gboolean ad
   GSList *rbgroup;
   gulong spinfunc,blockfunc;
   gchar *name;
-  gchar *txt;
+  gchar *txt,*tmp,*tmp2;
   gboolean use_mnemonic;
 
   lives_colRGB24_t rgb;
@@ -1570,13 +1570,19 @@ gboolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, gboolean ad
     }
     gtk_box_pack_start (GTK_BOX (hbox), labelcname, FALSE, FALSE, 10);
 
-    spinbutton_red = lives_standard_spin_button_new(_("_Red"), TRUE, rgb.red, 0., 255., 1., 1., 0, 
-						    (LiVESBox *)hbox, (_("The red value (0 - 255)")));
-    spinbutton_green = lives_standard_spin_button_new(_("_Green"), TRUE, rgb.green, 0., 255., 1., 1., 0, 
-						    (LiVESBox *)hbox, (_("The green value (0 - 255)")));
-    spinbutton_blue = lives_standard_spin_button_new(_("_Blue"), TRUE, rgb.blue, 0., 255., 1., 1., 0, 
-						    (LiVESBox *)hbox, (_("The blue value (0 - 255)")));
-    
+    spinbutton_red = lives_standard_spin_button_new((tmp=g_strdup(_("_Red"))), TRUE, rgb.red, 0., 255., 1., 1., 0, 
+						    (LiVESBox *)hbox, (tmp2=g_strdup(_("The red value (0 - 255)"))));
+    g_free(tmp);
+    g_free(tmp2);
+    spinbutton_green = lives_standard_spin_button_new((tmp=g_strdup(_("_Green"))), TRUE, rgb.green, 0., 255., 1., 1., 0, 
+						      (LiVESBox *)hbox, (tmp2=g_strdup(_("The green value (0 - 255)"))));
+    g_free(tmp);
+    g_free(tmp2);
+    spinbutton_blue = lives_standard_spin_button_new((tmp=g_strdup(_("_Blue"))), TRUE, rgb.blue, 0., 255., 1., 1., 0, 
+						     (LiVESBox *)hbox, (tmp2=g_strdup(_("The blue value (0 - 255)"))));
+    g_free(tmp);
+    g_free(tmp2);
+
     gtk_box_pack_start (GTK_BOX (hbox), cbutton, TRUE, TRUE, 20);
 
     g_signal_connect (GTK_OBJECT (cbutton), "color-set",

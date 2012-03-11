@@ -303,7 +303,6 @@ gboolean do_effect(lives_rfx_t *rfx, gboolean is_preview) {
 
   if (!do_progress_dialog(TRUE,TRUE,effectstring)||mainw->error) {
     mainw->last_dprint_file=ldfile;
-    do_rfx_cleanup(rfx);
     mainw->show_procd=TRUE;
     mainw->keep_pre=FALSE;
     if (mainw->error) {
@@ -319,12 +318,20 @@ gboolean do_effect(lives_rfx_t *rfx, gboolean is_preview) {
     cfile->nokeep=FALSE;
     cfile->fx_frame_pump=0;
 
+    if (cfile->start==0) {
+      cfile->start=1;
+      cfile->end=cfile->frames;
+    }
+
     if (rfx->num_in_channels==0&&mainw->current_file!=current_file) {
       mainw->suppress_dprint=TRUE;
       close_current_file(current_file);
       mainw->suppress_dprint=FALSE;
     }
-    else mainw->current_file=current_file;
+    else {
+      mainw->current_file=current_file;
+      do_rfx_cleanup(rfx);
+    }
 
     mainw->is_generating=FALSE;
     mainw->no_switch_dprint=FALSE;
@@ -334,6 +341,11 @@ gboolean do_effect(lives_rfx_t *rfx, gboolean is_preview) {
     }
 
     return FALSE;
+  }
+
+  if (cfile->start==0) {
+    cfile->start=1;
+    cfile->end=cfile->frames;
   }
 
   do_rfx_cleanup(rfx);
@@ -547,7 +559,10 @@ gboolean do_effect(lives_rfx_t *rfx, gboolean is_preview) {
 
   if (!mainw->gen_to_clipboard) cfile->changed=TRUE;
   if (mainw->multitrack==NULL) {
-    if (new_file!=-1) switch_to_file ((mainw->current_file=0),new_file);
+    if (new_file!=-1) {
+      lives_sync();
+      switch_to_file ((mainw->current_file=0),new_file);
+    }
   }
   else {
     mainw->current_file=mainw->multitrack->render_file;

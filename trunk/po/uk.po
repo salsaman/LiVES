@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2012-03-07 22:45-0300\n"
+"POT-Creation-Date: 2012-03-11 12:31-0300\n"
 "PO-Revision-Date: 2012-02-01 11:46+0000\n"
 "Last-Translator: Yuri Chornoivan <yurchor@gmail.com>\n"
 "Language-Team: Ukrainian <translation@linux.org.ua>\n"
@@ -106,47 +106,47 @@ msgid "_Resize All Frames"
 msgstr "_Змінити розміри всіх кадрів"
 
 #. TRANSLATORS: text saying "Any", for encoder and output format (as in "does not matter")
-#: src/main.c:807
+#: src/main.c:806
 msgid "Any"
 msgstr "Будь-який"
 
 #. TRANSLATORS: text saying "None", for playback plugin name (as in "none specified")
-#: src/main.c:809
+#: src/main.c:808
 msgid "None"
 msgstr "Жодного"
 
 #. TRANSLATORS: text saying "recommended", for plugin names, etc.
-#: src/main.c:811
+#: src/main.c:810
 msgid "recommended"
 msgstr "найліпший"
 
 #. TRANSLATORS: text saying "disabled", (as in "not enabled")
-#: src/main.c:813
+#: src/main.c:812
 msgid "disabled !"
 msgstr "вимкнено!"
 
 #. TRANSLATORS: text saying "**The current layout**", to warn users that the current layout is affected
-#: src/main.c:815
+#: src/main.c:814
 msgid "**The current layout**"
 msgstr "**Поточне компонування**"
 
-#: src/main.c:1379
+#: src/main.c:1378
 msgid "Loading realtime effect plugins..."
 msgstr "Завантаження додатків ефектів реального часу…"
 
-#: src/main.c:1443
+#: src/main.c:1442
 msgid "Starting jack audio server..."
 msgstr "Запуск звукового сервера jack…"
 
-#: src/main.c:1445
+#: src/main.c:1444
 msgid "Starting jack transport server..."
 msgstr "Запуск сервера передавання даних jack…"
 
-#: src/main.c:1446
+#: src/main.c:1445
 msgid "Connecting to jack transport server..."
 msgstr "Встановлення з’єднання з сервером передавання даних jack…"
 
-#: src/main.c:1476
+#: src/main.c:1475
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -165,104 +165,104 @@ msgstr ""
 "\n"
 "Alternatively, try to start lives with either \"lives -jackopts 16\", or "
 
-#: src/main.c:1504
+#: src/main.c:1503
 msgid "Starting pulse audio server..."
 msgstr "Запуск звукового сервера PulseAudio…"
 
-#: src/main.c:1565
+#: src/main.c:1564
 msgid "Checking optional dependencies:"
 msgstr "Пошук додаткових залежностей:"
 
-#: src/main.c:1566
+#: src/main.c:1565
 msgid "mplayer...detected..."
 msgstr "mplayer… виявлено…"
 
-#: src/main.c:1567
+#: src/main.c:1566
 msgid "mplayer...NOT DETECTED..."
 msgstr "mplayer…НЕ ВИЯВЛЕНО…"
 
-#: src/main.c:1568
+#: src/main.c:1567
 msgid "convert...detected..."
 msgstr "convert…виявлено…"
 
-#: src/main.c:1569
+#: src/main.c:1568
 msgid "convert...NOT DETECTED..."
 msgstr "convert...НЕ ВИЯВЛЕНО…"
 
-#: src/main.c:1570
+#: src/main.c:1569
 msgid "composite...detected..."
 msgstr "composite…виявлено…"
 
-#: src/main.c:1571
+#: src/main.c:1570
 msgid "composite...NOT DETECTED..."
 msgstr "composite…НЕ ВИЯВЛЕНО…"
 
-#: src/main.c:1572
+#: src/main.c:1571
 msgid "sox...detected\n"
 msgstr "sox…виявлено\n"
 
-#: src/main.c:1573
+#: src/main.c:1572
 msgid "sox...NOT DETECTED\n"
 msgstr "sox…НЕ ВИЯВЛЕНО\n"
 
-#: src/main.c:1574
+#: src/main.c:1573
 msgid "cdda2wav...detected..."
 msgstr "cdda2wav...виявлено..."
 
-#: src/main.c:1575
+#: src/main.c:1574
 msgid "cdda2wav...NOT DETECTED..."
 msgstr "cdda2wav...НЕ ВИЯВЛЕНО..."
 
-#: src/main.c:1576
+#: src/main.c:1575
 msgid "jackd...detected..."
 msgstr "jackd…виявлено…"
 
-#: src/main.c:1577
+#: src/main.c:1576
 msgid "jackd...NOT DETECTED..."
 msgstr "jackd…НЕ ВИЯВЛЕНО…"
 
-#: src/main.c:1578
+#: src/main.c:1577
 msgid "pulse audio...detected..."
 msgstr "pulse audio…виявлено…"
 
-#: src/main.c:1579
+#: src/main.c:1578
 msgid "pulse audio...NOT DETECTED..."
 msgstr "pulse audio…НЕ ВИЯВЛЕНО…"
 
-#: src/main.c:1580
+#: src/main.c:1579
 msgid "python...detected..."
 msgstr "python…виявлено…"
 
-#: src/main.c:1581
+#: src/main.c:1580
 msgid "python...NOT DETECTED..."
 msgstr "python…НЕ ВИЯВЛЕНО…"
 
-#: src/main.c:1582
+#: src/main.c:1581
 msgid "dvgrab...detected..."
 msgstr "dvgrab…виявлено…"
 
-#: src/main.c:1583
+#: src/main.c:1582
 msgid "dvgrab...NOT DETECTED..."
 msgstr "dvgrab…НЕ ВИЯВЛЕНО…"
 
-#: src/main.c:1584
+#: src/main.c:1583
 msgid "xwininfo...detected..."
 msgstr "xwininfo…виявлено…"
 
-#: src/main.c:1585
+#: src/main.c:1584
 msgid "xwininfo...NOT DETECTED..."
 msgstr "xwininfo…НЕ ВИЯВЛЕНО…"
 
-#: src/main.c:1591
+#: src/main.c:1590
 #, fuzzy
 msgid "Windows"
 msgstr "За_крити вікно"
 
-#: src/main.c:1593
+#: src/main.c:1592
 msgid "UNKNOWN - please patch me !"
 msgstr "НЕВІДОМИЙ — будь ласка, накладіть латку!"
 
-#: src/main.c:1597
+#: src/main.c:1596
 #, c-format
 msgid ""
 "\n"
@@ -273,22 +273,22 @@ msgstr ""
 "\n"
 "Інструмент керування вікнами — «%s»; "
 
-#: src/main.c:1600
+#: src/main.c:1599
 #, c-format
 msgid "number of monitors detected: %d\n"
 msgstr "виявлена кількість моніторів: %d\n"
 
-#: src/main.c:1603
+#: src/main.c:1602
 #, c-format
 msgid "Number of CPUs detected: %d\n"
 msgstr "Кількість виявлених процесорів: %d\n"
 
-#: src/main.c:1606
+#: src/main.c:1605
 #, c-format
 msgid "Temp directory is %s\n"
 msgstr "Каталог тимчасових файлів — %s\n"
 
-#: src/main.c:1610
+#: src/main.c:1609
 msgid ""
 "WARNING - this version of LiVES was compiled without either\n"
 "jack or pulse audio support.\n"
@@ -298,15 +298,15 @@ msgstr ""
 "jack або PulseAudio.\n"
 "Ви не зможете скористатися багатьма можливостями з обробки звуку.\n"
 
-#: src/main.c:1613
+#: src/main.c:1612
 msgid "Compiled with jack support, good !\n"
 msgstr "Зібрано з підтримкою jack, добре!\n"
 
-#: src/main.c:1616
+#: src/main.c:1615
 msgid "Compiled with pulse audio support, wonderful !\n"
 msgstr "Зібрано з підтримкою PulseAudio, чудово!\n"
 
-#: src/main.c:1620
+#: src/main.c:1619
 #, c-format
 msgid ""
 "Welcome to LiVES version %s.\n"
@@ -315,7 +315,7 @@ msgstr ""
 "Вітаємо у LiVES версії %s.\n"
 "\n"
 
-#: src/main.c:2039
+#: src/main.c:2038
 #, c-format
 msgid ""
 "\n"
@@ -325,83 +325,83 @@ msgstr ""
 "Синтаксис команди запуску: %s [параметри] [назва файла [початок_за_часом] "
 "[кількість кадрів]]\n"
 
-#: src/main.c:2040
+#: src/main.c:2039
 msgid "Where: filename is the name of a media file or backup file.\n"
 msgstr ""
 "де «назва файла» — назва файла мультимедійних даних або резервної копії.\n"
 
-#: src/main.c:2041
+#: src/main.c:2040
 msgid "start_time : filename start time in seconds\n"
 msgstr ""
 "початок_за_часом: початок за часом у файлі з вказаною назвою у секундах\n"
 
-#: src/main.c:2042
+#: src/main.c:2041
 msgid "frames : maximum number of frames to open\n"
 msgstr "кількість кадрів: максимальна кількість кадрів, які слід відкрити\n"
 
-#: src/main.c:2044
+#: src/main.c:2043
 msgid "opts can be:\n"
 msgstr "параметри можуть бути такими:\n"
 
-#: src/main.c:2045
+#: src/main.c:2044
 msgid "-help            : show this help text and exit\n"
 msgstr "-help               : показати текст цієї довідки і завершити роботу\n"
 
-#: src/main.c:2046
+#: src/main.c:2045
 msgid "-tmpdir <tempdir>: use alternate working directory (e.g /var/ramdisk)\n"
 msgstr ""
 "-tmpdir <тимч. каталог>: використовувати інший робочий каталог (наприклад /"
 "var/ramdisk)\n"
 
-#: src/main.c:2047
+#: src/main.c:2046
 msgid "-set <setname>   : autoload clip set setname\n"
 msgstr ""
 "-set <назва_набору> : автоматично завантажити набір кліпів з вказаною "
 "назвою\n"
 
-#: src/main.c:2048
+#: src/main.c:2047
 msgid "-noset           : do not load any set on startup\n"
 msgstr "-noset              : не завантажувати жодного набору після запуску\n"
 
-#: src/main.c:2049
+#: src/main.c:2048
 msgid "-norecover       : force no-loading of crash recovery\n"
 msgstr ""
 "-norecover          : не завантажувати відновлені дані під час перезапуску "
 "після аварії\n"
 
-#: src/main.c:2050
+#: src/main.c:2049
 msgid "-recover         : force loading of crash recovery\n"
 msgstr ""
 "-recover            : завантажити відновлені дані під час перезапуску після "
 "аварії\n"
 
-#: src/main.c:2051
+#: src/main.c:2050
 msgid "-nothreaddialog  : doe nothing - retained for backwards compatibility\n"
 msgstr ""
 "-nothreaddialog  : нічого не робити — залишено з міркувань зворотної "
 "сумісності\n"
 
-#: src/main.c:2052
+#: src/main.c:2051
 msgid "-nogui           : do not show the gui\n"
 msgstr "-nogui              : не показувати графічного інтерфейсу\n"
 
-#: src/main.c:2053
+#: src/main.c:2052
 msgid "-nosplash        : do not show the splash window\n"
 msgstr "-nosplash        : не показувати вікна вітання\n"
 
-#: src/main.c:2054
+#: src/main.c:2053
 msgid "-noplaywin       : do not show the play window\n"
 msgstr "-noplaywin       : не показувати вікна відтворення\n"
 
-#: src/main.c:2055
+#: src/main.c:2054
 msgid "-startup-ce      : start in clip editor mode\n"
 msgstr "-startup-ce      : запустити у режимі редактора кліпів\n"
 
-#: src/main.c:2056
+#: src/main.c:2055
 msgid "-startup-mt      : start in multitrack mode\n"
 msgstr "-startup-mt      : запустити у режимі роботи з декількома доріжками\n"
 
-#: src/main.c:2057
+#: src/main.c:2056
 msgid ""
 "-fxmodesmax <n>  : allow <n> modes per effect key (minimum is 1, default is "
 "8)\n"
@@ -409,17 +409,17 @@ msgstr ""
 "-fxmodesmax <n>  : надати змогу використовувати <n> режимів на клавішу "
 "ефекту (мінімальне значення — 1, типове — 8)\n"
 
-#: src/main.c:2059
+#: src/main.c:2058
 msgid "-oscstart <port> : start OSC listener on UDP port <port>\n"
 msgstr ""
 "-oscstart <порт>    : запустити програму очікування на дані OSC на вказаному "
 "порті UDP\n"
 
-#: src/main.c:2060
+#: src/main.c:2059
 msgid "-nooscstart      : do not start OSC listener\n"
 msgstr "-nooscstart         : не запускати програми очікування на дані OSC\n"
 
-#: src/main.c:2062
+#: src/main.c:2061
 msgid ""
 "-aplayer <ap>    : start with selected audio player. <ap> can be mplayer"
 msgstr ""
@@ -427,15 +427,15 @@ msgstr ""
 "Програвачем <ap> може бути, наприклад, mplayer"
 
 #. TRANSLATORS: pulse (audio)
-#: src/main.c:2065
+#: src/main.c:2064
 msgid ", pulse"
 msgstr ", pulse"
 
-#: src/main.c:2068
+#: src/main.c:2067
 msgid ", sox or jack\n"
 msgstr ", sox або jack\n"
 
-#: src/main.c:2069
+#: src/main.c:2068
 msgid ""
 "-jackopts <opts>    : opts is a bitmap of jack startup options [1 = jack "
 "transport client, 2 = jack transport master, 4 = start jack transport "
@@ -446,16 +446,16 @@ msgstr ""
 "запуск сервера передавання даних jack, 8 = призупинка відтворення звуку, "
 "якщо призупинено відтворення відео, 16 = запуск звукового сервера jack] \n"
 
-#: src/main.c:2071
+#: src/main.c:2070
 msgid " or sox\n"
 msgstr " або sox\n"
 
-#: src/main.c:2073
+#: src/main.c:2072
 msgid "-devicemap <mapname>          : autoload devicemap\n"
 msgstr ""
 "-devicemap <назва карти>         : автоматично завантажити карту пристроїв\n"
 
-#: src/main.c:2074
+#: src/main.c:2073
 msgid ""
 "-vppdefaults <file>          : load video playback plugin defaults from "
 "<file> (Note: only sets the settings, not the plugin type)\n"
@@ -464,17 +464,17 @@ msgstr ""
 "відтворення відео з  <файл>-а (Зауваження: встановлюються лише параметри, а "
 "не тип додатка)\n"
 
-#: src/main.c:2075
+#: src/main.c:2074
 msgid "-debug            : try to debug crashes (requires 'gdb' installed)\n"
 msgstr ""
 "-debug               : спробувати виконати діагностику аварії (доведеться "
 "встановити «gdb»)\n"
 
-#: src/main.c:2101 src/gui.c:1089
+#: src/main.c:2100 src/gui.c:1089
 msgid "Starting GUI..."
 msgstr "Запуск графічного інтерфейсу..."
 
-#: src/main.c:2114
+#: src/main.c:2113
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -492,7 +492,7 @@ msgstr ""
 "(Можливо, вам доведеться змінити значення параметра <prefix_dir> у вашому "
 "файлі ~/.lives)\n"
 
-#: src/main.c:2128
+#: src/main.c:2127
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -504,7 +504,7 @@ msgstr ""
 "Будь ласка, переконайтеся, що маєте права доступу на запис до /tmp і "
 "повторіть спробу.\n"
 
-#: src/main.c:2133
+#: src/main.c:2132
 msgid ""
 "\n"
 "`smogrify` must be in your path, and be executable\n"
@@ -519,7 +519,7 @@ msgstr ""
 "Будь ласка, ознайомтеся з файлом README, який постачається\n"
 "разом з цим пакунком, перед запуском LiVES.\n"
 
-#: src/main.c:2139
+#: src/main.c:2138
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -534,7 +534,7 @@ msgstr ""
 "\n"
 "Будь ласка, перевірте права доступу до файла і повторіть спробу.\n"
 
-#: src/main.c:2146
+#: src/main.c:2145
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -551,7 +551,7 @@ msgstr ""
 "Будь ласка, перевірте права доступу на цей файл і каталог,\n"
 "а потім повторіть спробу.\n"
 
-#: src/main.c:2156
+#: src/main.c:2155
 #, fuzzy, c-format
 msgid ""
 "Please check the <tempdir> setting in \n"
@@ -562,7 +562,7 @@ msgstr ""
 "%s/.lives\n"
 "і повторіть спробу.\n"
 
-#: src/main.c:2163
+#: src/main.c:2162
 #, c-format
 msgid ""
 "\n"
@@ -577,7 +577,7 @@ msgstr ""
 "\n"
 "%s"
 
-#: src/main.c:2171
+#: src/main.c:2170
 msgid ""
 "\n"
 "An incorrect version of smogrify was found in your path.\n"
@@ -595,7 +595,7 @@ msgstr ""
 "\n"
 "Дякуємо.\n"
 
-#: src/main.c:2176 src/dialogs.c:1815
+#: src/main.c:2175 src/dialogs.c:1815
 msgid ""
 "\n"
 "LiVES currently requires either 'mplayer' or 'sox' to function. Please "
@@ -606,7 +606,7 @@ msgstr ""
 "програма «sox». Будь ласка, встановіть одну з цих програм і повторіть "
 "спробу.\n"
 
-#: src/main.c:2180
+#: src/main.c:2179
 #, fuzzy
 msgid ""
 "\n"
@@ -618,7 +618,7 @@ msgstr ""
 "програма «sox». Будь ласка, встановіть одну з цих програм і повторіть "
 "спробу.\n"
 
-#: src/main.c:2190
+#: src/main.c:2189
 msgid ""
 "\n"
 "LiVES was unable to locate 'mplayer'. You may wish to install mplayer to use "
@@ -628,7 +628,7 @@ msgstr ""
 "LiVES не вдалося виявити програму «mplayer». Вам варто встановити mplayer, "
 "щоб скористатися усіма можливостями LiVES.\n"
 
-#: src/main.c:2193
+#: src/main.c:2192
 msgid ""
 "\n"
 "LiVES was unable to locate 'convert'. You should install convert and image-"
@@ -638,7 +638,7 @@ msgstr ""
 "LiVES не вдалося виявити програми «convert». Якщо ви маєте намір "
 "користуватися ефектами показу, вам слід встановити convert і image-magick.\n"
 
-#: src/main.c:2196
+#: src/main.c:2195
 msgid ""
 "\n"
 "LiVES was unable to locate 'composite'. You should install composite and "
@@ -649,7 +649,7 @@ msgstr ""
 "користуватися функціональними можливостями об’єднання, вам слід встановити "
 "composite і image-magick.\n"
 
-#: src/main.c:2199
+#: src/main.c:2198
 msgid ""
 "\n"
 "LiVES was unable to locate 'sox'. Some audio features may not work. You "
@@ -660,7 +660,7 @@ msgstr ""
 "програму, програма не зможе виконувати деякі з функцій обробки звуку. Вам "
 "слід встановити «sox».\n"
 
-#: src/main.c:2202
+#: src/main.c:2201
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -677,59 +677,59 @@ msgstr ""
 "Без цих додатків ви не зможете скористатися пунктом «Зберегти».\n"
 "Можливо, вам слід змінити значення параметра <lib_dir> у ~/.lives\n"
 
-#: src/main.c:2314
+#: src/main.c:2313
 #, c-format
 msgid "Autoloading set %s..."
 msgstr "Автоматичне завантаження набору %s..."
 
 #. TRANSLATORS: localised name may be used here
-#: src/main.c:2469
+#: src/main.c:2468
 msgid "LiVES"
 msgstr "LiVES"
 
-#: src/main.c:2633
+#: src/main.c:2631
 #, c-format
 msgid "Invalid audio player %s\n"
 msgstr "Помилковий аудіопрогравач %s\n"
 
-#: src/main.c:2751
+#: src/main.c:2749
 #, c-format
 msgid "LiVES-%s: <Untitled%d> %dx%d : %d frames %d bpp %.3f fps"
 msgstr "LiVES-%s: <Untitled%d> %dx%d : %d кадрів %d бітів/пк %.3f кд/с"
 
-#: src/main.c:2755
+#: src/main.c:2753
 #, c-format
 msgid "LiVES-%s: <%s> %dx%d : ??? frames ??? bpp %.3f fps"
 msgstr "LiVES-%s: <%s> %dx%d : ??? кадрів ??? бітів/пк %.3f кд/с"
 
-#: src/main.c:2758
+#: src/main.c:2756
 #, c-format
 msgid "LiVES-%s: <%s> %dx%d : %d frames %d bpp %.3f fps"
 msgstr "LiVES-%s: <%s> %dx%d : %d кадрів %d бітів/пк %.3f кд/с"
 
-#: src/main.c:2764
+#: src/main.c:2762
 #, c-format
 msgid "LiVES-%s: <No File>"
 msgstr "LiVES-%s: <файла не вказано>"
 
 #. TRANSLATORS: rec(ord)
-#: src/main.c:4341
+#: src/main.c:4339
 #, c-format
 msgid "rec %9d/%d"
 msgstr "зап %9d/%d"
 
 #. TRANSLATORS: out of memory (rec(ord))
-#: src/main.c:4345
+#: src/main.c:4343
 #, c-format
 msgid "!rec %9d/%d"
 msgstr "!зап %9d/%d"
 
-#: src/main.c:4582 src/main.c:4583 src/gui.c:2052 src/gui.c:3094
+#: src/main.c:4580 src/main.c:4581 src/gui.c:2052 src/gui.c:3094
 #: src/saveplay.c:2258
 msgid "Play"
 msgstr "Пуск"
 
-#: src/main.c:5229
+#: src/main.c:5225
 msgid ""
 "LiVES was unable to capture this image\n"
 "\n"
@@ -737,35 +737,35 @@ msgstr ""
 "LiVES не вдалося захопити це зображення.\n"
 "\n"
 
-#: src/main.c:5351
+#: src/main.c:5347
 #, c-format
 msgid "Closed file %s\n"
 msgstr "Закритий файл %s\n"
 
-#: src/main.c:5544 src/gui.c:622 src/utils.c:3862 src/utils.c:3894
+#: src/main.c:5541 src/gui.c:622 src/utils.c:3862 src/utils.c:3894
 #: src/saveplay.c:3409 src/multitrack.c:4076 src/multitrack.c:5648
 msgid "_Undo"
 msgstr "В_ернути"
 
-#: src/main.c:5545 src/gui.c:635 src/utils.c:3863 src/utils.c:3895
+#: src/main.c:5542 src/gui.c:635 src/utils.c:3863 src/utils.c:3895
 #: src/saveplay.c:3410 src/multitrack.c:4097 src/multitrack.c:5671
 msgid "_Redo"
 msgstr "Повт_орити"
 
-#: src/main.c:5572 src/interface.c:661 src/gui.c:2217 src/preferences.c:2540
+#: src/main.c:5569 src/interface.c:661 src/gui.c:2217 src/preferences.c:2540
 #: src/resample.c:1837
 msgid "Video"
 msgstr "Відео"
 
-#: src/main.c:5573 src/interface.c:680 src/gui.c:2236
+#: src/main.c:5570 src/interface.c:680 src/gui.c:2236
 msgid "Left Audio"
 msgstr "Лівий канал звуку"
 
-#: src/main.c:5574 src/gui.c:2254
+#: src/main.c:5571 src/gui.c:2254
 msgid "Right Audio"
 msgstr "Правий канал звуку"
 
-#: src/main.c:5622
+#: src/main.c:5619
 msgid ""
 "\n"
 "\n"
@@ -779,7 +779,7 @@ msgstr ""
 "визначено mplayer.\n"
 "Будь ласка, змініть налаштування у «Параметрах» і повторіть спробу.\n"
 
-#: src/main.c:5705 src/callbacks.c:7367 src/callbacks.c:7515
+#: src/main.c:5704 src/callbacks.c:7367 src/callbacks.c:7515
 #: src/callbacks.c:7841 src/callbacks.c:7858 src/gui.c:3682
 #: src/saveplay.c:2379 src/saveplay.c:2413 src/saveplay.c:2992
 #: src/saveplay.c:3102 src/saveplay.c:3124 src/multitrack.c:8421
@@ -788,13 +788,13 @@ msgstr ""
 msgid " (%d %% scale)"
 msgstr " (масштаб: %d %%)"
 
-#: src/main.c:5707 src/callbacks.c:7369 src/callbacks.c:7517
+#: src/main.c:5706 src/callbacks.c:7369 src/callbacks.c:7517
 #: src/callbacks.c:7843 src/gui.c:3686 src/saveplay.c:2381 src/saveplay.c:2415
 #, c-format
 msgid "LiVES: - Play Window%s"
 msgstr "LiVES: вікно відтворення%s"
 
-#: src/main.c:6109 src/plugins.c:1536
+#: src/main.c:6104 src/plugins.c:1536
 msgid "LiVES: - Play Window"
 msgstr "LiVES: - Вікно відтворення"
 
@@ -1192,7 +1192,7 @@ msgstr ""
 #: src/interface.c:203 src/callbacks.c:9866 src/callbacks.c:9896
 #: src/callbacks.c:9897 src/gui.c:3097 src/gui.c:3660 src/saveplay.c:2261
 #: src/saveplay.c:3015 src/dialogs.c:1333 src/dialogs.c:1334
-#: src/dialogs.c:1555 src/dialogs.c:1556 src/framedraw.c:228
+#: src/dialogs.c:1555 src/dialogs.c:1556 src/framedraw.c:225
 #: src/multitrack.c:7235
 msgid "Preview"
 msgstr "Перегляд"
@@ -1246,7 +1246,7 @@ msgstr "Показати подробиці"
 msgid "_Enough"
 msgstr "_Досить"
 
-#: src/interface.c:425 src/framedraw.c:287
+#: src/interface.c:425 src/framedraw.c:276
 msgid "_Preview"
 msgstr "П_ереглянути"
 
@@ -6056,7 +6056,7 @@ msgstr "лише звук"
 msgid "Audio only Transitions"
 msgstr "Лише звук з переходами"
 
-#: src/effects.c:98 src/effects.c:101 src/multitrack.c:17394
+#: src/effects.c:98 src/effects.c:101 src/multitrack.c:17400
 msgid "audio"
 msgstr "звук"
 
@@ -6141,7 +6141,7 @@ msgstr "%s до нового кліпу"
 msgid "%s frames %d to %d"
 msgstr "%s кадри від %d до %d"
 
-#: src/effects.c:419 src/effects.c:486
+#: src/effects.c:431 src/effects.c:498
 msgid ""
 "\n"
 "No frames were generated.\n"
@@ -6202,33 +6202,33 @@ msgstr "Не вдалося запустити породжувач %s, поми
 msgid "%s [unstable] (%s)"
 msgstr "%s [нестабільний] (%s)"
 
-#: src/framedraw.c:153
+#: src/framedraw.c:144
 msgid "You can click in Preview to change these values"
 msgstr ""
 "Ви можете клацнути лівою кнопкою миші у області перегляду, щоб змінити ці "
 "значення"
 
-#: src/framedraw.c:170
+#: src/framedraw.c:161
 msgid "_Reset Values"
 msgstr "Від_новити значення"
 
-#: src/framedraw.c:271
+#: src/framedraw.c:260
 msgid "    _Frame"
 msgstr "    _Кадр"
 
-#: src/paramspecial.c:274
+#: src/paramspecial.c:259
 msgid "Maintain aspect ratio of original frame"
 msgstr "Зберігати співвідношення розмірів початкового кадру"
 
-#: src/paramspecial.c:277
+#: src/paramspecial.c:262
 msgid "Maintain _Aspect Ratio"
 msgstr "З_берігати співвідношення розмірів"
 
-#: src/paramspecial.c:325
+#: src/paramspecial.c:310
 msgid "LiVES: Select file"
 msgstr "LiVES: вибір файла"
 
-#: src/paramspecial.c:356
+#: src/paramspecial.c:341
 msgid "Display Password"
 msgstr "Показувати пароль"
 
@@ -6342,19 +6342,19 @@ msgstr "_Червоний"
 msgid "The red value (0 - 255)"
 msgstr "Значення червоного (0-255)"
 
-#: src/paramwindow.c:1575
+#: src/paramwindow.c:1577
 msgid "_Green"
 msgstr "_Зелений"
 
-#: src/paramwindow.c:1576
+#: src/paramwindow.c:1578
 msgid "The green value (0 - 255)"
 msgstr "Значення зеленого (0-255)"
 
-#: src/paramwindow.c:1577
+#: src/paramwindow.c:1581
 msgid "_Blue"
 msgstr "С_иній"
 
-#: src/paramwindow.c:1578
+#: src/paramwindow.c:1582
 msgid "The blue value (0 - 255)"
 msgstr "Значення синього (0-255)"
 
@@ -9485,7 +9485,7 @@ msgstr ""
 "Вказано некоректну для LiVES кількість каналів звукових даних (%d).\n"
 "Не вдалося завантажити.\n"
 
-#: src/multitrack.c:4884 src/multitrack.c:4893 src/multitrack.c:19783
+#: src/multitrack.c:4884 src/multitrack.c:4893 src/multitrack.c:19789
 msgid "Layout was wiped.\n"
 msgstr "Компонування було вилучено.\n"
 
@@ -10186,17 +10186,17 @@ msgstr ""
 "\n"
 " (змінна)"
 
-#: src/multitrack.c:14286 src/multitrack.c:17373 src/multitrack.c:17385
+#: src/multitrack.c:14286 src/multitrack.c:17379 src/multitrack.c:17391
 #, c-format
 msgid "track %s"
 msgstr "доріжка %s"
 
-#: src/multitrack.c:14291 src/multitrack.c:17378
+#: src/multitrack.c:14291 src/multitrack.c:17384
 #, c-format
 msgid "tracks %s and %s"
 msgstr "доріжки %s і %s"
 
-#: src/multitrack.c:14297 src/multitrack.c:17388
+#: src/multitrack.c:14297 src/multitrack.c:17394
 msgid "selected tracks"
 msgstr "позначені доріжки"
 
@@ -10227,15 +10227,15 @@ msgstr "П_ризупинити"
 msgid "Pause (p)"
 msgstr "Призупинити (p)"
 
-#: src/multitrack.c:15536
+#: src/multitrack.c:15538
 msgid "Press 'm' during playback"
 msgstr "Натисніть «m» під час відтворення"
 
-#: src/multitrack.c:15537
+#: src/multitrack.c:15539
 msgid "to make a mark on the timeline"
 msgstr "для створення позначки на монтажному столі"
 
-#: src/multitrack.c:15827
+#: src/multitrack.c:15833
 #, c-format
 msgid ""
 "Inserted audio %.4f to %.4f from clip %s into backing audio from time %.4f "
@@ -10244,7 +10244,7 @@ msgstr ""
 "Вставлено звукові дані від %.4f до %.4f з кліпу %s до звукового супроводу з "
 "часової позначки %.4f до %.4f\n"
 
-#: src/multitrack.c:16074
+#: src/multitrack.c:16080
 #, c-format
 msgid ""
 "Inserted frames %d to %d from clip %s into track %s from time %.4f to %.4f\n"
@@ -10252,14 +10252,14 @@ msgstr ""
 "Вставлено кадри від %d до %d з кліпу %s до доріжки %s з часової позначки "
 "%.4f до %.4f\n"
 
-#: src/multitrack.c:16654
+#: src/multitrack.c:16660
 #, c-format
 msgid ""
 "Time region %.3f to %.3f\n"
 "selected.\n"
 msgstr "Позначено ділянку часу від %.3f до %.3f.\n"
 
-#: src/multitrack.c:16658
+#: src/multitrack.c:16664
 msgid ""
 "select one or more tracks\n"
 "to create a region.\n"
@@ -10267,12 +10267,12 @@ msgstr ""
 "позначте одну або декілька доріжок,\n"
 "щоб створити область.\n"
 
-#: src/multitrack.c:16660
+#: src/multitrack.c:16666
 #, c-format
 msgid "%d video tracks selected.\n"
 msgstr "Позначено %d відеодоріжок.\n"
 
-#: src/multitrack.c:16662
+#: src/multitrack.c:16668
 msgid ""
 "Double click on timeline\n"
 "to deselect time region."
@@ -10280,7 +10280,7 @@ msgstr ""
 "Двічі клацніть лівою кнопкою миші на монтажному столі,\n"
 "щоб зняти позначення з області."
 
-#: src/multitrack.c:16669
+#: src/multitrack.c:16675
 msgid ""
 "Single click on an effect\n"
 "to select it."
@@ -10288,7 +10288,7 @@ msgstr ""
 "Один раз клацніть на позначці ефекту,\n"
 "щоб позначити ефект."
 
-#: src/multitrack.c:16670
+#: src/multitrack.c:16676
 msgid ""
 "Double click on an effect\n"
 "to edit it."
@@ -10296,7 +10296,7 @@ msgstr ""
 "Двічі клацніть на позначці ефекту,\n"
 "щоб змінити його параметри."
 
-#: src/multitrack.c:16671
+#: src/multitrack.c:16677
 msgid ""
 "Right click on an effect\n"
 "for context menu.\n"
@@ -10304,7 +10304,7 @@ msgstr ""
 "Клацанням правою кнопкою миші на позначці\n"
 "ефекту можна викликати контекстне меню.\n"
 
-#: src/multitrack.c:16673
+#: src/multitrack.c:16679
 msgid ""
 "Effect order can be changed at\n"
 "FILTER MAPS"
@@ -10312,7 +10312,7 @@ msgstr ""
 "Порядок застосування ефектів можна\n"
 "змінити у КАРТАХ ЕФЕКТІВ"
 
-#: src/multitrack.c:16680
+#: src/multitrack.c:16686
 msgid ""
 "You can select an effect,\n"
 "then use the INSERT BEFORE"
@@ -10320,11 +10320,11 @@ msgstr ""
 "Ви можете позначити ефект,\n"
 "а потім скористатися кнопкою ВСТАВИТИ ПЕРЕД"
 
-#: src/multitrack.c:16681
+#: src/multitrack.c:16687
 msgid "or INSERT AFTER buttons to move it."
 msgstr "або ВСТАВИТИ ПІСЛЯ, щоб пересунути його."
 
-#: src/multitrack.c:16717
+#: src/multitrack.c:16723
 msgid ""
 "You can click and drag\n"
 "below the timeline"
@@ -10332,15 +10332,15 @@ msgstr ""
 "Ви можете натиснути кнопку миші\n"
 "і перетягнути вказівник монтажним столом"
 
-#: src/multitrack.c:16718
+#: src/multitrack.c:16724
 msgid "to select a time region.\n"
 msgstr "щоб позначити діапазон часу.\n"
 
-#: src/multitrack.c:16953 src/multitrack.c:16966
+#: src/multitrack.c:16959 src/multitrack.c:16972
 msgid "Click on another effect,"
 msgstr "Натисніть на пункті іншого ефекту"
 
-#: src/multitrack.c:16954 src/multitrack.c:16967
+#: src/multitrack.c:16960 src/multitrack.c:16973
 msgid ""
 "and the selected one\n"
 "will be inserted"
@@ -10348,46 +10348,46 @@ msgstr ""
 "і позначений ефект\n"
 "буде вставлено"
 
-#: src/multitrack.c:16955
+#: src/multitrack.c:16961
 msgid "after it.\n"
 msgstr "після.\n"
 
-#: src/multitrack.c:16968
+#: src/multitrack.c:16974
 msgid "before it.\n"
 msgstr "перед.\n"
 
-#: src/multitrack.c:17200
+#: src/multitrack.c:17206
 #, c-format
 msgid "Removed parameter values for effect %s at time %.4f\n"
 msgstr "Вилучено значення параметрів ефекту %s у позиції часу %.4f\n"
 
-#: src/multitrack.c:17396
+#: src/multitrack.c:17402
 #, c-format
 msgid "Set parameter values for %s %s on %s at time %.4f\n"
 msgstr "Встановлено значення параметрів %s %s у %s для позиції часу %.4f\n"
 
-#: src/multitrack.c:17885 src/multitrack.c:19506
+#: src/multitrack.c:17891 src/multitrack.c:19512
 msgid "_Autoreload each time"
 msgstr "_Автоматично перезавантажувати кожного разу"
 
-#: src/multitrack.c:17993
+#: src/multitrack.c:17999
 #, c-format
 msgid "Saved layout to %s\n"
 msgstr "Збережено компонування для %s\n"
 
-#: src/multitrack.c:19412
+#: src/multitrack.c:19418
 msgid "clips and frames"
 msgstr "кліпи і кадри"
 
-#: src/multitrack.c:19416
+#: src/multitrack.c:19422
 msgid "clips"
 msgstr "кліпи"
 
-#: src/multitrack.c:19419
+#: src/multitrack.c:19425
 msgid "frames"
 msgstr "кадрів"
 
-#: src/multitrack.c:19429
+#: src/multitrack.c:19435
 msgid ""
 "\n"
 "Auto reload layout.\n"
@@ -10395,7 +10395,7 @@ msgstr ""
 "\n"
 "Автоматичне перезавантаження компонування.\n"
 
-#: src/multitrack.c:19432
+#: src/multitrack.c:19438
 #, c-format
 msgid ""
 "%s\n"
@@ -10406,11 +10406,11 @@ msgstr ""
 "Не вистачає деяких %s з компонування %s\n"
 "Отже належне завантаження неможливе.\n"
 
-#: src/multitrack.c:19571
+#: src/multitrack.c:19577
 msgid "auto backup"
 msgstr "автоматичне створення резервних копій"
 
-#: src/multitrack.c:19574
+#: src/multitrack.c:19580
 #, c-format
 msgid ""
 "\n"
@@ -10419,43 +10419,43 @@ msgstr ""
 "\n"
 "Не вдалося завантажити файл компонування %s\n"
 
-#: src/multitrack.c:19594
+#: src/multitrack.c:19600
 #, c-format
 msgid "Loading layout from %s..."
 msgstr "Завантаження компонування з %s…"
 
-#: src/multitrack.c:19627
+#: src/multitrack.c:19633
 #, c-format
 msgid "Got %d events...processing..."
 msgstr "Отримано %d повідомлень про події… обробка…"
 
-#: src/multitrack.c:19642
+#: src/multitrack.c:19648
 msgid "Checking and rebuilding event list"
 msgstr "Перевірка і перебудова списку подій"
 
-#: src/multitrack.c:19668
+#: src/multitrack.c:19674
 #, c-format
 msgid "%d errors detected.\n"
 msgstr "Виявлено %d помилок.\n"
 
-#: src/multitrack.c:19719
+#: src/multitrack.c:19725
 #, c-format
 msgid "Multitrack fps set to %.3f\n"
 msgstr "Частоту кадрів багатодоріжкової області встановлено у значення %.3f\n"
 
-#: src/multitrack.c:20718
+#: src/multitrack.c:20724
 msgid "LiVES: Multitrack audio mixer"
 msgstr "LiVES: мікшер багатодоріжкового звуку"
 
-#: src/multitrack.c:20755
+#: src/multitrack.c:20761
 msgid "_Reset values"
 msgstr "Від_новити значення"
 
-#: src/multitrack.c:20759
+#: src/multitrack.c:20765
 msgid "_Close mixer"
 msgstr "_Закрити вікно мікшера"
 
-#: src/multitrack.c:20801
+#: src/multitrack.c:20807
 msgid ""
 "_Invert backing audio\n"
 "and layer volumes"
@@ -10463,17 +10463,17 @@ msgstr ""
 "_Інвертувати гучності\n"
 "звукового супроводу і шарів"
 
-#: src/multitrack.c:20807
+#: src/multitrack.c:20813
 msgid "Adjust backing and layer audio values so that they sum to 1.0"
 msgstr ""
 "Скоригувати гучності звукового супроводу і шарів звуку так, щоб їх сума "
 "складала 1,0"
 
-#: src/multitrack.c:20846
+#: src/multitrack.c:20852
 msgid "_Gang layer audio"
 msgstr "Звук з’_єднаного шару"
 
-#: src/multitrack.c:20852
+#: src/multitrack.c:20858
 msgid "Adjust all layer audio values to the same value"
 msgstr "Вирівняти гучності всіх шарів звукових даних"
 

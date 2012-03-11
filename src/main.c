@@ -5823,10 +5823,6 @@ void switch_to_file(gint old_file, gint new_file) {
 	  g_signal_handler_unblock(mainw->spinbutton_start,mainw->spin_start_func);
           load_start_image(cfile->start);
           load_end_image(cfile->end);
-	  if (prefs->ce_maxspect) {
-	    load_start_image(cfile->start);
-	    load_end_image(cfile->end);
-	  }
 	  load_frame_image(cfile->frameno);
 	}
 	if (mainw->double_size) {
@@ -6151,8 +6147,7 @@ void do_quick_switch (gint new_file) {
 
 
 
-void
-resize (gdouble scale) {
+void resize (gdouble scale) {
   // resize the frame widgets
   // set scale<0. to _force_ the playback frame to expand (for external capture)
 #define HSPACE 320

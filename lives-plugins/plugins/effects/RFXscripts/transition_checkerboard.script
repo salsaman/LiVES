@@ -64,7 +64,7 @@ while ($x<$width) {
 	while ($y<$height) {
 		$y1=$y+$bheight;
 		if ($draw) {
-			`$convert_command mask.png -fill white -draw 'rectangle $x,$y $x1,$y1' mask.png`;
+			`$convert_command mask.png -fill white -draw \"rectangle $x,$y $x1,$y1\" mask.png`;
 		}
 		$draw=!$draw;
 		$y=$y1+1;

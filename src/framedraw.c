@@ -68,6 +68,11 @@ static void start_preview (GtkButton *button, lives_rfx_t *rfx) {
 #endif
     g_free(com);
 
+    if (cfile->start==0) {
+      cfile->start=1;
+      cfile->end=cfile->frames;
+    }
+
     do_rfx_cleanup(rfx);
   }
 

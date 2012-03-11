@@ -126,6 +126,12 @@ void on_paramwindow_ok_clicked (GtkButton *button, lives_rfx_t *rfx) {
       lives_win32_kill_subprocesses(pid,TRUE);
 #endif
       g_free(com);
+      
+      if (cfile->start==0) {
+	cfile->start=1;
+	cfile->end=cfile->frames;
+      }
+
       do_rfx_cleanup(rfx);
     }
     mainw->did_rfx_preview=FALSE;
@@ -199,6 +205,12 @@ void on_paramwindow_cancel_clicked (GtkButton *button, lives_rfx_t *rfx) {
     g_free(com);
     mainw->did_rfx_preview=FALSE;
     mainw->show_procd=TRUE;
+
+    if (cfile->start==0) {
+      cfile->start=1;
+      cfile->end=cfile->frames;
+    }
+
     do_rfx_cleanup(rfx);
   }
 
@@ -238,8 +250,12 @@ void on_paramwindow_cancel_clicked (GtkButton *button, lives_rfx_t *rfx) {
 
 }
 
-
+/**
+   get a (radiobutton) list from an index 
+*/
 static lives_widget_group_t *get_group(lives_rfx_t *rfx, lives_param_t *param) {
+
+
   if (rfx->status==RFX_STATUS_WEED) {
     return livesgrp_from_usrgrp (usrgrp_to_livesgrp[1], param->group);
   }

@@ -6840,8 +6840,8 @@ sub rc_set {
 sub rc_get {
     # return a value from our .rc file
     my ($key)=shift;
-    my ($rcfile)=$home.'/'.$rc_filename;
-    my ($string)='';
+    my $rcfile="$home/$rc_filename";
+    my $string="";
 
     if (defined($prefs_file)) {
 	$rcfile=$prefs_file;
@@ -7182,7 +7182,7 @@ sub RGB24_to_string {
     # convert input like 255,255,255 to #FFFFFF
 
     my ($red,$green,$blue)=@_;
-    sprintf("'#%02X%02X%02X'",int($red),int($green),int($blue));
+    sprintf("\"#%02X%02X%02XFF\"",int($red),int($green),int($blue));
 }
 
 

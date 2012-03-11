@@ -283,6 +283,10 @@ if (@pre) {
     &gen_pre; 
 }
 
+print OUT "\n";
+print OUT "    if (\$start==0) {\$start = 1;}\n";
+print OUT "\n";
+
 unless ($is_batch_gen) {
     print OUT "\n################# loop through frames #################\n";
 	if ($in_channels==2) {

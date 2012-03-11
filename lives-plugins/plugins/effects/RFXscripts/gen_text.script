@@ -141,7 +141,7 @@ $fps=$p11;
 $cstring1=&RGB24_to_string($p3_red,$p3_green,$p3_blue);
 $cstring2=&RGB24_to_string($p4_red,$p4_green,$p4_blue);
 
-`$convert_command $tmpimg -fill $cstring1 -stroke $cstring2 $font -pointsize $p5 -draw 'text $p1 $p2 \"$p0\"' +matte $out`;
+`$convert_command $tmpimg -fill $cstring1 -stroke $cstring2 $font -pointsize $p5 -draw \"text $p1 $p2 '$p0'\" +matte $out`;
 
 $nwidth=$p8; $nheight=$p9;
 </loop>

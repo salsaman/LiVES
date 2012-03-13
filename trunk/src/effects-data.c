@@ -404,8 +404,16 @@ void pconx_chain_data(int key, int mode) {
   weed_plant_t *inst;
 
   register int i;
+  if (mainw->is_rendering) {
+    inst=get_new_inst_for_keymode(key,mode);
+  }
+  else {
+    if ((inst=rte_keymode_get_instance(key+1,mode))==NULL) {
+      LIVES_ERROR("pulling data from non-enabled effect");
+      return; ///< effect is not enabled
+    }
+  }
 
-  if ((inst=rte_keymode_get_instance(key+1,mode))==NULL) return; ///< effect is not enabled
   if (weed_plant_has_leaf(inst,"in_parameters")) nparams=weed_leaf_num_elements(inst,"in_parameters");
 
   if (nparams>0) {
@@ -594,7 +602,7 @@ void cconx_add_connection(int ikey, int imode, int icnum, int okey, int omode, i
 
 
 weed_plant_t *cconx_get_out_alpha(int okey, int omode, int ocnum) {
-  // walk all cconx and find one which has okey/omode/opnum as output
+  // walk all cconx and find one which has okey/omode/ocnum as output
   // then all we need do is convert the pixel_data
 
   lives_cconnect_t *cconx=mainw->cconx;
@@ -605,7 +613,13 @@ weed_plant_t *cconx_get_out_alpha(int okey, int omode, int ocnum) {
   register int i,j;
 
   while (cconx!=NULL) {
-    if ((inst=rte_keymode_get_instance(cconx->ikey+1,cconx->imode))==NULL) return NULL; ///< effect is not enabled
+    if (mainw->is_rendering) {
+      inst=get_new_inst_for_keymode(cconx->ikey,cconx->imode);
+    }
+    else {
+      inst=rte_keymode_get_instance(cconx->ikey+1,cconx->imode);
+    }
+    if (inst==NULL) return NULL; ///< effect is not enabled
     totcons=0;
     j=0;
     for (i=0;i<cconx->nchans;i++) {
@@ -667,7 +681,6 @@ gboolean cconx_convert_pixel_data(weed_plant_t *dchan, weed_plant_t *schan) {
   if (ipal==opal&&iwidth==owidth&&iheight==oheight&&irow==orow) {
     /// everything matches - we can just do a steal
     weed_set_voidptr_value(dchan,"pixel_data",spdata);
-
     /// caller - do not free in dchan
     weed_set_boolean_value(dchan,"host_orig_pdata",WEED_TRUE);
     return FALSE;
@@ -689,7 +702,7 @@ gboolean cconx_convert_pixel_data(weed_plant_t *dchan, weed_plant_t *schan) {
   dpdata=weed_get_voidptr_value(dchan,"pixel_data",&error);
 
   if (dpdata!=NULL) {
-    g_free(dpdata);
+    //g_free(dpdata);
     dpdata=NULL;
   }
 
@@ -699,6 +712,7 @@ gboolean cconx_convert_pixel_data(weed_plant_t *dchan, weed_plant_t *schan) {
 
   if (pal_ok) {
     weed_set_voidptr_value(dchan,"pixel_data",spdata);
+    weed_set_int_value(dchan,"rowstrides",irow);
     
     /// caller - do not free in dchan
     weed_set_boolean_value(dchan,"host_orig_pdata",WEED_TRUE);
@@ -741,7 +755,18 @@ boolean cconx_chain_data(int key, int mode) {
 
   register int i=0;
 
-  if ((inst=rte_keymode_get_instance(key+1,mode))==NULL) return FALSE; ///< effect is not enabled
+  if (mainw->is_rendering) {
+    if ((inst=get_new_inst_for_keymode(key,mode))==NULL) {
+      LIVES_ERROR("pulling alpha from unknown effect");
+      return FALSE; ///< effect is not found
+    }
+  }
+  else {
+    if ((inst=rte_keymode_get_instance(key+1,mode))==NULL) {
+      LIVES_ERROR("pulling alpha from non-enabled effect");
+      return FALSE; ///< effect is not enabled
+    }
+  }
 
   while ((ichan=get_enabled_channel(inst,i,TRUE))!=NULL) {
     if ((ochan=cconx_get_out_alpha(key,mode,i++))!=NULL) {

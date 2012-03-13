@@ -154,6 +154,9 @@ int weed_add_effectkey_by_idx (gint key, int idx); ///< see description
 int rte_key_getmode (gint key); ///< returns current active mode for a key (or -1)
 int rte_key_getmaxmode(gint key); ///< returns highest mode which is set
 
+weed_plant_t *get_new_inst_for_keymode(int key, int mode); ///< get new inst (during recording playback)
+
+
 gboolean rte_key_setmode (gint key, gint newmode); ///< set mode for a given key; if key==0 then the active key is used
 
 ///< returns -1 if the filter is not found; it will match the first name found - returns -2 if you try to switch a generator/non-generator

@@ -831,7 +831,7 @@ static void disp_fraction(gint done, gint start, gint end, gdouble timesofar, xp
 
   est_time=timesofar/fraction_done-timesofar;
   prog_label=g_strdup_printf(_("\n%s%d%% done. Time remaining: %u sec%s\n"),stretch,(gint)(fraction_done*100.),(guint)(est_time+.5),stretch);
-  gtk_label_set_text(GTK_LABEL(proc->label3),prog_label);
+  if (GTK_IS_LABEL(proc->label3)) gtk_label_set_text(GTK_LABEL(proc->label3),prog_label);
   g_free(prog_label);
 
   disp_frames_done=done;

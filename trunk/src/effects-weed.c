@@ -774,7 +774,7 @@ weed_plant_t *add_filter_init_events (weed_plant_t *event_list, weed_timecode_t 
 
   for (i=0;i<FX_KEYS_MAX_VIRTUAL;i++) {
     if ((inst=key_to_instance[i][key_modes[i]])!=NULL&&enabled_in_channels (inst,FALSE)>0) {
-      event_list=append_filter_init_event (event_list,tc,(fx_idx=key_to_fx[i][key_modes[i]]),-1);
+      event_list=append_filter_init_event (event_list,tc,(fx_idx=key_to_fx[i][key_modes[i]]),-1,i,inst);
       init_events[i]=get_last_event(event_list);
       ntracks=weed_leaf_num_elements(init_events[i],"in_tracks");
       pchains[i]=filter_init_add_pchanges(event_list,inst,init_events[i],ntracks);
@@ -1532,22 +1532,6 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
   }
 
 
-  // make sure we have pixel_data for all mandatory in alpha channels (from alpha chains)
-  // if not, if the ctmpl is optnl mark as temp_disabled; else return with error
-
-  for (i=0;i<num_inc+num_in_alpha;i++) {
-    if (!weed_palette_is_alpha_palette(weed_get_int_value(in_channels[i],"current_palette",&error))) continue;
-    if (weed_get_voidptr_value(in_channels[i],"pixel_data",&error)==NULL) {
-      chantmpl=weed_get_plantptr_value(in_channels[i],"template",&error);
-      if (weed_plant_has_leaf(chantmpl,"max_repeats")||(weed_plant_has_leaf(chantmpl,"option")&&
-							weed_get_boolean_value(chantmpl,"optional",&error)==WEED_TRUE))
-	weed_set_boolean_value(in_channels[i],"temp_disabled",WEED_TRUE);
-      else {
-	return FILTER_ERROR_MISSING_CHANNEL;
-      }
-    }
-  }
-
   // ensure all chantmpls not marked "optional" have at least one corresponding enabled channel
   // e.g. we could have disabled all channels from a template with "max_repeats" that is not "optional"
   num_ctmpl=weed_leaf_num_elements(filter,"in_channel_templates");
@@ -1595,7 +1579,7 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
       num_out_alpha++;
   }
 
-  num_out_tracks-=num_out_alpha;
+  if (init_event==NULL) num_out_tracks-=num_out_alpha;
 
   // pull frames for tracks
 
@@ -1774,15 +1758,39 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
     }
   }
 
+  // we stored original key/mode to use here
   if (weed_plant_has_leaf(inst,"host_key")) {
     // pull from alpha chain
-    int key=weed_get_int_value(inst,"host_key",&error);
+    int key=weed_get_int_value(inst,"host_key",&error),mode;
+    if (weed_plant_has_leaf(inst,"host_mode")) {
+      mode=weed_get_int_value(inst,"host_mode",&error);
+    }
+    else mode=key_modes[key];
+
     // need to do this AFTER setting in-channel size
     if (mainw->cconx!=NULL) {
       // chain any alpha channels
-      if (cconx_chain_data(key,key_modes[key])) needs_reinit=TRUE;
+      if (cconx_chain_data(key,mode)) needs_reinit=TRUE;
     }
   }
+
+  // make sure we have pixel_data for all mandatory in alpha channels (from alpha chains)
+  // if not, if the ctmpl is optnl mark as temp_disabled; else return with error
+
+  for (i=0;i<num_inc+num_in_alpha;i++) {
+    if (!weed_palette_is_alpha_palette(weed_get_int_value(in_channels[i],"current_palette",&error))) continue;
+    if (weed_get_voidptr_value(in_channels[i],"pixel_data",&error)==NULL) {
+      chantmpl=weed_get_plantptr_value(in_channels[i],"template",&error);
+      if (weed_plant_has_leaf(chantmpl,"max_repeats")||(weed_plant_has_leaf(chantmpl,"option")&&
+							weed_get_boolean_value(chantmpl,"optional",&error)==WEED_TRUE))
+	weed_set_boolean_value(in_channels[i],"temp_disabled",WEED_TRUE);
+      else {
+	LIVES_WARN("missing alpha data in channel");
+	return FILTER_ERROR_MISSING_CHANNEL;
+      }
+    }
+  }
+
 
   // now we do a second pass, and we change the palettes of in layers to match the channel, if necessary
 
@@ -1968,6 +1976,7 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
 
   // set up our out channels
   for (i=0;i<num_out_tracks+num_out_alpha;i++) {
+
     channel=get_enabled_channel(inst,i,FALSE);
     palette=weed_get_int_value(channel,"current_palette",&error);
 
@@ -2160,6 +2169,7 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
     if ((rowstrides_changed&&(channel_flags&WEED_CHANNEL_REINIT_ON_ROWSTRIDES_CHANGE))||
 	(((outwidth!=width)||(outheight!=height))&&(channel_flags&WEED_CHANNEL_REINIT_ON_SIZE_CHANGE))) 
       needs_reinit=TRUE;
+
   }
   
   if (needs_reinit) {
@@ -2786,12 +2796,18 @@ lives_filter_error_t weed_apply_audio_instance (weed_plant_t *init_event, float 
 
 
 static void weed_apply_filter_map (weed_plant_t **layers, weed_plant_t *filter_map, weed_timecode_t tc, void ***pchains) {
-  int i,key,num_inst,error;
   weed_plant_t *instance;
-  gchar *keystr;
-  void **init_events;
-  int filter_error;
   weed_plant_t *init_event,*deinit_event;
+
+  gchar *keystr;
+
+  void *pdata;
+  void **init_events;
+
+  int filter_error;
+  int key,num_inst,error;
+
+  register int i,j;
 
   // this is called during rendering - we will have previously received a filter_map event and now we apply this to layers
 
@@ -2841,20 +2857,64 @@ static void weed_apply_filter_map (weed_plant_t **layers, weed_plant_t *filter_m
 	}
       }
 
+      // else we are previewing or rendering from an event_list
       if (weed_plant_has_leaf(init_event,"host_tag")) {
 	keystr=weed_get_string_value(init_event,"host_tag",&error);
 	key=atoi(keystr);
 	weed_free(keystr);
 	if (rte_key_valid (key+1,FALSE)) {
 	  if ((instance=key_to_instance[key][key_modes[key]])==NULL) continue;
+
 	  if (pchains!=NULL&&pchains[key]!=NULL) {
 	    interpolate_params(instance,pchains[key],tc); // interpolate parameters during playback
+	  }
+	  
+	  if (mainw->pconx!=NULL) {
+	    int key=i;
+	    int mode=key_modes[i];
+	    if (weed_plant_has_leaf(instance,"host_mode")) {
+	      key=weed_get_int_value(instance,"host_key",&error);
+	      mode=weed_get_int_value(instance,"host_mode",&error);
+	    }
+	    // chain any data pipelines
+	    pconx_chain_data(key,mode);
 	  }
 	  filter_error=weed_apply_instance (instance,init_event,layers,0,0,tc);
 	  //if (filter_error!=FILTER_NO_ERROR) g_printerr("Render error was %d\n",filter_error);
 	}
       }
     }
+
+
+    // free any alpha outs 
+   for (i=0;i<num_inst;i++) {
+      init_event=(weed_plant_t *)init_events[i];
+      if (weed_plant_has_leaf(init_event,"host_tag")) {
+	keystr=weed_get_string_value(init_event,"host_tag",&error);
+	key=atoi(keystr);
+	weed_free(keystr);
+	if (rte_key_valid (key+1,FALSE)) {
+	  weed_plant_t **ochans;
+	  int nchans;
+	  if ((instance=key_to_instance[i][key_modes[i]])==NULL) continue;
+	  if (!weed_plant_has_leaf(instance,"out_channels")||weed_get_plantptr_value(instance,"out_channels",&error)==NULL)
+	    continue;
+	  nchans=weed_leaf_num_elements(instance,"out_channels");
+	  if (nchans==0) continue;
+	  ochans=weed_get_plantptr_array(instance,"out_channels",&error);
+	  for (j=0;j<nchans;j++) {
+	    int pal=weed_get_int_value(ochans[j],"current_palette",&error);
+	    if (weed_plant_has_leaf(ochans[j],"pixel_data")&&weed_palette_is_alpha_palette(pal) && 
+		weed_plant_has_leaf(ochans[j],"pixel_data") && 
+		(pdata=weed_get_voidptr_value(ochans[j],"pixel_data",&error))!=NULL) {
+	      weed_free(pdata);
+	      weed_set_voidptr_value(ochans[j],"pixel_data",NULL);
+	    }
+	  }
+	  weed_free(ochans);
+	}
+      }
+   }
     weed_free(init_events);
   }
 }
@@ -2916,21 +2976,20 @@ weed_plant_t *weed_apply_effects (weed_plant_t **layers, weed_plant_t *filter_ma
       }
     }
   }
+
+
+  
+  // TODO - set mainw->vpp->play_params from connected out params and out alphas
+
   if (!mainw->is_rendering) {
-
-    // TODO - set mainw->vpp->play_params from connected out params and out alphas
-
-
-
-
     // free pixel_data for all instance out_channels with alpha palettes
     // alpha in_channels were freed after each effect, unless they reffed an out_channel padata directly
     for (i=0;i<FX_KEYS_MAX_VIRTUAL;i++) {
       if (rte_key_valid(i+1,TRUE)) {
 	if (mainw->rte&(GU641<<i)) {
-	  if ((instance=key_to_instance[i][key_modes[i]])==NULL) continue;
 	  weed_plant_t **ochans;
 	  int nchans;
+	  if ((instance=key_to_instance[i][key_modes[i]])==NULL) continue;
 	  if (!weed_plant_has_leaf(instance,"out_channels")||weed_get_plantptr_value(instance,"out_channels",&error)==NULL)
 	    continue;
 	  nchans=weed_leaf_num_elements(instance,"out_channels");
@@ -2950,9 +3009,7 @@ weed_plant_t *weed_apply_effects (weed_plant_t **layers, weed_plant_t *filter_ma
       }
     }
     
-
     mainw->osc_block=FALSE;
-   
   }
 
   // caller should free all layers, but here we will free all other pixel_data
@@ -3002,7 +3059,7 @@ weed_plant_t *weed_apply_effects (weed_plant_t **layers, weed_plant_t *filter_ma
       weed_set_int_value(layer,"width",opwidth);
       weed_set_int_value(layer,"height",opheight);
       create_empty_pixel_data(layer,TRUE,TRUE);
-      g_printerr("weed_apply_effects created empty pixel_data\n");
+      LIVES_WARN("weed_apply_effects created empty pixel_data");
     }
   
   return layer;
@@ -4713,7 +4770,8 @@ gboolean weed_init_effect(int hotkey) {
 
   if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)&&inc_count>0) {
     // place this synchronous with the preceding frame
-    event_list=append_filter_init_event (mainw->event_list,mainw->currticks,key_to_fx[hotkey][key_modes[hotkey]],-1);
+    event_list=append_filter_init_event (mainw->event_list,mainw->currticks,
+					 key_to_fx[hotkey][key_modes[hotkey]],-1,hotkey,new_instance);
     if (mainw->event_list==NULL) mainw->event_list=event_list;
     init_events[hotkey]=get_last_event(mainw->event_list);
     ntracks=weed_leaf_num_elements(init_events[hotkey],"in_tracks");
@@ -5839,9 +5897,24 @@ gint weed_get_blend_factor(int hotkey) {
 
 
 
+weed_plant_t *get_new_inst_for_keymode(int key, int mode)  {
+  weed_plant_t *inst;
 
+  int error;
 
+  register int i;
 
+  for (i=FX_KEYS_MAX_VIRTUAL;i<FX_KEYS_MAX;i++) {
+    if ((inst=key_to_instance[i][key_modes[i]])==NULL) continue;
+    if (weed_plant_has_leaf(inst,"host_mode")) {
+      if (weed_get_int_value(inst,"host_key",&error)==key && weed_get_int_value(inst,"host_mode",&error)==mode) {
+	return inst;
+      }
+    }
+  }
+
+  return NULL;
+}
 
 
 
@@ -6115,6 +6188,9 @@ G_GNUC_PURE gint rte_bg_gen_mode (void) {
 G_GNUC_PURE gint rte_fg_gen_mode (void) {
   return fg_generator_mode;
 }
+
+
+
 
 
 

@@ -2681,7 +2681,7 @@ void play_file (void) {
       mainw->cancelled=CANCEL_NONE;
 
       if (mainw->event_list!=NULL&&!mainw->record) {
-	if (pb_start_event==NULL) pb_start_event=get_first_frame_event(mainw->event_list);
+	if (pb_start_event==NULL) pb_start_event=get_first_event(mainw->event_list);
 
 	if (has_audio_buffers) {
 

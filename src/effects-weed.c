@@ -1785,7 +1785,6 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
 							weed_get_boolean_value(chantmpl,"optional",&error)==WEED_TRUE))
 	weed_set_boolean_value(in_channels[i],"temp_disabled",WEED_TRUE);
       else {
-	LIVES_WARN("missing alpha data in channel");
 	return FILTER_ERROR_MISSING_CHANNEL;
       }
     }
@@ -2221,10 +2220,10 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
 	  weed_get_boolean_value(channel,"host_orig_pdata",&error)!=WEED_TRUE) {
 	void *pdata=weed_get_voidptr_value(channel,"pixel_data",&error);
 	if (pdata!=NULL) g_free(pdata);
-	weed_set_voidptr_value(channel,"pixel_data",NULL);
-	if (weed_plant_has_leaf(channel,"host_orig_pdata")) 
-	  weed_leaf_delete(channel,"host_orig_pdata");
       }
+      weed_set_voidptr_value(channel,"pixel_data",NULL);
+      if (weed_plant_has_leaf(channel,"host_orig_pdata")) 
+	weed_leaf_delete(channel,"host_orig_pdata");
     }
   }
 

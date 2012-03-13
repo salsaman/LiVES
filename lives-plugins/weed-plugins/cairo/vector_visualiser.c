@@ -43,6 +43,21 @@ static int package_version=1; // version of this package
 #include <string.h>
 #include <math.h>
 
+#define MAX_ELEMS 500
+
+typedef struct {
+  float len;
+  int j;
+  int i;
+  float x;
+  float y;
+} list_ent;
+
+
+// TODO - make non-static
+list_ent xlist[MAX_ELEMS];
+
+
 static gboolean is_big_endian() {
   int testint = 0x12345678;
   char *pMem=&testint;
@@ -76,6 +91,40 @@ static void init_unal(void) {
 
 
 
+void clear_xlist(void) {
+  register int i;
+
+  for (i=0;i<MAX_ELEMS;i++) {
+    xlist[i].len=0.;
+  }
+}
+
+
+
+void add_to_list(float len, int i, int j, float x, float y) {
+  register int k,l;
+
+  for (k=0;k<MAX_ELEMS;k++) {
+    if (len>xlist[k].len) {
+      // shift existing elements
+      for (l=MAX_ELEMS-1;l<k;l--) {
+	if (xlist[l-1].len>0.) {
+	  xlist[l].len=xlist[l-1].len;
+	  xlist[l].i=xlist[l-1].i;
+	  xlist[l].j=xlist[l-1].j;
+	  xlist[l].x=xlist[l-1].x;
+	  xlist[l].y=xlist[l-1].y;
+	}
+      }
+      xlist[k].len=len;
+      xlist[k].i=i;
+      xlist[k].j=j;
+      xlist[k].x=x;
+      xlist[k].y=y;
+      break;
+    }
+  }
+}
 
 
 
@@ -135,7 +184,7 @@ static cairo_t *channel_to_cairo(weed_plant_t *channel) {
   guchar *src,*dst,*pixel_data;
 
   cairo_surface_t *surf;
-  cairo_t *cairo;
+  cairo_t *cairo=NULL;
   cairo_format_t cform;
 
   width=weed_get_int_value(channel,"width",&error);
@@ -188,6 +237,7 @@ static cairo_t *channel_to_cairo(weed_plant_t *channel) {
     }
   }
 
+
   surf=cairo_image_surface_create_for_data(pixel_data,
 					   cform, 
 					   width, height,
@@ -195,6 +245,8 @@ static cairo_t *channel_to_cairo(weed_plant_t *channel) {
 
   cairo=cairo_create(surf);
   cairo_surface_destroy(surf);
+
+  weed_free(pixel_data);
 
   return cairo;
 }
@@ -271,8 +323,11 @@ static gboolean cairo_to_channel(cairo_t *cairo, weed_plant_t *channel) {
 
 /////////////////////////////////////////////////////////////
 
+enum {
+  MD_GRID,
+  MD_LARGEST
+};
 
-#define MD_GROUP 0
 
 
 static void draw_arrow(cairo_t *cr, int i, int j, float x, float y) {
@@ -295,8 +350,6 @@ static void draw_arrow(cairo_t *cr, int i, int j, float x, float y) {
 }
 
 
-
-
 int vector_visualiser_process (weed_plant_t *inst, weed_timecode_t timestamp) {
   cairo_t *cr;
 
@@ -313,7 +366,7 @@ int vector_visualiser_process (weed_plant_t *inst, weed_timecode_t timestamp) {
 
   float x,y,scale=1.;
 
-  int mode=MD_GROUP;
+  int mode=MD_LARGEST;
 
   int irow0=weed_get_int_value(in_channels[1],"rowstrides",&error)>>2;
   int irow1=weed_get_int_value(in_channels[2],"rowstrides",&error)>>2;
@@ -336,7 +389,7 @@ int vector_visualiser_process (weed_plant_t *inst, weed_timecode_t timestamp) {
   cr=channel_to_cairo(in_channels[0]);
 
   switch (mode) {
-  case MD_GROUP:
+  case MD_GRID:
     {
       int smwidth=width/20;
       int smheight=height/20;
@@ -350,14 +403,38 @@ int vector_visualiser_process (weed_plant_t *inst, weed_timecode_t timestamp) {
       }
     }
     break;
+
+  case MD_LARGEST:
+    {
+      float len;
+      clear_xlist();
+
+      for (i=0;i<height;i++) {
+	for (j=0;j<width;j++) {
+	  x=alpha0[i*irow0+j];
+	  y=alpha1[i*irow1+j];
+	  len=sqrt(x*x+y*y);
+	  if (len>xlist[MAX_ELEMS-1].len) add_to_list(len,i,j,x,y);
+	}
+      }
+
+      for (i=0;i<MAX_ELEMS;i++) {
+	if (xlist[i].len>0.) draw_arrow(cr,xlist[i].j,xlist[i].i,xlist[i].x*scale,xlist[i].y*scale);
+      }
+
+    }
+    break;
+
   default:
     break;
 
+
   }
 
-  weed_free(in_channels);
-
   cairo_to_channel(cr,out_channel);
+  cairo_destroy(cr);
+
+  weed_free(in_channels);
 
   return WEED_NO_ERROR;
 }

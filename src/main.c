@@ -109,7 +109,7 @@ GtkTargetEntry target_table[]  = {
 /////////////////////////////////
 #ifdef NO_COMPILE // never compile this
 void tr_msg(void) {
-  // dummy function for translators message
+  // TRANSLATORS: do not translate this message
   gchar *msg=(_("Attention Translators !\nThis message is intended for you, so please do not translate it.\n\nAll translators should read the LiVES translation notes at\nhttp://lives.sourceforge.net/TRANS-README.txt"));
 }
 #endif

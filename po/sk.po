@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2012-03-11 12:31-0300\n"
+"POT-Creation-Date: 2012-03-13 12:38-0300\n"
 "PO-Revision-Date: 2011-11-01 11:47+0000\n"
 "Last-Translator: milboy <Unknown>\n"
 "Language-Team: Slovak <sk@li.org>\n"
@@ -19,6 +19,7 @@ msgstr ""
 "X-Launchpad-Export-Date: 2011-11-26 11:33+0000\n"
 "X-Generator: Launchpad (build 14381)\n"
 
+#. TRANSLATORS: do not translate this message
 #: src/main.c:113
 msgid ""
 "Attention Translators !\n"
@@ -1141,7 +1142,7 @@ msgstr ""
 #: src/interface.c:203 src/callbacks.c:9866 src/callbacks.c:9896
 #: src/callbacks.c:9897 src/gui.c:3097 src/gui.c:3660 src/saveplay.c:2261
 #: src/saveplay.c:3015 src/dialogs.c:1333 src/dialogs.c:1334
-#: src/dialogs.c:1555 src/dialogs.c:1556 src/framedraw.c:225
+#: src/dialogs.c:1555 src/dialogs.c:1556 src/framedraw.c:230
 #: src/multitrack.c:7235
 msgid "Preview"
 msgstr "Náhľad"
@@ -1194,7 +1195,7 @@ msgstr "Zobraziť podrobnosti"
 msgid "_Enough"
 msgstr "_Dostatočne"
 
-#: src/interface.c:425 src/framedraw.c:276
+#: src/interface.c:425 src/framedraw.c:281
 msgid "_Preview"
 msgstr "_Náhľad"
 
@@ -3711,7 +3712,7 @@ msgstr "_O programe"
 msgid "Rewind to start (w)"
 msgstr "Previnúť na štart (w)"
 
-#: src/gui.c:1732 src/multitrack.c:15401
+#: src/gui.c:1732 src/multitrack.c:15402
 msgid "Play all (p)"
 msgstr "Prehrať všetko (p)"
 
@@ -5794,7 +5795,7 @@ msgstr "iba zvuk"
 msgid "Audio only Transitions"
 msgstr "Iba prevody zvuku"
 
-#: src/effects.c:98 src/effects.c:101 src/multitrack.c:17400
+#: src/effects.c:98 src/effects.c:101 src/multitrack.c:17401
 msgid "audio"
 msgstr "zvuk"
 
@@ -5891,17 +5892,17 @@ msgstr ""
 "\n"
 "Neboli generované snímky.\n"
 
-#: src/effects-weed.c:3641
+#: src/effects-weed.c:3697
 #, c-format
 msgid "Error: plugin %s has no weed_setup() function.\n"
 msgstr "Chyba: rozšírenie %s nemá weed_setup () funkciu.\n"
 
-#: src/effects-weed.c:3656
+#: src/effects-weed.c:3712
 #, c-format
 msgid "No usable filters found in plugin %s\n"
 msgstr ""
 
-#: src/effects-weed.c:3736
+#: src/effects-weed.c:3792
 #, c-format
 msgid ""
 "Info: Unable to load plugin %s\n"
@@ -5910,50 +5911,50 @@ msgstr ""
 "Info: Nemožno nahrať rozšírenie %s\n"
 "Chyba bola: %s\n"
 
-#: src/effects-weed.c:3739 src/effects-weed.c:4078
+#: src/effects-weed.c:3795 src/effects-weed.c:4134
 #, fuzzy
 msgid "Some plugin directories"
 msgstr "Vrátane podpriečinkov"
 
-#: src/effects-weed.c:3914
+#: src/effects-weed.c:3970
 #, c-format
 msgid "Successfully loaded %d Weed filters\n"
 msgstr "Úspešne načítané %d Weed filtre\n"
 
-#: src/effects-weed.c:4644
+#: src/effects-weed.c:4700
 #, c-format
 msgid "Failed to start instance %s, error code %d\n"
 msgstr "Nepodarilo sa spustiť inštanciu %s, kód chyby %d\n"
 
-#: src/effects-weed.c:4682
+#: src/effects-weed.c:4738
 #, c-format
 msgid "Unable to start generator %s\n"
 msgstr "Nedá sa spustiť generátor %s\n"
 
-#: src/effects-weed.c:5235
+#: src/effects-weed.c:5292
 #, c-format
 msgid "Failed to start generator %s\n"
 msgstr "Nepodarilo sa spustiť generátor %s\n"
 
-#: src/effects-weed.c:5296
+#: src/effects-weed.c:5353
 #, c-format
 msgid "Failed to start generator %s, error %d\n"
 msgstr "Nepodarilo sa spustiť generátor %s, chyba %d\n"
 
-#: src/effects-weed.c:6376
+#: src/effects-weed.c:6451
 #, c-format
 msgid "%s [unstable] (%s)"
 msgstr ""
 
-#: src/framedraw.c:144
+#: src/framedraw.c:149
 msgid "You can click in Preview to change these values"
 msgstr "Môžete kliknutím na náhľad zmeniť tieto hodnoty"
 
-#: src/framedraw.c:161
+#: src/framedraw.c:166
 msgid "_Reset Values"
 msgstr "_Vymazanie hodnôt"
 
-#: src/framedraw.c:260
+#: src/framedraw.c:265
 msgid "    _Frame"
 msgstr "    _Snímka"
 
@@ -5973,69 +5974,69 @@ msgstr "LiVES: Vybrať súbor"
 msgid "Display Password"
 msgstr ""
 
-#: src/paramwindow.c:394
+#: src/paramwindow.c:410
 msgid "Transition _In"
 msgstr "Prechod _v"
 
-#: src/paramwindow.c:399
+#: src/paramwindow.c:415
 msgid "Transition in"
 msgstr "Prechod v"
 
-#: src/paramwindow.c:427
+#: src/paramwindow.c:443
 msgid "Check the box to make audio transition with the video"
 msgstr "Začiarknite políčko, pre urobenie prechodu zvuku  s videom"
 
-#: src/paramwindow.c:430
+#: src/paramwindow.c:446
 #, fuzzy
 msgid "Crossfade audio"
 msgstr "Zoslabujúci zvuk v"
 
-#: src/paramwindow.c:464
+#: src/paramwindow.c:480
 msgid "Transition _Out"
 msgstr "Prechod _z"
 
-#: src/paramwindow.c:469
+#: src/paramwindow.c:485
 msgid "Transition out"
 msgstr "Prechod z"
 
-#: src/paramwindow.c:527
+#: src/paramwindow.c:543
 msgid "Target _FPS (plugin may override this)"
 msgstr "Cieľová _FPS (nemá vplyv na rozšírenie)"
 
-#: src/paramwindow.c:566
+#: src/paramwindow.c:582
 #, c-format
 msgid "%s : size"
 msgstr "%s : veľkosť"
 
-#: src/paramwindow.c:570
+#: src/paramwindow.c:586
 msgid "New size (pixels)"
 msgstr "Nová veľkosť (pixely)"
 
-#: src/paramwindow.c:582 src/plugins.c:1016
+#: src/paramwindow.c:598 src/plugins.c:1016
 msgid "_Width"
 msgstr "_Šírka"
 
-#: src/paramwindow.c:610 src/plugins.c:1031
+#: src/paramwindow.c:626 src/plugins.c:1031
 msgid "_Height"
 msgstr "_Výška"
 
-#: src/paramwindow.c:683
+#: src/paramwindow.c:699
 msgid "Generate to _Clipboard"
 msgstr "Generovať do _schránky"
 
-#: src/paramwindow.c:688
+#: src/paramwindow.c:704
 msgid "Generate frames to the clipboard"
 msgstr "Generovať snímky do schránky"
 
-#: src/paramwindow.c:704
+#: src/paramwindow.c:720
 msgid "Generate to _New Clip"
 msgstr "Generovať do _nového klipu"
 
-#: src/paramwindow.c:709
+#: src/paramwindow.c:725
 msgid "Generate frames to a new clip"
 msgstr "Generovať snímky do nového klipu"
 
-#: src/paramwindow.c:832
+#: src/paramwindow.c:848
 #, c-format
 msgid ""
 "\n"
@@ -6046,58 +6047,58 @@ msgstr ""
 "Musíte vybrať najmenej %d snímkov k použitiu tohto efektu.\n"
 "\n"
 
-#: src/paramwindow.c:925 src/paramwindow.c:935
+#: src/paramwindow.c:941 src/paramwindow.c:951
 msgid "Set as default"
 msgstr "Nastaviť ako štandardné"
 
-#: src/paramwindow.c:927 src/paramwindow.c:939
+#: src/paramwindow.c:943 src/paramwindow.c:955
 msgid "Reset"
 msgstr ""
 
-#: src/paramwindow.c:937 src/rte_window.c:1514 src/omc-learn.c:1376
+#: src/paramwindow.c:953 src/rte_window.c:1514 src/omc-learn.c:1376
 msgid "Close _window"
 msgstr "Zavrieť okno"
 
-#: src/paramwindow.c:1289
+#: src/paramwindow.c:1305
 msgid "No parameters"
 msgstr "Žiadne parametre"
 
-#: src/paramwindow.c:1370
+#: src/paramwindow.c:1386
 msgid "Invalid parameter"
 msgstr "Neplatný parameter"
 
-#: src/paramwindow.c:1554
+#: src/paramwindow.c:1570
 msgid "LiVES: - Select Colour"
 msgstr "LiVES: - Vybrať farbu"
 
-#: src/paramwindow.c:1558
+#: src/paramwindow.c:1574
 msgid "Click to set the colour"
 msgstr "Kliknite pre nastavenie farby"
 
-#: src/paramwindow.c:1573
+#: src/paramwindow.c:1589
 #, fuzzy
 msgid "_Red"
 msgstr "_Znova"
 
-#: src/paramwindow.c:1574
+#: src/paramwindow.c:1590
 msgid "The red value (0 - 255)"
 msgstr "Červená hodnota (0 - 255)"
 
-#: src/paramwindow.c:1577
+#: src/paramwindow.c:1593
 #, fuzzy
 msgid "_Green"
 msgstr "Zelená"
 
-#: src/paramwindow.c:1578
+#: src/paramwindow.c:1594
 msgid "The green value (0 - 255)"
 msgstr "Zelená hodnota (0 - 255)"
 
-#: src/paramwindow.c:1581
+#: src/paramwindow.c:1597
 #, fuzzy
 msgid "_Blue"
 msgstr "Modrá"
 
-#: src/paramwindow.c:1582
+#: src/paramwindow.c:1598
 msgid "The blue value (0 - 255)"
 msgstr "Modrá hodnota (0 - 255)"
 
@@ -9166,7 +9167,7 @@ msgstr ""
 "LiVES našiel neplatný počet zvukových kanálov (%d).\n"
 "Nemohlo byť spustené.\n"
 
-#: src/multitrack.c:4884 src/multitrack.c:4893 src/multitrack.c:19789
+#: src/multitrack.c:4884 src/multitrack.c:4893 src/multitrack.c:19790
 msgid "Layout was wiped.\n"
 msgstr ""
 
@@ -9261,7 +9262,7 @@ msgstr "Vymazať _značky z časovej osi"
 msgid "Ignore selection limits when inserting"
 msgstr "Ignorovať obmedzenia výberu pri vkladaní"
 
-#: src/multitrack.c:5795 src/multitrack.c:15400
+#: src/multitrack.c:5795 src/multitrack.c:15401
 msgid "_Play from Timeline Position"
 msgstr "_Prehrať z určitého miesta na časovej osi"
 
@@ -9858,56 +9859,56 @@ msgstr ""
 "\n"
 " (variabilný)"
 
-#: src/multitrack.c:14286 src/multitrack.c:17379 src/multitrack.c:17391
+#: src/multitrack.c:14287 src/multitrack.c:17380 src/multitrack.c:17392
 #, c-format
 msgid "track %s"
 msgstr "stopa %s"
 
-#: src/multitrack.c:14291 src/multitrack.c:17384
+#: src/multitrack.c:14292 src/multitrack.c:17385
 #, c-format
 msgid "tracks %s and %s"
 msgstr "stopy %s a %s"
 
-#: src/multitrack.c:14297 src/multitrack.c:17394
+#: src/multitrack.c:14298 src/multitrack.c:17395
 msgid "selected tracks"
 msgstr "vybrané stopy"
 
-#: src/multitrack.c:14301
+#: src/multitrack.c:14302
 #, c-format
 msgid "Added %s %s to %s from %.4f to %.4f\n"
 msgstr "Pridané %s %s do %s z %.4f do %.4f\n"
 
-#: src/multitrack.c:14330
+#: src/multitrack.c:14331
 #, c-format
 msgid "Added effect %s to track %s from %.4f to %.4f\n"
 msgstr "Pridaný efekt %s do stopy %s z %.4f do %.4f\n"
 
-#: src/multitrack.c:14625
+#: src/multitrack.c:14626
 #, c-format
 msgid "rendered %d frames to new clip.\n"
 msgstr "vykreslené %d snímky do nového klipu.\n"
 
-#: src/multitrack.c:14715
+#: src/multitrack.c:14716
 msgid "Cleaning up..."
 msgstr "Prebieha čistenie..."
 
-#: src/multitrack.c:15393
+#: src/multitrack.c:15394
 msgid "_Pause"
 msgstr "_Pozastaviť"
 
-#: src/multitrack.c:15394
+#: src/multitrack.c:15395
 msgid "Pause (p)"
 msgstr "Pozastavené (p)"
 
-#: src/multitrack.c:15538
+#: src/multitrack.c:15539
 msgid "Press 'm' during playback"
 msgstr "Stlač 'm' počas prehrávania"
 
-#: src/multitrack.c:15539
+#: src/multitrack.c:15540
 msgid "to make a mark on the timeline"
 msgstr "urobiť značku na časovej osi"
 
-#: src/multitrack.c:15833
+#: src/multitrack.c:15834
 #, c-format
 msgid ""
 "Inserted audio %.4f to %.4f from clip %s into backing audio from time %.4f "
@@ -9915,13 +9916,13 @@ msgid ""
 msgstr ""
 "Vložený zvuk %.4f do %.4f z klipu %s do zvuku v pozadí od %.4f do %.4f\n"
 
-#: src/multitrack.c:16080
+#: src/multitrack.c:16081
 #, c-format
 msgid ""
 "Inserted frames %d to %d from clip %s into track %s from time %.4f to %.4f\n"
 msgstr "Vložené snímky %d do %d z klipu %s do do stopy %s od %.4f do %.4f\n"
 
-#: src/multitrack.c:16660
+#: src/multitrack.c:16661
 #, c-format
 msgid ""
 "Time region %.3f to %.3f\n"
@@ -9930,7 +9931,7 @@ msgstr ""
 "Časová zóna%.3f do %.3f\n"
 "vybraná.\n"
 
-#: src/multitrack.c:16664
+#: src/multitrack.c:16665
 msgid ""
 "select one or more tracks\n"
 "to create a region.\n"
@@ -9938,12 +9939,12 @@ msgstr ""
 "vyberte jednu alebo viac stôp\n"
 "k vytvoreniu regionu.\n"
 
-#: src/multitrack.c:16666
+#: src/multitrack.c:16667
 #, c-format
 msgid "%d video tracks selected.\n"
 msgstr "%d video stopa vybraná.\n"
 
-#: src/multitrack.c:16668
+#: src/multitrack.c:16669
 msgid ""
 "Double click on timeline\n"
 "to deselect time region."
@@ -9951,7 +9952,7 @@ msgstr ""
 "dvojité kliknutie na časovú zónu\n"
 "pre odznačenie časovej oblasti."
 
-#: src/multitrack.c:16675
+#: src/multitrack.c:16676
 msgid ""
 "Single click on an effect\n"
 "to select it."
@@ -9959,7 +9960,7 @@ msgstr ""
 "Jednoduché kliknutie na efekt\n"
 "pre jeho vybratie."
 
-#: src/multitrack.c:16676
+#: src/multitrack.c:16677
 msgid ""
 "Double click on an effect\n"
 "to edit it."
@@ -9967,7 +9968,7 @@ msgstr ""
 "Dvojité kliknutie na efekt\n"
 "pre jeho úpravu"
 
-#: src/multitrack.c:16677
+#: src/multitrack.c:16678
 msgid ""
 "Right click on an effect\n"
 "for context menu.\n"
@@ -9975,39 +9976,39 @@ msgstr ""
 "Kliknite pravým tlačidlom myši na efekt\n"
 "pre kontextové menu.\n"
 
-#: src/multitrack.c:16679
+#: src/multitrack.c:16680
 #, fuzzy
 msgid ""
 "Effect order can be changed at\n"
 "FILTER MAPS"
 msgstr "Zmeniť poradie efektov"
 
-#: src/multitrack.c:16686
+#: src/multitrack.c:16687
 msgid ""
 "You can select an effect,\n"
 "then use the INSERT BEFORE"
 msgstr ""
 
-#: src/multitrack.c:16687
+#: src/multitrack.c:16688
 msgid "or INSERT AFTER buttons to move it."
 msgstr "alebo VLOŽIŤ PO tlačítkom pre pohyb."
 
-#: src/multitrack.c:16723
+#: src/multitrack.c:16724
 #, fuzzy
 msgid ""
 "You can click and drag\n"
 "below the timeline"
 msgstr "Môžete kliknutím na náhľad zmeniť tieto hodnoty"
 
-#: src/multitrack.c:16724
+#: src/multitrack.c:16725
 msgid "to select a time region.\n"
 msgstr "vybrať časové pásmo.\n"
 
-#: src/multitrack.c:16959 src/multitrack.c:16972
+#: src/multitrack.c:16960 src/multitrack.c:16973
 msgid "Click on another effect,"
 msgstr "Kliknite na daľší efekt,"
 
-#: src/multitrack.c:16960 src/multitrack.c:16973
+#: src/multitrack.c:16961 src/multitrack.c:16974
 msgid ""
 "and the selected one\n"
 "will be inserted"
@@ -10015,46 +10016,46 @@ msgstr ""
 "a jeho vybraním\n"
 "bude vložený"
 
-#: src/multitrack.c:16961
+#: src/multitrack.c:16962
 msgid "after it.\n"
 msgstr "po.\n"
 
-#: src/multitrack.c:16974
+#: src/multitrack.c:16975
 msgid "before it.\n"
 msgstr "pred.\n"
 
-#: src/multitrack.c:17206
+#: src/multitrack.c:17207
 #, c-format
 msgid "Removed parameter values for effect %s at time %.4f\n"
 msgstr "Odstránené hodnoty pre efekt %s v čase %.4f\n"
 
-#: src/multitrack.c:17402
+#: src/multitrack.c:17403
 #, c-format
 msgid "Set parameter values for %s %s on %s at time %.4f\n"
 msgstr "Nastaviť hodnoty pre %s %s na %s v čase %.4f\n"
 
-#: src/multitrack.c:17891 src/multitrack.c:19512
+#: src/multitrack.c:17892 src/multitrack.c:19513
 msgid "_Autoreload each time"
 msgstr "_Automatické znovu načítanie"
 
-#: src/multitrack.c:17999
+#: src/multitrack.c:18000
 #, c-format
 msgid "Saved layout to %s\n"
 msgstr "Rozloženie uložené do %s\n"
 
-#: src/multitrack.c:19418
+#: src/multitrack.c:19419
 msgid "clips and frames"
 msgstr "klipy a snímky"
 
-#: src/multitrack.c:19422
+#: src/multitrack.c:19423
 msgid "clips"
 msgstr "klipy"
 
-#: src/multitrack.c:19425
+#: src/multitrack.c:19426
 msgid "frames"
 msgstr "snímky"
 
-#: src/multitrack.c:19435
+#: src/multitrack.c:19436
 msgid ""
 "\n"
 "Auto reload layout.\n"
@@ -10062,7 +10063,7 @@ msgstr ""
 "\n"
 "Automatické načítanie rozloženia.\n"
 
-#: src/multitrack.c:19438
+#: src/multitrack.c:19439
 #, c-format
 msgid ""
 "%s\n"
@@ -10073,11 +10074,11 @@ msgstr ""
 "Niektoré %s sa nenachádzajú v rozložení%s\n"
 "Preto nemohli byť správne otvorené.\n"
 
-#: src/multitrack.c:19577
+#: src/multitrack.c:19578
 msgid "auto backup"
 msgstr "automatické zálohovanie"
 
-#: src/multitrack.c:19580
+#: src/multitrack.c:19581
 #, c-format
 msgid ""
 "\n"
@@ -10086,59 +10087,59 @@ msgstr ""
 "\n"
 "Nedá sa načítať súbor s rozložením %s\n"
 
-#: src/multitrack.c:19600
+#: src/multitrack.c:19601
 #, c-format
 msgid "Loading layout from %s..."
 msgstr "Načítavam rozloženie z %s..."
 
-#: src/multitrack.c:19633
+#: src/multitrack.c:19634
 #, c-format
 msgid "Got %d events...processing..."
 msgstr "%d udalostí...spracovávam..."
 
-#: src/multitrack.c:19648
+#: src/multitrack.c:19649
 msgid "Checking and rebuilding event list"
 msgstr "Kontrolujem a opäť vytváram zoznam udalostí"
 
-#: src/multitrack.c:19674
+#: src/multitrack.c:19675
 #, c-format
 msgid "%d errors detected.\n"
 msgstr "%d nájdených chýb.\n"
 
-#: src/multitrack.c:19725
+#: src/multitrack.c:19726
 #, c-format
 msgid "Multitrack fps set to %.3f\n"
 msgstr "Multitrack fps nastavené na %.3f\n"
 
-#: src/multitrack.c:20724
+#: src/multitrack.c:20725
 msgid "LiVES: Multitrack audio mixer"
 msgstr "LiVES: Multitrack mixovanie zvuku"
 
-#: src/multitrack.c:20761
+#: src/multitrack.c:20762
 msgid "_Reset values"
 msgstr "_Vynulovať hodnoty"
 
-#: src/multitrack.c:20765
+#: src/multitrack.c:20766
 msgid "_Close mixer"
 msgstr "_Zatvoriť mixér"
 
-#: src/multitrack.c:20807
+#: src/multitrack.c:20808
 #, fuzzy
 msgid ""
 "_Invert backing audio\n"
 "and layer volumes"
 msgstr "Neplatný prehrávač zvuku %s\n"
 
-#: src/multitrack.c:20813
+#: src/multitrack.c:20814
 #, fuzzy
 msgid "Adjust backing and layer audio values so that they sum to 1.0"
 msgstr "Nastavte všetky hladiny hodnôt zvuku na rovnakú hodnotu"
 
-#: src/multitrack.c:20852
+#: src/multitrack.c:20853
 msgid "_Gang layer audio"
 msgstr "_Usporiadanie vrstvy zvuku"
 
-#: src/multitrack.c:20858
+#: src/multitrack.c:20859
 msgid "Adjust all layer audio values to the same value"
 msgstr "Nastavte všetky hladiny hodnôt zvuku na rovnakú hodnotu"
 

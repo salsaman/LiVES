@@ -15,6 +15,7 @@
 # v 2.5 add threading support and experimental webm encoding
 # v 2.6 made threading support optional because of instability problems; versioning string changed in ffmpeg
 # v 2.7 fixed webm encoding support, removed asf format
+# v 2.8 always prompt for threads
 #######################################################################
 
 if (!defined($standalone)) {
@@ -30,7 +31,7 @@ else {
 
 
 if ($command eq "version") {
-    print "ffmpeg encoder plugin v2.7\n";
+    print "ffmpeg encoder plugin v2.8\n";
     exit 0;
 }
 
@@ -117,6 +118,40 @@ if ($command eq "get_rfx") {
 	    print "</params>\n";
 
 	}
+	else {
+	    # mandatory section
+	    print "<define>\n";
+	    print "|1.7\n";
+	    print "</define>\n";
+	    
+	    # mandatory section
+	    print "<language_code>\n";
+	    print "0xF0\n";
+	    print "</language_code>\n";
+	    
+	    # optional section
+	    print "<params>\n";
+	    print "threads|Number of threads (>1 may cause instability)|num0|1|1|16|";
+	    print "</params>\n";
+	}
+    }
+    else {
+	# mandatory section
+	print "<define>\n";
+	print "|1.7\n";
+	print "</define>\n";
+	
+	# mandatory section
+	print "<language_code>\n";
+	print "0xF0\n";
+	print "</language_code>\n";
+	
+	# optional section
+	print "<params>\n";
+	print "threads|Number of threads (>1 may cause instability)|num0|1|1|16|";
+	print "</params>\n";
+	
+	
     }
 }
 
@@ -140,9 +175,10 @@ if ($command eq "encode") {
 
     unlink "testfile";
 
-    $usemp3=$ARGV[13];
-    $usemp3lame=$ARGV[14];
-    $nthreads=$ARGV[15];
+    $nthreads=$ARGV[13];
+
+    $usemp3=$ARGV[14];
+    $usemp3lame=$ARGV[15];
 
     $vid_length=($end-$start+1)/$fps;
 

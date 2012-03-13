@@ -308,6 +308,10 @@ int farneback_process (weed_plant_t *inst, weed_timecode_t tc) {
 
 	    prevImg (y,x) = nextImg ( y + flow (y,x)[1], x + flow (y,x)[0])
 
+	    since we are mainly interested int nextImg, we store: -flow
+	    e.g.
+
+	    nextImg (y,x) = prevImg ( y - flow (y,x)[1], x - flow (y,x)[0])
 
   */
 
@@ -327,13 +331,10 @@ int farneback_process (weed_plant_t *inst, weed_timecode_t tc) {
 
   fptr=(float *)cvflow.data;
 
-
-  fprintf(stderr,"vals %d x %d (%d %d %d) %p %p %p\n",width,height,irow,orow1,orow2,dst1,dst2,fptr);
-
   for (i=0;i<height;i++) {
     for (j=0;j<width;j++) {
-      *dst2++=*fptr++;
-      *dst1++=*fptr++;
+      *dst2++=-*fptr++;
+      *dst1++=-*fptr++;
     }
     fptr+=irow;
     dst1+=orow1;

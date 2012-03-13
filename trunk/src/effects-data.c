@@ -702,7 +702,7 @@ gboolean cconx_convert_pixel_data(weed_plant_t *dchan, weed_plant_t *schan) {
   dpdata=weed_get_voidptr_value(dchan,"pixel_data",&error);
 
   if (dpdata!=NULL) {
-    //g_free(dpdata);
+    g_free(dpdata);
     dpdata=NULL;
   }
 

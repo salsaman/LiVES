@@ -5476,6 +5476,7 @@ static gboolean recover_files(gchar *recovery_file, gboolean auto_recover) {
 	cfile->start=cfile->frames>0?1:0;
 	cfile->end=cfile->frames;
 	cfile->is_loaded=TRUE;
+	cfile->changed=TRUE;
 	unlink (cfile->info_file);
 	set_main_title(cfile->name,0);
 	

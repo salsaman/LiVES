@@ -14129,7 +14129,7 @@ static void add_effect_inner(lives_mt *mt, int num_in_tracks, int *in_tracks, in
   }
 
   // add effect_init event
-  mt->event_list=append_filter_init_event(mt->event_list,start_tc,mt->current_fx,num_in_tracks);
+  mt->event_list=append_filter_init_event(mt->event_list,start_tc,mt->current_fx,num_in_tracks,-1,NULL);
   mt->init_event=get_last_event(mt->event_list);
   unlink_event(mt->event_list,mt->init_event);
   weed_set_int_array(mt->init_event,"in_tracks",num_in_tracks,in_tracks);
@@ -14141,7 +14141,8 @@ static void add_effect_inner(lives_mt *mt, int num_in_tracks, int *in_tracks, in
     pchain=NULL;
   }
 
-  if (weed_plant_has_leaf(filter,"in_parameter_templates")) pchain=filter_init_add_pchanges(mt->event_list,filter,mt->init_event,num_in_tracks);
+  if (weed_plant_has_leaf(filter,"in_parameter_templates")) 
+    pchain=filter_init_add_pchanges(mt->event_list,filter,mt->init_event,num_in_tracks);
 
   // add effect map event
   init_events=get_init_events_before(start_event,mt->init_event,TRUE);

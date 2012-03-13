@@ -2988,13 +2988,13 @@ void do_onchange (GObject *object, lives_rfx_t *rfx) {
     // init
     switch (rfx->status) {
     case RFX_STATUS_BUILTIN:
-      plugdir=g_build_filename ("%s%s%s",prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_RENDERED_EFFECTS_BUILTIN);
+      plugdir=g_build_filename ("%s%s%s",prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_RENDERED_EFFECTS_BUILTIN,NULL);
       break;
     case RFX_STATUS_CUSTOM:
-      plugdir=g_build_filename ("%s%s%s",capable->home_dir,LIVES_CONFIG_DIR,PLUGIN_RENDERED_EFFECTS_CUSTOM);
+      plugdir=g_build_filename ("%s%s%s",capable->home_dir,LIVES_CONFIG_DIR,PLUGIN_RENDERED_EFFECTS_CUSTOM,NULL);
       break;
     case RFX_STATUS_TEST:
-      plugdir=g_build_filename ("%s%s%s",capable->home_dir,LIVES_CONFIG_DIR,PLUGIN_RENDERED_EFFECTS_TEST);
+      plugdir=g_build_filename ("%s%s%s",capable->home_dir,LIVES_CONFIG_DIR,PLUGIN_RENDERED_EFFECTS_TEST,NULL);
       break;
     default:
       plugdir=g_strdup_printf ("%s",prefs->tmpdir);

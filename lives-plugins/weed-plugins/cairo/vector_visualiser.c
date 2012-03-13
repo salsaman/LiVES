@@ -39,8 +39,9 @@ static int package_version=1; // version of this package
 
 #include <gdk/gdk.h>
 
-#include <stdio.h>;
+#include <stdio.h>
 #include <string.h>
+#include <math.h>
 
 static gboolean is_big_endian() {
   int testint = 0x12345678;
@@ -274,29 +275,80 @@ static gboolean cairo_to_channel(cairo_t *cairo, weed_plant_t *channel) {
 #define MD_GROUP 0
 
 
+static void draw_arrow(cairo_t *cr, int i, int j, float x, float y) {
+  // draw arrow from point i,j to i+x, j+y
+  int finx=(int)(i+x+.5);
+  int finy=(int)(j+y+.5);
+
+  int len=sqrt(x*x+y*y);
+
+  cairo_set_line_width(cr,4.);
+  cairo_set_source_rgb(cr,1.,0.,0.);
+  cairo_move_to(cr,i,j);
+  cairo_line_to(cr,finx,finy);
+
+  cairo_arc(cr,finx,finy,len/4.,0,M_PI*2.);
+  cairo_stroke(cr);
+
+
+
+}
+
+
+
 
 int vector_visualiser_process (weed_plant_t *inst, weed_timecode_t timestamp) {
-  cairo_t *cairo;
+  cairo_t *cr;
 
   int error;
+
   weed_plant_t **in_channels=weed_get_plantptr_array(inst,"in_channels",&error);
-  weed_plant_t *out_channel=weed_get_plantptr_value(inst,"out_channels",&error);
   weed_plant_t **in_params=weed_get_plantptr_array(inst,"in_parameters",&error);
+
+  weed_plant_t *out_channel=weed_get_plantptr_value(inst,"out_channels",&error);
+
+  float *alpha0=(float *)weed_get_voidptr_value(in_channels[1],"pixel_data",&error);
+  float *alpha1=(float *)weed_get_voidptr_value(in_channels[2],"pixel_data",&error);
+
+
+  float x,y,scale=1.;
+
   int mode=MD_GROUP;
 
-  int enabled=weed_get_boolean_value(in_params[0],"value",&error);
-  weed_free(in_params);
+  int irow0=weed_get_int_value(in_channels[1],"rowstrides",&error)>>2;
+  int irow1=weed_get_int_value(in_channels[2],"rowstrides",&error)>>2;
 
-  fprintf(stderr,"vvis run\n");
+  int width=weed_get_int_value(out_channel,"width",&error);
+  int height=weed_get_int_value(out_channel,"height",&error);
+
+
+  int enabled=weed_get_boolean_value(in_params[0],"value",&error);
+
+
+  register int i,j;
+
+  weed_free(in_params);
 
   if (enabled==WEED_FALSE) {
     return WEED_NO_ERROR;
   }
 
-  cairo=channel_to_cairo(in_channels[0]);
+  cr=channel_to_cairo(in_channels[0]);
 
   switch (mode) {
   case MD_GROUP:
+    {
+      int smwidth=width/20;
+      int smheight=height/20;
+
+      for (i=smheight;i<height;i+=smheight*2) {
+	for (j=smwidth;j<width;j+=smwidth*2) {
+	  x=alpha0[i*irow0+j];
+	  y=alpha1[i*irow1+j];
+	  draw_arrow(cr,j,i,x*scale,y*scale);
+	}
+      }
+    }
     break;
   default:
     break;
@@ -305,7 +357,7 @@ int vector_visualiser_process (weed_plant_t *inst, weed_timecode_t timestamp) {
 
   weed_free(in_channels);
 
-  cairo_to_channel(cairo,out_channel);
+  cairo_to_channel(cr,out_channel);
 
   return WEED_NO_ERROR;
 }

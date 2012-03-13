@@ -178,8 +178,8 @@ int farneback_process (weed_plant_t *inst, weed_timecode_t tc) {
 
   uint8_t *src=(uint8_t *)weed_get_voidptr_value(in_channel,"pixel_data",&error);
 
-  uint8_t *dst1=(uint8_t *)weed_get_voidptr_value(out_channels[0],"pixel_data",&error);
-  uint8_t *dst2=(uint8_t *)weed_get_voidptr_value(out_channels[1],"pixel_data",&error);
+  float *dst1=(float *)weed_get_voidptr_value(out_channels[0],"pixel_data",&error);
+  float *dst2=(float *)weed_get_voidptr_value(out_channels[1],"pixel_data",&error);
 
   int width=weed_get_int_value(in_channel,"width",&error);
   int height=weed_get_int_value(in_channel,"height",&error);
@@ -326,6 +326,9 @@ int farneback_process (weed_plant_t *inst, weed_timecode_t tc) {
   orow2=(orow2>>2)-width;
 
   fptr=(float *)cvflow.data;
+
+
+  fprintf(stderr,"vals %d x %d (%d %d %d) %p %p %p\n",width,height,irow,orow1,orow2,dst1,dst2,fptr);
 
   for (i=0;i<height;i++) {
     for (j=0;j<width;j++) {

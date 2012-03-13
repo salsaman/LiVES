@@ -1527,7 +1527,7 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
 
   // all we really do here is set from_files,aseeks and avels arrays and call render_audio_segment
 
-  lives_audio_track_state_t *atstate;
+  lives_audio_track_state_t *atstate=NULL;
   int nnfiles,i;
   gdouble chvols[MAX_AUDIO_TRACKS]; // TODO - use list
 
@@ -1578,7 +1578,8 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
     // start of the track buffer
 
 
-    atstate=get_audio_and_effects_state_at(event_list,event,TRUE,exact);
+    if (event!=get_first_event(event_list))
+      atstate=get_audio_and_effects_state_at(event_list,event,TRUE,exact);
     
     if (atstate!=NULL) {
       

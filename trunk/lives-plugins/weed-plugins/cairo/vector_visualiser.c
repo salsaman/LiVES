@@ -55,7 +55,9 @@ typedef struct {
 
 
 // TODO - make non-static
-list_ent xlist[MAX_ELEMS];
+static list_ent xlist[MAX_ELEMS];
+static void *pixel_data;
+
 
 
 static gboolean is_big_endian() {
@@ -168,9 +170,6 @@ void alpha_premult(weed_plant_t *channel) {
 
 
 
-
-
-
 static cairo_t *channel_to_cairo(weed_plant_t *channel) {
   // convert a weed channel to cairo
 
@@ -181,7 +180,7 @@ static cairo_t *channel_to_cairo(weed_plant_t *channel) {
 
   register int i;
 
-  guchar *src,*dst,*pixel_data;
+  guchar *src,*dst;
 
   cairo_surface_t *surf;
   cairo_t *cairo=NULL;
@@ -245,8 +244,6 @@ static cairo_t *channel_to_cairo(weed_plant_t *channel) {
 
   cairo=cairo_create(surf);
   cairo_surface_destroy(surf);
-
-  weed_free(pixel_data);
 
   return cairo;
 }
@@ -366,7 +363,7 @@ int vector_visualiser_process (weed_plant_t *inst, weed_timecode_t timestamp) {
 
   float x,y,scale=1.;
 
-  int mode=MD_LARGEST;
+  int mode=MD_GRID;
 
   int irow0=weed_get_int_value(in_channels[1],"rowstrides",&error)>>2;
   int irow1=weed_get_int_value(in_channels[2],"rowstrides",&error)>>2;
@@ -433,6 +430,8 @@ int vector_visualiser_process (weed_plant_t *inst, weed_timecode_t timestamp) {
 
   cairo_to_channel(cr,out_channel);
   cairo_destroy(cr);
+
+  weed_free(pixel_data);
 
   weed_free(in_channels);
 

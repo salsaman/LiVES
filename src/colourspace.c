@@ -10914,6 +10914,9 @@ cairo_t *layer_to_cairo(weed_plant_t *layer) {
   cairo_surface_destroy(surf);
 
 
+  // TODO - ** if pixel_data!=src, we need to free it when we destroy the cairo
+
+
   return cairo;
 }
 

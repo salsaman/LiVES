@@ -2150,6 +2150,9 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
 
 	weed_set_voidptr_array(channel,"pixel_data",numplanes,pixel_data);
 	weed_free(pixel_data);
+
+	g_print("set pd to %p for %p\n",channel,pixel_data[0]);
+
 	if (contiguous) weed_set_boolean_value(channel,"host_pixel_data_contiguous",WEED_TRUE);
 	else if (weed_plant_has_leaf(channel,"host_pixel_data_contiguous")) 
 	  weed_leaf_delete(channel,"host_pixel_data_contiguous");
@@ -2878,15 +2881,15 @@ static void weed_apply_filter_map (weed_plant_t **layers, weed_plant_t *filter_m
 	    // chain any data pipelines
 	    pconx_chain_data(key,mode);
 	  }
+	  g_print("app %p\n",instance);
 	  filter_error=weed_apply_instance (instance,init_event,layers,0,0,tc);
 	  //if (filter_error!=FILTER_NO_ERROR) g_printerr("Render error was %d\n",filter_error);
 	}
       }
     }
 
-
     // free any alpha outs 
-   for (i=0;i<num_inst;i++) {
+    for (i=0;i<num_inst;i++) {
       init_event=(weed_plant_t *)init_events[i];
       if (weed_plant_has_leaf(init_event,"host_tag")) {
 	keystr=weed_get_string_value(init_event,"host_tag",&error);
@@ -2895,7 +2898,7 @@ static void weed_apply_filter_map (weed_plant_t **layers, weed_plant_t *filter_m
 	if (rte_key_valid (key+1,FALSE)) {
 	  weed_plant_t **ochans;
 	  int nchans;
-	  if ((instance=key_to_instance[i][key_modes[i]])==NULL) continue;
+	  if ((instance=key_to_instance[key][key_modes[key]])==NULL) continue;
 	  if (!weed_plant_has_leaf(instance,"out_channels")||weed_get_plantptr_value(instance,"out_channels",&error)==NULL)
 	    continue;
 	  nchans=weed_leaf_num_elements(instance,"out_channels");
@@ -2904,7 +2907,6 @@ static void weed_apply_filter_map (weed_plant_t **layers, weed_plant_t *filter_m
 	  for (j=0;j<nchans;j++) {
 	    int pal=weed_get_int_value(ochans[j],"current_palette",&error);
 	    if (weed_plant_has_leaf(ochans[j],"pixel_data")&&weed_palette_is_alpha_palette(pal) && 
-		weed_plant_has_leaf(ochans[j],"pixel_data") && 
 		(pdata=weed_get_voidptr_value(ochans[j],"pixel_data",&error))!=NULL) {
 	      weed_free(pdata);
 	      weed_set_voidptr_value(ochans[j],"pixel_data",NULL);
@@ -2913,7 +2915,7 @@ static void weed_apply_filter_map (weed_plant_t **layers, weed_plant_t *filter_m
 	  weed_free(ochans);
 	}
       }
-   }
+    }
     weed_free(init_events);
   }
 }
@@ -2975,7 +2977,6 @@ weed_plant_t *weed_apply_effects (weed_plant_t **layers, weed_plant_t *filter_ma
       }
     }
   }
-
 
   
   // TODO - set mainw->vpp->play_params from connected out params and out alphas

@@ -10824,7 +10824,11 @@ LIVES_INLINE int get_weed_palette_for_cairo(void) {
   return (capable->byte_order==LIVES_BIG_ENDIAN)?WEED_PALETTE_ARGB32:WEED_PALETTE_BGRA32;
 }
 
+static void pdfree(void *data) {
+  weed_free(data);
+}
 
+static cairo_user_data_key_t crkey;
 
 cairo_t *layer_to_cairo(weed_plant_t *layer) {
   // convert a weed layer to cairo
@@ -10913,9 +10917,9 @@ cairo_t *layer_to_cairo(weed_plant_t *layer) {
   cairo=cairo_create(surf);
   cairo_surface_destroy(surf);
 
-
-  // TODO - ** if pixel_data!=src, we need to free it when we destroy the cairo
-
+  if (pixel_data!=src) {
+    cairo_set_user_data(cairo, &crkey, pixel_data, pdfree);
+  }
 
   return cairo;
 }

@@ -56,7 +56,7 @@ typedef struct {
 
 // TODO - make non-static
 static list_ent xlist[MAX_ELEMS];
-static void *pixel_data;
+static cairo_user_data_key_t crkey;
 
 
 
@@ -170,6 +170,10 @@ void alpha_premult(weed_plant_t *channel) {
 
 
 
+static void pdfree(void *data) {
+  weed_free(data);
+}
+
 static cairo_t *channel_to_cairo(weed_plant_t *channel) {
   // convert a weed channel to cairo
 
@@ -185,6 +189,8 @@ static cairo_t *channel_to_cairo(weed_plant_t *channel) {
   cairo_surface_t *surf;
   cairo_t *cairo=NULL;
   cairo_format_t cform;
+
+  void *pixel_data;
 
   width=weed_get_int_value(channel,"width",&error);
 
@@ -244,6 +250,8 @@ static cairo_t *channel_to_cairo(weed_plant_t *channel) {
 
   cairo=cairo_create(surf);
   cairo_surface_destroy(surf);
+
+  cairo_set_user_data(cairo, &crkey, pixel_data, pdfree);
 
   return cairo;
 }
@@ -306,14 +314,6 @@ static gboolean cairo_to_channel(cairo_t *cairo, weed_plant_t *channel) {
 
   return TRUE;
 }
-
-
-
-
-
-
-
-
 
 
 
@@ -430,8 +430,6 @@ int vector_visualiser_process (weed_plant_t *inst, weed_timecode_t timestamp) {
 
   cairo_to_channel(cr,out_channel);
   cairo_destroy(cr);
-
-  weed_free(pixel_data);
 
   weed_free(in_channels);
 

@@ -1933,6 +1933,7 @@ on_undo_activate                      (GtkMenuItem     *menuitem,
 
     if (mainw->com_failed) return;
     
+    mainw->com_failed=FALSE;
     mainw->cancelled=CANCEL_NONE;
     mainw->error=FALSE;
     
@@ -1953,7 +1954,7 @@ on_undo_activate                      (GtkMenuItem     *menuitem,
 	if (mainw->com_failed) return;
 
 	retvalb=do_auto_dialog(_("Restoring audio..."),0);
-	if (retvalb) {
+	if (!retvalb) {
 	  d_print_failed();
 	  //cfile->may_be_damaged=TRUE;
 	  return;
@@ -7104,8 +7105,11 @@ void on_cancel_keep_button_clicked (GtkButton *button, gpointer user_data) {
       mainw->cancelled=CANCEL_KEEP;
       return;
     }
-    if (!mainw->is_rendering) 
+    if (!mainw->is_rendering) {
       keep_frames=cfile->proc_ptr->frames_done-cfile->progress_start+cfile->start-1+mainw->internal_messaging*2;
+      if (mainw->internal_messaging && atoi(mainw->msg)>cfile->proc_ptr->frames_done) 
+	keep_frames=atoi(mainw->msg)-cfile->progress_start+cfile->start-1+2;
+    }
     else keep_frames=cfile->frames+1;
     if (keep_frames>mainw->internal_messaging) {
       gchar *msg=g_strdup_printf(_ ("%d frames are enough !\n"),keep_frames-cfile->start);
@@ -7148,10 +7152,10 @@ void on_cancel_keep_button_clicked (GtkButton *button, gpointer user_data) {
       else {
 	mainw->internal_messaging=FALSE;
 	if (!mainw->keep_pre) com=g_strdup_printf ("%s mv_mgk \"%s\" %d %d \"%s\"",prefs->backend,cfile->handle,
-						   cfile->start,keep_frames,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
+						   cfile->start,keep_frames-1,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
 	else {
 	  com=g_strdup_printf("%s mv_pre \"%s\" %d %d \"%s\" &",prefs->backend_sync,cfile->handle,
-			      cfile->start,keep_frames,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
+			      cfile->start,keep_frames-1,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
 	  mainw->keep_pre=FALSE;
 	}
       }

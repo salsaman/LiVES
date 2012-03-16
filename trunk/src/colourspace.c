@@ -11106,6 +11106,9 @@ void weed_layer_free (weed_plant_t *layer) {
 
   if (layer==NULL) return;
 
+  if (weed_plant_has_leaf(layer,"host_orig_pdata")&&weed_get_boolean_value(layer,"host_orig_pdata",&error)==WEED_TRUE) 
+    goto wpf;
+
   if (weed_plant_has_leaf(layer,"pixel_data")) {
     pd_elements=weed_leaf_num_elements(layer,"pixel_data");
     if (weed_plant_has_leaf(layer,"host_pixel_data_contiguous")&&
@@ -11125,6 +11128,9 @@ void weed_layer_free (weed_plant_t *layer) {
       }
     }
   }
+
+
+ wpf:
   weed_plant_free(layer);
 }
 

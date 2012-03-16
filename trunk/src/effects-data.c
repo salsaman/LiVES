@@ -557,6 +557,7 @@ void cconx_add_connection(int ikey, int imode, int icnum, int okey, int omode, i
     
     // make space for new
     cconx->nconns=(int *)g_realloc(cconx->nconns,posn*sizint);
+    cconx->chans=(int *)g_realloc(cconx->chans,posn*sizint);
 
     cconx->okey=(int *)g_realloc(cconx->okey,totcons*sizint);
     cconx->omode=(int *)g_realloc(cconx->omode,totcons*sizint);

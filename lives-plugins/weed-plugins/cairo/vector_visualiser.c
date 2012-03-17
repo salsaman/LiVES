@@ -343,7 +343,6 @@ static void draw_arrow(cairo_t *cr, int i, int j, float x, float y) {
   cairo_stroke(cr);
 
 
-
 }
 
 
@@ -390,6 +389,9 @@ int vector_visualiser_process (weed_plant_t *inst, weed_timecode_t timestamp) {
     {
       int smwidth=width/20;
       int smheight=height/20;
+
+      if (smwidth<1) smwidth=1;
+      if (smheight<1) smheight=1;
 
       for (i=smheight;i<height;i+=smheight*2) {
 	for (j=smwidth;j<width;j+=smwidth*2) {

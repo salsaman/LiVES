@@ -196,7 +196,7 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
    while ((msg=(aserver_message_t *)pulsed->msgq)!=NULL) {
      switch (msg->command) {
      case ASERVER_CMD_FILE_OPEN:
-       new_file=atoi(msg->data);
+       new_file=atoi((char *)msg->data);
        if (pulsed->playing_file!=new_file) {
 	 if (pulsed->is_opening) filename=g_build_filename(prefs->tmpdir,mainw->files[new_file]->handle,
 							   "audiodump.pcm",NULL);
@@ -232,7 +232,7 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
        break;
      case ASERVER_CMD_FILE_SEEK:
        if (pulsed->fd<0) break;
-       xseek=seek=atol(msg->data);
+       xseek=seek=atol((char *)msg->data);
        if (seek<0.) xseek=0.;
        if (!pulsed->mute) {
 	 lseek(pulsed->fd,xseek,SEEK_SET);
@@ -245,7 +245,7 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
      default:
        msg->data=NULL;
      }
-     if (msg->data!=NULL) g_free(msg->data);
+     if (msg->data!=NULL) g_free((gpointer)msg->data);
      msg->command=ASERVER_CMD_PROCESSED;
      if (msg->next==NULL) pulsed->msgq=NULL;
      else pulsed->msgq = msg->next;

@@ -2274,6 +2274,7 @@ void play_file (void) {
     if ((!mainw->sep_win||(!mainw->faded&&(prefs->sepwin_type!=1)))&&(cfile->frames>0||mainw->foreign)) {
       // show the frame in the main window
       gtk_widget_show(mainw->playframe);
+      while(g_main_context_iteration(NULL,FALSE));
     }
   }
 

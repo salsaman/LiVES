@@ -300,7 +300,7 @@ static int audio_process (nframes_t nframes, void *arg) {
     // TODO - set seek_pos after setting record params
     switch (msg->command) {
     case ASERVER_CMD_FILE_OPEN:
-      new_file=atoi(msg->data);
+      new_file=atoi((char *)msg->data);
       if (jackd->playing_file!=new_file) {
 	jackd->playing_file=new_file;
       }
@@ -315,7 +315,7 @@ static int audio_process (nframes_t nframes, void *arg) {
       break;
     case ASERVER_CMD_FILE_SEEK:
       if (jackd->playing_file<0) break;
-      xseek=atol(msg->data);
+      xseek=atol((char *)msg->data);
       if (xseek<0.) xseek=0.;
       jackd->seek_pos=xseek;
       jackd->audio_ticks=mainw->currticks;
@@ -324,7 +324,7 @@ static int audio_process (nframes_t nframes, void *arg) {
     default:
       msg->data=NULL;
     }
-    if (msg->data!=NULL) g_free(msg->data);
+    if (msg->data!=NULL) g_free((char *)msg->data);
     msg->command=ASERVER_CMD_PROCESSED;
     if (msg->next==NULL) jackd->msgq=NULL; 
     else jackd->msgq = msg->next;

@@ -3672,6 +3672,7 @@ void make_play_window(void) {
       gtk_widget_queue_resize(mainw->preview_box);
       // be careful, the user could switch out of sepwin here !
       mainw->noswitch=TRUE;
+
       while (g_main_context_iteration(NULL,FALSE));
       mainw->noswitch=FALSE;
       if (mainw->play_window==NULL) return;
@@ -3705,15 +3706,15 @@ void make_play_window(void) {
 
   gtk_widget_set_tooltip_text( mainw->m_sepwinbutton,_ ("Hide Play Window"));
 
-    mainw->pw_exp_func=g_signal_connect_after (GTK_OBJECT (mainw->play_window), "expose_event",
+  mainw->pw_exp_func=g_signal_connect_after (GTK_OBJECT (mainw->play_window), "expose_event",
 					     G_CALLBACK (expose_play_window),
 					     NULL);
-
-    g_signal_connect (GTK_OBJECT (mainw->play_window), "delete_event",
-		      G_CALLBACK (on_stop_activate_by_del),
-		      NULL);
-
-
+  
+  g_signal_connect (GTK_OBJECT (mainw->play_window), "delete_event",
+		    G_CALLBACK (on_stop_activate_by_del),
+		    NULL);
+  
+  
   if (((mainw->current_file>-1&&(cfile->is_loaded||(cfile->clip_type!=CLIP_TYPE_DISK&&
 						    cfile->clip_type!=CLIP_TYPE_FILE)))||
        (mainw->preview&&cfile->frames>0))&&(mainw->multitrack!=NULL||mainw->playing_file>-1)) {

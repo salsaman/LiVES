@@ -202,6 +202,8 @@ int farneback_process (weed_plant_t *inst, weed_timecode_t tc) {
 
   _sdata *sdata=(_sdata *)weed_get_voidptr_value(inst,"plugin_internal",&error);
 
+  weed_free(out_channels);
+
   // convert image to greyscale
 
   cvgrey = new Mat(1,1,CV_8U);
@@ -340,9 +342,8 @@ int farneback_process (weed_plant_t *inst, weed_timecode_t tc) {
     dst1+=orow1;
     dst2+=orow2;
   }
-  // clean up
 
-  weed_free(out_channels);
+
   return WEED_NO_ERROR;
 }
 

@@ -1368,29 +1368,41 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
   // then the output will be smaller also and need resizing by the caller
 
   // TODO ** - handle return errors
-  int num_in_tracks,num_out_tracks;
   int *in_tracks,*out_tracks;
+  int *rowstrides;
+  int *layer_rows=NULL,*channel_rows;
+  int *mand;
+
+  void **pixel_data;
+
+  void *pdata;
+
+  weed_process_f *process_func_ptr_ptr;
+  weed_process_f process_func;
+  weed_plant_t *def_channel=NULL;
+
+  int num_in_tracks,num_out_tracks;
   int error;
+
   weed_plant_t *filter=weed_get_plantptr_value(inst,"filter_class",&error);
   weed_plant_t *layer=NULL,*orig_layer=NULL;
+
   weed_plant_t **in_channels,**out_channels,*channel,*chantmpl;
+  weed_plant_t **in_ctmpls;
+
   int frame;
   int inwidth,inheight,inpalette,outpalette,channel_flags,filter_flags=0;
   int palette,cpalette;
   int outwidth,outheight;
   gboolean needs_reinit=FALSE,inplace=FALSE;
   int incwidth,incheight,numplanes=0,width,height;
-  int *rowstrides;
-  void **pixel_data;
-  weed_process_f *process_func_ptr_ptr;
-  weed_process_f process_func;
-  weed_plant_t *def_channel=NULL;
+
   gboolean rowstrides_changed;
   gboolean ignore_palette;
   int nchr;
-  int *layer_rows=NULL,*channel_rows;
+
   lives_filter_error_t retval=FILTER_NO_ERROR;
-  int *mand;
+
   int maxinwidth=4,maxinheight=4;
   int iclamping,isampling,isubspace;
   int clip;
@@ -1400,8 +1412,6 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
   int oclamping=-1;
   int flags;
   int num_in_alpha=0,num_out_alpha=0;
-
-  weed_plant_t **in_ctmpls;
 
   gboolean def_disabled=FALSE;
   gboolean all_outs_alpha=TRUE,all_ins_alpha=FALSE;
@@ -2123,9 +2133,15 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
 
       palette=weed_get_int_value(channel,"current_palette",&error);
 
-      width=weed_get_int_value(channel,"width",&error);
-      height=weed_get_int_value(channel,"height",&error);
-      //pdata=weed_get_voidptr_value(channel,"pixel_data",&error);
+      width=weed_get_int_value(def_channel,"width",&error);
+      height=weed_get_int_value(def_channel,"height",&error);
+  
+      pdata=weed_get_voidptr_value(channel,"pixel_data",&error);
+
+      if (weed_palette_is_alpha_palette(palette)&&outpalette==palette&&outwidth==width&&outheight==height&&pdata!=NULL) {
+	weed_free(channel_rows);
+	continue;
+      }
 
       set_channel_size(channel,opwidth/weed_palette_get_pixels_per_macropixel(palette),opheight,1,NULL);
 
@@ -2219,7 +2235,7 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
 
       if (!weed_plant_has_leaf(channel,"host_orig_pdata")||
 	  weed_get_boolean_value(channel,"host_orig_pdata",&error)!=WEED_TRUE) {
-	void *pdata=weed_get_voidptr_value(channel,"pixel_data",&error);
+	pdata=weed_get_voidptr_value(channel,"pixel_data",&error);
 	if (pdata!=NULL) g_free(pdata);
       }
       weed_set_voidptr_value(channel,"pixel_data",NULL);
@@ -2801,13 +2817,12 @@ static void weed_apply_filter_map (weed_plant_t **layers, weed_plant_t *filter_m
 
   gchar *keystr;
 
-  void *pdata;
   void **init_events;
 
   int filter_error;
   int key,num_inst,error;
 
-  register int i,j;
+  register int i;
 
   // this is called during rendering - we will have previously received a filter_map event and now we apply this to layers
 
@@ -2885,34 +2900,6 @@ static void weed_apply_filter_map (weed_plant_t **layers, weed_plant_t *filter_m
       }
     }
 
-    // free any alpha outs 
-    for (i=0;i<num_inst;i++) {
-      init_event=(weed_plant_t *)init_events[i];
-      if (weed_plant_has_leaf(init_event,"host_tag")) {
-	keystr=weed_get_string_value(init_event,"host_tag",&error);
-	key=atoi(keystr);
-	weed_free(keystr);
-	if (rte_key_valid (key+1,FALSE)) {
-	  weed_plant_t **ochans;
-	  int nchans;
-	  if ((instance=key_to_instance[key][key_modes[key]])==NULL) continue;
-	  if (!weed_plant_has_leaf(instance,"out_channels")||weed_get_plantptr_value(instance,"out_channels",&error)==NULL)
-	    continue;
-	  nchans=weed_leaf_num_elements(instance,"out_channels");
-	  if (nchans==0) continue;
-	  ochans=weed_get_plantptr_array(instance,"out_channels",&error);
-	  for (j=0;j<nchans;j++) {
-	    int pal=weed_get_int_value(ochans[j],"current_palette",&error);
-	    if (weed_plant_has_leaf(ochans[j],"pixel_data")&&weed_palette_is_alpha_palette(pal) && 
-		(pdata=weed_get_voidptr_value(ochans[j],"pixel_data",&error))!=NULL) {
-	      weed_free(pdata);
-	      weed_set_voidptr_value(ochans[j],"pixel_data",NULL);
-	    }
-	  }
-	  weed_free(ochans);
-	}
-      }
-    }
     weed_free(init_events);
   }
 }
@@ -2939,7 +2926,7 @@ weed_plant_t *weed_apply_effects (weed_plant_t **layers, weed_plant_t *filter_ma
   int clip;
   void *pdata;
 
-  register int i,j;
+  register int i;
 
   if (mainw->is_rendering&&!(cfile->proc_ptr!=NULL&&mainw->preview)) {
     // rendering from multitrack
@@ -2979,33 +2966,6 @@ weed_plant_t *weed_apply_effects (weed_plant_t **layers, weed_plant_t *filter_ma
   // TODO - set mainw->vpp->play_params from connected out params and out alphas
 
   if (!mainw->is_rendering) {
-    // free pixel_data for all instance out_channels with alpha palettes
-    // alpha in_channels were freed after each effect, unless they reffed an out_channel padata directly
-    for (i=0;i<FX_KEYS_MAX_VIRTUAL;i++) {
-      if (rte_key_valid(i+1,TRUE)) {
-	if (mainw->rte&(GU641<<i)) {
-	  weed_plant_t **ochans;
-	  int nchans;
-	  if ((instance=key_to_instance[i][key_modes[i]])==NULL) continue;
-	  if (!weed_plant_has_leaf(instance,"out_channels")||weed_get_plantptr_value(instance,"out_channels",&error)==NULL)
-	    continue;
-	  nchans=weed_leaf_num_elements(instance,"out_channels");
-	  if (nchans==0) continue;
-	  ochans=weed_get_plantptr_array(instance,"out_channels",&error);
-	  for (j=0;j<nchans;j++) {
-	    int pal=weed_get_int_value(ochans[j],"current_palette",&error);
-	    if (weed_plant_has_leaf(ochans[j],"pixel_data")&&weed_palette_is_alpha_palette(pal) && 
-		weed_plant_has_leaf(ochans[j],"pixel_data") && 
-		(pdata=weed_get_voidptr_value(ochans[j],"pixel_data",&error))!=NULL) {
-	      weed_free(pdata);
-	      weed_set_voidptr_value(ochans[j],"pixel_data",NULL);
-	    }
-	  }
-	  weed_free(ochans);
-	}
-      }
-    }
-    
     mainw->osc_block=FALSE;
   }
 

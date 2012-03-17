@@ -57,8 +57,8 @@
 
 /* message passing structure */
 typedef struct _aserver_message_t {
-  gint command;
-  gchar *data;
+  volatile gint command;
+  volatile gchar *data;
   volatile struct _aserver_message_t *next;
 } aserver_message_t;
 

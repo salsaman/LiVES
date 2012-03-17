@@ -2143,6 +2143,9 @@ GList *filter_encoders_by_img_ext(GList *encoders, const gchar *img_ext) {
   GList *encoder_capabilities=NULL;
   GList *list=encoders,*listnext;
   int caps;
+
+  register int i;
+
   char *blacklist[]={
     NULL,
     NULL
@@ -2153,7 +2156,7 @@ GList *filter_encoders_by_img_ext(GList *encoders, const gchar *img_ext) {
 
   while (list!=NULL) {
     gboolean skip=FALSE;
-    int i=0;
+    i=0;
 
     listnext=list->next;
 
@@ -2192,6 +2195,8 @@ GList *filter_encoders_by_img_ext(GList *encoders, const gchar *img_ext) {
 
     list=listnext;
   }
+
+  for (i=0;blacklist[i]!=NULL;i++) g_free(blacklist[i]);
 
   return encoders;
 

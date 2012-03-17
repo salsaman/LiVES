@@ -1841,6 +1841,8 @@ capability *get_capabilities (void) {
 
   g_snprintf(string,256,"%s report \"%s\" 2>/dev/null",prefs->backend_sync,
 	     (tmp=g_filename_from_utf8 (safer_bfile,-1,NULL,NULL,NULL)));
+
+  g_free(tmp);
 #else
 
   g_snprintf(prefs->backend_sync,PATH_MAX,"perl \"%s\\smogrify\"",prefs->prefix_dir);
@@ -4134,7 +4136,7 @@ static void get_max_opsize(int *opwidth, int *opheight) {
 	  } while (*opwidth * *opheight == 0);
 	}
 	else {
-	  if (mainw->pwidth<*opwidth||mainw->pheight<*opheight) {
+	  if (mainw->pwidth<*opwidth||mainw->pheight<*opheight||*opwidth==0||*opheight==0) {
 	    *opwidth=mainw->pwidth;
 	    *opheight=mainw->pheight;
 	  }
@@ -4142,6 +4144,7 @@ static void get_max_opsize(int *opwidth, int *opheight) {
       }
     }
   }
+
 }
 
 

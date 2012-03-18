@@ -1940,7 +1940,11 @@ capability *get_capabilities (void) {
   get_location("mplayer",string,256);
   if (strlen(string)) capable->has_mplayer=TRUE;
 
+#ifndef IS_MINGW
   get_location("convert",string,256);
+#else
+  get_location("mgkvert",string,256);
+#endif
   if (strlen(string)) capable->has_convert=TRUE;
 
   get_location("composite",string,256);

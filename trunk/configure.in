@@ -42,13 +42,6 @@ dnl AC_CONFIG_HEADERS(config.h)
 
 ACX_PTHREAD(PTHREAD_OK=true,PTHREAD_OK=false)
 
-AC_CHECK_FILE(lives-plugins/Makefile.am,,[
-echo "LiVES plugins were not found. Please make sure you have checked them out."
-echo
-echo
-exit
-])
-
 IS_DARWIN="false"
 IS_IRIX="false"
 IS_SOLARIS="false"
@@ -80,6 +73,16 @@ AM_CONDITIONAL(IS_IRIX,$IS_IRIX)
 AM_CONDITIONAL(IS_LINUX_GNU,$IS_LINUX_GNU)
 AM_CONDITIONAL(IS_SOLARIS,$IS_SOLARIS)
 AM_CONDITIONAL(IS_MINGW,$IS_MINGW)
+
+if test "$IS_MINGW" = "false"; then
+AC_CHECK_FILE(lives-plugins/Makefile.am,,[
+echo "LiVES plugins were not found. Please make sure you have checked them out."
+echo
+echo
+exit
+])
+fi
+
 
 GETTEXT_PACKAGE=lives
 AC_SUBST(GETTEXT_PACKAGE)

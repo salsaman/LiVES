@@ -57,7 +57,7 @@ if ($^O eq "MSWin32") {
 
     $encoder="ffmpeg_encoder";
     $composite_command="composite.exe -quiet -colorspace RGB -type truecolor";
-    $convert_command="convert.exe -quiet -colorspace RGB -type truecolor";
+    $convert_command="mgkvert.exe -quiet -colorspace RGB -type truecolor";
 
 }
 else {

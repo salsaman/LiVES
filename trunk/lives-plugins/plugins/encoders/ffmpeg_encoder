@@ -114,7 +114,7 @@ if ($command eq "get_rfx") {
 	    print "<params>\n";
 	    print "mp3|Use _mp3 audio codec|bool|1|1\n";
 	    print "mp3lame|Use mp3_lame audio codec|bool|0|1\n";
-	    print "threads|Number of threads (>1 may cause instability)|num0|1|1|16|";
+	    print "threads|Number of threads (>1 may cause instability)|num0|1|1|16|\n";
 	    print "</params>\n";
 
 	}
@@ -131,7 +131,7 @@ if ($command eq "get_rfx") {
 	    
 	    # optional section
 	    print "<params>\n";
-	    print "threads|Number of threads (>1 may cause instability)|num0|1|1|16|";
+	    print "threads|Number of threads (>1 may cause instability)|num0|1|1|16|\n";
 	    print "</params>\n";
 	}
     }
@@ -148,7 +148,7 @@ if ($command eq "get_rfx") {
 	
 	# optional section
 	print "<params>\n";
-	print "threads|Number of threads (>1 may cause instability)|num0|1|1|16|";
+	print "threads|Number of threads (>1 may cause instability)|num0|1|1|16|\n";
 	print "</params>\n";
 	
 	

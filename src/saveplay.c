@@ -1298,25 +1298,83 @@ void save_file (int clip, int start, int end, const char *filename) {
   }
 
 
+  if (rdet!=NULL) {
+    gtk_widget_destroy (rdet->dialog);
+    g_free(rdet->encoder_name);
+    g_free(rdet);
+    rdet=NULL;
+    if (resaudw!=NULL) g_free(resaudw);
+    resaudw=NULL;
+  }
+
 
   if (sfile->arate*sfile->achans) {
     aud_start=calc_time_from_frame (clip,start*sfile->arps/sfile->arate);
     aud_end=calc_time_from_frame (clip,(end+1)*sfile->arps/sfile->arate);
   }
 
+
+  // get extra params for encoder
+
+  if (!sfile->ratio_fps) {
+    fps_string=g_strdup_printf ("%.3f",sfile->fps);
+  }
+  else {
+    fps_string=g_strdup_printf ("%.8f",sfile->fps);
+  }
+
+  enc_exec_name=g_build_filename(prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_ENCODERS,prefs->encoder.name,NULL);
+
+#ifdef IS_MINGW
+  //cmd=g_strdup_printf("START perl ");
+  cmd=g_strdup("perl ");
+#else
+  cmd=g_strdup("");
+#endif
+
+  arate=sfile->arate;
+
+  if (!mainw->save_with_sound||prefs->encoder.of_allowed_acodecs==0) {
+    arate=0;
+  }
+
+  // get extra parameters for saving
+  if (prefs->encoder.capabilities&HAS_RFX) {
+    if (prefs->encoder.capabilities&ENCODER_NON_NATIVE) {
+      com=g_strdup_printf("%s save get_rfx %s \"%s\" %s \"%s\" %d %d %d %d %d %d %.4f %.4f",prefs->backend,
+			  sfile->handle,enc_exec_name,
+			  fps_string,(tmp=g_filename_from_utf8(full_file_name,-1,NULL,NULL,NULL)),
+			  1,sfile->frames,arate,sfile->achans,sfile->asampsize,asigned|aendian,aud_start,aud_end);
+      g_free(tmp);
+    }
+    else {
+      com=g_strdup_printf("%s\"%s\" save get_rfx %s \"\" %s \"%s\" %d %d %d %d %d %d %.4f %.4f",
+			  cmd, enc_exec_name,sfile->handle,
+			  fps_string,(tmp=g_filename_from_utf8(full_file_name,-1,NULL,NULL,NULL)),
+			  1,sfile->frames,arate,sfile->achans,sfile->asampsize,asigned|aendian,aud_start,aud_end);
+      g_free(tmp);
+    }
+    extra_params=plugin_run_param_window(com,NULL,NULL);
+    g_free(com);
+
+    if (extra_params==NULL) {
+      gtk_widget_destroy(fx_dialog[1]);
+      fx_dialog[1]=NULL;
+      g_free(fps_string);
+      switch_to_file(mainw->current_file,current_file);
+      d_print_cancelled();
+      if (mainw->subt_save_file!=NULL) g_free(mainw->subt_save_file);
+      mainw->subt_save_file=NULL;
+      return;
+    }
+  }
+
+
   if (!save_all&&!safe_symlinks) {
     // we are saving a selection - make symlinks from a temporary clip
 
     if ((new_file=mainw->first_free_file)==-1) {
       too_many_files();
-      if (rdet!=NULL) {
-	gtk_widget_destroy (rdet->dialog);
-	g_free(rdet->encoder_name);
-	g_free(rdet);
-	rdet=NULL;
-	if (resaudw!=NULL) g_free(resaudw);
-	resaudw=NULL;
-      }
       if (mainw->subt_save_file!=NULL) g_free(mainw->subt_save_file);
       mainw->subt_save_file=NULL;
       return;
@@ -1324,13 +1382,6 @@ void save_file (int clip, int start, int end, const char *filename) {
 
     // create new clip
     if (!get_new_handle(new_file,g_strdup (_("selection")))) {
-      if (rdet!=NULL) {
-	g_free(rdet->encoder_name);
-	g_free(rdet);
-	rdet=NULL;
-	if (resaudw!=NULL) g_free(resaudw);
-	resaudw=NULL;
-      }
       if (mainw->subt_save_file!=NULL) g_free(mainw->subt_save_file);
       mainw->subt_save_file=NULL;
       return;
@@ -1346,14 +1397,6 @@ void save_file (int clip, int start, int end, const char *filename) {
       
       if (mainw->cancelled!=CANCEL_NONE||!resb) {
 	mainw->cancelled=CANCEL_USER;
-	if (rdet!=NULL) {
-	  gtk_widget_destroy (rdet->dialog);
-	  g_free(rdet->encoder_name);
-	  g_free(rdet);
-	  rdet=NULL;
-	  if (resaudw!=NULL) g_free(resaudw);
-	  resaudw=NULL;
-	}
 	if (mainw->subt_save_file!=NULL) g_free(mainw->subt_save_file);
 	mainw->subt_save_file=NULL;
 	if (!resb) d_print_file_error_failed();
@@ -1412,14 +1455,6 @@ void save_file (int clip, int start, int end, const char *filename) {
 	mainw->first_free_file=new_file;
       switch_to_file(mainw->current_file,current_file);
       d_print_cancelled();
-      if (rdet!=NULL) {
-	gtk_widget_destroy (rdet->dialog);
-	g_free(rdet->encoder_name);
-	g_free(rdet);
-	rdet=NULL;
-	if (resaudw!=NULL) g_free(resaudw);
-	resaudw=NULL;
-      }
       if (mainw->subt_save_file!=NULL) g_free(mainw->subt_save_file);
       mainw->subt_save_file=NULL;
       return;
@@ -1453,14 +1488,6 @@ void save_file (int clip, int start, int end, const char *filename) {
       switch_to_file(mainw->current_file,current_file);
       if (mainw->error) d_print_failed();
       else d_print_cancelled();
-      if (rdet!=NULL) {
-	gtk_widget_destroy (rdet->dialog);
-	g_free(rdet->encoder_name);
-	g_free(rdet);
-	rdet=NULL;
-	if (resaudw!=NULL) g_free(resaudw);
-	resaudw=NULL;
-      }
       if (mainw->subt_save_file!=NULL) g_free(mainw->subt_save_file);
       mainw->subt_save_file=NULL;
       return;
@@ -1500,33 +1527,11 @@ void save_file (int clip, int start, int end, const char *filename) {
       mainw->files[new_file]=NULL;
       if (mainw->first_free_file==-1||new_file) mainw->first_free_file=new_file;
     }
-    else if (!save_all&&safe_symlinks) {
-      com=g_strdup_printf("%s clear_symlinks \"%s\"",prefs->backend_sync,nfile->handle);
-      lives_system (com,TRUE);
-      g_free (com);
-    }
     switch_to_file(mainw->current_file,current_file);
     d_print_cancelled();
-    if (rdet!=NULL) {
-      gtk_widget_destroy (rdet->dialog);
-      g_free(rdet->encoder_name);
-      g_free(rdet);
-      rdet=NULL;
-      if (resaudw!=NULL) g_free(resaudw);
-      resaudw=NULL;
-    }
     if (mainw->subt_save_file!=NULL) g_free(mainw->subt_save_file);
     mainw->subt_save_file=NULL;
     return;
-  }
-
-  if (rdet!=NULL) {
-    gtk_widget_destroy (rdet->dialog);
-    g_free(rdet->encoder_name);
-    g_free(rdet);
-    rdet=NULL;
-    if (resaudw!=NULL) g_free(resaudw);
-    resaudw=NULL;
   }
 
 
@@ -1546,14 +1551,6 @@ void save_file (int clip, int start, int end, const char *filename) {
       
       if (mainw->cancelled!=CANCEL_NONE||!resb) {
 	mainw->cancelled=CANCEL_USER;
-	if (rdet!=NULL) {
-	  gtk_widget_destroy (rdet->dialog);
-	  g_free(rdet->encoder_name);
-	  g_free(rdet);
-	  rdet=NULL;
-	  if (resaudw!=NULL) g_free(resaudw);
-	  resaudw=NULL;
-	}
 	if (mainw->subt_save_file!=NULL) g_free(mainw->subt_save_file);
 	mainw->subt_save_file=NULL;
 	if (!resb) d_print_file_error_failed();
@@ -1579,14 +1576,6 @@ void save_file (int clip, int start, int end, const char *filename) {
       cfile->nopreview=FALSE;
       switch_to_file(mainw->current_file,current_file);
       d_print_cancelled();
-      if (rdet!=NULL) {
-	gtk_widget_destroy (rdet->dialog);
-	g_free(rdet->encoder_name);
-	g_free(rdet);
-	rdet=NULL;
-	if (resaudw!=NULL) g_free(resaudw);
-	resaudw=NULL;
-      }
       if (mainw->subt_save_file!=NULL) g_free(mainw->subt_save_file);
       mainw->subt_save_file=NULL;
       return;
@@ -1602,14 +1591,6 @@ void save_file (int clip, int start, int end, const char *filename) {
       switch_to_file(mainw->current_file,current_file);
       if (mainw->error) d_print_failed();
       else d_print_cancelled();
-      if (rdet!=NULL) {
-	gtk_widget_destroy (rdet->dialog);
-	g_free(rdet->encoder_name);
-	g_free(rdet);
-	rdet=NULL;
-	if (resaudw!=NULL) g_free(resaudw);
-	resaudw=NULL;
-      }
       if (mainw->subt_save_file!=NULL) g_free(mainw->subt_save_file);
       mainw->subt_save_file=NULL;
       return;
@@ -1641,11 +1622,9 @@ void save_file (int clip, int start, int end, const char *filename) {
     }
   }
 
-  arate=sfile->arate;
 
   if (!mainw->save_with_sound||prefs->encoder.of_allowed_acodecs==0) {
     bit=g_strdup(_ (" (with no sound)\n"));
-    arate=0;
   }
   else {
     bit=g_strdup("\n");
@@ -1661,83 +1640,6 @@ void save_file (int clip, int start, int end, const char *filename) {
   }
   g_free (bit);
   
-  if (!sfile->ratio_fps) {
-    fps_string=g_strdup_printf ("%.3f",sfile->fps);
-  }
-  else {
-    fps_string=g_strdup_printf ("%.8f",sfile->fps);
-  }
-
-  enc_exec_name=g_build_filename(prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_ENCODERS,prefs->encoder.name,NULL);
-
-#ifdef IS_MINGW
-  //cmd=g_strdup_printf("START perl ");
-  cmd=g_strdup("perl ");
-#else
-  cmd=g_strdup("");
-#endif
-
-  // get extra parameters for saving
-  if (prefs->encoder.capabilities&HAS_RFX) {
-    if (prefs->encoder.capabilities&ENCODER_NON_NATIVE) {
-      com=g_strdup_printf("%s save get_rfx %s \"%s\" %s \"%s\" %d %d %d %d %d %d %.4f %.4f",prefs->backend,
-			  sfile->handle,enc_exec_name,
-			  fps_string,(tmp=g_filename_from_utf8(full_file_name,-1,NULL,NULL,NULL)),
-			  1,sfile->frames,arate,sfile->achans,sfile->asampsize,asigned|aendian,aud_start,aud_end);
-      g_free(tmp);
-    }
-    else {
-      com=g_strdup_printf("%s\"%s\" save get_rfx %s \"\" %s \"%s\" %d %d %d %d %d %d %.4f %.4f",
-			  cmd, enc_exec_name,sfile->handle,
-			  fps_string,(tmp=g_filename_from_utf8(full_file_name,-1,NULL,NULL,NULL)),
-			  1,sfile->frames,arate,sfile->achans,sfile->asampsize,asigned|aendian,aud_start,aud_end);
-      g_free(tmp);
-    }
-    extra_params=plugin_run_param_window(com,NULL,NULL);
-    g_free(com);
-
-    if (extra_params==NULL) {
-      if (!save_all&&safe_symlinks) {
-	com=g_strdup_printf("%s clear_symlinks \"%s\"",prefs->backend_sync,nfile->handle);
-	lives_system (com,TRUE);
-	g_free (com);
-      }
-      if (!save_all&&!safe_symlinks) {
-#ifdef IS_MINGW
-	// kill any active processes: for other OSes the backend does this
-	// get pid from backend
-	FILE *rfile;
-	ssize_t rlen;
-	char val[16];
-	int pid;
-	com=g_strdup_printf("%s get_pid_for_handle \"%s\"",prefs->backend_sync,nfile->handle);
-	rfile=popen(com,"r");
-	rlen=fread(val,1,16,rfile);
-	pclose(rfile);
-	memset(val+rlen,0,1);
-	pid=atoi(val);
-	
-	lives_win32_kill_subprocesses(pid,TRUE);
-#endif
-	lives_system ((com=g_strdup_printf("%s close \"%s\"",prefs->backend,nfile->handle)),TRUE);
-	g_free(com);
-	g_free(nfile);
-	mainw->files[new_file]=NULL;
-	if (mainw->first_free_file==-1||mainw->first_free_file>mainw->current_file)
-	  mainw->first_free_file=new_file;
-      }
-      gtk_widget_destroy(fx_dialog[1]);
-      fx_dialog[1]=NULL;
-      g_free(mesg);
-      g_free(fps_string);
-      switch_to_file(mainw->current_file,current_file);
-      d_print_cancelled();
-      if (mainw->subt_save_file!=NULL) g_free(mainw->subt_save_file);
-      mainw->subt_save_file=NULL;
-      return;
-    }
-  }
-
 
   mainw->no_switch_dprint=TRUE;
   d_print (mesg);
@@ -1749,9 +1651,9 @@ void save_file (int clip, int start, int end, const char *filename) {
     // open a file for stderr
 
 #ifndef IS_MINGW
-    new_stderr_name=g_strdup_printf("%s%s/.debug_out",prefs->tmpdir,cfile->handle);
+    new_stderr_name=g_build_filename(prefs->tmpdir,cfile->handle,".debug_out",NULL);
 #else
-    new_stderr_name=g_strdup_printf("%s%s/debug_out",prefs->tmpdir,cfile->handle);
+    new_stderr_name=g_build_filename(prefs->tmpdir,cfile->handle,"debug_out",NULL);
 #endif
     g_free(redir);
 

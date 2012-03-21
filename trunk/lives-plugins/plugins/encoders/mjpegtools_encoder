@@ -37,26 +37,27 @@
 #######################################################################
 
 if (!defined($standalone)) {
-    my $smogrify=`which smogrify`;
-    chomp($smogrify);
+    my $smogrify;
+    if ($^O eq "MSWin32") {
+	$smogrify="smogrify";
+    }
+    else {
+	$smogrify=`which smogrify`;
+	chomp($smogrify);
+    }
     if ($smogrify ne "") {
 	require $smogrify;
     }
 }
-else {
-    $command=$ARGV[0];
-}
 
+my $tmpvid="tmpvid.m1v";
+my $tmpaud="tmpaud.mpa";
 
-#######################################################################
-$tmpvid="tmpvid.m1v";
-$tmpaud="tmpaud.mpa";
 
 if ($command eq "version") {
     print "mjpegtools encoder plugin v1.0\n";
     exit 0;
 }
-
 
 if ($command eq "init") {
     # perform any initialisation needed

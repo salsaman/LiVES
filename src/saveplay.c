@@ -1326,8 +1326,8 @@ void save_file (int clip, int start, int end, const char *filename) {
   enc_exec_name=g_build_filename(prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_ENCODERS,prefs->encoder.name,NULL);
 
 #ifdef IS_MINGW
-  //cmd=g_strdup_printf("START perl ");
-  cmd=g_strdup("perl ");
+  cmd=g_strdup_printf("START perl ");
+  //cmd=g_strdup("perl ");
 #else
   cmd=g_strdup("");
 #endif

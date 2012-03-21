@@ -15,12 +15,19 @@
 #######################################################################
 
 if (!defined($standalone)) {
-    my $smogrify=`which smogrify`;
-    chomp($smogrify);
+    my $smogrify;
+    if ($^O eq "MSWin32") {
+	$smogrify="smogrify";
+    }
+    else {
+	$smogrify=`which smogrify`;
+	chomp($smogrify);
+    }
     if ($smogrify ne "") {
 	require $smogrify;
     }
 }
+
 else {
     $command=$ARGV[0];
 }

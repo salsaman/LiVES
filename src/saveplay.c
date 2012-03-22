@@ -1326,8 +1326,8 @@ void save_file (int clip, int start, int end, const char *filename) {
   enc_exec_name=g_build_filename(prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_ENCODERS,prefs->encoder.name,NULL);
 
 #ifdef IS_MINGW
-  cmd=g_strdup_printf("START perl ");
-  //cmd=g_strdup("perl ");
+  //cmd=g_strdup_printf("START perl ");  // real windows : does encode but no redir
+  cmd=g_strdup("perl ");   // mingw : does encode, but no redirection
 #else
   cmd=g_strdup("");
 #endif
@@ -1340,18 +1340,31 @@ void save_file (int clip, int start, int end, const char *filename) {
 
   // get extra parameters for saving
   if (prefs->encoder.capabilities&HAS_RFX) {
+
+    // pull at least one frame so we know the file ext
+    if (sfile->clip_type==CLIP_TYPE_FILE) {
+      resb=virtual_to_images(clip,start,end,TRUE);
+      
+      if (!resb) {
+	if (mainw->subt_save_file!=NULL) g_free(mainw->subt_save_file);
+	mainw->subt_save_file=NULL;
+	d_print_file_error_failed();
+	return;
+      }
+    }
+
     if (prefs->encoder.capabilities&ENCODER_NON_NATIVE) {
       com=g_strdup_printf("%s save get_rfx %s \"%s\" %s \"%s\" %d %d %d %d %d %d %.4f %.4f",prefs->backend,
 			  sfile->handle,enc_exec_name,
 			  fps_string,(tmp=g_filename_from_utf8(full_file_name,-1,NULL,NULL,NULL)),
-			  1,sfile->frames,arate,sfile->achans,sfile->asampsize,asigned|aendian,aud_start,aud_end);
+			  start,end,arate,sfile->achans,sfile->asampsize,asigned|aendian,aud_start,aud_end);
       g_free(tmp);
     }
     else {
       com=g_strdup_printf("%s\"%s\" save get_rfx %s \"\" %s \"%s\" %d %d %d %d %d %d %.4f %.4f",
 			  cmd, enc_exec_name,sfile->handle,
 			  fps_string,(tmp=g_filename_from_utf8(full_file_name,-1,NULL,NULL,NULL)),
-			  1,sfile->frames,arate,sfile->achans,sfile->asampsize,asigned|aendian,aud_start,aud_end);
+			  start,end,arate,sfile->achans,sfile->asampsize,asigned|aendian,aud_start,aud_end);
       g_free(tmp);
     }
     extra_params=plugin_run_param_window(com,NULL,NULL);
@@ -1659,7 +1672,7 @@ void save_file (int clip, int start, int end, const char *filename) {
 
     do {
       retval=0;
-      new_stderr=open(new_stderr_name,O_CREAT|O_RDWR|O_TRUNC|O_SYNC,S_IRUSR|S_IWUSR);
+      new_stderr=open(new_stderr_name,O_CREAT|O_RDONLY|O_TRUNC|O_SYNC,S_IRUSR|S_IWUSR);
       if (new_stderr<0) {
 	retval=do_write_failed_error_s_with_retry(new_stderr_name,g_strerror(errno),NULL);
 	if (retval==LIVES_CANCEL) redir=g_strdup("1>&2");
@@ -1667,12 +1680,14 @@ void save_file (int clip, int start, int end, const char *filename) {
       else {
 
 #ifdef IS_MINGW
-      setmode(new_stderr,O_BINARY);
+	setmode(new_stderr,O_BINARY);
+	mainw->iochan=g_io_channel_win32_new_fd(new_stderr);
+	redir=g_strdup_printf("2>&1 >\"%s\"",new_stderr_name);
+#else
+	mainw->iochan=g_io_channel_unix_new(new_stderr);
+	redir=g_strdup_printf("2>\"%s\"",new_stderr_name);
 #endif
 
-	redir=g_strdup_printf("1>&2 2>\"%s\"",new_stderr_name);
-	
-	mainw->iochan=g_io_channel_unix_new(new_stderr);
 	g_io_channel_set_encoding (mainw->iochan, NULL, NULL);
 	g_io_channel_set_buffer_size(mainw->iochan,0);
 	g_io_channel_set_flags(mainw->iochan,G_IO_FLAG_NONBLOCK,&gerr);
@@ -1770,6 +1785,23 @@ void save_file (int clip, int start, int end, const char *filename) {
 
     lives_system(com,FALSE);
     g_free(com);
+  }
+  else {
+    if (mainw->iochan!=NULL) {
+      // flush last of stdout/stderr from plugin
+      
+      lives_fsync(new_stderr);
+      pump_io_chan(mainw->iochan);
+      
+      g_io_channel_shutdown(mainw->iochan,FALSE,&gerr);
+      g_io_channel_unref(mainw->iochan);
+      
+      if (gerr!=NULL) g_error_free(gerr);
+      close(new_stderr);
+      unlink(new_stderr_name);
+      g_free(new_stderr_name);
+      g_free(redir);
+    }
   }
 
   g_free(enc_exec_name);

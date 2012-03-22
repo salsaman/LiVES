@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: LiVEScz\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2012-03-18 11:38-0300\n"
+"POT-Creation-Date: 2012-03-22 00:01-0300\n"
 "PO-Revision-Date: 2011-08-18 12:09+0000\n"
 "Last-Translator: salsaman <salsaman@gmail.com>\n"
 "Language-Team: <martin@svobodicz.com, ales@mur.at>\n"
@@ -679,7 +679,7 @@ msgid "!rec %9d/%d"
 msgstr ""
 
 #: src/main.c:4587 src/main.c:4588 src/gui.c:2052 src/gui.c:3094
-#: src/saveplay.c:2258
+#: src/saveplay.c:2179
 msgid "Play"
 msgstr "Přehrát"
 
@@ -697,12 +697,12 @@ msgid "Closed file %s\n"
 msgstr "Zavřený soubor %s\n"
 
 #: src/main.c:5548 src/gui.c:622 src/utils.c:3862 src/utils.c:3894
-#: src/saveplay.c:3410 src/multitrack.c:4076 src/multitrack.c:5648
+#: src/saveplay.c:3331 src/multitrack.c:4076 src/multitrack.c:5648
 msgid "_Undo"
 msgstr "_Zpět"
 
 #: src/main.c:5549 src/gui.c:635 src/utils.c:3863 src/utils.c:3895
-#: src/saveplay.c:3411 src/multitrack.c:4097 src/multitrack.c:5671
+#: src/saveplay.c:3332 src/multitrack.c:4097 src/multitrack.c:5671
 msgid "_Redo"
 msgstr "_Znovu"
 
@@ -735,15 +735,15 @@ msgstr ""
 
 #: src/main.c:5711 src/callbacks.c:7371 src/callbacks.c:7519
 #: src/callbacks.c:7845 src/callbacks.c:7862 src/gui.c:3683
-#: src/saveplay.c:2380 src/saveplay.c:2414 src/saveplay.c:2993
-#: src/saveplay.c:3103 src/saveplay.c:3125 src/multitrack.c:8421
+#: src/saveplay.c:2301 src/saveplay.c:2335 src/saveplay.c:2914
+#: src/saveplay.c:3024 src/saveplay.c:3046 src/multitrack.c:8421
 #: src/multitrack.c:10013
 #, c-format
 msgid " (%d %% scale)"
 msgstr ""
 
 #: src/main.c:5713 src/callbacks.c:7373 src/callbacks.c:7521
-#: src/callbacks.c:7847 src/gui.c:3687 src/saveplay.c:2382 src/saveplay.c:2416
+#: src/callbacks.c:7847 src/gui.c:3687 src/saveplay.c:2303 src/saveplay.c:2337
 #, fuzzy, c-format
 msgid "LiVES: - Play Window%s"
 msgstr "LiVES: - Přehrávací okno"
@@ -1085,8 +1085,8 @@ msgstr ""
 "importovány."
 
 #: src/interface.c:203 src/callbacks.c:9870 src/callbacks.c:9900
-#: src/callbacks.c:9901 src/gui.c:3097 src/gui.c:3660 src/saveplay.c:2261
-#: src/saveplay.c:3016 src/dialogs.c:1333 src/dialogs.c:1334
+#: src/callbacks.c:9901 src/gui.c:3097 src/gui.c:3660 src/saveplay.c:2182
+#: src/saveplay.c:2937 src/dialogs.c:1333 src/dialogs.c:1334
 #: src/dialogs.c:1555 src/dialogs.c:1556 src/framedraw.c:230
 #: src/multitrack.c:7235
 msgid "Preview"
@@ -2000,8 +2000,8 @@ msgstr "Opakuji"
 msgid "Copying frames %d to %d%s to the clipboard..."
 msgstr "Kopírování snímků %d do %d%s do schránky ..."
 
-#: src/callbacks.c:2512 src/saveplay.c:1343 src/saveplay.c:1543
-#: src/saveplay.c:1629 src/saveplay.c:3837
+#: src/callbacks.c:2512 src/saveplay.c:1394 src/saveplay.c:1548
+#: src/saveplay.c:1610 src/saveplay.c:3758
 msgid "Pulling frames from clip"
 msgstr ""
 
@@ -2530,7 +2530,7 @@ msgstr "Zobraz hrací okno (s)"
 msgid "Play in separate window (s)"
 msgstr "Přehraj v odděleném okně (s)"
 
-#: src/callbacks.c:7710 src/gui.c:3928 src/saveplay.c:2411
+#: src/callbacks.c:7710 src/gui.c:3928 src/saveplay.c:2332
 #, fuzzy
 msgid "LiVES: - Streaming"
 msgstr "LiVES: - Varování !"
@@ -4150,7 +4150,7 @@ msgstr "Otvírání%s"
 msgid "Opening %s start time %.2f sec. frames %d"
 msgstr "Otvírání%s začátek %.2f sek. snímků %d"
 
-#: src/saveplay.c:311 src/saveplay.c:3824
+#: src/saveplay.c:311 src/saveplay.c:3745
 msgid " without sound"
 msgstr " bez zvuku"
 
@@ -4252,33 +4252,33 @@ msgstr ""
 "\n"
 "Tak co, pokračovat ?"
 
-#: src/saveplay.c:1326
+#: src/saveplay.c:1384
 msgid "selection"
 msgstr "výběr"
 
-#: src/saveplay.c:1430 src/saveplay.c:1597
+#: src/saveplay.c:1465 src/saveplay.c:1586
 msgid "Linking selection"
 msgstr "Spojuji výběr"
 
-#: src/saveplay.c:1647
+#: src/saveplay.c:1627
 msgid " (with no sound)\n"
 msgstr " (bez zvuku)\n"
 
-#: src/saveplay.c:1655
+#: src/saveplay.c:1634
 #, c-format
 msgid "Saving frames %d to %d%s as \"%s\" : encoder = %s : format = %s..."
 msgstr "Ukládání snímků %d do %d%s jako \"%s\" : enkoder = %s : formát = %s..."
 
-#: src/saveplay.c:1659
+#: src/saveplay.c:1638
 #, c-format
 msgid "Saving frames 1 to %d%s as \"%s\" : encoder %s : format = %s..."
 msgstr "Ukládání snímků 1 do %d%s jako \"%s\" : enkoder = %s : formát = %s..."
 
-#: src/saveplay.c:1841
+#: src/saveplay.c:1745
 msgid "Saving [can take a long time]"
 msgstr "Ukládám [může to chvíli trvat]"
 
-#: src/saveplay.c:1972
+#: src/saveplay.c:1893
 msgid ""
 "\n"
 "\n"
@@ -4288,34 +4288,34 @@ msgstr ""
 "\n"
 "Chyba enkoderu - výstupní soubor nebyl vytvořen !\n"
 
-#: src/saveplay.c:2003
+#: src/saveplay.c:1924
 #, fuzzy
 msgid "Clearing letterbox"
 msgstr "Mazání schránky"
 
-#: src/saveplay.c:2108
+#: src/saveplay.c:2029
 #, fuzzy, c-format
 msgid "File size was %s\n"
 msgstr "Velikost souboru"
 
-#: src/saveplay.c:2204
+#: src/saveplay.c:2125
 msgid "recording aborted by preview.\n"
 msgstr "nahrávání přerušeno náhledem.\n"
 
-#: src/saveplay.c:2208
+#: src/saveplay.c:2129
 msgid "recording aborted by clipboard playback.\n"
 msgstr "nahrávání přerušeno přehráváním náhledu.\n"
 
-#: src/saveplay.c:2211
+#: src/saveplay.c:2132
 msgid "Recording performance..."
 msgstr "Nahrávání produkce..."
 
-#: src/saveplay.c:3176
+#: src/saveplay.c:3097
 #, c-format
 msgid "Average FPS was %.4f\n"
 msgstr "Průměrná hodnota FPS byla %.4f\n"
 
-#: src/saveplay.c:3182
+#: src/saveplay.c:3103
 msgid ""
 "\n"
 "\n"
@@ -4329,16 +4329,16 @@ msgstr ""
 "Klikněte na Nástroje--->Změnit velikost všech snímků \n"
 "a změňte všechny velikost všech snímků na současnou hodnotu.\n"
 
-#: src/saveplay.c:3340
+#: src/saveplay.c:3261
 msgid "Unknown"
 msgstr "Neznámé"
 
-#: src/saveplay.c:3446 src/saveplay.c:4404
+#: src/saveplay.c:3367 src/saveplay.c:4325
 #, c-format
 msgid "Untitled%d"
 msgstr "Bez jména%d"
 
-#: src/saveplay.c:3481
+#: src/saveplay.c:3402
 #, c-format
 msgid ""
 "\n"
@@ -4346,7 +4346,7 @@ msgid ""
 "Bad things may happen with this clip.\n"
 msgstr ""
 
-#: src/saveplay.c:3571
+#: src/saveplay.c:3492
 #, c-format
 msgid ""
 "\n"
@@ -4358,14 +4358,14 @@ msgstr ""
 "(snímků za sekundu). \n"
 "Výchozí hodnoty lze nastavit v Nástroje | Předvolby | Různé\n"
 
-#: src/saveplay.c:3583
+#: src/saveplay.c:3504
 #, c-format
 msgid "Playback speed was adjusted to %.3f frames per second to fit audio.\n"
 msgstr ""
 "Rychlost přehrávání byla upravena na %.3f snímků za sekundu, aby odpovídal "
 "zvuku.\n"
 
-#: src/saveplay.c:3602
+#: src/saveplay.c:3523
 #, c-format
 msgid ""
 "Frames=%d type=%s size=%dx%d *bpp=Greyscale* fps=%.3f\n"
@@ -4374,7 +4374,7 @@ msgstr ""
 "Snímky=%d typ=%s velikost=%dx%d *bpp=Šedá škála* snímků za sekundu  =%.3f\n"
 "Zvuk:"
 
-#: src/saveplay.c:3606 src/saveplay.c:4581
+#: src/saveplay.c:3527 src/saveplay.c:4502
 #, c-format
 msgid ""
 "Frames=%d type=%s size=%dx%d bpp=%d fps=%.3f\n"
@@ -4383,49 +4383,49 @@ msgstr ""
 "Snímků=%d typ=%s velikost=%dx%d bpp=%d snímků za sekundu =%.3f\n"
 "Zvuk:"
 
-#: src/saveplay.c:3610 src/saveplay.c:4585
+#: src/saveplay.c:3531 src/saveplay.c:4506
 #, c-format
 msgid "%s none\n"
 msgstr "%s nic\n"
 
-#: src/saveplay.c:3613 src/saveplay.c:4588
+#: src/saveplay.c:3534 src/saveplay.c:4509
 #, c-format
 msgid "%s %d Hz %d channel(s) %d bps\n"
 msgstr "%s %d Hz %d kanál(ů) %d bps\n"
 
-#: src/saveplay.c:3621
+#: src/saveplay.c:3542
 #, c-format
 msgid " - Comment: %s\n"
 msgstr " - Komentář: %s\n"
 
-#: src/saveplay.c:3726
+#: src/saveplay.c:3647
 #, c-format
 msgid "Saving frame %d as %s..."
 msgstr "Uložení snímků %d jako %s..."
 
-#: src/saveplay.c:3819
+#: src/saveplay.c:3740
 #, c-format
 msgid "Backing up %s to %s"
 msgstr "zZálohování %s jako %s"
 
-#: src/saveplay.c:3872
+#: src/saveplay.c:3793
 msgid "Backing up"
 msgstr "Zálohuji"
 
-#: src/saveplay.c:3906
+#: src/saveplay.c:3827
 msgid "performance data was backed up..."
 msgstr "data byly zazálohovány"
 
-#: src/saveplay.c:4480
+#: src/saveplay.c:4401
 #, c-format
 msgid "Restoring %s..."
 msgstr "Obnovování %s..."
 
-#: src/saveplay.c:4511
+#: src/saveplay.c:4432
 msgid "Restoring"
 msgstr "Obnovování"
 
-#: src/saveplay.c:4533
+#: src/saveplay.c:4454
 #, c-format
 msgid ""
 "\n"
@@ -4439,22 +4439,22 @@ msgstr ""
 "LiVES ho nemohl obnovit.\n"
 
 #. TRANSLATORS: rec(ord) %.2f M(ega)B(ytes)
-#: src/saveplay.c:5025
+#: src/saveplay.c:4946
 #, fuzzy, c-format
 msgid "rec %.2f MB"
 msgstr "%.2f s"
 
-#: src/saveplay.c:5031
+#: src/saveplay.c:4952
 #, fuzzy, c-format
 msgid "!rec %.2f MB"
 msgstr "%.2f s"
 
 #. TRANSLATORS: rec(ord) ?? M(ega)B(ytes)
-#: src/saveplay.c:5034
+#: src/saveplay.c:4955
 msgid "rec ?? MB"
 msgstr ""
 
-#: src/saveplay.c:5059
+#: src/saveplay.c:4980
 #, c-format
 msgid ""
 "\n"
@@ -4462,7 +4462,7 @@ msgid ""
 "Record stop level can be set in Preferences.\n"
 msgstr ""
 
-#: src/saveplay.c:5205
+#: src/saveplay.c:5126
 msgid ""
 "\n"
 "Files from a previous run of LiVES were found.\n"
@@ -4472,11 +4472,11 @@ msgstr ""
 "Byly nalezeny soubory z předchozího spuštění LiVES.\n"
 "Pokusit se o jejich obnovení?\n"
 
-#: src/saveplay.c:5225
+#: src/saveplay.c:5146
 msgid "Recovering files"
 msgstr "Obnovuji soubory"
 
-#: src/saveplay.c:5227
+#: src/saveplay.c:5148
 #, fuzzy
 msgid "Recovering files..."
 msgstr "Obnovuji soubory"

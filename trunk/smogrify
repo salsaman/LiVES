@@ -1973,7 +1973,9 @@ if (defined($ARGV[0])) {
 	    # get image size ($hsize x $vsize)
 	    $imresact="none";
 	    my $firstframe=&mkname($start);
+
 	    &get_image_size("$firstframe$img_ext");
+
 	    if ($panic||$hsize==-1) {
 		unlink $pidfile;
 		exit 1;
@@ -1987,7 +1989,6 @@ if (defined($ARGV[0])) {
 	    $audiofile="";
 
 	    print STDERR "\nSAVE pt a11\n";
-
 
 	    if ($get_rfx==0) {
 

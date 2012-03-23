@@ -12,7 +12,7 @@ Changes
 1.3 Added "<define>" section
 1.4 Added string support, made line delimiter fixed (\n)
 1.5 Added note about LC_NUMERIC
-1.6 Added string_list parameter type
+d1.6 Added string_list parameter type
 1.7 Updates for compatibility with realtime effects
 
 --- API Version frozen ---
@@ -27,6 +27,8 @@ Changes
 - Add "special|fileread"
 - Added note about differing input image types
 - Add "special|password"
+- Fix text errors, add note about "$fps"
+
 
 TODO: 	- change rectdemask to use proportion, to match other framedraws
 	- split into RFX layout and RFX plugin components
@@ -594,6 +596,8 @@ In LiVES-perl this is done by setting $nwidth and $nheight to the width and heig
 
 
 
+Plugins with no in channels (generators) may also set $fps to inform the host of the framerate of the 
+generated clip.
 
 
 
@@ -633,7 +637,7 @@ trigger type is executed in the order in which it appears in this section. The f
 e.g. (in LiVES-perl):
 
 <onchange>
-init|$p0_min=-$width+1;$p0_max=$width-1;$p0_min=-$height+1;$p1_max=$height-1;
+init|$p0_min=-$width+1;$p0_max=$width-1;$p1_min=-$height+1;$p1_max=$height-1;
 0|if ($p0) {$p3=$p4*$p5;} elsif ($p1&&$p5>0.) {$p4=$p3/$p5;} elsif ($p4>0.) {$p5=$p3/$p4;}
 </onchange>
 

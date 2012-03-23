@@ -1,4 +1,5 @@
 #!/usr/bin/perl
+
 # (c) Salsaman 2004 - 2012
 
 # released under the GPL 3 or later
@@ -13,16 +14,19 @@
 
 $DEBUG=1;
 
-$SIG{'HUP'} = 'HUP_handler';
-
-if (&location("sendOSC") eq "") {
-    print "You must have sendOSC installed to run this.\n";
-    exit 1;
+if ($^O eq "MSWin32") {
+    use IO::Socket::INET;
 }
+else {
+    $SIG{'HUP'} = 'HUP_handler';
 
+    if (&location("sendOSC") eq "") {
+	print "You must have sendOSC installed to run this.\n";
+	exit 1;
+    }
 
-use IO::Socket::UNIX;
-
+    use IO::Socket::UNIX;
+}
 
 $remote_host="localhost";
 $remote_port=49999; #command port to app
@@ -40,7 +44,13 @@ if (defined($ARGV[2])) {
     $local_port=$ARGV[2];
 }
 
-$sendOMC="sendOSC -h $remote_host $remote_port";
+if ($^O eq "MSWin32") {
+    $sendOMC="perl sendOSC.pl $remote_host $remote_port";
+}
+else {
+    $sendOMC="sendOSC -h $remote_host $remote_port";
+}
+
 
 
 ###################
@@ -74,7 +84,13 @@ $timeout=1;
 #################################################################
 # start sending OMC commands
 
-`$sendOMC /lives/open_status_socket,$my_ip_addr,$local_port`;
+if ($^O eq "MSWin32") {
+    `$sendOMC /lives/open_status_socket s $my_ip_addr i $local_port`;
+}
+else {
+    `$sendOMC /lives/open_status_socket,$my_ip_addr,$local_port`;
+}
+
 
 `$sendOMC /lives/ping`;
 my $retmsg=&get_newmsg;
@@ -142,7 +158,11 @@ while (1) {
 	# 1,2,3,4,5
 	# random clip switch
 	$nextclip=int(rand($numclips)+1);
-	`$sendOMC /clip/select,$nextclip`;
+	if ($^O eq "MSWin32") {
+	    `$sendOMC /clip/select i $nextclip`;
+	} else {
+	    `$sendOMC /clip/select,$nextclip`;
+	}
     }
     elsif ($action<15) {
 	# mess with effects
@@ -152,21 +172,40 @@ while (1) {
 	    # 6,7,8,9,10
 	    if ($nexteffectkey!=$key_to_avoid) {
 		`$sendOMC /effect_key/disable,$nexteffectkey`;
+		if ($^O eq "MSWin32") {
+		    `$sendOMC /effect_key/disable i $nexteffectkey`;
+		} else {
+		    `$sendOMC /effect_key/disable,$nexteffectkey`;
+		}
 	    }
 	}
 	elsif ($action<13) {
 	    #11,12
 	    if ($nexteffectkey!=$key_to_avoid) {
-		`$sendOMC /effect_key/enable,$nexteffectkey`;
+		if ($^O eq "MSWin32") {
+		    `$sendOMC /effect_key/enable i $nexteffectkey`;
+		} else {
+		    `$sendOMC /effect_key/enable,$nexteffectkey`;
+		}
 	    }
 	}
 	else {
 	    #13,14,15,16
 	    if ($nexteffectkey!=$key_to_avoid) {
-		`$sendOMC /effect_key/maxmode/get,$nexteffectkey`;
+		if ($^O eq "MSWin32") {
+		    `$sendOMC /effect_key/maxmode/get i $nexteffectkey`;
+		} else {
+		    `$sendOMC /effect_key/maxmode/get,$nexteffectkey`;
+		}
+
 		$maxmode=&get_newmsg;
 		$newmode=int(rand($maxmode))+1;
-		`$sendOMC /effect_key/mode/set,$nexteffectkey,$newmode`;
+
+		if ($^O eq "MSWin32") {
+		    `$sendOMC /effect_key/mode/set i $nexteffectkey i $newmode`;
+		} else {
+		    `$sendOMC /effect_key/mode/set,$nexteffectkey,$newmode`;
+		}
 	    }
 	}
     }
@@ -226,7 +265,11 @@ sub print_layout {
     my ($i,$j);
     for ($i=1;$i<=$keys;$i++) {
 	for ($j=1;$j<=$modes;$j++) {
-	    `$sendOMC /effect_key/name/get,$i,$j`;
+	    if ($^O eq "MSWin32") {
+		`$sendOMC /effect_key/name/get i $i i $j`;
+	    } else {
+		`$sendOMC /effect_key/name/get,$i,$j`;
+	    }
 	    $name=&get_newmsg;
 	    unless ($name eq "") {
 		print "key $i, mode $j: $name    ";

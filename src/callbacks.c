@@ -9059,6 +9059,7 @@ void on_toy_activate  (GtkMenuItem *menuitem, gpointer user_data) {
       return;
     }
 
+#ifndef IS_MINGW
     // search for autolives.pl
     if (!capable->has_autolives) {
       get_location("autolives.pl",string,PATH_MAX);
@@ -9069,7 +9070,7 @@ void on_toy_activate  (GtkMenuItem *menuitem, gpointer user_data) {
 	return;
       }
     }
-    
+#endif
 
     // chek if osc is started; if not ask permission
     if (!prefs->osc_udp_started) {
@@ -9092,7 +9093,13 @@ void on_toy_activate  (GtkMenuItem *menuitem, gpointer user_data) {
       mainw->autolives_reset_fx=TRUE;
     }
 
+#ifndef IS_MINGW
     com=g_strdup_printf("autolives.pl localhost %d %d >/dev/null 2>&1",prefs->osc_udp_port,prefs->osc_udp_port-1);
+#else
+    com=g_strdup_printf("START /MIN /B perl \"%s\\bin\\autolives.pl\" localhost %d %d >NUL 2>&1",
+			prefs->prefix_dir,prefs->osc_udp_port,prefs->osc_udp_port-1);
+#endif
+
     mainw->toy_alives_pid=lives_fork(com);
     g_free(com);
 

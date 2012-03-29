@@ -511,7 +511,11 @@ sub gen_param_checks {
 
 #use POSIX::strtod to account for locales LC_NUMERIC
 
-		print OUT "    \$p$i=int(POSIX::strtod(\$p$i)*$fix+.5)/$fix;\n";
+		print OUT "    if (\$p$i>=0) {\n";
+		print OUT "        \$p$i=int(POSIX::strtod(\$p$i)*$fix+.5)/$fix;\n";
+		print OUT "    } else {\n";
+		print OUT "        \$p$i=int(POSIX::strtod(\$p$i)*$fix-.5)/$fix;\n";
+		print OUT "    }\n";
 		print OUT "    if (\$p$i<$min) {\n";
 		print OUT "       &sig_error(\"$pname must be >= $min\");\n";
 		print OUT "       exit 1;\n";

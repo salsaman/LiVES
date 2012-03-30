@@ -3999,7 +3999,7 @@ on_record_perf_activate                      (GtkMenuItem     *menuitem,
 	    lives_alarm_clear(alarm_handle);
 	    frames_written=mainw->jackd->frames_written;
 	    seek_pos=mainw->jackd->seek_pos;
-	    audio_ticks=mainw->pulsed->audio_ticks;
+	    audio_ticks=mainw->jackd->audio_ticks;
 	    
 	    jack_message.command=ASERVER_CMD_FILE_CLOSE;
 	    jack_message.data=NULL;

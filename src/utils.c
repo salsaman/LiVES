@@ -3516,9 +3516,20 @@ gboolean check_dir_access (const gchar *dir) {
 gboolean check_dev_busy(gchar *devstr) {
 #ifndef IS_MINGW
   int ret;
+#ifdef IS_SOLARIS
+  struct flock lock;
+  lock.l_start = 0;
+  lock.l_whence = SEEK_SET;
+  lock.l_len = 0;
+  lock.l_type = F_WRLCK;
+#endif
   int fd=open(devstr,O_RDONLY|O_NONBLOCK);
   if (fd==-1) return FALSE;
+#ifdef IS_SOLARIS
+  ret=fcntl(fd, F_SETLK, &lock);
+#else
   ret=flock(fd,LOCK_EX|LOCK_NB);
+#endif
   close(fd);
   if (ret==-1) return FALSE;
   return TRUE;

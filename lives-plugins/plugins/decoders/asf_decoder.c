@@ -31,7 +31,9 @@
 #include <unistd.h>
 #include <stdlib.h>
 #ifndef IS_MINGW
+#ifndef IS_SOLARIS
 #include <endian.h>
+#endif
 #endif
 #include <sys/stat.h>
 

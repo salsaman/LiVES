@@ -10,6 +10,7 @@ of audio
 
 22 Nov 2011 - clarified what kinds of channel patterns expected
 
+05 Apr 2012 - if plugin has no audio it should send silence.
 
 
 
@@ -107,9 +108,7 @@ audio_data : must be >=1 (mono), 2==stereo, etc.
 
 Notes:
 
-In the case that the host has no audio at all for a channel, it can
-set "audio_data" to NULL, and leave all other audio leaves
-undefined.
+In the case that the host has no audio at all for a channel, it should fill the array with (float) 0.0.
 
 If the host sets the values "audio_channels", "audio_rate", or
 "audio_interleaf" itself, then the values for all channels MUST be
@@ -148,6 +147,6 @@ Summary
 == HOST_INFO leaves ==
 
 "host_audio_player" : WEED_SEED_STRING : name of the host audio
-player. Examples are "jack", "sox", "mplayer".
+player. Examples are "jack", "sox", "mplayer". In general most plugins can ignore this.
 
 

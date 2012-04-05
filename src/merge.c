@@ -524,12 +524,14 @@ on_merge_ok_clicked                   (GtkButton       *button,
 
 
   // number of frames to merge, must be <= selection length
-  if (!mainw->last_transition_loop_to_fit&&mainw->last_transition_align_start) { //loop_to_fit_audio
+  if (!mainw->last_transition_loop_to_fit) {
     cb_end=(clipboard->frames-excess_frames)*times_to_loop;
   }
   else {
+    //loop_to_fit_audio
     cb_end=cfile->end-cfile->start+1;
   } 
+
 
   // here we use undo_start and undo_end to mark the merged section,
   // insert_start and insert_end to mark the inserted section (if any)
@@ -549,10 +551,20 @@ on_merge_ok_clicked                   (GtkButton       *button,
     }
   }
 
-  cfile->progress_end=cb_end-cb_start+cfile->start+excess_frames*!mainw->last_transition_align_start;
-  cfile->progress_start=cfile->start;
-
-  clipboard->start=cb_start;
+  if (!mainw->last_transition_loop_to_fit) {
+    if (mainw->last_transition_align_start) {
+      cfile->progress_end=cb_end-cb_start+cfile->start+excess_frames*!mainw->last_transition_align_start;
+      cfile->progress_start=cfile->start;
+    }
+    else {
+      cfile->progress_end=cfile->end;
+      cfile->progress_start=cfile->end-cb_end+1;
+    }
+  }
+  else {
+    cfile->progress_start=cfile->start;
+    cfile->progress_end=cfile->end;
+  }
 
   // do the actual merge
   if (!do_effect (rfx,FALSE)) {

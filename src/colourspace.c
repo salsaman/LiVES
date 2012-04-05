@@ -10371,7 +10371,7 @@ boolean resize_layer (weed_plant_t *layer, int width, int height, LiVESInterpTyp
       }
 
       if (swscale==NULL) {
-	LIVES_ERROR("swscale is NULL !!");
+	LIVES_DEBUG("swscale is NULL !!");
       }
       else {
 	sws_scale(swscale, (const uint8_t * const*)in_pixel_data, irowstrides, 0, iheight, 

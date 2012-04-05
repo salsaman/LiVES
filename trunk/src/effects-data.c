@@ -271,6 +271,7 @@ gboolean pconx_convert_value_data(weed_plant_t *dparam, weed_plant_t *sparam) {
       {
 	char *opstring=g_strdup(""),*tmp,*bit;
 	double *valsd=weed_get_double_array(sparam,"value",&error);
+	if (ndvals==1) ndvals=nsvals;
 	for (i=0;i<nsvals;i++) {
 	  bit=g_strdup_printf("%.4f",valsd[i]);
 	  if (strlen(opstring)==0) 
@@ -297,6 +298,7 @@ gboolean pconx_convert_value_data(weed_plant_t *dparam, weed_plant_t *sparam) {
       {
 	char *opstring=g_strdup(""),*tmp,*bit;
 	int *valsi=weed_get_int_array(sparam,"value",&error);
+	if (ndvals==1) ndvals=nsvals;
 	for (i=0;i<ndvals;i++) {
 	  bit=g_strdup_printf("%d",valsi[i]);
 	  if (strlen(opstring)==0) 
@@ -339,6 +341,7 @@ gboolean pconx_convert_value_data(weed_plant_t *dparam, weed_plant_t *sparam) {
       {
 	char *opstring=g_strdup(""),*tmp,*bit;
 	int *valsi=weed_get_boolean_array(sparam,"value",&error);
+	if (ndvals==1) ndvals=nsvals;
 	for (i=0;i<ndvals;i++) {
 	  bit=g_strdup_printf("%d",valsi[i]);
 	  if (strlen(opstring)==0) 

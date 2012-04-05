@@ -1,6 +1,6 @@
 // callbacks.c
 // LiVES
-// (c) G. Finch 2003 - 2012 <salsaman@xs4all.nl,salsaman@gmail.com>
+// (c) G. Finch 2003 - 2012 <salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -8976,7 +8976,9 @@ on_rename_set_name                   (GtkButton       *button,
 
 void on_toy_activate  (GtkMenuItem *menuitem, gpointer user_data) {
 #ifdef ENABLE_OSC
+#ifndef IS_MINGW
   gchar string[PATH_MAX];
+#endif
   gchar *com;
 #endif
 

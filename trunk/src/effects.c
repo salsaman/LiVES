@@ -52,10 +52,19 @@ gchar *lives_fx_cat_to_text(lives_fx_cat_t cat, gboolean plural) {
   switch (cat) {
 
     // main categories
-  case LIVES_FX_CAT_GENERATOR:
+  case LIVES_FX_CAT_VIDEO_GENERATOR:
     if (!plural) return (g_strdup(_("generator")));
     else return (g_strdup(_("Generators")));
+  case LIVES_FX_CAT_AUDIO_GENERATOR:
+    if (!plural) return (g_strdup(_("audio generator")));
+    else return (g_strdup(_("Audio Generators")));
+  case LIVES_FX_CAT_AV_GENERATOR:
+    if (!plural) return (g_strdup(_("audio/video generator")));
+    else return (g_strdup(_("Audio/Video Generators")));
   case LIVES_FX_CAT_DATA_GENERATOR:
+    if (!plural) return (g_strdup(_("data generator")));
+    else return (g_strdup(_("Data Generators")));
+  case LIVES_FX_CAT_DATA_VISUALISER:
     if (!plural) return (g_strdup(_("data generator")));
     else return (g_strdup(_("Data Generators")));
   case LIVES_FX_CAT_TRANSITION:

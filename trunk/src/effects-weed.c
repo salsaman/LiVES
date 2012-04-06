@@ -252,6 +252,7 @@ lives_fx_cat_t weed_filter_categorise (weed_plant_t *pl, int in_channels, int ou
   int filter_flags,error;
   gboolean has_out_params=FALSE;
   gboolean all_out_alpha=TRUE;
+  gboolean all_in_alpha=TRUE;
   register int i;
 
   if (WEED_PLANT_IS_FILTER_INSTANCE(pl)) filt=weed_get_plantptr_value(pl,"filter_class",&error);
@@ -273,12 +274,34 @@ lives_fx_cat_t weed_filter_categorise (weed_plant_t *pl, int in_channels, int ou
     }
   }
 
+ // check mandatory input chans, see if any are non-alpha
+  if (weed_plant_has_leaf(filt,"in_channel_templates")) {
+    int nins=weed_leaf_num_elements(filt,"in_channel_templates");
+    if (nins>0) {
+      weed_plant_t **ctmpls=weed_get_plantptr_array(filt,"in_channel_templates",&error);
+      for (i=0;i<nins;i++) {
+	if (weed_plant_has_leaf(ctmpls[i],"optional")&&
+	    weed_get_boolean_value(ctmpls[i],"optional",&error)==WEED_TRUE) continue; ///< ignore optional channels
+	if (has_non_alpha_palette(ctmpls[i])) {
+	  all_in_alpha=FALSE;
+	  break;
+	}
+      }
+      weed_free(ctmpls);
+    }
+  }
+
   filter_flags=weed_get_int_value(filt,"flags",&error);
   if (weed_plant_has_leaf(filt,"out_parameter_templates")) has_out_params=TRUE;
   if (filter_flags&WEED_FILTER_IS_CONVERTER) return LIVES_FX_CAT_CONVERTER;
   if (in_channels==0&&out_channels>0&&all_out_alpha) return LIVES_FX_CAT_DATA_GENERATOR;
-  if (in_channels==0&&out_channels>0) return LIVES_FX_CAT_GENERATOR;
-  if (out_channels>1&&all_out_alpha) return LIVES_FX_CAT_ANALYSER;
+  if (in_channels==0&&out_channels>0) {
+    if (!has_audio_chans_out(filt,TRUE)) return LIVES_FX_CAT_VIDEO_GENERATOR;
+    else if (has_video_chans_out(filt,TRUE)) return LIVES_FX_CAT_AV_GENERATOR;
+    else return LIVES_FX_CAT_AUDIO_GENERATOR;
+  }
+  if (out_channels>=1&&in_channels>=1&&all_in_alpha&&!all_out_alpha) return LIVES_FX_CAT_DATA_VISUALISER;
+  if (out_channels>=1&&all_out_alpha) return LIVES_FX_CAT_ANALYSER;
   if (out_channels>1) return LIVES_FX_CAT_SPLITTER;
   if (in_channels>2&&out_channels==1) return LIVES_FX_CAT_COMPOSITOR;
   if (in_channels==2&&out_channels==1) return LIVES_FX_CAT_TRANSITION;
@@ -665,7 +688,7 @@ gboolean is_pure_audio(weed_plant_t *plant, gboolean count_opt) {
   weed_plant_t *filter=plant;
   if (WEED_PLANT_IS_FILTER_INSTANCE(plant)) filter=weed_get_plantptr_value(plant,"filter_class",&error);
   if ((has_audio_chans_in(filter,count_opt) || has_audio_chans_out(filter,count_opt)) &&
-      !(has_video_chans_in(filter,count_opt)) && (!has_video_chans_out(filter,count_opt))) return TRUE;
+      !has_video_chans_in(filter,count_opt) && !has_video_chans_out(filter,count_opt)) return TRUE;
   return FALSE;
 }
 
@@ -2628,7 +2651,7 @@ lives_filter_error_t weed_apply_audio_instance (weed_plant_t *init_event, float 
   else return FILTER_ERROR_INVALID_INIT_EVENT;
 
   if (weed_plant_has_leaf(instance,"in_channels")) channel=weed_get_plantptr_value(instance,"in_channels",&error);
-  if (channel==NULL) channel=weed_get_plantptr_value(instance,"out_channels",&error);
+  if (channel==NULL) return FILTER_ERROR_NO_IN_CHANNELS; // audio generators are dealt with by the audio player
 
   filter=weed_get_plantptr_value(instance,"filter_class",&error);
 
@@ -3220,7 +3243,7 @@ gint enabled_out_channels (weed_plant_t *plant, gboolean count_repeats) {
 static gint check_for_lives(weed_plant_t *filter, int filter_idx) {
   // for LiVES, currently:
   // all filters must take 0, 1 or 2 mandatory/optional inputs and provide 
-  // 1 mandatory output or >1 optional outputs (for now)
+  // 1 mandatory output (audio or video) or >1 optional (video only) outputs (for now)
 
   // or 1 or more mandatory alpha outputs (analysers)
 
@@ -3334,7 +3357,7 @@ static gint check_for_lives(weed_plant_t *filter, int filter_idx) {
   if ((chans_out_mand>1&&!all_out_alpha)||((chans_out_mand+chans_out_opt_max+achans_out_mand<1)
 					   &&(chans_in_mand!=1||!has_out_params))) return 11;
   if (achans_out_mand>1||(achans_out_mand==1&&chans_out_mand>0)) return 14;
-  if ((achans_in_mand==1&&achans_out_mand==0)||(achans_in_mand==0&&achans_out_mand==1)) return 15;
+  if (achans_in_mand>=1&&achans_out_mand==0) return 15;
 
   weed_add_plant_flags(filter,WEED_LEAF_READONLY_PLUGIN);
   if (weed_plant_has_leaf(filter,"gui")) {
@@ -6339,7 +6362,7 @@ gint rte_switch_keymode (gint key, gint mode, const gchar *hashname) {
   // this is called when we switch the filter_class bound to an effect_key/mode
 
   int oldkeymode=key_modes[--key];
-  int id=weed_get_idx_for_hashname (hashname,TRUE);
+  int id=weed_get_idx_for_hashname (hashname,TRUE),tid;
   gboolean osc_block;
   gboolean has_gen=FALSE,has_non_gen=FALSE;
 
@@ -6348,12 +6371,12 @@ gint rte_switch_keymode (gint key, gint mode, const gchar *hashname) {
   // effect not found
   if (id==-1) return -1;
 
-  if (key_to_fx[key][test]!=-1) {
-    if (enabled_in_channels(weed_filters[key_to_fx[key][test]],FALSE)==0) has_gen=TRUE;
+  if ((tid=key_to_fx[key][test])!=-1) {
+    if (enabled_in_channels(weed_filters[tid],FALSE)==0&&has_video_chans_out(weed_filters[tid],TRUE)) has_gen=TRUE;
     else has_non_gen=TRUE;
   }
 
-  if ((enabled_in_channels(weed_filters[id],FALSE)==0&&has_non_gen)||
+  if ((enabled_in_channels(weed_filters[id],FALSE)==0&&has_video_chans_out(weed_filters[id],TRUE)&&has_non_gen)||
       (enabled_in_channels(weed_filters[id],FALSE)>0&&has_gen)) return -2;
 
   osc_block=mainw->osc_block;

@@ -1122,8 +1122,10 @@ on_rtew_ok_clicked (GtkButton *button, gpointer user_data) {
 
 
 
-void do_mix_error(void) {
-  do_error_dialog_with_check_transient(_("\n\nThis version of LiVES does not allowing mixing of generators and non-generators on the same key.\n\n"),FALSE,0,GTK_WINDOW(rte_window));
+static void do_mix_error(void) {
+  do_error_dialog_with_check_transient(
+				       _("\n\nThis version of LiVES does not allowing mixing of generators and non-generators on the same key.\n\n"),
+				       FALSE,0,GTK_WINDOW(rte_window));
   return;
 }
 

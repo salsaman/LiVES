@@ -938,6 +938,8 @@ static void lives_init(_ign_opts *ign_opts) {
 
   cached_key=cached_mod=0;
 
+  mainw->agen_key=-1;
+
   /////////////////////////////////////////////////// add new stuff just above here ^^
 
 

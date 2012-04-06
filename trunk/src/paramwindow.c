@@ -1323,7 +1323,7 @@ gboolean make_param_box(GtkVBox *top_vbox, lives_rfx_t *rfx) {
 
   if (mainw->multitrack==NULL&&rfx->status==RFX_STATUS_WEED&&rfx->is_template) {
     weed_plant_t *filter=weed_get_plantptr_value((weed_plant_t *)rfx->source,"filter_class",&error);
-    if (enabled_in_channels(filter,FALSE)==0&&enabled_out_channels(filter,FALSE)>0) {
+    if (enabled_in_channels(filter,FALSE)==0&&enabled_out_channels(filter,FALSE)>0&&has_video_chans_out(filter,TRUE)) {
       // out channel size(s) and target_fps for generators
       if (!chk_params) add_sizes(GTK_BOX(top_vbox),TRUE,rfx);
       has_param=TRUE;

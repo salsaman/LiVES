@@ -742,6 +742,8 @@ AM_CONDITIONAL(HAVE_SYSTEM_WEED_PLUGIN_UTILS,$HAVE_SYSTEM_WEED_PLUGIN_UTILS)
 
 
 
+dnl AC_OUTPUT needs to be more parameterised !!!!!!
+
 
 
 # find -name Makefile.am | sed "s/\.\///g" | sed "s/\.am//g" >> configure.in
@@ -777,6 +779,7 @@ $WEED_MAKEFILES
 lives-plugins/weed-plugins/Makefile
 lives-plugins/weed-plugins/gdk/Makefile
 lives-plugins/weed-plugins/cairo/Makefile
+lives-plugins/weed-plugins/supercollider/Makefile
 lives-plugins/marcos-encoders/Makefile
 ])
 

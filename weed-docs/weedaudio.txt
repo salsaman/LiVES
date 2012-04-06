@@ -149,4 +149,7 @@ Summary
 "host_audio_player" : WEED_SEED_STRING : name of the host audio
 player. Examples are "jack", "sox", "mplayer". In general most plugins can ignore this.
 
+HOWEVER: if the host changes its audio player, all plugins with audio channels should be reinited
+
+
 

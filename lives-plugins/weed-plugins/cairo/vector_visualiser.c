@@ -328,18 +328,19 @@ enum {
 
 
 static void draw_arrow(cairo_t *cr, int i, int j, float x, float y) {
-  // draw arrow from point i,j to i+x, j+y
-  int finx=(int)(i+x+.5);
-  int finy=(int)(j+y+.5);
+  // draw arrow from point i-x,j-y to i, j
+  int stx=i-(x+.5);
+  int sty=j-(y+.5);
 
   int len=sqrt(x*x+y*y);
 
   cairo_set_line_width(cr,4.);
   cairo_set_source_rgb(cr,1.,0.,0.);
-  cairo_move_to(cr,i,j);
-  cairo_line_to(cr,finx,finy);
 
-  cairo_arc(cr,finx,finy,len/4.,0,M_PI*2.);
+  cairo_move_to(cr,stx,sty);
+  cairo_line_to(cr,i,j);
+
+  cairo_arc(cr,i,j,len/4.,0,M_PI*2.);
   cairo_stroke(cr);
 
 

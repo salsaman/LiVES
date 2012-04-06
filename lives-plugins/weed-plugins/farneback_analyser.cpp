@@ -335,8 +335,8 @@ int farneback_process (weed_plant_t *inst, weed_timecode_t tc) {
 
   for (i=0;i<height;i++) {
     for (j=0;j<width;j++) {
-      *dst2++=-*fptr++;
       *dst1++=-*fptr++;
+      *dst2++=-*fptr++;
     }
     fptr+=irow;
     dst1+=orow1;

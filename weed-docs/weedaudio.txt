@@ -28,12 +28,11 @@ Generally, the following rules should apply:
   output parameters, the second to convert the parameters into audio or video data
 
 - plugins which deal with audio MUST be able to process small chunks of audio extremely fast 
-  (sub millisecond processing time - they may be called much more frequently than video effects, which is why mixing 
-  audio and video channels is not recommended); alternately the host may buffer one video frames-worth of audio and 
-  send this to the plugin
+  (ideally sub millisecond processing time - they may be called much more frequently than video effects, which is why mixing 
+  audio and video channels is not recommended)
 
-  [except for audio generators which may generate audio more slowly - generally they will be called at the video frame rate 
-   and asked to return a frames-worth of audio each time
+  [an exception is made for audio/video generators, which may generate audio more slowly - generally they will be called at the video frame rate 
+   and asked to return a frames-worth of audio each time]
 
 
 
@@ -149,7 +148,7 @@ Summary
 "host_audio_player" : WEED_SEED_STRING : name of the host audio
 player. Examples are "jack", "sox", "mplayer". In general most plugins can ignore this.
 
-HOWEVER: if the host changes its audio player, all plugins with audio channels should be reinited
+NOTE: if the host changes its audio player, all plugins with audio channels should be reinited
 
 
 

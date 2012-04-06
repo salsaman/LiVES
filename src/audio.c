@@ -309,7 +309,8 @@ void sample_move_d16_float (float *dst, short *src, uint64_t nsamples, uint64_t 
 
 
 
-int64_t sample_move_float_int(void *holding_buff, float **float_buffer, int nsamps, float scale, int chans, int asamps, int usigned, gboolean swap_endian, float vol) {
+int64_t sample_move_float_int(void *holding_buff, float **float_buffer, int nsamps, float scale, int chans, int asamps, int usigned, 
+			      gboolean swap_endian, float vol) {
   // convert float samples back to int
   int64_t frames_out=0l;
   register int i;

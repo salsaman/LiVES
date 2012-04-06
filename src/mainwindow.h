@@ -995,6 +995,8 @@ typedef struct {
   int64_t alarms[LIVES_MAX_ALARMS];
   int next_free_alarm;
 
+  volatile int agen_key; ///< which fx key is generating audio (or -1 for none)
+
   gboolean aplayer_broken;
 
   gboolean com_failed;

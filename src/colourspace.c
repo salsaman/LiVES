@@ -1251,7 +1251,7 @@ static void convert_yuv888_to_rgb_frame(guchar *src, gint hsize, gint vsize, gin
     for (i=0;i<nthreads;i++) {
       pthread_join(cthreads[i],NULL);
     }
-    free(ccparams);
+    g_free(ccparams);
     return;
   }
 
@@ -1334,7 +1334,7 @@ static void convert_yuva8888_to_rgba_frame(guchar *src, gint hsize, gint vsize, 
     for (i=0;i<nthreads;i++) {
       pthread_join(cthreads[i],NULL);
     }
-    free(ccparams);
+    g_free(ccparams);
     return;
   }
 
@@ -1416,7 +1416,7 @@ static void convert_yuv888_to_bgr_frame(guchar *src, gint hsize, gint vsize, gin
     for (i=0;i<nthreads;i++) {
       pthread_join(cthreads[i],NULL);
     }
-    free(ccparams);
+    g_free(ccparams);
     return;
   }
 
@@ -1500,7 +1500,7 @@ static void convert_yuva8888_to_bgra_frame(guchar *src, gint hsize, gint vsize, 
     for (i=0;i<nthreads;i++) {
       pthread_join(cthreads[i],NULL);
     }
-    free(ccparams);
+    g_free(ccparams);
     return;
   }
 
@@ -1580,7 +1580,7 @@ static void convert_yuv888_to_argb_frame(guchar *src, gint hsize, gint vsize, gi
     for (i=0;i<nthreads;i++) {
       pthread_join(cthreads[i],NULL);
     }
-    free(ccparams);
+    g_free(ccparams);
     return;
   }
 
@@ -1661,7 +1661,7 @@ static void convert_yuva8888_to_argb_frame(guchar *src, gint hsize, gint vsize, 
     for (i=0;i<nthreads;i++) {
       pthread_join(cthreads[i],NULL);
     }
-    free(ccparams);
+    g_free(ccparams);
     return;
   }
 
@@ -1991,7 +1991,7 @@ static void convert_rgb_to_uyvy_frame(guchar *rgbdata, gint hsize, gint vsize, g
     for (i=0;i<nthreads;i++) {
       pthread_join(cthreads[i],NULL);
     }
-    free(ccparams);
+    g_free(ccparams);
     return;
   }
 
@@ -2074,7 +2074,7 @@ static void convert_rgb_to_yuyv_frame(guchar *rgbdata, gint hsize, gint vsize, g
     for (i=0;i<prefs->nfx_threads;i++) {
       pthread_join(cthreads[i],NULL);
     }
-    free(ccparams);
+    g_free(ccparams);
     return;
   }
 
@@ -2156,7 +2156,7 @@ static void convert_bgr_to_uyvy_frame(guchar *rgbdata, gint hsize, gint vsize, g
     for (i=0;i<nthreads;i++) {
       pthread_join(cthreads[i],NULL);
     }
-    free(ccparams);
+    g_free(ccparams);
     return;
   }
 
@@ -2242,7 +2242,7 @@ static void convert_bgr_to_yuyv_frame(guchar *rgbdata, gint hsize, gint vsize, g
     for (i=0;i<nthreads;i++) {
       pthread_join(cthreads[i],NULL);
     }
-    free(ccparams);
+    g_free(ccparams);
     return;
   }
 
@@ -2326,7 +2326,7 @@ static void convert_argb_to_uyvy_frame(guchar *rgbdata, gint hsize, gint vsize, 
     for (i=0;i<nthreads;i++) {
       pthread_join(cthreads[i],NULL);
     }
-    free(ccparams);
+    g_free(ccparams);
     return;
   }
 
@@ -2404,7 +2404,7 @@ static void convert_argb_to_yuyv_frame(guchar *rgbdata, gint hsize, gint vsize, 
     for (i=0;i<nthreads;i++) {
       pthread_join(cthreads[i],NULL);
     }
-    free(ccparams);
+    g_free(ccparams);
     return;
   }
 
@@ -2484,7 +2484,7 @@ static void convert_rgb_to_yuv_frame(guchar *rgbdata, gint hsize, gint vsize, gi
     for (i=0;i<nthreads;i++) {
       pthread_join(cthreads[i],NULL);
     }
-    free(ccparams);
+    g_free(ccparams);
     return;
   }
 
@@ -2576,7 +2576,7 @@ static void convert_rgb_to_yuvp_frame(guchar *rgbdata, gint hsize, gint vsize, g
     for (i=0;i<nthreads;i++) {
       pthread_join(cthreads[i],NULL);
     }
-    free(ccparams);
+    g_free(ccparams);
     return;
   }
 
@@ -2660,7 +2660,7 @@ static void convert_bgr_to_yuv_frame(guchar *rgbdata, gint hsize, gint vsize, gi
     for (i=0;i<nthreads;i++) {
       pthread_join(cthreads[i],NULL);
     }
-    free(ccparams);
+    g_free(ccparams);
     return;
   }
 
@@ -2756,7 +2756,7 @@ static void convert_bgr_to_yuvp_frame(guchar *rgbdata, gint hsize, gint vsize, g
     for (i=0;i<nthreads;i++) {
       pthread_join(cthreads[i],NULL);
     }
-    free(ccparams);
+    g_free(ccparams);
     return;
   }
 
@@ -2840,7 +2840,7 @@ static void convert_argb_to_yuv_frame(guchar *rgbdata, gint hsize, gint vsize, g
     for (i=0;i<nthreads;i++) {
       pthread_join(cthreads[i],NULL);
     }
-    free(ccparams);
+    g_free(ccparams);
     return;
   }
 
@@ -2927,7 +2927,7 @@ static void convert_argb_to_yuvp_frame(guchar *rgbdata, gint hsize, gint vsize, 
     for (i=0;i<nthreads;i++) {
       pthread_join(cthreads[i],NULL);
     }
-    free(ccparams);
+    g_free(ccparams);
     return;
   }
 
@@ -3337,7 +3337,7 @@ static void convert_uyvy_to_rgb_frame(uyvy_macropixel *src, int width, int heigh
     for (i=0;i<nthreads;i++) {
       pthread_join(cthreads[i],NULL);
     }
-    free(ccparams);
+    g_free(ccparams);
     return;
   }
 
@@ -3418,7 +3418,7 @@ static void convert_uyvy_to_bgr_frame(uyvy_macropixel *src, int width, int heigh
     for (i=0;i<nthreads;i++) {
       pthread_join(cthreads[i],NULL);
     }
-    free(ccparams);
+    g_free(ccparams);
     return;
   }
 
@@ -3497,7 +3497,7 @@ static void convert_uyvy_to_argb_frame(uyvy_macropixel *src, int width, int heig
     for (i=0;i<nthreads;i++) {
       pthread_join(cthreads[i],NULL);
     }
-    free(ccparams);
+    g_free(ccparams);
     return;
   }
 
@@ -3570,7 +3570,7 @@ static void convert_yuyv_to_rgb_frame(yuyv_macropixel *src, int width, int heigh
     for (i=0;i<nthreads;i++) {
       pthread_join(cthreads[i],NULL);
     }
-    free(ccparams);
+    g_free(ccparams);
     return;
   }
 
@@ -3651,7 +3651,7 @@ static void convert_yuyv_to_bgr_frame(yuyv_macropixel *src, int width, int heigh
     for (i=0;i<nthreads;i++) {
       pthread_join(cthreads[i],NULL);
     }
-    free(ccparams);
+    g_free(ccparams);
     return;
   }
 
@@ -3725,7 +3725,7 @@ static void convert_yuyv_to_argb_frame(yuyv_macropixel *src, int width, int heig
     for (i=0;i<nthreads;i++) {
       pthread_join(cthreads[i],NULL);
     }
-    free(ccparams);
+    g_free(ccparams);
     return;
   }
 
@@ -3897,7 +3897,7 @@ static void convert_yuv_planar_to_rgb_frame(guchar **src, int width, int height,
     for (i=0;i<nthreads;i++) {
       pthread_join(cthreads[i],NULL);
     }
-    free(ccparams);
+    g_free(ccparams);
     return;
   }
 
@@ -3991,7 +3991,7 @@ static void convert_yuv_planar_to_bgr_frame(guchar **src, int width, int height,
     for (i=0;i<nthreads;i++) {
       pthread_join(cthreads[i],NULL);
     }
-    free(ccparams);
+    g_free(ccparams);
     return;
   }
 
@@ -4084,7 +4084,7 @@ static void convert_yuv_planar_to_argb_frame(guchar **src, int width, int height
     for (i=0;i<nthreads;i++) {
       pthread_join(cthreads[i],NULL);
     }
-    free(ccparams);
+    g_free(ccparams);
     return;
   }
 
@@ -5815,7 +5815,7 @@ static void convert_swap3_frame (guchar *src, int width, int height, int irowstr
     for (i=0;i<nthreads;i++) {
       pthread_join(cthreads[i],NULL);
     }
-    free(ccparams);
+    g_free(ccparams);
     return;
   }
 
@@ -5895,7 +5895,7 @@ static void convert_swap4_frame (guchar *src, int width, int height, int irowstr
     for (i=0;i<nthreads;i++) {
       pthread_join(cthreads[i],NULL);
     }
-    free(ccparams);
+    g_free(ccparams);
     return;
   }
 
@@ -5976,7 +5976,7 @@ static void convert_swap3addpost_frame(guchar *src, int width, int height, int i
     for (i=0;i<nthreads;i++) {
       pthread_join(cthreads[i],NULL);
     }
-    free(ccparams);
+    g_free(ccparams);
     return;
   }
 
@@ -6058,7 +6058,7 @@ static void convert_swap3addpre_frame(guchar *src, int width, int height, int ir
     for (i=0;i<nthreads;i++) {
       pthread_join(cthreads[i],NULL);
     }
-    free(ccparams);
+    g_free(ccparams);
     return;
   }
 
@@ -6138,7 +6138,7 @@ static void convert_swap3postalpha_frame(guchar *src, int width, int height, int
     for (i=0;i<nthreads;i++) {
       pthread_join(cthreads[i],NULL);
     }
-    free(ccparams);
+    g_free(ccparams);
     return;
   }
 
@@ -6219,7 +6219,7 @@ static void convert_addpost_frame(guchar *src, int width, int height, int irowst
     for (i=0;i<nthreads;i++) {
       pthread_join(cthreads[i],NULL);
     }
-    free(ccparams);
+    g_free(ccparams);
     return;
   }
 
@@ -6304,7 +6304,7 @@ static void convert_addpre_frame(guchar *src, int width, int height, int irowstr
     for (i=0;i<nthreads;i++) {
       pthread_join(cthreads[i],NULL);
     }
-    free(ccparams);
+    g_free(ccparams);
     return;
   }
 
@@ -6384,7 +6384,7 @@ static void convert_swap3delpost_frame(guchar *src,int width,int height, int iro
     for (i=0;i<nthreads;i++) {
       pthread_join(cthreads[i],NULL);
     }
-    free(ccparams);
+    g_free(ccparams);
     return;
   }
 
@@ -6462,7 +6462,7 @@ static void convert_delpost_frame(guchar *src,int width,int height, int irowstri
     for (i=0;i<nthreads;i++) {
       pthread_join(cthreads[i],NULL);
     }
-    free(ccparams);
+    g_free(ccparams);
     return;
   }
 
@@ -6542,7 +6542,7 @@ static void convert_delpre_frame(guchar *src,int width,int height, int irowstrid
     for (i=0;i<nthreads;i++) {
       pthread_join(cthreads[i],NULL);
     }
-    free(ccparams);
+    g_free(ccparams);
     return;
   }
 
@@ -6623,7 +6623,7 @@ static void convert_swap3delpre_frame(guchar *src, int width, int height, int ir
     for (i=0;i<nthreads;i++) {
       pthread_join(cthreads[i],NULL);
     }
-    free(ccparams);
+    g_free(ccparams);
     return;
   }
 
@@ -6705,7 +6705,7 @@ static void convert_swapprepost_frame (guchar *src, int width, int height, int i
     for (i=0;i<nthreads;i++) {
       pthread_join(cthreads[i],NULL);
     }
-    free(ccparams);
+    g_free(ccparams);
     return;
   }
 
@@ -6804,7 +6804,7 @@ static void convert_swab_frame(guchar *src, int width, int height, guchar *dest,
     for (i=0;i<nthreads;i++) {
       pthread_join(cthreads[i],NULL);
     }
-    free(ccparams);
+    g_free(ccparams);
     return;
   }
 

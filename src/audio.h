@@ -192,6 +192,8 @@ gboolean resync_audio(gint frameno);
 
 lives_audio_track_state_t *get_audio_and_effects_state_at(weed_plant_t *event_list, weed_plant_t *st_event, gboolean get_audstate, gboolean exact);
 
+gboolean get_audio_from_plugin(float *fbuffer, int nchans, int arate, int nsamps);
+void reinit_audio_gen(void);
 
 void init_jack_audio_buffers (gint achans, gint arate, gboolean exact);
 void free_jack_audio_buffers(void);

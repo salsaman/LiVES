@@ -17,10 +17,12 @@
 #ifdef HAVE_SYSTEM_WEED
 #include <weed/weed.h>
 #include <weed/weed-host.h>
+#include <weed/weed-effects.h>
 #include <weed/weed-palettes.h>
 #else
 #include "../libweed/weed.h"
 #include "../libweed/weed-host.h"
+#include "../libweed/weed-effects.h"
 #include "../libweed/weed-palettes.h"
 #endif
 
@@ -2207,6 +2209,73 @@ lives_audio_buf_t *audio_cache_get_buffer(void) {
 }
 
 
+///////////////////////////////////////
+
+// plugin handling
+
+gboolean get_audio_from_plugin(float *fbuffer, int nchans, int arate, int nsamps) {
+  // get audio from an audio generator; fbuffer is filled with non-interleaved float
+
+  weed_timecode_t tc;
+
+  weed_plant_t *inst=rte_keymode_get_instance(mainw->agen_key,rte_key_getmode(mainw->agen_key)),*filter;
+  weed_plant_t *channel=get_enabled_channel(inst,0,FALSE);
+
+  weed_process_f *process_func_ptr_ptr;
+  weed_process_f process_func;
+  
+  int error;
+
+  if (mainw->agen_needs_reinit) return FALSE; // wait for other thread to reinit us
+
+  // stop video thread from possibly interpolating/deiniting
+  if (pthread_mutex_trylock(&mainw->interp_mutex)) return FALSE;
+
+  // make sure values match, else we need to reinit the plugin
+  if (nchans!=weed_get_int_value(channel,"audio_channels",&error)||
+      arate!=weed_get_int_value(channel,"audio_rate",&error)||
+      weed_get_boolean_value(channel,"audio_interleaf",&error)==WEED_TRUE) {
+    // reinit plugin
+    mainw->agen_needs_reinit=TRUE;
+  }
+
+  weed_set_int_value(channel,"audio_channels",nchans);
+  weed_set_int_value(channel,"audio_rate",arate);
+  weed_set_boolean_value(channel,"audio_interleaf",WEED_FALSE);
+  weed_set_int_value(channel,"audio_data_length",nsamps);
+  weed_set_voidptr_value(channel,"audio_data",fbuffer);
+
+  weed_set_double_value(inst,"fps",cfile->pb_fps);
+
+  if (mainw->agen_needs_reinit) {
+    // allow main thread to complete the reinit so we do not delay; just return silence
+    pthread_mutex_unlock(&mainw->interp_mutex);
+    return FALSE;
+  }
+
+  tc=(double)mainw->agen_samps_count/(double)arate*U_SEC; // we take our timing from the number of samples read
+  weed_set_int64_value(channel,"timecode",tc);
+
+  weed_leaf_get(filter,"process_func",0,(void *)&process_func_ptr_ptr);
+  process_func=process_func_ptr_ptr[0];
+
+  if ((*process_func)(inst,tc)==WEED_ERROR_PLUGIN_INVALID) {
+    pthread_mutex_unlock(&mainw->interp_mutex);
+    return FALSE;
+  }
+  pthread_mutex_unlock(&mainw->interp_mutex);
+
+  mainw->agen_samps_count+=nsamps;
+
+  return TRUE;
+}
+
+
+void reinit_audio_gen(void) {
+  weed_plant_t *inst=rte_keymode_get_instance(mainw->agen_key,rte_key_getmode(mainw->agen_key));
+  weed_reinit_effect(inst,TRUE);
+}
+
 
 ////////////////////////////////////////
 // audio streaming
@@ -2243,20 +2312,20 @@ gboolean start_audio_stream(void) {
   g_free(astname);
   g_free(astname_out);
 
-    if (prefs->audio_player==AUD_PLAYER_PULSE) {
+  if (prefs->audio_player==AUD_PLAYER_PULSE) {
 #ifdef HAVE_PULSE_AUDIO
-      arate=(int)mainw->pulsed->out_arate;
-      // TODO - chans, samps, signed, endian
+    arate=(int)mainw->pulsed->out_arate;
+    // TODO - chans, samps, signed, endian
 #endif
-    }
+  }
 
-    if (prefs->audio_player==AUD_PLAYER_JACK) {
+  if (prefs->audio_player==AUD_PLAYER_JACK) {
 #ifdef ENABLE_JACK
-      arate=(int)mainw->jackd->sample_out_rate;
-      // TODO - chans, samps, signed, endian
+    arate=(int)mainw->jackd->sample_out_rate;
+    // TODO - chans, samps, signed, endian
       
 #endif
-    }
+  }
 
 
   astream_pid=fork();

@@ -995,7 +995,10 @@ typedef struct {
   int64_t alarms[LIVES_MAX_ALARMS];
   int next_free_alarm;
 
-  volatile int agen_key; ///< which fx key is generating audio (or -1 for none)
+  // stuff specific to audio gens (will be extended to all rt audio fx)
+  volatile int agen_key; ///< which fx key is generating audio [1 based] (or 0 for none)
+  volatile gboolean agen_needs_reinit;
+  gint64 agen_samps_count; ///< count of samples since init
 
   gboolean aplayer_broken;
 

@@ -17,7 +17,6 @@
 #include "audio.h" // for fill_abuffer_from
 #include "resample.h"
 
-
 extern void reset_frame_and_clip_index (void);
 
 
@@ -1493,6 +1492,10 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
 	return FALSE;
       }
 
+      if (G_UNLIKELY(mainw->agen_needs_reinit)) {
+	// we are generating audio from a plugin and it needs reinit - we do it in this thread so as not to hold up the player thread
+	reinit_audio_gen();
+      }
 
       // normal playback, wth realtime audio player
       if (!visible&&(mainw->whentostop!=STOP_ON_AUD_END||
@@ -1595,6 +1598,11 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
 	lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
 	if (mainw->current_file>-1&&cfile!=NULL) lives_freep((void**)&cfile->op_dir);
 	return FALSE;
+      }
+
+      if (G_UNLIKELY(mainw->agen_needs_reinit)) {
+	// we are generating audio from a plugin and it needs reinit - we do it in this thread so as not to hold up the player thread
+	reinit_audio_gen();
       }
 
       if (mainw->iochan!=NULL&&progress_count==0) {

@@ -1171,7 +1171,6 @@ lives_filter_error_t weed_reinit_effect (weed_plant_t *inst, gboolean deinit_fir
 
   if (deinit_first) weed_call_deinit_func(inst);
 
-
   if (weed_plant_has_leaf(filter,"init_func")) {
     weed_init_f *init_func_ptr_ptr;
     weed_init_f init_func;
@@ -1219,7 +1218,7 @@ void weed_reinit_all(void) {
       if (mainw->rte&(GU641<<i)) {
 	mainw->osc_block=TRUE;
 	if ((instance=key_to_instance[i][key_modes[i]])==NULL) continue;
-	if (enabled_in_channels(instance,FALSE)==0) continue;
+	if (enabled_in_channels(instance,FALSE)==0&&!is_pure_audio(instance,FALSE)) continue;
 	weed_reinit_effect(instance,TRUE);
       }
     }
@@ -4574,11 +4573,14 @@ gboolean weed_init_effect(int hotkey) {
   // mainw->osc_block should be set to TRUE before calling this function !
   weed_plant_t *filter;
   weed_plant_t *new_instance;
-  gint num_tr_applied;
+  weed_plant_t *event_list;
+
   gboolean fg_modeswitch=FALSE,is_trans=FALSE,gen_start=FALSE,is_modeswitch=FALSE;
+  gboolean is_audio_gen=FALSE;
+
+  gint num_tr_applied;
   gint rte_keys=mainw->rte_keys;
   gint inc_count;
-  weed_plant_t *event_list;
   gint ntracks;
   int error;
 
@@ -4597,12 +4599,24 @@ gboolean weed_init_effect(int hotkey) {
 
   inc_count=enabled_in_channels(weed_filters[key_to_fx[hotkey][key_modes[hotkey]]],FALSE);
 
+  // check first if it is an audio generator
+
+  if (inc_count==0&&has_audio_chans_out(weed_filters[key_to_fx[hotkey][key_modes[hotkey]]],FALSE)&&
+      !has_video_chans_out(weed_filters[key_to_fx[hotkey][key_modes[hotkey]]],TRUE)) {
+
+    if (mainw->agen_key!=0) {
+      // we had an existing audio gen running - stop that one first
+      weed_deinit_effect(mainw->agen_key);
+    }
+    is_audio_gen=TRUE;
+  }
+
   // TODO - block template channel changes
   // we must stop any old generators
 
   if (inc_count==0&&hotkey!=fg_generator_key&&mainw->num_tr_applied>0&&mainw->blend_file!=-1&&
       mainw->blend_file!=mainw->current_file&&mainw->files[mainw->blend_file]!=NULL&&
-      mainw->files[mainw->blend_file]->clip_type==CLIP_TYPE_GENERATOR&&inc_count==0) {
+      mainw->files[mainw->blend_file]->clip_type==CLIP_TYPE_GENERATOR&&inc_count==0&&!is_audio_gen) {
     if (bg_gen_to_start==-1) {
       weed_generator_end((weed_plant_t *)mainw->files[mainw->blend_file]->ext_src);
     }
@@ -4611,7 +4625,7 @@ gboolean weed_init_effect(int hotkey) {
   }
 
   if (mainw->current_file>0&&cfile->clip_type==CLIP_TYPE_GENERATOR&&
-      (fg_modeswitch||(inc_count==0&&mainw->num_tr_applied==0))) {
+      (fg_modeswitch||(inc_count==0&&mainw->num_tr_applied==0))&&!is_audio_gen) {
     if (mainw->noswitch||mainw->is_processing||mainw->preview) return FALSE; // stopping fg gen will cause clip to switch
     if (mainw->playing_file>-1&&mainw->whentostop==STOP_ON_VID_END&&inc_count!=0) {
       mainw->cancelled=CANCEL_GENERATOR_END;
@@ -4634,7 +4648,7 @@ gboolean weed_init_effect(int hotkey) {
       mainw->blend_file=mainw->current_file;
     }
   }
-  else if (inc_count==0) {
+  else if (inc_count==0&&!is_audio_gen) {
     // aha - a generator
      if (mainw->playing_file==-1) {
       // if we are not playing, we will postpone creating the instance
@@ -4643,7 +4657,7 @@ gboolean weed_init_effect(int hotkey) {
       fg_generator_key=hotkey;
       fg_generator_mode=key_modes[hotkey];
       gen_start=TRUE;
-    }
+     }
      else if (!fg_modeswitch&&mainw->num_tr_applied==0&&(mainw->noswitch||mainw->is_processing||mainw->preview)) 
        return FALSE;
   }
@@ -4695,6 +4709,7 @@ gboolean weed_init_effect(int hotkey) {
 	if (is_trans) mainw->num_tr_applied--;
 	lives_chdir(cwd,FALSE);
 	g_free(cwd);
+	if (is_audio_gen) mainw->agen_needs_reinit=FALSE;
 	return FALSE;
       }
       g_free(cwd);
@@ -4702,7 +4717,7 @@ gboolean weed_init_effect(int hotkey) {
     set_param_gui_readonly(new_instance);
   }
 
-  if (inc_count==0) {
+  if (inc_count==0&&!is_audio_gen) {
     // generator start
     if (mainw->num_tr_applied>0&&!fg_modeswitch&&mainw->current_file>-1&&mainw->playing_file>-1) {
       // transition is on, make into bg clip
@@ -4768,6 +4783,11 @@ gboolean weed_init_effect(int hotkey) {
     mainw->event_list=append_filter_map_event (mainw->event_list,mainw->currticks,filter_map);
   }
 
+  if (is_audio_gen) {
+    mainw->agen_key=hotkey+1;
+    mainw->agen_needs_reinit=FALSE;
+  }
+
   return TRUE;
 }
 
@@ -4821,8 +4841,10 @@ void weed_deinit_effect(int hotkey) {
   // caller should also handle mainw->rte
 
   weed_plant_t *instance;
+
   gboolean is_modeswitch=FALSE;
   gboolean was_transition=FALSE;
+  gboolean is_audio_gen=FALSE;
   gint num_in_chans;
 
   if (hotkey<0) {
@@ -4836,8 +4858,10 @@ void weed_deinit_effect(int hotkey) {
 
   num_in_chans=enabled_in_channels(instance,FALSE);
 
-  if (num_in_chans==0) {
-    // is generator
+  if (hotkey+1==mainw->agen_key) is_audio_gen=TRUE;
+
+  if (num_in_chans==0&&!is_audio_gen) {
+    // is (video) generator
     if (mainw->playing_file>-1&&mainw->whentostop==STOP_ON_VID_END&&(hotkey!=bg_generator_key)) {
       mainw->cancelled=CANCEL_GENERATOR_END;
     }
@@ -4847,6 +4871,18 @@ void weed_deinit_effect(int hotkey) {
     return;
   }
   else {
+    if (is_audio_gen) {
+      // is audio generator
+      int agen_key=mainw->agen_key;
+      pthread_mutex_lock(&mainw->interp_mutex); // wait for current processing to finish :  TODO - do for all audio effects (when we have them)
+      mainw->agen_key=0;
+      pthread_mutex_unlock(&mainw->interp_mutex);
+      mainw->agen_samps_count=0;
+      if ((mainw->rte&(GU641<<agen_key))) {
+	mainw->rte^=(GU641<<agen_key);
+	if (rte_window!=NULL) rtew_set_keych(agen_key,TRUE);
+      }
+    }
     weed_call_deinit_func(instance);
   }
 
@@ -6290,11 +6326,13 @@ gboolean rte_key_setmode (gint key, gint newmode) {
   if (oldmode!=newmode) {
     blend_file=mainw->blend_file;
 
-    if (was_started&&enabled_in_channels(inst,FALSE)>0) {
+    if (was_started&&enabled_in_channels(inst,FALSE)>0&&!is_pure_audio(inst,FALSE)) {
       // not a generator
       weed_deinit_effect (key);
     }
-    else if (enabled_in_channels(weed_filters[key_to_fx[key][newmode]],FALSE)==0) mainw->whentostop=NEVER_STOP; // when gen->gen, dont stop pb
+    else if (enabled_in_channels(weed_filters[key_to_fx[key][newmode]],FALSE)==0&&
+	     has_video_chans_out(weed_filters[key_to_fx[key][newmode]],TRUE)) 
+      mainw->whentostop=NEVER_STOP; // when gen->gen, dont stop pb
     
     key_modes[real_key]=newmode;
 
@@ -6336,11 +6374,13 @@ int weed_add_effectkey_by_idx (gint key, int idx) {
 
   for (i=0;i<prefs->max_modes_per_key;i++) {
     if (key_to_fx[key][i]!=-1) {
-      if (enabled_in_channels(weed_filters[key_to_fx[key][i]],FALSE)==0) has_gen=TRUE;
+      if (enabled_in_channels(weed_filters[key_to_fx[key][i]],FALSE)==0
+	  &&has_video_chans_out(weed_filters[key_to_fx[key][i]],TRUE)) 
+	has_gen=TRUE;
       else has_non_gen=TRUE;
     }
     else {
-      if ((enabled_in_channels(weed_filters[idx],FALSE)==0&&has_non_gen)||
+      if ((enabled_in_channels(weed_filters[idx],FALSE)==0&&has_non_gen&&has_video_chans_out(weed_filters[idx],TRUE)) ||
 	  (enabled_in_channels(weed_filters[idx],FALSE)>0&&has_gen)) return -2;
       key_to_fx[key][i]=idx;
       return i;

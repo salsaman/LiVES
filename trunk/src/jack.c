@@ -289,6 +289,7 @@ static int audio_process (nframes_t nframes, void *arg) {
   int new_file;
   gboolean from_memory=FALSE;
   gboolean wait_cache_buffer=FALSE;
+  gboolean pl_error=FALSE; ///< flag tells if we had an error during plugin processing
   lives_audio_buf_t *cache_buffer=NULL;
   size_t nbytes;
 
@@ -340,7 +341,7 @@ static int audio_process (nframes_t nframes, void *arg) {
   for (i = 0; i < jackd->num_output_channels; i++) 
     out_buffer[i] = (float *) jack_port_get_buffer(jackd->output_port[i], 
 						   nframes);
-  if (mainw->agen_key==-1) { // if a plugin is generating audio we do not use cache_buffers
+  if (mainw->agen_key==0||mainw->agen_needs_reinit) { // if a plugin is generating audio we do not use cache_buffers, otherwise:
     if (jackd->read_abuf==-1) {
       // assign local copy from cache_buffers
       if (mainw->playing_file==-1 || ( cache_buffer = pop_cache_buffer() )==NULL || !cache_buffer->is_ready ) {
@@ -460,7 +461,7 @@ static int audio_process (nframes_t nframes, void *arg) {
 	      }
 	    }
 
-	    if (!wait_cache_buffer&&mainw->agen_key==-1) push_cache_buffer( cache_buffer, jackd, in_bytes, nframes, shrink_factor );
+	    if (!wait_cache_buffer&&mainw->agen_key==0&&!mainw->agen_needs_reinit) push_cache_buffer( cache_buffer, jackd, in_bytes, nframes, shrink_factor );
 
 	    for(i = 0; i < jackd->num_output_channels; i++) sample_silence_dS(out_buffer[i], nframes);
 
@@ -526,7 +527,7 @@ static int audio_process (nframes_t nframes, void *arg) {
 	  return 0;
 	}
 	
-	if (mainw->agen_key==-1) inputFramesAvailable = cache_buffer->samp_space;
+	if (mainw->agen_key==0&&!mainw->agen_needs_reinit) inputFramesAvailable = cache_buffer->samp_space;
 	else inputFramesAvailable=jackFramesAvailable;
 
 #ifdef DEBUG_AJACK
@@ -555,23 +556,30 @@ static int audio_process (nframes_t nframes, void *arg) {
       if (numFramesToWrite) {
 	if (!from_memory) {
 	  //	if (((gint)(jackd->num_calls/100.))*100==jackd->num_calls) if (mainw->soft_debug) g_print("audio pip\n");
-	  if (cache_buffer->bufferf!=NULL||mainw->agen_key!=-1) {
+	  if (cache_buffer->bufferf!=NULL||mainw->agen_key!=0||mainw->agen_needs_reinit) {
 	    float *fbuffer=NULL;
 
-	    if (mainw->agen_key!=-1) {
+	    if (mainw->agen_key!=0||mainw->agen_needs_reinit) {
 	      // audio generated from plugin
 
-	      fbuffer=g_malloc(numFramesToWrite*jackd->num_output_channels*4);
+	      if (mainw->agen_needs_reinit) pl_error=TRUE;
+	      else {
+		fbuffer=g_malloc(numFramesToWrite*jackd->num_output_channels*4);
+		
+		if (!get_audio_from_plugin(fbuffer,jackd->num_output_channels,jackd->sample_out_rate,numFramesToWrite)) {
+		  pl_error=TRUE;
+		}
+	      }
 
-	      //get_audio_from_plugin(fbuffer,jackd->num_output_channels,jackd->out_arate,numFramesToWrite);
 	      // get back non-interleaved float fbuffer; rate and channels should match
 
 	      for (i=0;i<jackd->num_output_channels;i++) {
-		// TODO *** - need to apply vol
-
-		lives_memcpy(out_buffer[i], fbuffer + i * numFramesToWrite, numFramesToWrite);
+		if (pl_error) sample_silence_dS(out_buffer[i], nframes);
+		else {
+		  // TODO *** - need to apply vol
+		  lives_memcpy(out_buffer[i], fbuffer + i * numFramesToWrite, numFramesToWrite);
+		}
 	      }
-
 	    }
 	    else {
 	      for (i=0;i<jackd->num_output_channels;i++) {
@@ -586,73 +594,79 @@ static int audio_process (nframes_t nframes, void *arg) {
 
 	      nbytes=numFramesToWrite*4;
 
-	      if (mainw->agen_key==-1)
-		xbuf=(unsigned char *)cache_buffer->buffer16[0];
-	      else {
-		// plugin is generating and we are streaming: convert fbuffer to s16
-		float **fp=g_malloc(jackd->num_output_channels*sizeof(float *));
-		for (i=0;i<jackd->num_output_channels;i++) {
-		  fp[i]=fbuffer+i*numFramesToWrite;
-		}
-
-		xbuf=g_malloc(nbytes*jackd->num_output_channels);
-
-		sample_move_float_int((void *)xbuf,fp,numFramesToWrite,1.0,jackd->num_output_channels,16,0,TRUE,1.0);
-
+	      if (pl_error) {
+		check_zero_buff(nbytes);
+		audio_stream(zero_buff,nbytes,jackd->astream_fd);
 	      }
-	      
-	      if (jackd->num_output_channels!=2) {
-		// need to remap channels to stereo (assumed for now)
-		size_t bysize=4,tsize=0;
-		unsigned char *inbuf,*oinbuf=NULL;
+	      else {
+		if (mainw->agen_key==0)
+		  xbuf=(unsigned char *)cache_buffer->buffer16[0];
+		else {
+		  // plugin is generating and we are streaming: convert fbuffer to s16
+		  float **fp=g_malloc(jackd->num_output_channels*sizeof(float *));
+		  for (i=0;i<jackd->num_output_channels;i++) {
+		    fp[i]=fbuffer+i*numFramesToWrite;
+		  }
 
-		if (mainw->agen_key!=-1) inbuf=(unsigned char *)cache_buffer->buffer16[0];
-		else oinbuf=inbuf=xbuf;
+		  xbuf=g_malloc(nbytes*jackd->num_output_channels);
 
-		xbuf=(unsigned char *)g_try_malloc(nbytes);
-		if (!xbuf) {
-		  for(i = 0; i < jackd->num_output_channels; i++) sample_silence_dS(out_buffer[i], numFramesToWrite);
-		  
-		  // external streaming
-		  nbytes=numFramesToWrite*4;
-		  if (check_zero_buff(nbytes))
-		    audio_stream(zero_buff,nbytes,jackd->astream_fd);
-		  return 0;
+		  sample_move_float_int((void *)xbuf,fp,numFramesToWrite,1.0,jackd->num_output_channels,16,0,TRUE,1.0);
+
 		}
-		if (jackd->num_output_channels==1) bysize=2;
-		while (nbytes>0) {
-		  memcpy(xbuf+tsize,inbuf,bysize);
-		  tsize+=bysize;
-		  nbytes-=bysize;
-		  if (bysize==2) {
-		    // duplicate mono channel
+	      
+		if (jackd->num_output_channels!=2) {
+		  // need to remap channels to stereo (assumed for now)
+		  size_t bysize=4,tsize=0;
+		  unsigned char *inbuf,*oinbuf=NULL;
+
+		  if (mainw->agen_key!=0) inbuf=(unsigned char *)cache_buffer->buffer16[0];
+		  else oinbuf=inbuf=xbuf;
+
+		  xbuf=(unsigned char *)g_try_malloc(nbytes);
+		  if (!xbuf) {
+		    // external streaming
+		    nbytes=numFramesToWrite*4;
+		    if (check_zero_buff(nbytes))
+		      audio_stream(zero_buff,nbytes,jackd->astream_fd);
+		    return 0;
+		  }
+		  if (jackd->num_output_channels==1) bysize=2;
+		  while (nbytes>0) {
 		    memcpy(xbuf+tsize,inbuf,bysize);
 		    tsize+=bysize;
 		    nbytes-=bysize;
-		    inbuf+=bysize;
+		    if (bysize==2) {
+		      // duplicate mono channel
+		      memcpy(xbuf+tsize,inbuf,bysize);
+		      tsize+=bysize;
+		      nbytes-=bysize;
+		      inbuf+=bysize;
+		    }
+		    else {
+		      // or skip extra channels
+		      inbuf+=jackd->num_output_channels*4;
+		    }
 		  }
-		  else {
-		    // or skip extra channels
-		    inbuf+=jackd->num_output_channels*4;
-		  }
+		  nbytes=numFramesToWrite*4;
+		  if (oinbuf!=NULL) g_free(oinbuf);
 		}
-		nbytes=numFramesToWrite*4;
-		if (oinbuf!=NULL) g_free(oinbuf);
+		audio_stream(xbuf,nbytes,jackd->astream_fd);
+		if (mainw->agen_key!=0||xbuf!=(unsigned char *)cache_buffer->buffer16[0]) g_free(xbuf);
 	      }
-	      audio_stream(xbuf,nbytes,jackd->astream_fd);
-	      if (mainw->agen_key!=-1||xbuf!=(unsigned char *)cache_buffer->buffer16[0]) g_free(xbuf);
 	    }
-
+	    
 	    if (fbuffer!=NULL) g_free(fbuffer);
-
+	    
 	  }
 	  else {
 	    for(i = 0; i < jackd->num_output_channels; i++) sample_silence_dS(out_buffer[i], numFramesToWrite);
 	  
 	    // external streaming
 	    nbytes=numFramesToWrite*4;
-	    check_zero_buff(nbytes);
-	    audio_stream(zero_buff,nbytes,jackd->astream_fd);
+	    if (jackd->astream_fd!=-1) {
+	      check_zero_buff(nbytes);
+	      audio_stream(zero_buff,nbytes,jackd->astream_fd);
+	    }
 	  }
 	}
 	else {
@@ -726,7 +740,7 @@ static int audio_process (nframes_t nframes, void *arg) {
     }
 
     if (!from_memory) {
-      if (!wait_cache_buffer&&mainw->agen_key==-1) push_cache_buffer( cache_buffer, jackd, in_bytes, nframes, shrink_factor );
+      if (!wait_cache_buffer&&mainw->agen_key==0) push_cache_buffer( cache_buffer, jackd, in_bytes, nframes, shrink_factor );
       if (shrink_factor>0.) jackd->seek_pos+=in_bytes;
     }
 
@@ -974,6 +988,8 @@ int jack_open_device(jack_driver_t *jackd) {
   /* set up an error handler */
   jack_set_error_function(jack_error_func);
   jackd->client=NULL;
+
+  // TODO - use alarm
 
   stime=lives_get_current_ticks();
 

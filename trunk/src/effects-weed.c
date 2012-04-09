@@ -4583,6 +4583,7 @@ gboolean weed_init_effect(int hotkey) {
   gint inc_count;
   gint ntracks;
   int error;
+  int idx;
 
   if (hotkey<0) {
     is_modeswitch=TRUE;
@@ -4597,18 +4598,33 @@ gboolean weed_init_effect(int hotkey) {
     return FALSE;
   }
 
-  inc_count=enabled_in_channels(weed_filters[key_to_fx[hotkey][key_modes[hotkey]]],FALSE);
+  idx=key_to_fx[hotkey][key_modes[hotkey]];
+
+  inc_count=enabled_in_channels(weed_filters[idx],FALSE);
 
   // check first if it is an audio generator
 
-  if (inc_count==0&&has_audio_chans_out(weed_filters[key_to_fx[hotkey][key_modes[hotkey]]],FALSE)&&
-      !has_video_chans_out(weed_filters[key_to_fx[hotkey][key_modes[hotkey]]],TRUE)) {
+  if ((inc_count==0||(has_audio_chans_in(weed_filters[idx],FALSE)&&
+		      !has_video_chans_in(weed_filters[idx],TRUE)))&&
+      has_audio_chans_out(weed_filters[idx],FALSE)&&
+      !has_video_chans_out(weed_filters[idx],TRUE)) {
 
-    if (mainw->agen_key!=0) {
-      // we had an existing audio gen running - stop that one first
-      weed_deinit_effect(mainw->agen_key);
+    if (prefs->audio_player!=AUD_PLAYER_JACK&&prefs->audio_player!=AUD_PLAYER_PULSE) {
+      // audio fx only with realtime players
+      gchar *fxname=weed_filter_get_name(idx);
+      gchar *msg=g_strdup_printf(_("Effect %s cannot be used with this audio player.\n"),fxname);
+      d_print(msg);
+      return FALSE;
     }
-    is_audio_gen=TRUE;
+
+
+    if (inc_count==0) {
+      if (mainw->agen_key!=0) {
+	// we had an existing audio gen running - stop that one first
+	weed_deinit_effect(mainw->agen_key);
+      }
+      is_audio_gen=TRUE;
+    }
   }
 
   // TODO - block template channel changes
@@ -4662,7 +4678,7 @@ gboolean weed_init_effect(int hotkey) {
        return FALSE;
   }
 
-  filter=weed_filters[key_to_fx[hotkey][key_modes[hotkey]]];
+  filter=weed_filters[idx];
 
   // TODO - unblock template channel changes
 
@@ -4774,7 +4790,7 @@ gboolean weed_init_effect(int hotkey) {
   if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)&&inc_count>0) {
     // place this synchronous with the preceding frame
     event_list=append_filter_init_event (mainw->event_list,mainw->currticks,
-					 key_to_fx[hotkey][key_modes[hotkey]],-1,hotkey,new_instance);
+					 idx,-1,hotkey,new_instance);
     if (mainw->event_list==NULL) mainw->event_list=event_list;
     init_events[hotkey]=get_last_event(mainw->event_list);
     ntracks=weed_leaf_num_elements(init_events[hotkey],"in_tracks");

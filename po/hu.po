@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: hu\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2012-03-22 00:01-0300\n"
+"POT-Creation-Date: 2012-04-15 09:37-0300\n"
 "PO-Revision-Date: 2011-08-18 11:58+0000\n"
 "Last-Translator: Krasznecz Zoltán <zoltan.krasznecz@gmail.com>\n"
 "Language-Team: Magyar <lisovszki@gmail.com>\n"
@@ -125,25 +125,25 @@ msgstr "tíltva!"
 msgid "**The current layout**"
 msgstr "**A jelenlegi kimenet**"
 
-#: src/main.c:1378
+#: src/main.c:1382
 msgid "Loading realtime effect plugins..."
 msgstr "Az azonnali effektek betöltése..."
 
-#: src/main.c:1442
+#: src/main.c:1446
 msgid "Starting jack audio server..."
 msgstr "Jack audió szerver indítása"
 
-#: src/main.c:1444
+#: src/main.c:1448
 #, fuzzy
 msgid "Starting jack transport server..."
 msgstr "Jack audió szerver indítása"
 
-#: src/main.c:1445
+#: src/main.c:1449
 #, fuzzy
 msgid "Connecting to jack transport server..."
 msgstr "Jack audió szerver indítása"
 
-#: src/main.c:1475
+#: src/main.c:1479
 #, c-format
 msgid ""
 "\n"
@@ -155,104 +155,104 @@ msgid ""
 "Alternatively, try to start lives with either \"lives -jackopts 16\", or "
 msgstr ""
 
-#: src/main.c:1503
+#: src/main.c:1507
 msgid "Starting pulse audio server..."
 msgstr "Pulse audio szerver indítása..."
 
-#: src/main.c:1564
+#: src/main.c:1568
 msgid "Checking optional dependencies:"
 msgstr "Ajánlott függőségek ellenőrzése"
 
-#: src/main.c:1565
+#: src/main.c:1569
 msgid "mplayer...detected..."
 msgstr "mplayer...megtalálva"
 
-#: src/main.c:1566
+#: src/main.c:1570
 msgid "mplayer...NOT DETECTED..."
 msgstr "mplayer...NEM TALÁLOM.."
 
-#: src/main.c:1567
+#: src/main.c:1571
 msgid "convert...detected..."
 msgstr "convert...megtalálva"
 
-#: src/main.c:1568
+#: src/main.c:1572
 msgid "convert...NOT DETECTED..."
 msgstr "convert...NEM TALÁLOM"
 
-#: src/main.c:1569
+#: src/main.c:1573
 msgid "composite...detected..."
 msgstr "composite...megtalálva..."
 
-#: src/main.c:1570
+#: src/main.c:1574
 msgid "composite...NOT DETECTED..."
 msgstr "composite...NEM TALÁLOM"
 
-#: src/main.c:1571
+#: src/main.c:1575
 msgid "sox...detected\n"
 msgstr "sox...megtalálva\n"
 
-#: src/main.c:1572
+#: src/main.c:1576
 msgid "sox...NOT DETECTED\n"
 msgstr "sox...NEM TALÁLOM\n"
 
-#: src/main.c:1573
+#: src/main.c:1577
 msgid "cdda2wav...detected..."
 msgstr "cdda2wav...megtalálva..."
 
-#: src/main.c:1574
+#: src/main.c:1578
 msgid "cdda2wav...NOT DETECTED..."
 msgstr "cdda2wav...NEM TALÁLOM..."
 
-#: src/main.c:1575
+#: src/main.c:1579
 msgid "jackd...detected..."
 msgstr "jackd...megtalálva..."
 
-#: src/main.c:1576
+#: src/main.c:1580
 msgid "jackd...NOT DETECTED..."
 msgstr "jackd...NEM TALÁLOM..."
 
-#: src/main.c:1577
+#: src/main.c:1581
 msgid "pulse audio...detected..."
 msgstr "pulse audio...megtalálva..."
 
-#: src/main.c:1578
+#: src/main.c:1582
 msgid "pulse audio...NOT DETECTED..."
 msgstr "pulse audio...NEM TALÁLOM..."
 
-#: src/main.c:1579
+#: src/main.c:1583
 msgid "python...detected..."
 msgstr "python...megtalálva..."
 
-#: src/main.c:1580
+#: src/main.c:1584
 msgid "python...NOT DETECTED..."
 msgstr "python...NEM TALÁLOM..."
 
-#: src/main.c:1581
+#: src/main.c:1585
 msgid "dvgrab...detected..."
 msgstr "dvgrab...megtalálva..."
 
-#: src/main.c:1582
+#: src/main.c:1586
 msgid "dvgrab...NOT DETECTED..."
 msgstr "dvgrab...NEM TALÁLOM..."
 
-#: src/main.c:1583
+#: src/main.c:1587
 msgid "xwininfo...detected..."
 msgstr "xwininfo...megtalálva..."
 
-#: src/main.c:1584
+#: src/main.c:1588
 msgid "xwininfo...NOT DETECTED..."
 msgstr "xwininfo...NEM TALÁLOM..."
 
-#: src/main.c:1590
+#: src/main.c:1594
 #, fuzzy
 msgid "Windows"
 msgstr "Ablak _bezárása"
 
-#: src/main.c:1592
+#: src/main.c:1596
 msgid "UNKNOWN - please patch me !"
 msgstr ""
 
-#: src/main.c:1596
+#: src/main.c:1600
 #, c-format
 msgid ""
 "\n"
@@ -263,22 +263,22 @@ msgstr ""
 "\n"
 "Az ablakkezelő jelenti: \"%s\"; "
 
-#: src/main.c:1599
+#: src/main.c:1603
 #, c-format
 msgid "number of monitors detected: %d\n"
 msgstr "monitorok száma: %d\n"
 
-#: src/main.c:1602
+#: src/main.c:1606
 #, fuzzy, c-format
 msgid "Number of CPUs detected: %d\n"
 msgstr "monitorok száma: %d\n"
 
-#: src/main.c:1605
+#: src/main.c:1609
 #, c-format
 msgid "Temp directory is %s\n"
 msgstr "Az átmeneti könyvtár: %s\n"
 
-#: src/main.c:1609
+#: src/main.c:1613
 msgid ""
 "WARNING - this version of LiVES was compiled without either\n"
 "jack or pulse audio support.\n"
@@ -288,15 +288,15 @@ msgstr ""
 "jack hangrendszer nélkül lett szerkesztve.\n"
 "A legtöbb hangszerkesztési lehetőség nem lesz elérhető.\n"
 
-#: src/main.c:1612
+#: src/main.c:1616
 msgid "Compiled with jack support, good !\n"
 msgstr "Jack támogatással összeállítva. Jóó !\n"
 
-#: src/main.c:1615
+#: src/main.c:1619
 msgid "Compiled with pulse audio support, wonderful !\n"
 msgstr "Pulse audio támogatással összeszerkesztve. Csodálatos :)!\n"
 
-#: src/main.c:1619
+#: src/main.c:1623
 #, c-format
 msgid ""
 "Welcome to LiVES version %s.\n"
@@ -305,7 +305,7 @@ msgstr ""
 "Légy üdvözölve a LiVES %s verziójában.\n"
 "\n"
 
-#: src/main.c:2044
+#: src/main.c:2048
 #, c-format
 msgid ""
 "\n"
@@ -314,87 +314,87 @@ msgstr ""
 "\n"
 "Az indító szintax: %s [opts] [fájlnév [eleje] [képkockák]]\n"
 
-#: src/main.c:2045
+#: src/main.c:2049
 msgid "Where: filename is the name of a media file or backup file.\n"
 msgstr "Ahol: a fájlnév a média, vagy a biztonsági mentés fájl neve.\n"
 
-#: src/main.c:2046
+#: src/main.c:2050
 msgid "start_time : filename start time in seconds\n"
 msgstr "eleje : a fájlnév eleje másodpercben\n"
 
-#: src/main.c:2047
+#: src/main.c:2051
 msgid "frames : maximum number of frames to open\n"
 msgstr "képkockák : a maximálisan megnyitott képkockák száma\n"
 
-#: src/main.c:2049
+#: src/main.c:2053
 msgid "opts can be:\n"
 msgstr "opts lehet:\n"
 
-#: src/main.c:2050
+#: src/main.c:2054
 msgid "-help            : show this help text and exit\n"
 msgstr "-help             : mutasd ezt a súgó szöveget, majd lépj ki\n"
 
-#: src/main.c:2051
+#: src/main.c:2055
 msgid "-tmpdir <tempdir>: use alternate working directory (e.g /var/ramdisk)\n"
 msgstr ""
 
-#: src/main.c:2052
+#: src/main.c:2056
 msgid "-set <setname>   : autoload clip set setname\n"
 msgstr "-set<setname>    :automatikusan betölti a klip beállításait\n"
 
-#: src/main.c:2053
+#: src/main.c:2057
 msgid "-noset           : do not load any set on startup\n"
 msgstr "-noset           : ne töltsön be semmiféle beállítást az indításnál\n"
 
-#: src/main.c:2054
+#: src/main.c:2058
 msgid "-norecover       : force no-loading of crash recovery\n"
 msgstr "-norecover       : nem töltsön be sérült helyreállítást\n"
 
-#: src/main.c:2055
+#: src/main.c:2059
 msgid "-recover         : force loading of crash recovery\n"
 msgstr "-recover         : sérült visszaállítás betöltése\n"
 
-#: src/main.c:2056
+#: src/main.c:2060
 msgid "-nothreaddialog  : doe nothing - retained for backwards compatibility\n"
 msgstr ""
 
-#: src/main.c:2057
+#: src/main.c:2061
 msgid "-nogui           : do not show the gui\n"
 msgstr "-nogui           : ne legyen grafikus felület\n"
 
-#: src/main.c:2058
+#: src/main.c:2062
 #, fuzzy
 msgid "-nosplash        : do not show the splash window\n"
 msgstr "-nogui           : ne legyen grafikus felület\n"
 
-#: src/main.c:2059
+#: src/main.c:2063
 #, fuzzy
 msgid "-noplaywin       : do not show the play window\n"
 msgstr "-nogui           : ne legyen grafikus felület\n"
 
-#: src/main.c:2060
+#: src/main.c:2064
 msgid "-startup-ce      : start in clip editor mode\n"
 msgstr "-startup-ce      : indítás klip szerkesztő módban\n"
 
-#: src/main.c:2061
+#: src/main.c:2065
 msgid "-startup-mt      : start in multitrack mode\n"
 msgstr "-startup-mt      : indítás multitrack módban\n"
 
-#: src/main.c:2062
+#: src/main.c:2066
 msgid ""
 "-fxmodesmax <n>  : allow <n> modes per effect key (minimum is 1, default is "
 "8)\n"
 msgstr ""
 
-#: src/main.c:2064
+#: src/main.c:2068
 msgid "-oscstart <port> : start OSC listener on UDP port <port>\n"
 msgstr "-oscstart <port> : OSC hallgató indítása az UDP porton <port>\n"
 
-#: src/main.c:2065
+#: src/main.c:2069
 msgid "-nooscstart      : do not start OSC listener\n"
 msgstr "-nooscstart      : ne indítsd el az OSC hallgatót\n"
 
-#: src/main.c:2067
+#: src/main.c:2071
 msgid ""
 "-aplayer <ap>    : start with selected audio player. <ap> can be mplayer"
 msgstr ""
@@ -402,15 +402,15 @@ msgstr ""
 "mplayer"
 
 #. TRANSLATORS: pulse (audio)
-#: src/main.c:2070
+#: src/main.c:2074
 msgid ", pulse"
 msgstr ", pulse"
 
-#: src/main.c:2073
+#: src/main.c:2077
 msgid ", sox or jack\n"
 msgstr ", sox vagy jack\n"
 
-#: src/main.c:2074
+#: src/main.c:2078
 msgid ""
 "-jackopts <opts>    : opts is a bitmap of jack startup options [1 = jack "
 "transport client, 2 = jack transport master, 4 = start jack transport "
@@ -420,31 +420,31 @@ msgstr ""
 "kliens, 2 = jack átvitel master, 4 = jack átviteli szerver indítása, 8 = "
 "hang szünetelése mikor a videó szünetel, 16 = jack hang szerver indítása] \n"
 
-#: src/main.c:2076
+#: src/main.c:2080
 msgid " or sox\n"
 msgstr " vagy sox\n"
 
-#: src/main.c:2078
+#: src/main.c:2082
 msgid "-devicemap <mapname>          : autoload devicemap\n"
 msgstr "-devicemap <mapneve> : automatikusan betölti a eszköztérképet\n"
 
-#: src/main.c:2079
+#: src/main.c:2083
 msgid ""
 "-vppdefaults <file>          : load video playback plugin defaults from "
 "<file> (Note: only sets the settings, not the plugin type)\n"
 msgstr ""
 
-#: src/main.c:2080
+#: src/main.c:2084
 msgid "-debug            : try to debug crashes (requires 'gdb' installed)\n"
 msgstr ""
 "-debug : megpróbálja kideríteni az összeomlás okát ('gdb' program megléte "
 "szükséges)\n"
 
-#: src/main.c:2106 src/gui.c:1089
+#: src/main.c:2110 src/gui.c:1089
 msgid "Starting GUI..."
 msgstr "Grafikus felhasználói felület indítása..."
 
-#: src/main.c:2119
+#: src/main.c:2123
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -461,7 +461,7 @@ msgstr ""
 "%s/%s.\n"
 "(Talán meg kellen változtatnod a <prefix_dir> értékét a ~/.lives fájlban)\n"
 
-#: src/main.c:2133
+#: src/main.c:2137
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -473,7 +473,7 @@ msgstr ""
 "Kérlek ellenőrizd az írási jogosultságaidat a /tmp könyvtárhoz, és próbáld "
 "újra.\n"
 
-#: src/main.c:2138
+#: src/main.c:2142
 msgid ""
 "\n"
 "`smogrify` must be in your path, and be executable\n"
@@ -487,7 +487,7 @@ msgstr ""
 "Kérlek olvasd el a README fájlt, hogy mi érkezik ezzel a csomaggal,\n"
 "mielött fiuttatnád a LiVES-t.\n"
 
-#: src/main.c:2144
+#: src/main.c:2148
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -502,7 +502,7 @@ msgstr ""
 "\n"
 "Kérlek ellenőrizd a fájl jogosultságait, majd próbáld újra.\n"
 
-#: src/main.c:2151
+#: src/main.c:2155
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -519,7 +519,7 @@ msgstr ""
 "Kérlek ellenőrizd a fájl jogosultságait ennek a fájlnak\n"
 "és könyvtárnak, majd próbáld újra.\n"
 
-#: src/main.c:2161
+#: src/main.c:2165
 #, fuzzy, c-format
 msgid ""
 "Please check the <tempdir> setting in \n"
@@ -534,7 +534,7 @@ msgstr ""
 "%s/.lives-ban,\n"
 "majd próbáld újra.\n"
 
-#: src/main.c:2168
+#: src/main.c:2172
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -546,7 +546,7 @@ msgstr ""
 "LiVES nem tudja rögzíteni ezt a képet\n"
 "\n"
 
-#: src/main.c:2176
+#: src/main.c:2180
 msgid ""
 "\n"
 "An incorrect version of smogrify was found in your path.\n"
@@ -564,7 +564,7 @@ msgstr ""
 "\n"
 "Köszönöm.\n"
 
-#: src/main.c:2181 src/dialogs.c:1815
+#: src/main.c:2185 src/dialogs.c:1823
 msgid ""
 "\n"
 "LiVES currently requires either 'mplayer' or 'sox' to function. Please "
@@ -574,7 +574,7 @@ msgstr ""
 "LiVES-nak szüksége van az 'mplayer' vagy a 'sox' valamelyikére. Kérlek "
 "telepíts egyet ezek közül, majd próbáld újra.\n"
 
-#: src/main.c:2185
+#: src/main.c:2189
 #, fuzzy
 msgid ""
 "\n"
@@ -585,7 +585,7 @@ msgstr ""
 "LiVES-nak szüksége van az 'mplayer' vagy a 'sox' valamelyikére. Kérlek "
 "telepíts egyet ezek közül, majd próbáld újra.\n"
 
-#: src/main.c:2195
+#: src/main.c:2199
 msgid ""
 "\n"
 "LiVES was unable to locate 'mplayer'. You may wish to install mplayer to use "
@@ -595,7 +595,7 @@ msgstr ""
 "A LiVES nem találja az 'mplayert'. Ha azt szeretnéd, hogy jobban működjön a "
 "LiVES akkor telepítsd fel.\n"
 
-#: src/main.c:2198
+#: src/main.c:2202
 msgid ""
 "\n"
 "LiVES was unable to locate 'convert'. You should install convert and image-"
@@ -605,7 +605,7 @@ msgstr ""
 "A LiVES nem találja a 'convert'-et. Fel kell telepítened a convert-et és az "
 "image-magick-et, ha szeretnéd használni a létrehozott effekteket.\n"
 
-#: src/main.c:2201
+#: src/main.c:2205
 msgid ""
 "\n"
 "LiVES was unable to locate 'composite'. You should install composite and "
@@ -615,7 +615,7 @@ msgstr ""
 "A LiVES nem találja a 'composite'-ot. Fel kell telepítened az image-magic-"
 "kel együtt, ha szeretnéd használni az egyesítés funkciót.\n"
 
-#: src/main.c:2204
+#: src/main.c:2208
 msgid ""
 "\n"
 "LiVES was unable to locate 'sox'. Some audio features may not work. You "
@@ -625,7 +625,7 @@ msgstr ""
 "A LiVES nem találja a 'sox'-ot. Néhány hang tulajdonság nem fog működni. "
 "Telepítsd fel a 'sox'-ot.\n"
 
-#: src/main.c:2207
+#: src/main.c:2211
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -642,59 +642,59 @@ msgstr ""
 "Nem tudsz majd menteni nélkülük.\n"
 "A <lib_dir> értékét a ~./lives-ban meg kellene változtatni\n"
 
-#: src/main.c:2319
+#: src/main.c:2323
 #, c-format
 msgid "Autoloading set %s..."
 msgstr "%s beállítás automatikus betöltése..."
 
 #. TRANSLATORS: localised name may be used here
-#: src/main.c:2474
+#: src/main.c:2478
 msgid "LiVES"
 msgstr ""
 
-#: src/main.c:2637
+#: src/main.c:2641
 #, c-format
 msgid "Invalid audio player %s\n"
 msgstr "Érvénytelen zene lejátszó %s\n"
 
-#: src/main.c:2755
+#: src/main.c:2759
 #, c-format
 msgid "LiVES-%s: <Untitled%d> %dx%d : %d frames %d bpp %.3f fps"
 msgstr "LiVES-%s: <Névtelen%d> %dx%d : %d képkockák %d bpp %.3f fps"
 
-#: src/main.c:2759
+#: src/main.c:2763
 #, c-format
 msgid "LiVES-%s: <%s> %dx%d : ??? frames ??? bpp %.3f fps"
 msgstr "LiVES-%s: <%s> %dx%d : ??? képkocka ??? bpp %.3f fps"
 
-#: src/main.c:2762
+#: src/main.c:2766
 #, c-format
 msgid "LiVES-%s: <%s> %dx%d : %d frames %d bpp %.3f fps"
 msgstr "LiVES-%s: <%s> %dx%d : %d képkocka %d bpp %.3f fps"
 
-#: src/main.c:2768
+#: src/main.c:2772
 #, c-format
 msgid "LiVES-%s: <No File>"
 msgstr "LiVES-%s: <Nincs fájl>"
 
 #. TRANSLATORS: rec(ord)
-#: src/main.c:4346
+#: src/main.c:4350
 #, c-format
 msgid "rec %9d/%d"
 msgstr ""
 
 #. TRANSLATORS: out of memory (rec(ord))
-#: src/main.c:4350
+#: src/main.c:4354
 #, c-format
 msgid "!rec %9d/%d"
 msgstr ""
 
-#: src/main.c:4587 src/main.c:4588 src/gui.c:2052 src/gui.c:3094
-#: src/saveplay.c:2179
+#: src/main.c:4591 src/main.c:4592 src/gui.c:2052 src/gui.c:3094
+#: src/saveplay.c:2192
 msgid "Play"
 msgstr "Lejátszás"
 
-#: src/main.c:5232
+#: src/main.c:5236
 msgid ""
 "LiVES was unable to capture this image\n"
 "\n"
@@ -702,35 +702,35 @@ msgstr ""
 "LiVES nem tudja rögzíteni ezt a képet\n"
 "\n"
 
-#: src/main.c:5354
+#: src/main.c:5358
 #, c-format
 msgid "Closed file %s\n"
 msgstr "%s fájl bezárva\n"
 
-#: src/main.c:5548 src/gui.c:622 src/utils.c:3862 src/utils.c:3894
-#: src/saveplay.c:3331 src/multitrack.c:4076 src/multitrack.c:5648
+#: src/main.c:5552 src/gui.c:622 src/utils.c:3873 src/utils.c:3905
+#: src/saveplay.c:3344 src/multitrack.c:4076 src/multitrack.c:5648
 msgid "_Undo"
 msgstr "_Visszavonás"
 
-#: src/main.c:5549 src/gui.c:635 src/utils.c:3863 src/utils.c:3895
-#: src/saveplay.c:3332 src/multitrack.c:4097 src/multitrack.c:5671
+#: src/main.c:5553 src/gui.c:635 src/utils.c:3874 src/utils.c:3906
+#: src/saveplay.c:3345 src/multitrack.c:4097 src/multitrack.c:5671
 msgid "_Redo"
 msgstr "Új_ra"
 
-#: src/main.c:5576 src/interface.c:661 src/gui.c:2217 src/preferences.c:2540
+#: src/main.c:5580 src/interface.c:661 src/gui.c:2217 src/preferences.c:2540
 #: src/resample.c:1837
 msgid "Video"
 msgstr "Videó"
 
-#: src/main.c:5577 src/interface.c:680 src/gui.c:2236
+#: src/main.c:5581 src/interface.c:680 src/gui.c:2236
 msgid "Left Audio"
 msgstr "Bal oldali hang"
 
-#: src/main.c:5578 src/gui.c:2254
+#: src/main.c:5582 src/gui.c:2254
 msgid "Right Audio"
 msgstr "Jobb oldali hang"
 
-#: src/main.c:5626
+#: src/main.c:5630
 msgid ""
 "\n"
 "\n"
@@ -744,22 +744,22 @@ msgstr ""
 "lejátszó az mplayer.\n"
 "Kérlek állítsd be a lejátszási beállításokat, majd próbáld újra.\n"
 
-#: src/main.c:5711 src/callbacks.c:7371 src/callbacks.c:7519
+#: src/main.c:5715 src/callbacks.c:7371 src/callbacks.c:7519
 #: src/callbacks.c:7845 src/callbacks.c:7862 src/gui.c:3683
-#: src/saveplay.c:2301 src/saveplay.c:2335 src/saveplay.c:2914
-#: src/saveplay.c:3024 src/saveplay.c:3046 src/multitrack.c:8421
+#: src/saveplay.c:2314 src/saveplay.c:2348 src/saveplay.c:2927
+#: src/saveplay.c:3037 src/saveplay.c:3059 src/multitrack.c:8421
 #: src/multitrack.c:10013
 #, c-format
 msgid " (%d %% scale)"
 msgstr ""
 
-#: src/main.c:5713 src/callbacks.c:7373 src/callbacks.c:7521
-#: src/callbacks.c:7847 src/gui.c:3687 src/saveplay.c:2303 src/saveplay.c:2337
+#: src/main.c:5717 src/callbacks.c:7373 src/callbacks.c:7521
+#: src/callbacks.c:7847 src/gui.c:3687 src/saveplay.c:2316 src/saveplay.c:2350
 #, fuzzy, c-format
 msgid "LiVES: - Play Window%s"
 msgstr "LiVES: - Lejátszó Ablak"
 
-#: src/main.c:6111 src/plugins.c:1536
+#: src/main.c:6115 src/plugins.c:1536
 msgid "LiVES: - Play Window"
 msgstr "LiVES: - Lejátszó Ablak"
 
@@ -1121,10 +1121,10 @@ msgstr ""
 "Ha ez be van állítva, a képkockák deinterlacelve lesznek amint importálják "
 "őket."
 
-#: src/interface.c:203 src/callbacks.c:9870 src/callbacks.c:9900
-#: src/callbacks.c:9901 src/gui.c:3097 src/gui.c:3660 src/saveplay.c:2182
-#: src/saveplay.c:2937 src/dialogs.c:1333 src/dialogs.c:1334
-#: src/dialogs.c:1555 src/dialogs.c:1556 src/framedraw.c:230
+#: src/interface.c:203 src/callbacks.c:9879 src/callbacks.c:9909
+#: src/callbacks.c:9910 src/gui.c:3097 src/gui.c:3660 src/saveplay.c:2195
+#: src/saveplay.c:2950 src/dialogs.c:1332 src/dialogs.c:1333
+#: src/dialogs.c:1558 src/dialogs.c:1559 src/framedraw.c:230
 #: src/multitrack.c:7235
 msgid "Preview"
 msgstr "Előnézet"
@@ -1141,7 +1141,7 @@ msgstr "Kattints ide a kiválasztott hang előnézetéhez"
 msgid "Click here to _Preview the video"
 msgstr "Kattints ide a video előnézetéhez"
 
-#: src/interface.c:313 src/dialogs.c:2365
+#: src/interface.c:313 src/dialogs.c:2373
 msgid "LiVES: - Processing..."
 msgstr "LiVES: - Feldolgozás..."
 
@@ -1159,8 +1159,8 @@ msgstr ""
 "\n"
 "Ne felejtsd el kikapcsolni az effekteket (ctr-0) utána!"
 
-#: src/interface.c:357 src/callbacks.c:9639 src/callbacks.c:9673
-#: src/dialogs.c:2399
+#: src/interface.c:357 src/callbacks.c:9648 src/callbacks.c:9682
+#: src/dialogs.c:2407
 msgid ""
 "\n"
 "Please Wait"
@@ -1172,7 +1172,7 @@ msgstr ""
 msgid "Show details"
 msgstr "Részletek megjelenítése"
 
-#: src/interface.c:424 src/dialogs.c:2417
+#: src/interface.c:424 src/dialogs.c:2425
 msgid "_Enough"
 msgstr "_Elég"
 
@@ -1185,7 +1185,7 @@ msgstr "_Előnézet"
 msgid "Paus_e"
 msgstr "Megállítás"
 
-#: src/interface.c:428 src/callbacks.c:9670
+#: src/interface.c:428 src/callbacks.c:9679
 #, fuzzy
 msgid "Pause/_Enough"
 msgstr "_Elég"
@@ -1270,7 +1270,7 @@ msgstr "Tartsd meg a _beállításaim"
 msgid "Use _recommended settings"
 msgstr "Használd a _javasolt beállításokat"
 
-#: src/interface.c:1049 src/dialogs.c:107
+#: src/interface.c:1049 src/dialogs.c:106
 msgid ""
 "Do _not show this warning any more\n"
 "(can be turned back on from Preferences/Warnings)"
@@ -2005,7 +2005,7 @@ msgstr "Beállítás törlése"
 msgid "Set %s was permanently deleted from the disk.\n"
 msgstr "%s beállítás törölve lett a lemezről.\n"
 
-#: src/callbacks.c:1808 src/callbacks.c:12057
+#: src/callbacks.c:1808 src/callbacks.c:12066
 msgid "Insert Silence"
 msgstr "Csend beszúrása"
 
@@ -2044,8 +2044,8 @@ msgstr "Újra"
 msgid "Copying frames %d to %d%s to the clipboard..."
 msgstr "%d képkockák másolása ide:%d%s a vágólapra..."
 
-#: src/callbacks.c:2512 src/saveplay.c:1394 src/saveplay.c:1548
-#: src/saveplay.c:1610 src/saveplay.c:3758
+#: src/callbacks.c:2512 src/saveplay.c:1407 src/saveplay.c:1561
+#: src/saveplay.c:1623 src/saveplay.c:3771
 msgid "Pulling frames from clip"
 msgstr "Képkockák kiemelése a klipből"
 
@@ -2114,7 +2114,7 @@ msgstr ""
 "multitrack kimenetbe.\n"
 "Biztosan folytatni szeretnéd?\n"
 
-#: src/callbacks.c:2895 src/callbacks.c:11989
+#: src/callbacks.c:2895 src/callbacks.c:11998
 msgid ""
 "\n"
 "Insertion will cause audio to shift in some multitrack layouts.\n"
@@ -2198,8 +2198,8 @@ msgstr ""
 "A törlés hiányzó képkockákat eredményezhet a kimeneteken.\n"
 "Biztosan szeretnéd folytatni?\n"
 
-#: src/callbacks.c:3485 src/callbacks.c:11217 src/callbacks.c:11463
-#: src/callbacks.c:11529
+#: src/callbacks.c:3485 src/callbacks.c:11226 src/callbacks.c:11472
+#: src/callbacks.c:11538
 msgid ""
 "\n"
 "Deletion will cause missing audio in some multitrack layouts.\n"
@@ -2220,7 +2220,7 @@ msgstr ""
 "kimenetbe.\n"
 "Biztosan folytatni szeretnéd?\n"
 
-#: src/callbacks.c:3523 src/callbacks.c:11511
+#: src/callbacks.c:3523 src/callbacks.c:11520
 msgid ""
 "\n"
 "Deletion will cause audio to shift in some multitrack layouts.\n"
@@ -2529,7 +2529,7 @@ msgid "Opening audio"
 msgstr "Hang megnyitása"
 
 #: src/callbacks.c:6737 src/callbacks.c:6777 src/callbacks.c:8576
-#: src/callbacks.c:8618 src/callbacks.c:8661 src/callbacks.c:11141
+#: src/callbacks.c:8618 src/callbacks.c:8661 src/callbacks.c:11150
 msgid "Cancelling"
 msgstr "Megszakítás"
 
@@ -2538,8 +2538,8 @@ msgstr "Megszakítás"
 msgid "New audio: %d Hz %d channel(s) %d bps\n"
 msgstr "Új hang: %d Hz %d csatorna %d bps\n"
 
-#: src/callbacks.c:6824 src/callbacks.c:8703 src/callbacks.c:11171
-#: src/callbacks.c:11865
+#: src/callbacks.c:6824 src/callbacks.c:8703 src/callbacks.c:11180
+#: src/callbacks.c:11874
 msgid "Committing audio"
 msgstr "Hang hozzáadása"
 
@@ -2584,7 +2584,7 @@ msgstr "Lejátszó ablak(ok) mutatása"
 msgid "Play in separate window (s)"
 msgstr "Lejátszás külön ablak(ok)ban"
 
-#: src/callbacks.c:7710 src/gui.c:3928 src/saveplay.c:2332
+#: src/callbacks.c:7710 src/gui.c:3928 src/saveplay.c:2345
 #, fuzzy
 msgid "LiVES: - Streaming"
 msgstr "LiVES: - Figyelmeztetés!"
@@ -2682,11 +2682,11 @@ msgstr "_Hibák törlése"
 msgid "_Delete affected layouts"
 msgstr "_Érintett kimenetek törlése"
 
-#: src/callbacks.c:9609 src/callbacks.c:9654
+#: src/callbacks.c:9618 src/callbacks.c:9663
 msgid "Resume"
 msgstr "Folytatás"
 
-#: src/callbacks.c:9610
+#: src/callbacks.c:9619
 #, fuzzy
 msgid ""
 "\n"
@@ -2698,28 +2698,28 @@ msgstr ""
 "(Kattints a 'Megtartás' gombra, hogy megtartsd amit készítettél)\n"
 "(Kattints a 'Folytatás' gombra, hogy folytatódjon a folyamat)"
 
-#: src/callbacks.c:9611 src/callbacks.c:9660
+#: src/callbacks.c:9620 src/callbacks.c:9669
 msgid "paused..."
 msgstr "megállítva..."
 
-#: src/callbacks.c:9638 src/callbacks.c:9671
+#: src/callbacks.c:9647 src/callbacks.c:9680
 msgid "Pause"
 msgstr "Megállítás"
 
-#: src/callbacks.c:9640 src/callbacks.c:9674
+#: src/callbacks.c:9649 src/callbacks.c:9683
 msgid "resumed..."
 msgstr "folytatva..."
 
-#: src/callbacks.c:9656
+#: src/callbacks.c:9665
 msgid "Keep"
 msgstr "Megtartás"
 
-#: src/callbacks.c:9657
+#: src/callbacks.c:9666
 #, fuzzy
 msgid "Enough"
 msgstr "_Elég"
 
-#: src/callbacks.c:9658
+#: src/callbacks.c:9667
 msgid ""
 "\n"
 "Paused\n"
@@ -2731,30 +2731,30 @@ msgstr ""
 "(Kattints a 'Megtartás' gombra, hogy megtartsd amit készítettél)\n"
 "(Kattints a 'Folytatás' gombra, hogy folytatódjon a folyamat)"
 
-#: src/callbacks.c:9672
+#: src/callbacks.c:9681
 msgid "Cancel"
 msgstr "Mégse"
 
-#: src/callbacks.c:9809
+#: src/callbacks.c:9818
 #, fuzzy
 msgid "Stop"
 msgstr "_Leállítás"
 
-#: src/callbacks.c:10294 src/multitrack.c:12135
+#: src/callbacks.c:10303 src/multitrack.c:12135
 msgid "LiVES: Selected frame"
 msgstr "LiVES: Kijelölt képkocka"
 
-#: src/callbacks.c:10301
+#: src/callbacks.c:10310
 #, fuzzy
 msgid "_Save frame as..."
 msgstr "Képkocka mentése mint: %s..."
 
-#: src/callbacks.c:10545
+#: src/callbacks.c:10554
 #, c-format
 msgid "Audio is ahead of video by %.4f secs. at frame %d, with fps %.4f\n"
 msgstr ""
 
-#: src/callbacks.c:10623
+#: src/callbacks.c:10632
 msgid ""
 "\n"
 "\n"
@@ -2763,7 +2763,7 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/callbacks.c:10629
+#: src/callbacks.c:10638
 msgid ""
 "\n"
 "\n"
@@ -2775,7 +2775,7 @@ msgstr ""
 "Fel kell telepítened az \"xwininfo\"-t ezen képesség használatához\n"
 "\n"
 
-#: src/callbacks.c:10705 src/callbacks.c:11783
+#: src/callbacks.c:10714 src/callbacks.c:11792
 msgid ""
 "\n"
 "Record time must be greater than 0.\n"
@@ -2783,7 +2783,7 @@ msgstr ""
 "\n"
 "A rögzítési időnek nagyobbnak kell lennie 0-nál.\n"
 
-#: src/callbacks.c:10716
+#: src/callbacks.c:10725
 msgid ""
 "Capture an External Window:\n"
 "\n"
@@ -2797,11 +2797,11 @@ msgstr ""
 "Nyomj 'Mégse'-t a megszakításhoz\n"
 "\n"
 
-#: src/callbacks.c:10721
+#: src/callbacks.c:10730
 msgid "External window was released.\n"
 msgstr "Külső ablak felszabadítva.\n"
 
-#: src/callbacks.c:10755
+#: src/callbacks.c:10764
 msgid ""
 "Click on a Window to Capture it\n"
 "Press 'q' to stop recording"
@@ -2809,7 +2809,7 @@ msgstr ""
 "Kattints az ablakra a rögzítéshez\n"
 "nyomj 'q'-t a felvétel megállításához"
 
-#: src/callbacks.c:10785
+#: src/callbacks.c:10794
 #, c-format
 msgid ""
 "\n"
@@ -2824,19 +2824,19 @@ msgstr ""
 "Stop vagy 'q' a befejezéshez.\n"
 "(Az alapértelmezett %.3f képkocka/másodperc lesz használva.)\n"
 
-#: src/callbacks.c:10811
+#: src/callbacks.c:10820
 msgid "LiVES was unable to capture this window. Sorry.\n"
 msgstr "A LiVES nem képes rögzíteni ezt az ablakot. Elnézést.\n"
 
-#: src/callbacks.c:10959
+#: src/callbacks.c:10968
 msgid "Export Selected Audio as..."
 msgstr "Kijelölt hang exportálása mint..."
 
-#: src/callbacks.c:10962
+#: src/callbacks.c:10971
 msgid "Export Audio as..."
 msgstr "Hang exportálása mint..."
 
-#: src/callbacks.c:11004
+#: src/callbacks.c:11013
 msgid ""
 "\n"
 "\n"
@@ -2849,86 +2849,86 @@ msgstr ""
 "A hanglejátszás sebessége meg lett változtatva a klipben.\n"
 "'OK' az új sebesség exportálásához, vagy 'Mégse' az eredeti exportálásához.\n"
 
-#: src/callbacks.c:11010
+#: src/callbacks.c:11019
 #, c-format
 msgid "Exporting audio frames %d to %d as %s..."
 msgstr "%d hang exportálása ide: %d, mint: %s..."
 
-#: src/callbacks.c:11015
+#: src/callbacks.c:11024
 #, c-format
 msgid "Exporting audio as %s..."
 msgstr "Hang exportálása mint %s..."
 
-#: src/callbacks.c:11040
+#: src/callbacks.c:11049
 msgid "Exporting audio"
 msgstr "Hang exportálása"
 
-#: src/callbacks.c:11073
+#: src/callbacks.c:11082
 msgid "Append Audio File..."
 msgstr "Hang fájl hozzáfűzése..."
 
-#: src/callbacks.c:11120
+#: src/callbacks.c:11129
 #, c-format
 msgid "Appending audio file %s..."
 msgstr "%s hang fájl hozzáfűzése..."
 
-#: src/callbacks.c:11131
+#: src/callbacks.c:11140
 msgid "Appending audio"
 msgstr "Hang hozzáfűzése"
 
-#: src/callbacks.c:11187
+#: src/callbacks.c:11196
 msgid "Append Audio"
 msgstr "Hang hozzáfűzés"
 
-#: src/callbacks.c:11249
+#: src/callbacks.c:11258
 #, fuzzy, c-format
 msgid "Padding audio to %.2f seconds..."
 msgstr "Hang vágása %.2f -től %.2f másodpercig..."
 
-#: src/callbacks.c:11251
+#: src/callbacks.c:11260
 #, c-format
 msgid "Trimming audio from %.2f to %.2f seconds..."
 msgstr "Hang vágása %.2f -től %.2f másodpercig..."
 
-#: src/callbacks.c:11270
+#: src/callbacks.c:11279
 msgid "Trimming/Padding audio"
 msgstr "Hang nyesés/kitöltés"
 
-#: src/callbacks.c:11278
+#: src/callbacks.c:11287
 msgid "Trim/Pad Audio"
 msgstr "Hangot nyes/kitölt"
 
-#: src/callbacks.c:11353
+#: src/callbacks.c:11362
 msgid "Fading audio in"
 msgstr "Fokozatosan erősödő hang"
 
-#: src/callbacks.c:11354
+#: src/callbacks.c:11363
 msgid "Fade audio in"
 msgstr "Fokozatosan erősödő hang"
 
-#: src/callbacks.c:11359
+#: src/callbacks.c:11368
 msgid "Fading audio out"
 msgstr "Fokozatosan halkuló hang"
 
-#: src/callbacks.c:11360
+#: src/callbacks.c:11369
 msgid "Fade audio out"
 msgstr "Fokozatosan halkuló hang"
 
-#: src/callbacks.c:11383
+#: src/callbacks.c:11392
 #, c-format
 msgid "%s over %.1f seconds..."
 msgstr "%s %.1f másodpercen túl..."
 
-#: src/callbacks.c:11385
+#: src/callbacks.c:11394
 #, c-format
 msgid "%s from time %.2f seconds to %.2f seconds..."
 msgstr "%s : %.2f másodperctől %.2f másodpercig..."
 
-#: src/callbacks.c:11392
+#: src/callbacks.c:11401
 msgid "Fading audio..."
 msgstr "Halkuló hang..."
 
-#: src/callbacks.c:11495
+#: src/callbacks.c:11504
 msgid ""
 "\n"
 "Deleting all audio will close this file.\n"
@@ -2938,37 +2938,37 @@ msgstr ""
 "Az összes hang törlése bezárja a fájlt.\n"
 "Biztos vagy benne?"
 
-#: src/callbacks.c:11498
+#: src/callbacks.c:11507
 msgid "Deleting all audio..."
 msgstr "Minden hang törlése..."
 
-#: src/callbacks.c:11504
+#: src/callbacks.c:11513
 #, c-format
 msgid "Deleting audio from %.2f to %.2f seconds..."
 msgstr "Hang törlése %.2f-től %.2f másodpercig..."
 
-#: src/callbacks.c:11591
+#: src/callbacks.c:11600
 msgid "Deleting Audio"
 msgstr "Hang törlése"
 
-#: src/callbacks.c:11598
+#: src/callbacks.c:11607
 msgid "Delete Audio"
 msgstr "Hang törlése"
 
-#: src/callbacks.c:11936
+#: src/callbacks.c:11945
 msgid "Record new audio"
 msgstr "Új hang rögzítése"
 
-#: src/callbacks.c:12020
+#: src/callbacks.c:12029
 #, c-format
 msgid "Inserting silence from %.2f to %.2f seconds..."
 msgstr "Csend beszúrása a %.2f-től a %.2f másodpercig..."
 
-#: src/callbacks.c:12048
+#: src/callbacks.c:12057
 msgid "Inserting Silence"
 msgstr "Csend beszúrása"
 
-#: src/callbacks.c:12151
+#: src/callbacks.c:12160
 #, c-format
 msgid ""
 "\n"
@@ -3041,12 +3041,12 @@ msgstr "A vágólap összeolvasztása a kijelöltekkel..."
 msgid "inserting %d extra frame(s) before merge\n"
 msgstr "%d extra képkockák beillesztése az összeolvasztás elött\n"
 
-#: src/merge.c:599
+#: src/merge.c:611
 #, c-format
 msgid "now inserting %d extra frame(s)\n"
 msgstr "most beillesztem a %d extra képkocká(kat)t\n"
 
-#: src/merge.c:615
+#: src/merge.c:627
 msgid "Merge done.\n"
 msgstr "Összeolvasztás kész.\n"
 
@@ -3845,8 +3845,8 @@ msgstr "Képkocka mennyiség hozzárendelve a lejátszó mutatóhoz (csúszkáho
 msgid "Rewind"
 msgstr "Visszatekerés"
 
-#: src/gui.c:3512 src/dialogs.c:790 src/dialogs.c:792 src/dialogs.c:1622
-#: src/dialogs.c:1624
+#: src/gui.c:3512 src/dialogs.c:789 src/dialogs.c:791 src/dialogs.c:1630
+#: src/dialogs.c:1632
 msgid "Play all"
 msgstr "Mind lejátszása"
 
@@ -4174,26 +4174,26 @@ msgstr ""
 "\n"
 "Felülírod?\n"
 
-#: src/utils.c:3855 src/utils.c:3887 src/multitrack.c:4069
+#: src/utils.c:3866 src/utils.c:3898 src/multitrack.c:4069
 #, c-format
 msgid "_Undo %s"
 msgstr "_%s visszavonása"
 
-#: src/utils.c:3856 src/utils.c:3888 src/multitrack.c:4091
+#: src/utils.c:3867 src/utils.c:3899 src/multitrack.c:4091
 #, c-format
 msgid "_Redo %s"
 msgstr "\"%s\" _újra"
 
-#: src/utils.c:3913
+#: src/utils.c:3924
 msgid "-------------Selection------------"
 msgstr "-------------Kijelölés-------------"
 
 #. TRANSLATORS: - try to keep the text of the middle part the same length, by deleting "-" if necessary
-#: src/utils.c:3921
+#: src/utils.c:3932
 msgid " sec ] ----------Selection---------- [ "
 msgstr " mp ] ----------Kijelölés----------- [ "
 
-#: src/utils.c:3921
+#: src/utils.c:3932
 msgid " frames ] ----------"
 msgstr " képkockák ] ----------"
 
@@ -4211,7 +4211,7 @@ msgstr "%s megnyitása"
 msgid "Opening %s start time %.2f sec. frames %d"
 msgstr "%s megnyitása. Kezdés ideje %.2f mp. képkockák %d"
 
-#: src/saveplay.c:311 src/saveplay.c:3745
+#: src/saveplay.c:311 src/saveplay.c:3758
 msgid " without sound"
 msgstr " hang nélkül"
 
@@ -4314,35 +4314,35 @@ msgstr ""
 "\n"
 "Még mindig akarod folytatni?"
 
-#: src/saveplay.c:1384
+#: src/saveplay.c:1397
 msgid "selection"
 msgstr "kiválasztás"
 
-#: src/saveplay.c:1465 src/saveplay.c:1586
+#: src/saveplay.c:1478 src/saveplay.c:1599
 msgid "Linking selection"
 msgstr "Linkek létrehozása: kiválasztás"
 
-#: src/saveplay.c:1627
+#: src/saveplay.c:1640
 msgid " (with no sound)\n"
 msgstr " (hang nélkül)\n"
 
-#: src/saveplay.c:1634
+#: src/saveplay.c:1647
 #, c-format
 msgid "Saving frames %d to %d%s as \"%s\" : encoder = %s : format = %s..."
 msgstr ""
 "%d képkockák mentése ide: %d%s, mint \"%s\" : kódoló = %s : formátum = %s..."
 
-#: src/saveplay.c:1638
+#: src/saveplay.c:1651
 #, c-format
 msgid "Saving frames 1 to %d%s as \"%s\" : encoder %s : format = %s..."
 msgstr ""
 "Képkockák elmentése 1 től %d%s-ig mint \"%s\" : kódoló %s : formátum = %s..."
 
-#: src/saveplay.c:1745
+#: src/saveplay.c:1758
 msgid "Saving [can take a long time]"
 msgstr "Mentés [ sok időbe telhet]"
 
-#: src/saveplay.c:1893
+#: src/saveplay.c:1906
 msgid ""
 "\n"
 "\n"
@@ -4352,34 +4352,34 @@ msgstr ""
 "\n"
 "Kódolási hiba - a kimeneti fájl nem készült el!\n"
 
-#: src/saveplay.c:1924
+#: src/saveplay.c:1937
 #, fuzzy
 msgid "Clearing letterbox"
 msgstr "Vágólap letakarítása"
 
-#: src/saveplay.c:2029
+#: src/saveplay.c:2042
 #, fuzzy, c-format
 msgid "File size was %s\n"
 msgstr "Fájl mérete"
 
-#: src/saveplay.c:2125
+#: src/saveplay.c:2138
 msgid "recording aborted by preview.\n"
 msgstr "felvétel megszakítva az előnézet miatt.\n"
 
-#: src/saveplay.c:2129
+#: src/saveplay.c:2142
 msgid "recording aborted by clipboard playback.\n"
 msgstr "felvétel megszakítva a vágólap visszajátszása miatt.\n"
 
-#: src/saveplay.c:2132
+#: src/saveplay.c:2145
 msgid "Recording performance..."
 msgstr "Felvétel minősége..."
 
-#: src/saveplay.c:3097
+#: src/saveplay.c:3110
 #, c-format
 msgid "Average FPS was %.4f\n"
 msgstr "Az átlagos FPS %.4f volt\n"
 
-#: src/saveplay.c:3103
+#: src/saveplay.c:3116
 msgid ""
 "\n"
 "\n"
@@ -4393,16 +4393,16 @@ msgstr ""
 "Kattints rá az Eszközök--->Mind átméretezése\n"
 "opcióra, majd minden képkockát méretezz át a megfelelő méretre.\n"
 
-#: src/saveplay.c:3261
+#: src/saveplay.c:3274
 msgid "Unknown"
 msgstr "Ismeretlen"
 
-#: src/saveplay.c:3367 src/saveplay.c:4325
+#: src/saveplay.c:3380 src/saveplay.c:4338
 #, c-format
 msgid "Untitled%d"
 msgstr "Névtelen%d"
 
-#: src/saveplay.c:3402
+#: src/saveplay.c:3415
 #, c-format
 msgid ""
 "\n"
@@ -4410,7 +4410,7 @@ msgid ""
 "Bad things may happen with this clip.\n"
 msgstr ""
 
-#: src/saveplay.c:3492
+#: src/saveplay.c:3505
 #, c-format
 msgid ""
 "\n"
@@ -4423,14 +4423,14 @@ msgstr ""
 "Az alapértelmezett sebesség beállítható az Eszközök | Beállítások | Vegyes "
 "részben.\n"
 
-#: src/saveplay.c:3504
+#: src/saveplay.c:3517
 #, c-format
 msgid "Playback speed was adjusted to %.3f frames per second to fit audio.\n"
 msgstr ""
 "A lejátszás sebessége %.3f fps-re lett beállítva, ezáltal a videó "
 "hozáilleszkedik a hanghoz.\n"
 
-#: src/saveplay.c:3523
+#: src/saveplay.c:3536
 #, c-format
 msgid ""
 "Frames=%d type=%s size=%dx%d *bpp=Greyscale* fps=%.3f\n"
@@ -4439,7 +4439,7 @@ msgstr ""
 "Képkockák=%d típus=%s méret=%dx%d *bpp=Greyscale* fps=%.3f\n"
 "Hang:"
 
-#: src/saveplay.c:3527 src/saveplay.c:4502
+#: src/saveplay.c:3540 src/saveplay.c:4515
 #, c-format
 msgid ""
 "Frames=%d type=%s size=%dx%d bpp=%d fps=%.3f\n"
@@ -4448,49 +4448,49 @@ msgstr ""
 "Képkockák=%d típus=%s méret=%dx%d bpp=%d fps=%.3f\n"
 "Hang:"
 
-#: src/saveplay.c:3531 src/saveplay.c:4506
+#: src/saveplay.c:3544 src/saveplay.c:4519
 #, c-format
 msgid "%s none\n"
 msgstr "%s nincs\n"
 
-#: src/saveplay.c:3534 src/saveplay.c:4509
+#: src/saveplay.c:3547 src/saveplay.c:4522
 #, c-format
 msgid "%s %d Hz %d channel(s) %d bps\n"
 msgstr "%s %d Hz %d csatorna(k) %d bps\n"
 
-#: src/saveplay.c:3542
+#: src/saveplay.c:3555
 #, c-format
 msgid " - Comment: %s\n"
 msgstr " - Megjegyzés: %s\n"
 
-#: src/saveplay.c:3647
+#: src/saveplay.c:3660
 #, c-format
 msgid "Saving frame %d as %s..."
 msgstr "%d képkocka mentése mint %s..."
 
-#: src/saveplay.c:3740
+#: src/saveplay.c:3753
 #, c-format
 msgid "Backing up %s to %s"
 msgstr "%s mentése eddig: %s"
 
-#: src/saveplay.c:3793
+#: src/saveplay.c:3806
 msgid "Backing up"
 msgstr "Mentés"
 
-#: src/saveplay.c:3827
+#: src/saveplay.c:3840
 msgid "performance data was backed up..."
 msgstr "minőségi adatok el lettek mentve..."
 
-#: src/saveplay.c:4401
+#: src/saveplay.c:4414
 #, c-format
 msgid "Restoring %s..."
 msgstr "%s helyreállítása..."
 
-#: src/saveplay.c:4432
+#: src/saveplay.c:4445
 msgid "Restoring"
 msgstr "Helyreállítás"
 
-#: src/saveplay.c:4454
+#: src/saveplay.c:4467
 #, c-format
 msgid ""
 "\n"
@@ -4504,22 +4504,22 @@ msgstr ""
 "A LiVES nem tudja helyreállítani.\n"
 
 #. TRANSLATORS: rec(ord) %.2f M(ega)B(ytes)
-#: src/saveplay.c:4946
+#: src/saveplay.c:4959
 #, fuzzy, c-format
 msgid "rec %.2f MB"
 msgstr "%.2f mp."
 
-#: src/saveplay.c:4952
+#: src/saveplay.c:4965
 #, fuzzy, c-format
 msgid "!rec %.2f MB"
 msgstr "%.2f mp."
 
 #. TRANSLATORS: rec(ord) ?? M(ega)B(ytes)
-#: src/saveplay.c:4955
+#: src/saveplay.c:4968
 msgid "rec ?? MB"
 msgstr ""
 
-#: src/saveplay.c:4980
+#: src/saveplay.c:4993
 #, c-format
 msgid ""
 "\n"
@@ -4527,7 +4527,7 @@ msgid ""
 "Record stop level can be set in Preferences.\n"
 msgstr ""
 
-#: src/saveplay.c:5126
+#: src/saveplay.c:5139
 msgid ""
 "\n"
 "Files from a previous run of LiVES were found.\n"
@@ -4537,64 +4537,64 @@ msgstr ""
 "A LiVES előző futtatásából előkerült néhány fájl.\n"
 "Szeretnéd helyreállítani őket?\n"
 
-#: src/saveplay.c:5146
+#: src/saveplay.c:5159
 msgid "Recovering files"
 msgstr "Fájlok visszaállítása"
 
-#: src/saveplay.c:5148
+#: src/saveplay.c:5161
 msgid "Recovering files..."
 msgstr "Visszaszerzés fájlokat..."
 
-#: src/dialogs.c:70
+#: src/dialogs.c:69
 msgid "Show affected _layouts"
 msgstr "Érintett _kimenetek megjelenítése"
 
-#: src/dialogs.c:140
+#: src/dialogs.c:139
 #, fuzzy
 msgid "_Recover disk space"
 msgstr "Lemez terület takarítása"
 
-#: src/dialogs.c:155
+#: src/dialogs.c:154
 #, fuzzy
 msgid " _Advanced Settings >>"
 msgstr "%s haladó beállítások"
 
-#: src/dialogs.c:193
+#: src/dialogs.c:192
 msgid "LiVES: - Warning !"
 msgstr "LiVES: - Figyelmeztetés!"
 
-#: src/dialogs.c:194
+#: src/dialogs.c:193
 msgid "warning"
 msgstr "figyelmeztetés"
 
-#: src/dialogs.c:202
+#: src/dialogs.c:201
 msgid "LiVES: - Question"
 msgstr "LiVES: - Kérdés"
 
-#: src/dialogs.c:203
+#: src/dialogs.c:202
 msgid "question"
 msgstr ""
 
-#: src/dialogs.c:211
+#: src/dialogs.c:210
 #, fuzzy
 msgid "LiVES: - File Error"
 msgstr "LiVES: - Szín Kiválasztása"
 
-#: src/dialogs.c:212
+#: src/dialogs.c:211
 #, fuzzy
 msgid "File Error"
 msgstr "_Hibák törlése"
 
-#: src/dialogs.c:214
+#: src/dialogs.c:213
 #, fuzzy
 msgid "_Abort"
 msgstr "_Névjegy"
 
-#: src/dialogs.c:220
+#: src/dialogs.c:219
 msgid "_Retry"
 msgstr ""
 
-#: src/dialogs.c:490
+#: src/dialogs.c:489
 #, c-format
 msgid ""
 "FREE SPACE IN THE PARTITION CONTAINING\n"
@@ -4605,7 +4605,7 @@ msgid ""
 "(Disk warning levels can be configured in Preferences.)"
 msgstr ""
 
-#: src/dialogs.c:508
+#: src/dialogs.c:507
 #, c-format
 msgid ""
 "Free space in the partition containing\n"
@@ -4617,11 +4617,11 @@ msgid ""
 "Preferences.)"
 msgstr ""
 
-#: src/dialogs.c:520
+#: src/dialogs.c:519
 msgid "Audio players cannot be switched during playback."
 msgstr "Nem lehet zene lejátszót váltani a lejátszás alatt."
 
-#: src/dialogs.c:526
+#: src/dialogs.c:525
 msgid ""
 "\n"
 "\n"
@@ -4633,11 +4633,11 @@ msgstr ""
 "A LiVES nem tudja ezt a műveletet elvégezni kellő memória hiányában.\n"
 "Kérlek próbálj meg néhány alkalmazást bezárni.\n"
 
-#: src/dialogs.c:648
+#: src/dialogs.c:647
 msgid "Processing has been paused."
 msgstr ""
 
-#: src/dialogs.c:833
+#: src/dialogs.c:832
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -4646,7 +4646,7 @@ msgstr ""
 "\n"
 "%d%% kész. Hátralévő idő:%u másodperc\n"
 
-#: src/dialogs.c:1167
+#: src/dialogs.c:1166
 #, c-format
 msgid ""
 "\n"
@@ -4655,7 +4655,7 @@ msgstr ""
 "\n"
 "%d/%d képkocka megnyitva. A hátralévő idő %u másodperc.\n"
 
-#: src/dialogs.c:1169
+#: src/dialogs.c:1168
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -4664,7 +4664,7 @@ msgstr ""
 "\n"
 "%d képkocka megnyitva.\n"
 
-#: src/dialogs.c:1173
+#: src/dialogs.c:1172
 #, c-format
 msgid ""
 "\n"
@@ -4673,7 +4673,7 @@ msgstr ""
 "\n"
 "%d képkocka megnyitva.\n"
 
-#: src/dialogs.c:1740
+#: src/dialogs.c:1748
 #, c-format
 msgid ""
 "\n"
@@ -4682,7 +4682,7 @@ msgstr ""
 "\n"
 "Hátralévő idő: %d mp"
 
-#: src/dialogs.c:1797
+#: src/dialogs.c:1805
 #, c-format
 msgid ""
 "\n"
@@ -4693,7 +4693,7 @@ msgstr ""
 "Elnézést, de a LiVES csak %d fájlt tud megnyitni egyszerre.\n"
 "Kérlek zárj be egy fájlt, majd próbáld újra."
 
-#: src/dialogs.c:1804
+#: src/dialogs.c:1812
 #, c-format
 msgid ""
 "LiVES was unable to write to its temporary directory.\n"
@@ -4712,7 +4712,7 @@ msgstr ""
 "\n"
 "Kérlek ellenőrizd az írási jogosultságaidat."
 
-#: src/dialogs.c:1821
+#: src/dialogs.c:1829
 msgid ""
 "Audio resampling is required for this format.\n"
 "Please install 'sox'\n"
@@ -4722,7 +4722,7 @@ msgstr ""
 "Kérlek telepítsd a 'sox'-ot,\n"
 "vagy válts egy másik kódolóra az Eszközök | Beállítások | Kódolás menüben\n"
 
-#: src/dialogs.c:1826
+#: src/dialogs.c:1834
 msgid ""
 "\n"
 "\n"
@@ -4734,7 +4734,7 @@ msgstr ""
 "Ez a kódoló/formátum nem használható a kért hang kódekhez. \n"
 "Kérlek állítsd be a hang kódolót az Eszközök|Beállítások|kódolás menüben.\n"
 
-#: src/dialogs.c:1831
+#: src/dialogs.c:1839
 msgid ""
 "This layout includes generated frames.\n"
 "It cannot be saved, you must render it to a clip first.\n"
@@ -4742,7 +4742,7 @@ msgstr ""
 "Ez a kimenet generált képkockákat tartalmaz.\n"
 "Nem menthető, először egy klippé kell alakítanod.\n"
 
-#: src/dialogs.c:1836
+#: src/dialogs.c:1844
 #, fuzzy
 msgid ""
 "This layout includes generated or recorded audio.\n"
@@ -4751,7 +4751,7 @@ msgstr ""
 "Ez a kimenet generált képkockákat tartalmaz.\n"
 "Nem menthető, először egy klippé kell alakítanod.\n"
 
-#: src/dialogs.c:1843 src/dialogs.c:1941
+#: src/dialogs.c:1851 src/dialogs.c:1949
 #, c-format
 msgid ""
 "\n"
@@ -4762,7 +4762,7 @@ msgstr ""
 "\n"
 "Kellő korlátozások a %s formátumban.\n"
 
-#: src/dialogs.c:1865
+#: src/dialogs.c:1873
 msgid ""
 "LiVES recommends the following settings:\n"
 "\n"
@@ -4770,43 +4770,43 @@ msgstr ""
 "A LiVES a következő beállításokat ajánlja:\n"
 "\n"
 
-#: src/dialogs.c:1871 src/dialogs.c:1979 src/resample.c:850
+#: src/dialogs.c:1879 src/dialogs.c:1987 src/resample.c:850
 msgid ", signed"
 msgstr ", aláírt"
 
-#: src/dialogs.c:1872 src/dialogs.c:1980 src/resample.c:853
+#: src/dialogs.c:1880 src/dialogs.c:1988 src/resample.c:853
 msgid ", unsigned"
 msgstr ", aláíratlan"
 
-#: src/dialogs.c:1876 src/dialogs.c:1984 src/resample.c:858
+#: src/dialogs.c:1884 src/dialogs.c:1992 src/resample.c:858
 msgid ", little-endian"
 msgstr ", kicsi-endian"
 
-#: src/dialogs.c:1877 src/dialogs.c:1985 src/resample.c:861
+#: src/dialogs.c:1885 src/dialogs.c:1993 src/resample.c:861
 msgid ", big-endian"
 msgstr ", nagy-endian"
 
-#: src/dialogs.c:1883
+#: src/dialogs.c:1891
 #, fuzzy, c-format
 msgid "Use an audio rate of %d Hz%s%s\n"
 msgstr "%d Hz%s hangráta használata\n"
 
-#: src/dialogs.c:1891
+#: src/dialogs.c:1899
 #, c-format
 msgid "Set video rate to %.3f frames per second\n"
 msgstr "Videó arány beállítása erre: %.3f fps-re\n"
 
-#: src/dialogs.c:1895
+#: src/dialogs.c:1903
 #, c-format
 msgid "Set video rate to %d:%d frames per second\n"
 msgstr "Videó arány beállítása erre: %d:%d fps-re\n"
 
-#: src/dialogs.c:1900 src/dialogs.c:2014
+#: src/dialogs.c:1908 src/dialogs.c:2022
 #, c-format
 msgid "Set video size to %d x %d pixels\n"
 msgstr "Videó méretének beállítása erre: %d x %d pixel\n"
 
-#: src/dialogs.c:1908 src/dialogs.c:2013
+#: src/dialogs.c:1916 src/dialogs.c:2021
 msgid ""
 "\n"
 "You may wish to:\n"
@@ -4814,35 +4814,35 @@ msgstr ""
 "\n"
 "Szeretnéd:\n"
 
-#: src/dialogs.c:1911 src/dialogs.c:2005
+#: src/dialogs.c:1919 src/dialogs.c:2013
 #, c-format
 msgid "resize video to %d x %d pixels\n"
 msgstr "videó átméretezése %d x %d pixelre\n"
 
-#: src/dialogs.c:1916
+#: src/dialogs.c:1924
 msgid "disable audio, since the target encoder cannot encode audio\n"
 msgstr "hang letiltva, mivel a kijelölt kodek nem képes kezelni a hangot\n"
 
-#: src/dialogs.c:1975
+#: src/dialogs.c:1983
 msgid "LiVES must:\n"
 msgstr "A LiVES-nak szükséges a:\n"
 
-#: src/dialogs.c:1990
+#: src/dialogs.c:1998
 #, fuzzy, c-format
 msgid "resample audio to %d Hz%s%s\n"
 msgstr "hang újramintázása erre: %d Hz%s\n"
 
-#: src/dialogs.c:1997
+#: src/dialogs.c:2005
 #, c-format
 msgid "resample video to %.3f frames per second\n"
 msgstr "videó újramintázása %.3f fps-re\n"
 
-#: src/dialogs.c:2001
+#: src/dialogs.c:2009
 #, c-format
 msgid "resample video to %d:%d frames per second\n"
 msgstr "videó újramintázása %d:%d fps-re\n"
 
-#: src/dialogs.c:2020
+#: src/dialogs.c:2028
 msgid ""
 "\n"
 "You will be able to undo these changes afterwards.\n"
@@ -4856,7 +4856,7 @@ msgstr ""
 "'OK' a jóváhagyáshoz, 'Mégse' az elvetéshez.\n"
 "\n"
 
-#: src/dialogs.c:2023
+#: src/dialogs.c:2031
 msgid ""
 "\n"
 "Changes applied to the selection will not be permanent.\n"
@@ -4866,7 +4866,7 @@ msgstr ""
 "A változások a kijelölésben nem lesznek maradandóak.\n"
 "\n"
 
-#: src/dialogs.c:2043
+#: src/dialogs.c:2051
 msgid ""
 "\n"
 "\n"
@@ -4880,7 +4880,7 @@ msgstr ""
 "elérhető memória.\n"
 "Próbálj meg csak egy kijelölt részt rögzíteni a fájlból."
 
-#: src/dialogs.c:2051
+#: src/dialogs.c:2059
 msgid ""
 "The playback speed (fps), or the audio rate\n"
 " of the clipboard does not match\n"
@@ -4898,7 +4898,7 @@ msgstr ""
 "\n"
 "Kérlek nyomj 'Mégse'-t a beillesztés megszakításához, 'OK'-t a folytatáshoz."
 
-#: src/dialogs.c:2059
+#: src/dialogs.c:2067
 msgid ""
 "When opening a yuvmpeg stream, you should first create a fifo file and then "
 "write yuv4mpeg frames to it.\n"
@@ -4912,11 +4912,11 @@ msgstr ""
 "Csak nyomj 'OK'-t ha tudod mit kell tenned, minden más esetben válaszd a "
 "'Mégse' opciót."
 
-#: src/dialogs.c:2109
+#: src/dialogs.c:2117
 msgid "Show Keys"
 msgstr "Billentyűk mutatása"
 
-#: src/dialogs.c:2110
+#: src/dialogs.c:2118
 msgid ""
 "You can use the following keys during playback to control LiVES:-\n"
 "\n"
@@ -4996,11 +4996,11 @@ msgstr ""
 "d                             dupla méret\n"
 "g                             ping pong ismétlés\n"
 
-#: src/dialogs.c:2118
+#: src/dialogs.c:2126
 msgid "Multitrack Keys"
 msgstr "Multitrack billenytűk"
 
-#: src/dialogs.c:2119
+#: src/dialogs.c:2127
 msgid ""
 "You can use the following keys to control the multitrack window:-\n"
 "\n"
@@ -5022,11 +5022,11 @@ msgid ""
 "For other keys, see the menus.\n"
 msgstr ""
 
-#: src/dialogs.c:2135
+#: src/dialogs.c:2143
 msgid "Message History"
 msgstr "Üzenet előzmények"
 
-#: src/dialogs.c:2149
+#: src/dialogs.c:2157
 #, fuzzy, c-format
 msgid ""
 "After upgrading/installing, you may need to adjust the <prefix_dir> setting "
@@ -5035,7 +5035,7 @@ msgstr ""
 "Frissítés/telepítés után ellenőzizd a <prefix_dir> beállításokat a ~/.lives "
 "könyvtáradban"
 
-#: src/dialogs.c:2158
+#: src/dialogs.c:2166
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -5052,7 +5052,7 @@ msgstr ""
 "%s%s%s\n"
 "vagy változtasd meg a tartalmazó mappa <lib_dir> helyét itt: ~/.lives\n"
 
-#: src/dialogs.c:2166
+#: src/dialogs.c:2174
 msgid ""
 "Sorry, unknown audio type.\n"
 "\n"
@@ -5062,18 +5062,18 @@ msgstr ""
 "\n"
 " (használható fájltípusok:.mp3, .ogg, .wav, .mod, .xm, .it)"
 
-#: src/dialogs.c:2167
+#: src/dialogs.c:2175
 msgid "failed (unknown type)\n"
 msgstr "nem sikerült (ismeretlen típus)\n"
 
-#: src/dialogs.c:2172
+#: src/dialogs.c:2180
 msgid ""
 "\n"
 "Do you wish to remove the layout files associated with this set ?\n"
 "(They will not be usable without the set).\n"
 msgstr ""
 
-#: src/dialogs.c:2177
+#: src/dialogs.c:2185
 #, c-format
 msgid ""
 "\n"
@@ -5087,7 +5087,7 @@ msgstr ""
 "beállításhoz.\n"
 "'Mégse' egy új létrehozásához.\n"
 
-#: src/dialogs.c:2184
+#: src/dialogs.c:2192
 msgid ""
 "\n"
 "Frames from this clip are used in some multitrack layouts.\n"
@@ -5099,7 +5099,7 @@ msgstr ""
 "Biztosan szeretnéd folytatni?\n"
 "."
 
-#: src/dialogs.c:2188
+#: src/dialogs.c:2196
 msgid ""
 "\n"
 "Audio from this clip is used in some multitrack layouts.\n"
@@ -5111,7 +5111,7 @@ msgstr ""
 "Biztosan folytatni szeretnéd?\n"
 "."
 
-#: src/dialogs.c:2192
+#: src/dialogs.c:2200
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -5129,7 +5129,7 @@ msgstr ""
 "és kattints az 'OK'-ra.\n"
 "Ellenkező esetben kattints a 'Mégse' gombra a fájl betöltés kihagyásához.\n"
 
-#: src/dialogs.c:2199
+#: src/dialogs.c:2207
 #, c-format
 msgid ""
 "\n"
@@ -5144,7 +5144,7 @@ msgstr ""
 "%s\n"
 "A klipet nem lehet betölteni.\n"
 
-#: src/dialogs.c:2206
+#: src/dialogs.c:2214
 msgid ""
 "\n"
 "Dear user, the jack developers decided to remove the -Z option from jackd.\n"
@@ -5152,7 +5152,7 @@ msgid ""
 "Alternately, select a different audio player in Preferences.\n"
 msgstr ""
 
-#: src/dialogs.c:2210
+#: src/dialogs.c:2218
 msgid ""
 "\n"
 "Unable to start up jack. Please ensure that alsa is set up correctly on your "
@@ -5161,13 +5161,13 @@ msgid ""
 "Automatic jack startup will be disabled now.\n"
 msgstr ""
 
-#: src/dialogs.c:2216
+#: src/dialogs.c:2224
 msgid ""
 "\n"
 "Unable to connect to jack server. Please start jack before starting LiVES\n"
 msgstr ""
 
-#: src/dialogs.c:2225
+#: src/dialogs.c:2233
 #, c-format
 msgid ""
 "\n"
@@ -5178,7 +5178,7 @@ msgid ""
 "%s\n"
 msgstr ""
 
-#: src/dialogs.c:2232
+#: src/dialogs.c:2240
 msgid ""
 "\n"
 "Alternately, you can restart LiVES and select another audio player.\n"
@@ -5187,7 +5187,7 @@ msgstr ""
 "Más megoldásként, indítsd újra a LiVES-t, majd válassz egy másik "
 "hangmeghajtót.\n"
 
-#: src/dialogs.c:2237
+#: src/dialogs.c:2245
 #, c-format
 msgid ""
 "\n"
@@ -5202,7 +5202,7 @@ msgstr ""
 "Növelheted az értéket a Beállítások/Multitrac menüben.\n"
 "Az ajánlott érték legalább %d MB"
 
-#: src/dialogs.c:2243
+#: src/dialogs.c:2251
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -5215,7 +5215,7 @@ msgstr ""
 "Ajánlott törölni őket.\n"
 "'Ok' a törlésükhöz, 'Mégse' a meghagyásukhoz.\n"
 
-#: src/dialogs.c:2250
+#: src/dialogs.c:2258
 msgid ""
 "\n"
 "LiVES was unable to reserve enough memory for multitrack undo.\n"
@@ -5227,7 +5227,7 @@ msgstr ""
 "Zárj be néhány más alkalmazást a memória felszabadításához.\n"
 "Használd a Beállítások/Multitrack/Visszaállítási memória opciót\n"
 
-#: src/dialogs.c:2254
+#: src/dialogs.c:2262
 msgid ""
 "\n"
 "Out of memory for undo.\n"
@@ -5239,7 +5239,7 @@ msgstr ""
 "Meg kell növelned a visszaállítási memóriát\n"
 "használd a Beállítások/Multitrack/Visszaállítási memóriát\n"
 
-#: src/dialogs.c:2258
+#: src/dialogs.c:2266
 msgid ""
 "\n"
 "LiVES was unable to reserve enough memory for the multitrack undo buffer.\n"
@@ -5248,21 +5248,21 @@ msgstr ""
 "A LiVES nem képes elég memóriát biztosítani a multitrack visszállító "
 "pufferéhez.\n"
 
-#: src/dialogs.c:2260
+#: src/dialogs.c:2268
 msgid "or enter a smaller value.\n"
 msgstr "vagy adj meg egy kisebb értéket.\n"
 
-#: src/dialogs.c:2262
+#: src/dialogs.c:2270
 msgid "Try again from the clip editor, try closing some other applications\n"
 msgstr ""
 "Próbáld meg ismét a klip szerkesztőböl. Próbálj meg bezárni néhány egyéb "
 "alkalmazást\n"
 
-#: src/dialogs.c:2263
+#: src/dialogs.c:2271
 msgid "Try closing some other applications\n"
 msgstr "Zárj be néhány egyéb alkalmazást\n"
 
-#: src/dialogs.c:2274
+#: src/dialogs.c:2282
 msgid ""
 "Multitrack is set to 0 audio channels, but this layout has audio.\n"
 "You should adjust the audio settings from the Tools menu.\n"
@@ -5270,13 +5270,13 @@ msgstr ""
 "A Multitrack értéke 0 csatornát jelez, de a kimenetnek van hangja.\n"
 "Ellenőrizd a hang beállításokat az Eszközök menüben.\n"
 
-#: src/dialogs.c:2278
+#: src/dialogs.c:2286
 msgid ""
 "The current layout has audio, so audio channels may not be set to zero.\n"
 msgstr ""
 "A jelenlegi kimenetnek van hangja, ezért a csatornák száma nem lehet 0.\n"
 
-#: src/dialogs.c:2282
+#: src/dialogs.c:2290
 msgid ""
 "Multitrack audio preview is only available with the\n"
 "\"jack\" or \"pulse audio\" audio player.\n"
@@ -5286,7 +5286,7 @@ msgstr ""
 "illetve \"pulse audio\" lejátszókkal lehetséges.\n"
 "Ezt beállíthatod az Eszközök|Beállítások|Lejátszás menüben."
 
-#: src/dialogs.c:2286
+#: src/dialogs.c:2294
 msgid ""
 "Errors were detected in the layout (which may be due to transferring from "
 "another system, or from an older version of LiVES).\n"
@@ -5296,7 +5296,7 @@ msgstr ""
 "egy régebbi verziója miatt is).\n"
 "Megpróbálhatom megjavítani a kimenet másolatát?\n"
 
-#: src/dialogs.c:2290
+#: src/dialogs.c:2298
 msgid ""
 "LiVES was unable to load the layout.\n"
 "Sorry.\n"
@@ -5304,7 +5304,7 @@ msgstr ""
 "A LiVES nem képes betölteni a kimenetet.\n"
 "Sajnálom.\n"
 
-#: src/dialogs.c:2296
+#: src/dialogs.c:2304
 msgid ""
 "\n"
 "\n"
@@ -5314,7 +5314,7 @@ msgstr ""
 "\n"
 "A hang aránynak 0-nál nagyobbnak kell lennie.\n"
 
-#: src/dialogs.c:2300
+#: src/dialogs.c:2308
 msgid ""
 "\n"
 "Event list will be very large\n"
@@ -5326,7 +5326,7 @@ msgstr ""
 "és sokáig tart megjeleníteni.\n"
 "Biztosan meg szeretnéd nézni?\n"
 
-#: src/dialogs.c:2305
+#: src/dialogs.c:2313
 msgid ""
 "\n"
 "\n"
@@ -5336,7 +5336,7 @@ msgstr ""
 "\n"
 "Telepítened kell a 'dvgab'-et a funkció használatához.\n"
 
-#: src/dialogs.c:2310
+#: src/dialogs.c:2318
 msgid ""
 "\n"
 "\n"
@@ -5351,25 +5351,25 @@ msgstr ""
 "Ki kell egyet választanod ezek közül az Eszközök/Beállítások/Lejátszás "
 "menüben.\n"
 
-#: src/dialogs.c:2314
+#: src/dialogs.c:2322
 msgid "Video playback plugin failed to initialise palette !\n"
 msgstr "A videólejátszó bővítmény nem tudja inicializálni a palettát!\n"
 
-#: src/dialogs.c:2318
+#: src/dialogs.c:2326
 msgid "Decoder plugin failed to initialise palette !\n"
 msgstr "Nem sikerült inicializálnia a palettát a dekóder bővítménynek!\n"
 
-#: src/dialogs.c:2323
+#: src/dialogs.c:2331
 msgid "Unable to set framerate of video plugin\n"
 msgstr "Nem lehet beállítani videó bővítmény képkocka arányát\n"
 
-#: src/dialogs.c:2328
+#: src/dialogs.c:2336
 msgid ""
 "After a crash, it is advisable to clean up the disk with\n"
 "File|Clean up disk space\n"
 msgstr "Öszeomlás után\n"
 
-#: src/dialogs.c:2340
+#: src/dialogs.c:2348
 #, c-format
 msgid ""
 "Stream frame size is too large for your network buffers.\n"
@@ -5382,33 +5382,33 @@ msgstr ""
 "\n"
 "echo %d > /proc/sys/net/core/rmem_max\n"
 
-#: src/dialogs.c:2564
+#: src/dialogs.c:2572
 msgid "cancelled.\n"
 msgstr "megszakítva.\n"
 
-#: src/dialogs.c:2571
+#: src/dialogs.c:2579
 msgid "failed.\n"
 msgstr "nem sikerült.\n"
 
-#: src/dialogs.c:2578
+#: src/dialogs.c:2586
 msgid "done.\n"
 msgstr "kész.\n"
 
-#: src/dialogs.c:2582
+#: src/dialogs.c:2590
 msgid "error in file. Failed.\n"
 msgstr "hiba a fájlban. Sikertelen.\n"
 
-#: src/dialogs.c:2616 src/dialogs.c:2665 src/dialogs.c:2689
+#: src/dialogs.c:2624 src/dialogs.c:2673 src/dialogs.c:2697
 #, c-format
 msgid "Additional info: %s\n"
 msgstr ""
 
-#: src/dialogs.c:2619
+#: src/dialogs.c:2627
 #, c-format
 msgid "The error value was %d%s\n"
 msgstr ""
 
-#: src/dialogs.c:2622
+#: src/dialogs.c:2630
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -5422,7 +5422,7 @@ msgstr ""
 "%s\n"
 "Kérlek ellenőrizd a jogosultságokat, majd próbáld meg ismét."
 
-#: src/dialogs.c:2668
+#: src/dialogs.c:2676
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -5436,7 +5436,7 @@ msgstr ""
 "%s\n"
 "Kérlek ellenőrizd a jogosultságokat, majd próbáld meg ismét."
 
-#: src/dialogs.c:2692
+#: src/dialogs.c:2700
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -5450,7 +5450,7 @@ msgstr ""
 "%s\n"
 "Kérlek ellenőrizd a jogosultságokat, majd próbáld meg ismét."
 
-#: src/dialogs.c:2736
+#: src/dialogs.c:2744
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -5463,7 +5463,7 @@ msgstr ""
 "%s\n"
 "Kérlek ellenőrizd a jogosultságokat, majd próbáld meg ismét."
 
-#: src/dialogs.c:2740
+#: src/dialogs.c:2748
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -5477,7 +5477,7 @@ msgstr ""
 "%s\n"
 "Kérlek ellenőrizd a jogosultságokat, majd próbáld meg ismét."
 
-#: src/dialogs.c:2771
+#: src/dialogs.c:2779
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -5490,7 +5490,7 @@ msgstr ""
 "%s\n"
 "Kérlek ellenőrizd a jogosultságokat, majd próbáld meg ismét."
 
-#: src/dialogs.c:2775
+#: src/dialogs.c:2783
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -5504,12 +5504,12 @@ msgstr ""
 "%s\n"
 "Kérlek ellenőrizd a jogosultságokat, majd próbáld meg ismét."
 
-#: src/dialogs.c:2843
+#: src/dialogs.c:2851
 #, c-format
 msgid "Value for \"%s\" could not be read."
 msgstr ""
 
-#: src/dialogs.c:2861
+#: src/dialogs.c:2869
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -5522,7 +5522,7 @@ msgstr ""
 "%s\n"
 "Kérlek ellenőrizd a jogosultságokat, majd próbáld meg ismét."
 
-#: src/dialogs.c:2870
+#: src/dialogs.c:2878
 #, c-format
 msgid ""
 "\n"
@@ -5535,7 +5535,7 @@ msgstr ""
 "%s\n"
 "Kérlek ellenőrizd a jogosultságokat, majd próbáld meg ismét."
 
-#: src/dialogs.c:2877
+#: src/dialogs.c:2885
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -5548,7 +5548,7 @@ msgstr ""
 "%s\n"
 "Kérlek ellenőrizd a jogosultságokat, majd próbáld meg ismét."
 
-#: src/dialogs.c:2884
+#: src/dialogs.c:2892
 #, fuzzy
 msgid ""
 "\n"
@@ -5560,7 +5560,7 @@ msgstr ""
 "A beállítás törlődik a lemezről.\n"
 "Biztos vagy benne?\n"
 
-#: src/dialogs.c:2890
+#: src/dialogs.c:2898
 #, c-format
 msgid ""
 "\n"
@@ -5571,13 +5571,13 @@ msgstr ""
 "A %s nem képes klipet készíteni ezekkel a képekkel: %s\n"
 "Kérlek válassz egy másik kódolót a listából.\n"
 
-#: src/dialogs.c:2899
+#: src/dialogs.c:2907
 msgid ""
 "\n"
 "This card is already in use and cannot be opened multiple times.\n"
 msgstr ""
 
-#: src/dialogs.c:2904
+#: src/dialogs.c:2912
 #, c-format
 msgid ""
 "\n"
@@ -5587,20 +5587,20 @@ msgid ""
 "- Check if the device actually exists.\n"
 msgstr ""
 
-#: src/dialogs.c:2911
+#: src/dialogs.c:2919
 msgid ""
 "\n"
 "This file already has subtitles loaded.\n"
 "Do you wish to overwrite the existing subtitles ?\n"
 msgstr ""
 
-#: src/dialogs.c:2915
+#: src/dialogs.c:2923
 msgid ""
 "\n"
 "LiVES currently only supports subtitles of type .srt and .sub.\n"
 msgstr ""
 
-#: src/dialogs.c:2919
+#: src/dialogs.c:2927
 #, fuzzy
 msgid ""
 "\n"
@@ -5612,7 +5612,7 @@ msgstr ""
 "A beállítás törlődik a lemezről.\n"
 "Biztos vagy benne?\n"
 
-#: src/dialogs.c:2925
+#: src/dialogs.c:2933
 #, c-format
 msgid ""
 "\n"
@@ -5621,14 +5621,14 @@ msgid ""
 "or OK to continue and save as type \"%s\"\n"
 msgstr ""
 
-#: src/dialogs.c:2932
+#: src/dialogs.c:2940
 msgid ""
 "\n"
 "Do you wish to move the current clip sets to the new directory ?\n"
 "(If unsure, click Yes)\n"
 msgstr ""
 
-#: src/dialogs.c:2936
+#: src/dialogs.c:2944
 #, c-format
 msgid ""
 "\n"
@@ -5639,19 +5639,19 @@ msgid ""
 "."
 msgstr ""
 
-#: src/dialogs.c:2942
+#: src/dialogs.c:2950
 msgid ""
 "\n"
 "No video input devices could be found.\n"
 msgstr ""
 
-#: src/dialogs.c:2946
+#: src/dialogs.c:2954
 msgid ""
 "\n"
 "All video input devices are already in use.\n"
 msgstr ""
 
-#: src/dialogs.c:2950
+#: src/dialogs.c:2958
 msgid ""
 "\n"
 "\n"
@@ -5659,7 +5659,7 @@ msgid ""
 "DO NOT SHUT DOWN OR CLOSE LIVES !\n"
 msgstr ""
 
-#: src/dialogs.c:2969
+#: src/dialogs.c:2977
 #, c-format
 msgid ""
 "No clips were recovered for set (%s).\n"
@@ -5667,7 +5667,7 @@ msgid ""
 msgstr ""
 
 #. TRANSLATORS: make sure the menu text matches what is in gui.c
-#: src/dialogs.c:2978
+#: src/dialogs.c:2986
 #, c-format
 msgid ""
 "\n"
@@ -5679,7 +5679,7 @@ msgid ""
 msgstr ""
 
 #. TRANSLATORS: make sure the menu text matches what is in gui.c
-#: src/dialogs.c:2986
+#: src/dialogs.c:2994
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -5690,34 +5690,34 @@ msgstr ""
 "Légy üdvözölve a LiVES %s verziójában.\n"
 "\n"
 
-#: src/dialogs.c:2992
+#: src/dialogs.c:3000
 msgid ""
 "\n"
 "You must have autolives.pl installed and in your path to use this toy.\n"
 "Consult your package distributor.\n"
 msgstr ""
 
-#: src/dialogs.c:2996
+#: src/dialogs.c:3004
 msgid ""
 "\n"
 "You must have a minimum of one clip loaded to use this toy.\n"
 msgstr ""
 
-#: src/dialogs.c:3000
+#: src/dialogs.c:3008
 msgid ""
 "\n"
 "LiVES lost its connection to jack and was unable to reconnect.\n"
 "Restarting LiVES is recommended.\n"
 msgstr ""
 
-#: src/dialogs.c:3004
+#: src/dialogs.c:3012
 msgid ""
 "\n"
 "LiVES lost its connection to pulseaudio and was unable to reconnect.\n"
 "Restarting LiVES is recommended.\n"
 msgstr ""
 
-#: src/dialogs.c:3017
+#: src/dialogs.c:3025
 #, c-format
 msgid ""
 "\n"
@@ -5736,195 +5736,215 @@ msgstr "Generátorok"
 
 #: src/effects.c:59
 #, fuzzy
-msgid "data generator"
+msgid "audio generator"
 msgstr "generátor"
 
 #: src/effects.c:60
 #, fuzzy
-msgid "Data Generators"
+msgid "Audio Generators"
 msgstr "Generátorok"
 
 #: src/effects.c:62
+#, fuzzy
+msgid "audio/video generator"
+msgstr "hang/videó"
+
+#: src/effects.c:63
+#, fuzzy
+msgid "Audio/Video Generators"
+msgstr "Hang/videó átmenetek"
+
+#: src/effects.c:65 src/effects.c:68
+#, fuzzy
+msgid "data generator"
+msgstr "generátor"
+
+#: src/effects.c:66 src/effects.c:69
+#, fuzzy
+msgid "Data Generators"
+msgstr "Generátorok"
+
+#: src/effects.c:71
 msgid "transition"
 msgstr "átmenet"
 
-#: src/effects.c:63
+#: src/effects.c:72
 msgid "Transitions"
 msgstr "Átmenetek"
 
-#: src/effects.c:65
+#: src/effects.c:74
 msgid "effect"
 msgstr "hatás"
 
 #. TRANSLATORS: please keep this string short
-#: src/effects.c:66 src/preferences.c:3883
+#: src/effects.c:75 src/preferences.c:3883
 msgid "Effects"
 msgstr "Effektek"
 
-#: src/effects.c:68
+#: src/effects.c:77
 msgid "utility"
 msgstr "segédprogram"
 
-#: src/effects.c:69
+#: src/effects.c:78
 msgid "Utilities"
 msgstr "Segédprogramok"
 
-#: src/effects.c:71
+#: src/effects.c:80
 msgid "compositor"
 msgstr "compositor"
 
-#: src/effects.c:72
+#: src/effects.c:81
 msgid "Compositors"
 msgstr "Compositorok"
 
-#: src/effects.c:74
+#: src/effects.c:83
 msgid "tap"
 msgstr "csap"
 
-#: src/effects.c:75
+#: src/effects.c:84
 msgid "Taps"
 msgstr "Csapok"
 
-#: src/effects.c:77
+#: src/effects.c:86
 msgid "splitter"
 msgstr "osztó"
 
-#: src/effects.c:78
+#: src/effects.c:87
 msgid "Splitters"
 msgstr "Osztók"
 
-#: src/effects.c:80
+#: src/effects.c:89
 msgid "converter"
 msgstr "konvertáló"
 
-#: src/effects.c:81
+#: src/effects.c:90
 msgid "Converters"
 msgstr "Konvertálók"
 
-#: src/effects.c:83
+#: src/effects.c:92
 #, fuzzy
 msgid "analyser"
 msgstr "csak videó"
 
-#: src/effects.c:84
+#: src/effects.c:93
 #, fuzzy
 msgid "Analysers"
 msgstr "_Hang paraméterek"
 
-#: src/effects.c:89
+#: src/effects.c:98
 msgid "audio/video"
 msgstr "hang/videó"
 
-#: src/effects.c:90
+#: src/effects.c:99
 msgid "Audio/Video Transitions"
 msgstr "Hang/videó átmenetek"
 
-#: src/effects.c:92
+#: src/effects.c:101
 msgid "video only"
 msgstr "csak videó"
 
-#: src/effects.c:93
+#: src/effects.c:102
 msgid "Video only Transitions"
 msgstr "Csak videó átmenetek"
 
-#: src/effects.c:95 src/multitrack.c:9736
+#: src/effects.c:104 src/multitrack.c:9736
 msgid "audio only"
 msgstr "csak hang"
 
-#: src/effects.c:96
+#: src/effects.c:105
 msgid "Audio only Transitions"
 msgstr "Csak hang átmenetek"
 
-#: src/effects.c:98 src/effects.c:101 src/multitrack.c:17401
+#: src/effects.c:107 src/effects.c:110 src/multitrack.c:17401
 msgid "audio"
 msgstr "hang"
 
-#: src/effects.c:99
+#: src/effects.c:108
 msgid "Audio Mixers"
 msgstr "Hang keverők"
 
-#: src/effects.c:102
+#: src/effects.c:111
 msgid "Audio Effects"
 msgstr "Hang effektek"
 
-#: src/effects.c:104
+#: src/effects.c:113
 msgid "audio volume controller"
 msgstr "hangerőszabályzó"
 
-#: src/effects.c:105
+#: src/effects.c:114
 msgid "Audio Volume Controllers"
 msgstr "Hangerőszabályzók"
 
-#: src/effects.c:107
+#: src/effects.c:116
 #, fuzzy
 msgid "video analyser"
 msgstr "csak videó"
 
-#: src/effects.c:108
+#: src/effects.c:117
 #, fuzzy
 msgid "Video analysers"
 msgstr "csak videó"
 
-#: src/effects.c:110
+#: src/effects.c:119
 #, fuzzy
 msgid "audio analyser"
 msgstr "csak hang"
 
-#: src/effects.c:111
+#: src/effects.c:120
 #, fuzzy
 msgid "Audio Analysers"
 msgstr "_Hang paraméterek"
 
-#: src/effects.c:115 src/plugins.c:2486 src/plugins.c:2500
+#: src/effects.c:124 src/plugins.c:2486 src/plugins.c:2500
 msgid "unknown"
 msgstr "ismeretlen"
 
-#: src/effects.c:216
+#: src/effects.c:225
 #, c-format
 msgid "%s all frames..."
 msgstr "%s összes képkocka..."
 
-#: src/effects.c:221
+#: src/effects.c:230
 #, c-format
 msgid "%s clipboard into frames %d to %d..."
 msgstr "%s vágólap %d képkockákban eddig: %d..."
 
-#: src/effects.c:228
+#: src/effects.c:237
 #, c-format
 msgid "%s to clipboard..."
 msgstr "%s a vágólapra..."
 
-#: src/effects.c:232
+#: src/effects.c:241
 #, c-format
 msgid "%s to new clip..."
 msgstr "%s az új klippbe..."
 
-#: src/effects.c:237
+#: src/effects.c:246
 #, c-format
 msgid "%s frames %d to %d..."
 msgstr "%s képkockák %d eddig %d..."
 
-#: src/effects.c:268
+#: src/effects.c:277
 #, c-format
 msgid "%s clipboard with selection"
 msgstr "%s vágólap kijelöléssel"
 
-#: src/effects.c:273
+#: src/effects.c:282
 #, c-format
 msgid "%s to clipboard"
 msgstr "%s a vágólapra"
 
-#: src/effects.c:277
+#: src/effects.c:286
 #, c-format
 msgid "%s to new clip"
 msgstr "%s az új klipbe"
 
-#: src/effects.c:282
+#: src/effects.c:291
 #, c-format
 msgid "%s frames %d to %d"
 msgstr "%s képkockák %d eddig %d"
 
-#: src/effects.c:431 src/effects.c:498
+#: src/effects.c:440 src/effects.c:507
 msgid ""
 "\n"
 "No frames were generated.\n"
@@ -5932,17 +5952,17 @@ msgstr ""
 "\n"
 "Nincsenek képkockák generálva.\n"
 
-#: src/effects-weed.c:3655
+#: src/effects-weed.c:3677
 #, c-format
 msgid "Error: plugin %s has no weed_setup() function.\n"
 msgstr "Hiba: a(z) %s bővítménynek nincsenek beállításai.\n"
 
-#: src/effects-weed.c:3670
+#: src/effects-weed.c:3692
 #, c-format
 msgid "No usable filters found in plugin %s\n"
 msgstr ""
 
-#: src/effects-weed.c:3750
+#: src/effects-weed.c:3772
 #, c-format
 msgid ""
 "Info: Unable to load plugin %s\n"
@@ -5951,37 +5971,42 @@ msgstr ""
 "Információ: Nem lehet betölteni a következő bővítményt: %s\n"
 "A hiba a következő volt: %s\n"
 
-#: src/effects-weed.c:3753 src/effects-weed.c:4092
+#: src/effects-weed.c:3775 src/effects-weed.c:4114
 #, fuzzy
 msgid "Some plugin directories"
 msgstr "Almappákat is beleértve"
 
-#: src/effects-weed.c:3928
+#: src/effects-weed.c:3950
 #, c-format
 msgid "Successfully loaded %d Weed filters\n"
 msgstr "Sikeresen betöltött %d Weed szűrők\n"
 
-#: src/effects-weed.c:4666
+#: src/effects-weed.c:4615
+#, c-format
+msgid "Effect %s cannot be used with this audio player.\n"
+msgstr ""
+
+#: src/effects-weed.c:4719
 #, c-format
 msgid "Failed to start instance %s, error code %d\n"
 msgstr "Nem sikerült elindítani a(z) %s eseményt, hiba kód: %d\n"
 
-#: src/effects-weed.c:4704
+#: src/effects-weed.c:4758
 #, c-format
 msgid "Unable to start generator %s\n"
 msgstr "Nem lehet elindítani a %s generátort\n"
 
-#: src/effects-weed.c:5258
+#: src/effects-weed.c:5333
 #, c-format
 msgid "Failed to start generator %s\n"
 msgstr "Nem lehet elindítani a %s generátort\n"
 
-#: src/effects-weed.c:5319
+#: src/effects-weed.c:5394
 #, c-format
 msgid "Failed to start generator %s, error %d\n"
 msgstr "Nem lehet elindítani a %s generátort, %d hiba\n"
 
-#: src/effects-weed.c:6417
+#: src/effects-weed.c:6496
 #, c-format
 msgid "%s [unstable] (%s)"
 msgstr ""
@@ -6094,7 +6119,7 @@ msgstr "Legyen ez az alapértelmezés"
 msgid "Reset"
 msgstr ""
 
-#: src/paramwindow.c:953 src/rte_window.c:1514 src/omc-learn.c:1376
+#: src/paramwindow.c:953 src/rte_window.c:1516 src/omc-learn.c:1376
 msgid "Close _window"
 msgstr "_Ablak bezárása"
 
@@ -8716,7 +8741,7 @@ msgstr "Verzió: %d"
 msgid "Description: "
 msgstr "Leírás: "
 
-#: src/rte_window.c:1126
+#: src/rte_window.c:1127
 msgid ""
 "\n"
 "\n"
@@ -8730,65 +8755,65 @@ msgstr ""
 "ugyanazzal a billentyűvel.\n"
 "\n"
 
-#: src/rte_window.c:1171
+#: src/rte_window.c:1173
 #, c-format
 msgid "LiVES could not locate the effect %s.\n"
 msgstr "LiVES nem találja a %s effektet.\n"
 
-#: src/rte_window.c:1257
+#: src/rte_window.c:1259
 msgid "LiVES: Real time effect mapping"
 msgstr "LiVES: Azonnali effekt leképezés"
 
-#: src/rte_window.c:1266 src/rte_window.c:1324
+#: src/rte_window.c:1268 src/rte_window.c:1326
 msgid "Key grab"
 msgstr "Billentyű elkapás"
 
-#: src/rte_window.c:1281
+#: src/rte_window.c:1283
 #, c-format
 msgid "Ctrl-%d"
 msgstr "Ctrl-%d"
 
-#: src/rte_window.c:1290
+#: src/rte_window.c:1292
 msgid "Key active"
 msgstr "Billentyű aktív"
 
-#: src/rte_window.c:1329
+#: src/rte_window.c:1331
 msgid "Grab keyboard for this effect key"
 msgstr "Effekthez rendelt billentyű"
 
-#: src/rte_window.c:1348
+#: src/rte_window.c:1350
 msgid "_Clear all effects"
 msgstr "_Minden effekt kitörlése"
 
-#: src/rte_window.c:1367
+#: src/rte_window.c:1369
 msgid "Mode active"
 msgstr "Mód aktív"
 
-#: src/rte_window.c:1393 src/multitrack.c:7696
+#: src/rte_window.c:1395 src/multitrack.c:7696
 msgid "Info"
 msgstr "Információ"
 
-#: src/rte_window.c:1394
+#: src/rte_window.c:1396
 msgid "Set Parameters"
 msgstr "Paraméterek beállítása"
 
-#: src/rte_window.c:1395
+#: src/rte_window.c:1397
 msgid "Clear"
 msgstr "Törlés"
 
-#: src/rte_window.c:1404
+#: src/rte_window.c:1406
 msgid "Effect name:"
 msgstr "Effekt név:"
 
-#: src/rte_window.c:1504
+#: src/rte_window.c:1506
 msgid "_Save as default keymap"
 msgstr "_Mentés alapértelmezett billentyűzet kiosztásként"
 
-#: src/rte_window.c:1509
+#: src/rte_window.c:1511
 msgid "_Load default keymap"
 msgstr "_Alapértelmezett billentyűzet kiosztás betöltése"
 
-#: src/rte_window.c:1877
+#: src/rte_window.c:1879
 #, c-format
 msgid ""
 "Unable to create default keymap file: %s\n"
@@ -10216,19 +10241,19 @@ msgstr "Minden hang réteg értékének beállítása ugyanarra az értékre"
 msgid "JACK server started\n"
 msgstr "Jack szerver elindítva\n"
 
-#: src/jack.c:929 src/jack.c:1000
+#: src/jack.c:1008 src/jack.c:1079
 msgid "Unable to connect to JACK server\n"
 msgstr "Nem tudok csatlakozni a JACK szerverre\n"
 
-#: src/jack.c:1159
+#: src/jack.c:1238
 msgid "Started jack audio subsystem.\n"
 msgstr "Jack hang alrendszer elindítva.\n"
 
-#: src/jack.c:1267
+#: src/jack.c:1346
 msgid "Started jack audio reader.\n"
 msgstr "Jack hang olvasó elindítva.\n"
 
-#: src/jack.c:1476
+#: src/jack.c:1555
 msgid ""
 "\n"
 "Connection to jack audio was reset.\n"

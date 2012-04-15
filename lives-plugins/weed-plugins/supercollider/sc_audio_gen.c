@@ -162,7 +162,6 @@ int scgen_process (weed_plant_t *inst, weed_timecode_t timestamp) {
   // here we will send OSC to scsynth
   // and read from ring buffer
 
-
   int error;
   int chans,nsamps,inter,rate,nrsamps;
 

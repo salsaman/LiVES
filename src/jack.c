@@ -341,7 +341,8 @@ static int audio_process (nframes_t nframes, void *arg) {
   for (i = 0; i < jackd->num_output_channels; i++) 
     out_buffer[i] = (float *) jack_port_get_buffer(jackd->output_port[i], 
 						   nframes);
-  if (mainw->agen_key==0||mainw->agen_needs_reinit) { // if a plugin is generating audio we do not use cache_buffers, otherwise:
+  if (mainw->agen_key==0||mainw->agen_needs_reinit||mainw->multitrack!=NULL) {
+    // if a plugin is generating audio we do not use cache_buffers, otherwise:
     if (jackd->read_abuf==-1) {
       // assign local copy from cache_buffers
       if (mainw->playing_file==-1 || ( cache_buffer = pop_cache_buffer() )==NULL || !cache_buffer->is_ready ) {
@@ -380,7 +381,9 @@ static int audio_process (nframes_t nframes, void *arg) {
 
     jackd->num_calls++;
 
-    if (!jackd->in_use||((jackd->playing_file<0||jackd->seek_pos<0.)&&jackd->read_abuf<0)||jackd->is_paused) {
+    if (!jackd->in_use||((jackd->playing_file<0||jackd->seek_pos<0.)&&jackd->read_abuf<0
+			  &&(mainw->agen_key==0||mainw->multitrack!=NULL))
+			 ||jackd->is_paused) {
       /* output silence if nothing is being outputted */
       if (!jackd->is_silent) for(i = 0; i < jackd->num_output_channels; i++) sample_silence_dS(out_buffer[i], nframes);
       jackd->is_silent=TRUE;
@@ -461,7 +464,8 @@ static int audio_process (nframes_t nframes, void *arg) {
 	      }
 	    }
 
-	    if (!wait_cache_buffer&&mainw->agen_key==0&&!mainw->agen_needs_reinit) push_cache_buffer( cache_buffer, jackd, in_bytes, nframes, shrink_factor );
+	    if (!wait_cache_buffer&&((mainw->agen_key==0&&!mainw->agen_needs_reinit)||mainw->multitrack!=NULL)) 
+	      push_cache_buffer( cache_buffer, jackd, in_bytes, nframes, shrink_factor );
 
 	    for(i = 0; i < jackd->num_output_channels; i++) sample_silence_dS(out_buffer[i], nframes);
 
@@ -477,7 +481,10 @@ static int audio_process (nframes_t nframes, void *arg) {
 	  else {
 	    if (shrink_factor>0.) {
 	      if (!(*jackd->cancelled)) {
-		gboolean eof=cache_buffer->eof;
+		gboolean eof=FALSE;
+
+		if (mainw->agen_key==0) eof=cache_buffer->eof;
+		else if (jackd->playing_file>-1 && afile->afilesize <=jackd->seek_pos) eof=TRUE;
 
 		if (eof) {
 		  // reached the end, forwards
@@ -509,6 +516,9 @@ static int audio_process (nframes_t nframes, void *arg) {
 	  }
 
 	}
+	if (mainw->agen_key!=0&&mainw->multitrack==NULL&&jackd->playing_file<0) {
+	  in_bytes=jackFramesAvailable*jackd->num_output_channels*4;
+	}
 
 	if (!jackd->in_use||in_bytes==0) {
 	  // reached end of audio with no looping
@@ -527,7 +537,8 @@ static int audio_process (nframes_t nframes, void *arg) {
 	  return 0;
 	}
 	
-	if (mainw->agen_key==0&&!mainw->agen_needs_reinit) inputFramesAvailable = cache_buffer->samp_space;
+	if (mainw->multitrack!=NULL||(mainw->agen_key==0&&!mainw->agen_needs_reinit)) 
+	  inputFramesAvailable = cache_buffer->samp_space;
 	else inputFramesAvailable=jackFramesAvailable;
 
 #ifdef DEBUG_AJACK
@@ -554,9 +565,10 @@ static int audio_process (nframes_t nframes, void *arg) {
       vol=mainw->volume*mainw->volume; // TODO - we should really use a logarithmic scale
       
       if (numFramesToWrite) {
+
 	if (!from_memory) {
 	  //	if (((gint)(jackd->num_calls/100.))*100==jackd->num_calls) if (mainw->soft_debug) g_print("audio pip\n");
-	  if (cache_buffer->bufferf!=NULL||mainw->agen_key!=0||mainw->agen_needs_reinit) {
+	  if (mainw->agen_key!=0||mainw->agen_needs_reinit||cache_buffer->bufferf!=NULL) {
 	    float *fbuffer=NULL;
 
 	    if (mainw->agen_key!=0||mainw->agen_needs_reinit) {
@@ -571,13 +583,13 @@ static int audio_process (nframes_t nframes, void *arg) {
 		}
 	      }
 
-	      // get back non-interleaved float fbuffer; rate and channels should match
+	      // get back interleaved float fbuffer; rate and channels should match
 
 	      for (i=0;i<jackd->num_output_channels;i++) {
 		if (pl_error) sample_silence_dS(out_buffer[i], nframes);
 		else {
-		  // TODO *** - need to apply vol
-		  lives_memcpy(out_buffer[i], fbuffer + i * numFramesToWrite, numFramesToWrite);
+		  sample_move_float_float(out_buffer[i], fbuffer + i, numFramesToWrite,
+					  jackd->num_output_channels, vol);
 		}
 	      }
 	    }
@@ -740,7 +752,8 @@ static int audio_process (nframes_t nframes, void *arg) {
     }
 
     if (!from_memory) {
-      if (!wait_cache_buffer&&mainw->agen_key==0) push_cache_buffer( cache_buffer, jackd, in_bytes, nframes, shrink_factor );
+      if (!wait_cache_buffer&&mainw->agen_key==0) 
+	push_cache_buffer( cache_buffer, jackd, in_bytes, nframes, shrink_factor );
       if (shrink_factor>0.) jackd->seek_pos+=in_bytes;
     }
 
@@ -1633,6 +1646,7 @@ void jack_aud_pb_ready(gint fileno) {
 	mainw->rec_aseek=(gdouble)sfile->aseek_pos/(gdouble)(sfile->arate*sfile->achans*(sfile->asampsize/8));
       }
     }
+    if (mainw->agen_key!=0&&mainw->multitrack==NULL) mainw->jackd->in_use=TRUE; // audio generator is active
   }
 }
 

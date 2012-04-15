@@ -1,6 +1,6 @@
 // audio.c
 // LiVES (lives-exe)
-// (c) G. Finch 2005 - 2011
+// (c) G. Finch 2005 - 2012
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -305,14 +305,20 @@ void sample_move_d16_float (float *dst, short *src, uint64_t nsamples, uint64_t 
 
 
 
+void sample_move_float_float (float *dst, float *src, uint64_t nsamples, uint64_t src_skip, float vol) {
+  // copy one channel of (interleaved) float to a buffer, applying the volume
+  register int i;
+
+  for (i=0;i<nsamples;i++) {
+    *(dst++)=*src*vol;
+    src+=src_skip;
+  }
+}
 
 
 
-
-
-
-int64_t sample_move_float_int(void *holding_buff, float **float_buffer, int nsamps, float scale, int chans, int asamps, int usigned, 
-			      gboolean swap_endian, float vol) {
+int64_t sample_move_float_int(void *holding_buff, float **float_buffer, int nsamps, float scale, int chans, int asamps, 
+			      int usigned, gboolean swap_endian, float vol) {
   // convert float samples back to int
   int64_t frames_out=0l;
   register int i;
@@ -577,7 +583,7 @@ int64_t sample_move_abuf_int16 (short *obuf, int nchans, int nsamps, int out_ara
 
 
 
-/// copy a memory chunk into an audio buffer, applying overall volume control
+/// copy a memory chunk into an audio buffer
 
 
 static size_t chunk_to_float_abuf(lives_audio_buf_t *abuf, float **float_buffer, int nsamps) {
@@ -2218,13 +2224,15 @@ gboolean get_audio_from_plugin(float *fbuffer, int nchans, int arate, int nsamps
 
   weed_timecode_t tc;
 
-  weed_plant_t *inst=rte_keymode_get_instance(mainw->agen_key,rte_key_getmode(mainw->agen_key)),*filter;
+  int error;
+
+  weed_plant_t *inst=rte_keymode_get_instance(mainw->agen_key,rte_key_getmode(mainw->agen_key));
+  weed_plant_t *filter=weed_get_plantptr_value(inst,"filter_class",&error);
   weed_plant_t *channel=get_enabled_channel(inst,0,FALSE);
 
   weed_process_f *process_func_ptr_ptr;
   weed_process_f process_func;
   
-  int error;
 
   if (mainw->agen_needs_reinit) return FALSE; // wait for other thread to reinit us
 
@@ -2234,14 +2242,14 @@ gboolean get_audio_from_plugin(float *fbuffer, int nchans, int arate, int nsamps
   // make sure values match, else we need to reinit the plugin
   if (nchans!=weed_get_int_value(channel,"audio_channels",&error)||
       arate!=weed_get_int_value(channel,"audio_rate",&error)||
-      weed_get_boolean_value(channel,"audio_interleaf",&error)==WEED_TRUE) {
+      weed_get_boolean_value(channel,"audio_interleaf",&error)==WEED_FALSE) {
     // reinit plugin
     mainw->agen_needs_reinit=TRUE;
   }
 
   weed_set_int_value(channel,"audio_channels",nchans);
   weed_set_int_value(channel,"audio_rate",arate);
-  weed_set_boolean_value(channel,"audio_interleaf",WEED_FALSE);
+  weed_set_boolean_value(channel,"audio_interleaf",WEED_TRUE);
   weed_set_int_value(channel,"audio_data_length",nsamps);
   weed_set_voidptr_value(channel,"audio_data",fbuffer);
 
@@ -2272,8 +2280,16 @@ gboolean get_audio_from_plugin(float *fbuffer, int nchans, int arate, int nsamps
 
 
 void reinit_audio_gen(void) {
-  weed_plant_t *inst=rte_keymode_get_instance(mainw->agen_key,rte_key_getmode(mainw->agen_key));
-  weed_reinit_effect(inst,TRUE);
+  int agen_key=mainw->agen_key;
+  int ret;
+
+  weed_plant_t *inst=rte_keymode_get_instance(agen_key,rte_key_getmode(mainw->agen_key));
+
+  ret=weed_reinit_effect(inst,TRUE);
+  if (ret==FILTER_NO_ERROR||ret==FILTER_INFO_REINITED) {
+    mainw->agen_needs_reinit=FALSE;
+    mainw->agen_key=agen_key;
+  }
 }
 
 

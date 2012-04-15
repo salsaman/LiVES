@@ -2603,7 +2603,7 @@ static lives_filter_error_t weed_apply_audio_instance_inner (weed_plant_t *inst,
 
 
 lives_filter_error_t weed_apply_audio_instance (weed_plant_t *init_event, float **abuf, int nbtracks, int nchans, 
-						int64_t nsamps, gdouble arate, weed_timecode_t tc, double *vis) {
+						int64_t nsamps, gdouble arate, int aint, weed_timecode_t tc, double *vis) {
   void *in_abuf,*out_abuf;
   int i,j,error;
   weed_plant_t **layers;
@@ -2612,7 +2612,6 @@ lives_filter_error_t weed_apply_audio_instance (weed_plant_t *init_event, float 
   void **ev_pchains;
   lives_filter_error_t retval=FILTER_NO_ERROR;
   weed_plant_t *channel=NULL;
-  int aint=WEED_FALSE;               // use non-interlaced - TODO
   gboolean can_reinit=TRUE;
   weed_plant_t *ctmpl;
 
@@ -2802,7 +2801,7 @@ lives_filter_error_t weed_apply_audio_instance (weed_plant_t *init_event, float 
     weed_set_int_value(layers[i],"audio_data_length",nsamps);
     weed_set_int_value(layers[i],"audio_channels",nchans);
     weed_set_int_value(layers[i],"audio_rate",arate);
-    weed_set_boolean_value(layers[i],"audio_interleaf",WEED_FALSE);
+    weed_set_boolean_value(layers[i],"audio_interleaf",aint);
   }
 
   layers[i]=NULL;
@@ -3073,7 +3072,7 @@ void weed_apply_audio_effects (weed_plant_t *filter_map, float **abuf, int nbtra
       filter=get_weed_filter(weed_get_idx_for_hashname(fhash,TRUE));
       weed_free(fhash);
       if (has_audio_chans_in(filter,FALSE)) 
-	filter_error=weed_apply_audio_instance(init_event,abuf,nbtracks,nchans,nsamps,arate,tc,vis);
+	filter_error=weed_apply_audio_instance(init_event,abuf,nbtracks,nchans,nsamps,arate,WEED_FALSE,tc,vis);
     }
     weed_free(init_events);
   }
@@ -3804,10 +3803,13 @@ void weed_load_all (void) {
 
   gint listlen;
 
+
+#ifdef TEST_DSP
   pconx_add_connection(0,0,0, 5,0,0);
 
   cconx_add_connection(0,0,0, 1,0,1);
   cconx_add_connection(0,0,1, 1,0,2);
+#endif
 
   key=-1;
 
@@ -4802,6 +4804,23 @@ gboolean weed_init_effect(int hotkey) {
   if (is_audio_gen) {
     mainw->agen_key=hotkey+1;
     mainw->agen_needs_reinit=FALSE;
+
+    if (mainw->playing_file>0) {
+      if (prefs->audio_player==AUD_PLAYER_JACK) {
+#ifdef ENABLE_JACK
+	if (mainw->jackd!=NULL) {
+	  mainw->jackd->in_use=TRUE;
+	}
+#endif
+      }
+      if (prefs->audio_player==AUD_PLAYER_JACK) {
+#ifdef HAVE_PULSE_AUDIO
+	if (mainw->pulsed!=NULL) {
+	  mainw->pulsed->in_use=TRUE;
+	}
+#endif
+      }
+    }
   }
 
   return TRUE;
@@ -4890,7 +4909,8 @@ void weed_deinit_effect(int hotkey) {
     if (is_audio_gen) {
       // is audio generator
       int agen_key=mainw->agen_key;
-      pthread_mutex_lock(&mainw->interp_mutex); // wait for current processing to finish :  TODO - do for all audio effects (when we have them)
+      // wait for current processing to finish :  TODO - do for all audio effects (when we have them)
+      pthread_mutex_lock(&mainw->interp_mutex);
       mainw->agen_key=0;
       pthread_mutex_unlock(&mainw->interp_mutex);
       mainw->agen_samps_count=0;

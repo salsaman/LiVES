@@ -6069,7 +6069,7 @@ void do_quick_switch (gint new_file) {
       mainw->rec_avel=0.;
       mainw->rec_aseek=0.;
      }
-    }
+  }
 #endif
   }
 

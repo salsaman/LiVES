@@ -1,5 +1,5 @@
-// sc_audio_gen.c
-// weed plugin
+// tone_gen.c
+// weed plugin to generate simple audio tones
 // (c) G. Finch (salsaman) 2012
 //
 // released under the GNU GPL 3 or later
@@ -10,9 +10,9 @@
 #include <weed/weed-effects.h>
 #include <weed/weed-plugin.h>
 #else
-#include "../../../libweed/weed.h"
-#include "../../../libweed/weed-effects.h"
-#include "../../../libweed/weed-plugin.h"
+#include "../../libweed/weed.h"
+#include "../../libweed/weed-effects.h"
+#include "../../libweed/weed-plugin.h"
 #endif
 
 
@@ -30,15 +30,13 @@ static int package_version=1; // version of this package
 #include <weed/weed-utils.h> // optional
 #include <weed/weed-plugin-utils.h> // optional
 #else
-#include "../../../libweed/weed.h" // optional
-#include "../../../libweed/weed-utils.h" // optional
-#include "../../../libweed/weed-plugin-utils.h" // optional
+#include "../../libweed/weed.h" // optional
+#include "../../libweed/weed-utils.h" // optional
+#include "../../libweed/weed-plugin-utils.h" // optional
 #endif
 
 #include <string.h>
 #include <stdio.h>
-
-#define SCSYNTH_PORT 51000
 
 /////////////////////////////////////////////////////////////
 
@@ -84,82 +82,8 @@ static int resample(float **inbuf, float *outbuf, int nsamps, int nchans, int in
 
 /////////////////////////////////////////////////////////////
 
-int scgen_deinit(weed_plant_t *inst) {
-  // tell scsynth to quit
-  //osc_send("/quit");
 
-  // killall -9 jack_rec
-
-  // terminate pthread_reader
-
-
-
-
-  return WEED_NO_ERROR;
-}
-
-
-int scgen_init(weed_plant_t *inst) {
-  char com[256];
-
-  int retval,error,chans;
-
-  weed_plant_t *out_channel=weed_get_plantptr_value(inst,"out_channels",&error);
-
-  // check our audio player is jack
-  weed_plant_t *filter=weed_get_plantptr_value(inst,"filter_class",&error);
-  weed_plant_t *pinfo=weed_get_plantptr_value(filter,"plugin_info",&error);
-  weed_plant_t *hinfo=weed_get_plantptr_value(pinfo,"host_info",&error);
-
-  if (weed_plant_has_leaf(hinfo,"host_audio_player")) {
-    char *hap=weed_get_string_value(hinfo,"host_audio_player",&error);
-    if (strcmp(hap,"jack")) {
-      weed_free(hap);
-      return WEED_ERROR_HARDWARE;
-    }
-    weed_free(hap);
-  }
-
-  // jack should be running, so we can init scsynth in the background
-
-  chans=weed_get_int_value(out_channel,"audio_channels",&error);
-
-  snprintf(com,256,"scsynth -u %d -i 0 -o %d &",SCSYNTH_PORT,chans);
-  //retval=system(com);
-
-  // get audio rate from jack
-  //fd=popen("jack_samplerate 2>/dev/null","r");
-  
-
-
-  // now we want to connect the jack client to a jack filewriter to a fifo
-
-  //retval=mkfifo(fifofile);
-
-  //snprintf(com,256,"jack_rec -f %s -b 32 -d 1000000000",fifofile);
-
-  //for (i=0;i<nchans;i++) {
-  //snprintf(com,256,"% SuperCollider:out_%d",i);
-  //}
-
-  //snprintf(com,256,"%s 2>/dev/null &",com);
-  //retval=system(com);
-
-  // we will read from fifo and buffer it in 3 ringbuffers (2 write and one read)
-
-  // start pthread
-
-
-
-  return WEED_NO_ERROR;
-}
-
-
-
-int scgen_process (weed_plant_t *inst, weed_timecode_t timestamp) {
-  // here we will send OSC to scsynth
-  // and read from ring buffer
-
+int tonegen_process (weed_plant_t *inst, weed_timecode_t timestamp) {
   int error;
   int chans,nsamps,inter,rate,nrsamps;
 
@@ -185,8 +109,6 @@ int scgen_process (weed_plant_t *inst, weed_timecode_t timestamp) {
 
 
 
-#define TEST  
-#ifdef TEST
   // fill with audio at TRATE
   trate=freq*mult;
 
@@ -223,8 +145,6 @@ int scgen_process (weed_plant_t *inst, weed_timecode_t timestamp) {
 
   weed_free(buff);
 
-#endif
-
   return WEED_NO_ERROR;
 }
 
@@ -235,8 +155,10 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
   weed_plant_t *plugin_info=weed_plugin_info_init(weed_boot,num_versions,api_versions);
   if (plugin_info!=NULL) {
     weed_plant_t *out_chantmpls[]={weed_audio_channel_template_init("out channel 0",0),NULL};
-    weed_plant_t *in_params[]={weed_float_init("freq","_Frequency",7500.,0.0,48000.0),weed_float_init("multiplier","Frequency _Multiplier",1.,.01,1000.),NULL};
-    weed_plant_t *filter_class=weed_filter_class_init("supercollider audiogen","salsaman",1,0,&scgen_init,&scgen_process,NULL,NULL,out_chantmpls,in_params,NULL);
+    weed_plant_t *in_params[]={weed_float_init("freq","_Frequency",7500.,0.0,48000.0),
+			       weed_float_init("multiplier","Frequency _Multiplier",1.,.01,1000.),NULL};
+    weed_plant_t *filter_class=weed_filter_class_init("Tone generator","salsaman",1,0,NULL,&tonegen_process,
+						      NULL,NULL,out_chantmpls,in_params,NULL);
 
     weed_plugin_info_add_filter_class (plugin_info,filter_class);
 

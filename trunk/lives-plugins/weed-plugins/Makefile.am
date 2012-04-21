@@ -113,6 +113,7 @@ fxpluginslib_LTLIBRARIES = RGBdelay.la \
 	softlight.la \
 	targeted_zoom.la \
 	textfun.la \
+	tone_gen.la \
 	tvpic.la \
 	vertigo.la \
 	warpTV.la \

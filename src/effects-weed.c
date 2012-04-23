@@ -4813,7 +4813,7 @@ gboolean weed_init_effect(int hotkey) {
 	}
 #endif
       }
-      if (prefs->audio_player==AUD_PLAYER_JACK) {
+      if (prefs->audio_player==AUD_PLAYER_PULSE) {
 #ifdef HAVE_PULSE_AUDIO
 	if (mainw->pulsed!=NULL) {
 	  mainw->pulsed->in_use=TRUE;

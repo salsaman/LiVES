@@ -3979,7 +3979,7 @@ on_record_perf_activate                      (GtkMenuItem     *menuitem,
 
       toggle_record();
 
-      if (prefs->rec_opts&REC_EXT_AUDIO&&
+      if ((prefs->rec_opts&REC_EXT_AUDIO||mainw->agen_key!=0)&&
 	  ((prefs->audio_player==AUD_PLAYER_JACK) ||
 	   (prefs->audio_player==AUD_PLAYER_PULSE))) {
 	// remove play head and add record head
@@ -4046,22 +4046,31 @@ on_record_perf_activate                      (GtkMenuItem     *menuitem,
 	  
 	  if (prefs->audio_player==AUD_PLAYER_JACK) {
 #ifdef ENABLE_JACK
-	    jack_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_EXTERNAL);
-	    mainw->rec_aseek=(double)mainw->jackd_read->frames_written/(double)mainw->files[mainw->ascrap_file]->arps;
-	    mainw->jackd_read->frames_written=frames_written;
-	    mainw->jackd_read->audio_ticks=audio_ticks;
-	    mainw->jackd_read->seek_pos=seek_pos;
+	    if (prefs->rec_opts&REC_EXT_AUDIO) {
+	      jack_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_EXTERNAL);
+	      mainw->rec_aseek=(double)mainw->jackd_read->frames_written/(double)mainw->files[mainw->ascrap_file]->arps;
+	      mainw->jackd_read->frames_written=frames_written;
+	      mainw->jackd_read->audio_ticks=audio_ticks;
+	      mainw->jackd_read->seek_pos=seek_pos;
+	    }
+	    else 
+	      jack_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_GENERATED);
+
 #endif
 	  }
 	  if (prefs->audio_player==AUD_PLAYER_PULSE) {
 #ifdef HAVE_PULSE_AUDIO
-	    pulse_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_EXTERNAL);
-	    mainw->rec_aseek=(double)mainw->pulsed_read->frames_written/(double)mainw->files[mainw->ascrap_file]->arps;
-	    mainw->pulsed_read->frames_written=frames_written;
-	    mainw->pulsed_read->usec_start=usec_start;
-	    mainw->pulsed_read->audio_ticks=audio_ticks;
-	    mainw->pulsed_read->seek_pos=seek_pos;
-	    pulse_driver_uncork(mainw->pulsed_read);
+	    if (prefs->rec_opts&REC_EXT_AUDIO) {
+	      pulse_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_EXTERNAL);
+	      mainw->rec_aseek=(double)mainw->pulsed_read->frames_written/(double)mainw->files[mainw->ascrap_file]->arps;
+	      mainw->pulsed_read->frames_written=frames_written;
+	      mainw->pulsed_read->usec_start=usec_start;
+	      mainw->pulsed_read->audio_ticks=audio_ticks;
+	      mainw->pulsed_read->seek_pos=seek_pos;
+	      pulse_driver_uncork(mainw->pulsed_read);
+	    }
+	    else 
+	      pulse_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_GENERATED);
 #endif
 	  }
 

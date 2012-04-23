@@ -318,7 +318,7 @@ void sample_move_float_float (float *dst, float *src, uint64_t nsamples, uint64_
 
 
 int64_t sample_move_float_int(void *holding_buff, float **float_buffer, int nsamps, float scale, int chans, int asamps, 
-			      int usigned, gboolean swap_endian, float vol) {
+			      int usigned, gboolean little_endian, gboolean interleaved, float vol) {
   // convert float samples back to int
   int64_t frames_out=0l;
   register int i;
@@ -332,17 +332,18 @@ int64_t sample_move_float_int(void *holding_buff, float **float_buffer, int nsam
   register unsigned short valu=0;
   register float valf;
 
+
   while ((nsamps-coffs)>0) {
     frames_out++;
     for (i=0;i<chans;i++) {
-      valf=*(float_buffer[i]+coffs);
+      valf=*(float_buffer[i]+(interleaved?(coffs*chans):coffs));
       valf*=vol;
       val=(short)(valf*(valf>0.?SAMPLE_MAX_16BIT_P:SAMPLE_MAX_16BIT_N));
 
       if (usigned) valu=(val+SAMPLE_MAX_16BITI);
 
       if (asamps==16) {
-	if (!swap_endian) {
+	if (!little_endian) {
 	  if (usigned) *(hbuffu+offs)=valu;
 	  else *(hbuffs+offs)=val;
 	}
@@ -1061,7 +1062,7 @@ int64_t render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdoubl
 	// output to file
 	// convert back to int; use out_scale of 1., since we did our resampling in sample_move_*_d16
 	frames_out=sample_move_float_int((void *)finish_buff,chunk_float_buffer,blocksize,1.,out_achans,
-					 out_asamps*8,out_unsigned,out_reverse_endian,opvol);
+					 out_asamps*8,out_unsigned,out_reverse_endian,FALSE,opvol);
 	lives_write (out_fd,finish_buff,frames_out*out_asamps*out_achans,TRUE);
 #ifdef DEBUG_ARENDER
 	g_print(".");
@@ -1159,35 +1160,49 @@ void jack_rec_audio_to_clip(gint fileno, gint old_file, lives_rec_audio_type_t r
 
   g_free(outfilename);
 
-  mainw->jackd_read=jack_get_driver(0,FALSE);
-  mainw->jackd_read->playing_file=fileno;
-  mainw->jackd_read->frames_written=0;
+  if (rec_type!=RECA_GENERATED) {
+    mainw->jackd_read=jack_get_driver(0,FALSE);
+    mainw->jackd_read->playing_file=fileno;
+    mainw->jackd_read->frames_written=0;
+  }
 
 #ifdef IS_MINGW
   setmode(mainw->aud_rec_fd, O_BINARY);
 #endif
 
-  if (rec_type==RECA_EXTERNAL) {
+  if (rec_type==RECA_EXTERNAL||rec_type==RECA_GENERATED) {
     gint asigned;
     gint aendian;
     uint64_t fsize=get_file_size(mainw->aud_rec_fd);
 
     mainw->jackd_read->reverse_endian=FALSE;
  
-    // start jack recording
-    jack_open_device_read(mainw->jackd_read);
-    jack_read_driver_activate(mainw->jackd_read);
-
-    outfile->arate=outfile->arps=mainw->jackd_read->sample_in_rate;
-    outfile->achans=mainw->jackd_read->num_input_channels;
-
-    outfile->asampsize=16;
-    outfile->signed_endian=get_signed_endian(TRUE,TRUE);
-    
-    asigned=!(outfile->signed_endian&AFORM_UNSIGNED);
-    aendian=!(outfile->signed_endian&AFORM_BIG_ENDIAN);
-
-    mainw->jackd_read->frames_written=fsize/(outfile->achans*(outfile->asampsize>>3));
+    if (rec_type==RECA_EXTERNAL) {
+      // start jack recording
+      jack_open_device_read(mainw->jackd_read);
+      jack_read_driver_activate(mainw->jackd_read);
+      
+      outfile->arate=outfile->arps=mainw->jackd_read->sample_in_rate;
+      outfile->achans=mainw->jackd_read->num_input_channels;
+      
+      outfile->asampsize=16;
+      outfile->signed_endian=get_signed_endian(TRUE,TRUE);
+      
+      asigned=!(outfile->signed_endian&AFORM_UNSIGNED);
+      aendian=!(outfile->signed_endian&AFORM_BIG_ENDIAN);
+      
+      mainw->jackd_read->frames_written=fsize/(outfile->achans*(outfile->asampsize>>3));
+    }
+    else {
+      outfile->arate=outfile->arps=mainw->jackd_read->sample_out_rate;
+      outfile->achans=mainw->jackd_read->num_output_channels;
+      
+      outfile->asampsize=16;
+      outfile->signed_endian=get_signed_endian(TRUE,TRUE);
+      
+      asigned=!(outfile->signed_endian&AFORM_UNSIGNED);
+      aendian=!(outfile->signed_endian&AFORM_BIG_ENDIAN);
+    }
 
     save_clip_value(fileno,CLIP_DETAILS_ACHANS,&outfile->achans);
     save_clip_value(fileno,CLIP_DETAILS_ARATE,&outfile->arps);
@@ -1211,7 +1226,7 @@ void jack_rec_audio_to_clip(gint fileno, gint old_file, lives_rec_audio_type_t r
   }
 
   // in grab window mode, just return, we will call rec_audio_end on playback end
-  if (rec_type==RECA_WINDOW_GRAB||rec_type==RECA_EXTERNAL) return;
+  if (rec_type==RECA_WINDOW_GRAB||rec_type==RECA_EXTERNAL||rec_type==RECA_GENERATED) return;
 
   mainw->cancelled=CANCEL_NONE;
   mainw->cancel_type=CANCEL_SOFT;
@@ -1237,7 +1252,7 @@ void jack_rec_audio_end(void) {
   // recording ended
 
   // stop recording
-  jack_close_device(mainw->jackd_read);
+  if (mainw->jackd_read!=NULL) jack_close_device(mainw->jackd_read);
   mainw->jackd_read=NULL;
 
   // close file
@@ -1270,33 +1285,46 @@ void pulse_rec_audio_to_clip(gint fileno, gint old_file, lives_rec_audio_type_t 
     }
   } while (retval==LIVES_RETRY);
 
-  mainw->pulsed_read=pulse_get_driver(FALSE);
-  mainw->pulsed_read->playing_file=fileno;
-  mainw->pulsed_read->frames_written=0;
+  if (rec_type!=RECA_GENERATED) {
+    mainw->pulsed_read=pulse_get_driver(FALSE);
+    mainw->pulsed_read->playing_file=fileno;
+    mainw->pulsed_read->frames_written=0;
+  }
 
 #ifdef IS_MINGW
   setmode(mainw->aud_rec_fd, O_BINARY);
 #endif
 
-  if (rec_type==RECA_EXTERNAL) {
+  if (rec_type==RECA_EXTERNAL||rec_type==RECA_GENERATED) {
     gint asigned;
     gint aendian;
     uint64_t fsize=get_file_size(mainw->aud_rec_fd);
 
-    mainw->pulsed_read->reverse_endian=FALSE;
-
-    pulse_driver_activate(mainw->pulsed_read);
-
-    outfile->arate=outfile->arps=mainw->pulsed_read->out_arate;
-    outfile->achans=mainw->pulsed_read->out_achans;
-    outfile->asampsize=mainw->pulsed_read->out_asamps;
-    outfile->signed_endian=get_signed_endian(mainw->pulsed_read->out_signed!=AFORM_UNSIGNED,
-					     mainw->pulsed_read->out_endian!=AFORM_BIG_ENDIAN);
-    
-    asigned=!(outfile->signed_endian&AFORM_UNSIGNED);
-    aendian=!(outfile->signed_endian&AFORM_BIG_ENDIAN);
-
-    mainw->pulsed_read->frames_written=fsize/(outfile->achans*(outfile->asampsize>>3));
+    if (rec_type==RECA_EXTERNAL) {
+      mainw->pulsed_read->reverse_endian=FALSE;
+      
+      pulse_driver_activate(mainw->pulsed_read);
+      
+      outfile->arate=outfile->arps=mainw->pulsed_read->out_arate;
+      outfile->achans=mainw->pulsed_read->out_achans;
+      outfile->asampsize=mainw->pulsed_read->out_asamps;
+      outfile->signed_endian=get_signed_endian(mainw->pulsed_read->out_signed!=AFORM_UNSIGNED,
+					       mainw->pulsed_read->out_endian!=AFORM_BIG_ENDIAN);
+      
+      asigned=!(outfile->signed_endian&AFORM_UNSIGNED);
+      aendian=!(outfile->signed_endian&AFORM_BIG_ENDIAN);
+      
+      mainw->pulsed_read->frames_written=fsize/(outfile->achans*(outfile->asampsize>>3));
+    }
+    else {
+      outfile->achans=mainw->pulsed->out_achans;
+      outfile->asampsize=mainw->pulsed->out_asamps;
+      outfile->signed_endian=get_signed_endian(mainw->pulsed->out_signed!=AFORM_UNSIGNED,
+					       mainw->pulsed->out_endian!=AFORM_BIG_ENDIAN);
+      
+      asigned=!(outfile->signed_endian&AFORM_UNSIGNED);
+      aendian=!(outfile->signed_endian&AFORM_BIG_ENDIAN);
+    }
 
     save_clip_value(fileno,CLIP_DETAILS_ACHANS,&outfile->achans);
     save_clip_value(fileno,CLIP_DETAILS_ARATE,&outfile->arps);
@@ -1319,7 +1347,7 @@ void pulse_rec_audio_to_clip(gint fileno, gint old_file, lives_rec_audio_type_t 
   }
 
   // in grab window mode, just return, we will call rec_audio_end on playback end
-  if (rec_type==RECA_WINDOW_GRAB||rec_type==RECA_EXTERNAL) return;
+  if (rec_type==RECA_WINDOW_GRAB||rec_type==RECA_EXTERNAL||rec_type==RECA_GENERATED) return;
 
   mainw->cancelled=CANCEL_NONE;
   mainw->cancel_type=CANCEL_SOFT;
@@ -1344,12 +1372,14 @@ void pulse_rec_audio_end(void) {
 
   // stop recording
 
-  pa_threaded_mainloop_lock(mainw->pulsed->mloop);
-  pulse_flush_read_data(mainw->pulsed_read,0,NULL);
-  pulse_close_client(mainw->pulsed_read);
-  pa_threaded_mainloop_unlock(mainw->pulsed->mloop);
+  if (mainw->pulsed_read!=NULL) {
+    pa_threaded_mainloop_lock(mainw->pulsed->mloop);
+    pulse_flush_read_data(mainw->pulsed_read,0,NULL);
+    pulse_close_client(mainw->pulsed_read);
+    pa_threaded_mainloop_unlock(mainw->pulsed->mloop);
 
-  mainw->pulsed_read=NULL;
+    mainw->pulsed_read=NULL;
+  }
 
   // close file
   close(mainw->aud_rec_fd);

@@ -21,6 +21,8 @@ static size_t zero_buff_count=0;
 
 static gboolean seek_err;
 
+static int audio_read_inner(jack_driver_t *jackd, float **in_buffer, int nframes, double out_scale, gboolean out_unsigned, size_t rbytes);
+
 static gboolean check_zero_buff(size_t check_size) {
   if (check_size>zero_buff_count) {
     zero_buff=(unsigned char *)g_try_realloc(zero_buff,check_size);
@@ -592,6 +594,14 @@ static int audio_process (nframes_t nframes, void *arg) {
 					  jackd->num_output_channels, vol);
 		}
 	      }
+
+	      if (mainw->record&&mainw->ascrap_file!=-1&&mainw->playing_file>0) {
+		int out_unsigned=afile->signed_endian&AFORM_UNSIGNED;
+		nbytes=numFramesToWrite*4;
+		audio_read_inner(jackd,out_buffer,numFramesToWrite,1.0,out_unsigned,nbytes);
+		mainw->files[mainw->ascrap_file]->aseek_pos+=nbytes;
+	      }
+
 	    }
 	    else {
 	      for (i=0;i<jackd->num_output_channels;i++) {
@@ -617,12 +627,12 @@ static int audio_process (nframes_t nframes, void *arg) {
 		  // plugin is generating and we are streaming: convert fbuffer to s16
 		  float **fp=g_malloc(jackd->num_output_channels*sizeof(float *));
 		  for (i=0;i<jackd->num_output_channels;i++) {
-		    fp[i]=fbuffer+i*numFramesToWrite;
+		    fp[i]=fbuffer+i;
 		  }
 
 		  xbuf=g_malloc(nbytes*jackd->num_output_channels);
 
-		  sample_move_float_int((void *)xbuf,fp,numFramesToWrite,1.0,jackd->num_output_channels,16,0,TRUE,1.0);
+		  sample_move_float_int((void *)xbuf,fp,numFramesToWrite,1.0,jackd->num_output_channels,16,0,TRUE,TRUE,1.0);
 
 		}
 	      
@@ -749,6 +759,7 @@ static int audio_process (nframes_t nframes, void *arg) {
 	audio_stream(zero_buff,nbytes,jackd->astream_fd);
       }
 
+
     }
 
     if (!from_memory) {
@@ -850,47 +861,15 @@ int lives_start_ready_callback (jack_transport_state_t state, jack_position_t *p
 }
 
 
+static int audio_read_inner(jack_driver_t *jackd, float **in_buffer, int nframes, double out_scale, gboolean out_unsigned, size_t rbytes) {
+  int frames_out;
 
-
-static int audio_read (nframes_t nframes, void *arg) {
-  // read nframes from jack buffer, and then write to mainw->aud_rec_fd
-
-  // this is the jack callback for when we are recording audio
-
-  jack_driver_t* jackd = (jack_driver_t*)arg;
-  void *holding_buff;
-  float *in_buffer[jackd->num_input_channels];
-  float out_scale=(float)jackd->sample_in_rate/(float)afile->arate;
-  int out_unsigned=afile->signed_endian&AFORM_UNSIGNED;
-  int i;
-  int64_t frames_out;
-
-  size_t rbytes;
-
-  if (mainw->effects_paused) return 0; // pause during record
-
-  if (mainw->rec_samples==0) return 0; // wrote enough already, return until main thread stop
-
-  frames_out=(int64_t)((gdouble)nframes/out_scale+1.);
-
-  rbytes=frames_out*afile->achans*afile->asampsize/8;
-  holding_buff=g_try_malloc(rbytes);
+  void *holding_buff=g_try_malloc(rbytes);
 
   if (!holding_buff) return 0;
 
-  for (i=0;i<jackd->num_input_channels;i++) {
-    in_buffer[i] = (float *) jack_port_get_buffer(jackd->input_port[i], nframes);
-  }
-
   frames_out=sample_move_float_int((void *)holding_buff,in_buffer,nframes,out_scale,afile->achans,
-				   afile->asampsize,out_unsigned,jackd->reverse_endian,1.);
-
-  jackd->frames_written+=nframes;
-
-  if (mainw->record&&(prefs->rec_opts&REC_EXT_AUDIO)&&mainw->ascrap_file!=-1&&mainw->playing_file>0) {
-    mainw->files[mainw->playing_file]->aseek_pos+=rbytes;
-    jackd->seek_pos+=rbytes;
-  }
+				   afile->asampsize,out_unsigned,jackd->reverse_endian,FALSE,1.);
 
   if (mainw->rec_samples>0) {
     if (frames_out>mainw->rec_samples) frames_out=mainw->rec_samples;
@@ -905,6 +884,44 @@ static int audio_read (nframes_t nframes, void *arg) {
   }
 
   g_free(holding_buff);
+
+  return frames_out;
+}
+
+
+static int audio_read (nframes_t nframes, void *arg) {
+  // read nframes from jack buffer, and then write to mainw->aud_rec_fd
+
+  // this is the jack callback for when we are recording audio
+
+  jack_driver_t* jackd = (jack_driver_t*)arg;
+  float *in_buffer[jackd->num_input_channels];
+  float out_scale=(float)jackd->sample_in_rate/(float)afile->arate;
+  int out_unsigned=afile->signed_endian&AFORM_UNSIGNED;
+  int i;
+  int64_t frames_out;
+
+  size_t rbytes;
+
+  if (mainw->effects_paused) return 0; // pause during record
+
+  if (mainw->rec_samples==0) return 0; // wrote enough already, return until main thread stop
+
+  frames_out=(int64_t)((gdouble)nframes/out_scale+1.);
+  rbytes=frames_out*afile->achans*afile->asampsize/8;
+
+  for (i=0;i<jackd->num_input_channels;i++) {
+    in_buffer[i] = (float *) jack_port_get_buffer(jackd->input_port[i], nframes);
+  }
+
+  nframes=audio_read_inner(jackd,in_buffer,nframes,out_scale,out_unsigned,rbytes);
+
+  jackd->frames_written+=nframes;
+
+  if (mainw->record&&(prefs->rec_opts&REC_EXT_AUDIO)&&mainw->ascrap_file!=-1&&mainw->playing_file>0) {
+    mainw->files[mainw->playing_file]->aseek_pos+=rbytes;
+    jackd->seek_pos+=rbytes;
+  }
 
   if (mainw->rec_samples==0&&mainw->cancelled==CANCEL_NONE) mainw->cancelled=CANCEL_KEEP; // we wrote the required #
 

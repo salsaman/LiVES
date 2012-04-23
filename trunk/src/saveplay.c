@@ -2555,7 +2555,7 @@ void play_file (void) {
 
   // if recording, set up recorder (jack or pulse)
 
-  if (!mainw->foreign&&(mainw->record&&(prefs->rec_opts&REC_EXT_AUDIO))&&
+  if (!mainw->foreign&&(mainw->record&&(prefs->rec_opts&REC_EXT_AUDIO||mainw->agen_key!=0))&&
       ((audio_player==AUD_PLAYER_JACK) ||
        (audio_player==AUD_PLAYER_PULSE))) {
     // creat temp clip
@@ -2569,12 +2569,18 @@ void play_file (void) {
 
       if (audio_player==AUD_PLAYER_JACK) {
 #ifdef ENABLE_JACK
-	jack_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_EXTERNAL);
+	if (prefs->rec_opts&REC_EXT_AUDIO)
+	  jack_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_EXTERNAL);
+	else 
+	  jack_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_GENERATED);
 #endif
       }
       if (audio_player==AUD_PLAYER_PULSE) {
 #ifdef HAVE_PULSE_AUDIO
-	pulse_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_EXTERNAL);
+	if (prefs->rec_opts&REC_EXT_AUDIO)
+	  pulse_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_EXTERNAL);
+	else 
+	  pulse_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_GENERATED);
 #endif
       }
     }

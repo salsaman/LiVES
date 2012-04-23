@@ -157,7 +157,7 @@ void sample_move_d16_d8(uint8_t *dst, short *src,
 
 void sample_move_d16_float (float *dst, short *src, uint64_t nsamples, uint64_t src_skip, int is_unsigned, float vol);
 
-int64_t sample_move_float_int(void *holding_buff, float **float_buffer, int nsamps, float scale, int chans, int asamps, int usigned, gboolean swap_endian, float vol); ///< returns frames output
+int64_t sample_move_float_int(void *holding_buff, float **float_buffer, int nsamps, float scale, int chans, int asamps, int usigned, gboolean swap_endian, gboolean float_interleaved, float vol); ///< returns frames output
 
 int64_t sample_move_abuf_float (float **obuf, int nchans, int nsamps, int out_arate, float vol);
 
@@ -173,7 +173,8 @@ typedef enum {
   RECA_WINDOW_GRAB,
   RECA_NEW_CLIP,
   RECA_EXISTING,
-  RECA_EXTERNAL
+  RECA_EXTERNAL,
+  RECA_GENERATED
 } lives_rec_audio_type_t;
 
 #ifdef ENABLE_JACK

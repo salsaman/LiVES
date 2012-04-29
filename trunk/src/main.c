@@ -4231,7 +4231,7 @@ void load_frame_image(gint frame) {
 #ifdef ENABLE_JACK
 	  if (prefs->audio_player==AUD_PLAYER_JACK&&(prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS)&&
 	      mainw->jackd!=NULL&&cfile->achans>0 &&
-	    !(mainw->record&&!mainw->record_paused&&(prefs->rec_opts&REC_EXT_AUDIO))) {
+	      !(mainw->record&&!mainw->record_paused&&((prefs->rec_opts&REC_EXT_AUDIO)||mainw->agen_key!=0))) {
 	    if (!jack_audio_seek_frame(mainw->jackd,frame)) {
 	      if (jack_try_reconnect()) jack_audio_seek_frame(mainw->jackd,frame);
 	    }
@@ -4245,7 +4245,7 @@ void load_frame_image(gint frame) {
 #ifdef HAVE_PULSE_AUDIO
 	  if (prefs->audio_player==AUD_PLAYER_PULSE&&(prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS)&&
 	      mainw->pulsed!=NULL&&cfile->achans>0 &&
-	      !(mainw->record&&!mainw->record_paused&&(prefs->rec_opts&REC_EXT_AUDIO))) {
+	      !(mainw->record&&!mainw->record_paused&&((prefs->rec_opts&REC_EXT_AUDIO)||mainw->agen_key!=0))) {
 
 	    if (!pulse_audio_seek_frame(mainw->pulsed,mainw->play_start)) {
 	      if (pulse_try_reconnect()) pulse_audio_seek_frame(mainw->pulsed,mainw->play_start);
@@ -4311,14 +4311,14 @@ void load_frame_image(gint frame) {
 
 #ifdef ENABLE_JACK
 	  if (prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL&&
-	      (prefs->rec_opts&REC_AUDIO)&&!(prefs->rec_opts&REC_EXT_AUDIO)&&mainw->rec_aclip!=-1) {
+	      (prefs->rec_opts&REC_AUDIO)&&!(prefs->rec_opts&REC_EXT_AUDIO)&&mainw->rec_aclip!=mainw->ascrap_file) {
 	    // get current seek postion
 	    jack_get_rec_avals(mainw->jackd);
 	  }
 #endif
 #ifdef HAVE_PULSE_AUDIO
 	  if (prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL&&
-	      (prefs->rec_opts&REC_AUDIO)&&!(prefs->rec_opts&REC_EXT_AUDIO)&&mainw->rec_aclip!=-1) {
+	      (prefs->rec_opts&REC_AUDIO)&&!(prefs->rec_opts&REC_EXT_AUDIO)&&mainw->rec_aclip!=mainw->ascrap_file) {
 	    // get current seek postion
 	    pulse_get_rec_avals(mainw->pulsed);
 	  }
@@ -4343,6 +4343,7 @@ void load_frame_image(gint frame) {
 	  if (mainw->event_list==NULL) mainw->event_list=event_list;
 	  if (mainw->rec_aclip!=-1&&((prefs->rec_opts&REC_AUDIO)||(prefs->rec_opts&REC_EXT_AUDIO))) {
 	    weed_plant_t *event=get_last_event(mainw->event_list);
+	    g_print("INASA %f\n",mainw->rec_aseek);
 	    insert_audio_event_at(mainw->event_list,event,-1,mainw->rec_aclip,mainw->rec_aseek,mainw->rec_avel);
 	    mainw->rec_aclip=-1;
 	  }

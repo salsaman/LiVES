@@ -21,7 +21,8 @@ static size_t zero_buff_count=0;
 
 static gboolean seek_err;
 
-static int audio_read_inner(jack_driver_t *jackd, float **in_buffer, int nframes, double out_scale, gboolean out_unsigned, size_t rbytes);
+static int audio_read_inner(jack_driver_t *jackd, float **in_buffer, int fileno, 
+			    int nframes, double out_scale, gboolean rev_endian, gboolean out_unsigned, size_t rbytes);
 
 static gboolean check_zero_buff(size_t check_size) {
   if (check_size>zero_buff_count) {
@@ -293,7 +294,7 @@ static int audio_process (nframes_t nframes, void *arg) {
   gboolean wait_cache_buffer=FALSE;
   gboolean pl_error=FALSE; ///< flag tells if we had an error during plugin processing
   lives_audio_buf_t *cache_buffer=NULL;
-  size_t nbytes;
+  size_t nbytes,rbytes;
 
 #ifdef DEBUG_AJACK
   g_printerr("nframes %ld, sizeof(float) == %d\n", (int64_t)nframes, sizeof(float));
@@ -363,6 +364,7 @@ static int audio_process (nframes_t nframes, void *arg) {
 
   jackd->state=jack_transport_query (jackd->client, &pos);
 
+
 #ifdef DEBUG_AJACK
   g_printerr("STATE is %d %d\n",jackd->state,jackd->play_when_stopped);
 #endif
@@ -383,17 +385,19 @@ static int audio_process (nframes_t nframes, void *arg) {
 
     jackd->num_calls++;
 
+
     if (!jackd->in_use||((jackd->playing_file<0||jackd->seek_pos<0.)&&jackd->read_abuf<0
 			  &&(mainw->agen_key==0||mainw->multitrack!=NULL))
 			 ||jackd->is_paused) {
+
       /* output silence if nothing is being outputted */
       if (!jackd->is_silent) for(i = 0; i < jackd->num_output_channels; i++) sample_silence_dS(out_buffer[i], nframes);
       jackd->is_silent=TRUE;
 
       // external streaming
-      nbytes=nframes*4;
-      check_zero_buff(nbytes);
-      audio_stream(zero_buff,nbytes,jackd->astream_fd);
+      rbytes=nframes*jackd->num_output_channels*2;
+      check_zero_buff(rbytes);
+      audio_stream(zero_buff,rbytes,jackd->astream_fd);
 
       if (!jackd->is_paused) jackd->frames_written+=nframes;
       if (jackd->seek_pos<0.&&jackd->playing_file>-1&&afile!=NULL) {
@@ -418,7 +422,7 @@ static int audio_process (nframes_t nframes, void *arg) {
 
       }
       else {
-	if (G_LIKELY(jackd->playing_file>=0)) {
+	if (G_LIKELY(jackd->playing_file>=0)&&mainw->agen_key==0) {
 	  in_bytes=ABS((in_frames=((gdouble)jackd->sample_in_rate/(gdouble)jackd->sample_out_rate*
 				   (gdouble)jackFramesAvailable+((gdouble)fastrand()/(gdouble)G_MAXUINT32))))
 	    *jackd->num_input_channels*jackd->bytes_per_channel;
@@ -472,9 +476,9 @@ static int audio_process (nframes_t nframes, void *arg) {
 	    for(i = 0; i < jackd->num_output_channels; i++) sample_silence_dS(out_buffer[i], nframes);
 
 	    // external streaming
-	    nbytes=nframes*4;
-	    check_zero_buff(nbytes);
-	    audio_stream(zero_buff,nbytes,jackd->astream_fd);
+	    rbytes=nframes*jackd->num_output_channels*2;
+	    check_zero_buff(rbytes);
+	    audio_stream(zero_buff,rbytes,jackd->astream_fd);
 
 	    jackd->frames_written+=nframes;
 	    return 0;
@@ -518,7 +522,7 @@ static int audio_process (nframes_t nframes, void *arg) {
 	  }
 
 	}
-	if (mainw->agen_key!=0&&mainw->multitrack==NULL&&jackd->playing_file<0) {
+	if (mainw->agen_key!=0&&mainw->multitrack==NULL) {
 	  in_bytes=jackFramesAvailable*jackd->num_output_channels*4;
 	}
 
@@ -528,9 +532,9 @@ static int audio_process (nframes_t nframes, void *arg) {
 	  jackd->is_silent=TRUE;
 
 	  // external streaming
-	  nbytes=nframes*4;
-	  check_zero_buff(nbytes);
-	  audio_stream(zero_buff,nbytes,jackd->astream_fd);
+	  rbytes=nframes*jackd->num_output_channels*2;
+	  check_zero_buff(rbytes);
+	  audio_stream(zero_buff,rbytes,jackd->astream_fd);
 
 	  if (!jackd->is_paused) jackd->frames_written+=nframes;
 	  if (jackd->seek_pos<0.&&jackd->playing_file>-1&&afile!=NULL) {
@@ -593,13 +597,18 @@ static int audio_process (nframes_t nframes, void *arg) {
 		  sample_move_float_float(out_buffer[i], fbuffer + i, numFramesToWrite,
 					  jackd->num_output_channels, vol);
 		}
+
+		
 	      }
 
 	      if (mainw->record&&mainw->ascrap_file!=-1&&mainw->playing_file>0) {
 		int out_unsigned=afile->signed_endian&AFORM_UNSIGNED;
-		nbytes=numFramesToWrite*4;
-		audio_read_inner(jackd,out_buffer,numFramesToWrite,1.0,out_unsigned,nbytes);
-		mainw->files[mainw->ascrap_file]->aseek_pos+=nbytes;
+		rbytes=numFramesToWrite*mainw->files[mainw->ascrap_file]->achans*
+		  mainw->files[mainw->ascrap_file]->asampsize>>3;
+
+		audio_read_inner(jackd,out_buffer,mainw->ascrap_file,numFramesToWrite,1.0,
+				 (capable->byte_order==LIVES_LITTLE_ENDIAN),out_unsigned,rbytes);
+		mainw->files[mainw->ascrap_file]->aseek_pos+=rbytes;
 	      }
 
 	    }
@@ -614,11 +623,12 @@ static int audio_process (nframes_t nframes, void *arg) {
 	      // audio streaming if enabled
 	      unsigned char *xbuf;
 
-	      nbytes=numFramesToWrite*4;
+	      nbytes=numFramesToWrite*jackd->num_output_channels*4;
+	      rbytes=numFramesToWrite*jackd->num_output_channels*2;
 
 	      if (pl_error) {
-		check_zero_buff(nbytes);
-		audio_stream(zero_buff,nbytes,jackd->astream_fd);
+		check_zero_buff(rbytes);
+		audio_stream(zero_buff,rbytes,jackd->astream_fd);
 	      }
 	      else {
 		if (mainw->agen_key==0)
@@ -647,9 +657,9 @@ static int audio_process (nframes_t nframes, void *arg) {
 		  xbuf=(unsigned char *)g_try_malloc(nbytes);
 		  if (!xbuf) {
 		    // external streaming
-		    nbytes=numFramesToWrite*4;
-		    if (check_zero_buff(nbytes))
-		      audio_stream(zero_buff,nbytes,jackd->astream_fd);
+		    rbytes=numFramesToWrite*jackd->num_output_channels*2;
+		    if (check_zero_buff(rbytes))
+		      audio_stream(zero_buff,rbytes,jackd->astream_fd);
 		    return 0;
 		  }
 		  if (jackd->num_output_channels==1) bysize=2;
@@ -669,10 +679,11 @@ static int audio_process (nframes_t nframes, void *arg) {
 		      inbuf+=jackd->num_output_channels*4;
 		    }
 		  }
-		  nbytes=numFramesToWrite*4;
+		  nbytes=numFramesToWrite*jackd->num_output_channels*4;
 		  if (oinbuf!=NULL) g_free(oinbuf);
 		}
-		audio_stream(xbuf,nbytes,jackd->astream_fd);
+		rbytes=numFramesToWrite*jackd->num_output_channels*2;
+		audio_stream(xbuf,rbytes,jackd->astream_fd);
 		if (mainw->agen_key!=0||xbuf!=(unsigned char *)cache_buffer->buffer16[0]) g_free(xbuf);
 	      }
 	    }
@@ -684,10 +695,10 @@ static int audio_process (nframes_t nframes, void *arg) {
 	    for(i = 0; i < jackd->num_output_channels; i++) sample_silence_dS(out_buffer[i], numFramesToWrite);
 	  
 	    // external streaming
-	    nbytes=numFramesToWrite*4;
 	    if (jackd->astream_fd!=-1) {
-	      check_zero_buff(nbytes);
-	      audio_stream(zero_buff,nbytes,jackd->astream_fd);
+	      rbytes=numFramesToWrite*jackd->num_output_channels*2;
+	      check_zero_buff(rbytes);
+	      audio_stream(zero_buff,rbytes,jackd->astream_fd);
 	    }
 	  }
 	}
@@ -698,7 +709,7 @@ static int audio_process (nframes_t nframes, void *arg) {
 	    if (jackd->astream_fd!=-1) {
 	      // audio streaming if enabled
 	      unsigned char *xbuf=(unsigned char *)out_buffer;
-	      nbytes=numFramesToWrite*4;
+	      nbytes=numFramesToWrite*jackd->num_output_channels*4;
 	      
 	      if (jackd->num_output_channels!=2) {
 		// need to remap channels to stereo (assumed for now)
@@ -709,9 +720,9 @@ static int audio_process (nframes_t nframes, void *arg) {
 		  for(i = 0; i < jackd->num_output_channels; i++) sample_silence_dS(out_buffer[i], numFramesToWrite);
 		  
 		  // external streaming
-		  nbytes=numFramesToWrite*4;
-		  if (check_zero_buff(nbytes))
-		    audio_stream(zero_buff,nbytes,jackd->astream_fd);
+		  rbytes=numFramesToWrite*jackd->num_output_channels*2;
+		  if (check_zero_buff(rbytes))
+		    audio_stream(zero_buff,rbytes,jackd->astream_fd);
 		  return 0;
 		}
 		
@@ -732,9 +743,10 @@ static int audio_process (nframes_t nframes, void *arg) {
 		    inbuf+=jackd->num_output_channels*4;
 		  }
 		}
-		nbytes=numFramesToWrite*4;
+		nbytes=numFramesToWrite*jackd->num_output_channels*2;
 	      }
-	      audio_stream(xbuf,nbytes,jackd->astream_fd);
+	      rbytes=numFramesToWrite*jackd->num_output_channels*2;
+	      audio_stream(xbuf,rbytes,jackd->astream_fd);
 	      if (xbuf!=(unsigned char *)out_buffer) g_free(xbuf);
 	    }
 	  }
@@ -742,9 +754,9 @@ static int audio_process (nframes_t nframes, void *arg) {
 	    for(i = 0; i < jackd->num_output_channels; i++) sample_silence_dS(out_buffer[i], nframes);
 	    
 	    // external streaming
-	    nbytes=nframes*4;
-	    check_zero_buff(nbytes);
-	    audio_stream(zero_buff,nbytes,jackd->astream_fd);
+	    rbytes=numFramesToWrite*jackd->num_output_channels*2;
+	    check_zero_buff(rbytes);
+	    audio_stream(zero_buff,rbytes,jackd->astream_fd);
 	  }
 	}
       }
@@ -754,9 +766,9 @@ static int audio_process (nframes_t nframes, void *arg) {
 	for(i = 0; i < jackd->num_output_channels; i++) sample_silence_dS(out_buffer[i], nframes);
 	  
 	// external streaming
-	nbytes=nframes*4;
-	check_zero_buff(nbytes);
-	audio_stream(zero_buff,nbytes,jackd->astream_fd);
+	rbytes=numFramesToWrite*jackd->num_output_channels*2;
+	check_zero_buff(rbytes);
+	audio_stream(zero_buff,rbytes,jackd->astream_fd);
       }
 
 
@@ -783,9 +795,10 @@ static int audio_process (nframes_t nframes, void *arg) {
 	sample_silence_dS(out_buffer[i] + (nframes - jackFramesAvailable), jackFramesAvailable);
 
       // external streaming
-      nbytes=jackFramesAvailable*4;
-      check_zero_buff(nbytes);
-      audio_stream(zero_buff,nbytes,jackd->astream_fd);
+      rbytes=numFramesToWrite*jackd->num_output_channels*2;
+
+      check_zero_buff(rbytes);
+      audio_stream(zero_buff,rbytes,jackd->astream_fd);
     }
 
   }
@@ -800,9 +813,9 @@ static int audio_process (nframes_t nframes, void *arg) {
     jackd->is_silent=TRUE;
 
     // external streaming
-    nbytes=nframes*4;
-    check_zero_buff(nbytes);
-    audio_stream(zero_buff,nbytes,jackd->astream_fd);
+    rbytes=nframes*jackd->num_output_channels*2;
+    check_zero_buff(rbytes);
+    audio_stream(zero_buff,rbytes,jackd->astream_fd);
 
     /* if we were told to reset then zero out some variables */
     /* and transition to STOPPED */
@@ -861,15 +874,18 @@ int lives_start_ready_callback (jack_transport_state_t state, jack_position_t *p
 }
 
 
-static int audio_read_inner(jack_driver_t *jackd, float **in_buffer, int nframes, double out_scale, gboolean out_unsigned, size_t rbytes) {
+static int audio_read_inner(jack_driver_t *jackd, float **in_buffer, int ofileno, int nframes, 
+			    double out_scale, gboolean rev_endian, gboolean out_unsigned, size_t rbytes) {
   int frames_out;
 
   void *holding_buff=g_try_malloc(rbytes);
 
+  file *ofile=mainw->files[ofileno];
+
   if (!holding_buff) return 0;
 
-  frames_out=sample_move_float_int((void *)holding_buff,in_buffer,nframes,out_scale,afile->achans,
-				   afile->asampsize,out_unsigned,jackd->reverse_endian,FALSE,1.);
+  frames_out=sample_move_float_int((void *)holding_buff,in_buffer,nframes,out_scale,ofile->achans,
+				   ofile->asampsize,out_unsigned,rev_endian,FALSE,1.);
 
   if (mainw->rec_samples>0) {
     if (frames_out>mainw->rec_samples) frames_out=mainw->rec_samples;
@@ -877,7 +893,7 @@ static int audio_read_inner(jack_driver_t *jackd, float **in_buffer, int nframes
   }
 
   if (mainw->bad_aud_file==NULL) {
-    size_t target=frames_out*(afile->asampsize/8)*afile->achans,bytes;
+    size_t target=frames_out*(ofile->asampsize/8)*ofile->achans,bytes;
     // use write not lives_write - because of potential threading issues
     bytes=write (mainw->aud_rec_fd,holding_buff,target);
     if (bytes<target) mainw->bad_aud_file=filename_from_fd(NULL,mainw->aud_rec_fd);
@@ -914,7 +930,8 @@ static int audio_read (nframes_t nframes, void *arg) {
     in_buffer[i] = (float *) jack_port_get_buffer(jackd->input_port[i], nframes);
   }
 
-  nframes=audio_read_inner(jackd,in_buffer,nframes,out_scale,out_unsigned,rbytes);
+  nframes=audio_read_inner(jackd,in_buffer,mainw->playing_file,nframes,out_scale,mainw->jackd_read->reverse_endian,
+			   out_unsigned,rbytes);
 
   jackd->frames_written+=nframes;
 
@@ -954,7 +971,8 @@ void jack_shutdown(void* arg) {
   mainw->jackd=jack_get_driver(0,TRUE);
   mainw->jackd->msgq=NULL;
 
-  if (mainw->jackd->playing_file!=-1&&afile!=NULL) jack_audio_seek_bytes(mainw->jackd,mainw->jackd->seek_pos); // at least re-seek to the right place
+  if (mainw->jackd->playing_file!=-1&&afile!=NULL) 
+    jack_audio_seek_bytes(mainw->jackd,mainw->jackd->seek_pos); // at least re-seek to the right place
 }
 
 

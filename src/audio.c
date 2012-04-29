@@ -1145,7 +1145,7 @@ void jack_rec_audio_to_clip(gint fileno, gint old_file, lives_rec_audio_type_t r
   file *outfile=mainw->files[fileno];
   gchar *outfilename=g_build_filename(prefs->tmpdir,outfile->handle,"audio",NULL);
   int retval;
-  
+
   do {
     retval=0;
     mainw->aud_rec_fd=open(outfilename,O_WRONLY|O_CREAT|O_APPEND,S_IRUSR|S_IWUSR);
@@ -1160,11 +1160,15 @@ void jack_rec_audio_to_clip(gint fileno, gint old_file, lives_rec_audio_type_t r
 
   g_free(outfilename);
 
-  if (rec_type!=RECA_GENERATED) {
+  if (rec_type==RECA_EXTERNAL) {
     mainw->jackd_read=jack_get_driver(0,FALSE);
     mainw->jackd_read->playing_file=fileno;
     mainw->jackd_read->frames_written=0;
   }
+  else if (rec_type==RECA_GENERATED) {
+    mainw->jackd->playing_file=fileno;
+  }
+
 
 #ifdef IS_MINGW
   setmode(mainw->aud_rec_fd, O_BINARY);
@@ -1175,9 +1179,9 @@ void jack_rec_audio_to_clip(gint fileno, gint old_file, lives_rec_audio_type_t r
     gint aendian;
     uint64_t fsize=get_file_size(mainw->aud_rec_fd);
 
-    mainw->jackd_read->reverse_endian=FALSE;
- 
     if (rec_type==RECA_EXTERNAL) {
+      mainw->jackd_read->reverse_endian=FALSE;
+    
       // start jack recording
       jack_open_device_read(mainw->jackd_read);
       jack_read_driver_activate(mainw->jackd_read);
@@ -1194,8 +1198,9 @@ void jack_rec_audio_to_clip(gint fileno, gint old_file, lives_rec_audio_type_t r
       mainw->jackd_read->frames_written=fsize/(outfile->achans*(outfile->asampsize>>3));
     }
     else {
-      outfile->arate=outfile->arps=mainw->jackd_read->sample_out_rate;
-      outfile->achans=mainw->jackd_read->num_output_channels;
+      mainw->jackd->reverse_endian=FALSE;
+      outfile->arate=outfile->arps=mainw->jackd->sample_out_rate;
+      outfile->achans=mainw->jackd->num_output_channels;
       
       outfile->asampsize=16;
       outfile->signed_endian=get_signed_endian(TRUE,TRUE);
@@ -1285,10 +1290,13 @@ void pulse_rec_audio_to_clip(gint fileno, gint old_file, lives_rec_audio_type_t 
     }
   } while (retval==LIVES_RETRY);
 
-  if (rec_type!=RECA_GENERATED) {
+  if (rec_type==RECA_EXTERNAL) {
     mainw->pulsed_read=pulse_get_driver(FALSE);
     mainw->pulsed_read->playing_file=fileno;
     mainw->pulsed_read->frames_written=0;
+  }
+  else if (rec_type==RECA_GENERATED) {
+    mainw->pulsed->playing_file=fileno;
   }
 
 #ifdef IS_MINGW
@@ -1317,6 +1325,7 @@ void pulse_rec_audio_to_clip(gint fileno, gint old_file, lives_rec_audio_type_t 
       mainw->pulsed_read->frames_written=fsize/(outfile->achans*(outfile->asampsize>>3));
     }
     else {
+      mainw->pulsed->reverse_endian=FALSE;
       outfile->achans=mainw->pulsed->out_achans;
       outfile->asampsize=mainw->pulsed->out_asamps;
       outfile->signed_endian=get_signed_endian(mainw->pulsed->out_signed!=AFORM_UNSIGNED,
@@ -1837,6 +1846,8 @@ gboolean resync_audio(gint frameno) {
 
   // if recording external audio, we are intrinsically in sync
   if (mainw->record&&(prefs->rec_opts&REC_EXT_AUDIO)) return TRUE;
+
+  if (mainw->agen_key!=0) return TRUE;
 
 #ifdef ENABLE_JACK
   if (prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL) {

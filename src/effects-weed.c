@@ -3804,6 +3804,7 @@ void weed_load_all (void) {
   gint listlen;
 
 
+#define TEST_DSP
 #ifdef TEST_DSP
   pconx_add_connection(0,0,0, 5,0,0);
 
@@ -4975,7 +4976,7 @@ void deinit_render_effects (void) {
 
 
 void weed_deinit_all(gboolean shutdown) {
-  // deinit all except generators *
+  // deinit all (except generators* during playback)
   // this is called on ctrl-0 or on shutdown
 
   // * background generators will be killed because their transition will be deinited
@@ -4997,7 +4998,7 @@ void weed_deinit_all(gboolean shutdown) {
     }
     if ((mainw->rte&(GU641<<i))) {
       if ((instance=key_to_instance[i][key_modes[i]])!=NULL) {
-	if (shutdown||(enabled_in_channels(instance,FALSE)>0)) {
+	if (shutdown||mainw->playing_file==-1||(enabled_in_channels(instance,FALSE)>0)) {
 	  weed_deinit_effect(i);
 	  mainw->rte^=(GU641<<i);
 	}

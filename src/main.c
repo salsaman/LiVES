@@ -5902,13 +5902,15 @@ void do_quick_switch (gint new_file) {
     g_snprintf(cfile->info_file,PATH_MAX,"%s",tmp);
     g_free(tmp);
   }
+
   osc_block=mainw->osc_block;
   mainw->osc_block=TRUE;
 
+ 
   if (prefs->audio_player==AUD_PLAYER_JACK&&(prefs->audio_opts&AUDIO_OPTS_FOLLOW_CLIPS)&&!mainw->is_rendering&&
       !(mainw->record&&!mainw->record_paused&&(prefs->rec_opts&REC_EXT_AUDIO))) {
 #ifdef ENABLE_JACK
-  if (mainw->jackd!=NULL) {
+    if (mainw->jackd!=NULL) {
       gboolean timeout;
       int alarm_handle=lives_alarm_set(LIVES_ACONNECT_TIMEOUT);
       while (!(timeout=lives_alarm_get(alarm_handle))&&jack_get_msgq(mainw->jackd)!=NULL) {
@@ -5935,18 +5937,18 @@ void do_quick_switch (gint new_file) {
       mainw->jackd->in_use=TRUE;
       
       if (mainw->files[new_file]->achans>0) { 
-        gint asigned=!(mainw->files[new_file]->signed_endian&AFORM_UNSIGNED);
-        gint aendian=!(mainw->files[new_file]->signed_endian&AFORM_BIG_ENDIAN);
-        mainw->jackd->num_input_channels=mainw->files[new_file]->achans;
-        mainw->jackd->bytes_per_channel=mainw->files[new_file]->asampsize/8;
-        if (prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS) {
-          if (!mainw->files[new_file]->play_paused) 
+	gint asigned=!(mainw->files[new_file]->signed_endian&AFORM_UNSIGNED);
+	gint aendian=!(mainw->files[new_file]->signed_endian&AFORM_BIG_ENDIAN);
+	mainw->jackd->num_input_channels=mainw->files[new_file]->achans;
+	mainw->jackd->bytes_per_channel=mainw->files[new_file]->asampsize/8;
+	if (prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS) {
+	  if (!mainw->files[new_file]->play_paused) 
 	    mainw->jackd->sample_in_rate=mainw->files[new_file]->arate*mainw->files[new_file]->pb_fps/
 	      mainw->files[new_file]->fps;
-          else mainw->jackd->sample_in_rate=mainw->files[new_file]->arate*mainw->files[new_file]->freeze_fps/
+	  else mainw->jackd->sample_in_rate=mainw->files[new_file]->arate*mainw->files[new_file]->freeze_fps/
 		 mainw->files[new_file]->fps;
-        }
-        else mainw->jackd->sample_in_rate=mainw->files[new_file]->arate;
+	}
+	else mainw->jackd->sample_in_rate=mainw->files[new_file]->arate;
 	mainw->jackd->usigned=!asigned;
 	mainw->jackd->seek_end=mainw->files[new_file]->afilesize;
 
@@ -5955,38 +5957,42 @@ void do_quick_switch (gint new_file) {
 	  mainw->jackd->reverse_endian=TRUE;
 	else mainw->jackd->reverse_endian=FALSE;
 
-        if (mainw->ping_pong) mainw->jackd->loop=AUDIO_LOOP_PINGPONG;
-        else mainw->jackd->loop=AUDIO_LOOP_FORWARD;
+	if (mainw->ping_pong) mainw->jackd->loop=AUDIO_LOOP_PINGPONG;
+	else mainw->jackd->loop=AUDIO_LOOP_FORWARD;
 
 	// tell jack server to open audio file and start playing it
 
 	jack_message.command=ASERVER_CMD_FILE_OPEN;
 
-        jack_message.data=g_strdup_printf("%d",new_file);
+	jack_message.data=g_strdup_printf("%d",new_file);
 
 	jack_message2.command=ASERVER_CMD_FILE_SEEK;
 	jack_message.next=&jack_message2;
-        jack_message2.data=g_strdup_printf("%"PRId64,mainw->files[new_file]->aseek_pos);
+	jack_message2.data=g_strdup_printf("%"PRId64,mainw->files[new_file]->aseek_pos);
 	jack_message2.next=NULL;
 
-        mainw->jackd->msgq=&jack_message;
-        mainw->jackd->in_use=TRUE;
+	mainw->jackd->msgq=&jack_message;
+	mainw->jackd->in_use=TRUE;
 
-	if (prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS) {
-	  mainw->jackd->is_paused=mainw->files[new_file]->play_paused;
-	  mainw->jackd->is_silent=FALSE;
+	if (mainw->agen_key==0&&!mainw->agen_needs_reinit) {
+	  if (prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS) {
+	    mainw->jackd->is_paused=mainw->files[new_file]->play_paused;
+	    mainw->jackd->is_silent=FALSE;
+	  }
+	    
+	  mainw->rec_aclip=new_file;
+	  mainw->rec_avel=mainw->files[new_file]->pb_fps/mainw->files[new_file]->fps;
+	  mainw->rec_aseek=(gdouble)mainw->files[new_file]->aseek_pos/
+	    (gdouble)(mainw->files[new_file]->arate*mainw->files[new_file]->achans*mainw->files[new_file]->asampsize/8);
 	}
-
-       mainw->rec_aclip=new_file;
-       mainw->rec_avel=mainw->files[new_file]->pb_fps/mainw->files[new_file]->fps;
-       mainw->rec_aseek=(gdouble)mainw->files[new_file]->aseek_pos/
-	 (gdouble)(mainw->files[new_file]->arate*mainw->files[new_file]->achans*mainw->files[new_file]->asampsize/8);
-     }
-    else {
-      mainw->rec_aclip=mainw->current_file;
-      mainw->rec_avel=0.;
-      mainw->rec_aseek=0.;
-     }
+      }
+      else {
+	if (mainw->agen_key==0&&!mainw->agen_needs_reinit) {
+	  mainw->rec_aclip=mainw->current_file;
+	  mainw->rec_avel=0.;
+	  mainw->rec_aseek=0.;
+	}
+      }
     }
 #endif
   }
@@ -5994,7 +6000,7 @@ void do_quick_switch (gint new_file) {
   if (prefs->audio_player==AUD_PLAYER_PULSE&&(prefs->audio_opts&AUDIO_OPTS_FOLLOW_CLIPS)&&!mainw->is_rendering&&
       !(mainw->record&&!mainw->record_paused&&(prefs->rec_opts&REC_EXT_AUDIO))) {
 #ifdef HAVE_PULSE_AUDIO
-  if (mainw->pulsed!=NULL) {
+    if (mainw->pulsed!=NULL) {
       gboolean timeout;
       int alarm_handle=lives_alarm_set(LIVES_ACONNECT_TIMEOUT);
       while (!(timeout=lives_alarm_get(alarm_handle))&&pulse_get_msgq(mainw->pulsed)!=NULL) {
@@ -6020,18 +6026,18 @@ void do_quick_switch (gint new_file) {
       mainw->pulsed->in_use=TRUE;
       
       if (mainw->files[new_file]->achans>0) { 
-        gint asigned=!(mainw->files[new_file]->signed_endian&AFORM_UNSIGNED);
-        gint aendian=!(mainw->files[new_file]->signed_endian&AFORM_BIG_ENDIAN);
-        mainw->pulsed->in_achans=mainw->files[new_file]->achans;
-        mainw->pulsed->in_asamps=mainw->files[new_file]->asampsize;
-        if (prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS) {
-          if (!mainw->files[new_file]->play_paused) 
+	gint asigned=!(mainw->files[new_file]->signed_endian&AFORM_UNSIGNED);
+	gint aendian=!(mainw->files[new_file]->signed_endian&AFORM_BIG_ENDIAN);
+	mainw->pulsed->in_achans=mainw->files[new_file]->achans;
+	mainw->pulsed->in_asamps=mainw->files[new_file]->asampsize;
+	if (prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS) {
+	  if (!mainw->files[new_file]->play_paused) 
 	    mainw->pulsed->in_arate=mainw->files[new_file]->arate*mainw->files[new_file]->pb_fps/
 	      mainw->files[new_file]->fps;
-          else mainw->pulsed->in_arate=mainw->files[new_file]->arate*mainw->files[new_file]->freeze_fps/
+	  else mainw->pulsed->in_arate=mainw->files[new_file]->arate*mainw->files[new_file]->freeze_fps/
 		 mainw->files[new_file]->fps;
-        }
-        else mainw->pulsed->in_arate=mainw->files[new_file]->arate;
+	}
+	else mainw->pulsed->in_arate=mainw->files[new_file]->arate;
 	mainw->pulsed->usigned=!asigned;
 	mainw->pulsed->seek_end=mainw->files[new_file]->afilesize;
 	if (mainw->files[new_file]->opening) mainw->pulsed->is_opening=TRUE;
@@ -6042,42 +6048,49 @@ void do_quick_switch (gint new_file) {
 	  mainw->pulsed->reverse_endian=TRUE;
 	else mainw->pulsed->reverse_endian=FALSE;
 
-        if (mainw->ping_pong) mainw->pulsed->loop=AUDIO_LOOP_PINGPONG;
-        else mainw->pulsed->loop=AUDIO_LOOP_FORWARD;
+	if (mainw->ping_pong) mainw->pulsed->loop=AUDIO_LOOP_PINGPONG;
+	else mainw->pulsed->loop=AUDIO_LOOP_FORWARD;
 
 	// tell pulse server to open audio file and start playing it
 
 	pulse_message.command=ASERVER_CMD_FILE_OPEN;
 
 	if (mainw->files[new_file]->opening) {
-          mainw->pulsed->is_opening=TRUE;
-        }
-        pulse_message.data=g_strdup_printf("%d",new_file);
+	  mainw->pulsed->is_opening=TRUE;
+	}
+	pulse_message.data=g_strdup_printf("%d",new_file);
 
 	pulse_message2.command=ASERVER_CMD_FILE_SEEK;
 	pulse_message.next=&pulse_message2;
-        pulse_message2.data=g_strdup_printf("%"PRId64,mainw->files[new_file]->aseek_pos);
+	pulse_message2.data=g_strdup_printf("%"PRId64,mainw->files[new_file]->aseek_pos);
 	pulse_message2.next=NULL;
-        mainw->pulsed->msgq=&pulse_message;
-        mainw->pulsed->in_use=TRUE;
+	mainw->pulsed->msgq=&pulse_message;
+	mainw->pulsed->in_use=TRUE;
 
-	if (prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS) {
-	  mainw->pulsed->is_paused=mainw->files[new_file]->play_paused;
+	if (mainw->agen_key==0&&!mainw->agen_needs_reinit) {
+	  LIVES_DEBUG("ABC");
+	  if (prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS) {
+	    mainw->pulsed->is_paused=mainw->files[new_file]->play_paused;
+	  }
+	    
+	  mainw->rec_aclip=new_file;
+	  mainw->rec_avel=mainw->files[new_file]->pb_fps/mainw->files[new_file]->fps;
+	  mainw->rec_aseek=(gdouble)mainw->files[new_file]->aseek_pos/
+	    (gdouble)(mainw->files[new_file]->arate*mainw->files[new_file]->achans*mainw->files[new_file]->asampsize/8);
 	}
-
-       mainw->rec_aclip=new_file;
-       mainw->rec_avel=mainw->files[new_file]->pb_fps/mainw->files[new_file]->fps;
-       mainw->rec_aseek=(gdouble)mainw->files[new_file]->aseek_pos/
-	 (gdouble)(mainw->files[new_file]->arate*mainw->files[new_file]->achans*mainw->files[new_file]->asampsize/8);
       }
-    else {
-      mainw->rec_aclip=mainw->current_file;
-      mainw->rec_avel=0.;
-      mainw->rec_aseek=0.;
-     }
-  }
+      else {
+	if (mainw->agen_key==0&&!mainw->agen_needs_reinit) {
+	  mainw->rec_aclip=mainw->current_file;
+	  mainw->rec_avel=0.;
+	  mainw->rec_aseek=0.;
+	}
+      }
+    }
 #endif
   }
+
+
 
   mainw->whentostop=NEVER_STOP;
 

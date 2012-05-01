@@ -920,7 +920,7 @@ gboolean process_one (gboolean visible) {
 	  (!mainw->is_rendering||(mainw->multitrack!=NULL&&!cfile->opening&&!mainw->multitrack->is_rendering))&&
 	  mainw->jackd!=NULL&&mainw->jackd->in_use) {
 	if (!(mainw->fixed_fpsd>0.||(mainw->vpp!=NULL&&mainw->vpp->fixed_fpsd>0.&&mainw->ext_playback))) {
-	  if (mainw->aud_rec_fd!=-1) mainw->currticks=lives_jack_get_time(mainw->jackd_read,TRUE);
+	  if (mainw->aud_rec_fd!=-1&&mainw->agen_key==0) mainw->currticks=lives_jack_get_time(mainw->jackd_read,TRUE);
 	  else mainw->currticks=lives_jack_get_time(mainw->jackd,TRUE);
 	  time_source=LIVES_TIME_SOURCE_SOUNDCARD;
 	}
@@ -934,7 +934,7 @@ gboolean process_one (gboolean visible) {
 						   !cfile->opening&&!mainw->multitrack->is_rendering))&&
 	  ((mainw->pulsed!=NULL&&mainw->pulsed->in_use)||mainw->pulsed_read!=NULL)) {
 	if (!(mainw->fixed_fpsd>0.||(mainw->vpp!=NULL&&mainw->vpp->fixed_fpsd>0.&&mainw->ext_playback))) {
-	  if (mainw->aud_rec_fd!=-1) mainw->currticks=lives_pulse_get_time(mainw->pulsed_read,TRUE);
+	  if (mainw->aud_rec_fd!=-1&&mainw->agen_key==0&&!mainw->agen_needs_reinit) mainw->currticks=lives_pulse_get_time(mainw->pulsed_read,TRUE);
 	  else mainw->currticks=lives_pulse_get_time(mainw->pulsed,TRUE);
 	  time_source=LIVES_TIME_SOURCE_SOUNDCARD;
 	}
@@ -1407,7 +1407,6 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
 					     cfile->fps*cfile->arate*cfile->achans*(cfile->asampsize/8));
 
 
-
   // MUST do re-seek after setting origsecs in order to set our clock properly
   // re-seek to new playback start
 #ifdef ENABLE_JACK
@@ -1420,7 +1419,7 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
 
     mainw->rec_aclip=mainw->current_file;
     mainw->rec_avel=cfile->pb_fps/cfile->fps;
-    if (!(mainw->record&&!mainw->record_paused&&(prefs->rec_opts&REC_EXT_AUDIO||mainw->agen_key!=0)))
+    if (!(mainw->record&&!mainw->record_paused&&(prefs->rec_opts&REC_EXT_AUDIO||mainw->agen_key!=0||mainw->agen_needs_reinit)))
       mainw->rec_aseek=(gdouble)cfile->aseek_pos/(gdouble)(cfile->arate*cfile->achans*(cfile->asampsize/8));
     else {
       mainw->rec_aclip=mainw->ascrap_file;
@@ -1449,7 +1448,7 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
 
     mainw->rec_aclip=mainw->current_file;
     mainw->rec_avel=cfile->pb_fps/cfile->fps;
-    if (!(mainw->record&&!mainw->record_paused&&(prefs->rec_opts&REC_EXT_AUDIO||mainw->agen_key!=0)))
+    if (!(mainw->record&&!mainw->record_paused&&(prefs->rec_opts&REC_EXT_AUDIO||mainw->agen_key!=0||mainw->agen_needs_reinit)))
       mainw->rec_aseek=(gdouble)cfile->aseek_pos/(gdouble)(cfile->arate*cfile->achans*(cfile->asampsize/8));
     else {
       mainw->rec_aclip=mainw->ascrap_file;

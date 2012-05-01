@@ -4807,6 +4807,7 @@ gboolean weed_init_effect(int hotkey) {
     mainw->agen_needs_reinit=FALSE;
 
     if (mainw->playing_file>0) {
+      if (mainw->whentostop==STOP_ON_AUD_END) mainw->whentostop=STOP_ON_VID_END;
       if (prefs->audio_player==AUD_PLAYER_JACK) {
 #ifdef ENABLE_JACK
 	if (mainw->jackd!=NULL) {
@@ -4921,6 +4922,9 @@ void weed_deinit_effect(int hotkey) {
       }
     }
     weed_call_deinit_func(instance);
+    if (mainw->whentostop==STOP_ON_VID_END&&(cfile->frames==0||(mainw->loop&&cfile->achans>0&&!mainw->is_rendering&&(mainw->audio_end/cfile->fps)
+								<MAX (cfile->laudio_time,cfile->raudio_time)))) mainw->whentostop=STOP_ON_AUD_END;
+
   }
 
   if (num_in_chans==2) {

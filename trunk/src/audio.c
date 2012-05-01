@@ -1326,6 +1326,7 @@ void pulse_rec_audio_to_clip(gint fileno, gint old_file, lives_rec_audio_type_t 
     }
     else {
       mainw->pulsed->reverse_endian=FALSE;
+      outfile->arate=outfile->arps=mainw->pulsed->out_arate;
       outfile->achans=mainw->pulsed->out_achans;
       outfile->asampsize=mainw->pulsed->out_asamps;
       outfile->signed_endian=get_signed_endian(mainw->pulsed->out_signed!=AFORM_UNSIGNED,
@@ -1383,7 +1384,7 @@ void pulse_rec_audio_end(void) {
 
   if (mainw->pulsed_read!=NULL) {
     pa_threaded_mainloop_lock(mainw->pulsed->mloop);
-    pulse_flush_read_data(mainw->pulsed_read,0,NULL);
+    pulse_flush_read_data(mainw->pulsed_read,mainw->pulsed->playing_file,0,mainw->pulsed->reverse_endian,NULL);
     pulse_close_client(mainw->pulsed_read);
     pa_threaded_mainloop_unlock(mainw->pulsed->mloop);
 
@@ -1847,7 +1848,7 @@ gboolean resync_audio(gint frameno) {
   // if recording external audio, we are intrinsically in sync
   if (mainw->record&&(prefs->rec_opts&REC_EXT_AUDIO)) return TRUE;
 
-  if (mainw->agen_key!=0) return TRUE;
+  if (mainw->agen_key!=0||mainw->agen_needs_reinit) return TRUE;
 
 #ifdef ENABLE_JACK
   if (prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL) {

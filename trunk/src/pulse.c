@@ -260,16 +260,17 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
      uint64_t inputFramesAvailable;
      uint64_t numFramesToWrite;
      int64_t in_frames=0;
-     uint64_t in_bytes=0;
+     uint64_t in_bytes=0,xin_bytes=0;
      gfloat shrink_factor=1.f;
      int swap_sign;
+
+     file *xfile=afile;
 
  #ifdef DEBUG_PULSE
      g_printerr("playing... pulseFramesAvailable = %ld\n", pulseFramesAvailable);
  #endif
 
      pulsed->num_calls++;
-
 
      if (!pulsed->in_use||(((pulsed->fd<0||pulsed->seek_pos<0.)&&pulsed->read_abuf<0)&&
 			   ((mainw->agen_key==0&&!mainw->agen_needs_reinit)||mainw->multitrack!=NULL))
@@ -285,6 +286,7 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
        //g_print("pt a3 %d\n",pulsed->in_use);
        return;
      }
+
 
      if (G_LIKELY(pulseFramesAvailable>0&&(pulsed->read_abuf>-1||
 					   (pulsed->aPlayPtr!=NULL
@@ -304,6 +306,11 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
        }
        else {
 	 if (G_LIKELY(pulsed->fd>=0)) {
+	   
+	   if (pulsed->playing_file==mainw->ascrap_file&&mainw->playing_file>=-1&&mainw->files[mainw->playing_file]->achans>0) {
+	     xfile=mainw->files[mainw->playing_file];
+	   }
+
 	   pulsed->aPlayPtr->size=0;
 	   in_bytes=ABS((in_frames=((gdouble)pulsed->in_arate/(gdouble)pulsed->out_arate*
 				    (gdouble)pulseFramesAvailable+((gdouble)fastrand()/(gdouble)G_MAXUINT32))))
@@ -376,8 +383,8 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
 		 if (!(*pulsed->cancelled)&&ABS(shrink_factor)<=100.f) {
 		   if (((((mainw->agen_key==0&&!mainw->agen_needs_reinit)||mainw->multitrack!=NULL)&&
 			 (pulsed->aPlayPtr->size=read(pulsed->fd,pulsed->aPlayPtr->data,in_bytes))==0))||
-		       ((mainw->agen_key!=0||mainw->agen_needs_reinit)&&mainw->multitrack==NULL&&
-			pulsed->seek_pos+in_bytes>=afile->afilesize)) {
+		       (((mainw->agen_key!=0||mainw->agen_needs_reinit)&&mainw->multitrack==NULL&&
+			 pulsed->seek_pos+in_bytes>=xfile->afilesize))) {
 		     if (*pulsed->whentostop==STOP_ON_AUD_END) {
 		       *pulsed->cancelled=CANCEL_AUD_END;
 		     }
@@ -399,7 +406,7 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
 			   pulse_set_rec_avals(pulsed,TRUE);
 			 }
 			 else {
-			   pulsed->in_use=FALSE;
+			   if (mainw->agen_key==0&&!mainw->agen_needs_reinit) pulsed->in_use=FALSE;
 			   loop_restart=FALSE;
 			   pulse_set_rec_avals(pulsed,TRUE);
 			 }
@@ -431,10 +438,15 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
 	       }
 	     } while (loop_restart);
 	   }
+	   xin_bytes=in_bytes;
 	 }
 
+	 if (mainw->agen_key!=0&&mainw->multitrack==NULL) {
+	   in_bytes=pulseFramesAvailable*pulsed->out_achans*2;
+	   if (xin_bytes==0) xin_bytes=in_bytes;
+	 }
 
-	 if (!pulsed->in_use||(in_bytes==0&&((mainw->agen_key==0&&!mainw->agen_needs_reinit)||mainw->multitrack!=NULL))) {
+	 if (!pulsed->in_use||in_bytes==0) {
 	   // reached end of audio with no looping
 	   sample_silence_pulse(pulsed,nframes*pulsed->out_achans*
 				(pulsed->out_asamps>>3),xbytes);
@@ -535,7 +547,10 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
 	     free(fp);
 
 	     if (mainw->record&&mainw->ascrap_file!=-1&&mainw->playing_file>0) {
-	       pulse_flush_read_data(pulsed,nbytes,buf);
+		size_t rbytes=numFramesToWrite*mainw->files[mainw->ascrap_file]->achans*
+		  mainw->files[mainw->ascrap_file]->asampsize>>3;
+		pulse_flush_read_data(pulsed,mainw->ascrap_file,nbytes,mainw->files[mainw->ascrap_file]->signed_endian&AFORM_BIG_ENDIAN,buf);
+		mainw->files[mainw->ascrap_file]->aseek_pos+=rbytes;
 	     }
 	   }
 	 }
@@ -631,59 +646,66 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
 
 
 
-void pulse_flush_read_data(pulse_driver_t *pulsed, size_t rbytes, void *data) {
+size_t pulse_flush_read_data(pulse_driver_t *pulsed, int fileno, size_t rbytes, gboolean rev_endian, void *data) {
   short *gbuf;
-  size_t bytes_out,frames_out;
+  size_t bytes_out,frames_out,bytes=0;
   void *holding_buff;
 
-  float out_scale=(float)pulsed->in_arate/(float)afile->arate;
-  int swap_sign=afile->signed_endian&AFORM_UNSIGNED;
+  file *ofile=mainw->files[fileno];
 
-  if (prb==0||mainw->rec_samples==0) return;
+  float out_scale=(float)pulsed->in_arate/(float)ofile->arate;
+  int swap_sign=ofile->signed_endian&AFORM_UNSIGNED;
+
+  if (fileno==mainw->ascrap_file) prb=rbytes;
+
+  if (prb==0||mainw->rec_samples==0) return 0;
 
   gbuf=(short *)g_try_malloc(prb);
 
-  if (!gbuf) return;
+  if (!gbuf) return 0;
 
-  lives_memcpy(gbuf,prbuf,prb-rbytes);
+  if (fileno!=mainw->ascrap_file) lives_memcpy(gbuf,prbuf,prb-rbytes);
+
   if (rbytes>0) lives_memcpy(gbuf+(prb-rbytes)/sizeof(short),data,rbytes);
 
   frames_out=(size_t)((gdouble)((prb/(pulsed->in_asamps>>3)/pulsed->in_achans))/out_scale+.5);
 
-  bytes_out=frames_out*afile->achans*(afile->asampsize>>3);
+  bytes_out=frames_out*ofile->achans*(ofile->asampsize>>3);
 
   holding_buff=g_try_malloc(bytes_out);
 
-  if (!holding_buff) return;
+  if (!holding_buff) return 0;
 
-  if (bytes_out != pulsed->chunk_size) pulsed->chunk_size = bytes_out;
+  if (fileno!=mainw->ascrap_file && bytes_out != pulsed->chunk_size) pulsed->chunk_size = bytes_out;
 
-  if (afile->asampsize==16) {
-    sample_move_d16_d16((short *)holding_buff,gbuf,frames_out,prb,out_scale,afile->achans,
-			pulsed->in_achans,pulsed->reverse_endian?SWAP_L_TO_X:0,swap_sign?SWAP_S_TO_U:0);
+  if (ofile->asampsize==16) {
+    sample_move_d16_d16((short *)holding_buff,gbuf,frames_out,prb,out_scale,ofile->achans,
+			pulsed->in_achans,rev_endian?SWAP_L_TO_X:0,swap_sign?SWAP_S_TO_U:0);
   }
   else {
-    sample_move_d16_d8((uint8_t *)holding_buff,gbuf,frames_out,prb,out_scale,afile->achans,
+    sample_move_d16_d8((uint8_t *)holding_buff,gbuf,frames_out,prb,out_scale,ofile->achans,
 		       pulsed->in_achans,swap_sign?SWAP_S_TO_U:0);
   }
     
   g_free(gbuf);
   prb=0;
 
-  if (mainw->rec_samples>0) {
+  if (fileno!=mainw->ascrap_file&&mainw->rec_samples>0) {
     if (frames_out>mainw->rec_samples) frames_out=mainw->rec_samples;
     mainw->rec_samples-=frames_out;
   }
 
   if (mainw->bad_aud_file==NULL) {
-    size_t target=frames_out*(afile->asampsize/8)*afile->achans,bytes;
+    size_t target=frames_out*(ofile->asampsize/8)*ofile->achans;
     // use write not lives_write - because of potential threading issues
     bytes=write (mainw->aud_rec_fd,holding_buff,target);
     if (bytes<target) mainw->bad_aud_file=filename_from_fd(NULL,mainw->aud_rec_fd);
+    if (bytes<0) bytes=0;
   }
 
   g_free(holding_buff);
 
+  return bytes;
 }
 
 
@@ -724,7 +746,7 @@ static void pulse_audio_read_process (pa_stream *pstream, size_t nbytes, void *a
     return;
   }
 
-  pulse_flush_read_data(pulsed,rbytes,data);
+  pulse_flush_read_data(pulsed,mainw->playing_file,rbytes,pulsed->reverse_endian,data);
 
   pa_stream_drop(pulsed->pstream);
 

@@ -4343,7 +4343,12 @@ void load_frame_image(gint frame) {
 	  if (mainw->event_list==NULL) mainw->event_list=event_list;
 	  if (mainw->rec_aclip!=-1&&((prefs->rec_opts&REC_AUDIO)||(prefs->rec_opts&REC_EXT_AUDIO))) {
 	    weed_plant_t *event=get_last_event(mainw->event_list);
-	    g_print("INASA %f\n",mainw->rec_aseek);
+
+	    if (mainw->rec_aclip==mainw->ascrap_file) {
+	      mainw->rec_aseek=(double)mainw->files[mainw->ascrap_file]->aseek_pos/
+		(double)(mainw->files[mainw->ascrap_file]->arps*mainw->files[mainw->ascrap_file]->achans*mainw->files[mainw->ascrap_file]->asampsize>>3);
+
+	    }
 	    insert_audio_event_at(mainw->event_list,event,-1,mainw->rec_aclip,mainw->rec_aseek,mainw->rec_avel);
 	    mainw->rec_aclip=-1;
 	  }

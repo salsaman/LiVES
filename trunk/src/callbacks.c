@@ -4057,7 +4057,6 @@ on_record_perf_activate                      (GtkMenuItem     *menuitem,
 	      jack_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_GENERATED);
 	      mainw->rec_aseek=(double)mainw->files[mainw->ascrap_file]->aseek_pos/
 		(double)(mainw->files[mainw->ascrap_file]->arps*mainw->files[mainw->ascrap_file]->achans*mainw->files[mainw->ascrap_file]->asampsize>>3);
-
 	    }
 #endif
 	  }
@@ -9974,7 +9973,7 @@ changed_fps_during_pb           (GtkSpinButton   *spinbutton,
 
   mainw->period=U_SEC/cfile->pb_fps;
 
-  if (prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS&&mainw->agen_key==0) {
+  if (prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS&&mainw->agen_key==0&&!mainw->agen_needs_reinit) {
 #ifdef ENABLE_JACK
     if (prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL&&mainw->jackd->playing_file==mainw->current_file&&
 	!(mainw->record&&!mainw->record_paused&&(prefs->rec_opts&REC_EXT_AUDIO))) {

@@ -2175,7 +2175,6 @@ void play_file (void) {
     }
   }
 
-  find_when_to_stop();
 
   if (!cfile->opening_audio&&!mainw->loop) {
     // if we are opening audio or looping we just play to the end of audio,
@@ -2571,21 +2570,26 @@ void play_file (void) {
 #ifdef ENABLE_JACK
 	if (prefs->rec_opts&REC_EXT_AUDIO)
 	  jack_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_EXTERNAL);
-	else 
+	else { 
 	  jack_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_GENERATED);
+	  mainw->jackd->frames_written=0;
+	}
 #endif
       }
       if (audio_player==AUD_PLAYER_PULSE) {
 #ifdef HAVE_PULSE_AUDIO
 	if (prefs->rec_opts&REC_EXT_AUDIO)
 	  pulse_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_EXTERNAL);
-	else 
+	else { 
 	  pulse_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_GENERATED);
+	  mainw->pulsed->frames_written=0;
+	}
 #endif
       }
     }
   }
 
+  find_when_to_stop();
 
   if (mainw->foreign||weed_playback_gen_start()) {
 

@@ -9973,15 +9973,17 @@ changed_fps_during_pb           (GtkSpinButton   *spinbutton,
 
   mainw->period=U_SEC/cfile->pb_fps;
 
-  if (prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS&&mainw->agen_key==0&&!mainw->agen_needs_reinit) {
+  if (prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS) {
 #ifdef ENABLE_JACK
     if (prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL&&mainw->jackd->playing_file==mainw->current_file&&
 	!(mainw->record&&!mainw->record_paused&&(prefs->rec_opts&REC_EXT_AUDIO))) {
       
       mainw->jackd->sample_in_rate=cfile->arate*cfile->pb_fps/cfile->fps;
-      mainw->rec_aclip=mainw->current_file;
-      mainw->rec_avel=cfile->pb_fps/cfile->fps;
-      mainw->rec_aseek=(gdouble)mainw->jackd->seek_pos/(gdouble)(cfile->arate*cfile->achans*cfile->asampsize/8);
+      if (mainw->agen_key==0&&!mainw->agen_needs_reinit) {
+	mainw->rec_aclip=mainw->current_file;
+	mainw->rec_avel=cfile->pb_fps/cfile->fps;
+	mainw->rec_aseek=(gdouble)mainw->jackd->seek_pos/(gdouble)(cfile->arate*cfile->achans*cfile->asampsize/8);
+      }
     }
 #endif
 
@@ -9990,9 +9992,11 @@ changed_fps_during_pb           (GtkSpinButton   *spinbutton,
       !(mainw->record&&!mainw->record_paused&&(prefs->rec_opts&REC_EXT_AUDIO))) {
 
       mainw->pulsed->in_arate=cfile->arate*cfile->pb_fps/cfile->fps;
-      mainw->rec_aclip=mainw->current_file;
-      mainw->rec_avel=cfile->pb_fps/cfile->fps;
-      mainw->rec_aseek=(gdouble)mainw->pulsed->seek_pos/(gdouble)(cfile->arate*cfile->achans*cfile->asampsize/8);
+      if (mainw->agen_key==0&&!mainw->agen_needs_reinit) {
+	mainw->rec_aclip=mainw->current_file;
+	mainw->rec_avel=cfile->pb_fps/cfile->fps;
+	mainw->rec_aseek=(gdouble)mainw->pulsed->seek_pos/(gdouble)(cfile->arate*cfile->achans*cfile->asampsize/8);
+      }
     }
 #endif
   }

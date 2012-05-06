@@ -1384,7 +1384,7 @@ void pulse_rec_audio_end(void) {
 
   if (mainw->pulsed_read!=NULL) {
     pa_threaded_mainloop_lock(mainw->pulsed->mloop);
-    pulse_flush_read_data(mainw->pulsed_read,mainw->pulsed->playing_file,0,mainw->pulsed->reverse_endian,NULL);
+    pulse_flush_read_data(mainw->pulsed_read,mainw->pulsed_read->playing_file,0,mainw->pulsed->reverse_endian,NULL);
     pulse_close_client(mainw->pulsed_read);
     pa_threaded_mainloop_unlock(mainw->pulsed->mloop);
 

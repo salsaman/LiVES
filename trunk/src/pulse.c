@@ -182,6 +182,7 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
 
    pa_volume_t pavol;
 
+
    pulsed->pstream=pstream;
 
    if (xbytes>nbytes) xbytes=nbytes;
@@ -191,7 +192,6 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
      //g_print("pt a1 %ld\n",nframes);
      return;
    }
-
 
    while ((msg=(aserver_message_t *)pulsed->msgq)!=NULL) {
      switch (msg->command) {
@@ -256,6 +256,7 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
    pulsed->state=pa_context_get_state(pulsed->con);
 
    if (pulsed->state==PA_CONTEXT_READY) {
+
      uint64_t pulseFramesAvailable = nframes;
      uint64_t inputFramesAvailable;
      uint64_t numFramesToWrite;
@@ -286,7 +287,6 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
        //g_print("pt a3 %d\n",pulsed->in_use);
        return;
      }
-
 
      if (G_LIKELY(pulseFramesAvailable>0&&(pulsed->read_abuf>-1||
 					   (pulsed->aPlayPtr!=NULL
@@ -651,24 +651,36 @@ size_t pulse_flush_read_data(pulse_driver_t *pulsed, int fileno, size_t rbytes, 
   size_t bytes_out,frames_out,bytes=0;
   void *holding_buff;
 
-  file *ofile=mainw->files[fileno];
+  float out_scale;
+  int swap_sign;
 
-  float out_scale=(float)pulsed->in_arate/(float)ofile->arate;
-  int swap_sign=ofile->signed_endian&AFORM_UNSIGNED;
+  file *ofile;
 
-  if (fileno==mainw->ascrap_file) prb=rbytes;
 
-  if (prb==0||mainw->rec_samples==0) return 0;
+  if (mainw->agen_key==0&&!mainw->agen_needs_reinit) {
+    if (prb==0||mainw->rec_samples==0) return 0;
+    gbuf=(short *)g_try_malloc(prb);
+    if (!gbuf) return 0;
+    lives_memcpy(gbuf,prbuf,prb-rbytes);
+    if (rbytes>0) lives_memcpy(gbuf+(prb-rbytes)/sizeof(short),data,rbytes);
+    ofile=afile;
+  }
+  else {
+    if (rbytes==0) return 0;
+    if (fileno==-1) return 0;
+    gbuf=(short *)data;
+    prb=rbytes;
+    ofile=mainw->files[fileno];
+  }
 
-  gbuf=(short *)g_try_malloc(prb);
+  out_scale=(float)pulsed->in_arate/(float)ofile->arate;
+  swap_sign=ofile->signed_endian&AFORM_UNSIGNED;
 
-  if (!gbuf) return 0;
+  frames_out=(size_t)((gdouble)((prb/(ofile->asampsize>>3)/ofile->achans))/out_scale+.5);
 
-  if (fileno!=mainw->ascrap_file) lives_memcpy(gbuf,prbuf,prb-rbytes);
-
-  if (rbytes>0) lives_memcpy(gbuf+(prb-rbytes)/sizeof(short),data,rbytes);
-
-  frames_out=(size_t)((gdouble)((prb/(pulsed->in_asamps>>3)/pulsed->in_achans))/out_scale+.5);
+  if (mainw->agen_key==0&&!mainw->agen_needs_reinit) {
+    if (frames_out != pulsed->chunk_size) pulsed->chunk_size = frames_out;
+  }
 
   bytes_out=frames_out*ofile->achans*(ofile->asampsize>>3);
 
@@ -676,31 +688,29 @@ size_t pulse_flush_read_data(pulse_driver_t *pulsed, int fileno, size_t rbytes, 
 
   if (!holding_buff) return 0;
 
-  if (fileno!=mainw->ascrap_file && bytes_out != pulsed->chunk_size) pulsed->chunk_size = bytes_out;
-
   if (ofile->asampsize==16) {
-    sample_move_d16_d16((short *)holding_buff,gbuf,frames_out,prb,out_scale,ofile->achans,
-			pulsed->in_achans,rev_endian?SWAP_L_TO_X:0,swap_sign?SWAP_S_TO_U:0);
+    sample_move_d16_d16((short *)holding_buff,gbuf,frames_out,prb,out_scale,ofile->achans,pulsed->in_achans,pulsed->reverse_endian?SWAP_L_TO_X:0,swap_sign?SWAP_S_TO_U:0);
   }
   else {
-    sample_move_d16_d8((uint8_t *)holding_buff,gbuf,frames_out,prb,out_scale,ofile->achans,
-		       pulsed->in_achans,swap_sign?SWAP_S_TO_U:0);
+    sample_move_d16_d8((uint8_t *)holding_buff,gbuf,frames_out,prb,out_scale,ofile->achans,pulsed->in_achans,swap_sign?SWAP_S_TO_U:0);
   }
     
-  g_free(gbuf);
+  if (mainw->agen_key==0&&!mainw->agen_needs_reinit) {
+    g_free(gbuf);
+  }
+
   prb=0;
 
-  if (fileno!=mainw->ascrap_file&&mainw->rec_samples>0) {
+  if (mainw->rec_samples>0) {
     if (frames_out>mainw->rec_samples) frames_out=mainw->rec_samples;
     mainw->rec_samples-=frames_out;
   }
 
   if (mainw->bad_aud_file==NULL) {
-    size_t target=frames_out*(ofile->asampsize/8)*ofile->achans;
+    size_t target=frames_out*(ofile->asampsize/8)*ofile->achans,bytes;
     // use write not lives_write - because of potential threading issues
     bytes=write (mainw->aud_rec_fd,holding_buff,target);
     if (bytes<target) mainw->bad_aud_file=filename_from_fd(NULL,mainw->aud_rec_fd);
-    if (bytes<0) bytes=0;
   }
 
   g_free(holding_buff);

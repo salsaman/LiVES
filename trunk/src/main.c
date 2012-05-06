@@ -746,6 +746,10 @@ static void lives_init(_ign_opts *ign_opts) {
 
   prefs->rec_opts|=(REC_FPS+REC_FRAMES);
 
+  if (!((prefs->audio_player==AUD_PLAYER_JACK&&capable->has_jackd)||(prefs->audio_player==AUD_PLAYER_PULSE&&capable->has_pulse_audio))) {
+    if (prefs->rec_opts&REC_EXT_AUDIO) prefs->rec_opts^=REC_EXT_AUDIO;
+  }
+
   mainw->new_clip=-1;
   mainw->record=FALSE;
   mainw->event_list=NULL;

@@ -629,6 +629,10 @@ gboolean apply_prefs(gboolean skip_warn) {
   else if (!strncmp(audp,"sox",3)) g_snprintf(audio_player,256,"sox");
   else if (!strncmp(audp,"pulse audio",11)) g_snprintf(audio_player,256,"pulse");
   
+  if (!((prefs->audio_player==AUD_PLAYER_JACK&&capable->has_jackd)||(prefs->audio_player==AUD_PLAYER_PULSE&&capable->has_pulse_audio))) {
+    if (prefs->rec_opts&=REC_EXT_AUDIO) rec_opts^=REC_EXT_AUDIO;
+  }
+
   if (rec_opts!=prefs->rec_opts) {
     prefs->rec_opts=rec_opts;
     set_int_pref("record_opts",prefs->rec_opts);
@@ -1584,6 +1588,7 @@ static void on_audp_entry_changed (GtkWidget *audp_combo, gpointer ptr) {
     gtk_widget_set_sensitive(prefsw->checkbutton_afollow,FALSE);
     gtk_widget_set_sensitive(prefsw->raudio,FALSE);
     gtk_widget_set_sensitive(prefsw->rextaudio,FALSE);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(prefsw->rextaudio),FALSE);
   }
   if (!strncmp(audp,"jack",4)) {
     gtk_widget_set_sensitive(prefsw->checkbutton_jack_pwp,TRUE);

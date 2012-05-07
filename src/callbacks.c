@@ -3979,11 +3979,14 @@ on_record_perf_activate                      (GtkMenuItem     *menuitem,
 
       toggle_record();
 
-      if ((prefs->rec_opts&REC_EXT_AUDIO||mainw->agen_key!=0)&&
+      if ((prefs->rec_opts&REC_EXT_AUDIO||((prefs->rec_opts&REC_AUDIO)&&(mainw->agen_key!=0||mainw->agen_needs_reinit)))&&
 	  ((prefs->audio_player==AUD_PLAYER_JACK) ||
 	   (prefs->audio_player==AUD_PLAYER_PULSE))) {
 	// remove play head and add record head
 	// creat temp clip
+
+	if (prefs->rec_opts&REC_EXT_AUDIO) {
+
 
 #ifdef ENABLE_JACK
 	if (prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL) {
@@ -4035,7 +4038,7 @@ on_record_perf_activate                      (GtkMenuItem     *menuitem,
 	}
 #endif
 
-
+	}
 
 	if (mainw->ascrap_file==-1) open_ascrap_file();
 	if (mainw->ascrap_file!=-1) {
@@ -4071,11 +4074,13 @@ on_record_perf_activate                      (GtkMenuItem     *menuitem,
 	      mainw->pulsed_read->seek_pos=seek_pos;
 	      pulse_driver_uncork(mainw->pulsed_read);
 	    }
-	    else 
+	    else {
 	      pulse_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_GENERATED);
 	      mainw->rec_aseek=(double)mainw->files[mainw->ascrap_file]->aseek_pos/
 		(double)(mainw->files[mainw->ascrap_file]->arps*mainw->files[mainw->ascrap_file]->achans*mainw->files[mainw->ascrap_file]->asampsize>>3);
+	    }
 #endif
+
 	  }
 
 	}

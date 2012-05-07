@@ -4822,6 +4822,13 @@ gboolean weed_init_effect(int hotkey) {
 	}
 #endif
       }
+
+      /*      if (mainw->playing_file>0&&mainw->record&&!mainw->record_paused&&(prefs->rec_opts&REC_AUDIO)) {
+	// if recording audio, open ascrap file and add audio event
+	mainw->record=FALSE;
+	on_record_perf_activate(NULL,NULL);
+	} */
+
     }
   }
 
@@ -4925,6 +4932,12 @@ void weed_deinit_effect(int hotkey) {
     if (mainw->whentostop==STOP_ON_VID_END&&(cfile->frames==0||(mainw->loop&&cfile->achans>0&&!mainw->is_rendering&&(mainw->audio_end/cfile->fps)
 								<MAX (cfile->laudio_time,cfile->raudio_time)))) mainw->whentostop=STOP_ON_AUD_END;
 
+    /*    if (mainw->playing_file>0&&mainw->record&&!mainw->record_paused&&(prefs->rec_opts&REC_AUDIO)) {
+      // if recording audio, add audio event
+      mainw->record=FALSE;
+      on_record_perf_activate(NULL,NULL);
+      mainw->record_starting=FALSE;
+      }*/
   }
 
   if (num_in_chans==2) {

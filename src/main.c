@@ -6072,7 +6072,6 @@ void do_quick_switch (gint new_file) {
 	mainw->pulsed->in_use=TRUE;
 
 	if (mainw->agen_key==0&&!mainw->agen_needs_reinit) {
-	  LIVES_DEBUG("ABC");
 	  if (prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS) {
 	    mainw->pulsed->is_paused=mainw->files[new_file]->play_paused;
 	  }

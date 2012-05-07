@@ -920,7 +920,8 @@ gboolean process_one (gboolean visible) {
 	  (!mainw->is_rendering||(mainw->multitrack!=NULL&&!cfile->opening&&!mainw->multitrack->is_rendering))&&
 	  mainw->jackd!=NULL&&mainw->jackd->in_use) {
 	if (!(mainw->fixed_fpsd>0.||(mainw->vpp!=NULL&&mainw->vpp->fixed_fpsd>0.&&mainw->ext_playback))) {
-	  if (mainw->aud_rec_fd!=-1&&mainw->agen_key==0) mainw->currticks=lives_jack_get_time(mainw->jackd_read,TRUE);
+	  if (mainw->jackd_read!=NULL&&mainw->aud_rec_fd!=-1&&mainw->agen_key==0) 
+	    mainw->currticks=lives_jack_get_time(mainw->jackd_read,TRUE);
 	  else mainw->currticks=lives_jack_get_time(mainw->jackd,TRUE);
 	  time_source=LIVES_TIME_SOURCE_SOUNDCARD;
 	}
@@ -934,7 +935,8 @@ gboolean process_one (gboolean visible) {
 						   !cfile->opening&&!mainw->multitrack->is_rendering))&&
 	  ((mainw->pulsed!=NULL&&mainw->pulsed->in_use)||mainw->pulsed_read!=NULL)) {
 	if (!(mainw->fixed_fpsd>0.||(mainw->vpp!=NULL&&mainw->vpp->fixed_fpsd>0.&&mainw->ext_playback))) {
-	  if (mainw->aud_rec_fd!=-1&&mainw->agen_key==0&&!mainw->agen_needs_reinit) mainw->currticks=lives_pulse_get_time(mainw->pulsed_read,TRUE);
+	  if (mainw->pulsed_read!=NULL&&mainw->aud_rec_fd!=-1&&mainw->agen_key==0&&!mainw->agen_needs_reinit) 
+	    mainw->currticks=lives_pulse_get_time(mainw->pulsed_read,TRUE);
 	  else mainw->currticks=lives_pulse_get_time(mainw->pulsed,TRUE);
 	  time_source=LIVES_TIME_SOURCE_SOUNDCARD;
 	}

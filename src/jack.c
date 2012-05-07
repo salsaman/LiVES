@@ -907,6 +907,7 @@ static size_t audio_read_inner(jack_driver_t *jackd, float **in_buffer, int ofil
     size_t target=frames_out*(ofile->asampsize/8)*ofile->achans;
     // use write not lives_write - because of potential threading issues
     bytes=write (mainw->aud_rec_fd,holding_buff,target);
+
     if (bytes<target) mainw->bad_aud_file=filename_from_fd(NULL,mainw->aud_rec_fd);
     if (bytes<0) bytes=0;
   }
@@ -942,7 +943,7 @@ static int audio_read (nframes_t nframes, void *arg) {
     in_buffer[i] = (float *) jack_port_get_buffer(jackd->input_port[i], nframes);
   }
 
-  rbytes=audio_read_inner(jackd,in_buffer,mainw->playing_file,nframes,out_scale,mainw->jackd_read->reverse_endian,
+  rbytes=audio_read_inner(jackd,in_buffer,jackd->playing_file,nframes,out_scale,mainw->jackd_read->reverse_endian,
 			   out_unsigned,rbytes);
 
   jackd->frames_written+=nframes;

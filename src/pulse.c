@@ -26,7 +26,7 @@ static guint pulse_server_rate=0;
 
 #define PULSE_READ_BYTES 48000
 
-static guchar prbuf[PULSE_READ_BYTES];
+static guchar prbuf[PULSE_READ_BYTES*2];
 
 static size_t prb=0;
 
@@ -234,7 +234,7 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
        if (pulsed->fd<0) break;
        xseek=seek=atol((char *)msg->data);
        if (seek<0.) xseek=0.;
-       if (!pulsed->mute) {
+       if (mainw->agen_key==0&&!mainw->agen_needs_reinit) {
 	 lseek(pulsed->fd,xseek,SEEK_SET);
        }
        pulsed->seek_pos=seek;
@@ -288,15 +288,16 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
        return;
      }
 
-     if (G_LIKELY(pulseFramesAvailable>0&&(pulsed->read_abuf>-1||
+
+      if (G_LIKELY(pulseFramesAvailable>0&&(pulsed->read_abuf>-1||
 					   (pulsed->aPlayPtr!=NULL
 					    &&pulsed->in_achans>0)||
 					   ((mainw->agen_key!=0||mainw->agen_needs_reinit)&&mainw->multitrack==NULL) 
 					   ))) {
 
-       if (mainw->playing_file>-1&&pulsed->read_abuf>-1) {
+        if (mainw->playing_file>-1&&pulsed->read_abuf>-1) {
 	 // playing back from memory buffers instead of from file
-	 // this is used in multitrack
+ 	 // this is used in multitrack
 	 from_memory=TRUE;
 
 	 numFramesToWrite=pulseFramesAvailable;
@@ -306,8 +307,9 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
        }
        else {
 	 if (G_LIKELY(pulsed->fd>=0)) {
-	   
-	   if (pulsed->playing_file==mainw->ascrap_file&&mainw->playing_file>=-1&&mainw->files[mainw->playing_file]->achans>0) {
+
+	   if ((pulsed->playing_file==mainw->ascrap_file&&!mainw->preview)&&mainw->playing_file>=-1
+	       &&mainw->files[mainw->playing_file]->achans>0) {
 	     xfile=mainw->files[mainw->playing_file];
 	   }
 
@@ -659,10 +661,15 @@ size_t pulse_flush_read_data(pulse_driver_t *pulsed, int fileno, size_t rbytes, 
 
   if (mainw->agen_key==0&&!mainw->agen_needs_reinit) {
     if (prb==0||mainw->rec_samples==0) return 0;
-    gbuf=(short *)g_try_malloc(prb);
-    if (!gbuf) return 0;
-    lives_memcpy(gbuf,prbuf,prb-rbytes);
-    if (rbytes>0) lives_memcpy(gbuf+(prb-rbytes)/sizeof(short),data,rbytes);
+    if (prb<=PULSE_READ_BYTES*2&&rbytes>0) {
+      gbuf=(short *)data;
+    }
+    else {
+      gbuf=(short *)g_try_malloc(prb);
+      if (!gbuf) return 0;
+      lives_memcpy(gbuf,prbuf,prb-rbytes);
+      if (rbytes>0) lives_memcpy(gbuf+(prb-rbytes)/sizeof(short),data,rbytes);
+    }
     ofile=afile;
   }
   else {
@@ -695,7 +702,7 @@ size_t pulse_flush_read_data(pulse_driver_t *pulsed, int fileno, size_t rbytes, 
     sample_move_d16_d8((uint8_t *)holding_buff,gbuf,frames_out,prb,out_scale,ofile->achans,pulsed->in_achans,swap_sign?SWAP_S_TO_U:0);
   }
     
-  if (mainw->agen_key==0&&!mainw->agen_needs_reinit) {
+  if (gbuf!=(short *)data) {
     g_free(gbuf);
   }
 
@@ -756,7 +763,11 @@ static void pulse_audio_read_process (pa_stream *pstream, size_t nbytes, void *a
     return;
   }
 
-  pulse_flush_read_data(pulsed,mainw->playing_file,rbytes,pulsed->reverse_endian,data);
+  if (prb<=PULSE_READ_BYTES*2) {
+    lives_memcpy(&prbuf[prb-rbytes],data,rbytes);
+    pulse_flush_read_data(pulsed,mainw->playing_file,prb,pulsed->reverse_endian,prbuf);
+  }
+  else pulse_flush_read_data(pulsed,mainw->playing_file,rbytes,pulsed->reverse_endian,data);
 
   pa_stream_drop(pulsed->pstream);
 

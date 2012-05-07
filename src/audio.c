@@ -762,7 +762,7 @@ int64_t render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdoubl
   int64_t tot_frames=0l;
 
   int render_block_size=RENDER_BLOCK_SIZE;
-
+  
   if (out_achans*nfiles*tsamples==0) return 0l;
 
   if (!storedfdsset) audio_reset_stored_fnames();
@@ -925,6 +925,7 @@ int64_t render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdoubl
     return tsamples;
   }
 
+
   // we don't want to use more than MAX_AUDIO_MEM bytes
   // (numbers will be much larger than examples given)
 
@@ -998,6 +999,7 @@ int64_t render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdoubl
 
       if (from_files[track]==mainw->ascrap_file) {
 	// be forgiving with the ascrap file
+
 	if (mainw->read_failed) mainw->read_failed=FALSE;
       }
 
@@ -1160,13 +1162,13 @@ void jack_rec_audio_to_clip(gint fileno, gint old_file, lives_rec_audio_type_t r
 
   g_free(outfilename);
 
-  if (rec_type==RECA_EXTERNAL) {
+  if (rec_type==RECA_GENERATED) {
+    mainw->jackd->playing_file=fileno;
+  }
+  else {
     mainw->jackd_read=jack_get_driver(0,FALSE);
     mainw->jackd_read->playing_file=fileno;
     mainw->jackd_read->frames_written=0;
-  }
-  else if (rec_type==RECA_GENERATED) {
-    mainw->jackd->playing_file=fileno;
   }
 
 
@@ -1290,13 +1292,13 @@ void pulse_rec_audio_to_clip(gint fileno, gint old_file, lives_rec_audio_type_t 
     }
   } while (retval==LIVES_RETRY);
 
-  if (rec_type==RECA_EXTERNAL) {
+  if (rec_type==RECA_GENERATED) {
+    mainw->pulsed->playing_file=fileno;
+  }
+  else {
     mainw->pulsed_read=pulse_get_driver(FALSE);
     mainw->pulsed_read->playing_file=fileno;
     mainw->pulsed_read->frames_written=0;
-  }
-  else if (rec_type==RECA_GENERATED) {
-    mainw->pulsed->playing_file=fileno;
   }
 
 #ifdef IS_MINGW
@@ -1456,6 +1458,7 @@ static lives_audio_track_state_t *aframe_to_atstate(weed_plant_t *event) {
 
   int btoffs=mainw->multitrack!=NULL?mainw->multitrack->opts.back_audio_tracks:1;
 
+
   for (i=0;i<num_aclips;i+=2) {
     if (aclips[i+1]>0) { // else ignore
       atrack=aclips[i];
@@ -1596,7 +1599,6 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
 
   if (st_event!=NULL) {
     // this is only called for the first buffered read
-
     event=st_event;
     last_tc=get_event_timecode(event);
 
@@ -1627,8 +1629,12 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
     // start of the track buffer
 
 
-    if (event!=get_first_event(event_list))
+    if (event!=get_first_event(event_list)) 
       atstate=get_audio_and_effects_state_at(event_list,event,TRUE,exact);
+
+    // process audio updates at this frame
+    else atstate=aframe_to_atstate(event);
+
     
     if (atstate!=NULL) {
       
@@ -1848,7 +1854,6 @@ gboolean resync_audio(gint frameno) {
   // if recording external audio, we are intrinsically in sync
   if (mainw->record&&(prefs->rec_opts&REC_EXT_AUDIO)) return TRUE;
 
-  if (mainw->agen_key!=0||mainw->agen_needs_reinit) return TRUE;
 
 #ifdef ENABLE_JACK
   if (prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL) {
@@ -1858,9 +1863,11 @@ gboolean resync_audio(gint frameno) {
 	if (jack_try_reconnect()) jack_audio_seek_frame(mainw->jackd,frameno);
       }
 
-      mainw->rec_aclip=mainw->current_file;
-      mainw->rec_avel=cfile->pb_fps/cfile->fps;
-      mainw->rec_aseek=(gdouble)mainw->jackd->seek_pos/(gdouble)(cfile->arate*cfile->achans*cfile->asampsize/8);
+      if (mainw->agen_key==0&&!mainw->agen_needs_reinit) {
+	mainw->rec_aclip=mainw->current_file;
+	mainw->rec_avel=cfile->pb_fps/cfile->fps;
+	mainw->rec_aseek=(gdouble)mainw->jackd->seek_pos/(gdouble)(cfile->arate*cfile->achans*cfile->asampsize/8);
+      }
     }
 
     return TRUE;
@@ -1873,9 +1880,11 @@ gboolean resync_audio(gint frameno) {
       if (!pulse_audio_seek_frame(mainw->pulsed,frameno)) {
 	if (pulse_try_reconnect()) pulse_audio_seek_frame(mainw->pulsed,frameno);
       }
-      mainw->rec_aclip=mainw->current_file;
-      mainw->rec_avel=cfile->pb_fps/cfile->fps;
-      mainw->rec_aseek=(gdouble)mainw->pulsed->seek_pos/(gdouble)(cfile->arate*cfile->achans*cfile->asampsize/8);
+      if (mainw->agen_key==0&&!mainw->agen_needs_reinit) {
+	mainw->rec_aclip=mainw->current_file;
+	mainw->rec_avel=cfile->pb_fps/cfile->fps;
+	mainw->rec_aseek=(gdouble)mainw->pulsed->seek_pos/(gdouble)(cfile->arate*cfile->achans*cfile->asampsize/8);
+      }
     }
     return TRUE;
   }

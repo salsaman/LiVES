@@ -740,7 +740,7 @@ AC_SUBST(WEED_PLUGIN_UTILS_LIBS)
 
 AM_CONDITIONAL(HAVE_SYSTEM_WEED_PLUGIN_UTILS,$HAVE_SYSTEM_WEED_PLUGIN_UTILS)
 
-
+AM_CONDITIONAL(BUILD_EXPERIMENTAL,false)
 
 dnl AC_OUTPUT needs to be more parameterised !!!!!!
 
@@ -780,6 +780,7 @@ lives-plugins/weed-plugins/Makefile
 lives-plugins/weed-plugins/gdk/Makefile
 lives-plugins/weed-plugins/cairo/Makefile
 lives-plugins/weed-plugins/supercollider/Makefile
+lives-plugins/weed-plugins/experimental/Makefile
 lives-plugins/marcos-encoders/Makefile
 ])
 

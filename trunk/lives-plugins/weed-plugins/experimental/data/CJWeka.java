@@ -232,14 +232,14 @@ public class CJWeka extends AbstractClassifier
 	      my_attributes.add(a); 
 	  }
 
-	  classvals.add("a");
-	  classvals.add("b");
-	  classvals.add("c");
-	  classvals.add("d");
-	  classvals.add("e");
-	  classvals.add("f");
-	  classvals.add("g");
-	  classvals.add("h");
+	  classvals.add("0");
+	  classvals.add("1");
+	  classvals.add("2");
+	  classvals.add("3");
+	  classvals.add("4");
+	  classvals.add("5");
+	  classvals.add("6");
+	  classvals.add("7");
 
 	  Attribute cls = new Attribute("class",classvals);
 

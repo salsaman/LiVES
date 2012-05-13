@@ -86,7 +86,23 @@ static void make_floatdata(double *data, int ndata, char *tclass) {
 
 }
 
+static int parse_output(const char *sout) {
+  double val,max=0;
+  char *sptr=(char *)sout;
 
+  int maxi=0;
+
+  register int i;
+
+  for (i=0;i<NCLASSES;i++) {
+    val=strtod(sptr,&sptr);
+    if (val>max) maxi=i;
+  }
+
+  return maxi;
+
+
+}
 
 
 
@@ -142,6 +158,7 @@ int weka_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   int error,rc;
 
   weed_plant_t **in_params=weed_get_plantptr_array(inst,"in_parameters",&error);
+  weed_plant_t **out_params=weed_get_plantptr_array(inst,"out_parameters",&error);
 
   char sout[1024];
 
@@ -151,6 +168,8 @@ int weka_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   char *tclass=NULL;
 
   int ndata=weed_leaf_num_elements(in_params[0],"value");
+
+  int mostlikely;
 
   memset(&sout, 0, 1024);
 
@@ -163,15 +182,13 @@ int weka_process(weed_plant_t *inst, weed_timecode_t timestamp) {
     printf("N inst is %s\n",sout);
     break;
 
-  case MODE_TRAIN:
-    break;
-
   case MODE_LIVE:
     rc=cjProxyLoadModelString(&proxy,savefile,sout);
     make_floatdata(data,ndata,tclass);
     rc=cjProxyRunModelString(&proxy,floatdata,sout);
     printf("Result was |%s|\n",sout);
-    //floatdata=parse_output(sout);
+    mostlikely=parse_output(sout);
+    weed_set_int_value(out_params[0],"value",mostlikely);
     break;
 
   default:
@@ -181,6 +198,7 @@ int weka_process(weed_plant_t *inst, weed_timecode_t timestamp) {
 
   weed_free(data);
   weed_free(in_params);
+  weed_free(out_params);
 
   return 0;
 }
@@ -197,9 +215,9 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 
 
     weed_plant_t *in_params[]={weed_float_init("data","_Data",0.,-1000000000.,1000000000.),weed_switch_init("train","_Training mode",WEED_TRUE),
-			       weed_text_init("class","_Class",""),NULL};
+			       weed_integer_init("class","_Class",0,0,NCLASSES-1),NULL};
 
-    weed_plant_t *out_params[]={weed_out_param_integer_init("class",0,0,7),NULL};
+    weed_plant_t *out_params[]={weed_out_param_integer_init("class",0,0,NCLASSES-1),NULL};
 
     weed_plant_t *filter_class=weed_filter_class_init("weka-elman","salsaman",1,0,&weka_init,&weka_process,&weka_deinit,NULL,NULL,in_params,out_params);
 

@@ -3,7 +3,7 @@
 LIBS =
 
 #NOTE - install-exec-local MUST go in the first subdir ONLY !!
-SUBDIRS = gdk cairo supercollider
+SUBDIRS = gdk cairo supercollider experimental
 
 fxpluginslibdir = "$(libdir)/$(PACKAGE)/plugins/effects/realtime/weed"
 

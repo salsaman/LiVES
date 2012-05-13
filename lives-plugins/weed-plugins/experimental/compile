@@ -1,0 +1,1 @@
+$HOME/src/jdk1.7.0_04/bin/javac -classpath ./data:$HOME/masters/jni/java/src/main/java -Xlint:deprecation -Xlint:unchecked  ./data/CJWeka.java ./data/cj/CJProxy.java

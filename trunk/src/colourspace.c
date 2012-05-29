@@ -7358,7 +7358,7 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
   case WEED_PALETTE_RGB24:
   case WEED_PALETTE_BGR24:
     rowstride=width*3;
-    framesize=CEIL(width*height*3,32);
+    framesize=CEIL(rowstride*height,32);
     pixel_data=(guchar *)calloc(framesize>>2,4);
     if (pixel_data==NULL) return;
     weed_set_voidptr_value(layer,"pixel_data",pixel_data);

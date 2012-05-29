@@ -64,7 +64,7 @@ static cjClass_t proxyClass;
 static cjObject_t proxy;
 
 static pmode_t mode;
-static char floatdata[1024];
+static char floatdata[8192];
 
 /**
  * Calls CJWeka proxy via CJ facade
@@ -74,15 +74,18 @@ static char floatdata[1024];
 #define NCLASSES 8 // number of distinct classes - this is currently hardcoded in CJWeka
 
 
-static void make_floatdata(double *data, int ndata, char *tclass) {
+static void make_floatdata(double *data, int ndata, int tclass) {
   register int i;
+  char tmp[1024];
 
   memset(floatdata,0,1024);
 
   for (i=0;i<ndata;i++) {
-    snprintf(floatdata,1024,"%s %8f",floatdata,data[i]);
+    snprintf(tmp,1024,"%8f ",data[i]);
+    strncat(floatdata,tmp,1024);
   }
-  if (tclass!=NULL) snprintf(floatdata,1024,"%s %s",floatdata,tclass);
+  snprintf(tmp,1024,"%d",tclass);
+  strncat(floatdata,tmp,1024);
 
 }
 
@@ -128,12 +131,17 @@ int weka_init(weed_plant_t *inst) {
     // train with data
     rc=cjProxyBuildModelString(&proxy,"",sout);
     rc=cjProxySaveModelString(&proxy,savefile,sout);
+    rc=cjProxyResetModelString(&proxy,"",sout);
     mode=MODE_LIVE;
+    rc=cjProxyLoadModelString(&proxy,savefile,sout);
     weed_set_boolean_value(gui,"hidden",WEED_TRUE); // hide Class in param
   }
   else if (mode==MODE_LIVE && train) {
     mode=MODE_STORE;
     weed_set_boolean_value(gui,"hidden",WEED_FALSE); // show Class in param
+  }
+  else if (mode==MODE_LIVE) {
+    rc=cjProxyResetModelString(&proxy,"",sout);
   }
 
   return WEED_NO_ERROR;
@@ -165,7 +173,7 @@ int weka_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   char *savefile="";
 
   double *data=weed_get_double_array(in_params[0],"value",&error);
-  char *tclass=NULL;
+  int tclass;
 
   int ndata=weed_leaf_num_elements(in_params[0],"value");
 
@@ -175,16 +183,14 @@ int weka_process(weed_plant_t *inst, weed_timecode_t timestamp) {
 
   switch (mode) {
   case MODE_STORE:
-    tclass=weed_get_string_value(in_params[2],"value",&error);
+    tclass=weed_get_int_value(in_params[2],"value",&error);
     make_floatdata(data,ndata,tclass);
-    weed_free(tclass);
     rc=cjProxyAddInstanceString(&proxy,floatdata,sout);
-    printf("N inst is %s\n",sout);
+    printf("N inst is %s, %s %d\n",sout,floatdata,tclass);
     break;
 
   case MODE_LIVE:
-    rc=cjProxyLoadModelString(&proxy,savefile,sout);
-    make_floatdata(data,ndata,tclass);
+    make_floatdata(data,ndata,-1);
     rc=cjProxyRunModelString(&proxy,floatdata,sout);
     printf("Result was |%s|\n",sout);
     mostlikely=parse_output(sout);
@@ -224,6 +230,8 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
     weed_set_int_value(in_params[0],"flags",WEED_PARAMETER_VARIABLE_ELEMENTS);
     weed_set_int_value(in_params[1],"flags",WEED_PARAMETER_REINIT_ON_VALUE_CHANGE);
 
+
+    //setenv("LD_LIBRARY_PATH","$LD_LIBRARY_PATH:$HOME/src/jdk1.7.0_04/jre/lib/amd64/server",1); // path to libjvm.so
 
     memset(&jvm, 0, sizeof(cjJVM_t));
     memset(&proxyClass, 0, sizeof(cjClass_t));

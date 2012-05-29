@@ -159,7 +159,7 @@ public class CJWeka extends AbstractClassifier
         m_normalizeClass = true;
         m_normalizeAttributes = true;
         m_useNomToBin = true;
-        m_numEpochs = 600;
+        m_numEpochs = 4000;
         m_randomSeed = 0;
         m_hiddenLayers = 2;
         m_learningRate = .3;
@@ -234,14 +234,14 @@ public class CJWeka extends AbstractClassifier
 
 	  classvals.add("0");
 	  classvals.add("1");
-	  classvals.add("2");
+	  /*	  classvals.add("2");
 	  classvals.add("3");
 	  classvals.add("4");
 	  classvals.add("5");
 	  classvals.add("6");
-	  classvals.add("7");
+	  classvals.add("7");*/
 
-	  Attribute cls = new Attribute("class",classvals);
+	  Attribute cls = new Attribute("class", classvals);
 
 	  my_attributes.add(cls); 
 
@@ -253,7 +253,7 @@ public class CJWeka extends AbstractClassifier
       Instance inst = this.floatstringToInst(floatstring,ii,true);
       ii.add(inst);
 
-      retbuf.append(ii.numClasses()); // return number of Instances in ii
+      retbuf.append(ii.numInstances()); // return number of Instances in ii
       return retbuf.toString();
    }
 
@@ -349,6 +349,23 @@ public class CJWeka extends AbstractClassifier
    }
 
 
+   public Object resetModel(Object args) throws Exception
+   {
+      if (!(args instanceof String))
+      {
+         throw new RuntimeException("Invalid type for execute");
+      }
+
+      StringBuffer retbuf = new StringBuffer("");
+
+      // function code goes in here
+      resetNetwork();
+
+      return retbuf.toString();
+   }
+
+
+
 
     ///////////////////////////////////////////////////////////
 
@@ -363,15 +380,17 @@ public class CJWeka extends AbstractClassifier
 	if (hasClass) nvals--;
 
 	for (j=0; j<nvals; j++) {
-	    Float f = new Float(flostr[j]);
-	    i.setValue(j, f);
+	    if (!flostr[j].equals("")) {
+		Float f = new Float(flostr[j]);
+		i.setValue(j, f);
+	    }
 	}
 
 	i.setDataset(ii);
 
 	if (hasClass) {
 	    Attribute clsAttrib = ii.classAttribute();
-	    clsAttrib.addStringValue(flostr[j]);
+	    //clsAttrib.addStringValue(flostr[j]);
 	    i.setValue(clsAttrib, flostr[j]);
 	}
 
@@ -997,7 +1016,7 @@ public class CJWeka extends AbstractClassifier
         result.disableAll();
 
         // attributes
-        result.enable(Capability.NOMINAL_ATTRIBUTES);
+	result.enable(Capability.NOMINAL_ATTRIBUTES);
         result.enable(Capability.NUMERIC_ATTRIBUTES);
         result.enable(Capability.DATE_ATTRIBUTES);
         result.enable(Capability.MISSING_VALUES);

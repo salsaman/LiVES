@@ -251,6 +251,7 @@ lives_fx_cat_t weed_filter_categorise (weed_plant_t *pl, int in_channels, int ou
   weed_plant_t *filt=pl;
   int filter_flags,error;
   gboolean has_out_params=FALSE;
+  gboolean has_in_params=FALSE;
   gboolean all_out_alpha=TRUE;
   gboolean all_in_alpha=TRUE;
   register int i;
@@ -293,6 +294,7 @@ lives_fx_cat_t weed_filter_categorise (weed_plant_t *pl, int in_channels, int ou
 
   filter_flags=weed_get_int_value(filt,"flags",&error);
   if (weed_plant_has_leaf(filt,"out_parameter_templates")) has_out_params=TRUE;
+  if (weed_plant_has_leaf(filt,"in_parameter_templates")) has_in_params=TRUE;
   if (filter_flags&WEED_FILTER_IS_CONVERTER) return LIVES_FX_CAT_CONVERTER;
   if (in_channels==0&&out_channels>0&&all_out_alpha) return LIVES_FX_CAT_DATA_GENERATOR;
   if (in_channels==0&&out_channels>0) {
@@ -308,6 +310,8 @@ lives_fx_cat_t weed_filter_categorise (weed_plant_t *pl, int in_channels, int ou
   if (in_channels==1&&out_channels==1) return LIVES_FX_CAT_EFFECT;
   if (in_channels>0&&out_channels==0&&has_out_params) return LIVES_FX_CAT_ANALYSER;
   if (in_channels>0&&out_channels==0) return LIVES_FX_CAT_TAP;
+  if (in_channels==0&&out_channels==0&&has_out_params&&has_in_params) return LIVES_FX_CAT_DATA_PROCESSOR;
+  if (in_channels==0&&out_channels==0&&has_out_params) return LIVES_FX_CAT_DATA_SOURCE;
   if (in_channels==0&&out_channels==0) return LIVES_FX_CAT_UTILITY;
   return LIVES_FX_CAT_NONE;
 }
@@ -1218,7 +1222,7 @@ void weed_reinit_all(void) {
       if (mainw->rte&(GU641<<i)) {
 	mainw->osc_block=TRUE;
 	if ((instance=key_to_instance[i][key_modes[i]])==NULL) continue;
-	if (enabled_in_channels(instance,FALSE)==0&&!is_pure_audio(instance,FALSE)) continue;
+	if (enabled_in_channels(instance,FALSE)==0&&enabled_out_channels>0&&!is_pure_audio(instance,FALSE)) continue;
 	weed_reinit_effect(instance,TRUE);
       }
     }
@@ -1444,10 +1448,30 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
 
   if (weed_plant_has_leaf(filter,"flags")) 
     filter_flags=weed_get_int_value(filter,"flags",&error);
- 
+
   // here, in_tracks and out_tracks map our layers to in_channels and out_channels in the filter
-  if (!weed_plant_has_leaf(inst,"in_channels")||(in_channels=weed_get_plantptr_array(inst,"in_channels",&error))==NULL) 
+  if (!weed_plant_has_leaf(inst,"in_channels")||(in_channels=weed_get_plantptr_array(inst,"in_channels",&error))==NULL) {
+    if ((!weed_plant_has_leaf(inst,"out_channels")||(out_channels=weed_get_plantptr_array(inst,"out_channels",&error))==NULL)
+	&&weed_plant_has_leaf(inst,"out_parameters")) {
+      // data processing effect; just call the process_func
+      weed_set_double_value(inst,"fps",cfile->pb_fps);
+
+      // see if we can multithread
+      if ((prefs->nfx_threads=future_prefs->nfx_threads)>1 && 
+	  filter_flags&WEED_FILTER_HINT_MAY_THREAD) retval=process_func_threaded(inst,out_channels,tc);
+      else {
+	// normal single threaded version
+	int ret;
+	weed_leaf_get(filter,"process_func",0,(void *)&process_func_ptr_ptr);
+	process_func=process_func_ptr_ptr[0];
+	ret=(*process_func)(inst,tc);
+	if (ret==WEED_ERROR_PLUGIN_INVALID) retval=FILTER_ERROR_MUST_RELOAD;
+      }
+      return retval;
+    }
+
     return FILTER_ERROR_NO_IN_CHANNELS;
+  }
 
   if (get_enabled_channel(inst,0,TRUE)==NULL) {
     // we process generators elsewhere
@@ -3248,6 +3272,8 @@ static gint check_for_lives(weed_plant_t *filter, int filter_idx) {
   // filters can also have 1 mandatory input and no outputs and out parameters
   // (video analyzer)
 
+  // they may have no outs provided they have out parameters (data sources or processors)
+
   // all channels used must support a limited range of palettes (for now)
 
   // filters can now have any number of mandatory in alphas, the effect will not be run unless the channels are filled 
@@ -3353,7 +3379,7 @@ static gint check_for_lives(weed_plant_t *filter, int filter_idx) {
   if (weed_plant_has_leaf(filter,"out_parameter_templates")) has_out_params=TRUE;
 
   if ((chans_out_mand>1&&!all_out_alpha)||((chans_out_mand+chans_out_opt_max+achans_out_mand<1)
-					   &&(chans_in_mand!=1||!has_out_params))) return 11;
+					   &&(!has_out_params))) return 11;
   if (achans_out_mand>1||(achans_out_mand==1&&chans_out_mand>0)) return 14;
   if (achans_in_mand>=1&&achans_out_mand==0) return 15;
 
@@ -4435,6 +4461,9 @@ static void set_default_channel_sizes (weed_plant_t **in_channels, weed_plant_t 
   int *rowstrides,def_rowstride;
   gboolean is_gen=TRUE;
 
+  // ignore filters with no in/out channels (e.g. data processors)
+  if ((in_channels==NULL||in_channels[0]==NULL)&&(out_channels==NULL||out_channels[0]==NULL)) return;
+
   for (i=0;in_channels!=NULL&&in_channels[i]!=NULL&&
 	 !(weed_plant_has_leaf(in_channels[i],"disabled")&&
 	   weed_get_boolean_value(in_channels[i],"disabled",&error)==WEED_TRUE);i++) {
@@ -4583,7 +4612,7 @@ gboolean weed_init_effect(int hotkey) {
 
   gint num_tr_applied;
   gint rte_keys=mainw->rte_keys;
-  gint inc_count;
+  gint inc_count,outc_count;
   gint ntracks;
   int error;
   int idx;
@@ -4604,6 +4633,7 @@ gboolean weed_init_effect(int hotkey) {
   idx=key_to_fx[hotkey][key_modes[hotkey]];
 
   inc_count=enabled_in_channels(weed_filters[idx],FALSE);
+  outc_count=enabled_in_channels(weed_filters[idx],FALSE);
 
   // check first if it is an audio generator
 
@@ -4633,7 +4663,7 @@ gboolean weed_init_effect(int hotkey) {
   // TODO - block template channel changes
   // we must stop any old generators
 
-  if (inc_count==0&&hotkey!=fg_generator_key&&mainw->num_tr_applied>0&&mainw->blend_file!=-1&&
+  if (inc_count==0&&outc_count>0&&hotkey!=fg_generator_key&&mainw->num_tr_applied>0&&mainw->blend_file!=-1&&
       mainw->blend_file!=mainw->current_file&&mainw->files[mainw->blend_file]!=NULL&&
       mainw->files[mainw->blend_file]->clip_type==CLIP_TYPE_GENERATOR&&inc_count==0&&!is_audio_gen) {
     if (bg_gen_to_start==-1) {
@@ -4644,7 +4674,7 @@ gboolean weed_init_effect(int hotkey) {
   }
 
   if (mainw->current_file>0&&cfile->clip_type==CLIP_TYPE_GENERATOR&&
-      (fg_modeswitch||(inc_count==0&&mainw->num_tr_applied==0))&&!is_audio_gen) {
+      (fg_modeswitch||(inc_count==0&&outc_count>0&&mainw->num_tr_applied==0))&&!is_audio_gen) {
     if (mainw->noswitch||mainw->is_processing||mainw->preview) return FALSE; // stopping fg gen will cause clip to switch
     if (mainw->playing_file>-1&&mainw->whentostop==STOP_ON_VID_END&&inc_count!=0) {
       mainw->cancelled=CANCEL_GENERATOR_END;
@@ -4667,7 +4697,7 @@ gboolean weed_init_effect(int hotkey) {
       mainw->blend_file=mainw->current_file;
     }
   }
-  else if (inc_count==0&&!is_audio_gen) {
+  else if (inc_count==0&&outc_count>0&&!is_audio_gen) {
     // aha - a generator
      if (mainw->playing_file==-1) {
       // if we are not playing, we will postpone creating the instance
@@ -4736,7 +4766,7 @@ gboolean weed_init_effect(int hotkey) {
     set_param_gui_readonly(new_instance);
   }
 
-  if (inc_count==0&&!is_audio_gen) {
+  if (inc_count==0&&outc_count>0&&!is_audio_gen) {
     // generator start
     if (mainw->num_tr_applied>0&&!fg_modeswitch&&mainw->current_file>-1&&mainw->playing_file>-1) {
       // transition is on, make into bg clip
@@ -4790,7 +4820,7 @@ gboolean weed_init_effect(int hotkey) {
     mainw->blend_factor=weed_get_blend_factor(rte_keys);
   }
 
-  if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)&&inc_count>0) {
+  if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)&&(inc_count>0||outc_count==0)) {
     // place this synchronous with the preceding frame
     event_list=append_filter_init_event (mainw->event_list,mainw->currticks,
 					 idx,-1,hotkey,new_instance);
@@ -4889,7 +4919,7 @@ void weed_deinit_effect(int hotkey) {
   gboolean is_modeswitch=FALSE;
   gboolean was_transition=FALSE;
   gboolean is_audio_gen=FALSE;
-  gint num_in_chans;
+  gint num_in_chans,num_out_chans;
 
   if (hotkey<0) {
     is_modeswitch=TRUE;
@@ -4901,10 +4931,11 @@ void weed_deinit_effect(int hotkey) {
   if ((instance=key_to_instance[hotkey][key_modes[hotkey]])==NULL) return;
 
   num_in_chans=enabled_in_channels(instance,FALSE);
+  num_out_chans=enabled_in_channels(instance,FALSE);
 
   if (hotkey+1==mainw->agen_key) is_audio_gen=TRUE;
 
-  if (num_in_chans==0&&!is_audio_gen) {
+  if (num_in_chans==0&&num_out_chans>0&&!is_audio_gen) {
     // is (video) generator
     if (mainw->playing_file>-1&&mainw->whentostop==STOP_ON_VID_END&&(hotkey!=bg_generator_key)) {
       mainw->cancelled=CANCEL_GENERATOR_END;

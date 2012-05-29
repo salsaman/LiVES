@@ -581,7 +581,7 @@ the plugin after weed_setup(), and should not be altered by the host.
  * "in_channel_templates"    : WEED_SEED_PLANTPTR, list of 0 or more elements: array of inp channel templates, '''type''' of the referenced plant MUST be  WEED_PLANT_CHANNEL_TEMPLATE
  * "out_channel_templates"   : WEED_SEED_PLANTPTR, list of 0 or more elements : array of out channel templates, '''type''' of the referenced plant MUST be  WEED_PLANT_CHANNEL_TEMPLATE
  * "in_parameter_templates"  : WEED_SEED_PLANTPTR, list of 0 or more elements : array of in parameter templates, '''type''' of the referenced plant MUST be  WEED_PLANT_PARAMETER_TEMPLATE
- * "out_parameter_templates" : WEED_SEED_PLANTPTR, list of 0 or more elements : array of out parameter templates, '''type''' of the referenced plant MUST be  WEED_PLANT_PARAMETER_TEMPLATE
+ * "out_parameter_templates" : WEED_SEED_PLANTPTR, list of 0 or more elements : array of out parameter templates, '''type''' of the referenced plant MUST be  WEED_PLANT_PARAMETER_TEMPLATE.
 
  * "description"  : WEED_SEED_STRING : filter description
  * "url"          : WEED_SEED_STRING : filter URL

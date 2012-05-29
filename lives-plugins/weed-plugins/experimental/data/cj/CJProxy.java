@@ -13,5 +13,6 @@ public interface CJProxy
    public Object saveModel(Object args) throws Exception;
    public Object loadModel(Object args) throws Exception;
    public Object runModel(Object args) throws Exception;
+   public Object resetModel(Object args) throws Exception;
 }
 

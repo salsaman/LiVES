@@ -254,9 +254,10 @@ gboolean pconx_convert_value_data(weed_plant_t *dparam, weed_plant_t *sparam) {
 
   //  sflags=weed_get_int_value(sptmpl,"flags",&error);
   dflags=weed_get_int_value(dptmpl,"flags",&error);
+  if ((dflags&WEED_PARAMETER_VARIABLE_ELEMENTS)&&!(dflags&WEED_PARAMETER_ELEMENT_PER_CHANNEL)) ndvals=nsvals;
 
-  if (((dtype=weed_leaf_seed_type(dparam,"value"))==(stype=weed_leaf_seed_type(sparam,"value"))) &&
-      ((nsvals==ndvals) || (dflags&WEED_PARAMETER_VARIABLE_ELEMENTS))) {
+  if ((dtype=weed_leaf_seed_type(dparam,"value"))==(stype=weed_leaf_seed_type(sparam,"value")) &&
+      nsvals==ndvals) {
     // values of same type and number, -> simpĺe copy
     weed_leaf_copy(dparam,"value",sparam,"value");
     return TRUE;

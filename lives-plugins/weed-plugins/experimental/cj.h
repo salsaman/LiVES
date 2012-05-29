@@ -14,7 +14,7 @@
  */
 
 // Constants 
-#define CJ_STRMAX 1000
+#define CJ_STRMAX 8192
 #define CJ_MAX_METHODS 20
 
 // Error codes 

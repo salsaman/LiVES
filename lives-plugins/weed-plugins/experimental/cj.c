@@ -32,6 +32,7 @@ int jstring2cstring(cjJVM_t *pJVM, jstring js, char *cs);
 #define CJ_PROXY_SAVE_MODEL_METHOD 5
 #define CJ_PROXY_LOAD_MODEL_METHOD 6
 #define CJ_PROXY_RUN_MODEL_METHOD 7
+#define CJ_PROXY_RESET_MODEL_METHOD 8
 
 static cjMethod_t proxyMethods[] =
 {
@@ -42,7 +43,8 @@ static cjMethod_t proxyMethods[] =
    {"buildModel", "(Ljava/lang/Object;)Ljava/lang/Object;", NULL},
    {"saveModel", "(Ljava/lang/Object;)Ljava/lang/Object;", NULL},
    {"loadModel", "(Ljava/lang/Object;)Ljava/lang/Object;", NULL},
-   {"runModel", "(Ljava/lang/Object;)Ljava/lang/Object;", NULL}
+   {"runModel", "(Ljava/lang/Object;)Ljava/lang/Object;", NULL},
+   {"resetModel", "(Ljava/lang/Object;)Ljava/lang/Object;", NULL}
 };
 
 // java.lang.Integer class spec
@@ -169,7 +171,7 @@ int cjClassCreate(cjClass_t *pClass)
 
    // Get methods
    //for (i = 0; i < pClass->numMethods; i++)
-   for (i = 0; i < 8; i++)
+   for (i = 0; i < 9; i++)
    {
       if (rc == CJ_ERR_SUCCESS)
       {
@@ -320,6 +322,11 @@ int cjProxyLoadModel(cjObject_t *pProxy, jobject data, jobject *pOutData)
 int cjProxyRunModel(cjObject_t *pProxy, jobject data, jobject *pOutData)
 {
    return callProxyMethod(pProxy, data, pOutData, CJ_PROXY_RUN_MODEL_METHOD);
+}
+
+int cjProxyResetModel(cjObject_t *pProxy, jobject data, jobject *pOutData)
+{
+   return callProxyMethod(pProxy, data, pOutData, CJ_PROXY_RESET_MODEL_METHOD);
 }
 
 int callProxyMethod(cjObject_t *pProxy, jobject data, jobject *pOutData,
@@ -662,6 +669,55 @@ int cjProxyRunModelString(cjObject_t *pProxy, char *inData, char *outData)
    if (rc == CJ_ERR_SUCCESS)
    {
       rc = cjProxyRunModel(pProxy, instring, &outobject);
+   }
+
+   // copy return object into a buffer
+   if (rc == CJ_ERR_SUCCESS)
+   {
+      rc = jstring2cstring(jvm, outobject, outData);
+   }
+
+   // free the string if it was created
+   if (instring != NULL)
+   {
+      // nothing to do
+   }
+
+   return rc;
+}
+
+
+
+
+int cjProxyResetModelString(cjObject_t *pProxy, char *inData, char *outData)
+{
+   int rc = CJ_ERR_SUCCESS;
+   cjClass_t *pClass = pProxy->clazz;
+   cjJVM_t *jvm = pClass->jvm;
+   JNIEnv *env = jvm->jni;
+   jboolean isException = JNI_FALSE;
+   jstring instring = NULL;
+   jstring outobject;
+
+   // Create string
+   if (rc == CJ_ERR_SUCCESS)
+   {
+      instring = (*env)->NewStringUTF(env, inData);
+      if (instring == NULL)
+      {
+         rc = CJ_ERR_MEM;
+      }
+      isException = checkException(jvm);
+      if (isException)
+      {
+         rc = CJ_ERR_JNI;
+      }
+   }
+
+   // Call proxy exec on string
+   if (rc == CJ_ERR_SUCCESS)
+   {
+      rc = cjProxyResetModel(pProxy, instring, &outobject);
    }
 
    // copy return object into a buffer

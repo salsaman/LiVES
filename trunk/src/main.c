@@ -1851,15 +1851,19 @@ capability *get_capabilities (void) {
 	     (tmp=g_filename_from_utf8 (safer_bfile,-1,NULL,NULL,NULL)));
 
   g_free(tmp);
+
+  g_snprintf(string,256,"%s report \"%s\" 2>/dev/null",prefs->backend_sync,
+	     (tmp=g_filename_from_utf8 (safer_bfile,-1,NULL,NULL,NULL)));
 #else
 
   g_snprintf(prefs->backend_sync,PATH_MAX,"perl \"%s\\smogrify\"",prefs->prefix_dir);
   g_snprintf(prefs->backend,PATH_MAX,"START /MIN /B perl \"%s\\smogrify\"",prefs->prefix_dir);
 
-#endif
-
   g_snprintf(string,256,"%s report \"%s\" 2>NUL",prefs->backend_sync,
 	     (tmp=g_filename_from_utf8 (safer_bfile,-1,NULL,NULL,NULL)));
+
+#endif
+
 
   g_free(tmp);
 

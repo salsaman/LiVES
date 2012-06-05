@@ -2175,7 +2175,10 @@ GList *filter_encoders_by_img_ext(GList *encoders, const gchar *img_ext) {
       continue;
     }
 
-    if (!strcmp(img_ext,"jpg")) continue;
+    if (!strcmp(img_ext,"jpg")) {
+      list=listnext;
+      continue;
+    }
 
     if ((encoder_capabilities=plugin_request(PLUGIN_ENCODERS,(gchar *)list->data,"get_capabilities"))==NULL) {
       g_free(list->data);

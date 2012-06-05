@@ -1643,18 +1643,25 @@ if (defined($ARGV[0])) {
 
 	# if the last frame has zero size, delete it
 	if ($count>0) {
+
 	    $name=&mkname($count);
-	    while (-f "$name$img_ext" && -z "$name$img_ext" && $count > 1) {
+	    while ($count > 0 && -f "$name$img_ext" && -z "$name$img_ext") {
 		unlink "$name$img_ext";
-		$count--;
+		$name=&mkname(--$count);
 	    }
+	    if ($count==0) {
+		if ($img_ext==".png") {
+		    &sig_error("Your version of mplayer/ffmpeg may be broken","See http://bugzilla.mplayerhq.hu/show_bug.cgi?id=2071"," ","You can work around this by switching to jpeg output in Preferences/Decoding.");
+		}
+	    }
+
 	    # double check image size
 	    $name=&mkname(1);
 	    $imresact="none";
 	    &get_image_size("$name$img_ext");
 	    if ($panic||$hsize==-1) {
 		unlink $pidfile;
-		exit 1;
+		&sig_error;
 	    }
 	}
 
@@ -1733,7 +1740,6 @@ if (defined($ARGV[0])) {
 		$count--;
 	    }
 	}
-
 
 	$af_size= -s $audio_out;
 	if (-d $curtmpdir) {

@@ -4633,7 +4633,7 @@ gboolean weed_init_effect(int hotkey) {
   idx=key_to_fx[hotkey][key_modes[hotkey]];
 
   inc_count=enabled_in_channels(weed_filters[idx],FALSE);
-  outc_count=enabled_in_channels(weed_filters[idx],FALSE);
+  outc_count=enabled_out_channels(weed_filters[idx],FALSE);
 
   // check first if it is an audio generator
 
@@ -4931,7 +4931,7 @@ void weed_deinit_effect(int hotkey) {
   if ((instance=key_to_instance[hotkey][key_modes[hotkey]])==NULL) return;
 
   num_in_chans=enabled_in_channels(instance,FALSE);
-  num_out_chans=enabled_in_channels(instance,FALSE);
+  num_out_chans=enabled_out_channels(instance,FALSE);
 
   if (hotkey+1==mainw->agen_key) is_audio_gen=TRUE;
 

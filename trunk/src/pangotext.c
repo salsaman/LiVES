@@ -91,12 +91,16 @@ char **get_font_list(void) {
   return font_list;
 }
 
-int font_cmp(const void *p1, const void *p2) {  
+static int font_cmp(const void *p1, const void *p2) {  
   const char *s1 = (const char *)(*(char **)p1);
   const char *s2 = (const char *)(*(char **)p2);
-  return(strcasecmp(s1, s2));
+  char *u1 = g_utf8_casefold(s1, -1);
+  char *u2 = g_utf8_casefold(s2, -1);
+  int ret = strcmp(u1, u2);
+  g_free(u1);
+  g_free(u2);
+  return ret;
 }
-
 
 weed_plant_t *render_text_to_layer(weed_plant_t *layer, const char *text, const char *fontname,
   double size, lives_text_mode_t mode, lives_colRGBA32_t *fg_col, lives_colRGBA32_t *bg_col,

@@ -229,7 +229,7 @@ static LiVESPixbuf *make_thumb (lives_mt *mt, int file, int width, int height, i
       if (lives_pixbuf_get_width(pixbuf)!=width||lives_pixbuf_get_height(pixbuf)!=height) {
 	// ...at_scale is inaccurate
 	thumbnail=lives_pixbuf_scale_simple(pixbuf,width,height,LIVES_INTERP_BEST);
-	gdk_pixbuf_unref(pixbuf);
+	lives_object_unref(pixbuf);
       }
       else thumbnail=pixbuf;
     }
@@ -245,7 +245,7 @@ static LiVESPixbuf *make_thumb (lives_mt *mt, int file, int width, int height, i
 	tried_all=TRUE;
       }
       frame=nframe;
-      if (thumbnail!=NULL) gdk_pixbuf_unref(thumbnail);
+      if (thumbnail!=NULL) lives_object_unref(thumbnail);
       thumbnail=NULL;
     }
 
@@ -329,7 +329,7 @@ static void set_cursor_style(lives_mt *mt, gint cstyle, gint width, gint height,
 		cpixels+=width<<2;
 	      }
 	    }
-	    gdk_pixbuf_unref(thumbnail);
+	    lives_object_unref(thumbnail);
 	  }
 	}
       }
@@ -370,7 +370,7 @@ static void set_cursor_style(lives_mt *mt, gint cstyle, gint width, gint height,
 
   mt->cursor = gdk_cursor_new_from_pixbuf (gdk_display_get_default(), pixbuf, hsx, hsy);
   gdk_window_set_cursor (mt->window->window, mt->cursor);
-  gdk_pixbuf_unref (pixbuf);
+  lives_object_unref (pixbuf);
 
 }
 
@@ -817,7 +817,7 @@ static void draw_block (lives_mt *mt,track_rect *block, gint x1, gint x2) {
 	    // create a small thumb
 	    framenum=get_frame_event_frame(event,track);
 	    
-	    if (thumbnail!=NULL) gdk_pixbuf_unref(thumbnail);
+	    if (thumbnail!=NULL) lives_object_unref(thumbnail);
 	    thumbnail=NULL;
 	    if (framenum!=last_framenum) thumbnail=make_thumb(mt,filenum,width,eventbox->allocation.height-1,
 							      framenum,FALSE);
@@ -840,7 +840,7 @@ static void draw_block (lives_mt *mt,track_rect *block, gint x1, gint x2) {
 	    mt->redraw_block=FALSE;
 	  }
 	}
-	if (thumbnail!=NULL) gdk_pixbuf_unref(thumbnail);
+	if (thumbnail!=NULL) lives_object_unref(thumbnail);
 	cairo_destroy (cr);
       }
       else {
@@ -1034,7 +1034,7 @@ static void redraw_eventbox(lives_mt *mt, GtkWidget *eventbox) {
   GdkPixbuf *bgimg;
 
   if ((bgimg=(GdkPixbuf *)g_object_get_data(G_OBJECT(eventbox), "bgimg"))!=NULL) {
-    gdk_pixbuf_unref(bgimg);
+    lives_object_unref(bgimg);
     g_object_set_data(G_OBJECT(eventbox), "bgimg",NULL);
   }
 
@@ -1047,7 +1047,7 @@ static void redraw_eventbox(lives_mt *mt, GtkWidget *eventbox) {
     if (cfile->achans>0) {
       xeventbox=(GtkWidget *)g_object_get_data(G_OBJECT(eventbox),"achan0");
       if ((bgimg=(GdkPixbuf *)g_object_get_data(G_OBJECT(xeventbox), "bgimg"))!=NULL) {
-	gdk_pixbuf_unref(bgimg);
+	lives_object_unref(bgimg);
 	g_object_set_data(G_OBJECT(xeventbox), "bgimg",NULL);
       }
       
@@ -1057,7 +1057,7 @@ static void redraw_eventbox(lives_mt *mt, GtkWidget *eventbox) {
       if (cfile->achans>1) {
 	xeventbox=(GtkWidget *)g_object_get_data(G_OBJECT(eventbox),"achan1");
 	if ((bgimg=(GdkPixbuf *)g_object_get_data(G_OBJECT(xeventbox), "bgimg"))!=NULL) {
-	  gdk_pixbuf_unref(bgimg);
+	  lives_object_unref(bgimg);
 	  g_object_set_data(G_OBJECT(xeventbox), "bgimg",NULL);
 	}
 	
@@ -2686,7 +2686,7 @@ void mt_show_current_frame(lives_mt *mt, gboolean return_layer) {
       }
     }
     if (mt->sepwin_pixbuf!=NULL&&mt->sepwin_pixbuf!=mainw->imframe) {
-      gdk_pixbuf_unref(mt->sepwin_pixbuf);
+      lives_object_unref(mt->sepwin_pixbuf);
       mt->sepwin_pixbuf=NULL;
     }
     if (mt->framedraw==NULL) mt->sepwin_pixbuf=pixbuf;
@@ -2715,7 +2715,7 @@ void mt_show_current_frame(lives_mt *mt, gboolean return_layer) {
       gtk_widget_queue_draw(mt->play_box);
     }
 
-    if (mt->sepwin_pixbuf!=NULL&&mt->sepwin_pixbuf!=mainw->imframe) gdk_pixbuf_unref(mt->sepwin_pixbuf);
+    if (mt->sepwin_pixbuf!=NULL&&mt->sepwin_pixbuf!=mainw->imframe) lives_object_unref(mt->sepwin_pixbuf);
     mt->sepwin_pixbuf=mainw->imframe;
   }
 
@@ -7950,7 +7950,7 @@ void delete_audio_track(lives_mt *mt, GtkWidget *eventbox, gboolean full) {
   }
 
   if ((bgimg=(GdkPixbuf *)g_object_get_data(G_OBJECT(eventbox), "bgimg"))!=NULL) {
-    gdk_pixbuf_unref(bgimg);
+    lives_object_unref(bgimg);
   }
 
   if ((st_image=(GdkPixbuf *)g_object_get_data(G_OBJECT(eventbox),"backup_image"))!=NULL) {
@@ -7971,7 +7971,7 @@ void delete_audio_track(lives_mt *mt, GtkWidget *eventbox, gboolean full) {
   xeventbox=(GtkWidget *)g_object_get_data(G_OBJECT(eventbox),"achan0");
   if (xeventbox!=NULL) {
     if ((bgimg=(GdkPixbuf *)g_object_get_data(G_OBJECT(xeventbox), "bgimg"))!=NULL) {
-      gdk_pixbuf_unref(bgimg);
+      lives_object_unref(bgimg);
     }
     
     if ((st_image=(GdkPixbuf *)g_object_get_data(G_OBJECT(xeventbox),"backup_image"))!=NULL) {
@@ -7983,7 +7983,7 @@ void delete_audio_track(lives_mt *mt, GtkWidget *eventbox, gboolean full) {
     xeventbox=(GtkWidget *)g_object_get_data(G_OBJECT(eventbox),"achan1");
     if (xeventbox!=NULL) {
       if ((bgimg=(GdkPixbuf *)g_object_get_data(G_OBJECT(xeventbox), "bgimg"))!=NULL) {
-	gdk_pixbuf_unref(bgimg);
+	lives_object_unref(bgimg);
       }
       
       if ((st_image=(GdkPixbuf *)g_object_get_data(G_OBJECT(xeventbox),"backup_image"))!=NULL) {
@@ -8354,7 +8354,7 @@ gboolean multitrack_delete (lives_mt *mt, gboolean save_layout) {
     gtk_widget_set_app_paintable(mainw->playarea,TRUE);
   }
 
-  if (mt->sepwin_pixbuf!=NULL&&mt->sepwin_pixbuf!=mainw->imframe) gdk_pixbuf_unref(mt->sepwin_pixbuf);
+  if (mt->sepwin_pixbuf!=NULL&&mt->sepwin_pixbuf!=mainw->imframe) lives_object_unref(mt->sepwin_pixbuf);
   mt->sepwin_pixbuf=NULL;
 
   // free our track_rects
@@ -8967,7 +8967,7 @@ void delete_video_track(lives_mt *mt, gint layer, gboolean full) {
   }
 
   if ((bgimg=(GdkPixbuf *)g_object_get_data(G_OBJECT(eventbox), "bgimg"))!=NULL) {
-    gdk_pixbuf_unref(bgimg);
+    lives_object_unref(bgimg);
   }
 
   if ((st_image=(GdkPixbuf *)g_object_get_data(G_OBJECT(eventbox),"backup_image"))!=NULL) {
@@ -9691,7 +9691,7 @@ void mt_init_clips (lives_mt *mt, gint orig_file, gboolean add) {
 
       thumb_image=gtk_image_new();
       gtk_image_set_from_pixbuf(GTK_IMAGE(thumb_image),thumbnail);
-      if (thumbnail!=NULL) gdk_pixbuf_unref(thumbnail);
+      if (thumbnail!=NULL) lives_object_unref(thumbnail);
       gtk_container_add (GTK_CONTAINER (eventbox), vbox);
       gtk_box_pack_start (GTK_BOX (mt->clip_inner_box), eventbox, FALSE, FALSE, 0);
       if (palette->style&STYLE_4) {
@@ -10432,7 +10432,7 @@ static void update_in_image(lives_mt *mt) {
 
   thumb=make_thumb(mt,filenum,width,height,frame_start,FALSE);
   gtk_image_set_from_pixbuf (GTK_IMAGE(mt->in_image),thumb);
-  if (thumb!=NULL) gdk_pixbuf_unref(thumb);
+  if (thumb!=NULL) lives_object_unref(thumb);
 }
 
 
@@ -10460,7 +10460,7 @@ static void update_out_image(lives_mt *mt, weed_timecode_t end_tc) {
 
   thumb=make_thumb(mt,filenum,width,height,frame_end,FALSE);
   gtk_image_set_from_pixbuf (GTK_IMAGE(mt->out_image),thumb);
-  if (thumb!=NULL) gdk_pixbuf_unref(thumb);
+  if (thumb!=NULL) lives_object_unref(thumb);
 }
 
 
@@ -11446,7 +11446,7 @@ void polymorph (lives_mt *mt, lives_mt_poly_state_t poly) {
       // start image
       thumb=make_thumb(mt,filenum,width,height,frame_start,FALSE);
       gtk_image_set_from_pixbuf (GTK_IMAGE(mt->in_image),thumb);
-      if (thumb!=NULL) gdk_pixbuf_unref(thumb);
+      if (thumb!=NULL) lives_object_unref(thumb);
     }
     else {
       gtk_container_set_border_width (GTK_CONTAINER (mt->poly_box), 10);
@@ -11524,7 +11524,7 @@ void polymorph (lives_mt *mt, lives_mt_poly_state_t poly) {
       // end image
       thumb=make_thumb(mt,filenum,width,height,frame_end,FALSE);
       gtk_image_set_from_pixbuf (GTK_IMAGE(mt->out_image),thumb);
-      if (thumb!=NULL) gdk_pixbuf_unref(thumb);
+      if (thumb!=NULL) lives_object_unref(thumb);
       out_end_range=count_resampled_frames(mainw->files[filenum]->frames,mainw->files[filenum]->fps,mt->fps)/mt->fps;
     }
     else out_end_range=q_gint64(mainw->files[filenum]->laudio_time*U_SEC,mt->fps)/U_SEC;

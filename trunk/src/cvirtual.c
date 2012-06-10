@@ -319,7 +319,7 @@ boolean virtual_to_images(int sfileno, int sframe, int eframe, boolean update_pr
       } while (retval==LIVES_RETRY);
 
       if (oname!=NULL) g_free(oname);
-      if (pixbuf!=NULL) gdk_pixbuf_unref(pixbuf);
+      if (pixbuf!=NULL) lives_object_unref(pixbuf);
       pixbuf=NULL;
 
       if (retval==LIVES_CANCEL) return FALSE;

@@ -342,7 +342,7 @@ void set_vpp(gboolean set_in_prefs) {
   // Video Playback Plugin
 
   if (strlen (future_prefs->vpp_name)) {
-    if (!g_strcasecmp(future_prefs->vpp_name,mainw->none_string)) {
+    if (!g_ascii_strcasecmp(future_prefs->vpp_name,mainw->none_string)) {
       if (mainw->vpp!=NULL) {
 	if (mainw->ext_playback) vid_playback_plugin_exit();
 	close_vid_playback_plugin(mainw->vpp);
@@ -994,7 +994,7 @@ gboolean apply_prefs(gboolean skip_warn) {
   }
 
   // the theme
-  if (strcmp(future_prefs->theme,theme)&&!(!strcasecmp(future_prefs->theme,"none")&&!strcmp(theme,mainw->none_string))) {
+  if (strcmp(future_prefs->theme,theme)&&!(!g_ascii_strcasecmp(future_prefs->theme,"none")&&!strcmp(theme,mainw->none_string))) {
     if (strcmp(theme,mainw->none_string)) {
       g_snprintf(future_prefs->theme,64,"%s",theme);
     }
@@ -1469,7 +1469,7 @@ void after_vpp_changed (GtkWidget *vpp_combo, gpointer advbutton) {
   const gchar *newvpp=gtk_combo_box_get_active_text(GTK_COMBO_BOX(vpp_combo));
   _vid_playback_plugin *tmpvpp;
 
-  if (!g_strcasecmp(newvpp,mainw->none_string)) {
+  if (!g_ascii_strcasecmp(newvpp,mainw->none_string)) {
     gtk_widget_set_sensitive (GTK_WIDGET(advbutton), FALSE);
   }
   else {
@@ -4970,7 +4970,7 @@ _prefsw *create_prefs_dialog (void) {
   gtk_box_pack_start (GTK_BOX (hbox93), prefsw->theme_combo, FALSE, FALSE, 0);
   gtk_widget_show(prefsw->theme_combo);
    
-  if (strcasecmp(future_prefs->theme, "none")) {
+  if (g_ascii_strcasecmp(future_prefs->theme, "none")) {
     theme = g_strdup(future_prefs->theme);
   }
   else theme = g_strdup(mainw->none_string);

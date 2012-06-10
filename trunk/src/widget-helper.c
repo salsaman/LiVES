@@ -18,6 +18,14 @@
 // basic functions
 
 
+
+LIVES_INLINE void lives_object_unref(LiVESObjectPtr object) {
+#ifdef GUI_GTK
+  g_object_unref(object);
+#endif
+}
+
+
 LIVES_INLINE LiVESWidget *lives_dialog_get_content_area(LiVESDialog *dialog) {
 #ifdef GUI_GTK
 

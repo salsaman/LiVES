@@ -27,6 +27,8 @@ typedef GdkPixbufDestroyNotify            LiVESPixbufDestroyNotify;
 
 typedef GdkInterpType                     LiVESInterpType;
 
+typedef gpointer                          LiVESObjectPtr;
+
 #define LIVES_INTERP_BEST   GDK_INTERP_HYPER
 #define LIVES_INTERP_NORMAL GDK_INTERP_BILINEAR
 #define LIVES_INTERP_FAST   GDK_INTERP_NEAREST
@@ -79,6 +81,7 @@ typedef (void *)(LiVESPixbufDestroyNotify(uchar *, gpointer));
 
 // basic functions (wrappers for Toolkit functions)
 
+void lives_object_unref(LiVESObjectPtr object);
 
 int lives_pixbuf_get_width(const LiVESPixbuf *pixbuf);
 int lives_pixbuf_get_height(const LiVESPixbuf *pixbuf);

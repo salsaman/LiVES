@@ -528,7 +528,7 @@ static gboolean pre_init(void) {
 
   needs_update=needs_update; // stop compiler warnings
 
-  if (!strcasecmp(prefs->theme,"none")) return FALSE;
+  if (!g_ascii_strcasecmp(prefs->theme,"none")) return FALSE;
 
   return TRUE;
 
@@ -3157,7 +3157,7 @@ void load_start_image(gint frame) {
     }
     if (start_pixbuf!=NULL) {
       if (G_IS_OBJECT(start_pixbuf)) {
-	gdk_pixbuf_unref(start_pixbuf);
+	lives_object_unref(start_pixbuf);
       }
     }
     threaded_dialog_spin();
@@ -3192,7 +3192,7 @@ void load_start_image(gint frame) {
     }
     if (start_pixbuf!=NULL) {
       if (G_IS_OBJECT(start_pixbuf)) {
-	gdk_pixbuf_unref(start_pixbuf);
+	lives_object_unref(start_pixbuf);
       }
     }
 
@@ -3278,7 +3278,7 @@ void load_end_image(gint frame) {
     }
     if (end_pixbuf!=NULL) {
       if (G_IS_OBJECT(end_pixbuf)) {
-	gdk_pixbuf_unref(end_pixbuf);
+	lives_object_unref(end_pixbuf);
       }
     }
     threaded_dialog_spin();
@@ -3313,7 +3313,7 @@ void load_end_image(gint frame) {
     }
     if (end_pixbuf!=NULL) {
       if (G_IS_OBJECT(end_pixbuf)) {
-	gdk_pixbuf_unref(end_pixbuf);
+	lives_object_unref(end_pixbuf);
       }
     }
 
@@ -3360,7 +3360,7 @@ void load_preview_image(gboolean update_always) {
       mainw->pw_exp_is_blocked=TRUE;
     }
     gtk_image_set_from_pixbuf(GTK_IMAGE(mainw->preview_image),pixbuf);
-    gdk_pixbuf_unref(pixbuf);
+    lives_object_unref(pixbuf);
     mainw->preview_frame=1;
     g_signal_handler_block(mainw->preview_spinbutton,mainw->preview_spin_func);
     gtk_spin_button_set_range(GTK_SPIN_BUTTON(mainw->preview_spinbutton),1,1);
@@ -3479,7 +3479,7 @@ void load_preview_image(gboolean update_always) {
       break;
     }
   }
-  if (pixbuf!=NULL) gdk_pixbuf_unref(pixbuf);
+  if (pixbuf!=NULL) lives_object_unref(pixbuf);
 }
 
 #ifndef NO_PROG_LOAD
@@ -4034,7 +4034,7 @@ LiVESPixbuf *pull_lives_pixbuf_at_size(int clip, int frame, const char *image_ex
     threaded_dialog_spin();
     // TODO - could use resize plugin here
     pixbuf2=lives_pixbuf_scale_simple(pixbuf,width,height,interp);
-    gdk_pixbuf_unref(pixbuf);
+    lives_object_unref(pixbuf);
     threaded_dialog_spin();
     pixbuf=pixbuf2;
   }
@@ -5184,7 +5184,7 @@ void load_frame_image(gint frame) {
 			     mainw->current_file!=mainw->scrap_file) 
       get_play_times();
     
-    gdk_pixbuf_unref(pixbuf);
+    lives_object_unref(pixbuf);
     
 #ifdef ENABLE_OSC
     // format is now msg|timecode|fgclip|fgframe|fgfps|
@@ -5245,7 +5245,7 @@ void load_frame_image(gint frame) {
       cairo_paint (cr);
       cairo_destroy (cr);
 
-      gdk_pixbuf_unref(pixbuf);
+      lives_object_unref(pixbuf);
       cfile->frames=frame;
     }
     else {

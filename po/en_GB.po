@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2012-04-15 09:37-0300\n"
+"POT-Creation-Date: 2012-06-10 13:04-0300\n"
 "PO-Revision-Date: 2012-02-01 11:59+0000\n"
 "Last-Translator: Anthony Harrington <untaintableangel@hotmail.co.uk>\n"
 "Language-Team: English (United Kingdom) <en_GB@li.org>\n"
@@ -101,47 +101,47 @@ msgid "_Resize All Frames"
 msgstr "_Resize All Frames"
 
 #. TRANSLATORS: text saying "Any", for encoder and output format (as in "does not matter")
-#: src/main.c:806
+#: src/main.c:810
 msgid "Any"
 msgstr "Any"
 
 #. TRANSLATORS: text saying "None", for playback plugin name (as in "none specified")
-#: src/main.c:808
+#: src/main.c:812
 msgid "None"
 msgstr "None"
 
 #. TRANSLATORS: text saying "recommended", for plugin names, etc.
-#: src/main.c:810
+#: src/main.c:814
 msgid "recommended"
 msgstr "recommended"
 
 #. TRANSLATORS: text saying "disabled", (as in "not enabled")
-#: src/main.c:812
+#: src/main.c:816
 msgid "disabled !"
 msgstr "disabled !"
 
 #. TRANSLATORS: text saying "**The current layout**", to warn users that the current layout is affected
-#: src/main.c:814
+#: src/main.c:818
 msgid "**The current layout**"
 msgstr "**The current layout**"
 
-#: src/main.c:1382
+#: src/main.c:1386
 msgid "Loading realtime effect plugins..."
 msgstr "Loading realtime effect plugins..."
 
-#: src/main.c:1446
+#: src/main.c:1450
 msgid "Starting jack audio server..."
 msgstr "Starting jack audio server..."
 
-#: src/main.c:1448
+#: src/main.c:1452
 msgid "Starting jack transport server..."
 msgstr "Starting jack transport server..."
 
-#: src/main.c:1449
+#: src/main.c:1453
 msgid "Connecting to jack transport server..."
 msgstr "Connecting to jack transport server..."
 
-#: src/main.c:1479
+#: src/main.c:1483
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -160,104 +160,104 @@ msgstr ""
 "\n"
 "Alternatively, try to start lives with either \"lives -jackopts 16\", or "
 
-#: src/main.c:1507
+#: src/main.c:1511
 msgid "Starting pulse audio server..."
 msgstr "Starting pulse audio server..."
 
-#: src/main.c:1568
+#: src/main.c:1572
 msgid "Checking optional dependencies:"
 msgstr "Checking optional dependencies:"
 
-#: src/main.c:1569
+#: src/main.c:1573
 msgid "mplayer...detected..."
 msgstr "mplayer...detected..."
 
-#: src/main.c:1570
+#: src/main.c:1574
 msgid "mplayer...NOT DETECTED..."
 msgstr "mplayer...NOT DETECTED..."
 
-#: src/main.c:1571
+#: src/main.c:1575
 msgid "convert...detected..."
 msgstr "convert...detected..."
 
-#: src/main.c:1572
+#: src/main.c:1576
 msgid "convert...NOT DETECTED..."
 msgstr "convert...NOT DETECTED..."
 
-#: src/main.c:1573
+#: src/main.c:1577
 msgid "composite...detected..."
 msgstr "composite...detected..."
 
-#: src/main.c:1574
+#: src/main.c:1578
 msgid "composite...NOT DETECTED..."
 msgstr "composite...NOT DETECTED..."
 
-#: src/main.c:1575
+#: src/main.c:1579
 msgid "sox...detected\n"
 msgstr "sox...detected\n"
 
-#: src/main.c:1576
+#: src/main.c:1580
 msgid "sox...NOT DETECTED\n"
 msgstr "sox...NOT DETECTED\n"
 
-#: src/main.c:1577
+#: src/main.c:1581
 msgid "cdda2wav...detected..."
 msgstr "cdda2wav...detected..."
 
-#: src/main.c:1578
+#: src/main.c:1582
 msgid "cdda2wav...NOT DETECTED..."
 msgstr "cdda2wav...NOT DETECTED..."
 
-#: src/main.c:1579
+#: src/main.c:1583
 msgid "jackd...detected..."
 msgstr "jackd...detected..."
 
-#: src/main.c:1580
+#: src/main.c:1584
 msgid "jackd...NOT DETECTED..."
 msgstr "jackd...NOT DETECTED..."
 
-#: src/main.c:1581
+#: src/main.c:1585
 msgid "pulse audio...detected..."
 msgstr "pulse audio...detected..."
 
-#: src/main.c:1582
+#: src/main.c:1586
 msgid "pulse audio...NOT DETECTED..."
 msgstr "pulse audio...NOT DETECTED..."
 
-#: src/main.c:1583
+#: src/main.c:1587
 msgid "python...detected..."
 msgstr "python...detected..."
 
-#: src/main.c:1584
+#: src/main.c:1588
 msgid "python...NOT DETECTED..."
 msgstr "python...NOT DETECTED..."
 
-#: src/main.c:1585
+#: src/main.c:1589
 msgid "dvgrab...detected..."
 msgstr "dvgrab...detected..."
 
-#: src/main.c:1586
+#: src/main.c:1590
 msgid "dvgrab...NOT DETECTED..."
 msgstr "dvgrab...NOT DETECTED..."
 
-#: src/main.c:1587
+#: src/main.c:1591
 msgid "xwininfo...detected..."
 msgstr "xwininfo...detected..."
 
-#: src/main.c:1588
+#: src/main.c:1592
 msgid "xwininfo...NOT DETECTED..."
 msgstr "xwininfo...NOT DETECTED..."
 
-#: src/main.c:1594
+#: src/main.c:1598
 #, fuzzy
 msgid "Windows"
 msgstr "_Close Window"
 
-#: src/main.c:1596
+#: src/main.c:1600
 msgid "UNKNOWN - please patch me !"
 msgstr "UNKNOWN - please patch me !"
 
-#: src/main.c:1600
+#: src/main.c:1604
 #, c-format
 msgid ""
 "\n"
@@ -268,22 +268,22 @@ msgstr ""
 "\n"
 "Window manager reports as \"%s\"; "
 
-#: src/main.c:1603
+#: src/main.c:1607
 #, c-format
 msgid "number of monitors detected: %d\n"
 msgstr "number of monitors detected: %d\n"
 
-#: src/main.c:1606
+#: src/main.c:1610
 #, c-format
 msgid "Number of CPUs detected: %d\n"
 msgstr "Number of CPUs detected: %d\n"
 
-#: src/main.c:1609
+#: src/main.c:1613
 #, c-format
 msgid "Temp directory is %s\n"
 msgstr "Temp directory is %s\n"
 
-#: src/main.c:1613
+#: src/main.c:1617
 msgid ""
 "WARNING - this version of LiVES was compiled without either\n"
 "jack or pulse audio support.\n"
@@ -293,15 +293,15 @@ msgstr ""
 "jack or pulse audio support.\n"
 "Many audio features will be unavailable.\n"
 
-#: src/main.c:1616
+#: src/main.c:1620
 msgid "Compiled with jack support, good !\n"
 msgstr "Compiled with jack support, good !\n"
 
-#: src/main.c:1619
+#: src/main.c:1623
 msgid "Compiled with pulse audio support, wonderful !\n"
 msgstr "Compiled with pulse audio support, wonderful !\n"
 
-#: src/main.c:1623
+#: src/main.c:1627
 #, c-format
 msgid ""
 "Welcome to LiVES version %s.\n"
@@ -310,7 +310,7 @@ msgstr ""
 "Welcome to LiVES version %s.\n"
 "\n"
 
-#: src/main.c:2048
+#: src/main.c:2056
 #, c-format
 msgid ""
 "\n"
@@ -319,73 +319,73 @@ msgstr ""
 "\n"
 "Startup syntax is: %s [opts] [filename [start_time] [frames]]\n"
 
-#: src/main.c:2049
+#: src/main.c:2057
 msgid "Where: filename is the name of a media file or backup file.\n"
 msgstr "Where: filename is the name of a media file or backup file.\n"
 
-#: src/main.c:2050
+#: src/main.c:2058
 msgid "start_time : filename start time in seconds\n"
 msgstr "start_time : filename start time in seconds\n"
 
-#: src/main.c:2051
+#: src/main.c:2059
 msgid "frames : maximum number of frames to open\n"
 msgstr "frames : maximum number of frames to open\n"
 
-#: src/main.c:2053
+#: src/main.c:2061
 msgid "opts can be:\n"
 msgstr "opts can be:\n"
 
-#: src/main.c:2054
+#: src/main.c:2062
 msgid "-help            : show this help text and exit\n"
 msgstr "-help            : show this help text and exit\n"
 
-#: src/main.c:2055
+#: src/main.c:2063
 msgid "-tmpdir <tempdir>: use alternate working directory (e.g /var/ramdisk)\n"
 msgstr ""
 "-tmpdir <tempdir>: use alternate working directory (e.g /var/ramdisk)\n"
 
-#: src/main.c:2056
+#: src/main.c:2064
 msgid "-set <setname>   : autoload clip set setname\n"
 msgstr "-set <setname>   : autoload clip set setname\n"
 
-#: src/main.c:2057
+#: src/main.c:2065
 msgid "-noset           : do not load any set on startup\n"
 msgstr "-noset           : do not load any set on startup\n"
 
-#: src/main.c:2058
+#: src/main.c:2066
 msgid "-norecover       : force no-loading of crash recovery\n"
 msgstr "-norecover       : force no-loading of crash recovery\n"
 
-#: src/main.c:2059
+#: src/main.c:2067
 msgid "-recover         : force loading of crash recovery\n"
 msgstr "-recover         : force loading of crash recovery\n"
 
-#: src/main.c:2060
+#: src/main.c:2068
 msgid "-nothreaddialog  : doe nothing - retained for backwards compatibility\n"
 msgstr ""
 "-nothreaddialog  : does nothing - retained for backwards compatibility\n"
 
-#: src/main.c:2061
+#: src/main.c:2069
 msgid "-nogui           : do not show the gui\n"
 msgstr "-nogui           : do not show the gui\n"
 
-#: src/main.c:2062
+#: src/main.c:2070
 msgid "-nosplash        : do not show the splash window\n"
 msgstr "-nosplash        : do not show the splash window\n"
 
-#: src/main.c:2063
+#: src/main.c:2071
 msgid "-noplaywin       : do not show the play window\n"
 msgstr "-noplaywin       : do not show the play window\n"
 
-#: src/main.c:2064
+#: src/main.c:2072
 msgid "-startup-ce      : start in clip editor mode\n"
 msgstr "-startup-ce      : start in clip editor mode\n"
 
-#: src/main.c:2065
+#: src/main.c:2073
 msgid "-startup-mt      : start in multitrack mode\n"
 msgstr "-startup-mt      : start in multitrack mode\n"
 
-#: src/main.c:2066
+#: src/main.c:2074
 msgid ""
 "-fxmodesmax <n>  : allow <n> modes per effect key (minimum is 1, default is "
 "8)\n"
@@ -393,30 +393,30 @@ msgstr ""
 "-fxmodesmax <n>  : allow <n> modes per effect key (minimum is 1, default is "
 "8)\n"
 
-#: src/main.c:2068
+#: src/main.c:2076
 msgid "-oscstart <port> : start OSC listener on UDP port <port>\n"
 msgstr "-oscstart <port> : start OSC listener on UDP port <port>\n"
 
-#: src/main.c:2069
+#: src/main.c:2077
 msgid "-nooscstart      : do not start OSC listener\n"
 msgstr "-nooscstart      : do not start OSC listener\n"
 
-#: src/main.c:2071
+#: src/main.c:2079
 msgid ""
 "-aplayer <ap>    : start with selected audio player. <ap> can be mplayer"
 msgstr ""
 "-aplayer <ap>    : start with selected audio player. <ap> may be mplayer"
 
 #. TRANSLATORS: pulse (audio)
-#: src/main.c:2074
+#: src/main.c:2082
 msgid ", pulse"
 msgstr ", pulse"
 
-#: src/main.c:2077
+#: src/main.c:2085
 msgid ", sox or jack\n"
 msgstr ", sox or jack\n"
 
-#: src/main.c:2078
+#: src/main.c:2086
 msgid ""
 "-jackopts <opts>    : opts is a bitmap of jack startup options [1 = jack "
 "transport client, 2 = jack transport master, 4 = start jack transport "
@@ -426,15 +426,15 @@ msgstr ""
 "transport client, 2 = jack transport master, 4 = start jack transport "
 "server, 8 = pause audio when video paused, 16 = start jack audio server] \n"
 
-#: src/main.c:2080
+#: src/main.c:2088
 msgid " or sox\n"
 msgstr " or sox\n"
 
-#: src/main.c:2082
+#: src/main.c:2090
 msgid "-devicemap <mapname>          : autoload devicemap\n"
 msgstr "-devicemap <mapname>          : autoload devicemap\n"
 
-#: src/main.c:2083
+#: src/main.c:2091
 msgid ""
 "-vppdefaults <file>          : load video playback plugin defaults from "
 "<file> (Note: only sets the settings, not the plugin type)\n"
@@ -442,15 +442,15 @@ msgstr ""
 "-vppdefaults <file>          : load video playback plugin defaults from "
 "<file> (Note: only sets the settings, not the plugin type)\n"
 
-#: src/main.c:2084
+#: src/main.c:2092
 msgid "-debug            : try to debug crashes (requires 'gdb' installed)\n"
 msgstr "-debug            : try to debug crashes (requires 'gdb' installed)\n"
 
-#: src/main.c:2110 src/gui.c:1089
+#: src/main.c:2118 src/gui.c:1089
 msgid "Starting GUI..."
 msgstr "Starting GUI..."
 
-#: src/main.c:2123
+#: src/main.c:2131
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -467,7 +467,7 @@ msgstr ""
 "%s/%s.\n"
 "(Maybe you need to change the value of <prefix_dir> in your ~/.lives file)\n"
 
-#: src/main.c:2137
+#: src/main.c:2145
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -478,7 +478,7 @@ msgstr ""
 "LiVES was unable to write a small file to /tmp\n"
 "Please make sure you have write access to /tmp and try again.\n"
 
-#: src/main.c:2142
+#: src/main.c:2150
 msgid ""
 "\n"
 "`smogrify` must be in your path, and be executable\n"
@@ -492,7 +492,7 @@ msgstr ""
 "Please review the README file which came with this package\n"
 "before running LiVES.\n"
 
-#: src/main.c:2148
+#: src/main.c:2156
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -507,7 +507,7 @@ msgstr ""
 "\n"
 "Please check the file permissions for this file and try again.\n"
 
-#: src/main.c:2155
+#: src/main.c:2163
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -524,7 +524,7 @@ msgstr ""
 "Please check the file permissions for this file and directory\n"
 "and try again.\n"
 
-#: src/main.c:2165
+#: src/main.c:2173
 #, fuzzy, c-format
 msgid ""
 "Please check the <tempdir> setting in \n"
@@ -535,7 +535,7 @@ msgstr ""
 "%s/.lives\n"
 "and try again.\n"
 
-#: src/main.c:2172
+#: src/main.c:2180
 #, c-format
 msgid ""
 "\n"
@@ -550,7 +550,7 @@ msgstr ""
 "\n"
 "%s"
 
-#: src/main.c:2180
+#: src/main.c:2188
 msgid ""
 "\n"
 "An incorrect version of smogrify was found in your path.\n"
@@ -568,7 +568,7 @@ msgstr ""
 "\n"
 "Thankyou.\n"
 
-#: src/main.c:2185 src/dialogs.c:1823
+#: src/main.c:2193 src/dialogs.c:1824
 msgid ""
 "\n"
 "LiVES currently requires either 'mplayer' or 'sox' to function. Please "
@@ -578,7 +578,7 @@ msgstr ""
 "LiVES currently requires either 'mplayer' or 'sox' to function. Please "
 "install one or other of these, and try again.\n"
 
-#: src/main.c:2189
+#: src/main.c:2197
 #, fuzzy
 msgid ""
 "\n"
@@ -589,7 +589,7 @@ msgstr ""
 "LiVES currently requires either 'mplayer' or 'sox' to function. Please "
 "install one or other of these, and try again.\n"
 
-#: src/main.c:2199
+#: src/main.c:2207
 msgid ""
 "\n"
 "LiVES was unable to locate 'mplayer'. You may wish to install mplayer to use "
@@ -599,7 +599,7 @@ msgstr ""
 "LiVES was unable to locate 'mplayer'. You may wish to install mplayer to use "
 "LiVES more fully.\n"
 
-#: src/main.c:2202
+#: src/main.c:2210
 msgid ""
 "\n"
 "LiVES was unable to locate 'convert'. You should install convert and image-"
@@ -609,7 +609,7 @@ msgstr ""
 "LiVES was unable to locate 'convert'. You should install convert and image-"
 "magick if you want to use rendered effects.\n"
 
-#: src/main.c:2205
+#: src/main.c:2213
 msgid ""
 "\n"
 "LiVES was unable to locate 'composite'. You should install composite and "
@@ -619,7 +619,7 @@ msgstr ""
 "LiVES was unable to locate 'composite'. You should install composite and "
 "image-magick if you want to use the merge function.\n"
 
-#: src/main.c:2208
+#: src/main.c:2216
 msgid ""
 "\n"
 "LiVES was unable to locate 'sox'. Some audio features may not work. You "
@@ -629,7 +629,7 @@ msgstr ""
 "LiVES was unable to locate 'sox'. Some audio features may not work. You "
 "should install 'sox'.\n"
 
-#: src/main.c:2211
+#: src/main.c:2219
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -646,59 +646,59 @@ msgstr ""
 "You will not be able to 'Save' without them.\n"
 "You may need to change the value of <lib_dir> in ~/.lives\n"
 
-#: src/main.c:2323
+#: src/main.c:2331
 #, c-format
 msgid "Autoloading set %s..."
 msgstr "Autoloading set %s..."
 
 #. TRANSLATORS: localised name may be used here
-#: src/main.c:2478
+#: src/main.c:2486
 msgid "LiVES"
 msgstr "LiVES"
 
-#: src/main.c:2641
+#: src/main.c:2649
 #, c-format
 msgid "Invalid audio player %s\n"
 msgstr "Invalid audio player %s\n"
 
-#: src/main.c:2759
+#: src/main.c:2767
 #, c-format
 msgid "LiVES-%s: <Untitled%d> %dx%d : %d frames %d bpp %.3f fps"
 msgstr "LiVES-%s: <Untitled%d> %dx%d : %d frames %d bpp %.3f fps"
 
-#: src/main.c:2763
+#: src/main.c:2771
 #, c-format
 msgid "LiVES-%s: <%s> %dx%d : ??? frames ??? bpp %.3f fps"
 msgstr "LiVES-%s: <%s> %dx%d : ??? frames ??? bpp %.3f fps"
 
-#: src/main.c:2766
+#: src/main.c:2774
 #, c-format
 msgid "LiVES-%s: <%s> %dx%d : %d frames %d bpp %.3f fps"
 msgstr "LiVES-%s: <%s> %dx%d : %d frames %d bpp %.3f fps"
 
-#: src/main.c:2772
+#: src/main.c:2780
 #, c-format
 msgid "LiVES-%s: <No File>"
 msgstr "LiVES-%s: <No File>"
 
 #. TRANSLATORS: rec(ord)
-#: src/main.c:4350
+#: src/main.c:4364
 #, c-format
 msgid "rec %9d/%d"
 msgstr "rec %9d/%d"
 
 #. TRANSLATORS: out of memory (rec(ord))
-#: src/main.c:4354
+#: src/main.c:4368
 #, c-format
 msgid "!rec %9d/%d"
 msgstr "!rec %9d/%d"
 
-#: src/main.c:4591 src/main.c:4592 src/gui.c:2052 src/gui.c:3094
-#: src/saveplay.c:2192
+#: src/main.c:4607 src/main.c:4608 src/gui.c:2052 src/gui.c:3094
+#: src/saveplay.c:2191
 msgid "Play"
 msgstr "Play"
 
-#: src/main.c:5236
+#: src/main.c:5252
 msgid ""
 "LiVES was unable to capture this image\n"
 "\n"
@@ -706,35 +706,35 @@ msgstr ""
 "LiVES was unable to capture this image\n"
 "\n"
 
-#: src/main.c:5358
+#: src/main.c:5374
 #, c-format
 msgid "Closed file %s\n"
 msgstr "Closed file %s\n"
 
-#: src/main.c:5552 src/gui.c:622 src/utils.c:3873 src/utils.c:3905
-#: src/saveplay.c:3344 src/multitrack.c:4076 src/multitrack.c:5648
+#: src/main.c:5568 src/gui.c:622 src/utils.c:3873 src/utils.c:3905
+#: src/saveplay.c:3354 src/multitrack.c:4076 src/multitrack.c:5648
 msgid "_Undo"
 msgstr "_Undo"
 
-#: src/main.c:5553 src/gui.c:635 src/utils.c:3874 src/utils.c:3906
-#: src/saveplay.c:3345 src/multitrack.c:4097 src/multitrack.c:5671
+#: src/main.c:5569 src/gui.c:635 src/utils.c:3874 src/utils.c:3906
+#: src/saveplay.c:3355 src/multitrack.c:4097 src/multitrack.c:5671
 msgid "_Redo"
 msgstr "_Redo"
 
-#: src/main.c:5580 src/interface.c:661 src/gui.c:2217 src/preferences.c:2540
+#: src/main.c:5596 src/interface.c:661 src/gui.c:2217 src/preferences.c:2545
 #: src/resample.c:1837
 msgid "Video"
 msgstr "Video"
 
-#: src/main.c:5581 src/interface.c:680 src/gui.c:2236
+#: src/main.c:5597 src/interface.c:680 src/gui.c:2236
 msgid "Left Audio"
 msgstr "Left Audio"
 
-#: src/main.c:5582 src/gui.c:2254
+#: src/main.c:5598 src/gui.c:2254
 msgid "Right Audio"
 msgstr "Right Audio"
 
-#: src/main.c:5630
+#: src/main.c:5646
 msgid ""
 "\n"
 "\n"
@@ -748,22 +748,22 @@ msgstr ""
 "mplayer.\n"
 "Please adjust the playback options in Preferences and try again.\n"
 
-#: src/main.c:5715 src/callbacks.c:7371 src/callbacks.c:7519
-#: src/callbacks.c:7845 src/callbacks.c:7862 src/gui.c:3683
-#: src/saveplay.c:2314 src/saveplay.c:2348 src/saveplay.c:2927
-#: src/saveplay.c:3037 src/saveplay.c:3059 src/multitrack.c:8421
+#: src/main.c:5731 src/callbacks.c:7389 src/callbacks.c:7537
+#: src/callbacks.c:7863 src/callbacks.c:7880 src/gui.c:3683
+#: src/saveplay.c:2313 src/saveplay.c:2347 src/saveplay.c:2937
+#: src/saveplay.c:3047 src/saveplay.c:3069 src/multitrack.c:8421
 #: src/multitrack.c:10013
 #, c-format
 msgid " (%d %% scale)"
 msgstr " (%d %% scale)"
 
-#: src/main.c:5717 src/callbacks.c:7373 src/callbacks.c:7521
-#: src/callbacks.c:7847 src/gui.c:3687 src/saveplay.c:2316 src/saveplay.c:2350
+#: src/main.c:5733 src/callbacks.c:7391 src/callbacks.c:7539
+#: src/callbacks.c:7865 src/gui.c:3687 src/saveplay.c:2315 src/saveplay.c:2349
 #, c-format
 msgid "LiVES: - Play Window%s"
 msgstr "LiVES: - Play Window%s"
 
-#: src/main.c:6115 src/plugins.c:1536
+#: src/main.c:6143 src/plugins.c:1536
 msgid "LiVES: - Play Window"
 msgstr "LiVES: - Play Window"
 
@@ -1144,10 +1144,10 @@ msgstr "Apply Deinterlace"
 msgid "If this is set, frames will be deinterlaced as they are imported."
 msgstr "If this is set, frames will be deinterlaced as they are imported."
 
-#: src/interface.c:203 src/callbacks.c:9879 src/callbacks.c:9909
-#: src/callbacks.c:9910 src/gui.c:3097 src/gui.c:3660 src/saveplay.c:2195
-#: src/saveplay.c:2950 src/dialogs.c:1332 src/dialogs.c:1333
-#: src/dialogs.c:1558 src/dialogs.c:1559 src/framedraw.c:230
+#: src/interface.c:203 src/callbacks.c:9897 src/callbacks.c:9927
+#: src/callbacks.c:9928 src/gui.c:3097 src/gui.c:3660 src/saveplay.c:2194
+#: src/saveplay.c:2960 src/dialogs.c:1334 src/dialogs.c:1335
+#: src/dialogs.c:1559 src/dialogs.c:1560 src/framedraw.c:230
 #: src/multitrack.c:7235
 msgid "Preview"
 msgstr "Preview"
@@ -1164,7 +1164,7 @@ msgstr "Click here to _Preview any selected audio file"
 msgid "Click here to _Preview the video"
 msgstr "Click here to _Preview the video"
 
-#: src/interface.c:313 src/dialogs.c:2373
+#: src/interface.c:313 src/dialogs.c:2374
 msgid "LiVES: - Processing..."
 msgstr "LiVES: - Processing..."
 
@@ -1182,8 +1182,8 @@ msgstr ""
 "\n"
 "Remember to switch off effects (ctrl-0) afterwards !"
 
-#: src/interface.c:357 src/callbacks.c:9648 src/callbacks.c:9682
-#: src/dialogs.c:2407
+#: src/interface.c:357 src/callbacks.c:9666 src/callbacks.c:9700
+#: src/dialogs.c:2408
 msgid ""
 "\n"
 "Please Wait"
@@ -1195,7 +1195,7 @@ msgstr ""
 msgid "Show details"
 msgstr "Show details"
 
-#: src/interface.c:424 src/dialogs.c:2425
+#: src/interface.c:424 src/dialogs.c:2426
 msgid "_Enough"
 msgstr "_Enough"
 
@@ -1207,7 +1207,7 @@ msgstr "_Preview"
 msgid "Paus_e"
 msgstr "Paus_e"
 
-#: src/interface.c:428 src/callbacks.c:9679
+#: src/interface.c:428 src/callbacks.c:9697
 msgid "Pause/_Enough"
 msgstr "Pause/_Enough"
 
@@ -1510,8 +1510,8 @@ msgstr "Set name "
 msgid "Use def_aults"
 msgstr "Use def_aults"
 
-#: src/interface.c:2205 src/interface.c:2561 src/preferences.c:2857
-#: src/preferences.c:3188
+#: src/interface.c:2205 src/interface.c:2561 src/preferences.c:2862
+#: src/preferences.c:3193
 msgid "_Advanced"
 msgstr "_Advanced"
 
@@ -1600,7 +1600,7 @@ msgstr "Height"
 msgid "Driver"
 msgstr "Driver"
 
-#: src/interface.c:2713 src/preferences.c:3708
+#: src/interface.c:2713 src/preferences.c:3713
 msgid "Output format"
 msgstr "Output format"
 
@@ -2021,7 +2021,7 @@ msgstr "Deleting set"
 msgid "Set %s was permanently deleted from the disk.\n"
 msgstr "Set %s was permanently deleted from the disk.\n"
 
-#: src/callbacks.c:1808 src/callbacks.c:12066
+#: src/callbacks.c:1808 src/callbacks.c:12088
 msgid "Insert Silence"
 msgstr "Insert Silence"
 
@@ -2061,7 +2061,7 @@ msgid "Copying frames %d to %d%s to the clipboard..."
 msgstr "Copying frames %d to %d%s to the clipboard..."
 
 #: src/callbacks.c:2512 src/saveplay.c:1407 src/saveplay.c:1561
-#: src/saveplay.c:1623 src/saveplay.c:3771
+#: src/saveplay.c:1623 src/saveplay.c:3781
 msgid "Pulling frames from clip"
 msgstr "Pulling frames from clip"
 
@@ -2128,7 +2128,7 @@ msgstr ""
 "Insertion will cause frames to shift in some multitrack layouts.\n"
 "Are you sure you wish to continue ?\n"
 
-#: src/callbacks.c:2895 src/callbacks.c:11998
+#: src/callbacks.c:2895 src/callbacks.c:12020
 msgid ""
 "\n"
 "Insertion will cause audio to shift in some multitrack layouts.\n"
@@ -2211,8 +2211,8 @@ msgstr ""
 "Deletion will cause missing frames in some multitrack layouts.\n"
 "Are you sure you wish to continue ?\n"
 
-#: src/callbacks.c:3485 src/callbacks.c:11226 src/callbacks.c:11472
-#: src/callbacks.c:11538
+#: src/callbacks.c:3485 src/callbacks.c:11248 src/callbacks.c:11494
+#: src/callbacks.c:11560
 msgid ""
 "\n"
 "Deletion will cause missing audio in some multitrack layouts.\n"
@@ -2232,7 +2232,7 @@ msgstr ""
 "Deletion will cause frames to shift in some multitrack layouts.\n"
 "Are you sure you wish to continue ?\n"
 
-#: src/callbacks.c:3523 src/callbacks.c:11520
+#: src/callbacks.c:3523 src/callbacks.c:11542
 msgid ""
 "\n"
 "Deletion will cause audio to shift in some multitrack layouts.\n"
@@ -2265,7 +2265,7 @@ msgstr ""
 "\n"
 "Selection is locked.\n"
 
-#: src/callbacks.c:4155
+#: src/callbacks.c:4173
 msgid ""
 "Ready to record. Use 'control' and cursor keys during playback to record "
 "your performance.\n"
@@ -2277,11 +2277,11 @@ msgstr ""
 "(To cancel, press 'r' or click on Play|Record Performance again before you "
 "play.)\n"
 
-#: src/callbacks.c:4161
+#: src/callbacks.c:4179
 msgid "Record cancelled.\n"
 msgstr "Record cancelled.\n"
 
-#: src/callbacks.c:4305
+#: src/callbacks.c:4323
 #, c-format
 msgid ""
 "\n"
@@ -2294,7 +2294,7 @@ msgstr ""
 "The '%s' plugin reports:\n"
 "%s\n"
 
-#: src/callbacks.c:4309
+#: src/callbacks.c:4327
 #, c-format
 msgid ""
 "\n"
@@ -2307,7 +2307,7 @@ msgstr ""
 "Unable to find the 'init' method in the %s plugin.\n"
 "The plugin may be broken or not installed correctly."
 
-#: src/callbacks.c:4701
+#: src/callbacks.c:4719
 #, c-format
 msgid ""
 "Saving the set will cause copies of all loaded clips to remain on the disk"
@@ -2320,22 +2320,22 @@ msgstr ""
 "\n"
 "Please press 'Cancel' if that is not what you want.\n"
 
-#: src/callbacks.c:4784
+#: src/callbacks.c:4802
 #, c-format
 msgid "Saving set %s"
 msgstr "Saving set %s"
 
-#: src/callbacks.c:5138
+#: src/callbacks.c:5156
 #, c-format
 msgid "Loading clips from set %s"
 msgstr "Loading clips from set %s"
 
-#: src/callbacks.c:5226
+#: src/callbacks.c:5244
 #, c-format
 msgid "%d clips and %d layouts were recovered from set (%s).\n"
 msgstr "%d clips and %d layouts were recovered from set (%s).\n"
 
-#: src/callbacks.c:5494
+#: src/callbacks.c:5512
 msgid ""
 "LiVES will attempt to recover some disk space.\n"
 "You should ONLY run this if you have no other copies of LiVES running on "
@@ -2347,24 +2347,24 @@ msgstr ""
 "this machine.\n"
 "Click OK to proceed.\n"
 
-#: src/callbacks.c:5499
+#: src/callbacks.c:5517
 msgid "Cleaning up disk space..."
 msgstr "Cleaning up disk space..."
 
-#: src/callbacks.c:5567
+#: src/callbacks.c:5585
 msgid "Recovering disk space"
 msgstr "Recovering disk space..."
 
-#: src/callbacks.c:5619
+#: src/callbacks.c:5637
 #, c-format
 msgid "%s of disk space was recovered.\n"
 msgstr "%s of disk space was recovered.\n"
 
-#: src/callbacks.c:5675
+#: src/callbacks.c:5693
 msgid "Resetting frame rates and frame values..."
 msgstr "Resetting frame rates and frame values..."
 
-#: src/callbacks.c:5724
+#: src/callbacks.c:5742
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -2375,12 +2375,12 @@ msgstr ""
 "External: %s\n"
 "Internal: %s (%d bpp)\n"
 
-#: src/callbacks.c:5726
+#: src/callbacks.c:5744
 msgid "buffered"
 msgstr "buffered"
 
-#: src/callbacks.c:5739 src/callbacks.c:5758 src/callbacks.c:5776
-#: src/callbacks.c:5810
+#: src/callbacks.c:5757 src/callbacks.c:5776 src/callbacks.c:5794
+#: src/callbacks.c:5828
 msgid ""
 "\n"
 "  Opening..."
@@ -2388,7 +2388,7 @@ msgstr ""
 "\n"
 "  Opening..."
 
-#: src/callbacks.c:5746
+#: src/callbacks.c:5764
 #, c-format
 msgid ""
 "\n"
@@ -2397,7 +2397,7 @@ msgstr ""
 "\n"
 "(%d virtual)"
 
-#: src/callbacks.c:5749
+#: src/callbacks.c:5767
 #, c-format
 msgid ""
 "\n"
@@ -2406,7 +2406,7 @@ msgstr ""
 "\n"
 "(%d decoded)"
 
-#: src/callbacks.c:5761 src/callbacks.c:5779 src/callbacks.c:5813
+#: src/callbacks.c:5779 src/callbacks.c:5797 src/callbacks.c:5831
 #, c-format
 msgid ""
 "\n"
@@ -2415,7 +2415,7 @@ msgstr ""
 "\n"
 "  %.2f sec."
 
-#: src/callbacks.c:5770
+#: src/callbacks.c:5788
 msgid ""
 "\n"
 "  Unknown"
@@ -2423,23 +2423,23 @@ msgstr ""
 "\n"
 "  Unknown"
 
-#: src/callbacks.c:5783 src/callbacks.c:5797
+#: src/callbacks.c:5801 src/callbacks.c:5815
 msgid "unsigned"
 msgstr "unsigned"
 
-#: src/callbacks.c:5784 src/callbacks.c:5798
+#: src/callbacks.c:5802 src/callbacks.c:5816
 msgid "signed"
 msgstr "signed"
 
-#: src/callbacks.c:5786 src/callbacks.c:5800
+#: src/callbacks.c:5804 src/callbacks.c:5818
 msgid "big-endian"
 msgstr "big-endian"
 
-#: src/callbacks.c:5787 src/callbacks.c:5801
+#: src/callbacks.c:5805 src/callbacks.c:5819
 msgid "little-endian"
 msgstr "little-endian"
 
-#: src/callbacks.c:5789 src/callbacks.c:5803
+#: src/callbacks.c:5807 src/callbacks.c:5821
 #, c-format
 msgid ""
 "  %d Hz %d bit\n"
@@ -2448,7 +2448,7 @@ msgstr ""
 "  %d Hz %d bit\n"
 "%s %s"
 
-#: src/callbacks.c:5873
+#: src/callbacks.c:5891
 msgid ""
 "This program is free software; you can redistribute it and/or modify\n"
 "it under the terms of the GNU General Public License as published by\n"
@@ -2478,11 +2478,11 @@ msgstr ""
 "along with this program; if not, write to the Free Software\n"
 "Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA.\n"
 
-#: src/callbacks.c:5887
+#: src/callbacks.c:5905
 msgid "A video editor and VJ program."
 msgstr "A video editor and VJ program."
 
-#: src/callbacks.c:5909
+#: src/callbacks.c:5927
 #, c-format
 msgid ""
 "LiVES Version %s\n"
@@ -2505,7 +2505,7 @@ msgstr ""
 "salsaman@gmail.com\n"
 "Homepage: http://lives.sourceforge.net"
 
-#: src/callbacks.c:6191
+#: src/callbacks.c:6209
 msgid ""
 "\n"
 "\n"
@@ -2515,7 +2515,7 @@ msgstr ""
 "\n"
 "You need to install mplayer to be able to preview this file.\n"
 
-#: src/callbacks.c:6194
+#: src/callbacks.c:6212
 #, fuzzy
 msgid ""
 "\n"
@@ -2526,7 +2526,7 @@ msgstr ""
 "\n"
 "You need to install mplayer to be able to preview this file.\n"
 
-#: src/callbacks.c:6597 src/callbacks.c:8478
+#: src/callbacks.c:6615 src/callbacks.c:8496
 msgid ""
 "\n"
 "Loading new audio may cause missing audio in some multitrack layouts.\n"
@@ -2538,168 +2538,168 @@ msgstr ""
 "Are you sure you wish to continue ?\n"
 "."
 
-#: src/callbacks.c:6695
+#: src/callbacks.c:6713
 #, c-format
 msgid "Opening audio %s, type %s..."
 msgstr "Opening audio %s, type %s..."
 
-#: src/callbacks.c:6728 src/saveplay.c:453
+#: src/callbacks.c:6746 src/saveplay.c:453
 msgid "Opening audio"
 msgstr "Opening audio"
 
-#: src/callbacks.c:6737 src/callbacks.c:6777 src/callbacks.c:8576
-#: src/callbacks.c:8618 src/callbacks.c:8661 src/callbacks.c:11150
+#: src/callbacks.c:6755 src/callbacks.c:6795 src/callbacks.c:8594
+#: src/callbacks.c:8636 src/callbacks.c:8679 src/callbacks.c:11172
 msgid "Cancelling"
 msgstr "Cancelling"
 
-#: src/callbacks.c:6796 src/callbacks.c:8727
+#: src/callbacks.c:6814 src/callbacks.c:8745
 #, c-format
 msgid "New audio: %d Hz %d channel(s) %d bps\n"
 msgstr "New audio: %d Hz %d channel(s) %d bps\n"
 
-#: src/callbacks.c:6824 src/callbacks.c:8703 src/callbacks.c:11180
-#: src/callbacks.c:11874
+#: src/callbacks.c:6842 src/callbacks.c:8721 src/callbacks.c:11202
+#: src/callbacks.c:11896
 msgid "Committing audio"
 msgstr "Committing audio"
 
-#: src/callbacks.c:6836 src/callbacks.c:8734
+#: src/callbacks.c:6854 src/callbacks.c:8752
 msgid "New Audio"
 msgstr "New Audio"
 
-#: src/callbacks.c:7115
+#: src/callbacks.c:7133
 #, c-format
 msgid "%d frames are enough !\n"
 msgstr "%d frames are enough !\n"
 
-#: src/callbacks.c:7233
+#: src/callbacks.c:7251
 msgid "LiVES: - Encoder debug output"
 msgstr "LiVES: - Encoder debug output"
 
-#: src/callbacks.c:7270 src/gui.c:1894
+#: src/callbacks.c:7288 src/gui.c:1894
 msgid "Fullscreen playback (f)"
 msgstr "Fullscreen playback (f)"
 
-#: src/callbacks.c:7272
+#: src/callbacks.c:7290
 msgid "Fullscreen playback off (f)"
 msgstr "Fullscreen playback off (f)"
 
-#: src/callbacks.c:7485 src/gui.c:1879
+#: src/callbacks.c:7503 src/gui.c:1879
 msgid "Double size (d)"
 msgstr "Double size (d)"
 
-#: src/callbacks.c:7492
+#: src/callbacks.c:7510
 msgid "Single size (d)"
 msgstr "Single size (d)"
 
-#: src/callbacks.c:7623 src/callbacks.c:7624
+#: src/callbacks.c:7641 src/callbacks.c:7642
 msgid "Hide the play window (s)"
 msgstr "Hide the play window (s)"
 
-#: src/callbacks.c:7633 src/gui.c:1718
+#: src/callbacks.c:7651 src/gui.c:1718
 msgid "Show the play window (s)"
 msgstr "Show the play window (s)"
 
-#: src/callbacks.c:7634 src/gui.c:1868
+#: src/callbacks.c:7652 src/gui.c:1868
 msgid "Play in separate window (s)"
 msgstr "Play in separate window (s)"
 
-#: src/callbacks.c:7710 src/gui.c:3928 src/saveplay.c:2345
+#: src/callbacks.c:7728 src/gui.c:3928 src/saveplay.c:2344
 msgid "LiVES: - Streaming"
 msgstr "LiVES: - Streaming"
 
-#: src/callbacks.c:7962
+#: src/callbacks.c:7980
 msgid "Switch continuous looping off (o)"
 msgstr "Switch continuous looping off (o)"
 
-#: src/callbacks.c:7969 src/gui.c:1769
+#: src/callbacks.c:7987 src/gui.c:1769
 msgid "Switch continuous looping on (o)"
 msgstr "Switch continuous looping on (o)"
 
-#: src/callbacks.c:8037
+#: src/callbacks.c:8055
 #, c-format
 msgid "Audio volume (%.2f)"
 msgstr "Audio volume (%.2f)"
 
-#: src/callbacks.c:8082 src/callbacks.c:8083 src/gui.c:3560
+#: src/callbacks.c:8100 src/callbacks.c:8101 src/gui.c:3560
 msgid "Unmute the audio (z)"
 msgstr "Unmute the audio (z)"
 
-#: src/callbacks.c:8094 src/callbacks.c:8095 src/gui.c:1782 src/gui.c:3559
+#: src/callbacks.c:8112 src/callbacks.c:8113 src/gui.c:1782 src/gui.c:3559
 msgid "Mute the audio (z)"
 msgstr "Mute the audio (z)"
 
-#: src/callbacks.c:8232
+#: src/callbacks.c:8250
 msgid "Reversing clipboard..."
 msgstr "Reversing clipboard..."
 
-#: src/callbacks.c:8246
+#: src/callbacks.c:8264
 msgid "Reversing clipboard"
 msgstr "Reversing clipboard"
 
-#: src/callbacks.c:8274
+#: src/callbacks.c:8292
 msgid "LiVES: Load subtitles from..."
 msgstr "LiVES: Load subtitles from..."
 
-#: src/callbacks.c:8341 src/saveplay.c:881
+#: src/callbacks.c:8359 src/saveplay.c:881
 #, c-format
 msgid "Loaded subtitle file: %s\n"
 msgstr "Loaded subtitle file: %s\n"
 
-#: src/callbacks.c:8410
+#: src/callbacks.c:8428
 msgid "Subtitles were erased.\n"
 msgstr "Subtitles were erased.\n"
 
-#: src/callbacks.c:8422 src/callbacks.c:8770
+#: src/callbacks.c:8440 src/callbacks.c:8788
 msgid "Select Audio File"
 msgstr "Select Audio File"
 
-#: src/callbacks.c:8438
+#: src/callbacks.c:8456
 msgid "Please set your CD play device in Tools | Preferences | Misc\n"
 msgstr "Please set your CD play device in Tools | Preferences | Misc\n"
 
-#: src/callbacks.c:8510
+#: src/callbacks.c:8528
 #, c-format
 msgid "Opening CD track %d from %s..."
 msgstr "Opening CD track %d from %s..."
 
-#: src/callbacks.c:8515
+#: src/callbacks.c:8533
 #, c-format
 msgid "CD track %d"
 msgstr "CD track %d"
 
-#: src/callbacks.c:8562
+#: src/callbacks.c:8580
 msgid "Opening CD track..."
 msgstr "Opening CD track..."
 
-#: src/callbacks.c:8604 src/callbacks.c:8650
+#: src/callbacks.c:8622 src/callbacks.c:8668
 msgid "Error loading CD track\n"
 msgstr "Error loading CD track\n"
 
-#: src/callbacks.c:8832
+#: src/callbacks.c:8850
 msgid "Selecting tracks"
 msgstr "Selecting tracks"
 
-#: src/callbacks.c:8887
+#: src/callbacks.c:8905
 msgid "layout errors"
 msgstr "layout errors"
 
-#: src/callbacks.c:8897
+#: src/callbacks.c:8915
 msgid "Close _Window"
 msgstr "Close _Window"
 
-#: src/callbacks.c:8908
+#: src/callbacks.c:8926
 msgid "Clear _Errors"
 msgstr "Clear _Errors"
 
-#: src/callbacks.c:8919
+#: src/callbacks.c:8937
 msgid "_Delete affected layouts"
 msgstr "_Delete affected layouts"
 
-#: src/callbacks.c:9618 src/callbacks.c:9663
+#: src/callbacks.c:9636 src/callbacks.c:9681
 msgid "Resume"
 msgstr "Resume"
 
-#: src/callbacks.c:9619
+#: src/callbacks.c:9637
 msgid ""
 "\n"
 "Paused\n"
@@ -2709,27 +2709,27 @@ msgstr ""
 "Paused\n"
 "(click Resume to continue processing)"
 
-#: src/callbacks.c:9620 src/callbacks.c:9669
+#: src/callbacks.c:9638 src/callbacks.c:9687
 msgid "paused..."
 msgstr "paused..."
 
-#: src/callbacks.c:9647 src/callbacks.c:9680
+#: src/callbacks.c:9665 src/callbacks.c:9698
 msgid "Pause"
 msgstr "Pause"
 
-#: src/callbacks.c:9649 src/callbacks.c:9683
+#: src/callbacks.c:9667 src/callbacks.c:9701
 msgid "resumed..."
 msgstr "resumed..."
 
-#: src/callbacks.c:9665
+#: src/callbacks.c:9683
 msgid "Keep"
 msgstr "Keep"
 
-#: src/callbacks.c:9666
+#: src/callbacks.c:9684
 msgid "Enough"
 msgstr "Enough"
 
-#: src/callbacks.c:9667
+#: src/callbacks.c:9685
 msgid ""
 "\n"
 "Paused\n"
@@ -2741,28 +2741,28 @@ msgstr ""
 "(click Keep to keep what you have and stop)\n"
 "(click Resume to continue processing)"
 
-#: src/callbacks.c:9681
+#: src/callbacks.c:9699
 msgid "Cancel"
 msgstr "Cancel"
 
-#: src/callbacks.c:9818
+#: src/callbacks.c:9836
 msgid "Stop"
 msgstr "Stop"
 
-#: src/callbacks.c:10303 src/multitrack.c:12135
+#: src/callbacks.c:10325 src/multitrack.c:12135
 msgid "LiVES: Selected frame"
 msgstr "LiVES: Selected frame"
 
-#: src/callbacks.c:10310
+#: src/callbacks.c:10332
 msgid "_Save frame as..."
 msgstr "_Save frame as..."
 
-#: src/callbacks.c:10554
+#: src/callbacks.c:10576
 #, c-format
 msgid "Audio is ahead of video by %.4f secs. at frame %d, with fps %.4f\n"
 msgstr "Audio is ahead of video by %.4f secs at frame %d, with fps %.4f\n"
 
-#: src/callbacks.c:10632
+#: src/callbacks.c:10654
 msgid ""
 "\n"
 "\n"
@@ -2776,7 +2776,7 @@ msgstr ""
 "Please send a patch to get it working on other platforms.\n"
 "\n"
 
-#: src/callbacks.c:10638
+#: src/callbacks.c:10660
 msgid ""
 "\n"
 "\n"
@@ -2788,7 +2788,7 @@ msgstr ""
 "You must install \"xwininfo\" before you can use this feature\n"
 "\n"
 
-#: src/callbacks.c:10714 src/callbacks.c:11792
+#: src/callbacks.c:10736 src/callbacks.c:11814
 msgid ""
 "\n"
 "Record time must be greater than 0.\n"
@@ -2796,7 +2796,7 @@ msgstr ""
 "\n"
 "Record time must be greater than 0.\n"
 
-#: src/callbacks.c:10725
+#: src/callbacks.c:10747
 msgid ""
 "Capture an External Window:\n"
 "\n"
@@ -2810,11 +2810,11 @@ msgstr ""
 "Click 'Cancel' to cancel\n"
 "\n"
 
-#: src/callbacks.c:10730
+#: src/callbacks.c:10752
 msgid "External window was released.\n"
 msgstr "External window was released.\n"
 
-#: src/callbacks.c:10764
+#: src/callbacks.c:10786
 msgid ""
 "Click on a Window to Capture it\n"
 "Press 'q' to stop recording"
@@ -2822,7 +2822,7 @@ msgstr ""
 "Click on a Window to Capture it\n"
 "Press 'q' to stop recording"
 
-#: src/callbacks.c:10794
+#: src/callbacks.c:10816
 #, c-format
 msgid ""
 "\n"
@@ -2837,19 +2837,19 @@ msgstr ""
 "Stop or 'q' to finish.\n"
 "(Default of %.3f frames per second will be used.)\n"
 
-#: src/callbacks.c:10820
+#: src/callbacks.c:10842
 msgid "LiVES was unable to capture this window. Sorry.\n"
 msgstr "LiVES was unable to capture this window. Sorry.\n"
 
-#: src/callbacks.c:10968
+#: src/callbacks.c:10990
 msgid "Export Selected Audio as..."
 msgstr "Export Selected Audio as..."
 
-#: src/callbacks.c:10971
+#: src/callbacks.c:10993
 msgid "Export Audio as..."
 msgstr "Export Audio as..."
 
-#: src/callbacks.c:11013
+#: src/callbacks.c:11035
 msgid ""
 "\n"
 "\n"
@@ -2863,86 +2863,86 @@ msgstr ""
 "Click 'OK' to export at the new speed, or 'Cancel' to export at the original "
 "rate.\n"
 
-#: src/callbacks.c:11019
+#: src/callbacks.c:11041
 #, c-format
 msgid "Exporting audio frames %d to %d as %s..."
 msgstr "Exporting audio frames %d to %d as %s..."
 
-#: src/callbacks.c:11024
+#: src/callbacks.c:11046
 #, c-format
 msgid "Exporting audio as %s..."
 msgstr "Exporting audio as %s..."
 
-#: src/callbacks.c:11049
+#: src/callbacks.c:11071
 msgid "Exporting audio"
 msgstr "Exporting audio"
 
-#: src/callbacks.c:11082
+#: src/callbacks.c:11104
 msgid "Append Audio File..."
 msgstr "Append Audio File..."
 
-#: src/callbacks.c:11129
+#: src/callbacks.c:11151
 #, c-format
 msgid "Appending audio file %s..."
 msgstr "Appending audio file %s..."
 
-#: src/callbacks.c:11140
+#: src/callbacks.c:11162
 msgid "Appending audio"
 msgstr "Appending audio"
 
-#: src/callbacks.c:11196
+#: src/callbacks.c:11218
 msgid "Append Audio"
 msgstr "Append Audio"
 
-#: src/callbacks.c:11258
+#: src/callbacks.c:11280
 #, fuzzy, c-format
 msgid "Padding audio to %.2f seconds..."
 msgstr "Trimming audio from %.2f to %.2f seconds..."
 
-#: src/callbacks.c:11260
+#: src/callbacks.c:11282
 #, c-format
 msgid "Trimming audio from %.2f to %.2f seconds..."
 msgstr "Trimming audio from %.2f to %.2f seconds..."
 
-#: src/callbacks.c:11279
+#: src/callbacks.c:11301
 msgid "Trimming/Padding audio"
 msgstr "Trimming/Padding audio"
 
-#: src/callbacks.c:11287
+#: src/callbacks.c:11309
 msgid "Trim/Pad Audio"
 msgstr "Trim/Pad Audio"
 
-#: src/callbacks.c:11362
+#: src/callbacks.c:11384
 msgid "Fading audio in"
 msgstr "Fading audio in"
 
-#: src/callbacks.c:11363
+#: src/callbacks.c:11385
 msgid "Fade audio in"
 msgstr "Fade audio in"
 
-#: src/callbacks.c:11368
+#: src/callbacks.c:11390
 msgid "Fading audio out"
 msgstr "Fading audio out"
 
-#: src/callbacks.c:11369
+#: src/callbacks.c:11391
 msgid "Fade audio out"
 msgstr "Fade audio out"
 
-#: src/callbacks.c:11392
+#: src/callbacks.c:11414
 #, c-format
 msgid "%s over %.1f seconds..."
 msgstr "%s over %.1f seconds..."
 
-#: src/callbacks.c:11394
+#: src/callbacks.c:11416
 #, c-format
 msgid "%s from time %.2f seconds to %.2f seconds..."
 msgstr "%s from time %.2f seconds to %.2f seconds..."
 
-#: src/callbacks.c:11401
+#: src/callbacks.c:11423
 msgid "Fading audio..."
 msgstr "Fading audio..."
 
-#: src/callbacks.c:11504
+#: src/callbacks.c:11526
 msgid ""
 "\n"
 "Deleting all audio will close this file.\n"
@@ -2952,37 +2952,37 @@ msgstr ""
 "Deleting all audio will close this file.\n"
 "Are you sure ?"
 
-#: src/callbacks.c:11507
+#: src/callbacks.c:11529
 msgid "Deleting all audio..."
 msgstr "Deleting all audio..."
 
-#: src/callbacks.c:11513
+#: src/callbacks.c:11535
 #, c-format
 msgid "Deleting audio from %.2f to %.2f seconds..."
 msgstr "Deleting audio from %.2f to %.2f seconds..."
 
-#: src/callbacks.c:11600
+#: src/callbacks.c:11622
 msgid "Deleting Audio"
 msgstr "Deleting Audio"
 
-#: src/callbacks.c:11607
+#: src/callbacks.c:11629
 msgid "Delete Audio"
 msgstr "Delete Audio"
 
-#: src/callbacks.c:11945
+#: src/callbacks.c:11967
 msgid "Record new audio"
 msgstr "Record new audio"
 
-#: src/callbacks.c:12029
+#: src/callbacks.c:12051
 #, c-format
 msgid "Inserting silence from %.2f to %.2f seconds..."
 msgstr "Inserting silence from %.2f to %.2f seconds..."
 
-#: src/callbacks.c:12057
+#: src/callbacks.c:12079
 msgid "Inserting Silence"
 msgstr "Inserting Silence"
 
-#: src/callbacks.c:12160
+#: src/callbacks.c:12182
 #, c-format
 msgid ""
 "\n"
@@ -3843,8 +3843,8 @@ msgstr "Frame number is linked to playback pointer"
 msgid "Rewind"
 msgstr "Rewind"
 
-#: src/gui.c:3512 src/dialogs.c:789 src/dialogs.c:791 src/dialogs.c:1630
-#: src/dialogs.c:1632
+#: src/gui.c:3512 src/dialogs.c:789 src/dialogs.c:791 src/dialogs.c:1631
+#: src/dialogs.c:1633
 msgid "Play all"
 msgstr "Play all"
 
@@ -4206,7 +4206,7 @@ msgstr "Opening %s"
 msgid "Opening %s start time %.2f sec. frames %d"
 msgstr "Opening %s start time %.2f sec. frames %d"
 
-#: src/saveplay.c:311 src/saveplay.c:3758
+#: src/saveplay.c:311 src/saveplay.c:3768
 msgid " without sound"
 msgstr " without sound"
 
@@ -4363,12 +4363,12 @@ msgstr "recording aborted by clipboard playback.\n"
 msgid "Recording performance..."
 msgstr "Recording performance..."
 
-#: src/saveplay.c:3110
+#: src/saveplay.c:3120
 #, c-format
 msgid "Average FPS was %.4f\n"
 msgstr "Average FPS was %.4f\n"
 
-#: src/saveplay.c:3116
+#: src/saveplay.c:3126
 msgid ""
 "\n"
 "\n"
@@ -4382,16 +4382,16 @@ msgstr ""
 "You should click on Tools--->Resize All\n"
 "and resize all frames to the current size.\n"
 
-#: src/saveplay.c:3274
+#: src/saveplay.c:3284
 msgid "Unknown"
 msgstr "Unknown"
 
-#: src/saveplay.c:3380 src/saveplay.c:4338
+#: src/saveplay.c:3390 src/saveplay.c:4348
 #, c-format
 msgid "Untitled%d"
 msgstr "Untitled%d"
 
-#: src/saveplay.c:3415
+#: src/saveplay.c:3425
 #, c-format
 msgid ""
 "\n"
@@ -4402,7 +4402,7 @@ msgstr ""
 "Error getting file info for clip %s.\n"
 "Bad things may happen with this clip.\n"
 
-#: src/saveplay.c:3505
+#: src/saveplay.c:3515
 #, c-format
 msgid ""
 "\n"
@@ -4413,12 +4413,12 @@ msgstr ""
 "Playback speed not found or invalid ! Using default fps of %.3f fps. \n"
 "Default can be set in Tools | Preferences | Misc.\n"
 
-#: src/saveplay.c:3517
+#: src/saveplay.c:3527
 #, c-format
 msgid "Playback speed was adjusted to %.3f frames per second to fit audio.\n"
 msgstr "Playback speed was adjusted to %.3f frames per second to fit audio.\n"
 
-#: src/saveplay.c:3536
+#: src/saveplay.c:3546
 #, c-format
 msgid ""
 "Frames=%d type=%s size=%dx%d *bpp=Greyscale* fps=%.3f\n"
@@ -4427,7 +4427,7 @@ msgstr ""
 "Frames=%d type=%s size=%dx%d *bpp=Greyscale* fps=%.3f\n"
 "Audio:"
 
-#: src/saveplay.c:3540 src/saveplay.c:4515
+#: src/saveplay.c:3550 src/saveplay.c:4525
 #, c-format
 msgid ""
 "Frames=%d type=%s size=%dx%d bpp=%d fps=%.3f\n"
@@ -4436,49 +4436,49 @@ msgstr ""
 "Frames=%d type=%s size=%dx%d bpp=%d fps=%.3f\n"
 "Audio:"
 
-#: src/saveplay.c:3544 src/saveplay.c:4519
+#: src/saveplay.c:3554 src/saveplay.c:4529
 #, c-format
 msgid "%s none\n"
 msgstr "%s none\n"
 
-#: src/saveplay.c:3547 src/saveplay.c:4522
+#: src/saveplay.c:3557 src/saveplay.c:4532
 #, c-format
 msgid "%s %d Hz %d channel(s) %d bps\n"
 msgstr "%s %d Hz %d channel(s) %d bps\n"
 
-#: src/saveplay.c:3555
+#: src/saveplay.c:3565
 #, c-format
 msgid " - Comment: %s\n"
 msgstr " - Comment: %s\n"
 
-#: src/saveplay.c:3660
+#: src/saveplay.c:3670
 #, c-format
 msgid "Saving frame %d as %s..."
 msgstr "Saving frame %d as %s..."
 
-#: src/saveplay.c:3753
+#: src/saveplay.c:3763
 #, c-format
 msgid "Backing up %s to %s"
 msgstr "Backing up %s to %s"
 
-#: src/saveplay.c:3806
+#: src/saveplay.c:3816
 msgid "Backing up"
 msgstr "Backing up"
 
-#: src/saveplay.c:3840
+#: src/saveplay.c:3850
 msgid "performance data was backed up..."
 msgstr "performance data was backed up..."
 
-#: src/saveplay.c:4414
+#: src/saveplay.c:4424
 #, c-format
 msgid "Restoring %s..."
 msgstr "Restoring %s..."
 
-#: src/saveplay.c:4445
+#: src/saveplay.c:4455
 msgid "Restoring"
 msgstr "Restoring"
 
-#: src/saveplay.c:4467
+#: src/saveplay.c:4477
 #, c-format
 msgid ""
 "\n"
@@ -4492,22 +4492,22 @@ msgstr ""
 "LiVES was unable to restore it.\n"
 
 #. TRANSLATORS: rec(ord) %.2f M(ega)B(ytes)
-#: src/saveplay.c:4959
+#: src/saveplay.c:4969
 #, c-format
 msgid "rec %.2f MB"
 msgstr "rec %.2f MB"
 
-#: src/saveplay.c:4965
+#: src/saveplay.c:4975
 #, c-format
 msgid "!rec %.2f MB"
 msgstr "!rec %.2f MB"
 
 #. TRANSLATORS: rec(ord) ?? M(ega)B(ytes)
-#: src/saveplay.c:4968
+#: src/saveplay.c:4978
 msgid "rec ?? MB"
 msgstr "rec ?? MB"
 
-#: src/saveplay.c:4993
+#: src/saveplay.c:5003
 #, c-format
 msgid ""
 "\n"
@@ -4518,7 +4518,7 @@ msgstr ""
 "RECORDING WAS PAUSED BECAUSE FREE DISK SPACE in %s IS BELOW %ld GB !\n"
 "Record stop level can be set in Preferences.\n"
 
-#: src/saveplay.c:5139
+#: src/saveplay.c:5149
 msgid ""
 "\n"
 "Files from a previous run of LiVES were found.\n"
@@ -4528,11 +4528,11 @@ msgstr ""
 "Files from a previous run of LiVES were found.\n"
 "Do you want to attempt to recover them ?\n"
 
-#: src/saveplay.c:5159
+#: src/saveplay.c:5169
 msgid "Recovering files"
 msgstr "Recovering files"
 
-#: src/saveplay.c:5161
+#: src/saveplay.c:5171
 msgid "Recovering files..."
 msgstr "Recovering files..."
 
@@ -4645,25 +4645,25 @@ msgstr ""
 "\n"
 "%d%% done. Time remaining: %u sec\n"
 
-#: src/dialogs.c:1166
-#, c-format
-msgid ""
-"\n"
-"%d/%d frames opened. Time remaining %u sec.\n"
-msgstr ""
-"\n"
-"%d/%d frames opened. Time remaining %u sec.\n"
-
 #: src/dialogs.c:1168
 #, c-format
 msgid ""
 "\n"
+"%d/%d frames opened. Time remaining %u sec.\n"
+msgstr ""
+"\n"
+"%d/%d frames opened. Time remaining %u sec.\n"
+
+#: src/dialogs.c:1170
+#, c-format
+msgid ""
+"\n"
 "%d/%d frames opened.\n"
 msgstr ""
 "\n"
 "%d/%d frames opened.\n"
 
-#: src/dialogs.c:1172
+#: src/dialogs.c:1174
 #, c-format
 msgid ""
 "\n"
@@ -4672,7 +4672,7 @@ msgstr ""
 "\n"
 "%d frames opened.\n"
 
-#: src/dialogs.c:1748
+#: src/dialogs.c:1749
 #, c-format
 msgid ""
 "\n"
@@ -4681,7 +4681,7 @@ msgstr ""
 "\n"
 "Time remaining: %d sec"
 
-#: src/dialogs.c:1805
+#: src/dialogs.c:1806
 #, c-format
 msgid ""
 "\n"
@@ -4692,7 +4692,7 @@ msgstr ""
 "Sorry, LiVES can only open %d files at once.\n"
 "Please close a file and then try again."
 
-#: src/dialogs.c:1812
+#: src/dialogs.c:1813
 #, c-format
 msgid ""
 "LiVES was unable to write to its temporary directory.\n"
@@ -4711,7 +4711,7 @@ msgstr ""
 "\n"
 "Please make sure you can write to this directory."
 
-#: src/dialogs.c:1829
+#: src/dialogs.c:1830
 msgid ""
 "Audio resampling is required for this format.\n"
 "Please install 'sox'\n"
@@ -4721,7 +4721,7 @@ msgstr ""
 "Please install 'sox'\n"
 "Or switch to another encoder format in Tools | Preferences | Encoding\n"
 
-#: src/dialogs.c:1834
+#: src/dialogs.c:1835
 msgid ""
 "\n"
 "\n"
@@ -4733,7 +4733,7 @@ msgstr ""
 "This encoder/format cannot use the requested audio codec.\n"
 "Please set the audio codec in Tools|Preferences|Encoding\n"
 
-#: src/dialogs.c:1839
+#: src/dialogs.c:1840
 msgid ""
 "This layout includes generated frames.\n"
 "It cannot be saved, you must render it to a clip first.\n"
@@ -4741,7 +4741,7 @@ msgstr ""
 "This layout includes generated frames.\n"
 "It cannot be saved, you must render it to a clip first.\n"
 
-#: src/dialogs.c:1844
+#: src/dialogs.c:1845
 msgid ""
 "This layout includes generated or recorded audio.\n"
 "It cannot be saved, you must render it to a clip first.\n"
@@ -4749,7 +4749,7 @@ msgstr ""
 "This layout includes generated or recorded audio.\n"
 "It cannot be saved, you must render it to a clip first.\n"
 
-#: src/dialogs.c:1851 src/dialogs.c:1949
+#: src/dialogs.c:1852 src/dialogs.c:1950
 #, c-format
 msgid ""
 "\n"
@@ -4760,7 +4760,7 @@ msgstr ""
 "\n"
 "Due to restrictions in the %s format\n"
 
-#: src/dialogs.c:1873
+#: src/dialogs.c:1874
 msgid ""
 "LiVES recommends the following settings:\n"
 "\n"
@@ -4768,43 +4768,43 @@ msgstr ""
 "LiVES recommends the following settings:\n"
 "\n"
 
-#: src/dialogs.c:1879 src/dialogs.c:1987 src/resample.c:850
+#: src/dialogs.c:1880 src/dialogs.c:1988 src/resample.c:850
 msgid ", signed"
 msgstr ", signed"
 
-#: src/dialogs.c:1880 src/dialogs.c:1988 src/resample.c:853
+#: src/dialogs.c:1881 src/dialogs.c:1989 src/resample.c:853
 msgid ", unsigned"
 msgstr ", unsigned"
 
-#: src/dialogs.c:1884 src/dialogs.c:1992 src/resample.c:858
+#: src/dialogs.c:1885 src/dialogs.c:1993 src/resample.c:858
 msgid ", little-endian"
 msgstr ", little-endian"
 
-#: src/dialogs.c:1885 src/dialogs.c:1993 src/resample.c:861
+#: src/dialogs.c:1886 src/dialogs.c:1994 src/resample.c:861
 msgid ", big-endian"
 msgstr ", big-endian"
 
-#: src/dialogs.c:1891
+#: src/dialogs.c:1892
 #, c-format
 msgid "Use an audio rate of %d Hz%s%s\n"
 msgstr "Use an audio rate of %d Hz%s%s\n"
 
-#: src/dialogs.c:1899
+#: src/dialogs.c:1900
 #, c-format
 msgid "Set video rate to %.3f frames per second\n"
 msgstr "Set video rate to %.3f frames per second\n"
 
-#: src/dialogs.c:1903
+#: src/dialogs.c:1904
 #, c-format
 msgid "Set video rate to %d:%d frames per second\n"
 msgstr "Set video rate to %d:%d frames per second\n"
 
-#: src/dialogs.c:1908 src/dialogs.c:2022
+#: src/dialogs.c:1909 src/dialogs.c:2023
 #, c-format
 msgid "Set video size to %d x %d pixels\n"
 msgstr "Set video size to %d x %d pixels\n"
 
-#: src/dialogs.c:1916 src/dialogs.c:2021
+#: src/dialogs.c:1917 src/dialogs.c:2022
 msgid ""
 "\n"
 "You may wish to:\n"
@@ -4812,35 +4812,35 @@ msgstr ""
 "\n"
 "You may wish to:\n"
 
-#: src/dialogs.c:1919 src/dialogs.c:2013
+#: src/dialogs.c:1920 src/dialogs.c:2014
 #, c-format
 msgid "resize video to %d x %d pixels\n"
 msgstr "resize video to %d x %d pixels\n"
 
-#: src/dialogs.c:1924
+#: src/dialogs.c:1925
 msgid "disable audio, since the target encoder cannot encode audio\n"
 msgstr "disable audio, since the target encoder cannot encode audio\n"
 
-#: src/dialogs.c:1983
+#: src/dialogs.c:1984
 msgid "LiVES must:\n"
 msgstr "LiVES must:\n"
 
-#: src/dialogs.c:1998
+#: src/dialogs.c:1999
 #, c-format
 msgid "resample audio to %d Hz%s%s\n"
 msgstr "resample audio to %d Hz%s%s\n"
 
-#: src/dialogs.c:2005
+#: src/dialogs.c:2006
 #, c-format
 msgid "resample video to %.3f frames per second\n"
 msgstr "resample video to %.3f frames per second\n"
 
-#: src/dialogs.c:2009
+#: src/dialogs.c:2010
 #, c-format
 msgid "resample video to %d:%d frames per second\n"
 msgstr "resample video to %d:%d frames per second\n"
 
-#: src/dialogs.c:2028
+#: src/dialogs.c:2029
 msgid ""
 "\n"
 "You will be able to undo these changes afterwards.\n"
@@ -4854,7 +4854,7 @@ msgstr ""
 "Click `OK` to proceed, `Cancel` to abort.\n"
 "\n"
 
-#: src/dialogs.c:2031
+#: src/dialogs.c:2032
 msgid ""
 "\n"
 "Changes applied to the selection will not be permanent.\n"
@@ -4864,7 +4864,7 @@ msgstr ""
 "Changes applied to the selection will not be permanent.\n"
 "\n"
 
-#: src/dialogs.c:2051
+#: src/dialogs.c:2052
 msgid ""
 "\n"
 "\n"
@@ -4878,7 +4878,7 @@ msgstr ""
 "memory available.\n"
 "Try recording for just a selection of the file."
 
-#: src/dialogs.c:2059
+#: src/dialogs.c:2060
 msgid ""
 "The playback speed (fps), or the audio rate\n"
 " of the clipboard does not match\n"
@@ -4896,7 +4896,7 @@ msgstr ""
 "\n"
 "Please press Cancel to abort the insert, or OK to continue."
 
-#: src/dialogs.c:2067
+#: src/dialogs.c:2068
 msgid ""
 "When opening a yuvmpeg stream, you should first create a fifo file and then "
 "write yuv4mpeg frames to it.\n"
@@ -4910,11 +4910,11 @@ msgstr ""
 "You should only click OK if you understand what you are doing, otherwise, "
 "click Cancel."
 
-#: src/dialogs.c:2117
+#: src/dialogs.c:2118
 msgid "Show Keys"
 msgstr "Show Keys"
 
-#: src/dialogs.c:2118
+#: src/dialogs.c:2119
 msgid ""
 "You can use the following keys during playback to control LiVES:-\n"
 "\n"
@@ -4994,11 +4994,11 @@ msgstr ""
 "d                             double size\n"
 "g                             ping pong loops\n"
 
-#: src/dialogs.c:2126
+#: src/dialogs.c:2127
 msgid "Multitrack Keys"
 msgstr "Multitrack Keys"
 
-#: src/dialogs.c:2127
+#: src/dialogs.c:2128
 msgid ""
 "You can use the following keys to control the multitrack window:-\n"
 "\n"
@@ -5038,11 +5038,11 @@ msgstr ""
 "\n"
 "For other keys, see the menus.\n"
 
-#: src/dialogs.c:2143
+#: src/dialogs.c:2144
 msgid "Message History"
 msgstr "Message History"
 
-#: src/dialogs.c:2157
+#: src/dialogs.c:2158
 #, fuzzy, c-format
 msgid ""
 "After upgrading/installing, you may need to adjust the <prefix_dir> setting "
@@ -5051,7 +5051,7 @@ msgstr ""
 "After upgrading/installing, you may need to adjust the <prefix_dir> setting "
 "in your ~/.lives file"
 
-#: src/dialogs.c:2166
+#: src/dialogs.c:2167
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -5068,7 +5068,7 @@ msgstr ""
 "%s%s%s\n"
 "or change the value of <lib_dir> in ~/.lives\n"
 
-#: src/dialogs.c:2174
+#: src/dialogs.c:2175
 msgid ""
 "Sorry, unknown audio type.\n"
 "\n"
@@ -5078,11 +5078,11 @@ msgstr ""
 "\n"
 " (Filenames must end in .mp3, .ogg, .wav, .mod, .xm or .it)"
 
-#: src/dialogs.c:2175
+#: src/dialogs.c:2176
 msgid "failed (unknown type)\n"
 msgstr "failed (unknown type)\n"
 
-#: src/dialogs.c:2180
+#: src/dialogs.c:2181
 msgid ""
 "\n"
 "Do you wish to remove the layout files associated with this set ?\n"
@@ -5092,7 +5092,7 @@ msgstr ""
 "Do you wish to remove the layout files associated with this set?\n"
 "(They will not be usable without the set).\n"
 
-#: src/dialogs.c:2185
+#: src/dialogs.c:2186
 #, c-format
 msgid ""
 "\n"
@@ -5105,7 +5105,7 @@ msgstr ""
 "Click OK to add the current clips and layouts to the existing set.\n"
 "Click Cancel to pick a new name.\n"
 
-#: src/dialogs.c:2192
+#: src/dialogs.c:2193
 msgid ""
 "\n"
 "Frames from this clip are used in some multitrack layouts.\n"
@@ -5117,7 +5117,7 @@ msgstr ""
 "Are you sure you wish to continue ?\n"
 "."
 
-#: src/dialogs.c:2196
+#: src/dialogs.c:2197
 msgid ""
 "\n"
 "Audio from this clip is used in some multitrack layouts.\n"
@@ -5129,7 +5129,7 @@ msgstr ""
 "Are you sure you wish to continue ?\n"
 "."
 
-#: src/dialogs.c:2200
+#: src/dialogs.c:2201
 #, c-format
 msgid ""
 "\n"
@@ -5146,7 +5146,7 @@ msgstr ""
 "If this file has been moved, click 'OK' to browse to the new location.\n"
 "Otherwise, click 'Cancel' to skip loading this file.\n"
 
-#: src/dialogs.c:2207
+#: src/dialogs.c:2208
 #, c-format
 msgid ""
 "\n"
@@ -5161,7 +5161,7 @@ msgstr ""
 "%s\n"
 "The clip could not be loaded.\n"
 
-#: src/dialogs.c:2214
+#: src/dialogs.c:2215
 msgid ""
 "\n"
 "Dear user, the jack developers decided to remove the -Z option from jackd.\n"
@@ -5173,7 +5173,7 @@ msgstr ""
 "Please check your ~/.jackdrc file and remove this option if present.\n"
 "Alternately, select a different audio player in Preferences.\n"
 
-#: src/dialogs.c:2218
+#: src/dialogs.c:2219
 msgid ""
 "\n"
 "Unable to start up jack. Please ensure that alsa is set up correctly on your "
@@ -5187,7 +5187,7 @@ msgstr ""
 "and also that the soundcard is not in use by another program.\n"
 "Automatic jack startup will be disabled now.\n"
 
-#: src/dialogs.c:2224
+#: src/dialogs.c:2225
 msgid ""
 "\n"
 "Unable to connect to jack server. Please start jack before starting LiVES\n"
@@ -5195,7 +5195,7 @@ msgstr ""
 "\n"
 "Unable to connect to jack server. Please start jack before starting LiVES.\n"
 
-#: src/dialogs.c:2233
+#: src/dialogs.c:2234
 #, c-format
 msgid ""
 "\n"
@@ -5212,7 +5212,7 @@ msgstr ""
 "\n"
 "%s\n"
 
-#: src/dialogs.c:2240
+#: src/dialogs.c:2241
 msgid ""
 "\n"
 "Alternately, you can restart LiVES and select another audio player.\n"
@@ -5220,7 +5220,7 @@ msgstr ""
 "\n"
 "Alternately, you can restart LiVES and select another audio player.\n"
 
-#: src/dialogs.c:2245
+#: src/dialogs.c:2246
 #, c-format
 msgid ""
 "\n"
@@ -5235,7 +5235,7 @@ msgstr ""
 "You can increase the value in Preferences/Multitrack.\n"
 "It is recommended to increase it to at least %d MB"
 
-#: src/dialogs.c:2251
+#: src/dialogs.c:2252
 #, c-format
 msgid ""
 "\n"
@@ -5248,7 +5248,7 @@ msgstr ""
 "It is recommended that you delete them.\n"
 "Do you wish to delete them ?\n"
 
-#: src/dialogs.c:2258
+#: src/dialogs.c:2259
 msgid ""
 "\n"
 "LiVES was unable to reserve enough memory for multitrack undo.\n"
@@ -5260,7 +5260,7 @@ msgstr ""
 "Either close some other applications, or reduce the undo memory\n"
 "using Preferences/Multitrack/Undo Memory\n"
 
-#: src/dialogs.c:2262
+#: src/dialogs.c:2263
 msgid ""
 "\n"
 "Out of memory for undo.\n"
@@ -5272,7 +5272,7 @@ msgstr ""
 "You may need to increase the undo memory\n"
 "using Preferences/Multitrack/Undo Memory\n"
 
-#: src/dialogs.c:2266
+#: src/dialogs.c:2267
 msgid ""
 "\n"
 "LiVES was unable to reserve enough memory for the multitrack undo buffer.\n"
@@ -5280,19 +5280,19 @@ msgstr ""
 "\n"
 "LiVES was unable to reserve enough memory for the multitrack undo buffer.\n"
 
-#: src/dialogs.c:2268
+#: src/dialogs.c:2269
 msgid "or enter a smaller value.\n"
 msgstr "or enter a smaller value.\n"
 
-#: src/dialogs.c:2270
+#: src/dialogs.c:2271
 msgid "Try again from the clip editor, try closing some other applications\n"
 msgstr "Try again from the clip editor, try closing some other applications\n"
 
-#: src/dialogs.c:2271
+#: src/dialogs.c:2272
 msgid "Try closing some other applications\n"
 msgstr "Try closing some other applications\n"
 
-#: src/dialogs.c:2282
+#: src/dialogs.c:2283
 msgid ""
 "Multitrack is set to 0 audio channels, but this layout has audio.\n"
 "You should adjust the audio settings from the Tools menu.\n"
@@ -5300,13 +5300,13 @@ msgstr ""
 "Multitrack is set to 0 audio channels, but this layout has audio.\n"
 "You should adjust the audio settings from the Tools menu.\n"
 
-#: src/dialogs.c:2286
+#: src/dialogs.c:2287
 msgid ""
 "The current layout has audio, so audio channels may not be set to zero.\n"
 msgstr ""
 "The current layout has audio, so audio channels may not be set to zero.\n"
 
-#: src/dialogs.c:2290
+#: src/dialogs.c:2291
 msgid ""
 "Multitrack audio preview is only available with the\n"
 "\"jack\" or \"pulse audio\" audio player.\n"
@@ -5316,7 +5316,7 @@ msgstr ""
 "\"jack\" or \"pulse audio\" audio player.\n"
 "You can set this in Tools|Preferences|Playback."
 
-#: src/dialogs.c:2294
+#: src/dialogs.c:2295
 msgid ""
 "Errors were detected in the layout (which may be due to transferring from "
 "another system, or from an older version of LiVES).\n"
@@ -5326,7 +5326,7 @@ msgstr ""
 "another system, or from an older version of LiVES).\n"
 "Should I try to repair the disk copy of the layout ?\n"
 
-#: src/dialogs.c:2298
+#: src/dialogs.c:2299
 msgid ""
 "LiVES was unable to load the layout.\n"
 "Sorry.\n"
@@ -5334,7 +5334,7 @@ msgstr ""
 "LiVES was unable to load the layout.\n"
 "Sorry.\n"
 
-#: src/dialogs.c:2304
+#: src/dialogs.c:2305
 msgid ""
 "\n"
 "\n"
@@ -5344,7 +5344,7 @@ msgstr ""
 "\n"
 "Audio rate must be greater than 0.\n"
 
-#: src/dialogs.c:2308
+#: src/dialogs.c:2309
 msgid ""
 "\n"
 "Event list will be very large\n"
@@ -5356,7 +5356,7 @@ msgstr ""
 "and may take a long time to display.\n"
 "Are you sure you wish to view it ?\n"
 
-#: src/dialogs.c:2313
+#: src/dialogs.c:2314
 msgid ""
 "\n"
 "\n"
@@ -5366,7 +5366,7 @@ msgstr ""
 "\n"
 "You must install 'dvgrab' to use this function.\n"
 
-#: src/dialogs.c:2318
+#: src/dialogs.c:2319
 msgid ""
 "\n"
 "\n"
@@ -5380,19 +5380,19 @@ msgstr ""
 "the \"jack\" or the \"pulse audio\" audio player.\n"
 "You may need to select one of these in Tools/Preferences/Playback.\n"
 
-#: src/dialogs.c:2322
+#: src/dialogs.c:2323
 msgid "Video playback plugin failed to initialise palette !\n"
 msgstr "Video playback plugin failed to initialise palette !\n"
 
-#: src/dialogs.c:2326
+#: src/dialogs.c:2327
 msgid "Decoder plugin failed to initialise palette !\n"
 msgstr "Decoder plugin failed to initialise palette !\n"
 
-#: src/dialogs.c:2331
+#: src/dialogs.c:2332
 msgid "Unable to set framerate of video plugin\n"
 msgstr "Unable to set framerate of video plugin\n"
 
-#: src/dialogs.c:2336
+#: src/dialogs.c:2337
 msgid ""
 "After a crash, it is advisable to clean up the disk with\n"
 "File|Clean up disk space\n"
@@ -5400,7 +5400,7 @@ msgstr ""
 "After a crash, it is advisable to clean up the disk with\n"
 "File|Clean up disk space\n"
 
-#: src/dialogs.c:2348
+#: src/dialogs.c:2349
 #, c-format
 msgid ""
 "Stream frame size is too large for your network buffers.\n"
@@ -5413,33 +5413,33 @@ msgstr ""
 "\n"
 "echo %d > /proc/sys/net/core/rmem_max\n"
 
-#: src/dialogs.c:2572
+#: src/dialogs.c:2573
 msgid "cancelled.\n"
 msgstr "cancelled.\n"
 
-#: src/dialogs.c:2579
+#: src/dialogs.c:2580
 msgid "failed.\n"
 msgstr "failed.\n"
 
-#: src/dialogs.c:2586
+#: src/dialogs.c:2587
 msgid "done.\n"
 msgstr "done.\n"
 
-#: src/dialogs.c:2590
+#: src/dialogs.c:2591
 msgid "error in file. Failed.\n"
 msgstr "error in file. Failed.\n"
 
-#: src/dialogs.c:2624 src/dialogs.c:2673 src/dialogs.c:2697
+#: src/dialogs.c:2625 src/dialogs.c:2674 src/dialogs.c:2698
 #, c-format
 msgid "Additional info: %s\n"
 msgstr "Additional info: %s\n"
 
-#: src/dialogs.c:2627
+#: src/dialogs.c:2628
 #, c-format
 msgid "The error value was %d%s\n"
 msgstr "The error value was %d%s\n"
 
-#: src/dialogs.c:2630
+#: src/dialogs.c:2631
 #, c-format
 msgid ""
 "\n"
@@ -5454,7 +5454,7 @@ msgstr ""
 "Please check your system for errors.\n"
 "%s%s%s"
 
-#: src/dialogs.c:2676
+#: src/dialogs.c:2677
 #, c-format
 msgid ""
 "\n"
@@ -5469,7 +5469,7 @@ msgstr ""
 "Please check for possible error causes.\n"
 "%s"
 
-#: src/dialogs.c:2700
+#: src/dialogs.c:2701
 #, c-format
 msgid ""
 "\n"
@@ -5484,7 +5484,7 @@ msgstr ""
 "Please check for possible error causes.\n"
 "%s"
 
-#: src/dialogs.c:2744
+#: src/dialogs.c:2745
 #, c-format
 msgid ""
 "\n"
@@ -5497,7 +5497,7 @@ msgstr ""
 "%s\n"
 "Please check for possible error causes.\n"
 
-#: src/dialogs.c:2748
+#: src/dialogs.c:2749
 #, c-format
 msgid ""
 "\n"
@@ -5512,7 +5512,7 @@ msgstr ""
 "The error was\n"
 "%s.\n"
 
-#: src/dialogs.c:2779
+#: src/dialogs.c:2780
 #, c-format
 msgid ""
 "\n"
@@ -5525,7 +5525,7 @@ msgstr ""
 "%s\n"
 "Please check for possible error causes.\n"
 
-#: src/dialogs.c:2783
+#: src/dialogs.c:2784
 #, c-format
 msgid ""
 "\n"
@@ -5540,12 +5540,12 @@ msgstr ""
 "The error was\n"
 "%s.\n"
 
-#: src/dialogs.c:2851
+#: src/dialogs.c:2852
 #, c-format
 msgid "Value for \"%s\" could not be read."
 msgstr "Value for \"%s\" could not be read."
 
-#: src/dialogs.c:2869
+#: src/dialogs.c:2870
 #, c-format
 msgid ""
 "\n"
@@ -5558,7 +5558,7 @@ msgstr ""
 "%s\n"
 "Please check your system for errors.\n"
 
-#: src/dialogs.c:2878
+#: src/dialogs.c:2879
 #, c-format
 msgid ""
 "\n"
@@ -5571,7 +5571,7 @@ msgstr ""
 "%s\n"
 "Please check the file permissions and try again."
 
-#: src/dialogs.c:2885
+#: src/dialogs.c:2886
 #, c-format
 msgid ""
 "\n"
@@ -5584,7 +5584,7 @@ msgstr ""
 "%s\n"
 "Please check the directory permissions and try again."
 
-#: src/dialogs.c:2892
+#: src/dialogs.c:2893
 msgid ""
 "\n"
 "Abort and exit immediately from LiVES\n"
@@ -5594,7 +5594,7 @@ msgstr ""
 "Abort and exit immediately from LiVES\n"
 "Are you sure?\n"
 
-#: src/dialogs.c:2898
+#: src/dialogs.c:2899
 #, c-format
 msgid ""
 "\n"
@@ -5605,7 +5605,7 @@ msgstr ""
 "The %s cannot encode clips with image type %s.\n"
 "Please select another encoder from the list.\n"
 
-#: src/dialogs.c:2907
+#: src/dialogs.c:2908
 msgid ""
 "\n"
 "This card is already in use and cannot be opened multiple times.\n"
@@ -5613,7 +5613,7 @@ msgstr ""
 "\n"
 "This card is already in use and cannot be opened multiple times.\n"
 
-#: src/dialogs.c:2912
+#: src/dialogs.c:2913
 #, c-format
 msgid ""
 "\n"
@@ -5628,7 +5628,7 @@ msgstr ""
 "- Check if this device is in use by another program.\n"
 "- Check if the device actually exists.\n"
 
-#: src/dialogs.c:2919
+#: src/dialogs.c:2920
 msgid ""
 "\n"
 "This file already has subtitles loaded.\n"
@@ -5638,7 +5638,7 @@ msgstr ""
 "This file already has subtitles loaded.\n"
 "Do you wish to overwrite the existing subtitles ?\n"
 
-#: src/dialogs.c:2923
+#: src/dialogs.c:2924
 msgid ""
 "\n"
 "LiVES currently only supports subtitles of type .srt and .sub.\n"
@@ -5646,7 +5646,7 @@ msgstr ""
 "\n"
 "LiVES currently only supports subtitles of type .srt and .sub.\n"
 
-#: src/dialogs.c:2927
+#: src/dialogs.c:2928
 msgid ""
 "\n"
 "Erase all subtitles from this clip.\n"
@@ -5656,7 +5656,7 @@ msgstr ""
 "Erase all subtitles from this clip.\n"
 "Are you sure ?\n"
 
-#: src/dialogs.c:2933
+#: src/dialogs.c:2934
 #, c-format
 msgid ""
 "\n"
@@ -5669,7 +5669,7 @@ msgstr ""
 "Click 'Cancel' to set another file name\n"
 "or 'OK' to continue and save as type \"%s\"\n"
 
-#: src/dialogs.c:2940
+#: src/dialogs.c:2941
 msgid ""
 "\n"
 "Do you wish to move the current clip sets to the new directory ?\n"
@@ -5679,7 +5679,7 @@ msgstr ""
 "Do you wish to move the current clip sets to the new directory ?\n"
 "(If unsure, click Yes)\n"
 
-#: src/dialogs.c:2944
+#: src/dialogs.c:2945
 #, c-format
 msgid ""
 "\n"
@@ -5695,7 +5695,7 @@ msgstr ""
 "You are strongly advised to close the other copy, before clicking 'OK' to "
 "continue."
 
-#: src/dialogs.c:2950
+#: src/dialogs.c:2951
 msgid ""
 "\n"
 "No video input devices could be found.\n"
@@ -5703,7 +5703,7 @@ msgstr ""
 "\n"
 "No video input devices could be found.\n"
 
-#: src/dialogs.c:2954
+#: src/dialogs.c:2955
 msgid ""
 "\n"
 "All video input devices are already in use.\n"
@@ -5711,7 +5711,7 @@ msgstr ""
 "\n"
 "All video input devices are already in use.\n"
 
-#: src/dialogs.c:2958
+#: src/dialogs.c:2959
 msgid ""
 "\n"
 "\n"
@@ -5723,7 +5723,7 @@ msgstr ""
 "CLEANING AND COPYING FILES. THIS MAY TAKE SOME TIME.\n"
 "DO NOT SHUT DOWN OR CLOSE LIVES !\n"
 
-#: src/dialogs.c:2977
+#: src/dialogs.c:2978
 #, c-format
 msgid ""
 "No clips were recovered for set (%s).\n"
@@ -5733,7 +5733,7 @@ msgstr ""
 "Please check the spelling of the set name and try again.\n"
 
 #. TRANSLATORS: make sure the menu text matches what is in gui.c
-#: src/dialogs.c:2986
+#: src/dialogs.c:2987
 #, c-format
 msgid ""
 "\n"
@@ -5751,7 +5751,7 @@ msgstr ""
 "File -> Clean up Diskspace\n"
 
 #. TRANSLATORS: make sure the menu text matches what is in gui.c
-#: src/dialogs.c:2994
+#: src/dialogs.c:2995
 #, c-format
 msgid ""
 "\n"
@@ -5764,7 +5764,7 @@ msgstr ""
 "Welcome to LiVES version %s !\n"
 "\n"
 
-#: src/dialogs.c:3000
+#: src/dialogs.c:3001
 msgid ""
 "\n"
 "You must have autolives.pl installed and in your path to use this toy.\n"
@@ -5774,7 +5774,7 @@ msgstr ""
 "You must have autolives.pl installed and in your path to use this toy.\n"
 "Consult your package distributor.\n"
 
-#: src/dialogs.c:3004
+#: src/dialogs.c:3005
 msgid ""
 "\n"
 "You must have a minimum of one clip loaded to use this toy.\n"
@@ -5782,7 +5782,7 @@ msgstr ""
 "\n"
 "You must have a minimum of one clip loaded to use this toy.\n"
 
-#: src/dialogs.c:3008
+#: src/dialogs.c:3009
 msgid ""
 "\n"
 "LiVES lost its connection to jack and was unable to reconnect.\n"
@@ -5792,7 +5792,7 @@ msgstr ""
 "LiVES lost its connection to jack and was unable to reconnect.\n"
 "Restarting LiVES is recommended.\n"
 
-#: src/dialogs.c:3012
+#: src/dialogs.c:3013
 msgid ""
 "\n"
 "LiVES lost its connection to pulseaudio and was unable to reconnect.\n"
@@ -5802,7 +5802,7 @@ msgstr ""
 "LiVES lost its connection to pulseaudio and was unable to reconnect.\n"
 "Restarting LiVES is recommended.\n"
 
-#: src/dialogs.c:3025
+#: src/dialogs.c:3026
 #, c-format
 msgid ""
 "\n"
@@ -5843,189 +5843,207 @@ msgstr "audio/video"
 msgid "Audio/Video Generators"
 msgstr "Audio/Video Transitions"
 
-#: src/effects.c:65 src/effects.c:68
+#: src/effects.c:65
 msgid "data generator"
 msgstr "Data generator"
 
-#: src/effects.c:66 src/effects.c:69
+#: src/effects.c:66
 msgid "Data Generators"
 msgstr "Data Generators"
 
+#: src/effects.c:68
+msgid "data processor"
+msgstr ""
+
+#: src/effects.c:69
+#, fuzzy
+msgid "Data Processors"
+msgstr "Data Generators"
+
 #: src/effects.c:71
+msgid "data source"
+msgstr ""
+
+#: src/effects.c:72
+#, fuzzy
+msgid "Data Sources"
+msgstr "Source: %s"
+
+#: src/effects.c:74
 msgid "transition"
 msgstr "transition"
 
-#: src/effects.c:72
+#: src/effects.c:75
 msgid "Transitions"
 msgstr "Transitions"
 
-#: src/effects.c:74
+#: src/effects.c:77
 msgid "effect"
 msgstr "effect"
 
 #. TRANSLATORS: please keep this string short
-#: src/effects.c:75 src/preferences.c:3883
+#: src/effects.c:78 src/preferences.c:3888
 msgid "Effects"
 msgstr "Effects"
 
-#: src/effects.c:77
+#: src/effects.c:80
 msgid "utility"
 msgstr "utility"
 
-#: src/effects.c:78
+#: src/effects.c:81
 msgid "Utilities"
 msgstr "Utilities"
 
-#: src/effects.c:80
+#: src/effects.c:83
 msgid "compositor"
 msgstr "compositor"
 
-#: src/effects.c:81
+#: src/effects.c:84
 msgid "Compositors"
 msgstr "Compositors"
 
-#: src/effects.c:83
+#: src/effects.c:86
 msgid "tap"
 msgstr "tap"
 
-#: src/effects.c:84
+#: src/effects.c:87
 msgid "Taps"
 msgstr "Taps"
 
-#: src/effects.c:86
+#: src/effects.c:89
 msgid "splitter"
 msgstr "splitter"
 
-#: src/effects.c:87
+#: src/effects.c:90
 msgid "Splitters"
 msgstr "Splitters"
 
-#: src/effects.c:89
+#: src/effects.c:92
 msgid "converter"
 msgstr "converter"
 
-#: src/effects.c:90
+#: src/effects.c:93
 msgid "Converters"
 msgstr "Converters"
 
-#: src/effects.c:92
+#: src/effects.c:95
 msgid "analyser"
 msgstr "analyser"
 
-#: src/effects.c:93
+#: src/effects.c:96
 msgid "Analysers"
 msgstr "Analysers"
 
-#: src/effects.c:98
+#: src/effects.c:101
 msgid "audio/video"
 msgstr "audio/video"
 
-#: src/effects.c:99
+#: src/effects.c:102
 msgid "Audio/Video Transitions"
 msgstr "Audio/Video Transitions"
 
-#: src/effects.c:101
+#: src/effects.c:104
 msgid "video only"
 msgstr "video only"
 
-#: src/effects.c:102
+#: src/effects.c:105
 msgid "Video only Transitions"
 msgstr "Video only Transitions"
 
-#: src/effects.c:104 src/multitrack.c:9736
+#: src/effects.c:107 src/multitrack.c:9736
 msgid "audio only"
 msgstr "audio only"
 
-#: src/effects.c:105
+#: src/effects.c:108
 msgid "Audio only Transitions"
 msgstr "Audio only Transitions"
 
-#: src/effects.c:107 src/effects.c:110 src/multitrack.c:17401
+#: src/effects.c:110 src/effects.c:113 src/multitrack.c:17401
 msgid "audio"
 msgstr "audio"
 
-#: src/effects.c:108
+#: src/effects.c:111
 msgid "Audio Mixers"
 msgstr "Audio Mixers"
 
-#: src/effects.c:111
+#: src/effects.c:114
 msgid "Audio Effects"
 msgstr "Audio Effects"
 
-#: src/effects.c:113
+#: src/effects.c:116
 msgid "audio volume controller"
 msgstr "audio volume controller"
 
-#: src/effects.c:114
+#: src/effects.c:117
 msgid "Audio Volume Controllers"
 msgstr "Audio Volume Controllers"
 
-#: src/effects.c:116
+#: src/effects.c:119
 msgid "video analyser"
 msgstr "video analyser"
 
-#: src/effects.c:117
+#: src/effects.c:120
 msgid "Video analysers"
 msgstr "Video analysers"
 
-#: src/effects.c:119
+#: src/effects.c:122
 msgid "audio analyser"
 msgstr "audio analyser"
 
-#: src/effects.c:120
+#: src/effects.c:123
 msgid "Audio Analysers"
 msgstr "Audio Analysers"
 
-#: src/effects.c:124 src/plugins.c:2486 src/plugins.c:2500
+#: src/effects.c:127 src/plugins.c:2489 src/plugins.c:2503
 msgid "unknown"
 msgstr "unknown"
 
-#: src/effects.c:225
+#: src/effects.c:228
 #, c-format
 msgid "%s all frames..."
 msgstr "%s all frames..."
 
-#: src/effects.c:230
+#: src/effects.c:233
 #, c-format
 msgid "%s clipboard into frames %d to %d..."
 msgstr "%s clipboard into frames %d to %d..."
 
-#: src/effects.c:237
+#: src/effects.c:240
 #, c-format
 msgid "%s to clipboard..."
 msgstr "%s to clipboard..."
 
-#: src/effects.c:241
+#: src/effects.c:244
 #, c-format
 msgid "%s to new clip..."
 msgstr "%s to new clip..."
 
-#: src/effects.c:246
+#: src/effects.c:249
 #, c-format
 msgid "%s frames %d to %d..."
 msgstr "%s frames %d to %d..."
 
-#: src/effects.c:277
+#: src/effects.c:280
 #, c-format
 msgid "%s clipboard with selection"
 msgstr "%s clipboard with selection"
 
-#: src/effects.c:282
+#: src/effects.c:285
 #, c-format
 msgid "%s to clipboard"
 msgstr "%s to clipboard"
 
-#: src/effects.c:286
+#: src/effects.c:289
 #, c-format
 msgid "%s to new clip"
 msgstr "%s to new clip"
 
-#: src/effects.c:291
+#: src/effects.c:294
 #, c-format
 msgid "%s frames %d to %d"
 msgstr "%s frames %d to %d"
 
-#: src/effects.c:440 src/effects.c:507
+#: src/effects.c:443 src/effects.c:510
 msgid ""
 "\n"
 "No frames were generated.\n"
@@ -6033,17 +6051,17 @@ msgstr ""
 "\n"
 "No frames were generated.\n"
 
-#: src/effects-weed.c:3677
+#: src/effects-weed.c:3702
 #, c-format
 msgid "Error: plugin %s has no weed_setup() function.\n"
 msgstr "Error: plugin %s has no weed_setup() function.\n"
 
-#: src/effects-weed.c:3692
+#: src/effects-weed.c:3717
 #, c-format
 msgid "No usable filters found in plugin %s\n"
 msgstr "No usable filters found in plugin %s\n"
 
-#: src/effects-weed.c:3772
+#: src/effects-weed.c:3797
 #, c-format
 msgid ""
 "Info: Unable to load plugin %s\n"
@@ -6052,41 +6070,41 @@ msgstr ""
 "Info: Unable to load plugin %s\n"
 "Error was: %s\n"
 
-#: src/effects-weed.c:3775 src/effects-weed.c:4114
+#: src/effects-weed.c:3800 src/effects-weed.c:4143
 msgid "Some plugin directories"
 msgstr "Some plugin directories"
 
-#: src/effects-weed.c:3950
+#: src/effects-weed.c:3979
 #, c-format
 msgid "Successfully loaded %d Weed filters\n"
 msgstr "Successfully loaded %d Weed filters\n"
 
-#: src/effects-weed.c:4615
+#: src/effects-weed.c:4648
 #, c-format
 msgid "Effect %s cannot be used with this audio player.\n"
 msgstr ""
 
-#: src/effects-weed.c:4719
+#: src/effects-weed.c:4752
 #, c-format
 msgid "Failed to start instance %s, error code %d\n"
 msgstr "Failed to start instance %s, error code %d\n"
 
-#: src/effects-weed.c:4758
+#: src/effects-weed.c:4791
 #, c-format
 msgid "Unable to start generator %s\n"
 msgstr "Unable to start generator %s\n"
 
-#: src/effects-weed.c:5333
+#: src/effects-weed.c:5402
 #, c-format
 msgid "Failed to start generator %s\n"
 msgstr "Failed to start generator %s\n"
 
-#: src/effects-weed.c:5394
+#: src/effects-weed.c:5463
 #, c-format
 msgid "Failed to start generator %s, error %d\n"
 msgstr "Failed to start generator %s, error %d\n"
 
-#: src/effects-weed.c:6496
+#: src/effects-weed.c:6565
 #, c-format
 msgid "%s [unstable] (%s)"
 msgstr "%s [unstable] (%s)"
@@ -6418,7 +6436,7 @@ msgstr ""
 msgid "Unable to resize, please install imageMagick\n"
 msgstr "Unable to resize, please install imageMagick\n"
 
-#: src/plugins.c:2427
+#: src/plugins.c:2430
 #, c-format
 msgid ""
 "\n"
@@ -6431,7 +6449,7 @@ msgstr ""
 "Failed to open decoder plugin %s\n"
 "Error was %s\n"
 
-#: src/plugins.c:2450
+#: src/plugins.c:2453
 #, c-format
 msgid ""
 "\n"
@@ -6446,24 +6464,24 @@ msgstr ""
 "is missing a mandatory function.\n"
 "Unable to use it.\n"
 
-#: src/plugins.c:2491
+#: src/plugins.c:2494
 msgid "/unknown"
 msgstr "/unknown"
 
-#: src/plugins.c:2607
+#: src/plugins.c:2610
 msgid "LiVES: - Decoder Plugins"
 msgstr "LiVES: - Decoder Plugins"
 
-#: src/plugins.c:2627
+#: src/plugins.c:2630
 msgid "Enabled Video Decoders (uncheck to disable)"
 msgstr "Enabled Video Decoders (uncheck to disable)"
 
-#: src/plugins.c:2705
+#: src/plugins.c:2708
 #, c-format
 msgid "Failed to load %s, transitions may not resize.\n"
 msgstr "Failed to load %s, transitions may not resize.\n"
 
-#: src/plugins.c:3806
+#: src/plugins.c:3809
 #, c-format
 msgid "%s advanced settings"
 msgstr "%s advanced settings"
@@ -7351,7 +7369,7 @@ msgstr ""
 "Tip: avoid setting it inside /tmp, since frequently /tmp is cleared on "
 "system shutdown."
 
-#: src/preferences.c:703
+#: src/preferences.c:707
 #, fuzzy, c-format
 msgid ""
 "Unable to create or write to the new temporary directory.\n"
@@ -7368,7 +7386,7 @@ msgstr ""
 "\n"
 "The directory will not be changed now.\n"
 
-#: src/preferences.c:705
+#: src/preferences.c:709
 #, fuzzy, c-format
 msgid ""
 "Unable to create or write to the new temporary directory.\n"
@@ -7384,7 +7402,7 @@ msgstr ""
 "\n"
 "The directory will not be changed now.\n"
 
-#: src/preferences.c:717
+#: src/preferences.c:721
 msgid ""
 "You have chosen to change the temporary directory.\n"
 "Please make sure you have no other copies of LiVES open.\n"
@@ -7404,7 +7422,7 @@ msgstr ""
 "Alternatively, press Cancel to restore the temporary directory to its "
 "original setting."
 
-#: src/preferences.c:1107
+#: src/preferences.c:1111
 msgid ""
 "\n"
 "Unable to switch audio players to jack - jackd must be installed first.\n"
@@ -7414,7 +7432,7 @@ msgstr ""
 "Unable to switch audio players to jack - jackd must be installed first.\n"
 "See http://jackaudio.org\n"
 
-#: src/preferences.c:1113
+#: src/preferences.c:1117
 msgid ""
 "\n"
 "Switching audio players requires restart (jackd must not be running)\n"
@@ -7422,7 +7440,7 @@ msgstr ""
 "\n"
 "Switching audio players requires restart (jackd must not be running)\n"
 
-#: src/preferences.c:1140
+#: src/preferences.c:1144
 msgid ""
 "\n"
 "Unable to switch audio players to pulse audio\n"
@@ -7434,67 +7452,67 @@ msgstr ""
 "pulseaudio must be installed first.\n"
 "See http://www.pulseaudio.org\n"
 
-#: src/preferences.c:1433
+#: src/preferences.c:1437
 msgid "PCM (highest quality; largest files)"
 msgstr "PCM (highest quality; largest files)"
 
-#: src/preferences.c:2072
+#: src/preferences.c:2077
 msgid "LiVES: - Preferences"
 msgstr "LiVES: - Preferences"
 
-#: src/preferences.c:2163
+#: src/preferences.c:2168
 msgid "Open file selection maximised"
 msgstr "Open file selection maximised"
 
-#: src/preferences.c:2173
+#: src/preferences.c:2178
 msgid "Show recent files in the File menu"
 msgstr "Show recent files in the File menu"
 
-#: src/preferences.c:2187
+#: src/preferences.c:2192
 msgid "Stop screensaver on playback    "
 msgstr "Stop screensaver on playback    "
 
-#: src/preferences.c:2196
+#: src/preferences.c:2201
 msgid "Open main window maximised"
 msgstr "Open main window maximised"
 
-#: src/preferences.c:2209
+#: src/preferences.c:2214
 msgid "Show toolbar when background is blanked"
 msgstr "Show toolbar when background is blanked"
 
-#: src/preferences.c:2218
+#: src/preferences.c:2223
 msgid "Allow mouse wheel to switch clips"
 msgstr "Allow mouse wheel to switch clips"
 
-#: src/preferences.c:2231
+#: src/preferences.c:2236
 msgid "Shrink previews to fit in interface"
 msgstr "Shrink previews to fit in interface"
 
-#: src/preferences.c:2241
+#: src/preferences.c:2246
 msgid "Startup mode:"
 msgstr "Startup mode:"
 
-#: src/preferences.c:2252
+#: src/preferences.c:2257
 msgid "_Clip editor"
 msgstr "_Clip editor"
 
-#: src/preferences.c:2272
+#: src/preferences.c:2277
 msgid "_Multitrack mode"
 msgstr "_Multitrack mode"
 
-#: src/preferences.c:2337
+#: src/preferences.c:2342
 msgid "Multi-head support"
 msgstr "Multi-head support"
 
-#: src/preferences.c:2350
+#: src/preferences.c:2355
 msgid " monitor number for LiVES interface"
 msgstr " monitor number for LiVES interface"
 
-#: src/preferences.c:2365
+#: src/preferences.c:2370
 msgid " monitor number for playback"
 msgstr " monitor number for playback"
 
-#: src/preferences.c:2378
+#: src/preferences.c:2383
 msgid ""
 "A setting of 0 means use all available monitors (only works with some "
 "playback plugins)."
@@ -7502,238 +7520,238 @@ msgstr ""
 "A setting of 0 means use all available monitors (only works with some "
 "playback plugins)."
 
-#: src/preferences.c:2391
+#: src/preferences.c:2396
 msgid "Force single monitor"
 msgstr "Force single monitor"
 
-#: src/preferences.c:2406
+#: src/preferences.c:2411
 msgid "Force single monitor mode"
 msgstr "Force single monitor mode"
 
 #. TRANSLATORS: please keep this string short
-#: src/preferences.c:2428
+#: src/preferences.c:2433
 msgid "GUI"
 msgstr "GUI"
 
-#: src/preferences.c:2456
+#: src/preferences.c:2461
 msgid "When entering Multitrack mode:"
 msgstr "When entering Multitrack mode:"
 
-#: src/preferences.c:2475
+#: src/preferences.c:2480
 msgid "_Prompt me for width, height, fps and audio settings"
 msgstr "_Prompt me for width, height, fps and audio settings"
 
-#: src/preferences.c:2494
+#: src/preferences.c:2499
 msgid "_Always use the following values:"
 msgstr "_Always use the following values:"
 
-#: src/preferences.c:2514
+#: src/preferences.c:2519
 msgid "Use these same _values for rendering a new clip"
 msgstr "Use these same _values for rendering a new clip"
 
-#: src/preferences.c:2553
+#: src/preferences.c:2558
 msgid "_Width           "
 msgstr "_Width           "
 
-#: src/preferences.c:2569
+#: src/preferences.c:2574
 msgid "          _Height      "
 msgstr "          _Height      "
 
-#: src/preferences.c:2586
+#: src/preferences.c:2591
 msgid "          _FPS"
 msgstr "          _FPS"
 
-#: src/preferences.c:2612
+#: src/preferences.c:2617
 msgid "Enable backing audio track"
 msgstr "Enable backing audio track"
 
-#: src/preferences.c:2634
+#: src/preferences.c:2639
 msgid "Audio track per video track"
 msgstr "Audio track per video track"
 
-#: src/preferences.c:2666
+#: src/preferences.c:2671
 msgid "    _Undo buffer size (MB)    "
 msgstr "    _Undo buffer size (MB)    "
 
-#: src/preferences.c:2682
+#: src/preferences.c:2687
 msgid "_Exit multitrack mode after rendering"
 msgstr "_Exit multitrack mode after rendering"
 
-#: src/preferences.c:2704
+#: src/preferences.c:2709
 msgid "Auto backup layouts"
 msgstr "Auto backup layouts"
 
-#: src/preferences.c:2714
+#: src/preferences.c:2719
 msgid "_Every"
 msgstr "_Every"
 
-#: src/preferences.c:2731
+#: src/preferences.c:2736
 msgid "seconds"
 msgstr "seconds"
 
-#: src/preferences.c:2750
+#: src/preferences.c:2755
 msgid "After every _change"
 msgstr "After every _change"
 
-#: src/preferences.c:2769
+#: src/preferences.c:2774
 msgid "_Never"
 msgstr "_Never"
 
 #. TRANSLATORS: please keep this string short
-#: src/preferences.c:2804
+#: src/preferences.c:2809
 msgid "Multitrack/Render"
 msgstr "Multitrack/Render"
 
-#: src/preferences.c:2838
+#: src/preferences.c:2843
 msgid "Use instant opening when possible"
 msgstr "Use instant opening when possible"
 
-#: src/preferences.c:2851
+#: src/preferences.c:2856
 msgid "Enable instant opening of some file types using decoder plugins"
 msgstr "Enable instant opening of some file types using decoder plugins"
 
-#: src/preferences.c:2877
+#: src/preferences.c:2882
 msgid "Video open command             "
 msgstr "Video open command             "
 
-#: src/preferences.c:2897
+#: src/preferences.c:2902
 msgid "Open/render compression                  "
 msgstr "Open/render compression                  "
 
-#: src/preferences.c:2909
+#: src/preferences.c:2914
 msgid " %     ( lower = slower, larger files; for jpeg, higher quality )"
 msgstr " %     ( lower = slower, larger files; for jpeg, higher quality )"
 
-#: src/preferences.c:2922
+#: src/preferences.c:2927
 msgid "Default image format          "
 msgstr "Default image format          "
 
-#: src/preferences.c:2931
+#: src/preferences.c:2936
 msgid "_jpeg"
 msgstr "_jpeg"
 
-#: src/preferences.c:2946
+#: src/preferences.c:2951
 msgid "_png"
 msgstr "_png"
 
-#: src/preferences.c:2966
+#: src/preferences.c:2971
 msgid "(Check Help/Troubleshoot to see which image formats are supported)"
 msgstr "(Check Help/Troubleshoot to see which image formats are supported)"
 
-#: src/preferences.c:2982
+#: src/preferences.c:2987
 msgid "Enable automatic deinterlacing when possible"
 msgstr "Enable automatic deinterlacing when possible"
 
-#: src/preferences.c:2994
+#: src/preferences.c:2999
 msgid "Automatically deinterlace frames when a plugin suggests it"
 msgstr "Automatically deinterlace frames when a plugin suggests it"
 
-#: src/preferences.c:3008
+#: src/preferences.c:3013
 msgid "Ignore blank borders when possible"
 msgstr "Ignore blank borders when possible"
 
-#: src/preferences.c:3020
+#: src/preferences.c:3025
 msgid "Clip any blank borders from frames where possible"
 msgstr "Clip any blank borders from frames where possible"
 
-#: src/preferences.c:3034
+#: src/preferences.c:3039
 msgid "When opening multiple files, concatenate images into one clip"
 msgstr "When opening multiple files, concatenate images into one clip"
 
 #. TRANSLATORS: please keep this string short
-#: src/preferences.c:3056
+#: src/preferences.c:3061
 msgid "Decoding"
 msgstr "Decoding"
 
-#: src/preferences.c:3095
+#: src/preferences.c:3100
 msgid "The preview quality for video playback - affects resizing"
 msgstr "The preview quality for video playback - affects resizing"
 
-#: src/preferences.c:3097
+#: src/preferences.c:3102
 msgid "Preview _quality"
 msgstr "Preview _quality"
 
 #. TRANSLATORS: video quality, max len 50
-#: src/preferences.c:3109
+#: src/preferences.c:3114
 msgid "Low - can improve performance on slower machines"
 msgstr "Low - can improve performance on slower machines"
 
 #. TRANSLATORS: video quality, max len 50
-#: src/preferences.c:3111
+#: src/preferences.c:3116
 msgid "Normal - recommended for most users"
 msgstr "Normal - recommended for most users"
 
 #. TRANSLATORS: video quality, max len 50
-#: src/preferences.c:3113
+#: src/preferences.c:3118
 msgid "High - can improve quality on very fast machines"
 msgstr "High - can improve quality on very fast machines"
 
-#: src/preferences.c:3136
+#: src/preferences.c:3141
 msgid "_Show FPS statistics"
 msgstr "_Show FPS statistics"
 
-#: src/preferences.c:3166
+#: src/preferences.c:3171
 msgid "_Plugin"
 msgstr "_Plugin"
 
-#: src/preferences.c:3213
+#: src/preferences.c:3218
 msgid "Stream audio"
 msgstr "Stream audio"
 
-#: src/preferences.c:3216
+#: src/preferences.c:3221
 msgid "Stream audio to playback plugin"
 msgstr "Stream audio to playback plugin"
 
-#: src/preferences.c:3235
+#: src/preferences.c:3240
 msgid "Record player output"
 msgstr ""
 
-#: src/preferences.c:3238
+#: src/preferences.c:3243
 msgid "Record output from player instead of input to player"
 msgstr ""
 
-#: src/preferences.c:3248
+#: src/preferences.c:3253
 msgid "VIDEO"
 msgstr "VIDEO"
 
-#: src/preferences.c:3271
+#: src/preferences.c:3276
 msgid "_Player"
 msgstr "_Player"
 
-#: src/preferences.c:3309
+#: src/preferences.c:3314
 msgid "(See also the Jack Integration tab for jack startup options)"
 msgstr "(See also the Jack Integration tab for jack startup options)"
 
-#: src/preferences.c:3343
+#: src/preferences.c:3348
 msgid "mplayer"
 msgstr "mplayer"
 
-#: src/preferences.c:3355
+#: src/preferences.c:3360
 msgid "Audio play _command"
 msgstr "Audio play _command"
 
-#: src/preferences.c:3373
+#: src/preferences.c:3378
 msgid "- internal -"
 msgstr "- internal -"
 
-#: src/preferences.c:3385
+#: src/preferences.c:3390
 msgid "Audio follows video _rate/direction"
 msgstr "Audio follows video _rate/direction"
 
-#: src/preferences.c:3406
+#: src/preferences.c:3411
 msgid "Audio follows _clip switches"
 msgstr "Audio follows _clip switches"
 
-#: src/preferences.c:3424
+#: src/preferences.c:3429
 msgid "AUDIO"
 msgstr "AUDIO"
 
 #. TRANSLATORS: please keep this string short
-#: src/preferences.c:3439
+#: src/preferences.c:3444
 msgid "Playback"
 msgstr "Playback"
 
-#: src/preferences.c:3464
+#: src/preferences.c:3469
 msgid ""
 "Record audio when capturing an e_xternal window\n"
 " (requires jack or pulse audio)"
@@ -7741,69 +7759,69 @@ msgstr ""
 "Record audio when capturing an e_xternal window\n"
 " (requires jack or pulse audio)"
 
-#: src/preferences.c:3484
+#: src/preferences.c:3489
 msgid "      What to record when 'r' is pressed   "
 msgstr "      What to record when 'r' is pressed   "
 
-#: src/preferences.c:3499
+#: src/preferences.c:3504
 msgid "_Frame changes"
 msgstr "_Frame changes"
 
-#: src/preferences.c:3515
+#: src/preferences.c:3520
 msgid "F_PS changes"
 msgstr "F_PS changes"
 
-#: src/preferences.c:3537
+#: src/preferences.c:3542
 msgid "_Real time effects"
 msgstr "_Real time effects"
 
-#: src/preferences.c:3549
+#: src/preferences.c:3554
 msgid "_Clip switches"
 msgstr "_Clip switches"
 
-#: src/preferences.c:3563
+#: src/preferences.c:3568
 msgid "_Internal Audio (requires jack or pulse audio player)"
 msgstr "_Internal Audio (requires jack or pulse audio player)"
 
-#: src/preferences.c:3585
+#: src/preferences.c:3590
 msgid "_External Audio (requires jack or pulse audio player)"
 msgstr "_External Audio (requires jack or pulse audio player)"
 
-#: src/preferences.c:3618
+#: src/preferences.c:3623
 msgid "Pause recording if free disk space falls below"
 msgstr "Pause recording if free disk space falls below:"
 
-#: src/preferences.c:3632
+#: src/preferences.c:3637
 msgid "GB"
 msgstr "GB"
 
 #. TRANSLATORS: please keep this string short
-#: src/preferences.c:3644
+#: src/preferences.c:3649
 msgid "Recording"
 msgstr "Recording"
 
-#: src/preferences.c:3672
+#: src/preferences.c:3677
 msgid "      Encoder                  "
 msgstr "      Encoder                  "
 
-#: src/preferences.c:3755
+#: src/preferences.c:3760
 msgid "Audio codec"
 msgstr "Audio codec"
 
 #. TRANSLATORS: please keep this string short
-#: src/preferences.c:3772
+#: src/preferences.c:3777
 msgid "Encoding"
 msgstr "Encoding"
 
-#: src/preferences.c:3798
+#: src/preferences.c:3803
 msgid "Use _antialiasing when resizing"
 msgstr "Use _antialiasing when resizing"
 
-#: src/preferences.c:3819
+#: src/preferences.c:3824
 msgid "Number of _real time effect keys"
 msgstr "Number of _real time effect keys"
 
-#: src/preferences.c:3832
+#: src/preferences.c:3837
 msgid ""
 "The number of \"virtual\" real time effect keys. They can be controlled "
 "through the real time effects window, or via network (OSC)."
@@ -7811,80 +7829,80 @@ msgstr ""
 "The number of \"virtual\" real time effect keys. They can be controlled "
 "through the real time effects window, or via network (OSC)."
 
-#: src/preferences.c:3838
+#: src/preferences.c:3843
 msgid "Use _threads where possible when applying effects"
 msgstr "Use _threads where possible when applying effects"
 
-#: src/preferences.c:3860
+#: src/preferences.c:3865
 msgid "Number of _threads"
 msgstr "Number of _threads"
 
-#: src/preferences.c:3908
+#: src/preferences.c:3913
 msgid "      Video load directory (default)      "
 msgstr "      Video load directory (default)      "
 
-#: src/preferences.c:3919
+#: src/preferences.c:3924
 msgid "      Video save directory (default) "
 msgstr "      Video save directory (default) "
 
-#: src/preferences.c:3930
+#: src/preferences.c:3935
 msgid "      Audio load directory (default) "
 msgstr "      Audio load directory (default) "
 
-#: src/preferences.c:3941
+#: src/preferences.c:3946
 msgid "      Image directory (default) "
 msgstr "      Image directory (default) "
 
-#: src/preferences.c:3952
+#: src/preferences.c:3957
 msgid "      Backup/Restore directory (default) "
 msgstr "      Backup/Restore directory (default) "
 
-#: src/preferences.c:3963
+#: src/preferences.c:3968
 msgid "      Temp directory (do not remove) "
 msgstr "      Temp directory (do not remove) "
 
-#: src/preferences.c:3982
+#: src/preferences.c:3987
 msgid "The default directory for loading video clips from"
 msgstr "The default directory for loading video clips from"
 
-#: src/preferences.c:4025
+#: src/preferences.c:4030
 msgid "The default directory for saving encoded clips to"
 msgstr "The default directory for saving encoded clips to"
 
-#: src/preferences.c:4038
+#: src/preferences.c:4043
 msgid "The default directory for loading and saving audio"
 msgstr "The default directory for loading and saving audio"
 
-#: src/preferences.c:4051
+#: src/preferences.c:4056
 msgid "The default directory for saving frameshots to"
 msgstr "The default directory for saving frameshots to"
 
-#: src/preferences.c:4064
+#: src/preferences.c:4069
 msgid "The default directory for backing up/restoring single clips"
 msgstr "The default directory for backing up/restoring single clips"
 
-#: src/preferences.c:4076
+#: src/preferences.c:4081
 msgid "LiVES working directory."
 msgstr "LiVES working directory."
 
 #. TRANSLATORS: please keep this string short
-#: src/preferences.c:4154
+#: src/preferences.c:4159
 msgid "Directories"
 msgstr "Directories"
 
-#: src/preferences.c:4185
+#: src/preferences.c:4190
 msgid "Warn if diskspace falls below: "
 msgstr "Warn if diskspace falls below: "
 
-#: src/preferences.c:4200 src/preferences.c:4232
+#: src/preferences.c:4205 src/preferences.c:4237
 msgid " MB [set to 0 to disable]"
 msgstr " MB [set to 0 to disable]"
 
-#: src/preferences.c:4217
+#: src/preferences.c:4222
 msgid "Diskspace critical level: "
 msgstr "Diskspace critical level: "
 
-#: src/preferences.c:4256
+#: src/preferences.c:4261
 msgid ""
 "Warn on Insert / Merge if _frame rate of clipboard does not match frame rate "
 "of selection"
@@ -7892,19 +7910,19 @@ msgstr ""
 "Warn on Insert / Merge if _frame rate of clipboard does not match frame rate "
 "of selection"
 
-#: src/preferences.c:4279
+#: src/preferences.c:4284
 msgid "Warn on Open if file _size exceeds "
 msgstr "Warn on Open if file _size exceeds "
 
-#: src/preferences.c:4302
+#: src/preferences.c:4307
 msgid " MB"
 msgstr " MB"
 
-#: src/preferences.c:4312
+#: src/preferences.c:4317
 msgid "Show a warning before saving a se_t"
 msgstr "Show a warning before saving a se_t"
 
-#: src/preferences.c:4331
+#: src/preferences.c:4336
 msgid ""
 "Show a warning if _mplayer, sox, composite or convert is not found when "
 "LiVES is started."
@@ -7912,65 +7930,65 @@ msgstr ""
 "Show a warning if _mplayer, sox, composite or convert is not found when "
 "LiVES is started."
 
-#: src/preferences.c:4350
+#: src/preferences.c:4355
 msgid "Show a warning if no _rendered effects are found at startup."
 msgstr "Show a warning if no _rendered effects are found at startup."
 
-#: src/preferences.c:4369
+#: src/preferences.c:4374
 msgid "Show a warning if no _encoder plugins are found at startup."
 msgstr "Show a warning if no _encoder plugins are found at startup."
 
-#: src/preferences.c:4388
+#: src/preferences.c:4393
 msgid "Show a warning if a _duplicate set name is entered."
 msgstr "Show a warning if a _duplicate set name is entered."
 
-#: src/preferences.c:4407
+#: src/preferences.c:4412
 msgid "When a set is loaded, warn if clips are missing from _layouts."
 msgstr "When a set is loaded, warn if clips are missing from _layouts."
 
-#: src/preferences.c:4427
+#: src/preferences.c:4432
 msgid "Warn if a clip used in a layout is about to be closed."
 msgstr "Warn if a clip used in a layout is about to be closed."
 
-#: src/preferences.c:4446
+#: src/preferences.c:4451
 msgid "Warn if frames used in a layout are about to be deleted."
 msgstr "Warn if frames used in a layout are about to be deleted."
 
-#: src/preferences.c:4465
+#: src/preferences.c:4470
 msgid "Warn if frames used in a layout are about to be shifted."
 msgstr "Warn if frames used in a layout are about to be shifted."
 
-#: src/preferences.c:4484
+#: src/preferences.c:4489
 msgid "Warn if frames used in a layout are about to be altered."
 msgstr "Warn if frames used in a layout are about to be altered."
 
-#: src/preferences.c:4503
+#: src/preferences.c:4508
 msgid "Warn if audio used in a layout is about to be deleted."
 msgstr "Warn if audio used in a layout is about to be deleted."
 
-#: src/preferences.c:4522
+#: src/preferences.c:4527
 msgid "Warn if audio used in a layout is about to be shifted."
 msgstr "Warn if audio used in a layout is about to be shifted."
 
-#: src/preferences.c:4541
+#: src/preferences.c:4546
 msgid "Warn if audio used in a layout is about to be altered."
 msgstr "Warn if audio used in a layout is about to be altered."
 
-#: src/preferences.c:4560
+#: src/preferences.c:4565
 msgid "Popup layout errors after clip changes."
 msgstr "Popup layout errors after clip changes."
 
-#: src/preferences.c:4579
+#: src/preferences.c:4584
 msgid "Warn if the layout has not been saved when leaving multitrack mode."
 msgstr "Warn if the layout has not been saved when leaving multitrack mode."
 
-#: src/preferences.c:4598
+#: src/preferences.c:4603
 msgid ""
 "Warn if multitrack has no audio channels, and a layout with audio is loaded."
 msgstr ""
 "Warn if multitrack has no audio channels, and a layout with audio is loaded."
 
-#: src/preferences.c:4617
+#: src/preferences.c:4622
 msgid ""
 "Warn if multitrack has audio channels, and your audio player is not \"jack\" "
 "or \"pulse audio\"."
@@ -7978,115 +7996,115 @@ msgstr ""
 "Warn if multitrack has audio channels, and your audio player is not \"jack\" "
 "or \"pulse audio\"."
 
-#: src/preferences.c:4636
+#: src/preferences.c:4641
 msgid "Show info message after importing from firewire device."
 msgstr "Show info message after importing from firewire device."
 
-#: src/preferences.c:4657
+#: src/preferences.c:4662
 msgid "Show a warning before opening a yuv4mpeg stream (advanced)."
 msgstr "Show a warning before opening a yuv4mpeg stream (advanced)."
 
-#: src/preferences.c:4678
+#: src/preferences.c:4683
 msgid "Show a warning when multitrack is low on backup space."
 msgstr "Show a warning when multitrack is low on backup space."
 
-#: src/preferences.c:4697
+#: src/preferences.c:4702
 msgid "Show a warning advising cleaning of disk space after a crash."
 msgstr "Show a warning advising cleaning of disk space after a crash."
 
-#: src/preferences.c:4717
+#: src/preferences.c:4722
 msgid "Show a warning if unable to connect to pulseaudio player."
 msgstr "Show a warning if unable to connect to pulseaudio player."
 
 #. TRANSLATORS: please keep this string short
-#: src/preferences.c:4741
+#: src/preferences.c:4746
 msgid "Warnings"
 msgstr "Warnings"
 
-#: src/preferences.c:4766
+#: src/preferences.c:4771
 msgid "Midi synch (requires the files midistart and midistop)"
 msgstr "Midi synch (requires the files midistart and midistop)"
 
-#: src/preferences.c:4790
+#: src/preferences.c:4795
 msgid "When inserting/merging frames:  "
 msgstr "When inserting/merging frames:  "
 
-#: src/preferences.c:4800
+#: src/preferences.c:4805
 msgid "_Speed Up/Slow Down Insertion"
 msgstr "_Speed Up/Slow Down Insertion"
 
-#: src/preferences.c:4816
+#: src/preferences.c:4821
 msgid "_Resample Insertion"
 msgstr "_Resample Insertion"
 
-#: src/preferences.c:4833
+#: src/preferences.c:4838
 msgid "Pause xmms during audio playback"
 msgstr "Pause xmms during audio playback"
 
-#: src/preferences.c:4856
+#: src/preferences.c:4861
 msgid "CD device           "
 msgstr "CD device           "
 
-#: src/preferences.c:4873
+#: src/preferences.c:4878
 msgid "LiVES: Choose CD device"
 msgstr "LiVES: Choose CD device"
 
-#: src/preferences.c:4896
+#: src/preferences.c:4901
 msgid "LiVES can load audio tracks from this CD"
 msgstr "LiVES can load audio tracks from this CD"
 
-#: src/preferences.c:4902
+#: src/preferences.c:4907
 msgid "Default FPS        "
 msgstr "Default FPS        "
 
-#: src/preferences.c:4915
+#: src/preferences.c:4920
 msgid "Frames per second to use when none is specified"
 msgstr "Frames per second to use when none is specified"
 
 #. TRANSLATORS: please keep this string short
-#: src/preferences.c:4922
+#: src/preferences.c:4927
 msgid "Misc"
 msgstr "Misc"
 
-#: src/preferences.c:4949
+#: src/preferences.c:4954
 msgid "New theme:           "
 msgstr "New theme:           "
 
 #. TRANSLATORS: please keep this string short
-#: src/preferences.c:4984
+#: src/preferences.c:4989
 msgid "Themes"
 msgstr "Themes"
 
-#: src/preferences.c:5011
+#: src/preferences.c:5016
 msgid "Download bandwidth (Kb/s)       "
 msgstr "Download bandwidth (Kb/s)       "
 
-#: src/preferences.c:5033
+#: src/preferences.c:5038
 msgid "LiVES must be compiled without \"configure --disable-OSC\" to use OMC"
 msgstr "LiVES must be compiled without \"configure --disable-OSC\" to use OMC"
 
-#: src/preferences.c:5047
+#: src/preferences.c:5052
 msgid "OMC remote control enabled"
 msgstr "OMC remote control enabled"
 
-#: src/preferences.c:5067
+#: src/preferences.c:5072
 msgid "UDP port       "
 msgstr "UDP port       "
 
-#: src/preferences.c:5083
+#: src/preferences.c:5088
 msgid "Start OMC on startup"
 msgstr "Start OMC on startup"
 
 #. TRANSLATORS: please keep this string short
-#: src/preferences.c:5117
+#: src/preferences.c:5122
 msgid "Streaming/Networking"
 msgstr "Streaming/Networking"
 
-#: src/preferences.c:5142
+#: src/preferences.c:5147
 msgid "Jack transport"
 msgstr "Jack transport"
 
-#: src/preferences.c:5157
+#: src/preferences.c:5162
 msgid ""
 "LiVES must be compiled with jack/transport.h and jack/jack.h present to use "
 "jack transport"
@@ -8094,47 +8112,47 @@ msgstr ""
 "LiVES must be compiled with jack/transport.h and jack/jack.h present to use "
 "jack transport"
 
-#: src/preferences.c:5168
+#: src/preferences.c:5173
 msgid "Jack _transport config file"
 msgstr "Jack _transport config file"
 
-#: src/preferences.c:5183
+#: src/preferences.c:5188
 msgid "The name of the jack server which can control LiVES transport"
 msgstr "The name of the jack server which can control LiVES transport"
 
-#: src/preferences.c:5186 src/preferences.c:5381
+#: src/preferences.c:5191 src/preferences.c:5386
 msgid "Start _server on LiVES startup"
 msgstr "Start _server on LiVES startup"
 
-#: src/preferences.c:5210
+#: src/preferences.c:5215
 msgid "Jack transport _master (start and stop)"
 msgstr "Jack transport _master (start and stop)"
 
-#: src/preferences.c:5230
+#: src/preferences.c:5235
 msgid "Jack transport _client (start and stop)"
 msgstr "Jack transport _client (start and stop)"
 
-#: src/preferences.c:5254
+#: src/preferences.c:5259
 msgid "Jack transport sets start position"
 msgstr "Jack transport sets start position"
 
-#: src/preferences.c:5283
+#: src/preferences.c:5288
 msgid "Jack transport timebase slave"
 msgstr "Jack transport timebase slave"
 
-#: src/preferences.c:5308
+#: src/preferences.c:5313
 msgid "(See also Playback -> Audio follows video rate/direction)"
 msgstr "(See also Playback -> Audio follows video rate/direction)"
 
-#: src/preferences.c:5331
+#: src/preferences.c:5336
 msgid "Jack audio"
 msgstr "Jack audio"
 
-#: src/preferences.c:5339
+#: src/preferences.c:5344
 msgid "LiVES must be compiled with jack/jack.h present to use jack audio"
 msgstr "LiVES must be compiled with jack/jack.h present to use jack audio"
 
-#: src/preferences.c:5346
+#: src/preferences.c:5351
 msgid ""
 "You MUST set the audio player to \"jack\" in the Playback tab to use jack "
 "audio"
@@ -8142,84 +8160,84 @@ msgstr ""
 "You MUST set the audio player to \"jack\" in the Playback tab to use jack "
 "audio"
 
-#: src/preferences.c:5357
+#: src/preferences.c:5362
 msgid "Jack _audio server config file"
 msgstr "Jack _audio server config file"
 
-#: src/preferences.c:5373
+#: src/preferences.c:5378
 msgid "The name of the jack server for audio"
 msgstr "The name of the jack server for audio"
 
-#: src/preferences.c:5402
+#: src/preferences.c:5407
 msgid "Play audio even when transport is _paused"
 msgstr "Play audio even when transport is _paused"
 
 #. TRANSLATORS: please keep this string short
-#: src/preferences.c:5430
+#: src/preferences.c:5435
 msgid "Jack Integration"
 msgstr "Jack Integration"
 
-#: src/preferences.c:5456
+#: src/preferences.c:5461
 msgid "Events to respond to:"
 msgstr "Events to respond to:"
 
-#: src/preferences.c:5467
+#: src/preferences.c:5472
 msgid "_Joystick events"
 msgstr "_Joystick events"
 
-#: src/preferences.c:5488
+#: src/preferences.c:5493
 msgid "_Joystick device"
 msgstr "_Joystick device"
 
-#: src/preferences.c:5503
+#: src/preferences.c:5508
 msgid "The joystick device, e.g. /dev/input/js0"
 msgstr "The joystick device, e.g. /dev/input/js0"
 
-#: src/preferences.c:5510
+#: src/preferences.c:5515
 msgid "LiVES: Choose joystick device"
 msgstr "LiVES: Choose joystick device"
 
-#: src/preferences.c:5526
+#: src/preferences.c:5531
 msgid "_MIDI events"
 msgstr "_MIDI events"
 
-#: src/preferences.c:5554
+#: src/preferences.c:5559
 msgid "Create an ALSA MIDI port which other MIDI devices can be connected to"
 msgstr "Create an ALSA MIDI port which other MIDI devices can be connected to"
 
-#: src/preferences.c:5555
+#: src/preferences.c:5560
 msgid "Use _ALSA MIDI (recommended)"
 msgstr "Use _ALSA MIDI (recommended)"
 
-#: src/preferences.c:5574
+#: src/preferences.c:5579
 msgid "Use _raw MIDI"
 msgstr "Use _raw MIDI"
 
-#: src/preferences.c:5587
+#: src/preferences.c:5592
 msgid "Read directly from the MIDI device"
 msgstr "Read directly from the MIDI device"
 
-#: src/preferences.c:5599
+#: src/preferences.c:5604
 msgid "_MIDI device"
 msgstr "_MIDI device"
 
-#: src/preferences.c:5614
+#: src/preferences.c:5619
 msgid "The MIDI device, e.g. /dev/input/midi0"
 msgstr "The MIDI device, e.g. /dev/input/midi0"
 
-#: src/preferences.c:5621
+#: src/preferences.c:5626
 msgid "LiVES: Choose MIDI device"
 msgstr "LiVES: Choose MIDI device"
 
-#: src/preferences.c:5638
+#: src/preferences.c:5643
 msgid "Advanced"
 msgstr "Advanced"
 
-#: src/preferences.c:5649
+#: src/preferences.c:5654
 msgid "MIDI check _rate"
 msgstr "MIDI check _rate"
 
-#: src/preferences.c:5662
+#: src/preferences.c:5667
 msgid ""
 "Number of MIDI checks per keyboard tick. Increasing this may improve MIDI "
 "responsiveness, but may slow down playback."
@@ -8227,24 +8245,24 @@ msgstr ""
 "Number of MIDI checks per keyboard tick. Increasing this may improve MIDI "
 "responsiveness, but may slow down playback."
 
-#: src/preferences.c:5664
+#: src/preferences.c:5669
 msgid "MIDI repeat"
 msgstr "MIDI repeat"
 
-#: src/preferences.c:5677
+#: src/preferences.c:5682
 msgid "Number of non-reads allowed between succesive reads."
 msgstr "Number of non-reads allowed between succesive reads."
 
-#: src/preferences.c:5683
+#: src/preferences.c:5688
 msgid "(Warning: setting this value too high can slow down playback.)"
 msgstr "(Warning: setting this value too high can slow down playback.)"
 
 #. TRANSLATORS: please keep this string short
-#: src/preferences.c:5706
+#: src/preferences.c:5711
 msgid "MIDI/Joystick learner"
 msgstr "MIDI/Joystick learner"
 
-#: src/preferences.c:6031
+#: src/preferences.c:6036
 msgid ""
 "\n"
 "LiVES will now shut down. You need to restart it for the directory change to "
@@ -8256,7 +8274,7 @@ msgstr ""
 "take effect.\n"
 "Click OK to continue.\n"
 
-#: src/preferences.c:6077
+#: src/preferences.c:6082
 msgid ""
 "For the directory change to take effect LiVES will restart when preferences "
 "dialog closes."
@@ -8264,12 +8282,12 @@ msgstr ""
 "For the directory change to take effect, LiVES will restart when the "
 "Preferences dialogue closes."
 
-#: src/preferences.c:6081
+#: src/preferences.c:6086
 msgid "Theme changes will not take effect until the next time you start LiVES."
 msgstr ""
 "Theme changes will not take effect until the next time you start LiVES."
 
-#: src/preferences.c:6085
+#: src/preferences.c:6090
 msgid "Jack options will not take effect until the next time you start LiVES."
 msgstr "Jack options will not take effect until the next time you start LiVES."
 
@@ -10289,23 +10307,23 @@ msgstr "_Gang layer audio"
 msgid "Adjust all layer audio values to the same value"
 msgstr "Adjust all layer audio values to the same value"
 
-#: src/jack.c:99
+#: src/jack.c:102
 msgid "JACK server started\n"
 msgstr "JACK server started\n"
 
-#: src/jack.c:1008 src/jack.c:1079
+#: src/jack.c:1069 src/jack.c:1140
 msgid "Unable to connect to JACK server\n"
 msgstr "Unable to connect to JACK server.\n"
 
-#: src/jack.c:1238
+#: src/jack.c:1299
 msgid "Started jack audio subsystem.\n"
 msgstr "Started jack audio subsystem.\n"
 
-#: src/jack.c:1346
+#: src/jack.c:1407
 msgid "Started jack audio reader.\n"
 msgstr "Started jack audio reader.\n"
 
-#: src/jack.c:1555
+#: src/jack.c:1616
 msgid ""
 "\n"
 "Connection to jack audio was reset.\n"
@@ -10349,7 +10367,7 @@ msgstr ""
 msgid "LiVES will exit and you can choose another audio player.\n"
 msgstr "LiVES will exit and you can choose another audio player.\n"
 
-#: src/pulse.c:1019
+#: src/pulse.c:1143
 msgid ""
 "\n"
 "Connection to pulse audio was reset.\n"
@@ -10838,13 +10856,13 @@ msgstr "Brightness end"
 msgid "Brightness start"
 msgstr "Brightness start"
 
-#: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
+#: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 msgid "Centre _X"
 msgstr "Centre _X"
 
-#: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
+#: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 msgid "Centre _Y"
 msgstr "Centre _Y"
 
@@ -10944,8 +10962,8 @@ msgstr "Dream"
 msgid "Dreamifying"
 msgstr "Dreamifying"
 
-#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 msgid "E_nd %"
 msgstr "E_nd %"
 
@@ -10993,8 +11011,8 @@ msgstr ""
 msgid "Fade _colour"
 msgstr "Fade _colour"
 
-#: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
+#: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 msgid "Fade _end"
 msgstr "Fade _end"
 
@@ -11278,8 +11296,8 @@ msgstr "Rotate Clip"
 msgid "Rotating"
 msgstr "Rotating"
 
-#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 msgid "S_tart %"
 msgstr "S_tart %"
 
@@ -11433,12 +11451,12 @@ msgstr "Wave"
 msgid "Waving"
 msgstr "Waving"
 
-#: /usr/share/lives/plugins/effects/rendered/rotate.script:0
-#: /usr/share/lives/plugins/effects/rendered/wave.script:0
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
-#: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
+#: /usr/share/lives/plugins/effects/rendered/wave.script:0
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
+#: /usr/share/lives/plugins/effects/rendered/rotate.script:0
+#: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
 msgid "_Background Colour"
 msgstr "_Background Colour"
 
@@ -11475,8 +11493,8 @@ msgstr "_Decrease Contrast"
 msgid "_Diffmax"
 msgstr "_Diffmax"
 
-#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 msgid "_End Colour"
 msgstr "_End Colour"
 
@@ -11497,8 +11515,8 @@ msgstr "_End amount"
 msgid "_Fade level"
 msgstr "_Fade level"
 
-#: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
+#: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 msgid "_Fade start"
 msgstr "_Fade start"
 
@@ -11519,9 +11537,9 @@ msgstr "_Flash for"
 msgid "_Font"
 msgstr "_Font"
 
-#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
+#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
 msgid "_Frames per second"
 msgstr "_Frames per second"
@@ -11562,8 +11580,8 @@ msgstr "_Init Size Y:"
 msgid "_Levels"
 msgstr "_Levels"
 
-#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 msgid "_Link start and end colours"
 msgstr "_Link start and end colours"
 
@@ -11618,14 +11636,14 @@ msgstr "_Radius end"
 msgid "_Radius start"
 msgstr "_Radius start"
 
-#: /usr/share/lives/plugins/effects/rendered/emboss.script:0
 #: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
+#: /usr/share/lives/plugins/effects/rendered/emboss.script:0
 #: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
 msgid "_Radius"
 msgstr "_Radius"
 
-#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 msgid "_Random colour each frame"
 msgstr "_Random colour each frame"
 
@@ -11670,14 +11688,14 @@ msgstr "_Source Colour"
 msgid "_Splice"
 msgstr "_Splice"
 
-#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 msgid "_Start Colour"
 msgstr "_Start Colour"
 
+#: /usr/share/lives/plugins/effects/rendered/solarize.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
-#: /usr/share/lives/plugins/effects/rendered/solarize.script:0
 msgid "_Start Value"
 msgstr "_Start Value"
 
@@ -12015,16 +12033,29 @@ msgid "Unable to locate the program $rfx_builder_multi"
 msgstr "Unable to locate the program $rfx_builder_multi"
 
 #: /usr/bin/smogrify:0
+msgid "Your version of mplayer/ffmpeg may be broken"
+msgstr ""
+
+#: /usr/bin/smogrify:0
+msgid "See http://bugzilla.mplayerhq.hu/show_bug.cgi?id=2071"
+msgstr ""
+
+#: /usr/bin/smogrify:0
+msgid " "
+msgstr ""
+
+#: /usr/bin/smogrify:0
+msgid ""
+"You can work around this by switching to jpeg output in Preferences/Decoding."
+msgstr ""
+
+#: /usr/bin/smogrify:0
 msgid "This does not appear to be a valid video or image file"
 msgstr "This does not appear to be a valid video or image file"
 
 #: /usr/bin/smogrify:0
 msgid "LiVES was unable to open it."
 msgstr "LiVES was unable to open it."
-
-#: /usr/bin/smogrify:0
-msgid " "
-msgstr ""
 
 #: /usr/bin/smogrify:0
 msgid "Check the terminal window for more details."

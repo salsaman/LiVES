@@ -3501,7 +3501,7 @@ lives_render_error_t render_events (gboolean reset) {
 	if (cfile->start==0) cfile->start=1;
 	out_frame++;
       }
-      if (pixbuf!=NULL) gdk_pixbuf_unref (pixbuf);
+      if (pixbuf!=NULL) lives_object_unref (pixbuf);
 
       break;
     case WEED_EVENT_HINT_FILTER_INIT:

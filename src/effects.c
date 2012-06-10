@@ -676,7 +676,7 @@ lives_render_error_t realfx_progress (gboolean reset) {
     }
   } while (retval==LIVES_RETRY);
   
-  gdk_pixbuf_unref (pixbuf);
+  lives_object_unref (pixbuf);
 
   if (cfile->clip_type==CLIP_TYPE_FILE) {
     cfile->frame_index[i-1]=-1;

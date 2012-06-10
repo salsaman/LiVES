@@ -6164,7 +6164,7 @@ void on_fs_preview_clicked (GtkButton *button, gpointer user_data) {
 	gdk_cairo_set_source_pixbuf (cr, blank, 0, 0);
 	cairo_paint (cr);
 	cairo_destroy (cr);
-	gdk_pixbuf_unref(blank);
+	lives_object_unref(blank);
 
 	while (g_main_context_iteration(NULL,FALSE));
 	
@@ -6181,7 +6181,7 @@ void on_fs_preview_clicked (GtkButton *button, gpointer user_data) {
 	g_error_free(error);
       }
       if (pixbuf!=NULL) {
-	gdk_pixbuf_unref(pixbuf);
+	lives_object_unref(pixbuf);
       }
       g_free(thumb);
     }
@@ -6344,7 +6344,7 @@ void on_fs_preview_clicked (GtkButton *button, gpointer user_data) {
     gdk_cairo_set_source_pixbuf (cr, blank, 0, 0);
     cairo_paint (cr);
     cairo_destroy (cr);
-    gdk_pixbuf_unref(blank);
+    lives_object_unref(blank);
 
     while (g_main_context_iteration(NULL,FALSE));
 	

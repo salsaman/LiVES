@@ -3723,7 +3723,7 @@ gboolean save_frame_inner(gint clip, gint frame, const gchar *file_name, gint wi
     } while (retval==LIVES_RETRY);
 
     free(tmp);
-    gdk_pixbuf_unref(pixbuf);
+    lives_object_unref(pixbuf);
   }
 
   // some other error condition

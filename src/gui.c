@@ -4149,7 +4149,7 @@ void splash_init(void) {
 
   gtk_box_pack_start (GTK_BOX (vbox), splash_img, TRUE, TRUE, 0);
 
-  if (splash_pix!=NULL) gdk_pixbuf_unref(splash_pix);
+  if (splash_pix!=NULL) lives_object_unref(splash_pix);
 
 
   mainw->splash_label=gtk_label_new("");

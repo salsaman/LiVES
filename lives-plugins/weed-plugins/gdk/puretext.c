@@ -1025,10 +1025,15 @@ int puretext_process (weed_plant_t *inst, weed_timecode_t tc) {
 
 
 
-inline static int font_compare(const void *p1, const void *p2) {  
+static int font_compare(const void *p1, const void *p2) {  
   const char *s1 = (const char *)(*(char **)p1);
   const char *s2 = (const char *)(*(char **)p2);
-  return(strcasecmp(s1, s2));
+  char *u1 = g_utf8_casefold(s1, -1);
+  char *u2 = g_utf8_casefold(s2, -1);
+  int ret = strcmp(u1, u2);
+  g_free(u1);
+  g_free(u2);
+  return ret;
 }
 
 weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {

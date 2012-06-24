@@ -513,7 +513,7 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
 
 	   if (mainw->agen_needs_reinit) pl_error=TRUE;
 	   else {
-	     fbuffer=g_malloc(numFramesToWrite*pulsed->out_achans*4);
+	     fbuffer=(float *)g_malloc(numFramesToWrite*pulsed->out_achans*4);
 	     if (!get_audio_from_plugin(fbuffer,pulsed->out_achans,pulsed->out_arate,numFramesToWrite)) {
 	       pl_error=TRUE;
 	     }

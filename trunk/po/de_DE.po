@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: Lives 0.9.5\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2012-06-10 13:04-0300\n"
+"POT-Creation-Date: 2012-06-24 11:23-0300\n"
 "PO-Revision-Date: 2012-01-08 13:38+0000\n"
 "Last-Translator: Daniel Winzen <d@winzen4.de>\n"
 "Language-Team: Herbert U. Hübner <herbert.u.huebner@friendglow.net>\n"
@@ -10514,13 +10514,13 @@ msgstr "Änderungen _ignorieren"
 msgid "Brightness start"
 msgstr "_Starter werden ausgerichtet"
 
-#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 msgid "Centre _X"
 msgstr ""
 
-#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 msgid "Centre _Y"
 msgstr ""
 
@@ -10633,8 +10633,8 @@ msgstr "Traum"
 msgid "Dreamifying"
 msgstr "Traum"
 
-#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 msgid "E_nd %"
 msgstr ""
 
@@ -10686,8 +10686,8 @@ msgstr ""
 msgid "Fade _colour"
 msgstr "Audio ausblenden"
 
-#: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+#: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
 #, fuzzy
 msgid "Fade _end"
 msgstr "Verblassen"
@@ -11013,8 +11013,8 @@ msgstr "Drehe"
 msgid "Rotating"
 msgstr "Drehe"
 
-#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #, fuzzy
 msgid "S_tart %"
 msgstr "_Starten"
@@ -11089,12 +11089,14 @@ msgid "Spinning"
 msgstr "Rotieren"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
+#, fuzzy
 msgid "Splice"
-msgstr ""
+msgstr "trenner"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
+#, fuzzy
 msgid "Splicing"
-msgstr ""
+msgstr "trenner"
 
 #: /usr/share/lives/plugins/effects/rendered/spread.script:0
 msgid "Spread"
@@ -11184,12 +11186,12 @@ msgstr "Welle"
 msgid "Waving"
 msgstr "Wellen"
 
+#: /usr/share/lives/plugins/effects/rendered/rotate.script:0
+#: /usr/share/lives/plugins/effects/rendered/wave.script:0
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
-#: /usr/share/lives/plugins/effects/rendered/wave.script:0
-#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
-#: /usr/share/lives/plugins/effects/rendered/rotate.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
+#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 #, fuzzy
 msgid "_Background Colour"
 msgstr "Hintergrund _Löschen"
@@ -11231,8 +11233,8 @@ msgstr "Kontrast"
 msgid "_Diffmax"
 msgstr ""
 
-#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #, fuzzy
 msgid "_End Colour"
 msgstr "Hintergrund _Löschen"
@@ -11256,8 +11258,8 @@ msgstr "Nur _Endbild"
 msgid "_Fade level"
 msgstr "Verblassen"
 
-#: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+#: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
 #, fuzzy
 msgid "_Fade start"
 msgstr "_Radius"
@@ -11282,9 +11284,9 @@ msgstr "Audio ausblenden"
 msgid "_Font"
 msgstr "_Schriftart"
 
+#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
-#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
 #, fuzzy
 msgid "_Frames per second"
@@ -11331,8 +11333,8 @@ msgstr ""
 msgid "_Levels"
 msgstr ""
 
-#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 msgid "_Link start and end colours"
 msgstr ""
 
@@ -11392,14 +11394,14 @@ msgstr "_Radius"
 msgid "_Radius start"
 msgstr "_Radius"
 
-#: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
 #: /usr/share/lives/plugins/effects/rendered/emboss.script:0
+#: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
 #: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
 msgid "_Radius"
 msgstr "_Radius"
 
-#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #, fuzzy
 msgid "_Random colour each frame"
 msgstr "Erstelle leere Frames"
@@ -11447,18 +11449,19 @@ msgid "_Source Colour"
 msgstr "_Starten"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
+#, fuzzy
 msgid "_Splice"
-msgstr ""
+msgstr "trenner"
 
-#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #, fuzzy
 msgid "_Start Colour"
 msgstr "_Starten"
 
-#: /usr/share/lives/plugins/effects/rendered/solarize.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
+#: /usr/share/lives/plugins/effects/rendered/solarize.script:0
 #, fuzzy
 msgid "_Start Value"
 msgstr "Startframe"

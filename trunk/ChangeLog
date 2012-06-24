@@ -1,15 +1,21 @@
-Version 1.6.2
--------------
+Version 1.6.2 (24 June 2012)
+----------------------------
 Clean up timer code.
 Show more accurate progress for rendering after recording.
 Call init triggers for rendered transitions.
 Fix triggers for rendered effects (regression).
+Fix regression in file open preview.
+Add workaround for breakage in mplayer/ffmpeg (see http://bugzilla.mplayerhq.hu/show_bug.cgi?id=2071)
+Fix hang in Preferences open when image type is set to jpeg (regression).
 Fix regression in undo cut.
 Fix regression for pad audio.
 Quick opening of mpegts files.
 Faster backup/restore.
-Enable exchange of layouts between 32 bit and 64 bit systems (in progress).
-	
+Enable exchange of layouts between 32 bit and 64 bit systems.
+Add support for video analyser plugins.
+Add support for data processing plugins.
+Add support for audio generator plugins.
+
 
 
 

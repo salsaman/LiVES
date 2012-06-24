@@ -590,7 +590,7 @@ static int audio_process (nframes_t nframes, void *arg) {
 
 	      if (mainw->agen_needs_reinit) pl_error=TRUE;
 	      else {
-		fbuffer=g_malloc(numFramesToWrite*jackd->num_output_channels*4);
+		fbuffer=(float *)g_malloc(numFramesToWrite*jackd->num_output_channels*4);
 		
 		if (!get_audio_from_plugin(fbuffer,jackd->num_output_channels,jackd->sample_out_rate,numFramesToWrite)) {
 		  pl_error=TRUE;
@@ -643,12 +643,12 @@ static int audio_process (nframes_t nframes, void *arg) {
 		  xbuf=(unsigned char *)cache_buffer->buffer16[0];
 		else {
 		  // plugin is generating and we are streaming: convert fbuffer to s16
-		  float **fp=g_malloc(jackd->num_output_channels*sizeof(float *));
+		  float **fp=(float **)g_malloc(jackd->num_output_channels*sizeof(float *));
 		  for (i=0;i<jackd->num_output_channels;i++) {
 		    fp[i]=fbuffer+i;
 		  }
 
-		  xbuf=g_malloc(nbytes*jackd->num_output_channels);
+		  xbuf=(unsigned char *)g_malloc(nbytes*jackd->num_output_channels);
 
 		  sample_move_float_int((void *)xbuf,fp,numFramesToWrite,1.0,jackd->num_output_channels,16,0,TRUE,TRUE,1.0);
 

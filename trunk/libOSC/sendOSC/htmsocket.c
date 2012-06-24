@@ -161,6 +161,7 @@ void *OpenHTMSocket(char *host, int portnumber) {
 	  strcpy(ucl_addr.sun_path, UNIXDG_TMP);
 
 	  dummy=mkstemp(ucl_addr.sun_path);
+	  dummy=dummy;
 	  clilen = sizeof(ucl_addr.sun_family) + strlen(ucl_addr.sun_path);
 		
 	  if (bind(sockfd, (struct sockaddr *) &ucl_addr, clilen) < 0)

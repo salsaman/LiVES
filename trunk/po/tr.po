@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2012-06-10 13:04-0300\n"
+"POT-Creation-Date: 2012-06-24 11:23-0300\n"
 "PO-Revision-Date: 2011-08-18 12:12+0000\n"
 "Last-Translator: salsaman <salsaman@gmail.com>\n"
 "Language-Team: Turkish <tr@li.org>\n"
@@ -10362,13 +10362,13 @@ msgstr "Değişiklikleri Yoksay"
 msgid "Brightness start"
 msgstr "Değişiklikleri Yoksay"
 
-#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 msgid "Centre _X"
 msgstr ""
 
-#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 msgid "Centre _Y"
 msgstr ""
 
@@ -10481,8 +10481,8 @@ msgstr "Hayal"
 msgid "Dreamifying"
 msgstr "Hayal"
 
-#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 msgid "E_nd %"
 msgstr ""
 
@@ -10533,8 +10533,8 @@ msgstr ""
 msgid "Fade _colour"
 msgstr "Çerçeve _Rengi"
 
-#: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+#: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
 #, fuzzy
 msgid "Fade _end"
 msgstr "Kaybol"
@@ -10550,8 +10550,9 @@ msgid "Fade _out"
 msgstr "Kaybol"
 
 #: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
+#, fuzzy
 msgid "Fade video in or out"
-msgstr ""
+msgstr "Kaybol"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 msgid "Fade"
@@ -10834,8 +10835,9 @@ msgid "Reduction radius"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
+#, fuzzy
 msgid "Replacing colours in"
-msgstr ""
+msgstr "Panoyu temizle"
 
 #: /usr/share/lives/plugins/effects/rendered/resize.script:0
 msgid "Resize All Frames"
@@ -10849,8 +10851,8 @@ msgstr "Klibi döndür"
 msgid "Rotating"
 msgstr "Döndürme"
 
-#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #, fuzzy
 msgid "S_tart %"
 msgstr "_Başlat"
@@ -10924,12 +10926,14 @@ msgid "Spinning"
 msgstr "Çeviriliyor"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
+#, fuzzy
 msgid "Splice"
-msgstr ""
+msgstr "ayrac"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
+#, fuzzy
 msgid "Splicing"
-msgstr ""
+msgstr "ayrac"
 
 #: /usr/share/lives/plugins/effects/rendered/spread.script:0
 msgid "Spread"
@@ -11018,12 +11022,12 @@ msgstr "Dalga"
 msgid "Waving"
 msgstr "Dalga etkisi veriliyor"
 
+#: /usr/share/lives/plugins/effects/rendered/rotate.script:0
+#: /usr/share/lives/plugins/effects/rendered/wave.script:0
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
-#: /usr/share/lives/plugins/effects/rendered/wave.script:0
-#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
-#: /usr/share/lives/plugins/effects/rendered/rotate.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
+#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 msgid "_Background Colour"
 msgstr "_Arkaplan Rengi"
 
@@ -11062,8 +11066,8 @@ msgstr "_Renk zıtlığı arttır"
 msgid "_Diffmax"
 msgstr "En büyük fark"
 
-#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #, fuzzy
 msgid "_End Colour"
 msgstr "_Arkaplan Rengi"
@@ -11087,8 +11091,8 @@ msgstr "_Başlat"
 msgid "_Fade level"
 msgstr "Kaybol"
 
-#: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+#: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
 #, fuzzy
 msgid "_Fade start"
 msgstr "_Yarı çap başlangıcı"
@@ -11112,9 +11116,9 @@ msgstr "Çerçeve _Rengi"
 msgid "_Font"
 msgstr "_Yazıtipi"
 
+#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
-#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
 #, fuzzy
 msgid "_Frames per second"
@@ -11158,8 +11162,8 @@ msgstr ""
 msgid "_Levels"
 msgstr ""
 
-#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 msgid "_Link start and end colours"
 msgstr ""
 
@@ -11216,14 +11220,14 @@ msgstr "_Yarı çap bitimi"
 msgid "_Radius start"
 msgstr "_Yarı çap başlangıcı"
 
-#: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
 #: /usr/share/lives/plugins/effects/rendered/emboss.script:0
+#: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
 #: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
 msgid "_Radius"
 msgstr "_Yarıçap"
 
-#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #, fuzzy
 msgid "_Random colour each frame"
 msgstr "Renkli çerçeve oluştur"
@@ -11269,18 +11273,19 @@ msgid "_Source Colour"
 msgstr "_Kaynak Renk"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
+#, fuzzy
 msgid "_Splice"
-msgstr ""
+msgstr "ayrac"
 
-#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #, fuzzy
 msgid "_Start Colour"
 msgstr "_Kaynak Renk"
 
-#: /usr/share/lives/plugins/effects/rendered/solarize.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
+#: /usr/share/lives/plugins/effects/rendered/solarize.script:0
 #, fuzzy
 msgid "_Start Value"
 msgstr "_Başlat"

@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2012-06-10 13:04-0300\n"
+"POT-Creation-Date: 2012-06-24 11:23-0300\n"
 "PO-Revision-Date: 2011-08-18 12:10+0000\n"
 "Last-Translator: salsaman <salsaman@gmail.com>\n"
 "Language-Team: Hebrew <he@li.org>\n"
@@ -10708,13 +10708,13 @@ msgstr "שינוי בהירות"
 msgid "Brightness start"
 msgstr "שינוי בהירות"
 
-#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 msgid "Centre _X"
 msgstr "מרכז _X"
 
-#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 #, fuzzy
 msgid "Centre _Y"
 msgstr "מרכז _X"
@@ -10823,8 +10823,8 @@ msgstr "חלום"
 msgid "Dreamifying"
 msgstr "חלום"
 
-#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 msgid "E_nd %"
 msgstr "_סוף %"
 
@@ -10874,8 +10874,8 @@ msgstr ""
 msgid "Fade _colour"
 msgstr "_צבע מסגרת"
 
-#: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+#: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
 #, fuzzy
 msgid "Fade _end"
 msgstr "עמעום"
@@ -11192,8 +11192,8 @@ msgstr "סיבוב קטע"
 msgid "Rotating"
 msgstr "מסובבב"
 
-#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #, fuzzy
 msgid "S_tart %"
 msgstr "_התחלה"
@@ -11367,12 +11367,12 @@ msgstr "גל"
 msgid "Waving"
 msgstr "יוצר גל"
 
+#: /usr/share/lives/plugins/effects/rendered/rotate.script:0
+#: /usr/share/lives/plugins/effects/rendered/wave.script:0
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
-#: /usr/share/lives/plugins/effects/rendered/wave.script:0
-#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
-#: /usr/share/lives/plugins/effects/rendered/rotate.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
+#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 msgid "_Background Colour"
 msgstr "_צבע רקע"
 
@@ -11409,8 +11409,8 @@ msgstr "_ירידה חדות"
 msgid "_Diffmax"
 msgstr ""
 
-#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 msgid "_End Colour"
 msgstr "_צבע סיום"
 
@@ -11433,8 +11433,8 @@ msgstr "_צבע סיום"
 msgid "_Fade level"
 msgstr "עמעום"
 
-#: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+#: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
 #, fuzzy
 msgid "_Fade start"
 msgstr "_תחילת רדיוס"
@@ -11458,9 +11458,9 @@ msgstr "_החזקה עבור"
 msgid "_Font"
 msgstr "_גופן"
 
+#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
-#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
 #, fuzzy
 msgid "_Frames per second"
@@ -11503,8 +11503,8 @@ msgstr ""
 msgid "_Levels"
 msgstr "_רמות"
 
-#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 msgid "_Link start and end colours"
 msgstr ""
 
@@ -11562,14 +11562,14 @@ msgstr "_סוף רדיוס"
 msgid "_Radius start"
 msgstr "_תחילת רדיוס"
 
-#: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
 #: /usr/share/lives/plugins/effects/rendered/emboss.script:0
+#: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
 #: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
 msgid "_Radius"
 msgstr "_רדיוס"
 
-#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #, fuzzy
 msgid "_Random colour each frame"
 msgstr "ליצור מסגרות צבעוניות"
@@ -11620,14 +11620,14 @@ msgstr "_צבע מקור"
 msgid "_Splice"
 msgstr "חיבור"
 
-#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 msgid "_Start Colour"
 msgstr "_צבע התחלה"
 
-#: /usr/share/lives/plugins/effects/rendered/solarize.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
+#: /usr/share/lives/plugins/effects/rendered/solarize.script:0
 msgid "_Start Value"
 msgstr "_ערך התחלתי"
 

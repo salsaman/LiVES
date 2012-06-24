@@ -211,8 +211,9 @@ lives_exe_LDADD = @X11_LIBS@ @MJPEGTOOLS_LIBS@ $(osc_LDADD) $(jack_LDADD) $(ldvg
 	 $(giw_LDADD) $(v4l1_LDADD) \
 	@UNICAP_LIBS@
 
+#-D__STDC_CONSTANT_MACROS
 
-AM_CFLAGS = -Wstrict-aliasing=0 -D__STDC_CONSTANT_MACROS $(yuv4mpeg_CFLAGS) $(ldvgrab_CFLAGS) $(dvgrab_CFLAGS) \
+AM_CFLAGS = -Wstrict-aliasing=0 $(yuv4mpeg_CFLAGS) $(ldvgrab_CFLAGS) $(dvgrab_CFLAGS) \
 	$(oil_CFLAGS) \
 	$(darwin_CFLAGS) $(irix_CFLAGS) $(linux_CFLAGS) $(solaris_CFLAGS) $(osc_CFLAGS) $(mingw_CFLAGS) $(alsa_CFLAGS) $(png_CFLAGS) $(swscale_CFLAGS) \
 	$(jack_CFLAGS) $(pulse_CFLAGS) $(giw_CFLAGS) $(unicap_CFLAGS) $(libweed_CFLAGS) $(libweed_compat_CFLAGS) \

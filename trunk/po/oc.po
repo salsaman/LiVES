@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2012-06-10 13:04-0300\n"
+"POT-Creation-Date: 2012-06-24 11:23-0300\n"
 "PO-Revision-Date: 2011-08-18 12:12+0000\n"
 "Last-Translator: Cédric VALMARY (Tot en òc) <cvalmary@yahoo.fr>\n"
 "Language-Team: Occitan (post 1500) <oc@li.org>\n"
@@ -9974,13 +9974,13 @@ msgstr "_Ignòra los cambiaments"
 msgid "Brightness start"
 msgstr "_Ignòra los cambiaments"
 
-#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 msgid "Centre _X"
 msgstr "Centre _X"
 
-#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 msgid "Centre _Y"
 msgstr "Centre _Y"
 
@@ -10093,8 +10093,8 @@ msgstr "Sòmi"
 msgid "Dreamifying"
 msgstr "Sòmi"
 
-#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 msgid "E_nd %"
 msgstr ""
 
@@ -10145,8 +10145,8 @@ msgstr ""
 msgid "Fade _colour"
 msgstr "Fondut"
 
-#: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+#: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
 #, fuzzy
 msgid "Fade _end"
 msgstr "Fondut"
@@ -10162,8 +10162,9 @@ msgid "Fade _out"
 msgstr "Fondut"
 
 #: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
+#, fuzzy
 msgid "Fade video in or out"
-msgstr ""
+msgstr "Fondut"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 msgid "Fade"
@@ -10214,12 +10215,14 @@ msgid "Frame _height"
 msgstr "Talha del quadre"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+#, fuzzy
 msgid "Frame _in frame position of clipboard..."
-msgstr ""
+msgstr "Escafament dels imatges %d a %d%s...."
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
+#, fuzzy
 msgid "Frame _in frame position of top frame..."
-msgstr ""
+msgstr "Escafament dels imatges %d a %d%s...."
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #, fuzzy
@@ -10470,8 +10473,8 @@ msgstr "Rotacion"
 msgid "Rotating"
 msgstr "Rotacion"
 
-#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #, fuzzy
 msgid "S_tart %"
 msgstr "_Aviar"
@@ -10644,12 +10647,12 @@ msgstr "Ondulacion"
 msgid "Waving"
 msgstr "Calcul d'ondulacions"
 
+#: /usr/share/lives/plugins/effects/rendered/rotate.script:0
+#: /usr/share/lives/plugins/effects/rendered/wave.script:0
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
-#: /usr/share/lives/plugins/effects/rendered/wave.script:0
-#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
-#: /usr/share/lives/plugins/effects/rendered/rotate.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
+#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 #, fuzzy
 msgid "_Background Colour"
 msgstr "_Aviar"
@@ -10691,8 +10694,8 @@ msgstr "contraste"
 msgid "_Diffmax"
 msgstr ""
 
-#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #, fuzzy
 msgid "_End Colour"
 msgstr "_Aviar"
@@ -10716,8 +10719,8 @@ msgstr "_Darrièr Imatge solament"
 msgid "_Fade level"
 msgstr "Fondut"
 
-#: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+#: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
 #, fuzzy
 msgid "_Fade start"
 msgstr "_Rai"
@@ -10742,9 +10745,9 @@ msgstr "Fondut"
 msgid "_Font"
 msgstr "_Poliça"
 
+#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
-#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
 #, fuzzy
 msgid "_Frames per second"
@@ -10790,8 +10793,8 @@ msgstr ""
 msgid "_Levels"
 msgstr ""
 
-#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 msgid "_Link start and end colours"
 msgstr ""
 
@@ -10852,14 +10855,14 @@ msgstr "_Rai"
 msgid "_Radius start"
 msgstr "_Rai"
 
-#: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
 #: /usr/share/lives/plugins/effects/rendered/emboss.script:0
+#: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
 #: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
 msgid "_Radius"
 msgstr "_Rai"
 
-#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #, fuzzy
 msgid "_Random colour each frame"
 msgstr "Cargament dels clips dempuèi %s"
@@ -10911,15 +10914,15 @@ msgstr "_Aviar"
 msgid "_Splice"
 msgstr "Separadors"
 
-#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #, fuzzy
 msgid "_Start Colour"
 msgstr "_Aviar"
 
-#: /usr/share/lives/plugins/effects/rendered/solarize.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
+#: /usr/share/lives/plugins/effects/rendered/solarize.script:0
 #, fuzzy
 msgid "_Start Value"
 msgstr "_Aviar"

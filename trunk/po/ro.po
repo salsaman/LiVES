@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2012-06-10 13:04-0300\n"
+"POT-Creation-Date: 2012-06-24 11:23-0300\n"
 "PO-Revision-Date: 2011-08-18 11:57+0000\n"
 "Last-Translator: salsaman <salsaman@gmail.com>\n"
 "Language-Team: Romanian <ro@li.org>\n"
@@ -9999,13 +9999,13 @@ msgstr "_Ignoră schimbările"
 msgid "Brightness start"
 msgstr "_Ignoră schimbările"
 
-#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 msgid "Centre _X"
 msgstr ""
 
-#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 msgid "Centre _Y"
 msgstr ""
 
@@ -10040,12 +10040,14 @@ msgid "Checkerboarding"
 msgstr "_Ignoră schimbările"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
+#, fuzzy
 msgid "Clipboard _over selection"
-msgstr ""
+msgstr "Introduceţi _cu sunet"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
+#, fuzzy
 msgid "Clipboard _under selection"
-msgstr ""
+msgstr "Introduceţi _cu sunet"
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #, fuzzy
@@ -10115,8 +10117,8 @@ msgstr ""
 msgid "Dreamifying"
 msgstr ""
 
-#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 msgid "E_nd %"
 msgstr ""
 
@@ -10167,8 +10169,8 @@ msgstr ""
 msgid "Fade _colour"
 msgstr "_Ignoră schimbările"
 
-#: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+#: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
 #, fuzzy
 msgid "Fade _end"
 msgstr "_Ignoră schimbările"
@@ -10184,8 +10186,9 @@ msgid "Fade _out"
 msgstr "_Ignoră schimbările"
 
 #: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
+#, fuzzy
 msgid "Fade video in or out"
-msgstr ""
+msgstr "_Ignoră schimbările"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 #, fuzzy
@@ -10193,12 +10196,14 @@ msgid "Fade"
 msgstr "_Ignoră schimbările"
 
 #: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
+#, fuzzy
 msgid "Fading video"
-msgstr ""
+msgstr "Audio restaurarea..."
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+#, fuzzy
 msgid "Fading"
-msgstr ""
+msgstr "Audio restaurarea..."
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 #, fuzzy
@@ -10384,20 +10389,23 @@ msgid "Modulate (BSH)"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
+#, fuzzy
 msgid "Modulating"
-msgstr ""
+msgstr "Inserez"
 
 #: /usr/share/lives/plugins/effects/rendered/monochrome.script:0
 msgid "Monochrome"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/negate.script:0
+#, fuzzy
 msgid "Negate"
-msgstr ""
+msgstr "Inserez"
 
 #: /usr/share/lives/plugins/effects/rendered/negate.script:0
+#, fuzzy
 msgid "Negating"
-msgstr ""
+msgstr "Inserez"
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
 msgid "Noise type"
@@ -10435,12 +10443,14 @@ msgid "Photo/still"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
+#, fuzzy
 msgid "Pixilate"
-msgstr ""
+msgstr "Inserez"
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
+#, fuzzy
 msgid "Pixilating"
-msgstr ""
+msgstr "Inserez"
 
 #: /usr/share/lives/plugins/effects/rendered/posterize.script:0
 #, fuzzy
@@ -10478,15 +10488,17 @@ msgid "Resize All Frames"
 msgstr "_Redimensionarea tuturor cadrelor"
 
 #: /usr/share/lives/plugins/effects/rendered/rotate.script:0
+#, fuzzy
 msgid "Rotate Clip"
-msgstr ""
+msgstr "Inserez"
 
 #: /usr/share/lives/plugins/effects/rendered/rotate.script:0
+#, fuzzy
 msgid "Rotating"
-msgstr ""
+msgstr "Inserez"
 
-#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #, fuzzy
 msgid "S_tart %"
 msgstr "_Ignoră schimbările"
@@ -10571,8 +10583,9 @@ msgid "Spread"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/spread.script:0
+#, fuzzy
 msgid "Spreading"
-msgstr ""
+msgstr "Audio restaurarea..."
 
 #: /usr/share/lives/plugins/effects/rendered/solarize.script:0
 #, fuzzy
@@ -10623,12 +10636,14 @@ msgid "Trimming"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
+#, fuzzy
 msgid "Tunnel"
-msgstr ""
+msgstr "Renunță"
 
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
+#, fuzzy
 msgid "Tunneling"
-msgstr ""
+msgstr "Renunță"
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
 msgid "Use _Natural Size"
@@ -10654,12 +10669,12 @@ msgstr ""
 msgid "Waving"
 msgstr ""
 
+#: /usr/share/lives/plugins/effects/rendered/rotate.script:0
+#: /usr/share/lives/plugins/effects/rendered/wave.script:0
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
-#: /usr/share/lives/plugins/effects/rendered/wave.script:0
-#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
-#: /usr/share/lives/plugins/effects/rendered/rotate.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
+#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 #, fuzzy
 msgid "_Background Colour"
 msgstr "_Ignoră schimbările"
@@ -10700,8 +10715,8 @@ msgstr ""
 msgid "_Diffmax"
 msgstr ""
 
-#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #, fuzzy
 msgid "_End Colour"
 msgstr "_Ignoră schimbările"
@@ -10725,8 +10740,8 @@ msgstr "_Ignoră schimbările"
 msgid "_Fade level"
 msgstr "_Ignoră schimbările"
 
-#: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+#: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
 #, fuzzy
 msgid "_Fade start"
 msgstr "_Ignoră schimbările"
@@ -10751,9 +10766,9 @@ msgstr "_Ignoră schimbările"
 msgid "_Font"
 msgstr ""
 
+#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
-#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
 #, fuzzy
 msgid "_Frames per second"
@@ -10797,8 +10812,8 @@ msgstr ""
 msgid "_Levels"
 msgstr ""
 
-#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 msgid "_Link start and end colours"
 msgstr ""
 
@@ -10815,8 +10830,9 @@ msgid "_Midtone"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/negate.script:0
+#, fuzzy
 msgid "_Negate"
-msgstr ""
+msgstr "Inserez"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
@@ -10857,15 +10873,15 @@ msgstr "_Ignoră schimbările"
 msgid "_Radius start"
 msgstr "_Ignoră schimbările"
 
-#: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
 #: /usr/share/lives/plugins/effects/rendered/emboss.script:0
+#: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
 #: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
 #, fuzzy
 msgid "_Radius"
 msgstr "_Ignoră schimbările"
 
-#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #, fuzzy
 msgid "_Random colour each frame"
 msgstr "Cadre"
@@ -10880,8 +10896,9 @@ msgid "_Right"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
+#, fuzzy
 msgid "_Rotate Selection by"
-msgstr ""
+msgstr "de selecţie."
 
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
 msgid "_Shrink rotated window to fit frame size"
@@ -10914,15 +10931,15 @@ msgstr "_Ignoră schimbările"
 msgid "_Splice"
 msgstr ""
 
-#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #, fuzzy
 msgid "_Start Colour"
 msgstr "_Ignoră schimbările"
 
-#: /usr/share/lives/plugins/effects/rendered/solarize.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
+#: /usr/share/lives/plugins/effects/rendered/solarize.script:0
 #, fuzzy
 msgid "_Start Value"
 msgstr "_Ignoră schimbările"
@@ -11152,16 +11169,18 @@ msgid "jumble"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
+#, fuzzy
 msgid "modulate"
-msgstr ""
+msgstr "Inserez"
 
 #: /usr/share/lives/plugins/effects/rendered/monochrome.script:0
 msgid "monochrome"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/negate.script:0
+#, fuzzy
 msgid "negate"
-msgstr ""
+msgstr "Inserez"
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
 msgid "noisify"
@@ -11177,8 +11196,9 @@ msgid "photo_still"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
+#, fuzzy
 msgid "pixilate"
-msgstr ""
+msgstr "Inserez"
 
 #: /usr/share/lives/plugins/effects/rendered/posterize.script:0
 #, fuzzy
@@ -11271,8 +11291,9 @@ msgid "trim_frames"
 msgstr "Cadre"
 
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
+#, fuzzy
 msgid "tunnel"
-msgstr ""
+msgstr "Renunță"
 
 #: /usr/share/lives/plugins/effects/rendered/wave.script:0
 msgid "wave"

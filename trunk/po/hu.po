@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: hu\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2012-06-10 13:04-0300\n"
+"POT-Creation-Date: 2012-06-24 11:23-0300\n"
 "PO-Revision-Date: 2011-08-18 11:58+0000\n"
 "Last-Translator: Krasznecz Zoltán <zoltan.krasznecz@gmail.com>\n"
 "Language-Team: Magyar <lisovszki@gmail.com>\n"
@@ -10806,13 +10806,13 @@ msgstr "Fényerő vége"
 msgid "Brightness start"
 msgstr "Fényerő kezdet"
 
-#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 msgid "Centre _X"
 msgstr "Középen _X"
 
-#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 msgid "Centre _Y"
 msgstr "Középen _Y"
 
@@ -10912,8 +10912,8 @@ msgstr "Álom"
 msgid "Dreamifying"
 msgstr "Álommá tevés"
 
-#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 msgid "E_nd %"
 msgstr "V_ége %"
 
@@ -10962,8 +10962,8 @@ msgstr ""
 msgid "Fade _colour"
 msgstr "Vaku _szín"
 
-#: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+#: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
 msgid "Fade _end"
 msgstr "Fokozatos hangerősödés _vége"
 
@@ -11253,8 +11253,8 @@ msgstr "Klip elforgatása"
 msgid "Rotating"
 msgstr "Forgatás"
 
-#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 msgid "S_tart %"
 msgstr "I_ndítás %"
 
@@ -11409,12 +11409,12 @@ msgstr "Esés/hullámok"
 msgid "Waving"
 msgstr "Készítés folyamatban"
 
+#: /usr/share/lives/plugins/effects/rendered/rotate.script:0
+#: /usr/share/lives/plugins/effects/rendered/wave.script:0
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
-#: /usr/share/lives/plugins/effects/rendered/wave.script:0
-#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
-#: /usr/share/lives/plugins/effects/rendered/rotate.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
+#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 msgid "_Background Colour"
 msgstr "_Háttér szine"
 
@@ -11451,8 +11451,8 @@ msgstr "_Kontraszt csökkentése"
 msgid "_Diffmax"
 msgstr "_Különbségmax"
 
-#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 msgid "_End Colour"
 msgstr "_Szín vég"
 
@@ -11473,8 +11473,8 @@ msgstr "_Végösszeg"
 msgid "_Fade level"
 msgstr "_Fokozatos hangerősödés szint"
 
-#: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+#: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
 msgid "_Fade start"
 msgstr "_Fokozatos hangerősödés kezdet"
 
@@ -11495,9 +11495,9 @@ msgstr "_Vaku..."
 msgid "_Font"
 msgstr "_Betűtípus"
 
+#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
-#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
 msgid "_Frames per second"
 msgstr "_Másodpercenkénti képkockák"
@@ -11539,8 +11539,8 @@ msgstr ""
 msgid "_Levels"
 msgstr "_Szintek"
 
-#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 msgid "_Link start and end colours"
 msgstr "_Induló és záró szín megcímzése"
 
@@ -11595,14 +11595,14 @@ msgstr "_Sugár vége"
 msgid "_Radius start"
 msgstr "_Sugár kezdet"
 
-#: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
 #: /usr/share/lives/plugins/effects/rendered/emboss.script:0
+#: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
 #: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
 msgid "_Radius"
 msgstr "_Sugár"
 
-#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 msgid "_Random colour each frame"
 msgstr "_Véletlenszerű szín minden képkockánál"
 
@@ -11647,14 +11647,14 @@ msgstr "_Forrás szín"
 msgid "_Splice"
 msgstr "_Összekötés"
 
-#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 msgid "_Start Colour"
 msgstr "_Indítás szín"
 
-#: /usr/share/lives/plugins/effects/rendered/solarize.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
+#: /usr/share/lives/plugins/effects/rendered/solarize.script:0
 msgid "_Start Value"
 msgstr "_Indítás érték"
 

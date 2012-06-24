@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2012-06-10 13:04-0300\n"
+"POT-Creation-Date: 2012-06-24 11:23-0300\n"
 "PO-Revision-Date: 2011-11-01 11:47+0000\n"
 "Last-Translator: milboy <Unknown>\n"
 "Language-Team: Slovak <sk@li.org>\n"
@@ -10739,13 +10739,13 @@ msgstr "Jas koniec"
 msgid "Brightness start"
 msgstr "Jas začiatok"
 
-#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 msgid "Centre _X"
 msgstr "Vystrediť _X"
 
-#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 msgid "Centre _Y"
 msgstr "Vystrediť _Y"
 
@@ -10845,8 +10845,8 @@ msgstr "Sen"
 msgid "Dreamifying"
 msgstr "Zasnenie"
 
-#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 msgid "E_nd %"
 msgstr "K_oniec %"
 
@@ -10895,8 +10895,8 @@ msgstr ""
 msgid "Fade _colour"
 msgstr "Žiarivá farba"
 
-#: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+#: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
 msgid "Fade _end"
 msgstr "Slabnutie _koniec"
 
@@ -11188,8 +11188,8 @@ msgstr "Otočiť klip"
 msgid "Rotating"
 msgstr "Otočenie"
 
-#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 msgid "S_tart %"
 msgstr "Š_tart %"
 
@@ -11345,12 +11345,12 @@ msgstr "Vlna"
 msgid "Waving"
 msgstr "Vlnenie"
 
+#: /usr/share/lives/plugins/effects/rendered/rotate.script:0
+#: /usr/share/lives/plugins/effects/rendered/wave.script:0
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
-#: /usr/share/lives/plugins/effects/rendered/wave.script:0
-#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
-#: /usr/share/lives/plugins/effects/rendered/rotate.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
+#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 msgid "_Background Colour"
 msgstr "Farba _Pozadia"
 
@@ -11387,8 +11387,8 @@ msgstr "_Znížiť kontrast"
 msgid "_Diffmax"
 msgstr ""
 
-#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 msgid "_End Colour"
 msgstr "_Koniec farby"
 
@@ -11409,8 +11409,8 @@ msgstr "_Koncová čiastka"
 msgid "_Fade level"
 msgstr "Ǔroveň _stmievania"
 
-#: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+#: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
 msgid "_Fade start"
 msgstr "Štart _stmievania"
 
@@ -11431,9 +11431,9 @@ msgstr "_Záblesk pre"
 msgid "_Font"
 msgstr "_Písmo"
 
+#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
-#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
 msgid "_Frames per second"
 msgstr "_Snímkov za sekundu"
@@ -11476,8 +11476,8 @@ msgstr ""
 msgid "_Levels"
 msgstr "_Levely"
 
-#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #, fuzzy
 msgid "_Link start and end colours"
 msgstr "_Nastavenie počiatočných a koncových bodov"
@@ -11534,14 +11534,14 @@ msgstr "_Koniec polomeru"
 msgid "_Radius start"
 msgstr "_Štart polomeru"
 
-#: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
 #: /usr/share/lives/plugins/effects/rendered/emboss.script:0
+#: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
 #: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
 msgid "_Radius"
 msgstr "_Polomer"
 
-#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 msgid "_Random colour each frame"
 msgstr "_Náhodná farba pre každý snímok"
 
@@ -11587,14 +11587,14 @@ msgstr "_Zdroj farby"
 msgid "_Splice"
 msgstr "Spojiť"
 
-#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 msgid "_Start Colour"
 msgstr "_Počiatočná farba"
 
-#: /usr/share/lives/plugins/effects/rendered/solarize.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
+#: /usr/share/lives/plugins/effects/rendered/solarize.script:0
 msgid "_Start Value"
 msgstr "_Počiatočná hodnota"
 

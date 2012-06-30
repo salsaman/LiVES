@@ -356,6 +356,7 @@ gboolean do_audio_choice_dialog(short startup_phase) {
   radiobutton_group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (radiobutton1));
 
   if (prefs->audio_player==AUD_PLAYER_JACK||!capable->has_pulse_audio) {
+    prefs->audio_player=AUD_PLAYER_JACK;
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(radiobutton1),TRUE);
     set_pref("audio_player","jack");
   }

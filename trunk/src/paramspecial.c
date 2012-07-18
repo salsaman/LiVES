@@ -315,6 +315,9 @@ void check_for_special (lives_param_t *param, gint num, GtkBox *pbox, lives_rfx_
       if (!GTK_WIDGET_IS_SENSITIVE(GTK_WIDGET(param->widgets[0]))) gtk_widget_set_sensitive(buttond,FALSE);
 
       g_signal_connect (GTK_FILE_CHOOSER(buttond), "selection-changed",G_CALLBACK (on_fileread_clicked),(gpointer)param->widgets[0]);
+
+      if (GTK_IS_ENTRY(param->widgets[0])) gtk_entry_set_max_length(GTK_ENTRY (param->widgets[0]),PATH_MAX);
+
     }
 
     slist=slist->next;

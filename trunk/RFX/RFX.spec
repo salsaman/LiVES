@@ -28,7 +28,7 @@ d1.6 Added string_list parameter type
 - Added note about differing input image types
 - Add "special|password"
 - Fix text errors, add note about "$fps"
-
+- Clarify max length for fileread special keyword.
 
 TODO: 	- change rectdemask to use proportion, to match other framedraws
 	- split into RFX layout and RFX plugin components
@@ -475,7 +475,7 @@ Special type "audiochannel" - >=1 any parameters : a parameter marked with this 
 Special type "mergealign" – 2 parameters
 The mergealign special widget links together two num type parameters. It has two states. In one state it will set the first parameter to its minimum value and the second parameter to its maximum value. In the second state it will do the opposite, set the first parameter to its maximum, and the second parameter to its minimum.
 
-Special type "fileread" - 1 string parameter : the linked string parameter should point to a file to which the user has read permissions 
+Special type "fileread" - 1 string parameter : the linked string parameter should point to a file to which the user has read permissions. In this case the maximum string length may be ignored by the host to avoid truncating longer filenames.
 
 Special type "password" - 1 string parameter : the host may hide/obscure the input to this string
 

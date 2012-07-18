@@ -1,7 +1,7 @@
 Version 1.6.3
 -------------
 Fix installation problem when jackd is not installed.
-
+Prevent truncation of longer filenames in plugin interfaces.
 
 
 

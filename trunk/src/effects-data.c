@@ -408,12 +408,13 @@ void pconx_chain_data(int key, int mode) {
   weed_plant_t *inst;
 
   register int i;
+
   if (mainw->is_rendering) {
     inst=get_new_inst_for_keymode(key,mode);
   }
   else {
     if ((inst=rte_keymode_get_instance(key+1,mode))==NULL) {
-      LIVES_ERROR("pulling data from non-enabled effect");
+      LIVES_ERROR("pulling data for non-enabled effect");
       return; ///< effect is not enabled
     }
   }
@@ -426,6 +427,13 @@ void pconx_chain_data(int key, int mode) {
     for (i=0;i<nparams;i++) {
       if ((oparam=pconx_get_out_param(key,mode,i))!=NULL) {
 	pconx_convert_value_data(inparams[i],oparam);
+
+	if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)&&
+	    enabled_in_channels(inst,FALSE)>0) {
+	  // if we are recording, add this change to our event_list (unless it is a generator - those get recorded to scrap_file or ascrap_file)
+	  rec_param_change(inst,i);
+	}
+
       }
     }
     weed_free(inparams);

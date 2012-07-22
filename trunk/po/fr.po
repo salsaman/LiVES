@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: fr\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2012-06-24 11:23-0300\n"
+"POT-Creation-Date: 2012-07-21 23:34-0300\n"
 "PO-Revision-Date: 2012-01-11 01:14+0000\n"
 "Last-Translator: salsaman <salsaman@gmail.com>\n"
 "Language-Team: Français <kwizart@gmail.com>\n"
@@ -967,81 +967,81 @@ msgstr "Utilise le lecteur audio _pulse"
 msgid "Use _jack audio player"
 msgstr "Utiliser le lecteur audio jack"
 
-#: src/startup.c:370
+#: src/startup.c:371
 msgid "Use _sox audio player"
 msgstr "Utilise le lecteur audio _sox"
 
-#: src/startup.c:405
+#: src/startup.c:406
 msgid "Use _mplayer audio player"
 msgstr "Utilise le lecteur audui _mplayer"
 
-#: src/startup.c:458 src/startup.c:646 src/interface.c:2148
+#: src/startup.c:459 src/startup.c:647 src/interface.c:2148
 msgid "_Next"
 msgstr "_Suivant"
 
-#: src/startup.c:502
+#: src/startup.c:503
 #, fuzzy
 msgid "Skipped"
 msgstr "Ignorer"
 
-#: src/startup.c:519
+#: src/startup.c:520
 msgid "Passed"
 msgstr ""
 
-#: src/startup.c:551
+#: src/startup.c:552
 msgid "Failed"
 msgstr "Échoué"
 
-#: src/startup.c:613
+#: src/startup.c:614
 msgid "LiVES: - Testing Configuration"
 msgstr "LiVES: - Test de Configuration"
 
-#: src/startup.c:616
+#: src/startup.c:617
 msgid "LiVES: - Troubleshoot"
 msgstr "LiVES : - Dépannage"
 
-#: src/startup.c:630
+#: src/startup.c:631
 msgid "LiVES will now run some basic configuration tests\n"
 msgstr "LiVES va maintenant lancer quelques tests de configuration de base\n"
 
-#: src/startup.c:669
+#: src/startup.c:670
 msgid "Checking for \"sox\" presence"
 msgstr "Vérification de la présence de \"sox\""
 
-#: src/startup.c:673
+#: src/startup.c:674
 msgid ""
 "You should install sox to be able to use all the audio features in LiVES"
 msgstr ""
 "Vous devriez installer sox pour utiliser toutes les fonctionnalités audio de "
 "LiVES"
 
-#: src/startup.c:681
+#: src/startup.c:682
 msgid "Checking if sox can convert audio"
 msgstr "Vérifie si sox peut convertir du son"
 
-#: src/startup.c:704
+#: src/startup.c:705
 msgid "Unable to allocate 176400 bytes memory."
 msgstr "Impossible d'allouer 176400 octets en mémoire."
 
-#: src/startup.c:719
+#: src/startup.c:720
 #, c-format
 msgid "Unable to write to: %s"
 msgstr "Impossible d'écrire sur : %s"
 
-#: src/startup.c:733 src/startup.c:865
+#: src/startup.c:734 src/startup.c:866
 #, c-format
 msgid "Command failed: %s"
 msgstr "La commande a échoué : %s"
 
-#: src/startup.c:755
+#: src/startup.c:756
 msgid "You should install sox_fmt_all or similar"
 msgstr "Vous devriez installer sox_fmt_all ou équivalent"
 
-#: src/startup.c:783
+#: src/startup.c:784
 msgid "Checking for \"mplayer\" presence"
 msgstr "Vérifie si \"mplayer\" est présent"
 
-#: src/startup.c:787
+#: src/startup.c:788
 msgid ""
 "You should install mplayer to be able to use all the decoding features in "
 "LiVES"
@@ -1049,45 +1049,45 @@ msgstr ""
 "Vous devriez installer mplayer pour pouvoir utiliser toutes les "
 "fonctionnalité de décodage de LiVES"
 
-#: src/startup.c:813
+#: src/startup.c:814
 msgid "Checking if mplayer can convert audio"
 msgstr "Vérifie si mplayer peut convertir du son"
 
-#: src/startup.c:826
+#: src/startup.c:827
 msgid "You should install mplayer with pcm/wav support"
 msgstr "Vous devriez installer mplayer avec la prise en charge de pcm/wav"
 
-#: src/startup.c:843
+#: src/startup.c:844
 msgid "Checking if mplayer can decode to png/alpha"
 msgstr "Vérifie si mplayer peut décoder en png/alpha"
 
-#: src/startup.c:886
+#: src/startup.c:887
 msgid "You may wish to upgrade mplayer to a newer version"
 msgstr "Il est suggéré d'utiliser une version plus récente de mplayer"
 
-#: src/startup.c:912
+#: src/startup.c:913
 msgid "Checking if mplayer can decode to jpeg"
 msgstr "Vérifie si mplayer peut décoder en jpeg"
 
-#: src/startup.c:930
+#: src/startup.c:931
 msgid "You should install mplayer with either png/alpha or jpeg support"
 msgstr ""
 "Vous devriez installer mplayer avec la prise en charge du jpeg ou du png/"
 "alpha"
 
-#: src/startup.c:931
+#: src/startup.c:932
 msgid "You may wish to add jpeg output support to mplayer"
 msgstr "Vous pouvez ajouter le support de sortie jpeg à mplayer"
 
-#: src/startup.c:940
+#: src/startup.c:941
 msgid "Checking for \"convert\" presence"
 msgstr "Vérification de la présence de la commande \"convert\""
 
-#: src/startup.c:944
+#: src/startup.c:945
 msgid "Install imageMagick to be able to use all of the rendered effects"
 msgstr "Installer imageMagick pour pouvoir utiliser tous les effets"
 
-#: src/startup.c:958
+#: src/startup.c:959
 msgid ""
 "\n"
 "\n"
@@ -1099,7 +1099,7 @@ msgstr ""
 "    Cliquez sur Annuler pour quitter et installer les composants manquants, "
 "ou sur Suivant pour continuer    \n"
 
-#: src/startup.c:997
+#: src/startup.c:998
 msgid ""
 "\n"
 "\n"
@@ -1110,44 +1110,44 @@ msgstr ""
 "Finalement, vous pouvez choisir L'interface de démarrage par défaut pour "
 "LiVES\n"
 
-#: src/startup.c:998
+#: src/startup.c:999
 msgid ""
 "\n"
 "\n"
 "LiVES has two main interfaces and you can start up with either of them.\n"
 msgstr ""
 
-#: src/startup.c:999
+#: src/startup.c:1000
 msgid ""
 "\n"
 "\n"
 "The default can always be changed later from Preferences.\n"
 msgstr ""
 
-#: src/startup.c:1010
+#: src/startup.c:1011
 #, fuzzy
 msgid "LiVES: - Choose the startup interface"
 msgstr "LiVES: - choisir un lecteur audio"
 
-#: src/startup.c:1039
+#: src/startup.c:1040
 msgid "Start in _Clip Edit mode"
 msgstr ""
 
-#: src/startup.c:1063
+#: src/startup.c:1064
 msgid "This is the best choice for simple editing tasks and for VJs\n"
 msgstr ""
 
-#: src/startup.c:1075
+#: src/startup.c:1076
 #, fuzzy
 msgid "Start in _Multitrack mode"
 msgstr "Mode _multitrack"
 
-#: src/startup.c:1095
+#: src/startup.c:1096
 msgid ""
 "This is a better choice for complex editing tasks involving multiple clips.\n"
 msgstr ""
 
-#: src/startup.c:1112
+#: src/startup.c:1113
 msgid "_Finish"
 msgstr ""
 
@@ -5876,17 +5876,17 @@ msgstr ""
 "\n"
 "%d images ouvertes.\n"
 
-#: src/effects-weed.c:3702
+#: src/effects-weed.c:3819
 #, c-format
 msgid "Error: plugin %s has no weed_setup() function.\n"
 msgstr "Erreur: le greffon %s n'a pas de fonction weed_setup().\n"
 
-#: src/effects-weed.c:3717
+#: src/effects-weed.c:3834
 #, c-format
 msgid "No usable filters found in plugin %s\n"
 msgstr ""
 
-#: src/effects-weed.c:3797
+#: src/effects-weed.c:3914
 #, c-format
 msgid ""
 "Info: Unable to load plugin %s\n"
@@ -5895,42 +5895,42 @@ msgstr ""
 "Info: Impossible de charger le plugin %s\n"
 "L'erreur était: %s\n"
 
-#: src/effects-weed.c:3800 src/effects-weed.c:4143
+#: src/effects-weed.c:3917 src/effects-weed.c:4260
 #, fuzzy
 msgid "Some plugin directories"
 msgstr "inclure les sous-répertoires"
 
-#: src/effects-weed.c:3979
+#: src/effects-weed.c:4096
 #, c-format
 msgid "Successfully loaded %d Weed filters\n"
 msgstr ""
 
-#: src/effects-weed.c:4648
+#: src/effects-weed.c:4765
 #, c-format
 msgid "Effect %s cannot be used with this audio player.\n"
 msgstr ""
 
-#: src/effects-weed.c:4752
+#: src/effects-weed.c:4869
 #, c-format
 msgid "Failed to start instance %s, error code %d\n"
 msgstr "Impossible de charger l'instance %s, code d'erreur %d\n"
 
-#: src/effects-weed.c:4791
+#: src/effects-weed.c:4908
 #, c-format
 msgid "Unable to start generator %s\n"
 msgstr "Impossible de charger le générateur %s\n"
 
-#: src/effects-weed.c:5402
+#: src/effects-weed.c:5523
 #, c-format
 msgid "Failed to start generator %s\n"
 msgstr "Impossible de démarrer le générateur %s.\n"
 
-#: src/effects-weed.c:5463
+#: src/effects-weed.c:5584
 #, c-format
 msgid "Failed to start generator %s, error %d\n"
 msgstr "Impossible de charger le générateur %s, erreur %d.\n"
 
-#: src/effects-weed.c:6565
+#: src/effects-weed.c:6685
 #, c-format
 msgid "%s [unstable] (%s)"
 msgstr ""
@@ -5960,7 +5960,7 @@ msgstr "M_aintenir Proportions"
 msgid "LiVES: Select file"
 msgstr "LiVES: Image sélectionnée"
 
-#: src/paramspecial.c:341
+#: src/paramspecial.c:344
 msgid "Display Password"
 msgstr ""
 
@@ -10157,7 +10157,7 @@ msgstr ""
 "\n"
 "La connexion à pulse audio a été réinitialisée.\n"
 
-#: src/pulse.c:85
+#: src/pulse.c:86
 msgid ""
 "\n"
 "Unable to connect to pulse audio server.\n"
@@ -10169,7 +10169,7 @@ msgstr ""
 "Retour au lecteur audio sox.\n"
 "Vous pouvez changer cela dans Preferences/Lecture\n"
 
-#: src/pulse.c:89
+#: src/pulse.c:90
 msgid ""
 "\n"
 "Unable to connect to pulse audio server.\n"
@@ -10181,7 +10181,7 @@ msgstr ""
 "Retour au lecteur audio mplayer.\n"
 "Vous pouvez changer cela dans Preferences/Lecture\n"
 
-#: src/pulse.c:93
+#: src/pulse.c:94
 msgid ""
 "\n"
 "Unable to connect to pulse audio server.\n"
@@ -10189,11 +10189,11 @@ msgstr ""
 "\n"
 "Impossible de se connecter au serveur pulse audio.\n"
 
-#: src/pulse.c:99
+#: src/pulse.c:100
 msgid "LiVES will exit and you can choose another audio player.\n"
 msgstr "LiVES se termine et vous pouvez choisir un autre lecteur audio.\n"
 
-#: src/pulse.c:1143
+#: src/pulse.c:1189
 msgid ""
 "\n"
 "Connection to pulse audio was reset.\n"

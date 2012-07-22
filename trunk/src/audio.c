@@ -575,6 +575,7 @@ int64_t sample_move_abuf_int16 (short *obuf, int nchans, int nsamps, int out_ara
     }
 
   }
+
 #endif
 
   return samples_out;
@@ -767,7 +768,7 @@ int64_t render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdoubl
 
   if (!storedfdsset) audio_reset_stored_fnames();
 
-  if (mainw->multitrack==NULL) render_block_size*=100;
+  //if (mainw->multitrack==NULL) render_block_size*=100;
 
   if (to_file>-1) {
     // prepare outfile stuff
@@ -1046,13 +1047,22 @@ int64_t render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdoubl
 	}
       }
 
+      // TODO *** when audio filters are implemented:- we will need to apply all audio effects with output here.
+      // even in clipedit mode (for preview/rendering with an event list)
+      // however, we should not apply any audio effects except the volume mixer (in mt mode), if the track source was the ascrap_file
+      // (since it would have been recorded with track effects already applied)
+      //
+      // also, we will need to keep updating the mainw->filter_map from mainw->event_list, as filters may switched on and off during the block
+
+
+
       // apply audio filter(s)
       if (mainw->multitrack!=NULL) {
 	// we work out the "visibility" of each track at tc
 	gdouble *vis=get_track_visibility_at_tc(mainw->multitrack->event_list,nfiles,
 						mainw->multitrack->opts.back_audio_tracks,tc,&shortcut,
 						mainw->multitrack->opts.audio_bleedthru);
-
+	
 	// locate the master volume parameter, and multiply all values by vis[track]
 	weed_apply_audio_effects(mainw->filter_map,chunk_float_buffer,mainw->multitrack->opts.back_audio_tracks,
 				 out_achans,blocksize,out_arate,tc,vis);
@@ -1144,10 +1154,28 @@ LIVES_INLINE void aud_fade(gint fileno, gdouble startt, gdouble endt, gdouble st
 #ifdef ENABLE_JACK
 void jack_rec_audio_to_clip(gint fileno, gint old_file, lives_rec_audio_type_t rec_type) {
   // open audio file for writing
-  file *outfile=mainw->files[fileno];
-  gchar *outfilename=g_build_filename(prefs->tmpdir,outfile->handle,"audio",NULL);
+  file *outfile;
+  gchar *outfilename;
   int retval;
 
+  if (fileno==-1) {
+    // respond to external audio, but do not record it (yet)
+    mainw->jackd_read=jack_get_driver(0,FALSE);
+    mainw->jackd_read->playing_file=fileno;
+    mainw->jackd_read->frames_written=0;
+
+    mainw->jackd_read->reverse_endian=FALSE;
+      
+    // start jack "recording"
+    jack_open_device_read(mainw->jackd_read);
+    jack_read_driver_activate(mainw->jackd_read);
+
+    return;
+  }
+
+  outfile=mainw->files[fileno];
+  outfilename=g_build_filename(prefs->tmpdir,outfile->handle,"audio",NULL);
+  
   do {
     retval=0;
     mainw->aud_rec_fd=open(outfilename,O_WRONLY|O_CREAT|O_APPEND,S_IRUSR|S_IWUSR);
@@ -1159,7 +1187,7 @@ void jack_rec_audio_to_clip(gint fileno, gint old_file, lives_rec_audio_type_t r
       }
     }
   } while (retval==LIVES_RETRY);
-
+  
   g_free(outfilename);
 
   if (rec_type==RECA_GENERATED) {
@@ -1180,10 +1208,10 @@ void jack_rec_audio_to_clip(gint fileno, gint old_file, lives_rec_audio_type_t r
     gint asigned;
     gint aendian;
     uint64_t fsize=get_file_size(mainw->aud_rec_fd);
-
+    
     if (rec_type==RECA_EXTERNAL) {
       mainw->jackd_read->reverse_endian=FALSE;
-    
+      
       // start jack recording
       jack_open_device_read(mainw->jackd_read);
       jack_read_driver_activate(mainw->jackd_read);
@@ -1218,7 +1246,7 @@ void jack_rec_audio_to_clip(gint fileno, gint old_file, lives_rec_audio_type_t r
     save_clip_value(fileno,CLIP_DETAILS_AENDIAN,&aendian);
     save_clip_value(fileno,CLIP_DETAILS_ASIGNED,&asigned);
 
-  }
+    }
   else {
     gint out_bendian=outfile->signed_endian&AFORM_BIG_ENDIAN;
 

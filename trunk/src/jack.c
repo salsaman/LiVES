@@ -11,6 +11,7 @@
 #ifdef ENABLE_JACK
 #include "callbacks.h"
 #include "support.h"
+#include "effects-weed.h"
 
 #define afile mainw->files[jackd->playing_file]
 
@@ -605,8 +606,12 @@ static int audio_process (nframes_t nframes, void *arg) {
 		  sample_move_float_float(out_buffer[i], fbuffer + i, numFramesToWrite,
 					  jackd->num_output_channels, vol);
 		}
+	      }
 
-		
+	      if (!pl_error&&has_audio_filters()) {
+		gint64 tc=jackd->audio_ticks+(gint64)(jackd->frames_written/(gdouble)jackd->sample_out_rate*U_SEC);
+	       // apply any audio effects with in_channels
+		weed_apply_audio_effects_rt(out_buffer,jackd->num_output_channels,numFramesToWrite,jackd->sample_out_rate,tc);
 	      }
 
 	      if (mainw->record&&mainw->ascrap_file!=-1&&mainw->playing_file>0) {
@@ -625,6 +630,13 @@ static int audio_process (nframes_t nframes, void *arg) {
 		sample_move_d16_float(out_buffer[i], cache_buffer->buffer16[0] + i, numFramesToWrite, 
 				      jackd->num_output_channels, afile->signed_endian&AFORM_UNSIGNED, vol);
 	      }
+
+	      if (has_audio_filters()&&jackd->playing_file!=mainw->ascrap_file) {
+		gint64 tc=jackd->audio_ticks+(gint64)(jackd->frames_written/(gdouble)jackd->sample_out_rate*U_SEC);
+	       // apply any audio effects with in_channels
+		weed_apply_audio_effects_rt(out_buffer,jackd->num_output_channels,numFramesToWrite,jackd->sample_out_rate,tc);
+	      }
+
 	    }
 	    
 	    if (jackd->astream_fd!=-1) {

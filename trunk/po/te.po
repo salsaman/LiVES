@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2012-06-24 11:23-0300\n"
+"POT-Creation-Date: 2012-07-21 23:34-0300\n"
 "PO-Revision-Date: 2012-01-07 19:54+0000\n"
 "Last-Translator: Praveen Illa <mail2ipn@gmail.com>\n"
 "Language-Team: Telugu <indlinux-telugu@lists.sourceforge.net>\n"
@@ -787,121 +787,121 @@ msgstr ""
 msgid "Use _jack audio player"
 msgstr ""
 
-#: src/startup.c:370
+#: src/startup.c:371
 msgid "Use _sox audio player"
 msgstr ""
 
-#: src/startup.c:405
+#: src/startup.c:406
 msgid "Use _mplayer audio player"
 msgstr ""
 
-#: src/startup.c:458 src/startup.c:646 src/interface.c:2148
+#: src/startup.c:459 src/startup.c:647 src/interface.c:2148
 msgid "_Next"
 msgstr ""
 
-#: src/startup.c:502
+#: src/startup.c:503
 #, fuzzy
 msgid "Skipped"
 msgstr "దాటవేయి (_S)"
 
-#: src/startup.c:519
+#: src/startup.c:520
 msgid "Passed"
 msgstr ""
 
-#: src/startup.c:551
+#: src/startup.c:552
 msgid "Failed"
 msgstr ""
 
-#: src/startup.c:613
+#: src/startup.c:614
 msgid "LiVES: - Testing Configuration"
 msgstr ""
 
-#: src/startup.c:616
+#: src/startup.c:617
 msgid "LiVES: - Troubleshoot"
 msgstr ""
 
-#: src/startup.c:630
+#: src/startup.c:631
 msgid "LiVES will now run some basic configuration tests\n"
 msgstr ""
 
-#: src/startup.c:669
+#: src/startup.c:670
 msgid "Checking for \"sox\" presence"
 msgstr ""
 
-#: src/startup.c:673
+#: src/startup.c:674
 msgid ""
 "You should install sox to be able to use all the audio features in LiVES"
 msgstr ""
 
-#: src/startup.c:681
+#: src/startup.c:682
 msgid "Checking if sox can convert audio"
 msgstr ""
 
-#: src/startup.c:704
+#: src/startup.c:705
 msgid "Unable to allocate 176400 bytes memory."
 msgstr ""
 
-#: src/startup.c:719
+#: src/startup.c:720
 #, c-format
 msgid "Unable to write to: %s"
 msgstr ""
 
-#: src/startup.c:733 src/startup.c:865
+#: src/startup.c:734 src/startup.c:866
 #, c-format
 msgid "Command failed: %s"
 msgstr ""
 
-#: src/startup.c:755
+#: src/startup.c:756
 msgid "You should install sox_fmt_all or similar"
 msgstr ""
 
-#: src/startup.c:783
+#: src/startup.c:784
 msgid "Checking for \"mplayer\" presence"
 msgstr ""
 
-#: src/startup.c:787
+#: src/startup.c:788
 msgid ""
 "You should install mplayer to be able to use all the decoding features in "
 "LiVES"
 msgstr ""
 
-#: src/startup.c:813
+#: src/startup.c:814
 msgid "Checking if mplayer can convert audio"
 msgstr ""
 
-#: src/startup.c:826
+#: src/startup.c:827
 msgid "You should install mplayer with pcm/wav support"
 msgstr ""
 
-#: src/startup.c:843
+#: src/startup.c:844
 msgid "Checking if mplayer can decode to png/alpha"
 msgstr ""
 
-#: src/startup.c:886
+#: src/startup.c:887
 msgid "You may wish to upgrade mplayer to a newer version"
 msgstr ""
 
-#: src/startup.c:912
+#: src/startup.c:913
 msgid "Checking if mplayer can decode to jpeg"
 msgstr ""
 
-#: src/startup.c:930
+#: src/startup.c:931
 msgid "You should install mplayer with either png/alpha or jpeg support"
 msgstr ""
 
-#: src/startup.c:931
+#: src/startup.c:932
 msgid "You may wish to add jpeg output support to mplayer"
 msgstr ""
 
-#: src/startup.c:940
+#: src/startup.c:941
 msgid "Checking for \"convert\" presence"
 msgstr ""
 
-#: src/startup.c:944
+#: src/startup.c:945
 msgid "Install imageMagick to be able to use all of the rendered effects"
 msgstr ""
 
-#: src/startup.c:958
+#: src/startup.c:959
 msgid ""
 "\n"
 "\n"
@@ -909,49 +909,49 @@ msgid ""
 "continue    \n"
 msgstr ""
 
-#: src/startup.c:997
+#: src/startup.c:998
 msgid ""
 "\n"
 "\n"
 "Finally, you can choose the default startup interface for LiVES.\n"
 msgstr ""
 
-#: src/startup.c:998
+#: src/startup.c:999
 msgid ""
 "\n"
 "\n"
 "LiVES has two main interfaces and you can start up with either of them.\n"
 msgstr ""
 
-#: src/startup.c:999
+#: src/startup.c:1000
 msgid ""
 "\n"
 "\n"
 "The default can always be changed later from Preferences.\n"
 msgstr ""
 
-#: src/startup.c:1010
+#: src/startup.c:1011
 msgid "LiVES: - Choose the startup interface"
 msgstr ""
 
-#: src/startup.c:1039
+#: src/startup.c:1040
 msgid "Start in _Clip Edit mode"
 msgstr ""
 
-#: src/startup.c:1063
+#: src/startup.c:1064
 msgid "This is the best choice for simple editing tasks and for VJs\n"
 msgstr ""
 
-#: src/startup.c:1075
+#: src/startup.c:1076
 msgid "Start in _Multitrack mode"
 msgstr ""
 
-#: src/startup.c:1095
+#: src/startup.c:1096
 msgid ""
 "This is a better choice for complex editing tasks involving multiple clips.\n"
 msgstr ""
 
-#: src/startup.c:1112
+#: src/startup.c:1113
 msgid "_Finish"
 msgstr ""
 
@@ -5286,58 +5286,58 @@ msgid ""
 "No frames were generated.\n"
 msgstr ""
 
-#: src/effects-weed.c:3702
+#: src/effects-weed.c:3819
 #, c-format
 msgid "Error: plugin %s has no weed_setup() function.\n"
 msgstr ""
 
-#: src/effects-weed.c:3717
+#: src/effects-weed.c:3834
 #, c-format
 msgid "No usable filters found in plugin %s\n"
 msgstr ""
 
-#: src/effects-weed.c:3797
+#: src/effects-weed.c:3914
 #, c-format
 msgid ""
 "Info: Unable to load plugin %s\n"
 "Error was: %s\n"
 msgstr ""
 
-#: src/effects-weed.c:3800 src/effects-weed.c:4143
+#: src/effects-weed.c:3917 src/effects-weed.c:4260
 msgid "Some plugin directories"
 msgstr ""
 
-#: src/effects-weed.c:3979
+#: src/effects-weed.c:4096
 #, c-format
 msgid "Successfully loaded %d Weed filters\n"
 msgstr ""
 
-#: src/effects-weed.c:4648
+#: src/effects-weed.c:4765
 #, c-format
 msgid "Effect %s cannot be used with this audio player.\n"
 msgstr ""
 
-#: src/effects-weed.c:4752
+#: src/effects-weed.c:4869
 #, c-format
 msgid "Failed to start instance %s, error code %d\n"
 msgstr ""
 
-#: src/effects-weed.c:4791
+#: src/effects-weed.c:4908
 #, fuzzy, c-format
 msgid "Unable to start generator %s\n"
 msgstr "ఉత్పాదకం"
 
-#: src/effects-weed.c:5402
+#: src/effects-weed.c:5523
 #, fuzzy, c-format
 msgid "Failed to start generator %s\n"
 msgstr "ఉత్పాదకం"
 
-#: src/effects-weed.c:5463
+#: src/effects-weed.c:5584
 #, c-format
 msgid "Failed to start generator %s, error %d\n"
 msgstr ""
 
-#: src/effects-weed.c:6565
+#: src/effects-weed.c:6685
 #, c-format
 msgid "%s [unstable] (%s)"
 msgstr ""
@@ -5369,7 +5369,7 @@ msgstr ""
 msgid "LiVES: Select file"
 msgstr "ఫైలుని ఎంచుకోండి"
 
-#: src/paramspecial.c:341
+#: src/paramspecial.c:344
 msgid "Display Password"
 msgstr ""
 
@@ -9277,7 +9277,7 @@ msgid ""
 "Connection to jack audio was reset.\n"
 msgstr ""
 
-#: src/pulse.c:85
+#: src/pulse.c:86
 msgid ""
 "\n"
 "Unable to connect to pulse audio server.\n"
@@ -9285,7 +9285,7 @@ msgid ""
 "You can change this in Preferences/Playback.\n"
 msgstr ""
 
-#: src/pulse.c:89
+#: src/pulse.c:90
 msgid ""
 "\n"
 "Unable to connect to pulse audio server.\n"
@@ -9293,17 +9293,17 @@ msgid ""
 "You can change this in Preferences/Playback.\n"
 msgstr ""
 
-#: src/pulse.c:93
+#: src/pulse.c:94
 msgid ""
 "\n"
 "Unable to connect to pulse audio server.\n"
 msgstr ""
 
-#: src/pulse.c:99
+#: src/pulse.c:100
 msgid "LiVES will exit and you can choose another audio player.\n"
 msgstr ""
 
-#: src/pulse.c:1143
+#: src/pulse.c:1189
 msgid ""
 "\n"
 "Connection to pulse audio was reset.\n"

@@ -9,6 +9,7 @@
 #include "main.h"
 #include "callbacks.h"
 #include "support.h"
+#include "effects-weed.h"
 
 #define afile mainw->files[pulsed->playing_file]
 
@@ -501,6 +502,45 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
 				   swap_sign?SWAP_U_TO_S:0);
 	     }
 	   }
+
+	   if (has_audio_filters()&&pulsed->playing_file!=mainw->ascrap_file) {
+	     boolean memok=TRUE;
+	     float **fltbuf=(float **)g_malloc(pulsed->out_achans*sizeof(float *));
+	     register int i;
+
+	     // we have audio filters; convert to float, pass through any audio filters, then back to s16
+	     for (i=0;i<pulsed->out_achans;i++) {
+	       // convert s16 to non-interleaved float
+	       fltbuf[i]=(float *)g_try_malloc(numFramesToWrite*sizeof(float));
+	       if (fltbuf[i]==NULL) {
+		 memok=FALSE;
+		 for (--i;i>=0;i--) {
+		   g_free(fltbuf[i]);
+		 }
+		 break;
+	       }
+
+	       sample_move_d16_float(fltbuf[i],(short*)pulsed->sound_buffer+i,numFramesToWrite,pulsed->out_achans,FALSE,1.0);
+	     }
+
+	     if (memok) {
+	       gint64 tc=pulsed->audio_ticks+(gint64)(pulsed->frames_written/(gdouble)pulsed->out_arate*U_SEC);
+	       // apply any audio effects with in_channels
+
+	       weed_apply_audio_effects_rt(fltbuf,pulsed->out_achans,numFramesToWrite,pulsed->out_arate,tc);
+
+	       // convert float audio back to s16
+	       sample_move_float_int(pulsed->sound_buffer,fltbuf,numFramesToWrite,1.0,pulsed->out_achans,16,0,
+				     (capable->byte_order==LIVES_LITTLE_ENDIAN),FALSE,1.0);
+
+	       for (i=0;i<pulsed->out_achans;i++) {
+		 g_free(fltbuf[i]);
+	       }
+	     }
+
+	     g_free(fltbuf);
+	   }
+
 	 }
 	 else {
 	   // audio generator
@@ -509,7 +549,6 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
 	   gboolean pl_error=FALSE;
 	   xbytes=nbytes;
 	   numFramesToWrite=pulseFramesAvailable;
-	   
 
 	   if (mainw->agen_needs_reinit) pl_error=TRUE;
 	   else {
@@ -535,24 +574,68 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
 	   if (pl_error) nbytes=0;
 	   else {
 	     register int i;
+	     boolean memok=FALSE;
 	     float **fp=(float**)lives_malloc(pulsed->out_achans*sizeof(float *));
 	     void *buf;
 	     pulsed->sound_buffer=(guchar *)pulsed->aPlayPtr->data;
 	     buf=(void *)pulsed->sound_buffer;
 
-	     for (i=0;i<pulsed->out_achans;i++) {
-	       fp[i]=fbuffer+i;
+	     if (has_audio_filters()) {
+	       register int i;
+
+	       memok=TRUE;
+
+	       // we have audio filters; convert to float, pass through any audio filters, then back to s16
+	       for (i=0;i<pulsed->out_achans;i++) {
+		 // convert s16 to non-interleaved float
+		 fp[i]=(float *)g_try_malloc(numFramesToWrite*sizeof(float));
+		 if (fp[i]==NULL) {
+		   memok=FALSE;
+		   for (--i;i>=0;i--) {
+		     g_free(fp[i]);
+		   }
+		   break;
+		 }
+		 
+		 for (i=0;i<pulsed->out_achans;i++) {
+		   sample_move_float_float(fp[i],fbuffer+i,numFramesToWrite,pulsed->out_achans,1.0);
+		 }
+
+	       }
+	       
+	       if (memok) {
+		 gint64 tc=pulsed->audio_ticks+(gint64)(pulsed->frames_written/(gdouble)pulsed->out_arate*U_SEC);
+		 // apply any audio effects with in_channels
+		 
+		 weed_apply_audio_effects_rt(fp,pulsed->out_achans,numFramesToWrite,pulsed->out_arate,tc);
+		 
+		 // convert float audio to s16
+		 sample_move_float_int(buf,fp,numFramesToWrite,1.0,pulsed->out_achans,16,FALSE,
+				       (capable->byte_order==LIVES_LITTLE_ENDIAN),FALSE,1.0);
+		 
+		 for (i=0;i<pulsed->out_achans;i++) {
+		   g_free(fp[i]);
+		 }
+	       }
 	     }
-	     sample_move_float_int(buf,fp,numFramesToWrite,1.0,
-				   pulsed->out_achans,16,0,TRUE,TRUE,1.0);
+
+	     if (!memok) {
+	       // no audio effects; or memory allocation error
+	       for (i=0;i<pulsed->out_achans;i++) {
+		 fp[i]=fbuffer+i;
+	       }
+	       sample_move_float_int(buf,fp,numFramesToWrite,1.0,
+				     pulsed->out_achans,16,0,(capable->byte_order==LIVES_LITTLE_ENDIAN),TRUE,1.0);
+	     }
 
 	     free(fp);
 
 	     if (mainw->record&&mainw->ascrap_file!=-1&&mainw->playing_file>0) {
-		size_t rbytes=numFramesToWrite*mainw->files[mainw->ascrap_file]->achans*
-		  mainw->files[mainw->ascrap_file]->asampsize>>3;
-		pulse_flush_read_data(pulsed,mainw->ascrap_file,nbytes,mainw->files[mainw->ascrap_file]->signed_endian&AFORM_BIG_ENDIAN,buf);
-		mainw->files[mainw->ascrap_file]->aseek_pos+=rbytes;
+	       // write generated audio to ascrap_file
+	       size_t rbytes=numFramesToWrite*mainw->files[mainw->ascrap_file]->achans*
+		 mainw->files[mainw->ascrap_file]->asampsize>>3;
+	       pulse_flush_read_data(pulsed,mainw->ascrap_file,nbytes,mainw->files[mainw->ascrap_file]->signed_endian&AFORM_BIG_ENDIAN,buf);
+	       mainw->files[mainw->ascrap_file]->aseek_pos+=rbytes;
 	     }
 	   }
 	 }

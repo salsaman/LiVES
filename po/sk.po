@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2012-06-24 11:23-0300\n"
+"POT-Creation-Date: 2012-07-21 23:34-0300\n"
 "PO-Revision-Date: 2011-11-01 11:47+0000\n"
 "Last-Translator: milboy <Unknown>\n"
 "Language-Team: Slovak <sk@li.org>\n"
@@ -934,80 +934,80 @@ msgstr "Použi _pulse audio prehrávač"
 msgid "Use _jack audio player"
 msgstr "Použi _jack audio prehrávač"
 
-#: src/startup.c:370
+#: src/startup.c:371
 msgid "Use _sox audio player"
 msgstr "Použi _sox audio prehrávač"
 
-#: src/startup.c:405
+#: src/startup.c:406
 msgid "Use _mplayer audio player"
 msgstr "Použi _mplayer audio prehrávač"
 
-#: src/startup.c:458 src/startup.c:646 src/interface.c:2148
+#: src/startup.c:459 src/startup.c:647 src/interface.c:2148
 msgid "_Next"
 msgstr "_Nasledujúci"
 
-#: src/startup.c:502
+#: src/startup.c:503
 msgid "Skipped"
 msgstr "Preskočené"
 
-#: src/startup.c:519
+#: src/startup.c:520
 msgid "Passed"
 msgstr ""
 
-#: src/startup.c:551
+#: src/startup.c:552
 msgid "Failed"
 msgstr "Zlyhalo"
 
-#: src/startup.c:613
+#: src/startup.c:614
 msgid "LiVES: - Testing Configuration"
 msgstr "LiVES: - Testovacia konfigurácia"
 
-#: src/startup.c:616
+#: src/startup.c:617
 msgid "LiVES: - Troubleshoot"
 msgstr "LiVES: - Riešenie problémov"
 
-#: src/startup.c:630
+#: src/startup.c:631
 msgid "LiVES will now run some basic configuration tests\n"
 msgstr "LiVES teraz spustí jednoduché testy konfigurácie\n"
 
-#: src/startup.c:669
+#: src/startup.c:670
 msgid "Checking for \"sox\" presence"
 msgstr "Kontrola prítomnosti \"Sox\""
 
-#: src/startup.c:673
+#: src/startup.c:674
 msgid ""
 "You should install sox to be able to use all the audio features in LiVES"
 msgstr ""
 "Mali by ste nainštalovať sox, aby ste v LIVES mohli využívať všetky audio "
 "funkcie"
 
-#: src/startup.c:681
+#: src/startup.c:682
 msgid "Checking if sox can convert audio"
 msgstr "Kontrola, či sox dokáže konvertovať audio"
 
-#: src/startup.c:704
+#: src/startup.c:705
 msgid "Unable to allocate 176400 bytes memory."
 msgstr ""
 
-#: src/startup.c:719
+#: src/startup.c:720
 #, fuzzy, c-format
 msgid "Unable to write to: %s"
 msgstr "Nedá sa spustiť generátor %s\n"
 
-#: src/startup.c:733 src/startup.c:865
+#: src/startup.c:734 src/startup.c:866
 #, c-format
 msgid "Command failed: %s"
 msgstr ""
 
-#: src/startup.c:755
+#: src/startup.c:756
 msgid "You should install sox_fmt_all or similar"
 msgstr "Mali by ste nainštalovať sox_fmt_all alebo podobné"
 
-#: src/startup.c:783
+#: src/startup.c:784
 msgid "Checking for \"mplayer\" presence"
 msgstr "Kontrola prítomnosti \"mplayer\""
 
-#: src/startup.c:787
+#: src/startup.c:788
 msgid ""
 "You should install mplayer to be able to use all the decoding features in "
 "LiVES"
@@ -1015,43 +1015,43 @@ msgstr ""
 "Mali by ste nainštalovať mplayer, aby ste v LiVES mohli využívať všetky "
 "audio funkcie"
 
-#: src/startup.c:813
+#: src/startup.c:814
 msgid "Checking if mplayer can convert audio"
 msgstr "Kontrola, či mplayer dokáže konvertovať audio"
 
-#: src/startup.c:826
+#: src/startup.c:827
 msgid "You should install mplayer with pcm/wav support"
 msgstr "Mali by ste nainštalovať mplayer a podporou pcm/wav"
 
-#: src/startup.c:843
+#: src/startup.c:844
 msgid "Checking if mplayer can decode to png/alpha"
 msgstr "Kontrola, či mplayer dokáže dekódovať na png/alpha"
 
-#: src/startup.c:886
+#: src/startup.c:887
 msgid "You may wish to upgrade mplayer to a newer version"
 msgstr "Mali by ste aktualizovať mplayer na novšiu verziu"
 
-#: src/startup.c:912
+#: src/startup.c:913
 msgid "Checking if mplayer can decode to jpeg"
 msgstr "Kontrola, či mplayer dokáže dekódovať na jpeg"
 
-#: src/startup.c:930
+#: src/startup.c:931
 msgid "You should install mplayer with either png/alpha or jpeg support"
 msgstr "Mali by ste nainštalovať mplayer s podporou buď png/alfa alebo jpeg"
 
-#: src/startup.c:931
+#: src/startup.c:932
 msgid "You may wish to add jpeg output support to mplayer"
 msgstr "Možno budete chcieť pridať podporu jpeg pre mplayer"
 
-#: src/startup.c:940
+#: src/startup.c:941
 msgid "Checking for \"convert\" presence"
 msgstr "Kontrola prítomnosti \"convert\""
 
-#: src/startup.c:944
+#: src/startup.c:945
 msgid "Install imageMagick to be able to use all of the rendered effects"
 msgstr "Nainštalujte ImageMagick aby ste mohli využiť všetky poskytnuté efekty"
 
-#: src/startup.c:958
+#: src/startup.c:959
 msgid ""
 "\n"
 "\n"
@@ -1063,7 +1063,7 @@ msgstr ""
 "    Kliknite na tlačidlo zrušiť pre ukončenie a nainštalovať chýbajúce "
 "súčasti, alebo ďalej pre pokračovanie    \n"
 
-#: src/startup.c:997
+#: src/startup.c:998
 msgid ""
 "\n"
 "\n"
@@ -1073,7 +1073,7 @@ msgstr ""
 "\n"
 "Nakoniec si môžete vybrať predvolené rozhranie pre spustenie LiVES.\n"
 
-#: src/startup.c:998
+#: src/startup.c:999
 msgid ""
 "\n"
 "\n"
@@ -1083,7 +1083,7 @@ msgstr ""
 "\n"
 "LiVES má dve hlavné rozhrania a môžete začať s niektorým z nich.\n"
 
-#: src/startup.c:999
+#: src/startup.c:1000
 msgid ""
 "\n"
 "\n"
@@ -1093,30 +1093,30 @@ msgstr ""
 "\n"
 "Predvolené možno kedykoľvek zmeniť v Nastaveniach.\n"
 
-#: src/startup.c:1010
+#: src/startup.c:1011
 msgid "LiVES: - Choose the startup interface"
 msgstr "LiVES: - Vyberte rozhranie pri spustení"
 
-#: src/startup.c:1039
+#: src/startup.c:1040
 msgid "Start in _Clip Edit mode"
 msgstr "Spustiť v móde Úprava _klipu"
 
-#: src/startup.c:1063
+#: src/startup.c:1064
 #, fuzzy
 msgid "This is the best choice for simple editing tasks and for VJs\n"
 msgstr "To je najlepšou voľbou pre jednoduchú editáciu úloh alebo pre VJs\n"
 
-#: src/startup.c:1075
+#: src/startup.c:1076
 msgid "Start in _Multitrack mode"
 msgstr "Spustiť vo _Viacstopom móde"
 
-#: src/startup.c:1095
+#: src/startup.c:1096
 #, fuzzy
 msgid ""
 "This is a better choice for complex editing tasks involving multiple clips.\n"
 msgstr "To je najlepšou voľbou pre jednoduchú editáciu úloh alebo pre VJs\n"
 
-#: src/startup.c:1112
+#: src/startup.c:1113
 msgid "_Finish"
 msgstr "_Dokončiť"
 
@@ -5930,17 +5930,17 @@ msgstr ""
 "\n"
 "Neboli generované snímky.\n"
 
-#: src/effects-weed.c:3702
+#: src/effects-weed.c:3819
 #, c-format
 msgid "Error: plugin %s has no weed_setup() function.\n"
 msgstr "Chyba: rozšírenie %s nemá weed_setup () funkciu.\n"
 
-#: src/effects-weed.c:3717
+#: src/effects-weed.c:3834
 #, c-format
 msgid "No usable filters found in plugin %s\n"
 msgstr ""
 
-#: src/effects-weed.c:3797
+#: src/effects-weed.c:3914
 #, c-format
 msgid ""
 "Info: Unable to load plugin %s\n"
@@ -5949,42 +5949,42 @@ msgstr ""
 "Info: Nemožno nahrať rozšírenie %s\n"
 "Chyba bola: %s\n"
 
-#: src/effects-weed.c:3800 src/effects-weed.c:4143
+#: src/effects-weed.c:3917 src/effects-weed.c:4260
 #, fuzzy
 msgid "Some plugin directories"
 msgstr "Vrátane podpriečinkov"
 
-#: src/effects-weed.c:3979
+#: src/effects-weed.c:4096
 #, c-format
 msgid "Successfully loaded %d Weed filters\n"
 msgstr "Úspešne načítané %d Weed filtre\n"
 
-#: src/effects-weed.c:4648
+#: src/effects-weed.c:4765
 #, c-format
 msgid "Effect %s cannot be used with this audio player.\n"
 msgstr ""
 
-#: src/effects-weed.c:4752
+#: src/effects-weed.c:4869
 #, c-format
 msgid "Failed to start instance %s, error code %d\n"
 msgstr "Nepodarilo sa spustiť inštanciu %s, kód chyby %d\n"
 
-#: src/effects-weed.c:4791
+#: src/effects-weed.c:4908
 #, c-format
 msgid "Unable to start generator %s\n"
 msgstr "Nedá sa spustiť generátor %s\n"
 
-#: src/effects-weed.c:5402
+#: src/effects-weed.c:5523
 #, c-format
 msgid "Failed to start generator %s\n"
 msgstr "Nepodarilo sa spustiť generátor %s\n"
 
-#: src/effects-weed.c:5463
+#: src/effects-weed.c:5584
 #, c-format
 msgid "Failed to start generator %s, error %d\n"
 msgstr "Nepodarilo sa spustiť generátor %s, chyba %d\n"
 
-#: src/effects-weed.c:6565
+#: src/effects-weed.c:6685
 #, c-format
 msgid "%s [unstable] (%s)"
 msgstr ""
@@ -6013,7 +6013,7 @@ msgstr "Zachovať _pomer strán"
 msgid "LiVES: Select file"
 msgstr "LiVES: Vybrať súbor"
 
-#: src/paramspecial.c:341
+#: src/paramspecial.c:344
 msgid "Display Password"
 msgstr ""
 
@@ -10208,7 +10208,7 @@ msgid ""
 "Connection to jack audio was reset.\n"
 msgstr ""
 
-#: src/pulse.c:85
+#: src/pulse.c:86
 #, fuzzy
 msgid ""
 "\n"
@@ -10220,7 +10220,7 @@ msgstr ""
 "\"jack\" alebo \"pulse audio\" prehrávačom.\n"
 "Môžete to nastaviť v Nástroje|Predvoľby|Prehrávanie."
 
-#: src/pulse.c:89
+#: src/pulse.c:90
 #, fuzzy
 msgid ""
 "\n"
@@ -10232,19 +10232,19 @@ msgstr ""
 "\"jack\" alebo \"pulse audio\" prehrávačom.\n"
 "Môžete to nastaviť v Nástroje|Predvoľby|Prehrávanie."
 
-#: src/pulse.c:93
+#: src/pulse.c:94
 #, fuzzy
 msgid ""
 "\n"
 "Unable to connect to pulse audio server.\n"
 msgstr "Nepodarilo sa pripojiť na JACK server\n"
 
-#: src/pulse.c:99
+#: src/pulse.c:100
 #, fuzzy
 msgid "LiVES will exit and you can choose another audio player.\n"
 msgstr "LiVES: - Vybrať audio prehrávač"
 
-#: src/pulse.c:1143
+#: src/pulse.c:1189
 #, fuzzy
 msgid ""
 "\n"

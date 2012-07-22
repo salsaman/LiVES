@@ -77,6 +77,14 @@ opencvlib_LTLIBRARIES = $(farneback_analyser_libs)
 endif
 
 
+if HAVE_FFTW3F
+audio_fft_libs = audio_fft.la
+audio_fft_la_LDFLAGS = $(FFTW3F_LIBS) $(AM_LDFLAGS)
+audio_fft_la_CFLAGS = $(FFTW3F_CFLAGS) $(AM_CFLAGS)
+audio_fftlibdir = "$(libdir)/$(PACKAGE)/plugins/effects/realtime/weed"
+audio_fftlib_LTLIBRARIES = $(audio_fft_libs)
+endif
+
 
 fxpluginslib_LTLIBRARIES = RGBdelay.la \
 	alien_overlay.la \

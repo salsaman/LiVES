@@ -47,6 +47,7 @@ weed_plant_t *get_enabled_channel (weed_plant_t *inst, gint which, gboolean is_i
 weed_plant_t *get_mandatory_channel (weed_plant_t *filter, gint which, gboolean is_in); ///< for FILTER_CLASS
 gboolean weed_filter_is_resizer(weed_plant_t *filt);
 gboolean weed_instance_is_resizer(weed_plant_t *filt);
+weed_plant_t *weed_instance_get_filter(weed_plant_t *inst);
 
 gboolean is_audio_channel_in(weed_plant_t *inst, int chnum);
 gboolean has_video_chans_in(weed_plant_t *filter, gboolean count_opt);
@@ -56,13 +57,18 @@ gboolean has_video_chans_out(weed_plant_t *filter, gboolean count_opt);
 gboolean has_audio_chans_out(weed_plant_t *filter, gboolean count_opt);
 gboolean is_pure_audio(weed_plant_t *filter_or_instance, gboolean count_opt); ///< TRUE if audio in or out and no vid in/out
 
+boolean has_audio_filters(void);
+
+#ifdef HAS_LIVES_EFFECTS_H
 lives_fx_cat_t weed_filter_categorise (weed_plant_t *pl, int in_channels, int out_channels);
 lives_fx_cat_t weed_filter_subcategorise (weed_plant_t *pl, lives_fx_cat_t category, gboolean count_opt);
+#endif
+
 gboolean has_usable_palette(weed_plant_t *chantmpl);
 int check_weed_palette_list (int *palette_list, int num_palettes, int palette);
 
-void weed_call_init_func(weed_plant_t *instance);
-void weed_call_deinit_func(weed_plant_t *instance);
+int weed_call_init_func(weed_plant_t *instance);
+int weed_call_deinit_func(weed_plant_t *instance);
 
 gchar *cd_to_plugin_dir(weed_plant_t *filter);
 gboolean weed_init_effect(int hotkey); ///< hotkey starts at 1
@@ -119,6 +125,8 @@ void weed_deinit_all(gboolean shutdown); ///< deinit all active effects
 weed_plant_t *weed_apply_effects (weed_plant_t **layers, weed_plant_t *filter_map, weed_timecode_t tc, int opwidth, int opheight, void ***pchains);
 lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init_event, weed_plant_t **layers, int opwidth, int opheight, weed_timecode_t tc);
 void weed_apply_audio_effects (weed_plant_t *filter_map, float **abuf, int nbtracks, int nchans, int64_t nsamps, gdouble arate, weed_timecode_t tc, double *vis);
+void weed_apply_audio_effects_rt(float **abuf, int nchans, int64_t nsamps, gdouble arate, weed_timecode_t tc);
+
 lives_filter_error_t weed_apply_audio_instance (weed_plant_t *init_event, float **abuf, int nbtracks, int nchans, int64_t nsamps, gdouble arate, int aint, weed_timecode_t tc, double *vis);
 
 gboolean weed_generator_start (weed_plant_t *inst);
@@ -142,7 +150,11 @@ gint rte_keymode_get_filter_idx(gint key, gint mode); ///< returns filter_class 
 gchar *rte_keymode_get_filter_name (gint key, gint mode); ///< returns name of filter_class bound to key/mode (or "")
 gchar *rte_keymode_get_plugin_name(gint key, gint mode); ///< returns name of plugin package containing filter_class (or "")
 gchar *rte_keymode_get_type (gint key, gint mode, gboolean get_subtype); ///< returns a string filter/instance type (or "")
+
+#ifdef HAS_LIVES_EFFECTS_H
 lives_fx_cat_t rte_keymode_get_category (gint key, gint mode);
+#endif
+
 weed_plant_t *rte_keymode_get_instance(gint key, gint mode); ///< returns filter_instance bound to key/mode (or NULL)
 weed_plant_t *rte_keymode_get_filter(gint key, gint mode); ///< returns filter_class bound to key/mode (or NULL)
 

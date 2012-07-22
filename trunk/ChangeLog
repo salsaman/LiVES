@@ -2,6 +2,9 @@ Version 1.6.3
 -------------
 Fix installation problem when pulseaudio is not installed.
 Prevent truncation of longer filenames in plugin interfaces.
+Add support for audio analyser plugins.
+
+
 
 
 

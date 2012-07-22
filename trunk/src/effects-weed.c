@@ -3157,7 +3157,7 @@ void weed_apply_audio_effects (weed_plant_t *filter_map, float **abuf, int nbtra
 
 
 
-void weed_apply_audio_effects_rt(float **abuf, int nchans, int64_t nsamps, gdouble arate, weed_timecode_t tc) {
+void weed_apply_audio_effects_rt(float **abuf, int nchans, int64_t nsamps, gdouble arate, weed_timecode_t tc, boolean analysers_only) {
 
   weed_plant_t *instance,*filter;
 
@@ -3176,6 +3176,8 @@ void weed_apply_audio_effects_rt(float **abuf, int nchans, int64_t nsamps, gdoub
 	filter=weed_instance_get_filter(instance);
 
 	if (!has_audio_chans_in(filter,FALSE)) continue; 
+
+	if (analysers_only&&has_audio_chans_out(filter,FALSE)) continue;
 
 	if (mainw->pchains!=NULL&&mainw->pchains[key]!=NULL) {
 	  interpolate_params(instance,mainw->pchains[key],tc); // interpolate parameters during preview
@@ -3201,7 +3203,7 @@ void weed_apply_audio_effects_rt(float **abuf, int nchans, int64_t nsamps, gdoub
 
 
 
-boolean has_audio_filters(void) {
+boolean has_audio_filters(boolean analysers_only) {
   // do we have any active audio filters (excluding audio generators) ?
   weed_plant_t *instance,*filter;
 
@@ -3212,7 +3214,10 @@ boolean has_audio_filters(void) {
       if (mainw->rte&(GU641<<i)) {
 	if ((instance=key_to_instance[i][key_modes[i]])==NULL) continue;
 	filter=weed_instance_get_filter(instance);
-	if (has_audio_chans_in(filter,FALSE)) return TRUE;
+	if (has_audio_chans_in(filter,FALSE)) {
+	  if (analysers_only&&has_audio_chans_out(filter,FALSE)) continue;
+	  return TRUE;
+	}
       }
     }
   }

@@ -123,7 +123,7 @@ void sample_move_d8_d16(short *dst, unsigned char *src,
 
 
 
-/* convert from any number of source channels to any number of destination channels */
+/* convert from any number of source channels to any number of destination channels - both interleaved */
 void sample_move_d16_d16(short *dst, short *src,
 			 uint64_t nsamples, size_t tbytes, float scale, int nDstChannels, int nSrcChannels, int swap_endian, int swap_sign) {
   register int nSrcCount, nDstCount;
@@ -1290,12 +1290,13 @@ void jack_rec_audio_end(void) {
   if (mainw->jackd_read!=NULL) jack_close_device(mainw->jackd_read);
   mainw->jackd_read=NULL;
 
-  // close file
-  close(mainw->aud_rec_fd);
-  mainw->aud_rec_fd=-1;
-  mainw->cancel_type=CANCEL_KILL;
+  if (mainw->aud_rec_fd!=-1) {
+    // close file
+    close(mainw->aud_rec_fd);
+    mainw->aud_rec_fd=-1;
+    mainw->cancel_type=CANCEL_KILL;
+  }
 }
-
 #endif
 
 
@@ -1304,9 +1305,26 @@ void jack_rec_audio_end(void) {
 #ifdef HAVE_PULSE_AUDIO
 void pulse_rec_audio_to_clip(gint fileno, gint old_file, lives_rec_audio_type_t rec_type) {
   // open audio file for writing
-  file *outfile=mainw->files[fileno];
-  gchar *outfilename=g_build_filename(prefs->tmpdir,outfile->handle,"audio",NULL);
+  file *outfile;
+  gchar *outfilename;
   int retval;
+
+  if (fileno==-1) {
+    mainw->pulsed_read=pulse_get_driver(FALSE);
+    mainw->pulsed_read->playing_file=-1;
+    mainw->pulsed_read->frames_written=0;
+
+    mainw->pulsed_read->reverse_endian=FALSE;
+    mainw->aud_rec_fd=-1;
+
+    pulse_driver_activate(mainw->pulsed_read);
+
+    return;
+  }
+
+
+  outfile=mainw->files[fileno];
+  outfilename=g_build_filename(prefs->tmpdir,outfile->handle,"audio",NULL);
 
   do {
     retval=0;
@@ -1413,18 +1431,21 @@ void pulse_rec_audio_end(void) {
   // stop recording
 
   if (mainw->pulsed_read!=NULL) {
-    pa_threaded_mainloop_lock(mainw->pulsed->mloop);
-    pulse_flush_read_data(mainw->pulsed_read,mainw->pulsed_read->playing_file,0,mainw->pulsed->reverse_endian,NULL);
+    pa_threaded_mainloop_lock(mainw->pulsed_read->mloop);
+    if (mainw->pulsed_read->playing_file>-1)
+      pulse_flush_read_data(mainw->pulsed_read,mainw->pulsed_read->playing_file,0,mainw->pulsed->reverse_endian,NULL);
     pulse_close_client(mainw->pulsed_read);
-    pa_threaded_mainloop_unlock(mainw->pulsed->mloop);
+    pa_threaded_mainloop_unlock(mainw->pulsed_read->mloop);
 
     mainw->pulsed_read=NULL;
   }
 
-  // close file
-  close(mainw->aud_rec_fd);
-  mainw->aud_rec_fd=-1;
-  mainw->cancel_type=CANCEL_KILL;
+  if (mainw->aud_rec_fd!=-1) {
+    // close file
+    close(mainw->aud_rec_fd);
+    mainw->aud_rec_fd=-1;
+    mainw->cancel_type=CANCEL_KILL;
+  }
 }
 
 #endif

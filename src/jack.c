@@ -608,10 +608,10 @@ static int audio_process (nframes_t nframes, void *arg) {
 		}
 	      }
 
-	      if (!pl_error&&has_audio_filters()) {
+	      if (!pl_error&&has_audio_filters(FALSE)) {
 		gint64 tc=jackd->audio_ticks+(gint64)(jackd->frames_written/(gdouble)jackd->sample_out_rate*U_SEC);
 	       // apply any audio effects with in_channels
-		weed_apply_audio_effects_rt(out_buffer,jackd->num_output_channels,numFramesToWrite,jackd->sample_out_rate,tc);
+		weed_apply_audio_effects_rt(out_buffer,jackd->num_output_channels,numFramesToWrite,jackd->sample_out_rate,tc,FALSE);
 	      }
 
 	      if (mainw->record&&mainw->ascrap_file!=-1&&mainw->playing_file>0) {
@@ -631,10 +631,10 @@ static int audio_process (nframes_t nframes, void *arg) {
 				      jackd->num_output_channels, afile->signed_endian&AFORM_UNSIGNED, vol);
 	      }
 
-	      if (has_audio_filters()&&jackd->playing_file!=mainw->ascrap_file) {
+	      if (has_audio_filters(FALSE)&&jackd->playing_file!=mainw->ascrap_file) {
 		gint64 tc=jackd->audio_ticks+(gint64)(jackd->frames_written/(gdouble)jackd->sample_out_rate*U_SEC);
 	       // apply any audio effects with in_channels
-		weed_apply_audio_effects_rt(out_buffer,jackd->num_output_channels,numFramesToWrite,jackd->sample_out_rate,tc);
+		weed_apply_audio_effects_rt(out_buffer,jackd->num_output_channels,numFramesToWrite,jackd->sample_out_rate,tc,FALSE);
 	      }
 
 	    }
@@ -937,8 +937,8 @@ static int audio_read (nframes_t nframes, void *arg) {
 
   jack_driver_t* jackd = (jack_driver_t*)arg;
   float *in_buffer[jackd->num_input_channels];
-  float out_scale=(float)jackd->sample_in_rate/(float)afile->arate;
-  int out_unsigned=afile->signed_endian&AFORM_UNSIGNED;
+  float out_scale;
+  int out_unsigned;
   int i;
   int64_t frames_out;
 
@@ -948,12 +948,26 @@ static int audio_read (nframes_t nframes, void *arg) {
 
   if (mainw->rec_samples==0) return 0; // wrote enough already, return until main thread stop
 
-  frames_out=(int64_t)((gdouble)nframes/out_scale+1.);
-  rbytes=frames_out*afile->achans*afile->asampsize/8;
-
   for (i=0;i<jackd->num_input_channels;i++) {
     in_buffer[i] = (float *) jack_port_get_buffer(jackd->input_port[i], nframes);
   }
+
+  if (mainw->playing_file>0&&(jackd->playing_file==-1||(mainw->record&&(prefs->rec_opts&REC_EXT_AUDIO)&&mainw->ascrap_file!=-1))) {
+    // in this case we read external audio, but maybe not record it
+    // we may wish to analyse the audio for example
+
+    if (has_audio_filters(TRUE)) {
+	gint64 tc=jackd->audio_ticks+(gint64)(jackd->frames_written/(gdouble)jackd->sample_in_rate*U_SEC);
+	// apply any audio effects with in_channels and no out_channels
+	weed_apply_audio_effects_rt(in_buffer,jackd->num_input_channels,nframes,jackd->sample_in_rate,tc,TRUE);
+    }
+  }
+
+  out_scale=(float)jackd->sample_in_rate/(float)afile->arate;
+  out_unsigned=afile->signed_endian&AFORM_UNSIGNED;
+
+  frames_out=(int64_t)((gdouble)nframes/out_scale+1.);
+  rbytes=frames_out*afile->achans*afile->asampsize/8;
 
   rbytes=audio_read_inner(jackd,in_buffer,jackd->playing_file,nframes,out_scale,mainw->jackd_read->reverse_endian,
 			   out_unsigned,rbytes);

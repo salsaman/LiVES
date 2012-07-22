@@ -503,7 +503,7 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
 	     }
 	   }
 
-	   if (has_audio_filters()&&pulsed->playing_file!=mainw->ascrap_file) {
+	   if (has_audio_filters(FALSE)&&pulsed->playing_file!=mainw->ascrap_file) {
 	     boolean memok=TRUE;
 	     float **fltbuf=(float **)g_malloc(pulsed->out_achans*sizeof(float *));
 	     register int i;
@@ -527,7 +527,7 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
 	       gint64 tc=pulsed->audio_ticks+(gint64)(pulsed->frames_written/(gdouble)pulsed->out_arate*U_SEC);
 	       // apply any audio effects with in_channels
 
-	       weed_apply_audio_effects_rt(fltbuf,pulsed->out_achans,numFramesToWrite,pulsed->out_arate,tc);
+	       weed_apply_audio_effects_rt(fltbuf,pulsed->out_achans,numFramesToWrite,pulsed->out_arate,tc,FALSE);
 
 	       // convert float audio back to s16
 	       sample_move_float_int(pulsed->sound_buffer,fltbuf,numFramesToWrite,1.0,pulsed->out_achans,16,0,
@@ -580,7 +580,7 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
 	     pulsed->sound_buffer=(guchar *)pulsed->aPlayPtr->data;
 	     buf=(void *)pulsed->sound_buffer;
 
-	     if (has_audio_filters()) {
+	     if (has_audio_filters(FALSE)) {
 	       register int i;
 
 	       memok=TRUE;
@@ -607,7 +607,7 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
 		 gint64 tc=pulsed->audio_ticks+(gint64)(pulsed->frames_written/(gdouble)pulsed->out_arate*U_SEC);
 		 // apply any audio effects with in_channels
 		 
-		 weed_apply_audio_effects_rt(fp,pulsed->out_achans,numFramesToWrite,pulsed->out_arate,tc);
+		 weed_apply_audio_effects_rt(fp,pulsed->out_achans,numFramesToWrite,pulsed->out_arate,tc,FALSE);
 		 
 		 // convert float audio to s16
 		 sample_move_float_int(buf,fp,numFramesToWrite,1.0,pulsed->out_achans,16,FALSE,
@@ -811,13 +811,13 @@ size_t pulse_flush_read_data(pulse_driver_t *pulsed, int fileno, size_t rbytes, 
 
 
 static void pulse_audio_read_process (pa_stream *pstream, size_t nbytes, void *arg) {
-  // read nframes from pulse buffer, and then write to mainw->aud_rec_fd
+  // read nframes from pulse buffer, and then possibly write to mainw->aud_rec_fd
 
   // this is the callback from pulse when we are recording
 
   pulse_driver_t* pulsed = (pulse_driver_t*)arg;
-  float out_scale=(float)pulsed->in_arate/(float)afile->arate;
-  size_t frames_out;
+  float out_scale;
+  size_t frames_out,nframes;
   void *data;
   size_t rbytes=nbytes;
 
@@ -829,10 +829,61 @@ static void pulse_audio_read_process (pa_stream *pstream, size_t nbytes, void *a
 
   prb+=rbytes;
 
+  if (pulsed->playing_file==-1) out_scale=1.0; // just listening
+  out_scale=(float)pulsed->in_arate/(float)afile->arate; // recording to ascrap_file
+
   frames_out=(size_t)((gdouble)((prb/(pulsed->in_asamps>>3)/pulsed->in_achans))/out_scale+.5);
   
+  nframes=(size_t)((gdouble)((rbytes/(pulsed->in_asamps>>3)/pulsed->in_achans))/out_scale+.5);
   // should really be frames_read here
-  pulsed->frames_written+=(size_t)((gdouble)((rbytes/(pulsed->in_asamps>>3)/pulsed->in_achans))/out_scale+.5);
+  pulsed->frames_written+=nframes;
+
+
+  if (mainw->playing_file>0&&(pulsed->playing_file==-1||(mainw->record&&(prefs->rec_opts&REC_EXT_AUDIO)&&mainw->ascrap_file!=-1))) {
+    // in this case we read external audio, but maybe not record it
+    // we may wish to analyse the audio for example
+
+    if (has_audio_filters(TRUE)) {
+      // convert to float, apply any analysers
+      boolean memok=TRUE;
+      float **fltbuf=(float **)g_malloc(pulsed->in_achans*sizeof(float *));
+      register int i;
+
+      for (i=0;i<pulsed->in_achans;i++) {
+	// convert s16 to non-interleaved float
+	fltbuf[i]=(float *)g_try_malloc(nframes*sizeof(float));
+	if (fltbuf[i]==NULL) {
+	  memok=FALSE;
+	  for (--i;i>=0;i--) {
+	    g_free(fltbuf[i]);
+	  }
+	  break;
+	}
+	
+	sample_move_d16_float(fltbuf[i],(short*)data+i,nframes,pulsed->in_achans,FALSE,1.0);
+      }
+      
+      if (memok) {
+	gint64 tc=pulsed->audio_ticks+(gint64)(pulsed->frames_written/(gdouble)pulsed->in_arate*U_SEC);
+	// apply any audio effects with in_channels and no out_channels
+	
+	weed_apply_audio_effects_rt(fltbuf,pulsed->in_achans,nframes,pulsed->in_arate,tc,TRUE);
+	
+	for (i=0;i<pulsed->in_achans;i++) {
+	  g_free(fltbuf[i]);
+	}
+      }
+      
+      g_free(fltbuf);
+
+    }
+    if (pulsed->playing_file==-1) {
+      pa_stream_drop(pulsed->pstream);
+      return;
+    }
+  }
+
+
 
   if (mainw->record&&(prefs->rec_opts&REC_EXT_AUDIO)&&mainw->ascrap_file!=-1&&mainw->playing_file>0) {
     mainw->files[mainw->playing_file]->aseek_pos+=rbytes;

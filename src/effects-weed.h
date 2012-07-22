@@ -57,7 +57,7 @@ gboolean has_video_chans_out(weed_plant_t *filter, gboolean count_opt);
 gboolean has_audio_chans_out(weed_plant_t *filter, gboolean count_opt);
 gboolean is_pure_audio(weed_plant_t *filter_or_instance, gboolean count_opt); ///< TRUE if audio in or out and no vid in/out
 
-boolean has_audio_filters(void);
+boolean has_audio_filters(boolean analysers_only);
 
 #ifdef HAS_LIVES_EFFECTS_H
 lives_fx_cat_t weed_filter_categorise (weed_plant_t *pl, int in_channels, int out_channels);
@@ -125,7 +125,7 @@ void weed_deinit_all(gboolean shutdown); ///< deinit all active effects
 weed_plant_t *weed_apply_effects (weed_plant_t **layers, weed_plant_t *filter_map, weed_timecode_t tc, int opwidth, int opheight, void ***pchains);
 lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init_event, weed_plant_t **layers, int opwidth, int opheight, weed_timecode_t tc);
 void weed_apply_audio_effects (weed_plant_t *filter_map, float **abuf, int nbtracks, int nchans, int64_t nsamps, gdouble arate, weed_timecode_t tc, double *vis);
-void weed_apply_audio_effects_rt(float **abuf, int nchans, int64_t nsamps, gdouble arate, weed_timecode_t tc);
+void weed_apply_audio_effects_rt(float **abuf, int nchans, int64_t nsamps, gdouble arate, weed_timecode_t tc, boolean analysers_only);
 
 lives_filter_error_t weed_apply_audio_instance (weed_plant_t *init_event, float **abuf, int nbtracks, int nchans, int64_t nsamps, gdouble arate, int aint, weed_timecode_t tc, double *vis);
 

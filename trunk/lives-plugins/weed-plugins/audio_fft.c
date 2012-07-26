@@ -41,6 +41,7 @@ static int package_version=1; // version of this package
 #include <stdio.h>
 
 #include <fftw3.h>
+#include <math.h>
 
 typedef struct {
   int size;
@@ -184,7 +185,7 @@ int fftw_process (weed_plant_t *inst, weed_timecode_t timestamp) {
     //fprintf(stderr,"executing plan of size %d\n",sdata->size);
     fftwf_execute(sdata->p);
 
-    tot+=sdata->out[k][0]*sdata->out[k][0]+sdata->out[k][1]*sdata->out[k][1];
+    tot+=sqrtf(sdata->out[k][0]*sdata->out[k][0]+sdata->out[k][1]*sdata->out[k][1]);
 
   }
 

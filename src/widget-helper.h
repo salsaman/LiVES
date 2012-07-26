@@ -43,6 +43,94 @@ typedef GLogLevelFlags LiVESLogLevelFlags;
 #define LIVES_CONTROL_MASK GDK_CONTROL_MASK
 #define LIVES_ALT_MASK     GDK_MOD1_MASK
 #define LIVES_SHIFT_MASK   GDK_SHIFT_MASK
+#define LIVES_LOCK_MASK    GDK_LOCK_MASK
+
+#ifdef GDK_KEY_a
+#define LIVES_KEY_Left GDK_KEY_Left
+#define LIVES_KEY_Right GDK_KEY_Right
+#define LIVES_KEY_Up GDK_KEY_Up
+#define LIVES_KEY_Down GDK_KEY_Down
+
+#define LIVES_KEY_Space GDK_KEY_space
+#define LIVES_KEY_BackSpace GDK_KEY_BackSpace
+#define LIVES_KEY_Return GDK_KEY_Return
+#define LIVES_KEY_Tab GDK_KEY_Tab
+
+#define LIVES_KEY_q GDK_KEY_q
+
+#define LIVES_KEY_1 GDK_KEY_1
+#define LIVES_KEY_2 GDK_KEY_2
+#define LIVES_KEY_3 GDK_KEY_3
+#define LIVES_KEY_4 GDK_KEY_4
+#define LIVES_KEY_5 GDK_KEY_5
+#define LIVES_KEY_6 GDK_KEY_6
+#define LIVES_KEY_7 GDK_KEY_7
+#define LIVES_KEY_8 GDK_KEY_8
+#define LIVES_KEY_9 GDK_KEY_9
+#define LIVES_KEY_0 GDK_KEY_0
+
+#define LIVES_KEY_q GDK_KEY_q
+
+#define LIVES_KEY_F1 GDK_KEY_F1
+#define LIVES_KEY_F2 GDK_KEY_F2
+#define LIVES_KEY_F3 GDK_KEY_F3
+#define LIVES_KEY_F4 GDK_KEY_F4
+#define LIVES_KEY_F5 GDK_KEY_F5
+#define LIVES_KEY_F6 GDK_KEY_F6
+#define LIVES_KEY_F7 GDK_KEY_F7
+#define LIVES_KEY_F8 GDK_KEY_F8
+#define LIVES_KEY_F9 GDK_KEY_F9
+#define LIVES_KEY_F10 GDK_KEY_F10
+#define LIVES_KEY_F11 GDK_KEY_F11
+#define LIVES_KEY_F12 GDK_KEY_F12
+
+#define LIVES_KEY_Page_Up GDK_KEY_Page_Up
+#define LIVES_KEY_Page_Down GDK_KEY_Page_Down
+
+#else
+#define LIVES_KEY_Left GDK_Left
+#define LIVES_KEY_Right GDK_Right
+#define LIVES_KEY_Up GDK_Up
+#define LIVES_KEY_Down GDK_Down
+
+#define LIVES_KEY_Space GDK_space
+#define LIVES_KEY_BackSpace GDK_BackSpace
+#define LIVES_KEY_Return GDK_Return
+#define LIVES_KEY_Tab GDK_Tab
+
+#define LIVES_KEY_q GDK_q
+
+#define LIVES_KEY_1 GDK_1
+#define LIVES_KEY_2 GDK_2
+#define LIVES_KEY_3 GDK_3
+#define LIVES_KEY_4 GDK_4
+#define LIVES_KEY_5 GDK_5
+#define LIVES_KEY_6 GDK_6
+#define LIVES_KEY_7 GDK_7
+#define LIVES_KEY_8 GDK_8
+#define LIVES_KEY_9 GDK_9
+#define LIVES_KEY_0 GDK_0
+
+#define LIVES_KEY_q GDK_q
+
+#define LIVES_KEY_F1 GDK_F1
+#define LIVES_KEY_F2 GDK_F2
+#define LIVES_KEY_F3 GDK_F3
+#define LIVES_KEY_F4 GDK_F4
+#define LIVES_KEY_F5 GDK_F5
+#define LIVES_KEY_F6 GDK_F6
+#define LIVES_KEY_F7 GDK_F7
+#define LIVES_KEY_F8 GDK_F8
+#define LIVES_KEY_F9 GDK_F9
+#define LIVES_KEY_F10 GDK_F10
+#define LIVES_KEY_F11 GDK_F11
+#define LIVES_KEY_F12 GDK_F12
+
+#define LIVES_KEY_Page_Up GDK_Page_Up
+#define LIVES_KEY_Page_Down GDK_Page_Down
+
+#endif
+
 
 #endif
 

@@ -1,10 +1,10 @@
 /* Frei0r wrapper for Weed
-   author: Salsaman (G. Finch) <salsaman@xs4all.nl,salsaman@gmail.com>
+   author: Salsaman (G. Finch) <salsaman@gmail.com>
 
    Released under the Lesser Gnu Public License (LGPL) 3 or later
    See www.gnu.org for details
 
- (c) 2005 - 2011, Salsaman
+   (c) 2005 - 2012, Salsaman
 */
 
 
@@ -66,8 +66,15 @@ typedef void (*f0r_set_param_value_f)(f0r_instance_t *instance, f0r_param_t *par
 typedef void (*f0r_get_param_value_f)(f0r_instance_t *instance, f0r_param_t *param, int param_index);
 #endif
 
-// TODO
-#define MAX_PATH 4096
+#include <limits.h>
+
+#ifndef PATH_MAX
+#ifdef MAX_PATH
+#define PATH_MAX MAX_PATH
+#else
+#define PATH_MAX 4096
+#endif
+#endif
 
 
 static void getenv_piece(char * target, size_t tlen, char *envvar, int num) {
@@ -224,7 +231,7 @@ int frei0r_process (weed_plant_t *inst, weed_timecode_t timestamp) {
     f0r_update=weed_get_voidptr_value(filter,"plugin_f0r_update",&error);
     out_channels=weed_get_plantptr_array(inst,"out_channels",&error);
     in_channels=weed_get_plantptr_array(inst,"in_channels",&error);
-   (*f0r_update)(f0r_inst,time,weed_get_voidptr_value(in_channels[0],"pixel_data",&error),weed_get_voidptr_value(out_channels[0],"pixel_data",&error));
+    (*f0r_update)(f0r_inst,time,weed_get_voidptr_value(in_channels[0],"pixel_data",&error),weed_get_voidptr_value(out_channels[0],"pixel_data",&error));
     weed_free(out_channels);
     weed_free(in_channels);
     break;
@@ -240,7 +247,7 @@ int frei0r_process (weed_plant_t *inst, weed_timecode_t timestamp) {
     f0r_update2=weed_get_voidptr_value(filter,"plugin_f0r_update2",&error);
     out_channels=weed_get_plantptr_array(inst,"out_channels",&error);
     in_channels=weed_get_plantptr_array(inst,"in_channels",&error);
-   (*f0r_update2)(f0r_inst,time,weed_get_voidptr_value(in_channels[0],"pixel_data",&error),weed_get_voidptr_value(in_channels[1],"pixel_data",&error),weed_get_voidptr_value(in_channels[2],"pixel_data",&error),weed_get_voidptr_value(out_channels[0],"pixel_data",&error));
+    (*f0r_update2)(f0r_inst,time,weed_get_voidptr_value(in_channels[0],"pixel_data",&error),weed_get_voidptr_value(in_channels[1],"pixel_data",&error),weed_get_voidptr_value(in_channels[2],"pixel_data",&error),weed_get_voidptr_value(out_channels[0],"pixel_data",&error));
     weed_free(out_channels);
     weed_free(in_channels);
     break;
@@ -270,18 +277,18 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 
     int finished=0;
 
-    char vdir1[MAX_PATH]="/usr/lib/frei0r-1/";
-    char vdir2[MAX_PATH]="/usr/local/lib/frei0r-1/";
-    char vdir3[MAX_PATH];
+    char vdir1[PATH_MAX]="/usr/lib/frei0r-1/";
+    char vdir2[PATH_MAX]="/usr/local/lib/frei0r-1/";
+    char vdir3[PATH_MAX];
 
-    char dir1[MAX_PATH],dir2[MAX_PATH],dir3[MAX_PATH];
-    char plug1[MAX_PATH],plug2[MAX_PATH],plug3[MAX_PATH];
+    char dir1[PATH_MAX],dir2[PATH_MAX],dir3[PATH_MAX];
+    char plug1[PATH_MAX],plug2[PATH_MAX],plug3[PATH_MAX];
 
     struct dirent *vdirent=NULL,*dirent;
 
-    char homedir[MAX_PATH];
+    char homedir[PATH_MAX];
 
-    char vendor_name[MAX_PATH],plugin_name[MAX_PATH],weed_name[MAX_PATH];
+    char vendor_name[PATH_MAX],plugin_name[PATH_MAX],weed_name[PATH_MAX];
 
     DIR *curvdir=NULL,*curdir=NULL;
 
@@ -310,8 +317,8 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
     int is_unstable;
 
 #ifdef CAN_GET_DEF
-  f0r_instance_t f0r_inst;
-  f0r_get_param_value_f f0r_get_param_value=NULL;
+    f0r_instance_t f0r_inst;
+    f0r_get_param_value_f f0r_get_param_value=NULL;
 #endif
 
     char *fpp=getenv("FREI0R_PATH");
@@ -327,8 +334,8 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
       vdirval=10;
     }
     else {
-      snprintf(homedir,MAX_PATH,"%s",getenv("HOME"));
-      snprintf (vdir3,MAX_PATH,"%s/frei0r-1/",homedir);
+      snprintf(homedir,PATH_MAX,"%s",getenv("HOME"));
+      snprintf (vdir3,PATH_MAX,"%s/frei0r-1/",homedir);
     }
 
     while (vdirval<6||vdirval>9) {
@@ -357,7 +364,7 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
       }
 
       if (vdirval>9) {
-	getenv_piece(vdir1,MAX_PATH,fpp,vdirval-10);
+	getenv_piece(vdir1,PATH_MAX,fpp,vdirval-10);
 	if (!strlen(vdir1)) {
 	  vdirval=6;
 	  break;
@@ -371,27 +378,27 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
       
       weed_memset(vendor_name,0,1);
 	
-	do {
+      do {
 
-	  snprintf(dir1,MAX_PATH,"%s/%s",vdir1,vendor_name);
+	snprintf(dir1,PATH_MAX,"%s/%s",vdir1,vendor_name);
 
-	  if (vdirval<10) {
-	    snprintf(dir2,MAX_PATH,"%s/%s",vdir2,vendor_name);
-	    snprintf(dir3,MAX_PATH,"%s/%s",vdir3,vendor_name);
-	  }
+	if (vdirval<10) {
+	  snprintf(dir2,PATH_MAX,"%s/%s",vdir2,vendor_name);
+	  snprintf(dir3,PATH_MAX,"%s/%s",vdir3,vendor_name);
+	}
 
-	  vdirent=readdir(curvdir);
+	vdirent=readdir(curvdir);
 	  
-	  if (vdirent==NULL) {
-	    closedir(curvdir);
-	    curvdir=NULL;
+	if (vdirent==NULL) {
+	  closedir(curvdir);
+	  curvdir=NULL;
 	  vdirval++;
 	  break;
 	}
 
 	if (!strncmp(vdirent->d_name,"..",strlen(vdirent->d_name))) continue;
 
-	snprintf(vendor_name,MAX_PATH,"%s",vdirent->d_name);
+	snprintf(vendor_name,PATH_MAX,"%s",vdirent->d_name);
 
 	if (vdirval==1) {
 	  curdir=opendir(dir3);
@@ -421,13 +428,13 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 
 	  if (!strncmp(dirent->d_name,"..",strlen(dirent->d_name))) continue;
 	  
-	  snprintf(plugin_name,MAX_PATH,"%s",dirent->d_name);
+	  snprintf(plugin_name,PATH_MAX,"%s",dirent->d_name);
 
-	  snprintf(plug1,MAX_PATH,"%s/%s",dir1,plugin_name);
+	  snprintf(plug1,PATH_MAX,"%s/%s",dir1,plugin_name);
 
 	  if (vdirval<10) {
-	    snprintf(plug2,MAX_PATH,"%s/%s",dir2,plugin_name);
-	    snprintf(plug3,MAX_PATH,"%s/%s",dir3,plugin_name);
+	    snprintf(plug2,PATH_MAX,"%s/%s",dir2,plugin_name);
+	    snprintf(plug3,PATH_MAX,"%s/%s",dir3,plugin_name);
 	    
 	    handle=dlopen(plug3,RTLD_NOW);
 	    if ((handle!=NULL&&(vdirval>1))||(handle==NULL&&vdirval==1)) {
@@ -809,7 +816,7 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 	  f0r_destruct(f0r_inst);
 #endif
 
-	  snprintf(weed_name,MAX_PATH,"Frei0r: %s",f0rinfo.name);
+	  snprintf(weed_name,PATH_MAX,"Frei0r: %s",f0rinfo.name);
 	  pversion=f0rinfo.major_version*1000+f0rinfo.minor_version;
 
 	  filter_class=weed_filter_class_init(weed_name,(char *)f0rinfo.author,pversion,0,&frei0r_init,&frei0r_process,&frei0r_deinit,in_chantmpls,out_chantmpls,in_params,NULL);
@@ -858,7 +865,7 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 	// end vendor dir
       } while (vdirent!=NULL);
       if (curdir!=NULL) closedir(curdir);
-      }
+    }
     // end frei0r dirs
     if (curvdir!=NULL) closedir(curvdir);
 

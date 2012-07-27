@@ -3859,10 +3859,14 @@ static void load_weed_plugin (gchar *plugin_name, gchar *plugin_path, gchar *dir
 	  for (i=0;i<idx;i++) {
 	    if (!strcmp(hashnames[idx],hashnames[i])) {
 	      // skip dups
+	      char *msg=g_strdup_printf(_("Found duplicate plugin %s\n"),hashnames[idx]);
+	      LIVES_INFO(msg);
+	      g_free(msg);
 	      g_free(hashnames[idx]);
 	      hashnames[idx]=NULL;
 	      weed_filters[idx]=NULL;
 	      num_weed_filters--;
+	      idx--;
 	      dup=TRUE;
 	      break;
 	    }
@@ -3901,7 +3905,7 @@ static void load_weed_plugin (gchar *plugin_name, gchar *plugin_path, gchar *dir
 
 	    kmode++;
 	  }
-	    idx++;
+	  idx++;
 	}
 #ifdef DEBUG_WEED
 	else g_printerr(g_strdup_printf("Unsuitable filter \"%s\" in plugin \"%s\", reason code %d\n",filter_name,plugin_name,reason));

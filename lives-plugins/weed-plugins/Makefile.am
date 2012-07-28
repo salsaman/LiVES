@@ -85,6 +85,13 @@ audio_fftlibdir = "$(libdir)/$(PACKAGE)/plugins/effects/realtime/weed"
 audio_fftlib_LTLIBRARIES = $(audio_fft_libs)
 endif
 
+if HAVE_LADSPA
+ladspa_libs = ladspa.la
+ladspa_la_LDFLAGS = $(AM_LDFLAGS)
+ladspa_la_CFLAGS = $(AM_CFLAGS)
+ladspadir = "$(libdir)/$(PACKAGE)/plugins/effects/realtime/weed"
+ladspa_LTLIBRARIES = $(ladspa_libs)
+endif
 
 fxpluginslib_LTLIBRARIES = RGBdelay.la \
 	alien_overlay.la \

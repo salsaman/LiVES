@@ -318,6 +318,8 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
     int flags,error;
 
     in_params[0]=weed_text_init("maskfile","_Mask file (.png or .jpg)",defmaskfile);
+    gui=weed_parameter_template_get_gui(in_params[0]);
+    weed_set_int_value(gui,"maxchars",80); // for display only - fileread will override this
     flags=0;
     if (weed_plant_has_leaf(in_params[0],"flags")) 
       flags=weed_get_int_value(in_params[0],"flags",&error);

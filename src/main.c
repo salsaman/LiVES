@@ -286,6 +286,7 @@ static gboolean pre_init(void) {
   pthread_mutex_init(&mainw->interp_mutex,NULL);
 
   pthread_mutex_init(&mainw->abuf_mutex,NULL);
+  pthread_mutex_init(&mainw->afilter_mutex,NULL);
 
   prefs=(_prefs *)g_malloc(sizeof(_prefs));
   future_prefs=(_future_prefs *)g_malloc(sizeof(_future_prefs));

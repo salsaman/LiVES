@@ -1695,44 +1695,21 @@ gboolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, gboolean ad
       gtk_box_pack_start (GTK_BOX (hbox), scrolledwindow, TRUE, TRUE, 10);
       g_object_set_data(G_OBJECT(hbox),"textwidget",(gpointer)textbuffer);
 
-      if (rfx->status!=RFX_STATUS_WEED) {
-	blockfunc=g_signal_connect_after (G_OBJECT (hbox), "set-focus-child", G_CALLBACK (after_param_text_focus_changed), 
-					  (gpointer) rfx);
-      }
-      else {
-	if (mainw->multitrack!=NULL)
-	  blockfunc=g_signal_connect_after (G_OBJECT (hbox), "set-focus-child", G_CALLBACK (after_param_text_focus_changed), 
-					    (gpointer) rfx);
-	/*	blockfunc=g_signal_connect_after (G_OBJECT (textbuffer),"changed", G_CALLBACK (after_param_text_changed), 
-		(gpointer) rfx);*/
-      }
-      g_object_set_data(G_OBJECT(textbuffer),"blockfunc",(gpointer)blockfunc);
-
-      // store parameter so we know whose trigger to use
-      g_object_set_data (G_OBJECT (textbuffer),"param_number",GINT_TO_POINTER (pnum));
-      g_object_set_data (G_OBJECT (textbuffer),"rfx",rfx);
     }
     else {
       if (use_mnemonic) gtk_label_set_mnemonic_widget (GTK_LABEL (label),entry);
       gtk_box_pack_start (GTK_BOX (hbox), entry, TRUE, TRUE, 10);
       g_object_set_data(G_OBJECT(hbox),"textwidget",(gpointer)entry);
-      if (rfx->status!=RFX_STATUS_WEED) {
-	blockfunc=g_signal_connect_after (G_OBJECT (hbox), "set-focus-child", G_CALLBACK (after_param_text_focus_changed), 
-					  (gpointer) rfx);
-      }
-      else {
-	if (mainw->multitrack!=NULL)
-	  blockfunc=g_signal_connect_after (G_OBJECT (hbox), "set-focus-child", G_CALLBACK (after_param_text_focus_changed), 
-					    (gpointer) rfx);
-	/*	blockfunc=g_signal_connect_after (G_OBJECT (entry),"changed", G_CALLBACK (after_param_text_changed), 
-		(gpointer) rfx);*/
-      }
-      g_object_set_data(G_OBJECT(entry),"blockfunc",(gpointer)blockfunc);
-      
-      // store parameter so we know whose trigger to use
-      g_object_set_data (G_OBJECT (entry),"param_number",GINT_TO_POINTER (pnum));
-      g_object_set_data (G_OBJECT (entry),"rfx",rfx);
     }
+
+    blockfunc=g_signal_connect_after (G_OBJECT (hbox), "set-focus-child", G_CALLBACK (after_param_text_focus_changed), 
+				      (gpointer) rfx);
+
+    g_object_set_data(G_OBJECT(textbuffer),"blockfunc",(gpointer)blockfunc);
+
+    // store parameter so we know whose trigger to use
+    g_object_set_data (G_OBJECT (textbuffer),"param_number",GINT_TO_POINTER (pnum));
+    g_object_set_data (G_OBJECT (textbuffer),"rfx",rfx);
 
     break;
 

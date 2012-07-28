@@ -183,7 +183,6 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
 
    pa_volume_t pavol;
 
-
    pulsed->pstream=pstream;
 
    if (xbytes>nbytes) xbytes=nbytes;
@@ -552,7 +551,7 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
 
 	   if (mainw->agen_needs_reinit) pl_error=TRUE;
 	   else {
-	     fbuffer=(float *)g_malloc(numFramesToWrite*pulsed->out_achans*4);
+	     fbuffer=(float *)g_malloc(numFramesToWrite*pulsed->out_achans*sizeof(float));
 	     if (!get_audio_from_plugin(fbuffer,pulsed->out_achans,pulsed->out_arate,numFramesToWrite)) {
 	       pl_error=TRUE;
 	     }
@@ -597,9 +596,7 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
 		   break;
 		 }
 		 
-		 for (i=0;i<pulsed->out_achans;i++) {
-		   lives_memcpy(fp[i],fbuffer+(i*numFramesToWrite),numFramesToWrite*sizeof(float));
-		 }
+		 lives_memcpy(fp[i],fbuffer+(i*numFramesToWrite),numFramesToWrite*sizeof(float));
 
 	       }
 	       
@@ -622,12 +619,13 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
 	     if (!memok) {
 	       // no audio effects; or memory allocation error
 	       for (i=0;i<pulsed->out_achans;i++) {
-		 fp[i]=fbuffer+i;
+		 fp[i]=fbuffer+(i*numFramesToWrite);
 	       }
 	       sample_move_float_int(buf,fp,numFramesToWrite,1.0,
-				     pulsed->out_achans,16,0,(capable->byte_order==LIVES_LITTLE_ENDIAN),TRUE,1.0);
+				     pulsed->out_achans,16,0,(capable->byte_order==LIVES_LITTLE_ENDIAN),FALSE,1.0);
 	     }
 
+	     if (fbuffer!=NULL) g_free(fbuffer);
 	     free(fp);
 
 	     if (mainw->record&&mainw->ascrap_file!=-1&&mainw->playing_file>0) {

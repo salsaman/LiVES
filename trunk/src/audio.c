@@ -600,6 +600,43 @@ static size_t chunk_to_float_abuf(lives_audio_buf_t *abuf, float **float_buffer,
 }
 
 
+boolean float_deinterleave(float *fbuffer, int nsamps, int nchans) {
+  // deinterleave a float buffer
+  register int i,j;
+
+  float *tmpfbuffer=(float *)g_try_malloc(nsamps*nchans*sizeof(float));
+  if (tmpfbuffer==NULL) return FALSE;
+  
+  for (i=0;i<nsamps;i++) {
+    for (j=0;j<nchans;j++) {
+      tmpfbuffer[nsamps*j+i]=fbuffer[i*nchans+j];
+    }
+  }
+  lives_memcpy(fbuffer,tmpfbuffer,nsamps*nchans*sizeof(float));
+  g_free(tmpfbuffer);
+  return TRUE;
+}
+
+
+boolean float_interleave(float *fbuffer, int nsamps, int nchans) {
+  // deinterleave a float buffer
+  register int i,j;
+
+  float *tmpfbuffer=(float *)g_try_malloc(nsamps*nchans*sizeof(float));
+  if (tmpfbuffer==NULL) return FALSE;
+  
+  for (i=0;i<nsamps;i++) {
+    for (j=0;j<nchans;j++) {
+      tmpfbuffer[i*nchans+j]=fbuffer[j*nsamps+i];
+    }
+  }
+  lives_memcpy(fbuffer,tmpfbuffer,nsamps*nchans*sizeof(float));
+  g_free(tmpfbuffer);
+  return TRUE;
+}
+
+
+
 // for pulse audio we use int16, and let it apply the volume
 
 static size_t chunk_to_int16_abuf(lives_audio_buf_t *abuf, float **float_buffer, int nsamps) {
@@ -2326,30 +2363,43 @@ gboolean get_audio_from_plugin(float *fbuffer, int nchans, int arate, int nsamps
 
   int error;
 
+  int xnchans=nchans;
+  int aint=WEED_FALSE;
+
   weed_plant_t *inst=rte_keymode_get_instance(mainw->agen_key,rte_key_getmode(mainw->agen_key));
   weed_plant_t *filter=weed_get_plantptr_value(inst,"filter_class",&error);
   weed_plant_t *channel=get_enabled_channel(inst,0,FALSE);
+  weed_plant_t *ctmpl;
 
   weed_process_f *process_func_ptr_ptr;
   weed_process_f process_func;
-  
 
   if (mainw->agen_needs_reinit) return FALSE; // wait for other thread to reinit us
+
+  ctmpl=weed_get_plantptr_value(channel,"template",&error);
+
+  if (weed_plant_has_leaf(ctmpl,"audio_rate")&&weed_get_int_value(ctmpl,"audio_rate",&error)!=arate) {
+    return FALSE;
+  }
+
+  if (weed_plant_has_leaf(ctmpl,"audio_interleaf")) aint=weed_get_boolean_value(ctmpl,"audio_interleaf",&error);
+  if (weed_plant_has_leaf(ctmpl,"audio_channels")) xnchans=weed_get_int_value(ctmpl,"audio_channels",&error);
 
   // stop video thread from possibly interpolating/deiniting
   if (pthread_mutex_trylock(&mainw->interp_mutex)) return FALSE;
 
+
   // make sure values match, else we need to reinit the plugin
-  if (nchans!=weed_get_int_value(channel,"audio_channels",&error)||
+  if (xnchans!=weed_get_int_value(channel,"audio_channels",&error)||
       arate!=weed_get_int_value(channel,"audio_rate",&error)||
-      weed_get_boolean_value(channel,"audio_interleaf",&error)==WEED_FALSE) {
+      weed_get_boolean_value(channel,"audio_interleaf",&error)!=aint) {
     // reinit plugin
     mainw->agen_needs_reinit=TRUE;
   }
 
-  weed_set_int_value(channel,"audio_channels",nchans);
+  weed_set_int_value(channel,"audio_channels",xnchans);
   weed_set_int_value(channel,"audio_rate",arate);
-  weed_set_boolean_value(channel,"audio_interleaf",WEED_TRUE);
+  weed_set_boolean_value(channel,"audio_interleaf",aint);
   weed_set_int_value(channel,"audio_data_length",nsamps);
   weed_set_voidptr_value(channel,"audio_data",fbuffer);
 
@@ -2372,6 +2422,15 @@ gboolean get_audio_from_plugin(float *fbuffer, int nchans, int arate, int nsamps
     return FALSE;
   }
   pthread_mutex_unlock(&mainw->interp_mutex);
+
+  if (aint==WEED_TRUE) {
+    if (!float_deinterleave(fbuffer,nsamps,nchans)) return FALSE;
+  }
+
+  if (xnchans==1&&nchans==2) {
+    // if we got mono but we wanted stereo, copy to right channel
+    weed_memcpy(&fbuffer[nsamps],fbuffer,nsamps*sizeof(float));
+  }
 
   mainw->agen_samps_count+=nsamps;
 

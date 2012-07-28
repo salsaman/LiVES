@@ -1625,6 +1625,7 @@ void redraw_pwindow (gint key, gint mode) {
       // rip out the contents
       if (mainw->invis==NULL) mainw->invis=gtk_vbox_new(FALSE,0);
       child_list=gtk_container_get_children(GTK_CONTAINER(lives_dialog_get_content_area(GTK_DIALOG(fx_dialog[1]))));
+      gtk_container_set_focus_child(GTK_CONTAINER(GTK_DIALOG(fx_dialog[1])->action_area),NULL);
       for (i=0;i<g_list_length(child_list);i++) {
 	GtkWidget *widget=(GtkWidget *)g_list_nth_data(child_list,i);
 	if (widget!=GTK_DIALOG (fx_dialog[1])->action_area) {
@@ -1636,6 +1637,7 @@ void redraw_pwindow (gint key, gint mode) {
       if (child_list!=NULL) g_list_free(child_list);
       on_paramwindow_cancel_clicked(NULL,NULL);
       restore_pwindow(rfx);
+
     }
   }
 }

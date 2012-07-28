@@ -311,6 +311,7 @@ lives_fx_cat_t weed_filter_categorise (weed_plant_t *pl, int in_channels, int ou
   if (out_channels>1) return LIVES_FX_CAT_SPLITTER;
   if (in_channels>2&&out_channels==1) return LIVES_FX_CAT_COMPOSITOR;
   if (in_channels==2&&out_channels==1) return LIVES_FX_CAT_TRANSITION;
+  if (in_channels==1&&out_channels==1&&!(has_video_chans_in(filt,TRUE))&&!(has_video_chans_out(filt,TRUE))) return LIVES_FX_CAT_AUDIO_EFFECT;
   if (in_channels==1&&out_channels==1) return LIVES_FX_CAT_EFFECT;
   if (in_channels>0&&out_channels==0&&has_out_params) return LIVES_FX_CAT_ANALYSER;
   if (in_channels>0&&out_channels==0) return LIVES_FX_CAT_TAP;
@@ -2395,7 +2396,7 @@ static lives_filter_error_t weed_apply_audio_instance_inner (weed_plant_t *inst,
   weed_plant_t *filter=weed_instance_get_filter(inst);
   weed_plant_t *layer;
   weed_plant_t **in_channels,**out_channels=NULL,*channel,*chantmpl;
-  //gboolean needs_reinit=FALSE;
+
   gboolean inplace=FALSE;
   weed_process_f *process_func_ptr_ptr;
   weed_process_f process_func;
@@ -2410,6 +2411,11 @@ static lives_filter_error_t weed_apply_audio_instance_inner (weed_plant_t *inst,
   int nchans=0;
   int nsamps=0;
   void *adata=NULL;
+
+  // TODO - handle the following:
+  // input audio_channels are mono, but the plugin NEEDS stereo
+  
+
 
   if (!weed_plant_has_leaf(inst,"in_channels")||(in_channels=weed_get_plantptr_array(inst,"in_channels",&error))==NULL) 
     return FILTER_ERROR_NO_IN_CHANNELS;
@@ -2527,6 +2533,19 @@ static lives_filter_error_t weed_apply_audio_instance_inner (weed_plant_t *inst,
     // nchans and nsamps needed for inplace
     nchans=weed_get_int_value(channel,"audio_channels",&error);
     nsamps=weed_get_int_value(channel,"audio_data_length",&error);
+
+    if (weed_get_boolean_value(channel,"audio_interleaf",&error)==WEED_TRUE) {
+      // handle case where plugin NEEDS interleaved
+      weed_set_boolean_value(layers[i],"audio_interleaf",WEED_TRUE);
+      if (!float_interleave(adata,nsamps,nchans)) {
+	weed_free(in_tracks);
+	weed_free(out_tracks);
+	weed_free(in_channels);
+	if (out_channels!=NULL) weed_free(out_channels);
+	return FILTER_ERROR_MEMORY_ERROR;
+      }
+    }
+
     weed_set_voidptr_value(channel,"audio_data",adata);
   }
 
@@ -2558,7 +2577,6 @@ static lives_filter_error_t weed_apply_audio_instance_inner (weed_plant_t *inst,
     if (def_channel!=NULL&&i==0&&(in_tracks[0]==out_tracks[0])) {
       if (channel_flags&WEED_CHANNEL_CAN_DO_INPLACE) {
 	// ah, good, inplace
-	weed_set_boolean_value(channel,"inplace",WEED_TRUE);
 	inplace=TRUE;
       }
     }
@@ -2571,8 +2589,8 @@ static lives_filter_error_t weed_apply_audio_instance_inner (weed_plant_t *inst,
     else {
       weed_set_int_value(channel,"audio_data_length",nsamps);
       weed_set_voidptr_value(channel,"audio_data",adata);
+      weed_set_boolean_value(layers[i],"audio_interleaf",weed_get_boolean_value(channel,"audio_interleaf",&error));
     }
-    weed_set_boolean_value(channel,"inplace",WEED_FALSE);
   }
 
   weed_set_double_value(inst,"fps",cfile->pb_fps);
@@ -2596,8 +2614,9 @@ static lives_filter_error_t weed_apply_audio_instance_inner (weed_plant_t *inst,
 
   // now we write our out channels back to layers, leaving the palettes and sizes unchanged
   for (i=0;i<num_out_tracks;i++) {
+    if (i==0&&inplace) continue;
+
     channel=get_enabled_channel(inst,i,FALSE);
-    if (weed_get_boolean_value(channel,"inplace",&error)==WEED_TRUE) continue;
     layer=layers[out_tracks[i]+nbtracks];
     if (weed_plant_has_leaf(channel,"audio_data")) {
       float *audio_data=(float *)weed_get_voidptr_value(layer,"audio_data",&error);
@@ -2628,29 +2647,26 @@ static lives_filter_error_t weed_apply_audio_instance_inner (weed_plant_t *inst,
 
 
 lives_filter_error_t weed_apply_audio_instance (weed_plant_t *init_event, float **abuf, int nbtracks, int nchans, 
-						int64_t nsamps, gdouble arate, int aint, weed_timecode_t tc, double *vis) {
-  // note - aint is interleaving for the plugin, abuf is always single channel
-  // so at some point this will be removed from the function params.
+						int64_t nsamps, gdouble arate, weed_timecode_t tc, double *vis) {
 
 
   void *in_abuf,*out_abuf;
   int error;
-  weed_plant_t **layers;
+  weed_plant_t **layers,**in_channels,**out_channels=NULL;
   weed_plant_t *instance,*filter;
   size_t nsf=nsamps*sizeof(float);
   void **ev_pchains;
   lives_filter_error_t retval=FILTER_NO_ERROR;
   weed_plant_t *channel=NULL;
-  gboolean can_reinit=TRUE;
+  gboolean needs_reinit=FALSE;
   weed_plant_t *ctmpl;
 
   int flags=0;
 
-  //  int xnsamps,xnchans,xarate,xaint;
-
   int ntracks=1;
+  int numinchans,numoutchans=0,xnchans,aint;
 
-  register int i,j,k;
+  register int i,j;
 
   // caller passes an init_event from event list, or an instance (for realtime mode)
   if (WEED_PLANT_IS_FILTER_INSTANCE(init_event)) {
@@ -2695,123 +2711,156 @@ lives_filter_error_t weed_apply_audio_instance (weed_plant_t *init_event, float 
   if (weed_plant_has_leaf(instance,"in_channels")) channel=weed_get_plantptr_value(instance,"in_channels",&error);
   if (channel==NULL) return FILTER_ERROR_NO_IN_CHANNELS; // audio generators are dealt with by the audio player
 
+  in_channels=weed_get_plantptr_array(instance,"in_channels",&error);
+  numinchans=weed_leaf_num_elements(instance,"in_channels");
+
+  if (weed_plant_has_leaf(instance,"out_channels")) {
+    out_channels=weed_get_plantptr_array(instance,"out_channels",&error);
+    if (out_channels[0]!=NULL) numoutchans=weed_leaf_num_elements(instance,"out_channels");
+  }
+
   filter=weed_instance_get_filter(instance);
 
-  if (nsamps!=weed_get_int_value(channel,"audio_data_length",&error)||
-      nchans!=weed_get_int_value(channel,"audio_channels",&error)||
-      arate!=weed_get_int_value(channel,"audio_rate",&error)||
-      weed_get_boolean_value(channel,"audio_interleaf",&error)!=aint) {
-    // audio mismatch with channel values - adjust channels or resample audio
+  for (i=0;i<numinchans;i++) {
+    if ((channel=in_channels[i])==NULL) continue;
 
-    // TODO - check if we can reinit
-    weed_plant_t **in_channels,**out_channels;
-    int numchans;
-
-    // reset channel values
-    in_channels=weed_get_plantptr_array(instance,"in_channels",&error);
-    numchans=weed_leaf_num_elements(instance,"in_channels");
-    for (i=0;i<numchans;i++) {
-      if ((channel=in_channels[i])!=NULL) {
-	ctmpl=weed_get_plantptr_value(channel,"template",&error);
-	if ((weed_plant_has_leaf(ctmpl,"audio_data_length")&&
-	     weed_get_int_value(ctmpl,"audio_data_length",&error)!=nsamps)||
-	    (weed_plant_has_leaf(ctmpl,"audio_channels")&&weed_get_int_value(ctmpl,"audio_channels",&error)!=nchans)||
-	    (weed_plant_has_leaf(ctmpl,"audio_rate")&&weed_get_int_value(ctmpl,"audio_rate",&error)!=arate)||
-	    (weed_plant_has_leaf(ctmpl,"audio_interleaf")&&
-	     weed_get_boolean_value(channel,"audio_interleaf",&error)!=aint)) {
-	  can_reinit=FALSE;
-	  //xnsamps=weed_get_int_value(channel,"audio_data_length",&error);
-	  //xnchans=weed_get_int_value(channel,"audio_channels",&error);
-	  //xarate=weed_get_int_value(channel,"audio_rate",&error);
-	  //xaint=weed_get_boolean_value(channel,"audio_interleaf",&error);
-	  break;
-	}
+    aint=WEED_FALSE; // preferred value
+    ctmpl=weed_get_plantptr_value(channel,"template",&error);
+    if (weed_plant_has_leaf(ctmpl,"audio_interleaf")) {
+      aint=weed_get_boolean_value(ctmpl,"audio_interleaf",&error);
+      if (weed_get_boolean_value(channel,"audio_interleaf",&error)!=aint) {
+	needs_reinit=TRUE;
       }
     }
-    weed_free(in_channels);
-      
-    if (can_reinit&&weed_plant_has_leaf(instance,"out_channels")) {
-      out_channels=weed_get_plantptr_array(instance,"out_channels",&error);
-      numchans=weed_leaf_num_elements(instance,"out_channels");
-      for (i=0;i<numchans;i++) {
-	if ((channel=out_channels[i])!=NULL) {
-	  ctmpl=weed_get_plantptr_value(channel,"template",&error);
-	  if ((weed_plant_has_leaf(ctmpl,"audio_data_length")&&
-	       weed_get_int_value(ctmpl,"audio_data_length",&error)!=nsamps)||
-	      (weed_plant_has_leaf(ctmpl,"audio_channels")&&weed_get_int_value(ctmpl,"audio_channels",&error)!=nchans)||
-	      (weed_plant_has_leaf(ctmpl,"audio_rate")&&weed_get_int_value(ctmpl,"audio_rate",&error)!=arate)||
-	      (weed_plant_has_leaf(ctmpl,"audio_interleaf")&&
-	       weed_get_boolean_value(channel,"audio_interleaf",&error)!=aint)) {
-	    can_reinit=FALSE;
-	    //xnsamps=weed_get_int_value(channel,"audio_data_length",&error);
-	    //xnchans=weed_get_int_value(channel,"audio_channels",&error);
-	    //xarate=weed_get_int_value(channel,"audio_rate",&error);
-	    //xaint=weed_get_boolean_value(channel,"audio_interleaf",&error);
-	    break;
-	  }
-	}
-	weed_free(out_channels);
+    xnchans=nchans; // preferred value
+    if (weed_plant_has_leaf(ctmpl,"audio_channels")) {
+      xnchans=weed_get_int_value(ctmpl,"audio_channels",&error);
+      if (weed_get_int_value(channel,"audio_channels",&error)!=xnchans) {
+	needs_reinit=TRUE;
       }
     }
 
-    if (can_reinit) {
-      // - deinit inst
-      weed_call_deinit_func(instance);
-
-      // reset channel values
-      in_channels=weed_get_plantptr_array(instance,"in_channels",&error);
-      numchans=weed_leaf_num_elements(instance,"in_channels");
-      for (i=0;i<numchans;i++) {
-	if ((channel=in_channels[i])!=NULL) {
-	  weed_set_int_value(channel,"audio_data_length",nsamps);
-	  weed_set_int_value(channel,"audio_channels",nchans);
-	  weed_set_int_value(channel,"audio_rate",arate);
-	  weed_set_boolean_value(channel,"audio_interleaf",aint);
-	}
-      }
+  
+    if ((weed_plant_has_leaf(ctmpl,"audio_data_length")&&nsamps!=weed_get_int_value(ctmpl,"audio_data_length",&error))||
+	(weed_plant_has_leaf(ctmpl,"audio_arate")&&arate!=weed_get_int_value(ctmpl,"audio_rate",&error))) {
       weed_free(in_channels);
+      if (out_channels!=NULL) weed_free(out_channels);
+      return FILTER_ERROR_TEMPLATE_MISMATCH;
+    }
+    
+    if (weed_get_int_value(channel,"audio_rate",&error)!=arate) {
+      needs_reinit=TRUE;
+    }
+    
+    weed_set_int_value(channel,"audio_data_length",nsamps);
+    
+  }
       
-      if (weed_plant_has_leaf(instance,"out_channels")) {
-	out_channels=weed_get_plantptr_array(instance,"out_channels",&error);
-	numchans=weed_leaf_num_elements(instance,"out_channels");
-	for (i=0;i<numchans;i++) {
-	  if ((channel=out_channels[i])!=NULL) {
-	    weed_set_int_value(channel,"audio_data_length",nsamps);
-	    weed_set_int_value(channel,"audio_channels",nchans);
-	    weed_set_int_value(channel,"audio_rate",arate);
-	    weed_set_boolean_value(channel,"audio_interleaf",aint);
-	  }
+  for (i=0;i<numoutchans;i++) {
+    if ((channel=out_channels[i])==NULL) continue;
+
+      aint=WEED_FALSE; // preferred value
+      ctmpl=weed_get_plantptr_value(channel,"template",&error);
+      if (weed_plant_has_leaf(ctmpl,"audio_interleaf")) {
+	aint=weed_get_boolean_value(ctmpl,"audio_interleaf",&error);
+	if (weed_get_boolean_value(channel,"audio_interleaf",&error)!=aint) {
+	  needs_reinit=TRUE;
 	}
-	weed_free(out_channels);
+      }
+      xnchans=nchans; // preferred value
+      if (weed_plant_has_leaf(ctmpl,"audio_channels")) {
+	xnchans=weed_get_int_value(ctmpl,"audio_channels",&error);
+	if (weed_get_int_value(channel,"audio_channels",&error)!=xnchans) {
+	  needs_reinit=TRUE;
+	}
       }
 
-      // - init inst
-      if (weed_plant_has_leaf(filter,"init_func")) {
-	weed_init_f *init_func_ptr_ptr;
-	weed_init_f init_func;
-	weed_leaf_get(filter,"init_func",0,(void *)&init_func_ptr_ptr);
-	init_func=init_func_ptr_ptr[0];
-	if (init_func!=NULL) {
-	  gchar *cwd=cd_to_plugin_dir(filter);
-	  set_param_gui_readwrite(instance);
-	  update_host_info(instance);
-	  if ((*init_func)(instance)!=WEED_NO_ERROR) {
-	    key_to_instance[key][key_modes[key]]=NULL;
-	    lives_chdir(cwd,FALSE);
-	    g_free(cwd);
-	    return FILTER_ERROR_COULD_NOT_REINIT;
-	  }
-	  set_param_gui_readonly(instance);
+      if ((weed_plant_has_leaf(ctmpl,"audio_data_length")&&nsamps!=weed_get_int_value(ctmpl,"audio_data_length",&error))||
+	  (weed_plant_has_leaf(ctmpl,"audio_arate")&&arate!=weed_get_int_value(ctmpl,"audio_rate",&error))) {
+	weed_free(in_channels);
+	if (out_channels!=NULL) weed_free(out_channels);
+	return FILTER_ERROR_TEMPLATE_MISMATCH;
+      }
+
+      if (weed_get_int_value(channel,"audio_rate",&error)!=arate) {
+	needs_reinit=TRUE;
+      }
+      
+      weed_set_int_value(channel,"audio_data_length",nsamps);
+      
+  }
+
+
+  if (needs_reinit) {
+    // - deinit inst
+    weed_call_deinit_func(instance);
+
+    for (i=0;i<numinchans;i++) {
+      if ((channel=in_channels[i])!=NULL) {
+	aint=WEED_FALSE; // preferred value
+	ctmpl=weed_get_plantptr_value(channel,"template",&error);
+	if (weed_plant_has_leaf(ctmpl,"audio_interleaf")) {
+	  aint=weed_get_boolean_value(ctmpl,"audio_interleaf",&error);
+	}
+	xnchans=nchans; // preferred value
+	if (weed_plant_has_leaf(ctmpl,"audio_channels")) {
+	  xnchans=weed_get_int_value(ctmpl,"audio_channels",&error);
+	}
+	  
+	weed_set_boolean_value(channel,"audio_interleaf",aint);
+	weed_set_int_value(channel,"audio_channels",xnchans);
+	weed_set_int_value(channel,"audio_rate",arate);
+      }
+    }
+
+    for (i=0;i<numoutchans;i++) {
+      if ((channel=out_channels[i])!=NULL) {
+	aint=WEED_FALSE; // preferred value
+	ctmpl=weed_get_plantptr_value(channel,"template",&error);
+	if (weed_plant_has_leaf(ctmpl,"audio_interleaf")) {
+	  aint=weed_get_boolean_value(ctmpl,"audio_interleaf",&error);
+	}
+	xnchans=nchans; // preferred value
+	if (weed_plant_has_leaf(ctmpl,"audio_channels")) {
+	  xnchans=weed_get_int_value(ctmpl,"audio_channels",&error);
+	}
+	  
+	weed_set_boolean_value(channel,"audio_interleaf",aint);
+	weed_set_int_value(channel,"audio_channels",xnchans);
+	weed_set_int_value(channel,"audio_rate",arate);
+      }
+    }
+
+    // - init inst
+    if (weed_plant_has_leaf(filter,"init_func")) {
+      weed_init_f *init_func_ptr_ptr;
+      weed_init_f init_func;
+      weed_leaf_get(filter,"init_func",0,(void *)&init_func_ptr_ptr);
+      init_func=init_func_ptr_ptr[0];
+      if (init_func!=NULL) {
+	gchar *cwd=cd_to_plugin_dir(filter);
+	set_param_gui_readwrite(instance);
+	update_host_info(instance);
+	if ((*init_func)(instance)!=WEED_NO_ERROR) {
+	  key_to_instance[key][key_modes[key]]=NULL;
 	  lives_chdir(cwd,FALSE);
 	  g_free(cwd);
+	  weed_free(in_channels);
+	  if (out_channels!=NULL) weed_free(out_channels);
+	  return FILTER_ERROR_COULD_NOT_REINIT;
 	}
+	set_param_gui_readonly(instance);
+	lives_chdir(cwd,FALSE);
+	g_free(cwd);
       }
-      retval=FILTER_INFO_REINITED;
     }
-    else {
-      // else resample if we can - TODO
-    }
+    retval=FILTER_INFO_REINITED;
   }
+
+
+
+  weed_free(in_channels);
+  if (out_channels!=NULL) weed_free(out_channels);
 
   if (!weed_plant_has_leaf(filter,"flags")) weed_set_int_value(filter,"flags",0);
   else flags=weed_get_int_value(filter,"flags",&error);
@@ -2844,25 +2893,16 @@ lives_filter_error_t weed_apply_audio_instance (weed_plant_t *init_event, float 
     // copy audio into layer audio
     in_abuf=g_malloc(nchans*nsf);
 
-    if (aint==WEED_FALSE) {
-      // non-interleaved
-      for (j=0;j<nchans;j++) {
-	lives_memcpy((char *)in_abuf+(j*nsf),abuf[i*nchans+j],nsf);
-      }
-    }
-    else {
-      for (k=0;k<nsamps;k++) {
-	for (j=0;j<nchans;j++) {
-	  lives_memcpy((char *)in_abuf+(k*nchans+j)*sizeof(float),&(abuf[i*nchans+j][k]),sizeof(float));
-	}
-      }
+    // non-interleaved
+    for (j=0;j<nchans;j++) {
+      lives_memcpy((char *)in_abuf+(j*nsf),abuf[i*nchans+j],nsf);
     }
 
     weed_set_voidptr_value(layers[i],"audio_data",in_abuf);
     weed_set_int_value(layers[i],"audio_data_length",nsamps);
     weed_set_int_value(layers[i],"audio_channels",nchans);
     weed_set_int_value(layers[i],"audio_rate",arate);
-    weed_set_boolean_value(layers[i],"audio_interleaf",aint);
+    weed_set_boolean_value(layers[i],"audio_interleaf",WEED_FALSE);
   }
 
   layers[i]=NULL;
@@ -2871,26 +2911,15 @@ lives_filter_error_t weed_apply_audio_instance (weed_plant_t *init_event, float 
 
   out_abuf=weed_get_voidptr_value(layers[0],"audio_data",&error);
 
-  if (!can_reinit) {
-    // resample back
-
-
-  }
-
-  if (weed_plant_has_leaf(instance,"out_channels")&&weed_get_plantptr_value(instance,"out_channels",&error)!=NULL) {
+  if (numoutchans>0) {
     // copy processed audio
-    if (aint==WEED_FALSE) {
-      // non-interleaved
-      for (i=0;i<nchans;i++) {
-	lives_memcpy(abuf[i],(char *)out_abuf+(i*nsf),nsf);
-      }
-    }
-    else {
-      for (i=0;i<nchans;i++) {
-	for (k=0;k<nsamps;k++) {
-	  lives_memcpy(&(abuf[i][k]),(char *)out_abuf+(k*nchans+i)*sizeof(float),sizeof(float));
-	}
-      }
+ 
+    // inner function will set this if the plugin accepts/returns interleaved audio only
+    if (weed_get_boolean_value(layers[0],"audio_interleaf",&error)==WEED_FALSE) float_deinterleave(out_abuf,nsamps,nchans);
+
+    // non-interleaved
+    for (i=0;i<nchans;i++) {
+      lives_memcpy(abuf[i],(char *)out_abuf+(i*nsf),nsf);
     }
   }
 
@@ -3149,7 +3178,7 @@ void weed_apply_audio_effects (weed_plant_t *filter_map, float **abuf, int nbtra
       filter=get_weed_filter(weed_get_idx_for_hashname(fhash,TRUE));
       weed_free(fhash);
       if (has_audio_chans_in(filter,FALSE)) 
-	filter_error=weed_apply_audio_instance(init_event,abuf,nbtracks,nchans,nsamps,arate,WEED_FALSE,tc,vis);
+	filter_error=weed_apply_audio_instance(init_event,abuf,nbtracks,nchans,nsamps,arate,tc,vis);
     }
     weed_free(init_events);
   }
@@ -3189,7 +3218,7 @@ void weed_apply_audio_effects_rt(float **abuf, int nchans, int64_t nsamps, gdoub
 	}
 	weed_set_int_value(instance,"host_key",i);
 
-	filter_error=weed_apply_audio_instance(instance,abuf,0,nchans,nsamps,arate,WEED_FALSE,tc,NULL);
+	filter_error=weed_apply_audio_instance(instance,abuf,0,nchans,nsamps,arate,tc,NULL);
 
 	if (filter_error==FILTER_INFO_REINITED) redraw_pwindow(i,key_modes[i]); // redraw our paramwindow
 #ifdef DEBUG_RTE
@@ -3408,6 +3437,7 @@ static gint check_for_lives(weed_plant_t *filter, int filter_idx) {
 
   int error,flags=0;
   int num_elements,i;
+  int naudins=0,naudouts=0;
   weed_plant_t **array=NULL;
 
   // TODO - check seed types
@@ -3431,10 +3461,19 @@ static gint check_for_lives(weed_plant_t *filter, int filter_idx) {
 
   for (i=0;i<num_elements;i++) {
 #ifndef HAVE_POSIX_MEMALIGN
-    if (weed_plant_has_leaf(array[i],"alignment")) return 12;
+    if (weed_plant_has_leaf(array[i],"alignment")) {
+      weed_free(array);
+      return 12;
+    }
 #endif
-    if (weed_plant_has_leaf(array[i],"is_audio")&&weed_get_boolean_value(array[i],"is_audio",&error)==WEED_TRUE) 
+    if (weed_plant_has_leaf(array[i],"is_audio")&&weed_get_boolean_value(array[i],"is_audio",&error)==WEED_TRUE) {
+      if (weed_plant_has_leaf(array[i],"audio_channels")&&(naudins=weed_get_int_value(array[i],"audio_channels",&error))>2) {
+	// currently we only handle mono and stereo audio filters
+	weed_free(array);
+	return 7;
+      }
       is_audio=TRUE;
+    }
     if (!weed_plant_has_leaf(array[i],"name")||(!weed_plant_has_leaf(array[i],"palette_list")&&!is_audio)) {
       weed_free(array);
       return 6;
@@ -3466,10 +3505,24 @@ static gint check_for_lives(weed_plant_t *filter, int filter_idx) {
 
   for (i=0;i<num_elements;i++) {
 #ifndef HAVE_POSIX_MEMALIGN
-    if (weed_plant_has_leaf(array[i],"alignment")) return 12;
+    if (weed_plant_has_leaf(array[i],"alignment")) {
+      weed_free(array);
+      return 12;
+    }
 #endif
-    if (weed_plant_has_leaf(array[i],"is_audio")&&weed_get_boolean_value(array[i],"is_audio",&error)==WEED_TRUE) 
+    if (weed_plant_has_leaf(array[i],"is_audio")&&weed_get_boolean_value(array[i],"is_audio",&error)==WEED_TRUE) {
+      if (weed_plant_has_leaf(array[i],"audio_channels")&&(naudouts=weed_get_int_value(array[i],"audio_channels",&error))>2) {
+	// currently we only handle mono and stereo audio filters
+	weed_free(array);
+	return 7;
+      }
+      if (naudins==1&&naudouts==2) {
+	// converting mono to stereo cannot be done like that
+	weed_free(array);
+	return 7;
+      }
       is_audio=TRUE;
+    }
     if (!weed_plant_has_leaf(array[i],"name")||(!weed_plant_has_leaf(array[i],"palette_list")&&!is_audio)) {
       weed_free(array);
       return 9;

@@ -165,6 +165,9 @@ int64_t sample_move_abuf_int16 (short *obuf, int nchans, int nsamps, int out_ara
 
 void sample_move_float_float (float *dst, float *src, uint64_t nsamples, uint64_t src_skip, float vol);
 
+boolean float_deinterleave(float *fbuffer, int nsamps, int nchans);
+boolean float_interleave(float *fbuffer, int nsamps, int nchans);
+
 int64_t render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdouble *avels, gdouble *fromtime, weed_timecode_t tc_start, weed_timecode_t tc_end, gdouble *chvol, gdouble opvol_start, gdouble opvol_end, lives_audio_buf_t *obuf);
 
 void aud_fade(gint fileno, gdouble startt, gdouble endt, gdouble startv, gdouble endv); ///< fade in/fade out

@@ -570,7 +570,7 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
 	     pulsed->aPlayPtr->size=nbytes;
 	   }
 
-	   // get back interleaved float fbuffer; rate and channels should match
+	   // get back non-interleaved float fbuffer; rate and channels should match
 	   if (pl_error) nbytes=0;
 	   else {
 	     register int i;
@@ -598,7 +598,7 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
 		 }
 		 
 		 for (i=0;i<pulsed->out_achans;i++) {
-		   sample_move_float_float(fp[i],fbuffer+i,numFramesToWrite,pulsed->out_achans,1.0);
+		   lives_memcpy(fp[i],fbuffer+(i*numFramesToWrite),numFramesToWrite*sizeof(float));
 		 }
 
 	       }

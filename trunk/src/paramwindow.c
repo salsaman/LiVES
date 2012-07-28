@@ -1701,10 +1701,10 @@ gboolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, gboolean ad
       }
       else {
 	if (mainw->multitrack!=NULL)
-	  g_signal_connect_after (G_OBJECT (hbox), "set-focus-child", G_CALLBACK (after_param_text_focus_changed), 
-				  (gpointer) rfx);
-	blockfunc=g_signal_connect_after (G_OBJECT (textbuffer),"changed", G_CALLBACK (after_param_text_changed), 
-					  (gpointer) rfx);
+	  blockfunc=g_signal_connect_after (G_OBJECT (hbox), "set-focus-child", G_CALLBACK (after_param_text_focus_changed), 
+					    (gpointer) rfx);
+	/*	blockfunc=g_signal_connect_after (G_OBJECT (textbuffer),"changed", G_CALLBACK (after_param_text_changed), 
+		(gpointer) rfx);*/
       }
       g_object_set_data(G_OBJECT(textbuffer),"blockfunc",(gpointer)blockfunc);
 
@@ -1722,10 +1722,10 @@ gboolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, gboolean ad
       }
       else {
 	if (mainw->multitrack!=NULL)
-	  g_signal_connect_after (G_OBJECT (hbox), "set-focus-child", G_CALLBACK (after_param_text_focus_changed), 
-				  (gpointer) rfx);
-	blockfunc=g_signal_connect_after (G_OBJECT (entry),"changed", G_CALLBACK (after_param_text_changed), 
-					  (gpointer) rfx);
+	  blockfunc=g_signal_connect_after (G_OBJECT (hbox), "set-focus-child", G_CALLBACK (after_param_text_focus_changed), 
+					    (gpointer) rfx);
+	/*	blockfunc=g_signal_connect_after (G_OBJECT (entry),"changed", G_CALLBACK (after_param_text_changed), 
+		(gpointer) rfx);*/
       }
       g_object_set_data(G_OBJECT(entry),"blockfunc",(gpointer)blockfunc);
       
@@ -1791,7 +1791,13 @@ void add_label_to_box (GtkBox *box, gboolean do_trans, const gchar *text) {
 
   gtk_box_set_homogeneous(GTK_BOX(box),FALSE);
 
-  if (do_trans) label = gtk_label_new_with_mnemonic (_ (text));
+  if (do_trans) {
+    char *markup;
+    markup=g_markup_printf_escaped("<span weight=\"bold\" style=\"italic\">%s</span>",_(text));
+    label = gtk_label_new(NULL);
+    gtk_label_set_markup_with_mnemonic (GTK_LABEL(label),markup);
+    g_free(markup);
+  }
   else label = gtk_label_new_with_mnemonic (text);
 
   gtk_box_pack_start (box, label, FALSE, FALSE, 10);
@@ -2469,6 +2475,7 @@ after_param_text_changed (GtkWidget *textwidget, lives_rfx_t *rfx) {
       if (param->reinit||(param->copy_to!=-1&&rfx->params[param->copy_to].reinit)) {
 	weed_reinit_effect((weed_plant_t *)rfx->source,FALSE);
       }
+
       if (disp_string!=NULL) {
 	gulong blockfunc=(gulong)g_object_get_data(G_OBJECT(textwidget),"blockfunc");
 	g_signal_handler_block(textwidget,blockfunc);
@@ -2484,7 +2491,7 @@ after_param_text_changed (GtkWidget *textwidget, lives_rfx_t *rfx) {
 
     }
   }
-  
+
   if (strcmp (old_text,(gchar *)param->value)&&param->onchange) {
     param->change_blocked=TRUE;
     do_onchange (G_OBJECT (textwidget), rfx);
@@ -2497,6 +2504,7 @@ after_param_text_changed (GtkWidget *textwidget, lives_rfx_t *rfx) {
     activate_mt_preview(mainw->multitrack);
   }
   param->changed=TRUE;
+
 }
 
 

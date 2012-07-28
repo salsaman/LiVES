@@ -159,7 +159,7 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
     weed_plant_t *out_chantmpls[]={weed_audio_channel_template_init("out channel 0",0),NULL};
     weed_plant_t *in_params[]={weed_float_init("freq","_Frequency",7500.,0.0,48000.0),
 			       weed_float_init("multiplier","Frequency _Multiplier",1.,.01,1000.),NULL};
-    weed_plant_t *filter_class=weed_filter_class_init("Tone generator","salsaman",1,0,NULL,&tonegen_process,
+    weed_plant_t *filter_class=weed_filter_class_init("tone generator","salsaman",1,0,NULL,&tonegen_process,
 						      NULL,NULL,out_chantmpls,in_params,NULL);
 
     weed_plugin_info_add_filter_class (plugin_info,filter_class);

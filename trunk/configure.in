@@ -546,6 +546,17 @@ AC_SUBST(LIBBZ_LIBS)
 AM_CONDITIONAL(CONFIG_BZLIB,$HAVE_LIBBZ)
 
 
+HAVE_LADSPA=false
+AC_ARG_ENABLE( ladspa, [  --disable-ladspa    Disable LADSPA support.] , disable_ladspa=yes)
+if test "x$disable_ladspa" != "xyes" ; then
+
+dnl check for libz
+AC_CHECK_HEADERS(ladspa.h,HAVE_LADSPA=true,HAVE_LADSPA=false)
+fi
+
+AM_CONDITIONAL(HAVE_LADSPA,$HAVE_LADSPA)
+
+
 HAVE_UNICAP=false
 AC_ARG_ENABLE( unicap, [  --disable-unicap    Disable unicap support.] , disable_unicap=yes)
 if test "x$disable_unicap" != "xyes" ; then

@@ -28,6 +28,8 @@ typedef enum {
   FILTER_ERROR_IS_AUDIO,
   FILTER_ERROR_IS_SCRAP_FILE,
   FILTER_ERROR_MISSING_CHANNEL,
+  FILTER_ERROR_TEMPLATE_MISMATCH,
+  FILTER_ERROR_MEMORY_ERROR,
 
   /// values >= 512 are info
   FILTER_INFO_REINITED=512
@@ -127,7 +129,7 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
 void weed_apply_audio_effects (weed_plant_t *filter_map, float **abuf, int nbtracks, int nchans, int64_t nsamps, gdouble arate, weed_timecode_t tc, double *vis);
 void weed_apply_audio_effects_rt(float **abuf, int nchans, int64_t nsamps, gdouble arate, weed_timecode_t tc, boolean analysers_only);
 
-lives_filter_error_t weed_apply_audio_instance (weed_plant_t *init_event, float **abuf, int nbtracks, int nchans, int64_t nsamps, gdouble arate, int aint, weed_timecode_t tc, double *vis);
+lives_filter_error_t weed_apply_audio_instance (weed_plant_t *init_event, float **abuf, int nbtracks, int nchans, int64_t nsamps, gdouble arate, weed_timecode_t tc, double *vis);
 
 gboolean weed_generator_start (weed_plant_t *inst);
 weed_plant_t *weed_layer_new_from_generator (weed_plant_t *inst, weed_timecode_t tc);

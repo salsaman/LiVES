@@ -598,13 +598,12 @@ static int audio_process (nframes_t nframes, void *arg) {
 		}
 	      }
 
-	      // get back interleaved float fbuffer; rate and channels should match
+	      // get back non-interleaved float fbuffer; rate and channels should match
 
 	      for (i=0;i<jackd->num_output_channels;i++) {
 		if (pl_error) sample_silence_dS(out_buffer[i], nframes);
 		else {
-		  sample_move_float_float(out_buffer[i], fbuffer + i, numFramesToWrite,
-					  jackd->num_output_channels, vol);
+		   lives_memcpy(out_buffer[i],fbuffer+(i*numFramesToWrite),numFramesToWrite*sizeof(float));
 		}
 	      }
 
@@ -684,12 +683,12 @@ static int audio_process (nframes_t nframes, void *arg) {
 		  }
 		  if (jackd->num_output_channels==1) bysize=2;
 		  while (nbytes>0) {
-		    memcpy(xbuf+tsize,inbuf,bysize);
+		    lives_memcpy(xbuf+tsize,inbuf,bysize);
 		    tsize+=bysize;
 		    nbytes-=bysize;
 		    if (bysize==2) {
 		      // duplicate mono channel
-		      memcpy(xbuf+tsize,inbuf,bysize);
+		      lives_memcpy(xbuf+tsize,inbuf,bysize);
 		      tsize+=bysize;
 		      nbytes-=bysize;
 		      inbuf+=bysize;
@@ -748,12 +747,12 @@ static int audio_process (nframes_t nframes, void *arg) {
 		
 		if (jackd->num_output_channels==1) bysize=2;
 		while (nbytes>0) {
-		  memcpy(xbuf+tsize,inbuf,bysize);
+		  lives_memcpy(xbuf+tsize,inbuf,bysize);
 		  tsize+=bysize;
 		  nbytes-=bysize;
 		  if (bysize==2) {
 		    // duplicate mono channel
-		    memcpy(xbuf+tsize,inbuf,bysize);
+		    lives_memcpy(xbuf+tsize,inbuf,bysize);
 		    tsize+=bysize;
 		    nbytes-=bysize;
 		    inbuf+=bysize;

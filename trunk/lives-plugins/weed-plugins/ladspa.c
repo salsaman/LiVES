@@ -169,11 +169,11 @@ int ladspa_init(weed_plant_t *inst) {
   pinc=weed_get_int_value(filter,"plugin_in_channels",&error);
   poutc=weed_get_int_value(filter,"plugin_out_channels",&error);
 
+  sdata->activated_l=sdata->activated_r=WEED_FALSE;
+
   sdata->handle_l=(lad_instantiate_func)(laddes,rate);
   if (pinc==1||poutc==1) sdata->handle_r=(lad_instantiate_func)(laddes,rate);
   else sdata->handle_r=NULL;
-
-  sdata->activated_l=sdata->activated_r=WEED_FALSE;
 
   weed_set_voidptr_value(inst,"plugin_data",sdata);
 
@@ -327,8 +327,6 @@ int ladspa_process (weed_plant_t *inst, weed_timecode_t timestamp) {
     // we asked the host for non-interleaved audio, but just in case...
     if (float_deinterleave(src,nsamps,iinc)!=WEED_NO_ERROR) return WEED_ERROR_HARDWARE;
   }
-
-
 
   laddes=(LADSPA_Descriptor *)weed_get_voidptr_value(filter,"plugin_lad_descriptor",&error);
   lad_connect_port_func=(lad_connect_port_f)weed_get_voidptr_value(filter,"plugin_lad_connect_port_func",&error);

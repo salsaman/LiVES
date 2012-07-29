@@ -79,7 +79,7 @@ weed_plant_t *weed_instance_from_filter(weed_plant_t *filter);
 void weed_instance_ref(weed_plant_t *inst);
 void weed_instance_unref(weed_plant_t *inst);
 void weed_in_parameters_free (weed_plant_t *inst);
-lives_filter_error_t weed_reinit_effect (weed_plant_t *inst, gboolean deinit_first);
+lives_filter_error_t weed_reinit_effect (weed_plant_t *inst);
 void weed_reinit_all(void);
 
 

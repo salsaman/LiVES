@@ -2554,7 +2554,7 @@ void play_file (void) {
 
   // if recording, set up recorder (jack or pulse)
 
-  if (!mainw->foreign&&(mainw->record&&(prefs->rec_opts&REC_EXT_AUDIO||mainw->agen_key!=0))&&
+  if (!mainw->foreign&&(mainw->record&&(prefs->rec_opts&REC_EXT_AUDIO||mainw->agen_key!=0||has_audio_filters(FALSE)))&&
       ((audio_player==AUD_PLAYER_JACK) ||
        (audio_player==AUD_PLAYER_PULSE))) {
     // creat temp clip

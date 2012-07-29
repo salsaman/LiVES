@@ -3979,7 +3979,7 @@ on_record_perf_activate                      (GtkMenuItem     *menuitem,
 
       toggle_record();
 
-      if ((prefs->rec_opts&REC_EXT_AUDIO||((prefs->rec_opts&REC_AUDIO)&&(mainw->agen_key!=0||mainw->agen_needs_reinit)))&&
+      if ((prefs->rec_opts&REC_EXT_AUDIO||((prefs->rec_opts&REC_AUDIO)&&(mainw->agen_key!=0||mainw->agen_needs_reinit||has_audio_filters(FALSE))))&&
 	  ((prefs->audio_player==AUD_PLAYER_JACK) ||
 	   (prefs->audio_player==AUD_PLAYER_PULSE))) {
 	// remove play head and add record head
@@ -9984,7 +9984,7 @@ changed_fps_during_pb           (GtkSpinButton   *spinbutton,
 	!(mainw->record&&!mainw->record_paused&&(prefs->rec_opts&REC_EXT_AUDIO))) {
       
       mainw->jackd->sample_in_rate=cfile->arate*cfile->pb_fps/cfile->fps;
-      if (mainw->agen_key==0&&!mainw->agen_needs_reinit) {
+      if (mainw->agen_key==0&&!mainw->agen_needs_reinit&&!has_audio_filters(FALSE)) {
 	mainw->rec_aclip=mainw->current_file;
 	mainw->rec_avel=cfile->pb_fps/cfile->fps;
 	mainw->rec_aseek=(gdouble)mainw->jackd->seek_pos/(gdouble)(cfile->arate*cfile->achans*cfile->asampsize/8);
@@ -9997,7 +9997,7 @@ changed_fps_during_pb           (GtkSpinButton   *spinbutton,
       !(mainw->record&&!mainw->record_paused&&(prefs->rec_opts&REC_EXT_AUDIO))) {
 
       mainw->pulsed->in_arate=cfile->arate*cfile->pb_fps/cfile->fps;
-      if (mainw->agen_key==0&&!mainw->agen_needs_reinit) {
+      if (mainw->agen_key==0&&!mainw->agen_needs_reinit&&!has_audio_filters(FALSE)) {
 	mainw->rec_aclip=mainw->current_file;
 	mainw->rec_avel=cfile->pb_fps/cfile->fps;
 	mainw->rec_aseek=(gdouble)mainw->pulsed->seek_pos/(gdouble)(cfile->arate*cfile->achans*cfile->asampsize/8);

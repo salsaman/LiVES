@@ -4212,7 +4212,7 @@ void load_frame_image(gint frame) {
       // add blank frame
       weed_plant_t *event=get_last_event(mainw->event_list);
       weed_plant_t *event_list=insert_blank_frame_event_at(mainw->event_list,mainw->currticks,&event);
-      if (mainw->rec_aclip!=-1&&(prefs->rec_opts&REC_AUDIO)&&!mainw->record_starting&&!(prefs->rec_opts&REC_EXT_AUDIO)) {
+      if (mainw->rec_aclip!=-1&&(prefs->rec_opts&REC_AUDIO)&&!mainw->record_starting&&!(prefs->rec_opts&REC_EXT_AUDIO)&&!(has_audio_filters(FALSE))) {
 	// we are recording, and the audio clip changed; add audio
 	if (mainw->event_list==NULL) mainw->event_list=event_list;
 	insert_audio_event_at(mainw->event_list,event,-1,mainw->rec_aclip,mainw->rec_aseek,mainw->rec_avel);
@@ -4245,10 +4245,11 @@ void load_frame_image(gint frame) {
 	      if (jack_try_reconnect()) jack_audio_seek_frame(mainw->jackd,frame);
 	    }
 
-	    mainw->rec_aclip=mainw->current_file;
-	    mainw->rec_avel=cfile->pb_fps/cfile->fps;
-	    mainw->rec_aseek=cfile->aseek_pos/(cfile->arate*cfile->achans*cfile->asampsize/8);
-	    
+	    if (!(mainw->record&&!mainw->record_paused&&has_audio_filters(FALSE))) {
+	      mainw->rec_aclip=mainw->current_file;
+	      mainw->rec_avel=cfile->pb_fps/cfile->fps;
+	      mainw->rec_aseek=cfile->aseek_pos/(cfile->arate*cfile->achans*cfile->asampsize/8);
+	    }
 	  }
 #endif
 #ifdef HAVE_PULSE_AUDIO
@@ -4261,10 +4262,11 @@ void load_frame_image(gint frame) {
 	      else mainw->aplayer_broken=TRUE;
 	    }
 
-	    mainw->rec_aclip=mainw->current_file;
-	    mainw->rec_avel=cfile->pb_fps/cfile->fps;
-	    mainw->rec_aseek=cfile->aseek_pos/(cfile->arate*cfile->achans*cfile->asampsize/8);
-	    
+	    if (!(mainw->record&&!mainw->record_paused&&has_audio_filters(FALSE))) {
+	      mainw->rec_aclip=mainw->current_file;
+	      mainw->rec_avel=cfile->pb_fps/cfile->fps;
+	      mainw->rec_aseek=cfile->aseek_pos/(cfile->arate*cfile->achans*cfile->asampsize/8);
+	    }
 	  }
 #endif
 	}
@@ -5990,11 +5992,13 @@ void do_quick_switch (gint new_file) {
 	    mainw->jackd->is_paused=mainw->files[new_file]->play_paused;
 	    mainw->jackd->is_silent=FALSE;
 	  }
-	    
-	  mainw->rec_aclip=new_file;
-	  mainw->rec_avel=mainw->files[new_file]->pb_fps/mainw->files[new_file]->fps;
-	  mainw->rec_aseek=(gdouble)mainw->files[new_file]->aseek_pos/
-	    (gdouble)(mainw->files[new_file]->arate*mainw->files[new_file]->achans*mainw->files[new_file]->asampsize/8);
+	  
+	  if (!has_audio_filters(FALSE)) {
+	    mainw->rec_aclip=new_file;
+	    mainw->rec_avel=mainw->files[new_file]->pb_fps/mainw->files[new_file]->fps;
+	    mainw->rec_aseek=(gdouble)mainw->files[new_file]->aseek_pos/
+	      (gdouble)(mainw->files[new_file]->arate*mainw->files[new_file]->achans*mainw->files[new_file]->asampsize/8);
+	  }
 	}
       }
       else {
@@ -6083,10 +6087,12 @@ void do_quick_switch (gint new_file) {
 	    mainw->pulsed->is_paused=mainw->files[new_file]->play_paused;
 	  }
 	    
-	  mainw->rec_aclip=new_file;
-	  mainw->rec_avel=mainw->files[new_file]->pb_fps/mainw->files[new_file]->fps;
-	  mainw->rec_aseek=(gdouble)mainw->files[new_file]->aseek_pos/
-	    (gdouble)(mainw->files[new_file]->arate*mainw->files[new_file]->achans*mainw->files[new_file]->asampsize/8);
+	  if (!has_audio_filters(FALSE)) {
+	    mainw->rec_aclip=new_file;
+	    mainw->rec_avel=mainw->files[new_file]->pb_fps/mainw->files[new_file]->fps;
+	    mainw->rec_aseek=(gdouble)mainw->files[new_file]->aseek_pos/
+	      (gdouble)(mainw->files[new_file]->arate*mainw->files[new_file]->achans*mainw->files[new_file]->asampsize/8);
+	  }
 	}
       }
       else {

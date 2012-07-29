@@ -3320,7 +3320,7 @@ static void populate_filter_box(GtkWidget *box, gint ninchans, lives_mt *mt) {
 
   for (i=0;i<nfilts;i++) {
     weed_plant_t *filter=get_weed_filter(i);
-    if (filter!=NULL&&!weed_plant_has_leaf(filter,"host_menu_hide")) {
+    if (filter!=NULL&&!weed_plant_has_leaf(filter,"host_menu_hide")&&!has_audio_chans_in(filter,FALSE)&&!has_audio_chans_out(filter,FALSE)) {
 
       if (enabled_in_channels(filter,TRUE)==ninchans&&enabled_out_channels(filter,FALSE)==1) {
 	if (weed_plant_has_leaf(filter,"plugin_unstable")&&
@@ -6061,7 +6061,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   num_filters=rte_get_numfilters();
   for (i=0;i<num_filters;i++) {
     weed_plant_t *filter=get_weed_filter(i);
-    if (filter!=NULL&&!weed_plant_has_leaf(filter,"host_menu_hide")) {
+    if (filter!=NULL&&!weed_plant_has_leaf(filter,"host_menu_hide")&&!has_audio_chans_in(filter,FALSE)&&!has_audio_chans_out(filter,FALSE)) {
       GtkWidget *menuitem;
       gchar *fname=weed_filter_get_name(i),*fxname;
       if (weed_plant_has_leaf(filter,"plugin_unstable")&&
@@ -13727,6 +13727,8 @@ multitrack_undo            (GtkMenuItem     *menuitem,
     avol_fx=mt->avol_fx;
     mt->avol_fx=-1;
 
+    mt->no_expose=TRUE;
+
     event_list_free(mt->event_list);
     last_undo=(mt_undo *)g_list_nth_data(mt->undos,g_list_length(mt->undos)-1-mt->undo_offset);
     memblock=(unsigned char *)(last_undo)+sizeof(mt_undo);
@@ -13789,7 +13791,7 @@ multitrack_undo            (GtkMenuItem     *menuitem,
 
     if (mt->event_list!=NULL) remove_markers(mt->event_list);
 
-    mt->selected_tracks=g_list_copy(seltracks);
+     mt->selected_tracks=g_list_copy(seltracks);
     slist=mt->selected_tracks;
     while (slist!=NULL) {
       eventbox=(GtkWidget *)g_list_nth_data(mt->video_draws,GPOINTER_TO_INT(slist->data));
@@ -13812,6 +13814,8 @@ multitrack_undo            (GtkMenuItem     *menuitem,
     track_select(mt);
     if (mt->end_secs!=end_secs&&event_list_get_end_secs(mt->event_list)<=end_secs) set_timeline_end_secs (mt, end_secs);
   }
+
+  mt->no_expose=FALSE;
 
   mt->undo_offset++;
 
@@ -13911,6 +13915,8 @@ multitrack_redo            (GtkMenuItem     *menuitem,
     avol_fx=mt->avol_fx;
     mt->avol_fx=-1;
 
+    mt->no_expose=TRUE;
+
     event_list_free(mt->event_list);
 
     memblock=(unsigned char *)(last_redo)+sizeof(mt_undo);
@@ -13996,6 +14002,8 @@ multitrack_redo            (GtkMenuItem     *menuitem,
     track_select(mt);
     if (mt->end_secs!=end_secs&&event_list_get_end_secs(mt->event_list)<=end_secs) set_timeline_end_secs (mt, end_secs);
   }
+
+  mt->no_expose=FALSE;
 
   mt->undo_offset--;
 

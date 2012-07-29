@@ -196,7 +196,7 @@ void lives_osc_notify_failure (void) {
 
 /* unused */
 /*
-void lives_osc_notify_cancel (void) {
+  void lives_osc_notify_cancel (void) {
   if (prefs->omc_noisy);
   lives_osc_notify(LIVES_OSC_NOTIFY_CANCELLED,NULL);
   }*/
@@ -2615,7 +2615,9 @@ static gboolean setfx (weed_plant_t *inst, weed_plant_t *tparam, int pnum, int n
 	}
       }
 
+      pthread_mutex_lock(&mainw->afilter_mutex);
       weed_set_int_array(tparam,"value",nargs,valuesi);
+      pthread_mutex_unlock(&mainw->afilter_mutex);
       g_free(valuesi);
 
       set_copy_to(inst,pnum,TRUE);
@@ -2647,7 +2649,9 @@ static gboolean setfx (weed_plant_t *inst, weed_plant_t *tparam, int pnum, int n
 	x++;
       }
 
+      pthread_mutex_lock(&mainw->afilter_mutex);
       weed_set_boolean_array(tparam,"value",nargs,valuesb);
+      pthread_mutex_unlock(&mainw->afilter_mutex);
       g_free(valuesb);
 
       copyto=set_copy_to(inst,pnum,TRUE);
@@ -2699,7 +2703,9 @@ static gboolean setfx (weed_plant_t *inst, weed_plant_t *tparam, int pnum, int n
 	  if (copyto!=-1) rec_param_change(inst,copyto);
 	}
       }
+      pthread_mutex_lock(&mainw->afilter_mutex);
       weed_set_double_array(tparam,"value",nargs,valuesd);
+      pthread_mutex_unlock(&mainw->afilter_mutex);
       g_free(valuesd);
 
       set_copy_to(inst,pnum,TRUE);
@@ -2747,7 +2753,9 @@ static gboolean setfx (weed_plant_t *inst, weed_plant_t *tparam, int pnum, int n
       }
 
 
+      pthread_mutex_lock(&mainw->afilter_mutex);
       weed_set_string_array(tparam,"value",nargs,valuess);
+      pthread_mutex_unlock(&mainw->afilter_mutex);
       for (i=0;i<x;i++) g_free(valuess[i]);
       g_free(valuess);
 
@@ -2857,7 +2865,9 @@ static gboolean setfx (weed_plant_t *inst, weed_plant_t *tparam, int pnum, int n
 	  }
 	}
 	
+	pthread_mutex_lock(&mainw->afilter_mutex);
 	weed_set_int_array(tparam,"value",nargs,valuesi);
+	pthread_mutex_unlock(&mainw->afilter_mutex);
 	g_free(valuesi);
 	
 	set_copy_to(inst,pnum,TRUE);
@@ -2956,7 +2966,9 @@ static gboolean setfx (weed_plant_t *inst, weed_plant_t *tparam, int pnum, int n
 	    if (copyto!=-1) rec_param_change(inst,copyto);
 	  }
 	}
+	pthread_mutex_lock(&mainw->afilter_mutex);
 	weed_set_double_array(tparam,"value",nargs,valuesd);
+	pthread_mutex_unlock(&mainw->afilter_mutex);
 	g_free(valuesd);
 	
 	set_copy_to(inst,pnum,TRUE);
@@ -3071,133 +3083,137 @@ static gboolean setfx (weed_plant_t *inst, weed_plant_t *tparam, int pnum, int n
 	    if (copyto!=-1) rec_param_change(inst,copyto);
 	  }
 	
-	weed_set_int_array(tparam,"value",nargs,valuesi);
-	g_free(valuesi);
-
-	set_copy_to(inst,pnum,TRUE);
-
-	if (inst!=NULL) {
-	  if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
-	    // if we are recording, add this change to our event_list
-	    rec_param_change(inst,pnum);
-	    if (copyto!=-1) rec_param_change(inst,copyto);
-	  }
-	}
-
-	if (nmins>4) g_free(minis);
-	if (nmaxs>4) g_free(maxis);
-
-      }
-      else {
-	// RGBA, float type
-	double *valuesd=(double *)g_malloc(nargs*sizdbl);
-	int nmins=weed_leaf_num_elements(ptmpl,"min");
-	int nmaxs=weed_leaf_num_elements(ptmpl,"max");
-	double *minds=NULL,*maxds=NULL;
-
-	// get min and max values - 3 possibilities: 1 value, 3 values or N values
-
-	if (nmins==1) {
-	  mind_r=mind_g=mind_b=mind_a=weed_get_double_value(ptmpl,"min",&error);
-	}
-	else {
-	  minds=weed_get_double_array(ptmpl,"min",&error);
-	  if (nmins==4) {
-	    mind_r=minds[0];
-	    mind_g=minds[1];
-	    mind_b=minds[2];
-	    mind_a=minds[3];
-	    weed_free(minds);
-	  }
-	}
-
-	if (nmaxs==1) {
-	  maxd_r=maxd_g=maxd_b=mind_a=weed_get_double_value(ptmpl,"max",&error);
-	}
-	else {
-	  maxds=weed_get_double_array(ptmpl,"max",&error);
-	  if (nmaxs==4) {
-	    maxd_r=maxds[0];
-	    maxd_g=maxds[1];
-	    maxd_b=maxds[2];
-	    maxd_a=maxds[3];
-	    weed_free(maxds);
-	  }
-	}
-
-	// read vals from OSC message
-	while (pattern[x]!=0) {
-
-	  // get next 4 values
-	  for (i=0;i<4;i++) {
-	    if (pattern[x]=='i') {
-	      // we wanted float but we got floats
-	      lives_osc_parse_int_argument(vargs,&valuei);
-	      valuesd[x+i]=(double)valuei;
-	    }
-	    else { 
-	      lives_osc_parse_float_argument(vargs,&valuef);
-	      valuesd[x+i]=(double)valuef;
-	    } 
-	  }
-
-	  if (nmins<=4) {
-	    if (valuesd[x]<mind_r) valuesd[x]=mind_r;
-	    if (valuesd[x+1]<mind_g) valuesd[x+1]=mind_g;
-	    if (valuesd[x+2]<mind_b) valuesd[x+2]=mind_b;
-	    if (valuesd[x+3]<mind_a) valuesd[x+3]=mind_a;
-	  }
-	  else {
-	    if (valuesd[x]<minds[x])   valuesd[x]=minds[x];
-	    if (valuesd[x+1]<minds[x+1]) valuesd[x+1]=minds[x+1];
-	    if (valuesd[x+2]<minds[x+2]) valuesd[x+2]=minds[x+2];
-	    if (valuesd[x+3]<minds[x+3]) valuesd[x+3]=minds[x+3];
-	  }
-
-	  if (nmaxs<=4) {
-	    if (valuesd[x]>maxd_r) valuesd[x]=maxd_r;
-	    if (valuesd[x+1]>maxd_g) valuesd[x+1]=maxd_g;
-	    if (valuesd[x+2]>maxd_b) valuesd[x+2]=maxd_b;
-	    if (valuesd[x+3]>maxd_a) valuesd[x+3]=maxd_a;
-	  }
-	  else {
-	    if (valuesd[x]>maxds[x])   valuesd[x]=maxds[x];
-	    if (valuesd[x+1]>maxds[x+1]) valuesd[x+1]=maxds[x+1];
-	    if (valuesd[x+2]>maxds[x+2]) valuesd[x+2]=maxds[x+2];
-	    if (valuesd[x+3]>maxds[x+3]) valuesd[x+3]=maxds[x+3];
-	  }
-	  x+=4;
-	}
-
-	copyto=set_copy_to(inst,pnum,FALSE);
-
-	if (inst!=NULL) {
-	  if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
-	    // if we are recording, add this change to our event_list
-	    rec_param_change(inst,pnum);
-	    if (copyto!=-1) rec_param_change(inst,copyto);
-	  }
-	}
+	  pthread_mutex_lock(&mainw->afilter_mutex);
+	  weed_set_int_array(tparam,"value",nargs,valuesi);
+	  pthread_mutex_unlock(&mainw->afilter_mutex);
+	  g_free(valuesi);
 	  
-	weed_set_double_array(tparam,"value",nargs,valuesd);
-	g_free(valuesd);
-	
-	set_copy_to(inst,pnum,TRUE);
-
-	if (inst!=NULL) {
-	  if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
-	    // if we are recording, add this change to our event_list
-	    rec_param_change(inst,pnum);
-	    if (copyto!=-1) rec_param_change(inst,copyto);
+	  set_copy_to(inst,pnum,TRUE);
+	  
+	  if (inst!=NULL) {
+	    if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
+	      // if we are recording, add this change to our event_list
+	      rec_param_change(inst,pnum);
+	      if (copyto!=-1) rec_param_change(inst,copyto);
+	    }
 	  }
+
+	  if (nmins>4) g_free(minis);
+	  if (nmaxs>4) g_free(maxis);
+	  
+	}
+	else {
+	  // RGBA, float type
+	  double *valuesd=(double *)g_malloc(nargs*sizdbl);
+	  int nmins=weed_leaf_num_elements(ptmpl,"min");
+	  int nmaxs=weed_leaf_num_elements(ptmpl,"max");
+	  double *minds=NULL,*maxds=NULL;
+
+	  // get min and max values - 3 possibilities: 1 value, 3 values or N values
+
+	  if (nmins==1) {
+	    mind_r=mind_g=mind_b=mind_a=weed_get_double_value(ptmpl,"min",&error);
+	  }
+	  else {
+	    minds=weed_get_double_array(ptmpl,"min",&error);
+	    if (nmins==4) {
+	      mind_r=minds[0];
+	      mind_g=minds[1];
+	      mind_b=minds[2];
+	      mind_a=minds[3];
+	      weed_free(minds);
+	    }
+	  }
+
+	  if (nmaxs==1) {
+	    maxd_r=maxd_g=maxd_b=mind_a=weed_get_double_value(ptmpl,"max",&error);
+	  }
+	  else {
+	    maxds=weed_get_double_array(ptmpl,"max",&error);
+	    if (nmaxs==4) {
+	      maxd_r=maxds[0];
+	      maxd_g=maxds[1];
+	      maxd_b=maxds[2];
+	      maxd_a=maxds[3];
+	      weed_free(maxds);
+	    }
+	  }
+
+	  // read vals from OSC message
+	  while (pattern[x]!=0) {
+
+	    // get next 4 values
+	    for (i=0;i<4;i++) {
+	      if (pattern[x]=='i') {
+		// we wanted float but we got floats
+		lives_osc_parse_int_argument(vargs,&valuei);
+		valuesd[x+i]=(double)valuei;
+	      }
+	      else { 
+		lives_osc_parse_float_argument(vargs,&valuef);
+		valuesd[x+i]=(double)valuef;
+	      } 
+	    }
+
+	    if (nmins<=4) {
+	      if (valuesd[x]<mind_r) valuesd[x]=mind_r;
+	      if (valuesd[x+1]<mind_g) valuesd[x+1]=mind_g;
+	      if (valuesd[x+2]<mind_b) valuesd[x+2]=mind_b;
+	      if (valuesd[x+3]<mind_a) valuesd[x+3]=mind_a;
+	    }
+	    else {
+	      if (valuesd[x]<minds[x])   valuesd[x]=minds[x];
+	      if (valuesd[x+1]<minds[x+1]) valuesd[x+1]=minds[x+1];
+	      if (valuesd[x+2]<minds[x+2]) valuesd[x+2]=minds[x+2];
+	      if (valuesd[x+3]<minds[x+3]) valuesd[x+3]=minds[x+3];
+	    }
+
+	    if (nmaxs<=4) {
+	      if (valuesd[x]>maxd_r) valuesd[x]=maxd_r;
+	      if (valuesd[x+1]>maxd_g) valuesd[x+1]=maxd_g;
+	      if (valuesd[x+2]>maxd_b) valuesd[x+2]=maxd_b;
+	      if (valuesd[x+3]>maxd_a) valuesd[x+3]=maxd_a;
+	    }
+	    else {
+	      if (valuesd[x]>maxds[x])   valuesd[x]=maxds[x];
+	      if (valuesd[x+1]>maxds[x+1]) valuesd[x+1]=maxds[x+1];
+	      if (valuesd[x+2]>maxds[x+2]) valuesd[x+2]=maxds[x+2];
+	      if (valuesd[x+3]>maxds[x+3]) valuesd[x+3]=maxds[x+3];
+	    }
+	    x+=4;
+	  }
+
+	  copyto=set_copy_to(inst,pnum,FALSE);
+
+	  if (inst!=NULL) {
+	    if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
+	      // if we are recording, add this change to our event_list
+	      rec_param_change(inst,pnum);
+	      if (copyto!=-1) rec_param_change(inst,copyto);
+	    }
+	  }
+	  
+	  pthread_mutex_lock(&mainw->afilter_mutex);
+	  weed_set_double_array(tparam,"value",nargs,valuesd);
+	  pthread_mutex_unlock(&mainw->afilter_mutex);
+	  g_free(valuesd);
+	
+	  set_copy_to(inst,pnum,TRUE);
+
+	  if (inst!=NULL) {
+	    if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
+	      // if we are recording, add this change to our event_list
+	      rec_param_change(inst,pnum);
+	      if (copyto!=-1) rec_param_change(inst,copyto);
+	    }
+	  }
+
+	  if (nmins>4) g_free(minds);
+	  if (nmaxs>4) g_free(maxds);
+
 	}
 
-	if (nmins>4) g_free(minds);
-	if (nmaxs>4) g_free(maxds);
-
-      }
-
-      break;
+	break;
       }
 
     default:
@@ -3264,7 +3280,7 @@ void lives_osc_cb_rte_getparamtype(void *context, int arglen, const void *vargs,
 
 
 void lives_osc_cb_rte_getpparamtype(void *context, int arglen, const void *vargs, OSCTimeTag when, 
-				   NetworkReturnAddressPtr ra) {
+				    NetworkReturnAddressPtr ra) {
   // playback plugin params
   weed_plant_t *ptmpl,*param;
   int hint,error;
@@ -3389,7 +3405,7 @@ void lives_osc_cb_rte_getparamcspace(void *context, int arglen, const void *varg
 
 
 void lives_osc_cb_rte_getpparamcspace(void *context, int arglen, const void *vargs, OSCTimeTag when, 
-				     NetworkReturnAddressPtr ra) {
+				      NetworkReturnAddressPtr ra) {
   // playback plugin params
   weed_plant_t *ptmpl,*param;
   int hint,error;
@@ -3514,7 +3530,7 @@ void lives_osc_cb_rte_getparamflags(void *context, int arglen, const void *vargs
 
 
 void lives_osc_cb_rte_getpparamflags(void *context, int arglen, const void *vargs, OSCTimeTag when, 
-				    NetworkReturnAddressPtr ra) {
+				     NetworkReturnAddressPtr ra) {
   weed_plant_t *ptmpl,*param;
   int error;
   int pnum,flags=0;
@@ -3583,7 +3599,7 @@ void lives_osc_cb_rte_getparamname(void *context, int arglen, const void *vargs,
 
 
 void lives_osc_cb_rte_getpparamname(void *context, int arglen, const void *vargs, OSCTimeTag when, 
-				   NetworkReturnAddressPtr ra) {
+				    NetworkReturnAddressPtr ra) {
   weed_plant_t *ptmpl,*param;
   int error;
   int pnum;
@@ -4114,7 +4130,7 @@ void lives_osc_cb_rte_getparamdef(void *context, int arglen, const void *vargs, 
 
 
 void lives_osc_cb_rte_getpparamdef(void *context, int arglen, const void *vargs, OSCTimeTag when, 
-				  NetworkReturnAddressPtr ra) {
+				   NetworkReturnAddressPtr ra) {
   // default for playback plugin param
 
   int pnum,nvals;
@@ -4820,7 +4836,7 @@ static struct
   void	 (*cb)(void *ctx, int len, const void *vargs, OSCTimeTag when,	NetworkReturnAddressPtr ra);
   int		 leave; // leaf
 } osc_methods[] = 
-    {
+  {
     { "/record/enable",		"enable",		lives_osc_record_start,			3	},	
     { "/record/disable",	"disable",		lives_osc_record_stop,			3	},	
     { "/record/toggle",	        "toggle",		lives_osc_record_toggle,			3	},	
@@ -4992,7 +5008,7 @@ static struct
     { "/test",		"",	lives_osc_cb_test,       	500	},
     
     { NULL,					NULL,		NULL,							0	},
-    };
+  };
 
 
 static struct

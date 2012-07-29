@@ -1170,11 +1170,21 @@ gchar *cd_to_plugin_dir(weed_plant_t *filter) {
   return ret;
 }
 
-lives_filter_error_t weed_reinit_effect (weed_plant_t *inst, gboolean deinit_first) {
+lives_filter_error_t weed_reinit_effect (weed_plant_t *inst) {
   weed_plant_t *filter=weed_instance_get_filter(inst);
   gchar *cwd;
+  boolean is_audio=FALSE,deinit_first=FALSE;
+  int error;
 
-  if (deinit_first) weed_call_deinit_func(inst);
+  if (weed_plant_has_leaf(inst,"host_inited")&&weed_get_boolean_value(inst,"host_inited",&error)==WEED_TRUE) deinit_first=TRUE;
+
+  if (deinit_first) {
+    if (has_audio_chans_in(filter,FALSE)||has_audio_chans_out(filter,FALSE)) {
+      pthread_mutex_lock(&mainw->afilter_mutex);
+      is_audio=TRUE;
+    }
+    weed_call_deinit_func(inst);
+  }
 
   if (weed_plant_has_leaf(filter,"init_func")) {
     weed_init_f *init_func_ptr_ptr;
@@ -1187,9 +1197,11 @@ lives_filter_error_t weed_reinit_effect (weed_plant_t *inst, gboolean deinit_fir
       set_param_gui_readwrite(inst);
       update_host_info(inst);
       if ((*init_func)(inst)!=WEED_NO_ERROR) {
+	if (is_audio) pthread_mutex_unlock(&mainw->afilter_mutex);
 	lives_chdir(cwd,FALSE);
 	return FILTER_ERROR_COULD_NOT_REINIT;
       }
+      if (is_audio) pthread_mutex_unlock(&mainw->afilter_mutex);
       set_param_gui_readonly(inst);
       if (fx_dialog[1]!=NULL) {
 	// redraw GUI if necessary
@@ -1205,11 +1217,13 @@ lives_filter_error_t weed_reinit_effect (weed_plant_t *inst, gboolean deinit_fir
 
 
     }
+    weed_set_boolean_value(inst,"host_inited",WEED_TRUE);
     if (!deinit_first) weed_call_deinit_func(inst);
     lives_chdir(cwd,FALSE);
     g_free(cwd);
     return FILTER_INFO_REINITED;
   }
+  weed_set_boolean_value(inst,"host_inited",WEED_TRUE);
   return FILTER_NO_ERROR;
 }
 
@@ -1224,7 +1238,7 @@ void weed_reinit_all(void) {
 	mainw->osc_block=TRUE;
 	if ((instance=key_to_instance[i][key_modes[i]])==NULL) continue;
 	if (enabled_in_channels(instance,FALSE)==0&&enabled_out_channels>0&&!is_pure_audio(instance,FALSE)) continue;
-	weed_reinit_effect(instance,TRUE);
+	weed_reinit_effect(instance);
       }
     }
   }
@@ -2236,7 +2250,7 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
   }
   
   if (needs_reinit) {
-    if ((retval=weed_reinit_effect(inst,TRUE))==FILTER_ERROR_COULD_NOT_REINIT) {
+    if ((retval=weed_reinit_effect(inst))==FILTER_ERROR_COULD_NOT_REINIT) {
       weed_free(in_tracks);
       weed_free(out_tracks);
       weed_free(in_channels);
@@ -2854,6 +2868,7 @@ lives_filter_error_t weed_apply_audio_instance (weed_plant_t *init_event, float 
 	g_free(cwd);
       }
     }
+    weed_set_boolean_value(instance,"host_inited",WEED_TRUE);
     retval=FILTER_INFO_REINITED;
   }
 
@@ -3205,7 +3220,7 @@ void weed_apply_audio_effects_rt(float **abuf, int nchans, int64_t nsamps, gdoub
 	mainw->osc_block=TRUE;
 
 	// filter must not be deinited until we have processed it
-	pthread_mutex_lock(&mainw->afilter_mutex);
+	if (pthread_mutex_trylock(&mainw->afilter_mutex)) continue;
 
 	if ((instance=key_to_instance[i][key_modes[i]])==NULL) {
 	  pthread_mutex_unlock(&mainw->afilter_mutex);
@@ -4443,15 +4458,15 @@ static void weed_free_instance (weed_plant_t *inst) {
 
 void weed_instance_unref(weed_plant_t *inst) {
   int error;
-  int nrefs=weed_get_int_value(inst,"refs",&error)-1;
+  int nrefs=weed_get_int_value(inst,"host_refs",&error)-1;
   if (nrefs==0) weed_free_instance(inst);
-  else weed_set_int_value(inst,"refs",nrefs);
+  else weed_set_int_value(inst,"host_refs",nrefs);
 }
 
 void weed_instance_ref(weed_plant_t *inst) {
   int error;
-  int nrefs=weed_get_int_value(inst,"refs",&error)+1;
-  weed_set_int_value(inst,"refs",nrefs);
+  int nrefs=weed_get_int_value(inst,"host_refs",&error)+1;
+  weed_set_int_value(inst,"host_refs",nrefs);
 }
 
 
@@ -4760,7 +4775,8 @@ static weed_plant_t *weed_create_instance (weed_plant_t *filter, weed_plant_t **
   if (inp!=NULL) weed_set_plantptr_array(inst,"in_parameters",weed_flagset_array_count(inp,TRUE),inp);
   if (outp!=NULL) weed_set_plantptr_array(inst,"out_parameters",weed_flagset_array_count(outp,TRUE),outp);
 
-  weed_set_int_value(inst,"refs",1);
+  weed_set_int_value(inst,"host_refs",1);
+  weed_set_boolean_value(inst,"host_inited",WEED_FALSE);
 
   weed_add_plant_flags(inst,WEED_LEAF_READONLY_PLUGIN);
   return inst;
@@ -4940,6 +4956,7 @@ gboolean weed_init_effect(int hotkey) {
       weed_leaf_get(filter,"init_func",0,(void *)&init_func_ptr_ptr);
       init_func=init_func_ptr_ptr[0];
       set_param_gui_readwrite(new_instance);
+      weed_set_boolean_value(new_instance,"host_inited",WEED_TRUE);
       if (init_func!=NULL&&(error=(*init_func)(new_instance))!=WEED_NO_ERROR) {
 	gint weed_error;
 	gchar *filter_name=weed_get_string_value(filter,"name",&weed_error),*tmp;
@@ -4958,9 +4975,10 @@ gboolean weed_init_effect(int hotkey) {
 	if (is_audio_gen) mainw->agen_needs_reinit=FALSE;
 	return FALSE;
       }
+      set_param_gui_readonly(new_instance);
       g_free(cwd);
     }
-    set_param_gui_readonly(new_instance);
+    weed_set_boolean_value(new_instance,"host_inited",WEED_TRUE);
   }
 
   if (inc_count==0&&outc_count>0&&!is_audio_gen) {
@@ -5090,6 +5108,7 @@ int weed_call_init_func(weed_plant_t *inst) {
        g_free(cwd);
      }
    }
+   weed_set_boolean_value(inst,"host_inited",WEED_TRUE);
    return error;
  }
 
@@ -5112,6 +5131,7 @@ int weed_call_deinit_func(weed_plant_t *instance) {
       g_free(cwd);
     }
   }
+  weed_set_boolean_value(instance,"host_inited",WEED_FALSE);
   return error;
 }
 
@@ -5605,6 +5625,7 @@ gboolean weed_playback_gen_start (void) {
 	    g_free(cwd);
 	  }
 	}
+	weed_set_boolean_value(inst,"host_inited",WEED_TRUE);
       }
       if (error!=WEED_NO_ERROR) {
 	key_to_instance[fg_gen_to_start][key_modes[fg_gen_to_start]]=NULL;

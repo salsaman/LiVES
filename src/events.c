@@ -3117,6 +3117,7 @@ weed_plant_t *process_events (weed_plant_t *next_event, weed_timecode_t curr_tc)
 	  }
 	  set_param_gui_readonly(inst);
 	}
+	weed_set_boolean_value(inst,"host_inited",WEED_TRUE);
       }
       else pchains[key]=NULL;
 
@@ -3599,6 +3600,7 @@ lives_render_error_t render_events (gboolean reset) {
 	  }
 	  set_param_gui_readonly(inst);
 	}
+	weed_set_boolean_value(inst,"host_inited",WEED_TRUE);
 	if (weed_plant_has_leaf(event,"in_parameters")) {
 	  pchains[key]=weed_get_voidptr_array(event,"in_parameters",&weed_error);
 	}

@@ -1055,7 +1055,7 @@ static void check_hidden_gui(weed_plant_t *inst, lives_param_t *param) {
   int error;
   weed_plant_t *wtmpl,*gui;
 
-  if (param->reinit&&(weed_get_int_value(inst,"refs",&error)==2||
+  if (param->reinit&&(weed_get_int_value(inst,"host_refs",&error)==2||
 		      (mainw->multitrack!=NULL&&mainw->multitrack->fx_box!=NULL&&
 		       mt_get_effect_time(mainw->multitrack)>0.))) {
     // effect is running and user is editing the params (or in multitrack at not at fx time 0.)
@@ -1864,13 +1864,13 @@ after_boolean_param_toggled        (GtkToggleButton *togglebutton,
 	if (copyto!=-1) rec_param_change(inst,copyto);
       }
 
-      if (param->reinit||(copyto!=-1&&rfx->params[copyto].reinit)) {
-	weed_reinit_effect((weed_plant_t *)rfx->source,FALSE);
-      }
       disp_string=get_weed_display_string(inst,param_number);
       if (disp_string!=NULL) {
 	gtk_label_set_text(GTK_LABEL(param->widgets[1]),disp_string);
 	weed_free(disp_string);
+      }
+      if (param->reinit||(copyto!=-1&&rfx->params[copyto].reinit)) {
+	weed_reinit_effect(inst);
       }
 
     }
@@ -1989,13 +1989,13 @@ after_param_value_changed           (GtkSpinButton   *spinbutton,
 	if (copyto!=-1) rec_param_change(inst,copyto);
       }
 
-      if (param->reinit||(copyto!=-1&&rfx->params[copyto].reinit)) {
-	weed_reinit_effect((weed_plant_t *)rfx->source,FALSE);
-      }
       disp_string=get_weed_display_string(inst,param_number);
       if (disp_string!=NULL) {
 	gtk_label_set_text(GTK_LABEL(param->widgets[1]),disp_string);
 	weed_free(disp_string);
+      }
+      if (param->reinit||(copyto!=-1&&rfx->params[copyto].reinit)) {
+	weed_reinit_effect(inst);
       }
 
     }
@@ -2186,7 +2186,7 @@ after_param_red_changed           (GtkSpinButton   *spinbutton,
       }
       
       if (param->reinit||(copyto!=-1&&rfx->params[copyto].reinit)) {
-	weed_reinit_effect((weed_plant_t *)rfx->source,FALSE);
+	weed_reinit_effect(inst);
       }
     }
   }
@@ -2255,7 +2255,7 @@ after_param_green_changed           (GtkSpinButton   *spinbutton,
       }
       
       if (param->reinit||(copyto!=-1&&rfx->params[copyto].reinit)) {
-	weed_reinit_effect((weed_plant_t *)rfx->source,FALSE);
+	weed_reinit_effect(inst);
       }
     }
   }
@@ -2323,7 +2323,7 @@ after_param_blue_changed           (GtkSpinButton   *spinbutton,
       }
       
       if (param->reinit||(copyto!=-1&&rfx->params[copyto].reinit)) {
-	weed_reinit_effect((weed_plant_t *)rfx->source,FALSE);
+	weed_reinit_effect(inst);
       }
     }
   }
@@ -2479,7 +2479,7 @@ after_param_text_changed (GtkWidget *textwidget, lives_rfx_t *rfx) {
       }
 
       if (param->reinit||(copyto!=-1&&rfx->params[copyto].reinit)) {
-	weed_reinit_effect((weed_plant_t *)rfx->source,FALSE);
+	weed_reinit_effect(inst);
       }
 
       if (disp_string!=NULL) {
@@ -2562,7 +2562,7 @@ after_string_list_changed (GtkEntry *entry, lives_rfx_t *rfx) {
     
       
       if (param->reinit||(copyto!=-1&&rfx->params[copyto].reinit)) {
-	weed_reinit_effect((weed_plant_t *)rfx->source,FALSE);
+	weed_reinit_effect(inst);
       }
 
       if (disp_string!=NULL) {

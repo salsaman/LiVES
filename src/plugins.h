@@ -373,7 +373,7 @@ typedef struct {
 #define HIDDEN_NEEDS_REINIT (1<<2)
 
   gdouble step_size;
-  gint copy_to;
+  //gint copy_to;
   gboolean transition;
   gboolean reinit;
 
@@ -521,7 +521,7 @@ void rfx_params_store_free (lives_rfx_t *, void **store);
 GList *array_to_string_list (gchar **array, gint offset, gint len);
 
 lives_rfx_t *weed_to_rfx (weed_plant_t *plant, gboolean show_reinits);
-lives_param_t *weed_params_to_rfx(gint npar, weed_plant_t *plant, gboolean show_reinits);
+lives_param_t *weed_params_to_rfx(gint npar, weed_plant_t *instance, gboolean show_reinits);
 
 gchar *plugin_run_param_window(const gchar *get_com, GtkVBox *vbox, lives_rfx_t **ret_rfx);
 

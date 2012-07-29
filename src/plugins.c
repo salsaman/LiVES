@@ -2807,7 +2807,6 @@ void render_fx_get_params (lives_rfx_t *rfx, const gchar *plugin_name, gshort st
     cparam->wrap=FALSE;
     cparam->transition=FALSE;
     cparam->step_size=1.;
-    cparam->copy_to=-1;
     cparam->group=0;
     cparam->max=0.;
     cparam->reinit=FALSE;
@@ -3209,7 +3208,7 @@ gint find_rfx_plugin_by_name (const gchar *name, gshort status) {
 
 
 
-lives_param_t *weed_params_to_rfx(gint npar, weed_plant_t *plant, gboolean show_reinits) {
+lives_param_t *weed_params_to_rfx(gint npar, weed_plant_t *inst, gboolean show_reinits) {
   int i,j;
   lives_param_t *rpar=(lives_param_t *)g_malloc(npar*sizeof(lives_param_t));
   int param_hint;
@@ -3232,7 +3231,7 @@ lives_param_t *weed_params_to_rfx(gint npar, weed_plant_t *plant, gboolean show_
 
   weed_plant_t *chann,*ctmpl;
 
-  wpars=weed_get_plantptr_array(plant,"in_parameters",&error);
+  wpars=weed_get_plantptr_array(inst,"in_parameters",&error);
 
   for (i=0;i<npar;i++) {
     wpar=wpars[i];
@@ -3253,7 +3252,6 @@ lives_param_t *weed_params_to_rfx(gint npar, weed_plant_t *plant, gboolean show_
     rpar[i].interp_func=rpar[i].display_func=NULL;
     rpar[i].hidden=0;
     rpar[i].step_size=1.;
-    rpar[i].copy_to=-1;
     rpar[i].transition=FALSE;
     rpar[i].wrap=FALSE;
     rpar[i].reinit=FALSE;
@@ -3271,33 +3269,12 @@ lives_param_t *weed_params_to_rfx(gint npar, weed_plant_t *plant, gboolean show_
     }
     else rpar[i].multi=PVAL_MULTI_NONE;
 
-    chann=get_enabled_channel(plant,0,TRUE);
+    chann=get_enabled_channel(inst,0,TRUE);
     ctmpl=weed_get_plantptr_value(chann,"template",&error);
 
     if (weed_plant_has_leaf(ctmpl,"is_audio")&&weed_get_boolean_value(ctmpl,"is_audio",&error)==WEED_TRUE) {
       // dont hide multivalued params for audio effects
       rpar[i].hidden=0;
-    }
-
-    param_hint=weed_get_int_value(wtmpl,"hint",&error);
-
-    if (gui!=NULL) {
-      if (weed_plant_has_leaf(gui,"copy_value_to")) {
-	int copyto=weed_get_int_value(gui,"copy_value_to",&error);
-	int param_hint2,flags2=0;
-	weed_plant_t *wtmpl2;
-	if (copyto==i||copyto<0) copyto=-1;
-	if (copyto>-1) {
-	  wtmpl2=weed_get_plantptr_value(wpars[copyto],"template",&error);
-	  if (weed_plant_has_leaf(wtmpl2,"flags")) flags2=weed_get_int_value(wtmpl2,"flags",&error);
-	  param_hint2=weed_get_int_value(wtmpl2,"hint",&error);
-	  if (param_hint==param_hint2&&((flags2&WEED_PARAMETER_VARIABLE_ELEMENTS)||
-					(flags&WEED_PARAMETER_ELEMENT_PER_CHANNEL&&
-					 flags2&WEED_PARAMETER_ELEMENT_PER_CHANNEL)||
-					weed_leaf_num_elements(wtmpl,"default")==
-					weed_leaf_num_elements(wtmpl2,"default"))) rpar[i].copy_to=copyto;
-	}
-      }
     }
 
     rpar[i].dp=0;
@@ -3312,6 +3289,7 @@ lives_param_t *weed_params_to_rfx(gint npar, weed_plant_t *plant, gboolean show_
     else rpar[i].reinit=FALSE;
 
     ///////////////////////////////
+    param_hint=weed_get_int_value(wtmpl,"hint",&error);
 
     switch (param_hint) {
     case WEED_HINT_SWITCH:
@@ -3575,8 +3553,7 @@ lives_param_t *weed_params_to_rfx(gint npar, weed_plant_t *plant, gboolean show_
   }
 
   for (i=0;i<npar;i++) {
-    if (rpar[i].copy_to!=-1) weed_leaf_copy(weed_inst_in_param(plant,rpar[i].copy_to,FALSE),"value",
-					    weed_inst_in_param(plant,i,FALSE),"value");
+    set_copy_to(inst,i,TRUE);
   }
 
   weed_free(wpars);
@@ -3589,18 +3566,20 @@ lives_param_t *weed_params_to_rfx(gint npar, weed_plant_t *plant, gboolean show_
 lives_rfx_t *weed_to_rfx (weed_plant_t *plant, gboolean show_reinits) {
   // return an RFX for a weed effect; set rfx->source to an INSTANCE of the filter
   int error;
-  weed_plant_t *filter;
+  weed_plant_t *filter,*inst;
 
   gchar *string;
   lives_rfx_t *rfx=(lives_rfx_t *)g_malloc(sizeof(lives_rfx_t));
   rfx->is_template=FALSE;
-  if (weed_get_int_value(plant,"type",&error)==WEED_PLANT_FILTER_INSTANCE) 
+  if (weed_get_int_value(plant,"type",&error)==WEED_PLANT_FILTER_INSTANCE) {
     filter=weed_get_plantptr_value(plant,"filter_class",&error);
+    inst=plant;
+  }
   else {
     filter=plant;
-    plant=weed_instance_from_filter(filter);
+    inst=weed_instance_from_filter(filter);
     // init and deinit the effect to allow the plugin to hide parameters, etc.
-    weed_reinit_effect(plant,FALSE);
+    weed_reinit_effect(inst,FALSE);
     rfx->is_template=TRUE;
   }
 
@@ -3617,9 +3596,9 @@ lives_rfx_t *weed_to_rfx (weed_plant_t *plant, gboolean show_reinits) {
   if (!weed_plant_has_leaf(filter,"in_parameter_templates")||
       weed_get_plantptr_value(filter,"in_parameter_templates",&error)==NULL) rfx->num_params=0;
   else rfx->num_params=weed_leaf_num_elements(filter,"in_parameter_templates");
-  if (rfx->num_params>0) rfx->params=weed_params_to_rfx(rfx->num_params,plant,show_reinits);
+  if (rfx->num_params>0) rfx->params=weed_params_to_rfx(rfx->num_params,inst,show_reinits);
   else rfx->params=NULL;
-  rfx->source=(void *)plant;
+  rfx->source=(void *)inst;
   rfx->source_type=LIVES_RFX_SOURCE_WEED;
   rfx->extra=NULL;
   return rfx;

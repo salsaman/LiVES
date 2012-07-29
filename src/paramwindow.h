@@ -65,7 +65,7 @@ void do_onchange_init(lives_rfx_t *rfx);
 
 
 
-void update_weed_color_value(weed_plant_t *param, int pnum, weed_plant_t *copy_to, int c1, int c2, int c3, int c4);
+void update_weed_color_value(weed_plant_t *param, int pnum, int c1, int c2, int c3, int c4);
 
 
 #endif

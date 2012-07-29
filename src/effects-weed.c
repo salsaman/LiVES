@@ -2877,6 +2877,7 @@ lives_filter_error_t weed_apply_audio_instance (weed_plant_t *init_event, float 
 	fvols[i]=fvols[i]*vis[in_tracks[i]+nbtracks];
       }
       weed_set_double_array(in_params[vmaster],"value",nvals,fvols);
+      set_copy_to(instance,vmaster,TRUE);
       weed_free(fvols);
       weed_free(in_params);
       weed_free(in_tracks);
@@ -4938,9 +4939,11 @@ gboolean weed_init_effect(int hotkey) {
       gchar *cwd=cd_to_plugin_dir(filter);
       weed_leaf_get(filter,"init_func",0,(void *)&init_func_ptr_ptr);
       init_func=init_func_ptr_ptr[0];
+      set_param_gui_readwrite(new_instance);
       if (init_func!=NULL&&(error=(*init_func)(new_instance))!=WEED_NO_ERROR) {
 	gint weed_error;
 	gchar *filter_name=weed_get_string_value(filter,"name",&weed_error),*tmp;
+	set_param_gui_readonly(new_instance);
 	d_print ((tmp=g_strdup_printf (_ ("Failed to start instance %s, error code %d\n"),filter_name,error)));
 	g_free(tmp);
 	weed_free(filter_name);
@@ -5080,7 +5083,9 @@ int weed_call_init_func(weed_plant_t *inst) {
      update_host_info(inst);
      if (init_func!=NULL) {
        gchar *cwd=cd_to_plugin_dir(filter);
+       set_param_gui_readwrite(inst);
        error=(*init_func)(inst);
+       set_param_gui_readonly(inst);
        lives_chdir(cwd,FALSE);
        g_free(cwd);
      }
@@ -5593,7 +5598,9 @@ gboolean weed_playback_gen_start (void) {
 	  update_host_info(inst);
 	  if (init_func!=NULL) {
 	    gchar *cwd=cd_to_plugin_dir(filter);
+	    set_param_gui_readwrite(inst);
 	    error=(*init_func)(inst);
+	    set_param_gui_readonly(inst);
 	    lives_chdir(cwd,FALSE);
 	    g_free(cwd);
 	  }
@@ -5968,11 +5975,68 @@ char *get_weed_display_string (weed_plant_t *inst, int pnum) {
 
 
 
+int set_copy_to(weed_plant_t *inst, int pnum, boolean update) {
+  // if we update a plugin in_parameter, evaluate any "copy_value_to"
+  int error;
+  int copyto;
+  boolean copy_ok=FALSE;
+
+  weed_plant_t *gui=NULL;
+
+  weed_plant_t **in_params=weed_get_plantptr_array(inst,"in_parameters",&error);
+  weed_plant_t *in_param=in_params[pnum];
+
+  weed_plant_t *paramtmpl=weed_get_plantptr_value(in_param,"template",&error);
+  int param_hint=weed_get_int_value(paramtmpl,"hint",&error);
+
+  int nparams=weed_leaf_num_elements(inst,"in_parameters");
+
+  if (weed_plant_has_leaf(paramtmpl,"gui")) gui=weed_get_plantptr_value(paramtmpl,"gui",&error);
+
+  if (gui==NULL) return -1;
+
+  if (weed_plant_has_leaf(gui,"copy_value_to")) {
+    int param_hint2,flags2=0;
+    weed_plant_t *paramtmpl2;
+    
+    copyto=weed_get_int_value(gui,"copy_value_to",&error);
+    if (copyto==pnum||copyto<0||copyto>=nparams) {
+      weed_free(in_params);
+      return -1;
+    }
+    paramtmpl2=weed_get_plantptr_value(in_params[copyto],"template",&error);
+    if (weed_plant_has_leaf(paramtmpl2,"flags")) flags2=weed_get_int_value(paramtmpl2,"flags",&error);
+    param_hint2=weed_get_int_value(paramtmpl2,"hint",&error);
+    if (param_hint==param_hint2&&((flags2&WEED_PARAMETER_VARIABLE_ELEMENTS)||
+				  weed_leaf_num_elements(paramtmpl,"default")==
+				  weed_leaf_num_elements(paramtmpl2,"default"))) {
+      copy_ok=TRUE;
+    }
+  }
+
+  if (!copy_ok) {
+    weed_free(in_params);
+    return -1;
+  }
+
+  if (update) weed_leaf_copy(in_params[copyto],"value",in_param,"value");
+  weed_free(in_params);
+  return copyto;
+}
+
+
 void rec_param_change(weed_plant_t *inst, int pnum) {
   int error;
-  weed_timecode_t tc=get_event_timecode(get_last_event(mainw->event_list));
-  int key=weed_get_int_value(inst,"host_hotkey",&error);
-  weed_plant_t *in_param=weed_inst_in_param(inst,pnum,FALSE);
+  weed_timecode_t tc;
+  weed_plant_t *in_param;
+  int key;
+
+  // do not record changes for generators those get recorded to scrap_file or ascrap_file
+  if (enabled_in_channels(inst,FALSE)==0) return;
+
+  tc=get_event_timecode(get_last_event(mainw->event_list));
+  key=weed_get_int_value(inst,"host_hotkey",&error);
+  in_param=weed_inst_in_param(inst,pnum,FALSE);
 
   mainw->event_list=append_param_change_event(mainw->event_list,tc,pnum,in_param,init_events[key],pchains[key]);
 }
@@ -5984,17 +6048,15 @@ void rec_param_change(weed_plant_t *inst, int pnum) {
 
 void weed_set_blend_factor(int hotkey) {
   // mainw->osc_block should be set to TRUE before calling this function !
-  weed_plant_t *inst,*in_param,*in_param2=NULL,*paramtmpl,*paramtmpl2=NULL;
+  weed_plant_t *inst,*in_param,*in_param2=NULL,*paramtmpl;
   int error;
   int vali,mini,maxi;
   double vald,mind,maxd;
   GList *list=NULL;
   int param_hint;
   int copyto=-1;
-  weed_plant_t *gui=NULL;
   weed_plant_t **in_params;
   int pnum;
-  gboolean copy_ok=FALSE;
   weed_timecode_t tc=0;
   gint inc_count;
 
@@ -6009,38 +6071,14 @@ void weed_set_blend_factor(int hotkey) {
 
   in_params=weed_get_plantptr_array(inst,"in_parameters",&error);
   in_param=in_params[pnum];
+  weed_free(in_params);
 
   paramtmpl=weed_get_plantptr_value(in_param,"template",&error);
   param_hint=weed_get_int_value(paramtmpl,"hint",&error);
 
-  if (weed_plant_has_leaf(paramtmpl,"gui")) gui=weed_get_plantptr_value(paramtmpl,"gui",&error);
-
-  if (gui!=NULL) {
-    if (weed_plant_has_leaf(gui,"copy_value_to")) {
-      int param_hint2,flags2=0;
-      weed_plant_t *paramtmpl2;
-      copyto=weed_get_int_value(gui,"copy_value_to",&error);
-      //if (copyto==in_param||copyto<0) copyto=-1;
-      if (copyto>-1) {
-	copy_ok=FALSE;
-	paramtmpl2=weed_get_plantptr_value(in_params[copyto],"template",&error);
-	if (weed_plant_has_leaf(paramtmpl2,"flags")) flags2=weed_get_int_value(paramtmpl2,"flags",&error);
-	param_hint2=weed_get_int_value(paramtmpl2,"hint",&error);
-	if (param_hint==param_hint2&&((flags2&WEED_PARAMETER_VARIABLE_ELEMENTS)||
-				      weed_leaf_num_elements(paramtmpl,"default")==
-				      weed_leaf_num_elements(paramtmpl2,"default"))) {
-	  if (!(flags2&WEED_PARAMETER_REINIT_ON_VALUE_CHANGE)) {
-	    copy_ok=TRUE;
-	  }}}}}
-
-  if (!copy_ok) copyto=-1;
-  else {
-    in_param2=in_params[copyto];
-    paramtmpl2=weed_get_plantptr_value(in_param2,"template",&error);
-  }
-
-  weed_free(in_params);
   inc_count=enabled_in_channels(inst,FALSE);
+
+  copyto=set_copy_to(inst,pnum,FALSE);
 
   if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)&&inc_count>0) {
     tc=get_event_timecode(get_last_event(mainw->event_list));
@@ -6067,23 +6105,6 @@ void weed_set_blend_factor(int hotkey) {
     g_list_free_strings(list);
     g_list_free(list);
 
-    if (copyto>-1) {
-      vali=weed_get_int_value(in_param2,"value",&error);
-      mini=weed_get_int_value(paramtmpl2,"min",&error);
-      maxi=weed_get_int_value(paramtmpl2,"max",&error);
-      
-      weed_set_int_value (in_param2,"value",(int)((gdouble)mini+(mainw->blend_factor/KEYSCALE*(gdouble)(maxi-mini))+.5));
-      vali=weed_get_int_value (in_param2,"value",&error);
-      
-      list=g_list_append(list,g_strdup_printf("%d",vali));
-      list=g_list_append(list,g_strdup_printf("%d",mini));
-      list=g_list_append(list,g_strdup_printf("%d",maxi));
-      update_pwindow(hotkey,copyto,list);
-      g_list_free_strings(list);
-      g_list_free(list);
-    }
-
-
     break;
   case WEED_HINT_FLOAT:
     vald=weed_get_double_value(in_param,"value",&error);
@@ -6100,22 +6121,6 @@ void weed_set_blend_factor(int hotkey) {
     g_list_free_strings(list);
     g_list_free(list);
 
-    if (copyto>-1) {
-      vald=weed_get_double_value(in_param2,"value",&error);
-      mind=weed_get_double_value(paramtmpl2,"min",&error);
-      maxd=weed_get_double_value(paramtmpl2,"max",&error);
-      
-      weed_set_double_value (in_param2,"value",mind+(mainw->blend_factor/KEYSCALE*(maxd-mind)));
-      vald=weed_get_double_value (in_param2,"value",&error);
-      
-      list=g_list_append(list,g_strdup_printf("%.4f",vald));
-      list=g_list_append(list,g_strdup_printf("%.4f",mind));
-      list=g_list_append(list,g_strdup_printf("%.4f",maxd));
-      update_pwindow(hotkey,copyto,list);
-      g_list_free_strings(list);
-      g_list_free(list);
-    }
-
     break;
   case WEED_HINT_SWITCH:
     vali=!!(int)mainw->blend_factor;
@@ -6128,25 +6133,15 @@ void weed_set_blend_factor(int hotkey) {
     g_list_free_strings(list);
     g_list_free(list);
 
-    if (copyto>-1) {
-      vali=!!(int)mainw->blend_factor;
-      weed_set_boolean_value (in_param2,"value",vali);
-      vali=weed_get_boolean_value (in_param2,"value",&error);
-      mainw->blend_factor=(gdouble)vali;
-      
-      list=g_list_append(list,g_strdup_printf("%d",vali));
-      update_pwindow(hotkey,copyto,list);
-      g_list_free_strings(list);
-      g_list_free(list);
-    }
-
     break;
   }
+
+  set_copy_to(inst,pnum,TRUE);
 
   if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)&&inc_count>0) {
     mainw->event_list=append_param_change_event(mainw->event_list,tc,pnum,in_param,init_events[hotkey],pchains[hotkey]);
     if (copyto>-1) {
-      weed_leaf_copy(in_param2,"value",in_param,"value");
+ 
       mainw->event_list=append_param_change_event(mainw->event_list,tc,copyto,in_param2,init_events[hotkey],
 						  pchains[hotkey]);
     }

@@ -226,7 +226,7 @@ weed_plant_t *pconx_get_out_param(int okey, int omode, int opnum) {
 
 
 gboolean pconx_convert_value_data(weed_plant_t *dparam, weed_plant_t *sparam) {
-  // try to convert values of various type, if we succeed, copy the "value" and return TRUE
+  // try to convert values of various type, if we succeed, copy the "value" and return TRUE (if changed -TODO)
   weed_plant_t *dptmpl;
 
   int dtype,stype,nsvals,ndvals,error,dflags;
@@ -407,6 +407,10 @@ void pconx_chain_data(int key, int mode) {
   weed_plant_t *oparam;
   weed_plant_t *inst;
 
+  boolean changed;
+
+  int copyto=-1;
+
   register int i;
 
   if (mainw->is_rendering) {
@@ -426,12 +430,17 @@ void pconx_chain_data(int key, int mode) {
 
     for (i=0;i<nparams;i++) {
       if ((oparam=pconx_get_out_param(key,mode,i))!=NULL) {
-	pconx_convert_value_data(inparams[i],oparam);
+	changed=pconx_convert_value_data(inparams[i],oparam);
 
-	if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)&&
-	    enabled_in_channels(inst,FALSE)>0) {
-	  // if we are recording, add this change to our event_list (unless it is a generator - those get recorded to scrap_file or ascrap_file)
-	  rec_param_change(inst,i);
+	if (changed) {
+	  // TODO *** - only store value if it changed; for int, double or colour, store old value too
+
+	  copyto=set_copy_to(inst,i,TRUE);
+	  if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
+	    // if we are recording, add this change to our event_list
+	    rec_param_change(inst,i);
+	    if (copyto!=-1) rec_param_change(inst,copyto);
+	  }
 	}
 
       }
@@ -789,6 +798,3 @@ boolean cconx_chain_data(int key, int mode) {
   return needs_reinit;
 }
  
-
-
-

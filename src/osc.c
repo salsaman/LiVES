@@ -2553,6 +2553,7 @@ static gboolean setfx (weed_plant_t *inst, weed_plant_t *tparam, int pnum, int n
   int hint,cspace;
   int x=0;
   int skip=2;
+  int copyto=-1;
   int maxi_r=255,maxi_g=255,maxi_b=255,maxi_a=255,mini_r=0,mini_g=0,mini_b=0,mini_a=0,mini,maxi;
   double maxd_r=1.,maxd_g=1.,maxd_b=1.,maxd_a=1.,mind_r=0.,mind_g=0.,mind_b=0.,mind_a=0.,mind,maxd;
   gchar values[OSC_STRING_SIZE];
@@ -2604,20 +2605,26 @@ static gboolean setfx (weed_plant_t *inst, weed_plant_t *tparam, int pnum, int n
 	x++;
       }
 
+      copyto=set_copy_to(inst,pnum,FALSE);
+
       if (inst!=NULL) {
 	if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
 	  // if we are recording, add this change to our event_list
 	  rec_param_change(inst,pnum);
+	  if (copyto!=-1) rec_param_change(inst,copyto);
 	}
       }
 
       weed_set_int_array(tparam,"value",nargs,valuesi);
       g_free(valuesi);
 
+      set_copy_to(inst,pnum,TRUE);
+
       if (inst!=NULL) {
 	if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
 	  // if we are recording, add this change to our event_list
 	  rec_param_change(inst,pnum);
+	  if (copyto!=-1) rec_param_change(inst,copyto);
 	}
       }
 
@@ -2640,20 +2647,16 @@ static gboolean setfx (weed_plant_t *inst, weed_plant_t *tparam, int pnum, int n
 	x++;
       }
 
-      if (inst!=NULL) {
-	if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
-	  // if we are recording, add this change to our event_list
-	  rec_param_change(inst,pnum);
-	}
-      }
-
       weed_set_boolean_array(tparam,"value",nargs,valuesb);
       g_free(valuesb);
 
+      copyto=set_copy_to(inst,pnum,TRUE);
+
       if (inst!=NULL) {
 	if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
 	  // if we are recording, add this change to our event_list
 	  rec_param_change(inst,pnum);
+	  if (copyto!=-1) rec_param_change(inst,copyto);
 	}
       }
       break;
@@ -2687,19 +2690,25 @@ static gboolean setfx (weed_plant_t *inst, weed_plant_t *tparam, int pnum, int n
 	x++;
       }
 
-      if (inst!=NULL) {
-	if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
-	  // if we are recording, add this change to our event_list
-	  rec_param_change(inst,pnum);
-	}
-      }
-      weed_set_double_array(tparam,"value",nargs,valuesd);
-      g_free(valuesd);
+      copyto=set_copy_to(inst,pnum,FALSE);
 
       if (inst!=NULL) {
 	if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
 	  // if we are recording, add this change to our event_list
 	  rec_param_change(inst,pnum);
+	  if (copyto!=-1) rec_param_change(inst,copyto);
+	}
+      }
+      weed_set_double_array(tparam,"value",nargs,valuesd);
+      g_free(valuesd);
+
+      set_copy_to(inst,pnum,TRUE);
+
+      if (inst!=NULL) {
+	if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
+	  // if we are recording, add this change to our event_list
+	  rec_param_change(inst,pnum);
+	  if (copyto!=-1) rec_param_change(inst,copyto);
 	}
       }
       break;
@@ -2737,21 +2746,18 @@ static gboolean setfx (weed_plant_t *inst, weed_plant_t *tparam, int pnum, int n
 	x++;
       }
 
-      if (inst!=NULL) {
-	if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
-	  // if we are recording, add this change to our event_list
-	  rec_param_change(inst,pnum);
-	}
-      }
 
       weed_set_string_array(tparam,"value",nargs,valuess);
       for (i=0;i<x;i++) g_free(valuess[i]);
       g_free(valuess);
 
+      copyto=set_copy_to(inst,pnum,TRUE);
+
       if (inst!=NULL) {
 	if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
 	  // if we are recording, add this change to our event_list
 	  rec_param_change(inst,pnum);
+	  if (copyto!=-1) rec_param_change(inst,copyto);
 	}
       }
       break;
@@ -2841,20 +2847,26 @@ static gboolean setfx (weed_plant_t *inst, weed_plant_t *tparam, int pnum, int n
 	  x+=3;
 	}
 
+	copyto=set_copy_to(inst,pnum,FALSE);
+
 	if (inst!=NULL) {
 	  if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
 	    // if we are recording, add this change to our event_list
 	    rec_param_change(inst,pnum);
+	    if (copyto!=-1) rec_param_change(inst,copyto);
 	  }
 	}
 	
 	weed_set_int_array(tparam,"value",nargs,valuesi);
 	g_free(valuesi);
 	
+	set_copy_to(inst,pnum,TRUE);
+
 	if (inst!=NULL) {
 	  if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
 	    // if we are recording, add this change to our event_list
 	    rec_param_change(inst,pnum);
+	    if (copyto!=-1) rec_param_change(inst,copyto);
 	  }
 	}
 
@@ -2935,19 +2947,25 @@ static gboolean setfx (weed_plant_t *inst, weed_plant_t *tparam, int pnum, int n
 	  x+=3;
 	}
 
+	copyto=set_copy_to(inst,pnum,FALSE);
+
 	if (inst!=NULL) {
 	  if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
 	    // if we are recording, add this change to our event_list
 	    rec_param_change(inst,pnum);
+	    if (copyto!=-1) rec_param_change(inst,copyto);
 	  }
 	}
 	weed_set_double_array(tparam,"value",nargs,valuesd);
 	g_free(valuesd);
 	
+	set_copy_to(inst,pnum,TRUE);
+
 	if (inst!=NULL) {
 	  if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
 	    // if we are recording, add this change to our event_list
 	    rec_param_change(inst,pnum);
+	    if (copyto!=-1) rec_param_change(inst,copyto);
 	  }
 	}
 
@@ -3044,19 +3062,25 @@ static gboolean setfx (weed_plant_t *inst, weed_plant_t *tparam, int pnum, int n
 	  x+=4;
 	}
 
-	if (inst!=NULL) {
-	  if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
-	    // if we are recording, add this change to our event_list
-	    rec_param_change(inst,pnum);
-	  }
-	
-	weed_set_int_array(tparam,"value",nargs,valuesi);
-	g_free(valuesi);
+	copyto=set_copy_to(inst,pnum,FALSE);
 
 	if (inst!=NULL) {
 	  if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
 	    // if we are recording, add this change to our event_list
 	    rec_param_change(inst,pnum);
+	    if (copyto!=-1) rec_param_change(inst,copyto);
+	  }
+	
+	weed_set_int_array(tparam,"value",nargs,valuesi);
+	g_free(valuesi);
+
+	set_copy_to(inst,pnum,TRUE);
+
+	if (inst!=NULL) {
+	  if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
+	    // if we are recording, add this change to our event_list
+	    rec_param_change(inst,pnum);
+	    if (copyto!=-1) rec_param_change(inst,copyto);
 	  }
 	}
 
@@ -3145,20 +3169,26 @@ static gboolean setfx (weed_plant_t *inst, weed_plant_t *tparam, int pnum, int n
 	  x+=4;
 	}
 
+	copyto=set_copy_to(inst,pnum,FALSE);
+
 	if (inst!=NULL) {
 	  if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
 	    // if we are recording, add this change to our event_list
 	    rec_param_change(inst,pnum);
+	    if (copyto!=-1) rec_param_change(inst,copyto);
 	  }
 	}
 	  
 	weed_set_double_array(tparam,"value",nargs,valuesd);
 	g_free(valuesd);
 	
+	set_copy_to(inst,pnum,TRUE);
+
 	if (inst!=NULL) {
 	  if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
 	    // if we are recording, add this change to our event_list
 	    rec_param_change(inst,pnum);
+	    if (copyto!=-1) rec_param_change(inst,copyto);
 	  }
 	}
 

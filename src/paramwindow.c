@@ -359,6 +359,7 @@ static void trans_in_out_pressed(lives_rfx_t *rfx, gboolean in) {
     if (in) weed_set_double_value(tparam,"value",weed_get_double_value(tparamtmpl,"min",&error));
     else weed_set_double_value(tparam,"value",weed_get_double_value(tparamtmpl,"max",&error));
   }
+  set_copy_to(inst,trans,TRUE);
   update_visual_params(rfx,FALSE);
   weed_free(in_params);
 }
@@ -1822,6 +1823,7 @@ after_boolean_param_toggled        (GtkToggleButton *togglebutton,
   gint param_number=GPOINTER_TO_INT (g_object_get_data (G_OBJECT (togglebutton),"param_number"));
   lives_param_t *param=&rfx->params[param_number];
   gboolean old_bool=get_bool_param(param->value),new_bool;
+  int copyto=-1;
 
   if (mainw->block_param_updates) return; // updates are blocked when we update visually
 
@@ -1838,10 +1840,6 @@ after_boolean_param_toggled        (GtkToggleButton *togglebutton,
       int index=0,numvals;
       int *valis;
 
-      if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
-	// if we are recording, add this change to our event_list
-	rec_param_change(inst,param_number);
-      }
 
       if (mainw->multitrack!=NULL&&mainw->multitrack->track_index!=-1&&is_perchannel_multi(rfx,param_number)) 
 	index=mainw->multitrack->track_index;
@@ -1856,10 +1854,17 @@ after_boolean_param_toggled        (GtkToggleButton *togglebutton,
       valis=weed_get_boolean_array(wparam,"value",&error);
       valis[index]=new_bool;
       weed_set_boolean_array(wparam,"value",numvals,valis);
-      if (param->copy_to!=-1) weed_set_boolean_array(weed_inst_in_param(inst,param->copy_to,FALSE),"value",numvals,valis);
+      copyto=set_copy_to(inst,param_number,TRUE);
+
       weed_free(valis);
 
-      if (param->reinit||(param->copy_to!=-1&&rfx->params[param->copy_to].reinit)) {
+      if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
+	// if we are recording, add this change to our event_list
+	rec_param_change(inst,param_number);
+	if (copyto!=-1) rec_param_change(inst,copyto);
+      }
+
+      if (param->reinit||(copyto!=-1&&rfx->params[copyto].reinit)) {
 	weed_reinit_effect((weed_plant_t *)rfx->source,FALSE);
       }
       disp_string=get_weed_display_string(inst,param_number);
@@ -1876,7 +1881,7 @@ after_boolean_param_toggled        (GtkToggleButton *togglebutton,
     while (g_main_context_iteration(NULL,FALSE));
     param->change_blocked=FALSE;
   }
-  if (param->copy_to!=-1) update_visual_params(rfx,FALSE);
+  if (copyto!=-1) update_visual_params(rfx,FALSE);
   if (mainw->multitrack!=NULL&&rfx->status==RFX_STATUS_WEED) {
     activate_mt_preview(mainw->multitrack);
   }
@@ -1892,6 +1897,7 @@ after_param_value_changed           (GtkSpinButton   *spinbutton,
   lives_param_t *param=&rfx->params[param_number];
   gdouble new_double,old_double=0.;
   gint new_int,old_int=0;
+  int copyto=-1;
 
   if (mainw->block_param_updates) return; // updates are blocked when we update visually
 
@@ -1902,6 +1908,8 @@ after_param_value_changed           (GtkSpinButton   *spinbutton,
     // if we are recording, add this (pre)change to our event_list
     // however, we need to use the actual instance and not the one generated for the rte_window
     rec_param_change((weed_plant_t *)rfx->source,param_number);
+    copyto=set_copy_to((weed_plant_t *)rfx->source,param_number,FALSE);
+    if (copyto!=-1) rec_param_change((weed_plant_t *)rfx->source,copyto);
   }
 
   if (param->dp>0) {
@@ -1934,8 +1942,7 @@ after_param_value_changed           (GtkSpinButton   *spinbutton,
 	valds=weed_get_double_array(wparam,"value",&error);
 	valds[index]=new_double;
 	weed_set_double_array(wparam,"value",numvals,valds);
-	if (param->copy_to!=-1) weed_set_double_array(weed_inst_in_param(inst,param->copy_to,FALSE),"value",numvals,valds);
-	
+	copyto=set_copy_to(inst,param_number,TRUE);
 	weed_free(valds);
 
       }
@@ -1964,7 +1971,7 @@ after_param_value_changed           (GtkSpinButton   *spinbutton,
 	valis=weed_get_int_array(wparam,"value",&error);
 	valis[index]=new_int;
 	weed_set_int_array(wparam,"value",numvals,valis);
-	if (param->copy_to!=-1) weed_set_int_array(weed_inst_in_param(inst,param->copy_to,FALSE),"value",numvals,valis);
+	copyto=set_copy_to(inst,param_number,TRUE);
 	weed_free(valis);
       }
     }
@@ -1979,9 +1986,10 @@ after_param_value_changed           (GtkSpinButton   *spinbutton,
       if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
 	// if we are recording, add this change to our event_list
 	rec_param_change(inst,param_number);
+	if (copyto!=-1) rec_param_change(inst,copyto);
       }
 
-      if (param->reinit||(param->copy_to!=-1&&rfx->params[param->copy_to].reinit)) {
+      if (param->reinit||(copyto!=-1&&rfx->params[copyto].reinit)) {
 	weed_reinit_effect((weed_plant_t *)rfx->source,FALSE);
       }
       disp_string=get_weed_display_string(inst,param_number);
@@ -2001,7 +2009,7 @@ after_param_value_changed           (GtkSpinButton   *spinbutton,
     while (g_main_context_iteration(NULL,FALSE));
     param->change_blocked=FALSE;
   }
-  if (param->copy_to!=-1) update_visual_params(rfx,FALSE);
+  if (copyto!=-1) update_visual_params(rfx,FALSE);
   if (mainw->multitrack!=NULL&&rfx->status==RFX_STATUS_WEED) {
     activate_mt_preview(mainw->multitrack);
   }
@@ -2009,7 +2017,7 @@ after_param_value_changed           (GtkSpinButton   *spinbutton,
 }
 
 
-void update_weed_color_value(weed_plant_t *param, int pnum, weed_plant_t *copy_param, int c1, int c2, int c3, int c4) {
+void update_weed_color_value(weed_plant_t *param, int pnum, int c1, int c2, int c3, int c4) {
   int error;
   int cols[4]={c1,c2,c3,c4};
   double colds[4];
@@ -2075,7 +2083,6 @@ void update_weed_color_value(weed_plant_t *param, int pnum, weed_plant_t *copy_p
 	valis[index*3+1]=cols[1];
 	valis[index*3+2]=cols[2];
 	weed_set_int_array(param,"value",numvals,valis);
-	if (copy_param!=NULL) weed_set_int_array(copy_param,"value",numvals,valis);
 	weed_free(valis);
       }
       break;
@@ -2120,12 +2127,12 @@ void update_weed_color_value(weed_plant_t *param, int pnum, weed_plant_t *copy_p
 	valds[index*3+1]=colds[1];
 	valds[index*3+2]=colds[2];
 	weed_set_double_array(param,"value",numvals,valds);
-	if (copy_param!=NULL) weed_set_double_array(copy_param,"value",numvals,valds);
 	weed_free(valds);
       }
     }
     break;
   }
+
 }
 
 
@@ -2138,7 +2145,7 @@ after_param_red_changed           (GtkSpinButton   *spinbutton,
   gint new_red;
   GdkColor colr;
   GtkWidget *cbutton;
-  weed_plant_t *copy_param=NULL;
+  int copyto=-1;
 
   if (mainw->block_param_updates) return; // updates are blocked when we update visually
 
@@ -2146,6 +2153,8 @@ after_param_red_changed           (GtkSpinButton   *spinbutton,
       (prefs->rec_opts&REC_EFFECTS)) {
     // if we are recording, add this change to our event_list
     rec_param_change((weed_plant_t *)rfx->source,param_number);
+    copyto=set_copy_to((weed_plant_t *)rfx->source,param_number,FALSE);
+    if (copyto!=-1) rec_param_change((weed_plant_t *)rfx->source,copyto);
   }
 
   get_colRGB24_param(param->value,&old_value);
@@ -2165,27 +2174,30 @@ after_param_red_changed           (GtkSpinButton   *spinbutton,
     int error;
     weed_plant_t *inst=(weed_plant_t *)rfx->source;
 
-    if (param->copy_to!=-1) copy_param=weed_inst_in_param(inst,param->copy_to,FALSE);
-    if (inst!=NULL&&weed_get_int_value(inst,"type",&error)==WEED_PLANT_FILTER_INSTANCE) 
+    if (inst!=NULL&&weed_get_int_value(inst,"type",&error)==WEED_PLANT_FILTER_INSTANCE)  {
       update_weed_color_value(weed_inst_in_param(inst,param_number,FALSE),param_number,
-			      copy_param,new_red,old_value.green,old_value.blue,0);
+			      new_red,old_value.green,old_value.blue,0);
+      copyto=set_copy_to(inst,param_number,TRUE);
 
-    if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
-      // if we are recording, add this change to our event_list
-      rec_param_change(inst,param_number);
-    }
-
-    if (param->reinit||(param->copy_to!=-1&&rfx->params[param->copy_to].reinit)) {
-      weed_reinit_effect((weed_plant_t *)rfx->source,FALSE);
+      if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
+	// if we are recording, add this change to our event_list
+	rec_param_change(inst,param_number);
+	if (copyto!=-1) rec_param_change(inst,copyto);
+      }
+      
+      if (param->reinit||(copyto!=-1&&rfx->params[copyto].reinit)) {
+	weed_reinit_effect((weed_plant_t *)rfx->source,FALSE);
+      }
     }
   }
+
   if (new_red!=old_value.red&&param->onchange) {
     param->change_blocked=TRUE;
     do_onchange (G_OBJECT (spinbutton), rfx);
     while (g_main_context_iteration(NULL,FALSE));
     param->change_blocked=FALSE;
   }
-  if (param->copy_to!=-1) update_visual_params(rfx,FALSE);
+  if (copyto!=-1) update_visual_params(rfx,FALSE);
   if (mainw->multitrack!=NULL&&rfx->status==RFX_STATUS_WEED) {
     activate_mt_preview(mainw->multitrack);
   }
@@ -2202,7 +2214,7 @@ after_param_green_changed           (GtkSpinButton   *spinbutton,
   gint new_green;
   GdkColor colr;
   GtkWidget *cbutton;
-  weed_plant_t *copy_param=NULL;
+  int copyto=-1;
 
   if (mainw->block_param_updates) return; // updates are blocked when we update visually
 
@@ -2210,6 +2222,8 @@ after_param_green_changed           (GtkSpinButton   *spinbutton,
       (prefs->rec_opts&REC_EFFECTS)) {
     // if we are recording, add this change to our event_list
     rec_param_change((weed_plant_t *)rfx->source,param_number);
+    copyto=set_copy_to((weed_plant_t *)rfx->source,param_number,FALSE);
+    if (copyto!=-1) rec_param_change((weed_plant_t *)rfx->source,copyto);
   }
 
   get_colRGB24_param(param->value,&old_value);
@@ -2228,27 +2242,31 @@ after_param_green_changed           (GtkSpinButton   *spinbutton,
     int error;
     weed_plant_t *inst=(weed_plant_t *)rfx->source;
 
-    if (param->copy_to!=-1) copy_param=weed_inst_in_param(inst,param->copy_to,FALSE);
-    if (inst!=NULL&&weed_get_int_value(inst,"type",&error)==WEED_PLANT_FILTER_INSTANCE) 
+    if (inst!=NULL&&weed_get_int_value(inst,"type",&error)==WEED_PLANT_FILTER_INSTANCE) {
       update_weed_color_value(weed_inst_in_param(inst,param_number,FALSE),
-			      param_number,copy_param,old_value.red,new_green,old_value.blue,0);
+			      param_number,old_value.red,new_green,old_value.blue,0);
 
-    if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
-      // if we are recording, add this change to our event_list
-      rec_param_change(inst,param_number);
-    }
+      copyto=set_copy_to(inst,param_number,TRUE);
 
-    if (param->reinit||(param->copy_to!=-1&&rfx->params[param->copy_to].reinit)) {
-      weed_reinit_effect((weed_plant_t *)rfx->source,FALSE);
+      if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
+	// if we are recording, add this change to our event_list
+	rec_param_change(inst,param_number);
+	if (copyto!=-1) rec_param_change(inst,copyto);
+      }
+      
+      if (param->reinit||(copyto!=-1&&rfx->params[copyto].reinit)) {
+	weed_reinit_effect((weed_plant_t *)rfx->source,FALSE);
+      }
     }
   }
+
   if (new_green!=old_value.green&&param->onchange) {
     param->change_blocked=TRUE;
     do_onchange (G_OBJECT (spinbutton), rfx);
     while (g_main_context_iteration(NULL,FALSE));
     param->change_blocked=FALSE;
   }
-  if (param->copy_to!=-1) update_visual_params(rfx,FALSE);
+  if (copyto!=-1) update_visual_params(rfx,FALSE);
   if (mainw->multitrack!=NULL&&rfx->status==RFX_STATUS_WEED) {
     activate_mt_preview(mainw->multitrack);
   }
@@ -2264,7 +2282,7 @@ after_param_blue_changed           (GtkSpinButton   *spinbutton,
   gint new_blue;
   GdkColor colr;
   GtkWidget *cbutton;
-  weed_plant_t *copy_param=NULL;
+  int copyto=-1;
 
   if (mainw->block_param_updates) return; // updates are blocked when we update visually
 
@@ -2272,6 +2290,8 @@ after_param_blue_changed           (GtkSpinButton   *spinbutton,
       (prefs->rec_opts&REC_EFFECTS)) {
     // if we are recording, add this change to our event_list
     rec_param_change((weed_plant_t *)rfx->source,param_number);
+    copyto=set_copy_to((weed_plant_t *)rfx->source,param_number,FALSE);
+    if (copyto!=-1) rec_param_change((weed_plant_t *)rfx->source,copyto);
   }
 
   get_colRGB24_param(param->value,&old_value);
@@ -2291,27 +2311,30 @@ after_param_blue_changed           (GtkSpinButton   *spinbutton,
     int error;
     weed_plant_t *inst=(weed_plant_t *)rfx->source;
 
-    if (param->copy_to!=-1) copy_param=weed_inst_in_param(inst,param->copy_to,FALSE);
-    if (inst!=NULL&&weed_get_int_value(inst,"type",&error)==WEED_PLANT_FILTER_INSTANCE) 
-      update_weed_color_value(weed_inst_in_param(inst,param_number,FALSE),param_number,copy_param,
+    if (inst!=NULL&&weed_get_int_value(inst,"type",&error)==WEED_PLANT_FILTER_INSTANCE) {
+      update_weed_color_value(weed_inst_in_param(inst,param_number,FALSE),param_number,
 			      old_value.red,old_value.green,new_blue,0);
+      copyto=set_copy_to(inst,param_number,TRUE);
 
-    if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
-      // if we are recording, add this change to our event_list
-      rec_param_change(inst,param_number);
-    }
-
-    if (param->reinit||(param->copy_to!=-1&&rfx->params[param->copy_to].reinit)) {
-      weed_reinit_effect((weed_plant_t *)rfx->source,FALSE);
+      if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
+	// if we are recording, add this change to our event_list
+	rec_param_change(inst,param_number);
+	if (copyto!=-1) rec_param_change(inst,copyto);
+      }
+      
+      if (param->reinit||(copyto!=-1&&rfx->params[copyto].reinit)) {
+	weed_reinit_effect((weed_plant_t *)rfx->source,FALSE);
+      }
     }
   }
+
   if (new_blue!=old_value.blue&&param->onchange) {
     param->change_blocked=TRUE;
     do_onchange (G_OBJECT (spinbutton), rfx);
     while (g_main_context_iteration(NULL,FALSE));
     param->change_blocked=FALSE;
   }
-  if (param->copy_to!=-1) update_visual_params(rfx,FALSE);
+  if (copyto!=-1) update_visual_params(rfx,FALSE);
   if (mainw->multitrack!=NULL&&rfx->status==RFX_STATUS_WEED) {
     activate_mt_preview(mainw->multitrack);
   }
@@ -2327,6 +2350,7 @@ after_param_alpha_changed           (GtkSpinButton   *spinbutton,
   lives_param_t *param=&rfx->params[param_number];
   lives_colRGBA32_t old_value;
   gint new_alpha=gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(spinbutton));
+  int copyto=-1;
 
   if (mainw->block_param_updates) return; // updates are blocked when we update visually
 
@@ -2334,6 +2358,8 @@ after_param_alpha_changed           (GtkSpinButton   *spinbutton,
       (prefs->rec_opts&REC_EFFECTS)) {
     // if we are recording, add this change to our event_list
     rec_param_change((weed_plant_t *)rfx->source,param_number);
+    copyto=set_copy_to((weed_plant_t *)rfx->source,param_number,FALSE);
+    if (copyto!=-1) rec_param_change((weed_plant_t *)rfx->source,copyto);
   }
 
   get_colRGBA32_param(param->value,&old_value);
@@ -2347,6 +2373,7 @@ after_param_alpha_changed           (GtkSpinButton   *spinbutton,
       (prefs->rec_opts&REC_EFFECTS)) {
     // if we are recording, add this change to our event_list
     rec_param_change((weed_plant_t *)rfx->source,param_number);
+    if (copyto!=-1) rec_param_change((weed_plant_t *)rfx->source,copyto);
   }
 
 
@@ -2401,6 +2428,7 @@ after_param_text_changed (GtkWidget *textwidget, lives_rfx_t *rfx) {
   gint param_number=GPOINTER_TO_INT (g_object_get_data (G_OBJECT (textwidget),"param_number"));
   lives_param_t *param=&rfx->params[param_number];
   gchar *old_text=(gchar *)param->value;
+  int copyto=-1;
 
   if (mainw->block_param_updates) return; // updates are blocked when we update visually
 
@@ -2440,16 +2468,17 @@ after_param_text_changed (GtkWidget *textwidget, lives_rfx_t *rfx) {
       valss=weed_get_string_array(wparam,"value",&error);
       valss[index]=g_strdup((gchar *)param->value);
       weed_set_string_array(wparam,"value",numvals,valss);
-      if (param->copy_to!=-1) weed_set_string_array(weed_inst_in_param(inst,param->copy_to,FALSE),"value",numvals,valss);
+      copyto=set_copy_to(inst,param_number,TRUE);
       for (i=0;i<numvals;i++) weed_free(valss[i]);
       weed_free(valss);
 
       if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
 	// if we are recording, add this change to our event_list
 	rec_param_change(inst,param_number);
+	if (copyto!=-1) rec_param_change(inst,copyto);
       }
 
-      if (param->reinit||(param->copy_to!=-1&&rfx->params[param->copy_to].reinit)) {
+      if (param->reinit||(copyto!=-1&&rfx->params[copyto].reinit)) {
 	weed_reinit_effect((weed_plant_t *)rfx->source,FALSE);
       }
 
@@ -2476,7 +2505,7 @@ after_param_text_changed (GtkWidget *textwidget, lives_rfx_t *rfx) {
     param->change_blocked=FALSE;
   }
   g_free (old_text);
-  if (param->copy_to!=-1) update_visual_params(rfx,FALSE);
+  if (copyto!=-1) update_visual_params(rfx,FALSE);
   if (mainw->multitrack!=NULL&&rfx->status==RFX_STATUS_WEED) {
     activate_mt_preview(mainw->multitrack);
   }
@@ -2491,6 +2520,7 @@ after_string_list_changed (GtkEntry *entry, lives_rfx_t *rfx) {
   lives_param_t *param=&rfx->params[param_number];
   gint old_index=get_int_param(param->value);
   gint new_index=lives_list_index(param->list,gtk_entry_get_text(entry));
+  int copyto=-1;
 
   if (mainw->block_param_updates) return; // updates are blocked when we update visually
 
@@ -2509,11 +2539,6 @@ after_string_list_changed (GtkEntry *entry, lives_rfx_t *rfx) {
       int index=0,numvals;
       int *valis;
 
-      if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
-      // if we are recording, add this change to our event_list
-	rec_param_change(inst,param_number);
-      }
-    
       if (mainw->multitrack!=NULL&&mainw->multitrack->track_index!=-1&&is_perchannel_multi(rfx,param_number)) 
 	index=mainw->multitrack->track_index;
       numvals=weed_leaf_num_elements(wparam,"value");
@@ -2526,10 +2551,17 @@ after_string_list_changed (GtkEntry *entry, lives_rfx_t *rfx) {
       valis=weed_get_int_array(wparam,"value",&error);
       valis[index]=new_index;
       weed_set_int_array(wparam,"value",numvals,valis);
-      if (param->copy_to!=-1) weed_set_int_array(weed_inst_in_param(inst,param->copy_to,FALSE),"value",numvals,valis);
+      copyto=set_copy_to(inst,param_number,TRUE);
       weed_free(valis);
+
+     if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
+      // if we are recording, add this change to our event_list
+	rec_param_change(inst,param_number);
+	if (copyto!=-1) rec_param_change(inst,copyto);
+      }
+    
       
-      if (param->reinit||(param->copy_to!=-1&&rfx->params[param->copy_to].reinit)) {
+      if (param->reinit||(copyto!=-1&&rfx->params[copyto].reinit)) {
 	weed_reinit_effect((weed_plant_t *)rfx->source,FALSE);
       }
 
@@ -2549,7 +2581,7 @@ after_string_list_changed (GtkEntry *entry, lives_rfx_t *rfx) {
     while (g_main_context_iteration(NULL,FALSE));
     param->change_blocked=FALSE;
   }
-  if (param->copy_to!=-1) update_visual_params(rfx,FALSE);
+  if (copyto!=-1) update_visual_params(rfx,FALSE);
   if (mainw->multitrack!=NULL&&rfx->status==RFX_STATUS_WEED) {
     activate_mt_preview(mainw->multitrack);
   }

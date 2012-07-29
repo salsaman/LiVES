@@ -3827,7 +3827,6 @@ gboolean script_to_rfxbuilder (rfx_build_window_t *rfxbuilder, const gchar *scri
       rfxbuilder->params[i].step_size=1.;
       rfxbuilder->params[i].interp_func=rfxbuilder->params[i].display_func=NULL;
       rfxbuilder->params[i].hidden=FALSE;
-      rfxbuilder->params[i].copy_to=-1;
       rfxbuilder->params[i].transition=FALSE;
       rfxbuilder->params[i].wrap=FALSE;
       ////////////////

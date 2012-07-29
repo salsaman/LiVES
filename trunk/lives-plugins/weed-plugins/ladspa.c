@@ -201,7 +201,6 @@ int ladspa_init(weed_plant_t *inst) {
     }
   }
 
-
   return WEED_NO_ERROR;
 
 }
@@ -356,7 +355,7 @@ int ladspa_process (weed_plant_t *inst, weed_timecode_t timestamp) {
       }
     }
 
-    if (ioutc>0) {
+    if (ioutc>0||iinc>0) {
       // the second instance out channel is unconnected; we need to connect it to the second lad instance
 
       // if we have an unconnected (second) in channel, we connect it here; otherwise we connect both input ports again
@@ -564,7 +563,7 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
     int cninps,cnoutps;
     int stcount;
 
-    int pflags,dual;
+    int dual;
 
     register int i;
 
@@ -615,7 +614,6 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 	num_plugins=0;
 
 	while ((laddes=((*lad_descriptor_func)(num_plugins))) != NULL) {
-	  pflags=0;
 
 	  if ((lad_instantiate_func=laddes->instantiate)==NULL) {
 	    continue;
@@ -636,7 +634,6 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 
 	  //fprintf(stderr,"2checking %s : %ld\n",plug1,num_plugins);
 	  ladprop=laddes->Properties;
-	  if (!(ladprop&LADSPA_PROPERTY_INPLACE_BROKEN)) pflags|=WEED_CHANNEL_CAN_DO_INPLACE;
 
 	  ninps=noutps=ninchs=noutchs=0;
 
@@ -762,6 +759,7 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 	    out_chantmpls[1]=NULL;
 	    if (!dual||onoutchs!=1) weed_set_int_value(out_chantmpls[0],"audio_channels",noutchs);
 	    weed_set_boolean_value(out_chantmpls[0],"audio_interleaf",WEED_FALSE);
+	    if (oninchs==onoutchs&&!(ladprop&LADSPA_PROPERTY_INPLACE_BROKEN)) weed_set_int_value(out_chantmpls[0],"flags",WEED_CHANNEL_CAN_DO_INPLACE);
 	  }
 	  else out_chantmpls=NULL;
 
@@ -943,7 +941,7 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 
 	  snprintf(weed_name,PATH_MAX,"LADSPA: %s",laddes->Name);
 
-	  filter_class=weed_filter_class_init(weed_name,laddes->Maker,0,pflags,&ladspa_init,&ladspa_process,&ladspa_deinit,
+	  filter_class=weed_filter_class_init(weed_name,laddes->Maker,0,0,&ladspa_init,&ladspa_process,&ladspa_deinit,
 					      in_chantmpls,out_chantmpls,in_params,out_params);
 	
 	  weed_set_voidptr_value(filter_class,"plugin_lad_descriptor",laddes);

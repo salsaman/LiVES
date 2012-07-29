@@ -259,7 +259,9 @@ gboolean pconx_convert_value_data(weed_plant_t *dparam, weed_plant_t *sparam) {
   if ((dtype=weed_leaf_seed_type(dparam,"value"))==(stype=weed_leaf_seed_type(sparam,"value")) &&
       nsvals==ndvals) {
     // values of same type and number, -> simpĺe copy
+    pthread_mutex_lock(&mainw->afilter_mutex);
     weed_leaf_copy(dparam,"value",sparam,"value");
+    pthread_mutex_unlock(&mainw->afilter_mutex);
     return TRUE;
   }
 

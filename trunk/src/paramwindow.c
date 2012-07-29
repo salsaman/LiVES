@@ -351,6 +351,7 @@ static void trans_in_out_pressed(lives_rfx_t *rfx, gboolean in) {
   weed_plant_t *tparamtmpl=weed_get_plantptr_value(tparam,"template",&error);
   int hint=weed_get_int_value(tparamtmpl,"hint",&error);
 
+  pthread_mutex_lock(&mainw->afilter_mutex);
   if (hint==WEED_HINT_INTEGER) {
     if (in) weed_set_int_value(tparam,"value",weed_get_int_value(tparamtmpl,"min",&error));
     else weed_set_int_value(tparam,"value",weed_get_int_value(tparamtmpl,"max",&error));
@@ -359,6 +360,7 @@ static void trans_in_out_pressed(lives_rfx_t *rfx, gboolean in) {
     if (in) weed_set_double_value(tparam,"value",weed_get_double_value(tparamtmpl,"min",&error));
     else weed_set_double_value(tparam,"value",weed_get_double_value(tparamtmpl,"max",&error));
   }
+  pthread_mutex_unlock(&mainw->afilter_mutex);
   set_copy_to(inst,trans,TRUE);
   update_visual_params(rfx,FALSE);
   weed_free(in_params);
@@ -1853,7 +1855,9 @@ after_boolean_param_toggled        (GtkToggleButton *togglebutton,
 
       valis=weed_get_boolean_array(wparam,"value",&error);
       valis[index]=new_bool;
+      pthread_mutex_lock(&mainw->afilter_mutex);
       weed_set_boolean_array(wparam,"value",numvals,valis);
+      pthread_mutex_unlock(&mainw->afilter_mutex);
       copyto=set_copy_to(inst,param_number,TRUE);
 
       weed_free(valis);
@@ -1941,7 +1945,9 @@ after_param_value_changed           (GtkSpinButton   *spinbutton,
 	
 	valds=weed_get_double_array(wparam,"value",&error);
 	valds[index]=new_double;
+	pthread_mutex_lock(&mainw->afilter_mutex);
 	weed_set_double_array(wparam,"value",numvals,valds);
+	pthread_mutex_unlock(&mainw->afilter_mutex);
 	copyto=set_copy_to(inst,param_number,TRUE);
 	weed_free(valds);
 
@@ -1970,7 +1976,9 @@ after_param_value_changed           (GtkSpinButton   *spinbutton,
 	
 	valis=weed_get_int_array(wparam,"value",&error);
 	valis[index]=new_int;
+	pthread_mutex_lock(&mainw->afilter_mutex);
 	weed_set_int_array(wparam,"value",numvals,valis);
+	pthread_mutex_unlock(&mainw->afilter_mutex);
 	copyto=set_copy_to(inst,param_number,TRUE);
 	weed_free(valis);
       }
@@ -2467,7 +2475,9 @@ after_param_text_changed (GtkWidget *textwidget, lives_rfx_t *rfx) {
       
       valss=weed_get_string_array(wparam,"value",&error);
       valss[index]=g_strdup((gchar *)param->value);
+      pthread_mutex_lock(&mainw->afilter_mutex);
       weed_set_string_array(wparam,"value",numvals,valss);
+      pthread_mutex_unlock(&mainw->afilter_mutex);
       copyto=set_copy_to(inst,param_number,TRUE);
       for (i=0;i<numvals;i++) weed_free(valss[i]);
       weed_free(valss);
@@ -2550,7 +2560,9 @@ after_string_list_changed (GtkEntry *entry, lives_rfx_t *rfx) {
       
       valis=weed_get_int_array(wparam,"value",&error);
       valis[index]=new_index;
+      pthread_mutex_lock(&mainw->afilter_mutex);
       weed_set_int_array(wparam,"value",numvals,valis);
+      pthread_mutex_unlock(&mainw->afilter_mutex);
       copyto=set_copy_to(inst,param_number,TRUE);
       weed_free(valis);
 

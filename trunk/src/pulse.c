@@ -502,7 +502,7 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
 	     }
 	   }
 
-	   if (has_audio_filters(FALSE)&&pulsed->playing_file!=mainw->ascrap_file) {
+	   if (has_audio_filters(FALSE)&&(pulsed->playing_file!=mainw->ascrap_file||(mainw->agen_key==0&&!mainw->agen_needs_reinit))) {
 	     boolean memok=TRUE;
 	     float **fltbuf=(float **)g_malloc(pulsed->out_achans*sizeof(float *));
 	     register int i;

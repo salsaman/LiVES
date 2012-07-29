@@ -1283,7 +1283,7 @@ void jack_rec_audio_to_clip(gint fileno, gint old_file, lives_rec_audio_type_t r
     save_clip_value(fileno,CLIP_DETAILS_AENDIAN,&aendian);
     save_clip_value(fileno,CLIP_DETAILS_ASIGNED,&asigned);
 
-    }
+  }
   else {
     gint out_bendian=outfile->signed_endian&AFORM_BIG_ENDIAN;
 
@@ -1949,7 +1949,7 @@ gboolean resync_audio(gint frameno) {
 	if (jack_try_reconnect()) jack_audio_seek_frame(mainw->jackd,frameno);
       }
 
-      if (mainw->agen_key==0&&!mainw->agen_needs_reinit) {
+      if (mainw->agen_key==0&&!mainw->agen_needs_reinit&&!has_audio_filters(FALSE)) {
 	mainw->rec_aclip=mainw->current_file;
 	mainw->rec_avel=cfile->pb_fps/cfile->fps;
 	mainw->rec_aseek=(gdouble)mainw->jackd->seek_pos/(gdouble)(cfile->arate*cfile->achans*cfile->asampsize/8);
@@ -1966,7 +1966,7 @@ gboolean resync_audio(gint frameno) {
       if (!pulse_audio_seek_frame(mainw->pulsed,frameno)) {
 	if (pulse_try_reconnect()) pulse_audio_seek_frame(mainw->pulsed,frameno);
       }
-      if (mainw->agen_key==0&&!mainw->agen_needs_reinit) {
+      if (mainw->agen_key==0&&!mainw->agen_needs_reinit&&!has_audio_filters(FALSE)) {
 	mainw->rec_aclip=mainw->current_file;
 	mainw->rec_avel=cfile->pb_fps/cfile->fps;
 	mainw->rec_aseek=(gdouble)mainw->pulsed->seek_pos/(gdouble)(cfile->arate*cfile->achans*cfile->asampsize/8);

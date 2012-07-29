@@ -2414,7 +2414,6 @@ static lives_filter_error_t weed_apply_audio_instance_inner (weed_plant_t *inst,
   gboolean inplace=FALSE;
   weed_process_f *process_func_ptr_ptr;
   weed_process_f process_func;
-  weed_plant_t *def_channel=NULL;
   lives_filter_error_t retval=FILTER_NO_ERROR;
   int *mand;
   int channel_flags;
@@ -2588,7 +2587,7 @@ static lives_filter_error_t weed_apply_audio_instance_inner (weed_plant_t *inst,
     chantmpl=weed_get_plantptr_value(channel,"template",&error);
     channel_flags=weed_get_int_value(chantmpl,"flags",&error);
     
-    if (def_channel!=NULL&&i==0&&(in_tracks[0]==out_tracks[0])) {
+    if (i==0&&(in_tracks[0]==out_tracks[0])) {
       if (channel_flags&WEED_CHANNEL_CAN_DO_INPLACE) {
 	// ah, good, inplace
 	inplace=TRUE;
@@ -2891,7 +2890,9 @@ lives_filter_error_t weed_apply_audio_instance (weed_plant_t *init_event, float 
       for (i=0;i<nvals;i++) {
 	fvols[i]=fvols[i]*vis[in_tracks[i]+nbtracks];
       }
+      pthread_mutex_lock(&mainw->afilter_mutex);
       weed_set_double_array(in_params[vmaster],"value",nvals,fvols);
+      pthread_mutex_unlock(&mainw->afilter_mutex);
       set_copy_to(instance,vmaster,TRUE);
       weed_free(fvols);
       weed_free(in_params);
@@ -6040,7 +6041,11 @@ int set_copy_to(weed_plant_t *inst, int pnum, boolean update) {
     return -1;
   }
 
-  if (update) weed_leaf_copy(in_params[copyto],"value",in_param,"value");
+  if (update) {
+    pthread_mutex_lock(&mainw->afilter_mutex);
+    weed_leaf_copy(in_params[copyto],"value",in_param,"value");
+    pthread_mutex_unlock(&mainw->afilter_mutex);
+  }
   weed_free(in_params);
   return copyto;
 }
@@ -6116,7 +6121,9 @@ void weed_set_blend_factor(int hotkey) {
     mini=weed_get_int_value(paramtmpl,"min",&error);
     maxi=weed_get_int_value(paramtmpl,"max",&error);
 
+    pthread_mutex_lock(&mainw->afilter_mutex);
     weed_set_int_value (in_param,"value",(int)((gdouble)mini+(mainw->blend_factor/KEYSCALE*(gdouble)(maxi-mini))+.5));
+    pthread_mutex_unlock(&mainw->afilter_mutex);
     vali=weed_get_int_value (in_param,"value",&error);
 
     list=g_list_append(list,g_strdup_printf("%d",vali));
@@ -6132,7 +6139,9 @@ void weed_set_blend_factor(int hotkey) {
     mind=weed_get_double_value(paramtmpl,"min",&error);
     maxd=weed_get_double_value(paramtmpl,"max",&error);
 
+    pthread_mutex_lock(&mainw->afilter_mutex);
     weed_set_double_value (in_param,"value",mind+(mainw->blend_factor/KEYSCALE*(maxd-mind)));
+    pthread_mutex_unlock(&mainw->afilter_mutex);
     vald=weed_get_double_value (in_param,"value",&error);
 
     list=g_list_append(list,g_strdup_printf("%.4f",vald));
@@ -6145,7 +6154,9 @@ void weed_set_blend_factor(int hotkey) {
     break;
   case WEED_HINT_SWITCH:
     vali=!!(int)mainw->blend_factor;
+    pthread_mutex_lock(&mainw->afilter_mutex);
     weed_set_boolean_value (in_param,"value",vali);
+    pthread_mutex_unlock(&mainw->afilter_mutex);
     vali=weed_get_boolean_value (in_param,"value",&error);
     mainw->blend_factor=(gdouble)vali;
 

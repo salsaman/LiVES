@@ -1704,7 +1704,7 @@ void rte_set_key_defs (GtkButton *button, lives_rfx_t *rfx) {
 
 void rte_set_defs_ok (GtkButton *button, lives_rfx_t *rfx) {
   int i;
-  weed_plant_t **ptmpls,*filter,*copy_param=NULL;
+  weed_plant_t **ptmpls,*filter;
   int error;
   lives_colRGB24_t *rgbp;
 
@@ -1717,9 +1717,7 @@ void rte_set_defs_ok (GtkButton *button, lives_rfx_t *rfx) {
       switch (rfx->params[i].type) {
       case LIVES_PARAM_COLRGB24:
 	rgbp=(lives_colRGB24_t *)rfx->params[i].value;
-	if (rfx->params[i].copy_to!=-1) copy_param=weed_inst_in_param((weed_plant_t *)rfx->source,
-								      rfx->params[i].copy_to,FALSE);
-	update_weed_color_value(ptmpls[i],i,copy_param,rgbp->red,rgbp->green,rgbp->blue,0);
+	update_weed_color_value(ptmpls[i],i,rgbp->red,rgbp->green,rgbp->blue,0);
 	break;
       case LIVES_PARAM_STRING:
 	weed_set_string_value(ptmpls[i],"host_default",(gchar *)rfx->params[i].value);

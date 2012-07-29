@@ -152,6 +152,8 @@ int ladspa_init(weed_plant_t *inst) {
   int rate=0;
   int pinc,poutc;
 
+  register int i;
+
   sdata=(_sdata *)weed_malloc(sizeof(_sdata));
   if (sdata==NULL) {
     return WEED_ERROR_MEMORY_ALLOCATION;
@@ -174,6 +176,31 @@ int ladspa_init(weed_plant_t *inst) {
   sdata->activated_l=sdata->activated_r=WEED_FALSE;
 
   weed_set_voidptr_value(inst,"plugin_data",sdata);
+
+  if (weed_get_boolean_value(filter,"plugin_dual",&error)==WEED_TRUE) {
+    if (weed_plant_has_leaf(inst,"in_parameters")) {
+      weed_plant_t **in_params=(weed_plant_t **)weed_get_plantptr_array(inst,"in_parameters",&error);
+      int ninps=(weed_leaf_num_elements(inst,"in_parameters")-2)/2;
+      int link=weed_get_boolean_value(in_params[ninps*2],"value",&error);
+      for (i=0;i<ninps;i++) {
+	weed_plant_t *ptmpl=weed_get_plantptr_value(in_params[i],"template",&error);
+	weed_plant_t *gui=weed_parameter_template_get_gui(ptmpl);
+	if (link==WEED_TRUE) {
+	  weed_set_int_value(gui,"copy_value_to",i+ninps);
+	  ptmpl=weed_get_plantptr_value(in_params[i+ninps],"template",&error);
+	  gui=weed_parameter_template_get_gui(ptmpl);
+	  weed_set_int_value(gui,"copy_value_to",i);
+	}
+	else {
+	  weed_set_int_value(gui,"copy_value_to",-1);
+	  ptmpl=weed_get_plantptr_value(in_params[i+ninps],"template",&error);
+	  gui=weed_parameter_template_get_gui(ptmpl);
+	  weed_set_int_value(gui,"copy_value_to",-1);
+	}
+      }
+    }
+  }
+
 
   return WEED_NO_ERROR;
 
@@ -217,9 +244,11 @@ int ladspa_process (weed_plant_t *inst, weed_timecode_t timestamp) {
   int inplace=WEED_FALSE;
   int inter=WEED_FALSE;
   int dual=WEED_FALSE;
+  int rate=DEF_ARATE;
 
   weed_plant_t *in_channel=NULL,*out_channel=NULL;
   weed_plant_t *filter=weed_get_plantptr_value(inst,"filter_class",&error);
+  weed_plant_t *ptmpl;
 
   lad_connect_port_f lad_connect_port_func;
   lad_run_f lad_run_func;
@@ -248,6 +277,7 @@ int ladspa_process (weed_plant_t *inst, weed_timecode_t timestamp) {
       iinc=weed_get_int_value(in_channel,"audio_channels",&error);
       nsamps=weed_get_int_value(in_channel,"audio_data_length",&error);
       inter=weed_get_boolean_value(in_channel,"audio_interleaf",&error);
+      rate=weed_get_int_value(in_channel,"audio_rate",&error);
     }
   }
 
@@ -259,6 +289,7 @@ int ladspa_process (weed_plant_t *inst, weed_timecode_t timestamp) {
       ioutc=weed_get_int_value(out_channel,"audio_channels",&error);
       nsamps=weed_get_int_value(out_channel,"audio_data_length",&error);
       inter=weed_get_boolean_value(out_channel,"audio_interleaf",&error);
+      rate=weed_get_int_value(out_channel,"audio_rate",&error);
     }
   }
 
@@ -356,6 +387,7 @@ int ladspa_process (weed_plant_t *inst, weed_timecode_t timestamp) {
   if (weed_plant_has_leaf(inst,"in_parameters")) {
     iinp=weed_leaf_num_elements(inst,"in_parameters");
     in_params=(weed_plant_t **)weed_get_plantptr_array(inst,"in_parameters",&error);
+    if (weed_get_boolean_value(filter,"plugin_dual",&error)==WEED_TRUE) iinp-=2;
   }
   
   if (weed_plant_has_leaf(inst,"out_parameters")) {
@@ -406,6 +438,7 @@ int ladspa_process (weed_plant_t *inst, weed_timecode_t timestamp) {
 	  // control ports
 	  ladphint=laddes->PortRangeHints[i];
 	  ladphintdes=ladphint.HintDescriptor;
+	  ptmpl=weed_get_plantptr_value(in_params[pinp],"template",&error);
 
 	  if (ladpdes&LADSPA_PORT_INPUT) {
 	    // connect to next instance in param	
@@ -418,6 +451,8 @@ int ladspa_process (weed_plant_t *inst, weed_timecode_t timestamp) {
 	    else {
 	      invals[pinp]=(float)weed_get_double_value(in_params[pinp],"value",&error);
 	    }
+	    if (weed_get_boolean_value(ptmpl,"plugin_sample_rate",&error)==WEED_TRUE) invals[pinp]*=(float)rate;
+
 	    (*lad_connect_port_func)(sdata->handle_r,i,(LADSPA_Data *)&invals[pinp++]);
 	  }
 	  else {
@@ -529,6 +564,7 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
     int ninps,noutps,ninchs,noutchs;
     int oninps,onoutps,oninchs,onoutchs;
     int cninps,cnoutps;
+    int stcount;
 
     int pflags,dual;
 
@@ -538,7 +574,7 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
       fprintf(stderr,"No LADSPA plugins found; if you have them installed please set the LADSPA_PATH environment variable to point to them.\n");
       return NULL;
     }
-#define DEBUG
+    //#define DEBUG
 #ifndef DEBUG
     new_stdout=dup(1);
     new_stderr=dup(2);
@@ -642,8 +678,14 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 	  // if we have 0,1 or 2 input channels, 1 outputs
 	  // 1 input, 0 or 2 outputs
 
-	  if ((ninchs<2&&noutchs<2&&(ninchs+noutchs>0))||noutchs==1) dual=WEED_TRUE;
-	  else dual=WEED_FALSE;
+	  if ((ninchs<2&&noutchs<2&&(ninchs+noutchs>0))||noutchs==1) {
+	    dual=WEED_TRUE;
+	    stcount=1;
+	  }
+	  else {
+	    dual=WEED_FALSE;
+	    stcount=0;
+	  }
 
 	  oninchs=ninchs;
 	  onoutchs=noutchs;
@@ -653,30 +695,43 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 	  if (dual&&oninchs==1) ninchs=2; 
 	  if (dual&&onoutchs==1) noutchs=2; 
 
-	  if (dual) {
+	  if (dual==WEED_TRUE) {
 	    ninps=oninps*2;
 	    noutps=onoutps*2;
 
-	    rfx_strings=weed_malloc((ninps+3)*sizeof(char *));
-	    for (pnum=0;pnum<ninps+3;pnum++) {
+	    rfx_strings=weed_malloc((ninps+3+stcount)*sizeof(char *));
+	    for (pnum=0;pnum<ninps+3+stcount;pnum++) {
 	      rfx_strings[pnum]=(char *)weed_malloc(256);
 	    }
 
 	    if (ninchs==0) {
-	      sprintf(rfx_strings[0],"layout|\"Left output channel\"|");
-	      sprintf(rfx_strings[oninps+2],"layout|\"Right output channel\"|");
+	      sprintf(rfx_strings[stcount],"layout|\"Left output channel\"|");
+	      sprintf(rfx_strings[oninps+2+stcount],"layout|\"Right output channel\"|");
 	    }
 	    else {
-	      if (ninchs==1) sprintf(rfx_strings[0],"layout|\"Left/mono channel\"");
-	      else sprintf(rfx_strings[0],"layout|\"Left channel\"");
-	      sprintf(rfx_strings[oninps+2],"layout|\"Right channel\"");
+	      if (ninchs==1) sprintf(rfx_strings[stcount],"layout|\"Left/mono channel\"");
+	      else sprintf(rfx_strings[stcount],"layout|\"Left channel\"");
+	      sprintf(rfx_strings[oninps+2+stcount],"layout|\"Right channel\"");
 	    }
-	    sprintf(rfx_strings[oninps+1],"layout|hseparator|");
+	    sprintf(rfx_strings[oninps+1+stcount],"layout|hseparator|");
 	  }
 
 	  if (ninps>0) {
-	    in_params=(weed_plant_t **)weed_malloc(++ninps*sizeof(weed_plant_t *));
-	    in_params[ninps-1]=NULL;
+	    // add extra in 2 extra params for "link channels"
+	    in_params=(weed_plant_t **)weed_malloc((++ninps+stcount*2)*sizeof(weed_plant_t *));
+	    in_params[ninps+stcount*2-1]=NULL;
+	    if (dual==WEED_TRUE) {
+	      in_params[ninps-1]=weed_switch_init("link","_Link left and right parameters",WEED_FALSE);
+	      gui=weed_parameter_template_get_gui(in_params[ninps-1]);
+	      weed_set_int_value(gui,"copy_value_to",ninps);
+	      sprintf(rfx_strings[0],"layout|p%d|",ninps-1);
+
+	      // link it to a dummy param which is hidden and reinit - this allows the value to be updated and the plugin to be reinited at any time
+	      in_params[ninps]=weed_switch_init("link dummy","linkdummy",WEED_FALSE);
+	      weed_set_int_value(in_params[ninps],"flags",WEED_PARAMETER_REINIT_ON_VALUE_CHANGE); 
+	      gui=weed_parameter_template_get_gui(in_params[ninps]);
+	      weed_set_boolean_value(gui,"hidden",WEED_TRUE);
+	    }
 	  }
 	  else in_params=NULL;
 
@@ -712,7 +767,7 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 	  }
 	  else out_chantmpls=NULL;
 
-	  cninps=cnoutps=0;
+	  cnoutps=cninps=0;
 
 	  for (i=0;i<laddes->PortCount;i++) {
 	    ladpdes=laddes->PortDescriptors[i];
@@ -804,8 +859,8 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 		  if (ladphintdes&LADSPA_HINT_LOGARITHMIC) weed_set_boolean_value(in_params[cninps+oninps],"plugin_logarithmic",WEED_TRUE);
 		  else weed_set_boolean_value(in_params[cninps+oninps],"plugin_logarithmic",WEED_FALSE);
 
-		  sprintf(rfx_strings[cninps+2],"layout|p%d|",cninps);
-		  sprintf(rfx_strings[cninps+oninps+3],"layout|p%d|",cninps+oninps);
+		  sprintf(rfx_strings[cninps+1+stcount],"layout|p%d|",cninps);
+		  sprintf(rfx_strings[cninps+oninps+3+stcount],"layout|p%d|",cninps+oninps);
 		}
 
 		cninps++;
@@ -911,8 +966,8 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 	      weed_set_string_value(gui,"rfx_delim","|");
 
 	      // subtract 1 from ninps since we incremented it
-	      weed_set_string_array(gui,"rfx_strings",ninps+2,rfx_strings);
-	      for (wnum=0;wnum<ninps+2;wnum++) weed_free(rfx_strings[wnum]);
+	      weed_set_string_array(gui,"rfx_strings",ninps+2+stcount,rfx_strings);
+	      for (wnum=0;wnum<ninps+2+stcount;wnum++) weed_free(rfx_strings[wnum]);
 	      weed_free(rfx_strings);
 	      rfx_strings=NULL;
 	    }

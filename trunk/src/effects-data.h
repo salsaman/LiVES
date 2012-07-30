@@ -32,7 +32,7 @@ struct _lives_pconnect_t {
   int *ikey;  ///< ikey is 0 based
   int *imode;
   int *ipnum;
-  int *autoscale;
+  boolean *autoscale;
 
   lives_pconnect_t *next;
   
@@ -44,7 +44,7 @@ struct _lives_pconnect_t {
 void pconx_add_connection(int okey, int omode, int opnum, int ikey, int imode, int ipnum, boolean autoscale);
 
 /// return if ikey/imode/ipnum is mapped to an out param
-weed_plant_t *pconx_get_out_param(int ikey, int imode, int ipnum, int *okey, int *omode, int *autoscale);
+weed_plant_t *pconx_get_out_param(int ikey, int imode, int ipnum, boolean *autoscale);
 
 // free all connections (and set mainw->pconx to NULL)
 void pconx_free_all();
@@ -96,7 +96,7 @@ void cconx_add_connection(int okey, int omode, int ocnum, int ikey, int imode, i
 
 
 /// return if okey/omode/ochan is mapped to an out alpha
-weed_plant_t *cconx_get_out_chan(int ikey, int imode, int ipnum, int *okey, int *omode);
+weed_plant_t *cconx_get_out_chan(int ikey, int imode, int ipnum);
 
 
 // chain any output data into fx key/mode

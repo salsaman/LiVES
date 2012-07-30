@@ -36,10 +36,13 @@ GList *plugin_request_by_line (const gchar *plugin_type, const gchar *plugin_nam
 GList *plugin_request_by_space (const gchar *plugin_type, const gchar *plugin_name, const gchar *request);
 GList *plugin_request_common (const gchar *plugin_type, const gchar *plugin_name, const gchar *request, const gchar *delim, gboolean allow_blanks);
 
+#ifndef  __WEED_EFFECTS_H__
 typedef weed_plant_t *(*weed_bootstrap_f) (weed_default_getter_f *value, int num_versions, int *plugin_versions);
+#endif
 
 /// video playback plugins
 typedef gboolean (*plugin_keyfunc) (gboolean down, guint16 unicode, guint16 keymod);
+
 
 typedef struct {
   // playback

@@ -9,7 +9,7 @@
 
 #include "main.h"
 
-
+//#define DEBUG_PCONX
 
 #if HAVE_SYSTEM_WEED
 #include <weed/weed.h>
@@ -171,14 +171,18 @@ void pconx_add_connection(int okey, int omode, int opnum, int ikey, int imode, i
     pconx->ipnum[posn]=ipnum;
     pconx->autoscale[posn]=autoscale;
 
+#ifdef DEBUG_PCONX
+  g_print("added another pconx from %d %d %d to %d %d %d\n",okey,omode,opnum,ikey,imode,ipnum);
+#endif
+
     return;
 
   }
 
   // add new
 
+  totcons=pconx_get_numcons(pconx)+1;
   pconx->nparams++;
-  totcons=pconx_get_numcons(pconx);
 
   pconx->nconns=(int *)g_realloc(pconx->params,pconx->nparams*sizint);
   pconx->nconns[pconx->nparams-1]=1;
@@ -198,12 +202,15 @@ void pconx_add_connection(int okey, int omode, int opnum, int ikey, int imode, i
   pconx->autoscale=(int *)g_realloc(pconx->autoscale,totcons*sizint);
   pconx->autoscale[totcons-1]=autoscale;
 
+#ifdef DEBUG_PCONX
+  g_print("added new pconx from %d %d %d to %d %d %d\n",okey,omode,opnum,ikey,imode,ipnum);
+#endif
 
 }
 
 
 
-weed_plant_t *pconx_get_out_param(int ikey, int imode, int ipnum, int *okey, int *omode, int *autoscale) {
+weed_plant_t *pconx_get_out_param(int ikey, int imode, int ipnum, int *autoscale) {
   // walk all pconx and find one which has ikey/imode/ipnum as destination
   // then all we need do is copy the "value" leaf
 
@@ -221,8 +228,14 @@ weed_plant_t *pconx_get_out_param(int ikey, int imode, int ipnum, int *okey, int
     else {
       inst=rte_keymode_get_instance(pconx->okey+1,pconx->omode);
     }
-    if (inst==NULL) continue;
-    if (!weed_plant_has_leaf(inst,"out_parameters")) continue;
+    if (inst==NULL) {
+      pconx=pconx->next;
+      continue;
+    }
+    if (!weed_plant_has_leaf(inst,"out_parameters")) {
+      pconx=pconx->next;
+      continue;
+    }
     totcons=0;
     j=0;
     for (i=0;i<pconx->nparams;i++) {
@@ -233,8 +246,6 @@ weed_plant_t *pconx_get_out_param(int ikey, int imode, int ipnum, int *okey, int
 	  weed_plant_t *param=NULL;
 	  if (i<weed_leaf_num_elements(inst,"out_parameters")) {
 	    param=outparams[pconx->params[i]];
-	    if (okey!=NULL) *okey=pconx->okey;
-	    if (omode!=NULL) *omode=pconx->omode;
 	    if (autoscale!=NULL) *autoscale=pconx->autoscale[j];
 	  }
 	  weed_free(outparams);
@@ -257,6 +268,8 @@ boolean pconx_convert_value_data(weed_plant_t *dparam, weed_plant_t *sparam, boo
   int dtype,stype,nsvals,ndvals,error,dflags;
 
   register int i;
+
+  // TODO *** - handle autoscale
 
   // allowed conversions
   // type -> type
@@ -430,7 +443,7 @@ boolean pconx_convert_value_data(weed_plant_t *dparam, weed_plant_t *sparam, boo
 void pconx_chain_data(int key, int mode) {
   int error;
   int nparams=0;
-  int okey,omode,autoscale;
+  int autoscale;
   weed_plant_t **inparams;
   weed_plant_t *oparam;
   weed_plant_t *inst;
@@ -458,19 +471,11 @@ void pconx_chain_data(int key, int mode) {
     inparams=weed_get_plantptr_array(inst,"in_parameters",&error);
 
     for (i=0;i<nparams;i++) {
-      if ((oparam=pconx_get_out_param(key,mode,i,&okey,&omode,&autoscale))!=NULL) {
-
-	if (mainw->is_rendering) {
-	  if ((inst=get_new_inst_for_keymode(okey,omode))==NULL) {
-	    return; ///< source effect is not found
-	  }
-	}
-	else {
-	  if ((inst=rte_keymode_get_instance(okey+1,omode))==NULL) {
-	    return; ///< source effect is not enabled
-	  }
-	}
-
+      if ((oparam=pconx_get_out_param(key,mode,i,&autoscale))!=NULL) {
+	//#define DEBUG_PCONX
+#ifdef DEBUG_PCONX
+  g_print("got pconx from %d %d to %d %d %d\n",okey,omode,key,mode,i);
+#endif
 	changed=pconx_convert_value_data(inparams[i],oparam,autoscale);
 
 	if (changed) {
@@ -648,8 +653,8 @@ void cconx_add_connection(int ikey, int imode, int icnum, int okey, int omode, i
 
   // add new
 
+  totcons=cconx_get_numcons(cconx)+1;
   cconx->nchans++;
-  totcons=cconx_get_numcons(cconx);
 
   cconx->nconns=(int *)g_realloc(cconx->chans,cconx->nchans*sizint);
   cconx->nconns[cconx->nchans-1]=1;
@@ -671,7 +676,7 @@ void cconx_add_connection(int ikey, int imode, int icnum, int okey, int omode, i
 
 
 
-weed_plant_t *cconx_get_out_alpha(int ikey, int imode, int icnum, int *okey, int *omode) {
+weed_plant_t *cconx_get_out_alpha(int ikey, int imode, int icnum) {
   // walk all cconx and find one which has ikey/imode/icnum as destination
   // then all we need do is convert the pixel_data
 
@@ -689,8 +694,14 @@ weed_plant_t *cconx_get_out_alpha(int ikey, int imode, int icnum, int *okey, int
     else {
       inst=rte_keymode_get_instance(cconx->okey+1,cconx->omode);
     }
-    if (inst==NULL) continue;
-    if (!weed_plant_has_leaf(inst,"out_channels")) continue;
+    if (inst==NULL) {
+      cconx=cconx->next;
+      continue;
+    }
+    if (!weed_plant_has_leaf(inst,"out_channels")) {
+      cconx=cconx->next;
+      continue;
+    }
     totcons=0;
     j=0;
     for (i=0;i<cconx->nchans;i++) {
@@ -701,8 +712,6 @@ weed_plant_t *cconx_get_out_alpha(int ikey, int imode, int icnum, int *okey, int
 	  weed_plant_t *channel=NULL;
 	  if (cconx->chans[i]<weed_leaf_num_elements(inst,"out_channels")) {
 	    channel=outchans[cconx->chans[i]];
-	    if (okey!=NULL) *okey=cconx->okey;
-	    if (omode!=NULL) *omode=cconx->omode;
 	  }
 	  weed_free(outchans);
 	  return channel;
@@ -817,8 +826,6 @@ gboolean cconx_convert_pixel_data(weed_plant_t *dchan, weed_plant_t *schan) {
 boolean cconx_chain_data(int key, int mode) {
   // ret TRUE if we should reinit inst (because of palette change)
 
-  int okey,omode;
-
   weed_plant_t *ichan,*ochan;
   weed_plant_t *inst;
 
@@ -838,19 +845,7 @@ boolean cconx_chain_data(int key, int mode) {
   }
 
   while ((ichan=get_enabled_channel(inst,i,TRUE))!=NULL) {
-    if ((ochan=cconx_get_out_alpha(key,mode,i++,&okey,&omode))!=NULL) {
-
-      if (mainw->is_rendering) {
-	if ((inst=get_new_inst_for_keymode(okey,omode))==NULL) {
-	  return FALSE; ///< source effect is not found
-	}
-      }
-      else {
-	if ((inst=rte_keymode_get_instance(okey+1,omode))==NULL) {
-	  return FALSE; ///< source effect is not enabled
-	}
-      }
-
+    if ((ochan=cconx_get_out_alpha(key,mode,i++))!=NULL) {
       if (cconx_convert_pixel_data(ichan,ochan)) needs_reinit=TRUE;
     }
   }

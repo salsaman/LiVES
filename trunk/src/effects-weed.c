@@ -3337,6 +3337,23 @@ gint num_in_params(weed_plant_t *plant, gboolean count_reinits, gboolean count_v
   return counted;
 }
 
+gint num_out_params(weed_plant_t *plant) {
+  int num_params,error;
+  gboolean is_template=(WEED_PLANT_IS_FILTER_CLASS(plant));
+
+  if (is_template) {
+    if (!weed_plant_has_leaf(plant,"out_parameter_templates")||
+	weed_get_plantptr_value(plant,"out_parameter_templates",&error)==NULL) return 0;
+    num_params=weed_leaf_num_elements(plant,"out_parameter_templates");
+  }
+  else {
+    if (!weed_plant_has_leaf(plant,"out_parameters")) return 0;
+    if (weed_get_plantptr_value(plant,"out_parameters",&error)==NULL) return 0;
+    num_params=weed_leaf_num_elements(plant,"out_parameters");
+  }
+  return num_params;
+}
+
 gboolean has_usable_palette(weed_plant_t *chantmpl) {
   int error;
   int palette=weed_get_int_value(chantmpl,"current_palette",&error);
@@ -4035,15 +4052,6 @@ void weed_load_all (void) {
 
   gint listlen;
 
-
-#define TEST_DSP
-#ifdef TEST_DSP
-  pconx_add_connection(0,0,0, 5,0,0);
-
-  cconx_add_connection(0,0,0, 1,0,1);
-  cconx_add_connection(0,0,1, 1,0,2);
-#endif
-
   key=-1;
 
   num_weed_filters=0;
@@ -4055,7 +4063,6 @@ void weed_load_all (void) {
   g_printerr("In weed init\n");
 #endif
 
-  // danger Will Robinson !
   fg_gen_to_start=fg_generator_key=fg_generator_clip=fg_generator_mode=-1;
   bg_gen_to_start=bg_generator_key=bg_generator_mode=-1;
 
@@ -6239,6 +6246,8 @@ gint weed_get_blend_factor(int hotkey) {
 
 
 weed_plant_t *get_new_inst_for_keymode(int key, int mode)  {
+  // key is 0 based
+
   weed_plant_t *inst;
 
   int error;

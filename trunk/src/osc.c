@@ -239,8 +239,8 @@ static const gchar *get_omc_const(const gchar *cname) {
   if (!strcmp(cname,"LIVES_COLORSPACE_RGBA")) 
     return QUOTEME(WEED_COLORSPACE_RGBA);
 
-  if (!strcmp(cname,"TRUE")) return QUOTEME(TRUE);
-  if (!strcmp(cname,"FALSE")) return QUOTEME(FALSE);
+  if (!strcmp(cname,"LIVES_TRUE")) return QUOTEME(TRUE);
+  if (!strcmp(cname,"LIVES_FALSE")) return QUOTEME(FALSE);
 
   if (!strcmp(cname,"LIVES_PARAM_FLAGS_REINIT_ON_VALUE_CHANGE")) 
     return QUOTEME(WEED_PARAMETER_FLAGS_REINIT_ON_VALUE_CHANGE);
@@ -3254,6 +3254,7 @@ void lives_osc_cb_rte_getparamtype(void *context, int arglen, const void *vargs,
   //g_print("key %d pnum %d",effect_key,pnum);
 
   filter=rte_keymode_get_filter(effect_key,rte_key_getmode(effect_key));
+  if (filter==NULL) return lives_osc_notify_failure();
 
   if (!weed_plant_has_leaf(filter,"in_parameter_templates")) return lives_osc_notify_failure();
   nparams=weed_leaf_num_elements(filter,"in_parameter_templates");
@@ -3336,6 +3337,7 @@ void lives_osc_cb_rte_getnparamtype(void *context, int arglen, const void *vargs
   //g_print("key %d pnum %d",effect_key,pnum);
 
   filter=rte_keymode_get_filter(effect_key,rte_key_getmode(effect_key));
+  if (filter==NULL) return lives_osc_notify_failure();
   if (!weed_plant_has_leaf(filter,"in_parameter_templates")) return lives_osc_notify_failure();
   i=get_nth_simple_param(filter,pnum);
   if (i==-1) return lives_osc_notify_failure();
@@ -3377,6 +3379,7 @@ void lives_osc_cb_rte_getparamcspace(void *context, int arglen, const void *varg
   //g_print("key %d pnum %d",effect_key,pnum);
 
   filter=rte_keymode_get_filter(effect_key,rte_key_getmode(effect_key));
+  if (filter==NULL) return lives_osc_notify_failure();
   if (!weed_plant_has_leaf(filter,"in_parameter_templates")) return lives_osc_notify_failure();
 
   nparams=weed_leaf_num_elements(filter,"in_parameter_templates");
@@ -3509,6 +3512,7 @@ void lives_osc_cb_rte_getparamflags(void *context, int arglen, const void *vargs
   //g_print("key %d pnum %d",effect_key,pnum);
 
   filter=rte_keymode_get_filter(effect_key,rte_key_getmode(effect_key));
+  if (filter==NULL) return lives_osc_notify_failure();
   if (!weed_plant_has_leaf(filter,"in_parameter_templates")) return lives_osc_notify_failure();
 
   nparams=weed_leaf_num_elements(filter,"in_parameter_templates");
@@ -3579,6 +3583,7 @@ void lives_osc_cb_rte_getparamname(void *context, int arglen, const void *vargs,
   //g_print("key %d pnum %d",effect_key,pnum);
 
   filter=rte_keymode_get_filter(effect_key,rte_key_getmode(effect_key));
+  if (filter==NULL) return lives_osc_notify_failure();
   if (!weed_plant_has_leaf(filter,"in_parameter_templates")) return lives_osc_notify_failure();
 
   nparams=weed_leaf_num_elements(filter,"in_parameter_templates");
@@ -3648,6 +3653,7 @@ void lives_osc_cb_rte_getnparamname(void *context, int arglen, const void *vargs
   //g_print("key %d pnum %d",effect_key,pnum);
 
   filter=rte_keymode_get_filter(effect_key,rte_key_getmode(effect_key));
+  if (filter==NULL) return lives_osc_notify_failure();
   if (!weed_plant_has_leaf(filter,"in_parameter_templates")) return lives_osc_notify_failure();
 
   i=get_nth_simple_param(filter,pnum);
@@ -3804,6 +3810,8 @@ void lives_osc_cb_rte_setnparam(void *context, int arglen, const void *vargs, OS
   }
   else lives_osc_notify_failure();
 
+  lives_osc_notify_success(NULL);
+
 }
 
 
@@ -3823,6 +3831,7 @@ void lives_osc_cb_rte_paramcount(void *context, int arglen, const void *vargs, O
   //g_print("key %d pnum %d",effect_key,pnum);
 
   filter=rte_keymode_get_filter(effect_key,rte_key_getmode(effect_key));
+  if (filter==NULL) return lives_osc_notify_failure();
 
   if (weed_plant_has_leaf(filter,"in_parameter_templates")) {
     count=weed_leaf_num_elements(filter,"in_parameter_templates");
@@ -3875,6 +3884,7 @@ void lives_osc_cb_rte_nparamcount(void *context, int arglen, const void *vargs, 
   //g_print("key %d pnum %d",effect_key,pnum);
 
   filter=rte_keymode_get_filter(effect_key,rte_key_getmode(effect_key));
+  if (filter==NULL) return lives_osc_notify_failure();
 
   do {
     i=get_nth_simple_param(filter,++count);
@@ -3934,6 +3944,7 @@ void lives_osc_cb_rte_getparammin(void *context, int arglen, const void *vargs, 
   //g_print("key %d pnum %d",effect_key,pnum);
 
   filter=rte_keymode_get_filter(effect_key,rte_key_getmode(effect_key));
+  if (filter==NULL) return lives_osc_notify_failure();
 
   if (!weed_plant_has_leaf(filter,"in_parameter_templates")) return lives_osc_notify_failure();
 
@@ -4014,6 +4025,7 @@ void lives_osc_cb_rte_getparammax(void *context, int arglen, const void *vargs, 
   //g_print("key %d pnum %d",effect_key,pnum);
 
   filter=rte_keymode_get_filter(effect_key,rte_key_getmode(effect_key));
+  if (filter==NULL) return lives_osc_notify_failure();
 
   if (!weed_plant_has_leaf(filter,"in_parameter_templates")) return lives_osc_notify_failure();
   nparams=weed_leaf_num_elements(filter,"in_parameter_templates");
@@ -4096,6 +4108,7 @@ void lives_osc_cb_rte_getparamdef(void *context, int arglen, const void *vargs, 
   //g_print("key %d pnum %d",effect_key,pnum);
 
   filter=rte_keymode_get_filter(effect_key,rte_key_getmode(effect_key));
+  if (filter==NULL) return lives_osc_notify_failure();
 
   if (!weed_plant_has_leaf(filter,"in_parameter_templates")) return lives_osc_notify_failure();
   nparams=weed_leaf_num_elements(filter,"in_parameter_templates");
@@ -4200,6 +4213,7 @@ void lives_osc_cb_rte_getparamval(void *context, int arglen, const void *vargs, 
   //g_print("key %d pnum %d",effect_key,pnum);
 
   filter=rte_keymode_get_filter(effect_key,rte_key_getmode(effect_key));
+  if (filter==NULL) return lives_osc_notify_failure();
 
   if (!weed_plant_has_leaf(filter,"in_parameter_templates")) return lives_osc_notify_failure();
   nparams=weed_leaf_num_elements(filter,"in_parameter_templates");
@@ -4311,6 +4325,7 @@ void lives_osc_cb_rte_getnparam(void *context, int arglen, const void *vargs, OS
   //g_print("key %d pnum %d",effect_key,pnum);
 
   filter=rte_keymode_get_filter(effect_key,rte_key_getmode(effect_key));
+  if (filter==NULL) return lives_osc_notify_failure();
 
   i=get_nth_simple_param(filter,pnum);
 
@@ -4365,6 +4380,7 @@ void lives_osc_cb_rte_getnparammin(void *context, int arglen, const void *vargs,
   //g_print("key %d pnum %d",effect_key,pnum);
 
   filter=rte_keymode_get_filter(effect_key,rte_key_getmode(effect_key));
+  if (filter==NULL) return lives_osc_notify_failure();
 
   i=get_nth_simple_param(filter,pnum);
 
@@ -4419,7 +4435,8 @@ void lives_osc_cb_rte_getnparammax(void *context, int arglen, const void *vargs,
   //g_print("key %d pnum %d",effect_key,pnum);
 
   filter=rte_keymode_get_filter(effect_key,rte_key_getmode(effect_key));
- 
+   if (filter==NULL) return lives_osc_notify_failure();
+
   i=get_nth_simple_param(filter,pnum);
 
   if (i==-1) return lives_osc_notify_failure();
@@ -4471,6 +4488,7 @@ void lives_osc_cb_rte_getnparamdef(void *context, int arglen, const void *vargs,
   //g_print("key %d pnum %d",effect_key,pnum);
 
   filter=rte_keymode_get_filter(effect_key,rte_key_getmode(effect_key));
+  if (filter==NULL) return lives_osc_notify_failure();
 
   i=get_nth_simple_param(filter,pnum);
 
@@ -4526,6 +4544,7 @@ void lives_osc_cb_rte_getnparamtrans(void *context, int arglen, const void *varg
   //g_print("key %d pnum %d",effect_key,pnum);
 
   filter=rte_keymode_get_filter(effect_key,rte_key_getmode(effect_key));
+  if (filter==NULL) return lives_osc_notify_failure();
 
   if (!weed_plant_has_leaf(filter,"in_parameter_templates")) return lives_osc_notify_failure();
   nparams=weed_leaf_num_elements(filter,"in_parameter_templates");
@@ -4578,6 +4597,7 @@ void lives_osc_cb_rte_getparamtrans(void *context, int arglen, const void *vargs
   //g_print("key %d pnum %d",effect_key,pnum);
 
   filter=rte_keymode_get_filter(effect_key,rte_key_getmode(effect_key));
+  if (filter==NULL) return lives_osc_notify_failure();
 
   if (!weed_plant_has_leaf(filter,"in_parameter_templates")) return lives_osc_notify_failure();
   nparams=weed_leaf_num_elements(filter,"in_parameter_templates");
@@ -4651,42 +4671,99 @@ void lives_osc_cb_rte_getmodespk(void *context, int arglen, const void *vargs, O
   lives_osc_check_arguments (arglen,vargs,"i",TRUE);
   lives_osc_parse_int_argument(vargs,&effect_key);
 
-  if (effect_key>FX_MAX||effect_key<1) {
+  if (effect_key>FX_KEYS_MAX_VIRTUAL||effect_key<1) {
     lives_status_send ("0");
     return;
   }
 
-  lives_status_send ((tmp=g_strdup_printf ("%d",rte_getmodespk ())));
+  lives_status_send ((tmp=g_strdup_printf ("%d",rte_key_getmaxmode (effect_key))));
   g_free(tmp);
 
 }
 
 
+void lives_osc_cb_rte_addpconnection(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+  int key0,mode0,pnum0;
+  int key1,mode1,pnum1;
+  int autoscale;
+  weed_plant_t *filter;
 
-// deprecated - do not use
-void lives_osc_cb_rte_getusermode(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
-  int nmode;
-  int effect_key;
-  gchar *tmp;
+  if (!lives_osc_check_arguments (arglen,vargs,"iiiiiii",TRUE)) return lives_osc_notify_failure();
+  lives_osc_parse_int_argument(vargs,&key0);
+  lives_osc_parse_int_argument(vargs,&mode0);
+  lives_osc_parse_int_argument(vargs,&pnum0);
 
-  if (status_socket==NULL) return;
+  lives_osc_parse_int_argument(vargs,&autoscale);
 
-  if (!lives_osc_check_arguments (arglen,vargs,"i",TRUE)) {
-    return lives_osc_notify_failure();
-  }
+  lives_osc_parse_int_argument(vargs,&key1);
+  lives_osc_parse_int_argument(vargs,&mode1);
+  lives_osc_parse_int_argument(vargs,&pnum1);
 
-  lives_osc_parse_int_argument(vargs,&effect_key);
+  if (autoscale!=TRUE&&autoscale!=FALSE) lives_osc_notify_failure();
 
-  if (effect_key>FX_MAX||effect_key<1) {
-    lives_status_send ("0");
-    return;
-  }
+  filter=rte_keymode_get_filter(key0,mode0);
+  if (filter==NULL) return lives_osc_notify_failure();
 
-  nmode=rte_key_getmaxmode(effect_key);
+  if (pnum0>=num_out_params(filter)) return lives_osc_notify_failure();
 
-  lives_status_send ((tmp=g_strdup_printf ("%d",nmode)));
-  g_free(tmp);
 
+  filter=rte_keymode_get_filter(key1,mode1);
+  if (filter==NULL) return lives_osc_notify_failure();
+
+  if (pnum1>=num_in_params(filter,TRUE,TRUE)) return lives_osc_notify_failure();
+
+  pconx_add_connection(--key0,mode0,pnum0,--key1,mode1,pnum1,autoscale);
+  lives_osc_notify_success(NULL);
+}
+
+void lives_osc_cb_rte_delpconnection(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+
+
+  lives_osc_notify_success(NULL);
+
+}
+
+void lives_osc_cb_rte_listpconnection(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+  lives_status_send("0 0 0 0");
+
+}
+
+void lives_osc_cb_rte_addcconnection(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+  int key0,mode0,cnum0;
+  int key1,mode1,cnum1;
+  weed_plant_t *filter;
+
+  if (!lives_osc_check_arguments (arglen,vargs,"iiiiii",TRUE)) return lives_osc_notify_failure();
+  lives_osc_parse_int_argument(vargs,&key0);
+  lives_osc_parse_int_argument(vargs,&mode0);
+  lives_osc_parse_int_argument(vargs,&cnum0);
+  lives_osc_parse_int_argument(vargs,&key1);
+  lives_osc_parse_int_argument(vargs,&mode1);
+  lives_osc_parse_int_argument(vargs,&cnum1);
+
+  filter=rte_keymode_get_filter(key0,mode0);
+  if (filter==NULL) return lives_osc_notify_failure();
+
+  if (cnum0>=enabled_out_channels(filter,FALSE)) return lives_osc_notify_failure();
+
+
+  filter=rte_keymode_get_filter(key1,mode1);
+  if (filter==NULL) return lives_osc_notify_failure();
+
+  if (cnum1>=enabled_in_channels(filter,FALSE)) return lives_osc_notify_failure();
+
+  cconx_add_connection(--key0,mode0,cnum0,--key1,mode1,cnum1);
+  lives_osc_notify_success(NULL);
+
+}
+
+void lives_osc_cb_rte_delcconnection(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+
+  lives_osc_notify_success(NULL);
+}
+
+void lives_osc_cb_rte_listcconnection(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+  lives_status_send("0 0 0 0");
 }
 
 
@@ -4923,7 +5000,12 @@ static struct
     { "/effect_key/mode/previous",		"previous",	lives_osc_cb_rte_prevmode,		        43	},
     { "/effect_key/name/get",		"get",	lives_osc_cb_rte_get_keyfxname,		        44	},
     { "/effect_key/maxmode/get",		"get",	lives_osc_cb_rte_getmodespk,		        45	},
-    { "/effect_key/usermode/get",		"get",	lives_osc_cb_rte_getusermode,		        56	},
+    { "/effect_key/out_parameter/connection/add",		"add",	lives_osc_cb_rte_addpconnection,		        151	},
+    { "/effect_key/out_parameter/connection/delete",		"delete",	lives_osc_cb_rte_delpconnection,		        151	},
+    { "/effect_key/out_parameter/connection/list",		"list",	lives_osc_cb_rte_listpconnection,		        151	},
+    { "/effect_key/out_channel/connection/add",		        "add",	lives_osc_cb_rte_addcconnection,		        161	},
+    { "/effect_key/out_channel/connection/delete",		"delete",	lives_osc_cb_rte_delcconnection,		        161	},
+    { "/effect_key/out_channel/connection/list",		"list",	lives_osc_cb_rte_listcconnection,		        161	},
     { "/clip/encode_as",		"encode_as",	lives_osc_cb_clip_encodeas,			1	},
     { "/clip/select",		"select",	lives_osc_cb_fgclip_select,			1	},
     { "/clip/close",		"close",	lives_osc_cb_clip_close,	  		        1	},
@@ -5091,7 +5173,10 @@ static struct
     {	"/effect_key/mode/" , 		"mode",	 43, 25,0	},
     {	"/effect_key/name/" , 		"name",	 44, 25,0	},
     {	"/effect_key/maxmode/" , 	"maxmode",	 45, 25,0	},
-    {	"/effect_key/usermode/" , 	"usermode",	 56, 25,0	},
+    {	"/effect_key/out_channel/" , 	"out_channel",	 150, 25,0	},
+    {	"/effect_key/out_channel/connection/" , 	"connection",	 151, 150,0	},
+    {	"/effect_key/out_parameter/" , 	"out_parameter",	 160, 25,0	},
+    {	"/effect_key/out_parameter/connection/" , 	"connection",	 161, 160,0	},
     {	"/lives/" , 		"lives",	 21, -1,0	},
     {	"/lives/version" , 		"version",	 24, 21,0	},
     {	"/lives/mode" , 		"mode",	 103, 21,0	},

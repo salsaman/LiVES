@@ -25,11 +25,11 @@
 #include "effects.h"
 
 
-static lives_pconnect_t *pconx_new (int ikey, int imode) {
+static lives_pconnect_t *pconx_new (int okey, int omode) {
   lives_pconnect_t *pconx=(lives_pconnect_t *)g_malloc0(sizeof(struct _lives_pconnect_t));
   pconx->next=NULL;
-  pconx->ikey=ikey;
-  pconx->imode=imode;
+  pconx->okey=okey;
+  pconx->omode=omode;
   pconx->nparams=0;
   pconx->nconns=NULL;
   return pconx;
@@ -50,10 +50,11 @@ static void pconx_append(lives_pconnect_t *pconx) {
 }
 
 
-static lives_pconnect_t *pconx_find (int ikey, int imode) {
+static lives_pconnect_t *pconx_find (int okey, int omode) {
+  //
   lives_pconnect_t *pconx=mainw->pconx;
   while (pconx!=NULL) {
-    if (pconx->ikey==ikey&&pconx->imode==imode) {
+    if (pconx->okey==okey&&pconx->omode==omode) {
       return pconx;
     }
     pconx=pconx->next;
@@ -75,14 +76,14 @@ static int pconx_get_numcons(lives_pconnect_t *pconx) {
 
 
 
-void pconx_add_connection(int ikey, int imode, int ipnum, int okey, int omode, int opnum) {
-  lives_pconnect_t *pconx=pconx_find(ikey,imode);
+void pconx_add_connection(int okey, int omode, int opnum, int ikey, int imode, int ipnum, boolean autoscale) {
+  lives_pconnect_t *pconx=pconx_find(okey,omode);
   int posn=0,totcons=0;
   register int i,j;
 
   if (pconx==NULL) {
     // add whole new node
-    pconx=pconx_new(ikey,imode);
+    pconx=pconx_new(okey,omode);
     pconx_append(pconx);
   }
   else {
@@ -90,7 +91,7 @@ void pconx_add_connection(int ikey, int imode, int ipnum, int okey, int omode, i
     
     for (i=0;i<pconx->nparams;i++) {
       
-      if (pconx->params[i]==ipnum) {
+      if (pconx->params[i]==opnum) {
 	// located !
 	// add connection to existing
 
@@ -105,34 +106,45 @@ void pconx_add_connection(int ikey, int imode, int ipnum, int okey, int omode, i
 	  totcons+=pconx->nconns[j];
 	}
 
+	// if already there, do not add again, just update autoscale
+	for (j=posn;j<totcons;j++) {
+	  if (pconx->ikey[j]==ikey&&pconx->imode[j]==imode&&pconx->ipnum[j]==ipnum) {
+	    pconx->autoscale[j]=autoscale;
+	    return;
+	  }
+	}
+
 	// make space for new
-	pconx->okey=(int *)g_realloc(pconx->okey,totcons*sizint);
-	pconx->omode=(int *)g_realloc(pconx->omode,totcons*sizint);
-	pconx->opnum=(int *)g_realloc(pconx->opnum,totcons*sizint);
+	pconx->ikey=(int *)g_realloc(pconx->ikey,totcons*sizint);
+	pconx->imode=(int *)g_realloc(pconx->imode,totcons*sizint);
+	pconx->ipnum=(int *)g_realloc(pconx->ipnum,totcons*sizint);
+	pconx->autoscale=(int *)g_realloc(pconx->autoscale,totcons*sizint);
 
 	// move up 1
 	for (j=totcons-1;j>posn;j--) {
-	  pconx->okey[j]=pconx->okey[j-1];
-	  pconx->omode[j]=pconx->omode[j-1];
-	  pconx->opnum[j]=pconx->opnum[j-1];
+	  pconx->ikey[j]=pconx->ikey[j-1];
+	  pconx->imode[j]=pconx->imode[j-1];
+	  pconx->ipnum[j]=pconx->ipnum[j-1];
+	  pconx->autoscale[j]=pconx->autoscale[j-1];
 	}
 
 	// insert at posn
-	pconx->okey[posn]=okey;
-	pconx->omode[posn]=omode;
-	pconx->opnum[posn]=opnum;
+	pconx->ikey[posn]=ikey;
+	pconx->imode[posn]=imode;
+	pconx->ipnum[posn]=ipnum;
+	pconx->autoscale[posn]=autoscale;
 
 	return;
       }
       
     }
 
-    // so, we have data for key/mode but this is a new channel to be mapped
+    // so, we have data for key/mode but this is a new param to be mapped
     
     for (i=0;i<pconx->nparams;i++) {
       totcons+=pconx->nconns[i];
     }
-    
+
     totcons++;
     
     pconx->nparams++;
@@ -140,20 +152,24 @@ void pconx_add_connection(int ikey, int imode, int ipnum, int okey, int omode, i
     
     // make space for new
     pconx->nconns=(int *)g_realloc(pconx->nconns,posn*sizint);
+    pconx->params=(int *)g_realloc(pconx->params,posn*sizint);
 
-
-    pconx->okey=(int *)g_realloc(pconx->okey,totcons*sizint);
-    pconx->omode=(int *)g_realloc(pconx->omode,totcons*sizint);
-    pconx->opnum=(int *)g_realloc(pconx->opnum,totcons*sizint);
+    pconx->ikey=(int *)g_realloc(pconx->ikey,totcons*sizint);
+    pconx->imode=(int *)g_realloc(pconx->imode,totcons*sizint);
+    pconx->ipnum=(int *)g_realloc(pconx->ipnum,totcons*sizint);
+    pconx->autoscale=(int *)g_realloc(pconx->autoscale,totcons*sizint);
     
+    pconx->params[posn-1]=opnum;
+
     pconx->nconns[posn-1]=1;
     
     posn=totcons-1;
     
     // insert at posn
-    pconx->okey[posn]=okey;
-    pconx->omode[posn]=omode;
-    pconx->opnum[posn]=opnum;
+    pconx->ikey[posn]=ikey;
+    pconx->imode[posn]=imode;
+    pconx->ipnum[posn]=ipnum;
+    pconx->autoscale[posn]=autoscale;
 
     return;
 
@@ -168,24 +184,27 @@ void pconx_add_connection(int ikey, int imode, int ipnum, int okey, int omode, i
   pconx->nconns[pconx->nparams-1]=1;
 
   pconx->params=(int *)g_realloc(pconx->params,pconx->nparams*sizint);
-  pconx->params[pconx->nparams-1]=ipnum;
+  pconx->params[pconx->nparams-1]=opnum;
 
-  pconx->okey=(int *)g_realloc(pconx->okey,pconx->nparams*sizint);
-  pconx->okey[pconx->nparams-1]=okey;
+  pconx->ikey=(int *)g_realloc(pconx->ikey,totcons*sizint);
+  pconx->ikey[totcons-1]=ikey;
 
-  pconx->omode=(int *)g_realloc(pconx->omode,pconx->nparams*sizint);
-  pconx->omode[pconx->nparams-1]=omode;
+  pconx->imode=(int *)g_realloc(pconx->imode,totcons*sizint);
+  pconx->imode[totcons-1]=imode;
 
-  pconx->opnum=(int *)g_realloc(pconx->opnum,pconx->nparams*sizint);
-  pconx->opnum[pconx->nparams-1]=opnum;
+  pconx->ipnum=(int *)g_realloc(pconx->ipnum,totcons*sizint);
+  pconx->ipnum[totcons-1]=ipnum;
+
+  pconx->autoscale=(int *)g_realloc(pconx->autoscale,totcons*sizint);
+  pconx->autoscale[totcons-1]=autoscale;
 
 
 }
 
 
 
-weed_plant_t *pconx_get_out_param(int okey, int omode, int opnum) {
-  // walk all pconx and find one which has okey/omode/opnum as output
+weed_plant_t *pconx_get_out_param(int ikey, int imode, int ipnum, int *okey, int *omode, int *autoscale) {
+  // walk all pconx and find one which has ikey/imode/ipnum as destination
   // then all we need do is copy the "value" leaf
 
   lives_pconnect_t *pconx=mainw->pconx;
@@ -196,24 +215,30 @@ weed_plant_t *pconx_get_out_param(int okey, int omode, int opnum) {
   register int i,j;
 
   while (pconx!=NULL) {
-    if ((inst=rte_keymode_get_instance(pconx->ikey+1,pconx->imode))==NULL) return NULL; ///< effect is not enabled
+    if (mainw->is_rendering) {
+      inst=get_new_inst_for_keymode(pconx->okey,pconx->omode);
+    }
+    else {
+      inst=rte_keymode_get_instance(pconx->okey+1,pconx->omode);
+    }
+    if (inst==NULL) continue;
+    if (!weed_plant_has_leaf(inst,"out_parameters")) continue;
     totcons=0;
     j=0;
     for (i=0;i<pconx->nparams;i++) {
       totcons+=pconx->nconns[i];
       for (;j<totcons;j++) {
-	if (pconx->okey[j]==okey && pconx->omode[j]==omode && pconx->opnum[j]==opnum) {
-
-	  if (!weed_plant_has_leaf(inst,"out_parameters")) return NULL;
-	  else {
-	    weed_plant_t **outparams=weed_get_plantptr_array(inst,"out_parameters",&error);
-	    weed_plant_t *param=NULL;
-	    if (i<weed_leaf_num_elements(inst,"out_parameters")) {
-	      param=outparams[pconx->params[i]];
-	    }
-	    weed_free(outparams);
-	    return param;
+	if (pconx->ikey[j]==ikey && pconx->imode[j]==imode && pconx->ipnum[j]==ipnum) {
+	  weed_plant_t **outparams=weed_get_plantptr_array(inst,"out_parameters",&error);
+	  weed_plant_t *param=NULL;
+	  if (i<weed_leaf_num_elements(inst,"out_parameters")) {
+	    param=outparams[pconx->params[i]];
+	    if (okey!=NULL) *okey=pconx->okey;
+	    if (omode!=NULL) *omode=pconx->omode;
+	    if (autoscale!=NULL) *autoscale=pconx->autoscale[j];
 	  }
+	  weed_free(outparams);
+	  return param;
 	}
       }
     }
@@ -225,7 +250,7 @@ weed_plant_t *pconx_get_out_param(int okey, int omode, int opnum) {
 
 
 
-gboolean pconx_convert_value_data(weed_plant_t *dparam, weed_plant_t *sparam) {
+boolean pconx_convert_value_data(weed_plant_t *dparam, weed_plant_t *sparam, boolean autoscale) {
   // try to convert values of various type, if we succeed, copy the "value" and return TRUE (if changed -TODO)
   weed_plant_t *dptmpl;
 
@@ -405,6 +430,7 @@ gboolean pconx_convert_value_data(weed_plant_t *dparam, weed_plant_t *sparam) {
 void pconx_chain_data(int key, int mode) {
   int error;
   int nparams=0;
+  int okey,omode,autoscale;
   weed_plant_t **inparams;
   weed_plant_t *oparam;
   weed_plant_t *inst;
@@ -416,12 +442,13 @@ void pconx_chain_data(int key, int mode) {
   register int i;
 
   if (mainw->is_rendering) {
-    inst=get_new_inst_for_keymode(key,mode);
+    if ((inst=get_new_inst_for_keymode(key,mode))==NULL) {
+      return; ///< dest effect is not found
+    }
   }
   else {
     if ((inst=rte_keymode_get_instance(key+1,mode))==NULL) {
-      LIVES_ERROR("pulling data for non-enabled effect");
-      return; ///< effect is not enabled
+      return; ///< dest effect is not enabled
     }
   }
 
@@ -431,8 +458,20 @@ void pconx_chain_data(int key, int mode) {
     inparams=weed_get_plantptr_array(inst,"in_parameters",&error);
 
     for (i=0;i<nparams;i++) {
-      if ((oparam=pconx_get_out_param(key,mode,i))!=NULL) {
-	changed=pconx_convert_value_data(inparams[i],oparam);
+      if ((oparam=pconx_get_out_param(key,mode,i,&okey,&omode,&autoscale))!=NULL) {
+
+	if (mainw->is_rendering) {
+	  if ((inst=get_new_inst_for_keymode(okey,omode))==NULL) {
+	    return; ///< source effect is not found
+	  }
+	}
+	else {
+	  if ((inst=rte_keymode_get_instance(okey+1,omode))==NULL) {
+	    return; ///< source effect is not enabled
+	  }
+	}
+
+	changed=pconx_convert_value_data(inparams[i],oparam,autoscale);
 
 	if (changed) {
 	  // TODO *** - only store value if it changed; for int, double or colour, store old value too
@@ -468,11 +507,11 @@ void pconx_chain_data(int key, int mode) {
 
 
 
-static lives_cconnect_t *cconx_new (int ikey, int imode) {
+static lives_cconnect_t *cconx_new (int okey, int omode) {
   lives_cconnect_t *cconx=(lives_cconnect_t *)g_malloc0(sizeof(struct _lives_cconnect_t));
   cconx->next=NULL;
-  cconx->ikey=ikey;
-  cconx->imode=imode;
+  cconx->okey=okey;
+  cconx->omode=omode;
   cconx->nchans=0;
   cconx->nconns=NULL;
   return cconx;
@@ -493,10 +532,10 @@ static void cconx_append(lives_cconnect_t *cconx) {
 }
 
 
-static lives_cconnect_t *cconx_find (int ikey, int imode) {
+static lives_cconnect_t *cconx_find (int okey, int omode) {
   lives_cconnect_t *cconx=mainw->cconx;
   while (cconx!=NULL) {
-    if (cconx->ikey==ikey&&cconx->imode==imode) {
+    if (cconx->okey==okey&&cconx->omode==omode) {
       return cconx;
     }
     cconx=cconx->next;
@@ -519,13 +558,13 @@ static int cconx_get_numcons(lives_cconnect_t *cconx) {
 
 
 void cconx_add_connection(int ikey, int imode, int icnum, int okey, int omode, int ocnum) {
-  lives_cconnect_t *cconx=cconx_find(ikey,imode);
+  lives_cconnect_t *cconx=cconx_find(okey,omode);
   int posn=0,totcons=0;
   register int i,j;
 
   if (cconx==NULL) {
     // add whole new node
-    cconx=cconx_new(ikey,imode);
+    cconx=cconx_new(okey,omode);
     cconx_append(cconx);
   }
   else {
@@ -545,22 +584,29 @@ void cconx_add_connection(int ikey, int imode, int icnum, int okey, int omode, i
 	  totcons+=cconx->nconns[j];
 	}
 
+	// if already there, do not add again
+	for (j=posn;j<totcons;j++) {
+	  if (cconx->ikey[j]==ikey&&cconx->imode[j]==imode&&cconx->icnum[j]==icnum) {
+	    return;
+	  }
+	}
+
 	// make space for new
-	cconx->okey=(int *)g_realloc(cconx->okey,totcons*sizint);
-	cconx->omode=(int *)g_realloc(cconx->omode,totcons*sizint);
-	cconx->ocnum=(int *)g_realloc(cconx->ocnum,totcons*sizint);
+	cconx->ikey=(int *)g_realloc(cconx->ikey,totcons*sizint);
+	cconx->imode=(int *)g_realloc(cconx->imode,totcons*sizint);
+	cconx->icnum=(int *)g_realloc(cconx->icnum,totcons*sizint);
 
 	// move up 1
 	for (j=totcons-1;j>posn;j--) {
-	  cconx->okey[j]=cconx->okey[j-1];
-	  cconx->omode[j]=cconx->omode[j-1];
-	  cconx->ocnum[j]=cconx->ocnum[j-1];
+	  cconx->ikey[j]=cconx->ikey[j-1];
+	  cconx->imode[j]=cconx->imode[j-1];
+	  cconx->icnum[j]=cconx->icnum[j-1];
 	}
 
 	// insert at posn
-	cconx->okey[posn]=okey;
-	cconx->omode[posn]=omode;
-	cconx->ocnum[posn]=ocnum;
+	cconx->ikey[posn]=ikey;
+	cconx->imode[posn]=imode;
+	cconx->icnum[posn]=icnum;
 
 	return;
       }
@@ -582,20 +628,20 @@ void cconx_add_connection(int ikey, int imode, int icnum, int okey, int omode, i
     cconx->nconns=(int *)g_realloc(cconx->nconns,posn*sizint);
     cconx->chans=(int *)g_realloc(cconx->chans,posn*sizint);
 
-    cconx->okey=(int *)g_realloc(cconx->okey,totcons*sizint);
-    cconx->omode=(int *)g_realloc(cconx->omode,totcons*sizint);
-    cconx->ocnum=(int *)g_realloc(cconx->ocnum,totcons*sizint);
+    cconx->ikey=(int *)g_realloc(cconx->ikey,totcons*sizint);
+    cconx->imode=(int *)g_realloc(cconx->imode,totcons*sizint);
+    cconx->icnum=(int *)g_realloc(cconx->icnum,totcons*sizint);
     
-    cconx->chans[posn-1]=icnum;
+    cconx->chans[posn-1]=ocnum;
 
     cconx->nconns[posn-1]=1;
     
     posn=totcons-1;
     
     // insert at posn
-    cconx->okey[posn]=okey;
-    cconx->omode[posn]=omode;
-    cconx->ocnum[posn]=ocnum;
+    cconx->ikey[posn]=ikey;
+    cconx->imode[posn]=imode;
+    cconx->icnum[posn]=icnum;
 
     return;
   }
@@ -609,24 +655,24 @@ void cconx_add_connection(int ikey, int imode, int icnum, int okey, int omode, i
   cconx->nconns[cconx->nchans-1]=1;
 
   cconx->chans=(int *)g_realloc(cconx->chans,cconx->nchans*sizint);
-  cconx->chans[cconx->nchans-1]=icnum;
+  cconx->chans[cconx->nchans-1]=ocnum;
 
-  cconx->okey=(int *)g_realloc(cconx->okey,cconx->nchans*sizint);
-  cconx->okey[cconx->nchans-1]=okey;
+  cconx->ikey=(int *)g_realloc(cconx->ikey,totcons*sizint);
+  cconx->ikey[totcons-1]=ikey;
 
-  cconx->omode=(int *)g_realloc(cconx->omode,cconx->nchans*sizint);
-  cconx->omode[cconx->nchans-1]=omode;
+  cconx->imode=(int *)g_realloc(cconx->imode,totcons*sizint);
+  cconx->imode[totcons-1]=imode;
 
-  cconx->ocnum=(int *)g_realloc(cconx->ocnum,cconx->nchans*sizint);
-  cconx->ocnum[cconx->nchans-1]=ocnum;
+  cconx->icnum=(int *)g_realloc(cconx->icnum,totcons*sizint);
+  cconx->icnum[totcons-1]=icnum;
 
 
 }
 
 
 
-weed_plant_t *cconx_get_out_alpha(int okey, int omode, int ocnum) {
-  // walk all cconx and find one which has okey/omode/ocnum as output
+weed_plant_t *cconx_get_out_alpha(int ikey, int imode, int icnum, int *okey, int *omode) {
+  // walk all cconx and find one which has ikey/imode/icnum as destination
   // then all we need do is convert the pixel_data
 
   lives_cconnect_t *cconx=mainw->cconx;
@@ -638,29 +684,28 @@ weed_plant_t *cconx_get_out_alpha(int okey, int omode, int ocnum) {
 
   while (cconx!=NULL) {
     if (mainw->is_rendering) {
-      inst=get_new_inst_for_keymode(cconx->ikey,cconx->imode);
+      inst=get_new_inst_for_keymode(cconx->okey,cconx->omode);
     }
     else {
-      inst=rte_keymode_get_instance(cconx->ikey+1,cconx->imode);
+      inst=rte_keymode_get_instance(cconx->okey+1,cconx->omode);
     }
-    if (inst==NULL) return NULL; ///< effect is not enabled
+    if (inst==NULL) continue;
+    if (!weed_plant_has_leaf(inst,"out_channels")) continue;
     totcons=0;
     j=0;
     for (i=0;i<cconx->nchans;i++) {
       totcons+=cconx->nconns[i];
       for (;j<totcons;j++) {
-	if (cconx->okey[j]==okey && cconx->omode[j]==omode && cconx->ocnum[j]==ocnum) {
-	  if (!weed_plant_has_leaf(inst,"out_channels")) return NULL;
-	  else {
-	    weed_plant_t **outchans=weed_get_plantptr_array(inst,"out_channels",&error);
-	    weed_plant_t *channel=NULL;
-	    if (cconx->chans[i]<weed_leaf_num_elements(inst,"out_channels")) {
-	      channel=outchans[cconx->chans[i]];
-
-	    }
-	    weed_free(outchans);
-	    return channel;
+	if (cconx->ikey[j]==ikey && cconx->imode[j]==imode && cconx->icnum[j]==icnum) {
+	  weed_plant_t **outchans=weed_get_plantptr_array(inst,"out_channels",&error);
+	  weed_plant_t *channel=NULL;
+	  if (cconx->chans[i]<weed_leaf_num_elements(inst,"out_channels")) {
+	    channel=outchans[cconx->chans[i]];
+	    if (okey!=NULL) *okey=cconx->okey;
+	    if (omode!=NULL) *omode=cconx->omode;
 	  }
+	  weed_free(outchans);
+	  return channel;
 	}
       }
     }
@@ -772,6 +817,8 @@ gboolean cconx_convert_pixel_data(weed_plant_t *dchan, weed_plant_t *schan) {
 boolean cconx_chain_data(int key, int mode) {
   // ret TRUE if we should reinit inst (because of palette change)
 
+  int okey,omode;
+
   weed_plant_t *ichan,*ochan;
   weed_plant_t *inst;
 
@@ -781,19 +828,29 @@ boolean cconx_chain_data(int key, int mode) {
 
   if (mainw->is_rendering) {
     if ((inst=get_new_inst_for_keymode(key,mode))==NULL) {
-      LIVES_ERROR("pulling alpha from unknown effect");
-      return FALSE; ///< effect is not found
+      return FALSE; ///< dest effect is not found
     }
   }
   else {
     if ((inst=rte_keymode_get_instance(key+1,mode))==NULL) {
-      LIVES_ERROR("pulling alpha from non-enabled effect");
-      return FALSE; ///< effect is not enabled
+      return FALSE; ///< dest effect is not enabled
     }
   }
 
   while ((ichan=get_enabled_channel(inst,i,TRUE))!=NULL) {
-    if ((ochan=cconx_get_out_alpha(key,mode,i++))!=NULL) {
+    if ((ochan=cconx_get_out_alpha(key,mode,i++,&okey,&omode))!=NULL) {
+
+      if (mainw->is_rendering) {
+	if ((inst=get_new_inst_for_keymode(okey,omode))==NULL) {
+	  return FALSE; ///< source effect is not found
+	}
+      }
+      else {
+	if ((inst=rte_keymode_get_instance(okey+1,omode))==NULL) {
+	  return FALSE; ///< source effect is not enabled
+	}
+      }
+
       if (cconx_convert_pixel_data(ichan,ochan)) needs_reinit=TRUE;
     }
   }

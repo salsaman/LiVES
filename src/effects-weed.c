@@ -3106,7 +3106,6 @@ weed_plant_t *weed_apply_effects (weed_plant_t **layers, weed_plant_t *filter_ma
     }
   }
 
-  
   // TODO - set mainw->vpp->play_params from connected out params and out alphas
 
   if (!mainw->is_rendering) {

@@ -4706,7 +4706,6 @@ void lives_osc_cb_rte_addpconnection(void *context, int arglen, const void *varg
 
   if (pnum0>=num_out_params(filter)) return lives_osc_notify_failure();
 
-
   filter=rte_keymode_get_filter(key1,mode1);
   if (filter==NULL) return lives_osc_notify_failure();
 
@@ -5173,10 +5172,10 @@ static struct
     {	"/effect_key/mode/" , 		"mode",	 43, 25,0	},
     {	"/effect_key/name/" , 		"name",	 44, 25,0	},
     {	"/effect_key/maxmode/" , 	"maxmode",	 45, 25,0	},
-    {	"/effect_key/out_channel/" , 	"out_channel",	 150, 25,0	},
-    {	"/effect_key/out_channel/connection/" , 	"connection",	 151, 150,0	},
-    {	"/effect_key/out_parameter/" , 	"out_parameter",	 160, 25,0	},
-    {	"/effect_key/out_parameter/connection/" , 	"connection",	 161, 160,0	},
+    {	"/effect_key/out_channel/" , 	"out_channel",	 160, 25,0	},
+    {	"/effect_key/out_channel/connection/" , 	"connection",	 161, 160,0	},
+    {	"/effect_key/out_parameter/" , 	"out_parameter",	 150, 25,0	},
+    {	"/effect_key/out_parameter/connection/" , 	"connection",	 151, 150,0	},
     {	"/lives/" , 		"lives",	 21, -1,0	},
     {	"/lives/version" , 		"version",	 24, 21,0	},
     {	"/lives/mode" , 		"mode",	 103, 21,0	},

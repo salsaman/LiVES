@@ -86,6 +86,7 @@ void weed_reinit_all(void);
 int weed_flagset_array_count(weed_plant_t **array, gboolean set_readonly);
 
 int num_in_params(weed_plant_t *, gboolean count_reinits, gboolean count_variable);
+int num_out_params(weed_plant_t *);
 weed_plant_t *weed_inst_in_param (weed_plant_t *inst, int param_num, gboolean skip_hidden);
 gboolean is_hidden_param(weed_plant_t *plant, int i);
 int get_nth_simple_param(weed_plant_t *plant, int pnum);

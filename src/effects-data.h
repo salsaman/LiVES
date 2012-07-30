@@ -17,8 +17,8 @@ typedef struct _lives_pconnect_t lives_pconnect_t;
 
 
 struct _lives_pconnect_t {
-  int ikey; ///< ikey is 0 based
-  int imode;
+  int okey; ///< okey is 0 based
+  int omode;
 
   int nparams; ///< number of parameters which are linked
 
@@ -29,9 +29,10 @@ struct _lives_pconnect_t {
   int *nconns;
 
   // each param is mapped to nconns[i] of these
-  int *okey;  ///< okey is 0 based
-  int *omode;
-  int *opnum;
+  int *ikey;  ///< ikey is 0 based
+  int *imode;
+  int *ipnum;
+  int *autoscale;
 
   lives_pconnect_t *next;
   
@@ -39,11 +40,11 @@ struct _lives_pconnect_t {
 
 
 
-/// add a new connection from out_param ikey/imode/ipnum to in_param okey/omode/opnum
-void pconx_add_connection(int ikey, int imode, int ipnum, int okey, int omode, int opnum);
+/// add a new connection from out_param okey/omode/opnum to in_param ikey/imode/ipnum
+void pconx_add_connection(int okey, int omode, int opnum, int ikey, int imode, int ipnum, boolean autoscale);
 
-/// return if okey/omode/opnum is mapped to an out param
-weed_plant_t *pconx_get_out_param(int okey, int omode, int opnum);
+/// return if ikey/imode/ipnum is mapped to an out param
+weed_plant_t *pconx_get_out_param(int ikey, int imode, int ipnum, int *okey, int *omode, int *autoscale);
 
 // free all connections (and set mainw->pconx to NULL)
 void pconx_free_all();
@@ -68,8 +69,8 @@ typedef struct _lives_cconnect_t lives_cconnect_t;
 
 
 struct _lives_cconnect_t {
-  int ikey; ///< ikey is 0 based
-  int imode;
+  int okey; ///< okey is 0 based
+  int omode;
 
   int nchans; ///< number of alpha channels which are linked (|chans|)
 
@@ -80,9 +81,9 @@ struct _lives_cconnect_t {
   int *nconns;
 
   // each param is mapped to nconns[i] of these
-  int *okey;  ///< okey is 0 based
-  int *omode;
-  int *ocnum;
+  int *ikey;  ///< ikey is 0 based
+  int *imode;
+  int *icnum;
 
   lives_cconnect_t *next;
   
@@ -90,12 +91,12 @@ struct _lives_cconnect_t {
 
 
 
-/// add a new connection from out_param ikey/imode/ipnum to in_param okey/omode/opnum
-void cconx_add_connection(int ikey, int imode, int icnum, int okey, int omode, int ocnum);
+/// add a new connection from out_param okey/omode/opnum to in_param ikey/imode/ipnum
+void cconx_add_connection(int okey, int omode, int ocnum, int ikey, int imode, int icnum);
 
 
 /// return if okey/omode/ochan is mapped to an out alpha
-weed_plant_t *cconx_get_out_chan(int okey, int omode, int opnum);
+weed_plant_t *cconx_get_out_chan(int ikey, int imode, int ipnum, int *okey, int *omode);
 
 
 // chain any output data into fx key/mode

@@ -107,7 +107,7 @@ extern "C"
 #define WEED_CHANNEL_SIZE_CAN_VARY            (1<<3)
 #define WEED_CHANNEL_PALETTE_CAN_VARY         (1<<4)
 
-
+  
 /* Channel flags */
 #define WEED_CHANNEL_ALPHA_PREMULT (1<<0)
 

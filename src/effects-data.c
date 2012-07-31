@@ -27,6 +27,9 @@
 
 void pconx_delete_all(void) {
   lives_pconnect_t *pconx=mainw->pconx,*pconx_next;
+
+  pthread_mutex_lock(&mainw->afilter_mutex);
+
   while (pconx!=NULL) {
     pconx_next=pconx->next;
     g_free(pconx->params);
@@ -39,6 +42,9 @@ void pconx_delete_all(void) {
     pconx=pconx_next;
   }
   mainw->pconx=NULL;
+
+  pthread_mutex_unlock(&mainw->afilter_mutex);
+
 }
 
 
@@ -49,6 +55,8 @@ void pconx_delete(int okey, int omode, int opnum, int ikey, int imode, int ipnum
   register int i,j=0,k;
 
   int totcons=0,maxcons=0;
+
+  pthread_mutex_lock(&mainw->afilter_mutex);
 
   while (pconx!=NULL) {
     pconx_next=pconx->next;
@@ -64,6 +72,7 @@ void pconx_delete(int okey, int omode, int opnum, int ikey, int imode, int ipnum
 	g_free(pconx);
 	if (mainw->pconx==pconx) mainw->pconx=pconx_next;
 	else pconx_prev->next=pconx_next;
+	pthread_mutex_unlock(&mainw->afilter_mutex);
 	return;
       }
 
@@ -132,6 +141,7 @@ void pconx_delete(int okey, int omode, int opnum, int ikey, int imode, int ipnum
     pconx_prev=pconx;
     pconx=pconx_next;
   }
+  pthread_mutex_unlock(&mainw->afilter_mutex);
 }
 
 
@@ -215,6 +225,8 @@ void pconx_add_connection(int okey, int omode, int opnum, int ikey, int imode, i
   int posn=0,totcons=0;
   register int i,j;
 
+  pthread_mutex_lock(&mainw->afilter_mutex);
+
   if (pconx==NULL) {
     // add whole new node
     pconx=pconx_new(okey,omode);
@@ -244,6 +256,7 @@ void pconx_add_connection(int okey, int omode, int opnum, int ikey, int imode, i
 	for (j=posn;j<totcons;j++) {
 	  if (pconx->ikey[j]==ikey&&pconx->imode[j]==imode&&pconx->ipnum[j]==ipnum) {
 	    pconx->autoscale[j]=autoscale;
+	    pthread_mutex_unlock(&mainw->afilter_mutex);
 	    return;
 	  }
 	}
@@ -267,6 +280,8 @@ void pconx_add_connection(int okey, int omode, int opnum, int ikey, int imode, i
 	pconx->imode[posn]=imode;
 	pconx->ipnum[posn]=ipnum;
 	pconx->autoscale[posn]=autoscale;
+
+	pthread_mutex_unlock(&mainw->afilter_mutex);
 
 	return;
       }
@@ -306,8 +321,10 @@ void pconx_add_connection(int okey, int omode, int opnum, int ikey, int imode, i
     pconx->autoscale[posn]=autoscale;
 
 #ifdef DEBUG_PCONX
-  g_print("added another pconx from %d %d %d to %d %d %d\n",okey,omode,opnum,ikey,imode,ipnum);
+    g_print("added another pconx from %d %d %d to %d %d %d\n",okey,omode,opnum,ikey,imode,ipnum);
 #endif
+
+    pthread_mutex_unlock(&mainw->afilter_mutex);
 
     return;
 
@@ -339,6 +356,8 @@ void pconx_add_connection(int okey, int omode, int opnum, int ikey, int imode, i
 #ifdef DEBUG_PCONX
   g_print("added new pconx from %d %d %d to %d %d %d\n",okey,omode,opnum,ikey,imode,ipnum);
 #endif
+
+  pthread_mutex_unlock(&mainw->afilter_mutex);
 
 }
 

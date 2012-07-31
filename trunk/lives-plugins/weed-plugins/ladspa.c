@@ -565,13 +565,13 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 
     int dual;
 
-    register int i;
+    register int i,j;
 
     if (lpp==NULL) {
       fprintf(stderr,"No LADSPA plugins found; if you have them installed please set the LADSPA_PATH environment variable to point to them.\n");
       return NULL;
     }
-    //#define DEBUG
+    //    #define DEBUG
 #ifndef DEBUG
     new_stdout=dup(1);
     new_stderr=dup(2);
@@ -716,17 +716,18 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 	    in_params=(weed_plant_t **)weed_malloc((++ninps+stcount*2)*sizeof(weed_plant_t *));
 	    in_params[ninps+stcount*2-1]=NULL;
 	    if (dual==WEED_TRUE) {
-	      in_params[ninps-1]=weed_switch_init("link","_Link left and right parameters",WEED_FALSE);
+	      in_params[ninps-1]=weed_switch_init("link","_Link left and right parameters",WEED_TRUE);
 	      gui=weed_parameter_template_get_gui(in_params[ninps-1]);
 	      weed_set_int_value(gui,"copy_value_to",ninps);
 	      sprintf(rfx_strings[0],"layout|p%d|",ninps-1);
 
 	      // link it to a dummy param which is hidden and reinit - this allows the value to be updated and the plugin to be reinited at any time
-	      in_params[ninps]=weed_switch_init("link dummy","linkdummy",WEED_FALSE);
+	      in_params[ninps]=weed_switch_init("link dummy","linkdummy",WEED_TRUE);
 	      weed_set_int_value(in_params[ninps],"flags",WEED_PARAMETER_REINIT_ON_VALUE_CHANGE); 
 	      gui=weed_parameter_template_get_gui(in_params[ninps]);
 	      weed_set_boolean_value(gui,"hidden",WEED_TRUE);
 	    }
+
 	  }
 	  else in_params=NULL;
 
@@ -954,7 +955,7 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 	  weed_set_voidptr_value(filter_class,"plugin_lad_run_func",(void *)lad_run_func);
 	  weed_set_voidptr_value(filter_class,"plugin_lad_cleanup_func",(void *)lad_cleanup_func);
 
-	  if (dual) {
+	  if (dual==WEED_TRUE) {
 	    weed_set_boolean_value(filter_class,"plugin_dual",WEED_TRUE);
 	    if (ninps>0) {
 	      gui=weed_filter_class_get_gui(filter_class);
@@ -966,6 +967,14 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 	      for (wnum=0;wnum<ninps+2+stcount;wnum++) weed_free(rfx_strings[wnum]);
 	      weed_free(rfx_strings);
 	      rfx_strings=NULL;
+	      
+	      for (j=0;j<oninps;j++) {
+		gui=weed_parameter_template_get_gui(in_params[j]);
+		weed_set_int_value(gui,"copy_value_to",j+oninps);
+		gui=weed_parameter_template_get_gui(in_params[j+oninps]);
+		weed_set_int_value(gui,"copy_value_to",j);
+	      }
+
 	    }
 	  }
 	  else weed_set_boolean_value(filter_class,"plugin_dual",WEED_FALSE);
@@ -974,8 +983,7 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 	  weed_set_int_value(filter_class,"plugin_out_channels",onoutchs);
 	  weed_set_int_value(filter_class,"plugin_in_params",oninps);
 	  weed_set_int_value(filter_class,"plugin_out_params",onoutps);
-
-
+	  
 	  weed_plugin_info_add_filter_class (plugin_info,filter_class);
 	  num_plugins++;
 	  num_filters++;

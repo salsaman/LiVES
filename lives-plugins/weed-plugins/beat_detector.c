@@ -330,14 +330,20 @@ int beat_process (weed_plant_t *inst, weed_timecode_t timestamp) {
     }
     var/=(float)sdata->bufidx;
 
+    //fprintf(stderr,"%f %f %f  ",var,av,sdata->buf[i][sdata->bufidx]);
 
-    if (((sdata->buf[i][sdata->bufidx]-av)*(sdata->buf[i][sdata->bufidx]-av))>varlim*var && sdata->buf[i][sdata->bufidx]>avlim*av) {
+    varlim*=varlim;
+
+    if (var>varlim && sdata->buf[i][sdata->bufidx]>avlim*av) {
       // got a beat !
       beat_pulse=beat_hold=WEED_TRUE;
+      //fprintf(stderr,"PULSE !\n");
       break;
     }
 
   }
+
+  //fprintf(stderr,"\n\n");
 
  done:
   weed_set_boolean_value(out_params[0],"value",beat_hold);
@@ -355,7 +361,7 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
   weed_plant_t *plugin_info=weed_plugin_info_init(weed_boot,num_versions,api_versions);
   if (plugin_info!=NULL) {
     weed_plant_t *in_chantmpls[]={weed_audio_channel_template_init("in channel 0",0),NULL};
-    weed_plant_t *in_params[]={weed_switch_init("reset","_Reset hold",WEED_FALSE),weed_float_init("avlim","_Average threshold",2.5,1.,10.),weed_float_init("varlim","_Variance threshold",5.,1.,100.),NULL};
+    weed_plant_t *in_params[]={weed_switch_init("reset","_Reset hold",WEED_FALSE),weed_float_init("avlim","_Average threshold",1.5,1.,10.),weed_float_init("varlim","_Variance threshold",5.,1.,100.),NULL};
     weed_plant_t *out_params[]={weed_out_param_switch_init("beat hold",WEED_FALSE),weed_out_param_switch_init("beat pulse",WEED_FALSE),NULL};
     weed_plant_t *filter_class=weed_filter_class_init("beat detector","salsaman",1,0,&beat_init,&beat_process,
 						      &beat_deinit,in_chantmpls,NULL,in_params,out_params);

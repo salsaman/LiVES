@@ -81,6 +81,8 @@ if HAVE_FFTW3F
 audio_fft_libs = audio_fft.la beat_detector.la
 audio_fft_la_LDFLAGS = $(FFTW3F_LIBS) $(AM_LDFLAGS)
 audio_fft_la_CFLAGS = $(FFTW3F_CFLAGS) $(AM_CFLAGS)
+beat_detector_la_LDFLAGS = $(FFTW3F_LIBS) $(AM_LDFLAGS)
+beat_detector_la_CFLAGS = $(FFTW3F_CFLAGS) $(AM_CFLAGS)
 audio_fftlibdir = "$(libdir)/$(PACKAGE)/plugins/effects/realtime/weed"
 audio_fftlib_LTLIBRARIES = $(audio_fft_libs)
 endif

@@ -4630,7 +4630,7 @@ void lives_osc_cb_rte_getmode(void *context, int arglen, const void *vargs, OSCT
     return;
   }
 
-  lives_status_send ((tmp=g_strdup_printf ("%d",rte_key_getmode (effect_key))));
+  lives_status_send ((tmp=g_strdup_printf ("%d",rte_key_getmode (effect_key)+1)));
   g_free(tmp);
 
 }
@@ -4699,14 +4699,19 @@ void lives_osc_cb_rte_addpconnection(void *context, int arglen, const void *varg
   lives_osc_parse_int_argument(vargs,&mode1);
   lives_osc_parse_int_argument(vargs,&pnum1);
 
+  if (key0<1||key0>=FX_KEYS_MAX_VIRTUAL||mode0<1||mode0>rte_getmodespk()) return lives_osc_notify_failure();
+  if (key1<1||key1>=FX_KEYS_MAX_VIRTUAL||mode1<1||mode1>rte_getmodespk()) return lives_osc_notify_failure();
+
+  if (key0==key1) lives_osc_notify_failure();
+
   if (autoscale!=TRUE&&autoscale!=FALSE) lives_osc_notify_failure();
 
-  filter=rte_keymode_get_filter(key0,mode0);
+  filter=rte_keymode_get_filter(key0,--mode0);
   if (filter==NULL) return lives_osc_notify_failure();
 
   if (pnum0>=num_out_params(filter)) return lives_osc_notify_failure();
 
-  filter=rte_keymode_get_filter(key1,mode1);
+  filter=rte_keymode_get_filter(key1,--mode1);
   if (filter==NULL) return lives_osc_notify_failure();
 
   if (pnum1>=num_in_params(filter,TRUE,TRUE)) return lives_osc_notify_failure();
@@ -4716,8 +4721,21 @@ void lives_osc_cb_rte_addpconnection(void *context, int arglen, const void *varg
 }
 
 void lives_osc_cb_rte_delpconnection(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+  int key0,mode0,pnum0;
+  int key1,mode1,pnum1;
 
+  if (!lives_osc_check_arguments (arglen,vargs,"iiiiii",TRUE)) return lives_osc_notify_failure();
+  lives_osc_parse_int_argument(vargs,&key0);
+  lives_osc_parse_int_argument(vargs,&mode0);
+  lives_osc_parse_int_argument(vargs,&pnum0);
+  lives_osc_parse_int_argument(vargs,&key1);
+  lives_osc_parse_int_argument(vargs,&mode1);
+  lives_osc_parse_int_argument(vargs,&pnum1);
 
+  if (key0<1||key0>=FX_KEYS_MAX_VIRTUAL||mode0<1||mode0>rte_getmodespk()) return lives_osc_notify_failure();
+  if (key1<1||key1>=FX_KEYS_MAX_VIRTUAL||mode1<1||mode1>rte_getmodespk()) return lives_osc_notify_failure();
+
+  pconx_delete(--key0,--mode0,pnum0,--key1,--mode1,pnum1);
   lives_osc_notify_success(NULL);
 
 }
@@ -4740,13 +4758,17 @@ void lives_osc_cb_rte_addcconnection(void *context, int arglen, const void *varg
   lives_osc_parse_int_argument(vargs,&mode1);
   lives_osc_parse_int_argument(vargs,&cnum1);
 
-  filter=rte_keymode_get_filter(key0,mode0);
+  if (key0<1||key0>=FX_KEYS_MAX_VIRTUAL||mode0<1||mode0>rte_getmodespk()) return lives_osc_notify_failure();
+  if (key1<1||key1>=FX_KEYS_MAX_VIRTUAL||mode1<1||mode1>rte_getmodespk()) return lives_osc_notify_failure();
+
+  if (key0==key1) lives_osc_notify_failure();
+
+  filter=rte_keymode_get_filter(key0,--mode0);
   if (filter==NULL) return lives_osc_notify_failure();
 
   if (cnum0>=enabled_out_channels(filter,FALSE)) return lives_osc_notify_failure();
 
-
-  filter=rte_keymode_get_filter(key1,mode1);
+  filter=rte_keymode_get_filter(key1,--mode1);
   if (filter==NULL) return lives_osc_notify_failure();
 
   if (cnum1>=enabled_in_channels(filter,FALSE)) return lives_osc_notify_failure();
@@ -4757,6 +4779,21 @@ void lives_osc_cb_rte_addcconnection(void *context, int arglen, const void *varg
 }
 
 void lives_osc_cb_rte_delcconnection(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+  int key0,mode0,cnum0;
+  int key1,mode1,cnum1;
+
+  if (!lives_osc_check_arguments (arglen,vargs,"iiiiii",TRUE)) return lives_osc_notify_failure();
+  lives_osc_parse_int_argument(vargs,&key0);
+  lives_osc_parse_int_argument(vargs,&mode0);
+  lives_osc_parse_int_argument(vargs,&cnum0);
+  lives_osc_parse_int_argument(vargs,&key1);
+  lives_osc_parse_int_argument(vargs,&mode1);
+  lives_osc_parse_int_argument(vargs,&cnum1);
+
+  if (key0<1||key0>=FX_KEYS_MAX_VIRTUAL||mode0<1||mode0>rte_getmodespk()) return lives_osc_notify_failure();
+  if (key1<1||key1>=FX_KEYS_MAX_VIRTUAL||mode1<1||mode1>rte_getmodespk()) return lives_osc_notify_failure();
+
+  cconx_delete(--key0,--mode0,cnum0,--key1,--mode1,cnum1);
 
   lives_osc_notify_success(NULL);
 }
@@ -4992,19 +5029,19 @@ static struct
     { "/effect_key/nparameter/default/get",		"get",	lives_osc_cb_rte_getnparamdef,		        95	},
     { "/effect_key/nparameter/is_transition/get",		"get",	lives_osc_cb_rte_getnparamtrans,		        96	},
     { "/effect_key/parameter/is_transition/get",		"get",	lives_osc_cb_rte_getparamtrans,		        78	},
-    { "/effect_key/inchannels/active/get",		"get",	lives_osc_cb_rte_getnchannels,		        131	},
+    { "/effect_key/inchannel/active/count",		"count",	lives_osc_cb_rte_getnchannels,		        131	},
     { "/effect_key/mode/set",		"set",	lives_osc_cb_rte_setmode,		        43	},
     { "/effect_key/mode/get",		"get",	lives_osc_cb_rte_getmode,		        43	},
     { "/effect_key/mode/next",		"next",	lives_osc_cb_rte_nextmode,		        43	},
     { "/effect_key/mode/previous",		"previous",	lives_osc_cb_rte_prevmode,		        43	},
     { "/effect_key/name/get",		"get",	lives_osc_cb_rte_get_keyfxname,		        44	},
     { "/effect_key/maxmode/get",		"get",	lives_osc_cb_rte_getmodespk,		        45	},
-    { "/effect_key/out_parameter/connection/add",		"add",	lives_osc_cb_rte_addpconnection,		        151	},
-    { "/effect_key/out_parameter/connection/delete",		"delete",	lives_osc_cb_rte_delpconnection,		        151	},
-    { "/effect_key/out_parameter/connection/list",		"list",	lives_osc_cb_rte_listpconnection,		        151	},
-    { "/effect_key/out_channel/connection/add",		        "add",	lives_osc_cb_rte_addcconnection,		        161	},
-    { "/effect_key/out_channel/connection/delete",		"delete",	lives_osc_cb_rte_delcconnection,		        161	},
-    { "/effect_key/out_channel/connection/list",		"list",	lives_osc_cb_rte_listcconnection,		        161	},
+    { "/effect_key/outparameter/connection/add",		"add",	lives_osc_cb_rte_addpconnection,		        151	},
+    { "/effect_key/outparameter/connection/delete",		"delete",	lives_osc_cb_rte_delpconnection,		        151	},
+    { "/effect_key/outparameter/connection/list",		"list",	lives_osc_cb_rte_listpconnection,		        151	},
+    { "/effect_key/outchannel/connection/add",		        "add",	lives_osc_cb_rte_addcconnection,		        161	},
+    { "/effect_key/outchannel/connection/delete",		"delete",	lives_osc_cb_rte_delcconnection,		        161	},
+    { "/effect_key/outchannel/connection/list",		"list",	lives_osc_cb_rte_listcconnection,		        161	},
     { "/clip/encode_as",		"encode_as",	lives_osc_cb_clip_encodeas,			1	},
     { "/clip/select",		"select",	lives_osc_cb_fgclip_select,			1	},
     { "/clip/close",		"close",	lives_osc_cb_clip_close,	  		        1	},
@@ -5148,8 +5185,8 @@ static struct
     {	"/effect/realtime/" , 		"realtime",	 114, 4,0	},
     {	"/effect/realtime/name/" , 		"name",	 115, 114,0	},
     {	"/effect_key/" , 		"effect_key",	 25, -1,0	},
-    {	"/effect_key/inchannels/" , 	"inchannels",	 130, 25,0	},
-    {	"/effect_key/inchannels/active/" , 	"active",	 131, 130,0	},
+    {	"/effect_key/inchannel/" , 	"inchannel",	 130, 25,0	},
+    {	"/effect_key/inchannel/active/" , 	"active",	 131, 130,0	},
     {	"/effect_key/parameter/" , 	"parameter",	 41, 25,0	},
     {	"/effect_key/parameter/value/" ,"value",	 42, 41,0	},
     {	"/effect_key/parameter/type/" ,"type",	 68, 41,0	},
@@ -5172,10 +5209,10 @@ static struct
     {	"/effect_key/mode/" , 		"mode",	 43, 25,0	},
     {	"/effect_key/name/" , 		"name",	 44, 25,0	},
     {	"/effect_key/maxmode/" , 	"maxmode",	 45, 25,0	},
-    {	"/effect_key/out_channel/" , 	"out_channel",	 160, 25,0	},
-    {	"/effect_key/out_channel/connection/" , 	"connection",	 161, 160,0	},
-    {	"/effect_key/out_parameter/" , 	"out_parameter",	 150, 25,0	},
-    {	"/effect_key/out_parameter/connection/" , 	"connection",	 151, 150,0	},
+    {	"/effect_key/outchannel/" , 	"outchannel",	 160, 25,0	},
+    {	"/effect_key/outchannel/connection/" , 	"connection",	 161, 160,0	},
+    {	"/effect_key/outparameter/" , 	"outparameter",	 150, 25,0	},
+    {	"/effect_key/outparameter/connection/" , 	"connection",	 151, 150,0	},
     {	"/lives/" , 		"lives",	 21, -1,0	},
     {	"/lives/version" , 		"version",	 24, 21,0	},
     {	"/lives/mode" , 		"mode",	 103, 21,0	},

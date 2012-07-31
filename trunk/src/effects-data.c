@@ -25,6 +25,140 @@
 #include "effects.h"
 
 
+void pconx_delete_all(void) {
+  lives_pconnect_t *pconx=mainw->pconx,*pconx_next;
+  while (pconx!=NULL) {
+    pconx_next=pconx->next;
+    g_free(pconx->params);
+    g_free(pconx->nconns);
+    g_free(pconx->ikey);
+    g_free(pconx->imode);
+    g_free(pconx->ipnum);
+    g_free(pconx->autoscale);
+    g_free(pconx);
+    pconx=pconx_next;
+  }
+  mainw->pconx=NULL;
+}
+
+
+
+void pconx_delete(int okey, int omode, int opnum, int ikey, int imode, int ipnum) {
+  lives_pconnect_t *pconx=mainw->pconx,*pconx_next,*pconx_prev=NULL;
+
+  register int i,j=0,k;
+
+  int totcons=0,maxcons=0;
+
+  while (pconx!=NULL) {
+    pconx_next=pconx->next;
+    if (okey==-1||(pconx->okey==okey&&pconx->omode==omode)) {
+      if (ikey==-1) {
+	// delete entire node
+	g_free(pconx->params);
+	g_free(pconx->nconns);
+	g_free(pconx->ikey);
+	g_free(pconx->imode);
+	g_free(pconx->ipnum);
+	g_free(pconx->autoscale);
+	g_free(pconx);
+	if (mainw->pconx==pconx) mainw->pconx=pconx_next;
+	else pconx_prev->next=pconx_next;
+	return;
+      }
+
+      for (i=0;i<pconx->nparams;i++) {
+	maxcons+=pconx->nconns[i];
+      }
+
+      for (i=0;i<pconx->nparams;i++) {
+	totcons+=pconx->nconns[i];
+
+	if (okey!=-1&&pconx->params[i]!=opnum) {
+	  j+=totcons;
+	  continue;
+	}
+
+	for (;j<totcons;j++) {
+	  if (pconx->ikey[j]==ikey && pconx->imode[j]==imode && pconx->ipnum[j]==ipnum) {
+	    maxcons--;
+	    for (k=j;k<maxcons;k++) {
+	      pconx->ikey[k]=pconx->ikey[k+1];
+	      pconx->imode[k]=pconx->imode[k+1];
+	      pconx->ipnum[k]=pconx->ipnum[k+1];
+	      pconx->autoscale[k]=pconx->autoscale[k+1];
+	    }
+
+	    pconx->ikey=(int *)g_realloc(pconx->ikey,maxcons*sizint);
+	    pconx->imode=(int *)g_realloc(pconx->imode,maxcons*sizint);
+	    pconx->ipnum=(int *)g_realloc(pconx->ipnum,maxcons*sizint);
+	    pconx->autoscale=(int *)g_realloc(pconx->autoscale,maxcons*sizint);
+
+	    pconx->nconns[i]--;
+
+	    if (pconx->nconns[i]==0) {
+	      pconx->nparams--;
+	      for (k=i;k<pconx->nparams;k++) {
+		pconx->nconns[k]=pconx->nconns[k+1];
+	      }
+
+	      if (pconx->nparams==0) {
+		// delete entire node
+		g_free(pconx->params);
+		g_free(pconx->nconns);
+		g_free(pconx->ikey);
+		g_free(pconx->imode);
+		g_free(pconx->ipnum);
+		g_free(pconx->autoscale);
+		g_free(pconx);
+		if (mainw->pconx==pconx) {
+		  mainw->pconx=pconx_next;
+		  pconx=NULL;
+		}
+		else {
+		  pconx=pconx_prev;
+		  pconx->next=pconx_next;
+		}
+	      }
+	      else {
+		pconx->nconns=(int *)g_realloc(pconx->nconns,pconx->nparams*sizint);
+	      }
+	    }
+	  }
+	}
+	j+=totcons;
+      }
+    }
+    pconx_prev=pconx;
+    pconx=pconx_next;
+  }
+}
+
+
+void pconx_remap_mode(int key, int omode, int nmode) {
+  lives_pconnect_t *pconx=mainw->pconx;
+
+  register int i,j,totcons;
+
+  while (pconx!=NULL) {
+    if (pconx->okey==key&&pconx->omode==omode) {
+      pconx->omode=nmode;
+    }
+    j=0;
+    totcons=0;
+    for (i=0;i<pconx->nparams;i++) {
+      totcons+=pconx->nconns[i];
+      for (;j<totcons;j++) {
+	if (pconx->ikey[j]==key && pconx->imode[j]==omode) {
+	  pconx->imode[j]=nmode;
+	}
+      }
+    }
+    pconx=pconx->next;
+  }
+}
+
+
 static lives_pconnect_t *pconx_new (int okey, int omode) {
   lives_pconnect_t *pconx=(lives_pconnect_t *)g_malloc0(sizeof(struct _lives_pconnect_t));
   pconx->next=NULL;
@@ -474,7 +608,7 @@ void pconx_chain_data(int key, int mode) {
       if ((oparam=pconx_get_out_param(key,mode,i,&autoscale))!=NULL) {
 	//#define DEBUG_PCONX
 #ifdef DEBUG_PCONX
-  g_print("got pconx from %d %d to %d %d %d\n",okey,omode,key,mode,i);
+  g_print("got pconx to %d %d %d\n",key,mode,i);
 #endif
 	changed=pconx_convert_value_data(inparams[i],oparam,autoscale);
 
@@ -509,6 +643,136 @@ void pconx_chain_data(int key, int mode) {
 
 
 
+void cconx_delete_all(void) {
+  lives_cconnect_t *cconx=mainw->cconx,*cconx_next;
+  while (cconx!=NULL) {
+    cconx_next=cconx->next;
+    if (cconx->nchans>0) {
+      g_free(cconx->chans);
+      g_free(cconx->nconns);
+      g_free(cconx->ikey);
+      g_free(cconx->imode);
+      g_free(cconx->icnum);
+    }
+    g_free(cconx);
+    cconx=cconx_next;
+  }
+  mainw->cconx=NULL;
+}
+
+
+
+
+void cconx_delete(int okey, int omode, int ocnum, int ikey, int imode, int icnum) {
+  lives_cconnect_t *cconx=mainw->cconx,*cconx_next,*cconx_prev=NULL;
+
+  register int i,j=0,k;
+
+  int totcons=0,maxcons=0;
+
+  while (cconx!=NULL) {
+    cconx_next=cconx->next;
+    if (okey==-1||(cconx->okey==okey&&cconx->omode==omode)) {
+      if (ikey==-1) {
+	// delete entire node
+	g_free(cconx->chans);
+	g_free(cconx->nconns);
+	g_free(cconx->ikey);
+	g_free(cconx->imode);
+	g_free(cconx->icnum);
+	g_free(cconx);
+	if (mainw->cconx==cconx) mainw->cconx=cconx_next;
+	else cconx_prev->next=cconx_next;
+	return;
+      }
+
+      for (i=0;i<cconx->nchans;i++) {
+	maxcons+=cconx->nconns[i];
+      }
+
+      for (i=0;i<cconx->nchans;i++) {
+	totcons+=cconx->nconns[i];
+
+	if (okey!=-1&&cconx->chans[i]!=ocnum) {
+	  j+=totcons;
+	  continue;
+	}
+
+	for (;j<totcons;j++) {
+	  if (cconx->ikey[j]==ikey && cconx->imode[j]==imode && cconx->icnum[j]==icnum) {
+	    maxcons--;
+	    for (k=j;k<maxcons;k++) {
+	      cconx->ikey[k]=cconx->ikey[k+1];
+	      cconx->imode[k]=cconx->imode[k+1];
+	      cconx->icnum[k]=cconx->icnum[k+1];
+	    }
+
+	    cconx->ikey=(int *)g_realloc(cconx->ikey,maxcons*sizint);
+	    cconx->imode=(int *)g_realloc(cconx->imode,maxcons*sizint);
+	    cconx->icnum=(int *)g_realloc(cconx->icnum,maxcons*sizint);
+
+	    cconx->nconns[i]--;
+
+	    if (cconx->nconns[i]==0) {
+	      cconx->nchans--;
+	      for (k=i;k<cconx->nchans;k++) {
+		cconx->nconns[k]=cconx->nconns[k+1];
+	      }
+
+	      if (cconx->nchans==0) {
+		// delete entire node
+		g_free(cconx->chans);
+		g_free(cconx->nconns);
+		g_free(cconx->ikey);
+		g_free(cconx->imode);
+		g_free(cconx->icnum);
+		g_free(cconx);
+		if (mainw->cconx==cconx) {
+		  mainw->cconx=cconx_next;
+		  cconx=NULL;
+		}
+		else {
+		  cconx=cconx_prev;
+		  cconx->next=cconx_next;
+		}
+	      }
+	      else {
+		cconx->nconns=(int *)g_realloc(cconx->nconns,cconx->nchans*sizint);
+	      }
+	    }
+	  }
+	}
+	j+=totcons;
+      }
+    }
+    cconx_prev=cconx;
+    cconx=cconx_next;
+  }
+}
+
+
+void cconx_remap_mode(int key, int omode, int nmode) {
+  lives_cconnect_t *cconx=mainw->cconx;
+
+  register int i,j,totcons;
+
+  while (cconx!=NULL) {
+    if (cconx->okey==key&&cconx->omode==omode) {
+      cconx->omode=nmode;
+    }
+    j=0;
+    totcons=0;
+    for (i=0;i<cconx->nchans;i++) {
+      totcons+=cconx->nconns[i];
+      for (;j<totcons;j++) {
+	if (cconx->ikey[j]==key && cconx->imode[j]==omode) {
+	  cconx->imode[j]=nmode;
+	}
+      }
+    }
+    cconx=cconx->next;
+  }
+}
 
 
 
@@ -562,7 +826,7 @@ static int cconx_get_numcons(lives_cconnect_t *cconx) {
 
 
 
-void cconx_add_connection(int ikey, int imode, int icnum, int okey, int omode, int ocnum) {
+void cconx_add_connection(int okey, int omode, int ocnum, int ikey, int imode, int icnum) {
   lives_cconnect_t *cconx=cconx_find(okey,omode);
   int posn=0,totcons=0;
   register int i,j;
@@ -648,6 +912,10 @@ void cconx_add_connection(int ikey, int imode, int icnum, int okey, int omode, i
     cconx->imode[posn]=imode;
     cconx->icnum[posn]=icnum;
 
+#ifdef DEBUG_PCONX
+  g_print("added another cconx from %d %d %d to %d %d %d\n",okey,omode,ocnum,ikey,imode,icnum);
+#endif
+
     return;
   }
 
@@ -671,6 +939,9 @@ void cconx_add_connection(int ikey, int imode, int icnum, int okey, int omode, i
   cconx->icnum=(int *)g_realloc(cconx->icnum,totcons*sizint);
   cconx->icnum[totcons-1]=icnum;
 
+#ifdef DEBUG_PCONX
+  g_print("added new cconx from %d %d %d to %d %d %d\n",okey,omode,ocnum,ikey,imode,icnum);
+#endif
 
 }
 

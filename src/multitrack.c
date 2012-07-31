@@ -2960,6 +2960,7 @@ static void notebook_error(GtkNotebook *nb, guint tab, lives_mt_nb_error_t err, 
   guint page=poly_tab_to_page(tab);
 
   if (mt->nb_label!=NULL) gtk_widget_destroy(mt->nb_label);
+  mt->nb_label=NULL;
 
   switch(err) {
   case NB_ERROR_SEL:
@@ -5247,6 +5248,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   mt->fm_edit_event=NULL;
 
   mt->nb_label=NULL;
+  mt->fx_list_box=NULL;
 
   mt->moving_fx=NULL;
   mt->fx_order=FX_ORD_NONE;
@@ -11370,13 +11372,15 @@ void polymorph (lives_mt *mt, lives_mt_poly_state_t poly) {
   case POLY_EFFECTS:
   case POLY_TRANS:
   case POLY_COMP:
-    gtk_widget_destroy(mt->fx_list_box);
-    if (mt->nb_label!=NULL) gtk_widget_destroy(mt->nb_label);
-    mt->nb_label=NULL;
     break;
   default:
     break;
   }
+
+  if (mt->fx_list_box!=NULL) gtk_widget_destroy(mt->fx_list_box);
+  mt->fx_list_box=NULL;
+  if (mt->nb_label!=NULL) gtk_widget_destroy(mt->nb_label);
+  mt->nb_label=NULL;
 
   mt->poly_state=poly;
 
@@ -16366,17 +16370,10 @@ static void draw_soundwave(GtkWidget *ebox, gint start, gint width, gint chnum, 
     for (i=offset_start;i<=offset_end;i++) {
       secs=((gdouble)i/ebox->allocation.width*tl_span+mt->tl_min-offset_startd)*vel;
       secs+=seek;
-      ypos=ABS(get_float_audio_val_at_time(fnum,secs,chnum,cfile->achans));
-      if (chnum==0)
-	gdk_draw_line(GDK_DRAWABLE(ebox->window),mainw->general_gc,i,
-		      ebox->allocation.height,i,(1.-ypos)*ebox->allocation.height);
-      else if (chnum==1)
-	gdk_draw_line(GDK_DRAWABLE(ebox->window),mainw->general_gc,i,
-		      0,i,ypos*ebox->allocation.height);
-      else
-	gdk_draw_line(GDK_DRAWABLE(ebox->window),mainw->general_gc,i,
-		      (1.-ypos)/2.*ebox->allocation.height,i,(1.+ypos)/2.*ebox->allocation.height);
-
+      if (secs>mainw->files[fnum]->laudio_time) break;
+      ypos=get_float_audio_val_at_time(fnum,secs,chnum,cfile->achans)*.5;
+      gdk_draw_line(GDK_DRAWABLE(ebox->window),mainw->general_gc,i,
+		    (float)ebox->allocation.height/2.,i,(.5-ypos)*(float)ebox->allocation.height);
 
     }
     block=block->next;

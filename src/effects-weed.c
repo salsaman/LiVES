@@ -2423,7 +2423,7 @@ static lives_filter_error_t weed_apply_audio_instance_inner (weed_plant_t *inst,
 
   int nchans=0;
   int nsamps=0;
-  void *adata=NULL;
+  void *adata=NULL,*adata0=NULL;
 
   // TODO - handle the following:
   // input audio_channels are mono, but the plugin NEEDS stereo
@@ -2542,6 +2542,7 @@ static lives_filter_error_t weed_apply_audio_instance_inner (weed_plant_t *inst,
 
     weed_set_int64_value(channel,"timecode",tc);
     adata=weed_get_voidptr_value(layer,"audio_data",&error);
+    if (i==0) adata0=adata;
 
     // nchans and nsamps needed for inplace
     nchans=weed_get_int_value(channel,"audio_channels",&error);
@@ -2587,7 +2588,7 @@ static lives_filter_error_t weed_apply_audio_instance_inner (weed_plant_t *inst,
     chantmpl=weed_get_plantptr_value(channel,"template",&error);
     channel_flags=weed_get_int_value(chantmpl,"flags",&error);
     
-    if (i==0&&(in_tracks[0]==out_tracks[0])) {
+    if (i==0&&(in_tracks[0]==out_tracks[0])&&adata0!=NULL) {
       if (channel_flags&WEED_CHANNEL_CAN_DO_INPLACE) {
 	// ah, good, inplace
 	inplace=TRUE;
@@ -2598,10 +2599,11 @@ static lives_filter_error_t weed_apply_audio_instance_inner (weed_plant_t *inst,
       float *abuf=(float *)g_malloc0(nchans*nsamps*sizeof(float));
       weed_set_int_value(channel,"audio_data_length",nsamps);
       weed_set_voidptr_value(channel,"audio_data",abuf);
+      inplace=FALSE;
     }
     else {
       weed_set_int_value(channel,"audio_data_length",nsamps);
-      weed_set_voidptr_value(channel,"audio_data",adata);
+      weed_set_voidptr_value(channel,"audio_data",adata0);
       weed_set_boolean_value(layers[i],"audio_interleaf",weed_get_boolean_value(channel,"audio_interleaf",&error));
     }
   }
@@ -2625,9 +2627,11 @@ static lives_filter_error_t weed_apply_audio_instance_inner (weed_plant_t *inst,
 
   // TODO - handle process errors (WEED_ERROR_PLUGIN_INVALID)
 
-  // now we write our out channels back to layers, leaving the palettes and sizes unchanged
+  // now we write our out channels back to layers
   for (i=0;i<num_out_tracks;i++) {
     if (i==0&&inplace) continue;
+
+    // TODO - check this...
 
     channel=get_enabled_channel(inst,i,FALSE);
     layer=layers[out_tracks[i]+nbtracks];
@@ -2663,7 +2667,7 @@ lives_filter_error_t weed_apply_audio_instance (weed_plant_t *init_event, float 
 						int64_t nsamps, gdouble arate, weed_timecode_t tc, double *vis) {
 
 
-  void *in_abuf,*out_abuf;
+  float *in_abuf,*out_abuf;
   int error;
   weed_plant_t **layers,**in_channels,**out_channels=NULL;
   weed_plant_t *instance,*filter;
@@ -2912,10 +2916,10 @@ lives_filter_error_t weed_apply_audio_instance (weed_plant_t *init_event, float 
 
     // non-interleaved
     for (j=0;j<nchans;j++) {
-      lives_memcpy((char *)in_abuf+(j*nsf),abuf[i*nchans+j],nsf);
+      lives_memcpy(&in_abuf[j*nsamps],abuf[i*nchans+j],nsf);
     }
 
-    weed_set_voidptr_value(layers[i],"audio_data",in_abuf);
+    weed_set_voidptr_value(layers[i],"audio_data",(void *)in_abuf);
     weed_set_int_value(layers[i],"audio_data_length",nsamps);
     weed_set_int_value(layers[i],"audio_channels",nchans);
     weed_set_int_value(layers[i],"audio_rate",arate);
@@ -2926,7 +2930,7 @@ lives_filter_error_t weed_apply_audio_instance (weed_plant_t *init_event, float 
 
   weed_apply_audio_instance_inner(instance,init_event,layers,tc,nbtracks);
 
-  out_abuf=weed_get_voidptr_value(layers[0],"audio_data",&error);
+  out_abuf=(float *)weed_get_voidptr_value(layers[0],"audio_data",&error);
 
   if (numoutchans>0) {
     // copy processed audio
@@ -2936,18 +2940,18 @@ lives_filter_error_t weed_apply_audio_instance (weed_plant_t *init_event, float 
 
     // non-interleaved
     for (i=0;i<nchans;i++) {
-      lives_memcpy(abuf[i],(char *)out_abuf+(i*nsf),nsf);
+      lives_memcpy(abuf[i],&out_abuf[i*nsamps],nsf);
     }
   }
 
   for (i=0;i<ntracks;i++) {
-    in_abuf=weed_get_voidptr_value(layers[i],"audio_data",&error);
+    in_abuf=(float *)weed_get_voidptr_value(layers[i],"audio_data",&error);
     g_free(in_abuf);
 
     weed_plant_free(layers[i]);
   }
   g_free(layers);
-
+  
   return retval;
 }
 

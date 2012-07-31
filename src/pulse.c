@@ -596,7 +596,7 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
 		   break;
 		 }
 		 
-		 lives_memcpy(fp[i],fbuffer+(i*numFramesToWrite),numFramesToWrite*sizeof(float));
+		 lives_memcpy(fp[i],&fbuffer[i*numFramesToWrite],numFramesToWrite*sizeof(float));
 
 	       }
 	       

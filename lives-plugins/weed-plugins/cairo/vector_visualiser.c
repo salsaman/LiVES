@@ -459,7 +459,7 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 
     weed_plant_t *in_params[]={weed_switch_init("enabled","_Enabled",WEED_TRUE),NULL};
 
-    weed_plant_t *filter_class=weed_filter_class_init("Cairo vector visualiser","salsaman",1,0,
+    weed_plant_t *filter_class=weed_filter_class_init("cairo vector visualiser","salsaman",1,0,
 						      NULL,&vector_visualiser_process,NULL,
 						      in_chantmpls,out_chantmpls,
 						      in_params,NULL);

@@ -101,6 +101,9 @@ gboolean on_clear_all_clicked (GtkButton *button, gpointer user_data) {
       return FALSE;
     }
 
+  pconx_delete_all();
+  cconx_delete_all();
+
   for (i=0;i<prefs->rte_keys_virtual;i++) {
     if (rte_window!=NULL) gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(key_checks[i]),FALSE);
     for (j=modes-1;j>=0;j--) {
@@ -1019,6 +1022,13 @@ void on_clear_clicked (GtkButton *button, gpointer user_data) {
 
   weed_delete_effectkey (key+1,mode);
 
+  pconx_delete(-1,0,0,key,mode,-1);
+  pconx_delete(key,mode,-1,-1,0,0);
+
+  cconx_delete(-1,0,0,key,mode,-1);
+  cconx_delete(key,mode,-1,-1,0,0);
+
+
   newmode=rte_key_getmode(key+1);
   g_signal_handler_block(mode_radios[key*modes+newmode],mode_ra_fns[key*modes+newmode]);
   rtew_set_mode_radio(key,newmode);
@@ -1028,6 +1038,8 @@ void on_clear_clicked (GtkButton *button, gpointer user_data) {
     idx=key*modes+i;
     gtk_entry_set_text (GTK_ENTRY(combo_entries[idx]),gtk_entry_get_text(GTK_ENTRY(combo_entries[idx+1])));
     type_label_set_text(key,i);
+    pconx_remap_mode(key,i+1,i);
+    cconx_remap_mode(key,i+1,i);
   }
   idx++;
   gtk_entry_set_text (GTK_ENTRY(combo_entries[idx]),"");
@@ -1186,6 +1198,14 @@ void fx_changed (GtkItem *item, gpointer user_data) {
   type_label_set_text(key,mode);
 
   check_clear_all_button();
+
+  pconx_delete(-1,0,0,key,mode,-1);
+  pconx_delete(key,mode,-1,-1,0,0);
+
+  cconx_delete(-1,0,0,key,mode,-1);
+  cconx_delete(key,mode,-1,-1,0,0);
+
+
 
 }
 

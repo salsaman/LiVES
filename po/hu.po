@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: hu\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2012-07-30 20:37-0300\n"
+"POT-Creation-Date: 2012-07-31 10:50-0300\n"
 "PO-Revision-Date: 2011-08-18 11:58+0000\n"
 "Last-Translator: Krasznecz Zoltán <zoltan.krasznecz@gmail.com>\n"
 "Language-Team: Magyar <lisovszki@gmail.com>\n"
@@ -708,12 +708,12 @@ msgid "Closed file %s\n"
 msgstr "%s fájl bezárva\n"
 
 #: src/main.c:5571 src/gui.c:622 src/utils.c:3873 src/utils.c:3905
-#: src/saveplay.c:3354 src/multitrack.c:4076 src/multitrack.c:5648
+#: src/saveplay.c:3354 src/multitrack.c:4077 src/multitrack.c:5650
 msgid "_Undo"
 msgstr "_Visszavonás"
 
 #: src/main.c:5572 src/gui.c:635 src/utils.c:3874 src/utils.c:3906
-#: src/saveplay.c:3355 src/multitrack.c:4097 src/multitrack.c:5671
+#: src/saveplay.c:3355 src/multitrack.c:4098 src/multitrack.c:5673
 msgid "_Redo"
 msgstr "Új_ra"
 
@@ -747,8 +747,8 @@ msgstr ""
 #: src/main.c:5734 src/callbacks.c:7389 src/callbacks.c:7537
 #: src/callbacks.c:7863 src/callbacks.c:7880 src/gui.c:3683
 #: src/saveplay.c:2313 src/saveplay.c:2347 src/saveplay.c:2937
-#: src/saveplay.c:3047 src/saveplay.c:3069 src/multitrack.c:8421
-#: src/multitrack.c:10013
+#: src/saveplay.c:3047 src/saveplay.c:3069 src/multitrack.c:8423
+#: src/multitrack.c:10015
 #, c-format
 msgid " (%d %% scale)"
 msgstr ""
@@ -1125,7 +1125,7 @@ msgstr ""
 #: src/callbacks.c:9928 src/gui.c:3097 src/gui.c:3660 src/saveplay.c:2194
 #: src/saveplay.c:2960 src/dialogs.c:1334 src/dialogs.c:1335
 #: src/dialogs.c:1559 src/dialogs.c:1560 src/framedraw.c:230
-#: src/multitrack.c:7235
+#: src/multitrack.c:7237
 msgid "Preview"
 msgstr "Előnézet"
 
@@ -2740,7 +2740,7 @@ msgstr "Mégse"
 msgid "Stop"
 msgstr "_Leállítás"
 
-#: src/callbacks.c:10325 src/multitrack.c:12135
+#: src/callbacks.c:10325 src/multitrack.c:12139
 msgid "LiVES: Selected frame"
 msgstr "LiVES: Kijelölt képkocka"
 
@@ -3063,11 +3063,11 @@ msgstr "_Egyéni effektek"
 msgid "Custom _Utilities"
 msgstr "Egyéni _segédprogramok"
 
-#: src/gui.c:326 src/multitrack.c:5351
+#: src/gui.c:326 src/multitrack.c:5353
 msgid "_File"
 msgstr "_Fájl"
 
-#: src/gui.c:337 src/multitrack.c:5374
+#: src/gui.c:337 src/multitrack.c:5376
 msgid "_Open File/Directory"
 msgstr "_Fájl/könyvtár megnyitása"
 
@@ -3076,12 +3076,12 @@ msgstr "_Fájl/könyvtár megnyitása"
 msgid "O_pen Part of File..."
 msgstr "_Legutóbbi fájlok..."
 
-#: src/gui.c:349 src/gui.c:353 src/multitrack.c:5391 src/multitrack.c:5407
-#: src/multitrack.c:5412
+#: src/gui.c:349 src/gui.c:353 src/multitrack.c:5393 src/multitrack.c:5409
+#: src/multitrack.c:5414
 msgid "Open _Location/Stream..."
 msgstr "_Hely/adatfolyam megnyitása..."
 
-#: src/gui.c:362 src/multitrack.c:5400
+#: src/gui.c:362 src/multitrack.c:5402
 #, fuzzy
 msgid "Open _Youtube Clip..."
 msgstr "LiVES: - Klip átnevezése"
@@ -3106,11 +3106,11 @@ msgstr "_Importálás eszközről"
 msgid "_Import from Firewire"
 msgstr "_Importálás eszközről"
 
-#: src/gui.c:395 src/multitrack.c:5468
+#: src/gui.c:395 src/multitrack.c:5470
 msgid "Import from _Firewire Device (dv)"
 msgstr "Importálás innen: _firewire eszköz (dv)"
 
-#: src/gui.c:396 src/multitrack.c:5476
+#: src/gui.c:396 src/multitrack.c:5478
 msgid "Import from _Firewire Device (hdv)"
 msgstr "Importálás innen: _firewire eszköz (hdv)"
 
@@ -3131,15 +3131,15 @@ msgstr "Importálás innen: _firewire eszköz (dv)"
 msgid "Add _TV Device"
 msgstr ""
 
-#: src/gui.c:476 src/multitrack.c:5499
+#: src/gui.c:476 src/multitrack.c:5501
 msgid "_Recent Files..."
 msgstr "_Legutóbbi fájlok..."
 
-#: src/gui.c:527 src/multitrack.c:5558
+#: src/gui.c:527 src/multitrack.c:5560
 msgid "_Reload Clip Set..."
 msgstr "_Klip beállítás újratöltése..."
 
-#: src/gui.c:531 src/multitrack.c:5566
+#: src/gui.c:531 src/multitrack.c:5568
 msgid "Close/Sa_ve All Clips"
 msgstr "_Bezárás/összes klip mentése"
 
@@ -3173,11 +3173,11 @@ msgstr "Kódolás/mentés _hanggal"
 msgid "Auto load subtitles"
 msgstr "_Automatikus újratöltés legközelebb"
 
-#: src/gui.c:603 src/multitrack.c:5605
+#: src/gui.c:603 src/multitrack.c:5607
 msgid "Clean _up Diskspace"
 msgstr "_Lemezterület felszabadítása"
 
-#: src/gui.c:611 src/multitrack.c:5638
+#: src/gui.c:611 src/multitrack.c:5640
 msgid "_Edit"
 msgstr "_Szerkesztés"
 
@@ -3253,7 +3253,7 @@ msgstr "_Kijelölés megfordítása"
 msgid "_Lock Selection Width"
 msgstr "_Kijelöltek zárolása"
 
-#: src/gui.c:812 src/multitrack.c:5785
+#: src/gui.c:812 src/multitrack.c:5787
 msgid "_Play"
 msgstr "_Lejátszás"
 
@@ -3269,15 +3269,15 @@ msgstr "_Kijelöltek lejátszása"
 msgid "Play _Clipboard"
 msgstr "_Vágólap lejátszása"
 
-#: src/gui.c:860 src/multitrack.c:5814
+#: src/gui.c:860 src/multitrack.c:5816
 msgid "_Stop"
 msgstr "_Leállítás"
 
-#: src/gui.c:873 src/multitrack.c:5824
+#: src/gui.c:873 src/multitrack.c:5826
 msgid "Re_wind"
 msgstr "_Előre"
 
-#: src/gui.c:904 src/multitrack.c:5839
+#: src/gui.c:904 src/multitrack.c:5841
 msgid "_Full Screen"
 msgstr "_Teljes képernyő"
 
@@ -3285,7 +3285,7 @@ msgstr "_Teljes képernyő"
 msgid "_Double Size"
 msgstr "_Dupla méret"
 
-#: src/gui.c:921 src/multitrack.c:5847
+#: src/gui.c:921 src/multitrack.c:5849
 msgid "Play in _Separate Window"
 msgstr "Lejátszás _önálló ablakban"
 
@@ -3297,7 +3297,7 @@ msgstr "_Üres háttér"
 msgid "(Auto)_loop Video (to fit audio track)"
 msgstr "(Automatikus)_videó rendezés (hogy kitöltse a zenét)"
 
-#: src/gui.c:946 src/multitrack.c:5855
+#: src/gui.c:946 src/multitrack.c:5857
 msgid "L_oop Continuously"
 msgstr "_Folytatólagos hurok"
 
@@ -3305,11 +3305,11 @@ msgstr "_Folytatólagos hurok"
 msgid "Pin_g Pong Loops"
 msgstr "_Ping pong hurkok"
 
-#: src/gui.c:963 src/multitrack.c:5863
+#: src/gui.c:963 src/multitrack.c:5865
 msgid "_Mute"
 msgstr "_Elnémítás"
 
-#: src/gui.c:977 src/multitrack.c:5876
+#: src/gui.c:977 src/multitrack.c:5878
 msgid "Separate Window 'S_ticky' Mode"
 msgstr "Önálló ablak, 'r_agadós' mód"
 
@@ -3326,7 +3326,7 @@ msgstr "Részletek megjelenítése"
 msgid "Letterbox mode"
 msgstr ""
 
-#: src/gui.c:1011 src/multitrack.c:5891
+#: src/gui.c:1011 src/multitrack.c:5893
 msgid "Effect_s"
 msgstr "_Effektek"
 
@@ -3338,7 +3338,7 @@ msgstr "Az effektek az aktuális kijelölésnél lesznek alkalmazva."
 msgid "_Run Test Rendered Effect/Tool/Generator..."
 msgstr "_Effekt/Eszköz/Generátor teszt futtatása..."
 
-#: src/gui.c:1031 src/multitrack.c:6368
+#: src/gui.c:1031 src/multitrack.c:6370
 msgid "_Tools"
 msgstr "_Eszközök"
 
@@ -3362,7 +3362,7 @@ msgstr "_Video újramintázása új képarány értékre..."
 msgid "_Utilities"
 msgstr "_Segédprogramok"
 
-#: src/gui.c:1074 src/multitrack.c:6393
+#: src/gui.c:1074 src/multitrack.c:6395
 msgid "_Generate"
 msgstr "_Létrehozás"
 
@@ -3384,11 +3384,11 @@ msgstr "_Mentés fájlba"
 msgid "Erase subtitles"
 msgstr "_Mentés fájlba"
 
-#: src/gui.c:1117 src/multitrack.c:6402
+#: src/gui.c:1117 src/multitrack.c:6404
 msgid "Capture _External Window... "
 msgstr "Felvétel _külső ablakban... "
 
-#: src/gui.c:1126 src/multitrack.c:6417
+#: src/gui.c:1126 src/multitrack.c:6419
 msgid "_Preferences..."
 msgstr "_Beállítások..."
 
@@ -3504,15 +3504,15 @@ msgstr "Fájl kommentek megjelenítése/_szerkesztése"
 msgid "Show _Clipboard Info"
 msgstr "_Vágólap információ megjelenítése"
 
-#: src/gui.c:1348 src/multitrack.c:6526
+#: src/gui.c:1348 src/multitrack.c:6528
 msgid "Show _Messages"
 msgstr "_Üzenetek megjelenítése"
 
-#: src/gui.c:1352 src/multitrack.c:6604
+#: src/gui.c:1352 src/multitrack.c:6606
 msgid "Show _Layout Errors"
 msgstr "_Kimeneti hibák mutatása"
 
-#: src/gui.c:1357 src/multitrack.c:6503
+#: src/gui.c:1357 src/multitrack.c:6505
 msgid "_Clips"
 msgstr "_Klipek"
 
@@ -3672,39 +3672,39 @@ msgstr "_Őrült képkockák"
 msgid "_LiVES TV (broadband)"
 msgstr "_LiVES TV (szélessávú)"
 
-#: src/gui.c:1642 src/multitrack.c:6626
+#: src/gui.c:1642 src/multitrack.c:6628
 msgid "_Help"
 msgstr "_Súgó"
 
-#: src/gui.c:1653 src/multitrack.c:6645
+#: src/gui.c:1653 src/multitrack.c:6647
 msgid "_Manual (opens in browser)"
 msgstr "_Kézikönyv (böngészőben nyílik meg)"
 
-#: src/gui.c:1662 src/multitrack.c:6654
+#: src/gui.c:1662 src/multitrack.c:6656
 msgid "_Donate to the project !"
 msgstr "_Támogasd a projektet!"
 
-#: src/gui.c:1666 src/multitrack.c:6658
+#: src/gui.c:1666 src/multitrack.c:6660
 msgid "_Email the author"
 msgstr "_Levél a fejlesztőnek"
 
-#: src/gui.c:1670 src/multitrack.c:6662
+#: src/gui.c:1670 src/multitrack.c:6664
 msgid "Report a _bug"
 msgstr "Hiba bejelentése"
 
-#: src/gui.c:1674 src/multitrack.c:6666
+#: src/gui.c:1674 src/multitrack.c:6668
 msgid "Suggest a _feature"
 msgstr "_Képesség ajánlása a fejlesztőnek"
 
-#: src/gui.c:1678 src/multitrack.c:6670
+#: src/gui.c:1678 src/multitrack.c:6672
 msgid "Assist with _translating"
 msgstr "Segítség a _fordításban"
 
-#: src/gui.c:1687 src/multitrack.c:6679
+#: src/gui.c:1687 src/multitrack.c:6681
 msgid "_Troubleshoot"
 msgstr "_Hibaelhárítás"
 
-#: src/gui.c:1691 src/multitrack.c:6683
+#: src/gui.c:1691 src/multitrack.c:6685
 msgid "_About"
 msgstr "_Névjegy"
 
@@ -3712,7 +3712,7 @@ msgstr "_Névjegy"
 msgid "Rewind to start (w)"
 msgstr "_Visszatekerés az elejére (w)"
 
-#: src/gui.c:1732 src/multitrack.c:15410
+#: src/gui.c:1732 src/multitrack.c:15414
 msgid "Play all (p)"
 msgstr "Mind lejátszása (p)"
 
@@ -4174,12 +4174,12 @@ msgstr ""
 "\n"
 "Felülírod?\n"
 
-#: src/utils.c:3866 src/utils.c:3898 src/multitrack.c:4069
+#: src/utils.c:3866 src/utils.c:3898 src/multitrack.c:4070
 #, c-format
 msgid "_Undo %s"
 msgstr "_%s visszavonása"
 
-#: src/utils.c:3867 src/utils.c:3899 src/multitrack.c:4091
+#: src/utils.c:3867 src/utils.c:3899 src/multitrack.c:4092
 #, c-format
 msgid "_Redo %s"
 msgstr "\"%s\" _újra"
@@ -5865,7 +5865,7 @@ msgstr "csak videó"
 msgid "Video only Transitions"
 msgstr "Csak videó átmenetek"
 
-#: src/effects.c:107 src/multitrack.c:9736
+#: src/effects.c:107 src/multitrack.c:9738
 msgid "audio only"
 msgstr "csak hang"
 
@@ -5873,7 +5873,7 @@ msgstr "csak hang"
 msgid "Audio only Transitions"
 msgstr "Csak hang átmenetek"
 
-#: src/effects.c:110 src/effects.c:113 src/multitrack.c:17409
+#: src/effects.c:110 src/effects.c:113 src/multitrack.c:17406
 msgid "audio"
 msgstr "hang"
 
@@ -5970,22 +5970,22 @@ msgstr ""
 "\n"
 "Nincsenek képkockák generálva.\n"
 
-#: src/effects-weed.c:3920
+#: src/effects-weed.c:3924
 #, c-format
 msgid "Error: plugin %s has no weed_setup() function.\n"
 msgstr "Hiba: a(z) %s bővítménynek nincsenek beállításai.\n"
 
-#: src/effects-weed.c:3935
+#: src/effects-weed.c:3939
 #, c-format
 msgid "No usable filters found in plugin %s\n"
 msgstr ""
 
-#: src/effects-weed.c:3963
+#: src/effects-weed.c:3967
 #, c-format
 msgid "Found duplicate plugin %s\n"
 msgstr ""
 
-#: src/effects-weed.c:4019
+#: src/effects-weed.c:4023
 #, c-format
 msgid ""
 "Info: Unable to load plugin %s\n"
@@ -5994,42 +5994,42 @@ msgstr ""
 "Információ: Nem lehet betölteni a következő bővítményt: %s\n"
 "A hiba a következő volt: %s\n"
 
-#: src/effects-weed.c:4022 src/effects-weed.c:4355
+#: src/effects-weed.c:4026 src/effects-weed.c:4359
 #, fuzzy
 msgid "Some plugin directories"
 msgstr "Almappákat is beleértve"
 
-#: src/effects-weed.c:4191
+#: src/effects-weed.c:4195
 #, c-format
 msgid "Successfully loaded %d Weed filters\n"
 msgstr "Sikeresen betöltött %d Weed szűrők\n"
 
-#: src/effects-weed.c:4866
+#: src/effects-weed.c:4870
 #, c-format
 msgid "Effect %s cannot be used with this audio player.\n"
 msgstr ""
 
-#: src/effects-weed.c:4971
+#: src/effects-weed.c:4975
 #, c-format
 msgid "Failed to start instance %s, error code %d\n"
 msgstr "Nem sikerült elindítani a(z) %s eseményt, hiba kód: %d\n"
 
-#: src/effects-weed.c:5013
+#: src/effects-weed.c:5017
 #, c-format
 msgid "Unable to start generator %s\n"
 msgstr "Nem lehet elindítani a %s generátort\n"
 
-#: src/effects-weed.c:5643
+#: src/effects-weed.c:5647
 #, c-format
 msgid "Failed to start generator %s\n"
 msgstr "Nem lehet elindítani a %s generátort\n"
 
-#: src/effects-weed.c:5703
+#: src/effects-weed.c:5707
 #, c-format
 msgid "Failed to start generator %s, error %d\n"
 msgstr "Nem lehet elindítani a %s generátort, %d hiba\n"
 
-#: src/effects-weed.c:6804
+#: src/effects-weed.c:6808
 #, c-format
 msgid "%s [unstable] (%s)"
 msgstr ""
@@ -8240,21 +8240,21 @@ msgstr "A jack beállítások csak a LiVES következő indításakor lépnek ér
 msgid "Syncing to external framerate of %.8f frames per second.\n"
 msgstr "A külső képkocka arány szinkronizálása %.8f fps-re.\n"
 
-#: src/osc.c:5313
+#: src/osc.c:5320
 msgid "Cannot initialize OSC receiver\n"
 msgstr "Nem tudom azonosítani az OSC fogadót\n"
 
-#: src/osc.c:5337
+#: src/osc.c:5344
 #, c-format
 msgid "WARNING: Cannot start OSC server at UDP port %d\n"
 msgstr "FIGYELMEZTETÉS: Nem tudom elindítani az OSC szervert a %d UDP porton\n"
 
-#: src/osc.c:5342
+#: src/osc.c:5349
 #, c-format
 msgid "Started OSC server at UDP port %d\n"
 msgstr "OSC szerver elindítva a %d UDP porton\n"
 
-#: src/osc.c:5455
+#: src/osc.c:5462
 #, c-format
 msgid "Cannot start OSC/UDP server at port %d \n"
 msgstr "Nem tudom elindítani az OSC/UDP szervert a %d porton \n"
@@ -8812,7 +8812,7 @@ msgstr "_Minden effekt kitörlése"
 msgid "Mode active"
 msgstr "Mód aktív"
 
-#: src/rte_window.c:1395 src/multitrack.c:7696
+#: src/rte_window.c:1395 src/multitrack.c:7698
 msgid "Info"
 msgstr "Információ"
 
@@ -8939,12 +8939,12 @@ msgstr "Automatikus biztonsági mentés"
 msgid "Backing audio"
 msgstr "Háttérzene"
 
-#: src/multitrack.c:1531 src/multitrack.c:3138
+#: src/multitrack.c:1531 src/multitrack.c:3139
 #, c-format
 msgid "Current track: %s (layer %d)\n"
 msgstr "Jelenlegi szám: %s (%d réteg)\n"
 
-#: src/multitrack.c:1535 src/multitrack.c:3139
+#: src/multitrack.c:1535 src/multitrack.c:3140
 msgid "Current track: Backing audio\n"
 msgstr "Jelenlegi szám: Háttér hang\n"
 
@@ -8958,12 +8958,12 @@ msgstr "Aktuális szám: %d réteg hang\n"
 msgid "%.2f sec.\n"
 msgstr "%.2f mp.\n"
 
-#: src/multitrack.c:1544 src/multitrack.c:3144
+#: src/multitrack.c:1544 src/multitrack.c:3145
 #, c-format
 msgid "Source: %s"
 msgstr "Forrás: %s"
 
-#: src/multitrack.c:1547 src/multitrack.c:3146
+#: src/multitrack.c:1547 src/multitrack.c:3147
 msgid "Right click for context menu.\n"
 msgstr "Jobb gomb a tartalom menüért.\n"
 
@@ -8975,7 +8975,7 @@ msgstr ""
 "Kijelöléshez kattints kétszer\n"
 "a blokkra."
 
-#: src/multitrack.c:2966
+#: src/multitrack.c:2967
 #, fuzzy
 msgid ""
 "\n"
@@ -8990,7 +8990,7 @@ msgstr ""
 "az idővonalon úgy,\n"
 "hogy kétszer rákattintasz.\n"
 
-#: src/multitrack.c:2969
+#: src/multitrack.c:2970
 #, fuzzy
 msgid ""
 "\n"
@@ -9001,7 +9001,7 @@ msgstr ""
 "Kattints duplán az effektre\n"
 "a szerkesztéséhez."
 
-#: src/multitrack.c:2972
+#: src/multitrack.c:2973
 msgid ""
 "\n"
 "\n"
@@ -9011,7 +9011,7 @@ msgstr ""
 "\n"
 "Nincsenek klipek betöltve.\n"
 
-#: src/multitrack.c:2975
+#: src/multitrack.c:2976
 msgid ""
 "You must select two video tracks\n"
 "and a time region\n"
@@ -9021,7 +9021,7 @@ msgid ""
 "before inserting clips into the timeline."
 msgstr ""
 
-#: src/multitrack.c:2978
+#: src/multitrack.c:2979
 msgid ""
 "\n"
 "\n"
@@ -9035,12 +9035,12 @@ msgstr ""
 "kell kijelölnöd a kompozitorok\n"
 "alkalmazásához.\n"
 
-#: src/multitrack.c:3142
+#: src/multitrack.c:3143
 #, c-format
 msgid "%.2f sec. to %.2f sec.\n"
 msgstr "%.2f mp-től %.2f mp-ig.\n"
 
-#: src/multitrack.c:3147
+#: src/multitrack.c:3148
 msgid ""
 "Single click on timeline\n"
 "to select a frame.\n"
@@ -9048,184 +9048,184 @@ msgstr ""
 "Egyszerű kattintás az idővonalra\n"
 "a képkocka kiválasztásához.\n"
 
-#: src/multitrack.c:3330 src/multitrack.c:6073
+#: src/multitrack.c:3331 src/multitrack.c:6075
 #, c-format
 msgid "%s [unstable]"
 msgstr ""
 
-#: src/multitrack.c:3587
+#: src/multitrack.c:3588
 msgid "LiVES: Selected clip"
 msgstr "LiVES: Kijelölt klip"
 
-#: src/multitrack.c:3594
+#: src/multitrack.c:3595
 msgid "_Adjust start and end points"
 msgstr "_Kezdő és végpont meghatározása"
 
-#: src/multitrack.c:3603
+#: src/multitrack.c:3604
 msgid "_Edit/encode in clip editor"
 msgstr "_Szerkesztés/kódolás a klip szerkesztőben"
 
-#: src/multitrack.c:3610
+#: src/multitrack.c:3611
 msgid "_Show clip information"
 msgstr "_Klip információk megjelenítése"
 
-#: src/multitrack.c:3617
+#: src/multitrack.c:3618
 msgid "_Close this clip"
 msgstr "_Klip bezárása"
 
-#: src/multitrack.c:3826
+#: src/multitrack.c:3827
 msgid "Audio mixer (ctrl-m)"
 msgstr "Keverő (ctrl-m)"
 
-#: src/multitrack.c:3902
+#: src/multitrack.c:3903
 msgid "Single click on timeline"
 msgstr "Egy kattintás az idővonalon"
 
-#: src/multitrack.c:3903
+#: src/multitrack.c:3904
 msgid "to select a frame."
 msgstr "egy képkocka kijelöléséhez."
 
-#: src/multitrack.c:3904
+#: src/multitrack.c:3905
 #, fuzzy
 msgid "Double click or right click on timeline"
 msgstr "Dupla kattintás az idővonalon"
 
-#: src/multitrack.c:3905
+#: src/multitrack.c:3906
 msgid "to select a block."
 msgstr "egy blokk kijelöléslhez."
 
-#: src/multitrack.c:3906
+#: src/multitrack.c:3907
 msgid "Clips can be dragged"
 msgstr "A klipek kiemelhetők/mozgathatók"
 
-#: src/multitrack.c:3907
+#: src/multitrack.c:3908
 msgid "onto the timeline."
 msgstr "az idővonalon."
 
-#: src/multitrack.c:3909
+#: src/multitrack.c:3910
 msgid "Mouse mode is: Move"
 msgstr "Egér mód most: Mozgatás"
 
-#: src/multitrack.c:3910
+#: src/multitrack.c:3911
 msgid "clips can be moved around."
 msgstr "a klipek ide-oda mozgathatók."
 
-#: src/multitrack.c:3915
+#: src/multitrack.c:3916
 msgid "Mouse mode is: Select."
 msgstr "Egér mód most: Kijelöl."
 
-#: src/multitrack.c:3916
+#: src/multitrack.c:3917
 msgid "Drag with mouse on timeline"
 msgstr "Húzd az egérrel az idővonalon"
 
-#: src/multitrack.c:3917
+#: src/multitrack.c:3918
 msgid "to select tracks and time."
 msgstr "számok és az idő kijelöléséhez."
 
-#: src/multitrack.c:3928
+#: src/multitrack.c:3929
 msgid "_Insert mode: Normal"
 msgstr "_Illesztési mód: Normál"
 
-#: src/multitrack.c:3944
+#: src/multitrack.c:3945
 msgid "_Mouse mode: Move"
 msgstr "_Egér mód: mozgatás"
 
-#: src/multitrack.c:3948
+#: src/multitrack.c:3949
 msgid "_Mouse mode: Select"
 msgstr "_Egér mód: kijelölés"
 
-#: src/multitrack.c:3971 src/multitrack.c:7144
+#: src/multitrack.c:3972 src/multitrack.c:7146
 msgid "_Gravity: Normal"
 msgstr "_Gravitáció/súlyosság: Normál"
 
-#: src/multitrack.c:3975
+#: src/multitrack.c:3976
 msgid "_Gravity: Left"
 msgstr "_Gravitáció/súlyosság: Bal"
 
-#: src/multitrack.c:3980
+#: src/multitrack.c:3981
 msgid "_Gravity: Right"
 msgstr "_Gravitáció/súlyosság: Jobb"
 
-#: src/multitrack.c:3982
+#: src/multitrack.c:3983
 #, fuzzy
 msgid "Close _last gap(s) in selected tracks/time"
 msgstr "Az _első hézag(ok) bezárása a kijelöltekben"
 
-#: src/multitrack.c:3985
+#: src/multitrack.c:3986
 msgid "Close _first gap(s) in selected tracks/time"
 msgstr "Az _első hézag(ok) bezárása a kijelöltekben"
 
-#: src/multitrack.c:4024
+#: src/multitrack.c:4025
 msgid "Close gaps"
 msgstr "Hézagok bezárása"
 
-#: src/multitrack.c:4026
+#: src/multitrack.c:4027
 msgid "Move block"
 msgstr "Tömb mozgatása"
 
-#: src/multitrack.c:4028
+#: src/multitrack.c:4029
 msgid "Move audio block"
 msgstr "Hang tömb mozgatása"
 
-#: src/multitrack.c:4030
+#: src/multitrack.c:4031
 msgid "Delete block"
 msgstr "Blokk törlése"
 
-#: src/multitrack.c:4032
+#: src/multitrack.c:4033
 msgid "Delete audio block"
 msgstr "Hang blokk törlése"
 
-#: src/multitrack.c:4034
+#: src/multitrack.c:4035
 msgid "Split tracks"
 msgstr "Megosztott számok"
 
-#: src/multitrack.c:4036
+#: src/multitrack.c:4037
 msgid "Split block"
 msgstr "Megosztott tömbök"
 
-#: src/multitrack.c:4039
+#: src/multitrack.c:4040
 #, c-format
 msgid "Apply %s"
 msgstr "Alkalmaz %s"
 
-#: src/multitrack.c:4044
+#: src/multitrack.c:4045
 #, c-format
 msgid "Delete %s"
 msgstr "%s törlése"
 
-#: src/multitrack.c:4048
+#: src/multitrack.c:4049
 msgid "Insert block"
 msgstr "Tömb beszúrása"
 
-#: src/multitrack.c:4050
+#: src/multitrack.c:4051
 msgid "Insert gap"
 msgstr "Beszúrás"
 
-#: src/multitrack.c:4052
+#: src/multitrack.c:4053
 msgid "Insert audio block"
 msgstr "Hang blokk beszúrása"
 
-#: src/multitrack.c:4054
+#: src/multitrack.c:4055
 msgid "Effect order change"
 msgstr "Effekt utasítás változás"
 
-#: src/multitrack.c:4450
+#: src/multitrack.c:4451
 msgid "unsigned "
 msgstr "aláíratlan "
 
-#: src/multitrack.c:4451
+#: src/multitrack.c:4452
 msgid "signed "
 msgstr "aláírt "
 
-#: src/multitrack.c:4453
+#: src/multitrack.c:4454
 msgid "big endian"
 msgstr "nagy endian"
 
-#: src/multitrack.c:4454
+#: src/multitrack.c:4455
 msgid "little endian"
 msgstr "kicsi endian"
 
-#: src/multitrack.c:4456
+#: src/multitrack.c:4457
 #, c-format
 msgid ""
 "Multitrack values set to %.3f fps, frame size %d x %d, audio channels %d, "
@@ -9234,15 +9234,15 @@ msgstr ""
 "Multitrack értékek beálítva erre: %.3f fps, képkocka méret %d x %d, hang "
 "csatornák %d, hang arány %d, hang minta méret %d, %s.\n"
 
-#: src/multitrack.c:4488
+#: src/multitrack.c:4489
 msgid "invalid event list. Failed.\n"
 msgstr "érvénytelen esemény lista. Sikertelen.\n"
 
-#: src/multitrack.c:4494
+#: src/multitrack.c:4495
 msgid "event list has invalid fps. Failed.\n"
 msgstr "esemény lista érvénytelen fps-t tartalmaz. Sikertelen.\n"
 
-#: src/multitrack.c:4503
+#: src/multitrack.c:4504
 #, c-format
 msgid ""
 "\n"
@@ -9257,7 +9257,7 @@ msgstr ""
 "zárd be az aktuális beállítást,\n"
 "majd töltsd be az újat a fájl menüből.\n"
 
-#: src/multitrack.c:4544
+#: src/multitrack.c:4545
 #, c-format
 msgid ""
 "\n"
@@ -9268,336 +9268,336 @@ msgstr ""
 "Ez egy LiVES számára érvénytelen hang (%d) csatorna számot tartalmaz.\n"
 "Nem lehet betölteni.\n"
 
-#: src/multitrack.c:4884 src/multitrack.c:4893 src/multitrack.c:19798
+#: src/multitrack.c:4885 src/multitrack.c:4894 src/multitrack.c:19795
 msgid "Layout was wiped.\n"
 msgstr "Kimenet törölve.\n"
 
-#: src/multitrack.c:4933
+#: src/multitrack.c:4934
 #, c-format
 msgid "LiVES-%s: Multitrack %dx%d : %d bpp %.3f fps"
 msgstr "LiVES-%s: Multitrack %dx%d : %d bpp %.3f fps"
 
-#: src/multitrack.c:5364
+#: src/multitrack.c:5366
 msgid "_Open..."
 msgstr "_Megnyitás..."
 
-#: src/multitrack.c:5381
+#: src/multitrack.c:5383
 msgid "O_pen File Selection..."
 msgstr "_Kijelölt fájl megnyitása..."
 
-#: src/multitrack.c:5424
+#: src/multitrack.c:5426
 msgid "Import Selection from _dvd/vcd..."
 msgstr "Importálás innen: _dvd/vcd..."
 
-#: src/multitrack.c:5433
+#: src/multitrack.c:5435
 msgid "Import Selection from _dvd"
 msgstr "Importálás innen: _dvd"
 
-#: src/multitrack.c:5443
+#: src/multitrack.c:5445
 msgid "Import Selection from _vcd"
 msgstr "Importálás innen: _vcd"
 
-#: src/multitrack.c:5459
+#: src/multitrack.c:5461
 msgid "_Import from Device"
 msgstr "_Importálás eszközről"
 
-#: src/multitrack.c:5485
+#: src/multitrack.c:5487
 msgid "_Close the selected clip"
 msgstr "_Kijelölt klip bezárása"
 
-#: src/multitrack.c:5579
+#: src/multitrack.c:5581
 msgid "_Save layout as..."
 msgstr "_Kimenet mentése mint..."
 
-#: src/multitrack.c:5587
+#: src/multitrack.c:5589
 msgid "_Load layout..."
 msgstr "_Szerkezet betöltése"
 
-#: src/multitrack.c:5591
+#: src/multitrack.c:5593
 msgid "_Wipe/Delete layout..."
 msgstr "_Törlés/kimenet törlése..."
 
-#: src/multitrack.c:5617
+#: src/multitrack.c:5619
 msgid "_Ignore width, height and audio values from loaded layouts"
 msgstr ""
 "_Szélesség, magasság és hang értékek figyelmen kívűl hagyása az elmentett "
 "kimenetben"
 
-#: src/multitrack.c:5621
+#: src/multitrack.c:5623
 msgid "Auto load _subtitles with clips"
 msgstr ""
 
-#: src/multitrack.c:5698
+#: src/multitrack.c:5700
 msgid "_CLIP EDITOR"
 msgstr "_KLIP SZERKESZTŐ"
 
-#: src/multitrack.c:5710
+#: src/multitrack.c:5712
 msgid "_Adjust selected clip start/end points"
 msgstr "_Kiválasztott klip kezdő/végpontjának meghatározása"
 
-#: src/multitrack.c:5719
+#: src/multitrack.c:5721
 msgid "_Insert selected clip"
 msgstr "_Kijelölt klip beillesztése"
 
-#: src/multitrack.c:5731
+#: src/multitrack.c:5733
 msgid "_Insert selected clip audio"
 msgstr "_Kijelölt hang beillesztése"
 
-#: src/multitrack.c:5740
+#: src/multitrack.c:5742
 msgid "_Delete selected block"
 msgstr "_Kijelölt tömb törlése"
 
-#: src/multitrack.c:5749
+#: src/multitrack.c:5751
 msgid "_Jump to previous block boundary"
 msgstr "_Ugrás az előző tömb határra"
 
-#: src/multitrack.c:5758
+#: src/multitrack.c:5760
 msgid "_Jump to next block boundary"
 msgstr "_Ugrás a következő tömb határra"
 
-#: src/multitrack.c:5771
+#: src/multitrack.c:5773
 msgid "Clear _marks from timeline"
 msgstr "_Kijelölések eltávolítása az idővonalról"
 
-#: src/multitrack.c:5779
+#: src/multitrack.c:5781
 msgid "Ignore selection limits when inserting"
 msgstr "Kijelölési limit mellőzése beillesztéskor"
 
-#: src/multitrack.c:5795 src/multitrack.c:15409
+#: src/multitrack.c:5797 src/multitrack.c:15413
 msgid "_Play from Timeline Position"
 msgstr "_Lejátszás innen: Idővonal pozíció"
 
-#: src/multitrack.c:5807
+#: src/multitrack.c:5809
 #, fuzzy
 msgid "Pla_y selected time only"
 msgstr "_Kijelöltek lejátszása"
 
-#: src/multitrack.c:5901
+#: src/multitrack.c:5903
 msgid "_Move effects with blocks"
 msgstr "_Effektek mozgatása a tömbökkel"
 
-#: src/multitrack.c:5914
+#: src/multitrack.c:5916
 #, fuzzy
 msgid "Select _autotransition effect..."
 msgstr "_Utolsó effekt kiválasztása"
 
-#: src/multitrack.c:5928
+#: src/multitrack.c:5930
 msgid "View/_Edit selected effect"
 msgstr "Kijelölt effekt megtekintése/_szerkesztése"
 
-#: src/multitrack.c:5932
+#: src/multitrack.c:5934
 msgid "_Delete selected effect"
 msgstr "_Kijelölt effekt eltávolítása"
 
-#: src/multitrack.c:5940
+#: src/multitrack.c:5942
 msgid "Apply effect to _block..."
 msgstr "Effekt alkalmazása a _tömbre..."
 
-#: src/multitrack.c:5951
+#: src/multitrack.c:5953
 msgid "Apply effect to _region..."
 msgstr "Effekt alkalmazása a _területre..."
 
-#: src/multitrack.c:6155
+#: src/multitrack.c:6157
 msgid "_Tracks"
 msgstr "_Sávok"
 
-#: src/multitrack.c:6165
+#: src/multitrack.c:6167
 msgid "Make _Backing Audio current track"
 msgstr "_Háttér zene készítése az aktuális számból"
 
-#: src/multitrack.c:6176
+#: src/multitrack.c:6178
 msgid "Add Video Track at _Rear"
 msgstr "Videó sáv hozzáadás _hátra"
 
-#: src/multitrack.c:6184
+#: src/multitrack.c:6186
 msgid "Add Video Track at _Front"
 msgstr "Videó sáv hozzáadás _előre"
 
-#: src/multitrack.c:6197
+#: src/multitrack.c:6199
 msgid "_Split current track at cursor"
 msgstr "_Sáv szétválasztása a kurzornál"
 
-#: src/multitrack.c:6209
+#: src/multitrack.c:6211
 msgid "_Split selected video tracks"
 msgstr "_Kijelölt videó sávok szétválasztása"
 
-#: src/multitrack.c:6222
+#: src/multitrack.c:6224
 msgid "Insert gap in selected tracks/time"
 msgstr "Hézag beillesztése a kijelölt számba"
 
-#: src/multitrack.c:6230
+#: src/multitrack.c:6232
 msgid "Insert gap in current track/selected time"
 msgstr "Hézag beszúrása a kijelölt számba/kiválasztott időnél"
 
-#: src/multitrack.c:6242
+#: src/multitrack.c:6244
 msgid "Close all _gaps in selected tracks/time"
 msgstr "Minden _hézag bezárása a kijelöltekben"
 
-#: src/multitrack.c:6268
+#: src/multitrack.c:6270
 msgid "Se_lection"
 msgstr "Ki_jelölés"
 
-#: src/multitrack.c:6278
+#: src/multitrack.c:6280
 msgid "_Select Current Track"
 msgstr "_Jelenlegi sáv kiválasztása"
 
-#: src/multitrack.c:6285
+#: src/multitrack.c:6287
 msgid "Select _all video tracks"
 msgstr "_Minden videó kijelölése"
 
-#: src/multitrack.c:6292
+#: src/multitrack.c:6294
 msgid "Select _no video tracks"
 msgstr "_A _nem videók kijelölése"
 
-#: src/multitrack.c:6299
+#: src/multitrack.c:6301
 msgid "Select all _time"
 msgstr "Teljes _idő kijelölése"
 
-#: src/multitrack.c:6310
+#: src/multitrack.c:6312
 msgid "Select from _zero time"
 msgstr "Kjelölés a _zero ponttól"
 
-#: src/multitrack.c:6317
+#: src/multitrack.c:6319
 msgid "Select to _end time"
 msgstr "Kijelölés a _záró pontig"
 
-#: src/multitrack.c:6324
+#: src/multitrack.c:6326
 msgid "_Copy..."
 msgstr "_Másolás..."
 
-#: src/multitrack.c:6334
+#: src/multitrack.c:6336
 msgid "_Timecode to region start"
 msgstr "_Időkód a terület indításhoz"
 
-#: src/multitrack.c:6341
+#: src/multitrack.c:6343
 msgid "_Timecode to region end"
 msgstr "_Időkód a terület végéhez"
 
-#: src/multitrack.c:6348
+#: src/multitrack.c:6350
 msgid "_Region start to timecode"
 msgstr "_Terület indítás az időkódhoz"
 
-#: src/multitrack.c:6355
+#: src/multitrack.c:6357
 msgid "_Region end to timecode"
 msgstr "_Terület vég az időkódhoz"
 
-#: src/multitrack.c:6379
+#: src/multitrack.c:6381
 msgid "_Change width, height and audio values..."
 msgstr "_Szélességi, magassági és hang értékek módosítása..."
 
-#: src/multitrack.c:6436
+#: src/multitrack.c:6438
 msgid "_Render"
 msgstr "_Elkészítés"
 
-#: src/multitrack.c:6446
+#: src/multitrack.c:6448
 msgid "_Render all to new clip"
 msgstr "_Mindet új klipbe"
 
-#: src/multitrack.c:6461
+#: src/multitrack.c:6463
 msgid "Render _video"
 msgstr "_video elkészítése"
 
-#: src/multitrack.c:6466
+#: src/multitrack.c:6468
 msgid "Render _audio"
 msgstr "_hang átalakítása"
 
-#: src/multitrack.c:6476
+#: src/multitrack.c:6478
 #, fuzzy
 msgid "_Normalise rendered audio"
 msgstr "_Hang visszaállítása"
 
-#: src/multitrack.c:6483
+#: src/multitrack.c:6485
 msgid "_Pre-render audio"
 msgstr "_Hang visszaállítása"
 
-#: src/multitrack.c:6492
+#: src/multitrack.c:6494
 msgid "_View"
 msgstr "_Nézet"
 
-#: src/multitrack.c:6510
+#: src/multitrack.c:6512
 msgid "Block _In/out points"
 msgstr "Tömb _be/ki pontjai"
 
-#: src/multitrack.c:6519
+#: src/multitrack.c:6521
 msgid "_Effects at current"
 msgstr "_Effektek - jelenlegi"
 
-#: src/multitrack.c:6537
+#: src/multitrack.c:6539
 msgid "Audio parameters"
 msgstr "_Hang paraméterek"
 
-#: src/multitrack.c:6547
+#: src/multitrack.c:6549
 msgid "Show backing _audio track"
 msgstr "_Háttér hang sáv mutatása"
 
-#: src/multitrack.c:6551
+#: src/multitrack.c:6553
 msgid "Compact view"
 msgstr "Apró nézet"
 
-#: src/multitrack.c:6559
+#: src/multitrack.c:6561
 msgid "Maximum tracks to display..."
 msgstr "Maximális megjelenített sáv..."
 
-#: src/multitrack.c:6566
+#: src/multitrack.c:6568
 msgid "Scroll to follow playback"
 msgstr "Görgetés a lejátszás követéséhez"
 
-#: src/multitrack.c:6570
+#: src/multitrack.c:6572
 msgid "_Center on cursor"
 msgstr "_Közép a kurzoron"
 
-#: src/multitrack.c:6577
+#: src/multitrack.c:6579
 msgid "_Zoom in"
 msgstr "_Nagyítás"
 
-#: src/multitrack.c:6588
+#: src/multitrack.c:6590
 msgid "_Zoom out"
 msgstr "_Kicsinyítés"
 
-#: src/multitrack.c:6600
+#: src/multitrack.c:6602
 msgid "Multitrack _details"
 msgstr "Multitrack _részletek"
 
-#: src/multitrack.c:6613
+#: src/multitrack.c:6615
 msgid "_Event Window"
 msgstr "_Esemény ablak"
 
-#: src/multitrack.c:6617
+#: src/multitrack.c:6619
 msgid "_Event Window (selected time only)"
 msgstr "_Folyamat ablak (csak a kijelölt ideig)"
 
-#: src/multitrack.c:6621
+#: src/multitrack.c:6623
 msgid "_Show FRAME events"
 msgstr "_KÉPKOCKA események megjelenítése"
 
-#: src/multitrack.c:6637
+#: src/multitrack.c:6639
 msgid "_Show multitrack keys"
 msgstr "_Multitrack billentyűk mutatása"
 
-#: src/multitrack.c:6704
+#: src/multitrack.c:6706
 msgid "Mouse mode: _Move"
 msgstr "Egér mód:  _Mozgatás"
 
-#: src/multitrack.c:6712
+#: src/multitrack.c:6714
 msgid "Mouse mode: _Select"
 msgstr "Egér mód: _Kijelölés"
 
-#: src/multitrack.c:6740
+#: src/multitrack.c:6742
 msgid "Insert mode: _Normal"
 msgstr "Illesztési mód: _Normál"
 
-#: src/multitrack.c:7022
+#: src/multitrack.c:7024
 msgid ""
 "Select whether video clips are inserted and moved with their audio or not"
 msgstr ""
 "Kiválaszthatod, hogy a videók a hangjukkal együtt legyenek beillesztve/"
 "mozgatva, vagy azok nélkül"
 
-#: src/multitrack.c:7026
+#: src/multitrack.c:7028
 msgid "Insert with _audio"
 msgstr "Beillesztés _hanggal"
 
-#: src/multitrack.c:7057
+#: src/multitrack.c:7059
 msgid ""
 "Select whether timeline selection snaps to overlap between selected tracks "
 "or not"
@@ -9605,103 +9605,103 @@ msgstr ""
 "Beállíthatod, hogy az kijelölt idővonalbilincsek átfedést biztosítsanak a "
 "kijelölt számok között vagy sem"
 
-#: src/multitrack.c:7062
+#: src/multitrack.c:7064
 msgid "Select _overlap"
 msgstr "_Átfedés kiválasztása"
 
-#: src/multitrack.c:7120 src/multitrack.c:12995
+#: src/multitrack.c:7122 src/multitrack.c:12999
 msgid "Expanded View (d)"
 msgstr "Kitöltött nézet (d)"
 
-#: src/multitrack.c:7122 src/multitrack.c:13002
+#: src/multitrack.c:7124 src/multitrack.c:13006
 msgid "Compact View (d)"
 msgstr "Apró nézet (d)"
 
-#: src/multitrack.c:7155
+#: src/multitrack.c:7157
 msgid "Gravity: _Normal"
 msgstr "_Gravitáció/súlyosság: _Normál"
 
-#: src/multitrack.c:7165
+#: src/multitrack.c:7167
 msgid "Gravity: _Left"
 msgstr "_Gravitáció/súlyosság: _Bal"
 
-#: src/multitrack.c:7176
+#: src/multitrack.c:7178
 msgid "Gravity: _Right"
 msgstr "_Gravitáció/súlyosság: _Jobb"
 
-#: src/multitrack.c:7286
+#: src/multitrack.c:7288
 msgid "Clips"
 msgstr "Klipek"
 
-#: src/multitrack.c:7323
+#: src/multitrack.c:7325
 msgid "In/out"
 msgstr "Be/ki"
 
-#: src/multitrack.c:7332
+#: src/multitrack.c:7334
 msgid "FX stack"
 msgstr "FX halom"
 
-#: src/multitrack.c:7371 src/omc-learn.c:673
+#: src/multitrack.c:7373 src/omc-learn.c:673
 msgid "Params."
 msgstr "Paraméterek."
 
-#: src/multitrack.c:7396
+#: src/multitrack.c:7398
 msgid "_Apply"
 msgstr "_Alkalmaz"
 
-#: src/multitrack.c:7418
+#: src/multitrack.c:7420
 msgid "Time"
 msgstr "Idő"
 
-#: src/multitrack.c:7434
+#: src/multitrack.c:7436
 msgid "_Del. node"
 msgstr "_Tartalom törlése"
 
-#: src/multitrack.c:7442
+#: src/multitrack.c:7444
 msgid "_Next node"
 msgstr "_Következő tartalom"
 
-#: src/multitrack.c:7450
+#: src/multitrack.c:7452
 msgid "_Prev node"
 msgstr "_Előző tartalom"
 
-#: src/multitrack.c:7480
+#: src/multitrack.c:7482
 msgid "_Reverse playback  "
 msgstr "_Lejátszás visszafelé  "
 
-#: src/multitrack.c:7508
+#: src/multitrack.c:7510
 msgid "_Velocity  "
 msgstr "_Sebesség  "
 
-#: src/multitrack.c:7565
+#: src/multitrack.c:7567
 msgid "Anchor the start point to the timeline"
 msgstr "Kezdőpont lefixálása az idővonalon"
 
-#: src/multitrack.c:7568
+#: src/multitrack.c:7570
 msgid "Anchor _start"
 msgstr "_Indítási pont"
 
-#: src/multitrack.c:7602
+#: src/multitrack.c:7604
 msgid "Start frame"
 msgstr "Kezdő képkocka"
 
-#: src/multitrack.c:7639
+#: src/multitrack.c:7641
 msgid "Anchor the end point to the timeline"
 msgstr "A végpont megadása az idővonalon"
 
-#: src/multitrack.c:7642
+#: src/multitrack.c:7644
 msgid "Anchor _end"
 msgstr "Horgony _vége"
 
-#: src/multitrack.c:7675
+#: src/multitrack.c:7677
 msgid "End frame"
 msgstr "Utolsó képkocka"
 
-#: src/multitrack.c:7829
+#: src/multitrack.c:7831
 msgid "Scroll"
 msgstr "Görgetés"
 
-#: src/multitrack.c:8410
+#: src/multitrack.c:8412
 msgid ""
 "\n"
 "==============================\n"
@@ -9711,91 +9711,91 @@ msgstr ""
 "==============================\n"
 "Klip szerkesztő módba váltott\n"
 
-#: src/multitrack.c:8586
+#: src/multitrack.c:8588
 msgid "Timeline (seconds)"
 msgstr "Idővonal (másodpercek)"
 
-#: src/multitrack.c:9026
+#: src/multitrack.c:9028
 msgid " Backing audio"
 msgstr " Háttér hang"
 
-#: src/multitrack.c:9029
+#: src/multitrack.c:9031
 #, c-format
 msgid " Layer %d audio"
 msgstr " %d hang réteg"
 
-#: src/multitrack.c:9036
+#: src/multitrack.c:9038
 msgid "Show/hide audio details"
 msgstr "Hang információinak megjelenítése/eérejtése"
 
-#: src/multitrack.c:9053 src/multitrack.c:9261
+#: src/multitrack.c:9055 src/multitrack.c:9263
 #, c-format
 msgid "Layer %d audio"
 msgstr "%d hang réteg"
 
-#: src/multitrack.c:9216
+#: src/multitrack.c:9218
 msgid "Select track"
 msgstr "Szám kiválasztása"
 
-#: src/multitrack.c:9219
+#: src/multitrack.c:9221
 msgid "Show/hide audio"
 msgstr "Hang megjelenítése/elrejtése"
 
-#: src/multitrack.c:9225
+#: src/multitrack.c:9227
 #, c-format
 msgid "Video %d"
 msgstr "Videó %d"
 
-#: src/multitrack.c:9253 src/multitrack.c:9289
+#: src/multitrack.c:9255 src/multitrack.c:9291
 #, c-format
 msgid "%s (layer %d)"
 msgstr "%s (réteg %d)"
 
-#: src/multitrack.c:9262
+#: src/multitrack.c:9264
 #, c-format
 msgid " %s"
 msgstr " %s"
 
-#: src/multitrack.c:9359
+#: src/multitrack.c:9361
 msgid "LiVES: Selected effect"
 msgstr "LiVES: Kijelölt effekt"
 
-#: src/multitrack.c:9366
+#: src/multitrack.c:9368
 msgid "_View/Edit this effect"
 msgstr "_Nézet/effekt szerkesztése"
 
-#: src/multitrack.c:9369
+#: src/multitrack.c:9371
 msgid "_View this effect"
 msgstr "_Effekt megtekintése"
 
-#: src/multitrack.c:9377
+#: src/multitrack.c:9379
 msgid "_Delete this effect"
 msgstr "_Effekt törlése"
 
-#: src/multitrack.c:9428
+#: src/multitrack.c:9430
 msgid "Cannot insert after this effect"
 msgstr "Nem lehet beszúrni után ez a hatás"
 
-#: src/multitrack.c:9457
+#: src/multitrack.c:9459
 msgid "This effect cannot be moved"
 msgstr "Ez a hatás nem lehet mozgatni"
 
-#: src/multitrack.c:9503
+#: src/multitrack.c:9505
 #, c-format
 msgid "  %d to %d selected  "
 msgstr "  %d-tól %d-ig kijelölt  "
 
-#: src/multitrack.c:9506 src/multitrack.c:9742
+#: src/multitrack.c:9508 src/multitrack.c:9744
 #, c-format
 msgid "%.2f sec."
 msgstr "%.2f mp."
 
-#: src/multitrack.c:9713
+#: src/multitrack.c:9715
 #, c-format
 msgid "%d frames"
 msgstr "%d képkockák"
 
-#: src/multitrack.c:10023
+#: src/multitrack.c:10025
 msgid ""
 "\n"
 "==============================\n"
@@ -9805,19 +9805,19 @@ msgstr ""
 "==============================\n"
 "Váltás Multitrack módra\n"
 
-#: src/multitrack.c:11620
+#: src/multitrack.c:11624
 msgid "Drag the time slider to where you"
 msgstr "Húzd oda az idő csúszkát ahol"
 
-#: src/multitrack.c:11621
+#: src/multitrack.c:11625
 msgid "want to set effect parameters"
 msgstr "be szeretnéd állítani az effekt paramétereit"
 
-#: src/multitrack.c:11622
+#: src/multitrack.c:11626
 msgid "Set parameters, then click \"Apply\"\n"
 msgstr "Állítsd be az értékeket, majd nyomd meg az \"Alkalmaz\" gombot\n"
 
-#: src/multitrack.c:11623
+#: src/multitrack.c:11627
 msgid ""
 "NODES are points where parameters\n"
 "have been set.\n"
@@ -9827,46 +9827,46 @@ msgstr ""
 "a paraméterek be lettek állítva.\n"
 "A Nodes törölhető."
 
-#: src/multitrack.c:11626
+#: src/multitrack.c:11630
 msgid "Effect has no parameters.\n"
 msgstr "Az effektnek nincsenek értékei.\n"
 
-#: src/multitrack.c:11713
+#: src/multitrack.c:11717
 #, c-format
 msgid "%s output"
 msgstr "%s kimenet"
 
-#: src/multitrack.c:11719
+#: src/multitrack.c:11723
 #, c-format
 msgid "layer %d"
 msgstr "%d réteg"
 
-#: src/multitrack.c:11721
+#: src/multitrack.c:11725
 msgid "audio track"
 msgstr "zene szám"
 
-#: src/multitrack.c:11722
+#: src/multitrack.c:11726
 #, c-format
 msgid "%s to %s"
 msgstr "%s és %s között"
 
-#: src/multitrack.c:11773
+#: src/multitrack.c:11777
 msgid "_Prev filter map"
 msgstr "_Előző szűrő térkép"
 
-#: src/multitrack.c:11784
+#: src/multitrack.c:11788
 msgid "Insert _before"
 msgstr "Beszúrás _előtte:"
 
-#: src/multitrack.c:11794
+#: src/multitrack.c:11798
 msgid "Insert _after"
 msgstr "Beszúrás _utána"
 
-#: src/multitrack.c:11809
+#: src/multitrack.c:11813
 msgid "_Next filter map"
 msgstr "_Következő szűrő térkép"
 
-#: src/multitrack.c:11824
+#: src/multitrack.c:11828
 msgid ""
 "\n"
 "\n"
@@ -9878,7 +9878,7 @@ msgstr ""
 "Nincs effekt a jelenlegi klipnél,\n"
 "és időnél.\n"
 
-#: src/multitrack.c:11836
+#: src/multitrack.c:11840
 msgid ""
 "Drag a compositor anywhere\n"
 "on the timeline\n"
@@ -9888,7 +9888,7 @@ msgstr ""
 "bárhol ahhoz, hogy\n"
 "alkalmazhasd a kijelölt területrre."
 
-#: src/multitrack.c:11843
+#: src/multitrack.c:11847
 msgid ""
 "Drag a transition anywhere\n"
 "on the timeline\n"
@@ -9898,7 +9898,7 @@ msgstr ""
 "bárhol ahhoz, hogy\n"
 "alkalmazhasd a kijelölt területrre."
 
-#: src/multitrack.c:11851
+#: src/multitrack.c:11855
 msgid ""
 "Effects can be dragged\n"
 "onto blocks on the timeline."
@@ -9906,64 +9906,64 @@ msgstr ""
 "Az effektek elhúzhatók\n"
 "a blokkokon az egész idővonalon."
 
-#: src/multitrack.c:12053
+#: src/multitrack.c:12057
 msgid "LiVES: Selected block/frame"
 msgstr "LiVES :Kijelölt tömb/képkocka"
 
-#: src/multitrack.c:12059
+#: src/multitrack.c:12063
 msgid "_Select this block"
 msgstr "_Tömb kiválasztása"
 
-#: src/multitrack.c:12069
+#: src/multitrack.c:12073
 msgid "_Split block here"
 msgstr "_Tömb szétválasztása itt"
 
-#: src/multitrack.c:12077
+#: src/multitrack.c:12081
 msgid "List _effects here"
 msgstr "_Effektek listázása itt"
 
-#: src/multitrack.c:12086 src/multitrack.c:12164
+#: src/multitrack.c:12090 src/multitrack.c:12168
 #, c-format
 msgid "_Adjust %s"
 msgstr "_Igazítás %s"
 
-#: src/multitrack.c:12101
+#: src/multitrack.c:12105
 msgid "_Delete this block"
 msgstr "_Tömb törlése"
 
-#: src/multitrack.c:12145
+#: src/multitrack.c:12149
 msgid "_Insert here"
 msgstr "_Beszúrás ide"
 
-#: src/multitrack.c:12151
+#: src/multitrack.c:12155
 msgid "_Insert audio here"
 msgstr "_Hang beszúrása ide"
 
-#: src/multitrack.c:13598
+#: src/multitrack.c:13602
 #, c-format
 msgid "Inserted gap in selected tracks from time %.4f to %.4f\n"
 msgstr "Beillesztett hézag a kijelölt számokban innentől: %.4f , idáig: %.4f\n"
 
-#: src/multitrack.c:13632
+#: src/multitrack.c:13636
 #, c-format
 msgid "Inserted gap in track %s from time %.4f to %.4f\n"
 msgstr "Beillesztett hézag itt: %s innentől: %4.f , idáig: %.4f\n"
 
-#: src/multitrack.c:13834
+#: src/multitrack.c:13838
 #, c-format
 msgid "Undid %s\n"
 msgstr "%s vissza\n"
 
-#: src/multitrack.c:14034
+#: src/multitrack.c:14038
 #, c-format
 msgid "Redid %s\n"
 msgstr "%s újra\n"
 
-#: src/multitrack.c:14060
+#: src/multitrack.c:14064
 msgid "Multitrack details"
 msgstr "Multitrack részletek"
 
-#: src/multitrack.c:14072
+#: src/multitrack.c:14076
 msgid ""
 "\n"
 " (variable)"
@@ -9971,56 +9971,56 @@ msgstr ""
 "\n"
 " (változó)"
 
-#: src/multitrack.c:14295 src/multitrack.c:17388 src/multitrack.c:17400
+#: src/multitrack.c:14299 src/multitrack.c:17385 src/multitrack.c:17397
 #, c-format
 msgid "track %s"
 msgstr "%s sáv"
 
-#: src/multitrack.c:14300 src/multitrack.c:17393
+#: src/multitrack.c:14304 src/multitrack.c:17390
 #, c-format
 msgid "tracks %s and %s"
 msgstr "%s és %s sávok"
 
-#: src/multitrack.c:14306 src/multitrack.c:17403
+#: src/multitrack.c:14310 src/multitrack.c:17400
 msgid "selected tracks"
 msgstr "kijelölt sávok"
 
-#: src/multitrack.c:14310
+#: src/multitrack.c:14314
 #, c-format
 msgid "Added %s %s to %s from %.4f to %.4f\n"
 msgstr "Hozzáadva %s %s eddig %s innen: %.4f eddig %.4f\n"
 
-#: src/multitrack.c:14339
+#: src/multitrack.c:14343
 #, c-format
 msgid "Added effect %s to track %s from %.4f to %.4f\n"
 msgstr "%s effekt hozzáadása  a%s sávhoz innentől: %.4f idáig %.4f\n"
 
-#: src/multitrack.c:14634
+#: src/multitrack.c:14638
 #, c-format
 msgid "rendered %d frames to new clip.\n"
 msgstr "renderelt %d képkockák az új kliphez.\n"
 
-#: src/multitrack.c:14724
+#: src/multitrack.c:14728
 msgid "Cleaning up..."
 msgstr "Takarítás..."
 
-#: src/multitrack.c:15402
+#: src/multitrack.c:15406
 msgid "_Pause"
 msgstr "_Szünet"
 
-#: src/multitrack.c:15403
+#: src/multitrack.c:15407
 msgid "Pause (p)"
 msgstr "Szünet (p)"
 
-#: src/multitrack.c:15547
+#: src/multitrack.c:15551
 msgid "Press 'm' during playback"
 msgstr "Nyomd meg az 'm'-et a lejátszás alatt"
 
-#: src/multitrack.c:15548
+#: src/multitrack.c:15552
 msgid "to make a mark on the timeline"
 msgstr "hogy kijelölést tehess az idővonalra"
 
-#: src/multitrack.c:15842
+#: src/multitrack.c:15846
 #, c-format
 msgid ""
 "Inserted audio %.4f to %.4f from clip %s into backing audio from time %.4f "
@@ -10029,7 +10029,7 @@ msgstr ""
 "Beillesztett %.4f hang ide: %.4f a %s klipből háttér hangnak a %.4f időtől, "
 "idáig: %.4f\n"
 
-#: src/multitrack.c:16089
+#: src/multitrack.c:16093
 #, c-format
 msgid ""
 "Inserted frames %d to %d from clip %s into track %s from time %.4f to %.4f\n"
@@ -10037,7 +10037,7 @@ msgstr ""
 "Beillesztett %d képkockák ide:%d, %s klipből, a %s sávba a %.4f-től a %.4f-"
 "ig\n"
 
-#: src/multitrack.c:16669
+#: src/multitrack.c:16666
 #, c-format
 msgid ""
 "Time region %.3f to %.3f\n"
@@ -10046,7 +10046,7 @@ msgstr ""
 "%.3f -től %.3f -ig\n"
 "kijelölve.\n"
 
-#: src/multitrack.c:16673
+#: src/multitrack.c:16670
 msgid ""
 "select one or more tracks\n"
 "to create a region.\n"
@@ -10054,12 +10054,12 @@ msgstr ""
 "egy vagy több sáv kiválasztása\n"
 "egy terület létrehozásához.\n"
 
-#: src/multitrack.c:16675
+#: src/multitrack.c:16672
 #, c-format
 msgid "%d video tracks selected.\n"
 msgstr "%d videó sávok kijelölve.\n"
 
-#: src/multitrack.c:16677
+#: src/multitrack.c:16674
 msgid ""
 "Double click on timeline\n"
 "to deselect time region."
@@ -10067,7 +10067,7 @@ msgstr ""
 "Dupla katt az idővonalo\n"
 "a kijelölés megszüntetéséhez."
 
-#: src/multitrack.c:16684
+#: src/multitrack.c:16681
 msgid ""
 "Single click on an effect\n"
 "to select it."
@@ -10075,7 +10075,7 @@ msgstr ""
 "Kattints az effektre a\n"
 "kijelöléséhez."
 
-#: src/multitrack.c:16685
+#: src/multitrack.c:16682
 msgid ""
 "Double click on an effect\n"
 "to edit it."
@@ -10083,7 +10083,7 @@ msgstr ""
 "Kattints duplán az effektre\n"
 "a szerkesztéséhez."
 
-#: src/multitrack.c:16686
+#: src/multitrack.c:16683
 msgid ""
 "Right click on an effect\n"
 "for context menu.\n"
@@ -10091,7 +10091,7 @@ msgstr ""
 "Jobb egér gomb megnyomásával\n"
 "a context menübe lépsz.\n"
 
-#: src/multitrack.c:16688
+#: src/multitrack.c:16685
 msgid ""
 "Effect order can be changed at\n"
 "FILTER MAPS"
@@ -10099,17 +10099,17 @@ msgstr ""
 "Az effekt utasítások megváltoztathatóak a\n"
 "SZŰRŐ TÉRKÉPEKNÉL"
 
-#: src/multitrack.c:16695
+#: src/multitrack.c:16692
 msgid ""
 "You can select an effect,\n"
 "then use the INSERT BEFORE"
 msgstr ""
 
-#: src/multitrack.c:16696
+#: src/multitrack.c:16693
 msgid "or INSERT AFTER buttons to move it."
 msgstr "vagy a BEILLESZTÉS UTÁNA gombot a mozgatásához."
 
-#: src/multitrack.c:16732
+#: src/multitrack.c:16729
 msgid ""
 "You can click and drag\n"
 "below the timeline"
@@ -10117,15 +10117,15 @@ msgstr ""
 "Csak egy klikk, és már húzhatod\n"
 "is alul az idővonalon"
 
-#: src/multitrack.c:16733
+#: src/multitrack.c:16730
 msgid "to select a time region.\n"
 msgstr ", hogy kijelölj egy idő területet.\n"
 
-#: src/multitrack.c:16968 src/multitrack.c:16981
+#: src/multitrack.c:16965 src/multitrack.c:16978
 msgid "Click on another effect,"
 msgstr "Kattints egy másik effektre,"
 
-#: src/multitrack.c:16969 src/multitrack.c:16982
+#: src/multitrack.c:16966 src/multitrack.c:16979
 msgid ""
 "and the selected one\n"
 "will be inserted"
@@ -10133,46 +10133,46 @@ msgstr ""
 "és a kiválasztott\n"
 "beillesztésre kerül"
 
-#: src/multitrack.c:16970
+#: src/multitrack.c:16967
 msgid "after it.\n"
 msgstr "ez után.\n"
 
-#: src/multitrack.c:16983
+#: src/multitrack.c:16980
 msgid "before it.\n"
 msgstr "ez előtt.\n"
 
-#: src/multitrack.c:17215
+#: src/multitrack.c:17212
 #, c-format
 msgid "Removed parameter values for effect %s at time %.4f\n"
 msgstr "%s effekt paraméterértékeinek eltávolítása a %.4f időnél\n"
 
-#: src/multitrack.c:17411
+#: src/multitrack.c:17408
 #, c-format
 msgid "Set parameter values for %s %s on %s at time %.4f\n"
 msgstr "Paraméter értékek beállításai erre: %s %s a %s-en %.4f-kor\n"
 
-#: src/multitrack.c:17900 src/multitrack.c:19521
+#: src/multitrack.c:17897 src/multitrack.c:19518
 msgid "_Autoreload each time"
 msgstr "_Autoújratöltés minden egyes alkalommal"
 
-#: src/multitrack.c:18008
+#: src/multitrack.c:18005
 #, c-format
 msgid "Saved layout to %s\n"
 msgstr "Kimenet mentése mint:%s\n"
 
-#: src/multitrack.c:19427
+#: src/multitrack.c:19424
 msgid "clips and frames"
 msgstr "klipek és képkockák"
 
-#: src/multitrack.c:19431
+#: src/multitrack.c:19428
 msgid "clips"
 msgstr "klipek"
 
-#: src/multitrack.c:19434
+#: src/multitrack.c:19431
 msgid "frames"
 msgstr "képkockák"
 
-#: src/multitrack.c:19444
+#: src/multitrack.c:19441
 msgid ""
 "\n"
 "Auto reload layout.\n"
@@ -10180,7 +10180,7 @@ msgstr ""
 "\n"
 "Kimenet automatikus újratöltése.\n"
 
-#: src/multitrack.c:19447
+#: src/multitrack.c:19444
 #, c-format
 msgid ""
 "%s\n"
@@ -10191,11 +10191,11 @@ msgstr ""
 "Néhány %s hiányzik a(z) %s kimenetből\n"
 "Ezért nem lehet megfelelően betölteni.\n"
 
-#: src/multitrack.c:19586
+#: src/multitrack.c:19583
 msgid "auto backup"
 msgstr "automatikus biztonsági mentés"
 
-#: src/multitrack.c:19589
+#: src/multitrack.c:19586
 #, c-format
 msgid ""
 "\n"
@@ -10204,43 +10204,43 @@ msgstr ""
 "\n"
 "Nem lehet betölteni a %s kimeneti fájlt\n"
 
-#: src/multitrack.c:19609
+#: src/multitrack.c:19606
 #, c-format
 msgid "Loading layout from %s..."
 msgstr "Kimenet betöltése innen: %s...."
 
-#: src/multitrack.c:19642
+#: src/multitrack.c:19639
 #, c-format
 msgid "Got %d events...processing..."
 msgstr "%d események vannak...feldolgozás..."
 
-#: src/multitrack.c:19657
+#: src/multitrack.c:19654
 msgid "Checking and rebuilding event list"
 msgstr "Folyamat lista ellenőrzése és újratöltése"
 
-#: src/multitrack.c:19683
+#: src/multitrack.c:19680
 #, c-format
 msgid "%d errors detected.\n"
 msgstr "%d hibákat találtam.\n"
 
-#: src/multitrack.c:19734
+#: src/multitrack.c:19731
 #, c-format
 msgid "Multitrack fps set to %.3f\n"
 msgstr "Multitrack fps beállítása erre: %.3f\n"
 
-#: src/multitrack.c:20733
+#: src/multitrack.c:20730
 msgid "LiVES: Multitrack audio mixer"
 msgstr "LiVES: Multitrack hangkeverő"
 
-#: src/multitrack.c:20770
+#: src/multitrack.c:20767
 msgid "_Reset values"
 msgstr "_Értékek visszaállítása"
 
-#: src/multitrack.c:20774
+#: src/multitrack.c:20771
 msgid "_Close mixer"
 msgstr "_Keverő bezárása"
 
-#: src/multitrack.c:20816
+#: src/multitrack.c:20813
 msgid ""
 "_Invert backing audio\n"
 "and layer volumes"
@@ -10248,15 +10248,15 @@ msgstr ""
 "_Háttér hang\n"
 "és szűrő hangértékek felcserélése"
 
-#: src/multitrack.c:20822
+#: src/multitrack.c:20819
 msgid "Adjust backing and layer audio values so that they sum to 1.0"
 msgstr "Háttér hang és hangréteg értékek megadása, amely összesen 1.0 lehet"
 
-#: src/multitrack.c:20861
+#: src/multitrack.c:20858
 msgid "_Gang layer audio"
 msgstr "_Gang hang réteg"
 
-#: src/multitrack.c:20867
+#: src/multitrack.c:20864
 msgid "Adjust all layer audio values to the same value"
 msgstr "Minden hang réteg értékének beállítása ugyanarra az értékre"
 

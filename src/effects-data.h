@@ -47,7 +47,11 @@ void pconx_add_connection(int okey, int omode, int opnum, int ikey, int imode, i
 weed_plant_t *pconx_get_out_param(int ikey, int imode, int ipnum, boolean *autoscale);
 
 // free all connections (and set mainw->pconx to NULL)
-void pconx_free_all();
+void pconx_delete_all();
+
+void pconx_delete(int okey, int omode, int ocnum, int ikey, int imode, int icnum);
+
+void pconx_remap_mode(int key, int omode, int nmode);
 
 // chain any output data into fx key/mode
 void pconx_chain_data(int key, int mode);
@@ -91,13 +95,18 @@ struct _lives_cconnect_t {
 
 
 
-/// add a new connection from out_param okey/omode/opnum to in_param ikey/imode/ipnum
+/// add a new connection from out_chan okey/omode/ocnum to in_chan ikey/imode/icnum
 void cconx_add_connection(int okey, int omode, int ocnum, int ikey, int imode, int icnum);
 
-
-/// return if okey/omode/ochan is mapped to an out alpha
+/// return if ikey/imode/ichan is mapped to an out alpha
 weed_plant_t *cconx_get_out_chan(int ikey, int imode, int ipnum);
 
+// free all connections (and set mainw->cconx to NULL)
+void cconx_delete_all();
+
+void cconx_delete(int okey, int omode, int ocnum, int ikey, int imode, int icnum);
+
+void cconx_remap_mode(int key, int omode, int nmode);
 
 // chain any output data into fx key/mode
 boolean cconx_chain_data(int key, int mode);

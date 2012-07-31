@@ -421,6 +421,9 @@ void lives_exit (void) {
 #endif
   }
 
+  pconx_delete_all();
+  cconx_delete_all();
+
   if (mainw->multitrack!=NULL) {
     event_list_free_undos(mainw->multitrack);
     

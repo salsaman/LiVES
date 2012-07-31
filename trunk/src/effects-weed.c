@@ -4876,7 +4876,7 @@ gboolean weed_init_effect(int hotkey) {
     if (inc_count==0) {
       if (mainw->agen_key!=0) {
 	// we had an existing audio gen running - stop that one first
-	weed_deinit_effect(mainw->agen_key);
+	weed_deinit_effect(mainw->agen_key-1);
       }
       is_audio_gen=TRUE;
     }

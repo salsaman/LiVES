@@ -35,6 +35,8 @@ static int package_version=1; // version of this package
 #include "../../libweed/weed-plugin-utils.h" // optional
 #endif
 
+#include <stdio.h>
+
 /////////////////////////////////////////////////////////////
 
 
@@ -121,6 +123,7 @@ int avol_process (weed_plant_t *inst, weed_timecode_t timestamp) {
     inter=weed_get_boolean_value(in_channels[i],"audio_interleaf",&error);
 
     chans=weed_get_int_value(in_channels[i],"audio_channels",&error);
+
     
     voll=volr=vol[i];
     

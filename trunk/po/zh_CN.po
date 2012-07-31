@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2012-07-21 23:34-0300\n"
+"POT-Creation-Date: 2012-07-30 20:37-0300\n"
 "PO-Revision-Date: 2011-11-07 16:24+0000\n"
 "Last-Translator: lhquark <Unknown>\n"
 "Language-Team: Simplified Chinese <zh_CN@li.org>\n"
@@ -90,56 +90,56 @@ msgstr ""
 msgid "Preserving set.\n"
 msgstr "正在保存场景。\n"
 
-#: src/main.c:559
+#: src/main.c:560
 msgid "Resizing"
 msgstr "正在调整尺寸"
 
-#: src/main.c:566
+#: src/main.c:567
 msgid "_Resize All Frames"
 msgstr "调整所有帧的尺寸(_R)"
 
 #. TRANSLATORS: text saying "Any", for encoder and output format (as in "does not matter")
-#: src/main.c:810
+#: src/main.c:811
 msgid "Any"
 msgstr "任意"
 
 #. TRANSLATORS: text saying "None", for playback plugin name (as in "none specified")
-#: src/main.c:812
+#: src/main.c:813
 msgid "None"
 msgstr "无"
 
 #. TRANSLATORS: text saying "recommended", for plugin names, etc.
-#: src/main.c:814
+#: src/main.c:815
 msgid "recommended"
 msgstr "推荐"
 
 #. TRANSLATORS: text saying "disabled", (as in "not enabled")
-#: src/main.c:816
+#: src/main.c:817
 msgid "disabled !"
 msgstr "已禁用 ！"
 
 #. TRANSLATORS: text saying "**The current layout**", to warn users that the current layout is affected
-#: src/main.c:818
+#: src/main.c:819
 msgid "**The current layout**"
 msgstr "**当前的布局**"
 
-#: src/main.c:1386
+#: src/main.c:1387
 msgid "Loading realtime effect plugins..."
 msgstr "正在加载实时效果插件..."
 
-#: src/main.c:1450
+#: src/main.c:1451
 msgid "Starting jack audio server..."
 msgstr "正在启动 jack 音频服务器..."
 
-#: src/main.c:1452
+#: src/main.c:1453
 msgid "Starting jack transport server..."
 msgstr "正在启动 jack 传输服务器..."
 
-#: src/main.c:1453
+#: src/main.c:1454
 msgid "Connecting to jack transport server..."
 msgstr "正在连接 jack 传输服务器..."
 
-#: src/main.c:1483
+#: src/main.c:1484
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -158,104 +158,104 @@ msgstr ""
 "\n"
 "或者，尝试通过“lives -jackopts 16”或以下方式启动 lives "
 
-#: src/main.c:1511
+#: src/main.c:1512
 msgid "Starting pulse audio server..."
 msgstr "正在开启 pulse 音频服务..."
 
-#: src/main.c:1572
+#: src/main.c:1573
 msgid "Checking optional dependencies:"
 msgstr "检查可选的依赖："
 
-#: src/main.c:1573
+#: src/main.c:1574
 msgid "mplayer...detected..."
 msgstr "mplayer...发现..."
 
-#: src/main.c:1574
+#: src/main.c:1575
 msgid "mplayer...NOT DETECTED..."
 msgstr "mplayer...未发现..."
 
-#: src/main.c:1575
+#: src/main.c:1576
 msgid "convert...detected..."
 msgstr "convert...发现..."
 
-#: src/main.c:1576
+#: src/main.c:1577
 msgid "convert...NOT DETECTED..."
 msgstr "convert...未发现..."
 
-#: src/main.c:1577
+#: src/main.c:1578
 msgid "composite...detected..."
 msgstr "composite...发现..."
 
-#: src/main.c:1578
+#: src/main.c:1579
 msgid "composite...NOT DETECTED..."
 msgstr "composite...未发现..."
 
-#: src/main.c:1579
+#: src/main.c:1580
 msgid "sox...detected\n"
 msgstr "sox...发现\n"
 
-#: src/main.c:1580
+#: src/main.c:1581
 msgid "sox...NOT DETECTED\n"
 msgstr "sox...未发现\n"
 
-#: src/main.c:1581
+#: src/main.c:1582
 msgid "cdda2wav...detected..."
 msgstr "cdda2wav...发现..."
 
-#: src/main.c:1582
+#: src/main.c:1583
 msgid "cdda2wav...NOT DETECTED..."
 msgstr "cdda2wav...未发现..."
 
-#: src/main.c:1583
+#: src/main.c:1584
 msgid "jackd...detected..."
 msgstr "jackd...发现..."
 
-#: src/main.c:1584
+#: src/main.c:1585
 msgid "jackd...NOT DETECTED..."
 msgstr "jackd...未发现..."
 
-#: src/main.c:1585
+#: src/main.c:1586
 msgid "pulse audio...detected..."
 msgstr "pulse audio...发现..."
 
-#: src/main.c:1586
+#: src/main.c:1587
 msgid "pulse audio...NOT DETECTED..."
 msgstr "pulse 音频...未发现..."
 
-#: src/main.c:1587
+#: src/main.c:1588
 msgid "python...detected..."
 msgstr "python...发现..."
 
-#: src/main.c:1588
+#: src/main.c:1589
 msgid "python...NOT DETECTED..."
 msgstr "python...未发现..."
 
-#: src/main.c:1589
+#: src/main.c:1590
 msgid "dvgrab...detected..."
 msgstr "dvgrab...发现..."
 
-#: src/main.c:1590
+#: src/main.c:1591
 msgid "dvgrab...NOT DETECTED..."
 msgstr "dvgrab...未发现..."
 
-#: src/main.c:1591
+#: src/main.c:1592
 msgid "xwininfo...detected..."
 msgstr "xwininfo...发现..."
 
-#: src/main.c:1592
+#: src/main.c:1593
 msgid "xwininfo...NOT DETECTED..."
 msgstr "xwininfo...未发现..."
 
-#: src/main.c:1598
+#: src/main.c:1599
 #, fuzzy
 msgid "Windows"
 msgstr "关闭窗口(_C)"
 
-#: src/main.c:1600
+#: src/main.c:1601
 msgid "UNKNOWN - please patch me !"
 msgstr ""
 
-#: src/main.c:1604
+#: src/main.c:1605
 #, c-format
 msgid ""
 "\n"
@@ -266,22 +266,22 @@ msgstr ""
 "\n"
 "窗口管理器报告为\"%s\"； "
 
-#: src/main.c:1607
+#: src/main.c:1608
 #, c-format
 msgid "number of monitors detected: %d\n"
 msgstr "检测到的显视器数量：%d\n"
 
-#: src/main.c:1610
+#: src/main.c:1611
 #, c-format
 msgid "Number of CPUs detected: %d\n"
 msgstr "检测到的 CPU 数目： %d\n"
 
-#: src/main.c:1613
+#: src/main.c:1614
 #, c-format
 msgid "Temp directory is %s\n"
 msgstr "临时文件夹为 %s\n"
 
-#: src/main.c:1617
+#: src/main.c:1618
 msgid ""
 "WARNING - this version of LiVES was compiled without either\n"
 "jack or pulse audio support.\n"
@@ -291,15 +291,15 @@ msgstr ""
 "jack 或 pulse 音频支持。\n"
 "许多音频功能将不可用。\n"
 
-#: src/main.c:1620
+#: src/main.c:1621
 msgid "Compiled with jack support, good !\n"
 msgstr "编译上 jack 支持了，好！\n"
 
-#: src/main.c:1623
+#: src/main.c:1624
 msgid "Compiled with pulse audio support, wonderful !\n"
 msgstr "编译上 pulse 音频支持了，很好！\n"
 
-#: src/main.c:1627
+#: src/main.c:1628
 #, c-format
 msgid ""
 "Welcome to LiVES version %s.\n"
@@ -308,7 +308,7 @@ msgstr ""
 "欢迎来到 LiVES 版本 %s。\n"
 "\n"
 
-#: src/main.c:2056
+#: src/main.c:2057
 #, c-format
 msgid ""
 "\n"
@@ -317,99 +317,99 @@ msgstr ""
 "\n"
 "启动语法为： %s [opts] [filename [start_time] [frames]]\n"
 
-#: src/main.c:2057
+#: src/main.c:2058
 msgid "Where: filename is the name of a media file or backup file.\n"
 msgstr "其中：filename 为媒体文件或备份文件名。\n"
 
-#: src/main.c:2058
+#: src/main.c:2059
 msgid "start_time : filename start time in seconds\n"
 msgstr "start_time : 文件名以秒计的开始时间\n"
 
-#: src/main.c:2059
+#: src/main.c:2060
 msgid "frames : maximum number of frames to open\n"
 msgstr "frames : 要打开的最大帧数\n"
 
-#: src/main.c:2061
+#: src/main.c:2062
 msgid "opts can be:\n"
 msgstr "选项可以是：\n"
 
-#: src/main.c:2062
+#: src/main.c:2063
 msgid "-help            : show this help text and exit\n"
 msgstr "-help            : 显示此帮助文字并退出\n"
 
-#: src/main.c:2063
+#: src/main.c:2064
 msgid "-tmpdir <tempdir>: use alternate working directory (e.g /var/ramdisk)\n"
 msgstr "-tmpdir <tempdir> ：使用其它的工作目录(例如 /var/ramdisk)\n"
 
-#: src/main.c:2064
+#: src/main.c:2065
 msgid "-set <setname>   : autoload clip set setname\n"
 msgstr "-set <setname> : 自动加载场景 setname\n"
 
-#: src/main.c:2065
+#: src/main.c:2066
 msgid "-noset           : do not load any set on startup\n"
 msgstr "-noset : 启动时不加载任何场景\n"
 
-#: src/main.c:2066
+#: src/main.c:2067
 msgid "-norecover       : force no-loading of crash recovery\n"
 msgstr "-norecover : 强制不从崩溃中恢复\n"
 
-#: src/main.c:2067
+#: src/main.c:2068
 msgid "-recover         : force loading of crash recovery\n"
 msgstr "-recover         : 强制载入崩溃恢复\n"
 
-#: src/main.c:2068
+#: src/main.c:2069
 msgid "-nothreaddialog  : doe nothing - retained for backwards compatibility\n"
 msgstr ""
 
-#: src/main.c:2069
+#: src/main.c:2070
 msgid "-nogui           : do not show the gui\n"
 msgstr "-nogui : 不显示图形用户界面\n"
 
-#: src/main.c:2070
+#: src/main.c:2071
 msgid "-nosplash        : do not show the splash window\n"
 msgstr "-nosplash：不显示启动画面\n"
 
-#: src/main.c:2071
+#: src/main.c:2072
 msgid "-noplaywin       : do not show the play window\n"
 msgstr "-noplaywin：不显示播放窗口\n"
 
-#: src/main.c:2072
+#: src/main.c:2073
 msgid "-startup-ce      : start in clip editor mode\n"
 msgstr "-startup-ce : 以剪辑编辑模式启动\n"
 
-#: src/main.c:2073
+#: src/main.c:2074
 msgid "-startup-mt      : start in multitrack mode\n"
 msgstr "-startup-mt : 以多轨模式启动\n"
 
-#: src/main.c:2074
+#: src/main.c:2075
 msgid ""
 "-fxmodesmax <n>  : allow <n> modes per effect key (minimum is 1, default is "
 "8)\n"
 msgstr ""
 
-#: src/main.c:2076
+#: src/main.c:2077
 msgid "-oscstart <port> : start OSC listener on UDP port <port>\n"
 msgstr "-oscstart <port> : 在 UDP 端口 <port> 启动 OSC 监听\n"
 
-#: src/main.c:2077
+#: src/main.c:2078
 msgid "-nooscstart      : do not start OSC listener\n"
 msgstr "-nooscstart : 不启动 OSC 监听\n"
 
-#: src/main.c:2079
+#: src/main.c:2080
 msgid ""
 "-aplayer <ap>    : start with selected audio player. <ap> can be mplayer"
 msgstr "-aplayer <ap>    : 和选择的音频播放器一起启动。<ap> 可以是 mplayer"
 
 #. TRANSLATORS: pulse (audio)
-#: src/main.c:2082
+#: src/main.c:2083
 msgid ", pulse"
 msgstr ", pulse"
 
-#: src/main.c:2085
+#: src/main.c:2086
 msgid ", sox or jack\n"
 msgstr "、 sox 或 jack\n"
 
-#: src/main.c:2086
+#: src/main.c:2087
 msgid ""
 "-jackopts <opts>    : opts is a bitmap of jack startup options [1 = jack "
 "transport client, 2 = jack transport master, 4 = start jack transport "
@@ -419,29 +419,29 @@ msgstr ""
 "client, 2 = jack transport master, 4 = start jack transport server, 8 = "
 "pause audio when video paused, 16 = start jack audio server] \n"
 
-#: src/main.c:2088
+#: src/main.c:2089
 msgid " or sox\n"
 msgstr " 或 sox\n"
 
-#: src/main.c:2090
+#: src/main.c:2091
 msgid "-devicemap <mapname>          : autoload devicemap\n"
 msgstr "-devicemap <mapname>          : 自动加载 devicemap\n"
 
-#: src/main.c:2091
+#: src/main.c:2092
 msgid ""
 "-vppdefaults <file>          : load video playback plugin defaults from "
 "<file> (Note: only sets the settings, not the plugin type)\n"
 msgstr ""
 
-#: src/main.c:2092
+#: src/main.c:2093
 msgid "-debug            : try to debug crashes (requires 'gdb' installed)\n"
 msgstr "-debug : 尝试调试崩溃（需要安装 gdb）\n"
 
-#: src/main.c:2118 src/gui.c:1089
+#: src/main.c:2119 src/gui.c:1089
 msgid "Starting GUI..."
 msgstr "正在启动图形用户界面..."
 
-#: src/main.c:2131
+#: src/main.c:2132
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -457,7 +457,7 @@ msgstr ""
 "%s/%s。\n"
 "（或许您需要修改 ~/.lives 文件中 <prefix_dir> 的值）\n"
 
-#: src/main.c:2145
+#: src/main.c:2146
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -468,7 +468,7 @@ msgstr ""
 "LiVES 无法向 /tmp 写入小文件\n"
 "请确保您有向 /tmp 的写入权限并重试。\n"
 
-#: src/main.c:2150
+#: src/main.c:2151
 msgid ""
 "\n"
 "`smogrify` must be in your path, and be executable\n"
@@ -482,7 +482,7 @@ msgstr ""
 "请在运行 LiVES 前\n"
 "参阅 README 文件。\n"
 
-#: src/main.c:2156
+#: src/main.c:2157
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -497,7 +497,7 @@ msgstr ""
 "\n"
 "请检查文件权限并重试。\n"
 
-#: src/main.c:2163
+#: src/main.c:2164
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -514,7 +514,7 @@ msgstr ""
 "请检查文件及包含该文件的目录权限\n"
 "并重试。\n"
 
-#: src/main.c:2173
+#: src/main.c:2174
 #, fuzzy, c-format
 msgid ""
 "Please check the <tempdir> setting in \n"
@@ -529,7 +529,7 @@ msgstr ""
 "%s/.lives\n"
 "中 <tempdir> 的设置并重试。\n"
 
-#: src/main.c:2180
+#: src/main.c:2181
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -541,7 +541,7 @@ msgstr ""
 "LiVES 无法捕获此图片\n"
 "\n"
 
-#: src/main.c:2188
+#: src/main.c:2189
 msgid ""
 "\n"
 "An incorrect version of smogrify was found in your path.\n"
@@ -559,7 +559,7 @@ msgstr ""
 "\n"
 "谢谢。\n"
 
-#: src/main.c:2193 src/dialogs.c:1824
+#: src/main.c:2194 src/dialogs.c:1824
 msgid ""
 "\n"
 "LiVES currently requires either 'mplayer' or 'sox' to function. Please "
@@ -568,7 +568,7 @@ msgstr ""
 "\n"
 "LiVES 目前需要 'mplayer' 或 'sox' 以正常工作。请至少安装其中之一并重试。\n"
 
-#: src/main.c:2197
+#: src/main.c:2198
 #, fuzzy
 msgid ""
 "\n"
@@ -578,7 +578,7 @@ msgstr ""
 "\n"
 "LiVES 目前需要 'mplayer' 或 'sox' 以正常工作。请至少安装其中之一并重试。\n"
 
-#: src/main.c:2207
+#: src/main.c:2208
 msgid ""
 "\n"
 "LiVES was unable to locate 'mplayer'. You may wish to install mplayer to use "
@@ -587,7 +587,7 @@ msgstr ""
 "\n"
 "LiVES 无法定位 'mplayer'。您可以安装 mplayer 来获得更完整的 LiVES 功能。\n"
 
-#: src/main.c:2210
+#: src/main.c:2211
 msgid ""
 "\n"
 "LiVES was unable to locate 'convert'. You should install convert and image-"
@@ -597,7 +597,7 @@ msgstr ""
 "LiVES 无法定位 'convert'。您可以安装 convert 和 image-magick 来使用渲染效"
 "果。\n"
 
-#: src/main.c:2213
+#: src/main.c:2214
 msgid ""
 "\n"
 "LiVES was unable to locate 'composite'. You should install composite and "
@@ -607,7 +607,7 @@ msgstr ""
 "LiVES 无法定位 'composite'。您需要安装 composite 和 image-magick 来使用融合功"
 "能。\n"
 
-#: src/main.c:2216
+#: src/main.c:2217
 msgid ""
 "\n"
 "LiVES was unable to locate 'sox'. Some audio features may not work. You "
@@ -616,7 +616,7 @@ msgstr ""
 "\n"
 "LiVES 无法定位 'sox'。有些音频特性可能无法工作。您应该安装 'sox'。\n"
 
-#: src/main.c:2219
+#: src/main.c:2220
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -633,59 +633,59 @@ msgstr ""
 "没有插件您无法进行 '保存'。\n"
 "您或许需要修改 ~/.lives 中 <lib_dir> 的设置。\n"
 
-#: src/main.c:2331
+#: src/main.c:2332
 #, c-format
 msgid "Autoloading set %s..."
 msgstr "自动装载场景 %s..."
 
 #. TRANSLATORS: localised name may be used here
-#: src/main.c:2486
+#: src/main.c:2487
 msgid "LiVES"
 msgstr ""
 
-#: src/main.c:2649
+#: src/main.c:2650
 #, c-format
 msgid "Invalid audio player %s\n"
 msgstr "无效的音频播放器 %s\n"
 
-#: src/main.c:2767
+#: src/main.c:2768
 #, c-format
 msgid "LiVES-%s: <Untitled%d> %dx%d : %d frames %d bpp %.3f fps"
 msgstr "LiVES-%s: <Untitled%d> %dx%d : %d 帧 %d bpp %.3f fps"
 
-#: src/main.c:2771
+#: src/main.c:2772
 #, c-format
 msgid "LiVES-%s: <%s> %dx%d : ??? frames ??? bpp %.3f fps"
 msgstr "LiVES-%s: <%s> %dx%d : ??? 帧 ??? bpp %.3f fps"
 
-#: src/main.c:2774
+#: src/main.c:2775
 #, c-format
 msgid "LiVES-%s: <%s> %dx%d : %d frames %d bpp %.3f fps"
 msgstr "LiVES-%s: <%s> %dx%d : %d 帧 %d bpp %.3f fps"
 
-#: src/main.c:2780
+#: src/main.c:2781
 #, c-format
 msgid "LiVES-%s: <No File>"
 msgstr "LiVES-%s: <没有文件>"
 
 #. TRANSLATORS: rec(ord)
-#: src/main.c:4364
+#: src/main.c:4367
 #, c-format
 msgid "rec %9d/%d"
 msgstr ""
 
 #. TRANSLATORS: out of memory (rec(ord))
-#: src/main.c:4368
+#: src/main.c:4371
 #, c-format
 msgid "!rec %9d/%d"
 msgstr ""
 
-#: src/main.c:4607 src/main.c:4608 src/gui.c:2052 src/gui.c:3094
+#: src/main.c:4610 src/main.c:4611 src/gui.c:2052 src/gui.c:3094
 #: src/saveplay.c:2191
 msgid "Play"
 msgstr "播放"
 
-#: src/main.c:5252
+#: src/main.c:5255
 msgid ""
 "LiVES was unable to capture this image\n"
 "\n"
@@ -693,35 +693,35 @@ msgstr ""
 "LiVES 无法捕获此图片\n"
 "\n"
 
-#: src/main.c:5374
+#: src/main.c:5377
 #, c-format
 msgid "Closed file %s\n"
 msgstr "已关闭文件 %s\n"
 
-#: src/main.c:5568 src/gui.c:622 src/utils.c:3873 src/utils.c:3905
+#: src/main.c:5571 src/gui.c:622 src/utils.c:3873 src/utils.c:3905
 #: src/saveplay.c:3354 src/multitrack.c:4076 src/multitrack.c:5648
 msgid "_Undo"
 msgstr "撤消(_U)"
 
-#: src/main.c:5569 src/gui.c:635 src/utils.c:3874 src/utils.c:3906
+#: src/main.c:5572 src/gui.c:635 src/utils.c:3874 src/utils.c:3906
 #: src/saveplay.c:3355 src/multitrack.c:4097 src/multitrack.c:5671
 msgid "_Redo"
 msgstr "重做(_R)"
 
-#: src/main.c:5596 src/interface.c:661 src/gui.c:2217 src/preferences.c:2545
+#: src/main.c:5599 src/interface.c:661 src/gui.c:2217 src/preferences.c:2545
 #: src/resample.c:1837
 msgid "Video"
 msgstr "视频"
 
-#: src/main.c:5597 src/interface.c:680 src/gui.c:2236
+#: src/main.c:5600 src/interface.c:680 src/gui.c:2236
 msgid "Left Audio"
 msgstr "左声道"
 
-#: src/main.c:5598 src/gui.c:2254
+#: src/main.c:5601 src/gui.c:2254
 msgid "Right Audio"
 msgstr "右声道"
 
-#: src/main.c:5646
+#: src/main.c:5649
 msgid ""
 "\n"
 "\n"
@@ -734,7 +734,7 @@ msgstr ""
 "如果指定音频播放器为 mplayer，LiVES 无法在同时打开的片段见切换。\n"
 "请调整首选项中的回放设置并重试。\n"
 
-#: src/main.c:5731 src/callbacks.c:7389 src/callbacks.c:7537
+#: src/main.c:5734 src/callbacks.c:7389 src/callbacks.c:7537
 #: src/callbacks.c:7863 src/callbacks.c:7880 src/gui.c:3683
 #: src/saveplay.c:2313 src/saveplay.c:2347 src/saveplay.c:2937
 #: src/saveplay.c:3047 src/saveplay.c:3069 src/multitrack.c:8421
@@ -743,13 +743,13 @@ msgstr ""
 msgid " (%d %% scale)"
 msgstr ""
 
-#: src/main.c:5733 src/callbacks.c:7391 src/callbacks.c:7539
+#: src/main.c:5736 src/callbacks.c:7391 src/callbacks.c:7539
 #: src/callbacks.c:7865 src/gui.c:3687 src/saveplay.c:2315 src/saveplay.c:2349
 #, fuzzy, c-format
 msgid "LiVES: - Play Window%s"
 msgstr "LiVES: - 播放窗口"
 
-#: src/main.c:6143 src/plugins.c:1536
+#: src/main.c:6150 src/plugins.c:1536
 msgid "LiVES: - Play Window"
 msgstr "LiVES: - 播放窗口"
 
@@ -3693,7 +3693,7 @@ msgstr "关于(_A)"
 msgid "Rewind to start (w)"
 msgstr "倒带启动 (w)"
 
-#: src/gui.c:1732 src/multitrack.c:15402
+#: src/gui.c:1732 src/multitrack.c:15410
 msgid "Play all (p)"
 msgstr "播放所有 (p)"
 
@@ -5670,7 +5670,7 @@ msgstr "音频参数"
 msgid "Audio only Transitions"
 msgstr "过渡"
 
-#: src/effects.c:110 src/effects.c:113 src/multitrack.c:17401
+#: src/effects.c:110 src/effects.c:113 src/multitrack.c:17409
 msgid "audio"
 msgstr "音频"
 
@@ -5769,17 +5769,22 @@ msgid ""
 "No frames were generated.\n"
 msgstr "字幕已擦除。\n"
 
-#: src/effects-weed.c:3819
+#: src/effects-weed.c:3920
 #, c-format
 msgid "Error: plugin %s has no weed_setup() function.\n"
 msgstr ""
 
-#: src/effects-weed.c:3834
+#: src/effects-weed.c:3935
 #, c-format
 msgid "No usable filters found in plugin %s\n"
 msgstr ""
 
-#: src/effects-weed.c:3914
+#: src/effects-weed.c:3963
+#, c-format
+msgid "Found duplicate plugin %s\n"
+msgstr ""
+
+#: src/effects-weed.c:4019
 #, fuzzy, c-format
 msgid ""
 "Info: Unable to load plugin %s\n"
@@ -5789,22 +5794,22 @@ msgstr ""
 "%s\n"
 "错误代码为 %d\n"
 
-#: src/effects-weed.c:3917 src/effects-weed.c:4260
+#: src/effects-weed.c:4022 src/effects-weed.c:4355
 #, fuzzy
 msgid "Some plugin directories"
 msgstr "包含子目录"
 
-#: src/effects-weed.c:4096
+#: src/effects-weed.c:4191
 #, c-format
 msgid "Successfully loaded %d Weed filters\n"
 msgstr ""
 
-#: src/effects-weed.c:4765
+#: src/effects-weed.c:4866
 #, c-format
 msgid "Effect %s cannot be used with this audio player.\n"
 msgstr ""
 
-#: src/effects-weed.c:4869
+#: src/effects-weed.c:4971
 #, fuzzy, c-format
 msgid "Failed to start instance %s, error code %d\n"
 msgstr ""
@@ -5814,17 +5819,17 @@ msgstr ""
 "%s\n"
 "错误代码为 %d\n"
 
-#: src/effects-weed.c:4908
+#: src/effects-weed.c:5013
 #, fuzzy, c-format
 msgid "Unable to start generator %s\n"
 msgstr "无法打开设备 %s\n"
 
-#: src/effects-weed.c:5523
+#: src/effects-weed.c:5643
 #, fuzzy, c-format
 msgid "Failed to start generator %s\n"
 msgstr "生成器"
 
-#: src/effects-weed.c:5584
+#: src/effects-weed.c:5703
 #, fuzzy, c-format
 msgid "Failed to start generator %s, error %d\n"
 msgstr ""
@@ -5832,7 +5837,7 @@ msgstr ""
 "%s\n"
 "错误代码为 %d\n"
 
-#: src/effects-weed.c:6685
+#: src/effects-weed.c:6804
 #, c-format
 msgid "%s [unstable] (%s)"
 msgstr ""
@@ -5871,77 +5876,77 @@ msgstr "LiVES：已选择的帧"
 msgid "Display Password"
 msgstr ""
 
-#: src/paramwindow.c:410
+#: src/paramwindow.c:413
 #, fuzzy
 msgid "Transition _In"
 msgstr "过渡"
 
-#: src/paramwindow.c:415
+#: src/paramwindow.c:418
 #, fuzzy
 msgid "Transition in"
 msgstr "过渡"
 
-#: src/paramwindow.c:443
+#: src/paramwindow.c:446
 msgid "Check the box to make audio transition with the video"
 msgstr ""
 
-#: src/paramwindow.c:446
+#: src/paramwindow.c:449
 #, fuzzy
 msgid "Crossfade audio"
 msgstr "淡入音频"
 
-#: src/paramwindow.c:480
+#: src/paramwindow.c:483
 #, fuzzy
 msgid "Transition _Out"
 msgstr "过渡"
 
-#: src/paramwindow.c:485
+#: src/paramwindow.c:488
 #, fuzzy
 msgid "Transition out"
 msgstr "过渡"
 
-#: src/paramwindow.c:543
+#: src/paramwindow.c:546
 msgid "Target _FPS (plugin may override this)"
 msgstr ""
 
-#: src/paramwindow.c:582
+#: src/paramwindow.c:585
 #, c-format
 msgid "%s : size"
 msgstr ""
 
-#: src/paramwindow.c:586
+#: src/paramwindow.c:589
 msgid "New size (pixels)"
 msgstr ""
 
-#: src/paramwindow.c:598 src/plugins.c:1016
+#: src/paramwindow.c:601 src/plugins.c:1016
 msgid "_Width"
 msgstr "宽度(_W)"
 
-#: src/paramwindow.c:626 src/plugins.c:1031
+#: src/paramwindow.c:629 src/plugins.c:1031
 msgid "_Height"
 msgstr "高度(_H)"
 
-#: src/paramwindow.c:699
+#: src/paramwindow.c:702
 #, fuzzy
 msgid "Generate to _Clipboard"
 msgstr "由图像生成剪辑"
 
-#: src/paramwindow.c:704
+#: src/paramwindow.c:707
 #, fuzzy
 msgid "Generate frames to the clipboard"
 msgstr "正在从剪切板中插入 %d%s 帧..."
 
-#: src/paramwindow.c:720
+#: src/paramwindow.c:723
 #, fuzzy
 msgid "Generate to _New Clip"
 msgstr "渲染所有到新剪辑(_R)"
 
-#: src/paramwindow.c:725
+#: src/paramwindow.c:728
 #, fuzzy
 msgid "Generate frames to a new clip"
 msgstr "渲染所有到新剪辑(_R)"
 
-#: src/paramwindow.c:848
+#: src/paramwindow.c:851
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -5953,60 +5958,60 @@ msgstr ""
 "您必须安装“xwininfo”，然后才能使用此功能\n"
 "\n"
 
-#: src/paramwindow.c:941 src/paramwindow.c:951
+#: src/paramwindow.c:944 src/paramwindow.c:954
 msgid "Set as default"
 msgstr "设置为默认"
 
-#: src/paramwindow.c:943 src/paramwindow.c:955
+#: src/paramwindow.c:946 src/paramwindow.c:958
 msgid "Reset"
 msgstr ""
 
-#: src/paramwindow.c:953 src/rte_window.c:1516 src/omc-learn.c:1376
+#: src/paramwindow.c:956 src/rte_window.c:1516 src/omc-learn.c:1376
 msgid "Close _window"
 msgstr "关闭窗口(_W)"
 
-#: src/paramwindow.c:1305
+#: src/paramwindow.c:1308
 #, fuzzy
 msgid "No parameters"
 msgstr "音频参数"
 
-#: src/paramwindow.c:1386
+#: src/paramwindow.c:1389
 msgid "Invalid parameter"
 msgstr "无效参数"
 
-#: src/paramwindow.c:1570
+#: src/paramwindow.c:1573
 #, fuzzy
 msgid "LiVES: - Select Colour"
 msgstr "LiVES:- 选择 VCD 标题"
 
-#: src/paramwindow.c:1574
+#: src/paramwindow.c:1577
 msgid "Click to set the colour"
 msgstr ""
 
-#: src/paramwindow.c:1589
+#: src/paramwindow.c:1592
 #, fuzzy
 msgid "_Red"
 msgstr "重做(_R)"
 
-#: src/paramwindow.c:1590
+#: src/paramwindow.c:1593
 msgid "The red value (0 - 255)"
 msgstr ""
 
-#: src/paramwindow.c:1593
+#: src/paramwindow.c:1596
 #, fuzzy
 msgid "_Green"
 msgstr "绿"
 
-#: src/paramwindow.c:1594
+#: src/paramwindow.c:1597
 msgid "The green value (0 - 255)"
 msgstr ""
 
-#: src/paramwindow.c:1597
+#: src/paramwindow.c:1600
 #, fuzzy
 msgid "_Blue"
 msgstr "蓝"
 
-#: src/paramwindow.c:1598
+#: src/paramwindow.c:1601
 msgid "The blue value (0 - 255)"
 msgstr ""
 
@@ -6209,7 +6214,7 @@ msgstr ""
 msgid "Failed to load %s, transitions may not resize.\n"
 msgstr ""
 
-#: src/plugins.c:3809
+#: src/plugins.c:3788
 #, fuzzy, c-format
 msgid "%s advanced settings"
 msgstr "使用推荐设置(_R)"
@@ -6733,7 +6738,7 @@ msgstr ""
 "\n"
 "设置名称可能不能为空。\n"
 
-#: src/rfx-builder.c:3319 src/rfx-builder.c:4606
+#: src/rfx-builder.c:3319 src/rfx-builder.c:4605
 msgid ""
 "\n"
 "\n"
@@ -6813,7 +6818,7 @@ msgstr ""
 msgid "Bad description. (%s)\n"
 msgstr "描述： "
 
-#: src/rfx-builder.c:3921
+#: src/rfx-builder.c:3920
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -6827,28 +6832,28 @@ msgstr ""
 "文件中的版本无效\n"
 "%s\n"
 
-#: src/rfx-builder.c:4076
+#: src/rfx-builder.c:4075
 msgid "Rebuilding all RFX scripts...builtin..."
 msgstr ""
 
-#: src/rfx-builder.c:4077
+#: src/rfx-builder.c:4076
 msgid "Rebuilding scripts"
 msgstr ""
 
-#: src/rfx-builder.c:4085
+#: src/rfx-builder.c:4084
 #, fuzzy
 msgid "custom..."
 msgstr "自定义"
 
-#: src/rfx-builder.c:4089
+#: src/rfx-builder.c:4088
 msgid "test..."
 msgstr ""
 
-#: src/rfx-builder.c:4095
+#: src/rfx-builder.c:4094
 msgid "rebuilding dynamic menu entries..."
 msgstr ""
 
-#: src/rfx-builder.c:4122 src/rfx-builder.c:4129
+#: src/rfx-builder.c:4121 src/rfx-builder.c:4128
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -6862,7 +6867,7 @@ msgstr ""
 "\n"
 "请检查文件权限并重试。\n"
 
-#: src/rfx-builder.c:4169
+#: src/rfx-builder.c:4168
 #, c-format
 msgid ""
 "\n"
@@ -6872,12 +6877,12 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/rfx-builder.c:4178
+#: src/rfx-builder.c:4177
 #, fuzzy, c-format
 msgid "Deleting rfx script %s..."
 msgstr "删除设置..."
 
-#: src/rfx-builder.c:4188
+#: src/rfx-builder.c:4187
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -6892,7 +6897,7 @@ msgstr ""
 "%s\n"
 "错误代码为 %d\n"
 
-#: src/rfx-builder.c:4225
+#: src/rfx-builder.c:4224
 #, c-format
 msgid ""
 "\n"
@@ -6902,12 +6907,12 @@ msgid ""
 "Please delete it first, or rename the test script.\n"
 msgstr ""
 
-#: src/rfx-builder.c:4236
+#: src/rfx-builder.c:4235
 #, c-format
 msgid "Promoting rfx test plugin %s to custom..."
 msgstr ""
 
-#: src/rfx-builder.c:4253
+#: src/rfx-builder.c:4252
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -6923,21 +6928,21 @@ msgstr ""
 "%s\n"
 "错误代码为 %d\n"
 
-#: src/rfx-builder.c:4272
+#: src/rfx-builder.c:4271
 msgid "Import Script from..."
 msgstr ""
 
-#: src/rfx-builder.c:4288
+#: src/rfx-builder.c:4287
 #, fuzzy
 msgid "Export Script to..."
 msgstr "输出音频(_E)..."
 
-#: src/rfx-builder.c:4310 src/rfx-builder.c:4389
+#: src/rfx-builder.c:4309 src/rfx-builder.c:4388
 #, fuzzy, c-format
 msgid "Copying %s to %s..."
 msgstr "自动装载场景 %s..."
 
-#: src/rfx-builder.c:4381
+#: src/rfx-builder.c:4380
 #, c-format
 msgid ""
 "\n"
@@ -6947,61 +6952,61 @@ msgid ""
 "Please delete it first, or rename the import script.\n"
 msgstr ""
 
-#: src/rfx-builder.c:4455 src/rfx-builder.c:4613 src/rfx-builder.c:4683
+#: src/rfx-builder.c:4454 src/rfx-builder.c:4612 src/rfx-builder.c:4682
 msgid "Builtin"
 msgstr "内置"
 
-#: src/rfx-builder.c:4456 src/rfx-builder.c:4615 src/rfx-builder.c:4687
+#: src/rfx-builder.c:4455 src/rfx-builder.c:4614 src/rfx-builder.c:4686
 msgid "Custom"
 msgstr "自定义"
 
-#: src/rfx-builder.c:4457 src/rfx-builder.c:4691
+#: src/rfx-builder.c:4456 src/rfx-builder.c:4690
 msgid "Test"
 msgstr "测试"
 
-#: src/rfx-builder.c:4482
+#: src/rfx-builder.c:4481
 msgid "LiVES: - Copy RFX Script"
 msgstr ""
 
-#: src/rfx-builder.c:4484
+#: src/rfx-builder.c:4483
 msgid "From type:    "
 msgstr ""
 
-#: src/rfx-builder.c:4503
+#: src/rfx-builder.c:4502
 msgid "   Script:    "
 msgstr ""
 
-#: src/rfx-builder.c:4512
+#: src/rfx-builder.c:4511
 #, fuzzy
 msgid "LiVES: - Rename test RFX Script"
 msgstr "LiVES: - 重命名剪辑"
 
-#: src/rfx-builder.c:4513
+#: src/rfx-builder.c:4512
 #, fuzzy
 msgid "From script: "
 msgstr "描述： "
 
-#: src/rfx-builder.c:4518
+#: src/rfx-builder.c:4517
 #, fuzzy
 msgid "LiVES: - RFX Script name"
 msgstr "LiVES: - 输入场景名"
 
-#: src/rfx-builder.c:4519
+#: src/rfx-builder.c:4518
 #, fuzzy
 msgid "Script name: "
 msgstr "场景名 "
 
-#: src/rfx-builder.c:4552
+#: src/rfx-builder.c:4551
 #, fuzzy
 msgid "New name: "
 msgstr "新名称 "
 
-#: src/rfx-builder.c:4555
+#: src/rfx-builder.c:4554
 #, fuzzy
 msgid "New script name: "
 msgstr "新名称 "
 
-#: src/rfx-builder.c:4637
+#: src/rfx-builder.c:4636
 msgid ""
 "\n"
 "\n"
@@ -7009,12 +7014,12 @@ msgid ""
 "Script name must be unique.\n"
 msgstr ""
 
-#: src/rfx-builder.c:4649
+#: src/rfx-builder.c:4648
 #, c-format
 msgid "Renaming RFX test script %s to %s..."
 msgstr ""
 
-#: src/rfx-builder.c:4655
+#: src/rfx-builder.c:4654
 #, c-format
 msgid ""
 "\n"
@@ -7025,16 +7030,16 @@ msgid ""
 "Return code was %d\n"
 msgstr ""
 
-#: src/rfx-builder.c:4857
+#: src/rfx-builder.c:4856
 msgid "_Apply Real Time Effects to Selection"
 msgstr ""
 
-#: src/rfx-builder.c:4907
+#: src/rfx-builder.c:4906
 #, fuzzy, c-format
 msgid "Loading rendered effect %s..."
 msgstr "正在加载实时效果插件..."
 
-#: src/rfx-builder.c:5012
+#: src/rfx-builder.c:5011
 msgid ""
 "See: VJ - show VJ keys. Set the realtime effects, and then apply them here."
 msgstr ""
@@ -7999,21 +8004,21 @@ msgstr "Jack 选项在您下次启动 LiVES 时才会生效。"
 msgid "Syncing to external framerate of %.8f frames per second.\n"
 msgstr "视频长度现在为 %d帧，播放速度为 %.3f帧/秒。\n"
 
-#: src/osc.c:5183
+#: src/osc.c:5313
 msgid "Cannot initialize OSC receiver\n"
 msgstr "无法初始化 OSC 接收器\n"
 
-#: src/osc.c:5207
+#: src/osc.c:5337
 #, c-format
 msgid "WARNING: Cannot start OSC server at UDP port %d\n"
 msgstr "警告：无法在 UDP 端口 %d 上启动 OSC 服务器\n"
 
-#: src/osc.c:5212
+#: src/osc.c:5342
 #, c-format
 msgid "Started OSC server at UDP port %d\n"
 msgstr "已在 UDP 端口 %d 上启动 OSC 服务器\n"
 
-#: src/osc.c:5325
+#: src/osc.c:5455
 #, c-format
 msgid "Cannot start OSC/UDP server at port %d \n"
 msgstr "无法在端口 %d 上启动 OSC/UDP 服务器 \n"
@@ -9001,7 +9006,7 @@ msgstr ""
 "此布局中的声道数 (%d) 对 LiVES 无效。\n"
 "无法加载。\n"
 
-#: src/multitrack.c:4884 src/multitrack.c:4893 src/multitrack.c:19790
+#: src/multitrack.c:4884 src/multitrack.c:4893 src/multitrack.c:19798
 msgid "Layout was wiped.\n"
 msgstr "布局已擦除。\n"
 
@@ -9097,7 +9102,7 @@ msgstr "清除时间线上的标记(_M)"
 msgid "Ignore selection limits when inserting"
 msgstr "在插入时忽略选区限制"
 
-#: src/multitrack.c:5795 src/multitrack.c:15401
+#: src/multitrack.c:5795 src/multitrack.c:15409
 msgid "_Play from Timeline Position"
 msgstr "从时间线位置开始播放(_P)"
 
@@ -9683,90 +9688,90 @@ msgstr ""
 msgid "Inserted gap in track %s from time %.4f to %.4f\n"
 msgstr ""
 
-#: src/multitrack.c:13830
+#: src/multitrack.c:13834
 #, c-format
 msgid "Undid %s\n"
 msgstr ""
 
-#: src/multitrack.c:14026
+#: src/multitrack.c:14034
 #, c-format
 msgid "Redid %s\n"
 msgstr ""
 
-#: src/multitrack.c:14052
+#: src/multitrack.c:14060
 msgid "Multitrack details"
 msgstr "多轨道细节"
 
-#: src/multitrack.c:14064
+#: src/multitrack.c:14072
 #, fuzzy
 msgid ""
 "\n"
 " (variable)"
 msgstr "变量"
 
-#: src/multitrack.c:14287 src/multitrack.c:17380 src/multitrack.c:17392
+#: src/multitrack.c:14295 src/multitrack.c:17388 src/multitrack.c:17400
 #, c-format
 msgid "track %s"
 msgstr "轨道 %s"
 
-#: src/multitrack.c:14292 src/multitrack.c:17385
+#: src/multitrack.c:14300 src/multitrack.c:17393
 #, c-format
 msgid "tracks %s and %s"
 msgstr "轨道 %s 和 %s"
 
-#: src/multitrack.c:14298 src/multitrack.c:17395
+#: src/multitrack.c:14306 src/multitrack.c:17403
 msgid "selected tracks"
 msgstr "已选择的轨道"
 
-#: src/multitrack.c:14302
+#: src/multitrack.c:14310
 #, c-format
 msgid "Added %s %s to %s from %.4f to %.4f\n"
 msgstr ""
 
-#: src/multitrack.c:14331
+#: src/multitrack.c:14339
 #, c-format
 msgid "Added effect %s to track %s from %.4f to %.4f\n"
 msgstr ""
 
-#: src/multitrack.c:14626
+#: src/multitrack.c:14634
 #, fuzzy, c-format
 msgid "rendered %d frames to new clip.\n"
 msgstr "正在粘贴 %d 帧至新剪辑 %s ..."
 
-#: src/multitrack.c:14716
+#: src/multitrack.c:14724
 msgid "Cleaning up..."
 msgstr "正在清理..."
 
-#: src/multitrack.c:15394
+#: src/multitrack.c:15402
 msgid "_Pause"
 msgstr "暂停(_P)"
 
-#: src/multitrack.c:15395
+#: src/multitrack.c:15403
 msgid "Pause (p)"
 msgstr "暂停(p)"
 
-#: src/multitrack.c:15539
+#: src/multitrack.c:15547
 msgid "Press 'm' during playback"
 msgstr "在播放过程中按“m”键"
 
-#: src/multitrack.c:15540
+#: src/multitrack.c:15548
 msgid "to make a mark on the timeline"
 msgstr "要在时间线上做标记"
 
-#: src/multitrack.c:15834
+#: src/multitrack.c:15842
 #, c-format
 msgid ""
 "Inserted audio %.4f to %.4f from clip %s into backing audio from time %.4f "
 "to %.4f\n"
 msgstr ""
 
-#: src/multitrack.c:16081
+#: src/multitrack.c:16089
 #, c-format
 msgid ""
 "Inserted frames %d to %d from clip %s into track %s from time %.4f to %.4f\n"
 msgstr ""
 
-#: src/multitrack.c:16661
+#: src/multitrack.c:16669
 #, c-format
 msgid ""
 "Time region %.3f to %.3f\n"
@@ -9775,7 +9780,7 @@ msgstr ""
 "时间区段 %.3f 到 %.3f\n"
 "已选择。\n"
 
-#: src/multitrack.c:16665
+#: src/multitrack.c:16673
 msgid ""
 "select one or more tracks\n"
 "to create a region.\n"
@@ -9783,12 +9788,12 @@ msgstr ""
 "选择一条或多条轨道\n"
 "来创建一个区段。\n"
 
-#: src/multitrack.c:16667
+#: src/multitrack.c:16675
 #, c-format
 msgid "%d video tracks selected.\n"
 msgstr "已选择了 %d 条视频轨道。\n"
 
-#: src/multitrack.c:16669
+#: src/multitrack.c:16677
 msgid ""
 "Double click on timeline\n"
 "to deselect time region."
@@ -9796,7 +9801,7 @@ msgstr ""
 "双击时间线来\n"
 "取消时间区段选择。"
 
-#: src/multitrack.c:16676
+#: src/multitrack.c:16684
 msgid ""
 "Single click on an effect\n"
 "to select it."
@@ -9804,7 +9809,7 @@ msgstr ""
 "单击某个效果来\n"
 "选中它。"
 
-#: src/multitrack.c:16677
+#: src/multitrack.c:16685
 msgid ""
 "Double click on an effect\n"
 "to edit it."
@@ -9812,7 +9817,7 @@ msgstr ""
 "双击某个效果\n"
 "进行编辑。"
 
-#: src/multitrack.c:16678
+#: src/multitrack.c:16686
 msgid ""
 "Right click on an effect\n"
 "for context menu.\n"
@@ -9820,14 +9825,14 @@ msgstr ""
 "右击某个效果来\n"
 "打开环境菜单。\n"
 
-#: src/multitrack.c:16680
+#: src/multitrack.c:16688
 #, fuzzy
 msgid ""
 "Effect order can be changed at\n"
 "FILTER MAPS"
 msgstr "更改特效顺序"
 
-#: src/multitrack.c:16687
+#: src/multitrack.c:16695
 msgid ""
 "You can select an effect,\n"
 "then use the INSERT BEFORE"
@@ -9835,11 +9840,11 @@ msgstr ""
 "您可以选择一个特效，\n"
 "然后使用 插入前面"
 
-#: src/multitrack.c:16688
+#: src/multitrack.c:16696
 msgid "or INSERT AFTER buttons to move it."
 msgstr "或 插入后面 按钮来移动它。"
 
-#: src/multitrack.c:16724
+#: src/multitrack.c:16732
 msgid ""
 "You can click and drag\n"
 "below the timeline"
@@ -9847,15 +9852,15 @@ msgstr ""
 "您可以点击拖动\n"
 "时间线下方"
 
-#: src/multitrack.c:16725
+#: src/multitrack.c:16733
 msgid "to select a time region.\n"
 msgstr "以选择一个时间区段。\n"
 
-#: src/multitrack.c:16960 src/multitrack.c:16973
+#: src/multitrack.c:16968 src/multitrack.c:16981
 msgid "Click on another effect,"
 msgstr "点击另一个效果，"
 
-#: src/multitrack.c:16961 src/multitrack.c:16974
+#: src/multitrack.c:16969 src/multitrack.c:16982
 msgid ""
 "and the selected one\n"
 "will be inserted"
@@ -9863,46 +9868,46 @@ msgstr ""
 "和所选的这个\n"
 "将被插入"
 
-#: src/multitrack.c:16962
+#: src/multitrack.c:16970
 msgid "after it.\n"
 msgstr "在它之后。\n"
 
-#: src/multitrack.c:16975
+#: src/multitrack.c:16983
 msgid "before it.\n"
 msgstr "在它之前。\n"
 
-#: src/multitrack.c:17207
+#: src/multitrack.c:17215
 #, c-format
 msgid "Removed parameter values for effect %s at time %.4f\n"
 msgstr "已移除效果 %s 的参数值，于时间 %.4f\n"
 
-#: src/multitrack.c:17403
+#: src/multitrack.c:17411
 #, fuzzy, c-format
 msgid "Set parameter values for %s %s on %s at time %.4f\n"
 msgstr "已移除效果 %s 的参数值，于时间 %.4f\n"
 
-#: src/multitrack.c:17892 src/multitrack.c:19513
+#: src/multitrack.c:17900 src/multitrack.c:19521
 msgid "_Autoreload each time"
 msgstr "每次都自动重载(_A)"
 
-#: src/multitrack.c:18000
+#: src/multitrack.c:18008
 #, c-format
 msgid "Saved layout to %s\n"
 msgstr "将布局保存到 %s\n"
 
-#: src/multitrack.c:19419
+#: src/multitrack.c:19427
 msgid "clips and frames"
 msgstr "剪辑和帧"
 
-#: src/multitrack.c:19423
+#: src/multitrack.c:19431
 msgid "clips"
 msgstr "剪辑"
 
-#: src/multitrack.c:19426
+#: src/multitrack.c:19434
 msgid "frames"
 msgstr "画面"
 
-#: src/multitrack.c:19436
+#: src/multitrack.c:19444
 msgid ""
 "\n"
 "Auto reload layout.\n"
@@ -9910,7 +9915,7 @@ msgstr ""
 "\n"
 "自动重载布局。\n"
 
-#: src/multitrack.c:19439
+#: src/multitrack.c:19447
 #, c-format
 msgid ""
 "%s\n"
@@ -9921,11 +9926,11 @@ msgstr ""
 "有些 %s 在布局 %s 中找不到\n"
 "因此不能正确加载。\n"
 
-#: src/multitrack.c:19578
+#: src/multitrack.c:19586
 msgid "auto backup"
 msgstr "自动备份"
 
-#: src/multitrack.c:19581
+#: src/multitrack.c:19589
 #, c-format
 msgid ""
 "\n"
@@ -9934,80 +9939,80 @@ msgstr ""
 "\n"
 "无法加载布局文件 %s\n"
 
-#: src/multitrack.c:19601
+#: src/multitrack.c:19609
 #, c-format
 msgid "Loading layout from %s..."
 msgstr "正在从 %s 加载布局..."
 
-#: src/multitrack.c:19634
+#: src/multitrack.c:19642
 #, c-format
 msgid "Got %d events...processing..."
 msgstr "收到 %d 个事件...处理中..."
 
-#: src/multitrack.c:19649
+#: src/multitrack.c:19657
 msgid "Checking and rebuilding event list"
 msgstr "正在检测和重新构建事件列表"
 
-#: src/multitrack.c:19675
+#: src/multitrack.c:19683
 #, c-format
 msgid "%d errors detected.\n"
 msgstr "检测到 %d 项错误。\n"
 
-#: src/multitrack.c:19726
+#: src/multitrack.c:19734
 #, c-format
 msgid "Multitrack fps set to %.3f\n"
 msgstr ""
 
-#: src/multitrack.c:20725
+#: src/multitrack.c:20733
 msgid "LiVES: Multitrack audio mixer"
 msgstr "LiVES：多轨音频混音器"
 
-#: src/multitrack.c:20762
+#: src/multitrack.c:20770
 msgid "_Reset values"
 msgstr "重设值(_R)"
 
-#: src/multitrack.c:20766
+#: src/multitrack.c:20774
 msgid "_Close mixer"
 msgstr "关闭混音器(_C)"
 
-#: src/multitrack.c:20808
+#: src/multitrack.c:20816
 #, fuzzy
 msgid ""
 "_Invert backing audio\n"
 "and layer volumes"
 msgstr "无效的音频播放器 %s\n"
 
-#: src/multitrack.c:20814
+#: src/multitrack.c:20822
 #, fuzzy
 msgid "Adjust backing and layer audio values so that they sum to 1.0"
 msgstr "将所有层的音频值调整为相同值"
 
-#: src/multitrack.c:20853
+#: src/multitrack.c:20861
 #, fuzzy
 msgid "_Gang layer audio"
 msgstr " 层 %d 音频"
 
-#: src/multitrack.c:20859
+#: src/multitrack.c:20867
 msgid "Adjust all layer audio values to the same value"
 msgstr "将所有层的音频值调整为相同值"
 
-#: src/jack.c:102
+#: src/jack.c:103
 msgid "JACK server started\n"
 msgstr "JACK 服务器已启动\n"
 
-#: src/jack.c:1069 src/jack.c:1140
+#: src/jack.c:1094 src/jack.c:1165
 msgid "Unable to connect to JACK server\n"
 msgstr "无法连接 JACK 服务器\n"
 
-#: src/jack.c:1299
+#: src/jack.c:1324
 msgid "Started jack audio subsystem.\n"
 msgstr "已启动 jack 音频子系统。\n"
 
-#: src/jack.c:1407
+#: src/jack.c:1432
 msgid "Started jack audio reader.\n"
 msgstr "已启动 jack 音频读取器。\n"
 
-#: src/jack.c:1616
+#: src/jack.c:1641
 #, fuzzy
 msgid ""
 "\n"
@@ -10042,7 +10047,7 @@ msgstr "无法连接 JACK 服务器\n"
 msgid "LiVES will exit and you can choose another audio player.\n"
 msgstr "LIVES： -选择一款音频播放器"
 
-#: src/pulse.c:1189
+#: src/pulse.c:1275
 #, fuzzy
 msgid ""
 "\n"

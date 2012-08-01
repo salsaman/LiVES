@@ -2185,7 +2185,6 @@ void play_file (void) {
 
 
 
-
   if (mainw->multitrack==NULL) {
     if (!mainw->preview) {
       gtk_frame_set_label(GTK_FRAME(mainw->playframe),_ ("Play"));

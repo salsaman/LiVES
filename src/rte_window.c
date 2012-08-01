@@ -1143,23 +1143,43 @@ static void do_mix_error(void) {
 
 
 
+enum {
+  NAME_TYPE_COLUMN,
+  NAME_COLUMN,
+  HASH_COLUMN,
+  NUM_COLUMNS
+};
 
 
-void fx_changed (GtkItem *item, gpointer user_data) {
+
+void fx_changed (GtkComboBox *combo, gpointer user_data) {
   gint key_mode=GPOINTER_TO_INT(user_data);
   int modes=rte_getmodespk();
   gint key=(gint)(key_mode/modes);
   gint mode=key_mode-key*modes;
-  gchar *hashname1=g_strdup((gchar *)g_object_get_data(G_OBJECT(item),"hashname"));
-  gchar *hashname2=g_strdup((gchar *)g_object_get_data(G_OBJECT(combo_entries[key_mode]),"hashname"));
+
+  GtkTreeIter iter1;
+  GtkTreeModel *model;
+
+  gchar *hashname1;
+  gchar *hashname2=(gchar *)g_object_get_data(G_OBJECT(combo),"hashname");
   gint error;
   gchar *tmp;
 
   int i;
 
+  gchar *txt;
+
+  if (gtk_combo_box_get_active(combo)==-1) return; // -1 is returned after we set our own text (without the type)
+
+  gtk_combo_box_get_active_iter(combo,&iter1);
+
+  model=gtk_combo_box_get_model(combo);
+
+  gtk_tree_model_get(model,&iter1,HASH_COLUMN,&hashname1);
+
   if (!strcmp(hashname1,hashname2)) {
     g_free(hashname1);
-    g_free(hashname2);
     return;
   }
 
@@ -1179,21 +1199,21 @@ void fx_changed (GtkItem *item, gpointer user_data) {
     gtk_entry_set_text (GTK_ENTRY (combo_entries[key_mode]),(tmp=rte_keymode_get_filter_name(key+1,mode)));
     g_free(tmp);
 
-    // this gets called twice, unfortunately...may be a bug in gtk+
     if (error==-2) do_mix_error();
     if (error==-1) {
       d_print((tmp=g_strdup_printf(_("LiVES could not locate the effect %s.\n"),rte_keymode_get_filter_name(key+1,mode))));
       g_free(tmp);
     }
-    g_free(hashname1);
-    g_free(hashname2);
     return;
   }
 
-  g_object_set_data(G_OBJECT(combo_entries[key_mode]),"hashname",g_strdup(hashname1));
-
+  gtk_tree_model_get(model,&iter1,NAME_COLUMN,&txt);
+  gtk_entry_set_text (GTK_ENTRY (combo_entries[key_mode]),txt);
+  g_free(txt);
   g_free(hashname2);
-  g_free(hashname1);
+
+  // TODO - g_free on delete
+  g_object_set_data(G_OBJECT(combo),"hashname",hashname1);
     
   type_label_set_text(key,mode);
 
@@ -1205,15 +1225,93 @@ void fx_changed (GtkItem *item, gpointer user_data) {
   cconx_delete(-1,0,0,key,mode,-1);
   cconx_delete(key,mode,-1,-1,0,0);
 
-
-
 }
 
 
 
 
+GtkTreeModel *rte_window_fx_model (void) {
+  GtkTreeStore *tstore;
+
+  GtkTreeIter iter1,iter2;
+
+  // fill names of our effects
+  int fx_idx=0;
+
+  GList *list=name_type_list;
+
+  int error;
+
+  gchar *pkg=NULL,*pkgstring,*fxname;
+
+  tstore=gtk_tree_store_new (NUM_COLUMNS, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING);
+
+  while (list!=NULL) {
+    weed_plant_t *filter=get_weed_filter(weed_get_idx_for_hashname((gchar *)g_list_nth_data(hash_list,fx_idx),TRUE));
+    int filter_flags=weed_get_int_value(filter,"flags",&error);
+    if ((weed_plant_has_leaf(filter,"plugin_unstable")&&weed_get_boolean_value(filter,"plugin_unstable",&error)==
+	 WEED_TRUE&&!prefs->unstable_fx)||((enabled_in_channels(filter,FALSE)>1&&
+					    !has_video_chans_in(filter,FALSE))||
+					   (weed_plant_has_leaf(filter,"host_menu_hide")&&
+					    weed_get_boolean_value(filter,"host_menu_hide",&error)==WEED_TRUE)
+					   ||(filter_flags&WEED_FILTER_IS_CONVERTER))) {
+      list = list->next;
+      fx_idx++;
+      continue; // skip audio transitions and hidden entries
+    }
+
+
+    fxname=g_strdup((gchar *)g_list_nth_data(name_list,fx_idx));
+
+    if ((pkgstring=strstr(fxname,": "))!=NULL) {
+      // package effect
+      if (pkg==NULL) {
+	pkg=fxname;
+	fxname=g_strdup(pkg);
+	memset(pkgstring,0,1);
+	/* TRANSLATORS: example " - LADSPA plugins -" */
+	pkgstring=g_strdup_printf(_(" - %s plugins -"),pkg);
+	gtk_tree_store_append (tstore, &iter1, NULL);
+	gtk_tree_store_set(tstore,&iter1,NAME_TYPE_COLUMN,pkgstring,NAME_COLUMN,fxname,
+			 HASH_COLUMN,g_list_nth_data(hash_list,fx_idx),-1);
+	g_free(pkgstring);
+      }
+      gtk_tree_store_append (tstore, &iter2, &iter1);
+      gtk_tree_store_set(tstore,&iter2,NAME_TYPE_COLUMN,list->data,NAME_COLUMN,fxname,
+			 HASH_COLUMN,g_list_nth_data(hash_list,fx_idx),-1);
+    }
+    else {
+      if (pkg!=NULL) g_free(pkg);
+      pkg=NULL;
+      gtk_tree_store_append (tstore, &iter1, NULL);  /* Acquire an iterator */
+      gtk_tree_store_set(tstore,&iter1,NAME_TYPE_COLUMN,list->data,NAME_COLUMN,fxname,
+			 HASH_COLUMN,g_list_nth_data(hash_list,fx_idx),-1);
+      }
+
+    g_free(fxname);
+
+    list = list->next;
+    fx_idx++;
+  }
+
+  if (pkg!=NULL) g_free(pkg);
+
+  return (GtkTreeModel *)tstore;
+}
+
+
+
+
+
+
+
+
+
+
+
+
 GtkWidget * create_rte_window (void) {
-  int i,j,idx,fx_idx,error;
+  int i,j,idx;
 
   gint winsize_h;
   gint winsize_v;
@@ -1240,10 +1338,9 @@ GtkWidget * create_rte_window (void) {
 
   int modes=rte_getmodespk();
 
-  GList *list;
-  GtkWidget *item;
-
   gchar *tmp;
+
+  GtkTreeModel *model;
 
   ///////////////////////////////////////////////////////////////////////////
 
@@ -1430,51 +1527,35 @@ GtkWidget * create_rte_window (void) {
 
       gtk_box_pack_start (GTK_BOX (hbox), nlabels[idx], FALSE, FALSE, 0);
 
-      combo = gtk_combo_new ();
+
+      // create combo entry model
+      model=rte_window_fx_model();
+
+
+      combo = gtk_combo_box_new_with_model_and_entry (model);
+
+      g_object_set_data (G_OBJECT(combo), "hashname", (gpointer)g_strdup(""));
       gtk_box_pack_start (GTK_BOX (hbox), combo, TRUE, TRUE, 0);
 
-      combo_entries[idx] = GTK_COMBO (combo)->entry;
-      g_object_set_data (G_OBJECT(combo_entries[idx]), "hashname", (gpointer)"");
+#if GTK_CHECK_VERSION(2,24,0)
+      gtk_combo_box_set_entry_text_column(GTK_COMBO_BOX(combo),NAME_TYPE_COLUMN);
+#else
+      gtk_combo_box_entry_set_text_column(GTK_COMBO_BOX_ENTRY(combo),NAME_TYPE_COLUMN);
+#endif
 
-      // fill names of our effects
-      fx_idx=0;
-      list=name_type_list;
-      
-      while (list!=NULL) {
-	weed_plant_t *filter=get_weed_filter(weed_get_idx_for_hashname((gchar *)g_list_nth_data(hash_list,fx_idx),TRUE));
-	int filter_flags=weed_get_int_value(filter,"flags",&error);
-	if ((weed_plant_has_leaf(filter,"plugin_unstable")&&weed_get_boolean_value(filter,"plugin_unstable",&error)==
-	     WEED_TRUE&&!prefs->unstable_fx)||((enabled_in_channels(filter,FALSE)>1&&
-						!has_video_chans_in(filter,FALSE))||
-					       (weed_plant_has_leaf(filter,"host_menu_hide")&&
-						weed_get_boolean_value(filter,"host_menu_hide",&error)==WEED_TRUE)
-					       ||(filter_flags&WEED_FILTER_IS_CONVERTER))) {
-	  list = list->next;
-	  fx_idx++;
-	  continue; // skip audio transitions and hidden entries
-	}
-	item = gtk_list_item_new_with_label ((gchar *) list->data);
-	gtk_widget_show(item);
-	gtk_container_add (GTK_CONTAINER (GTK_COMBO(combo)->list), item);
-	g_object_set_data (G_OBJECT(item),"hashname",g_list_nth_data(hash_list,fx_idx));
-	gtk_combo_set_item_string(GTK_COMBO(combo),GTK_ITEM(item),(gchar *)g_list_nth_data(name_list,fx_idx));
-
-	if (fx_idx==rte_keymode_get_filter_idx(i+1,j)) {
-	  g_object_set_data (G_OBJECT(combo_entries[idx]),"hashname",g_list_nth_data(hash_list,fx_idx));
-	}
-
-	g_signal_connect (G_OBJECT(item), "select", G_CALLBACK (fx_changed), GINT_TO_POINTER(idx));
-	list = list->next;
-	fx_idx++;
-      }
+      combo_entries[idx] = gtk_bin_get_child(GTK_BIN (combo));
       
       gtk_entry_set_text (GTK_ENTRY (combo_entries[idx]),(tmp=rte_keymode_get_filter_name(i+1,j)));
       g_free(tmp);
+ 
       gtk_entry_set_editable (GTK_ENTRY (combo_entries[idx]), FALSE);
       
       hbox = gtk_hbox_new (FALSE, 12);
       gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 0);
 
+      g_signal_connect(GTK_OBJECT (combo), "changed",
+		       G_CALLBACK (fx_changed),GINT_TO_POINTER(i*rte_getmodespk()+j));
+      
       g_signal_connect (GTK_OBJECT (info_buttons[idx]), "clicked",
 			G_CALLBACK (on_rte_info_clicked),GINT_TO_POINTER (idx));
 

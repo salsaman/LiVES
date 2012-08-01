@@ -5010,7 +5010,8 @@ gboolean weed_init_effect(int hotkey) {
     if (fg_modeswitch) mainw->num_tr_applied=0; // force to fg
 
     // TODO - be more descriptive with error
-    // FIXME - new_instance can be invalidated by weed_generator_start, do not reference it after here
+    key_to_instance[hotkey][key_modes[hotkey]]=new_instance;
+
     if (!weed_generator_start(new_instance)) {
       int weed_error;
       gchar *filter_name=weed_get_string_value(filter,"name",&weed_error),*tmp;
@@ -5024,10 +5025,11 @@ gboolean weed_init_effect(int hotkey) {
 	fg_generator_key=fg_generator_clip=fg_generator_mode=-1;
       }
       if (fg_modeswitch) mainw->num_tr_applied=num_tr_applied;
-      key_to_instance[hotkey][key_modes[hotkey]]=new_instance;
+      key_to_instance[hotkey][key_modes[hotkey]]=NULL;
 
       return FALSE;
     }
+    new_instance=key_to_instance[hotkey][key_modes[hotkey]];
 
     // TODO - problem if modeswitch triggers playback
     // hence we do not allow mixing of generators and non-gens on the same key
@@ -5042,7 +5044,7 @@ gboolean weed_init_effect(int hotkey) {
     }
   }
 
-
+      
   if (rte_keys==hotkey) {
     mainw->rte_keys=rte_keys;
     mainw->blend_factor=weed_get_blend_factor(rte_keys);
@@ -5091,7 +5093,6 @@ gboolean weed_init_effect(int hotkey) {
   }
 
   key_to_instance[hotkey][key_modes[hotkey]]=new_instance;
-
 
   return TRUE;
 }
@@ -5317,6 +5318,7 @@ weed_plant_t *weed_layer_new_from_generator (weed_plant_t *inst, weed_timecode_t
   gchar *cwd;
 
   if (inst==NULL) return NULL;
+
   if ((num_channels=weed_leaf_num_elements(inst,"out_channels"))==0) return NULL;
   out_channels=weed_get_plantptr_array(inst,"out_channels",&error);
   if ((channel=get_enabled_channel(inst,0,FALSE))==NULL) {
@@ -5396,7 +5398,6 @@ gboolean weed_generator_start (weed_plant_t *inst) {
 
   // create a virtual clip
   gint new_file=0;
-
   gboolean is_bg=FALSE;
 
   if (mainw->current_file<1||cfile->frames>0) {
@@ -5617,6 +5618,7 @@ gboolean weed_playback_gen_start (void) {
 
   if (fg_gen_to_start!=-1) {
     // check is still gen
+
     if (enabled_in_channels(weed_filters[key_to_fx[fg_gen_to_start][key_modes[fg_gen_to_start]]],FALSE)==0) {
       inst=key_to_instance[fg_gen_to_start][key_modes[fg_gen_to_start]];
       if (inst!=NULL) {
@@ -5664,6 +5666,7 @@ gboolean weed_playback_gen_start (void) {
 	mainw->current_file=current_file;
       }
       mainw->clip_switched=TRUE;
+
       cfile->ext_src=inst;
     }
     fg_gen_to_start=-1;

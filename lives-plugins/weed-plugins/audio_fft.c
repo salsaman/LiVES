@@ -73,13 +73,13 @@ int fftw_init(weed_plant_t *inst) {
   if (nsamps>0) {
     // create fftw plan
     
-    sdata->in = (float*) fftwf_alloc_real(nsamps);
+    sdata->in = (float*) fftwf_malloc(nsamps*sizeof(float));
     if (sdata->in==NULL) {
       weed_free(sdata);
       return WEED_ERROR_MEMORY_ALLOCATION;
     }
     
-    sdata->out = (fftwf_complex*) fftwf_alloc_complex(nsamps);
+    sdata->out = (fftwf_complex*) fftwf_malloc(nsamps*sizeof(fftwf_complex));
     if (sdata->out==NULL) {
       fftwf_free(sdata->in);
       weed_free(sdata);
@@ -133,7 +133,6 @@ int fftw_process (weed_plant_t *inst, weed_timecode_t timestamp) {
   float tot=0.;
 
   register int i,j;
-  fprintf(stderr,"proc\n");
 
   weed_free(in_params);
 

@@ -31,7 +31,7 @@
 #include "support.h"
 #include "rte_window.h"
 #include "resample.h"
-
+#include "paramwindow.h"
 
 void *status_socket;
 void *notify_socket;
@@ -3728,7 +3728,7 @@ void lives_osc_cb_rte_setparam(void *context, int arglen, const void *vargs, OSC
       gint keyw=GPOINTER_TO_INT (g_object_get_data (G_OBJECT (fx_dialog[1]),"key"));
       gint modew=GPOINTER_TO_INT (g_object_get_data (G_OBJECT (fx_dialog[1]),"mode"));
       if (keyw==effect_key&&modew==rte_key_getmode(effect_key))
-	update_visual_params(rfx,FALSE);
+	mainw->vrfx_update=rfx;
     }
   }
   weed_free(in_params);

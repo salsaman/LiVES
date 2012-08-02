@@ -16,6 +16,7 @@
 #include "cvirtual.h"
 #include "audio.h" // for fill_abuffer_from
 #include "resample.h"
+#include "paramwindow.h"
 
 extern void reset_frame_and_clip_index (void);
 
@@ -875,6 +876,8 @@ gboolean process_one (gboolean visible) {
   lives_time_source_t time_source;
   gboolean show_frame;
 
+  lives_rfx_t *xrfx;
+
 #ifdef RT_AUDIO
   gdouble audio_stretch;
   gint64 audio_ticks=0;
@@ -1203,6 +1206,13 @@ gboolean process_one (gboolean visible) {
   }
 
   if (G_LIKELY(mainw->cancelled==CANCEL_NONE)) {
+
+    if ((xrfx=(lives_rfx_t *)mainw->vrfx_update)!=NULL&&fx_dialog[1]!=NULL) {
+      // the audio thread wants to update the parameter window
+      mainw->vrfx_update=FALSE;
+      update_visual_params(xrfx,FALSE);
+    }
+
     while (g_main_context_iteration(NULL,FALSE));
     if (G_UNLIKELY(mainw->cancelled!=CANCEL_NONE)) {
       cancel_process(visible);

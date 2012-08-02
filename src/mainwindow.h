@@ -881,6 +881,9 @@ typedef struct {
 
   pthread_mutex_t abuf_mutex;  ///< used to synch audio buffer request count - shared between audio and video threads
   pthread_mutex_t afilter_mutex;  ///< used to prevent video/gui thread deiniting an audio filter while it may be active
+  pthread_mutex_t data_mutex;  ///< used to prevent data being connected while it is possibly being updated
+
+  volatile lives_rfx_t *vrfx_update;
 
   lives_fx_candidate_t fx_candidates[MAX_FX_CANDIDATE_TYPES]; ///< effects which can have candidates from which a delegate is selected (current examples are: audio_volume, resize)
 

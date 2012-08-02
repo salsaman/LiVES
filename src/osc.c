@@ -2615,9 +2615,9 @@ static gboolean setfx (weed_plant_t *inst, weed_plant_t *tparam, int pnum, int n
 	}
       }
 
-      pthread_mutex_lock(&mainw->afilter_mutex);
+      pthread_mutex_lock(&mainw->data_mutex);
       weed_set_int_array(tparam,"value",nargs,valuesi);
-      pthread_mutex_unlock(&mainw->afilter_mutex);
+      pthread_mutex_unlock(&mainw->data_mutex);
       g_free(valuesi);
 
       set_copy_to(inst,pnum,TRUE);
@@ -2649,9 +2649,9 @@ static gboolean setfx (weed_plant_t *inst, weed_plant_t *tparam, int pnum, int n
 	x++;
       }
 
-      pthread_mutex_lock(&mainw->afilter_mutex);
+      pthread_mutex_lock(&mainw->data_mutex);
       weed_set_boolean_array(tparam,"value",nargs,valuesb);
-      pthread_mutex_unlock(&mainw->afilter_mutex);
+      pthread_mutex_unlock(&mainw->data_mutex);
       g_free(valuesb);
 
       copyto=set_copy_to(inst,pnum,TRUE);
@@ -2703,9 +2703,9 @@ static gboolean setfx (weed_plant_t *inst, weed_plant_t *tparam, int pnum, int n
 	  if (copyto!=-1) rec_param_change(inst,copyto);
 	}
       }
-      pthread_mutex_lock(&mainw->afilter_mutex);
+      pthread_mutex_lock(&mainw->data_mutex);
       weed_set_double_array(tparam,"value",nargs,valuesd);
-      pthread_mutex_unlock(&mainw->afilter_mutex);
+      pthread_mutex_unlock(&mainw->data_mutex);
       g_free(valuesd);
 
       set_copy_to(inst,pnum,TRUE);
@@ -2753,9 +2753,9 @@ static gboolean setfx (weed_plant_t *inst, weed_plant_t *tparam, int pnum, int n
       }
 
 
-      pthread_mutex_lock(&mainw->afilter_mutex);
+      pthread_mutex_lock(&mainw->data_mutex);
       weed_set_string_array(tparam,"value",nargs,valuess);
-      pthread_mutex_unlock(&mainw->afilter_mutex);
+      pthread_mutex_unlock(&mainw->data_mutex);
       for (i=0;i<x;i++) g_free(valuess[i]);
       g_free(valuess);
 
@@ -2865,9 +2865,9 @@ static gboolean setfx (weed_plant_t *inst, weed_plant_t *tparam, int pnum, int n
 	  }
 	}
 	
-	pthread_mutex_lock(&mainw->afilter_mutex);
+	pthread_mutex_lock(&mainw->data_mutex);
 	weed_set_int_array(tparam,"value",nargs,valuesi);
-	pthread_mutex_unlock(&mainw->afilter_mutex);
+	pthread_mutex_unlock(&mainw->data_mutex);
 	g_free(valuesi);
 	
 	set_copy_to(inst,pnum,TRUE);
@@ -2966,9 +2966,9 @@ static gboolean setfx (weed_plant_t *inst, weed_plant_t *tparam, int pnum, int n
 	    if (copyto!=-1) rec_param_change(inst,copyto);
 	  }
 	}
-	pthread_mutex_lock(&mainw->afilter_mutex);
+	pthread_mutex_lock(&mainw->data_mutex);
 	weed_set_double_array(tparam,"value",nargs,valuesd);
-	pthread_mutex_unlock(&mainw->afilter_mutex);
+	pthread_mutex_unlock(&mainw->data_mutex);
 	g_free(valuesd);
 	
 	set_copy_to(inst,pnum,TRUE);
@@ -3083,9 +3083,9 @@ static gboolean setfx (weed_plant_t *inst, weed_plant_t *tparam, int pnum, int n
 	    if (copyto!=-1) rec_param_change(inst,copyto);
 	  }
 	
-	  pthread_mutex_lock(&mainw->afilter_mutex);
+	  pthread_mutex_lock(&mainw->data_mutex);
 	  weed_set_int_array(tparam,"value",nargs,valuesi);
-	  pthread_mutex_unlock(&mainw->afilter_mutex);
+	  pthread_mutex_unlock(&mainw->data_mutex);
 	  g_free(valuesi);
 	  
 	  set_copy_to(inst,pnum,TRUE);
@@ -3193,9 +3193,9 @@ static gboolean setfx (weed_plant_t *inst, weed_plant_t *tparam, int pnum, int n
 	    }
 	  }
 	  
-	  pthread_mutex_lock(&mainw->afilter_mutex);
+	  pthread_mutex_lock(&mainw->data_mutex);
 	  weed_set_double_array(tparam,"value",nargs,valuesd);
-	  pthread_mutex_unlock(&mainw->afilter_mutex);
+	  pthread_mutex_unlock(&mainw->data_mutex);
 	  g_free(valuesd);
 	
 	  set_copy_to(inst,pnum,TRUE);

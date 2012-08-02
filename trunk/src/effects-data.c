@@ -450,6 +450,15 @@ boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, weed_plant_t *dpa
   //
   // provided we have min/max on output (for scaling)
 
+
+  // TODO var elems with nsvals > ndvals
+  // TODO autoscale
+  // TODO any -> color
+  // TODO string -> string
+  // TODO - max/min with > 1 elems
+
+
+
   nsvals=weed_leaf_num_elements(sparam,"value");
   ondvals=ndvals=weed_leaf_num_elements(dparam,"value");
   
@@ -458,40 +467,52 @@ boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, weed_plant_t *dpa
 
   //  sflags=weed_get_int_value(sptmpl,"flags",&error);
   dflags=weed_get_int_value(dptmpl,"flags",&error);
-  if ((dflags&WEED_PARAMETER_VARIABLE_ELEMENTS)&&!(dflags&WEED_PARAMETER_ELEMENT_PER_CHANNEL)) ndvals=nsvals;
 
-  // TODO !!
-  if ((dtype=weed_leaf_seed_type(dparam,"value"))==(stype=weed_leaf_seed_type(sparam,"value")) &&
-      nsvals==ndvals) {
-    // values of same type and number, -> simpĺe copy
-    
-    if (weed_leaves_differ(dparam,"value",sparam,"value")) {
- 
-      if (dtype==WEED_SEED_INT||dtype==WEED_SEED_DOUBLE) {
-	// prevent interpolation during rendering
-	if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
-	  // if we are recording, add this change to our event_list
-	  rec_param_change(inst,pnum);
-	  copyto=set_copy_to(inst,pnum,FALSE);
-	  if (copyto!=-1) rec_param_change(inst,copyto);
-	}
-      }
+  dtype=weed_leaf_seed_type(dparam,"value");
+  stype=weed_leaf_seed_type(sparam,"value");
 
-      pthread_mutex_lock(&mainw->data_mutex);
-      retval=weed_leaf_copy(dparam,"value",sparam,"value");
-      pthread_mutex_unlock(&mainw->data_mutex);
-    }
-    return retval;
+  if (ndvals>nsvals) {
+    if (!((dflags&WEED_PARAMETER_VARIABLE_ELEMENTS)&&!(dflags&WEED_PARAMETER_ELEMENT_PER_CHANNEL))) return FALSE;
+    // TODO !!!
   }
-
-  /// TODO !!!
-  if (ndvals>nsvals) return FALSE;
-
-  ndvals=ondvals;
 
   switch (stype) {
   case WEED_SEED_DOUBLE:
     switch (dtype) {
+    case WEED_SEED_DOUBLE:
+      {
+	double *valsD=weed_get_double_array(sparam,"value",&error);
+	double *valsd=weed_get_double_array(dparam,"value",&error);
+	
+	double maxd=weed_get_double_value(dptmpl,"max",&error);
+	double mind=weed_get_double_value(dptmpl,"min",&error);
+
+	for (i=0;i<ndvals;i++) {
+	  if (valsd[i]!=valsD[i]) {
+	    retval=TRUE;
+	    valsd[i]=valsD[i];
+	    if (valsd[i]>maxd) valsd[i]=maxd;
+	    if (valsd[i]<mind) valsd[i]=mind;
+	  }
+	}
+	if (retval) {
+
+	  if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
+	    // if we are recording, add this change to our event_list
+	    rec_param_change(inst,pnum);
+	    copyto=set_copy_to(inst,pnum,FALSE);
+	    if (copyto!=-1) rec_param_change(inst,copyto);
+	  }
+
+	  pthread_mutex_lock(&mainw->data_mutex);
+	  weed_set_double_array(dparam,"value",ndvals,valsd);
+	  pthread_mutex_unlock(&mainw->data_mutex);
+	}
+	weed_free(valsD);
+	weed_free(valsd);
+      }
+      return retval;
+
     case WEED_SEED_STRING:
       {
 	char *opstring,*tmp,*bit;
@@ -649,6 +670,40 @@ boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, weed_plant_t *dpa
       }
       return retval;
 
+   case WEED_SEED_INT:
+      {
+	int *valsI=weed_get_int_array(sparam,"value",&error);
+	int *valsi=weed_get_int_array(dparam,"value",&error);
+	
+	int maxi=weed_get_int_value(dptmpl,"max",&error);
+	int mini=weed_get_int_value(dptmpl,"min",&error);
+
+	for (i=0;i<ndvals;i++) {
+	  if (valsi[i]!=valsI[i]) {
+	    retval=TRUE;
+	    valsi[i]=valsI[i];
+	    if (valsi[i]>maxi) valsi[i]=maxi;
+	    if (valsi[i]<mini) valsi[i]=mini;
+	  }
+	}
+	if (retval) {
+
+	  if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
+	    // if we are recording, add this change to our event_list
+	    rec_param_change(inst,pnum);
+	    copyto=set_copy_to(inst,pnum,FALSE);
+	    if (copyto!=-1) rec_param_change(inst,copyto);
+	  }
+
+	  pthread_mutex_lock(&mainw->data_mutex);
+	  weed_set_int_array(dparam,"value",ndvals,valsi);
+	  pthread_mutex_unlock(&mainw->data_mutex);
+	}
+	weed_free(valsI);
+	weed_free(valsi);
+      }
+      return retval;
+
     }
     break;
 
@@ -778,6 +833,35 @@ boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, weed_plant_t *dpa
 	weed_free(valsb);
       }
       return retval;
+
+    case WEED_SEED_BOOLEAN:
+      {
+	int *valsB=weed_get_boolean_array(sparam,"value",&error);
+	int *valsb=weed_get_boolean_array(dparam,"value",&error);
+
+	for (i=0;i<ndvals;i++) {
+	  if (valsb[i]!=valsB[i]) {
+	    retval=TRUE;
+	    valsb[i]=valsB[i];
+	  }
+	}
+	if (retval) {
+
+	  if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
+	    // if we are recording, add this change to our event_list
+	    rec_param_change(inst,pnum);
+	    copyto=set_copy_to(inst,pnum,FALSE);
+	    if (copyto!=-1) rec_param_change(inst,copyto);
+	  }
+
+	  pthread_mutex_lock(&mainw->data_mutex);
+	  weed_set_boolean_array(dparam,"value",ndvals,valsb);
+	  pthread_mutex_unlock(&mainw->data_mutex);
+	}
+	weed_free(valsB);
+	weed_free(valsb);
+      }
+      return retval;
     default:
       break;
     }
@@ -788,6 +872,31 @@ boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, weed_plant_t *dpa
     break;
     }
 
+
+  if ((dflags&WEED_PARAMETER_VARIABLE_ELEMENTS)&&!(dflags&WEED_PARAMETER_ELEMENT_PER_CHANNEL)) ndvals=nsvals;
+
+  // TODO !!
+  if (dtype==stype && nsvals==ndvals) {
+    // values of same type and number, -> simpĺe copy
+    
+    if (weed_leaves_differ(dparam,"value",sparam,"value")) {
+ 
+      if (dtype==WEED_SEED_INT||dtype==WEED_SEED_DOUBLE) {
+	// prevent interpolation during rendering
+	if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
+	  // if we are recording, add this change to our event_list
+	  rec_param_change(inst,pnum);
+	  copyto=set_copy_to(inst,pnum,FALSE);
+	  if (copyto!=-1) rec_param_change(inst,copyto);
+	}
+      }
+
+      pthread_mutex_lock(&mainw->data_mutex);
+      retval=weed_leaf_copy(dparam,"value",sparam,"value");
+      pthread_mutex_unlock(&mainw->data_mutex);
+    }
+    return retval;
+  }
 
   return retval;
 }

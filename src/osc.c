@@ -216,13 +216,16 @@ void lives_osc_close_notify_socket (void) {
 
 static const gchar *get_omc_const(const gchar *cname) {
 
+  // looping modes
   if (!strcmp(cname,"LIVES_LOOP_NONE")) return "0";
   if (!strcmp(cname,"LIVES_LOOP_FIT")) return "2";
   if (!strcmp(cname,"LIVES_LOOP_CONT")) return "1";
 
+  // interface modes
   if (!strcmp(cname,"LIVES_MODE_CLIPEDIT")) return "0";
   if (!strcmp(cname,"LIVES_MODE_MULTITRACK")) return "1";
 
+  // parameter types
   if (!strcmp(cname,"LIVES_PARAM_TYPE_INTEGER")) 
     return QUOTEME(WEED_HINT_INTEGER);
   if (!strcmp(cname,"LIVES_PARAM_TYPE_FLOAT")) 
@@ -234,14 +237,17 @@ static const gchar *get_omc_const(const gchar *cname) {
   if (!strcmp(cname,"LIVES_PARAM_TYPE_COLOR")) 
     return QUOTEME(WEED_HINT_COLOR);
 
+  // colorspaces
   if (!strcmp(cname,"LIVES_COLORSPACE_RGB")) 
     return QUOTEME(WEED_COLORSPACE_RGB);
   if (!strcmp(cname,"LIVES_COLORSPACE_RGBA")) 
     return QUOTEME(WEED_COLORSPACE_RGBA);
 
+  // boolean values
   if (!strcmp(cname,"LIVES_TRUE")) return QUOTEME(TRUE);
   if (!strcmp(cname,"LIVES_FALSE")) return QUOTEME(FALSE);
 
+  // parameter flags
   if (!strcmp(cname,"LIVES_PARAM_FLAGS_REINIT_ON_VALUE_CHANGE")) 
     return QUOTEME(WEED_PARAMETER_FLAGS_REINIT_ON_VALUE_CHANGE);
   if (!strcmp(cname,"LIVES_PARAM_FLAGS_VARIABLE_ELEMENTS"))
@@ -249,11 +255,45 @@ static const gchar *get_omc_const(const gchar *cname) {
   if (!strcmp(cname,"LIVES_PARAM_FLAGS_ELEMENT_PER_CHANNEL"))
     return QUOTEME(WEED_PARAMETER_FLAGS_ELEMENT_PER_CHANNEL);
 
+  // notification types
   if (!strcmp(cname,"LIVES_OSC_NOTIFY_SUCCESS")) 
     return QUOTEME(LIVES_OSC_NOTIFY_SUCCESS);
   if (!strcmp(cname,"LIVES_OSC_NOTIFY_FAILED")) 
     return QUOTEME(LIVES_OSC_NOTIFY_FAILED);
 
+  // notification events
+  if (!strcmp(cname,"LIVES_OSC_NOTIFY_FRAME_SYNCH")) 
+    return QUOTEME(LIVES_OSC_NOTIFY_FRAME_SYNC);
+  if (!strcmp(cname,"LIVES_OSC_NOTIFY_PLAYBACK_STARTED")) 
+    return QUOTEME(LIVES_OSC_NOTIFY_PLAYBACK_STARTED);
+  if (!strcmp(cname,"LIVES_OSC_NOTIFY_PLAYBACK_STOPPED"))
+    return QUOTEME(LIVES_OSC_NOTIFY_PLAYBACK_STOPPED);
+  if (!strcmp(cname,"LIVES_OSC_NOTIFY_PLAYBACK_STOPPED_RD"))
+    return QUOTEME(LIVES_OSC_NOTIFY_PLAYBACK_STOPPED_RD);
+  if (!strcmp(cname,"LIVES_OSC_NOTIFY_RECORD_STARTED"))
+    return QUOTEME(LIVES_OSC_NOTIFY_RECORD_STARTED);
+  if (!strcmp(cname,"LIVES_OSC_NOTIFY_RECORD_STOPPED"))
+    return QUOTEME(LIVES_OSC_NOTIFY_RECORD_STOPPED);
+  if (!strcmp(cname,"LIVES_OSC_NOTIFY_QUIT"))
+    return QUOTEME(LIVES_OSC_NOTIFY_QUIT);
+  if (!strcmp(cname,"LIVES_OSC_NOTIFY_CLIP_OPENED")) 
+    return QUOTEME(LIVES_OSC_NOTIFY_CLIP_OPENED);
+  if (!strcmp(cname,"LIVES_OSC_NOTIFY_CLIP_CLOSED"))
+    return QUOTEME(LIVES_OSC_NOTIFY_CLIP_CLOSED);
+  if (!strcmp(cname,"LIVES_OSC_NOTIFY_CLIPSET_OPENED"))
+    return QUOTEME(LIVES_OSC_NOTIFY_CLIPSET_OPENED);
+  if (!strcmp(cname,"LIVES_OSC_NOTIFY_CLIPSET_SAVED"))
+    return QUOTEME(LIVES_OSC_NOTIFY_CLIPSET_SAVED);
+  if (!strcmp(cname,"LIVES_OSC_NOTIFY_SUCCESS"))
+    return QUOTEME(LIVES_OSC_NOTIFY_SUCCESS);
+  if (!strcmp(cname,"LIVES_OSC_NOTIFY_FAILED"))
+    return QUOTEME(LIVES_OSC_NOTIFY_FAILED);
+  if (!strcmp(cname,"LIVES_OSC_NOTIFY_CANCELLED"))
+    return QUOTEME(LIVES_OSC_NOTIFY_CANCELLED);
+  if (!strcmp(cname,"LIVES_OSC_NOTIFY_MODE_CHANGED"))
+    return QUOTEME(LIVES_OSC_NOTIFY_MODE_CHANGED);
+
+  // generic constants
   if (!strcmp(cname,"LIVES_FPS_MAX")) 
     return QUOTEME(FPS_MAX);
 

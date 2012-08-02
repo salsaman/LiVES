@@ -335,10 +335,11 @@ int ladspa_process (weed_plant_t *inst, weed_timecode_t timestamp) {
 
   handle=sdata->handle_l;
 
+  psrc=src;
+  pdst=dst;
+
   if (pinc>0||poutc>0) {
     // connect audio ports
-    psrc=src;
-    pdst=dst;
 
     for (i=0;i<laddes->PortCount;i++) {
       ladpdes=laddes->PortDescriptors[i];

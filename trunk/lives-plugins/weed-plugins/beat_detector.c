@@ -91,13 +91,13 @@ static int sdata_create_plan(_sdata *sdata, int nsamps) {
 
   if (nsamps==0) return WEED_NO_ERROR;
 
-  sdata->in = (float*) fftwf_alloc_real(nsamps);
+  sdata->in = (float*) fftwf_malloc(nsamps*sizeof(float));
   if (sdata->in==NULL) {
     weed_free(sdata);
     return WEED_ERROR_MEMORY_ALLOCATION;
   }
 
-  sdata->out = (fftwf_complex*) fftwf_alloc_complex(nsamps);
+  sdata->out = (fftwf_complex*) fftwf_malloc(nsamps*sizeof(fftwf_complex));
   if (sdata->out==NULL) {
     fftwf_free(sdata->in);
     weed_free(sdata);

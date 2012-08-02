@@ -103,8 +103,6 @@ gboolean weed_parameter_has_variable_elements_strict(weed_plant_t *inst, weed_pl
 gboolean interpolate_param(weed_plant_t *inst, int i, void *pchain, weed_timecode_t tc);
 gboolean interpolate_params(weed_plant_t *inst, void **pchains, weed_timecode_t tc);
 
-void update_visual_params(lives_rfx_t *rfx, gboolean update_hidden);
-
 gboolean weed_plant_serialise(int fd, weed_plant_t *plant, unsigned char **mem);
 weed_plant_t *weed_plant_deserialise(int fd, unsigned char **mem);
 

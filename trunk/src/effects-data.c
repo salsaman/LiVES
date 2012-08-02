@@ -28,7 +28,7 @@
 void pconx_delete_all(void) {
   lives_pconnect_t *pconx=mainw->pconx,*pconx_next;
 
-  pthread_mutex_lock(&mainw->afilter_mutex);
+  pthread_mutex_lock(&mainw->data_mutex);
 
   while (pconx!=NULL) {
     pconx_next=pconx->next;
@@ -43,7 +43,7 @@ void pconx_delete_all(void) {
   }
   mainw->pconx=NULL;
 
-  pthread_mutex_unlock(&mainw->afilter_mutex);
+  pthread_mutex_unlock(&mainw->data_mutex);
 
 }
 
@@ -56,7 +56,7 @@ void pconx_delete(int okey, int omode, int opnum, int ikey, int imode, int ipnum
 
   int totcons=0,maxcons=0;
 
-  pthread_mutex_lock(&mainw->afilter_mutex);
+  pthread_mutex_lock(&mainw->data_mutex);
 
   while (pconx!=NULL) {
     pconx_next=pconx->next;
@@ -72,7 +72,7 @@ void pconx_delete(int okey, int omode, int opnum, int ikey, int imode, int ipnum
 	g_free(pconx);
 	if (mainw->pconx==pconx) mainw->pconx=pconx_next;
 	else pconx_prev->next=pconx_next;
-	pthread_mutex_unlock(&mainw->afilter_mutex);
+	pthread_mutex_unlock(&mainw->data_mutex);
 	return;
       }
 
@@ -141,7 +141,7 @@ void pconx_delete(int okey, int omode, int opnum, int ikey, int imode, int ipnum
     pconx_prev=pconx;
     pconx=pconx_next;
   }
-  pthread_mutex_unlock(&mainw->afilter_mutex);
+  pthread_mutex_unlock(&mainw->data_mutex);
 }
 
 
@@ -225,7 +225,7 @@ void pconx_add_connection(int okey, int omode, int opnum, int ikey, int imode, i
   int posn=0,totcons=0;
   register int i,j;
 
-  pthread_mutex_lock(&mainw->afilter_mutex);
+  pthread_mutex_lock(&mainw->data_mutex);
 
   if (pconx==NULL) {
     // add whole new node
@@ -256,7 +256,7 @@ void pconx_add_connection(int okey, int omode, int opnum, int ikey, int imode, i
 	for (j=posn;j<totcons;j++) {
 	  if (pconx->ikey[j]==ikey&&pconx->imode[j]==imode&&pconx->ipnum[j]==ipnum) {
 	    pconx->autoscale[j]=autoscale;
-	    pthread_mutex_unlock(&mainw->afilter_mutex);
+	    pthread_mutex_unlock(&mainw->data_mutex);
 	    return;
 	  }
 	}
@@ -281,7 +281,7 @@ void pconx_add_connection(int okey, int omode, int opnum, int ikey, int imode, i
 	pconx->ipnum[posn]=ipnum;
 	pconx->autoscale[posn]=autoscale;
 
-	pthread_mutex_unlock(&mainw->afilter_mutex);
+	pthread_mutex_unlock(&mainw->data_mutex);
 
 	return;
       }
@@ -324,7 +324,7 @@ void pconx_add_connection(int okey, int omode, int opnum, int ikey, int imode, i
     g_print("added another pconx from %d %d %d to %d %d %d\n",okey,omode,opnum,ikey,imode,ipnum);
 #endif
 
-    pthread_mutex_unlock(&mainw->afilter_mutex);
+    pthread_mutex_unlock(&mainw->data_mutex);
 
     return;
 
@@ -357,7 +357,7 @@ void pconx_add_connection(int okey, int omode, int opnum, int ikey, int imode, i
   g_print("added new pconx from %d %d %d to %d %d %d\n",okey,omode,opnum,ikey,imode,ipnum);
 #endif
 
-  pthread_mutex_unlock(&mainw->afilter_mutex);
+  pthread_mutex_unlock(&mainw->data_mutex);
 
 }
 
@@ -414,11 +414,24 @@ weed_plant_t *pconx_get_out_param(int ikey, int imode, int ipnum, int *autoscale
 
 
 
-boolean pconx_convert_value_data(weed_plant_t *dparam, weed_plant_t *sparam, boolean autoscale) {
-  // try to convert values of various type, if we succeed, copy the "value" and return TRUE (if changed -TODO)
+boolean weed_leaves_differ(weed_plant_t *p1, const char *key1, weed_plant_t *p2, const char *key2) {
+
+
+
+
+  return TRUE;
+}
+
+
+
+boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, weed_plant_t *dparam, weed_plant_t *sparam, boolean autoscale) {
+  // try to convert values of various type, if we succeed, copy the "value" and return TRUE (if changed)
   weed_plant_t *dptmpl;
 
   int dtype,stype,nsvals,ndvals,error,dflags;
+  int copyto,ondvals;
+
+  boolean retval=FALSE;
 
   register int i;
 
@@ -438,7 +451,7 @@ boolean pconx_convert_value_data(weed_plant_t *dparam, weed_plant_t *sparam, boo
   // provided we have min/max on output (for scaling)
 
   nsvals=weed_leaf_num_elements(sparam,"value");
-  ndvals=weed_leaf_num_elements(dparam,"value");
+  ondvals=ndvals=weed_leaf_num_elements(dparam,"value");
   
   dptmpl=weed_get_plantptr_value(dparam,"template",&error);
   //sptmpl=weed_get_plantptr_value(sparam,"template",&error);
@@ -447,37 +460,93 @@ boolean pconx_convert_value_data(weed_plant_t *dparam, weed_plant_t *sparam, boo
   dflags=weed_get_int_value(dptmpl,"flags",&error);
   if ((dflags&WEED_PARAMETER_VARIABLE_ELEMENTS)&&!(dflags&WEED_PARAMETER_ELEMENT_PER_CHANNEL)) ndvals=nsvals;
 
+  // TODO !!
   if ((dtype=weed_leaf_seed_type(dparam,"value"))==(stype=weed_leaf_seed_type(sparam,"value")) &&
       nsvals==ndvals) {
     // values of same type and number, -> simpĺe copy
-    pthread_mutex_lock(&mainw->afilter_mutex);
-    weed_leaf_copy(dparam,"value",sparam,"value");
-    pthread_mutex_unlock(&mainw->afilter_mutex);
-    return TRUE;
+    
+    if (weed_leaves_differ(dparam,"value",sparam,"value")) {
+ 
+      if (dtype==WEED_SEED_INT||dtype==WEED_SEED_DOUBLE) {
+	// prevent interpolation during rendering
+	if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
+	  // if we are recording, add this change to our event_list
+	  rec_param_change(inst,pnum);
+	  copyto=set_copy_to(inst,pnum,FALSE);
+	  if (copyto!=-1) rec_param_change(inst,copyto);
+	}
+      }
+
+      pthread_mutex_lock(&mainw->data_mutex);
+      retval=weed_leaf_copy(dparam,"value",sparam,"value");
+      pthread_mutex_unlock(&mainw->data_mutex);
+    }
+    return retval;
   }
 
+  /// TODO !!!
   if (ndvals>nsvals) return FALSE;
+
+  ndvals=ondvals;
 
   switch (stype) {
   case WEED_SEED_DOUBLE:
     switch (dtype) {
     case WEED_SEED_STRING:
       {
-	char *opstring=g_strdup(""),*tmp,*bit;
+	char *opstring,*tmp,*bit;
 	double *valsd=weed_get_double_array(sparam,"value",&error);
-	if (ndvals==1) ndvals=nsvals;
-	for (i=0;i<nsvals;i++) {
-	  bit=g_strdup_printf("%.4f",valsd[i]);
-	  if (strlen(opstring)==0) 
-	    tmp=g_strconcat (opstring,bit,NULL);
-	  else 
-	    tmp=g_strconcat (opstring," ",bit,NULL);
+	char **valss,*vals;
+
+	if (ndvals==1) {
+	  opstring=g_strdup("");
+	  vals=weed_get_string_value(dparam,"value",&error);
+	  for (i=0;i<nsvals;i++) {
+	    bit=g_strdup_printf("%.4f",valsd[i]);
+	    if (strlen(opstring)==0)
+	      tmp=g_strconcat (opstring,bit,NULL);
+	    else 
+	      tmp=g_strconcat (opstring," ",bit,NULL);
+	    g_free(bit);
+	    g_free(opstring);
+	    opstring=tmp;
+	  }
+	  if (strcmp(vals,opstring)) {
+	    pthread_mutex_lock(&mainw->data_mutex);
+	    weed_set_string_value(dparam,"value",opstring);
+	    pthread_mutex_unlock(&mainw->data_mutex);
+	    retval=TRUE;
+	  }
+	  weed_free(vals);
+	  weed_free(valsd);
 	  g_free(opstring);
-	  opstring=tmp;
+	  return retval;
 	}
-	weed_set_string_value(dparam,"value",opstring);
+
+	valss=weed_get_string_array(dparam,"value",&error);
+	for (i=0;i<ndvals;i++) {
+	  bit=g_strdup_printf("%.4f",valsd[i]);
+	  if (strcmp(valss[i],bit)) {
+	    retval=TRUE;
+	    weed_free(valss[i]);
+	    valss[i]=bit;
+	  }
+	  else g_free(bit);
+	}
+	if (!retval) {
+	  for (i=0;i<ndvals;i++) weed_free(valss[i]);
+	  weed_free(valss);
+	  weed_free(valsd);
+	  return FALSE;
+	}
+
+	pthread_mutex_lock(&mainw->data_mutex);
+	weed_set_string_array(dparam,"value",ndvals,valss);
+	pthread_mutex_unlock(&mainw->data_mutex);
+
+	for (i=0;i<ndvals;i++) weed_free(valss[i]);
+	weed_free(valss);
 	weed_free(valsd);
-	g_free(opstring);
       }
       return TRUE;
     default:
@@ -490,41 +559,95 @@ boolean pconx_convert_value_data(weed_plant_t *dparam, weed_plant_t *sparam, boo
     switch (dtype) {
     case WEED_SEED_STRING:
       {
-	char *opstring=g_strdup(""),*tmp,*bit;
+	char *opstring,*tmp,*bit;
 	int *valsi=weed_get_int_array(sparam,"value",&error);
-	if (ndvals==1) ndvals=nsvals;
+
+	char **valss,*vals;
+
+	if (ndvals==1) {
+	  opstring=g_strdup("");
+	  vals=weed_get_string_value(dparam,"value",&error);
+	  for (i=0;i<nsvals;i++) {
+	    bit=g_strdup_printf("%d",valsi[i]);
+	    if (strlen(opstring)==0)
+	      tmp=g_strconcat (opstring,bit,NULL);
+	    else 
+	      tmp=g_strconcat (opstring," ",bit,NULL);
+	    g_free(bit);
+	    g_free(opstring);
+	    opstring=tmp;
+	  }
+	  if (strcmp(vals,opstring)) {
+	    pthread_mutex_lock(&mainw->data_mutex);
+	    weed_set_string_value(dparam,"value",opstring);
+	    pthread_mutex_unlock(&mainw->data_mutex);
+	    retval=TRUE;
+	  }
+	  weed_free(vals);
+	  weed_free(valsi);
+	  g_free(opstring);
+	  return retval;
+	}
+
+	valss=weed_get_string_array(dparam,"value",&error);
 	for (i=0;i<ndvals;i++) {
 	  bit=g_strdup_printf("%d",valsi[i]);
-	  if (strlen(opstring)==0) 
-	    tmp=g_strconcat (opstring,bit,NULL);
-	  else 
-	    tmp=g_strconcat (opstring," ",bit,NULL);
-	  g_free(opstring);
-	  opstring=tmp;
+	  if (strcmp(valss[i],bit)) {
+	    retval=TRUE;
+	    weed_free(valss[i]);
+	    valss[i]=bit;
+	  }
+	  else g_free(bit);
 	}
-	weed_set_string_value(dparam,"value",opstring);
+	if (!retval) {
+	  for (i=0;i<ndvals;i++) weed_free(valss[i]);
+	  weed_free(valss);
+	  weed_free(valsi);
+	  return FALSE;
+	}
+
+	pthread_mutex_lock(&mainw->data_mutex);
+	weed_set_string_array(dparam,"value",ndvals,valss);
+	pthread_mutex_unlock(&mainw->data_mutex);
+
+	for (i=0;i<ndvals;i++) weed_free(valss[i]);
+	weed_free(valss);
 	weed_free(valsi);
-	g_free(opstring);
       }
-      return TRUE;
+      return retval;
     case WEED_SEED_DOUBLE:
       {
 	int *valsi=weed_get_int_array(sparam,"value",&error);
-	double * valsd=(double *)g_try_malloc(ndvals*sizdbl);
+	double * valsd=weed_get_double_array(dparam,"value",&error);
 	
-	if (valsd==NULL) {
-	  LIVES_WARN("Could not assign memory for dest value");
-	  return TRUE;
-	}
-	
+	double maxd=weed_get_double_value(dptmpl,"max",&error);
+	double mind=weed_get_double_value(dptmpl,"min",&error);
+
 	for (i=0;i<ndvals;i++) {
-	  valsd[i]=(double)valsi[i];
+	  if (valsd[i]!=(double)valsi[i]) {
+	    retval=TRUE;
+	    valsd[i]=(double)valsi[i];
+	    if (valsd[i]>maxd) valsd[i]=maxd;
+	    if (valsd[i]<mind) valsd[i]=mind;
+	  }
 	}
-	weed_set_double_array(dparam,"value",ndvals,valsd);
+	if (retval) {
+
+	  if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
+	    // if we are recording, add this change to our event_list
+	    rec_param_change(inst,pnum);
+	    copyto=set_copy_to(inst,pnum,FALSE);
+	    if (copyto!=-1) rec_param_change(inst,copyto);
+	  }
+
+	  pthread_mutex_lock(&mainw->data_mutex);
+	  weed_set_double_array(dparam,"value",ndvals,valsd);
+	  pthread_mutex_unlock(&mainw->data_mutex);
+	}
 	weed_free(valsi);
-	g_free(valsd);
+	weed_free(valsd);
       }
-      return TRUE;
+      return retval;
 
     }
     break;
@@ -533,48 +656,128 @@ boolean pconx_convert_value_data(weed_plant_t *dparam, weed_plant_t *sparam, boo
     switch (dtype) {
     case WEED_SEED_STRING:
       {
-	char *opstring=g_strdup(""),*tmp,*bit;
-	int *valsi=weed_get_boolean_array(sparam,"value",&error);
-	if (ndvals==1) ndvals=nsvals;
-	for (i=0;i<ndvals;i++) {
-	  bit=g_strdup_printf("%d",valsi[i]);
-	  if (strlen(opstring)==0) 
-	    tmp=g_strconcat (opstring,bit,NULL);
-	  else 
-	    tmp=g_strconcat (opstring," ",bit,NULL);
+	char *opstring,*tmp,*bit;
+	int *valsb=weed_get_boolean_array(sparam,"value",&error);
+
+	char **valss,*vals;
+
+	if (ndvals==1) {
+	  opstring=g_strdup("");
+	  vals=weed_get_string_value(dparam,"value",&error);
+	  for (i=0;i<nsvals;i++) {
+	    bit=g_strdup_printf("%d",valsb[i]);
+	    if (strlen(opstring)==0)
+	      tmp=g_strconcat (opstring,bit,NULL);
+	    else 
+	      tmp=g_strconcat (opstring," ",bit,NULL);
+	    g_free(bit);
+	    g_free(opstring);
+	    opstring=tmp;
+	  }
+	  if (strcmp(vals,opstring)) {
+	    pthread_mutex_lock(&mainw->data_mutex);
+	    weed_set_string_value(dparam,"value",opstring);
+	    pthread_mutex_unlock(&mainw->data_mutex);
+	    retval=TRUE;
+	  }
+	  weed_free(vals);
+	  weed_free(valsb);
 	  g_free(opstring);
-	  opstring=tmp;
+	  return retval;
 	}
-	weed_set_string_value(dparam,"value",opstring);
-	weed_free(valsi);
-	g_free(opstring);
+
+	valss=weed_get_string_array(dparam,"value",&error);
+	for (i=0;i<ndvals;i++) {
+	  bit=g_strdup_printf("%d",valsb[i]);
+	  if (strcmp(valss[i],bit)) {
+	    retval=TRUE;
+	    weed_free(valss[i]);
+	    valss[i]=bit;
+	  }
+	  else g_free(bit);
+	}
+	if (!retval) {
+	  for (i=0;i<ndvals;i++) weed_free(valss[i]);
+	  weed_free(valss);
+	  weed_free(valsb);
+	  return FALSE;
+	}
+
+	pthread_mutex_lock(&mainw->data_mutex);
+	weed_set_string_array(dparam,"value",ndvals,valss);
+	pthread_mutex_unlock(&mainw->data_mutex);
+
+	for (i=0;i<ndvals;i++) weed_free(valss[i]);
+	weed_free(valss);
+	weed_free(valsb);
       }
-      return TRUE;
+      return retval;
     case WEED_SEED_DOUBLE:
       {
-	int *valsi=weed_get_boolean_array(sparam,"value",&error);
-	double * valsd=(double *)g_try_malloc(ndvals*sizdbl);
+	int *valsb=weed_get_boolean_array(sparam,"value",&error);
+	double * valsd=weed_get_double_array(dparam,"value",&error);
 	
-	if (valsd==NULL) {
-	  LIVES_WARN("Could not assign memory for dest value");
-	  return TRUE;
-	}
-	
+	double maxd=weed_get_double_value(dptmpl,"max",&error);
+	double mind=weed_get_double_value(dptmpl,"min",&error);
+
 	for (i=0;i<ndvals;i++) {
-	  valsd[i]=(double)valsi[i];
+	  if (valsd[i]!=(double)valsb[i]) {
+	    retval=TRUE;
+	    valsd[i]=(double)valsb[i];
+	    if (valsd[i]>maxd) valsd[i]=maxd;
+	    if (valsd[i]<mind) valsd[i]=mind;
+	  }
 	}
-	weed_set_double_array(dparam,"value",ndvals,valsd);
-	weed_free(valsi);
-	g_free(valsd);
+	if (retval) {
+
+	  if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
+	    // if we are recording, add this change to our event_list
+	    rec_param_change(inst,pnum);
+	    copyto=set_copy_to(inst,pnum,FALSE);
+	    if (copyto!=-1) rec_param_change(inst,copyto);
+	  }
+
+	  pthread_mutex_lock(&mainw->data_mutex);
+	  weed_set_double_array(dparam,"value",ndvals,valsd);
+	  pthread_mutex_unlock(&mainw->data_mutex);
+	}
+	weed_free(valsb);
+	weed_free(valsd);
       }
-      return TRUE;
+      return retval;
     case WEED_SEED_INT:
       {
-	int *valsi=weed_get_boolean_array(sparam,"value",&error);
-	weed_set_int_array(dparam,"value",ndvals,valsi);
+	int *valsb=weed_get_boolean_array(sparam,"value",&error);
+	int *valsi=weed_get_int_array(dparam,"value",&error);
+
+	int maxi=weed_get_int_value(dptmpl,"max",&error);
+	int mini=weed_get_int_value(dptmpl,"min",&error);
+	
+	for (i=0;i<ndvals;i++) {
+	  if (valsi[i]!=valsb[i]) {
+	    retval=TRUE;
+	    valsi[i]=valsb[i];
+	    if (valsi[i]>maxi) valsi[i]=maxi;
+	    if (valsi[i]<mini) valsi[i]=mini;
+	  }
+	}
+	if (retval) {
+
+	  if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
+	    // if we are recording, add this change to our event_list
+	    rec_param_change(inst,pnum);
+	    copyto=set_copy_to(inst,pnum,FALSE);
+	    if (copyto!=-1) rec_param_change(inst,copyto);
+	  }
+
+	  pthread_mutex_lock(&mainw->data_mutex);
+	  weed_set_int_array(dparam,"value",ndvals,valsi);
+	  pthread_mutex_unlock(&mainw->data_mutex);
+	}
 	weed_free(valsi);
+	weed_free(valsb);
       }
-      return TRUE;
+      return retval;
     default:
       break;
     }
@@ -586,7 +789,7 @@ boolean pconx_convert_value_data(weed_plant_t *dparam, weed_plant_t *sparam, boo
     }
 
 
-  return FALSE;
+  return retval;
 }
 
 
@@ -629,10 +832,10 @@ void pconx_chain_data(int key, int mode) {
 #ifdef DEBUG_PCONX
   g_print("got pconx to %d %d %d\n",key,mode,i);
 #endif
-	changed=pconx_convert_value_data(inparams[i],oparam,autoscale);
+  changed=pconx_convert_value_data(inst,i,inparams[i],oparam,autoscale);
 
 	if (changed) {
-	  // TODO *** - only store value if it changed; for int, double or colour, store old value too
+	  // only store value if it changed; for int, double or colour, store old value too
 
 	  copyto=set_copy_to(inst,i,TRUE);
 	  if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
@@ -640,6 +843,21 @@ void pconx_chain_data(int key, int mode) {
 	    rec_param_change(inst,i);
 	    if (copyto!=-1) rec_param_change(inst,copyto);
 	  }
+
+
+	  if (fx_dialog[1]!=NULL) {
+	    lives_rfx_t *rfx=(lives_rfx_t *)g_object_get_data(G_OBJECT(fx_dialog[1]),"rfx");
+	    if (!rfx->is_template) {
+	      gint keyw=GPOINTER_TO_INT (g_object_get_data (G_OBJECT (fx_dialog[1]),"key"));
+	      gint modew=GPOINTER_TO_INT (g_object_get_data (G_OBJECT (fx_dialog[1]),"mode"));
+	      if (keyw==key&&modew==mode)
+		// ask the main thread to update the param window
+		mainw->vrfx_update=rfx;
+	    }
+	  }
+
+
+
 	}
 
       }

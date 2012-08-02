@@ -286,7 +286,10 @@ static gboolean pre_init(void) {
   pthread_mutex_init(&mainw->interp_mutex,NULL);
 
   pthread_mutex_init(&mainw->abuf_mutex,NULL);
-  pthread_mutex_init(&mainw->afilter_mutex,&mattr); // because audio filters can pull values from data connections
+  pthread_mutex_init(&mainw->afilter_mutex,&mattr); // mattr because audio filters can pull values from data connections
+  pthread_mutex_init(&mainw->data_mutex,&mattr); // mattr because audio filters can pull values from data connections
+
+  mainw->vrfx_update=NULL;
 
   prefs=(_prefs *)g_malloc(sizeof(_prefs));
   future_prefs=(_future_prefs *)g_malloc(sizeof(_future_prefs));

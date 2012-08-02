@@ -259,6 +259,7 @@ int ladspa_process (weed_plant_t *inst, weed_timecode_t timestamp) {
   LADSPA_PortDescriptor ladpdes;
   LADSPA_PortRangeHint ladphint;
   LADSPA_PortRangeHintDescriptor ladphintdes;
+  LADSPA_Handle handle;
 
   weed_plant_t **in_params=NULL;
   weed_plant_t **out_params=NULL;
@@ -330,6 +331,10 @@ int ladspa_process (weed_plant_t *inst, weed_timecode_t timestamp) {
   laddes=(LADSPA_Descriptor *)weed_get_voidptr_value(filter,"plugin_lad_descriptor",&error);
   lad_connect_port_func=(lad_connect_port_f)weed_get_voidptr_value(filter,"plugin_lad_connect_port_func",&error);
 
+  lad_run_func=(lad_run_f)weed_get_voidptr_value(filter,"plugin_lad_run_func",&error);
+
+  handle=sdata->handle_l;
+
   if (pinc>0||poutc>0) {
     // connect audio ports
     psrc=src;
@@ -342,44 +347,20 @@ int ladspa_process (weed_plant_t *inst, weed_timecode_t timestamp) {
 	// channel
 	if (ladpdes&LADSPA_PORT_INPUT) {
 	  // connect to next instance audio in
-	  (*lad_connect_port_func)(sdata->handle_l,i,(LADSPA_Data *)psrc);
+	  (*lad_connect_port_func)(handle,i,(LADSPA_Data *)psrc);
 	  psrc+=nsamps;
 	  iinc--;
 	}
 	else {
 	  // connect to next instance audio out
-	  (*lad_connect_port_func)(sdata->handle_l,i,(LADSPA_Data *)pdst);
+	  (*lad_connect_port_func)(handle,i,(LADSPA_Data *)pdst);
 	  pdst+=nsamps;
 	  ioutc--;
 	}
       }
     }
 
-    if (ioutc>0||iinc>0) {
-      // the second instance out channel is unconnected; we need to connect it to the second lad instance
-
-      // if we have an unconnected (second) in channel, we connect it here; otherwise we connect both input ports again
-      if (iinc==0) psrc=src;
-
-      for (i=0;i<laddes->PortCount;i++) {
-	ladpdes=laddes->PortDescriptors[i];
-        
-	if (ladpdes&LADSPA_PORT_AUDIO) {
-	  // channel
-	  if (ladpdes&LADSPA_PORT_INPUT) {
-	    // connect to next instance audio in
-	    (*lad_connect_port_func)(sdata->handle_r,i,(LADSPA_Data *)psrc);
-	    psrc+=nsamps;
-	  }
-	  else {
-	    // connect to next instance audio out
-	    (*lad_connect_port_func)(sdata->handle_r,i,(LADSPA_Data *)pdst);
-	  }
-	}
-      }
-    }
   }
-
 
   if (weed_plant_has_leaf(inst,"in_parameters")) {
     iinp=weed_leaf_num_elements(inst,"in_parameters");
@@ -393,8 +374,8 @@ int ladspa_process (weed_plant_t *inst, weed_timecode_t timestamp) {
   }
 
 
-  outvals=weed_malloc(ioutp*sizeof(float));
-  invals=weed_malloc(iinp*sizeof(float));
+  if (ioutp>0) outvals=weed_malloc(ioutp*sizeof(float));
+  if (iinp>0) invals=weed_malloc(iinp*sizeof(float));
 
   if (iinp>0||ioutp>0) {
 
@@ -405,6 +386,7 @@ int ladspa_process (weed_plant_t *inst, weed_timecode_t timestamp) {
 	// control ports
 	ladphint=laddes->PortRangeHints[i];
 	ladphintdes=ladphint.HintDescriptor;
+	ptmpl=weed_get_plantptr_value(in_params[pinp],"template",&error);
 
 	if (ladpdes&LADSPA_PORT_INPUT) {
 	  // connect to next instance in param	
@@ -417,14 +399,52 @@ int ladspa_process (weed_plant_t *inst, weed_timecode_t timestamp) {
 	  else {
 	    invals[pinp]=(float)weed_get_double_value(in_params[pinp],"value",&error);
 	  }
-	  (*lad_connect_port_func)(sdata->handle_l,i,(LADSPA_Data *)&invals[pinp++]);
+	  if (weed_get_boolean_value(ptmpl,"plugin_sample_rate",&error)==WEED_TRUE) invals[pinp]*=(float)rate;
+	  (*lad_connect_port_func)(handle,i,(LADSPA_Data *)&invals[pinp++]);
 	}
 	else {
 	  // connect to store for out params
-	  (*lad_connect_port_func)(sdata->handle_l,i,(LADSPA_Data *)&outvals[poutp++]);
+	  (*lad_connect_port_func)(handle,i,(LADSPA_Data *)&outvals[poutp++]);
 	}
       }
     }
+
+  }
+
+
+  (*lad_run_func)(handle,nsamps);
+
+  handle=sdata->handle_r;
+
+
+  if (pinc>0||poutc>0) {
+    if (ioutc>0||iinc>0) {
+      // the second instance out channel is unconnected; we need to connect it to the second lad instance
+
+      // if we have an unconnected (second) in channel, we connect it here; otherwise we connect both input ports again
+      if (iinc==0) psrc=src;
+
+      for (i=0;i<laddes->PortCount;i++) {
+	ladpdes=laddes->PortDescriptors[i];
+        
+	if (ladpdes&LADSPA_PORT_AUDIO) {
+	  // channel
+	  if (ladpdes&LADSPA_PORT_INPUT) {
+	    // connect to next instance audio in
+	    (*lad_connect_port_func)(handle,i,(LADSPA_Data *)psrc);
+	    psrc+=nsamps;
+	  }
+	  else {
+	    // connect to next instance audio out
+	    (*lad_connect_port_func)(handle,i,(LADSPA_Data *)pdst);
+	  }
+	}
+      }
+    }
+  }
+
+
+  if (iinp>0||ioutp>0) {
 
     if (pinp<iinp||poutp<ioutp) {
       // need to use second instance
@@ -450,26 +470,21 @@ int ladspa_process (weed_plant_t *inst, weed_timecode_t timestamp) {
 	    }
 	    if (weed_get_boolean_value(ptmpl,"plugin_sample_rate",&error)==WEED_TRUE) invals[pinp]*=(float)rate;
 
-	    (*lad_connect_port_func)(sdata->handle_r,i,(LADSPA_Data *)&invals[pinp++]);
+	    (*lad_connect_port_func)(handle,i,(LADSPA_Data *)&invals[pinp++]);
 	  }
 	  else {
 	    // connect to store for out params
-	    (*lad_connect_port_func)(sdata->handle_r,i,(LADSPA_Data *)&outvals[poutp++]);
+	    (*lad_connect_port_func)(handle,i,(LADSPA_Data *)&outvals[poutp++]);
 	  }
 	}
       }
 
     }
 
-
   }
 
 
-  // now all ports are connected we can run the filter
-  lad_run_func=(lad_run_f)weed_get_voidptr_value(filter,"plugin_lad_run_func",&error);
-
-  (*lad_run_func)(sdata->handle_l,nsamps);
-  if (dual) (*lad_run_func)(sdata->handle_r,nsamps);
+  if (dual) (*lad_run_func)(handle,nsamps);
 
   // copy out values to out_params
   for (i=0;i<ioutp;i++) {

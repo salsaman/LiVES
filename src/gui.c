@@ -3355,7 +3355,7 @@ make_preview_box (void) {
   gtk_scale_set_draw_value(GTK_SCALE(mainw->preview_scale),FALSE);
 
   gtk_widget_set_tooltip_text( mainw->preview_spinbutton, _("Frame number to preview"));
-  gtk_tooltips_copy(mainw->preview_scale,mainw->preview_spinbutton);
+  lives_tooltips_copy(mainw->preview_scale,mainw->preview_spinbutton);
 
   hbox_rb = gtk_hbox_new (FALSE, 10);
   gtk_box_pack_start (GTK_BOX (mainw->preview_box), hbox_rb, FALSE, FALSE, 0);
@@ -3376,7 +3376,7 @@ make_preview_box (void) {
   eventbox=gtk_event_box_new();
   gtk_container_add(GTK_CONTAINER(eventbox),label);
   gtk_widget_set_tooltip_text( eventbox, _("Free choice of frame number"));
-  gtk_tooltips_copy(radiobutton_free,eventbox);
+  lives_tooltips_copy(radiobutton_free,eventbox);
   g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
 		    G_CALLBACK (label_act_toggle),
 		    radiobutton_free);
@@ -3405,7 +3405,7 @@ make_preview_box (void) {
   eventbox=gtk_event_box_new();
   gtk_container_add(GTK_CONTAINER(eventbox),label);
   gtk_widget_set_tooltip_text( eventbox, _("Frame number is linked to start frame"));
-  gtk_tooltips_copy(radiobutton_start,eventbox);
+  lives_tooltips_copy(radiobutton_start,eventbox);
   g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
 		    G_CALLBACK (label_act_toggle),
 		    radiobutton_start);
@@ -3436,7 +3436,7 @@ make_preview_box (void) {
   eventbox=gtk_event_box_new();
   gtk_container_add(GTK_CONTAINER(eventbox),label);
   gtk_widget_set_tooltip_text( eventbox, _("Frame number is linked to end frame"));
-  gtk_tooltips_copy(radiobutton_end,eventbox);
+  lives_tooltips_copy(radiobutton_end,eventbox);
   g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
 		    G_CALLBACK (label_act_toggle),
 		    radiobutton_end);
@@ -3466,7 +3466,7 @@ make_preview_box (void) {
   eventbox=gtk_event_box_new();
   gtk_container_add(GTK_CONTAINER(eventbox),label);
   gtk_widget_set_tooltip_text( eventbox, _("Frame number is linked to playback pointer"));
-  gtk_tooltips_copy(radiobutton_ptr,eventbox);
+  lives_tooltips_copy(radiobutton_ptr,eventbox);
   g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
 		    G_CALLBACK (label_act_toggle),
 		    radiobutton_ptr);

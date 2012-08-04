@@ -47,7 +47,7 @@ void after_param_blue_changed (GtkSpinButton *, lives_rfx_t * rfx);
 void after_param_alpha_changed (GtkSpinButton *, lives_rfx_t * rfx);
 gboolean after_param_text_focus_changed (GtkWidget *, GtkWidget *, lives_rfx_t *rfx);
 void after_param_text_changed (GtkWidget *, lives_rfx_t *rfx);
-void after_string_list_changed (GtkEntry *, lives_rfx_t *rfx);
+void after_string_list_changed (GtkComboBox *, lives_rfx_t *rfx);
 
 void on_pwcolsel (GtkButton *button, lives_rfx_t *);
 

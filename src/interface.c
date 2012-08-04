@@ -913,7 +913,7 @@ create_encoder_prep_dialog (const gchar *text1, const gchar *text2, gboolean opt
 
     gtk_widget_set_tooltip_text( checkbutton2, _("Draw black rectangles either above or to the sides of the image, to prevent it from stretching."));
     eventbox=gtk_event_box_new();
-    gtk_tooltips_copy(eventbox,checkbutton2);
+    lives_tooltips_copy(eventbox,checkbutton2);
     label=gtk_label_new_with_mnemonic (_("Use _letterboxing to maintain aspect ratio (optional)"));
     gtk_label_set_mnemonic_widget (GTK_LABEL (label),checkbutton2);
     
@@ -1372,7 +1372,7 @@ create_insert_dialog (void)
   eventbox=gtk_event_box_new();
   gtk_container_add(GTK_CONTAINER(eventbox),label);
   gtk_widget_set_tooltip_text( eventbox, _("Insert clipboard before selected frames"));
-  gtk_tooltips_copy(radiobutton1,eventbox);
+  lives_tooltips_copy(radiobutton1,eventbox);
   g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
 		    G_CALLBACK (label_act_toggle),
 		    radiobutton1);
@@ -1409,7 +1409,7 @@ create_insert_dialog (void)
   eventbox=gtk_event_box_new();
   gtk_container_add(GTK_CONTAINER(eventbox),label);
   gtk_widget_set_tooltip_text( eventbox, _("Insert clipboard after selected frames"));
-  gtk_tooltips_copy(radiobutton4,eventbox);
+  lives_tooltips_copy(radiobutton4,eventbox);
   g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
 		    G_CALLBACK (label_act_toggle),
 		    radiobutton4);

@@ -2149,7 +2149,7 @@ gboolean track_arrow_pressed (GtkWidget *ebox, GdkEventButton *event, gpointer u
 
   g_object_set_data(G_OBJECT(eventbox),"arrow",new_arrow);
 
-  gtk_tooltips_copy(new_arrow,arrow);
+  lives_tooltips_copy(new_arrow,arrow);
 
   // must do this after we update object data, to avoid a race condition
   gtk_widget_unref(arrow);
@@ -7024,7 +7024,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   gtk_widget_set_tooltip_text( mt->insa_checkbutton, _("Select whether video clips are inserted and moved with their audio or not"));
   hbox2 = gtk_hbox_new (FALSE, 0);
 
-  gtk_tooltips_copy(mt->insa_eventbox,mt->insa_checkbutton);
+  lives_tooltips_copy(mt->insa_eventbox,mt->insa_checkbutton);
   label=gtk_label_new_with_mnemonic (_("Insert with _audio"));
   gtk_label_set_mnemonic_widget (GTK_LABEL (label),mt->insa_checkbutton);
 
@@ -7060,7 +7060,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   hbox2 = gtk_hbox_new (FALSE, 0);
 
   eventbox=gtk_event_box_new();
-  gtk_tooltips_copy(eventbox,mt->snapo_checkbutton);
+  lives_tooltips_copy(eventbox,mt->snapo_checkbutton);
   label=gtk_label_new_with_mnemonic (_("Select _overlap"));
   gtk_label_set_mnemonic_widget (GTK_LABEL (label),mt->snapo_checkbutton);
 
@@ -7566,7 +7566,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   mt->checkbutton_start_anchored = gtk_check_button_new ();
   gtk_widget_set_tooltip_text( mt->checkbutton_start_anchored, _("Anchor the start point to the timeline"));
   mt->in_eventbox=gtk_event_box_new();
-  gtk_tooltips_copy(mt->in_eventbox,mt->checkbutton_start_anchored);
+  lives_tooltips_copy(mt->in_eventbox,mt->checkbutton_start_anchored);
   label=gtk_label_new_with_mnemonic (_("Anchor _start"));
   gtk_label_set_mnemonic_widget (GTK_LABEL (label),mt->checkbutton_start_anchored);
 
@@ -7640,7 +7640,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   mt->checkbutton_end_anchored = gtk_check_button_new ();
   gtk_widget_set_tooltip_text( mt->checkbutton_end_anchored, _("Anchor the end point to the timeline"));
   mt->out_eventbox=gtk_event_box_new();
-  gtk_tooltips_copy(mt->out_eventbox,mt->checkbutton_end_anchored);
+  lives_tooltips_copy(mt->out_eventbox,mt->checkbutton_end_anchored);
   label=gtk_label_new_with_mnemonic (_("Anchor _end"));
   gtk_label_set_mnemonic_widget (GTK_LABEL (label),mt->checkbutton_end_anchored);
 
@@ -20818,7 +20818,7 @@ void amixer_show (GtkButton *button, gpointer user_data) {
     
     gtk_widget_set_tooltip_text( amixer->inv_checkbutton, _("Adjust backing and layer audio values so that they sum to 1.0"));
     eventbox=gtk_event_box_new();
-    gtk_tooltips_copy(eventbox,amixer->inv_checkbutton);
+    lives_tooltips_copy(eventbox,amixer->inv_checkbutton);
     gtk_label_set_mnemonic_widget (GTK_LABEL (label),amixer->inv_checkbutton);
     
     gtk_container_add(GTK_CONTAINER(eventbox),label);
@@ -20863,7 +20863,7 @@ void amixer_show (GtkButton *button, gpointer user_data) {
 
     gtk_widget_set_tooltip_text( amixer->gang_checkbutton, _("Adjust all layer audio values to the same value"));
     eventbox=gtk_event_box_new();
-    gtk_tooltips_copy(eventbox,amixer->gang_checkbutton);
+    lives_tooltips_copy(eventbox,amixer->gang_checkbutton);
     gtk_label_set_mnemonic_widget (GTK_LABEL (label),amixer->gang_checkbutton);
     
     gtk_container_add(GTK_CONTAINER(eventbox),label);

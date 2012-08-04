@@ -4895,7 +4895,15 @@ gboolean weed_init_effect(int hotkey) {
     if (inc_count==0) {
       if (mainw->agen_key!=0) {
 	// we had an existing audio gen running - stop that one first
-	weed_deinit_effect(mainw->agen_key-1);
+	int agen_key=mainw->agen_key-1;
+	weed_deinit_effect(agen_key);
+
+	if ((mainw->rte&(GU641<<agen_key))) {
+	  // need to do this in case starting another audio gen caused us to come here
+	  mainw->rte^=(GU641<<agen_key);
+	  if (rte_window!=NULL) rtew_set_keych(agen_key,FALSE);
+	}
+
       }
       is_audio_gen=TRUE;
     }
@@ -5207,16 +5215,11 @@ void weed_deinit_effect(int hotkey) {
 
   if (is_audio_gen) {
     // is audio generator
-    int agen_key=mainw->agen_key-1;
     // wait for current processing to finish :  TODO - do for all audio effects (when we have them)
     pthread_mutex_lock(&mainw->interp_mutex);
     mainw->agen_key=0;
     pthread_mutex_unlock(&mainw->interp_mutex);
     mainw->agen_samps_count=0;
-    if ((mainw->rte&(GU641<<agen_key))) {
-      mainw->rte^=(GU641<<agen_key);
-      if (rte_window!=NULL) rtew_set_keych(agen_key,FALSE);
-    }
   }
   pthread_mutex_lock(&mainw->afilter_mutex);
   key_to_instance[hotkey][key_modes[hotkey]]=NULL;
@@ -6681,9 +6684,8 @@ gboolean rte_key_setmode (gint key, gint newmode) {
 
   if (oldmode!=newmode) {
     blend_file=mainw->blend_file;
-
-    if (was_started&&enabled_in_channels(inst,FALSE)>0&&!is_pure_audio(inst,FALSE)) {
-      // not a generator
+    if (was_started&&(enabled_in_channels(inst,FALSE)>0||enabled_out_channels(inst,FALSE)==0||is_pure_audio(inst,FALSE))) {
+      // not a (video or video/audio) generator
       weed_deinit_effect (key);
     }
     else if (enabled_in_channels(weed_filters[key_to_fx[key][newmode]],FALSE)==0&&

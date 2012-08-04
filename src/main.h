@@ -754,17 +754,6 @@ typedef enum {
 } lives_clip_details_t;
 
 
-typedef enum {
-  LIVES_CURSOR_NORMAL=0,  ///< must be zero
-  LIVES_CURSOR_BLOCK,
-  LIVES_CURSOR_AUDIO_BLOCK,
-  LIVES_CURSOR_BUSY,
-  LIVES_CURSOR_FX_BLOCK
-} lives_cursor_t;
-
-
-
-
 // some useful functions
 
 // interface.c
@@ -1087,14 +1076,11 @@ void save_future_prefs(void);
 void set_menu_text(GtkWidget *menu, const gchar *text, gboolean use_mnemonic);
 void get_menu_text(GtkWidget *menu, gchar *text);
 void get_menu_text_long(GtkWidget *menuitem, gchar *text);
-gint get_box_child_index (GtkBox *box, GtkWidget *tchild);
 void reset_clip_menu (void);
 void get_play_times(void);
 void get_total_time (file *file);
 guint get_signed_endian (gboolean is_signed, gboolean little_endian);
 void fullscreen_internal(void);
-void unhide_cursor(GdkWindow *window);
-void hide_cursor(GdkWindow *window);
 void set_alwaysontop(GtkWidget *window, gboolean ontop); ///< TODO - use for playwin
 void colour_equal(GdkColor *c1, const GdkColor *c2);
 void switch_to_int_player(void);
@@ -1128,7 +1114,7 @@ gdouble get_ratio_fps(const gchar *string);
 void calc_maxspect(gint rwidth, gint rheight, gint *cwidth, gint *cheight);
 
 gchar *remove_trailing_zeroes(gdouble val);
-void toggle_button_toggle (GtkToggleButton *tbutton);
+
 void remove_layout_files(GList *lmap);
 gboolean add_lmap_error(lives_lmap_error_t lerror, const gchar *name, gpointer user_data, 
 			gint clipno, gint frameno, gdouble atime, gboolean affects_current);
@@ -1145,9 +1131,7 @@ gint count_resampled_frames (gint in_frames, gdouble orig_fps, gdouble resampled
 gboolean int_array_contains_value(int *array, int num_elems, int value);
 gboolean check_for_lock_file(const gchar *set_name, gint type);
 void g_list_free_strings(GList *list);
-void gtk_tooltips_copy(GtkWidget *dest, GtkWidget *source);
-void adjustment_configure(GtkAdjustment *adjustment, gdouble value, gdouble lower, gdouble upper, 
-			  gdouble step_increment, gdouble page_increment, gdouble page_size);
+
 gboolean create_event_space(gint length_in_eventsb);
 void add_to_recent(const gchar *filename, gdouble start, gint frames, const gchar *file_open_params);
 gint verhash (gchar *version);
@@ -1159,7 +1143,6 @@ void set_sel_label (GtkWidget *label);
 void clear_mainw_msg (void);
 gint get_token_count (const gchar *string, int delim);
 LiVESPixbuf *lives_pixbuf_new_blank(int width, int height, int palette);
-void get_border_size (GtkWidget *win, gint *bx, gint *by);
 gchar *g_strappend (gchar *string, gint len, const gchar *newbit);
 GList *g_list_append_unique(GList *xlist, const gchar *add);
 void find_when_to_stop (void);
@@ -1167,6 +1150,7 @@ gint calc_new_playback_position(gint fileno, gint64 otc, gint64 *ntc);
 void calc_aframeno(gint fileno);
 void minimise_aspect_delta (gdouble allowed_aspect,gint hblock,gint vblock,gint hsize,gint vsize,gint *width,gint *height);
 LiVESInterpType get_interp_value(gshort quality);
+
 GList *g_list_move_to_first(GList *list, GList *item) WARN_UNUSED;
 GList *g_list_delete_string(GList *, char *string) WARN_UNUSED;
 GList *g_list_copy_strings(GList *list);
@@ -1174,7 +1158,6 @@ gboolean string_lists_differ(GList *, GList *);
 
 
 GList *get_set_list(const gchar *dir);
-void combo_set_popdown_strings (GtkCombo *combo, GList *list);
 
 gchar *subst (const gchar *string, const gchar *from, const gchar *to);
 gchar *insert_newlines(const gchar *text, int maxwidth);
@@ -1186,16 +1169,6 @@ guint32 fastrand(void);
 void fastsrand(guint32 seed);
 
 gint lives_list_index (GList *list, const gchar *data);
-
-void set_fg_colour(gint red, gint green, gint blue);
-gboolean label_act_toggle (GtkWidget *, GdkEventButton *, GtkToggleButton *);
-gboolean widget_act_toggle (GtkWidget *, GtkToggleButton *);
-
-void lives_set_cursor_style(lives_cursor_t cstyle, GdkWindow *window);
-
-
-gchar *text_view_get_text(GtkTextView *textview);
-void text_view_set_text(GtkTextView *textview, const gchar *text);
 
 
 // plugins.c

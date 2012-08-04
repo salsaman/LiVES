@@ -258,7 +258,7 @@ void check_for_special (lives_param_t *param, gint num, GtkBox *pbox, lives_rfx_
       checkbutton = gtk_check_button_new ();
       gtk_widget_set_tooltip_text( checkbutton, (_("Maintain aspect ratio of original frame")));
       eventbox=gtk_event_box_new();
-      gtk_tooltips_copy(eventbox,checkbutton);
+      lives_tooltips_copy(eventbox,checkbutton);
       label=gtk_label_new_with_mnemonic (_("Maintain _Aspect Ratio"));
       
       

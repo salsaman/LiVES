@@ -416,7 +416,7 @@ void transition_add_in_out(GtkBox *vbox, lives_rfx_t *rfx, gboolean add_audio_ch
   eventbox=gtk_event_box_new();
   gtk_container_add(GTK_CONTAINER(eventbox),label);
   gtk_widget_set_tooltip_text( eventbox, _("Transition in"));
-  gtk_tooltips_copy(radiobutton_in,eventbox);
+  lives_tooltips_copy(radiobutton_in,eventbox);
   g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
 		    G_CALLBACK (label_act_toggle),
 		    radiobutton_in);
@@ -445,7 +445,7 @@ void transition_add_in_out(GtkBox *vbox, lives_rfx_t *rfx, gboolean add_audio_ch
 
     gtk_widget_set_tooltip_text( checkbutton, _("Check the box to make audio transition with the video"));
     eventbox=gtk_event_box_new();
-    gtk_tooltips_copy(eventbox,checkbutton);
+    lives_tooltips_copy(eventbox,checkbutton);
     label=gtk_label_new_with_mnemonic (_("Crossfade audio"));
     gtk_label_set_mnemonic_widget (GTK_LABEL (label),checkbutton);
 
@@ -486,7 +486,7 @@ void transition_add_in_out(GtkBox *vbox, lives_rfx_t *rfx, gboolean add_audio_ch
   eventbox=gtk_event_box_new();
   gtk_container_add(GTK_CONTAINER(eventbox),label);
   gtk_widget_set_tooltip_text( eventbox, _("Transition out"));
-  gtk_tooltips_copy(radiobutton_out,eventbox);
+  lives_tooltips_copy(radiobutton_out,eventbox);
   g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
 		    G_CALLBACK (label_act_toggle),
 		    radiobutton_out);
@@ -705,7 +705,7 @@ static void add_gen_to(GtkBox *vbox, lives_rfx_t *rfx) {
   eventbox=gtk_event_box_new();
   gtk_container_add(GTK_CONTAINER(eventbox),label);
   gtk_widget_set_tooltip_text( eventbox, _("Generate frames to the clipboard"));
-  gtk_tooltips_copy(radiobutton,eventbox);
+  lives_tooltips_copy(radiobutton,eventbox);
   g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
 		    G_CALLBACK (label_act_toggle),
 		    radiobutton);
@@ -726,7 +726,7 @@ static void add_gen_to(GtkBox *vbox, lives_rfx_t *rfx) {
   eventbox=gtk_event_box_new();
   gtk_container_add(GTK_CONTAINER(eventbox),label);
   gtk_widget_set_tooltip_text( eventbox, _("Generate frames to a new clip"));
-  gtk_tooltips_copy(radiobutton,eventbox);
+  lives_tooltips_copy(radiobutton,eventbox);
   g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
 		    G_CALLBACK (label_act_toggle),
 		    radiobutton);
@@ -1721,20 +1721,21 @@ gboolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, gboolean ad
     combo=lives_standard_combo_new(name, use_mnemonic, param->list, (LiVESBox *)box, param->desc);
 
     if (rfx->status==RFX_STATUS_WEED&&(disp_string=get_weed_display_string((weed_plant_t *)rfx->source,pnum))!=NULL) {
-      gtk_entry_set_text (GTK_ENTRY((GTK_COMBO(combo))->entry),disp_string);
+      gtk_entry_set_text (GTK_ENTRY(gtk_bin_get_child(GTK_BIN(combo))),disp_string);
       weed_free(disp_string);
     }
     else if (param->list!=NULL) {
-      gtk_entry_set_text (GTK_ENTRY((GTK_COMBO(combo))->entry), 
+      gtk_entry_set_text (GTK_ENTRY(gtk_bin_get_child(GTK_BIN(combo))), 
 			  (gchar *)g_list_nth_data (param->list,get_int_param (param->value)));
     }
 
-    blockfunc=g_signal_connect_after (G_OBJECT (GTK_COMBO(combo)->entry), "changed", 
+    blockfunc=g_signal_connect_after (G_OBJECT (combo), "changed", 
 				      G_CALLBACK (after_string_list_changed), (gpointer) rfx);
-    g_object_set_data(G_OBJECT(GTK_COMBO(combo)->entry),"blockfunc",(gpointer)blockfunc);
+
+    g_object_set_data(G_OBJECT(combo),"blockfunc",(gpointer)blockfunc);
  
     // store parameter so we know whose trigger to use
-    g_object_set_data (G_OBJECT (GTK_COMBO(combo)->entry),"param_number",GINT_TO_POINTER (pnum));
+    g_object_set_data (G_OBJECT (combo),"param_number",GINT_TO_POINTER (pnum));
     param->widgets[0]=combo;
     if (param->hidden) gtk_widget_set_sensitive(combo,FALSE);
 
@@ -2525,11 +2526,11 @@ after_param_text_changed (GtkWidget *textwidget, lives_rfx_t *rfx) {
 
 
 void 
-after_string_list_changed (GtkEntry *entry, lives_rfx_t *rfx) {
-  gint param_number=GPOINTER_TO_INT (g_object_get_data (G_OBJECT (entry),"param_number"));
+after_string_list_changed (GtkComboBox *combo, lives_rfx_t *rfx) {
+  gint param_number=GPOINTER_TO_INT (g_object_get_data (G_OBJECT (combo),"param_number"));
   lives_param_t *param=&rfx->params[param_number];
   gint old_index=get_int_param(param->value);
-  gint new_index=lives_list_index(param->list,gtk_entry_get_text(entry));
+  gint new_index=lives_list_index(param->list,gtk_combo_box_get_active_text(combo));
   int copyto=-1;
 
   if (mainw->block_param_updates) return; // updates are blocked when we update visually
@@ -2578,10 +2579,10 @@ after_string_list_changed (GtkEntry *entry, lives_rfx_t *rfx) {
       }
 
       if (disp_string!=NULL) {
-	gulong blockfunc=(gulong)g_object_get_data(G_OBJECT(entry),"blockfunc");
-	g_signal_handler_block(entry,blockfunc);
-	gtk_entry_set_text(entry,disp_string);
-	g_signal_handler_unblock(entry,blockfunc);
+	gulong blockfunc=(gulong)g_object_get_data(G_OBJECT(combo),"blockfunc");
+	g_signal_handler_block(combo,blockfunc);
+	gtk_entry_set_text (GTK_ENTRY(gtk_bin_get_child(GTK_BIN(combo))),disp_string);
+	g_signal_handler_unblock(combo,blockfunc);
 	weed_free(disp_string);
       } 
     }
@@ -2589,7 +2590,7 @@ after_string_list_changed (GtkEntry *entry, lives_rfx_t *rfx) {
 
   if (old_index!=new_index&&param->onchange) {
     param->change_blocked=TRUE;
-    do_onchange(G_OBJECT(entry), rfx);
+    do_onchange(G_OBJECT(combo), rfx);
     while (g_main_context_iteration(NULL,FALSE));
     param->change_blocked=FALSE;
   }
@@ -2992,7 +2993,7 @@ gint set_param_from_list(GList *plist, lives_param_t *param, gint pnum, gboolean
       if (param->change_blocked) break;
       set_int_param(param->value,int_value);
       if (upd&&param->widgets[0]!=NULL&&GTK_IS_COMBO(param->widgets[0])&&int_value<g_list_length(param->list))
-	gtk_entry_set_text(GTK_ENTRY(GTK_COMBO(param->widgets[0])->entry),(gchar *)g_list_nth_data(param->list,int_value));
+	gtk_entry_set_text(GTK_ENTRY(gtk_bin_get_child(GTK_BIN(param->widgets[0]))),(gchar *)g_list_nth_data(param->list,int_value));
       break;
     }
   default:

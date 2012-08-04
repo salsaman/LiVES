@@ -7,13 +7,30 @@
 #ifndef HAS_LIVES_WIDGET_HELPER_H
 #define HAS_LIVES_WIDGET_HELPER_H
 
+typedef enum {
+  LIVES_CURSOR_NORMAL=0,  ///< must be zero
+  LIVES_CURSOR_BLOCK,
+  LIVES_CURSOR_AUDIO_BLOCK,
+  LIVES_CURSOR_BUSY,
+  LIVES_CURSOR_FX_BLOCK
+} lives_cursor_t;
+
+
 #ifdef GUI_GTK
 typedef GtkObject                         LiVESObject;
 typedef GtkWidget                         LiVESWidget;
 typedef GtkDialog                         LiVESDialog;
 typedef GtkBox                            LiVESBox;
+typedef GtkComboBox                       LiVESComboBox;
+typedef GtkComboBoxText                   LiVESComboBoxText;
+typedef GtkToggleButton                   LiVESToggleButton;
+
+typedef GtkTooltips                       LiVESTooltips;
+typedef GtkTooltipsData                   LiVESTooltipsData;
 
 typedef GdkPixbuf                         LiVESPixbuf;
+
+typedef GdkEventButton                    LiVESEventButton;
 
 #ifndef IS_MINGW
 typedef gboolean                          boolean;
@@ -28,6 +45,12 @@ typedef GdkPixbufDestroyNotify            LiVESPixbufDestroyNotify;
 typedef GdkInterpType                     LiVESInterpType;
 
 typedef gpointer                          LiVESObjectPtr;
+
+#define LIVES_BOX(widget) GTK_BOX(widget)
+#define LIVES_COMBO_BOX(widget) GTK_COMBO_BOX(widget)
+#define LIVES_COMBO_BOX_TEXT(widget) GTK_COMBO_BOX_TEXT(widget)
+
+#define LIVES_WIDGET_IS_SENSITIVE(widget) GTK_WIDGET_IS_SENSITIVE(widget)
 
 #define LIVES_INTERP_BEST   GDK_INTERP_HYPER
 #define LIVES_INTERP_NORMAL GDK_INTERP_BILINEAR
@@ -194,8 +217,23 @@ LiVESPixbuf *lives_pixbuf_scale_simple(const LiVESPixbuf *src, int dest_width, i
 
 LiVESWidget *lives_dialog_get_content_area(LiVESDialog *dialog);
 
+
+LiVESWidget *lives_combo_box_text_new_with_entry(void);
+void lives_combo_box_text_append_text(LiVESComboBoxText *combo, const char *text);
+void lives_combo_box_set_entry_text_column(LiVESComboBox *combo, int column);
+
+boolean lives_toggle_button_get_active(LiVESToggleButton *button);
+void lives_toggle_button_set_active(LiVESToggleButton *button, boolean active);
+
+
+
+LiVESTooltipsData* lives_tooltips_data_get (LiVESWidget *widget);
+void lives_tooltips_set_tip (LiVESTooltips *tooltips, LiVESWidget *widget, const char *tip_text, const char *tip_private);
+
+
 // compound functions (composed of basic functions)
 
+void lives_tooltips_copy(LiVESWidget *dest, LiVESWidget *source);
 
 LiVESWidget *lives_standard_check_button_new(const char *label, boolean use_mnemonic, LiVESBox *box, const char *tooltip);
 LiVESWidget *lives_standard_radio_button_new(const char *labeltext, boolean use_mnemonic, LiVESSList *rbgroup, 
@@ -205,6 +243,38 @@ LiVESWidget *lives_standard_spin_button_new(const char *labeltext, boolean use_m
 					    const char *tooltip);
 LiVESWidget *lives_standard_combo_new (const char *labeltext, boolean use_mnemonic, LiVESList *list, LiVESBox *box, 
 				       const char *tooltip);
+
+
+
+
+// util functions
+
+void lives_combo_box_set_active_string(LiVESComboBox *combo, char *active_str);
+
+gint get_box_child_index (GtkBox *box, GtkWidget *tchild);
+
+void set_fg_colour(gint red, gint green, gint blue);
+
+gboolean label_act_toggle (LiVESWidget *, LiVESEventButton *, LiVESToggleButton *);
+gboolean widget_act_toggle (LiVESWidget *, LiVESToggleButton *);
+
+void gtk_tooltips_copy(LiVESWidget *dest, LiVESWidget *source);
+void adjustment_configure(GtkAdjustment *adjustment, gdouble value, gdouble lower, gdouble upper, 
+			  gdouble step_increment, gdouble page_increment, gdouble page_size);
+
+gchar *text_view_get_text(GtkTextView *textview);
+void text_view_set_text(GtkTextView *textview, const gchar *text);
+
+void lives_set_cursor_style(lives_cursor_t cstyle, GdkWindow *window);
+
+void toggle_button_toggle (GtkToggleButton *tbutton);
+
+void unhide_cursor(GdkWindow *window);
+void hide_cursor(GdkWindow *window);
+
+void get_border_size (GtkWidget *win, gint *bx, gint *by);
+
+void combo_set_popdown_strings (GtkCombo *combo, GList *list);
 
 #endif
 

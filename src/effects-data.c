@@ -62,6 +62,8 @@ void pconx_delete(int okey, int omode, int opnum, int ikey, int imode, int ipnum
     pconx_next=pconx->next;
     if (okey==-1||(pconx->okey==okey&&pconx->omode==omode)) {
       if (ikey==-1) {
+	//g_print("rem all cons from %d %d to any param\n",okey,omode); 
+
 	// delete entire node
 	g_free(pconx->params);
 	g_free(pconx->nconns);
@@ -80,7 +82,7 @@ void pconx_delete(int okey, int omode, int opnum, int ikey, int imode, int ipnum
 	maxcons+=pconx->nconns[i];
       }
 
-      for (i=0;i<pconx->nparams;i++) {
+      for (i=0;pconx!=NULL&&i<pconx->nparams;i++) {
 	totcons+=pconx->nconns[i];
 
 	if (okey!=-1&&pconx->params[i]!=opnum) {
@@ -89,7 +91,8 @@ void pconx_delete(int okey, int omode, int opnum, int ikey, int imode, int ipnum
 	}
 
 	for (;j<totcons;j++) {
-	  if (pconx->ikey[j]==ikey && pconx->imode[j]==imode && pconx->ipnum[j]==ipnum) {
+	  if (pconx->ikey[j]==ikey && pconx->imode[j]==imode && (ipnum==-1||pconx->ipnum[j]==ipnum)) {
+	    //g_print("rem con to %d %d\n",ikey,omode); 
 	    maxcons--;
 	    for (k=j;k<maxcons;k++) {
 	      pconx->ikey[k]=pconx->ikey[k+1];
@@ -426,57 +429,112 @@ boolean weed_leaves_differ(weed_plant_t *p1, const char *key1, weed_plant_t *p2,
 
 boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, weed_plant_t *dparam, weed_plant_t *sparam, boolean autoscale) {
   // try to convert values of various type, if we succeed, copy the "value" and return TRUE (if changed)
-  weed_plant_t *dptmpl;
+  weed_plant_t *dptmpl,*sptmpl;
+
+  double ratio;
 
   int dtype,stype,nsvals,ndvals,error,dflags;
   int copyto,ondvals;
+
+  int nsmin=0,nsmax=0;
+
+  int dhint;
+
+  int minct=0,maxct=0;
+  int sminct=0,smaxct=0;
+
+  int nmax=0,nmin=0;
 
   boolean retval=FALSE;
 
   register int i;
 
-  // TODO *** - handle autoscale
-
   // allowed conversions
   // type -> type
 
-  // bool -> int, bool -> float, bool -> string, (bool -> int64)
-  // int -> float, int -> string,  (int -> int64)
-  // float -> string
+  // bool -> double, bool -> int, bool -> string, (bool -> int64)
+  // int -> double, int -> string,  (int -> int64)
+  // double -> string
   // (int64 -> string)
 
-  // TODO : int[3]/float[3] -> colourRGB
-  //        int[4]/float[4] -> colourRGBA
+  // int[3x]/double[3x] -> colourRGB
+  // int[4x]/double[4x] -> colourRGBA
   //
-  // provided we have min/max on output (for scaling)
-
-
-  // TODO var elems with nsvals > ndvals
-  // TODO autoscale
-  // TODO any -> color
-  // TODO string -> string
-  // TODO - max/min with > 1 elems
-
-
 
   nsvals=weed_leaf_num_elements(sparam,"value");
   ondvals=ndvals=weed_leaf_num_elements(dparam,"value");
   
   dptmpl=weed_get_plantptr_value(dparam,"template",&error);
-  //sptmpl=weed_get_plantptr_value(sparam,"template",&error);
+  sptmpl=weed_get_plantptr_value(sparam,"template",&error);
 
-  //  sflags=weed_get_int_value(sptmpl,"flags",&error);
   dflags=weed_get_int_value(dptmpl,"flags",&error);
+  dhint=weed_get_int_value(dptmpl,"hint",&error);
 
   dtype=weed_leaf_seed_type(dparam,"value");
   stype=weed_leaf_seed_type(sparam,"value");
 
+
+  if (dhint==WEED_HINT_COLOR) {
+    int cspace=weed_get_int_value(dptmpl,"colorspace",&error);
+    if (cspace==WEED_COLORSPACE_RGB&&(nsvals%3!=0)) return FALSE;
+    if (nsvals%4!=0) return FALSE;
+  }
+
   if (ndvals>nsvals) {
     if (!((dflags&WEED_PARAMETER_VARIABLE_ELEMENTS)&&!(dflags&WEED_PARAMETER_ELEMENT_PER_CHANNEL))) return FALSE;
-    // TODO !!!
+    else ndvals=nsvals;
+  }
+
+  if (autoscale) {
+    if (weed_plant_has_leaf(sptmpl,"min")&&weed_plant_has_leaf(sptmpl,"max")) {
+      nsmin=weed_leaf_num_elements(sptmpl,"min");
+      nsmax=weed_leaf_num_elements(sptmpl,"max");
+    }
+    else autoscale=FALSE;
+  }
+
+  if (weed_plant_has_leaf(dptmpl,"max")) {
+    nmax=weed_leaf_num_elements(dptmpl,"max");
+    nmin=weed_leaf_num_elements(dptmpl,"min");
   }
 
   switch (stype) {
+  case WEED_SEED_STRING:
+    switch (dtype) {
+    case WEED_SEED_STRING:
+      {
+	char **valsS=weed_get_string_array(sparam,"value",&error);
+	char **valss=weed_get_string_array(dparam,"value",&error);
+
+	if (ndvals>ondvals) valss=(char **)g_realloc(valss,ndvals*sizeof(char *));
+
+	for (i=0;i<ndvals;i++) {
+	  if (i>=ondvals||strcmp(valss[i],valsS[i])) {
+	    retval=TRUE;
+	    if (i<ondvals) weed_free(valss[i]);
+	    valss[i]=valsS[i];
+	  }
+	  else weed_free(valsS[i]);
+	}
+	if (!retval) {
+	  for (i=0;i<ndvals;i++) weed_free(valss[i]);
+	  weed_free(valss);
+	  weed_free(valsS);
+	  return FALSE;
+	}
+
+	pthread_mutex_lock(&mainw->data_mutex);
+	weed_set_string_array(dparam,"value",ndvals,valss);
+	pthread_mutex_unlock(&mainw->data_mutex);
+
+	for (i=0;i<ndvals;i++) weed_free(valss[i]);
+	weed_free(valss);
+	weed_free(valsS);
+      }
+      return TRUE;
+  default:
+    return retval;
+    }
   case WEED_SEED_DOUBLE:
     switch (dtype) {
     case WEED_SEED_DOUBLE:
@@ -484,17 +542,41 @@ boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, weed_plant_t *dpa
 	double *valsD=weed_get_double_array(sparam,"value",&error);
 	double *valsd=weed_get_double_array(dparam,"value",&error);
 	
-	double maxd=weed_get_double_value(dptmpl,"max",&error);
-	double mind=weed_get_double_value(dptmpl,"min",&error);
+	double *maxd=weed_get_double_array(dptmpl,"max",&error);
+	double *mind=weed_get_double_array(dptmpl,"min",&error);
+
+	double *mins=NULL,*maxs=NULL;
+
+	if (autoscale) {
+	  mins=weed_get_double_array(sptmpl,"min",&error);
+	  maxs=weed_get_double_array(sptmpl,"max",&error);
+	}
+
+	if (ndvals>ondvals) valsd=(double *)g_realloc(valsd,ndvals*sizeof(double));
 
 	for (i=0;i<ndvals;i++) {
-	  if (valsd[i]!=valsD[i]) {
+	  if (autoscale) {
+	    ratio=(valsD[i]-mins[sminct])/(maxs[smaxct]-mins[sminct]);
+	    valsD[i]=mind[minct]+(maxd[maxct]-mind[minct])*ratio;
+	    if (++smaxct==nsmax) smaxct=0;
+	    if (++sminct==nsmin) sminct=0;
+	  }
+	  if (valsD[i]>maxd[maxct]) valsD[i]=maxd[maxct];
+	  if (valsD[i]<mind[minct]) valsD[i]=mind[minct];
+
+	  if (i>=ondvals||valsd[i]!=valsD[i]) {
 	    retval=TRUE;
 	    valsd[i]=valsD[i];
-	    if (valsd[i]>maxd) valsd[i]=maxd;
-	    if (valsd[i]<mind) valsd[i]=mind;
 	  }
+	  if (++maxct==nmax) maxct=0;
+	  if (++minct==nmin) minct=0;
 	}
+
+	if (mins!=NULL) {
+	  weed_free(mins);
+	  weed_free(maxs);
+	}
+
 	if (retval) {
 
 	  if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
@@ -508,6 +590,8 @@ boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, weed_plant_t *dpa
 	  weed_set_double_array(dparam,"value",ndvals,valsd);
 	  pthread_mutex_unlock(&mainw->data_mutex);
 	}
+	weed_free(maxd);
+	weed_free(mind);
 	weed_free(valsD);
 	weed_free(valsd);
       }
@@ -545,11 +629,14 @@ boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, weed_plant_t *dpa
 	}
 
 	valss=weed_get_string_array(dparam,"value",&error);
+
+	if (ndvals>ondvals) valss=(char **)g_realloc(valsd,ndvals*sizeof(char *));
+
 	for (i=0;i<ndvals;i++) {
 	  bit=g_strdup_printf("%.4f",valsd[i]);
-	  if (strcmp(valss[i],bit)) {
+	  if (i>=ondvals||strcmp(valss[i],bit)) {
 	    retval=TRUE;
-	    weed_free(valss[i]);
+	    if (i<ondvals) weed_free(valss[i]);
 	    valss[i]=bit;
 	  }
 	  else g_free(bit);
@@ -611,11 +698,14 @@ boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, weed_plant_t *dpa
 	}
 
 	valss=weed_get_string_array(dparam,"value",&error);
+
+	if (ndvals>ondvals) valss=(char **)g_realloc(valss,ndvals*sizeof(char *));
+
 	for (i=0;i<ndvals;i++) {
 	  bit=g_strdup_printf("%d",valsi[i]);
-	  if (strcmp(valss[i],bit)) {
+	  if (i>=ondvals||strcmp(valss[i],bit)) {
 	    retval=TRUE;
-	    weed_free(valss[i]);
+	    if (i<ondvals) weed_free(valss[i]);
 	    valss[i]=bit;
 	  }
 	  else g_free(bit);
@@ -641,17 +731,42 @@ boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, weed_plant_t *dpa
 	int *valsi=weed_get_int_array(sparam,"value",&error);
 	double * valsd=weed_get_double_array(dparam,"value",&error);
 	
-	double maxd=weed_get_double_value(dptmpl,"max",&error);
-	double mind=weed_get_double_value(dptmpl,"min",&error);
+	double *maxd=weed_get_double_array(dptmpl,"max",&error);
+	double *mind=weed_get_double_array(dptmpl,"min",&error);
+	double vald;
+
+	int *mins=NULL,*maxs=NULL;
+
+	if (autoscale) {
+	  mins=weed_get_int_array(sptmpl,"min",&error);
+	  maxs=weed_get_int_array(sptmpl,"max",&error);
+	}
+
+	if (ndvals>ondvals) valsd=(double *)g_realloc(valsd,ndvals*sizeof(double));
 
 	for (i=0;i<ndvals;i++) {
-	  if (valsd[i]!=(double)valsi[i]) {
-	    retval=TRUE;
-	    valsd[i]=(double)valsi[i];
-	    if (valsd[i]>maxd) valsd[i]=maxd;
-	    if (valsd[i]<mind) valsd[i]=mind;
+	  if (autoscale) {
+	    ratio=(double)(valsi[i]-mins[sminct])/(double)(maxs[smaxct]-mins[sminct]);
+	    vald=mind[minct]+(maxd[maxct]-mind[minct])*ratio;
+	    if (++smaxct==nsmax) smaxct=0;
+	    if (++sminct==nsmin) sminct=0;
 	  }
+	  else vald=(double)valsi[i];
+	  if (vald>maxd[maxct]) vald=maxd[maxct];
+	  if (vald<mind[minct]) vald=mind[minct];
+	  if (i>=ondvals||valsd[i]!=vald) {
+	    retval=TRUE;
+	    valsd[i]=vald;
+	  }
+	  if (++maxct==nmax) maxct=0;
+	  if (++minct==nmin) minct=0;
 	}
+
+	if (mins!=NULL) {
+	  weed_free(mins);
+	  weed_free(maxs);
+	}
+
 	if (retval) {
 
 	  if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
@@ -665,6 +780,8 @@ boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, weed_plant_t *dpa
 	  weed_set_double_array(dparam,"value",ndvals,valsd);
 	  pthread_mutex_unlock(&mainw->data_mutex);
 	}
+	weed_free(maxd);
+	weed_free(mind);
 	weed_free(valsi);
 	weed_free(valsd);
       }
@@ -675,17 +792,40 @@ boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, weed_plant_t *dpa
 	int *valsI=weed_get_int_array(sparam,"value",&error);
 	int *valsi=weed_get_int_array(dparam,"value",&error);
 	
-	int maxi=weed_get_int_value(dptmpl,"max",&error);
-	int mini=weed_get_int_value(dptmpl,"min",&error);
+	int *maxi=weed_get_int_array(dptmpl,"max",&error);
+	int *mini=weed_get_int_array(dptmpl,"min",&error);
+
+	int *mins=NULL,*maxs=NULL;
+
+	if (autoscale) {
+	  mins=weed_get_int_array(sptmpl,"min",&error);
+	  maxs=weed_get_int_array(sptmpl,"max",&error);
+	}
+
+	if (ndvals>ondvals) valsi=(int *)g_realloc(valsi,ndvals*sizeof(int));
 
 	for (i=0;i<ndvals;i++) {
-	  if (valsi[i]!=valsI[i]) {
+	  if (autoscale) {
+	    ratio=(double)(valsI[i]-mins[sminct])/(double)(maxs[smaxct]-mins[sminct]);
+	    valsI[i]=myround(mini[minct]+(double)(maxi[maxct]-mini[minct])*ratio);
+	    if (++smaxct==nsmax) smaxct=0;
+	    if (++sminct==nsmin) sminct=0;
+	  }
+	  if (valsI[i]>maxi[maxct]) valsI[i]=maxi[maxct];
+	  if (valsI[i]<mini[minct]) valsI[i]=mini[minct];
+	  if (i>=ondvals||valsi[i]!=valsI[i]) {
 	    retval=TRUE;
 	    valsi[i]=valsI[i];
-	    if (valsi[i]>maxi) valsi[i]=maxi;
-	    if (valsi[i]<mini) valsi[i]=mini;
 	  }
+	  if (++maxct==nmax) maxct=0;
+	  if (++minct==nmin) minct=0;
 	}
+
+	if (mins!=NULL) {
+	  weed_free(mins);
+	  weed_free(maxs);
+	}
+
 	if (retval) {
 
 	  if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
@@ -699,6 +839,8 @@ boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, weed_plant_t *dpa
 	  weed_set_int_array(dparam,"value",ndvals,valsi);
 	  pthread_mutex_unlock(&mainw->data_mutex);
 	}
+	weed_free(maxi);
+	weed_free(mini);
 	weed_free(valsI);
 	weed_free(valsi);
       }
@@ -742,11 +884,13 @@ boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, weed_plant_t *dpa
 	}
 
 	valss=weed_get_string_array(dparam,"value",&error);
+	if (ndvals>ondvals) valss=(char **)g_realloc(valss,ndvals*sizeof(char *));
+
 	for (i=0;i<ndvals;i++) {
 	  bit=g_strdup_printf("%d",valsb[i]);
-	  if (strcmp(valss[i],bit)) {
+	  if (i>=ondvals||strcmp(valss[i],bit)) {
 	    retval=TRUE;
-	    weed_free(valss[i]);
+	    if (i<ondvals) weed_free(valss[i]);
 	    valss[i]=bit;
 	  }
 	  else g_free(bit);
@@ -772,16 +916,28 @@ boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, weed_plant_t *dpa
 	int *valsb=weed_get_boolean_array(sparam,"value",&error);
 	double * valsd=weed_get_double_array(dparam,"value",&error);
 	
-	double maxd=weed_get_double_value(dptmpl,"max",&error);
-	double mind=weed_get_double_value(dptmpl,"min",&error);
+	double *maxd=weed_get_double_array(dptmpl,"max",&error);
+	double *mind=weed_get_double_array(dptmpl,"min",&error);
+	double vald;
+
+	if (ndvals>ondvals) valsd=(double *)g_realloc(valsd,ndvals*sizeof(double));
 
 	for (i=0;i<ndvals;i++) {
-	  if (valsd[i]!=(double)valsb[i]) {
-	    retval=TRUE;
-	    valsd[i]=(double)valsb[i];
-	    if (valsd[i]>maxd) valsd[i]=maxd;
-	    if (valsd[i]<mind) valsd[i]=mind;
+	  if (autoscale) {
+	    if (valsb[i]==WEED_TRUE) vald=maxd[maxct];
+	    else vald=mind[minct];
 	  }
+	  else {
+	    vald=(double)valsb[i];
+	    if (vald>maxd[maxct]) vald=maxd[maxct];
+	    if (vald<mind[minct]) vald=mind[minct];
+	  }
+	  if (i>=ondvals||valsd[i]!=vald) {
+	    retval=TRUE;
+	    valsd[i]=vald;
+	  }
+	  if (++maxct==nmax) maxct=0;
+	  if (++minct==nmin) minct=0;
 	}
 	if (retval) {
 
@@ -796,6 +952,8 @@ boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, weed_plant_t *dpa
 	  weed_set_double_array(dparam,"value",ndvals,valsd);
 	  pthread_mutex_unlock(&mainw->data_mutex);
 	}
+	weed_free(maxd);
+	weed_free(mind);
 	weed_free(valsb);
 	weed_free(valsd);
       }
@@ -805,16 +963,26 @@ boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, weed_plant_t *dpa
 	int *valsb=weed_get_boolean_array(sparam,"value",&error);
 	int *valsi=weed_get_int_array(dparam,"value",&error);
 
-	int maxi=weed_get_int_value(dptmpl,"max",&error);
-	int mini=weed_get_int_value(dptmpl,"min",&error);
+	int *maxi=weed_get_int_array(dptmpl,"max",&error);
+	int *mini=weed_get_int_array(dptmpl,"min",&error);
 	
+	if (ndvals>ondvals) valsi=(int *)g_realloc(valsi,ndvals*sizeof(int));
+
 	for (i=0;i<ndvals;i++) {
-	  if (valsi[i]!=valsb[i]) {
+	  if (autoscale) {
+	    if (valsb[i]==WEED_TRUE) valsb[i]=maxi[maxct];
+	    else valsb[i]=mini[minct];
+	  }
+	  else {
+	    if (valsb[i]>maxi[maxct]) valsb[i]=maxi[maxct];
+	    if (valsb[i]<mini[minct]) valsb[i]=mini[maxct];
+	  }
+	  if (i>=ondvals||valsi[i]!=valsb[i]) {
 	    retval=TRUE;
 	    valsi[i]=valsb[i];
-	    if (valsi[i]>maxi) valsi[i]=maxi;
-	    if (valsi[i]<mini) valsi[i]=mini;
 	  }
+	  if (++maxct==nmax) maxct=0;
+	  if (++minct==nmin) minct=0;
 	}
 	if (retval) {
 
@@ -829,6 +997,8 @@ boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, weed_plant_t *dpa
 	  weed_set_int_array(dparam,"value",ndvals,valsi);
 	  pthread_mutex_unlock(&mainw->data_mutex);
 	}
+	weed_free(maxi);
+	weed_free(mini);
 	weed_free(valsi);
 	weed_free(valsb);
       }
@@ -839,8 +1009,10 @@ boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, weed_plant_t *dpa
 	int *valsB=weed_get_boolean_array(sparam,"value",&error);
 	int *valsb=weed_get_boolean_array(dparam,"value",&error);
 
+	if (ndvals>ondvals) valsb=(int *)g_realloc(valsb,ndvals*sizeof(int));
+
 	for (i=0;i<ndvals;i++) {
-	  if (valsb[i]!=valsB[i]) {
+	  if (i>=ondvals||valsb[i]!=valsB[i]) {
 	    retval=TRUE;
 	    valsb[i]=valsB[i];
 	  }
@@ -939,9 +1111,9 @@ void pconx_chain_data(int key, int mode) {
       if ((oparam=pconx_get_out_param(key,mode,i,&autoscale))!=NULL) {
 	//#define DEBUG_PCONX
 #ifdef DEBUG_PCONX
-  g_print("got pconx to %d %d %d\n",key,mode,i);
+	g_print("got pconx to %d %d %d\n",key,mode,i);
 #endif
-  changed=pconx_convert_value_data(inst,i,inparams[i],oparam,autoscale);
+	changed=pconx_convert_value_data(inst,i,inparams[i],oparam,autoscale);
 
 	if (changed) {
 	  // only store value if it changed; for int, double or colour, store old value too
@@ -953,7 +1125,6 @@ void pconx_chain_data(int key, int mode) {
 	    if (copyto!=-1) rec_param_change(inst,copyto);
 	  }
 
-
 	  if (fx_dialog[1]!=NULL) {
 	    lives_rfx_t *rfx=(lives_rfx_t *)g_object_get_data(G_OBJECT(fx_dialog[1]),"rfx");
 	    if (!rfx->is_template) {
@@ -964,8 +1135,6 @@ void pconx_chain_data(int key, int mode) {
 		mainw->vrfx_update=rfx;
 	    }
 	  }
-
-
 
 	}
 

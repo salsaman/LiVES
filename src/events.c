@@ -5116,7 +5116,6 @@ render_details *create_render_details (gint type) {
     gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
   gtk_box_pack_start (GTK_BOX (top_vbox), label, FALSE, FALSE, 0);
-  rdet->encoder_combo = gtk_combo_box_new_text();
 
   if (!specified) {
     rdet->encoder_name=g_strdup(mainw->any_string);
@@ -5126,15 +5125,16 @@ render_details *create_render_details (gint type) {
     rdet->encoder_name=g_strdup(prefs->encoder.name);
   }
 
-  gtk_box_pack_start (GTK_BOX (top_vbox), rdet->encoder_combo, FALSE, FALSE, 10);
-
-  populate_combo_box(GTK_COMBO_BOX(rdet->encoder_combo), encoders);
+  rdet->encoder_combo = lives_standard_combo_new("",FALSE,encoders,LIVES_BOX(top_vbox),NULL);
+  
 
   rdet->encoder_name_fn = g_signal_connect_after(GTK_COMBO_BOX(rdet->encoder_combo), "changed",
 						 G_CALLBACK(on_encoder_entry_changed), rdet);
+
   g_signal_handler_block(rdet->encoder_combo, rdet->encoder_name_fn);
-  set_combo_box_active_string(GTK_COMBO_BOX(rdet->encoder_combo), rdet->encoder_name);
+  lives_combo_box_set_active_string(LIVES_COMBO_BOX(rdet->encoder_combo), rdet->encoder_name);
   g_signal_handler_unblock(rdet->encoder_combo, rdet->encoder_name_fn);
+
 
   if (encoders!=NULL) {
     g_list_free_strings (encoders);
@@ -5207,7 +5207,7 @@ render_details *create_render_details (gint type) {
   }
   else {
     g_signal_handler_block(rdet->ofmt_combo, rdet->encoder_ofmt_fn);
-    set_combo_box_active_string(GTK_COMBO_BOX(rdet->ofmt_combo), prefs->encoder.of_desc);
+    lives_combo_box_set_active_string(LIVES_COMBO_BOX(rdet->ofmt_combo), prefs->encoder.of_desc);
     g_signal_handler_unblock(rdet->ofmt_combo, rdet->encoder_ofmt_fn);
 
     check_encoder_restrictions(TRUE,FALSE,TRUE);
@@ -5227,7 +5227,7 @@ render_details *create_render_details (gint type) {
 
   label=gtk_label_new_with_mnemonic (_("_Always use these values"));
   gtk_widget_set_tooltip_text( rdet->always_checkbutton, _("Check this button to always use these values when entering multitrack mode. Choice can be re-enabled from Preferences."));
-  gtk_tooltips_copy(eventbox,rdet->always_checkbutton);
+  lives_tooltips_copy(eventbox,rdet->always_checkbutton);
   
   gtk_label_set_mnemonic_widget (GTK_LABEL (label),rdet->always_checkbutton);
   

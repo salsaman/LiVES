@@ -106,7 +106,7 @@ struct _dvgrabw *create_camwindow (s_cam *cam, gint type)
   dvgrabw->split=gtk_check_button_new();
 
   eventbox=gtk_event_box_new();
-  gtk_tooltips_copy(eventbox,dvgrabw->split);
+  lives_tooltips_copy(eventbox,dvgrabw->split);
   label=gtk_label_new_with_mnemonic (_("_Split into scenes"));
   gtk_label_set_mnemonic_widget (GTK_LABEL (label),dvgrabw->split);
   

@@ -799,15 +799,21 @@ static void omc_learn_link_params(lives_omc_match_node_t *mnode) {
 
 
 
-static void on_omc_combo_entry_changed (GtkEntry *macro_entry, gpointer ptr) {
-  const gchar *macro_text=gtk_entry_get_text(macro_entry);
+static void on_omc_combo_entry_changed (GtkComboBox *combo, gpointer ptr) {
+  const gchar *macro_text;
 
   int i;
     
   lives_omc_match_node_t *mnode=(lives_omc_match_node_t *)ptr;
 
-  gint row=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(macro_entry),"row"));
-  omclearn_w *omclw=(omclearn_w *)g_object_get_data(G_OBJECT(macro_entry),"omclw");
+  gint row=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(combo),"row"));
+  omclearn_w *omclw=(omclearn_w *)g_object_get_data(G_OBJECT(combo),"omclw");
+
+#if GTK_CHECK_VERSION(2,24,0)
+  macro_text=gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(combo));
+#else
+  macro_text=gtk_combo_box_get_active_text(combo);
+#endif
 
   if (mnode->treev2!=NULL) {
     // remove old mapping
@@ -938,34 +944,27 @@ static void cell_edited_callback (GtkCellRendererSpin *spinbutton, const gchar *
 
 
 static GtkWidget *create_omc_macro_combo(lives_omc_match_node_t *mnode, gint row, omclearn_w *omclw) {
-  GList *macro_list=NULL;
   int i;
-  gulong omc_combo_fn;
 
-  GtkWidget *combo = gtk_combo_new ();
-
-  macro_list=g_list_append(macro_list,mainw->none_string);
-
+  GtkWidget *combo;
+  
+  combo=lives_combo_box_text_new_with_entry();
+  
   for (i=0;i<N_OMC_MACROS;i++) {
     if (omc_macros[i].msg==NULL) break;
-    macro_list=g_list_append(macro_list,omc_macros[i].macro_text);
+
+    lives_combo_box_text_append_text(LIVES_COMBO_BOX_TEXT(combo),omc_macros[i].macro_text);
+
   }
 
-  combo_set_popdown_strings (GTK_COMBO (combo), macro_list);
-
-  g_list_free(macro_list);
-
-  gtk_editable_set_editable (GTK_EDITABLE((GTK_COMBO(combo))->entry),FALSE);
-  omc_combo_fn=g_signal_connect_after (G_OBJECT (GTK_COMBO(combo)->entry), "changed", G_CALLBACK (on_omc_combo_entry_changed), mnode);
-  
   if (mnode->macro!=-1) {
-    g_signal_handler_block(GTK_COMBO(combo)->entry,omc_combo_fn);
-    gtk_entry_set_text (GTK_ENTRY((GTK_COMBO(combo))->entry),omc_macros[mnode->macro].macro_text);
-    g_signal_handler_unblock(GTK_COMBO(combo)->entry,omc_combo_fn);
+    gtk_combo_box_set_active (GTK_COMBO_BOX(combo),mnode->macro);
   }
 
-  g_object_set_data(G_OBJECT((GTK_COMBO(combo))->entry),"row",GINT_TO_POINTER(row));
-  g_object_set_data(G_OBJECT((GTK_COMBO(combo))->entry),"omclw",(gpointer)omclw);
+  g_signal_connect_after (G_OBJECT (combo), "changed", G_CALLBACK (on_omc_combo_entry_changed), mnode);
+
+  g_object_set_data(G_OBJECT(combo),"row",GINT_TO_POINTER(row));
+  g_object_set_data(G_OBJECT(combo),"omclw",(gpointer)omclw);
 
   return combo;
 }
@@ -2142,6 +2141,10 @@ void on_midi_learn_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
 #ifdef OMC_MIDI_IMPL
       if (mainw->ext_cntl[EXT_CNTL_MIDI]) string=midi_mangle();
+      //#define TEST_OMC_LEARN
+#ifdef TEST_OMC_LEARN
+      string=g_strdup("176 10 0 1");
+#endif
       if (string!=NULL) {
 	omc_process_string(OMC_MIDI,string,TRUE,omclw);
 	g_free(string);

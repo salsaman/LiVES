@@ -2887,61 +2887,6 @@ zero_spinbuttons (void) {
 }
 
 
-void hide_cursor(GdkWindow *window) {
-  //make the cursor invisible in playback windows
-
-#if GTK_CHECK_VERSION(3,0,0)
-cairo_surface_t *s;
-GdkPixbuf *pixbuf;
-
- if (hidden_cursor==NULL) {
-   s = cairo_image_surface_create (CAIRO_FORMAT_A1, 1, 1);
-   pixbuf = gdk_pixbuf_get_from_surface (s,
-					 0, 0,
-					 1, 1);
-   
-   cairo_surface_destroy (s);
-   
-   hidden_cursor = gdk_cursor_new_from_pixbuf (gdk_display_get_default(), pixbuf, 0, 0);
-   
-   g_object_unref (pixbuf);
- }
-#else
-  char cursor_bits[] = {0x00};
-  char cursormask_bits[] = {0x00};
-  GdkPixmap *source, *mask;
-  GdkColor fg = { 0, 0, 0, 0 };
-  GdkColor bg = { 0, 0, 0, 0 };
-
-  if (hidden_cursor==NULL) {
-    source = gdk_bitmap_create_from_data (NULL, cursor_bits,
-					  1, 1);
-    mask = gdk_bitmap_create_from_data (NULL, cursormask_bits,
-					1, 1);
-    hidden_cursor = gdk_cursor_new_from_pixmap (source, mask, &fg, &bg, 0, 0);
-    gdk_pixmap_unref (source);
-    gdk_pixmap_unref (mask);
-  }
-#endif 
-  if (GDK_IS_WINDOW(window))
-    gdk_window_set_cursor (window, hidden_cursor);
-}
-
-
-void 
-unhide_cursor(GdkWindow *window) {
-  if (GDK_IS_WINDOW(window))
-    gdk_window_set_cursor(window,NULL);
-}
-
-
-
-LIVES_INLINE void toggle_button_toggle (GtkToggleButton *tbutton) {
-  if (gtk_toggle_button_get_active(tbutton)) gtk_toggle_button_set_active(tbutton,FALSE);
-  else gtk_toggle_button_set_active(tbutton,FALSE);
-}
-
-
 
 
 gboolean switch_aud_to_jack(void) {
@@ -3781,32 +3726,6 @@ add_to_recent(const gchar *filename, gdouble start, gint frames, const gchar *ex
   }
 
   g_free(file);
-}
-
-
-void lives_set_cursor_style(lives_cursor_t cstyle, GdkWindow *window) {
-  if (mainw->cursor!=NULL) gdk_cursor_unref(mainw->cursor);
-  mainw->cursor=NULL;
-
-  if (window==NULL) {
-    if (mainw->multitrack==NULL&&mainw->is_ready) window=mainw->LiVES->window;
-    else if (mainw->multitrack!=NULL&&mainw->multitrack->is_ready) window=mainw->multitrack->window->window;
-    else return;
-  }
-
-  switch(cstyle) {
-  case LIVES_CURSOR_NORMAL:
-    if (GDK_IS_WINDOW(window))
-      gdk_window_set_cursor (window, NULL);
-    return;
-  case LIVES_CURSOR_BUSY:
-    mainw->cursor=gdk_cursor_new(GDK_WATCH);
-    if (GDK_IS_WINDOW(window))
-      gdk_window_set_cursor (window, mainw->cursor);
-    return;
-  default:
-    return;
-  }
 }
 
 
@@ -4665,28 +4584,6 @@ gchar *insert_newlines(const gchar *text, int maxwidth) {
 }
 
 
-void combo_set_popdown_strings (GtkCombo *combo, GList *list) {
-  // this avoids an assert in some versions of GTK+ when list==NULL
-  GList *empty_list=NULL;
-  empty_list=g_list_append (empty_list,(gpointer)"");
-  if (list==NULL) gtk_combo_set_popdown_strings (combo,empty_list);
-  else {
-    g_list_free (empty_list);
-    gtk_combo_set_popdown_strings (combo,g_list_copy(list));
-  }
-}
-
-
-void get_border_size (GtkWidget *win, gint *bx, gint *by) {
-  GdkRectangle rect;
-  gint wx,wy;
-  gdk_window_get_frame_extents (GDK_WINDOW (win->window),&rect);
-  gdk_window_get_origin (GDK_WINDOW (win->window), &wx, &wy);
-  *bx=wx-rect.x;
-  *by=wy-rect.y;
-}
-
-
 
 gint hextodec (const gchar *string) {
   int i;
@@ -4728,101 +4625,6 @@ LIVES_INLINE guint32 fastrand(void)
 void fastsrand(guint32 seed)
 {
   fastrand_val = seed;
-}
-
-
-void set_fg_colour(gint red, gint green, gint blue) {
-  GdkColor col;
-  col.red=red*255;
-  col.green=green*255;
-  col.blue=blue*255;
-  if (mainw->general_gc==NULL) {
-    if (mainw->multitrack==NULL) mainw->general_gc=gdk_gc_new(GDK_DRAWABLE(mainw->LiVES->window));
-    else mainw->general_gc=gdk_gc_new(GDK_DRAWABLE(mainw->multitrack->window->window));
-  }
-  gdk_gc_set_rgb_fg_color(mainw->general_gc,&col);
-}
-
-
-gboolean
-label_act_toggle (GtkWidget *widget, GdkEventButton *event, GtkToggleButton *togglebutton) {
-  if (!GTK_WIDGET_IS_SENSITIVE(togglebutton)) return FALSE;
-  gtk_toggle_button_set_active (togglebutton, !gtk_toggle_button_get_active(togglebutton));
-  return FALSE;
-}
-
-gboolean
-widget_act_toggle (GtkWidget *widget, GtkToggleButton *togglebutton) {
-  gtk_toggle_button_set_active (togglebutton, TRUE);
-  return FALSE;
-}
-
-
-void gtk_tooltips_copy(GtkWidget *dest, GtkWidget *source) {
-  GtkTooltipsData *td=gtk_tooltips_data_get(source);
-  if (td==NULL) return;
-  gtk_tooltips_set_tip (td->tooltips, dest, td->tip_text, td->tip_private);
-}
-
-
-
-gchar *text_view_get_text(GtkTextView *textview) {
-  GtkTextIter siter,eiter;
-  GtkTextBuffer *textbuf=gtk_text_view_get_buffer (textview);
-  gtk_text_buffer_get_start_iter(textbuf,&siter);
-  gtk_text_buffer_get_end_iter(textbuf,&eiter);
-
-  return gtk_text_buffer_get_text(textbuf,&siter,&eiter,TRUE);
-}
-
-
-void text_view_set_text(GtkTextView *textview, const gchar *text) {
-  GtkTextBuffer *textbuf=gtk_text_view_get_buffer (textview);
-  gtk_text_buffer_set_text(textbuf,text,-1);
-}
-
-
-gint get_box_child_index (GtkBox *box, GtkWidget *tchild) {
-  GList *list=box->children;
-  GtkBoxChild *child;
-  int i=0;
-
-  while (list!=NULL) {
-    child=(GtkBoxChild *)list->data;
-    if (child->widget==tchild) return i;
-    list=list->next;
-    i++;
-  }
-  return -1;
-}
-
-
-
-void adjustment_configure(GtkAdjustment *adjustment,
-		     gdouble value,
-		     gdouble lower,
-		     gdouble upper,
-		     gdouble step_increment,
-		     gdouble page_increment,
-		     gdouble page_size) {
-  g_object_freeze_notify (G_OBJECT(adjustment));
-
-#ifdef HAVE_GTK_NICE_VERSION
-  gtk_adjustment_configure(adjustment,value,lower,upper,step_increment,page_increment,page_size);
-  g_object_thaw_notify (G_OBJECT(adjustment));
-  return;
-#else
-
-
-  adjustment->upper=upper;
-  adjustment->lower=lower;
-  adjustment->value=value;
-  adjustment->step_increment=step_increment;
-  adjustment->page_increment=page_increment;
-  adjustment->page_size=page_size;
-
-  g_object_thaw_notify (G_OBJECT(adjustment));
-#endif
 }
 
 

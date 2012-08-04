@@ -1446,7 +1446,7 @@ GtkWidget * create_rte_window (void) {
     eventbox=gtk_event_box_new();
     gtk_container_add(GTK_CONTAINER(eventbox),label);
     gtk_widget_set_tooltip_text( eventbox, _("Grab keyboard for this effect key"));
-    gtk_tooltips_copy(key_grabs[i],eventbox);
+    lives_tooltips_copy(key_grabs[i],eventbox);
     g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
 		      G_CALLBACK (label_act_toggle),
 		      key_grabs[i]);
@@ -1531,17 +1531,12 @@ GtkWidget * create_rte_window (void) {
       // create combo entry model
       model=rte_window_fx_model();
 
-
       combo = gtk_combo_box_new_with_model_and_entry (model);
 
       g_object_set_data (G_OBJECT(combo), "hashname", (gpointer)g_strdup(""));
       gtk_box_pack_start (GTK_BOX (hbox), combo, TRUE, TRUE, 0);
 
-#if GTK_CHECK_VERSION(2,24,0)
-      gtk_combo_box_set_entry_text_column(GTK_COMBO_BOX(combo),NAME_TYPE_COLUMN);
-#else
-      gtk_combo_box_entry_set_text_column(GTK_COMBO_BOX_ENTRY(combo),NAME_TYPE_COLUMN);
-#endif
+      lives_combo_box_set_entry_text_column(LIVES_COMBO_BOX(combo),NAME_TYPE_COLUMN);
 
       combo_entries[idx] = gtk_bin_get_child(GTK_BIN (combo));
       

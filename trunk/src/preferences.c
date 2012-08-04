@@ -1128,7 +1128,7 @@ gboolean apply_prefs(gboolean skip_warn) {
       // may fail
       if (!switch_aud_to_jack()) {
 	do_jack_noopen_warn();
-	set_combo_box_active_string(GTK_COMBO_BOX(prefsw->audp_combo), prefsw->orig_audp_name);
+	lives_combo_box_set_active_string(LIVES_COMBO_BOX(prefsw->audp_combo), prefsw->orig_audp_name);
       }
     }
     
@@ -1147,7 +1147,7 @@ gboolean apply_prefs(gboolean skip_warn) {
       else {
 	if (!switch_aud_to_pulse()) {
 	  // revert text
-	  set_combo_box_active_string(GTK_COMBO_BOX(prefsw->audp_combo), prefsw->orig_audp_name);
+	  lives_combo_box_set_active_string(LIVES_COMBO_BOX(prefsw->audp_combo), prefsw->orig_audp_name);
 	}
       }
     }
@@ -1569,7 +1569,7 @@ static void on_audp_entry_changed (GtkWidget *audp_combo, gpointer ptr) {
     do_aud_during_play_error();
     g_signal_handler_block(audp_combo, prefsw->audp_entry_func);
 
-    set_combo_box_active_string(GTK_COMBO_BOX(audp_combo), prefsw->audp_name);
+    lives_combo_box_set_active_string(LIVES_COMBO_BOX(audp_combo), prefsw->audp_name);
 
     //gtk_widget_queue_draw(audp_entry);
     g_signal_handler_unblock(audp_combo, prefsw->audp_entry_func);
@@ -1882,34 +1882,6 @@ void populate_combo_box(GtkComboBox *combo, GList *data)
   gtk_cell_layout_pack_start (GTK_CELL_LAYOUT (combo), renderer, FALSE);
 
   gtk_cell_layout_set_attributes (GTK_CELL_LAYOUT (combo), renderer, "text", 0, NULL);
-}
-
-/*
- * Set active string to the combo box, if it is in the given list
- */
-void set_combo_box_active_string(GtkComboBox *combo, gchar *active_str)
-{
-  gchar *text = NULL;
-  GtkTreeModel *model;
-  GtkTreeIter   iter;
-
-  model = gtk_combo_box_get_model( combo );
-
-  if ( gtk_tree_model_get_iter_first(model, &iter) ){
-    do {
-      gtk_tree_model_get( model, &iter, 0, &text, -1 );
-      if (!g_ascii_strcasecmp(text, active_str)) {
-	gtk_combo_box_set_active_iter(combo, &iter);
-                
-	if (text)
-	  g_free(text);
-
-	break;
-      }
-      if (text)
-	g_free(text);
-    } while ( gtk_tree_model_iter_next(model, &iter) );
-  }
 }
 
 
@@ -3104,7 +3076,7 @@ _prefsw *create_prefs_dialog (void) {
     gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
 
-  gtk_tooltips_copy(label, prefsw->pbq_combo);
+  lives_tooltips_copy(label, prefsw->pbq_combo);
   
   gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 10);
   gtk_box_pack_start (GTK_BOX (hbox), prefsw->pbq_combo, FALSE, FALSE, 10);
@@ -3199,7 +3171,7 @@ _prefsw *create_prefs_dialog (void) {
 		    NULL);
 
   if (mainw->vpp != NULL) {
-    set_combo_box_active_string(GTK_COMBO_BOX(pp_combo), mainw->vpp->name);
+    lives_combo_box_set_active_string(LIVES_COMBO_BOX(pp_combo), mainw->vpp->name);
   }
   else {
     gtk_combo_box_set_active(GTK_COMBO_BOX(pp_combo), 0);
@@ -3349,7 +3321,7 @@ _prefsw *create_prefs_dialog (void) {
   }
   // ---
   if (prefsw->audp_name!=NULL) 
-    set_combo_box_active_string(GTK_COMBO_BOX(prefsw->audp_combo), prefsw->audp_name);
+    lives_combo_box_set_active_string(LIVES_COMBO_BOX(prefsw->audp_combo), prefsw->audp_name);
   prefsw->orig_audp_name=g_strdup(prefsw->audp_name);
   //---
   hbox10 = gtk_hbox_new (FALSE, 0);
@@ -3691,7 +3663,7 @@ _prefsw *create_prefs_dialog (void) {
       encoders=filter_encoders_by_img_ext(encoders,prefs->image_ext);
       populate_combo_box(GTK_COMBO_BOX(prefsw->encoder_combo), encoders);
       // ---
-      set_combo_box_active_string(GTK_COMBO_BOX(prefsw->encoder_combo), prefs->encoder.name);
+      lives_combo_box_set_active_string(LIVES_COMBO_BOX(prefsw->encoder_combo), prefs->encoder.name);
       // ---
       g_list_free_strings (encoders);
       g_list_free (encoders);
@@ -3747,7 +3719,7 @@ _prefsw *create_prefs_dialog (void) {
     add_fill_to_box (GTK_BOX (hbox));
     gtk_widget_show_all(hbox);
 
-    set_combo_box_active_string(GTK_COMBO_BOX(prefsw->ofmt_combo), prefs->encoder.of_desc);
+    lives_combo_box_set_active_string(LIVES_COMBO_BOX(prefsw->ofmt_combo), prefs->encoder.of_desc);
 
     prefsw->acodec_combo = gtk_combo_box_new_text();
     prefs->acodec_list=NULL;
@@ -4975,7 +4947,7 @@ _prefsw *create_prefs_dialog (void) {
   }
   else theme = g_strdup(mainw->none_string);
   // ---
-  set_combo_box_active_string(GTK_COMBO_BOX(prefsw->theme_combo), theme);
+  lives_combo_box_set_active_string(LIVES_COMBO_BOX(prefsw->theme_combo), theme);
   //---
   g_free(theme);
   g_list_free_strings (themes);

@@ -4288,13 +4288,13 @@ on_encoder_entry_changed (GtkComboBox *combo, gpointer ptr) {
 
     g_signal_handler_block(GTK_COMBO_BOX(rdet->encoder_combo), rdet->encoder_name_fn);
     // ---
-    lives_combo_box_set_active_string(LIVES_COMBO_BOX(rdet->encoder_combo), mainw->any_string);
+    lives_combo_set_active_string(LIVES_COMBO(rdet->encoder_combo), mainw->any_string);
     // ---
     g_signal_handler_unblock(GTK_COMBO_BOX(rdet->encoder_combo), rdet->encoder_name_fn);
 
-    populate_combo_box(GTK_COMBO_BOX(rdet->ofmt_combo), ofmt);
+    lives_combo_populate(LIVES_COMBO(rdet->ofmt_combo), ofmt);
     g_signal_handler_block (GTK_COMBO_BOX(rdet->ofmt_combo), rdet->encoder_ofmt_fn);
-    lives_combo_box_set_active_string(LIVES_COMBO_BOX(rdet->ofmt_combo),mainw->any_string);
+    lives_combo_set_active_string(LIVES_COMBO(rdet->ofmt_combo),mainw->any_string);
     g_signal_handler_unblock (GTK_COMBO_BOX(rdet->ofmt_combo), rdet->encoder_ofmt_fn);
 
     g_list_free(ofmt);
@@ -4305,9 +4305,9 @@ on_encoder_entry_changed (GtkComboBox *combo, gpointer ptr) {
     }
     prefs->acodec_list = g_list_append(prefs->acodec_list, g_strdup(mainw->any_string));
 
-    populate_combo_box(GTK_COMBO_BOX(rdet->acodec_combo), prefs->acodec_list);
+    lives_combo_populate(LIVES_COMBO(rdet->acodec_combo), prefs->acodec_list);
 
-    lives_combo_box_set_active_string(LIVES_COMBO_BOX(rdet->acodec_combo),mainw->any_string);
+    lives_combo_set_active_string(LIVES_COMBO(rdet->acodec_combo),mainw->any_string);
 
     g_free(new_encoder_name);
   
@@ -4354,7 +4354,7 @@ on_encoder_entry_changed (GtkComboBox *combo, gpointer ptr) {
     if (prefsw != NULL) {
       g_signal_handler_block(GTK_COMBO_BOX(prefsw->encoder_combo), prefsw->encoder_name_fn);
       // ---
-      lives_combo_box_set_active_string(LIVES_COMBO_BOX(prefsw->encoder_combo), prefs->encoder.name);
+      lives_combo_set_active_string(LIVES_COMBO(prefsw->encoder_combo), prefs->encoder.name);
       // ---
       g_signal_handler_unblock(GTK_COMBO_BOX(prefsw->encoder_combo), prefsw->encoder_name_fn);
     }
@@ -4362,7 +4362,7 @@ on_encoder_entry_changed (GtkComboBox *combo, gpointer ptr) {
     if (rdet != NULL) {
       g_signal_handler_block(GTK_COMBO_BOX(rdet->encoder_combo), rdet->encoder_name_fn);
       // ---
-      lives_combo_box_set_active_string(LIVES_COMBO_BOX(rdet->encoder_combo), rdet->encoder_name);
+      lives_combo_set_active_string(LIVES_COMBO(rdet->encoder_combo), rdet->encoder_name);
       // ---
       g_signal_handler_unblock(GTK_COMBO_BOX(rdet->encoder_combo), rdet->encoder_name_fn);
     }
@@ -4390,7 +4390,7 @@ on_encoder_entry_changed (GtkComboBox *combo, gpointer ptr) {
     if (prefsw!=NULL) {
       g_signal_handler_block(GTK_COMBO_BOX(prefsw->encoder_combo), prefsw->encoder_name_fn);
       // ---
-      lives_combo_box_set_active_string(LIVES_COMBO_BOX(prefsw->encoder_combo), prefs->encoder.name);
+      lives_combo_set_active_string(LIVES_COMBO(prefsw->encoder_combo), prefs->encoder.name);
       // ---
       g_signal_handler_unblock(GTK_COMBO_BOX(prefsw->encoder_combo), prefsw->encoder_name_fn);
     }
@@ -4398,7 +4398,7 @@ on_encoder_entry_changed (GtkComboBox *combo, gpointer ptr) {
     if (rdet!=NULL) {
       g_signal_handler_block (GTK_COMBO_BOX(rdet->encoder_combo), rdet->encoder_name_fn);
       // ---
-      lives_combo_box_set_active_string(LIVES_COMBO_BOX(rdet->encoder_combo), rdet->encoder_name);
+      lives_combo_set_active_string(LIVES_COMBO(rdet->encoder_combo), rdet->encoder_name);
       // ---
       g_signal_handler_unblock (GTK_COMBO_BOX(rdet->encoder_combo), rdet->encoder_name_fn);
     }
@@ -4425,7 +4425,7 @@ on_encoder_entry_changed (GtkComboBox *combo, gpointer ptr) {
       // we have to block here, otherwise on_ofmt_changed gets called for every added entry !
       g_signal_handler_block(GTK_COMBO_BOX(prefsw->ofmt_combo), prefsw->encoder_ofmt_fn);
 
-      populate_combo_box(GTK_COMBO_BOX(prefsw->ofmt_combo), ofmt);
+      lives_combo_populate(LIVES_COMBO(prefsw->ofmt_combo), ofmt);
 
       g_signal_handler_unblock(GTK_COMBO_BOX(prefsw->ofmt_combo), prefsw->encoder_ofmt_fn);
     }
@@ -4434,7 +4434,7 @@ on_encoder_entry_changed (GtkComboBox *combo, gpointer ptr) {
       // we have to block here, otherwise on_ofmt_changed gets called for every added entry !
       g_signal_handler_block (GTK_COMBO_BOX(rdet->ofmt_combo), rdet->encoder_ofmt_fn);
 
-      populate_combo_box(GTK_COMBO_BOX(rdet->ofmt_combo), ofmt);
+      lives_combo_populate(LIVES_COMBO(rdet->ofmt_combo), ofmt);
 
       g_signal_handler_unblock(GTK_COMBO_BOX(rdet->ofmt_combo), rdet->encoder_ofmt_fn);
     }
@@ -4445,7 +4445,7 @@ on_encoder_entry_changed (GtkComboBox *combo, gpointer ptr) {
     array=g_strsplit ((gchar *)g_list_nth_data (ofmt_all,0),"|",-1);
 
     if (rdet!=NULL) {
-      lives_combo_box_set_active_string(LIVES_COMBO_BOX(rdet->ofmt_combo), array[1]);
+      lives_combo_set_active_string(LIVES_COMBO(rdet->ofmt_combo), array[1]);
 
       if (prefsw==NULL&&strcmp(prefs->encoder.name,future_prefs->encoder.name)) {
 	g_snprintf(prefs->encoder.name,51,"%s",future_prefs->encoder.name);
@@ -4459,7 +4459,7 @@ on_encoder_entry_changed (GtkComboBox *combo, gpointer ptr) {
     }
 
     if (prefsw!=NULL) {
-      lives_combo_box_set_active_string(LIVES_COMBO_BOX(prefsw->ofmt_combo), array[1]);
+      lives_combo_set_active_string(LIVES_COMBO(prefsw->ofmt_combo), array[1]);
     }
     on_encoder_ofmt_changed (NULL, rdet);
     g_strfreev (array);

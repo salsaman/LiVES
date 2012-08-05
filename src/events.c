@@ -5125,14 +5125,18 @@ render_details *create_render_details (gint type) {
     rdet->encoder_name=g_strdup(prefs->encoder.name);
   }
 
-  rdet->encoder_combo = lives_standard_combo_new("",FALSE,encoders,LIVES_BOX(top_vbox),NULL);
-  
+  rdet->encoder_combo = lives_combo_new();
+  lives_combo_populate(LIVES_COMBO(rdet->encoder_combo),encoders);
+  gtk_widget_show(rdet->encoder_combo);
+
+  gtk_box_pack_start (GTK_BOX (top_vbox), rdet->encoder_combo, FALSE, FALSE, 0);
+
 
   rdet->encoder_name_fn = g_signal_connect_after(GTK_COMBO_BOX(rdet->encoder_combo), "changed",
 						 G_CALLBACK(on_encoder_entry_changed), rdet);
 
   g_signal_handler_block(rdet->encoder_combo, rdet->encoder_name_fn);
-  lives_combo_box_set_active_string(LIVES_COMBO_BOX(rdet->encoder_combo), rdet->encoder_name);
+  lives_combo_set_active_string(LIVES_COMBO(rdet->encoder_combo), rdet->encoder_name);
   g_signal_handler_unblock(rdet->encoder_combo, rdet->encoder_name_fn);
 
 
@@ -5170,12 +5174,13 @@ render_details *create_render_details (gint type) {
   }
 
   label = gtk_label_new (_("    Output format           "));
-  rdet->ofmt_combo = gtk_combo_box_new_text();
+  rdet->ofmt_combo = lives_combo_new();
   if (palette->style&STYLE_1) {
     gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
 
-  populate_combo_box(GTK_COMBO_BOX(rdet->ofmt_combo), ofmt);
+  lives_combo_populate(LIVES_COMBO(rdet->ofmt_combo), ofmt);
+
   gtk_combo_box_set_active(GTK_COMBO_BOX(rdet->ofmt_combo), 0);
 
   g_list_free_strings(ofmt);
@@ -5186,7 +5191,7 @@ render_details *create_render_details (gint type) {
   gtk_box_pack_start (GTK_BOX (top_vbox), label, FALSE, FALSE, 0);
   gtk_box_pack_start (GTK_BOX (top_vbox), rdet->ofmt_combo, FALSE, FALSE, 10);
   
-  rdet->acodec_combo = gtk_combo_box_new_text ();
+  rdet->acodec_combo = lives_combo_new ();
   alabel = gtk_label_new (_("    Audio format           "));
   if (palette->style&STYLE_1) {
     gtk_widget_modify_fg(alabel, GTK_STATE_NORMAL, &palette->normal_fore);
@@ -5202,12 +5207,12 @@ render_details *create_render_details (gint type) {
       prefs->acodec_list=NULL;
     }
     prefs->acodec_list=g_list_append(prefs->acodec_list,g_strdup(mainw->any_string));
-    populate_combo_box(GTK_COMBO_BOX(rdet->acodec_combo), prefs->acodec_list);
+    lives_combo_populate(LIVES_COMBO(rdet->acodec_combo), prefs->acodec_list);
     gtk_combo_box_set_active(GTK_COMBO_BOX(rdet->acodec_combo), 0);
   }
   else {
     g_signal_handler_block(rdet->ofmt_combo, rdet->encoder_ofmt_fn);
-    lives_combo_box_set_active_string(LIVES_COMBO_BOX(rdet->ofmt_combo), prefs->encoder.of_desc);
+    lives_combo_set_active_string(LIVES_COMBO(rdet->ofmt_combo), prefs->encoder.of_desc);
     g_signal_handler_unblock(rdet->ofmt_combo, rdet->encoder_ofmt_fn);
 
     check_encoder_restrictions(TRUE,FALSE,TRUE);

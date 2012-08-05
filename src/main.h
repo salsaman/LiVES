@@ -108,7 +108,6 @@ typedef int lives_pgid_t;
 #define  __STDC_CONSTANT_MACROS
 #include <stdint.h>
 
-#include "widget-helper.h"
 
 #define QUOTEME(x) #x
 
@@ -224,6 +223,8 @@ typedef int lives_pgid_t;
 #ifdef PRODUCE_LOG
 #define LIVES_LOG "lives.log"
 #endif
+
+#include "widget-helper.h"
 
 typedef  void *(*fn_ptr) (void *ptr);
 

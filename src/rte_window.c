@@ -1536,9 +1536,9 @@ GtkWidget * create_rte_window (void) {
       g_object_set_data (G_OBJECT(combo), "hashname", (gpointer)g_strdup(""));
       gtk_box_pack_start (GTK_BOX (hbox), combo, TRUE, TRUE, 0);
 
-      lives_combo_box_set_entry_text_column(LIVES_COMBO_BOX(combo),NAME_TYPE_COLUMN);
+      lives_combo_set_entry_text_column(LIVES_COMBO(combo),NAME_TYPE_COLUMN);
 
-      combo_entries[idx] = gtk_bin_get_child(GTK_BIN (combo));
+      combo_entries[idx] = lives_combo_get_entry(combo);
       
       gtk_entry_set_text (GTK_ENTRY (combo_entries[idx]),(tmp=rte_keymode_get_filter_name(i+1,j)));
       g_free(tmp);

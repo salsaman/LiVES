@@ -948,12 +948,12 @@ static GtkWidget *create_omc_macro_combo(lives_omc_match_node_t *mnode, gint row
 
   GtkWidget *combo;
   
-  combo=lives_combo_box_text_new_with_entry();
+  combo=lives_combo_new();
   
   for (i=0;i<N_OMC_MACROS;i++) {
     if (omc_macros[i].msg==NULL) break;
 
-    lives_combo_box_text_append_text(LIVES_COMBO_BOX_TEXT(combo),omc_macros[i].macro_text);
+    lives_combo_append_text(LIVES_COMBO_BOX_TEXT(combo),omc_macros[i].macro_text);
 
   }
 

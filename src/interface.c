@@ -2026,7 +2026,10 @@ _entryw* create_rename_dialog (gint type) {
 
   hbox = gtk_hbox_new (FALSE, 0);
   gtk_widget_show (hbox);
-  if (type!=6) {
+  if (type==3) {
+    gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, TRUE, FALSE, 40);
+  }
+  else if (type!=6) {
     gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, TRUE, TRUE, 0);
   }
   else {
@@ -2068,10 +2071,13 @@ _entryw* create_rename_dialog (gint type) {
     GtkEntryCompletion *completion;
     GList *xlist;
 
-    set_combo=gtk_combo_new();
+    set_combo=lives_combo_new();
+
     renamew->setlist=get_set_list(prefs->tmpdir);
-    combo_set_popdown_strings(GTK_COMBO(set_combo),renamew->setlist);
-    renamew->entry=(GTK_COMBO(set_combo))->entry;
+
+    lives_combo_populate(LIVES_COMBO(set_combo),renamew->setlist);
+
+    renamew->entry=gtk_bin_get_child(GTK_BIN(set_combo));
 
     if (strlen(prefs->ar_clipset_name)) {
       // set default to our auto-reload clipset
@@ -2232,7 +2238,7 @@ static void rb_tvcarddef_toggled(GtkToggleButton *tbut, gpointer user_data) {
 
 static void after_dialog_combo_changed (GtkWidget *combo, gpointer user_data) {
   GList *list=(GList *)user_data;
-  gchar *etext=gtk_combo_box_get_active_text(GTK_COMBO_BOX(combo));
+  gchar *etext=lives_combo_get_active_text(LIVES_COMBO(combo));
   mainw->fx1_val=lives_list_index(list,etext);
 }
 
@@ -2297,9 +2303,9 @@ GtkWidget *create_combo_dialog (gint type, gpointer user_data) {
   gtk_box_pack_start (GTK_BOX (dialog_vbox), label, TRUE, TRUE, 0);
   gtk_widget_show (label);
 
-  combo = gtk_combo_box_new_text();
+  combo = lives_combo_new();
+  lives_combo_populate(LIVES_COMBO(combo),list);
 
-  populate_combo_box(GTK_COMBO_BOX(combo), list);
   gtk_combo_box_set_active(GTK_COMBO_BOX(combo), 0);
 
   g_signal_connect_after (G_OBJECT (combo), "changed", G_CALLBACK (after_dialog_combo_changed), list);
@@ -2689,56 +2695,21 @@ create_cdtrack_dialog (gint type, gpointer user_data)
 
     hbox = gtk_hbox_new (FALSE, 0);
 
-    tvcardw->combod = gtk_combo_new ();
- 
-    label = gtk_label_new_with_mnemonic (_("Driver"));
-    gtk_label_set_mnemonic_widget (GTK_LABEL (label),GTK_COMBO(tvcardw->combod)->entry);
- 
-    if (palette->style&STYLE_1) {
-      gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-    }
-
-    gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 10);
-    gtk_box_pack_start (GTK_BOX (hbox), tvcardw->combod, FALSE, TRUE, 10);
-    gtk_editable_set_editable (GTK_EDITABLE((GTK_COMBO (tvcardw->combod))->entry),FALSE);
-   
-    combo_set_popdown_strings (GTK_COMBO (tvcardw->combod), dlist);
-    gtk_entry_set_activates_default(GTK_ENTRY((GTK_COMBO(tvcardw->combod))->entry),TRUE);
 
 
+    tvcardw->combod = lives_standard_combo_new (_("_Driver"),TRUE,dlist,LIVES_BOX(hbox),NULL);
+    gtk_combo_box_set_active(GTK_COMBO_BOX(tvcardw->combod), 0);
 
-
-    tvcardw->comboo = gtk_combo_new ();
- 
-    label = gtk_label_new_with_mnemonic (_("Output format"));
-    gtk_label_set_mnemonic_widget (GTK_LABEL (label),GTK_COMBO(tvcardw->comboo)->entry);
- 
-    if (palette->style&STYLE_1) {
-      gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-    }
-
-    gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 10);
-    gtk_box_pack_start (GTK_BOX (hbox), tvcardw->comboo, FALSE, TRUE, 10);
-    gtk_editable_set_editable (GTK_EDITABLE((GTK_COMBO (tvcardw->comboo))->entry),FALSE);
-    gtk_entry_set_activates_default(GTK_ENTRY((GTK_COMBO(tvcardw->comboo))->entry),TRUE);
-   
-    combo_set_popdown_strings (GTK_COMBO (tvcardw->comboo), olist);
+    tvcardw->comboo = lives_standard_combo_new (_("_Output format"),TRUE,olist,LIVES_BOX(hbox),NULL);
+    gtk_combo_box_set_active(GTK_COMBO_BOX(tvcardw->comboo), 0);
 
 
     gtk_widget_show_all (hbox);
     gtk_box_pack_start (GTK_BOX (tvcardw->adv_vbox), hbox, TRUE, FALSE, 0);
 
-
-
-
-
-
-
-
     g_signal_connect (GTK_OBJECT (tvcardw->advbutton), "clicked",
 		      G_CALLBACK (on_liveinp_advanced_clicked),
 		      tvcardw);
-
 
     gtk_widget_hide(tvcardw->adv_vbox);
 

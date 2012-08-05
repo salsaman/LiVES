@@ -15,7 +15,7 @@ void on_merge_ok_clicked (GtkButton *, gpointer);
 
 void on_align_start_end_toggled (GtkToggleButton *, gpointer);
 
-void on_trans_method_changed (GtkWidget *, gpointer);
+void on_trans_method_changed (GtkComboBox *, gpointer);
 
 void bang (GtkWidget *, gpointer);
 

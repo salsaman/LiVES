@@ -949,34 +949,11 @@ _vppaw *on_vpp_advanced_clicked (GtkButton *button, gpointer user_data) {
     }
   }
 
-  // fps
-  combo = gtk_combo_new ();
 
   if (tmpvpp->get_fps_list!=NULL&&(fps_list=(*tmpvpp->get_fps_list)(tmpvpp->palette))!=NULL) {
     int nfps,i;
     gchar **array=g_strsplit (fps_list,"|",-1);
-    
-    hbox = gtk_hbox_new (FALSE, 0);
-    gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, FALSE, FALSE, 10);
-    add_fill_to_box(GTK_BOX(hbox));
 
-    gtk_widget_set_tooltip_text( combo, _("Fixed framerate for plugin.\n"));
-    
-    label = gtk_label_new_with_mnemonic (_("_FPS"));
-    gtk_label_set_mnemonic_widget (GTK_LABEL (label),GTK_COMBO(combo)->entry);
-  
-    if (palette->style&STYLE_1) {
-      gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-    }
-    
-    gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 10);
-    gtk_box_pack_start (GTK_BOX (hbox), combo, FALSE, FALSE, 10);
-    add_fill_to_box(GTK_BOX(hbox));
-
-    vppa->fps_entry=(GTK_COMBO(combo))->entry;
-
-    gtk_editable_set_editable (GTK_EDITABLE((GTK_COMBO (combo))->entry),FALSE);
-    
     nfps=get_token_count((gchar *)fps_list,'|');
     for (i=0;i<nfps;i++) {
       if (strlen(array[i])&&strcmp(array[i],"\n")) {
@@ -987,7 +964,10 @@ _vppaw *on_vpp_advanced_clicked (GtkButton *button, gpointer user_data) {
       }
     }
 
-    combo_set_popdown_strings (GTK_COMBO (combo), fps_list_strings);
+    // fps
+    combo = lives_standard_combo_new (_("_FPS"),TRUE,fps_list_strings,LIVES_BOX(dialog_vbox),_("Fixed framerate for plugin.\n"));
+    vppa->fps_entry=lives_combo_get_entry(LIVES_COMBO(combo));
+
     g_list_free_strings(fps_list_strings);
     g_list_free(fps_list_strings);
     fps_list_strings=NULL;
@@ -1046,31 +1026,8 @@ _vppaw *on_vpp_advanced_clicked (GtkButton *button, gpointer user_data) {
   
   // palette
 
-  combo = gtk_combo_new ();
   if (tmpvpp->get_palette_list!=NULL&&(pal_list=(*tmpvpp->get_palette_list)())!=NULL) {
     int i;
-    
-    hbox = gtk_hbox_new (FALSE, 0);
-    gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, FALSE, FALSE, 10);
-    add_fill_to_box(GTK_BOX(hbox));
-    
-    gtk_widget_set_tooltip_text( combo, _("Colourspace input to the plugin.\n"));
-    
-    label = gtk_label_new_with_mnemonic (_("_Colourspace"));
-    gtk_label_set_mnemonic_widget (GTK_LABEL (label),GTK_COMBO(combo)->entry);
-  
-    if (palette->style&STYLE_1) {
-      gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-    }
-    
-    gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 10);
-    gtk_box_pack_start (GTK_BOX (hbox), combo, FALSE, FALSE, 10);
-    add_fill_to_box(GTK_BOX(hbox));
-
-    vppa->pal_entry=(GTK_COMBO(combo))->entry;
-
-    gtk_editable_set_editable (GTK_EDITABLE((GTK_COMBO (combo))->entry),FALSE);
-    gtk_entry_set_activates_default(GTK_ENTRY((GTK_COMBO(combo))->entry),TRUE);
     
     for (i=0;pal_list[i]!=WEED_PALETTE_END;i++) {
       int j=0;
@@ -1087,7 +1044,9 @@ _vppaw *on_vpp_advanced_clicked (GtkButton *button, gpointer user_data) {
 	pal_list_strings=g_list_append (pal_list_strings, g_strdup(string));
       }
     }
-    combo_set_popdown_strings (GTK_COMBO (combo), pal_list_strings);
+
+    combo = lives_standard_combo_new (_("_Colourspace"),TRUE,pal_list_strings,LIVES_BOX(dialog_vbox),_("Colourspace input to the plugin.\n"));
+    vppa->pal_entry=lives_combo_get_entry(LIVES_COMBO(combo));
 
     if (tmpvpp->get_yuv_palette_clamping!=NULL&&weed_palette_is_yuv_palette(tmpvpp->palette)) {
       int *clampings=tmpvpp->get_yuv_palette_clamping(tmpvpp->palette);

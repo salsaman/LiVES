@@ -90,7 +90,7 @@ LIVES_INLINE LiVESPixbuf *lives_pixbuf_new_from_data (const unsigned char *buf, 
 
 
 
-LIVES_INLINE LiVESPixbuf *lives_pixbuf_new_from_file(const char *filename, GError **error) {
+LIVES_INLINE LiVESPixbuf *lives_pixbuf_new_from_file(const char *filename, LiVESError **error) {
 #ifdef GUI_GTK
   return gdk_pixbuf_new_from_file(filename, error);
 #endif
@@ -114,7 +114,7 @@ LIVES_INLINE LiVESPixbuf *lives_pixbuf_new_from_file(const char *filename, GErro
 
 LIVES_INLINE LiVESPixbuf *lives_pixbuf_new_from_file_at_scale(const char *filename, int width, int height, 
 							      boolean preserve_aspect_ratio,
-							      GError **error) {
+							      LiVESError **error) {
 
 #ifdef GUI_GTK
   return gdk_pixbuf_new_from_file_at_scale(filename, width, height, preserve_aspect_ratio, error);
@@ -189,7 +189,7 @@ LIVES_INLINE int lives_pixbuf_get_n_channels(const LiVESPixbuf *pixbuf) {
 
 
 
-LIVES_INLINE guchar *lives_pixbuf_get_pixels(const LiVESPixbuf *pixbuf) {
+LIVES_INLINE unsigned char *lives_pixbuf_get_pixels(const LiVESPixbuf *pixbuf) {
 #ifdef GUI_GTK
   return gdk_pixbuf_get_pixels(pixbuf);
 #endif
@@ -200,7 +200,7 @@ LIVES_INLINE guchar *lives_pixbuf_get_pixels(const LiVESPixbuf *pixbuf) {
 }
 
 
-LIVES_INLINE const guchar *lives_pixbuf_get_pixels_readonly(const LiVESPixbuf *pixbuf) {
+LIVES_INLINE const unsigned char *lives_pixbuf_get_pixels_readonly(const LiVESPixbuf *pixbuf) {
 
 #ifdef GUI_GTK
   return (const guchar *)gdk_pixbuf_get_pixels(pixbuf);
@@ -246,7 +246,7 @@ LIVES_INLINE LiVESPixbuf *lives_pixbuf_scale_simple(const LiVESPixbuf *src, int 
 }
 
 
-LiVESWidget *lives_combo_box_text_new_with_entry(void) {
+LiVESWidget *lives_combo_new(void) {
   LiVESWidget *combo;
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(2,24,0)
@@ -259,7 +259,7 @@ LiVESWidget *lives_combo_box_text_new_with_entry(void) {
 }
 
 
-void lives_combo_box_text_append_text(LiVESComboBoxText *combo, const char *text) {
+void lives_combo_append_text(LiVESCombo *combo, const char *text) {
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(2,24,0)
   gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(combo),text);
@@ -271,7 +271,7 @@ void lives_combo_box_text_append_text(LiVESComboBoxText *combo, const char *text
 
 
 
-void lives_combo_box_set_entry_text_column(LiVESComboBox *combo, int column) {
+void lives_combo_set_entry_text_column(LiVESComboBox *combo, int column) {
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(2,24,0)
   gtk_combo_box_set_entry_text_column(GTK_COMBO_BOX(combo),column);
@@ -280,6 +280,19 @@ void lives_combo_box_set_entry_text_column(LiVESComboBox *combo, int column) {
 #endif
 #endif
 }
+
+
+char *lives_combo_get_active_text(LiVESComboBox *combo) {
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(2,24,0)
+  return gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(combo));
+#else
+  return gtk_combo_box_get_active_text(GTK_COMBO_BOX(combo));
+#endif
+#endif
+}
+
+
 
 
 boolean lives_toggle_button_get_active(LiVESToggleButton *button) {
@@ -312,6 +325,13 @@ void lives_tooltips_set_tip (LiVESTooltips *tooltips, LiVESWidget *widget, const
 
 
 // compound functions
+
+void lives_combo_populate(LiVESCombo *combo, LiVESList *list) {
+  while (list!=NULL) {
+    lives_combo_append_text(LIVES_COMBO(combo),(const char *)list->data);
+    list=list->next;
+  }
+}
 
 
 void lives_tooltips_copy(LiVESWidget *dest, LiVESWidget *source) {
@@ -523,7 +543,7 @@ LiVESWidget *lives_standard_combo_new (const char *labeltext, boolean use_mnemon
   LiVESWidget *label;
   LiVESWidget *hbox;
 
-  combo=lives_combo_box_text_new_with_entry();
+  combo=lives_combo_new();
 
   if (tooltip!=NULL) gtk_widget_set_tooltip_text(combo, tooltip);
   
@@ -557,11 +577,7 @@ LiVESWidget *lives_standard_combo_new (const char *labeltext, boolean use_mnemon
   gtk_editable_set_editable (GTK_EDITABLE(gtk_bin_get_child(GTK_BIN (combo))),FALSE);
   gtk_entry_set_activates_default(GTK_ENTRY(gtk_bin_get_child(GTK_BIN (combo))),TRUE);
 
-  while (list!=NULL) {
-    lives_combo_box_text_append_text(LIVES_COMBO_BOX_TEXT(combo),(const char *)list->data);
-    list=list->next;
-  }
-
+  lives_combo_populate(LIVES_COMBO(combo),list);
 
 #endif
 
@@ -572,13 +588,34 @@ LiVESWidget *lives_standard_combo_new (const char *labeltext, boolean use_mnemon
 
 
 // utils
+LiVESWidget *lives_combo_get_entry(LiVESCombo *widget) {
+#ifdef GUI_GTK
+  return gtk_bin_get_child(GTK_BIN(widget));
+#endif
+}
+
+
+boolean label_act_toggle (LiVESWidget *widget, LiVESEventButton *event, LiVESToggleButton *togglebutton) {
+  if (!LIVES_WIDGET_IS_SENSITIVE(togglebutton)) return FALSE;
+  lives_toggle_button_set_active (togglebutton, !lives_toggle_button_get_active(togglebutton));
+  return FALSE;
+}
+
+boolean widget_act_toggle (LiVESWidget *widget, LiVESToggleButton *togglebutton) {
+  if (!LIVES_WIDGET_IS_SENSITIVE(togglebutton)) return FALSE;
+  lives_toggle_button_set_active (togglebutton, TRUE);
+  return FALSE;
+}
+
+LIVES_INLINE void toggle_button_toggle (LiVESToggleButton *tbutton) {
+  if (lives_toggle_button_get_active(tbutton)) lives_toggle_button_set_active(tbutton,FALSE);
+  else lives_toggle_button_set_active(tbutton,FALSE);
+}
 
 /*
  * Set active string to the combo box
  */
-
-void lives_combo_box_set_active_string(LiVESComboBox *combo, char *active_str)
-{
+void lives_combo_set_active_string(LiVESComboBox *combo, const char *active_str) {
 
   // TODO ***
 
@@ -629,20 +666,7 @@ void set_fg_colour(gint red, gint green, gint blue) {
 }
 
 
-boolean label_act_toggle (LiVESWidget *widget, LiVESEventButton *event, LiVESToggleButton *togglebutton) {
-  if (!LIVES_WIDGET_IS_SENSITIVE(togglebutton)) return FALSE;
-  lives_toggle_button_set_active (togglebutton, !lives_toggle_button_get_active(togglebutton));
-  return FALSE;
-}
-
-boolean widget_act_toggle (LiVESWidget *widget, LiVESToggleButton *togglebutton) {
-  if (!LIVES_WIDGET_IS_SENSITIVE(togglebutton)) return FALSE;
-  lives_toggle_button_set_active (togglebutton, TRUE);
-  return FALSE;
-}
-
-
-gchar *text_view_get_text(GtkTextView *textview) {
+char *text_view_get_text(LiVESTextView *textview) {
   GtkTextIter siter,eiter;
   GtkTextBuffer *textbuf=gtk_text_view_get_buffer (textview);
   gtk_text_buffer_get_start_iter(textbuf,&siter);
@@ -652,13 +676,13 @@ gchar *text_view_get_text(GtkTextView *textview) {
 }
 
 
-void text_view_set_text(GtkTextView *textview, const gchar *text) {
+void text_view_set_text(LiVESTextView *textview, const gchar *text) {
   GtkTextBuffer *textbuf=gtk_text_view_get_buffer (textview);
   gtk_text_buffer_set_text(textbuf,text,-1);
 }
 
 
-gint get_box_child_index (GtkBox *box, GtkWidget *tchild) {
+int get_box_child_index (LiVESBox *box, LiVESWidget *tchild) {
   GList *list=box->children;
   GtkBoxChild *child;
   int i=0;
@@ -673,13 +697,13 @@ gint get_box_child_index (GtkBox *box, GtkWidget *tchild) {
 }
 
 
-void adjustment_configure(GtkAdjustment *adjustment,
-		     gdouble value,
-		     gdouble lower,
-		     gdouble upper,
-		     gdouble step_increment,
-		     gdouble page_increment,
-		     gdouble page_size) {
+void adjustment_configure(LiVESAdjustment *adjustment,
+		     double value,
+		     double lower,
+		     double upper,
+		     double step_increment,
+		     double page_increment,
+		     double page_size) {
   g_object_freeze_notify (G_OBJECT(adjustment));
 
 #ifdef HAVE_GTK_NICE_VERSION
@@ -701,7 +725,7 @@ void adjustment_configure(GtkAdjustment *adjustment,
 }
 
 
-void lives_set_cursor_style(lives_cursor_t cstyle, GdkWindow *window) {
+void lives_set_cursor_style(lives_cursor_t cstyle, LiVESXWindow *window) {
   if (mainw->cursor!=NULL) gdk_cursor_unref(mainw->cursor);
   mainw->cursor=NULL;
 
@@ -727,14 +751,9 @@ void lives_set_cursor_style(lives_cursor_t cstyle, GdkWindow *window) {
 }
 
 
-LIVES_INLINE void toggle_button_toggle (GtkToggleButton *tbutton) {
-  if (gtk_toggle_button_get_active(tbutton)) gtk_toggle_button_set_active(tbutton,FALSE);
-  else gtk_toggle_button_set_active(tbutton,FALSE);
-}
 
 
-
-void hide_cursor(GdkWindow *window) {
+void hide_cursor(LiVESXWindow *window) {
   //make the cursor invisible in playback windows
 
 #if GTK_CHECK_VERSION(3,0,0)
@@ -775,14 +794,13 @@ GdkPixbuf *pixbuf;
 }
 
 
-void 
-unhide_cursor(GdkWindow *window) {
+void unhide_cursor(LiVESXWindow *window) {
   if (GDK_IS_WINDOW(window))
     gdk_window_set_cursor(window,NULL);
 }
 
 
-void get_border_size (GtkWidget *win, gint *bx, gint *by) {
+void get_border_size (LiVESWidget *win, int *bx, int *by) {
   GdkRectangle rect;
   gint wx,wy;
   gdk_window_get_frame_extents (GDK_WINDOW (win->window),&rect);
@@ -792,8 +810,8 @@ void get_border_size (GtkWidget *win, gint *bx, gint *by) {
 }
 
 
-
-void combo_set_popdown_strings (GtkCombo *combo, GList *list) {
+// TODO - remove this, use LiVESComboBox
+void combo_set_popdown_strings (GtkCombo *combo, LiVESList *list) {
   // this avoids an assert in some versions of GTK+ when list==NULL
   GList *empty_list=NULL;
   empty_list=g_list_append (empty_list,(gpointer)"");

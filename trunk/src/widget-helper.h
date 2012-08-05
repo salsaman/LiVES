@@ -21,16 +21,24 @@ typedef GtkObject                         LiVESObject;
 typedef GtkWidget                         LiVESWidget;
 typedef GtkDialog                         LiVESDialog;
 typedef GtkBox                            LiVESBox;
+typedef GtkComboBox                       LiVESCombo;
 typedef GtkComboBox                       LiVESComboBox;
 typedef GtkComboBoxText                   LiVESComboBoxText;
 typedef GtkToggleButton                   LiVESToggleButton;
+typedef GtkTextView                       LiVESTextView;
+
+typedef GtkAdjustment                     LiVESAdjustment;
 
 typedef GtkTooltips                       LiVESTooltips;
 typedef GtkTooltipsData                   LiVESTooltipsData;
 
 typedef GdkPixbuf                         LiVESPixbuf;
 
+typedef GdkWindow                         LiVESXWindow;
+
 typedef GdkEventButton                    LiVESEventButton;
+
+typedef GError                          LiVESError;
 
 #ifndef IS_MINGW
 typedef gboolean                          boolean;
@@ -47,6 +55,7 @@ typedef GdkInterpType                     LiVESInterpType;
 typedef gpointer                          LiVESObjectPtr;
 
 #define LIVES_BOX(widget) GTK_BOX(widget)
+#define LIVES_COMBO(widget) GTK_COMBO_BOX(widget)
 #define LIVES_COMBO_BOX(widget) GTK_COMBO_BOX(widget)
 #define LIVES_COMBO_BOX_TEXT(widget) GTK_COMBO_BOX_TEXT(widget)
 
@@ -152,7 +161,11 @@ typedef GLogLevelFlags LiVESLogLevelFlags;
 #define LIVES_KEY_Page_Up GDK_Page_Up
 #define LIVES_KEY_Page_Down GDK_Page_Down
 
+
 #endif
+
+// TO BE REMOVED:
+void combo_set_popdown_strings (GtkCombo *combo, LiVESList *list);
 
 
 #endif
@@ -199,16 +212,16 @@ int lives_pixbuf_get_height(const LiVESPixbuf *pixbuf);
 boolean lives_pixbuf_get_has_alpha(const LiVESPixbuf *pixbuf);
 int lives_pixbuf_get_rowstride(const LiVESPixbuf *pixbuf);
 int lives_pixbuf_get_n_channels(const LiVESPixbuf *pixbuf);
-guchar *lives_pixbuf_get_pixels(const LiVESPixbuf *pixbuf);
-const guchar *lives_pixbuf_get_pixels_readonly(const LiVESPixbuf *pixbuf);
+unsigned char *lives_pixbuf_get_pixels(const LiVESPixbuf *pixbuf);
+const unsigned char *lives_pixbuf_get_pixels_readonly(const LiVESPixbuf *pixbuf);
 LiVESPixbuf *lives_pixbuf_new(boolean has_alpha, int width, int height);
 LiVESPixbuf *lives_pixbuf_new_from_data (const unsigned char *buf, boolean has_alpha, int width, int height, 
 					 int rowstride, LiVESPixbufDestroyNotify lives_free_buffer_fn, 
 					 gpointer destroy_fn_data);
 
-LiVESPixbuf *lives_pixbuf_new_from_file(const char *filename, GError **error);
+LiVESPixbuf *lives_pixbuf_new_from_file(const char *filename, LiVESError **error);
 LiVESPixbuf *lives_pixbuf_new_from_file_at_scale(const char *filename, int width, int height, boolean preserve_aspect_ratio,
-						 GError **error);
+						 LiVESError **error);
 
 
 LiVESPixbuf *lives_pixbuf_scale_simple(const LiVESPixbuf *src, int dest_width, int dest_height, 
@@ -217,15 +230,19 @@ LiVESPixbuf *lives_pixbuf_scale_simple(const LiVESPixbuf *src, int dest_width, i
 
 LiVESWidget *lives_dialog_get_content_area(LiVESDialog *dialog);
 
+LiVESWidget *lives_combo_new(void);
 
-LiVESWidget *lives_combo_box_text_new_with_entry(void);
-void lives_combo_box_text_append_text(LiVESComboBoxText *combo, const char *text);
-void lives_combo_box_set_entry_text_column(LiVESComboBox *combo, int column);
+void lives_combo_append_text(LiVESCombo *combo, const char *text);
+void lives_combo_set_entry_text_column(LiVESCombo *combo, int column);
+
+char *lives_combo_get_active_text(LiVESCombo *combo) WARN_UNUSED;
+
+LiVESWidget *lives_combo_get_entry(LiVESCombo *combo);
+
+void lives_combo_populate(LiVESCombo *combo, LiVESList *list);
 
 boolean lives_toggle_button_get_active(LiVESToggleButton *button);
 void lives_toggle_button_set_active(LiVESToggleButton *button, boolean active);
-
-
 
 LiVESTooltipsData* lives_tooltips_data_get (LiVESWidget *widget);
 void lives_tooltips_set_tip (LiVESTooltips *tooltips, LiVESWidget *widget, const char *tip_text, const char *tip_private);
@@ -245,36 +262,35 @@ LiVESWidget *lives_standard_combo_new (const char *labeltext, boolean use_mnemon
 				       const char *tooltip);
 
 
-
-
 // util functions
 
-void lives_combo_box_set_active_string(LiVESComboBox *combo, char *active_str);
 
-gint get_box_child_index (GtkBox *box, GtkWidget *tchild);
+
+void lives_combo_set_active_string(LiVESComboBox *combo, const char *active_str);
+
+int get_box_child_index (LiVESBox *box, LiVESWidget *tchild);
 
 void set_fg_colour(gint red, gint green, gint blue);
 
-gboolean label_act_toggle (LiVESWidget *, LiVESEventButton *, LiVESToggleButton *);
-gboolean widget_act_toggle (LiVESWidget *, LiVESToggleButton *);
+boolean label_act_toggle (LiVESWidget *, LiVESEventButton *, LiVESToggleButton *);
+boolean widget_act_toggle (LiVESWidget *, LiVESToggleButton *);
 
 void gtk_tooltips_copy(LiVESWidget *dest, LiVESWidget *source);
-void adjustment_configure(GtkAdjustment *adjustment, gdouble value, gdouble lower, gdouble upper, 
-			  gdouble step_increment, gdouble page_increment, gdouble page_size);
 
-gchar *text_view_get_text(GtkTextView *textview);
-void text_view_set_text(GtkTextView *textview, const gchar *text);
+void adjustment_configure(LiVESAdjustment *adjustment, double value, double lower, double upper, 
+			  double step_increment, double page_increment, double page_size);
 
-void lives_set_cursor_style(lives_cursor_t cstyle, GdkWindow *window);
+char *text_view_get_text(LiVESTextView *textview);
+void text_view_set_text(LiVESTextView *textview, const char *text);
 
-void toggle_button_toggle (GtkToggleButton *tbutton);
+void lives_set_cursor_style(lives_cursor_t cstyle, LiVESXWindow *window);
 
-void unhide_cursor(GdkWindow *window);
-void hide_cursor(GdkWindow *window);
+void toggle_button_toggle (LiVESToggleButton *tbutton);
 
-void get_border_size (GtkWidget *win, gint *bx, gint *by);
+void unhide_cursor(LiVESXWindow *window);
+void hide_cursor(LiVESXWindow *window);
 
-void combo_set_popdown_strings (GtkCombo *combo, GList *list);
+void get_border_size (LiVESWidget *win, int *bx, int *by);
 
 #endif
 

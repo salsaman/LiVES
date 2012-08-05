@@ -1128,7 +1128,7 @@ gboolean apply_prefs(gboolean skip_warn) {
       // may fail
       if (!switch_aud_to_jack()) {
 	do_jack_noopen_warn();
-	lives_combo_box_set_active_string(LIVES_COMBO_BOX(prefsw->audp_combo), prefsw->orig_audp_name);
+	lives_combo_set_active_string(LIVES_COMBO(prefsw->audp_combo), prefsw->orig_audp_name);
       }
     }
     
@@ -1147,7 +1147,7 @@ gboolean apply_prefs(gboolean skip_warn) {
       else {
 	if (!switch_aud_to_pulse()) {
 	  // revert text
-	  lives_combo_box_set_active_string(LIVES_COMBO_BOX(prefsw->audp_combo), prefsw->orig_audp_name);
+	  lives_combo_set_active_string(LIVES_COMBO(prefsw->audp_combo), prefsw->orig_audp_name);
 	}
       }
     }
@@ -1422,11 +1422,11 @@ void set_acodec_list_from_allowed (_prefsw *prefsw, render_details *rdet) {
     future_prefs->encoder.audio_codec=prefs->acodec_list_to_format[0]=AUDIO_CODEC_NONE;
 
     if (prefsw!=NULL) {
-      populate_combo_box(GTK_COMBO_BOX(prefsw->acodec_combo), prefs->acodec_list);
+      lives_combo_populate(LIVES_COMBO(prefsw->acodec_combo), prefs->acodec_list);
       gtk_combo_box_set_active(GTK_COMBO_BOX(prefsw->acodec_combo), 0);
     }
     if (rdet!=NULL) {
-      populate_combo_box(GTK_COMBO_BOX(rdet->acodec_combo), prefs->acodec_list);
+      lives_combo_populate(LIVES_COMBO(rdet->acodec_combo), prefs->acodec_list);
       gtk_combo_box_set_active(GTK_COMBO_BOX(rdet->acodec_combo), 0);
     }
     return;
@@ -1442,10 +1442,10 @@ void set_acodec_list_from_allowed (_prefsw *prefsw, render_details *rdet) {
   }
 
   if (prefsw != NULL){
-    populate_combo_box(GTK_COMBO_BOX(prefsw->acodec_combo), prefs->acodec_list);
+    lives_combo_populate(LIVES_COMBO(prefsw->acodec_combo), prefs->acodec_list);
   }
   if (rdet != NULL){
-    populate_combo_box(GTK_COMBO_BOX(rdet->acodec_combo), prefs->acodec_list);
+    lives_combo_populate(LIVES_COMBO(rdet->acodec_combo), prefs->acodec_list);
   }
   if (!is_allowed) {
     future_prefs->encoder.audio_codec=prefs->acodec_list_to_format[0];
@@ -1569,7 +1569,7 @@ static void on_audp_entry_changed (GtkWidget *audp_combo, gpointer ptr) {
     do_aud_during_play_error();
     g_signal_handler_block(audp_combo, prefsw->audp_entry_func);
 
-    lives_combo_box_set_active_string(LIVES_COMBO_BOX(audp_combo), prefsw->audp_name);
+    lives_combo_set_active_string(LIVES_COMBO(audp_combo), prefsw->audp_name);
 
     //gtk_widget_queue_draw(audp_entry);
     g_signal_handler_unblock(audp_combo, prefsw->audp_entry_func);
@@ -1820,7 +1820,8 @@ void on_prefDomainChanged(GtkTreeSelection *widget, gpointer dummy)
 
   //if (!strcmp(prefs->wm,"Compiz")) {
     // this is needed to force the window to update in some cases
-    if (GTK_WIDGET_VISIBLE(prefsw->prefs_dialog)) gtk_widget_show_all(prefsw->prefs_dialog);
+    //if (GTK_WIDGET_VISIBLE(prefsw->prefs_dialog)) gtk_widget_show_all(prefsw->prefs_dialog);
+    if (GTK_WIDGET_VISIBLE(prefsw->prefs_dialog)) gtk_widget_show_all(prefsw->right_shown);
     gtk_widget_queue_draw(prefsw->prefs_dialog);
     if (dummy==NULL) on_prefDomainChanged(widget,GINT_TO_POINTER(1));
     //}
@@ -1851,38 +1852,6 @@ static void toggle_set_insensitive(GtkWidget *widget, gpointer func_data)
   gtk_widget_set_sensitive(GTK_WIDGET(func_data), !gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget)));
 }
 
-void populate_combo_box(GtkComboBox *combo, GList *data)
-{
-  gchar			*text;
-  GtkListStore		*store;
-  GtkTreeIter		iter;
-  GtkCellRenderer	*renderer;
-
-
-  GList *listrunner = g_list_first(data);
-
-  // Create tree store for the combo box
-  store = gtk_list_store_new(1, G_TYPE_STRING);
-
-  while (listrunner){
-    text = (gchar*)listrunner->data;
-
-    gtk_list_store_append(store, &iter);
-    gtk_list_store_set(store, &iter, 0, text, -1);
-
-    listrunner = g_list_next(listrunner);
-  }
-  gtk_combo_box_set_model(GTK_COMBO_BOX(combo), GTK_TREE_MODEL(store));
-  g_object_unref(G_OBJECT(store));
-
-  gtk_cell_layout_clear(GTK_CELL_LAYOUT (combo));
-
-  renderer = gtk_cell_renderer_text_new ();
-
-  gtk_cell_layout_pack_start (GTK_CELL_LAYOUT (combo), renderer, FALSE);
-
-  gtk_cell_layout_set_attributes (GTK_CELL_LAYOUT (combo), renderer, "text", 0, NULL);
-}
 
 
 static void spinbutton_crit_ds_value_changed (GtkSpinButton *crit_ds, gpointer user_data) {
@@ -3068,7 +3037,7 @@ _prefsw *create_prefs_dialog (void) {
   gtk_widget_show (hbox);
   gtk_container_add (GTK_CONTAINER (vbox69), hbox);
 
-  prefsw->pbq_combo = gtk_combo_box_new_text();
+  prefsw->pbq_combo = lives_combo_new();
   gtk_widget_set_tooltip_text( prefsw->pbq_combo, (_("The preview quality for video playback - affects resizing")));
   
   label = gtk_label_new_with_mnemonic (_("Preview _quality"));
@@ -3089,7 +3058,7 @@ _prefsw *create_prefs_dialog (void) {
   // TRANSLATORS: video quality, max len 50
   prefsw->pbq_list=g_list_append(prefsw->pbq_list,g_strdup((_("High - can improve quality on very fast machines"))));
 
-  populate_combo_box(GTK_COMBO_BOX(prefsw->pbq_combo), prefsw->pbq_list);
+  lives_combo_populate(LIVES_COMBO(prefsw->pbq_combo), prefsw->pbq_list);
   gtk_combo_box_set_active(GTK_COMBO_BOX(prefsw->pbq_combo), 0);
 
   gtk_widget_show (hbox);
@@ -3148,7 +3117,7 @@ _prefsw *create_prefs_dialog (void) {
   gtk_box_pack_start (GTK_BOX (hbox31), label126, FALSE, FALSE, 0);
   gtk_label_set_justify (GTK_LABEL (label126), GTK_JUSTIFY_LEFT);
   // ---
-  pp_combo = gtk_combo_box_new_text();
+  pp_combo = lives_combo_new();
   gtk_box_pack_start (GTK_BOX (hbox31), pp_combo, FALSE, FALSE, 20);
   // ---
 #ifndef IS_MINGW
@@ -3158,7 +3127,7 @@ _prefsw *create_prefs_dialog (void) {
 #endif
   vid_playback_plugins = g_list_prepend (vid_playback_plugins, g_strdup(mainw->none_string));
 
-  populate_combo_box(GTK_COMBO_BOX(pp_combo), vid_playback_plugins);
+  lives_combo_populate(LIVES_COMBO(pp_combo), vid_playback_plugins);
 
   gtk_widget_show(pp_combo);
 
@@ -3171,7 +3140,7 @@ _prefsw *create_prefs_dialog (void) {
 		    NULL);
 
   if (mainw->vpp != NULL) {
-    lives_combo_box_set_active_string(LIVES_COMBO_BOX(pp_combo), mainw->vpp->name);
+    lives_combo_set_active_string(LIVES_COMBO(pp_combo), mainw->vpp->name);
   }
   else {
     gtk_combo_box_set_active(GTK_COMBO_BOX(pp_combo), 0);
@@ -3273,8 +3242,8 @@ _prefsw *create_prefs_dialog (void) {
     audp = g_list_append (audp, g_strdup("mplayer"));
   }
 
-  prefsw->audp_combo = gtk_combo_box_new_text();
-  populate_combo_box(GTK_COMBO_BOX(prefsw->audp_combo), audp);
+  prefsw->audp_combo = lives_combo_new();
+  lives_combo_populate(LIVES_COMBO(prefsw->audp_combo), audp);
 
   gtk_box_pack_start (GTK_BOX (hbox10), prefsw->audp_combo, TRUE, TRUE, 20);
   gtk_widget_show(prefsw->audp_combo);
@@ -3321,7 +3290,7 @@ _prefsw *create_prefs_dialog (void) {
   }
   // ---
   if (prefsw->audp_name!=NULL) 
-    lives_combo_box_set_active_string(LIVES_COMBO_BOX(prefsw->audp_combo), prefsw->audp_name);
+    lives_combo_set_active_string(LIVES_COMBO(prefsw->audp_combo), prefsw->audp_name);
   prefsw->orig_audp_name=g_strdup(prefsw->audp_name);
   //---
   hbox10 = gtk_hbox_new (FALSE, 0);
@@ -3654,16 +3623,16 @@ _prefsw *create_prefs_dialog (void) {
   gtk_box_pack_start (GTK_BOX (hbox11), label37, FALSE, FALSE, 0);
   gtk_label_set_justify (GTK_LABEL (label37), GTK_JUSTIFY_LEFT);
 
-  prefsw->encoder_combo = gtk_combo_box_new_text();
+  prefsw->encoder_combo = lives_combo_new();
   gtk_box_pack_start(GTK_BOX(hbox11), prefsw->encoder_combo, FALSE, FALSE, 0);
 
   if (capable->has_encoder_plugins) {
     // scan for encoder plugins
     if ((encoders=get_plugin_list (PLUGIN_ENCODERS,TRUE,NULL,NULL))!=NULL) {
       encoders=filter_encoders_by_img_ext(encoders,prefs->image_ext);
-      populate_combo_box(GTK_COMBO_BOX(prefsw->encoder_combo), encoders);
+      lives_combo_populate(LIVES_COMBO(prefsw->encoder_combo), encoders);
       // ---
-      lives_combo_box_set_active_string(LIVES_COMBO_BOX(prefsw->encoder_combo), prefs->encoder.name);
+      lives_combo_set_active_string(LIVES_COMBO(prefsw->encoder_combo), prefs->encoder.name);
       // ---
       g_list_free_strings (encoders);
       g_list_free (encoders);
@@ -3688,7 +3657,7 @@ _prefsw *create_prefs_dialog (void) {
   }
   gtk_box_pack_start (GTK_BOX (hbox), label56, TRUE, FALSE, 0);
   
-  prefsw->ofmt_combo = gtk_combo_box_new_text();
+  prefsw->ofmt_combo = lives_combo_new();
 
   if (capable->has_encoder_plugins) {
     // reqest formats from the encoder plugin
@@ -3704,7 +3673,7 @@ _prefsw *create_prefs_dialog (void) {
 	}
       }
       lives_memcpy (&future_prefs->encoder,&prefs->encoder,sizeof(_encoder));
-      populate_combo_box(GTK_COMBO_BOX(prefsw->ofmt_combo), ofmt);
+      lives_combo_populate(LIVES_COMBO(prefsw->ofmt_combo), ofmt);
       g_list_free_strings(ofmt);
       g_list_free(ofmt);
       g_list_free_strings(ofmt_all);
@@ -3719,9 +3688,9 @@ _prefsw *create_prefs_dialog (void) {
     add_fill_to_box (GTK_BOX (hbox));
     gtk_widget_show_all(hbox);
 
-    lives_combo_box_set_active_string(LIVES_COMBO_BOX(prefsw->ofmt_combo), prefs->encoder.of_desc);
+    lives_combo_set_active_string(LIVES_COMBO(prefsw->ofmt_combo), prefs->encoder.of_desc);
 
-    prefsw->acodec_combo = gtk_combo_box_new_text();
+    prefsw->acodec_combo = lives_combo_new();
     prefs->acodec_list=NULL;
 
     set_acodec_list_from_allowed(prefsw, rdet);
@@ -4931,13 +4900,13 @@ _prefsw *create_prefs_dialog (void) {
   gtk_box_pack_start (GTK_BOX (hbox93), label94, FALSE, FALSE, 40);
   gtk_label_set_justify (GTK_LABEL (label94), GTK_JUSTIFY_LEFT);
    
-  prefsw->theme_combo = gtk_combo_box_new_text();
+  prefsw->theme_combo = lives_combo_new();
    
   // scan for themes
   themes = get_plugin_list(PLUGIN_THEMES, TRUE, NULL, NULL);
   themes = g_list_prepend(themes, g_strdup(mainw->none_string));
    
-  populate_combo_box(GTK_COMBO_BOX(prefsw->theme_combo), themes);
+  lives_combo_populate(LIVES_COMBO(prefsw->theme_combo), themes);
 
   gtk_box_pack_start (GTK_BOX (hbox93), prefsw->theme_combo, FALSE, FALSE, 0);
   gtk_widget_show(prefsw->theme_combo);
@@ -4947,7 +4916,7 @@ _prefsw *create_prefs_dialog (void) {
   }
   else theme = g_strdup(mainw->none_string);
   // ---
-  lives_combo_box_set_active_string(LIVES_COMBO_BOX(prefsw->theme_combo), theme);
+  lives_combo_set_active_string(LIVES_COMBO(prefsw->theme_combo), theme);
   //---
   g_free(theme);
   g_list_free_strings (themes);

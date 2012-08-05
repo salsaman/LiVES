@@ -1124,6 +1124,7 @@ create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox) {
   GtkWidget *radiobutton27;
   GtkWidget *vseparator4;
   GtkWidget *vbox23;
+  GtkWidget *vbox;
   GtkWidget *radiobutton28;
   GSList *radiobutton28_group = NULL;
   GtkWidget *radiobutton29;
@@ -1513,29 +1514,29 @@ create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox) {
       gtk_widget_show_all(resaudw->aud_hbox);
     }
 
+
+
+
+
     hbox25 = gtk_hbox_new (FALSE, 0);
-    gtk_widget_show (hbox25);
-    gtk_box_pack_start (GTK_BOX (xvbox), hbox25, FALSE, FALSE, 0);
+
+    gtk_box_pack_start (GTK_BOX (xvbox), hbox25, TRUE, FALSE, 0);
     gtk_container_set_border_width (GTK_CONTAINER (hbox25), 10);
-    
-    if (type>=3) label98 = gtk_label_new_with_mnemonic (_("_Rate (Hz) "));
-    else label98 = gtk_label_new (_("Rate (Hz) "));
+       
+    vbox = gtk_vbox_new (FALSE, 0);
+    gtk_box_pack_start (GTK_BOX (hbox25), vbox, TRUE, TRUE, 0);
 
-    if (palette->style&STYLE_1) {
-      gtk_widget_modify_fg(label98, GTK_STATE_NORMAL, &palette->normal_fore);
-    }
+    add_fill_to_box(vbox);
 
-    gtk_widget_show (label98);
-    gtk_box_pack_start (GTK_BOX (hbox25), label98, FALSE, FALSE, 0);
-    gtk_label_set_justify (GTK_LABEL (label98), GTK_JUSTIFY_LEFT);
+    hbox = gtk_hbox_new (FALSE, 0);
+    gtk_box_pack_start (GTK_BOX (vbox), hbox, TRUE, FALSE, 0);
+
+    add_fill_to_box(vbox);
+
+    combo4 = lives_standard_combo_new (_("Rate (Hz) "),type>=3,rate,LIVES_BOX(hbox),NULL);
     
-    combo4 = gtk_combo_new ();
-    gtk_combo_set_popdown_strings (GTK_COMBO (combo4), rate);
-    gtk_widget_show (combo4);
-    gtk_box_pack_start (GTK_BOX (hbox25), combo4, TRUE, TRUE, 1);
-    
-    resaudw->entry_arate = GTK_COMBO (combo4)->entry;
-    gtk_widget_show (resaudw->entry_arate);
+    resaudw->entry_arate = lives_combo_get_entry(combo4);
+
     gtk_entry_set_width_chars (GTK_ENTRY (resaudw->entry_arate), 8);
     if (type==7) gtk_widget_set_sensitive(combo4,FALSE);
   
@@ -1545,27 +1546,10 @@ create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox) {
     else tmp=g_strdup_printf ("%d",prefs->mt_def_arate);
     gtk_entry_set_text (GTK_ENTRY (resaudw->entry_arate),tmp);
     g_free (tmp);
-    
-    if (type>=3) label99 = gtk_label_new_with_mnemonic (_("    _Channels "));
-    else label99 = gtk_label_new (_("    Channels "));
 
-    if (palette->style&STYLE_1) {
-      gtk_widget_modify_fg(label99, GTK_STATE_NORMAL, &palette->normal_fore);
-    }
-
-    gtk_widget_show (label99);
-    gtk_box_pack_start (GTK_BOX (hbox25), label99, FALSE, FALSE, 0);
-    gtk_label_set_justify (GTK_LABEL (label99), GTK_JUSTIFY_LEFT);
+    combo5 = lives_standard_combo_new ((type>=3?(_("    _Channels ")):(_("    Channels "))),type>=3,rate,LIVES_BOX(hbox),NULL);
     
-    combo5 = gtk_combo_new ();
-    gtk_combo_set_popdown_strings (GTK_COMBO (combo5), channels);
-    gtk_widget_show (combo5);
-    gtk_box_pack_start (GTK_BOX (hbox25), combo5, FALSE, FALSE, 0);
-    if (type==7) gtk_widget_set_sensitive(combo5,FALSE);
-    
-    resaudw->entry_achans = GTK_COMBO (combo5)->entry;
-    gtk_widget_show (resaudw->entry_achans);
-    gtk_editable_set_editable (GTK_EDITABLE (resaudw->entry_achans), FALSE);
+    resaudw->entry_achans = lives_combo_get_entry(combo5);
     gtk_entry_set_width_chars (GTK_ENTRY (resaudw->entry_achans), 3);
     
     if (type<3||(type>4&&type<8)) tmp=g_strdup_printf ("%d",(gint)mainw->fx2_val);
@@ -1583,21 +1567,12 @@ create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox) {
     if (type>=3) label100 = gtk_label_new_with_mnemonic (_("    _Sample Size "));
     else label100 = gtk_label_new (_("    Sample Size "));
 
-    if (palette->style&STYLE_1) {
-      gtk_widget_modify_fg(label100, GTK_STATE_NORMAL, &palette->normal_fore);
-    }
+ 
+    combo6 = lives_standard_combo_new ((type>=3?(_("    _Sample Size ")):(_("    Sample Size "))),type>=3,sampsize,LIVES_BOX(hbox),NULL);
 
-    gtk_widget_show (label100);
-    gtk_box_pack_start (GTK_BOX (hbox25), label100, FALSE, FALSE, 0);
-    gtk_label_set_justify (GTK_LABEL (label100), GTK_JUSTIFY_LEFT);
-    
-    combo6 = gtk_combo_new ();
-    gtk_combo_set_popdown_strings (GTK_COMBO (combo6), sampsize);
-    gtk_widget_show (combo6);
-    gtk_box_pack_start (GTK_BOX (hbox25), combo6, TRUE, TRUE, 0);
     if (type==7) gtk_widget_set_sensitive(combo6,FALSE);
 
-    resaudw->entry_asamps = GTK_COMBO (combo6)->entry;
+    resaudw->entry_asamps = lives_combo_get_entry(combo6);
     gtk_widget_show (resaudw->entry_asamps);
     gtk_entry_set_max_length (GTK_ENTRY (resaudw->entry_asamps), 2);
     gtk_editable_set_editable (GTK_EDITABLE (resaudw->entry_asamps), FALSE);
@@ -1708,6 +1683,7 @@ create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox) {
     gtk_widget_show (vbox25);
     gtk_box_pack_start (GTK_BOX (hbox25), vbox25, TRUE, TRUE, 0);
 
+    gtk_widget_show_all(hbox25);
 
     hbox = gtk_hbox_new (FALSE, 0);
     gtk_widget_show(hbox);

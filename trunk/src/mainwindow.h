@@ -1046,7 +1046,6 @@ typedef struct {
   GtkWidget *drop_frame_button;
   GtkWidget *param_vbox;
   GtkWidget *spinbutton_loops;
-  GtkWidget *trans_entry;
 
   gboolean loop_to_fit;
   gboolean align_start;

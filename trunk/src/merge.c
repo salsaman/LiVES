@@ -248,27 +248,14 @@ void create_merge_dialog (void) {
   hseparator = gtk_hseparator_new ();
   gtk_widget_show (hseparator);
   gtk_box_pack_start (GTK_BOX (vbox), hseparator, FALSE, TRUE, 0);
-
-  hbox = gtk_hbox_new (FALSE, 0);
-  gtk_widget_show (hbox);
+  
+  hbox = gtk_hbox_new (TRUE, 0);
   gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 10);
 
-  label = gtk_label_new_with_mnemonic (_("_Transition Method:"));
-  gtk_widget_show (label);
-  gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 0);
+  transition_combo = lives_standard_combo_new (_("_Transition Method:"),TRUE,merge_opts->trans_list,LIVES_BOX(hbox),NULL);
+  gtk_widget_show_all(hbox);
 
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg (label, GTK_STATE_NORMAL, &palette->normal_fore);
-  }
-
-  transition_combo = gtk_combo_new ();
-  combo_set_popdown_strings (GTK_COMBO (transition_combo), merge_opts->trans_list);
-  gtk_box_pack_start (GTK_BOX (hbox), transition_combo, TRUE, FALSE, 0);
-  gtk_widget_show(transition_combo);
-  merge_opts->trans_entry=(GtkWidget*)(GTK_ENTRY((GTK_COMBO(transition_combo))->entry));
-  gtk_entry_set_text (GTK_ENTRY (merge_opts->trans_entry),(gchar *)g_list_nth_data (merge_opts->trans_list,defstart));
-  gtk_editable_set_editable (GTK_EDITABLE(merge_opts->trans_entry),FALSE);
-  gtk_label_set_mnemonic_widget (GTK_LABEL (label),merge_opts->trans_entry);
+  gtk_combo_box_set_active(GTK_COMBO_BOX(transition_combo),defstart);
 
   mainw->last_transition_idx=merge_opts->list_to_rfx_index[defstart];
 
@@ -315,8 +302,7 @@ void create_merge_dialog (void) {
                       G_CALLBACK (on_merge_ok_clicked),
                       rfx);
 
-
-  g_signal_connect (GTK_OBJECT(merge_opts->trans_entry),"changed",G_CALLBACK (on_trans_method_changed),NULL);
+   g_signal_connect (GTK_OBJECT(transition_combo),"changed",G_CALLBACK (on_trans_method_changed),NULL);
 
 
   g_signal_connect (GTK_OBJECT (align_start_button), "toggled",
@@ -341,14 +327,14 @@ void create_merge_dialog (void) {
 
 
 
-void on_trans_method_changed (GtkWidget *entry, gpointer user_data) {
+void on_trans_method_changed (GtkComboBox *combo, gpointer user_data) {
   int idx;
   lives_rfx_t *rfx;
 
-  if (!strlen (gtk_entry_get_text (GTK_ENTRY (entry)))) return;
+  if (!strlen (lives_combo_get_active_text (combo))) return;
 
   for (idx=0;strcmp((char *)g_list_nth_data (merge_opts->trans_list,idx),
-		    (char *)gtk_entry_get_text(GTK_ENTRY (entry)));idx++);
+		    (char *)lives_combo_get_active_text(combo));idx++);
 
   mainw->last_transition_idx=merge_opts->list_to_rfx_index[idx];
   rfx=&mainw->rendered_fx[mainw->last_transition_idx];

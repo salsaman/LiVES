@@ -113,7 +113,7 @@ typedef struct {
   GtkWidget *type_effect0_radiobutton;
   GtkWidget *type_tool_radiobutton;
   GtkWidget *type_utility_radiobutton;
-  GtkWidget *langc_entry;
+  GtkWidget *langc_combo;
   GtkWidget *table;
   GtkWidget *requirements_button;
   GtkWidget *properties_button;
@@ -141,7 +141,7 @@ typedef struct {
   GtkWidget *param_dialog;
   GtkWidget *param_name_entry;
   GtkWidget *param_label_entry;
-  GtkWidget *param_type_entry;
+  GtkWidget *param_type_combo;
   GtkWidget *param_dp_label;
   GtkWidget *param_def_label;
   GtkWidget *param_min_label;
@@ -152,13 +152,9 @@ typedef struct {
   GtkWidget *param_wrap_checkbutton;
   GtkWidget *param_strlist_hbox;
   GtkWidget *param_def_combo;
-  GtkWidget *paramw_kw_entry;
-  GtkWidget *paramw_sp_entry;
-  GtkWidget *paramw_spsub_entry;
   GtkWidget *paramw_rest_entry;
-  GtkWidget *paramw_sp_label;
+  GtkWidget *paramw_kw_combo;
   GtkWidget *paramw_sp_combo;
-  GtkWidget *paramw_spsub_label;
   GtkWidget *paramw_spsub_combo;
   GtkWidget *paramw_rest_label;
   GtkWidget *bg_label;
@@ -262,11 +258,11 @@ void after_param_min_changed (GtkSpinButton *, gpointer rfxbuilder);
 void after_param_max_changed (GtkSpinButton *, gpointer rfxbuilder);
 void after_param_def_changed (GtkSpinButton *, gpointer rfxbuilder);
 void after_rfxbuilder_type_toggled (GtkToggleButton *, gpointer rfxbuilder);
-void on_param_type_changed (GtkEntry *, gpointer rfxbuilder);
-void on_paramw_kw_changed (GtkEntry *, gpointer rfxbuilder);
-void on_paramw_sp_changed (GtkEntry *, gpointer rfxbuilder);
-void on_paramw_spsub_changed (GtkEntry *, gpointer rfxbuilder);
-void on_script_status_changed (GtkEntry *, gpointer combo);
+void on_param_type_changed (GtkComboBox *, gpointer rfxbuilder);
+void on_paramw_kw_changed (GtkComboBox *, gpointer rfxbuilder);
+void on_paramw_sp_changed (GtkComboBox *, gpointer rfxbuilder);
+void on_paramw_spsub_changed (GtkComboBox *, gpointer rfxbuilder);
+void on_script_status_changed (GtkComboBox *, gpointer combo);
 
 // fileselectors
 void on_export_rfx_ok (GtkButton *, gchar *script_name);

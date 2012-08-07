@@ -342,7 +342,7 @@ void set_vpp(gboolean set_in_prefs) {
   // Video Playback Plugin
 
   if (strlen (future_prefs->vpp_name)) {
-    if (!g_ascii_strcasecmp(future_prefs->vpp_name,mainw->none_string)) {
+    if (!g_ascii_strcasecmp(future_prefs->vpp_name,mainw->string_constants[LIVES_STRING_CONSTANT_NONE])) {
       if (mainw->vpp!=NULL) {
 	if (mainw->ext_playback) vid_playback_plugin_exit();
 	close_vid_playback_plugin(mainw->vpp);
@@ -994,8 +994,8 @@ gboolean apply_prefs(gboolean skip_warn) {
   }
 
   // the theme
-  if (strcmp(future_prefs->theme,theme)&&!(!g_ascii_strcasecmp(future_prefs->theme,"none")&&!strcmp(theme,mainw->none_string))) {
-    if (strcmp(theme,mainw->none_string)) {
+  if (strcmp(future_prefs->theme,theme)&&!(!g_ascii_strcasecmp(future_prefs->theme,"none")&&!strcmp(theme,mainw->string_constants[LIVES_STRING_CONSTANT_NONE]))) {
+    if (strcmp(theme,mainw->string_constants[LIVES_STRING_CONSTANT_NONE])) {
       g_snprintf(future_prefs->theme,64,"%s",theme);
     }
     else g_snprintf(future_prefs->theme,64,"none");
@@ -1385,7 +1385,7 @@ rdet_acodec_changed (GtkComboBox *acodec_combo, gpointer user_data) {
   gint listlen=g_list_length (prefs->acodec_list);
   int idx;
   const gchar *audio_codec = gtk_combo_box_get_active_text(acodec_combo);
-  if (!strcmp(audio_codec,mainw->any_string)) return;
+  if (!strcmp(audio_codec,mainw->string_constants[LIVES_STRING_CONSTANT_ANY])) return;
 
   for (idx=0;idx<listlen&&strcmp((gchar *)g_list_nth_data (prefs->acodec_list,idx),audio_codec);idx++);
 
@@ -1418,7 +1418,7 @@ void set_acodec_list_from_allowed (_prefsw *prefsw, render_details *rdet) {
   }
 
   if (future_prefs->encoder.of_allowed_acodecs==0) {
-    prefs->acodec_list = g_list_append (prefs->acodec_list, g_strdup(mainw->none_string));
+    prefs->acodec_list = g_list_append (prefs->acodec_list, g_strdup(mainw->string_constants[LIVES_STRING_CONSTANT_NONE]));
     future_prefs->encoder.audio_codec=prefs->acodec_list_to_format[0]=AUDIO_CODEC_NONE;
 
     if (prefsw!=NULL) {
@@ -1469,7 +1469,7 @@ void after_vpp_changed (GtkWidget *vpp_combo, gpointer advbutton) {
   const gchar *newvpp=gtk_combo_box_get_active_text(GTK_COMBO_BOX(vpp_combo));
   _vid_playback_plugin *tmpvpp;
 
-  if (!g_ascii_strcasecmp(newvpp,mainw->none_string)) {
+  if (!g_ascii_strcasecmp(newvpp,mainw->string_constants[LIVES_STRING_CONSTANT_NONE])) {
     gtk_widget_set_sensitive (GTK_WIDGET(advbutton), FALSE);
   }
   else {
@@ -3125,7 +3125,7 @@ _prefsw *create_prefs_dialog (void) {
 #else
   vid_playback_plugins = get_plugin_list(PLUGIN_VID_PLAYBACK, TRUE, NULL, "-dll");
 #endif
-  vid_playback_plugins = g_list_prepend (vid_playback_plugins, g_strdup(mainw->none_string));
+  vid_playback_plugins = g_list_prepend (vid_playback_plugins, g_strdup(mainw->string_constants[LIVES_STRING_CONSTANT_NONE]));
 
   lives_combo_populate(LIVES_COMBO(pp_combo), vid_playback_plugins);
 
@@ -3223,19 +3223,19 @@ _prefsw *create_prefs_dialog (void) {
   gtk_label_set_justify (GTK_LABEL (label35), GTK_JUSTIFY_LEFT);
 
 #ifdef HAVE_PULSE_AUDIO
-  audp = g_list_append (audp, g_strdup_printf("pulse audio (%s)",mainw->recommended_string));
+  audp = g_list_append (audp, g_strdup_printf("pulse audio (%s)",mainw->string_constants[LIVES_STRING_CONSTANT_RECOMMENDED]));
   has_ap_rec=TRUE;
 #endif
 
 #ifdef ENABLE_JACK
-  if (!has_ap_rec) audp = g_list_append (audp, g_strdup_printf("jack (%s)",mainw->recommended_string));
+  if (!has_ap_rec) audp = g_list_append (audp, g_strdup_printf("jack (%s)",mainw->string_constants[LIVES_STRING_CONSTANT_RECOMMENDED]));
   else audp = g_list_append (audp, g_strdup_printf("jack"));
   has_ap_rec=TRUE;
 #endif
 
   if (capable->has_sox_play) {
     if (has_ap_rec) audp = g_list_append (audp, g_strdup("sox"));
-    else audp = g_list_append (audp, g_strdup_printf("sox (%s)",mainw->recommended_string));
+    else audp = g_list_append (audp, g_strdup_printf("sox (%s)",mainw->string_constants[LIVES_STRING_CONSTANT_RECOMMENDED]));
   }
 
   if (capable->has_mplayer) {
@@ -3265,7 +3265,7 @@ _prefsw *create_prefs_dialog (void) {
 
 #ifdef HAVE_PULSE_AUDIO
   if (prefs->audio_player==AUD_PLAYER_PULSE) {
-    prefsw->audp_name=g_strdup_printf("pulse audio (%s)",mainw->recommended_string);
+    prefsw->audp_name=g_strdup_printf("pulse audio (%s)",mainw->string_constants[LIVES_STRING_CONSTANT_RECOMMENDED]);
   }
   has_ap_rec=TRUE;
 #endif
@@ -3273,7 +3273,7 @@ _prefsw *create_prefs_dialog (void) {
 #ifdef ENABLE_JACK
   if (prefs->audio_player==AUD_PLAYER_JACK) {
     if (!has_ap_rec)
-      prefsw->audp_name=g_strdup_printf("jack (%s)",mainw->recommended_string);
+      prefsw->audp_name=g_strdup_printf("jack (%s)",mainw->string_constants[LIVES_STRING_CONSTANT_RECOMMENDED]);
     else prefsw->audp_name=g_strdup_printf("jack");
     gtk_widget_show(prefsw->jack_int_label);
   }
@@ -3281,7 +3281,7 @@ _prefsw *create_prefs_dialog (void) {
 #endif
 
   if (prefs->audio_player==AUD_PLAYER_SOX) {
-    if (!has_ap_rec) prefsw->audp_name=g_strdup_printf("sox (%s)",mainw->recommended_string);
+    if (!has_ap_rec) prefsw->audp_name=g_strdup_printf("sox (%s)",mainw->string_constants[LIVES_STRING_CONSTANT_RECOMMENDED]);
     else prefsw->audp_name=g_strdup_printf("sox");
   }
 
@@ -4904,7 +4904,7 @@ _prefsw *create_prefs_dialog (void) {
    
   // scan for themes
   themes = get_plugin_list(PLUGIN_THEMES, TRUE, NULL, NULL);
-  themes = g_list_prepend(themes, g_strdup(mainw->none_string));
+  themes = g_list_prepend(themes, g_strdup(mainw->string_constants[LIVES_STRING_CONSTANT_NONE]));
    
   lives_combo_populate(LIVES_COMBO(prefsw->theme_combo), themes);
 
@@ -4914,7 +4914,7 @@ _prefsw *create_prefs_dialog (void) {
   if (g_ascii_strcasecmp(future_prefs->theme, "none")) {
     theme = g_strdup(future_prefs->theme);
   }
-  else theme = g_strdup(mainw->none_string);
+  else theme = g_strdup(mainw->string_constants[LIVES_STRING_CONSTANT_NONE]);
   // ---
   lives_combo_set_active_string(LIVES_COMBO(prefsw->theme_combo), theme);
   //---

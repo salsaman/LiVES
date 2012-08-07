@@ -866,6 +866,7 @@ _vppaw *on_vpp_advanced_clicked (GtkButton *button, gpointer user_data) {
   GObject *spinbutton_adj;
 
   gchar *title;
+  gchar *tmp,*tmp2;
 
   const gchar *pversion;
   const gchar *desc;
@@ -965,7 +966,9 @@ _vppaw *on_vpp_advanced_clicked (GtkButton *button, gpointer user_data) {
     }
 
     // fps
-    combo = lives_standard_combo_new (_("_FPS"),TRUE,fps_list_strings,LIVES_BOX(dialog_vbox),_("Fixed framerate for plugin.\n"));
+    combo = lives_standard_combo_new ((tmp=g_strdup(_("_FPS"))),TRUE,fps_list_strings,LIVES_BOX(dialog_vbox),(tmp2=g_strdup(_("Fixed framerate for plugin.\n"))));
+    g_free(tmp);
+    g_free(tmp2);
     vppa->fps_entry=lives_combo_get_entry(LIVES_COMBO(combo));
 
     g_list_free_strings(fps_list_strings);
@@ -1045,7 +1048,9 @@ _vppaw *on_vpp_advanced_clicked (GtkButton *button, gpointer user_data) {
       }
     }
 
-    combo = lives_standard_combo_new (_("_Colourspace"),TRUE,pal_list_strings,LIVES_BOX(dialog_vbox),_("Colourspace input to the plugin.\n"));
+    combo = lives_standard_combo_new ((tmp=g_strdup(_("_Colourspace"))),TRUE,pal_list_strings,LIVES_BOX(dialog_vbox),tmp2=g_strdup(_("Colourspace input to the plugin.\n")));
+    g_free(tmp);
+    g_free(tmp2);
     vppa->pal_entry=lives_combo_get_entry(LIVES_COMBO(combo));
 
     if (tmpvpp->get_yuv_palette_clamping!=NULL&&weed_palette_is_yuv_palette(tmpvpp->palette)) {

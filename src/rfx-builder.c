@@ -13,6 +13,8 @@
 #include "paramwindow.h"
 #include "effects.h"
 
+static GtkWidget *copy_script_okbutton;
+
 void
 on_new_rfx_activate (GtkMenuItem *menuitem, gpointer user_data) {
   rfx_build_window_t *rfxbuilder;
@@ -82,7 +84,6 @@ rfx_build_window_t *make_rfx_build_window (const gchar *script_name, lives_rfx_s
   GtkWidget *dialog_action_area;
   GtkWidget *hbox;
   GtkWidget *label;
-  GtkWidget *langc_combo;
   GtkWidget *hseparator;
   GtkWidget *okbutton;
   GtkWidget *cancelbutton;
@@ -96,6 +97,8 @@ rfx_build_window_t *make_rfx_build_window (const gchar *script_name, lives_rfx_s
   rfx_build_window_t *rfxbuilder=(rfx_build_window_t *)g_malloc (sizeof(rfx_build_window_t));
 
   GtkAccelGroup *accel_group=GTK_ACCEL_GROUP(gtk_accel_group_new ());
+
+  gchar *tmp,*tmp2;
 
   rfxbuilder->rfx_version=g_strdup(RFX_VERSION);
 
@@ -459,30 +462,15 @@ rfx_build_window_t *make_rfx_build_window (const gchar *script_name, lives_rfx_s
   gtk_widget_show (hseparator);
   gtk_box_pack_start (GTK_BOX (top_vbox), hseparator, FALSE, TRUE, 0);
 
-  hbox = gtk_hbox_new (FALSE, 0);
-  gtk_widget_show (hbox);
-  gtk_box_pack_start (GTK_BOX (top_vbox), hbox, TRUE, TRUE, 0);
-
-  label = gtk_label_new (_("Language code:"));
-  gtk_widget_show (label);
-  gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 0);
-
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg (label, GTK_STATE_NORMAL, &palette->normal_fore);
-  }
-
   langc = g_list_append (langc, (gpointer)"0xF0 - LiVES-Perl");
 
-  langc_combo = gtk_combo_new ();
-  combo_set_popdown_strings (GTK_COMBO (langc_combo), langc);
-  g_list_free(langc);
-  gtk_box_pack_start (GTK_BOX (hbox), langc_combo, TRUE, FALSE, 0);
-  gtk_widget_show(langc_combo);
-  rfxbuilder->langc_entry=(GtkWidget*)(GTK_ENTRY((GTK_COMBO(langc_combo))->entry));
-  gtk_editable_set_editable (GTK_EDITABLE(rfxbuilder->langc_entry),FALSE);
+  rfxbuilder->langc_combo = lives_standard_combo_new ((tmp=g_strdup(_("_Language code:"))),TRUE,langc,LIVES_BOX(top_vbox),
+						      (tmp2=g_strdup(_ ("Language for pre/loop/post/triggers. Optional."))));
 
-  gtk_widget_set_tooltip_text( rfxbuilder->langc_entry,
-			(_ ("Language for pre/loop/post/triggers. Optional.")));
+  g_free(tmp);
+  g_free(tmp2);
+  g_list_free(langc);
+  gtk_widget_show_all(gtk_widget_get_parent(rfxbuilder->langc_combo));
 
   hseparator = gtk_hseparator_new ();
   gtk_widget_show (hseparator);
@@ -1127,8 +1115,8 @@ void on_code_ok (GtkButton *button, gpointer user_data) {
       g_strfreev (lines);
 
       // set "default" combo - TODO - try to retain old default using string matching
-      combo_set_popdown_strings (GTK_COMBO (rfxbuilder->param_def_combo), 
-				 rfxbuilder->copy_params[rfxbuilder->edit_param].list);
+      lives_combo_populate (LIVES_COMBO (rfxbuilder->param_def_combo), 
+			     rfxbuilder->copy_params[rfxbuilder->edit_param].list);
       if (rfxbuilder->copy_params[rfxbuilder->edit_param].list==NULL||
 	  defindex>g_list_length (rfxbuilder->copy_params[rfxbuilder->edit_param].list)) {
 	set_int_param (rfxbuilder->copy_params[rfxbuilder->edit_param].def,(defindex=0));
@@ -1300,6 +1288,7 @@ void on_table_add_row (GtkButton *button, gpointer user_data) {
   int i;
 
   gchar *tmpx;
+  gchar *ctext;
 
   switch (rfxbuilder->table_type) {
   case RFX_TABLE_TYPE_REQUIREMENTS:
@@ -1429,7 +1418,9 @@ void on_table_add_row (GtkButton *button, gpointer user_data) {
 	return;
       }
       entry = rfxbuilder->entry[rfxbuilder->table_rows] = gtk_entry_new ();
-      gtk_entry_set_text (GTK_ENTRY (entry),gtk_entry_get_text (GTK_ENTRY (rfxbuilder->paramw_kw_entry)));
+      ctext=lives_combo_get_active_text(LIVES_COMBO(rfxbuilder->paramw_kw_combo));
+      gtk_entry_set_text (GTK_ENTRY (entry),ctext);
+      g_free(ctext);
       rfxbuilder->num_paramw_hints++;
     }
     else {
@@ -1454,13 +1445,17 @@ void on_table_add_row (GtkButton *button, gpointer user_data) {
       }
       else {
 	// TODO - use lives_rfx_special_t->has_subtype,name,num_params
-	if (!strcmp (gtk_entry_get_text (GTK_ENTRY (rfxbuilder->paramw_sp_entry)),"framedraw")) {
-	  gtk_entry_set_text (GTK_ENTRY (entry2),(tmpx=g_strdup_printf ("%s%s%s%s%s",gtk_entry_get_text (GTK_ENTRY (rfxbuilder->paramw_sp_entry)),rfxbuilder->field_delim,gtk_entry_get_text (GTK_ENTRY (rfxbuilder->paramw_spsub_entry)),rfxbuilder->field_delim,gtk_entry_get_text (GTK_ENTRY (rfxbuilder->paramw_rest_entry)))));
+	ctext=lives_combo_get_active_text(LIVES_COMBO(rfxbuilder->paramw_sp_combo));
+	if (!strcmp (ctext,"framedraw")) {
+	  gchar *ctext2=lives_combo_get_active_text(LIVES_COMBO(rfxbuilder->paramw_spsub_combo));
+	  gtk_entry_set_text (GTK_ENTRY (entry2),(tmpx=g_strdup_printf ("%s%s%s%s%s",ctext,rfxbuilder->field_delim,ctext2,rfxbuilder->field_delim,gtk_entry_get_text (GTK_ENTRY (rfxbuilder->paramw_rest_entry)))));
+	  g_free(ctext2);
 	}
 	else {
-	  gtk_entry_set_text (GTK_ENTRY (entry2),(tmpx=g_strdup_printf ("%s%s%s",gtk_entry_get_text (GTK_ENTRY (rfxbuilder->paramw_sp_entry)),rfxbuilder->field_delim,gtk_entry_get_text (GTK_ENTRY (rfxbuilder->paramw_rest_entry)))));
+	  gtk_entry_set_text (GTK_ENTRY (entry2),(tmpx=g_strdup_printf ("%s%s%s",ctext,rfxbuilder->field_delim,gtk_entry_get_text (GTK_ENTRY (rfxbuilder->paramw_rest_entry)))));
 	}
 	g_free(tmpx);
+	g_free(ctext);
       }
     }
     else {
@@ -1536,25 +1531,29 @@ void on_table_add_row (GtkButton *button, gpointer user_data) {
 void param_set_from_dialog (lives_param_t *copy_param, rfx_build_window_t *rfxbuilder) {
   // set parameter values from param_dialog
   // this is called after adding a new copy_param or editing an existing one
+  gchar *ctext=lives_combo_get_active_text(LIVES_COMBO(rfxbuilder->param_type_combo));
 
   copy_param->name=g_strdup (gtk_entry_get_text (GTK_ENTRY (rfxbuilder->param_name_entry)));
   copy_param->label=g_strdup (gtk_entry_get_text (GTK_ENTRY (rfxbuilder->param_label_entry)));
   
-  if (!strcmp (gtk_entry_get_text (GTK_ENTRY (rfxbuilder->param_type_entry)),"num")) {
+  if (!strcmp (ctext,"num")) {
     copy_param->type=LIVES_PARAM_NUM;
   }
-  else if (!strcmp (gtk_entry_get_text (GTK_ENTRY (rfxbuilder->param_type_entry)),"bool")) {
+  else if (!strcmp (ctext,"bool")) {
     copy_param->type=LIVES_PARAM_BOOL;
   }
-  else if (!strcmp (gtk_entry_get_text (GTK_ENTRY (rfxbuilder->param_type_entry)),"colRGB24")) {
+  else if (!strcmp (ctext,"colRGB24")) {
     copy_param->type=LIVES_PARAM_COLRGB24;
   }
-  else if (!strcmp (gtk_entry_get_text (GTK_ENTRY (rfxbuilder->param_type_entry)),"string")) {
+  else if (!strcmp (ctext,"string")) {
     copy_param->type=LIVES_PARAM_STRING;
   }
-  else if (!strcmp (gtk_entry_get_text (GTK_ENTRY (rfxbuilder->param_type_entry)),"string_list")) {
+  else if (!strcmp (ctext,"string_list")) {
     copy_param->type=LIVES_PARAM_STRING_LIST;
   }
+
+  g_free(ctext);
+
   copy_param->dp=gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(rfxbuilder->spinbutton_param_dp));
   copy_param->group=gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(rfxbuilder->spinbutton_param_group));
   copy_param->onchange=FALSE;  // no trigger assigned yet
@@ -1620,6 +1619,7 @@ void on_table_edit_row (GtkButton *button, gpointer user_data) {
   gboolean param_ok=FALSE;
 
   gchar *tmpx;
+  gchar *ctext;
 
   switch (rfxbuilder->table_type) {
   case RFX_TABLE_TYPE_REQUIREMENTS:
@@ -1689,18 +1689,27 @@ void on_table_edit_row (GtkButton *button, gpointer user_data) {
       gtk_widget_destroy (paramw_dialog);
       return;
     }
-    gtk_entry_set_text (GTK_ENTRY (rfxbuilder->entry[found]),gtk_entry_get_text (GTK_ENTRY (rfxbuilder->paramw_kw_entry)));
+    ctext=lives_combo_get_active_text(LIVES_COMBO(rfxbuilder->paramw_kw_combo));
+    gtk_entry_set_text (GTK_ENTRY (rfxbuilder->entry[found]),ctext);
+    g_free(ctext);
     if (!strcmp (gtk_entry_get_text (GTK_ENTRY (rfxbuilder->entry[found])),"layout")) {
       gtk_entry_set_text (GTK_ENTRY (rfxbuilder->entry2[found]),gtk_entry_get_text (GTK_ENTRY (rfxbuilder->paramw_rest_entry)));
     }
     else {
       // TODO - use lives_rfx_special_t->has_subtype,name,num_params
-      if (!strcmp (gtk_entry_get_text (GTK_ENTRY (rfxbuilder->paramw_sp_entry)),"framedraw")) {
-	gtk_entry_set_text (GTK_ENTRY (rfxbuilder->entry2[found]),(tmpx=g_strdup_printf ("%s%s%s%s%s",gtk_entry_get_text (GTK_ENTRY (rfxbuilder->paramw_sp_entry)),rfxbuilder->field_delim,gtk_entry_get_text (GTK_ENTRY (rfxbuilder->paramw_spsub_entry)),rfxbuilder->field_delim,gtk_entry_get_text (GTK_ENTRY (rfxbuilder->paramw_rest_entry)))));
+      ctext=lives_combo_get_active_text(LIVES_COMBO(rfxbuilder->paramw_sp_combo));
+      if (!strcmp (ctext,"framedraw")) {
+	gchar *ctext2=lives_combo_get_active_text(LIVES_COMBO(rfxbuilder->paramw_spsub_combo));
+	gtk_entry_set_text (GTK_ENTRY (rfxbuilder->entry2[found]),
+			    (tmpx=g_strdup_printf ("%s%s%s%s%s",ctext,rfxbuilder->field_delim,ctext2,rfxbuilder->field_delim,
+						   gtk_entry_get_text (GTK_ENTRY (rfxbuilder->paramw_rest_entry)))));
+	g_free(ctext2);
       }
       else {
-	gtk_entry_set_text (GTK_ENTRY (rfxbuilder->entry2[found]),(tmpx=g_strdup_printf ("%s%s%s",gtk_entry_get_text (GTK_ENTRY (rfxbuilder->paramw_sp_entry)),rfxbuilder->field_delim,gtk_entry_get_text (GTK_ENTRY (rfxbuilder->paramw_rest_entry)))));
+	gtk_entry_set_text (GTK_ENTRY (rfxbuilder->entry2[found]),
+			    (tmpx=g_strdup_printf ("%s%s%s",ctext,rfxbuilder->field_delim,gtk_entry_get_text (GTK_ENTRY (rfxbuilder->paramw_rest_entry)))));
       }
+      g_free(ctext);
       g_free(tmpx);
     }
     gtk_widget_destroy (paramw_dialog);
@@ -1913,13 +1922,14 @@ GtkWidget * make_param_dialog (gint pnum, rfx_build_window_t *rfxbuilder) {
   GtkWidget *cancelbutton;
   GtkWidget *okbutton;
   GtkWidget *label;
-  GtkWidget *combo;
   GtkWidget *hseparator;
   GObject *spinbutton_adj;
 
   GList *typelist=NULL;
 
   lives_colRGB24_t rgb;
+
+  gchar *tmp,*tmp2;
 
   dialog = gtk_dialog_new ();
   if (pnum<0) {
@@ -2017,17 +2027,6 @@ GtkWidget * make_param_dialog (gint pnum, rfx_build_window_t *rfxbuilder) {
   gtk_label_set_mnemonic_widget (GTK_LABEL (rfxbuilder->bg_label),rfxbuilder->spinbutton_param_group);
 
   // type
-  hbox = gtk_hbox_new (FALSE, 0);
-  gtk_widget_show (hbox);
-  gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, TRUE, TRUE, 0);
-
-  label = gtk_label_new_with_mnemonic (_("_Type:         "));
-  gtk_widget_show (label);
-  gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 0);
-
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg (label, GTK_STATE_NORMAL, &palette->normal_fore);
-  }
 
   typelist = g_list_append (typelist, (gpointer)"num");
   typelist = g_list_append (typelist, (gpointer)"bool");
@@ -2035,33 +2034,31 @@ GtkWidget * make_param_dialog (gint pnum, rfx_build_window_t *rfxbuilder) {
   typelist = g_list_append (typelist, (gpointer)"colRGB24");
   typelist = g_list_append (typelist, (gpointer)"string_list");
 
-  combo = gtk_combo_new ();
-  combo_set_popdown_strings (GTK_COMBO (combo), typelist);
+  rfxbuilder->param_type_combo = lives_standard_combo_new ((tmp=g_strdup(_("_Type:         "))),TRUE,typelist,
+							   LIVES_BOX(dialog_vbox),(tmp2=g_strdup(_ ("Parameter type (select from list)."))));
+  g_free(tmp);
+  g_free(tmp2);
   g_list_free(typelist);
-  gtk_box_pack_start (GTK_BOX (hbox), combo, TRUE, FALSE, 0);
-  gtk_widget_show(combo);
-  rfxbuilder->param_type_entry=(GtkWidget*)(GTK_ENTRY((GTK_COMBO(combo))->entry));
-  gtk_editable_set_editable (GTK_EDITABLE(rfxbuilder->param_type_entry),FALSE);
-  gtk_label_set_mnemonic_widget (GTK_LABEL (label),rfxbuilder->param_type_entry);
-  gtk_widget_set_tooltip_text( rfxbuilder->param_type_entry,(_ ("Parameter type (select from list).")));
+
+  gtk_widget_show_all(gtk_widget_get_parent(rfxbuilder->param_type_combo));
 
   if (pnum>=0) {
     rfxbuilder->edit_param=pnum;
     switch(rfxbuilder->copy_params[pnum].type) {
     case LIVES_PARAM_NUM:
-      gtk_entry_set_text (GTK_ENTRY (rfxbuilder->param_type_entry),"num");
+      gtk_combo_box_set_active(GTK_COMBO_BOX(rfxbuilder->param_type_combo),0);
       break;
     case LIVES_PARAM_BOOL:
-      gtk_entry_set_text (GTK_ENTRY (rfxbuilder->param_type_entry),"bool");
+      gtk_combo_box_set_active(GTK_COMBO_BOX(rfxbuilder->param_type_combo),1);
       break;
     case LIVES_PARAM_COLRGB24:
-      gtk_entry_set_text (GTK_ENTRY (rfxbuilder->param_type_entry),"colRGB24");
+      gtk_combo_box_set_active(GTK_COMBO_BOX(rfxbuilder->param_type_combo),2);
       break;
     case LIVES_PARAM_STRING:
-      gtk_entry_set_text (GTK_ENTRY (rfxbuilder->param_type_entry),"string");
+      gtk_combo_box_set_active(GTK_COMBO_BOX(rfxbuilder->param_type_combo),3);
       break;
     case LIVES_PARAM_STRING_LIST:
-      gtk_entry_set_text (GTK_ENTRY (rfxbuilder->param_type_entry),"string_list");
+      gtk_combo_box_set_active(GTK_COMBO_BOX(rfxbuilder->param_type_combo),4);
       break;
     default:
       break;
@@ -2134,10 +2131,10 @@ GtkWidget * make_param_dialog (gint pnum, rfx_build_window_t *rfxbuilder) {
   gtk_widget_show (label);
   gtk_box_pack_start (GTK_BOX (rfxbuilder->param_strlist_hbox), label, FALSE, FALSE, 0);
 
-  rfxbuilder->param_def_combo = gtk_combo_new ();
+  rfxbuilder->param_def_combo = lives_combo_new ();
   gtk_box_pack_start (GTK_BOX (rfxbuilder->param_strlist_hbox), rfxbuilder->param_def_combo, FALSE, FALSE, 0);
   gtk_widget_show(rfxbuilder->param_def_combo);
-  gtk_editable_set_editable (GTK_EDITABLE((GTK_COMBO(rfxbuilder->param_def_combo))->entry),FALSE);
+
   gtk_label_set_mnemonic_widget (GTK_LABEL (rfxbuilder->param_def_label),rfxbuilder->param_def_combo);
 
   if (pnum>=0) {
@@ -2288,7 +2285,7 @@ GtkWidget * make_param_dialog (gint pnum, rfx_build_window_t *rfxbuilder) {
 		    G_CALLBACK (on_code_clicked),
 		    (gpointer)rfxbuilder);
 
-  g_signal_connect (GTK_OBJECT(rfxbuilder->param_type_entry),"changed",G_CALLBACK (on_param_type_changed),
+  g_signal_connect (GTK_OBJECT(rfxbuilder->param_type_combo),"changed",G_CALLBACK (on_param_type_changed),
 		    (gpointer)rfxbuilder);
 
   g_signal_connect_after (GTK_OBJECT (rfxbuilder->spinbutton_param_dp), "value_changed",
@@ -2308,7 +2305,7 @@ GtkWidget * make_param_dialog (gint pnum, rfx_build_window_t *rfxbuilder) {
 			  (gpointer)rfxbuilder);
 
   if (pnum>=0) {
-    on_param_type_changed (GTK_ENTRY (rfxbuilder->param_type_entry),(gpointer)rfxbuilder);
+    on_param_type_changed (LIVES_COMBO (rfxbuilder->param_type_combo),(gpointer)rfxbuilder);
     switch (rfxbuilder->copy_params[pnum].type) {
     case LIVES_PARAM_NUM:
       gtk_spin_button_set_value (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_min),rfxbuilder->copy_params[pnum].min);
@@ -2360,8 +2357,14 @@ void after_param_dp_changed (GtkSpinButton *spinbutton, gpointer user_data) {
 void after_param_min_changed (GtkSpinButton *spinbutton, gpointer user_data) {
   rfx_build_window_t *rfxbuilder=(rfx_build_window_t *)user_data;
   gint dp;
+  gchar *ctext=lives_combo_get_active_text(LIVES_COMBO(rfxbuilder->param_type_combo));
 
-  if (strcmp (gtk_entry_get_text (GTK_ENTRY (rfxbuilder->param_type_entry)),"num")) return;
+  if (strcmp (ctext,"num")) {
+    g_free(ctext);
+    return;
+  }
+
+  g_free(ctext);
 
   g_signal_handler_block (rfxbuilder->spinbutton_param_max,rfxbuilder->max_spin_f);
   g_signal_handler_block (rfxbuilder->spinbutton_param_def,rfxbuilder->def_spin_f);
@@ -2402,8 +2405,14 @@ void after_param_min_changed (GtkSpinButton *spinbutton, gpointer user_data) {
 void after_param_max_changed (GtkSpinButton *spinbutton, gpointer user_data) {
   rfx_build_window_t *rfxbuilder=(rfx_build_window_t *)user_data;
   gint dp;
+  gchar *ctext=lives_combo_get_active_text(LIVES_COMBO(rfxbuilder->param_type_combo));
 
-  if (strcmp (gtk_entry_get_text (GTK_ENTRY (rfxbuilder->param_type_entry)),"num")) return;
+  if (strcmp (ctext,"num")) {
+    g_free(ctext);
+    return;
+  }
+
+  g_free(ctext);
 
   g_signal_handler_block (rfxbuilder->spinbutton_param_min,rfxbuilder->min_spin_f);
   g_signal_handler_block (rfxbuilder->spinbutton_param_def,rfxbuilder->def_spin_f);
@@ -2442,8 +2451,14 @@ void after_param_max_changed (GtkSpinButton *spinbutton, gpointer user_data) {
 
 void after_param_def_changed (GtkSpinButton *spinbutton, gpointer user_data) {
   rfx_build_window_t *rfxbuilder=(rfx_build_window_t *)user_data;
+  gchar *ctext=lives_combo_get_active_text(LIVES_COMBO(rfxbuilder->param_type_combo));
 
-  if (strcmp (gtk_entry_get_text (GTK_ENTRY (rfxbuilder->param_type_entry)),"num")) return;
+  if (strcmp (ctext,"num")) {
+    g_free(ctext);
+    return;
+  }
+
+  g_free(ctext);
 
   if (gtk_spin_button_get_value_as_int (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_dp))) {
     gdouble dbl_def=gtk_spin_button_get_value (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_def));
@@ -2466,11 +2481,13 @@ void after_param_def_changed (GtkSpinButton *spinbutton, gpointer user_data) {
 }
 
 
-void on_param_type_changed (GtkEntry *param_type_entry, gpointer user_data) {
+void on_param_type_changed (GtkComboBox *param_type_combo, gpointer user_data) {
 
   rfx_build_window_t *rfxbuilder=(rfx_build_window_t *)user_data;
   gint pnum=rfxbuilder->edit_param;
   gint dp;
+
+  gchar *ctext=lives_combo_get_active_text(LIVES_COMBO(rfxbuilder->param_type_combo));
 
   gtk_widget_show (rfxbuilder->param_min_label);
   gtk_widget_show (rfxbuilder->param_max_label);
@@ -2490,7 +2507,7 @@ void on_param_type_changed (GtkEntry *param_type_entry, gpointer user_data) {
   gtk_widget_hide (rfxbuilder->param_wrap_checkbutton);
   gtk_widget_hide (rfxbuilder->param_wrap_eventbox);
 
-  if (!strcmp (gtk_entry_get_text (GTK_ENTRY (param_type_entry)),"string_list")) {
+  if (!strcmp (ctext,"string_list")) {
     gint defindex;
 
     if (rfxbuilder->copy_params[pnum].type!=LIVES_PARAM_STRING_LIST) {
@@ -2503,7 +2520,9 @@ void on_param_type_changed (GtkEntry *param_type_entry, gpointer user_data) {
 
     rfxbuilder->copy_params[pnum].type=LIVES_PARAM_STRING_LIST;
     defindex=get_int_param (rfxbuilder->copy_params[pnum].def);
-    combo_set_popdown_strings (GTK_COMBO (rfxbuilder->param_def_combo), rfxbuilder->copy_params[pnum].list);
+
+    lives_combo_populate (LIVES_COMBO (rfxbuilder->param_def_combo), rfxbuilder->copy_params[pnum].list);
+
     if (rfxbuilder->copy_params[pnum].list==NULL||defindex>g_list_length (rfxbuilder->copy_params[pnum].list)) {
       set_int_param (rfxbuilder->copy_params[pnum].def,(defindex=0));
     }
@@ -2527,7 +2546,7 @@ void on_param_type_changed (GtkEntry *param_type_entry, gpointer user_data) {
     gtk_widget_show (rfxbuilder->param_strlist_hbox);
   }
   else {
-    if (!strcmp (gtk_entry_get_text (GTK_ENTRY (param_type_entry)),"num")) {
+    if (!strcmp (ctext,"num")) {
       rfxbuilder->copy_params[pnum].type=LIVES_PARAM_NUM;
       gtk_label_set_text (GTK_LABEL (rfxbuilder->param_def_label),(_("Default value:    ")));
       gtk_label_set_text (GTK_LABEL (rfxbuilder->param_min_label),(_("Minimum value: ")));
@@ -2600,7 +2619,7 @@ void on_param_type_changed (GtkEntry *param_type_entry, gpointer user_data) {
 	gtk_spin_button_set_value (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_max),max);
       }
     }
-    else if (!strcmp (gtk_entry_get_text (GTK_ENTRY (param_type_entry)),"bool")) {
+    else if (!strcmp (ctext,"bool")) {
       rfxbuilder->copy_params[pnum].type=LIVES_PARAM_BOOL;
       gtk_label_set_text (GTK_LABEL (rfxbuilder->param_def_label),(_("Default value:    ")));
       gtk_widget_hide (rfxbuilder->param_min_label);
@@ -2616,7 +2635,7 @@ void on_param_type_changed (GtkEntry *param_type_entry, gpointer user_data) {
       gtk_spin_button_set_digits (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_min),0);
       gtk_spin_button_set_digits (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_max),0);
     }
-    else if (!strcmp (gtk_entry_get_text (GTK_ENTRY (param_type_entry)),"colRGB24")) {
+    else if (!strcmp (ctext,"colRGB24")) {
       rfxbuilder->copy_params[pnum].type=LIVES_PARAM_COLRGB24;
       gtk_widget_hide (rfxbuilder->spinbutton_param_dp);
       gtk_widget_hide (rfxbuilder->param_dp_label);
@@ -2632,7 +2651,7 @@ void on_param_type_changed (GtkEntry *param_type_entry, gpointer user_data) {
       gtk_spin_button_set_digits (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_max),0);
       gtk_spin_button_set_value (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_max),0);
     }
-    else if (!strcmp (gtk_entry_get_text (GTK_ENTRY (param_type_entry)),"string")) {
+    else if (!strcmp (ctext,"string")) {
       rfxbuilder->copy_params[pnum].type=LIVES_PARAM_STRING;
       gtk_widget_hide (rfxbuilder->spinbutton_param_dp);
       gtk_widget_hide (rfxbuilder->param_dp_label);
@@ -2654,6 +2673,8 @@ void on_param_type_changed (GtkEntry *param_type_entry, gpointer user_data) {
       }
     }
   }
+
+  g_free(ctext);
 }
 
 
@@ -2668,8 +2689,6 @@ GtkWidget * make_param_window_dialog (gint pnum, rfx_build_window_t *rfxbuilder)
   GtkWidget *hbox;
   GtkWidget *cancelbutton;
   GtkWidget *okbutton;
-  GtkWidget *label;
-  GtkWidget *combo;
 
   GList *kwlist=NULL;
   GList *splist=NULL;
@@ -2732,87 +2751,49 @@ GtkWidget * make_param_window_dialog (gint pnum, rfx_build_window_t *rfxbuilder)
   }
 
   // kw
-  hbox = gtk_hbox_new (FALSE, 0);
-  gtk_widget_show (hbox);
-  gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, TRUE, TRUE, 0);
-
-  label = gtk_label_new (_("Keyword:         "));
-  gtk_widget_show (label);
-  gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 0);
-
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg (label, GTK_STATE_NORMAL, &palette->normal_fore);
-  }
-
   kwlist = g_list_append (kwlist, (gpointer)"layout");
   kwlist = g_list_append (kwlist, (gpointer)"special");
 
-  combo = gtk_combo_new ();
-  combo_set_popdown_strings (GTK_COMBO (combo), kwlist);
+  rfxbuilder->paramw_kw_combo = lives_standard_combo_new (_("_Keyword:         "),TRUE,kwlist,LIVES_BOX(dialog_vbox),NULL);
+  gtk_widget_show_all(gtk_widget_get_parent(rfxbuilder->paramw_kw_combo));
   g_list_free(kwlist);
-  gtk_box_pack_start (GTK_BOX (hbox), combo, TRUE, FALSE, 0);
-  gtk_widget_show(combo);
-  rfxbuilder->paramw_kw_entry=(GtkWidget*)(GTK_ENTRY((GTK_COMBO(combo))->entry));
-  gtk_editable_set_editable (GTK_EDITABLE(rfxbuilder->paramw_kw_entry),FALSE);
 
   if (pnum>=0&&kw!=NULL) {
-    gtk_entry_set_text (GTK_ENTRY (rfxbuilder->paramw_kw_entry),kw);
+    lives_combo_set_active_string (LIVES_COMBO (rfxbuilder->paramw_kw_combo),kw);
   }
 
 
   // type
-  hbox = gtk_hbox_new (FALSE, 0);
-  gtk_widget_show (hbox);
-  gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, TRUE, TRUE, 0);
-
-  rfxbuilder->paramw_sp_label = gtk_label_new (_("Special Type:         "));
-  gtk_box_pack_start (GTK_BOX (hbox), rfxbuilder->paramw_sp_label, FALSE, FALSE, 0);
-
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg (rfxbuilder->paramw_sp_label, GTK_STATE_NORMAL, &palette->normal_fore);
-  }
-
   splist = g_list_append (splist, (gpointer)"aspect");
   splist = g_list_append (splist, (gpointer)"framedraw");
   splist = g_list_append (splist, (gpointer)"fileread");
+  splist = g_list_append (splist, (gpointer)"password");
   if (rfxbuilder->type==RFX_BUILD_TYPE_EFFECT2) {
     splist = g_list_append (splist, (gpointer)"mergealign");
   }
 
-  rfxbuilder->paramw_sp_combo = gtk_combo_new ();
-  combo_set_popdown_strings (GTK_COMBO (rfxbuilder->paramw_sp_combo), splist);
+  rfxbuilder->paramw_sp_combo = lives_standard_combo_new (_("Special _Type:         "),TRUE,splist,LIVES_BOX(dialog_vbox),NULL);
+  gtk_widget_show_all(gtk_widget_get_parent(rfxbuilder->paramw_sp_combo));
+
   g_list_free(splist);
-  gtk_box_pack_start (GTK_BOX (hbox), rfxbuilder->paramw_sp_combo, TRUE, FALSE, 0);
-  rfxbuilder->paramw_sp_entry=(GtkWidget*)(GTK_ENTRY((GTK_COMBO(rfxbuilder->paramw_sp_combo))->entry));
-  gtk_editable_set_editable (GTK_EDITABLE(rfxbuilder->paramw_sp_entry),FALSE);
+
   if (pnum>=0&&sp!=NULL) {
-    gtk_entry_set_text (GTK_ENTRY (rfxbuilder->paramw_sp_entry),sp);
+    lives_combo_set_active_string (LIVES_COMBO (rfxbuilder->paramw_sp_combo),sp);
   }
 
   // subtype
-  hbox = gtk_hbox_new (FALSE, 0);
-  gtk_widget_show (hbox);
-  gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, TRUE, TRUE, 0);
-
-  rfxbuilder->paramw_spsub_label = gtk_label_new (_("Special Subtype:         "));
-  gtk_box_pack_start (GTK_BOX (hbox), rfxbuilder->paramw_spsub_label, FALSE, FALSE, 0);
-
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg (rfxbuilder->paramw_spsub_label, GTK_STATE_NORMAL, &palette->normal_fore);
-  }
 
   spsublist = g_list_append (spsublist, (gpointer)"rectdemask");
   spsublist = g_list_append (spsublist, (gpointer)"multrect");
   spsublist = g_list_append (spsublist, (gpointer)"singlepoint");
 
-  rfxbuilder->paramw_spsub_combo = gtk_combo_new ();
-  combo_set_popdown_strings (GTK_COMBO (rfxbuilder->paramw_spsub_combo), spsublist);
+  rfxbuilder->paramw_spsub_combo = lives_standard_combo_new (_("Special _Subtype:         "),TRUE,spsublist,LIVES_BOX(dialog_vbox),NULL);
+  gtk_widget_show_all(gtk_widget_get_parent(rfxbuilder->paramw_spsub_combo));
+
   g_list_free(spsublist);
-  gtk_box_pack_start (GTK_BOX (hbox), rfxbuilder->paramw_spsub_combo, TRUE, FALSE, 0);
-  rfxbuilder->paramw_spsub_entry=(GtkWidget*)(GTK_ENTRY((GTK_COMBO(rfxbuilder->paramw_spsub_combo))->entry));
-  gtk_editable_set_editable (GTK_EDITABLE(rfxbuilder->paramw_spsub_entry),FALSE);
+
   if (pnum>=0&&spsub!=NULL) {
-    gtk_entry_set_text (GTK_ENTRY (rfxbuilder->paramw_spsub_entry),spsub);
+    lives_combo_set_active_string (LIVES_COMBO (rfxbuilder->paramw_spsub_combo),spsub);
   }
 
 
@@ -2863,80 +2844,83 @@ GtkWidget * make_param_window_dialog (gint pnum, rfx_build_window_t *rfxbuilder)
 		    G_CALLBACK (gtk_true),
 		    NULL);
 
-  g_signal_connect (GTK_OBJECT(rfxbuilder->paramw_kw_entry),"changed",
+  g_signal_connect (GTK_OBJECT(rfxbuilder->paramw_kw_combo),"changed",
 		    G_CALLBACK (on_paramw_kw_changed),(gpointer)rfxbuilder);
 
-  g_signal_connect (GTK_OBJECT(rfxbuilder->paramw_sp_entry),"changed",
+  g_signal_connect (GTK_OBJECT(rfxbuilder->paramw_sp_combo),"changed",
 		    G_CALLBACK (on_paramw_sp_changed),(gpointer)rfxbuilder);
 
-  g_signal_connect (GTK_OBJECT(rfxbuilder->paramw_spsub_entry),"changed",
+  g_signal_connect (GTK_OBJECT(rfxbuilder->paramw_spsub_combo),"changed",
 		    G_CALLBACK (on_paramw_spsub_changed),(gpointer)rfxbuilder);
 
-  if (pnum>=0) on_paramw_kw_changed (GTK_ENTRY (rfxbuilder->paramw_kw_entry),(gpointer)rfxbuilder);
+  on_paramw_kw_changed (GTK_COMBO_BOX (rfxbuilder->paramw_kw_combo),(gpointer)rfxbuilder);
 
   return dialog;
 }
 
 
 
-void on_paramw_kw_changed (GtkEntry *paramw_kw_entry, gpointer user_data) {
+void on_paramw_kw_changed (GtkComboBox *combo, gpointer user_data) {
 
   rfx_build_window_t *rfxbuilder=(rfx_build_window_t *)user_data;
+  gchar *ctext=lives_combo_get_active_text(combo);
 
-  if (!strcmp (gtk_entry_get_text (GTK_ENTRY (paramw_kw_entry)),"special")) {
-    gtk_widget_show (rfxbuilder->paramw_sp_label);
-    gtk_widget_show (rfxbuilder->paramw_sp_combo);
-    on_paramw_sp_changed (GTK_ENTRY (rfxbuilder->paramw_sp_entry),(gpointer)rfxbuilder);
-    gtk_widget_grab_focus (rfxbuilder->paramw_sp_entry);
+  if (!strcmp (ctext,"special")) {
+    gtk_widget_show_all (gtk_widget_get_parent(rfxbuilder->paramw_sp_combo));
+    on_paramw_sp_changed (GTK_COMBO_BOX(rfxbuilder->paramw_sp_combo),(gpointer)rfxbuilder);
+    gtk_widget_grab_focus (lives_combo_get_entry(LIVES_COMBO(rfxbuilder->paramw_sp_combo)));
   }
   else {
     gtk_label_set_text (GTK_LABEL (rfxbuilder->paramw_rest_label),(_("Row:    ")));
-    gtk_widget_hide (rfxbuilder->paramw_sp_label);
-    gtk_widget_hide (rfxbuilder->paramw_sp_combo);
-    gtk_widget_hide (rfxbuilder->paramw_spsub_label);
-    gtk_widget_hide (rfxbuilder->paramw_spsub_combo);
+    gtk_widget_hide_all (gtk_widget_get_parent(rfxbuilder->paramw_sp_combo));
+    gtk_widget_hide_all (gtk_widget_get_parent(rfxbuilder->paramw_spsub_combo));
     gtk_widget_grab_focus (rfxbuilder->paramw_rest_entry);
   }
+
+  g_free(ctext);
 }
 
 
-void on_paramw_sp_changed (GtkEntry *paramw_sp_entry, gpointer user_data) {
+void on_paramw_sp_changed (GtkComboBox *combo, gpointer user_data) {
 
   rfx_build_window_t *rfxbuilder=(rfx_build_window_t *)user_data;
-  const gchar *text=gtk_entry_get_text (GTK_ENTRY (paramw_sp_entry));
   gint npars;
   gchar *tmpx;
+  gchar *ctext=lives_combo_get_active_text(combo);
 
-  if (!strcmp (text,"framedraw")) {
-    gtk_widget_show (rfxbuilder->paramw_spsub_label);
-    gtk_widget_show (rfxbuilder->paramw_spsub_combo);
-    gtk_widget_grab_focus (rfxbuilder->paramw_spsub_entry);
-    on_paramw_spsub_changed (GTK_ENTRY (rfxbuilder->paramw_spsub_entry),(gpointer)rfxbuilder);
+  if (!strcmp (ctext,"framedraw")) {
+    gtk_widget_show_all (gtk_widget_get_parent(rfxbuilder->paramw_spsub_combo));
+    on_paramw_spsub_changed (GTK_COMBO_BOX(rfxbuilder->paramw_spsub_combo),(gpointer)rfxbuilder);
+    gtk_widget_grab_focus (lives_combo_get_entry(LIVES_COMBO(rfxbuilder->paramw_spsub_combo)));
   }
   else {
-    if (!strcmp(text,"fileread")) npars=1;
+    if (!strcmp(ctext,"fileread")||!strcmp(ctext,"password")) npars=1;
     else npars=2;
     gtk_label_set_text (GTK_LABEL (rfxbuilder->paramw_rest_label),
 			(tmpx=g_strdup_printf(_("Linked parameters (%d):    "),npars)));
     g_free(tmpx);
-    gtk_widget_hide (rfxbuilder->paramw_spsub_label);
-    gtk_widget_hide (rfxbuilder->paramw_spsub_combo);
+    gtk_widget_hide_all (gtk_widget_get_parent(rfxbuilder->paramw_spsub_combo));
     gtk_widget_grab_focus (rfxbuilder->paramw_rest_entry);
   }
+
+  g_free(ctext);
 }
 
 
-void on_paramw_spsub_changed (GtkEntry *paramw_spsub_entry, gpointer user_data) {
+void on_paramw_spsub_changed (GtkComboBox *combo, gpointer user_data) {
 
   rfx_build_window_t *rfxbuilder=(rfx_build_window_t *)user_data;
+  gchar *ctext=lives_combo_get_active_text(combo);
 
-  if (!strcmp (gtk_entry_get_text (GTK_ENTRY (paramw_spsub_entry)),"rectdemask")||
-      !strcmp (gtk_entry_get_text (GTK_ENTRY (paramw_spsub_entry)),"multrect")) {
+  if (!strcmp (ctext,"rectdemask")||
+      !strcmp (ctext,"multrect")) {
     gtk_label_set_text (GTK_LABEL (rfxbuilder->paramw_rest_label),(_("Linked parameters (4):    ")));
   }
-  else if (!strcmp (gtk_entry_get_text (GTK_ENTRY (paramw_spsub_entry)),"singlepoint")) {
+  else if (!strcmp (ctext,"singlepoint")) {
     gtk_label_set_text (GTK_LABEL (rfxbuilder->paramw_rest_label),(_("Linked parameters (2):    ")));
   }
+
+  g_free(ctext);
 }
 
 
@@ -3009,13 +2993,12 @@ GtkWidget * make_trigger_dialog (gint tnum, rfx_build_window_t *rfxbuilder) {
     }
   }
 
-  combo = gtk_combo_new ();
-  combo_set_popdown_strings (GTK_COMBO (combo), whenlist);
+  combo = lives_combo_new ();
+  lives_combo_populate (LIVES_COMBO (combo), whenlist);
   g_list_free(whenlist);
   gtk_box_pack_start (GTK_BOX (hbox), combo, TRUE, FALSE, 0);
   gtk_widget_show(combo);
-  rfxbuilder->trigger_when_entry=(GtkWidget*)(GTK_ENTRY((GTK_COMBO(combo))->entry));
-  gtk_editable_set_editable (GTK_EDITABLE(rfxbuilder->trigger_when_entry),FALSE);
+  rfxbuilder->trigger_when_entry=lives_combo_get_entry(LIVES_COMBO(combo));
 
 
   // code area
@@ -3617,7 +3600,7 @@ gboolean rfxbuilder_to_script (rfx_build_window_t *rfxbuilder) {
       g_free (buf);
       lives_fputs("\n</properties>\n\n",sfile);
       lives_fputs("<language_code>\n",sfile);
-      array=g_strsplit(gtk_entry_get_text (GTK_ENTRY (rfxbuilder->langc_entry))," ",-1);
+      array=g_strsplit(lives_combo_get_active_text (LIVES_COMBO (rfxbuilder->langc_combo))," ",-1);
       lives_fputs (array[0],sfile);
       g_strfreev (array);
       lives_fputs("\n</language_code>\n\n",sfile);
@@ -4436,12 +4419,11 @@ gchar *prompt_for_script_name(const gchar *sname, lives_rfx_status_t status) {
   GtkWidget *script_combo=NULL;
   GtkWidget *name_entry=NULL;
   GtkWidget *script_combo_entry=NULL;
-  GtkWidget *status_combo;
+  GtkWidget *status_combo=NULL;
   GtkWidget *status_combo_entry=NULL;
   GtkWidget *dialog;
   GtkWidget *action_area;
   GtkWidget *cancelbutton;
-  GtkWidget *okbutton;
 
   GList *status_list=NULL;
 
@@ -4451,9 +4433,9 @@ gchar *prompt_for_script_name(const gchar *sname, lives_rfx_status_t status) {
 
   if (status==RFX_STATUS_COPY) {
     copy_mode=TRUE;
-    status_list = g_list_append (status_list, g_strdup(_("Builtin")));
-    status_list = g_list_append (status_list, g_strdup(_("Custom")));
-    status_list = g_list_append (status_list, g_strdup(_("Test")));
+    status_list = g_list_append (status_list, g_strdup(mainw->string_constants[LIVES_STRING_CONSTANT_BUILTIN]));
+    status_list = g_list_append (status_list, g_strdup(mainw->string_constants[LIVES_STRING_CONSTANT_CUSTOM]));
+    status_list = g_list_append (status_list, g_strdup(mainw->string_constants[LIVES_STRING_CONSTANT_TEST]));
   }
   dialog = gtk_dialog_new ();
 
@@ -4476,28 +4458,29 @@ gchar *prompt_for_script_name(const gchar *sname, lives_rfx_status_t status) {
   hbox = gtk_hbox_new (FALSE, 0);
   gtk_widget_show (hbox);
   gtk_box_pack_start (GTK_BOX (vbox), hbox, TRUE, TRUE, 0);
+
+  vbox = gtk_vbox_new (FALSE, 0);
+  gtk_widget_show (vbox);
+  gtk_box_pack_start (GTK_BOX (hbox), vbox, TRUE, TRUE, 0);
+
+  add_fill_to_box(LIVES_BOX(vbox));
+
+  hbox = gtk_hbox_new (FALSE, 0);
+  gtk_widget_show (hbox);
+  gtk_box_pack_start (GTK_BOX (vbox), hbox, TRUE, TRUE, 0);
+
+  add_fill_to_box(LIVES_BOX(vbox));
   
   if (copy_mode) {
     gtk_window_set_title (GTK_WINDOW (dialog), _("LiVES: - Copy RFX Script"));
 
-    label = gtk_label_new (_ ("From type:    "));
-    gtk_widget_show (label);
-    gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 0);
-    if (palette->style&STYLE_1) {
-      gtk_widget_modify_fg (label, GTK_STATE_NORMAL, &palette->normal_fore);
-    }
+    status_combo = lives_standard_combo_new (_ ("_From type:    "),TRUE,status_list,LIVES_BOX(hbox),NULL);
+    gtk_widget_show_all (hbox);
 
-    status_combo = gtk_combo_new ();
-    gtk_widget_show (status_combo);
+    status_combo_entry = lives_combo_get_entry(LIVES_COMBO(status_combo));
 
-    status_combo_entry = GTK_COMBO (status_combo)->entry;
-    gtk_editable_set_editable (GTK_EDITABLE(status_combo_entry),FALSE);
-    gtk_widget_show (status_combo_entry);
-
-    combo_set_popdown_strings (GTK_COMBO (status_combo), status_list);
     g_list_free_strings (status_list);
     g_list_free (status_list);
-    gtk_box_pack_start (GTK_BOX (hbox), status_combo, TRUE, TRUE, 0);
 
     label = gtk_label_new (_ ("   Script:    "));
     gtk_widget_show (label);
@@ -4526,19 +4509,10 @@ gchar *prompt_for_script_name(const gchar *sname, lives_rfx_status_t status) {
   
   
   if (sname==NULL||copy_mode||rename_mode) {
-    GList *sclist;
-    script_combo = gtk_combo_new ();
+    script_combo = lives_combo_new ();
     gtk_widget_show (script_combo);
 
-    name_entry = script_combo_entry = GTK_COMBO (script_combo)->entry;
-    gtk_editable_set_editable (GTK_EDITABLE(name_entry),FALSE);
-    gtk_widget_show (name_entry);
-
-    combo_set_popdown_strings (GTK_COMBO (script_combo), (sclist=get_script_list (status)));
-    if (sclist!=NULL) {
-      g_list_free_strings(sclist);
-      g_list_free(sclist);
-    }
+    name_entry = script_combo_entry = lives_combo_get_entry(LIVES_COMBO(script_combo));
     gtk_box_pack_start (GTK_BOX (hbox), script_combo, TRUE, TRUE, 0);
   }
   if (sname!=NULL||copy_mode||rename_mode) {
@@ -4546,7 +4520,7 @@ gchar *prompt_for_script_name(const gchar *sname, lives_rfx_status_t status) {
     name_entry=gtk_entry_new();
 
     if (copy_mode) {
-      g_signal_connect (GTK_OBJECT(status_combo_entry),"changed",G_CALLBACK (on_script_status_changed),
+      g_signal_connect (GTK_OBJECT(status_combo),"changed",G_CALLBACK (on_script_status_changed),
 			(gpointer)script_combo);
       label = gtk_label_new (_ ("New name: "));
     }
@@ -4582,16 +4556,18 @@ gchar *prompt_for_script_name(const gchar *sname, lives_rfx_status_t status) {
   gtk_dialog_add_action_widget (GTK_DIALOG (dialog), cancelbutton, GTK_RESPONSE_CANCEL);
   GTK_WIDGET_SET_FLAGS (cancelbutton, GTK_CAN_DEFAULT);
 
-  okbutton = gtk_button_new_from_stock ("gtk-ok");
-  gtk_widget_show (okbutton);
+  copy_script_okbutton = gtk_button_new_from_stock ("gtk-ok");
+  gtk_widget_show (copy_script_okbutton);
 
-  gtk_dialog_add_action_widget (GTK_DIALOG (dialog), okbutton, GTK_RESPONSE_OK);
-  GTK_WIDGET_SET_FLAGS (okbutton, GTK_CAN_DEFAULT);
-  gtk_widget_grab_default (okbutton);
+  gtk_dialog_add_action_widget (GTK_DIALOG (dialog), copy_script_okbutton, GTK_RESPONSE_OK);
+  GTK_WIDGET_SET_FLAGS (copy_script_okbutton, GTK_CAN_DEFAULT);
+  gtk_widget_grab_default (copy_script_okbutton);
 
   g_signal_connect (GTK_OBJECT (dialog), "delete_event",
 		    G_CALLBACK (gtk_true),
 		    NULL);
+
+  on_script_status_changed(LIVES_COMBO(status_combo),(gpointer)script_combo);
 
   do {
     OK=TRUE;
@@ -4609,9 +4585,9 @@ gchar *prompt_for_script_name(const gchar *sname, lives_rfx_status_t status) {
 	else {
 	  from_name=g_strdup(gtk_entry_get_text (GTK_ENTRY (script_combo_entry)));
 	  from_status=g_strdup(gtk_entry_get_text (GTK_ENTRY (status_combo_entry)));
-	  if (!strcmp (from_status,_("Builtin"))) status=RFX_STATUS_BUILTIN;
+	  if (!strcmp (from_status,mainw->string_constants[LIVES_STRING_CONSTANT_BUILTIN])) status=RFX_STATUS_BUILTIN;
 	  else {
-	    if (!strcmp (from_status,_("Custom"))) status=RFX_STATUS_CUSTOM;
+	    if (!strcmp (from_status,mainw->string_constants[LIVES_STRING_CONSTANT_CUSTOM])) status=RFX_STATUS_CUSTOM;
 	    else status=RFX_STATUS_TEST;
 	  }
 
@@ -4673,32 +4649,38 @@ gchar *prompt_for_script_name(const gchar *sname, lives_rfx_status_t status) {
 }
 
 
-void on_script_status_changed (GtkEntry *script_entry, gpointer combo) {
-  gchar *text=g_strdup (gtk_entry_get_text (GTK_ENTRY (script_entry)));
+void on_script_status_changed (GtkComboBox *status_combo, gpointer user_data) {
+  gchar *text=lives_combo_get_active_text(status_combo);
   GList *list=NULL;
+  LiVESWidget *script_combo=(LiVESWidget *)user_data;
 
-  if (combo==NULL||!GTK_IS_COMBO (combo)) return;
+  if (script_combo==NULL||!LIVES_IS_COMBO (script_combo)) return;
 
-  if (!(strcmp (text,_("Builtin")))) {
-    combo_set_popdown_strings (GTK_COMBO (combo), (list=get_script_list (RFX_STATUS_BUILTIN)));
+  if (!(strcmp (text,mainw->string_constants[LIVES_STRING_CONSTANT_BUILTIN]))) {
+    lives_combo_populate (LIVES_COMBO (script_combo), (list=get_script_list (RFX_STATUS_BUILTIN)));
   }
   else {
-    if (!(strcmp (text,_("Custom")))) {
-    combo_set_popdown_strings (GTK_COMBO (combo), (list=get_script_list (RFX_STATUS_CUSTOM)));
+    if (!(strcmp (text,mainw->string_constants[LIVES_STRING_CONSTANT_CUSTOM]))) {
+      lives_combo_populate (LIVES_COMBO (script_combo), (list=get_script_list (RFX_STATUS_CUSTOM)));
     }
     else {
-      if (!(strcmp (text,_("Test")))) {
-	combo_set_popdown_strings (GTK_COMBO (combo), (list=get_script_list (RFX_STATUS_TEST)));
+      if (!(strcmp (text,mainw->string_constants[LIVES_STRING_CONSTANT_TEST]))) {
+	lives_combo_populate (LIVES_COMBO (script_combo), (list=get_script_list (RFX_STATUS_TEST)));
       }
     }
   }
   g_free (text);
   if (list!=NULL) {
+    gtk_combo_box_set_active(GTK_COMBO_BOX(script_combo),0);
+    gtk_widget_set_sensitive(copy_script_okbutton,TRUE);
     g_list_free_strings(list);
     g_list_free(list);
   }
+  else {
+    lives_combo_set_active_string(LIVES_COMBO(script_combo),"");
+    gtk_widget_set_sensitive(copy_script_okbutton,FALSE);
+  }
 }
-
 
 
 GList *get_script_list (gshort status) {

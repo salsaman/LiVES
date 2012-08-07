@@ -4761,7 +4761,7 @@ void stored_event_list_free_undos(void) {
 void remove_current_from_affected_layouts(lives_mt *mt) {
   // remove from affected layouts map
   if (mainw->affected_layouts_map!=NULL) {
-    GList *found=g_list_find_custom(mainw->affected_layouts_map,mainw->cl_string,(GCompareFunc)strcmp);
+    GList *found=g_list_find_custom(mainw->affected_layouts_map,mainw->string_constants[LIVES_STRING_CONSTANT_CL],(GCompareFunc)strcmp);
     if (found!=NULL) {
       g_free(found->data);
       mainw->affected_layouts_map=g_list_delete_link(mainw->affected_layouts_map,found);
@@ -6142,7 +6142,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   }
 
   /// None autotransition
-  menuitem2 = gtk_check_menu_item_new_with_label (mainw->none_string);
+  menuitem2 = gtk_check_menu_item_new_with_label (mainw->string_constants[LIVES_STRING_CONSTANT_NONE]);
   g_object_set_data(G_OBJECT(menuitem2),"idx",GINT_TO_POINTER(-1));
   gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(menuitem2),prefs->atrans_fx==-1);
   gtk_menu_shell_prepend(GTK_MENU_SHELL(mt->submenu_atransfx),menuitem2);
@@ -20128,7 +20128,7 @@ void migrate_layouts (const gchar *old_set_name, const gchar *new_set_name) {
   while (map!=NULL) {
     if ((old_set_name!=NULL&&!strncmp((char *)map->data,changefrom,chlen))||
 	(old_set_name==NULL&&(strstr((char *)map->data,new_set_name)==NULL))) {
-      if (strcmp(mainw->cl_string,(char *)map->data+chlen)) {
+      if (strcmp(mainw->string_constants[LIVES_STRING_CONSTANT_CL],(char *)map->data+chlen)) {
 	tmp=g_build_filename(prefs->tmpdir,new_set_name,"layouts",(char *)map->data+chlen,NULL);
 	if (g_file_test(tmp,G_FILE_TEST_EXISTS)) {
 	  g_free(tmp);
@@ -20157,7 +20157,7 @@ GList *layout_frame_is_affected(gint clipno, gint frame) {
   if (mainw->stored_event_list!=NULL&&mainw->files[clipno]->stored_layout_frame!=0) {
     // see if it affects the current layout
     resampled_frame=count_resampled_frames(mainw->files[clipno]->stored_layout_frame,mainw->files[clipno]->stored_layout_fps,mainw->files[clipno]->fps);
-    if (frame<=resampled_frame) mainw->xlays=g_list_append_unique(mainw->xlays,mainw->cl_string);
+    if (frame<=resampled_frame) mainw->xlays=g_list_append_unique(mainw->xlays,mainw->string_constants[LIVES_STRING_CONSTANT_CL]);
   }
 
   while (lmap!=NULL) {
@@ -20191,7 +20191,8 @@ GList *layout_audio_is_affected(gint clipno, gdouble time) {
 
   if (mainw->stored_event_list!=NULL) {
     // see if it affects the current layout
-    if (mainw->files[clipno]->stored_layout_audio>0.&&time<=mainw->files[clipno]->stored_layout_audio) mainw->xlays=g_list_append_unique(mainw->xlays,mainw->cl_string);
+    if (mainw->files[clipno]->stored_layout_audio>0.&&time<=mainw->files[clipno]->stored_layout_audio) 
+      mainw->xlays=g_list_append_unique(mainw->xlays,mainw->string_constants[LIVES_STRING_CONSTANT_CL]);
   }
 
   while (lmap!=NULL) {

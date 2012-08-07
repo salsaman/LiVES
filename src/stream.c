@@ -1009,7 +1009,7 @@ void weed_layer_set_from_lives2lives(weed_plant_t *layer, gint clip, lives_vstre
 
 void on_send_lives2lives_activate (GtkMenuItem *menuitem, gpointer user_data) {
   _vppaw *vppa;
-  gchar *orig_name=g_strdup(mainw->none_string);
+  gchar *orig_name=g_strdup(mainw->string_constants[LIVES_STRING_CONSTANT_NONE]);
   gchar *tmp;
   int resp;
 

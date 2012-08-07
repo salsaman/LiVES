@@ -1133,9 +1133,7 @@ create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox) {
   GtkWidget *hbox25;
   GtkWidget *label98;
   GtkWidget *combo4;
-  GtkWidget *label99;
   GtkWidget *combo5;
-  GtkWidget *label100;
   GtkWidget *combo6;
   GtkWidget *vseparator5;
   GtkWidget *vbox24;
@@ -1526,16 +1524,16 @@ create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox) {
     vbox = gtk_vbox_new (FALSE, 0);
     gtk_box_pack_start (GTK_BOX (hbox25), vbox, TRUE, TRUE, 0);
 
-    add_fill_to_box(vbox);
+    add_fill_to_box(GTK_BOX(vbox));
 
     hbox = gtk_hbox_new (FALSE, 0);
     gtk_box_pack_start (GTK_BOX (vbox), hbox, TRUE, FALSE, 0);
 
-    add_fill_to_box(vbox);
+    add_fill_to_box(GTK_BOX(vbox));
 
     combo4 = lives_standard_combo_new (_("Rate (Hz) "),type>=3,rate,LIVES_BOX(hbox),NULL);
     
-    resaudw->entry_arate = lives_combo_get_entry(combo4);
+    resaudw->entry_arate = lives_combo_get_entry(LIVES_COMBO(combo4));
 
     gtk_entry_set_width_chars (GTK_ENTRY (resaudw->entry_arate), 8);
     if (type==7) gtk_widget_set_sensitive(combo4,FALSE);
@@ -1549,7 +1547,7 @@ create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox) {
 
     combo5 = lives_standard_combo_new ((type>=3?(_("    _Channels ")):(_("    Channels "))),type>=3,rate,LIVES_BOX(hbox),NULL);
     
-    resaudw->entry_achans = lives_combo_get_entry(combo5);
+    resaudw->entry_achans = lives_combo_get_entry(LIVES_COMBO(combo5));
     gtk_entry_set_width_chars (GTK_ENTRY (resaudw->entry_achans), 3);
     
     if (type<3||(type>4&&type<8)) tmp=g_strdup_printf ("%d",(gint)mainw->fx2_val);
@@ -1564,15 +1562,12 @@ create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox) {
       gtk_widget_set_sensitive(combo5,FALSE);
     }
 
-    if (type>=3) label100 = gtk_label_new_with_mnemonic (_("    _Sample Size "));
-    else label100 = gtk_label_new (_("    Sample Size "));
-
  
     combo6 = lives_standard_combo_new ((type>=3?(_("    _Sample Size ")):(_("    Sample Size "))),type>=3,sampsize,LIVES_BOX(hbox),NULL);
 
     if (type==7) gtk_widget_set_sensitive(combo6,FALSE);
 
-    resaudw->entry_asamps = lives_combo_get_entry(combo6);
+    resaudw->entry_asamps = lives_combo_get_entry(LIVES_COMBO(combo6));
     gtk_widget_show (resaudw->entry_asamps);
     gtk_entry_set_max_length (GTK_ENTRY (resaudw->entry_asamps), 2);
     gtk_editable_set_editable (GTK_EDITABLE (resaudw->entry_asamps), FALSE);

@@ -831,7 +831,7 @@ static void on_omc_combo_entry_changed (GtkComboBox *combo, gpointer ptr) {
 
   }
 
-  if (!strcmp(macro_text,mainw->none_string)) return;
+  if (!strcmp(macro_text,mainw->string_constants[LIVES_STRING_CONSTANT_NONE])) return;
 
   for (i=0;i<=N_OMC_MACROS;i++) {
     if (!strcmp(macro_text,omc_macros[i].macro_text)) break;
@@ -953,7 +953,7 @@ static GtkWidget *create_omc_macro_combo(lives_omc_match_node_t *mnode, gint row
   for (i=0;i<N_OMC_MACROS;i++) {
     if (omc_macros[i].msg==NULL) break;
 
-    lives_combo_append_text(LIVES_COMBO_BOX_TEXT(combo),omc_macros[i].macro_text);
+    lives_combo_append_text(LIVES_COMBO(combo),omc_macros[i].macro_text);
 
   }
 

@@ -811,15 +811,21 @@ static void lives_init(_ign_opts *ign_opts) {
   mainw->suppress_dprint=FALSE;
 
   // TRANSLATORS: text saying "Any", for encoder and output format (as in "does not matter")
-  mainw->any_string=g_strdup(_("Any"));
+  mainw->string_constants[LIVES_STRING_CONSTANT_ANY]=g_strdup(_("Any"));
   // TRANSLATORS: text saying "None", for playback plugin name (as in "none specified")
-  mainw->none_string=g_strdup(_("None"));
+  mainw->string_constants[LIVES_STRING_CONSTANT_NONE]=g_strdup(_("None"));
   // TRANSLATORS: text saying "recommended", for plugin names, etc.
-  mainw->recommended_string=g_strdup(_("recommended"));
+  mainw->string_constants[LIVES_STRING_CONSTANT_RECOMMENDED]=g_strdup(_("recommended"));
   // TRANSLATORS: text saying "disabled", (as in "not enabled")
-  mainw->disabled_string=g_strdup(_("disabled !"));
+  mainw->string_constants[LIVES_STRING_CONSTANT_DISABLED]=g_strdup(_("disabled !"));
   // TRANSLATORS: text saying "**The current layout**", to warn users that the current layout is affected
-  mainw->cl_string=g_strdup(_("**The current layout**"));
+  mainw->string_constants[LIVES_STRING_CONSTANT_CL]=g_strdup(_("**The current layout**"));
+  // TRANSLATORS: adjective for "Built in" type effects
+  mainw->string_constants[LIVES_STRING_CONSTANT_BUILTIN]=g_strdup(_("Builtin"));
+  // TRANSLATORS: adjective for "Custom" type effects
+  mainw->string_constants[LIVES_STRING_CONSTANT_CUSTOM]=g_strdup(_("Custom"));
+  // TRANSLATORS: adjective for "Test" type effects
+  mainw->string_constants[LIVES_STRING_CONSTANT_TEST]=g_strdup(_("Test"));
 
   mainw->opening_frames=-1;
 

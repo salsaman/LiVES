@@ -47,9 +47,9 @@ gboolean on_LiVES_delete_event (GtkWidget *widget, GdkEvent *event, gpointer use
 
 
 void lives_exit (void) {
+  register int i;
 
   if (mainw->is_ready) {
-    int i;
     gchar *com;
     gchar *cwd;
 
@@ -440,11 +440,7 @@ void lives_exit (void) {
 
   g_free(mainw->recovery_file);
 
-  g_free(mainw->any_string);
-  g_free(mainw->none_string);
-  g_free(mainw->disabled_string);
-  g_free(mainw->recommended_string);
-  g_free(mainw->cl_string);
+  for (i=0;i<NUM_LIVES_STRING_CONSTANTS;i++) g_free(mainw->string_constants[i]);
 
   if (mainw->foreign_visual!=NULL) g_free(mainw->foreign_visual);
   if (mainw->read_failed_file!=NULL) g_free(mainw->read_failed_file);
@@ -1085,7 +1081,7 @@ on_close_activate                      (GtkMenuItem     *menuitem,
     acurrent=used_in_current_layout(mainw->multitrack,mainw->current_file);
     if (acurrent) {
       if (mainw->xlays==NULL) only_current=TRUE;
-      mainw->xlays=g_list_append_unique(mainw->xlays,mainw->cl_string);
+      mainw->xlays=g_list_append_unique(mainw->xlays,mainw->string_constants[LIVES_STRING_CONSTANT_CL]);
     }
 
     if (mainw->xlays!=NULL) {
@@ -1171,7 +1167,6 @@ on_close_activate                      (GtkMenuItem     *menuitem,
     gchar *com;
 
     gboolean has_layout_map=FALSE;
-
     int i;
 
 
@@ -4282,19 +4277,19 @@ on_encoder_entry_changed (GtkComboBox *combo, gpointer ptr) {
     return;
   }
 
-  if (!strcmp(new_encoder_name,mainw->any_string)) { 
+  if (!strcmp(new_encoder_name,mainw->string_constants[LIVES_STRING_CONSTANT_ANY])) { 
     GList *ofmt = NULL;
-    ofmt = g_list_append(ofmt,g_strdup(mainw->any_string));
+    ofmt = g_list_append(ofmt,g_strdup(mainw->string_constants[LIVES_STRING_CONSTANT_ANY]));
 
     g_signal_handler_block(GTK_COMBO_BOX(rdet->encoder_combo), rdet->encoder_name_fn);
     // ---
-    lives_combo_set_active_string(LIVES_COMBO(rdet->encoder_combo), mainw->any_string);
+    lives_combo_set_active_string(LIVES_COMBO(rdet->encoder_combo), mainw->string_constants[LIVES_STRING_CONSTANT_ANY]);
     // ---
     g_signal_handler_unblock(GTK_COMBO_BOX(rdet->encoder_combo), rdet->encoder_name_fn);
 
     lives_combo_populate(LIVES_COMBO(rdet->ofmt_combo), ofmt);
     g_signal_handler_block (GTK_COMBO_BOX(rdet->ofmt_combo), rdet->encoder_ofmt_fn);
-    lives_combo_set_active_string(LIVES_COMBO(rdet->ofmt_combo),mainw->any_string);
+    lives_combo_set_active_string(LIVES_COMBO(rdet->ofmt_combo),mainw->string_constants[LIVES_STRING_CONSTANT_ANY]);
     g_signal_handler_unblock (GTK_COMBO_BOX(rdet->ofmt_combo), rdet->encoder_ofmt_fn);
 
     g_list_free(ofmt);
@@ -4303,11 +4298,11 @@ on_encoder_entry_changed (GtkComboBox *combo, gpointer ptr) {
       g_list_free (prefs->acodec_list);
       prefs->acodec_list=NULL;
     }
-    prefs->acodec_list = g_list_append(prefs->acodec_list, g_strdup(mainw->any_string));
+    prefs->acodec_list = g_list_append(prefs->acodec_list, g_strdup(mainw->string_constants[LIVES_STRING_CONSTANT_ANY]));
 
     lives_combo_populate(LIVES_COMBO(rdet->acodec_combo), prefs->acodec_list);
 
-    lives_combo_set_active_string(LIVES_COMBO(rdet->acodec_combo),mainw->any_string);
+    lives_combo_set_active_string(LIVES_COMBO(rdet->acodec_combo),mainw->string_constants[LIVES_STRING_CONSTANT_ANY]);
 
     g_free(new_encoder_name);
   
@@ -10909,7 +10904,7 @@ on_encoder_ofmt_changed (GtkComboBox *combo, gpointer user_data) {
       new_fmt = g_strdup(gtk_combo_box_get_active_text(GTK_COMBO_BOX(rdet->ofmt_combo)));
   }
 
-  if ( !strlen( new_fmt ) || !strcmp( new_fmt, mainw->any_string ) ){
+  if ( !strlen( new_fmt ) || !strcmp( new_fmt, mainw->string_constants[LIVES_STRING_CONSTANT_ANY] ) ){
       return;
   }
 

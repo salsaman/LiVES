@@ -252,7 +252,7 @@ LiVESWidget *lives_combo_new(void) {
 #if GTK_CHECK_VERSION(2,24,0)
   combo = gtk_combo_box_text_new_with_entry ();
 #else
-  combo = gtk_combo_box_new_text ();
+  combo = gtk_combo_box_entry_new_text ();
 #endif
 #endif
   return combo;
@@ -271,7 +271,7 @@ void lives_combo_append_text(LiVESCombo *combo, const char *text) {
 
 
 
-void lives_combo_set_entry_text_column(LiVESComboBox *combo, int column) {
+void lives_combo_set_entry_text_column(LiVESCombo *combo, int column) {
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(2,24,0)
   gtk_combo_box_set_entry_text_column(GTK_COMBO_BOX(combo),column);
@@ -282,7 +282,7 @@ void lives_combo_set_entry_text_column(LiVESComboBox *combo, int column) {
 }
 
 
-char *lives_combo_get_active_text(LiVESComboBox *combo) {
+char *lives_combo_get_active_text(LiVESCombo *combo) {
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(2,24,0)
   return gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(combo));
@@ -291,7 +291,6 @@ char *lives_combo_get_active_text(LiVESComboBox *combo) {
 #endif
 #endif
 }
-
 
 
 
@@ -308,38 +307,49 @@ void lives_toggle_button_set_active(LiVESToggleButton *button, boolean active) {
 }
 
 
-LiVESTooltipsData* lives_tooltips_data_get (LiVESWidget *widget) {
+
+void lives_tooltips_set(LiVESWidget *widget, const char *tip_text) {
 #ifdef GUI_GTK
-// TODO - use new API since 2.12
-  return gtk_tooltips_data_get(widget);
+
+#if GTK_CHECK_VERSION(2,12,0)
+  gtk_widget_set_tooltip_text(widget,tip_text);
+#else
+  GtkTooltips *tips;
+  tips = gtk_tooltips_new ();
+  gtk_tooltips_set_tip(tips,widget,tip_text,NULL);
+#endif
 #endif
 }
-
-
-void lives_tooltips_set_tip (LiVESTooltips *tooltips, LiVESWidget *widget, const char *tip_text, const char *tip_private) {
-#ifdef GUI_GTK
-// TODO - use new API since 2.12
-  gtk_tooltips_set_tip(tooltips,widget,tip_text,tip_private);
-#endif
-}
-
 
 // compound functions
 
+
+
+void lives_tooltips_copy(LiVESWidget *dest, LiVESWidget *source) {
+#if GTK_CHECK_VERSION(2,12,0)
+  gtk_widget_set_tooltip_text(dest,gtk_widget_get_tooltip_text(source));
+#else
+  GtkTooltipsData *td=gtk_tooltips_data_get(source);
+  if (td==NULL) return;
+  gtk_tooltips_set_tip (td->tooltips, dest, td->tip_text, td->tip_private);
+#endif
+}
+
+
 void lives_combo_populate(LiVESCombo *combo, LiVESList *list) {
+  // remove any current list
+  int count;
+
+  gtk_combo_box_set_active(combo,-1);
+  count = gtk_tree_model_iter_n_children(gtk_combo_box_get_model(combo),NULL);
+  while (count-- > 0) gtk_combo_box_remove_text(combo,0);
+
+  // add the new list
   while (list!=NULL) {
     lives_combo_append_text(LIVES_COMBO(combo),(const char *)list->data);
     list=list->next;
   }
 }
-
-
-void lives_tooltips_copy(LiVESWidget *dest, LiVESWidget *source) {
-  LiVESTooltipsData *td=lives_tooltips_data_get(source);
-  if (td==NULL) return;
-  lives_tooltips_set_tip (td->tooltips, dest, td->tip_text, td->tip_private);
-}
-
 
 
 LiVESWidget *lives_standard_check_button_new(const char *labeltext, boolean use_mnemonic, LiVESBox *box, 
@@ -355,7 +365,7 @@ LiVESWidget *lives_standard_check_button_new(const char *labeltext, boolean use_
   LiVESWidget *hbox;
 
   checkbutton = gtk_check_button_new ();
-  if (tooltip!=NULL) gtk_widget_set_tooltip_text(checkbutton, tooltip);
+  if (tooltip!=NULL) lives_tooltips_set(checkbutton, tooltip);
   eventbox=gtk_event_box_new();
   lives_tooltips_copy(eventbox,checkbutton);
   if (use_mnemonic) {
@@ -395,9 +405,6 @@ LiVESWidget *lives_standard_check_button_new(const char *labeltext, boolean use_
 
 
 
-
-
-
 LiVESWidget *lives_standard_radio_button_new(const char *labeltext, boolean use_mnemonic, LiVESSList *rbgroup, 
 					     LiVESBox *box, const char *tooltips) {
   LiVESWidget *radiobutton;
@@ -413,7 +420,7 @@ LiVESWidget *lives_standard_radio_button_new(const char *labeltext, boolean use_
 
   radiobutton = gtk_radio_button_new (rbgroup);
 
-  if (tooltips!=NULL) gtk_widget_set_tooltip_text(radiobutton, tooltips);
+  if (tooltips!=NULL) lives_tooltips_set(radiobutton, tooltips);
 
   GTK_WIDGET_SET_FLAGS (radiobutton, GTK_CAN_DEFAULT|GTK_CAN_FOCUS);
   if (GTK_IS_HBOX(box)) hbox=GTK_WIDGET(box);
@@ -481,7 +488,7 @@ LiVESWidget *lives_standard_spin_button_new(const char *labeltext, boolean use_m
 
   adj = gtk_adjustment_new (val, min, max, step, page, 0.);
   spinbutton = gtk_spin_button_new (GTK_ADJUSTMENT (adj), 1, dp);
-  if (tooltip!=NULL) gtk_widget_set_tooltip_text(spinbutton, tooltip);
+  if (tooltip!=NULL) lives_tooltips_set(spinbutton, tooltip);
   gtk_spin_button_set_numeric (GTK_SPIN_BUTTON (spinbutton),TRUE);
   txt=g_strdup_printf ("%d",(int)max);
   maxlen=strlen (txt);
@@ -542,14 +549,16 @@ LiVESWidget *lives_standard_combo_new (const char *labeltext, boolean use_mnemon
   LiVESWidget *eventbox;
   LiVESWidget *label;
   LiVESWidget *hbox;
+  LiVESEntry *entry;
 
   combo=lives_combo_new();
+  if (tooltip!=NULL) lives_tooltips_set(combo, tooltip);
 
-  if (tooltip!=NULL) gtk_widget_set_tooltip_text(combo, tooltip);
-  
+  entry=(LiVESEntry *)lives_combo_get_entry(LIVES_COMBO(combo));
+
   if (use_mnemonic) {
     label = gtk_label_new_with_mnemonic (labeltext);
-    gtk_label_set_mnemonic_widget (GTK_LABEL (label), gtk_bin_get_child(GTK_BIN (combo)));
+    gtk_label_set_mnemonic_widget (GTK_LABEL (label), GTK_WIDGET(entry));
   }
   else label = gtk_label_new (labeltext);
 
@@ -574,11 +583,12 @@ LiVESWidget *lives_standard_combo_new (const char *labeltext, boolean use_mnemon
   gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, 10);
   gtk_box_pack_start (GTK_BOX (hbox), combo, FALSE, TRUE, 10);
 
-  gtk_editable_set_editable (GTK_EDITABLE(gtk_bin_get_child(GTK_BIN (combo))),FALSE);
-  gtk_entry_set_activates_default(GTK_ENTRY(gtk_bin_get_child(GTK_BIN (combo))),TRUE);
+  gtk_editable_set_editable (GTK_EDITABLE(entry),FALSE);
+  gtk_entry_set_activates_default(entry,TRUE);
 
   lives_combo_populate(LIVES_COMBO(combo),list);
 
+  if (list!=NULL) gtk_combo_box_set_active(LIVES_COMBO(combo),0);
 #endif
 
   return combo;
@@ -615,38 +625,10 @@ LIVES_INLINE void toggle_button_toggle (LiVESToggleButton *tbutton) {
 /*
  * Set active string to the combo box
  */
-void lives_combo_set_active_string(LiVESComboBox *combo, const char *active_str) {
-
-  // TODO ***
+void lives_combo_set_active_string(LiVESCombo *combo, const char *active_str) {
 
 #ifdef GUI_GTK
-
-  if (GTK_IS_ENTRY(gtk_bin_get_child(GTK_BIN(combo)))) {
-    gtk_entry_set_text(GTK_ENTRY(gtk_bin_get_child(GTK_BIN(combo))),active_str);
-  }
-  else {
-    gchar *text = NULL;
-    GtkTreeModel *model;
-    GtkTreeIter   iter;
-    
-    model = gtk_combo_box_get_model( combo );
-    
-    if ( gtk_tree_model_get_iter_first(model, &iter) ){
-      do {
-	gtk_tree_model_get( model, &iter, 0, &text, -1 );
-	if (!g_ascii_strcasecmp(text, active_str)) {
-	  gtk_combo_box_set_active_iter(combo, &iter);
-	  
-	  if (text)
-	    g_free(text);
-	  
-	  break;
-	}
-	if (text)
-	  g_free(text);
-      } while ( gtk_tree_model_iter_next(model, &iter) );
-    }
-  }
+  gtk_entry_set_text(GTK_ENTRY(gtk_bin_get_child(GTK_BIN(combo))),active_str);
 #endif
 
 }
@@ -809,16 +791,4 @@ void get_border_size (LiVESWidget *win, int *bx, int *by) {
   *by=wy-rect.y;
 }
 
-
-// TODO - remove this, use LiVESComboBox
-void combo_set_popdown_strings (GtkCombo *combo, LiVESList *list) {
-  // this avoids an assert in some versions of GTK+ when list==NULL
-  GList *empty_list=NULL;
-  empty_list=g_list_append (empty_list,(gpointer)"");
-  if (list==NULL) gtk_combo_set_popdown_strings (combo,empty_list);
-  else {
-    g_list_free (empty_list);
-    gtk_combo_set_popdown_strings (combo,g_list_copy(list));
-  }
-}
 

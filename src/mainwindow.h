@@ -186,6 +186,20 @@ typedef struct {
   GdkScreen *screen;
 } lives_mgeometry_t;
 
+// constant strings
+enum {
+  LIVES_STRING_CONSTANT_ANY=0,
+  LIVES_STRING_CONSTANT_NONE,
+  LIVES_STRING_CONSTANT_RECOMMENDED,
+  LIVES_STRING_CONSTANT_DISABLED,
+  LIVES_STRING_CONSTANT_CL,
+  LIVES_STRING_CONSTANT_BUILTIN,
+  LIVES_STRING_CONSTANT_CUSTOM,
+  LIVES_STRING_CONSTANT_TEST,
+  NUM_LIVES_STRING_CONSTANTS
+};
+
+
 
 /// where do we add the builtin tools in the tools menu
 #define RFX_TOOL_MENU_POSN 2
@@ -903,6 +917,8 @@ typedef struct {
   gint rec_signed_endian;
 
   gboolean suppress_dprint; ///< tidy up, e.g. by blocking "switched to file..." and "closed file..." messages
+
+  gchar *string_constants[NUM_LIVES_STRING_CONSTANTS];
   gchar *any_string;  ///< localised text saying "Any", for encoder and output format
   gchar *none_string;  ///< localised text saying "None", for playback plugin name, etc.
   gchar *recommended_string;  ///< localised text saying "recommended", for encoder and output format

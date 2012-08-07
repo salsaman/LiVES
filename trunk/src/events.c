@@ -5118,7 +5118,7 @@ render_details *create_render_details (gint type) {
   gtk_box_pack_start (GTK_BOX (top_vbox), label, FALSE, FALSE, 0);
 
   if (!specified) {
-    rdet->encoder_name=g_strdup(mainw->any_string);
+    rdet->encoder_name=g_strdup(mainw->string_constants[LIVES_STRING_CONSTANT_ANY]);
     encoders=g_list_prepend(encoders,g_strdup(rdet->encoder_name));
   }
   else {
@@ -5148,7 +5148,7 @@ render_details *create_render_details (gint type) {
   encoders=NULL;
   
   if (!specified) {
-    ofmt=g_list_append(ofmt,g_strdup(mainw->any_string));
+    ofmt=g_list_append(ofmt,g_strdup(mainw->string_constants[LIVES_STRING_CONSTANT_ANY]));
   }
   else {
     if (capable->has_encoder_plugins) {
@@ -5206,7 +5206,7 @@ render_details *create_render_details (gint type) {
       g_list_free (prefs->acodec_list);
       prefs->acodec_list=NULL;
     }
-    prefs->acodec_list=g_list_append(prefs->acodec_list,g_strdup(mainw->any_string));
+    prefs->acodec_list=g_list_append(prefs->acodec_list,g_strdup(mainw->string_constants[LIVES_STRING_CONSTANT_ANY]));
     lives_combo_populate(LIVES_COMBO(rdet->acodec_combo), prefs->acodec_list);
     gtk_combo_box_set_active(GTK_COMBO_BOX(rdet->acodec_combo), 0);
   }

@@ -26,11 +26,9 @@ typedef GtkComboBox                       LiVESComboBox;
 typedef GtkComboBoxText                   LiVESComboBoxText;
 typedef GtkToggleButton                   LiVESToggleButton;
 typedef GtkTextView                       LiVESTextView;
+typedef GtkEntry                          LiVESEntry;
 
 typedef GtkAdjustment                     LiVESAdjustment;
-
-typedef GtkTooltips                       LiVESTooltips;
-typedef GtkTooltipsData                   LiVESTooltipsData;
 
 typedef GdkPixbuf                         LiVESPixbuf;
 
@@ -60,6 +58,7 @@ typedef gpointer                          LiVESObjectPtr;
 #define LIVES_COMBO_BOX_TEXT(widget) GTK_COMBO_BOX_TEXT(widget)
 
 #define LIVES_WIDGET_IS_SENSITIVE(widget) GTK_WIDGET_IS_SENSITIVE(widget)
+#define LIVES_IS_COMBO(widget) GTK_IS_COMBO_BOX(widget)
 
 #define LIVES_INTERP_BEST   GDK_INTERP_HYPER
 #define LIVES_INTERP_NORMAL GDK_INTERP_BILINEAR
@@ -236,6 +235,7 @@ void lives_combo_append_text(LiVESCombo *combo, const char *text);
 void lives_combo_set_entry_text_column(LiVESCombo *combo, int column);
 
 char *lives_combo_get_active_text(LiVESCombo *combo) WARN_UNUSED;
+void lives_combo_set_active_text(LiVESCombo *combo, const char *text);
 
 LiVESWidget *lives_combo_get_entry(LiVESCombo *combo);
 
@@ -244,8 +244,7 @@ void lives_combo_populate(LiVESCombo *combo, LiVESList *list);
 boolean lives_toggle_button_get_active(LiVESToggleButton *button);
 void lives_toggle_button_set_active(LiVESToggleButton *button, boolean active);
 
-LiVESTooltipsData* lives_tooltips_data_get (LiVESWidget *widget);
-void lives_tooltips_set_tip (LiVESTooltips *tooltips, LiVESWidget *widget, const char *tip_text, const char *tip_private);
+void lives_tooltips_set (LiVESWidget *widget, const char *tip_text);
 
 
 // compound functions (composed of basic functions)
@@ -266,7 +265,7 @@ LiVESWidget *lives_standard_combo_new (const char *labeltext, boolean use_mnemon
 
 
 
-void lives_combo_set_active_string(LiVESComboBox *combo, const char *active_str);
+void lives_combo_set_active_string(LiVESCombo *combo, const char *active_str);
 
 int get_box_child_index (LiVESBox *box, LiVESWidget *tchild);
 

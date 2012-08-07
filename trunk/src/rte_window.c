@@ -1538,7 +1538,7 @@ GtkWidget * create_rte_window (void) {
 
       lives_combo_set_entry_text_column(LIVES_COMBO(combo),NAME_TYPE_COLUMN);
 
-      combo_entries[idx] = lives_combo_get_entry(combo);
+      combo_entries[idx] = lives_combo_get_entry(LIVES_COMBO(combo));
       
       gtk_entry_set_text (GTK_ENTRY (combo_entries[idx]),(tmp=rte_keymode_get_filter_name(i+1,j)));
       g_free(tmp);

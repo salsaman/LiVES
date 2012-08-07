@@ -1638,10 +1638,10 @@ gboolean add_lmap_error(lives_lmap_error_t lerror, const gchar *name, gpointer u
   case LMAP_ERROR_MISSING_CLIP:
   case LMAP_ERROR_CLOSE_FILE:
     if (affects_current) {
-      text=g_strdup_printf("%s\n",mainw->cl_string);
+      text=g_strdup_printf("%s\n",mainw->string_constants[LIVES_STRING_CONSTANT_CL]);
       gtk_text_buffer_insert(GTK_TEXT_BUFFER(mainw->layout_textbuffer),&end_iter,text,-1);
       g_free(text);
-      mainw->affected_layouts_map=g_list_append_unique(mainw->affected_layouts_map,mainw->cl_string);
+      mainw->affected_layouts_map=g_list_append_unique(mainw->affected_layouts_map,mainw->string_constants[LIVES_STRING_CONSTANT_CL]);
 
       mainw->affected_layout_marks=g_list_append(mainw->affected_layout_marks,(gpointer)gtk_text_buffer_create_mark(GTK_TEXT_BUFFER(mainw->layout_textbuffer),NULL,&end_iter,TRUE));
 
@@ -1661,10 +1661,10 @@ gboolean add_lmap_error(lives_lmap_error_t lerror, const gchar *name, gpointer u
   case LMAP_ERROR_DELETE_FRAMES:
   case LMAP_ERROR_ALTER_FRAMES:
     if (affects_current) {
-      text=g_strdup_printf("%s\n",mainw->cl_string);
+      text=g_strdup_printf("%s\n",mainw->string_constants[LIVES_STRING_CONSTANT_CL]);
       gtk_text_buffer_insert(GTK_TEXT_BUFFER(mainw->layout_textbuffer),&end_iter,text,-1);
       g_free(text);
-      mainw->affected_layouts_map=g_list_append_unique(mainw->affected_layouts_map,mainw->cl_string);
+      mainw->affected_layouts_map=g_list_append_unique(mainw->affected_layouts_map,mainw->string_constants[LIVES_STRING_CONSTANT_CL]);
 
       mainw->affected_layout_marks=g_list_append(mainw->affected_layout_marks,(gpointer)gtk_text_buffer_create_mark(GTK_TEXT_BUFFER(mainw->layout_textbuffer),NULL,&end_iter,TRUE));
     }
@@ -1687,10 +1687,10 @@ gboolean add_lmap_error(lives_lmap_error_t lerror, const gchar *name, gpointer u
   case LMAP_ERROR_DELETE_AUDIO:
   case LMAP_ERROR_ALTER_AUDIO:
     if (affects_current) {
-      text=g_strdup_printf("%s\n",mainw->cl_string);
+      text=g_strdup_printf("%s\n",mainw->string_constants[LIVES_STRING_CONSTANT_CL]);
       gtk_text_buffer_insert(GTK_TEXT_BUFFER(mainw->layout_textbuffer),&end_iter,text,-1);
       g_free(text);
-      mainw->affected_layouts_map=g_list_append_unique(mainw->affected_layouts_map,mainw->cl_string);
+      mainw->affected_layouts_map=g_list_append_unique(mainw->affected_layouts_map,mainw->string_constants[LIVES_STRING_CONSTANT_CL]);
 
       mainw->affected_layout_marks=g_list_append(mainw->affected_layout_marks,(gpointer)gtk_text_buffer_create_mark(GTK_TEXT_BUFFER(mainw->layout_textbuffer),NULL,&end_iter,TRUE));
     }
@@ -2135,9 +2135,9 @@ void remove_layout_files(GList *map) {
   while (map!=NULL) {
     map_next=map->next;
     if (map->data!=NULL) {
-      if (!strcmp((gchar *)map->data,mainw->cl_string)) {
+      if (!strcmp((gchar *)map->data,mainw->string_constants[LIVES_STRING_CONSTANT_CL])) {
 	is_current=TRUE;
-	fname=g_strdup(mainw->cl_string);
+	fname=g_strdup(mainw->string_constants[LIVES_STRING_CONSTANT_CL]);
       }
       else {
 	is_current=FALSE;

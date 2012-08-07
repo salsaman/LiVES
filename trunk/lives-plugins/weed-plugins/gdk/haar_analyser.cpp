@@ -103,22 +103,6 @@ static int package_version=1; // version of this package
 /* imgSeek Includes */
 #include "haar_analyser.h"
 
-
-// python array wrapper. Creates a new double array                
-double *
-new_darray(int size)
-{
-  return (double*) malloc(size*sizeof(double));
-}
-
-// python array wrapper. Creates a new int array
-int *
-new_iarray(int size)
-{
-  return (int*) malloc(size*sizeof(int));
-}
-
-
 static unsigned short UNCLAMP_Y[256];
 static unsigned short UNCLAMP_UV[256];
 
@@ -487,23 +471,54 @@ static gboolean pl_pixbuf_to_channel(weed_plant_t *channel, GdkPixbuf *pixbuf) {
 
 
 typedef struct {
-  // placeholder for future use
-  int count;
+  int coefs;
+  Idx *sig1;
+  Idx *sig2;
+  Idx *sig3;
 } _sdata;
 
+
+
+static int make_sigs(_sdata *sdata, int num_coefs) {
+
+
+  sdata->sig1=(Idx *)weed_malloc(num_coefs*sizeof(Idx));
+  if (sdata->sig1==NULL) return WEED_ERROR_MEMORY_ALLOCATION;
+
+  sdata->sig2=(Idx *)weed_malloc(num_coefs*sizeof(Idx));
+  if (sdata->sig2==NULL) {
+    weed_free(sdata->sig1);
+    return WEED_ERROR_MEMORY_ALLOCATION;
+  }
+
+  sdata->sig3=(Idx *)weed_malloc(num_coefs*sizeof(Idx));
+  if (sdata->sig3==NULL) {
+    weed_free(sdata->sig1);
+    weed_free(sdata->sig2);
+    return WEED_ERROR_MEMORY_ALLOCATION;
+  }
+
+  sdata->coefs=num_coefs;
+  return WEED_NO_ERROR;
+}
 
 
 ////////////////////////////////////////////////////////////
 
 
 int haar_init (weed_plant_t *inst) {
+  int error,retval;
   _sdata *sdata;
+  weed_plant_t **in_params=(weed_plant_t **)weed_get_plantptr_array(inst,"in_parameters",&error);
+  int num_coefs=weed_get_int_value(in_params[0],"value",&error);
+
+  weed_free(in_params);
 
   sdata=(_sdata *)weed_malloc(sizeof(_sdata));
 
   if (sdata==NULL) return WEED_ERROR_MEMORY_ALLOCATION;
 
-  sdata->count=0;
+  if ((retval=make_sigs(sdata,num_coefs))!=WEED_NO_ERROR) return retval; 
 
   weed_set_voidptr_value(inst,"plugin_internal",sdata);
 
@@ -516,7 +531,12 @@ int haar_deinit (weed_plant_t *inst) {
   int error;
   _sdata *sdata=(_sdata *)weed_get_voidptr_value(inst,"plugin_internal",&error);
 
-  if (sdata!=NULL) weed_free(sdata);
+  if (sdata!=NULL) {
+    weed_free(sdata->sig1);
+    weed_free(sdata->sig2);
+    weed_free(sdata->sig3);
+    weed_free(sdata);
+  }
 
   return WEED_NO_ERROR;
 }
@@ -545,10 +565,6 @@ int haar_process (weed_plant_t *inst, weed_timecode_t timestamp) {
 
   unsigned char *end=src+height*irowstride;
   register int i,j,k;
-
-  Idx *sig1;
-  Idx *sig2;
-  Idx *sig3;
 
   int cn = 0;
   Unit cdata1[NUM_PIXELS_SQUARED];
@@ -629,29 +645,20 @@ int haar_process (weed_plant_t *inst, weed_timecode_t timestamp) {
   weed_free(orig_src);
   weed_free(orig_rows);
 
-  sig1=(Idx *)weed_malloc(num_coefs*sizeof(Idx));
-  if (sig1==NULL) return WEED_ERROR_MEMORY_ALLOCATION;
-
-  sig2=(Idx *)weed_malloc(num_coefs*sizeof(Idx));
-  if (sig2==NULL) {
-    weed_free(sig1);
-    return WEED_ERROR_MEMORY_ALLOCATION;
-  }
-
-  sig3=(Idx *)weed_malloc(num_coefs*sizeof(Idx));
-  if (sig3==NULL) {
-    weed_free(sig1);
-    weed_free(sig2);
-    return WEED_ERROR_MEMORY_ALLOCATION;
+  if (num_coefs!=sdata->coefs) {
+    weed_free(sdata->sig1);
+    weed_free(sdata->sig2);
+    weed_free(sdata->sig3);
+    make_sigs(sdata,num_coefs);
   }
 
   transform(cdata1,cdata2,cdata3,pal);
-  calcHaar(cdata1,cdata2,cdata3,sig1,sig2,sig3,avgl,num_coefs);
+  calcHaar(cdata1,cdata2,cdata3,sdata->sig1,sdata->sig2,sdata->sig3,avgl,num_coefs);
 
-  weed_set_int_array(out_params[0],"value",num_coefs,sig1);
-  weed_set_int_array(out_params[1],"value",num_coefs,sig2);
-  weed_set_int_array(out_params[2],"value",num_coefs,sig3);
-
+  weed_set_int_array(out_params[0],"value",num_coefs,sdata->sig1);
+  weed_set_int_array(out_params[1],"value",num_coefs,sdata->sig2);
+  weed_set_int_array(out_params[2],"value",num_coefs,sdata->sig3);
+  
   weed_set_double_value(out_params[3],"value",avgl[0]);
   weed_set_double_value(out_params[4],"value",avgl[1]);
   weed_set_double_value(out_params[5],"value",avgl[2]);
@@ -660,7 +667,7 @@ int haar_process (weed_plant_t *inst, weed_timecode_t timestamp) {
   printf("vals %f %f %f\n",avgl[0],avgl[1],avgl[2]);
 
   for (i=0;i<num_coefs;i++) {
-    printf("vals %d: %d %d %d\n",i,sig1[i],sig2[i],sig3[i]);
+    printf("vals %d: %d %d %d\n",i,sdata->sig1[i],sdata->sig2[i],sdata->sig3[i]);
   }
 #endif
 

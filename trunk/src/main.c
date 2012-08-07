@@ -4214,7 +4214,9 @@ void load_frame_image(gint frame) {
   gint pmonitor;
   int pwidth,pheight;
   int lb_width=0,lb_height=0;
+  int bad_frame_count=0;
 
+#define BFC_LIMIT 1000
 
   if (G_UNLIKELY(cfile->frames==0&&!mainw->foreign&&!mainw->is_rendering)) {
     if (mainw->record&&!mainw->record_paused) {
@@ -4564,6 +4566,14 @@ void load_frame_image(gint frame) {
 				  cfile->hsize,cfile->vsize,WEED_PALETTE_END)) {
 	    if (mainw->frame_layer!=NULL) weed_layer_free(mainw->frame_layer);
 	    mainw->frame_layer=NULL;
+
+	    if (cfile->opening && cfile->img_type==IMG_TYPE_PNG && sget_file_size(fname_next)==0) {
+	      if (++bad_frame_count>BFC_LIMIT) {
+		mainw->cancelled=check_for_bad_ffmpeg();
+		bad_frame_count=0;
+	      }
+	      else g_usleep(prefs->sleep_time);
+	    }
 	  }
 	}
 

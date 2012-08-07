@@ -4791,3 +4791,34 @@ gboolean string_lists_differ(GList *alist, GList *blist) {
 
 
 
+lives_cancel_t check_for_bad_ffmpeg(void) {
+  int i;
+
+  int fcount,ofcount;
+  
+  char *fname_next;
+
+  boolean maybeok=FALSE;
+
+  ofcount=cfile->frames;
+
+  get_frame_count(mainw->current_file);
+
+  fcount=cfile->frames;
+
+  for (i=1;i<=fcount;i++) {
+    fname_next=g_strdup_printf("%s/%s/%08d.%s",prefs->tmpdir,cfile->handle,i,prefs->image_ext);
+    if (sget_file_size(fname_next)>0) {
+      maybeok=TRUE;
+      break;
+    }
+  }
+
+  cfile->frames=ofcount;
+
+  if (!maybeok) {
+    do_error_dialog(_("Your version of mplayer/ffmpeg may be broken !\nSee http://bugzilla.mplayerhq.hu/show_bug.cgi?id=2071\n\nYou can work around this temporarily by switching to jpeg output in Preferences/Decoding.\n\nTry running Help/Troubleshoot for more information."));
+    return CANCEL_ERROR;
+  }
+  return CANCEL_NONE;
+}

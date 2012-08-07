@@ -1171,6 +1171,7 @@ void fastsrand(guint32 seed);
 
 gint lives_list_index (GList *list, const gchar *data);
 
+lives_cancel_t check_for_bad_ffmpeg(void);
 
 // plugins.c
 GList *get_external_window_hints(lives_rfx_t *rfx);

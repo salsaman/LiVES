@@ -597,7 +597,10 @@ gboolean do_startup_tests(gboolean tshoot) {
 
   gchar *image_ext=g_strdup(prefs->image_ext);
 
+  boolean imgext_switched=FALSE;
+
   mainw->suppress_dprint=TRUE;
+  mainw->cancelled=CANCEL_NONE;
 
   if (mainw->multitrack!=NULL) {
     if (mainw->multitrack->idlefunc>0) {
@@ -606,7 +609,6 @@ gboolean do_startup_tests(gboolean tshoot) {
     }
     mt_desensitise(mainw->multitrack);
   }
-
 
   dialog = gtk_dialog_new ();
 
@@ -923,6 +925,7 @@ gboolean do_startup_tests(gboolean tshoot) {
     if (res==0) {
       pass_test(table,5);
       if (!success3) {
+	if (!strcmp(prefs->image_ext,"png")) imgext_switched=TRUE;
 	set_pref("default_image_format","jpeg");
 	g_snprintf (prefs->image_ext,16,"%s","jpg");
       }
@@ -952,10 +955,19 @@ gboolean do_startup_tests(gboolean tshoot) {
   close_current_file(current_file);
 
   gtk_widget_set_sensitive(okbutton,TRUE);
-  if (tshoot) gtk_widget_hide(cancelbutton); 
-  
-
-  if (!tshoot) {
+  if (tshoot) {
+    gtk_widget_hide(cancelbutton); 
+    if (imgext_switched) {
+      label=gtk_label_new(_("\n\n    Image decoding type has been switched to jpeg. You can revert this in Preferences/Decoding.    \n"));
+      gtk_container_add (GTK_CONTAINER (dialog_vbox), label);
+      
+      if (palette->style&STYLE_1) {
+	gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
+      }
+    }
+    gtk_widget_show(label);
+  }
+  else {
     label=gtk_label_new(_("\n\n    Click Cancel to exit and install any missing components, or Next to continue    \n"));
     gtk_container_add (GTK_CONTAINER (dialog_vbox), label);
 

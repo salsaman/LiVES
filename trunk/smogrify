@@ -204,7 +204,7 @@ if (defined($ARGV[0])) {
 		}
 	    }
 
-	    if ($command ne "stop_audio") {
+	    if ($sig eq "KILL" && $command ne "stop_audio") {
 		&sig_killed;
 	    }
 	    exit 0;

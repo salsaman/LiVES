@@ -9714,6 +9714,7 @@ void on_effects_paused (GtkButton *button, gpointer user_data) {
   }
   if (com!=NULL) g_free(com);
   mainw->effects_paused=!mainw->effects_paused;
+
 }
 
 

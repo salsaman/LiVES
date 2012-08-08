@@ -840,6 +840,7 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
 
   // now file should be loaded...get full details
   cfile->is_loaded=TRUE;
+
   if (cfile->ext_src==NULL) add_file_info(cfile->handle,FALSE);
   else {
     add_file_info(NULL,FALSE);
@@ -3411,56 +3412,64 @@ gboolean add_file_info(const gchar *check_handle, gboolean aud_only) {
   gchar *test_fps_string2;
 
  
-  if (check_handle!=NULL) {
-    if (mainw->msg==NULL||get_token_count(mainw->msg,'|')==1) return FALSE;
-
-    array=g_strsplit(mainw->msg,"|",-1);
-    
-    // sanity check handle against status file
-    // (this should never happen...)
-    
-    if (strcmp(check_handle,array[1])) {
-      LIVES_ERROR("Handle!=statusfile !");
-      mesg=g_strdup_printf(_("\nError getting file info for clip %s.\nBad things may happen with this clip.\n"),
-			   check_handle);
-      do_error_dialog(mesg);
-      g_free(mesg);
-      g_strfreev(array);
-      return FALSE;
-    }
-    
-    if (!aud_only) {
-      cfile->frames=atoi(array[2]);
-      g_snprintf(cfile->type,40,"%s",array[3]);
-      cfile->hsize=atoi(array[4]);
-      cfile->vsize=atoi(array[5]);
-      cfile->bpp=atoi(array[6]);
-      cfile->pb_fps=cfile->fps=g_strtod(array[7],NULL);
-      
-      cfile->f_size=strtol(array[8],NULL,10);
-    }
-
-    cfile->arps=cfile->arate=atoi(array[9]);
-    cfile->achans=atoi(array[10]);
-    cfile->asampsize=atoi(array[11]);
-    cfile->signed_endian=get_signed_endian(atoi (array[12]), atoi (array[13]));
-    cfile->afilesize=strtol(array[14],NULL,10);
-    
-    pieces=get_token_count (mainw->msg,'|');
-    
-    if (pieces>14&&array[15]!=NULL) {
-      g_snprintf (cfile->title,256,"%s",g_strstrip(array[15]));
-    }
-    if (pieces>15&&array[16]!=NULL) {
-      g_snprintf (cfile->author,256,"%s",g_strstrip(array[16]));
-    }
-    if (pieces>16&&array[17]!=NULL) {
-      g_snprintf (cfile->comment,256,"%s",g_strstrip(array[17]));
-    }
-    
-    g_strfreev(array);
+  if (!strcmp(mainw->msg,"killed")) {
+    get_frame_count(mainw->current_file);
+    reget_afilesize(mainw->current_file);
+    mesg=g_strdup_printf(_("%d frames are enough !\n"),cfile->frames);
+    d_print(mesg);
+    g_free(mesg);
   }
+  else {
+    if (check_handle!=NULL) {
+      if (mainw->msg==NULL||get_token_count(mainw->msg,'|')==1) return FALSE;
 
+      array=g_strsplit(mainw->msg,"|",-1);
+    
+      // sanity check handle against status file
+      // (this should never happen...)
+    
+      if (strcmp(check_handle,array[1])) {
+	LIVES_ERROR("Handle!=statusfile !");
+	mesg=g_strdup_printf(_("\nError getting file info for clip %s.\nBad things may happen with this clip.\n"),
+			     check_handle);
+	do_error_dialog(mesg);
+	g_free(mesg);
+	g_strfreev(array);
+	return FALSE;
+      }
+    
+      if (!aud_only) {
+	cfile->frames=atoi(array[2]);
+	g_snprintf(cfile->type,40,"%s",array[3]);
+	cfile->hsize=atoi(array[4]);
+	cfile->vsize=atoi(array[5]);
+	cfile->bpp=atoi(array[6]);
+	cfile->pb_fps=cfile->fps=g_strtod(array[7],NULL);
+      
+	cfile->f_size=strtol(array[8],NULL,10);
+      }
+
+      cfile->arps=cfile->arate=atoi(array[9]);
+      cfile->achans=atoi(array[10]);
+      cfile->asampsize=atoi(array[11]);
+      cfile->signed_endian=get_signed_endian(atoi (array[12]), atoi (array[13]));
+      cfile->afilesize=strtol(array[14],NULL,10);
+    
+      pieces=get_token_count (mainw->msg,'|');
+    
+      if (pieces>14&&array[15]!=NULL) {
+	g_snprintf (cfile->title,256,"%s",g_strstrip(array[15]));
+      }
+      if (pieces>15&&array[16]!=NULL) {
+	g_snprintf (cfile->author,256,"%s",g_strstrip(array[16]));
+      }
+      if (pieces>16&&array[17]!=NULL) {
+	g_snprintf (cfile->comment,256,"%s",g_strstrip(array[17]));
+      }
+    
+      g_strfreev(array);
+    }
+  }
   cfile->video_time=0;
 
   if (aud_only) return TRUE;

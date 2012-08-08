@@ -322,6 +322,11 @@ typedef struct {
 
   char backend_sync[PATH_MAX];
   char backend[PATH_MAX];
+
+  char weed_plugin_path[PATH_MAX];
+  char frei0r_path[PATH_MAX];
+  char ladspa_path[PATH_MAX];
+
 } _prefs;
 
 enum {
@@ -516,6 +521,9 @@ typedef struct {
   GtkWidget *temp_label;
   GtkWidget *checkbutton_stream_audio;
   GtkWidget *checkbutton_rec_after_pb;
+  GtkWidget *wpp_entry;
+  GtkWidget *frei0r_entry;
+  GtkWidget *ladspa_entry;
   GtkTreeSelection *selection;
   gboolean needs_restart;
 } _prefsw;

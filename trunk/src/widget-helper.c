@@ -321,13 +321,35 @@ void lives_tooltips_set(LiVESWidget *widget, const char *tip_text) {
 #endif
 }
 
+
+/*
+ * Set active string to the combo box
+ */
+void lives_combo_set_active_string(LiVESCombo *combo, const char *active_str) {
+
+#ifdef GUI_GTK
+  gtk_entry_set_text(GTK_ENTRY(gtk_bin_get_child(GTK_BIN(combo))),active_str);
+#endif
+
+}
+
+LiVESWidget *lives_combo_get_entry(LiVESCombo *widget) {
+#ifdef GUI_GTK
+  return gtk_bin_get_child(GTK_BIN(widget));
+#endif
+}
+
+
+
 // compound functions
 
 
 
 void lives_tooltips_copy(LiVESWidget *dest, LiVESWidget *source) {
 #if GTK_CHECK_VERSION(2,12,0)
-  gtk_widget_set_tooltip_text(dest,gtk_widget_get_tooltip_text(source));
+  gchar *text=gtk_widget_get_tooltip_text(source);
+  gtk_widget_set_tooltip_text(dest,text);
+  g_free(text);
 #else
   GtkTooltipsData *td=gtk_tooltips_data_get(source);
   if (td==NULL) return;
@@ -352,6 +374,23 @@ void lives_combo_populate(LiVESCombo *combo, LiVESList *list) {
 }
 
 
+
+LiVESWidget *lives_standard_label_new(const char *text) {
+  LiVESWidget *label;
+#ifdef GUI_GTK
+
+  label=gtk_label_new(text);
+
+  if (palette->style&STYLE_1) {
+    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
+  }
+  gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_LEFT);
+#endif
+
+  return label;
+}
+
+
 LiVESWidget *lives_standard_check_button_new(const char *labeltext, boolean use_mnemonic, LiVESBox *box, 
 					     const char *tooltip) {
   LiVESWidget *checkbutton;
@@ -367,13 +406,13 @@ LiVESWidget *lives_standard_check_button_new(const char *labeltext, boolean use_
   checkbutton = gtk_check_button_new ();
   if (tooltip!=NULL) lives_tooltips_set(checkbutton, tooltip);
   eventbox=gtk_event_box_new();
-  lives_tooltips_copy(eventbox,checkbutton);
+  if (tooltip!=NULL) lives_tooltips_copy(eventbox,checkbutton);
   if (use_mnemonic) {
     label=gtk_label_new_with_mnemonic (labeltext);
     gtk_label_set_mnemonic_widget (GTK_LABEL (label),checkbutton);
+    gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_LEFT);
   }
-  else label=gtk_label_new (labeltext);
-  gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_LEFT);
+  else label=lives_standard_label_new (labeltext);
 
   gtk_container_add(GTK_CONTAINER(eventbox),label);
   g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
@@ -406,7 +445,7 @@ LiVESWidget *lives_standard_check_button_new(const char *labeltext, boolean use_
 
 
 LiVESWidget *lives_standard_radio_button_new(const char *labeltext, boolean use_mnemonic, LiVESSList *rbgroup, 
-					     LiVESBox *box, const char *tooltips) {
+					     LiVESBox *box, const char *tooltip) {
   LiVESWidget *radiobutton;
 
   // pack a themed check button into box
@@ -420,7 +459,7 @@ LiVESWidget *lives_standard_radio_button_new(const char *labeltext, boolean use_
 
   radiobutton = gtk_radio_button_new (rbgroup);
 
-  if (tooltips!=NULL) lives_tooltips_set(radiobutton, tooltips);
+  if (tooltip!=NULL) lives_tooltips_set(radiobutton, tooltip);
 
   GTK_WIDGET_SET_FLAGS (radiobutton, GTK_CAN_DEFAULT|GTK_CAN_FOCUS);
   if (GTK_IS_HBOX(box)) hbox=GTK_WIDGET(box);
@@ -436,12 +475,12 @@ LiVESWidget *lives_standard_radio_button_new(const char *labeltext, boolean use_
   if (use_mnemonic) {
     label=gtk_label_new_with_mnemonic (labeltext);
     gtk_label_set_mnemonic_widget (GTK_LABEL (label),radiobutton);
+    gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_LEFT);
   }
-  else label=gtk_label_new (labeltext);
-  gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_LEFT);
+  else label=lives_standard_label_new (labeltext);
 
   eventbox=gtk_event_box_new();
-  lives_tooltips_copy(eventbox,radiobutton);
+  if (tooltip!=NULL) lives_tooltips_copy(eventbox,radiobutton);
   gtk_container_add(GTK_CONTAINER(eventbox),label);
   g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
 		    G_CALLBACK (label_act_toggle),
@@ -457,14 +496,6 @@ LiVESWidget *lives_standard_radio_button_new(const char *labeltext, boolean use_
 
   return radiobutton;
 }
-
-
-
-
-
-
-
-
 
 
 
@@ -504,12 +535,12 @@ LiVESWidget *lives_standard_spin_button_new(const char *labeltext, boolean use_m
   if (use_mnemonic) {
     label=gtk_label_new_with_mnemonic (labeltext);
     gtk_label_set_mnemonic_widget (GTK_LABEL (label),spinbutton);
+    gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_LEFT);
   }
-  else label=gtk_label_new (labeltext);
-  gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_LEFT);
+  else label=lives_standard_label_new (labeltext);
 
   eventbox=gtk_event_box_new();
-  lives_tooltips_copy(eventbox,spinbutton);
+  if (tooltip!=NULL) lives_tooltips_copy(eventbox,spinbutton);
   gtk_container_add(GTK_CONTAINER(eventbox),label);
 
   if (palette->style&STYLE_1) {
@@ -559,13 +590,13 @@ LiVESWidget *lives_standard_combo_new (const char *labeltext, boolean use_mnemon
   if (use_mnemonic) {
     label = gtk_label_new_with_mnemonic (labeltext);
     gtk_label_set_mnemonic_widget (GTK_LABEL (label), GTK_WIDGET(entry));
+    gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_LEFT);
   }
-  else label = gtk_label_new (labeltext);
+  else label = lives_standard_label_new (labeltext);
 
   eventbox=gtk_event_box_new();
-  lives_tooltips_copy(eventbox,combo);
+  if (tooltip!=NULL) lives_tooltips_copy(eventbox,combo);
   gtk_container_add(GTK_CONTAINER(eventbox),label);
-  gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_LEFT);
 
   if (palette->style&STYLE_1) {
     gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
@@ -595,15 +626,63 @@ LiVESWidget *lives_standard_combo_new (const char *labeltext, boolean use_mnemon
 }
 
 
+LiVESWidget *lives_standard_entry_new(const char *labeltext, boolean use_mnemonic, char *txt, int dispwidth, int maxchars, LiVESBox *box, 
+					     const char *tooltip) {
+
+  LiVESWidget *entry;
+
+#ifdef GUI_GTK
+  LiVESWidget *label;
+
+  LiVESWidget *hbox;
+
+  entry=gtk_entry_new();
+
+  if (tooltip!=NULL) lives_tooltips_set(entry, tooltip);
+
+  if (GTK_IS_HBOX(box)) hbox=GTK_WIDGET(box);
+
+  else {
+    hbox = gtk_hbox_new (TRUE, 0);
+    gtk_box_pack_start (GTK_BOX (box), hbox, FALSE, FALSE, 10);
+  }
+
+  gtk_box_set_homogeneous(GTK_BOX(hbox),FALSE);
+
+  gtk_entry_set_text (GTK_ENTRY (entry),txt);
+
+  if (maxchars!=-1) gtk_entry_set_max_length(GTK_ENTRY (entry),maxchars);
+  if (dispwidth!=-1) gtk_entry_set_width_chars (GTK_ENTRY (entry),dispwidth);
+  gtk_entry_set_activates_default (GTK_ENTRY (entry), TRUE);
+
+  if (use_mnemonic) {
+    label = gtk_label_new_with_mnemonic (labeltext);
+    gtk_label_set_mnemonic_widget (GTK_LABEL (label),entry);
+    gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_LEFT);
+  }
+  else label = lives_standard_label_new (labeltext);
+
+  if (palette->style&STYLE_1) {
+    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
+  }
+
+  if (tooltip!=NULL) lives_tooltips_copy(label,entry);
+  gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 10);
+  
+  gtk_box_pack_start (GTK_BOX (hbox), entry, TRUE, TRUE, 10);
+#endif
+
+  return entry;
+}
+
+
+
+
+
+
 
 
 // utils
-LiVESWidget *lives_combo_get_entry(LiVESCombo *widget) {
-#ifdef GUI_GTK
-  return gtk_bin_get_child(GTK_BIN(widget));
-#endif
-}
-
 
 boolean label_act_toggle (LiVESWidget *widget, LiVESEventButton *event, LiVESToggleButton *togglebutton) {
   if (!LIVES_WIDGET_IS_SENSITIVE(togglebutton)) return FALSE;
@@ -620,17 +699,6 @@ boolean widget_act_toggle (LiVESWidget *widget, LiVESToggleButton *togglebutton)
 LIVES_INLINE void toggle_button_toggle (LiVESToggleButton *tbutton) {
   if (lives_toggle_button_get_active(tbutton)) lives_toggle_button_set_active(tbutton,FALSE);
   else lives_toggle_button_set_active(tbutton,FALSE);
-}
-
-/*
- * Set active string to the combo box
- */
-void lives_combo_set_active_string(LiVESCombo *combo, const char *active_str) {
-
-#ifdef GUI_GTK
-  gtk_entry_set_text(GTK_ENTRY(gtk_bin_get_child(GTK_BIN(combo))),active_str);
-#endif
-
 }
 
 

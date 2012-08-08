@@ -365,7 +365,7 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 
       if (vdirval>9) {
 	getenv_piece(vdir1,PATH_MAX,fpp,vdirval-10);
-	if (!strlen(vdir1)) {
+	if (!strlen(vdir1)||vdir1==NULL) {
 	  vdirval=6;
 	  break;
 	}
@@ -620,13 +620,13 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 	  }
 	  
 	  num_weed_params=0;
+	  weed_free(pal);
 
 #ifdef CAN_GET_DEF
 	  // try to get defaults
 	  if ((f0r_inst=(*f0r_construct) (640,480))==NULL) {
 	    (*f0r_deinit)();
 	    dlclose(handle);
-	    weed_free(pal);
 	    weed_free(out_chantmpls);
 	    if (in_chantmpls!=NULL) weed_free(in_chantmpls);
 	    continue;
@@ -640,7 +640,6 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 #endif
 	      (*f0r_deinit)();
 	      dlclose(handle);
-	      weed_free(pal);
 	      weed_free(out_chantmpls);
 	      if (in_chantmpls!=NULL) weed_free(in_chantmpls);
 	      continue;
@@ -651,7 +650,6 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 	      f0r_destruct(f0r_inst);
 	      (*f0r_deinit)();
 	      dlclose(handle);
-	      weed_free(pal);
 	      weed_free(out_chantmpls);
 	      if (in_chantmpls!=NULL) weed_free(in_chantmpls);
 	      continue;
@@ -795,7 +793,6 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 #endif
 		(*f0r_deinit)();
 		dlclose(handle);
-		weed_free(pal);
 		weed_free(out_chantmpls);
 		if (in_chantmpls!=NULL) weed_free(in_chantmpls);
 		if (in_params!=NULL) weed_free(in_params);
@@ -837,7 +834,6 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 
 	  if (f0rinfo.explanation!=NULL) weed_set_string_value(filter_class,"description",(char *)f0rinfo.explanation);
 	  num_filters++;
-	  weed_free(pal);
 	  weed_free(out_chantmpls);
 	  if (in_chantmpls!=NULL) weed_free(in_chantmpls);
 	  if (in_params!=NULL) weed_free(in_params);
@@ -874,7 +870,10 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
     dup2(new_stderr,2);
 #endif
 
-    if (num_filters==0) return NULL;
+    if (num_filters==0) {
+      fprintf(stderr,"No frei0r plugins found; if you have them installed please set the FREI0R_PATH environment variable to point to them.\n");
+      return NULL;
+    }
     weed_set_int_value(plugin_info,"version",package_version);
   }
 

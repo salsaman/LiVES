@@ -1688,6 +1688,8 @@ gboolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, gboolean ad
     }
     gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 10);
 
+    blockfunc=g_signal_connect_after (G_OBJECT (hbox), "set-focus-child", G_CALLBACK (after_param_text_focus_changed), 
+				      (gpointer) rfx);
 
     if ((gint)param->max>RFX_TEXT_MAGIC||param->max==0.) {
       scrolledwindow = gtk_scrolled_window_new (NULL, NULL);
@@ -1696,23 +1698,17 @@ gboolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, gboolean ad
       gtk_container_add (GTK_CONTAINER (scrolledwindow), textview);
       if (use_mnemonic) gtk_label_set_mnemonic_widget (GTK_LABEL (label),textview);
       gtk_box_pack_start (GTK_BOX (hbox), scrolledwindow, TRUE, TRUE, 10);
-      g_object_set_data(G_OBJECT(hbox),"textwidget",(gpointer)textbuffer);
-
     }
     else {
       if (use_mnemonic) gtk_label_set_mnemonic_widget (GTK_LABEL (label),entry);
       gtk_box_pack_start (GTK_BOX (hbox), entry, TRUE, TRUE, 10);
-      g_object_set_data(G_OBJECT(hbox),"textwidget",(gpointer)entry);
     }
 
-    blockfunc=g_signal_connect_after (G_OBJECT (hbox), "set-focus-child", G_CALLBACK (after_param_text_focus_changed), 
-				      (gpointer) rfx);
+    g_object_set_data(G_OBJECT(hbox),"textwidget",(gpointer)param->widgets[0]);
+    g_object_set_data(G_OBJECT(param->widgets[0]),"blockfunc",(gpointer)blockfunc);
+    g_object_set_data (G_OBJECT (param->widgets[0]),"param_number",GINT_TO_POINTER (pnum));
+    g_object_set_data (G_OBJECT (param->widgets[0]),"rfx",rfx);
 
-    g_object_set_data(G_OBJECT(textbuffer),"blockfunc",(gpointer)blockfunc);
-
-    // store parameter so we know whose trigger to use
-    g_object_set_data (G_OBJECT (textbuffer),"param_number",GINT_TO_POINTER (pnum));
-    g_object_set_data (G_OBJECT (textbuffer),"rfx",rfx);
 
     break;
 

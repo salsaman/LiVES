@@ -607,11 +607,19 @@ static void lives_init(_ign_opts *ign_opts) {
   int i;
   int randfd;
   int naudp=0;
+
+  boolean needs_free;
+
   ssize_t randres;
   gchar buff[256];
   uint32_t rseed;
   GList *encoders=NULL;
   GList *encoder_capabilities=NULL;
+
+  gchar *weed_plugin_path;
+  gchar *frei0r_path;
+  gchar *ladspa_path;
+
 
   // initialise the mainwindow data
   mainw->scr_width=gdk_screen_width();
@@ -1393,6 +1401,42 @@ static void lives_init(_ign_opts *ign_opts) {
       prefs->fxdefsfile=NULL;
       prefs->fxsizesfile=NULL;
       
+      needs_free=FALSE;
+      weed_plugin_path=getenv("WEED_PLUGIN_PATH");
+      if (weed_plugin_path==NULL) {
+	get_pref("weed_plugin_path",prefs->weed_plugin_path,PATH_MAX);
+	if (strlen(prefs->weed_plugin_path)==0) weed_plugin_path=g_build_filename(prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_WEED_FX_BUILTIN,NULL);
+	else weed_plugin_path=g_strdup(prefs->weed_plugin_path);
+	lives_setenv("WEED_PLUGIN_PATH",weed_plugin_path);
+	needs_free=TRUE;
+      }
+      snprintf(prefs->weed_plugin_path,PATH_MAX,"%s",weed_plugin_path);
+      if (needs_free) g_free(weed_plugin_path);
+      
+      needs_free=FALSE;
+      frei0r_path=getenv("FREI0R_PATH");
+      if (frei0r_path==NULL) {
+	get_pref("frei0r_path",prefs->frei0r_path,PATH_MAX);
+	if (strlen(prefs->frei0r_path)==0) frei0r_path=g_strdup_printf("/usr/lib/frei0r-1:/usr/local/lib/frei0r-1:%s/frei0r-1",capable->home_dir);
+	else frei0r_path=g_strdup(prefs->frei0r_path);
+	lives_setenv("FREI0R_PATH",frei0r_path);
+	needs_free=TRUE;
+      }
+      snprintf(prefs->frei0r_path,PATH_MAX,"%s",frei0r_path);
+      if (needs_free) g_free(frei0r_path);
+      
+      needs_free=FALSE;
+      ladspa_path=getenv("LADSPA_PATH");
+      if (ladspa_path==NULL||strlen(ladspa_path)==0) {
+	get_pref("ladspa_path",prefs->ladspa_path,PATH_MAX);
+	if (strlen(prefs->ladspa_path)==0) ladspa_path=g_build_filename(prefs->lib_dir,"ladspa",NULL);
+	else ladspa_path=g_strdup(prefs->ladspa_path);
+	lives_setenv("LADSPA_PATH",ladspa_path);
+	needs_free=TRUE;
+      }
+      snprintf(prefs->ladspa_path,PATH_MAX,"%s",ladspa_path);
+      if (needs_free) g_free(ladspa_path);
+
       splash_msg(_("Loading realtime effect plugins..."),.6);
       weed_load_all();
 

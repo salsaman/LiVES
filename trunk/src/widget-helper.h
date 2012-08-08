@@ -237,6 +237,8 @@ void lives_combo_set_entry_text_column(LiVESCombo *combo, int column);
 char *lives_combo_get_active_text(LiVESCombo *combo) WARN_UNUSED;
 void lives_combo_set_active_text(LiVESCombo *combo, const char *text);
 
+void lives_combo_set_active_string(LiVESCombo *combo, const char *active_str);
+
 LiVESWidget *lives_combo_get_entry(LiVESCombo *combo);
 
 void lives_combo_populate(LiVESCombo *combo, LiVESList *list);
@@ -247,25 +249,28 @@ void lives_toggle_button_set_active(LiVESToggleButton *button, boolean active);
 void lives_tooltips_set (LiVESWidget *widget, const char *tip_text);
 
 
+
 // compound functions (composed of basic functions)
 
 void lives_tooltips_copy(LiVESWidget *dest, LiVESWidget *source);
 
+LiVESWidget *lives_standard_label_new(const char *text);
+
 LiVESWidget *lives_standard_check_button_new(const char *label, boolean use_mnemonic, LiVESBox *box, const char *tooltip);
 LiVESWidget *lives_standard_radio_button_new(const char *labeltext, boolean use_mnemonic, LiVESSList *rbgroup, 
-					     LiVESBox *box, const char *tooltips);
+					     LiVESBox *box, const char *tooltip);
 LiVESWidget *lives_standard_spin_button_new(const char *labeltext, boolean use_mnemonic, double val, double min, 
 					    double max, double step, double page, int dp, LiVESBox *box, 
 					    const char *tooltip);
 LiVESWidget *lives_standard_combo_new (const char *labeltext, boolean use_mnemonic, LiVESList *list, LiVESBox *box, 
 				       const char *tooltip);
 
+LiVESWidget *lives_standard_entry_new(const char *labeltext, boolean use_mnemonic, char *txt, int dispwidth, int maxchars, LiVESBox *box, 
+				      const char *tooltip);
 
 // util functions
 
 
-
-void lives_combo_set_active_string(LiVESCombo *combo, const char *active_str);
 
 int get_box_child_index (LiVESBox *box, LiVESWidget *tchild);
 

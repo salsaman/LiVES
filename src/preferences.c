@@ -439,6 +439,9 @@ gboolean apply_prefs(gboolean skip_warn) {
   const gchar *def_audio_dir=gtk_entry_get_text(GTK_ENTRY(prefsw->audio_dir_entry));
   const gchar *def_image_dir=gtk_entry_get_text(GTK_ENTRY(prefsw->image_dir_entry));
   const gchar *def_proj_dir=gtk_entry_get_text(GTK_ENTRY(prefsw->proj_dir_entry));
+  const gchar *wp_path=gtk_entry_get_text(GTK_ENTRY(prefsw->wpp_entry));
+  const gchar *frei0r_path=gtk_entry_get_text(GTK_ENTRY(prefsw->frei0r_entry));
+  const gchar *ladspa_path=gtk_entry_get_text(GTK_ENTRY(prefsw->ladspa_entry));
   gchar tmpdir[PATH_MAX];
   const gchar *theme = gtk_combo_box_get_active_text( GTK_COMBO_BOX(prefsw->theme_combo) );
   const gchar *audp = gtk_combo_box_get_active_text( GTK_COMBO_BOX(prefsw->audp_combo) );
@@ -687,6 +690,21 @@ gboolean apply_prefs(gboolean skip_warn) {
       gint current_file=mainw->current_file;
       switch_to_file((mainw->current_file=0),current_file);
     }
+  }
+
+  if (strcmp(wp_path,prefs->weed_plugin_path)) {
+    set_pref("weed_plugin_path",wp_path);
+    snprintf(prefs->weed_plugin_path,PATH_MAX,"%s",wp_path);
+  }
+
+  if (strcmp(frei0r_path,prefs->frei0r_path)) {
+    set_pref("frei0r_path",frei0r_path);
+    snprintf(prefs->frei0r_path,PATH_MAX,"%s",frei0r_path);
+  }
+
+  if (strcmp(ladspa_path,prefs->ladspa_path)) {
+    set_pref("ladspa_path",ladspa_path);
+    snprintf(prefs->ladspa_path,PATH_MAX,"%s",ladspa_path);
   }
 
   ensure_isdir(tmpdir);
@@ -2407,10 +2425,7 @@ _prefsw *create_prefs_dialog (void) {
   gtk_box_pack_start (GTK_BOX (hbox1), label, FALSE, FALSE, 16);
   gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_LEFT);
   // ---
-  label = gtk_label_new ("");
-  gtk_widget_show (label);
-  gtk_box_pack_start (GTK_BOX (hbox1), label, FALSE, FALSE, 16);
-  gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_LEFT);
+  add_fill_to_box(LIVES_BOX(hbox1));
   // ---
   hbox2 = gtk_hbox_new (FALSE, 0);
   gtk_widget_show (hbox2);
@@ -3739,86 +3754,80 @@ _prefsw *create_prefs_dialog (void) {
     gtk_widget_modify_bg(GTK_BIN(prefsw->scrollw_right_effects)->child, GTK_STATE_NORMAL, &palette->normal_back);
   }
 
-  prefsw->checkbutton_antialias = gtk_check_button_new();
-  eventbox = gtk_event_box_new();
-  label = gtk_label_new_with_mnemonic(_("Use _antialiasing when resizing"));
-  gtk_label_set_mnemonic_widget(GTK_LABEL(label), prefsw->checkbutton_antialias);
-  gtk_container_add(GTK_CONTAINER(eventbox), label);
-  g_signal_connect(GTK_OBJECT(eventbox), "button_press_event", G_CALLBACK(label_act_toggle), prefsw->checkbutton_antialias);
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_bg(eventbox, GTK_STATE_NORMAL, &palette->normal_back);
-  }
   hbox = gtk_hbox_new(FALSE, 0);
-  gtk_box_pack_start(GTK_BOX(hbox), prefsw->checkbutton_antialias, FALSE, FALSE, 5);
-  gtk_box_pack_start(GTK_BOX(hbox), eventbox, FALSE, FALSE, 5);
   gtk_container_set_border_width(GTK_CONTAINER (hbox), 20);
-  gtk_widget_show_all(hbox);
   gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_effects), hbox, FALSE, FALSE, 10);
+
+  prefsw->checkbutton_antialias = lives_standard_check_button_new(_("Use _antialiasing when resizing"),TRUE,LIVES_BOX(hbox),NULL);
+  gtk_widget_show_all(hbox);
+
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_antialias), prefs->antialias);
   //
+
   hbox = gtk_hbox_new (FALSE,0);
   gtk_widget_show (hbox);
   gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_effects), hbox, TRUE, TRUE, 0);
   
-  label = gtk_label_new_with_mnemonic (_("Number of _real time effect keys"));
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-  }
-  gtk_widget_show (label);
-  gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 10);
+  prefsw->spinbutton_rte_keys = lives_standard_spin_button_new 
+    ((tmp=g_strdup(_("Number of _real time effect keys"))),TRUE,prefs->rte_keys_virtual, FX_KEYS_PHYSICAL, 
+     FX_KEYS_MAX_VIRTUAL, 1., 1., 0, LIVES_BOX(hbox),
+    (tmp2=g_strdup(_("The number of \"virtual\" real time effect keys. They can be controlled through the real time effects window, or via network (OSC)."))));
+  g_free(tmp);
+  g_free(tmp2);
 
-  spinbutton_adj = (GObject *)gtk_adjustment_new (prefs->rte_keys_virtual, FX_KEYS_PHYSICAL, FX_KEYS_MAX_VIRTUAL, 1, 1, 0);
-  
-  prefsw->spinbutton_rte_keys = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 1, 0);
-  gtk_widget_show (prefsw->spinbutton_rte_keys);
-  gtk_box_pack_start (GTK_BOX (hbox), prefsw->spinbutton_rte_keys, FALSE, TRUE, 0);
-  gtk_label_set_mnemonic_widget (GTK_LABEL (label),prefsw->spinbutton_rte_keys);
-  gtk_widget_set_tooltip_text( prefsw->spinbutton_rte_keys, _("The number of \"virtual\" real time effect keys. They can be controlled through the real time effects window, or via network (OSC)."));
-
-
-
-  prefsw->checkbutton_threads = gtk_check_button_new();
-  eventbox = gtk_event_box_new();
-  label = gtk_label_new_with_mnemonic(_("Use _threads where possible when applying effects"));
-  gtk_label_set_mnemonic_widget(GTK_LABEL(label), prefsw->checkbutton_threads);
-  gtk_container_add(GTK_CONTAINER(eventbox), label);
-  g_signal_connect(GTK_OBJECT(eventbox), "button_press_event", G_CALLBACK(label_act_toggle), prefsw->checkbutton_threads);
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_bg(eventbox, GTK_STATE_NORMAL, &palette->normal_back);
-  }
-  hbox = gtk_hbox_new(FALSE, 0);
-  gtk_box_pack_start(GTK_BOX(hbox), prefsw->checkbutton_threads, FALSE, FALSE, 5);
-  gtk_box_pack_start(GTK_BOX(hbox), eventbox, FALSE, FALSE, 5);
-  gtk_container_set_border_width(GTK_CONTAINER (hbox), 20);
   gtk_widget_show_all(hbox);
+
+  hbox = gtk_hbox_new(FALSE, 0);
+  gtk_container_set_border_width(GTK_CONTAINER (hbox), 20);
   gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_effects), hbox, FALSE, FALSE, 10);
+
+  prefsw->checkbutton_threads = lives_standard_check_button_new(_("Use _threads where possible when applying effects"),TRUE,LIVES_BOX(hbox),NULL);
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_threads), future_prefs->nfx_threads>1);
+  gtk_widget_show_all (hbox);
+
   //
+
   hbox = gtk_hbox_new (FALSE,0);
-  gtk_widget_show (hbox);
   gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_effects), hbox, TRUE, TRUE, 0);
 
+  prefsw->spinbutton_nfx_threads = lives_standard_spin_button_new (_("Number of _threads"),TRUE,future_prefs->nfx_threads, 2., 65536., 1., 1., 0, 
+								   LIVES_BOX(hbox),NULL);
 
-  label = gtk_label_new_with_mnemonic (_("Number of _threads"));
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-  }
-  gtk_widget_show (label);
-  gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 10);
-
-  spinbutton_adj = (GObject *)gtk_adjustment_new (future_prefs->nfx_threads, 2., 65536, 1, 1, 0);
-  
-  prefsw->spinbutton_nfx_threads = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 1, 0);
-  gtk_widget_show (prefsw->spinbutton_nfx_threads);
-  gtk_box_pack_start (GTK_BOX (hbox), prefsw->spinbutton_nfx_threads, FALSE, TRUE, 0);
-  gtk_label_set_mnemonic_widget (GTK_LABEL (label),prefsw->spinbutton_nfx_threads);
-
+  gtk_widget_show_all (hbox);
 
   if (future_prefs->nfx_threads==1) gtk_widget_set_sensitive(prefsw->spinbutton_nfx_threads,FALSE);
+
+  hseparator = gtk_hseparator_new ();
+  gtk_widget_show (hseparator);
+  if (palette->style&STYLE_1) {
+    gtk_widget_modify_bg(hseparator, GTK_STATE_NORMAL, &palette->normal_back);
+  }
+  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_effects), hseparator, FALSE, FALSE, 0);
+
+
+  hbox = gtk_hbox_new (FALSE, 0);
+  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_effects), hbox, FALSE, FALSE, 0);
+
+  label = lives_standard_label_new (_("Restart is required if any of the following paths are changed:"));
+
+  gtk_widget_show (label);
+  gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 16);
+  // ---
+  add_fill_to_box(LIVES_BOX(hbox));
+
+  gtk_widget_show_all(hbox);
+
+
+
+
+  prefsw->wpp_entry=lives_standard_entry_new(_("Weed plugin path"),TRUE,prefs->weed_plugin_path,40,PATH_MAX,LIVES_BOX(prefsw->vbox_right_effects),NULL);
+  gtk_widget_show_all(gtk_widget_get_parent(prefsw->wpp_entry));
+
+  prefsw->frei0r_entry=lives_standard_entry_new(_("Frei0r plugin path"),TRUE,prefs->frei0r_path,40,PATH_MAX,LIVES_BOX(prefsw->vbox_right_effects),NULL);
+  gtk_widget_show_all(gtk_widget_get_parent(prefsw->frei0r_entry));
+
+  prefsw->ladspa_entry=lives_standard_entry_new(_("LADSPA plugin path"),TRUE,prefs->ladspa_path,40,PATH_MAX,LIVES_BOX(prefsw->vbox_right_effects),NULL);
+  gtk_widget_show_all(gtk_widget_get_parent(prefsw->ladspa_entry));
 
 
   icon = g_build_filename(prefs->prefix_dir, ICON_DIR, "pref_effects.png", NULL);
@@ -5692,6 +5701,7 @@ _prefsw *create_prefs_dialog (void) {
   gtk_widget_show(prefsw->closebutton);
   gtk_dialog_add_action_widget(GTK_DIALOG(prefsw->prefs_dialog), prefsw->closebutton, GTK_RESPONSE_OK);
   GTK_WIDGET_SET_FLAGS (prefsw->closebutton, GTK_CAN_DEFAULT);
+
    
   g_signal_connect(dirbutton1, "clicked", G_CALLBACK (on_filesel_simple_clicked),prefsw->vid_load_dir_entry);
   g_signal_connect(dirbutton2, "clicked", G_CALLBACK (on_filesel_simple_clicked),prefsw->vid_save_dir_entry);
@@ -5701,6 +5711,9 @@ _prefsw *create_prefs_dialog (void) {
   g_signal_connect(dirbutton6, "clicked", G_CALLBACK (on_filesel_complex_clicked),prefsw->tmpdir_entry);
 
   // Connect signals for 'Apply' button activity handling
+  g_signal_connect(GTK_OBJECT(prefsw->wpp_entry), "changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->frei0r_entry), "changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->ladspa_entry), "changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
   g_signal_connect(GTK_OBJECT(prefsw->fs_max_check), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
   g_signal_connect(GTK_OBJECT(prefsw->recent_check), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
   g_signal_connect(GTK_OBJECT(prefsw->stop_screensaver_check), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
@@ -5906,7 +5919,7 @@ _prefsw *create_prefs_dialog (void) {
    
   g_signal_connect (GTK_OBJECT (prefsw->closebutton), "clicked",
 		    G_CALLBACK (on_prefs_close_clicked),
-		    NULL);
+		    prefsw);
    
   g_signal_connect (GTK_OBJECT (prefsw->applybutton), "clicked",
 		    G_CALLBACK (on_prefs_apply_clicked),

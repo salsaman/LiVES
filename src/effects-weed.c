@@ -3909,20 +3909,28 @@ static gboolean set_out_channel_palettes (gint idx, gint num_channels) {
 
 
 static void load_weed_plugin (gchar *plugin_name, gchar *plugin_path, gchar *dir) {
-  gchar *filter_name;
   weed_setup_f setup_fn;
   weed_bootstrap_f bootstrap=(weed_bootstrap_f)&weed_bootstrap_func;
   
+  weed_plant_t *plugin_info,**filters,*filter;
+
+  void *handle;
+
+  GtkWidget *menuitem,*menu;
+  GtkWidget *pkg_menu;
+  GtkWidget *pkg_submenu=NULL;
+
   int error,reason,idx=num_weed_filters;
 
-  weed_plant_t *plugin_info,**filters,*filter;
-  void *handle;
   int filters_in_plugin;
   int mode=-1,kmode=0;
   int i;
+
   gchar *string,*filter_type;
-  GtkWidget *menuitem;
+  gchar *filter_name;
   char cwd[PATH_MAX],*pwd;
+  gchar *pkg=NULL,*pkgstring;
+
 
   pwd=getcwd(cwd,PATH_MAX);
 
@@ -3987,6 +3995,7 @@ static void load_weed_plugin (gchar *plugin_name, gchar *plugin_path, gchar *dir
 	      LIVES_INFO(msg);
 	      g_free(msg);
 	      g_free(hashnames[idx]);
+	      g_free(filter_name);
 	      hashnames[idx]=NULL;
 	      weed_filters[idx]=NULL;
 	      num_weed_filters--;
@@ -4013,6 +4022,40 @@ static void load_weed_plugin (gchar *plugin_name, gchar *plugin_path, gchar *dir
 	      if (key<FX_KEYS_PHYSICAL) {
 		key_to_fx[key][kmode]=idx;
 	      }
+
+	      if ((pkgstring=strstr(filter_name,": "))!=NULL) {
+		// package effect
+		if (pkg==NULL) {
+		  pkg=filter_name;
+		  filter_name=g_strdup(pkg);
+		  memset(pkgstring,0,1);
+		  /* TRANSLATORS: example " - LADSPA plugins -" */
+		  pkgstring=g_strdup_printf(_(" - %s plugins -"),pkg);
+		  // create new submenu
+		  
+		  pkg_menu=gtk_menu_item_new_with_label (pkgstring);
+		  gtk_container_add (GTK_CONTAINER (mainw->rte_defs), pkg_menu);
+
+		  pkg_submenu=gtk_menu_new();
+		  gtk_menu_item_set_submenu (GTK_MENU_ITEM (pkg_menu), pkg_submenu);
+
+		  if (palette->style&STYLE_1) {
+		    gtk_widget_modify_bg(pkg_submenu, GTK_STATE_NORMAL, &palette->menu_and_bars);
+		  }
+		  
+		  gtk_widget_show (pkg_menu);
+		  gtk_widget_show (pkg_submenu);
+		  g_free(pkgstring);
+		}
+		// add to submenu
+		menu=pkg_submenu;
+	      }
+	      else {
+		if (pkg!=NULL) g_free(pkg);
+		pkg=NULL;
+		menu=mainw->rte_defs;
+	      }
+
 	      filter_type=weed_filter_get_type(weed_filters[idx],FALSE);
 	      string=g_strdup_printf("%s (%s)",filter_name,filter_type);
 	      menuitem=gtk_menu_item_new_with_label (string);
@@ -4020,7 +4063,7 @@ static void load_weed_plugin (gchar *plugin_name, gchar *plugin_path, gchar *dir
 	      g_free(string);
 	      g_free(filter_type);
 	      
-	      gtk_container_add (GTK_CONTAINER (mainw->rte_defs), menuitem);
+	      gtk_container_add (GTK_CONTAINER (menu), menuitem);
 	      
 	      g_signal_connect (GTK_OBJECT (menuitem), "activate",
 				G_CALLBACK (rte_set_defs_activate),

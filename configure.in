@@ -842,3 +842,12 @@ echo "2.10.0 of gtk+-2.0 to ensure problem free running of LiVES"
 echo "*******************************************************************"
 echo
 fi
+
+
+echo "*******************************************************************"
+echo "LiVES is now configured and ready for building."
+echo "If you are building for MULTILIBS on a 64 bit system, you may wish to re-run, e.g.: ./configure --libdir=/usr/lib64"
+echo "In this case you MUST first manually update the library paths in libweed/*.pc files."
+echo  "*******************************************************************"
+
+

@@ -1,5 +1,6 @@
 Version 1.6.3
 -------------
+Fix regression in file open/enough.
 Fix installation problem when pulseaudio is not installed.
 Fix GUI exposure crash in multitrack window.
 Prevent truncation of longer filenames in plugin interfaces.
@@ -8,8 +9,8 @@ Add support for audio processing plugins.
 Add support for LADSPA plugins.
 Add beat detector plugin.
 Fixes for rare crashes/bugs in plugin interface windows.
-Group effects by package in the effect mapper window.
-
+Group effects by package in the effect mapper window and defaults menu.
+Add OSC commands for out channels, out parameters and data chaining. 
 
 
 

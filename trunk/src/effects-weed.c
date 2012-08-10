@@ -6510,22 +6510,27 @@ gboolean rte_keymode_valid (gint key, gint mode, gboolean is_userkey) {
 }
 
 gint rte_keymode_get_filter_idx(gint key, gint mode) {
+  if (key<1||key>FX_KEYS_MAX||mode<0||
+      mode>=(key<FX_KEYS_MAX_VIRTUAL?prefs->max_modes_per_key:1)) return -1;
   return (key_to_fx[--key][mode]);
 }
 
 int rte_key_getmode (gint key) {
+  if (key<1||key>FX_KEYS_MAX) return -1;
   return key_modes[--key];
 }
 
 int rte_key_getmaxmode (gint key) {
   register int i;
 
+  if (key<1||key>FX_KEYS_MAX) return -1;
+
   key--;
 
   for (i=0;i<(key<FX_KEYS_MAX_VIRTUAL?prefs->max_modes_per_key:1);i++) {
-    if (key_to_fx[key][i]==-1) return i;
+    if (key_to_fx[key][i]==-1) return i-1;
   }
-  return 0;
+  return i-1;
 }
 
 weed_plant_t *rte_keymode_get_instance(gint key, gint mode) {

@@ -446,7 +446,7 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
   weed_plant_t *plugin_info=weed_plugin_info_init(weed_boot,num_versions,api_versions);
   if (plugin_info!=NULL) {
 
-    int apalette_list[]={WEED_PALETTE_AFLOAT,WEED_PALETTE_AFLOAT,WEED_PALETTE_END};
+    int apalette_list[]={WEED_PALETTE_AFLOAT,WEED_PALETTE_END};
 
     int vpalette_list[]={WEED_PALETTE_BGRA32,WEED_PALETTE_END};
 

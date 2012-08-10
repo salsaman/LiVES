@@ -492,12 +492,15 @@ int ladspa_process (weed_plant_t *inst, weed_timecode_t timestamp) {
     switch (weed_leaf_seed_type(out_params[i],"value")) {
     case WEED_SEED_BOOLEAN:
       weed_set_boolean_value(out_params[i],"value",(int)outvals[i]);
+      weed_set_int64_value(out_params[i],"timecode",tc);
       break;
     case WEED_SEED_INT:
       weed_set_int_value(out_params[i],"value",(int)outvals[i]);
+      weed_set_int64_value(out_params[i],"timecode",tc);
       break;
     default:
       weed_set_double_value(out_params[i],"value",(double)outvals[i]);
+      weed_set_int64_value(out_params[i],"timecode",tc);
       break;
     }
   }

@@ -347,7 +347,9 @@ int beat_process (weed_plant_t *inst, weed_timecode_t timestamp) {
 
  done:
   weed_set_boolean_value(out_params[0],"value",beat_hold);
+  weed_set_int64_value(out_params[0],"timecode",tc);
   weed_set_boolean_value(out_params[1],"value",beat_pulse);
+  weed_set_int64_value(out_params[1],"timecode",tc);
 
   weed_free(out_params);
   

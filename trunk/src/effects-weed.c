@@ -709,6 +709,8 @@ gboolean weed_parameter_has_variable_elements_strict(weed_plant_t *inst, weed_pl
 
   if (flags&WEED_PARAMETER_VARIABLE_ELEMENTS) return TRUE;
 
+  if (inst==NULL) return;
+
   if (!(flags&WEED_PARAMETER_ELEMENT_PER_CHANNEL)) return FALSE;
 
   if (!weed_plant_has_leaf(inst,"in_channels")

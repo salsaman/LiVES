@@ -316,6 +316,8 @@ static gchar *lives_osc_format_result(weed_plant_t *plant, const gchar *key, int
 
   gchar *retval=NULL,*tmp;
 
+  if (end==-1) end=weed_leaf_num_elements(plant,key);
+
   if (end<=st) return g_strdup("");
 
   stype=weed_leaf_seed_type(plant,key);
@@ -2586,41 +2588,46 @@ void lives_osc_cb_rte_prevmode(void *context, int arglen, const void *vargs, OSC
 ///////////////////////////////////////////////////////////////
 
 
-static gboolean setfx (weed_plant_t *inst, weed_plant_t *tparam, int pnum, int nargs, const void *vargs) {
-  // set value of "value" leaf for tparam
+static gboolean setfx (weed_plant_t *plant, weed_plant_t *tparam, int pnum, int nargs, const void *vargs, int skip) {
+  // set value of "value" leaf for tparam, or "host_default" for a template
   // set it to vargs (length nargs)
 
   int valuei;
   float valuef;
   int error,i;
-  weed_plant_t *ptmpl;
-  int hint,cspace;
+  weed_plant_t *ptmpl,*inst=NULL;
+  int hint,cspace=-1;
   int x=0;
-  int skip=2;
   int copyto=-1;
+  int defargs;
   int maxi_r=255,maxi_g=255,maxi_b=255,maxi_a=255,mini_r=0,mini_g=0,mini_b=0,mini_a=0,mini,maxi;
+
   double maxd_r=1.,maxd_g=1.,maxd_b=1.,maxd_a=1.,mind_r=0.,mind_g=0.,mind_b=0.,mind_a=0.,mind,maxd;
   gchar values[OSC_STRING_SIZE];
-  char *pattern;
+  const char *pattern;
 
   if (nargs<=0) return FALSE; // must set at least one value
 
-  ptmpl=weed_get_plantptr_value(tparam,"template",&error);
-
-  hint=weed_get_int_value(ptmpl,"hint",&error);
-
-  if (inst!=NULL) {
-    if (!(weed_parameter_has_variable_elements_strict(inst,ptmpl))) {
-      if (nargs>weed_leaf_num_elements(ptmpl,"default")) {
-	// error: parameter does not have variable elements, and the user sent too many values
-	return FALSE;
-      }
-    }
-    skip++;
+  if (WEED_PLANT_IS_FILTER_CLASS(plant)) {
+    ptmpl=tparam;
+  }
+  else {
+    ptmpl=weed_get_plantptr_value(tparam,"template",&error);
+    inst=plant;
   }
 
-  /* get header pattern (type tags) */
-  pattern=g_strdup(((char *)vargs)+skip); // skip comma,int,(int)
+  hint=weed_get_int_value(ptmpl,"hint",&error);
+  if (hint==WEED_HINT_COLOR) cspace=weed_get_int_value(ptmpl,"colorspace",&error);
+
+  if (!(weed_parameter_has_variable_elements_strict(inst,ptmpl))) {
+    if (nargs>(defargs=weed_leaf_num_elements(ptmpl,"default"))) {
+      if (!(hint==WEED_HINT_COLOR&&defargs==1&&((cspace==WEED_COLORSPACE_RGB&&(nargs%3==0))||(cspace==WEED_COLORSPACE_RGBA&&(nargs%4==0)))))
+	// error: parameter does not have variable elements, and the user sent too many values
+	return FALSE;
+    }
+  }
+
+  pattern=(char *)vargs+skip; // skip comma,int,(int)
 
   switch (hint) {
   case WEED_HINT_INTEGER:
@@ -2649,30 +2656,30 @@ static gboolean setfx (weed_plant_t *inst, weed_plant_t *tparam, int pnum, int n
 	x++;
       }
 
-      copyto=set_copy_to(inst,pnum,FALSE);
-
       if (inst!=NULL) {
+	copyto=set_copy_to(inst,pnum,FALSE);
+	if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
+	  // if we are recording, add this change to our event_list
+	  rec_param_change(inst,pnum);
+	  if (copyto!=-1) rec_param_change(inst,copyto);
+	}
+	pthread_mutex_lock(&mainw->data_mutex);
+	weed_set_int_array(tparam,"value",nargs,valuesi);
+	pthread_mutex_unlock(&mainw->data_mutex);
+
+	set_copy_to(inst,pnum,TRUE);
+
 	if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
 	  // if we are recording, add this change to our event_list
 	  rec_param_change(inst,pnum);
 	  if (copyto!=-1) rec_param_change(inst,copyto);
 	}
       }
+      else {
+	weed_set_int_array(tparam,"host_default",nargs,valuesi);
+      }
 
-      pthread_mutex_lock(&mainw->data_mutex);
-      weed_set_int_array(tparam,"value",nargs,valuesi);
-      pthread_mutex_unlock(&mainw->data_mutex);
       g_free(valuesi);
-
-      set_copy_to(inst,pnum,TRUE);
-
-      if (inst!=NULL) {
-	if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
-	  // if we are recording, add this change to our event_list
-	  rec_param_change(inst,pnum);
-	  if (copyto!=-1) rec_param_change(inst,copyto);
-	}
-      }
 
       break;
     }
@@ -2693,20 +2700,25 @@ static gboolean setfx (weed_plant_t *inst, weed_plant_t *tparam, int pnum, int n
 	x++;
       }
 
-      pthread_mutex_lock(&mainw->data_mutex);
-      weed_set_boolean_array(tparam,"value",nargs,valuesb);
-      pthread_mutex_unlock(&mainw->data_mutex);
-      g_free(valuesb);
-
-      copyto=set_copy_to(inst,pnum,TRUE);
-
       if (inst!=NULL) {
+	pthread_mutex_lock(&mainw->data_mutex);
+	weed_set_boolean_array(tparam,"value",nargs,valuesb);
+	pthread_mutex_unlock(&mainw->data_mutex);
+
+	copyto=set_copy_to(inst,pnum,TRUE);
+
 	if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
 	  // if we are recording, add this change to our event_list
 	  rec_param_change(inst,pnum);
 	  if (copyto!=-1) rec_param_change(inst,copyto);
 	}
       }
+      else {
+	weed_set_boolean_array(tparam,"host_default",nargs,valuesb);
+      }
+
+      g_free(valuesb);
+
       break;
 
     }
@@ -2738,29 +2750,33 @@ static gboolean setfx (weed_plant_t *inst, weed_plant_t *tparam, int pnum, int n
 	x++;
       }
 
-      copyto=set_copy_to(inst,pnum,FALSE);
 
       if (inst!=NULL) {
+	copyto=set_copy_to(inst,pnum,FALSE);
+
+	if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
+	  // if we are recording, add this change to our event_list
+	  rec_param_change(inst,pnum);
+	  if (copyto!=-1) rec_param_change(inst,copyto);
+	}
+	pthread_mutex_lock(&mainw->data_mutex);
+	weed_set_double_array(tparam,"value",nargs,valuesd);
+	pthread_mutex_unlock(&mainw->data_mutex);
+
+	set_copy_to(inst,pnum,TRUE);
+
 	if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
 	  // if we are recording, add this change to our event_list
 	  rec_param_change(inst,pnum);
 	  if (copyto!=-1) rec_param_change(inst,copyto);
 	}
       }
-      pthread_mutex_lock(&mainw->data_mutex);
-      weed_set_double_array(tparam,"value",nargs,valuesd);
-      pthread_mutex_unlock(&mainw->data_mutex);
+      else {
+	weed_set_double_array(tparam,"host_default",nargs,valuesd);
+      }
+
       g_free(valuesd);
 
-      set_copy_to(inst,pnum,TRUE);
-
-      if (inst!=NULL) {
-	if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
-	  // if we are recording, add this change to our event_list
-	  rec_param_change(inst,pnum);
-	  if (copyto!=-1) rec_param_change(inst,copyto);
-	}
-      }
       break;
 
     }
@@ -2797,21 +2813,26 @@ static gboolean setfx (weed_plant_t *inst, weed_plant_t *tparam, int pnum, int n
       }
 
 
-      pthread_mutex_lock(&mainw->data_mutex);
-      weed_set_string_array(tparam,"value",nargs,valuess);
-      pthread_mutex_unlock(&mainw->data_mutex);
-      for (i=0;i<x;i++) g_free(valuess[i]);
-      g_free(valuess);
-
-      copyto=set_copy_to(inst,pnum,TRUE);
-
       if (inst!=NULL) {
+	pthread_mutex_lock(&mainw->data_mutex);
+	weed_set_string_array(tparam,"value",nargs,valuess);
+	pthread_mutex_unlock(&mainw->data_mutex);
+
+	copyto=set_copy_to(inst,pnum,TRUE);
+	
 	if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
 	  // if we are recording, add this change to our event_list
 	  rec_param_change(inst,pnum);
 	  if (copyto!=-1) rec_param_change(inst,copyto);
 	}
       }
+      else {
+	weed_set_string_array(tparam,"host_default",nargs,valuess);
+      }
+
+      for (i=0;i<x;i++) g_free(valuess[i]);
+      g_free(valuess);
+
       break;
 
     }
@@ -2820,7 +2841,6 @@ static gboolean setfx (weed_plant_t *inst, weed_plant_t *tparam, int pnum, int n
     // an int or a float type. Also min and max can have 1,n or N values.
 
   case WEED_HINT_COLOR:
-    cspace=weed_get_int_value(ptmpl,"colorspace",&error);
     switch (cspace) {
     case WEED_COLORSPACE_RGB:
       if (nargs%3 != 0) return FALSE; //nargs must be a multiple of 3
@@ -2899,30 +2919,32 @@ static gboolean setfx (weed_plant_t *inst, weed_plant_t *tparam, int pnum, int n
 	  x+=3;
 	}
 
-	copyto=set_copy_to(inst,pnum,FALSE);
-
 	if (inst!=NULL) {
+	  copyto=set_copy_to(inst,pnum,FALSE);
+
+	  if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
+	    // if we are recording, add this change to our event_list
+	    rec_param_change(inst,pnum);
+	    if (copyto!=-1) rec_param_change(inst,copyto);
+	  }
+	
+	  pthread_mutex_lock(&mainw->data_mutex);
+	  weed_set_int_array(tparam,"value",nargs,valuesi);
+	  pthread_mutex_unlock(&mainw->data_mutex);
+	
+	  set_copy_to(inst,pnum,TRUE);
+
 	  if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
 	    // if we are recording, add this change to our event_list
 	    rec_param_change(inst,pnum);
 	    if (copyto!=-1) rec_param_change(inst,copyto);
 	  }
 	}
-	
-	pthread_mutex_lock(&mainw->data_mutex);
-	weed_set_int_array(tparam,"value",nargs,valuesi);
-	pthread_mutex_unlock(&mainw->data_mutex);
+	else {
+	  weed_set_int_array(tparam,"host_default",nargs,valuesi);
+	}
+
 	g_free(valuesi);
-	
-	set_copy_to(inst,pnum,TRUE);
-
-	if (inst!=NULL) {
-	  if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
-	    // if we are recording, add this change to our event_list
-	    rec_param_change(inst,pnum);
-	    if (copyto!=-1) rec_param_change(inst,copyto);
-	  }
-	}
 
 	if (nmins>3) g_free(minis);
 	if (nmaxs>3) g_free(maxis);
@@ -3001,29 +3023,32 @@ static gboolean setfx (weed_plant_t *inst, weed_plant_t *tparam, int pnum, int n
 	  x+=3;
 	}
 
-	copyto=set_copy_to(inst,pnum,FALSE);
-
 	if (inst!=NULL) {
+	  copyto=set_copy_to(inst,pnum,FALSE);
+
 	  if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
 	    // if we are recording, add this change to our event_list
 	    rec_param_change(inst,pnum);
 	    if (copyto!=-1) rec_param_change(inst,copyto);
 	  }
-	}
-	pthread_mutex_lock(&mainw->data_mutex);
-	weed_set_double_array(tparam,"value",nargs,valuesd);
-	pthread_mutex_unlock(&mainw->data_mutex);
-	g_free(valuesd);
+
+	  pthread_mutex_lock(&mainw->data_mutex);
+	  weed_set_double_array(tparam,"value",nargs,valuesd);
+	  pthread_mutex_unlock(&mainw->data_mutex);
 	
-	set_copy_to(inst,pnum,TRUE);
+	  set_copy_to(inst,pnum,TRUE);
 
-	if (inst!=NULL) {
 	  if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
 	    // if we are recording, add this change to our event_list
 	    rec_param_change(inst,pnum);
 	    if (copyto!=-1) rec_param_change(inst,copyto);
 	  }
 	}
+	else {
+	  weed_set_double_array(tparam,"host_default",nargs,valuesd);
+	}
+
+	g_free(valuesd);
 
 	if (nmins>3) g_free(minds);
 	if (nmaxs>3) g_free(maxds);
@@ -3118,9 +3143,9 @@ static gboolean setfx (weed_plant_t *inst, weed_plant_t *tparam, int pnum, int n
 	  x+=4;
 	}
 
-	copyto=set_copy_to(inst,pnum,FALSE);
-
 	if (inst!=NULL) {
+	  copyto=set_copy_to(inst,pnum,FALSE);
+
 	  if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
 	    // if we are recording, add this change to our event_list
 	    rec_param_change(inst,pnum);
@@ -3130,142 +3155,146 @@ static gboolean setfx (weed_plant_t *inst, weed_plant_t *tparam, int pnum, int n
 	  pthread_mutex_lock(&mainw->data_mutex);
 	  weed_set_int_array(tparam,"value",nargs,valuesi);
 	  pthread_mutex_unlock(&mainw->data_mutex);
-	  g_free(valuesi);
 	  
 	  set_copy_to(inst,pnum,TRUE);
 	  
-	  if (inst!=NULL) {
-	    if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
-	      // if we are recording, add this change to our event_list
-	      rec_param_change(inst,pnum);
-	      if (copyto!=-1) rec_param_change(inst,copyto);
-	    }
+	  if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
+	    // if we are recording, add this change to our event_list
+	    rec_param_change(inst,pnum);
+	    if (copyto!=-1) rec_param_change(inst,copyto);
 	  }
-
-	  if (nmins>4) g_free(minis);
-	  if (nmaxs>4) g_free(maxis);
-	  
 	}
 	else {
-	  // RGBA, float type
-	  double *valuesd=(double *)g_malloc(nargs*sizdbl);
-	  int nmins=weed_leaf_num_elements(ptmpl,"min");
-	  int nmaxs=weed_leaf_num_elements(ptmpl,"max");
-	  double *minds=NULL,*maxds=NULL;
+	  weed_set_int_array(tparam,"host_default",nargs,valuesi);
+	}
 
-	  // get min and max values - 3 possibilities: 1 value, 3 values or N values
+	g_free(valuesi);
+	
+	if (nmins>4) g_free(minis);
+	if (nmaxs>4) g_free(maxis);
+	  
+      }
+      else {
+	// RGBA, float type
+	double *valuesd=(double *)g_malloc(nargs*sizdbl);
+	int nmins=weed_leaf_num_elements(ptmpl,"min");
+	int nmaxs=weed_leaf_num_elements(ptmpl,"max");
+	double *minds=NULL,*maxds=NULL;
 
-	  if (nmins==1) {
-	    mind_r=mind_g=mind_b=mind_a=weed_get_double_value(ptmpl,"min",&error);
+	// get min and max values - 3 possibilities: 1 value, 3 values or N values
+
+	if (nmins==1) {
+	  mind_r=mind_g=mind_b=mind_a=weed_get_double_value(ptmpl,"min",&error);
+	}
+	else {
+	  minds=weed_get_double_array(ptmpl,"min",&error);
+	  if (nmins==4) {
+	    mind_r=minds[0];
+	    mind_g=minds[1];
+	    mind_b=minds[2];
+	    mind_a=minds[3];
+	    weed_free(minds);
+	  }
+	}
+
+	if (nmaxs==1) {
+	  maxd_r=maxd_g=maxd_b=mind_a=weed_get_double_value(ptmpl,"max",&error);
+	}
+	else {
+	  maxds=weed_get_double_array(ptmpl,"max",&error);
+	  if (nmaxs==4) {
+	    maxd_r=maxds[0];
+	    maxd_g=maxds[1];
+	    maxd_b=maxds[2];
+	    maxd_a=maxds[3];
+	    weed_free(maxds);
+	  }
+	}
+
+	// read vals from OSC message
+	while (pattern[x]!=0) {
+
+	  // get next 4 values
+	  for (i=0;i<4;i++) {
+	    if (pattern[x]=='i') {
+	      // we wanted float but we got floats
+	      lives_osc_parse_int_argument(vargs,&valuei);
+	      valuesd[x+i]=(double)valuei;
+	    }
+	    else { 
+	      lives_osc_parse_float_argument(vargs,&valuef);
+	      valuesd[x+i]=(double)valuef;
+	    } 
+	  }
+
+	  if (nmins<=4) {
+	    if (valuesd[x]<mind_r) valuesd[x]=mind_r;
+	    if (valuesd[x+1]<mind_g) valuesd[x+1]=mind_g;
+	    if (valuesd[x+2]<mind_b) valuesd[x+2]=mind_b;
+	    if (valuesd[x+3]<mind_a) valuesd[x+3]=mind_a;
 	  }
 	  else {
-	    minds=weed_get_double_array(ptmpl,"min",&error);
-	    if (nmins==4) {
-	      mind_r=minds[0];
-	      mind_g=minds[1];
-	      mind_b=minds[2];
-	      mind_a=minds[3];
-	      weed_free(minds);
-	    }
+	    if (valuesd[x]<minds[x])   valuesd[x]=minds[x];
+	    if (valuesd[x+1]<minds[x+1]) valuesd[x+1]=minds[x+1];
+	    if (valuesd[x+2]<minds[x+2]) valuesd[x+2]=minds[x+2];
+	    if (valuesd[x+3]<minds[x+3]) valuesd[x+3]=minds[x+3];
 	  }
 
-	  if (nmaxs==1) {
-	    maxd_r=maxd_g=maxd_b=mind_a=weed_get_double_value(ptmpl,"max",&error);
+	  if (nmaxs<=4) {
+	    if (valuesd[x]>maxd_r) valuesd[x]=maxd_r;
+	    if (valuesd[x+1]>maxd_g) valuesd[x+1]=maxd_g;
+	    if (valuesd[x+2]>maxd_b) valuesd[x+2]=maxd_b;
+	    if (valuesd[x+3]>maxd_a) valuesd[x+3]=maxd_a;
 	  }
 	  else {
-	    maxds=weed_get_double_array(ptmpl,"max",&error);
-	    if (nmaxs==4) {
-	      maxd_r=maxds[0];
-	      maxd_g=maxds[1];
-	      maxd_b=maxds[2];
-	      maxd_a=maxds[3];
-	      weed_free(maxds);
-	    }
+	    if (valuesd[x]>maxds[x])   valuesd[x]=maxds[x];
+	    if (valuesd[x+1]>maxds[x+1]) valuesd[x+1]=maxds[x+1];
+	    if (valuesd[x+2]>maxds[x+2]) valuesd[x+2]=maxds[x+2];
+	    if (valuesd[x+3]>maxds[x+3]) valuesd[x+3]=maxds[x+3];
 	  }
+	  x+=4;
+	}
 
-	  // read vals from OSC message
-	  while (pattern[x]!=0) {
-
-	    // get next 4 values
-	    for (i=0;i<4;i++) {
-	      if (pattern[x]=='i') {
-		// we wanted float but we got floats
-		lives_osc_parse_int_argument(vargs,&valuei);
-		valuesd[x+i]=(double)valuei;
-	      }
-	      else { 
-		lives_osc_parse_float_argument(vargs,&valuef);
-		valuesd[x+i]=(double)valuef;
-	      } 
-	    }
-
-	    if (nmins<=4) {
-	      if (valuesd[x]<mind_r) valuesd[x]=mind_r;
-	      if (valuesd[x+1]<mind_g) valuesd[x+1]=mind_g;
-	      if (valuesd[x+2]<mind_b) valuesd[x+2]=mind_b;
-	      if (valuesd[x+3]<mind_a) valuesd[x+3]=mind_a;
-	    }
-	    else {
-	      if (valuesd[x]<minds[x])   valuesd[x]=minds[x];
-	      if (valuesd[x+1]<minds[x+1]) valuesd[x+1]=minds[x+1];
-	      if (valuesd[x+2]<minds[x+2]) valuesd[x+2]=minds[x+2];
-	      if (valuesd[x+3]<minds[x+3]) valuesd[x+3]=minds[x+3];
-	    }
-
-	    if (nmaxs<=4) {
-	      if (valuesd[x]>maxd_r) valuesd[x]=maxd_r;
-	      if (valuesd[x+1]>maxd_g) valuesd[x+1]=maxd_g;
-	      if (valuesd[x+2]>maxd_b) valuesd[x+2]=maxd_b;
-	      if (valuesd[x+3]>maxd_a) valuesd[x+3]=maxd_a;
-	    }
-	    else {
-	      if (valuesd[x]>maxds[x])   valuesd[x]=maxds[x];
-	      if (valuesd[x+1]>maxds[x+1]) valuesd[x+1]=maxds[x+1];
-	      if (valuesd[x+2]>maxds[x+2]) valuesd[x+2]=maxds[x+2];
-	      if (valuesd[x+3]>maxds[x+3]) valuesd[x+3]=maxds[x+3];
-	    }
-	    x+=4;
-	  }
-
+	if (inst!=NULL) {
 	  copyto=set_copy_to(inst,pnum,FALSE);
 
-	  if (inst!=NULL) {
-	    if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
-	      // if we are recording, add this change to our event_list
-	      rec_param_change(inst,pnum);
-	      if (copyto!=-1) rec_param_change(inst,copyto);
-	    }
+	  if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
+	    // if we are recording, add this change to our event_list
+	    rec_param_change(inst,pnum);
+	    if (copyto!=-1) rec_param_change(inst,copyto);
 	  }
-	  
+	    
 	  pthread_mutex_lock(&mainw->data_mutex);
 	  weed_set_double_array(tparam,"value",nargs,valuesd);
 	  pthread_mutex_unlock(&mainw->data_mutex);
-	  g_free(valuesd);
-	
+	    
 	  set_copy_to(inst,pnum,TRUE);
 
-	  if (inst!=NULL) {
-	    if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
-	      // if we are recording, add this change to our event_list
-	      rec_param_change(inst,pnum);
-	      if (copyto!=-1) rec_param_change(inst,copyto);
-	    }
+	  if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
+	    // if we are recording, add this change to our event_list
+	    rec_param_change(inst,pnum);
+	    if (copyto!=-1) rec_param_change(inst,copyto);
 	  }
-
-	  if (nmins>4) g_free(minds);
-	  if (nmaxs>4) g_free(maxds);
-
+	}
+	else {
+	  weed_set_double_array(tparam,"host_default",nargs,valuesd);
 	}
 
-	break;
+	g_free(valuesd);
+
+	if (nmins>4) g_free(minds);
+	if (nmaxs>4) g_free(maxds);
+
       }
+
+      break;
 
     default:
       // invalid colorspace
       return FALSE;
       
     }
-
+    
   default:
     // invalid param hint
     return FALSE;
@@ -3945,7 +3974,7 @@ void lives_osc_cb_rte_setparam(void *context, int arglen, const void *vargs, OSC
   tparam=in_params[pnum];
 
   if (!mainw->osc_block) {
-    if (!setfx(inst,tparam,pnum,nargs-2,vargs)) {
+    if (!setfx(inst,tparam,pnum,nargs-2,vargs,3)) {
       weed_free(in_params);
       return lives_osc_notify_failure();
     }
@@ -3965,6 +3994,66 @@ void lives_osc_cb_rte_setparam(void *context, int arglen, const void *vargs, OSC
     }
   }
   weed_free(in_params);
+
+  lives_osc_notify_success(NULL);
+
+}
+
+
+void lives_osc_cb_rte_setparamdef(void *context, int arglen, const void *vargs, OSCTimeTag when, 
+				  NetworkReturnAddressPtr ra) {
+
+  weed_plant_t *filter;
+  weed_plant_t **in_ptmpls;
+  weed_plant_t *tptmpl;
+  int nparams,error;
+
+  int effect_key;
+  int mode;
+  int pnum,nargs,skip;
+
+  nargs=lives_osc_get_num_arguments(vargs);
+
+  if (!lives_osc_check_arguments (arglen,vargs,"iii",FALSE)) {
+    if (!lives_osc_check_arguments (arglen,vargs,"ii",TRUE)) return lives_osc_notify_failure();
+    if (nargs<3) return lives_osc_notify_failure();
+    osc_header_len=pad4(nargs+1); // add comma
+    lives_osc_parse_int_argument(vargs,&effect_key);
+    lives_osc_parse_int_argument(vargs,&pnum);
+    mode=rte_key_getmode(effect_key);
+    skip=3;
+  }
+  else {
+    if (nargs<4) return lives_osc_notify_failure();
+    lives_osc_check_arguments (arglen,vargs,"iii",TRUE);
+    osc_header_len=pad4(nargs+1); // add comma
+    lives_osc_parse_int_argument(vargs,&effect_key);
+    lives_osc_parse_int_argument(vargs,&mode);
+    if (mode<1||mode>rte_key_getmaxmode(effect_key)+1) return lives_osc_notify_failure();
+    lives_osc_parse_int_argument(vargs,&pnum);
+    skip=4;
+  }
+
+
+  if (effect_key<1||effect_key>FX_MAX) return lives_osc_notify_failure();
+  //g_print("key %d pnum %d",effect_key,pnum);
+
+  filter=rte_keymode_get_filter(effect_key,mode);
+
+  if (filter==NULL) return lives_osc_notify_failure();
+
+  if (!weed_plant_has_leaf(filter,"in_parameter_templates")) return lives_osc_notify_failure();
+  nparams=weed_leaf_num_elements(filter,"in_parameter_templates");
+  if (pnum>=nparams) return lives_osc_notify_failure();
+  
+  in_ptmpls=weed_get_plantptr_array(filter,"in_parameter_templates",&error);
+  
+  tptmpl=in_ptmpls[pnum];
+  weed_free(in_ptmpls);
+
+  if (!setfx(filter,tptmpl,pnum,nargs-2,vargs,skip)) {
+    return lives_osc_notify_failure();
+  }
 
   lives_osc_notify_success(NULL);
 
@@ -3994,7 +4083,7 @@ void lives_osc_cb_rte_setpparam(void *context, int arglen, const void *vargs, OS
   param=mainw->vpp->play_params[pnum];
 
   if (!mainw->osc_block) {
-    if (!setfx(NULL,param,pnum,nargs-1,vargs)) return lives_osc_notify_failure();
+    if (!setfx(NULL,param,pnum,nargs-1,vargs,2)) return lives_osc_notify_failure();
   }
   else return lives_osc_notify_failure();
   
@@ -4039,7 +4128,7 @@ void lives_osc_cb_rte_setnparam(void *context, int arglen, const void *vargs, OS
   param=in_params[i];
 
   if (i!=-1 && !mainw->osc_block) {
-    if (!setfx(inst,param,pnum,nargs-2,vargs)) return lives_osc_notify_failure();
+    if (!setfx(inst,param,pnum,nargs-2,vargs,3)) return lives_osc_notify_failure();
   }
   else lives_osc_notify_failure();
 
@@ -4050,9 +4139,74 @@ void lives_osc_cb_rte_setnparam(void *context, int arglen, const void *vargs, OS
 
 
 
+void lives_osc_cb_rte_setnparamdef(void *context, int arglen, const void *vargs, OSCTimeTag when, 
+				  NetworkReturnAddressPtr ra) {
+
+  weed_plant_t *filter;
+  weed_plant_t **in_ptmpls;
+  weed_plant_t *tptmpl;
+  int nparams,error;
+
+  int effect_key;
+  int mode;
+  int pnum,nargs,skip,i;
+
+  nargs=lives_osc_get_num_arguments(vargs);
+
+  if (!lives_osc_check_arguments (arglen,vargs,"iii",FALSE)) {
+    if (!lives_osc_check_arguments (arglen,vargs,"ii",TRUE)) return lives_osc_notify_failure();
+    if (nargs<3) return lives_osc_notify_failure();
+    osc_header_len=pad4(nargs+1); // add comma
+    lives_osc_parse_int_argument(vargs,&effect_key);
+    lives_osc_parse_int_argument(vargs,&pnum);
+    mode=rte_key_getmode(effect_key);
+    skip=3;
+  }
+  else {
+    if (nargs<4) return lives_osc_notify_failure();
+    lives_osc_check_arguments (arglen,vargs,"iii",TRUE);
+    osc_header_len=pad4(nargs+1); // add comma
+    lives_osc_parse_int_argument(vargs,&effect_key);
+    lives_osc_parse_int_argument(vargs,&mode);
+    if (mode<1||mode>rte_key_getmaxmode(effect_key)+1) return lives_osc_notify_failure();
+    lives_osc_parse_int_argument(vargs,&pnum);
+    skip=4;
+  }
+
+
+  if (effect_key<1||effect_key>FX_MAX) return lives_osc_notify_failure();
+  //g_print("key %d pnum %d",effect_key,pnum);
+
+  filter=rte_keymode_get_filter(effect_key,mode);
+
+  if (filter==NULL) return lives_osc_notify_failure();
+
+  if (!weed_plant_has_leaf(filter,"in_parameter_templates")) return lives_osc_notify_failure();
+  nparams=weed_leaf_num_elements(filter,"in_parameter_templates");
+  if (pnum>=nparams) return lives_osc_notify_failure();
+
+  i=get_nth_simple_param(filter,pnum);
+  if (i==-1) return lives_osc_notify_failure();
+  
+  in_ptmpls=weed_get_plantptr_array(filter,"in_parameter_templates",&error);
+  
+  tptmpl=in_ptmpls[i];
+  weed_free(in_ptmpls);
+
+  if (!setfx(filter,tptmpl,pnum,nargs-2,vargs,skip)) {
+    return lives_osc_notify_failure();
+  }
+
+  lives_osc_notify_success(NULL);
+
+}
+
+
+
 void lives_osc_cb_rte_paramcount(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
 
   int effect_key,mode;
+    
   int count=0;
   weed_plant_t *filter;
   gchar *msg;
@@ -4123,6 +4277,135 @@ void lives_osc_cb_rte_oparamcount(void *context, int arglen, const void *vargs, 
 
 
 
+void lives_osc_cb_rte_getinpal(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+
+  int effect_key,mode,cnum,count,error;
+  weed_plant_t **ctmpls;
+  weed_plant_t *filter,*inst,*ctmpl,*chan=NULL;
+  gchar *msg;
+  
+  if (!lives_osc_check_arguments (arglen,vargs,"iii",FALSE)) {
+    if (!lives_osc_check_arguments (arglen,vargs,"ii",TRUE)) return lives_osc_notify_failure();
+    lives_osc_parse_int_argument(vargs,&effect_key);
+    lives_osc_parse_int_argument(vargs,&cnum);
+    mode=rte_key_getmode(effect_key);
+  }
+  else {
+    lives_osc_check_arguments (arglen,vargs,"iii",TRUE);
+    lives_osc_parse_int_argument(vargs,&effect_key);
+    lives_osc_parse_int_argument(vargs,&mode);
+    if (mode<1||mode>rte_key_getmaxmode(effect_key)+1) return lives_osc_notify_failure();
+    lives_osc_parse_int_argument(vargs,&cnum);
+    mode--;
+  }
+
+  if (effect_key<1||effect_key>FX_MAX) return lives_osc_notify_failure();
+  //g_print("key %d pnum %d",effect_key,pnum);
+
+  inst=rte_keymode_get_instance(effect_key,mode);
+
+  if (inst!=NULL) {
+    chan=get_enabled_channel(inst,cnum,TRUE);
+    ctmpl=weed_get_plantptr_value(chan,"template",&error);
+  }
+  else {
+    filter=rte_keymode_get_filter(effect_key,mode);
+    if (filter==NULL) return lives_osc_notify_failure();
+
+    if (!weed_plant_has_leaf(filter,"in_channel_templates")) return lives_osc_notify_failure();
+    count=weed_leaf_num_elements(filter,"in_channel_templates");
+    if (cnum>=count) return lives_osc_notify_failure();
+    ctmpls=weed_get_plantptr_array(filter,"in_channel_templates",&error);
+    ctmpl=ctmpls[cnum];
+    weed_free(ctmpls);
+  }
+
+  if (weed_plant_has_leaf(ctmpl,"is_audio")) {
+      msg=g_strdup_printf("%d",WEED_PALETTE_END);
+      lives_status_send(msg);
+      g_free(msg);
+      return;
+  }
+
+  if (inst!=NULL) {
+    msg=g_strdup_printf("%d",weed_get_int_value(chan,"current_palette",&error));
+    lives_status_send(msg);
+    g_free(msg);
+    return;
+  }
+
+  msg=lives_osc_format_result(ctmpl,"palette_list",0,-1);
+  lives_status_send(msg);
+  g_free(msg);
+
+}
+
+
+void lives_osc_cb_rte_getoutpal(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+
+  int effect_key,mode,cnum,count,error;
+  weed_plant_t **ctmpls;
+  weed_plant_t *filter,*inst,*ctmpl,*chan=NULL;
+  gchar *msg;
+  
+  if (!lives_osc_check_arguments (arglen,vargs,"iii",FALSE)) {
+    if (!lives_osc_check_arguments (arglen,vargs,"ii",TRUE)) return lives_osc_notify_failure();
+    lives_osc_parse_int_argument(vargs,&effect_key);
+    lives_osc_parse_int_argument(vargs,&cnum);
+    mode=rte_key_getmode(effect_key);
+  }
+  else {
+    lives_osc_check_arguments (arglen,vargs,"iii",TRUE);
+    lives_osc_parse_int_argument(vargs,&effect_key);
+    lives_osc_parse_int_argument(vargs,&mode);
+    if (mode<1||mode>rte_key_getmaxmode(effect_key)+1) return lives_osc_notify_failure();
+    lives_osc_parse_int_argument(vargs,&cnum);
+    mode--;
+  }
+
+  if (effect_key<1||effect_key>FX_MAX) return lives_osc_notify_failure();
+  //g_print("key %d pnum %d",effect_key,pnum);
+
+  inst=rte_keymode_get_instance(effect_key,mode);
+
+  if (inst!=NULL) {
+    chan=get_enabled_channel(inst,cnum,FALSE);
+    ctmpl=weed_get_plantptr_value(chan,"template",&error);
+  }
+  else {
+    filter=rte_keymode_get_filter(effect_key,mode);
+    if (filter==NULL) return lives_osc_notify_failure();
+
+    if (!weed_plant_has_leaf(filter,"out_channel_templates")) return lives_osc_notify_failure();
+    count=weed_leaf_num_elements(filter,"out_channel_templates");
+    if (cnum>=count) return lives_osc_notify_failure();
+    ctmpls=weed_get_plantptr_array(filter,"out_channel_templates",&error);
+    ctmpl=ctmpls[cnum];
+    weed_free(ctmpls);
+  }
+
+  if (weed_plant_has_leaf(ctmpl,"is_audio")) {
+      msg=g_strdup_printf("%d",WEED_PALETTE_END);
+      lives_status_send(msg);
+      g_free(msg);
+      return;
+  }
+
+  if (inst!=NULL) {
+    msg=g_strdup_printf("%d",weed_get_int_value(chan,"current_palette",&error));
+    lives_status_send(msg);
+    g_free(msg);
+    return;
+  }
+
+  msg=lives_osc_format_result(ctmpl,"palette_list",0,-1);
+  lives_status_send(msg);
+  g_free(msg);
+
+}
+
+
+
 void lives_osc_cb_rte_pparamcount(void *context, int arglen, const void *vargs, OSCTimeTag when,
 				  NetworkReturnAddressPtr ra) {
   // return num playback plugin params
@@ -4178,20 +4461,30 @@ void lives_osc_cb_rte_nparamcount(void *context, int arglen, const void *vargs, 
 void lives_osc_cb_rte_getnchannels(void *context, int arglen, const void *vargs, OSCTimeTag when, 
 				   NetworkReturnAddressPtr ra) {
 
-  int effect_key;
+  int effect_key,mode;
   int count;
 
   weed_plant_t *plant;
 
   gchar *msg;
   
-  if (!lives_osc_check_arguments (arglen,vargs,"i",TRUE)) return lives_osc_notify_failure();
-  lives_osc_parse_int_argument(vargs,&effect_key);
+ if (!lives_osc_check_arguments (arglen,vargs,"ii",FALSE)) {
+    if (!lives_osc_check_arguments (arglen,vargs,"i",TRUE)) return lives_osc_notify_failure();
+    lives_osc_parse_int_argument(vargs,&effect_key);
+    mode=rte_key_getmode(effect_key);
+  }
+  else {
+    lives_osc_check_arguments (arglen,vargs,"ii",TRUE);
+    lives_osc_parse_int_argument(vargs,&effect_key);
+    lives_osc_parse_int_argument(vargs,&mode);
+    if (mode<1||mode>rte_key_getmaxmode(effect_key)+1) return lives_osc_notify_failure();
+    mode--;
+  }
 
   if (effect_key<1||effect_key>FX_MAX) return lives_osc_notify_failure();
   //g_print("key %d pnum %d",effect_key,pnum);
-  plant=rte_keymode_get_instance(effect_key,rte_key_getmode(effect_key));
-  if (plant==NULL) plant=rte_keymode_get_filter(effect_key,rte_key_getmode(effect_key));
+  plant=rte_keymode_get_instance(effect_key,mode);
+  if (plant==NULL) plant=rte_keymode_get_filter(effect_key,mode);
   if (plant==NULL) return lives_osc_notify_failure();
 
   count=enabled_in_channels(plant, FALSE);
@@ -4235,7 +4528,7 @@ void lives_osc_cb_rte_getparammin(void *context, int arglen, const void *vargs, 
 
   int effect_key;
   int mode;
-  int pnum,nvals;
+  int pnum;
 
   int error,nparams;
   weed_plant_t *filter;
@@ -4279,9 +4572,7 @@ void lives_osc_cb_rte_getparammin(void *context, int arglen, const void *vargs, 
     return lives_osc_notify_failure();
   }
 
-  nvals=weed_leaf_num_elements(ptmpl,"min");
-
-  msg=lives_osc_format_result(ptmpl,"min",0,nvals);
+  msg=lives_osc_format_result(ptmpl,"min",0,-1);
 
   lives_status_send(msg);
   g_free(msg);
@@ -4295,7 +4586,7 @@ void lives_osc_cb_rte_getoparammin(void *context, int arglen, const void *vargs,
 
   int effect_key;
   int mode;
-  int pnum,nvals;
+  int pnum;
 
   int error,nparams;
   weed_plant_t *filter;
@@ -4339,9 +4630,7 @@ void lives_osc_cb_rte_getoparammin(void *context, int arglen, const void *vargs,
     return lives_osc_notify_failure();
   }
 
-  nvals=weed_leaf_num_elements(ptmpl,"min");
-
-  msg=lives_osc_format_result(ptmpl,"min",0,nvals);
+  msg=lives_osc_format_result(ptmpl,"min",0,-1);
 
   lives_status_send(msg);
   g_free(msg);
@@ -4402,7 +4691,7 @@ void lives_osc_cb_rte_getohasparammin(void *context, int arglen, const void *var
 void lives_osc_cb_rte_getpparammin(void *context, int arglen, const void *vargs, OSCTimeTag when, 
 				   NetworkReturnAddressPtr ra) {
 
-  int pnum,nvals;
+  int pnum;
 
   int error;
   weed_plant_t *ptmpl,*param;
@@ -4424,9 +4713,7 @@ void lives_osc_cb_rte_getpparammin(void *context, int arglen, const void *vargs,
     return lives_osc_notify_failure();
   }
 
-  nvals=weed_leaf_num_elements(ptmpl,"min");
-
-  msg=lives_osc_format_result(ptmpl,"min",0,nvals);
+  msg=lives_osc_format_result(ptmpl,"min",0,-1);
 
   lives_status_send(msg);
   g_free(msg);
@@ -4437,7 +4724,7 @@ void lives_osc_cb_rte_getparammax(void *context, int arglen, const void *vargs, 
 
   int effect_key;
   int mode;
-  int pnum,nvals;
+  int pnum;
 
   int error,nparams;
   weed_plant_t *filter;
@@ -4480,9 +4767,7 @@ void lives_osc_cb_rte_getparammax(void *context, int arglen, const void *vargs, 
     return lives_osc_notify_failure();
   }
 
-  nvals=weed_leaf_num_elements(ptmpl,"max");
-
-  msg=lives_osc_format_result(ptmpl,"max",0,nvals);
+  msg=lives_osc_format_result(ptmpl,"max",0,-1);
 
   lives_status_send(msg);
   g_free(msg);
@@ -4495,7 +4780,7 @@ void lives_osc_cb_rte_getoparammax(void *context, int arglen, const void *vargs,
 
   int effect_key;
   int mode;
-  int pnum,nvals;
+  int pnum;
 
   int error,nparams;
   weed_plant_t *filter;
@@ -4538,9 +4823,7 @@ void lives_osc_cb_rte_getoparammax(void *context, int arglen, const void *vargs,
     return lives_osc_notify_failure();
   }
 
-  nvals=weed_leaf_num_elements(ptmpl,"max");
-
-  msg=lives_osc_format_result(ptmpl,"max",0,nvals);
+  msg=lives_osc_format_result(ptmpl,"max",0,-1);
 
   lives_status_send(msg);
   g_free(msg);
@@ -4601,7 +4884,7 @@ void lives_osc_cb_rte_getpparammax(void *context, int arglen, const void *vargs,
 				   NetworkReturnAddressPtr ra) {
   // playback plugin param max
 
-  int pnum,nvals;
+  int pnum;
 
   int error;
   weed_plant_t *ptmpl,*param;
@@ -4623,9 +4906,7 @@ void lives_osc_cb_rte_getpparammax(void *context, int arglen, const void *vargs,
     return lives_osc_notify_failure();
   }
 
-  nvals=weed_leaf_num_elements(ptmpl,"max");
-
-  msg=lives_osc_format_result(ptmpl,"max",0,nvals);
+  msg=lives_osc_format_result(ptmpl,"max",0,-1);
 
   lives_status_send(msg);
   g_free(msg);
@@ -4665,7 +4946,7 @@ void lives_osc_cb_rte_getparamdef(void *context, int arglen, const void *vargs, 
   if (effect_key<1||effect_key>FX_MAX) return lives_osc_notify_failure();
   //g_print("key %d pnum %d",effect_key,pnum);
 
-  filter=rte_keymode_get_filter(effect_key,rte_key_getmode(effect_key));
+  filter=rte_keymode_get_filter(effect_key,mode);
   if (filter==NULL) return lives_osc_notify_failure();
 
   if (!weed_plant_has_leaf(filter,"in_parameter_templates")) return lives_osc_notify_failure();
@@ -4677,8 +4958,7 @@ void lives_osc_cb_rte_getparamdef(void *context, int arglen, const void *vargs, 
   ptmpl=in_ptmpls[pnum];
 
   if (weed_plant_has_leaf(ptmpl,"host_default")) {
-    nvals=weed_leaf_num_elements(ptmpl,"host_default");
-    msg=lives_osc_format_result(ptmpl,"host_default",0,nvals);
+    msg=lives_osc_format_result(ptmpl,"host_default",0,-1);
   }
   else {
     nvals=weed_leaf_num_elements(ptmpl,"default");
@@ -4686,8 +4966,7 @@ void lives_osc_cb_rte_getparamdef(void *context, int arglen, const void *vargs, 
       msg=lives_osc_format_result(ptmpl,"default",0,nvals);
     else {
       // default can have 0 values if param has variable elements; in this case we use "new_default"
-      nvals=weed_leaf_num_elements(ptmpl,"new_default");
-      msg=lives_osc_format_result(ptmpl,"new_default",0,nvals);
+      msg=lives_osc_format_result(ptmpl,"new_default",0,-1);
     }
   }
 
@@ -4730,7 +5009,7 @@ void lives_osc_cb_rte_getoparamdef(void *context, int arglen, const void *vargs,
   if (effect_key<1||effect_key>FX_MAX) return lives_osc_notify_failure();
   //g_print("key %d pnum %d",effect_key,pnum);
 
-  filter=rte_keymode_get_filter(effect_key,rte_key_getmode(effect_key));
+  filter=rte_keymode_get_filter(effect_key,mode);
   if (filter==NULL) return lives_osc_notify_failure();
 
   if (!weed_plant_has_leaf(filter,"out_parameter_templates")) return lives_osc_notify_failure();
@@ -4742,8 +5021,7 @@ void lives_osc_cb_rte_getoparamdef(void *context, int arglen, const void *vargs,
   ptmpl=out_ptmpls[pnum];
 
   if (weed_plant_has_leaf(ptmpl,"host_default")) {
-    nvals=weed_leaf_num_elements(ptmpl,"host_default");
-    msg=lives_osc_format_result(ptmpl,"host_default",0,nvals);
+    msg=lives_osc_format_result(ptmpl,"host_default",0,-1);
   }
   else {
     if (!weed_plant_has_leaf(ptmpl,"default")) {
@@ -4756,8 +5034,7 @@ void lives_osc_cb_rte_getoparamdef(void *context, int arglen, const void *vargs,
       msg=lives_osc_format_result(ptmpl,"default",0,nvals);
     else {
       // default can have 0 values if param has variable elements; in this case we use "new_default"
-      nvals=weed_leaf_num_elements(ptmpl,"new_default");
-      msg=lives_osc_format_result(ptmpl,"new_default",0,nvals);
+      msg=lives_osc_format_result(ptmpl,"new_default",0,-1);
     }
   }
 
@@ -4798,7 +5075,7 @@ void lives_osc_cb_rte_gethasparamdef(void *context, int arglen, const void *varg
   if (effect_key<1||effect_key>FX_MAX) return lives_osc_notify_failure();
   //g_print("key %d pnum %d",effect_key,pnum);
 
-  filter=rte_keymode_get_filter(effect_key,rte_key_getmode(effect_key));
+  filter=rte_keymode_get_filter(effect_key,mode);
   if (filter==NULL) return lives_osc_notify_failure();
 
   if (!weed_plant_has_leaf(filter,"in_parameter_templates")) return lives_osc_notify_failure();
@@ -4851,7 +5128,7 @@ void lives_osc_cb_rte_getohasparamdef(void *context, int arglen, const void *var
   if (effect_key<1||effect_key>FX_MAX) return lives_osc_notify_failure();
   //g_print("key %d pnum %d",effect_key,pnum);
 
-  filter=rte_keymode_get_filter(effect_key,rte_key_getmode(effect_key));
+  filter=rte_keymode_get_filter(effect_key,mode);
   if (filter==NULL) return lives_osc_notify_failure();
 
   if (!weed_plant_has_leaf(filter,"out_parameter_templates")) return lives_osc_notify_failure();
@@ -4901,8 +5178,7 @@ void lives_osc_cb_rte_getpparamdef(void *context, int arglen, const void *vargs,
     msg=lives_osc_format_result(ptmpl,"default",0,nvals);
   else {
     // default can have 0 values if param has variable elements; in this case we use "new_default"
-    nvals=weed_leaf_num_elements(ptmpl,"new_default");
-    msg=lives_osc_format_result(ptmpl,"new_default",0,nvals);
+    msg=lives_osc_format_result(ptmpl,"new_default",0,-1);
   }
 
   lives_status_send(msg);
@@ -5843,6 +6119,7 @@ static struct
     { "/effect_key/parameter/min/get",		"get",	lives_osc_cb_rte_getparammin,		        75	},
     { "/effect_key/parameter/max/get",		"get",	lives_osc_cb_rte_getparammax,		        76	},
     { "/effect_key/parameter/default/get",		"get",	lives_osc_cb_rte_getparamdef,		        77	},
+    { "/effect_key/parameter/default/set",		"set",	lives_osc_cb_rte_setparamdef,		        77	},
     { "/effect_key/outparameter/min/get",		"get",	lives_osc_cb_rte_getoparammin,		        156	},
     { "/effect_key/outparameter/max/get",		"get",	lives_osc_cb_rte_getoparammax,		        157	},
     { "/effect_key/outparameter/default/get",		"get",	lives_osc_cb_rte_getoparamdef,		        158	},
@@ -5860,10 +6137,13 @@ static struct
     { "/effect_key/nparameter/min/get",		"get",	lives_osc_cb_rte_getnparammin,		        93	},
     { "/effect_key/nparameter/max/get",		"get",	lives_osc_cb_rte_getnparammax,		        94	},
     { "/effect_key/nparameter/default/get",		"get",	lives_osc_cb_rte_getnparamdef,		        95	},
-    { "/effect_key/nparameter/is_transition/get",		"get",	lives_osc_cb_rte_getnparamtrans,		        96	},
-    { "/effect_key/parameter/is_transition/get",		"get",	lives_osc_cb_rte_getparamtrans,		        78	},
+    { "/effect_key/nparameter/default/set",		"set",	lives_osc_cb_rte_setnparamdef,		        95	},
+    { "/effect_key/nparameter/is_transition",		"is_transition",	lives_osc_cb_rte_getnparamtrans,		        91	},
+    { "/effect_key/parameter/is_transition",		"is_transition",	lives_osc_cb_rte_getparamtrans,		        41	},
     { "/effect_key/inchannel/active/count",		"count",	lives_osc_cb_rte_getnchannels,		        131	},
+    { "/effect_key/inchannel/palette/get",		"get",	lives_osc_cb_rte_getinpal,		        132	},
     { "/effect_key/outchannel/active/count",		"count",	lives_osc_cb_rte_getnochannels,		        171	},
+    { "/effect_key/outchannel/palette/get",		"get",	lives_osc_cb_rte_getoutpal,		        162	},
     { "/effect_key/mode/set",		"set",	lives_osc_cb_rte_setmode,		        43	},
     { "/effect_key/mode/get",		"get",	lives_osc_cb_rte_getmode,		        43	},
     { "/effect_key/mode/next",		"next",	lives_osc_cb_rte_nextmode,		        43	},
@@ -6022,6 +6302,7 @@ static struct
     {	"/effect_key/" , 		"effect_key",	 25, -1,0	},
     {	"/effect_key/inchannel/" , 	"inchannel",	 130, 25,0	},
     {	"/effect_key/inchannel/active/" , 	"active",	 131, 130,0	},
+    {	"/effect_key/inchannel/palette/" , 	"palette",	 132, 130,0	},
     {	"/effect_key/parameter/" , 	"parameter",	 41, 25,0	},
     {	"/effect_key/parameter/value/" ,"value",	 42, 41,0	},
     {	"/effect_key/parameter/type/" ,"type",	 68, 41,0	},
@@ -6031,7 +6312,6 @@ static struct
     {	"/effect_key/parameter/min/" ,"min",	 75, 41,0	},
     {	"/effect_key/parameter/max/" ,"max",	 76, 41,0	},
     {	"/effect_key/parameter/default/" ,"default",	 77, 41,0	},
-    {	"/effect_key/parameter/is_transition/" ,"is_transition", 78, 41,0  },
     {	"/effect_key/nparameter/" , 	"nparameter",	 91, 25,0	},
     {	"/effect_key/nparameter/name/" ,"name",	 72, 91,0	},
     {	"/effect_key/nparameter/value/" ,"value",	 92, 91,0	},
@@ -6039,7 +6319,6 @@ static struct
     {	"/effect_key/nparameter/min/" ,"min",	 93, 91,0	},
     {	"/effect_key/nparameter/max/" ,"max",	 94, 91,0	},
     {	"/effect_key/nparameter/default/" ,"default",	 95, 91,0	},
-    {	"/effect_key/nparameter/is_transition/" ,"is_transition", 96, 91,0  },
     {	"/effect_key/map/" , 		"map",	 32, 25,0	},
     {	"/effect_key/mode/" , 		"mode",	 43, 25,0	},
     {	"/effect_key/name/" , 		"name",	 44, 25,0	},
@@ -6047,6 +6326,7 @@ static struct
     {	"/effect_key/state/" , 	"state",	 56, 25,0	},
     {	"/effect_key/outchannel/" , 	"outchannel",	 160, 25,0	},
     {	"/effect_key/outchannel/connection/" , 	"connection",	 161, 160,0	},
+    {	"/effect_key/outchannel/palette/" , 	"palette",	 162, 160,0	},
     {	"/effect_key/outchannel/active/" , 	"active",	 171, 160,0	},
     {	"/effect_key/outparameter/" , 	"outparameter",	 150, 25,0	},
     {	"/effect_key/outparameter/connection/" , 	"connection",	 151, 150,0	},

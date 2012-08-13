@@ -709,7 +709,7 @@ gboolean weed_parameter_has_variable_elements_strict(weed_plant_t *inst, weed_pl
 
   if (flags&WEED_PARAMETER_VARIABLE_ELEMENTS) return TRUE;
 
-  if (inst==NULL) return;
+  if (inst==NULL) return FALSE;
 
   if (!(flags&WEED_PARAMETER_ELEMENT_PER_CHANNEL)) return FALSE;
 

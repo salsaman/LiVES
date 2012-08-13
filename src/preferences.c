@@ -1836,14 +1836,6 @@ void on_prefDomainChanged(GtkTreeSelection *widget, gpointer dummy)
     }
   }
 
-  //if (!strcmp(prefs->wm,"Compiz")) {
-    // this is needed to force the window to update in some cases
-    //if (GTK_WIDGET_VISIBLE(prefsw->prefs_dialog)) gtk_widget_show_all(prefsw->prefs_dialog);
-    if (GTK_WIDGET_VISIBLE(prefsw->prefs_dialog)) gtk_widget_show_all(prefsw->right_shown);
-    gtk_widget_queue_draw(prefsw->prefs_dialog);
-    if (dummy==NULL) on_prefDomainChanged(widget,GINT_TO_POINTER(1));
-    //}
-
   gtk_widget_queue_draw(prefsw->prefs_dialog);
 
 }
@@ -2024,6 +2016,10 @@ _prefsw *create_prefs_dialog (void) {
   gboolean has_ap_rec = FALSE;
 
   GdkGeometry hints;
+
+  GtkTreeIter iter;
+  GtkTreeModel *model;
+  guint selected_idx;
 
   // Allocate memory for the preferences structure
   prefsw = (_prefsw*)(g_malloc(sizeof(_prefsw)));
@@ -5932,6 +5928,21 @@ _prefsw *create_prefs_dialog (void) {
   g_list_free_strings (audp);
   g_list_free (audp);
 
+
+  // Get currently selected row number
+  model = gtk_tree_view_get_model(GTK_TREE_VIEW(prefsw->prefs_list));
+  if (gtk_tree_selection_get_selected(prefsw->selection, &model, &iter)) {
+    gtk_tree_model_get(model, &iter, LIST_NUM, &selected_idx, -1);
+  }
+  else{
+    if (mainw->multitrack == NULL)
+      selected_idx = LIST_ENTRY_GUI;
+    else
+      selected_idx = LIST_ENTRY_MULTITRACK;
+  }
+
+  select_pref_list_row(selected_idx);
+
   on_prefDomainChanged(prefsw->selection,NULL);
 
   return prefsw;
@@ -5951,12 +5962,6 @@ on_preferences_activate(GtkMenuItem *menuitem, gpointer user_data)
 
   prefsw = create_prefs_dialog();
   gtk_widget_show(prefsw->prefs_dialog);
-
-  //if (!strcmp(prefs->wm,"Compiz")) {
-    // need to do exactly this, else the window does not get properly centered on some WMs
-    while (g_main_context_iteration(NULL,FALSE));
-    on_prefDomainChanged(prefsw->selection,NULL);
-    //}
 
 }
 

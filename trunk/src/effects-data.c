@@ -49,6 +49,39 @@ void pconx_delete_all(void) {
 
 
 
+gchar *pconx_list(int okey, int omode, int opnum) {
+  gchar *st1=g_strdup(""),*st2;
+  lives_pconnect_t *pconx=mainw->pconx;
+
+  int totcons=0;
+
+  register int i,j;
+
+  while (pconx!=NULL) {
+    if (pconx->okey==okey&&pconx->omode==omode) {
+      for (i=0;i<pconx->nparams;i++) {
+	if (pconx->params[i]==opnum) {
+	  for (j=totcons;j<totcons+pconx->nconns[i];j++) {
+	    if (strlen(st1)==0) st2=g_strdup_printf("%d %d %d %d",pconx->ikey[j],pconx->imode[j],pconx->ipnum[j],pconx->autoscale[j]);
+	    st2=g_strdup_printf("%s %d %d %d %d",st1,pconx->ikey[j],pconx->imode[j],pconx->ipnum[j],pconx->autoscale[j]);
+	    g_free(st1);
+	    st1=st2;
+	  }
+	  return st1;
+	}
+	totcons+=pconx->nconns[i];
+      }
+      return st1;
+    }
+    pconx=pconx->next;
+  }
+  return st1;
+}
+
+
+
+
+
 void pconx_delete(int okey, int omode, int opnum, int ikey, int imode, int ipnum) {
   lives_pconnect_t *pconx=mainw->pconx,*pconx_next,*pconx_prev=NULL;
 
@@ -1176,6 +1209,34 @@ void cconx_delete_all(void) {
 }
 
 
+gchar *cconx_list(int okey, int omode, int ocnum) {
+  gchar *st1=g_strdup(""),*st2;
+  lives_cconnect_t *cconx=mainw->cconx;
+
+  int totcons=0;
+
+  register int i,j;
+
+  while (cconx!=NULL) {
+    if (cconx->okey==okey&&cconx->omode==omode) {
+      for (i=0;i<cconx->nchans;i++) {
+	if (cconx->chans[i]==ocnum) {
+	  for (j=totcons;j<totcons+cconx->nconns[i];j++) {
+	    if (strlen(st1)==0) st2=g_strdup_printf("%d %d %d",cconx->ikey[j],cconx->imode[j],cconx->icnum[j]);
+	    st2=g_strdup_printf("%s %d %d %d",st1,cconx->ikey[j],cconx->imode[j],cconx->icnum[j]);
+	    g_free(st1);
+	    st1=st2;
+	  }
+	  return st1;
+	}
+	totcons+=cconx->nconns[i];
+      }
+      return st1;
+    }
+    cconx=cconx->next;
+  }
+  return st1;
+}
 
 
 void cconx_delete(int okey, int omode, int ocnum, int ikey, int imode, int icnum) {

@@ -5828,8 +5828,8 @@ void lives_osc_cb_rte_delpconnection(void *context, int arglen, const void *varg
   lives_osc_parse_int_argument(vargs,&mode1);
   lives_osc_parse_int_argument(vargs,&pnum1);
 
-  if (key0<1||key0>=FX_KEYS_MAX_VIRTUAL||mode0<1||mode0>rte_getmodespk()) return lives_osc_notify_failure();
-  if (key1<1||key1>=FX_KEYS_MAX_VIRTUAL||mode1<1||mode1>rte_getmodespk()) return lives_osc_notify_failure();
+  if (key0<0||key0>=FX_KEYS_MAX_VIRTUAL||mode0<1||mode0>rte_getmodespk()) return lives_osc_notify_failure();
+  if (key1<0||key1>=FX_KEYS_MAX_VIRTUAL||mode1<1||mode1>rte_getmodespk()) return lives_osc_notify_failure();
 
   pconx_delete(--key0,--mode0,pnum0,--key1,--mode1,pnum1);
   lives_osc_notify_success(NULL);
@@ -5837,8 +5837,25 @@ void lives_osc_cb_rte_delpconnection(void *context, int arglen, const void *varg
 }
 
 void lives_osc_cb_rte_listpconnection(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
-  if (status_socket==NULL) return;
-  lives_status_send("0 0 0 0");
+  int okey,omode,opnum;
+  gchar *msg;
+ 
+  if (!lives_osc_check_arguments (arglen,vargs,"iii",TRUE)) return lives_osc_notify_failure();
+  lives_osc_parse_int_argument(vargs,&okey);
+  lives_osc_parse_int_argument(vargs,&omode);
+  lives_osc_parse_int_argument(vargs,&opnum);
+
+  if (okey<1||okey>=FX_KEYS_MAX_VIRTUAL||omode<1||omode>rte_getmodespk()) return lives_osc_notify_failure();
+
+  msg=pconx_list(okey,omode,opnum);
+
+  if (strlen(msg)==0) {
+    g_free(msg);
+    msg=g_strdup("0 0 0 0");
+  }
+
+  lives_status_send(msg);
+  g_free(msg);
 
 }
 
@@ -5887,8 +5904,8 @@ void lives_osc_cb_rte_delcconnection(void *context, int arglen, const void *varg
   lives_osc_parse_int_argument(vargs,&mode1);
   lives_osc_parse_int_argument(vargs,&cnum1);
 
-  if (key0<1||key0>=FX_KEYS_MAX_VIRTUAL||mode0<1||mode0>rte_getmodespk()) return lives_osc_notify_failure();
-  if (key1<1||key1>=FX_KEYS_MAX_VIRTUAL||mode1<1||mode1>rte_getmodespk()) return lives_osc_notify_failure();
+  if (key0<0||key0>=FX_KEYS_MAX_VIRTUAL||mode0<1||mode0>rte_getmodespk()) return lives_osc_notify_failure();
+  if (key1<0||key1>=FX_KEYS_MAX_VIRTUAL||mode1<1||mode1>rte_getmodespk()) return lives_osc_notify_failure();
 
   cconx_delete(--key0,--mode0,cnum0,--key1,--mode1,cnum1);
 
@@ -5896,8 +5913,25 @@ void lives_osc_cb_rte_delcconnection(void *context, int arglen, const void *varg
 }
 
 void lives_osc_cb_rte_listcconnection(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
-  if (status_socket==NULL) return;
-  lives_status_send("0 0 0 0");
+  int okey,omode,ocnum;
+  gchar *msg;
+
+  if (!lives_osc_check_arguments (arglen,vargs,"iii",TRUE)) return lives_osc_notify_failure();
+  lives_osc_parse_int_argument(vargs,&okey);
+  lives_osc_parse_int_argument(vargs,&omode);
+  lives_osc_parse_int_argument(vargs,&ocnum);
+
+  if (okey<1||okey>=FX_KEYS_MAX_VIRTUAL||omode<1||omode>rte_getmodespk()) return lives_osc_notify_failure();
+
+  msg=cconx_list(okey,omode,ocnum);
+
+  if (strlen(msg)==0) {
+    g_free(msg);
+    msg=g_strdup("0 0 0");
+  }
+
+  lives_status_send(msg);
+  g_free(msg);
 }
 
 

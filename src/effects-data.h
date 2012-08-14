@@ -56,6 +56,8 @@ void pconx_remap_mode(int key, int omode, int nmode);
 // chain any output data into fx key/mode
 void pconx_chain_data(int key, int mode);
 
+// return list of in keys/modes/params/autoscale
+gchar *pconx_list(int okey, int omode, int opnum);
 
 
 // alpha channels
@@ -110,3 +112,6 @@ void cconx_remap_mode(int key, int omode, int nmode);
 
 // chain any output data into fx key/mode
 boolean cconx_chain_data(int key, int mode);
+
+// return list of in chaannels/modes/params
+gchar *cconx_list(int okey, int omode, int ocnum);

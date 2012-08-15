@@ -8,16 +8,16 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2012-08-07 11:54-0300\n"
-"PO-Revision-Date: 2011-08-18 12:02+0000\n"
+"POT-Creation-Date: 2012-08-14 21:49-0300\n"
+"PO-Revision-Date: 2012-08-08 08:58+0000\n"
 "Last-Translator: Tarmo Ilves <tarmo.ilves.001@mail.ee>\n"
 "Language-Team: Estonian <et@li.org>\n"
 "Language: et\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Launchpad-Export-Date: 2011-08-21 20:42+0000\n"
-"X-Generator: Launchpad (build 13697)\n"
+"X-Launchpad-Export-Date: 2012-08-15 00:36+0000\n"
+"X-Generator: Launchpad (build 15801)\n"
 
 #. TRANSLATORS: do not translate this message
 #: src/main.c:113
@@ -30,9 +30,9 @@ msgid ""
 msgstr ""
 
 #: src/main.c:126
-#, fuzzy, c-format
+#, c-format
 msgid "%s Warning: %s\n"
-msgstr "Hoiatused"
+msgstr ""
 
 #: src/main.c:130
 #, c-format
@@ -101,64 +101,62 @@ msgid "_Resize All Frames"
 msgstr "_kõikide kaadrite suuruse muutmine"
 
 #. TRANSLATORS: text saying "Any", for encoder and output format (as in "does not matter")
-#: src/main.c:814
+#: src/main.c:822
 msgid "Any"
 msgstr "Kõik"
 
 #. TRANSLATORS: text saying "None", for playback plugin name (as in "none specified")
-#: src/main.c:816
+#: src/main.c:824
 msgid "None"
 msgstr "Pole"
 
 #. TRANSLATORS: text saying "recommended", for plugin names, etc.
-#: src/main.c:818
+#: src/main.c:826
 msgid "recommended"
 msgstr "soovitatav"
 
 #. TRANSLATORS: text saying "disabled", (as in "not enabled")
-#: src/main.c:820
+#: src/main.c:828
 msgid "disabled !"
 msgstr "keelatud !"
 
 #. TRANSLATORS: text saying "**The current layout**", to warn users that the current layout is affected
-#: src/main.c:822
+#: src/main.c:830
 msgid "**The current layout**"
 msgstr "**Praegune skeem**"
 
 #. TRANSLATORS: adjective for "Built in" type effects
-#: src/main.c:824
+#: src/main.c:832
 msgid "Builtin"
 msgstr "Sisseehitatud"
 
 #. TRANSLATORS: adjective for "Custom" type effects
-#: src/main.c:826
+#: src/main.c:834
 msgid "Custom"
 msgstr "Kohandatud"
 
 #. TRANSLATORS: adjective for "Test" type effects
-#: src/main.c:828
+#: src/main.c:836
 msgid "Test"
 msgstr "Testi"
 
-#: src/main.c:1396
+#: src/main.c:1440
 msgid "Loading realtime effect plugins..."
 msgstr "Laen reaalaja efektide pluginaid..."
 
-#: src/main.c:1460
+#: src/main.c:1504
 msgid "Starting jack audio server..."
 msgstr "Heli serveri jack käivitamine..."
 
-#: src/main.c:1462
-#, fuzzy
+#: src/main.c:1506
 msgid "Starting jack transport server..."
-msgstr "Heli serveri jack käivitamine..."
+msgstr ""
 
-#: src/main.c:1463
-#, fuzzy
+#: src/main.c:1507
 msgid "Connecting to jack transport server..."
-msgstr "Heli serveri jack käivitamine..."
+msgstr ""
 
-#: src/main.c:1493
+#: src/main.c:1537
 #, c-format
 msgid ""
 "\n"
@@ -170,116 +168,103 @@ msgid ""
 "Alternatively, try to start lives with either \"lives -jackopts 16\", or "
 msgstr ""
 
-#: src/main.c:1521
+#: src/main.c:1565
 msgid "Starting pulse audio server..."
 msgstr "Heli serveri pulse käivitamine..."
 
-#: src/main.c:1582
+#: src/main.c:1626
 msgid "Checking optional dependencies:"
 msgstr ""
 
-#: src/main.c:1583
+#: src/main.c:1627
 msgid "mplayer...detected..."
 msgstr "mplayer...tuvastatud..."
 
-#: src/main.c:1584
+#: src/main.c:1628
 msgid "mplayer...NOT DETECTED..."
 msgstr "mplayer...ei tuvastatud..."
 
-#: src/main.c:1585
+#: src/main.c:1629
 msgid "convert...detected..."
 msgstr "konverdi...tuvastatud..."
 
-#: src/main.c:1586
+#: src/main.c:1630
 msgid "convert...NOT DETECTED..."
 msgstr "konversioon...ei tuvastatud..."
 
-#: src/main.c:1587
+#: src/main.c:1631
 msgid "composite...detected..."
 msgstr "komposiit...tuvastatud.."
 
-#: src/main.c:1588
+#: src/main.c:1632
 msgid "composite...NOT DETECTED..."
 msgstr "komposiit...ei tuvastatud..."
 
-#: src/main.c:1589
+#: src/main.c:1633
 msgid "sox...detected\n"
 msgstr "sox...tuvastatud\n"
 
-#: src/main.c:1590
+#: src/main.c:1634
 msgid "sox...NOT DETECTED\n"
 msgstr "sox...ei tuvastatud\n"
 
-#: src/main.c:1591
-#, fuzzy
+#: src/main.c:1635
 msgid "cdda2wav...detected..."
-msgstr "konverdi...tuvastatud..."
+msgstr ""
 
-#: src/main.c:1592
-#, fuzzy
+#: src/main.c:1636
 msgid "cdda2wav...NOT DETECTED..."
-msgstr "konversioon...ei tuvastatud..."
+msgstr ""
 
-#: src/main.c:1593
-#, fuzzy
+#: src/main.c:1637
 msgid "jackd...detected..."
-msgstr "mplayer...tuvastatud..."
+msgstr ""
 
-#: src/main.c:1594
-#, fuzzy
+#: src/main.c:1638
 msgid "jackd...NOT DETECTED..."
-msgstr "mplayer...ei tuvastatud..."
+msgstr ""
 
-#: src/main.c:1595
-#, fuzzy
+#: src/main.c:1639
 msgid "pulse audio...detected..."
-msgstr "mplayer...tuvastatud..."
+msgstr ""
 
-#: src/main.c:1596
-#, fuzzy
+#: src/main.c:1640
 msgid "pulse audio...NOT DETECTED..."
-msgstr "mplayer...ei tuvastatud..."
+msgstr ""
 
-#: src/main.c:1597
-#, fuzzy
+#: src/main.c:1641
 msgid "python...detected..."
-msgstr "mplayer...tuvastatud..."
+msgstr ""
 
-#: src/main.c:1598
-#, fuzzy
+#: src/main.c:1642
 msgid "python...NOT DETECTED..."
-msgstr "mplayer...ei tuvastatud..."
+msgstr ""
 
-#: src/main.c:1599
-#, fuzzy
+#: src/main.c:1643
 msgid "dvgrab...detected..."
-msgstr "konverdi...tuvastatud..."
+msgstr ""
 
-#: src/main.c:1600
-#, fuzzy
+#: src/main.c:1644
 msgid "dvgrab...NOT DETECTED..."
-msgstr "konversioon...ei tuvastatud..."
+msgstr ""
 
-#: src/main.c:1601
-#, fuzzy
+#: src/main.c:1645
 msgid "xwininfo...detected..."
-msgstr "konverdi...tuvastatud..."
+msgstr ""
 
-#: src/main.c:1602
-#, fuzzy
+#: src/main.c:1646
 msgid "xwininfo...NOT DETECTED..."
-msgstr "konversioon...ei tuvastatud..."
+msgstr ""
 
-#: src/main.c:1608
-#, fuzzy
+#: src/main.c:1652
 msgid "Windows"
-msgstr "_Sulge aken"
+msgstr ""
 
-#: src/main.c:1610
+#: src/main.c:1654
 msgid "UNKNOWN - please patch me !"
 msgstr ""
 
-#: src/main.c:1614
+#: src/main.c:1658
 #, c-format
 msgid ""
 "\n"
@@ -287,172 +272,172 @@ msgid ""
 "Window manager reports as \"%s\"; "
 msgstr ""
 
-#: src/main.c:1617
+#: src/main.c:1661
 #, c-format
 msgid "number of monitors detected: %d\n"
 msgstr ""
 
-#: src/main.c:1620
+#: src/main.c:1664
 #, c-format
 msgid "Number of CPUs detected: %d\n"
 msgstr ""
 
-#: src/main.c:1623
+#: src/main.c:1667
 #, c-format
 msgid "Temp directory is %s\n"
 msgstr ""
 
-#: src/main.c:1627
+#: src/main.c:1671
 msgid ""
 "WARNING - this version of LiVES was compiled without either\n"
 "jack or pulse audio support.\n"
 "Many audio features will be unavailable.\n"
 msgstr ""
 
-#: src/main.c:1630
+#: src/main.c:1674
 msgid "Compiled with jack support, good !\n"
 msgstr ""
 
-#: src/main.c:1633
+#: src/main.c:1677
 msgid "Compiled with pulse audio support, wonderful !\n"
 msgstr ""
 
-#: src/main.c:1637
+#: src/main.c:1681
 #, c-format
 msgid ""
 "Welcome to LiVES version %s.\n"
 "\n"
 msgstr ""
 
-#: src/main.c:2066
+#: src/main.c:2110
 #, c-format
 msgid ""
 "\n"
 "Startup syntax is: %s [opts] [filename [start_time] [frames]]\n"
 msgstr ""
 
-#: src/main.c:2067
+#: src/main.c:2111
 msgid "Where: filename is the name of a media file or backup file.\n"
 msgstr ""
 
-#: src/main.c:2068
+#: src/main.c:2112
 msgid "start_time : filename start time in seconds\n"
 msgstr ""
 
-#: src/main.c:2069
+#: src/main.c:2113
 msgid "frames : maximum number of frames to open\n"
 msgstr ""
 
-#: src/main.c:2071
+#: src/main.c:2115
 msgid "opts can be:\n"
 msgstr ""
 
-#: src/main.c:2072
+#: src/main.c:2116
 msgid "-help            : show this help text and exit\n"
 msgstr ""
 
-#: src/main.c:2073
+#: src/main.c:2117
 msgid "-tmpdir <tempdir>: use alternate working directory (e.g /var/ramdisk)\n"
 msgstr ""
 
-#: src/main.c:2074
+#: src/main.c:2118
 msgid "-set <setname>   : autoload clip set setname\n"
 msgstr ""
 
-#: src/main.c:2075
+#: src/main.c:2119
 msgid "-noset           : do not load any set on startup\n"
 msgstr ""
 
-#: src/main.c:2076
+#: src/main.c:2120
 msgid "-norecover       : force no-loading of crash recovery\n"
 msgstr ""
 
-#: src/main.c:2077
+#: src/main.c:2121
 msgid "-recover         : force loading of crash recovery\n"
 msgstr ""
 
-#: src/main.c:2078
+#: src/main.c:2122
 msgid "-nothreaddialog  : doe nothing - retained for backwards compatibility\n"
 msgstr ""
 
-#: src/main.c:2079
+#: src/main.c:2123
 msgid "-nogui           : do not show the gui\n"
 msgstr ""
 
-#: src/main.c:2080
+#: src/main.c:2124
 msgid "-nosplash        : do not show the splash window\n"
 msgstr ""
 
-#: src/main.c:2081
+#: src/main.c:2125
 msgid "-noplaywin       : do not show the play window\n"
 msgstr ""
 
-#: src/main.c:2082
+#: src/main.c:2126
 msgid "-startup-ce      : start in clip editor mode\n"
 msgstr ""
 
-#: src/main.c:2083
+#: src/main.c:2127
 msgid "-startup-mt      : start in multitrack mode\n"
 msgstr ""
 
-#: src/main.c:2084
+#: src/main.c:2128
 msgid ""
 "-fxmodesmax <n>  : allow <n> modes per effect key (minimum is 1, default is "
 "8)\n"
 msgstr ""
 
-#: src/main.c:2086
+#: src/main.c:2130
 msgid "-oscstart <port> : start OSC listener on UDP port <port>\n"
 msgstr ""
 
-#: src/main.c:2087
+#: src/main.c:2131
 msgid "-nooscstart      : do not start OSC listener\n"
 msgstr ""
 
-#: src/main.c:2089
+#: src/main.c:2133
 msgid ""
 "-aplayer <ap>    : start with selected audio player. <ap> can be mplayer"
 msgstr ""
 
 #. TRANSLATORS: pulse (audio)
-#: src/main.c:2092
+#: src/main.c:2136
 msgid ", pulse"
 msgstr ""
 
-#: src/main.c:2095
+#: src/main.c:2139
 msgid ", sox or jack\n"
 msgstr ""
 
-#: src/main.c:2096
+#: src/main.c:2140
 msgid ""
 "-jackopts <opts>    : opts is a bitmap of jack startup options [1 = jack "
 "transport client, 2 = jack transport master, 4 = start jack transport "
 "server, 8 = pause audio when video paused, 16 = start jack audio server] \n"
 msgstr ""
 
-#: src/main.c:2098
+#: src/main.c:2142
 msgid " or sox\n"
 msgstr ""
 
-#: src/main.c:2100
+#: src/main.c:2144
 msgid "-devicemap <mapname>          : autoload devicemap\n"
 msgstr ""
 
-#: src/main.c:2101
+#: src/main.c:2145
 msgid ""
 "-vppdefaults <file>          : load video playback plugin defaults from "
 "<file> (Note: only sets the settings, not the plugin type)\n"
 msgstr ""
 
-#: src/main.c:2102
+#: src/main.c:2146
 msgid "-debug            : try to debug crashes (requires 'gdb' installed)\n"
 msgstr ""
 
-#: src/main.c:2128 src/gui.c:1089
+#: src/main.c:2172 src/gui.c:1089
 msgid "Starting GUI..."
 msgstr ""
 
-#: src/main.c:2141
+#: src/main.c:2185
 #, c-format
 msgid ""
 "\n"
@@ -463,7 +448,7 @@ msgid ""
 "(Maybe you need to change the value of <prefix_dir> in your %s file)\n"
 msgstr ""
 
-#: src/main.c:2155
+#: src/main.c:2199
 #, c-format
 msgid ""
 "\n"
@@ -471,7 +456,7 @@ msgid ""
 "Please make sure you have write access to %s and try again.\n"
 msgstr ""
 
-#: src/main.c:2160
+#: src/main.c:2204
 msgid ""
 "\n"
 "`smogrify` must be in your path, and be executable\n"
@@ -480,7 +465,7 @@ msgid ""
 "before running LiVES.\n"
 msgstr ""
 
-#: src/main.c:2166
+#: src/main.c:2210
 #, c-format
 msgid ""
 "\n"
@@ -490,7 +475,7 @@ msgid ""
 "Please check the file permissions for this file and try again.\n"
 msgstr ""
 
-#: src/main.c:2173
+#: src/main.c:2217
 #, c-format
 msgid ""
 "\n"
@@ -501,7 +486,7 @@ msgid ""
 "and try again.\n"
 msgstr ""
 
-#: src/main.c:2183
+#: src/main.c:2227
 #, c-format
 msgid ""
 "Please check the <tempdir> setting in \n"
@@ -509,7 +494,7 @@ msgid ""
 "and try again.\n"
 msgstr ""
 
-#: src/main.c:2190
+#: src/main.c:2234
 #, c-format
 msgid ""
 "\n"
@@ -519,7 +504,7 @@ msgid ""
 "%s"
 msgstr ""
 
-#: src/main.c:2198
+#: src/main.c:2242
 msgid ""
 "\n"
 "An incorrect version of smogrify was found in your path.\n"
@@ -530,49 +515,49 @@ msgid ""
 "Thankyou.\n"
 msgstr ""
 
-#: src/main.c:2203 src/dialogs.c:1834
+#: src/main.c:2247 src/dialogs.c:1834
 msgid ""
 "\n"
 "LiVES currently requires either 'mplayer' or 'sox' to function. Please "
 "install one or other of these, and try again.\n"
 msgstr ""
 
-#: src/main.c:2207
+#: src/main.c:2251
 msgid ""
 "\n"
 "LiVES currently requires both 'mplayer' and 'sox' to function. Please "
 "install these, and try again.\n"
 msgstr ""
 
-#: src/main.c:2217
+#: src/main.c:2261
 msgid ""
 "\n"
 "LiVES was unable to locate 'mplayer'. You may wish to install mplayer to use "
 "LiVES more fully.\n"
 msgstr ""
 
-#: src/main.c:2220
+#: src/main.c:2264
 msgid ""
 "\n"
 "LiVES was unable to locate 'convert'. You should install convert and image-"
 "magick if you want to use rendered effects.\n"
 msgstr ""
 
-#: src/main.c:2223
+#: src/main.c:2267
 msgid ""
 "\n"
 "LiVES was unable to locate 'composite'. You should install composite and "
 "image-magick if you want to use the merge function.\n"
 msgstr ""
 
-#: src/main.c:2226
+#: src/main.c:2270
 msgid ""
 "\n"
 "LiVES was unable to locate 'sox'. Some audio features may not work. You "
 "should install 'sox'.\n"
 msgstr ""
 
-#: src/main.c:2229
+#: src/main.c:2273
 #, c-format
 msgid ""
 "\n"
@@ -583,95 +568,93 @@ msgid ""
 "You may need to change the value of <lib_dir> in %s\n"
 msgstr ""
 
-#: src/main.c:2341
-#, fuzzy, c-format
+#: src/main.c:2385
+#, c-format
 msgid "Autoloading set %s..."
-msgstr "Kustutamine"
+msgstr ""
 
 #. TRANSLATORS: localised name may be used here
-#: src/main.c:2496
+#: src/main.c:2540
 msgid "LiVES"
 msgstr ""
 
-#: src/main.c:2659
+#: src/main.c:2703
 #, c-format
 msgid "Invalid audio player %s\n"
 msgstr ""
 
-#: src/main.c:2777
+#: src/main.c:2821
 #, c-format
 msgid "LiVES-%s: <Untitled%d> %dx%d : %d frames %d bpp %.3f fps"
 msgstr ""
 
-#: src/main.c:2781
+#: src/main.c:2825
 #, c-format
 msgid "LiVES-%s: <%s> %dx%d : ??? frames ??? bpp %.3f fps"
 msgstr ""
 
-#: src/main.c:2784
+#: src/main.c:2828
 #, c-format
 msgid "LiVES-%s: <%s> %dx%d : %d frames %d bpp %.3f fps"
 msgstr ""
 
-#: src/main.c:2790
+#: src/main.c:2834
 #, c-format
 msgid "LiVES-%s: <No File>"
 msgstr ""
 
 #. TRANSLATORS: rec(ord)
-#: src/main.c:4378
+#: src/main.c:4422
 #, c-format
 msgid "rec %9d/%d"
 msgstr ""
 
 #. TRANSLATORS: out of memory (rec(ord))
-#: src/main.c:4382
+#: src/main.c:4426
 #, c-format
 msgid "!rec %9d/%d"
 msgstr ""
 
-#: src/main.c:4629 src/main.c:4630 src/gui.c:2052 src/gui.c:3094
-#: src/saveplay.c:2190
+#: src/main.c:4673 src/main.c:4674 src/gui.c:2052 src/gui.c:3094
+#: src/saveplay.c:2191
 msgid "Play"
 msgstr "Esita"
 
-#: src/main.c:5274
+#: src/main.c:5318
 msgid ""
 "LiVES was unable to capture this image\n"
 "\n"
 msgstr ""
 
-#: src/main.c:5396
+#: src/main.c:5440
 #, c-format
 msgid "Closed file %s\n"
 msgstr ""
 
-#: src/main.c:5590 src/gui.c:622 src/utils.c:3792 src/utils.c:3824
-#: src/saveplay.c:3353 src/multitrack.c:4077 src/multitrack.c:5650
+#: src/main.c:5634 src/gui.c:622 src/utils.c:3792 src/utils.c:3824
+#: src/saveplay.c:3354 src/multitrack.c:4077 src/multitrack.c:5650
 msgid "_Undo"
 msgstr "Võta _tagasi"
 
-#: src/main.c:5591 src/gui.c:635 src/utils.c:3793 src/utils.c:3825
-#: src/saveplay.c:3354 src/multitrack.c:4098 src/multitrack.c:5673
+#: src/main.c:5635 src/gui.c:635 src/utils.c:3793 src/utils.c:3825
+#: src/saveplay.c:3355 src/multitrack.c:4098 src/multitrack.c:5673
 msgid "_Redo"
 msgstr "_Taasta"
 
-#: src/main.c:5618 src/interface.c:661 src/gui.c:2217 src/preferences.c:2486
+#: src/main.c:5662 src/interface.c:661 src/gui.c:2217 src/preferences.c:2497
 #: src/resample.c:1808
 msgid "Video"
 msgstr "Video"
 
-#: src/main.c:5619 src/interface.c:680 src/gui.c:2236
-#, fuzzy
+#: src/main.c:5663 src/interface.c:680 src/gui.c:2236
 msgid "Left Audio"
-msgstr "Heli"
+msgstr ""
 
-#: src/main.c:5620 src/gui.c:2254
-#, fuzzy
+#: src/main.c:5664 src/gui.c:2254
 msgid "Right Audio"
-msgstr "Heli"
+msgstr ""
 
-#: src/main.c:5668
+#: src/main.c:5712
 msgid ""
 "\n"
 "\n"
@@ -680,22 +663,22 @@ msgid ""
 "Please adjust the playback options in Preferences and try again.\n"
 msgstr ""
 
-#: src/main.c:5753 src/callbacks.c:7387 src/callbacks.c:7535
+#: src/main.c:5797 src/callbacks.c:7387 src/callbacks.c:7535
 #: src/callbacks.c:7861 src/callbacks.c:7878 src/gui.c:3683
-#: src/saveplay.c:2312 src/saveplay.c:2346 src/saveplay.c:2936
-#: src/saveplay.c:3046 src/saveplay.c:3068 src/multitrack.c:8423
+#: src/saveplay.c:2313 src/saveplay.c:2347 src/saveplay.c:2937
+#: src/saveplay.c:3047 src/saveplay.c:3069 src/multitrack.c:8423
 #: src/multitrack.c:10015
 #, c-format
 msgid " (%d %% scale)"
 msgstr ""
 
-#: src/main.c:5755 src/callbacks.c:7389 src/callbacks.c:7537
-#: src/callbacks.c:7863 src/gui.c:3687 src/saveplay.c:2314 src/saveplay.c:2348
+#: src/main.c:5799 src/callbacks.c:7389 src/callbacks.c:7537
+#: src/callbacks.c:7863 src/gui.c:3687 src/saveplay.c:2315 src/saveplay.c:2349
 #, c-format
 msgid "LiVES: - Play Window%s"
 msgstr ""
 
-#: src/main.c:6169 src/plugins.c:1500
+#: src/main.c:6213 src/plugins.c:1500
 msgid "LiVES: - Play Window"
 msgstr ""
 
@@ -842,9 +825,8 @@ msgid "_Next"
 msgstr ""
 
 #: src/startup.c:503
-#, fuzzy
 msgid "Skipped"
-msgstr "_Jäta vahele"
+msgstr ""
 
 #: src/startup.c:520
 msgid "Passed"
@@ -1015,17 +997,16 @@ msgid "Let LiVES set the _file extension (.%s)"
 msgstr ""
 
 #: src/interface.c:151
-#, fuzzy
 msgid "Apply Deinterlace"
-msgstr "Kihilisuse kõrvaldamine"
+msgstr ""
 
 #: src/interface.c:174
 msgid "If this is set, frames will be deinterlaced as they are imported."
 msgstr ""
 
-#: src/interface.c:203 src/callbacks.c:9895 src/callbacks.c:9925
-#: src/callbacks.c:9926 src/gui.c:3097 src/gui.c:3660 src/saveplay.c:2193
-#: src/saveplay.c:2959 src/dialogs.c:1344 src/dialogs.c:1345
+#: src/interface.c:203 src/callbacks.c:9896 src/callbacks.c:9926
+#: src/callbacks.c:9927 src/gui.c:3097 src/gui.c:3660 src/saveplay.c:2194
+#: src/saveplay.c:2960 src/dialogs.c:1344 src/dialogs.c:1345
 #: src/dialogs.c:1569 src/dialogs.c:1570 src/framedraw.c:230
 #: src/multitrack.c:7237
 msgid "Preview"
@@ -1078,9 +1059,8 @@ msgid "_Preview"
 msgstr "_Eelvaade"
 
 #: src/interface.c:427
-#, fuzzy
 msgid "Paus_e"
-msgstr "Paus"
+msgstr ""
 
 #: src/interface.c:428 src/callbacks.c:9695
 msgid "Pause/_Enough"
@@ -1103,9 +1083,8 @@ msgid "File size"
 msgstr "Failisuurus"
 
 #: src/interface.c:624
-#, fuzzy
 msgid "Byte size"
-msgstr "Failisuurus"
+msgstr ""
 
 #: src/interface.c:633 src/interface.c:706 src/interface.c:756
 msgid "Total time"
@@ -1128,14 +1107,12 @@ msgid "Audio"
 msgstr "Heli"
 
 #: src/interface.c:724 src/interface.c:774
-#, fuzzy
 msgid "Rate/size"
-msgstr "Suuruse muutmine"
+msgstr ""
 
 #: src/interface.c:783
-#, fuzzy
 msgid "Right audio"
-msgstr "audio"
+msgstr ""
 
 #: src/interface.c:855
 msgid "LiVES: - Encoding options"
@@ -1164,9 +1141,8 @@ msgid "Keep _my settings"
 msgstr ""
 
 #: src/interface.c:975
-#, fuzzy
 msgid "Use _recommended settings"
-msgstr "soovitatav"
+msgstr ""
 
 #: src/interface.c:1049 src/dialogs.c:107
 msgid ""
@@ -1199,18 +1175,16 @@ msgid "_Insert to fit audio"
 msgstr ""
 
 #: src/interface.c:1369
-#, fuzzy
 msgid "Insert _before selection"
-msgstr "_Pööra valik"
+msgstr ""
 
 #: src/interface.c:1374
 msgid "Insert clipboard before selected frames"
 msgstr ""
 
 #: src/interface.c:1406
-#, fuzzy
 msgid "Insert _after selection"
-msgstr "_Pööra valik"
+msgstr ""
 
 #: src/interface.c:1411
 msgid "Insert clipboard after selected frames"
@@ -1275,9 +1249,8 @@ msgid "URL : "
 msgstr "URL : "
 
 #: src/interface.c:1767
-#, fuzzy
 msgid "Youtube URL : "
-msgstr "URL : "
+msgstr ""
 
 #: src/interface.c:1787
 msgid "Do not send bandwidth information"
@@ -1352,17 +1325,15 @@ msgid "New name "
 msgstr "Uus nimi "
 
 #: src/interface.c:2056
-#, fuzzy
 msgid "Set name "
-msgstr "Uus nimi "
+msgstr ""
 
 #: src/interface.c:2208
-#, fuzzy
 msgid "Use def_aults"
-msgstr "Sea vaikeväärtuseks"
+msgstr ""
 
-#: src/interface.c:2211 src/interface.c:2567 src/preferences.c:2803
-#: src/preferences.c:3134
+#: src/interface.c:2211 src/interface.c:2567 src/preferences.c:2814
+#: src/preferences.c:3145
 msgid "_Advanced"
 msgstr "_Laiendatud"
 
@@ -1428,9 +1399,8 @@ msgid "Channel  "
 msgstr ""
 
 #: src/interface.c:2515
-#, fuzzy
 msgid "Audio ID  "
-msgstr "Heli"
+msgstr ""
 
 #: src/interface.c:2583
 msgid "Input number"
@@ -1441,23 +1411,20 @@ msgid "Use default width, height and FPS"
 msgstr ""
 
 #: src/interface.c:2648
-#, fuzzy
 msgid "Width"
-msgstr "_Laius"
+msgstr ""
 
 #: src/interface.c:2663
-#, fuzzy
 msgid "Height"
-msgstr "_Kõrgus"
+msgstr ""
 
 #: src/interface.c:2700
 msgid "_Driver"
 msgstr ""
 
 #: src/interface.c:2703
-#, fuzzy
 msgid "_Output format"
-msgstr "Väljundi vorming"
+msgstr ""
 
 #: src/interface.c:2821
 msgid "LiVES:- Fade Audio In"
@@ -1468,18 +1435,16 @@ msgid "LiVES:- Fade Audio Out"
 msgstr ""
 
 #: src/interface.c:2850
-#, fuzzy
 msgid "Fade in over  "
-msgstr "Hajumine"
+msgstr ""
 
 #: src/interface.c:2851
 msgid "first"
 msgstr "esimene"
 
 #: src/interface.c:2854
-#, fuzzy
 msgid "Fade out over  "
-msgstr "Hajumine"
+msgstr ""
 
 #: src/interface.c:2855
 msgid "last"
@@ -1490,9 +1455,8 @@ msgid "seconds."
 msgstr "sekundit."
 
 #: src/interface.c:2917
-#, fuzzy
 msgid "selection."
-msgstr "valik"
+msgstr ""
 
 #: src/interface.c:2983
 msgid "LiVES: - Play Random Music"
@@ -1507,9 +1471,8 @@ msgid "Directory:"
 msgstr "Kataloog:"
 
 #: src/interface.c:3060
-#, fuzzy
 msgid "Include subdirectories"
-msgstr "Kataloogid"
+msgstr ""
 
 #: src/interface.c:3088
 msgid "Minimum File Size (MB)         "
@@ -1528,9 +1491,8 @@ msgid "Title/Name : "
 msgstr ""
 
 #: src/interface.c:3202
-#, fuzzy
 msgid "Author/Artist : "
-msgstr "Autor: %s"
+msgstr ""
 
 #: src/interface.c:3213
 msgid "Comments : "
@@ -1629,19 +1591,16 @@ msgid "_Wipe layout"
 msgstr ""
 
 #: src/interface.c:3620
-#, fuzzy
 msgid "_Ignore changes"
-msgstr "Hajumine"
+msgstr ""
 
 #: src/interface.c:3621
-#, fuzzy
 msgid "_Delete clip set"
-msgstr "_Kustuta valik"
+msgstr ""
 
 #: src/interface.c:3622
-#, fuzzy
 msgid "_Delete layout"
-msgstr "_Kustuta kõik"
+msgstr ""
 
 #: src/interface.c:3628
 msgid "_Save layout"
@@ -1679,18 +1638,17 @@ msgid "Remove Sets which have _Layouts but no Clips"
 msgstr ""
 
 #: src/interface.c:3839
-#, fuzzy
 msgid "_Reset to Defaults"
-msgstr "Sea vaikeväärtuseks"
+msgstr ""
 
 #: src/interface.c:3846
 msgid "_Accept"
 msgstr ""
 
 #: src/callbacks.c:188
-#, fuzzy, c-format
+#, c-format
 msgid "Saving as set %s..."
-msgstr "Kustutamine"
+msgstr ""
 
 #: src/callbacks.c:581 src/callbacks.c:611
 msgid "Select File"
@@ -1705,9 +1663,9 @@ msgid "Please enter a valid URL for the download.\n"
 msgstr ""
 
 #: src/callbacks.c:837
-#, fuzzy, c-format
+#, c-format
 msgid "Downloading %s to %s..."
-msgstr "Kustutamine"
+msgstr ""
 
 #: src/callbacks.c:865
 msgid "Downloading clip"
@@ -1787,9 +1745,9 @@ msgid "Importing project"
 msgstr ""
 
 #: src/callbacks.c:1445
-#, fuzzy, c-format
+#, c-format
 msgid "Exporting project %s..."
-msgstr "Kustutamine"
+msgstr ""
 
 #: src/callbacks.c:1463
 msgid "Exporting project"
@@ -1812,49 +1770,42 @@ msgid ""
 msgstr ""
 
 #: src/callbacks.c:1741
-#, fuzzy, c-format
+#, c-format
 msgid "Deleting set %s..."
-msgstr "Kustutamine"
+msgstr ""
 
 #: src/callbacks.c:1743
-#, fuzzy
 msgid "Deleting set..."
-msgstr "Kustutamine"
+msgstr ""
 
 #: src/callbacks.c:1747
-#, fuzzy
 msgid "Deleting set"
-msgstr "Kustutamine"
+msgstr ""
 
 #: src/callbacks.c:1755
 #, c-format
 msgid "Set %s was permanently deleted from the disk.\n"
 msgstr ""
 
-#: src/callbacks.c:1806 src/callbacks.c:12086
-#, fuzzy
+#: src/callbacks.c:1806 src/callbacks.c:12087
 msgid "Insert Silence"
-msgstr "Lisan"
+msgstr ""
 
 #: src/callbacks.c:1861 src/callbacks.c:1941 src/callbacks.c:2104
-#, fuzzy
 msgid "Undoing"
-msgstr "Võta _tagasi"
+msgstr ""
 
 #: src/callbacks.c:1954 src/callbacks.c:2165
-#, fuzzy
 msgid "Restoring audio..."
-msgstr "Taastamine"
+msgstr ""
 
 #: src/callbacks.c:1970
-#, fuzzy
 msgid "Clearing frame images"
-msgstr "kaadrit"
+msgstr ""
 
 #: src/callbacks.c:2003
-#, fuzzy
 msgid "Deleting excess frames"
-msgstr "kaadrit"
+msgstr ""
 
 #: src/callbacks.c:2247
 #, c-format
@@ -1867,17 +1818,16 @@ msgid "Clipboard was resampled to %d frames.\n"
 msgstr ""
 
 #: src/callbacks.c:2414 src/callbacks.c:2443
-#, fuzzy
 msgid "Redoing"
-msgstr "_Taasta"
+msgstr ""
 
 #: src/callbacks.c:2488
 #, c-format
 msgid "Copying frames %d to %d%s to the clipboard..."
 msgstr ""
 
-#: src/callbacks.c:2510 src/saveplay.c:1407 src/saveplay.c:1561
-#: src/saveplay.c:1623 src/saveplay.c:3780
+#: src/callbacks.c:2510 src/saveplay.c:1408 src/saveplay.c:1562
+#: src/saveplay.c:1624 src/saveplay.c:3789
 msgid "Pulling frames from clip"
 msgstr ""
 
@@ -1931,7 +1881,7 @@ msgid ""
 "Are you sure you wish to continue ?\n"
 msgstr ""
 
-#: src/callbacks.c:2893 src/callbacks.c:12018
+#: src/callbacks.c:2893 src/callbacks.c:12019
 msgid ""
 "\n"
 "Insertion will cause audio to shift in some multitrack layouts.\n"
@@ -1996,8 +1946,8 @@ msgid ""
 "Are you sure you wish to continue ?\n"
 msgstr ""
 
-#: src/callbacks.c:3483 src/callbacks.c:11246 src/callbacks.c:11492
-#: src/callbacks.c:11558
+#: src/callbacks.c:3483 src/callbacks.c:11247 src/callbacks.c:11493
+#: src/callbacks.c:11559
 msgid ""
 "\n"
 "Deletion will cause missing audio in some multitrack layouts.\n"
@@ -2011,7 +1961,7 @@ msgid ""
 "Are you sure you wish to continue ?\n"
 msgstr ""
 
-#: src/callbacks.c:3521 src/callbacks.c:11540
+#: src/callbacks.c:3521 src/callbacks.c:11541
 msgid ""
 "\n"
 "Deletion will cause audio to shift in some multitrack layouts.\n"
@@ -2019,9 +1969,9 @@ msgid ""
 msgstr ""
 
 #: src/callbacks.c:3579
-#, fuzzy, c-format
+#, c-format
 msgid "Deleting frames %d to %d%s..."
-msgstr "Kustutamine"
+msgstr ""
 
 #: src/callbacks.c:3604
 msgid "Deleting"
@@ -2078,14 +2028,14 @@ msgid ""
 msgstr ""
 
 #: src/callbacks.c:4800
-#, fuzzy, c-format
+#, c-format
 msgid "Saving set %s"
-msgstr "Kustutamine"
+msgstr ""
 
 #: src/callbacks.c:5154
-#, fuzzy, c-format
+#, c-format
 msgid "Loading clips from set %s"
-msgstr "kaadrit"
+msgstr ""
 
 #: src/callbacks.c:5242
 #, c-format
@@ -2101,9 +2051,8 @@ msgid ""
 msgstr ""
 
 #: src/callbacks.c:5515
-#, fuzzy
 msgid "Cleaning up disk space..."
-msgstr "Puhastamine..."
+msgstr ""
 
 #: src/callbacks.c:5583
 msgid "Recovering disk space"
@@ -2132,11 +2081,10 @@ msgstr ""
 
 #: src/callbacks.c:5755 src/callbacks.c:5774 src/callbacks.c:5792
 #: src/callbacks.c:5826
-#, fuzzy
 msgid ""
 "\n"
 "  Opening..."
-msgstr "Avamine %s"
+msgstr ""
 
 #: src/callbacks.c:5762
 #, c-format
@@ -2160,11 +2108,10 @@ msgid ""
 msgstr ""
 
 #: src/callbacks.c:5786
-#, fuzzy
 msgid ""
 "\n"
 "  Unknown"
-msgstr "Tundmatu"
+msgstr ""
 
 #: src/callbacks.c:5799 src/callbacks.c:5813
 msgid "unsigned"
@@ -2252,12 +2199,11 @@ msgid "Opening audio %s, type %s..."
 msgstr ""
 
 #: src/callbacks.c:6744 src/saveplay.c:453
-#, fuzzy
 msgid "Opening audio"
-msgstr "Avamine %s"
+msgstr ""
 
 #: src/callbacks.c:6753 src/callbacks.c:6793 src/callbacks.c:8592
-#: src/callbacks.c:8634 src/callbacks.c:8677 src/callbacks.c:11170
+#: src/callbacks.c:8634 src/callbacks.c:8677 src/callbacks.c:11171
 msgid "Cancelling"
 msgstr "Tühistamine"
 
@@ -2266,17 +2212,16 @@ msgstr "Tühistamine"
 msgid "New audio: %d Hz %d channel(s) %d bps\n"
 msgstr ""
 
-#: src/callbacks.c:6840 src/callbacks.c:8719 src/callbacks.c:11200
-#: src/callbacks.c:11894
+#: src/callbacks.c:6840 src/callbacks.c:8719 src/callbacks.c:11201
+#: src/callbacks.c:11895
 msgid "Committing audio"
 msgstr ""
 
 #: src/callbacks.c:6852 src/callbacks.c:8750
-#, fuzzy
 msgid "New Audio"
-msgstr "Heli"
+msgstr ""
 
-#: src/callbacks.c:7131
+#: src/callbacks.c:7131 src/saveplay.c:3418
 #, c-format
 msgid "%d frames are enough !\n"
 msgstr ""
@@ -2298,9 +2243,8 @@ msgid "Double size (d)"
 msgstr ""
 
 #: src/callbacks.c:7508
-#, fuzzy
 msgid "Single size (d)"
-msgstr "Failisuurus"
+msgstr ""
 
 #: src/callbacks.c:7639 src/callbacks.c:7640
 msgid "Hide the play window (s)"
@@ -2314,7 +2258,7 @@ msgstr ""
 msgid "Play in separate window (s)"
 msgstr ""
 
-#: src/callbacks.c:7726 src/gui.c:3928 src/saveplay.c:2343
+#: src/callbacks.c:7726 src/gui.c:3928 src/saveplay.c:2344
 msgid "LiVES: - Streaming"
 msgstr ""
 
@@ -2351,7 +2295,7 @@ msgstr ""
 msgid "LiVES: Load subtitles from..."
 msgstr ""
 
-#: src/callbacks.c:8357 src/saveplay.c:881
+#: src/callbacks.c:8357 src/saveplay.c:882
 #, c-format
 msgid "Loaded subtitle file: %s\n"
 msgstr ""
@@ -2361,9 +2305,8 @@ msgid "Subtitles were erased.\n"
 msgstr ""
 
 #: src/callbacks.c:8438 src/callbacks.c:8786
-#, fuzzy
 msgid "Select Audio File"
-msgstr "Vali fail"
+msgstr ""
 
 #: src/callbacks.c:8454
 msgid "Please set your CD play device in Tools | Preferences | Misc\n"
@@ -2388,23 +2331,20 @@ msgid "Error loading CD track\n"
 msgstr ""
 
 #: src/callbacks.c:8848
-#, fuzzy
 msgid "Selecting tracks"
-msgstr "_Valik"
+msgstr ""
 
 #: src/callbacks.c:8903
 msgid "layout errors"
 msgstr ""
 
 #: src/callbacks.c:8913
-#, fuzzy
 msgid "Close _Window"
-msgstr "_Sulge aken"
+msgstr ""
 
 #: src/callbacks.c:8924
-#, fuzzy
 msgid "Clear _Errors"
-msgstr "$error"
+msgstr ""
 
 #: src/callbacks.c:8935
 msgid "_Delete affected layouts"
@@ -2430,9 +2370,8 @@ msgid "Pause"
 msgstr "Paus"
 
 #: src/callbacks.c:9665 src/callbacks.c:9699
-#, fuzzy
 msgid "resumed..."
-msgstr "Jätka"
+msgstr ""
 
 #: src/callbacks.c:9681
 msgid "Keep"
@@ -2454,25 +2393,24 @@ msgstr ""
 msgid "Cancel"
 msgstr "Katkesta"
 
-#: src/callbacks.c:9834
-#, fuzzy
+#: src/callbacks.c:9835
 msgid "Stop"
-msgstr "_Peata"
+msgstr ""
 
-#: src/callbacks.c:10323 src/multitrack.c:12139
+#: src/callbacks.c:10324 src/multitrack.c:12139
 msgid "LiVES: Selected frame"
 msgstr ""
 
-#: src/callbacks.c:10330
+#: src/callbacks.c:10331
 msgid "_Save frame as..."
 msgstr ""
 
-#: src/callbacks.c:10574
+#: src/callbacks.c:10575
 #, c-format
 msgid "Audio is ahead of video by %.4f secs. at frame %d, with fps %.4f\n"
 msgstr ""
 
-#: src/callbacks.c:10652
+#: src/callbacks.c:10653
 msgid ""
 "\n"
 "\n"
@@ -2481,7 +2419,7 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/callbacks.c:10658
+#: src/callbacks.c:10659
 msgid ""
 "\n"
 "\n"
@@ -2489,13 +2427,13 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/callbacks.c:10734 src/callbacks.c:11812
+#: src/callbacks.c:10735 src/callbacks.c:11813
 msgid ""
 "\n"
 "Record time must be greater than 0.\n"
 msgstr ""
 
-#: src/callbacks.c:10745
+#: src/callbacks.c:10746
 msgid ""
 "Capture an External Window:\n"
 "\n"
@@ -2504,17 +2442,17 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/callbacks.c:10750
+#: src/callbacks.c:10751
 msgid "External window was released.\n"
 msgstr ""
 
-#: src/callbacks.c:10784
+#: src/callbacks.c:10785
 msgid ""
 "Click on a Window to Capture it\n"
 "Press 'q' to stop recording"
 msgstr ""
 
-#: src/callbacks.c:10814
+#: src/callbacks.c:10815
 #, c-format
 msgid ""
 "\n"
@@ -2524,19 +2462,19 @@ msgid ""
 "(Default of %.3f frames per second will be used.)\n"
 msgstr ""
 
-#: src/callbacks.c:10840
+#: src/callbacks.c:10841
 msgid "LiVES was unable to capture this window. Sorry.\n"
 msgstr ""
 
-#: src/callbacks.c:10988
+#: src/callbacks.c:10989
 msgid "Export Selected Audio as..."
 msgstr ""
 
-#: src/callbacks.c:10991
+#: src/callbacks.c:10992
 msgid "Export Audio as..."
 msgstr ""
 
-#: src/callbacks.c:11033
+#: src/callbacks.c:11034
 msgid ""
 "\n"
 "\n"
@@ -2545,132 +2483,123 @@ msgid ""
 "rate.\n"
 msgstr ""
 
-#: src/callbacks.c:11039
+#: src/callbacks.c:11040
 #, c-format
 msgid "Exporting audio frames %d to %d as %s..."
 msgstr ""
 
-#: src/callbacks.c:11044
-#, fuzzy, c-format
+#: src/callbacks.c:11045
+#, c-format
 msgid "Exporting audio as %s..."
-msgstr "Heli serveri jack käivitamine..."
+msgstr ""
 
-#: src/callbacks.c:11069
+#: src/callbacks.c:11070
 msgid "Exporting audio"
 msgstr ""
 
-#: src/callbacks.c:11102
+#: src/callbacks.c:11103
 msgid "Append Audio File..."
 msgstr ""
 
-#: src/callbacks.c:11149
+#: src/callbacks.c:11150
 #, c-format
 msgid "Appending audio file %s..."
 msgstr ""
 
-#: src/callbacks.c:11160
+#: src/callbacks.c:11161
 msgid "Appending audio"
 msgstr ""
 
-#: src/callbacks.c:11216
+#: src/callbacks.c:11217
 msgid "Append Audio"
 msgstr ""
 
-#: src/callbacks.c:11278
+#: src/callbacks.c:11279
 #, c-format
 msgid "Padding audio to %.2f seconds..."
 msgstr ""
 
-#: src/callbacks.c:11280
+#: src/callbacks.c:11281
 #, c-format
 msgid "Trimming audio from %.2f to %.2f seconds..."
 msgstr ""
 
-#: src/callbacks.c:11299
+#: src/callbacks.c:11300
 msgid "Trimming/Padding audio"
 msgstr ""
 
-#: src/callbacks.c:11307
+#: src/callbacks.c:11308
 msgid "Trim/Pad Audio"
 msgstr ""
 
-#: src/callbacks.c:11382
-#, fuzzy
-msgid "Fading audio in"
-msgstr "Hajumine"
-
 #: src/callbacks.c:11383
-#, fuzzy
-msgid "Fade audio in"
-msgstr "Hajumine"
+msgid "Fading audio in"
+msgstr ""
 
-#: src/callbacks.c:11388
-#, fuzzy
-msgid "Fading audio out"
-msgstr "Hajumine"
+#: src/callbacks.c:11384
+msgid "Fade audio in"
+msgstr ""
 
 #: src/callbacks.c:11389
-#, fuzzy
-msgid "Fade audio out"
-msgstr "Hajumine"
+msgid "Fading audio out"
+msgstr ""
 
-#: src/callbacks.c:11412
+#: src/callbacks.c:11390
+msgid "Fade audio out"
+msgstr ""
+
+#: src/callbacks.c:11413
 #, c-format
 msgid "%s over %.1f seconds..."
 msgstr ""
 
-#: src/callbacks.c:11414
+#: src/callbacks.c:11415
 #, c-format
 msgid "%s from time %.2f seconds to %.2f seconds..."
 msgstr ""
 
-#: src/callbacks.c:11421
-#, fuzzy
+#: src/callbacks.c:11422
 msgid "Fading audio..."
-msgstr "Hajumine"
+msgstr ""
 
-#: src/callbacks.c:11524
+#: src/callbacks.c:11525
 msgid ""
 "\n"
 "Deleting all audio will close this file.\n"
 "Are you sure ?"
 msgstr ""
 
-#: src/callbacks.c:11527
-#, fuzzy
+#: src/callbacks.c:11528
 msgid "Deleting all audio..."
-msgstr "Kustutamine"
+msgstr ""
 
-#: src/callbacks.c:11533
+#: src/callbacks.c:11534
 #, c-format
 msgid "Deleting audio from %.2f to %.2f seconds..."
 msgstr ""
 
-#: src/callbacks.c:11620
-#, fuzzy
+#: src/callbacks.c:11621
 msgid "Deleting Audio"
-msgstr "Kustutamine"
+msgstr ""
 
-#: src/callbacks.c:11627
-#, fuzzy
+#: src/callbacks.c:11628
 msgid "Delete Audio"
-msgstr "Kustuta"
+msgstr ""
 
-#: src/callbacks.c:11965
+#: src/callbacks.c:11966
 msgid "Record new audio"
 msgstr ""
 
-#: src/callbacks.c:12049
+#: src/callbacks.c:12050
 #, c-format
 msgid "Inserting silence from %.2f to %.2f seconds..."
 msgstr ""
 
-#: src/callbacks.c:12077
-#, fuzzy
+#: src/callbacks.c:12078
 msgid "Inserting Silence"
-msgstr "Lisan"
+msgstr ""
 
-#: src/callbacks.c:12180
+#: src/callbacks.c:12181
 #, c-format
 msgid ""
 "\n"
@@ -2698,9 +2627,8 @@ msgid ""
 msgstr ""
 
 #: src/merge.c:136
-#, fuzzy
 msgid "Align _Starts"
-msgstr "_Alusta"
+msgstr ""
 
 #: src/merge.c:160
 msgid "Align _Ends"
@@ -2711,33 +2639,28 @@ msgid "What to do with extra clipboard frames -"
 msgstr ""
 
 #: src/merge.c:196
-#, fuzzy
 msgid "_Insert Frames"
-msgstr "_Kaadrid"
+msgstr ""
 
 #: src/merge.c:210
-#, fuzzy
 msgid "_Drop Frames"
-msgstr "_Kaadrid"
+msgstr ""
 
 #: src/merge.c:223
 msgid "Number of Times to Loop Clipboard"
 msgstr ""
 
 #: src/merge.c:236
-#, fuzzy
 msgid "_Loop Clipboard to Fit Selection"
-msgstr "_Pööra valik"
+msgstr ""
 
 #: src/merge.c:255
-#, fuzzy
 msgid "_Transition Method:"
-msgstr "Siirded"
+msgstr ""
 
 #: src/merge.c:456
-#, fuzzy
 msgid "Merging clipboard with selection..."
-msgstr "_Pööra valik"
+msgstr ""
 
 #: src/merge.c:478
 #, c-format
@@ -2750,32 +2673,28 @@ msgid "now inserting %d extra frame(s)\n"
 msgstr ""
 
 #: src/merge.c:613
-#, fuzzy
 msgid "Merge done.\n"
-msgstr "tehtud.\n"
+msgstr ""
 
 #: src/gui.c:123
 msgid "_Custom Generators"
 msgstr ""
 
 #: src/gui.c:124
-#, fuzzy
 msgid "_Custom Effects"
-msgstr "Efektid"
+msgstr ""
 
 #: src/gui.c:125
-#, fuzzy
 msgid "Custom _Utilities"
-msgstr "Üldkas_utatavad"
+msgstr ""
 
 #: src/gui.c:326 src/multitrack.c:5353
 msgid "_File"
 msgstr "_Fail"
 
 #: src/gui.c:337 src/multitrack.c:5376
-#, fuzzy
 msgid "_Open File/Directory"
-msgstr "Kataloog:"
+msgstr ""
 
 #: src/gui.c:343
 msgid "O_pen Part of File..."
@@ -2831,9 +2750,8 @@ msgid "Add _TV Device"
 msgstr ""
 
 #: src/gui.c:476 src/multitrack.c:5501
-#, fuzzy
 msgid "_Recent Files..."
-msgstr "_Omadused..."
+msgstr ""
 
 #: src/gui.c:527 src/multitrack.c:5560
 msgid "_Reload Clip Set..."
@@ -2848,9 +2766,8 @@ msgid "_Encode Clip As..."
 msgstr ""
 
 #: src/gui.c:546
-#, fuzzy
 msgid "Encode _Selection As..."
-msgstr "_Vali..."
+msgstr ""
 
 #: src/gui.c:553
 msgid "_Close This Clip"
@@ -2885,14 +2802,12 @@ msgid "_MULTITRACK mode"
 msgstr ""
 
 #: src/gui.c:666
-#, fuzzy
 msgid "_Copy Selection"
-msgstr "_Valik"
+msgstr ""
 
 #: src/gui.c:675
-#, fuzzy
 msgid "Cu_t Selection"
-msgstr "_Pööra valik"
+msgstr ""
 
 #: src/gui.c:684
 msgid "_Insert from Clipboard..."
@@ -2903,9 +2818,8 @@ msgid "Paste as _New"
 msgstr ""
 
 #: src/gui.c:706
-#, fuzzy
 msgid "_Merge Clipboard with Selection..."
-msgstr "_Pööra valik"
+msgstr ""
 
 #: src/gui.c:713
 msgid "_Delete Selection"
@@ -2920,24 +2834,20 @@ msgid "_Select..."
 msgstr "_Vali..."
 
 #: src/gui.c:754
-#, fuzzy
 msgid "Select _All Frames"
-msgstr "_kõikide kaadrite suuruse muutmine"
+msgstr ""
 
 #: src/gui.c:762
-#, fuzzy
 msgid "_Start Frame Only"
-msgstr "_Alusta"
+msgstr ""
 
 #: src/gui.c:770
-#, fuzzy
 msgid "_End Frame Only"
-msgstr "_Alusta"
+msgstr ""
 
 #: src/gui.c:783
-#, fuzzy
 msgid "Select from _First Frame"
-msgstr "_Kaadrid"
+msgstr ""
 
 #: src/gui.c:787
 msgid "Select to _Last Frame"
@@ -2956,23 +2866,20 @@ msgid "_Invert Selection"
 msgstr "_Pööra valik"
 
 #: src/gui.c:807
-#, fuzzy
 msgid "_Lock Selection Width"
-msgstr "_Kustuta valik"
+msgstr ""
 
 #: src/gui.c:812 src/multitrack.c:5787
 msgid "_Play"
 msgstr "_Esita"
 
 #: src/gui.c:823
-#, fuzzy
 msgid "_Play All"
-msgstr "_Esita"
+msgstr ""
 
 #: src/gui.c:835
-#, fuzzy
 msgid "Pla_y Selection"
-msgstr "_Valik"
+msgstr ""
 
 #: src/gui.c:843
 msgid "Play _Clipboard"
@@ -2983,9 +2890,8 @@ msgid "_Stop"
 msgstr "_Peata"
 
 #: src/gui.c:873 src/multitrack.c:5826
-#, fuzzy
 msgid "Re_wind"
-msgstr "Tagasikerimine"
+msgstr ""
 
 #: src/gui.c:904 src/multitrack.c:5841
 msgid "_Full Screen"
@@ -3000,9 +2906,8 @@ msgid "Play in _Separate Window"
 msgstr ""
 
 #: src/gui.c:930
-#, fuzzy
 msgid "_Blank Background"
-msgstr "_Alusta"
+msgstr ""
 
 #: src/gui.c:937
 msgid "(Auto)_loop Video (to fit audio track)"
@@ -3025,23 +2930,20 @@ msgid "Separate Window 'S_ticky' Mode"
 msgstr ""
 
 #: src/gui.c:985
-#, fuzzy
 msgid "S_how Frame Counter"
-msgstr "_Alusta"
+msgstr ""
 
 #: src/gui.c:995
-#, fuzzy
 msgid "Show Subtitles"
-msgstr "Näita üksikasju"
+msgstr ""
 
 #: src/gui.c:1005
 msgid "Letterbox mode"
 msgstr ""
 
 #: src/gui.c:1011 src/multitrack.c:5893
-#, fuzzy
 msgid "Effect_s"
-msgstr "Efektid"
+msgstr ""
 
 #: src/gui.c:1014
 msgid "Effects are applied to the current selection."
@@ -3080,14 +2982,12 @@ msgid "_Generate"
 msgstr "_Genereeri"
 
 #: src/gui.c:1084
-#, fuzzy
 msgid "Custom _Tools"
-msgstr "_Tööriistad"
+msgstr ""
 
 #: src/gui.c:1087
-#, fuzzy
 msgid "Loading rendered effect plugins..."
-msgstr "Laen reaalaja efektide pluginaid..."
+msgstr ""
 
 #: src/gui.c:1102
 msgid "Load _Subtitles from File..."
@@ -3102,14 +3002,12 @@ msgid "Capture _External Window... "
 msgstr ""
 
 #: src/gui.c:1126 src/multitrack.c:6419
-#, fuzzy
 msgid "_Preferences..."
-msgstr "_Omadused..."
+msgstr ""
 
 #: src/gui.c:1137
-#, fuzzy
 msgid "_Audio"
-msgstr "Heli"
+msgstr ""
 
 #: src/gui.c:1148
 msgid "Load _New Audio for Clip..."
@@ -3132,9 +3030,8 @@ msgid "to New _Clip..."
 msgstr ""
 
 #: src/gui.c:1184
-#, fuzzy
 msgid "to _Selection"
-msgstr "_Valik"
+msgstr ""
 
 #: src/gui.c:1194
 msgid "Fade Audio _In..."
@@ -3173,24 +3070,20 @@ msgid "Trim/Pad Audio from Beginning to _Play Start"
 msgstr ""
 
 #: src/gui.c:1257
-#, fuzzy
 msgid "_Delete Audio..."
-msgstr "_Kustuta valik"
+msgstr ""
 
 #: src/gui.c:1269
-#, fuzzy
 msgid "Delete _Selected Audio"
-msgstr "_Kustuta valik"
+msgstr ""
 
 #: src/gui.c:1273
-#, fuzzy
 msgid "Delete _All Audio"
-msgstr "_Kustuta kõik"
+msgstr ""
 
 #: src/gui.c:1277
-#, fuzzy
 msgid "Insert _Silence in Selection"
-msgstr "_Pööra valik"
+msgstr ""
 
 #: src/gui.c:1282
 msgid "_Resample Audio..."
@@ -3225,9 +3118,8 @@ msgid "Show _Clipboard Info"
 msgstr ""
 
 #: src/gui.c:1348 src/multitrack.c:6528
-#, fuzzy
 msgid "Show _Messages"
-msgstr "Näita _detailisi"
+msgstr ""
 
 #: src/gui.c:1352 src/multitrack.c:6606
 msgid "Show _Layout Errors"
@@ -3366,9 +3258,8 @@ msgid "_Load device mapping..."
 msgstr ""
 
 #: src/gui.c:1597
-#, fuzzy
 msgid "Show VJ _Keys"
-msgstr "Näita _detailisi"
+msgstr ""
 
 #: src/gui.c:1601
 msgid "To_ys"
@@ -3383,9 +3274,8 @@ msgid "_Autolives"
 msgstr ""
 
 #: src/gui.c:1627
-#, fuzzy
 msgid "_Mad Frames"
-msgstr "_Kaadrid"
+msgstr ""
 
 #: src/gui.c:1632
 msgid "_LiVES TV (broadband)"
@@ -3440,9 +3330,8 @@ msgid "Stop playback (q)"
 msgstr ""
 
 #: src/gui.c:1753
-#, fuzzy
 msgid "Play selection (y)"
-msgstr "valik"
+msgstr ""
 
 #: src/gui.c:1798
 msgid "Volume"
@@ -3469,9 +3358,8 @@ msgid "Skip back (ctrl-left)"
 msgstr ""
 
 #: src/gui.c:1920
-#, fuzzy
 msgid "Skip forward (ctrl-right)"
-msgstr "Edasikerimine"
+msgstr ""
 
 #: src/gui.c:1926
 msgid "Show clip info (i)"
@@ -3501,14 +3389,12 @@ msgid "                                                            "
 msgstr "                                                            "
 
 #: src/gui.c:2036 src/gui.c:3092
-#, fuzzy
 msgid "First Frame"
-msgstr "_Kaadrid"
+msgstr ""
 
 #: src/gui.c:2111 src/gui.c:3101
-#, fuzzy
 msgid "Last Frame"
-msgstr "_Kaadrid"
+msgstr ""
 
 #: src/gui.c:2130
 msgid "The first selected frame in this clip"
@@ -3519,9 +3405,8 @@ msgid "The last selected frame in this clip"
 msgstr ""
 
 #: src/gui.c:2397
-#, fuzzy
 msgid "Starting...\n"
-msgstr "Pööramine"
+msgstr ""
 
 #: src/gui.c:2951
 msgid "    Press 'q' to stop recording.  DO NOT COVER THE PLAY WINDOW !   "
@@ -3556,9 +3441,8 @@ msgid "Frame number is linked to end frame"
 msgstr ""
 
 #: src/gui.c:3463
-#, fuzzy
 msgid "_Pointer"
-msgstr "Failisuurus"
+msgstr ""
 
 #: src/gui.c:3468
 msgid "Frame number is linked to playback pointer"
@@ -3570,28 +3454,24 @@ msgstr "Tagasikerimine"
 
 #: src/gui.c:3512 src/dialogs.c:790 src/dialogs.c:792 src/dialogs.c:1641
 #: src/dialogs.c:1643
-#, fuzzy
 msgid "Play all"
-msgstr "Esita"
+msgstr ""
 
 #: src/gui.c:3525
-#, fuzzy
 msgid "Play Selection"
-msgstr "_Valik"
+msgstr ""
 
 #: src/gui.c:3539
 msgid "Loop On/Off"
 msgstr ""
 
 #: src/gui.c:3600
-#, fuzzy
 msgid "Start _recording"
-msgstr "Salvestamine"
+msgstr ""
 
 #: src/gui.c:3606
-#, fuzzy
 msgid "Stop _recording"
-msgstr "Salvestamine"
+msgstr ""
 
 #: src/gui.c:3612
 msgid "_Record Performance"
@@ -3804,9 +3684,8 @@ msgid "(No video)"
 msgstr ""
 
 #: src/utils.c:2591
-#, fuzzy
 msgid "(No audio)"
-msgstr "audio"
+msgstr ""
 
 #: src/utils.c:2596
 msgid "Mono  [opening...]"
@@ -3840,9 +3719,8 @@ msgid "LiVES cannot switch to mplayer whilst clips are loading."
 msgstr ""
 
 #: src/utils.c:3256
-#, fuzzy
 msgid "Cleaning up clip"
-msgstr "Puhastamine..."
+msgstr ""
 
 #: src/utils.c:3386
 #, c-format
@@ -3902,14 +3780,14 @@ msgstr "Avamine %s"
 msgid "Opening %s start time %.2f sec. frames %d"
 msgstr ""
 
-#: src/saveplay.c:311 src/saveplay.c:3767
+#: src/saveplay.c:311 src/saveplay.c:3776
 msgid " without sound"
 msgstr ""
 
 #: src/saveplay.c:377
-#, fuzzy, c-format
+#, c-format
 msgid "Opening audio for %s"
-msgstr "Avamine %s"
+msgstr ""
 
 #: src/saveplay.c:587
 #, c-format
@@ -3927,7 +3805,7 @@ msgstr ""
 msgid " - please be patient."
 msgstr ""
 
-#: src/saveplay.c:853
+#: src/saveplay.c:854
 msgid ""
 "\n"
 "\n"
@@ -3935,14 +3813,14 @@ msgid ""
 "Please check the terminal window for more details.\n"
 msgstr ""
 
-#: src/saveplay.c:856
+#: src/saveplay.c:857
 msgid ""
 "\n"
 "\n"
 "You may need to install mplayer to open this file.\n"
 msgstr ""
 
-#: src/saveplay.c:859
+#: src/saveplay.c:860
 msgid ""
 "\n"
 "\n"
@@ -3950,29 +3828,29 @@ msgid ""
 "Tools|Preferences|Decoding\n"
 msgstr ""
 
-#: src/saveplay.c:923
+#: src/saveplay.c:924
 msgid "Adding image..."
 msgstr ""
 
-#: src/saveplay.c:1013
+#: src/saveplay.c:1014
 #, c-format
 msgid "Subtitles were saved as %s\n"
 msgstr ""
 
-#: src/saveplay.c:1097
+#: src/saveplay.c:1098
 #, c-format
 msgid "LiVES: Save Frame %d as..."
 msgstr ""
 
-#: src/saveplay.c:1100
+#: src/saveplay.c:1101
 msgid "LiVES: Save Frame as..."
 msgstr ""
 
-#: src/saveplay.c:1209
+#: src/saveplay.c:1210
 msgid "LiVES: Save Clip as..."
 msgstr ""
 
-#: src/saveplay.c:1281
+#: src/saveplay.c:1282
 msgid ""
 "Saving your video could lead to a loss of quality !\n"
 "You are strongly advised to 'Save As' to a new file.\n"
@@ -3980,67 +3858,66 @@ msgid ""
 "Do you still wish to continue ?"
 msgstr ""
 
-#: src/saveplay.c:1397
+#: src/saveplay.c:1398
 msgid "selection"
 msgstr "valik"
 
-#: src/saveplay.c:1478 src/saveplay.c:1599
-#, fuzzy
+#: src/saveplay.c:1479 src/saveplay.c:1600
 msgid "Linking selection"
-msgstr "valik"
+msgstr ""
 
-#: src/saveplay.c:1640
+#: src/saveplay.c:1641
 msgid " (with no sound)\n"
 msgstr ""
 
-#: src/saveplay.c:1647
+#: src/saveplay.c:1648
 #, c-format
 msgid "Saving frames %d to %d%s as \"%s\" : encoder = %s : format = %s..."
 msgstr ""
 
-#: src/saveplay.c:1651
+#: src/saveplay.c:1652
 #, c-format
 msgid "Saving frames 1 to %d%s as \"%s\" : encoder %s : format = %s..."
 msgstr ""
 
-#: src/saveplay.c:1758
+#: src/saveplay.c:1759
 msgid "Saving [can take a long time]"
 msgstr ""
 
-#: src/saveplay.c:1906
+#: src/saveplay.c:1907
 msgid ""
 "\n"
 "\n"
 "Encoder error - output file was not created !\n"
 msgstr ""
 
-#: src/saveplay.c:1937
+#: src/saveplay.c:1938
 msgid "Clearing letterbox"
 msgstr ""
 
-#: src/saveplay.c:2042
-#, fuzzy, c-format
+#: src/saveplay.c:2043
+#, c-format
 msgid "File size was %s\n"
-msgstr "Failisuurus"
+msgstr ""
 
-#: src/saveplay.c:2138
+#: src/saveplay.c:2139
 msgid "recording aborted by preview.\n"
 msgstr ""
 
-#: src/saveplay.c:2142
+#: src/saveplay.c:2143
 msgid "recording aborted by clipboard playback.\n"
 msgstr ""
 
-#: src/saveplay.c:2145
+#: src/saveplay.c:2146
 msgid "Recording performance..."
 msgstr ""
 
-#: src/saveplay.c:3119
+#: src/saveplay.c:3120
 #, c-format
 msgid "Average FPS was %.4f\n"
 msgstr ""
 
-#: src/saveplay.c:3125
+#: src/saveplay.c:3126
 msgid ""
 "\n"
 "\n"
@@ -4049,16 +3926,16 @@ msgid ""
 "and resize all frames to the current size.\n"
 msgstr ""
 
-#: src/saveplay.c:3283
+#: src/saveplay.c:3284
 msgid "Unknown"
 msgstr "Tundmatu"
 
-#: src/saveplay.c:3389 src/saveplay.c:4347
+#: src/saveplay.c:3390 src/saveplay.c:4356
 #, c-format
 msgid "Untitled%d"
 msgstr "Pealkirjata%d"
 
-#: src/saveplay.c:3424
+#: src/saveplay.c:3433
 #, c-format
 msgid ""
 "\n"
@@ -4066,7 +3943,7 @@ msgid ""
 "Bad things may happen with this clip.\n"
 msgstr ""
 
-#: src/saveplay.c:3514
+#: src/saveplay.c:3523
 #, c-format
 msgid ""
 "\n"
@@ -4074,69 +3951,68 @@ msgid ""
 "Default can be set in Tools | Preferences | Misc.\n"
 msgstr ""
 
-#: src/saveplay.c:3526
+#: src/saveplay.c:3535
 #, c-format
 msgid "Playback speed was adjusted to %.3f frames per second to fit audio.\n"
 msgstr ""
 
-#: src/saveplay.c:3545
+#: src/saveplay.c:3554
 #, c-format
 msgid ""
 "Frames=%d type=%s size=%dx%d *bpp=Greyscale* fps=%.3f\n"
 "Audio:"
 msgstr ""
 
-#: src/saveplay.c:3549 src/saveplay.c:4524
+#: src/saveplay.c:3558 src/saveplay.c:4533
 #, c-format
 msgid ""
 "Frames=%d type=%s size=%dx%d bpp=%d fps=%.3f\n"
 "Audio:"
 msgstr ""
 
-#: src/saveplay.c:3553 src/saveplay.c:4528
+#: src/saveplay.c:3562 src/saveplay.c:4537
 #, c-format
 msgid "%s none\n"
 msgstr ""
 
-#: src/saveplay.c:3556 src/saveplay.c:4531
+#: src/saveplay.c:3565 src/saveplay.c:4540
 #, c-format
 msgid "%s %d Hz %d channel(s) %d bps\n"
 msgstr ""
 
-#: src/saveplay.c:3564
+#: src/saveplay.c:3573
 #, c-format
 msgid " - Comment: %s\n"
 msgstr ""
 
-#: src/saveplay.c:3669
+#: src/saveplay.c:3678
 #, c-format
 msgid "Saving frame %d as %s..."
 msgstr ""
 
-#: src/saveplay.c:3762
+#: src/saveplay.c:3771
 #, c-format
 msgid "Backing up %s to %s"
 msgstr ""
 
-#: src/saveplay.c:3815
-#, fuzzy
+#: src/saveplay.c:3824
 msgid "Backing up"
-msgstr "Tühjendamine"
+msgstr ""
 
-#: src/saveplay.c:3849
+#: src/saveplay.c:3858
 msgid "performance data was backed up..."
 msgstr ""
 
-#: src/saveplay.c:4423
-#, fuzzy, c-format
+#: src/saveplay.c:4432
+#, c-format
 msgid "Restoring %s..."
-msgstr "Taastamine"
+msgstr ""
 
-#: src/saveplay.c:4454
+#: src/saveplay.c:4463
 msgid "Restoring"
 msgstr "Taastamine"
 
-#: src/saveplay.c:4476
+#: src/saveplay.c:4485
 #, c-format
 msgid ""
 "\n"
@@ -4146,22 +4022,22 @@ msgid ""
 msgstr ""
 
 #. TRANSLATORS: rec(ord) %.2f M(ega)B(ytes)
-#: src/saveplay.c:4968
+#: src/saveplay.c:4977
 #, c-format
 msgid "rec %.2f MB"
 msgstr ""
 
-#: src/saveplay.c:4974
+#: src/saveplay.c:4983
 #, c-format
 msgid "!rec %.2f MB"
 msgstr ""
 
 #. TRANSLATORS: rec(ord) ?? M(ega)B(ytes)
-#: src/saveplay.c:4977
+#: src/saveplay.c:4986
 msgid "rec ?? MB"
 msgstr ""
 
-#: src/saveplay.c:5002
+#: src/saveplay.c:5011
 #, c-format
 msgid ""
 "\n"
@@ -4169,19 +4045,18 @@ msgid ""
 "Record stop level can be set in Preferences.\n"
 msgstr ""
 
-#: src/saveplay.c:5148
+#: src/saveplay.c:5157
 msgid ""
 "\n"
 "Files from a previous run of LiVES were found.\n"
 "Do you want to attempt to recover them ?\n"
 msgstr ""
 
-#: src/saveplay.c:5168
-#, fuzzy
+#: src/saveplay.c:5177
 msgid "Recovering files"
-msgstr "Salvestamine"
+msgstr ""
 
-#: src/saveplay.c:5170
+#: src/saveplay.c:5179
 msgid "Recovering files..."
 msgstr ""
 
@@ -4214,19 +4089,16 @@ msgid "question"
 msgstr ""
 
 #: src/dialogs.c:211
-#, fuzzy
 msgid "LiVES: - File Error"
-msgstr "$error"
+msgstr ""
 
 #: src/dialogs.c:212
-#, fuzzy
 msgid "File Error"
-msgstr "$error"
+msgstr ""
 
 #: src/dialogs.c:214
-#, fuzzy
 msgid "_Abort"
-msgstr "_Lähemalt"
+msgstr ""
 
 #: src/dialogs.c:220
 msgid "_Retry"
@@ -4483,9 +4355,8 @@ msgid ""
 msgstr ""
 
 #: src/dialogs.c:2128
-#, fuzzy
 msgid "Show Keys"
-msgstr "Näita üksikasju"
+msgstr ""
 
 #: src/dialogs.c:2129
 msgid ""
@@ -5113,34 +4984,28 @@ msgid ""
 msgstr ""
 
 #: src/effects.c:56
-#, fuzzy
 msgid "generator"
-msgstr "_Genereeri"
+msgstr ""
 
 #: src/effects.c:57
-#, fuzzy
 msgid "Generators"
-msgstr "_Genereeri"
+msgstr ""
 
 #: src/effects.c:59
-#, fuzzy
 msgid "audio generator"
-msgstr "_Genereeri"
+msgstr ""
 
 #: src/effects.c:60
-#, fuzzy
 msgid "Audio Generators"
-msgstr "_Genereeri"
+msgstr ""
 
 #: src/effects.c:62
-#, fuzzy
 msgid "audio/video generator"
-msgstr "Hajumine"
+msgstr ""
 
 #: src/effects.c:63
-#, fuzzy
 msgid "Audio/Video Generators"
-msgstr "Siirded"
+msgstr ""
 
 #: src/effects.c:65
 msgid "data generator"
@@ -5163,14 +5028,12 @@ msgid "data source"
 msgstr ""
 
 #: src/effects.c:72
-#, fuzzy
 msgid "Data Sources"
-msgstr "Autor: %s"
+msgstr ""
 
 #: src/effects.c:74
-#, fuzzy
 msgid "transition"
-msgstr "Siirded"
+msgstr ""
 
 #: src/effects.c:75
 msgid "Transitions"
@@ -5181,14 +5044,13 @@ msgid "effect"
 msgstr "efekt"
 
 #. TRANSLATORS: please keep this string short
-#: src/effects.c:78 src/preferences.c:3829
+#: src/effects.c:78 src/preferences.c:3834
 msgid "Effects"
 msgstr "Efektid"
 
 #: src/effects.c:80
-#, fuzzy
 msgid "utility"
-msgstr "Tööriistad"
+msgstr ""
 
 #: src/effects.c:81
 msgid "Utilities"
@@ -5215,9 +5077,8 @@ msgid "splitter"
 msgstr "eraldaja"
 
 #: src/effects.c:90
-#, fuzzy
 msgid "Splitters"
-msgstr "eraldaja"
+msgstr ""
 
 #: src/effects.c:92
 msgid "converter"
@@ -5236,33 +5097,28 @@ msgid "Analysers"
 msgstr ""
 
 #: src/effects.c:101
-#, fuzzy
 msgid "audio/video"
-msgstr "Hajumine"
+msgstr ""
 
 #: src/effects.c:102
-#, fuzzy
 msgid "Audio/Video Transitions"
-msgstr "Siirded"
+msgstr ""
 
 #: src/effects.c:104
 msgid "video only"
 msgstr ""
 
 #: src/effects.c:105
-#, fuzzy
 msgid "Video only Transitions"
-msgstr "Siirded"
+msgstr ""
 
 #: src/effects.c:107 src/multitrack.c:9738
-#, fuzzy
 msgid "audio only"
-msgstr "audio"
+msgstr ""
 
 #: src/effects.c:108
-#, fuzzy
 msgid "Audio only Transitions"
-msgstr "Siirded"
+msgstr ""
 
 #: src/effects.c:110 src/effects.c:113 src/multitrack.c:17406
 msgid "audio"
@@ -5273,9 +5129,8 @@ msgid "Audio Mixers"
 msgstr ""
 
 #: src/effects.c:114
-#, fuzzy
 msgid "Audio Effects"
-msgstr "Efektid"
+msgstr ""
 
 #: src/effects.c:116
 msgid "audio volume controller"
@@ -5306,9 +5161,9 @@ msgid "unknown"
 msgstr "teadmata"
 
 #: src/effects.c:228
-#, fuzzy, c-format
+#, c-format
 msgid "%s all frames..."
-msgstr "_kõikide kaadrite suuruse muutmine"
+msgstr ""
 
 #: src/effects.c:233
 #, c-format
@@ -5331,9 +5186,9 @@ msgid "%s frames %d to %d..."
 msgstr ""
 
 #: src/effects.c:280
-#, fuzzy, c-format
+#, c-format
 msgid "%s clipboard with selection"
-msgstr "_Pööra valik"
+msgstr ""
 
 #: src/effects.c:285
 #, c-format
@@ -5356,63 +5211,69 @@ msgid ""
 "No frames were generated.\n"
 msgstr ""
 
-#: src/effects-weed.c:3943
+#: src/effects-weed.c:3953
 #, c-format
 msgid "Error: plugin %s has no weed_setup() function.\n"
 msgstr ""
 
-#: src/effects-weed.c:3958
+#: src/effects-weed.c:3968
 #, c-format
 msgid "No usable filters found in plugin %s\n"
 msgstr ""
 
-#: src/effects-weed.c:3986
+#: src/effects-weed.c:3996
 #, c-format
 msgid "Found duplicate plugin %s\n"
 msgstr ""
 
-#: src/effects-weed.c:4042
+#. TRANSLATORS: example " - LADSPA plugins -"
+#: src/effects-weed.c:4035 src/rte_window.c:1273
+#, c-format
+msgid " - %s plugins -"
+msgstr ""
+
+#: src/effects-weed.c:4087
 #, c-format
 msgid ""
 "Info: Unable to load plugin %s\n"
 "Error was: %s\n"
 msgstr ""
 
-#: src/effects-weed.c:4045 src/effects-weed.c:4378
+#: src/effects-weed.c:4090 src/effects-weed.c:4423
 msgid "Some plugin directories"
 msgstr ""
 
-#: src/effects-weed.c:4214
+#: src/effects-weed.c:4259
 #, c-format
 msgid "Successfully loaded %d Weed filters\n"
 msgstr ""
 
-#: src/effects-weed.c:4889
+#: src/effects-weed.c:4934
 #, c-format
 msgid "Effect %s cannot be used with this audio player.\n"
 msgstr ""
 
-#: src/effects-weed.c:5002
+#: src/effects-weed.c:5047
 #, c-format
 msgid "Failed to start instance %s, error code %d\n"
 msgstr ""
 
-#: src/effects-weed.c:5045
+#: src/effects-weed.c:5090
 #, c-format
 msgid "Unable to start generator %s\n"
 msgstr ""
 
-#: src/effects-weed.c:5674
+#: src/effects-weed.c:5719
 #, c-format
 msgid "Failed to start generator %s\n"
 msgstr ""
 
-#: src/effects-weed.c:5735
+#: src/effects-weed.c:5780
 #, c-format
 msgid "Failed to start generator %s, error %d\n"
 msgstr ""
 
-#: src/effects-weed.c:6838
+#: src/effects-weed.c:6888
 #, c-format
 msgid "%s [unstable] (%s)"
 msgstr ""
@@ -5422,14 +5283,12 @@ msgid "You can click in Preview to change these values"
 msgstr ""
 
 #: src/framedraw.c:166
-#, fuzzy
 msgid "_Reset Values"
-msgstr "Sea vaikeväärtuseks"
+msgstr ""
 
 #: src/framedraw.c:265
-#, fuzzy
 msgid "    _Frame"
-msgstr "_Kaadrid"
+msgstr ""
 
 #: src/paramspecial.c:259
 msgid "Maintain aspect ratio of original frame"
@@ -5440,23 +5299,20 @@ msgid "Maintain _Aspect Ratio"
 msgstr ""
 
 #: src/paramspecial.c:310
-#, fuzzy
 msgid "LiVES: Select file"
-msgstr "Vali fail"
+msgstr ""
 
 #: src/paramspecial.c:344
 msgid "Display Password"
 msgstr ""
 
 #: src/paramwindow.c:413
-#, fuzzy
 msgid "Transition _In"
-msgstr "Siirded"
+msgstr ""
 
 #: src/paramwindow.c:418
-#, fuzzy
 msgid "Transition in"
-msgstr "Siirded"
+msgstr ""
 
 #: src/paramwindow.c:446
 msgid "Check the box to make audio transition with the video"
@@ -5467,14 +5323,12 @@ msgid "Crossfade audio"
 msgstr ""
 
 #: src/paramwindow.c:483
-#, fuzzy
 msgid "Transition _Out"
-msgstr "Siirded"
+msgstr ""
 
 #: src/paramwindow.c:488
-#, fuzzy
 msgid "Transition out"
-msgstr "Siirded"
+msgstr ""
 
 #: src/paramwindow.c:546
 msgid "Target _FPS (plugin may override this)"
@@ -5498,9 +5352,8 @@ msgid "_Height"
 msgstr "_Kõrgus"
 
 #: src/paramwindow.c:702
-#, fuzzy
 msgid "Generate to _Clipboard"
-msgstr "kaadrit"
+msgstr ""
 
 #: src/paramwindow.c:707
 msgid "Generate frames to the clipboard"
@@ -5511,9 +5364,8 @@ msgid "Generate to _New Clip"
 msgstr ""
 
 #: src/paramwindow.c:728
-#, fuzzy
 msgid "Generate frames to a new clip"
-msgstr "kaadrit"
+msgstr ""
 
 #: src/paramwindow.c:851
 #, c-format
@@ -5552,27 +5404,24 @@ msgid "Click to set the colour"
 msgstr ""
 
 #: src/paramwindow.c:1592
-#, fuzzy
 msgid "_Red"
-msgstr "_Taasta"
+msgstr ""
 
 #: src/paramwindow.c:1593
 msgid "The red value (0 - 255)"
 msgstr ""
 
 #: src/paramwindow.c:1596
-#, fuzzy
 msgid "_Green"
-msgstr "Roheline"
+msgstr ""
 
 #: src/paramwindow.c:1597
 msgid "The green value (0 - 255)"
 msgstr ""
 
 #: src/paramwindow.c:1600
-#, fuzzy
 msgid "_Blue"
-msgstr "Sinine"
+msgstr ""
 
 #: src/paramwindow.c:1601
 msgid "The blue value (0 - 255)"
@@ -5586,9 +5435,9 @@ msgid ""
 msgstr ""
 
 #: src/plugins.c:87
-#, fuzzy, c-format
+#, c-format
 msgid " : message was %s\n"
-msgstr "Failisuurus"
+msgstr ""
 
 #: src/plugins.c:381
 #, c-format
@@ -5634,9 +5483,8 @@ msgid "Fixed framerate for plugin.\n"
 msgstr ""
 
 #: src/plugins.c:1051
-#, fuzzy
 msgid "_Colourspace"
-msgstr "Värvi"
+msgstr ""
 
 #: src/plugins.c:1051
 msgid "Colourspace input to the plugin.\n"
@@ -5738,9 +5586,8 @@ msgid ""
 msgstr ""
 
 #: src/plugins.c:2458
-#, fuzzy
 msgid "/unknown"
-msgstr "teadmata"
+msgstr ""
 
 #: src/plugins.c:2574
 msgid "LiVES: - Decoder Plugins"
@@ -5773,29 +5620,24 @@ msgid "Type:"
 msgstr "Tüüp:"
 
 #: src/rfx-builder.c:209
-#, fuzzy
 msgid "Effect -"
-msgstr "Efektid"
+msgstr ""
 
 #: src/rfx-builder.c:224
-#, fuzzy
 msgid "Transition -"
-msgstr "Siirded"
+msgstr ""
 
 #: src/rfx-builder.c:238
-#, fuzzy
 msgid "Generator -"
-msgstr "_Genereeri"
+msgstr ""
 
 #: src/rfx-builder.c:251
-#, fuzzy
 msgid "Tool -"
-msgstr "_Tööriistad"
+msgstr ""
 
 #: src/rfx-builder.c:265
-#, fuzzy
 msgid "Utility -"
-msgstr "Tööriistad"
+msgstr ""
 
 #: src/rfx-builder.c:284
 msgid "Name:          "
@@ -5810,9 +5652,8 @@ msgid "Version:       "
 msgstr ""
 
 #: src/rfx-builder.c:316
-#, fuzzy
 msgid "The script version."
-msgstr "Kirjeldus: "
+msgstr ""
 
 #: src/rfx-builder.c:320
 msgid "    Author:       "
@@ -5839,18 +5680,16 @@ msgid "The text to show in the menu."
 msgstr ""
 
 #: src/rfx-builder.c:385
-#, fuzzy
 msgid "Action description:        "
-msgstr "Kirjeldus: "
+msgstr ""
 
 #: src/rfx-builder.c:397
 msgid "Describe what the plugin is doing. E.g. \"Edge detecting\""
 msgstr ""
 
 #: src/rfx-builder.c:403
-#, fuzzy
 msgid "Minimum frames:"
-msgstr "kaadrit"
+msgstr ""
 
 #: src/rfx-builder.c:416
 msgid ""
@@ -5874,9 +5713,8 @@ msgid "Set properties for the plugin. Optional."
 msgstr ""
 
 #: src/rfx-builder.c:445
-#, fuzzy
 msgid "_Parameters..."
-msgstr "_Omadused..."
+msgstr ""
 
 #: src/rfx-builder.c:449
 msgid "Set up parameters used in pre/loop/post/trigger code. Optional."
@@ -5891,9 +5729,8 @@ msgid "Set hints about how to lay out the parameter window. Optional."
 msgstr ""
 
 #: src/rfx-builder.c:467
-#, fuzzy
 msgid "_Language code:"
-msgstr "Keele kood:"
+msgstr ""
 
 #: src/rfx-builder.c:468
 msgid "Language for pre/loop/post/triggers. Optional."
@@ -5964,9 +5801,8 @@ msgid "_New Entry"
 msgstr ""
 
 #: src/rfx-builder.c:834
-#, fuzzy
 msgid "_Edit Entry"
-msgstr "_Redigeeri"
+msgstr ""
 
 #: src/rfx-builder.c:838
 msgid "_Remove Entry"
@@ -6081,18 +5917,16 @@ msgid ""
 msgstr ""
 
 #: src/rfx-builder.c:2239
-#, fuzzy
 msgid "_Wrap: "
-msgstr "_Lõppu (või algusese) jõudmisel otsingut ei katkestata\""
+msgstr ""
 
 #: src/rfx-builder.c:2256
 msgid "Whether the value wraps max->min and min->max."
 msgstr ""
 
 #: src/rfx-builder.c:2544
-#, fuzzy
 msgid "Set _values"
-msgstr "_Alusta"
+msgstr ""
 
 #: src/rfx-builder.c:2551 src/rfx-builder.c:2624
 msgid "Default value:    "
@@ -6119,9 +5953,8 @@ msgid "Default _Blue: "
 msgstr ""
 
 #: src/rfx-builder.c:2662
-#, fuzzy
 msgid "Set _default"
-msgstr "Sea vaikeväärtuseks"
+msgstr ""
 
 #: src/rfx-builder.c:2664
 msgid "Default value:  "
@@ -6275,9 +6108,9 @@ msgid ""
 msgstr ""
 
 #: src/rfx-builder.c:3377
-#, fuzzy, c-format
+#, c-format
 msgid "Writing script file %s..."
-msgstr "Kustutamine"
+msgstr ""
 
 #: src/rfx-builder.c:3678
 msgid "No <define> section found in script.\n"
@@ -6304,9 +6137,9 @@ msgid "No <description> section found in script.\n"
 msgstr ""
 
 #: src/rfx-builder.c:3741
-#, fuzzy, c-format
+#, c-format
 msgid "Bad description. (%s)\n"
-msgstr "Kirjeldus: "
+msgstr ""
 
 #: src/rfx-builder.c:3903
 #, c-format
@@ -6327,9 +6160,8 @@ msgid "Rebuilding scripts"
 msgstr ""
 
 #: src/rfx-builder.c:4067
-#, fuzzy
 msgid "custom..."
-msgstr "Kohandatud"
+msgstr ""
 
 #: src/rfx-builder.c:4071
 msgid "test..."
@@ -6359,9 +6191,9 @@ msgid ""
 msgstr ""
 
 #: src/rfx-builder.c:4160
-#, fuzzy, c-format
+#, c-format
 msgid "Deleting rfx script %s..."
-msgstr "Kustutamine"
+msgstr ""
 
 #: src/rfx-builder.c:4170
 #, c-format
@@ -6408,9 +6240,9 @@ msgid "Export Script to..."
 msgstr ""
 
 #: src/rfx-builder.c:4292 src/rfx-builder.c:4371
-#, fuzzy, c-format
+#, c-format
 msgid "Copying %s to %s..."
-msgstr "Kustutamine"
+msgstr ""
 
 #: src/rfx-builder.c:4363
 #, c-format
@@ -6439,28 +6271,24 @@ msgid "LiVES: - Rename test RFX Script"
 msgstr ""
 
 #: src/rfx-builder.c:4495
-#, fuzzy
 msgid "From script: "
-msgstr "Kirjeldus: "
+msgstr ""
 
 #: src/rfx-builder.c:4500
 msgid "LiVES: - RFX Script name"
 msgstr ""
 
 #: src/rfx-builder.c:4501
-#, fuzzy
 msgid "Script name: "
-msgstr "Kirjeldus: "
+msgstr ""
 
 #: src/rfx-builder.c:4525
-#, fuzzy
 msgid "New name: "
-msgstr "Uus nimi "
+msgstr ""
 
 #: src/rfx-builder.c:4528
-#, fuzzy
 msgid "New script name: "
-msgstr "Uus nimi "
+msgstr ""
 
 #: src/rfx-builder.c:4612
 msgid ""
@@ -6491,9 +6319,9 @@ msgid "_Apply Real Time Effects to Selection"
 msgstr ""
 
 #: src/rfx-builder.c:4888
-#, fuzzy, c-format
+#, c-format
 msgid "Loading rendered effect %s..."
-msgstr "Laen reaalaja efektide pluginaid..."
+msgstr ""
 
 #: src/rfx-builder.c:4993
 msgid ""
@@ -6532,7 +6360,7 @@ msgid ""
 "It should be in a partition with plenty of free disk space.\n"
 msgstr ""
 
-#: src/preferences.c:707
+#: src/preferences.c:725
 #, c-format
 msgid ""
 "Unable to create or write to the new temporary directory.\n"
@@ -6543,7 +6371,7 @@ msgid ""
 "The directory will not be changed now.\n"
 msgstr ""
 
-#: src/preferences.c:709
+#: src/preferences.c:727
 #, c-format
 msgid ""
 "Unable to create or write to the new temporary directory.\n"
@@ -6553,7 +6381,7 @@ msgid ""
 "The directory will not be changed now.\n"
 msgstr ""
 
-#: src/preferences.c:721
+#: src/preferences.c:739
 msgid ""
 "You have chosen to change the temporary directory.\n"
 "Please make sure you have no other copies of LiVES open.\n"
@@ -6565,20 +6393,20 @@ msgid ""
 "original setting."
 msgstr ""
 
-#: src/preferences.c:1111
+#: src/preferences.c:1129
 msgid ""
 "\n"
 "Unable to switch audio players to jack - jackd must be installed first.\n"
 "See http://jackaudio.org\n"
 msgstr ""
 
-#: src/preferences.c:1117
+#: src/preferences.c:1135
 msgid ""
 "\n"
 "Switching audio players requires restart (jackd must not be running)\n"
 msgstr ""
 
-#: src/preferences.c:1144
+#: src/preferences.c:1162
 msgid ""
 "\n"
 "Unable to switch audio players to pulse audio\n"
@@ -6586,813 +6414,818 @@ msgid ""
 "See http://www.pulseaudio.org\n"
 msgstr ""
 
-#: src/preferences.c:1437
+#: src/preferences.c:1455
 msgid "PCM (highest quality; largest files)"
 msgstr ""
 
-#: src/preferences.c:2018
+#: src/preferences.c:2032
 msgid "LiVES: - Preferences"
 msgstr ""
 
-#: src/preferences.c:2109
+#: src/preferences.c:2123
 msgid "Open file selection maximised"
 msgstr ""
 
-#: src/preferences.c:2119
+#: src/preferences.c:2133
 msgid "Show recent files in the File menu"
 msgstr ""
 
-#: src/preferences.c:2133
+#: src/preferences.c:2147
 msgid "Stop screensaver on playback    "
 msgstr ""
 
-#: src/preferences.c:2142
+#: src/preferences.c:2156
 msgid "Open main window maximised"
 msgstr ""
 
-#: src/preferences.c:2155
+#: src/preferences.c:2169
 msgid "Show toolbar when background is blanked"
 msgstr ""
 
-#: src/preferences.c:2164
+#: src/preferences.c:2178
 msgid "Allow mouse wheel to switch clips"
 msgstr ""
 
-#: src/preferences.c:2177
+#: src/preferences.c:2191
 msgid "Shrink previews to fit in interface"
 msgstr ""
 
-#: src/preferences.c:2187
-#, fuzzy
+#: src/preferences.c:2201
 msgid "Startup mode:"
-msgstr "_Alusta"
+msgstr ""
 
-#: src/preferences.c:2198
+#: src/preferences.c:2212
 msgid "_Clip editor"
 msgstr ""
 
-#: src/preferences.c:2218
+#: src/preferences.c:2232
 msgid "_Multitrack mode"
 msgstr ""
 
-#: src/preferences.c:2283
+#: src/preferences.c:2297
 msgid "Multi-head support"
 msgstr ""
 
-#: src/preferences.c:2296
+#: src/preferences.c:2310
 msgid " monitor number for LiVES interface"
 msgstr ""
 
-#: src/preferences.c:2311
+#: src/preferences.c:2325
 msgid " monitor number for playback"
 msgstr ""
 
-#: src/preferences.c:2324
+#: src/preferences.c:2338
 msgid ""
 "A setting of 0 means use all available monitors (only works with some "
 "playback plugins)."
 msgstr ""
 
-#: src/preferences.c:2337
+#: src/preferences.c:2351
 msgid "Force single monitor"
 msgstr ""
 
-#: src/preferences.c:2352
+#: src/preferences.c:2366
 msgid "Force single monitor mode"
 msgstr ""
 
 #. TRANSLATORS: please keep this string short
-#: src/preferences.c:2374
+#: src/preferences.c:2388
 msgid "GUI"
 msgstr "GUI"
 
-#: src/preferences.c:2402
+#: src/preferences.c:2416
 msgid "When entering Multitrack mode:"
 msgstr ""
 
-#: src/preferences.c:2421
+#: src/preferences.c:2432
 msgid "_Prompt me for width, height, fps and audio settings"
 msgstr ""
 
-#: src/preferences.c:2440
+#: src/preferences.c:2451
 msgid "_Always use the following values:"
 msgstr ""
 
-#: src/preferences.c:2460
+#: src/preferences.c:2471
 msgid "Use these same _values for rendering a new clip"
 msgstr ""
 
-#: src/preferences.c:2499
+#: src/preferences.c:2510
 msgid "_Width           "
 msgstr ""
 
-#: src/preferences.c:2515
+#: src/preferences.c:2526
 msgid "          _Height      "
 msgstr ""
 
-#: src/preferences.c:2532
+#: src/preferences.c:2543
 msgid "          _FPS"
 msgstr ""
 
-#: src/preferences.c:2558
+#: src/preferences.c:2569
 msgid "Enable backing audio track"
 msgstr ""
 
-#: src/preferences.c:2580
+#: src/preferences.c:2591
 msgid "Audio track per video track"
 msgstr ""
 
-#: src/preferences.c:2612
+#: src/preferences.c:2623
 msgid "    _Undo buffer size (MB)    "
 msgstr ""
 
-#: src/preferences.c:2628
+#: src/preferences.c:2639
 msgid "_Exit multitrack mode after rendering"
 msgstr ""
 
-#: src/preferences.c:2650
+#: src/preferences.c:2661
 msgid "Auto backup layouts"
 msgstr ""
 
-#: src/preferences.c:2660
-#, fuzzy
+#: src/preferences.c:2671
 msgid "_Every"
-msgstr "iga"
+msgstr ""
 
-#: src/preferences.c:2677
+#: src/preferences.c:2688
 msgid "seconds"
 msgstr "sekundid"
 
-#: src/preferences.c:2696
+#: src/preferences.c:2707
 msgid "After every _change"
 msgstr ""
 
-#: src/preferences.c:2715
+#: src/preferences.c:2726
 msgid "_Never"
 msgstr "_Mitte kunagi"
 
 #. TRANSLATORS: please keep this string short
-#: src/preferences.c:2750
+#: src/preferences.c:2761
 msgid "Multitrack/Render"
 msgstr ""
 
-#: src/preferences.c:2784
+#: src/preferences.c:2795
 msgid "Use instant opening when possible"
 msgstr ""
 
-#: src/preferences.c:2797
+#: src/preferences.c:2808
 msgid "Enable instant opening of some file types using decoder plugins"
 msgstr ""
 
-#: src/preferences.c:2823
+#: src/preferences.c:2834
 msgid "Video open command             "
 msgstr ""
 
-#: src/preferences.c:2843
+#: src/preferences.c:2854
 msgid "Open/render compression                  "
 msgstr ""
 
-#: src/preferences.c:2855
+#: src/preferences.c:2866
 msgid " %     ( lower = slower, larger files; for jpeg, higher quality )"
 msgstr ""
 
-#: src/preferences.c:2868
+#: src/preferences.c:2879
 msgid "Default image format          "
 msgstr ""
 
-#: src/preferences.c:2877
+#: src/preferences.c:2888
 msgid "_jpeg"
 msgstr "_jpeg"
 
-#: src/preferences.c:2892
+#: src/preferences.c:2903
 msgid "_png"
 msgstr "_png"
 
-#: src/preferences.c:2912
+#: src/preferences.c:2923
 msgid "(Check Help/Troubleshoot to see which image formats are supported)"
 msgstr ""
 
-#: src/preferences.c:2928
+#: src/preferences.c:2939
 msgid "Enable automatic deinterlacing when possible"
 msgstr ""
 
-#: src/preferences.c:2940
+#: src/preferences.c:2951
 msgid "Automatically deinterlace frames when a plugin suggests it"
 msgstr ""
 
-#: src/preferences.c:2954
+#: src/preferences.c:2965
 msgid "Ignore blank borders when possible"
 msgstr ""
 
-#: src/preferences.c:2966
+#: src/preferences.c:2977
 msgid "Clip any blank borders from frames where possible"
 msgstr ""
 
-#: src/preferences.c:2980
+#: src/preferences.c:2991
 msgid "When opening multiple files, concatenate images into one clip"
 msgstr ""
 
 #. TRANSLATORS: please keep this string short
-#: src/preferences.c:3002
-#, fuzzy
+#: src/preferences.c:3013
 msgid "Decoding"
-msgstr "Salvestamine"
+msgstr ""
 
-#: src/preferences.c:3041
+#: src/preferences.c:3052
 msgid "The preview quality for video playback - affects resizing"
 msgstr ""
 
-#: src/preferences.c:3043
-#, fuzzy
+#: src/preferences.c:3054
 msgid "Preview _quality"
-msgstr "Eelvaade"
+msgstr ""
 
 #. TRANSLATORS: video quality, max len 50
-#: src/preferences.c:3055
+#: src/preferences.c:3066
 msgid "Low - can improve performance on slower machines"
 msgstr ""
 
 #. TRANSLATORS: video quality, max len 50
-#: src/preferences.c:3057
+#: src/preferences.c:3068
 msgid "Normal - recommended for most users"
 msgstr ""
 
 #. TRANSLATORS: video quality, max len 50
-#: src/preferences.c:3059
+#: src/preferences.c:3070
 msgid "High - can improve quality on very fast machines"
 msgstr ""
 
-#: src/preferences.c:3082
+#: src/preferences.c:3093
 msgid "_Show FPS statistics"
 msgstr ""
 
-#: src/preferences.c:3112
+#: src/preferences.c:3123
 msgid "_Plugin"
 msgstr ""
 
-#: src/preferences.c:3159
+#: src/preferences.c:3170
 msgid "Stream audio"
 msgstr ""
 
-#: src/preferences.c:3162
+#: src/preferences.c:3173
 msgid "Stream audio to playback plugin"
 msgstr ""
 
-#: src/preferences.c:3181
+#: src/preferences.c:3192
 msgid "Record player output"
 msgstr ""
 
-#: src/preferences.c:3184
+#: src/preferences.c:3195
 msgid "Record output from player instead of input to player"
 msgstr ""
 
-#: src/preferences.c:3194
+#: src/preferences.c:3205
 msgid "VIDEO"
 msgstr "VIDEO"
 
-#: src/preferences.c:3217
-#, fuzzy
+#: src/preferences.c:3228
 msgid "_Player"
-msgstr "_Esita"
+msgstr ""
 
-#: src/preferences.c:3255
+#: src/preferences.c:3266
 msgid "(See also the Jack Integration tab for jack startup options)"
 msgstr ""
 
-#: src/preferences.c:3289
+#: src/preferences.c:3300
 msgid "mplayer"
 msgstr "mplayer"
 
-#: src/preferences.c:3301
+#: src/preferences.c:3312
 msgid "Audio play _command"
 msgstr ""
 
-#: src/preferences.c:3319
+#: src/preferences.c:3330
 msgid "- internal -"
 msgstr ""
 
-#: src/preferences.c:3331
+#: src/preferences.c:3342
 msgid "Audio follows video _rate/direction"
 msgstr ""
 
-#: src/preferences.c:3352
+#: src/preferences.c:3363
 msgid "Audio follows _clip switches"
 msgstr ""
 
-#: src/preferences.c:3370
+#: src/preferences.c:3381
 msgid "AUDIO"
 msgstr ""
 
 #. TRANSLATORS: please keep this string short
-#: src/preferences.c:3385
+#: src/preferences.c:3396
 msgid "Playback"
 msgstr "Taasesitus"
 
-#: src/preferences.c:3410
+#: src/preferences.c:3421
 msgid ""
 "Record audio when capturing an e_xternal window\n"
 " (requires jack or pulse audio)"
 msgstr ""
 
-#: src/preferences.c:3430
+#: src/preferences.c:3441
 msgid "      What to record when 'r' is pressed   "
 msgstr ""
 
-#: src/preferences.c:3445
-#, fuzzy
+#: src/preferences.c:3456
 msgid "_Frame changes"
-msgstr "Hajumine"
+msgstr ""
 
-#: src/preferences.c:3461
-#, fuzzy
+#: src/preferences.c:3472
 msgid "F_PS changes"
-msgstr "Hajumine"
+msgstr ""
 
-#: src/preferences.c:3483
+#: src/preferences.c:3494
 msgid "_Real time effects"
 msgstr ""
 
-#: src/preferences.c:3495
+#: src/preferences.c:3506
 msgid "_Clip switches"
 msgstr ""
 
-#: src/preferences.c:3509
+#: src/preferences.c:3520
 msgid "_Internal Audio (requires jack or pulse audio player)"
 msgstr ""
 
-#: src/preferences.c:3531
+#: src/preferences.c:3542
 msgid "_External Audio (requires jack or pulse audio player)"
 msgstr ""
 
-#: src/preferences.c:3564
+#: src/preferences.c:3575
 msgid "Pause recording if free disk space falls below"
 msgstr ""
 
-#: src/preferences.c:3578
+#: src/preferences.c:3589
 msgid "GB"
 msgstr ""
 
 #. TRANSLATORS: please keep this string short
-#: src/preferences.c:3590
+#: src/preferences.c:3601
 msgid "Recording"
 msgstr "Salvestamine"
 
-#: src/preferences.c:3618
+#: src/preferences.c:3629
 msgid "      Encoder                  "
 msgstr ""
 
-#: src/preferences.c:3654
+#: src/preferences.c:3665
 msgid "Output format"
 msgstr "Väljundi vorming"
 
-#: src/preferences.c:3701
-#, fuzzy
+#: src/preferences.c:3712
 msgid "Audio codec"
-msgstr "Heli"
+msgstr ""
 
 #. TRANSLATORS: please keep this string short
-#: src/preferences.c:3718
+#: src/preferences.c:3729
 msgid "Encoding"
 msgstr "Kodeering"
 
-#: src/preferences.c:3744
+#: src/preferences.c:3757
 msgid "Use _antialiasing when resizing"
 msgstr ""
 
-#: src/preferences.c:3765
+#: src/preferences.c:3768
 msgid "Number of _real time effect keys"
 msgstr ""
 
-#: src/preferences.c:3778
+#: src/preferences.c:3770
 msgid ""
 "The number of \"virtual\" real time effect keys. They can be controlled "
 "through the real time effects window, or via network (OSC)."
 msgstr ""
 
-#: src/preferences.c:3784
+#: src/preferences.c:3780
 msgid "Use _threads where possible when applying effects"
 msgstr ""
 
-#: src/preferences.c:3806
+#: src/preferences.c:3789
 msgid "Number of _threads"
 msgstr ""
 
-#: src/preferences.c:3854
+#: src/preferences.c:3807
+msgid "Restart is required if any of the following paths are changed:"
+msgstr ""
+
+#: src/preferences.c:3819
+msgid "Weed plugin path"
+msgstr ""
+
+#: src/preferences.c:3822
+msgid "Frei0r plugin path"
+msgstr ""
+
+#: src/preferences.c:3825
+msgid "LADSPA plugin path"
+msgstr ""
+
+#: src/preferences.c:3859
 msgid "      Video load directory (default)      "
 msgstr ""
 
-#: src/preferences.c:3865
+#: src/preferences.c:3870
 msgid "      Video save directory (default) "
 msgstr ""
 
-#: src/preferences.c:3876
+#: src/preferences.c:3881
 msgid "      Audio load directory (default) "
 msgstr ""
 
-#: src/preferences.c:3887
+#: src/preferences.c:3892
 msgid "      Image directory (default) "
 msgstr ""
 
-#: src/preferences.c:3898
+#: src/preferences.c:3903
 msgid "      Backup/Restore directory (default) "
 msgstr ""
 
-#: src/preferences.c:3909
+#: src/preferences.c:3914
 msgid "      Temp directory (do not remove) "
 msgstr ""
 
-#: src/preferences.c:3928
+#: src/preferences.c:3933
 msgid "The default directory for loading video clips from"
 msgstr ""
 
-#: src/preferences.c:3971
+#: src/preferences.c:3976
 msgid "The default directory for saving encoded clips to"
 msgstr ""
 
-#: src/preferences.c:3984
+#: src/preferences.c:3989
 msgid "The default directory for loading and saving audio"
 msgstr ""
 
-#: src/preferences.c:3997
+#: src/preferences.c:4002
 msgid "The default directory for saving frameshots to"
 msgstr ""
 
-#: src/preferences.c:4010
+#: src/preferences.c:4015
 msgid "The default directory for backing up/restoring single clips"
 msgstr ""
 
-#: src/preferences.c:4022
+#: src/preferences.c:4027
 msgid "LiVES working directory."
 msgstr ""
 
 #. TRANSLATORS: please keep this string short
-#: src/preferences.c:4100
+#: src/preferences.c:4105
 msgid "Directories"
 msgstr "Kataloogid"
 
-#: src/preferences.c:4131
+#: src/preferences.c:4136
 msgid "Warn if diskspace falls below: "
 msgstr ""
 
-#: src/preferences.c:4146 src/preferences.c:4178
+#: src/preferences.c:4151 src/preferences.c:4183
 msgid " MB [set to 0 to disable]"
 msgstr ""
 
-#: src/preferences.c:4163
+#: src/preferences.c:4168
 msgid "Diskspace critical level: "
 msgstr ""
 
-#: src/preferences.c:4202
+#: src/preferences.c:4207
 msgid ""
 "Warn on Insert / Merge if _frame rate of clipboard does not match frame rate "
 "of selection"
 msgstr ""
 
-#: src/preferences.c:4225
+#: src/preferences.c:4230
 msgid "Warn on Open if file _size exceeds "
 msgstr ""
 
-#: src/preferences.c:4248
+#: src/preferences.c:4253
 msgid " MB"
 msgstr " MB"
 
-#: src/preferences.c:4258
+#: src/preferences.c:4263
 msgid "Show a warning before saving a se_t"
 msgstr ""
 
-#: src/preferences.c:4277
+#: src/preferences.c:4282
 msgid ""
 "Show a warning if _mplayer, sox, composite or convert is not found when "
 "LiVES is started."
 msgstr ""
 
-#: src/preferences.c:4296
+#: src/preferences.c:4301
 msgid "Show a warning if no _rendered effects are found at startup."
 msgstr ""
 
-#: src/preferences.c:4315
+#: src/preferences.c:4320
 msgid "Show a warning if no _encoder plugins are found at startup."
 msgstr ""
 
-#: src/preferences.c:4334
+#: src/preferences.c:4339
 msgid "Show a warning if a _duplicate set name is entered."
 msgstr ""
 
-#: src/preferences.c:4353
+#: src/preferences.c:4358
 msgid "When a set is loaded, warn if clips are missing from _layouts."
 msgstr ""
 
-#: src/preferences.c:4373
+#: src/preferences.c:4378
 msgid "Warn if a clip used in a layout is about to be closed."
 msgstr ""
 
-#: src/preferences.c:4392
+#: src/preferences.c:4397
 msgid "Warn if frames used in a layout are about to be deleted."
 msgstr ""
 
-#: src/preferences.c:4411
+#: src/preferences.c:4416
 msgid "Warn if frames used in a layout are about to be shifted."
 msgstr ""
 
-#: src/preferences.c:4430
+#: src/preferences.c:4435
 msgid "Warn if frames used in a layout are about to be altered."
 msgstr ""
 
-#: src/preferences.c:4449
+#: src/preferences.c:4454
 msgid "Warn if audio used in a layout is about to be deleted."
 msgstr ""
 
-#: src/preferences.c:4468
+#: src/preferences.c:4473
 msgid "Warn if audio used in a layout is about to be shifted."
 msgstr ""
 
-#: src/preferences.c:4487
+#: src/preferences.c:4492
 msgid "Warn if audio used in a layout is about to be altered."
 msgstr ""
 
-#: src/preferences.c:4506
+#: src/preferences.c:4511
 msgid "Popup layout errors after clip changes."
 msgstr ""
 
-#: src/preferences.c:4525
+#: src/preferences.c:4530
 msgid "Warn if the layout has not been saved when leaving multitrack mode."
 msgstr ""
 
-#: src/preferences.c:4544
+#: src/preferences.c:4549
 msgid ""
 "Warn if multitrack has no audio channels, and a layout with audio is loaded."
 msgstr ""
 
-#: src/preferences.c:4563
+#: src/preferences.c:4568
 msgid ""
 "Warn if multitrack has audio channels, and your audio player is not \"jack\" "
 "or \"pulse audio\"."
 msgstr ""
 
-#: src/preferences.c:4582
+#: src/preferences.c:4587
 msgid "Show info message after importing from firewire device."
 msgstr ""
 
-#: src/preferences.c:4603
+#: src/preferences.c:4608
 msgid "Show a warning before opening a yuv4mpeg stream (advanced)."
 msgstr ""
 
-#: src/preferences.c:4624
+#: src/preferences.c:4629
 msgid "Show a warning when multitrack is low on backup space."
 msgstr ""
 
-#: src/preferences.c:4643
+#: src/preferences.c:4648
 msgid "Show a warning advising cleaning of disk space after a crash."
 msgstr ""
 
-#: src/preferences.c:4663
-#, fuzzy
+#: src/preferences.c:4668
 msgid "Show a warning if unable to connect to pulseaudio player."
-msgstr "Heli serveri pulse käivitamine..."
+msgstr ""
 
 #. TRANSLATORS: please keep this string short
-#: src/preferences.c:4687
+#: src/preferences.c:4692
 msgid "Warnings"
 msgstr "Hoiatused"
 
-#: src/preferences.c:4712
+#: src/preferences.c:4717
 msgid "Midi synch (requires the files midistart and midistop)"
 msgstr ""
 
-#: src/preferences.c:4736
+#: src/preferences.c:4741
 msgid "When inserting/merging frames:  "
 msgstr ""
 
-#: src/preferences.c:4746
+#: src/preferences.c:4751
 msgid "_Speed Up/Slow Down Insertion"
 msgstr ""
 
-#: src/preferences.c:4762
+#: src/preferences.c:4767
 msgid "_Resample Insertion"
 msgstr ""
 
-#: src/preferences.c:4779
+#: src/preferences.c:4784
 msgid "Pause xmms during audio playback"
 msgstr ""
 
-#: src/preferences.c:4802
+#: src/preferences.c:4807
 msgid "CD device           "
 msgstr ""
 
-#: src/preferences.c:4819
+#: src/preferences.c:4824
 msgid "LiVES: Choose CD device"
 msgstr ""
 
-#: src/preferences.c:4842
+#: src/preferences.c:4847
 msgid "LiVES can load audio tracks from this CD"
 msgstr ""
 
-#: src/preferences.c:4848
+#: src/preferences.c:4853
 msgid "Default FPS        "
 msgstr ""
 
-#: src/preferences.c:4861
+#: src/preferences.c:4866
 msgid "Frames per second to use when none is specified"
 msgstr ""
 
 #. TRANSLATORS: please keep this string short
-#: src/preferences.c:4868
+#: src/preferences.c:4873
 msgid "Misc"
 msgstr "Muud"
 
-#: src/preferences.c:4895
+#: src/preferences.c:4900
 msgid "New theme:           "
 msgstr ""
 
 #. TRANSLATORS: please keep this string short
-#: src/preferences.c:4930
+#: src/preferences.c:4935
 msgid "Themes"
 msgstr "Teemad"
 
-#: src/preferences.c:4957
+#: src/preferences.c:4962
 msgid "Download bandwidth (Kb/s)       "
 msgstr ""
 
-#: src/preferences.c:4979
+#: src/preferences.c:4984
 msgid "LiVES must be compiled without \"configure --disable-OSC\" to use OMC"
 msgstr ""
 
-#: src/preferences.c:4993
+#: src/preferences.c:4998
 msgid "OMC remote control enabled"
 msgstr ""
 
-#: src/preferences.c:5013
+#: src/preferences.c:5018
 msgid "UDP port       "
 msgstr ""
 
-#: src/preferences.c:5029
-#, fuzzy
+#: src/preferences.c:5034
 msgid "Start OMC on startup"
-msgstr "Siirded"
+msgstr ""
 
 #. TRANSLATORS: please keep this string short
-#: src/preferences.c:5063
+#: src/preferences.c:5068
 msgid "Streaming/Networking"
 msgstr ""
 
-#: src/preferences.c:5088
+#: src/preferences.c:5093
 msgid "Jack transport"
 msgstr ""
 
-#: src/preferences.c:5103
+#: src/preferences.c:5108
 msgid ""
 "LiVES must be compiled with jack/transport.h and jack/jack.h present to use "
 "jack transport"
 msgstr ""
 
-#: src/preferences.c:5114
+#: src/preferences.c:5119
 msgid "Jack _transport config file"
 msgstr ""
 
-#: src/preferences.c:5129
+#: src/preferences.c:5134
 msgid "The name of the jack server which can control LiVES transport"
 msgstr ""
 
-#: src/preferences.c:5132 src/preferences.c:5327
+#: src/preferences.c:5137 src/preferences.c:5332
 msgid "Start _server on LiVES startup"
 msgstr ""
 
-#: src/preferences.c:5156
+#: src/preferences.c:5161
 msgid "Jack transport _master (start and stop)"
 msgstr ""
 
-#: src/preferences.c:5176
+#: src/preferences.c:5181
 msgid "Jack transport _client (start and stop)"
 msgstr ""
 
-#: src/preferences.c:5200
+#: src/preferences.c:5205
 msgid "Jack transport sets start position"
 msgstr ""
 
-#: src/preferences.c:5229
+#: src/preferences.c:5234
 msgid "Jack transport timebase slave"
 msgstr ""
 
-#: src/preferences.c:5254
+#: src/preferences.c:5259
 msgid "(See also Playback -> Audio follows video rate/direction)"
 msgstr ""
 
-#: src/preferences.c:5277
-#, fuzzy
+#: src/preferences.c:5282
 msgid "Jack audio"
-msgstr "audio"
+msgstr ""
 
-#: src/preferences.c:5285
+#: src/preferences.c:5290
 msgid "LiVES must be compiled with jack/jack.h present to use jack audio"
 msgstr ""
 
-#: src/preferences.c:5292
+#: src/preferences.c:5297
 msgid ""
 "You MUST set the audio player to \"jack\" in the Playback tab to use jack "
 "audio"
 msgstr ""
 
-#: src/preferences.c:5303
+#: src/preferences.c:5308
 msgid "Jack _audio server config file"
 msgstr ""
 
-#: src/preferences.c:5319
+#: src/preferences.c:5324
 msgid "The name of the jack server for audio"
 msgstr ""
 
-#: src/preferences.c:5348
+#: src/preferences.c:5353
 msgid "Play audio even when transport is _paused"
 msgstr ""
 
 #. TRANSLATORS: please keep this string short
-#: src/preferences.c:5376
+#: src/preferences.c:5381
 msgid "Jack Integration"
 msgstr ""
 
-#: src/preferences.c:5402
+#: src/preferences.c:5407
 msgid "Events to respond to:"
 msgstr ""
 
-#: src/preferences.c:5413
+#: src/preferences.c:5418
 msgid "_Joystick events"
 msgstr ""
 
-#: src/preferences.c:5434
+#: src/preferences.c:5439
 msgid "_Joystick device"
 msgstr ""
 
-#: src/preferences.c:5449
+#: src/preferences.c:5454
 msgid "The joystick device, e.g. /dev/input/js0"
 msgstr ""
 
-#: src/preferences.c:5456
+#: src/preferences.c:5461
 msgid "LiVES: Choose joystick device"
 msgstr ""
 
-#: src/preferences.c:5472
+#: src/preferences.c:5477
 msgid "_MIDI events"
 msgstr ""
 
-#: src/preferences.c:5500
+#: src/preferences.c:5505
 msgid "Create an ALSA MIDI port which other MIDI devices can be connected to"
 msgstr ""
 
-#: src/preferences.c:5501
+#: src/preferences.c:5506
 msgid "Use _ALSA MIDI (recommended)"
 msgstr ""
 
-#: src/preferences.c:5520
+#: src/preferences.c:5525
 msgid "Use _raw MIDI"
 msgstr ""
 
-#: src/preferences.c:5533
+#: src/preferences.c:5538
 msgid "Read directly from the MIDI device"
 msgstr ""
 
-#: src/preferences.c:5545
+#: src/preferences.c:5550
 msgid "_MIDI device"
 msgstr ""
 
-#: src/preferences.c:5560
+#: src/preferences.c:5565
 msgid "The MIDI device, e.g. /dev/input/midi0"
 msgstr ""
 
-#: src/preferences.c:5567
+#: src/preferences.c:5572
 msgid "LiVES: Choose MIDI device"
 msgstr ""
 
-#: src/preferences.c:5584
+#: src/preferences.c:5589
 msgid "Advanced"
 msgstr "Muu"
 
-#: src/preferences.c:5595
+#: src/preferences.c:5600
 msgid "MIDI check _rate"
 msgstr ""
 
-#: src/preferences.c:5608
+#: src/preferences.c:5613
 msgid ""
 "Number of MIDI checks per keyboard tick. Increasing this may improve MIDI "
 "responsiveness, but may slow down playback."
 msgstr ""
 
-#: src/preferences.c:5610
+#: src/preferences.c:5615
 msgid "MIDI repeat"
 msgstr ""
 
-#: src/preferences.c:5623
+#: src/preferences.c:5628
 msgid "Number of non-reads allowed between succesive reads."
 msgstr ""
 
-#: src/preferences.c:5629
+#: src/preferences.c:5634
 msgid "(Warning: setting this value too high can slow down playback.)"
 msgstr ""
 
 #. TRANSLATORS: please keep this string short
-#: src/preferences.c:5652
+#: src/preferences.c:5657
 msgid "MIDI/Joystick learner"
 msgstr ""
 
-#: src/preferences.c:5977
+#: src/preferences.c:5995
 msgid ""
 "\n"
 "LiVES will now shut down. You need to restart it for the directory change to "
@@ -7400,40 +7233,40 @@ msgid ""
 "Click OK to continue.\n"
 msgstr ""
 
-#: src/preferences.c:6023
+#: src/preferences.c:6041
 msgid ""
 "For the directory change to take effect LiVES will restart when preferences "
 "dialog closes."
 msgstr ""
 
-#: src/preferences.c:6027
+#: src/preferences.c:6045
 msgid "Theme changes will not take effect until the next time you start LiVES."
 msgstr ""
 
-#: src/preferences.c:6031
+#: src/preferences.c:6049
 msgid "Jack options will not take effect until the next time you start LiVES."
 msgstr ""
 
-#: src/osc.c:2429
+#: src/osc.c:2435
 #, c-format
 msgid "Syncing to external framerate of %.8f frames per second.\n"
 msgstr ""
 
-#: src/osc.c:5390
+#: src/osc.c:6508
 msgid "Cannot initialize OSC receiver\n"
 msgstr ""
 
-#: src/osc.c:5414
+#: src/osc.c:6532
 #, c-format
 msgid "WARNING: Cannot start OSC server at UDP port %d\n"
 msgstr ""
 
-#: src/osc.c:5419
+#: src/osc.c:6537
 #, c-format
 msgid "Started OSC server at UDP port %d\n"
 msgstr ""
 
-#: src/osc.c:5532
+#: src/osc.c:6650
 #, c-format
 msgid "Cannot start OSC/UDP server at port %d \n"
 msgstr ""
@@ -7576,9 +7409,8 @@ msgid "New"
 msgstr "Uus"
 
 #: src/resample.c:1793
-#, fuzzy
 msgid "_Frames Per Second "
-msgstr "sekundid"
+msgstr ""
 
 #: src/resample.c:1835
 msgid "Record for maximum:  "
@@ -7593,9 +7425,8 @@ msgid " minutes  "
 msgstr ""
 
 #: src/resample.c:1884
-#, fuzzy
 msgid " seconds  "
-msgstr "sekundid"
+msgstr ""
 
 #: src/resample.c:1905
 msgid "Unlimited"
@@ -7672,9 +7503,8 @@ msgid ""
 msgstr ""
 
 #: src/resample.c:2324
-#, fuzzy
 msgid "Speed Change"
-msgstr "Hajumine"
+msgstr ""
 
 #: src/resample.c:2333
 #, c-format
@@ -7687,18 +7517,16 @@ msgid "Changed playback speed to %.3f frames per second.\n"
 msgstr ""
 
 #: src/resample.c:2421
-#, fuzzy
 msgid "Resampling video"
-msgstr "Hajumine"
+msgstr ""
 
 #: src/resample.c:2428 src/resample.c:2544 src/resample.c:2566
 msgid "Resampling clipboard video"
 msgstr ""
 
 #: src/resample.c:2433
-#, fuzzy
 msgid "Reordering frames"
-msgstr "kaadrit"
+msgstr ""
 
 #: src/resample.c:2442
 msgid ""
@@ -7708,18 +7536,17 @@ msgid ""
 msgstr ""
 
 #: src/resample.c:2491
-#, fuzzy
 msgid "Deordering frames"
-msgstr "kaadrit"
+msgstr ""
 
 #: src/resample.c:2583
 msgid "resampling error..."
 msgstr ""
 
 #: src/rte_window.c:67 src/rte_window.c:923
-#, fuzzy, c-format
+#, c-format
 msgid "Type: %s"
-msgstr "Tüüp:"
+msgstr ""
 
 #: src/rte_window.c:98
 msgid ""
@@ -7762,9 +7589,9 @@ msgid ""
 msgstr ""
 
 #: src/rte_window.c:289
-#, fuzzy, c-format
+#, c-format
 msgid "Saving real time effect defaults to %s..."
-msgstr "Laen reaalaja efektide pluginaid..."
+msgstr ""
 
 #: src/rte_window.c:298
 #, c-format
@@ -7777,9 +7604,9 @@ msgid ""
 msgstr ""
 
 #: src/rte_window.c:395
-#, fuzzy, c-format
+#, c-format
 msgid "Loading real time effect defaults from %s..."
-msgstr "Laen reaalaja efektide pluginaid..."
+msgstr ""
 
 #: src/rte_window.c:444
 #, c-format
@@ -7855,9 +7682,9 @@ msgid "LiVES: Information for %s"
 msgstr ""
 
 #: src/rte_window.c:915
-#, fuzzy, c-format
+#, c-format
 msgid "Effect name: %s"
-msgstr "Efektid"
+msgstr ""
 
 #: src/rte_window.c:931
 #, c-format
@@ -7892,16 +7719,9 @@ msgstr ""
 msgid "LiVES could not locate the effect %s.\n"
 msgstr ""
 
-#. TRANSLATORS: example " - LADSPA plugins -"
-#: src/rte_window.c:1273
-#, c-format
-msgid " - %s plugins -"
-msgstr ""
-
 #: src/rte_window.c:1376
-#, fuzzy
 msgid "LiVES: Real time effect mapping"
-msgstr "Laen reaalaja efektide pluginaid..."
+msgstr ""
 
 #: src/rte_window.c:1385 src/rte_window.c:1443
 msgid "Key grab"
@@ -7941,14 +7761,12 @@ msgid "Clear"
 msgstr "Puhasta"
 
 #: src/rte_window.c:1523
-#, fuzzy
 msgid "Effect name:"
-msgstr "Efektid"
+msgstr ""
 
 #: src/rte_window.c:1602
-#, fuzzy
 msgid "_Save as default keymap"
-msgstr "Sea vaikeväärtuseks"
+msgstr ""
 
 #: src/rte_window.c:1607
 msgid "_Load default keymap"
@@ -7997,9 +7815,8 @@ msgid "Opened yuv4mpeg stream on %s"
 msgstr ""
 
 #: src/lives-yuv4mpeg.c:397
-#, fuzzy
 msgid "Audio: "
-msgstr "Heli"
+msgstr ""
 
 #: src/lives-yuv4mpeg.c:400
 msgid "none\n"
@@ -8070,9 +7887,9 @@ msgid "%.2f sec.\n"
 msgstr ""
 
 #: src/multitrack.c:1544 src/multitrack.c:3145
-#, fuzzy, c-format
+#, c-format
 msgid "Source: %s"
-msgstr "Autor: %s"
+msgstr ""
 
 #: src/multitrack.c:1547 src/multitrack.c:3147
 msgid "Right click for context menu.\n"
@@ -8248,52 +8065,46 @@ msgid "Close gaps"
 msgstr ""
 
 #: src/multitrack.c:4027
-#, fuzzy
 msgid "Move block"
-msgstr "Liiguta _alla"
+msgstr ""
 
 #: src/multitrack.c:4029
 msgid "Move audio block"
 msgstr ""
 
 #: src/multitrack.c:4031
-#, fuzzy
 msgid "Delete block"
-msgstr "_Kustuta kõik"
+msgstr ""
 
 #: src/multitrack.c:4033
-#, fuzzy
 msgid "Delete audio block"
-msgstr "_Kustuta kõik"
+msgstr ""
 
 #: src/multitrack.c:4035
-#, fuzzy
 msgid "Split tracks"
-msgstr "eraldaja"
+msgstr ""
 
 #: src/multitrack.c:4037
 msgid "Split block"
 msgstr ""
 
 #: src/multitrack.c:4040
-#, fuzzy, c-format
+#, c-format
 msgid "Apply %s"
-msgstr "_Rakenda"
+msgstr ""
 
 #: src/multitrack.c:4045
-#, fuzzy, c-format
+#, c-format
 msgid "Delete %s"
-msgstr "Kustuta"
+msgstr ""
 
 #: src/multitrack.c:4049
-#, fuzzy
 msgid "Insert block"
-msgstr "Lisa"
+msgstr ""
 
 #: src/multitrack.c:4051
-#, fuzzy
 msgid "Insert gap"
-msgstr "Lisa"
+msgstr ""
 
 #: src/multitrack.c:4053
 msgid "Insert audio block"
@@ -8312,9 +8123,8 @@ msgid "signed "
 msgstr ""
 
 #: src/multitrack.c:4454
-#, fuzzy
 msgid "big endian"
-msgstr "_Alusta"
+msgstr ""
 
 #: src/multitrack.c:4455
 msgid "little endian"
@@ -8367,23 +8177,20 @@ msgid "_Open..."
 msgstr ""
 
 #: src/multitrack.c:5383
-#, fuzzy
 msgid "O_pen File Selection..."
-msgstr "_Kustuta valik"
+msgstr ""
 
 #: src/multitrack.c:5426
 msgid "Import Selection from _dvd/vcd..."
 msgstr ""
 
 #: src/multitrack.c:5435
-#, fuzzy
 msgid "Import Selection from _dvd"
-msgstr "_Pööra valik"
+msgstr ""
 
 #: src/multitrack.c:5445
-#, fuzzy
 msgid "Import Selection from _vcd"
-msgstr "_Pööra valik"
+msgstr ""
 
 #: src/multitrack.c:5461
 msgid "_Import from Device"
@@ -8422,19 +8229,16 @@ msgid "_Adjust selected clip start/end points"
 msgstr ""
 
 #: src/multitrack.c:5721
-#, fuzzy
 msgid "_Insert selected clip"
-msgstr "_Pööra valik"
+msgstr ""
 
 #: src/multitrack.c:5733
-#, fuzzy
 msgid "_Insert selected clip audio"
-msgstr "_Pööra valik"
+msgstr ""
 
 #: src/multitrack.c:5742
-#, fuzzy
 msgid "_Delete selected block"
-msgstr "_Kustuta valik"
+msgstr ""
 
 #: src/multitrack.c:5751
 msgid "_Jump to previous block boundary"
@@ -8473,9 +8277,8 @@ msgid "View/_Edit selected effect"
 msgstr ""
 
 #: src/multitrack.c:5934
-#, fuzzy
 msgid "_Delete selected effect"
-msgstr "_Kustuta valik"
+msgstr ""
 
 #: src/multitrack.c:5942
 msgid "Apply effect to _block..."
@@ -8538,18 +8341,16 @@ msgid "Select _no video tracks"
 msgstr ""
 
 #: src/multitrack.c:6301
-#, fuzzy
 msgid "Select all _time"
-msgstr "Vali fail"
+msgstr ""
 
 #: src/multitrack.c:6312
 msgid "Select from _zero time"
 msgstr ""
 
 #: src/multitrack.c:6319
-#, fuzzy
 msgid "Select to _end time"
-msgstr "Vali fail"
+msgstr ""
 
 #: src/multitrack.c:6326
 msgid "_Copy..."
@@ -8584,14 +8385,12 @@ msgid "_Render all to new clip"
 msgstr ""
 
 #: src/multitrack.c:6463
-#, fuzzy
 msgid "Render _video"
-msgstr "_Genereerimine"
+msgstr ""
 
 #: src/multitrack.c:6468
-#, fuzzy
 msgid "Render _audio"
-msgstr "_Genereerimine"
+msgstr ""
 
 #: src/multitrack.c:6478
 msgid "_Normalise rendered audio"
@@ -8650,9 +8449,8 @@ msgid "Multitrack _details"
 msgstr ""
 
 #: src/multitrack.c:6615
-#, fuzzy
 msgid "_Event Window"
-msgstr "_Sulge aken"
+msgstr ""
 
 #: src/multitrack.c:6619
 msgid "_Event Window (selected time only)"
@@ -8694,18 +8492,16 @@ msgid ""
 msgstr ""
 
 #: src/multitrack.c:7064
-#, fuzzy
 msgid "Select _overlap"
-msgstr "Vali fail"
+msgstr ""
 
 #: src/multitrack.c:7122 src/multitrack.c:12999
 msgid "Expanded View (d)"
 msgstr ""
 
 #: src/multitrack.c:7124 src/multitrack.c:13006
-#, fuzzy
 msgid "Compact View (d)"
-msgstr "Tihe vaade"
+msgstr ""
 
 #: src/multitrack.c:7157
 msgid "Gravity: _Normal"
@@ -8752,32 +8548,28 @@ msgid "_Next node"
 msgstr ""
 
 #: src/multitrack.c:7452
-#, fuzzy
 msgid "_Prev node"
-msgstr "_Eelvaade"
+msgstr ""
 
 #: src/multitrack.c:7482
 msgid "_Reverse playback  "
 msgstr ""
 
 #: src/multitrack.c:7510
-#, fuzzy
 msgid "_Velocity  "
-msgstr "kiirus"
+msgstr ""
 
 #: src/multitrack.c:7567
 msgid "Anchor the start point to the timeline"
 msgstr ""
 
 #: src/multitrack.c:7570
-#, fuzzy
 msgid "Anchor _start"
-msgstr "Pööris"
+msgstr ""
 
 #: src/multitrack.c:7604
-#, fuzzy
 msgid "Start frame"
-msgstr "_Kaadrid"
+msgstr ""
 
 #: src/multitrack.c:7641
 msgid "Anchor the end point to the timeline"
@@ -8788,9 +8580,8 @@ msgid "Anchor _end"
 msgstr ""
 
 #: src/multitrack.c:7677
-#, fuzzy
 msgid "End frame"
-msgstr "kaadrit"
+msgstr ""
 
 #: src/multitrack.c:7831
 msgid "Scroll"
@@ -8804,9 +8595,8 @@ msgid ""
 msgstr ""
 
 #: src/multitrack.c:8588
-#, fuzzy
 msgid "Timeline (seconds)"
-msgstr "sekundid"
+msgstr ""
 
 #: src/multitrack.c:9028
 msgid " Backing audio"
@@ -8818,9 +8608,8 @@ msgid " Layer %d audio"
 msgstr ""
 
 #: src/multitrack.c:9038
-#, fuzzy
 msgid "Show/hide audio details"
-msgstr "Näita üksikasju"
+msgstr ""
 
 #: src/multitrack.c:9055 src/multitrack.c:9263
 #, c-format
@@ -8828,18 +8617,17 @@ msgid "Layer %d audio"
 msgstr ""
 
 #: src/multitrack.c:9218
-#, fuzzy
 msgid "Select track"
-msgstr "Vali fail"
+msgstr ""
 
 #: src/multitrack.c:9221
 msgid "Show/hide audio"
 msgstr ""
 
 #: src/multitrack.c:9227
-#, fuzzy, c-format
+#, c-format
 msgid "Video %d"
-msgstr "Video"
+msgstr ""
 
 #: src/multitrack.c:9255 src/multitrack.c:9291
 #, c-format
@@ -8864,9 +8652,8 @@ msgid "_View this effect"
 msgstr ""
 
 #: src/multitrack.c:9379
-#, fuzzy
 msgid "_Delete this effect"
-msgstr "_Kustuta valik"
+msgstr ""
 
 #: src/multitrack.c:9430
 msgid "Cannot insert after this effect"
@@ -8887,9 +8674,9 @@ msgid "%.2f sec."
 msgstr ""
 
 #: src/multitrack.c:9715
-#, fuzzy, c-format
+#, c-format
 msgid "%d frames"
-msgstr "kaadrit"
+msgstr ""
 
 #: src/multitrack.c:10025
 msgid ""
@@ -8927,14 +8714,13 @@ msgid "%s output"
 msgstr ""
 
 #: src/multitrack.c:11723
-#, fuzzy, c-format
+#, c-format
 msgid "layer %d"
-msgstr "mplayer"
+msgstr ""
 
 #: src/multitrack.c:11725
-#, fuzzy
 msgid "audio track"
-msgstr "audio"
+msgstr ""
 
 #: src/multitrack.c:11726
 #, c-format
@@ -8946,14 +8732,12 @@ msgid "_Prev filter map"
 msgstr ""
 
 #: src/multitrack.c:11788
-#, fuzzy
 msgid "Insert _before"
-msgstr "Lisa"
+msgstr ""
 
 #: src/multitrack.c:11798
-#, fuzzy
 msgid "Insert _after"
-msgstr "Lisa"
+msgstr ""
 
 #: src/multitrack.c:11813
 msgid "_Next filter map"
@@ -8992,9 +8776,8 @@ msgid "LiVES: Selected block/frame"
 msgstr ""
 
 #: src/multitrack.c:12063
-#, fuzzy
 msgid "_Select this block"
-msgstr "Vali fail"
+msgstr ""
 
 #: src/multitrack.c:12073
 msgid "_Split block here"
@@ -9005,19 +8788,17 @@ msgid "List _effects here"
 msgstr ""
 
 #: src/multitrack.c:12090 src/multitrack.c:12168
-#, fuzzy, c-format
+#, c-format
 msgid "_Adjust %s"
-msgstr "Kontrasti muutmine"
+msgstr ""
 
 #: src/multitrack.c:12105
-#, fuzzy
 msgid "_Delete this block"
-msgstr "_Kustuta valik"
+msgstr ""
 
 #: src/multitrack.c:12149
-#, fuzzy
 msgid "_Insert here"
-msgstr "Lisa"
+msgstr ""
 
 #: src/multitrack.c:12155
 msgid "_Insert audio here"
@@ -9048,11 +8829,10 @@ msgid "Multitrack details"
 msgstr ""
 
 #: src/multitrack.c:14076
-#, fuzzy
 msgid ""
 "\n"
 " (variable)"
-msgstr "muutuja"
+msgstr ""
 
 #: src/multitrack.c:14299 src/multitrack.c:17385 src/multitrack.c:17397
 #, c-format
@@ -9092,9 +8872,8 @@ msgid "_Pause"
 msgstr "_Peata"
 
 #: src/multitrack.c:15407
-#, fuzzy
 msgid "Pause (p)"
-msgstr "Paus"
+msgstr ""
 
 #: src/multitrack.c:15551
 msgid "Press 'm' during playback"
@@ -9223,9 +9002,8 @@ msgid "Saved layout to %s\n"
 msgstr ""
 
 #: src/multitrack.c:19424
-#, fuzzy
 msgid "clips and frames"
-msgstr "kaadrit"
+msgstr ""
 
 #: src/multitrack.c:19428
 msgid "clips"
@@ -9289,14 +9067,12 @@ msgid "LiVES: Multitrack audio mixer"
 msgstr ""
 
 #: src/multitrack.c:20768
-#, fuzzy
 msgid "_Reset values"
-msgstr "Sea vaikeväärtuseks"
+msgstr ""
 
 #: src/multitrack.c:20772
-#, fuzzy
 msgid "_Close mixer"
-msgstr "_Sulge aken"
+msgstr ""
 
 #: src/multitrack.c:20814
 msgid ""
@@ -9321,19 +9097,16 @@ msgid "JACK server started\n"
 msgstr ""
 
 #: src/jack.c:1094 src/jack.c:1165
-#, fuzzy
 msgid "Unable to connect to JACK server\n"
-msgstr "Heli serveri pulse käivitamine..."
+msgstr ""
 
 #: src/jack.c:1324
-#, fuzzy
 msgid "Started jack audio subsystem.\n"
-msgstr "Heli serveri jack käivitamine..."
+msgstr ""
 
 #: src/jack.c:1432
-#, fuzzy
 msgid "Started jack audio reader.\n"
-msgstr "Heli serveri jack käivitamine..."
+msgstr ""
 
 #: src/jack.c:1641
 msgid ""
@@ -9358,22 +9131,20 @@ msgid ""
 msgstr ""
 
 #: src/pulse.c:94
-#, fuzzy
 msgid ""
 "\n"
 "Unable to connect to pulse audio server.\n"
-msgstr "Heli serveri pulse käivitamine..."
+msgstr ""
 
 #: src/pulse.c:100
 msgid "LiVES will exit and you can choose another audio player.\n"
 msgstr ""
 
 #: src/pulse.c:1275
-#, fuzzy
 msgid ""
 "\n"
 "Connection to pulse audio was reset.\n"
-msgstr "Heli serveri pulse käivitamine..."
+msgstr ""
 
 #: src/colourspace.c:1095
 msgid "unclamped"
@@ -9516,18 +9287,16 @@ msgid "Switch foreground clip to the nth valid clip"
 msgstr ""
 
 #: src/omc-learn.c:1428
-#, fuzzy
 msgid "Play forwards"
-msgstr "Edasikerimine"
+msgstr ""
 
 #: src/omc-learn.c:1429
 msgid "Play video in a forwards direction"
 msgstr ""
 
 #: src/omc-learn.c:1432
-#, fuzzy
 msgid "Play backwards"
-msgstr "Taasesitus"
+msgstr ""
 
 #: src/omc-learn.c:1433
 msgid "Play video in a backwards direction"
@@ -9574,14 +9343,12 @@ msgid "Set framerate of foreground clip to <float fps>"
 msgstr ""
 
 #: src/omc-learn.c:1457
-#, fuzzy
 msgid "Start recording"
-msgstr "Salvestamine"
+msgstr ""
 
 #: src/omc-learn.c:1460
-#, fuzzy
 msgid "Stop recording"
-msgstr "Salvestamine"
+msgstr ""
 
 #: src/omc-learn.c:1463
 msgid "Toggle recording state"
@@ -9662,9 +9429,8 @@ msgstr ""
 
 #. TRANSLATORS: short form of "clip number"
 #: src/omc-learn.c:1541 src/omc-learn.c:1612
-#, fuzzy
 msgid "clipnum"
-msgstr "pnum"
+msgstr ""
 
 #. TRANSLATORS: short form of "frames per second"
 #: src/omc-learn.c:1550
@@ -9764,14 +9530,12 @@ msgid "Adjust contrast"
 msgstr "Kontrasti muutmine"
 
 #: /usr/share/lives/plugins/effects/rendered/contrast.script:0
-#, fuzzy
 msgid "Adjusting contrast of"
-msgstr "Kontrasti muutmine"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
-#, fuzzy
 msgid "Adjusting noise on"
-msgstr "Kontrasti muutmine"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
 msgid "Applying charcoal to"
@@ -9794,67 +9558,56 @@ msgid "B/W thresholding"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/blank_frames.script:0
-#, fuzzy
 msgid "Blank _Colour"
-msgstr "_Alusta"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/blank_frames.script:0
-#, fuzzy
 msgid "Blank frames"
-msgstr "kaadrit"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/blank_frames.script:0
 msgid "Blanking"
 msgstr "Tühjendamine"
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
-#, fuzzy
 msgid "Block _height"
-msgstr "_Kõrgus"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
-#, fuzzy
 msgid "Block _width"
-msgstr "_Kõrgus"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
 msgid "Blur"
 msgstr "Pehmendus"
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
-#, fuzzy
 msgid "Bluring"
-msgstr "Pehmendus"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
-#, fuzzy
 msgid "Border _Colour"
-msgstr "_Alusta"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/brightness_change.script:0
-#, fuzzy
 msgid "Brightness _end"
-msgstr "Siirded"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/brightness_change.script:0
-#, fuzzy
 msgid "Brightness _start"
-msgstr "Siirded"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/brightness_change.script:0
-#, fuzzy
 msgid "Brightness change"
-msgstr "Siirded"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
-#, fuzzy
 msgid "Brightness end"
-msgstr "Siirded"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
-#, fuzzy
 msgid "Brightness start"
-msgstr "Siirded"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
@@ -9891,62 +9644,52 @@ msgid "Checkerboard"
 msgstr "Malelaud"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
-#, fuzzy
 msgid "Checkerboarding"
-msgstr "Malelaud"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
-#, fuzzy
 msgid "Clipboard _over selection"
-msgstr "_Pööra valik"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
-#, fuzzy
 msgid "Clipboard _under selection"
-msgstr "_Pööra valik"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 msgid "Colorize"
 msgstr "Värvi"
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
-#, fuzzy
 msgid "Colorizing"
-msgstr "Värvi"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/cycle.script:0
-#, fuzzy
 msgid "Colour cycle"
-msgstr "Värvi"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/cycle.script:0
-#, fuzzy
 msgid "Colour cycling"
-msgstr "Värvi"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
-#, fuzzy
 msgid "Colour filter"
-msgstr "Värvi"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
-#, fuzzy
 msgid "Colour filtering"
-msgstr "Värvi"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
-#, fuzzy
 msgid "Colour replace"
-msgstr "Värvi"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
 msgid "Constant noise level"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/cycle.script:0
-#, fuzzy
 msgid "Cycle _Step"
-msgstr "_Alusta"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/deinterlace.script:0
 msgid "Deinterlace"
@@ -9961,18 +9704,16 @@ msgid "Despeckle"
 msgstr "Punktitasandus"
 
 #: /usr/share/lives/plugins/effects/rendered/despekle.script:0
-#, fuzzy
 msgid "Despeckling"
-msgstr "Punktitasandus"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/dream.script:0
 msgid "Dream"
 msgstr "Unelemismuusika"
 
 #: /usr/share/lives/plugins/effects/rendered/dream.script:0
-#, fuzzy
 msgid "Dreamifying"
-msgstr "Unelemismuusika"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
@@ -9984,18 +9725,16 @@ msgid "Edge detect"
 msgstr "Servade tuvastamine"
 
 #: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
-#, fuzzy
 msgid "Edge detecting"
-msgstr "Servade tuvastamine"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/emboss.script:0
 msgid "Emboss"
 msgstr "Reljeefne"
 
 #: /usr/share/lives/plugins/effects/rendered/emboss.script:0
-#, fuzzy
 msgid "Embossing"
-msgstr "Reljeefne"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
 msgid "End _Alpha:"
@@ -10014,86 +9753,73 @@ msgid "Enhance"
 msgstr "Arenda"
 
 #: /usr/share/lives/plugins/effects/rendered/enhance.script:0
-#, fuzzy
 msgid "Enhancing"
-msgstr "Arenda"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 msgid "Envelope length"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
-#, fuzzy
 msgid "Fade _colour"
-msgstr "Hajumine"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
-#, fuzzy
 msgid "Fade _end"
-msgstr "Hajumine"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
-#, fuzzy
 msgid "Fade _in"
-msgstr "Hajumine"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
-#, fuzzy
 msgid "Fade _out"
-msgstr "Hajumine"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
-#, fuzzy
 msgid "Fade video in or out"
-msgstr "Hajumine"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 msgid "Fade"
 msgstr "Hajumine"
 
 #: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
-#, fuzzy
 msgid "Fading video"
-msgstr "Hajumine"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 msgid "Fading"
 msgstr "Hajumine"
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
-#, fuzzy
 msgid "Fina_l frame"
-msgstr "_Kaadrid"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
-#, fuzzy
 msgid "Flash _colour"
-msgstr "Hajumine"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/flip.script:0
 msgid "Flip vertically"
 msgstr "Vertikaalselt peegeldamine"
 
 #: /usr/share/lives/plugins/effects/rendered/flop.script:0
-#, fuzzy
 msgid "Flop horizontally"
-msgstr "Vertikaalselt peegeldamine"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
-#, fuzzy
 msgid "Frame Calculator"
-msgstr "_Alusta"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
-#, fuzzy
 msgid "Frame _Colour"
-msgstr "_Alusta"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
-#, fuzzy
 msgid "Frame _height"
-msgstr "Raami suurus"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 msgid "Frame _in frame position of clipboard..."
@@ -10104,69 +9830,56 @@ msgid "Frame _in frame position of top frame..."
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
-#, fuzzy
 msgid "Frame _width"
-msgstr "Raami suurus"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
-#, fuzzy
 msgid "Frames _per second (FPS)"
-msgstr "sekundid"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
-#, fuzzy
 msgid "Gamma _end"
-msgstr "Hajumine"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
-#, fuzzy
 msgid "Gamma _start"
-msgstr "_Alusta"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
-#, fuzzy
 msgid "Gamma change"
-msgstr "Hajumine"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
-#, fuzzy
 msgid "Generate blank frames"
-msgstr "kaadrit"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
-#, fuzzy
 msgid "Generate clip from image"
-msgstr "kaadrit"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
-#, fuzzy
 msgid "Generate coloured frames"
-msgstr "kaadrit"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
-#, fuzzy
 msgid "Generate title frames"
-msgstr "kaadrit"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
-#, fuzzy
 msgid "Generating blank frames"
-msgstr "kaadrit"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
-#, fuzzy
 msgid "Generating clip from image"
-msgstr "kaadrit"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
-#, fuzzy
 msgid "Generating coloured frames"
-msgstr "kaadrit"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
-#, fuzzy
 msgid "Generating title frames"
-msgstr "kaadrit"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/flop.script:0
 msgid "Horizontal flopping"
@@ -10177,29 +9890,24 @@ msgid "Horizontal shifting"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
-#, fuzzy
 msgid "Hue _end"
-msgstr "Hajumine"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
-#, fuzzy
 msgid "Hue _start"
-msgstr "_Alusta"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
-#, fuzzy
 msgid "Hue change"
-msgstr "Hajumine"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
-#, fuzzy
 msgid "Hue end"
-msgstr "Hajumine"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
-#, fuzzy
 msgid "Hue start"
-msgstr "_Alusta"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
 msgid "Image overlay"
@@ -10226,9 +9934,8 @@ msgid "Jumbling"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
-#, fuzzy
 msgid "Keep _Centered"
-msgstr "_Muud"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
 msgid "Keep image aspect _ratio"
@@ -10239,19 +9946,16 @@ msgid "L_eft"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/monochrome.script:0
-#, fuzzy
 msgid "Making monochrome"
-msgstr "Ühevärviline"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
-#, fuzzy
 msgid "Modulate (BSH)"
-msgstr "Pööramine"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
-#, fuzzy
 msgid "Modulating"
-msgstr "Pööramine"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/monochrome.script:0
 msgid "Monochrome"
@@ -10262,9 +9966,8 @@ msgid "Negate"
 msgstr "Negatiiv"
 
 #: /usr/share/lives/plugins/effects/rendered/negate.script:0
-#, fuzzy
 msgid "Negating"
-msgstr "Negatiiv"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
 msgid "Noise type"
@@ -10283,9 +9986,8 @@ msgid "Normalizing"
 msgstr "Normaalseks tegemine"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
-#, fuzzy
 msgid "Number of _frames"
-msgstr "_Kaadrid"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
 msgid "Overlaying an image onto video"
@@ -10300,23 +10002,20 @@ msgid "Photo/still"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
-#, fuzzy
 msgid "Pixilate"
-msgstr "Kleebi"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
-#, fuzzy
 msgid "Pixilating"
-msgstr "Kleebi"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/posterize.script:0
 msgid "Posterize"
 msgstr "Posterdamine"
 
 #: /usr/share/lives/plugins/effects/rendered/posterize.script:0
-#, fuzzy
 msgid "Posterizing"
-msgstr "Posterdamine"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/randomzoom.script:0
 msgid "Random zoom"
@@ -10339,14 +10038,12 @@ msgid "Replacing colours in"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/resize.script:0
-#, fuzzy
 msgid "Resize All Frames"
-msgstr "_kõikide kaadrite suuruse muutmine"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/rotate.script:0
-#, fuzzy
 msgid "Rotate Clip"
-msgstr "Pööramine"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/rotate.script:0
 msgid "Rotating"
@@ -10354,48 +10051,40 @@ msgstr "Pööramine"
 
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
-#, fuzzy
 msgid "S_tart %"
-msgstr "_Alusta"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
-#, fuzzy
 msgid "Saturation _end"
-msgstr "Siirded"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
-#, fuzzy
 msgid "Saturation _start"
-msgstr "Siirded"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
-#, fuzzy
 msgid "Saturation change"
-msgstr "Siirded"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
-#, fuzzy
 msgid "Saturation end"
-msgstr "Siirded"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
-#, fuzzy
 msgid "Saturation start"
-msgstr "Siirded"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/sepia.script:0
 msgid "Sepia"
 msgstr "Seepia"
 
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
-#, fuzzy
 msgid "Shift horizontally"
-msgstr "Vertikaalselt peegeldamine"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
-#, fuzzy
 msgid "Shift vertically"
-msgstr "Vertikaalselt peegeldamine"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 msgid "Shrink/Expand"
@@ -10414,28 +10103,24 @@ msgid "Solarize"
 msgstr "Ülesäritus"
 
 #: /usr/share/lives/plugins/effects/rendered/solarize.script:0
-#, fuzzy
 msgid "Solarizing"
-msgstr "Ülesäritus"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
 msgid "Spin"
 msgstr "Spinn"
 
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
-#, fuzzy
 msgid "Spinning"
-msgstr "Spinn"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
-#, fuzzy
 msgid "Splice"
-msgstr "eraldaja"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
-#, fuzzy
 msgid "Splicing"
-msgstr "eraldaja"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/spread.script:0
 msgid "Spread"
@@ -10446,35 +10131,30 @@ msgid "Spreading"
 msgstr "Hajutamine"
 
 #: /usr/share/lives/plugins/effects/rendered/solarize.script:0
-#, fuzzy
 msgid "Step _Value"
-msgstr "_Alusta"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
-#, fuzzy
 msgid "Step per _Frame"
-msgstr "_Alusta"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
-#, fuzzy
 msgid "Swirl _start"
-msgstr "Pööris"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
-#, fuzzy
 msgid "Swirl s_tep"
-msgstr "Pööris"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
 msgid "Swirl"
 msgstr "Pööris"
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
-#, fuzzy
 msgid "Swirling"
-msgstr "Pööris"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
 msgid "Text Overlay"
@@ -10497,9 +10177,8 @@ msgid "Tunnel"
 msgstr "Tunnel"
 
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
-#, fuzzy
 msgid "Tunneling"
-msgstr "Tunnel"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
 msgid "Use _Natural Size"
@@ -10531,14 +10210,12 @@ msgstr ""
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
-#, fuzzy
 msgid "_Background Colour"
-msgstr "_Alusta"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
-#, fuzzy
 msgid "_Background colour"
-msgstr "_Alusta"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
 msgid "_Black and white camera"
@@ -10553,19 +10230,16 @@ msgid "_Bottom"
 msgstr "_Alumine"
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
-#, fuzzy
 msgid "_Calculate"
-msgstr "_Alusta"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/cycle.script:0
-#, fuzzy
 msgid "_Cycle Start"
-msgstr "_Alusta"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/contrast.script:0
-#, fuzzy
 msgid "_Decrease Contrast"
-msgstr "Kontrasti muutmine"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/dream.script:0
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
@@ -10574,9 +10248,8 @@ msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
-#, fuzzy
 msgid "_End Colour"
-msgstr "_Alusta"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
 msgid "_End Size X:"
@@ -10587,37 +10260,31 @@ msgid "_End Size Y:"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/spread.script:0
-#, fuzzy
 msgid "_End amount"
-msgstr "_Alusta"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/dream.script:0
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
-#, fuzzy
 msgid "_Fade level"
-msgstr "Hajumine"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
-#, fuzzy
 msgid "_Fade start"
-msgstr "_Raadius"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
-#, fuzzy
 msgid "_Fill colour"
-msgstr "Hajumine"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
-#, fuzzy
 msgid "_First frame"
-msgstr "_Kaadrid"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
-#, fuzzy
 msgid "_Flash for"
-msgstr "Hajumine"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 msgid "_Font"
@@ -10627,37 +10294,32 @@ msgstr "_Kirjatüüp"
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
-#, fuzzy
 msgid "_Frames per second"
-msgstr "sekundid"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
 msgid "_Frames"
 msgstr "_Kaadrid"
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
-#, fuzzy
 msgid "_Hold for"
-msgstr "Hajumine"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
 msgid "_Horizontal segments"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
-#, fuzzy
 msgid "_Image File"
-msgstr "_Fail"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
-#, fuzzy
 msgid "_Image"
-msgstr "_Fail"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/contrast.script:0
-#, fuzzy
 msgid "_Increase Contrast"
-msgstr "Kontrasti muutmine"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
 msgid "_Init Size X:"
@@ -10689,16 +10351,14 @@ msgid "_Midtone"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/negate.script:0
-#, fuzzy
 msgid "_Negate"
-msgstr "Negatiiv"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
-#, fuzzy
 msgid "_Number of frames"
-msgstr "_Kaadrid"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
 msgid "_Offset X"
@@ -10709,9 +10369,8 @@ msgid "_Offset Y"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
-#, fuzzy
 msgid "_Other Center"
-msgstr "_Muud"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/rotate.script:0
 msgid "_Other"
@@ -10719,19 +10378,16 @@ msgstr "_Muud"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
-#, fuzzy
 msgid "_Point size"
-msgstr "Failisuurus"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
-#, fuzzy
 msgid "_Radius end"
-msgstr "_Raadius"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
-#, fuzzy
 msgid "_Radius start"
-msgstr "_Raadius"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/emboss.script:0
 #: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
@@ -10741,9 +10397,8 @@ msgstr "_Raadius"
 
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
-#, fuzzy
 msgid "_Random colour each frame"
-msgstr "kaadrit"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/dream.script:0
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
@@ -10755,71 +10410,60 @@ msgid "_Right"
 msgstr "_Paremal"
 
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
-#, fuzzy
 msgid "_Rotate Selection by"
-msgstr "_Kustuta valik"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
 msgid "_Shrink rotated window to fit frame size"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
-#, fuzzy
 msgid "_Sigma end"
-msgstr "_Alusta"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
-#, fuzzy
 msgid "_Sigma start"
-msgstr "_Alusta"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
-#, fuzzy
 msgid "_Skip ahead"
-msgstr "_Jäta vahele"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/negate.script:0
 msgid "_Skip"
 msgstr "_Jäta vahele"
 
 #: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
-#, fuzzy
 msgid "_Source Colour"
-msgstr "_Alusta"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
-#, fuzzy
 msgid "_Splice"
-msgstr "eraldaja"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
-#, fuzzy
 msgid "_Start Colour"
-msgstr "_Alusta"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
 #: /usr/share/lives/plugins/effects/rendered/solarize.script:0
-#, fuzzy
 msgid "_Start Value"
-msgstr "_Alusta"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/spread.script:0
-#, fuzzy
 msgid "_Start amount"
-msgstr "_Alusta"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
-#, fuzzy
 msgid "_Stroke colour"
-msgstr "_Alusta"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
-#, fuzzy
 msgid "_Target Colour"
-msgstr "_Alusta"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
@@ -10827,9 +10471,8 @@ msgid "_Text"
 msgstr "_Tekst"
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
-#, fuzzy
 msgid "_Time (seconds)"
-msgstr "sekundid"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
 msgid "_Top left is clipboard"
@@ -10844,9 +10487,8 @@ msgid "_Vertical segments"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/wave.script:0
-#, fuzzy
 msgid "_Wavemax"
-msgstr "Laine"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 msgid "_White is transparent"
@@ -10858,18 +10500,16 @@ msgid "_Wrap Around"
 msgstr "_Lõppu (või algusese) jõudmisel otsingut ei katkestata\""
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
-#, fuzzy
 msgid "_X Center"
-msgstr "_Muud"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
 msgid "_X End"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
-#, fuzzy
 msgid "_X Start"
-msgstr "_Alusta"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
@@ -10877,18 +10517,16 @@ msgid "_X offset"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
-#, fuzzy
 msgid "_Y Center"
-msgstr "_Muud"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
 msgid "_Y End"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
-#, fuzzy
 msgid "_Y Start"
-msgstr "_Alusta"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
@@ -10904,86 +10542,72 @@ msgid "_then"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/blank_frames.script:0
-#, fuzzy
 msgid "blank_frames"
-msgstr "kaadrit"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
 msgid "blur"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/brightness_change.script:0
-#, fuzzy
 msgid "brightness_change"
-msgstr "Siirded"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
-#, fuzzy
 msgid "charcoal"
-msgstr "Söejoonistus"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
-#, fuzzy
 msgid "colorize"
-msgstr "Värvi"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
-#, fuzzy
 msgid "colour_filter"
-msgstr "Värvi"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
-#, fuzzy
 msgid "colour_replace"
-msgstr "Värvi"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/contrast.script:0
-#, fuzzy
 msgid "contrast"
-msgstr "Kontrasti muutmine"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/cycle.script:0
 msgid "cycle"
 msgstr "ringle"
 
 #: /usr/share/lives/plugins/effects/rendered/deinterlace.script:0
-#, fuzzy
 msgid "deinterlace"
-msgstr "Kihilisuse kõrvaldamine"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/despekle.script:0
-#, fuzzy
 msgid "despeckle"
-msgstr "Punktitasandus"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/dream.script:0
-#, fuzzy
 msgid "dream"
-msgstr "Unelemismuusika"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
-#, fuzzy
 msgid "edge_detect"
-msgstr "Servade tuvastamine"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/emboss.script:0
-#, fuzzy
 msgid "emboss"
-msgstr "Reljeefne"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/enhance.script:0
-#, fuzzy
 msgid "enhance"
-msgstr "Arenda"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
 msgid "every"
 msgstr "iga"
 
 #: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
-#, fuzzy
 msgid "fade_in_out"
-msgstr "Hajumine"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
 msgid "fc"
@@ -10998,38 +10622,32 @@ msgid "flop"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
-#, fuzzy
 msgid "frame_calculator"
-msgstr "_Alusta"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
-#, fuzzy
 msgid "gamma_change"
-msgstr "Siirded"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
-#, fuzzy
 msgid "gen_blank_frames"
-msgstr "kaadrit"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
-#, fuzzy
 msgid "gen_clip_from_image"
-msgstr "kaadrit"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
-#, fuzzy
 msgid "gen_coloured_frames"
-msgstr "kaadrit"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 msgid "gen_text"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
-#, fuzzy
 msgid "hue_change"
-msgstr "Siirded"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
 msgid "image_overlay"
@@ -11040,42 +10658,36 @@ msgid "jumble"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
-#, fuzzy
 msgid "modulate"
-msgstr "Pööramine"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/monochrome.script:0
-#, fuzzy
 msgid "monochrome"
-msgstr "Ühevärviline"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/negate.script:0
-#, fuzzy
 msgid "negate"
-msgstr "Negatiiv"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
 msgid "noisify"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/normalize.script:0
-#, fuzzy
 msgid "normalize"
-msgstr "Normaliseerimine"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
 msgid "photo_still"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
-#, fuzzy
 msgid "pixilate"
-msgstr "Kleebi"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/posterize.script:0
-#, fuzzy
 msgid "posterize"
-msgstr "Posterdamine"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/randomzoom.script:0
 msgid "randomzoom"
@@ -11090,85 +10702,72 @@ msgid "rotate"
 msgstr "pööramine"
 
 #: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
-#, fuzzy
 msgid "saturation_change"
-msgstr "Siirded"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/sepia.script:0
 msgid "sepia"
 msgstr "seepia"
 
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
-#, fuzzy
 msgid "shift_horizontal"
-msgstr "Vertikaalselt peegeldamine"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
-#, fuzzy
 msgid "shift_vertical"
-msgstr "Vertikaalselt peegeldamine"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 msgid "shrink_expand"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
-#, fuzzy
 msgid "skip_forwards"
-msgstr "Edasikerimine"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/solarize.script:0
-#, fuzzy
 msgid "solarize"
-msgstr "Ülesäritus"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
 msgid "spin"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/spread.script:0
-#, fuzzy
 msgid "spread"
-msgstr "Hajuta"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
-#, fuzzy
 msgid "swirl"
-msgstr "Pööris"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
 msgid "textover"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
-#, fuzzy
 msgid "transition_bwthresh"
-msgstr "Siirded"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
-#, fuzzy
 msgid "transition_checkerboard"
-msgstr "Malelaud"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
-#, fuzzy
 msgid "transition_fade2"
-msgstr "Siirded"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
-#, fuzzy
 msgid "transition_splice"
-msgstr "Siirded"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
-#, fuzzy
 msgid "trim_frames"
-msgstr "kaadrit"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
-#, fuzzy
 msgid "tunnel"
-msgstr "Tunnel"
+msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/wave.script:0
 msgid "wave"
@@ -11232,9 +10831,8 @@ msgid "$file"
 msgstr "$file"
 
 #: /usr/bin/smogrify:0
-#, fuzzy
 msgid "LiVES audio error."
-msgstr "$error"
+msgstr ""
 
 #: /usr/bin/smogrify:0
 msgid "cdda2wav is required for this function."
@@ -11263,6 +10861,3 @@ msgstr ""
 #: /usr/bin/smogrify:0
 msgid "$error"
 msgstr "$error"
-
-#~ msgid "Red"
-#~ msgstr "Punane"

@@ -1,5 +1,5 @@
-Version 1.6.3
--------------
+Version 1.6.3 (15 August 2012)
+------------------------------
 Fix regression in file open/enough.
 Fix installation problem when pulseaudio is not installed.
 Fix GUI exposure crash in multitrack window.

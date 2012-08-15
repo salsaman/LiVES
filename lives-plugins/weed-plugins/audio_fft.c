@@ -116,7 +116,7 @@ int fftw_deinit(weed_plant_t *inst) {
 
 
 
-int fftw_process (weed_plant_t *inst, weed_timecode_t timestamp) {
+int fftw_process (weed_plant_t *inst, weed_timecode_t tc) {
   int error;
   int chans,nsamps,inter,rate,k;
 

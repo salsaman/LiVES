@@ -257,9 +257,9 @@ static boolean get_tag(const lives_clip_data_t *cdata, AVFormatContext *s, const
     fprintf(stderr, "asf_decoder: Unsupported value type %d len %d in tag %s.\n", type, len, key);
     return TRUE;
   }
-#ifndef IS_MINGW
-  av_metadata_set2(&s->metadata, key, value, 0);
-#endif
+
+  av_dict_set(&s->metadata, key, value, 0);
+
   free(value);
   return TRUE;
 }
@@ -1328,25 +1328,25 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
 
 	if (!got_vidst) {
 	  if (priv->st->codec->extradata_size && (priv->st->codec->bits_per_coded_sample <= 8)) {
-	    priv->st->codec->palctrl = av_mallocz(sizeof(AVPaletteControl));
+
 
 #ifndef IS_MINGW
 # if __BYTE_ORDER == __BIG_ENDIAN
-	    for (i = 0; i < FFMIN(priv->st->codec->extradata_size, AVPALETTE_SIZE)/4; i++)
-	      
-	      priv->st->codec->palctrl->palette[i] = get_le32int((uint8_t *)(((uint32_t*)&priv->st->codec->extradata)[i]));
+            int i;
+            for (i = 0; i < FFMIN(priv->st->codec->extradata_size, AVPALETTE_SIZE)/4; i++)
+                priv->asf_st->palette[i] = av_bswap32(((uint32_t*)priv->st->codec->extradata)[i]);
 #else
-	    memcpy(priv->st->codec->palctrl->palette, priv->st->codec->extradata,
-		   FFMIN(priv->st->codec->extradata_size, AVPALETTE_SIZE));
+            memcpy(priv->asf_st->palette, priv->st->codec->extradata,
+                   FFMIN(priv->st->codec->extradata_size, AVPALETTE_SIZE));
 #endif
 #else
-	    memcpy(priv->st->codec->palctrl->palette, priv->st->codec->extradata,
-		   FFMIN(priv->st->codec->extradata_size, AVPALETTE_SIZE));
+            memcpy(priv->asf_st->palette, priv->st->codec->extradata,
+                   FFMIN(priv->st->codec->extradata_size, AVPALETTE_SIZE));
 #endif
 
-	    priv->st->codec->palctrl->palette_changed = 1;
-	  }
-	  
+            priv->asf_st->palette_changed = 1;
+        }
+
 	  priv->st->codec->codec_tag = tag1;
 	  priv->st->codec->codec_id = ff_codec_get_id((const AVCodecTag*)(codec_bmp_tags), tag1);
 
@@ -1950,7 +1950,7 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
 	      const char primary_tag[3] = { rfc1766[0], rfc1766[1], '\0' }; // ignore country code if any
 	      const char *iso6392 = av_convert_lang_to(primary_tag, AV_LANG_ISO639_2_BIBL);
 	      if (iso6392)
-	      av_metadata_set2(&priv->stmetadata, "language", iso6392, 0);
+	      av_dict_set(&priv->stmetadata, "language", iso6392, 0);
 	      }
 	      }*/
     }
@@ -2223,9 +2223,6 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
 
 
 const char *module_check_init(void) {
-#ifndef IS_MINGW
-  avcodec_init();
-#endif
   avcodec_register_all();
   return NULL;
 }

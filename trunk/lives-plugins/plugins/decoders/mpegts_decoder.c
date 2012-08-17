@@ -2671,8 +2671,6 @@ void ff_read_frame_flush(AVFormatContext *s)
 
   flush_packet_queue(s);
 
-  s->cur_st = NULL;
-
   /* for each stream, reset read state */
   for(i = 0; i < s->nb_streams; i++) {
     st = s->streams[i];
@@ -2680,15 +2678,15 @@ void ff_read_frame_flush(AVFormatContext *s)
     if (st->parser) {
       av_parser_close(st->parser);
       st->parser = NULL;
-      av_free_packet(&st->cur_pkt);
+      //av_free_packet(&st->cur_pkt);
     }
     st->last_IP_pts = AV_NOPTS_VALUE;
     if(st->first_dts == AV_NOPTS_VALUE) st->cur_dts = 0;
     else                                st->cur_dts = AV_NOPTS_VALUE; /* we set the current DTS to an unspecified origin */
     st->reference_dts = AV_NOPTS_VALUE;
     /* fail safe */
-    st->cur_ptr = NULL;
-    st->cur_len = 0;
+    //st->cur_ptr = NULL;
+    //st->cur_len = 0;
 
     st->probe_packets = MAX_PROBE_PACKETS;
 
@@ -2725,9 +2723,6 @@ static int64_t frame_to_dts(const lives_clip_data_t *cdata, int64_t frame) {
 
 
 const char *module_check_init(void) {
-#ifndef IS_MINGW
-  avcodec_init();
-#endif
   avcodec_register_all();
   av_log_set_level(0);
   return NULL;

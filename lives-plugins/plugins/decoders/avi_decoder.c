@@ -1673,7 +1673,6 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
 
 
 const char *module_check_init(void) {
-  avcodec_init();
   avcodec_register_all();
   return NULL;
 }

@@ -1209,9 +1209,6 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
 
 
 const char *module_check_init(void) {
-#ifndef IS_MINGW
-  avcodec_init();
-#endif
   avcodec_register_all();
   return NULL;
 }

@@ -633,7 +633,7 @@ static void ebml_free(EbmlSyntax *syntax, void *data)
 
 
 ////////////////////////////////////////////////////////////////////////////////
-
+/*
 void ff_update_cur_dts(AVFormatContext *s, AVStream *ref_st, int64_t timestamp)
 {
   int i;
@@ -646,7 +646,7 @@ void ff_update_cur_dts(AVFormatContext *s, AVStream *ref_st, int64_t timestamp)
 			     st->time_base.num * (int64_t)ref_st->time_base.den);
   }
 }
-
+*/
 
 /*
  * Autodetecting...
@@ -1955,9 +1955,6 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
 
 
 const char *module_check_init(void) {
-#ifndef IS_MINGW
-  avcodec_init();
-#endif
   avcodec_register_all();
   av_log_set_level(AV_LOG_ERROR);
   return NULL;

@@ -758,8 +758,10 @@ static void lives_init(_ign_opts *ign_opts) {
 
   prefs->rec_opts|=(REC_FPS+REC_FRAMES);
 
+  prefs->audio_src=AUDIO_SRC_INT;
+
   if (!((prefs->audio_player==AUD_PLAYER_JACK&&capable->has_jackd)||(prefs->audio_player==AUD_PLAYER_PULSE&&capable->has_pulse_audio))) {
-    if (prefs->rec_opts&REC_EXT_AUDIO) prefs->rec_opts^=REC_EXT_AUDIO;
+    prefs->audio_src=AUDIO_SRC_INT;
   }
 
   mainw->new_clip=-1;
@@ -4267,7 +4269,7 @@ void load_frame_image(gint frame) {
       // add blank frame
       weed_plant_t *event=get_last_event(mainw->event_list);
       weed_plant_t *event_list=insert_blank_frame_event_at(mainw->event_list,mainw->currticks,&event);
-      if (mainw->rec_aclip!=-1&&(prefs->rec_opts&REC_AUDIO)&&!mainw->record_starting&&!(prefs->rec_opts&REC_EXT_AUDIO)&&!(has_audio_filters(FALSE))) {
+      if (mainw->rec_aclip!=-1&&(prefs->rec_opts&REC_AUDIO)&&!mainw->record_starting&&prefs->audio_src==AUDIO_SRC_INT&&!(has_audio_filters(FALSE))) {
 	// we are recording, and the audio clip changed; add audio
 	if (mainw->event_list==NULL) mainw->event_list=event_list;
 	insert_audio_event_at(mainw->event_list,event,-1,mainw->rec_aclip,mainw->rec_aseek,mainw->rec_avel);
@@ -4295,7 +4297,7 @@ void load_frame_image(gint frame) {
 #ifdef ENABLE_JACK
 	  if (prefs->audio_player==AUD_PLAYER_JACK&&(prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS)&&
 	      mainw->jackd!=NULL&&cfile->achans>0 &&
-	      !(mainw->record&&!mainw->record_paused&&((prefs->rec_opts&REC_EXT_AUDIO)||mainw->agen_key!=0))) {
+	      !(mainw->record&&!mainw->record_paused&&(prefs->audio_src==AUDIO_SRC_EXT||mainw->agen_key!=0))) {
 	    if (!jack_audio_seek_frame(mainw->jackd,frame)) {
 	      if (jack_try_reconnect()) jack_audio_seek_frame(mainw->jackd,frame);
 	    }
@@ -4310,7 +4312,7 @@ void load_frame_image(gint frame) {
 #ifdef HAVE_PULSE_AUDIO
 	  if (prefs->audio_player==AUD_PLAYER_PULSE&&(prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS)&&
 	      mainw->pulsed!=NULL&&cfile->achans>0 &&
-	      !(mainw->record&&!mainw->record_paused&&((prefs->rec_opts&REC_EXT_AUDIO)||mainw->agen_key!=0))) {
+	      !(mainw->record&&!mainw->record_paused&&(prefs->audio_src==AUDIO_SRC_EXT||mainw->agen_key!=0))) {
 
 	    if (!pulse_audio_seek_frame(mainw->pulsed,mainw->play_start)) {
 	      if (pulse_try_reconnect()) pulse_audio_seek_frame(mainw->pulsed,mainw->play_start);
@@ -4377,14 +4379,14 @@ void load_frame_image(gint frame) {
 
 #ifdef ENABLE_JACK
 	  if (prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL&&
-	      (prefs->rec_opts&REC_AUDIO)&&!(prefs->rec_opts&REC_EXT_AUDIO)&&mainw->rec_aclip!=mainw->ascrap_file) {
+	      (prefs->rec_opts&REC_AUDIO)&&prefs->audio_src==AUDIO_SRC_INT&&mainw->rec_aclip!=mainw->ascrap_file) {
 	    // get current seek postion
 	    jack_get_rec_avals(mainw->jackd);
 	  }
 #endif
 #ifdef HAVE_PULSE_AUDIO
 	  if (prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL&&
-	      (prefs->rec_opts&REC_AUDIO)&&!(prefs->rec_opts&REC_EXT_AUDIO)&&mainw->rec_aclip!=mainw->ascrap_file) {
+	      (prefs->rec_opts&REC_AUDIO)&&prefs->audio_src==AUDIO_SRC_INT&&mainw->rec_aclip!=mainw->ascrap_file) {
 	    // get current seek postion
 	    pulse_get_rec_avals(mainw->pulsed);
 	  }
@@ -4407,7 +4409,7 @@ void load_frame_image(gint frame) {
 	if (framecount!=NULL) g_free(framecount);
 	if ((event_list=append_frame_event (mainw->event_list,mainw->currticks,numframes,clips,frames))!=NULL) {
 	  if (mainw->event_list==NULL) mainw->event_list=event_list;
-	  if (mainw->rec_aclip!=-1&&((prefs->rec_opts&REC_AUDIO)||(prefs->rec_opts&REC_EXT_AUDIO))) {
+	  if (mainw->rec_aclip!=-1&&((prefs->rec_opts&REC_AUDIO))) {
 	    weed_plant_t *event=get_last_event(mainw->event_list);
 
 	    if (mainw->rec_aclip==mainw->ascrap_file) {
@@ -4872,6 +4874,17 @@ void load_frame_image(gint frame) {
 
       }
 
+      // chain any data to the playback plugin
+      if (!(mainw->preview||mainw->is_rendering)) {
+	// chain any data pipelines
+	if (mainw->pconx!=NULL) {
+	  pthread_mutex_lock(&mainw->data_mutex);
+	  pconx_chain_data(-2,0);
+	  pthread_mutex_unlock(&mainw->data_mutex);
+	}
+	if (mainw->cconx!=NULL) cconx_chain_data(-2,0);
+      }
+
       if (!(*mainw->vpp->render_frame)(weed_get_int_value(frame_layer,"width",&weed_error),
 				       weed_get_int_value(mainw->frame_layer,"height",&weed_error),
 				       mainw->currticks-mainw->stream_ticks,pd_array,retdata,mainw->vpp->play_params)) {
@@ -5097,6 +5110,17 @@ void load_frame_image(gint frame) {
 	compact_rowstrides(return_layer);
 
 	retdata=weed_get_voidptr_array(return_layer,"pixel_data",&weed_error);
+      }
+
+      // chain any data to the playback plugin
+      if (!(mainw->preview||mainw->is_rendering)) {
+	// chain any data pipelines
+	if (mainw->pconx!=NULL) {
+	  pthread_mutex_lock(&mainw->data_mutex);
+	  pconx_chain_data(-2,0);
+	  pthread_mutex_unlock(&mainw->data_mutex);
+	}
+	if (mainw->cconx!=NULL) cconx_chain_data(-2,0);
       }
 
       if (!(*mainw->vpp->render_frame)(weed_get_int_value(frame_layer,"width",&weed_error),
@@ -5984,7 +6008,7 @@ void do_quick_switch (gint new_file) {
 
  
   if (prefs->audio_player==AUD_PLAYER_JACK&&(prefs->audio_opts&AUDIO_OPTS_FOLLOW_CLIPS)&&!mainw->is_rendering&&
-      !(mainw->record&&!mainw->record_paused&&(prefs->rec_opts&REC_EXT_AUDIO))) {
+      !(mainw->record&&!mainw->record_paused&&prefs->audio_src==AUDIO_SRC_EXT)) {
 #ifdef ENABLE_JACK
     if (mainw->jackd!=NULL) {
       gboolean timeout;
@@ -6076,7 +6100,7 @@ void do_quick_switch (gint new_file) {
   }
 
   if (prefs->audio_player==AUD_PLAYER_PULSE&&(prefs->audio_opts&AUDIO_OPTS_FOLLOW_CLIPS)&&!mainw->is_rendering&&
-      !(mainw->record&&!mainw->record_paused&&(prefs->rec_opts&REC_EXT_AUDIO))) {
+      !(mainw->record&&!mainw->record_paused&&prefs->audio_src==AUDIO_SRC_EXT)) {
 #ifdef HAVE_PULSE_AUDIO
     if (mainw->pulsed!=NULL) {
       gboolean timeout;

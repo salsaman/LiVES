@@ -3977,13 +3977,13 @@ on_record_perf_activate                      (GtkMenuItem     *menuitem,
 
       toggle_record();
 
-      if ((prefs->rec_opts&REC_EXT_AUDIO||((prefs->rec_opts&REC_AUDIO)&&(mainw->agen_key!=0||mainw->agen_needs_reinit||has_audio_filters(FALSE))))&&
+      if ((prefs->audio_src==AUDIO_SRC_EXT||((prefs->rec_opts&REC_AUDIO)&&(mainw->agen_key!=0||mainw->agen_needs_reinit||has_audio_filters(FALSE))))&&
 	  ((prefs->audio_player==AUD_PLAYER_JACK) ||
 	   (prefs->audio_player==AUD_PLAYER_PULSE))) {
 	// remove play head and add record head
 	// creat temp clip
 
-	if (prefs->rec_opts&REC_EXT_AUDIO) {
+	if (prefs->audio_src==AUDIO_SRC_EXT) {
 
 
 #ifdef ENABLE_JACK
@@ -4047,7 +4047,7 @@ on_record_perf_activate                      (GtkMenuItem     *menuitem,
 	  
 	  if (prefs->audio_player==AUD_PLAYER_JACK) {
 #ifdef ENABLE_JACK
-	    if (prefs->rec_opts&REC_EXT_AUDIO) {
+	    if (prefs->audio_src==AUDIO_SRC_EXT) {
 	      jack_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_EXTERNAL);
 	      mainw->rec_aseek=(double)mainw->jackd_read->frames_written/(double)mainw->files[mainw->ascrap_file]->arps;
 	      mainw->jackd_read->frames_written=frames_written;
@@ -4063,7 +4063,7 @@ on_record_perf_activate                      (GtkMenuItem     *menuitem,
 	  }
 	  if (prefs->audio_player==AUD_PLAYER_PULSE) {
 #ifdef HAVE_PULSE_AUDIO
-	    if (prefs->rec_opts&REC_EXT_AUDIO) {
+	    if (prefs->audio_src==AUDIO_SRC_EXT) {
 	      pulse_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_EXTERNAL);
 	      mainw->rec_aseek=(double)mainw->pulsed_read->frames_written/(double)mainw->files[mainw->ascrap_file]->arps;
 	      mainw->pulsed_read->frames_written=frames_written;
@@ -4115,7 +4115,7 @@ on_record_perf_activate                      (GtkMenuItem     *menuitem,
       }
 #endif
 
-      if (prefs->rec_opts&REC_EXT_AUDIO) {
+      if (prefs->audio_src==AUDIO_SRC_EXT) {
 	// remove record head and add play head
 #ifdef ENABLE_JACK
 	if (prefs->audio_player==AUD_PLAYER_JACK) {
@@ -9980,7 +9980,7 @@ changed_fps_during_pb           (GtkSpinButton   *spinbutton,
   if (prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS) {
 #ifdef ENABLE_JACK
     if (prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL&&mainw->jackd->playing_file==mainw->current_file&&
-	!(mainw->record&&!mainw->record_paused&&(prefs->rec_opts&REC_EXT_AUDIO))) {
+	!(mainw->record&&!mainw->record_paused&&prefs->audio_src==AUDIO_SRC_EXT)) {
       
       mainw->jackd->sample_in_rate=cfile->arate*cfile->pb_fps/cfile->fps;
       if (mainw->agen_key==0&&!mainw->agen_needs_reinit&&!has_audio_filters(FALSE)) {
@@ -9993,7 +9993,7 @@ changed_fps_during_pb           (GtkSpinButton   *spinbutton,
 
 #ifdef HAVE_PULSE_AUDIO
     if (prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL&&mainw->pulsed->playing_file==mainw->current_file&&
-      !(mainw->record&&!mainw->record_paused&&(prefs->rec_opts&REC_EXT_AUDIO))) {
+      !(mainw->record&&!mainw->record_paused&&prefs->audio_src==AUDIO_SRC_EXT)) {
 
       mainw->pulsed->in_arate=cfile->arate*cfile->pb_fps/cfile->fps;
       if (mainw->agen_key==0&&!mainw->agen_needs_reinit&&!has_audio_filters(FALSE)) {

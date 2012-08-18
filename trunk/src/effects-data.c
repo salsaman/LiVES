@@ -62,8 +62,8 @@ gchar *pconx_list(int okey, int omode, int opnum) {
       for (i=0;i<pconx->nparams;i++) {
 	if (pconx->params[i]==opnum) {
 	  for (j=totcons;j<totcons+pconx->nconns[i];j++) {
-	    if (strlen(st1)==0) st2=g_strdup_printf("%d %d %d %d",pconx->ikey[j],pconx->imode[j],pconx->ipnum[j],pconx->autoscale[j]);
-	    st2=g_strdup_printf("%s %d %d %d %d",st1,pconx->ikey[j],pconx->imode[j],pconx->ipnum[j],pconx->autoscale[j]);
+	    if (strlen(st1)==0) st2=g_strdup_printf("%d %d %d %d",pconx->ikey[j]+1,pconx->imode[j]+1,pconx->ipnum[j],pconx->autoscale[j]);
+	    st2=g_strdup_printf("%s %d %d %d %d",st1,pconx->ikey[j]+1,pconx->imode[j]+1,pconx->ipnum[j],pconx->autoscale[j]);
 	    g_free(st1);
 	    st1=st2;
 	  }
@@ -261,6 +261,9 @@ void pconx_add_connection(int okey, int omode, int opnum, int ikey, int imode, i
   int posn=0,totcons=0;
   register int i,j;
 
+  // delete any existing connection to the input param
+  pconx_delete(-1,0,0,ikey,imode,ipnum);
+
   pthread_mutex_lock(&mainw->data_mutex);
 
   if (pconx==NULL) {
@@ -450,16 +453,6 @@ weed_plant_t *pconx_get_out_param(int ikey, int imode, int ipnum, int *autoscale
 
 
 
-boolean weed_leaves_differ(weed_plant_t *p1, const char *key1, weed_plant_t *p2, const char *key2) {
-
-
-
-
-  return TRUE;
-}
-
-
-
 boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, weed_plant_t *dparam, weed_plant_t *sparam, boolean autoscale) {
   // try to convert values of various type, if we succeed, copy the "value" and return TRUE (if changed)
   weed_plant_t *dptmpl,*sptmpl;
@@ -612,7 +605,7 @@ boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, weed_plant_t *dpa
 
 	if (retval) {
 
-	  if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
+	  if (inst!=NULL&&mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
 	    // if we are recording, add this change to our event_list
 	    rec_param_change(inst,pnum);
 	    copyto=set_copy_to(inst,pnum,FALSE);
@@ -802,7 +795,7 @@ boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, weed_plant_t *dpa
 
 	if (retval) {
 
-	  if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
+	  if (inst!=NULL&&mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
 	    // if we are recording, add this change to our event_list
 	    rec_param_change(inst,pnum);
 	    copyto=set_copy_to(inst,pnum,FALSE);
@@ -861,7 +854,7 @@ boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, weed_plant_t *dpa
 
 	if (retval) {
 
-	  if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
+	  if (inst!=NULL&&mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
 	    // if we are recording, add this change to our event_list
 	    rec_param_change(inst,pnum);
 	    copyto=set_copy_to(inst,pnum,FALSE);
@@ -974,7 +967,7 @@ boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, weed_plant_t *dpa
 	}
 	if (retval) {
 
-	  if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
+	  if (inst!=NULL&&mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
 	    // if we are recording, add this change to our event_list
 	    rec_param_change(inst,pnum);
 	    copyto=set_copy_to(inst,pnum,FALSE);
@@ -1019,7 +1012,7 @@ boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, weed_plant_t *dpa
 	}
 	if (retval) {
 
-	  if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
+	  if (inst!=NULL&&mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
 	    // if we are recording, add this change to our event_list
 	    rec_param_change(inst,pnum);
 	    copyto=set_copy_to(inst,pnum,FALSE);
@@ -1052,7 +1045,7 @@ boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, weed_plant_t *dpa
 	}
 	if (retval) {
 
-	  if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
+	  if (inst!=NULL&&mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
 	    // if we are recording, add this change to our event_list
 	    rec_param_change(inst,pnum);
 	    copyto=set_copy_to(inst,pnum,FALSE);
@@ -1077,32 +1070,6 @@ boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, weed_plant_t *dpa
     break;
     }
 
-
-  if ((dflags&WEED_PARAMETER_VARIABLE_ELEMENTS)&&!(dflags&WEED_PARAMETER_ELEMENT_PER_CHANNEL)) ndvals=nsvals;
-
-  // TODO !!
-  if (dtype==stype && nsvals==ndvals) {
-    // values of same type and number, -> simpĺe copy
-    
-    if (weed_leaves_differ(dparam,"value",sparam,"value")) {
- 
-      if (dtype==WEED_SEED_INT||dtype==WEED_SEED_DOUBLE) {
-	// prevent interpolation during rendering
-	if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
-	  // if we are recording, add this change to our event_list
-	  rec_param_change(inst,pnum);
-	  copyto=set_copy_to(inst,pnum,FALSE);
-	  if (copyto!=-1) rec_param_change(inst,copyto);
-	}
-      }
-
-      pthread_mutex_lock(&mainw->data_mutex);
-      retval=weed_leaf_copy(dparam,"value",sparam,"value");
-      pthread_mutex_unlock(&mainw->data_mutex);
-    }
-    return retval;
-  }
-
   return retval;
 }
 
@@ -1116,7 +1083,7 @@ void pconx_chain_data(int key, int mode) {
   int autoscale;
   weed_plant_t **inparams;
   weed_plant_t *oparam;
-  weed_plant_t *inst;
+  weed_plant_t *inst=NULL;
 
   boolean changed;
 
@@ -1124,21 +1091,29 @@ void pconx_chain_data(int key, int mode) {
 
   register int i;
 
-  if (mainw->is_rendering) {
-    if ((inst=get_new_inst_for_keymode(key,mode))==NULL) {
-      return; ///< dest effect is not found
+  if (key>-1) {
+    if (mainw->is_rendering) {
+      if ((inst=get_new_inst_for_keymode(key,mode))==NULL) {
+	return; ///< dest effect is not found
+      }
     }
-  }
-  else {
-    if ((inst=rte_keymode_get_instance(key+1,mode))==NULL) {
-      return; ///< dest effect is not enabled
+    else {
+      if ((inst=rte_keymode_get_instance(key+1,mode))==NULL) {
+	return; ///< dest effect is not enabled
+      }
     }
+    
+    if (weed_plant_has_leaf(inst,"in_parameters")) nparams=weed_leaf_num_elements(inst,"in_parameters");
   }
-
-  if (weed_plant_has_leaf(inst,"in_parameters")) nparams=weed_leaf_num_elements(inst,"in_parameters");
+  else if (key==-2) {
+    // playback plugin
+    if (mainw->vpp==NULL) return;
+    nparams=mainw->vpp->num_play_params;
+  }
 
   if (nparams>0) {
-    inparams=weed_get_plantptr_array(inst,"in_parameters",&error);
+    if (key==-2) inparams=mainw->vpp->play_params;
+    else inparams=weed_get_plantptr_array(inst,"in_parameters",&error);
 
     for (i=0;i<nparams;i++) {
       if ((oparam=pconx_get_out_param(key,mode,i,&autoscale))!=NULL) {
@@ -1146,9 +1121,9 @@ void pconx_chain_data(int key, int mode) {
 #ifdef DEBUG_PCONX
 	g_print("got pconx to %d %d %d\n",key,mode,i);
 #endif
-	changed=pconx_convert_value_data(inst,i,inparams[i],oparam,autoscale);
+	changed=pconx_convert_value_data(inst,i,key==-2?(weed_plant_t *)pp_get_param(mainw->vpp->play_params,i):inparams[i],oparam,autoscale);
 
-	if (changed) {
+	if (changed&&inst!=NULL) {
 	  // only store value if it changed; for int, double or colour, store old value too
 
 	  copyto=set_copy_to(inst,i,TRUE);
@@ -1173,7 +1148,7 @@ void pconx_chain_data(int key, int mode) {
 
       }
     }
-    weed_free(inparams);
+    if (key!=-2) weed_free(inparams);
   }
 }
 
@@ -1222,8 +1197,8 @@ gchar *cconx_list(int okey, int omode, int ocnum) {
       for (i=0;i<cconx->nchans;i++) {
 	if (cconx->chans[i]==ocnum) {
 	  for (j=totcons;j<totcons+cconx->nconns[i];j++) {
-	    if (strlen(st1)==0) st2=g_strdup_printf("%d %d %d",cconx->ikey[j],cconx->imode[j],cconx->icnum[j]);
-	    st2=g_strdup_printf("%s %d %d %d",st1,cconx->ikey[j],cconx->imode[j],cconx->icnum[j]);
+	    if (strlen(st1)==0) st2=g_strdup_printf("%d %d %d",cconx->ikey[j]+1,cconx->imode[j]+1,cconx->icnum[j]);
+	    st2=g_strdup_printf("%s %d %d %d",st1,cconx->ikey[j]+1,cconx->imode[j]+1,cconx->icnum[j]);
 	    g_free(st1);
 	    st1=st2;
 	  }
@@ -1406,6 +1381,9 @@ void cconx_add_connection(int okey, int omode, int ocnum, int ikey, int imode, i
   lives_cconnect_t *cconx=cconx_find(okey,omode);
   int posn=0,totcons=0;
   register int i,j;
+
+  // delete any existing connection to the input channel
+  cconx_delete(-1,0,0,ikey,imode,icnum);
 
   if (cconx==NULL) {
     // add whole new node
@@ -1674,24 +1652,29 @@ boolean cconx_chain_data(int key, int mode) {
   // ret TRUE if we should reinit inst (because of palette change)
 
   weed_plant_t *ichan,*ochan;
-  weed_plant_t *inst;
+  weed_plant_t *inst=NULL;
 
   gboolean needs_reinit=FALSE;
 
   register int i=0;
 
-  if (mainw->is_rendering) {
-    if ((inst=get_new_inst_for_keymode(key,mode))==NULL) {
-      return FALSE; ///< dest effect is not found
+  if (key>-1) {
+    if (mainw->is_rendering) {
+      if ((inst=get_new_inst_for_keymode(key,mode))==NULL) {
+	return FALSE; ///< dest effect is not found
+      }
+    }
+    else {
+      if ((inst=rte_keymode_get_instance(key+1,mode))==NULL) {
+	return FALSE; ///< dest effect is not enabled
+      }
     }
   }
-  else {
-    if ((inst=rte_keymode_get_instance(key+1,mode))==NULL) {
-      return FALSE; ///< dest effect is not enabled
-    }
+  else if (key==-2) {
+    if (mainw->vpp==NULL||mainw->vpp->num_alpha_chans==0) return FALSE;
   }
 
-  while ((ichan=get_enabled_channel(inst,i,TRUE))!=NULL) {
+  while ((ichan=(key==-2?(weed_plant_t *)pp_get_chan(mainw->vpp->play_params,i):get_enabled_channel(inst,i,TRUE)))!=NULL) {
     if ((ochan=cconx_get_out_alpha(key,mode,i++))!=NULL) {
       if (cconx_convert_pixel_data(ichan,ochan)) needs_reinit=TRUE;
     }

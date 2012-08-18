@@ -502,7 +502,7 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
 	     }
 	   }
 
-	   if (has_audio_filters(FALSE)&&(pulsed->playing_file!=mainw->ascrap_file||(mainw->agen_key==0&&!mainw->agen_needs_reinit))) {
+	   if (has_audio_filters(FALSE)&&(pulsed->playing_file!=mainw->ascrap_file)) {
 	     boolean memok=TRUE;
 	     float **fltbuf=(float **)g_malloc(pulsed->out_achans*sizeof(float *));
 	     register int i;
@@ -837,7 +837,7 @@ static void pulse_audio_read_process (pa_stream *pstream, size_t nbytes, void *a
   pulsed->frames_written+=nframes;
 
 
-  if (mainw->playing_file>0&&(pulsed->playing_file==-1||(mainw->record&&(prefs->rec_opts&REC_EXT_AUDIO)&&mainw->ascrap_file!=-1))) {
+  if (mainw->playing_file>0&&(pulsed->playing_file==-1||(mainw->record&&prefs->audio_src==AUDIO_SRC_EXT&&mainw->ascrap_file!=-1))) {
     // in this case we read external audio, but maybe not record it
     // we may wish to analyse the audio for example
 
@@ -883,7 +883,7 @@ static void pulse_audio_read_process (pa_stream *pstream, size_t nbytes, void *a
 
 
 
-  if (mainw->record&&(prefs->rec_opts&REC_EXT_AUDIO)&&mainw->ascrap_file!=-1&&mainw->playing_file>0) {
+  if (mainw->record&&prefs->audio_src==AUDIO_SRC_EXT&&mainw->ascrap_file!=-1&&mainw->playing_file>0) {
     mainw->files[mainw->playing_file]->aseek_pos+=rbytes;
     pulsed->seek_pos+=rbytes;
   }

@@ -951,7 +951,7 @@ static int audio_read (nframes_t nframes, void *arg) {
     in_buffer[i] = (float *) jack_port_get_buffer(jackd->input_port[i], nframes);
   }
 
-  if (mainw->playing_file>0&&(jackd->playing_file==-1||(mainw->record&&(prefs->rec_opts&REC_EXT_AUDIO)&&mainw->ascrap_file!=-1))) {
+  if (mainw->playing_file>0&&(jackd->playing_file==-1||(mainw->record&&prefs->audio_src==AUDIO_SRC_EXT&&mainw->ascrap_file!=-1))) {
     // in this case we read external audio, but maybe not record it
     // we may wish to analyse the audio for example
 
@@ -973,7 +973,7 @@ static int audio_read (nframes_t nframes, void *arg) {
 
   jackd->frames_written+=nframes;
 
-  if (mainw->record&&(prefs->rec_opts&REC_EXT_AUDIO)&&mainw->ascrap_file!=-1&&mainw->playing_file>0) {
+  if (mainw->record&&prefs->audio_src==AUDIO_SRC_EXT&&mainw->ascrap_file!=-1&&mainw->playing_file>0) {
     mainw->files[mainw->playing_file]->aseek_pos+=rbytes;
     jackd->seek_pos+=rbytes;
   }

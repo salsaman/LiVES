@@ -1177,6 +1177,31 @@ void close_vid_playback_plugin(_vid_playback_plugin *vpp) {
 }
 
 
+const weed_plant_t *pp_get_param(weed_plant_t **pparams, int idx) {
+  register int i=0;
+  while (pparams[i]!=NULL) {
+    if (WEED_PLANT_IS_PARAMETER(pparams[i])) {
+      if (--idx<0) return pparams[i];
+    }
+    i++;
+  }
+  return NULL;
+}
+
+
+const weed_plant_t *pp_get_chan(weed_plant_t **pparams, int idx) {
+  register int i=0;
+  while (pparams[i]!=NULL) {
+    if (WEED_PLANT_IS_CHANNEL(pparams[i])) {
+      if (--idx<0) return pparams[i];
+    }
+    i++;
+  }
+  return NULL;
+}
+
+
+
 _vid_playback_plugin *open_vid_playback_plugin (const gchar *name, gboolean in_use) {
   // this is called on startup or when the user selects a new playback plugin
 

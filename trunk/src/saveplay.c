@@ -2477,7 +2477,7 @@ void play_file (void) {
   // reinit all active effects
   if (!mainw->preview&&!mainw->is_rendering&&!mainw->foreign) weed_reinit_all();
 
-  if (!mainw->foreign&&(!(mainw->record&&(prefs->rec_opts&REC_EXT_AUDIO))&&
+  if (!mainw->foreign&&(!(mainw->record&&prefs->audio_src==AUDIO_SRC_EXT)&&
 			((audio_player==AUD_PLAYER_JACK) ||
 			 (audio_player==AUD_PLAYER_PULSE)))) {
     cfile->aseek_pos=(long)((gdouble)(mainw->play_start-1.)/cfile->fps*cfile->arate)*cfile->achans*(cfile->asampsize/8);
@@ -2554,7 +2554,7 @@ void play_file (void) {
 
   // if recording, set up recorder (jack or pulse)
 
-  if (!mainw->foreign&&(mainw->record&&(prefs->rec_opts&REC_EXT_AUDIO||mainw->agen_key!=0||has_audio_filters(FALSE)))&&
+  if (!mainw->foreign&&(mainw->record&&(prefs->audio_src==AUDIO_SRC_EXT||mainw->agen_key!=0||has_audio_filters(FALSE)))&&
       ((audio_player==AUD_PLAYER_JACK) ||
        (audio_player==AUD_PLAYER_PULSE))) {
     // creat temp clip
@@ -2568,7 +2568,7 @@ void play_file (void) {
 
       if (audio_player==AUD_PLAYER_JACK) {
 #ifdef ENABLE_JACK
-	if (prefs->rec_opts&REC_EXT_AUDIO)
+	if (prefs->audio_src==AUDIO_SRC_EXT)
 	  jack_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_EXTERNAL);
 	else { 
 	  jack_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_GENERATED);
@@ -2578,7 +2578,7 @@ void play_file (void) {
       }
       if (audio_player==AUD_PLAYER_PULSE) {
 #ifdef HAVE_PULSE_AUDIO
-	if (prefs->rec_opts&REC_EXT_AUDIO)
+	if (prefs->audio_src==AUDIO_SRC_EXT)
 	  pulse_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_EXTERNAL);
 	else { 
 	  pulse_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_GENERATED);
@@ -2780,7 +2780,7 @@ void play_file (void) {
       mainw->jackd->msgq=&jack_message;
 
     }
-    if (mainw->record&&((prefs->rec_opts&REC_AUDIO)||(prefs->rec_opts&REC_EXT_AUDIO))) {
+    if (mainw->record&&((prefs->rec_opts&REC_AUDIO)||prefs->audio_src==AUDIO_SRC_EXT)) {
       weed_plant_t *event=get_last_frame_event(mainw->event_list);
       insert_audio_event_at(mainw->event_list,event,-1,1,0.,0.); // audio switch off
     }
@@ -2808,7 +2808,7 @@ void play_file (void) {
       pulse_message.next=NULL;
       mainw->pulsed->msgq=&pulse_message;
     }
-    if (mainw->record&&((prefs->rec_opts&REC_AUDIO)||(prefs->rec_opts&REC_EXT_AUDIO))) {
+    if (mainw->record&&((prefs->rec_opts&REC_AUDIO)||prefs->audio_src==AUDIO_SRC_EXT)) {
       weed_plant_t *event=get_last_frame_event(mainw->event_list);
       insert_audio_event_at(mainw->event_list,event,-1,1,0.,0.); // audio switch off
     }

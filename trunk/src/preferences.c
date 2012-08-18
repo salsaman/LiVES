@@ -592,8 +592,7 @@ gboolean apply_prefs(gboolean skip_warn) {
 
   gchar audio_player[256];
   gint listlen=g_list_length (prefs->acodec_list);
-  gint rec_opts=rec_frames*REC_FRAMES+rec_fps*REC_FPS+rec_effects*REC_EFFECTS+rec_clips*REC_CLIPS+rec_audio*REC_AUDIO+
-    rec_ext_audio*REC_EXT_AUDIO+rec_after_pb*REC_AFTER_PB;
+  gint rec_opts=rec_frames*REC_FRAMES+rec_fps*REC_FPS+rec_effects*REC_EFFECTS+rec_clips*REC_CLIPS+rec_audio*REC_AUDIO+rec_after_pb*REC_AFTER_PB;
   guint warn_mask;
 
   unsigned char *new_undo_buf;
@@ -633,7 +632,7 @@ gboolean apply_prefs(gboolean skip_warn) {
   else if (!strncmp(audp,"pulse audio",11)) g_snprintf(audio_player,256,"pulse");
   
   if (!((prefs->audio_player==AUD_PLAYER_JACK&&capable->has_jackd)||(prefs->audio_player==AUD_PLAYER_PULSE&&capable->has_pulse_audio))) {
-    if (prefs->rec_opts&=REC_EXT_AUDIO) rec_opts^=REC_EXT_AUDIO;
+    if (prefs->audio_src==AUDIO_SRC_EXT) prefs->audio_src=AUDIO_SRC_INT;
   }
 
   if (rec_opts!=prefs->rec_opts) {
@@ -1598,8 +1597,6 @@ static void on_audp_entry_changed (GtkWidget *audp_combo, gpointer ptr) {
   if (!strncmp(audp,"jack",4)||!strncmp(audp,"pulse",5)) {
     gtk_widget_set_sensitive(prefsw->checkbutton_aclips,TRUE);
     gtk_widget_set_sensitive(prefsw->checkbutton_afollow,TRUE);
-    gtk_widget_set_sensitive(prefsw->raudio,!(prefs->rec_opts&REC_EXT_AUDIO));
-    gtk_widget_set_sensitive(prefsw->rextaudio,!(prefs->rec_opts&REC_AUDIO));
   }
   else {
     gtk_widget_set_sensitive(prefsw->checkbutton_aclips,FALSE);
@@ -3523,11 +3520,6 @@ _prefsw *create_prefs_dialog (void) {
   gtk_widget_show_all(hbox);
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->raudio),prefs->rec_opts&REC_AUDIO);
 
-
-  if (prefs->rec_opts&REC_EXT_AUDIO) {
-    gtk_widget_set_sensitive (prefsw->raudio,FALSE);
-  }
-
   if (mainw->playing_file>0&&mainw->record){
     gtk_widget_set_sensitive (prefsw->raudio,FALSE);
   }
@@ -3543,11 +3535,7 @@ _prefsw *create_prefs_dialog (void) {
 						   TRUE,(LiVESBox *)hbox,NULL);
   gtk_container_set_border_width(GTK_CONTAINER (hbox), 10);
   gtk_widget_show_all(hbox);
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->rextaudio),prefs->rec_opts&REC_EXT_AUDIO);
-
-  if (prefs->rec_opts&REC_AUDIO) {
-    gtk_widget_set_sensitive (prefsw->rextaudio,FALSE);
-  }
+  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->rextaudio),prefs->audio_src==AUDIO_SRC_EXT);
 
   if (mainw->playing_file>0&&mainw->record){
     gtk_widget_set_sensitive (prefsw->rextaudio,FALSE);

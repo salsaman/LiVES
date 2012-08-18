@@ -58,6 +58,7 @@ typedef gpointer                          LiVESObjectPtr;
 #define LIVES_COMBO_BOX(widget) GTK_COMBO_BOX(widget)
 #define LIVES_COMBO_BOX_TEXT(widget) GTK_COMBO_BOX_TEXT(widget)
 #define LIVES_RADIO_BUTTON(widget) GTK_RADIO_BUTTON(widget)
+#define LIVES_TOGGLE_BUTTON(widget) GTK_TOGGLE_BUTTON(widget)
 
 #define LIVES_WIDGET_IS_SENSITIVE(widget) GTK_WIDGET_IS_SENSITIVE(widget)
 #define LIVES_IS_COMBO(widget) GTK_IS_COMBO_BOX(widget)

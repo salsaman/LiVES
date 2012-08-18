@@ -1927,16 +1927,12 @@ _prefsw *create_prefs_dialog (void) {
   GtkWidget *label134;
   GtkWidget *label31;
   GtkWidget *frame5;
-  GtkWidget *hbox10;
-  GtkWidget *label35;
-  GtkWidget *label36;
   GtkWidget *label32;
   GtkWidget *label97;
   GtkWidget *label88;
   GtkWidget *vbox;
   GtkWidget *hbox11;
   GtkWidget *hbox94;
-  GtkWidget *hbox101;
   GtkWidget *label37;
   GtkWidget *hbox115;
   GtkWidget *label56;
@@ -1966,7 +1962,6 @@ _prefsw *create_prefs_dialog (void) {
   GtkWidget *dirimage5;
   GtkWidget *dirimage6;
   GtkWidget *hbox31;
-  GtkWidget *label126;
   GtkWidget *pp_combo;
   GtkWidget *png;
   GtkWidget *frame;
@@ -2204,63 +2199,29 @@ _prefsw *create_prefs_dialog (void) {
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_ce_maxspect), prefs->ce_maxspect);
 
   // ---
-  hbox5 = gtk_hbox_new (FALSE, 0);
-  gtk_widget_show (hbox5);
-  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_gui), hbox5, TRUE, FALSE, 10);
+  hbox = gtk_hbox_new (FALSE, 0);
+  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_gui), hbox, TRUE, FALSE, 10);
+
   // ---
-  label = gtk_label_new (_("Startup mode:"));
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-  }
-  gtk_widget_show (label);
-  gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_LEFT);
-  gtk_box_pack_start (GTK_BOX (hbox5), label, FALSE, TRUE, 0);
-  add_fill_to_box(GTK_BOX(hbox5));
+  label = lives_standard_label_new (_("Startup mode:"));
+  gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, TRUE, 0);
+  add_fill_to_box(GTK_BOX(hbox));
+  gtk_widget_show_all (hbox);
+
   // --- 
-  prefsw->rb_startup_ce = gtk_radio_button_new(st_interface_group);
-  st_interface_group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (prefsw->rb_startup_ce));
-  label = gtk_label_new_with_mnemonic(_("_Clip editor"));
-  gtk_label_set_mnemonic_widget(GTK_LABEL(label), prefsw->rb_startup_ce);
-  eventbox = gtk_event_box_new();
-  gtk_container_add(GTK_CONTAINER(eventbox), label);
-  g_signal_connect(GTK_OBJECT(eventbox), "button_press_event", G_CALLBACK(label_act_toggle), prefsw->rb_startup_ce);
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_bg(eventbox, GTK_STATE_NORMAL, &palette->normal_back);
-  }
-  hbox = gtk_hbox_new(FALSE, 0);
-  gtk_box_pack_start(GTK_BOX(hbox), prefsw->rb_startup_ce, FALSE, FALSE, 10);
-  gtk_box_pack_start(GTK_BOX(hbox), eventbox, FALSE, FALSE, 10);
-  gtk_container_set_border_width(GTK_CONTAINER (hbox), 20);
-  gtk_widget_show_all(hbox);
-  gtk_box_pack_start(GTK_BOX(hbox5), hbox, TRUE, TRUE, 0);
-  add_fill_to_box(GTK_BOX(hbox5));
+  prefsw->rb_startup_ce = lives_standard_radio_button_new(_("_Clip editor"),TRUE,st_interface_group,LIVES_BOX(hbox),NULL);
+  st_interface_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (prefsw->rb_startup_ce));
+
+  add_fill_to_box(GTK_BOX(hbox));
   // ---
-  prefsw->rb_startup_mt = gtk_radio_button_new(st_interface_group);
-  st_interface_group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (prefsw->rb_startup_mt));
-  label = gtk_label_new_with_mnemonic(_("_Multitrack mode"));
-  gtk_label_set_mnemonic_widget(GTK_LABEL(label), prefsw->rb_startup_ce);
-  eventbox = gtk_event_box_new();
-  gtk_container_add(GTK_CONTAINER(eventbox), label);
-  g_signal_connect(GTK_OBJECT(eventbox), "button_press_event", G_CALLBACK(label_act_toggle), prefsw->rb_startup_mt);
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_bg(eventbox, GTK_STATE_NORMAL, &palette->normal_back);
-  }
-  hbox = gtk_hbox_new(FALSE, 0);
-  gtk_box_pack_start(GTK_BOX(hbox), prefsw->rb_startup_mt, FALSE, FALSE, 10);
-  gtk_box_pack_start(GTK_BOX(hbox), eventbox, FALSE, FALSE, 10);
-  gtk_container_set_border_width(GTK_CONTAINER (hbox), 20);
-  gtk_widget_show_all(hbox);
-  gtk_box_pack_start(GTK_BOX(hbox5), hbox, TRUE, TRUE, 0);
+  prefsw->rb_startup_mt = lives_standard_radio_button_new(_("_Multitrack mode"),TRUE,st_interface_group,LIVES_BOX(hbox),NULL);
+
   // ---
   if (future_prefs->startup_interface==STARTUP_MT) {
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(prefsw->rb_startup_mt),TRUE);
+    lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->rb_startup_mt),TRUE);
   }
   else {
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(prefsw->rb_startup_ce),TRUE);
+    lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->rb_startup_ce),TRUE);
   }
   // 
   // multihead support (inside Gui part)
@@ -2304,76 +2265,45 @@ _prefsw *create_prefs_dialog (void) {
   }
   gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_gui), hseparator, FALSE, TRUE, 20);
   // ---
-  label = gtk_label_new (_("Multi-head support"));
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-  }
+  label = lives_standard_label_new (_("Multi-head support"));
   gtk_widget_show (label);
   gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_gui), label, FALSE, TRUE, 10);
   // ---
-  hbox6 = gtk_hbox_new (FALSE, 0);
-  gtk_widget_show (hbox6);
-  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_gui), hbox6, TRUE, TRUE, 20);
-  // ---
-  spinbutton_adj = (GObject *)gtk_adjustment_new (prefs->gui_monitor, 1, capable->nmonitors, 1, 1, 0);
-  prefsw->spinbutton_gmoni = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 1, 0);
-  label = gtk_label_new (_ (" monitor number for LiVES interface"));
-  gtk_label_set_mnemonic_widget(GTK_LABEL(label), prefsw->spinbutton_gmoni);
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-  }
   hbox = gtk_hbox_new (FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (hbox), prefsw->spinbutton_gmoni, TRUE, FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 10);
-  gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_LEFT);
-  gtk_widget_show_all(hbox);
-  gtk_container_set_border_width(GTK_CONTAINER (hbox), 20);
-  gtk_box_pack_start (GTK_BOX (hbox6), hbox, FALSE, TRUE, 0);
+  gtk_widget_show (hbox);
+  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_gui), hbox, TRUE, TRUE, 20);
   // ---
-  spinbutton_adj = (GObject *)gtk_adjustment_new (prefs->play_monitor, 0, capable->nmonitors==1?0:capable->nmonitors, 1, 1, 0);
-  prefsw->spinbutton_pmoni = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 1, 0);
-  label = gtk_label_new (_ (" monitor number for playback"));
-  gtk_label_set_mnemonic_widget(GTK_LABEL(label), prefsw->spinbutton_pmoni);
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-  }
-  hbox = gtk_hbox_new (FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (hbox), prefsw->spinbutton_pmoni, TRUE, FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 10);
-  gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_LEFT);
-  gtk_widget_show_all(hbox);
-  gtk_container_set_border_width(GTK_CONTAINER (hbox), 20);
-  gtk_box_pack_end (GTK_BOX (hbox6), hbox, FALSE, TRUE, 0);
+
+
+  prefsw->spinbutton_gmoni = lives_standard_spin_button_new (_(" monitor number for LiVES interface"), TRUE, prefs->gui_monitor, 1, capable->nmonitors, 
+							     1., 1., 0, LIVES_BOX(hbox),NULL);
+  add_fill_to_box(LIVES_BOX(hbox));
+
+  prefsw->spinbutton_pmoni = lives_standard_spin_button_new (_(" monitor number for playback"), TRUE, prefs->play_monitor, 0, 
+							     capable->nmonitors==1?0:capable->nmonitors,
+							     1., 1., 0, LIVES_BOX(hbox),NULL);
+
   // ---
-  label = gtk_label_new (_("A setting of 0 means use all available monitors (only works with some playback plugins)."));
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-  }
-  gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_LEFT);
+  gtk_widget_show_all(hbox);
+
+  // ---
+  label = lives_standard_label_new (_("A setting of 0 means use all available monitors (only works with some playback plugins)."));
+
   gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_gui), label, TRUE, TRUE, 0);
   // ---
-  hbox7 = gtk_hbox_new (FALSE, 0);
-  gtk_widget_show (hbox7);
-  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_gui), hbox7, TRUE, TRUE, 20);
+  hbox = gtk_hbox_new (FALSE, 0);
+
+  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_gui), hbox, TRUE, TRUE, 20);
   // ---
-  prefsw->forcesmon = gtk_check_button_new();
-  eventbox = gtk_event_box_new();
-  label = gtk_label_new_with_mnemonic(_("Force single monitor"));
-  gtk_label_set_mnemonic_widget(GTK_LABEL(label), prefsw->forcesmon);
-  gtk_container_add(GTK_CONTAINER(eventbox), label);
-  g_signal_connect(GTK_OBJECT(eventbox), "button_press_event", G_CALLBACK(label_act_toggle), prefsw->forcesmon);
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_bg(eventbox, GTK_STATE_NORMAL, &palette->normal_back);
-  }
-  hbox = gtk_hbox_new(FALSE, 0);
-  gtk_box_pack_start(GTK_BOX(hbox), prefsw->forcesmon, FALSE, FALSE, 5);
-  gtk_box_pack_start(GTK_BOX(hbox), eventbox, FALSE, FALSE, 5);
-  gtk_widget_show_all(hbox);
-  gtk_container_set_border_width(GTK_CONTAINER (hbox), 20);
-  gtk_box_pack_start (GTK_BOX (hbox7), hbox, FALSE, FALSE, 0);
-  gtk_widget_set_tooltip_text( prefsw->forcesmon, (_("Force single monitor mode")));
+
+  add_fill_to_box(LIVES_BOX(hbox));
+
+  prefsw->forcesmon = lives_standard_check_button_new(_("Force single monitor"),FALSE,LIVES_BOX(hbox),_("Ignore all except the first monitor."));
+
+  add_fill_to_box(LIVES_BOX(hbox));
+
+  gtk_widget_show_all (hbox);
+
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->forcesmon), prefs->force_single_monitor);
   // ---
   if (capable->nmonitors<=1) {
@@ -3054,23 +2984,6 @@ _prefsw *create_prefs_dialog (void) {
   gtk_container_add (GTK_CONTAINER (frame4), vbox69);
   gtk_container_set_border_width (GTK_CONTAINER (vbox69), 10);
 
-  hbox = gtk_hbox_new (FALSE, 0);
-  gtk_widget_show (hbox);
-  gtk_container_add (GTK_CONTAINER (vbox69), hbox);
-
-  prefsw->pbq_combo = lives_combo_new();
-  gtk_widget_set_tooltip_text( prefsw->pbq_combo, (_("The preview quality for video playback - affects resizing")));
-  
-  label = gtk_label_new_with_mnemonic (_("Preview _quality"));
-  if (palette->style & STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-  }
-
-  lives_tooltips_copy(label, prefsw->pbq_combo);
-  
-  gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 10);
-  gtk_box_pack_start (GTK_BOX (hbox), prefsw->pbq_combo, FALSE, FALSE, 10);
-  
   prefsw->pbq_list=NULL;
   // TRANSLATORS: video quality, max len 50
   prefsw->pbq_list=g_list_append(prefsw->pbq_list,g_strdup((_("Low - can improve performance on slower machines"))));
@@ -3079,12 +2992,7 @@ _prefsw *create_prefs_dialog (void) {
   // TRANSLATORS: video quality, max len 50
   prefsw->pbq_list=g_list_append(prefsw->pbq_list,g_strdup((_("High - can improve quality on very fast machines"))));
 
-  lives_combo_populate(LIVES_COMBO(prefsw->pbq_combo), prefsw->pbq_list);
-  gtk_combo_box_set_active(GTK_COMBO_BOX(prefsw->pbq_combo), 0);
-
-  gtk_widget_show (hbox);
-  gtk_widget_show (prefsw->pbq_combo);
-  gtk_widget_show (label);
+  prefsw->pbq_combo = lives_standard_combo_new(_("Preview _quality"),TRUE,prefsw->pbq_list,LIVES_BOX(vbox69),_("The preview quality for video playback - affects resizing"));
 
   switch (prefs->pb_quality) {
   case PB_QUALITY_HIGH:
@@ -3093,31 +3001,12 @@ _prefsw *create_prefs_dialog (void) {
   case PB_QUALITY_MED:
     gtk_combo_box_set_active(GTK_COMBO_BOX(prefsw->pbq_combo), 1);
   }
+
   // ---
-  hbox101 = gtk_hbox_new (TRUE, 0);
-  gtk_widget_show (hbox101);
-  gtk_box_pack_start (GTK_BOX (vbox69), hbox101, FALSE, FALSE, 0);
 
-  prefsw->checkbutton_show_stats = gtk_check_button_new();
-  eventbox = gtk_event_box_new();
-  label = gtk_label_new_with_mnemonic(_("_Show FPS statistics"));
-  gtk_label_set_mnemonic_widget(GTK_LABEL(label), prefsw->checkbutton_show_stats);
-  gtk_container_add(GTK_CONTAINER(eventbox), label);
-  g_signal_connect(GTK_OBJECT(eventbox), "button_press_event", G_CALLBACK(label_act_toggle), prefsw->checkbutton_show_stats);
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_bg(eventbox, GTK_STATE_NORMAL, &palette->normal_back);
-  }
-  hbox = gtk_hbox_new(FALSE, 0);
-  gtk_box_pack_start(GTK_BOX(hbox), prefsw->checkbutton_show_stats, FALSE, FALSE, 5);
-  gtk_box_pack_start(GTK_BOX(hbox), eventbox, FALSE, FALSE, 5);
-  gtk_container_set_border_width(GTK_CONTAINER (hbox), 20);
-  gtk_widget_show_all(hbox);
-  gtk_box_pack_start (GTK_BOX (hbox101), hbox, FALSE, FALSE, 0);
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_show_stats),prefs->show_player_stats);
+  prefsw->checkbutton_show_stats = lives_standard_check_button_new(_("_Show FPS statistics"),TRUE,LIVES_BOX(vbox69),NULL);
+  gtk_widget_show_all(gtk_widget_get_parent(prefsw->checkbutton_show_stats));
 
-  add_fill_to_box(GTK_BOX(hbox101));
   // ---
   hseparator = gtk_hseparator_new ();
   gtk_widget_show (hseparator);
@@ -3125,21 +3014,11 @@ _prefsw *create_prefs_dialog (void) {
     gtk_widget_modify_bg(hseparator, GTK_STATE_NORMAL, &palette->normal_back);
   }
   gtk_box_pack_start (GTK_BOX (vbox69), hseparator, TRUE, TRUE, 0);
+
   // ---
   hbox31 = gtk_hbox_new (FALSE, 0);
-  gtk_widget_show (hbox31);
-  gtk_box_pack_start (GTK_BOX (vbox69), hbox31, FALSE, FALSE, 0);
+  gtk_box_pack_start (GTK_BOX (vbox69), hbox31, TRUE, TRUE, 0);
 
-  label126 = gtk_label_new_with_mnemonic (_("_Plugin"));
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label126, GTK_STATE_NORMAL, &palette->normal_fore);
-  }
-  gtk_widget_show (label126);
-  gtk_box_pack_start (GTK_BOX (hbox31), label126, FALSE, FALSE, 0);
-  gtk_label_set_justify (GTK_LABEL (label126), GTK_JUSTIFY_LEFT);
-  // ---
-  pp_combo = lives_combo_new();
-  gtk_box_pack_start (GTK_BOX (hbox31), pp_combo, FALSE, FALSE, 20);
   // ---
 #ifndef IS_MINGW
   vid_playback_plugins = get_plugin_list(PLUGIN_VID_PLAYBACK, TRUE, NULL, "-so");
@@ -3148,9 +3027,7 @@ _prefsw *create_prefs_dialog (void) {
 #endif
   vid_playback_plugins = g_list_prepend (vid_playback_plugins, g_strdup(mainw->string_constants[LIVES_STRING_CONSTANT_NONE]));
 
-  lives_combo_populate(LIVES_COMBO(pp_combo), vid_playback_plugins);
-
-  gtk_widget_show(pp_combo);
+  pp_combo = lives_standard_combo_new(_("_Plugin"),TRUE,vid_playback_plugins,LIVES_BOX(hbox31),NULL);
 
   advbutton = gtk_button_new_with_mnemonic (_("_Advanced"));
   gtk_widget_show (advbutton);
@@ -3159,6 +3036,9 @@ _prefsw *create_prefs_dialog (void) {
   g_signal_connect (GTK_OBJECT (advbutton), "clicked",
 		    G_CALLBACK (on_vpp_advanced_clicked),
 		    NULL);
+
+  gtk_widget_show_all(hbox31);
+
 
   if (mainw->vpp != NULL) {
     lives_combo_set_active_string(LIVES_COMBO(pp_combo), mainw->vpp->name);
@@ -3172,18 +3052,16 @@ _prefsw *create_prefs_dialog (void) {
 
   g_signal_connect_after (G_OBJECT (pp_combo), "changed", G_CALLBACK (after_vpp_changed), (gpointer) advbutton);
 
-  hbox = gtk_hbox_new (FALSE, 0);
-  gtk_widget_show (hbox);
-  gtk_box_pack_start (GTK_BOX (vbox69), hbox, FALSE, FALSE, 0);
-
   prefsw->checkbutton_stream_audio = 
     lives_standard_check_button_new((tmp=g_strdup(_("Stream audio"))),
-				    TRUE,(LiVESBox *)hbox,
+				    TRUE,(LiVESBox *)vbox69,
 				    (tmp2=g_strdup
 				     (_("Stream audio to playback plugin"))));
   g_free(tmp);
   g_free(tmp2);
 
+
+  gtk_widget_show_all(gtk_widget_get_parent(prefsw->checkbutton_stream_audio));
 
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_stream_audio),prefs->stream_audio_out);
 
@@ -3193,29 +3071,22 @@ _prefsw *create_prefs_dialog (void) {
 
 
 
-
-  hbox = gtk_hbox_new (FALSE, 0);
-  gtk_widget_show (hbox);
-  gtk_box_pack_start (GTK_BOX (vbox69), hbox, FALSE, FALSE, 0);
-
   prefsw->checkbutton_rec_after_pb = 
     lives_standard_check_button_new((tmp=g_strdup(_("Record player output"))),
-				    TRUE,(LiVESBox *)hbox,
+				    TRUE,(LiVESBox *)vbox69,
 				    (tmp2=g_strdup
 				     (_("Record output from player instead of input to player"))));
   g_free(tmp);
   g_free(tmp2);
 								     
-								     
+  gtk_widget_show_all(gtk_widget_get_parent(prefsw->checkbutton_rec_after_pb));
 
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_rec_after_pb),(prefs->rec_opts&REC_AFTER_PB));
 
   prefsw_set_rec_after_settings(mainw->vpp);
 
-  label31 = gtk_label_new (_("VIDEO"));
+  label31 = lives_standard_label_new (_("VIDEO"));
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label31, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_bg(label31, GTK_STATE_NORMAL, &palette->normal_fore);
     gtk_widget_modify_bg(frame4, GTK_STATE_NORMAL, &palette->normal_back);
   }
   gtk_widget_show (label31);
@@ -3230,18 +3101,6 @@ _prefsw *create_prefs_dialog (void) {
   gtk_widget_show (vbox);
   gtk_container_add (GTK_CONTAINER (frame5), vbox);
 
-  hbox10 = gtk_hbox_new (FALSE, 0);
-  gtk_widget_show (hbox10);
-  gtk_box_pack_start (GTK_BOX (vbox), hbox10, TRUE, TRUE, 6);
-  gtk_container_set_border_width (GTK_CONTAINER (hbox10), 10);
-
-  label35 = gtk_label_new_with_mnemonic (_("_Player"));
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label35, GTK_STATE_NORMAL, &palette->normal_fore);
-  }
-  gtk_widget_show (label35);
-  gtk_box_pack_start (GTK_BOX (hbox10), label35, FALSE, FALSE, 20);
-  gtk_label_set_justify (GTK_LABEL (label35), GTK_JUSTIFY_LEFT);
 
 #ifdef HAVE_PULSE_AUDIO
   audp = g_list_append (audp, g_strdup_printf("pulse audio (%s)",mainw->string_constants[LIVES_STRING_CONSTANT_RECOMMENDED]));
@@ -3263,20 +3122,13 @@ _prefsw *create_prefs_dialog (void) {
     audp = g_list_append (audp, g_strdup("mplayer"));
   }
 
-  prefsw->audp_combo = lives_combo_new();
-  lives_combo_populate(LIVES_COMBO(prefsw->audp_combo), audp);
-
-  gtk_box_pack_start (GTK_BOX (hbox10), prefsw->audp_combo, TRUE, TRUE, 20);
-  gtk_widget_show(prefsw->audp_combo);
+  prefsw->audp_combo = lives_standard_combo_new(_("_Player"),TRUE,audp,LIVES_BOX(vbox),NULL);
+  gtk_widget_show_all(gtk_widget_get_parent(prefsw->audp_combo));
 
   has_ap_rec=FALSE;
 
-  add_fill_to_box(GTK_BOX(hbox10));
+  prefsw->jack_int_label=lives_standard_label_new(_("(See also the Jack Integration tab for jack startup options)"));
 
-  prefsw->jack_int_label=gtk_label_new(_("(See also the Jack Integration tab for jack startup options)"));
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(prefsw->jack_int_label, GTK_STATE_NORMAL, &palette->normal_fore);
-  }
   gtk_box_pack_start (GTK_BOX (vbox), prefsw->jack_int_label, FALSE, FALSE, 0);
 
   gtk_widget_hide(prefsw->jack_int_label);
@@ -3313,26 +3165,12 @@ _prefsw *create_prefs_dialog (void) {
   if (prefsw->audp_name!=NULL) 
     lives_combo_set_active_string(LIVES_COMBO(prefsw->audp_combo), prefsw->audp_name);
   prefsw->orig_audp_name=g_strdup(prefsw->audp_name);
+
+
   //---
-  hbox10 = gtk_hbox_new (FALSE, 0);
-  gtk_widget_show (hbox10);
-  gtk_box_pack_start (GTK_BOX (vbox), hbox10, TRUE, TRUE, 6);
-  gtk_container_set_border_width (GTK_CONTAINER (hbox10), 10);
 
-  label36 = gtk_label_new_with_mnemonic (_("Audio play _command"));
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label36, GTK_STATE_NORMAL, &palette->normal_fore);
-  }
-  gtk_widget_show (label36);
-  gtk_box_pack_start (GTK_BOX (hbox10), label36, FALSE, FALSE, 20);
-  gtk_label_set_justify (GTK_LABEL (label36), GTK_JUSTIFY_LEFT);
+  prefsw->audio_command_entry = lives_standard_entry_new (_("Audio play _command"),TRUE,"",40,255,LIVES_BOX(vbox),NULL);
 
-  prefsw->audio_command_entry = gtk_entry_new ();
-  gtk_entry_set_max_length(GTK_ENTRY(prefsw->audio_command_entry),255);
-  gtk_widget_show (prefsw->audio_command_entry);
-  gtk_box_pack_start (GTK_BOX (hbox10), prefsw->audio_command_entry, TRUE, TRUE, 0);
-
-  add_fill_to_box(GTK_BOX(hbox10));
 
   // get from prefs
   if (prefs->audio_player!=AUD_PLAYER_JACK&&prefs->audio_player!=AUD_PLAYER_PULSE) gtk_entry_set_text(GTK_ENTRY(prefsw->audio_command_entry),prefs->audio_play_command);
@@ -3341,55 +3179,28 @@ _prefsw *create_prefs_dialog (void) {
     gtk_widget_set_sensitive(prefsw->audio_command_entry,FALSE);
   }
 
-  hbox1 = gtk_hbox_new (FALSE, 0);
-  gtk_widget_show (hbox1);
+  gtk_widget_show_all(gtk_widget_get_parent(prefsw->audio_command_entry));
 
-  gtk_box_pack_start (GTK_BOX (vbox), hbox1, TRUE, TRUE, 6);
-  gtk_container_set_border_width (GTK_CONTAINER (hbox), 10);
+
+
+  hbox = gtk_hbox_new (FALSE, 0);
+  gtk_widget_show (hbox);
+
+  gtk_box_pack_start (GTK_BOX (vbox), hbox, TRUE, TRUE, 6);
   // ---
-  prefsw->checkbutton_afollow = gtk_check_button_new();
-  eventbox = gtk_event_box_new();
-  label = gtk_label_new_with_mnemonic(_("Audio follows video _rate/direction"));
-  gtk_label_set_mnemonic_widget(GTK_LABEL(label), prefsw->checkbutton_afollow);
-  gtk_container_add(GTK_CONTAINER(eventbox), label);
-  g_signal_connect(GTK_OBJECT(eventbox), "button_press_event", G_CALLBACK(label_act_toggle), prefsw->checkbutton_afollow);
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_bg(eventbox, GTK_STATE_NORMAL, &palette->normal_back);
-  }
-  hbox = gtk_hbox_new(FALSE, 0);
-  gtk_box_pack_start(GTK_BOX(hbox), prefsw->checkbutton_afollow, FALSE, FALSE, 5);
-  gtk_box_pack_start(GTK_BOX(hbox), eventbox, FALSE, FALSE, 5);
-  gtk_container_set_border_width(GTK_CONTAINER (hbox), 20);
-  gtk_widget_show_all(hbox);
-  gtk_box_pack_start (GTK_BOX (hbox1), hbox, FALSE, FALSE, 10);
+
+  prefsw->checkbutton_afollow = lives_standard_check_button_new(_("Audio follows video _rate/direction"),TRUE,LIVES_BOX(hbox),NULL);
+
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_afollow),(prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS)?TRUE:FALSE);
   gtk_widget_set_sensitive(prefsw->checkbutton_afollow,prefs->audio_player==AUD_PLAYER_JACK||prefs->audio_player==AUD_PLAYER_PULSE);
 
   // ---
-  prefsw->checkbutton_aclips = gtk_check_button_new();
-  eventbox = gtk_event_box_new();
-  label = gtk_label_new_with_mnemonic(_("Audio follows _clip switches"));
-  gtk_label_set_mnemonic_widget(GTK_LABEL(label), prefsw->checkbutton_aclips);
-  gtk_container_add(GTK_CONTAINER(eventbox), label);
-  g_signal_connect(GTK_OBJECT(eventbox), "button_press_event", G_CALLBACK(label_act_toggle), prefsw->checkbutton_aclips);
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_bg(eventbox, GTK_STATE_NORMAL, &palette->normal_back);
-  }
-  hbox = gtk_hbox_new(FALSE, 0);
-  gtk_box_pack_start(GTK_BOX(hbox), prefsw->checkbutton_aclips, FALSE, FALSE, 5);
-  gtk_box_pack_start(GTK_BOX(hbox), eventbox, FALSE, FALSE, 5);
-  gtk_container_set_border_width(GTK_CONTAINER (hbox), 20);
+  prefsw->checkbutton_aclips = lives_standard_check_button_new(_("Audio follows _clip switches"),TRUE,LIVES_BOX(hbox),NULL);
+
   gtk_widget_show_all(hbox);
-  gtk_box_pack_end (GTK_BOX (hbox1), hbox, FALSE, FALSE, 10);
+
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_aclips),(prefs->audio_opts&AUDIO_OPTS_FOLLOW_CLIPS)?TRUE:FALSE);
   gtk_widget_set_sensitive(prefsw->checkbutton_aclips,prefs->audio_player==AUD_PLAYER_JACK||prefs->audio_player==AUD_PLAYER_PULSE);
-
-
-
 
   hbox = gtk_hbox_new(FALSE, 0);
   gtk_box_pack_start (GTK_BOX (vbox), hbox, TRUE, TRUE, 6);
@@ -3397,7 +3208,6 @@ _prefsw *create_prefs_dialog (void) {
   gtk_box_pack_start(GTK_BOX(hbox),label,FALSE,FALSE,10);
   add_fill_to_box(LIVES_BOX(hbox));
   gtk_widget_show_all(hbox);
-
 
   hbox = gtk_hbox_new(FALSE, 0);
   gtk_box_pack_start (GTK_BOX (vbox), hbox, TRUE, TRUE, 6);

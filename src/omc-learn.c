@@ -2308,7 +2308,7 @@ OSCbuf *omc_learner_decode(gint type, gint idx, const gchar *string) {
 	if (macro==25 && i==1 && mainw->vpp!=NULL && mainw->vpp->play_params!=NULL && oval0<mainw->vpp->num_play_params) {
 	  // auto scale for playback plugin params
 
-	  weed_plant_t *ptmpl=weed_get_plantptr_value(mainw->vpp->play_params[oval0],"template",&error);
+	  weed_plant_t *ptmpl=weed_get_plantptr_value((weed_plant_t *)pp_get_param(mainw->vpp->play_params,oval0),"template",&error);
 	  hint=weed_get_int_value(ptmpl,"hint",&error);
 	  if ((hint==WEED_HINT_INTEGER||hint==WEED_HINT_FLOAT)&&weed_leaf_num_elements(ptmpl,"default")==1) {
 	    if (hint==WEED_HINT_INTEGER) {

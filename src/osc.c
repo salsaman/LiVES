@@ -3438,7 +3438,7 @@ void lives_osc_cb_rte_getpparamtype(void *context, int arglen, const void *vargs
 
   if (pnum>=mainw->vpp->num_play_params) return lives_osc_notify_failure();
 
-  param=mainw->vpp->play_params[pnum];
+  param=(weed_plant_t *)pp_get_param(mainw->vpp->play_params,pnum);
 
   ptmpl=weed_get_plantptr_value(param,"template",&error);
 
@@ -3652,7 +3652,7 @@ void lives_osc_cb_rte_getpparamcspace(void *context, int arglen, const void *var
 
   if (pnum>=mainw->vpp->num_play_params) return lives_osc_notify_failure();
 
-  param=mainw->vpp->play_params[pnum];
+  param=(weed_plant_t *)pp_get_param(mainw->vpp->play_params,pnum);
 
   ptmpl=weed_get_plantptr_value(param,"template",&error);
 
@@ -3749,7 +3749,7 @@ void lives_osc_cb_rte_getpparamflags(void *context, int arglen, const void *varg
 
   if (pnum>=mainw->vpp->num_play_params) return lives_osc_notify_failure();
 
-  param=mainw->vpp->play_params[pnum];
+  param=(weed_plant_t *)pp_get_param(mainw->vpp->play_params,pnum);
 
   ptmpl=weed_get_plantptr_value(param,"template",&error);
 
@@ -3881,7 +3881,7 @@ void lives_osc_cb_rte_getpparamname(void *context, int arglen, const void *vargs
 
   if (pnum>=mainw->vpp->num_play_params) return lives_osc_notify_failure();
 
-  param=mainw->vpp->play_params[pnum];
+  param=(weed_plant_t *)pp_get_param(mainw->vpp->play_params,pnum);
 
   ptmpl=weed_get_plantptr_value(param,"template",&error);
 
@@ -4080,7 +4080,7 @@ void lives_osc_cb_rte_setpparam(void *context, int arglen, const void *vargs, OS
 
   if (pnum>=mainw->vpp->num_play_params) return lives_osc_notify_failure();
 
-  param=mainw->vpp->play_params[pnum];
+  param=(weed_plant_t *)pp_get_param(mainw->vpp->play_params,pnum);
 
   if (!mainw->osc_block) {
     if (!setfx(NULL,param,pnum,nargs-1,vargs,2)) return lives_osc_notify_failure();
@@ -4705,7 +4705,7 @@ void lives_osc_cb_rte_getpparammin(void *context, int arglen, const void *vargs,
 
   if (pnum>=mainw->vpp->num_play_params) return lives_osc_notify_failure();
 
-  param=mainw->vpp->play_params[pnum];
+  param=(weed_plant_t *)pp_get_param(mainw->vpp->play_params,pnum);
 
   ptmpl=weed_get_plantptr_value(param,"template",&error);
 
@@ -4898,7 +4898,7 @@ void lives_osc_cb_rte_getpparammax(void *context, int arglen, const void *vargs,
 
   if (pnum>=mainw->vpp->num_play_params) return lives_osc_notify_failure();
 
-  param=mainw->vpp->play_params[pnum];
+  param=(weed_plant_t *)pp_get_param(mainw->vpp->play_params,pnum);
 
   ptmpl=weed_get_plantptr_value(param,"template",&error);
 
@@ -5169,7 +5169,7 @@ void lives_osc_cb_rte_getpparamdef(void *context, int arglen, const void *vargs,
 
   if (pnum>=mainw->vpp->num_play_params) return lives_osc_notify_failure();
 
-  param=mainw->vpp->play_params[pnum];
+  param=(weed_plant_t *)pp_get_param(mainw->vpp->play_params,pnum);
 
   ptmpl=weed_get_plantptr_value(param,"template",&error);
 
@@ -5348,7 +5348,7 @@ void lives_osc_cb_rte_getpparamval(void *context, int arglen, const void *vargs,
     end=st+1;
   }
 
-  param=mainw->vpp->play_params[pnum];
+  param=(weed_plant_t *)pp_get_param(mainw->vpp->play_params,pnum);
 
   ptmpl=weed_get_plantptr_value(param,"template",&error);
 
@@ -5796,7 +5796,7 @@ void lives_osc_cb_rte_addpconnection(void *context, int arglen, const void *varg
   lives_osc_parse_int_argument(vargs,&pnum1);
 
   if (key0<1||key0>=FX_KEYS_MAX_VIRTUAL||mode0<1||mode0>rte_getmodespk()) return lives_osc_notify_failure();
-  if (key1<1||key1>=FX_KEYS_MAX_VIRTUAL||mode1<1||mode1>rte_getmodespk()) return lives_osc_notify_failure();
+  if (key1<-2||key1==0||key1>=FX_KEYS_MAX_VIRTUAL||mode1<1||mode1>rte_getmodespk()) return lives_osc_notify_failure();
 
   if (key0==key1) lives_osc_notify_failure();
 
@@ -5807,10 +5807,20 @@ void lives_osc_cb_rte_addpconnection(void *context, int arglen, const void *varg
 
   if (pnum0>=num_out_params(filter)) return lives_osc_notify_failure();
 
-  filter=rte_keymode_get_filter(key1,--mode1);
-  if (filter==NULL) return lives_osc_notify_failure();
-
-  if (pnum1>=num_in_params(filter,TRUE,TRUE)) return lives_osc_notify_failure();
+  if (key1==-1) {
+    // connecting to the playback plugin
+    if (mode1>1||mainw->vpp==NULL||pnum1>=mainw->vpp->num_play_params) return lives_osc_notify_failure();
+  }
+  else if (key1==-2) {
+    // connecting to subtitler
+    if (mode1>1||pnum1>0) return lives_osc_notify_failure();
+  }
+  else {
+    filter=rte_keymode_get_filter(key1,--mode1);
+    if (filter==NULL) return lives_osc_notify_failure();
+    
+    if (pnum1>=num_in_params(filter,TRUE,TRUE)) return lives_osc_notify_failure();
+  }
 
   pconx_add_connection(--key0,mode0,pnum0,--key1,mode1,pnum1,autoscale);
   lives_osc_notify_success(NULL);
@@ -5829,7 +5839,7 @@ void lives_osc_cb_rte_delpconnection(void *context, int arglen, const void *varg
   lives_osc_parse_int_argument(vargs,&pnum1);
 
   if (key0<0||key0>=FX_KEYS_MAX_VIRTUAL||mode0<1||mode0>rte_getmodespk()) return lives_osc_notify_failure();
-  if (key1<0||key1>=FX_KEYS_MAX_VIRTUAL||mode1<1||mode1>rte_getmodespk()) return lives_osc_notify_failure();
+  if (key1<-2||key1>=FX_KEYS_MAX_VIRTUAL||mode1<1||mode1>rte_getmodespk()) return lives_osc_notify_failure();
 
   pconx_delete(--key0,--mode0,pnum0,--key1,--mode1,pnum1);
   lives_osc_notify_success(NULL);
@@ -5873,7 +5883,7 @@ void lives_osc_cb_rte_addcconnection(void *context, int arglen, const void *varg
   lives_osc_parse_int_argument(vargs,&cnum1);
 
   if (key0<1||key0>=FX_KEYS_MAX_VIRTUAL||mode0<1||mode0>rte_getmodespk()) return lives_osc_notify_failure();
-  if (key1<1||key1>=FX_KEYS_MAX_VIRTUAL||mode1<1||mode1>rte_getmodespk()) return lives_osc_notify_failure();
+  if (key1<-1||key1==0||key1>=FX_KEYS_MAX_VIRTUAL||mode1<1||mode1>rte_getmodespk()) return lives_osc_notify_failure();
 
   if (key0==key1) lives_osc_notify_failure();
 
@@ -5882,10 +5892,16 @@ void lives_osc_cb_rte_addcconnection(void *context, int arglen, const void *varg
 
   if (cnum0>=enabled_out_channels(filter,FALSE)) return lives_osc_notify_failure();
 
-  filter=rte_keymode_get_filter(key1,--mode1);
-  if (filter==NULL) return lives_osc_notify_failure();
+  if (key1==-1) {
+    // connecting to the playback plugin
+    if (mode1>1||mainw->vpp==NULL||cnum1>=mainw->vpp->num_alpha_chans) return lives_osc_notify_failure();
+  }
+  else {
+    filter=rte_keymode_get_filter(key1,--mode1);
+    if (filter==NULL) return lives_osc_notify_failure();
 
-  if (cnum1>=enabled_in_channels(filter,FALSE)) return lives_osc_notify_failure();
+    if (cnum1>=enabled_in_channels(filter,FALSE)) return lives_osc_notify_failure();
+  }
 
   cconx_add_connection(--key0,mode0,cnum0,--key1,mode1,cnum1);
   lives_osc_notify_success(NULL);
@@ -5905,7 +5921,7 @@ void lives_osc_cb_rte_delcconnection(void *context, int arglen, const void *varg
   lives_osc_parse_int_argument(vargs,&cnum1);
 
   if (key0<0||key0>=FX_KEYS_MAX_VIRTUAL||mode0<1||mode0>rte_getmodespk()) return lives_osc_notify_failure();
-  if (key1<0||key1>=FX_KEYS_MAX_VIRTUAL||mode1<1||mode1>rte_getmodespk()) return lives_osc_notify_failure();
+  if (key1<-2||key1>=FX_KEYS_MAX_VIRTUAL||mode1<1||mode1>rte_getmodespk()) return lives_osc_notify_failure();
 
   cconx_delete(--key0,--mode0,cnum0,--key1,--mode1,cnum1);
 

@@ -131,6 +131,9 @@ void save_vpp_defaults(_vid_playback_plugin *, gchar *file);
 void load_vpp_defaults(_vid_playback_plugin *, gchar *file);
 
 
+const weed_plant_t *pp_get_param(weed_plant_t **pparams, int idx);
+const weed_plant_t *pp_get_chan(weed_plant_t **pparams, int idx);
+
 // encoder plugins
 
 void do_plugin_encoder_error(const gchar *plugin_name_or_null);

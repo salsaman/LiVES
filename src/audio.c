@@ -1086,9 +1086,6 @@ int64_t render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdoubl
 
       // TODO *** when audio filters are implemented:- we will need to apply all audio effects with output here.
       // even in clipedit mode (for preview/rendering with an event list)
-      // however, we should not apply any audio effects except the volume mixer (in mt mode), if the track source was the ascrap_file
-      // (since it would have been recorded with track effects already applied)
-      //
       // also, we will need to keep updating the mainw->filter_map from mainw->event_list, as filters may switched on and off during the block
 
 
@@ -1937,7 +1934,7 @@ gboolean resync_audio(gint frameno) {
     if (!(prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS)) return FALSE;
 
   // if recording external audio, we are intrinsically in sync
-  if (mainw->record&&(prefs->rec_opts&REC_EXT_AUDIO)) return TRUE;
+  if (mainw->record&&prefs->audio_src==AUDIO_SRC_EXT) return TRUE;
 
 
 #ifdef ENABLE_JACK

@@ -340,6 +340,13 @@ LiVESWidget *lives_combo_get_entry(LiVESCombo *widget) {
 }
 
 
+LiVESSList *lives_radio_button_get_group(LiVESRadioButton *rbutton) {
+#ifdef GUI_GTK
+  return gtk_radio_button_get_group(rbutton);
+#endif
+}
+
+
 
 // compound functions
 

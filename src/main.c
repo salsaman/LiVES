@@ -758,7 +758,7 @@ static void lives_init(_ign_opts *ign_opts) {
 
   prefs->rec_opts|=(REC_FPS+REC_FRAMES);
 
-  prefs->audio_src=AUDIO_SRC_INT;
+  prefs->audio_src=get_int_pref("audio_src");
 
   if (!((prefs->audio_player==AUD_PLAYER_JACK&&capable->has_jackd)||(prefs->audio_player==AUD_PLAYER_PULSE&&capable->has_pulse_audio))) {
     prefs->audio_src=AUDIO_SRC_INT;

@@ -640,6 +640,16 @@ gboolean apply_prefs(gboolean skip_warn) {
     set_int_pref("record_opts",prefs->rec_opts);
   }
 
+  if (rec_ext_audio&&prefs->audio_src==AUDIO_SRC_INT) {
+    prefs->audio_src=AUDIO_SRC_EXT;
+    set_int_pref("audio_src",AUDIO_SRC_EXT);
+  }
+  else if (!rec_ext_audio&&prefs->audio_src==AUDIO_SRC_EXT) {
+    prefs->audio_src=AUDIO_SRC_INT;
+    set_int_pref("audio_src",AUDIO_SRC_INT);
+  }
+
+
   warn_mask=!warn_fps*WARN_MASK_FPS+!warn_save_set*WARN_MASK_SAVE_SET+!warn_fsize*WARN_MASK_FSIZE+!warn_mplayer*
     WARN_MASK_NO_MPLAYER+!warn_rendered_fx*WARN_MASK_RENDERED_FX+!warn_encoders*
     WARN_MASK_NO_ENCODERS+!warn_layout_missing_clips*WARN_MASK_LAYOUT_MISSING_CLIPS+!warn_duplicate_set*
@@ -1966,6 +1976,7 @@ _prefsw *create_prefs_dialog (void) {
   GtkWidget *mt_enter_defs;
   GObject *spinbutton_ocp_adj;
   GtkWidget *advbutton;
+  GtkWidget *rbutton;
 
 #ifdef ENABLE_OSC
 #ifdef OMC_MIDI_IMPL
@@ -1992,6 +2003,8 @@ _prefsw *create_prefs_dialog (void) {
 
   GSList *autoback_group = NULL;
   GSList *st_interface_group = NULL;
+
+  LiVESSList *asrc_group=NULL;
 
   // drop down lists
   GList *themes = NULL;
@@ -3375,6 +3388,46 @@ _prefsw *create_prefs_dialog (void) {
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_aclips),(prefs->audio_opts&AUDIO_OPTS_FOLLOW_CLIPS)?TRUE:FALSE);
   gtk_widget_set_sensitive(prefsw->checkbutton_aclips,prefs->audio_player==AUD_PLAYER_JACK||prefs->audio_player==AUD_PLAYER_PULSE);
 
+
+
+
+  hbox = gtk_hbox_new(FALSE, 0);
+  gtk_box_pack_start (GTK_BOX (vbox), hbox, TRUE, TRUE, 6);
+  label=lives_standard_label_new(_("Source:"));
+  gtk_box_pack_start(GTK_BOX(hbox),label,FALSE,FALSE,10);
+  add_fill_to_box(LIVES_BOX(hbox));
+  gtk_widget_show_all(hbox);
+
+
+  hbox = gtk_hbox_new(FALSE, 0);
+  gtk_box_pack_start (GTK_BOX (vbox), hbox, TRUE, TRUE, 6);
+
+  rbutton=lives_standard_radio_button_new(_("_Internal"),TRUE,asrc_group,LIVES_BOX(hbox),NULL);
+
+  asrc_group=lives_radio_button_get_group (LIVES_RADIO_BUTTON (rbutton));
+
+  prefsw->rextaudio = lives_standard_radio_button_new(_("_External (requires jack or pulse audio player)"),
+						      TRUE,asrc_group,LIVES_BOX(hbox),NULL);
+
+  gtk_container_set_border_width(GTK_CONTAINER (hbox), 10);
+  gtk_widget_show_all(hbox);
+  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->rextaudio),prefs->audio_src==AUDIO_SRC_EXT);
+
+  if (mainw->playing_file>0&&mainw->record){
+    gtk_widget_set_sensitive (prefsw->rextaudio,FALSE);
+  }
+
+  if (prefs->audio_player!=AUD_PLAYER_JACK&&prefs->audio_player!=AUD_PLAYER_PULSE){
+    gtk_widget_set_sensitive (prefsw->rextaudio,FALSE);
+  }
+
+  gtk_widget_show_all(hbox);
+
+  g_signal_connect(GTK_OBJECT(prefsw->rextaudio), "toggled", GTK_SIGNAL_FUNC(toggle_set_insensitive), prefsw->checkbutton_aclips);
+  g_signal_connect(GTK_OBJECT(prefsw->rextaudio), "toggled", GTK_SIGNAL_FUNC(toggle_set_insensitive), prefsw->checkbutton_afollow);
+
+
+
   label32 = gtk_label_new (_("AUDIO"));
   if (palette->style&STYLE_1) {
     gtk_widget_modify_fg(label32, GTK_STATE_NORMAL, &palette->normal_fore);
@@ -3514,7 +3567,7 @@ _prefsw *create_prefs_dialog (void) {
 
   hbox = gtk_hbox_new(FALSE, 0);
   gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_recording), hbox, TRUE, TRUE, 6);
-  prefsw->raudio = lives_standard_check_button_new(_("_Internal Audio (requires jack or pulse audio player)"),
+  prefsw->raudio = lives_standard_check_button_new(_("_Audio (requires jack or pulse audio player)"),
 						   TRUE,(LiVESBox *)hbox,NULL);
   gtk_container_set_border_width(GTK_CONTAINER (hbox), 10);
   gtk_widget_show_all(hbox);
@@ -3528,25 +3581,6 @@ _prefsw *create_prefs_dialog (void) {
     gtk_widget_set_sensitive (prefsw->raudio,FALSE);
   }
 
-
-  hbox = gtk_hbox_new(FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_recording), hbox, TRUE, TRUE, 6);
-  prefsw->rextaudio = lives_standard_check_button_new(_("_External Audio (requires jack or pulse audio player)"),
-						   TRUE,(LiVESBox *)hbox,NULL);
-  gtk_container_set_border_width(GTK_CONTAINER (hbox), 10);
-  gtk_widget_show_all(hbox);
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->rextaudio),prefs->audio_src==AUDIO_SRC_EXT);
-
-  if (mainw->playing_file>0&&mainw->record){
-    gtk_widget_set_sensitive (prefsw->rextaudio,FALSE);
-  }
-
-  if (prefs->audio_player!=AUD_PLAYER_JACK&&prefs->audio_player!=AUD_PLAYER_PULSE){
-    gtk_widget_set_sensitive (prefsw->rextaudio,FALSE);
-  }
-
-  g_signal_connect(GTK_OBJECT(prefsw->raudio), "toggled", GTK_SIGNAL_FUNC(toggle_set_insensitive), prefsw->rextaudio);
-  g_signal_connect(GTK_OBJECT(prefsw->rextaudio), "toggled", GTK_SIGNAL_FUNC(toggle_set_insensitive), prefsw->raudio);
 
   // ---
   hseparator = gtk_hseparator_new ();

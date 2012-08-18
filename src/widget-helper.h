@@ -27,6 +27,7 @@ typedef GtkComboBoxText                   LiVESComboBoxText;
 typedef GtkToggleButton                   LiVESToggleButton;
 typedef GtkTextView                       LiVESTextView;
 typedef GtkEntry                          LiVESEntry;
+typedef GtkRadioButton                    LiVESRadioButton;
 
 typedef GtkAdjustment                     LiVESAdjustment;
 
@@ -36,7 +37,7 @@ typedef GdkWindow                         LiVESXWindow;
 
 typedef GdkEventButton                    LiVESEventButton;
 
-typedef GError                          LiVESError;
+typedef GError                            LiVESError;
 
 #ifndef IS_MINGW
 typedef gboolean                          boolean;
@@ -56,6 +57,7 @@ typedef gpointer                          LiVESObjectPtr;
 #define LIVES_COMBO(widget) GTK_COMBO_BOX(widget)
 #define LIVES_COMBO_BOX(widget) GTK_COMBO_BOX(widget)
 #define LIVES_COMBO_BOX_TEXT(widget) GTK_COMBO_BOX_TEXT(widget)
+#define LIVES_RADIO_BUTTON(widget) GTK_RADIO_BUTTON(widget)
 
 #define LIVES_WIDGET_IS_SENSITIVE(widget) GTK_WIDGET_IS_SENSITIVE(widget)
 #define LIVES_IS_COMBO(widget) GTK_IS_COMBO_BOX(widget)
@@ -248,6 +250,7 @@ void lives_toggle_button_set_active(LiVESToggleButton *button, boolean active);
 
 void lives_tooltips_set (LiVESWidget *widget, const char *tip_text);
 
+LiVESSList *lives_radio_button_get_group(LiVESRadioButton *rbutton);
 
 
 // compound functions (composed of basic functions)

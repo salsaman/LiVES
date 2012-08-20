@@ -402,6 +402,7 @@ if (defined($ARGV[0])) {
 	&rc_set_if_not_set("rec_stop_gb",10);
 
 	&rc_set_if_not_set("def_autotrans","chroma blend");
+	&rc_set_if_not_set("audio_src",0); #internal
 
 	$tmpdir=&rc_get("tempdir");
 	&write_bootstrap_file;

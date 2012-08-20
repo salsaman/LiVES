@@ -43,82 +43,69 @@ static int package_version=1; // version of this package
 #include <fftw3.h>
 #include <math.h>
 
-typedef struct {
-  int size;
-  float *in;
-  fftwf_complex *out;
-  fftwf_plan p;
-} _sdata;
+#define MAXPLANS 18
 
 static size_t sizf=sizeof(float);
+
+static float *ins[MAXPLANS];
+static fftwf_complex *outs[MAXPLANS];
+static fftwf_plan plans[MAXPLANS];
+
+static int rndlog2(int i) {
+  // return (int)log2(i) - 1
+  int x=2,val=-1;
+
+  while (x<=i) {
+    x*=2;
+    val++;
+  }
+  return val;
+}
+
+
+static int twopow(int i) {
+  // return 2**(i+1)
+  register int j,x=2;
+
+  for (j=0;j<i;j++) x*=2;
+
+  return x;
+}
+
+
+static int create_plans(void) {
+  register int i,nsamps;
+
+  for (i=0;i<MAXPLANS;i++) {
+    // create fftw plan
+    nsamps=twopow(i);
+
+    ins[i] = (float*) fftwf_malloc(nsamps*sizeof(float));
+    if (ins[i]==NULL) {
+      return WEED_ERROR_MEMORY_ALLOCATION;
+    }
+    
+    outs[i] = (fftwf_complex*) fftwf_malloc(nsamps*sizeof(fftwf_complex));
+    if (outs[i]==NULL) {
+      return WEED_ERROR_MEMORY_ALLOCATION;
+    }
+    
+    plans[i] = fftwf_plan_dft_r2c_1d(nsamps, ins[i], outs[i], i<13?FFTW_MEASURE:FFTW_ESTIMATE);
+  }
+  return WEED_NO_ERROR;
+}
+
+
+
 
 /////////////////////////////////////////////////////////////
 
 
-int fftw_init(weed_plant_t *inst) {
-  int error;
-  int nsamps;
-
-  _sdata *sdata;
-
-  weed_plant_t *in_channel=weed_get_plantptr_value(inst,"in_channels",&error);
-
-  sdata=(_sdata *)weed_malloc(sizeof(_sdata));
-  if (sdata==NULL) {
-    return WEED_ERROR_MEMORY_ALLOCATION;
-  }
-
-  nsamps=weed_get_int_value(in_channel,"audio_data_length",&error);
-
-  if (nsamps>0) {
-    // create fftw plan
-    
-    sdata->in = (float*) fftwf_malloc(nsamps*sizeof(float));
-    if (sdata->in==NULL) {
-      weed_free(sdata);
-      return WEED_ERROR_MEMORY_ALLOCATION;
-    }
-    
-    sdata->out = (fftwf_complex*) fftwf_malloc(nsamps*sizeof(fftwf_complex));
-    if (sdata->out==NULL) {
-      fftwf_free(sdata->in);
-      weed_free(sdata);
-      return WEED_ERROR_MEMORY_ALLOCATION;
-    }
-    
-    sdata->p = fftwf_plan_dft_r2c_1d(nsamps, sdata->in, sdata->out, FFTW_ESTIMATE);
-  }
-  sdata->size=nsamps;
-    
-  weed_set_voidptr_value(inst,"plugin_data",sdata);
-
-  return WEED_NO_ERROR;
-
-}
-
-
-int fftw_deinit(weed_plant_t *inst) {
-  int error;
-  _sdata *sdata=(_sdata *)weed_get_voidptr_value(inst,"plugin_data",&error);
-
-  if (sdata!=NULL) {
-    if (sdata->size>0) {
-      fftwf_destroy_plan(sdata->p);
-      fftwf_free(sdata->in);
-      fftwf_free(sdata->out);
-    }
-    weed_free(sdata);
-  }
-
-  return WEED_NO_ERROR;
-
-}
-
-
 
 int fftw_process (weed_plant_t *inst, weed_timecode_t tc) {
+
   int error;
-  int chans,nsamps,inter,rate,k;
+  int chans,nsamps,onsamps,base,inter,rate,k;
 
   weed_plant_t *in_channel=weed_get_plantptr_value(inst,"in_channels",&error);
   float *src=(float *)weed_get_voidptr_value(in_channel,"audio_data",&error);
@@ -128,29 +115,22 @@ int fftw_process (weed_plant_t *inst, weed_timecode_t tc) {
 
   double freq=weed_get_double_value(in_params[0],"value",&error);
 
-  _sdata *sdata=(_sdata *)weed_get_voidptr_value(inst,"plugin_data",&error);
-
   float tot=0.;
 
   register int i,j;
 
   weed_free(in_params);
 
-  nsamps=weed_get_int_value(in_channel,"audio_data_length",&error);
+  onsamps=weed_get_int_value(in_channel,"audio_data_length",&error);
 
-  if (nsamps==0) {
+  if (onsamps<2) {
     weed_set_double_value(out_param,"value",0.);
     weed_set_int64_value(out_param,"timecode",tc);
     return WEED_NO_ERROR;
   }
 
-  if (nsamps!=sdata->size) {
-    int ret=fftw_deinit(inst);
-    if (ret!=WEED_NO_ERROR) return WEED_ERROR_HARDWARE;
-    ret=fftw_init(inst);
-    if (ret!=WEED_NO_ERROR) return WEED_ERROR_HARDWARE;
-    sdata=(_sdata *)weed_get_voidptr_value(inst,"plugin_data",&error);
-  }
+  base=rndlog2(onsamps);
+  nsamps=twopow(base);
 
   rate=weed_get_int_value(in_channel,"audio_rate",&error);
 
@@ -178,23 +158,21 @@ int fftw_process (weed_plant_t *inst, weed_timecode_t tc) {
     // copy in data to sdata->in
     if (inter==WEED_FALSE) {
       // non-interleaved
-      weed_memcpy(sdata->in,src,nsamps*sizf);
-      src+=nsamps;
+      weed_memcpy(ins[base],src,nsamps*sizf);
+      src+=onsamps;
     }
     else {
       // interleaved
       for (j=0;j<nsamps;j++) {
-	sdata->in[j]=src[j*chans];
+	ins[base][j]=src[j*chans];
       }
       src++;
     }
 
-
-
     //fprintf(stderr,"executing plan of size %d\n",sdata->size);
-    fftwf_execute(sdata->p);
+    fftwf_execute(plans[base]);
 
-    tot+=sqrtf(sdata->out[k][0]*sdata->out[k][0]+sdata->out[k][1]*sdata->out[k][1]);
+    tot+=sqrtf(outs[base][k][0]*outs[base][k][0]+outs[base][k][1]*outs[base][k][1]);
 
   }
 
@@ -212,18 +190,28 @@ int fftw_process (weed_plant_t *inst, weed_timecode_t tc) {
 
 
 weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
+  if (create_plans()!=WEED_NO_ERROR) return NULL;
   weed_plant_t *plugin_info=weed_plugin_info_init(weed_boot,num_versions,api_versions);
   if (plugin_info!=NULL) {
     weed_plant_t *in_chantmpls[]={weed_audio_channel_template_init("in channel 0",0),NULL};
     weed_plant_t *in_params[]={weed_float_init("freq","_Frequency",2000.,0.0,22000.0),NULL};
     weed_plant_t *out_params[]={weed_out_param_float_init("value",0.,0.,1.),NULL};
-    weed_plant_t *filter_class=weed_filter_class_init("audio fft analyser","salsaman",1,0,&fftw_init,&fftw_process,
-						      &fftw_deinit,in_chantmpls,NULL,in_params,out_params);
-
+    weed_plant_t *filter_class=weed_filter_class_init("audio fft analyser","salsaman",1,0,NULL,&fftw_process,
+						      NULL,in_chantmpls,NULL,in_params,out_params);
+    
     weed_plugin_info_add_filter_class (plugin_info,filter_class);
-
+    
     weed_set_int_value(plugin_info,"version",package_version);
   }
   return plugin_info;
 }
 
+
+void weed_desetup(void) {
+  register int i;
+  for (i=0;i<=MAXPLANS;i++) {
+    fftwf_destroy_plan(plans[i]);
+    fftwf_free(ins[i]);
+    fftwf_free(outs[i]);
+  }
+}

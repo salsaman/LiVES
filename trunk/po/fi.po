@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2012-08-15 20:31-0300\n"
+"POT-Creation-Date: 2012-08-18 09:31-0300\n"
 "PO-Revision-Date: 2012-01-20 00:23+0000\n"
 "Last-Translator: Tuomas Lähteenmäki <Unknown>\n"
 "Language-Team: Finnish <fi@li.org>\n"
@@ -107,62 +107,62 @@ msgid "_Resize All Frames"
 msgstr "Muuta kaikkien kuvien k_okoa"
 
 #. TRANSLATORS: text saying "Any", for encoder and output format (as in "does not matter")
-#: src/main.c:822
+#: src/main.c:824
 msgid "Any"
 msgstr "Mikä tahansa"
 
 #. TRANSLATORS: text saying "None", for playback plugin name (as in "none specified")
-#: src/main.c:824
+#: src/main.c:826
 msgid "None"
 msgstr "Ei mitään"
 
 #. TRANSLATORS: text saying "recommended", for plugin names, etc.
-#: src/main.c:826
+#: src/main.c:828
 msgid "recommended"
 msgstr "suositeltu"
 
 #. TRANSLATORS: text saying "disabled", (as in "not enabled")
-#: src/main.c:828
+#: src/main.c:830
 msgid "disabled !"
 msgstr "kytketty pois päältä!"
 
 #. TRANSLATORS: text saying "**The current layout**", to warn users that the current layout is affected
-#: src/main.c:830
+#: src/main.c:832
 msgid "**The current layout**"
 msgstr "**Nykyinen asettelu**"
 
 #. TRANSLATORS: adjective for "Built in" type effects
-#: src/main.c:832
+#: src/main.c:834
 msgid "Builtin"
 msgstr ""
 
 #. TRANSLATORS: adjective for "Custom" type effects
-#: src/main.c:834
+#: src/main.c:836
 msgid "Custom"
 msgstr "Mukauta"
 
 #. TRANSLATORS: adjective for "Test" type effects
-#: src/main.c:836
+#: src/main.c:838
 msgid "Test"
 msgstr "Kokeile"
 
-#: src/main.c:1440
+#: src/main.c:1442
 msgid "Loading realtime effect plugins..."
 msgstr "Ladataan reaaliaikaiset tehosteliitännäiset..."
 
-#: src/main.c:1504
+#: src/main.c:1506
 msgid "Starting jack audio server..."
 msgstr "Käynnistetään jack-äänipalvelin..."
 
-#: src/main.c:1506
+#: src/main.c:1508
 msgid "Starting jack transport server..."
 msgstr "Käynnistetään jack-välityspalvelin..."
 
-#: src/main.c:1507
+#: src/main.c:1509
 msgid "Connecting to jack transport server..."
 msgstr "Yhdistetään jack-välityspalvelimeen..."
 
-#: src/main.c:1537
+#: src/main.c:1539
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -182,104 +182,104 @@ msgstr ""
 "\n"
 "Vaihtoehtoisesti voit kokeilla käynnistää \"lives-jackopts 16\", tai "
 
-#: src/main.c:1565
+#: src/main.c:1567
 msgid "Starting pulse audio server..."
 msgstr "Käynnistetään pulse audio -palvelin..."
 
-#: src/main.c:1626
+#: src/main.c:1628
 msgid "Checking optional dependencies:"
 msgstr "Tarkistetaan valinnaiset riippuvuudet:"
 
-#: src/main.c:1627
+#: src/main.c:1629
 msgid "mplayer...detected..."
 msgstr "mplayer...havaittu..."
 
-#: src/main.c:1628
+#: src/main.c:1630
 msgid "mplayer...NOT DETECTED..."
 msgstr "mplayer...EI HAVAITTU..."
 
-#: src/main.c:1629
+#: src/main.c:1631
 msgid "convert...detected..."
 msgstr "convert...havaittu..."
 
-#: src/main.c:1630
+#: src/main.c:1632
 msgid "convert...NOT DETECTED..."
 msgstr "convert...EI HAVAITTU..."
 
-#: src/main.c:1631
+#: src/main.c:1633
 msgid "composite...detected..."
 msgstr "composite...havaittu..."
 
-#: src/main.c:1632
+#: src/main.c:1634
 msgid "composite...NOT DETECTED..."
 msgstr "composite...EI HAVAITTU..."
 
-#: src/main.c:1633
+#: src/main.c:1635
 msgid "sox...detected\n"
 msgstr "sox...havaittu\n"
 
-#: src/main.c:1634
+#: src/main.c:1636
 msgid "sox...NOT DETECTED\n"
 msgstr "sox...EI HAVAITTU\n"
 
-#: src/main.c:1635
+#: src/main.c:1637
 msgid "cdda2wav...detected..."
 msgstr "cdda2wav...havaittu..."
 
-#: src/main.c:1636
+#: src/main.c:1638
 msgid "cdda2wav...NOT DETECTED..."
 msgstr "cdda2wav...EI HAVAITTU..."
 
-#: src/main.c:1637
+#: src/main.c:1639
 msgid "jackd...detected..."
 msgstr "jackd...havaittu..."
 
-#: src/main.c:1638
+#: src/main.c:1640
 msgid "jackd...NOT DETECTED..."
 msgstr "jackd...EI HAVAITTU..."
 
-#: src/main.c:1639
+#: src/main.c:1641
 msgid "pulse audio...detected..."
 msgstr "pulse audio...havaittu..."
 
-#: src/main.c:1640
+#: src/main.c:1642
 msgid "pulse audio...NOT DETECTED..."
 msgstr "pulse audio...EI HAVAITTU..."
 
-#: src/main.c:1641
+#: src/main.c:1643
 msgid "python...detected..."
 msgstr "python...havaittu..."
 
-#: src/main.c:1642
+#: src/main.c:1644
 msgid "python...NOT DETECTED..."
 msgstr "python...EI HAVAITTU..."
 
-#: src/main.c:1643
+#: src/main.c:1645
 msgid "dvgrab...detected..."
 msgstr "dvgrab...havaittu..."
 
-#: src/main.c:1644
+#: src/main.c:1646
 msgid "dvgrab...NOT DETECTED..."
 msgstr "dvgrab...EI HAVAITTU..."
 
-#: src/main.c:1645
+#: src/main.c:1647
 msgid "xwininfo...detected..."
 msgstr "xwininfo...havaittu..."
 
-#: src/main.c:1646
+#: src/main.c:1648
 msgid "xwininfo...NOT DETECTED..."
 msgstr "xwininfo...EI HAVAITTU..."
 
-#: src/main.c:1652
+#: src/main.c:1654
 #, fuzzy
 msgid "Windows"
 msgstr "_Sulje ikkuna"
 
-#: src/main.c:1654
+#: src/main.c:1656
 msgid "UNKNOWN - please patch me !"
 msgstr "TUNTEMATON - ole hyvä ja korjaa minut !"
 
-#: src/main.c:1658
+#: src/main.c:1660
 #, c-format
 msgid ""
 "\n"
@@ -290,22 +290,22 @@ msgstr ""
 "\n"
 "Ikkunointiohjelma ilmoitti olevansa \"%s\"; "
 
-#: src/main.c:1661
+#: src/main.c:1663
 #, c-format
 msgid "number of monitors detected: %d\n"
 msgstr "näyttöjä löydetty: %d\n"
 
-#: src/main.c:1664
+#: src/main.c:1666
 #, c-format
 msgid "Number of CPUs detected: %d\n"
 msgstr "Suorittimia havaittu: %d\n"
 
-#: src/main.c:1667
+#: src/main.c:1669
 #, c-format
 msgid "Temp directory is %s\n"
 msgstr "Tilapäishakemisto on %s\n"
 
-#: src/main.c:1671
+#: src/main.c:1673
 msgid ""
 "WARNING - this version of LiVES was compiled without either\n"
 "jack or pulse audio support.\n"
@@ -315,15 +315,15 @@ msgstr ""
 "jack- tai pulse audio -tukea.\n"
 "Jotkut ääniominaisuudet eivät ole käytettävissä.\n"
 
-#: src/main.c:1674
+#: src/main.c:1676
 msgid "Compiled with jack support, good !\n"
 msgstr "Käännetty jack-tuella, hienoa!\n"
 
-#: src/main.c:1677
+#: src/main.c:1679
 msgid "Compiled with pulse audio support, wonderful !\n"
 msgstr "Käännetty pulse audio -tuella, loistavaa!\n"
 
-#: src/main.c:1681
+#: src/main.c:1683
 #, c-format
 msgid ""
 "Welcome to LiVES version %s.\n"
@@ -332,7 +332,7 @@ msgstr ""
 "Tervetuloa LiVES-versioon %s.\n"
 "\n"
 
-#: src/main.c:2110
+#: src/main.c:2112
 #, c-format
 msgid ""
 "\n"
@@ -342,135 +342,135 @@ msgstr ""
 "Käynnistyssyntaksi on: %s [valitsimet] [tiedostonimi [aloitusaika] "
 "[kehykset]]\n"
 
-#: src/main.c:2111
+#: src/main.c:2113
 msgid "Where: filename is the name of a media file or backup file.\n"
 msgstr ""
 "Missä: tiedostonimi on mediatiedoston tai varmuuskopiotiedoston nimi.\n"
 
-#: src/main.c:2112
+#: src/main.c:2114
 msgid "start_time : filename start time in seconds\n"
 msgstr "aloitusaika : tiedostonnimen aloitusaika sekunteina\n"
 
-#: src/main.c:2113
+#: src/main.c:2115
 msgid "frames : maximum number of frames to open\n"
 msgstr "kehykset : avattavien kehysten enimmäismäärä\n"
 
-#: src/main.c:2115
+#: src/main.c:2117
 msgid "opts can be:\n"
 msgstr "valitsimia voivat olla:\n"
 
-#: src/main.c:2116
+#: src/main.c:2118
 msgid "-help            : show this help text and exit\n"
 msgstr "-help            : näytä tämä ohjeteksti ja poistu\n"
 
-#: src/main.c:2117
+#: src/main.c:2119
 msgid "-tmpdir <tempdir>: use alternate working directory (e.g /var/ramdisk)\n"
 msgstr ""
 
-#: src/main.c:2118
+#: src/main.c:2120
 msgid "-set <setname>   : autoload clip set setname\n"
 msgstr "-set <leikenimi> : lataa automaattisesti leikesarja leikenimi\n"
 
-#: src/main.c:2119
+#: src/main.c:2121
 msgid "-noset           : do not load any set on startup\n"
 msgstr "-noset           : älä lataa leikesarjoja käynnistäessä\n"
 
-#: src/main.c:2120
+#: src/main.c:2122
 #, fuzzy
 msgid "-norecover       : force no-loading of crash recovery\n"
 msgstr "-recover : voimaan lastaus kaatua hyödyntämistä\n"
 
-#: src/main.c:2121
+#: src/main.c:2123
 msgid "-recover         : force loading of crash recovery\n"
 msgstr "-recover : voimaan lastaus kaatua hyödyntämistä\n"
 
-#: src/main.c:2122
+#: src/main.c:2124
 msgid "-nothreaddialog  : doe nothing - retained for backwards compatibility\n"
 msgstr ""
 
-#: src/main.c:2123
+#: src/main.c:2125
 msgid "-nogui           : do not show the gui\n"
 msgstr "-nogui           : käynnistä ilman käyttöliittymää\n"
 
-#: src/main.c:2124
+#: src/main.c:2126
 #, fuzzy
 msgid "-nosplash        : do not show the splash window\n"
 msgstr "-nogui           : käynnistä ilman käyttöliittymää\n"
 
-#: src/main.c:2125
+#: src/main.c:2127
 #, fuzzy
 msgid "-noplaywin       : do not show the play window\n"
 msgstr "-nogui           : käynnistä ilman käyttöliittymää\n"
 
-#: src/main.c:2126
+#: src/main.c:2128
 msgid "-startup-ce      : start in clip editor mode\n"
 msgstr "-startup-ce : alkaa clip editori-tilassa\n"
 
-#: src/main.c:2127
+#: src/main.c:2129
 msgid "-startup-mt      : start in multitrack mode\n"
 msgstr "-startum-mt : alkaa moniraitaäänityksen tilassa\n"
 
-#: src/main.c:2128
+#: src/main.c:2130
 msgid ""
 "-fxmodesmax <n>  : allow <n> modes per effect key (minimum is 1, default is "
 "8)\n"
 msgstr ""
 
-#: src/main.c:2130
+#: src/main.c:2132
 msgid "-oscstart <port> : start OSC listener on UDP port <port>\n"
 msgstr "-oscstart <portti> : käynnistä OSC-kuuntelin UDP-portissa <portti>\n"
 
-#: src/main.c:2131
+#: src/main.c:2133
 msgid "-nooscstart      : do not start OSC listener\n"
 msgstr "-nooscstart      : älä käynnistä OSC-kuuntelinta\n"
 
-#: src/main.c:2133
+#: src/main.c:2135
 msgid ""
 "-aplayer <ap>    : start with selected audio player. <ap> can be mplayer"
 msgstr ""
 "-aplayer <ap>    : käynnistä valitulla äänisoittimella. <ap> voi olla mplayer"
 
 #. TRANSLATORS: pulse (audio)
-#: src/main.c:2136
+#: src/main.c:2138
 msgid ", pulse"
 msgstr ", pulse"
 
-#: src/main.c:2139
+#: src/main.c:2141
 msgid ", sox or jack\n"
 msgstr ", sox tai jack\n"
 
-#: src/main.c:2140
+#: src/main.c:2142
 msgid ""
 "-jackopts <opts>    : opts is a bitmap of jack startup options [1 = jack "
 "transport client, 2 = jack transport master, 4 = start jack transport "
 "server, 8 = pause audio when video paused, 16 = start jack audio server] \n"
 msgstr ""
 
-#: src/main.c:2142
+#: src/main.c:2144
 msgid " or sox\n"
 msgstr " tai sox\n"
 
-#: src/main.c:2144
+#: src/main.c:2146
 msgid "-devicemap <mapname>          : autoload devicemap\n"
 msgstr "-devicemap <kartan nimi> : automaattisesti Kontti kartta\n"
 
-#: src/main.c:2145
+#: src/main.c:2147
 msgid ""
 "-vppdefaults <file>          : load video playback plugin defaults from "
 "<file> (Note: only sets the settings, not the plugin type)\n"
 msgstr ""
 
-#: src/main.c:2146
+#: src/main.c:2148
 msgid "-debug            : try to debug crashes (requires 'gdb' installed)\n"
 msgstr ""
 "-debug            : yritä jäljittää kaatumisen aiheuttavaa vikaa (\"gdb\" "
 "oltava asennettuna)\n"
 
-#: src/main.c:2172 src/gui.c:1089
+#: src/main.c:2174 src/gui.c:1089
 msgid "Starting GUI..."
 msgstr "Käynnistetään graafinen käyttöliittymä..."
 
-#: src/main.c:2185
+#: src/main.c:2187
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -486,7 +486,7 @@ msgstr ""
 "%s/%s.\n"
 "(Muuta tarvittaessa <prefix_dir>-arvoa tiedostosta ~/.lives)\n"
 
-#: src/main.c:2199
+#: src/main.c:2201
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -497,7 +497,7 @@ msgstr ""
 "LiVES ei pystynyt kirjoittamaan pientä tiedostoa /tmp-kansioon\n"
 "Tarkista että sinulla on kirjoitusoikeus /tmp-kansioon ja yritä uudelleen.\n"
 
-#: src/main.c:2204
+#: src/main.c:2206
 msgid ""
 "\n"
 "`smogrify` must be in your path, and be executable\n"
@@ -506,7 +506,7 @@ msgid ""
 "before running LiVES.\n"
 msgstr ""
 
-#: src/main.c:2210
+#: src/main.c:2212
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -521,7 +521,7 @@ msgstr ""
 "\n"
 "Tarkista tiedoston käyttöoikeudet ja yritä uudestaan.\n"
 
-#: src/main.c:2217
+#: src/main.c:2219
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -538,7 +538,7 @@ msgstr ""
 "Tarkista tiedoston ja sen sijaintihakemiston käyttöoikeudet\n"
 "ja yritä uudestaan.\n"
 
-#: src/main.c:2227
+#: src/main.c:2229
 #, fuzzy, c-format
 msgid ""
 "Please check the <tempdir> setting in \n"
@@ -549,7 +549,7 @@ msgstr ""
 "%s/.lives\n"
 "ja yritä uudelleen.\n"
 
-#: src/main.c:2234
+#: src/main.c:2236
 #, c-format
 msgid ""
 "\n"
@@ -564,7 +564,7 @@ msgstr ""
 "\n"
 "%s"
 
-#: src/main.c:2242
+#: src/main.c:2244
 msgid ""
 "\n"
 "An incorrect version of smogrify was found in your path.\n"
@@ -575,21 +575,21 @@ msgid ""
 "Thankyou.\n"
 msgstr ""
 
-#: src/main.c:2247 src/dialogs.c:1834
+#: src/main.c:2249 src/dialogs.c:1834
 msgid ""
 "\n"
 "LiVES currently requires either 'mplayer' or 'sox' to function. Please "
 "install one or other of these, and try again.\n"
 msgstr ""
 
-#: src/main.c:2251
+#: src/main.c:2253
 msgid ""
 "\n"
 "LiVES currently requires both 'mplayer' and 'sox' to function. Please "
 "install these, and try again.\n"
 msgstr ""
 
-#: src/main.c:2261
+#: src/main.c:2263
 msgid ""
 "\n"
 "LiVES was unable to locate 'mplayer'. You may wish to install mplayer to use "
@@ -599,7 +599,7 @@ msgstr ""
 "LiVES ei löytänyt ohjelmaa \"mplayer\". Asenna mplayer jos haluat käyttää \n"
 "LiVESiä täysipainoisesti.\n"
 
-#: src/main.c:2264
+#: src/main.c:2266
 msgid ""
 "\n"
 "LiVES was unable to locate 'convert'. You should install convert and image-"
@@ -609,7 +609,7 @@ msgstr ""
 "LiVES ei löytänyt \"convert\"-ohjelmaa. Asenna convert ja image-magick jos "
 "haluat käyttää hahmonnettuja tehosteita.\n"
 
-#: src/main.c:2267
+#: src/main.c:2269
 msgid ""
 "\n"
 "LiVES was unable to locate 'composite'. You should install composite and "
@@ -619,7 +619,7 @@ msgstr ""
 "LiVES ei löytänyt \"composite\"-ohjelmaa. Asenna composite ja image-magick "
 "jos haluat käyttää yhdistä-toimintoa.\n"
 
-#: src/main.c:2270
+#: src/main.c:2272
 msgid ""
 "\n"
 "LiVES was unable to locate 'sox'. Some audio features may not work. You "
@@ -629,7 +629,7 @@ msgstr ""
 "LiVES ei löytänyt ohjelmaa 'sox'. Jotkin ääniominaisuudet eivät välttämättä "
 "toimi. Sinun tulisi asentaa 'sox'.\n"
 
-#: src/main.c:2273
+#: src/main.c:2275
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -645,59 +645,59 @@ msgstr ""
 "%s/%s.\n"
 "(Muuta tarvittaessa <prefix_dir>-arvoa tiedostosta ~/.lives)\n"
 
-#: src/main.c:2385
+#: src/main.c:2387
 #, c-format
 msgid "Autoloading set %s..."
 msgstr "Ladataan automaattisesti leikesarja %s..."
 
 #. TRANSLATORS: localised name may be used here
-#: src/main.c:2540
+#: src/main.c:2542
 msgid "LiVES"
 msgstr "LiVES"
 
-#: src/main.c:2703
+#: src/main.c:2705
 #, c-format
 msgid "Invalid audio player %s\n"
 msgstr "Virheellinen musiikkisoitin %s\n"
 
-#: src/main.c:2821
+#: src/main.c:2823
 #, c-format
 msgid "LiVES-%s: <Untitled%d> %dx%d : %d frames %d bpp %.3f fps"
 msgstr "LiVES-%s: <Nimetön%d> %dx%d : %d kuvaa %d bpp %.3f fps"
 
-#: src/main.c:2825
+#: src/main.c:2827
 #, c-format
 msgid "LiVES-%s: <%s> %dx%d : ??? frames ??? bpp %.3f fps"
 msgstr "LiVES-%s: <%s> %dx%d : ??? kuvaa ??? bpp %.3f fps"
 
-#: src/main.c:2828
+#: src/main.c:2830
 #, c-format
 msgid "LiVES-%s: <%s> %dx%d : %d frames %d bpp %.3f fps"
 msgstr "LiVES-%s: <%s> %dx%d : %d kuvaa %d bpp %.3f fps"
 
-#: src/main.c:2834
+#: src/main.c:2836
 #, c-format
 msgid "LiVES-%s: <No File>"
 msgstr "LiVES-%s: <Ei tiedostoa>"
 
 #. TRANSLATORS: rec(ord)
-#: src/main.c:4422
+#: src/main.c:4424
 #, c-format
 msgid "rec %9d/%d"
 msgstr "rec %9d/%d"
 
 #. TRANSLATORS: out of memory (rec(ord))
-#: src/main.c:4426
+#: src/main.c:4428
 #, fuzzy, c-format
 msgid "!rec %9d/%d"
 msgstr "rec %9d/%d"
 
-#: src/main.c:4673 src/main.c:4674 src/gui.c:2052 src/gui.c:3094
+#: src/main.c:4675 src/main.c:4676 src/gui.c:2052 src/gui.c:3094
 #: src/saveplay.c:2191
 msgid "Play"
 msgstr "Toista"
 
-#: src/main.c:5318
+#: src/main.c:5342
 msgid ""
 "LiVES was unable to capture this image\n"
 "\n"
@@ -705,35 +705,35 @@ msgstr ""
 "LiVES ei pystynyt kaappaamaan tätä kuvaa\n"
 "\n"
 
-#: src/main.c:5440
+#: src/main.c:5464
 #, c-format
 msgid "Closed file %s\n"
 msgstr "Tiedosto %s suljettiin\n"
 
-#: src/main.c:5634 src/gui.c:622 src/utils.c:3792 src/utils.c:3824
+#: src/main.c:5658 src/gui.c:622 src/utils.c:3792 src/utils.c:3824
 #: src/saveplay.c:3354 src/multitrack.c:4077 src/multitrack.c:5650
 msgid "_Undo"
 msgstr "Kum_oa"
 
-#: src/main.c:5635 src/gui.c:635 src/utils.c:3793 src/utils.c:3825
+#: src/main.c:5659 src/gui.c:635 src/utils.c:3793 src/utils.c:3825
 #: src/saveplay.c:3355 src/multitrack.c:4098 src/multitrack.c:5673
 msgid "_Redo"
 msgstr "_Tee uudestaan"
 
-#: src/main.c:5662 src/interface.c:661 src/gui.c:2217 src/preferences.c:2497
+#: src/main.c:5686 src/interface.c:661 src/gui.c:2217 src/preferences.c:2494
 #: src/resample.c:1808
 msgid "Video"
 msgstr "Video"
 
-#: src/main.c:5663 src/interface.c:680 src/gui.c:2236
+#: src/main.c:5687 src/interface.c:680 src/gui.c:2236
 msgid "Left Audio"
 msgstr "Vasen ääni"
 
-#: src/main.c:5664 src/gui.c:2254
+#: src/main.c:5688 src/gui.c:2254
 msgid "Right Audio"
 msgstr "Oikea ääni"
 
-#: src/main.c:5712
+#: src/main.c:5736
 msgid ""
 "\n"
 "\n"
@@ -742,7 +742,7 @@ msgid ""
 "Please adjust the playback options in Preferences and try again.\n"
 msgstr ""
 
-#: src/main.c:5797 src/callbacks.c:7387 src/callbacks.c:7535
+#: src/main.c:5821 src/callbacks.c:7387 src/callbacks.c:7535
 #: src/callbacks.c:7861 src/callbacks.c:7878 src/gui.c:3683
 #: src/saveplay.c:2313 src/saveplay.c:2347 src/saveplay.c:2937
 #: src/saveplay.c:3047 src/saveplay.c:3069 src/multitrack.c:8423
@@ -751,13 +751,13 @@ msgstr ""
 msgid " (%d %% scale)"
 msgstr ""
 
-#: src/main.c:5799 src/callbacks.c:7389 src/callbacks.c:7537
+#: src/main.c:5823 src/callbacks.c:7389 src/callbacks.c:7537
 #: src/callbacks.c:7863 src/gui.c:3687 src/saveplay.c:2315 src/saveplay.c:2349
 #, fuzzy, c-format
 msgid "LiVES: - Play Window%s"
 msgstr "LiVES: - Toistoikkuna"
 
-#: src/main.c:6213 src/plugins.c:1500
+#: src/main.c:6237 src/plugins.c:1525
 msgid "LiVES: - Play Window"
 msgstr "LiVES: - Toistoikkuna"
 
@@ -1469,8 +1469,8 @@ msgstr "Leikesarjan nimi "
 msgid "Use def_aults"
 msgstr "Aseta oletukseksi"
 
-#: src/interface.c:2211 src/interface.c:2567 src/preferences.c:2814
-#: src/preferences.c:3145
+#: src/interface.c:2211 src/interface.c:2567 src/preferences.c:2811
+#: src/preferences.c:3142
 msgid "_Advanced"
 msgstr "L_isäasetukset"
 
@@ -5602,7 +5602,7 @@ msgid "effect"
 msgstr "tehoste"
 
 #. TRANSLATORS: please keep this string short
-#: src/effects.c:78 src/preferences.c:3834
+#: src/effects.c:78 src/preferences.c:3822
 msgid "Effects"
 msgstr "Tehosteet"
 
@@ -5723,7 +5723,7 @@ msgstr ""
 msgid "Audio Analysers"
 msgstr ""
 
-#: src/effects.c:127 src/plugins.c:2453 src/plugins.c:2467
+#: src/effects.c:127 src/plugins.c:2478 src/plugins.c:2492
 msgid "unknown"
 msgstr "tuntematon"
 
@@ -6087,7 +6087,7 @@ msgstr ""
 msgid "Save settings to an alternate file.\n"
 msgstr ""
 
-#: src/plugins.c:1204
+#: src/plugins.c:1229
 #, c-format
 msgid ""
 "\n"
@@ -6100,7 +6100,7 @@ msgstr ""
 "Toistoliitännäistä %s ei voitu avata\n"
 "Virheilmoitus oli %s\n"
 
-#: src/plugins.c:1250
+#: src/plugins.c:1275
 #, c-format
 msgid ""
 "\n"
@@ -6115,7 +6115,7 @@ msgstr ""
 "puuttuu pakollinen toiminto.\n"
 "Sitä ei voida käyttää.\n"
 
-#: src/plugins.c:1263
+#: src/plugins.c:1288
 #, fuzzy, c-format
 msgid ""
 "Video playback plugin failed to initialise.\n"
@@ -6126,31 +6126,31 @@ msgstr ""
 "Toistoliitännäistä %s ei voitu avata\n"
 "Virheilmoitus oli %s\n"
 
-#: src/plugins.c:1459
+#: src/plugins.c:1484
 msgid ""
 "\n"
 "Warning ! Video playback plugin will not send key presses. Keyboard may be "
 "disabled during plugin use !\n"
 msgstr ""
 
-#: src/plugins.c:1463
+#: src/plugins.c:1488
 #, c-format
 msgid ""
 "*** Using %s plugin for fs playback, agreed to use palette type %d ( %s ). "
 "***\n"
 msgstr ""
 
-#: src/plugins.c:1569
+#: src/plugins.c:1594
 #, c-format
 msgid "Audio stream unable to use preferred format '%s'\n"
 msgstr ""
 
-#: src/plugins.c:1577
+#: src/plugins.c:1602
 #, c-format
 msgid "Using format '%s' instead.\n"
 msgstr ""
 
-#: src/plugins.c:1614
+#: src/plugins.c:1639
 #, fuzzy, c-format
 msgid ""
 "LiVES was unable to find its encoder plugins. Please make sure you have the "
@@ -6164,7 +6164,7 @@ msgstr ""
 "%s/%s.\n"
 "(Muuta tarvittaessa <prefix_dir>-arvoa tiedostosta ~/.lives)\n"
 
-#: src/plugins.c:1622
+#: src/plugins.c:1647
 #, fuzzy, c-format
 msgid ""
 "LiVES did not receive a response from the encoder plugin called '%s'.\n"
@@ -6178,11 +6178,11 @@ msgstr ""
 "%s/%s.\n"
 "(Muuta tarvittaessa <prefix_dir>-arvoa tiedostosta ~/.lives)\n"
 
-#: src/plugins.c:2030
+#: src/plugins.c:2055
 msgid "Unable to resize, please install imageMagick\n"
 msgstr "Koon muuttaminen ei onnistu, ole hyvä ja asenna imageMagick\n"
 
-#: src/plugins.c:2394
+#: src/plugins.c:2419
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -6195,7 +6195,7 @@ msgstr ""
 "Toistoliitännäistä %s ei voitu avata\n"
 "Virheilmoitus oli %s\n"
 
-#: src/plugins.c:2417
+#: src/plugins.c:2442
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -6210,26 +6210,26 @@ msgstr ""
 "puuttuu pakollinen toiminto.\n"
 "Sitä ei voida käyttää.\n"
 
-#: src/plugins.c:2458
+#: src/plugins.c:2483
 #, fuzzy
 msgid "/unknown"
 msgstr "tuntematon"
 
-#: src/plugins.c:2574
+#: src/plugins.c:2599
 #, fuzzy
 msgid "LiVES: - Decoder Plugins"
 msgstr "LiVES:- Laitteen tiedot"
 
-#: src/plugins.c:2594
+#: src/plugins.c:2619
 msgid "Enabled Video Decoders (uncheck to disable)"
 msgstr ""
 
-#: src/plugins.c:2672
+#: src/plugins.c:2697
 #, c-format
 msgid "Failed to load %s, transitions may not resize.\n"
 msgstr ""
 
-#: src/plugins.c:3752
+#: src/plugins.c:3777
 #, fuzzy, c-format
 msgid "%s advanced settings"
 msgstr "Käytä _suositeltuja asetuksia"
@@ -7094,7 +7094,7 @@ msgstr ""
 "Vinkki: vältä sen sijoittamista /tmp-kansioon, sillä tavallisesti /tmp "
 "tyhjennetään järjestelmän sammutuksen yhteydessä."
 
-#: src/preferences.c:725
+#: src/preferences.c:724
 #, c-format
 msgid ""
 "Unable to create or write to the new temporary directory.\n"
@@ -7105,7 +7105,7 @@ msgid ""
 "The directory will not be changed now.\n"
 msgstr ""
 
-#: src/preferences.c:727
+#: src/preferences.c:726
 #, c-format
 msgid ""
 "Unable to create or write to the new temporary directory.\n"
@@ -7115,7 +7115,7 @@ msgid ""
 "The directory will not be changed now.\n"
 msgstr ""
 
-#: src/preferences.c:739
+#: src/preferences.c:738
 msgid ""
 "You have chosen to change the temporary directory.\n"
 "Please make sure you have no other copies of LiVES open.\n"
@@ -7127,20 +7127,20 @@ msgid ""
 "original setting."
 msgstr ""
 
-#: src/preferences.c:1129
+#: src/preferences.c:1128
 msgid ""
 "\n"
 "Unable to switch audio players to jack - jackd must be installed first.\n"
 "See http://jackaudio.org\n"
 msgstr ""
 
-#: src/preferences.c:1135
+#: src/preferences.c:1134
 msgid ""
 "\n"
 "Switching audio players requires restart (jackd must not be running)\n"
 msgstr ""
 
-#: src/preferences.c:1162
+#: src/preferences.c:1161
 msgid ""
 "\n"
 "Unable to switch audio players to pulse audio\n"
@@ -7148,314 +7148,314 @@ msgid ""
 "See http://www.pulseaudio.org\n"
 msgstr ""
 
-#: src/preferences.c:1455
+#: src/preferences.c:1454
 msgid "PCM (highest quality; largest files)"
 msgstr "PCM (korkein laatu; suurimmat tiedostot)"
 
-#: src/preferences.c:2032
+#: src/preferences.c:2029
 msgid "LiVES: - Preferences"
 msgstr "LiVES: - Asetukset"
 
-#: src/preferences.c:2123
+#: src/preferences.c:2120
 msgid "Open file selection maximised"
 msgstr "Avaa tiedostovalinta suurennettuna"
 
-#: src/preferences.c:2133
+#: src/preferences.c:2130
 msgid "Show recent files in the File menu"
 msgstr "Näytä viimeisimmät tiedostot Tiedosto-valikossa"
 
-#: src/preferences.c:2147
+#: src/preferences.c:2144
 msgid "Stop screensaver on playback    "
 msgstr "Pysäytä näytönsäästäjä toistettaessa    "
 
-#: src/preferences.c:2156
+#: src/preferences.c:2153
 msgid "Open main window maximised"
 msgstr "Avaa pääikkuna suurennettuna"
 
-#: src/preferences.c:2169
+#: src/preferences.c:2166
 msgid "Show toolbar when background is blanked"
 msgstr "Näytä työkalurivi kun tausta on pimennetty"
 
-#: src/preferences.c:2178
+#: src/preferences.c:2175
 msgid "Allow mouse wheel to switch clips"
 msgstr "Käytä hiiren rullaa leikkeiden vaihtoon"
 
-#: src/preferences.c:2191
+#: src/preferences.c:2188
 msgid "Shrink previews to fit in interface"
 msgstr ""
 
-#: src/preferences.c:2201
+#: src/preferences.c:2198
 #, fuzzy
 msgid "Startup mode:"
 msgstr "Aloituskuva"
 
-#: src/preferences.c:2212
+#: src/preferences.c:2209
 msgid "_Clip editor"
 msgstr ""
 
-#: src/preferences.c:2232
+#: src/preferences.c:2229
 #, fuzzy
 msgid "_Multitrack mode"
 msgstr "Käynnistä _Multitrack-tilaan"
 
-#: src/preferences.c:2297
+#: src/preferences.c:2294
 msgid "Multi-head support"
 msgstr "Moninäyttötuki"
 
-#: src/preferences.c:2310
+#: src/preferences.c:2307
 msgid " monitor number for LiVES interface"
 msgstr " LiVES-käyttöliittymälle käytettävän näytön numero"
 
-#: src/preferences.c:2325
+#: src/preferences.c:2322
 msgid " monitor number for playback"
 msgstr " toistoon käytettävän näytön numero"
 
-#: src/preferences.c:2338
+#: src/preferences.c:2335
 msgid ""
 "A setting of 0 means use all available monitors (only works with some "
 "playback plugins)."
 msgstr ""
 
-#: src/preferences.c:2351
+#: src/preferences.c:2348
 msgid "Force single monitor"
 msgstr ""
 
-#: src/preferences.c:2366
+#: src/preferences.c:2363
 msgid "Force single monitor mode"
 msgstr ""
 
 #. TRANSLATORS: please keep this string short
-#: src/preferences.c:2388
+#: src/preferences.c:2385
 msgid "GUI"
 msgstr "Käyttöliittymä"
 
-#: src/preferences.c:2416
+#: src/preferences.c:2413
 msgid "When entering Multitrack mode:"
 msgstr "Siirryttäessä Multitrack-tilaan:"
 
-#: src/preferences.c:2432
+#: src/preferences.c:2429
 msgid "_Prompt me for width, height, fps and audio settings"
 msgstr "_Kysy aina leveys-, korkeus-, fps- ja ääniasetukset"
 
-#: src/preferences.c:2451
+#: src/preferences.c:2448
 msgid "_Always use the following values:"
 msgstr "Käytä _aina seuraavia arvoja:"
 
-#: src/preferences.c:2471
+#: src/preferences.c:2468
 msgid "Use these same _values for rendering a new clip"
 msgstr ""
 
-#: src/preferences.c:2510
+#: src/preferences.c:2507
 msgid "_Width           "
 msgstr "_Leveys           "
 
-#: src/preferences.c:2526
+#: src/preferences.c:2523
 msgid "          _Height      "
 msgstr "          _Korkeus      "
 
-#: src/preferences.c:2543
+#: src/preferences.c:2540
 #, fuzzy
 msgid "          _FPS"
 msgstr "Nimi:          "
 
-#: src/preferences.c:2569
+#: src/preferences.c:2566
 msgid "Enable backing audio track"
 msgstr ""
 
-#: src/preferences.c:2591
+#: src/preferences.c:2588
 msgid "Audio track per video track"
 msgstr ""
 
-#: src/preferences.c:2623
+#: src/preferences.c:2620
 msgid "    _Undo buffer size (MB)    "
 msgstr "    _Kumoa-puskurin koko (Mt)    "
 
-#: src/preferences.c:2639
+#: src/preferences.c:2636
 msgid "_Exit multitrack mode after rendering"
 msgstr ""
 
-#: src/preferences.c:2661
+#: src/preferences.c:2658
 msgid "Auto backup layouts"
 msgstr "Asetteluiden automaattitallennus"
 
-#: src/preferences.c:2671
+#: src/preferences.c:2668
 #, fuzzy
 msgid "_Every"
 msgstr "_Ei koskaan"
 
-#: src/preferences.c:2688
+#: src/preferences.c:2685
 #, fuzzy
 msgid "seconds"
 msgstr "sekuntia."
 
-#: src/preferences.c:2707
+#: src/preferences.c:2704
 msgid "After every _change"
 msgstr "Jokaisen _muutoksen jälkeen"
 
-#: src/preferences.c:2726
+#: src/preferences.c:2723
 msgid "_Never"
 msgstr "_Ei koskaan"
 
 #. TRANSLATORS: please keep this string short
-#: src/preferences.c:2761
+#: src/preferences.c:2758
 #, fuzzy
 msgid "Multitrack/Render"
 msgstr "Multitrack-näppäimet"
 
-#: src/preferences.c:2795
+#: src/preferences.c:2792
 #, fuzzy
 msgid "Use instant opening when possible"
 msgstr "Käytä automaattista lomituksenpoistoa mikäli mahdollista"
 
-#: src/preferences.c:2808
+#: src/preferences.c:2805
 msgid "Enable instant opening of some file types using decoder plugins"
 msgstr ""
 
-#: src/preferences.c:2834
+#: src/preferences.c:2831
 msgid "Video open command             "
 msgstr "Videon toistokomento             "
 
-#: src/preferences.c:2854
+#: src/preferences.c:2851
 #, fuzzy
 msgid "Open/render compression                  "
 msgstr "      Pakkaaja                  "
 
-#: src/preferences.c:2866
+#: src/preferences.c:2863
 msgid " %     ( lower = slower, larger files; for jpeg, higher quality )"
 msgstr ""
 
-#: src/preferences.c:2879
+#: src/preferences.c:2876
 msgid "Default image format          "
 msgstr "Oletuskuvaformaatti          "
 
-#: src/preferences.c:2888
+#: src/preferences.c:2885
 msgid "_jpeg"
 msgstr "_jpeg"
 
-#: src/preferences.c:2903
+#: src/preferences.c:2900
 msgid "_png"
 msgstr ""
 
-#: src/preferences.c:2923
+#: src/preferences.c:2920
 msgid "(Check Help/Troubleshoot to see which image formats are supported)"
 msgstr ""
 
-#: src/preferences.c:2939
+#: src/preferences.c:2936
 msgid "Enable automatic deinterlacing when possible"
 msgstr "Käytä automaattista lomituksenpoistoa mikäli mahdollista"
 
-#: src/preferences.c:2951
+#: src/preferences.c:2948
 msgid "Automatically deinterlace frames when a plugin suggests it"
 msgstr ""
 
-#: src/preferences.c:2965
+#: src/preferences.c:2962
 msgid "Ignore blank borders when possible"
 msgstr ""
 
-#: src/preferences.c:2977
+#: src/preferences.c:2974
 msgid "Clip any blank borders from frames where possible"
 msgstr ""
 
-#: src/preferences.c:2991
+#: src/preferences.c:2988
 msgid "When opening multiple files, concatenate images into one clip"
 msgstr "Avattaessa useita tiedostoja, ketjuta kuvat yhteen leikkeeseen"
 
 #. TRANSLATORS: please keep this string short
-#: src/preferences.c:3013
+#: src/preferences.c:3010
 #, fuzzy
 msgid "Decoding"
 msgstr "Nauhoitus"
 
-#: src/preferences.c:3052
+#: src/preferences.c:3049
 msgid "The preview quality for video playback - affects resizing"
 msgstr ""
 
-#: src/preferences.c:3054
+#: src/preferences.c:3051
 msgid "Preview _quality"
 msgstr "_Esikatselun laatu"
 
 #. TRANSLATORS: video quality, max len 50
-#: src/preferences.c:3066
+#: src/preferences.c:3063
 msgid "Low - can improve performance on slower machines"
 msgstr "Matala - parantaa suorituskykyä hitaammilla koneilla"
 
 #. TRANSLATORS: video quality, max len 50
-#: src/preferences.c:3068
+#: src/preferences.c:3065
 msgid "Normal - recommended for most users"
 msgstr "Normaali - suositeltava useimmille käyttäjille"
 
 #. TRANSLATORS: video quality, max len 50
-#: src/preferences.c:3070
+#: src/preferences.c:3067
 msgid "High - can improve quality on very fast machines"
 msgstr "Korkea - parantaa laatua nopeammilla koneilla"
 
-#: src/preferences.c:3093
+#: src/preferences.c:3090
 msgid "_Show FPS statistics"
 msgstr "_Näytä FPS-tiedot"
 
-#: src/preferences.c:3123
+#: src/preferences.c:3120
 msgid "_Plugin"
 msgstr "_Liitännäinen"
 
-#: src/preferences.c:3170
+#: src/preferences.c:3167
 #, fuzzy
 msgid "Stream audio"
 msgstr "Oikea ääni"
 
-#: src/preferences.c:3173
+#: src/preferences.c:3170
 msgid "Stream audio to playback plugin"
 msgstr ""
 
-#: src/preferences.c:3192
+#: src/preferences.c:3189
 msgid "Record player output"
 msgstr ""
 
-#: src/preferences.c:3195
+#: src/preferences.c:3192
 msgid "Record output from player instead of input to player"
 msgstr ""
 
-#: src/preferences.c:3205
+#: src/preferences.c:3202
 msgid "VIDEO"
 msgstr "VIDEO"
 
-#: src/preferences.c:3228
+#: src/preferences.c:3225
 msgid "_Player"
 msgstr "_Soitin"
 
-#: src/preferences.c:3266
+#: src/preferences.c:3263
 msgid "(See also the Jack Integration tab for jack startup options)"
 msgstr ""
 
-#: src/preferences.c:3300
+#: src/preferences.c:3297
 msgid "mplayer"
 msgstr "mplayer"
 
-#: src/preferences.c:3312
+#: src/preferences.c:3309
 msgid "Audio play _command"
 msgstr "Äänen soitto_komento"
 
-#: src/preferences.c:3330
+#: src/preferences.c:3327
 msgid "- internal -"
 msgstr "- sisäinen -"
 
-#: src/preferences.c:3342
+#: src/preferences.c:3339
 msgid "Audio follows video _rate/direction"
 msgstr ""
 
-#: src/preferences.c:3363
+#: src/preferences.c:3360
 msgid "Audio follows _clip switches"
 msgstr ""
 
-#: src/preferences.c:3381
+#: src/preferences.c:3378
 msgid "AUDIO"
 msgstr "ÄÄNI"
 
 #. TRANSLATORS: please keep this string short
-#: src/preferences.c:3396
+#: src/preferences.c:3393
 msgid "Playback"
 msgstr "Toisto"
 
-#: src/preferences.c:3421
+#: src/preferences.c:3418
 msgid ""
 "Record audio when capturing an e_xternal window\n"
 " (requires jack or pulse audio)"
@@ -7463,266 +7463,266 @@ msgstr ""
 "Nauhoita ääni kaapattaessa _ulkoisesta ikkunasta\n"
 " (vaatii jack- tai pulse audion)"
 
-#: src/preferences.c:3441
+#: src/preferences.c:3438
 msgid "      What to record when 'r' is pressed   "
 msgstr "      Mitä nauhoitetaan kun \"r\" on painettu   "
 
-#: src/preferences.c:3456
+#: src/preferences.c:3453
 #, fuzzy
 msgid "_Frame changes"
 msgstr "_Hylkää muutokset"
 
-#: src/preferences.c:3472
+#: src/preferences.c:3469
 msgid "F_PS changes"
 msgstr "_FPS-muutokset"
 
-#: src/preferences.c:3494
+#: src/preferences.c:3491
 msgid "_Real time effects"
 msgstr "_Tosiaikaiset tehosteet"
 
-#: src/preferences.c:3506
+#: src/preferences.c:3503
 #, fuzzy
 msgid "_Clip switches"
 msgstr "_Leikkeet"
 
-#: src/preferences.c:3520
+#: src/preferences.c:3517
 #, fuzzy
 msgid "_Internal Audio (requires jack or pulse audio player)"
 msgstr ""
 "Nauhoita ääni kaapattaessa _ulkoisesta ikkunasta\n"
 " (vaatii jack- tai pulse audion)"
 
-#: src/preferences.c:3542
+#: src/preferences.c:3534
 #, fuzzy
 msgid "_External Audio (requires jack or pulse audio player)"
 msgstr ""
 "Nauhoita ääni kaapattaessa _ulkoisesta ikkunasta\n"
 " (vaatii jack- tai pulse audion)"
 
-#: src/preferences.c:3575
+#: src/preferences.c:3563
 msgid "Pause recording if free disk space falls below"
 msgstr ""
 
-#: src/preferences.c:3589
+#: src/preferences.c:3577
 msgid "GB"
 msgstr ""
 
 #. TRANSLATORS: please keep this string short
-#: src/preferences.c:3601
+#: src/preferences.c:3589
 msgid "Recording"
 msgstr "Nauhoitus"
 
-#: src/preferences.c:3629
+#: src/preferences.c:3617
 msgid "      Encoder                  "
 msgstr "      Pakkaaja                  "
 
-#: src/preferences.c:3665
+#: src/preferences.c:3653
 msgid "Output format"
 msgstr "Tallennusmuoto"
 
-#: src/preferences.c:3712
+#: src/preferences.c:3700
 msgid "Audio codec"
 msgstr "Äänikoodekki"
 
 #. TRANSLATORS: please keep this string short
-#: src/preferences.c:3729
+#: src/preferences.c:3717
 msgid "Encoding"
 msgstr "Pakkaus"
 
-#: src/preferences.c:3757
+#: src/preferences.c:3745
 msgid "Use _antialiasing when resizing"
 msgstr "Käytä kuva-alueen _pehmennystä kokoa muutettaessa"
 
-#: src/preferences.c:3768
+#: src/preferences.c:3756
 msgid "Number of _real time effect keys"
 msgstr "_Tehostenäppäimien lukumäärä"
 
-#: src/preferences.c:3770
+#: src/preferences.c:3758
 msgid ""
 "The number of \"virtual\" real time effect keys. They can be controlled "
 "through the real time effects window, or via network (OSC)."
 msgstr ""
 
-#: src/preferences.c:3780
+#: src/preferences.c:3768
 msgid "Use _threads where possible when applying effects"
 msgstr ""
 
-#: src/preferences.c:3789
+#: src/preferences.c:3777
 #, fuzzy
 msgid "Number of _threads"
 msgstr "Kuvien _määrä"
 
-#: src/preferences.c:3807
+#: src/preferences.c:3795
 msgid "Restart is required if any of the following paths are changed:"
 msgstr ""
 
-#: src/preferences.c:3819
+#: src/preferences.c:3807
 msgid "Weed plugin path"
 msgstr ""
 
-#: src/preferences.c:3822
+#: src/preferences.c:3810
 msgid "Frei0r plugin path"
 msgstr ""
 
-#: src/preferences.c:3825
+#: src/preferences.c:3813
 msgid "LADSPA plugin path"
 msgstr ""
 
-#: src/preferences.c:3859
+#: src/preferences.c:3847
 msgid "      Video load directory (default)      "
 msgstr "      Videoiden latauskansio (oletus)      "
 
-#: src/preferences.c:3870
+#: src/preferences.c:3858
 msgid "      Video save directory (default) "
 msgstr "      Videoiden tallennuskansio (oletus) "
 
-#: src/preferences.c:3881
+#: src/preferences.c:3869
 msgid "      Audio load directory (default) "
 msgstr "      Äänileikkeiden latauskansio (oletus) "
 
-#: src/preferences.c:3892
+#: src/preferences.c:3880
 msgid "      Image directory (default) "
 msgstr "      Kuvakansio (oletus) "
 
-#: src/preferences.c:3903
+#: src/preferences.c:3891
 msgid "      Backup/Restore directory (default) "
 msgstr "      Varmuuskopio/palautuskansio (oletus) "
 
-#: src/preferences.c:3914
+#: src/preferences.c:3902
 msgid "      Temp directory (do not remove) "
 msgstr "      Tilapäiskansio (älä poista) "
 
-#: src/preferences.c:3933
+#: src/preferences.c:3921
 msgid "The default directory for loading video clips from"
 msgstr "Oletuskansio josta videoleikkeet ladataan"
 
-#: src/preferences.c:3976
+#: src/preferences.c:3964
 msgid "The default directory for saving encoded clips to"
 msgstr "Oletuskansio johon pakatut leikkeet tallennetaan"
 
-#: src/preferences.c:3989
+#: src/preferences.c:3977
 msgid "The default directory for loading and saving audio"
 msgstr "Oletuskansio avattaville ja tallennettaville äänitiedostoille"
 
-#: src/preferences.c:4002
+#: src/preferences.c:3990
 msgid "The default directory for saving frameshots to"
 msgstr "Oletuskansio johon kuvaotokset tallennetaan"
 
-#: src/preferences.c:4015
+#: src/preferences.c:4003
 msgid "The default directory for backing up/restoring single clips"
 msgstr "Oletuskansio yksittäisten leikkeiden varmuuskopiointiin/palautukseen"
 
-#: src/preferences.c:4027
+#: src/preferences.c:4015
 msgid "LiVES working directory."
 msgstr "LiVESin työkansio."
 
 #. TRANSLATORS: please keep this string short
-#: src/preferences.c:4105
+#: src/preferences.c:4093
 msgid "Directories"
 msgstr "Kansiot"
 
-#: src/preferences.c:4136
+#: src/preferences.c:4124
 msgid "Warn if diskspace falls below: "
 msgstr ""
 
-#: src/preferences.c:4151 src/preferences.c:4183
+#: src/preferences.c:4139 src/preferences.c:4171
 msgid " MB [set to 0 to disable]"
 msgstr ""
 
-#: src/preferences.c:4168
+#: src/preferences.c:4156
 msgid "Diskspace critical level: "
 msgstr ""
 
-#: src/preferences.c:4207
+#: src/preferences.c:4195
 msgid ""
 "Warn on Insert / Merge if _frame rate of clipboard does not match frame rate "
 "of selection"
 msgstr ""
 
-#: src/preferences.c:4230
+#: src/preferences.c:4218
 msgid "Warn on Open if file _size exceeds "
 msgstr "Varoita jos avattavan tiedoston _koko on yli "
 
-#: src/preferences.c:4253
+#: src/preferences.c:4241
 msgid " MB"
 msgstr " Mt"
 
-#: src/preferences.c:4263
+#: src/preferences.c:4251
 msgid "Show a warning before saving a se_t"
 msgstr "Näytä varoitus ennen leikesarjan _tallennusta"
 
-#: src/preferences.c:4282
+#: src/preferences.c:4270
 msgid ""
 "Show a warning if _mplayer, sox, composite or convert is not found when "
 "LiVES is started."
 msgstr ""
 
-#: src/preferences.c:4301
+#: src/preferences.c:4289
 msgid "Show a warning if no _rendered effects are found at startup."
 msgstr ""
 "Näytä varoitus jos _hahmonnettuja tehosteita ei löydy käynnistyksen "
 "yhteydessä."
 
-#: src/preferences.c:4320
+#: src/preferences.c:4308
 msgid "Show a warning if no _encoder plugins are found at startup."
 msgstr ""
 "Näytä varoitus jos _pakkausliitännäisiä ei löydy käynnistyksen yhteydessä."
 
-#: src/preferences.c:4339
+#: src/preferences.c:4327
 #, fuzzy
 msgid "Show a warning if a _duplicate set name is entered."
 msgstr ""
 "Näytä varoitus jos _pakkausliitännäisiä ei löydy käynnistyksen yhteydessä."
 
-#: src/preferences.c:4358
+#: src/preferences.c:4346
 msgid "When a set is loaded, warn if clips are missing from _layouts."
 msgstr "Varoita leikesarjaa ladattaessa jos asetteluista puuttuu leikkeitä."
 
-#: src/preferences.c:4378
+#: src/preferences.c:4366
 msgid "Warn if a clip used in a layout is about to be closed."
 msgstr "Varoita jos asettelussa käytetty leike aiotaan sulkea."
 
-#: src/preferences.c:4397
+#: src/preferences.c:4385
 msgid "Warn if frames used in a layout are about to be deleted."
 msgstr "Varoita jos asettelussa käytettyjä kuvia aiotaan poistaa."
 
-#: src/preferences.c:4416
+#: src/preferences.c:4404
 msgid "Warn if frames used in a layout are about to be shifted."
 msgstr "Varoita jos asettelussa käytettyjä kuvia aiotaan siirtää."
 
-#: src/preferences.c:4435
+#: src/preferences.c:4423
 msgid "Warn if frames used in a layout are about to be altered."
 msgstr "Varoita jos asettelussa käytettyjä kuvia aiotaan muuttaa."
 
-#: src/preferences.c:4454
+#: src/preferences.c:4442
 msgid "Warn if audio used in a layout is about to be deleted."
 msgstr "Varoita jos asettelussa käytetty ääniraita aiotaan poistaa."
 
-#: src/preferences.c:4473
+#: src/preferences.c:4461
 msgid "Warn if audio used in a layout is about to be shifted."
 msgstr "Varoita jos asettelussa käytettyä ääniraitaa aiotaan siirtää."
 
-#: src/preferences.c:4492
+#: src/preferences.c:4480
 msgid "Warn if audio used in a layout is about to be altered."
 msgstr "Varoita jos asettelussa käytettyä ääniraitaa aiotaan muuttaa."
 
-#: src/preferences.c:4511
+#: src/preferences.c:4499
 msgid "Popup layout errors after clip changes."
 msgstr ""
 
-#: src/preferences.c:4530
+#: src/preferences.c:4518
 msgid "Warn if the layout has not been saved when leaving multitrack mode."
 msgstr ""
 "Varoita multitrack-tilasta poistuttaessa jos asettelua ei ole tallennettu."
 
-#: src/preferences.c:4549
+#: src/preferences.c:4537
 msgid ""
 "Warn if multitrack has no audio channels, and a layout with audio is loaded."
 msgstr ""
 "Varoita jos multitrack ei sisällä äänikanavia ja aiotaan ladata ääntä "
 "sisältävä asettelu."
 
-#: src/preferences.c:4568
+#: src/preferences.c:4556
 msgid ""
 "Warn if multitrack has audio channels, and your audio player is not \"jack\" "
 "or \"pulse audio\"."
@@ -7730,280 +7730,280 @@ msgstr ""
 "Varoita jos multitrack sisältää äänikanavia ja äänisoittimeksi ei ole "
 "valittu \"jack\" tai \"pulse audio\"."
 
-#: src/preferences.c:4587
+#: src/preferences.c:4575
 msgid "Show info message after importing from firewire device."
 msgstr "Näytä ilmoitus firewire-laitteelta tuonnin jälkeen."
 
-#: src/preferences.c:4608
+#: src/preferences.c:4596
 msgid "Show a warning before opening a yuv4mpeg stream (advanced)."
 msgstr "Näytä varoitus ennen yuv4mpeg-suoratoiston avaamista (edistynyt)."
 
-#: src/preferences.c:4629
+#: src/preferences.c:4617
 msgid "Show a warning when multitrack is low on backup space."
 msgstr ""
 
-#: src/preferences.c:4648
+#: src/preferences.c:4636
 msgid "Show a warning advising cleaning of disk space after a crash."
 msgstr ""
 
-#: src/preferences.c:4668
+#: src/preferences.c:4656
 #, fuzzy
 msgid "Show a warning if unable to connect to pulseaudio player."
 msgstr ""
 "Näytä varoitus jos _pakkausliitännäisiä ei löydy käynnistyksen yhteydessä."
 
 #. TRANSLATORS: please keep this string short
-#: src/preferences.c:4692
+#: src/preferences.c:4680
 msgid "Warnings"
 msgstr "Varoitukset"
 
-#: src/preferences.c:4717
+#: src/preferences.c:4705
 msgid "Midi synch (requires the files midistart and midistop)"
 msgstr "Midi-synkronointi (vaatii tiedostot midistart ja midistop)"
 
-#: src/preferences.c:4741
+#: src/preferences.c:4729
 msgid "When inserting/merging frames:  "
 msgstr ""
 
-#: src/preferences.c:4751
+#: src/preferences.c:4739
 msgid "_Speed Up/Slow Down Insertion"
 msgstr ""
 
-#: src/preferences.c:4767
+#: src/preferences.c:4755
 msgid "_Resample Insertion"
 msgstr ""
 
-#: src/preferences.c:4784
+#: src/preferences.c:4772
 msgid "Pause xmms during audio playback"
 msgstr "Pysäytä xmms äänen toiston ajaksi"
 
-#: src/preferences.c:4807
+#: src/preferences.c:4795
 msgid "CD device           "
 msgstr "CD-laite           "
 
-#: src/preferences.c:4824
+#: src/preferences.c:4812
 msgid "LiVES: Choose CD device"
 msgstr "LiVES: Valitse CD-laite"
 
-#: src/preferences.c:4847
+#: src/preferences.c:4835
 msgid "LiVES can load audio tracks from this CD"
 msgstr ""
 
-#: src/preferences.c:4853
+#: src/preferences.c:4841
 #, fuzzy
 msgid "Default FPS        "
 msgstr "Oletuskuvaformaatti          "
 
-#: src/preferences.c:4866
+#: src/preferences.c:4854
 msgid "Frames per second to use when none is specified"
 msgstr ""
 
 #. TRANSLATORS: please keep this string short
-#: src/preferences.c:4873
+#: src/preferences.c:4861
 msgid "Misc"
 msgstr "Sekalaiset"
 
-#: src/preferences.c:4900
+#: src/preferences.c:4888
 msgid "New theme:           "
 msgstr "Uusi teema:           "
 
 #. TRANSLATORS: please keep this string short
-#: src/preferences.c:4935
+#: src/preferences.c:4923
 msgid "Themes"
 msgstr "Teemat"
 
-#: src/preferences.c:4962
+#: src/preferences.c:4950
 msgid "Download bandwidth (Kb/s)       "
 msgstr "Latauksen kaistanleveys (Kb/s)       "
 
-#: src/preferences.c:4984
+#: src/preferences.c:4972
 msgid "LiVES must be compiled without \"configure --disable-OSC\" to use OMC"
 msgstr ""
 "LiVES täytyy kääntää ilman valitsinta \"configure --disable-OSC\" jotta OMC:"
 "tä voi käyttää"
 
-#: src/preferences.c:4998
+#: src/preferences.c:4986
 msgid "OMC remote control enabled"
 msgstr "Käytä OMC-etäohjausta"
 
-#: src/preferences.c:5018
+#: src/preferences.c:5006
 msgid "UDP port       "
 msgstr "UDP-portti       "
 
-#: src/preferences.c:5034
+#: src/preferences.c:5022
 msgid "Start OMC on startup"
 msgstr "Käynnistä OMC LiVESin käynnistyksen yhteydessä"
 
 #. TRANSLATORS: please keep this string short
-#: src/preferences.c:5068
+#: src/preferences.c:5056
 msgid "Streaming/Networking"
 msgstr "Suoratoisto/Verkko"
 
-#: src/preferences.c:5093
+#: src/preferences.c:5081
 msgid "Jack transport"
 msgstr "Jack-välityspalvelu"
 
-#: src/preferences.c:5108
+#: src/preferences.c:5096
 msgid ""
 "LiVES must be compiled with jack/transport.h and jack/jack.h present to use "
 "jack transport"
 msgstr ""
 
-#: src/preferences.c:5119
+#: src/preferences.c:5107
 msgid "Jack _transport config file"
 msgstr "Jack-_välityspalvelun asetustiedosto"
 
-#: src/preferences.c:5134
+#: src/preferences.c:5122
 msgid "The name of the jack server which can control LiVES transport"
 msgstr ""
 
-#: src/preferences.c:5137 src/preferences.c:5332
+#: src/preferences.c:5125 src/preferences.c:5320
 msgid "Start _server on LiVES startup"
 msgstr "Käynnistä _palvelin LiVESin käynnistyessä"
 
-#: src/preferences.c:5161
+#: src/preferences.c:5149
 msgid "Jack transport _master (start and stop)"
 msgstr ""
 
-#: src/preferences.c:5181
+#: src/preferences.c:5169
 msgid "Jack transport _client (start and stop)"
 msgstr ""
 
-#: src/preferences.c:5205
+#: src/preferences.c:5193
 msgid "Jack transport sets start position"
 msgstr ""
 
-#: src/preferences.c:5234
+#: src/preferences.c:5222
 #, fuzzy
 msgid "Jack transport timebase slave"
 msgstr "Jack-_välityspalvelun asetustiedosto"
 
-#: src/preferences.c:5259
+#: src/preferences.c:5247
 msgid "(See also Playback -> Audio follows video rate/direction)"
 msgstr ""
 
-#: src/preferences.c:5282
+#: src/preferences.c:5270
 #, fuzzy
 msgid "Jack audio"
 msgstr "(Ei ääniraitaa)"
 
-#: src/preferences.c:5290
+#: src/preferences.c:5278
 #, fuzzy
 msgid "LiVES must be compiled with jack/jack.h present to use jack audio"
 msgstr ""
 "LiVES täytyy kääntää ilman valitsinta \"configure --disable-OSC\" jotta OMC:"
 "tä voi käyttää"
 
-#: src/preferences.c:5297
+#: src/preferences.c:5285
 msgid ""
 "You MUST set the audio player to \"jack\" in the Playback tab to use jack "
 "audio"
 msgstr ""
 
-#: src/preferences.c:5308
+#: src/preferences.c:5296
 msgid "Jack _audio server config file"
 msgstr "Jack-_äänipalvelimen asetustiedosto"
 
-#: src/preferences.c:5324
+#: src/preferences.c:5312
 msgid "The name of the jack server for audio"
 msgstr ""
 
-#: src/preferences.c:5353
+#: src/preferences.c:5341
 msgid "Play audio even when transport is _paused"
 msgstr ""
 
 #. TRANSLATORS: please keep this string short
-#: src/preferences.c:5381
+#: src/preferences.c:5369
 #, fuzzy
 msgid "Jack Integration"
 msgstr "Jack-välityspalvelu"
 
-#: src/preferences.c:5407
+#: src/preferences.c:5395
 msgid "Events to respond to:"
 msgstr ""
 
-#: src/preferences.c:5418
+#: src/preferences.c:5406
 msgid "_Joystick events"
 msgstr "_Peliohjaintapahtumat"
 
-#: src/preferences.c:5439
+#: src/preferences.c:5427
 msgid "_Joystick device"
 msgstr "_Peliohjainlaite"
 
-#: src/preferences.c:5454
+#: src/preferences.c:5442
 msgid "The joystick device, e.g. /dev/input/js0"
 msgstr "Peliohjainlaite, esim. /dev/input/js0"
 
-#: src/preferences.c:5461
+#: src/preferences.c:5449
 msgid "LiVES: Choose joystick device"
 msgstr "LiVES: Valitse peliohjainlaite"
 
-#: src/preferences.c:5477
+#: src/preferences.c:5465
 msgid "_MIDI events"
 msgstr "_MIDI-tapahtumat"
 
-#: src/preferences.c:5505
+#: src/preferences.c:5493
 msgid "Create an ALSA MIDI port which other MIDI devices can be connected to"
 msgstr "Luo ALSA MIDI-portti johon muut MIDI-laitteet voidaan yhdistää"
 
-#: src/preferences.c:5506
+#: src/preferences.c:5494
 msgid "Use _ALSA MIDI (recommended)"
 msgstr "Käytä _ALSA MIDIä (suositeltu)"
 
-#: src/preferences.c:5525
+#: src/preferences.c:5513
 msgid "Use _raw MIDI"
 msgstr ""
 
-#: src/preferences.c:5538
+#: src/preferences.c:5526
 msgid "Read directly from the MIDI device"
 msgstr "Lue suoraan MIDI-laitteelta"
 
-#: src/preferences.c:5550
+#: src/preferences.c:5538
 msgid "_MIDI device"
 msgstr "_MIDI-laite"
 
-#: src/preferences.c:5565
+#: src/preferences.c:5553
 msgid "The MIDI device, e.g. /dev/input/midi0"
 msgstr "MIDI-laite, esim. /dev/input/midi0"
 
-#: src/preferences.c:5572
+#: src/preferences.c:5560
 msgid "LiVES: Choose MIDI device"
 msgstr "LiVES: Valitse MIDI-laite"
 
-#: src/preferences.c:5589
+#: src/preferences.c:5577
 msgid "Advanced"
 msgstr "Lisäasetukset"
 
-#: src/preferences.c:5600
+#: src/preferences.c:5588
 msgid "MIDI check _rate"
 msgstr ""
 
-#: src/preferences.c:5613
+#: src/preferences.c:5601
 msgid ""
 "Number of MIDI checks per keyboard tick. Increasing this may improve MIDI "
 "responsiveness, but may slow down playback."
 msgstr ""
 
-#: src/preferences.c:5615
+#: src/preferences.c:5603
 #, fuzzy
 msgid "MIDI repeat"
 msgstr "_MIDI-tapahtumat"
 
-#: src/preferences.c:5628
+#: src/preferences.c:5616
 msgid "Number of non-reads allowed between succesive reads."
 msgstr ""
 
-#: src/preferences.c:5634
+#: src/preferences.c:5622
 msgid "(Warning: setting this value too high can slow down playback.)"
 msgstr ""
 "(Varoitus: toisto saattaa hidastua jos tämä arvo asetetaan liian suureksi.)"
 
 #. TRANSLATORS: please keep this string short
-#: src/preferences.c:5657
+#: src/preferences.c:5645
 msgid "MIDI/Joystick learner"
 msgstr ""
 
-#: src/preferences.c:5995
+#: src/preferences.c:5983
 msgid ""
 "\n"
 "LiVES will now shut down. You need to restart it for the directory change to "
@@ -8011,18 +8011,18 @@ msgid ""
 "Click OK to continue.\n"
 msgstr ""
 
-#: src/preferences.c:6041
+#: src/preferences.c:6029
 msgid ""
 "For the directory change to take effect LiVES will restart when preferences "
 "dialog closes."
 msgstr ""
 
-#: src/preferences.c:6045
+#: src/preferences.c:6033
 msgid "Theme changes will not take effect until the next time you start LiVES."
 msgstr ""
 "Teeman vaihdos tulee voimaan vasta seuraavalla LiVESin käynnistyskerralla."
 
-#: src/preferences.c:6049
+#: src/preferences.c:6037
 msgid "Jack options will not take effect until the next time you start LiVES."
 msgstr ""
 "Jack-asetukset tulevat voimaan vasta seuraavalla LiVEsin käynnistyskerralla."
@@ -8032,21 +8032,21 @@ msgstr ""
 msgid "Syncing to external framerate of %.8f frames per second.\n"
 msgstr "Aseta videon nopeudeksi %.3f kuvaa sekunnissa\n"
 
-#: src/osc.c:6508
+#: src/osc.c:6524
 msgid "Cannot initialize OSC receiver\n"
 msgstr ""
 
-#: src/osc.c:6532
+#: src/osc.c:6548
 #, c-format
 msgid "WARNING: Cannot start OSC server at UDP port %d\n"
 msgstr ""
 
-#: src/osc.c:6537
+#: src/osc.c:6553
 #, c-format
 msgid "Started OSC server at UDP port %d\n"
 msgstr ""
 
-#: src/osc.c:6650
+#: src/osc.c:6666
 #, c-format
 msgid "Cannot start OSC/UDP server at port %d \n"
 msgstr ""

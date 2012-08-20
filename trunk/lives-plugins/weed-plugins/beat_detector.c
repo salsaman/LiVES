@@ -301,6 +301,8 @@ int beat_process (weed_plant_t *inst, weed_timecode_t timestamp) {
 	// store this value in the buffer
 	sdata->buf[s][sdata->bufidx]+=tot;
 	sdata->av[s]+=tot;
+
+	kmin=k;
       }
     } // done for all slices
   } // done for all channels

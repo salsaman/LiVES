@@ -1219,12 +1219,20 @@ lives_filter_error_t weed_reinit_effect (weed_plant_t *inst) {
 
 
     }
+    else if (is_audio) pthread_mutex_unlock(&mainw->afilter_mutex);
+
     weed_set_boolean_value(inst,"host_inited",WEED_TRUE);
-    if (!deinit_first) weed_call_deinit_func(inst);
+    if (!deinit_first) {
+      if (is_audio) pthread_mutex_lock(&mainw->afilter_mutex);
+      weed_call_deinit_func(inst);
+      if (is_audio) pthread_mutex_unlock(&mainw->afilter_mutex);
+    }
     lives_chdir(cwd,FALSE);
     g_free(cwd);
     return FILTER_INFO_REINITED;
   }
+  else if (is_audio) pthread_mutex_unlock(&mainw->afilter_mutex);
+
   weed_set_boolean_value(inst,"host_inited",WEED_TRUE);
   return FILTER_NO_ERROR;
 }
@@ -2635,8 +2643,10 @@ static lives_filter_error_t weed_apply_audio_instance_inner (weed_plant_t *inst,
     weed_free(out_tracks);
     weed_free(in_channels);
     if (out_channels!=NULL) weed_free(out_channels);
+    g_print("pt b\n");
     return FILTER_ERROR_MUST_RELOAD;
   }
+
   pthread_mutex_unlock(&mainw->interp_mutex);
   pthread_mutex_unlock(&mainw->data_mutex);
 

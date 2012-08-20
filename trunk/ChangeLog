@@ -1,3 +1,17 @@
+Version 1.6.4
+-------------
+Updates to decoder plugins to work with current libav.
+Fix crash in paramwindow textbuffers.
+
+
+
+
+
+
+
+
+
+
 Version 1.6.3 (15 August 2012)
 ------------------------------
 Fix regression in file open/enough.

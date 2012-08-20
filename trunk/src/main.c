@@ -4290,6 +4290,8 @@ void load_frame_image(gint frame) {
       // normal play
 
       if (G_UNLIKELY(mainw->nervous)) {
+	// nervous mode
+
 	if ((mainw->actual_frame+=(-10+(int) (21.*rand()/(RAND_MAX+1.0))))>cfile->frames||
 	    mainw->actual_frame<1) mainw->actual_frame=frame;
 	else {
@@ -4297,7 +4299,7 @@ void load_frame_image(gint frame) {
 #ifdef ENABLE_JACK
 	  if (prefs->audio_player==AUD_PLAYER_JACK&&(prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS)&&
 	      mainw->jackd!=NULL&&cfile->achans>0 &&
-	      !(mainw->record&&!mainw->record_paused&&(prefs->audio_src==AUDIO_SRC_EXT||mainw->agen_key!=0))) {
+	      !(prefs->audio_src==AUDIO_SRC_EXT||mainw->agen_key!=0)) {
 	    if (!jack_audio_seek_frame(mainw->jackd,frame)) {
 	      if (jack_try_reconnect()) jack_audio_seek_frame(mainw->jackd,frame);
 	    }
@@ -4312,7 +4314,7 @@ void load_frame_image(gint frame) {
 #ifdef HAVE_PULSE_AUDIO
 	  if (prefs->audio_player==AUD_PLAYER_PULSE&&(prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS)&&
 	      mainw->pulsed!=NULL&&cfile->achans>0 &&
-	      !(mainw->record&&!mainw->record_paused&&(prefs->audio_src==AUDIO_SRC_EXT||mainw->agen_key!=0))) {
+	      !(prefs->audio_src==AUDIO_SRC_EXT||mainw->agen_key!=0)) {
 
 	    if (!pulse_audio_seek_frame(mainw->pulsed,mainw->play_start)) {
 	      if (pulse_try_reconnect()) pulse_audio_seek_frame(mainw->pulsed,mainw->play_start);
@@ -6007,8 +6009,9 @@ void do_quick_switch (gint new_file) {
   mainw->osc_block=TRUE;
 
  
+  // switch audio clip
   if (prefs->audio_player==AUD_PLAYER_JACK&&(prefs->audio_opts&AUDIO_OPTS_FOLLOW_CLIPS)&&!mainw->is_rendering&&
-      !(mainw->record&&!mainw->record_paused&&prefs->audio_src==AUDIO_SRC_EXT)) {
+      (mainw->preview||!(mainw->agen_key!=0||prefs->audio_src==AUDIO_SRC_EXT))) {
 #ifdef ENABLE_JACK
     if (mainw->jackd!=NULL) {
       gboolean timeout;
@@ -6099,8 +6102,9 @@ void do_quick_switch (gint new_file) {
 #endif
   }
 
+  // switch audio clip
   if (prefs->audio_player==AUD_PLAYER_PULSE&&(prefs->audio_opts&AUDIO_OPTS_FOLLOW_CLIPS)&&!mainw->is_rendering&&
-      !(mainw->record&&!mainw->record_paused&&prefs->audio_src==AUDIO_SRC_EXT)) {
+      (mainw->preview||!(mainw->agen_key!=0||prefs->audio_src==AUDIO_SRC_EXT))) {
 #ifdef HAVE_PULSE_AUDIO
     if (mainw->pulsed!=NULL) {
       gboolean timeout;

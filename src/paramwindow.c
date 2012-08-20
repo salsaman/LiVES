@@ -2416,6 +2416,7 @@ gboolean after_param_text_focus_changed (GtkWidget *hbox, GtkWidget *child, live
   if (hbox!=NULL) {
     if (mainw->textwidget_focus!=NULL) {
       textwidget=(GtkWidget *)g_object_get_data (G_OBJECT (mainw->textwidget_focus),"textwidget");
+      textwidget=(GtkWidget *)g_object_get_data (G_OBJECT (textwidget),"textbuffer");
       after_param_text_changed(textwidget,rfx);
     }
     mainw->textwidget_focus=hbox;

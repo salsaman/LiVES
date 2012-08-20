@@ -499,7 +499,6 @@ boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, weed_plant_t *dpa
   dtype=weed_leaf_seed_type(dparam,"value");
   stype=weed_leaf_seed_type(sparam,"value");
 
-
   if (dhint==WEED_HINT_COLOR) {
     int cspace=weed_get_int_value(dptmpl,"colorspace",&error);
     if (cspace==WEED_COLORSPACE_RGB&&(nsvals%3!=0)) return FALSE;

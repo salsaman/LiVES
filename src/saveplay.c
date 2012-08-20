@@ -2477,9 +2477,9 @@ void play_file (void) {
   // reinit all active effects
   if (!mainw->preview&&!mainw->is_rendering&&!mainw->foreign) weed_reinit_all();
 
-  if (!mainw->foreign&&(!(mainw->record&&prefs->audio_src==AUDIO_SRC_EXT)&&
+  if (!mainw->foreign&&(!(prefs->audio_src==AUDIO_SRC_EXT&&
 			((audio_player==AUD_PLAYER_JACK) ||
-			 (audio_player==AUD_PLAYER_PULSE)))) {
+			 (audio_player==AUD_PLAYER_PULSE))))) {
     cfile->aseek_pos=(long)((gdouble)(mainw->play_start-1.)/cfile->fps*cfile->arate)*cfile->achans*(cfile->asampsize/8);
 
     // start up our audio player (jack or pulse)
@@ -2553,41 +2553,44 @@ void play_file (void) {
   g_free (com4);
 
   // if recording, set up recorder (jack or pulse)
-
-  if (!mainw->foreign&&(mainw->record&&(prefs->audio_src==AUDIO_SRC_EXT||mainw->agen_key!=0||has_audio_filters(FALSE)))&&
+  if (!mainw->foreign&&!mainw->preview&&(prefs->audio_src==AUDIO_SRC_EXT||(mainw->record&&mainw->agen_key!=0))&&
       ((audio_player==AUD_PLAYER_JACK) ||
        (audio_player==AUD_PLAYER_PULSE))) {
-    // creat temp clip
-    open_ascrap_file();
-    if (mainw->ascrap_file!=-1) {
-      mainw->rec_samples=-1; // record unlimited
-      
-      mainw->rec_aclip=mainw->ascrap_file;
-      mainw->rec_avel=1.;
-      mainw->rec_aseek=0;
-
-      if (audio_player==AUD_PLAYER_JACK) {
-#ifdef ENABLE_JACK
-	if (prefs->audio_src==AUDIO_SRC_EXT)
-	  jack_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_EXTERNAL);
-	else { 
-	  jack_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_GENERATED);
-	  mainw->jackd->frames_written=0;
-	}
-#endif
-      }
-      if (audio_player==AUD_PLAYER_PULSE) {
-#ifdef HAVE_PULSE_AUDIO
-	if (prefs->audio_src==AUDIO_SRC_EXT)
-	  pulse_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_EXTERNAL);
-	else { 
-	  pulse_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_GENERATED);
-	  mainw->pulsed->frames_written=0;
-	}
-#endif
+    mainw->rec_samples=-1; // record unlimited
+    if (mainw->record) {
+      // creat temp clip
+      open_ascrap_file();
+      if (mainw->ascrap_file!=-1) {
+	
+	mainw->rec_aclip=mainw->ascrap_file;
+	mainw->rec_avel=1.;
+	mainw->rec_aseek=0;
       }
     }
+    if (audio_player==AUD_PLAYER_JACK) {
+#ifdef ENABLE_JACK
+      if (prefs->audio_src==AUDIO_SRC_EXT)
+	jack_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_EXTERNAL);
+      else { 
+	jack_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_GENERATED);
+      }
+      mainw->jackd->frames_written=0;
+#endif
+    }
+    if (audio_player==AUD_PLAYER_PULSE) {
+#ifdef HAVE_PULSE_AUDIO
+      if (prefs->audio_src==AUDIO_SRC_EXT)
+	pulse_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_EXTERNAL);
+      else { 
+	pulse_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_GENERATED);
+      }
+      mainw->pulsed->frames_written=0;
+#endif
+    }
   }
+
+
+
 
   find_when_to_stop();
 
@@ -2780,7 +2783,7 @@ void play_file (void) {
       mainw->jackd->msgq=&jack_message;
 
     }
-    if (mainw->record&&((prefs->rec_opts&REC_AUDIO)||prefs->audio_src==AUDIO_SRC_EXT)) {
+    if (mainw->record&&(prefs->rec_opts&REC_AUDIO)) {
       weed_plant_t *event=get_last_frame_event(mainw->event_list);
       insert_audio_event_at(mainw->event_list,event,-1,1,0.,0.); // audio switch off
     }
@@ -2808,7 +2811,7 @@ void play_file (void) {
       pulse_message.next=NULL;
       mainw->pulsed->msgq=&pulse_message;
     }
-    if (mainw->record&&((prefs->rec_opts&REC_AUDIO)||prefs->audio_src==AUDIO_SRC_EXT)) {
+    if (mainw->record&&(prefs->rec_opts&REC_AUDIO)) {
       weed_plant_t *event=get_last_frame_event(mainw->event_list);
       insert_audio_event_at(mainw->event_list,event,-1,1,0.,0.); // audio switch off
     }

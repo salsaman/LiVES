@@ -828,7 +828,7 @@ static void pulse_audio_read_process (pa_stream *pstream, size_t nbytes, void *a
   prb+=rbytes;
 
   if (pulsed->playing_file==-1) out_scale=1.0; // just listening
-  out_scale=(float)pulsed->in_arate/(float)afile->arate; // recording to ascrap_file
+  else out_scale=(float)pulsed->in_arate/(float)afile->arate; // recording to ascrap_file
 
   frames_out=(size_t)((gdouble)((prb/(pulsed->in_asamps>>3)/pulsed->in_achans))/out_scale+.5);
   
@@ -837,7 +837,7 @@ static void pulse_audio_read_process (pa_stream *pstream, size_t nbytes, void *a
   pulsed->frames_written+=nframes;
 
 
-  if (mainw->playing_file>0&&(pulsed->playing_file==-1||(mainw->record&&prefs->audio_src==AUDIO_SRC_EXT&&mainw->ascrap_file!=-1))) {
+  if (mainw->playing_file>0&&prefs->audio_src==AUDIO_SRC_EXT) {
     // in this case we read external audio, but maybe not record it
     // we may wish to analyse the audio for example
 
@@ -863,8 +863,7 @@ static void pulse_audio_read_process (pa_stream *pstream, size_t nbytes, void *a
       
       if (memok) {
 	gint64 tc=pulsed->audio_ticks+(gint64)(pulsed->frames_written/(gdouble)pulsed->in_arate*U_SEC);
-	// apply any audio effects with in_channels and no out_channels
-	
+	// apply any audio effects with in channels but no out channels
 	weed_apply_audio_effects_rt(fltbuf,pulsed->in_achans,nframes,pulsed->in_arate,tc,TRUE);
 	
 	for (i=0;i<pulsed->in_achans;i++) {

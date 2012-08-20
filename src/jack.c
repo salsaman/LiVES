@@ -951,7 +951,7 @@ static int audio_read (nframes_t nframes, void *arg) {
     in_buffer[i] = (float *) jack_port_get_buffer(jackd->input_port[i], nframes);
   }
 
-  if (mainw->playing_file>0&&(jackd->playing_file==-1||(mainw->record&&prefs->audio_src==AUDIO_SRC_EXT&&mainw->ascrap_file!=-1))) {
+  if (mainw->playing_file>0&&prefs->audio_src==AUDIO_SRC_EXT) {
     // in this case we read external audio, but maybe not record it
     // we may wish to analyse the audio for example
 
@@ -962,7 +962,8 @@ static int audio_read (nframes_t nframes, void *arg) {
     }
   }
 
-  out_scale=(float)jackd->sample_in_rate/(float)afile->arate;
+  if (jackd->playing_file==-1) out_scale=1.0; // just listening
+  else out_scale=(float)jackd->sample_in_rate/(float)afile->arate;
   out_unsigned=afile->signed_endian&AFORM_UNSIGNED;
 
   frames_out=(int64_t)((gdouble)nframes/out_scale+1.);

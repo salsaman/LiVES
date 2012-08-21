@@ -190,8 +190,10 @@ int fftw_process (weed_plant_t *inst, weed_timecode_t tc) {
 
 
 weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
+  weed_plant_t *plugin_info;
+
   if (create_plans()!=WEED_NO_ERROR) return NULL;
-  weed_plant_t *plugin_info=weed_plugin_info_init(weed_boot,num_versions,api_versions);
+  plugin_info=weed_plugin_info_init(weed_boot,num_versions,api_versions);
   if (plugin_info!=NULL) {
     weed_plant_t *in_chantmpls[]={weed_audio_channel_template_init("in channel 0",0),NULL};
     weed_plant_t *in_params[]={weed_float_init("freq","_Frequency",2000.,0.0,22000.0),NULL};
@@ -209,7 +211,7 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 
 void weed_desetup(void) {
   register int i;
-  for (i=0;i<=MAXPLANS;i++) {
+  for (i=0;i<MAXPLANS;i++) {
     fftwf_destroy_plan(plans[i]);
     fftwf_free(ins[i]);
     fftwf_free(outs[i]);

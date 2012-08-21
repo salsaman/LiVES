@@ -3281,7 +3281,8 @@ void weed_apply_audio_effects_rt(float **abuf, int nchans, int64_t nsamps, gdoub
 	    pthread_mutex_unlock(&mainw->data_mutex);
 	  }
 	}
-	weed_set_int_value(instance,"host_key",i);
+
+	//weed_set_int_value(instance,"host_key",i);
 
 	filter_error=weed_apply_audio_instance(instance,abuf,0,nchans,nsamps,arate,tc,NULL);
 	pthread_mutex_unlock(&mainw->afilter_mutex);

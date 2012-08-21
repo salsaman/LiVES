@@ -819,6 +819,8 @@ static void pulse_audio_read_process (pa_stream *pstream, size_t nbytes, void *a
   void *data;
   size_t rbytes=nbytes;
 
+  if (mainw->playing_file<0&&prefs->audio_src==AUDIO_SRC_EXT) return; 
+
   if (mainw->effects_paused) return; // pause during record
 
   pa_stream_peek(pulsed->pstream,(const void**)&data,&rbytes);
@@ -837,7 +839,8 @@ static void pulse_audio_read_process (pa_stream *pstream, size_t nbytes, void *a
   pulsed->frames_written+=nframes;
 
 
-  if (mainw->playing_file>0&&prefs->audio_src==AUDIO_SRC_EXT) {
+  if (prefs->audio_src==AUDIO_SRC_EXT) {
+
     // in this case we read external audio, but maybe not record it
     // we may wish to analyse the audio for example
 
@@ -878,9 +881,9 @@ static void pulse_audio_read_process (pa_stream *pstream, size_t nbytes, void *a
       pa_stream_drop(pulsed->pstream);
       return;
     }
+
+    // TODO - return if not recording
   }
-
-
 
   if (mainw->record&&prefs->audio_src==AUDIO_SRC_EXT&&mainw->ascrap_file!=-1&&mainw->playing_file>0) {
     mainw->files[mainw->playing_file]->aseek_pos+=rbytes;

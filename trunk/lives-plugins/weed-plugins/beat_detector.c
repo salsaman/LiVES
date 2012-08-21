@@ -47,17 +47,13 @@ static int package_version=1; // version of this package
 
 #define STIME 1000.f // milliseconds to buffer values for
 
-#define BUFMAX 1024
+#define BUFMAX 16384
 
 typedef struct {
-  int size;
-  float *in;
-  fftwf_complex *out;
-  fftwf_plan p;
   int totsamps;
   int bufidx;
   int bufsize[BUFMAX];
-  float av[NSLICES];
+  double av[NSLICES];
   float buf[NSLICES][BUFMAX];
 } _sdata;
 
@@ -74,51 +70,61 @@ float freq[NSLICES]={25.,50.,75.,100.,150.,200.,250.,300.,
 		     20000.};
 
 
-/////////////////////////////////////////////////////////////
+#define MAXPLANS 18
 
-static void sdata_free_plan(_sdata *sdata) {
-  if (sdata->size!=0) {
-    fftwf_destroy_plan(sdata->p);
-    fftwf_free(sdata->in);
-    fftwf_free(sdata->out);
+static float *ins[MAXPLANS];
+static fftwf_complex *outs[MAXPLANS];
+static fftwf_plan plans[MAXPLANS];
+
+static int rndlog2(int i) {
+  // return (int)log2(i) - 1
+  int x=2,val=-1;
+
+  while (x<=i) {
+    x*=2;
+    val++;
   }
+  return val;
 }
 
 
-static int sdata_create_plan(_sdata *sdata, int nsamps) {
+static int twopow(int i) {
+  // return 2**(i+1)
+  register int j,x=2;
 
-  sdata->size=nsamps;
+  for (j=0;j<i;j++) x*=2;
 
-  if (nsamps==0) return WEED_NO_ERROR;
+  return x;
+}
 
-  sdata->in = (float*) fftwf_malloc(nsamps*sizeof(float));
-  if (sdata->in==NULL) {
-    weed_free(sdata);
-    return WEED_ERROR_MEMORY_ALLOCATION;
+
+static int create_plans(void) {
+  register int i,nsamps;
+
+  for (i=0;i<MAXPLANS;i++) {
+    // create fftw plan
+    nsamps=twopow(i);
+
+    ins[i] = (float*) fftwf_malloc(nsamps*sizeof(float));
+    if (ins[i]==NULL) {
+      return WEED_ERROR_MEMORY_ALLOCATION;
+    }
+    
+    outs[i] = (fftwf_complex*) fftwf_malloc(nsamps*sizeof(fftwf_complex));
+    if (outs[i]==NULL) {
+      return WEED_ERROR_MEMORY_ALLOCATION;
+    }
+    
+    plans[i] = fftwf_plan_dft_r2c_1d(nsamps, ins[i], outs[i], i<13?FFTW_MEASURE:FFTW_ESTIMATE);
   }
-
-  sdata->out = (fftwf_complex*) fftwf_malloc(nsamps*sizeof(fftwf_complex));
-  if (sdata->out==NULL) {
-    fftwf_free(sdata->in);
-    weed_free(sdata);
-    return WEED_ERROR_MEMORY_ALLOCATION;
-  }
-
-  sdata->p = fftwf_plan_dft_r2c_1d(nsamps, sdata->in, sdata->out, FFTW_ESTIMATE);
-
   return WEED_NO_ERROR;
-}  
+}
 
+/////////////////////////////////////////////////////////////
 
 
 int beat_init(weed_plant_t *inst) {
-  int error;
-  int nsamps;
-  int retval;
-
   _sdata *sdata;
-
-  weed_plant_t *in_channel=weed_get_plantptr_value(inst,"in_channels",&error);
 
   register int i,j;
 
@@ -126,13 +132,6 @@ int beat_init(weed_plant_t *inst) {
   if (sdata==NULL) {
     return WEED_ERROR_MEMORY_ALLOCATION;
   }
-
-  nsamps=weed_get_int_value(in_channel,"audio_data_length",&error);
-
-  // create fftw plan
-  retval=sdata_create_plan(sdata,nsamps);
-  if (retval!=WEED_NO_ERROR) return retval;
-
 
   for (i=0;i<NSLICES;i++) {
     sdata->av[i]=0.;
@@ -161,7 +160,6 @@ int beat_deinit(weed_plant_t *inst) {
   _sdata *sdata=(_sdata *)weed_get_voidptr_value(inst,"plugin_data",&error);
 
   if (sdata!=NULL) {
-    sdata_free_plan(sdata);
     weed_free(sdata);
   }
 
@@ -172,8 +170,8 @@ int beat_deinit(weed_plant_t *inst) {
 
 
 int beat_process (weed_plant_t *inst, weed_timecode_t timestamp) {
-  int error,retval;
-  int chans,nsamps,inter,rate,k;
+  int error;
+  int chans,nsamps,onsamps,base,inter,rate,k;
 
   weed_plant_t *in_channel=weed_get_plantptr_value(inst,"in_channels",&error);
   float *src=(float *)weed_get_voidptr_value(in_channel,"audio_data",&error);
@@ -201,17 +199,11 @@ int beat_process (weed_plant_t *inst, weed_timecode_t timestamp) {
 
   if (beat_hold==WEED_TRUE) beat_hold=!reset;
 
-  nsamps=weed_get_int_value(in_channel,"audio_data_length",&error);
+  onsamps=weed_get_int_value(in_channel,"audio_data_length",&error);
 
-  if (nsamps==0) {
+  if (onsamps<2) {
     beat_pulse=beat_hold=WEED_FALSE;
     goto done;
-  }
-
-  if (nsamps!=sdata->size) {
-    sdata_free_plan(sdata);
-    retval=sdata_create_plan(sdata,nsamps);
-    if (retval!=WEED_NO_ERROR) return WEED_ERROR_HARDWARE;
   }
 
   rate=weed_get_int_value(in_channel,"audio_rate",&error);
@@ -225,10 +217,11 @@ int beat_process (weed_plant_t *inst, weed_timecode_t timestamp) {
     // shift all values up
 
     for (i=0;i<NSLICES;i++) {
-      if (sdata->buf[i][0]!=-1.) sdata->av[i]-=sdata->buf[i][0];
+      sdata->av[i]=0.;
 
       for (j=0;j<sdata->bufidx;j++) {
 	sdata->buf[i][j]=sdata->buf[i][j+1];
+	if (sdata->buf[i][j]!=-1.) sdata->av[i]+=sdata->buf[i][j];
       }
     }
 
@@ -236,17 +229,21 @@ int beat_process (weed_plant_t *inst, weed_timecode_t timestamp) {
   }
   else {
     sdata->bufidx++;
-    if (sdata->bufidx==BUFMAX) sdata->bufidx--;
+    if (sdata->bufidx==BUFMAX) {
+      //fprintf(stderr,"OVERFLOW\n");
+      sdata->bufidx--;
+    }
   }
 
-
-  sdata->totsamps+=nsamps;
-  sdata->bufsize[sdata->bufidx]=nsamps;
-
+  sdata->totsamps+=onsamps;
+  sdata->bufsize[sdata->bufidx]=onsamps;
 
   for (s=0;s<NSLICES;s++) {
     sdata->buf[s][sdata->bufidx]=0.;
   }
+
+  base=rndlog2(onsamps);
+  nsamps=twopow(base);
 
   for (i=0;i<chans;i++) {
     // do transform for each channel
@@ -254,19 +251,19 @@ int beat_process (weed_plant_t *inst, weed_timecode_t timestamp) {
     // copy in data to sdata->in
     if (inter==WEED_FALSE) {
       // non-interleaved
-      weed_memcpy(sdata->in,src,nsamps*sizf);
-      src+=nsamps;
+      weed_memcpy(ins[base],src,nsamps*sizf);
+      src+=onsamps;
     }
     else {
       // interleaved
       for (j=0;j<nsamps;j++) {
-	sdata->in[j]=src[j*chans];
+	ins[base][j]=src[j*chans];
       }
       src++;
     }
       
     //fprintf(stderr,"executing plan of size %d\n",sdata->size);
-    fftwf_execute(sdata->p);
+    fftwf_execute(plans[base]);
 
     kmin=0;
 
@@ -280,7 +277,7 @@ int beat_process (weed_plant_t *inst, weed_timecode_t timestamp) {
 	
       kmax = freq[s]/(double)rate*(double)nsamps;
 	
-      if (kmax>(nsamps>>1)) {
+      if (kmax>=(nsamps>>1)) {
 	// frequency invalid - too high for this sample packet
 	tot=-1.;
 	sdata->buf[s][sdata->bufidx]=tot;
@@ -288,9 +285,9 @@ int beat_process (weed_plant_t *inst, weed_timecode_t timestamp) {
       else {
 	tot=0.;
 
-	for (k=kmin;k<kmax;k++) {
+	for (k=kmin;k<=kmax;k++) {
 	  // sum values over range
-	  tot+=sdata->out[k][0]*sdata->out[k][0]+sdata->out[k][1]*sdata->out[k][1];
+	  tot+=outs[base][k][0]*outs[base][k][0]+outs[base][k][1]*outs[base][k][1];
 	}
 	// average over range
 	tot/=(float)kmax-(float)kmin+1.;
@@ -300,9 +297,8 @@ int beat_process (weed_plant_t *inst, weed_timecode_t timestamp) {
 
 	// store this value in the buffer
 	sdata->buf[s][sdata->bufidx]+=tot;
-	sdata->av[s]+=tot;
 
-	kmin=k;
+	kmin=kmax;
       }
     } // done for all slices
   } // done for all channels
@@ -324,19 +320,21 @@ int beat_process (weed_plant_t *inst, weed_timecode_t timestamp) {
   for (i=0;i<NSLICES;i++) {
     // for the variance:
     var=0.;
-    av=sdata->av[i]/(float)sdata->bufidx;
+    av=sdata->av[i]/(double)sdata->bufidx;
 
     for (j=0;j<sdata->bufidx;j++) {
-      varx=(sdata->buf[i][j]-av);
-      var+=varx*varx;
+      if (sdata->buf[i][j]!=-1.) {
+	varx=(sdata->buf[i][j]-av);
+	var+=varx*varx;
+      }
     }
-    var/=(float)sdata->bufidx;
+    var/=(float)sdata->bufidx*(float)sdata->bufidx;
 
-    //fprintf(stderr,"%f %f %f  ",var,av,sdata->buf[i][sdata->bufidx]);
+    //if (i==0) fprintf(stderr,"%f %f %f  ",var,av,sdata->buf[i][sdata->bufidx]);
 
     varlim*=varlim;
 
-    if (var>varlim && sdata->buf[i][sdata->bufidx]>avlim*av) {
+    if (var>varlim && sdata->buf[i][sdata->bufidx] > (avlim*av)) {
       // got a beat !
       beat_pulse=beat_hold=WEED_TRUE;
       //fprintf(stderr,"PULSE !\n");
@@ -362,10 +360,12 @@ int beat_process (weed_plant_t *inst, weed_timecode_t timestamp) {
 
 
 weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
-  weed_plant_t *plugin_info=weed_plugin_info_init(weed_boot,num_versions,api_versions);
+  weed_plant_t *plugin_info;
+  if (create_plans()!=WEED_NO_ERROR) return NULL;
+  plugin_info=weed_plugin_info_init(weed_boot,num_versions,api_versions);
   if (plugin_info!=NULL) {
     weed_plant_t *in_chantmpls[]={weed_audio_channel_template_init("in channel 0",0),NULL};
-    weed_plant_t *in_params[]={weed_switch_init("reset","_Reset hold",WEED_FALSE),weed_float_init("avlim","_Average threshold",1.5,1.,10.),weed_float_init("varlim","_Variance threshold",5.,1.,100.),NULL};
+    weed_plant_t *in_params[]={weed_switch_init("reset","_Reset hold",WEED_FALSE),weed_float_init("avlim","_Average threshold",10.,1.,100.),weed_float_init("varlim","_Variance threshold",.99,0.,100.),NULL};
     weed_plant_t *out_params[]={weed_out_param_switch_init("beat hold",WEED_FALSE),weed_out_param_switch_init("beat pulse",WEED_FALSE),NULL};
     weed_plant_t *filter_class=weed_filter_class_init("beat detector","salsaman",1,0,&beat_init,&beat_process,
 						      &beat_deinit,in_chantmpls,NULL,in_params,out_params);
@@ -377,3 +377,12 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
   return plugin_info;
 }
 
+
+void weed_desetup(void) {
+  register int i;
+  for (i=0;i<MAXPLANS;i++) {
+    fftwf_destroy_plan(plans[i]);
+    fftwf_free(ins[i]);
+    fftwf_free(outs[i]);
+  }
+}

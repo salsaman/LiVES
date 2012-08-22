@@ -943,6 +943,8 @@ static int audio_read (nframes_t nframes, void *arg) {
 
   size_t rbytes;
 
+  if (mainw->playing_file<0&&prefs->audio_src==AUDIO_SRC_EXT) return 0; 
+
   if (mainw->effects_paused) return 0; // pause during record
 
   if (mainw->rec_samples==0) return 0; // wrote enough already, return until main thread stop
@@ -951,7 +953,11 @@ static int audio_read (nframes_t nframes, void *arg) {
     in_buffer[i] = (float *) jack_port_get_buffer(jackd->input_port[i], nframes);
   }
 
+  jackd->frames_written+=nframes;
+
   if (mainw->playing_file>0&&prefs->audio_src==AUDIO_SRC_EXT) {
+    // TODO - dont apply filters when doing ext window grab, or voiceover
+
     // in this case we read external audio, but maybe not record it
     // we may wish to analyse the audio for example
 
@@ -960,22 +966,29 @@ static int audio_read (nframes_t nframes, void *arg) {
 	// apply any audio effects with in_channels and no out_channels
 	weed_apply_audio_effects_rt(in_buffer,jackd->num_input_channels,nframes,jackd->sample_in_rate,tc,TRUE);
     }
+
+
+  }
+
+  if (jackd->playing_file==-1||mainw->record_paused) {
+    return 0;
   }
 
   if (jackd->playing_file==-1) out_scale=1.0; // just listening
   else out_scale=(float)jackd->sample_in_rate/(float)afile->arate;
+  
   out_unsigned=afile->signed_endian&AFORM_UNSIGNED;
-
+  
   frames_out=(int64_t)((gdouble)nframes/out_scale+1.);
   rbytes=frames_out*afile->achans*afile->asampsize/8;
-
+  
   rbytes=audio_read_inner(jackd,in_buffer,jackd->playing_file,nframes,out_scale,mainw->jackd_read->reverse_endian,
-			   out_unsigned,rbytes);
-
-  jackd->frames_written+=nframes;
+			  out_unsigned,rbytes);
+  
 
   if (mainw->record&&prefs->audio_src==AUDIO_SRC_EXT&&mainw->ascrap_file!=-1&&mainw->playing_file>0) {
     mainw->files[mainw->playing_file]->aseek_pos+=rbytes;
+    if (!mainw->record_paused&&mainw->ascrap_file!=mainw->playing_file) mainw->files[mainw->ascrap_file]->aseek_pos+=rbytes;
     jackd->seek_pos+=rbytes;
   }
 

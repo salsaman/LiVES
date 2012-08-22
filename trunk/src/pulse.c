@@ -811,7 +811,7 @@ size_t pulse_flush_read_data(pulse_driver_t *pulsed, int fileno, size_t rbytes, 
 static void pulse_audio_read_process (pa_stream *pstream, size_t nbytes, void *arg) {
   // read nframes from pulse buffer, and then possibly write to mainw->aud_rec_fd
 
-  // this is the callback from pulse when we are recording
+  // this is the callback from pulse when we are recording or playing external audio
 
   pulse_driver_t* pulsed = (pulse_driver_t*)arg;
   float out_scale;
@@ -821,25 +821,32 @@ static void pulse_audio_read_process (pa_stream *pstream, size_t nbytes, void *a
 
   if (mainw->playing_file<0&&prefs->audio_src==AUDIO_SRC_EXT) return; 
 
-  if (mainw->effects_paused) return; // pause during record
+  if (mainw->effects_paused) return; // pause during record ???
 
   pa_stream_peek(pulsed->pstream,(const void**)&data,&rbytes);
 
   if (data==NULL) return;
 
-  prb+=rbytes;
+  if (pulsed->playing_file==-1) {
+    out_scale=1.0; // just listening, no recording
+  }
+  else {
+    out_scale=(float)pulsed->in_arate/(float)afile->arate; // recording to ascrap_file
+    prb+=rbytes;
+  }
 
-  if (pulsed->playing_file==-1) out_scale=1.0; // just listening
-  else out_scale=(float)pulsed->in_arate/(float)afile->arate; // recording to ascrap_file
+  if (pulsed->playing_file==-1||(mainw->record&&mainw->record_paused)) prb=0;
 
   frames_out=(size_t)((gdouble)((prb/(pulsed->in_asamps>>3)/pulsed->in_achans))/out_scale+.5);
   
   nframes=(size_t)((gdouble)((rbytes/(pulsed->in_asamps>>3)/pulsed->in_achans))/out_scale+.5);
+
   // should really be frames_read here
   pulsed->frames_written+=nframes;
 
 
   if (prefs->audio_src==AUDIO_SRC_EXT) {
+    // TODO - do not call this when recording ext window or voiceover
 
     // in this case we read external audio, but maybe not record it
     // we may wish to analyse the audio for example
@@ -850,9 +857,11 @@ static void pulse_audio_read_process (pa_stream *pstream, size_t nbytes, void *a
       float **fltbuf=(float **)g_malloc(pulsed->in_achans*sizeof(float *));
       register int i;
 
+      size_t xnframes=(size_t)(rbytes/(pulsed->in_asamps>>3)/pulsed->in_achans);
+
       for (i=0;i<pulsed->in_achans;i++) {
 	// convert s16 to non-interleaved float
-	fltbuf[i]=(float *)g_try_malloc(nframes*sizeof(float));
+	fltbuf[i]=(float *)g_try_malloc(xnframes*sizeof(float));
 	if (fltbuf[i]==NULL) {
 	  memok=FALSE;
 	  for (--i;i>=0;i--) {
@@ -861,13 +870,13 @@ static void pulse_audio_read_process (pa_stream *pstream, size_t nbytes, void *a
 	  break;
 	}
 	
-	sample_move_d16_float(fltbuf[i],(short*)data+i,nframes,pulsed->in_achans,FALSE,1.0);
+	sample_move_d16_float(fltbuf[i],(short*)data+i,xnframes,pulsed->in_achans,FALSE,1.0);
       }
       
       if (memok) {
 	gint64 tc=pulsed->audio_ticks+(gint64)(pulsed->frames_written/(gdouble)pulsed->in_arate*U_SEC);
 	// apply any audio effects with in channels but no out channels
-	weed_apply_audio_effects_rt(fltbuf,pulsed->in_achans,nframes,pulsed->in_arate,tc,TRUE);
+	weed_apply_audio_effects_rt(fltbuf,pulsed->in_achans,xnframes,pulsed->in_arate,tc,TRUE);
 	
 	for (i=0;i<pulsed->in_achans;i++) {
 	  g_free(fltbuf[i]);
@@ -877,18 +886,22 @@ static void pulse_audio_read_process (pa_stream *pstream, size_t nbytes, void *a
       g_free(fltbuf);
 
     }
-    if (pulsed->playing_file==-1) {
-      pa_stream_drop(pulsed->pstream);
-      return;
-    }
 
-    // TODO - return if not recording
   }
 
-  if (mainw->record&&prefs->audio_src==AUDIO_SRC_EXT&&mainw->ascrap_file!=-1&&mainw->playing_file>0) {
-    mainw->files[mainw->playing_file]->aseek_pos+=rbytes;
-    pulsed->seek_pos+=rbytes;
+  if (pulsed->playing_file==-1||mainw->record_paused) {
+    pa_stream_drop(pulsed->pstream);
+    return;
   }
+
+  if (mainw->playing_file!=mainw->ascrap_file) {
+    if (mainw->playing_file!=-1) mainw->files[mainw->playing_file]->aseek_pos+=rbytes;
+    if (mainw->ascrap_file!=-1&&!mainw->record_paused) mainw->files[mainw->ascrap_file]->aseek_pos+=rbytes;
+  }
+  else if (mainw->ascrap_file!=-1&&!mainw->record_paused) mainw->files[mainw->ascrap_file]->aseek_pos+=rbytes;
+
+  pulsed->seek_pos+=rbytes;
+
 
   if (prb<PULSE_READ_BYTES&&(mainw->rec_samples==-1||frames_out<mainw->rec_samples)) {
     // buffer until we have enough

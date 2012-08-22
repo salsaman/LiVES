@@ -2240,6 +2240,7 @@ static void after_dialog_combo_changed (GtkWidget *combo, gpointer user_data) {
   GList *list=(GList *)user_data;
   gchar *etext=lives_combo_get_active_text(LIVES_COMBO(combo));
   mainw->fx1_val=lives_list_index(list,etext);
+  g_free(etext);
 }
 
 

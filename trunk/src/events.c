@@ -5016,11 +5016,7 @@ render_details *create_render_details (gint type) {
   if (type==3) {
     // extra opts
     
-    label= gtk_label_new (_("Options"));
-    
-    if (palette->style&STYLE_1) {
-      gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-    }
+    label= lives_standard_label_new (_("Options"));
     
     gtk_box_pack_start (GTK_BOX (top_vbox), label, FALSE, FALSE, 10);
     
@@ -5034,7 +5030,6 @@ render_details *create_render_details (gint type) {
 		      rdet->backaudio_checkbutton);
     
     if (palette->style&STYLE_1) {
-      gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
       gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
       gtk_widget_modify_bg (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
     }
@@ -5099,22 +5094,16 @@ render_details *create_render_details (gint type) {
   }
 
   hsep = gtk_hseparator_new ();
-  label= gtk_label_new ("");
+  label= lives_standard_label_new ("");
   if (!specified) {
     gtk_box_pack_start (GTK_BOX (top_vbox), hsep, TRUE, TRUE, 0);
     if (type!=3) gtk_label_set_text(GTK_LABEL(label),_ ("Options"));
   }
 
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-  }
-
   gtk_box_pack_start (GTK_BOX (top_vbox), label, FALSE, FALSE, 10);
 
-  label = gtk_label_new (_("      Target Encoder           "));
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-  }
+  label = lives_standard_label_new (_("      Target Encoder           "));
+
   gtk_box_pack_start (GTK_BOX (top_vbox), label, FALSE, FALSE, 0);
 
   if (!specified) {
@@ -5129,7 +5118,7 @@ render_details *create_render_details (gint type) {
   lives_combo_populate(LIVES_COMBO(rdet->encoder_combo),encoders);
   gtk_widget_show(rdet->encoder_combo);
 
-  gtk_box_pack_start (GTK_BOX (top_vbox), rdet->encoder_combo, FALSE, FALSE, 0);
+  gtk_box_pack_start (GTK_BOX (top_vbox), rdet->encoder_combo, FALSE, FALSE, 10);
 
 
   rdet->encoder_name_fn = g_signal_connect_after(GTK_COMBO_BOX(rdet->encoder_combo), "changed",
@@ -5173,11 +5162,8 @@ render_details *create_render_details (gint type) {
     }
   }
 
-  label = gtk_label_new (_("    Output format           "));
+  label = lives_standard_label_new (_("    Output format           "));
   rdet->ofmt_combo = lives_combo_new();
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-  }
 
   lives_combo_populate(LIVES_COMBO(rdet->ofmt_combo), ofmt);
 
@@ -5192,10 +5178,8 @@ render_details *create_render_details (gint type) {
   gtk_box_pack_start (GTK_BOX (top_vbox), rdet->ofmt_combo, FALSE, FALSE, 10);
   
   rdet->acodec_combo = lives_combo_new ();
-  alabel = gtk_label_new (_("    Audio format           "));
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(alabel, GTK_STATE_NORMAL, &palette->normal_fore);
-  }
+  alabel = lives_standard_label_new (_("    Audio format           "));
+
   gtk_box_pack_start (GTK_BOX (top_vbox), alabel, FALSE, FALSE, 0);
   gtk_box_pack_start (GTK_BOX (top_vbox), rdet->acodec_combo, FALSE, FALSE, 10);
   

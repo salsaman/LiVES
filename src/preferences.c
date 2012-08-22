@@ -443,10 +443,10 @@ gboolean apply_prefs(gboolean skip_warn) {
   const gchar *frei0r_path=gtk_entry_get_text(GTK_ENTRY(prefsw->frei0r_entry));
   const gchar *ladspa_path=gtk_entry_get_text(GTK_ENTRY(prefsw->ladspa_entry));
   gchar tmpdir[PATH_MAX];
-  const gchar *theme = gtk_combo_box_get_active_text( GTK_COMBO_BOX(prefsw->theme_combo) );
-  const gchar *audp = gtk_combo_box_get_active_text( GTK_COMBO_BOX(prefsw->audp_combo) );
-  const gchar *audio_codec=NULL;
-  const gchar *pb_quality = gtk_combo_box_get_active_text( GTK_COMBO_BOX(prefsw->pbq_combo) );
+  char *theme = lives_combo_get_active_text( LIVES_COMBO(prefsw->theme_combo) );
+  char *audp = lives_combo_get_active_text( LIVES_COMBO(prefsw->audp_combo) );
+  gchar *audio_codec=NULL;
+  char *pb_quality = lives_combo_get_active_text( LIVES_COMBO(prefsw->pbq_combo) );
 
   gint pbq=PB_QUALITY_MED;
 
@@ -611,13 +611,13 @@ gboolean apply_prefs(gboolean skip_warn) {
   gchar *cdplay_device=g_filename_from_utf8(gtk_entry_get_text(GTK_ENTRY(prefsw->cdplay_entry)),-1,NULL,NULL,NULL);
 
   if (capable->has_encoder_plugins) {
-    audio_codec = gtk_combo_box_get_active_text( GTK_COMBO_BOX(prefsw->acodec_combo) );
+    audio_codec = lives_combo_get_active_text( LIVES_COMBO(prefsw->acodec_combo) );
 
     for (idx=0;idx<listlen&&strcmp((gchar *)g_list_nth_data (prefs->acodec_list,idx),audio_codec);idx++);
+    g_free(audio_codec);
 
     if (idx==listlen) future_prefs->encoder.audio_codec=0;
     else future_prefs->encoder.audio_codec=prefs->acodec_list_to_format[idx];
-
   }
   else future_prefs->encoder.audio_codec=0;
 
@@ -631,6 +631,8 @@ gboolean apply_prefs(gboolean skip_warn) {
   else if (!strncmp(audp,"sox",3)) g_snprintf(audio_player,256,"sox");
   else if (!strncmp(audp,"pulse audio",11)) g_snprintf(audio_player,256,"pulse");
   
+  g_free(audp);
+
   if (!((prefs->audio_player==AUD_PLAYER_JACK&&capable->has_jackd)||(prefs->audio_player==AUD_PLAYER_PULSE&&capable->has_pulse_audio))) {
     if (prefs->audio_src==AUDIO_SRC_EXT) prefs->audio_src=AUDIO_SRC_INT;
   }
@@ -951,6 +953,8 @@ gboolean apply_prefs(gboolean skip_warn) {
   if (!strcmp(pb_quality,(gchar *)g_list_nth_data(prefsw->pbq_list,1))) pbq=PB_QUALITY_MED;
   if (!strcmp(pb_quality,(gchar *)g_list_nth_data(prefsw->pbq_list,2))) pbq=PB_QUALITY_HIGH;
 
+  g_free(pb_quality);
+
   if (pbq!=prefs->pb_quality) {
     prefs->pb_quality=pbq;
     set_int_pref("pb_quality",pbq);
@@ -1029,6 +1033,8 @@ gboolean apply_prefs(gboolean skip_warn) {
     set_pref("gui_theme",future_prefs->theme);
     mainw->prefs_changed|=PREFS_THEME_CHANGED;
   }
+
+  g_free(theme);
 
   // default fps
   if (prefs->default_fps!=default_fps) {
@@ -1411,10 +1417,14 @@ void
 rdet_acodec_changed (GtkComboBox *acodec_combo, gpointer user_data) {
   gint listlen=g_list_length (prefs->acodec_list);
   int idx;
-  const gchar *audio_codec = gtk_combo_box_get_active_text(acodec_combo);
-  if (!strcmp(audio_codec,mainw->string_constants[LIVES_STRING_CONSTANT_ANY])) return;
+  char *audio_codec = lives_combo_get_active_text(acodec_combo);
+  if (!strcmp(audio_codec,mainw->string_constants[LIVES_STRING_CONSTANT_ANY])) {
+    g_free(audio_codec);
+    return;
+  }
 
   for (idx=0;idx<listlen&&strcmp((gchar *)g_list_nth_data (prefs->acodec_list,idx),audio_codec);idx++);
+  g_free(audio_codec);
 
   if (idx==listlen) future_prefs->encoder.audio_codec=0;
   else future_prefs->encoder.audio_codec=prefs->acodec_list_to_format[idx];
@@ -1493,7 +1503,7 @@ void set_acodec_list_from_allowed (_prefsw *prefsw, render_details *rdet) {
 
 
 void after_vpp_changed (GtkWidget *vpp_combo, gpointer advbutton) {
-  const gchar *newvpp=gtk_combo_box_get_active_text(GTK_COMBO_BOX(vpp_combo));
+  char *newvpp=lives_combo_get_active_text(LIVES_COMBO(vpp_combo));
   _vid_playback_plugin *tmpvpp;
 
   if (!g_ascii_strcasecmp(newvpp,mainw->string_constants[LIVES_STRING_CONSTANT_NONE])) {
@@ -1503,10 +1513,14 @@ void after_vpp_changed (GtkWidget *vpp_combo, gpointer advbutton) {
     gtk_widget_set_sensitive (GTK_WIDGET(advbutton), TRUE);
 
     // will call set_astream_settings
-    if ((tmpvpp=open_vid_playback_plugin (newvpp, FALSE))==NULL) return;
+    if ((tmpvpp=open_vid_playback_plugin (newvpp, FALSE))==NULL) {
+      g_free(newvpp);
+      return;
+    }
     close_vid_playback_plugin(tmpvpp);
   }
   g_snprintf (future_prefs->vpp_name,64,"%s",newvpp);
+  g_free(newvpp);
 
   if (future_prefs->vpp_argv!=NULL) {
     int i;
@@ -1588,9 +1602,12 @@ static void on_alsa_midi_toggled (GtkToggleButton *tbutton, gpointer user_data) 
 
 
 static void on_audp_entry_changed (GtkWidget *audp_combo, gpointer ptr) {
-  const gchar *audp = gtk_combo_box_get_active_text(GTK_COMBO_BOX(audp_combo));
+  char *audp = lives_combo_get_active_text(LIVES_COMBO(audp_combo));
 
-  if (!strlen(audp)||!strcmp(audp,prefsw->audp_name)) return;
+  if (!strlen(audp)||!strcmp(audp,prefsw->audp_name)) {
+    g_free(audp);
+    return;
+  }
 
   if (mainw->playing_file>-1) {
     do_aud_during_play_error();
@@ -1600,6 +1617,7 @@ static void on_audp_entry_changed (GtkWidget *audp_combo, gpointer ptr) {
 
     //gtk_widget_queue_draw(audp_entry);
     g_signal_handler_unblock(audp_combo, prefsw->audp_entry_func);
+    g_free(audp);
     return;
   }
 
@@ -1627,9 +1645,11 @@ static void on_audp_entry_changed (GtkWidget *audp_combo, gpointer ptr) {
   }
 #endif
   g_free(prefsw->audp_name);
-  prefsw->audp_name=g_strdup(gtk_combo_box_get_active_text(GTK_COMBO_BOX(audp_combo)));
+  prefsw->audp_name=lives_combo_get_active_text(LIVES_COMBO(audp_combo));
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_stream_audio),FALSE);
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_rec_after_pb),FALSE);
+  g_free(audp);
+
 }
 
 
@@ -1916,8 +1936,6 @@ _prefsw *create_prefs_dialog (void) {
   GtkWidget *hbox3;
   GtkWidget *hbox4;
   GtkWidget *hbox5;
-  GtkWidget *hbox6;
-  GtkWidget *hbox7;
   GtkWidget *vbox69;
   GtkWidget *frame4;
   GtkWidget *hbox109;
@@ -2298,7 +2316,9 @@ _prefsw *create_prefs_dialog (void) {
 
   add_fill_to_box(LIVES_BOX(hbox));
 
-  prefsw->forcesmon = lives_standard_check_button_new(_("Force single monitor"),FALSE,LIVES_BOX(hbox),_("Ignore all except the first monitor."));
+  prefsw->forcesmon = lives_standard_check_button_new((tmp=g_strdup(_("Force single monitor"))),FALSE,LIVES_BOX(hbox),(tmp2=g_strdup(_("Ignore all except the first monitor."))));
+  g_free(tmp);
+  g_free(tmp2);
 
   add_fill_to_box(LIVES_BOX(hbox));
 
@@ -2992,7 +3012,10 @@ _prefsw *create_prefs_dialog (void) {
   // TRANSLATORS: video quality, max len 50
   prefsw->pbq_list=g_list_append(prefsw->pbq_list,g_strdup((_("High - can improve quality on very fast machines"))));
 
-  prefsw->pbq_combo = lives_standard_combo_new(_("Preview _quality"),TRUE,prefsw->pbq_list,LIVES_BOX(vbox69),_("The preview quality for video playback - affects resizing"));
+  prefsw->pbq_combo = lives_standard_combo_new((tmp=g_strdup(_("Preview _quality"))),TRUE,prefsw->pbq_list,LIVES_BOX(vbox69),(tmp2=g_strdup(_("The preview quality for video playback - affects resizing"))));
+
+  g_free(tmp);
+  g_free(tmp2);
 
   switch (prefs->pb_quality) {
   case PB_QUALITY_HIGH:
@@ -3644,7 +3667,6 @@ _prefsw *create_prefs_dialog (void) {
   add_fill_to_box(LIVES_BOX(hbox));
 
   gtk_widget_show_all(hbox);
-
 
 
 

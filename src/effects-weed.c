@@ -1509,11 +1509,13 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
   if (get_enabled_channel(inst,0,TRUE)==NULL) {
     // we process generators elsewhere
     weed_free(in_channels);
+    weed_free(out_channels);
     return FILTER_ERROR_NO_IN_CHANNELS;
   }
 
   if (is_pure_audio(filter,TRUE)) {
     weed_free(in_channels);
+    weed_free(out_channels);
     return FILTER_ERROR_IS_AUDIO; // we process audio effects elsewhere
   }
 
@@ -1532,8 +1534,6 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
     num_out_tracks=weed_leaf_num_elements(init_event,"out_tracks");
     out_tracks=weed_get_int_array(init_event,"out_tracks",&error);
   }
-
-  out_channels=weed_get_plantptr_array(inst,"out_channels",&error);
 
   // handle case where in_tracks[i] > than num layers
   // either we temporarily disable the channel, or we can't apply the filter

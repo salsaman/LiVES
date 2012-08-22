@@ -330,11 +330,16 @@ void create_merge_dialog (void) {
 void on_trans_method_changed (GtkComboBox *combo, gpointer user_data) {
   int idx;
   lives_rfx_t *rfx;
+  char *txt=lives_combo_get_active_text (combo);
 
-  if (!strlen (lives_combo_get_active_text (combo))) return;
+  if (!strlen (txt)) {
+    g_free(txt);
+    return;
+  }
 
-  for (idx=0;strcmp((char *)g_list_nth_data (merge_opts->trans_list,idx),
-		    (char *)lives_combo_get_active_text(combo));idx++);
+  idx=lives_list_index(merge_opts->trans_list,txt);
+
+  g_free(txt);
 
   mainw->last_transition_idx=merge_opts->list_to_rfx_index[idx];
   rfx=&mainw->rendered_fx[mainw->last_transition_idx];

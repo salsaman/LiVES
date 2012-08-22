@@ -2527,8 +2527,11 @@ after_string_list_changed (GtkComboBox *combo, lives_rfx_t *rfx) {
   gint param_number=GPOINTER_TO_INT (g_object_get_data (G_OBJECT (combo),"param_number"));
   lives_param_t *param=&rfx->params[param_number];
   gint old_index=get_int_param(param->value);
-  gint new_index=lives_list_index(param->list,gtk_combo_box_get_active_text(combo));
+  char *txt=lives_combo_get_active_text(combo);
+  gint new_index=lives_list_index(param->list,txt);
   int copyto=-1;
+
+  g_free(txt);
 
   if (mainw->block_param_updates) return; // updates are blocked when we update visually
 

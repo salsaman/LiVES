@@ -873,6 +873,8 @@ int64_t render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdoubl
     
     infile=mainw->files[from_files[track]];
 
+    if (nfiles==1&&from_files[0]==mainw->ascrap_file) render_block_size*=100;
+
     in_asamps[track]=infile->asampsize/8;
     in_achans[track]=infile->achans;
     in_arate[track]=infile->arate;

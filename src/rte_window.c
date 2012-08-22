@@ -1173,7 +1173,6 @@ void fx_changed (GtkComboBox *combo, gpointer user_data) {
   if (gtk_combo_box_get_active(combo)==-1) return; // -1 is returned after we set our own text (without the type)
 
   gtk_combo_box_get_active_iter(combo,&iter1);
-
   model=gtk_combo_box_get_model(combo);
 
   gtk_tree_model_get(model,&iter1,HASH_COLUMN,&hashname1);
@@ -1206,6 +1205,10 @@ void fx_changed (GtkComboBox *combo, gpointer user_data) {
     }
     return;
   }
+
+  // prevents a segfault
+  gtk_combo_box_get_active_iter(combo,&iter1);
+  model=gtk_combo_box_get_model(combo);
 
   gtk_tree_model_get(model,&iter1,NAME_COLUMN,&txt);
   gtk_entry_set_text (GTK_ENTRY (combo_entries[key_mode]),txt);

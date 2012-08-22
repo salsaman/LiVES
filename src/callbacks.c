@@ -3955,15 +3955,6 @@ on_record_perf_activate                      (GtkMenuItem     *menuitem,
 					      gpointer         user_data)
 {
   // real time recording
-#ifdef HAVE_PULSE_AUDIO
-  pa_usec_t usec_start=0;
-#endif
-
-#ifdef RT_AUDIO
-  uint64_t frames_written=0;
-  uint64_t audio_ticks=0;
-  uint64_t seek_pos=0;
-#endif
 
   if (mainw->multitrack!=NULL) return;
 
@@ -3977,66 +3968,9 @@ on_record_perf_activate                      (GtkMenuItem     *menuitem,
 
       toggle_record();
 
-      if ((prefs->audio_src==AUDIO_SRC_EXT||((prefs->rec_opts&REC_AUDIO)&&(mainw->agen_key!=0||mainw->agen_needs_reinit||has_audio_filters(FALSE))))&&
+      if ((prefs->rec_opts&REC_AUDIO)&&(mainw->agen_key!=0||mainw->agen_needs_reinit||prefs->audio_src==AUDIO_SRC_EXT)&&
 	  ((prefs->audio_player==AUD_PLAYER_JACK) ||
 	   (prefs->audio_player==AUD_PLAYER_PULSE))) {
-	// remove play head and add record head
-	// creat temp clip
-
-	if (prefs->audio_src==AUDIO_SRC_EXT) {
-
-
-#ifdef ENABLE_JACK
-	if (prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL) {
-
-	  // tell jack client to close audio file
-	  if (mainw->jackd->playing_file>0) {
-	    gboolean timeout;
-	    int alarm_handle=lives_alarm_set(LIVES_ACONNECT_TIMEOUT);
-	    while (!(timeout=lives_alarm_get(alarm_handle))&&jack_get_msgq(mainw->jackd)!=NULL) {
-	      sched_yield(); // wait for seek
-	    }
-	    if (timeout) jack_try_reconnect();
-	    lives_alarm_clear(alarm_handle);
-	    frames_written=mainw->jackd->frames_written;
-	    seek_pos=mainw->jackd->seek_pos;
-	    audio_ticks=mainw->jackd->audio_ticks;
-	    
-	    jack_message.command=ASERVER_CMD_FILE_CLOSE;
-	    jack_message.data=NULL;
-	    jack_message.next=NULL;
-	    mainw->jackd->msgq=&jack_message;
-
-	  }
-	}
-#endif
-#ifdef HAVE_PULSE_AUDIO
-	if (prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL) {
-	  
-	  // tell pulse client to close audio file
-	  if (mainw->pulsed->fd>0) {
-	    gboolean timeout;
-	    int alarm_handle=lives_alarm_set(LIVES_ACONNECT_TIMEOUT);
-	    while (!(timeout=lives_alarm_get(alarm_handle))&&pulse_get_msgq(mainw->pulsed)!=NULL) {
-	      sched_yield(); // wait for seek
-	    }
-	    if (timeout) pulse_try_reconnect();
-	    lives_alarm_clear(alarm_handle);
-	    frames_written=mainw->pulsed->frames_written;
-	    usec_start=mainw->pulsed->usec_start;
-	    seek_pos=mainw->pulsed->seek_pos;
-	    audio_ticks=mainw->pulsed->audio_ticks;
-
-	    pulse_message.command=ASERVER_CMD_FILE_CLOSE;
-	    pulse_message.data=NULL;
-	    pulse_message.next=NULL;
-	    mainw->pulsed->msgq=&pulse_message;
-	  }
-	  
-	}
-#endif
-
-	}
 
 	if (mainw->ascrap_file==-1) open_ascrap_file();
 	if (mainw->ascrap_file!=-1) {
@@ -4045,44 +3979,28 @@ on_record_perf_activate                      (GtkMenuItem     *menuitem,
 	  mainw->rec_aclip=mainw->ascrap_file;
 	  mainw->rec_avel=1.;
 	  
-	  if (prefs->audio_player==AUD_PLAYER_JACK) {
 #ifdef ENABLE_JACK
-	    if (prefs->audio_src==AUDIO_SRC_EXT) {
-	      jack_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_EXTERNAL);
-	      mainw->rec_aseek=(double)mainw->jackd_read->frames_written/(double)mainw->files[mainw->ascrap_file]->arps;
-	      mainw->jackd_read->frames_written=frames_written;
-	      mainw->jackd_read->audio_ticks=audio_ticks;
-	      mainw->jackd_read->seek_pos=seek_pos;
-	    }
-	    else {
-	      jack_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_GENERATED);
-	      mainw->rec_aseek=(double)mainw->files[mainw->ascrap_file]->aseek_pos/
-		(double)(mainw->files[mainw->ascrap_file]->arps*mainw->files[mainw->ascrap_file]->achans*mainw->files[mainw->ascrap_file]->asampsize>>3);
-	    }
-#endif
+	if (prefs->audio_player==AUD_PLAYER_JACK) {
+	  if (mainw->agen_key==0&&!mainw->agen_needs_reinit) {
+	    if (mainw->jackd_read!=NULL) jack_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_EXTERNAL);
 	  }
-	  if (prefs->audio_player==AUD_PLAYER_PULSE) {
-#ifdef HAVE_PULSE_AUDIO
-	    if (prefs->audio_src==AUDIO_SRC_EXT) {
-	      pulse_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_EXTERNAL);
-	      mainw->rec_aseek=(double)mainw->pulsed_read->frames_written/(double)mainw->files[mainw->ascrap_file]->arps;
-	      mainw->pulsed_read->frames_written=frames_written;
-	      mainw->pulsed_read->usec_start=usec_start;
-	      mainw->pulsed_read->audio_ticks=audio_ticks;
-	      mainw->pulsed_read->seek_pos=seek_pos;
-	      pulse_driver_uncork(mainw->pulsed_read);
-	    }
-	    else {
-	      pulse_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_GENERATED);
-	      mainw->rec_aseek=(double)mainw->files[mainw->ascrap_file]->aseek_pos/
-		(double)(mainw->files[mainw->ascrap_file]->arps*mainw->files[mainw->ascrap_file]->achans*mainw->files[mainw->ascrap_file]->asampsize>>3);
-	    }
-#endif
-
+	  else {
+	    if (mainw->jackd!=NULL) jack_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_GENERATED);
 	  }
 
 	}
-
+#endif
+#ifdef HAVE_PULSE_AUDIO
+	if (prefs->audio_player==AUD_PLAYER_PULSE) {
+	  if (mainw->agen_key==0&&!mainw->agen_needs_reinit) {
+	    if (mainw->pulsed_read!=NULL) pulse_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_EXTERNAL);
+	  }
+	  else {
+	    if (mainw->pulsed!=NULL) pulse_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_GENERATED);
+	  }
+	}
+#endif
+	}
 	return;
       }
 
@@ -4115,6 +4033,8 @@ on_record_perf_activate                      (GtkMenuItem     *menuitem,
       }
 #endif
 
+
+      /*
       if (prefs->audio_src==AUDIO_SRC_EXT) {
 	// remove record head and add play head
 #ifdef ENABLE_JACK
@@ -4143,6 +4063,7 @@ on_record_perf_activate                      (GtkMenuItem     *menuitem,
 #endif
 	}
       }
+      */
 
       if (prefs->rec_opts&REC_EFFECTS) {
 	// add deinit events for all active effects
@@ -4265,7 +4186,7 @@ on_encoder_entry_changed (GtkComboBox *combo, gpointer ptr) {
   GList *ofmt_all=NULL;
   GList *ofmt=NULL;
 
-  gchar *new_encoder_name = g_strdup(gtk_combo_box_get_active_text(combo));
+  gchar *new_encoder_name = lives_combo_get_active_text(combo);
   gchar *msg;
   gchar **array;
   int i;
@@ -10899,14 +10820,15 @@ on_encoder_ofmt_changed (GtkComboBox *combo, gpointer user_data) {
   render_details *rdet = (render_details *)user_data;
 
   if (rdet == NULL){
-      new_fmt = g_strdup(gtk_combo_box_get_active_text(GTK_COMBO_BOX(prefsw->ofmt_combo)));
+      new_fmt = lives_combo_get_active_text(LIVES_COMBO(prefsw->ofmt_combo));
   }
   else{
-      new_fmt = g_strdup(gtk_combo_box_get_active_text(GTK_COMBO_BOX(rdet->ofmt_combo)));
+      new_fmt = lives_combo_get_active_text(LIVES_COMBO(rdet->ofmt_combo));
   }
 
   if ( !strlen( new_fmt ) || !strcmp( new_fmt, mainw->string_constants[LIVES_STRING_CONSTANT_ANY] ) ){
-      return;
+    g_free(new_fmt);
+    return;
   }
 
   if ((ofmt_all=plugin_request_by_line(PLUGIN_ENCODERS,future_prefs->encoder.name,"get_formats"))!=NULL) {

@@ -283,6 +283,7 @@ void lives_combo_set_entry_text_column(LiVESCombo *combo, int column) {
 
 
 char *lives_combo_get_active_text(LiVESCombo *combo) {
+  // return value should be freed
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(2,24,0)
   return gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(combo));

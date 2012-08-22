@@ -4412,7 +4412,7 @@ void load_frame_image(gint frame) {
 	if ((event_list=append_frame_event (mainw->event_list,mainw->currticks,numframes,clips,frames))!=NULL) {
 	  if (mainw->event_list==NULL) mainw->event_list=event_list;
 	  if (mainw->rec_aclip!=-1&&((prefs->rec_opts&REC_AUDIO))) {
-	    weed_plant_t *event=get_last_event(mainw->event_list);
+	    weed_plant_t *event=get_last_frame_event(mainw->event_list);
 
 	    if (mainw->rec_aclip==mainw->ascrap_file) {
 	      mainw->rec_aseek=(double)mainw->files[mainw->ascrap_file]->aseek_pos/

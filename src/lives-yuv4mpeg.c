@@ -655,8 +655,8 @@ on_live_tvcard_activate                      (GtkMenuItem     *menuitem,
       fps=gtk_spin_button_get_value(GTK_SPIN_BUTTON(tvcardw->spinbuttonf));
     }
 
-    driver=g_strdup(gtk_entry_get_text(GTK_ENTRY((GTK_COMBO(tvcardw->combod))->entry)));
-    outfmt=g_strdup(gtk_entry_get_text(GTK_ENTRY((GTK_COMBO(tvcardw->comboo))->entry)));
+    driver=lives_combo_get_active_text(LIVES_COMBO(tvcardw->combod));
+    outfmt=lives_combo_get_active_text(LIVES_COMBO(tvcardw->comboo));
 
     com=g_strdup_printf("%s open_tv_card \"%s\" \"%s\" \"%s\" \"%s\" %d %d %d %.3f \"%s\" \"%s\"",
 			prefs->backend,cfile->handle,chanstr,

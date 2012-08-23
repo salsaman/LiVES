@@ -800,7 +800,7 @@ static void omc_learn_link_params(lives_omc_match_node_t *mnode) {
 
 
 static void on_omc_combo_entry_changed (GtkComboBox *combo, gpointer ptr) {
-  const gchar *macro_text;
+  char *macro_text;
 
   int i;
     
@@ -809,11 +809,7 @@ static void on_omc_combo_entry_changed (GtkComboBox *combo, gpointer ptr) {
   gint row=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(combo),"row"));
   omclearn_w *omclw=(omclearn_w *)g_object_get_data(G_OBJECT(combo),"omclw");
 
-#if GTK_CHECK_VERSION(2,24,0)
-  macro_text=gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(combo));
-#else
-  macro_text=gtk_combo_box_get_active_text(combo);
-#endif
+  macro_text=lives_combo_get_active_text(LIVES_COMBO(combo));
 
   if (mnode->treev2!=NULL) {
     // remove old mapping
@@ -831,11 +827,16 @@ static void on_omc_combo_entry_changed (GtkComboBox *combo, gpointer ptr) {
 
   }
 
-  if (!strcmp(macro_text,mainw->string_constants[LIVES_STRING_CONSTANT_NONE])) return;
+  if (!strcmp(macro_text,mainw->string_constants[LIVES_STRING_CONSTANT_NONE])) {
+    g_free(macro_text);
+    return;
+  }
 
   for (i=0;i<=N_OMC_MACROS;i++) {
     if (!strcmp(macro_text,omc_macros[i].macro_text)) break;
   }
+
+  g_free(macro_text);
 
   mnode->macro=i;
   omc_learn_link_params(mnode);

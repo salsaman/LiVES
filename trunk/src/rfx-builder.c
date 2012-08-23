@@ -1046,7 +1046,8 @@ void on_param_window_ok (GtkButton *button, gpointer user_data) {
     g_free (rfxbuilder->paramw_hints[i]);
   }
   for (i=0;i<rfxbuilder->num_paramw_hints;i++) {
-    rfxbuilder->paramw_hints[i]=g_strdup_printf ("%s%s%s",gtk_entry_get_text (GTK_ENTRY (rfxbuilder->entry[i])),rfxbuilder->field_delim,gtk_entry_get_text (GTK_ENTRY (rfxbuilder->entry2[i])));
+    rfxbuilder->paramw_hints[i]=g_strdup_printf ("%s%s%s",gtk_entry_get_text (GTK_ENTRY (rfxbuilder->entry[i])),rfxbuilder->field_delim,
+						 gtk_entry_get_text (GTK_ENTRY (rfxbuilder->entry2[i])));
   }
   gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
 }
@@ -1122,8 +1123,8 @@ void on_code_ok (GtkButton *button, gpointer user_data) {
 	set_int_param (rfxbuilder->copy_params[rfxbuilder->edit_param].def,(defindex=0));
       }
       if (rfxbuilder->copy_params[rfxbuilder->edit_param].list!=NULL) {
-	gtk_entry_set_text (GTK_ENTRY((GTK_COMBO(rfxbuilder->param_def_combo))->entry), 
-			    (gchar *)g_list_nth_data (rfxbuilder->copy_params[rfxbuilder->edit_param].list,defindex));
+	lives_combo_set_active_string (LIVES_COMBO(rfxbuilder->param_def_combo), 
+				       (gchar *)g_list_nth_data (rfxbuilder->copy_params[rfxbuilder->edit_param].list,defindex));
       }
 
     }
@@ -1589,7 +1590,7 @@ void param_set_from_dialog (lives_param_t *copy_param, rfx_build_window_t *rfxbu
   case LIVES_PARAM_STRING_LIST:
     copy_param->dp=0;
     copy_param->def=g_malloc (sizdbl);
-    set_int_param (copy_param->def,lives_list_index (copy_param->list,gtk_entry_get_text (GTK_ENTRY (GTK_COMBO(rfxbuilder->param_def_combo)->entry))));
+    set_int_param (copy_param->def,lives_list_index (copy_param->list,lives_combo_get_active_text(LIVES_COMBO(rfxbuilder->param_def_combo))));
     break;
   case LIVES_PARAM_COLRGB24:
     copy_param->def=g_malloc (3*sizint);
@@ -2528,8 +2529,8 @@ void on_param_type_changed (GtkComboBox *param_type_combo, gpointer user_data) {
     }
 
     if (rfxbuilder->copy_params[pnum].list!=NULL) {
-      gtk_entry_set_text (GTK_ENTRY((GTK_COMBO(rfxbuilder->param_def_combo))->entry),
-			  (gchar *)g_list_nth_data (rfxbuilder->copy_params[pnum].list,defindex));
+      lives_combo_set_active_string (LIVES_COMBO(rfxbuilder->param_def_combo), 
+				     (gchar *)g_list_nth_data (rfxbuilder->copy_params[pnum].list,defindex));
     }
 
     gtk_widget_hide (rfxbuilder->spinbutton_param_dp);

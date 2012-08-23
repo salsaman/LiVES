@@ -4248,15 +4248,6 @@ on_encoder_entry_changed (GtkComboBox *combo, gpointer ptr) {
     }
     g_free(new_encoder_name);
 
-    if (rdet != NULL){
-        // FIXME: what to hide ?
-        //gtk_widget_hide(gtk_widget_get_toplevel(GTK_COMBO(rdet->encoder_combo)->list));
-    }
-    else if (prefsw != NULL){
-        // FIXME: what to hide ?
-        //gtk_widget_hide(gtk_widget_get_toplevel(GTK_COMBO(prefsw->encoder_combo)->list));
-    }
-
     if (mainw->is_ready){
       GtkWindow *twindow=GTK_WINDOW(mainw->LiVES);
       if (prefsw!=NULL) twindow=GTK_WINDOW(prefsw->prefs_dialog);
@@ -4297,10 +4288,7 @@ on_encoder_entry_changed (GtkComboBox *combo, gpointer ptr) {
   g_free(new_encoder_name);
 
   if ((encoder_capabilities=plugin_request(PLUGIN_ENCODERS,future_prefs->encoder.name,"get_capabilities"))==NULL) {
-    if (rdet != NULL){
-        // FIXME: what to hide ?
-        // gtk_widget_hide(gtk_widget_get_toplevel(GTK_COMBO(rdet->encoder_combo)->list));
-    }
+ 
     do_plugin_encoder_error(future_prefs->encoder.name);
 
     if (prefsw!=NULL) {
@@ -10842,19 +10830,11 @@ on_encoder_ofmt_changed (GtkComboBox *combo, gpointer user_data) {
 	  if (prefsw!=NULL) {
 	    g_signal_handler_block(GTK_COMBO_BOX(prefsw->ofmt_combo), prefsw->encoder_ofmt_fn);
             gtk_combo_box_set_active(GTK_COMBO_BOX(prefsw->ofmt_combo), counter);
-
-	    // gtk_widget_queue_draw (GTK_COMBO(prefsw->ofmt_combo)->entry); FIXME: ???
-
 	    g_signal_handler_unblock(GTK_COMBO_BOX(prefsw->ofmt_combo), prefsw->encoder_ofmt_fn);
 	  }
 	  if (rdet!=NULL) {
 	    g_signal_handler_block(GTK_COMBO_BOX(rdet->ofmt_combo), rdet->encoder_ofmt_fn);
-
-            // TODO: switch to this line when rdet->ofmt_combo is gtk_combo_box
             gtk_combo_box_set_active(GTK_COMBO_BOX(rdet->ofmt_combo), counter);
-
-	    // gtk_widget_queue_draw (GTK_COMBO(rdet->ofmt_combo)->entry); FIXME: ???
-
 	    g_signal_handler_unblock(GTK_COMBO_BOX(rdet->ofmt_combo), rdet->encoder_ofmt_fn);
 	  }
 	  g_snprintf(future_prefs->encoder.of_name,51,"%s",array[0]);
@@ -10887,10 +10867,6 @@ on_encoder_ofmt_changed (GtkComboBox *combo, gpointer user_data) {
     set_acodec_list_from_allowed(prefsw,rdet);
   }
   else {
-    if (rdet!=NULL){
-        // FIXME: what to hide ?
-        //gtk_widget_hide(gtk_widget_get_toplevel(GTK_COMBO(rdet->encoder_combo)->list));
-    }
     do_plugin_encoder_error(future_prefs->encoder.name);
   }
 }

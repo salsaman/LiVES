@@ -2763,6 +2763,14 @@ lives_filter_error_t weed_apply_audio_instance (weed_plant_t *init_event, float 
 
   filter=weed_instance_get_filter(instance);
 
+  if (!weed_plant_has_leaf(filter,"flags")) weed_set_int_value(filter,"flags",0);
+  else flags=weed_get_int_value(filter,"flags",&error);
+
+  if (vis!=NULL&&vis[0]<0.) {
+    // first layer comes from ascrap file; do not apply any effects except the audio mixer
+    if (numinchans==1&&numoutchans==1&&!(flags&WEED_FILTER_IS_CONVERTER)) return FILTER_ERROR_IS_SCRAP_FILE;
+  }
+
   for (i=0;i<numinchans;i++) {
     if ((channel=in_channels[i])==NULL) continue;
 
@@ -2905,9 +2913,6 @@ lives_filter_error_t weed_apply_audio_instance (weed_plant_t *init_event, float 
   weed_free(in_channels);
   if (out_channels!=NULL) weed_free(out_channels);
 
-  if (!weed_plant_has_leaf(filter,"flags")) weed_set_int_value(filter,"flags",0);
-  else flags=weed_get_int_value(filter,"flags",&error);
-
   // apply visibility mask to volume values
   if (vis!=NULL&&(flags&WEED_FILTER_IS_CONVERTER)) {
     int vmaster=get_master_vol_param(filter);
@@ -2918,6 +2923,7 @@ lives_filter_error_t weed_apply_audio_instance (weed_plant_t *init_event, float 
       int *in_tracks=weed_get_int_array(init_event,"in_tracks",&error);
       for (i=0;i<nvals;i++) {
 	fvols[i]=fvols[i]*vis[in_tracks[i]+nbtracks];
+	if (vis[in_tracks[i]+nbtracks]<0.) fvols[i]=-fvols[i];
       }
       pthread_mutex_lock(&mainw->data_mutex);
       weed_set_double_array(in_params[vmaster],"value",nvals,fvols);
@@ -3224,8 +3230,9 @@ void weed_apply_audio_effects (weed_plant_t *filter_map, float **abuf, int nbtra
       fhash=weed_get_string_value(init_event,"filter",&error);
       filter=get_weed_filter(weed_get_idx_for_hashname(fhash,TRUE));
       weed_free(fhash);
-      if (has_audio_chans_in(filter,FALSE)) 
+      if (has_audio_chans_in(filter,FALSE)) {
 	filter_error=weed_apply_audio_instance(init_event,abuf,nbtracks,nchans,nsamps,arate,tc,vis);
+      }
     }
     weed_free(init_events);
   }

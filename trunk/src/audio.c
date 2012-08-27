@@ -1141,11 +1141,11 @@ int64_t render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdoubl
 	obuf->samples_filled+=frames_out;
       }
 
-      if (mainw->multitrack==NULL) {
+      if (mainw->multitrack==NULL&&opvol_end!=opvol_start) {
 	time+=(gdouble)frames_out/(gdouble)out_arate;
 	opvol=opvol_start+(opvol_end-opvol_start)*(time/(gdouble)((tc_end-tc_start)/U_SEC));
       }
-      else tc+=(gdouble)blocksize/(gdouble)out_arate*U_SEC;
+      tc+=(gdouble)blocksize/(gdouble)out_arate*U_SEC;
     }
     xsamples=zsamples;
 

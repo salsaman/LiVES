@@ -729,7 +729,7 @@ int64_t render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdoubl
 
   // write this into our float buffers (1 buffer per channel per track)
 
-  // we then send small chunks at a time to our audio volume/pan effect; this is to allow for parameter interpolation
+  // we then send small chunks at a time to any audio effects; this is to allow for parameter interpolation
 
   // the small chunks are processed and mixed, converted from float to int, and then written to the outfile
 
@@ -762,17 +762,25 @@ int64_t render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdoubl
   int c,x;
   register int i,j;
   ssize_t bytes_read;
+
   int in_fd[nfiles],out_fd=-1;
+
   uint64_t nframes;
+
   gboolean in_reverse_endian[nfiles],out_reverse_endian=FALSE;
+
   off64_t seekstart[nfiles];
   gchar *infilename,*outfilename;
+
   weed_timecode_t tc=tc_start;
+
   gdouble ins_pt=tc/U_SEC;
-  int64_t ins_size=0l,cur_size;
   gdouble time=0.;
   gdouble opvol=opvol_start;
+  gdouble *vis=NULL;
+
   int64_t frames_out=0;
+  int64_t ins_size=0l,cur_size;
 
   int track;
 
@@ -805,7 +813,7 @@ int64_t render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdoubl
 
   if (!storedfdsset) audio_reset_stored_fnames();
 
-  //if (mainw->multitrack==NULL) render_block_size*=100;
+  if (mainw->event_list==NULL||(mainw->multitrack==NULL&&nfiles==1&&from_files[0]==mainw->ascrap_file)) render_block_size*=100;
 
   if (to_file>-1) {
     // prepare outfile stuff
@@ -872,8 +880,6 @@ int64_t render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdoubl
     is_silent[track]=FALSE;
     
     infile=mainw->files[from_files[track]];
-
-    if (nfiles==1&&from_files[0]==mainw->ascrap_file) render_block_size*=100;
 
     in_asamps[track]=infile->asampsize/8;
     in_achans[track]=infile->achans;
@@ -1086,25 +1092,33 @@ int64_t render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdoubl
 	}
       }
 
-      // TODO *** when audio filters are implemented:- we will need to apply all audio effects with output here.
-      // even in clipedit mode (for preview/rendering with an event list)
-      // also, we will need to keep updating the mainw->filter_map from mainw->event_list, as filters may switched on and off during the block
+      if (mainw->event_list!=NULL&&mainw->filter_map!=NULL&&!(mainw->multitrack==NULL&&from_files[0]==mainw->ascrap_file)) {
+	// we need to apply all audio effects with output here.
+	// even in clipedit mode (for preview/rendering with an event list)
+	// also, we will need to keep updating the mainw->filter_map from mainw->event_list, as filters may switched on and off during the block
 
+	int nbtracks=0;
 
+	// apply audio filter(s)
+	if (mainw->multitrack!=NULL) {
+	  // we work out the "visibility" of each track at tc
+	  vis=get_track_visibility_at_tc(mainw->multitrack->event_list,nfiles,
+					 mainw->multitrack->opts.back_audio_tracks,tc,&shortcut,
+					 mainw->multitrack->opts.audio_bleedthru);
 
-      // apply audio filter(s)
-      if (mainw->multitrack!=NULL) {
-	// we work out the "visibility" of each track at tc
-	gdouble *vis=get_track_visibility_at_tc(mainw->multitrack->event_list,nfiles,
-						mainw->multitrack->opts.back_audio_tracks,tc,&shortcut,
-						mainw->multitrack->opts.audio_bleedthru);
+	  if (from_files[0]==mainw->ascrap_file) vis[0]=-vis[0]; // first track is ascrap_file - flag that no effects should be applied to it
+
+	  nbtracks=mainw->multitrack->opts.back_audio_tracks;
+	}
+	
 	// locate the master volume parameter, and multiply all values by vis[track]
-	weed_apply_audio_effects(mainw->filter_map,chunk_float_buffer,mainw->multitrack->opts.back_audio_tracks,
+	weed_apply_audio_effects(mainw->filter_map,chunk_float_buffer,nbtracks,
 				 out_achans,blocksize,out_arate,tc,vis);
 	
-	g_free(vis);
+	if (vis!=NULL) g_free(vis);
+
       }
-      
+
       if (to_file>-1) {
 	// output to file
 	// convert back to int; use out_scale of 1., since we did our resampling in sample_move_*_d16

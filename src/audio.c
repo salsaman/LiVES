@@ -1106,7 +1106,8 @@ int64_t render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdoubl
 					 mainw->multitrack->opts.back_audio_tracks,tc,&shortcut,
 					 mainw->multitrack->opts.audio_bleedthru);
 
-	  if (from_files[0]==mainw->ascrap_file) vis[0]=-vis[0]; // first track is ascrap_file - flag that no effects should be applied to it
+	  // first track is ascrap_file - flag that no effects should be applied to it, except for the audio mixer
+	  if (from_files[0]==mainw->ascrap_file) vis[0]=-vis[0];
 
 	  nbtracks=mainw->multitrack->opts.back_audio_tracks;
 	}

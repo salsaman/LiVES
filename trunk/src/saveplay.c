@@ -3106,6 +3106,7 @@ void play_file (void) {
   }
 
   mainw->filter_map=NULL;
+  mainw->afilter_map=NULL;
 
   // disable the freeze key
   gtk_accel_group_disconnect (GTK_ACCEL_GROUP (mainw->accel_group), freeze_closure);

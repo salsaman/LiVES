@@ -9649,6 +9649,7 @@ on_preview_clicked                     (GtkButton       *button,
   gint64 xticks;
   gint current_file=mainw->current_file;
   weed_plant_t *filter_map=mainw->filter_map; // back this up in case we are rendering
+  weed_plant_t *afilter_map=mainw->afilter_map; // back this up in case we are rendering
 
 
   if (in_preview_func) {
@@ -9858,6 +9859,7 @@ on_preview_clicked                     (GtkButton       *button,
   xticks=U_SECL*(tv.tv_sec-mainw->origsecs)+tv.tv_usec*U_SEC_RATIO-mainw->origusecs*U_SEC_RATIO;
   mainw->timeout_ticks+=xticks;
   mainw->filter_map=filter_map;
+  mainw->afilter_map=afilter_map;
 
   if (mainw->multitrack!=NULL) {
     current_file=mainw->current_file;

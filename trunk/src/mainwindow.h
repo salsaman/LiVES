@@ -708,6 +708,7 @@ typedef struct {
   GdkCursor *cursor;
 
   weed_plant_t *filter_map;
+  weed_plant_t *afilter_map;
   void ***pchains;
 
   // for the internal player

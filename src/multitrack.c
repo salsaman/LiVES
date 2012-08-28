@@ -77,7 +77,7 @@ static gint force_backing_tracks;
 static gint clips_to_files[MAX_FILES];
 
 static gboolean pb_audio_needs_prerender;
-static weed_plant_t *pb_loop_event,*pb_filter_map;
+static weed_plant_t *pb_loop_event,*pb_filter_map,*pb_afilter_map;
 
 static gboolean mainw_was_ready;
 
@@ -15437,6 +15437,7 @@ void mt_prepare_for_playback(lives_mt *mt) {
 
   pb_loop_event=mt->pb_loop_event;
   pb_filter_map=mainw->filter_map; // keep a copy of this, in case we are rendering
+  pb_afilter_map=mainw->afilter_map; // keep a copy of this, in case we are rendering
   pb_audio_needs_prerender=GTK_WIDGET_SENSITIVE(mt->prerender_aud);
 
   mt_desensitise(mt);
@@ -15522,6 +15523,7 @@ void mt_post_playback(lives_mt *mt) {
   }
 
   mainw->filter_map=pb_filter_map;
+  mainw->afilter_map=pb_afilter_map;
 
   if (mt->is_paused) mt->pb_loop_event=pb_loop_event;
   gtk_widget_set_sensitive (mainw->m_playbutton, TRUE);

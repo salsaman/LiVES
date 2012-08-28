@@ -845,8 +845,8 @@ static void pulse_audio_read_process (pa_stream *pstream, size_t nbytes, void *a
   pulsed->frames_written+=nframes;
 
 
-  if (prefs->audio_src==AUDIO_SRC_EXT) {
-    // TODO - do not call this when recording ext window or voiceover
+  if (prefs->audio_src==AUDIO_SRC_EXT&&(pulsed->playing_file==-1||pulsed->playing_file==mainw->ascrap_file)) {
+    // - (do not call this when recording ext window or voiceover)
 
     // in this case we read external audio, but maybe not record it
     // we may wish to analyse the audio for example
@@ -889,7 +889,7 @@ static void pulse_audio_read_process (pa_stream *pstream, size_t nbytes, void *a
 
   }
 
-  if (pulsed->playing_file==-1||mainw->record_paused) {
+  if (pulsed->playing_file==-1||(mainw->record&&mainw->record_paused)) {
     pa_stream_drop(pulsed->pstream);
     return;
   }

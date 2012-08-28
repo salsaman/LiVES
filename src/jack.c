@@ -955,7 +955,7 @@ static int audio_read (nframes_t nframes, void *arg) {
 
   jackd->frames_written+=nframes;
 
-  if (mainw->playing_file>0&&prefs->audio_src==AUDIO_SRC_EXT) {
+  if (prefs->audio_src==AUDIO_SRC_EXT&&(jackd->playing_file==-1||jackd->playing_file==mainw->ascrap_file)) {
     // TODO - dont apply filters when doing ext window grab, or voiceover
 
     // in this case we read external audio, but maybe not record it
@@ -970,7 +970,7 @@ static int audio_read (nframes_t nframes, void *arg) {
 
   }
 
-  if (jackd->playing_file==-1||mainw->record_paused) {
+  if (jackd->playing_file==-1||(mainw->record&&mainw->record_paused)) {
     return 0;
   }
 

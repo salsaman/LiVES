@@ -398,7 +398,6 @@ static weed_plant_t *init_events[FX_KEYS_MAX_VIRTUAL];
 static void **pchains[FX_KEYS_MAX]; // parameter changes, used during recording (not for rendering)
 static void *filter_map[FX_KEYS_MAX+2];
 static int next_free_key;
-static int key; // for assigning loaded filters
 
 ////////////////////////////////////////////////////////////////////
 
@@ -2695,22 +2694,32 @@ lives_filter_error_t weed_apply_audio_instance (weed_plant_t *init_event, float 
   float *in_abuf,*out_abuf;
   int error;
   weed_plant_t **layers,**in_channels,**out_channels=NULL;
-  weed_plant_t *instance,*filter;
+  weed_plant_t *instance=NULL,*filter;
   size_t nsf=nsamps*sizeof(float);
-  void **ev_pchains;
   lives_filter_error_t retval=FILTER_NO_ERROR;
   weed_plant_t *channel=NULL;
   gboolean needs_reinit=FALSE;
   weed_plant_t *ctmpl;
 
   int flags=0;
+  int key=-1;
 
   int ntracks=1;
   int numinchans,numoutchans=0,xnchans,aint;
 
   register int i,j;
 
+
   // caller passes an init_event from event list, or an instance (for realtime mode)
+
+
+  if (weed_plant_has_leaf(init_event,"host_tag")) {
+    gchar *keystr=weed_get_string_value(init_event,"host_tag",&error);
+    key=atoi(keystr);
+    weed_free(keystr);
+  }
+  else return FILTER_ERROR_INVALID_INIT_EVENT;
+
   if (WEED_PLANT_IS_FILTER_INSTANCE(init_event)) {
     // for realtime, we pass a single instance instead of init_event
     instance=init_event;
@@ -2723,29 +2732,18 @@ lives_filter_error_t weed_apply_audio_instance (weed_plant_t *init_event, float 
     ntracks=weed_leaf_num_elements(init_event,"in_tracks");
 
     // check instance exists, and interpolate parameters
-    if (weed_plant_has_leaf(init_event,"host_tag")) {
-      
-      gchar *keystr=weed_get_string_value(init_event,"host_tag",&error);
-      int key=atoi(keystr);
-      weed_free(keystr);
-      if (rte_key_valid (key+1,FALSE)) {
-	if ((instance=key_to_instance[key][key_modes[key]])==NULL)
-	  return FILTER_ERROR_INVALID_INSTANCE;
-	if (weed_plant_has_leaf(init_event,"in_parameters")) {
-	  ev_pchains=weed_get_voidptr_array(init_event,"in_parameters",&error);
-	  if (ev_pchains[0]!=NULL) {
-	    if (!pthread_mutex_trylock(&mainw->interp_mutex)) { // try to minimise thread locking
-	      pthread_mutex_unlock(&mainw->interp_mutex);
-	      if (!interpolate_params(instance,ev_pchains,tc)) {
-		weed_free(ev_pchains);
-		return FILTER_ERROR_INTERPOLATION_FAILED;
-	      }
-	    }
+
+    if (rte_key_valid (key+1,FALSE)) {
+      if ((instance=key_to_instance[key][key_modes[key]])==NULL)
+	return FILTER_ERROR_INVALID_INSTANCE;
+      if (mainw->pchains!=NULL&&mainw->pchains[key]!=NULL) {
+	if (!pthread_mutex_trylock(&mainw->interp_mutex)) { // try to minimise thread locking
+	  pthread_mutex_unlock(&mainw->interp_mutex);
+	  if (!interpolate_params(instance,pchains[key],tc)) {
+	    return FILTER_ERROR_INTERPOLATION_FAILED;
 	  }
-	  weed_free(ev_pchains);
 	}
       }
-      else return FILTER_ERROR_INVALID_FILTER;
     }
     else return FILTER_ERROR_INVALID_INIT_EVENT;
   }
@@ -3037,12 +3035,15 @@ static void weed_apply_filter_map (weed_plant_t **layers, weed_plant_t *filter_m
 	    // TODO - if current fx 
 	    void **pchain=mt_get_pchain();
 	    instance=(weed_plant_t *)mainw->multitrack->current_rfx->source;
+
+	    if (is_pure_audio(instance,FALSE)) continue; // audio effects are applied in the audio renderer
+
 	    // interpolation can be switched of by setting mainw->no_interp
 	    if (!mainw->no_interp&&pchain!=NULL) {
 	      interpolate_params(instance,pchain,tc); // interpolate parameters for preview
 	    }
 	    filter_error=weed_apply_instance (instance,mainw->multitrack->init_event,layers,0,0,tc);
-	    if (!init_event_is_process_last(mainw->multitrack->init_event)&&!is_pure_audio(instance,TRUE)) break;
+	    if (!init_event_is_process_last(mainw->multitrack->init_event)) break;
 	    continue;
 	  }
 	}
@@ -3055,6 +3056,8 @@ static void weed_apply_filter_map (weed_plant_t **layers, weed_plant_t *filter_m
 	weed_free(keystr);
 	if (rte_key_valid (key+1,FALSE)) {
 	  if ((instance=key_to_instance[key][key_modes[key]])==NULL) continue;
+
+	  if (is_pure_audio(instance,FALSE)) continue; // audio effects are applied in the audio renderer
 
 	  if (pchains!=NULL&&pchains[key]!=NULL) {
 	    interpolate_params(instance,pchains[key],tc); // interpolate parameters during playback
@@ -3122,8 +3125,8 @@ weed_plant_t *weed_apply_effects (weed_plant_t **layers, weed_plant_t *filter_ma
 	if (mainw->rte&(GU641<<i)) {
 	  mainw->osc_block=TRUE;
 	  if ((instance=key_to_instance[i][key_modes[i]])==NULL) continue;
-	  if (mainw->pchains!=NULL&&mainw->pchains[key]!=NULL) {
-	    interpolate_params(instance,mainw->pchains[key],tc); // interpolate parameters during preview
+	  if (mainw->pchains!=NULL&&mainw->pchains[i]!=NULL) {
+	    interpolate_params(instance,mainw->pchains[i],tc); // interpolate parameters during preview
 	  }
 
 	  if (mainw->pconx!=NULL&&!(mainw->preview||mainw->is_rendering)) {
@@ -3276,8 +3279,8 @@ void weed_apply_audio_effects_rt(float **abuf, int nchans, int64_t nsamps, gdoub
 	  continue;
 	}
 
-	if (mainw->pchains!=NULL&&mainw->pchains[key]!=NULL) {
-	  interpolate_params(instance,mainw->pchains[key],tc); // interpolate parameters during preview
+	if (mainw->pchains!=NULL&&mainw->pchains[i]!=NULL) {
+	  interpolate_params(instance,mainw->pchains[i],tc); // interpolate parameters during preview
 	}
 	
 	if (mainw->pconx!=NULL) {
@@ -3951,6 +3954,7 @@ static void load_weed_plugin (gchar *plugin_name, gchar *plugin_path, gchar *dir
   char cwd[PATH_MAX],*pwd;
   gchar *pkg=NULL,*pkgstring;
 
+  static int key=-1;
 
   pwd=getcwd(cwd,PATH_MAX);
 
@@ -4136,8 +4140,6 @@ void weed_load_all (void) {
   gchar *msg;
 
   gint listlen;
-
-  key=-1;
 
   num_weed_filters=0;
 

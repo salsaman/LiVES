@@ -712,6 +712,55 @@ static gboolean pad_with_silence(int out_fd, off64_t oins_size, int64_t ins_size
 
 
 
+static void audio_process_events_to(weed_timecode_t tc) {
+  // process events from mainw->audio_event up to tc
+  // at playback start we should have set mainw->audio_event and mainw->afilter_map
+
+  int hint,error;
+
+  weed_plant_t *event=mainw->audio_event;
+
+  weed_timecode_t ctc;
+
+  while (event!=NULL && get_event_timecode(event)<=tc) {
+    hint=get_event_hint (event);
+    ctc=get_event_timecode(event);
+
+    switch (hint) {
+      
+    case WEED_EVENT_HINT_FILTER_INIT:
+      {
+	weed_plant_t *deinit_event=weed_get_voidptr_value (event,"deinit_event",&error);
+	if (get_event_timecode((weed_plant_t *)deinit_event)<tc) break;
+	process_events(event,TRUE,ctc);
+      }
+      break;
+    case WEED_EVENT_HINT_FILTER_DEINIT:
+      {
+	weed_plant_t *init_event=weed_get_voidptr_value (event,"init_event",&error);
+	if (weed_plant_has_leaf((weed_plant_t *)init_event,"host_tag")) {
+	  process_events(event,TRUE,ctc);
+	}
+      }
+      break;
+    case WEED_EVENT_HINT_FILTER_MAP:
+#ifdef DEBUG_EVENTS
+      g_print ("got new audio effect map\n");
+#endif
+      mainw->afilter_map=event;
+      break;
+    default:
+      break;
+    }
+    event=get_next_event(event);
+  }
+
+  mainw->audio_event=event;
+
+}
+
+
+
 int64_t render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdouble *avels, gdouble *fromtime, weed_timecode_t tc_start, weed_timecode_t tc_end, gdouble *chvol, gdouble opvol_start, gdouble opvol_end, lives_audio_buf_t *obuf) {
   // called during multitrack rendering to create the actual audio file
   // (or in-memory buffer for preview playback in multitrack)
@@ -1112,8 +1161,13 @@ int64_t render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdoubl
 	  nbtracks=mainw->multitrack->opts.back_audio_tracks;
 	}
 	
+	// process events up to current tc:
+	// filter inits and deinits, and filter maps
+
+	audio_process_events_to(tc);
+
 	// locate the master volume parameter, and multiply all values by vis[track]
-	weed_apply_audio_effects(mainw->filter_map,chunk_float_buffer,nbtracks,
+	weed_apply_audio_effects(mainw->afilter_map,chunk_float_buffer,nbtracks,
 				 out_achans,blocksize,out_arate,tc,vis);
 	
 	if (vis!=NULL) g_free(vis);
@@ -1600,6 +1654,9 @@ lives_audio_track_state_t *get_audio_and_effects_state_at(weed_plant_t *event_li
   // and initialises audio buffers
 
   mainw->filter_map=NULL;
+  mainw->afilter_map=NULL;
+
+  mainw->audio_event=st_event;
 
   fill_tc=get_event_timecode(st_event);
 
@@ -1607,12 +1664,13 @@ lives_audio_track_state_t *get_audio_and_effects_state_at(weed_plant_t *event_li
     event=nevent;
     if (WEED_EVENT_IS_FILTER_MAP(event)) {
       mainw->filter_map=event;
+      mainw->afilter_map=event;
     }
     else if (WEED_EVENT_IS_FILTER_INIT(event)) {
       deinit_event=(weed_plant_t *)weed_get_voidptr_value(event,"deinit_event",&error);
       if (get_event_timecode(deinit_event)>=fill_tc) {
 	// this effect should be activated
-	process_events(event,get_event_timecode(event));
+	process_events(event,TRUE,get_event_timecode(event));
       }
     }
     else if (get_audstate&&weed_plant_has_leaf(event,"audio_clips")) {
@@ -1675,7 +1733,7 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
 
   // otherwise, we continue from where we left off the last time
 
-
+  
   // all we really do here is set from_files,aseeks and avels arrays and call render_audio_segment
 
   lives_audio_track_state_t *atstate=NULL;
@@ -1735,6 +1793,8 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
     else atstate=aframe_to_atstate(event);
 
     
+    mainw->audio_event=event;
+
     if (atstate!=NULL) {
       
       for (nnfiles=0;atstate[nnfiles].afile!=-1;nnfiles++);

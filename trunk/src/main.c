@@ -780,6 +780,7 @@ static void lives_init(_ign_opts *ign_opts) {
 
   mainw->filter_map=NULL; // filter map for video rendering
   mainw->afilter_map=NULL; // filter map for audio rendering
+  mainw->audio_event=NULL;
 
   mainw->did_rfx_preview=FALSE;
   mainw->invis=NULL;

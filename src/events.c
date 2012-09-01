@@ -2839,7 +2839,7 @@ weed_plant_t *append_filter_map_event (weed_plant_t *event_list, weed_timecode_t
 
 
 
-weed_plant_t *process_events (weed_plant_t *next_event, weed_timecode_t curr_tc) {
+weed_plant_t *process_events (weed_plant_t *next_event, boolean process_audio, weed_timecode_t curr_tc) {
   // here we play back (preview) with an event_list
   // we process all events, but drop frames (unless mainw->nodrop is set)
 
@@ -3027,14 +3027,18 @@ weed_plant_t *process_events (weed_plant_t *next_event, weed_timecode_t curr_tc)
   case WEED_EVENT_HINT_FILTER_INIT:
     // effect init
     //  bind the weed_fx to next free key/0
-    key=get_next_free_key();
     filter_name=weed_get_string_value (next_event,"filter",&error);
-
-
-    // for now, assume we can locate the hashname
     idx=weed_get_idx_for_hashname (filter_name,TRUE);
     weed_free (filter_name);
+
     if (idx!=-1) {
+      filter=get_weed_filter(idx);
+      if (!process_audio&&is_pure_audio(filter,FALSE)) {
+	if (weed_plant_has_leaf(next_event,"host_tag")) weed_leaf_delete(next_event,"host_tag");
+	break; // audio effects are processed in the audio renderer
+      }
+
+      key=get_next_free_key();
       weed_add_effectkey_by_idx (key+1,idx);
       key_string=g_strdup_printf ("%d",key);
       weed_set_string_value (next_event,"host_tag",key_string);
@@ -3044,8 +3048,6 @@ weed_plant_t *process_events (weed_plant_t *next_event, weed_timecode_t curr_tc)
       g_print ("event: init effect on key %d at tc %"PRId64" curr_tc=%"PRId64"\n",key,tc,curr_tc);
 #endif
     
-      filter=get_weed_filter(idx);
-	
       if (weed_plant_has_leaf(next_event,"in_count")) {
 	num_in_count=weed_leaf_num_elements(next_event,"in_count");
 	in_count=weed_get_int_array(next_event,"in_count",&error);
@@ -3143,6 +3145,16 @@ weed_plant_t *process_events (weed_plant_t *next_event, weed_timecode_t curr_tc)
       key_string=weed_get_string_value ((weed_plant_t *)init_event,"host_tag",&error);
       key=atoi (key_string);
       weed_free (key_string);
+
+      if (!process_audio) {
+	filter_name=weed_get_string_value (init_event,"filter",&error);
+	idx=weed_get_idx_for_hashname (filter_name,TRUE);
+	weed_free (filter_name);
+	
+	filter=get_weed_filter(idx);
+	if (is_pure_audio(filter,FALSE)) break; // audio effects are processed in the audio renderer
+      }
+      
       if (rte_keymode_get_instance(key+1,0)!=NULL) {
 	weed_deinit_effect (key);
 	weed_delete_effectkey (key+1,0);
@@ -3230,6 +3242,9 @@ lives_render_error_t render_events (gboolean reset) {
 
     clear_mainw_msg();
     mainw->filter_map=NULL;
+    mainw->afilter_map=NULL;
+    mainw->audio_event=event;
+
     for (i=0;i<MAX_AUDIO_TRACKS;i++) {
       xaclips[i]=-1;
       xaseek[i]=xavel[i]=0;
@@ -3338,7 +3353,7 @@ lives_render_error_t render_events (gboolean reset) {
 	  mainw->read_failed_file=NULL;
 
 	  render_audio_segment(0, NULL, mainw->multitrack!=NULL?mainw->multitrack->render_file:mainw->current_file,
-			       NULL, NULL, atime*U_SEC, q_gint64(tc,cfile->fps)+(U_SEC/cfile->fps*!is_blank), 
+			       NULL, NULL, atime*U_SEC, q_gint64(tc,cfile->fps),//+(U_SEC/cfile->fps*!is_blank), 
 			       chvols, 1., 1., NULL);
 	  
 	  if (mainw->write_failed) {
@@ -3508,17 +3523,24 @@ lives_render_error_t render_events (gboolean reset) {
     case WEED_EVENT_HINT_FILTER_INIT:
       // effect init
       //  bind the weed_fx to next free key/0
-      key=get_next_free_key();
+
       filter_name=weed_get_string_value (event,"filter",&weed_error);
       // for now, assume we can find hashname
       idx=weed_get_idx_for_hashname (filter_name,TRUE);
       weed_free (filter_name);
+
+      filter=get_weed_filter(idx);
+      if (is_pure_audio(filter,FALSE)) {
+	if (weed_plant_has_leaf(event,"host_tag")) weed_leaf_delete(event,"host_tag");
+	break; // audio effects are processed in the audio renderer
+      }
+
+      key=get_next_free_key();
       weed_add_effectkey_by_idx (key+1,idx);
       key_string=g_strdup_printf ("%d",key);
       weed_set_string_value (event,"host_tag",key_string);
       g_free (key_string);
 
-      filter=get_weed_filter(idx);
 
       if (weed_plant_has_leaf(event,"in_count")) {
 	num_in_count=weed_leaf_num_elements(event,"in_count");
@@ -3613,6 +3635,15 @@ lives_render_error_t render_events (gboolean reset) {
       break;
     case WEED_EVENT_HINT_FILTER_DEINIT:
       init_event=weed_get_voidptr_value (event,"init_event",&weed_error);
+
+      filter_name=weed_get_string_value (init_event,"filter",&weed_error);
+      // for now, assume we can find hashname
+      idx=weed_get_idx_for_hashname (filter_name,TRUE);
+      weed_free (filter_name);
+
+      filter=get_weed_filter(idx);
+      if (is_pure_audio(filter,FALSE)) break; // audio effects are processed in the audio renderer
+
       key_string=weed_get_string_value ((weed_plant_t *)init_event,"host_tag",&weed_error);
       key=atoi (key_string);
       weed_free (key_string);
@@ -3662,6 +3693,7 @@ lives_render_error_t render_events (gboolean reset) {
     reget_afilesize(mainw->current_file);
     mainw->multitrack=multi;
     mainw->filter_map=NULL;
+    mainw->afilter_map=NULL;
     completed=TRUE;
   }
 

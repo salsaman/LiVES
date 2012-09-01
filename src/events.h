@@ -34,7 +34,7 @@ void remove_frame_from_event (weed_plant_t *event_list, weed_plant_t *event, gin
 void remove_end_blank_frames (weed_plant_t *event_list);
 void remove_filter_from_event_list(weed_plant_t *event_list, weed_plant_t *init_event);
 
-weed_plant_t *process_events (weed_plant_t *next_event, weed_timecode_t curr_tc); ///< RT playback
+weed_plant_t *process_events (weed_plant_t *next_event, boolean process_audio, weed_timecode_t curr_tc); ///< RT playback
 void event_list_close_start_gap (weed_plant_t *event_list);
 void event_list_add_track (weed_plant_t *event_list, gint layer);
 void event_list_free (weed_plant_t *event_list);

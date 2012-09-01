@@ -707,9 +707,10 @@ typedef struct {
 
   GdkCursor *cursor;
 
-  weed_plant_t *filter_map;
-  weed_plant_t *afilter_map;
-  void ***pchains;
+  weed_plant_t *filter_map; // the video filter map for rendering
+  weed_plant_t *afilter_map; // the audio filter map for renering
+  weed_plant_t *audio_event; // event for audio render tracking
+  void ***pchains; // parameter value chains for interpolation
 
   // for the internal player
   GtkWidget *image274;

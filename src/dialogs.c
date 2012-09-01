@@ -1028,7 +1028,7 @@ gboolean process_one (gboolean visible) {
 	if (mainw->multitrack!=NULL&&mainw->multitrack->playing_sel&&get_event_timecode(cfile->next_event)/U_SEC>=
 	    mainw->multitrack->region_end) mainw->cancelled=CANCEL_EVENT_LIST_END;
 	else {
-	  cfile->next_event=process_events (cfile->next_event,mainw->currticks);
+	  cfile->next_event=process_events (cfile->next_event,FALSE,mainw->currticks);
 	
 	  // see if we need to fill an audio buffer
 #ifdef ENABLE_JACK

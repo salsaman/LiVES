@@ -112,6 +112,9 @@ gchar *lives_fx_cat_to_text(lives_fx_cat_t cat, gboolean plural) {
   case LIVES_FX_CAT_AUDIO_EFFECT:
     if (!plural) return (g_strdup(_("audio")));
     else return (g_strdup(_("Audio Effects")));
+  case LIVES_FX_CAT_VIDEO_EFFECT:
+    if (!plural) return (g_strdup(_("video")));
+    else return (g_strdup(_("Video Effects")));
   case LIVES_FX_CAT_AUDIO_VOL:
     if (!plural) return (g_strdup(_("audio volume controller")));
     else return (g_strdup(_("Audio Volume Controllers")));

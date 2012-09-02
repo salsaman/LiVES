@@ -805,7 +805,7 @@ static void draw_block (lives_mt *mt,track_rect *block, gint x1, gint x2) {
 		     eventbox->allocation.height-1, offset_end, eventbox->allocation.height-1);
     }
     else {
-      if ((cfile->achans==0||!is_audio_eventbox(mt,eventbox))&&track>-1) {
+      if ((!is_audio_eventbox(mt,eventbox))&&track>-1) {
 	cairo_t *cr = gdk_cairo_create (eventbox->window);
 	filenum=get_frame_event_clip(block->start_event,track);
 	last_framenum=-1;
@@ -1265,7 +1265,9 @@ static gboolean add_mt_param_box(lives_mt *mt) {
 static track_rect *get_block_from_time (GtkWidget *eventbox, gdouble time, lives_mt *mt) {
   // return block (track_rect) at seconds time in eventbox
   weed_timecode_t tc=time*U_SECL;
-  track_rect *block=(track_rect *)g_object_get_data (G_OBJECT(eventbox),"blocks");
+  track_rect *block;
+
+  block=(track_rect *)g_object_get_data (G_OBJECT(eventbox),"blocks");
   tc=q_gint64(tc,mt->fps);
 
   while (block!=NULL) {
@@ -1526,11 +1528,11 @@ static void show_track_info(lives_mt *mt, GtkWidget *eventbox, gint track, gdoub
   gint filenum;
 
   clear_context(mt);
-  if (cfile->achans==0||!is_audio_eventbox(mt,eventbox)) add_context_label 
-							   (mt,(tmp=g_strdup_printf 
-								(_("Current track: %s (layer %d)\n"),
-								 g_object_get_data(G_OBJECT(eventbox),
-										   "track_name"),track)));
+  if (!is_audio_eventbox(mt,eventbox)) add_context_label 
+					 (mt,(tmp=g_strdup_printf 
+					      (_("Current track: %s (layer %d)\n"),
+					       g_object_get_data(G_OBJECT(eventbox),
+								 "track_name"),track)));
   else {
     if (track==-1) add_context_label (mt,(tmp=g_strdup (_("Current track: Backing audio\n"))));
     else add_context_label (mt,(tmp=g_strdup_printf (_("Current track: Layer %d audio\n"),track)));
@@ -1539,7 +1541,7 @@ static void show_track_info(lives_mt *mt, GtkWidget *eventbox, gint track, gdoub
   add_context_label (mt,(tmp=g_strdup_printf (_("%.2f sec.\n"),timesecs)));
   g_free(tmp);
   if (block!=NULL) {
-    if (cfile->achans==0||!is_audio_eventbox(mt,eventbox)) filenum=get_frame_event_clip(block->start_event,track);
+    if (!is_audio_eventbox(mt,eventbox)) filenum=get_frame_event_clip(block->start_event,track);
     else filenum=get_audio_frame_clip(block->start_event,track);
     add_context_label (mt,(tmp=g_strdup_printf (_("Source: %s"),(tmp1=g_path_get_basename(mainw->files[filenum]->name)))));
     g_free(tmp);
@@ -3126,29 +3128,35 @@ static void select_block (lives_mt *mt) {
   if (block!=NULL) {
     GtkWidget *eventbox=block->eventbox;
 
-    if (cfile->achans==0||mt->audio_draws==NULL||(mt->opts.back_audio_tracks==0||eventbox!=mt->audio_draws->data)) track=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"layer_number"));
+    if (cfile->achans==0||mt->audio_draws==NULL||(mt->opts.back_audio_tracks==0||eventbox!=mt->audio_draws->data)) 
+      track=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"layer_number"));
     else track=-1;
 
-    if (cfile->achans==0||mt->audio_draws==NULL||!is_audio_eventbox(mt,eventbox)) filenum=get_frame_event_clip(block->start_event,track);
+    if (!is_audio_eventbox(mt,eventbox)) filenum=get_frame_event_clip(block->start_event,track);
     else filenum=get_audio_frame_clip(block->start_event,track);
     block->state=BLOCK_SELECTED;
     mt->block_selected=block;
 
     clear_context(mt);
 
-    if (cfile->achans==0||mt->audio_draws==NULL||(mt->opts.back_audio_tracks==0||eventbox!=mt->audio_draws->data)) add_context_label (mt,(tmp2=g_strdup_printf (_("Current track: %s (layer %d)\n"),g_object_get_data(G_OBJECT(eventbox),"track_name"),track)));
+    if (cfile->achans==0||mt->audio_draws==NULL||(mt->opts.back_audio_tracks==0||eventbox!=mt->audio_draws->data)) 
+      add_context_label (mt,(tmp2=g_strdup_printf (_("Current track: %s (layer %d)\n"),g_object_get_data(G_OBJECT(eventbox),"track_name"),track)));
     else add_context_label (mt,(tmp2=g_strdup (_("Current track: Backing audio\n"))));
     g_free(tmp2);
     
-    add_context_label (mt,(tmp2=g_strdup_printf (_("%.2f sec. to %.2f sec.\n"),get_event_timecode(block->start_event)/U_SEC,get_event_timecode(block->end_event)/U_SEC+1./mt->fps)));
+    add_context_label (mt,(tmp2=g_strdup_printf (_("%.2f sec. to %.2f sec.\n"),get_event_timecode(block->start_event)/U_SEC,
+						 get_event_timecode(block->end_event)/U_SEC+1./mt->fps)));
     g_free(tmp2);
     add_context_label (mt,(tmp2=g_strdup_printf (_("Source: %s"),(tmp=g_path_get_basename (mainw->files[filenum]->name)))));
     g_free(tmp2);
     add_context_label (mt,(_("Right click for context menu.\n")));
     add_context_label (mt,(_("Single click on timeline\nto select a frame.\n")));
     g_free(tmp);
+
     gtk_widget_set_sensitive(mt->view_in_out,TRUE);
     gtk_widget_set_sensitive (mt->fx_block, TRUE);
+    gtk_widget_set_sensitive (mt->fx_blockv, TRUE);
+    if (cfile->achans>0) gtk_widget_set_sensitive (mt->fx_blocka, TRUE);
 
     redraw_eventbox(mt,eventbox);
 
@@ -3165,7 +3173,7 @@ on_drag_filter_end           (GtkWidget       *widget,
 			      GdkEventButton  *event,
 			      gpointer         user_data) {
   GdkWindow *window;
-  GtkWidget *eventbox;
+  GtkWidget *eventbox=NULL,*oeventbox;
   GtkWidget *labelbox;
   GtkWidget *ahbox;
   GtkWidget *menuitem;
@@ -3173,7 +3181,9 @@ on_drag_filter_end           (GtkWidget       *widget,
   int win_x,win_y;
   int i;
   gint tchan=0;
-  gdouble timesecs;
+  gdouble timesecs=0.;
+
+  boolean ok=FALSE;
 
   if (mt->cursor_style!=LIVES_CURSOR_FX_BLOCK) {
     mt->selected_filter=-1;
@@ -3189,31 +3199,34 @@ on_drag_filter_end           (GtkWidget       *widget,
 
   window=gdk_display_get_window_at_pointer (mt->display,&win_x,&win_y);
 
-  if (cfile->achans>0&&mt->opts.back_audio_tracks>0&&GPOINTER_TO_INT(g_object_get_data(G_OBJECT(mt->audio_draws->data),"hidden"))==0) {
-    labelbox=(GtkWidget *)g_object_get_data(G_OBJECT(mt->audio_draws->data),"labelbox");
-    ahbox=(GtkWidget *)g_object_get_data(G_OBJECT(mt->audio_draws->data),"ahbox");
-  
-    if (GTK_WIDGET(mt->audio_draws->data)->window==window||labelbox->window==window||ahbox->window==window) {
-      if (labelbox->window==window||ahbox->window==window) timesecs=0.;
-      else {
-	gdk_window_get_pointer(GDK_WINDOW (mt->timeline->window), &mt->sel_x, &mt->sel_y, NULL);
-	timesecs=get_time_from_x(mt,mt->sel_x);
+  if (cfile->achans>0&&enabled_in_channels(get_weed_filter(mt->selected_filter),TRUE)==1) {
+    for (i=0;i<g_list_length(mt->audio_draws);i++) {
+      eventbox=(GtkWidget *)g_list_nth_data(mt->audio_draws,i);
+      if (GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"hidden"))!=0) continue;
+      labelbox=(GtkWidget *)g_object_get_data(G_OBJECT(eventbox),"labelbox");
+      if (eventbox->window==window||labelbox->window==window) {
+	if (labelbox->window!=window) {
+	  gdk_window_get_pointer(GDK_WINDOW (mt->timeline->window), &mt->sel_x, &mt->sel_y, NULL);
+	  timesecs=get_time_from_x(mt,mt->sel_x);
+	}
+	tchan=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"layer_number"));
+	if ((oeventbox=(GtkWidget *)g_object_get_data(G_OBJECT(eventbox),"owner"))!=NULL) {
+	  eventbox=oeventbox;
+	}
+	ok=TRUE;
+	break;
       }
-      tchan=-1;
-      eventbox=(GtkWidget *)mt->audio_draws->data;
     }
   }
 
-  if (tchan==0) {
-    tchan=-1;
+  if (!ok) {
     for (i=0;i<g_list_length(mt->video_draws);i++) {
       eventbox=(GtkWidget *)g_list_nth_data(mt->video_draws,i);
       if (GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"hidden"))!=0) continue;
       labelbox=(GtkWidget *)g_object_get_data(G_OBJECT(eventbox),"labelbox");
       ahbox=(GtkWidget *)g_object_get_data(G_OBJECT(eventbox),"ahbox");
       if (eventbox->window==window||labelbox->window==window||ahbox->window==window) {
-	if (labelbox->window==window||ahbox->window==window) timesecs=0.;
-	else {
+	if (labelbox->window!=window) {
 	  gdk_window_get_pointer(GDK_WINDOW (mt->timeline->window), &mt->sel_x, &mt->sel_y, NULL);
 	  timesecs=get_time_from_x(mt,mt->sel_x);
 	}
@@ -3221,10 +3234,11 @@ on_drag_filter_end           (GtkWidget       *widget,
 	break;
       }
     }
-    if (tchan==-1) {
-      mt->selected_filter=-1;
-      return FALSE;
-    }
+  }
+
+  if (tchan==-1) {
+    mt->selected_filter=-1;
+    return FALSE;
   }
 
   mt->current_fx=mt->selected_filter;
@@ -3236,25 +3250,26 @@ on_drag_filter_end           (GtkWidget       *widget,
 
   switch (enabled_in_channels(get_weed_filter(mt->current_fx),TRUE)) {
   case 1:
-    // filter - either we drop on a region or on a block
+    /*    // filter - either we drop on a region or on a block
     if (g_list_length(mt->selected_tracks)==1&&mt->region_start!=mt->region_end) {
       // apply to region
       mt_add_region_effect(GTK_MENU_ITEM(menuitem),mt);
     }
-    else {
-      track_rect *block;
-      if (tchan==-1) {
-	gtk_widget_destroy(menuitem);
-	return FALSE;
-      }
-      block=get_block_from_time(eventbox,timesecs,mt);
-      unselect_all(mt);
-      mt->putative_block=block;
-      select_block(mt);
-      // apply to block
-      mt->putative_block=NULL;
-      mt_add_block_effect(GTK_MENU_ITEM(menuitem),mt);
+    else*/ {
+    // always apply to block
+    track_rect *block;
+    if (tchan==-1) {
+      gtk_widget_destroy(menuitem);
+      return FALSE;
     }
+    block=get_block_from_time(eventbox,timesecs,mt);
+    unselect_all(mt);
+    mt->putative_block=block;
+    select_block(mt);
+    // apply to block
+    mt->putative_block=NULL;
+    mt_add_block_effect(GTK_MENU_ITEM(menuitem),mt);
+  }
     break;
   case 2:
     // transition
@@ -3312,16 +3327,23 @@ filter_ebox_pressed (GtkWidget *eventbox, GdkEventButton *event, gpointer user_d
 
 
 static void populate_filter_box(GtkWidget *box, gint ninchans, lives_mt *mt) {
-  GtkWidget *xeventbox,*vbox,*label;
+  GtkWidget *eventbox,*xeventbox,*vbox,*label;
   gchar *txt;
   gint nfilts=rte_get_numfilters();
   int i,error;
   lives_fx_cat_t cat,subcat;
   gchar *tmp;
 
+  if (mt->block_selected==NULL) return;
+
+  eventbox=mt->block_selected->eventbox;
+
   for (i=0;i<nfilts;i++) {
     weed_plant_t *filter=get_weed_filter(i);
-    if (filter!=NULL&&!weed_plant_has_leaf(filter,"host_menu_hide")&&!has_audio_chans_in(filter,FALSE)&&!has_audio_chans_out(filter,FALSE)) {
+    if (filter!=NULL&&!weed_plant_has_leaf(filter,"host_menu_hide")) {
+
+      if ((is_pure_audio(filter,FALSE)&&!is_audio_eventbox(mt,eventbox))||
+	  (!is_pure_audio(filter,FALSE)&&is_audio_eventbox(mt,eventbox))) continue;
 
       if (enabled_in_channels(filter,TRUE)==ninchans&&enabled_out_channels(filter,FALSE)==1) {
 	if (weed_plant_has_leaf(filter,"plugin_unstable")&&
@@ -5087,9 +5109,13 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
 #endif
 
   GtkWidget *submenu_menu;
+  GtkWidget *submenu_menuv;
+  GtkWidget *submenu_menua;
   GtkWidget *submenu_menu2;
   GtkWidget *submenu_menu3;
   GtkWidget *submenu_menu4;
+  GtkWidget *submenu_menu4v;
+  GtkWidget *submenu_menu4a;
   GtkWidget *submenu_menu5;
   GtkWidget *submenu_menu10;
   GtkWidget *submenu_menu11;
@@ -5950,6 +5976,63 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
     gtk_widget_modify_bg(submenu_menu, GTK_STATE_NORMAL, &palette->menu_and_bars);
   }
 
+
+
+
+  gtk_container_add (GTK_CONTAINER (menuitem_menu), mt->fx_block);
+  gtk_widget_set_sensitive(mt->fx_block,FALSE);
+
+  submenu_menu=gtk_menu_new();
+  gtk_menu_item_set_submenu (GTK_MENU_ITEM (mt->fx_block), submenu_menu);
+
+  if (palette->style&STYLE_1) {
+    gtk_widget_modify_bg(submenu_menu, GTK_STATE_NORMAL, &palette->menu_and_bars);
+  }
+
+
+
+  tname=lives_fx_cat_to_text(LIVES_FX_CAT_VIDEO_EFFECT,TRUE); // video effects
+  cname=g_strdup_printf("_%s...",tname);
+  g_free(tname);
+
+  mt->fx_blockv = gtk_menu_item_new_with_mnemonic (cname);
+  g_free(cname);
+
+
+  gtk_container_add (GTK_CONTAINER (submenu_menu), mt->fx_blockv);
+  gtk_widget_set_sensitive(mt->fx_blockv,FALSE);
+
+  submenu_menuv=gtk_menu_new();
+  gtk_menu_item_set_submenu (GTK_MENU_ITEM (mt->fx_blockv), submenu_menuv);
+
+  if (palette->style&STYLE_1) {
+    gtk_widget_modify_bg(submenu_menuv, GTK_STATE_NORMAL, &palette->menu_and_bars);
+  }
+
+
+
+  tname=lives_fx_cat_to_text(LIVES_FX_CAT_AUDIO_EFFECT,TRUE); // audio effects
+  cname=g_strdup_printf("_%s...",tname);
+  g_free(tname);
+
+  mt->fx_blocka = gtk_menu_item_new_with_mnemonic (cname);
+  g_free(cname);
+
+
+  gtk_container_add (GTK_CONTAINER (submenu_menu), mt->fx_blocka);
+  gtk_widget_set_sensitive(mt->fx_blocka,FALSE);
+
+  submenu_menua=gtk_menu_new();
+  gtk_menu_item_set_submenu (GTK_MENU_ITEM (mt->fx_blocka), submenu_menua);
+
+  if (palette->style&STYLE_1) {
+    gtk_widget_modify_bg(submenu_menua, GTK_STATE_NORMAL, &palette->menu_and_bars);
+  }
+
+
+
+
+
   mt->fx_region = gtk_menu_item_new_with_mnemonic (_("Apply effect to _region..."));
   gtk_container_add (GTK_CONTAINER (menuitem_menu), mt->fx_region);
   gtk_widget_set_sensitive(mt->fx_region,FALSE);
@@ -5970,12 +6053,52 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   gtk_container_add (GTK_CONTAINER (submenu_menu2), mt->fx_region_1);
   gtk_widget_set_sensitive(mt->fx_region_1,FALSE);
 
+
   submenu_menu3=gtk_menu_new();
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (mt->fx_region_1), submenu_menu3);
 
   if (palette->style&STYLE_1) {
     gtk_widget_modify_bg(submenu_menu3, GTK_STATE_NORMAL, &palette->menu_and_bars);
   }
+
+
+  tname=lives_fx_cat_to_text(LIVES_FX_CAT_VIDEO_EFFECT,TRUE); // video effects
+  cname=g_strdup_printf("_%s...",tname);
+  g_free(tname);
+
+  mt->fx_region_1v = gtk_menu_item_new_with_mnemonic (cname);
+  g_free(cname);
+  gtk_container_add (GTK_CONTAINER (submenu_menu3), mt->fx_region_1v);
+  gtk_widget_set_sensitive(mt->fx_region_1v,FALSE);
+
+  submenu_menu4v=gtk_menu_new();
+  gtk_menu_item_set_submenu (GTK_MENU_ITEM (mt->fx_region_1v), submenu_menu4v);
+
+  if (palette->style&STYLE_1) {
+    gtk_widget_modify_bg(submenu_menu4v, GTK_STATE_NORMAL, &palette->menu_and_bars);
+  }
+
+  
+
+  tname=lives_fx_cat_to_text(LIVES_FX_CAT_AUDIO_EFFECT,TRUE); // audio effects
+  cname=g_strdup_printf("_%s...",tname);
+  g_free(tname);
+
+  mt->fx_region_1a = gtk_menu_item_new_with_mnemonic (cname);
+  g_free(cname);
+  gtk_container_add (GTK_CONTAINER (submenu_menu3), mt->fx_region_1a);
+  gtk_widget_set_sensitive(mt->fx_region_1a,FALSE);
+
+  submenu_menu4a=gtk_menu_new();
+  gtk_menu_item_set_submenu (GTK_MENU_ITEM (mt->fx_region_1a), submenu_menu4a);
+
+  if (palette->style&STYLE_1) {
+    gtk_widget_modify_bg(submenu_menu4a, GTK_STATE_NORMAL, &palette->menu_and_bars);
+  }
+
+  
+
+
 
   tname=lives_fx_cat_to_text(LIVES_FX_CAT_TRANSITION,TRUE); // transitions
   cname=g_strdup_printf("_%s...",tname);
@@ -6063,7 +6186,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   num_filters=rte_get_numfilters();
   for (i=0;i<num_filters;i++) {
     weed_plant_t *filter=get_weed_filter(i);
-    if (filter!=NULL&&!weed_plant_has_leaf(filter,"host_menu_hide")&&!has_audio_chans_in(filter,FALSE)&&!has_audio_chans_out(filter,FALSE)) {
+    if (filter!=NULL&&!weed_plant_has_leaf(filter,"host_menu_hide")) {
       GtkWidget *menuitem;
       gchar *fname=weed_filter_get_name(i),*fxname;
       if (weed_plant_has_leaf(filter,"plugin_unstable")&&
@@ -6077,13 +6200,6 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
       else fxname=g_strdup(fname);
 
       if (enabled_in_channels(filter,TRUE)>2&&enabled_out_channels(filter,FALSE)==1) {
-	// add all compositor effects to submenus
-	menuitem = gtk_image_menu_item_new_with_label (fxname);
-	gtk_container_add (GTK_CONTAINER (submenu_menu), menuitem);
-	g_object_set_data(G_OBJECT(menuitem),"idx",GINT_TO_POINTER(i));
-	g_signal_connect (GTK_OBJECT (menuitem), "activate",
-			  G_CALLBACK (mt_add_block_effect),
-			  (gpointer)mt);
 	menuitem = gtk_image_menu_item_new_with_label (fxname);
 	gtk_container_add (GTK_CONTAINER (submenu_menu5), menuitem);
 	g_object_set_data(G_OBJECT(menuitem),"idx",GINT_TO_POINTER(i));
@@ -6094,17 +6210,37 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
       else if (enabled_in_channels(filter,FALSE)==1&&enabled_out_channels(filter,FALSE)==1) {
 	// add all filter effects to submenus
 	menuitem = gtk_image_menu_item_new_with_label (fxname);
-	gtk_container_add (GTK_CONTAINER (submenu_menu), menuitem);
-	g_object_set_data(G_OBJECT(menuitem),"idx",GINT_TO_POINTER(i));
-	g_signal_connect (GTK_OBJECT (menuitem), "activate",
-			  G_CALLBACK (mt_add_block_effect),
-			  (gpointer)mt);
-	menuitem = gtk_image_menu_item_new_with_label (fxname);
-	gtk_container_add (GTK_CONTAINER (submenu_menu3), menuitem);
-	g_object_set_data(G_OBJECT(menuitem),"idx",GINT_TO_POINTER(i));
-	g_signal_connect (GTK_OBJECT (menuitem), "activate",
-			  G_CALLBACK (mt_add_region_effect),
-			  (gpointer)mt);
+
+	if (!is_pure_audio(filter,FALSE)) {
+	  gtk_container_add (GTK_CONTAINER (submenu_menuv), menuitem);
+	  g_object_set_data(G_OBJECT(menuitem),"idx",GINT_TO_POINTER(i));
+	  g_signal_connect (GTK_OBJECT (menuitem), "activate",
+			    G_CALLBACK (mt_add_block_effect),
+			    (gpointer)mt);
+
+	  menuitem = gtk_image_menu_item_new_with_label (fxname);
+	  gtk_container_add (GTK_CONTAINER (submenu_menu4v), menuitem);
+	  g_object_set_data(G_OBJECT(menuitem),"idx",GINT_TO_POINTER(i));
+	  g_signal_connect (GTK_OBJECT (menuitem), "activate",
+			    G_CALLBACK (mt_add_region_effect),
+			    (gpointer)mt);
+	}
+	else {
+	  gtk_container_add (GTK_CONTAINER (submenu_menua), menuitem);
+	  g_object_set_data(G_OBJECT(menuitem),"idx",GINT_TO_POINTER(i));
+	  g_signal_connect (GTK_OBJECT (menuitem), "activate",
+			    G_CALLBACK (mt_add_block_effect),
+			    (gpointer)mt);
+
+	  menuitem = gtk_image_menu_item_new_with_label (fxname);
+	  gtk_container_add (GTK_CONTAINER (submenu_menu4a), menuitem);
+	  g_object_set_data(G_OBJECT(menuitem),"idx",GINT_TO_POINTER(i));
+	  g_signal_connect (GTK_OBJECT (menuitem), "activate",
+			    G_CALLBACK (mt_add_region_effect),
+			    (gpointer)mt);
+	}
+
+
       }
       else if (enabled_in_channels(filter,FALSE)==2&&enabled_out_channels(filter,FALSE)==1) {
 	// add all transitions to submenus
@@ -10287,6 +10423,8 @@ void unselect_all (lives_mt *mt) {
   gtk_widget_set_sensitive(mt->view_in_out,FALSE);
   gtk_widget_set_sensitive (mt->delblock, FALSE);
   gtk_widget_set_sensitive (mt->fx_block, FALSE);
+  gtk_widget_set_sensitive (mt->fx_blocka, FALSE);
+  gtk_widget_set_sensitive (mt->fx_blockv, FALSE);
   if (mt->poly_state!=POLY_FX_STACK) polymorph (mt,POLY_CLIPS);
 }
 
@@ -12417,7 +12555,7 @@ gboolean on_track_click (GtkWidget *eventbox, GdkEventButton *event, gpointer us
       if (event->time!=dclick_time) {
 	show_track_info(mt,eventbox,track,timesecs);
 	if (block!=NULL) {
-	  if (cfile->achans==0||mt->audio_draws==NULL||!is_audio_eventbox(mt,eventbox)) 
+	  if (!is_audio_eventbox(mt,eventbox)) 
 	    filenum=get_frame_event_clip(block->start_event,track);
 	  else filenum=get_audio_frame_clip(block->start_event,-1);
 	  if (filenum!=mainw->scrap_file&&filenum!=mainw->ascrap_file) {
@@ -12443,7 +12581,7 @@ gboolean on_track_click (GtkWidget *eventbox, GdkEventButton *event, gpointer us
 	      return TRUE;
 	    }
 
-	    if (cfile->achans==0||!is_audio_eventbox(mt,eventbox)) 
+	    if (!is_audio_eventbox(mt,eventbox)) 
 	      height=GTK_WIDGET(g_list_nth_data(mt->video_draws,0))->allocation.height;
 	    else height=GTK_WIDGET(mt->audio_draws->data)->allocation.height;
 	    
@@ -13249,7 +13387,7 @@ static void split_block(lives_mt *mt, track_rect *block, weed_timecode_t tc, gin
   if (!WEED_EVENT_IS_FRAME(event)) event=get_next_frame_event(event);
   eventbox=block->eventbox;
 
-  if (cfile->achans==0||mt->audio_draws==NULL||!is_audio_eventbox(mt,eventbox)) {
+  if (!is_audio_eventbox(mt,eventbox)) {
     if (!no_recurse) {
       // if we have an audio block, split it too
       GtkWidget *aeventbox=GTK_WIDGET(g_object_get_data(G_OBJECT(eventbox),"atrack"));
@@ -13275,7 +13413,7 @@ static void split_block(lives_mt *mt, track_rect *block, weed_timecode_t tc, gin
     insert_audio_event_at(mt->event_list,event,track,clip,new_seek,vel);
   }
 
-  if (block->ordered||(cfile->achans>0&&is_audio_eventbox(mt,eventbox))) offset_start=block->offset_start-get_event_timecode(start_event)+get_event_timecode(event);
+  if (block->ordered||(is_audio_eventbox(mt,eventbox))) offset_start=block->offset_start-get_event_timecode(start_event)+get_event_timecode(event);
   else offset_start=calc_time_from_frame(clip,frame)*U_SEC;
 
   new_block=add_block_start_point (GTK_WIDGET(eventbox),tc,clip,offset_start,event,block->ordered);
@@ -15180,6 +15318,8 @@ void on_seltrack_activate (GtkMenuItem *menuitem, gpointer user_data) {
   gtk_widget_set_sensitive (mt->remove_first_gaps, FALSE);
   gtk_widget_set_sensitive(mt->split_sel,FALSE);
   gtk_widget_set_sensitive(mt->fx_region_1,FALSE);
+  gtk_widget_set_sensitive(mt->fx_region_1a,FALSE);
+  gtk_widget_set_sensitive(mt->fx_region_1v,FALSE);
   gtk_widget_set_sensitive(mt->fx_region_2,FALSE);
   
   if (mt->selected_tracks!=NULL&&mt->event_list!=NULL&&get_first_event(mt->event_list)!=NULL) {
@@ -15192,6 +15332,8 @@ void on_seltrack_activate (GtkMenuItem *menuitem, gpointer user_data) {
       switch (g_list_length(mt->selected_tracks)) {
       case 1:
 	gtk_widget_set_sensitive(mt->fx_region_1,TRUE);
+	gtk_widget_set_sensitive(mt->fx_region_1v,TRUE);
+	if (cfile->achans>0) gtk_widget_set_sensitive(mt->fx_region_1a,TRUE);
 	break;
       case 2:
 	gtk_widget_set_sensitive(mt->fx_region_2,TRUE);
@@ -16348,7 +16490,7 @@ static void draw_soundwave(GtkWidget *ebox, gint start, gint width, gint chnum, 
       return;
     }
 
-    offset_endd=get_event_timecode(block->end_event)/U_SEC;
+    offset_endd=get_event_timecode(block->end_event)/U_SEC+1./cfile->fps;
     offset_end=(offset_endd-mt->tl_min)/tl_span*ebox->allocation.width;
 
     if (offset_end<start_secs) {

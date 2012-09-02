@@ -216,10 +216,14 @@ struct _mt {
   GtkWidget *render;
   GtkWidget *prerender_aud;
   GtkWidget *fx_block;
+  GtkWidget *fx_blockv;
+  GtkWidget *fx_blocka;
   GtkWidget *fx_delete;
   GtkWidget *fx_edit;
   GtkWidget *fx_region;
   GtkWidget *fx_region_1;
+  GtkWidget *fx_region_1v;
+  GtkWidget *fx_region_1a;
   GtkWidget *fx_region_2;
   GtkWidget *fx_region_2av;
   GtkWidget *fx_region_2v;

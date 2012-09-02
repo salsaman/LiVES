@@ -3213,7 +3213,7 @@ lives_render_error_t render_events (gboolean reset) {
   weed_plant_t *inst;
   weed_plant_t **source_params,**in_params;
   int num_in_count=0;
-  gboolean is_blank=TRUE;
+  gboolean is_blank=(mainw->multitrack!=NULL);
   gboolean firstframe=TRUE;
   gboolean completed=FALSE;
   gdouble chvols[MAX_AUDIO_TRACKS];
@@ -3353,7 +3353,7 @@ lives_render_error_t render_events (gboolean reset) {
 	  mainw->read_failed_file=NULL;
 
 	  render_audio_segment(0, NULL, mainw->multitrack!=NULL?mainw->multitrack->render_file:mainw->current_file,
-			       NULL, NULL, atime*U_SEC, q_gint64(tc+(mainw->multitrack!=NULL*U_SEC/cfile->fps*!is_blank),cfile->fps), 
+			       NULL, NULL, atime*U_SEC, q_gint64(tc+(U_SEC/cfile->fps*!is_blank),cfile->fps), 
 			       chvols, 1., 1., NULL);
 	  
 	  if (mainw->write_failed) {
@@ -3429,7 +3429,7 @@ lives_render_error_t render_events (gboolean reset) {
 
 		render_audio_segment(natracks, xaclips, mainw->multitrack!=NULL?mainw->multitrack->render_file:
 				     mainw->current_file, xavel, xaseek, (atime*U_SEC+.5), 
-				     q_gint64(tc+(mainw->multitrack!=NULL*U_SEC/cfile->fps*!is_blank),cfile->fps), chvols, 1., 1., NULL);
+				     q_gint64(tc+(U_SEC/cfile->fps*!is_blank),cfile->fps), chvols, 1., 1., NULL);
 
 
 		if (mainw->write_failed) {
@@ -4838,7 +4838,6 @@ render_details *create_render_details (gint type) {
   GtkWidget *scrollw;
   GtkWidget *hbox;
   GtkWidget *vbox;
-  GtkWidget *eventbox;
   GtkWidget *frame;
   GtkWidget *cancelbutton;
   GtkWidget *alabel;
@@ -4860,6 +4859,7 @@ render_details *create_render_details (gint type) {
 
   gchar **array;
 
+  gchar *tmp,*tmp2;
 
   if (type==1) specified=TRUE;
 
@@ -5052,51 +5052,20 @@ render_details *create_render_details (gint type) {
     
     gtk_box_pack_start (GTK_BOX (top_vbox), label, FALSE, FALSE, 10);
     
-    eventbox=gtk_event_box_new();
-    label=gtk_label_new_with_mnemonic (_("Enable _backing audio track"));
-    gtk_label_set_mnemonic_widget (GTK_LABEL (label),rdet->backaudio_checkbutton);
-    
-    gtk_container_add(GTK_CONTAINER(eventbox),label);
-    g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
-		      G_CALLBACK (label_act_toggle),
-		      rdet->backaudio_checkbutton);
-    
-    if (palette->style&STYLE_1) {
-      gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-      gtk_widget_modify_bg (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
-    }
-    
     hbox = gtk_hbox_new (FALSE, 0);
     gtk_box_pack_start (GTK_BOX (top_vbox), hbox, FALSE, FALSE, 10);
-    
-    gtk_box_pack_start (GTK_BOX (hbox), rdet->backaudio_checkbutton, FALSE, FALSE, 10);
-    gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, 10);
-    GTK_WIDGET_SET_FLAGS (rdet->backaudio_checkbutton, GTK_CAN_DEFAULT|GTK_CAN_FOCUS);
-    
+
+    rdet->backaudio_checkbutton=lives_standard_check_button_new(_("Enable _backing audio track"),TRUE,LIVES_BOX(hbox),NULL);
+
+    add_fill_to_box(LIVES_BOX(hbox));
+
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (rdet->backaudio_checkbutton), prefs->mt_backaudio>0);
     
     gtk_widget_set_sensitive(rdet->backaudio_checkbutton, 
 			     gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(resaudw->aud_checkbutton)));
 
-    eventbox=gtk_event_box_new();
-    label=gtk_label_new_with_mnemonic (_("Audio track _per video track"));
-    gtk_label_set_mnemonic_widget (GTK_LABEL (label),rdet->pertrack_checkbutton);
-    
-    gtk_container_add(GTK_CONTAINER(eventbox),label);
-    g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
-		      G_CALLBACK (label_act_toggle),
-		      rdet->pertrack_checkbutton);
-    
-    if (palette->style&STYLE_1) {
-      gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-      gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-      gtk_widget_modify_bg (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
-    }
-    
-    gtk_box_pack_end (GTK_BOX (hbox), eventbox, FALSE, FALSE, 10);
-    gtk_box_pack_end (GTK_BOX (hbox), rdet->pertrack_checkbutton, FALSE, FALSE, 10);
-    GTK_WIDGET_SET_FLAGS (rdet->pertrack_checkbutton, GTK_CAN_DEFAULT|GTK_CAN_FOCUS);
-    
+    rdet->pertrack_checkbutton=lives_standard_check_button_new(_("Audio track _per video track"),TRUE,LIVES_BOX(hbox),NULL);
+
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (rdet->pertrack_checkbutton), prefs->mt_pertrack_audio);
 
     gtk_widget_set_sensitive(rdet->pertrack_checkbutton, 
@@ -5242,29 +5211,19 @@ render_details *create_render_details (gint type) {
 
   rdet->always_checkbutton = gtk_check_button_new ();
   
-  rdet->always_hbox = gtk_hbox_new (FALSE, 0);
+  rdet->always_hbox = gtk_hbox_new (TRUE, 20);
 
-  eventbox=gtk_event_box_new();
 
-  label=gtk_label_new_with_mnemonic (_("_Always use these values"));
-  gtk_widget_set_tooltip_text( rdet->always_checkbutton, _("Check this button to always use these values when entering multitrack mode. Choice can be re-enabled from Preferences."));
-  lives_tooltips_copy(eventbox,rdet->always_checkbutton);
-  
-  gtk_label_set_mnemonic_widget (GTK_LABEL (label),rdet->always_checkbutton);
-  
-  gtk_container_add(GTK_CONTAINER(eventbox),label);
-  g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
-		    G_CALLBACK (label_act_toggle),
-		    rdet->always_checkbutton);
-  
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_bg(eventbox, GTK_STATE_NORMAL, &palette->normal_back);
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-  }
-  
-  gtk_box_pack_start (GTK_BOX (rdet->always_hbox), rdet->always_checkbutton, FALSE, FALSE, 10);
-  gtk_box_pack_start (GTK_BOX (rdet->always_hbox), eventbox, FALSE, FALSE, 10);
-  gtk_box_pack_start (GTK_BOX (GTK_DIALOG(rdet->dialog)->action_area), rdet->always_hbox, FALSE, FALSE, 0);
+  rdet->always_checkbutton=lives_standard_check_button_new ((tmp=g_strdup(_("_Always use these values"))),TRUE,
+							    LIVES_BOX(rdet->always_hbox),
+							    (tmp2=g_strdup( _("Check this button to always use these values when entering multitrack mode. Choice can be re-enabled from Preferences."))));
+
+  g_free(tmp);
+  g_free(tmp2);
+
+  add_fill_to_box(LIVES_BOX(rdet->always_hbox));
+
+  gtk_box_pack_start (GTK_BOX (GTK_DIALOG(rdet->dialog)->action_area), rdet->always_hbox, TRUE, FALSE, 20);
 
 
   cancelbutton = gtk_button_new_from_stock ("gtk-cancel");

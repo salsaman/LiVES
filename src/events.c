@@ -3353,7 +3353,7 @@ lives_render_error_t render_events (gboolean reset) {
 	  mainw->read_failed_file=NULL;
 
 	  render_audio_segment(0, NULL, mainw->multitrack!=NULL?mainw->multitrack->render_file:mainw->current_file,
-			       NULL, NULL, atime*U_SEC, q_gint64(tc,cfile->fps),//+(U_SEC/cfile->fps*!is_blank), 
+			       NULL, NULL, atime*U_SEC, q_gint64(tc+(mainw->multitrack!=NULL*U_SEC/cfile->fps*!is_blank),cfile->fps), 
 			       chvols, 1., 1., NULL);
 	  
 	  if (mainw->write_failed) {
@@ -3429,7 +3429,7 @@ lives_render_error_t render_events (gboolean reset) {
 
 		render_audio_segment(natracks, xaclips, mainw->multitrack!=NULL?mainw->multitrack->render_file:
 				     mainw->current_file, xavel, xaseek, (atime*U_SEC+.5), 
-				     q_gint64(tc,cfile->fps)+(U_SEC/cfile->fps*!is_blank), chvols, 1., 1., NULL);
+				     q_gint64(tc+(mainw->multitrack!=NULL*U_SEC/cfile->fps*!is_blank),cfile->fps), chvols, 1., 1., NULL);
 
 
 		if (mainw->write_failed) {

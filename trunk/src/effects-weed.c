@@ -2447,8 +2447,6 @@ static lives_filter_error_t weed_apply_audio_instance_inner (weed_plant_t *inst,
   // TODO - handle the following:
   // input audio_channels are mono, but the plugin NEEDS stereo
   
-
-
   if (!weed_plant_has_leaf(inst,"in_channels")||(in_channels=weed_get_plantptr_array(inst,"in_channels",&error))==NULL) 
     return FILTER_ERROR_NO_IN_CHANNELS;
 
@@ -2712,14 +2710,6 @@ lives_filter_error_t weed_apply_audio_instance (weed_plant_t *init_event, float 
 
   // caller passes an init_event from event list, or an instance (for realtime mode)
 
-
-  if (weed_plant_has_leaf(init_event,"host_tag")) {
-    gchar *keystr=weed_get_string_value(init_event,"host_tag",&error);
-    key=atoi(keystr);
-    weed_free(keystr);
-  }
-  else return FILTER_ERROR_INVALID_INIT_EVENT;
-
   if (WEED_PLANT_IS_FILTER_INSTANCE(init_event)) {
     // for realtime, we pass a single instance instead of init_event
     instance=init_event;
@@ -2728,6 +2718,13 @@ lives_filter_error_t weed_apply_audio_instance (weed_plant_t *init_event, float 
   }
   else {
     // when processing an event list, we pass an init_event
+
+    if (weed_plant_has_leaf(init_event,"host_tag")) {
+      gchar *keystr=weed_get_string_value(init_event,"host_tag",&error);
+      key=atoi(keystr);
+      weed_free(keystr);
+    }
+    else return FILTER_ERROR_INVALID_INIT_EVENT;
 
     ntracks=weed_leaf_num_elements(init_event,"in_tracks");
 

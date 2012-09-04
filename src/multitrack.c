@@ -3231,12 +3231,13 @@ on_drag_filter_end           (GtkWidget       *widget,
 	  timesecs=get_time_from_x(mt,mt->sel_x);
 	}
 	tchan=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"layer_number"));
+	ok=TRUE;
 	break;
       }
     }
   }
 
-  if (tchan==-1) {
+  if (!ok) {
     mt->selected_filter=-1;
     return FALSE;
   }

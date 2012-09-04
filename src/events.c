@@ -3213,7 +3213,7 @@ lives_render_error_t render_events (gboolean reset) {
   weed_plant_t *inst;
   weed_plant_t **source_params,**in_params;
   int num_in_count=0;
-  gboolean is_blank=(mainw->multitrack!=NULL);
+  gboolean is_blank=TRUE;
   gboolean firstframe=TRUE;
   gboolean completed=FALSE;
   gdouble chvols[MAX_AUDIO_TRACKS];
@@ -3298,7 +3298,7 @@ lives_render_error_t render_events (gboolean reset) {
 	else {
 	  layers=(weed_plant_t **)g_malloc((num_tracks+1)*sizeof(weed_plant_t *));
 	  for (i=0;i<num_tracks;i++) {
-	    if (clip_index[i]>0&&frame_index[i]>0) is_blank=FALSE;
+	    if (clip_index[i]>0&&frame_index[i]>0&&mainw->multitrack!=NULL) is_blank=FALSE;
 	    layers[i]=weed_plant_new(WEED_PLANT_CHANNEL);
 	    weed_set_int_value(layers[i],"clip",clip_index[i]);
 	    weed_set_int_value(layers[i],"frame",frame_index[i]);

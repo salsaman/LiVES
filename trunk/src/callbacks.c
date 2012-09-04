@@ -9650,7 +9650,7 @@ on_preview_clicked                     (GtkButton       *button,
   gint current_file=mainw->current_file;
   weed_plant_t *filter_map=mainw->filter_map; // back this up in case we are rendering
   weed_plant_t *afilter_map=mainw->afilter_map; // back this up in case we are rendering
-
+  weed_plant_t *audio_event=mainw->audio_event;
 
   if (in_preview_func) {
     // this is a special value of cancel - don't propogate it to "open"
@@ -9860,6 +9860,7 @@ on_preview_clicked                     (GtkButton       *button,
   mainw->timeout_ticks+=xticks;
   mainw->filter_map=filter_map;
   mainw->afilter_map=afilter_map;
+  mainw->audio_event=audio_event;
 
   if (mainw->multitrack!=NULL) {
     current_file=mainw->current_file;

@@ -555,20 +555,16 @@ static gboolean mt_auto_backup(gpointer user_data) {
 
   struct timeval otv;
   int64_t stime,diff;
-  gboolean had_idlefunc=FALSE;
 
   lives_mt *mt=(lives_mt *)user_data;
 
-  if (!mt->auto_changed||mt->event_list==NULL||mt->idlefunc==0||prefs->mt_auto_back<0) {
+  if (mt->idlefunc==0||!mt->auto_changed||mt->event_list==NULL||prefs->mt_auto_back<0) {
     mt->idlefunc=0;
     return FALSE;
   }
 
-  if (mt->idlefunc>0) {
-    g_source_remove(mt->idlefunc);
-    mt->idlefunc=0;
-    had_idlefunc=TRUE;
-  }
+  g_source_remove(mt->idlefunc);
+  mt->idlefunc=0;
 
   gettimeofday(&otv, NULL);
   stime=otv.tv_sec;
@@ -580,10 +576,7 @@ static gboolean mt_auto_backup(gpointer user_data) {
     save_mt_autoback(mt,stime);
   }
 
-
-  if (had_idlefunc) {
-    mt->idlefunc=mt_idle_add(mt);
-  }
+  mt->idlefunc=mt_idle_add(mt);
 
   return TRUE;
 }
@@ -2424,7 +2417,7 @@ static void set_time_scrollbar(lives_mt *mt) {
   gtk_widget_queue_draw(mt->time_scrollbar);
 }
 
-static void redraw_all_event_boxes(lives_mt *mt) {
+void redraw_all_event_boxes(lives_mt *mt) {
   GList *slist;
 
   slist=mt->audio_draws;
@@ -5301,7 +5294,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
 
   mt->sepwin_pixbuf=NULL;
 
-  mt->no_expose=FALSE;
+  mt->no_expose=TRUE;
 
   mt->is_paused=FALSE;
 
@@ -9000,7 +8993,6 @@ void mt_init_tracks (lives_mt *mt, gboolean set_min_max) {
 	    if (aclips[i+1]>0) aclips[i+1]=renumbered_clips[aclips[i+1]];
 	  }
 	  weed_set_int_array(event,"audio_clips",num_aclips,aclips);
-	  weed_free(aclips);
 	  weed_free(aseeks);
 	}
 
@@ -9034,7 +9026,6 @@ void mt_init_tracks (lives_mt *mt, gboolean set_min_max) {
 	  slist=mt->audio_draws;
 	  for (j=0;j<g_list_length(mt->audio_draws);j++) {
 	    if (cfile->achans>0&&avels[j]!=0.) add_block_end_point ((GtkWidget *)slist->data,event);
-
 	    slist=slist->next;
 	  }
 	}
@@ -10184,10 +10175,6 @@ gboolean on_multitrack_activate (GtkMenuItem *menuitem, weed_plant_t *event_list
 
   if (transfer_focus) gtk_window_present(GTK_WINDOW(multi->window));
 
-  if (multi->idlefunc==0) {
-    multi->idlefunc=mt_idle_add(multi);
-  }
-
   mainw_was_ready=mainw->is_ready;
   mainw->is_ready=TRUE;
 
@@ -10195,6 +10182,16 @@ gboolean on_multitrack_activate (GtkMenuItem *menuitem, weed_plant_t *event_list
   lives_osc_notify(LIVES_OSC_NOTIFY_MODE_CHANGED,(tmp=g_strdup_printf("%d",STARTUP_MT)));
   g_free(tmp);
 #endif
+
+  multi->no_expose=FALSE;
+  while (g_main_context_iteration(NULL,FALSE));
+  redraw_all_event_boxes(multi);
+
+  // this must be done right at the end
+  // it slows down every single call to g_main_context_iteration - therefore it should be disabled before calling that
+  if (multi->idlefunc==0) {
+    multi->idlefunc=mt_idle_add(multi);
+  }
 
   return TRUE;
 }
@@ -12416,10 +12413,7 @@ gboolean on_track_release (GtkWidget *eventbox, GdkEventButton *event, gpointer 
       gdk_display_get_pointer(mt->display,&screen,&abs_x,&abs_y,NULL);
 #if GLIB_CHECK_VERSION(2,8,0)
       gdk_display_warp_pointer(mt->display,screen,abs_x+mt->hotspot_x,abs_y+mt->hotspot_y-height/2);
-
       // we need to call this to warp the pointer
-      if (mt->idlefunc>0) g_source_remove(mt->idlefunc);
-      threaded_dialog_spin();
       g_main_context_iteration(NULL,FALSE);
       threaded_dialog_spin();
 #endif
@@ -15743,10 +15737,13 @@ void multitrack_playall (lives_mt *mt) {
 
   gtk_widget_unref(mt->context_scroll);
 
-  if (!mt->is_rendering) mt_sensitise(mt);
+  if (!mt->is_rendering) {
+    mt_sensitise(mt);
+    mt->idlefunc=mt_idle_add(mt);
+  }
+
   if (!pb_audio_needs_prerender) gtk_widget_set_sensitive(mt->prerender_aud,FALSE);
 
-  mt->idlefunc=mt_idle_add(mt);
 
 }
 

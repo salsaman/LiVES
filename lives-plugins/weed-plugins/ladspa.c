@@ -530,6 +530,8 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
   weed_plant_t *plugin_info=weed_plugin_info_init(weed_boot,num_versions,api_versions);
   unsigned long num_plugins=0;
 
+  int num_filters=0;
+
   if (plugin_info!=NULL) {
     // get LADSPA path
 
@@ -584,7 +586,7 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 
     register int i,j;
 
-    //    #define DEBUG
+    //#define DEBUG
 #ifndef DEBUG
     new_stdout=dup(1);
     new_stderr=dup(2);
@@ -624,6 +626,8 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 	  dlclose(handle);
 	  continue;
 	}
+
+	num_plugins=0;
 
 	while ((laddes=((*lad_descriptor_func)(num_plugins))) != NULL) {
 
@@ -951,6 +955,7 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 	    }
 
 	  }
+	fprintf(stderr,"3checking %s\n",plug1);
 
 	  snprintf(weed_name,PATH_MAX,"LADSPA: %s",laddes->Name);
 
@@ -1004,6 +1009,7 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 	  
 	  weed_plugin_info_add_filter_class (plugin_info,filter_class);
 	  num_plugins++;
+	  num_filters++;
 	  //fprintf(stderr,"DONE\n");
 	}
       }
@@ -1017,7 +1023,7 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
   }
 
 
-  if (num_plugins==0) {
+  if (num_filters==0) {
     fprintf(stderr,"No LADSPA plugins found; if you have them installed please set the LADSPA_PATH environment variable to point to them.\n");
     return NULL;
   }

@@ -2745,7 +2745,7 @@ lives_filter_error_t weed_apply_audio_instance (weed_plant_t *init_event, float 
       if (mainw->pchains!=NULL&&mainw->pchains[key]!=NULL) {
 	if (!pthread_mutex_trylock(&mainw->interp_mutex)) { // try to minimise thread locking
 	  pthread_mutex_unlock(&mainw->interp_mutex);
-	  if (!interpolate_params(instance,pchains[key],tc)) {
+	  if (!interpolate_params(instance,mainw->pchains[key],tc)) {
 	    weed_free(in_tracks);
 	    weed_free(out_tracks);
 	    return FILTER_ERROR_INTERPOLATION_FAILED;
@@ -3252,6 +3252,7 @@ void weed_apply_audio_effects (weed_plant_t *filter_map, float **abuf, int nbtra
       (weed_get_voidptr_value(filter_map,"init_events",&error)==NULL)) {
     return;
   }
+  mainw->pchains=get_event_pchains();
   if ((num_inst=weed_leaf_num_elements(filter_map,"init_events"))>0) {
     init_events=weed_get_voidptr_array(filter_map,"init_events",&error);
     for (i=0;i<num_inst;i++) {
@@ -3265,6 +3266,7 @@ void weed_apply_audio_effects (weed_plant_t *filter_map, float **abuf, int nbtra
     }
     weed_free(init_events);
   }
+  mainw->pchains=NULL;
 }
 
 

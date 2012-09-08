@@ -6193,7 +6193,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
       }
       else fxname=g_strdup(fname);
 
-      if (enabled_in_channels(filter,TRUE)>2&&enabled_out_channels(filter,FALSE)==1) {
+      if (enabled_in_channels(filter,TRUE)==1000000&&enabled_out_channels(filter,FALSE)==1) {
 	menuitem = gtk_image_menu_item_new_with_label (fxname);
 	gtk_container_add (GTK_CONTAINER (submenu_menu5), menuitem);
 	g_object_set_data(G_OBJECT(menuitem),"idx",GINT_TO_POINTER(i));
@@ -8695,6 +8695,8 @@ void mt_init_tracks (lives_mt *mt, gboolean set_min_max) {
   GtkWidget *label;
   GList *tlist;
 
+  mt->avol_init_event=NULL;
+
   tlist=mt->audio_draws;
 
   while (mt->audio_draws!=NULL) {
@@ -8838,8 +8840,6 @@ void mt_init_tracks (lives_mt *mt, gboolean set_min_max) {
     GList *slist;
 
     track_rect *block;
-
-    if (mt->avol_fx!=-1) locate_avol_init_event(mt,mt->event_list,mt->avol_fx);
 
     for (j=0;j<MAX_TRACKS;j++) {
       tracks[j]=0;
@@ -9038,6 +9038,8 @@ void mt_init_tracks (lives_mt *mt, gboolean set_min_max) {
     if (block_marker_uo_tracks!=NULL) weed_free(block_marker_uo_tracks);
 
     if (cfile->achans>0&&mt->opts.back_audio_tracks>0) gtk_widget_show (mt->view_audio);
+
+    if (mt->avol_fx!=-1) locate_avol_init_event(mt,mt->event_list,mt->avol_fx);
 
     if (!mt->was_undo_redo&&mt->avol_fx!=-1&&mt->audio_draws!=NULL) {
       apply_avol_filter(mt);
@@ -9324,7 +9326,8 @@ void add_video_track (lives_mt *mt, gboolean behind) {
   gint max_disp_vtracks=mt->max_disp_vtracks;
   gchar *tmp;
 
-  if (mt->audio_draws!=NULL&&mt->audio_draws->data!=NULL&&mt->opts.back_audio_tracks>0&&GPOINTER_TO_INT(g_object_get_data(G_OBJECT(mt->audio_draws->data),"hidden"))==0) {
+  if (mt->audio_draws!=NULL&&mt->audio_draws->data!=NULL&&mt->opts.back_audio_tracks>0&&
+      GPOINTER_TO_INT(g_object_get_data(G_OBJECT(mt->audio_draws->data),"hidden"))==0) {
     max_disp_vtracks--;
     if (GPOINTER_TO_INT(g_object_get_data(G_OBJECT(mt->audio_draws->data),"expanded"))) max_disp_vtracks-=cfile->achans;
   }
@@ -9416,7 +9419,8 @@ void add_video_track (lives_mt *mt, gboolean behind) {
     mt->current_track=mt->num_video_tracks-1;
   }
 
-  label=gtk_label_new ((tmp=g_strdup_printf(_("%s (layer %d)"),g_object_get_data (G_OBJECT(eventbox),"track_name"),GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"layer_number")))));
+  label=gtk_label_new ((tmp=g_strdup_printf(_("%s (layer %d)"),g_object_get_data (G_OBJECT(eventbox),"track_name"),
+					    GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"layer_number")))));
   g_free(tmp);
   gtk_widget_ref(label);
 
@@ -9435,6 +9439,7 @@ void add_video_track (lives_mt *mt, gboolean behind) {
     aeventbox=add_audio_track(mt,mt->current_track,behind);
     g_object_set_data (G_OBJECT(aeventbox),"owner",eventbox);
     g_object_set_data (G_OBJECT(eventbox),"atrack",aeventbox);
+    if (mt->avol_init_event!=NULL) add_track_to_avol_init(mt->avol_init_event,behind?mt->num_video_tracks-1:0);
   }
 
   if (!behind) scroll_track_on_screen(mt,0);
@@ -19278,6 +19283,7 @@ gboolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list) {
 	  if (clip_index[i]>0&&(clip_index[i]>MAX_FILES||renumbered_clips[clip_index[i]]<1||
 				mainw->files[renumbered_clips[clip_index[i]]]==NULL)) {
 	    // clip has probably been closed, so we remove its frames
+
 	    new_clip_index[i]=-1;
 	    new_frame_index[i]=0;
 	    ebuf=rec_error_add(ebuf,"Invalid clip number",clip_index[i],tc);

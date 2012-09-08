@@ -2,8 +2,11 @@ Version 1.6.4
 -------------
 Updates to decoder plugins to work with current libav.
 Fix crash in paramwindow textbuffers.
-
-
+Add preference for internal/external audio.
+Render audio with audio effects.
+Allow use of audio effects in multitrack.
+Fix crash after adding a new track with an existing event list.
+Update youtube downloader to recognise youtu.be links.
 
 
 

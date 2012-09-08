@@ -469,7 +469,7 @@ do_error_dialog_with_check_transient(const gchar *text, gboolean is_blocking, gi
   if (mytext!=NULL) g_free(mytext);
   if (transient!=NULL) gtk_window_set_transient_for(GTK_WINDOW(err_box),transient);
   gtk_widget_show(err_box);
-  gtk_window_present (GTK_WINDOW (err_box));
+  if (prefs->present) gtk_window_present (GTK_WINDOW (err_box));
   gdk_window_raise (err_box->window);
 
   if (is_blocking) {
@@ -2979,7 +2979,7 @@ void do_do_not_close_d (void) {
 
   if (transient!=NULL) gtk_window_set_transient_for(GTK_WINDOW(err_box),transient);
   gtk_widget_show(err_box);
-  gtk_window_present (GTK_WINDOW (err_box));
+  if (prefs->present) gtk_window_present (GTK_WINDOW (err_box));
   gdk_window_raise (err_box->window);
 }
 

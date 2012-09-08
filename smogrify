@@ -3457,7 +3457,7 @@ if (defined($ARGV[0])) {
 	my $url=$ARGV[2];
 	my $dfile=$ARGV[3];
 
-	if ($url =~ /youtube/) {
+	if ($url =~ /youtube/ || $url =~ /youtu\.be/) {
 	    # youtube-dl
 
 	    if (-f $dfile) {
@@ -3474,6 +3474,7 @@ if (defined($ARGV[0])) {
 	    &sig_progress(1);
 
 	    $res=smog_system("$com");
+
 	    if ($res || !(-f $dfile) || -z $dfile) {
 
 		if (-f $dfile) {

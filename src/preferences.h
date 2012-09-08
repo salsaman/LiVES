@@ -331,6 +331,8 @@ typedef struct {
   char frei0r_path[PATH_MAX];
   char ladspa_path[PATH_MAX];
 
+  gboolean present;
+
 } _prefs;
 
 enum {

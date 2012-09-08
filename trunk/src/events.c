@@ -2357,6 +2357,27 @@ void event_list_close_gaps (weed_plant_t *event_list) {
 
 
 
+void add_track_to_avol_init(weed_plant_t *event, gint tnum) {
+  int *new_in_tracks,*in_tracks;
+  int num_in_tracks,error;
+
+  register int i;
+
+  if (weed_plant_has_leaf(event,"in_tracks")&&(num_in_tracks=weed_leaf_num_elements(event,"in_tracks"))>0) {
+    in_tracks=weed_get_int_array(event,"in_tracks",&error);
+    new_in_tracks=g_malloc((num_in_tracks+1)*sizint);
+    for (i=0;i<num_in_tracks;i++) {
+      new_in_tracks[i]=in_tracks[i];
+    }
+    new_in_tracks[i]=tnum;
+    weed_set_int_array(event,"in_tracks",num_in_tracks+1,new_in_tracks);
+    weed_free(in_tracks);
+    g_free(new_in_tracks);
+  }
+}
+
+
+
 void event_list_add_track (weed_plant_t *event_list, gint layer) {
   // in this function we insert a new track before existing tracks
   // TODO - memcheck
@@ -3033,10 +3054,13 @@ weed_plant_t *process_events (weed_plant_t *next_event, boolean process_audio, w
 
     if (idx!=-1) {
       filter=get_weed_filter(idx);
+
       if (!process_audio&&is_pure_audio(filter,FALSE)) {
 	if (weed_plant_has_leaf(next_event,"host_tag")) weed_leaf_delete(next_event,"host_tag");
 	break; // audio effects are processed in the audio renderer
       }
+
+      if (process_audio&&!is_pure_audio(filter,FALSE)) break;
 
       key=get_next_free_key();
       weed_add_effectkey_by_idx (key+1,idx);
@@ -3146,15 +3170,18 @@ weed_plant_t *process_events (weed_plant_t *next_event, boolean process_audio, w
       key=atoi (key_string);
       weed_free (key_string);
 
+      filter_name=weed_get_string_value (init_event,"filter",&error);
+      idx=weed_get_idx_for_hashname (filter_name,TRUE);
+      weed_free (filter_name);
+      
+      filter=get_weed_filter(idx);
+
       if (!process_audio) {
-	filter_name=weed_get_string_value (init_event,"filter",&error);
-	idx=weed_get_idx_for_hashname (filter_name,TRUE);
-	weed_free (filter_name);
-	
-	filter=get_weed_filter(idx);
 	if (is_pure_audio(filter,FALSE)) break; // audio effects are processed in the audio renderer
       }
       
+      if (process_audio&&!is_pure_audio(filter,FALSE)) break;
+
       if (rte_keymode_get_instance(key+1,0)!=NULL) {
 	weed_deinit_effect (key);
 	weed_delete_effectkey (key+1,0);

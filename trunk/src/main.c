@@ -1083,6 +1083,8 @@ static void lives_init(_ign_opts *ign_opts) {
 
     prefs->force64bit=FALSE;
 
+    prefs->present=FALSE;
+
     //////////////////////////////////////////////////////////////////
 
     weed_memory_init();

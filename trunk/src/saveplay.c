@@ -3419,6 +3419,7 @@ gboolean add_file_info(const gchar *check_handle, gboolean aud_only) {
  
   if (!strcmp(mainw->msg,"killed")) {
     get_frame_count(mainw->current_file);
+    cfile->frames--; // just in case last frame is damaged
     reget_afilesize(mainw->current_file);
     mesg=g_strdup_printf(_("%d frames are enough !\n"),cfile->frames);
     d_print(mesg);
@@ -5067,6 +5068,7 @@ void recover_layout_map(gint numclips) {
   GList *mlist,*lmap_node,*lmap_node_next,*lmap_entry_list,*lmap_entry_list_next;
   layout_map *lmap_entry;
   gchar **array;
+  gchar *check_handle;
   
   if (numclips>MAX_FILES) numclips=MAX_FILES;
 
@@ -5079,7 +5081,15 @@ void recover_layout_map(gint numclips) {
       while (lmap_node!=NULL) {
 	lmap_node_next=lmap_node->next;
 	lmap_entry=(layout_map *)lmap_node->data;
-	if (!strcmp(mainw->files[i]->handle,lmap_entry->handle)&&(mainw->files[i]->unique_id==lmap_entry->unique_id)) {
+
+	check_handle=g_strdup(mainw->files[i]->handle);
+
+	if (strstr(lmap_entry->handle,"/")==NULL) {
+	  g_free(check_handle);
+	  check_handle=g_path_get_basename(mainw->files[i]->handle);
+	}
+
+	if (!strcmp(check_handle,lmap_entry->handle)&&(mainw->files[i]->unique_id==lmap_entry->unique_id)) {
 	  // check handle and unique id match
 	  // got a match, assign list to layout_map and delete this node
 	  lmap_entry_list=lmap_entry->list;
@@ -5106,6 +5116,8 @@ void recover_layout_map(gint numclips) {
 	  if (lmap_node_next!=NULL) lmap_node_next->prev=lmap_node->prev;
 	  //g_free(lmap_node);   // i don't know why, but this causes a segfault
 	}
+
+	g_free(check_handle);
 	lmap_node=lmap_node_next;
       }
     }

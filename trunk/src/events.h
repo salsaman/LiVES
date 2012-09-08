@@ -37,6 +37,7 @@ void remove_filter_from_event_list(weed_plant_t *event_list, weed_plant_t *init_
 weed_plant_t *process_events (weed_plant_t *next_event, boolean process_audio, weed_timecode_t curr_tc); ///< RT playback
 void event_list_close_start_gap (weed_plant_t *event_list);
 void event_list_add_track (weed_plant_t *event_list, gint layer);
+void add_track_to_avol_init(weed_plant_t *event, gint tnum);
 void event_list_free (weed_plant_t *event_list);
 
 /// replace events in event_list with events in new_event_list

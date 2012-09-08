@@ -890,7 +890,7 @@ static void lives_init(_ign_opts *ign_opts) {
 
 
   mainw->stored_event_list=NULL;
-  mainw->stored_event_list_changed=FALSE;
+  mainw->stored_event_list_changed=mainw->stored_event_list_auto_changed=FALSE;
   mainw->stored_layout_save_all_vals=TRUE;
 
   mainw->affected_layout_marks=NULL;

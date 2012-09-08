@@ -272,6 +272,7 @@ typedef struct {
   weed_plant_t *event_list; ///< current event_list, for recording
   weed_plant_t *stored_event_list; ///< stored mt -> clip editor
   gboolean stored_event_list_changed;
+  gboolean stored_event_list_auto_changed;
   gboolean stored_layout_save_all_vals;
   gchar stored_layout_name[PATH_MAX];
 

@@ -5181,10 +5181,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
 
   mt->file_selected=orig_file;
 
-  if (event_list==NULL) mt->changed=FALSE;
-  else mt->changed=TRUE;
-
-  mt->auto_changed=mt->changed;
+  mt->auto_changed=mt->changed=FALSE;
 
   mt->was_undo_redo=FALSE;
 
@@ -8312,7 +8309,8 @@ gboolean multitrack_delete (lives_mt *mt, gboolean save_layout) {
       mainw->stored_event_list=mt->event_list;
       mt->event_list=NULL;
       mainw->stored_event_list_changed=mt->changed;
-      memcpy(mainw->stored_layout_name,mt->layout_name,(strlen(mt->layout_name)+1));
+      mainw->stored_event_list_auto_changed=mt->auto_changed;
+      snprintf(mainw->stored_layout_name,256,"%s",mt->layout_name);
       mainw->stored_layout_undos=mt->undos;
       mainw->sl_undo_mem=mt->undo_mem;
       mainw->sl_undo_buffer_used=mt->undo_buffer_used;
@@ -8832,7 +8830,8 @@ void mt_init_tracks (lives_mt *mt, gboolean set_min_max) {
     int *block_marker_uo_tracks=NULL;
     gboolean ordered;
     int num_aclips,i;
-    int *aclips;
+    int navs,maxval;
+    int *aclips,*navals;
     double *aseeks;
     gboolean shown_audio_warn=FALSE;
 
@@ -8846,6 +8845,25 @@ void mt_init_tracks (lives_mt *mt, gboolean set_min_max) {
       tracks[j]=0;
       avels[j]=0.;
     }
+
+    if (weed_plant_has_leaf(mt->event_list,"audio_volume_tracks")) {
+      navs=weed_leaf_num_elements(mt->event_list,"audio_volume_tracks");
+      navals=weed_get_int_array(mt->event_list,"audio_volume_tracks",&error);
+      maxval=mt->num_video_tracks-1;
+
+      for (j=0;j<navs;j++) {
+	if (navals[j]>maxval) maxval=navals[j];
+      }
+
+      num_tracks=maxval+1;
+
+      if (num_tracks>mt->num_video_tracks) {
+	for (j=mt->num_video_tracks;j<num_tracks;j++) {
+	  add_video_track_behind(NULL,mt);
+	}
+      }
+    }
+
 
     // draw coloured blocks to represent the FRAME events
     event=get_first_event(mt->event_list);
@@ -8864,6 +8882,26 @@ void mt_init_tracks (lives_mt *mt, gboolean set_min_max) {
 	  block_marker_uo_tracks=weed_get_int_array(event,"tracks",&error);
 	}
       }
+      else if (WEED_EVENT_IS_FILTER_INIT(event)) {
+	if (weed_plant_has_leaf(event,"in_tracks")) {
+	  navs=weed_leaf_num_elements(event,"in_tracks");
+	  navals=weed_get_int_array(event,"in_tracks",&error);
+	  maxval=mt->num_video_tracks-1;
+
+	  for (j=0;j<navs;j++) {
+	    if (navals[j]>maxval) maxval=navals[j];
+	  }
+
+	  num_tracks=maxval+1;
+
+	  if (num_tracks>mt->num_video_tracks) {
+	    for (j=mt->num_video_tracks;j<num_tracks;j++) {
+	      add_video_track_behind(NULL,mt);
+	    }
+	  }
+	}
+      }
+
       else if (WEED_EVENT_IS_FRAME(event)) {
 	tc=get_event_timecode (event);
 	num_tracks=weed_leaf_num_elements (event,"clips");
@@ -9904,6 +9942,46 @@ void mt_init_clips (lives_mt *mt, gint orig_file, gboolean add) {
 }
 
 
+static void set_audio_mixer_vols(lives_mt *mt, weed_plant_t *elist) {
+  gint natracks,navols;
+  int *atracks;
+  double *avols;
+  gint catracks=g_list_length(mt->audio_vols);
+  int error,i,xtrack,xavol;
+
+  if (!weed_plant_has_leaf(elist,"audio_volume_tracks")||!weed_plant_has_leaf(elist,"audio_volume_values")) return;
+
+  natracks=weed_leaf_num_elements(elist,"audio_volume_tracks");
+  navols=weed_leaf_num_elements(elist,"audio_volume_values");
+
+  atracks=weed_get_int_array(elist,"audio_volume_tracks",&error);
+  if (error!=WEED_NO_ERROR) return;
+
+  avols=weed_get_double_array(elist,"audio_volume_values",&error);
+  if (error!=WEED_NO_ERROR) {
+    weed_free(atracks);
+    return;
+  }
+
+  for (i=0;i<natracks;i++) {
+    xtrack=atracks[i];
+    if (xtrack<-mt->opts.back_audio_tracks) continue;
+    if (xtrack>=catracks-mt->opts.back_audio_tracks) continue;
+
+    xavol=i;
+    if (xavol>=navols) {
+      mt->opts.gang_audio=TRUE;
+      xavol=navols-1;
+    }
+    set_mixer_track_vol(mt,xtrack+mt->opts.back_audio_tracks,avols[xavol]);
+  }
+
+  weed_free(atracks);
+  weed_free(avols);
+}
+
+
+
 gboolean on_multitrack_activate (GtkMenuItem *menuitem, weed_plant_t *event_list) {
   //returns TRUE if we go into mt mode
   gint orig_file;
@@ -10070,6 +10148,10 @@ gboolean on_multitrack_activate (GtkMenuItem *menuitem, weed_plant_t *event_list
       return FALSE;
     }
     remove_markers(multi->event_list);
+    set_audio_mixer_vols(multi,multi->event_list);
+    snprintf(multi->layout_name,256,"%s",mainw->stored_layout_name);
+    multi->changed=mainw->stored_event_list_changed;
+    multi->auto_changed=mainw->stored_event_list_auto_changed;
   }
 
   if (mainw->recoverable_layout&&multi->event_list==NULL&&prefs->startup_interface==STARTUP_CE) {
@@ -19873,7 +19955,7 @@ weed_plant_t *load_event_list(lives_mt *mt, gchar *eload_file) {
 
   if (event_list!=NULL) {
     if (!mainw->recoverable_layout) {
-      g_snprintf(mt->layout_name,256,"%s",eload_file);
+      g_snprintf(mt->layout_name,PATH_MAX,"%s",eload_file);
       get_basename(mt->layout_name);
     }
 
@@ -20030,46 +20112,6 @@ void on_clear_event_list_activate (GtkMenuItem *menuitem, gpointer user_data) {
   // wipe
   wipe_layout(mt);
 
-}
-
-
-
-static void set_audio_mixer_vols(lives_mt *mt, weed_plant_t *elist) {
-  gint natracks,navols;
-  int *atracks;
-  double *avols;
-  gint catracks=g_list_length(mt->audio_vols);
-  int error,i,xtrack,xavol;
-
-  if (!weed_plant_has_leaf(elist,"audio_volume_tracks")||!weed_plant_has_leaf(elist,"audio_volume_values")) return;
-
-  natracks=weed_leaf_num_elements(elist,"audio_volume_tracks");
-  navols=weed_leaf_num_elements(elist,"audio_volume_values");
-
-  atracks=weed_get_int_array(elist,"audio_volume_tracks",&error);
-  if (error!=WEED_NO_ERROR) return;
-
-  avols=weed_get_double_array(elist,"audio_volume_values",&error);
-  if (error!=WEED_NO_ERROR) {
-    weed_free(atracks);
-    return;
-  }
-
-  for (i=0;i<natracks;i++) {
-    xtrack=atracks[i];
-    if (xtrack<-mt->opts.back_audio_tracks) continue;
-    if (xtrack>=catracks-mt->opts.back_audio_tracks) continue;
-
-    xavol=i;
-    if (xavol>=navols) {
-      mt->opts.gang_audio=TRUE;
-      xavol=navols-1;
-    }
-    set_mixer_track_vol(mt,xtrack+mt->opts.back_audio_tracks,avols[xavol]);
-  }
-
-  weed_free(atracks);
-  weed_free(avols);
 }
 
 

@@ -9443,7 +9443,7 @@ void add_video_track (lives_mt *mt, gboolean behind) {
 
     if (mt->avol_init_event!=NULL) {
       weed_plant_t *filter=get_weed_filter(mt->avol_fx);
-      add_track_to_avol_init(filter,mt->avol_init_event,mt->num_video_tracks,behind);
+      add_track_to_avol_init(filter,mt->avol_init_event,mt->opts.back_audio_tracks,behind);
     }
   }
   if (!behind) scroll_track_on_screen(mt,0);
@@ -17342,7 +17342,7 @@ void on_del_node_clicked  (GtkWidget *button, gpointer user_data) {
 	else weed_leaf_copy(event,"value",paramtmpl,"default");
 	if (is_perchannel_multiw(param)) {
 	  int num_in_tracks=weed_leaf_num_elements(mt->init_event,"in_tracks");
-	  fill_param_vals_to(event,paramtmpl,num_in_tracks-1,TRUE);
+	  fill_param_vals_to(event,paramtmpl,num_in_tracks-1);
 	}
       }
     }
@@ -18756,10 +18756,9 @@ gboolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list) {
 
   uint64_t *init_events;
 
+  ttable trans_table[FX_KEYS_MAX-FX_KEYS_MAX_VIRTUAL]; // translation table for init_events
 
   if (mt!=NULL) mt->layout_prompt=FALSE;
-
-  ttable trans_table[FX_KEYS_MAX-FX_KEYS_MAX_VIRTUAL]; // translation table for init_events
 
   for (i=0;i<FX_KEYS_MAX-FX_KEYS_MAX_VIRTUAL;i++) {
     trans_table[i].in=0;

@@ -1841,13 +1841,12 @@ after_boolean_param_toggled        (GtkToggleButton *togglebutton,
 
       if (mainw->multitrack!=NULL&&is_perchannel_multi(rfx,param_number)) {
 	index=mainw->multitrack->track_index;
-	if (is_pure_audio(inst,FALSE)) index+=mainw->multitrack->opts.back_audio_tracks;
       }
       numvals=weed_leaf_num_elements(wparam,"value");
 
       if (index>=numvals) {
 	weed_plant_t *paramtmpl=weed_get_plantptr_value(wparam,"template",&error);
-	fill_param_vals_to(wparam,paramtmpl,index,TRUE);
+	fill_param_vals_to(wparam,paramtmpl,index);
 	numvals=index+1;
       }
 
@@ -1934,12 +1933,11 @@ after_param_value_changed           (GtkSpinButton   *spinbutton,
 
 	if (mainw->multitrack!=NULL&&is_perchannel_multi(rfx,param_number)) {
 	  index=mainw->multitrack->track_index;
-	  if (is_pure_audio(inst,FALSE)) index+=mainw->multitrack->opts.back_audio_tracks;
 	}
 	numvals=weed_leaf_num_elements(wparam,"value");
 	if (index>=numvals) {
 	  weed_plant_t *paramtmpl=weed_get_plantptr_value(wparam,"template",&error);
-	  fill_param_vals_to(wparam,paramtmpl,index,TRUE);
+	  fill_param_vals_to(wparam,paramtmpl,index);
 	  numvals=index+1;
 	}
 	
@@ -1967,12 +1965,11 @@ after_param_value_changed           (GtkSpinButton   *spinbutton,
 	
 	if (mainw->multitrack!=NULL&&is_perchannel_multi(rfx,param_number)) {
 	  index=mainw->multitrack->track_index;
-	  if (is_pure_audio(inst,FALSE)) index+=mainw->multitrack->opts.back_audio_tracks;
 	}
 	numvals=weed_leaf_num_elements(wparam,"value");
 	if (index>=numvals) {
 	  weed_plant_t *paramtmpl=weed_get_plantptr_value(wparam,"template",&error);
-	  fill_param_vals_to(wparam,paramtmpl,index,TRUE);
+	  fill_param_vals_to(wparam,paramtmpl,index);
 	  numvals=index+1;
 	}
 	
@@ -2082,12 +2079,11 @@ void update_weed_color_value(weed_plant_t *inst, int pnum, int c1, int c2, int c
 	
 	if (mainw->multitrack!=NULL&&is_perchannel_multiw(ptmpl)) {
 	  index=mainw->multitrack->track_index;
-	  if (is_pure_audio(inst,FALSE)) index+=mainw->multitrack->opts.back_audio_tracks;
 	}
 	numvals=weed_leaf_num_elements(param,"value");
 	if (index*3>=numvals) {
 	  weed_plant_t *paramtmpl=weed_get_plantptr_value(param,"template",&error);
-	  fill_param_vals_to(param,paramtmpl,index,TRUE);
+	  fill_param_vals_to(param,paramtmpl,index);
 	  numvals=(index+1)*3;
 	}
 	
@@ -2128,12 +2124,11 @@ void update_weed_color_value(weed_plant_t *inst, int pnum, int c1, int c2, int c
 	
 	if (mainw->multitrack!=NULL&&is_perchannel_multiw(ptmpl)) {
 	  index=mainw->multitrack->track_index;
-	  if (is_pure_audio(inst,FALSE)) index+=mainw->multitrack->opts.back_audio_tracks;
 	}
 	numvals=weed_leaf_num_elements(param,"value");
 	if (index*3>=numvals) {
 	  weed_plant_t *paramtmpl=weed_get_plantptr_value(param,"template",&error);
-	  fill_param_vals_to(param,paramtmpl,index,TRUE);
+	  fill_param_vals_to(param,paramtmpl,index);
 	  numvals=(index+1)*3;
 	}
 	
@@ -2474,12 +2469,11 @@ after_param_text_changed (GtkWidget *textwidget, lives_rfx_t *rfx) {
 
       if (mainw->multitrack!=NULL&&is_perchannel_multi(rfx,param_number)) {
 	index=mainw->multitrack->track_index;
-	if (is_pure_audio(inst,FALSE)) index+=mainw->multitrack->opts.back_audio_tracks;
       }
       numvals=weed_leaf_num_elements(wparam,"value");
       if (index>=numvals) {
 	weed_plant_t *paramtmpl=weed_get_plantptr_value(wparam,"template",&error);
-	fill_param_vals_to(wparam,paramtmpl,index,TRUE);
+	fill_param_vals_to(wparam,paramtmpl,index);
 	numvals=index+1;
       }
       
@@ -2564,12 +2558,11 @@ after_string_list_changed (GtkComboBox *combo, lives_rfx_t *rfx) {
 
       if (mainw->multitrack!=NULL&&is_perchannel_multi(rfx,param_number)) {
 	index=mainw->multitrack->track_index;
-	if (is_pure_audio(inst,FALSE)) index+=mainw->multitrack->opts.back_audio_tracks;
       }
       numvals=weed_leaf_num_elements(wparam,"value");
       if (index>=numvals) {
 	weed_plant_t *paramtmpl=weed_get_plantptr_value(wparam,"template",&error);
-	fill_param_vals_to(wparam,paramtmpl,index,TRUE);
+	fill_param_vals_to(wparam,paramtmpl,index);
 	numvals=index+1;
       }
       
@@ -3153,7 +3146,6 @@ void update_visual_params(lives_rfx_t *rfx, gboolean update_hidden) {
 
       if (mainw->multitrack!=NULL&&is_perchannel_multi(rfx,i)) {
 	index=mainw->multitrack->track_index;
-	if (is_pure_audio(inst,FALSE)) index+=mainw->multitrack->opts.back_audio_tracks;
       }
 
       pthread_mutex_lock(&mainw->data_mutex);
@@ -3161,7 +3153,7 @@ void update_visual_params(lives_rfx_t *rfx, gboolean update_hidden) {
       numvals=weed_leaf_num_elements(in_param,"value");
 
       if (param_hint!=WEED_HINT_COLOR&&index>=numvals) {
-	fill_param_vals_to(in_param,paramtmpl,index,TRUE);
+	fill_param_vals_to(in_param,paramtmpl,index);
 	numvals=index+1;
       }
 
@@ -3243,7 +3235,7 @@ void update_visual_params(lives_rfx_t *rfx, gboolean update_hidden) {
 	switch (cspace) {
 	case WEED_COLORSPACE_RGB:
 	  numvals=weed_leaf_num_elements(in_param,"value");
-	  if (index*3>=numvals) fill_param_vals_to(in_param,paramtmpl,index,TRUE);
+	  if (index*3>=numvals) fill_param_vals_to(in_param,paramtmpl,index);
 
 	  if (weed_leaf_seed_type(paramtmpl,"default")==WEED_SEED_INT) {
 	    colsis=weed_get_int_array(in_param,"value",&error);

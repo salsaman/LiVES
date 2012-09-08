@@ -450,7 +450,7 @@ struct _mt {
 
   lives_rfx_t *current_rfx;
 
-  gchar layout_name[256];
+  gchar layout_name[PATH_MAX];
 
   // cursor warping for mouse move mode
   gdouble hotspot_x;

@@ -2362,24 +2362,27 @@ void add_track_to_avol_init(weed_plant_t *filter, weed_plant_t *event, int nbtra
   weed_plant_t **in_ptmpls;
 
   int *new_in_tracks;
+  int *igns,*nigns;
 
-  int num_in_tracks;
-  int error,nparams;
+  int num_in_tracks,x=-nbtracks;
+  int error,nparams,numigns;
+
+  int bval;
 
   void **pchainx,*pchange;
 
-  register int i;
+  register int i,j;
 
   // add a new value to in_tracks
   num_in_tracks=weed_leaf_num_elements(event,"in_tracks")+1;
   new_in_tracks=g_malloc(num_in_tracks*sizint);
   for (i=0;i<num_in_tracks;i++) {
-    new_in_tracks[i]=i;
+    new_in_tracks[i]=x++;
   }
   weed_set_int_array(event,"in_tracks",num_in_tracks,new_in_tracks);
   g_free(new_in_tracks);
 
-  weed_set_int_value(event,"in_count",weed_get_int_value(event,"in_count",&error));
+  weed_set_int_value(event,"in_count",weed_get_int_value(event,"in_count",&error)+1);
 
   // update all param_changes
 
@@ -2390,9 +2393,31 @@ void add_track_to_avol_init(weed_plant_t *filter, weed_plant_t *event, int nbtra
 
   for (i=0;i<nparams;i++) {
     pchange=(weed_plant_t *)pchainx[i];
+    bval=WEED_FALSE;
     while (pchange!=NULL) {
-      fill_param_vals_to(pchange,in_ptmpls[i],num_in_tracks,behind);
+      fill_param_vals_to(pchange,in_ptmpls[i],behind?num_in_tracks-1:1);
+      if (weed_plant_has_leaf(pchange,"ignore")) {
+	numigns=weed_leaf_num_elements(pchange,"ignore")+1;
+	igns=weed_get_boolean_array(pchange,"ignore",&error);
+	nigns=g_malloc(numigns*sizint);
+
+	for (j=0;j<numigns;j++) {
+	  if (behind) {
+	    if (j<numigns-1) nigns[j]=igns[j];
+	    else nigns[j]=bval;
+	  }
+	  else {
+	    if (j==0) nigns[j]=igns[j];
+	    else if (j==1) nigns[j]=bval;
+	    else nigns[j]=igns[j-1];
+	  }
+	}
+	weed_set_boolean_array(pchange,"ignore",numigns,nigns);
+	weed_free(igns);
+	g_free(nigns);
+      }
       pchange=weed_get_voidptr_value(pchange,"next_change",&error);
+      bval=WEED_TRUE;
     }
   }
 
@@ -2572,7 +2597,7 @@ void **filter_init_add_pchanges (weed_plant_t *event_list, weed_plant_t *plant, 
 
     if (is_perchannel_multiw(in_params[i])) {
       // if the parameter is element-per-channel, fill up to number of channels
-      fill_param_vals_to(in_params[i],in_ptmpls[i],ntracks-1,TRUE);
+      fill_param_vals_to(in_params[i],in_ptmpls[i],ntracks-1);
     }
 
     weed_leaf_copy((weed_plant_t *)pchain[i],"value",in_params[i],"value");

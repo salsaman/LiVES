@@ -56,7 +56,7 @@ add_to_special (const gchar *sp_string, lives_rfx_t *rfx) {
   int *ign;
 
   weed_plant_t *param,*paramtmpl,*init_event=NULL;
-  int hint,num_in_tracks=0,error;
+  int num_in_tracks=0,error;
 
   void **pchains=NULL,*pchange;
 
@@ -135,10 +135,9 @@ add_to_special (const gchar *sp_string, lives_rfx_t *rfx) {
 	}
 	if (init_event!=NULL) {
 	  param=weed_inst_in_param((weed_plant_t *)rfx->source,pnum,FALSE);
-	  pchange=pchains[pnum];
 	  paramtmpl=weed_get_plantptr_value(param,"template",&error);
-	  hint=weed_get_int_value(paramtmpl,"hint",&error);
-	  fill_param_vals_to (paramtmpl, (weed_plant_t *)pchange, pnum, hint, num_in_tracks-1);
+	  pchange=pchains[pnum];
+	  fill_param_vals_to ((weed_plant_t *)pchange,paramtmpl,num_in_tracks-1,TRUE);
 	  weed_set_boolean_array((weed_plant_t *)pchange,"ignore",num_in_tracks,ign);
 	}
       }

@@ -279,7 +279,7 @@ lives_fx_cat_t weed_filter_categorise (weed_plant_t *pl, int in_channels, int ou
     }
   }
 
- // check mandatory input chans, see if any are non-alpha
+  // check mandatory input chans, see if any are non-alpha
   if (weed_plant_has_leaf(filt,"in_channel_templates")) {
     int nins=weed_leaf_num_elements(filt,"in_channel_templates");
     if (nins>0) {
@@ -738,26 +738,26 @@ gboolean weed_parameter_has_variable_elements_strict(weed_plant_t *inst, weed_pl
 
 static void create_filter_map (void) {
   /** here we create an effect map which defines the order in which effects are applied to a frame stack
-  * this is done during recording, the keymap is from mainw->rte which is a bitmap of effect keys
-  * keys are applied here from smallest (ctrl-1) to largest (virtual key ctrl-FX_KEYS_MAX_VIRTUAL)
+   * this is done during recording, the keymap is from mainw->rte which is a bitmap of effect keys
+   * keys are applied here from smallest (ctrl-1) to largest (virtual key ctrl-FX_KEYS_MAX_VIRTUAL)
 
-  * this is transformed into filter_map which holds init_events 
-  * these pointers are then stored in a filter_map event
+   * this is transformed into filter_map which holds init_events 
+   * these pointers are then stored in a filter_map event
 
-  * what we actually point to are the init_events for the effects. The init_events are stored when we 
-  * init an effect
+   * what we actually point to are the init_events for the effects. The init_events are stored when we 
+   * init an effect
 
-  * during rendering we read the filter_map event, and retrieve the new key, which is at that time 
-  * held in the 
-  * "host_tag" property of the init_event, and we apply our effects
-  * (which are then bound to virtual keys >=FX_KEYS_MAX_VIRTUAL)
+   * during rendering we read the filter_map event, and retrieve the new key, which is at that time 
+   * held in the 
+   * "host_tag" property of the init_event, and we apply our effects
+   * (which are then bound to virtual keys >=FX_KEYS_MAX_VIRTUAL)
 
-  * [note] that we can do cool things, like mapping the same instance multiple times (though it will always
-  * apply itself to the same in/out tracks
+   * [note] that we can do cool things, like mapping the same instance multiple times (though it will always
+   * apply itself to the same in/out tracks
 
-  * we don't need to worry about free()ing init_events, since they will be free'd 
-  * when the instance is deinited
-  */
+   * we don't need to worry about free()ing init_events, since they will be free'd 
+   * when the instance is deinited
+   */
 
   int count=0,i;
   weed_plant_t *inst;
@@ -1644,13 +1644,13 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
   for (j=0;j<num_ctmpl;j++) {
     if (mand[j]==0&&(!weed_plant_has_leaf(in_ctmpls[j],"optional")||
 		     weed_get_boolean_value(in_ctmpls[j],"optional",&error)==WEED_FALSE)) {
-    weed_free(in_ctmpls);
-    weed_free(in_tracks);
-    weed_free(out_tracks);
-    weed_free(in_channels);
-    weed_free(out_channels);
-    g_free(mand);
-    return FILTER_ERROR_MISSING_LAYER;
+      weed_free(in_ctmpls);
+      weed_free(in_tracks);
+      weed_free(out_tracks);
+      weed_free(in_channels);
+      weed_free(out_channels);
+      g_free(mand);
+      return FILTER_ERROR_MISSING_LAYER;
     }
   }
 
@@ -1677,7 +1677,7 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
     if (weed_palette_is_alpha_palette(palette)) continue;
     if (weed_plant_has_leaf(channel,"temp_disabled")&&
 	weed_get_boolean_value(channel,"temp_disabled",&error)==WEED_TRUE) continue;
-      all_outs_alpha=FALSE;
+    all_outs_alpha=FALSE;
   }
 
 
@@ -1691,7 +1691,7 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
     clip=weed_get_int_value(layer,"clip",&error);
 
     if (!weed_plant_has_leaf(layer,"pixel_data")||weed_get_voidptr_value(layer,"pixel_data",&error)==NULL) {
-       // pull_frame will set pixel_data,width,height,current_palette and rowstrides
+      // pull_frame will set pixel_data,width,height,current_palette and rowstrides
       if (!pull_frame(layer,mainw->files[clip]->img_type==IMG_TYPE_JPEG?"jpg":"png",tc)) return FILTER_ERROR_MISSING_FRAME;
     }
 
@@ -1779,7 +1779,7 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
 
     // check if we need to resize
     if ((inwidth!=width)||(inheight!=height)) {
-     // layer needs resizing
+      // layer needs resizing
       if (prefs->pb_quality==PB_QUALITY_HIGH||opwidth==0||opheight==0) {
 	if (!resize_layer(layer,width,height,GDK_INTERP_HYPER)) return FILTER_ERROR_UNABLE_TO_RESIZE;
       }
@@ -2350,7 +2350,7 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
     pixel_data=weed_get_voidptr_array(layer,"pixel_data",&error);
     if (pixel_data!=NULL) {
       if (weed_plant_has_leaf(layer,"host_pixel_data_contiguous") && 
-	weed_get_boolean_value(layer,"host_pixel_data_contiguous",&error)==WEED_TRUE)
+	  weed_get_boolean_value(layer,"host_pixel_data_contiguous",&error)==WEED_TRUE)
 	numplanes=1;
       
       for (j=0;j<numplanes;j++) if (pixel_data[j]!=NULL) g_free(pixel_data[j]);
@@ -2538,14 +2538,14 @@ static lives_filter_error_t weed_apply_audio_instance_inner (weed_plant_t *inst,
   }
   for (j=0;j<num_ctmpl;j++) if (mand[j]==0&&(!weed_plant_has_leaf(in_ctmpls[j],"optional")||
 					     weed_get_boolean_value(in_ctmpls[j],"optional",&error)==WEED_FALSE)) {
-    weed_free(in_ctmpls);
-    weed_free(in_tracks);
-    weed_free(out_tracks);
-    weed_free(in_channels);
-    if (out_channels!=NULL) weed_free(out_channels);
-    g_free(mand);
-    return FILTER_ERROR_MISSING_LAYER;
-  }
+      weed_free(in_ctmpls);
+      weed_free(in_tracks);
+      weed_free(out_tracks);
+      weed_free(in_channels);
+      if (out_channels!=NULL) weed_free(out_channels);
+      g_free(mand);
+      return FILTER_ERROR_MISSING_LAYER;
+    }
   weed_free(in_ctmpls);
   g_free(mand);
 
@@ -2828,36 +2828,36 @@ lives_filter_error_t weed_apply_audio_instance (weed_plant_t *init_event, float 
   for (i=0;i<numoutchans;i++) {
     if ((channel=out_channels[i])==NULL) continue;
 
-      aint=WEED_FALSE; // preferred value
-      ctmpl=weed_get_plantptr_value(channel,"template",&error);
-      if (weed_plant_has_leaf(ctmpl,"audio_interleaf")) {
-	aint=weed_get_boolean_value(ctmpl,"audio_interleaf",&error);
-	if (weed_get_boolean_value(channel,"audio_interleaf",&error)!=aint) {
-	  needs_reinit=TRUE;
-	}
-      }
-      xnchans=nchans; // preferred value
-      if (weed_plant_has_leaf(ctmpl,"audio_channels")) {
-	xnchans=weed_get_int_value(ctmpl,"audio_channels",&error);
-	if (weed_get_int_value(channel,"audio_channels",&error)!=xnchans) {
-	  needs_reinit=TRUE;
-	}
-      }
-
-      if ((weed_plant_has_leaf(ctmpl,"audio_data_length")&&nsamps!=weed_get_int_value(ctmpl,"audio_data_length",&error))||
-	  (weed_plant_has_leaf(ctmpl,"audio_arate")&&arate!=weed_get_int_value(ctmpl,"audio_rate",&error))) {
-	weed_free(in_channels);
-	weed_free(in_tracks);
-	weed_free(out_tracks);
-	if (out_channels!=NULL) weed_free(out_channels);
-	return FILTER_ERROR_TEMPLATE_MISMATCH;
-      }
-
-      if (weed_get_int_value(channel,"audio_rate",&error)!=arate) {
+    aint=WEED_FALSE; // preferred value
+    ctmpl=weed_get_plantptr_value(channel,"template",&error);
+    if (weed_plant_has_leaf(ctmpl,"audio_interleaf")) {
+      aint=weed_get_boolean_value(ctmpl,"audio_interleaf",&error);
+      if (weed_get_boolean_value(channel,"audio_interleaf",&error)!=aint) {
 	needs_reinit=TRUE;
       }
+    }
+    xnchans=nchans; // preferred value
+    if (weed_plant_has_leaf(ctmpl,"audio_channels")) {
+      xnchans=weed_get_int_value(ctmpl,"audio_channels",&error);
+      if (weed_get_int_value(channel,"audio_channels",&error)!=xnchans) {
+	needs_reinit=TRUE;
+      }
+    }
+
+    if ((weed_plant_has_leaf(ctmpl,"audio_data_length")&&nsamps!=weed_get_int_value(ctmpl,"audio_data_length",&error))||
+	(weed_plant_has_leaf(ctmpl,"audio_arate")&&arate!=weed_get_int_value(ctmpl,"audio_rate",&error))) {
+      weed_free(in_channels);
+      weed_free(in_tracks);
+      weed_free(out_tracks);
+      if (out_channels!=NULL) weed_free(out_channels);
+      return FILTER_ERROR_TEMPLATE_MISMATCH;
+    }
+
+    if (weed_get_int_value(channel,"audio_rate",&error)!=arate) {
+      needs_reinit=TRUE;
+    }
       
-      weed_set_int_value(channel,"audio_data_length",nsamps);
+    weed_set_int_value(channel,"audio_data_length",nsamps);
       
   }
 
@@ -3090,17 +3090,17 @@ static void weed_apply_filter_map (weed_plant_t **layers, weed_plant_t *filter_m
 	  }
 	  
 	  /*
-	    // might be needed for multitrack ???
+	  // might be needed for multitrack ???
 	  if (mainw->pconx!=NULL) {
-	    int key=i;
-	    int mode=key_modes[i];
-	    if (weed_plant_has_leaf(instance,"host_mode")) {
-	      key=weed_get_int_value(instance,"host_key",&error);
-	      mode=weed_get_int_value(instance,"host_mode",&error);
-	    }
-	    // chain any data pipelines
-	    pconx_chain_data(key,mode);
-	    }*/
+	  int key=i;
+	  int mode=key_modes[i];
+	  if (weed_plant_has_leaf(instance,"host_mode")) {
+	  key=weed_get_int_value(instance,"host_key",&error);
+	  mode=weed_get_int_value(instance,"host_mode",&error);
+	  }
+	  // chain any data pipelines
+	  pconx_chain_data(key,mode);
+	  }*/
 
 	  filter_error=weed_apply_instance (instance,init_event,layers,0,0,tc);
 	  //if (filter_error!=FILTER_NO_ERROR) g_printerr("Render error was %d\n",filter_error);
@@ -3784,10 +3784,10 @@ static gboolean set_in_channel_palettes (gint idx, gint num_channels) {
 	weed_free(palettes);
 	return FALSE; // mandatory channel; we don't yet handle rgb float
       }
-	      /*else if (check_weed_palette_list (palettes,num_palettes,WEED_PALETTE_RGBFLOAT)==WEED_PALETTE_RGBFLOAT) 
-	      weed_set_int_value(chantmpls[i],"current_palette",WEED_PALETTE_RGBFLOAT);
-	      else if (check_weed_palette_list (palettes,num_palettes,WEED_PALETTE_ARGBFLOAT)==WEED_PALETTE_ARGBFLOAT) 
-	      weed_set_int_value(chantmpls[i],"current_palette",WEED_PALETTE_ARGBFLOAT);
+      /*else if (check_weed_palette_list (palettes,num_palettes,WEED_PALETTE_RGBFLOAT)==WEED_PALETTE_RGBFLOAT) 
+	weed_set_int_value(chantmpls[i],"current_palette",WEED_PALETTE_RGBFLOAT);
+	else if (check_weed_palette_list (palettes,num_palettes,WEED_PALETTE_ARGBFLOAT)==WEED_PALETTE_ARGBFLOAT) 
+	weed_set_int_value(chantmpls[i],"current_palette",WEED_PALETTE_ARGBFLOAT);
       */
       weed_free(palettes);
     }
@@ -3798,9 +3798,9 @@ static gboolean set_in_channel_palettes (gint idx, gint num_channels) {
   if (num_channels>0) {
     // OK we need to use some optional channels
     for (i=0;i<num_elements&&num_channels>0;i++) if (weed_plant_has_leaf(chantmpls[i],"optional")) {
-      weed_set_boolean_value(chantmpls[i],"disabled",WEED_FALSE);
-      num_channels--;
-    }
+	weed_set_boolean_value(chantmpls[i],"disabled",WEED_FALSE);
+	num_channels--;
+      }
   }
   if (num_channels>0) {
     if (chantmpls!=NULL) weed_free(chantmpls);
@@ -3900,9 +3900,9 @@ static gboolean set_out_channel_palettes (gint idx, gint num_channels) {
       }
 
       /*	else if (check_weed_palette_list (palettes,num_palettes,WEED_PALETTE_RGBFLOAT)==WEED_PALETTE_RGBFLOAT) 
-	weed_set_int_value(chantmpls[i],"current_palette",WEED_PALETTE_RGBFLOAT);
-	else if (check_weed_palette_list (palettes,num_palettes,WEED_PALETTE_ARGBFLOAT)==WEED_PALETTE_ARGBFLOAT) 
-	weed_set_int_value(chantmpls[i],"current_palette",WEED_PALETTE_ARGBFLOAT);
+		weed_set_int_value(chantmpls[i],"current_palette",WEED_PALETTE_RGBFLOAT);
+		else if (check_weed_palette_list (palettes,num_palettes,WEED_PALETTE_ARGBFLOAT)==WEED_PALETTE_ARGBFLOAT) 
+		weed_set_int_value(chantmpls[i],"current_palette",WEED_PALETTE_ARGBFLOAT);
       */
       weed_free(palettes);
     }
@@ -3912,9 +3912,9 @@ static gboolean set_out_channel_palettes (gint idx, gint num_channels) {
   if (num_channels>0) {
     // OK we need to use some optional channels
     for (i=0;i<num_elements&&num_channels>0;i++) if (weed_plant_has_leaf(chantmpls[i],"optional")) {
-      weed_set_boolean_value(chantmpls[i],"disabled",WEED_FALSE);
-      num_channels--;
-    }
+	weed_set_boolean_value(chantmpls[i],"disabled",WEED_FALSE);
+	num_channels--;
+      }
   }
 
   if (num_channels>0) {
@@ -4156,7 +4156,7 @@ void weed_memory_init(void) {
 
 
 void weed_load_all (void) {
-// get list of plugins from directory and create our fx
+  // get list of plugins from directory and create our fx
   int i,j,plugin_idx,subdir_idx;
 
   GList *weed_plugin_list,*weed_plugin_sublist;
@@ -4251,18 +4251,19 @@ void weed_load_all (void) {
       threaded_dialog_spin();
       plugin_name=(gchar *)g_list_nth_data(weed_plugin_list,plugin_idx);
 #ifndef IS_MINGW
-      if (!strncmp(plugin_name+strlen(plugin_name)-3,".so",3)) {
+      if (!strncmp(plugin_name+strlen(plugin_name)-3,".so",3))
 #else
-      if (!strncmp(plugin_name+strlen(plugin_name)-4,".dll",4)) {
+	if (!strncmp(plugin_name+strlen(plugin_name)-4,".dll",4))
 #endif
-	plugin_path=g_build_filename(dirs[i],plugin_name,NULL);
-	load_weed_plugin(plugin_name,plugin_path,dirs[i]);
-	g_free(plugin_name);
-	g_free(plugin_path);
-	weed_plugin_list=g_list_delete_link(weed_plugin_list,g_list_nth(weed_plugin_list,plugin_idx));
-	plugin_idx--;
-	listlen--;
-      }
+	  {
+	    plugin_path=g_build_filename(dirs[i],plugin_name,NULL);
+	    load_weed_plugin(plugin_name,plugin_path,dirs[i]);
+	    g_free(plugin_name);
+	    g_free(plugin_path);
+	    weed_plugin_list=g_list_delete_link(weed_plugin_list,g_list_nth(weed_plugin_list,plugin_idx));
+	    plugin_idx--;
+	    listlen--;
+	  }
       threaded_dialog_spin();
 
     }
@@ -5041,16 +5042,16 @@ gboolean weed_init_effect(int hotkey) {
   }
   else if (inc_count==0&&outc_count>0&&!is_audio_gen) {
     // aha - a generator
-     if (mainw->playing_file==-1) {
+    if (mainw->playing_file==-1) {
       // if we are not playing, we will postpone creating the instance
       // this is a workaround for a problem in libvisual
       fg_gen_to_start=hotkey;
       fg_generator_key=hotkey;
       fg_generator_mode=key_modes[hotkey];
       gen_start=TRUE;
-     }
-     else if (!fg_modeswitch&&mainw->num_tr_applied==0&&(mainw->noswitch||mainw->is_processing||mainw->preview)) 
-       return FALSE;
+    }
+    else if (!fg_modeswitch&&mainw->num_tr_applied==0&&(mainw->noswitch||mainw->is_processing||mainw->preview)) 
+      return FALSE;
   }
 
   filter=weed_filters[idx];
@@ -5204,10 +5205,10 @@ gboolean weed_init_effect(int hotkey) {
       }
 
       /*      if (mainw->playing_file>0&&mainw->record&&!mainw->record_paused&&(prefs->rec_opts&REC_AUDIO)) {
-	// if recording audio, open ascrap file and add audio event
-	mainw->record=FALSE;
-	on_record_perf_activate(NULL,NULL);
-	} */
+      // if recording audio, open ascrap file and add audio event
+      mainw->record=FALSE;
+      on_record_perf_activate(NULL,NULL);
+      } */
 
     }
   }
@@ -5222,27 +5223,27 @@ gboolean weed_init_effect(int hotkey) {
 
 
 int weed_call_init_func(weed_plant_t *inst) {
-   int error=0;
+  int error=0;
 
-   weed_plant_t *filter=weed_instance_get_filter(inst);
-   if (weed_plant_has_leaf(filter,"init_func")) {
-     weed_init_f *init_func_ptr_ptr;
-     weed_init_f init_func;
-     weed_leaf_get(filter,"init_func",0,(void *)&init_func_ptr_ptr);
-     init_func=init_func_ptr_ptr[0];
-     update_host_info(inst);
-     if (init_func!=NULL) {
-       gchar *cwd=cd_to_plugin_dir(filter);
-       set_param_gui_readwrite(inst);
-       error=(*init_func)(inst);
-       set_param_gui_readonly(inst);
-       lives_chdir(cwd,FALSE);
-       g_free(cwd);
-     }
-   }
-   weed_set_boolean_value(inst,"host_inited",WEED_TRUE);
-   return error;
- }
+  weed_plant_t *filter=weed_instance_get_filter(inst);
+  if (weed_plant_has_leaf(filter,"init_func")) {
+    weed_init_f *init_func_ptr_ptr;
+    weed_init_f init_func;
+    weed_leaf_get(filter,"init_func",0,(void *)&init_func_ptr_ptr);
+    init_func=init_func_ptr_ptr[0];
+    update_host_info(inst);
+    if (init_func!=NULL) {
+      gchar *cwd=cd_to_plugin_dir(filter);
+      set_param_gui_readwrite(inst);
+      error=(*init_func)(inst);
+      set_param_gui_readonly(inst);
+      lives_chdir(cwd,FALSE);
+      g_free(cwd);
+    }
+  }
+  weed_set_boolean_value(inst,"host_inited",WEED_TRUE);
+  return error;
+}
 
 
 
@@ -5322,12 +5323,12 @@ void weed_deinit_effect(int hotkey) {
 								   ||(mainw->loop&&cfile->achans>0&&!mainw->is_rendering&&(mainw->audio_end/cfile->fps)
 								      <MAX (cfile->laudio_time,cfile->raudio_time)))) mainw->whentostop=STOP_ON_AUD_END;
 
-    /*    if (mainw->playing_file>0&&mainw->record&&!mainw->record_paused&&(prefs->rec_opts&REC_AUDIO)) {
-      // if recording audio, add audio event
-      mainw->record=FALSE;
-      on_record_perf_activate(NULL,NULL);
-      mainw->record_starting=FALSE;
-      }*/
+  /*    if (mainw->playing_file>0&&mainw->record&&!mainw->record_paused&&(prefs->rec_opts&REC_AUDIO)) {
+  // if recording audio, add audio event
+  mainw->record=FALSE;
+  on_record_perf_activate(NULL,NULL);
+  mainw->record_starting=FALSE;
+  }*/
  
 
   if (num_in_chans==2) {
@@ -5346,7 +5347,7 @@ void weed_deinit_effect(int hotkey) {
 
   if (was_transition&&!is_modeswitch) {
     if (mainw->num_tr_applied<1) {
-       if (bg_gen_to_start!=-1) bg_gen_to_start=-1;
+      if (bg_gen_to_start!=-1) bg_gen_to_start=-1;
       if (mainw->blend_file!=-1&&mainw->blend_file!=mainw->current_file&&mainw->files[mainw->blend_file]!=NULL&&
 	  mainw->files[mainw->blend_file]->clip_type==CLIP_TYPE_GENERATOR) {
 	// all transitions off, so end the bg generator
@@ -6000,15 +6001,15 @@ weed_plant_t *weed_inst_in_param (weed_plant_t *inst, int param_num, gboolean sk
     int i;
     
     for (i=0;i<num_params;i++) {
-	if (!is_hidden_param(inst,i)) {
-	  if (count==param_num) {
-	    param=in_params[count];
-	    break;
-	  }
-	  count++;
+      if (!is_hidden_param(inst,i)) {
+	if (count==param_num) {
+	  param=in_params[count];
+	  break;
 	}
+	count++;
       }
     }
+  }
 
   weed_free(in_params);
   return param;
@@ -6406,16 +6407,16 @@ weed_plant_t *get_new_inst_for_keymode(int key, int mode)  {
 ////////////////////////////////////////////////////////////////////////
 
 
- static LIVES_INLINE gchar *weed_instance_get_type(weed_plant_t *inst, gboolean getsub) {
+static LIVES_INLINE gchar *weed_instance_get_type(weed_plant_t *inst, gboolean getsub) {
   // return value should be free'd after use
-   weed_plant_t *filter=weed_instance_get_filter(inst);
-   return weed_filter_get_type(filter,getsub);
+  weed_plant_t *filter=weed_instance_get_filter(inst);
+  return weed_filter_get_type(filter,getsub);
 }
 
 
 
 
- gchar *rte_keymode_get_type (gint key, gint mode, gboolean get_subtype) {
+gchar *rte_keymode_get_type (gint key, gint mode, gboolean get_subtype) {
   // return value should be free'd after use
   gchar *type=g_strdup ("");
   weed_plant_t *filter,*inst;
@@ -6454,8 +6455,8 @@ lives_fx_cat_t rte_keymode_get_category (gint key, gint mode) {
   if ((filter=weed_filters[idx])==NULL) return LIVES_FX_CAT_NONE;
 
   else cat=weed_filter_categorise(filter,
-				 enabled_in_channels(filter,FALSE),
-				 enabled_out_channels(filter,FALSE));
+				  enabled_in_channels(filter,FALSE),
+				  enabled_out_channels(filter,FALSE));
 
   return cat;
 }
@@ -6802,7 +6803,7 @@ gboolean rte_key_setmode (gint key, gint newmode) {
 	if (mainw->rte&(GU641<<key)) mainw->rte^=(GU641<<key);
 	mainw->osc_block=FALSE;
 	return FALSE;
-       }
+      }
     }
     // TODO - unblock template channel changes
     mainw->whentostop=whentostop;
@@ -6959,10 +6960,12 @@ gint rte_get_numfilters(void) {
 ///////////////////
 // parameter interpolation
 
-void fill_param_vals_to (weed_plant_t *paramtmpl, weed_plant_t *param, int pnum, int hint, int index) {
+void fill_param_vals_to (weed_plant_t *param, weed_plant_t *paramtmpl, int index, boolean add_last) {
   // for a multi valued parameter or pchange, we will fill "value" up to element index with "new_default"
 
-  int i,error;
+  // paramtmpl must be supplied, since pchanges do not have one directly
+
+  int i,error,hint;
   int num_vals=weed_leaf_num_elements(param,"value");
   int new_defi,*valis,*nvalis;
   double new_defd,*valds,*nvalds;
@@ -6971,6 +6974,7 @@ void fill_param_vals_to (weed_plant_t *paramtmpl, weed_plant_t *param, int pnum,
   int *colsis,*coli;
   double *colsds,*cold;
 
+  hint=weed_get_int_value(paramtmpl,"hint",&error);
 
   switch (hint) {
   case WEED_HINT_INTEGER:
@@ -6978,8 +6982,14 @@ void fill_param_vals_to (weed_plant_t *paramtmpl, weed_plant_t *param, int pnum,
     valis=weed_get_int_array(param,"value",&error);
     nvalis=(int *)g_malloc((index+1)*sizint);
     for (i=0;i<=index;i++) {
-      if (i<num_vals) nvalis[i]=valis[i];
-      else nvalis[i]=new_defi;
+      if (add_last) {
+	if (i<num_vals) nvalis[i]=valis[i];
+	else nvalis[i]=new_defi;
+      }
+      else {
+	if (i==0) nvalis[i]=new_defi;
+	else nvalis[i]=valis[i-1];
+      }
     }
     weed_set_int_array(param,"value",index+1,nvalis);
     weed_free(valis);
@@ -6990,8 +7000,14 @@ void fill_param_vals_to (weed_plant_t *paramtmpl, weed_plant_t *param, int pnum,
     valds=weed_get_double_array(param,"value",&error);
     nvalds=(double *)g_malloc((index+1)*sizdbl);
     for (i=0;i<=index;i++) {
-      if (i<num_vals) nvalds[i]=valds[i];
-      else nvalds[i]=new_defd;
+      if (add_last) {
+	if (i<num_vals) nvalds[i]=valds[i];
+	else nvalds[i]=new_defd;
+      }
+      else {
+	if (i==0) nvalds[i]=new_defd;
+	else nvalds[i]=valds[i-1];
+      }
     }
     weed_set_double_array(param,"value",index+1,nvalds);
 
@@ -7003,8 +7019,14 @@ void fill_param_vals_to (weed_plant_t *paramtmpl, weed_plant_t *param, int pnum,
     valis=weed_get_boolean_array(param,"value",&error);
     nvalis=(int *)g_malloc((index+1)*sizint);
     for (i=0;i<=index;i++) {
-      if (i<num_vals) nvalis[i]=valis[i];
-      else nvalis[i]=new_defi;
+      if (add_last) {
+	if (i<num_vals) nvalis[i]=valis[i];
+	else nvalis[i]=new_defi;
+      }
+      else {
+	if (i==0) nvalis[i]=new_defi;
+	else nvalis[i]=valis[i-1];
+      }
     }
     weed_set_boolean_array(param,"value",index+1,nvalis);
     weed_free(valis);
@@ -7015,19 +7037,27 @@ void fill_param_vals_to (weed_plant_t *paramtmpl, weed_plant_t *param, int pnum,
     valss=weed_get_string_array(param,"value",&error);
     nvalss=(gchar **)g_malloc((index+1)*sizeof(gchar *));
     for (i=0;i<=index;i++) {
-      if (i<num_vals) {
-	nvalss[i]=g_strdup(valss[i]);
-	weed_free(valss[i]);
+      if (add_last) {
+	if (i<num_vals) {
+	  nvalss[i]=valss[i];
+	}
+	else nvalss[i]=new_defs;
       }
-      else nvalss[i]=g_strdup(new_defs);
+      else {
+	if (i==0) {
+	  nvalss[i]=new_defs;
+	}
+	else {
+	  nvalss[i]=valss[i-1];
+	}
+      }
     }
     weed_set_string_array(param,"value",index+1,nvalss);
 
     for (i=0;i<index;i++) {
-      g_free(nvalss[i]);
+      weed_free(nvalss[i]);
     }
 
-    weed_free(new_defs);
     weed_free(valss);
     g_free(nvalss);
     break;
@@ -7046,15 +7076,29 @@ void fill_param_vals_to (weed_plant_t *paramtmpl, weed_plant_t *param, int pnum,
 	valis=weed_get_int_array(param,"value",&error);
 	nvalis=(int *)g_malloc((index+3)*4);
 	for (i=0;i<=index;i+=3) {
-	  if (i<num_vals) {
-	    nvalis[i]=valis[i];
-	    nvalis[i+1]=valis[i+1];
-	    nvalis[i+2]=valis[i+2];
+	  if (add_last) {
+	    if (i<num_vals) {
+	      nvalis[i]=valis[i];
+	      nvalis[i+1]=valis[i+1];
+	      nvalis[i+2]=valis[i+2];
+	    }
+	    else {
+	      nvalis[i]=coli[0];
+	      nvalis[i+1]=coli[1];
+	      nvalis[i+2]=coli[2];
+	    }
 	  }
 	  else {
-	    nvalis[i]=coli[0];
-	    nvalis[i+1]=coli[1];
-	    nvalis[i+2]=coli[2];
+	    if (i==0) {
+	      nvalis[i]=coli[0];
+	      nvalis[i+1]=coli[1];
+	      nvalis[i+2]=coli[2];
+	    }
+	    else {
+	      nvalis[i]=valis[i-3];
+	      nvalis[i+1]=valis[i-2];
+	      nvalis[i+2]=valis[i-1];
+	    }
 	  }
 	}
 	weed_set_int_array(param,"value",index+3,nvalis);
@@ -7072,15 +7116,29 @@ void fill_param_vals_to (weed_plant_t *paramtmpl, weed_plant_t *param, int pnum,
 	valds=weed_get_double_array(param,"value",&error);
 	nvalds=(double *)g_malloc((index+3)*sizdbl);
 	for (i=0;i<=index;i+=3) {
-	  if (i<num_vals) {
-	    nvalds[i]=valds[i];
-	    nvalds[i+1]=valds[i+1];
-	    nvalds[i+2]=valds[i+2];
+	  if (add_last) {
+	    if (i<num_vals) {
+	      nvalds[i]=valds[i];
+	      nvalds[i+1]=valds[i+1];
+	      nvalds[i+2]=valds[i+2];
+	    }
+	    else {
+	      nvalds[i]=cold[0];
+	      nvalds[i+1]=cold[1];
+	      nvalds[i+2]=cold[2];
+	    }
 	  }
 	  else {
-	    nvalds[i]=cold[0];
-	    nvalds[i+1]=cold[1];
-	    nvalds[i+2]=cold[2];
+	    if (i==0) {
+	      nvalds[i]=cold[0];
+	      nvalds[i+1]=cold[1];
+	      nvalds[i+2]=cold[2];
+	    }
+	    else {
+	      nvalds[i]=valds[i-3];
+	      nvalds[i+1]=valds[i-2];
+	      nvalds[i+2]=valds[i-1];
+	    }
 	  }
 	}
 	weed_set_double_array(param,"value",index+3,nvalds);
@@ -7178,7 +7236,7 @@ static double get_default_element_double (weed_plant_t *param, int idx, int mpy,
     weed_free(valsd);
     return val;
   }
-   return weed_get_double_value(ptmpl,"new_default",&error);
+  return weed_get_double_value(ptmpl,"new_default",&error);
 }
 
 
@@ -7425,7 +7483,7 @@ gboolean interpolate_param(weed_plant_t *inst, int i, void *pchain, weed_timecod
     switch (hint) {
     case WEED_HINT_FLOAT:
       if (lpc[j]==NULL) {
-      // before first change
+	// before first change
 	valds[j]=get_default_element_double(param,j,1,0);
 	continue;
       }
@@ -7739,7 +7797,7 @@ gboolean interpolate_params(weed_plant_t *inst, void **pchains, weed_timecode_t 
 ///////////////////////////////////////////////////////////
 ////// hashnames
 
- gchar *make_weed_hashname(int filter_idx, gboolean fullname) {
+gchar *make_weed_hashname(int filter_idx, gboolean fullname) {
   weed_plant_t *filter,*plugin_info;
   gchar *plugin_name,*filter_name,*filter_author,*filter_version,*hashname;
   int error,version;
@@ -7794,7 +7852,7 @@ int weed_get_idx_for_hashname (const gchar *hashname, gboolean fullname) {
   return -1;
 }
 
- weed_plant_t *get_weed_filter(int idx) {
+weed_plant_t *get_weed_filter(int idx) {
   if (idx>-1&&idx<num_weed_filters) return weed_filters[idx];
   return NULL;
 }
@@ -7917,11 +7975,11 @@ gboolean weed_plant_serialise(int fd, weed_plant_t *plant, unsigned char **mem) 
 
 
 
- static gint weed_leaf_deserialise(int fd, weed_plant_t *plant, const gchar *key, unsigned char **mem, 
-				   gboolean check_key) {
+static gint weed_leaf_deserialise(int fd, weed_plant_t *plant, const gchar *key, unsigned char **mem, 
+				  gboolean check_key) {
   // if plant is NULL, returns type
   // "host_default" sets key; otherwise NULL
-   // check_key set to TRUE - check that we read the correct key
+  // check_key set to TRUE - check that we read the correct key
 
   void **values;
 
@@ -8516,7 +8574,7 @@ void reset_frame_and_clip_index(void) {
   if (mainw->clip_index==NULL) {
     mainw->clip_index=(gint *)weed_malloc(sizint);
     mainw->clip_index[0]=-1;
-    }
+  }
   if (mainw->frame_index==NULL) {
     mainw->frame_index=(gint *)weed_malloc(sizint);
     mainw->frame_index[0]=0;

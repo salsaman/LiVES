@@ -237,7 +237,7 @@ void weed_add_plant_flags (weed_plant_t *plant, int flags);
 void update_host_info (weed_plant_t *inst);
 
 /// add default filler values to a parameter or pchange.
-void fill_param_vals_to (weed_plant_t *paramtmpl, weed_plant_t *param, int pnum, int hint, int index);
+void fill_param_vals_to (weed_plant_t *param, weed_plant_t *ptmpl, int index, boolean add_last);
 
 
 // some general utilities

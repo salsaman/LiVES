@@ -574,6 +574,7 @@ static gboolean mt_auto_backup(gpointer user_data) {
   diff=stime-mt->auto_back_time;
   if (diff>=prefs->mt_auto_back) {
     save_mt_autoback(mt,stime);
+    mt->auto_changed=FALSE;
   }
 
   mt->idlefunc=mt_idle_add(mt);
@@ -942,7 +943,7 @@ static void draw_aparams(lives_mt *mt, GtkWidget *eventbox, GList *param_list, w
   if (offset_start>startx) startpos=offset_start;
   else startpos=startx;
 
-  track=GPOINTER_TO_INT(g_object_get_data (G_OBJECT(eventbox),"layer_number"))+1;
+  track=GPOINTER_TO_INT(g_object_get_data (G_OBJECT(eventbox),"layer_number"))+mt->opts.back_audio_tracks;
 
 
   // TODO - make one function
@@ -1385,7 +1386,7 @@ void track_select (lives_mt *mt) {
       if (hidden==0) {
 	labelbox=(GtkWidget *)g_object_get_data(G_OBJECT(eventbox),"labelbox");
 	ahbox=(GtkWidget *)g_object_get_data(G_OBJECT(eventbox),"ahbox");
-	if (mt->current_track==i-mt->opts.back_audio_tracks&&(mt->current_track==-1||mt->aud_track_selected)) {
+	if (mt->current_track==i-mt->opts.back_audio_tracks&&(mt->current_track<0||mt->aud_track_selected)) {
 	  if (labelbox!=NULL) gtk_widget_set_state(labelbox,GTK_STATE_SELECTED);
 	  if (ahbox!=NULL) gtk_widget_set_state(ahbox,GTK_STATE_SELECTED);
 	  gtk_widget_set_sensitive (mt->jumpback, g_object_get_data(G_OBJECT(eventbox),"blocks")!=NULL);
@@ -3321,23 +3322,23 @@ filter_ebox_pressed (GtkWidget *eventbox, GdkEventButton *event, gpointer user_d
 
 
 static void populate_filter_box(GtkWidget *box, gint ninchans, lives_mt *mt) {
-  GtkWidget *eventbox,*xeventbox,*vbox,*label;
+  GtkWidget *eventbox=NULL,*xeventbox,*vbox,*label;
   gchar *txt;
   gint nfilts=rte_get_numfilters();
   int i,error;
   lives_fx_cat_t cat,subcat;
   gchar *tmp;
 
-  if (mt->block_selected==NULL) return;
+  if (mt->block_selected==NULL&&ninchans==1) return;
 
-  eventbox=mt->block_selected->eventbox;
+  if (mt->block_selected) eventbox=mt->block_selected->eventbox;
 
   for (i=0;i<nfilts;i++) {
     weed_plant_t *filter=get_weed_filter(i);
     if (filter!=NULL&&!weed_plant_has_leaf(filter,"host_menu_hide")) {
 
-      if ((is_pure_audio(filter,FALSE)&&!is_audio_eventbox(mt,eventbox))||
-	  (!is_pure_audio(filter,FALSE)&&is_audio_eventbox(mt,eventbox))) continue;
+      if ((is_pure_audio(filter,FALSE)&&(eventbox==NULL||!is_audio_eventbox(mt,eventbox)))||
+	  (!is_pure_audio(filter,FALSE)&&eventbox!=NULL&&is_audio_eventbox(mt,eventbox))) continue;
 
       if (enabled_in_channels(filter,TRUE)==ninchans&&enabled_out_channels(filter,FALSE)==1) {
 	if (weed_plant_has_leaf(filter,"plugin_unstable")&&
@@ -9439,9 +9440,12 @@ void add_video_track (lives_mt *mt, gboolean behind) {
     aeventbox=add_audio_track(mt,mt->current_track,behind);
     g_object_set_data (G_OBJECT(aeventbox),"owner",eventbox);
     g_object_set_data (G_OBJECT(eventbox),"atrack",aeventbox);
-    if (mt->avol_init_event!=NULL) add_track_to_avol_init(mt->avol_init_event,behind?mt->num_video_tracks-1:0);
-  }
 
+    if (mt->avol_init_event!=NULL) {
+      weed_plant_t *filter=get_weed_filter(mt->avol_fx);
+      add_track_to_avol_init(filter,mt->avol_init_event,mt->num_video_tracks,behind);
+    }
+  }
   if (!behind) scroll_track_on_screen(mt,0);
   else scroll_track_on_screen(mt,mt->num_video_tracks-1);
 
@@ -17338,8 +17342,7 @@ void on_del_node_clicked  (GtkWidget *button, gpointer user_data) {
 	else weed_leaf_copy(event,"value",paramtmpl,"default");
 	if (is_perchannel_multiw(param)) {
 	  int num_in_tracks=weed_leaf_num_elements(mt->init_event,"in_tracks");
-	  int param_hint=weed_get_int_value(paramtmpl,"hint",&error);
-	  fill_param_vals_to(paramtmpl,event,i,param_hint,num_in_tracks-1);
+	  fill_param_vals_to(event,paramtmpl,num_in_tracks-1,TRUE);
 	}
       }
     }

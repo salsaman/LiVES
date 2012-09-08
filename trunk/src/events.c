@@ -2357,23 +2357,46 @@ void event_list_close_gaps (weed_plant_t *event_list) {
 
 
 
-void add_track_to_avol_init(weed_plant_t *event, gint tnum) {
-  int *new_in_tracks,*in_tracks;
-  int num_in_tracks,error;
+void add_track_to_avol_init(weed_plant_t *filter, weed_plant_t *event, int nbtracks, boolean behind) {
+  // added a new video track - now we need to update our audio volume and pan effect
+  weed_plant_t **in_ptmpls;
+
+  int *new_in_tracks;
+
+  int num_in_tracks;
+  int error,nparams;
+
+  void **pchainx,*pchange;
 
   register int i;
 
-  if (weed_plant_has_leaf(event,"in_tracks")&&(num_in_tracks=weed_leaf_num_elements(event,"in_tracks"))>0) {
-    in_tracks=weed_get_int_array(event,"in_tracks",&error);
-    new_in_tracks=g_malloc((num_in_tracks+1)*sizint);
-    for (i=0;i<num_in_tracks;i++) {
-      new_in_tracks[i]=in_tracks[i];
-    }
-    new_in_tracks[i]=tnum;
-    weed_set_int_array(event,"in_tracks",num_in_tracks+1,new_in_tracks);
-    weed_free(in_tracks);
-    g_free(new_in_tracks);
+  // add a new value to in_tracks
+  num_in_tracks=weed_leaf_num_elements(event,"in_tracks")+1;
+  new_in_tracks=g_malloc(num_in_tracks*sizint);
+  for (i=0;i<num_in_tracks;i++) {
+    new_in_tracks[i]=i;
   }
+  weed_set_int_array(event,"in_tracks",num_in_tracks,new_in_tracks);
+  g_free(new_in_tracks);
+
+  weed_set_int_value(event,"in_count",weed_get_int_value(event,"in_count",&error));
+
+  // update all param_changes
+
+  nparams=weed_leaf_num_elements(event,"in_parameters");
+  pchainx=weed_get_voidptr_array(event,"in_parameters",&error);
+
+  in_ptmpls=weed_get_plantptr_array(filter,"in_parameter_templates",&error);
+
+  for (i=0;i<nparams;i++) {
+    pchange=(weed_plant_t *)pchainx[i];
+    while (pchange!=NULL) {
+      fill_param_vals_to(pchange,in_ptmpls[i],num_in_tracks,behind);
+      pchange=weed_get_voidptr_value(pchange,"next_change",&error);
+    }
+  }
+
+  weed_free(in_ptmpls);
 }
 
 
@@ -2516,7 +2539,7 @@ weed_plant_t *append_frame_event (weed_plant_t *event_list, weed_timecode_t tc, 
 
 void **filter_init_add_pchanges (weed_plant_t *event_list, weed_plant_t *plant, weed_plant_t *init_event, int ntracks) {
   int i,error;
-  weed_plant_t **in_params;
+  weed_plant_t **in_params,**in_ptmpls;
   int num_params;
   void **pchain=NULL;
 
@@ -2534,6 +2557,7 @@ void **filter_init_add_pchanges (weed_plant_t *event_list, weed_plant_t *plant, 
   if (!weed_plant_has_leaf(filter,"in_parameter_templates")||weed_get_plantptr_value(filter,"in_parameter_templates",&error)==NULL) return NULL;
 
   num_params=weed_leaf_num_elements(filter,"in_parameter_templates");
+  in_ptmpls=weed_get_plantptr_array(filter,"in_parameter_templates",&error);
 
   pchain=(void **)g_malloc(num_params*sizeof(void *));
 
@@ -2548,9 +2572,7 @@ void **filter_init_add_pchanges (weed_plant_t *event_list, weed_plant_t *plant, 
 
     if (is_perchannel_multiw(in_params[i])) {
       // if the parameter is element-per-channel, fill up to number of channels
-      weed_plant_t *ptmpl=weed_get_plantptr_value(in_params[i],"template",&error);
-      int phint=weed_get_int_value(ptmpl,"hint",&error);
-      fill_param_vals_to(ptmpl,in_params[i],i,phint,ntracks-1);
+      fill_param_vals_to(in_params[i],in_ptmpls[i],ntracks-1,TRUE);
     }
 
     weed_leaf_copy((weed_plant_t *)pchain[i],"value",in_params[i],"value");
@@ -2566,6 +2588,7 @@ void **filter_init_add_pchanges (weed_plant_t *event_list, weed_plant_t *plant, 
   }
 
   weed_free(in_params);
+  weed_free(in_ptmpls);
 
   weed_set_voidptr_array(init_event,"in_parameters",num_params,pchain);
   return pchain;

@@ -2762,7 +2762,7 @@ void play_file (void) {
 #ifdef ENABLE_JACK
   if (audio_player==AUD_PLAYER_JACK&&(mainw->jackd!=NULL||mainw->jackd_read!=NULL)) {
 
-    if (mainw->jackd_read!=NULL||mainw->aud_rec_fd!=-1) jack_rec_audio_end();
+    if (mainw->jackd_read!=NULL||mainw->aud_rec_fd!=-1) jack_rec_audio_end(TRUE);
 
     // send jack transport stop
     if (!mainw->preview&&!mainw->foreign) jack_pb_stop();
@@ -2794,7 +2794,7 @@ void play_file (void) {
 #ifdef HAVE_PULSE_AUDIO
     if (audio_player==AUD_PLAYER_PULSE&&(mainw->pulsed!=NULL||mainw->pulsed_read!=NULL)) {
 
-    if (mainw->pulsed_read!=NULL||mainw->aud_rec_fd!=-1) pulse_rec_audio_end();
+    if (mainw->pulsed_read!=NULL||mainw->aud_rec_fd!=-1) pulse_rec_audio_end(TRUE);
 
     // tell pulse client to close audio file
     if (mainw->pulsed->fd>0) {

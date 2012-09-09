@@ -182,12 +182,12 @@ typedef enum {
 
 #ifdef ENABLE_JACK
 void jack_rec_audio_to_clip(gint fileno, gint oldfileno, lives_rec_audio_type_t rec_type);  ///< record from external source to clip
-void jack_rec_audio_end(void);
+void jack_rec_audio_end(boolean close_fd);
 #endif
 
 #ifdef HAVE_PULSE_AUDIO
 void pulse_rec_audio_to_clip(gint fileno, gint oldfileno, lives_rec_audio_type_t rec_type);  ///< record from external source to clip
-void pulse_rec_audio_end(void);
+void pulse_rec_audio_end(boolean close_fd);
 #endif
 
 void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_plant_t *st_event, gboolean exact);

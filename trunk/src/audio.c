@@ -1391,19 +1391,19 @@ void jack_rec_audio_to_clip(gint fileno, gint old_file, lives_rec_audio_type_t r
     on_playsel_activate(NULL,NULL);
     mainw->current_file=current_file;
   }
-  jack_rec_audio_end();
+  jack_rec_audio_end(TRUE);
 }
 
 
 
-void jack_rec_audio_end(void) {
+void jack_rec_audio_end(boolean close_fd) {
   // recording ended
 
   // stop recording
   if (mainw->jackd_read!=NULL) jack_close_device(mainw->jackd_read);
   mainw->jackd_read=NULL;
 
-  if (mainw->aud_rec_fd!=-1) {
+  if (close_fd&&mainw->aud_rec_fd!=-1) {
     // close file
     close(mainw->aud_rec_fd);
     mainw->aud_rec_fd=-1;
@@ -1533,12 +1533,12 @@ void pulse_rec_audio_to_clip(gint fileno, gint old_file, lives_rec_audio_type_t 
     on_playsel_activate(NULL,NULL);
     mainw->current_file=current_file;
   }
-  pulse_rec_audio_end();
+  pulse_rec_audio_end(TRUE);
 }
 
 
 
-void pulse_rec_audio_end(void) {
+void pulse_rec_audio_end(boolean close_fd) {
   // recording ended
 
   // stop recording
@@ -1553,7 +1553,7 @@ void pulse_rec_audio_end(void) {
     mainw->pulsed_read=NULL;
   }
 
-  if (mainw->aud_rec_fd!=-1) {
+  if (mainw->aud_rec_fd!=-1&&close_fd) {
     // close file
     close(mainw->aud_rec_fd);
     mainw->aud_rec_fd=-1;

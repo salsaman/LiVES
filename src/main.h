@@ -977,6 +977,7 @@ void close_current_file (gint file_to_switch_to);  ///< close current file, and 
 void get_next_free_file(void);
 void switch_to_file(gint old_file, gint new_file);
 void do_quick_switch (gint new_file);
+void switch_audio_clip(gint new_file, boolean activate);
 void resize (gdouble scale);
 gboolean read_file_details(const gchar *file_name, gboolean only_check_for_audio);
 void do_start_messages(void);

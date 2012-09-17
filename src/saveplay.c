@@ -2120,6 +2120,7 @@ void play_file (void) {
   mainw->rec_aclip=-1;
 
   if (mainw->pre_src_file==-2) mainw->pre_src_file=mainw->current_file;
+  mainw->pre_src_audio_file=mainw->current_file;
 
   // enable the freeze button
   gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_BackSpace, (GdkModifierType)GDK_CONTROL_MASK, 

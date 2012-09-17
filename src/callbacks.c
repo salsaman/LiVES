@@ -3989,6 +3989,7 @@ on_record_perf_activate                      (GtkMenuItem     *menuitem,
 	  }
 
 	}
+
 #endif
 #ifdef HAVE_PULSE_AUDIO
 	if (prefs->audio_player==AUD_PLAYER_PULSE) {
@@ -4032,38 +4033,6 @@ on_record_perf_activate                      (GtkMenuItem     *menuitem,
 	insert_audio_event_at(mainw->event_list, last_frame, -1, mainw->rec_aclip, 0., 0.);
       }
 #endif
-
-
-      /*
-      if (prefs->audio_src==AUDIO_SRC_EXT) {
-	// remove record head and add play head
-#ifdef ENABLE_JACK
-	if (prefs->audio_player==AUD_PLAYER_JACK) {
-	  if (mainw->jackd_read!=NULL) {
-	    jack_rec_audio_end();
-	  }
-	}
-#endif
-#ifdef HAVE_PULSE_AUDIO
-	if (prefs->audio_player==AUD_PLAYER_PULSE) {
-	  if (mainw->pulsed_read!=NULL) {
-	    pulse_rec_audio_end();
-	  }
-	}
-#endif
-
-	if (prefs->audio_player==AUD_PLAYER_JACK) {
-#ifdef ENABLE_JACK
-	  jack_aud_pb_ready(mainw->current_file);
-#endif
-	}
-	else if (prefs->audio_player==AUD_PLAYER_PULSE) {
-#ifdef HAVE_PULSE_AUDIO
-	  pulse_aud_pb_ready(mainw->current_file);
-#endif
-	}
-      }
-      */
 
       if (prefs->rec_opts&REC_EFFECTS) {
 	// add deinit events for all active effects

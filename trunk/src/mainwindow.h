@@ -347,7 +347,8 @@ typedef struct {
   /// which number file we are playing (or -1)
   gint playing_file;
 
-  gint pre_src_file; ///< file we were editing before any ext input started
+  gint pre_src_file; ///< video file we were playing before any ext input started
+  gint pre_src_audio_file; ///< audio file we were playing before any ext input started
 
   gint scr_width;
   gint scr_height;

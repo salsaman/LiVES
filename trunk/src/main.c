@@ -696,6 +696,7 @@ static void lives_init(_ign_opts *ign_opts) {
   mainw->blend_file=-1;
 
   mainw->pre_src_file=-2;
+  mainw->pre_src_audio_file=-1;
 
   mainw->size_warn=FALSE;
   mainw->dvgrab_preview=FALSE;
@@ -5968,58 +5969,15 @@ void switch_to_file(gint old_file, gint new_file) {
 }
 
 
+void switch_audio_clip(gint new_file, boolean activate) {
 
-void do_quick_switch (gint new_file) {
-  // handle clip switching during playback
-
-  gint ovsize=mainw->pheight;
-  gint ohsize=mainw->pwidth;
-  gboolean osc_block;
-
-  if (mainw->current_file<1||mainw->files[new_file]==NULL) return;
-
-  if (mainw->noswitch||(mainw->record&&!mainw->record_paused&&!(prefs->rec_opts&REC_CLIPS))||
-      mainw->foreign||(mainw->preview&&!mainw->is_rendering&&mainw->multitrack==NULL)) return;
-
-  if (new_file==mainw->current_file) {
-    if (!((mainw->fs&&prefs->gui_monitor==prefs->play_monitor)||(mainw->faded&&mainw->double_size)||
-	  mainw->multitrack!=NULL)) {
-      switch_to_file (mainw->current_file=0, new_file);
-      if (mainw->play_window!=NULL&&!mainw->double_size&&!mainw->fs&&mainw->current_file!=-1&&cfile!=NULL&&
-	  (ohsize!=cfile->hsize||ovsize!=cfile->vsize)) {
-	// for single size sepwin, we resize frames to fit the window
-	mainw->must_resize=TRUE;
-	mainw->pheight=ovsize;
-	mainw->pwidth=ohsize;
-      }
-      else if (mainw->multitrack==NULL) mainw->must_resize=FALSE;
-    }
-    return;
-  }
-
-  // reset old info file
-  if (cfile!=NULL) {
-    gchar *tmp;
-#ifndef IS_MINGW
-      tmp=g_build_filename(prefs->tmpdir,cfile->handle,".status",NULL);
-#else
-      tmp=g_build_filename(prefs->tmpdir,cfile->handle,"status",NULL);
-#endif
-    g_snprintf(cfile->info_file,PATH_MAX,"%s",tmp);
-    g_free(tmp);
-  }
-
-  osc_block=mainw->osc_block;
-  mainw->osc_block=TRUE;
-
- 
-  // switch audio clip
-  if (prefs->audio_player==AUD_PLAYER_JACK&&(prefs->audio_opts&AUDIO_OPTS_FOLLOW_CLIPS)&&!mainw->is_rendering&&
-      (mainw->preview||!(mainw->agen_key!=0||prefs->audio_src==AUDIO_SRC_EXT))) {
+  if (prefs->audio_player==AUD_PLAYER_JACK) {
 #ifdef ENABLE_JACK
     if (mainw->jackd!=NULL) {
       gboolean timeout;
       int alarm_handle=lives_alarm_set(LIVES_ACONNECT_TIMEOUT);
+      if (!activate) mainw->jackd->in_use=FALSE;
+
       while (!(timeout=lives_alarm_get(alarm_handle))&&jack_get_msgq(mainw->jackd)!=NULL) {
 	sched_yield(); // wait for seek
       }
@@ -6040,8 +5998,13 @@ void do_quick_switch (gint new_file) {
 	lives_alarm_clear(alarm_handle);
 	
       }
+
+      if (new_file<0||mainw->files[new_file]==NULL) {
+	mainw->jackd->in_use=FALSE;
+	return;
+      }
       
-      mainw->jackd->in_use=TRUE;
+      if (activate) mainw->jackd->in_use=TRUE;
       
       if (mainw->files[new_file]->achans>0) { 
 	gint asigned=!(mainw->files[new_file]->signed_endian&AFORM_UNSIGNED);
@@ -6087,12 +6050,10 @@ void do_quick_switch (gint new_file) {
 	    mainw->jackd->is_silent=FALSE;
 	  }
 	  
-	  if (!has_audio_filters(FALSE)) {
-	    mainw->rec_aclip=new_file;
-	    mainw->rec_avel=mainw->files[new_file]->pb_fps/mainw->files[new_file]->fps;
-	    mainw->rec_aseek=(gdouble)mainw->files[new_file]->aseek_pos/
-	      (gdouble)(mainw->files[new_file]->arate*mainw->files[new_file]->achans*mainw->files[new_file]->asampsize/8);
-	  }
+	  mainw->rec_aclip=new_file;
+	  mainw->rec_avel=mainw->files[new_file]->pb_fps/mainw->files[new_file]->fps;
+	  mainw->rec_aseek=(gdouble)mainw->files[new_file]->aseek_pos/
+	    (gdouble)(mainw->files[new_file]->arate*mainw->files[new_file]->achans*mainw->files[new_file]->asampsize/8);
 	}
       }
       else {
@@ -6107,8 +6068,7 @@ void do_quick_switch (gint new_file) {
   }
 
   // switch audio clip
-  if (prefs->audio_player==AUD_PLAYER_PULSE&&(prefs->audio_opts&AUDIO_OPTS_FOLLOW_CLIPS)&&!mainw->is_rendering&&
-      (mainw->preview||!(mainw->agen_key!=0||prefs->audio_src==AUDIO_SRC_EXT))) {
+ if (prefs->audio_player==AUD_PLAYER_PULSE) {
 #ifdef HAVE_PULSE_AUDIO
     if (mainw->pulsed!=NULL) {
       gboolean timeout;
@@ -6131,6 +6091,11 @@ void do_quick_switch (gint new_file) {
 	}
 	if (timeout) pulse_try_reconnect();
 	lives_alarm_clear(alarm_handle);
+      }
+
+      if (new_file<0||mainw->files[new_file]==NULL) {
+	mainw->pulsed->in_use=FALSE;
+	return;
       }
 
       mainw->pulsed->in_use=TRUE;
@@ -6182,12 +6147,10 @@ void do_quick_switch (gint new_file) {
 	    mainw->pulsed->is_paused=mainw->files[new_file]->play_paused;
 	  }
 	    
-	  if (!has_audio_filters(FALSE)) {
-	    mainw->rec_aclip=new_file;
-	    mainw->rec_avel=mainw->files[new_file]->pb_fps/mainw->files[new_file]->fps;
-	    mainw->rec_aseek=(gdouble)mainw->files[new_file]->aseek_pos/
-	      (gdouble)(mainw->files[new_file]->arate*mainw->files[new_file]->achans*mainw->files[new_file]->asampsize/8);
-	  }
+	  mainw->rec_aclip=new_file;
+	  mainw->rec_avel=mainw->files[new_file]->pb_fps/mainw->files[new_file]->fps;
+	  mainw->rec_aseek=(gdouble)mainw->files[new_file]->aseek_pos/
+	    (gdouble)(mainw->files[new_file]->arate*mainw->files[new_file]->achans*mainw->files[new_file]->asampsize/8);
 	}
       }
       else {
@@ -6199,9 +6162,59 @@ void do_quick_switch (gint new_file) {
       }
     }
 #endif
+ }
+}
+
+
+
+void do_quick_switch (gint new_file) {
+  // handle clip switching during playback
+
+  gint ovsize=mainw->pheight;
+  gint ohsize=mainw->pwidth;
+  gboolean osc_block;
+
+  if (mainw->current_file<1||mainw->files[new_file]==NULL) return;
+
+  if (mainw->noswitch||(mainw->record&&!mainw->record_paused&&!(prefs->rec_opts&REC_CLIPS))||
+      mainw->foreign||(mainw->preview&&!mainw->is_rendering&&mainw->multitrack==NULL)) return;
+
+  if (new_file==mainw->current_file) {
+    if (!((mainw->fs&&prefs->gui_monitor==prefs->play_monitor)||(mainw->faded&&mainw->double_size)||
+	  mainw->multitrack!=NULL)) {
+      switch_to_file (mainw->current_file=0, new_file);
+      if (mainw->play_window!=NULL&&!mainw->double_size&&!mainw->fs&&mainw->current_file!=-1&&cfile!=NULL&&
+	  (ohsize!=cfile->hsize||ovsize!=cfile->vsize)) {
+	// for single size sepwin, we resize frames to fit the window
+	mainw->must_resize=TRUE;
+	mainw->pheight=ovsize;
+	mainw->pwidth=ohsize;
+      }
+      else if (mainw->multitrack==NULL) mainw->must_resize=FALSE;
+    }
+    return;
   }
 
+  // reset old info file
+  if (cfile!=NULL) {
+    gchar *tmp;
+#ifndef IS_MINGW
+      tmp=g_build_filename(prefs->tmpdir,cfile->handle,".status",NULL);
+#else
+      tmp=g_build_filename(prefs->tmpdir,cfile->handle,"status",NULL);
+#endif
+    g_snprintf(cfile->info_file,PATH_MAX,"%s",tmp);
+    g_free(tmp);
+  }
 
+  osc_block=mainw->osc_block;
+  mainw->osc_block=TRUE;
+ 
+  // switch audio clip
+  if ((prefs->audio_player==AUD_PLAYER_JACK||prefs->audio_player==AUD_PLAYER_PULSE)&&(prefs->audio_opts&AUDIO_OPTS_FOLLOW_CLIPS)&&!mainw->is_rendering&&
+      (mainw->preview||!(mainw->agen_key!=0||prefs->audio_src==AUDIO_SRC_EXT))) {
+    switch_audio_clip(new_file,TRUE);
+  }
 
   mainw->whentostop=NEVER_STOP;
 

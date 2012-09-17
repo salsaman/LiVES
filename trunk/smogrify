@@ -4948,9 +4948,36 @@ sub get_file_info {
 	    $panic=1;
 	    return;
 	}
+
+
+
 	
 	if (-f $file_ident) {
-	    $id_vid_form=smog_system_direct("grep ID_VIDEO_CODEC \"$file_ident\" 2>$nulfile");
+
+	    $length=smog_system_direct("grep ID_LENGTH \"$file_ident\" 2>$nulfile");
+	    $length=(split("=",(split("\n",$length))[0]))[1];
+	    chomp($length);
+
+	    if ($length eq "0" &&!(defined($is_remote)&&($is_remote>0))) {
+		$com="$mplay_command -demuxer lavf -identify -vo null -ao null -frames 0 \"$file\" > $file_ident 2>$nulfile <$nulfile";
+
+		$smerr=smog_system($com);
+		
+		if ($smerr) {
+		    sig_system_error("$com",$smerr);
+		    $panic=1;
+		    return;
+		}
+
+
+
+	    }
+
+	}
+
+
+	if (-f $file_ident) {
+	$id_vid_form=smog_system_direct("grep ID_VIDEO_CODEC \"$file_ident\" 2>$nulfile");
         $id_vid_form=(split("=",(split("\n",$id_vid_form))[0]))[1];
         chomp($id_vid_form);
 
@@ -5125,9 +5152,6 @@ sub get_file_info {
 	    chomp($count);
 
             if ($count eq "") {
-                $length=smog_system_direct("grep ID_LENGTH \"$file_ident\" 2>$nulfile");
-                $length=(split("=",(split("\n",$length))[0]))[1];
-                chomp($length);
                 $count=int($fps*$length+.5);
             }
             if ($count eq "") {

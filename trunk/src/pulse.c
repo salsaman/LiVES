@@ -153,6 +153,16 @@ static void sample_silence_pulse (pulse_driver_t *pdriver, size_t nbytes, size_t
 static short *shortbuffer=NULL;
 
 
+static void pulse_audio_write_process_dummy (pa_stream *pstream, size_t nbytes, void *arg) {
+  pulse_driver_t* pulsed = (pulse_driver_t*)arg;
+  uint64_t nframes=nbytes/pulsed->out_achans/(pulsed->out_asamps>>3);
+  size_t xbytes=pa_stream_writable_size(pstream);
+  sample_silence_pulse(pulsed,nframes*pulsed->out_achans*(pulsed->out_asamps>>3),xbytes);
+  //g_print("pt a1 %ld\n",nframes);
+  return;
+}
+
+
 static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *arg) {
   // PULSE AUDIO calls this periodically to get the next audio buffer
 
@@ -1022,6 +1032,10 @@ int pulse_audio_read_init(void) {
 }
 
 
+void set_process_callback_pulse(pulse_driver_t *pdriver, boolean activate) {
+  if (activate) pa_stream_set_write_callback(pdriver->pstream,pulse_audio_write_process,pdriver);
+  else pa_stream_set_write_callback(pdriver->pstream,pulse_audio_write_process_dummy,pdriver);
+}
 
 
 int pulse_driver_activate(pulse_driver_t *pdriver) {
@@ -1101,7 +1115,7 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
     pa_cvolume_set(&out_vol,pdriver->out_achans,pavol);
 
     // set write callback
-    pa_stream_set_write_callback(pdriver->pstream,pulse_audio_write_process,pdriver);
+    set_process_callback_pulse(pdriver,TRUE);
 
 #ifdef PA_STREAM_START_UNMUTED
     pa_stream_connect_playback(pdriver->pstream,NULL,&pa_battr,

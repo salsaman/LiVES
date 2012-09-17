@@ -5193,7 +5193,8 @@ gboolean weed_init_effect(int hotkey) {
 #ifdef ENABLE_JACK
 	if (mainw->jackd_read!=NULL&&(mainw->jackd_read->playing_file==-1||mainw->jackd_read->playing_file==mainw->ascrap_file)) {
 	  // if playing external audio, switch over to internal for an audio gen
-	  mainw->jackd->frames_written+=mainw->jackd_read->frames_written;
+	  mainw->jackd->audio_ticks=mainw->currticks;
+	  mainw->jackd->frames_written=0;
 	  jack_rec_audio_end(FALSE);
 	}
 	if (mainw->jackd!=NULL&&mainw->jackd_read==NULL) {
@@ -5205,7 +5206,8 @@ gboolean weed_init_effect(int hotkey) {
 #ifdef HAVE_PULSE_AUDIO
 	if (mainw->pulsed_read!=NULL&&(mainw->pulsed_read->playing_file==-1||mainw->pulsed_read->playing_file==mainw->ascrap_file)) {
 	  // if playing external audio, switch over to internal for an audio gen
-	  mainw->pulsed->frames_written+=mainw->pulsed_read->frames_written;
+	  mainw->pulsed->audio_ticks=mainw->currticks;
+	  mainw->pulsed->frames_written=0;
 	  pulse_rec_audio_end(FALSE);
 	}
 	if (mainw->pulsed!=NULL&&mainw->pulsed_read==NULL) {
@@ -5214,10 +5216,25 @@ gboolean weed_init_effect(int hotkey) {
 #endif
       }
 
-      if (mainw->playing_file>0&&mainw->record&&!mainw->record_paused&&(prefs->rec_opts&REC_AUDIO)) {
+      if (mainw->playing_file>0&&mainw->record&&!mainw->record_paused&&!prefs->audio_src==AUDIO_SRC_EXT&&(prefs->rec_opts&REC_AUDIO)) {
 	// if recording audio, open ascrap file and add audio event
 	mainw->record=FALSE;
 	on_record_perf_activate(NULL,NULL);
+	mainw->record_starting=FALSE;
+	mainw->record=TRUE;
+	if (prefs->audio_player==AUD_PLAYER_PULSE) {
+#ifdef HAVE_PULSE_AUDIO
+	  mainw->pulsed->audio_ticks=mainw->currticks;
+	  mainw->pulsed->frames_written=0;
+#endif
+	}
+	if (prefs->audio_player==AUD_PLAYER_JACK) {
+#ifdef ENABLE_JACK
+	  mainw->jackd->audio_ticks=mainw->currticks;
+	  mainw->jackd->frames_written=0;
+#endif
+	}
+
       }
 
     }
@@ -5332,28 +5349,33 @@ void weed_deinit_effect(int hotkey) {
       if (prefs->audio_player==AUD_PLAYER_JACK) {
 #ifdef ENABLE_JACK
 	if (mainw->jackd_read==NULL) {
-	mainw->jackd->in_use=FALSE; // deactivate writer
-	jack_rec_audio_to_clip(-1,0,0); //activate reader
-	mainw->jackd_read->frames_written+=mainw->jackd->frames_written; // ensure time continues monotonically
-	if (mainw->record) mainw->jackd->playing_file=mainw->ascrap_file; // if recording, continue to write to 
+	  mainw->jackd->in_use=FALSE; // deactivate writer
+	  jack_rec_audio_to_clip(-1,0,0); //activate reader
+	  mainw->jackd_read->frames_written+=mainw->jackd->frames_written; // ensure time continues monotonically
+	  if (mainw->record) mainw->jackd->playing_file=mainw->ascrap_file; // if recording, continue to write to 
+	}
 #endif
       }
-	if (prefs->audio_player==AUD_PLAYER_PULSE) {
+      if (prefs->audio_player==AUD_PLAYER_PULSE) {
 #ifdef HAVE_PULSE_AUDIO
 	if (mainw->pulsed_read==NULL) {
-	mainw->pulsed->in_use=FALSE; // deactivate writer
-	pulse_rec_audio_to_clip(-1,0,0); //activate reader
-	mainw->pulsed_read->frames_written+=mainw->pulsed->frames_written; // ensure time continues monotonically
-	if (mainw->record) mainw->pulsed->playing_file=mainw->ascrap_file; // if recording, continue to write to 
-      }
+	  mainw->pulsed->in_use=FALSE; // deactivate writer
+	  pulse_rec_audio_to_clip(-1,0,0); //activate reader
+	  mainw->pulsed_read->frames_written+=mainw->pulsed->frames_written; // ensure time continues monotonically
+	  if (mainw->record) mainw->pulsed->playing_file=mainw->ascrap_file; // if recording, continue to write to 
+        }
 #endif
       }
+    }
+    else if (mainw->playing_file>0) {
+      // for internal, continue where we should
+      if (prefs->audio_player==AUD_PLAYER_JACK||prefs->audio_player==AUD_PLAYER_PULSE) {
+	if (prefs->audio_opts&AUDIO_OPTS_FOLLOW_CLIPS) switch_audio_clip(mainw->playing_file,TRUE);
+	else switch_audio_clip(mainw->pre_src_audio_file,TRUE);
       }
-
-
-      }
-      }
-
+    }
+  }
+ 
   pthread_mutex_lock(&mainw->afilter_mutex);
   key_to_instance[hotkey][key_modes[hotkey]]=NULL;
   pthread_mutex_unlock(&mainw->afilter_mutex);
@@ -5361,14 +5383,6 @@ void weed_deinit_effect(int hotkey) {
   if (mainw->whentostop==STOP_ON_VID_END&&mainw->current_file>-1&&(cfile->frames==0
 								   ||(mainw->loop&&cfile->achans>0&&!mainw->is_rendering&&(mainw->audio_end/cfile->fps)
 								      <MAX (cfile->laudio_time,cfile->raudio_time)))) mainw->whentostop=STOP_ON_AUD_END;
-
-  /*    if (mainw->playing_file>0&&mainw->record&&!mainw->record_paused&&(prefs->rec_opts&REC_AUDIO)) {
-  // if recording audio, add audio event
-  mainw->record=FALSE;
-  on_record_perf_activate(NULL,NULL);
-  mainw->record_starting=FALSE;
-  }*/
- 
 
   if (num_in_chans==2) {
     was_transition=TRUE;

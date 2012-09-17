@@ -282,6 +282,23 @@ static lives_audio_buf_t *pop_cache_buffer (void) {
 
 
 
+static int audio_process_null (nframes_t nframes, void *arg) {
+  float* out_buffer[JACK_MAX_OUTPUT_PORTS];
+  jack_driver_t* jackd = (jack_driver_t*)arg;
+  register int i;
+
+  if (!jackd->is_silent) {
+    for (i = 0; i < jackd->num_output_channels; i++) { 
+      out_buffer[i] = (float *) jack_port_get_buffer(jackd->output_port[i], 
+						     nframes);
+      sample_silence_dS(out_buffer[i], nframes);
+    }
+    jackd->is_silent=TRUE;
+  }
+  return 0;
+}
+
+
 static int audio_process (nframes_t nframes, void *arg) {
   // JACK calls this periodically to get the next audio buffer
   float* out_buffer[JACK_MAX_OUTPUT_PORTS];
@@ -1070,6 +1087,13 @@ static void jack_error_func(const char *desc) {
 // wait 5 seconds to startup
 #define JACK_START_WAIT 500000000
 
+void set_process_callback_jack(jack_driver_t *jackd, boolean activate) {
+  // set process callback and start
+  if (activate) jack_set_process_callback ((void *)jackd->client, audio_process, jackd);  
+  else jack_set_process_callback ((void *)jackd->client, audio_process_null, jackd);  
+}
+
+
 
 // create a new client and connect it to jack, connect the ports
 int jack_open_device(jack_driver_t *jackd) {
@@ -1147,9 +1171,7 @@ int jack_open_device(jack_driver_t *jackd) {
      just decides to stop calling us. */
   jack_on_shutdown(jackd->client, jack_shutdown, jackd);
 
-  // set process callback and start
-  jack_set_process_callback (jackd->client, audio_process, jackd);  
-
+  set_process_callback_jack(jackd, TRUE);
 
   return 0;
 

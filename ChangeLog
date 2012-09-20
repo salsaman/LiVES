@@ -7,7 +7,7 @@ Render audio with audio effects.
 Allow use of audio effects in multitrack.
 Fix crash after adding a new track with an existing event list.
 Update youtube downloader to recognise youtu.be links.
-
+Fix regression for number of channels dropdown box in audio resampling.
 
 
 

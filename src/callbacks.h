@@ -742,12 +742,7 @@ void
 on_ins_silence_activate (GtkMenuItem     *menuitem,
 			 gpointer         user_data);
 
-void
-on_ins_silence_details_clicked                      (GtkButton *button,
-						     GtkEntry *entry);
-
-
-void popup_lmap_errors(GtkMenuItem *, gpointer);
+void on_ins_silence_details_clicked (GtkButton *, gpointer user_data);
 
 void on_lerrors_close_clicked (GtkButton *, gpointer);
 void on_lerrors_clear_clicked (GtkButton *, gpointer);

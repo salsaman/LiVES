@@ -2904,10 +2904,18 @@ void sensitize(void) {
   gtk_widget_set_sensitive (mainw->import_proj, mainw->current_file==-1);
 
   if (!mainw->foreign) {
-    for (i=0;i<=mainw->num_rendered_effects_builtin+mainw->num_rendered_effects_custom+
+    for (i=1;i<=mainw->num_rendered_effects_builtin+mainw->num_rendered_effects_custom+
 	   mainw->num_rendered_effects_test;i++) 
       if (mainw->rendered_fx[i].menuitem!=NULL&&mainw->rendered_fx[i].min_frames>=0) 
 	gtk_widget_set_sensitive(mainw->rendered_fx[i].menuitem,mainw->current_file>0&&cfile->frames>0);
+
+    if (mainw->current_file>0&&((has_video_filters(FALSE)&&!has_video_filters(TRUE))||
+				(cfile->achans>0&&prefs->audio_src==AUDIO_SRC_INT&&has_audio_filters(FALSE))||
+				mainw->agen_key!=0)) {
+      
+      gtk_widget_set_sensitive(mainw->rendered_fx[0].menuitem,TRUE);
+    }
+    else gtk_widget_set_sensitive(mainw->rendered_fx[0].menuitem,FALSE);
   }
 
   gtk_widget_set_sensitive (mainw->record_perf, TRUE);
@@ -6011,7 +6019,7 @@ void switch_audio_clip(gint new_file, boolean activate) {
 	gint aendian=!(mainw->files[new_file]->signed_endian&AFORM_BIG_ENDIAN);
 	mainw->jackd->num_input_channels=mainw->files[new_file]->achans;
 	mainw->jackd->bytes_per_channel=mainw->files[new_file]->asampsize/8;
-	if (prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS) {
+	if (activate&&(prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS)) {
 	  if (!mainw->files[new_file]->play_paused) 
 	    mainw->jackd->sample_in_rate=mainw->files[new_file]->arate*mainw->files[new_file]->pb_fps/
 	      mainw->files[new_file]->fps;
@@ -6105,7 +6113,7 @@ void switch_audio_clip(gint new_file, boolean activate) {
 	gint aendian=!(mainw->files[new_file]->signed_endian&AFORM_BIG_ENDIAN);
 	mainw->pulsed->in_achans=mainw->files[new_file]->achans;
 	mainw->pulsed->in_asamps=mainw->files[new_file]->asampsize;
-	if (prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS) {
+	if (activate&&(prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS)) {
 	  if (!mainw->files[new_file]->play_paused) 
 	    mainw->pulsed->in_arate=mainw->files[new_file]->arate*mainw->files[new_file]->pb_fps/
 	      mainw->files[new_file]->fps;

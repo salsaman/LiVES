@@ -1187,6 +1187,8 @@ void on_effects_paused (GtkButton *, gpointer user_data);
 void on_cancel_keep_button_clicked (GtkButton *, gpointer user_data);
 void on_cleardisk_activate (GtkWidget *, gpointer user_data);
 void on_cleardisk_advanced_clicked (GtkWidget *, gpointer user_data);
+void popup_lmap_errors(GtkMenuItem *, gpointer);
+
 
 // paramspecial.c
 gboolean mt_framedraw(lives_mt *, GdkPixbuf *);

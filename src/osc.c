@@ -832,13 +832,19 @@ void lives_osc_cb_fx_enable(void *context, int arglen, const void *vargs, OSCTim
   lives_osc_parse_int_argument(vargs,&effect_key);
 
   if (!(mainw->rte&(GU641<<(effect_key-1)))) {
-    if (mainw->playing_file==-1&&via_shortcut) {
-      weed_plant_t *filter=rte_keymode_get_filter(effect_key,rte_key_getmode(effect_key));
-      if (filter==NULL) return lives_osc_notify_failure();
-      count=enabled_in_channels(filter, FALSE);
-      if (count!=0) return lives_osc_notify_failure(); // is no generator
+    weed_plant_t *filter=rte_keymode_get_filter(effect_key,rte_key_getmode(effect_key));
+    if (filter==NULL) return lives_osc_notify_failure();
+    count=enabled_in_channels(filter, FALSE);
+    if (mainw->playing_file==-1&&via_shortcut&&count!=0) return lives_osc_notify_failure(); // is no generator
+    
+    if (!mainw->osc_block) {
+      if (mainw->playing_file==-1&&count==0) {
+	// re - add the timer, as we hang here if a generator is started, and we want to receive messages still during playback
+	gtk_timeout_remove (mainw->kb_timer);
+	mainw->kb_timer=gtk_timeout_add(KEY_RPT_INTERVAL,&ext_triggers_poll,NULL);
+      }
+      rte_on_off_callback(NULL,NULL,0,(GdkModifierType)0,GINT_TO_POINTER(effect_key));
     }
-    if (!mainw->osc_block) rte_on_off_callback(NULL,NULL,0,(GdkModifierType)0,GINT_TO_POINTER(effect_key));
   }
   mainw->last_grabable_effect=grab;
   if (prefs->omc_noisy) lives_osc_notify_success(NULL);
@@ -860,19 +866,26 @@ void lives_osc_cb_fx_disable(void *context, int arglen, const void *vargs, OSCTi
 void lives_osc_cb_fx_toggle(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   // if not playing and via_shortcut, see if fx key points to generator
 
-  int count;
+  int count=0;
   int effect_key;
   if (mainw->multitrack!=NULL) return lives_osc_notify_failure();
   if (!lives_osc_check_arguments (arglen,vargs,"i",TRUE)) return lives_osc_notify_failure();
   lives_osc_parse_int_argument(vargs,&effect_key);
 
-  if (!(mainw->rte&(GU641<<(effect_key-1)))&&mainw->playing_file==-1&&via_shortcut) {
+  if (!(mainw->rte&(GU641<<(effect_key-1)))&&mainw->playing_file==-1) {
     weed_plant_t *filter=rte_keymode_get_filter(effect_key,rte_key_getmode(effect_key));
     if (filter==NULL) return lives_osc_notify_failure();
     count=enabled_in_channels(filter, FALSE);
-    if (count!=0) return lives_osc_notify_failure(); // is no generator
+    if (via_shortcut&&count!=0) return lives_osc_notify_failure(); // is no generator
   }
-  if (!mainw->osc_block) rte_on_off_callback(NULL,NULL,0,(GdkModifierType)0,GINT_TO_POINTER(effect_key));
+  if (!mainw->osc_block) {
+    if (!(mainw->rte&(GU641<<(effect_key-1)))&&mainw->playing_file==-1&&count==0&&via_shortcut) {
+      // re - add the timer, as we hang here if a generator is started, and we want to receive messages still during playback
+      gtk_timeout_remove (mainw->kb_timer);
+      mainw->kb_timer=gtk_timeout_add(KEY_RPT_INTERVAL,&ext_triggers_poll,NULL);
+    }
+    rte_on_off_callback(NULL,NULL,0,(GdkModifierType)0,GINT_TO_POINTER(effect_key));
+  }
   if (prefs->omc_noisy) lives_osc_notify_success(NULL);
 }
 

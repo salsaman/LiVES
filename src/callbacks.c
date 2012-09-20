@@ -1798,7 +1798,6 @@ on_undo_activate                      (GtkMenuItem     *menuitem,
     mainw->no_switch_dprint=FALSE;
   }
 
-  // TODO - maybe use a switch()
 
   if (cfile->undo_action==UNDO_INSERT_SILENCE) {
     on_del_audio_activate(NULL,NULL);
@@ -11813,6 +11812,8 @@ on_recaudclip_ok_clicked                      (GtkButton *button,
 
     if (mainw->read_failed) {
       do_read_failed_error_s(mainw->read_failed_file,NULL);
+      if (mainw->read_failed_file!=NULL) g_free(mainw->read_failed_file);
+      mainw->read_failed_file=NULL;
       if (!prefs->conserve_space&&type==1&&!backr) {
 	// try to recover backup
 	com=g_strdup_printf("%s undo_audio \"%s\"",prefs->backend_sync,mainw->files[old_file]->handle);
@@ -11857,6 +11858,7 @@ on_ins_silence_activate (GtkMenuItem     *menuitem,
   gdouble start=0,end=0;
   gchar *com,*msg;
   gboolean has_lmap_error=FALSE;
+  gboolean has_new_audio=FALSE;
 
   if (menuitem==NULL) {
     // redo
@@ -11875,8 +11877,12 @@ on_ins_silence_activate (GtkMenuItem     *menuitem,
     mainw->fx3_val=DEFAULT_AUDIO_SAMPS;
     mainw->fx4_val=mainw->endian;
     resaudw=create_resaudw(2,NULL,NULL);
-    gtk_widget_show (resaudw->dialog);
-    return;
+    if (gtk_dialog_run(GTK_DIALOG(resaudw->dialog))!=GTK_RESPONSE_OK) return;
+    if (mainw->error) {
+      mainw->error=FALSE;
+      return;
+    }
+    has_new_audio=TRUE;
   }
 
 
@@ -11890,6 +11896,7 @@ on_ins_silence_activate (GtkMenuItem     *menuitem,
 	  g_list_free_strings(mainw->xlays);
 	  g_list_free(mainw->xlays);
 	  mainw->xlays=NULL;
+	  if (has_new_audio) cfile->achans=cfile->arate=cfile->asampsize=cfile->arps=0;
 	  return;
 	}
 	add_lmap_error(LMAP_ERROR_SHIFT_AUDIO,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,0,start,
@@ -11907,6 +11914,7 @@ on_ins_silence_activate (GtkMenuItem     *menuitem,
 	g_list_free_strings(mainw->xlays);
 	g_list_free(mainw->xlays);
 	mainw->xlays=NULL;
+	if (has_new_audio) cfile->achans=cfile->arate=cfile->asampsize=cfile->arps=0;
 	return;
       }
       add_lmap_error(LMAP_ERROR_ALTER_AUDIO,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,0,start,
@@ -11942,6 +11950,7 @@ on_ins_silence_activate (GtkMenuItem     *menuitem,
 
   if (mainw->com_failed) {
     d_print_failed();
+    if (has_new_audio) cfile->achans=cfile->arate=cfile->asampsize=cfile->arps=0;
     return;
   }
 
@@ -11949,6 +11958,7 @@ on_ins_silence_activate (GtkMenuItem     *menuitem,
 
   if (mainw->error) {
     d_print_failed();
+    if (has_new_audio) cfile->achans=cfile->arate=cfile->asampsize=cfile->arps=0;
     return;
   }
 
@@ -11979,10 +11989,7 @@ on_ins_silence_activate (GtkMenuItem     *menuitem,
 
 
 
-void
-on_ins_silence_details_clicked                      (GtkButton *button,
-						     GtkEntry *entry)
-{
+void on_ins_silence_details_clicked (GtkButton *button, gpointer user_data) {
   int asigned=1,aendian=1;
   gboolean bad_header=FALSE;
   
@@ -12013,9 +12020,10 @@ on_ins_silence_details_clicked                      (GtkButton *button,
     if (mainw->com_failed||mainw->write_failed) bad_header=TRUE;
 
     if (bad_header) do_header_write_error(mainw->current_file);
+    mainw->error=TRUE;
     return;
   }
-  on_ins_silence_activate(GTK_MENU_ITEM(mainw->ins_silence),NULL);
+  mainw->error=FALSE;
 }
 
 

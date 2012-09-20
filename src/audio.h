@@ -155,7 +155,7 @@ void sample_move_d16_d16(short *dst, short *src,
 void sample_move_d16_d8(uint8_t *dst, short *src,
 			uint64_t nsamples, size_t tbytes, float scale, int nDstChannels, int nSrcChannels, int swap_sign);
 
-void sample_move_d16_float (float *dst, short *src, uint64_t nsamples, uint64_t src_skip, int is_unsigned, float vol);
+void sample_move_d16_float (float *dst, short *src, uint64_t nsamples, uint64_t src_skip, int is_unsigned, boolean rev_endian, float vol);
 
 int64_t sample_move_float_int(void *holding_buff, float **float_buffer, int nsamps, float scale, int chans, int asamps, int usigned, gboolean swap_endian, gboolean float_interleaved, float vol); ///< returns frames output
 
@@ -212,6 +212,10 @@ void audio_free_fnames(void);
 lives_audio_buf_t *audio_cache_init (void);
 void audio_cache_end (void);
 lives_audio_buf_t *audio_cache_get_buffer(void);
+
+boolean apply_rte_audio_init(void);
+void apply_rte_audio_end(boolean del);
+boolean apply_rte_audio(int nframes);
 
 gboolean start_audio_stream(void);
 void stop_audio_stream(void);

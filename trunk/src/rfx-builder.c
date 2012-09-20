@@ -5004,6 +5004,14 @@ void add_rfx_effects(void) {
   mainw->rendered_fx[0].menuitem=menuitem;
   mainw->rendered_fx[0].num_in_channels=1;
   
+  if (mainw->playing_file==-1&&mainw->current_file>0&&((has_video_filters(TRUE)&&!has_video_filters(FALSE))||
+						       (cfile->achans>0&&prefs->audio_src==AUDIO_SRC_INT&&has_audio_filters(FALSE))||
+						       mainw->agen_key!=0)) {
+    
+    gtk_widget_set_sensitive(mainw->rendered_fx[0].menuitem,TRUE);
+  }
+  else gtk_widget_set_sensitive(mainw->rendered_fx[0].menuitem,FALSE);
+
   gtk_container_add (GTK_CONTAINER (mainw->effects_menu), mainw->custom_effects_submenu);
   
   mainw->custom_effects_separator = gtk_menu_item_new ();

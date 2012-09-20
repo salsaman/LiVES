@@ -1106,6 +1106,7 @@ create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox) {
   // type 8 == grab external window, with audio
   // type 9 == grab external, no audio
   // type 10 == change inside multitrack
+  // type 11 == rte audio gen as rfx
 
   GtkWidget *dialog_vbox=NULL;
   GtkWidget *vbox21;
@@ -1172,7 +1173,7 @@ create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox) {
     type=3;
   }
 
-  if (type>5&&mainw->rec_end_time!=-1.) {
+  if (type>5&&type!=11&&mainw->rec_end_time!=-1.) {
     hours=(gint)(mainw->rec_end_time/3600.);
     mins=(gint)((mainw->rec_end_time-(hours*3600.))/60.);
     secs=mainw->rec_end_time-hours*3600.-mins*60.;
@@ -1180,7 +1181,6 @@ create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox) {
 
   _resaudw *resaudw=(_resaudw*)(g_malloc(sizeof(_resaudw)));
 
-  //if (type>2&&type<5) channels=g_list_append(channels,"0");
   channels = g_list_append (channels, (gpointer)"1");
   channels = g_list_append (channels, (gpointer)"2");
 
@@ -1207,13 +1207,13 @@ create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox) {
     else if (type==2) {
       gtk_window_set_title (GTK_WINDOW (resaudw->dialog), _("LiVES: - Insert Silence"));
     }
-    else if (type==5) {
+    else if (type==5||type==11) {
       gtk_window_set_title (GTK_WINDOW (resaudw->dialog), _("LiVES: - New Clip Audio"));
     }
     else if (type==9||type==8) {
       gtk_window_set_title (GTK_WINDOW (resaudw->dialog), _("LiVES: - External Clip Settings"));
     }
-    gtk_window_set_position (GTK_WINDOW (resaudw->dialog), GTK_WIN_POS_CENTER_ALWAYS);
+    gtk_window_set_position (GTK_WINDOW (resaudw->dialog), GTK_WIN_POS_CENTER_ON_PARENT);
     gtk_window_set_modal (GTK_WINDOW (resaudw->dialog), TRUE);
 
     if (prefs->show_gui) {
@@ -1468,7 +1468,7 @@ create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox) {
   resaudw->aud_checkbutton = NULL;
 
 
-  if (type<9) {
+  if (type<9||type==11) {
     frame7 = gtk_frame_new (NULL);
     gtk_widget_show (frame7);
     gtk_box_pack_start (GTK_BOX (vbox21), frame7, TRUE, TRUE, 0);
@@ -1531,26 +1531,27 @@ create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox) {
 
     add_fill_to_box(GTK_BOX(vbox));
 
-    combo4 = lives_standard_combo_new (_("Rate (Hz) "),type>=3,rate,LIVES_BOX(hbox),NULL);
+    combo4 = lives_standard_combo_new (_("Rate (Hz) "),type>=3&&type!=11,rate,LIVES_BOX(hbox),NULL);
     
     resaudw->entry_arate = lives_combo_get_entry(LIVES_COMBO(combo4));
 
     gtk_entry_set_width_chars (GTK_ENTRY (resaudw->entry_arate), 8);
     if (type==7) gtk_widget_set_sensitive(combo4,FALSE);
   
-    if (type<3||(type>4&&type<8)) tmp=g_strdup_printf ("%d",(gint)mainw->fx1_val);
+    if (type<3||(type>4&&type<8)||type==11) tmp=g_strdup_printf ("%d",(gint)mainw->fx1_val);
     else if (type==8) tmp=g_strdup_printf ("%d",DEFAULT_AUDIO_RATE);
     else if (type==3) tmp=g_strdup_printf ("%d",rdet->arate);
     else tmp=g_strdup_printf ("%d",prefs->mt_def_arate);
     gtk_entry_set_text (GTK_ENTRY (resaudw->entry_arate),tmp);
     g_free (tmp);
 
-    combo5 = lives_standard_combo_new ((type>=3?(_("    _Channels ")):(_("    Channels "))),type>=3,rate,LIVES_BOX(hbox),NULL);
+    combo5 = lives_standard_combo_new ((type>=3&&type!=11?(_("    _Channels ")):(_("    Channels "))),type>=3&&type!=11,
+				       channels,LIVES_BOX(hbox),NULL);
     
     resaudw->entry_achans = lives_combo_get_entry(LIVES_COMBO(combo5));
     gtk_entry_set_width_chars (GTK_ENTRY (resaudw->entry_achans), 3);
     
-    if (type<3||(type>4&&type<8)) tmp=g_strdup_printf ("%d",(gint)mainw->fx2_val);
+    if (type<3||(type>4&&type<8)||type==11) tmp=g_strdup_printf ("%d",(gint)mainw->fx2_val);
     else if (type==8) tmp=g_strdup_printf ("%d",DEFAULT_AUDIO_CHANS);
     else if (type==3) tmp=g_strdup_printf ("%d",rdet->achans);
     else tmp=g_strdup_printf ("%d",prefs->mt_def_achans==0?DEFAULT_AUDIO_CHANS:prefs->mt_def_achans);
@@ -1563,7 +1564,8 @@ create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox) {
     }
 
  
-    combo6 = lives_standard_combo_new ((type>=3?(_("    _Sample Size ")):(_("    Sample Size "))),type>=3,sampsize,LIVES_BOX(hbox),NULL);
+    combo6 = lives_standard_combo_new ((type>=3&&type!=11?(_("    _Sample Size ")):(_("    Sample Size "))),type>=3&&type!=11,
+				       sampsize,LIVES_BOX(hbox),NULL);
 
     if (type==7) gtk_widget_set_sensitive(combo6,FALSE);
 
@@ -1573,7 +1575,7 @@ create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox) {
     gtk_editable_set_editable (GTK_EDITABLE (resaudw->entry_asamps), FALSE);
     gtk_entry_set_width_chars (GTK_ENTRY (resaudw->entry_asamps), 3);
     
-    if (type<3||(type>4&&type<8)) tmp=g_strdup_printf ("%d",(gint)mainw->fx3_val);
+    if (type<3||(type>4&&type<8)||type==11) tmp=g_strdup_printf ("%d",(gint)mainw->fx3_val);
     else if (type==8) tmp=g_strdup_printf ("%d",DEFAULT_AUDIO_SAMPS);
     else if (type==3) tmp=g_strdup_printf ("%d",rdet->asamps);
     else tmp=g_strdup_printf ("%d",prefs->mt_def_asamps);
@@ -1658,7 +1660,7 @@ create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox) {
 
     if (type==7||!is_8bit) gtk_widget_set_sensitive(resaudw->rb_unsigned,FALSE);
 
-    if (type<3||(type>4&&type<8)) aendian=mainw->fx4_val;
+    if (type<3||(type>4&&type<8)||type==11) aendian=mainw->fx4_val;
     else if (type==8) aendian=DEFAULT_AUDIO_SIGNED16|((capable->byte_order==LIVES_BIG_ENDIAN)?AFORM_BIG_ENDIAN:0);
     else if (type==3) aendian=rdet->aendian;
     else aendian=prefs->mt_def_signed_endian;
@@ -1760,23 +1762,23 @@ create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox) {
 		      G_CALLBACK (on_resaudw_asamps_changed),
 		      NULL);
 
-    if (type>=3) label93 = gtk_label_new (_("Audio"));
+    if (type>=3&&type!=11) label93 = gtk_label_new (_("Audio"));
     else label93 = gtk_label_new (_("New"));
 
     if (palette->style&STYLE_1) {
       gtk_widget_modify_fg(label93, GTK_STATE_NORMAL, &palette->normal_fore);
     }
 
-    gtk_widget_show (label93);
+    if (type==1||(type>=3&&type!=11)) gtk_widget_show (label93);
 
-    if (type==3&&palette->style&STYLE_1) gtk_widget_modify_bg(frame7, GTK_STATE_NORMAL, &palette->normal_back);
+    if (type==3&&type!=11&&palette->style&STYLE_1) gtk_widget_modify_bg(frame7, GTK_STATE_NORMAL, &palette->normal_back);
 
     gtk_frame_set_label_widget (GTK_FRAME (frame7), label93);
     gtk_label_set_justify (GTK_LABEL (label93), GTK_JUSTIFY_LEFT);
     
   }
 
-  if (type>7) {
+  if (type>7&&type!=11) {
     frame7 = gtk_frame_new (NULL);
     gtk_widget_show (frame7);
     gtk_box_pack_start (GTK_BOX (vbox21), frame7, TRUE, TRUE, 0);
@@ -1790,7 +1792,7 @@ create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox) {
     gtk_container_add (GTK_CONTAINER (frame7), hbox25);
     gtk_container_set_border_width (GTK_CONTAINER (hbox25), 10);
     
-    if (type>=3) label98 = gtk_label_new_with_mnemonic (_("_Frames Per Second "));
+    if (type>=3&&type!=11) label98 = gtk_label_new_with_mnemonic (_("_Frames Per Second "));
     gtk_widget_show (label98);
     if (palette->style&STYLE_1) {
       gtk_widget_modify_fg(label98, GTK_STATE_NORMAL, &palette->normal_fore);
@@ -1817,7 +1819,7 @@ create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox) {
     gtk_label_set_justify (GTK_LABEL (label93), GTK_JUSTIFY_LEFT);
   }
 
-  if (type>4) {
+  if (type>4&&type!=11) {
     gtk_box_set_spacing(GTK_BOX(dialog_vbox),30);
     
     hbox = gtk_hbox_new (FALSE, 0);
@@ -1923,9 +1925,9 @@ create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox) {
                       G_CALLBACK (on_rb_audrec_time_toggled),
                       (gpointer)resaudw);
 
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(resaudw->unlim_radiobutton),type==5||type>7);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(resaudw->unlim_radiobutton),(type==5||type>7)&&type!=11);
 
-    if (type<8) {
+    if (type<8||type==11) {
       hsep = gtk_hseparator_new ();
       gtk_widget_show (hsep);
       gtk_box_pack_start (GTK_BOX (dialog_vbox), hsep, TRUE, TRUE, 0);
@@ -1960,7 +1962,7 @@ create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox) {
     GTK_WIDGET_SET_FLAGS (okbutton12, GTK_CAN_DEFAULT);
     gtk_widget_grab_default (okbutton12);
 
-    if (type<8) {
+    if (type<8||type==11) {
       g_signal_connect (GTK_OBJECT (cancelbutton13), "clicked",
 			G_CALLBACK (on_cancel_button1_clicked),
 			resaudw);
@@ -1970,17 +1972,17 @@ create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox) {
 			  G_CALLBACK (on_resaudio_ok_clicked),
 			  NULL);
       }
-      if (type==2) {
+      else if (type==2||type==11) {
 	g_signal_connect (GTK_OBJECT (okbutton12), "clicked",
 			  G_CALLBACK (on_ins_silence_details_clicked),
 			  NULL);
       }
-      if (type==5) {
+      else if (type==5) {
 	g_signal_connect (GTK_OBJECT (okbutton12), "clicked",
 			  G_CALLBACK (on_recaudclip_ok_clicked),
 			  GINT_TO_POINTER(0));
       }
-      if (type==6||type==7) {
+      else if (type==6||type==7) {
 	g_signal_connect (GTK_OBJECT (okbutton12), "clicked",
 			  G_CALLBACK (on_recaudclip_ok_clicked),
 			  GINT_TO_POINTER(1));

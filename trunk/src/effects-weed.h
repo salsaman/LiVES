@@ -60,6 +60,7 @@ gboolean has_audio_chans_out(weed_plant_t *filter, gboolean count_opt);
 gboolean is_pure_audio(weed_plant_t *filter_or_instance, gboolean count_opt); ///< TRUE if audio in or out and no vid in/out
 
 boolean has_audio_filters(boolean analysers_only);
+boolean has_video_filters(boolean analysers_only);
 
 #ifdef HAS_LIVES_EFFECTS_H
 lives_fx_cat_t weed_filter_categorise (weed_plant_t *pl, int in_channels, int out_channels);

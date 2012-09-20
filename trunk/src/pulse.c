@@ -529,7 +529,7 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
 		 break;
 	       }
 
-	       sample_move_d16_float(fltbuf[i],(short*)pulsed->sound_buffer+i,numFramesToWrite,pulsed->out_achans,FALSE,1.0);
+	       sample_move_d16_float(fltbuf[i],(short*)pulsed->sound_buffer+i,numFramesToWrite,pulsed->out_achans,FALSE,FALSE,1.0);
 	     }
 
 	     if (memok) {
@@ -880,7 +880,7 @@ static void pulse_audio_read_process (pa_stream *pstream, size_t nbytes, void *a
 	  break;
 	}
 	
-	sample_move_d16_float(fltbuf[i],(short*)data+i,xnframes,pulsed->in_achans,FALSE,1.0);
+	sample_move_d16_float(fltbuf[i],(short*)data+i,xnframes,pulsed->in_achans,FALSE,FALSE,1.0);
       }
       
       if (memok) {
@@ -1314,6 +1314,8 @@ gboolean pulse_try_reconnect(void) {
 
 
 void pulse_aud_pb_ready(gint fileno) {
+  // TODO - can we merge with switch_audio_clip() ?
+
   // prepare to play file fileno
   // - set loop mode
   // - check if we need to reconnect

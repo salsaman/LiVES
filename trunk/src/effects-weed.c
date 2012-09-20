@@ -3359,6 +3359,28 @@ boolean has_audio_filters(boolean analysers_only) {
 }
 
 
+boolean has_video_filters(boolean analysers_only) {
+  // do we have any active video filters (excluding generators) ?
+  weed_plant_t *instance,*filter;
+
+  register int i;
+
+  for (i=0;i<FX_KEYS_MAX_VIRTUAL;i++) {
+    if (rte_key_valid(i+1,TRUE)) {
+      if (mainw->rte&(GU641<<i)) {
+	if ((instance=key_to_instance[i][key_modes[i]])==NULL) continue;
+	filter=weed_instance_get_filter(instance);
+	if (has_video_chans_in(filter,FALSE)) {
+	  if (analysers_only&&has_video_chans_out(filter,FALSE)) continue;
+	  return TRUE;
+	}
+      }
+    }
+  }
+  return FALSE;
+}
+
+
 /////////////////////////////////////////////////////////////////////////
 
 

@@ -26,6 +26,7 @@
 #include "paramwindow.h"
 #include "support.h"
 #include "cvirtual.h"
+#include "resample.h"
 
 //////////// Effects ////////////////
 
@@ -40,6 +41,8 @@
 static int framecount;
 
 static weed_plant_t *resize_instance=NULL;
+
+static boolean apply_audio_fx;
 
 ///////////////////////////////////////////////////
 
@@ -316,6 +319,7 @@ gboolean do_effect(lives_rfx_t *rfx, gboolean is_preview) {
     }
   }
 
+
   if (!do_progress_dialog(TRUE,TRUE,effectstring)||mainw->error) {
     mainw->last_dprint_file=ldfile;
     mainw->show_procd=TRUE;
@@ -325,8 +329,10 @@ gboolean do_effect(lives_rfx_t *rfx, gboolean is_preview) {
       d_print_failed();
       mainw->last_dprint_file=ldfile;
     }
-    cfile->undo_start=oundo_start;
-    cfile->undo_end=oundo_end;
+    if (mainw->cancelled!=CANCEL_KEEP) {
+      cfile->undo_start=oundo_start;
+      cfile->undo_end=oundo_end;
+    }
     cfile->pb_fps=old_pb_fps;
     mainw->internal_messaging=FALSE;
     mainw->resizing=FALSE;
@@ -641,67 +647,86 @@ lives_render_error_t realfx_progress (gboolean reset) {
     return LIVES_RENDER_COMPLETE;
   }
 
-  layer=weed_plant_new(WEED_PLANT_CHANNEL);
-  weed_set_int_value(layer,"clip",mainw->current_file);
-  weed_set_int_value(layer,"frame",i);
+  if (has_video_filters(FALSE)) {
 
-  frameticks=(i-cfile->start+1.)/cfile->fps*U_SECL;
+    layer=weed_plant_new(WEED_PLANT_CHANNEL);
+    weed_set_int_value(layer,"clip",mainw->current_file);
+    weed_set_int_value(layer,"frame",i);
 
-  if (!pull_frame(layer,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",frameticks)) {
-    // do_read_failed_error_s() cannot be used here as we dont know the filename
-    g_snprintf (mainw->msg,256,"error|missing image %d",i);
-    return LIVES_RENDER_WARNING_READ_FRAME;
-  }
+    frameticks=(i-cfile->start+1.)/cfile->fps*U_SECL;
 
-  layer=on_rte_apply (layer, 0, 0, (weed_timecode_t)frameticks);
-  layer_palette=weed_get_int_value(layer,"current_palette",&weed_error);
-
-  if (cfile->img_type==IMG_TYPE_JPEG&&layer_palette!=WEED_PALETTE_RGB24&&layer_palette!=WEED_PALETTE_RGBA32) 
-    convert_layer_palette(layer,WEED_PALETTE_RGB24,0);
-  else if (cfile->img_type==IMG_TYPE_PNG&&layer_palette!=WEED_PALETTE_RGBA32) 
-    convert_layer_palette(layer,WEED_PALETTE_RGBA32,0);
-
-  if (resize_instance==NULL) resize_layer(layer,cfile->hsize,cfile->vsize,LIVES_INTERP_BEST);
-  pixbuf=layer_to_pixbuf(layer);
-  weed_plant_free(layer);
-
-  g_snprintf(oname,PATH_MAX,"%s/%s/%08d.mgk",prefs->tmpdir,cfile->handle,i);
-
-  do {
-    retval=0;
-    lives_pixbuf_save (pixbuf, oname, cfile->img_type, 100, TRUE, &error);
-
-    if (error!=NULL) {
-      retval=do_write_failed_error_s_with_retry(oname,error->message,NULL);
-      g_error_free(error);
-      error=NULL;
-      if (retval!=LIVES_RETRY) write_error=LIVES_RENDER_ERROR_WRITE_FRAME;
+    if (!pull_frame(layer,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",frameticks)) {
+      // do_read_failed_error_s() cannot be used here as we dont know the filename
+      g_snprintf (mainw->msg,256,"error|missing image %d",i);
+      return LIVES_RENDER_WARNING_READ_FRAME;
     }
-  } while (retval==LIVES_RETRY);
-  
-  lives_object_unref (pixbuf);
 
-  if (cfile->clip_type==CLIP_TYPE_FILE) {
-    cfile->frame_index[i-1]=-1;
-  }
-  
-  if (++i>cfile->end) {
-    mainw->error=FALSE;
-    mainw->cancelled=CANCEL_NONE;
-    com=g_strdup_printf ("%s mv_mgk \"%s\" %d %d \"%s\"",prefs->backend,cfile->handle,cfile->start,
-			 cfile->end,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
-    lives_system (com,FALSE);
-    g_free (com);
-    mainw->internal_messaging=FALSE;
+    layer=on_rte_apply (layer, 0, 0, (weed_timecode_t)frameticks);
 
-    check_backend_return(cfile);
+    if (!has_video_filters(TRUE)) {
+      layer_palette=weed_get_int_value(layer,"current_palette",&weed_error);
 
-    if (mainw->error) write_error=LIVES_RENDER_ERROR_WRITE_FRAME;
-    //cfile->may_be_damaged=TRUE;
-    else {
+      if (cfile->img_type==IMG_TYPE_JPEG&&layer_palette!=WEED_PALETTE_RGB24&&layer_palette!=WEED_PALETTE_RGBA32) 
+	convert_layer_palette(layer,WEED_PALETTE_RGB24,0);
+      else if (cfile->img_type==IMG_TYPE_PNG&&layer_palette!=WEED_PALETTE_RGBA32) 
+	convert_layer_palette(layer,WEED_PALETTE_RGBA32,0);
+      
+      if (resize_instance==NULL) resize_layer(layer,cfile->hsize,cfile->vsize,LIVES_INTERP_BEST);
+      pixbuf=layer_to_pixbuf(layer);
+      weed_plant_free(layer);
+      
+      g_snprintf(oname,PATH_MAX,"%s/%s/%08d.mgk",prefs->tmpdir,cfile->handle,i);
+      
+      do {
+	retval=0;
+	lives_pixbuf_save (pixbuf, oname, cfile->img_type, 100, TRUE, &error);
+      
+	if (error!=NULL) {
+	  retval=do_write_failed_error_s_with_retry(oname,error->message,NULL);
+	  g_error_free(error);
+	  error=NULL;
+	  if (retval!=LIVES_RETRY) write_error=LIVES_RENDER_ERROR_WRITE_FRAME;
+	}
+      } while (retval==LIVES_RETRY);
+    
+      
+      lives_object_unref (pixbuf);
+
       if (cfile->clip_type==CLIP_TYPE_FILE) {
-	if (!check_if_non_virtual(mainw->current_file,1,cfile->frames)) save_frame_index(mainw->current_file);
+	cfile->frame_index[i-1]=-1;
       }
+    }
+    else weed_plant_free(layer);
+  }
+  if (apply_audio_fx) {
+    if (!apply_rte_audio((double)cfile->arate/(double)cfile->fps+(double)rand()/.5/(double)(RAND_MAX))) {
+      return LIVES_RENDER_ERROR_WRITE_AUDIO;
+    }
+  }
+
+  if (++i>cfile->end) {
+    if (has_video_filters(FALSE)&&!has_video_filters(TRUE)) {
+      mainw->error=FALSE;
+      mainw->cancelled=CANCEL_NONE;
+      com=g_strdup_printf ("%s mv_mgk \"%s\" %d %d \"%s\"",prefs->backend,cfile->handle,cfile->start,
+			   cfile->end,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
+      lives_system (com,FALSE);
+      g_free (com);
+      mainw->internal_messaging=FALSE;
+      
+      check_backend_return(cfile);
+      
+      if (mainw->error) write_error=LIVES_RENDER_ERROR_WRITE_FRAME;
+      //cfile->may_be_damaged=TRUE;
+      else {
+	if (cfile->clip_type==CLIP_TYPE_FILE) {
+	  if (!check_if_non_virtual(mainw->current_file,1,cfile->frames)) save_frame_index(mainw->current_file);
+	}
+	return LIVES_RENDER_COMPLETE;
+      }
+    }
+    else {
+      sprintf(mainw->msg,"%s","completed");
       return LIVES_RENDER_COMPLETE;
     }
   }
@@ -717,15 +742,67 @@ gboolean on_realfx_activate_inner(gint type, lives_rfx_t *rfx) {
   // 1 - resize (using weed filter)
   gboolean retval;
 
+  boolean has_new_audio=FALSE;
+
+  apply_audio_fx=FALSE;
+
+  if (type==0&&((cfile->achans>0&&prefs->audio_src==AUDIO_SRC_INT&&has_audio_filters(FALSE))||mainw->agen_key!=0)) {
+    if (mainw->agen_key!=0&&cfile->achans==0) {
+      // apply audio gen to clip with no audio - prompt for audio settings
+      resaudw=create_resaudw(2,NULL,NULL);
+      while (g_main_context_iteration(NULL,FALSE));
+      gdk_window_raise(resaudw->dialog->window);
+
+      if (gtk_dialog_run(GTK_DIALOG(resaudw->dialog))!=GTK_RESPONSE_OK) return FALSE;
+      if (mainw->error) {
+	mainw->error=FALSE;
+	return FALSE;
+      }
+      has_new_audio=TRUE;
+    }
+    apply_audio_fx=TRUE;
+    if (!apply_rte_audio_init()) return FALSE;
+
+  }
+
   if (type==1) resize_instance=(weed_plant_t *)rfx->source;
   else resize_instance=NULL;
 
   mainw->internal_messaging=TRUE;
   framecount=0;
+ 
   mainw->progress_fn=&realfx_progress;
   mainw->progress_fn (TRUE);
 
+  weed_reinit_all();
+
   retval=do_effect (rfx,FALSE);
+
+  if (apply_audio_fx) {
+    apply_rte_audio_end(!retval);
+
+    if (retval) {
+      if (!has_video_filters(FALSE)||!has_video_filters(TRUE)) cfile->undo_action=UNDO_NEW_AUDIO;
+      
+      cfile->undo_achans=cfile->achans;
+      cfile->undo_arate=cfile->arate;
+      cfile->undo_arps=cfile->arps;
+      cfile->undo_asampsize=cfile->asampsize;
+      cfile->undo_signed_endian=cfile->signed_endian;
+      
+    }
+    else {
+      if (has_new_audio) cfile->achans=cfile->asampsize=cfile->arate=cfile->arps=0;
+      else {
+      	gchar *com=g_strdup_printf("%s undo_audio %s",prefs->backend_sync,cfile->handle);
+	mainw->com_failed=FALSE;
+	unlink (cfile->info_file);
+	lives_system(com,FALSE);
+	g_free(com);
+      }
+    }
+    reget_afilesize(mainw->current_file);
+  }
 
   resize_instance=NULL;
   return retval;
@@ -736,12 +813,55 @@ gboolean on_realfx_activate_inner(gint type, lives_rfx_t *rfx) {
 
 
 void on_realfx_activate (GtkMenuItem *menuitem, gpointer user_data) {
-  gint type;
+  gint type=1;
 
-  if (menuitem!=NULL) type=0;
-  else type=1;
+  boolean has_lmap_error=FALSE;
 
-  on_realfx_activate_inner(type,(lives_rfx_t *)user_data);
+  // type can be 0 - apply current realtime effects
+  // 1 - resize (using weed filter)
+
+  if (menuitem!=NULL) {
+    type=0;
+
+    if (!(prefs->warning_mask&WARN_MASK_LAYOUT_ALTER_FRAMES)&&(mainw->xlays=
+							       layout_frame_is_affected(mainw->current_file,1))!=NULL) {
+      if (!do_layout_alter_frames_warning()) {
+	g_list_free_strings(mainw->xlays);
+	g_list_free(mainw->xlays);
+	mainw->xlays=NULL;
+	return;
+      }
+      add_lmap_error(LMAP_ERROR_ALTER_FRAMES,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,0,0.,
+		     cfile->stored_layout_frame>0);
+      g_list_free_strings(mainw->xlays);
+      g_list_free(mainw->xlays);
+      mainw->xlays=NULL;
+      has_lmap_error=TRUE;
+    }
+
+    
+    if (!(prefs->warning_mask&WARN_MASK_LAYOUT_ALTER_AUDIO)&&
+	(mainw->xlays=layout_audio_is_affected(mainw->current_file,0.))!=NULL) {
+      if (!do_layout_alter_audio_warning()) {
+	g_list_free_strings(mainw->xlays);
+	g_list_free(mainw->xlays);
+	mainw->xlays=NULL;
+	return;
+      }
+      add_lmap_error(LMAP_ERROR_ALTER_AUDIO,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,0,0.,
+		     cfile->stored_layout_audio>0.);
+      has_lmap_error=TRUE;
+      g_list_free_strings(mainw->xlays);
+      g_list_free(mainw->xlays);
+      mainw->xlays=NULL;
+    }
+  }
+
+  if (!on_realfx_activate_inner(type,(lives_rfx_t *)user_data)) return;
+
+  if (has_lmap_error) popup_lmap_errors(NULL,NULL);
+
+
 }
 
 
@@ -883,11 +1003,12 @@ weed_plant_t *get_blend_layer(weed_timecode_t tc) {
 
 
 
-gboolean rte_on_off_callback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer user_data)
-{
+gboolean rte_on_off_callback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer user_data) {
 // this is the callback which happens when a rte is keyed
   gint key=GPOINTER_TO_INT(user_data);
   guint new_rte=GU641<<(key-1);
+
+  mainw->osc_block=TRUE;
 
   if (key==EFFECT_NONE) {
     // switch up/down keys to default (fps change)
@@ -897,31 +1018,42 @@ gboolean rte_on_off_callback (GtkAccelGroup *group, GObject *obj, guint keyval, 
     mainw->rte^=new_rte;
     if (mainw->rte&new_rte) {
       // switch is ON
-      // WARNING - if we start playing because a generator was started, we block here
-      mainw->osc_block=TRUE;
       mainw->last_grabable_effect=key-1;
 
       if (rte_window!=NULL) rtew_set_keych(key-1,TRUE);
+
+      // WARNING - if we start playing because a generator was started, we block here
       if (!(weed_init_effect(key-1))) {
 	// ran out of instance slots, no effect assigned, or some other error
 	mainw->rte^=new_rte;
 	if (rte_window!=NULL&&group!=NULL) rtew_set_keych(key-1,FALSE);
+	mainw->osc_block=FALSE;
+	return TRUE;
       }
-      mainw->osc_block=FALSE;
-      return TRUE;
     }
     else {
       // effect is OFF
-      mainw->osc_block=TRUE;
       weed_deinit_effect(key-1);
       if (mainw->rte&(GU641<<(key-1))) mainw->rte^=(GU641<<(key-1));
       if (rte_window!=NULL&&group!=NULL) rtew_set_keych(key-1,FALSE);
-      mainw->osc_block=FALSE;
     }
   }
+
+  mainw->osc_block=FALSE;
+
   if (mainw->current_file>0&&cfile->play_paused&&!mainw->noswitch) {
     load_frame_image (cfile->frameno);
   }
+
+  if (mainw->playing_file==-1&&mainw->current_file>0&&((has_video_filters(FALSE)&&!has_video_filters(TRUE))||
+						       (cfile->achans>0&&prefs->audio_src==AUDIO_SRC_INT&&has_audio_filters(FALSE))||
+						       mainw->agen_key!=0)) {
+
+    gtk_widget_set_sensitive(mainw->rendered_fx[0].menuitem,TRUE);
+  }
+  else gtk_widget_set_sensitive(mainw->rendered_fx[0].menuitem,FALSE);
+
+
   return TRUE;
 }
 

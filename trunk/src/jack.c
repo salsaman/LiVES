@@ -644,7 +644,7 @@ static int audio_process (nframes_t nframes, void *arg) {
 	    else {
 	      for (i=0;i<jackd->num_output_channels;i++) {
 		sample_move_d16_float(out_buffer[i], cache_buffer->buffer16[0] + i, numFramesToWrite, 
-				      jackd->num_output_channels, afile->signed_endian&AFORM_UNSIGNED, vol);
+				      jackd->num_output_channels, afile->signed_endian&AFORM_UNSIGNED, FALSE, vol);
 	      }
 
 	      if (has_audio_filters(FALSE)&&jackd->playing_file!=mainw->ascrap_file) {
@@ -1688,6 +1688,8 @@ gboolean jack_try_reconnect(void) {
 
 
 void jack_aud_pb_ready(gint fileno) {
+  // TODO - can we merge with switch_audio_clip()
+
   // prepare to play file fileno
   // - set loop mode
   // - check if we need to reconnect
@@ -1740,7 +1742,6 @@ void jack_aud_pb_ready(gint fileno) {
 	jack_message.command=ASERVER_CMD_FILE_OPEN;
 	jack_message.data=g_strdup_printf("%d",fileno);
 	
-	// TODO ** - use chain messages
 	jack_message.next=NULL;
 	mainw->jackd->msgq=&jack_message;
 	

@@ -1439,9 +1439,11 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
       mainw->rec_aseek=0;
     }
   }
-  if (prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL&&mainw->multitrack!=NULL&&
-      !mainw->multitrack->is_rendering&&cfile->achans>0) {
-    // have to set this here as we don't do a seek in multitrack
+  if (prefs->audio_player==AUD_PLAYER_JACK&&((mainw->jackd!=NULL&&mainw->multitrack!=NULL&&
+					      !mainw->multitrack->is_rendering&&cfile->achans>0)||
+					     ((prefs->audio_src==AUDIO_SRC_EXT&&mainw->jackd_read!=NULL)||
+					      mainw->agen_key!=0))) {
+    // have to set this here as we don't do a seek in multitrack, or when playing external audio, or from an audio gen
     mainw->jackd->audio_ticks=mainw->offsetticks;
     mainw->jackd->frames_written=0;
   }
@@ -1468,8 +1470,10 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
       mainw->rec_aseek=0;
     }
   }
-  if (prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL&&mainw->multitrack!=NULL&&
-      !mainw->multitrack->is_rendering&&cfile->achans>0) {
+  if (prefs->audio_player==AUD_PLAYER_PULSE&&((mainw->pulsed!=NULL&&mainw->multitrack!=NULL&&
+					       !mainw->multitrack->is_rendering&&cfile->achans>0)||
+					      ((prefs->audio_src==AUDIO_SRC_EXT&&mainw->pulsed_read!=NULL)||
+					       mainw->agen_key!=0))) {
     mainw->pulsed->audio_ticks=mainw->offsetticks;
     mainw->pulsed->frames_written=0;
     mainw->pulsed->usec_start=0;

@@ -2333,6 +2333,24 @@ if (defined($ARGV[0])) {
 
 	    &clean_old;
 
+	    if ($letterbox) {
+		# make a background frame
+		if (!defined($bgcolour)) {
+		    $bgcolour="#000000";
+		}
+		
+		$com="$convert_command -size $owidth!x$oheight! xc:$bgcolour blank.jpg >$nulfile 2>&1";
+		$smerr=smog_system($com);
+		if ($smerr) {
+		    sig_system_error("$com",$smerr);
+		    unlink "blank.jpg";
+		    unlink "$pidfile"; 
+		    exit 1;
+		}
+	    }
+
+
+
 	    for ($i=1;$i<=$end;$i++) {
 		$name=&mkname($i);
 		
@@ -2340,6 +2358,7 @@ if (defined($ARGV[0])) {
 		if ($panic) {
 		    if ($letterbox) {
 			try_to_recover($start,$i-1);
+			unlink "blank.jpg";
 		    }
 		    if ($DEBUG_SMOGRIFY) {
 			print STDERR "smogrify debug - rename failed ($!): \"$curtmpdir/$name$img_ext\",\"$curtmpdir/$name.bak\"\n";
@@ -2358,6 +2377,7 @@ if (defined($ARGV[0])) {
 		if ($panic) {
 		    if ($letterbox) {
 			try_to_recover($start,$i);
+			unlink "blank.jpg";
 		    }
 		    unlink "$pidfile"; 
 		    exit 1;
@@ -2370,6 +2390,7 @@ if (defined($ARGV[0])) {
 		if ($panic) {
 		    if ($letterbox) {
 			try_to_recover($start,$i);
+			unlink "blank.jpg";
 		    }
 		    unlink "$pidfile"; 
 		    exit 1;
@@ -2388,6 +2409,7 @@ if (defined($ARGV[0])) {
 		    exit 1;
 		}
 	    }
+	    else unlink "blank.jpg";
 
 	    &sig_complete;
 	    exit 0;
@@ -2590,6 +2612,24 @@ if (defined($ARGV[0])) {
 	    $pstart=&getint($val);
 	    $count=$pstart;
 	    
+
+	    if ($letterbox&&!$leave_bak) {
+		# make a background frame
+		if (!defined($bgcolour)) {
+		    $bgcolour="#000000";
+		}
+		
+		$com="$convert_command -size $owidth!x$oheight! xc:$bgcolour blank.jpg >$nulfile 2>&1";
+		$smerr=smog_system($com);
+		if ($smerr) {
+		    sig_system_error("$com",$smerr);
+		    unlink "$pidfile"; 
+		    exit 1;
+		}
+	    }
+
+
+
 	    while ($newframe!=0) {
 		read IN,$val,4;
 		$newframe=&getint($val);
@@ -2603,6 +2643,7 @@ if (defined($ARGV[0])) {
 			    if ($panic) {
 				if ($letterbox) {
 				    try_to_recover($start,$i-1);
+				    unlink "blank.jpg";
 				}
 				unlink "$pidfile"; 
 				exit 1;
@@ -2612,6 +2653,7 @@ if (defined($ARGV[0])) {
 			    if (!$smerr) {
 				if ($letterbox) {
 				    try_to_recover($start,$i);
+				    unlink "blank.jpg";
 				}
 				sig_system_error("Renaming \"$curtmpdir/$from$resize_ext\" to \"$curtmpdir/$to.mgk\"",$!);
 				unlink "$pidfile"; 
@@ -2651,7 +2693,8 @@ if (defined($ARGV[0])) {
 				smog_copy("$curtmpdir/$to$img_ext", "$curtmpdir/$to.bak");
 				if ($panic) {
 				    try_to_recover($start,$i-1);
-				    unlink "$pidfile"; 
+				    unlink "$pidfile";
+				    unlink "blank.jpg";
 				    exit 1;
 				}
 				# make $to.mgk $to.img_ext
@@ -2660,6 +2703,7 @@ if (defined($ARGV[0])) {
 				if ($panic) {
 				    try_to_recover($start,$i-1);
 				    unlink "$pidfile"; 
+				    unlink "blank.jpg";
 				    exit 1;
 				}
 
@@ -2674,6 +2718,11 @@ if (defined($ARGV[0])) {
 		&sig_progress($fcount++);
 	    }
 	    close IN;
+
+	    if ($letterbox&&!$leave_bak) {
+		unlink "blank.jpg";
+	    }
+
 	}
 	
 	else {
@@ -4672,20 +4721,6 @@ sub letterbox_frame {
     my $from="$name$in_ext";
     my $to="$name$out_ext";
 
-    # make a background frame
-    if (!defined($bgcolour)) {
-	$bgcolour="#000000";
-    }
-    
-    $com="$convert_command -size $owidth!x$oheight! xc:$bgcolour blank.jpg >$nulfile 2>&1";
-    $smerr=smog_system($com);
-    if ($smerr) {
-	sig_system_error("$com",$smerr);
-	$panic=1; 
-	return;
-    }
-
-
     # overlay frame
     $xstart=int(($owidth-$iwidth)/2);
     $ystart=int(($oheight-$iheight)/2);
@@ -4700,8 +4735,6 @@ sub letterbox_frame {
 	$panic=1; 
 	return;
     }
-
-    unlink "blank.jpg";
 
 }
 

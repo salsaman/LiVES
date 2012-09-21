@@ -2486,12 +2486,12 @@ void play_file (void) {
     // start up our audio player (jack or pulse)
     if (audio_player==AUD_PLAYER_JACK) {
 #ifdef ENABLE_JACK
-      jack_aud_pb_ready(mainw->current_file);
+      if (mainw->jackd!=NULL) jack_aud_pb_ready(mainw->current_file);
 #endif
     }
     else if (audio_player==AUD_PLAYER_PULSE) {
 #ifdef HAVE_PULSE_AUDIO
-      pulse_aud_pb_ready(mainw->current_file);
+      if (mainw->pulsed!=NULL) pulse_aud_pb_ready(mainw->current_file);
 #endif
     }
     else if (cfile->achans>0) {
@@ -2570,20 +2570,32 @@ void play_file (void) {
     }
     if (audio_player==AUD_PLAYER_JACK) {
 #ifdef ENABLE_JACK
-      if (prefs->audio_src==AUDIO_SRC_EXT)
-	jack_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_EXTERNAL);
-      else { 
-	jack_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_GENERATED);
+      if (prefs->audio_src==AUDIO_SRC_EXT&&mainw->jackd!=NULL) {
+	if (mainw->agen_key!=0) {
+	  mainw->jackd->playing_file=mainw->current_file;
+	  mainw->jackd->frames_written=0;
+	  mainw->jackd->in_use=TRUE;
+	  jack_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_GENERATED);
+	}
+	else {
+	  jack_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_EXTERNAL);
+	}
       }
       mainw->jackd->frames_written=0;
 #endif
     }
     if (audio_player==AUD_PLAYER_PULSE) {
 #ifdef HAVE_PULSE_AUDIO
-      if (prefs->audio_src==AUDIO_SRC_EXT)
-	pulse_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_EXTERNAL);
-      else { 
-	pulse_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_GENERATED);
+      if (prefs->audio_src==AUDIO_SRC_EXT&&mainw->pulsed!=NULL) {
+	if (mainw->agen_key!=0) {
+	  mainw->pulsed->playing_file=mainw->current_file;
+	  mainw->pulsed->frames_written=0;
+	  mainw->pulsed->in_use=TRUE;
+	  pulse_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_GENERATED);
+	}
+	else {
+	  pulse_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_EXTERNAL);
+	}
       }
       mainw->pulsed->frames_written=0;
 #endif
@@ -2798,7 +2810,7 @@ void play_file (void) {
     if (mainw->pulsed_read!=NULL||mainw->aud_rec_fd!=-1) pulse_rec_audio_end(TRUE);
 
     // tell pulse client to close audio file
-    if (mainw->pulsed->fd>0) {
+    if (mainw->pulsed->playing_file>0||mainw->pulsed->fd>0) {
       gboolean timeout;
       int alarm_handle=lives_alarm_set(LIVES_ACONNECT_TIMEOUT);
       while (!(timeout=lives_alarm_get(alarm_handle))&&pulse_get_msgq(mainw->pulsed)!=NULL) {

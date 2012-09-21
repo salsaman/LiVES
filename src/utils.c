@@ -1166,16 +1166,16 @@ static gboolean check_for_audio_stop (gint fileno, gint first_frame, gint last_f
 
 void calc_aframeno(gint fileno) {
 #ifdef ENABLE_JACK
-  if (prefs->audio_player==AUD_PLAYER_JACK&&(mainw->jackd!=NULL||mainw->jackd_read!=NULL)&&
-      mainw->jackd->playing_file==fileno) {
+  if (prefs->audio_player==AUD_PLAYER_JACK&&((mainw->jackd!=NULL&&mainw->jackd->playing_file==fileno)||
+					     (mainw->jackd_read!=NULL&&mainw->jackd_read->playing_file==fileno))) {
     // get seek_pos from jack
     if (mainw->jackd_read!=NULL) mainw->aframeno=lives_jack_get_pos(mainw->jackd_read)/cfile->fps+1.;
     else mainw->aframeno=lives_jack_get_pos(mainw->jackd)/cfile->fps+1.;
   }
 #endif
 #ifdef HAVE_PULSE_AUDIO
-  if (prefs->audio_player==AUD_PLAYER_PULSE&&(mainw->pulsed!=NULL||mainw->pulsed_read!=NULL)&&
-      mainw->pulsed->playing_file==fileno) {
+  if (prefs->audio_player==AUD_PLAYER_PULSE&&((mainw->pulsed!=NULL&& mainw->pulsed->playing_file==fileno)||
+					      (mainw->pulsed_read!=NULL&&mainw->pulsed_read->playing_file==fileno))) {
     // get seek_pos from pulse
     if (mainw->pulsed_read!=NULL) mainw->aframeno=lives_pulse_get_pos(mainw->pulsed_read)/cfile->fps+1.;
     else mainw->aframeno=lives_pulse_get_pos(mainw->pulsed)/cfile->fps+1.;
@@ -1236,7 +1236,7 @@ gint calc_new_playback_position(gint fileno, gint64 otc, gint64 *ntc) {
 
   if (fps==0.) {
     *ntc=otc;
-    calc_aframeno(fileno);
+    if (prefs->audio_src==AUDIO_SRC_INT) calc_aframeno(fileno);
     return cframe;
   }
 
@@ -1252,7 +1252,7 @@ gint calc_new_playback_position(gint fileno, gint64 otc, gint64 *ntc) {
   if (nframe==cframe||mainw->foreign) return nframe;
 
   // calculate audio "frame" from the number of samples played
-  if (mainw->playing_file==fileno) {
+  if (prefs->audio_src==AUDIO_SRC_INT&&mainw->playing_file==fileno) {
     calc_aframeno(fileno);
   }
 
@@ -2445,7 +2445,7 @@ void get_play_times(void) {
       GTK_RULER (mainw->hruler)->position=offset*cfile->total_time/allocwidth;
       gtk_widget_queue_draw (mainw->hruler);
     }
-    if (cfile->achans>0&&cfile->is_loaded) {
+    if (cfile->achans>0&&cfile->is_loaded&&prefs->audio_src!=AUDIO_SRC_EXT) {
       if ((prefs->audio_player==AUD_PLAYER_JACK||prefs->audio_player==AUD_PLAYER_PULSE)&&
 	  (mainw->event_list==NULL||!mainw->preview)) {
 #ifdef ENABLE_JACK
@@ -2528,10 +2528,10 @@ void get_play_times(void) {
 	  }
 	}
       }
-      if (cfile->frames==0) {
-	GTK_RULER (mainw->hruler)->position=offset*cfile->total_time/allocwidth;
-	gtk_widget_queue_draw (mainw->hruler);
-      }
+    }
+    if (cfile->frames==0) {
+      GTK_RULER (mainw->hruler)->position=offset*cfile->total_time/allocwidth;
+      gtk_widget_queue_draw (mainw->hruler);
     }
   }
   
@@ -2806,7 +2806,7 @@ find_when_to_stop (void) {
   else if (cfile->clip_type!=CLIP_TYPE_DISK&&cfile->clip_type!=CLIP_TYPE_FILE) mainw->whentostop=NEVER_STOP;
   else if (cfile->opening_only_audio) mainw->whentostop=STOP_ON_AUD_END;
   else if (cfile->opening_audio) mainw->whentostop=STOP_ON_VID_END;
-  else if (mainw->loop_cont&&!mainw->preview) mainw->whentostop=NEVER_STOP;
+  else if (!mainw->preview&&(mainw->loop_cont||(mainw->loop&&prefs->audio_src==AUDIO_SRC_EXT))) mainw->whentostop=NEVER_STOP;
   else if (cfile->frames==0||(mainw->loop&&cfile->achans>0&&!mainw->is_rendering&&(mainw->audio_end/cfile->fps)
 			      <MAX (cfile->laudio_time,cfile->raudio_time))) mainw->whentostop=STOP_ON_AUD_END;
   else mainw->whentostop=STOP_ON_VID_END; // tada...

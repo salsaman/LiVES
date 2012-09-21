@@ -6953,6 +6953,10 @@ gint rte_switch_keymode (gint key, gint mode, const gchar *hashname) {
 
   osc_block=mainw->osc_block;
   mainw->osc_block=TRUE;
+
+// must be done before switching the key_to_fx, as we need to know number of in_parameter_templates
+  if (key_defaults[key][mode]!=NULL) free_key_defaults(key,mode);
+
   if (key_to_instance[key][mode]!=NULL) {
     key_modes[key]=mode;
     weed_deinit_effect(-key-1); // set is_modeswitch
@@ -6963,8 +6967,6 @@ gint rte_switch_keymode (gint key, gint mode, const gchar *hashname) {
   else key_to_fx[key][mode]=id;
 
   mainw->osc_block=osc_block;
-
-  if (key_defaults[key][mode]!=NULL) free_key_defaults(key,mode);
 
   return 0;
 }

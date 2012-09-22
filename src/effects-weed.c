@@ -3247,7 +3247,6 @@ void weed_apply_audio_effects (weed_plant_t *filter_map, float **abuf, int nbtra
   // abuf will be a NULL terminated array of float audio
 
   // the results of abuf[0] and abuf[1] (for stereo) will be written to fileno
-
   if (filter_map==NULL||!weed_plant_has_leaf(filter_map,"init_events")||
       (weed_get_voidptr_value(filter_map,"init_events",&error)==NULL)) {
     return;
@@ -5152,10 +5151,10 @@ gboolean weed_init_effect(int hotkey) {
     num_tr_applied=mainw->num_tr_applied;
     if (fg_modeswitch) mainw->num_tr_applied=0; // force to fg
 
-    // TODO - be more descriptive with error
     key_to_instance[hotkey][key_modes[hotkey]]=new_instance;
 
     if (!weed_generator_start(new_instance)) {
+      // TODO - be more descriptive with error
       int weed_error;
       gchar *filter_name=weed_get_string_value(filter,"name",&weed_error),*tmp;
       d_print ((tmp=g_strdup_printf (_ ("Unable to start generator %s\n"),filter_name)));
@@ -5172,6 +5171,8 @@ gboolean weed_init_effect(int hotkey) {
 
       return FALSE;
     }
+
+    // weed_generator_start can change the instance
     new_instance=key_to_instance[hotkey][key_modes[hotkey]];
 
     // TODO - problem if modeswitch triggers playback
@@ -5192,6 +5193,9 @@ gboolean weed_init_effect(int hotkey) {
     mainw->rte_keys=rte_keys;
     mainw->blend_factor=weed_get_blend_factor(rte_keys);
   }
+
+  // need to do this *before* calling append_filter_map_event
+  key_to_instance[hotkey][key_modes[hotkey]]=new_instance;
 
   if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)&&(inc_count>0||outc_count==0)) {
     // place this synchronous with the preceding frame
@@ -5262,7 +5266,6 @@ gboolean weed_init_effect(int hotkey) {
     }
   }
 
-  key_to_instance[hotkey][key_modes[hotkey]]=new_instance;
 
   return TRUE;
 }

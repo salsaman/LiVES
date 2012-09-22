@@ -1188,9 +1188,6 @@ gint64 lives_pulse_get_time(pulse_driver_t *pulsed, gboolean absolute) {
   volatile aserver_message_t *msg=pulsed->msgq;
   gdouble frames_written;
 
-  frames_written=pulsed->frames_written;
-  if (frames_written<0.) frames_written=0.;
-
   if (msg!=NULL&&msg->command==ASERVER_CMD_FILE_SEEK) {
     gboolean timeout;
     int alarm_handle=lives_alarm_set(LIVES_ACONNECT_TIMEOUT);
@@ -1200,6 +1197,9 @@ gint64 lives_pulse_get_time(pulse_driver_t *pulsed, gboolean absolute) {
     if (timeout) return -1;
     lives_alarm_clear(alarm_handle);
   }
+
+  frames_written=pulsed->frames_written;
+  if (frames_written<0.) frames_written=0.;
 
 #ifdef USE_PA_INTERP_TIME
   {

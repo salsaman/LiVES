@@ -346,6 +346,7 @@ static int audio_process (nframes_t nframes, void *arg) {
       jackd->seek_pos=xseek;
       jackd->audio_ticks=mainw->currticks;
       jackd->frames_written=0;
+      g_print("SEEK HAPPENED\n");
       break;
     default:
       msg->data=NULL;
@@ -999,7 +1000,7 @@ static int audio_read (nframes_t nframes, void *arg) {
   frames_out=(int64_t)((gdouble)nframes/out_scale+1.);
   rbytes=frames_out*afile->achans*afile->asampsize/8;
   
-  rbytes=audio_read_inner(jackd,in_buffer,jackd->playing_file,nframes,out_scale,mainw->jackd_read->reverse_endian,
+  rbytes=audio_read_inner(jackd,in_buffer,jackd->playing_file,nframes,out_scale,jackd->reverse_endian,
 			  out_unsigned,rbytes);
   
 
@@ -1570,9 +1571,8 @@ gint64 lives_jack_get_time(jack_driver_t *jackd, gboolean absolute) {
   // get the time in ticks since either playback started or since last seek
 
   volatile aserver_message_t *msg=jackd->msgq;
-  gdouble frames_written=jackd->frames_written;
+  gdouble frames_written;
 
-  if (frames_written<0.) frames_written=0.;
   if (msg!=NULL&&msg->command==ASERVER_CMD_FILE_SEEK) {
     gboolean timeout;
     int alarm_handle=lives_alarm_set(LIVES_ACONNECT_TIMEOUT);
@@ -1582,6 +1582,10 @@ gint64 lives_jack_get_time(jack_driver_t *jackd, gboolean absolute) {
     if (timeout) return -1;
     lives_alarm_clear(alarm_handle);
   }
+
+  frames_written=jackd->frames_written;
+  if (frames_written<0.) frames_written=0.;
+
   if (jackd->is_output) return jackd->audio_ticks*absolute+(gint64)(frames_written/(gdouble)jackd->sample_out_rate*U_SEC);
   return jackd->audio_ticks*absolute+(gint64)(frames_written/(gdouble)jackd->sample_in_rate*U_SEC);
 }

@@ -23,7 +23,6 @@ typedef GtkDialog                         LiVESDialog;
 typedef GtkBox                            LiVESBox;
 typedef GtkComboBox                       LiVESCombo;
 typedef GtkComboBox                       LiVESComboBox;
-typedef GtkComboBoxText                   LiVESComboBoxText;
 typedef GtkToggleButton                   LiVESToggleButton;
 typedef GtkTextView                       LiVESTextView;
 typedef GtkEntry                          LiVESEntry;
@@ -56,7 +55,6 @@ typedef gpointer                          LiVESObjectPtr;
 #define LIVES_BOX(widget) GTK_BOX(widget)
 #define LIVES_COMBO(widget) GTK_COMBO_BOX(widget)
 #define LIVES_COMBO_BOX(widget) GTK_COMBO_BOX(widget)
-#define LIVES_COMBO_BOX_TEXT(widget) GTK_COMBO_BOX_TEXT(widget)
 #define LIVES_RADIO_BUTTON(widget) GTK_RADIO_BUTTON(widget)
 #define LIVES_TOGGLE_BUTTON(widget) GTK_TOGGLE_BUTTON(widget)
 

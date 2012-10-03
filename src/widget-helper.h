@@ -164,10 +164,6 @@ typedef GLogLevelFlags LiVESLogLevelFlags;
 
 #endif
 
-// TO BE REMOVED:
-void combo_set_popdown_strings (GtkCombo *combo, LiVESList *list);
-
-
 #endif
 
 

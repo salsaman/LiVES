@@ -2038,8 +2038,6 @@ _prefsw *create_prefs_dialog (void) {
 
   gboolean has_ap_rec = FALSE;
 
-  GdkGeometry hints;
-
   GtkTreeIter iter;
   GtkTreeModel *model;
   guint selected_idx;
@@ -2072,11 +2070,8 @@ _prefsw *create_prefs_dialog (void) {
   // Get dialog's vbox and show it
   dialog_vbox_main = lives_dialog_get_content_area(GTK_DIALOG(prefsw->prefs_dialog));
   gtk_widget_show (dialog_vbox_main);
-  // Set geometry hints for dialog's vbox
-  // This prevents shrinking of dialog window in some cases
-  hints.min_width = PREF_WIN_WIDTH;
-  hints.min_height = PREF_WIN_HEIGHT;
-  gtk_window_set_geometry_hints (GTK_WINDOW(prefsw->prefs_dialog), GTK_WIDGET (dialog_vbox_main), &hints, GDK_HINT_MIN_SIZE);
+
+  gtk_widget_set_size_request (prefsw->prefs_dialog, PREF_WIN_WIDTH, PREF_WIN_HEIGHT);
 
   // Create dialog horizontal panels
   dialog_hpaned = gtk_hpaned_new();

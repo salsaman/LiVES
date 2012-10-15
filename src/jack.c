@@ -346,7 +346,6 @@ static int audio_process (nframes_t nframes, void *arg) {
       jackd->seek_pos=xseek;
       jackd->audio_ticks=mainw->currticks;
       jackd->frames_written=0;
-      g_print("SEEK HAPPENED\n");
       break;
     default:
       msg->data=NULL;

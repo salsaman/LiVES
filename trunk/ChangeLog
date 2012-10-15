@@ -9,6 +9,7 @@ Fix crash after adding a new track with an existing event list.
 Update youtube downloader to recognise youtu.be links.
 Fix regression for number of channels dropdown box in audio resampling.
 Fix possible crash when remapping a filter with key defaults set.
+Fix flickering preferences dialog on some window managers.
 
 
 

@@ -1280,7 +1280,6 @@ LIVES_INLINE void aud_fade(gint fileno, gdouble startt, gdouble endt, gdouble st
 void jack_rec_audio_to_clip(gint fileno, gint old_file, lives_rec_audio_type_t rec_type) {
   // open audio file for writing
   file *outfile;
-  gchar *outfilename;
   int retval;
 
   if (fileno==-1) {
@@ -1299,21 +1298,22 @@ void jack_rec_audio_to_clip(gint fileno, gint old_file, lives_rec_audio_type_t r
   }
 
   outfile=mainw->files[fileno];
-  outfilename=g_build_filename(prefs->tmpdir,outfile->handle,"audio",NULL);
   
-  do {
-    retval=0;
-    mainw->aud_rec_fd=open(outfilename,O_WRONLY|O_CREAT|O_APPEND,S_IRUSR|S_IWUSR);
-    if (mainw->aud_rec_fd<0) {
-      retval=do_write_failed_error_s_with_retry(outfilename,g_strerror(errno),NULL);
-      if (retval==LIVES_CANCEL) {
-	g_free(outfilename);
-	return;
+  if (mainw->aud_rec_fd==-1) {
+    gchar *outfilename=g_build_filename(prefs->tmpdir,outfile->handle,"audio",NULL);
+    do {
+      retval=0;
+      mainw->aud_rec_fd=open(outfilename,O_WRONLY|O_CREAT|O_APPEND,S_IRUSR|S_IWUSR);
+      if (mainw->aud_rec_fd<0) {
+	retval=do_write_failed_error_s_with_retry(outfilename,g_strerror(errno),NULL);
+	if (retval==LIVES_CANCEL) {
+	  g_free(outfilename);
+	  return;
+	}
       }
-    }
-  } while (retval==LIVES_RETRY);
-  
-  g_free(outfilename);
+    } while (retval==LIVES_RETRY);
+    g_free(outfilename);
+  }
 
   if (rec_type==RECA_GENERATED) {
     mainw->jackd->playing_file=fileno;
@@ -1431,7 +1431,6 @@ void jack_rec_audio_end(boolean close_fd) {
 void pulse_rec_audio_to_clip(gint fileno, gint old_file, lives_rec_audio_type_t rec_type) {
   // open audio file for writing
   file *outfile;
-  gchar *outfilename;
   int retval;
 
   if (fileno==-1) {
@@ -1449,19 +1448,22 @@ void pulse_rec_audio_to_clip(gint fileno, gint old_file, lives_rec_audio_type_t 
 
 
   outfile=mainw->files[fileno];
-  outfilename=g_build_filename(prefs->tmpdir,outfile->handle,"audio",NULL);
 
-  do {
-    retval=0;
-    mainw->aud_rec_fd=open(outfilename,O_WRONLY|O_CREAT|O_APPEND,S_IRUSR|S_IWUSR);
-    if (mainw->aud_rec_fd<0) {
-      retval=do_write_failed_error_s_with_retry(outfilename,g_strerror(errno),NULL);
-      if (retval==LIVES_CANCEL) {
-	g_free(outfilename);
-	return;
+  if (mainw->aud_rec_fd==-1) {
+    gchar *outfilename=g_build_filename(prefs->tmpdir,outfile->handle,"audio",NULL);
+    do {
+      retval=0;
+      mainw->aud_rec_fd=open(outfilename,O_WRONLY|O_CREAT|O_APPEND,S_IRUSR|S_IWUSR);
+      if (mainw->aud_rec_fd<0) {
+	retval=do_write_failed_error_s_with_retry(outfilename,g_strerror(errno),NULL);
+	if (retval==LIVES_CANCEL) {
+	  g_free(outfilename);
+	  return;
+	}
       }
-    }
-  } while (retval==LIVES_RETRY);
+    } while (retval==LIVES_RETRY);
+    g_free(outfilename);
+  }
 
   if (rec_type==RECA_GENERATED) {
     mainw->pulsed->playing_file=fileno;

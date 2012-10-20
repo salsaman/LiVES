@@ -5221,9 +5221,13 @@ gboolean weed_init_effect(int hotkey) {
 	  // if playing external audio, switch over to internal for an audio gen
 	  mainw->jackd->audio_ticks=mainw->currticks;
 	  mainw->jackd->frames_written=0;
+
+	  // close the reader
 	  jack_rec_audio_end(FALSE);
 	}
 	if (mainw->jackd!=NULL&&mainw->jackd_read==NULL) {
+
+	  // enable writer
 	  mainw->jackd->in_use=TRUE;
 	}
 #endif
@@ -5361,7 +5365,7 @@ void weed_deinit_effect(int hotkey) {
 
   if (is_audio_gen) {
     // is audio generator
-    // wait for current processing to finish :  TODO - do for all audio effects (when we have them)
+    // wait for current processing to finish
     pthread_mutex_lock(&mainw->interp_mutex);
     mainw->agen_key=0;
     pthread_mutex_unlock(&mainw->interp_mutex);

@@ -1,5 +1,5 @@
-Version 1.6.4
--------------
+Version 1.6.4 (21 October 2012)
+-------------------------------
 Updates to decoder plugins to work with current libav.
 Fix crash in paramwindow textbuffers.
 Add preference for internal/external audio.

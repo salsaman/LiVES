@@ -4,7 +4,7 @@ LiVES is a Video Editing System
 -     -    -     -       -
 
 
-Original author: salsaman (salsaman@xs4all.nl,salsaman@gmail.com) and others (see file AUTHORS)
+Original author: salsaman (salsaman@gmail.com) and others (see file AUTHORS)
 
 
 Released under the GNU PUBLIC LICENSE, version 3 or later.
@@ -103,11 +103,6 @@ Assuming everything went OK, you can now install the application with:
 
 
 Finally, you should make sure your system can find the new libraries installed by LiVES:
-
-
-	ldconfig
-
-(or as root -
 
 	sudo ldconfig
 

@@ -2455,6 +2455,8 @@ lives_audio_buf_t *audio_cache_get_buffer(void) {
 gboolean get_audio_from_plugin(float *fbuffer, int nchans, int arate, int nsamps) {
   // get audio from an audio generator; fbuffer is filled with non-interleaved float
 
+  // TODO *** handling for compund fx
+
   weed_timecode_t tc;
 
   int error;
@@ -2463,7 +2465,7 @@ gboolean get_audio_from_plugin(float *fbuffer, int nchans, int arate, int nsamps
   int aint=WEED_FALSE;
 
   weed_plant_t *inst=rte_keymode_get_instance(mainw->agen_key,rte_key_getmode(mainw->agen_key));
-  weed_plant_t *filter=weed_get_plantptr_value(inst,"filter_class",&error);
+  weed_plant_t *filter=weed_instance_get_filter(inst,FALSE);
   weed_plant_t *channel=get_enabled_channel(inst,0,FALSE);
   weed_plant_t *ctmpl;
 
@@ -2540,7 +2542,7 @@ void reinit_audio_gen(void) {
 
   weed_plant_t *inst=rte_keymode_get_instance(agen_key,rte_key_getmode(mainw->agen_key));
 
-  ret=weed_reinit_effect(inst);
+  ret=weed_reinit_effect(inst,TRUE);
   if (ret==FILTER_NO_ERROR||ret==FILTER_INFO_REINITED) {
     mainw->agen_needs_reinit=FALSE;
     mainw->agen_key=agen_key;

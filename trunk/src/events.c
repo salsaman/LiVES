@@ -2574,7 +2574,7 @@ void **filter_init_add_pchanges (weed_plant_t *event_list, weed_plant_t *plant, 
   weed_timecode_t tc=get_event_timecode(init_event);
 
   if (WEED_PLANT_IS_FILTER_INSTANCE(plant)) {
-    filter=weed_get_plantptr_value(plant,"filter_class",&error);
+    filter=weed_instance_get_filter(plant,TRUE);
     is_inst=TRUE;
   }
 

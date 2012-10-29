@@ -377,6 +377,7 @@ typedef struct {
 #define HIDDEN_GUI (1<<0)
 #define HIDDEN_MULTI (1<<1)
 #define HIDDEN_NEEDS_REINIT (1<<2)
+#define HIDDEN_COMPOUND_INTERNAL (1<<3)
 
   gdouble step_size;
   //gint copy_to;

@@ -1810,7 +1810,7 @@ void rte_set_defs_ok (GtkButton *button, lives_rfx_t *rfx) {
   if (mainw->textwidget_focus!=NULL) after_param_text_changed(mainw->textwidget_focus,rfx);
 
   if (rfx->num_params>0) {
-    filter=weed_get_plantptr_value((weed_plant_t *)rfx->source,"filter_class",&error);
+    filter=weed_instance_get_filter((weed_plant_t *)rfx->source,TRUE);
     ptmpls=weed_get_plantptr_array(filter,"in_parameter_templates",&error);
     for (i=0;i<rfx->num_params;i++) {
       switch (rfx->params[i].type) {
@@ -1870,9 +1870,11 @@ void rte_reset_defs_clicked (GtkButton *button, lives_rfx_t *rfx) {
 
   inst=(weed_plant_t *)rfx->source;
 
-  filter=weed_get_plantptr_value(inst,"filter_class",&error);
+  filter=weed_instance_get_filter(inst,TRUE);
 
   if (rfx->num_params>0) {
+
+    // TODO *** - handle compound fx
 
     if (is_generic_defs) {
       // for generic, reset from plugin supplied defs

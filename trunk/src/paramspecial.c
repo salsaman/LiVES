@@ -126,11 +126,14 @@ add_to_special (const gchar *sp_string, lives_rfx_t *rfx) {
       pnum=atoi(array[i+2]);
       if (rfx->status==RFX_STATUS_WEED) {
 	if (mainw->multitrack!=NULL) {
-	  if (rfx->params[pnum].hidden&HIDDEN_MULTI&&mainw->multitrack->track_index!=-1) {
-	    rfx->params[pnum].hidden^=HIDDEN_MULTI; // multivalues allowed
-	  }
-	  else if (mainw->multitrack->track_index==-1) {
-	    rfx->params[pnum].hidden|=HIDDEN_MULTI; // multivalues hidden
+	  // TODO - check rfx->params[pnum].multi
+	  if ((rfx->params[pnum].hidden&HIDDEN_MULTI)==HIDDEN_MULTI) {
+	    if (mainw->multitrack->track_index!=-1) {
+	      rfx->params[pnum].hidden^=HIDDEN_MULTI; // multivalues allowed
+	    }
+	    else {
+	      rfx->params[pnum].hidden|=HIDDEN_MULTI; // multivalues hidden
+	    }
 	  }
 	}
 	if (init_event!=NULL) {

@@ -4313,9 +4313,11 @@ static void add_aparam_menuitems(lives_mt *mt) {
   filter=get_weed_filter(mt->avol_fx);
   rfx=weed_to_rfx(filter,FALSE);
   for (i=0;i<rfx->num_params;i++) {
+    // TODO - check rfx->params[i].multi
     if ((rfx->params[i].hidden|HIDDEN_MULTI)==HIDDEN_MULTI&&rfx->params[i].type==LIVES_PARAM_NUM) {
       menuitem = gtk_check_menu_item_new_with_label (rfx->params[i].name);
-      if (mt->aparam_view_list!=NULL&&g_list_find(mt->aparam_view_list,GINT_TO_POINTER(i))) gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(menuitem),TRUE);
+      if (mt->aparam_view_list!=NULL&&g_list_find(mt->aparam_view_list,GINT_TO_POINTER(i))) 
+	gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(menuitem),TRUE);
       else gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(menuitem),FALSE);
       gtk_container_add (GTK_CONTAINER (mt->aparam_submenu), menuitem);
       gtk_widget_show(menuitem);
@@ -4455,7 +4457,7 @@ static void set_audio_filter_channel_values(lives_mt *mt) {
   
   mt->changed=mt->auto_changed=TRUE;
 
-  weed_reinit_effect(inst);
+  weed_reinit_effect(inst,TRUE);
   polymorph(mt,POLY_PARAMS);
 
 }

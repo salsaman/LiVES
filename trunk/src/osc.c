@@ -4513,6 +4513,7 @@ void lives_osc_cb_rte_getnochannels(void *context, int arglen, const void *vargs
 
   int effect_key;
   int count;
+  int error;
 
   weed_plant_t *plant;
 
@@ -4524,7 +4525,10 @@ void lives_osc_cb_rte_getnochannels(void *context, int arglen, const void *vargs
   if (effect_key<1||effect_key>FX_MAX) return lives_osc_notify_failure();
   //g_print("key %d pnum %d",effect_key,pnum);
   plant=rte_keymode_get_instance(effect_key,rte_key_getmode(effect_key));
-  if (plant==NULL) plant=rte_keymode_get_filter(effect_key,rte_key_getmode(effect_key));
+
+  // handle compound fx
+  if (plant!=NULL) while (weed_plant_has_leaf(plant,"host_next_instance")) plant=weed_get_plantptr_value(plant,"host_next_instance",&error);
+  else plant=rte_keymode_get_filter(effect_key,rte_key_getmode(effect_key));
   if (plant==NULL) return lives_osc_notify_failure();
 
   count=enabled_out_channels(plant, FALSE);

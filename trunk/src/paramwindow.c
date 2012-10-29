@@ -342,9 +342,11 @@ static void gen_fps_changed (GtkSpinButton *spin, gpointer user_data) {
 
 
 static void trans_in_out_pressed(lives_rfx_t *rfx, gboolean in) {
+  // TODO *** - compound fx
+
   int error;
   weed_plant_t *inst=(weed_plant_t *)rfx->source;
-  weed_plant_t *filter=weed_get_plantptr_value(inst,"filter_class",&error);
+  weed_plant_t *filter=weed_instance_get_filter(inst,TRUE);
   int trans=get_transition_param(filter);
   weed_plant_t **in_params=weed_get_plantptr_array(inst,"in_parameters",&error);
   weed_plant_t *tparam=in_params[trans];
@@ -435,7 +437,7 @@ void transition_add_in_out(GtkBox *vbox, lives_rfx_t *rfx, gboolean add_audio_ch
 
   if (add_audio_check) {
     int error;
-    weed_plant_t *filter=weed_get_plantptr_value((weed_plant_t *)rfx->source,"filter_class",&error);
+    weed_plant_t *filter=weed_instance_get_filter((weed_plant_t *)rfx->source,FALSE);
     GtkWidget *checkbutton = gtk_check_button_new ();
 
     if (weed_plant_has_leaf(mainw->multitrack->init_event,"host_audio_transition")&&
@@ -518,7 +520,7 @@ void transition_add_in_out(GtkBox *vbox, lives_rfx_t *rfx, gboolean add_audio_ch
 static gboolean add_sizes(GtkBox *vbox, gboolean add_fps, lives_rfx_t *rfx) {
   // add size settings for generators and resize effects
   int i,error;
-  weed_plant_t *filter=weed_get_plantptr_value((weed_plant_t *)rfx->source,"filter_class",&error);
+  weed_plant_t *filter=weed_instance_get_filter((weed_plant_t *)rfx->source,TRUE);
   int num_chans=weed_leaf_num_elements(filter,"out_channel_templates");
   weed_plant_t **ctmpls=weed_get_plantptr_array(filter,"out_channel_templates",&error),*tmpl;
   gchar *cname,*ltxt;
@@ -1079,6 +1081,16 @@ static void check_hidden_gui(weed_plant_t *inst, lives_param_t *param) {
 }
 
 
+static int num_in_params_for_nth_instance(weed_plant_t *inst, int idx) {
+  // get number of params for nth instance in a compound effect - gives an offset for param number within the compound
+
+  int error;
+  while (idx>0) inst=weed_get_plantptr_value(inst,"host_next_instance",&error);
+  return weed_leaf_num_elements(inst,"in_parameters");
+}
+
+
+
 
 gboolean make_param_box(GtkVBox *top_vbox, lives_rfx_t *rfx) {
   // make a dynamic parameter window
@@ -1097,8 +1109,9 @@ gboolean make_param_box(GtkVBox *top_vbox, lives_rfx_t *rfx) {
   GList *hints=NULL;
   GList *onchange=NULL;
   GList *layout=NULL;
-  int i,j,k,pnum,error;
+  int i,j,k,pnum;
   int length;
+  int poffset=0,inum=0;
   lives_param_t *param=NULL;
 
   gint num_tok;
@@ -1113,7 +1126,7 @@ gboolean make_param_box(GtkVBox *top_vbox, lives_rfx_t *rfx) {
   gboolean chk_params=FALSE;
 
   if (top_vbox==NULL) {
-    // I think this means we just check some things with params without displaying them
+    // just check how many non-hidden params without displaying
     chk_params=TRUE;
   }
   else {
@@ -1155,7 +1168,7 @@ gboolean make_param_box(GtkVBox *top_vbox, lives_rfx_t *rfx) {
   
   // extras for multitrack
   if (mainw->multitrack!=NULL&&rfx->status==RFX_STATUS_WEED&&!chk_params) {
-    weed_plant_t *filter=weed_get_plantptr_value((weed_plant_t *)rfx->source,"filter_class",&error);
+    weed_plant_t *filter=weed_instance_get_filter((weed_plant_t *)rfx->source,TRUE);
     if (enabled_in_channels(filter,FALSE)==2&&get_transition_param(filter)!=-1) {
       // add in/out for multitrack transition
       transition_add_in_out(GTK_BOX(param_vbox),rfx,(mainw->multitrack->opts.pertrack_audio));
@@ -1199,9 +1212,13 @@ gboolean make_param_box(GtkVBox *top_vbox, lives_rfx_t *rfx) {
   if (hints!=NULL) {
     gchar *lstring=g_strconcat("layout",rfx->delim,NULL);
     gchar *sstring=g_strconcat("special",rfx->delim,NULL);
+    gchar *istring=g_strconcat("internal",rfx->delim,NULL);
     for (i=0;i<g_list_length (hints);i++) {
       if (!strncmp ((gchar *)g_list_nth_data (hints,i),lstring,7)) {
 	layout=g_list_append (layout,g_strdup((gchar *)g_list_nth_data (hints,i)+7));
+      }
+      else if (!strncmp ((gchar *)g_list_nth_data (hints,i),istring,9)) {
+	layout=g_list_append (layout,g_strdup((gchar *)g_list_nth_data (hints,i)+9));
       }
       else if (!strncmp ((gchar *)g_list_nth_data (hints,i),sstring,8)) {
 	add_to_special((gchar *)g_list_nth_data (hints,i)+8,rfx);
@@ -1230,7 +1247,14 @@ gboolean make_param_box(GtkVBox *top_vbox, lives_rfx_t *rfx) {
     array=g_strsplit (line,rfx->delim,num_tok);
     if (!strlen(array[num_tok-1])) num_tok--;
     for (j=0;j<num_tok;j++) {
-      if (!strncmp (array[j],"p",1)&&(pnum=atoi ((gchar *)(array[j]+1)))>=0&&pnum<rfx->num_params&&!used[pnum]) {
+      if (!strcmp(array[j],"nextfilter")) {
+	// handling for compound fx - add an offset to the param number
+	poffset+=num_in_params_for_nth_instance(rfx->source,inum);
+	inum++;
+	continue;
+      }
+
+      if (!strncmp (array[j],"p",1)&&(pnum=atoi ((gchar *)(array[j]+1)))>=0&&(pnum=pnum+poffset)<rfx->num_params&&!used[pnum]) {
 	param=&rfx->params[pnum];
 	if (rfx->source_type==LIVES_RFX_SOURCE_WEED) check_hidden_gui((weed_plant_t *)rfx->source,param);
 	if ((param->hidden&&param->hidden!=HIDDEN_NEEDS_REINIT)||
@@ -1325,7 +1349,7 @@ gboolean make_param_box(GtkVBox *top_vbox, lives_rfx_t *rfx) {
   }
 
   if (mainw->multitrack==NULL&&rfx->status==RFX_STATUS_WEED&&rfx->is_template) {
-    weed_plant_t *filter=weed_get_plantptr_value((weed_plant_t *)rfx->source,"filter_class",&error);
+    weed_plant_t *filter=weed_instance_get_filter((weed_plant_t *)rfx->source,TRUE);
     if (enabled_in_channels(filter,FALSE)==0&&enabled_out_channels(filter,FALSE)>0&&has_video_chans_out(filter,TRUE)) {
       // out channel size(s) and target_fps for generators
       if (!chk_params) add_sizes(GTK_BOX(top_vbox),TRUE,rfx);
@@ -1871,7 +1895,7 @@ after_boolean_param_toggled        (GtkToggleButton *togglebutton,
 	weed_free(disp_string);
       }
       if (param->reinit||(copyto!=-1&&rfx->params[copyto].reinit)) {
-	weed_reinit_effect(inst);
+	weed_reinit_effect(inst,FALSE);
       }
 
     }
@@ -2002,7 +2026,7 @@ after_param_value_changed           (GtkSpinButton   *spinbutton,
 	weed_free(disp_string);
       }
       if (param->reinit||(copyto!=-1&&rfx->params[copyto].reinit)) {
-	weed_reinit_effect(inst);
+	weed_reinit_effect(inst,FALSE);
       }
 
     }
@@ -2196,7 +2220,7 @@ after_param_red_changed           (GtkSpinButton   *spinbutton,
       }
       
       if (param->reinit||(copyto!=-1&&rfx->params[copyto].reinit)) {
-	weed_reinit_effect(inst);
+	weed_reinit_effect(inst,FALSE);
       }
     }
   }
@@ -2265,7 +2289,7 @@ after_param_green_changed           (GtkSpinButton   *spinbutton,
       }
       
       if (param->reinit||(copyto!=-1&&rfx->params[copyto].reinit)) {
-	weed_reinit_effect(inst);
+	weed_reinit_effect(inst,FALSE);
       }
     }
   }
@@ -2333,7 +2357,7 @@ after_param_blue_changed           (GtkSpinButton   *spinbutton,
       }
       
       if (param->reinit||(copyto!=-1&&rfx->params[copyto].reinit)) {
-	weed_reinit_effect(inst);
+	weed_reinit_effect(inst,FALSE);
       }
     }
   }
@@ -2493,7 +2517,7 @@ after_param_text_changed (GtkWidget *textwidget, lives_rfx_t *rfx) {
       }
 
       if (param->reinit||(copyto!=-1&&rfx->params[copyto].reinit)) {
-	weed_reinit_effect(inst);
+	weed_reinit_effect(inst,FALSE);
       }
 
       if (disp_string!=NULL) {
@@ -2582,7 +2606,7 @@ after_string_list_changed (GtkComboBox *combo, lives_rfx_t *rfx) {
     
       
       if (param->reinit||(copyto!=-1&&rfx->params[copyto].reinit)) {
-	weed_reinit_effect(inst);
+	weed_reinit_effect(inst,FALSE);
       }
 
       if (disp_string!=NULL) {

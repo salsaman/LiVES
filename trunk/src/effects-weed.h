@@ -49,7 +49,8 @@ weed_plant_t *get_enabled_channel (weed_plant_t *inst, gint which, gboolean is_i
 weed_plant_t *get_mandatory_channel (weed_plant_t *filter, gint which, gboolean is_in); ///< for FILTER_CLASS
 gboolean weed_filter_is_resizer(weed_plant_t *filt);
 gboolean weed_instance_is_resizer(weed_plant_t *filt);
-weed_plant_t *weed_instance_get_filter(weed_plant_t *inst);
+weed_plant_t *weed_instance_get_filter(weed_plant_t *inst, boolean get_compound_parent);
+int num_compound_fx(weed_plant_t *plant); // return number of filters in a compund fx (1 if it is not compound) - works for filter or inst
 
 gboolean is_audio_channel_in(weed_plant_t *inst, int chnum);
 gboolean has_video_chans_in(weed_plant_t *filter, gboolean count_opt);
@@ -80,7 +81,7 @@ weed_plant_t *weed_instance_from_filter(weed_plant_t *filter);
 void weed_instance_ref(weed_plant_t *inst);
 void weed_instance_unref(weed_plant_t *inst);
 void weed_in_parameters_free (weed_plant_t *inst);
-lives_filter_error_t weed_reinit_effect (weed_plant_t *inst);
+lives_filter_error_t weed_reinit_effect (weed_plant_t *inst, boolean reinit_compound);
 void weed_reinit_all(void);
 
 

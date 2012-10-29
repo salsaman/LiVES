@@ -3213,6 +3213,7 @@ lives_param_t *weed_params_to_rfx(gint npar, weed_plant_t *inst, gboolean show_r
   double *colsd;
   double red_mind=0.,red_maxd=1.,green_mind=0.,green_maxd=1.,blue_mind=0.,blue_maxd=1.,*maxd=NULL,*mind=NULL;
   int flags=0;
+  int nwpars=0,poffset=0;
   gboolean col_int;
 
   weed_plant_t *wtmpl;
@@ -3220,10 +3221,24 @@ lives_param_t *weed_params_to_rfx(gint npar, weed_plant_t *inst, gboolean show_r
 
   weed_plant_t *chann,*ctmpl;
 
-  wpars=weed_get_plantptr_array(inst,"in_parameters",&error);
+  if (weed_plant_has_leaf(inst,"in_parameters")) nwpars=weed_leaf_num_elements(inst,"in_parameters");
+  if (nwpars>0) wpars=weed_get_plantptr_array(inst,"in_parameters",&error);
 
   for (i=0;i<npar;i++) {
-    wpar=wpars[i];
+    if (i>=nwpars) {
+      // handling for compound fx
+      poffset+=nwpars;
+      if (wpars!=NULL) weed_free(wpars);
+      inst=weed_get_plantptr_value(inst,"host_next_instance",&error);
+      if (weed_plant_has_leaf(inst,"in_parameters")) nwpars=weed_leaf_num_elements(inst,"in_parameters");
+      else nwpars=0;
+      if (nwpars>0) wpars=weed_get_plantptr_array(inst,"in_parameters",&error);
+      else wpars=NULL;
+      i--;
+      continue;
+    }
+
+    wpar=wpars[i-poffset];
     wtmpl=weed_get_plantptr_value(wpar,"template",&error);
 
     if (weed_plant_has_leaf(wtmpl,"flags")) flags=weed_get_int_value(wtmpl,"flags",&error);
@@ -3276,6 +3291,9 @@ lives_param_t *weed_params_to_rfx(gint npar, weed_plant_t *inst, gboolean show_r
       if (!show_reinits) rpar[i].hidden|=HIDDEN_NEEDS_REINIT;
     }
     else rpar[i].reinit=FALSE;
+
+    // hide internally connected params for compound fx
+    if (weed_plant_has_leaf(wpar,"host_internal_connection")) rpar[i].hidden|=HIDDEN_COMPOUND_INTERNAL;
 
     ///////////////////////////////
     param_hint=weed_get_int_value(wtmpl,"hint",&error);
@@ -3541,10 +3559,6 @@ lives_param_t *weed_params_to_rfx(gint npar, weed_plant_t *inst, gboolean show_r
     rpar[i].onchange=FALSE;
   }
 
-  for (i=0;i<npar;i++) {
-    set_copy_to(inst,i,TRUE);
-  }
-
   weed_free(wpars);
 
   return rpar;
@@ -3553,7 +3567,7 @@ lives_param_t *weed_params_to_rfx(gint npar, weed_plant_t *inst, gboolean show_r
 
 
 lives_rfx_t *weed_to_rfx (weed_plant_t *plant, gboolean show_reinits) {
-  // return an RFX for a weed effect; set rfx->source to an INSTANCE of the filter
+  // return an RFX for a weed effect; set rfx->source to an INSTANCE of the filter (first instance for compound fx)
   int error;
   weed_plant_t *filter,*inst;
 
@@ -3561,14 +3575,14 @@ lives_rfx_t *weed_to_rfx (weed_plant_t *plant, gboolean show_reinits) {
   lives_rfx_t *rfx=(lives_rfx_t *)g_malloc(sizeof(lives_rfx_t));
   rfx->is_template=FALSE;
   if (weed_get_int_value(plant,"type",&error)==WEED_PLANT_FILTER_INSTANCE) {
-    filter=weed_get_plantptr_value(plant,"filter_class",&error);
+    filter=weed_instance_get_filter(plant,TRUE);
     inst=plant;
   }
   else {
     filter=plant;
     inst=weed_instance_from_filter(filter);
     // init and deinit the effect to allow the plugin to hide parameters, etc.
-    weed_reinit_effect(inst);
+    weed_reinit_effect(inst,TRUE);
     rfx->is_template=TRUE;
   }
 
@@ -3578,7 +3592,7 @@ lives_rfx_t *weed_to_rfx (weed_plant_t *plant, gboolean show_reinits) {
   weed_free(string);
   rfx->action_desc=g_strdup("no action");
   rfx->min_frames=-1;
-  rfx->num_in_channels=enabled_in_channels(plant,FALSE);
+  rfx->num_in_channels=enabled_in_channels(filter,FALSE);
   rfx->status=RFX_STATUS_WEED;
   rfx->props=0;
   rfx->menuitem=NULL;
@@ -3599,43 +3613,65 @@ GList *get_external_window_hints(lives_rfx_t *rfx) {
   GList *hints=NULL;
 
   if (rfx->status==RFX_STATUS_WEED) {
-    int i,error;
+    int nfilters,error;
     int num_hints;
     weed_plant_t *gui;
     weed_plant_t *inst=(weed_plant_t *)rfx->source;
-    weed_plant_t *filter=weed_get_plantptr_value(inst,"filter_class",&error);
+    weed_plant_t *filter=weed_instance_get_filter(inst,TRUE);
+    weed_plant_t **filters=NULL;
     char *string,**rfx_strings,*delim;
-   
-    if (!weed_plant_has_leaf(filter,"gui")) return NULL;
-    gui=weed_get_plantptr_value(filter,"gui",&error);
 
-    if (!weed_plant_has_leaf(gui,"layout_scheme")) return NULL;
+    register int i;
 
-    string=weed_get_string_value(gui,"layout_scheme",&error);
-    if (strcmp(string,"RFX")) {
+    if ((nfilters=num_compound_fx(filter))>1) {
+      // handle compound fx
+      filters=weed_get_plantptr_array(filter,"host_filter_list",&error);
+    }
+
+    for (i=0;i<nfilters;i++) {
+
+      if (filters!=NULL) {
+	filter=filters[i];
+      }
+
+      if (!weed_plant_has_leaf(filter,"gui")) continue;
+      gui=weed_get_plantptr_value(filter,"gui",&error);
+
+      if (!weed_plant_has_leaf(gui,"layout_scheme")) continue;
+
+      string=weed_get_string_value(gui,"layout_scheme",&error);
+      if (strcmp(string,"RFX")) {
+	weed_free(string);
+	continue;
+      }
       weed_free(string);
-      return NULL;
+
+      if (!weed_plant_has_leaf(gui,"rfx_delim")) continue;
+      delim=weed_get_string_value(gui,"rfx_delim",&error);
+      g_snprintf(rfx->delim,2,"%s",delim);
+      weed_free(delim);
+      
+      if (!weed_plant_has_leaf(gui,"rfx_strings")) continue;
+      
+      num_hints=weed_leaf_num_elements(gui,"rfx_strings");
+      
+      if (num_hints==0) continue;
+      rfx_strings=weed_get_string_array(gui,"rfx_strings",&error);
+      
+      for (i=0;i<num_hints;i++) {
+	hints=g_list_append(hints,g_strdup(rfx_strings[i]));
+	weed_free(rfx_strings[i]);
+      }
+      weed_free(rfx_strings);
+
+      if (filters!=NULL) hints=g_list_append(hints,g_strdup("internal|nextfilter"));
+
     }
-    weed_free(string);
 
-    if (!weed_plant_has_leaf(gui,"rfx_delim")) return NULL;
-    delim=weed_get_string_value(gui,"rfx_delim",&error);
-    g_snprintf(rfx->delim,2,"%s",delim);
-    weed_free(delim);
+    if (filters!=NULL) weed_free(filters);
 
-    if (!weed_plant_has_leaf(gui,"rfx_strings")) return NULL;
-
-    num_hints=weed_leaf_num_elements(gui,"rfx_strings");
-
-    if (num_hints==0) return NULL;
-    rfx_strings=weed_get_string_array(gui,"rfx_strings",&error);
-
-    for (i=0;i<num_hints;i++) {
-      hints=g_list_append(hints,g_strdup(rfx_strings[i]));
-      weed_free(rfx_strings[i]);
-    }
-    weed_free(rfx_strings);
   }
+
   return hints;
 }
 

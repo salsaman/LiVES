@@ -4152,7 +4152,8 @@ static void load_weed_plugin (gchar *plugin_name, gchar *plugin_path, gchar *dir
 	  }
 	  if (!dup) {
 #ifdef DEBUG_WEED
-	    if (key<FX_KEYS_PHYSICAL) d_print(g_strdup_printf("Loaded filter \"%s\" in plugin \"%s\"; assigned to key ctrl-%d, mode %d.\n",filter_name,plugin_name,key+1,kmode+1));
+	    if (key<FX_KEYS_PHYSICAL) d_print(g_strdup_printf("Loaded filter \"%s\" in plugin \"%s\"; assigned to key ctrl-%d, mode %d.\n",
+							      filter_name,plugin_name,key+1,kmode+1));
 	    else d_print(g_strdup_printf("Loaded filter \"%s\" in plugin \"%s\", no key assigned\n",filter_name,plugin_name));
 #endif
 
@@ -5077,7 +5078,7 @@ weed_plant_t *weed_instance_from_filter(weed_plant_t *filter) {
 gboolean weed_init_effect(int hotkey) {
   // mainw->osc_block should be set to TRUE before calling this function !
   weed_plant_t *filter;
-  weed_plant_t *new_instance;
+  weed_plant_t *new_instance,*inst;
   weed_plant_t *event_list;
 
   gboolean fg_modeswitch=FALSE,is_trans=FALSE,gen_start=FALSE,is_modeswitch=FALSE;
@@ -5089,9 +5090,6 @@ gboolean weed_init_effect(int hotkey) {
   gint ntracks;
   int error;
   int idx;
-
-  // TODO *** - handle compound fx
-
 
   if (hotkey<0) {
     is_modeswitch=TRUE;
@@ -5205,8 +5203,14 @@ gboolean weed_init_effect(int hotkey) {
     lives_rfx_t *rfx=(lives_rfx_t *)g_object_get_data(G_OBJECT(fx_dialog[1]),"rfx");
     new_instance=(weed_plant_t *)rfx->source;
 
-    // TODO - handle compound fx
     weed_instance_ref(new_instance);
+
+    // handle compound fx
+    inst=new_instance;
+    while (weed_plant_has_leaf(inst,"host_next_instance")) {
+      inst=weed_get_plantptr_value(inst,"host_next_instance",&error);
+      weed_instance_ref(inst);
+    }
     redraw_pwindow(hotkey,key_modes[hotkey]);
   }
   else {
@@ -5219,26 +5223,42 @@ gboolean weed_init_effect(int hotkey) {
     }
   }
 
-  // TODO - handle compound fx
   update_host_info(new_instance);
 
   // record the key so we know whose parameters to record later
   weed_set_int_value(new_instance,"host_hotkey",hotkey);
 
+  // handle compound fx
+  inst=new_instance;
+  while (weed_plant_has_leaf(inst,"host_next_instance")) {
+    inst=weed_get_plantptr_value(inst,"host_next_instance",&error);
+    update_host_info(inst);
+    weed_set_int_value(inst,"host_hotkey",hotkey);
+  }
+
+
   if (!gen_start) {
+    weed_plant_t *inst,*next_inst=NULL;
+
+    inst=new_instance;
+
+  start1:
+
+    filter=weed_instance_get_filter(inst,FALSE);
+
     if (weed_plant_has_leaf(filter,"init_func")) {
       weed_init_f *init_func_ptr_ptr;
       weed_init_f init_func;
       gchar *cwd=cd_to_plugin_dir(filter);
       weed_leaf_get(filter,"init_func",0,(void *)&init_func_ptr_ptr);
       init_func=init_func_ptr_ptr[0];
-      set_param_gui_readwrite(new_instance);
-      weed_set_boolean_value(new_instance,"host_inited",WEED_TRUE);
-      if (init_func!=NULL&&(error=(*init_func)(new_instance))!=WEED_NO_ERROR) {
-	weed_plant_t *inst,*next_inst=NULL;
+      set_param_gui_readwrite(inst);
+      if (init_func!=NULL&&(error=(*init_func)(inst))!=WEED_NO_ERROR) {
 	gint weed_error;
-	gchar *filter_name=weed_get_string_value(filter,"name",&weed_error),*tmp;
-	set_param_gui_readonly(new_instance);
+	gchar *filter_name,*tmp;
+	filter=weed_filters[idx];
+	filter_name=weed_get_string_value(filter,"name",&weed_error);
+	set_param_gui_readonly(inst);
 	d_print ((tmp=g_strdup_printf (_ ("Failed to start instance %s, error code %d\n"),filter_name,error)));
 	g_free(tmp);
 	weed_free(filter_name);
@@ -5255,7 +5275,7 @@ gboolean weed_init_effect(int hotkey) {
 	weed_call_deinit_func(inst);
 	weed_instance_unref(inst);
 
-	if (next_inst!=NULL) {
+	if (next_inst!=NULL&&weed_get_boolean_value(next_inst,"host_inited",&error)==WEED_TRUE) {
 	  // handle compound fx
 	  inst=next_inst;
 	  goto deinit2;
@@ -5267,10 +5287,19 @@ gboolean weed_init_effect(int hotkey) {
 	if (is_audio_gen) mainw->agen_needs_reinit=FALSE;
 	return FALSE;
       }
-      set_param_gui_readonly(new_instance);
+       set_param_gui_readonly(inst);
       g_free(cwd);
     }
-    weed_set_boolean_value(new_instance,"host_inited",WEED_TRUE);
+
+    weed_set_boolean_value(inst,"host_inited",WEED_TRUE);
+
+    if (weed_plant_has_leaf(inst,"host_next_instance")) {
+      inst=weed_get_plantptr_value(inst,"host_next_instance",&error);
+      goto start1;
+    }
+
+    filter=weed_filters[idx];
+
   }
 
   if (inc_count==0&&outc_count>0&&!is_audio_gen) {
@@ -5968,8 +5997,6 @@ gboolean weed_playback_gen_start (void) {
   gint bgs=bg_gen_to_start;
   gboolean was_started=FALSE;
 
-  // TODO *** - handle compound fx
-
   if (mainw->is_rendering) return TRUE;
 
   if (fg_gen_to_start==bg_gen_to_start) bg_gen_to_start=-1;
@@ -5987,6 +6014,9 @@ gboolean weed_playback_gen_start (void) {
     if (enabled_in_channels(weed_filters[key_to_fx[fg_gen_to_start][key_modes[fg_gen_to_start]]],FALSE)==0) {
       inst=key_to_instance[fg_gen_to_start][key_modes[fg_gen_to_start]];
       if (inst!=NULL) {
+
+      geninit1:
+
 	filter=weed_instance_get_filter(inst,FALSE);
 	if (weed_plant_has_leaf(filter,"init_func")) {
 	  weed_init_f *init_func_ptr_ptr;
@@ -6003,52 +6033,66 @@ gboolean weed_playback_gen_start (void) {
 	    g_free(cwd);
 	  }
 	}
-	weed_set_boolean_value(inst,"host_inited",WEED_TRUE);
-      }
-      if (error!=WEED_NO_ERROR) {
-	key_to_instance[fg_gen_to_start][key_modes[fg_gen_to_start]]=NULL;
-	if (inst!=NULL) {
-	  gchar *tmp;
-	  filter=weed_instance_get_filter(inst,FALSE);
-	  filter_name=weed_get_string_value(filter,"name",&weed_error);
-	  d_print ((tmp=g_strdup_printf (_ ("Failed to start generator %s\n"),filter_name)));
-	  g_free(tmp);
-	  weed_free(filter_name);
 
-	deinit4:
 
-	  if (weed_plant_has_leaf(inst,"host_next_instance")) next_inst=weed_get_plantptr_value(inst,"host_next_instance",&error);
-  
-	  weed_call_deinit_func(inst);
-	  weed_instance_unref(inst);
-
-	  if (next_inst!=NULL) {
-	    // handle compound fx
-	    inst=next_inst;
-	    goto deinit4;
+	if (error!=WEED_NO_ERROR) {
+	  inst=key_to_instance[fg_gen_to_start][key_modes[fg_gen_to_start]];
+	  key_to_instance[fg_gen_to_start][key_modes[fg_gen_to_start]]=NULL;
+	  if (inst!=NULL) {
+	    gchar *tmp;
+	    filter=weed_instance_get_filter(inst,TRUE);
+	    filter_name=weed_get_string_value(filter,"name",&weed_error);
+	    d_print ((tmp=g_strdup_printf (_ ("Failed to start generator %s\n"),filter_name)));
+	    g_free(tmp);
+	    weed_free(filter_name);
+	    
+	  deinit4:
+	    
+	    if (weed_plant_has_leaf(inst,"host_next_instance")) next_inst=weed_get_plantptr_value(inst,"host_next_instance",&error);
+	    
+	    weed_call_deinit_func(inst);
+	    weed_instance_unref(inst);
+	    
+	    if (next_inst!=NULL) {
+	      // handle compound fx
+	      inst=next_inst;
+	      if (weed_get_boolean_value(inst,"host_inited",&error)==WEED_TRUE) goto deinit4;
+	    }
+	    
 	  }
 
+	  fg_gen_to_start=-1;
+	  cfile->ext_src=NULL;
+	  mainw->osc_block=FALSE;
+	  return FALSE;
 	}
-	fg_gen_to_start=-1;
-	cfile->ext_src=NULL;
-	mainw->osc_block=FALSE;
-	return FALSE;
-      }
-      if (weed_plant_has_leaf(inst,"target_fps")) {
-	gint current_file=mainw->current_file;
-	mainw->current_file=fg_generator_clip;
-	cfile->fps=weed_get_double_value(inst,"target_fps",&error);
-	set_main_title(cfile->file_name,0);
-	gtk_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_pb_fps),cfile->fps);
-	mainw->current_file=current_file;
-      }
-      mainw->clip_switched=TRUE;
 
-      cfile->ext_src=inst;
+	weed_set_boolean_value(inst,"host_inited",WEED_TRUE);
+
+	if (weed_plant_has_leaf(inst,"host_next_instance")) {
+	  inst=weed_get_plantptr_value(inst,"host_next_instance",&error);
+	  goto geninit1;
+	}
+
+
+	// TODO
+	if (weed_plant_has_leaf(inst,"target_fps")) {
+	  gint current_file=mainw->current_file;
+	  mainw->current_file=fg_generator_clip;
+	  cfile->fps=weed_get_double_value(inst,"target_fps",&error);
+	  set_main_title(cfile->file_name,0);
+	  gtk_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_pb_fps),cfile->fps);
+	  mainw->current_file=current_file;
+	}
+
+	mainw->clip_switched=TRUE;
+	
+	cfile->ext_src=inst;
+      }
+      
+      fg_gen_to_start=-1;
     }
-    fg_gen_to_start=-1;
   }
-
 
   if (bg_gen_to_start!=-1) {
 
@@ -6075,14 +6119,24 @@ gboolean weed_playback_gen_start (void) {
       }
       else {
 	if (!was_started) {
+
+	genstart2:
+
 	  weed_call_init_func(inst);
+
+	  // handle compound fx
+	  if (weed_plant_has_leaf(inst,"host_next_instance")) {
+	    inst=weed_get_plantptr_value(inst,"host_next_instance",&error);
+	    goto genstart2;
+	  }
+	  inst=key_to_instance[bgs][key_modes[bgs]];
 	}
       }
       
       if (error!=WEED_NO_ERROR) {
 	if (inst!=NULL) {
 	  gchar *tmp;
-	  filter=weed_instance_get_filter(inst,FALSE);
+	  filter=weed_instance_get_filter(inst,TRUE);
 	  filter_name=weed_get_string_value(filter,"name",&weed_error);
 	  d_print ((tmp=g_strdup_printf (_ ("Failed to start generator %s, error %d\n"),filter_name,error)));
 	  g_free(tmp);
@@ -6114,7 +6168,15 @@ gboolean weed_playback_gen_start (void) {
     bg_gen_to_start=-1;
   }
 
+ setgui1:
+
   if (inst!=NULL) set_param_gui_readonly(inst);
+
+  // handle compound fx
+  if (inst!=NULL&&weed_plant_has_leaf(inst,"host_next_instance")) {
+    inst=weed_get_plantptr_value(inst,"host_next_instance",&error);
+    goto setgui1;
+  }
 
   mainw->osc_block=FALSE;
 
@@ -6137,7 +6199,7 @@ gboolean is_hidden_param(weed_plant_t *plant, int i) {
 
   // TODO *** compound fx
 
-  if (WEED_PLANT_IS_FILTER_INSTANCE(plant)) filter=weed_instance_get_filter(plant,FALSE);
+  if (WEED_PLANT_IS_FILTER_INSTANCE(plant)) filter=weed_instance_get_filter(plant,TRUE);
   else filter=plant;
 
   if (weed_plant_has_leaf(filter,"in_parameter_templates")) 
@@ -6173,6 +6235,9 @@ gboolean is_hidden_param(weed_plant_t *plant, int i) {
 	    if (!(flags2&WEED_PARAMETER_REINIT_ON_VALUE_CHANGE)) {
 	      visible=TRUE;
 	    }}}}}}
+
+  // internally connected parameters for compound fx
+  if (weed_plant_has_leaf(wtmpl,"host_internal_connection")) visible=FALSE;
 
   weed_free(wtmpls);
   return !visible;

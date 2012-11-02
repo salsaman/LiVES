@@ -941,7 +941,8 @@ void deinterlace_frame(weed_plant_t *layer, weed_timecode_t tc) {
   layers[1]=NULL;
 
   layers[0]=layer;
-  
+  // TODO *** - handle compound fx
+
   init_event=weed_plant_new(WEED_PLANT_EVENT);
   weed_set_int_value(init_event,"in_tracks",0);
   weed_set_int_value(init_event,"out_tracks",0);

@@ -3158,6 +3158,7 @@ weed_plant_t *process_events (weed_plant_t *next_event, boolean process_audio, w
 
       // reinit effect with saved parameters
       inst=rte_keymode_get_instance(key+1,0);
+	// TODO *** - handle compound fx
 
       num_params=num_in_params(inst,TRUE,TRUE);
       if (num_params>0) {
@@ -3671,6 +3672,7 @@ lives_render_error_t render_events (gboolean reset) {
 	
       }
 
+	// TODO *** - handle compound fx
 
       num_params=num_in_params(inst,TRUE,TRUE);
       if (num_params>0) {

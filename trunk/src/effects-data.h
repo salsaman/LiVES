@@ -59,6 +59,9 @@ void pconx_chain_data(int key, int mode);
 // return list of in keys/modes/params/autoscale
 gchar *pconx_list(int okey, int omode, int opnum);
 
+// special version for compound fx internal connections
+void pconx_chain_data_internal(weed_plant_t *inst);
+
 
 // alpha channels
 
@@ -115,3 +118,5 @@ boolean cconx_chain_data(int key, int mode);
 
 // return list of in chaannels/modes/params
 gchar *cconx_list(int okey, int omode, int ocnum);
+
+boolean cconx_chain_data_internal(weed_plant_t *ichan);

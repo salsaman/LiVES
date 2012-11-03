@@ -1152,14 +1152,32 @@ void pconx_chain_data(int key, int mode) {
 }
 
 
+void pconx_chain_data_internal(weed_plant_t *inst) {
+  // special version for compound fx internal connections
+  weed_plant_t **in_params;
 
+  boolean autoscale;
 
+  int nparams=0,error;
 
+  register int i;
 
+  if (weed_plant_has_leaf(inst,"in_parameters")) nparams=weed_leaf_num_elements(inst,"in_parameters");
+  if (nparams==0) return;
 
+  in_params=weed_get_plantptr_array(inst,"in_parameters",&error);
 
+  for (i=0;i<nparams;i++) {
+    if (weed_plant_has_leaf(in_params[i],"host_internal_connection")) {
+      autoscale=FALSE;
+      if (weed_plant_has_leaf(in_params[i],"host_internal_connection_autoscale")&&
+	  weed_get_boolean_value(in_params[i],"host_internal_connection_autoscale",&error)==WEED_TRUE) autoscale=TRUE;
+      pconx_convert_value_data(inst,i,in_params[i],weed_get_plantptr_value(in_params[i],"host_internal_connection",&error),autoscale);
+    }
+  }
 
-
+  weed_free(in_params);
+}
 
 // alpha channs
 
@@ -1550,7 +1568,7 @@ weed_plant_t *cconx_get_out_alpha(int ikey, int imode, int icnum) {
 
 
 
-gboolean cconx_convert_pixel_data(weed_plant_t *dchan, weed_plant_t *schan) {
+boolean cconx_convert_pixel_data(weed_plant_t *dchan, weed_plant_t *schan) {
   // convert pixel_data by possibly converting the type (palette)
 
   // return TRUE if we need to reinit the instance (because channel palette changed)
@@ -1560,7 +1578,7 @@ gboolean cconx_convert_pixel_data(weed_plant_t *dchan, weed_plant_t *schan) {
   int error;
   int iwidth,iheight,ipal,irow;
   int owidth,oheight,opal,orow,oflags;
-  gboolean pal_ok,needs_reinit=FALSE;
+  boolean pal_ok,needs_reinit=FALSE;
 
   weed_plant_t *dtmpl=weed_get_plantptr_value(dchan,"template",&error);
 
@@ -1653,7 +1671,7 @@ boolean cconx_chain_data(int key, int mode) {
   weed_plant_t *ichan,*ochan;
   weed_plant_t *inst=NULL;
 
-  gboolean needs_reinit=FALSE;
+  boolean needs_reinit=FALSE;
 
   register int i=0;
 
@@ -1681,3 +1699,17 @@ boolean cconx_chain_data(int key, int mode) {
   return needs_reinit;
 }
  
+
+
+
+boolean cconx_chain_data_internal(weed_plant_t *ichan) {
+  // special version for compound fx internal connections
+  boolean needs_reinit=FALSE;
+
+  if (weed_plant_has_leaf(ichan,"host_internal_connection")) {
+    int error;
+    weed_plant_t *ochan=weed_get_plantptr_value(ichan,"host_internal_connection",&error);
+    if (cconx_convert_pixel_data(ichan,ochan)) needs_reinit=TRUE;
+  }
+  return needs_reinit;
+}

@@ -1874,8 +1874,6 @@ void rte_reset_defs_clicked (GtkButton *button, lives_rfx_t *rfx) {
 
   if (rfx->num_params>0) {
 
-    // TODO *** - handle compound fx
-
     if (is_generic_defs) {
       // for generic, reset from plugin supplied defs
       ptmpls=weed_get_plantptr_array(filter,"in_parameter_templates",&error);
@@ -1885,12 +1883,24 @@ void rte_reset_defs_clicked (GtkButton *button, lives_rfx_t *rfx) {
       weed_free(ptmpls);
     }
 
+  resetdefs1:
+    filter=weed_instance_get_filter(inst,FALSE);
+
     // reset params back to default defaults
     weed_in_parameters_free(inst);
     
     inp=weed_params_create(filter,TRUE);
     weed_set_plantptr_array(inst,"in_parameters",weed_flagset_array_count(inp,TRUE),inp);
     weed_free(inp);
+
+    if (weed_plant_has_leaf(inst,"host_next_instance")) {
+      // handle compound fx
+      inst=weed_get_plantptr_value(inst,"host_next_instance",&error);
+      goto resetdefs1;
+    }
+
+    inst=(weed_plant_t *)rfx->source;
+    filter=weed_instance_get_filter(inst,TRUE);
 
     rfx_params_free(rfx);
     g_free(rfx->params);
@@ -1913,6 +1923,7 @@ void rte_reset_defs_clicked (GtkButton *button, lives_rfx_t *rfx) {
   else {
     gint key=GPOINTER_TO_INT (g_object_get_data (G_OBJECT (fx_dialog[1]),"key"));
     gint mode=GPOINTER_TO_INT (g_object_get_data (G_OBJECT (fx_dialog[1]),"mode"));
+    // TODO *** - handle compound fx
     set_key_defaults(inst,key,mode);
   }
 

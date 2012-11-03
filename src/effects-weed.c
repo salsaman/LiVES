@@ -1898,6 +1898,9 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
 
   for (i=0;i<num_inc+num_in_alpha;i++) {
     if (!weed_palette_is_alpha_palette(weed_get_int_value(in_channels[i],"current_palette",&error))) continue;
+
+    if (weed_plant_has_leaf(in_channels[i],"host_internal_connection")) if (cconx_chain_data_internal(in_channels[i])) needs_reinit=TRUE;
+
     if (weed_get_voidptr_value(in_channels[i],"pixel_data",&error)==NULL) {
       chantmpl=weed_get_plantptr_value(in_channels[i],"template",&error);
       if (weed_plant_has_leaf(chantmpl,"max_repeats")||(weed_plant_has_leaf(chantmpl,"option")&&
@@ -3225,7 +3228,16 @@ weed_plant_t *weed_apply_effects (weed_plant_t **layers, weed_plant_t *filter_ma
 
 	  if (filter_error==WEED_NO_ERROR&&weed_plant_has_leaf(instance,"host_next_instance")) {
 	    // handling for compound fx
+
 	    instance=weed_get_plantptr_value(instance,"host_next_instance",&error);
+
+	    if (!(mainw->preview||mainw->is_rendering)) {
+	      // chain any internal data pipelines for compound fx
+	      pthread_mutex_lock(&mainw->data_mutex);
+	      pconx_chain_data_internal(instance);
+	      pthread_mutex_unlock(&mainw->data_mutex);
+	    }
+
 	    goto apply_inst3;
 	  }
 
@@ -3392,6 +3404,13 @@ void weed_apply_audio_effects_rt(float **abuf, int nchans, int64_t nsamps, gdoub
 	if (filter_error==WEED_NO_ERROR&&weed_plant_has_leaf(instance,"host_next_instance")) {
 	  // handling for compound fx
 	  instance=weed_get_plantptr_value(instance,"host_next_instance",&error);
+
+	  // chain any internal data pipelines for compound fx
+	  if (!pthread_mutex_trylock(&mainw->data_mutex)) {
+	    pconx_chain_data_internal(instance);
+	    pthread_mutex_unlock(&mainw->data_mutex);
+	  }
+
 	  goto apply_audio_inst2;
 	}
 
@@ -6196,9 +6215,6 @@ gboolean is_hidden_param(weed_plant_t *plant, int i) {
   int num_params=0;
   weed_plant_t *wtmpl;
 
-
-  // TODO *** compound fx
-
   if (WEED_PLANT_IS_FILTER_INSTANCE(plant)) filter=weed_instance_get_filter(plant,TRUE);
   else filter=plant;
 
@@ -6525,6 +6541,8 @@ int set_copy_to(weed_plant_t *inst, int pnum, boolean update) {
 
 
 void rec_param_change(weed_plant_t *inst, int pnum) {
+  // TODO - handle compound fx
+
   int error;
   weed_timecode_t tc;
   weed_plant_t *in_param;

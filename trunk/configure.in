@@ -782,6 +782,7 @@ src/Makefile
 resources/Makefile
 lives-plugins/Makefile
 lives-plugins/plugins/effects/RFXscripts/Makefile
+lives-plugins/plugins/effects/compound/Makefile
 lives-plugins/plugins/effects/Makefile
 lives-plugins/plugins/encoders/Makefile
 lives-plugins/plugins/decoders/Makefile

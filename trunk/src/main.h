@@ -138,6 +138,7 @@ typedef int lives_pgid_t;
 
 #define THEME_DIR "/share/lives/themes/"
 #define PLUGIN_SCRIPTS_DIR "/share/lives/plugins/"
+#define PLUGIN_COMPOUND_DIR "/share/lives/plugins/"
 #define PLUGIN_EXEC_DIR "/lives/plugins/"
 #define ICON_DIR "/share/lives/icons/"
 #define DATA_DIR "/share/lives/"
@@ -149,6 +150,7 @@ typedef int lives_pgid_t;
 
 #define THEME_DIR "\\Themes/"
 #define PLUGIN_SCRIPTS_DIR "\\Plugins/"
+#define PLUGIN_COMPOUND_DIR "\\Plugins/"
 #define PLUGIN_EXEC_DIR "\\Plugins/"
 #define ICON_DIR "\\Icons/"
 #define DATA_DIR "\\Data/"

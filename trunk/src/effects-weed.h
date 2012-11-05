@@ -50,7 +50,12 @@ weed_plant_t *get_mandatory_channel (weed_plant_t *filter, gint which, gboolean 
 gboolean weed_filter_is_resizer(weed_plant_t *filt);
 gboolean weed_instance_is_resizer(weed_plant_t *filt);
 weed_plant_t *weed_instance_get_filter(weed_plant_t *inst, boolean get_compound_parent);
+
+#define PLUGIN_COMPOUND_EFFECTS_BUILTIN "effects/compound/"
+#define PLUGIN_COMPOUND_EFFECTS_CUSTOM "plugins/effects/compound/"
+
 int num_compound_fx(weed_plant_t *plant); // return number of filters in a compund fx (1 if it is not compound) - works for filter or inst
+void load_compound_fx(void);
 
 gboolean is_audio_channel_in(weed_plant_t *inst, int chnum);
 gboolean has_video_chans_in(weed_plant_t *filter, gboolean count_opt);

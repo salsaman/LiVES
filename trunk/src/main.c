@@ -1446,6 +1446,7 @@ static void lives_init(_ign_opts *ign_opts) {
 
       splash_msg(_("Loading realtime effect plugins..."),.6);
       weed_load_all();
+      load_compound_fx();
 
       // replace any multi choice effects with their delegates
       replace_with_delegates();

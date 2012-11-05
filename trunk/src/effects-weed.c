@@ -4426,6 +4426,274 @@ void weed_load_all (void) {
 }
 
 
+
+static weed_plant_t *create_compound_filter(gchar *plugin_name, int nfilts, int *filts) {
+  weed_plant_t *filter=weed_plant_new(WEED_PLANT_FILTER_CLASS),*xfilter;
+
+  weed_plant_t **in_params=NULL,**out_params=NULL,**params;
+  weed_plant_t **in_chans,**out_chans;
+
+  gchar *tmp;
+
+  double tgfps=-1.,tfps;
+
+  int count,xcount,error;
+
+  int txparam=-1,tparam;
+
+  register int i,j,x;
+
+  weed_set_int_array(filter,"host_filter_list",nfilts,filts);
+
+  // create parameter templates - concatenate all sub filters
+  count=xcount=0;
+
+  for (i=0;i<nfilts;i++) {
+    xfilter=weed_filters[filts[i]];
+
+    if (weed_plant_has_leaf(xfilter,"target_fps")) {
+      tfps=weed_get_double_value(xfilter,"target_fps",&error);
+      if (tgfps==-1.) tgfps=tfps;
+      else if (tgfps!=tfps) {
+	d_print((tmp=g_strdup_printf(_("Invalid compound effect %s - has conflicting target_fps\n"),plugin_name)));
+	LIVES_ERROR(tmp);
+	g_free(tmp);
+	return NULL;
+      }
+    }
+
+    if (weed_plant_has_leaf(xfilter,"in_parameter_templates")) {
+
+      tparam=get_transition_param(xfilter);
+
+      if (tparam!=-1) {
+	if (txparam!=-1) {
+	  d_print((tmp=g_strdup_printf(_("Invalid compound effect %s - has multiple transition parameters\n"),plugin_name)));
+	  LIVES_ERROR(tmp);
+	  g_free(tmp);
+	  return NULL;
+	}
+	txparam=count+tparam;
+      }
+
+      count+=weed_leaf_num_elements(xfilter,"in_parameter_templates");
+      params=weed_get_plantptr_array(xfilter,"in_parameter_templates",&error);
+
+      in_params=g_realloc(in_params,count*sizeof(weed_plant_t *));
+      x=0;
+
+      for (j=xcount;j<count;j++) {
+	in_params[j]=params[x++];
+      }
+
+    }
+  }
+
+  if (tgfps!=-1.) weed_set_double_value(filter,"target_fps",tgfps);
+
+  if (count>0) {
+    weed_set_plantptr_array(filter,"in_parameter_templates",count,in_params);
+    weed_free(in_params);
+  }
+
+  count=xcount=0;
+
+  for (i=0;i<nfilts;i++) {
+    xfilter=weed_filters[filts[i]];
+    if (weed_plant_has_leaf(xfilter,"out_parameter_templates")) {
+      count+=weed_leaf_num_elements(xfilter,"out_parameter_templates");
+      params=weed_get_plantptr_array(xfilter,"out_parameter_templates",&error);
+
+      out_params=g_realloc(out_params,count*sizeof(weed_plant_t *));
+      x=0;
+
+      for (j=xcount;j<count;j++) {
+	out_params[j]=params[x++];
+      }
+
+    }
+  }
+
+  if (count>0) {
+    weed_set_plantptr_array(filter,"out_parameter_templates",count,out_params);
+    weed_free(out_params);
+  }
+
+  // use in channels from first filter
+
+  xfilter=weed_filters[filts[0]];
+  if (weed_plant_has_leaf(xfilter,"in_channel_templates")) {
+    count=weed_leaf_num_elements(xfilter,"in_channel_templates");
+    in_chans=weed_get_plantptr_array(xfilter,"in_channel_templates",&error);
+    weed_set_plantptr_array(filter,"in_channel_templates",count,in_chans);
+    weed_free(in_chans);
+  }
+
+  // use out channels from last filter
+
+  xfilter=weed_filters[filts[nfilts-1]];
+  if (weed_plant_has_leaf(xfilter,"out_channel_templates")) {
+    count=weed_leaf_num_elements(xfilter,"out_channel_templates");
+    out_chans=weed_get_plantptr_array(xfilter,"out_channel_templates",&error);
+    weed_set_plantptr_array(filter,"out_channel_templates",count,out_chans);
+    weed_free(out_chans);
+  }
+
+
+  return filter;
+}
+
+
+
+
+
+
+static void load_compound_plugin(gchar *plugin_name, gchar *plugin_path) {
+  FILE *cpdfile;
+
+  weed_plant_t *filter=NULL;
+
+  gchar buff[16384];
+
+  gchar *author=NULL,*tmp;
+
+  int *filters=NULL;
+
+  boolean ok=TRUE;
+
+  int stage=0,nfilts=0,fnum,line=0,version=0;
+
+  if ((cpdfile=fopen (plugin_path,"r"))) {
+    while (fgets(buff,16384,cpdfile)) {
+      g_strchomp(buff);
+      if (!strlen(buff)) {
+	if (++stage==3) break;
+	if (stage==1) {
+	  if (nfilts<2) {
+	    d_print((tmp=g_strdup_printf(_("Invalid compound effect %s - must have >1 sub filters\n"),plugin_name)));
+	    LIVES_ERROR(tmp);
+	    g_free(tmp);
+	    ok=FALSE;
+	    break;
+	  }
+	  filter=create_compound_filter(plugin_name,nfilts,filters);
+	  if (filter==NULL) break;
+	}
+	continue;
+      }
+      switch (stage) {
+      case 0:
+	if (line==0) author=g_strdup(buff);
+	if (line==1) version=atoi(buff);
+	if (++line<3) break;
+	// add filters
+	fnum=weed_get_idx_for_hashname(buff,TRUE);
+	if (fnum==-1) {
+	  d_print((tmp=g_strdup_printf(_("Invalid effect %s found in compound effect %s\n"),buff,plugin_name)));
+	  LIVES_ERROR(tmp);
+	  g_free(tmp);
+	  ok=FALSE;
+	  break;
+	}
+	filters=g_realloc(filters,++nfilts*sizeof(int));
+	filters[nfilts-1]=fnum;
+	break;
+      case 1:
+	// link params
+	break;
+      default:
+	// link alpha channels
+	break;
+      }
+      if (!ok) {
+	if (filter!=NULL) weed_plant_free(filter);
+	filter=NULL;
+	break;
+      }
+    }
+    fclose(cpdfile);
+  }
+
+  if (ok&&filter==NULL&&nfilts>1) {
+    filter=create_compound_filter(plugin_name,nfilts,filters);
+  }
+
+  if (filter!=NULL) {
+    gchar *filter_name=g_strdup_printf(_("Compound:%s"),plugin_name);
+    weed_set_string_value(filter,"name",filter_name);
+    g_free(filter_name);
+    weed_set_string_value(filter,"author",author);
+    weed_free(author);
+    weed_set_int_value(filter,"version",version);
+    weed_filters[num_weed_filters]=filter;
+    hashnames[num_weed_filters]=make_weed_hashname(num_weed_filters,TRUE);
+    num_weed_filters++;
+  }
+}
+
+
+
+
+
+void load_compound_fx(void) {
+  LiVESList *compound_plugin_list;
+
+  int plugin_idx,onum_filters=num_weed_filters;
+
+  gchar *lives_compound_plugin_path,*plugin_name,*plugin_path,*msg;
+
+  threaded_dialog_spin();
+
+  lives_compound_plugin_path=g_build_filename(capable->home_dir,PLUGIN_COMPOUND_EFFECTS_CUSTOM,NULL);
+  compound_plugin_list=get_plugin_list(PLUGIN_COMPOUND_EFFECTS_CUSTOM,TRUE,lives_compound_plugin_path,NULL);
+
+  for (plugin_idx=0;plugin_idx<g_list_length(compound_plugin_list);plugin_idx++) {
+    plugin_name=(gchar *)g_list_nth_data(compound_plugin_list,plugin_idx);
+    plugin_path=g_build_filename(lives_compound_plugin_path,plugin_name,NULL);
+    load_compound_plugin(plugin_name,plugin_path);
+    g_free(plugin_path);
+    threaded_dialog_spin();
+  }
+
+  if (compound_plugin_list!=NULL) {
+    g_list_free_strings(compound_plugin_list);
+    g_list_free(compound_plugin_list);
+  }
+
+  threaded_dialog_spin();
+  g_free(lives_compound_plugin_path);
+
+  lives_compound_plugin_path=g_build_filename(prefs->prefix_dir,PLUGIN_COMPOUND_DIR,PLUGIN_COMPOUND_EFFECTS_BUILTIN,NULL);
+  compound_plugin_list=get_plugin_list(PLUGIN_COMPOUND_EFFECTS_BUILTIN,TRUE,lives_compound_plugin_path,NULL);
+  
+  for (plugin_idx=0;plugin_idx<g_list_length(compound_plugin_list);plugin_idx++) {
+    plugin_name=(gchar *)g_list_nth_data(compound_plugin_list,plugin_idx);
+    plugin_path=g_build_filename(lives_compound_plugin_path,plugin_name,NULL);
+    load_compound_plugin(plugin_name,plugin_path);
+    g_free(plugin_path);
+    threaded_dialog_spin();
+  }
+
+  if (compound_plugin_list!=NULL) {
+    g_list_free_strings(compound_plugin_list);
+    g_list_free(compound_plugin_list);
+  }
+
+  if (num_weed_filters>onum_filters) {
+    msg=g_strdup_printf(_ ("Successfully loaded %d compound filters\n"),num_weed_filters-onum_filters);
+    d_print(msg);
+    g_free(msg);
+  }
+
+  g_free(lives_compound_plugin_path);
+  threaded_dialog_spin();
+
+}
+
+
+
+
+
 void weed_filter_free(weed_plant_t *filter) {
   int nitems,error,i;
   weed_plant_t **plants,*gui;
@@ -4540,7 +4808,10 @@ void weed_unload_all(void) {
 
     filter=weed_filters[i];
 
-    if (num_compound_fx(filter)>1) continue;
+    if (num_compound_fx(filter)>1) {
+      weed_plant_free(filter);
+      continue;
+    }
 
     plugin_info=weed_get_plantptr_value(filter,"plugin_info",&error);
 
@@ -5039,20 +5310,22 @@ static weed_plant_t *weed_create_instance (weed_plant_t *filter, weed_plant_t **
 weed_plant_t *weed_instance_from_filter(weed_plant_t *filter) {
   // return an instance from a filter
   weed_plant_t *new_instance=NULL,*inst,*ofilter=filter;
-  weed_plant_t **inc,**outc,**inp,**outp,**filters=NULL;
+  weed_plant_t **inc,**outc,**inp,**outp;
+
+  int *filters=NULL;
 
   int nfilters,ninpar,error;
 
   register int i,j;
 
   if ((nfilters=num_compound_fx(filter))>1) {
-    filters=weed_get_plantptr_array(filter,"host_filter_list",&error);
+    filters=weed_get_int_array(filter,"host_filter_list",&error);
   }
 
   for (i=0;i<nfilters;i++) {
 
     if (filters!=NULL) {
-      filter=filters[i];
+      filter=weed_filters[filters[i]];
     }
 
     // create channels from channel_templates
@@ -8158,6 +8431,8 @@ gchar *make_weed_hashname(int filter_idx, gboolean fullname) {
   }
   else hashname=g_strconcat(plugin_fname,filter_name,NULL);
   weed_free(filter_name);
+
+  //g_print("added filter %s\n",hashname);
 
   return hashname;
 }

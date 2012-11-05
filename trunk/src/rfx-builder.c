@@ -4021,7 +4021,7 @@ GList *get_script_section (const gchar *section, const gchar *file, gboolean str
   if ((script_file=fopen (outfile,"r"))) {
     while (fgets(buff,65536,script_file)) {
       if (buff!=NULL) {
-	if (strip) line=(g_strchomp (g_strchug(buff)));
+	if (strip) line=(g_strstrip(buff));
 	else line=buff;
 	if ((linelen=strlen (line))) {
 	  whole2=g_strconcat (whole,line,NULL);

@@ -302,7 +302,10 @@ GList *get_plugin_list (const gchar *plugin_type, gboolean allow_nonex, const gc
   }
   else if (!strcmp (plugin_type,PLUGIN_RENDERED_EFFECTS_CUSTOM_SCRIPTS)||
 	   !strcmp (plugin_type,PLUGIN_RENDERED_EFFECTS_TEST_SCRIPTS)||
-	   !strcmp (plugin_type,PLUGIN_RENDERED_EFFECTS_CUSTOM)||!strcmp (plugin_type,PLUGIN_RENDERED_EFFECTS_TEST)) {
+	   !strcmp (plugin_type,PLUGIN_RENDERED_EFFECTS_CUSTOM)||
+	   !strcmp (plugin_type,PLUGIN_RENDERED_EFFECTS_TEST)||
+	   !strcmp (plugin_type,PLUGIN_COMPOUND_EFFECTS_CUSTOM)
+	   ) {
     // look in home
     com=g_strdup_printf ("%s list_plugins %d 0 \"%s/%s%s\" \"%s\"",prefs->backend_sync,allow_nonex,capable->home_dir,
 			 LIVES_CONFIG_DIR,plugin_type,ext);
@@ -320,6 +323,10 @@ GList *get_plugin_list (const gchar *plugin_type, gboolean allow_nonex, const gc
   else if (!strcmp(plugin_type,PLUGIN_RENDERED_EFFECTS_BUILTIN_SCRIPTS)) {
     com=g_strdup_printf ("%s list_plugins %d 0 \"%s%s%s\" \"%s\"",prefs->backend_sync,allow_nonex,prefs->prefix_dir,
 			 PLUGIN_SCRIPTS_DIR,plugin_type,ext);
+  }
+  else if (!strcmp(plugin_type,PLUGIN_COMPOUND_EFFECTS_BUILTIN)) {
+    com=g_strdup_printf ("%s list_plugins %d 0 \"%s%s%s\" \"%s\"",prefs->backend_sync,allow_nonex,prefs->prefix_dir,
+			 PLUGIN_COMPOUND_DIR,plugin_type,ext);
   }
   else {
     com=g_strdup_printf ("%s list_plugins %d 0 \"%s%s%s\" \"%s\"",prefs->backend_sync,allow_nonex,prefs->lib_dir,
@@ -3618,20 +3625,20 @@ GList *get_external_window_hints(lives_rfx_t *rfx) {
     weed_plant_t *gui;
     weed_plant_t *inst=(weed_plant_t *)rfx->source;
     weed_plant_t *filter=weed_instance_get_filter(inst,TRUE);
-    weed_plant_t **filters=NULL;
+    int *filters=NULL;
     char *string,**rfx_strings,*delim;
 
     register int i;
 
     if ((nfilters=num_compound_fx(filter))>1) {
       // handle compound fx
-      filters=weed_get_plantptr_array(filter,"host_filter_list",&error);
+      filters=weed_get_int_array(filter,"host_filter_list",&error);
     }
 
     for (i=0;i<nfilters;i++) {
 
       if (filters!=NULL) {
-	filter=filters[i];
+	filter=get_weed_filter(filters[i]);
       }
 
       if (!weed_plant_has_leaf(filter,"gui")) continue;

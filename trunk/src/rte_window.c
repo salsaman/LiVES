@@ -613,7 +613,7 @@ gboolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
   if (keymap_file2==NULL) {
     // version 1 file
     while (fgets(buff,65536,kfile)) {
-      if (buff!=NULL) {
+      if (strlen(buff)) {
 	line=(g_strchomp (g_strchug(buff)));
 	if ((linelen=strlen (line))) {
 	  whole2=g_strconcat (whole,line,NULL);

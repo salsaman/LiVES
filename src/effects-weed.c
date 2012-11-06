@@ -3220,7 +3220,9 @@ weed_plant_t *weed_apply_effects (weed_plant_t **layers, weed_plant_t *filter_ma
 	apply_inst3:
 
 	  weed_set_int_value(instance,"host_key",i);
+
 	  filter_error=weed_apply_instance (instance,NULL,layers,opwidth,opheight,tc);
+
 	  if (filter_error==FILTER_INFO_REINITED) redraw_pwindow(i,key_modes[i]); // redraw our paramwindow
 #ifdef DEBUG_RTE
 	  if (filter_error!=FILTER_NO_ERROR) g_printerr("Render error was %d\n",filter_error);
@@ -4443,6 +4445,7 @@ static weed_plant_t *create_compound_filter(gchar *plugin_name, int nfilts, int 
 
   register int i,j,x;
 
+
   weed_set_int_array(filter,"host_filter_list",nfilts,filts);
 
   // create parameter templates - concatenate all sub filters
@@ -4619,16 +4622,18 @@ static void load_compound_plugin(gchar *plugin_name, gchar *plugin_path) {
   }
 
   if (filter!=NULL) {
+    int idx;
     gchar *filter_name=g_strdup_printf(_("Compound:%s"),plugin_name);
     weed_set_string_value(filter,"name",filter_name);
     g_free(filter_name);
     weed_set_string_value(filter,"author",author);
     weed_free(author);
     weed_set_int_value(filter,"version",version);
-    weed_filters[num_weed_filters]=filter;
-    hashnames[num_weed_filters]=make_weed_hashname(num_weed_filters,TRUE);
-    num_weed_filters++;
+    idx=num_weed_filters++;
+    weed_filters[idx]=filter;
+    hashnames[idx]=make_weed_hashname(idx,TRUE);
   }
+
 }
 
 
@@ -5309,7 +5314,7 @@ static weed_plant_t *weed_create_instance (weed_plant_t *filter, weed_plant_t **
 
 weed_plant_t *weed_instance_from_filter(weed_plant_t *filter) {
   // return an instance from a filter
-  weed_plant_t *new_instance=NULL,*inst,*ofilter=filter;
+  weed_plant_t *last_inst=NULL,*first_inst=NULL,*inst,*ofilter=filter;
   weed_plant_t **inc,**outc,**inp,**outp;
 
   int *filters=NULL;
@@ -5341,8 +5346,12 @@ weed_plant_t *weed_instance_from_filter(weed_plant_t *filter) {
     inst=weed_create_instance(filter,inc,outc,inp,outp);
     if (filters!=NULL) weed_set_plantptr_value(inst,"compound_class",ofilter);
 
-    if (i==0) new_instance=inst;
-    else weed_set_plantptr_value(new_instance,"host_next_instance",inst);
+    if (i>0) {
+      weed_set_plantptr_value(last_inst,"host_next_instance",inst);
+    }
+    else first_inst=inst;
+
+    last_inst=inst;
 
     if (inc!=NULL) weed_free(inc);
     if (outc!=NULL) weed_free(outc);
@@ -5361,7 +5370,7 @@ weed_plant_t *weed_instance_from_filter(weed_plant_t *filter) {
 
   if (filters!=NULL) weed_free(filters);
 
-  return new_instance;
+  return first_inst;
 }
 
 
@@ -5791,7 +5800,7 @@ void weed_deinit_effect(int hotkey) {
   // mainw->osc_block should be set before calling this function !
   // caller should also handle mainw->rte
 
-  weed_plant_t *instance,*inst,*last_inst,*next_inst=NULL;
+  weed_plant_t *instance,*inst,*last_inst,*next_inst;
 
   gboolean is_modeswitch=FALSE;
   gboolean was_transition=FALSE;
@@ -5889,6 +5898,7 @@ void weed_deinit_effect(int hotkey) {
  deinit3:
 
   if (weed_plant_has_leaf(inst,"host_next_instance")) next_inst=weed_get_plantptr_value(inst,"host_next_instance",&error);
+  else next_inst=NULL;
   
   weed_call_deinit_func(inst);
   weed_instance_unref(inst);
@@ -8409,13 +8419,15 @@ gchar *make_weed_hashname(int filter_idx, gboolean fullname) {
 
   filter=weed_filters[filter_idx];
 
-  plugin_info=weed_get_plantptr_value(filter,"plugin_info",&error);
+  if (weed_plant_has_leaf(filter,"plugin_info")) {
+    plugin_info=weed_get_plantptr_value(filter,"plugin_info",&error);
+    plugin_name=weed_get_string_value(plugin_info,"name",&error);
 
-  plugin_name=weed_get_string_value(plugin_info,"name",&error);
-
-  g_snprintf(plugin_fname,PATH_MAX,"%s",plugin_name);
-  weed_free(plugin_name);
-  get_filename(plugin_fname,TRUE);
+    g_snprintf(plugin_fname,PATH_MAX,"%s",plugin_name);
+    weed_free(plugin_name);
+    get_filename(plugin_fname,TRUE);
+  }
+  else memset(plugin_fname,0,1);
 
   filter_name=weed_get_string_value(filter,"name",&error);
 

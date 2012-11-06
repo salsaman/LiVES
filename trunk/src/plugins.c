@@ -166,7 +166,7 @@ static GList *get_plugin_result (const gchar *command, const gchar *delim, gbool
   array=g_strsplit(buffer,delim,pieces);
   for (i=0;i<pieces;i++) {
     if (array[i]!=NULL) {
-      buf=g_strdup(g_strchomp (g_strchug(array[i])));
+      buf=g_strdup(g_strstrip(array[i]));
       if (strlen (buf)||allow_blanks) {
 	list=g_list_append (list, buf);
       }

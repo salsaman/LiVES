@@ -2722,20 +2722,22 @@ lives_filter_error_t weed_apply_audio_instance (weed_plant_t *init_event, float 
 
   float *in_abuf,*out_abuf;
   int error;
-  weed_plant_t **layers,**in_channels,**out_channels=NULL;
+  weed_plant_t **layers=NULL,**in_channels=NULL,**out_channels=NULL;
   int *in_tracks=NULL,*out_tracks=NULL;
   weed_plant_t *instance=NULL,*filter;
   size_t nsf=nsamps*sizeof(float);
   lives_filter_error_t retval=FILTER_NO_ERROR,retval2;
   weed_plant_t *channel=NULL;
-  gboolean needs_reinit=FALSE;
+  boolean needs_reinit=FALSE;
   weed_plant_t *ctmpl;
+
+  boolean was_init_event=FALSE;
 
   int flags=0;
   int key=-1;
 
   int ntracks=1;
-  int numinchans,numoutchans=0,xnchans,aint;
+  int numinchans=0,numoutchans=0,xnchans,aint;
 
   register int i,j;
 
@@ -2755,11 +2757,10 @@ lives_filter_error_t weed_apply_audio_instance (weed_plant_t *init_event, float 
 
   }
   else {
-    // TODO *** - handle compound fx
-
 
     // when processing an event list, we pass an init_event
 
+    was_init_event=TRUE;
     if (weed_plant_has_leaf(init_event,"host_tag")) {
       gchar *keystr=weed_get_string_value(init_event,"host_tag",&error);
       key=atoi(keystr);
@@ -2769,6 +2770,7 @@ lives_filter_error_t weed_apply_audio_instance (weed_plant_t *init_event, float 
 
     ntracks=weed_leaf_num_elements(init_event,"in_tracks");
     in_tracks=weed_get_int_array(init_event,"in_tracks",&error);
+
     if (weed_plant_has_leaf(init_event,"out_tracks")) out_tracks=weed_get_int_array(init_event,"out_tracks",&error);
 
     // check instance exists, and interpolate parameters
@@ -2797,15 +2799,19 @@ lives_filter_error_t weed_apply_audio_instance (weed_plant_t *init_event, float 
     }
   }
 
+ audinst1:
+
   if (weed_plant_has_leaf(instance,"in_channels")) channel=weed_get_plantptr_value(instance,"in_channels",&error);
   if (channel==NULL) {
-    weed_free(in_tracks);
-    weed_free(out_tracks);
-    return FILTER_ERROR_NO_IN_CHANNELS; // audio generators are dealt with by the audio player
+    if (weed_plant_has_leaf(instance,"out_channels")) {
+      retval=FILTER_ERROR_NO_IN_CHANNELS; // audio generators are dealt with by the audio player
+      goto audret1;
+    }
   }
-
-  in_channels=weed_get_plantptr_array(instance,"in_channels",&error);
-  numinchans=weed_leaf_num_elements(instance,"in_channels");
+  else {
+    in_channels=weed_get_plantptr_array(instance,"in_channels",&error);
+    numinchans=weed_leaf_num_elements(instance,"in_channels");
+  }
 
   if (weed_plant_has_leaf(instance,"out_channels")) {
     out_channels=weed_get_plantptr_array(instance,"out_channels",&error);
@@ -2820,11 +2826,11 @@ lives_filter_error_t weed_apply_audio_instance (weed_plant_t *init_event, float 
   if (vis!=NULL&&vis[0]<0.&&in_tracks[0]<=-nbtracks) {
     // first layer comes from ascrap file; do not apply any effects except the audio mixer
     if (numinchans==1&&numoutchans==1&&!(flags&WEED_FILTER_IS_CONVERTER)) {
-      weed_free(in_tracks);
-      weed_free(out_tracks);
-      return FILTER_ERROR_IS_SCRAP_FILE;
+      retval=FILTER_ERROR_IS_SCRAP_FILE;
+      goto audret1;
     }
   }
+
   for (i=0;i<numinchans;i++) {
     if ((channel=in_channels[i])==NULL) continue;
 
@@ -2848,10 +2854,9 @@ lives_filter_error_t weed_apply_audio_instance (weed_plant_t *init_event, float 
     if ((weed_plant_has_leaf(ctmpl,"audio_data_length")&&nsamps!=weed_get_int_value(ctmpl,"audio_data_length",&error))||
 	(weed_plant_has_leaf(ctmpl,"audio_arate")&&arate!=weed_get_int_value(ctmpl,"audio_rate",&error))) {
       weed_free(in_channels);
-      weed_free(in_tracks);
-      weed_free(out_tracks);
       if (out_channels!=NULL) weed_free(out_channels);
-      return FILTER_ERROR_TEMPLATE_MISMATCH;
+      retval=FILTER_ERROR_TEMPLATE_MISMATCH;
+      goto audret1;
     }
     
     if (weed_get_int_value(channel,"audio_rate",&error)!=arate) {
@@ -2884,10 +2889,9 @@ lives_filter_error_t weed_apply_audio_instance (weed_plant_t *init_event, float 
     if ((weed_plant_has_leaf(ctmpl,"audio_data_length")&&nsamps!=weed_get_int_value(ctmpl,"audio_data_length",&error))||
 	(weed_plant_has_leaf(ctmpl,"audio_arate")&&arate!=weed_get_int_value(ctmpl,"audio_rate",&error))) {
       weed_free(in_channels);
-      weed_free(in_tracks);
-      weed_free(out_tracks);
       if (out_channels!=NULL) weed_free(out_channels);
-      return FILTER_ERROR_TEMPLATE_MISMATCH;
+      retval=FILTER_ERROR_TEMPLATE_MISMATCH;
+      goto audret1;
     }
 
     if (weed_get_int_value(channel,"audio_rate",&error)!=arate) {
@@ -2954,10 +2958,9 @@ lives_filter_error_t weed_apply_audio_instance (weed_plant_t *init_event, float 
 	  lives_chdir(cwd,FALSE);
 	  g_free(cwd);
 	  weed_free(in_channels);
-	  weed_free(in_tracks);
-	  weed_free(out_tracks);
 	  if (out_channels!=NULL) weed_free(out_channels);
-	  return FILTER_ERROR_COULD_NOT_REINIT;
+	  retval=FILTER_ERROR_COULD_NOT_REINIT;
+	  goto audret1;
 	}
 	set_param_gui_readonly(instance);
 	lives_chdir(cwd,FALSE);
@@ -2970,7 +2973,7 @@ lives_filter_error_t weed_apply_audio_instance (weed_plant_t *init_event, float 
 
 
 
-  weed_free(in_channels);
+  if (in_channels!=NULL) weed_free(in_channels);
   if (out_channels!=NULL) weed_free(out_channels);
 
   // apply visibility mask to volume values
@@ -2993,32 +2996,42 @@ lives_filter_error_t weed_apply_audio_instance (weed_plant_t *init_event, float 
     }
   }
 
-  layers=(weed_plant_t **)g_malloc((ntracks+1)*sizeof(weed_plant_t *));
+  if (layers==NULL&&numinchans>0&&numoutchans>0) {
+    layers=(weed_plant_t **)g_malloc((ntracks+1)*sizeof(weed_plant_t *));
 
-  for (i=0;i<ntracks;i++) {
-    // create audio layers, and copy/combine separated audio into each layer
+    for (i=0;i<ntracks;i++) {
+      // create audio layers, and copy/combine separated audio into each layer
+      
+      layers[i]=weed_plant_new(WEED_PLANT_CHANNEL);
+      
+      // copy audio into layer audio
+      in_abuf=g_malloc(nchans*nsf);
 
-    layers[i]=weed_plant_new(WEED_PLANT_CHANNEL);
-
-    // copy audio into layer audio
-    in_abuf=g_malloc(nchans*nsf);
-
-    // non-interleaved
-    for (j=0;j<nchans;j++) {
-      lives_memcpy(&in_abuf[j*nsamps],abuf[(in_tracks[i]+nbtracks)*nchans+j],nsf);
+      // non-interleaved
+      for (j=0;j<nchans;j++) {
+	lives_memcpy(&in_abuf[j*nsamps],abuf[(in_tracks[i]+nbtracks)*nchans+j],nsf);
+      }
+      
+      weed_set_voidptr_value(layers[i],"audio_data",(void *)in_abuf);
+      weed_set_int_value(layers[i],"audio_data_length",nsamps);
+      weed_set_int_value(layers[i],"audio_channels",nchans);
+      weed_set_int_value(layers[i],"audio_rate",arate);
+      weed_set_boolean_value(layers[i],"audio_interleaf",WEED_FALSE);
     }
 
-    weed_set_voidptr_value(layers[i],"audio_data",(void *)in_abuf);
-    weed_set_int_value(layers[i],"audio_data_length",nsamps);
-    weed_set_int_value(layers[i],"audio_channels",nchans);
-    weed_set_int_value(layers[i],"audio_rate",arate);
-    weed_set_boolean_value(layers[i],"audio_interleaf",WEED_FALSE);
+    layers[i]=NULL;
   }
-
-  layers[i]=NULL;
 
   retval2=weed_apply_audio_instance_inner(instance,init_event,layers,tc,nbtracks);
   if (retval==FILTER_NO_ERROR) retval=retval2;
+
+  if (retval2==FILTER_NO_ERROR&&was_init_event) {
+    // handle compound filters
+    if (weed_plant_has_leaf(instance,"host_next_instance")) {
+      instance=weed_get_plantptr_value(instance,"host_next_instance",&error);
+      goto audinst1;
+    }
+  }
 
   out_abuf=(float *)weed_get_voidptr_value(layers[0],"audio_data",&error);
 
@@ -3034,13 +3047,16 @@ lives_filter_error_t weed_apply_audio_instance (weed_plant_t *init_event, float 
     }
   }
 
-  for (i=0;i<ntracks;i++) {
-    in_abuf=(float *)weed_get_voidptr_value(layers[i],"audio_data",&error);
-    g_free(in_abuf);
+ audret1:
 
-    weed_plant_free(layers[i]);
+  if (layers!=NULL) {
+    for (i=0;i<ntracks;i++) {
+      in_abuf=(float *)weed_get_voidptr_value(layers[i],"audio_data",&error);
+      g_free(in_abuf);
+      weed_plant_free(layers[i]);
+    }
+    g_free(layers);
   }
-  g_free(layers);
   weed_free(in_tracks);
   weed_free(out_tracks);
 
@@ -3101,17 +3117,24 @@ static void weed_apply_filter_map (weed_plant_t **layers, weed_plant_t *filter_m
 
 	    if (is_pure_audio(instance,FALSE)) continue; // audio effects are applied in the audio renderer
 
-	  apply_inst1:
-
 	    // interpolation can be switched of by setting mainw->no_interp
 	    if (!mainw->no_interp&&pchain!=NULL) {
 	      interpolate_params(instance,pchain,tc); // interpolate parameters for preview
 	    }
+
+	  apply_inst1:
+
 	    filter_error=weed_apply_instance (instance,mainw->multitrack->init_event,layers,0,0,tc);
 
 	    if (filter_error==WEED_NO_ERROR&&weed_plant_has_leaf(instance,"host_next_instance")) {
 	      // handling for compound fx
 	      instance=weed_get_plantptr_value(instance,"host_next_instance",&error);
+
+	      // chain any internal data pipelines for compound fx
+	      pthread_mutex_lock(&mainw->data_mutex);
+	      pconx_chain_data_internal(instance);
+	      pthread_mutex_unlock(&mainw->data_mutex);
+
 	      goto apply_inst1;
 	    }
 
@@ -3155,6 +3178,12 @@ static void weed_apply_filter_map (weed_plant_t **layers, weed_plant_t *filter_m
 	  if (filter_error==WEED_NO_ERROR&&weed_plant_has_leaf(instance,"host_next_instance")) {
 	    // handling for compound fx
 	    instance=weed_get_plantptr_value(instance,"host_next_instance",&error);
+
+	    // chain any internal data pipelines for compound fx
+	    pthread_mutex_lock(&mainw->data_mutex);
+	    pconx_chain_data_internal(instance);
+	    pthread_mutex_unlock(&mainw->data_mutex);
+
 	    goto apply_inst2;
 	  }
 
@@ -3233,12 +3262,10 @@ weed_plant_t *weed_apply_effects (weed_plant_t **layers, weed_plant_t *filter_ma
 
 	    instance=weed_get_plantptr_value(instance,"host_next_instance",&error);
 
-	    if (!(mainw->preview||mainw->is_rendering)) {
-	      // chain any internal data pipelines for compound fx
-	      pthread_mutex_lock(&mainw->data_mutex);
-	      pconx_chain_data_internal(instance);
-	      pthread_mutex_unlock(&mainw->data_mutex);
-	    }
+	    // chain any internal data pipelines for compound fx
+	    pthread_mutex_lock(&mainw->data_mutex);
+	    pconx_chain_data_internal(instance);
+	    pthread_mutex_unlock(&mainw->data_mutex);
 
 	    goto apply_inst3;
 	  }
@@ -3384,11 +3411,11 @@ void weed_apply_audio_effects_rt(float **abuf, int nchans, int64_t nsamps, gdoub
 	  continue;
 	}
 
-      apply_audio_inst2:
-
 	if (mainw->pchains!=NULL&&mainw->pchains[i]!=NULL) {
 	  interpolate_params(instance,mainw->pchains[i],tc); // interpolate parameters during preview
 	}
+
+      apply_audio_inst2:
 	
 	if (mainw->pconx!=NULL) {
 	  // chain any data pipelines
@@ -6625,30 +6652,45 @@ weed_plant_t *weed_inst_in_param (weed_plant_t *inst, int param_num, gboolean sk
   weed_plant_t **in_params,*param=NULL;
   int error,num_params;
 
-  if (!weed_plant_has_leaf(inst,"in_parameters")) return NULL; // has no in_parameters
+  do {
 
-  num_params=weed_leaf_num_elements(inst,"in_parameters");
-  if (num_params<=param_num) return NULL; // invalid parameter number
+    if (!weed_plant_has_leaf(inst,"in_parameters")) continue; // has no in_parameters
 
-  in_params=weed_get_plantptr_array(inst,"in_parameters",&error);
-  if (!skip_hidden) param=in_params[param_num];
+    num_params=weed_leaf_num_elements(inst,"in_parameters");
 
-  else {
-    gint count=0;
-    int i;
-    
-    for (i=0;i<num_params;i++) {
-      if (!is_hidden_param(inst,i)) {
-	if (count==param_num) {
-	  param=in_params[count];
-	  break;
-	}
-	count++;
+    if (num_params<=param_num) return NULL; // invalid parameter number
+
+    in_params=weed_get_plantptr_array(inst,"in_parameters",&error);
+    if (!skip_hidden) {
+      if (num_params>param_num) {
+	param=in_params[param_num];
+	weed_free(in_params);
+	return param;
       }
+      param_num-=num_params;
     }
-  }
 
-  weed_free(in_params);
+    else {
+      gint count=0;
+      int i;
+    
+      for (i=0;i<num_params;i++) {
+	if (!is_hidden_param(inst,i)) {
+	  if (count==param_num) {
+	    param=in_params[count];
+	    weed_free(in_params);
+	    return param;
+	  }
+	  count++;
+	}
+      }
+      param_num-=count;
+    }
+
+    weed_free(in_params);
+
+  } while (weed_plant_has_leaf(inst,"host_next_instance")&&(inst=weed_get_plantptr_value(inst,"host_next_instance",&error))!=NULL);
+
   return param;
 }
 
@@ -6824,18 +6866,17 @@ int set_copy_to(weed_plant_t *inst, int pnum, boolean update) {
 
 
 void rec_param_change(weed_plant_t *inst, int pnum) {
-  // TODO - handle compound fx
-
   int error;
   weed_timecode_t tc;
   weed_plant_t *in_param;
   int key;
 
-  // do not record changes for generators those get recorded to scrap_file or ascrap_file
+  // do not record changes for generators - those get recorded to scrap_file or ascrap_file
   if (enabled_in_channels(inst,FALSE)==0) return;
 
   tc=get_event_timecode(get_last_event(mainw->event_list));
   key=weed_get_int_value(inst,"host_hotkey",&error);
+
   in_param=weed_inst_in_param(inst,pnum,FALSE);
 
   mainw->event_list=append_param_change_event(mainw->event_list,tc,pnum,in_param,init_events[key],pchains[key]);
@@ -8382,22 +8423,33 @@ gboolean interpolate_param(weed_plant_t *inst, int i, void *pchain, weed_timecod
 gboolean interpolate_params(weed_plant_t *inst, void **pchains, weed_timecode_t tc) {
   // interpolate all in_parameters for filter_instance inst, using void **pchain, which is an array of param_change events in temporal order
   // values are calculated for timecode tc. We skip "hidden" parameters
-  int i;
   void *pchain;
   int num_params;
+  int offset=0,error;
 
-  if (!weed_plant_has_leaf(inst,"in_parameters")||pchains==NULL) return TRUE;
+  register int i;
 
-  num_params=weed_leaf_num_elements(inst,"in_parameters");
+  do {
 
-  if (num_params==0) return TRUE; // no in_parameters ==> do nothing
+    if (!weed_plant_has_leaf(inst,"in_parameters")||pchains==NULL) continue;
 
-  for (i=0;i<num_params;i++) {
-    if (!is_hidden_param(inst,i)) {
-      pchain=pchains[i];
-      if (!interpolate_param(inst,i,pchain,tc)) return FALSE; // FALSE if param is not ready
+    num_params=weed_leaf_num_elements(inst,"in_parameters");
+
+    if (num_params==0) continue; // no in_parameters ==> do nothing
+
+    for (i=offset;i<offset+num_params;i++) {
+      if (!is_hidden_param(inst,i)) {
+	pchain=pchains[i];
+	if (!interpolate_param(inst,i,pchain,tc)) return FALSE; // FALSE if param is not ready
+      }
     }
-  }
+
+    offset+=num_params;
+
+  } while (weed_plant_has_leaf(inst,"host_next_instance")&&(inst=weed_get_plantptr_value(inst,"host_next_instance",&error))!=NULL);
+
+
+
   return TRUE;
 }
 

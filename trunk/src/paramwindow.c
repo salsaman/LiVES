@@ -574,7 +574,9 @@ static gboolean add_sizes(GtkBox *vbox, gboolean add_fps, lives_rfx_t *rfx) {
   
   for (i=0;i<num_chans;i++) {
     tmpl=ctmpls[i];
-    if (weed_plant_has_leaf(tmpl,"disabled")&&weed_get_boolean_value(tmpl,"disabled",&error)==WEED_TRUE) continue;
+
+    // TODO *** - "host_disabled" should be for inst, not template !
+    if (weed_plant_has_leaf(tmpl,"host_disabled")&&weed_get_boolean_value(tmpl,"host_disabled",&error)==WEED_TRUE) continue;
     if (weed_plant_has_leaf(tmpl,"width")&&weed_get_int_value(tmpl,"width",&error)!=0) continue;
     if (weed_plant_has_leaf(tmpl,"height")&&weed_get_int_value(tmpl,"height",&error)!=0) continue;
    
@@ -1085,7 +1087,7 @@ static int num_in_params_for_nth_instance(weed_plant_t *inst, int idx) {
   // get number of params for nth instance in a compound effect - gives an offset for param number within the compound
 
   int error;
-  while (idx>0) inst=weed_get_plantptr_value(inst,"host_next_instance",&error);
+  while (--idx>0) inst=weed_get_plantptr_value(inst,"host_next_instance",&error);
   return weed_leaf_num_elements(inst,"in_parameters");
 }
 

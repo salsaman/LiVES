@@ -3332,6 +3332,9 @@ void lives_osc_cb_rte_getparamtype(void *context, int arglen, const void *vargs,
 
   const gchar *retval;
 
+  // TODO - handle compound fx
+
+
   if (!lives_osc_check_arguments (arglen,vargs,"iii",FALSE)) {
     if (!lives_osc_check_arguments (arglen,vargs,"ii",TRUE)) return lives_osc_notify_failure();
     lives_osc_parse_int_argument(vargs,&effect_key);
@@ -3958,6 +3961,9 @@ void lives_osc_cb_rte_setparam(void *context, int arglen, const void *vargs, OSC
 
   int effect_key;
   int pnum,nargs;
+
+  // TODO - handle compound fx
+
 
   if (!lives_osc_check_arguments (arglen,vargs,"ii",TRUE)) return lives_osc_notify_failure();
 

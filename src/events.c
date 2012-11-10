@@ -3658,6 +3658,8 @@ lives_render_error_t render_events (gboolean reset) {
       // reinit effect with saved parameters
       inst=rte_keymode_get_instance(key+1,0);
 
+      // TODO *** - handle compound fx
+
 
       if (weed_plant_has_leaf(event,"host_key")) {
 	// mt events will not have this;
@@ -3671,8 +3673,6 @@ lives_render_error_t render_events (gboolean reset) {
 	weed_set_int_value(inst,"host_mode",hostmode);
 	
       }
-
-	// TODO *** - handle compound fx
 
       num_params=num_in_params(inst,TRUE,TRUE);
       if (num_params>0) {

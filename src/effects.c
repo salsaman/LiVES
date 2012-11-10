@@ -923,9 +923,11 @@ weed_plant_t *on_rte_apply (weed_plant_t *layer, int opwidth, int opheight, weed
 
 
 void deinterlace_frame(weed_plant_t *layer, weed_timecode_t tc) {
-  int deint_idx;
-  weed_plant_t *deint_filter,*deint_instance,*init_event;
   weed_plant_t **layers;
+
+  weed_plant_t *deint_filter,*deint_instance,*next_inst,*init_event;
+
+  int deint_idx,error;
 
   if (mainw->fx_candidates[FX_CANDIDATE_DEINTERLACE].delegate==-1) return;
 
@@ -941,17 +943,27 @@ void deinterlace_frame(weed_plant_t *layer, weed_timecode_t tc) {
   layers[1]=NULL;
 
   layers[0]=layer;
-  // TODO *** - handle compound fx
-
+ 
   init_event=weed_plant_new(WEED_PLANT_EVENT);
   weed_set_int_value(init_event,"in_tracks",0);
   weed_set_int_value(init_event,"out_tracks",0);
-  
+ 
+ deint1:
+ 
   weed_apply_instance(deint_instance,init_event,layers,0,0,tc);
   
-  weed_plant_free(init_event);
+  if (weed_plant_has_leaf(deint_instance,"host_next_instance")) next_inst=weed_get_plantptr_value(deint_instance,"host_next_instance",&error);
+  else next_inst=NULL;
+
   weed_call_deinit_func(deint_instance);
   weed_instance_unref(deint_instance);
+
+  if (next_inst!=NULL) {
+    deint_instance=next_inst;
+    goto deint1;
+  }
+
+  weed_plant_free(init_event);
 
   g_free(layers);
 }

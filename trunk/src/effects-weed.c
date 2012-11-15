@@ -345,7 +345,7 @@ lives_fx_cat_t weed_filter_subcategorise (weed_plant_t *pl, lives_fx_cat_t categ
   has_video_chansi=has_video_chans_in(filt,count_opt);
 
   if (category==LIVES_FX_CAT_TRANSITION) {
-    if (get_transition_param(filt)!=-1) {
+    if (get_transition_param(filt,FALSE)!=-1) {
       if (!has_video_chansi) return LIVES_FX_CAT_AUDIO_TRANSITION;
       return LIVES_FX_CAT_AV_TRANSITION;
     }
@@ -2978,7 +2978,7 @@ lives_filter_error_t weed_apply_audio_instance (weed_plant_t *init_event, float 
 
   // apply visibility mask to volume values
   if (vis!=NULL&&(flags&WEED_FILTER_IS_CONVERTER)) {
-    int vmaster=get_master_vol_param(filter);
+    int vmaster=get_master_vol_param(filter,FALSE);
     if (vmaster!=-1) {
       weed_plant_t **in_params=weed_get_plantptr_array(instance,"in_parameters",&error);
       int nvals=weed_leaf_num_elements(in_params[vmaster],"value");
@@ -3514,13 +3514,18 @@ static int check_weed_plugin_info (weed_plant_t *plugin_info) {
 }
 
 
-gint num_in_params(weed_plant_t *plant, gboolean count_reinits, gboolean count_variable) {
+gint num_in_params(weed_plant_t *plant, boolean skip_hidden, boolean skip_internal) {
   weed_plant_t **params=NULL;
-  gint counted=0;
+
+  weed_plant_t *param;
+
+  int counted=0;
   int num_params,i,error;
-  gboolean is_template=(WEED_PLANT_IS_FILTER_CLASS(plant));
-  int flags;
-  weed_plant_t *ptmpl;
+  boolean is_template=(WEED_PLANT_IS_FILTER_CLASS(plant));
+
+ nip1:
+
+  num_params=0;
 
   if (is_template) {
     if (!weed_plant_has_leaf(plant,"in_parameter_templates")||
@@ -3528,29 +3533,38 @@ gint num_in_params(weed_plant_t *plant, gboolean count_reinits, gboolean count_v
     num_params=weed_leaf_num_elements(plant,"in_parameter_templates");
   }
   else {
-    if (!weed_plant_has_leaf(plant,"in_parameters")) return 0;
-    if (weed_get_plantptr_value(plant,"in_parameters",&error)==NULL) return 0;
+    if (!weed_plant_has_leaf(plant,"in_parameters")) goto nip1done;
+    if (weed_get_plantptr_value(plant,"in_parameters",&error)==NULL) goto nip1done;
     num_params=weed_leaf_num_elements(plant,"in_parameters");
   }
-  if (count_reinits&&count_variable) return num_params;
+
+  if (!skip_hidden&&!skip_internal) {
+    counted+=num_params;
+    goto nip1done;
+  }
 
   if (is_template) params=weed_get_plantptr_array(plant,"in_parameter_templates",&error);
   else params=weed_get_plantptr_array(plant,"in_parameters",&error);
 
   for (i=0;i<num_params;i++) {
-    if (is_template) ptmpl=params[i];
-    else ptmpl=weed_get_plantptr_value(params[i],"template",&error);
-    if (weed_plant_has_leaf(ptmpl,"flags")) {
-      flags=weed_get_int_value(ptmpl,"flags",&error);
-      if ((count_reinits||!(flags&WEED_PARAMETER_REINIT_ON_VALUE_CHANGE))&&
-	  (count_variable||!(flags&WEED_PARAMETER_VARIABLE_ELEMENTS))) counted++;
-    }
-    else counted++;
+    if (skip_hidden&&is_hidden_param(plant,i)) continue;
+    param=params[i];
+    if (skip_internal&&weed_plant_has_leaf(param,"host_internal_connection")) continue;
+    counted++;
   }
 
   weed_free(params);
+
+ nip1done:
+
+  if (!is_template&&skip_internal&&weed_plant_has_leaf(plant,"host_next_instance")) {
+    plant=weed_get_plantptr_value(plant,"host_next_instance",&error);
+    goto nip1;
+  }
+
   return counted;
 }
+
 
 gint num_out_params(weed_plant_t *plant) {
   int num_params,error;
@@ -4457,7 +4471,7 @@ void weed_load_all (void) {
 
 
 static weed_plant_t *create_compound_filter(gchar *plugin_name, int nfilts, int *filts) {
-  weed_plant_t *filter=weed_plant_new(WEED_PLANT_FILTER_CLASS),*xfilter;
+  weed_plant_t *filter=weed_plant_new(WEED_PLANT_FILTER_CLASS),*xfilter,*gui;
 
   weed_plant_t **in_params=NULL,**out_params=NULL,**params;
   weed_plant_t **in_chans,**out_chans;
@@ -4468,7 +4482,7 @@ static weed_plant_t *create_compound_filter(gchar *plugin_name, int nfilts, int 
 
   int count,xcount,error;
 
-  int txparam=-1,tparam;
+  int txparam=-1,tparam,txvolm=-1,tvolm;
 
   register int i,j,x;
 
@@ -4492,9 +4506,16 @@ static weed_plant_t *create_compound_filter(gchar *plugin_name, int nfilts, int 
       }
     }
 
+    // in_parameter templates are copy-by-value, since we may set a different default/host_default value, and a different gui
+
+    // everything else - filter classes, out_param templates and channels are copy by ref.
+
+
     if (weed_plant_has_leaf(xfilter,"in_parameter_templates")) {
 
-      tparam=get_transition_param(xfilter);
+      tparam=get_transition_param(xfilter,FALSE);
+
+      // TODO *** - ignore transtion params if they are connected to themselves
 
       if (tparam!=-1) {
 	if (txparam!=-1) {
@@ -4503,7 +4524,21 @@ static weed_plant_t *create_compound_filter(gchar *plugin_name, int nfilts, int 
 	  g_free(tmp);
 	  return NULL;
 	}
-	txparam=count+tparam;
+	txparam=tparam;
+      }
+
+      tvolm=get_master_vol_param(xfilter,FALSE);
+
+      // TODO *** - ignore master vol params if they are connected to themselves
+
+      if (tvolm!=-1) {
+	if (txvolm!=-1) {
+	  d_print((tmp=g_strdup_printf(_("Invalid compound effect %s - has multiple master volume parameters\n"),plugin_name)));
+	  LIVES_ERROR(tmp);
+	  g_free(tmp);
+	  return NULL;
+	}
+	txvolm=tvolm;
       }
 
       count+=weed_leaf_num_elements(xfilter,"in_parameter_templates");
@@ -4513,7 +4548,23 @@ static weed_plant_t *create_compound_filter(gchar *plugin_name, int nfilts, int 
       x=0;
 
       for (j=xcount;j<count;j++) {
-	in_params[j]=params[x++];
+	in_params[j]=weed_plant_copy(params[x]);
+	if (weed_plant_has_leaf(params[x],"gui")) {
+	  gui=weed_get_plantptr_value(params[x],"gui",&error);
+	  weed_set_plantptr_value(in_params[j],"gui",weed_plant_copy(gui));
+	}
+
+	if (x==tparam) {
+	  weed_set_boolean_value(in_params[j],"transition",WEED_TRUE);
+	}
+	else if (weed_plant_has_leaf(in_params[j],"transition")) weed_leaf_delete(in_params[j],"transition");
+
+	if (x==tvolm) {
+	  weed_set_boolean_value(in_params[j],"is_volume_master",WEED_TRUE);
+	}
+	else if (weed_plant_has_leaf(in_params[j],"is_volume_master")) weed_leaf_delete(in_params[j],"is_volume_master");
+
+	x++;
       }
 
     }
@@ -4523,7 +4574,7 @@ static weed_plant_t *create_compound_filter(gchar *plugin_name, int nfilts, int 
 
   if (count>0) {
     weed_set_plantptr_array(filter,"in_parameter_templates",count,in_params);
-    weed_free(in_params);
+    g_free(in_params);
   }
 
   count=xcount=0;
@@ -4818,11 +4869,17 @@ void weed_filter_free(weed_plant_t *filter) {
 
 
 void weed_unload_all(void) {
-  int i,j,error;
-  weed_plant_t *filter,*plugin_info,*host_info;
+  weed_plant_t **plants;
+
+  weed_plant_t *filter,*plugin_info,*host_info,*gui;
+
   void *handle;
+
   weed_desetup_f desetup_fn;
+
   GList *pinfo=NULL,*xpinfo;
+
+  int i,j,error,nitems;
 
   mainw->num_tr_applied=0;
   weed_deinit_all(TRUE);
@@ -4841,6 +4898,22 @@ void weed_unload_all(void) {
     filter=weed_filters[i];
 
     if (num_compound_fx(filter)>1) {
+      // free in_param_templates, since they were copy by value
+      if (weed_plant_has_leaf(filter,"in_parameter_templates")) {
+	nitems=weed_leaf_num_elements(filter,"in_parameter_templates");
+	if (nitems>0) {
+	  plants=weed_get_plantptr_array(filter,"in_parameter_templates",&error);
+	  for (i=0;i<nitems;i++) {
+	    if (weed_plant_has_leaf(plants[i],"gui")) {
+	      gui=(weed_get_plantptr_value(plants[i],"gui",&error));
+	      weed_plant_free(gui);
+	    }
+	    weed_plant_free(plants[i]);
+	  }
+	  weed_free(plants);
+	}
+      }
+
       weed_plant_free(filter);
       continue;
     }
@@ -6575,8 +6648,8 @@ gboolean is_hidden_param(weed_plant_t *plant, int i) {
 }
 
 
-int get_transition_param(weed_plant_t *filter) {
-  int error,num_params,i;
+int get_transition_param(weed_plant_t *filter, boolean skip_internal) {
+  int error,num_params,i,count=0;
   weed_plant_t **in_ptmpls;
 
   if (!weed_plant_has_leaf(filter,"in_parameter_templates")) return -1; // has no in_parameters
@@ -6584,19 +6657,21 @@ int get_transition_param(weed_plant_t *filter) {
   num_params=weed_leaf_num_elements(filter,"in_parameter_templates");
   in_ptmpls=weed_get_plantptr_array(filter,"in_parameter_templates",&error);
   for (i=0;i<num_params;i++) {
+    if (skip_internal&&weed_plant_has_leaf(in_ptmpls[i],"host_internal_connection")) continue;
     if (weed_plant_has_leaf(in_ptmpls[i],"transition")&&
 	weed_get_boolean_value(in_ptmpls[i],"transition",&error)==WEED_TRUE) {
       weed_free(in_ptmpls);
-      return i;
+      return count;
     }
+    count++;
   }
   weed_free(in_ptmpls);
   return -1;
 }
 
 
-int get_master_vol_param(weed_plant_t *filter) {
-  int error,num_params,i;
+int get_master_vol_param(weed_plant_t *filter, boolean skip_internal) {
+  int error,num_params,i,count=0;
   weed_plant_t **in_ptmpls;
 
   if (!weed_plant_has_leaf(filter,"in_parameter_templates")) return -1; // has no in_parameters
@@ -6604,15 +6679,19 @@ int get_master_vol_param(weed_plant_t *filter) {
   num_params=weed_leaf_num_elements(filter,"in_parameter_templates");
   in_ptmpls=weed_get_plantptr_array(filter,"in_parameter_templates",&error);
   for (i=0;i<num_params;i++) {
+    if (skip_internal&&weed_plant_has_leaf(in_ptmpls[i],"host_internal_connection")) continue;
     if (weed_plant_has_leaf(in_ptmpls[i],"is_volume_master")&&
 	weed_get_boolean_value(in_ptmpls[i],"is_volume_master",&error)==WEED_TRUE) {
       weed_free(in_ptmpls);
-      return i;
+      return count;
     }
+    count++;
   }
   weed_free(in_ptmpls);
   return -1;
 }
+
+
 
 
 gboolean is_perchannel_multiw(weed_plant_t *param) {
@@ -6653,8 +6732,9 @@ gboolean has_perchannel_multiw(weed_plant_t *filter) {
 
 
 
-weed_plant_t *weed_inst_in_param (weed_plant_t *inst, int param_num, gboolean skip_hidden) {
-  weed_plant_t **in_params,*param=NULL;
+weed_plant_t *weed_inst_in_param (weed_plant_t *inst, int param_num, boolean skip_hidden, boolean skip_internal) {
+  weed_plant_t **in_params;
+  weed_plant_t *param;
   int error,num_params;
 
   do {
@@ -6663,11 +6743,9 @@ weed_plant_t *weed_inst_in_param (weed_plant_t *inst, int param_num, gboolean sk
 
     num_params=weed_leaf_num_elements(inst,"in_parameters");
 
-    if (num_params<=param_num) return NULL; // invalid parameter number
-
-    in_params=weed_get_plantptr_array(inst,"in_parameters",&error);
-    if (!skip_hidden) {
+    if (!skip_hidden&&!skip_internal) {
       if (num_params>param_num) {
+	in_params=weed_get_plantptr_array(inst,"in_parameters",&error);
 	param=in_params[param_num];
 	weed_free(in_params);
 	return param;
@@ -6677,12 +6755,14 @@ weed_plant_t *weed_inst_in_param (weed_plant_t *inst, int param_num, gboolean sk
 
     else {
       gint count=0;
-      int i;
-    
+      register int i;
+
+      in_params=weed_get_plantptr_array(inst,"in_parameters",&error);
+
       for (i=0;i<num_params;i++) {
-	if (!is_hidden_param(inst,i)) {
+	param=in_params[i];
+	if ((!skip_hidden||!is_hidden_param(inst,i))&&(!skip_internal||!weed_plant_has_leaf(param,"host_internal_connection"))) {
 	  if (count==param_num) {
-	    param=in_params[count];
 	    weed_free(in_params);
 	    return param;
 	  }
@@ -6690,13 +6770,50 @@ weed_plant_t *weed_inst_in_param (weed_plant_t *inst, int param_num, gboolean sk
 	}
       }
       param_num-=count;
+      weed_free(in_params);
     }
 
+   } while (weed_plant_has_leaf(inst,"host_next_instance")&&(inst=weed_get_plantptr_value(inst,"host_next_instance",&error))!=NULL);
+
+  return NULL;
+}
+
+
+
+
+weed_plant_t *weed_filter_in_paramtmpl (weed_plant_t *filter, int param_num, boolean skip_internal) {
+  weed_plant_t **in_params;
+  weed_plant_t *ptmpl;
+  int error,num_params;
+
+  int count=0;
+  register int i;
+
+  if (!weed_plant_has_leaf(filter,"in_parameter_templates")) return NULL; // has no in_parameters
+  
+  num_params=weed_leaf_num_elements(filter,"in_parameter_templatess");
+
+  if (num_params<=param_num) return NULL; // invalid parameter number
+
+  in_params=weed_get_plantptr_array(filter,"in_parameter_templates",&error);
+
+  if (!skip_internal) {
+    ptmpl=in_params[param_num];
     weed_free(in_params);
+    return ptmpl;
+  }
+  
+  for (i=0;i<num_params;i++) {
+    ptmpl=in_params[i];
+    if (!weed_plant_has_leaf(ptmpl,"host_internal_connection")) {
+      if (count==param_num) {
+	return ptmpl;
+      }
+      count++;
+    }
+  }
 
-  } while (weed_plant_has_leaf(inst,"host_next_instance")&&(inst=weed_get_plantptr_value(inst,"host_next_instance",&error))!=NULL);
-
-  return param;
+  return NULL;
 }
 
 
@@ -6778,7 +6895,7 @@ int count_simple_params(weed_plant_t *plant) {
 char *get_weed_display_string (weed_plant_t *inst, int pnum) {
   // TODO - for setting defaults, we will need to create params
   char *disp_string;
-  weed_plant_t *param=weed_inst_in_param(inst,pnum,FALSE);
+  weed_plant_t *param=weed_inst_in_param(inst,pnum,FALSE,FALSE);
   weed_plant_t *ptmpl,*gui,*filter;
   int error;
   weed_display_f *display_func_ptr;
@@ -6882,7 +6999,7 @@ void rec_param_change(weed_plant_t *inst, int pnum) {
   tc=get_event_timecode(get_last_event(mainw->event_list));
   key=weed_get_int_value(inst,"host_hotkey",&error);
 
-  in_param=weed_inst_in_param(inst,pnum,FALSE);
+  in_param=weed_inst_in_param(inst,pnum,FALSE,FALSE);
 
   mainw->event_list=append_param_change_event(mainw->event_list,tc,pnum,in_param,init_events[key],pchains[key]);
 }

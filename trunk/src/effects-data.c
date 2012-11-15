@@ -487,6 +487,8 @@ boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, weed_plant_t *dpa
   // int[4x]/double[4x] -> colourRGBA
   //
 
+  if (dparam==sparam) return FALSE;
+
   nsvals=weed_leaf_num_elements(sparam,"value");
   ondvals=ndvals=weed_leaf_num_elements(dparam,"value");
   
@@ -1162,7 +1164,7 @@ void pconx_chain_data_internal(weed_plant_t *inst) {
 
   register int i;
 
-  if (weed_plant_has_leaf(inst,"in_parameters")) nparams=weed_leaf_num_elements(inst,"in_parameters");
+  nparams=num_in_params(inst,FALSE,FALSE);
   if (nparams==0) return;
 
   in_params=weed_get_plantptr_array(inst,"in_parameters",&error);

@@ -137,7 +137,7 @@ add_to_special (const gchar *sp_string, lives_rfx_t *rfx) {
 	  }
 	}
 	if (init_event!=NULL) {
-	  param=weed_inst_in_param((weed_plant_t *)rfx->source,pnum,FALSE);
+	  param=weed_inst_in_param((weed_plant_t *)rfx->source,pnum,FALSE,FALSE);
 	  paramtmpl=weed_get_plantptr_value(param,"template",&error);
 	  pchange=pchains[pnum];
 	  fill_param_vals_to ((weed_plant_t *)pchange,paramtmpl,num_in_tracks-1);

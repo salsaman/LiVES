@@ -92,15 +92,16 @@ void weed_reinit_all(void);
 
 int weed_flagset_array_count(weed_plant_t **array, gboolean set_readonly);
 
-int num_in_params(weed_plant_t *, gboolean count_reinits, gboolean count_variable);
+gint num_in_params(weed_plant_t *, boolean skip_hidden, boolean skip_internal);
 int num_out_params(weed_plant_t *);
-weed_plant_t *weed_inst_in_param (weed_plant_t *inst, int param_num, gboolean skip_hidden);
-gboolean is_hidden_param(weed_plant_t *plant, int i);
-int get_nth_simple_param(weed_plant_t *plant, int pnum);
-int count_simple_params(weed_plant_t *plant);
+weed_plant_t *weed_inst_in_param (weed_plant_t *inst, int param_num, boolean skip_hidden, boolean skip_internal);
+weed_plant_t *weed_filter_in_paramtmpl (weed_plant_t *filter, int param_num, boolean skip_internal);
+gboolean is_hidden_param(weed_plant_t *, int i);
+int get_nth_simple_param(weed_plant_t *, int pnum);
+int count_simple_params(weed_plant_t *);
 weed_plant_t **weed_params_create (weed_plant_t *filter, gboolean in);
-int get_transition_param(weed_plant_t *filter);
-int get_master_vol_param(weed_plant_t *filter);
+int get_transition_param(weed_plant_t *filter, boolean skip_internal);
+int get_master_vol_param(weed_plant_t *filter, boolean skip_internal);
 gboolean is_perchannel_multiw(weed_plant_t *param);
 gboolean has_perchannel_multiw(weed_plant_t *filter);
 gboolean weed_parameter_has_variable_elements_strict(weed_plant_t *inst, weed_plant_t *ptmpl);

@@ -342,16 +342,29 @@ static void gen_fps_changed (GtkSpinButton *spin, gpointer user_data) {
 
 
 static void trans_in_out_pressed(lives_rfx_t *rfx, gboolean in) {
-  // TODO *** - compound fx
+  weed_plant_t **in_params;
 
-  int error;
   weed_plant_t *inst=(weed_plant_t *)rfx->source;
   weed_plant_t *filter=weed_instance_get_filter(inst,TRUE);
-  int trans=get_transition_param(filter);
-  weed_plant_t **in_params=weed_get_plantptr_array(inst,"in_parameters",&error);
-  weed_plant_t *tparam=in_params[trans];
-  weed_plant_t *tparamtmpl=weed_get_plantptr_value(tparam,"template",&error);
-  int hint=weed_get_int_value(tparamtmpl,"hint",&error);
+  weed_plant_t *tparam;
+  weed_plant_t *tparamtmpl;
+
+  int hint,error,nparams;
+  int trans=get_transition_param(filter,FALSE);
+
+  do {
+    // handle compound fx
+    if (weed_plant_has_leaf(inst,"in_parameters")) {
+      nparams=weed_leaf_num_elements(inst,"in_parameters");
+      if (trans<nparams) break;
+      trans-=nparams;
+    }
+  } while (weed_plant_has_leaf(inst,"host_next_instance")&&(inst=weed_get_plantptr_value(inst,"host_next_instance",&error))!=NULL);
+
+  in_params=weed_get_plantptr_array(inst,"in_parameters",&error);
+  tparam=in_params[trans];
+  tparamtmpl=weed_get_plantptr_value(tparam,"template",&error);
+  hint=weed_get_int_value(tparamtmpl,"hint",&error);
 
   pthread_mutex_lock(&mainw->data_mutex);
   if (hint==WEED_HINT_INTEGER) {
@@ -1171,7 +1184,7 @@ gboolean make_param_box(GtkVBox *top_vbox, lives_rfx_t *rfx) {
   // extras for multitrack
   if (mainw->multitrack!=NULL&&rfx->status==RFX_STATUS_WEED&&!chk_params) {
     weed_plant_t *filter=weed_instance_get_filter((weed_plant_t *)rfx->source,TRUE);
-    if (enabled_in_channels(filter,FALSE)==2&&get_transition_param(filter)!=-1) {
+    if (enabled_in_channels(filter,FALSE)==2&&get_transition_param(filter,FALSE)!=-1) {
       // add in/out for multitrack transition
       transition_add_in_out(GTK_BOX(param_vbox),rfx,(mainw->multitrack->opts.pertrack_audio));
       //trans_in_out_pressed(rfx,TRUE);
@@ -1861,7 +1874,7 @@ after_boolean_param_toggled        (GtkToggleButton *togglebutton,
     weed_plant_t *inst=(weed_plant_t *)rfx->source;
     if (inst!=NULL&&weed_get_int_value(inst,"type",&error)==WEED_PLANT_FILTER_INSTANCE) {
       char *disp_string;
-      weed_plant_t *wparam=weed_inst_in_param(inst,param_number,FALSE);
+      weed_plant_t *wparam=weed_inst_in_param(inst,param_number,FALSE,FALSE);
       int index=0,numvals;
       int *valis;
 
@@ -1953,7 +1966,7 @@ after_param_value_changed           (GtkSpinButton   *spinbutton,
       int error;
       weed_plant_t *inst=(weed_plant_t *)rfx->source;
       if (inst!=NULL&&weed_get_int_value(inst,"type",&error)==WEED_PLANT_FILTER_INSTANCE) {
-	weed_plant_t *wparam=weed_inst_in_param(inst,param_number,FALSE);
+	weed_plant_t *wparam=weed_inst_in_param(inst,param_number,FALSE,FALSE);
 	int index=0,numvals;
 	double *valds;
 
@@ -1985,7 +1998,7 @@ after_param_value_changed           (GtkSpinButton   *spinbutton,
       int error;
       weed_plant_t *inst=(weed_plant_t *)rfx->source;
       if (inst!=NULL&&weed_get_int_value(inst,"type",&error)==WEED_PLANT_FILTER_INSTANCE) {
-	weed_plant_t *wparam=weed_inst_in_param(inst,param_number,FALSE);
+	weed_plant_t *wparam=weed_inst_in_param(inst,param_number,FALSE,FALSE);
 	int index=0,numvals;
 	int *valis;
 	
@@ -2055,7 +2068,7 @@ void update_weed_color_value(weed_plant_t *inst, int pnum, int c1, int c2, int c
   int cols[4]={c1,c2,c3,c4};
   double colds[4];
   weed_plant_t *ptmpl;
-  weed_plant_t *param=weed_inst_in_param(inst,pnum,FALSE);
+  weed_plant_t *param=weed_inst_in_param(inst,pnum,FALSE,FALSE);
   int cspace;
   int rmax,rmin,gmax,gmin,bmax,bmin;
   int *maxs=NULL,*mins=NULL;
@@ -2279,7 +2292,7 @@ after_param_green_changed           (GtkSpinButton   *spinbutton,
     weed_plant_t *inst=(weed_plant_t *)rfx->source;
 
     if (inst!=NULL&&weed_get_int_value(inst,"type",&error)==WEED_PLANT_FILTER_INSTANCE) {
-      update_weed_color_value(weed_inst_in_param(inst,param_number,FALSE),
+      update_weed_color_value(weed_inst_in_param(inst,param_number,FALSE,FALSE),
 			      param_number,old_value.red,new_green,old_value.blue,0);
 
       copyto=set_copy_to(inst,param_number,TRUE);
@@ -2348,7 +2361,7 @@ after_param_blue_changed           (GtkSpinButton   *spinbutton,
     weed_plant_t *inst=(weed_plant_t *)rfx->source;
 
     if (inst!=NULL&&weed_get_int_value(inst,"type",&error)==WEED_PLANT_FILTER_INSTANCE) {
-      update_weed_color_value(weed_inst_in_param(inst,param_number,FALSE),param_number,
+      update_weed_color_value(weed_inst_in_param(inst,param_number,FALSE,FALSE),param_number,
 			      old_value.red,old_value.green,new_blue,0);
       copyto=set_copy_to(inst,param_number,TRUE);
 
@@ -2489,7 +2502,7 @@ after_param_text_changed (GtkWidget *textwidget, lives_rfx_t *rfx) {
     weed_plant_t *inst=(weed_plant_t *)rfx->source;
     if (inst!=NULL&&weed_get_int_value(inst,"type",&error)==WEED_PLANT_FILTER_INSTANCE) {
       char *disp_string=get_weed_display_string(inst,param_number);
-      weed_plant_t *wparam=weed_inst_in_param(inst,param_number,FALSE);
+      weed_plant_t *wparam=weed_inst_in_param(inst,param_number,FALSE,FALSE);
       int index=0,numvals;
       char **valss;
 
@@ -2578,7 +2591,7 @@ after_string_list_changed (GtkComboBox *combo, lives_rfx_t *rfx) {
     weed_plant_t *inst=(weed_plant_t *)rfx->source;
     if (inst!=NULL&&weed_get_int_value(inst,"type",&error)==WEED_PLANT_FILTER_INSTANCE) {
       char *disp_string=get_weed_display_string(inst,param_number);
-      weed_plant_t *wparam=weed_inst_in_param(inst,param_number,FALSE);
+      weed_plant_t *wparam=weed_inst_in_param(inst,param_number,FALSE,FALSE);
       int index=0,numvals;
       int *valis;
 

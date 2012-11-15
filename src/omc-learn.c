@@ -2350,6 +2350,7 @@ OSCbuf *omc_learner_decode(gint type, gint idx, const gchar *string) {
 	    ptmpls=weed_get_plantptr_array(filter,"in_parameter_templates",&error);
 	    for (k=0;k<ntmpls;k++) {
 	      ptmpl=ptmpls[k];
+	      if (weed_plant_has_leaf(ptmpl,"host_internal_connection")) continue;
 	      hint=weed_get_int_value(ptmpl,"hint",&error);
 	      flags=weed_get_int_value(ptmpl,"flags",&error);
 	      if ((hint==WEED_HINT_INTEGER||hint==WEED_HINT_FLOAT)&&flags==0&&weed_leaf_num_elements(ptmpl,"default")==1) {

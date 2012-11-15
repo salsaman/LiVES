@@ -510,7 +510,7 @@ weed_plant_t *event_copy_and_insert (weed_plant_t *in_event, weed_plant_t *event
     if (error==WEED_ERROR_MEMORY_ALLOCATION) return NULL;
     if ((idx=weed_get_idx_for_hashname(filter_hash,TRUE))!=-1) {
       filter=get_weed_filter(idx);
-      if ((num_params=num_in_params(filter,TRUE,TRUE))>0) {
+      if ((num_params=num_in_params(filter,FALSE,FALSE))>0) {
 	in_pchanges=(void **)g_try_malloc(num_params*sizeof(void *));
 	if (in_pchanges==NULL) return NULL;
 	for (i=0;i<num_params;i++) in_pchanges[i]=NULL;
@@ -2793,7 +2793,7 @@ weed_plant_t *append_filter_deinit_event (weed_plant_t *event_list, weed_timecod
     gchar *filter_hash=weed_get_string_value((weed_plant_t *)init_event,"filter",&error);
     int idx=weed_get_idx_for_hashname(filter_hash,TRUE);
     weed_plant_t *filter=get_weed_filter(idx);
-    int num_params=num_in_params(filter,TRUE,TRUE);
+    int num_params=num_in_params(filter,FALSE,FALSE);
     weed_set_voidptr_array(event,"in_parameters",num_params,pchain);
     weed_free(filter_hash);
   }
@@ -3176,7 +3176,7 @@ weed_plant_t *process_events (weed_plant_t *next_event, boolean process_audio, w
 
     filterinit1:
 
-      num_params=num_in_params(inst,TRUE,TRUE);
+      num_params=num_in_params(inst,FALSE,FALSE);
  
       if (num_params>0) {
 	weed_call_deinit_func(inst);
@@ -3702,7 +3702,7 @@ lives_render_error_t render_events (gboolean reset) {
 
     filterinit2:
 
-      num_params=num_in_params(inst,TRUE,TRUE);
+      num_params=num_in_params(inst,FALSE,FALSE);
  
       if (num_params>0) {
 	weed_call_deinit_func(inst);
@@ -4469,7 +4469,7 @@ gdouble *get_track_visibility_at_tc(weed_plant_t *event_list, gint ntracks, gint
 	  int idx;
 	  if ((idx=weed_get_idx_for_hashname(filter_hash,TRUE))!=-1) {
 	    weed_plant_t *filter=get_weed_filter(idx);
-	    int tparam=get_transition_param(filter);
+	    int tparam=get_transition_param(filter,FALSE);
 	    weed_plant_t *inst=weed_instance_from_filter(filter);
 	    weed_plant_t **in_params=weed_get_plantptr_array(inst,"in_parameters",&error);
 	    weed_plant_t *ttmpl=weed_get_plantptr_value(in_params[tparam],"template",&error);

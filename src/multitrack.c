@@ -3387,7 +3387,7 @@ static void populate_filter_box(GtkWidget *box, gint ninchans, lives_mt *mt) {
 	gtk_box_pack_start (GTK_BOX (vbox), label, FALSE, FALSE, 0);
 
 	// pack a/v transitions first
-	if (get_transition_param(filter)==-1||!has_video_chans_in(filter,FALSE)) 
+	if (get_transition_param(filter,FALSE)==-1||!has_video_chans_in(filter,FALSE)) 
 	  gtk_box_pack_end (GTK_BOX (box), xeventbox, FALSE, FALSE, 0);
 	else gtk_box_pack_start (GTK_BOX (box), xeventbox, FALSE, FALSE, 0);
 	
@@ -6240,7 +6240,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
 	// add all transitions to submenus
 	menuitem = gtk_image_menu_item_new_with_label (fxname);
 	g_object_set_data(G_OBJECT(menuitem),"idx",GINT_TO_POINTER(i));
-	if (get_transition_param(filter)==-1) gtk_container_add (GTK_CONTAINER (submenu_menu11), menuitem);
+	if (get_transition_param(filter,FALSE)==-1) gtk_container_add (GTK_CONTAINER (submenu_menu11), menuitem);
 	else {
 	  if (has_video_chans_in(filter,FALSE)) {
 	    /// the autotransitions menu
@@ -9535,13 +9535,22 @@ void do_effect_context (lives_mt *mt, GdkEventButton *event) {
   GtkWidget *delete_effect;
   GtkWidget *menu=gtk_menu_new();
 
+  weed_plant_t *filter;
+  gchar *fhash;
+
+  int error;
+
   gtk_menu_set_title (GTK_MENU(menu),_("LiVES: Selected effect"));
 
   if (palette->style&STYLE_1) {
     gtk_widget_modify_bg(menu, GTK_STATE_NORMAL, &palette->menu_and_bars);
   }
-  
-  if (weed_plant_has_leaf(mt->selected_init_event,"in_parameters")) {
+
+  fhash=weed_get_string_value(mt->selected_init_event,"filter",&error);
+  filter=get_weed_filter(weed_get_idx_for_hashname(fhash,TRUE));
+  weed_free(fhash);
+
+  if (num_in_params(filter,TRUE,TRUE)>0) {
     edit_effect = gtk_menu_item_new_with_mnemonic (_("_View/Edit this effect"));
   }
   else {
@@ -14339,7 +14348,8 @@ multitrack_view_details            (GtkMenuItem     *menuitem,
 
 
 
-static void add_effect_inner(lives_mt *mt, int num_in_tracks, int *in_tracks, int num_out_tracks, int *out_tracks, weed_plant_t *start_event, weed_plant_t *end_event) {
+static void add_effect_inner(lives_mt *mt, int num_in_tracks, int *in_tracks, int num_out_tracks, int *out_tracks, 
+			     weed_plant_t *start_event, weed_plant_t *end_event) {
   int i;
   weed_plant_t *event;
   void **init_events;
@@ -14379,7 +14389,7 @@ static void add_effect_inner(lives_mt *mt, int num_in_tracks, int *in_tracks, in
     pchain=NULL;
   }
 
-  if (weed_plant_has_leaf(filter,"in_parameter_templates")) 
+  if (num_in_params(filter,FALSE,FALSE)>0) 
     pchain=filter_init_add_pchanges(mt->event_list,filter,mt->init_event,num_in_tracks);
 
   // add effect map event
@@ -17254,7 +17264,7 @@ void on_next_fm_clicked  (GtkWidget *button, gpointer user_data) {
 
 
 static weed_timecode_t get_prev_node_tc(lives_mt *mt, weed_timecode_t tc) {
-  int num_params=weed_leaf_num_elements(get_weed_filter(mt->current_fx),"in_parameter_templates");
+  int num_params=num_in_params(get_weed_filter(mt->current_fx),FALSE,FALSE);
   int i,error;
   weed_timecode_t prev_tc=-1;
   weed_plant_t *event;
@@ -17274,7 +17284,7 @@ static weed_timecode_t get_prev_node_tc(lives_mt *mt, weed_timecode_t tc) {
 
 
 static weed_timecode_t get_next_node_tc(lives_mt *mt, weed_timecode_t tc) {
-  int num_params=weed_leaf_num_elements(get_weed_filter(mt->current_fx),"in_parameter_templates");
+  int num_params=num_in_params(get_weed_filter(mt->current_fx),FALSE,FALSE);
   int i,error;
   weed_timecode_t next_tc=-1;
   weed_plant_t *event;
@@ -17295,7 +17305,7 @@ static weed_timecode_t get_next_node_tc(lives_mt *mt, weed_timecode_t tc) {
 
 
 static gboolean is_node_tc(lives_mt *mt, weed_timecode_t tc) {
-  int num_params=weed_leaf_num_elements(get_weed_filter(mt->current_fx),"in_parameter_templates");
+  int num_params=num_in_params(get_weed_filter(mt->current_fx),FALSE,FALSE);
   int i,error;
   weed_plant_t *event;
   weed_timecode_t ev_tc;
@@ -17400,7 +17410,7 @@ void on_del_node_clicked  (GtkWidget *button, gpointer user_data) {
   weed_timecode_t tc=q_gint64(gtk_spin_button_get_value(GTK_SPIN_BUTTON(mt->node_spinbutton))*U_SEC+get_event_timecode(mt->init_event),mt->fps);
   weed_plant_t *prev_pchange,*next_pchange;
   gchar *filter_name,*text;
-  int num_params=weed_leaf_num_elements((weed_plant_t *)mt->current_rfx->source,"in_parameters");
+  int num_params=num_in_params((weed_plant_t *)mt->current_rfx->source,FALSE,FALSE);
   weed_plant_t **in_params=weed_get_plantptr_array((weed_plant_t *)mt->current_rfx->source,"in_parameters",&error);
 
   for (i=0;i<num_params;i++) {
@@ -17567,7 +17577,7 @@ void on_set_pvals_clicked  (GtkWidget *button, gpointer user_data) {
 
   gtk_widget_set_sensitive(mt->apply_fx_button,FALSE);
 
-  for (i=0;((param=weed_inst_in_param(inst,i,FALSE))!=NULL);i++) {
+  for (i=0;((param=weed_inst_in_param(inst,i,FALSE,FALSE))!=NULL);i++) {
     if (!mt->current_rfx->params[i].changed) continue; // set only user changed parameters
     pchange=weed_plant_new(WEED_PLANT_EVENT);
     weed_set_int_value(pchange,"hint",WEED_EVENT_HINT_PARAM_CHANGE);
@@ -18616,7 +18626,7 @@ static gchar *add_filter_deinits(weed_plant_t *event_list, ttable *trans_table, 
       filter_hash=weed_get_string_value(init_event,"filter",&error);
       if ((idx=weed_get_idx_for_hashname(filter_hash,TRUE))!=-1) {
 	filter=get_weed_filter(idx);
-	if ((num_params=num_in_params(filter,TRUE,TRUE))>0) {
+	if ((num_params=num_in_params(filter,FALSE,FALSE))>0) {
 	  in_pchanges=(void **)g_malloc(num_params*sizeof(void *));
 	  for (j=0;j<num_params;j++) {
 	    if (!WEED_EVENT_IS_FILTER_INIT((weed_plant_t *)pchains[i][j])) 
@@ -19076,7 +19086,7 @@ gboolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list) {
 #endif
 	    
 	    // use pchain array
-	    if ((num_params=num_in_params(filter,TRUE,TRUE))>0) {
+	    if ((num_params=num_in_params(filter,FALSE,FALSE))>0) {
 	      pchains[idx]=(void **)g_malloc(num_params*sizeof(void *));
 	      in_pchanges=(void **)g_malloc(num_params*sizeof(void *));
 	      for (i=0;i<num_params;i++) {
@@ -19133,7 +19143,7 @@ gboolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list) {
 	  filter_hash=weed_get_string_value((weed_plant_t *)init_event,"filter",&error);
 	  if ((filter_idx=weed_get_idx_for_hashname(filter_hash,TRUE))!=-1) {
 	    filter=get_weed_filter(filter_idx);
-	    if ((num_params=num_in_params(filter,TRUE,TRUE))>0) {
+	    if ((num_params=num_in_params(filter,FALSE,FALSE))>0) {
 	      in_pchanges=(void **)g_malloc(num_params*sizeof(void *));
 	      for (i=0;i<num_params;i++) {
 		if (!WEED_EVENT_IS_FILTER_INIT((weed_plant_t *)pchains[idx][i])) 
@@ -19248,7 +19258,7 @@ gboolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list) {
 	      if ((filter_idx=weed_get_idx_for_hashname(filter_hash,TRUE))!=-1) {
 		filter=get_weed_filter(filter_idx);
 		pnum=weed_get_int_value(event,"index",&error);
-		if (pnum<0||pnum>=(num_params=num_in_params(filter,TRUE,TRUE))) {
+		if (pnum<0||pnum>=(num_params=num_in_params(filter,FALSE,FALSE))) {
 		  ebuf=rec_error_add(ebuf,"Param_change has invalid index",pnum,tc);
 		  delete_event(event_list,event);
 		  was_deleted=TRUE;
@@ -21264,9 +21274,9 @@ void mt_do_autotransition(lives_mt *mt, track_rect *block) {
   if (block==NULL) return;  ///<invalid block
 
   filter=get_weed_filter(prefs->atrans_fx);
-  if (!weed_plant_has_leaf(filter,"in_parameter_templates")) return; ///<filter has no in parameters
+  if (num_in_params(filter,TRUE,TRUE)==0) return; ///<filter has no (visible) in parameters
 
-  tparam=get_transition_param(filter);
+  tparam=get_transition_param(filter,FALSE);
   if (tparam==-1) return; ///< filter has no transition parameter
 
   ptmpls=weed_get_plantptr_array(filter,"in_parameter_templates",&error);

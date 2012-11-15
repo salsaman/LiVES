@@ -2205,6 +2205,7 @@ static void write_fx_tag(const gchar *string, int nfixed, lives_omc_match_node_t
 	ptmpls=weed_get_plantptr_array(filter,"in_parameter_templates",&error);
 	for (k=0;k<ntmpls;k++) {
 	  ptmpl=ptmpls[k];
+	  if (weed_plant_has_leaf(ptmpl,"host_internal_connection")) continue;
 	  hint=weed_get_int_value(ptmpl,"hint",&error);
 	  flags=weed_get_int_value(ptmpl,"flags",&error);
 	  if (flags&WEED_PARAMETER_VARIABLE_ELEMENTS) flags^=WEED_PARAMETER_VARIABLE_ELEMENTS;
@@ -2225,6 +2226,7 @@ static void write_fx_tag(const gchar *string, int nfixed, lives_omc_match_node_t
 	weed_free(ptmpls);
       }
       else {
+	// playback plugin params
 	if (omacro->ptypes[i]==OMC_PARAM_INT) {
 	  int oval=myround((double)(vals[j]+mnode->offs0[j])*mnode->scale[j])+mnode->offs1[j];
 	  if (i==0) oval0=oval;

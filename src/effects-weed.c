@@ -4632,23 +4632,39 @@ static weed_plant_t *create_compound_filter(gchar *plugin_name, int nfilts, int 
 static void load_compound_plugin(gchar *plugin_name, gchar *plugin_path) {
   FILE *cpdfile;
 
-  weed_plant_t *filter=NULL;
+  weed_plant_t *filter=NULL,*ptmpl,*iptmpl,*xfilter;
 
   gchar buff[16384];
 
-  gchar *author=NULL,*tmp;
+  gchar **array,**svals;
 
-  int *filters=NULL;
+  gchar *author=NULL,*tmp,*key;
 
-  boolean ok=TRUE;
+  int *filters=NULL,*ivals;
+
+  double *dvals;
+
+  int xvals[4];
+
+  boolean ok=TRUE,autoscale;
 
   int stage=0,nfilts=0,fnum,line=0,version=0;
+  int qvals=1,ntok,xfilt,xfilt1,xfilt2;
+
+  int xconx=0;
+
+  int nparams,nchans,pnum,pnum2,xpnum2,cnum,cnum1,cnum2,ptype,phint,pcspace,pflags;
+
+  int error;
+
+  register int i;
 
   if ((cpdfile=fopen (plugin_path,"r"))) {
     while (fgets(buff,16384,cpdfile)) {
+      line++;
       g_strchomp(buff);
       if (!strlen(buff)) {
-	if (++stage==3) break;
+	if (++stage==4) break;
 	if (stage==1) {
 	  if (nfilts<2) {
 	    d_print((tmp=g_strdup_printf(_("Invalid compound effect %s - must have >1 sub filters\n"),plugin_name)));
@@ -4664,13 +4680,14 @@ static void load_compound_plugin(gchar *plugin_name, gchar *plugin_path) {
       }
       switch (stage) {
       case 0:
-	if (line==0) author=g_strdup(buff);
-	if (line==1) version=atoi(buff);
-	if (++line<3) break;
+	if (line==1) author=g_strdup(buff);
+	if (line==2) version=atoi(buff);
+	break;
+      case 1:
 	// add filters
 	fnum=weed_get_idx_for_hashname(buff,TRUE);
 	if (fnum==-1) {
-	  d_print((tmp=g_strdup_printf(_("Invalid effect %s found in compound effect %s\n"),buff,plugin_name)));
+	  d_print((tmp=g_strdup_printf(_("Invalid effect %s found in compound effect %s, line %d\n"),buff,plugin_name,line)));
 	  LIVES_ERROR(tmp);
 	  g_free(tmp);
 	  ok=FALSE;
@@ -4679,11 +4696,296 @@ static void load_compound_plugin(gchar *plugin_name, gchar *plugin_path) {
 	filters=g_realloc(filters,++nfilts*sizeof(int));
 	filters[nfilts-1]=fnum;
 	break;
-      case 1:
-	// link params
+      case 2:
+	// override defaults: format is i|p|d0|d1|...|dn
+	// NOTE: for obvious reasons, | may not be used inside string defaults
+	ntok=get_token_count (buff,'|');
+
+	if (ntok<2) {
+	  d_print((tmp=g_strdup_printf(_("Invalid default found in compound effect %s, line %d\n"),plugin_name,line)));
+	  LIVES_ERROR(tmp);
+	  g_free(tmp);
+	  ok=FALSE;
+	  break;
+	}
+
+	array=g_strsplit(buff,"|",ntok);
+
+	xfilt=atoi(array[0]); // sub filter number
+	if (xfilt<0||xfilt>=nfilts) {
+	  d_print((tmp=g_strdup_printf(_("Invalid filter %d for defaults found in compound effect %s, line %d\n"),xfilt,plugin_name,line)));
+	  LIVES_ERROR(tmp);
+	  g_free(tmp);
+	  ok=FALSE;
+	  g_strfreev(array);
+	  break;
+	}
+	filter=get_weed_filter(filters[xfilt]);
+
+	nparams=num_in_params(filter,FALSE,FALSE);
+
+	pnum=atoi(array[1]);
+	
+	if (pnum>=nparams) {
+	  d_print((tmp=g_strdup_printf(_("Invalid param %d for defaults found in compound effect %s, line %d\n"),pnum,plugin_name,line)));
+	  LIVES_ERROR(tmp);
+	  g_free(tmp);
+	  ok=FALSE;
+	  g_strfreev(array);
+	  break;
+	}
+
+	ptmpl=weed_filter_in_paramtmpl(filter,pnum,FALSE);
+	ptype=weed_leaf_seed_type(ptmpl,"default");
+	pflags=weed_get_int_value(ptmpl,"flags",&error);
+	phint=weed_get_int_value(ptmpl,"hint",&error);
+
+	if (phint==WEED_HINT_COLOR) {
+	  pcspace=weed_get_int_value(ptmpl,"colorspace",&error);
+	  qvals=3;
+	  if (pcspace==WEED_COLORSPACE_RGBA) qvals=4;
+	}
+
+	ntok-=2;
+
+	if ((ntok!=weed_leaf_num_elements(ptmpl,"default")&&!(pflags&WEED_PARAMETER_VARIABLE_ELEMENTS)) ||
+	    ntok%qvals!=0) {
+	  d_print((tmp=g_strdup_printf(_("Invalid number of values for defaults found in compound effect %s, line %d\n"),pnum,plugin_name,line)));
+	  LIVES_ERROR(tmp);
+	  g_free(tmp);
+	  ok=FALSE;
+	  g_strfreev(array);
+	  break;
+	}
+
+	// TODO - for INT and DOUBLE, check if default is within min/max bounds
+
+	switch (ptype) {
+	case WEED_SEED_INT:
+	  ivals=(int *)g_malloc(ntok*sizint);
+	  for (i=0;i<ntok;i++) {
+	    ivals[i]=atoi(array[i+2]);
+	  }
+	  weed_set_int_array(ptmpl,"default",ntok,ivals);
+	  g_free(ivals);
+	  break;
+	case WEED_SEED_DOUBLE:
+	  dvals=(double *)g_malloc(ntok*sizdbl);
+	  for (i=0;i<ntok;i++) {
+	    dvals[i]=strtod(array[i+2],NULL);
+	  }
+	  weed_set_double_array(ptmpl,"default",ntok,dvals);
+	  g_free(dvals);
+	  break;
+	case WEED_SEED_BOOLEAN:
+	  ivals=(int *)g_malloc(ntok*sizint);
+	  for (i=0;i<ntok;i++) {
+	    ivals[i]=atoi(array[i+2]);
+
+	    if (ivals[i]!=WEED_TRUE&&ivals[i]!=WEED_FALSE) {
+	      g_free(ivals);
+	      d_print((tmp=g_strdup_printf(_("Invalid non-boolean value for defaults found in compound effect %s, line %d\n"),
+					   pnum,plugin_name,line)));
+	      LIVES_ERROR(tmp);
+	      g_free(tmp);
+	      ok=FALSE;
+	      g_strfreev(array);
+	      break;
+	    }
+
+	  }
+	  weed_set_boolean_array(ptmpl,"default",ntok,ivals);
+	  g_free(ivals);
+	  break;
+	default: // string
+	  svals=(gchar **)g_malloc(ntok*sizeof(gchar *));
+	  for (i=0;i<ntok;i++) {
+	    svals[i]=g_strdup(array[i+2]);
+	  }
+	  weed_set_string_array(ptmpl,"default",ntok,svals);
+	  for (i=0;i<ntok;i++) {
+	    g_free(svals[i]);
+	  }
+	  g_free(svals);
+	  break;
+	}
+	g_strfreev(array);
+	break;
+      case 3:
+	// link params: format is f0|p0|autoscale|f1|p1
+
+	ntok=get_token_count (buff,'|');
+
+	if (ntok!=5) {
+	  d_print((tmp=g_strdup_printf(_("Invalid param link found in compound effect %s, line %d\n"),plugin_name,line)));
+	  LIVES_ERROR(tmp);
+	  g_free(tmp);
+	  ok=FALSE;
+	  break;
+	}
+
+	array=g_strsplit(buff,"|",ntok);
+
+	xfilt=atoi(array[0]); // sub filter number
+	if (xfilt<0||xfilt>=nfilts) {
+	  d_print((tmp=g_strdup_printf(_("Invalid out filter %d for link params found in compound effect %s, line %d\n"),xfilt,plugin_name,line)));
+	  LIVES_ERROR(tmp);
+	  g_free(tmp);
+	  ok=FALSE;
+	  g_strfreev(array);
+	  break;
+	}
+	xfilter=get_weed_filter(filters[xfilt]);
+
+	nparams=num_in_params(xfilter,FALSE,FALSE);
+
+	pnum=atoi(array[1]);
+	
+	if (pnum>=nparams) {
+	  d_print((tmp=g_strdup_printf(_("Invalid out param %d for link params found in compound effect %s, line %d\n"),pnum,plugin_name,line)));
+	  LIVES_ERROR(tmp);
+	  g_free(tmp);
+	  ok=FALSE;
+	  g_strfreev(array);
+	  break;
+	}
+
+	autoscale=atoi(array[2]);
+
+	if (autoscale!=WEED_TRUE&&autoscale!=WEED_FALSE) {
+	  d_print((tmp=g_strdup_printf(_("Invalid non-boolean value for autoscale found in compound effect %s, line %d\n"),
+				       pnum,plugin_name,line)));
+	  LIVES_ERROR(tmp);
+	  g_free(tmp);
+	  ok=FALSE;
+	  g_strfreev(array);
+	  break;
+	}
+
+	xfilt2=atoi(array[3]); // sub filter number
+	if (xfilt2<=xfilt||xfilt>=nfilts) {
+	  d_print((tmp=g_strdup_printf(_("Invalid in filter %d for link params found in compound effect %s, line %d\n"),xfilt2,plugin_name,line)));
+	  LIVES_ERROR(tmp);
+	  g_free(tmp);
+	  ok=FALSE;
+	  g_strfreev(array);
+	  break;
+	}
+	xfilter=get_weed_filter(filters[xfilt2]);
+
+	nparams=num_in_params(xfilter,FALSE,FALSE);
+
+	pnum2=atoi(array[4]);
+	
+	if (pnum2>=nparams) {
+	  d_print((tmp=g_strdup_printf(_("Invalid in param %d for link params found in compound effect %s, line %d\n"),pnum2,plugin_name,line)));
+	  LIVES_ERROR(tmp);
+	  g_free(tmp);
+	  ok=FALSE;
+	  g_strfreev(array);
+	  break;
+	}
+
+	// calc xpnum2
+	xpnum2=pnum2;
+	for (i=0;i<xfilt-1;i++) xpnum2+=num_in_params(get_weed_filter(filters[i]),FALSE,FALSE);
+
+	// must get paramtmpl here from filter (not xfilter)
+	iptmpl=weed_filter_in_paramtmpl(filter,xpnum2,FALSE);
+
+	xvals[0]=xfilt1;
+	xvals[1]=pnum;
+
+	weed_set_int_array(iptmpl,"host_internal_connection",2,xvals);
+	if (autoscale==WEED_TRUE) weed_set_boolean_value(iptmpl,"host_internal_connection_autoscale",WEED_TRUE);
+
+	g_strfreev(array);
+	break;
+      case 4:
+	// link alpha channels: format is f0|c0|f1|c1
+	ntok=get_token_count (buff,'|');
+
+	if (ntok!=4) {
+	  d_print((tmp=g_strdup_printf(_("Invalid channel link found in compound effect %s, line %d\n"),plugin_name,line)));
+	  LIVES_ERROR(tmp);
+	  g_free(tmp);
+	  ok=FALSE;
+	  break;
+	}
+
+	array=g_strsplit(buff,"|",ntok);
+
+	xfilt=atoi(array[0]); // sub filter number
+	if (xfilt<0||xfilt>=nfilts) {
+	  d_print((tmp=g_strdup_printf(_("Invalid out filter %d for link channels found in compound effect %s, line %d\n"),xfilt,plugin_name,line)));
+	  LIVES_ERROR(tmp);
+	  g_free(tmp);
+	  ok=FALSE;
+	  g_strfreev(array);
+	  break;
+	}
+	xfilter=get_weed_filter(filters[xfilt]);
+
+	nchans=0;
+	if (weed_plant_has_leaf(xfilter,"out_channel_templates")) {
+	  nchans=weed_leaf_num_elements(xfilter,"out_channel_templates");
+	  if (weed_get_plantptr_value(xfilter,"out_channel_templates",&error)==NULL) nchans=0;
+	}
+
+	cnum=atoi(array[1]);
+
+	if (cnum>=nchans) {
+	  d_print((tmp=g_strdup_printf(_("Invalid out channel %d for link params found in compound effect %s, line %d\n"),cnum,plugin_name,line)));
+	  LIVES_ERROR(tmp);
+	  g_free(tmp);
+	  ok=FALSE;
+	  g_strfreev(array);
+	  break;
+	}
+
+	xfilt2=atoi(array[2]); // sub filter number
+	if (xfilt2<=xfilt||xfilt>=nfilts) {
+	  d_print((tmp=g_strdup_printf(_("Invalid in filter %d for link channels found in compound effect %s, line %d\n"),xfilt2,plugin_name,line)));
+	  LIVES_ERROR(tmp);
+	  g_free(tmp);
+	  ok=FALSE;
+	  g_strfreev(array);
+	  break;
+	}
+	xfilter=get_weed_filter(filters[xfilt2]);
+
+	nchans=0;
+	if (weed_plant_has_leaf(xfilter,"in_channel_templates")) {
+	  nchans=weed_leaf_num_elements(xfilter,"in_channel_templates");
+	  if (weed_get_plantptr_value(xfilter,"in_channel_templates",&error)==NULL) nchans=0;
+	}
+
+	cnum2=atoi(array[3]);
+	
+	if (cnum2>=nchans) {
+	  d_print((tmp=g_strdup_printf(_("Invalid in channel %d for link params found in compound effect %s, line %d\n"),cnum2,plugin_name,line)));
+	  LIVES_ERROR(tmp);
+	  g_free(tmp);
+	  ok=FALSE;
+	  g_strfreev(array);
+	  break;
+	}
+
+	xvals[0]=xfilt1;
+	xvals[1]=cnum1;
+	xvals[2]=xfilt2;
+	xvals[3]=cnum2;
+
+	// unlike with in_param_templates, which are copy by value, in_channel_templates are copy by ref.
+	// so we need to add some extra leaves to the compound filter to note channel connections
+	// - we will link the actual channels when we create an instance from the filter
+	key=g_strdup_printf("host_channel_connection%d",xconx++);
+	weed_set_int_array(filter,key,4,xvals);
+	g_free(key);
+
+	g_strfreev(array);
 	break;
       default:
-	// link alpha channels
 	break;
       }
       if (!ok) {
@@ -4711,6 +5013,8 @@ static void load_compound_plugin(gchar *plugin_name, gchar *plugin_path) {
     weed_filters[idx]=filter;
     hashnames[idx]=make_weed_hashname(idx,TRUE);
   }
+
+  if (filters!=NULL) g_free(filters);
 
 }
 
@@ -5416,12 +5720,18 @@ static weed_plant_t *weed_create_instance (weed_plant_t *filter, weed_plant_t **
 
 weed_plant_t *weed_instance_from_filter(weed_plant_t *filter) {
   // return an instance from a filter
+  weed_plant_t **inc,**outc,**inp,**outp,**in_ptmpls;
+
   weed_plant_t *last_inst=NULL,*first_inst=NULL,*inst,*ofilter=filter;
-  weed_plant_t **inc,**outc,**inp,**outp;
+  weed_plant_t *iparam,*oparam,*ochan=NULL;
 
-  int *filters=NULL;
+  int *filters=NULL,*xvals;
 
-  int nfilters,ninpar,error;
+  gchar *key;
+
+  int nfilters,nptmpls,ninpar,error;
+
+  int xcnumx=0;
 
   register int i,j;
 
@@ -5470,7 +5780,74 @@ weed_plant_t *weed_instance_from_filter(weed_plant_t *filter) {
 
   }
 
-  if (filters!=NULL) weed_free(filters);
+  if (filters!=NULL) {
+    weed_free(filters);
+
+    // for compound fx, add param and channel connections
+
+    // add param connections
+    nptmpls=weed_leaf_num_elements(filter,"in_parameter_templates");
+    if (nptmpls!=0&&weed_get_plantptr_value(filter,"in_parameter_templates",&error)!=NULL) {
+      in_ptmpls=weed_get_plantptr_array(filter,"in_parameter_templates",&error);
+      for (i=0;i<nptmpls;i++) {
+	if (weed_plant_has_leaf(in_ptmpls[i],"host_internal_connection")) {
+	  xvals=weed_get_int_array(in_ptmpls[i],"host_internal_connection",&error);
+	  inst=first_inst;
+	  while (--xvals[0]>0) inst=weed_get_plantptr_value(inst,"host_next_instance",&error);
+	  
+	  oparam=weed_inst_in_param(inst,xvals[1],FALSE,FALSE);
+
+	  iparam=weed_inst_in_param(first_inst,i,FALSE,FALSE);
+
+	  weed_set_plantptr_value(iparam,"host_internal_connection",oparam);
+	  if (weed_plant_has_leaf(in_ptmpls[i],"host_internal_connection_autoscale")&&
+	      weed_get_boolean_value(in_ptmpls[i],"host_internal_connection_autoscale",&error)==WEED_TRUE)
+	    weed_set_boolean_value(iparam,"host_internal_connection_autoscale",WEED_TRUE);
+
+	  weed_free(xvals);
+	}
+      }
+      weed_free(in_ptmpls);
+    }
+
+
+    while (1) {
+      // add channel connections
+      key=g_strdup_printf("host_channel_connection%d",xcnumx++);
+      if (weed_plant_has_leaf(filter,key)) {
+	xvals=weed_get_int_array(filter,key,&error);
+
+	inst=first_inst;
+	while (1) {
+	  if (xvals[0]--==0) {
+	    // got the out instance
+	    outc=weed_get_plantptr_array(inst,"out_channels",&error);
+	    ochan=outc[xvals[1]];
+	    weed_free(outc);
+	  }
+	  if (xvals[2]--==0) {
+	    // got the in instance
+	    inc=weed_get_plantptr_array(inst,"in_channels",&error);
+	    weed_set_plantptr_value(inc[xvals[3]],"host_internal_connection",ochan);
+	    weed_free(inc);
+	    break;
+	  }
+
+	  inst=weed_get_plantptr_value(inst,"host_next_instance",&error);
+	}
+
+	weed_free(xvals);
+	g_free(key);
+
+      }
+      else {
+	g_free(key);
+	break;
+      }
+
+    }
+
+  }
 
   return first_inst;
 }

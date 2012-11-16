@@ -1588,9 +1588,11 @@ boolean cconx_convert_pixel_data(weed_plant_t *dchan, weed_plant_t *schan) {
 
   register int i;
 
+  ipal=weed_get_int_value(schan,"current_palette",&error);
+  if (!weed_palette_is_alpha_palette(ipal)) return FALSE;
+
   iwidth=weed_get_int_value(schan,"width",&error);
   iheight=weed_get_int_value(schan,"height",&error);
-  ipal=weed_get_int_value(schan,"current_palette",&error);
   irow=weed_get_int_value(schan,"rowstrides",&error);
 
   owidth=weed_get_int_value(dchan,"width",&error);

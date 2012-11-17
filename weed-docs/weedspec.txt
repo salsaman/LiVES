@@ -116,7 +116,8 @@ Clarified range for AFLOAT.
 29/07/12 salsaman
 ** Corrected name of flag and description to WEED_FILTER_HINT_MAY_THREAD
 
-
+15/11/12 salsaman
+added clarifying remarks for number of values in parameter defaults.
 
 
 (C) Gabriel "Salsaman" Finch 2005 - 2012
@@ -870,7 +871,8 @@ value for the parameter. The host should not change any other leaves.
  * "default" : default value(s) of the parameter : usually must contain at
                least one element, but may have 0 elements for parameters which have
                the WEED_PARAMETER_VARIABLE_ELEMENTS flag set. [0 elements means the leaf
-	       exists but has no value, since the SEED_TYPE must be known.]
+	       exists but has no value, since the SEED_TYPE must be known.]. Required even for out parameters, as the type
+	       and number of elements must be known.
 
  * "new_default" : required only for in parameters which have the flag WEED_PARAMETER_VARIABLE_ELEMENTS set. 
                    It tells the host the default value of
@@ -891,7 +893,7 @@ value for the parameter. The host should not change any other leaves.
  * "interpolate_func" : WEED_SEED_VOIDPTR : pointer to interpolate_func pointer.
    		      	 See below, Plugin Functions. For in parameters only.
 
- * "gui" : WEED_SEED_PLANTPTR : each parameter_template can have a
+ * "gui" : WEED_SEED_PLANTPTR : each parameter_template (for in_parameters) can have a
  "gui" leaf. This leaf points to a plant of type
  GUI. Within the GUI plant can be additional leaves to assist the host
  to display this particular parameter. The plugin can create it, and
@@ -971,22 +973,22 @@ Additional leaves that hint causes:
  * "colorspace" : WEED_SEED_INT : colorspace (see below), MANDATORY
 
 ==== Number of elements in the leaves ====
-The "default" leaf must contain at least one value UNLESS the plugin sets the parameter flag
+The "default" leaf must contain at least one value* UNLESS the plugin sets the parameter flag
 WEED_PARAMETER_VARIABLE_ELEMENTS (see below); then the "default" may
 take any number (0 or more) of elements,  [0 elements means the leaf
-exists but has no value, since the SEED_TYPE must be known.] and
+exists but has no value, since the SEED_TYPE must be known], and
 "new_default" must be set.
 
 The number of elements in "value" MUST match the number of elements in
 "default" UNLESS the plugin sets the parameter flag
 WEED_PARAMETER_VARIABLE_ELEMENTS (see below); then the "value" may
-take any number (0 or more) of elements.[0 elements means the leaf
-exists but has no value, since the SEED_TYPE must be known.] and
+take any number (0 or more) of elements, [0 elements means the leaf
+exists but has no value, since the SEED_TYPE must be known], and
 "new_default" must be set.
 
 The only exception is for "COLOR" parameters; there the number of
 elements in "default" and "value" MUST always be a multiple of 3 or 4
-(depending on the "colorspace").
+(depending on the "colorspace") - the multiple must be 1 or higher unless WEED_PARAMETER_VARIABLE_ELEMENTS is set, in which case it may be 0 or higher.
 
 The number of elements in each of "min" and "max" can be either 1, or equal to
 the number of elements in "default". If the plugin sets the flag
@@ -1004,6 +1006,12 @@ N (where N is a multiple of 3 or 4, matching the number of elements in "default"
 
 The last option is not valid if the parameter has the flag bit
 WEED_PARAMETER_VARIABLE_ELEMENTS set.
+
+
+
+* It is highly recommended to use exactly one value (or 3 or 4 values for color type parameters) for "default", 
+  unless WEED_PARAMETER_VARIABLE_ELEMENTS is set.
+
 
 
 == PLANT TYPE PARAMETER ==

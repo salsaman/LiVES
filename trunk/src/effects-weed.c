@@ -4549,6 +4549,7 @@ static weed_plant_t *create_compound_filter(gchar *plugin_name, int nfilts, int 
 
       for (j=xcount;j<count;j++) {
 	in_params[j]=weed_plant_copy(params[x]);
+	g_print("cop %p from %p\n",in_params[j],params[x]);
 	if (weed_plant_has_leaf(params[x],"gui")) {
 	  gui=weed_get_plantptr_value(params[x],"gui",&error);
 	  weed_set_plantptr_value(in_params[j],"gui",weed_plant_copy(gui));
@@ -4566,7 +4567,7 @@ static weed_plant_t *create_compound_filter(gchar *plugin_name, int nfilts, int 
 
 	x++;
       }
-
+      xcount+=count;
     }
   }
 
@@ -4591,7 +4592,7 @@ static weed_plant_t *create_compound_filter(gchar *plugin_name, int nfilts, int 
       for (j=xcount;j<count;j++) {
 	out_params[j]=params[x++];
       }
-
+      xcount=count;
     }
   }
 
@@ -4649,11 +4650,11 @@ static void load_compound_plugin(gchar *plugin_name, gchar *plugin_path) {
   boolean ok=TRUE,autoscale;
 
   int stage=0,nfilts=0,fnum,line=0,version=0;
-  int qvals=1,ntok,xfilt,xfilt1,xfilt2;
+  int qvals=1,ntok,xfilt,xfilt2;
 
   int xconx=0;
 
-  int nparams,nchans,pnum,pnum2,xpnum2,cnum,cnum1,cnum2,ptype,phint,pcspace,pflags;
+  int nparams,nchans,pnum,pnum2,xpnum2,cnum,cnum2,ptype,phint,pcspace,pflags;
 
   int error;
 
@@ -4665,7 +4666,7 @@ static void load_compound_plugin(gchar *plugin_name, gchar *plugin_path) {
       g_strchomp(buff);
       if (!strlen(buff)) {
 	if (++stage==4) break;
-	if (stage==1) {
+	if (stage==2) {
 	  if (nfilts<2) {
 	    d_print((tmp=g_strdup_printf(_("Invalid compound effect %s - must have >1 sub filters\n"),plugin_name)));
 	    LIVES_ERROR(tmp);
@@ -4893,7 +4894,7 @@ static void load_compound_plugin(gchar *plugin_name, gchar *plugin_path) {
 	// must get paramtmpl here from filter (not xfilter)
 	iptmpl=weed_filter_in_paramtmpl(filter,xpnum2,FALSE);
 
-	xvals[0]=xfilt1;
+	xvals[0]=xfilt;
 	xvals[1]=pnum;
 
 	weed_set_int_array(iptmpl,"host_internal_connection",2,xvals);
@@ -4971,8 +4972,8 @@ static void load_compound_plugin(gchar *plugin_name, gchar *plugin_path) {
 	  break;
 	}
 
-	xvals[0]=xfilt1;
-	xvals[1]=cnum1;
+	xvals[0]=xfilt;
+	xvals[1]=cnum;
 	xvals[2]=xfilt2;
 	xvals[3]=cnum2;
 
@@ -5183,7 +5184,9 @@ void weed_unload_all(void) {
 
   GList *pinfo=NULL,*xpinfo;
 
-  int i,j,error,nitems;
+  int error,nitems;
+
+  register int i,j;
 
   mainw->num_tr_applied=0;
   weed_deinit_all(TRUE);
@@ -5202,17 +5205,18 @@ void weed_unload_all(void) {
     filter=weed_filters[i];
 
     if (num_compound_fx(filter)>1) {
+
       // free in_param_templates, since they were copy by value
       if (weed_plant_has_leaf(filter,"in_parameter_templates")) {
 	nitems=weed_leaf_num_elements(filter,"in_parameter_templates");
 	if (nitems>0) {
 	  plants=weed_get_plantptr_array(filter,"in_parameter_templates",&error);
-	  for (i=0;i<nitems;i++) {
-	    if (weed_plant_has_leaf(plants[i],"gui")) {
-	      gui=(weed_get_plantptr_value(plants[i],"gui",&error));
+	  for (j=0;j<nitems;j++) {
+	    if (weed_plant_has_leaf(plants[j],"gui")) {
+	      gui=(weed_get_plantptr_value(plants[j],"gui",&error));
 	      weed_plant_free(gui);
 	    }
-	    weed_plant_free(plants[i]);
+	    weed_plant_free(plants[j]);
 	  }
 	  weed_free(plants);
 	}

@@ -2474,7 +2474,7 @@ gboolean after_param_text_focus_changed (GtkWidget *hbox, GtkWidget *child, live
 
 void 
 after_param_text_changed (GtkWidget *textwidget, lives_rfx_t *rfx) {
-  GtkWidget *textbuffer;
+  GtkWidget *textbuffer=NULL;
 
   gint param_number=GPOINTER_TO_INT (g_object_get_data (G_OBJECT (textwidget),"param_number"));
   lives_param_t *param=&rfx->params[param_number];

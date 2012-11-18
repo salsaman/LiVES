@@ -2491,7 +2491,6 @@ after_param_text_changed (GtkWidget *textwidget, lives_rfx_t *rfx) {
     gtk_text_buffer_get_end_iter(GTK_TEXT_BUFFER(textbuffer),&end_iter);
     
     param->value=gtk_text_buffer_get_text (GTK_TEXT_BUFFER(textbuffer),&start_iter,&end_iter,FALSE);
-    g_print("MAX is %s\n",param->value);
   }
   else {
     param->value=g_strdup (gtk_entry_get_text (GTK_ENTRY (textwidget)));

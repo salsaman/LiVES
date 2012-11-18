@@ -4549,7 +4549,6 @@ static weed_plant_t *create_compound_filter(gchar *plugin_name, int nfilts, int 
 
       for (j=xcount;j<count;j++) {
 	in_params[j]=weed_plant_copy(params[x]);
-	g_print("cop %p from %p\n",in_params[j],params[x]);
 	if (weed_plant_has_leaf(params[x],"gui")) {
 	  gui=weed_get_plantptr_value(params[x],"gui",&error);
 	  weed_set_plantptr_value(in_params[j],"gui",weed_plant_copy(gui));

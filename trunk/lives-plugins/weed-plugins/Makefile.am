@@ -127,6 +127,7 @@ fxpluginslib_LTLIBRARIES = RGBdelay.la \
 	posterise.la \
 	rippleTV.la \
 	rotozoom.la \
+	shift.la \
 	simple_blend.la \
 	slide_over.la \
 	softlight.la \

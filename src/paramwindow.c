@@ -2460,7 +2460,6 @@ gboolean after_param_text_focus_changed (GtkWidget *hbox, GtkWidget *child, live
   if (hbox!=NULL) {
     if (mainw->textwidget_focus!=NULL) {
       textwidget=(GtkWidget *)g_object_get_data (G_OBJECT (mainw->textwidget_focus),"textwidget");
-      textwidget=(GtkWidget *)g_object_get_data (G_OBJECT (textwidget),"textbuffer");
       after_param_text_changed(textwidget,rfx);
     }
     mainw->textwidget_focus=hbox;
@@ -2475,6 +2474,8 @@ gboolean after_param_text_focus_changed (GtkWidget *hbox, GtkWidget *child, live
 
 void 
 after_param_text_changed (GtkWidget *textwidget, lives_rfx_t *rfx) {
+  GtkWidget *textbuffer;
+
   gint param_number=GPOINTER_TO_INT (g_object_get_data (G_OBJECT (textwidget),"param_number"));
   lives_param_t *param=&rfx->params[param_number];
   gchar *old_text=(gchar *)param->value;
@@ -2482,14 +2483,15 @@ after_param_text_changed (GtkWidget *textwidget, lives_rfx_t *rfx) {
 
   if (mainw->block_param_updates) return; // updates are blocked when we update visually
 
-
   if ((gint)param->max>RFX_TEXT_MAGIC||param->max==0.) {
     GtkTextIter start_iter,end_iter;
+    textbuffer=(GtkWidget *)g_object_get_data (G_OBJECT (textwidget),"textbuffer");
  
-    gtk_text_buffer_get_start_iter(GTK_TEXT_BUFFER(textwidget),&start_iter);
-    gtk_text_buffer_get_end_iter(GTK_TEXT_BUFFER(textwidget),&end_iter);
+    gtk_text_buffer_get_start_iter(GTK_TEXT_BUFFER(textbuffer),&start_iter);
+    gtk_text_buffer_get_end_iter(GTK_TEXT_BUFFER(textbuffer),&end_iter);
     
-    param->value=gtk_text_buffer_get_text (GTK_TEXT_BUFFER(textwidget),&start_iter,&end_iter,FALSE);
+    param->value=gtk_text_buffer_get_text (GTK_TEXT_BUFFER(textbuffer),&start_iter,&end_iter,FALSE);
+    g_print("MAX is %s\n",param->value);
   }
   else {
     param->value=g_strdup (gtk_entry_get_text (GTK_ENTRY (textwidget)));
@@ -2539,7 +2541,7 @@ after_param_text_changed (GtkWidget *textwidget, lives_rfx_t *rfx) {
 	gulong blockfunc=(gulong)g_object_get_data(G_OBJECT(textwidget),"blockfunc");
 	g_signal_handler_block(textwidget,blockfunc);
 	if ((gint)param->max>RFX_TEXT_MAGIC||param->max==0.) {
-	  gtk_text_buffer_set_text (GTK_TEXT_BUFFER (textwidget), (gchar *)param->value, -1);
+	  gtk_text_buffer_set_text (GTK_TEXT_BUFFER (textbuffer), (gchar *)param->value, -1);
 	}
 	else {
 	  gtk_entry_set_text(GTK_ENTRY(textwidget),disp_string);

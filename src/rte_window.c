@@ -231,7 +231,6 @@ gboolean on_save_keymap_clicked (GtkButton *button, gpointer user_data) {
 	for (i=1;i<=prefs->rte_keys_virtual;i++) {
 	  for (j=0;j<modes;j++) {
 	    if (rte_keymode_valid(i,j,TRUE)) {
-	      g_print("val is %d\n",rte_keymode_get_filter_idx(i,j));
 	      lives_fputs(g_strdup_printf("%d|Weed%s\n",i,make_weed_hashname(rte_keymode_get_filter_idx(i,j),TRUE)),kfile);
 	    }
 	  }
@@ -1229,7 +1228,6 @@ void fx_changed (GtkComboBox *combo, gpointer user_data) {
   cconx_delete(-1,0,0,key,mode,-1);
   cconx_delete(key,mode,-1,-1,0,0);
 
-  g_print("pt bb\n");
 }
 
 

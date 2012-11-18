@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2012-11-16 17:56-0300\n"
+"POT-Creation-Date: 2012-11-16 22:18-0300\n"
 "PO-Revision-Date: 2011-11-07 16:24+0000\n"
 "Last-Translator: lhquark <Unknown>\n"
 "Language-Team: Simplified Chinese <zh_CN@li.org>\n"
@@ -5846,7 +5846,7 @@ msgstr ""
 "%s\n"
 "错误代码为 %d\n"
 
-#: src/effects-weed.c:4297 src/effects-weed.c:5269
+#: src/effects-weed.c:4297 src/effects-weed.c:5272
 #, fuzzy
 msgid "Some plugin directories"
 msgstr "包含子目录"
@@ -6052,12 +6052,12 @@ msgstr ""
 msgid "Successfully loaded %d compound filters\n"
 msgstr ""
 
-#: src/effects-weed.c:5902
+#: src/effects-weed.c:5905
 #, c-format
 msgid "Effect %s cannot be used with this audio player.\n"
 msgstr ""
 
-#: src/effects-weed.c:6042
+#: src/effects-weed.c:6045
 #, fuzzy, c-format
 msgid "Failed to start instance %s, error code %d\n"
 msgstr ""
@@ -6067,17 +6067,17 @@ msgstr ""
 "%s\n"
 "错误代码为 %d\n"
 
-#: src/effects-weed.c:6109
+#: src/effects-weed.c:6112
 #, fuzzy, c-format
 msgid "Unable to start generator %s\n"
 msgstr "无法打开设备 %s\n"
 
-#: src/effects-weed.c:6827
+#: src/effects-weed.c:6830
 #, fuzzy, c-format
 msgid "Failed to start generator %s\n"
 msgstr "生成器"
 
-#: src/effects-weed.c:6924
+#: src/effects-weed.c:6927
 #, fuzzy, c-format
 msgid "Failed to start generator %s, error %d\n"
 msgstr ""
@@ -6085,7 +6085,7 @@ msgstr ""
 "%s\n"
 "错误代码为 %d\n"
 
-#: src/effects-weed.c:8124
+#: src/effects-weed.c:8127
 #, c-format
 msgid "%s [unstable] (%s)"
 msgstr ""

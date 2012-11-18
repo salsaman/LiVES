@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2012-11-16 17:56-0300\n"
+"POT-Creation-Date: 2012-11-16 22:18-0300\n"
 "PO-Revision-Date: 2012-08-08 08:53+0000\n"
 "Last-Translator: Anthony Harrington <untaintableangel@hotmail.co.uk>\n"
 "Language-Team: English (United Kingdom) <en_GB@li.org>\n"
@@ -6055,7 +6055,7 @@ msgstr ""
 "Info: Unable to load plugin %s\n"
 "Error was: %s\n"
 
-#: src/effects-weed.c:4297 src/effects-weed.c:5269
+#: src/effects-weed.c:4297 src/effects-weed.c:5272
 msgid "Some plugin directories"
 msgstr "Some plugin directories"
 
@@ -6192,32 +6192,32 @@ msgstr ""
 msgid "Successfully loaded %d compound filters\n"
 msgstr "Successfully loaded %d Weed filters\n"
 
-#: src/effects-weed.c:5902
+#: src/effects-weed.c:5905
 #, c-format
 msgid "Effect %s cannot be used with this audio player.\n"
 msgstr ""
 
-#: src/effects-weed.c:6042
+#: src/effects-weed.c:6045
 #, c-format
 msgid "Failed to start instance %s, error code %d\n"
 msgstr "Failed to start instance %s, error code %d\n"
 
-#: src/effects-weed.c:6109
+#: src/effects-weed.c:6112
 #, c-format
 msgid "Unable to start generator %s\n"
 msgstr "Unable to start generator %s\n"
 
-#: src/effects-weed.c:6827
+#: src/effects-weed.c:6830
 #, c-format
 msgid "Failed to start generator %s\n"
 msgstr "Failed to start generator %s\n"
 
-#: src/effects-weed.c:6924
+#: src/effects-weed.c:6927
 #, c-format
 msgid "Failed to start generator %s, error %d\n"
 msgstr "Failed to start generator %s, error %d\n"
 
-#: src/effects-weed.c:8124
+#: src/effects-weed.c:8127
 #, c-format
 msgid "%s [unstable] (%s)"
 msgstr "%s [unstable] (%s)"

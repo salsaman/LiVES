@@ -96,6 +96,7 @@ ladspa_LTLIBRARIES = $(ladspa_libs)
 endif
 
 fxpluginslib_LTLIBRARIES = RGBdelay.la \
+	alpha_means.la \
 	alien_overlay.la \
 	audio_transition.la \
 	audio_volume.la \
@@ -106,6 +107,7 @@ fxpluginslib_LTLIBRARIES = RGBdelay.la \
 	ccorrect.la \
 	colorkey.la \
 	comic.la \
+	data_processor.la \
 	deinterlace.la \
 	edge.la \
 	fg_bg_removal.la \

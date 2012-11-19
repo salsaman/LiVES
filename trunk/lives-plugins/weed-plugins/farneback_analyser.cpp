@@ -343,7 +343,6 @@ int farneback_process (weed_plant_t *inst, weed_timecode_t tc) {
     dst2+=orow2;
   }
 
-
   return WEED_NO_ERROR;
 }
 

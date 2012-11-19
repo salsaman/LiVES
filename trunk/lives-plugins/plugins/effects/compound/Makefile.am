@@ -2,7 +2,7 @@
 #
 
 compoundscriptsdir = "$(datadir)/$(PACKAGE)/plugins/effects/compound"
-compoundscripts_DATA = compound_test
+compoundscripts_DATA = compound_test motion_compensation
 
 EXTRA_DIST = $(compoundscripts_DATA) data icons
 

@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2012-11-16 22:18-0300\n"
+"POT-Creation-Date: 2012-11-18 19:22-0300\n"
 "PO-Revision-Date: 2011-11-07 16:24+0000\n"
 "Last-Translator: lhquark <Unknown>\n"
 "Language-Team: Simplified Chinese <zh_CN@li.org>\n"
@@ -5831,7 +5831,7 @@ msgid "Found duplicate plugin %s\n"
 msgstr ""
 
 #. TRANSLATORS: example " - LADSPA plugins -"
-#: src/effects-weed.c:4242 src/rte_window.c:1278
+#: src/effects-weed.c:4242 src/rte_window.c:1276
 #, c-format
 msgid " - %s plugins -"
 msgstr ""
@@ -5846,7 +5846,7 @@ msgstr ""
 "%s\n"
 "错误代码为 %d\n"
 
-#: src/effects-weed.c:4297 src/effects-weed.c:5272
+#: src/effects-weed.c:4297 src/effects-weed.c:5273
 #, fuzzy
 msgid "Some plugin directories"
 msgstr "包含子目录"
@@ -5912,7 +5912,7 @@ msgstr ""
 "文件中的版本无效\n"
 "%s\n"
 
-#: src/effects-weed.c:4753
+#: src/effects-weed.c:4754
 #, fuzzy, c-format
 msgid ""
 "Invalid number of values for defaults found in compound effect %s, line %d\n"
@@ -5922,7 +5922,7 @@ msgstr ""
 "文件中的版本无效\n"
 "%s\n"
 
-#: src/effects-weed.c:4787
+#: src/effects-weed.c:4788
 #, fuzzy, c-format
 msgid ""
 "Invalid non-boolean value for defaults found in compound effect %s, line %d\n"
@@ -5932,7 +5932,7 @@ msgstr ""
 "文件中的版本无效\n"
 "%s\n"
 
-#: src/effects-weed.c:4820
+#: src/effects-weed.c:4821
 #, fuzzy, c-format
 msgid "Invalid param link found in compound effect %s, line %d\n"
 msgstr ""
@@ -5941,7 +5941,7 @@ msgstr ""
 "文件中的版本无效\n"
 "%s\n"
 
-#: src/effects-weed.c:4831
+#: src/effects-weed.c:4832
 #, fuzzy, c-format
 msgid ""
 "Invalid out filter %d for link params found in compound effect %s, line %d\n"
@@ -5951,7 +5951,7 @@ msgstr ""
 "文件中的版本无效\n"
 "%s\n"
 
-#: src/effects-weed.c:4845
+#: src/effects-weed.c:4846
 #, fuzzy, c-format
 msgid ""
 "Invalid out param %d for link params found in compound effect %s, line %d\n"
@@ -5961,7 +5961,7 @@ msgstr ""
 "文件中的版本无效\n"
 "%s\n"
 
-#: src/effects-weed.c:4856
+#: src/effects-weed.c:4857
 #, fuzzy, c-format
 msgid ""
 "Invalid non-boolean value for autoscale found in compound effect %s, line "
@@ -5972,7 +5972,7 @@ msgstr ""
 "文件中的版本无效\n"
 "%s\n"
 
-#: src/effects-weed.c:4867
+#: src/effects-weed.c:4868
 #, fuzzy, c-format
 msgid ""
 "Invalid in filter %d for link params found in compound effect %s, line %d\n"
@@ -5982,7 +5982,7 @@ msgstr ""
 "文件中的版本无效\n"
 "%s\n"
 
-#: src/effects-weed.c:4881
+#: src/effects-weed.c:4882
 #, fuzzy, c-format
 msgid ""
 "Invalid in param %d for link params found in compound effect %s, line %d\n"
@@ -5992,7 +5992,7 @@ msgstr ""
 "文件中的版本无效\n"
 "%s\n"
 
-#: src/effects-weed.c:4909
+#: src/effects-weed.c:4910
 #, fuzzy, c-format
 msgid "Invalid channel link found in compound effect %s, line %d\n"
 msgstr ""
@@ -6001,7 +6001,7 @@ msgstr ""
 "文件中的版本无效\n"
 "%s\n"
 
-#: src/effects-weed.c:4920
+#: src/effects-weed.c:4921
 #, fuzzy, c-format
 msgid ""
 "Invalid out filter %d for link channels found in compound effect %s, line "
@@ -6012,7 +6012,7 @@ msgstr ""
 "文件中的版本无效\n"
 "%s\n"
 
-#: src/effects-weed.c:4938
+#: src/effects-weed.c:4939
 #, fuzzy, c-format
 msgid ""
 "Invalid out channel %d for link params found in compound effect %s, line %d\n"
@@ -6022,7 +6022,7 @@ msgstr ""
 "文件中的版本无效\n"
 "%s\n"
 
-#: src/effects-weed.c:4948
+#: src/effects-weed.c:4949
 #, fuzzy, c-format
 msgid ""
 "Invalid in filter %d for link channels found in compound effect %s, line %d\n"
@@ -6032,7 +6032,7 @@ msgstr ""
 "文件中的版本无效\n"
 "%s\n"
 
-#: src/effects-weed.c:4966
+#: src/effects-weed.c:4967
 #, fuzzy, c-format
 msgid ""
 "Invalid in channel %d for link params found in compound effect %s, line %d\n"
@@ -6042,22 +6042,22 @@ msgstr ""
 "文件中的版本无效\n"
 "%s\n"
 
-#: src/effects-weed.c:5006
+#: src/effects-weed.c:5007
 #, c-format
 msgid "Compound:%s"
 msgstr ""
 
-#: src/effects-weed.c:5070
+#: src/effects-weed.c:5071
 #, c-format
 msgid "Successfully loaded %d compound filters\n"
 msgstr ""
 
-#: src/effects-weed.c:5905
+#: src/effects-weed.c:5906
 #, c-format
 msgid "Effect %s cannot be used with this audio player.\n"
 msgstr ""
 
-#: src/effects-weed.c:6045
+#: src/effects-weed.c:6046
 #, fuzzy, c-format
 msgid "Failed to start instance %s, error code %d\n"
 msgstr ""
@@ -6067,17 +6067,17 @@ msgstr ""
 "%s\n"
 "错误代码为 %d\n"
 
-#: src/effects-weed.c:6112
+#: src/effects-weed.c:6113
 #, fuzzy, c-format
 msgid "Unable to start generator %s\n"
 msgstr "无法打开设备 %s\n"
 
-#: src/effects-weed.c:6830
+#: src/effects-weed.c:6831
 #, fuzzy, c-format
 msgid "Failed to start generator %s\n"
 msgstr "生成器"
 
-#: src/effects-weed.c:6927
+#: src/effects-weed.c:6928
 #, fuzzy, c-format
 msgid "Failed to start generator %s, error %d\n"
 msgstr ""
@@ -6085,7 +6085,7 @@ msgstr ""
 "%s\n"
 "错误代码为 %d\n"
 
-#: src/effects-weed.c:8127
+#: src/effects-weed.c:8128
 #, c-format
 msgid "%s [unstable] (%s)"
 msgstr ""
@@ -6214,7 +6214,7 @@ msgstr "设置为默认"
 msgid "Reset"
 msgstr ""
 
-#: src/paramwindow.c:973 src/rte_window.c:1617 src/omc-learn.c:1376
+#: src/paramwindow.c:973 src/rte_window.c:1615 src/omc-learn.c:1376
 msgid "Close _window"
 msgstr "关闭窗口(_W)"
 
@@ -8588,7 +8588,7 @@ msgstr "删除多余的帧"
 msgid "resampling error..."
 msgstr "重采样错误..."
 
-#: src/rte_window.c:67 src/rte_window.c:924
+#: src/rte_window.c:67 src/rte_window.c:923
 #, c-format
 msgid "Type: %s"
 msgstr "类型：%s"
@@ -8641,12 +8641,12 @@ msgstr ""
 "%s\n"
 "错误代码为 %d\n"
 
-#: src/rte_window.c:290
+#: src/rte_window.c:289
 #, fuzzy, c-format
 msgid "Saving real time effect defaults to %s..."
 msgstr "正在从 %s 中加载实时特效默认设置..."
 
-#: src/rte_window.c:299
+#: src/rte_window.c:298
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -8659,22 +8659,22 @@ msgstr ""
 "%s\n"
 "错误代码为 %d\n"
 
-#: src/rte_window.c:396
+#: src/rte_window.c:395
 #, c-format
 msgid "Loading real time effect defaults from %s..."
 msgstr "正在从 %s 中加载实时特效默认设置..."
 
-#: src/rte_window.c:445
+#: src/rte_window.c:444
 #, fuzzy, c-format
 msgid "Loading generator default sizes from %s..."
 msgstr "正在从 %s 中加载实时特效默认设置..."
 
-#: src/rte_window.c:568
+#: src/rte_window.c:567
 #, fuzzy, c-format
 msgid "Loading default keymap from %s..."
 msgstr "正在从 %s 加载布局..."
 
-#: src/rte_window.c:591
+#: src/rte_window.c:590
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -8687,7 +8687,7 @@ msgstr ""
 "%s\n"
 "错误代码为 %d\n"
 
-#: src/rte_window.c:658
+#: src/rte_window.c:657
 #, fuzzy, c-format
 msgid "Invalid line %d in %s\n"
 msgstr ""
@@ -8696,7 +8696,7 @@ msgstr ""
 "文件中的版本无效\n"
 "%s\n"
 
-#: src/rte_window.c:734
+#: src/rte_window.c:733
 #, fuzzy, c-format
 msgid "Invalid key %d in %s\n"
 msgstr ""
@@ -8705,7 +8705,7 @@ msgstr ""
 "文件中的版本无效\n"
 "%s\n"
 
-#: src/rte_window.c:749
+#: src/rte_window.c:748
 #, fuzzy, c-format
 msgid "Invalid effect %s in %s\n"
 msgstr ""
@@ -8714,19 +8714,19 @@ msgstr ""
 "文件中的版本无效\n"
 "%s\n"
 
-#: src/rte_window.c:767
+#: src/rte_window.c:766
 #, c-format
 msgid "Unknown effect %s in %s\n"
 msgstr ""
 
-#: src/rte_window.c:784
+#: src/rte_window.c:783
 #, c-format
 msgid ""
 "This version of LiVES cannot mix generators/non-generators on the same key "
 "(%d) !\n"
 msgstr ""
 
-#: src/rte_window.c:795
+#: src/rte_window.c:794
 #, fuzzy, c-format
 msgid "Too many effects bound to key %d.\n"
 msgstr ""
@@ -8735,11 +8735,11 @@ msgstr ""
 "一些特效无法找到。\n"
 "\n"
 
-#: src/rte_window.c:824
+#: src/rte_window.c:823
 msgid "update required.\n"
 msgstr "需要更新。\n"
 
-#: src/rte_window.c:840
+#: src/rte_window.c:839
 msgid ""
 "\n"
 "\n"
@@ -8751,40 +8751,40 @@ msgstr ""
 "一些特效无法找到。\n"
 "\n"
 
-#: src/rte_window.c:897
+#: src/rte_window.c:896
 msgid "No Description"
 msgstr "无说明"
 
-#: src/rte_window.c:902
+#: src/rte_window.c:901
 #, c-format
 msgid "LiVES: Information for %s"
 msgstr "LiVES：%s 信息"
 
-#: src/rte_window.c:916
+#: src/rte_window.c:915
 #, c-format
 msgid "Effect name: %s"
 msgstr "特效名称：%s"
 
-#: src/rte_window.c:932
+#: src/rte_window.c:931
 #, c-format
 msgid "Plugin name: %s"
 msgstr "插件名称：%s"
 
-#: src/rte_window.c:940
+#: src/rte_window.c:939
 #, c-format
 msgid "Author: %s"
 msgstr "作者：%s"
 
-#: src/rte_window.c:948
+#: src/rte_window.c:947
 #, c-format
 msgid "Version: %d"
 msgstr "版本：%d"
 
-#: src/rte_window.c:960
+#: src/rte_window.c:959
 msgid "Description: "
 msgstr "描述： "
 
-#: src/rte_window.c:1140
+#: src/rte_window.c:1139
 msgid ""
 "\n"
 "\n"
@@ -8793,67 +8793,67 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/rte_window.c:1204
+#: src/rte_window.c:1203
 #, c-format
 msgid "LiVES could not locate the effect %s.\n"
 msgstr "LiVES 无法找到特效 %s。\n"
 
-#: src/rte_window.c:1381
+#: src/rte_window.c:1379
 #, fuzzy
 msgid "LiVES: Real time effect mapping"
 msgstr "LiVES：已选特效"
 
-#: src/rte_window.c:1390 src/rte_window.c:1448
+#: src/rte_window.c:1388 src/rte_window.c:1446
 msgid "Key grab"
 msgstr ""
 
-#: src/rte_window.c:1405
+#: src/rte_window.c:1403
 #, c-format
 msgid "Ctrl-%d"
 msgstr ""
 
-#: src/rte_window.c:1414
+#: src/rte_window.c:1412
 msgid "Key active"
 msgstr ""
 
-#: src/rte_window.c:1453
+#: src/rte_window.c:1451
 msgid "Grab keyboard for this effect key"
 msgstr ""
 
-#: src/rte_window.c:1472
+#: src/rte_window.c:1470
 msgid "_Clear all effects"
 msgstr "清除所有特效(_C)"
 
-#: src/rte_window.c:1491
+#: src/rte_window.c:1489
 msgid "Mode active"
 msgstr ""
 
-#: src/rte_window.c:1517 src/multitrack.c:7828
+#: src/rte_window.c:1515 src/multitrack.c:7828
 msgid "Info"
 msgstr "信息"
 
-#: src/rte_window.c:1518
+#: src/rte_window.c:1516
 msgid "Set Parameters"
 msgstr "设置参数"
 
-#: src/rte_window.c:1519
+#: src/rte_window.c:1517
 msgid "Clear"
 msgstr "清除"
 
-#: src/rte_window.c:1528
+#: src/rte_window.c:1526
 msgid "Effect name:"
 msgstr "特效名称："
 
-#: src/rte_window.c:1607
+#: src/rte_window.c:1605
 #, fuzzy
 msgid "_Save as default keymap"
 msgstr "设置为默认"
 
-#: src/rte_window.c:1612
+#: src/rte_window.c:1610
 msgid "_Load default keymap"
 msgstr ""
 
-#: src/rte_window.c:1993
+#: src/rte_window.c:1991
 #, c-format
 msgid ""
 "Unable to create default keymap file: %s\n"

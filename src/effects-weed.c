@@ -4750,7 +4750,8 @@ static void load_compound_plugin(gchar *plugin_name, gchar *plugin_path) {
 
 	if ((ntok!=weed_leaf_num_elements(ptmpl,"default")&&!(pflags&WEED_PARAMETER_VARIABLE_ELEMENTS)) ||
 	    ntok%qvals!=0) {
-	  d_print((tmp=g_strdup_printf(_("Invalid number of values for defaults found in compound effect %s, line %d\n"),pnum,plugin_name,line)));
+	  g_print("vals %d %d %p\n",xfilt,pnum,filter);
+	  d_print((tmp=g_strdup_printf(_("Invalid number of values for defaults found in compound effect %s, line %d\n"),plugin_name,line)));
 	  LIVES_ERROR(tmp);
 	  g_free(tmp);
 	  ok=FALSE;
@@ -7171,7 +7172,7 @@ weed_plant_t *weed_filter_in_paramtmpl (weed_plant_t *filter, int param_num, boo
 
   if (!weed_plant_has_leaf(filter,"in_parameter_templates")) return NULL; // has no in_parameters
   
-  num_params=weed_leaf_num_elements(filter,"in_parameter_templatess");
+  num_params=weed_leaf_num_elements(filter,"in_parameter_templates");
 
   if (num_params<=param_num) return NULL; // invalid parameter number
 
@@ -8991,7 +8992,6 @@ gchar *make_weed_hashname(int filter_idx, gboolean fullname) {
     filter_version=g_strdup_printf("%d",version);
 
     hashname=g_strconcat(plugin_fname,filter_name,filter_author,filter_version,NULL);
-
     weed_free(filter_author);
     g_free(filter_version);
   }

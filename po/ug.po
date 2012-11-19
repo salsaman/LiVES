@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2012-11-16 22:18-0300\n"
+"POT-Creation-Date: 2012-11-18 19:22-0300\n"
 "PO-Revision-Date: 2011-11-07 04:09+0000\n"
 "Last-Translator: Gheyret T.Kenji <Unknown>\n"
 "Language-Team: Uyghur <ug@li.org>\n"
@@ -5360,7 +5360,7 @@ msgid "Found duplicate plugin %s\n"
 msgstr ""
 
 #. TRANSLATORS: example " - LADSPA plugins -"
-#: src/effects-weed.c:4242 src/rte_window.c:1278
+#: src/effects-weed.c:4242 src/rte_window.c:1276
 #, c-format
 msgid " - %s plugins -"
 msgstr ""
@@ -5372,7 +5372,7 @@ msgid ""
 "Error was: %s\n"
 msgstr ""
 
-#: src/effects-weed.c:4297 src/effects-weed.c:5272
+#: src/effects-weed.c:4297 src/effects-weed.c:5273
 msgid "Some plugin directories"
 msgstr ""
 
@@ -5421,120 +5421,120 @@ msgstr ""
 msgid "Invalid param %d for defaults found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:4753
+#: src/effects-weed.c:4754
 #, c-format
 msgid ""
 "Invalid number of values for defaults found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:4787
+#: src/effects-weed.c:4788
 #, c-format
 msgid ""
 "Invalid non-boolean value for defaults found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:4820
+#: src/effects-weed.c:4821
 #, c-format
 msgid "Invalid param link found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:4831
+#: src/effects-weed.c:4832
 #, c-format
 msgid ""
 "Invalid out filter %d for link params found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:4845
+#: src/effects-weed.c:4846
 #, c-format
 msgid ""
 "Invalid out param %d for link params found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:4856
+#: src/effects-weed.c:4857
 #, c-format
 msgid ""
 "Invalid non-boolean value for autoscale found in compound effect %s, line "
 "%d\n"
 msgstr ""
 
-#: src/effects-weed.c:4867
+#: src/effects-weed.c:4868
 #, c-format
 msgid ""
 "Invalid in filter %d for link params found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:4881
+#: src/effects-weed.c:4882
 #, c-format
 msgid ""
 "Invalid in param %d for link params found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:4909
+#: src/effects-weed.c:4910
 #, c-format
 msgid "Invalid channel link found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:4920
+#: src/effects-weed.c:4921
 #, c-format
 msgid ""
 "Invalid out filter %d for link channels found in compound effect %s, line "
 "%d\n"
 msgstr ""
 
-#: src/effects-weed.c:4938
+#: src/effects-weed.c:4939
 #, c-format
 msgid ""
 "Invalid out channel %d for link params found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:4948
+#: src/effects-weed.c:4949
 #, c-format
 msgid ""
 "Invalid in filter %d for link channels found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:4966
+#: src/effects-weed.c:4967
 #, c-format
 msgid ""
 "Invalid in channel %d for link params found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:5006
+#: src/effects-weed.c:5007
 #, c-format
 msgid "Compound:%s"
 msgstr ""
 
-#: src/effects-weed.c:5070
+#: src/effects-weed.c:5071
 #, c-format
 msgid "Successfully loaded %d compound filters\n"
 msgstr ""
 
-#: src/effects-weed.c:5905
+#: src/effects-weed.c:5906
 #, c-format
 msgid "Effect %s cannot be used with this audio player.\n"
 msgstr ""
 
-#: src/effects-weed.c:6045
+#: src/effects-weed.c:6046
 #, c-format
 msgid "Failed to start instance %s, error code %d\n"
 msgstr ""
 
-#: src/effects-weed.c:6112
+#: src/effects-weed.c:6113
 #, c-format
 msgid "Unable to start generator %s\n"
 msgstr ""
 
-#: src/effects-weed.c:6830
+#: src/effects-weed.c:6831
 #, c-format
 msgid "Failed to start generator %s\n"
 msgstr ""
 
-#: src/effects-weed.c:6927
+#: src/effects-weed.c:6928
 #, c-format
 msgid "Failed to start generator %s, error %d\n"
 msgstr ""
 
-#: src/effects-weed.c:8127
+#: src/effects-weed.c:8128
 #, c-format
 msgid "%s [unstable] (%s)"
 msgstr ""
@@ -5653,7 +5653,7 @@ msgstr "كۆڭۈلدىكى قىممەتكە تەڭشە"
 msgid "Reset"
 msgstr ""
 
-#: src/paramwindow.c:973 src/rte_window.c:1617 src/omc-learn.c:1376
+#: src/paramwindow.c:973 src/rte_window.c:1615 src/omc-learn.c:1376
 #, fuzzy
 msgid "Close _window"
 msgstr "كۆزنەك ياپ(_C)"
@@ -7887,7 +7887,7 @@ msgstr "كاندۇك"
 msgid "resampling error..."
 msgstr ""
 
-#: src/rte_window.c:67 src/rte_window.c:924
+#: src/rte_window.c:67 src/rte_window.c:923
 #, c-format
 msgid "Type: %s"
 msgstr "تىپى: %s"
@@ -7932,12 +7932,12 @@ msgid ""
 "Error was %s\n"
 msgstr ""
 
-#: src/rte_window.c:290
+#: src/rte_window.c:289
 #, c-format
 msgid "Saving real time effect defaults to %s..."
 msgstr ""
 
-#: src/rte_window.c:299
+#: src/rte_window.c:298
 #, c-format
 msgid ""
 "\n"
@@ -7947,22 +7947,22 @@ msgid ""
 "Error code %d\n"
 msgstr ""
 
-#: src/rte_window.c:396
+#: src/rte_window.c:395
 #, c-format
 msgid "Loading real time effect defaults from %s..."
 msgstr ""
 
-#: src/rte_window.c:445
+#: src/rte_window.c:444
 #, c-format
 msgid "Loading generator default sizes from %s..."
 msgstr ""
 
-#: src/rte_window.c:568
+#: src/rte_window.c:567
 #, c-format
 msgid "Loading default keymap from %s..."
 msgstr ""
 
-#: src/rte_window.c:591
+#: src/rte_window.c:590
 #, c-format
 msgid ""
 "\n"
@@ -7972,43 +7972,43 @@ msgid ""
 "Error code %d\n"
 msgstr ""
 
-#: src/rte_window.c:658
+#: src/rte_window.c:657
 #, c-format
 msgid "Invalid line %d in %s\n"
 msgstr ""
 
-#: src/rte_window.c:734
+#: src/rte_window.c:733
 #, c-format
 msgid "Invalid key %d in %s\n"
 msgstr ""
 
-#: src/rte_window.c:749
+#: src/rte_window.c:748
 #, c-format
 msgid "Invalid effect %s in %s\n"
 msgstr ""
 
-#: src/rte_window.c:767
+#: src/rte_window.c:766
 #, c-format
 msgid "Unknown effect %s in %s\n"
 msgstr ""
 
-#: src/rte_window.c:784
+#: src/rte_window.c:783
 #, c-format
 msgid ""
 "This version of LiVES cannot mix generators/non-generators on the same key "
 "(%d) !\n"
 msgstr ""
 
-#: src/rte_window.c:795
+#: src/rte_window.c:794
 #, c-format
 msgid "Too many effects bound to key %d.\n"
 msgstr ""
 
-#: src/rte_window.c:824
+#: src/rte_window.c:823
 msgid "update required.\n"
 msgstr ""
 
-#: src/rte_window.c:840
+#: src/rte_window.c:839
 msgid ""
 "\n"
 "\n"
@@ -8016,40 +8016,40 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/rte_window.c:897
+#: src/rte_window.c:896
 msgid "No Description"
 msgstr "چۈشەندۈرۈشى يوق"
 
-#: src/rte_window.c:902
+#: src/rte_window.c:901
 #, c-format
 msgid "LiVES: Information for %s"
 msgstr ""
 
-#: src/rte_window.c:916
+#: src/rte_window.c:915
 #, fuzzy, c-format
 msgid "Effect name: %s"
 msgstr "ئاتىنى بەلگىلەش "
 
-#: src/rte_window.c:932
+#: src/rte_window.c:931
 #, c-format
 msgid "Plugin name: %s"
 msgstr ""
 
-#: src/rte_window.c:940
+#: src/rte_window.c:939
 #, c-format
 msgid "Author: %s"
 msgstr "ئاپتور: ‎%s"
 
-#: src/rte_window.c:948
+#: src/rte_window.c:947
 #, fuzzy, c-format
 msgid "Version: %d"
 msgstr "نەشرى:       "
 
-#: src/rte_window.c:960
+#: src/rte_window.c:959
 msgid "Description: "
 msgstr "چۈشەندۈرۈش: "
 
-#: src/rte_window.c:1140
+#: src/rte_window.c:1139
 msgid ""
 "\n"
 "\n"
@@ -8058,68 +8058,68 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/rte_window.c:1204
+#: src/rte_window.c:1203
 #, c-format
 msgid "LiVES could not locate the effect %s.\n"
 msgstr ""
 
-#: src/rte_window.c:1381
+#: src/rte_window.c:1379
 msgid "LiVES: Real time effect mapping"
 msgstr ""
 
-#: src/rte_window.c:1390 src/rte_window.c:1448
+#: src/rte_window.c:1388 src/rte_window.c:1446
 msgid "Key grab"
 msgstr ""
 
-#: src/rte_window.c:1405
+#: src/rte_window.c:1403
 #, c-format
 msgid "Ctrl-%d"
 msgstr ""
 
-#: src/rte_window.c:1414
+#: src/rte_window.c:1412
 msgid "Key active"
 msgstr ""
 
-#: src/rte_window.c:1453
+#: src/rte_window.c:1451
 msgid "Grab keyboard for this effect key"
 msgstr ""
 
-#: src/rte_window.c:1472
+#: src/rte_window.c:1470
 msgid "_Clear all effects"
 msgstr ""
 
-#: src/rte_window.c:1491
+#: src/rte_window.c:1489
 msgid "Mode active"
 msgstr ""
 
-#: src/rte_window.c:1517 src/multitrack.c:7828
+#: src/rte_window.c:1515 src/multitrack.c:7828
 msgid "Info"
 msgstr "ئۇچۇرى"
 
-#: src/rte_window.c:1518
+#: src/rte_window.c:1516
 #, fuzzy
 msgid "Set Parameters"
 msgstr "ئاتىنى بەلگىلەش "
 
-#: src/rte_window.c:1519
+#: src/rte_window.c:1517
 msgid "Clear"
 msgstr "تازىلا"
 
-#: src/rte_window.c:1528
+#: src/rte_window.c:1526
 #, fuzzy
 msgid "Effect name:"
 msgstr "ئاتىنى بەلگىلەش "
 
-#: src/rte_window.c:1607
+#: src/rte_window.c:1605
 #, fuzzy
 msgid "_Save as default keymap"
 msgstr "كۆڭۈلدىكى قىممەتكە تەڭشە"
 
-#: src/rte_window.c:1612
+#: src/rte_window.c:1610
 msgid "_Load default keymap"
 msgstr ""
 
-#: src/rte_window.c:1993
+#: src/rte_window.c:1991
 #, c-format
 msgid ""
 "Unable to create default keymap file: %s\n"

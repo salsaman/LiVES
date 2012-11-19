@@ -289,6 +289,7 @@ static int exp_to_tree(const char *exp) {
       break;
 
     case '(':
+      if (plevel==1) return 1;
       if (nstart!=-1) return 1;
 
       plevel=2;
@@ -334,10 +335,12 @@ static int exp_to_tree(const char *exp) {
     case '7':
     case '8':
     case '9':
+      if (plevel==1) return 1;
       if (varname!=NULL) return 1;
       if (nstart==-1) nstart=i;
       break;
     case '.':
+      if (plevel==1) return 1;
       if (gotdot||varname!=NULL) return 1;
       if (nstart==-1) nstart=i;
       gotdot=1;
@@ -382,6 +385,10 @@ static int exp_to_tree(const char *exp) {
 
 	}
       }
+      else {
+	snprintf(buf,2,"%s",&exp[i]);
+	add_parent(rootnode,buf);
+      }
 
       nstart=-1;
       gotdot=0;
@@ -389,10 +396,12 @@ static int exp_to_tree(const char *exp) {
 
       break;
     case 'i':
+      if (plevel==1) return 1;
       if (varname!=NULL||nstart!=-1) return 1;
       varname=strdup("i");
       break;
     case 's':
+      if (plevel==1) return 1;
       if (varname!=NULL||nstart!=-1) return 1;
       varname=strdup("s");
       break;
@@ -455,6 +464,7 @@ static double evaluate (char *exp, _sdata *sdata) {
   double res;
 
   sdata->error=0;
+  rootnode=NULL;
 
   if (exp_to_tree(exp)) {
     sdata->error=1;
@@ -554,24 +564,24 @@ int dataproc_process (weed_plant_t *inst, weed_timecode_t timestamp) {
 
     ptr=index(ip,'=');
     if (ptr==NULL) {
-      fprintf(stderr,"data_processor ERROR: eqn %d has no '='",i-EQS);
+      fprintf(stderr,"data_processor ERROR: eqn %d has no '='\n",i-EQS);
       continue;
     }
 
     if (strncmp(ip,"s",1)&&strncmp(ip,"o",1)) {
-      fprintf(stderr,"data_processor ERROR: eqn %d must set s or o value",i-EQS);
+      fprintf(stderr,"data_processor ERROR: eqn %d must set s or o value\n",i-EQS);
       continue;
     }
 
     if (strncmp(ip+1,"[",1)||strncmp(ptr-1,"]",1)) {
-      fprintf(stderr,"data_processor ERROR: eqn %d has invalid []",i-EQS);
+      fprintf(stderr,"data_processor ERROR: eqn %d has invalid []\n",i-EQS);
       continue;
     }
 
-    len=ptr-ip-3;
+    len=ptr-ip-2;
 
     if (len<1) {
-      fprintf(stderr,"data_processor ERROR: eqn %d has invalid []",i-EQS);
+      fprintf(stderr,"data_processor ERROR: eqn %d has invalid []\n",i-EQS);
       continue;
     }
 
@@ -580,9 +590,8 @@ int dataproc_process (weed_plant_t *inst, weed_timecode_t timestamp) {
     ws=weed_malloc(len+1);
     snprintf(ws,len,"%s",ip+2);
     which=(int)evaluate(ws,sdata);
-    weed_free(ws);
 
-    if (!strncmp(ip,"i[",2)) {
+    if (!strncmp(ip,"o[",2)) {
       if (which>=EQN-EQS) {
 	sdata->error=3;
       }
@@ -602,21 +611,21 @@ int dataproc_process (weed_plant_t *inst, weed_timecode_t timestamp) {
     if (sdata->error) {
       switch (sdata->error) {
       case 1:
-	fprintf(stderr,"data_processor ERROR: syntax error in RHS of eqn %d",i-EQS); break;
+	fprintf(stderr,"data_processor ERROR: syntax error in RHS of eqn %d\n",i-EQS); break;
       case 2:
-	fprintf(stderr,"data_processor ERROR: division by 0 in RHS of eqn %d",i-EQS); break;
+	fprintf(stderr,"data_processor ERROR: division by 0 in RHS of eqn %d\n",i-EQS); break;
       case 3:
-	fprintf(stderr,"data_processor ERROR: i array out of bounds in RHS of eqn %d",i-EQS); break;
+	fprintf(stderr,"data_processor ERROR: i array out of bounds in RHS of eqn %d\n",i-EQS); break;
       case 4:
-	fprintf(stderr,"data_processor ERROR: s array out of bounds in RHS of eqn %d",i-EQS); break;
+	fprintf(stderr,"data_processor ERROR: s array out of bounds in RHS of eqn %d\n",i-EQS); break;
       case 101:
-	fprintf(stderr,"data_processor ERROR: syntax error in LHS of eqn %d",i-EQS); break;
+	fprintf(stderr,"data_processor ERROR: syntax error in LHS of eqn %d\n%s\n",i-EQS,ws); break;
       case 102:
-	fprintf(stderr,"data_processor ERROR: division by 0 in LHS of eqn %d",i-EQS); break;
+	fprintf(stderr,"data_processor ERROR: division by 0 in LHS of eqn %d\n",i-EQS); break;
       case 103:
-	fprintf(stderr,"data_processor ERROR: i array out of bounds in LHS of eqn %d",i-EQS); break;
+	fprintf(stderr,"data_processor ERROR: o array out of bounds in LHS of eqn %d\n",i-EQS); break;
       case 104:
-	fprintf(stderr,"data_processor ERROR: s array out of bounds in LHS of eqn %d",i-EQS); break;
+	fprintf(stderr,"data_processor ERROR: s array out of bounds in LHS of eqn %d\n",i-EQS); break;
       default:
 	break;
       }
@@ -632,6 +641,7 @@ int dataproc_process (weed_plant_t *inst, weed_timecode_t timestamp) {
       }
     }
 
+    weed_free(ws);
     weed_free(ip);
   }
 

@@ -3232,7 +3232,7 @@ lives_param_t *weed_params_to_rfx(gint npar, weed_plant_t *inst, gboolean show_r
   if (nwpars>0) wpars=weed_get_plantptr_array(inst,"in_parameters",&error);
 
   for (i=0;i<npar;i++) {
-    if (i>=nwpars) {
+    if (i-poffset>=nwpars) {
       // handling for compound fx
       poffset+=nwpars;
       if (wpars!=NULL) weed_free(wpars);
@@ -3375,11 +3375,11 @@ lives_param_t *weed_params_to_rfx(gint npar, weed_plant_t *inst, gboolean show_r
       rpar[i].max=weed_get_double_value(wtmpl,"max",&error);
       if (weed_plant_has_leaf(wtmpl,"wrap")&&weed_get_boolean_value(wtmpl,"wrap",&error)==WEED_TRUE) rpar[i].wrap=TRUE;
       rpar[i].step_size=0.;
+      rpar[i].dp=2;
       if (gui!=NULL) {
 	if (weed_plant_has_leaf(gui,"step_size")) rpar[i].step_size=weed_get_double_value(gui,"step_size",&error);
 	if (weed_plant_has_leaf(gui,"decimals")) rpar[i].dp=weed_get_int_value(gui,"decimals",&error);
       }
-      if (rpar[i].dp==0) rpar[i].dp=2;
       if (rpar[i].step_size==0.) rpar[i].step_size=1./(double)lives_10pow(rpar[i].dp);
       break;
     case WEED_HINT_TEXT:

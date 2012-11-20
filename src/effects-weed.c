@@ -1899,7 +1899,9 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
   for (i=0;i<num_inc+num_in_alpha;i++) {
     if (!weed_palette_is_alpha_palette(weed_get_int_value(in_channels[i],"current_palette",&error))) continue;
 
-    if (weed_plant_has_leaf(in_channels[i],"host_internal_connection")) if (cconx_chain_data_internal(in_channels[i])) needs_reinit=TRUE;
+    if (weed_plant_has_leaf(in_channels[i],"host_internal_connection")) {
+      if (cconx_chain_data_internal(in_channels[i])) needs_reinit=TRUE;
+    }
 
     if (weed_get_voidptr_value(in_channels[i],"pixel_data",&error)==NULL) {
       chantmpl=weed_get_plantptr_value(in_channels[i],"template",&error);
@@ -3253,6 +3255,7 @@ weed_plant_t *weed_apply_effects (weed_plant_t **layers, weed_plant_t *filter_ma
 	  filter_error=weed_apply_instance (instance,NULL,layers,opwidth,opheight,tc);
 
 	  if (filter_error==FILTER_INFO_REINITED) redraw_pwindow(i,key_modes[i]); // redraw our paramwindow
+#define DEBUG_RTE
 #ifdef DEBUG_RTE
 	  if (filter_error!=FILTER_NO_ERROR) g_printerr("Render error was %d\n",filter_error);
 #endif
@@ -4469,6 +4472,104 @@ void weed_load_all (void) {
 }
 
 
+static void weed_filter_free(weed_plant_t *filter) {
+  int nitems,error,i;
+  weed_plant_t **plants,*gui;
+  void *func;
+  boolean is_compound=FALSE;
+
+  if (num_compound_fx(filter)>1) is_compound=TRUE;
+
+  // free in_param_templates
+  if (weed_plant_has_leaf(filter,"in_parameter_templates")) {
+    nitems=weed_leaf_num_elements(filter,"in_parameter_templates");
+    if (nitems>0) {
+      plants=weed_get_plantptr_array(filter,"in_parameter_templates",&error);
+      for (i=0;i<nitems;i++) {
+	if (weed_plant_has_leaf(plants[i],"gui")) {
+	  gui=(weed_get_plantptr_value(plants[i],"gui",&error));
+	  if (weed_plant_has_leaf(gui,"display_func")) {
+	    func=weed_get_voidptr_value(gui,"display_func",&error);
+	    if (func!=NULL) weed_free(func);
+	  }
+	  weed_plant_free(gui);
+	}
+	if (weed_plant_has_leaf(filter,"interpolate_func")) {
+	  func=weed_get_voidptr_value(filter,"interpolate_func",&error);
+	  if (func!=NULL) weed_free(func);
+	}
+	weed_plant_free(plants[i]);
+      }
+      weed_free(plants);
+    }
+  }
+
+  if (is_compound) {
+    weed_plant_free(filter);
+    return;
+  }
+
+  if (weed_plant_has_leaf(filter,"init_func")) {
+    func=weed_get_voidptr_value(filter,"init_func",&error);
+    if (func!=NULL) weed_free(func);
+  }
+  
+  if (weed_plant_has_leaf(filter,"deinit_func")) {
+    func=weed_get_voidptr_value(filter,"deinit_func",&error);
+    if (func!=NULL) weed_free(func);
+  }
+
+  if (weed_plant_has_leaf(filter,"process_func")) {
+    func=weed_get_voidptr_value(filter,"process_func",&error);
+    if (func!=NULL) weed_free(func);
+  }
+
+
+  // free in_channel_templates
+  if (weed_plant_has_leaf(filter,"in_channel_templates")) {
+    nitems=weed_leaf_num_elements(filter,"in_channel_templates");
+    if (nitems>0) {
+      plants=weed_get_plantptr_array(filter,"in_channel_templates",&error);
+      for (i=0;i<nitems;i++) weed_plant_free(plants[i]);
+      weed_free(plants);
+    }
+  }
+
+
+  // free out_channel_templates
+  if (weed_plant_has_leaf(filter,"out_channel_templates")) {
+    nitems=weed_leaf_num_elements(filter,"out_channel_templates");
+    if (nitems>0) {
+      plants=weed_get_plantptr_array(filter,"out_channel_templates",&error);
+      for (i=0;i<nitems;i++) weed_plant_free(plants[i]);
+      weed_free(plants);
+    }
+  }
+
+  // free out_param_templates
+  if (weed_plant_has_leaf(filter,"out_parameter_templates")) {
+    nitems=weed_leaf_num_elements(filter,"out_parameter_templates");
+    if (nitems>0) {
+      plants=weed_get_plantptr_array(filter,"out_parameter_templates",&error);
+      threaded_dialog_spin();
+      for (i=0;i<nitems;i++) {
+	if (weed_plant_has_leaf(plants[i],"gui")) weed_plant_free(weed_get_plantptr_value(plants[i],"gui",&error));
+	weed_plant_free(plants[i]);
+      }
+      weed_free(plants);
+    }
+  }
+
+
+  // free gui
+  if (weed_plant_has_leaf(filter,"gui")) weed_plant_free(weed_get_plantptr_value(filter,"gui",&error));
+
+
+  // free filter
+  weed_plant_free(filter);
+}
+
+
 
 static weed_plant_t *create_compound_filter(gchar *plugin_name, int nfilts, int *filts) {
   weed_plant_t *filter=weed_plant_new(WEED_PLANT_FILTER_CLASS),*xfilter,*gui;
@@ -4566,7 +4667,7 @@ static weed_plant_t *create_compound_filter(gchar *plugin_name, int nfilts, int 
 
 	x++;
       }
-      xcount+=count;
+      xcount=count;
     }
   }
 
@@ -4620,7 +4721,6 @@ static weed_plant_t *create_compound_filter(gchar *plugin_name, int nfilts, int 
     weed_free(out_chans);
   }
 
-
   return filter;
 }
 
@@ -4664,7 +4764,7 @@ static void load_compound_plugin(gchar *plugin_name, gchar *plugin_path) {
       line++;
       g_strchomp(buff);
       if (!strlen(buff)) {
-	if (++stage==4) break;
+	if (++stage==5) break;
 	if (stage==2) {
 	  if (nfilts<2) {
 	    d_print((tmp=g_strdup_printf(_("Invalid compound effect %s - must have >1 sub filters\n"),plugin_name)));
@@ -4720,9 +4820,9 @@ static void load_compound_plugin(gchar *plugin_name, gchar *plugin_path) {
 	  g_strfreev(array);
 	  break;
 	}
-	filter=get_weed_filter(filters[xfilt]);
+	xfilter=get_weed_filter(filters[xfilt]);
 
-	nparams=num_in_params(filter,FALSE,FALSE);
+	nparams=num_in_params(xfilter,FALSE,FALSE);
 
 	pnum=atoi(array[1]);
 	
@@ -4735,7 +4835,11 @@ static void load_compound_plugin(gchar *plugin_name, gchar *plugin_path) {
 	  break;
 	}
 
+	// get pnum for compound filter
+	for (i=0;i<xfilt;i++) pnum+=num_in_params(get_weed_filter(filters[i]),FALSE,FALSE);
+
 	ptmpl=weed_filter_in_paramtmpl(filter,pnum,FALSE);
+
 	ptype=weed_leaf_seed_type(ptmpl,"default");
 	pflags=weed_get_int_value(ptmpl,"flags",&error);
 	phint=weed_get_int_value(ptmpl,"hint",&error);
@@ -4750,7 +4854,6 @@ static void load_compound_plugin(gchar *plugin_name, gchar *plugin_path) {
 
 	if ((ntok!=weed_leaf_num_elements(ptmpl,"default")&&!(pflags&WEED_PARAMETER_VARIABLE_ELEMENTS)) ||
 	    ntok%qvals!=0) {
-	  g_print("vals %d %d %p\n",xfilt,pnum,filter);
 	  d_print((tmp=g_strdup_printf(_("Invalid number of values for defaults found in compound effect %s, line %d\n"),plugin_name,line)));
 	  LIVES_ERROR(tmp);
 	  g_free(tmp);
@@ -4906,6 +5009,8 @@ static void load_compound_plugin(gchar *plugin_name, gchar *plugin_path) {
 	// link alpha channels: format is f0|c0|f1|c1
 	ntok=get_token_count (buff,'|');
 
+	g_print("got ccon %s\n",buff);
+
 	if (ntok!=4) {
 	  d_print((tmp=g_strdup_printf(_("Invalid channel link found in compound effect %s, line %d\n"),plugin_name,line)));
 	  LIVES_ERROR(tmp);
@@ -4982,6 +5087,7 @@ static void load_compound_plugin(gchar *plugin_name, gchar *plugin_path) {
 	// - we will link the actual channels when we create an instance from the filter
 	key=g_strdup_printf("host_channel_connection%d",xconx++);
 	weed_set_int_array(filter,key,4,xvals);
+	g_print("setting %s in %p\n",key,filter);
 	g_free(key);
 
 	g_strfreev(array);
@@ -4990,16 +5096,12 @@ static void load_compound_plugin(gchar *plugin_name, gchar *plugin_path) {
 	break;
       }
       if (!ok) {
-	if (filter!=NULL) weed_plant_free(filter);
+	if (filter!=NULL) weed_filter_free(filter);
 	filter=NULL;
 	break;
       }
     }
     fclose(cpdfile);
-  }
-
-  if (ok&&filter==NULL&&nfilts>1) {
-    filter=create_compound_filter(plugin_name,nfilts,filters);
   }
 
   if (filter!=NULL) {
@@ -5082,101 +5184,8 @@ void load_compound_fx(void) {
 
 
 
-void weed_filter_free(weed_plant_t *filter) {
-  int nitems,error,i;
-  weed_plant_t **plants,*gui;
-  void *func;
-
-  if (weed_plant_has_leaf(filter,"init_func")) {
-    func=weed_get_voidptr_value(filter,"init_func",&error);
-    if (func!=NULL) weed_free(func);
-  }
-  
-  if (weed_plant_has_leaf(filter,"deinit_func")) {
-    func=weed_get_voidptr_value(filter,"deinit_func",&error);
-    if (func!=NULL) weed_free(func);
-  }
-
-  if (weed_plant_has_leaf(filter,"process_func")) {
-    func=weed_get_voidptr_value(filter,"process_func",&error);
-    if (func!=NULL) weed_free(func);
-  }
-
-
-  // free in_channel_templates
-  if (weed_plant_has_leaf(filter,"in_channel_templates")) {
-    nitems=weed_leaf_num_elements(filter,"in_channel_templates");
-    if (nitems>0) {
-      plants=weed_get_plantptr_array(filter,"in_channel_templates",&error);
-      for (i=0;i<nitems;i++) weed_plant_free(plants[i]);
-      weed_free(plants);
-    }
-  }
-
-
-  // free out_channel_templates
-  if (weed_plant_has_leaf(filter,"out_channel_templates")) {
-    nitems=weed_leaf_num_elements(filter,"out_channel_templates");
-    if (nitems>0) {
-      plants=weed_get_plantptr_array(filter,"out_channel_templates",&error);
-      for (i=0;i<nitems;i++) weed_plant_free(plants[i]);
-      weed_free(plants);
-    }
-  }
-
-  // free in_param_templates
-  if (weed_plant_has_leaf(filter,"in_parameter_templates")) {
-    nitems=weed_leaf_num_elements(filter,"in_parameter_templates");
-    if (nitems>0) {
-      plants=weed_get_plantptr_array(filter,"in_parameter_templates",&error);
-      for (i=0;i<nitems;i++) {
-	if (weed_plant_has_leaf(plants[i],"gui")) {
-	  gui=(weed_get_plantptr_value(plants[i],"gui",&error));
-	  if (weed_plant_has_leaf(gui,"display_func")) {
-	    func=weed_get_voidptr_value(gui,"display_func",&error);
-	    if (func!=NULL) weed_free(func);
-	  }
-	  weed_plant_free(gui);
-	}
-	if (weed_plant_has_leaf(filter,"interpolate_func")) {
-	  func=weed_get_voidptr_value(filter,"interpolate_func",&error);
-	  if (func!=NULL) weed_free(func);
-	}
-	weed_plant_free(plants[i]);
-      }
-      weed_free(plants);
-    }
-  }
-
-
-  // free out_param_templates
-  if (weed_plant_has_leaf(filter,"out_parameter_templates")) {
-    nitems=weed_leaf_num_elements(filter,"out_parameter_templates");
-    if (nitems>0) {
-      plants=weed_get_plantptr_array(filter,"out_parameter_templates",&error);
-      threaded_dialog_spin();
-      for (i=0;i<nitems;i++) {
-	if (weed_plant_has_leaf(plants[i],"gui")) weed_plant_free(weed_get_plantptr_value(plants[i],"gui",&error));
-	weed_plant_free(plants[i]);
-      }
-      weed_free(plants);
-    }
-  }
-
-
-  // free gui
-  if (weed_plant_has_leaf(filter,"gui")) weed_plant_free(weed_get_plantptr_value(filter,"gui",&error));
-
-
-  // free filter
-  weed_plant_free(filter);
-}
-
-
 void weed_unload_all(void) {
-  weed_plant_t **plants;
-
-  weed_plant_t *filter,*plugin_info,*host_info,*gui;
+  weed_plant_t *filter,*plugin_info,*host_info;
 
   void *handle;
 
@@ -5184,7 +5193,7 @@ void weed_unload_all(void) {
 
   GList *pinfo=NULL,*xpinfo;
 
-  int error,nitems;
+  int error;
 
   register int i,j;
 
@@ -5205,24 +5214,7 @@ void weed_unload_all(void) {
     filter=weed_filters[i];
 
     if (num_compound_fx(filter)>1) {
-
-      // free in_param_templates, since they were copy by value
-      if (weed_plant_has_leaf(filter,"in_parameter_templates")) {
-	nitems=weed_leaf_num_elements(filter,"in_parameter_templates");
-	if (nitems>0) {
-	  plants=weed_get_plantptr_array(filter,"in_parameter_templates",&error);
-	  for (j=0;j<nitems;j++) {
-	    if (weed_plant_has_leaf(plants[j],"gui")) {
-	      gui=(weed_get_plantptr_value(plants[j],"gui",&error));
-	      weed_plant_free(gui);
-	    }
-	    weed_plant_free(plants[j]);
-	  }
-	  weed_free(plants);
-	}
-      }
-
-      weed_plant_free(filter);
+      weed_filter_free(filter);
       continue;
     }
 
@@ -5733,7 +5725,7 @@ weed_plant_t *weed_instance_from_filter(weed_plant_t *filter) {
 
   gchar *key;
 
-  int nfilters,nptmpls,ninpar,error;
+  int nfilters,nptmpls=0,ninpar,error;
 
   int xcnumx=0;
 
@@ -5760,7 +5752,7 @@ weed_plant_t *weed_instance_from_filter(weed_plant_t *filter) {
     outp=weed_params_create(filter,FALSE);
     
     inst=weed_create_instance(filter,inc,outc,inp,outp);
-    if (filters!=NULL) weed_set_plantptr_value(inst,"compound_class",ofilter);
+    if (filters!=NULL) weed_set_plantptr_value(inst,"host_compound_class",ofilter);
 
     if (i>0) {
       weed_set_plantptr_value(last_inst,"host_next_instance",inst);
@@ -5788,9 +5780,10 @@ weed_plant_t *weed_instance_from_filter(weed_plant_t *filter) {
     weed_free(filters);
 
     // for compound fx, add param and channel connections
+    filter=ofilter;
 
     // add param connections
-    nptmpls=weed_leaf_num_elements(filter,"in_parameter_templates");
+    if (weed_plant_has_leaf(filter,"in_parameter_templates")) nptmpls=weed_leaf_num_elements(filter,"in_parameter_templates");
     if (nptmpls!=0&&weed_get_plantptr_value(filter,"in_parameter_templates",&error)!=NULL) {
       in_ptmpls=weed_get_plantptr_array(filter,"in_parameter_templates",&error);
       for (i=0;i<nptmpls;i++) {
@@ -5818,7 +5811,9 @@ weed_plant_t *weed_instance_from_filter(weed_plant_t *filter) {
     while (1) {
       // add channel connections
       key=g_strdup_printf("host_channel_connection%d",xcnumx++);
+      g_print("check key %s in %p\n",key,filter);
       if (weed_plant_has_leaf(filter,key)) {
+	g_print("got it\n");
 	xvals=weed_get_int_array(filter,key,&error);
 
 	inst=first_inst;

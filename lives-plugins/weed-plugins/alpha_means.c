@@ -67,6 +67,7 @@ int alpham_process (weed_plant_t *inst, weed_timecode_t timestamp) {
 
   float nf=(float)width/(float)n; // x pixels per quad
   float mf=(float)height/(float)m; // y pixels per quad
+  float nm=(float)(nf*mf); // pixels per quad
 
   double *vals;
 
@@ -94,6 +95,7 @@ int alpham_process (weed_plant_t *inst, weed_timecode_t timestamp) {
 	}
 	idx=nidx;
       }
+      alpha++;
     }
     alpha+=irow;
 
@@ -108,6 +110,14 @@ int alpham_process (weed_plant_t *inst, weed_timecode_t timestamp) {
     idx=nidx;
 
   }
+
+  if (nm<1.) nm=1.;
+
+  for (i=0;i<n*m;i++) {
+    vals[i]/=nm;
+  }
+
+  printf("AV %f\n",vals[0]);
 
   weed_set_double_array(out_param,"value",n*m,vals);
 

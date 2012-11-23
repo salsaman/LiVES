@@ -645,6 +645,8 @@ int dataproc_process (weed_plant_t *inst, weed_timecode_t timestamp) {
     weed_free(ip);
   }
 
+  printf("VALSSS: %f %f %f %f : %f %f\n",weed_get_double_value(in_params[0],"value",&error),weed_get_double_value(in_params[1],"value",&error),weed_get_double_value(in_params[2],"value",&error),weed_get_double_value(in_params[3],"value",&error),weed_get_double_value(out_params[0],"value",&error),weed_get_double_value(out_params[1],"value",&error));
+
   weed_free(in_params);
   weed_free(out_params);
 

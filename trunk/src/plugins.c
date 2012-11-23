@@ -3394,7 +3394,6 @@ lives_param_t *weed_params_to_rfx(gint npar, weed_plant_t *inst, gboolean show_r
       weed_free(string);
       string=weed_get_string_value(wpar,"value",&error);
       rpar[i].value=g_strdup(string);
-
       weed_free(string);
       rpar[i].max=0.;
       if (gui!=NULL&&weed_plant_has_leaf(gui,"maxchars")) {

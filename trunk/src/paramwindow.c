@@ -1334,7 +1334,9 @@ gboolean make_param_box(GtkVBox *top_vbox, lives_rfx_t *rfx) {
     if ((rfx->params[i].hidden&&rfx->params[i].hidden!=HIDDEN_NEEDS_REINIT)||
 	rfx->params[i].type==LIVES_PARAM_UNDISPLAYABLE) continue;
     if (!used[i]) {
-      if (!chk_params) add_param_to_box (GTK_BOX (param_vbox),rfx,i,TRUE);
+      if (!chk_params) {
+	add_param_to_box (GTK_BOX (param_vbox),rfx,i,TRUE);
+      }
       has_param=TRUE;
     }
   }

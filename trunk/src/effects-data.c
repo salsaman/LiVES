@@ -486,6 +486,7 @@ boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, weed_plant_t *dpa
   // int[3x]/double[3x] -> colourRGB
   // int[4x]/double[4x] -> colourRGBA
   //
+	g_print("pt aa13\n");
 
   if (dparam==sparam) return FALSE;
 
@@ -500,12 +501,14 @@ boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, weed_plant_t *dpa
 
   dtype=weed_leaf_seed_type(dparam,"value");
   stype=weed_leaf_seed_type(sparam,"value");
+	g_print("pt aa14\n");
 
   if (dhint==WEED_HINT_COLOR) {
     int cspace=weed_get_int_value(dptmpl,"colorspace",&error);
     if (cspace==WEED_COLORSPACE_RGB&&(nsvals%3!=0)) return FALSE;
     if (nsvals%4!=0) return FALSE;
   }
+	g_print("pt aa15\n");
 
   if (ndvals>nsvals) {
     if (!((dflags&WEED_PARAMETER_VARIABLE_ELEMENTS)&&!(dflags&WEED_PARAMETER_ELEMENT_PER_CHANNEL))) return FALSE;
@@ -524,6 +527,7 @@ boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, weed_plant_t *dpa
     nmax=weed_leaf_num_elements(dptmpl,"max");
     nmin=weed_leaf_num_elements(dptmpl,"min");
   }
+	g_print("pt aa16\n");
 
   switch (stype) {
   case WEED_SEED_STRING:
@@ -566,6 +570,7 @@ boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, weed_plant_t *dpa
     switch (dtype) {
     case WEED_SEED_DOUBLE:
       {
+	g_print("pt aa1\n");
 	double *valsD=weed_get_double_array(sparam,"value",&error);
 	double *valsd=weed_get_double_array(dparam,"value",&error);
 	
@@ -614,6 +619,7 @@ boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, weed_plant_t *dpa
 	  }
 
 	  pthread_mutex_lock(&mainw->data_mutex);
+	  printf("PASSINg VAL %f\n",valsd[0]);
 	  weed_set_double_array(dparam,"value",ndvals,valsd);
 	  pthread_mutex_unlock(&mainw->data_mutex);
 	}

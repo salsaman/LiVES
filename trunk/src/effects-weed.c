@@ -4835,10 +4835,14 @@ static void load_compound_plugin(gchar *plugin_name, gchar *plugin_path) {
 	  break;
 	}
 
+	g_print("set def for pnum %d\n",pnum);
+
 	// get pnum for compound filter
 	for (i=0;i<xfilt;i++) pnum+=num_in_params(get_weed_filter(filters[i]),FALSE,FALSE);
 
 	ptmpl=weed_filter_in_paramtmpl(filter,pnum,FALSE);
+	g_print("set def for 2pnum %d %p %p\n",pnum,filter,ptmpl);
+
 
 	ptype=weed_leaf_seed_type(ptmpl,"default");
 	pflags=weed_get_int_value(ptmpl,"flags",&error);
@@ -5009,8 +5013,6 @@ static void load_compound_plugin(gchar *plugin_name, gchar *plugin_path) {
 	// link alpha channels: format is f0|c0|f1|c1
 	ntok=get_token_count (buff,'|');
 
-	g_print("got ccon %s\n",buff);
-
 	if (ntok!=4) {
 	  d_print((tmp=g_strdup_printf(_("Invalid channel link found in compound effect %s, line %d\n"),plugin_name,line)));
 	  LIVES_ERROR(tmp);
@@ -5087,7 +5089,6 @@ static void load_compound_plugin(gchar *plugin_name, gchar *plugin_path) {
 	// - we will link the actual channels when we create an instance from the filter
 	key=g_strdup_printf("host_channel_connection%d",xconx++);
 	weed_set_int_array(filter,key,4,xvals);
-	g_print("setting %s in %p\n",key,filter);
 	g_free(key);
 
 	g_strfreev(array);
@@ -5716,7 +5717,7 @@ static weed_plant_t *weed_create_instance (weed_plant_t *filter, weed_plant_t **
 
 weed_plant_t *weed_instance_from_filter(weed_plant_t *filter) {
   // return an instance from a filter
-  weed_plant_t **inc,**outc,**inp,**outp,**in_ptmpls;
+  weed_plant_t **inc,**outc,**inp,**outp,**in_ptmpls,**xinp;
 
   weed_plant_t *last_inst=NULL,*first_inst=NULL,*inst,*ofilter=filter;
   weed_plant_t *iparam,*oparam,*ochan=NULL;
@@ -5725,15 +5726,17 @@ weed_plant_t *weed_instance_from_filter(weed_plant_t *filter) {
 
   gchar *key;
 
-  int nfilters,nptmpls=0,ninpar,error;
+  int nfilters,nptmpls=0,ninpar=0,error;
 
-  int xcnumx=0;
+  int xcnumx=0,x,poffset=0;
 
   register int i,j;
 
   if ((nfilters=num_compound_fx(filter))>1) {
     filters=weed_get_int_array(filter,"host_filter_list",&error);
   }
+
+  inp=weed_params_create(filter,TRUE);
 
   for (i=0;i<nfilters;i++) {
 
@@ -5748,10 +5751,20 @@ weed_plant_t *weed_instance_from_filter(weed_plant_t *filter) {
     set_default_channel_sizes (inc,outc); // we set the initial channel sizes to some reasonable defaults
     
     // create parameters from parameter_templates
-    inp=weed_params_create(filter,TRUE);
     outp=weed_params_create(filter,FALSE);
     
-    inst=weed_create_instance(filter,inc,outc,inp,outp);
+    if (nfilters==1) xinp=inp;
+    else {
+      // for a compound filter, assign only the params which belong to the instance
+      ninpar=num_in_params(filter,TRUE,TRUE);
+      xinp=g_malloc((ninpar+1)*sizeof(weed_plant_t *));
+      x=0;
+      for (j=poffset;j<poffset+ninpar;j++) xinp[x++]=inp[j];
+      xinp[x]=NULL;
+      poffset+=ninpar;
+    }
+
+    inst=weed_create_instance(filter,inc,outc,xinp,outp);
     if (filters!=NULL) weed_set_plantptr_value(inst,"host_compound_class",ofilter);
 
     if (i>0) {
@@ -5763,11 +5776,8 @@ weed_plant_t *weed_instance_from_filter(weed_plant_t *filter) {
 
     if (inc!=NULL) weed_free(inc);
     if (outc!=NULL) weed_free(outc);
-    if (inp!=NULL) weed_free(inp);
     if (outp!=NULL) weed_free(outp);
-
-    if (weed_plant_has_leaf(inst,"in_parameters")) ninpar=weed_leaf_num_elements(inst,"in_parameters");
-    else ninpar=0;
+    if (xinp!=inp) weed_free(xinp);
 
     for (j=0;j<ninpar;j++) {
       // copy param values if that was set up
@@ -5775,6 +5785,9 @@ weed_plant_t *weed_instance_from_filter(weed_plant_t *filter) {
     }
 
   }
+
+  if (inp!=NULL) weed_free(inp);
+
 
   if (filters!=NULL) {
     weed_free(filters);
@@ -5811,9 +5824,7 @@ weed_plant_t *weed_instance_from_filter(weed_plant_t *filter) {
     while (1) {
       // add channel connections
       key=g_strdup_printf("host_channel_connection%d",xcnumx++);
-      g_print("check key %s in %p\n",key,filter);
       if (weed_plant_has_leaf(filter,key)) {
-	g_print("got it\n");
 	xvals=weed_get_int_array(filter,key,&error);
 
 	inst=first_inst;
@@ -7309,35 +7320,29 @@ char *get_weed_display_string (weed_plant_t *inst, int pnum) {
 int set_copy_to(weed_plant_t *inst, int pnum, boolean update) {
   // if we update a plugin in_parameter, evaluate any "copy_value_to"
   int error;
-  int copyto;
   boolean copy_ok=FALSE;
+  int copyto;
 
+  weed_plant_t **in_params;
+  
   weed_plant_t *gui=NULL;
-
-  weed_plant_t **in_params=weed_get_plantptr_array(inst,"in_parameters",&error);
-  weed_plant_t *in_param=in_params[pnum];
-
+  weed_plant_t *in_param=weed_inst_in_param(inst,pnum,TRUE,TRUE); // use this here in case of compound fx
   weed_plant_t *paramtmpl=weed_get_plantptr_value(in_param,"template",&error);
-  int param_hint=weed_get_int_value(paramtmpl,"hint",&error);
-
-  int nparams=weed_leaf_num_elements(inst,"in_parameters");
 
   if (weed_plant_has_leaf(paramtmpl,"gui")) gui=weed_get_plantptr_value(paramtmpl,"gui",&error);
 
-  if (gui==NULL) {
-    weed_free(in_params);
-    return -1;
-  }
+  if (gui==NULL) return -1;
 
   if (weed_plant_has_leaf(gui,"copy_value_to")) {
-    int param_hint2,flags2=0;
     weed_plant_t *paramtmpl2;
+    int param_hint2,flags2=0;
+    int param_hint=weed_get_int_value(paramtmpl,"hint",&error);
+    int nparams=weed_leaf_num_elements(inst,"in_parameters");
     
     copyto=weed_get_int_value(gui,"copy_value_to",&error);
-    if (copyto==pnum||copyto<0||copyto>=nparams) {
-      weed_free(in_params);
-      return -1;
-    }
+    if (copyto==pnum||copyto<0||copyto>=nparams) return -1;
+
+    in_params=weed_get_plantptr_array(inst,"in_parameters",&error);
     paramtmpl2=weed_get_plantptr_value(in_params[copyto],"template",&error);
     if (weed_plant_has_leaf(paramtmpl2,"flags")) flags2=weed_get_int_value(paramtmpl2,"flags",&error);
     param_hint2=weed_get_int_value(paramtmpl2,"hint",&error);
@@ -7346,19 +7351,16 @@ int set_copy_to(weed_plant_t *inst, int pnum, boolean update) {
 				  weed_leaf_num_elements(paramtmpl2,"default"))) {
       copy_ok=TRUE;
     }
+    weed_free(in_params);
   }
 
-  if (!copy_ok) {
-    weed_free(in_params);
-    return -1;
-  }
+  if (!copy_ok) return -1;
 
   if (update) {
     pthread_mutex_lock(&mainw->data_mutex);
     weed_leaf_copy(in_params[copyto],"value",in_param,"value");
     pthread_mutex_unlock(&mainw->data_mutex);
   }
-  weed_free(in_params);
   return copyto;
 }
 

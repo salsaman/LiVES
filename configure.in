@@ -718,6 +718,10 @@ AM_CONDITIONAL(ENABLE_LDVGRAB,$HAVE_LDVGRAB)
 
 PKG_CHECK_MODULES(WEED, libweed >= 0.7.0, HAVE_SYSTEM_WEED=true, HAVE_SYSTEM_WEED=false)
 
+if test "$HAVE_SYSTEM_WEED" = "false"; then
+echo "...this is not a problem if we have WEED_SLICE"
+fi
+
 AC_SUBST(WEED_CFLAGS)
 AC_SUBST(WEED_LIBS)
 
@@ -728,6 +732,8 @@ PKG_CHECK_MODULES(WEED_SLICE, libweed_slice >= 0.7.0, HAVE_SYSTEM_WEED_SLICE=tru
 
 if test "$HAVE_SYSTEM_WEED_SLICE" = "true"; then
 HAVE_SYSTEM_WEED=true
+else
+echo "...will try to build from included sources"
 fi
 
 dnl CFLAGS will be the same
@@ -740,6 +746,10 @@ WEED_MAKEFILES=libweed/Makefile
 fi
 
 PKG_CHECK_MODULES(WEED_UTILS, libweed-utils >= 0.6.0, HAVE_SYSTEM_WEED_UTILS=true, HAVE_SYSTEM_WEED_UTILS=false)
+
+if test "$HAVE_SYSTEM_WEED_UTILS" = "false"; then
+echo "...will try to build from included sources"
+fi
 
 AC_SUBST(WEED_UTILS_CFLAGS)
 AC_SUBST(WEED_UTILS_LIBS)
@@ -754,11 +764,19 @@ AC_SUBST(WEED_COMPAT_LIBS)
 
 AM_CONDITIONAL(HAVE_SYSTEM_WEED_COMPAT,$HAVE_SYSTEM_WEED_COMPAT)
 
+if test "$HAVE_SYSTEM_WEED_COMPAT" = "false"; then
+echo "...will try to build from included sources"
+fi
 
-PKG_CHECK_MODULES(WEED_PLUGIN_UTILS, libweed-plugin-utils >= 0.7.0, HAVE_SYSTEM_WEED_PLUGIN_UTILS=true, HAVE_SYSTEM_WEED_PLUGIN_UTILS=false)
+
+PKG_CHECK_MODULES(WEED_PLUGIN_UTILS, libweed-plugin-utils >= 0.9.0, HAVE_SYSTEM_WEED_PLUGIN_UTILS=true, HAVE_SYSTEM_WEED_PLUGIN_UTILS=false)
 
 AC_SUBST(WEED_PLUGIN_UTILS_CFLAGS)
 AC_SUBST(WEED_PLUGIN_UTILS_LIBS)
+
+if test "$HAVE_SYSTEM_WEED_PLUGIN_UTILS" = "false"; then
+echo "...will try to build from included sources"
+fi
 
 AM_CONDITIONAL(HAVE_SYSTEM_WEED_PLUGIN_UTILS,$HAVE_SYSTEM_WEED_PLUGIN_UTILS)
 
@@ -847,8 +865,17 @@ fi
 
 echo "*******************************************************************"
 echo "LiVES is now configured and ready for building."
-echo "If you are building for MULTILIBS on a 64 bit system, you may wish to re-run, e.g.: ./configure --libdir=/usr/lib64"
+echo "If you are building for MULTILIBS on a 64 bit system, you may wish to re-run this, e.g.: ./configure --libdir=/usr/lib64"
 echo "In this case you MUST first manually update the library paths in libweed/*.pc files."
 echo  "*******************************************************************"
 
+echo "*******************************************************************"
+echo "
+IMPORTANT: if you are building a package using dpkg, you MUST have the following in your 'rules' file:
 
+#!/usr/bin/make -f
+LDFLAGS:=
+%:
+ dh \$@
+"
+echo "*******************************************************************"

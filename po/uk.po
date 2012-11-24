@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2012-11-18 19:22-0300\n"
+"POT-Creation-Date: 2012-11-24 12:14-0300\n"
 "PO-Revision-Date: 2012-08-15 11:08+0000\n"
 "Last-Translator: Yuri Chornoivan <yurchor@gmail.com>\n"
 "Language-Team: Ukrainian <translation@linux.org.ua>\n"
@@ -6232,28 +6232,28 @@ msgstr ""
 "\n"
 "Не було створено жодного кадру.\n"
 
-#: src/effects-weed.c:4159
+#: src/effects-weed.c:4162
 #, c-format
 msgid "Error: plugin %s has no weed_setup() function.\n"
 msgstr "Помилка: у додатку %s не визначено функції weed_setup().\n"
 
-#: src/effects-weed.c:4174
+#: src/effects-weed.c:4177
 #, c-format
 msgid "No usable filters found in plugin %s\n"
 msgstr "У додатку %s не знайдено придатних до використання фільтрів\n"
 
-#: src/effects-weed.c:4202
+#: src/effects-weed.c:4205
 #, c-format
 msgid "Found duplicate plugin %s\n"
 msgstr "Виявлено дублювання додатка %s\n"
 
 #. TRANSLATORS: example " - LADSPA plugins -"
-#: src/effects-weed.c:4242 src/rte_window.c:1276
+#: src/effects-weed.c:4245 src/rte_window.c:1276
 #, c-format
 msgid " - %s plugins -"
 msgstr " - додатки %s -"
 
-#: src/effects-weed.c:4294
+#: src/effects-weed.c:4297
 #, c-format
 msgid ""
 "Info: Unable to load plugin %s\n"
@@ -6262,169 +6262,169 @@ msgstr ""
 "Інформація: не вдалося завантажити додаток %s\n"
 "Повідомлення про помилку: %s\n"
 
-#: src/effects-weed.c:4297 src/effects-weed.c:5273
+#: src/effects-weed.c:4300 src/effects-weed.c:5266
 msgid "Some plugin directories"
 msgstr "Каталоги додатків"
 
-#: src/effects-weed.c:4465
+#: src/effects-weed.c:4468
 #, c-format
 msgid "Successfully loaded %d Weed filters\n"
 msgstr "Успішно завантажено %d фільтрів Weed\n"
 
-#: src/effects-weed.c:4502
+#: src/effects-weed.c:4603
 #, c-format
 msgid "Invalid compound effect %s - has conflicting target_fps\n"
 msgstr ""
 
-#: src/effects-weed.c:4522
+#: src/effects-weed.c:4623
 #, c-format
 msgid "Invalid compound effect %s - has multiple transition parameters\n"
 msgstr ""
 
-#: src/effects-weed.c:4536
+#: src/effects-weed.c:4637
 #, c-format
 msgid "Invalid compound effect %s - has multiple master volume parameters\n"
 msgstr ""
 
-#: src/effects-weed.c:4670
+#: src/effects-weed.c:4770
 #, c-format
 msgid "Invalid compound effect %s - must have >1 sub filters\n"
 msgstr ""
 
-#: src/effects-weed.c:4690
+#: src/effects-weed.c:4790
 #, fuzzy, c-format
 msgid "Invalid effect %s found in compound effect %s, line %d\n"
 msgstr "Некоректний ефект %s у %s\n"
 
-#: src/effects-weed.c:4705
+#: src/effects-weed.c:4805
 #, fuzzy, c-format
 msgid "Invalid default found in compound effect %s, line %d\n"
 msgstr "Некоректний ефект %s у %s\n"
 
-#: src/effects-weed.c:4716
+#: src/effects-weed.c:4816
 #, fuzzy, c-format
 msgid "Invalid filter %d for defaults found in compound effect %s, line %d\n"
 msgstr "Некоректний ефект %s у %s\n"
 
-#: src/effects-weed.c:4730
+#: src/effects-weed.c:4830
 #, fuzzy, c-format
 msgid "Invalid param %d for defaults found in compound effect %s, line %d\n"
 msgstr "Некоректний ефект %s у %s\n"
 
-#: src/effects-weed.c:4754
+#: src/effects-weed.c:4861
 #, fuzzy, c-format
 msgid ""
 "Invalid number of values for defaults found in compound effect %s, line %d\n"
 msgstr "Некоректний ефект %s у %s\n"
 
-#: src/effects-weed.c:4788
+#: src/effects-weed.c:4895
 #, fuzzy, c-format
 msgid ""
 "Invalid non-boolean value for defaults found in compound effect %s, line %d\n"
 msgstr "Некоректний ефект %s у %s\n"
 
-#: src/effects-weed.c:4821
+#: src/effects-weed.c:4928
 #, fuzzy, c-format
 msgid "Invalid param link found in compound effect %s, line %d\n"
 msgstr "Некоректний ефект %s у %s\n"
 
-#: src/effects-weed.c:4832
+#: src/effects-weed.c:4939
 #, fuzzy, c-format
 msgid ""
 "Invalid out filter %d for link params found in compound effect %s, line %d\n"
 msgstr "Некоректний ефект %s у %s\n"
 
-#: src/effects-weed.c:4846
+#: src/effects-weed.c:4953
 #, fuzzy, c-format
 msgid ""
 "Invalid out param %d for link params found in compound effect %s, line %d\n"
 msgstr "Некоректний ефект %s у %s\n"
 
-#: src/effects-weed.c:4857
+#: src/effects-weed.c:4964
 #, fuzzy, c-format
 msgid ""
 "Invalid non-boolean value for autoscale found in compound effect %s, line "
 "%d\n"
 msgstr "Некоректний ефект %s у %s\n"
 
-#: src/effects-weed.c:4868
+#: src/effects-weed.c:4975
 #, fuzzy, c-format
 msgid ""
 "Invalid in filter %d for link params found in compound effect %s, line %d\n"
 msgstr "Некоректний ефект %s у %s\n"
 
-#: src/effects-weed.c:4882
+#: src/effects-weed.c:4989
 #, fuzzy, c-format
 msgid ""
 "Invalid in param %d for link params found in compound effect %s, line %d\n"
 msgstr "Некоректний ефект %s у %s\n"
 
-#: src/effects-weed.c:4910
+#: src/effects-weed.c:5017
 #, fuzzy, c-format
 msgid "Invalid channel link found in compound effect %s, line %d\n"
 msgstr "Некоректний ефект %s у %s\n"
 
-#: src/effects-weed.c:4921
+#: src/effects-weed.c:5028
 #, fuzzy, c-format
 msgid ""
 "Invalid out filter %d for link channels found in compound effect %s, line "
 "%d\n"
 msgstr "Некоректний ефект %s у %s\n"
 
-#: src/effects-weed.c:4939
+#: src/effects-weed.c:5046
 #, fuzzy, c-format
 msgid ""
 "Invalid out channel %d for link params found in compound effect %s, line %d\n"
 msgstr "Некоректний ефект %s у %s\n"
 
-#: src/effects-weed.c:4949
+#: src/effects-weed.c:5056
 #, fuzzy, c-format
 msgid ""
 "Invalid in filter %d for link channels found in compound effect %s, line %d\n"
 msgstr "Некоректний ефект %s у %s\n"
 
-#: src/effects-weed.c:4967
+#: src/effects-weed.c:5074
 #, fuzzy, c-format
 msgid ""
 "Invalid in channel %d for link params found in compound effect %s, line %d\n"
 msgstr "Некоректний ефект %s у %s\n"
 
-#: src/effects-weed.c:5007
+#: src/effects-weed.c:5110
 #, c-format
 msgid "Compound:%s"
 msgstr ""
 
-#: src/effects-weed.c:5071
+#: src/effects-weed.c:5174
 #, fuzzy, c-format
 msgid "Successfully loaded %d compound filters\n"
 msgstr "Успішно завантажено %d фільтрів Weed\n"
 
-#: src/effects-weed.c:5906
+#: src/effects-weed.c:5931
 #, c-format
 msgid "Effect %s cannot be used with this audio player.\n"
 msgstr "Не можна використовувати ефект %s з цим програвачем звукових даних.\n"
 
-#: src/effects-weed.c:6046
+#: src/effects-weed.c:6071
 #, c-format
 msgid "Failed to start instance %s, error code %d\n"
 msgstr "Не вдалося запустити екземпляр %s, код помилки: %d\n"
 
-#: src/effects-weed.c:6113
+#: src/effects-weed.c:6138
 #, c-format
 msgid "Unable to start generator %s\n"
 msgstr "Не вдалося запустити породжувач %s\n"
 
-#: src/effects-weed.c:6831
+#: src/effects-weed.c:6856
 #, c-format
 msgid "Failed to start generator %s\n"
 msgstr "Не вдалося запустити породжувач %s\n"
 
-#: src/effects-weed.c:6928
+#: src/effects-weed.c:6953
 #, c-format
 msgid "Failed to start generator %s, error %d\n"
 msgstr "Не вдалося запустити породжувач %s, помилка: %d\n"
 
-#: src/effects-weed.c:8128
+#: src/effects-weed.c:8144
 #, c-format
 msgid "%s [unstable] (%s)"
 msgstr "%s [нестабільний] (%s)"
@@ -6545,43 +6545,43 @@ msgstr "Скинути"
 msgid "Close _window"
 msgstr "За_крити вікно"
 
-#: src/paramwindow.c:1347
+#: src/paramwindow.c:1349
 msgid "No parameters"
 msgstr "Без параметрів"
 
-#: src/paramwindow.c:1428
+#: src/paramwindow.c:1430
 msgid "Invalid parameter"
 msgstr "Некоректний параметр"
 
-#: src/paramwindow.c:1612
+#: src/paramwindow.c:1614
 msgid "LiVES: - Select Colour"
 msgstr "LiVES: - Вибір кольору"
 
-#: src/paramwindow.c:1616
+#: src/paramwindow.c:1618
 msgid "Click to set the colour"
 msgstr "Натисніть, щоб вказати колір"
 
-#: src/paramwindow.c:1631
+#: src/paramwindow.c:1633
 msgid "_Red"
 msgstr "_Червоний"
 
-#: src/paramwindow.c:1632
+#: src/paramwindow.c:1634
 msgid "The red value (0 - 255)"
 msgstr "Значення червоного (0-255)"
 
-#: src/paramwindow.c:1635
+#: src/paramwindow.c:1637
 msgid "_Green"
 msgstr "_Зелений"
 
-#: src/paramwindow.c:1636
+#: src/paramwindow.c:1638
 msgid "The green value (0 - 255)"
 msgstr "Значення зеленого (0-255)"
 
-#: src/paramwindow.c:1639
+#: src/paramwindow.c:1641
 msgid "_Blue"
 msgstr "С_иній"
 
-#: src/paramwindow.c:1640
+#: src/paramwindow.c:1642
 msgid "The blue value (0 - 255)"
 msgstr "Значення синього (0-255)"
 
@@ -6808,7 +6808,7 @@ msgstr "Увімкнені декодери відео (зніміть позн�
 msgid "Failed to load %s, transitions may not resize.\n"
 msgstr "Не вдалося завантажити %s, при переходах зміна розмірів неможлива.\n"
 
-#: src/plugins.c:3820
+#: src/plugins.c:3819
 #, c-format
 msgid "%s advanced settings"
 msgstr "Додаткові параметри %s"

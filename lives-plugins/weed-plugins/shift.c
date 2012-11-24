@@ -1,6 +1,6 @@
 // shift.c
 // weed plugin
-// (c) G. Finch (salsaman) 2005 - 2012
+// (c) G. Finch (salsaman) 2012
 //
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details

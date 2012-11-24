@@ -1,12 +1,12 @@
 // data_processor.c
 // weed plugin
-// (c) G. Finch (salsaman) 2011
+// (c) G. Finch (salsaman) 2012
 //
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
 
 // geenrically process out[x] from a combination of in[a][b], store[z] and arithmetic expressions
-
+//#define DEBUG
 #include <stdio.h>
 
 #ifdef HAVE_SYSTEM_WEED
@@ -228,8 +228,8 @@ static char *simplify(node *xnode, _sdata *sdata) {
 
 
 
-static int exp_to_tree(const char *exp) {
-  size_t len=strlen(exp);
+static int exp_to_tree(const char *oexp) {
+  size_t len=strlen(oexp);
 
   int nstart=-1;
   int plevel=0;
@@ -242,8 +242,9 @@ static int exp_to_tree(const char *exp) {
   char *varname=NULL;
   char *parbit;
 
-  node *oldroot,*newnode=NULL;
+  char *exp=(char *)oexp,*tmp;
 
+  node *oldroot,*newnode=NULL;
 
   register int i;
 
@@ -251,15 +252,20 @@ static int exp_to_tree(const char *exp) {
     switch (exp[i]) {
 
     case '[':
-      if (varname==NULL) return 1;
-
+      if (varname==NULL) {
+	if (exp!=oexp) weed_free(exp);
+	return 1;
+      }
       plevel=2;
       pstart=++i;
 
       while(1) {
 	if (!strncmp(&exp[i],"]",1)) break;
 	i++;
-	if (i>len) return 1;
+	if (i>len) {
+	  if (exp!=oexp) weed_free(exp);
+	  return 1;
+	}
       }
 
       parbit=weed_malloc(i-pstart+3);
@@ -289,8 +295,14 @@ static int exp_to_tree(const char *exp) {
       break;
 
     case '(':
-      if (plevel==1) return 1;
-      if (nstart!=-1) return 1;
+      if (plevel==1) {
+	if (exp!=oexp) weed_free(exp);
+	return 1;
+      }
+      if (nstart!=-1) {
+	if (exp!=oexp) weed_free(exp);
+	return 1;
+      }
 
       plevel=2;
       pstart=++i;
@@ -302,8 +314,10 @@ static int exp_to_tree(const char *exp) {
 	if (plevel==1) break;
 
 	i++;
-	if (i>len) return 1;
-
+	if (i>len) {
+	  if (exp!=oexp) weed_free(exp);
+	  return 1;
+	}
       }
 
       parbit=strndup(exp+pstart,i-pstart);
@@ -335,24 +349,53 @@ static int exp_to_tree(const char *exp) {
     case '7':
     case '8':
     case '9':
-      if (plevel==1) return 1;
-      if (varname!=NULL) return 1;
+      if (plevel==1) {
+	if (exp!=oexp) weed_free(exp);
+	return 1;
+      }
+      if (varname!=NULL) {
+	if (exp!=oexp) weed_free(exp);
+	return 1;
+      }
       if (nstart==-1) nstart=i;
       break;
     case '.':
-      if (plevel==1) return 1;
-      if (gotdot||varname!=NULL) return 1;
+      if (plevel==1) {
+	if (exp!=oexp) weed_free(exp);
+	return 1;
+      }
+      if (gotdot||varname!=NULL) {
+	if (exp!=oexp) weed_free(exp);
+	return 1;
+      }
       if (nstart==-1) nstart=i;
       gotdot=1;
       break;
-    case '+':
     case '-':
+    case '+':
+      if (nstart==-1) {
+	// unary operator
+	tmp=weed_malloc(len+2);
+	snprintf(tmp,i,"%s",exp);
+	sprintf(tmp+i,"0");
+	sprintf(tmp+i+1,exp+i);
+	len++;
+	i--;
+	if (exp!=oexp) weed_free(exp);
+	exp=tmp;
+	break;
+      }
     case '*':
     case '/':
-      if (varname!=NULL) return 1;
+      if (varname!=NULL) {
+	if (exp!=oexp) weed_free(exp);
+	return 1;
+      }
       if (plevel==0) {
-	if (nstart==-1) return 1;
-
+	if (nstart==-1) {
+	  if (exp!=oexp) weed_free(exp);
+	  return 1;
+	}
 	op=exp[i];
 
 	snprintf(buf,i-nstart+1,"%s",exp+nstart);
@@ -396,23 +439,37 @@ static int exp_to_tree(const char *exp) {
 
       break;
     case 'i':
-      if (plevel==1) return 1;
-      if (varname!=NULL||nstart!=-1) return 1;
+      if (plevel==1) {
+	if (exp!=oexp) weed_free(exp);
+	return 1;
+      }
+      if (varname!=NULL||nstart!=-1) {
+	if (exp!=oexp) weed_free(exp);
+	return 1;
+      }
       varname=strdup("i");
       break;
     case 's':
-      if (plevel==1) return 1;
-      if (varname!=NULL||nstart!=-1) return 1;
+      if (plevel==1) {
+	if (exp!=oexp) weed_free(exp);
+	return 1;
+      }
+      if (varname!=NULL||nstart!=-1) {
+	if (exp!=oexp) weed_free(exp);
+	return 1;
+      }
       varname=strdup("s");
       break;
     case ' ':
       break;
     default:
+      if (exp!=oexp) weed_free(exp);
       return 1;
     }
   }
 
   if (nstart==-1) {
+    if (exp!=oexp) weed_free(exp);
     if (plevel==0) return 1;
     return 0;
   }
@@ -429,6 +486,7 @@ static int exp_to_tree(const char *exp) {
     else add_right(newnode,buf);
   }
 
+  if (exp!=oexp) weed_free(exp);
   return 0;
 }
 
@@ -485,6 +543,8 @@ static double evaluate (char *exp, _sdata *sdata) {
   fprintf(stderr,"\n\n");
 #endif
 
+
+
   if (sdata->error) return 0.;
 
   if (!strncmp(rootnode->value,"inf",3)) {
@@ -492,7 +552,7 @@ static double evaluate (char *exp, _sdata *sdata) {
     return 0.;
   }
 
-  if (!(strncmp(rootnode->value,"i",1)||!strncmp(rootnode->value,"s",1))) {
+  if (!(strncmp(rootnode->value,"i",1))||!strncmp(rootnode->value,"s",1)) {
     char buf[32768];
 #ifdef DEBUG
     fprintf(stderr,"!!!!!\n");
@@ -644,8 +704,6 @@ int dataproc_process (weed_plant_t *inst, weed_timecode_t timestamp) {
     weed_free(ws);
     weed_free(ip);
   }
-
-  printf("VALSSS: %f %f %f %f : %f %f\n",weed_get_double_value(in_params[0],"value",&error),weed_get_double_value(in_params[1],"value",&error),weed_get_double_value(in_params[2],"value",&error),weed_get_double_value(in_params[3],"value",&error),weed_get_double_value(out_params[0],"value",&error),weed_get_double_value(out_params[1],"value",&error));
 
   weed_free(in_params);
   weed_free(out_params);

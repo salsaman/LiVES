@@ -489,6 +489,7 @@ weed_plant_t *weed_out_param_float_init (const char *name, double def, double mi
 
   weed_leaf_set(paramt,"name",WEED_SEED_STRING,1,&name);
   weed_leaf_set(paramt,"hint",WEED_SEED_INT,1,&hint);
+  weed_leaf_set(paramt,"default",WEED_SEED_DOUBLE,1,&def);
   weed_leaf_set(paramt,"min",WEED_SEED_DOUBLE,1,&min);
   weed_leaf_set(paramt,"max",WEED_SEED_DOUBLE,1,&max);
 

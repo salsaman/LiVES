@@ -4835,14 +4835,10 @@ static void load_compound_plugin(gchar *plugin_name, gchar *plugin_path) {
 	  break;
 	}
 
-	g_print("set def for pnum %d\n",pnum);
-
 	// get pnum for compound filter
 	for (i=0;i<xfilt;i++) pnum+=num_in_params(get_weed_filter(filters[i]),FALSE,FALSE);
 
 	ptmpl=weed_filter_in_paramtmpl(filter,pnum,FALSE);
-	g_print("set def for 2pnum %d %p %p\n",pnum,filter,ptmpl);
-
 
 	ptype=weed_leaf_seed_type(ptmpl,"default");
 	pflags=weed_get_int_value(ptmpl,"flags",&error);
@@ -4996,7 +4992,7 @@ static void load_compound_plugin(gchar *plugin_name, gchar *plugin_path) {
 
 	// calc xpnum2
 	xpnum2=pnum2;
-	for (i=0;i<xfilt-1;i++) xpnum2+=num_in_params(get_weed_filter(filters[i]),FALSE,FALSE);
+	for (i=0;i<xfilt2;i++) xpnum2+=num_in_params(get_weed_filter(filters[i]),FALSE,FALSE);
 
 	// must get paramtmpl here from filter (not xfilter)
 	iptmpl=weed_filter_in_paramtmpl(filter,xpnum2,FALSE);
@@ -5584,6 +5580,9 @@ weed_plant_t **weed_params_create (weed_plant_t *filter, gboolean in) {
       else weed_leaf_copy(params[i],"value",paramtmpls[i],"default");
       weed_add_plant_flags(params[i],WEED_LEAF_READONLY_PLUGIN);
     }
+    else {
+      weed_leaf_copy(params[i],"value",paramtmpls[i],"default");
+    }
   }
   params[num_params]=NULL;
   weed_free(paramtmpls);
@@ -5700,11 +5699,23 @@ static weed_plant_t *weed_create_instance (weed_plant_t *filter, weed_plant_t **
   // here we create a new filter_instance from the ingredients: 
   // filter_class, in_channels, out_channels, in_parameters, out_parameters
   weed_plant_t *inst=weed_plant_new(WEED_PLANT_FILTER_INSTANCE);
+
+  int n;
+  int flags=WEED_LEAF_READONLY_PLUGIN;
+
+  register int i;
+
   weed_set_plantptr_value(inst,"filter_class",filter);
   if (inc!=NULL) weed_set_plantptr_array(inst,"in_channels",weed_flagset_array_count(inc,TRUE),inc);
   if (outc!=NULL) weed_set_plantptr_array(inst,"out_channels",weed_flagset_array_count(outc,TRUE),outc);
   if (inp!=NULL) weed_set_plantptr_array(inst,"in_parameters",weed_flagset_array_count(inp,TRUE),inp);
-  if (outp!=NULL) weed_set_plantptr_array(inst,"out_parameters",weed_flagset_array_count(outp,TRUE),outp);
+  if (outp!=NULL) {
+    weed_set_plantptr_array(inst,"out_parameters",(n=weed_flagset_array_count(outp,TRUE)),outp);
+    for (i=0;i<n;i++) {
+      // allow plugins to set out_param "value"
+      weed_leaf_set_flags(outp[i],"value",(weed_leaf_get_flags(outp[i],"value")|flags)^flags);
+    }
+  }
 
   weed_set_int_value(inst,"host_refs",1);
   weed_set_boolean_value(inst,"host_inited",WEED_FALSE);
@@ -5803,9 +5814,11 @@ weed_plant_t *weed_instance_from_filter(weed_plant_t *filter) {
 	if (weed_plant_has_leaf(in_ptmpls[i],"host_internal_connection")) {
 	  xvals=weed_get_int_array(in_ptmpls[i],"host_internal_connection",&error);
 	  inst=first_inst;
-	  while (--xvals[0]>0) inst=weed_get_plantptr_value(inst,"host_next_instance",&error);
-	  
-	  oparam=weed_inst_in_param(inst,xvals[1],FALSE,FALSE);
+	  while (--xvals[0]>=0) inst=weed_get_plantptr_value(inst,"host_next_instance",&error);
+
+	  outp=weed_get_plantptr_array(inst,"out_parameters",&error);
+	  oparam=outp[xvals[1]];
+	  weed_free(outp);
 
 	  iparam=weed_inst_in_param(first_inst,i,FALSE,FALSE);
 
@@ -7326,7 +7339,7 @@ int set_copy_to(weed_plant_t *inst, int pnum, boolean update) {
   weed_plant_t **in_params;
   
   weed_plant_t *gui=NULL;
-  weed_plant_t *in_param=weed_inst_in_param(inst,pnum,TRUE,TRUE); // use this here in case of compound fx
+  weed_plant_t *in_param=weed_inst_in_param(inst,pnum,FALSE,FALSE); // use this here in case of compound fx
   weed_plant_t *paramtmpl=weed_get_plantptr_value(in_param,"template",&error);
 
   if (weed_plant_has_leaf(paramtmpl,"gui")) gui=weed_get_plantptr_value(paramtmpl,"gui",&error);

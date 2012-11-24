@@ -117,8 +117,6 @@ int alpham_process (weed_plant_t *inst, weed_timecode_t timestamp) {
     vals[i]/=nm;
   }
 
-  printf("AV %f\n",vals[0]);
-
   weed_set_double_array(out_param,"value",n*m,vals);
 
   weed_free(vals);

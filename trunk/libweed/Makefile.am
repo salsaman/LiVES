@@ -25,7 +25,7 @@ docs-doxygen:
 endif
 
 WEED_SO_VERSION = 0:6:0
-WEED_PSO_VERSION = 0:7:0
+WEED_PSO_VERSION = 0:9:0
 
 LIBS =
 

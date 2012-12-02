@@ -121,11 +121,9 @@ int shift_process (weed_plant_t *inst, weed_timecode_t timestamp) {
 
   int clamping=WEED_YUV_CLAMPING_CLAMPED;
 
-  register int i;
-
   weed_free(in_params);
 
-  printf("shift %d, %d\n",x,y);
+  //printf("\nshift %d, %d\n",x,y);
 
   // new threading arch
   if (weed_plant_has_leaf(out_channel,"offset")) {
@@ -149,9 +147,11 @@ int shift_process (weed_plant_t *inst, weed_timecode_t timestamp) {
     // shift left
     istart=0;
     iend=width+x;
+    if (iend<0) iend=0;
   }
   else {
     // shift right
+    if (x>=width) x=width;
     istart=x;
     iend=width;
   }
@@ -169,14 +169,13 @@ int shift_process (weed_plant_t *inst, weed_timecode_t timestamp) {
       add_bg_row(dst,x,pal,clamping,trans);
       sx=0;
     }
-    else sx=x;
+    else sx=-x;
 
-    for (i=istart;i<iend;i+=psize) {
-      weed_memcpy(&dst[i],src+sy+sx,psize);
-      sx+=psize;
+    if (istart<iend) {
+      weed_memcpy(&dst[istart],src+sy+sx,iend-istart);
     }
 
-    if (iend<width) add_bg_row(&dst[i],width-iend,pal,clamping,trans);
+    if (iend<width) add_bg_row(&dst[iend],width-iend,pal,clamping,trans);
 
   }
 

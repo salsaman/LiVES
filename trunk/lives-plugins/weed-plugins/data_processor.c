@@ -48,6 +48,7 @@ static int package_version=1; // version of this package
 
 #define NSTORE (EQN-EQS)
 
+#define MAX_EXP_LEN 65536
 
 typedef struct {
   weed_plant_t **params;
@@ -159,8 +160,14 @@ static char *simplify2(node *left, node *right, node *op, _sdata *sdata) {
 
   weed_free(op->value);
 
-  if (op->varname==NULL) snprintf(buf,32768,"%f",res);
-  else snprintf(buf,32768,"%s[%d]",op->varname,(int)res);
+  if (op->varname!=NULL) {
+    snprintf(buf,32768,"%s[%d]",op->varname,(int)res);
+    res=getval(buf,sdata);
+    free(op->varname);
+    op->varname=NULL;
+  }
+
+  snprintf(buf,32768,"%f",res);
 
   op->value=strdup(buf);
 
@@ -228,23 +235,23 @@ static char *simplify(node *xnode, _sdata *sdata) {
 
 
 
-static int exp_to_tree(const char *oexp) {
-  size_t len=strlen(oexp);
+static int exp_to_tree(const char *exp) {
+  size_t len=strlen(exp);
 
   int nstart=-1;
   int plevel=0;
   int pstart;
   int gotdot=0;
-  int op;
+  int retval;
 
   char buf[1024];
 
   char *varname=NULL;
   char *parbit;
 
-  char *exp=(char *)oexp,*tmp;
+  char *tmp;
 
-  node *oldroot,*newnode=NULL;
+  node *oldroot;
 
   register int i;
 
@@ -253,7 +260,6 @@ static int exp_to_tree(const char *oexp) {
 
     case '[':
       if (varname==NULL) {
-	if (exp!=oexp) weed_free(exp);
 	return 1;
       }
       plevel=2;
@@ -263,13 +269,14 @@ static int exp_to_tree(const char *oexp) {
 	if (!strncmp(&exp[i],"]",1)) break;
 	i++;
 	if (i>len) {
-	  if (exp!=oexp) weed_free(exp);
 	  return 1;
 	}
       }
 
+      if (i-pstart+3>MAX_EXP_LEN) return 5;
+
       parbit=weed_malloc(i-pstart+3);
-      sprintf(parbit,"%s","0+");
+      sprintf(parbit,"%s","0+"); // need at least one operator to hold the varname
 
       snprintf(parbit+2,i-pstart+1,"%s",exp+pstart);
 
@@ -280,8 +287,10 @@ static int exp_to_tree(const char *oexp) {
       oldroot=rootnode;
       rootnode=NULL;
 
-      exp_to_tree(parbit);
+      retval=exp_to_tree(parbit);
       weed_free(parbit);
+
+      if (retval!=0) return retval;
 
       rootnode->varname=varname;
       varname=NULL;
@@ -296,11 +305,9 @@ static int exp_to_tree(const char *oexp) {
 
     case '(':
       if (plevel==1) {
-	if (exp!=oexp) weed_free(exp);
 	return 1;
       }
       if (nstart!=-1) {
-	if (exp!=oexp) weed_free(exp);
 	return 1;
       }
 
@@ -315,7 +322,6 @@ static int exp_to_tree(const char *oexp) {
 
 	i++;
 	if (i>len) {
-	  if (exp!=oexp) weed_free(exp);
 	  return 1;
 	}
       }
@@ -329,8 +335,10 @@ static int exp_to_tree(const char *oexp) {
       oldroot=rootnode;
       rootnode=NULL;
 
-      exp_to_tree(parbit);
+      retval=exp_to_tree(parbit);
       weed_free(parbit);
+
+      if (retval!=0) return retval;
 
       if (oldroot!=NULL) {
 	oldroot->right=rootnode;
@@ -350,22 +358,18 @@ static int exp_to_tree(const char *oexp) {
     case '8':
     case '9':
       if (plevel==1) {
-	if (exp!=oexp) weed_free(exp);
 	return 1;
       }
       if (varname!=NULL) {
-	if (exp!=oexp) weed_free(exp);
 	return 1;
       }
       if (nstart==-1) nstart=i;
       break;
     case '.':
       if (plevel==1) {
-	if (exp!=oexp) weed_free(exp);
 	return 1;
       }
       if (gotdot||varname!=NULL) {
-	if (exp!=oexp) weed_free(exp);
 	return 1;
       }
       if (nstart==-1) nstart=i;
@@ -375,28 +379,27 @@ static int exp_to_tree(const char *oexp) {
     case '+':
       if (nstart==-1) {
 	// unary operator
+	if (len+2>MAX_EXP_LEN) return 5;
+
 	tmp=weed_malloc(len+2);
-	snprintf(tmp,i,"%s",exp);
+	snprintf(tmp,i+1,"%s",exp);
 	sprintf(tmp+i,"0");
 	sprintf(tmp+i+1,exp+i);
 	len++;
 	i--;
-	if (exp!=oexp) weed_free(exp);
-	exp=tmp;
+	sprintf((char *)exp,tmp);
+	weed_free(tmp);
 	break;
       }
     case '*':
     case '/':
       if (varname!=NULL) {
-	if (exp!=oexp) weed_free(exp);
 	return 1;
       }
       if (plevel==0) {
 	if (nstart==-1) {
-	  if (exp!=oexp) weed_free(exp);
 	  return 1;
 	}
-	op=exp[i];
 
 	snprintf(buf,i-nstart+1,"%s",exp+nstart);
 	
@@ -406,26 +409,9 @@ static int exp_to_tree(const char *oexp) {
 	  add_parent(rootnode,buf);
 	}
 	else {
-	  if (op=='+'||op=='-'||!strcmp(rootnode->value,"/")||!strcmp(rootnode->value,"*")) {
-	    if (newnode==NULL) add_right(rootnode,buf);
-	    else add_right(newnode,buf);
-	    snprintf(buf,2,"%s",&exp[i]);
-	    add_parent(rootnode,buf);
-	    newnode=NULL;
-	  }
-	  else {
-	    if (newnode!=NULL) {
-	      newnode=add_right(newnode,buf);
-	      snprintf(buf,2,"%s",&exp[i]);
-	      newnode=add_parent(newnode,buf);
-	    }
-	    else {
-	      newnode=add_right(rootnode,buf);
-	      snprintf(buf,2,"%s",&exp[i]);
-	      newnode=add_parent(newnode,buf);
-	    }
-	  }
-
+	  add_right(rootnode,buf);
+	  snprintf(buf,2,"%s",&exp[i]);
+	  add_parent(rootnode,buf);
 	}
       }
       else {
@@ -440,22 +426,18 @@ static int exp_to_tree(const char *oexp) {
       break;
     case 'i':
       if (plevel==1) {
-	if (exp!=oexp) weed_free(exp);
 	return 1;
       }
       if (varname!=NULL||nstart!=-1) {
-	if (exp!=oexp) weed_free(exp);
 	return 1;
       }
       varname=strdup("i");
       break;
     case 's':
       if (plevel==1) {
-	if (exp!=oexp) weed_free(exp);
 	return 1;
       }
       if (varname!=NULL||nstart!=-1) {
-	if (exp!=oexp) weed_free(exp);
 	return 1;
       }
       varname=strdup("s");
@@ -463,13 +445,11 @@ static int exp_to_tree(const char *oexp) {
     case ' ':
       break;
     default:
-      if (exp!=oexp) weed_free(exp);
       return 1;
     }
   }
 
   if (nstart==-1) {
-    if (exp!=oexp) weed_free(exp);
     if (plevel==0) return 1;
     return 0;
   }
@@ -480,13 +460,9 @@ static int exp_to_tree(const char *oexp) {
     rootnode=new_node(buf);
   }
   else {
-    if (newnode==NULL) {
-      add_right(rootnode,buf);
-    }
-    else add_right(newnode,buf);
+    add_right(rootnode,buf);
   }
 
-  if (exp!=oexp) weed_free(exp);
   return 0;
 }
 
@@ -518,16 +494,114 @@ static void print_tree(node *xnode, int visits) {
 #endif
 
 
-static double evaluate (char *exp, _sdata *sdata) {
+
+
+
+
+
+static int preproc(const char *exp) {
+  // put parens around *, /
+  char tmp[65536];
+  char lastop=0;
+
+  int nstart=-1,plevel=0;
+  size_t len=strlen(exp);
+
+  register int i;
+
+  
+  for (i=0;i<len;i++) {
+    switch (exp[i]) {
+    case '(':
+      nstart=i;
+    case '[':
+      i+=preproc(&exp[i+1]);
+      len=strlen(exp);
+      break;
+    case ')':
+    case ']':
+      i++;
+      goto preprocdone;
+    case '0':
+    case '1':
+    case '2':
+    case '3':
+    case '4':
+    case '5':
+    case '6':
+    case '7':
+    case '8':
+    case '9': 
+    case 'i':
+    case 's':
+      nstart=i;
+      break;
+    case '+':
+    case '-':
+      if (nstart==1) {
+	nstart=i;
+	break;
+      }
+      if (plevel>0&&(lastop=='*'||lastop=='/')) {
+	// close parens
+	if (nstart==-1) break;
+	sprintf(tmp,"%s",exp);
+	sprintf(tmp+i,")%s",exp+i);
+	sprintf((char *)exp,tmp);
+	len++;
+	i++;
+	nstart=-1;
+	plevel--;
+      }
+      lastop=exp[i];
+      break;
+    case '*':
+    case '/':
+      if (lastop=='+'||lastop=='-') {
+	// open parens
+	sprintf(tmp,exp);
+	sprintf(tmp+nstart,"(%s",exp+nstart);
+	sprintf((char *)exp,tmp);
+	len++;
+	i++;
+	nstart=-1;
+	plevel++;
+      }
+      lastop=exp[i];
+      break;
+    default:
+      break;
+    }
+  }
+
+ preprocdone:
+
+  // close any open parens
+  if (plevel>0) {
+    sprintf(tmp,exp);
+    for (i=0;i<plevel;i++) {
+      sprintf(tmp+len+i,")");
+    }
+    sprintf((char *)exp,tmp);
+    i=strlen(exp);
+  }
+
+  return i;
+}
+
+
+
+
+static double evaluate (const char *exp, _sdata *sdata) {
   double res;
 
   sdata->error=0;
   rootnode=NULL;
 
-  if (exp_to_tree(exp)) {
-    sdata->error=1;
-    return 0.;
-  }
+  preproc(exp);
+
+  sdata->error=exp_to_tree(exp);
+  if (sdata->error>0) return 0.;
 
 #ifdef DEBUG
   fprintf(stderr,"\nExp is:\n");
@@ -540,10 +614,8 @@ static double evaluate (char *exp, _sdata *sdata) {
 #ifdef DEBUG
   fprintf(stderr,"\nSimplified result is:\n");
   print_tree(rootnode,3);
-  fprintf(stderr,"\n\n");
+  fprintf(stderr,"\n\nOK\n");
 #endif
-
-
 
   if (sdata->error) return 0.;
 
@@ -552,18 +624,7 @@ static double evaluate (char *exp, _sdata *sdata) {
     return 0.;
   }
 
-  if (!(strncmp(rootnode->value,"i",1))||!strncmp(rootnode->value,"s",1)) {
-    char buf[32768];
-#ifdef DEBUG
-    fprintf(stderr,"!!!!!\n");
-#endif
-    res=getval(rootnode->value,sdata);
-    snprintf(buf,32768,"%f",res);
-#ifdef DEBUG
-    fprintf(stderr,"real res is %s\n",buf);
-#endif
-  }
-  else res=strtod(rootnode->value,NULL);
+  res=strtod(rootnode->value,NULL);
 
   free_all(rootnode);
 
@@ -607,7 +668,9 @@ int dataproc_process (weed_plant_t *inst, weed_timecode_t timestamp) {
 
   double res=0.;
 
-  char *ip,*ptr,*ws;
+  char *ip=NULL,*ptr;
+
+  char exp[MAX_EXP_LEN];
 
   size_t len;
 
@@ -618,6 +681,7 @@ int dataproc_process (weed_plant_t *inst, weed_timecode_t timestamp) {
   sdata->params=in_params;
 
   for (i=EQS;i<EQN;i++) {
+    if (ip!=NULL) weed_free(ip);
     ip=weed_get_string_value(in_params[i],"value",&error);
 
     if (!strlen(ip)) continue;
@@ -638,6 +702,11 @@ int dataproc_process (weed_plant_t *inst, weed_timecode_t timestamp) {
       continue;
     }
 
+    if (strlen(ptr+1)>=MAX_EXP_LEN) {
+      fprintf(stderr,"data_processor ERROR: eqn %d has too long expression\n",i-EQS);
+      continue;
+    }
+
     len=ptr-ip-2;
 
     if (len<1) {
@@ -645,11 +714,15 @@ int dataproc_process (weed_plant_t *inst, weed_timecode_t timestamp) {
       continue;
     }
 
+    if (len>=MAX_EXP_LEN) {
+      fprintf(stderr,"data_processor ERROR: eqn %d has too long []\n",i-EQS);
+      continue;
+    }
+
     sdata->error=0;
 
-    ws=weed_malloc(len+1);
-    snprintf(ws,len,"%s",ip+2);
-    which=(int)evaluate(ws,sdata);
+    snprintf(exp,len,"%s",ip+2);
+    which=(int)evaluate(exp,sdata);
 
     if (!strncmp(ip,"o[",2)) {
       if (which>=EQN-EQS) {
@@ -664,28 +737,35 @@ int dataproc_process (weed_plant_t *inst, weed_timecode_t timestamp) {
     }
 
     if (!sdata->error) {
-      res=evaluate(ptr+1,sdata);
+      sprintf(exp,"%s",ptr+1);
+      res=evaluate(exp,sdata);
     }
     else sdata->error+=100;
 
     if (sdata->error) {
       switch (sdata->error) {
       case 1:
-	fprintf(stderr,"data_processor ERROR: syntax error in RHS of eqn %d\n",i-EQS); break;
+	sprintf(exp,"%s",ptr+1);
+	fprintf(stderr,"data_processor ERROR: syntax error in RHS of eqn %d\n%s\n",i-EQS,exp); break;
       case 2:
 	fprintf(stderr,"data_processor ERROR: division by 0 in RHS of eqn %d\n",i-EQS); break;
       case 3:
 	fprintf(stderr,"data_processor ERROR: i array out of bounds in RHS of eqn %d\n",i-EQS); break;
       case 4:
 	fprintf(stderr,"data_processor ERROR: s array out of bounds in RHS of eqn %d\n",i-EQS); break;
+      case 5:
+	fprintf(stderr,"data_processor ERROR: expanded expression too long in RHS of eqn %d\n",i-EQS); break;
       case 101:
-	fprintf(stderr,"data_processor ERROR: syntax error in LHS of eqn %d\n%s\n",i-EQS,ws); break;
+	snprintf(exp,len,"%s",ip+2);
+	fprintf(stderr,"data_processor ERROR: syntax error in LHS of eqn %d\n%s\n",i-EQS,exp); break;
       case 102:
 	fprintf(stderr,"data_processor ERROR: division by 0 in LHS of eqn %d\n",i-EQS); break;
       case 103:
 	fprintf(stderr,"data_processor ERROR: o array out of bounds in LHS of eqn %d\n",i-EQS); break;
       case 104:
 	fprintf(stderr,"data_processor ERROR: s array out of bounds in LHS of eqn %d\n",i-EQS); break;
+      case 105:
+	fprintf(stderr,"data_processor ERROR: expanded expression too long in LHS of eqn %d\n",i-EQS); break;
       default:
 	break;
       }
@@ -701,9 +781,9 @@ int dataproc_process (weed_plant_t *inst, weed_timecode_t timestamp) {
       }
     }
 
-    weed_free(ws);
-    weed_free(ip);
   }
+
+  if (ip!=NULL) weed_free(ip);
 
   weed_free(in_params);
   weed_free(out_params);

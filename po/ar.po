@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2012-11-24 12:14-0300\n"
+"POT-Creation-Date: 2012-12-02 12:05-0300\n"
 "PO-Revision-Date: 2011-08-18 11:57+0000\n"
 "Last-Translator: salsaman <salsaman@gmail.com>\n"
 "Language-Team: Arabic <ar@li.org>\n"
@@ -5620,7 +5620,7 @@ msgstr ""
 "\n"
 "يرجى التحقق من تصريحات هذا الملف والمجلد ثم إعادة المحاولة\n"
 
-#: src/effects-weed.c:4300 src/effects-weed.c:5266
+#: src/effects-weed.c:4300 src/effects-weed.c:5262
 #, fuzzy
 msgid "Some plugin directories"
 msgstr "وتشمل الدلائل"
@@ -5670,120 +5670,120 @@ msgstr ""
 msgid "Invalid param %d for defaults found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:4861
+#: src/effects-weed.c:4857
 #, c-format
 msgid ""
 "Invalid number of values for defaults found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:4895
+#: src/effects-weed.c:4891
 #, c-format
 msgid ""
 "Invalid non-boolean value for defaults found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:4928
+#: src/effects-weed.c:4924
 #, c-format
 msgid "Invalid param link found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:4939
+#: src/effects-weed.c:4935
 #, c-format
 msgid ""
 "Invalid out filter %d for link params found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:4953
+#: src/effects-weed.c:4949
 #, c-format
 msgid ""
 "Invalid out param %d for link params found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:4964
+#: src/effects-weed.c:4960
 #, c-format
 msgid ""
 "Invalid non-boolean value for autoscale found in compound effect %s, line "
 "%d\n"
 msgstr ""
 
-#: src/effects-weed.c:4975
+#: src/effects-weed.c:4971
 #, c-format
 msgid ""
 "Invalid in filter %d for link params found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:4989
+#: src/effects-weed.c:4985
 #, c-format
 msgid ""
 "Invalid in param %d for link params found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:5017
+#: src/effects-weed.c:5013
 #, c-format
 msgid "Invalid channel link found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:5028
+#: src/effects-weed.c:5024
 #, c-format
 msgid ""
 "Invalid out filter %d for link channels found in compound effect %s, line "
 "%d\n"
 msgstr ""
 
-#: src/effects-weed.c:5046
+#: src/effects-weed.c:5042
 #, c-format
 msgid ""
 "Invalid out channel %d for link params found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:5056
+#: src/effects-weed.c:5052
 #, c-format
 msgid ""
 "Invalid in filter %d for link channels found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:5074
+#: src/effects-weed.c:5070
 #, c-format
 msgid ""
 "Invalid in channel %d for link params found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:5110
+#: src/effects-weed.c:5106
 #, c-format
 msgid "Compound:%s"
 msgstr ""
 
-#: src/effects-weed.c:5174
+#: src/effects-weed.c:5170
 #, c-format
 msgid "Successfully loaded %d compound filters\n"
 msgstr ""
 
-#: src/effects-weed.c:5931
+#: src/effects-weed.c:5925
 #, c-format
 msgid "Effect %s cannot be used with this audio player.\n"
 msgstr ""
 
-#: src/effects-weed.c:6071
+#: src/effects-weed.c:6065
 #, c-format
 msgid "Failed to start instance %s, error code %d\n"
 msgstr ""
 
-#: src/effects-weed.c:6138
+#: src/effects-weed.c:6132
 #, fuzzy, c-format
 msgid "Unable to start generator %s\n"
 msgstr "مولد"
 
-#: src/effects-weed.c:6856
+#: src/effects-weed.c:6850
 #, fuzzy, c-format
 msgid "Failed to start generator %s\n"
 msgstr "مولد"
 
-#: src/effects-weed.c:6953
+#: src/effects-weed.c:6947
 #, c-format
 msgid "Failed to start generator %s, error %d\n"
 msgstr ""
 
-#: src/effects-weed.c:8144
+#: src/effects-weed.c:8138
 #, c-format
 msgid "%s [unstable] (%s)"
 msgstr ""

@@ -4931,7 +4931,7 @@ static void load_compound_plugin(gchar *plugin_name, gchar *plugin_path) {
 	array=g_strsplit(buff,"|",ntok);
 
 	xfilt=atoi(array[0]); // sub filter number
-	if (xfilt<0||xfilt>=nfilts) {
+	if (xfilt<-1||xfilt>=nfilts) {
 	  d_print((tmp=g_strdup_printf(_("Invalid out filter %d for link params found in compound effect %s, line %d\n"),xfilt,plugin_name,line)));
 	  LIVES_ERROR(tmp);
 	  g_free(tmp);
@@ -4939,19 +4939,22 @@ static void load_compound_plugin(gchar *plugin_name, gchar *plugin_path) {
 	  g_strfreev(array);
 	  break;
 	}
-	xfilter=get_weed_filter(filters[xfilt]);
 
-	nparams=num_in_params(xfilter,FALSE,FALSE);
+	if (xfilt>-1) {
+	  xfilter=get_weed_filter(filters[xfilt]);
 
-	pnum=atoi(array[1]);
-	
-	if (pnum>=nparams) {
-	  d_print((tmp=g_strdup_printf(_("Invalid out param %d for link params found in compound effect %s, line %d\n"),pnum,plugin_name,line)));
-	  LIVES_ERROR(tmp);
-	  g_free(tmp);
-	  ok=FALSE;
-	  g_strfreev(array);
-	  break;
+	  nparams=num_in_params(xfilter,FALSE,FALSE);
+
+	  pnum=atoi(array[1]);
+	  
+	  if (pnum>=nparams) {
+	    d_print((tmp=g_strdup_printf(_("Invalid out param %d for link params found in compound effect %s, line %d\n"),pnum,plugin_name,line)));
+	    LIVES_ERROR(tmp);
+	    g_free(tmp);
+	    ok=FALSE;
+	    g_strfreev(array);
+	    break;
+	  }
 	}
 
 	autoscale=atoi(array[2]);
@@ -5813,14 +5816,18 @@ weed_plant_t *weed_instance_from_filter(weed_plant_t *filter) {
       for (i=0;i<nptmpls;i++) {
 	if (weed_plant_has_leaf(in_ptmpls[i],"host_internal_connection")) {
 	  xvals=weed_get_int_array(in_ptmpls[i],"host_internal_connection",&error);
-	  inst=first_inst;
-	  while (--xvals[0]>=0) inst=weed_get_plantptr_value(inst,"host_next_instance",&error);
-
-	  outp=weed_get_plantptr_array(inst,"out_parameters",&error);
-	  oparam=outp[xvals[1]];
-	  weed_free(outp);
 
 	  iparam=weed_inst_in_param(first_inst,i,FALSE,FALSE);
+
+	  if (xvals[0]>-1) {
+	    inst=first_inst;
+	    while (--xvals[0]>=0) inst=weed_get_plantptr_value(inst,"host_next_instance",&error);
+	    
+	    outp=weed_get_plantptr_array(inst,"out_parameters",&error);
+	    oparam=outp[xvals[1]];
+	    weed_free(outp);
+	  }
+	  else oparam=iparam; // just hide the parameter, but don't pull a value
 
 	  weed_set_plantptr_value(iparam,"host_internal_connection",oparam);
 	  if (weed_plant_has_leaf(in_ptmpls[i],"host_internal_connection_autoscale")&&

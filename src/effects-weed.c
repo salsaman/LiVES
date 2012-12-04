@@ -4940,13 +4940,13 @@ static void load_compound_plugin(gchar *plugin_name, gchar *plugin_path) {
 	  break;
 	}
 
+	pnum=atoi(array[1]);
+
 	if (xfilt>-1) {
 	  xfilter=get_weed_filter(filters[xfilt]);
 
 	  nparams=num_in_params(xfilter,FALSE,FALSE);
 
-	  pnum=atoi(array[1]);
-	  
 	  if (pnum>=nparams) {
 	    d_print((tmp=g_strdup_printf(_("Invalid out param %d for link params found in compound effect %s, line %d\n"),pnum,plugin_name,line)));
 	    LIVES_ERROR(tmp);
@@ -9791,7 +9791,7 @@ gboolean read_key_defaults(int fd, int nparams, int key, int mode, int ver) {
   if (key>=0) {
     idx=key_to_fx[key][mode];
     filter=weed_filters[idx];
-    xnparams=weed_leaf_num_elements(filter,"in_parameter_templates");
+    xnparams=num_in_params(filter,FALSE,FALSE);
   }
 
   if (xnparams>maxparams) maxparams=xnparams;
@@ -9886,23 +9886,35 @@ gboolean read_key_defaults(int fd, int nparams, int key, int mode, int ver) {
 
 void apply_key_defaults(weed_plant_t *inst, gint key, gint mode) {
   // apply key/mode param defaults to a filter instance
-  int i=0,error;
-  int nparams=weed_leaf_num_elements(inst,"in_parameters");
+  int error;
+  int nparams;
   weed_plant_t **defs;
   weed_plant_t **params;
+
+  weed_plant_t *filter=weed_instance_get_filter(inst,TRUE);
+
+  register int i,j=0;
+
+  nparams=num_in_params(filter,FALSE,FALSE);
 
   if (nparams==0) return;
   defs=key_defaults[key][mode];
 
   if (defs==NULL) return;
 
-  params=weed_get_plantptr_array(inst,"in_parameters",&error);
+  do {
+    params=weed_get_plantptr_array(inst,"in_parameters",&error);
+    nparams=num_in_params(inst,FALSE,FALSE);
 
-  while (i<nparams) {
-    weed_leaf_copy(params[i],"value",defs[i],"value");
-    i++;
-  }
-  weed_free(params);
+    for (i=0;i<nparams;i++) {
+      if (!is_hidden_param(inst,i))
+	weed_leaf_copy(params[i],"value",defs[j],"value");
+      j++;
+    }
+    weed_free(params);
+  } while (weed_plant_has_leaf(inst,"host_next_instance")&&(inst=weed_get_plantptr_value(inst,"host_next_instance",&error))!=NULL);
+
+
 }
 
 
@@ -9921,7 +9933,7 @@ void write_key_defaults(int fd, gint key, gint mode) {
   }
 
   filter=weed_filters[key_to_fx[key][mode]];
-  nparams=weed_leaf_num_elements(filter,"in_parameter_templates");
+  nparams=num_in_params(filter,FALSE,FALSE);
   lives_write_le (fd,&nparams,4,TRUE);
 
   for (i=0;i<nparams;i++) {
@@ -9947,7 +9959,7 @@ void free_key_defaults(gint key, gint mode) {
   if (key_defs==NULL) return;
 
   filter=weed_filters[key_to_fx[key][mode]];
-  nparams=weed_leaf_num_elements(filter,"in_parameter_templates");
+  nparams=num_in_params(filter,FALSE,FALSE);
 
   while (i<nparams) {
     if (key_defs[i]!=NULL) weed_plant_free(key_defs[i]);
@@ -9962,12 +9974,13 @@ void free_key_defaults(gint key, gint mode) {
 void set_key_defaults(weed_plant_t *inst, gint key, gint mode) {
   // copy key/mode param defaults from an instance
   weed_plant_t **key_defs,**params;
+  weed_plant_t *filter=weed_instance_get_filter(inst,TRUE);
   int i=0,error;
   int nparams,poffset=0;
 
   if (key_defaults[key][mode]!=NULL) free_key_defaults(key,mode);
 
-  nparams=num_in_paramtmpls(filter,FALSE,FALSE);
+  nparams=num_in_params(filter,FALSE,FALSE);
  
   if (nparams==0) return;
 

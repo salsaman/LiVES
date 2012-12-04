@@ -9963,23 +9963,33 @@ void set_key_defaults(weed_plant_t *inst, gint key, gint mode) {
   // copy key/mode param defaults from an instance
   weed_plant_t **key_defs,**params;
   int i=0,error;
-  int nparams=weed_leaf_num_elements(inst,"in_parameters");
+  int nparams,poffset=0;
 
   if (key_defaults[key][mode]!=NULL) free_key_defaults(key,mode);
 
+  nparams=num_in_paramtmpls(filter,FALSE,FALSE);
+ 
   if (nparams==0) return;
-
-  params=weed_get_plantptr_array(inst,"in_parameters",&error);
 
   key_defs=(weed_plant_t **)g_malloc(nparams*sizeof(weed_plant_t *));
 
-  while (i<nparams) {
-    key_defs[i]=weed_plant_new(WEED_PLANT_PARAMETER);
-    weed_leaf_copy(key_defs[i],"value",params[i],"value");
-    i++;
-  }
+  do {
+    nparams=num_in_params(inst,FALSE,FALSE);
 
-  weed_free(params);
+    params=weed_get_plantptr_array(inst,"in_parameters",&error);
+    
+    while (i<nparams+poffset) {
+      key_defs[i]=weed_plant_new(WEED_PLANT_PARAMETER);
+      weed_leaf_copy(key_defs[i],"value",params[i],"value");
+      i++;
+    }
+    
+    weed_free(params);
+
+    poffset+=nparams;
+
+  } while (weed_plant_has_leaf(inst,"host_next_instance")&&(inst=weed_get_plantptr_value(inst,"host_next_instance",&error))!=NULL);
+
   key_defaults[key][mode]=key_defs;
 }
 

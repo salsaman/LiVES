@@ -15,6 +15,18 @@ if !HAVE_SYSTEM_WEED
 WEED_SUBDIRS=libweed
 endif
 
+if !HAVE_SYSTEM_WEED_UTILS
+WEED_SUBDIRS=libweed
+endif
+
+if !HAVE_SYSTEM_WEED_COMPAT
+WEED_SUBDIRS=libweed
+endif
+
+if !HAVE_SYSTEM_WEED_PLUGIN_UTILS
+WEED_SUBDIRS=libweed
+endif
+
 SUBDIRS = $(OSC_SUBDIRS) intl $(WEED_SUBDIRS) src m4 lives-plugins po resources
 PACKAGE_CAPITALISED = LiVES
 

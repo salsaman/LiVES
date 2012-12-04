@@ -1789,7 +1789,10 @@ void rte_set_defs_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
 void rte_set_key_defs (GtkButton *button, lives_rfx_t *rfx) {
   gint key,mode;
-  if (mainw->textwidget_focus!=NULL) after_param_text_changed(mainw->textwidget_focus,rfx);
+  if (mainw->textwidget_focus!=NULL) {
+    GtkWidget *textwidget=(GtkWidget *)g_object_get_data (G_OBJECT (mainw->textwidget_focus),"textwidget");
+    after_param_text_changed(textwidget,rfx);
+  }
 
   if (rfx->num_params>0) {
     key=GPOINTER_TO_INT (g_object_get_data (G_OBJECT (fx_dialog[1]),"key"));
@@ -1807,7 +1810,10 @@ void rte_set_defs_ok (GtkButton *button, lives_rfx_t *rfx) {
   int error;
   lives_colRGB24_t *rgbp;
 
-  if (mainw->textwidget_focus!=NULL) after_param_text_changed(mainw->textwidget_focus,rfx);
+  if (mainw->textwidget_focus!=NULL) {
+    GtkWidget *textwidget=(GtkWidget *)g_object_get_data (G_OBJECT (mainw->textwidget_focus),"textwidget");
+    after_param_text_changed(textwidget,rfx);
+  }
 
   if (rfx->num_params>0) {
     filter=weed_instance_get_filter((weed_plant_t *)rfx->source,TRUE);

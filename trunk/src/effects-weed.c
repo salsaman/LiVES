@@ -9989,16 +9989,17 @@ void set_key_defaults(weed_plant_t *inst, gint key, gint mode) {
   do {
     nparams=num_in_params(inst,FALSE,FALSE);
 
-    params=weed_get_plantptr_array(inst,"in_parameters",&error);
+    if (nparams>0) {
+      params=weed_get_plantptr_array(inst,"in_parameters",&error);
     
-    while (i<nparams+poffset) {
-      key_defs[i]=weed_plant_new(WEED_PLANT_PARAMETER);
-      weed_leaf_copy(key_defs[i],"value",params[i],"value");
-      i++;
+      while (i<nparams+poffset) {
+	key_defs[i]=weed_plant_new(WEED_PLANT_PARAMETER);
+	weed_leaf_copy(key_defs[i],"value",params[i],"value");
+	i++;
+      }
+      
+      weed_free(params);
     }
-    
-    weed_free(params);
-
     poffset+=nparams;
 
   } while (weed_plant_has_leaf(inst,"host_next_instance")&&(inst=weed_get_plantptr_value(inst,"host_next_instance",&error))!=NULL);

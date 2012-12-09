@@ -612,13 +612,13 @@ quantise_events (weed_plant_t *in_list, gdouble qfps, gboolean allow_gap) {
       if (get_first_event(out_list)==NULL) weed_set_voidptr_value(out_list,"first",get_last_event(out_list));
     }
   }
-
+  
   if (out_clips!=NULL) weed_free(out_clips);
   if (out_frames!=NULL) weed_free(out_frames);
 
   if (aclips!=NULL) weed_free(aclips);
   if (aseeks!=NULL) weed_free(aseeks);
-
+  
   return out_list;
 }
 

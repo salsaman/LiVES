@@ -122,7 +122,11 @@ void set_mixer_track_vol(lives_mt *mt, int trackno, gdouble vol) {
 
 
 static gboolean save_event_list_inner(lives_mt *mt, int fd, weed_plant_t *event_list, unsigned char **mem) {
-  weed_plant_t *event=get_first_event(event_list);
+  weed_plant_t *event;
+
+  if (event_list==NULL) return TRUE;
+
+  event=get_first_event(event_list);
 
   threaded_dialog_spin();
 
@@ -1027,13 +1031,17 @@ static void draw_aparams(lives_mt *mt, GtkWidget *eventbox, GList *param_list, w
 static void redraw_eventbox(lives_mt *mt, GtkWidget *eventbox) {
   GdkPixbuf *bgimg;
 
+  gtk_widget_queue_draw (eventbox); // redraw the track
+
+  if (!G_IS_OBJECT(eventbox)) return;
+
   if ((bgimg=(GdkPixbuf *)g_object_get_data(G_OBJECT(eventbox), "bgimg"))!=NULL) {
     lives_object_unref(bgimg);
     g_object_set_data(G_OBJECT(eventbox), "bgimg",NULL);
   }
-
+  
   g_object_set_data (G_OBJECT(eventbox), "drawn",GINT_TO_POINTER(FALSE));
-  gtk_widget_queue_draw (eventbox); // redraw the track
+
 
   if (is_audio_eventbox(mt,eventbox)) {
     // handle expanded audio
@@ -5973,18 +5981,6 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
 
 
 
-  gtk_container_add (GTK_CONTAINER (menuitem_menu), mt->fx_block);
-  gtk_widget_set_sensitive(mt->fx_block,FALSE);
-
-  submenu_menu=gtk_menu_new();
-  gtk_menu_item_set_submenu (GTK_MENU_ITEM (mt->fx_block), submenu_menu);
-
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_bg(submenu_menu, GTK_STATE_NORMAL, &palette->menu_and_bars);
-  }
-
-
-
   tname=lives_fx_cat_to_text(LIVES_FX_CAT_VIDEO_EFFECT,TRUE); // video effects
   cname=g_strdup_printf("_%s...",tname);
   g_free(tname);
@@ -8323,6 +8319,7 @@ gboolean multitrack_delete (lives_mt *mt, gboolean save_layout) {
       // update layout maps (kind of) with the stored_event_list
       
       layout_map=update_layout_map(mainw->stored_event_list);
+
       layout_map_audio=update_layout_map_audio(mainw->stored_event_list);
       
       for (i=1;i<MAX_FILES;i++) {
@@ -11581,7 +11578,7 @@ void polymorph (lives_mt *mt, lives_mt_poly_state_t poly) {
     }
     mouse_mode_context(mt); // reset context box text
     mt->last_fx_type=MT_LAST_FX_NONE;
-    mt->fx_box=NULL;
+
     gtk_widget_set_sensitive(mt->fx_edit,FALSE);
     gtk_widget_set_sensitive(mt->fx_delete,FALSE);
     if (mt->idlefunc>0) {
@@ -17476,15 +17473,27 @@ void mt_fixup_events(lives_mt * mt, weed_plant_t *old_event, weed_plant_t *new_e
 
   if (mt==NULL) return;
 
-  if (mt->fm_edit_event==old_event) mt->fm_edit_event=new_event;
-  if (mt->init_event==old_event) mt->init_event=new_event;
+  if (mt->fm_edit_event==old_event) {
+    //g_print("fme event\n");
+    mt->fm_edit_event=new_event;
+  }
+  if (mt->init_event==old_event) {
+    //g_print("ie event\n");
+    mt->init_event=new_event;
+  }
   if (mt->selected_init_event==old_event) {
+    //g_print("se event\n");
     mt->selected_init_event=new_event;
   }
-  if (mt->avol_init_event==old_event) mt->avol_init_event=new_event;
-  if (mt->specific_event==old_event) mt->specific_event=new_event;
+  if (mt->avol_init_event==old_event) {
+    //g_print("aie event\n");
+    mt->avol_init_event=new_event;
+  }
+  if (mt->specific_event==old_event) {
+    //g_print("spec event\n");
+    mt->specific_event=new_event;
+  }
 }
-
 
 
 static void combine_ign (weed_plant_t *xnew, weed_plant_t *xold) {
@@ -18728,7 +18737,7 @@ static void remove_atrack_from_list(int track) {
 }
 
 
-static void add_missing_atrack_closers(weed_plant_t *event_list, gdouble fps, gchar *ebuf) {
+static gchar *add_missing_atrack_closers(weed_plant_t *event_list, gdouble fps, gchar *ebuf) {
   GList *alist=atrack_list;
   gchar *entry;
   gchar **array;
@@ -18741,7 +18750,7 @@ static void add_missing_atrack_closers(weed_plant_t *event_list, gdouble fps, gc
   int num_atracks;
   weed_timecode_t tc;
 
-  if (atrack_list==NULL) return;
+  if (atrack_list==NULL) return ebuf;
 
   num_atracks=g_list_length(atrack_list)*2;
 
@@ -18779,6 +18788,7 @@ static void add_missing_atrack_closers(weed_plant_t *event_list, gdouble fps, gc
   g_list_free_strings(atrack_list);
   g_list_free(atrack_list);
   atrack_list=NULL;
+  return ebuf;
 }
 
 
@@ -19659,7 +19669,7 @@ gboolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list) {
     else event=event_next;
   }
 
-  add_missing_atrack_closers(event_list,fps,ebuf);
+  ebuf=add_missing_atrack_closers(event_list,fps,ebuf);
 
   if (mt==NULL) transient=mainw->LiVES;
   else transient=mt->window;

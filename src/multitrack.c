@@ -1219,7 +1219,7 @@ static gboolean add_mt_param_box(lives_mt *mt) {
   gchar *ltext;
   weed_timecode_t tc;
   int error;
-  gboolean res;
+  gboolean res=FALSE;
 
   gdouble cur_time=GTK_RULER (mt->timeline)->position;
 
@@ -14457,8 +14457,8 @@ static void add_effect_inner(lives_mt *mt, int num_in_tracks, int *in_tracks, in
   else polymorph(mt,POLY_FX_STACK);
 
   if (!did_backup) mt->idlefunc=mt_idle_add(mt);
-
-  mt_show_current_frame(mt, FALSE);
+  
+  //mt_show_current_frame(mt, FALSE);
 }
 
 

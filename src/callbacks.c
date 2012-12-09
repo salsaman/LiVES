@@ -65,6 +65,7 @@ void lives_exit (void) {
 
     if (mainw->multitrack!=NULL&&mainw->multitrack->idlefunc>0) {
        g_source_remove(mainw->multitrack->idlefunc);
+       g_usleep(prefs->sleep_time); // needs a small pause 
     }
 
     if (mainw->multitrack!=NULL&&!mainw->only_close) {

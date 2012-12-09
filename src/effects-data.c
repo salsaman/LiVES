@@ -525,6 +525,7 @@ boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, weed_plant_t *dpa
     nmin=weed_leaf_num_elements(dptmpl,"min");
   }
 
+
   switch (stype) {
   case WEED_SEED_STRING:
     switch (dtype) {

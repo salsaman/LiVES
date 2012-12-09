@@ -1825,7 +1825,7 @@ void rte_set_defs_ok (GtkButton *button, lives_rfx_t *rfx) {
 	weed_set_int_array(ptmpls[i],"host_default",1,(int *)rfx->params[i].value);
 	break;
       case LIVES_PARAM_NUM:
-	if (rfx->params[i].dp>0) weed_set_double_array(ptmpls[i],"host_default",1,(double *)rfx->params[i].value);
+	if (weed_leaf_seed_type(ptmpls[i],"default")==WEED_SEED_DOUBLE) weed_set_double_array(ptmpls[i],"host_default",1,(double *)rfx->params[i].value);
 	else weed_set_int_array(ptmpls[i],"host_default",1,(int *)rfx->params[i].value);
 	break;
       case LIVES_PARAM_BOOL:
@@ -1948,7 +1948,6 @@ void rte_reset_defs_clicked (GtkButton *button, lives_rfx_t *rfx) {
   else {
     gint key=GPOINTER_TO_INT (g_object_get_data (G_OBJECT (fx_dialog[1]),"key"));
     gint mode=GPOINTER_TO_INT (g_object_get_data (G_OBJECT (fx_dialog[1]),"mode"));
-    // TODO *** - handle compound fx
     set_key_defaults(inst,key,mode);
   }
 

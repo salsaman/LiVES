@@ -8258,9 +8258,7 @@ void fill_param_vals_to (weed_plant_t *param, weed_plant_t *paramtmpl, int index
   hint=weed_get_int_value(paramtmpl,"hint",&error);
 
   vcount=weed_leaf_num_elements(param,"value");
-  if (index>vcount) vcount=index;
-
-  vcount++;
+  if (index>=vcount) vcount=++index;
 
   switch (hint) {
   case WEED_HINT_INTEGER:

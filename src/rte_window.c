@@ -1843,10 +1843,11 @@ void rte_set_defs_ok (GtkButton *button, lives_rfx_t *rfx) {
     }
     weed_free(ptmpls);
   }
+  g_print("CONE2\n");
 
   on_paramwindow_cancel_clicked(button,rfx);
   fx_dialog[1]=NULL;
-
+  g_print("CONE\n");
 }
 
 

@@ -706,6 +706,7 @@ gboolean has_audio_chans_out(weed_plant_t *filter, gboolean count_opt) {
 gboolean is_pure_audio(weed_plant_t *plant, gboolean count_opt) {
   weed_plant_t *filter=plant;
   if (WEED_PLANT_IS_FILTER_INSTANCE(plant)) filter=weed_instance_get_filter(plant,FALSE);
+
   if ((has_audio_chans_in(filter,count_opt) || has_audio_chans_out(filter,count_opt)) &&
       !has_video_chans_in(filter,count_opt) && !has_video_chans_out(filter,count_opt)) return TRUE;
   return FALSE;
@@ -1506,7 +1507,7 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
   register int i,j,k;
 
   if ((!weed_plant_has_leaf(inst,"out_channels")||(out_channels=weed_get_plantptr_array(inst,"out_channels",&error))==NULL)
-      &&(mainw->preview||mainw->is_rendering)) return retval;
+      &&(mainw->preview||mainw->is_rendering)&&(num_compound_fx(inst)==1)) return retval;
 
   if (weed_plant_has_leaf(filter,"flags")) filter_flags=weed_get_int_value(filter,"flags",&error);
 
@@ -1580,7 +1581,7 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
 
   num_inc-=num_in_alpha;
 
-  if (num_in_tracks>num_inc) num_in_tracks=num_inc;
+  if (num_in_tracks>num_inc) num_in_tracks=num_inc; // for example, compound fx
 
   if (num_inc>num_in_tracks) {
     for (i=num_in_tracks;i<num_inc+num_in_alpha;i++) {
@@ -1698,11 +1699,14 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
       num_out_alpha++;
   }
 
-  if (init_event==NULL) num_out_tracks-=num_out_alpha;
+  if (init_event==NULL||num_compound_fx(inst)>1) num_out_tracks-=num_out_alpha;
+
+  if (num_out_tracks<0) num_out_tracks=0;
 
   // pull frames for tracks
 
   for (i=0;i<num_out_tracks+num_out_alpha;i++) {
+    if (i>=num_outc) continue; // for compound filters, num_out_tracks may not be valid
     channel=out_channels[i];
     palette=weed_get_int_value(channel,"current_palette",&error);
     if (weed_palette_is_alpha_palette(palette)) continue;
@@ -2101,6 +2105,8 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
   for (i=0;i<num_out_tracks+num_out_alpha;i++) {
 
     channel=get_enabled_channel(inst,i,FALSE);
+    if (channel==NULL) break; // compound fx
+
     palette=weed_get_int_value(channel,"current_palette",&error);
 
     if (!weed_palette_is_alpha_palette(palette)&&out_tracks[i]<0) {
@@ -2365,6 +2371,7 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
   for (i=k=0;k<num_out_tracks+num_out_alpha;k++) {
 
     channel=get_enabled_channel(inst,k,FALSE);
+    if (channel==NULL) break; // compound fx
 
     if (weed_get_boolean_value(channel,"inplace",&error)==WEED_TRUE) continue;
 
@@ -3081,7 +3088,6 @@ static void weed_apply_filter_map (weed_plant_t **layers, weed_plant_t *filter_m
 
   // this is called during rendering - we will have previously received a filter_map event and now we apply this to layers
 
-
   // layers will be a NULL terminated array of channels, each with two extra leaves: clip and frame
   // clip corresponds to a LiVES file in mainw->files. "pixel_data" will initially be NULL, we will pull this as necessary
   // and the effect output is written back to the layers
@@ -3109,6 +3115,7 @@ static void weed_apply_filter_map (weed_plant_t **layers, weed_plant_t *filter_m
 	  mainw->multitrack->init_event!=NULL) {
 	if (mainw->multitrack->current_rfx->source_type==LIVES_RFX_SOURCE_WEED&&
 	    mainw->multitrack->current_rfx->source!=NULL) {
+
 	  deinit_event=(weed_plant_t *)weed_get_voidptr_value(mainw->multitrack->init_event,"deinit_event",&error);
 	  if (tc>=get_event_timecode(mainw->multitrack->init_event)&&tc<=get_event_timecode(deinit_event)) {
 	    // we are previewing an effect in multitrack - use current unapplied values
@@ -5770,12 +5777,15 @@ weed_plant_t *weed_instance_from_filter(weed_plant_t *filter) {
     if (nfilters==1) xinp=inp;
     else {
       // for a compound filter, assign only the params which belong to the instance
-      ninpar=num_in_params(filter,TRUE,TRUE);
-      xinp=g_malloc((ninpar+1)*sizeof(weed_plant_t *));
-      x=0;
-      for (j=poffset;j<poffset+ninpar;j++) xinp[x++]=inp[j];
-      xinp[x]=NULL;
-      poffset+=ninpar;
+      ninpar=num_in_params(filter,FALSE,FALSE);
+      if (ninpar==0) xinp=NULL;
+      else {
+	xinp=g_malloc((ninpar+1)*sizeof(weed_plant_t *));
+	x=0;
+	for (j=poffset;j<poffset+ninpar;j++) xinp[x++]=inp[j];
+	xinp[x]=NULL;
+	poffset+=ninpar;
+      }
     }
 
     inst=weed_create_instance(filter,inc,outc,xinp,outp);
@@ -8888,7 +8898,7 @@ gboolean interpolate_param(weed_plant_t *inst, int i, void *pchain, weed_timecod
 	if (xnum>j) {
 	  nvalss=weed_get_string_array((weed_plant_t *)lpc[j],"value",&error);
 	  valss[j]=g_strdup(nvalss[j]);
-	  for (k=0;k<num_values;k++) weed_free(nvalss[k]);
+	  for (k=0;k<xnum;k++) weed_free(nvalss[k]);
 	  weed_free(nvalss);
 	}
 	else valss[j]=get_default_element_string(param,j);
@@ -8958,9 +8968,9 @@ gboolean interpolate_params(weed_plant_t *inst, void **pchains, weed_timecode_t 
     if (num_params==0) continue; // no in_parameters ==> do nothing
 
     for (i=offset;i<offset+num_params;i++) {
-      if (!is_hidden_param(inst,i)) {
+      if (!is_hidden_param(inst,i-offset)) {
 	pchain=pchains[i];
-	if (!interpolate_param(inst,i,pchain,tc)) return FALSE; // FALSE if param is not ready
+	if (!interpolate_param(inst,i-offset,pchain,tc)) return FALSE; // FALSE if param is not ready
       }
     }
 
@@ -9994,7 +10004,7 @@ void set_key_defaults(weed_plant_t *inst, gint key, gint mode) {
     
       while (i<nparams+poffset) {
 	key_defs[i]=weed_plant_new(WEED_PLANT_PARAMETER);
-	weed_leaf_copy(key_defs[i],"value",params[i],"value");
+	weed_leaf_copy(key_defs[i],"value",params[i-poffset],"value");
 	i++;
       }
       

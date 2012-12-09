@@ -138,7 +138,6 @@ static void lives_log_handler (const char *domain, LiVESLogLevelFlags level, con
   g_printerr("%s",msg);
   g_free(msg);
 
-
   if (level&LIVES_LOG_FATAL_MASK) raise(LIVES_SIGSEGV);
 }
 
@@ -2510,10 +2509,10 @@ int main (int argc, char *argv[]) {
 
 #ifdef LIVES_NO_DEBUG
   // don't crash on GTK+ fatals
-  g_log_set_always_fatal ((GLogLevelFlags)0);
+  //g_log_set_always_fatal ((GLogLevelFlags)0);
 #endif
 
-  g_log_set_default_handler(lives_log_handler,NULL);
+  //g_log_set_default_handler(lives_log_handler,NULL);
 
   theme_expected=pre_init();
 

@@ -479,6 +479,7 @@ weed_plant_t *event_copy_and_insert (weed_plant_t *in_event, weed_plant_t *event
   }
 
   event=weed_plant_copy(in_event);
+  //if (mainw->multitrack!=NULL) mt_fixup_events(mainw->multitrack,in_event,event);
   if (event==NULL) return NULL;
 
   if (event_before==NULL) {
@@ -2563,15 +2564,19 @@ weed_plant_t *append_frame_event (weed_plant_t *event_list, weed_timecode_t tc, 
 
 
 void **filter_init_add_pchanges (weed_plant_t *event_list, weed_plant_t *plant, weed_plant_t *init_event, int ntracks) {
-  int i,error;
-  weed_plant_t **in_params,**in_ptmpls;
-  int num_params;
+  weed_plant_t **in_params=NULL,**in_ptmpls;
   void **pchain=NULL;
 
-  weed_plant_t *filter=plant;
-  gboolean is_inst=FALSE;
+  weed_plant_t *filter=plant,*in_param;
 
   weed_timecode_t tc=get_event_timecode(init_event);
+
+  gboolean is_inst=FALSE;
+
+  int num_params;
+  int error;
+
+  register int i;
 
   if (WEED_PLANT_IS_FILTER_INSTANCE(plant)) {
     filter=weed_instance_get_filter(plant,TRUE);
@@ -2587,7 +2592,6 @@ void **filter_init_add_pchanges (weed_plant_t *event_list, weed_plant_t *plant, 
   pchain=(void **)g_malloc(num_params*sizeof(void *));
 
   if (!is_inst) in_params=weed_params_create(filter,TRUE);
-  else in_params=weed_get_plantptr_array(plant,"in_parameters",&error);
 
   for (i=num_params-1;i>=0;i--) {
     
@@ -2595,12 +2599,15 @@ void **filter_init_add_pchanges (weed_plant_t *event_list, weed_plant_t *plant, 
     weed_set_int_value((weed_plant_t *)pchain[i],"hint",WEED_EVENT_HINT_PARAM_CHANGE);
     weed_set_int64_value((weed_plant_t *)pchain[i],"timecode",tc);
 
-    if (is_perchannel_multiw(in_params[i])) {
+    if (!is_inst) in_param=in_params[i];
+    else in_param=weed_inst_in_param(plant,i,FALSE,FALSE);
+
+    if (is_perchannel_multiw(in_param)) {
       // if the parameter is element-per-channel, fill up to number of channels
-      fill_param_vals_to(in_params[i],in_ptmpls[i],ntracks-1);
+      fill_param_vals_to(in_param,in_ptmpls[i],ntracks-1);
     }
 
-    weed_leaf_copy((weed_plant_t *)pchain[i],"value",in_params[i],"value");
+    weed_leaf_copy((weed_plant_t *)pchain[i],"value",in_param,"value");
 
     weed_set_int_value((weed_plant_t *)pchain[i],"index",i);
     weed_set_voidptr_value((weed_plant_t *)pchain[i],"init_event",init_event);

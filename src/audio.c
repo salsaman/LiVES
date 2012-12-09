@@ -1692,6 +1692,7 @@ lives_audio_track_state_t *get_audio_and_effects_state_at(weed_plant_t *event_li
       deinit_event=(weed_plant_t *)weed_get_voidptr_value(event,"deinit_event",&error);
       if (get_event_timecode(deinit_event)>=fill_tc) {
 	// this effect should be activated
+	process_events(event,FALSE,get_event_timecode(event));
 	process_events(event,TRUE,get_event_timecode(event));
       }
     }

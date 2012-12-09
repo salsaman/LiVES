@@ -5813,6 +5813,7 @@ void add_param_connections(weed_plant_t *inst) {
 	else oparam=iparam; // just hide the parameter, but don't pull a value
 	
 	weed_set_plantptr_value(iparam,"host_internal_connection",oparam);
+
 	if (weed_plant_has_leaf(in_ptmpls[i],"host_internal_connection_autoscale")&&
 	    weed_get_boolean_value(in_ptmpls[i],"host_internal_connection_autoscale",&error)==WEED_TRUE)
 	  weed_set_boolean_value(iparam,"host_internal_connection_autoscale",WEED_TRUE);

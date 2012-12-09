@@ -1937,8 +1937,8 @@ after_param_value_changed           (GtkSpinButton   *spinbutton,
 				     lives_rfx_t *rfx) {
   gint param_number=GPOINTER_TO_INT (g_object_get_data (G_OBJECT (spinbutton),"param_number"));
   lives_param_t *param=&rfx->params[param_number];
-  gdouble new_double,old_double=0.;
-  gint new_int,old_int=0;
+  gdouble new_double=0.,old_double=0.;
+  gint new_int=0,old_int=0;
   int copyto=-1;
 
   if (mainw->block_param_updates) return; // updates are blocked when we update visually
@@ -1963,57 +1963,43 @@ after_param_value_changed           (GtkSpinButton   *spinbutton,
 
   if (param->dp>0) {
     set_double_param(param->value,(new_double=gtk_spin_button_get_value(GTK_SPIN_BUTTON(spinbutton))));
+  }
+  else {
+    set_int_param(param->value,(new_int=gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(spinbutton))));
+  }
 
-    if (rfx->status==RFX_STATUS_WEED) {
-      int error;
-      weed_plant_t *inst=(weed_plant_t *)rfx->source;
-      if (inst!=NULL&&weed_get_int_value(inst,"type",&error)==WEED_PLANT_FILTER_INSTANCE) {
-	weed_plant_t *wparam=weed_inst_in_param(inst,param_number,FALSE,FALSE);
-	int index=0,numvals;
-	double *valds;
+  if (rfx->status==RFX_STATUS_WEED) {
+    int error;
+    weed_plant_t *inst=(weed_plant_t *)rfx->source;
+    if (inst!=NULL&&weed_get_int_value(inst,"type",&error)==WEED_PLANT_FILTER_INSTANCE) {
+      char *disp_string;
 
-	if (mainw->multitrack!=NULL&&is_perchannel_multi(rfx,param_number)) {
-	  index=mainw->multitrack->track_index;
-	}
-	numvals=weed_leaf_num_elements(wparam,"value");
-	if (index>=numvals) {
-	  weed_plant_t *paramtmpl=weed_get_plantptr_value(wparam,"template",&error);
-	  fill_param_vals_to(wparam,paramtmpl,index);
-	  numvals=index+1;
-	}
-	
+      weed_plant_t *wparam=weed_inst_in_param(inst,param_number,FALSE,FALSE);
+      int index=0,numvals;
+      double *valds;
+      int *valis;
+
+      if (mainw->multitrack!=NULL&&is_perchannel_multi(rfx,param_number)) {
+	index=mainw->multitrack->track_index;
+      }
+      numvals=weed_leaf_num_elements(wparam,"value");
+      if (index>=numvals) {
+	weed_plant_t *paramtmpl=weed_get_plantptr_value(wparam,"template",&error);
+	fill_param_vals_to(wparam,paramtmpl,index);
+	numvals=index+1;
+      }
+
+      if (weed_leaf_seed_type(wparam,"value")==WEED_SEED_DOUBLE) {
 	valds=weed_get_double_array(wparam,"value",&error);
-	valds[index]=new_double;
+	if (param->dp>0) valds[index]=new_double;
+	else valds[index]=(double)new_int;
 	pthread_mutex_lock(&mainw->data_mutex);
 	weed_set_double_array(wparam,"value",numvals,valds);
 	pthread_mutex_unlock(&mainw->data_mutex);
 	copyto=set_copy_to(inst,param_number,TRUE);
 	weed_free(valds);
-
       }
-    }
-  }
-  else {
-    set_int_param(param->value,(new_int=gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(spinbutton))));
-
-    if (rfx->status==RFX_STATUS_WEED) {
-      int error;
-      weed_plant_t *inst=(weed_plant_t *)rfx->source;
-      if (inst!=NULL&&weed_get_int_value(inst,"type",&error)==WEED_PLANT_FILTER_INSTANCE) {
-	weed_plant_t *wparam=weed_inst_in_param(inst,param_number,FALSE,FALSE);
-	int index=0,numvals;
-	int *valis;
-	
-	if (mainw->multitrack!=NULL&&is_perchannel_multi(rfx,param_number)) {
-	  index=mainw->multitrack->track_index;
-	}
-	numvals=weed_leaf_num_elements(wparam,"value");
-	if (index>=numvals) {
-	  weed_plant_t *paramtmpl=weed_get_plantptr_value(wparam,"template",&error);
-	  fill_param_vals_to(wparam,paramtmpl,index);
-	  numvals=index+1;
-	}
-	
+      else {
 	valis=weed_get_int_array(wparam,"value",&error);
 	valis[index]=new_int;
 	pthread_mutex_lock(&mainw->data_mutex);
@@ -2022,14 +2008,6 @@ after_param_value_changed           (GtkSpinButton   *spinbutton,
 	copyto=set_copy_to(inst,param_number,TRUE);
 	weed_free(valis);
       }
-    }
-  }
-
-  if (rfx->status==RFX_STATUS_WEED) {
-    int error;
-    weed_plant_t *inst=(weed_plant_t *)rfx->source;
-    if (inst!=NULL&&weed_get_int_value(inst,"type",&error)==WEED_PLANT_FILTER_INSTANCE) {
-      char *disp_string;
 
       if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
 	// if we are recording, add this change to our event_list

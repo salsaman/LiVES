@@ -61,7 +61,7 @@ static gboolean ca_canc;
 void type_label_set_text (gint key, gint mode) {
   int modes=rte_getmodespk();
   int idx=key*modes+mode;
-  gchar *type=rte_keymode_get_type(key+1,mode,FALSE);
+  gchar *type=rte_keymode_get_type(key+1,mode);
 
   if (strlen(type)) {
     gtk_label_set_text (GTK_LABEL(type_labels[idx]),g_strdup_printf(_("Type: %s"),type));
@@ -876,17 +876,11 @@ on_rte_info_clicked (GtkButton *button, gpointer user_data) {
   int filter_version;
   int weed_error;
 
-  lives_fx_cat_t cat;
-
   ////////////////////////
 
   if (!rte_keymode_valid(key+1,mode,TRUE)) return;
 
-  cat=rte_keymode_get_category(key+1,mode);
-  if (cat!=LIVES_FX_CAT_TRANSITION) {
-    type=rte_keymode_get_type(key+1,mode,TRUE);
-  }
-  else type=rte_keymode_get_type(key+1,mode,FALSE);
+  type=rte_keymode_get_type(key+1,mode);
 
   plugin_name=rte_keymode_get_plugin_name(key+1,mode);
   filter=rte_keymode_get_filter(key+1,mode);
@@ -1843,11 +1837,10 @@ void rte_set_defs_ok (GtkButton *button, lives_rfx_t *rfx) {
     }
     weed_free(ptmpls);
   }
-  g_print("CONE2\n");
 
   on_paramwindow_cancel_clicked(button,rfx);
   fx_dialog[1]=NULL;
-  g_print("CONE\n");
+
 }
 
 
@@ -1861,15 +1854,23 @@ void rte_set_defs_cancel (GtkButton *button, lives_rfx_t *rfx) {
 
 
 void rte_reset_defs_clicked (GtkButton *button, lives_rfx_t *rfx) {
-  weed_plant_t **ptmpls,**inp,*filter,*inst;
+  weed_plant_t **ptmpls,**inp,**xinp;
   weed_plant_t **ctmpls;
+
+  weed_plant_t *filter,*inst;
+
   GList *child_list;
   GtkWidget *pbox,*fxdialog,*cancelbutton;
 
   int error;
-  int i,nchans;
+  int nchans;
 
-  gboolean is_generic_defs=FALSE;
+  int poffset=0,ninpar,x;
+
+  boolean is_generic_defs=FALSE;
+  boolean add_pcons=FALSE;
+
+  register int i;
 
   cancelbutton=(GtkWidget *)g_object_get_data(G_OBJECT(button),"cancelbutton");
 
@@ -1890,24 +1891,41 @@ void rte_reset_defs_clicked (GtkButton *button, lives_rfx_t *rfx) {
       weed_free(ptmpls);
     }
 
+    inp=weed_params_create(filter,TRUE);
+
   resetdefs1:
     filter=weed_instance_get_filter(inst,FALSE);
 
     // reset params back to default defaults
     weed_in_parameters_free(inst);
     
-    inp=weed_params_create(filter,TRUE);
-    weed_set_plantptr_array(inst,"in_parameters",weed_flagset_array_count(inp,TRUE),inp);
-    weed_free(inp);
+    ninpar=num_in_params(filter,FALSE,FALSE);
+    if (ninpar==0) xinp=NULL;
+
+    xinp=g_malloc((ninpar+1)*sizeof(weed_plant_t *));
+    x=0;
+    for (i=poffset;i<poffset+ninpar;i++) xinp[x++]=inp[i];
+    xinp[x]=NULL;
+    poffset+=ninpar;
+
+    weed_set_plantptr_array(inst,"in_parameters",weed_flagset_array_count(xinp,TRUE),xinp);
+    weed_free(xinp);
 
     if (weed_plant_has_leaf(inst,"host_next_instance")) {
       // handle compound fx
       inst=weed_get_plantptr_value(inst,"host_next_instance",&error);
+      add_pcons=TRUE;
       goto resetdefs1;
     }
 
+    weed_free(inp);
+
     inst=(weed_plant_t *)rfx->source;
     filter=weed_instance_get_filter(inst,TRUE);
+
+    if (add_pcons) {
+      add_param_connections(inst);
+    }
 
     rfx_params_free(rfx);
     g_free(rfx->params);

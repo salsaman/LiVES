@@ -67,6 +67,9 @@ gchar *lives_fx_cat_to_text(lives_fx_cat_t cat, gboolean plural) {
   case LIVES_FX_CAT_DATA_GENERATOR:
     if (!plural) return (g_strdup(_("data generator")));
     else return (g_strdup(_("Data Generators")));
+  case LIVES_FX_CAT_DATA_VISUALISER:
+    if (!plural) return (g_strdup(_("data visualiser")));
+    else return (g_strdup(_("Data Visualisers")));
   case LIVES_FX_CAT_DATA_PROCESSOR:
     if (!plural) return (g_strdup(_("data processor")));
     else return (g_strdup(_("Data Processors")));

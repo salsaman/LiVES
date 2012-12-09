@@ -2724,6 +2724,9 @@ weed_plant_t *append_filter_init_event (weed_plant_t *event_list, weed_timecode_
       if (weed_palette_is_alpha_palette(weed_layer_get_palette(chan))) e_in_channels--;
     }
     
+    // handling for compound fx
+    while (weed_plant_has_leaf(inst,"host_next_instance")) inst=weed_get_plantptr_value(inst,"host_next_instance",&error);
+
     for (i=0;i<e_outs;i++) {
       chan=get_enabled_channel(inst,i,FALSE);
       if (weed_palette_is_alpha_palette(weed_layer_get_palette(chan))) e_out_channels--;
@@ -4283,7 +4286,8 @@ gboolean deal_with_render_choice (gboolean add_deinit) {
   oplay_start=mainw->play_start;
 
   do {
-    e_rec_dialog=events_rec_dialog(!was_paused);
+    //e_rec_dialog=events_rec_dialog(!was_paused);
+    e_rec_dialog=events_rec_dialog(TRUE);
     gtk_widget_show (e_rec_dialog);
     gtk_dialog_run (GTK_DIALOG (e_rec_dialog));
     gtk_widget_destroy (e_rec_dialog);

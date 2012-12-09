@@ -86,6 +86,7 @@ weed_plant_t *weed_instance_from_filter(weed_plant_t *filter);
 void weed_instance_ref(weed_plant_t *inst);
 void weed_instance_unref(weed_plant_t *inst);
 void weed_in_parameters_free (weed_plant_t *inst);
+void add_param_connections(weed_plant_t *inst);
 lives_filter_error_t weed_reinit_effect (weed_plant_t *inst, boolean reinit_compound);
 void weed_reinit_all(void);
 
@@ -164,7 +165,7 @@ gboolean rte_keymode_valid (gint key, gint mode, gboolean is_userkey); ///< retu
 gint rte_keymode_get_filter_idx(gint key, gint mode); ///< returns filter_class index of key/mode (or -1 if no filter bound)
 gchar *rte_keymode_get_filter_name (gint key, gint mode); ///< returns name of filter_class bound to key/mode (or "")
 gchar *rte_keymode_get_plugin_name(gint key, gint mode); ///< returns name of plugin package containing filter_class (or "")
-gchar *rte_keymode_get_type (gint key, gint mode, gboolean get_subtype); ///< returns a string filter/instance type (or "")
+gchar *rte_keymode_get_type (gint key, gint mode); ///< returns a string filter/instance type (or "")
 
 #ifdef HAS_LIVES_EFFECTS_H
 lives_fx_cat_t rte_keymode_get_category (gint key, gint mode);

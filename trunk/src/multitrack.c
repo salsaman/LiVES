@@ -3180,12 +3180,16 @@ on_drag_filter_end           (GtkWidget       *widget,
   GtkWidget *ahbox;
   GtkWidget *menuitem;
   lives_mt *mt=(lives_mt *)user_data;
-  int win_x,win_y;
-  int i;
-  gint tchan=0;
+
   gdouble timesecs=0.;
 
+  int win_x,win_y,nins;
+
+  gint tchan=0;
+
   boolean ok=FALSE;
+
+  register int i;
 
   if (mt->cursor_style!=LIVES_CURSOR_FX_BLOCK) {
     mt->selected_filter=-1;
@@ -3251,14 +3255,14 @@ on_drag_filter_end           (GtkWidget       *widget,
   menuitem=gtk_menu_item_new();
   g_object_set_data(G_OBJECT(menuitem),"idx",GINT_TO_POINTER(mt->current_fx));
 
-  switch (enabled_in_channels(get_weed_filter(mt->current_fx),TRUE)) {
-  case 1:
+  nins=enabled_in_channels(get_weed_filter(mt->current_fx),TRUE);
+  if (nins==1) {
     /*    // filter - either we drop on a region or on a block
     if (g_list_length(mt->selected_tracks)==1&&mt->region_start!=mt->region_end) {
       // apply to region
       mt_add_region_effect(GTK_MENU_ITEM(menuitem),mt);
     }
-    else*/ {
+    else {*/
     // always apply to block
     track_rect *block;
     if (tchan==-1) {
@@ -3273,15 +3277,14 @@ on_drag_filter_end           (GtkWidget       *widget,
     mt->putative_block=NULL;
     mt_add_block_effect(GTK_MENU_ITEM(menuitem),mt);
   }
-    break;
-  case 2:
+  else if (nins==2) {
     // transition
     if (g_list_length(mt->selected_tracks)==2&&mt->region_start!=mt->region_end) {
       // apply to region
       mt_add_region_effect(GTK_MENU_ITEM(menuitem),mt);
     }
-    break;
-  case 1000000:
+  }
+  else if (nins>=1000000) {
     // compositor
     if (mt->selected_tracks!=NULL&&mt->region_start!=mt->region_end) {
       // apply to region
@@ -3332,10 +3335,14 @@ filter_ebox_pressed (GtkWidget *eventbox, GdkEventButton *event, gpointer user_d
 static void populate_filter_box(GtkWidget *box, gint ninchans, lives_mt *mt) {
   GtkWidget *eventbox=NULL,*xeventbox,*vbox,*label;
   gchar *txt;
-  gint nfilts=rte_get_numfilters();
-  int i,error;
-  lives_fx_cat_t cat,subcat;
   gchar *tmp;
+
+  lives_fx_cat_t cat,subcat;
+
+  gint nfilts=rte_get_numfilters();
+  int error,nins;
+
+  register int i;
 
   if (mt->block_selected==NULL&&ninchans==1) return;
 
@@ -3348,7 +3355,9 @@ static void populate_filter_box(GtkWidget *box, gint ninchans, lives_mt *mt) {
       if ((is_pure_audio(filter,FALSE)&&(eventbox==NULL||!is_audio_eventbox(mt,eventbox)))||
 	  (!is_pure_audio(filter,FALSE)&&eventbox!=NULL&&is_audio_eventbox(mt,eventbox))) continue;
 
-      if (enabled_in_channels(filter,TRUE)==ninchans&&enabled_out_channels(filter,FALSE)==1) {
+      nins=enabled_in_channels(filter,TRUE);
+
+      if ((nins==ninchans||(ninchans==1000000&&nins>=ninchans))&&enabled_out_channels(filter,FALSE)==1) {
 	if (weed_plant_has_leaf(filter,"plugin_unstable")&&
 	    weed_get_boolean_value(filter,"plugin_unstable",&error)==WEED_TRUE) {
 	  if (!prefs->unstable_fx) continue;
@@ -6189,7 +6198,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
       }
       else fxname=g_strdup(fname);
 
-      if (enabled_in_channels(filter,TRUE)==1000000&&enabled_out_channels(filter,FALSE)==1) {
+      if (enabled_in_channels(filter,TRUE)>=1000000&&enabled_out_channels(filter,FALSE)==1) {
 	menuitem = gtk_image_menu_item_new_with_label (fxname);
 	gtk_container_add (GTK_CONTAINER (submenu_menu5), menuitem);
 	g_object_set_data(G_OBJECT(menuitem),"idx",GINT_TO_POINTER(i));
@@ -17033,6 +17042,8 @@ on_timeline_release (GtkWidget *eventbox, GdkEventButton *event, gpointer user_d
     switch (g_list_length(mt->selected_tracks)) {
     case 1:
       gtk_widget_set_sensitive(mt->fx_region_1,TRUE);
+      gtk_widget_set_sensitive(mt->fx_region_1v,TRUE);
+      if (cfile->achans>0) gtk_widget_set_sensitive(mt->fx_region_1a,TRUE);
       break;
     case 2:
       gtk_widget_set_sensitive(mt->fx_region_2,TRUE);

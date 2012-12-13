@@ -79,6 +79,8 @@ int alpham_process (weed_plant_t *inst, weed_timecode_t timestamp) {
 
   if (vals==NULL) return WEED_ERROR_MEMORY_ALLOCATION;
   
+  for (i=0;i<n*m;i++) vals[i]=0.;
+
   for (i=0;i<height;i++) {
     for (j=0;j<width;j++) {
       vals[idx]+=(double)*alpha;

@@ -2983,13 +2983,13 @@ void sort_rfx_array (lives_rfx_t *in, gint num) {
     for (i=start;i<=num;i++) {
       if (!used[i-1]) {
 	if (min_string==NULL) {
-	  min_string=g_utf8_collate_key (in[i].menu_text,strlen (in[i].menu_text));
+	  min_string=g_utf8_collate_key (in[i].menu_text,-1);
 	  min_val=i;
 	}
 	else {
-	  if (strcmp (min_string,(tmp=g_utf8_collate_key(in[i].menu_text,strlen (in[i].menu_text))))==1) {
+	  if (strcmp (min_string,(tmp=g_utf8_collate_key(in[i].menu_text,-1)))==1) {
 	    g_free (min_string);
-	    min_string=g_utf8_collate_key (in[i].menu_text,strlen (in[i].menu_text));
+	    min_string=g_utf8_collate_key (in[i].menu_text,-1);
 	    min_val=i;
 	  }
 	  g_free(tmp);

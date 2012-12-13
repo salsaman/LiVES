@@ -2511,15 +2511,20 @@ void mt_show_current_frame(lives_mt *mt, gboolean return_layer) {
 
   // or, if return_layer is TRUE, we just set mainw->frame_layer
 
-  gint current_file;
-  gdouble ptr_time=GTK_RULER(mt->timeline)->position;
-  gboolean is_rendering=mainw->is_rendering;
   weed_timecode_t curr_tc;
-  gint actual_frame;
+
+  gdouble ptr_time=GTK_RULER(mt->timeline)->position;
+
   weed_plant_t *frame_layer=mainw->frame_layer;
-  gboolean internal_messaging=mainw->internal_messaging;
-  gboolean needs_idlefunc=FALSE;
+
   cairo_t *cr;
+
+  gint current_file;
+  gint actual_frame;
+  int error;
+  boolean is_rendering=mainw->is_rendering;
+  boolean internal_messaging=mainw->internal_messaging;
+  boolean needs_idlefunc=FALSE;
 
   if (mt->idlefunc>0) {
     g_source_remove(mt->idlefunc);
@@ -2530,7 +2535,7 @@ void mt_show_current_frame(lives_mt *mt, gboolean return_layer) {
   if (!return_layer) {
     // show frame image in window
     if (!mt->mt_frame_preview) {
-      gboolean sep_win=mainw->sep_win;
+      boolean sep_win=mainw->sep_win;
       mt->mt_frame_preview=TRUE;
 
       if (mt->play_blank->parent!=NULL) {
@@ -2596,7 +2601,9 @@ void mt_show_current_frame(lives_mt *mt, gboolean return_layer) {
       if (mt->current_rfx!=NULL&&mt->init_event!=NULL) {
 	if (mt->current_rfx->source_type==LIVES_RFX_SOURCE_WEED&&mt->current_rfx->source!=NULL) {
 	  weed_plant_t *inst=(weed_plant_t *)mt->current_rfx->source;
-	  weed_call_init_func(inst);
+	  do {
+	    weed_call_init_func(inst);
+	  } while (weed_plant_has_leaf(inst,"host_next_instance")&&(inst=weed_get_plantptr_value(inst,"host_next_instance",&error))!=NULL);
 	}
       }
 
@@ -2610,7 +2617,9 @@ void mt_show_current_frame(lives_mt *mt, gboolean return_layer) {
       if (mt->current_rfx!=NULL&&mt->init_event!=NULL) {
 	if (mt->current_rfx->source_type==LIVES_RFX_SOURCE_WEED&&mt->current_rfx->source!=NULL) {
 	  weed_plant_t *inst=(weed_plant_t *)mt->current_rfx->source;
-	  weed_call_deinit_func(inst);
+	  do {
+	    weed_call_deinit_func(inst);
+	  } while (weed_plant_has_leaf(inst,"host_next_instance")&&(inst=weed_get_plantptr_value(inst,"host_next_instance",&error))!=NULL);
 	}
       }
 

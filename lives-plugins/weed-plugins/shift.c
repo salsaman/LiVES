@@ -123,8 +123,6 @@ int shift_process (weed_plant_t *inst, weed_timecode_t timestamp) {
 
   weed_free(in_params);
 
-  //printf("\nshift %d, %d\n",x,y);
-
   // new threading arch
   if (weed_plant_has_leaf(out_channel,"offset")) {
     offset=weed_get_int_value(out_channel,"offset",&error);

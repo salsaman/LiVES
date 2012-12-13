@@ -4699,6 +4699,7 @@ static weed_plant_t *create_compound_filter(gchar *plugin_name, int nfilts, int 
 
 	x++;
       }
+      weed_free(params);
       xcount=count;
     }
   }
@@ -4724,6 +4725,7 @@ static weed_plant_t *create_compound_filter(gchar *plugin_name, int nfilts, int 
       for (j=xcount;j<count;j++) {
 	out_params[j]=params[x++];
       }
+      if (params!=NULL) weed_free(params);
       xcount=count;
     }
   }

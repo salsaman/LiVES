@@ -42,6 +42,7 @@ static int package_version=1; // version of this package
 
 #include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 #define EQS 256
 #define EQN 512

@@ -3688,6 +3688,9 @@ void do_layout_recover_dialog(void) {
 
   g_signal_connect (okbutton, "clicked",G_CALLBACK (recover_layout),NULL);
 
+  gtk_widget_add_accelerator (cancelbutton, "activate", mainw->accel_group,
+                              GDK_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
+
   gtk_widget_show_all(mdialog);
 }
 

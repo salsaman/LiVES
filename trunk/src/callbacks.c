@@ -65,7 +65,8 @@ void lives_exit (void) {
 
     if (mainw->multitrack!=NULL&&mainw->multitrack->idlefunc>0) {
        g_source_remove(mainw->multitrack->idlefunc);
-       g_usleep(prefs->sleep_time); // needs a small pause 
+       mainw->multitrack->idlefunc=0;
+       //g_usleep(prefs->sleep_time); // needs a small pause 
     }
 
     if (mainw->multitrack!=NULL&&!mainw->only_close) {
@@ -407,6 +408,7 @@ void lives_exit (void) {
     if (capable->has_encoder_plugins) plugin_request("encoders",prefs->encoder.name,"finalise");
 
     weed_unload_all();
+
     threaded_dialog_spin();
 
     rfx_free_all();
@@ -427,7 +429,7 @@ void lives_exit (void) {
 
   if (mainw->multitrack!=NULL) {
     event_list_free_undos(mainw->multitrack);
-    
+
     if (mainw->multitrack->event_list!=NULL) {
       event_list_free(mainw->multitrack->event_list);
       mainw->multitrack->event_list=NULL;
@@ -450,7 +452,12 @@ void lives_exit (void) {
 
   unload_decoder_plugins();
 
+  g_free(mainw->multitrack);
+  mainw->multitrack=NULL;
+  mainw->is_ready=FALSE;
+
   end_threaded_dialog();
+
   if (mainw->mgeom!=NULL) g_free(mainw->mgeom);
 
   if (prefs->disabled_decoders!=NULL) {

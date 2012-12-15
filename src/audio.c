@@ -7,13 +7,6 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#include "main.h"
-#include "audio.h"
-#include "events.h"
-#include "callbacks.h"
-#include "effects.h"
-#include "support.h"
-
 #ifdef HAVE_SYSTEM_WEED
 #include <weed/weed.h>
 #include <weed/weed-host.h>
@@ -25,6 +18,13 @@
 #include "../libweed/weed-effects.h"
 #include "../libweed/weed-palettes.h"
 #endif
+
+#include "main.h"
+#include "audio.h"
+#include "events.h"
+#include "callbacks.h"
+#include "effects.h"
+#include "support.h"
 
 
 // keep first 16 audio_in filesysten handles open - multitrack only

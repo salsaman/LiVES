@@ -7,7 +7,6 @@
 
 // functions for chaining and data passing between fx plugins
 
-#include "main.h"
 
 //#define DEBUG_PCONX
 
@@ -21,6 +20,7 @@
 #include "../libweed/weed-effects.h"
 #endif
 
+#include "main.h"
 
 #include "effects.h"
 

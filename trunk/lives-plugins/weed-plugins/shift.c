@@ -104,8 +104,8 @@ int shift_process (weed_plant_t *inst, weed_timecode_t timestamp) {
 
   size_t send=irowstride*sheight;
 
-  int x=(int)(weed_get_double_value(in_params[0],"value",&error)+.5);
-  int y=(int)(weed_get_double_value(in_params[1],"value",&error)+.5)*irowstride;
+  int x=(int)(weed_get_double_value(in_params[0],"value",&error)*(double)width+.5);
+  int y=(int)(weed_get_double_value(in_params[1],"value",&error)*(double)sheight+.5)*irowstride;
   int trans=weed_get_boolean_value(in_params[2],"value",&error);
 
   int offset=0;

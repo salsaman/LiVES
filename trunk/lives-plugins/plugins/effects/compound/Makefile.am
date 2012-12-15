@@ -12,4 +12,5 @@ install-data-local:
 
 install-data-local-remove-vcs-files:
 	rm -rf "$(DESTDIR)$(compoundscriptsdir)/icons/".*
+	rm -rf "$(DESTDIR)$(compoundscriptsdir)/data/".*
 

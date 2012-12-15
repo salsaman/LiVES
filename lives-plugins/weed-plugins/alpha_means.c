@@ -62,6 +62,8 @@ int alpham_process (weed_plant_t *inst, weed_timecode_t timestamp) {
 
   int n=weed_get_int_value(in_params[0],"value",&error);
   int m=weed_get_int_value(in_params[1],"value",&error);
+  int xdiv=weed_get_boolean_value(in_params[2],"value",&error);
+  int ydiv=weed_get_boolean_value(in_params[3],"value",&error);
 
   int idx=0,nidx;
 
@@ -116,7 +118,9 @@ int alpham_process (weed_plant_t *inst, weed_timecode_t timestamp) {
   if (nm<1.) nm=1.;
 
   for (i=0;i<n*m;i++) {
-    vals[i]/=nm;
+    vals[i]/=nm; // get average val
+    if (xdiv) vals[i]/=(double)width;
+    if (ydiv) vals[i]/=(double)height;
   }
 
   weed_set_double_array(out_param,"value",n*m,vals);
@@ -137,7 +141,7 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 
     weed_plant_t *in_chantmpls[]={weed_channel_template_init("alpha float",0,apalette_list),NULL};
 
-    weed_plant_t *in_params[]={weed_integer_init("x divisions","_X divisions",1,1,256),weed_integer_init("y divisions","_Y divisions",1,1,256),NULL};
+    weed_plant_t *in_params[]={weed_integer_init("x divisions","_X divisions",1,1,256),weed_integer_init("y divisions","_Y divisions",1,1,256),weed_switch_init("xdiv","Divide by _width",WEED_FALSE),weed_switch_init("ydiv","Divide by _height",WEED_FALSE),NULL};
 
     weed_plant_t *out_params[]={weed_out_param_float_init("mean values",0.,-1000000000.,1000000000.),NULL};
 

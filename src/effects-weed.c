@@ -5004,7 +5004,7 @@ static void load_compound_plugin(gchar *plugin_name, gchar *plugin_path) {
 	}
 
 	xfilt2=atoi(array[3]); // sub filter number
-	if (xfilt2<=xfilt||xfilt>=nfilts) {
+	if (xfilt>=nfilts) {
 	  d_print((tmp=g_strdup_printf(_("Invalid in filter %d for link params found in compound effect %s, line %d\n"),xfilt2,plugin_name,line)));
 	  LIVES_ERROR(tmp);
 	  g_free(tmp);

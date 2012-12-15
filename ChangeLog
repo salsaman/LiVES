@@ -1,12 +1,12 @@
-Version 1.6.5
--------------
+Version 1.8.0 (15 December 2012)
+-------------------------------
 Fix breakage in multitrack effects (regression).
 Fix crash when re-entering multitrack mode (regression).
 Fix a crash in text parameter entry (regression).
 Add support for compound filters.
 Add new realtime effect - shift.
 Add new data processing filters: alpha_means, data_processing.
-Add new compound effect - image_stabilizer.
+Add new compound effect - image_stabilizer (requires openCV).
 
 
 

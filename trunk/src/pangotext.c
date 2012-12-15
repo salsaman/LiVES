@@ -11,10 +11,6 @@
 
 #include <pango/pangocairo.h>
 
-#include "support.h"
-#include "main.h"
-#include "pangotext.h"
-
 #ifdef HAVE_SYSTEM_WEED
 #include <weed/weed.h>
 #include <weed/weed-palettes.h>
@@ -26,6 +22,11 @@
 #include "../libweed/weed-effects.h"
 #include "../libweed/weed-host.h"
 #endif
+
+#include "support.h"
+#include "main.h"
+#include "pangotext.h"
+
 
 static int font_cmp(const void *p1, const void *p2); 
 

@@ -192,8 +192,8 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 
     weed_plant_t *in_chantmpls[]={weed_channel_template_init("in channel 0",0,palette_list),NULL};
     weed_plant_t *out_chantmpls[]={weed_channel_template_init("out channel 0",0,palette_list),NULL};
-    weed_plant_t *in_params[]={weed_float_init("xshift","_X shift (pixels)",0.,-100000.,100000.),
-			       weed_float_init("yshift","_Y shift (pixels)",0.,-100000.,100000.),
+    weed_plant_t *in_params[]={weed_float_init("xshift","_X shift (pixels)",0.,-1.,1.),
+			       weed_float_init("yshift","_Y shift (pixels)",0.,-1.,1.),
 			       weed_switch_init("transbg","_Transparent edges",WEED_FALSE),
 			       NULL};
 

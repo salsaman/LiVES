@@ -1,3 +1,12 @@
+Version 1.8.1
+-------------
+Fix compilation error (double typedef).
+
+
+
+
+
+
 Version 1.8.0 (15 December 2012)
 -------------------------------
 Fix breakage in multitrack effects (regression).

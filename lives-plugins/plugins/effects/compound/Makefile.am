@@ -2,7 +2,7 @@
 #
 
 compoundscriptsdir = "$(datadir)/$(PACKAGE)/plugins/effects/compound"
-compoundscripts_DATA = image_stabilizer
+compoundscripts_DATA = image_stabilizer neural_net
 
 EXTRA_DIST = $(compoundscripts_DATA) data icons
 

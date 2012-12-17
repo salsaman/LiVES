@@ -4979,7 +4979,9 @@ static void load_compound_plugin(gchar *plugin_name, gchar *plugin_path) {
 	if (xfilt>-1) {
 	  xfilter=get_weed_filter(filters[xfilt]);
 
-	  nparams=num_in_params(xfilter,FALSE,FALSE);
+	  if (weed_plant_has_leaf(xfilter,"out_parameter_templates"))
+	    nparams=weed_leaf_num_elements(xfilter,"out_parameter_templates");
+	  else nparams=0;
 
 	  if (pnum>=nparams) {
 	    d_print((tmp=g_strdup_printf(_("Invalid out param %d for link params found in compound effect %s, line %d\n"),pnum,plugin_name,line)));

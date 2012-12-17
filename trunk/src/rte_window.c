@@ -1061,7 +1061,14 @@ void on_params_clicked (GtkButton *button, gpointer user_data) {
     inst=weed_instance_from_filter(filter);
     apply_key_defaults(inst,key,mode);
   }
-  else weed_instance_ref(inst);
+  else {
+    int error;
+    weed_plant_t *ninst=inst;
+    do {
+      weed_instance_ref(ninst);
+    } while (weed_plant_has_leaf(ninst,"host_next_instance")&&(ninst=weed_get_plantptr_value(ninst,"host_next_instance",&error))!=NULL);
+  }
+
 
   if (fx_dialog[1]!=NULL) {
     rfx=(lives_rfx_t *)g_object_get_data (G_OBJECT (fx_dialog[1]),"rfx");

@@ -5,7 +5,7 @@
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
 
-// geenrically process out[x] from a combination of in[a][b], store[z] and arithmetic expressions
+// generically process out[x] from a combination of in[a][b], store[z] and arithmetic expressions
 //#define DEBUG
 #include <stdio.h>
 
@@ -234,7 +234,7 @@ static char *simplify(node *xnode, _sdata *sdata) {
   return res;
 }
 
-
+//#define DEBUG_SYNTAX
 
 static int exp_to_tree(const char *exp) {
   size_t len=strlen(exp);
@@ -244,6 +244,7 @@ static int exp_to_tree(const char *exp) {
   int pstart;
   int gotdot=0;
   int retval;
+  int op=0;
 
   char buf[1024];
 
@@ -261,6 +262,9 @@ static int exp_to_tree(const char *exp) {
 
     case '[':
       if (varname==NULL) {
+#ifdef DEBUG_SYNTAX
+	printf("pt 1\n");
+#endif
 	return 1;
       }
       plevel=2;
@@ -270,6 +274,9 @@ static int exp_to_tree(const char *exp) {
 	if (!strncmp(&exp[i],"]",1)) break;
 	i++;
 	if (i>len) {
+#ifdef DEBUG_SYNTAX
+	printf("pt 2\n");
+#endif
 	  return 1;
 	}
       }
@@ -306,9 +313,15 @@ static int exp_to_tree(const char *exp) {
 
     case '(':
       if (plevel==1) {
+#ifdef DEBUG_SYNTAX
+	printf("pt 3\n");
+#endif
 	return 1;
       }
       if (nstart!=-1) {
+#ifdef DEBUG_SYNTAX
+	printf("pt 4\n");
+#endif
 	return 1;
       }
 
@@ -323,6 +336,9 @@ static int exp_to_tree(const char *exp) {
 
 	i++;
 	if (i>len) {
+#ifdef DEBUG_SYNTAX
+	printf("pt 5\n");
+#endif
 	  return 1;
 	}
       }
@@ -359,18 +375,30 @@ static int exp_to_tree(const char *exp) {
     case '8':
     case '9':
       if (plevel==1) {
+#ifdef DEBUG_SYNTAX
+	printf("pt 6\n");
+#endif
 	return 1;
       }
       if (varname!=NULL) {
+#ifdef DEBUG_SYNTAX
+	printf("pt 7\n");
+#endif
 	return 1;
       }
       if (nstart==-1) nstart=i;
       break;
     case '.':
       if (plevel==1) {
+#ifdef DEBUG_SYNTAX
+	printf("pt 8\n");
+#endif
 	return 1;
       }
       if (gotdot||varname!=NULL) {
+#ifdef DEBUG_SYNTAX
+	printf("pt 9\n");
+#endif
 	return 1;
       }
       if (nstart==-1) nstart=i;
@@ -378,27 +406,50 @@ static int exp_to_tree(const char *exp) {
       break;
     case '-':
     case '+':
-      if (nstart==-1) {
-	// unary operator
+      if (varname!=NULL) {
+#ifdef DEBUG_SYNTAX
+	printf("pt 10\n");
+#endif
+	return 1;
+      }
+      if (nstart==-1&&plevel==0) {
 	if (len+2>MAX_EXP_LEN) return 5;
 
 	tmp=weed_malloc(len+2);
 	snprintf(tmp,i+1,"%s",exp);
+
 	sprintf(tmp+i,"0");
-	sprintf(tmp+i+1,exp+i);
+
+	// replace "+-" or "-+" with "0-"
+	// replace "++" or "--" with "0+ or "
+	if ((op=='-'&&exp[i]=='+')||(op=='+'&&exp[i]=='-')||(op!='+'&&op!='-'&&exp[i]=='-')) 
+	  sprintf(tmp+i+1,"%s","-");
+	else 
+	  sprintf(tmp+i+1,"%s","+");
+	sprintf(tmp+i+2,exp+i+1);
 	len++;
 	i--;
 	sprintf((char *)exp,tmp);
+
 	weed_free(tmp);
+	op=exp[i];
 	break;
       }
+
     case '*':
     case '/':
       if (varname!=NULL) {
+#ifdef DEBUG_SYNTAX
+	printf("pt 11\n");
+#endif
 	return 1;
       }
+      op=exp[i];
       if (plevel==0) {
 	if (nstart==-1) {
+#ifdef DEBUG_SYNTAX
+	printf("pt 12\n");
+#endif
 	  return 1;
 	}
 
@@ -427,18 +478,30 @@ static int exp_to_tree(const char *exp) {
       break;
     case 'i':
       if (plevel==1) {
+#ifdef DEBUG_SYNTAX
+	printf("pt 13\n");
+#endif
 	return 1;
       }
       if (varname!=NULL||nstart!=-1) {
+#ifdef DEBUG_SYNTAX
+	printf("pt 14\n");
+#endif
 	return 1;
       }
       varname=strdup("i");
       break;
     case 's':
       if (plevel==1) {
+#ifdef DEBUG_SYNTAX
+	printf("pt 15\n");
+#endif
 	return 1;
       }
       if (varname!=NULL||nstart!=-1) {
+#ifdef DEBUG_SYNTAX
+	printf("pt 16\n");
+#endif
 	return 1;
       }
       varname=strdup("s");
@@ -451,6 +514,9 @@ static int exp_to_tree(const char *exp) {
   }
 
   if (nstart==-1) {
+#ifdef DEBUG_SYNTAX
+	printf("pt 17\n");
+#endif
     if (plevel==0) return 1;
     return 0;
   }
@@ -535,11 +601,11 @@ static int preproc(const char *exp) {
     case '9': 
     case 'i':
     case 's':
-      nstart=i;
+      if (nstart==-1) nstart=i;
       break;
     case '+':
     case '-':
-      if (nstart==1) {
+      if (nstart==-1) {
 	nstart=i;
 	break;
       }
@@ -551,10 +617,10 @@ static int preproc(const char *exp) {
 	sprintf((char *)exp,tmp);
 	len++;
 	i++;
-	nstart=-1;
 	plevel--;
       }
       lastop=exp[i];
+      nstart=-1;
       break;
     case '*':
     case '/':
@@ -600,6 +666,10 @@ static double evaluate (const char *exp, _sdata *sdata) {
   rootnode=NULL;
 
   preproc(exp);
+
+#ifdef DEBUG
+  printf("preproc is %s\n",exp);
+#endif
 
   sdata->error=exp_to_tree(exp);
   if (sdata->error>0) return 0.;

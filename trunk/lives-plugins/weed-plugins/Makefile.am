@@ -120,6 +120,7 @@ fxpluginslib_LTLIBRARIES = RGBdelay.la \
 	multi_blends.la \
 	multi_transitions.la \
 	negate.la \
+	nn_programmer.la \
 	noise.la \
 	onedTV.la \
 	palette_test.la\

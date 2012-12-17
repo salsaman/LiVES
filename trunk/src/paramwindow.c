@@ -1912,7 +1912,9 @@ after_boolean_param_toggled        (GtkToggleButton *togglebutton,
 	weed_free(disp_string);
       }
       if (param->reinit||(copyto!=-1&&rfx->params[copyto].reinit)) {
+	gtk_widget_set_sensitive(GTK_WIDGET(togglebutton),FALSE);
 	weed_reinit_effect(inst,FALSE);
+	return;
       }
 
     }
@@ -1968,6 +1970,7 @@ after_param_value_changed           (GtkSpinButton   *spinbutton,
     set_int_param(param->value,(new_int=gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(spinbutton))));
   }
 
+
   if (rfx->status==RFX_STATUS_WEED) {
     int error;
     weed_plant_t *inst=(weed_plant_t *)rfx->source;
@@ -2021,7 +2024,11 @@ after_param_value_changed           (GtkSpinButton   *spinbutton,
 	weed_free(disp_string);
       }
       if (param->reinit||(copyto!=-1&&rfx->params[copyto].reinit)) {
+
+	// this is important; because widget gets destroyed/reparented
+	gtk_widget_set_sensitive(GTK_WIDGET(spinbutton),FALSE);
 	weed_reinit_effect(inst,FALSE);
+	return; // spinbutton is no longer valid
       }
 
     }
@@ -2215,7 +2222,10 @@ after_param_red_changed           (GtkSpinButton   *spinbutton,
       }
       
       if (param->reinit||(copyto!=-1&&rfx->params[copyto].reinit)) {
+	// this is important; because widget gets destroyed/reparented
+	gtk_widget_set_sensitive(GTK_WIDGET(spinbutton),FALSE);
 	weed_reinit_effect(inst,FALSE);
+	return; // spinbutton is no longer valid
       }
     }
   }
@@ -2284,7 +2294,10 @@ after_param_green_changed           (GtkSpinButton   *spinbutton,
       }
       
       if (param->reinit||(copyto!=-1&&rfx->params[copyto].reinit)) {
+	// this is important; because widget gets destroyed/reparented
+	gtk_widget_set_sensitive(GTK_WIDGET(spinbutton),FALSE);
 	weed_reinit_effect(inst,FALSE);
+	return; // spinbutton is no longer valid
       }
     }
   }
@@ -2352,7 +2365,10 @@ after_param_blue_changed           (GtkSpinButton   *spinbutton,
       }
       
       if (param->reinit||(copyto!=-1&&rfx->params[copyto].reinit)) {
+	// this is important; because widget gets destroyed/reparented
+	gtk_widget_set_sensitive(GTK_WIDGET(spinbutton),FALSE);
 	weed_reinit_effect(inst,FALSE);
+	return; // spinbutton is no longer valid
       }
     }
   }
@@ -2513,7 +2529,9 @@ after_param_text_changed (GtkWidget *textwidget, lives_rfx_t *rfx) {
       }
 
       if (param->reinit||(copyto!=-1&&rfx->params[copyto].reinit)) {
+	gtk_widget_set_sensitive(textwidget,FALSE);
 	weed_reinit_effect(inst,FALSE);
+	return;
       }
 
       if (disp_string!=NULL) {
@@ -2602,7 +2620,9 @@ after_string_list_changed (GtkComboBox *combo, lives_rfx_t *rfx) {
     
       
       if (param->reinit||(copyto!=-1&&rfx->params[copyto].reinit)) {
+	gtk_widget_set_sensitive(GTK_WIDGET(combo),FALSE);
 	weed_reinit_effect(inst,FALSE);
+	return;
       }
 
       if (disp_string!=NULL) {

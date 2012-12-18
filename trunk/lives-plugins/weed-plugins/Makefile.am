@@ -108,6 +108,7 @@ fxpluginslib_LTLIBRARIES = RGBdelay.la \
 	colorkey.la \
 	comic.la \
 	data_processor.la \
+	data_unpacker.la \
 	deinterlace.la \
 	edge.la \
 	fg_bg_removal.la \

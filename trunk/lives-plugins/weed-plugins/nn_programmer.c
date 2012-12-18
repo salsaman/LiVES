@@ -201,7 +201,9 @@ int nnprog_process (weed_plant_t *inst, weed_timecode_t timestamp) {
 
   for (i=0;i<hnodes+outnodes;i++) {
     weed_set_string_value(out_params[i],"value",strings[i]);
+#ifdef DEBUG
     if (strlen(strings[i])) printf("eqn %d: %s\n",i,strings[i]);
+#endif
     weed_free(strings[i]);
   }
 

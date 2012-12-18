@@ -54,13 +54,13 @@ void pconx_delete(int okey, int omode, int ocnum, int ikey, int imode, int icnum
 void pconx_remap_mode(int key, int omode, int nmode);
 
 // chain any output data into fx key/mode
-void pconx_chain_data(int key, int mode);
+boolean pconx_chain_data(int key, int mode);
 
 // return list of in keys/modes/params/autoscale
 gchar *pconx_list(int okey, int omode, int opnum);
 
 // special version for compound fx internal connections
-void pconx_chain_data_internal(weed_plant_t *inst);
+boolean pconx_chain_data_internal(weed_plant_t *inst);
 
 
 // alpha channels

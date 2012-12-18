@@ -589,9 +589,10 @@ boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, weed_plant_t *dpa
 	    valsD[i]=mind[minct]+(maxd[maxct]-mind[minct])*ratio;
 	    if (++smaxct==nsmax) smaxct=0;
 	    if (++sminct==nsmin) sminct=0;
+
+	    if (valsD[i]>maxd[maxct]) valsD[i]=maxd[maxct];
+	    if (valsD[i]<mind[minct]) valsD[i]=mind[minct];
 	  }
-	  if (valsD[i]>maxd[maxct]) valsD[i]=maxd[maxct];
-	  if (valsD[i]<mind[minct]) valsD[i]=mind[minct];
 
 	  if (i>=ondvals||valsd[i]!=valsD[i]) {
 	    retval=TRUE;
@@ -779,10 +780,12 @@ boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, weed_plant_t *dpa
 	    vald=mind[minct]+(maxd[maxct]-mind[minct])*ratio;
 	    if (++smaxct==nsmax) smaxct=0;
 	    if (++sminct==nsmin) sminct=0;
+
+	    if (vald>maxd[maxct]) vald=maxd[maxct];
+	    if (vald<mind[minct]) vald=mind[minct];
 	  }
 	  else vald=(double)valsi[i];
-	  if (vald>maxd[maxct]) vald=maxd[maxct];
-	  if (vald<mind[minct]) vald=mind[minct];
+
 	  if (i>=ondvals||valsd[i]!=vald) {
 	    retval=TRUE;
 	    valsd[i]=vald;
@@ -839,9 +842,11 @@ boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, weed_plant_t *dpa
 	    valsI[i]=myround(mini[minct]+(double)(maxi[maxct]-mini[minct])*ratio);
 	    if (++smaxct==nsmax) smaxct=0;
 	    if (++sminct==nsmin) sminct=0;
+
+	    if (valsI[i]>maxi[maxct]) valsI[i]=maxi[maxct];
+	    if (valsI[i]<mini[minct]) valsI[i]=mini[minct];
 	  }
-	  if (valsI[i]>maxi[maxct]) valsI[i]=maxi[maxct];
-	  if (valsI[i]<mini[minct]) valsI[i]=mini[minct];
+
 	  if (i>=ondvals||valsi[i]!=valsI[i]) {
 	    retval=TRUE;
 	    valsi[i]=valsI[i];
@@ -1080,15 +1085,17 @@ boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, weed_plant_t *dpa
 
 
 
-void pconx_chain_data(int key, int mode) {
-  int error;
-  int nparams=0;
-  int autoscale;
+boolean pconx_chain_data(int key, int mode) {
   weed_plant_t **inparams;
   weed_plant_t *oparam;
   weed_plant_t *inst=NULL;
 
-  boolean changed;
+  boolean changed,reinit_inst;
+
+  int error;
+  int nparams=0;
+  int autoscale;
+  int pflags;
 
   int copyto=-1;
 
@@ -1097,12 +1104,12 @@ void pconx_chain_data(int key, int mode) {
   if (key>-1) {
     if (mainw->is_rendering) {
       if ((inst=get_new_inst_for_keymode(key,mode))==NULL) {
-	return; ///< dest effect is not found
+	return FALSE; ///< dest effect is not found
       }
     }
     else {
       if ((inst=rte_keymode_get_instance(key+1,mode))==NULL) {
-	return; ///< dest effect is not enabled
+	return FALSE; ///< dest effect is not enabled
       }
     }
     
@@ -1110,7 +1117,7 @@ void pconx_chain_data(int key, int mode) {
   }
   else if (key==-2) {
     // playback plugin
-    if (mainw->vpp==NULL) return;
+    if (mainw->vpp==NULL) return FALSE;
     nparams=mainw->vpp->num_play_params;
   }
 
@@ -1126,7 +1133,7 @@ void pconx_chain_data(int key, int mode) {
 #endif
 	changed=pconx_convert_value_data(inst,i,key==-2?(weed_plant_t *)pp_get_param(mainw->vpp->play_params,i):inparams[i],oparam,autoscale);
 
-	if (changed&&inst!=NULL) {
+	if (changed&&inst!=NULL&&key>-1) {
 	  // only store value if it changed; for int, double or colour, store old value too
 
 	  copyto=set_copy_to(inst,i,TRUE);
@@ -1136,7 +1143,14 @@ void pconx_chain_data(int key, int mode) {
 	    if (copyto!=-1) rec_param_change(inst,copyto);
 	  }
 
-	  if (fx_dialog[1]!=NULL) {
+	  pflags=weed_get_int_value(inparams[i],"flags",&error);
+	  if (pflags&WEED_PARAMETER_REINIT_ON_VALUE_CHANGE) reinit_inst=TRUE;
+	  if (copyto!=-1) {
+	    pflags=weed_get_int_value(inparams[copyto],"flags",&error);
+	    if (pflags&WEED_PARAMETER_REINIT_ON_VALUE_CHANGE) reinit_inst=TRUE;
+	  }
+
+	  if (fx_dialog[1]!=NULL&&!reinit_inst) {
 	    lives_rfx_t *rfx=(lives_rfx_t *)g_object_get_data(G_OBJECT(fx_dialog[1]),"rfx");
 	    if (!rfx->is_template) {
 	      gint keyw=GPOINTER_TO_INT (g_object_get_data (G_OBJECT (fx_dialog[1]),"key"));
@@ -1153,21 +1167,22 @@ void pconx_chain_data(int key, int mode) {
     }
     if (key!=-2) weed_free(inparams);
   }
+  return reinit_inst;
 }
 
 
-void pconx_chain_data_internal(weed_plant_t *inst) {
+boolean pconx_chain_data_internal(weed_plant_t *inst) {
   // special version for compound fx internal connections
   weed_plant_t **in_params;
 
-  boolean autoscale;
+  boolean autoscale,reinit_inst;
 
-  int nparams=0,error;
+  int nparams=0,error,pflags,copyto;
 
   register int i;
 
   nparams=num_in_params(inst,FALSE,FALSE);
-  if (nparams==0) return;
+  if (nparams==0) return FALSE;
 
   in_params=weed_get_plantptr_array(inst,"in_parameters",&error);
 
@@ -1176,11 +1191,23 @@ void pconx_chain_data_internal(weed_plant_t *inst) {
       autoscale=FALSE;
       if (weed_plant_has_leaf(in_params[i],"host_internal_connection_autoscale")&&
 	  weed_get_boolean_value(in_params[i],"host_internal_connection_autoscale",&error)==WEED_TRUE) autoscale=TRUE;
-      pconx_convert_value_data(inst,i,in_params[i],weed_get_plantptr_value(in_params[i],"host_internal_connection",&error),autoscale);
+      if (pconx_convert_value_data(inst,i,in_params[i],weed_get_plantptr_value(in_params[i],"host_internal_connection",&error),autoscale)) {
+
+	copyto=set_copy_to(inst,i,TRUE);
+
+	pflags=weed_get_int_value(in_params[i],"flags",&error);
+	if (pflags&WEED_PARAMETER_REINIT_ON_VALUE_CHANGE) reinit_inst=TRUE;
+	if (copyto!=-1) {
+	  pflags=weed_get_int_value(in_params[copyto],"flags",&error);
+	  if (pflags&WEED_PARAMETER_REINIT_ON_VALUE_CHANGE) reinit_inst=TRUE;
+	}
+      }
+
     }
   }
 
   weed_free(in_params);
+  return reinit_inst;
 }
 
 // alpha channs

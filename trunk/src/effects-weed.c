@@ -3105,6 +3105,8 @@ static void weed_apply_filter_map (weed_plant_t **layers, weed_plant_t *filter_m
   lives_filter_error_t filter_error;
   int key,num_inst,error;
 
+  boolean needs_reinit;
+
   register int i;
 
   // this is called during rendering - we will have previously received a filter_map event and now we apply this to layers
@@ -3152,18 +3154,26 @@ static void weed_apply_filter_map (weed_plant_t **layers, weed_plant_t *filter_m
 	      interpolate_params(instance,pchain,tc); // interpolate parameters for preview
 	    }
 
+
+
+
 	  apply_inst1:
+
+	    if (weed_plant_has_leaf(instance,"host_next_instance")) {
+	      // chain any internal data pipelines for compound fx
+	      pthread_mutex_lock(&mainw->data_mutex);
+	      needs_reinit=pconx_chain_data_internal(instance);
+	      pthread_mutex_unlock(&mainw->data_mutex);
+	      if (needs_reinit) {
+		weed_reinit_effect(instance,FALSE);
+	      }
+	    }
 
 	    filter_error=weed_apply_instance (instance,mainw->multitrack->init_event,layers,0,0,tc);
 
 	    if (filter_error==WEED_NO_ERROR&&weed_plant_has_leaf(instance,"host_next_instance")) {
 	      // handling for compound fx
 	      instance=weed_get_plantptr_value(instance,"host_next_instance",&error);
-
-	      // chain any internal data pipelines for compound fx
-	      pthread_mutex_lock(&mainw->data_mutex);
-	      pconx_chain_data_internal(instance);
-	      pthread_mutex_unlock(&mainw->data_mutex);
 
 	      goto apply_inst1;
 	    }
@@ -3203,16 +3213,21 @@ static void weed_apply_filter_map (weed_plant_t **layers, weed_plant_t *filter_m
 
 	apply_inst2:
 
+	  if (weed_plant_has_leaf(instance,"host_next_instance")) {
+	    // chain any internal data pipelines for compound fx
+	    pthread_mutex_lock(&mainw->data_mutex);
+	    needs_reinit=pconx_chain_data_internal(instance);
+	    pthread_mutex_unlock(&mainw->data_mutex);
+	    if (needs_reinit) {
+	      weed_reinit_effect(instance,FALSE);
+	    }
+	  }
+
 	  filter_error=weed_apply_instance (instance,init_event,layers,0,0,tc);
 
 	  if (filter_error==WEED_NO_ERROR&&weed_plant_has_leaf(instance,"host_next_instance")) {
 	    // handling for compound fx
 	    instance=weed_get_plantptr_value(instance,"host_next_instance",&error);
-
-	    // chain any internal data pipelines for compound fx
-	    pthread_mutex_lock(&mainw->data_mutex);
-	    pconx_chain_data_internal(instance);
-	    pthread_mutex_unlock(&mainw->data_mutex);
 
 	    goto apply_inst2;
 	  }
@@ -3241,12 +3256,16 @@ weed_plant_t *weed_apply_effects (weed_plant_t **layers, weed_plant_t *filter_ma
 
   // TODO - update the param window with any out_param values which changed.
 
-  int error;
+  void *pdata;
+
   weed_plant_t *instance,*layer;
   lives_filter_error_t filter_error;
+
+  boolean needs_reinit;
+
+  int error;
   int output=-1;
   int clip;
-  void *pdata;
 
   register int i;
 
@@ -3272,11 +3291,25 @@ weed_plant_t *weed_apply_effects (weed_plant_t **layers, weed_plant_t *filter_ma
 	  if (mainw->pconx!=NULL&&!(mainw->preview||mainw->is_rendering)) {
 	    // chain any data pipelines
 	    pthread_mutex_lock(&mainw->data_mutex);
-	    pconx_chain_data(i,key_modes[i]);
+	    needs_reinit=pconx_chain_data(i,key_modes[i]);
 	    pthread_mutex_unlock(&mainw->data_mutex);
+
+	    if (needs_reinit) {
+	      weed_reinit_effect(instance,FALSE);
+	    }
 	  }
 
 	apply_inst3:
+
+	  if (weed_plant_has_leaf(instance,"host_next_instance")) {
+	    // chain any internal data pipelines for compound fx
+	    pthread_mutex_lock(&mainw->data_mutex);
+	    needs_reinit=pconx_chain_data_internal(instance);
+	    pthread_mutex_unlock(&mainw->data_mutex);
+	    if (needs_reinit) {
+	      weed_reinit_effect(instance,FALSE);
+	    }
+	  }
 
 	  weed_set_int_value(instance,"host_key",i);
 
@@ -3292,11 +3325,6 @@ weed_plant_t *weed_apply_effects (weed_plant_t **layers, weed_plant_t *filter_ma
 	    // handling for compound fx
 
 	    instance=weed_get_plantptr_value(instance,"host_next_instance",&error);
-
-	    // chain any internal data pipelines for compound fx
-	    pthread_mutex_lock(&mainw->data_mutex);
-	    pconx_chain_data_internal(instance);
-	    pthread_mutex_unlock(&mainw->data_mutex);
 
 	    goto apply_inst3;
 	  }
@@ -3412,6 +3440,8 @@ void weed_apply_audio_effects_rt(float **abuf, int nchans, int64_t nsamps, gdoub
 
   int error;
 
+  boolean needs_reinit;
+
   register int i;
 
   // free playback: apply any audio filters or analysers (but not generators)
@@ -3452,24 +3482,37 @@ void weed_apply_audio_effects_rt(float **abuf, int nchans, int64_t nsamps, gdoub
 	  // chain any data pipelines
 
 	  if (!pthread_mutex_trylock(&mainw->data_mutex)) {
-	    pconx_chain_data(i,key_modes[i]);
+	    needs_reinit=pconx_chain_data(i,key_modes[i]);
 	    pthread_mutex_unlock(&mainw->data_mutex);
+
+	    if (needs_reinit) {
+	      pthread_mutex_unlock(&mainw->afilter_mutex);
+	      weed_reinit_effect(instance,FALSE);
+	      pthread_mutex_lock(&mainw->afilter_mutex);
+	    }
 	  }
 	}
 
 	//weed_set_int_value(instance,"host_key",i);
+
+	if (weed_plant_has_leaf(instance,"host_next_instance")) {
+	  // chain any internal data pipelines for compound fx
+	  if (!pthread_mutex_trylock(&mainw->data_mutex)) {
+	    needs_reinit=pconx_chain_data_internal(instance);
+	    pthread_mutex_unlock(&mainw->data_mutex);
+	    if (needs_reinit) {
+	      pthread_mutex_unlock(&mainw->afilter_mutex);
+	      weed_reinit_effect(instance,FALSE);
+	      pthread_mutex_lock(&mainw->afilter_mutex);
+	    }
+	  }
+	}
 
 	filter_error=weed_apply_audio_instance(instance,abuf,0,nchans,nsamps,arate,tc,NULL);
 
 	if (filter_error==WEED_NO_ERROR&&weed_plant_has_leaf(instance,"host_next_instance")) {
 	  // handling for compound fx
 	  instance=weed_get_plantptr_value(instance,"host_next_instance",&error);
-
-	  // chain any internal data pipelines for compound fx
-	  if (!pthread_mutex_trylock(&mainw->data_mutex)) {
-	    pconx_chain_data_internal(instance);
-	    pthread_mutex_unlock(&mainw->data_mutex);
-	  }
 
 	  goto apply_audio_inst2;
 	}
@@ -7439,6 +7482,9 @@ int set_copy_to(weed_plant_t *inst, int pnum, boolean update) {
     if (copyto==pnum||copyto<0||copyto>=nparams) return -1;
 
     in_params=weed_get_plantptr_array(inst,"in_parameters",&error);
+
+    if (weed_plant_has_leaf(in_params[copyto],"host_internal_connection")) return -1;
+
     paramtmpl2=weed_get_plantptr_value(in_params[copyto],"template",&error);
     if (weed_plant_has_leaf(paramtmpl2,"flags")) flags2=weed_get_int_value(paramtmpl2,"flags",&error);
     param_hint2=weed_get_int_value(paramtmpl2,"hint",&error);

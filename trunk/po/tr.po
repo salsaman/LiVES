@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2012-12-16 17:18-0300\n"
+"POT-Creation-Date: 2012-12-19 21:58-0300\n"
 "PO-Revision-Date: 2011-08-18 12:12+0000\n"
 "Last-Translator: salsaman <salsaman@gmail.com>\n"
 "Language-Team: Turkish <tr@li.org>\n"
@@ -5747,28 +5747,28 @@ msgstr ""
 "\n"
 "%d çerçeve açıldı.\n"
 
-#: src/effects-weed.c:4190
+#: src/effects-weed.c:4233
 #, c-format
 msgid "Error: plugin %s has no weed_setup() function.\n"
 msgstr ""
 
-#: src/effects-weed.c:4205
+#: src/effects-weed.c:4248
 #, c-format
 msgid "No usable filters found in plugin %s\n"
 msgstr ""
 
-#: src/effects-weed.c:4233
+#: src/effects-weed.c:4276
 #, c-format
 msgid "Found duplicate plugin %s\n"
 msgstr ""
 
 #. TRANSLATORS: example " - LADSPA plugins -"
-#: src/effects-weed.c:4275 src/rte_window.c:1270
+#: src/effects-weed.c:4318 src/rte_window.c:1277
 #, c-format
 msgid " - %s plugins -"
 msgstr ""
 
-#: src/effects-weed.c:4329
+#: src/effects-weed.c:4372
 #, c-format
 msgid ""
 "Info: Unable to load plugin %s\n"
@@ -5777,170 +5777,170 @@ msgstr ""
 "Bilgi: %s eklentisi yüklenemiyor\n"
 "Hata:% s\n"
 
-#: src/effects-weed.c:4332 src/effects-weed.c:5321
+#: src/effects-weed.c:4375 src/effects-weed.c:5364
 #, fuzzy
 msgid "Some plugin directories"
 msgstr "Alt dizinler dahil"
 
-#: src/effects-weed.c:4500
+#: src/effects-weed.c:4543
 #, c-format
 msgid "Successfully loaded %d Weed filters\n"
 msgstr "%d Weed filtresi başarıyla yüklendi\n"
 
-#: src/effects-weed.c:4635
+#: src/effects-weed.c:4678
 #, c-format
 msgid "Invalid compound effect %s - has conflicting target_fps\n"
 msgstr ""
 
-#: src/effects-weed.c:4655
+#: src/effects-weed.c:4698
 #, c-format
 msgid "Invalid compound effect %s - has multiple transition parameters\n"
 msgstr ""
 
-#: src/effects-weed.c:4669
+#: src/effects-weed.c:4712
 #, c-format
 msgid "Invalid compound effect %s - has multiple master volume parameters\n"
 msgstr ""
 
-#: src/effects-weed.c:4804
+#: src/effects-weed.c:4847
 #, c-format
 msgid "Invalid compound effect %s - must have >1 sub filters\n"
 msgstr ""
 
-#: src/effects-weed.c:4824
+#: src/effects-weed.c:4867
 #, c-format
 msgid "Invalid effect %s found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:4839
+#: src/effects-weed.c:4882
 #, c-format
 msgid "Invalid default found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:4850
+#: src/effects-weed.c:4893
 #, c-format
 msgid "Invalid filter %d for defaults found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:4864
+#: src/effects-weed.c:4907
 #, c-format
 msgid "Invalid param %d for defaults found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:4891
+#: src/effects-weed.c:4934
 #, c-format
 msgid ""
 "Invalid number of values for defaults found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:4925
+#: src/effects-weed.c:4968
 #, c-format
 msgid ""
 "Invalid non-boolean value for defaults found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:4958
+#: src/effects-weed.c:5001
 #, c-format
 msgid "Invalid param link found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:4969
+#: src/effects-weed.c:5012
 #, c-format
 msgid ""
 "Invalid out filter %d for link params found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:4987
+#: src/effects-weed.c:5030
 #, c-format
 msgid ""
 "Invalid out param %d for link params found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:4999
+#: src/effects-weed.c:5042
 #, c-format
 msgid ""
 "Invalid non-boolean value for autoscale found in compound effect %s, line "
 "%d\n"
 msgstr ""
 
-#: src/effects-weed.c:5010
+#: src/effects-weed.c:5053
 #, c-format
 msgid ""
 "Invalid in filter %d for link params found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:5024
+#: src/effects-weed.c:5067
 #, c-format
 msgid ""
 "Invalid in param %d for link params found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:5052
+#: src/effects-weed.c:5095
 #, c-format
 msgid "Invalid channel link found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:5063
+#: src/effects-weed.c:5106
 #, c-format
 msgid ""
 "Invalid out filter %d for link channels found in compound effect %s, line "
 "%d\n"
 msgstr ""
 
-#: src/effects-weed.c:5081
+#: src/effects-weed.c:5124
 #, c-format
 msgid ""
 "Invalid out channel %d for link params found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:5091
+#: src/effects-weed.c:5134
 #, c-format
 msgid ""
 "Invalid in filter %d for link channels found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:5109
+#: src/effects-weed.c:5152
 #, c-format
 msgid ""
 "Invalid in channel %d for link params found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:5147
+#: src/effects-weed.c:5190
 #, c-format
 msgid "Compound:%s"
 msgstr ""
 
-#: src/effects-weed.c:5229
+#: src/effects-weed.c:5272
 #, fuzzy, c-format
 msgid "Successfully loaded %d compound filters\n"
 msgstr "%d Weed filtresi başarıyla yüklendi\n"
 
-#: src/effects-weed.c:6008
+#: src/effects-weed.c:6051
 #, c-format
 msgid "Effect %s cannot be used with this audio player.\n"
 msgstr ""
 
-#: src/effects-weed.c:6148
+#: src/effects-weed.c:6191
 #, fuzzy, c-format
 msgid "Failed to start instance %s, error code %d\n"
 msgstr "%s üretici başlatılamadı\n"
 
-#: src/effects-weed.c:6215
+#: src/effects-weed.c:6258
 #, c-format
 msgid "Unable to start generator %s\n"
 msgstr "%s üretci başlayamıyor\n"
 
-#: src/effects-weed.c:6933
+#: src/effects-weed.c:6976
 #, c-format
 msgid "Failed to start generator %s\n"
 msgstr "%s üretici başlatılamadı\n"
 
-#: src/effects-weed.c:7030
+#: src/effects-weed.c:7073
 #, fuzzy, c-format
 msgid "Failed to start generator %s, error %d\n"
 msgstr "%s üretici başlatılamadı\n"
 
-#: src/effects-weed.c:8221
+#: src/effects-weed.c:8267
 #, c-format
 msgid "%s [unstable] (%s)"
 msgstr ""
@@ -6056,7 +6056,7 @@ msgstr "Öntanımlı olarak ata"
 msgid "Reset"
 msgstr ""
 
-#: src/paramwindow.c:973 src/rte_window.c:1609 src/omc-learn.c:1376
+#: src/paramwindow.c:973 src/rte_window.c:1616 src/omc-learn.c:1376
 msgid "Close _window"
 msgstr "Pencereyi kapat"
 
@@ -8543,7 +8543,7 @@ msgstr "Sürüm: %d"
 msgid "Description: "
 msgstr "Açıklama: "
 
-#: src/rte_window.c:1133
+#: src/rte_window.c:1140
 msgid ""
 "\n"
 "\n"
@@ -8552,68 +8552,68 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/rte_window.c:1197
+#: src/rte_window.c:1204
 #, fuzzy, c-format
 msgid "LiVES could not locate the effect %s.\n"
 msgstr "LiVES: bir dosya seçin"
 
-#: src/rte_window.c:1373
+#: src/rte_window.c:1380
 #, fuzzy
 msgid "LiVES: Real time effect mapping"
 msgstr "Gerçek Zamanlı _Efekt Haritası"
 
-#: src/rte_window.c:1382 src/rte_window.c:1440
+#: src/rte_window.c:1389 src/rte_window.c:1447
 msgid "Key grab"
 msgstr ""
 
-#: src/rte_window.c:1397
+#: src/rte_window.c:1404
 #, c-format
 msgid "Ctrl-%d"
 msgstr "Ctrl-%d"
 
-#: src/rte_window.c:1406
+#: src/rte_window.c:1413
 msgid "Key active"
 msgstr ""
 
-#: src/rte_window.c:1445
+#: src/rte_window.c:1452
 msgid "Grab keyboard for this effect key"
 msgstr ""
 
-#: src/rte_window.c:1464
+#: src/rte_window.c:1471
 msgid "_Clear all effects"
 msgstr ""
 
-#: src/rte_window.c:1483
+#: src/rte_window.c:1490
 msgid "Mode active"
 msgstr ""
 
-#: src/rte_window.c:1509 src/multitrack.c:7842
+#: src/rte_window.c:1516 src/multitrack.c:7842
 msgid "Info"
 msgstr "Bilgiler"
 
-#: src/rte_window.c:1510
+#: src/rte_window.c:1517
 #, fuzzy
 msgid "Set Parameters"
 msgstr "Parametre yok"
 
-#: src/rte_window.c:1511
+#: src/rte_window.c:1518
 msgid "Clear"
 msgstr "Temizle"
 
-#: src/rte_window.c:1520
+#: src/rte_window.c:1527
 msgid "Effect name:"
 msgstr "Efekt adı:"
 
-#: src/rte_window.c:1599
+#: src/rte_window.c:1606
 #, fuzzy
 msgid "_Save as default keymap"
 msgstr "Öntanımlı olarak ata"
 
-#: src/rte_window.c:1604
+#: src/rte_window.c:1611
 msgid "_Load default keymap"
 msgstr ""
 
-#: src/rte_window.c:2015
+#: src/rte_window.c:2022
 #, c-format
 msgid ""
 "Unable to create default keymap file: %s\n"

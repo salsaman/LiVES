@@ -1,14 +1,15 @@
-// dat_unpacker.c
+// nn_programmer.c
 // weed plugin
 // (c) G. Finch (salsaman) 2012
 //
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
 
-// unpacks multivalued data into single valued outputs
+// converts float values to log_sig values
 
 //#define DEBUG
 #include <stdio.h>
+#include <math.h>
 
 #ifdef HAVE_SYSTEM_WEED
 #include <weed/weed.h>
@@ -42,30 +43,19 @@ static int package_version=1; // version of this package
 /////////////////////////////////////////////////////////////
 
 
-int dunpack_process (weed_plant_t *inst, weed_timecode_t timestamp) {
+int logsig_process (weed_plant_t *inst, weed_timecode_t timestamp) {
   int error;
   weed_plant_t **in_params=weed_get_plantptr_array(inst,"in_parameters",&error);
   weed_plant_t **out_params=weed_get_plantptr_array(inst,"out_parameters",&error);
-  double *fvals,xval;
+  double fval;
 
-  int oidx=0,nvals;
-
-  register int i,j;
+  register int i;
 
   for (i=0;i<256;i++) {
-    nvals=weed_leaf_num_elements(in_params[i],"value");
-    if (nvals>0) {
-      fvals=weed_get_double_array(in_params[i],"value",&error);
-      for (j=0;j<nvals;j++) {
-	xval=fvals[j];
-	if (xval>1.) xval=1.;
-	if (xval<-1.) xval=-1.;
-	weed_set_double_value(out_params[oidx++],"value",xval);
-	if (oidx==256) break;
-      }
-      weed_free(fvals);
+    if (weed_plant_has_leaf(in_params[i],"value")) {
+      fval=weed_get_double_value(in_params[i],"value",&error);
+      weed_set_double_value(out_params[i],"value",1./(1.+exp(-fval)));
     }
-    if (oidx==256) break;
   }
 
   weed_free(in_params);
@@ -92,9 +82,7 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
     for (i=0;i<256;i++) {
       snprintf(name,256,"input%03d",i);
       snprintf(label,256,"Input %03d",i);
-      in_params[i]=weed_float_init(name,label,0.,0.,1.);
-      weed_set_int_value(in_params[i],"flags",WEED_PARAMETER_VARIABLE_ELEMENTS);
-
+      in_params[i]=weed_float_init(name,label,0.,-1000000000000.,1000000000000.);
       snprintf(name,256,"Output %03d",i);
       out_params[i]=weed_out_param_float_init(name,0.,-1.,1.);
     }
@@ -102,7 +90,7 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
     in_params[i]=NULL;
     out_params[i]=NULL;
 
-    filter_class=weed_filter_class_init("data_unpacker","salsaman",1,0,NULL,&dunpack_process,
+    filter_class=weed_filter_class_init("log_sig","salsaman",1,0,NULL,&logsig_process,
 					NULL,NULL,NULL,in_params,out_params);
 
 

@@ -117,6 +117,7 @@ fxpluginslib_LTLIBRARIES = RGBdelay.la \
 	layout_blends.la \
 	lifeTV.la \
 	livetext.la \
+	log_sig.la \
 	mirrors.la \
 	multi_blends.la \
 	multi_transitions.la \

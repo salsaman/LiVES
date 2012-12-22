@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: ja\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2012-12-19 21:58-0300\n"
+"POT-Creation-Date: 2012-12-22 20:53-0300\n"
 "PO-Revision-Date: 2012-08-08 08:58+0000\n"
 "Last-Translator: Shushi Kurose <md81bird@hitaki.net>\n"
 "Language-Team: Japanese <ja@li.org>\n"
@@ -666,12 +666,12 @@ msgstr "記録 %9d/%d"
 msgid "!rec %9d/%d"
 msgstr "!記録 %9d/%d"
 
-#: src/main.c:4690 src/main.c:4691 src/gui.c:2052 src/gui.c:3094
-#: src/saveplay.c:2192
+#: src/main.c:4689 src/main.c:4690 src/gui.c:2052 src/gui.c:3094
+#: src/saveplay.c:2193
 msgid "Play"
 msgstr "再生"
 
-#: src/main.c:5357
+#: src/main.c:5356
 msgid ""
 "LiVES was unable to capture this image\n"
 "\n"
@@ -679,35 +679,35 @@ msgstr ""
 "LiVESはこの画像をキャプチャできませんでした\n"
 "\n"
 
-#: src/main.c:5479
+#: src/main.c:5478
 #, c-format
 msgid "Closed file %s\n"
 msgstr "ファイル %s を閉じました\n"
 
-#: src/main.c:5673 src/gui.c:622 src/utils.c:3792 src/utils.c:3824
-#: src/saveplay.c:3372 src/multitrack.c:4120 src/multitrack.c:5696
+#: src/main.c:5672 src/gui.c:622 src/utils.c:3792 src/utils.c:3824
+#: src/saveplay.c:3373 src/multitrack.c:4120 src/multitrack.c:5696
 msgid "_Undo"
 msgstr "元に戻す(_U)"
 
-#: src/main.c:5674 src/gui.c:635 src/utils.c:3793 src/utils.c:3825
-#: src/saveplay.c:3373 src/multitrack.c:4141 src/multitrack.c:5719
+#: src/main.c:5673 src/gui.c:635 src/utils.c:3793 src/utils.c:3825
+#: src/saveplay.c:3374 src/multitrack.c:4141 src/multitrack.c:5719
 msgid "_Redo"
 msgstr "やり直す(_R)"
 
-#: src/main.c:5701 src/interface.c:661 src/gui.c:2217 src/preferences.c:2452
+#: src/main.c:5700 src/interface.c:661 src/gui.c:2217 src/preferences.c:2452
 #: src/resample.c:1810
 msgid "Video"
 msgstr "ビデオ"
 
-#: src/main.c:5702 src/interface.c:680 src/gui.c:2236
+#: src/main.c:5701 src/interface.c:680 src/gui.c:2236
 msgid "Left Audio"
 msgstr "左音声"
 
-#: src/main.c:5703 src/gui.c:2254
+#: src/main.c:5702 src/gui.c:2254
 msgid "Right Audio"
 msgstr "右音声"
 
-#: src/main.c:5751
+#: src/main.c:5750
 msgid ""
 "\n"
 "\n"
@@ -721,22 +721,22 @@ msgstr ""
 "きません。\n"
 "「設定」の再生オプションを調整して、再度試してください。\n"
 
-#: src/main.c:5836 src/callbacks.c:7272 src/callbacks.c:7420
+#: src/main.c:5835 src/callbacks.c:7272 src/callbacks.c:7420
 #: src/callbacks.c:7746 src/callbacks.c:7763 src/gui.c:3683
-#: src/saveplay.c:2314 src/saveplay.c:2348 src/saveplay.c:2953
-#: src/saveplay.c:3063 src/saveplay.c:3085 src/multitrack.c:8569
+#: src/saveplay.c:2315 src/saveplay.c:2349 src/saveplay.c:2954
+#: src/saveplay.c:3064 src/saveplay.c:3086 src/multitrack.c:8569
 #: src/multitrack.c:10260
 #, c-format
 msgid " (%d %% scale)"
 msgstr ""
 
-#: src/main.c:5838 src/callbacks.c:7274 src/callbacks.c:7422
-#: src/callbacks.c:7748 src/gui.c:3687 src/saveplay.c:2316 src/saveplay.c:2350
+#: src/main.c:5837 src/callbacks.c:7274 src/callbacks.c:7422
+#: src/callbacks.c:7748 src/gui.c:3687 src/saveplay.c:2317 src/saveplay.c:2351
 #, c-format
 msgid "LiVES: - Play Window%s"
 msgstr ""
 
-#: src/main.c:6266 src/plugins.c:1532
+#: src/main.c:6265 src/plugins.c:1532
 msgid "LiVES: - Play Window"
 msgstr "LiVES: - 再生ウィンドウ"
 
@@ -1131,8 +1131,8 @@ msgstr ""
 "す。"
 
 #: src/interface.c:203 src/callbacks.c:9782 src/callbacks.c:9812
-#: src/callbacks.c:9813 src/gui.c:3097 src/gui.c:3660 src/saveplay.c:2195
-#: src/saveplay.c:2976 src/dialogs.c:1344 src/dialogs.c:1345
+#: src/callbacks.c:9813 src/gui.c:3097 src/gui.c:3660 src/saveplay.c:2196
+#: src/saveplay.c:2977 src/dialogs.c:1344 src/dialogs.c:1345
 #: src/dialogs.c:1573 src/dialogs.c:1574 src/framedraw.c:230
 #: src/multitrack.c:7381
 msgid "Preview"
@@ -2042,8 +2042,8 @@ msgstr "リドゥします"
 msgid "Copying frames %d to %d%s to the clipboard..."
 msgstr "%dから%d%sフレームをクリップボードにコピーします..."
 
-#: src/callbacks.c:2517 src/saveplay.c:1408 src/saveplay.c:1562
-#: src/saveplay.c:1624 src/saveplay.c:3808
+#: src/callbacks.c:2517 src/saveplay.c:1409 src/saveplay.c:1563
+#: src/saveplay.c:1625 src/saveplay.c:3809
 msgid "Pulling frames from clip"
 msgstr "クリップからフレームを抽出"
 
@@ -2543,7 +2543,7 @@ msgstr "音声を収容します"
 msgid "New Audio"
 msgstr "新しい音声"
 
-#: src/callbacks.c:7016 src/saveplay.c:3437
+#: src/callbacks.c:7016 src/saveplay.c:3438
 #, c-format
 msgid "%d frames are enough !\n"
 msgstr "%d フレームで十分です !\n"
@@ -2580,7 +2580,7 @@ msgstr "再生ウィンドウを表示する (s)"
 msgid "Play in separate window (s)"
 msgstr "独立したウィンドウで再生 (s)"
 
-#: src/callbacks.c:7611 src/gui.c:3928 src/saveplay.c:2345
+#: src/callbacks.c:7611 src/gui.c:3928 src/saveplay.c:2346
 msgid "LiVES: - Streaming"
 msgstr "LiVES: - ストリーミング"
 
@@ -4199,7 +4199,7 @@ msgstr "%sを開きます"
 msgid "Opening %s start time %.2f sec. frames %d"
 msgstr "%sを開きます。開始時刻%.2f秒、%dフレーム"
 
-#: src/saveplay.c:311 src/saveplay.c:3795
+#: src/saveplay.c:311 src/saveplay.c:3796
 msgid " without sound"
 msgstr " 音声なし"
 
@@ -4299,35 +4299,35 @@ msgstr ""
 "\n"
 "それでも続けますか ?"
 
-#: src/saveplay.c:1398
+#: src/saveplay.c:1399
 msgid "selection"
 msgstr "選択"
 
-#: src/saveplay.c:1479 src/saveplay.c:1600
+#: src/saveplay.c:1480 src/saveplay.c:1601
 msgid "Linking selection"
 msgstr "リンクの選択"
 
-#: src/saveplay.c:1641
+#: src/saveplay.c:1642
 msgid " (with no sound)\n"
 msgstr " (音声なし)\n"
 
-#: src/saveplay.c:1648
+#: src/saveplay.c:1649
 #, c-format
 msgid "Saving frames %d to %d%s as \"%s\" : encoder = %s : format = %s..."
 msgstr ""
 "フレーム%dから%d%sを\"%s\"として保存 : エンコーダ = %s : フォーマット = %s..."
 
-#: src/saveplay.c:1652
+#: src/saveplay.c:1653
 #, c-format
 msgid "Saving frames 1 to %d%s as \"%s\" : encoder %s : format = %s..."
 msgstr ""
 "フレーム1から%d%sを\"%s\"として保存 : エンコーダ = %s : フォーマット = %s..."
 
-#: src/saveplay.c:1759
+#: src/saveplay.c:1760
 msgid "Saving [can take a long time]"
 msgstr "保存 [しばらく時間がかかるかもしれません]"
 
-#: src/saveplay.c:1907
+#: src/saveplay.c:1908
 msgid ""
 "\n"
 "\n"
@@ -4337,33 +4337,33 @@ msgstr ""
 "\n"
 "エンコーダエラー - 出力ファイルは作成されませんでした !\n"
 
-#: src/saveplay.c:1938
+#: src/saveplay.c:1939
 msgid "Clearing letterbox"
 msgstr "レターボックスの消去"
 
-#: src/saveplay.c:2043
+#: src/saveplay.c:2044
 #, c-format
 msgid "File size was %s\n"
 msgstr "ファイルサイズ %s\n"
 
-#: src/saveplay.c:2140
+#: src/saveplay.c:2141
 msgid "recording aborted by preview.\n"
 msgstr "プレビューにより記録は中止されました。\n"
 
-#: src/saveplay.c:2144
+#: src/saveplay.c:2145
 msgid "recording aborted by clipboard playback.\n"
 msgstr "クリップボードの再生により記録は中止されました。\n"
 
-#: src/saveplay.c:2147
+#: src/saveplay.c:2148
 msgid "Recording performance..."
 msgstr "パフォーマンスを記録します..."
 
-#: src/saveplay.c:3138
+#: src/saveplay.c:3139
 #, c-format
 msgid "Average FPS was %.4f\n"
 msgstr "平均のFPSは%.4fです\n"
 
-#: src/saveplay.c:3144
+#: src/saveplay.c:3145
 msgid ""
 "\n"
 "\n"
@@ -4377,16 +4377,16 @@ msgstr ""
 "ツール--->すべてリサイズ をクリックして\n"
 "すべてのフレームを現在のサイズにリサイズしてください。\n"
 
-#: src/saveplay.c:3302
+#: src/saveplay.c:3303
 msgid "Unknown"
 msgstr "不明"
 
-#: src/saveplay.c:3408 src/saveplay.c:4375
+#: src/saveplay.c:3409 src/saveplay.c:4376
 #, c-format
 msgid "Untitled%d"
 msgstr "無題%d"
 
-#: src/saveplay.c:3452
+#: src/saveplay.c:3453
 #, c-format
 msgid ""
 "\n"
@@ -4397,7 +4397,7 @@ msgstr ""
 "クリップ %s のファイル情報の取得でエラーが発生しました。\n"
 "このクリップに問題が発生している可能性があります。\n"
 
-#: src/saveplay.c:3542
+#: src/saveplay.c:3543
 #, c-format
 msgid ""
 "\n"
@@ -4408,12 +4408,12 @@ msgstr ""
 "無効な再生速度です。 %.3ffpsの標準設定を使います。 \n"
 "標準値は「ツール | 設定 | その他」で指定できます。\n"
 
-#: src/saveplay.c:3554
+#: src/saveplay.c:3555
 #, c-format
 msgid "Playback speed was adjusted to %.3f frames per second to fit audio.\n"
 msgstr "再生速度は音声に合わせて %.3f フレーム/秒に調整しました。\n"
 
-#: src/saveplay.c:3573
+#: src/saveplay.c:3574
 #, c-format
 msgid ""
 "Frames=%d type=%s size=%dx%d *bpp=Greyscale* fps=%.3f\n"
@@ -4422,7 +4422,7 @@ msgstr ""
 "フレーム=%d タイプ=%s サイズ=%dx%d *bpp=グレースケール* fps=%.3f\n"
 "音声:"
 
-#: src/saveplay.c:3577 src/saveplay.c:4552
+#: src/saveplay.c:3578 src/saveplay.c:4553
 #, c-format
 msgid ""
 "Frames=%d type=%s size=%dx%d bpp=%d fps=%.3f\n"
@@ -4431,49 +4431,49 @@ msgstr ""
 "フレーム=%d タイプ=%s サイズ=%dx%d bpp=%d fps=%.3f\n"
 "音声:"
 
-#: src/saveplay.c:3581 src/saveplay.c:4556
+#: src/saveplay.c:3582 src/saveplay.c:4557
 #, c-format
 msgid "%s none\n"
 msgstr "%s なし\n"
 
-#: src/saveplay.c:3584 src/saveplay.c:4559
+#: src/saveplay.c:3585 src/saveplay.c:4560
 #, c-format
 msgid "%s %d Hz %d channel(s) %d bps\n"
 msgstr "%s %d Hz %d チャンネル %d bps\n"
 
-#: src/saveplay.c:3592
+#: src/saveplay.c:3593
 #, c-format
 msgid " - Comment: %s\n"
 msgstr " - コメント: %s\n"
 
-#: src/saveplay.c:3697
+#: src/saveplay.c:3698
 #, c-format
 msgid "Saving frame %d as %s..."
 msgstr "フレーム%dを%sとして保存..."
 
-#: src/saveplay.c:3790
+#: src/saveplay.c:3791
 #, c-format
 msgid "Backing up %s to %s"
 msgstr "%sから%sへバックアップします"
 
-#: src/saveplay.c:3843
+#: src/saveplay.c:3844
 msgid "Backing up"
 msgstr "バックアップします"
 
-#: src/saveplay.c:3877
+#: src/saveplay.c:3878
 msgid "performance data was backed up..."
 msgstr "パフォーマンスのデータをバックアップしました..."
 
-#: src/saveplay.c:4451
+#: src/saveplay.c:4452
 #, c-format
 msgid "Restoring %s..."
 msgstr "%sをリストアします..."
 
-#: src/saveplay.c:4482
+#: src/saveplay.c:4483
 msgid "Restoring"
 msgstr "リストアします"
 
-#: src/saveplay.c:4504
+#: src/saveplay.c:4505
 #, c-format
 msgid ""
 "\n"
@@ -4487,22 +4487,22 @@ msgstr ""
 "LiVESはリストアできませんでした。\n"
 
 #. TRANSLATORS: rec(ord) %.2f M(ega)B(ytes)
-#: src/saveplay.c:4996
+#: src/saveplay.c:4997
 #, c-format
 msgid "rec %.2f MB"
 msgstr "%.2fMBを記録しました"
 
-#: src/saveplay.c:5002
+#: src/saveplay.c:5003
 #, c-format
 msgid "!rec %.2f MB"
 msgstr "%.2fMBを記録しました"
 
 #. TRANSLATORS: rec(ord) ?? M(ega)B(ytes)
-#: src/saveplay.c:5005
+#: src/saveplay.c:5006
 msgid "rec ?? MB"
 msgstr "rec ?? MB"
 
-#: src/saveplay.c:5030
+#: src/saveplay.c:5031
 #, c-format
 msgid ""
 "\n"
@@ -4513,7 +4513,7 @@ msgstr ""
 "%s のディスクの空き領域が %ld GB を切ったため記録を停止しています！\n"
 "記録の停止レベルは「設定」で設定することができます。\n"
 
-#: src/saveplay.c:5187
+#: src/saveplay.c:5188
 msgid ""
 "\n"
 "Files from a previous run of LiVES were found.\n"
@@ -4523,11 +4523,11 @@ msgstr ""
 "LiVESを前回起動した際のファイルを発見しました。\n"
 "復元を試しますか?\n"
 
-#: src/saveplay.c:5207
+#: src/saveplay.c:5208
 msgid "Recovering files"
 msgstr "ファイルの復元"
 
-#: src/saveplay.c:5209
+#: src/saveplay.c:5210
 msgid "Recovering files..."
 msgstr "ファイルを復元しています..."
 
@@ -6068,28 +6068,28 @@ msgstr ""
 "\n"
 "フレームは生成されませんでした。\n"
 
-#: src/effects-weed.c:4233
+#: src/effects-weed.c:4239
 #, c-format
 msgid "Error: plugin %s has no weed_setup() function.\n"
 msgstr "エラー: プラグイン %s に weed_setup() がありません。\n"
 
-#: src/effects-weed.c:4248
+#: src/effects-weed.c:4254
 #, c-format
 msgid "No usable filters found in plugin %s\n"
 msgstr "プラグイン %s に使うことのできないフィルターが見つかりました\n"
 
-#: src/effects-weed.c:4276
+#: src/effects-weed.c:4282
 #, c-format
 msgid "Found duplicate plugin %s\n"
 msgstr ""
 
 #. TRANSLATORS: example " - LADSPA plugins -"
-#: src/effects-weed.c:4318 src/rte_window.c:1277
+#: src/effects-weed.c:4324 src/rte_window.c:1277
 #, c-format
 msgid " - %s plugins -"
 msgstr ""
 
-#: src/effects-weed.c:4372
+#: src/effects-weed.c:4378
 #, c-format
 msgid ""
 "Info: Unable to load plugin %s\n"
@@ -6098,169 +6098,169 @@ msgstr ""
 "情報: プラグイン %s を読み込みできませんでした。\n"
 "エラー: %s\n"
 
-#: src/effects-weed.c:4375 src/effects-weed.c:5364
+#: src/effects-weed.c:4381 src/effects-weed.c:5370
 msgid "Some plugin directories"
 msgstr "プラグインディレクトリ"
 
-#: src/effects-weed.c:4543
+#: src/effects-weed.c:4549
 #, c-format
 msgid "Successfully loaded %d Weed filters\n"
 msgstr "%d Weedフィルターの読み込みに成功しました\n"
 
-#: src/effects-weed.c:4678
+#: src/effects-weed.c:4684
 #, c-format
 msgid "Invalid compound effect %s - has conflicting target_fps\n"
 msgstr ""
 
-#: src/effects-weed.c:4698
+#: src/effects-weed.c:4704
 #, c-format
 msgid "Invalid compound effect %s - has multiple transition parameters\n"
 msgstr ""
 
-#: src/effects-weed.c:4712
+#: src/effects-weed.c:4718
 #, c-format
 msgid "Invalid compound effect %s - has multiple master volume parameters\n"
 msgstr ""
 
-#: src/effects-weed.c:4847
+#: src/effects-weed.c:4853
 #, c-format
 msgid "Invalid compound effect %s - must have >1 sub filters\n"
 msgstr ""
 
-#: src/effects-weed.c:4867
+#: src/effects-weed.c:4873
 #, fuzzy, c-format
 msgid "Invalid effect %s found in compound effect %s, line %d\n"
 msgstr "無効なエフェクト %s : %s\n"
 
-#: src/effects-weed.c:4882
+#: src/effects-weed.c:4888
 #, fuzzy, c-format
 msgid "Invalid default found in compound effect %s, line %d\n"
 msgstr "無効なエフェクト %s : %s\n"
 
-#: src/effects-weed.c:4893
+#: src/effects-weed.c:4899
 #, fuzzy, c-format
 msgid "Invalid filter %d for defaults found in compound effect %s, line %d\n"
 msgstr "無効なエフェクト %s : %s\n"
 
-#: src/effects-weed.c:4907
+#: src/effects-weed.c:4913
 #, fuzzy, c-format
 msgid "Invalid param %d for defaults found in compound effect %s, line %d\n"
 msgstr "無効なエフェクト %s : %s\n"
 
-#: src/effects-weed.c:4934
+#: src/effects-weed.c:4940
 #, fuzzy, c-format
 msgid ""
 "Invalid number of values for defaults found in compound effect %s, line %d\n"
 msgstr "無効なエフェクト %s : %s\n"
 
-#: src/effects-weed.c:4968
+#: src/effects-weed.c:4974
 #, fuzzy, c-format
 msgid ""
 "Invalid non-boolean value for defaults found in compound effect %s, line %d\n"
 msgstr "無効なエフェクト %s : %s\n"
 
-#: src/effects-weed.c:5001
+#: src/effects-weed.c:5007
 #, fuzzy, c-format
 msgid "Invalid param link found in compound effect %s, line %d\n"
 msgstr "無効なエフェクト %s : %s\n"
 
-#: src/effects-weed.c:5012
+#: src/effects-weed.c:5018
 #, fuzzy, c-format
 msgid ""
 "Invalid out filter %d for link params found in compound effect %s, line %d\n"
 msgstr "無効なエフェクト %s : %s\n"
 
-#: src/effects-weed.c:5030
+#: src/effects-weed.c:5036
 #, fuzzy, c-format
 msgid ""
 "Invalid out param %d for link params found in compound effect %s, line %d\n"
 msgstr "無効なエフェクト %s : %s\n"
 
-#: src/effects-weed.c:5042
+#: src/effects-weed.c:5048
 #, fuzzy, c-format
 msgid ""
 "Invalid non-boolean value for autoscale found in compound effect %s, line "
 "%d\n"
 msgstr "無効なエフェクト %s : %s\n"
 
-#: src/effects-weed.c:5053
+#: src/effects-weed.c:5059
 #, fuzzy, c-format
 msgid ""
 "Invalid in filter %d for link params found in compound effect %s, line %d\n"
 msgstr "無効なエフェクト %s : %s\n"
 
-#: src/effects-weed.c:5067
+#: src/effects-weed.c:5073
 #, fuzzy, c-format
 msgid ""
 "Invalid in param %d for link params found in compound effect %s, line %d\n"
 msgstr "無効なエフェクト %s : %s\n"
 
-#: src/effects-weed.c:5095
+#: src/effects-weed.c:5101
 #, fuzzy, c-format
 msgid "Invalid channel link found in compound effect %s, line %d\n"
 msgstr "無効なエフェクト %s : %s\n"
 
-#: src/effects-weed.c:5106
+#: src/effects-weed.c:5112
 #, fuzzy, c-format
 msgid ""
 "Invalid out filter %d for link channels found in compound effect %s, line "
 "%d\n"
 msgstr "無効なエフェクト %s : %s\n"
 
-#: src/effects-weed.c:5124
+#: src/effects-weed.c:5130
 #, fuzzy, c-format
 msgid ""
 "Invalid out channel %d for link params found in compound effect %s, line %d\n"
 msgstr "無効なエフェクト %s : %s\n"
 
-#: src/effects-weed.c:5134
+#: src/effects-weed.c:5140
 #, fuzzy, c-format
 msgid ""
 "Invalid in filter %d for link channels found in compound effect %s, line %d\n"
 msgstr "無効なエフェクト %s : %s\n"
 
-#: src/effects-weed.c:5152
+#: src/effects-weed.c:5158
 #, fuzzy, c-format
 msgid ""
 "Invalid in channel %d for link params found in compound effect %s, line %d\n"
 msgstr "無効なエフェクト %s : %s\n"
 
-#: src/effects-weed.c:5190
+#: src/effects-weed.c:5196
 #, c-format
 msgid "Compound:%s"
 msgstr ""
 
-#: src/effects-weed.c:5272
+#: src/effects-weed.c:5278
 #, fuzzy, c-format
 msgid "Successfully loaded %d compound filters\n"
 msgstr "%d Weedフィルターの読み込みに成功しました\n"
 
-#: src/effects-weed.c:6051
+#: src/effects-weed.c:6057
 #, c-format
 msgid "Effect %s cannot be used with this audio player.\n"
 msgstr ""
 
-#: src/effects-weed.c:6191
+#: src/effects-weed.c:6197
 #, c-format
 msgid "Failed to start instance %s, error code %d\n"
 msgstr "インスタンス %s を開始できません。エラーコード %d\n"
 
-#: src/effects-weed.c:6258
+#: src/effects-weed.c:6264
 #, c-format
 msgid "Unable to start generator %s\n"
 msgstr "ジェネレーター%sを開始できません。\n"
 
-#: src/effects-weed.c:6976
+#: src/effects-weed.c:6982
 #, c-format
 msgid "Failed to start generator %s\n"
 msgstr "ジェネレーター %s を開始できません。\n"
 
-#: src/effects-weed.c:7073
+#: src/effects-weed.c:7079
 #, c-format
 msgid "Failed to start generator %s, error %d\n"
 msgstr "ジェネレーター %s を開始できません。エラーコード %d\n"
 
-#: src/effects-weed.c:8267
+#: src/effects-weed.c:8273
 #, c-format
 msgid "%s [unstable] (%s)"
 msgstr "%s [不安定] (%s)"
@@ -6373,7 +6373,7 @@ msgstr "デフォルトに設定"
 msgid "Reset"
 msgstr "リセット"
 
-#: src/paramwindow.c:973 src/rte_window.c:1616 src/omc-learn.c:1376
+#: src/paramwindow.c:973 src/rte_window.c:1621 src/omc-learn.c:1376
 msgid "Close _window"
 msgstr "ウィンドウを閉じる(_W)"
 
@@ -9052,15 +9052,15 @@ msgstr "クリア"
 msgid "Effect name:"
 msgstr "エフェクト名:"
 
-#: src/rte_window.c:1606
+#: src/rte_window.c:1611
 msgid "_Save as default keymap"
 msgstr "デフォルトキーマップとして保存(_S)"
 
-#: src/rte_window.c:1611
+#: src/rte_window.c:1616
 msgid "_Load default keymap"
 msgstr "デフォルトキーマップの読み込み(_L)"
 
-#: src/rte_window.c:2022
+#: src/rte_window.c:2027
 #, c-format
 msgid ""
 "Unable to create default keymap file: %s\n"

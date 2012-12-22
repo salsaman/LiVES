@@ -880,7 +880,7 @@ echo  "*******************************************************************"
 
 echo "*******************************************************************"
 echo "
-IMPORTANT: if you are building a package using dpkg, you MUST have the following in your 'rules' file:
+IMPORTANT: if you are building a package using Ubuntu dpkg, you MUST have the following in your 'rules' file:
 
 #!/usr/bin/make -f
 LDFLAGS:=

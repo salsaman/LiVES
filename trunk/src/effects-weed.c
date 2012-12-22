@@ -2274,9 +2274,15 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
 
       palette=weed_get_int_value(channel,"current_palette",&error);
 
-      width=weed_get_int_value(def_channel,"width",&error);
-      height=weed_get_int_value(def_channel,"height",&error);
-  
+      if (weed_plant_has_leaf(channel,"host_width")) {
+	width=opwidth=weed_get_int_value(channel,"host_width",&error);
+	height=opheight=weed_get_int_value(channel,"host_height",&error);
+      }
+      else {
+	width=weed_get_int_value(def_channel,"width",&error);
+	height=weed_get_int_value(def_channel,"height",&error);
+      }
+
       pdata=weed_get_voidptr_value(channel,"pixel_data",&error);
 
       if (weed_palette_is_alpha_palette(palette)&&outpalette==palette&&outwidth==width&&outheight==height&&pdata!=NULL) {

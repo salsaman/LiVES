@@ -4622,7 +4622,6 @@ void load_frame_image(gint frame) {
 	  weed_set_int_value(mainw->frame_layer,"clip",mainw->current_file);
 	  weed_set_int_value(mainw->frame_layer,"frame",mainw->actual_frame);
 	  if (img_ext==NULL) img_ext=(cfile->img_type==IMG_TYPE_JPEG?g_strdup("jpg"):g_strdup("png"));
-
 	  if (!pull_frame_at_size(mainw->frame_layer,img_ext,(weed_timecode_t)mainw->currticks,
 				  cfile->hsize,cfile->vsize,WEED_PALETTE_END)) {
 	    if (mainw->frame_layer!=NULL) weed_layer_free(mainw->frame_layer);

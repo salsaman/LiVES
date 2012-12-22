@@ -1372,11 +1372,12 @@ void save_file (int clip, int start, int end, const char *filename) {
     g_free(com);
 
     if (extra_params==NULL) {
-      gtk_widget_destroy(fx_dialog[1]);
-      fx_dialog[1]=NULL;
+      if (fx_dialog[1]!=NULL) {
+	gtk_widget_destroy(fx_dialog[1]);
+	fx_dialog[1]=NULL;
+      }
       g_free(fps_string);
       switch_to_file(mainw->current_file,current_file);
-      d_print_cancelled();
       if (mainw->subt_save_file!=NULL) g_free(mainw->subt_save_file);
       mainw->subt_save_file=NULL;
       return;

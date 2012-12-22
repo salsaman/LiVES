@@ -26,12 +26,10 @@ static int package_version=1; // version of this package
 //////////////////////////////////////////////////////////////////
 
 #ifdef HAVE_SYSTEM_WEED
-#include <weed/weed.h>
 #include <weed/weed-utils.h> // optional
 #include <weed/weed-palettes.h> // optional
 #include <weed/weed-plugin-utils.h> // optional
 #else
-#include "../../libweed/weed.h" // optional
 #include "../../libweed/weed-utils.h" // optional
 #include "../../libweed/weed-palettes.h" // optional
 #include "../../libweed/weed-plugin-utils.h" // optional

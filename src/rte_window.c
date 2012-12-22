@@ -1531,16 +1531,21 @@ GtkWidget * create_rte_window (void) {
 
       gtk_box_pack_start (GTK_BOX (hbox), nlabels[idx], FALSE, FALSE, 0);
 
-
       // create combo entry model
       model=rte_window_fx_model();
 
+#if GTK_CHECK_VERSION(2,24,0)
       combo = gtk_combo_box_new_with_model_and_entry (model);
+#else
+      combo = gtk_combo_box_new_with_entry ();
+      gtk_combo_box_set_model(GTK_COMBO_BOX(combo),model);
+#endif
+
+      lives_combo_set_entry_text_column(LIVES_COMBO(combo),NAME_TYPE_COLUMN);
 
       g_object_set_data (G_OBJECT(combo), "hashname", (gpointer)g_strdup(""));
       gtk_box_pack_start (GTK_BOX (hbox), combo, TRUE, TRUE, 0);
 
-      lives_combo_set_entry_text_column(LIVES_COMBO(combo),NAME_TYPE_COLUMN);
 
       combo_entries[idx] = lives_combo_get_entry(LIVES_COMBO(combo));
       

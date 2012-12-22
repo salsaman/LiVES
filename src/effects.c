@@ -650,7 +650,7 @@ lives_render_error_t realfx_progress (gboolean reset) {
     return LIVES_RENDER_COMPLETE;
   }
 
-  if (has_video_filters(FALSE)) {
+  if (has_video_filters(FALSE)||resize_instance!=NULL) {
 
     layer=weed_plant_new(WEED_PLANT_CHANNEL);
     weed_set_int_value(layer,"clip",mainw->current_file);
@@ -666,7 +666,7 @@ lives_render_error_t realfx_progress (gboolean reset) {
 
     layer=on_rte_apply (layer, 0, 0, (weed_timecode_t)frameticks);
 
-    if (!has_video_filters(TRUE)) {
+    if (!has_video_filters(TRUE)||resize_instance!=NULL) {
       layer_palette=weed_get_int_value(layer,"current_palette",&weed_error);
 
       if (cfile->img_type==IMG_TYPE_JPEG&&layer_palette!=WEED_PALETTE_RGB24&&layer_palette!=WEED_PALETTE_RGBA32) 
@@ -683,7 +683,7 @@ lives_render_error_t realfx_progress (gboolean reset) {
       do {
 	retval=0;
 	lives_pixbuf_save (pixbuf, oname, cfile->img_type, 100, TRUE, &error);
-      
+
 	if (error!=NULL) {
 	  retval=do_write_failed_error_s_with_retry(oname,error->message,NULL);
 	  g_error_free(error);
@@ -708,7 +708,7 @@ lives_render_error_t realfx_progress (gboolean reset) {
   }
 
   if (++i>cfile->end) {
-    if (has_video_filters(FALSE)&&!has_video_filters(TRUE)) {
+    if (resize_instance!=NULL||(has_video_filters(FALSE)&&!has_video_filters(TRUE))) {
       mainw->error=FALSE;
       mainw->cancelled=CANCEL_NONE;
       com=g_strdup_printf ("%s mv_mgk \"%s\" %d %d \"%s\"",prefs->backend,cfile->handle,cfile->start,
@@ -899,13 +899,13 @@ weed_plant_t *on_rte_apply (weed_plant_t *layer, int opwidth, int opheight, weed
   else layers[1]=NULL;
 
   if (resize_instance!=NULL) {
+    lives_filter_error_t filter_error;
     weed_plant_t *init_event=weed_plant_new(WEED_PLANT_EVENT);
     weed_set_int_value(init_event,"in_tracks",0);
     weed_set_int_value(init_event,"out_tracks",0);
 
-    weed_apply_instance(resize_instance,init_event,layers,0,0,tc);
+    filter_error=weed_apply_instance(resize_instance,init_event,layers,0,0,tc);
     retlayer=layers[0];
-
     weed_plant_free(init_event);
   }
   else {

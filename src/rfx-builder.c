@@ -4705,11 +4705,6 @@ GList *get_script_list (gshort status) {
 
 
 
-static void remove_from_parent(GtkWidget *widget) {
-  gtk_container_remove(GTK_CONTAINER(widget->parent),widget);
-}
-
-
 void add_rfx_effects(void) {
   // scan render plugin directories, create a rfx array, and add each to the appropriate menu area
   GList *rfx_builtin_list=NULL;
@@ -4747,25 +4742,25 @@ void add_rfx_effects(void) {
 	   +mainw->num_rendered_effects_test;i++) {
       if (mainw->rendered_fx!=NULL) {
 	if (mainw->rendered_fx[i].menuitem!=NULL) {
-	  remove_from_parent(mainw->rendered_fx[i].menuitem);
+	  gtk_widget_unparent(mainw->rendered_fx[i].menuitem);
 	  threaded_dialog_spin();
 	}
       }
     }
     threaded_dialog_spin();
     if (mainw->rte_separator!=NULL) {
-      remove_from_parent (mainw->custom_effects_separator);
-      remove_from_parent (mainw->custom_effects_menu);
-      remove_from_parent (mainw->custom_effects_submenu);
-      remove_from_parent (mainw->custom_gens_menu);
-      remove_from_parent (mainw->custom_gens_submenu);
-      remove_from_parent (mainw->gens_menu);
-      remove_from_parent (mainw->custom_utilities_separator);
-      remove_from_parent (mainw->custom_utilities_menu);
-      remove_from_parent (mainw->custom_utilities_submenu);
-      remove_from_parent (mainw->custom_tools_menu);
-      remove_from_parent (mainw->utilities_menu);
-      remove_from_parent (mainw->run_test_rfx_menu);
+      gtk_widget_unparent (mainw->custom_effects_separator);
+      gtk_widget_unparent (mainw->custom_effects_menu);
+      gtk_widget_unparent (mainw->custom_effects_submenu);
+      gtk_widget_unparent (mainw->custom_gens_menu);
+      gtk_widget_unparent (mainw->custom_gens_submenu);
+      gtk_widget_unparent (mainw->gens_menu);
+      gtk_widget_unparent (mainw->custom_utilities_separator);
+      gtk_widget_unparent (mainw->custom_utilities_menu);
+      gtk_widget_unparent (mainw->custom_utilities_submenu);
+      gtk_widget_unparent (mainw->custom_tools_menu);
+      gtk_widget_unparent (mainw->utilities_menu);
+      gtk_widget_unparent (mainw->run_test_rfx_menu);
     }
     gtk_widget_queue_draw(mainw->effects_menu);
     while (g_main_context_iteration(NULL,FALSE));
@@ -5115,7 +5110,7 @@ void add_rfx_effects(void) {
   }
 
   if (mainw->custom_tools_menu!=NULL) {
-    remove_from_parent(mainw->custom_tools_menu);
+    gtk_widget_unparent(mainw->custom_tools_menu);
   }
 
   mainw->custom_tools_menu=gtk_menu_new();

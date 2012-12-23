@@ -52,6 +52,9 @@ typedef GdkInterpType                     LiVESInterpType;
 
 typedef gpointer                          LiVESObjectPtr;
 
+#define LIVES_WIDGET(widget) GTK_WIDGET(widget)
+#define LIVES_WINDOW(widget) GTK_WINDOW(widget)
+#define LIVES_XWINDOW(widget) GDK_WINDOW(widget)
 #define LIVES_BOX(widget) GTK_BOX(widget)
 #define LIVES_COMBO(widget) GTK_COMBO_BOX(widget)
 #define LIVES_COMBO_BOX(widget) GTK_COMBO_BOX(widget)
@@ -247,6 +250,9 @@ void lives_tooltips_set (LiVESWidget *widget, const char *tip_text);
 
 LiVESSList *lives_radio_button_get_group(LiVESRadioButton *rbutton);
 
+LiVESWidget *lives_widget_get_parent(LiVESWidget *widget);
+
+LiVESXWindow *lives_widget_get_xwindow(LiVESWidget *widget);
 
 // compound functions (composed of basic functions)
 

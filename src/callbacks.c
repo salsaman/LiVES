@@ -6043,7 +6043,7 @@ void on_fs_preview_clicked (GtkButton *button, gpointer user_data) {
 
 	blank=lives_pixbuf_new_blank(fwidth+20,fheight+20,WEED_PALETTE_RGB24);
 
-	cr = gdk_cairo_create (mainw->fs_playarea->window);
+	cr = gdk_cairo_create (lives_widget_get_xwindow(mainw->fs_playarea));
 	gdk_cairo_set_source_pixbuf (cr, blank, 0, 0);
 	cairo_paint (cr);
 	cairo_destroy (cr);
@@ -6055,7 +6055,7 @@ void on_fs_preview_clicked (GtkButton *button, gpointer user_data) {
 	offs_x=(fwidth-width)/2;
 	offs_y=(fheight-height)/2;
 
-	cr = gdk_cairo_create (mainw->fs_playarea->window);
+	cr = gdk_cairo_create (lives_widget_get_xwindow(mainw->fs_playarea));
 	gdk_cairo_set_source_pixbuf (cr, pixbuf, offs_x, offs_y);
 	cairo_paint (cr);
 	cairo_destroy (cr);
@@ -6117,9 +6117,9 @@ void on_fs_preview_clicked (GtkButton *button, gpointer user_data) {
 
     if (preview_type==1||preview_type==3) {
 #ifdef USE_X11
-      xwin=(uint64_t)GDK_WINDOW_XID (mainw->fs_playarea->window);
+      xwin=(uint64_t)GDK_WINDOW_XID (lives_widget_get_xwindow(mainw->fs_playarea));
 #else
-      xwin=(uint64_t)gdk_win32_drawable_get_handle (mainw->fs_playarea->window);
+      xwin=(uint64_t)gdk_win32_drawable_get_handle (lives_widget_get_xwindow(mainw->fs_playarea));
 #endif
 
     }
@@ -6223,7 +6223,7 @@ void on_fs_preview_clicked (GtkButton *button, gpointer user_data) {
     
     blank=lives_pixbuf_new_blank(fwidth+20,fheight+20,WEED_PALETTE_RGB24);
     
-    cr = gdk_cairo_create (mainw->fs_playarea->window);
+    cr = gdk_cairo_create (lives_widget_get_xwindow(mainw->fs_playarea));
     gdk_cairo_set_source_pixbuf (cr, blank, 0, 0);
     cairo_paint (cr);
     cairo_destroy (cr);
@@ -7195,7 +7195,7 @@ void on_full_screen_activate (GtkMenuItem *menuitem, gpointer user_data) {
 	  kill_play_window();
 	  make_play_window();
 	  if (mainw->play_window!=NULL) {
-	    hide_cursor(mainw->play_window->window);
+	    hide_cursor(lives_widget_get_xwindow(mainw->play_window));
 	    gtk_widget_set_app_paintable(mainw->play_window,TRUE);
 	  }
 	}
@@ -7288,7 +7288,7 @@ void on_full_screen_activate (GtkMenuItem *menuitem, gpointer user_data) {
 	  kill_play_window();
 	  make_play_window();
 	  if (mainw->play_window!=NULL) {
-	    hide_cursor(mainw->play_window->window);
+	    hide_cursor(lives_widget_get_xwindow(mainw->play_window));
 	    gtk_widget_set_app_paintable(mainw->play_window,TRUE);
 	  }
 	}
@@ -7431,7 +7431,7 @@ on_double_size_activate               (GtkMenuItem     *menuitem,
 	}
 	make_play_window();
 	if (mainw->play_window!=NULL) {
-	  hide_cursor(mainw->play_window->window);
+	  hide_cursor(lives_widget_get_xwindow(mainw->play_window));
 	  gtk_widget_set_app_paintable(mainw->play_window,TRUE);
 	}
       }
@@ -7620,13 +7620,13 @@ on_sepwin_activate               (GtkMenuItem     *menuitem,
 	mainw->pw_exp_is_blocked=TRUE;
      
 	
-	if (mainw->play_window!=NULL&&GDK_IS_WINDOW(mainw->play_window->window)) {
-	  hide_cursor(mainw->play_window->window);
+	if (mainw->play_window!=NULL&&GDK_IS_WINDOW(lives_widget_get_xwindow(mainw->play_window))) {
+	  hide_cursor(lives_widget_get_xwindow(mainw->play_window));
 	  gtk_widget_set_app_paintable(mainw->play_window,TRUE);
 	}
 	if (cfile->frames==1||cfile->play_paused) {
 	  while (g_main_context_iteration (NULL,FALSE));
-	  if (mainw->play_window!=NULL&&GDK_IS_WINDOW(mainw->play_window->window)&&
+	  if (mainw->play_window!=NULL&&GDK_IS_WINDOW(lives_widget_get_xwindow(mainw->play_window))&&
 	      !mainw->noswitch&&mainw->multitrack==NULL&&(cfile->clip_type==CLIP_TYPE_DISK||
 							  cfile->clip_type==CLIP_TYPE_FILE)) {
 	    weed_plant_t *frame_layer=mainw->frame_layer;
@@ -7678,7 +7678,7 @@ on_sepwin_activate               (GtkMenuItem     *menuitem,
 	}
 	kill_play_window();
 	if (mainw->multitrack==NULL) add_to_playframe();
-	hide_cursor(mainw->playarea->window);
+	hide_cursor(lives_widget_get_xwindow(mainw->playarea));
 	if (mainw->multitrack==NULL&&(cfile->frames==1||cfile->play_paused)&&
 	    !mainw->noswitch&&(cfile->clip_type==CLIP_TYPE_DISK||
 			       cfile->clip_type==CLIP_TYPE_FILE)) {
@@ -7694,13 +7694,13 @@ on_sepwin_activate               (GtkMenuItem     *menuitem,
     mainw->multitrack->redraw_block=FALSE;
     if (mainw->sep_win&&prefs->play_monitor!=prefs->gui_monitor&&prefs->play_monitor!=0) {
       gtk_widget_hide(mainw->multitrack->play_box);
-      gtk_widget_hide(mainw->multitrack->play_box->parent);
-      gtk_widget_hide(mainw->multitrack->play_box->parent->parent);
+      gtk_widget_hide(lives_widget_get_parent(mainw->multitrack->play_box));
+      gtk_widget_hide(lives_widget_get_parent(lives_widget_get_parent(mainw->multitrack->play_box)));
     }
     else {
       gtk_widget_show(mainw->multitrack->play_box);
-      gtk_widget_show(mainw->multitrack->play_box->parent);
-      gtk_widget_show(mainw->multitrack->play_box->parent->parent);
+      gtk_widget_show(lives_widget_get_parent(mainw->multitrack->play_box));
+      gtk_widget_show(lives_widget_get_parent(lives_widget_get_parent(mainw->multitrack->play_box)));
     }
   }
 }
@@ -9204,7 +9204,7 @@ expose_vid_event (GtkWidget *widget, GdkEventExpose *event) {
   }
 
   if (mainw->video_drawable==NULL) {
-    mainw->video_drawable = gdk_pixmap_new(mainw->video_draw->window,
+    mainw->video_drawable = gdk_pixmap_new(lives_widget_get_xwindow(mainw->video_draw),
 					   mainw->video_draw->allocation.width,
 					   mainw->video_draw->allocation.height,
 					   -1);
@@ -9221,7 +9221,7 @@ expose_vid_event (GtkWidget *widget, GdkEventExpose *event) {
                         );
   }
 
-  gdk_draw_pixmap(widget->window,
+  gdk_draw_pixmap(lives_widget_get_xwindow(widget),
 		  widget->style->fg_gc[GTK_WIDGET_STATE (widget)],
 		  mainw->video_drawable,
 		  ex, ey,
@@ -9271,7 +9271,7 @@ expose_laud_event (GtkWidget *widget, GdkEventExpose *event) {
   }
 
   if (mainw->laudio_drawable==NULL) {
-    mainw->laudio_drawable = gdk_pixmap_new(mainw->laudio_draw->window,
+    mainw->laudio_drawable = gdk_pixmap_new(lives_widget_get_xwindow(mainw->laudio_draw),
 					    mainw->laudio_draw->allocation.width,
 					    mainw->laudio_draw->allocation.height,
 					    -1);
@@ -9287,7 +9287,7 @@ expose_laud_event (GtkWidget *widget, GdkEventExpose *event) {
                         mainw->laudio_draw->allocation.height
                         );
   }
-  gdk_draw_pixmap(widget->window,
+  gdk_draw_pixmap(lives_widget_get_xwindow(widget),
 		  widget->style->fg_gc[GTK_WIDGET_STATE (widget)],
 		  mainw->laudio_drawable,
 		  ex, ey,
@@ -9337,7 +9337,7 @@ expose_raud_event (GtkWidget *widget, GdkEventExpose *event) {
   }
 
   if (mainw->raudio_drawable==NULL) {
-    mainw->raudio_drawable = gdk_pixmap_new(mainw->raudio_draw->window,
+    mainw->raudio_drawable = gdk_pixmap_new(lives_widget_get_xwindow(mainw->raudio_draw),
 					    mainw->raudio_draw->allocation.width,
 					    mainw->raudio_draw->allocation.height,
 					    -1);
@@ -9353,7 +9353,7 @@ expose_raud_event (GtkWidget *widget, GdkEventExpose *event) {
                         mainw->raudio_draw->allocation.height
                         );
   }
-  gdk_draw_pixmap(widget->window,
+  gdk_draw_pixmap(lives_widget_get_xwindow(widget),
 		  widget->style->fg_gc[GTK_WIDGET_STATE (widget)],
 		  mainw->raudio_drawable,
 		  ex, ey,
@@ -9369,7 +9369,7 @@ gboolean config_event (GtkWidget *widget, GdkEventConfigure *event, gpointer use
 
   if (mainw->is_ready) {
     if (mainw->gc==NULL) {
-      mainw->gc=gdk_gc_new (GDK_DRAWABLE (mainw->LiVES->window));
+      mainw->gc=gdk_gc_new (GDK_DRAWABLE (lives_widget_get_xwindow(mainw->LiVES)));
       // this is nice, but it sets button text and entries too
       //gdk_gc_set_rgb_fg_color (GDK_GC (mainw->LiVES->style->fg_gc[2]),&palette->black);
     }
@@ -9437,13 +9437,13 @@ gint expose_play_window (GtkWidget *widget, GdkEventExpose *event) {
 	g_free(tmp);
       }
       
-      cr = gdk_cairo_create (mainw->play_window->window);
+      cr = gdk_cairo_create (lives_widget_get_xwindow(mainw->play_window));
       gdk_cairo_set_source_pixbuf (cr, GDK_PIXBUF(mainw->camframe), 0, 0);
       cairo_paint (cr);
       cairo_destroy (cr);
     }
     else {
-      cr = gdk_cairo_create (mainw->play_window->window);
+      cr = gdk_cairo_create (lives_widget_get_xwindow(mainw->play_window));
       gdk_cairo_set_source_pixbuf (cr, GDK_PIXBUF(mainw->imframe), 0, 0);
       cairo_paint (cr);
       cairo_destroy (cr);
@@ -9463,7 +9463,7 @@ gint expose_play_window (GtkWidget *widget, GdkEventExpose *event) {
     if (rect.height>lives_pixbuf_get_height(GDK_PIXBUF (mainw->multitrack->sepwin_pixbuf))) {
       rect.height=lives_pixbuf_get_height(GDK_PIXBUF (mainw->multitrack->sepwin_pixbuf));
     }
-    cr = gdk_cairo_create (mainw->play_window->window);
+    cr = gdk_cairo_create (lives_widget_get_xwindow(mainw->play_window));
     gdk_cairo_set_source_pixbuf (cr, GDK_PIXBUF(mainw->multitrack->sepwin_pixbuf), 0, 0);
     cairo_paint (cr);
     cairo_destroy (cr);
@@ -9949,7 +9949,7 @@ on_mouse_sel_update           (GtkWidget       *widget,
   if (mainw->current_file>-1&&mainw->sel_start>0) {
     gint x,sel_current;
 
-    gdk_window_get_pointer(GDK_WINDOW (mainw->LiVES->window), &x, NULL, NULL);
+    gdk_window_get_pointer(lives_widget_get_xwindow(mainw->LiVES), &x, NULL, NULL);
 
     if (mainw->sel_move==SEL_MOVE_AUTO) 
       sel_current=calc_frame_from_time3(mainw->current_file,
@@ -10004,7 +10004,7 @@ on_mouse_sel_start           (GtkWidget       *widget,
   gint x;
   if (mainw->current_file<=0) return FALSE;
 
-  gdk_window_get_pointer(GDK_WINDOW (mainw->LiVES->window), &x, NULL, NULL);
+  gdk_window_get_pointer(lives_widget_get_xwindow (mainw->LiVES), &x, NULL, NULL);
 
   mainw->sel_start=calc_frame_from_time(mainw->current_file,
 					(gdouble)x/(gdouble)mainw->vidbar->allocation.width*cfile->total_time);
@@ -10081,7 +10081,7 @@ gboolean
 on_hrule_enter (GtkWidget *widget, GdkEventCrossing *event, gpointer user_data) {
   GdkCursor *cursor;
   cursor=gdk_cursor_new_for_display (gdk_display_get_default(), GDK_CENTER_PTR);
-  gdk_window_set_cursor (widget->window, cursor);
+  gdk_window_set_cursor (lives_widget_get_xwindow(widget), cursor);
   return FALSE;
 }
 
@@ -10092,7 +10092,7 @@ on_hrule_update           (GtkWidget       *widget,
   gint x;
   if (mainw->current_file<=0) return FALSE;
 
-  gdk_window_get_pointer(GDK_WINDOW (mainw->LiVES->window), &x, NULL, NULL);
+  gdk_window_get_pointer(lives_widget_get_xwindow(mainw->LiVES), &x, NULL, NULL);
   if (x<0) x=0;
 
   // figure out where ptr should be even when > cfile->frames
@@ -10115,7 +10115,7 @@ on_hrule_reset           (GtkWidget       *widget,
   gint x;
   if (mainw->current_file<=0) return FALSE;
 
-  gdk_window_get_pointer(GDK_WINDOW (mainw->LiVES->window), &x, NULL, NULL);
+  gdk_window_get_pointer(lives_widget_get_xwindow (mainw->LiVES), &x, NULL, NULL);
   if (x<0) x=0;
   if ((GTK_RULER (mainw->hruler)->position=cfile->pointer_time=
        calc_time_from_frame(mainw->current_file,
@@ -10157,7 +10157,7 @@ on_hrule_set           (GtkWidget       *widget,
   // button press
   gint x;
   if (mainw->current_file<=0) return FALSE;
-  gdk_window_get_pointer(GDK_WINDOW (mainw->LiVES->window), &x, NULL, NULL);
+  gdk_window_get_pointer(lives_widget_get_xwindow (mainw->LiVES), &x, NULL, NULL);
   if (x<0) x=0;
   if ((GTK_RULER (mainw->hruler)->position=cfile->pointer_time=
        calc_time_from_frame(mainw->current_file,calc_frame_from_time(mainw->current_file,

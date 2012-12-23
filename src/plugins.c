@@ -596,7 +596,7 @@ void on_vppa_cancel_clicked (GtkButton *button, gpointer user_data) {
 
   if (prefsw!=NULL) {
     gtk_window_present(GTK_WINDOW(prefsw->prefs_dialog));
-    gdk_window_raise(prefsw->prefs_dialog->window);
+    gdk_window_raise(lives_widget_get_xwindow(prefsw->prefs_dialog));
   }
 }
 
@@ -704,9 +704,9 @@ void on_vppa_ok_clicked (GtkButton *button, gpointer user_data) {
 	      if (prefs->play_monitor!=0) {
 		if (mainw->play_window!=NULL) {
 #ifdef USE_X11
-		  xwinid=(uint64_t)GDK_WINDOW_XID(mainw->play_window->window);
+		  xwinid=(uint64_t)GDK_WINDOW_XID(lives_widget_get_xwindow(mainw->play_window));
 #else
-		  xwinid=(uint64_t)gdk_win32_drawable_get_handle (mainw->play_window->window);
+		  xwinid=(uint64_t)gdk_win32_drawable_get_handle (lives_widget_get_xwindow(mainw->play_window));
 #endif
 		}
 	      }
@@ -1138,7 +1138,7 @@ _vppaw *on_vpp_advanced_clicked (GtkButton *button, gpointer user_data) {
 
   gtk_widget_show_all(vppa->dialog);
   gtk_window_present (GTK_WINDOW (vppa->dialog));
-  gdk_window_raise(vppa->dialog->window);
+  gdk_window_raise(lives_widget_get_xwindow(vppa->dialog));
 
   return vppa;
 }
@@ -1235,7 +1235,7 @@ _vid_playback_plugin *open_vid_playback_plugin (const gchar *name, gboolean in_u
   if (handle==NULL) {
     gchar *msg=g_strdup_printf (_("\n\nFailed to open playback plugin %s\nError was %s\n"),plugname,dlerror());
     if (prefsw!=NULL) do_error_dialog_with_check_transient(msg,TRUE,0,prefsw!=NULL?GTK_WINDOW(prefsw->prefs_dialog):
-							   GTK_WINDOW(mainw->LiVES->window));
+							   GTK_WINDOW(mainw->LiVES));
     else do_error_dialog(msg);
     g_free (msg);
     g_free(plugname);
@@ -1282,7 +1282,7 @@ _vid_playback_plugin *open_vid_playback_plugin (const gchar *name, gboolean in_u
       (_("\n\nPlayback module %s\nis missing a mandatory function.\nUnable to use it.\n"),plugname);
     set_pref ("vid_playback_plugin","none");
     do_error_dialog_with_check_transient(msg,TRUE,0,prefsw!=NULL?GTK_WINDOW(prefsw->prefs_dialog):
-					 GTK_WINDOW(mainw->LiVES->window));
+					 GTK_WINDOW(mainw->LiVES));
     g_free (msg);
     dlclose (handle);
     g_free (vpp);
@@ -1294,7 +1294,7 @@ _vid_playback_plugin *open_vid_playback_plugin (const gchar *name, gboolean in_u
   if ((pl_error=(*vpp->module_check_init)())!=NULL) {
     msg=g_strdup_printf(_("Video playback plugin failed to initialise.\nError was: %s\n"),pl_error);
     do_error_dialog_with_check_transient(msg,TRUE,0,prefsw!=NULL?GTK_WINDOW(prefsw->prefs_dialog):
-					 GTK_WINDOW(mainw->LiVES->window));
+					 GTK_WINDOW(mainw->LiVES));
     g_free(msg);
     dlclose (handle);
     g_free (vpp);
@@ -2511,7 +2511,7 @@ static void dpa_ok_clicked (GtkWidget *button, gpointer user_data) {
 
   if (prefsw!=NULL) {
     gtk_window_present(GTK_WINDOW(prefsw->prefs_dialog));
-    gdk_window_raise(prefsw->prefs_dialog->window);
+    gdk_window_raise(lives_widget_get_xwindow(prefsw->prefs_dialog));
     if (string_lists_differ(future_prefs->disabled_decoders,future_prefs->disabled_decoders_new))
       apply_button_set_enabled(NULL,NULL);
   }
@@ -2531,7 +2531,7 @@ static void dpa_cancel_clicked (GtkWidget *button, gpointer user_data) {
 
   if (prefsw!=NULL) {
     gtk_window_present(GTK_WINDOW(prefsw->prefs_dialog));
-    gdk_window_raise(prefsw->prefs_dialog->window);
+    gdk_window_raise(lives_widget_get_xwindow(prefsw->prefs_dialog));
   }
 
   if (future_prefs->disabled_decoders_new!=NULL) {
@@ -2685,7 +2685,7 @@ void on_decplug_advanced_clicked (GtkButton *button, gpointer user_data) {
 
   gtk_widget_show_all(dialog);
   gtk_window_present (GTK_WINDOW (dialog));
-  gdk_window_raise(dialog->window);
+  gdk_window_raise(lives_widget_get_xwindow(dialog));
 
   future_prefs->disabled_decoders_new=g_list_copy_strings(future_prefs->disabled_decoders);
 

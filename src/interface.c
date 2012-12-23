@@ -2213,7 +2213,7 @@ void on_liveinp_advanced_clicked (GtkButton *button, gpointer user_data) {
     gtk_widget_hide(tvcardw->adv_vbox);
   }
 
-  gtk_widget_queue_resize(tvcardw->adv_vbox->parent);
+  gtk_widget_queue_resize(lives_widget_get_parent(tvcardw->adv_vbox));
 
 }
 

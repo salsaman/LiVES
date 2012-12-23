@@ -5254,7 +5254,7 @@ void load_frame_image(gint frame) {
       }
     }
     else {
-      if (mainw->play_window!=NULL&&GDK_IS_WINDOW (mainw->play_window->window)) {
+      if (mainw->play_window!=NULL&&GDK_IS_WINDOW (lives_widget_get_xwindow(mainw->play_window))) {
 	interp=get_interp_value(prefs->pb_quality);
 	resize_layer(mainw->frame_layer,mainw->pwidth/weed_palette_get_pixels_per_macropixel(layer_palette),
 		     mainw->pheight,interp);
@@ -5269,8 +5269,8 @@ void load_frame_image(gint frame) {
 
     // internal player, double size or fullscreen, or multitrack
 
-    if (mainw->play_window!=NULL&&GDK_IS_WINDOW (mainw->play_window->window)) {
-      cairo_t *cr = gdk_cairo_create (mainw->play_window->window);
+    if (mainw->play_window!=NULL&&GDK_IS_WINDOW (lives_widget_get_xwindow(mainw->play_window))) {
+      cairo_t *cr = gdk_cairo_create (lives_widget_get_xwindow(mainw->play_window));
       block_expose();
 
       gdk_cairo_set_source_pixbuf (cr, pixbuf, 0, 0);
@@ -5306,7 +5306,7 @@ void load_frame_image(gint frame) {
     gchar fname[PATH_MAX];
     gint xwidth,xheight;
     GError *gerror=NULL;
-    cairo_t *cr = gdk_cairo_create (mainw->playarea->window);
+    cairo_t *cr = gdk_cairo_create (lives_widget_get_xwindow(mainw->playarea));
       
 
     if (mainw->rec_vid_frames==-1) gtk_entry_set_text(GTK_ENTRY(mainw->framecounter),(tmp=g_strdup_printf("%9d",frame)));
@@ -5675,7 +5675,7 @@ void close_current_file(gint file_to_switch_to) {
     gtk_widget_show(mainw->undo);
     gtk_widget_set_sensitive(mainw->undo,FALSE);
     
-    if (mainw->preview_box!=NULL&&mainw->preview_box->parent!=NULL) {
+    if (mainw->preview_box!=NULL&&lives_widget_get_parent(mainw->preview_box)!=NULL) {
       g_object_unref(mainw->preview_box);
       gtk_container_remove (GTK_CONTAINER (mainw->play_window), mainw->preview_box);
       mainw->preview_box=NULL;
@@ -5821,7 +5821,7 @@ void switch_to_file(gint old_file, gint new_file) {
       make_preview_box();
     }
     // add it the play window...
-    if (mainw->preview_box->parent==NULL) {
+    if (lives_widget_get_parent(mainw->preview_box)==NULL) {
       gtk_widget_queue_draw(mainw->play_window);
       gtk_container_add (GTK_CONTAINER (mainw->play_window), mainw->preview_box);
       if (old_file==-1) {

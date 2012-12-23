@@ -16,11 +16,11 @@ static void dvgrab_set_cursor_style(gint cstyle) {
 
   switch(cstyle) {
   case LIVES_CURSOR_NORMAL:
-    gdk_window_set_cursor (dvgrabw->window->window, NULL);
+    gdk_window_set_cursor (lives_widget_get_xwindow(dvgrabw->window), NULL);
     return;
   case LIVES_CURSOR_BUSY:
     dvgrabw->cursor=gdk_cursor_new(GDK_WATCH);
-    gdk_window_set_cursor (dvgrabw->window->window, dvgrabw->cursor);
+    gdk_window_set_cursor (lives_widget_get_xwindow(dvgrabw->window), dvgrabw->cursor);
     return;
   }
 }

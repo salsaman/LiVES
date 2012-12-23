@@ -984,7 +984,7 @@ void on_render_fx_pre_activate (GtkMenuItem *menuitem, lives_rfx_t *rfx) {
 
   GTK_WIDGET_SET_FLAGS (cancelbutton, GTK_CAN_DEFAULT|GTK_CAN_FOCUS);
 
-  if (okbutton->parent!=NULL) {
+  if (lives_widget_get_parent(okbutton)!=NULL) {
     GTK_WIDGET_SET_FLAGS (okbutton, GTK_CAN_DEFAULT|GTK_CAN_FOCUS);
     gtk_widget_grab_default (okbutton);
   }
@@ -993,7 +993,7 @@ void on_render_fx_pre_activate (GtkMenuItem *menuitem, lives_rfx_t *rfx) {
 
   if (no_process&&!is_defaults) {
     if (!is_realtime) {
-      if (okbutton->parent!=NULL)
+      if (lives_widget_get_parent(okbutton)!=NULL)
 	g_signal_connect (GTK_OBJECT (okbutton), "clicked",
 			  G_CALLBACK (on_paramwindow_cancel_clicked),
 			  rfx);
@@ -1785,7 +1785,7 @@ gboolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, gboolean ad
   
   // see if there were any 'special' hints
   //mainw->block_param_updates=FALSE; // need to keep blocked until last param widget has been created
-  check_for_special (param,pnum,GTK_BOX(GTK_WIDGET(box)->parent),rfx);
+  check_for_special (param,pnum,GTK_BOX(lives_widget_get_parent(LIVES_WIDGET(box))),rfx);
   //mainw->block_param_updates=TRUE;
 
   g_free (name);

@@ -359,7 +359,7 @@ void set_vpp(gboolean set_in_prefs) {
 	  if (!mainw->ext_playback) 
 	    do_error_dialog_with_check_transient 
 	      (_ ("\n\nVideo playback plugins are only activated in\nfull screen, separate window (fs) mode\n"),
-	       TRUE,0,prefsw!=NULL?GTK_WINDOW(prefsw->prefs_dialog):GTK_WINDOW(mainw->LiVES->window));
+	       TRUE,0,prefsw!=NULL?GTK_WINDOW(prefsw->prefs_dialog):GTK_WINDOW(mainw->LiVES));
 	}
       }
     }
@@ -1142,13 +1142,13 @@ gboolean apply_prefs(gboolean skip_warn) {
   if (prefs->audio_player==AUD_PLAYER_JACK&&!capable->has_jackd) {
     do_error_dialog_with_check_transient
       (_("\nUnable to switch audio players to jack - jackd must be installed first.\nSee http://jackaudio.org\n"),
-       TRUE,0,prefsw!=NULL?GTK_WINDOW(prefsw->prefs_dialog):GTK_WINDOW(mainw->LiVES->window));
+       TRUE,0,prefsw!=NULL?GTK_WINDOW(prefsw->prefs_dialog):GTK_WINDOW(mainw->LiVES));
   }
   else {
     if (prefs->audio_player==AUD_PLAYER_JACK&&strcmp(audio_player,"jack")) {
       do_error_dialog_with_check_transient
 	(_("\nSwitching audio players requires restart (jackd must not be running)\n"),
-	 TRUE,0,prefsw!=NULL?GTK_WINDOW(prefsw->prefs_dialog):GTK_WINDOW(mainw->LiVES->window));
+	 TRUE,0,prefsw!=NULL?GTK_WINDOW(prefsw->prefs_dialog):GTK_WINDOW(mainw->LiVES));
     }
 
     // switch to sox
@@ -1175,7 +1175,7 @@ gboolean apply_prefs(gboolean skip_warn) {
       if (!capable->has_pulse_audio) {
 	do_error_dialog_with_check_transient
 	  (_("\nUnable to switch audio players to pulse audio\npulseaudio must be installed first.\nSee http://www.pulseaudio.org\n"),
-	   TRUE,0,prefsw!=NULL?GTK_WINDOW(prefsw->prefs_dialog):GTK_WINDOW(mainw->LiVES->window));
+	   TRUE,0,prefsw!=NULL?GTK_WINDOW(prefsw->prefs_dialog):GTK_WINDOW(mainw->LiVES));
       }
       else {
 	if (!switch_aud_to_pulse()) {
@@ -5803,7 +5803,7 @@ on_preferences_activate(GtkMenuItem *menuitem, gpointer user_data)
 {
   if (prefsw != NULL && prefsw->prefs_dialog != NULL) {
     gtk_window_present(GTK_WINDOW(prefsw->prefs_dialog));
-    gdk_window_raise(prefsw->prefs_dialog->window);
+    gdk_window_raise(lives_widget_get_xwindow(prefsw->prefs_dialog));
     return;
   }
 
@@ -5964,7 +5964,7 @@ on_prefs_revert_clicked(GtkButton *button, gpointer user_data)
     g_list_free (future_prefs->disabled_decoders);
   }
 
-  lives_set_cursor_style(LIVES_CURSOR_BUSY,prefsw->prefs_dialog->window);
+  lives_set_cursor_style(LIVES_CURSOR_BUSY,lives_widget_get_xwindow(prefsw->prefs_dialog));
   while (g_main_context_iteration(NULL,FALSE)); // force busy cursor
 
   on_cancel_button1_clicked(button, prefsw);

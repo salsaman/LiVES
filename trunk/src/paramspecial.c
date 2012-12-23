@@ -297,10 +297,10 @@ void check_for_special (lives_param_t *param, gint num, GtkBox *pbox, lives_rfx_
       GList *clist;
       gint epos;
 
-      box=(GTK_WIDGET(param->widgets[0])->parent);
+      box=lives_widget_get_parent(param->widgets[0]);
 
       while (box !=NULL&&!GTK_IS_BOX(box)) {
-	box=box->parent;
+	box=lives_widget_get_parent(box);
       }
 
       if (box==NULL) return;
@@ -331,10 +331,10 @@ void check_for_special (lives_param_t *param, gint num, GtkBox *pbox, lives_rfx_
   slist=passwd_widgets;
   while (slist!=NULL) {
     if (num==GPOINTER_TO_INT(slist->data)) {
-      box=(GTK_WIDGET(param->widgets[0])->parent);
+      box=lives_widget_get_parent(param->widgets[0]);
 
       while (!GTK_IS_VBOX(box)) {
-	box=box->parent;
+	box=lives_widget_get_parent(box);
 	if (box==NULL) continue;
       }
 

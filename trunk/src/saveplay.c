@@ -2289,7 +2289,7 @@ void play_file (void) {
 			    &&mainw->current_file>0);
 
   if (cfile->frames==0&&mainw->multitrack==NULL) {
-    if (mainw->preview_box!=NULL&&mainw->preview_box->parent!=NULL) {
+    if (mainw->preview_box!=NULL&&lives_widget_get_parent(mainw->preview_box)!=NULL) {
       gtk_container_remove (GTK_CONTAINER (mainw->play_window), mainw->preview_box);
     }
   }
@@ -2304,7 +2304,7 @@ void play_file (void) {
       }
       else {
 	if (mainw->multitrack==NULL) {
-	  if (mainw->preview_box!=NULL&&mainw->preview_box->parent!=NULL) {
+	  if (mainw->preview_box!=NULL&&lives_widget_get_parent(mainw->preview_box)!=NULL) {
 	    gtk_container_remove (GTK_CONTAINER (mainw->play_window), mainw->preview_box);
 	  }
 	}
@@ -2333,14 +2333,14 @@ void play_file (void) {
 	  // this doesn't get called if we don't call resize_play_window()
 	  if (mainw->play_window!=NULL) {
 	    gtk_window_present (GTK_WINDOW (mainw->play_window));
-	    gdk_window_raise(mainw->play_window->window);
+	    gdk_window_raise(lives_widget_get_xwindow(mainw->play_window));
 	  }
 	}
       }
     }
 
     if (mainw->play_window!=NULL) {
-      hide_cursor (mainw->play_window->window);
+      hide_cursor (lives_widget_get_xwindow(mainw->play_window));
       gtk_widget_set_app_paintable(mainw->play_window,TRUE);
       if (mainw->vpp!=NULL&&!(mainw->vpp->capabilities&VPP_LOCAL_DISPLAY)&&mainw->fs) 
 	gtk_window_set_title (GTK_WINDOW (mainw->play_window),_("LiVES: - Streaming"));
@@ -2358,7 +2358,7 @@ void play_file (void) {
     }
   
     if (!mainw->foreign&&!mainw->sep_win) {
-      hide_cursor(mainw->playarea->window);
+      hide_cursor(lives_widget_get_xwindow(mainw->playarea));
     }
     
     // pwidth and pheight are playback width and height
@@ -2401,14 +2401,14 @@ void play_file (void) {
     com2=NULL;
 #ifdef USE_X11
     if (!prefs->show_gui&&prefs->show_playwin&&mainw->play_window!=NULL) {
-      awinid=(uint64_t)GDK_WINDOW_XID (mainw->play_window->window);
+      awinid=(uint64_t)GDK_WINDOW_XID (lives_widget_get_xwindow(mainw->play_window));
     }
     else if (prefs->show_gui) {
       if (mainw->multitrack!=NULL) {
-	awinid=(uint64_t)GDK_WINDOW_XID (mainw->multitrack->window->window);
+	awinid=(uint64_t)GDK_WINDOW_XID (lives_widget_get_xwindow(mainw->multitrack->window));
       }
       else if (mainw->LiVES!=NULL) {
-	awinid=(uint64_t)GDK_WINDOW_XID (mainw->LiVES->window);
+	awinid=(uint64_t)GDK_WINDOW_XID (lives_widget_get_xwindow(mainw->LiVES));
       }
     }
 
@@ -3093,8 +3093,8 @@ void play_file (void) {
 	    g_free(xtrabit);
 
 	    gtk_window_present (GTK_WINDOW (mainw->play_window));
-	    gdk_window_raise(mainw->play_window->window);
-	    unhide_cursor (mainw->play_window->window);
+	    gdk_window_raise(lives_widget_get_xwindow(mainw->play_window));
+	    unhide_cursor (lives_widget_get_xwindow(mainw->play_window));
 	  }
 	}
       }
@@ -3108,7 +3108,7 @@ void play_file (void) {
   }
   
   if (!mainw->foreign) {
-    unhide_cursor(mainw->playarea->window);
+    unhide_cursor(lives_widget_get_xwindow(mainw->playarea));
   }
 
   if (mainw->current_file>-1) cfile->play_paused=FALSE;

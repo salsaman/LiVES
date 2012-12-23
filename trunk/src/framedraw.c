@@ -202,11 +202,11 @@ void widget_add_framedraw (GtkVBox *box, gint start, gint end, gboolean add_prev
   mainw->framedraw_reset=NULL;
 
   vseparator = gtk_vseparator_new ();
-  gtk_box_pack_start (GTK_BOX (GTK_WIDGET (box)->parent), vseparator, FALSE, FALSE, 0);
+  gtk_box_pack_start (GTK_BOX (lives_widget_get_parent(LIVES_WIDGET (box))), vseparator, FALSE, FALSE, 0);
   gtk_widget_show (vseparator);
 
   vbox = gtk_vbox_new (FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (GTK_WIDGET (box)->parent), vbox, FALSE, FALSE, 0);
+  gtk_box_pack_start (GTK_BOX (lives_widget_get_parent(LIVES_WIDGET (box))), vbox, FALSE, FALSE, 0);
   gtk_container_set_border_width (GTK_CONTAINER (vbox), 10);
 
   fd_scale=calc_fd_scale(width,height);
@@ -312,7 +312,7 @@ void framedraw_redraw (lives_special_framedraw_rect_t * framedraw, gboolean relo
 
   cairo_t *cr;
 
-  if (!GDK_IS_DRAWABLE(mainw->framedraw->window)) return;
+  if (!GDK_IS_DRAWABLE(lives_widget_get_xwindow(mainw->framedraw))) return;
 
   if (mainw->current_file<1||cfile==NULL) return;
   
@@ -640,7 +640,7 @@ void redraw_framedraw_image(void) {
 
   int width,height;
 
-  if (!GDK_IS_DRAWABLE(mainw->framedraw->window)) return;
+  if (!GDK_IS_DRAWABLE(lives_widget_get_xwindow(mainw->framedraw))) return;
 
   if (mainw->fd_layer_orig==NULL) return;
 
@@ -664,7 +664,7 @@ void redraw_framedraw_image(void) {
   pixbuf=layer_to_pixbuf(mainw->fd_layer);
 
   // get cairo for window
-  cr = gdk_cairo_create (mainw->framedraw->window);
+  cr = gdk_cairo_create (lives_widget_get_xwindow(mainw->framedraw));
 
   // set source pixbuf for cairo
   gdk_cairo_set_source_pixbuf (cr, pixbuf, (fd_width-width)>>1, (fd_height-height)>>1);
@@ -693,7 +693,7 @@ gboolean on_framedraw_enter (GtkWidget *widget, GdkEventCrossing *event, lives_s
   if (framedraw==NULL&&mainw->multitrack!=NULL) {
     framedraw=mainw->multitrack->framedraw;
     if (framedraw==NULL&&mainw->multitrack->cursor_style==0) gdk_window_set_cursor 
-							       (mainw->multitrack->play_box->window, NULL);
+							       (lives_widget_get_xwindow(mainw->multitrack->play_box), NULL);
   }
 
   if (framedraw==NULL) return FALSE;
@@ -704,21 +704,21 @@ gboolean on_framedraw_enter (GtkWidget *widget, GdkEventCrossing *event, lives_s
   case FD_RECT_MULTRECT:
     if (mainw->multitrack==NULL) {
       cursor=gdk_cursor_new_for_display (gdk_display_get_default(), GDK_TOP_LEFT_CORNER);
-      gdk_window_set_cursor (mainw->framedraw->window, cursor);
+      gdk_window_set_cursor (lives_widget_get_xwindow(mainw->framedraw), cursor);
     }
     else {
       cursor=gdk_cursor_new_for_display (mainw->multitrack->display, GDK_TOP_LEFT_CORNER);
-      gdk_window_set_cursor (mainw->multitrack->play_box->window, cursor);
+      gdk_window_set_cursor (lives_widget_get_xwindow(mainw->multitrack->play_box), cursor);
     }
     break;
   case FD_SINGLEPOINT:
     if (mainw->multitrack==NULL) {
       cursor=gdk_cursor_new_for_display (gdk_display_get_default(), GDK_CROSSHAIR);
-      gdk_window_set_cursor (mainw->framedraw->window, cursor);
+      gdk_window_set_cursor (lives_widget_get_xwindow(mainw->framedraw), cursor);
     }
     else {
       cursor=gdk_cursor_new_for_display (mainw->multitrack->display, GDK_CROSSHAIR);
-      gdk_window_set_cursor (mainw->multitrack->play_box->window, cursor);
+      gdk_window_set_cursor (lives_widget_get_xwindow(mainw->multitrack->play_box), cursor);
     }
     break;
   }
@@ -727,7 +727,7 @@ gboolean on_framedraw_enter (GtkWidget *widget, GdkEventCrossing *event, lives_s
 
 gboolean on_framedraw_leave (GtkWidget *widget, GdkEventCrossing *event, lives_special_framedraw_rect_t *framedraw) {
   if (framedraw==NULL) return FALSE;
-  gdk_window_set_cursor (mainw->framedraw->window, NULL);
+  gdk_window_set_cursor (lives_widget_get_xwindow(mainw->framedraw), NULL);
   return FALSE;
 }
 
@@ -748,7 +748,7 @@ gboolean on_framedraw_mouse_start (GtkWidget *widget, GdkEventButton *event, liv
   if (mainw->multitrack!=NULL&&mainw->multitrack->track_index==-1) return FALSE;
 
   if (event->button==1) {
-    gdk_window_get_pointer(GDK_WINDOW (widget->window), &xstart, &ystart, NULL);
+    gdk_window_get_pointer(lives_widget_get_xwindow(widget), &xstart, &ystart, NULL);
 
     b1_held=TRUE;
 
@@ -757,11 +757,11 @@ gboolean on_framedraw_mouse_start (GtkWidget *widget, GdkEventButton *event, liv
       GdkCursor *cursor;
       if (mainw->multitrack==NULL) {
 	cursor=gdk_cursor_new_for_display (gdk_display_get_default(), GDK_BOTTOM_RIGHT_CORNER);
-	gdk_window_set_cursor (mainw->framedraw->window, cursor);
+	gdk_window_set_cursor (lives_widget_get_xwindow(mainw->framedraw), cursor);
       }
       else {
 	cursor=gdk_cursor_new_for_display (mainw->multitrack->display, GDK_BOTTOM_RIGHT_CORNER);
-	gdk_window_set_cursor (mainw->multitrack->play_box->window, cursor);
+	gdk_window_set_cursor (lives_widget_get_xwindow(mainw->multitrack->play_box), cursor);
       }
     }
 
@@ -829,7 +829,7 @@ gboolean on_framedraw_mouse_update (GtkWidget *widget, GdkEventButton *event, li
   if (framedraw==NULL) return FALSE;
   if (mainw->multitrack!=NULL&&mainw->multitrack->track_index==-1) return FALSE;
 
-  gdk_window_get_pointer(GDK_WINDOW (widget->window), &xcurrent, &ycurrent, NULL);
+  gdk_window_get_pointer(lives_widget_get_xwindow(widget), &xcurrent, &ycurrent, NULL);
 
   switch (framedraw->type) {
   case FD_RECT_DEMASK:
@@ -904,7 +904,7 @@ gboolean on_framedraw_mouse_reset (GtkWidget *widget, GdkEventButton *event, liv
   if (framedraw==NULL) return FALSE;
   if (mainw->multitrack!=NULL&&mainw->multitrack->track_index==-1) return FALSE;
 
-  gdk_window_get_pointer(GDK_WINDOW (widget->window), &xend, &yend, NULL);
+  gdk_window_get_pointer(lives_widget_get_xwindow(widget), &xend, &yend, NULL);
   // user released the mouse button in framedraw widget
   if (event->button==1) {
     b1_held=FALSE;
@@ -1004,7 +1004,7 @@ void draw_rect_demask (lives_colRGBA32_t *col, int x1, int y1, int x2, int y2, b
 
   if (mainw->fd_layer_orig==NULL) return;
 
-  if (!GDK_IS_DRAWABLE(mainw->framedraw->window)) return;
+  if (!GDK_IS_DRAWABLE(lives_widget_get_xwindow(mainw->framedraw))) return;
 
   if (mainw->current_file<1||cfile==NULL) return;
 

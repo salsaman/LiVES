@@ -754,7 +754,7 @@ gboolean on_realfx_activate_inner(gint type, lives_rfx_t *rfx) {
       // apply audio gen to clip with no audio - prompt for audio settings
       resaudw=create_resaudw(2,NULL,NULL);
       while (g_main_context_iteration(NULL,FALSE));
-      gdk_window_raise(resaudw->dialog->window);
+      gdk_window_raise(lives_widget_get_xwindow(resaudw->dialog));
 
       if (gtk_dialog_run(GTK_DIALOG(resaudw->dialog))!=GTK_RESPONSE_OK) return FALSE;
       if (mainw->error) {

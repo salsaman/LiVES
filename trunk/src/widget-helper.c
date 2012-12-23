@@ -348,6 +348,24 @@ LiVESSList *lives_radio_button_get_group(LiVESRadioButton *rbutton) {
 }
 
 
+LiVESWidget *lives_widget_get_parent(LiVESWidget *widget) {
+#ifdef GUI_GTK
+  return gtk_widget_get_parent(widget);
+#endif
+}
+
+
+LiVESXWindow *lives_widget_get_xwindow(LiVESWidget *widget) {
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(2,12,0)
+  return gtk_widget_get_window(widget);
+#else
+  return GDK_WINDOW(widget->window);
+#endif
+#endif
+}
+
+
 
 // compound functions
 
@@ -717,8 +735,8 @@ void set_fg_colour(gint red, gint green, gint blue) {
   col.green=green*255;
   col.blue=blue*255;
   if (mainw->general_gc==NULL) {
-    if (mainw->multitrack==NULL) mainw->general_gc=gdk_gc_new(GDK_DRAWABLE(mainw->LiVES->window));
-    else mainw->general_gc=gdk_gc_new(GDK_DRAWABLE(mainw->multitrack->window->window));
+    if (mainw->multitrack==NULL) mainw->general_gc=gdk_gc_new(GDK_DRAWABLE(lives_widget_get_xwindow(mainw->LiVES)));
+    else mainw->general_gc=gdk_gc_new(GDK_DRAWABLE(lives_widget_get_xwindow(mainw->multitrack->window)));
   }
   gdk_gc_set_rgb_fg_color(mainw->general_gc,&col);
 }
@@ -788,8 +806,8 @@ void lives_set_cursor_style(lives_cursor_t cstyle, LiVESXWindow *window) {
   mainw->cursor=NULL;
 
   if (window==NULL) {
-    if (mainw->multitrack==NULL&&mainw->is_ready) window=mainw->LiVES->window;
-    else if (mainw->multitrack!=NULL&&mainw->multitrack->is_ready) window=mainw->multitrack->window->window;
+    if (mainw->multitrack==NULL&&mainw->is_ready) window=lives_widget_get_xwindow(mainw->LiVES);
+    else if (mainw->multitrack!=NULL&&mainw->multitrack->is_ready) window=lives_widget_get_xwindow(mainw->multitrack->window);
     else return;
   }
 
@@ -861,8 +879,8 @@ void unhide_cursor(LiVESXWindow *window) {
 void get_border_size (LiVESWidget *win, int *bx, int *by) {
   GdkRectangle rect;
   gint wx,wy;
-  gdk_window_get_frame_extents (GDK_WINDOW (win->window),&rect);
-  gdk_window_get_origin (GDK_WINDOW (win->window), &wx, &wy);
+  gdk_window_get_frame_extents (lives_widget_get_xwindow (win),&rect);
+  gdk_window_get_origin (lives_widget_get_xwindow (win), &wx, &wy);
   *bx=wx-rect.x;
   *by=wy-rect.y;
 }

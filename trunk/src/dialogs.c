@@ -470,7 +470,7 @@ do_error_dialog_with_check_transient(const gchar *text, gboolean is_blocking, gi
   if (transient!=NULL) gtk_window_set_transient_for(GTK_WINDOW(err_box),transient);
   gtk_widget_show(err_box);
   if (prefs->present) gtk_window_present (GTK_WINDOW (err_box));
-  gdk_window_raise (err_box->window);
+  gdk_window_raise (lives_widget_get_xwindow(err_box));
 
   if (is_blocking) {
     gtk_dialog_run(GTK_DIALOG (err_box));
@@ -1733,7 +1733,7 @@ gboolean do_auto_dialog (const gchar *text, gint type) {
   lives_set_cursor_style(LIVES_CURSOR_BUSY,NULL);
   while (g_main_context_iteration(NULL,FALSE));
 
-  lives_set_cursor_style(LIVES_CURSOR_BUSY,proc_ptr->processing->window);
+  lives_set_cursor_style(LIVES_CURSOR_BUSY,lives_widget_get_xwindow(proc_ptr->processing));
 
   if (type==0) {
     clear_mainw_msg();
@@ -2334,7 +2334,7 @@ void do_nojack_rec_error(void) {
 }
 
 void do_vpp_palette_error (void) {
-  do_error_dialog_with_check_transient(_("Video playback plugin failed to initialise palette !\n"),TRUE,0,prefsw!=NULL?GTK_WINDOW(prefsw->prefs_dialog):GTK_WINDOW(mainw->LiVES->window));
+  do_error_dialog_with_check_transient(_("Video playback plugin failed to initialise palette !\n"),TRUE,0,prefsw!=NULL?GTK_WINDOW(prefsw->prefs_dialog):GTK_WINDOW(mainw->LiVES));
 }
 
 void do_decoder_palette_error (void) {
@@ -2343,7 +2343,7 @@ void do_decoder_palette_error (void) {
 
 
 void do_vpp_fps_error (void) {
-  do_error_dialog_with_check_transient(_("Unable to set framerate of video plugin\n"),TRUE,0,prefsw!=NULL?GTK_WINDOW(prefsw->prefs_dialog):GTK_WINDOW(mainw->LiVES->window));
+  do_error_dialog_with_check_transient(_("Unable to set framerate of video plugin\n"),TRUE,0,prefsw!=NULL?GTK_WINDOW(prefsw->prefs_dialog):GTK_WINDOW(mainw->LiVES));
 }
 
 
@@ -2464,7 +2464,7 @@ static void create_threaded_dialog(gchar *text, gboolean has_cancel) {
 
   gtk_widget_queue_draw(procw->processing);
 
-  lives_set_cursor_style(LIVES_CURSOR_BUSY,procw->processing->window);
+  lives_set_cursor_style(LIVES_CURSOR_BUSY,lives_widget_get_xwindow(procw->processing));
 
 }
 
@@ -2543,7 +2543,7 @@ void end_threaded_dialog(void) {
     }
     else gtk_widget_queue_draw(mainw->multitrack->window);
   }
-  else lives_set_cursor_style(LIVES_CURSOR_NORMAL,mainw->splash_window->window);
+  else lives_set_cursor_style(LIVES_CURSOR_NORMAL,lives_widget_get_xwindow(mainw->splash_window));
   if (procw!=NULL) {
     g_free(procw);
     procw=NULL;
@@ -2558,7 +2558,7 @@ void end_threaded_dialog(void) {
 
 void do_splash_progress(void) {
   mainw->threaded_dialog=TRUE;
-  lives_set_cursor_style(LIVES_CURSOR_BUSY,mainw->splash_window->window);
+  lives_set_cursor_style(LIVES_CURSOR_BUSY,lives_widget_get_xwindow(mainw->splash_window));
   splash_prog();
 }
 
@@ -2984,7 +2984,7 @@ void do_do_not_close_d (void) {
   if (transient!=NULL) gtk_window_set_transient_for(GTK_WINDOW(err_box),transient);
   gtk_widget_show(err_box);
   if (prefs->present) gtk_window_present (GTK_WINDOW (err_box));
-  gdk_window_raise (err_box->window);
+  gdk_window_raise (lives_widget_get_xwindow(err_box));
 }
 
 

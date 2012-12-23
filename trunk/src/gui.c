@@ -3620,7 +3620,7 @@ void make_play_window(void) {
   gchar *title;
 
   if (mainw->playing_file>-1) {
-      unhide_cursor(mainw->playarea->window);
+    unhide_cursor(lives_widget_get_xwindow(mainw->playarea));
   }
 
   gtk_image_set_from_pixbuf(GTK_IMAGE(mainw->image274),NULL);
@@ -3698,7 +3698,7 @@ void make_play_window(void) {
 
   if ((mainw->current_file==-1||(!cfile->is_loaded&&!mainw->preview)||
        (cfile->frames==0&&(mainw->multitrack==NULL||mainw->playing_file==-1)))&&mainw->imframe!=NULL) {
-    cairo_t *cr = gdk_cairo_create (mainw->play_window->window);
+    cairo_t *cr = gdk_cairo_create (lives_widget_get_xwindow(mainw->play_window));
     gdk_cairo_set_source_pixbuf (cr, mainw->imframe, (GdkModifierType)0, 0);
     cairo_paint (cr);
     cairo_destroy (cr);
@@ -3935,9 +3935,9 @@ void resize_play_window (void) {
 	  fullscreen=FALSE;
 	  if (mainw->play_window!=NULL) {
 #ifdef USE_X11
-	    xwinid=(uint64_t)GDK_WINDOW_XID(mainw->play_window->window);
+	    xwinid=(uint64_t)GDK_WINDOW_XID(lives_widget_get_xwindow(mainw->play_window));
 #else
-	    xwinid=(uint64_t)gdk_win32_drawable_get_handle (mainw->play_window->window);
+	    xwinid=(uint64_t)gdk_win32_drawable_get_handle (lives_widget_get_xwindow(mainw->play_window));
 #endif
 	  }
 	}
@@ -4015,7 +4015,7 @@ void resize_play_window (void) {
       }
     }
     gtk_window_present (GTK_WINDOW (mainw->play_window));
-    gdk_window_raise(mainw->play_window->window);
+    gdk_window_raise(lives_widget_get_xwindow(mainw->play_window));
   }
   else {
     // not playing
@@ -4067,7 +4067,7 @@ kill_play_window (void) {
   if (mainw->play_window!=NULL) {
     if (!mainw->pw_exp_is_blocked)
       g_signal_handler_block(mainw->play_window,mainw->pw_exp_func);
-    if (mainw->preview_box!=NULL&&mainw->preview_box->parent!=NULL) {
+    if (mainw->preview_box!=NULL&&lives_widget_get_parent(mainw->preview_box)!=NULL) {
       // preview_box is refed, so it will survive
       gtk_container_remove (GTK_CONTAINER (mainw->play_window), mainw->preview_box);
     }
@@ -4182,7 +4182,7 @@ void splash_init(void) {
 
   while (g_main_context_iteration(NULL,FALSE));
 
-  lives_set_cursor_style(LIVES_CURSOR_BUSY,GDK_WINDOW(mainw->splash_window->window));
+  lives_set_cursor_style(LIVES_CURSOR_BUSY,lives_widget_get_xwindow(mainw->splash_window));
 
   gtk_window_set_auto_startup_notification(TRUE);
 

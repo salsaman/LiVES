@@ -556,7 +556,7 @@ LiVESWidget *lives_standard_spin_button_new(const char *labeltext, boolean use_m
 
   gtk_entry_set_width_chars (GTK_ENTRY (spinbutton),maxlen+dp<4?4:maxlen+dp+1);
   GTK_WIDGET_SET_FLAGS (spinbutton, GTK_CAN_DEFAULT|GTK_CAN_FOCUS);
-  gtk_entry_set_activates_default (GTK_ENTRY ((GtkEntry *)&(GTK_SPIN_BUTTON (spinbutton)->entry)), TRUE);
+  gtk_entry_set_activates_default (GTK_ENTRY (spinbutton), TRUE);
   gtk_spin_button_set_update_policy (GTK_SPIN_BUTTON (spinbutton),GTK_UPDATE_ALWAYS);
   if (use_mnemonic) {
     label=gtk_label_new_with_mnemonic (labeltext);
@@ -759,7 +759,7 @@ void text_view_set_text(LiVESTextView *textview, const gchar *text) {
 
 
 int get_box_child_index (LiVESBox *box, LiVESWidget *tchild) {
-  GList *list=box->children;
+  GList *list=gtk_container_get_children(GTK_CONTAINER(box));
   GtkBoxChild *child;
   int i=0;
 

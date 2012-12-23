@@ -540,7 +540,6 @@ static gboolean add_sizes(GtkBox *vbox, gboolean add_fps, lives_rfx_t *rfx) {
   GtkWidget *label,*hbox,*hseparator;
   GtkWidget *spinbuttonh=NULL,*spinbuttonw=NULL;
   GtkWidget *spinbuttonf;
-  GObject *spinbutton_adj;
   int def_width=0,max_width,width_step;
   int def_height=0,max_height,height_step;
 
@@ -558,23 +557,12 @@ static gboolean add_sizes(GtkBox *vbox, gboolean add_fps, lives_rfx_t *rfx) {
     
     add_fill_to_box(GTK_BOX(hbox));
     
-    label=gtk_label_new_with_mnemonic(_("Target _FPS (plugin may override this)"));
-    if (palette->style&STYLE_1) {
-      gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-    }
-    
     if (weed_plant_has_leaf(filter,"host_fps")) def_fps=weed_get_double_value(filter,"host_fps",&error);
     else if (weed_plant_has_leaf(filter,"target_fps")) def_fps=weed_get_double_value(filter,"target_fps",&error);
     
     if (def_fps==0.) def_fps=prefs->default_fps;
-    
-    spinbutton_adj = (GObject *)gtk_adjustment_new (def_fps, 1., FPS_MAX, 1., 10., 0.);
-    spinbuttonf = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 1., 3);
-    gtk_entry_set_activates_default (GTK_ENTRY ((GtkEntry *)&(GTK_SPIN_BUTTON (spinbuttonf)->entry)), TRUE);
-    gtk_label_set_mnemonic_widget (GTK_LABEL (label),spinbuttonf);
-    gtk_box_pack_start (GTK_BOX (hbox), spinbuttonf, FALSE, FALSE, 10);
-    gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 10);
-    gtk_spin_button_set_update_policy (GTK_SPIN_BUTTON (spinbuttonf),GTK_UPDATE_IF_VALID);
+
+    spinbuttonf = lives_standard_spin_button_new (_("Target _FPS (plugin may override this)"),TRUE,def_fps,1.,FPS_MAX,1.,10.,3,LIVES_BOX(hbox),NULL);
     
     g_signal_connect_after (GTK_OBJECT (spinbuttonf), "value_changed",
 			    G_CALLBACK (gen_fps_changed),
@@ -606,20 +594,13 @@ static gboolean add_sizes(GtkBox *vbox, gboolean add_fps, lives_rfx_t *rfx) {
       ltxt=g_strdup(_("New size (pixels)"));
     }
 
-    label=gtk_label_new(ltxt);
+    label=lives_standard_label_new(ltxt);
     g_free(ltxt);
 
-    gtk_box_pack_start (vbox, label, FALSE, FALSE, 10);
-    if (palette->style&STYLE_1) {
-      gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-    }
     hbox = gtk_hbox_new (FALSE, 0);
     gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 10);
-    label=gtk_label_new_with_mnemonic(_("_Width"));
-    if (palette->style&STYLE_1) {
-      gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-    }
     gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 10);
+
 
     if (weed_plant_has_leaf(tmpl,"host_width")) def_width=weed_get_int_value(tmpl,"host_width",&error);
     if (def_width==0) def_width=DEF_GEN_WIDTH;
@@ -629,24 +610,15 @@ static gboolean add_sizes(GtkBox *vbox, gboolean add_fps, lives_rfx_t *rfx) {
     width_step=1;
     if (weed_plant_has_leaf(tmpl,"hstep")) width_step=weed_get_int_value(tmpl,"hstep",&error);
 
-    spinbutton_adj = (GObject *)gtk_adjustment_new (def_width, 1., max_width, width_step==1?4:width_step, 
-					 width_step==1?16:width_step*4, 0.);
-    spinbuttonw = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), width_step, 0);
-    gtk_entry_set_activates_default (GTK_ENTRY ((GtkEntry *)&(GTK_SPIN_BUTTON (spinbuttonw)->entry)), TRUE);
-    gtk_label_set_mnemonic_widget (GTK_LABEL (label),spinbuttonw);
-    gtk_box_pack_start (GTK_BOX (hbox), spinbuttonw, FALSE, FALSE, 10);
-    gtk_spin_button_set_update_policy (GTK_SPIN_BUTTON (spinbuttonw),GTK_UPDATE_IF_VALID);
+    spinbuttonw = lives_standard_spin_button_new (_("_Width"),TRUE,def_width,4.,max_width,width_step==1?4:width_step,
+						  width_step==1?16:width_step*4,0,
+						  LIVES_BOX(hbox),NULL);
 
     g_signal_connect_after (GTK_OBJECT (spinbuttonw), "value_changed",
 			    G_CALLBACK (gen_width_changed),
 			    tmpl);
     weed_leaf_delete(tmpl,"host_width"); // force a reset
     gen_width_changed(GTK_SPIN_BUTTON(spinbuttonw),tmpl);
-
-    label=gtk_label_new_with_mnemonic(_("_Height"));
-    if (palette->style&STYLE_1) {
-      gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-    }
 
     if (weed_plant_has_leaf(tmpl,"host_height")) def_height=weed_get_int_value(tmpl,"host_height",&error);
     if (def_height==0) def_height=DEF_GEN_HEIGHT;
@@ -656,14 +628,11 @@ static gboolean add_sizes(GtkBox *vbox, gboolean add_fps, lives_rfx_t *rfx) {
     height_step=1;
     if (weed_plant_has_leaf(tmpl,"vstep")) height_step=weed_get_int_value(tmpl,"vstep",&error);
 
-    spinbutton_adj = (GObject *)gtk_adjustment_new (def_height, 1., max_height, height_step==1?4:height_step, 
-					 height_step==1?16:height_step*4, 0.);
-    spinbuttonh = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), height_step, 0);
-    gtk_entry_set_activates_default (GTK_ENTRY ((GtkEntry *)&(GTK_SPIN_BUTTON (spinbuttonh)->entry)), TRUE);
-    gtk_label_set_mnemonic_widget (GTK_LABEL (label),spinbuttonh);
-    gtk_box_pack_end (GTK_BOX (hbox), spinbuttonh, FALSE, FALSE, 10);
-    gtk_box_pack_end (GTK_BOX (hbox), label, FALSE, FALSE, 10);
-    gtk_spin_button_set_update_policy (GTK_SPIN_BUTTON (spinbuttonh),GTK_UPDATE_IF_VALID);
+
+    spinbuttonh = lives_standard_spin_button_new (_("_Height"),TRUE,def_height,4.,max_height,height_step==1?4:height_step,
+						  height_step==1?16:height_step*4,0,
+						  LIVES_BOX(hbox),NULL);
+
     g_signal_connect_after (GTK_OBJECT (spinbuttonh), "value_changed",
 			    G_CALLBACK (gen_height_changed),
 			    tmpl);

@@ -1805,7 +1805,7 @@ create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox) {
     resaudw->fps_spinbutton = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 1, 3);
     gtk_widget_show (resaudw->fps_spinbutton);
     gtk_box_pack_start (GTK_BOX (hbox25), resaudw->fps_spinbutton, FALSE, FALSE, 20);
-    gtk_entry_set_activates_default (GTK_ENTRY ((GtkEntry *)&(GTK_SPIN_BUTTON (resaudw->fps_spinbutton)->entry)), TRUE);
+    gtk_entry_set_activates_default (GTK_ENTRY (resaudw->fps_spinbutton), TRUE);
 
     label93 = gtk_label_new (_("Video"));
     gtk_widget_show (label93);
@@ -2109,11 +2109,11 @@ create_new_pb_speed (gshort type)
     spinbutton_pb_time_adj = (GObject *)gtk_adjustment_new ((gdouble)((gint)(cfile->frames/cfile->fps*100.))/100., 1./FPS_MAX, cfile->frames, 1., 10., 0.);
     spinbutton_pb_time = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_pb_time_adj), 1, 2);
     gtk_box_pack_start (GTK_BOX (hbox), spinbutton_pb_time, TRUE, TRUE, 10);
-    gtk_entry_set_activates_default (GTK_ENTRY ((GtkEntry *)&(GTK_SPIN_BUTTON (spinbutton_pb_time)->entry)), TRUE);
+    gtk_entry_set_activates_default (GTK_ENTRY (spinbutton_pb_time), TRUE);
     gtk_label_set_mnemonic_widget (GTK_LABEL (label), spinbutton_pb_time);
 
   }
-  gtk_entry_set_activates_default (GTK_ENTRY ((GtkEntry *)&(GTK_SPIN_BUTTON (spinbutton_pb_speed)->entry)), TRUE);
+  gtk_entry_set_activates_default (GTK_ENTRY (spinbutton_pb_speed), TRUE);
 
   hbox = gtk_hbox_new (FALSE, 0);
   change_audio_speed = gtk_check_button_new();

@@ -56,6 +56,7 @@ typedef gpointer                          LiVESObjectPtr;
 #define LIVES_WINDOW(widget) GTK_WINDOW(widget)
 #define LIVES_XWINDOW(widget) GDK_WINDOW(widget)
 #define LIVES_BOX(widget) GTK_BOX(widget)
+#define LIVES_DIALOG(widget) GTK_DIALOG(widget)
 #define LIVES_COMBO(widget) GTK_COMBO_BOX(widget)
 #define LIVES_COMBO_BOX(widget) GTK_COMBO_BOX(widget)
 #define LIVES_RADIO_BUTTON(widget) GTK_RADIO_BUTTON(widget)

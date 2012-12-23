@@ -2065,7 +2065,7 @@ GtkWidget *events_rec_dialog (gboolean allow_mt) {
   if (prefs->show_gui) gtk_window_set_transient_for(GTK_WINDOW(e_rec_dialog),GTK_WINDOW(mainw->LiVES));
   gtk_window_set_modal (GTK_WINDOW (e_rec_dialog), TRUE);
 
-  dialog_vbox = GTK_DIALOG (e_rec_dialog)->vbox;
+  dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(e_rec_dialog));
   gtk_widget_show (dialog_vbox);
 
   vbox = gtk_vbox_new (FALSE, 0);
@@ -4626,7 +4626,7 @@ GtkWidget *create_event_list_dialog (weed_plant_t *event_list, weed_timecode_t s
  gtk_window_set_title (GTK_WINDOW (event_dialog), _("LiVES: Event list"));
  gtk_window_add_accel_group (GTK_WINDOW (event_dialog), mainw->accel_group);
  
- top_vbox=GTK_DIALOG(event_dialog)->vbox;
+ top_vbox=lives_dialog_get_content_area(LIVES_DIALOG(event_dialog));
 
  table = gtk_table_new (rows, 6, TRUE);
  gtk_widget_show (table);
@@ -5047,7 +5047,7 @@ render_details *create_render_details (gint type) {
   rdet_accel_group = GTK_ACCEL_GROUP(gtk_accel_group_new ());
   gtk_window_add_accel_group (GTK_WINDOW (rdet->dialog), rdet_accel_group);
 
-  dialog_vbox = GTK_DIALOG(rdet->dialog)->vbox;
+  dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(rdet->dialog));
 
 
   scrollw = gtk_scrolled_window_new (NULL, NULL);

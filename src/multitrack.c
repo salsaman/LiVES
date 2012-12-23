@@ -2111,7 +2111,7 @@ void scroll_tracks (lives_mt *mt, gint top_track) {
 
   GTK_ADJUSTMENT(mt->vadjustment)->upper=get_top_track_for(mt,mt->num_video_tracks-1)+GTK_ADJUSTMENT(mt->vadjustment)->page_size;
 
-  table_children=GTK_TABLE(mt->timeline_table)->children;
+  table_children=gtk_container_get_children(GTK_CONTAINER(mt->timeline_table));
 
   while (table_children!=NULL) {
     GtkRequisition req;
@@ -2341,7 +2341,7 @@ static void rerenumber_clips(const char *lfile) {
 
 
 void mt_clip_select (lives_mt *mt, gboolean scroll) {
-  GList *list=GTK_BOX (mt->clip_inner_box)->children;
+  GList *list=gtk_container_get_children(GTK_CONTAINER (mt->clip_inner_box));
   GtkBoxChild *clipbox=NULL;
   gint len;
   int i;
@@ -9770,7 +9770,7 @@ void mt_clear_timeline(lives_mt *mt) {
 
 void mt_delete_clips(lives_mt *mt, gint file) {
   // close eventbox(es) for a given file
-  GList *list=GTK_BOX (mt->clip_inner_box)->children,*list_next;
+  GList *list=gtk_container_get_children(GTK_CONTAINER (mt->clip_inner_box)),*list_next;
   GtkBoxChild *child;
   GtkWidget *label1,*label2;
   gint neg=0,i=0;

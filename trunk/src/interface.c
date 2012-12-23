@@ -1313,7 +1313,7 @@ create_insert_dialog (void)
   gtk_widget_show (insertw->spinbutton_times);
   gtk_label_set_mnemonic_widget (GTK_LABEL (label),insertw->spinbutton_times);
   gtk_box_pack_start (GTK_BOX (hbox), insertw->spinbutton_times, TRUE, FALSE, 0);
-  gtk_entry_set_activates_default (GTK_ENTRY ((GtkEntry *)&(GTK_SPIN_BUTTON (insertw->spinbutton_times)->entry)), TRUE);
+  gtk_entry_set_activates_default (GTK_ENTRY (insertw->spinbutton_times), TRUE);
 
   gtk_widget_show_all(hbox);
 
@@ -2474,7 +2474,7 @@ create_cdtrack_dialog (gint type, gpointer user_data)
   spinbutton35 = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton35_adj), 1, 0);
   gtk_widget_show (spinbutton35);
   gtk_box_pack_start (GTK_BOX (hbox), spinbutton35, FALSE, TRUE, 0);
-  gtk_entry_set_activates_default (GTK_ENTRY ((GtkEntry *)&(GTK_SPIN_BUTTON (spinbutton35)->entry)), TRUE);
+  gtk_entry_set_activates_default (GTK_ENTRY(spinbutton35), TRUE);
 
   add_fill_to_box(GTK_BOX(hbox));
 
@@ -2501,14 +2501,14 @@ create_cdtrack_dialog (gint type, gpointer user_data)
     spinbutton36 = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton36_adj), 1, 0);
     gtk_widget_show (spinbutton36);
     gtk_box_pack_start (GTK_BOX (hbox17), spinbutton36, FALSE, TRUE, 0);
-    gtk_entry_set_activates_default (GTK_ENTRY ((GtkEntry *)&(GTK_SPIN_BUTTON (spinbutton36)->entry)), TRUE);
+    gtk_entry_set_activates_default (GTK_ENTRY(spinbutton36), TRUE);
 
 
     if (type==1) {
       hbox17b = gtk_hbox_new (FALSE, 50);
       if (type==1) spinbutton36b_adj = (GObject *)gtk_adjustment_new (mainw->fx3_val, 128, 159, 1, 1, 0);
       spinbutton36b = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton36b_adj), 1, 0);
-      gtk_entry_set_activates_default (GTK_ENTRY ((GtkEntry *)&(GTK_SPIN_BUTTON (spinbutton36b)->entry)), TRUE);
+      gtk_entry_set_activates_default (GTK_ENTRY(spinbutton36b), TRUE);
       
       gtk_widget_show (hbox17b);
       gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox17b, TRUE, TRUE, 0);
@@ -2589,7 +2589,7 @@ create_cdtrack_dialog (gint type, gpointer user_data)
     
     spinbutton_adj = (GObject *)gtk_adjustment_new (0.,0.,16.,1.,1.,0.);
     tvcardw->spinbuttoni = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj),1,0);
-    gtk_entry_set_activates_default (GTK_ENTRY ((GtkEntry *)&(GTK_SPIN_BUTTON (tvcardw->spinbuttoni)->entry)), TRUE);
+    gtk_entry_set_activates_default (GTK_ENTRY(tvcardw->spinbuttoni), TRUE);
     
     gtk_label_set_mnemonic_widget (GTK_LABEL (label), tvcardw->spinbuttoni);
     gtk_box_pack_start (GTK_BOX (hbox), tvcardw->spinbuttoni, TRUE, FALSE, 0);
@@ -2654,7 +2654,7 @@ create_cdtrack_dialog (gint type, gpointer user_data)
     
     spinbutton_adj = (GObject *)gtk_adjustment_new (640.,4.,4096.,2.,2.,0.);
     tvcardw->spinbuttonw = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj),1,0);
-    gtk_entry_set_activates_default (GTK_ENTRY ((GtkEntry *)&(GTK_SPIN_BUTTON (tvcardw->spinbuttonw)->entry)), TRUE);
+    gtk_entry_set_activates_default (GTK_ENTRY(tvcardw->spinbuttonw), TRUE);
     
     gtk_label_set_mnemonic_widget (GTK_LABEL (label), tvcardw->spinbuttonw);
     gtk_box_pack_start (GTK_BOX (hbox), tvcardw->spinbuttonw, TRUE, FALSE, 0);
@@ -2669,7 +2669,7 @@ create_cdtrack_dialog (gint type, gpointer user_data)
     
     spinbutton_adj = (GObject *)gtk_adjustment_new (480.,4.,4096.,2.,2.,0.);
     tvcardw->spinbuttonh = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj),1,0);
-    gtk_entry_set_activates_default (GTK_ENTRY ((GtkEntry *)&(GTK_SPIN_BUTTON (tvcardw->spinbuttonh)->entry)), TRUE);
+    gtk_entry_set_activates_default (GTK_ENTRY(tvcardw->spinbuttonh), TRUE);
     
     gtk_label_set_mnemonic_widget (GTK_LABEL (label), tvcardw->spinbuttonh);
     gtk_box_pack_start (GTK_BOX (hbox), tvcardw->spinbuttonh, TRUE, FALSE, 0);
@@ -2684,7 +2684,7 @@ create_cdtrack_dialog (gint type, gpointer user_data)
     
     spinbutton_adj = (GObject *)gtk_adjustment_new (25., 1., FPS_MAX, 1., 10., 0.);
     tvcardw->spinbuttonf = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj),1,3);
-    gtk_entry_set_activates_default (GTK_ENTRY ((GtkEntry *)&(GTK_SPIN_BUTTON (tvcardw->spinbuttonf)->entry)), TRUE);
+    gtk_entry_set_activates_default (GTK_ENTRY(tvcardw->spinbuttonf), TRUE);
     
     gtk_label_set_mnemonic_widget (GTK_LABEL (label), tvcardw->spinbuttonf);
     gtk_box_pack_start (GTK_BOX (hbox), tvcardw->spinbuttonf, TRUE, FALSE, 0);

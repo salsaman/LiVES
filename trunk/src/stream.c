@@ -1281,7 +1281,7 @@ lives_pandh_w* create_pandh_dialog (gint type) {
   gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 0);
   spinbutton_adj = (GObject *)gtk_adjustment_new (48888, 1., 65535., 1., 1., 0.);
   pandhw->port_spin = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 1., 0);
-  gtk_entry_set_activates_default (GTK_ENTRY ((GtkEntry *)&(GTK_SPIN_BUTTON (pandhw->port_spin)->entry)), TRUE);
+  gtk_entry_set_activates_default (GTK_ENTRY(pandhw->port_spin), TRUE);
   gtk_label_set_mnemonic_widget (GTK_LABEL (label),pandhw->port_spin);
   gtk_box_pack_start (GTK_BOX (hbox), pandhw->port_spin, FALSE, FALSE, 10);
   gtk_spin_button_set_update_policy (GTK_SPIN_BUTTON (pandhw->port_spin),GTK_UPDATE_IF_VALID);

@@ -113,6 +113,7 @@ fxpluginslib_LTLIBRARIES = RGBdelay.la \
 	edge.la \
 	fg_bg_removal.la \
 	fireTV.la \
+	fourKlives.la \
 	haip.la \
 	layout_blends.la \
 	lifeTV.la \
@@ -142,12 +143,12 @@ fxpluginslib_LTLIBRARIES = RGBdelay.la \
 	warpTV.la \
 	xeffect.la
 
-EXTRA_DIST=data icons
+EXTRA_DIST=data icons fourKlives.h
 
 install-data-local:
 	mkdir -p "$(DESTDIR)$(fxpluginslibdir)"
-	cp -rf data/ "$(DESTDIR)$(fxpluginslibdir)"
-	cp -rf icons/ "$(DESTDIR)$(fxpluginslibdir)"
+	cp -rf data/ "$(DESTDIR)$(fxpluginslibdir)" && chmod -Rf a+r "$(DESTDIR)$(fxpluginslibdir)/data/"
+	cp -rf icons/ "$(DESTDIR)$(fxpluginslibdir)" && chmod -Rf a+r "$(DESTDIR)$(fxpluginslibdir)/icons/"
 	$(MAKE) -i install-data-local-remove-vcs-files
 
 install-data-local-remove-vcs-files:

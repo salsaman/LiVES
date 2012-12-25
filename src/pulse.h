@@ -67,33 +67,33 @@ typedef struct {
 
   float volume[PULSE_MAX_OUTPUT_CHANS]; ///< amount volume, 1.0 is full volume
 
-  gboolean in_use; /**< true if this device is currently in use */
-  gboolean mute;
+  boolean in_use; /**< true if this device is currently in use */
+  boolean mute;
 
   /**< linked list of messages we are sending to the callback process */
   volatile aserver_message_t   *msgq;
 
   volatile uint64_t frames_written;
 
-  gboolean is_paused;
+  boolean is_paused;
 
   volatile gint64 audio_ticks; ///< ticks when we did the last seek, used to calculate current ticks from audio
 
   int fd; /**< if >0 we are playing from a file */
-  gboolean is_opening; ///< TRUE if file is opening (audiodump.pcm)
+  boolean is_opening; ///< TRUE if file is opening (audiodump.pcm)
   volatile off_t seek_pos;
   off_t seek_end;
-  gboolean usigned;
-  gboolean reverse_endian;
+  boolean usigned;
+  boolean reverse_endian;
 
   lives_whentostop_t *whentostop; ///< pointer to mainw->whentostop
   volatile lives_cancel_t *cancelled; ///< pointer to mainw->cancelled
 
   /* variables used for trying to restart the connection to pulse */
-  gboolean pulsed_died;
+  boolean pulsed_died;
   struct timeval last_reconnect_attempt;
 
-  gboolean is_output; ///< is output FROM host to jack
+  boolean is_output; ///< is output FROM host to jack
 
   gint playing_file;
 
@@ -110,12 +110,12 @@ typedef struct {
 
 // TODO - rationalise names
 
-gboolean lives_pulse_init (short startup_phase); ///< init server, mainloop and context
+boolean lives_pulse_init (short startup_phase); ///< init server, mainloop and context
 
 int pulse_audio_init(void);  ///< init driver vars.
 int pulse_audio_read_init(void); // ditto
 
-pulse_driver_t *pulse_get_driver(gboolean is_output); ///< get driver refs
+pulse_driver_t *pulse_get_driver(boolean is_output); ///< get driver refs
 
 int pulse_driver_activate(pulse_driver_t *); ///< connect to server
 void pulse_close_client(pulse_driver_t *);
@@ -124,25 +124,25 @@ void pulse_shutdown(void); ///< shudown server, mainloop, context
 
 void pulse_aud_pb_ready(gint fileno);
 
-size_t pulse_flush_read_data(pulse_driver_t *pulsed, int fileno, size_t rbytes, gboolean rev_endian, void *data);
+size_t pulse_flush_read_data(pulse_driver_t *pulsed, int fileno, size_t rbytes, boolean rev_endian, void *data);
 
 void pulse_driver_uncork(pulse_driver_t *);
 
-gboolean pulse_try_reconnect(void);
+boolean pulse_try_reconnect(void);
 
 // utils
 volatile aserver_message_t *pulse_get_msgq(pulse_driver_t *); ///< pull last msg from msgq, or return NULL
 
 int64_t pulse_audio_seek_bytes (pulse_driver_t *, int64_t bytes); ///< seek to byte position
 
-gint64 lives_pulse_get_time(pulse_driver_t *, gboolean absolute); ///< get time from pa, in 10^-8 seconds
+int64_t lives_pulse_get_time(pulse_driver_t *, boolean absolute); ///< get time from pa, in 10^-8 seconds
 
 gdouble lives_pulse_get_pos(pulse_driver_t *);
 
 
 //////////////////////
 
-gboolean pulse_audio_seek_frame (pulse_driver_t *, gint frame); ///< seek to (video) frame
+boolean pulse_audio_seek_frame (pulse_driver_t *, gint frame); ///< seek to (video) frame
 
 void pulse_get_rec_avals(pulse_driver_t *);
 

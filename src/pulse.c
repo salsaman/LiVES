@@ -31,7 +31,7 @@ static guchar prbuf[PULSE_READ_BYTES*2];
 
 static size_t prb=0;
 
-static gboolean seek_err;
+static boolean seek_err;
 
 ///////////////////////////////////////////////////////////////////
 
@@ -48,7 +48,7 @@ static void pulse_server_cb(pa_context *c,const pa_server_info *info, void *user
 #define PULSE_START_WAIT 500000000
 
 
-gboolean lives_pulse_init (short startup_phase) {
+boolean lives_pulse_init (short startup_phase) {
   // startup pulse audio server
   gchar *msg,*msg2;
 
@@ -119,7 +119,7 @@ void pulse_get_rec_avals(pulse_driver_t *pulsed) {
   }
 }
 
-static void pulse_set_rec_avals(pulse_driver_t *pulsed, gboolean is_forward) {
+static void pulse_set_rec_avals(pulse_driver_t *pulsed, boolean is_forward) {
   // record direction change
   mainw->rec_aclip=pulsed->playing_file;
   if (mainw->rec_aclip!=-1) {
@@ -182,12 +182,12 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
    int64_t seek,xseek;
    int new_file;
    gchar *filename;
-   gboolean from_memory=FALSE;
+   boolean from_memory=FALSE;
 
    guchar *buffer;
    size_t xbytes=pa_stream_writable_size(pstream);
 
-   gboolean needs_free=FALSE;
+   boolean needs_free=FALSE;
 
    size_t offs=0;
 
@@ -387,7 +387,7 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
 	     return;
 	   }
 	   else {
-	     gboolean loop_restart;
+	     boolean loop_restart;
 	     do {
 	       loop_restart=FALSE;
 	       if (in_bytes>0) {
@@ -533,7 +533,7 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
 	     }
 
 	     if (memok) {
-	       gint64 tc=pulsed->audio_ticks+(gint64)(pulsed->frames_written/(gdouble)pulsed->out_arate*U_SEC);
+	       int64_t tc=pulsed->audio_ticks+(int64_t)(pulsed->frames_written/(gdouble)pulsed->out_arate*U_SEC);
 	       // apply any audio effects with in_channels
 
 	       weed_apply_audio_effects_rt(fltbuf,pulsed->out_achans,numFramesToWrite,pulsed->out_arate,tc,FALSE);
@@ -555,7 +555,7 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
 	   // audio generator
 	   // get float audio from gen, convert it to S16
 	   float *fbuffer=NULL;
-	   gboolean pl_error=FALSE;
+	   boolean pl_error=FALSE;
 	   xbytes=nbytes;
 	   numFramesToWrite=pulseFramesAvailable;
 
@@ -611,7 +611,7 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
 	       }
 	       
 	       if (memok) {
-		 gint64 tc=pulsed->audio_ticks+(gint64)(pulsed->frames_written/(gdouble)pulsed->out_arate*U_SEC);
+		 int64_t tc=pulsed->audio_ticks+(int64_t)(pulsed->frames_written/(gdouble)pulsed->out_arate*U_SEC);
 		 // apply any audio effects with in_channels
 		 
 		 weed_apply_audio_effects_rt(fp,pulsed->out_achans,numFramesToWrite,pulsed->out_arate,tc,FALSE);
@@ -739,7 +739,7 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
 
 
 
-size_t pulse_flush_read_data(pulse_driver_t *pulsed, int fileno, size_t rbytes, gboolean rev_endian, void *data) {
+size_t pulse_flush_read_data(pulse_driver_t *pulsed, int fileno, size_t rbytes, boolean rev_endian, void *data) {
   short *gbuf;
   size_t bytes_out,frames_out,bytes=0;
   void *holding_buff;
@@ -884,7 +884,7 @@ static void pulse_audio_read_process (pa_stream *pstream, size_t nbytes, void *a
       }
       
       if (memok) {
-	gint64 tc=pulsed->audio_ticks+(gint64)(pulsed->frames_written/(gdouble)pulsed->in_arate*U_SEC);
+	int64_t tc=pulsed->audio_ticks+(int64_t)(pulsed->frames_written/(gdouble)pulsed->in_arate*U_SEC);
 	// apply any audio effects with in channels but no out channels
 	weed_apply_audio_effects_rt(fltbuf,pulsed->in_achans,xnframes,pulsed->in_arate,tc,TRUE);
 	
@@ -1165,7 +1165,7 @@ void pulse_driver_uncork(pulse_driver_t *pdriver) {
 ///////////////////////////////////////////////////////////////
 
 
-pulse_driver_t *pulse_get_driver(gboolean is_output) {
+pulse_driver_t *pulse_get_driver(boolean is_output) {
   if (is_output) return &pulsed;
   return &pulsed_reader;
 }
@@ -1182,14 +1182,16 @@ volatile aserver_message_t *pulse_get_msgq(pulse_driver_t *pulsed) {
 
 
 
-gint64 lives_pulse_get_time(pulse_driver_t *pulsed, gboolean absolute) {
+int64_t lives_pulse_get_time(pulse_driver_t *pulsed, boolean absolute) {
   // get the time in ticks since either playback started or since last seek
 
   volatile aserver_message_t *msg=pulsed->msgq;
   gdouble frames_written;
 
+  int64_t xtime;
+
   if (msg!=NULL&&msg->command==ASERVER_CMD_FILE_SEEK) {
-    gboolean timeout;
+    boolean timeout;
     int alarm_handle=lives_alarm_set(LIVES_ACONNECT_TIMEOUT);
     while (!(timeout=lives_alarm_get(alarm_handle))&&pulse_get_msgq(pulsed)!=NULL) {
       sched_yield(); // wait for seek
@@ -1205,11 +1207,14 @@ gint64 lives_pulse_get_time(pulse_driver_t *pulsed, gboolean absolute) {
   {
     pa_usec_t usec;
     pa_stream_get_time(pulsed->pstream,&usec);
-    return pulsed->audio_ticks*absolute+(gint64)((usec-pulsed->usec_start)*U_SEC_RATIO);
+    return pulsed->audio_ticks*absolute+(int64_t)((usec-pulsed->usec_start)*U_SEC_RATIO);
   }
 #else
-  if (pulsed->is_output) return pulsed->audio_ticks*absolute+(gint64)(frames_written/(gdouble)pulsed->out_arate*U_SEC);
-  return pulsed->audio_ticks*absolute+(gint64)(frames_written/(gdouble)afile->arate*U_SEC);
+  pthread_mutex_lock(&mainw->afilter_mutex);
+  if (pulsed->is_output) xtime = pulsed->audio_ticks*absolute+(int64_t)(frames_written/(gdouble)pulsed->out_arate*U_SEC);
+  else xtime = pulsed->audio_ticks*absolute+(int64_t)(frames_written/(gdouble)afile->arate*U_SEC);
+  pthread_mutex_unlock(&mainw->afilter_mutex);
+  return xtime;
 #endif
 
 }
@@ -1221,13 +1226,13 @@ gdouble lives_pulse_get_pos(pulse_driver_t *pulsed) {
 
 
 
-gboolean pulse_audio_seek_frame (pulse_driver_t *pulsed, gint frame) {
+boolean pulse_audio_seek_frame (pulse_driver_t *pulsed, gint frame) {
   // seek to frame "frame" in current audio file
   // position will be adjusted to (floor) nearest sample
   int64_t seekstart;
   volatile aserver_message_t *pmsg;
   int alarm_handle=lives_alarm_set(LIVES_ACONNECT_TIMEOUT);
-  gboolean timeout;
+  boolean timeout;
 
   if (alarm_handle==-1) {
     LIVES_WARN("Invalid alarm handle");
@@ -1259,7 +1264,7 @@ int64_t pulse_audio_seek_bytes (pulse_driver_t *pulsed, int64_t bytes) {
   // if the position is > size of file, we will seek to the end of the file
   volatile aserver_message_t *pmsg;
 
-  gboolean timeout;
+  boolean timeout;
   int alarm_handle=lives_alarm_set(LIVES_ACONNECT_TIMEOUT);
 
   int64_t seekstart;
@@ -1291,7 +1296,7 @@ int64_t pulse_audio_seek_bytes (pulse_driver_t *pulsed, int64_t bytes) {
   return seekstart;
 }
 
-gboolean pulse_try_reconnect(void) {
+boolean pulse_try_reconnect(void) {
    mainw->pulsed=NULL;
    pa_mloop=NULL;
    if (!lives_pulse_init(9999)) goto err123; // init server
@@ -1342,7 +1347,7 @@ void pulse_aud_pb_ready(gint fileno) {
 	  g_file_test((tmpfilename=g_build_filename(prefs->tmpdir,sfile->handle,"audio",NULL)),
 		      G_FILE_TEST_EXISTS)))) {
       
-      gboolean timeout;
+      boolean timeout;
       int alarm_handle;
       
       if (tmpfilename!=NULL) g_free(tmpfilename);

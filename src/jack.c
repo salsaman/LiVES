@@ -20,12 +20,12 @@ static jack_client_t *jack_transport_client;
 static unsigned char *zero_buff=NULL;
 static size_t zero_buff_count=0;
 
-static gboolean seek_err;
+static boolean seek_err;
 
 static size_t audio_read_inner(jack_driver_t *jackd, float **in_buffer, int fileno, 
-			       int nframes, double out_scale, gboolean rev_endian, gboolean out_unsigned, size_t rbytes);
+			       int nframes, double out_scale, boolean rev_endian, boolean out_unsigned, size_t rbytes);
 
-static gboolean check_zero_buff(size_t check_size) {
+static boolean check_zero_buff(size_t check_size) {
   if (check_size>zero_buff_count) {
     zero_buff=(unsigned char *)g_try_realloc(zero_buff,check_size);
     if (zero_buff) {
@@ -39,7 +39,7 @@ static gboolean check_zero_buff(size_t check_size) {
   return TRUE;
 }
 
-gboolean lives_jack_init (void) {
+boolean lives_jack_init (void) {
   gchar *jt_client=g_strdup_printf("LiVES-%d",getpid());
   const char *server_name="default";
   jack_options_t options=JackServerName;
@@ -160,7 +160,7 @@ static void jack_transport_check_state (void) {
 }
 #endif
 
-gboolean lives_jack_poll(void) {
+boolean lives_jack_poll(void) {
   // data is always NULL
   // must return TRUE
 #ifdef ENABLE_JACK_TRANSPORT
@@ -231,7 +231,7 @@ void jack_get_rec_avals(jack_driver_t *jackd) {
   }
 }
 
-static void jack_set_rec_avals(jack_driver_t *jackd, gboolean is_forward) {
+static void jack_set_rec_avals(jack_driver_t *jackd, boolean is_forward) {
   // record direction change
   mainw->rec_aclip=jackd->playing_file;
   if (mainw->rec_aclip!=-1) {
@@ -291,9 +291,9 @@ static int audio_process (nframes_t nframes, void *arg) {
   aserver_message_t *msg;
   int64_t xseek;
   int new_file;
-  gboolean from_memory=FALSE;
-  gboolean wait_cache_buffer=FALSE;
-  gboolean pl_error=FALSE; ///< flag tells if we had an error during plugin processing
+  boolean from_memory=FALSE;
+  boolean wait_cache_buffer=FALSE;
+  boolean pl_error=FALSE; ///< flag tells if we had an error during plugin processing
   lives_audio_buf_t *cache_buffer=NULL;
   size_t nbytes,rbytes;
 
@@ -496,7 +496,7 @@ static int audio_process (nframes_t nframes, void *arg) {
 	  else {
 	    if (shrink_factor>0.) {
 	      if (!(*jackd->cancelled)) {
-		gboolean eof=FALSE;
+		boolean eof=FALSE;
 
 		if (mainw->agen_key==0) eof=cache_buffer->eof;
 		else if (jackd->playing_file>-1 && xfile!=NULL && xfile->afilesize <=jackd->seek_pos) eof=TRUE;
@@ -608,7 +608,7 @@ static int audio_process (nframes_t nframes, void *arg) {
 	      }
 
 	      if (!pl_error&&has_audio_filters(FALSE)) {
-		gint64 tc=jackd->audio_ticks+(gint64)(jackd->frames_written/(gdouble)jackd->sample_out_rate*U_SEC);
+		uint64_t tc=jackd->audio_ticks+(uint64_t)(jackd->frames_written/(gdouble)jackd->sample_out_rate*U_SEC);
 	       // apply any audio effects with in_channels
 		weed_apply_audio_effects_rt(out_buffer,jackd->num_output_channels,numFramesToWrite,jackd->sample_out_rate,tc,FALSE);
 	      }
@@ -631,7 +631,7 @@ static int audio_process (nframes_t nframes, void *arg) {
 	      }
 
 	      if (has_audio_filters(FALSE)&&jackd->playing_file!=mainw->ascrap_file) {
-		gint64 tc=jackd->audio_ticks+(gint64)(jackd->frames_written/(gdouble)jackd->sample_out_rate*U_SEC);
+		uint64_t tc=jackd->audio_ticks+(uint64_t)(jackd->frames_written/(gdouble)jackd->sample_out_rate*U_SEC);
 	       // apply any audio effects with in_channels
 		weed_apply_audio_effects_rt(out_buffer,jackd->num_output_channels,numFramesToWrite,jackd->sample_out_rate,tc,FALSE);
 	      }
@@ -854,7 +854,7 @@ static int audio_process (nframes_t nframes, void *arg) {
 
 
 int lives_start_ready_callback (jack_transport_state_t state, jack_position_t *pos, void *arg) {
-  gboolean seek_ready;
+  boolean seek_ready;
 
   // mainw->video_seek_ready is generally FALSE
   // if we are not playing, the transport poll should start playing which will set set 
@@ -895,7 +895,7 @@ int lives_start_ready_callback (jack_transport_state_t state, jack_position_t *p
 
 
 static size_t audio_read_inner(jack_driver_t *jackd, float **in_buffer, int ofileno, int nframes, 
-			       double out_scale, gboolean rev_endian, gboolean out_unsigned, size_t rbytes) {
+			       double out_scale, boolean rev_endian, boolean out_unsigned, size_t rbytes) {
   int frames_out;
 
   void *holding_buff=g_try_malloc(rbytes);
@@ -962,7 +962,7 @@ static int audio_read (nframes_t nframes, void *arg) {
     // we may wish to analyse the audio for example
 
     if (has_audio_filters(TRUE)) {
-	gint64 tc=jackd->audio_ticks+(gint64)(jackd->frames_written/(gdouble)jackd->sample_in_rate*U_SEC);
+	uint64_t tc=jackd->audio_ticks+(uint64_t)(jackd->frames_written/(gdouble)jackd->sample_in_rate*U_SEC);
 	// apply any audio effects with in_channels and no out_channels
 	weed_apply_audio_effects_rt(in_buffer,jackd->num_input_channels,nframes,jackd->sample_in_rate,tc,TRUE);
     }
@@ -1232,7 +1232,7 @@ int jack_driver_activate (jack_driver_t *jackd) {
 
   int i;
   const char** ports;
-  gboolean failed=FALSE;
+  boolean failed=FALSE;
 
   if (jackd->is_active) return 0; // already running
 
@@ -1347,7 +1347,7 @@ int jack_read_driver_activate (jack_driver_t *jackd) {
   // connect driver for reading
   int i;
   const char** ports;
-  gboolean failed=FALSE;
+  boolean failed=FALSE;
 
   /* tell the JACK server that we are ready to roll */
   if (jack_activate(jackd->client)) {
@@ -1448,7 +1448,7 @@ int jack_read_driver_activate (jack_driver_t *jackd) {
 
 
 
-jack_driver_t *jack_get_driver(gint dev_idx, gboolean is_output) {
+jack_driver_t *jack_get_driver(gint dev_idx, boolean is_output) {
   jack_driver_t *jackd;
 
   if (is_output) jackd = &outdev[dev_idx];
@@ -1462,7 +1462,7 @@ jack_driver_t *jack_get_driver(gint dev_idx, gboolean is_output) {
 
 
 
-static void jack_reset_dev(gint dev_idx, gboolean is_output) {
+static void jack_reset_dev(gint dev_idx, boolean is_output) {
   jack_driver_t *jackd = jack_get_driver(dev_idx,is_output);
   //g_printerr("resetting dev %d\n", dev_idx);
   jack_reset_driver(jackd);
@@ -1542,14 +1542,16 @@ volatile aserver_message_t *jack_get_msgq(jack_driver_t *jackd) {
   return jackd->msgq;
 }
 
-gint64 lives_jack_get_time(jack_driver_t *jackd, gboolean absolute) {
+uint64_t lives_jack_get_time(jack_driver_t *jackd, boolean absolute) {
   // get the time in ticks since either playback started or since last seek
 
   volatile aserver_message_t *msg=jackd->msgq;
   gdouble frames_written;
 
+  int64_t xtime;
+
   if (msg!=NULL&&msg->command==ASERVER_CMD_FILE_SEEK) {
-    gboolean timeout;
+    boolean timeout;
     int alarm_handle=lives_alarm_set(LIVES_ACONNECT_TIMEOUT);
     while (!(timeout=lives_alarm_get(alarm_handle))&&jack_get_msgq(jackd)!=NULL) {
       sched_yield(); // wait for seek
@@ -1561,8 +1563,11 @@ gint64 lives_jack_get_time(jack_driver_t *jackd, gboolean absolute) {
   frames_written=jackd->frames_written;
   if (frames_written<0.) frames_written=0.;
 
-  if (jackd->is_output) return jackd->audio_ticks*absolute+(gint64)(frames_written/(gdouble)jackd->sample_out_rate*U_SEC);
-  return jackd->audio_ticks*absolute+(gint64)(frames_written/(gdouble)jackd->sample_in_rate*U_SEC);
+  pthread_mutex_lock(&mainw->afilter_mutex);
+  if (jackd->is_output) xtime = jackd->audio_ticks*absolute+(uint64_t)(frames_written/(gdouble)jackd->sample_out_rate*U_SEC);
+  else xtime = jackd->audio_ticks*absolute+(uint64_t)(frames_written/(gdouble)jackd->sample_in_rate*U_SEC);
+  pthread_mutex_unlock(&mainw->afilter_mutex);
+  return xtime;
 }
 
 
@@ -1573,14 +1578,14 @@ gdouble lives_jack_get_pos(jack_driver_t *jackd) {
 
 
 
-gboolean jack_audio_seek_frame (jack_driver_t *jackd, gint frame) {
+boolean jack_audio_seek_frame (jack_driver_t *jackd, gint frame) {
   // seek to frame "frame" in current audio file
   // position will be adjusted to (floor) nearest sample
 
   volatile aserver_message_t *jmsg;
   int64_t seekstart;
   int alarm_handle=lives_alarm_set(LIVES_ACONNECT_TIMEOUT);
-  gboolean timeout;
+  boolean timeout;
 
   if (alarm_handle==-1) return FALSE;
 
@@ -1610,7 +1615,7 @@ int64_t jack_audio_seek_bytes (jack_driver_t *jackd, int64_t bytes) {
   volatile aserver_message_t *jmsg;
   int64_t seekstart;
 
-  gboolean timeout;
+  boolean timeout;
   int alarm_handle=lives_alarm_set(LIVES_ACONNECT_TIMEOUT);
 
   seek_err=FALSE;
@@ -1642,7 +1647,7 @@ int64_t jack_audio_seek_bytes (jack_driver_t *jackd, int64_t bytes) {
   return seekstart;
 }
 
-gboolean jack_try_reconnect(void) {
+boolean jack_try_reconnect(void) {
 
   if (!lives_jack_init()) goto err123;
 
@@ -1694,7 +1699,7 @@ void jack_aud_pb_ready(gint fileno) {
 	 (mainw->multitrack!=NULL&&mainw->multitrack->is_rendering&&
 	  g_file_test((tmpfilename=g_build_filename(prefs->tmpdir,sfile->handle,"audio",NULL)),
 		      G_FILE_TEST_EXISTS)))) {
-      gboolean timeout;
+      boolean timeout;
       int alarm_handle;
       
       if (tmpfilename!=NULL) g_free(tmpfilename);

@@ -18,8 +18,8 @@
 #include <jack/jack.h>
 #include <jack/transport.h>
 
-gboolean lives_jack_init (void); /** start up server on LiVES init */
-gboolean lives_jack_poll(void); /** poll function to check transport state */
+boolean lives_jack_init (void); /** start up server on LiVES init */
+boolean lives_jack_poll(void); /** poll function to check transport state */
 void lives_jack_end (void);
 
 int lives_start_ready_callback (jack_transport_state_t state, jack_position_t *pos, void *arg);
@@ -72,37 +72,37 @@ typedef struct {
 
   float     volume[JACK_MAX_OUTPUT_PORTS];      ///< amount volume, 1.0 is full volume
 
-  gboolean          in_use;                        /**< true if this device is currently in use */
-  gboolean mute;
+  boolean          in_use;                        /**< true if this device is currently in use */
+  boolean mute;
 
   volatile aserver_message_t   *msgq;          /**< linked list of messages we are sending to the callback process */
 
   off_t seek_pos;
   off_t seek_end;
-  gboolean usigned;
-  gboolean reverse_endian;
+  boolean usigned;
+  boolean reverse_endian;
 
   lives_whentostop_t *whentostop; ///< pointer to mainw->whentostop
   volatile lives_cancel_t *cancelled; ///< pointer to mainw->cancelled
 
   /* variables used for trying to restart the connection to jack */
-  gboolean             jackd_died;                    /**< true if jackd has died and we should try to restart it */
+  boolean             jackd_died;                    /**< true if jackd has died and we should try to restart it */
   struct timeval   last_reconnect_attempt;
 
-  gboolean play_when_stopped; ///< if we should play audio even when jack transport is stopped
-  gint64 audio_ticks; ///< ticks when we did the last seek, used to calculate current ticks from audio
+  boolean play_when_stopped; ///< if we should play audio even when jack transport is stopped
+  uint64_t audio_ticks; ///< ticks when we did the last seek, used to calculate current ticks from audio
   uint64_t frames_written;
 
   gint out_chans_available;
   gint in_chans_available;
 
-  gboolean is_paused;
+  boolean is_paused;
 
-  gboolean is_output; ///< is output FROM host to jack
+  boolean is_output; ///< is output FROM host to jack
 
-  gboolean is_silent;
+  boolean is_silent;
 
-  gboolean is_active;
+  boolean is_active;
 
   gint playing_file;
 
@@ -122,7 +122,7 @@ typedef struct {
 
 ////////////////////////////////////////////////////////////////////////////
 
-jack_driver_t *jack_get_driver(gint dev_idx, gboolean is_output); ///< get driver
+jack_driver_t *jack_get_driver(gint dev_idx, boolean is_output); ///< get driver
 
 int jack_audio_init(void); ///< init jack for host output
 int jack_audio_read_init(void); ///< init jack for host input
@@ -135,15 +135,15 @@ int jack_read_driver_activate (jack_driver_t *); ///< activate for host recordin
 
 void jack_close_device(jack_driver_t*);
 
-gboolean jack_try_reconnect(void);
+boolean jack_try_reconnect(void);
 
 void jack_aud_pb_ready(gint fileno);
 
 
 // utils
 volatile aserver_message_t *jack_get_msgq(jack_driver_t *); ///< pull last msg from msgq, or return NULL
-gint64 lives_jack_get_time(jack_driver_t *, gboolean absolute); ///< get time from jack, in 10^-8 seconds
-gboolean jack_audio_seek_frame (jack_driver_t *, gint frame); ///< seek to (video) frame
+uint64_t lives_jack_get_time(jack_driver_t *, boolean absolute); ///< get time from jack, in 10^-8 seconds
+boolean jack_audio_seek_frame (jack_driver_t *, gint frame); ///< seek to (video) frame
 int64_t jack_audio_seek_bytes (jack_driver_t *, int64_t bytes); ///< seek to byte position
 
 void jack_get_rec_avals(jack_driver_t *);

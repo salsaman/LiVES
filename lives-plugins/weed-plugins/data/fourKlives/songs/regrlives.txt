@@ -1,0 +1,70 @@
+# Example song by Antti Silvast.
+
+bpm:125
+
+# each instrument has the following parameters: 
+
+# in: waveform, attack, decay, sustain,
+# release,modulation,[sweep],[pan],[interpol],[modulator]
+# 
+# in            i and the number of instrument, e.g. i1
+# waveform      square | kantti, saw | saha, sin | sini, noise | kohina 
+# attack        attack magnitude in samples 
+# decay         decay magnitude in samples 
+# sustain       sustain magnitude in samples 
+# release       release magnitude in samples 
+# modulation    the amount of modulation (positive or negative) 
+# sweep         the amount of sweep (positive or negative) [optional] 
+# pan           stereo panning (0..100) [optional]
+# interpol      amount of sample interpolation (0..100) [optional] 
+# modulator     the waveform of modulation, for options see waveform [optional]
+
+#instruments
+i1:sini,2,16,1,4000,0,-60
+i2:saha,2,6,1,2000,0,0
+i3:kohina,2,10,1,5100,0,25
+i4:saha,2,5,1,4000,0,0
+i5:saha,2,4,1,4000,0,2
+i6:saha,2,4,1,16000,0,0
+i7:saha,2,5,1,23000,2,0
+i8:kantti,2,4,1,3000,500000,-5
+i9:sini,2,7,1,44100,2,0
+i10:kohina,2,5,1,8100,0,-1
+
+#patterns
+p1:00,   00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
+p2:echo1,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
+p3:g3,00,00,00,g3,00,00,00,g3,00,00,00,g3,00,00,g3
+p4:c2,c3,c3,c2,00,c2,c2,c3,c2,00,c3,c2,00,c2,c3,c2
+p5:g6,g6,g5,g5,c3,00,g6,g5,g6,g5,g5,g5,c3,00,g5,g6
+p6:c4,d4,D4,c4,d4,D4,c4,d4,D4,c4,d4,D4,c4,d4,D4,d4, d4,D4,f4,d4,D4,f4,d4,D4,f4,d4,D4,f4,d4,D4,f4,D4, D4,f4,g4,D4,f4,g4,D4,f4,g4,D4,f4,g4,D4,f4,g4,f4, f4,g4,G4,f4,g4,G4,f4,g4,G4,f4,g4,G4,f4,g4,G4,D4
+p7:c4,d4,D4,c4,d4,D4,c4,d4,D4,c4,d4,D4,c4,d4,D4,d4, d4,D4,f4,d4,D4,f4,d4,D4,f4,d4,D4,f4,d4,D4,f4,D4
+p8:D4,f4,g4,D4,f4,g4,D4,f4,g4,D4,f4,g4,D4,f4,g4,f4, f4,g4,G4,f4,g4,G4,f4,g4,G4,f4,g4,G4,f4,g4,G4,D4
+p9:f4,g4,G4,f4,g4,G4,f4,g4,G4,f4,g4,G4,f4,g4,G4,D4
+p10:c1,echo1,00,00,00,00,00,00,00,00,00,c3,00,00,00,00
+p11:c5,c1,00,00,00,00,00,00,00,00,00,c3,00,00,00,00
+p12:c5,c6,c5,c5,c6,c5,c5,c6,c5,c6,c5,c5,c6,c5,c5,c6
+p13:D5,00,d5,D5,00,D5,d5,00, D5,00,d5,D5,00,D5,d5,00, f5,00,D5,f5,00,f5,D5,00, f5,00,D5,f5,00,f5,D5,00, g5,00,f5,g5,00,g5,f5,00, g5,00,f5,g5,00,g5,f5,00, G5,00,g5,G5,00,G5,g5,00, G5,00,g5,G5,00,G5,g5,00
+p14:00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
+p15:D5,00,d5,D5,00,D5,d5,00, D5,00,d5,D5,00,D5,d5,00, f5,00,D5,f5,00,f5,D5,00, f5,00,D5,f5,00,f5,D5,00
+p16:c2,c2,A1,c2,c2,D2,A1,c2,c2,c2,A1,c2,c2,D2,A1,c2
+p17:g5,00,f5,g5,00,g5,f5,00, g5,00,f5,g5,00,g5,f5,00, G5,00,g5,G5,00,G5,g5,00, G5,00,g5,G5,00,G5,g5,00
+p18:G5,00,g5,G5,00,G5,g5,00
+p19:c6,echo1,c5,00,c6,c6,c5,00,c6,00,c5,c6, 00,c6,c5,00
+p20:A1,00,c2,00,00,00,00,00,00,00,c5,d6,D5,c6,d5,D6, 00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00 
+p21:c2,00,00,00,00,00,00,00,00,00,0,00,00,00,00,00, 00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
+p22:echo1,00,00,00,00,00,00,00,g6,g3,A1,A2,A1,A5,A6,A5,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
+p23:echo1,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,c1,D1,g1,c2,D2,g2,c3,D3,g3,c4,D4,g4,c5,D5,g5,c6
+p24:00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,echo1,00,00,00,00,00,00,00,g6,g3,A1,A2,A1,A5,A6,A5,
+
+#tracks
+t1: p1,    p14,    p14,  p14,   p14,  p3,   p3,   p3,  p3,  p3,  p3,  p3   
+t2: p1,    p14,    p14,  p14,   p14,  p4,   p4,   p4,  p4,  p4,  p4,  p4  
+t3: p1,    p14,    p14,  p14,   p14,  p5,   p5,   p5,  p5,  p5,  p5,  p5  
+t4: p2,    p14,    p14,  p14,   p6,   p7,   p8,   p7,  p8,  p14, p14, p20 
+t5: p2,    p14,    p14,  p14,   p6,   p7,   p8,   p7,  p8,  p14, p14, p20 
+t6: p2,    p14,    p24,  p14,   p12,  p12,  p12,  p14, p14, p12, p12, p14 
+t7: p2,    p14,    p24,  p23,   p13,  p15,  p17,  p14, p14, p15, p17, p14 
+t8: p2,    p22,    p22,  p22,   p14,  p10,  p10,  p10, p10, p10, p10, p10 
+t9: p2,    p21,    p21,  p21,   p14,  p14,  p14,  p14, p14, p14, p14, p14 
+t10:p2,    p14,    p14,  p14,   p14,  p19,  p19,  p19, p19, p19, p19, p19 

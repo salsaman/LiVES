@@ -1,0 +1,82 @@
+# Example instruments
+
+bpm: 125
+
+# each instrument has the following parameters: 
+
+# in: waveform, attack, decay, sustain, 
+# release,modulation,[sweep],[pan],[interpol],[modulator]
+# 
+# in 		i and the number of instrument, e.g. i1 
+# waveform 	square | kantti, saw | saha, sin | sini, noise | kohina 
+# attack 	attack magnitude in samples 
+# decay 	decay magnitude in samples 
+# sustain 	sustain magnitude in samples 
+# release 	release magnitude in samples 
+# modulation 	the amount of modulation (positive or negative) 
+# sweep 	the amount of sweep (positive or negative) [optional] 
+# pan 		stereo panning (0..100) [optional] 
+# interpol 	amount of sample interpolation (0..100) [optional] 
+# modulator 	the waveform of modulation, for options see waveform [optional]
+
+# instruments
+# bass 1
+i1: square, 2, 3, 1, 4300,101, 0, 50, 0, saw
+# bass 2
+i2: saw, 2, 3, 1, 3300,202, 1, 50, 0, sin
+# bass 3
+i3: sin, 2, 6, 1, 6300,101,0, 50, 0, saw
+# bass 4
+i4: saw, 2, 5,1, 4300, 102,1, 50,0, saw
+# bass drum
+i5: sin, 2, 13, 1, 4000, 0, -60
+# snare and hi-hat
+i6: noise, 2,6,1,8100,0,-15
+# melody 1
+i7: saw, 2, 5,1,27000, 101,0, 50, 0, saw
+# melody 2
+i8: sin, 2, 3,1,7000,101,0, 50, 0, sin
+# hi-hat 2
+i9: saw, 2, 4,1, 8100,1034334,-10
+# string
+i10: saw, 2, 4, 1, 44000, 201, 0, 50, 0, saw
+
+# patterns
+p1: 00,00,00,00, 00,00,00,00, 00,00,00,00, 00,00,00,00
+
+p2: c3,echo1, c2,c3, c3,c3,c4,c3, c2,c2,c3,c4, c5,c3,c3,A2
+
+p3: c4,c3,c2,echo1,c2,c2, 00,c1,g1,c2, 00,A0,c1,c2, c2,A3
+
+p4: g3,echo1,00,g3,g4,00,00,00, g3,00,g3,00, g4,00,00,g3
+p5: g6,g6,g5,g5,c3,g6,g6,c3,g6,c3,g5,g6,c3,g5,g5,c3
+p6: c2,echo1,00,00, 00,00,00,00, 00,00,00,00,00,00,00,00, 00,echo1,00,00, 00,00,00,00, 00,00,00,00,00,00,00,00
+p7: c3,echo1,00,00, 00,00,00,00, 00,00,00,00,00,00,00,00
+p8: c6,c6,00,c5,c4,c6,c6,c4,c6,c6,c6,c4,c4,c6,c5,c6
+p9: g6,00,g5,00,c3,00,g6,00,g6,00,g5,00,c3,00,g5,00
+p10:c5,f5,g5,c6, g5,f5,c5,f5, g5,c6,g5,f5, c5,f5,g5,c6,c5,f5,g5,c6, g5,f5,c5,f5, g5,c6,g5,f5, c5,f5,g5,c6
+p11:C5,f5,g5,C6, g5,f5,C5,f5, g5,C6,g5,f5, C5,f5,g5,C6,C5,f5,g5,C6, g5,f5,C5,f5, g5,C6,g5,f5, C5,f5,g5,C6
+p12:A4,f5,g5,A5, g5,f5,A4,f5, g5,A5,g5,f5, A4,f5,g5,A5,A4,f5,g5,A5, g5,f5,A4,f5, g5,A5,g5,f5, A4,f5,g5,A5
+
+p13: C3,echo1, C2,C3, C3,C3,C4,C3, C2,C2,C3,C4, C5,C3,C3,A2
+p14:C4,C3,C2,echo1,C2,C2, 00,C1,g1,C2, 00,A0,C1,C2, C2,A3
+
+p15: A2,echo1, A1,A2, A2,A2,A3,A2, A1,A1,A2,A3, A4,A2,A2,A2
+p16:A3,A2,A1,echo1,A1,A1, 00,A0,g1,A1, 00,A0,A0,A1, A1,A3
+p17:c3,echo1,00,00, 00,00,00,00, 00,00,00,00, 00,00,00,00
+p18:C3,echo1,00,00, 00,00,00,00, 00,00,00,00, 00,00,00,00
+p19:A2,echo1,00,00, 00,00,00,00, 00,00,00,00, 00,00,00,00
+p20: echo1,00,00,00, 00,00,00,00, 00,00,00,00, 00,00,00,00
+
+# tracks
+
+t1: p1, p2, p3, p14,p16,p10,p11,p12
+t2: p1, p2, p3, p14,p16,p10,p11,p12
+t3: p1, p3, p2, p13,p15,p10,p11,p12
+t4: p1, p3, p2, p13,p15,p17,p18,p19
+t5: p1, p4, p4, p4, p4, p1, p1, p1
+t6: p1, p9, p5, p5, p5, p1, p1, p1
+t7: p1, p6, p10,p11,p12,p1, p1, p1
+t8: p1, p1, p10,p11,p12,p1, p1, p1
+t9: p1, p8, p8, p8, p8, p1, p1, p1
+t10:p1, p1, p17,p18,p19,p1, p1, p1

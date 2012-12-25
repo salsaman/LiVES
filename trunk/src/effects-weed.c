@@ -1212,7 +1212,7 @@ lives_filter_error_t weed_reinit_effect (weed_plant_t *inst, boolean reinit_comp
   gchar *cwd;
   boolean is_audio=FALSE,deinit_first=FALSE;
   lives_filter_error_t filter_error=FILTER_NO_ERROR;
-  int error;
+  int error,retval;
 
  reinit:
 
@@ -1238,11 +1238,7 @@ lives_filter_error_t weed_reinit_effect (weed_plant_t *inst, boolean reinit_comp
       lives_rfx_t *rfx;
       set_param_gui_readwrite(inst);
       update_host_info(inst);
-      if ((*init_func)(inst)!=WEED_NO_ERROR) {
-	if (is_audio) pthread_mutex_unlock(&mainw->afilter_mutex);
-	lives_chdir(cwd,FALSE);
-	return FILTER_ERROR_COULD_NOT_REINIT;
-      }
+      retval=(*init_func)(inst);
       if (is_audio) pthread_mutex_unlock(&mainw->afilter_mutex);
       set_param_gui_readonly(inst);
       if (fx_dialog[1]!=NULL) {
@@ -1253,6 +1249,12 @@ lives_filter_error_t weed_reinit_effect (weed_plant_t *inst, boolean reinit_comp
 	  gint modew=GPOINTER_TO_INT (g_object_get_data (G_OBJECT (fx_dialog[1]),"mode"));
 	  redraw_pwindow(keyw,modew);
 	}
+      }
+
+      if (retval!=WEED_NO_ERROR) {
+	lives_chdir(cwd,FALSE);
+	g_free(cwd);
+	return FILTER_ERROR_COULD_NOT_REINIT;
       }
 
       // redraw set defs window

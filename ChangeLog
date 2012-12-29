@@ -4,7 +4,8 @@ Fix compilation error (double typedef).
 Fix compilation for GTK+ < 2.24
 Fix regression error in Resize All Frames.
 Add experimental neural_net compound effect.
-Add motion_analyser comound effect.
+Add motion_analyser compound effect.
+Add mini tracker player in LiVES (fourKlives).
 
 
 

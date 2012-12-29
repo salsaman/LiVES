@@ -284,7 +284,7 @@ static int exp_to_tree(const char *exp) {
       if (i-pstart+3>MAX_EXP_LEN) return 5;
 
       parbit=weed_malloc(i-pstart+3);
-      sprintf(parbit,"%s","0+"); // need at least one operator to hold the varname
+      sprintf(parbit,"0+"); // need at least one operator to hold the varname
 
       snprintf(parbit+2,i-pstart+1,"%s",exp+pstart);
 
@@ -423,13 +423,13 @@ static int exp_to_tree(const char *exp) {
 	// replace "+-" or "-+" with "0-"
 	// replace "++" or "--" with "0+ or "
 	if ((op=='-'&&exp[i]=='+')||(op=='+'&&exp[i]=='-')||(op!='+'&&op!='-'&&exp[i]=='-')) 
-	  sprintf(tmp+i+1,"%s","-");
+	  sprintf(tmp+i+1,"-");
 	else 
-	  sprintf(tmp+i+1,"%s","+");
-	sprintf(tmp+i+2,exp+i+1);
+	  sprintf(tmp+i+1,"+");
+	sprintf(tmp+i+2,"%s",exp+i+1);
 	len++;
 	i--;
-	sprintf((char *)exp,tmp);
+	sprintf((char *)exp,"%s",tmp);
 
 	weed_free(tmp);
 	op=exp[i];
@@ -614,7 +614,7 @@ static int preproc(const char *exp) {
 	if (nstart==-1) break;
 	sprintf(tmp,"%s",exp);
 	sprintf(tmp+i,")%s",exp+i);
-	sprintf((char *)exp,tmp);
+	sprintf((char *)exp,"%s",tmp);
 	len++;
 	i++;
 	plevel--;
@@ -626,9 +626,9 @@ static int preproc(const char *exp) {
     case '/':
       if (lastop=='+'||lastop=='-') {
 	// open parens
-	sprintf(tmp,exp);
+	sprintf(tmp,"%s",exp);
 	sprintf(tmp+nstart,"(%s",exp+nstart);
-	sprintf((char *)exp,tmp);
+	sprintf((char *)exp,"%s",tmp);
 	len++;
 	i++;
 	nstart=-1;
@@ -645,11 +645,11 @@ static int preproc(const char *exp) {
 
   // close any open parens
   if (plevel>0) {
-    sprintf(tmp,exp);
+    sprintf(tmp,"%s",exp);
     for (i=0;i<plevel;i++) {
       sprintf(tmp+len+i,")");
     }
-    sprintf((char *)exp,tmp);
+    sprintf((char *)exp,"%s",tmp);
     i=strlen(exp);
   }
 

@@ -426,30 +426,30 @@ static void syna_play(_sdata *sdata, float *dest, int length, int channels, int 
       }
 
       if (sdata->pola[i])
-	smp=(smp*(255-sdata->pola[i])>>8)+(sdata->prev[i]*sdata->pola[i]>>8);
+	smp=(smp*(255^sdata->pola[i])>>8)+(sdata->prev[i]*sdata->pola[i]>>8);
       sdata->prev[i]=smp;
 
       smp=smp*sdata->vol[i]>>8;
-      left+=(255-sdata->pan[i])*smp>>8;
+      left+=(255^sdata->pan[i])*smp>>8;
       right+=sdata->pan[i]*smp>>8;
     }
 
-    if (left<-3*32767)
-      left=-3*32767;
-    if(left>3*32767)
-      left=3*32767;
+    if (left<-98301)
+      left=-98301;
+    if(left>98301)
+      left=98301;
     if (!interleave||channels==1)
-      dest[n]=(float)((float)left/3.*32767.);
+      dest[n]=(float)left/98301.;
     else
-      dest[n*2]=(float)((float)left/3.*32767.);
+      dest[n*2]=(float)left/98301.;
 
     if (channels==2) {
-      if(right<-3*32767)
-	right=-3*32767;
-      if(right>3*32767)
-	right=3*32767;
-      if (interleave) dest[n*2+1]=(float)((float)right/3.*32767.);
-      else dest[n+length]=(float)((float)right/3.*32767.);
+      if(right<-98301)
+	right=-98301;
+      if(right>98301)
+	right=98301;
+      if (interleave) dest[n*2+1]=(float)right/98301.;
+      else dest[n+length]=(float)right/98301.;
     }
 
 #else
@@ -477,22 +477,22 @@ static void syna_play(_sdata *sdata, float *dest, int length, int channels, int 
       }
 
       if (sdata->pola[i])
-	smp=(smp*(255-sdata->pola[i])>>8)+(sdata->prev[i]*sdata->pola[i]>>8);
+	smp=(smp*(255^sdata->pola[i])>>8)+(sdata->prev[i]*sdata->pola[i]>>8);
       sdata->prev[i]=smp;
       //fprintf(stderr,"ok23 %d\n",smp);
 
       smp=smp*sdata->vol[i]>>8;
 	//fprintf(stderr,"ok24 %d\n",smp);
-      left+=(255-sdata->pan[i])*smp>>8;
+      left+=(255^sdata->pan[i])*smp>>8;
       if (channels==2)
 	right+=sdata->pan[i]*smp>>8;
     }
     
-    if(left<-3*32767)
-      left=-3*32767;
+    if(left<-98301)
+      left=-98301;
     else
-      if(left>3*32767)
-	left=3*32767;
+      if(left>98301)
+	left=98301;
     if (!interleave||channels==1)
       dest[n]=(float)(left*21>>6)/32767.;
     else {
@@ -501,11 +501,11 @@ static void syna_play(_sdata *sdata, float *dest, int length, int channels, int 
     }
     
     if (channels==2) {
-      if(right<-3*32767)
-	right=-3*32767;
+      if(right<-98301)
+	right=-98301;
       else
-	if(right>3*32767)
-	  right=3*32767;
+	if(right>98301)
+	  right=98301;
       if (interleave) dest[n*2+1]=(float)(right*21>>6)/32767.;
       else dest[n+length]=(float)(right*21>>6)/32767.;
     }

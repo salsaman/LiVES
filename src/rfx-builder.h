@@ -262,7 +262,8 @@ void on_param_type_changed (GtkComboBox *, gpointer rfxbuilder);
 void on_paramw_kw_changed (GtkComboBox *, gpointer rfxbuilder);
 void on_paramw_sp_changed (GtkComboBox *, gpointer rfxbuilder);
 void on_paramw_spsub_changed (GtkComboBox *, gpointer rfxbuilder);
-void on_script_status_changed (GtkComboBox *, gpointer combo);
+void populate_script_combo(GtkComboBox *script_combo, lives_rfx_status_t status);
+void on_script_status_changed (GtkComboBox *status_combo, gpointer script_combo);
 
 // fileselectors
 void on_export_rfx_ok (GtkButton *, gchar *script_name);

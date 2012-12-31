@@ -1966,7 +1966,7 @@ _prefsw *create_prefs_dialog (void) {
   GtkWidget *hbox13;
   GtkWidget *label44;
   GObject *spinbutton_def_fps_adj;
-  GtkWidget *dialog_action_area8;
+  GtkWidget *dialog_action_area;
   GtkWidget *dirbutton1;
   GtkWidget *dirbutton2;
   GtkWidget *dirbutton3;
@@ -5521,9 +5521,9 @@ _prefsw *create_prefs_dialog (void) {
   g_signal_connect(prefsw->selection, "changed", G_CALLBACK(on_prefDomainChanged), NULL);
   //
 
-  dialog_action_area8 = GTK_DIALOG (prefsw->prefs_dialog)->action_area;
-  gtk_widget_show (dialog_action_area8);
-  gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area8), GTK_BUTTONBOX_END);
+  dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (prefsw->prefs_dialog));
+  gtk_widget_show (dialog_action_area);
+  gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area), GTK_BUTTONBOX_END);
    
   // Preferences 'Revert' button
   prefsw->cancelbutton = gtk_button_new_from_stock ("gtk-revert-to-saved");

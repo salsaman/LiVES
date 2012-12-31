@@ -513,7 +513,7 @@ rfx_build_window_t *make_rfx_build_window (const gchar *script_name, lives_rfx_s
 			(_ ("Set trigger code for when the parameter window is shown, or when a parameter is changed. Optional (except for Utilities).")));
 
 
-  dialog_action_area = GTK_DIALOG (rfxbuilder->dialog)->action_area;
+  dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (rfxbuilder->dialog));
   gtk_widget_show (dialog_action_area);
   gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area), GTK_BUTTONBOX_END);
 
@@ -849,7 +849,7 @@ void on_list_table_clicked (GtkButton *button, gpointer user_data) {
     gtk_box_pack_start (GTK_BOX (button_box), rfxbuilder->move_down_button, FALSE, FALSE, 0);
   }
 
-  dialog_action_area = GTK_DIALOG (dialog)->action_area;
+  dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (dialog));
   gtk_widget_show (dialog_action_area);
   gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area), GTK_BUTTONBOX_END);
 
@@ -1244,7 +1244,7 @@ void on_properties_clicked (GtkButton *button, gpointer user_data) {
     }
   }
 
-  dialog_action_area = GTK_DIALOG (dialog)->action_area;
+  dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (dialog));
   gtk_widget_show (dialog_action_area);
   gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area), GTK_BUTTONBOX_END);
 
@@ -2264,7 +2264,7 @@ GtkWidget * make_param_dialog (gint pnum, rfx_build_window_t *rfxbuilder) {
 
 
 
-  dialog_action_area = GTK_DIALOG (dialog)->action_area;
+  dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (dialog));
   gtk_widget_show (dialog_action_area);
   gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area), GTK_BUTTONBOX_END);
 
@@ -2827,7 +2827,7 @@ GtkWidget * make_param_window_dialog (gint pnum, rfx_build_window_t *rfxbuilder)
 
   gtk_widget_grab_focus (rfxbuilder->paramw_rest_entry);
 
-  dialog_action_area = GTK_DIALOG (dialog)->action_area;
+  dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (dialog));
   gtk_widget_show (dialog_action_area);
   gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area), GTK_BUTTONBOX_END);
 
@@ -3025,7 +3025,7 @@ GtkWidget * make_trigger_dialog (gint tnum, rfx_build_window_t *rfxbuilder) {
     
   gtk_widget_set_size_request (scrolledwindow,400,100);
 
-  dialog_action_area = GTK_DIALOG (dialog)->action_area;
+  dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (dialog));
   gtk_widget_show (dialog_action_area);
   gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area), GTK_BUTTONBOX_END);
 
@@ -3170,7 +3170,7 @@ void on_code_clicked (GtkButton *button, gpointer user_data) {
 
   gtk_widget_set_size_request (scrolledwindow,600,400);
 
-  dialog_action_area = GTK_DIALOG (dialog)->action_area;
+  dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (dialog));
   gtk_widget_show (dialog_action_area);
   gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area), GTK_BUTTONBOX_END);
 
@@ -3655,6 +3655,12 @@ gboolean rfxbuilder_to_script (rfx_build_window_t *rfxbuilder) {
 
   if (retval!=LIVES_CANCEL) {
     d_print_done();
+
+    gtk_widget_set_sensitive(mainw->promote_test_rfx,TRUE);
+    gtk_widget_set_sensitive(mainw->delete_test_rfx,TRUE);
+    gtk_widget_set_sensitive(mainw->rename_test_rfx,TRUE);
+    gtk_widget_set_sensitive(mainw->edit_test_rfx,TRUE);
+
     return TRUE;
   }
   return FALSE;
@@ -4138,7 +4144,7 @@ on_delete_rfx_activate (GtkMenuItem *menuitem, gpointer user_data) {
       break;
     case RFX_STATUS_CUSTOM:
       rfx_script_dir=g_build_filename (capable->home_dir,LIVES_CONFIG_DIR,
-					PLUGIN_RENDERED_EFFECTS_CUSTOM_SCRIPTS,script_name,NULL);
+					PLUGIN_RENDERED_EFFECTS_CUSTOM_SCRIPTS,NULL);
       rfx_script_file=g_build_filename (rfx_script_dir,script_name,NULL);
       break;
     default:
@@ -4162,7 +4168,17 @@ on_delete_rfx_activate (GtkMenuItem *menuitem, gpointer user_data) {
     d_print (msg);
     g_free (msg);
     if (!(ret=unlink (rfx_script_file))) {
-      rmdir(rfx_script_dir);
+      gchar *com;
+#ifndef IS_MINGW
+      com=g_strdup_printf("/bin/rm -rf \"%s\"",rfx_script_dir);
+#else
+      com=g_strdup_printf("DEL /q \"%s\"",rfx_script_dir);
+      lives_system(com,TRUE);
+      g_free(com);
+      com=g_strdup_printf("RMDIR \"%s\"",rfx_script_dir);
+#endif
+      lives_system(com,TRUE);
+      g_free(com);
       d_print_done();
       on_rebuild_rfx_activate (NULL,NULL);
     }
@@ -4250,43 +4266,17 @@ on_promote_rfx_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
 
 
-void
-on_import_rfx_activate (GtkMenuItem *menuitem, gpointer status) {
-  GtkWidget *fileselection = create_fileselection (_ ("Import Script from..."),0,NULL);
-  g_signal_connect (GTK_FILE_SELECTION(fileselection)->ok_button, "clicked",G_CALLBACK (on_import_rfx_ok),status);
-  gtk_widget_show (fileselection);
-}
-
-
-
-void
-on_export_rfx_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void on_export_rfx_activate (GtkMenuItem *menuitem, gpointer user_data) {
   lives_rfx_status_t status=(lives_rfx_status_t)GPOINTER_TO_INT (user_data);
+
   gchar *script_name=prompt_for_script_name (NULL,status);
-  GtkWidget *fileselection;
-  gchar *tmp;
-  
-  if (script_name==NULL) return;  // user cancelled
-
-  fileselection = create_fileselection (_ ("Export Script to..."),0,script_name);
-  
-  g_signal_connect (GTK_FILE_SELECTION(fileselection)->ok_button, "clicked", 
-		    G_CALLBACK (on_export_rfx_ok),(gpointer)script_name);
-  gtk_file_selection_complete(GTK_FILE_SELECTION(fileselection), 
-			      (tmp=g_filename_from_utf8 (script_name,-1,NULL,NULL,NULL)));
-  g_free(tmp);
-  gtk_widget_show (fileselection);
-}
-
-
-void on_export_rfx_ok (GtkButton *button, gchar *script_name) {
-  gchar *filename=g_filename_to_utf8 (gtk_file_selection_get_filename
-				      (GTK_FILE_SELECTION(gtk_widget_get_toplevel(GTK_WIDGET(button)))),
-				      -1,NULL,NULL,NULL);
-  gchar *rfx_script_from;
+  gchar *rfx_script_from,*filename;
   gchar *com,*msg,*tmp,*tmp2;
-  gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
+  
+  if (script_name==NULL||!strlen(script_name)) return;  // user cancelled
 
+  filename = choose_file (NULL,script_name,NULL,GTK_FILE_CHOOSER_ACTION_SAVE,_ ("LiVES: - Export Script to..."),NULL);
+  
   rfx_script_from=g_build_filename (capable->home_dir,LIVES_CONFIG_DIR,
 				    PLUGIN_RENDERED_EFFECTS_CUSTOM_SCRIPTS,script_name,NULL);
 
@@ -4311,16 +4301,16 @@ void on_export_rfx_ok (GtkButton *button, gchar *script_name) {
 }
 
 
-void on_import_rfx_ok (GtkButton *button, gpointer user_data) {
+void on_import_rfx_activate (GtkMenuItem *menuitem, gpointer user_data) {
+
   gshort status=(gshort)GPOINTER_TO_INT (user_data);
-  gchar *filename=g_filename_to_utf8 
-    (gtk_file_selection_get_filename(GTK_FILE_SELECTION
-				     (gtk_widget_get_toplevel(GTK_WIDGET(button)))),-1,NULL,NULL,NULL);
   gchar *rfx_script_to,*rfx_dir_to;
   gchar *com,*msg,*tmp,*tmp2,*tmpx;
   gchar basename[PATH_MAX];
 
-  gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
+  gchar *filename=choose_file(NULL,NULL,NULL,GTK_FILE_CHOOSER_ACTION_OPEN,_ ("LiVES: Import Script from..."),NULL);
+
+  if (filename==NULL) return;
 
   g_snprintf (basename,PATH_MAX,"%s",filename);
   get_basename (basename);
@@ -4438,6 +4428,7 @@ gchar *prompt_for_script_name(const gchar *sname, lives_rfx_status_t status) {
     status_list = g_list_append (status_list, g_strdup(mainw->string_constants[LIVES_STRING_CONSTANT_CUSTOM]));
     status_list = g_list_append (status_list, g_strdup(mainw->string_constants[LIVES_STRING_CONSTANT_TEST]));
   }
+
   dialog = gtk_dialog_new ();
 
   gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_CENTER_ALWAYS);
@@ -4450,7 +4441,7 @@ gchar *prompt_for_script_name(const gchar *sname, lives_rfx_status_t status) {
     gtk_dialog_set_has_separator(GTK_DIALOG(dialog),FALSE);
   }
   gtk_widget_modify_bg (dialog, GTK_STATE_NORMAL, &palette->normal_back);
-  gtk_window_set_default_size (GTK_WINDOW (dialog), 300, 200);
+  //gtk_window_set_default_size (GTK_WINDOW (dialog), 300, 200);
   gtk_container_set_border_width (GTK_CONTAINER (dialog), 10);
 
   vbox = lives_dialog_get_content_area(GTK_DIALOG(dialog));
@@ -4514,6 +4505,7 @@ gchar *prompt_for_script_name(const gchar *sname, lives_rfx_status_t status) {
     gtk_widget_show (script_combo);
 
     name_entry = script_combo_entry = lives_combo_get_entry(LIVES_COMBO(script_combo));
+    gtk_editable_set_editable (GTK_EDITABLE(name_entry),FALSE);
     gtk_box_pack_start (GTK_BOX (hbox), script_combo, TRUE, TRUE, 0);
   }
   if (sname!=NULL||copy_mode||rename_mode) {
@@ -4548,7 +4540,7 @@ gchar *prompt_for_script_name(const gchar *sname, lives_rfx_status_t status) {
   gtk_widget_grab_focus (name_entry);
   gtk_entry_set_activates_default (GTK_ENTRY (name_entry), TRUE);
 
-  action_area = GTK_DIALOG (dialog)->action_area;
+  action_area = lives_dialog_get_action_area(LIVES_DIALOG (dialog));
   gtk_widget_show (action_area);
   gtk_button_box_set_layout (GTK_BUTTON_BOX (action_area), GTK_BUTTONBOX_END);
 
@@ -4568,7 +4560,8 @@ gchar *prompt_for_script_name(const gchar *sname, lives_rfx_status_t status) {
 		    G_CALLBACK (gtk_true),
 		    NULL);
 
-  on_script_status_changed(LIVES_COMBO(status_combo),(gpointer)script_combo);
+  if (status_combo!=NULL) on_script_status_changed(LIVES_COMBO(status_combo),(gpointer)script_combo);
+  else if (script_combo!=NULL) populate_script_combo(LIVES_COMBO(script_combo), status);
 
   do {
     OK=TRUE;
@@ -4609,7 +4602,9 @@ gchar *prompt_for_script_name(const gchar *sname, lives_rfx_status_t status) {
       }
       if (rename_mode) {
 	GList *nmlist=NULL;
-	if (name !=NULL&&g_list_find ((nmlist=get_script_list (status)),name)!=NULL) {
+	gchar *xname=ensure_extension(name,".script");
+
+	if (name !=NULL&&g_list_find ((nmlist=get_script_list (status)),xname)!=NULL) {
 	  do_blocking_error_dialog (_ ("\n\nThere is already a test script with this name.\nScript name must be unique.\n"));
 	  OK=FALSE;
 	}
@@ -4621,8 +4616,8 @@ gchar *prompt_for_script_name(const gchar *sname, lives_rfx_status_t status) {
 	  rfx_script_from=g_build_filename (capable->home_dir,LIVES_CONFIG_DIR,
 					    PLUGIN_RENDERED_EFFECTS_TEST_SCRIPTS,from_name,NULL);
 	  rfx_script_to=g_build_filename (capable->home_dir,LIVES_CONFIG_DIR,
-					  PLUGIN_RENDERED_EFFECTS_TEST_SCRIPTS,name,NULL);
-	  d_print ((tmp=g_strdup_printf (_ ("Renaming RFX test script %s to %s..."),from_name,name)));
+					  PLUGIN_RENDERED_EFFECTS_TEST_SCRIPTS,xname,NULL);
+	  d_print ((tmp=g_strdup_printf (_ ("Renaming RFX test script %s to %s..."),from_name,xname)));
 	  g_free(tmp);
 	  g_free (from_name);
 
@@ -4641,6 +4636,7 @@ gchar *prompt_for_script_name(const gchar *sname, lives_rfx_status_t status) {
 	  g_list_free_strings(nmlist);
 	  g_list_free(nmlist);
 	}
+	g_free(xname);
       }
     }
   } while (!OK);
@@ -4650,37 +4646,43 @@ gchar *prompt_for_script_name(const gchar *sname, lives_rfx_status_t status) {
 }
 
 
-void on_script_status_changed (GtkComboBox *status_combo, gpointer user_data) {
-  gchar *text=lives_combo_get_active_text(status_combo);
+void populate_script_combo(GtkComboBox *script_combo, lives_rfx_status_t status) {
   GList *list=NULL;
-  LiVESWidget *script_combo=(LiVESWidget *)user_data;
-
-  if (script_combo==NULL||!LIVES_IS_COMBO (script_combo)) return;
-
-  if (!(strcmp (text,mainw->string_constants[LIVES_STRING_CONSTANT_BUILTIN]))) {
-    lives_combo_populate (LIVES_COMBO (script_combo), (list=get_script_list (RFX_STATUS_BUILTIN)));
-  }
-  else {
-    if (!(strcmp (text,mainw->string_constants[LIVES_STRING_CONSTANT_CUSTOM]))) {
-      lives_combo_populate (LIVES_COMBO (script_combo), (list=get_script_list (RFX_STATUS_CUSTOM)));
-    }
-    else {
-      if (!(strcmp (text,mainw->string_constants[LIVES_STRING_CONSTANT_TEST]))) {
-	lives_combo_populate (LIVES_COMBO (script_combo), (list=get_script_list (RFX_STATUS_TEST)));
-      }
-    }
-  }
-  g_free (text);
+  lives_combo_populate (script_combo, (list=get_script_list (status)));
   if (list!=NULL) {
-    gtk_combo_box_set_active(GTK_COMBO_BOX(script_combo),0);
+    gtk_combo_box_set_active(script_combo,0);
     gtk_widget_set_sensitive(copy_script_okbutton,TRUE);
     g_list_free_strings(list);
     g_list_free(list);
   }
   else {
-    lives_combo_set_active_string(LIVES_COMBO(script_combo),"");
+    lives_combo_set_active_string(script_combo,"");
     gtk_widget_set_sensitive(copy_script_okbutton,FALSE);
   }
+}
+
+
+
+void on_script_status_changed (GtkComboBox *status_combo, gpointer user_data) {
+  gchar *text=lives_combo_get_active_text(status_combo);
+  LiVESWidget *script_combo=(LiVESWidget *)user_data;
+
+  if (script_combo==NULL||!LIVES_IS_COMBO (script_combo)) return;
+
+  if (!(strcmp (text,mainw->string_constants[LIVES_STRING_CONSTANT_BUILTIN]))) {
+    populate_script_combo(LIVES_COMBO(script_combo),RFX_STATUS_BUILTIN);
+  }
+  else {
+    if (!(strcmp (text,mainw->string_constants[LIVES_STRING_CONSTANT_CUSTOM]))) {
+      populate_script_combo(LIVES_COMBO(script_combo),RFX_STATUS_CUSTOM);
+    }
+    else {
+      if (!(strcmp (text,mainw->string_constants[LIVES_STRING_CONSTANT_TEST]))) {
+	populate_script_combo(LIVES_COMBO(script_combo),RFX_STATUS_TEST);
+      }
+    }
+  }
+  g_free (text);
 }
 
 
@@ -4749,18 +4751,20 @@ void add_rfx_effects(void) {
     }
     threaded_dialog_spin();
     if (mainw->rte_separator!=NULL) {
-      gtk_widget_unparent (mainw->custom_effects_separator);
-      gtk_widget_unparent (mainw->custom_effects_menu);
-      gtk_widget_unparent (mainw->custom_effects_submenu);
-      gtk_widget_unparent (mainw->custom_gens_menu);
-      gtk_widget_unparent (mainw->custom_gens_submenu);
-      gtk_widget_unparent (mainw->gens_menu);
-      gtk_widget_unparent (mainw->custom_utilities_separator);
-      gtk_widget_unparent (mainw->custom_utilities_menu);
-      gtk_widget_unparent (mainw->custom_utilities_submenu);
-      gtk_widget_unparent (mainw->custom_tools_menu);
-      gtk_widget_unparent (mainw->utilities_menu);
-      gtk_widget_unparent (mainw->run_test_rfx_menu);
+      if (mainw->custom_effects_separator!=NULL) gtk_widget_unparent (mainw->custom_effects_separator);
+      if (mainw->custom_effects_menu!=NULL) gtk_widget_unparent (mainw->custom_effects_menu);
+      if (mainw->custom_effects_submenu!=NULL) gtk_widget_unparent (mainw->custom_effects_submenu);
+      if (mainw->custom_gens_menu!=NULL) gtk_widget_unparent (mainw->custom_gens_menu);
+      if (mainw->custom_gens_submenu!=NULL) gtk_widget_unparent (mainw->custom_gens_submenu);
+      if (mainw->gens_menu!=NULL) gtk_widget_unparent (mainw->gens_menu);
+
+      // next line causes errors when unparenting custom_tools_menu (bug in gtk+ ?)
+      //if (mainw->custom_utilities_separator!=NULL) gtk_widget_unparent (mainw->custom_utilities_separator);
+      if (mainw->custom_utilities_menu!=NULL) gtk_widget_unparent (mainw->custom_utilities_menu);
+      if (mainw->custom_utilities_submenu!=NULL) gtk_widget_unparent (mainw->custom_utilities_submenu);
+      if (mainw->custom_tools_menu!=NULL) gtk_widget_unparent (mainw->custom_tools_menu);
+      if (mainw->utilities_menu!=NULL) gtk_widget_unparent (mainw->utilities_menu);
+      if (mainw->run_test_rfx_menu!=NULL) gtk_widget_unparent (mainw->run_test_rfx_menu);
     }
     gtk_widget_queue_draw(mainw->effects_menu);
     while (g_main_context_iteration(NULL,FALSE));
@@ -4790,6 +4794,7 @@ void add_rfx_effects(void) {
   }
 
   mainw->custom_tools_menu=gtk_menu_new();
+
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (mainw->custom_tools_submenu), mainw->custom_tools_menu);
   if (palette->style&STYLE_1) {
     gtk_widget_modify_bg(mainw->custom_tools_menu, GTK_STATE_NORMAL, &palette->menu_and_bars);
@@ -5109,17 +5114,6 @@ void add_rfx_effects(void) {
     gtk_widget_modify_bg(mainw->utilities_menu, GTK_STATE_NORMAL, &palette->menu_and_bars);
   }
 
-  if (mainw->custom_tools_menu!=NULL) {
-    gtk_widget_unparent(mainw->custom_tools_menu);
-  }
-
-  mainw->custom_tools_menu=gtk_menu_new();
-  gtk_menu_item_set_submenu (GTK_MENU_ITEM (mainw->custom_tools_submenu), mainw->custom_tools_menu);
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_bg(mainw->custom_tools_menu, GTK_STATE_NORMAL, &palette->menu_and_bars);
-  }
-
-
   mainw->gens_menu=gtk_menu_new();
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (mainw->gens_submenu), mainw->gens_menu);
   if (palette->style&STYLE_1) {
@@ -5136,7 +5130,6 @@ void add_rfx_effects(void) {
   gtk_container_add (GTK_CONTAINER (mainw->gens_menu), mainw->custom_gens_submenu);
 
 
-
   mainw->custom_utilities_separator=gtk_menu_item_new();
   gtk_widget_set_sensitive (mainw->custom_utilities_separator, FALSE);
 
@@ -5148,7 +5141,6 @@ void add_rfx_effects(void) {
 
   gtk_container_add (GTK_CONTAINER (mainw->custom_tools_menu), mainw->custom_utilities_separator);
   gtk_container_add (GTK_CONTAINER (mainw->custom_tools_menu), mainw->custom_utilities_submenu);
-
 
   threaded_dialog_spin();
 
@@ -5283,6 +5275,7 @@ void add_rfx_effects(void) {
     gtk_widget_show(mainw->custom_utilities_submenu);
   }
   else {
+    gtk_widget_hide(mainw->custom_utilities_separator);
     gtk_widget_hide(mainw->custom_utilities_menu);
     gtk_widget_hide(mainw->custom_utilities_submenu);
   }
@@ -5294,6 +5287,33 @@ void add_rfx_effects(void) {
     gtk_widget_hide(mainw->custom_gens_menu);
     gtk_widget_hide(mainw->custom_gens_submenu);
   }
+
+  if (mainw->is_ready) {
+    if (mainw->num_rendered_effects_custom>0) {
+      gtk_widget_set_sensitive(mainw->delete_custom_rfx,TRUE);
+      gtk_widget_set_sensitive(mainw->export_custom_rfx,TRUE);
+    }
+    else {
+      gtk_widget_set_sensitive(mainw->delete_custom_rfx,FALSE);
+      gtk_widget_set_sensitive(mainw->export_custom_rfx,FALSE);
+    }
+    
+    if (mainw->num_rendered_effects_test>0) {
+      gtk_widget_set_sensitive(mainw->run_test_rfx_submenu,TRUE);
+      gtk_widget_set_sensitive(mainw->promote_test_rfx,TRUE);
+      gtk_widget_set_sensitive(mainw->delete_test_rfx,TRUE);
+      gtk_widget_set_sensitive(mainw->rename_test_rfx,TRUE);
+      gtk_widget_set_sensitive(mainw->edit_test_rfx,TRUE);
+    }
+    else {
+      gtk_widget_set_sensitive(mainw->run_test_rfx_submenu,FALSE);
+      gtk_widget_set_sensitive(mainw->promote_test_rfx,FALSE);
+      gtk_widget_set_sensitive(mainw->delete_test_rfx,FALSE);
+      gtk_widget_set_sensitive(mainw->rename_test_rfx,FALSE);
+      gtk_widget_set_sensitive(mainw->edit_test_rfx,FALSE);
+    }
+  }
+
   if (mainw->current_file>0&&mainw->playing_file==-1) sensitize();
 
 }

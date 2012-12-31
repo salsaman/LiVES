@@ -93,6 +93,8 @@ void weed_reinit_all(void);
 
 int weed_flagset_array_count(weed_plant_t **array, gboolean set_readonly);
 
+int num_alpha_channels(weed_plant_t *filter, boolean out);
+
 gint num_in_params(weed_plant_t *, boolean skip_hidden, boolean skip_internal);
 int num_out_params(weed_plant_t *);
 weed_plant_t *weed_inst_in_param (weed_plant_t *inst, int param_num, boolean skip_hidden, boolean skip_internal);

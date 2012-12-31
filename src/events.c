@@ -5362,7 +5362,7 @@ render_details *create_render_details (gint type) {
 
   add_fill_to_box(LIVES_BOX(rdet->always_hbox));
 
-  gtk_box_pack_start (GTK_BOX (GTK_DIALOG(rdet->dialog)->action_area), rdet->always_hbox, TRUE, FALSE, 20);
+  gtk_box_pack_start (GTK_BOX (lives_dialog_get_action_area(LIVES_DIALOG(rdet->dialog))), rdet->always_hbox, TRUE, FALSE, 20);
 
 
   cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
@@ -5370,7 +5370,7 @@ render_details *create_render_details (gint type) {
     gtk_dialog_add_action_widget (GTK_DIALOG (rdet->dialog), cancelbutton, GTK_RESPONSE_CANCEL);
 
   }
-  else add_fill_to_box(GTK_BOX (GTK_DIALOG(rdet->dialog)->action_area));
+  else add_fill_to_box(GTK_BOX (lives_dialog_get_action_area(LIVES_DIALOG(rdet->dialog))));
 
   GTK_WIDGET_SET_FLAGS (cancelbutton, GTK_CAN_FOCUS);
 

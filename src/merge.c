@@ -277,7 +277,7 @@ void create_merge_dialog (void) {
   // done !
 
 
-  dialog_action_area = GTK_DIALOG (merge_opts->merge_dialog)->action_area;
+  dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (merge_opts->merge_dialog));
   gtk_widget_show (dialog_action_area);
   gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area), GTK_BUTTONBOX_END);
 

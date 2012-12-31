@@ -16,6 +16,10 @@ typedef enum {
 } lives_cursor_t;
 
 
+#define W_PACKING_WIDTH 10 // packing width for widgets with labels
+#define W_BORDER_WIDTH 20 // dialog border width
+
+
 #ifdef GUI_GTK
 typedef GtkObject                         LiVESObject;
 typedef GtkWidget                         LiVESWidget;
@@ -229,6 +233,7 @@ LiVESPixbuf *lives_pixbuf_scale_simple(const LiVESPixbuf *src, int dest_width, i
 
 
 LiVESWidget *lives_dialog_get_content_area(LiVESDialog *dialog);
+LiVESWidget *lives_dialog_get_action_area(LiVESDialog *dialog);
 
 LiVESWidget *lives_combo_new(void);
 
@@ -272,6 +277,8 @@ LiVESWidget *lives_standard_combo_new (const char *labeltext, boolean use_mnemon
 
 LiVESWidget *lives_standard_entry_new(const char *labeltext, boolean use_mnemonic, char *txt, int dispwidth, int maxchars, LiVESBox *box, 
 				      const char *tooltip);
+
+LiVESWidget *lives_standard_dialog_new(const gchar *title, boolean add_std_buttons);
 
 // util functions
 

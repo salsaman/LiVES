@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2012-12-22 20:53-0300\n"
+"POT-Creation-Date: 2012-12-31 09:09-0300\n"
 "PO-Revision-Date: 2011-08-18 12:12+0000\n"
 "Last-Translator: salsaman <salsaman@gmail.com>\n"
 "Language-Team: Turkish <tr@li.org>\n"
@@ -451,7 +451,7 @@ msgstr ""
 "-debug            : Çöküş nedeni bulmak için ('gdb' kurulu olması "
 "gereklidir)\n"
 
-#: src/main.c:2179 src/gui.c:1089
+#: src/main.c:2179 src/gui.c:1081
 msgid "Starting GUI..."
 msgstr "Grafiksel kullanıcı arayüzü başlıyor..."
 
@@ -698,7 +698,7 @@ msgstr "kayıt %9d/%d"
 msgid "!rec %9d/%d"
 msgstr "!kayıt %9d/%d"
 
-#: src/main.c:4689 src/main.c:4690 src/gui.c:2052 src/gui.c:3094
+#: src/main.c:4689 src/main.c:4690 src/gui.c:2068 src/gui.c:3110
 #: src/saveplay.c:2193
 msgid "Play"
 msgstr "Oynat"
@@ -716,26 +716,26 @@ msgstr ""
 msgid "Closed file %s\n"
 msgstr "Dosya kapandı %s\n"
 
-#: src/main.c:5672 src/gui.c:622 src/utils.c:3792 src/utils.c:3824
-#: src/saveplay.c:3373 src/multitrack.c:4120 src/multitrack.c:5696
+#: src/main.c:5672 src/gui.c:617 src/utils.c:3794 src/utils.c:3826
+#: src/saveplay.c:3373 src/multitrack.c:4121 src/multitrack.c:5697
 msgid "_Undo"
 msgstr "_Geri Al"
 
-#: src/main.c:5673 src/gui.c:635 src/utils.c:3793 src/utils.c:3825
-#: src/saveplay.c:3374 src/multitrack.c:4141 src/multitrack.c:5719
+#: src/main.c:5673 src/gui.c:630 src/utils.c:3795 src/utils.c:3827
+#: src/saveplay.c:3374 src/multitrack.c:4142 src/multitrack.c:5720
 msgid "_Redo"
 msgstr "_Yinele"
 
-#: src/main.c:5700 src/interface.c:661 src/gui.c:2217 src/preferences.c:2452
+#: src/main.c:5700 src/interface.c:661 src/gui.c:2233 src/preferences.c:2452
 #: src/resample.c:1810
 msgid "Video"
 msgstr "Video"
 
-#: src/main.c:5701 src/interface.c:680 src/gui.c:2236
+#: src/main.c:5701 src/interface.c:680 src/gui.c:2252
 msgid "Left Audio"
 msgstr "Sol Ses"
 
-#: src/main.c:5702 src/gui.c:2254
+#: src/main.c:5702 src/gui.c:2270
 msgid "Right Audio"
 msgstr "Sağ ses"
 
@@ -753,17 +753,17 @@ msgstr ""
 "arasında geçiş yapamazsınız.\n"
 "Lütfen Tercihlerden çalma seçeneklerini ayarlayın ve tekrar deneyin.\n"
 
-#: src/main.c:5835 src/callbacks.c:7272 src/callbacks.c:7420
-#: src/callbacks.c:7746 src/callbacks.c:7763 src/gui.c:3683
+#: src/main.c:5835 src/callbacks.c:7267 src/callbacks.c:7415
+#: src/callbacks.c:7741 src/callbacks.c:7758 src/gui.c:3699
 #: src/saveplay.c:2315 src/saveplay.c:2349 src/saveplay.c:2954
-#: src/saveplay.c:3064 src/saveplay.c:3086 src/multitrack.c:8569
-#: src/multitrack.c:10260
+#: src/saveplay.c:3064 src/saveplay.c:3086 src/multitrack.c:8570
+#: src/multitrack.c:10261
 #, c-format
 msgid " (%d %% scale)"
 msgstr ""
 
-#: src/main.c:5837 src/callbacks.c:7274 src/callbacks.c:7422
-#: src/callbacks.c:7748 src/gui.c:3687 src/saveplay.c:2317 src/saveplay.c:2351
+#: src/main.c:5837 src/callbacks.c:7269 src/callbacks.c:7417
+#: src/callbacks.c:7743 src/gui.c:3703 src/saveplay.c:2317 src/saveplay.c:2351
 #, fuzzy, c-format
 msgid "LiVES: - Play Window%s"
 msgstr "LiVES: - Oynatma Penceresi"
@@ -940,7 +940,7 @@ msgstr "_sox ses çalıcısı kullan"
 msgid "Use _mplayer audio player"
 msgstr "_mplayer ses çalıcısı kullan"
 
-#: src/startup.c:459 src/startup.c:649 src/interface.c:2154
+#: src/startup.c:459 src/startup.c:649 src/interface.c:2153
 msgid "_Next"
 msgstr "_Sonraki"
 
@@ -1143,11 +1143,11 @@ msgstr "Deinterlace uygula"
 msgid "If this is set, frames will be deinterlaced as they are imported."
 msgstr ""
 
-#: src/interface.c:203 src/callbacks.c:9782 src/callbacks.c:9812
-#: src/callbacks.c:9813 src/gui.c:3097 src/gui.c:3660 src/saveplay.c:2196
+#: src/interface.c:203 src/callbacks.c:9777 src/callbacks.c:9807
+#: src/callbacks.c:9808 src/gui.c:3113 src/gui.c:3676 src/saveplay.c:2196
 #: src/saveplay.c:2977 src/dialogs.c:1344 src/dialogs.c:1345
 #: src/dialogs.c:1573 src/dialogs.c:1574 src/framedraw.c:230
-#: src/multitrack.c:7381
+#: src/multitrack.c:7382
 msgid "Preview"
 msgstr "Önizleme"
 
@@ -1181,7 +1181,7 @@ msgstr ""
 "\n"
 "Lütfen Bekleyin"
 
-#: src/interface.c:357 src/callbacks.c:9549 src/callbacks.c:9583
+#: src/interface.c:357 src/callbacks.c:9544 src/callbacks.c:9578
 #: src/dialogs.c:2422
 msgid ""
 "\n"
@@ -1206,7 +1206,7 @@ msgstr "_Önizleme"
 msgid "Paus_e"
 msgstr "Durakla_t"
 
-#: src/interface.c:428 src/callbacks.c:9580
+#: src/interface.c:428 src/callbacks.c:9575
 msgid "Pause/_Enough"
 msgstr "Duraklat/_Yeterli"
 
@@ -1234,7 +1234,7 @@ msgstr "Bayt boyutu"
 msgid "Total time"
 msgstr "Toplam süre"
 
-#: src/interface.c:642 src/interface.c:2679
+#: src/interface.c:642 src/interface.c:2678
 msgid "FPS"
 msgstr "FPS"
 
@@ -1299,78 +1299,78 @@ msgstr ""
 "bu ve diğer uyarıları gösterme.\n"
 "(Tercihler / Uyarılar dan tekrar geri dönülebilir)"
 
-#: src/interface.c:1076
+#: src/interface.c:1075
 msgid "Show _Details"
 msgstr "_Detayları Göster"
 
-#: src/interface.c:1170
+#: src/interface.c:1169
 msgid "_Close Window"
 msgstr "_Pencereyi Kapat"
 
-#: src/interface.c:1174
+#: src/interface.c:1173
 msgid "_Save to file"
 msgstr "Dosyaya _kaydet"
 
-#: src/interface.c:1282
+#: src/interface.c:1281
 msgid "LiVES: - Insert"
 msgstr "LIVES - Ekle"
 
-#: src/interface.c:1304
+#: src/interface.c:1303
 #, fuzzy
 msgid "_Number of times to insert"
 msgstr "    Açılacak kare sayısı"
 
-#: src/interface.c:1325
+#: src/interface.c:1324
 msgid "_Insert to fit audio"
 msgstr "Ses uyacak şekilde ekle"
 
-#: src/interface.c:1369
+#: src/interface.c:1368
 msgid "Insert _before selection"
 msgstr "Seçim _öncesi ekle"
 
-#: src/interface.c:1374
+#: src/interface.c:1373
 #, fuzzy
 msgid "Insert clipboard before selected frames"
 msgstr "Seçildikten sonra çerçeveyi panoya ekle"
 
-#: src/interface.c:1406
+#: src/interface.c:1405
 msgid "Insert _after selection"
 msgstr "Seçim _sonrası ekle"
 
-#: src/interface.c:1411
+#: src/interface.c:1410
 msgid "Insert clipboard after selected frames"
 msgstr "Seçildikten sonra çerçeveyi panoya ekle"
 
-#: src/interface.c:1442
+#: src/interface.c:1441
 msgid "Insert _with sound"
 msgstr "Ses ile ekle"
 
-#: src/interface.c:1478
+#: src/interface.c:1477
 msgid "Insert with_out sound"
 msgstr "Ses olmadan ekle"
 
-#: src/interface.c:1581
+#: src/interface.c:1580
 msgid "LiVES: - Open Selection"
 msgstr "LiVES - Seçimi aç"
 
-#: src/interface.c:1610
+#: src/interface.c:1609
 msgid "    Selection start time (sec)"
 msgstr "    Seçim başlama zamanı (sn)"
 
-#: src/interface.c:1620
+#: src/interface.c:1619
 msgid "    Number of frames to open"
 msgstr "    Açılacak kare sayısı"
 
-#: src/interface.c:1730
+#: src/interface.c:1729
 msgid "LiVES: - Open Location"
 msgstr "LIVES - Açma Konumu"
 
-#: src/interface.c:1732
+#: src/interface.c:1731
 #, fuzzy
 msgid "LiVES: - Open Youtube Clip"
 msgstr "LiVES: - klip in ismini değiştir"
 
-#: src/interface.c:1738
+#: src/interface.c:1737
 msgid ""
 "\n"
 "\n"
@@ -1387,7 +1387,7 @@ msgstr ""
 "olun\n"
 "\n"
 
-#: src/interface.c:1741
+#: src/interface.c:1740
 msgid ""
 "\n"
 "\n"
@@ -1396,48 +1396,48 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/interface.c:1750
+#: src/interface.c:1749
 msgid ""
 "Enter the URL of the clip below.\n"
 "E.g: http://www.youtube.com/watch?v=WCR6f6WzjP8\n"
 "\n"
 msgstr ""
 
-#: src/interface.c:1765
+#: src/interface.c:1764
 msgid "URL : "
 msgstr "URL : "
 
-#: src/interface.c:1767
+#: src/interface.c:1766
 #, fuzzy
 msgid "Youtube URL : "
 msgstr "URL : "
 
-#: src/interface.c:1787
+#: src/interface.c:1786
 msgid "Do not send bandwidth information"
 msgstr "bant genişliği bilgisi gönderme"
 
-#: src/interface.c:1788
+#: src/interface.c:1787
 msgid "Try this setting if you are having problems getting a stream"
 msgstr "Eğer akışta problem yaşıyorsanız bu ayarı deneyin"
 
-#: src/interface.c:1825
+#: src/interface.c:1824
 msgid "Download to _Directory : "
 msgstr ""
 
-#: src/interface.c:1839
+#: src/interface.c:1838
 #, fuzzy
 msgid "Download Directory..."
 msgstr "%s ayarı otomatik yükleniyor..."
 
-#: src/interface.c:1862
+#: src/interface.c:1861
 msgid "Download _File Name : "
 msgstr ""
 
-#: src/interface.c:1876
+#: src/interface.c:1875
 msgid ".webm"
 msgstr ""
 
-#: src/interface.c:1989
+#: src/interface.c:1988
 msgid ""
 "You need to enter a name for the current clip set.\n"
 "This will allow you reload the layout with the same clips later.\n"
@@ -1449,7 +1449,7 @@ msgstr ""
 "Lütfen kullanmak istediğiniz adını girin.\n"
 "LiVES çıkmak istediğinizde klibi kaydetmek için hatırlatacaktır\n"
 
-#: src/interface.c:1999
+#: src/interface.c:1998
 msgid ""
 "In order to export this project, you must enter a name for this clip set.\n"
 "This will also be used for the project name.\n"
@@ -1457,7 +1457,7 @@ msgstr ""
 "Bu projeyi dışarı çıkarmak için bu klip için isim girmelisiniz.\n"
 "Bu aynı zamanda projenin adı kullanılır.\n"
 
-#: src/interface.c:2010
+#: src/interface.c:2009
 msgid ""
 "Welcome to LiVES !\n"
 "This startup wizard will guide you through the\n"
@@ -1467,7 +1467,7 @@ msgstr ""
 "This startup wizard will guide you through the\n"
 "initial install so that you can get the most from this application.\n"
 
-#: src/interface.c:2017
+#: src/interface.c:2016
 #, fuzzy
 msgid ""
 "\n"
@@ -1480,237 +1480,242 @@ msgstr ""
 "Not, bir çok sistemde /tmp kapatma zamanında temizlenir bu nedenle /tmp "
 "oluşturmak yanlış olabilir\n"
 
-#: src/interface.c:2040
+#: src/interface.c:2039
 msgid "LiVES: - Rename Clip"
 msgstr "LiVES: - klip in ismini değiştir"
 
-#: src/interface.c:2043
+#: src/interface.c:2042
 msgid "LiVES: - Enter Set Name"
 msgstr "LiVES: - Ayarlama Adını Girin"
 
-#: src/interface.c:2046
+#: src/interface.c:2045
 #, fuzzy
 msgid "LiVES: - Enter a Set Name to Reload"
 msgstr "LiVES: - Ayarlama Adını Girin"
 
-#: src/interface.c:2049
+#: src/interface.c:2048
 msgid "LiVES: - Choose a Working Directory"
 msgstr "LiVES: - Çalışma Dizini Seçin"
 
-#: src/interface.c:2053
+#: src/interface.c:2052
 msgid "New name "
 msgstr "Yeni isim "
 
-#: src/interface.c:2056
+#: src/interface.c:2055
 msgid "Set name "
 msgstr "Ayar ismi "
 
-#: src/interface.c:2208
+#: src/interface.c:2207
 msgid "Use def_aults"
 msgstr "Varsayılanı kullan"
 
-#: src/interface.c:2211 src/interface.c:2568 src/preferences.c:2769
+#: src/interface.c:2210 src/interface.c:2567 src/preferences.c:2769
 #: src/preferences.c:3050
 msgid "_Advanced"
 msgstr "_Gelişmiş"
 
-#: src/interface.c:2268
+#: src/interface.c:2267
 #, fuzzy
 msgid "LiVES:- Select input device"
 msgstr "LiVES: Dosya Seç"
 
-#: src/interface.c:2295
+#: src/interface.c:2294
 msgid "Select input device:"
 msgstr ""
 
-#: src/interface.c:2393
+#: src/interface.c:2392
 msgid "LiVES:- Load CD Track"
 msgstr "LiVES:- CD parçası yükle"
 
-#: src/interface.c:2396
+#: src/interface.c:2395
 msgid "LiVES:- Select DVD Title/Chapter"
 msgstr "LIVES: - DVD Başlık / Bölüm seçimi"
 
-#: src/interface.c:2399
+#: src/interface.c:2398
 msgid "LiVES:- Select VCD Title"
 msgstr "LIVES: - VCD Başlığı Seçiniz"
 
-#: src/interface.c:2402
+#: src/interface.c:2401
 msgid "LiVES:- Change Maximum Visible Tracks"
 msgstr "LIVES - Maksimum Görünür Parça Sayısını Değiştir"
 
-#: src/interface.c:2405
+#: src/interface.c:2404
 msgid "LiVES:- Device details"
 msgstr "LiVES:- Aygıt detayları"
 
-#: src/interface.c:2436
+#: src/interface.c:2435
 #, c-format
 msgid "Track to load (from %s)"
 msgstr "Parça yükleme ( %s den)"
 
-#: src/interface.c:2439
+#: src/interface.c:2438
 msgid "DVD Title"
 msgstr "DVD Başlığı"
 
-#: src/interface.c:2442
+#: src/interface.c:2441
 msgid "VCD Title"
 msgstr "VCD Başlığı"
 
-#: src/interface.c:2445
+#: src/interface.c:2444
 msgid "Maximum number of tracks to display"
 msgstr "parça azami sayısını görüntülemek için"
 
-#: src/interface.c:2448
+#: src/interface.c:2447
 msgid "Device:        /dev/video"
 msgstr "Aygıt: /dev/video"
 
-#: src/interface.c:2451
+#: src/interface.c:2450
 msgid "Device:        fw:"
 msgstr "Aygıt:        fw:"
 
-#: src/interface.c:2491
+#: src/interface.c:2490
 msgid "Chapter  "
 msgstr "Bölüm  "
 
-#: src/interface.c:2492
+#: src/interface.c:2491
 msgid "Channel  "
 msgstr "Kanal  "
 
-#: src/interface.c:2516
+#: src/interface.c:2515
 msgid "Audio ID  "
 msgstr "Ses nosu  "
 
-#: src/interface.c:2584
+#: src/interface.c:2583
 msgid "Input number"
 msgstr "Giriş numarası"
 
-#: src/interface.c:2609
+#: src/interface.c:2608
 msgid "Use default width, height and FPS"
 msgstr "Ön tanımlı genişlik, yükseklik ve FPS kullanımı"
 
-#: src/interface.c:2649
+#: src/interface.c:2648
 msgid "Width"
 msgstr "Genişlik"
 
-#: src/interface.c:2664
+#: src/interface.c:2663
 msgid "Height"
 msgstr "Yükseklik"
 
-#: src/interface.c:2701
+#: src/interface.c:2700
 #, fuzzy
 msgid "_Driver"
 msgstr "Sürücü"
 
-#: src/interface.c:2704
+#: src/interface.c:2703
 #, fuzzy
 msgid "_Output format"
 msgstr "Çıktı biçimi"
 
-#: src/interface.c:2822
+#: src/interface.c:2821
 msgid "LiVES:- Fade Audio In"
 msgstr "LiVES:- Ses girişini zayıflatmak"
 
-#: src/interface.c:2825
+#: src/interface.c:2824
 msgid "LiVES:- Fade Audio Out"
 msgstr "LiVES:- Ses çıkışını zayıflatmak"
 
-#: src/interface.c:2851
+#: src/interface.c:2850
 #, fuzzy
 msgid "Fade in over  "
 msgstr "Kaybol"
 
-#: src/interface.c:2852
+#: src/interface.c:2851
 msgid "first"
 msgstr "birinci"
 
-#: src/interface.c:2855
+#: src/interface.c:2854
 #, fuzzy
 msgid "Fade out over  "
 msgstr "Kaybol"
 
-#: src/interface.c:2856
+#: src/interface.c:2855
 msgid "last"
 msgstr "sonuncu"
 
-#: src/interface.c:2893
+#: src/interface.c:2892
 msgid "seconds."
 msgstr "saniye."
 
-#: src/interface.c:2918
+#: src/interface.c:2917
 msgid "selection."
 msgstr "seçim"
 
-#: src/interface.c:2984
+#: src/interface.c:2983
 msgid "LiVES: - Play Random Music"
 msgstr "LIVES - Rastgele Müzik çal"
 
-#: src/interface.c:3012
+#: src/interface.c:3011
 msgid "Number of Tracks Requested:    "
 msgstr "Parça Talep Sayısı:    "
 
-#: src/interface.c:3035
+#: src/interface.c:3034
 msgid "Directory:"
 msgstr "Dizin:"
 
-#: src/interface.c:3061
+#: src/interface.c:3060
 msgid "Include subdirectories"
 msgstr "Alt dizinler dahil"
 
-#: src/interface.c:3089
+#: src/interface.c:3088
 msgid "Minimum File Size (MB)         "
 msgstr "Minimum Dosya Boyutu (MB)         "
 
-#: src/interface.c:3109
+#: src/interface.c:3108
 msgid "Maximum File Size (MB)        "
 msgstr "Maksimum Dosya Boyutu (MB)        "
 
-#: src/interface.c:3172
+#: src/interface.c:3171
 msgid "LiVES: - File Comments (optional)"
 msgstr "LiVES - Dosya Yorumları (isteğe bağlı)"
 
-#: src/interface.c:3192
+#: src/interface.c:3191
 msgid "Title/Name : "
 msgstr "Başlık / İsim: "
 
-#: src/interface.c:3203
+#: src/interface.c:3202
 msgid "Author/Artist : "
 msgstr "Yazar / Sanatçı: "
 
-#: src/interface.c:3214
+#: src/interface.c:3213
 msgid "Comments : "
 msgstr "Açıklama: "
 
-#: src/interface.c:3250
+#: src/interface.c:3249
 msgid "_Options"
 msgstr "_Seçenekler"
 
-#: src/interface.c:3271
+#: src/interface.c:3270
 #, fuzzy
 msgid "Save _subtitles to file"
 msgstr "Dosyaya _kaydet"
 
-#: src/interface.c:3301
+#: src/interface.c:3300
 #, fuzzy
 msgid "Subtitle file"
 msgstr "Dosyaya _kaydet"
 
-#: src/interface.c:3307
+#: src/interface.c:3306
 msgid "Browse..."
 msgstr "Gözat..."
 
-#: src/interface.c:3386
+#: src/interface.c:3399
 msgid "LiVES: choose a directory"
 msgstr "LiVES: bir dizin seçin"
 
-#: src/interface.c:3389
+#: src/interface.c:3402
 msgid "LiVES: choose a file"
 msgstr "LiVES: bir dosya seçin"
 
-#: src/interface.c:3486
+#: src/interface.c:3508
+#, fuzzy, c-format
+msgid "LiVES: - %s"
+msgstr "LIVES - Ekle"
+
+#: src/interface.c:3555
 msgid "LiVES: - Cancel/Discard/Save"
 msgstr "LiVES - İptal / Sil / Kaydet"
 
-#: src/interface.c:3506
+#: src/interface.c:3575
 msgid ""
 "You are about to leave multitrack mode.\n"
 "The current layout has not been saved.\n"
@@ -1720,7 +1725,7 @@ msgstr ""
 "Geçerli yerleşim düzeni kaydedilemedi\n"
 "Ne yapmak istiyorsunuz?\n"
 
-#: src/interface.c:3509
+#: src/interface.c:3578
 msgid ""
 "You are about to leave multitrack mode.\n"
 "The current layout has been changed since the last save.\n"
@@ -1730,7 +1735,7 @@ msgstr ""
 "Geçerli yerleşim düzeni son kayıttan bu yana değiştirilmiştir.\n"
 "Ne yapmak istiyorsunuz?\n"
 
-#: src/interface.c:3513
+#: src/interface.c:3582
 #, fuzzy
 msgid ""
 "You are about to exit LiVES.\n"
@@ -1741,7 +1746,7 @@ msgstr ""
 "Geçerli yerleşim düzeni kaydedilemedi\n"
 "Ne yapmak istiyorsunuz?\n"
 
-#: src/interface.c:3514
+#: src/interface.c:3583
 msgid ""
 "The current clip set has not been saved.\n"
 "What would you like to do ?\n"
@@ -1749,7 +1754,7 @@ msgstr ""
 "Geçerli klip set kaydedilmedi.\n"
 "Ne yapmak istiyorsunuz?\n"
 
-#: src/interface.c:3518
+#: src/interface.c:3587
 msgid ""
 "The current layout has not been saved.\n"
 "What would you like to do ?\n"
@@ -1757,7 +1762,7 @@ msgstr ""
 "Mevcut düzen kaydedilmedi.\n"
 "Ne yapmak istiyorsunuz?\n"
 
-#: src/interface.c:3521
+#: src/interface.c:3590
 msgid ""
 "The current layout has not been changed since it was last saved.\n"
 "What would you like to do ?\n"
@@ -1765,13 +1770,13 @@ msgstr ""
 "Mevcut yerleşim düzeninde o son kaydedilen bu yana değişlik olmamıştır.\n"
 "Ne yapmak istiyorsunuz?\n"
 
-#: src/interface.c:3526
+#: src/interface.c:3595
 msgid ""
 "The current layout contains generated frames and cannot be retained.\n"
 "You may wish to render it before exiting multitrack mode.\n"
 msgstr ""
 
-#: src/interface.c:3529
+#: src/interface.c:3598
 #, fuzzy
 msgid ""
 "You are about to leave multitrack mode.\n"
@@ -1782,74 +1787,74 @@ msgstr ""
 "Geçerli yerleşim düzeni kaydedilemedi\n"
 "Ne yapmak istiyorsunuz?\n"
 
-#: src/interface.c:3552
+#: src/interface.c:3621
 msgid "Clip set _name"
 msgstr "Klip ayar ismi"
 
-#: src/interface.c:3564
+#: src/interface.c:3633
 #, fuzzy
 msgid "_Auto reload next time"
 msgstr "Altyazıları otomatik yükle"
 
-#: src/interface.c:3620 src/interface.c:3631
+#: src/interface.c:3689 src/interface.c:3700
 #, fuzzy
 msgid "_Wipe layout"
 msgstr "Yerleşim Düzenini _Kaydet"
 
-#: src/interface.c:3621
+#: src/interface.c:3690
 msgid "_Ignore changes"
 msgstr "Değişiklikleri Yoksay"
 
-#: src/interface.c:3622
+#: src/interface.c:3691
 msgid "_Delete clip set"
 msgstr "Klip ayarlarını sil"
 
-#: src/interface.c:3623
+#: src/interface.c:3692
 msgid "_Delete layout"
 msgstr "Düzeni sil"
 
-#: src/interface.c:3629
+#: src/interface.c:3698
 msgid "_Save layout"
 msgstr "Yerleşim Düzenini _Kaydet"
 
-#: src/interface.c:3630
+#: src/interface.c:3699
 msgid "_Save clip set"
 msgstr "Klip ayarlarını kaydet"
 
-#: src/interface.c:3650
+#: src/interface.c:3719
 msgid "LiVES: recover layout ?"
 msgstr "LiVES: Yerleşim düzenini kurtar ?"
 
-#: src/interface.c:3665
+#: src/interface.c:3734
 msgid ""
 "\n"
 "LiVES has detected a multitrack layout from a previous session.\n"
 "Would you like to try and recover it ?\n"
 msgstr ""
 
-#: src/interface.c:3718
+#: src/interface.c:3787
 #, fuzzy
 msgid "LiVES: - Disk Recovery Options"
 msgstr "LIVES - Kodlama seçenekleri"
 
-#: src/interface.c:3763
+#: src/interface.c:3832
 msgid "Delete _Orphaned Clips"
 msgstr ""
 
-#: src/interface.c:3790
+#: src/interface.c:3859
 msgid "Clear _Backup Files from Closed Clips"
 msgstr ""
 
-#: src/interface.c:3820
+#: src/interface.c:3889
 msgid "Remove Sets which have _Layouts but no Clips"
 msgstr ""
 
-#: src/interface.c:3843
+#: src/interface.c:3912
 #, fuzzy
 msgid "_Reset to Defaults"
 msgstr "_Değerleri Sıfırla"
 
-#: src/interface.c:3850
+#: src/interface.c:3919
 msgid "_Accept"
 msgstr ""
 
@@ -2006,7 +2011,7 @@ msgstr "Ayarları sil"
 msgid "Set %s was permanently deleted from the disk.\n"
 msgstr ""
 
-#: src/callbacks.c:1813 src/callbacks.c:11975
+#: src/callbacks.c:1813 src/callbacks.c:11970
 msgid "Insert Silence"
 msgstr "Sessiz ekle"
 
@@ -2106,7 +2111,7 @@ msgid ""
 "Are you sure you wish to continue ?\n"
 msgstr ""
 
-#: src/callbacks.c:2900 src/callbacks.c:11903
+#: src/callbacks.c:2900 src/callbacks.c:11898
 msgid ""
 "\n"
 "Insertion will cause audio to shift in some multitrack layouts.\n"
@@ -2175,8 +2180,8 @@ msgid ""
 "Are you sure you wish to continue ?\n"
 msgstr ""
 
-#: src/callbacks.c:3490 src/callbacks.c:11124 src/callbacks.c:11370
-#: src/callbacks.c:11436
+#: src/callbacks.c:3490 src/callbacks.c:11119 src/callbacks.c:11365
+#: src/callbacks.c:11431
 msgid ""
 "\n"
 "Deletion will cause missing audio in some multitrack layouts.\n"
@@ -2190,7 +2195,7 @@ msgid ""
 "Are you sure you wish to continue ?\n"
 msgstr ""
 
-#: src/callbacks.c:3528 src/callbacks.c:11418
+#: src/callbacks.c:3528 src/callbacks.c:11413
 msgid ""
 "\n"
 "Deletion will cause audio to shift in some multitrack layouts.\n"
@@ -2423,7 +2428,7 @@ msgid ""
 "Homepage: http://lives.sourceforge.net"
 msgstr ""
 
-#: src/callbacks.c:6092
+#: src/callbacks.c:6087
 #, fuzzy
 msgid ""
 "\n"
@@ -2434,7 +2439,7 @@ msgstr ""
 "\n"
 "Dosyayı açmak için mplayer yüklemeniz gerekebilir.\n"
 
-#: src/callbacks.c:6095
+#: src/callbacks.c:6090
 #, fuzzy
 msgid ""
 "\n"
@@ -2445,7 +2450,7 @@ msgstr ""
 "\n"
 "Dosyayı açmak için mplayer yüklemeniz gerekebilir.\n"
 
-#: src/callbacks.c:6498 src/callbacks.c:8379
+#: src/callbacks.c:6493 src/callbacks.c:8374
 msgid ""
 "\n"
 "Loading new audio may cause missing audio in some multitrack layouts.\n"
@@ -2453,176 +2458,176 @@ msgid ""
 "."
 msgstr ""
 
-#: src/callbacks.c:6596
+#: src/callbacks.c:6591
 #, fuzzy, c-format
 msgid "Opening audio %s, type %s..."
 msgstr "%s Ses dosyası  ekleniyor"
 
-#: src/callbacks.c:6629 src/saveplay.c:453
+#: src/callbacks.c:6624 src/saveplay.c:453
 msgid "Opening audio"
 msgstr "Ses açılıyor"
 
-#: src/callbacks.c:6638 src/callbacks.c:6678 src/callbacks.c:8477
-#: src/callbacks.c:8519 src/callbacks.c:8562 src/callbacks.c:11048
+#: src/callbacks.c:6633 src/callbacks.c:6673 src/callbacks.c:8472
+#: src/callbacks.c:8514 src/callbacks.c:8557 src/callbacks.c:11043
 msgid "Cancelling"
 msgstr "İptal ediliyor"
 
-#: src/callbacks.c:6697 src/callbacks.c:8628
+#: src/callbacks.c:6692 src/callbacks.c:8623
 #, c-format
 msgid "New audio: %d Hz %d channel(s) %d bps\n"
 msgstr "Yeni ses: %d Hz %d kanal %d bps\n"
 
-#: src/callbacks.c:6725 src/callbacks.c:8604 src/callbacks.c:11078
-#: src/callbacks.c:11772
+#: src/callbacks.c:6720 src/callbacks.c:8599 src/callbacks.c:11073
+#: src/callbacks.c:11767
 #, fuzzy
 msgid "Committing audio"
 msgstr "Ses dışa aktarılıyor"
 
-#: src/callbacks.c:6737 src/callbacks.c:8635
+#: src/callbacks.c:6732 src/callbacks.c:8630
 msgid "New Audio"
 msgstr "Yeni ses"
 
-#: src/callbacks.c:7016 src/saveplay.c:3438
+#: src/callbacks.c:7011 src/saveplay.c:3438
 #, c-format
 msgid "%d frames are enough !\n"
 msgstr "%d çerçeve yeterli !\n"
 
-#: src/callbacks.c:7134
+#: src/callbacks.c:7129
 #, fuzzy
 msgid "LiVES: - Encoder debug output"
 msgstr "LIVES - Kodlama seçenekleri"
 
-#: src/callbacks.c:7171 src/gui.c:1894
+#: src/callbacks.c:7166 src/gui.c:1910
 msgid "Fullscreen playback (f)"
 msgstr "Tam ekran oynatma (f)"
 
-#: src/callbacks.c:7173
+#: src/callbacks.c:7168
 msgid "Fullscreen playback off (f)"
 msgstr "Tam ekran oynatma (f)"
 
-#: src/callbacks.c:7386 src/gui.c:1879
+#: src/callbacks.c:7381 src/gui.c:1895
 msgid "Double size (d)"
 msgstr "Çift boyut (d)"
 
-#: src/callbacks.c:7393
+#: src/callbacks.c:7388
 msgid "Single size (d)"
 msgstr "Tek boyut (d)"
 
-#: src/callbacks.c:7524 src/callbacks.c:7525
+#: src/callbacks.c:7519 src/callbacks.c:7520
 msgid "Hide the play window (s)"
 msgstr "Oynatma penceresini gizle (s)"
 
-#: src/callbacks.c:7534 src/gui.c:1718
+#: src/callbacks.c:7529 src/gui.c:1734
 msgid "Show the play window (s)"
 msgstr "Oynatma penceresini göster (s)"
 
-#: src/callbacks.c:7535 src/gui.c:1868
+#: src/callbacks.c:7530 src/gui.c:1884
 #, fuzzy
 msgid "Play in separate window (s)"
 msgstr "Oynatma penceresini gizle (s)"
 
-#: src/callbacks.c:7611 src/gui.c:3928 src/saveplay.c:2346
+#: src/callbacks.c:7606 src/gui.c:3944 src/saveplay.c:2346
 #, fuzzy
 msgid "LiVES: - Streaming"
 msgstr "LiVES: - Uyarı !"
 
-#: src/callbacks.c:7863
+#: src/callbacks.c:7858
 msgid "Switch continuous looping off (o)"
 msgstr ""
 
-#: src/callbacks.c:7870 src/gui.c:1769
+#: src/callbacks.c:7865 src/gui.c:1785
 msgid "Switch continuous looping on (o)"
 msgstr ""
 
-#: src/callbacks.c:7938
+#: src/callbacks.c:7933
 #, c-format
 msgid "Audio volume (%.2f)"
 msgstr "Ses hacmi (%.2f)"
 
-#: src/callbacks.c:7983 src/callbacks.c:7984 src/gui.c:3560
+#: src/callbacks.c:7978 src/callbacks.c:7979 src/gui.c:3576
 msgid "Unmute the audio (z)"
 msgstr "Sesi kesme (z)"
 
-#: src/callbacks.c:7995 src/callbacks.c:7996 src/gui.c:1782 src/gui.c:3559
+#: src/callbacks.c:7990 src/callbacks.c:7991 src/gui.c:1798 src/gui.c:3575
 msgid "Mute the audio (z)"
 msgstr "Sesi kes (z)"
 
-#: src/callbacks.c:8133
+#: src/callbacks.c:8128
 #, fuzzy
 msgid "Reversing clipboard..."
 msgstr "Panoya %s ..."
 
-#: src/callbacks.c:8147
+#: src/callbacks.c:8142
 #, fuzzy
 msgid "Reversing clipboard"
 msgstr "Panoyu temizle"
 
-#: src/callbacks.c:8175
+#: src/callbacks.c:8170
 msgid "LiVES: Load subtitles from..."
 msgstr ""
 
-#: src/callbacks.c:8242 src/saveplay.c:882
+#: src/callbacks.c:8237 src/saveplay.c:882
 #, c-format
 msgid "Loaded subtitle file: %s\n"
 msgstr "Yüklenen altyazı dosyası: %s\n"
 
-#: src/callbacks.c:8311
+#: src/callbacks.c:8306
 msgid "Subtitles were erased.\n"
 msgstr "Altyazılar silindi.\n"
 
-#: src/callbacks.c:8323 src/callbacks.c:8671
+#: src/callbacks.c:8318 src/callbacks.c:8666
 msgid "Select Audio File"
 msgstr "Ses dosyasını seçin"
 
-#: src/callbacks.c:8339
+#: src/callbacks.c:8334
 msgid "Please set your CD play device in Tools | Preferences | Misc\n"
 msgstr ""
 "Lütfen Araçlar | Tercihler | Çeşitli  menüsünden CD oynatma aygıtını "
 "ayarlayınız.\n"
 
-#: src/callbacks.c:8411
+#: src/callbacks.c:8406
 #, fuzzy, c-format
 msgid "Opening CD track %d from %s..."
 msgstr "CD parçası açılıyor..."
 
-#: src/callbacks.c:8416
+#: src/callbacks.c:8411
 #, c-format
 msgid "CD track %d"
 msgstr "CD parçası %d"
 
-#: src/callbacks.c:8463
+#: src/callbacks.c:8458
 msgid "Opening CD track..."
 msgstr "CD parçası açılıyor..."
 
-#: src/callbacks.c:8505 src/callbacks.c:8551
+#: src/callbacks.c:8500 src/callbacks.c:8546
 msgid "Error loading CD track\n"
 msgstr "CD parçası yüklenirken hata veriyor\n"
 
-#: src/callbacks.c:8733
+#: src/callbacks.c:8728
 msgid "Selecting tracks"
 msgstr "Parça seçilmesi"
 
-#: src/callbacks.c:8788
+#: src/callbacks.c:8783
 msgid "layout errors"
 msgstr "Düzen hataları"
 
-#: src/callbacks.c:8798
+#: src/callbacks.c:8793
 msgid "Close _Window"
 msgstr "Pencere Kapat"
 
-#: src/callbacks.c:8809
+#: src/callbacks.c:8804
 msgid "Clear _Errors"
 msgstr "Hataları sil"
 
-#: src/callbacks.c:8820
+#: src/callbacks.c:8815
 msgid "_Delete affected layouts"
 msgstr "Etkilenen düzenleri sil"
 
-#: src/callbacks.c:9519 src/callbacks.c:9564
+#: src/callbacks.c:9514 src/callbacks.c:9559
 msgid "Resume"
 msgstr "Devam Et"
 
-#: src/callbacks.c:9520
+#: src/callbacks.c:9515
 msgid ""
 "\n"
 "Paused\n"
@@ -2632,28 +2637,28 @@ msgstr ""
 "Duraklatıldı\n"
 "(İşleme devam etmek için tıklayınız )"
 
-#: src/callbacks.c:9521 src/callbacks.c:9570
+#: src/callbacks.c:9516 src/callbacks.c:9565
 msgid "paused..."
 msgstr "duraklatıldı..."
 
-#: src/callbacks.c:9548 src/callbacks.c:9581
+#: src/callbacks.c:9543 src/callbacks.c:9576
 msgid "Pause"
 msgstr "Durdur"
 
-#: src/callbacks.c:9550 src/callbacks.c:9584
+#: src/callbacks.c:9545 src/callbacks.c:9579
 #, fuzzy
 msgid "resumed..."
 msgstr "duraklatıldı..."
 
-#: src/callbacks.c:9566
+#: src/callbacks.c:9561
 msgid "Keep"
 msgstr "Koru"
 
-#: src/callbacks.c:9567
+#: src/callbacks.c:9562
 msgid "Enough"
 msgstr "Yeter"
 
-#: src/callbacks.c:9568
+#: src/callbacks.c:9563
 #, fuzzy
 msgid ""
 "\n"
@@ -2665,31 +2670,31 @@ msgstr ""
 "Duraklatıldı\n"
 "(İşleme devam etmek için tıklayınız )"
 
-#: src/callbacks.c:9582
+#: src/callbacks.c:9577
 msgid "Cancel"
 msgstr "İptal"
 
-#: src/callbacks.c:9721
+#: src/callbacks.c:9716
 #, fuzzy
 msgid "Stop"
 msgstr "_Durdur"
 
-#: src/callbacks.c:10212 src/multitrack.c:12392
+#: src/callbacks.c:10207 src/multitrack.c:12393
 #, fuzzy
 msgid "LiVES: Selected frame"
 msgstr "LiVES: Dosya Seç"
 
-#: src/callbacks.c:10219
+#: src/callbacks.c:10214
 #, fuzzy
 msgid "_Save frame as..."
 msgstr "%s... çerçeve olarak kaydet"
 
-#: src/callbacks.c:10463
+#: src/callbacks.c:10458
 #, c-format
 msgid "Audio is ahead of video by %.4f secs. at frame %d, with fps %.4f\n"
 msgstr ""
 
-#: src/callbacks.c:10541
+#: src/callbacks.c:10536
 msgid ""
 "\n"
 "\n"
@@ -2698,7 +2703,7 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/callbacks.c:10547
+#: src/callbacks.c:10542
 msgid ""
 "\n"
 "\n"
@@ -2706,7 +2711,7 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/callbacks.c:10623 src/callbacks.c:11690
+#: src/callbacks.c:10618 src/callbacks.c:11685
 msgid ""
 "\n"
 "Record time must be greater than 0.\n"
@@ -2714,7 +2719,7 @@ msgstr ""
 "\n"
 "Kayıt süresi 0'dan büyük olmalıdır.\n"
 
-#: src/callbacks.c:10634
+#: src/callbacks.c:10629
 msgid ""
 "Capture an External Window:\n"
 "\n"
@@ -2723,17 +2728,17 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/callbacks.c:10639
+#: src/callbacks.c:10634
 msgid "External window was released.\n"
 msgstr ""
 
-#: src/callbacks.c:10673
+#: src/callbacks.c:10668
 msgid ""
 "Click on a Window to Capture it\n"
 "Press 'q' to stop recording"
 msgstr ""
 
-#: src/callbacks.c:10703
+#: src/callbacks.c:10698
 #, c-format
 msgid ""
 "\n"
@@ -2743,24 +2748,24 @@ msgid ""
 "(Default of %.3f frames per second will be used.)\n"
 msgstr ""
 
-#: src/callbacks.c:10729
+#: src/callbacks.c:10724
 #, fuzzy
 msgid "LiVES was unable to capture this window. Sorry.\n"
 msgstr ""
 "LiVES görüntü yakalanamadı\n"
 "\n"
 
-#: src/callbacks.c:10866
+#: src/callbacks.c:10861
 #, fuzzy
 msgid "Export Selected Audio as..."
 msgstr "_Seçili Sesi Çıkart..."
 
-#: src/callbacks.c:10869
+#: src/callbacks.c:10864
 #, fuzzy
 msgid "Export Audio as..."
 msgstr "Ses _Çıkart..."
 
-#: src/callbacks.c:10911
+#: src/callbacks.c:10906
 msgid ""
 "\n"
 "\n"
@@ -2769,91 +2774,91 @@ msgid ""
 "rate.\n"
 msgstr ""
 
-#: src/callbacks.c:10917
+#: src/callbacks.c:10912
 #, fuzzy, c-format
 msgid "Exporting audio frames %d to %d as %s..."
 msgstr "Çerçeveler siliniyor %d to %d%s..."
 
-#: src/callbacks.c:10922
+#: src/callbacks.c:10917
 #, fuzzy, c-format
 msgid "Exporting audio as %s..."
 msgstr "Ses dışa aktarılıyor"
 
-#: src/callbacks.c:10947
+#: src/callbacks.c:10942
 msgid "Exporting audio"
 msgstr "Ses dışa aktarılıyor"
 
-#: src/callbacks.c:10980
+#: src/callbacks.c:10975
 msgid "Append Audio File..."
 msgstr "Ses Dosyası Ekleme..."
 
-#: src/callbacks.c:11027
+#: src/callbacks.c:11022
 #, c-format
 msgid "Appending audio file %s..."
 msgstr "%s Ses dosyası  ekleniyor"
 
-#: src/callbacks.c:11038
+#: src/callbacks.c:11033
 msgid "Appending audio"
 msgstr "ses ekleniyor"
 
-#: src/callbacks.c:11094
+#: src/callbacks.c:11089
 msgid "Append Audio"
 msgstr "Ses ekle"
 
-#: src/callbacks.c:11156
+#: src/callbacks.c:11151
 #, fuzzy, c-format
 msgid "Padding audio to %.2f seconds..."
 msgstr "Çerçeveler siliniyor %d to %d%s..."
 
-#: src/callbacks.c:11158
+#: src/callbacks.c:11153
 #, c-format
 msgid "Trimming audio from %.2f to %.2f seconds..."
 msgstr ""
 
-#: src/callbacks.c:11177
+#: src/callbacks.c:11172
 msgid "Trimming/Padding audio"
 msgstr "Ses Kırpılıyor/Dolgulanıyor"
 
-#: src/callbacks.c:11185
+#: src/callbacks.c:11180
 msgid "Trim/Pad Audio"
 msgstr "Ses Kırp/Dolgu"
 
-#: src/callbacks.c:11260
+#: src/callbacks.c:11255
 #, fuzzy
 msgid "Fading audio in"
 msgstr "ses ekleniyor"
 
-#: src/callbacks.c:11261
+#: src/callbacks.c:11256
 #, fuzzy
 msgid "Fade audio in"
 msgstr "Kaybol"
 
-#: src/callbacks.c:11266
+#: src/callbacks.c:11261
 #, fuzzy
 msgid "Fading audio out"
 msgstr "ses ekleniyor"
 
-#: src/callbacks.c:11267
+#: src/callbacks.c:11262
 #, fuzzy
 msgid "Fade audio out"
 msgstr "Kaybol"
 
-#: src/callbacks.c:11290
+#: src/callbacks.c:11285
 #, c-format
 msgid "%s over %.1f seconds..."
 msgstr ""
 
-#: src/callbacks.c:11292
+#: src/callbacks.c:11287
 #, c-format
 msgid "%s from time %.2f seconds to %.2f seconds..."
 msgstr ""
 
-#: src/callbacks.c:11299
+#: src/callbacks.c:11294
 #, fuzzy
 msgid "Fading audio..."
 msgstr "Tüm sesler siliniyor..."
 
-#: src/callbacks.c:11402
+#: src/callbacks.c:11397
 #, fuzzy
 msgid ""
 "\n"
@@ -2864,38 +2869,38 @@ msgstr ""
 "Bu dosyayı kapatınca tüm çerçeveler silinecek.\n"
 "Emin misiniz ?"
 
-#: src/callbacks.c:11405
+#: src/callbacks.c:11400
 msgid "Deleting all audio..."
 msgstr "Tüm sesler siliniyor..."
 
-#: src/callbacks.c:11411
+#: src/callbacks.c:11406
 #, fuzzy, c-format
 msgid "Deleting audio from %.2f to %.2f seconds..."
 msgstr "Çerçeveler siliniyor %d to %d%s..."
 
-#: src/callbacks.c:11498
+#: src/callbacks.c:11493
 msgid "Deleting Audio"
 msgstr "Ses siliniyor"
 
-#: src/callbacks.c:11505
+#: src/callbacks.c:11500
 msgid "Delete Audio"
 msgstr "Sesi sil"
 
-#: src/callbacks.c:11845
+#: src/callbacks.c:11840
 msgid "Record new audio"
 msgstr "Yeni ses kaydet"
 
-#: src/callbacks.c:11936
+#: src/callbacks.c:11931
 #, fuzzy, c-format
 msgid "Inserting silence from %.2f to %.2f seconds..."
 msgstr "Zamanlar%d panodan%s ekleniyor..."
 
-#: src/callbacks.c:11965
+#: src/callbacks.c:11960
 #, fuzzy
 msgid "Inserting Silence"
 msgstr "Sessiz ekle"
 
-#: src/callbacks.c:12067
+#: src/callbacks.c:12062
 #, c-format
 msgid ""
 "\n"
@@ -2989,879 +2994,879 @@ msgstr "_Özel Efektler"
 msgid "Custom _Utilities"
 msgstr "Özel _Yardımcılar"
 
-#: src/gui.c:326 src/multitrack.c:5399
+#: src/gui.c:321 src/multitrack.c:5400
 msgid "_File"
 msgstr "_Dosya"
 
-#: src/gui.c:337 src/multitrack.c:5422
+#: src/gui.c:332 src/multitrack.c:5423
 msgid "_Open File/Directory"
 msgstr "_Dosya/Klasör Aç"
 
-#: src/gui.c:343
+#: src/gui.c:338
 #, fuzzy
 msgid "O_pen Part of File..."
 msgstr "_Son Dosyalar ..."
 
-#: src/gui.c:349 src/gui.c:353 src/multitrack.c:5439 src/multitrack.c:5455
-#: src/multitrack.c:5460
+#: src/gui.c:344 src/gui.c:348 src/multitrack.c:5440 src/multitrack.c:5456
+#: src/multitrack.c:5461
 msgid "Open _Location/Stream..."
 msgstr "_Konum/Akış Aç..."
 
-#: src/gui.c:362 src/multitrack.c:5448
+#: src/gui.c:357 src/multitrack.c:5449
 #, fuzzy
 msgid "Open _Youtube Clip..."
 msgstr "LiVES: - klip in ismini değiştir"
 
-#: src/gui.c:373
+#: src/gui.c:368
 #, fuzzy
 msgid "Import from _dvd/vcd..."
 msgstr "_dvd/vcd den seçimi içeri al"
 
-#: src/gui.c:381
+#: src/gui.c:376
 #, fuzzy
 msgid "Import from _dvd"
 msgstr "_dvd den seçimi içeri al"
 
-#: src/gui.c:384
+#: src/gui.c:379
 #, fuzzy
 msgid "Import from _vcd"
 msgstr "_Aygıttan içeri al"
 
-#: src/gui.c:387
+#: src/gui.c:382
 #, fuzzy
 msgid "_Import from Firewire"
 msgstr "_Aygıttan içeri al"
 
-#: src/gui.c:395 src/multitrack.c:5516
+#: src/gui.c:390 src/multitrack.c:5517
 msgid "Import from _Firewire Device (dv)"
 msgstr "_Firewire aygıtından (dv) içeri al"
 
-#: src/gui.c:396 src/multitrack.c:5524
+#: src/gui.c:391 src/multitrack.c:5525
 msgid "Import from _Firewire Device (hdv)"
 msgstr "_Firewire aygıtından (hdv) içeri al"
 
-#: src/gui.c:424
+#: src/gui.c:419
 msgid "_Add Webcam/TV card..."
 msgstr ""
 
-#: src/gui.c:442
+#: src/gui.c:437
 #, fuzzy
 msgid "Add _Unicap Device"
 msgstr "_TV aygıtı canlı yayın ekle"
 
-#: src/gui.c:452
+#: src/gui.c:447
 msgid "Add Live _Firewire Device"
 msgstr "_Firewire aygıtı canlı yayın ekle"
 
-#: src/gui.c:461
+#: src/gui.c:456
 #, fuzzy
 msgid "Add _TV Device"
 msgstr "_TV aygıtı canlı yayın ekle"
 
-#: src/gui.c:476 src/multitrack.c:5547
+#: src/gui.c:471 src/multitrack.c:5548
 msgid "_Recent Files..."
 msgstr "_Son Dosyalar ..."
 
-#: src/gui.c:527 src/multitrack.c:5606
+#: src/gui.c:522 src/multitrack.c:5607
 msgid "_Reload Clip Set..."
 msgstr "Klip ayarını _tekrar yükle"
 
-#: src/gui.c:531 src/multitrack.c:5614
+#: src/gui.c:526 src/multitrack.c:5615
 msgid "Close/Sa_ve All Clips"
 msgstr "_Tüm klipleri kaydet/kapat"
 
-#: src/gui.c:544
+#: src/gui.c:539
 msgid "_Encode Clip As..."
 msgstr "Klibi farklı adla _kodla..."
 
-#: src/gui.c:546
+#: src/gui.c:541
 msgid "Encode _Selection As..."
 msgstr "Seçimii farklı adla _kodla..."
 
-#: src/gui.c:553
+#: src/gui.c:548
 msgid "_Close This Clip"
 msgstr "Bu klibi _kapat"
 
-#: src/gui.c:566
+#: src/gui.c:561
 msgid "_Backup Clip as .lv1..."
 msgstr "Klip _Yedeği .lv1 i Farklı Kaydet..."
 
-#: src/gui.c:575
+#: src/gui.c:570
 msgid "_Restore Clip from .lv1..."
 msgstr ".lv1 den klibi _geri yükle..."
 
-#: src/gui.c:588
+#: src/gui.c:583
 msgid "Encode/Load/Backup _with Sound"
 msgstr "Sesli Kodla/Yükle/Yedek"
 
-#: src/gui.c:593
+#: src/gui.c:588
 msgid "Auto load subtitles"
 msgstr "Altyazıları otomatik yükle"
 
-#: src/gui.c:603 src/multitrack.c:5653
+#: src/gui.c:598 src/multitrack.c:5654
 msgid "Clean _up Diskspace"
 msgstr "Disk alanını temizle"
 
-#: src/gui.c:611 src/multitrack.c:5686
+#: src/gui.c:606 src/multitrack.c:5687
 msgid "_Edit"
 msgstr "_Düzenle"
 
-#: src/gui.c:653
+#: src/gui.c:648
 msgid "_MULTITRACK mode"
 msgstr "Çok parçalı kip"
 
-#: src/gui.c:666
+#: src/gui.c:661
 msgid "_Copy Selection"
 msgstr "Seçimi _kopyala"
 
-#: src/gui.c:675
+#: src/gui.c:670
 msgid "Cu_t Selection"
 msgstr "Seçimi ke_s"
 
-#: src/gui.c:684
+#: src/gui.c:679
 msgid "_Insert from Clipboard..."
 msgstr "Panodan _ekle..."
 
-#: src/gui.c:697
+#: src/gui.c:692
 msgid "Paste as _New"
 msgstr "_Yeni Olarak Yapıştır"
 
-#: src/gui.c:706
+#: src/gui.c:701
 msgid "_Merge Clipboard with Selection..."
 msgstr "Seçimi pano ile _birleştir..."
 
-#: src/gui.c:713
+#: src/gui.c:708
 msgid "_Delete Selection"
 msgstr "_Seçimi sil"
 
-#: src/gui.c:731
+#: src/gui.c:726
 msgid "Decouple _Video from Audio"
 msgstr ""
 
-#: src/gui.c:741
+#: src/gui.c:736
 msgid "_Select..."
 msgstr "_Seç..."
 
-#: src/gui.c:754
+#: src/gui.c:749
 msgid "Select _All Frames"
 msgstr "_Tüm çerçeveleri seç"
 
-#: src/gui.c:762
+#: src/gui.c:757
 #, fuzzy
 msgid "_Start Frame Only"
 msgstr "_Başlat"
 
-#: src/gui.c:770
+#: src/gui.c:765
 #, fuzzy
 msgid "_End Frame Only"
 msgstr "_Başlat"
 
-#: src/gui.c:783
+#: src/gui.c:778
 #, fuzzy
 msgid "Select from _First Frame"
 msgstr "_Tüm çerçeveleri seç"
 
-#: src/gui.c:787
+#: src/gui.c:782
 #, fuzzy
 msgid "Select to _Last Frame"
 msgstr "_Tüm çerçeveleri seç"
 
-#: src/gui.c:791
+#: src/gui.c:786
 msgid "Select Last Insertion/_Merge"
 msgstr ""
 
-#: src/gui.c:795
+#: src/gui.c:790
 msgid "Select Last _Effect"
 msgstr "Son  _efektii seç"
 
-#: src/gui.c:799
+#: src/gui.c:794
 msgid "_Invert Selection"
 msgstr "_Seçimi Tersine Çevir"
 
-#: src/gui.c:807
+#: src/gui.c:802
 msgid "_Lock Selection Width"
 msgstr "Genişlik Seçimini _Kilitle"
 
-#: src/gui.c:812 src/multitrack.c:5833
+#: src/gui.c:807 src/multitrack.c:5834
 msgid "_Play"
 msgstr "_Oynat"
 
-#: src/gui.c:823
+#: src/gui.c:818
 msgid "_Play All"
 msgstr "Tümünü _Oynat"
 
-#: src/gui.c:835
+#: src/gui.c:830
 msgid "Pla_y Selection"
 msgstr "Seçim O_ynat"
 
-#: src/gui.c:843
+#: src/gui.c:838
 msgid "Play _Clipboard"
 msgstr "_Panoyu oynat"
 
-#: src/gui.c:860 src/multitrack.c:5862
+#: src/gui.c:855 src/multitrack.c:5863
 msgid "_Stop"
 msgstr "_Durdur"
 
-#: src/gui.c:873 src/multitrack.c:5872
+#: src/gui.c:868 src/multitrack.c:5873
 msgid "Re_wind"
 msgstr "_Geriye sar"
 
-#: src/gui.c:904 src/multitrack.c:5887
+#: src/gui.c:899 src/multitrack.c:5888
 msgid "_Full Screen"
 msgstr "_Tam Ekran"
 
-#: src/gui.c:913
+#: src/gui.c:908
 msgid "_Double Size"
 msgstr "_Çift boyut"
 
-#: src/gui.c:921 src/multitrack.c:5895
+#: src/gui.c:916 src/multitrack.c:5896
 msgid "Play in _Separate Window"
 msgstr ""
 
-#: src/gui.c:930
+#: src/gui.c:925
 msgid "_Blank Background"
 msgstr "_Boş arkaplan"
 
-#: src/gui.c:937
+#: src/gui.c:932
 msgid "(Auto)_loop Video (to fit audio track)"
 msgstr "(Otomatik) Video _döngüsü (ses e uyacak şekilde)"
 
-#: src/gui.c:946 src/multitrack.c:5903
+#: src/gui.c:941 src/multitrack.c:5904
 msgid "L_oop Continuously"
 msgstr "Sürekli dö_ngü"
 
-#: src/gui.c:955
+#: src/gui.c:950
 msgid "Pin_g Pong Loops"
 msgstr ""
 
-#: src/gui.c:963 src/multitrack.c:5911
+#: src/gui.c:958 src/multitrack.c:5912
 msgid "_Mute"
 msgstr "_Sessiz"
 
-#: src/gui.c:977 src/multitrack.c:5924
+#: src/gui.c:972 src/multitrack.c:5925
 msgid "Separate Window 'S_ticky' Mode"
 msgstr ""
 
-#: src/gui.c:985
+#: src/gui.c:980
 msgid "S_how Frame Counter"
 msgstr "Çerçeve saymayı _göster"
 
-#: src/gui.c:995
+#: src/gui.c:990
 msgid "Show Subtitles"
 msgstr "Altyazıları Göster"
 
-#: src/gui.c:1005
+#: src/gui.c:1000
 msgid "Letterbox mode"
 msgstr ""
 
-#: src/gui.c:1011 src/multitrack.c:5939
+#: src/gui.c:1006 src/multitrack.c:5940
 msgid "Effect_s"
 msgstr "Efekt_ler"
 
-#: src/gui.c:1014
+#: src/gui.c:1009
 msgid "Effects are applied to the current selection."
 msgstr "Geçerli seçime efektleri uygula"
 
-#: src/gui.c:1026
+#: src/gui.c:1021
 msgid "_Run Test Rendered Effect/Tool/Generator..."
 msgstr ""
 
-#: src/gui.c:1031 src/multitrack.c:6514
+#: src/gui.c:1026 src/multitrack.c:6515
 msgid "_Tools"
 msgstr "_Araçlar"
 
-#: src/gui.c:1034
+#: src/gui.c:1029
 msgid "Tools are applied to complete clips."
 msgstr ""
 
-#: src/gui.c:1043
+#: src/gui.c:1038
 #, fuzzy
 msgid "_Reverse Clipboard"
 msgstr "_Panoyu oynat"
 
-#: src/gui.c:1052
+#: src/gui.c:1047
 msgid "_Change Playback/Save Speed..."
 msgstr ""
 
-#: src/gui.c:1057
+#: src/gui.c:1052
 msgid "Resample _Video to New Frame Rate..."
 msgstr ""
 
-#: src/gui.c:1063
+#: src/gui.c:1058
 msgid "_Utilities"
 msgstr "_Yardımcılar"
 
-#: src/gui.c:1074 src/multitrack.c:6539
-msgid "_Generate"
-msgstr "_Üret"
-
-#: src/gui.c:1084
+#: src/gui.c:1063
 msgid "Custom _Tools"
 msgstr "Özel _Araçlar"
 
-#: src/gui.c:1087
+#: src/gui.c:1069 src/multitrack.c:6540
+msgid "_Generate"
+msgstr "_Üret"
+
+#: src/gui.c:1079
 msgid "Loading rendered effect plugins..."
 msgstr "redener efekt eklentisi yükleniyor"
 
-#: src/gui.c:1102
+#: src/gui.c:1094
 #, fuzzy
 msgid "Load _Subtitles from File..."
 msgstr "Dosyaya _kaydet"
 
-#: src/gui.c:1107
+#: src/gui.c:1099
 msgid "Erase subtitles"
 msgstr "Altyazıları silme"
 
-#: src/gui.c:1117 src/multitrack.c:6548
+#: src/gui.c:1109 src/multitrack.c:6549
 msgid "Capture _External Window... "
 msgstr "_Dış Pencere Yakala... "
 
-#: src/gui.c:1126 src/multitrack.c:6563
+#: src/gui.c:1118 src/multitrack.c:6564
 msgid "_Preferences..."
 msgstr "_Tercihler"
 
-#: src/gui.c:1137
+#: src/gui.c:1129
 msgid "_Audio"
 msgstr "_Ses"
 
-#: src/gui.c:1148
+#: src/gui.c:1140
 msgid "Load _New Audio for Clip..."
 msgstr "Klip için _Yeni Ses Yükle..."
 
-#: src/gui.c:1154
+#: src/gui.c:1146
 msgid "Load _CD Track..."
 msgstr "_CD Parçası Yükle..."
 
-#: src/gui.c:1155
+#: src/gui.c:1147
 msgid "E_ject CD"
 msgstr "_CD'yi Çıkart"
 
-#: src/gui.c:1169
+#: src/gui.c:1161
 msgid "Record E_xternal Audio..."
 msgstr "_Dış Kaynaklı Ses kaydı"
 
-#: src/gui.c:1180
+#: src/gui.c:1172
 msgid "to New _Clip..."
 msgstr "Yeni _Klip e..."
 
-#: src/gui.c:1184
+#: src/gui.c:1176
 msgid "to _Selection"
 msgstr "_Seçime"
 
-#: src/gui.c:1194
+#: src/gui.c:1186
 #, fuzzy
 msgid "Fade Audio _In..."
 msgstr "LiVES:- Ses girişini zayıflatmak"
 
-#: src/gui.c:1198
+#: src/gui.c:1190
 #, fuzzy
 msgid "Fade Audio _Out..."
 msgstr "LiVES:- Ses çıkışını zayıflatmak"
 
-#: src/gui.c:1210
+#: src/gui.c:1202
 msgid "_Export Audio..."
 msgstr "Ses _Çıkart..."
 
-#: src/gui.c:1222
+#: src/gui.c:1214
 msgid "Export _Selected Audio..."
 msgstr "_Seçili Sesi Çıkart..."
 
-#: src/gui.c:1226
+#: src/gui.c:1218
 msgid "Export _All Audio..."
 msgstr "_Tüm sesleri çıkart"
 
-#: src/gui.c:1230
+#: src/gui.c:1222
 #, fuzzy
 msgid "_Append Audio..."
 msgstr "Ses ekle"
 
-#: src/gui.c:1235
+#: src/gui.c:1227
 #, fuzzy
 msgid "_Trim/Pad Audio..."
 msgstr "Ses Kırp/Dolgu"
 
-#: src/gui.c:1247
+#: src/gui.c:1239
 #, fuzzy
 msgid "Trim/Pad Audio to _Selection"
 msgstr "Ses Kırp/Dolgu"
 
-#: src/gui.c:1252
+#: src/gui.c:1244
 msgid "Trim/Pad Audio from Beginning to _Play Start"
 msgstr ""
 
-#: src/gui.c:1257
+#: src/gui.c:1249
 msgid "_Delete Audio..."
 msgstr "Sesi _sil"
 
-#: src/gui.c:1269
+#: src/gui.c:1261
 msgid "Delete _Selected Audio"
 msgstr "Seçilmiş Sesi sil"
 
-#: src/gui.c:1273
+#: src/gui.c:1265
 msgid "Delete _All Audio"
 msgstr "Tüm sesi sil"
 
-#: src/gui.c:1277
+#: src/gui.c:1269
 #, fuzzy
 msgid "Insert _Silence in Selection"
 msgstr "Seçim _öncesi ekle"
 
-#: src/gui.c:1282
+#: src/gui.c:1274
 #, fuzzy
 msgid "_Resample Audio..."
 msgstr "Sesi _sil"
 
-#: src/gui.c:1292
+#: src/gui.c:1284
 msgid "Play _Music Using xmms..."
 msgstr "xmms  Kullanarak Müzik Çalın...."
 
-#: src/gui.c:1296
+#: src/gui.c:1288
 msgid "Random Music _Using xmms..."
 msgstr "xmms  Kullanarak Rastgele  Müzik"
 
-#: src/gui.c:1300
+#: src/gui.c:1292
 msgid "Stop xmms _Playing"
 msgstr ""
 
-#: src/gui.c:1315
+#: src/gui.c:1307
 msgid "_Info"
 msgstr "_Bilgi"
 
-#: src/gui.c:1326
+#: src/gui.c:1318
 msgid "Show Clip _Info"
 msgstr "Klip Bilgisini _Göster"
 
-#: src/gui.c:1334
+#: src/gui.c:1326
 msgid "Show/_Edit File Comments"
 msgstr "Dosya Açıklamalarını Düzenle_/Göster"
 
-#: src/gui.c:1339
+#: src/gui.c:1331
 msgid "Show _Clipboard Info"
 msgstr "_Pano Bilgisini Göster"
 
-#: src/gui.c:1348 src/multitrack.c:6672
+#: src/gui.c:1340 src/multitrack.c:6673
 msgid "Show _Messages"
 msgstr "_Mesajları Göster"
 
-#: src/gui.c:1352 src/multitrack.c:6750
+#: src/gui.c:1344 src/multitrack.c:6751
 msgid "Show _Layout Errors"
 msgstr "_Yerleşim düzeni hatalarını göster"
 
-#: src/gui.c:1357 src/multitrack.c:6649
+#: src/gui.c:1349 src/multitrack.c:6650
 msgid "_Clips"
 msgstr "_Klipler"
 
-#: src/gui.c:1368
+#: src/gui.c:1360
 msgid "_Rename Current Clip in Menu..."
 msgstr ""
 
-#: src/gui.c:1383
+#: src/gui.c:1375
 msgid "A_dvanced"
 msgstr "_Gelişmiş"
 
-#: src/gui.c:1395
+#: src/gui.c:1387
 msgid "_RFX Effects/Tools/Utilities"
 msgstr ""
 
-#: src/gui.c:1406
+#: src/gui.c:1398
 msgid "_New Test RFX Script..."
 msgstr ""
 
-#: src/gui.c:1410
+#: src/gui.c:1402
 msgid "_Copy RFX Script to Test..."
 msgstr ""
 
-#: src/gui.c:1414
+#: src/gui.c:1406
 msgid "_Edit Test RFX Script..."
 msgstr ""
 
-#: src/gui.c:1418
+#: src/gui.c:1410
 msgid "Rena_me Test RFX Script..."
 msgstr ""
 
-#: src/gui.c:1422
+#: src/gui.c:1414
 msgid "_Delete Test RFX Script..."
 msgstr ""
 
-#: src/gui.c:1434
+#: src/gui.c:1426
 msgid "_Promote Test Rendered Effect/Tool/Generator..."
 msgstr ""
 
-#: src/gui.c:1443
+#: src/gui.c:1435
 msgid "_Import Custom RFX script..."
 msgstr ""
 
-#: src/gui.c:1447
+#: src/gui.c:1439
 msgid "E_xport Custom RFX script..."
 msgstr ""
 
-#: src/gui.c:1451
+#: src/gui.c:1443
 msgid "De_lete Custom RFX Script..."
 msgstr ""
 
-#: src/gui.c:1460
+#: src/gui.c:1452
 msgid "Re_build all RFX plugins"
 msgstr ""
 
-#: src/gui.c:1465
+#: src/gui.c:1481
 msgid "Receive _LiVES stream from..."
 msgstr ""
 
-#: src/gui.c:1473
+#: src/gui.c:1489
 msgid "_Send LiVES stream to..."
 msgstr ""
 
-#: src/gui.c:1480
+#: src/gui.c:1496
 #, c-format
 msgid "Open _yuv4mpeg stream on %sstream.yuv..."
 msgstr ""
 
-#: src/gui.c:1504
+#: src/gui.c:1520
 #, fuzzy
 msgid "_Import Project (.lv2)..."
 msgstr "Proje (.lv2) _dışarı çıkartılıyor..."
 
-#: src/gui.c:1508
+#: src/gui.c:1524
 msgid "E_xport Project (.lv2)..."
 msgstr "Proje (.lv2) _dışarı çıkartılıyor..."
 
-#: src/gui.c:1513
+#: src/gui.c:1529
 msgid "_VJ"
 msgstr "_VJ"
 
-#: src/gui.c:1524
+#: src/gui.c:1540
 msgid "Real Time _Effect Mapping"
 msgstr "Gerçek Zamanlı _Efekt Haritası"
 
-#: src/gui.c:1530
+#: src/gui.c:1546
 msgid "Bind real time effects to ctrl-number keys."
 msgstr "Gerçek zamanlı efektler için ctrl-sayı tuşları atama."
 
-#: src/gui.c:1532
+#: src/gui.c:1548
 msgid "Set Real Time Effect _Defaults"
 msgstr "Gerçek zamanlı efekt ön tanımları ayarla"
 
-#: src/gui.c:1534
+#: src/gui.c:1550
 msgid "Set default parameter values for real time effects."
 msgstr ""
 
-#: src/gui.c:1546
+#: src/gui.c:1562
 #, fuzzy
 msgid "Save Real Time Effect _Defaults"
 msgstr "Gerçek zamanlı efekt ön tanımları ayarla"
 
-#: src/gui.c:1549
+#: src/gui.c:1565
 msgid ""
 "Save real time effect defaults so they will be restored each time you use "
 "LiVES."
 msgstr ""
 
-#: src/gui.c:1556
+#: src/gui.c:1572
 msgid "_Reset all playback speeds and positions"
 msgstr ""
 
-#: src/gui.c:1559
+#: src/gui.c:1575
 msgid ""
 "Reset all playback positions to frame 1, and reset all playback frame rates."
 msgstr ""
 
-#: src/gui.c:1561
+#: src/gui.c:1577
 msgid "_MIDI/joystick interface"
 msgstr "_MIDI/denetim kolu arayüz"
 
-#: src/gui.c:1575
+#: src/gui.c:1591
 #, fuzzy
 msgid "_MIDI/joystick learner..."
 msgstr "_MIDI/denetim kolu arayüz"
 
-#: src/gui.c:1580
+#: src/gui.c:1596
 #, fuzzy
 msgid "_Save device mapping..."
 msgstr "%s... çerçeve olarak kaydet"
 
-#: src/gui.c:1586
+#: src/gui.c:1602
 msgid "_Load device mapping..."
 msgstr ""
 
-#: src/gui.c:1597
+#: src/gui.c:1613
 msgid "Show VJ _Keys"
 msgstr "VJ _Tuşlarını Göster"
 
-#: src/gui.c:1601
+#: src/gui.c:1617
 msgid "To_ys"
 msgstr "_Araçlar"
 
-#: src/gui.c:1612
+#: src/gui.c:1628
 msgid "_None"
 msgstr "_Hiçbiri"
 
-#: src/gui.c:1622
+#: src/gui.c:1638
 msgid "_Autolives"
 msgstr ""
 
-#: src/gui.c:1627
+#: src/gui.c:1643
 #, fuzzy
 msgid "_Mad Frames"
 msgstr "Çerçeveler"
 
-#: src/gui.c:1632
+#: src/gui.c:1648
 msgid "_LiVES TV (broadband)"
 msgstr "_LiVES TV (Geniş band)"
 
-#: src/gui.c:1642 src/multitrack.c:6772
+#: src/gui.c:1658 src/multitrack.c:6773
 msgid "_Help"
 msgstr "_Yardım"
 
-#: src/gui.c:1653 src/multitrack.c:6791
+#: src/gui.c:1669 src/multitrack.c:6792
 msgid "_Manual (opens in browser)"
 msgstr "Kılavuz (tarayıcıda açılır)"
 
-#: src/gui.c:1662 src/multitrack.c:6800
+#: src/gui.c:1678 src/multitrack.c:6801
 msgid "_Donate to the project !"
 msgstr "Projeye _Bağış !"
 
-#: src/gui.c:1666 src/multitrack.c:6804
+#: src/gui.c:1682 src/multitrack.c:6805
 msgid "_Email the author"
 msgstr "Yazara _E-posta"
 
-#: src/gui.c:1670 src/multitrack.c:6808
+#: src/gui.c:1686 src/multitrack.c:6809
 msgid "Report a _bug"
 msgstr "_Hata Raporu"
 
-#: src/gui.c:1674 src/multitrack.c:6812
+#: src/gui.c:1690 src/multitrack.c:6813
 msgid "Suggest a _feature"
 msgstr "Bir özellik _önerin"
 
-#: src/gui.c:1678 src/multitrack.c:6816
+#: src/gui.c:1694 src/multitrack.c:6817
 msgid "Assist with _translating"
 msgstr ""
 
-#: src/gui.c:1687 src/multitrack.c:6825
+#: src/gui.c:1703 src/multitrack.c:6826
 msgid "_Troubleshoot"
 msgstr "_Sorun Giderici"
 
-#: src/gui.c:1691 src/multitrack.c:6829
+#: src/gui.c:1707 src/multitrack.c:6830
 msgid "_About"
 msgstr "_Hakkında"
 
-#: src/gui.c:1724
+#: src/gui.c:1740
 msgid "Rewind to start (w)"
 msgstr ""
 
-#: src/gui.c:1732 src/multitrack.c:15669
+#: src/gui.c:1748 src/multitrack.c:15670
 msgid "Play all (p)"
 msgstr "Tümünü oynat (p)"
 
-#: src/gui.c:1742 src/gui.c:1849
+#: src/gui.c:1758 src/gui.c:1865
 msgid "Stop playback (q)"
 msgstr "Oynatmayı durdur (q)"
 
-#: src/gui.c:1753
+#: src/gui.c:1769
 msgid "Play selection (y)"
 msgstr "Seçimi oynat (y)"
 
-#: src/gui.c:1798
+#: src/gui.c:1814
 msgid "Volume"
 msgstr "Ses Düzeyi"
 
-#: src/gui.c:1826
+#: src/gui.c:1842
 msgid "Audio volume (1.00)"
 msgstr "Ses düzeyi (1.00)"
 
-#: src/gui.c:1855
+#: src/gui.c:1871
 msgid "Unblank background (b)"
 msgstr "Dolu arkaplan (b)"
 
-#: src/gui.c:1901
+#: src/gui.c:1917
 msgid "Play slower (ctrl-down)"
 msgstr "Yavaş oynat (ctrl-down)"
 
-#: src/gui.c:1907
+#: src/gui.c:1923
 msgid "Play faster (ctrl-up)"
 msgstr "Hızlı oynat (ctrl-up)"
 
-#: src/gui.c:1914
+#: src/gui.c:1930
 #, fuzzy
 msgid "Skip back (ctrl-left)"
 msgstr "İleri gitme (ctrl-right)"
 
-#: src/gui.c:1920
+#: src/gui.c:1936
 msgid "Skip forward (ctrl-right)"
 msgstr "İleri gitme (ctrl-right)"
 
-#: src/gui.c:1926
+#: src/gui.c:1942
 msgid "Show clip info (i)"
 msgstr "Klip bilgisini göster (i)"
 
-#: src/gui.c:1932
+#: src/gui.c:1948
 msgid "Hide this toolbar"
 msgstr "Araç çubuğunu gizle"
 
-#: src/gui.c:1934
+#: src/gui.c:1950
 msgid ""
 "Press \"s\" to toggle separate play window for improved performance, \"q\" "
 "to stop."
 msgstr ""
 
 #. TRANSLATORS: please keep the translated string the same length
-#: src/gui.c:1962
+#: src/gui.c:1978
 msgid "     Video playback speed (frames per second)        "
 msgstr ""
 
-#: src/gui.c:1981
+#: src/gui.c:1997
 msgid "Vary the video speed"
 msgstr ""
 
-#: src/gui.c:2005
+#: src/gui.c:2021
 msgid "                                                            "
 msgstr "                                                            "
 
-#: src/gui.c:2036 src/gui.c:3092
+#: src/gui.c:2052 src/gui.c:3108
 msgid "First Frame"
 msgstr "İlk Kare"
 
-#: src/gui.c:2111 src/gui.c:3101
+#: src/gui.c:2127 src/gui.c:3117
 msgid "Last Frame"
 msgstr "Son Çerçeve"
 
-#: src/gui.c:2130
+#: src/gui.c:2146
 msgid "The first selected frame in this clip"
 msgstr ""
 
-#: src/gui.c:2159
+#: src/gui.c:2175
 msgid "The last selected frame in this clip"
 msgstr ""
 
-#: src/gui.c:2397
+#: src/gui.c:2413
 msgid "Starting...\n"
 msgstr "Başlatılıyor ...\n"
 
-#: src/gui.c:2951
+#: src/gui.c:2967
 msgid "    Press 'q' to stop recording.  DO NOT COVER THE PLAY WINDOW !   "
 msgstr ""
 "    Kayıt durdurmak için 'q'  tuşuna bas. OYNATMA PENCERESİNİ KAPATMAYIN !   "
 
-#: src/gui.c:3357
+#: src/gui.c:3373
 msgid "Frame number to preview"
 msgstr "Önizleme için çerçeve sayısı"
 
-#: src/gui.c:3373
+#: src/gui.c:3389
 msgid "_Free"
 msgstr "_Serbest"
 
-#: src/gui.c:3378
+#: src/gui.c:3394
 msgid "Free choice of frame number"
 msgstr "Çerçeve sayısı özgür seçim"
 
-#: src/gui.c:3402
+#: src/gui.c:3418
 msgid "_Start"
 msgstr "_Başlat"
 
-#: src/gui.c:3407
+#: src/gui.c:3423
 #, fuzzy
 msgid "Frame number is linked to start frame"
 msgstr "Önizleme için çerçeve sayısı"
 
-#: src/gui.c:3433
+#: src/gui.c:3449
 msgid "_End"
 msgstr "_Son"
 
-#: src/gui.c:3438
+#: src/gui.c:3454
 #, fuzzy
 msgid "Frame number is linked to end frame"
 msgstr "Önizleme için çerçeve sayısı"
 
-#: src/gui.c:3463
+#: src/gui.c:3479
 msgid "_Pointer"
 msgstr "_İşaretçi"
 
-#: src/gui.c:3468
+#: src/gui.c:3484
 msgid "Frame number is linked to playback pointer"
 msgstr ""
 
-#: src/gui.c:3501
+#: src/gui.c:3517
 msgid "Rewind"
 msgstr "Geriye Sar"
 
-#: src/gui.c:3512 src/dialogs.c:790 src/dialogs.c:792 src/dialogs.c:1645
+#: src/gui.c:3528 src/dialogs.c:790 src/dialogs.c:792 src/dialogs.c:1645
 #: src/dialogs.c:1647
 msgid "Play all"
 msgstr "Tümünü oynat"
 
-#: src/gui.c:3525
+#: src/gui.c:3541
 msgid "Play Selection"
 msgstr "Seçimi oynat"
 
-#: src/gui.c:3539
+#: src/gui.c:3555
 msgid "Loop On/Off"
 msgstr "Döngüyü Aç/Kapat"
 
-#: src/gui.c:3600
+#: src/gui.c:3616
 msgid "Start _recording"
 msgstr "_Kaydı başlat"
 
-#: src/gui.c:3606
+#: src/gui.c:3622
 msgid "Stop _recording"
 msgstr "_Kaydı durdur"
 
-#: src/gui.c:3612
+#: src/gui.c:3628
 msgid "_Record Performance"
 msgstr "_Kayıt Performansı"
 
-#: src/gui.c:3707
+#: src/gui.c:3723
 msgid "Hide Play Window"
 msgstr "Oynatma Penceresini Gizle"
 
-#: src/gui.c:4077
+#: src/gui.c:4093
 msgid "Show Play Window"
 msgstr "Oynatma Penceresini Göster"
 
 #. TRANSLATORS: Exabytes
-#: src/utils.c:463
+#: src/utils.c:465
 #, fuzzy, c-format
 msgid "%.2f EB"
 msgstr "kayıt %.2f MB"
 
 #. TRANSLATORS: Petabytes
-#: src/utils.c:467
+#: src/utils.c:469
 #, fuzzy, c-format
 msgid "%.2f PB"
 msgstr "kayıt %.2f MB"
 
 #. TRANSLATORS: Terabytes
-#: src/utils.c:471
+#: src/utils.c:473
 #, fuzzy, c-format
 msgid "%.2f TB"
 msgstr "kayıt %.2f MB"
 
 #. TRANSLATORS: Gigabytes
-#: src/utils.c:475
+#: src/utils.c:477
 #, fuzzy, c-format
 msgid "%.2f GB"
 msgstr "kayıt %.2f MB"
 
 #. TRANSLATORS: Megabytes
-#: src/utils.c:479
+#: src/utils.c:481
 #, fuzzy, c-format
 msgid "%.2f MB"
 msgstr "kayıt %.2f MB"
 
 #. TRANSLATORS: Kilobytes (1024 bytes)
-#: src/utils.c:483
+#: src/utils.c:485
 #, fuzzy, c-format
 msgid "%.2f KiB"
 msgstr "kayıt %.2f MB"
 
-#: src/utils.c:486
+#: src/utils.c:488
 #, c-format
 msgid "%d bytes"
 msgstr ""
 
-#: src/utils.c:1488
+#: src/utils.c:1490
 msgid "Clearing the clipboard"
 msgstr "Panoyu temizle"
 
-#: src/utils.c:1524
+#: src/utils.c:1526
 #, c-format
 msgid ""
 "\n"
@@ -3869,81 +3874,81 @@ msgid ""
 "Switched to clip %s\n"
 msgstr ""
 
-#: src/utils.c:1530
+#: src/utils.c:1532
 msgid ""
 "\n"
 "==============================\n"
 "Switched to empty clip\n"
 msgstr ""
 
-#: src/utils.c:1568
+#: src/utils.c:1570
 msgid "(blank)"
 msgstr ""
 
-#: src/utils.c:1571
+#: src/utils.c:1573
 #, c-format
 msgid ""
 "The set name has been changed from %s to %s. Affected layouts have been "
 "updated accordingly\n"
 msgstr ""
 
-#: src/utils.c:1579
+#: src/utils.c:1581
 #, c-format
 msgid ""
 "The clip %s is missing from this set.\n"
 "It is required by the following layouts:\n"
 msgstr ""
 
-#: src/utils.c:1583
+#: src/utils.c:1585
 #, c-format
 msgid ""
 "The clip %s has been closed.\n"
 "It is required by the following layouts:\n"
 msgstr ""
 
-#: src/utils.c:1588
+#: src/utils.c:1590
 #, c-format
 msgid ""
 "Frames have been shifted in the clip %s.\n"
 "The following layouts are affected:\n"
 msgstr ""
 
-#: src/utils.c:1593
+#: src/utils.c:1595
 #, c-format
 msgid ""
 "Frames have been deleted from the clip %s.\n"
 "The following layouts are affected:\n"
 msgstr ""
 
-#: src/utils.c:1598
+#: src/utils.c:1600
 #, c-format
 msgid ""
 "Audio has been deleted from the clip %s.\n"
 "The following layouts are affected:\n"
 msgstr ""
 
-#: src/utils.c:1603
+#: src/utils.c:1605
 #, c-format
 msgid ""
 "Audio has been shifted in clip %s.\n"
 "The following layouts are affected:\n"
 msgstr ""
 
-#: src/utils.c:1608
+#: src/utils.c:1610
 #, c-format
 msgid ""
 "Audio has been altered in the clip %s.\n"
 "The following layouts are affected:\n"
 msgstr ""
 
-#: src/utils.c:1613
+#: src/utils.c:1615
 #, c-format
 msgid ""
 "Frames have been altered in the clip %s.\n"
 "The following layouts are affected:\n"
 msgstr ""
 
-#: src/utils.c:1780
+#: src/utils.c:1782
 #, c-format
 msgid ""
 "Set %s\n"
@@ -3951,7 +3956,7 @@ msgid ""
 "by another copy of LiVES.\n"
 msgstr ""
 
-#: src/utils.c:1787
+#: src/utils.c:1789
 #, c-format
 msgid ""
 "\n"
@@ -3959,32 +3964,32 @@ msgid ""
 "Please choose another set name.\n"
 msgstr ""
 
-#: src/utils.c:1827
+#: src/utils.c:1829
 msgid ""
 "\n"
 "Set names may not be blank.\n"
 msgstr ""
 
-#: src/utils.c:1832
+#: src/utils.c:1834
 msgid ""
 "\n"
 "Set names may not be longer than 128 characters.\n"
 msgstr ""
 
-#: src/utils.c:1837
+#: src/utils.c:1839
 #, c-format
 msgid ""
 "\n"
 "Set names may not contain spaces or the characters%s.\n"
 msgstr ""
 
-#: src/utils.c:1845
+#: src/utils.c:1847
 msgid ""
 "\n"
 "Set names may not start with a '.' or contain '..'\n"
 msgstr ""
 
-#: src/utils.c:1860
+#: src/utils.c:1862
 #, c-format
 msgid ""
 "\n"
@@ -3992,69 +3997,69 @@ msgid ""
 "Please choose another set name.\n"
 msgstr ""
 
-#: src/utils.c:2164
+#: src/utils.c:2166
 #, c-format
 msgid "Removing layout %s\n"
 msgstr "%s Yerleşim düzeni kaldırıldı\n"
 
-#: src/utils.c:2573
+#: src/utils.c:2575
 msgid "Video [opening...]"
 msgstr "Video [açılıyor ...]"
 
-#: src/utils.c:2577
+#: src/utils.c:2579
 #, c-format
 msgid "Video [%.2f sec]"
 msgstr "Video [%.2f sn]"
 
-#: src/utils.c:2581
+#: src/utils.c:2583
 msgid "(Undefined)"
 msgstr "(Tanımsız)"
 
-#: src/utils.c:2584
+#: src/utils.c:2586
 msgid "(No video)"
 msgstr "(Video yok)"
 
-#: src/utils.c:2591
+#: src/utils.c:2593
 msgid "(No audio)"
 msgstr "(Ses yok)"
 
-#: src/utils.c:2596
+#: src/utils.c:2598
 msgid "Mono  [opening...]"
 msgstr "Mono  [açılıyor...]"
 
-#: src/utils.c:2599
+#: src/utils.c:2601
 msgid "Left Audio [opening...]"
 msgstr "Sol Ses [açılıyor...]"
 
-#: src/utils.c:2604
+#: src/utils.c:2606
 #, c-format
 msgid "Mono [%.2f sec]"
 msgstr "Mono [%.2f sn]"
 
-#: src/utils.c:2607
+#: src/utils.c:2609
 #, c-format
 msgid "Left Audio [%.2f sec]"
 msgstr "Sol Ses [%.2f sn]"
 
-#: src/utils.c:2615
+#: src/utils.c:2617
 msgid "Right Audio [opening...]"
 msgstr "Sağ Ses [açılıyor...]"
 
-#: src/utils.c:2618
+#: src/utils.c:2620
 #, c-format
 msgid "Right Audio [%.2f sec]"
 msgstr "Sağ Ses [%.2f sn]"
 
-#: src/utils.c:3044
+#: src/utils.c:3046
 msgid "LiVES cannot switch to mplayer whilst clips are loading."
 msgstr ""
 
-#: src/utils.c:3256
+#: src/utils.c:3258
 #, fuzzy
 msgid "Cleaning up clip"
 msgstr "Temizleniyor..."
 
-#: src/utils.c:3386
+#: src/utils.c:3388
 #, c-format
 msgid ""
 "\n"
@@ -4069,30 +4074,30 @@ msgstr ""
 "\n"
 "Üzerine yazayım mı ?\n"
 
-#: src/utils.c:3785 src/utils.c:3817 src/multitrack.c:4113
+#: src/utils.c:3787 src/utils.c:3819 src/multitrack.c:4114
 #, c-format
 msgid "_Undo %s"
 msgstr "_Geri al %s"
 
-#: src/utils.c:3786 src/utils.c:3818 src/multitrack.c:4135
+#: src/utils.c:3788 src/utils.c:3820 src/multitrack.c:4136
 #, c-format
 msgid "_Redo %s"
 msgstr "_Yinele %s"
 
-#: src/utils.c:3843
+#: src/utils.c:3845
 msgid "-------------Selection------------"
 msgstr "------------- Seçim ------------"
 
 #. TRANSLATORS: - try to keep the text of the middle part the same length, by deleting "-" if necessary
-#: src/utils.c:3851
+#: src/utils.c:3853
 msgid " sec ] ----------Selection---------- [ "
 msgstr " sn ] ----------Seçim---------- [ "
 
-#: src/utils.c:3851
+#: src/utils.c:3853
 msgid " frames ] ----------"
 msgstr " çerçeve ] ----------"
 
-#: src/utils.c:4820
+#: src/utils.c:4822
 msgid ""
 "Your version of mplayer/ffmpeg may be broken !\n"
 "See http://bugzilla.mplayerhq.hu/show_bug.cgi?id=2071\n"
@@ -5630,7 +5635,7 @@ msgstr "sadece video"
 msgid "Video only Transitions"
 msgstr "Sadece Video Geçişleri"
 
-#: src/effects.c:113 src/multitrack.c:9939
+#: src/effects.c:113 src/multitrack.c:9940
 msgid "audio only"
 msgstr "sadece ses"
 
@@ -5638,7 +5643,7 @@ msgstr "sadece ses"
 msgid "Audio only Transitions"
 msgstr "Sadece  Ses Geçişleri"
 
-#: src/effects.c:116 src/effects.c:119 src/multitrack.c:17679
+#: src/effects.c:116 src/effects.c:119 src/multitrack.c:17680
 msgid "audio"
 msgstr "ses"
 
@@ -5747,28 +5752,28 @@ msgstr ""
 "\n"
 "%d çerçeve açıldı.\n"
 
-#: src/effects-weed.c:4239
+#: src/effects-weed.c:4277
 #, c-format
 msgid "Error: plugin %s has no weed_setup() function.\n"
 msgstr ""
 
-#: src/effects-weed.c:4254
+#: src/effects-weed.c:4292
 #, c-format
 msgid "No usable filters found in plugin %s\n"
 msgstr ""
 
-#: src/effects-weed.c:4282
+#: src/effects-weed.c:4320
 #, c-format
 msgid "Found duplicate plugin %s\n"
 msgstr ""
 
 #. TRANSLATORS: example " - LADSPA plugins -"
-#: src/effects-weed.c:4324 src/rte_window.c:1277
+#: src/effects-weed.c:4362 src/rte_window.c:1301
 #, c-format
 msgid " - %s plugins -"
 msgstr ""
 
-#: src/effects-weed.c:4378
+#: src/effects-weed.c:4416
 #, c-format
 msgid ""
 "Info: Unable to load plugin %s\n"
@@ -5777,173 +5782,178 @@ msgstr ""
 "Bilgi: %s eklentisi yüklenemiyor\n"
 "Hata:% s\n"
 
-#: src/effects-weed.c:4381 src/effects-weed.c:5370
+#: src/effects-weed.c:4419 src/effects-weed.c:5408
 #, fuzzy
 msgid "Some plugin directories"
 msgstr "Alt dizinler dahil"
 
-#: src/effects-weed.c:4549
+#: src/effects-weed.c:4587
 #, c-format
 msgid "Successfully loaded %d Weed filters\n"
 msgstr "%d Weed filtresi başarıyla yüklendi\n"
 
-#: src/effects-weed.c:4684
+#: src/effects-weed.c:4722
 #, c-format
 msgid "Invalid compound effect %s - has conflicting target_fps\n"
 msgstr ""
 
-#: src/effects-weed.c:4704
+#: src/effects-weed.c:4742
 #, c-format
 msgid "Invalid compound effect %s - has multiple transition parameters\n"
 msgstr ""
 
-#: src/effects-weed.c:4718
+#: src/effects-weed.c:4756
 #, c-format
 msgid "Invalid compound effect %s - has multiple master volume parameters\n"
 msgstr ""
 
-#: src/effects-weed.c:4853
+#: src/effects-weed.c:4891
 #, c-format
 msgid "Invalid compound effect %s - must have >1 sub filters\n"
 msgstr ""
 
-#: src/effects-weed.c:4873
+#: src/effects-weed.c:4911
 #, c-format
 msgid "Invalid effect %s found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:4888
+#: src/effects-weed.c:4926
 #, c-format
 msgid "Invalid default found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:4899
+#: src/effects-weed.c:4937
 #, c-format
 msgid "Invalid filter %d for defaults found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:4913
+#: src/effects-weed.c:4951
 #, c-format
 msgid "Invalid param %d for defaults found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:4940
+#: src/effects-weed.c:4978
 #, c-format
 msgid ""
 "Invalid number of values for defaults found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:4974
+#: src/effects-weed.c:5012
 #, c-format
 msgid ""
 "Invalid non-boolean value for defaults found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:5007
+#: src/effects-weed.c:5045
 #, c-format
 msgid "Invalid param link found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:5018
+#: src/effects-weed.c:5056
 #, c-format
 msgid ""
 "Invalid out filter %d for link params found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:5036
+#: src/effects-weed.c:5074
 #, c-format
 msgid ""
 "Invalid out param %d for link params found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:5048
+#: src/effects-weed.c:5086
 #, c-format
 msgid ""
 "Invalid non-boolean value for autoscale found in compound effect %s, line "
 "%d\n"
 msgstr ""
 
-#: src/effects-weed.c:5059
+#: src/effects-weed.c:5097
 #, c-format
 msgid ""
 "Invalid in filter %d for link params found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:5073
+#: src/effects-weed.c:5111
 #, c-format
 msgid ""
 "Invalid in param %d for link params found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:5101
+#: src/effects-weed.c:5139
 #, c-format
 msgid "Invalid channel link found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:5112
+#: src/effects-weed.c:5150
 #, c-format
 msgid ""
 "Invalid out filter %d for link channels found in compound effect %s, line "
 "%d\n"
 msgstr ""
 
-#: src/effects-weed.c:5130
+#: src/effects-weed.c:5168
 #, c-format
 msgid ""
 "Invalid out channel %d for link params found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:5140
+#: src/effects-weed.c:5178
 #, c-format
 msgid ""
 "Invalid in filter %d for link channels found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:5158
+#: src/effects-weed.c:5196
 #, c-format
 msgid ""
 "Invalid in channel %d for link params found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:5196
+#: src/effects-weed.c:5234
 #, c-format
 msgid "Compound:%s"
 msgstr ""
 
-#: src/effects-weed.c:5278
+#: src/effects-weed.c:5316
 #, fuzzy, c-format
 msgid "Successfully loaded %d compound filters\n"
 msgstr "%d Weed filtresi başarıyla yüklendi\n"
 
-#: src/effects-weed.c:6057
+#: src/effects-weed.c:6095
 #, c-format
 msgid "Effect %s cannot be used with this audio player.\n"
 msgstr ""
 
-#: src/effects-weed.c:6197
+#: src/effects-weed.c:6235
 #, fuzzy, c-format
 msgid "Failed to start instance %s, error code %d\n"
 msgstr "%s üretici başlatılamadı\n"
 
-#: src/effects-weed.c:6264
+#: src/effects-weed.c:6302
 #, c-format
 msgid "Unable to start generator %s\n"
 msgstr "%s üretci başlayamıyor\n"
 
-#: src/effects-weed.c:6982
+#: src/effects-weed.c:7020
 #, c-format
 msgid "Failed to start generator %s\n"
 msgstr "%s üretici başlatılamadı\n"
 
-#: src/effects-weed.c:7079
+#: src/effects-weed.c:7117
 #, fuzzy, c-format
 msgid "Failed to start generator %s, error %d\n"
 msgstr "%s üretici başlatılamadı\n"
 
-#: src/effects-weed.c:8273
+#: src/effects-weed.c:8311
 #, c-format
 msgid "%s [unstable] (%s)"
 msgstr ""
+
+#: src/effects-data.c:1761
+#, fuzzy
+msgid "LiVES: - Parameter and Alpha Channel Connections"
+msgstr "LiVES: - RFX Parametreleri"
 
 #: src/framedraw.c:149
 msgid "You can click in Preview to change these values"
@@ -5999,48 +6009,48 @@ msgstr "Geçiş dışarı"
 msgid "Transition out"
 msgstr "Geçiş dışarı"
 
-#: src/paramwindow.c:561
+#: src/paramwindow.c:565
 msgid "Target _FPS (plugin may override this)"
 msgstr ""
 
-#: src/paramwindow.c:602
+#: src/paramwindow.c:590
 #, c-format
 msgid "%s : size"
 msgstr "%s : boyut"
 
-#: src/paramwindow.c:606
+#: src/paramwindow.c:594
 msgid "New size (pixels)"
 msgstr "Yeni boyut (pixels)"
 
-#: src/paramwindow.c:618 src/plugins.c:1006
+#: src/paramwindow.c:613 src/plugins.c:1006
 msgid "_Width"
 msgstr "_Genişlik"
 
-#: src/paramwindow.c:646 src/plugins.c:1021
+#: src/paramwindow.c:632 src/plugins.c:1021
 msgid "_Height"
 msgstr "_Yükseklik"
 
-#: src/paramwindow.c:719
+#: src/paramwindow.c:688
 #, fuzzy
 msgid "Generate to _Clipboard"
 msgstr "Panodan _ekle..."
 
-#: src/paramwindow.c:724
+#: src/paramwindow.c:693
 #, fuzzy
 msgid "Generate frames to the clipboard"
 msgstr "Çerçeveler%d panodan%s ekleniyor..."
 
-#: src/paramwindow.c:740
+#: src/paramwindow.c:709
 #, fuzzy
 msgid "Generate to _New Clip"
 msgstr "Yeni _Klip e..."
 
-#: src/paramwindow.c:745
+#: src/paramwindow.c:714
 #, fuzzy
 msgid "Generate frames to a new clip"
 msgstr "Yeni klip için %s"
 
-#: src/paramwindow.c:868
+#: src/paramwindow.c:837
 #, c-format
 msgid ""
 "\n"
@@ -6048,58 +6058,58 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/paramwindow.c:961 src/paramwindow.c:971
+#: src/paramwindow.c:918 src/paramwindow.c:928
 msgid "Set as default"
 msgstr "Öntanımlı olarak ata"
 
-#: src/paramwindow.c:963 src/paramwindow.c:975
+#: src/paramwindow.c:920 src/paramwindow.c:932
 msgid "Reset"
 msgstr ""
 
-#: src/paramwindow.c:973 src/rte_window.c:1621 src/omc-learn.c:1376
+#: src/paramwindow.c:930 src/rte_window.c:1607 src/omc-learn.c:1376
 msgid "Close _window"
 msgstr "Pencereyi kapat"
 
-#: src/paramwindow.c:1349
+#: src/paramwindow.c:1306
 msgid "No parameters"
 msgstr "Parametre yok"
 
-#: src/paramwindow.c:1430
+#: src/paramwindow.c:1387
 msgid "Invalid parameter"
 msgstr "Geçersiz parametre"
 
-#: src/paramwindow.c:1614
+#: src/paramwindow.c:1571
 msgid "LiVES: - Select Colour"
 msgstr "LiVES: - Renk Seçimi"
 
-#: src/paramwindow.c:1618
+#: src/paramwindow.c:1575
 msgid "Click to set the colour"
 msgstr "Renk atamak için tıklayın"
 
-#: src/paramwindow.c:1633
+#: src/paramwindow.c:1590
 #, fuzzy
 msgid "_Red"
 msgstr "_Yinele"
 
-#: src/paramwindow.c:1634
+#: src/paramwindow.c:1591
 msgid "The red value (0 - 255)"
 msgstr "Kırmızı değeri (0 - 255)"
 
-#: src/paramwindow.c:1637
+#: src/paramwindow.c:1594
 #, fuzzy
 msgid "_Green"
 msgstr "Yeşil"
 
-#: src/paramwindow.c:1638
+#: src/paramwindow.c:1595
 msgid "The green value (0 - 255)"
 msgstr "Yeşil değeri (0 - 255)"
 
-#: src/paramwindow.c:1641
+#: src/paramwindow.c:1598
 #, fuzzy
 msgid "_Blue"
 msgstr "Mavi"
 
-#: src/paramwindow.c:1642
+#: src/paramwindow.c:1599
 msgid "The blue value (0 - 255)"
 msgstr "Mavi değeri (0 - 255)"
 
@@ -6796,7 +6806,7 @@ msgid ""
 "Author must not be blank.\n"
 msgstr ""
 
-#: src/rfx-builder.c:3303 src/rfx-builder.c:4582
+#: src/rfx-builder.c:3303 src/rfx-builder.c:4575
 msgid ""
 "\n"
 "\n"
@@ -6839,37 +6849,37 @@ msgstr ""
 msgid "Writing script file %s..."
 msgstr "%s Ses dosyası  ekleniyor"
 
-#: src/rfx-builder.c:3679
+#: src/rfx-builder.c:3685
 msgid "No <define> section found in script.\n"
 msgstr ""
 
-#: src/rfx-builder.c:3686 src/rfx-builder.c:3695
+#: src/rfx-builder.c:3692 src/rfx-builder.c:3701
 #, fuzzy
 msgid "Bad script version.\n"
 msgstr "Betik vsürümü."
 
-#: src/rfx-builder.c:3707
+#: src/rfx-builder.c:3713
 msgid "No <name> section found in script.\n"
 msgstr ""
 
-#: src/rfx-builder.c:3715
+#: src/rfx-builder.c:3721
 msgid "No <version> section found in script.\n"
 msgstr ""
 
-#: src/rfx-builder.c:3724
+#: src/rfx-builder.c:3730
 msgid "No <author> section found in script.\n"
 msgstr ""
 
-#: src/rfx-builder.c:3738
+#: src/rfx-builder.c:3744
 msgid "No <description> section found in script.\n"
 msgstr ""
 
-#: src/rfx-builder.c:3742
+#: src/rfx-builder.c:3748
 #, fuzzy, c-format
 msgid "Bad description. (%s)\n"
 msgstr "Açıklama: "
 
-#: src/rfx-builder.c:3904
+#: src/rfx-builder.c:3910
 #, c-format
 msgid ""
 "\n"
@@ -6879,27 +6889,27 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/rfx-builder.c:4059
+#: src/rfx-builder.c:4065
 msgid "Rebuilding all RFX scripts...builtin..."
 msgstr ""
 
-#: src/rfx-builder.c:4060
+#: src/rfx-builder.c:4066
 msgid "Rebuilding scripts"
 msgstr ""
 
-#: src/rfx-builder.c:4068
+#: src/rfx-builder.c:4074
 msgid "custom..."
 msgstr "özel..."
 
-#: src/rfx-builder.c:4072
+#: src/rfx-builder.c:4078
 msgid "test..."
 msgstr "test..."
 
-#: src/rfx-builder.c:4078
+#: src/rfx-builder.c:4084
 msgid "rebuilding dynamic menu entries..."
 msgstr ""
 
-#: src/rfx-builder.c:4105 src/rfx-builder.c:4112
+#: src/rfx-builder.c:4111 src/rfx-builder.c:4118
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -6913,7 +6923,7 @@ msgstr ""
 "\n"
 "Lütfen bu dosya için dosya izinlerini kontrol edip tekrar deneyin.\n"
 
-#: src/rfx-builder.c:4152
+#: src/rfx-builder.c:4158
 #, c-format
 msgid ""
 "\n"
@@ -6923,12 +6933,12 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/rfx-builder.c:4161
+#: src/rfx-builder.c:4167
 #, fuzzy, c-format
 msgid "Deleting rfx script %s..."
 msgstr "Ayar siliniyor..."
 
-#: src/rfx-builder.c:4171
+#: src/rfx-builder.c:4187
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -6941,7 +6951,7 @@ msgstr ""
 "%s\n"
 "Hata kodu %d\n"
 
-#: src/rfx-builder.c:4208
+#: src/rfx-builder.c:4224
 #, c-format
 msgid ""
 "\n"
@@ -6951,12 +6961,12 @@ msgid ""
 "Please delete it first, or rename the test script.\n"
 msgstr ""
 
-#: src/rfx-builder.c:4219
+#: src/rfx-builder.c:4235
 #, c-format
 msgid "Promoting rfx test plugin %s to custom..."
 msgstr ""
 
-#: src/rfx-builder.c:4236
+#: src/rfx-builder.c:4252
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -6970,22 +6980,22 @@ msgstr ""
 "%s\n"
 "Hata kodu %d\n"
 
-#: src/rfx-builder.c:4255
+#: src/rfx-builder.c:4278
 #, fuzzy
-msgid "Import Script from..."
-msgstr "_dvd/vcd den seçimi içeri al"
-
-#: src/rfx-builder.c:4271
-#, fuzzy
-msgid "Export Script to..."
+msgid "LiVES: - Export Script to..."
 msgstr "Ses _Çıkart..."
 
-#: src/rfx-builder.c:4293 src/rfx-builder.c:4372
+#: src/rfx-builder.c:4283 src/rfx-builder.c:4362
 #, fuzzy, c-format
 msgid "Copying %s to %s..."
 msgstr "%s ayarı otomatik yükleniyor..."
 
-#: src/rfx-builder.c:4364
+#: src/rfx-builder.c:4311
+#, fuzzy
+msgid "LiVES: Import Script from..."
+msgstr "_dvd/vcd den seçimi içeri al"
+
+#: src/rfx-builder.c:4354
 #, c-format
 msgid ""
 "\n"
@@ -6995,50 +7005,50 @@ msgid ""
 "Please delete it first, or rename the import script.\n"
 msgstr ""
 
-#: src/rfx-builder.c:4476
+#: src/rfx-builder.c:4467
 #, fuzzy
 msgid "LiVES: - Copy RFX Script"
 msgstr "LiVES: - RFX Özellikleri"
 
-#: src/rfx-builder.c:4478
+#: src/rfx-builder.c:4469
 #, fuzzy
 msgid "_From type:    "
 msgstr "_İsim:    "
 
-#: src/rfx-builder.c:4486
+#: src/rfx-builder.c:4477
 msgid "   Script:    "
 msgstr ""
 
-#: src/rfx-builder.c:4495
+#: src/rfx-builder.c:4486
 #, fuzzy
 msgid "LiVES: - Rename test RFX Script"
 msgstr "LiVES: - klip in ismini değiştir"
 
-#: src/rfx-builder.c:4496
+#: src/rfx-builder.c:4487
 #, fuzzy
 msgid "From script: "
 msgstr "Açıklama: "
 
-#: src/rfx-builder.c:4501
+#: src/rfx-builder.c:4492
 #, fuzzy
 msgid "LiVES: - RFX Script name"
 msgstr "LiVES: - RFX Parametreleri"
 
-#: src/rfx-builder.c:4502
+#: src/rfx-builder.c:4493
 #, fuzzy
 msgid "Script name: "
 msgstr "Ayar ismi "
 
-#: src/rfx-builder.c:4526
+#: src/rfx-builder.c:4518
 msgid "New name: "
 msgstr "Yeni isim: "
 
-#: src/rfx-builder.c:4529
+#: src/rfx-builder.c:4521
 #, fuzzy
 msgid "New script name: "
 msgstr "Yeni isim: "
 
-#: src/rfx-builder.c:4613
+#: src/rfx-builder.c:4608
 msgid ""
 "\n"
 "\n"
@@ -7046,12 +7056,12 @@ msgid ""
 "Script name must be unique.\n"
 msgstr ""
 
-#: src/rfx-builder.c:4625
+#: src/rfx-builder.c:4620
 #, c-format
 msgid "Renaming RFX test script %s to %s..."
 msgstr ""
 
-#: src/rfx-builder.c:4631
+#: src/rfx-builder.c:4626
 #, c-format
 msgid ""
 "\n"
@@ -8372,12 +8382,12 @@ msgstr "Fazla çerçeveler siliniyor"
 msgid "resampling error..."
 msgstr ""
 
-#: src/rte_window.c:67 src/rte_window.c:917
+#: src/rte_window.c:68 src/rte_window.c:918
 #, c-format
 msgid "Type: %s"
 msgstr "Tür: %s"
 
-#: src/rte_window.c:98
+#: src/rte_window.c:99
 msgid ""
 "\n"
 "\n"
@@ -8387,7 +8397,7 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/rte_window.c:203
+#: src/rte_window.c:204
 msgid ""
 "\n"
 "\n"
@@ -8395,19 +8405,19 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/rte_window.c:208
+#: src/rte_window.c:209
 #, fuzzy, c-format
 msgid "Saving keymap to %s\n"
 msgstr "Ayarlar kaydediliyor %s"
 
-#: src/rte_window.c:215
+#: src/rte_window.c:216
 #, fuzzy, c-format
 msgid ""
 "\n"
 "Updating keymap file %s..."
 msgstr "%s Ses dosyası  ekleniyor"
 
-#: src/rte_window.c:222
+#: src/rte_window.c:223
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -8420,12 +8430,12 @@ msgstr ""
 "%s\n"
 "Hata kodu %d\n"
 
-#: src/rte_window.c:289
+#: src/rte_window.c:290
 #, fuzzy, c-format
 msgid "Saving real time effect defaults to %s..."
 msgstr "Gerçek zaman efekt eklentileri yükleniyor"
 
-#: src/rte_window.c:298
+#: src/rte_window.c:299
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -8438,22 +8448,22 @@ msgstr ""
 "%s\n"
 "Hata kodu %d\n"
 
-#: src/rte_window.c:395
+#: src/rte_window.c:396
 #, fuzzy, c-format
 msgid "Loading real time effect defaults from %s..."
 msgstr "Gerçek zaman efekt eklentileri yükleniyor"
 
-#: src/rte_window.c:444
+#: src/rte_window.c:445
 #, fuzzy, c-format
 msgid "Loading generator default sizes from %s..."
 msgstr "ön tanımlı %s adresten video oynatma eklentisi yükleniyor ..."
 
-#: src/rte_window.c:567
+#: src/rte_window.c:568
 #, fuzzy, c-format
 msgid "Loading default keymap from %s..."
 msgstr "ön tanımlı %s adresten video oynatma eklentisi yükleniyor ..."
 
-#: src/rte_window.c:590
+#: src/rte_window.c:591
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -8466,43 +8476,43 @@ msgstr ""
 "%s\n"
 "Hata kodu %d\n"
 
-#: src/rte_window.c:657
+#: src/rte_window.c:658
 #, fuzzy, c-format
 msgid "Invalid line %d in %s\n"
 msgstr "Geçersiz ses çalar % s\n"
 
-#: src/rte_window.c:733
+#: src/rte_window.c:734
 #, fuzzy, c-format
 msgid "Invalid key %d in %s\n"
 msgstr "Geçersiz ses çalar % s\n"
 
-#: src/rte_window.c:748
+#: src/rte_window.c:749
 #, c-format
 msgid "Invalid effect %s in %s\n"
 msgstr ""
 
-#: src/rte_window.c:766
+#: src/rte_window.c:767
 #, c-format
 msgid "Unknown effect %s in %s\n"
 msgstr ""
 
-#: src/rte_window.c:783
+#: src/rte_window.c:784
 #, c-format
 msgid ""
 "This version of LiVES cannot mix generators/non-generators on the same key "
 "(%d) !\n"
 msgstr ""
 
-#: src/rte_window.c:794
+#: src/rte_window.c:795
 #, c-format
 msgid "Too many effects bound to key %d.\n"
 msgstr ""
 
-#: src/rte_window.c:823
+#: src/rte_window.c:824
 msgid "update required.\n"
 msgstr ""
 
-#: src/rte_window.c:839
+#: src/rte_window.c:840
 msgid ""
 "\n"
 "\n"
@@ -8510,40 +8520,40 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/rte_window.c:890
+#: src/rte_window.c:891
 msgid "No Description"
 msgstr "Açıklama Yok"
 
-#: src/rte_window.c:895
+#: src/rte_window.c:896
 #, c-format
 msgid "LiVES: Information for %s"
 msgstr ""
 
-#: src/rte_window.c:909
+#: src/rte_window.c:910
 #, c-format
 msgid "Effect name: %s"
 msgstr "Efekt ismi: %s"
 
-#: src/rte_window.c:925
+#: src/rte_window.c:926
 #, c-format
 msgid "Plugin name: %s"
 msgstr "Eklenti adı: %s"
 
-#: src/rte_window.c:933
+#: src/rte_window.c:934
 #, c-format
 msgid "Author: %s"
 msgstr "Yayıncı: %s"
 
-#: src/rte_window.c:941
+#: src/rte_window.c:942
 #, c-format
 msgid "Version: %d"
 msgstr "Sürüm: %d"
 
-#: src/rte_window.c:953
+#: src/rte_window.c:954
 msgid "Description: "
 msgstr "Açıklama: "
 
-#: src/rte_window.c:1140
+#: src/rte_window.c:1153
 msgid ""
 "\n"
 "\n"
@@ -8552,68 +8562,73 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/rte_window.c:1204
+#: src/rte_window.c:1220
 #, fuzzy, c-format
 msgid "LiVES could not locate the effect %s.\n"
 msgstr "LiVES: bir dosya seçin"
 
-#: src/rte_window.c:1380
+#: src/rte_window.c:1409
 #, fuzzy
 msgid "LiVES: Real time effect mapping"
 msgstr "Gerçek Zamanlı _Efekt Haritası"
 
-#: src/rte_window.c:1389 src/rte_window.c:1447
+#: src/rte_window.c:1418 src/rte_window.c:1454
 msgid "Key grab"
 msgstr ""
 
-#: src/rte_window.c:1404
+#: src/rte_window.c:1433
 #, c-format
 msgid "Ctrl-%d"
 msgstr "Ctrl-%d"
 
-#: src/rte_window.c:1413
+#: src/rte_window.c:1440
 msgid "Key active"
 msgstr ""
 
-#: src/rte_window.c:1452
+#: src/rte_window.c:1455
 msgid "Grab keyboard for this effect key"
 msgstr ""
 
-#: src/rte_window.c:1471
+#: src/rte_window.c:1465
 msgid "_Clear all effects"
 msgstr ""
 
-#: src/rte_window.c:1490
+#: src/rte_window.c:1479
 msgid "Mode active"
 msgstr ""
 
-#: src/rte_window.c:1516 src/multitrack.c:7842
+#: src/rte_window.c:1489 src/multitrack.c:7843
 msgid "Info"
 msgstr "Bilgiler"
 
-#: src/rte_window.c:1517
+#: src/rte_window.c:1490
 #, fuzzy
 msgid "Set Parameters"
 msgstr "Parametre yok"
 
-#: src/rte_window.c:1518
+#: src/rte_window.c:1491
+#, fuzzy
+msgid "Set Connections"
+msgstr "Seçi_m"
+
+#: src/rte_window.c:1492
 msgid "Clear"
 msgstr "Temizle"
 
-#: src/rte_window.c:1527
+#: src/rte_window.c:1501
 msgid "Effect name:"
 msgstr "Efekt adı:"
 
-#: src/rte_window.c:1611
+#: src/rte_window.c:1597
 #, fuzzy
 msgid "_Save as default keymap"
 msgstr "Öntanımlı olarak ata"
 
-#: src/rte_window.c:1616
+#: src/rte_window.c:1602
 msgid "_Load default keymap"
 msgstr ""
 
-#: src/rte_window.c:2027
+#: src/rte_window.c:2018
 #, c-format
 msgid ""
 "Unable to create default keymap file: %s\n"
@@ -8803,7 +8818,7 @@ msgid ""
 "to select a frame.\n"
 msgstr ""
 
-#: src/multitrack.c:3374 src/multitrack.c:6206
+#: src/multitrack.c:3374 src/multitrack.c:6207
 #, c-format
 msgid "%s [unstable]"
 msgstr ""
@@ -8831,184 +8846,184 @@ msgstr "Klip bilgisini göster (i)"
 msgid "_Close this clip"
 msgstr "Bu klibi _kapat"
 
-#: src/multitrack.c:3870
+#: src/multitrack.c:3871
 #, fuzzy
 msgid "Audio mixer (ctrl-m)"
 msgstr "Ses Mikserleri"
 
-#: src/multitrack.c:3946
+#: src/multitrack.c:3947
 msgid "Single click on timeline"
 msgstr ""
 
-#: src/multitrack.c:3947
+#: src/multitrack.c:3948
 #, fuzzy
 msgid "to select a frame."
 msgstr "_Tüm çerçeveleri seç"
 
-#: src/multitrack.c:3948
+#: src/multitrack.c:3949
 msgid "Double click or right click on timeline"
 msgstr ""
 
-#: src/multitrack.c:3949
+#: src/multitrack.c:3950
 msgid "to select a block."
 msgstr ""
 
-#: src/multitrack.c:3950
+#: src/multitrack.c:3951
 msgid "Clips can be dragged"
 msgstr ""
 
-#: src/multitrack.c:3951
+#: src/multitrack.c:3952
 msgid "onto the timeline."
 msgstr ""
 
-#: src/multitrack.c:3953
+#: src/multitrack.c:3954
 msgid "Mouse mode is: Move"
 msgstr ""
 
-#: src/multitrack.c:3954
+#: src/multitrack.c:3955
 msgid "clips can be moved around."
 msgstr ""
 
-#: src/multitrack.c:3959
+#: src/multitrack.c:3960
 msgid "Mouse mode is: Select."
 msgstr ""
 
-#: src/multitrack.c:3960
+#: src/multitrack.c:3961
 msgid "Drag with mouse on timeline"
 msgstr ""
 
-#: src/multitrack.c:3961
+#: src/multitrack.c:3962
 msgid "to select tracks and time."
 msgstr ""
 
-#: src/multitrack.c:3972
+#: src/multitrack.c:3973
 msgid "_Insert mode: Normal"
 msgstr ""
 
-#: src/multitrack.c:3988
+#: src/multitrack.c:3989
 msgid "_Mouse mode: Move"
 msgstr ""
 
-#: src/multitrack.c:3992
+#: src/multitrack.c:3993
 msgid "_Mouse mode: Select"
 msgstr ""
 
-#: src/multitrack.c:4015 src/multitrack.c:7290
+#: src/multitrack.c:4016 src/multitrack.c:7291
 msgid "_Gravity: Normal"
 msgstr ""
 
-#: src/multitrack.c:4019
+#: src/multitrack.c:4020
 msgid "_Gravity: Left"
 msgstr ""
 
-#: src/multitrack.c:4024
+#: src/multitrack.c:4025
 msgid "_Gravity: Right"
 msgstr ""
 
-#: src/multitrack.c:4026
+#: src/multitrack.c:4027
 msgid "Close _last gap(s) in selected tracks/time"
 msgstr ""
 
-#: src/multitrack.c:4029
+#: src/multitrack.c:4030
 msgid "Close _first gap(s) in selected tracks/time"
 msgstr ""
 
-#: src/multitrack.c:4068
+#: src/multitrack.c:4069
 msgid "Close gaps"
 msgstr ""
 
-#: src/multitrack.c:4070
+#: src/multitrack.c:4071
 #, fuzzy
 msgid "Move block"
 msgstr "_Aşağı Taşı"
 
-#: src/multitrack.c:4072
+#: src/multitrack.c:4073
 msgid "Move audio block"
 msgstr ""
 
-#: src/multitrack.c:4074
+#: src/multitrack.c:4075
 #, fuzzy
 msgid "Delete block"
 msgstr "He_psini sil"
 
-#: src/multitrack.c:4076
+#: src/multitrack.c:4077
 #, fuzzy
 msgid "Delete audio block"
 msgstr "Sesi sil"
 
-#: src/multitrack.c:4078
+#: src/multitrack.c:4079
 #, fuzzy
 msgid "Split tracks"
 msgstr "Parça seçilmesi"
 
-#: src/multitrack.c:4080
+#: src/multitrack.c:4081
 msgid "Split block"
 msgstr ""
 
-#: src/multitrack.c:4083
+#: src/multitrack.c:4084
 #, c-format
 msgid "Apply %s"
 msgstr "%s Uygula"
 
-#: src/multitrack.c:4088
+#: src/multitrack.c:4089
 #, c-format
 msgid "Delete %s"
 msgstr "%s Sil"
 
-#: src/multitrack.c:4092
+#: src/multitrack.c:4093
 #, fuzzy
 msgid "Insert block"
 msgstr "Sessiz ekle"
 
-#: src/multitrack.c:4094
+#: src/multitrack.c:4095
 #, fuzzy
 msgid "Insert gap"
 msgstr "Ekle"
 
-#: src/multitrack.c:4096
+#: src/multitrack.c:4097
 #, fuzzy
 msgid "Insert audio block"
 msgstr "Ses uyacak şekilde ekle"
 
-#: src/multitrack.c:4098
+#: src/multitrack.c:4099
 msgid "Effect order change"
 msgstr ""
 
-#: src/multitrack.c:4496
+#: src/multitrack.c:4497
 #, fuzzy
 msgid "unsigned "
 msgstr "imzasız"
 
-#: src/multitrack.c:4497
+#: src/multitrack.c:4498
 #, fuzzy
 msgid "signed "
 msgstr "imzalandı"
 
-#: src/multitrack.c:4499
+#: src/multitrack.c:4500
 #, fuzzy
 msgid "big endian"
 msgstr "_Başlat"
 
-#: src/multitrack.c:4500
+#: src/multitrack.c:4501
 msgid "little endian"
 msgstr ""
 
-#: src/multitrack.c:4502
+#: src/multitrack.c:4503
 #, c-format
 msgid ""
 "Multitrack values set to %.3f fps, frame size %d x %d, audio channels %d, "
 "audio rate %d, audio sample size %d, %s.\n"
 msgstr ""
 
-#: src/multitrack.c:4534
+#: src/multitrack.c:4535
 msgid "invalid event list. Failed.\n"
 msgstr ""
 
-#: src/multitrack.c:4540
+#: src/multitrack.c:4541
 msgid "event list has invalid fps. Failed.\n"
 msgstr ""
 
-#: src/multitrack.c:4549
+#: src/multitrack.c:4550
 #, c-format
 msgid ""
 "\n"
@@ -9018,7 +9033,7 @@ msgid ""
 "then load in the new set from the File menu.\n"
 msgstr ""
 
-#: src/multitrack.c:4590
+#: src/multitrack.c:4591
 #, c-format
 msgid ""
 "\n"
@@ -9026,634 +9041,634 @@ msgid ""
 "It cannot be loaded.\n"
 msgstr ""
 
-#: src/multitrack.c:4930 src/multitrack.c:4939 src/multitrack.c:20069
+#: src/multitrack.c:4931 src/multitrack.c:4940 src/multitrack.c:20070
 msgid "Layout was wiped.\n"
 msgstr ""
 
-#: src/multitrack.c:4979
+#: src/multitrack.c:4980
 #, fuzzy, c-format
 msgid "LiVES-%s: Multitrack %dx%d : %d bpp %.3f fps"
 msgstr "LiVES-%s: <%s> %dx%d : %d çerçeveler %d bpp %.3f fps"
 
-#: src/multitrack.c:5412
+#: src/multitrack.c:5413
 msgid "_Open..."
 msgstr "_Aç..."
 
-#: src/multitrack.c:5429
+#: src/multitrack.c:5430
 msgid "O_pen File Selection..."
 msgstr "_Seçili dosyayı aç"
 
-#: src/multitrack.c:5472
+#: src/multitrack.c:5473
 msgid "Import Selection from _dvd/vcd..."
 msgstr "_dvd/vcd den seçimi içeri al"
 
-#: src/multitrack.c:5481
+#: src/multitrack.c:5482
 msgid "Import Selection from _dvd"
 msgstr "_dvd den seçimi içeri al"
 
-#: src/multitrack.c:5491
+#: src/multitrack.c:5492
 msgid "Import Selection from _vcd"
 msgstr "_vcd den seçimi içeri al"
 
-#: src/multitrack.c:5507
+#: src/multitrack.c:5508
 msgid "_Import from Device"
 msgstr "_Aygıttan içeri al"
 
-#: src/multitrack.c:5533
+#: src/multitrack.c:5534
 #, fuzzy
 msgid "_Close the selected clip"
 msgstr "Bu klibi _kapat"
 
-#: src/multitrack.c:5627
+#: src/multitrack.c:5628
 #, fuzzy
 msgid "_Save layout as..."
 msgstr "Yerleşim Düzenini _Kaydet"
 
-#: src/multitrack.c:5635
+#: src/multitrack.c:5636
 #, fuzzy
 msgid "_Load layout..."
 msgstr "Yerleşim Düzenini _Kaydet"
 
-#: src/multitrack.c:5639
+#: src/multitrack.c:5640
 #, fuzzy
 msgid "_Wipe/Delete layout..."
 msgstr "Düzeni sil"
 
-#: src/multitrack.c:5665
+#: src/multitrack.c:5666
 msgid "_Ignore width, height and audio values from loaded layouts"
 msgstr ""
 
-#: src/multitrack.c:5669
+#: src/multitrack.c:5670
 #, fuzzy
 msgid "Auto load _subtitles with clips"
 msgstr "Altyazıları otomatik yükle"
 
-#: src/multitrack.c:5746
+#: src/multitrack.c:5747
 msgid "_CLIP EDITOR"
 msgstr ""
 
-#: src/multitrack.c:5758
+#: src/multitrack.c:5759
 msgid "_Adjust selected clip start/end points"
 msgstr ""
 
-#: src/multitrack.c:5767
+#: src/multitrack.c:5768
 #, fuzzy
 msgid "_Insert selected clip"
 msgstr "_Seçimi Tersine Çevir"
 
-#: src/multitrack.c:5779
+#: src/multitrack.c:5780
 #, fuzzy
 msgid "_Insert selected clip audio"
 msgstr "Ses uyacak şekilde ekle"
 
-#: src/multitrack.c:5788
+#: src/multitrack.c:5789
 #, fuzzy
 msgid "_Delete selected block"
 msgstr "Seçilmiş Sesi sil"
 
-#: src/multitrack.c:5797
+#: src/multitrack.c:5798
 msgid "_Jump to previous block boundary"
 msgstr ""
 
-#: src/multitrack.c:5806
+#: src/multitrack.c:5807
 msgid "_Jump to next block boundary"
 msgstr ""
 
-#: src/multitrack.c:5819
+#: src/multitrack.c:5820
 msgid "Clear _marks from timeline"
 msgstr ""
 
-#: src/multitrack.c:5827
+#: src/multitrack.c:5828
 msgid "Ignore selection limits when inserting"
 msgstr ""
 
-#: src/multitrack.c:5843 src/multitrack.c:15668
+#: src/multitrack.c:5844 src/multitrack.c:15669
 msgid "_Play from Timeline Position"
 msgstr ""
 
-#: src/multitrack.c:5855
+#: src/multitrack.c:5856
 #, fuzzy
 msgid "Pla_y selected time only"
 msgstr "Seçim O_ynat"
 
-#: src/multitrack.c:5949
+#: src/multitrack.c:5950
 msgid "_Move effects with blocks"
 msgstr ""
 
-#: src/multitrack.c:5962
+#: src/multitrack.c:5963
 #, fuzzy
 msgid "Select _autotransition effect..."
 msgstr "Son  _efektii seç"
 
-#: src/multitrack.c:5976
+#: src/multitrack.c:5977
 msgid "View/_Edit selected effect"
 msgstr ""
 
-#: src/multitrack.c:5980
+#: src/multitrack.c:5981
 #, fuzzy
 msgid "_Delete selected effect"
 msgstr "Seçilmiş Sesi sil"
 
-#: src/multitrack.c:5988
+#: src/multitrack.c:5989
 msgid "Apply effect to _block..."
 msgstr ""
 
-#: src/multitrack.c:6044
+#: src/multitrack.c:6045
 msgid "Apply effect to _region..."
 msgstr ""
 
-#: src/multitrack.c:6301
+#: src/multitrack.c:6302
 msgid "_Tracks"
 msgstr ""
 
-#: src/multitrack.c:6311
+#: src/multitrack.c:6312
 msgid "Make _Backing Audio current track"
 msgstr ""
 
-#: src/multitrack.c:6322
+#: src/multitrack.c:6323
 msgid "Add Video Track at _Rear"
 msgstr ""
 
-#: src/multitrack.c:6330
+#: src/multitrack.c:6331
 msgid "Add Video Track at _Front"
 msgstr ""
 
-#: src/multitrack.c:6343
+#: src/multitrack.c:6344
 msgid "_Split current track at cursor"
 msgstr ""
 
-#: src/multitrack.c:6355
+#: src/multitrack.c:6356
 #, fuzzy
 msgid "_Split selected video tracks"
 msgstr "Parça seçilmesi"
 
-#: src/multitrack.c:6368
+#: src/multitrack.c:6369
 #, fuzzy
 msgid "Insert gap in selected tracks/time"
 msgstr "Seçildikten sonra çerçeveyi panoya ekle"
 
-#: src/multitrack.c:6376
+#: src/multitrack.c:6377
 msgid "Insert gap in current track/selected time"
 msgstr ""
 
-#: src/multitrack.c:6388
+#: src/multitrack.c:6389
 msgid "Close all _gaps in selected tracks/time"
 msgstr ""
 
-#: src/multitrack.c:6414
+#: src/multitrack.c:6415
 msgid "Se_lection"
 msgstr "Seçi_m"
 
-#: src/multitrack.c:6424
+#: src/multitrack.c:6425
 #, fuzzy
 msgid "_Select Current Track"
 msgstr "Parça seçilmesi"
 
-#: src/multitrack.c:6431
+#: src/multitrack.c:6432
 #, fuzzy
 msgid "Select _all video tracks"
 msgstr "Parça seçilmesi"
 
-#: src/multitrack.c:6438
+#: src/multitrack.c:6439
 #, fuzzy
 msgid "Select _no video tracks"
 msgstr "Parça seçilmesi"
 
-#: src/multitrack.c:6445
+#: src/multitrack.c:6446
 #, fuzzy
 msgid "Select all _time"
 msgstr "_Tüm çerçeveleri seç"
 
-#: src/multitrack.c:6456
+#: src/multitrack.c:6457
 msgid "Select from _zero time"
 msgstr ""
 
-#: src/multitrack.c:6463
+#: src/multitrack.c:6464
 #, fuzzy
 msgid "Select to _end time"
 msgstr "Son  _efektii seç"
 
-#: src/multitrack.c:6470
+#: src/multitrack.c:6471
 msgid "_Copy..."
 msgstr "_Kopyala..."
 
-#: src/multitrack.c:6480
+#: src/multitrack.c:6481
 msgid "_Timecode to region start"
 msgstr ""
 
-#: src/multitrack.c:6487
+#: src/multitrack.c:6488
 msgid "_Timecode to region end"
 msgstr ""
 
-#: src/multitrack.c:6494
+#: src/multitrack.c:6495
 msgid "_Region start to timecode"
 msgstr ""
 
-#: src/multitrack.c:6501
+#: src/multitrack.c:6502
 msgid "_Region end to timecode"
 msgstr ""
 
-#: src/multitrack.c:6525
+#: src/multitrack.c:6526
 msgid "_Change width, height and audio values..."
 msgstr ""
 
-#: src/multitrack.c:6582
+#: src/multitrack.c:6583
 msgid "_Render"
 msgstr "_Tarama"
 
-#: src/multitrack.c:6592
+#: src/multitrack.c:6593
 #, fuzzy
 msgid "_Render all to new clip"
 msgstr "Yeni klip için %s"
 
-#: src/multitrack.c:6607
+#: src/multitrack.c:6608
 #, fuzzy
 msgid "Render _video"
 msgstr "_Tarama"
 
-#: src/multitrack.c:6612
+#: src/multitrack.c:6613
 #, fuzzy
 msgid "Render _audio"
 msgstr "Yeni ses kaydet"
 
-#: src/multitrack.c:6622
+#: src/multitrack.c:6623
 msgid "_Normalise rendered audio"
 msgstr ""
 
-#: src/multitrack.c:6629
+#: src/multitrack.c:6630
 #, fuzzy
 msgid "_Pre-render audio"
 msgstr "Yeni ses kaydet"
 
-#: src/multitrack.c:6638
+#: src/multitrack.c:6639
 msgid "_View"
 msgstr "_Göster"
 
-#: src/multitrack.c:6656
+#: src/multitrack.c:6657
 msgid "Block _In/out points"
 msgstr ""
 
-#: src/multitrack.c:6665
+#: src/multitrack.c:6666
 msgid "_Effects at current"
 msgstr ""
 
-#: src/multitrack.c:6683
+#: src/multitrack.c:6684
 msgid "Audio parameters"
 msgstr "Ses  parametreleri"
 
-#: src/multitrack.c:6693
+#: src/multitrack.c:6694
 msgid "Show backing _audio track"
 msgstr ""
 
-#: src/multitrack.c:6697
+#: src/multitrack.c:6698
 msgid "Compact view"
 msgstr "Yoğun görünüm"
 
-#: src/multitrack.c:6705
+#: src/multitrack.c:6706
 #, fuzzy
 msgid "Maximum tracks to display..."
 msgstr "parça azami sayısını görüntülemek için"
 
-#: src/multitrack.c:6712
+#: src/multitrack.c:6713
 msgid "Scroll to follow playback"
 msgstr ""
 
-#: src/multitrack.c:6716
+#: src/multitrack.c:6717
 msgid "_Center on cursor"
 msgstr ""
 
-#: src/multitrack.c:6723
+#: src/multitrack.c:6724
 msgid "_Zoom in"
 msgstr ""
 
-#: src/multitrack.c:6734
+#: src/multitrack.c:6735
 msgid "_Zoom out"
 msgstr ""
 
-#: src/multitrack.c:6746
+#: src/multitrack.c:6747
 #, fuzzy
 msgid "Multitrack _details"
 msgstr "Çoklu parça kip tuşları"
 
-#: src/multitrack.c:6759
+#: src/multitrack.c:6760
 #, fuzzy
 msgid "_Event Window"
 msgstr "_Pencereyi Kapat"
 
-#: src/multitrack.c:6763
+#: src/multitrack.c:6764
 msgid "_Event Window (selected time only)"
 msgstr ""
 
-#: src/multitrack.c:6767
+#: src/multitrack.c:6768
 msgid "_Show FRAME events"
 msgstr ""
 
-#: src/multitrack.c:6783
+#: src/multitrack.c:6784
 #, fuzzy
 msgid "_Show multitrack keys"
 msgstr "Çoklu parça kip tuşları"
 
-#: src/multitrack.c:6850
+#: src/multitrack.c:6851
 msgid "Mouse mode: _Move"
 msgstr ""
 
-#: src/multitrack.c:6858
+#: src/multitrack.c:6859
 msgid "Mouse mode: _Select"
 msgstr ""
 
-#: src/multitrack.c:6886
+#: src/multitrack.c:6887
 msgid "Insert mode: _Normal"
 msgstr ""
 
-#: src/multitrack.c:7168
+#: src/multitrack.c:7169
 msgid ""
 "Select whether video clips are inserted and moved with their audio or not"
 msgstr ""
 
-#: src/multitrack.c:7172
+#: src/multitrack.c:7173
 #, fuzzy
 msgid "Insert with _audio"
 msgstr "Ses uyacak şekilde ekle"
 
-#: src/multitrack.c:7203
+#: src/multitrack.c:7204
 msgid ""
 "Select whether timeline selection snaps to overlap between selected tracks "
 "or not"
 msgstr ""
 
-#: src/multitrack.c:7208
+#: src/multitrack.c:7209
 #, fuzzy
 msgid "Select _overlap"
 msgstr "Dosya Seçin"
 
-#: src/multitrack.c:7266 src/multitrack.c:13249
+#: src/multitrack.c:7267 src/multitrack.c:13250
 msgid "Expanded View (d)"
 msgstr ""
 
-#: src/multitrack.c:7268 src/multitrack.c:13256
+#: src/multitrack.c:7269 src/multitrack.c:13257
 #, fuzzy
 msgid "Compact View (d)"
 msgstr "Yoğun görünüm"
 
-#: src/multitrack.c:7301
+#: src/multitrack.c:7302
 msgid "Gravity: _Normal"
 msgstr ""
 
-#: src/multitrack.c:7311
+#: src/multitrack.c:7312
 msgid "Gravity: _Left"
 msgstr ""
 
-#: src/multitrack.c:7322
+#: src/multitrack.c:7323
 msgid "Gravity: _Right"
 msgstr ""
 
-#: src/multitrack.c:7432
+#: src/multitrack.c:7433
 msgid "Clips"
 msgstr "Klipler"
 
-#: src/multitrack.c:7469
+#: src/multitrack.c:7470
 msgid "In/out"
 msgstr ""
 
-#: src/multitrack.c:7478
+#: src/multitrack.c:7479
 msgid "FX stack"
 msgstr ""
 
-#: src/multitrack.c:7517 src/omc-learn.c:673
+#: src/multitrack.c:7518 src/omc-learn.c:673
 #, fuzzy
 msgid "Params."
 msgstr "_Parametreler..."
 
-#: src/multitrack.c:7542
+#: src/multitrack.c:7543
 msgid "_Apply"
 msgstr "_Uygula"
 
-#: src/multitrack.c:7564
+#: src/multitrack.c:7565
 msgid "Time"
 msgstr "Süre"
 
-#: src/multitrack.c:7580
+#: src/multitrack.c:7581
 msgid "_Del. node"
 msgstr ""
 
-#: src/multitrack.c:7588
+#: src/multitrack.c:7589
 #, fuzzy
 msgid "_Next node"
 msgstr "_Sonraki"
 
-#: src/multitrack.c:7596
+#: src/multitrack.c:7597
 #, fuzzy
 msgid "_Prev node"
 msgstr "_Önizleme"
 
-#: src/multitrack.c:7626
+#: src/multitrack.c:7627
 msgid "_Reverse playback  "
 msgstr ""
 
-#: src/multitrack.c:7654
+#: src/multitrack.c:7655
 #, fuzzy
 msgid "_Velocity  "
 msgstr "hız"
 
-#: src/multitrack.c:7711
+#: src/multitrack.c:7712
 msgid "Anchor the start point to the timeline"
 msgstr ""
 
-#: src/multitrack.c:7714
+#: src/multitrack.c:7715
 #, fuzzy
 msgid "Anchor _start"
 msgstr "Girdap"
 
-#: src/multitrack.c:7748
+#: src/multitrack.c:7749
 #, fuzzy
 msgid "Start frame"
 msgstr "_İlk çerçeve"
 
-#: src/multitrack.c:7785
+#: src/multitrack.c:7786
 msgid "Anchor the end point to the timeline"
 msgstr ""
 
-#: src/multitrack.c:7788
+#: src/multitrack.c:7789
 msgid "Anchor _end"
 msgstr ""
 
-#: src/multitrack.c:7821
+#: src/multitrack.c:7822
 #, fuzzy
 msgid "End frame"
 msgstr "Boş _çerçeve"
 
-#: src/multitrack.c:7975
+#: src/multitrack.c:7976
 msgid "Scroll"
 msgstr "Kaydırma"
 
-#: src/multitrack.c:8558
+#: src/multitrack.c:8559
 msgid ""
 "\n"
 "==============================\n"
 "Switched to Clip Edit mode\n"
 msgstr ""
 
-#: src/multitrack.c:8736
+#: src/multitrack.c:8737
 #, fuzzy
 msgid "Timeline (seconds)"
 msgstr "_Süre (saniye)"
 
-#: src/multitrack.c:9214
+#: src/multitrack.c:9215
 #, fuzzy
 msgid " Backing audio"
 msgstr "Yedekleniyor"
 
-#: src/multitrack.c:9217
+#: src/multitrack.c:9218
 #, fuzzy, c-format
 msgid " Layer %d audio"
 msgstr "%d katman"
 
-#: src/multitrack.c:9224
+#: src/multitrack.c:9225
 #, fuzzy
 msgid "Show/hide audio details"
 msgstr "Ses göster/gizle"
 
-#: src/multitrack.c:9241 src/multitrack.c:9450
+#: src/multitrack.c:9242 src/multitrack.c:9451
 #, fuzzy, c-format
 msgid "Layer %d audio"
 msgstr "%d katman"
 
-#: src/multitrack.c:9405
+#: src/multitrack.c:9406
 #, fuzzy
 msgid "Select track"
 msgstr "Parça seçilmesi"
 
-#: src/multitrack.c:9408
+#: src/multitrack.c:9409
 msgid "Show/hide audio"
 msgstr "Ses göster/gizle"
 
-#: src/multitrack.c:9414
+#: src/multitrack.c:9415
 #, c-format
 msgid "Video %d"
 msgstr "%d video"
 
-#: src/multitrack.c:9442 src/multitrack.c:9478
+#: src/multitrack.c:9443 src/multitrack.c:9479
 #, c-format
 msgid "%s (layer %d)"
 msgstr "%s ( %d katman)"
 
-#: src/multitrack.c:9451
+#: src/multitrack.c:9452
 #, c-format
 msgid " %s"
 msgstr " %s"
 
-#: src/multitrack.c:9558
+#: src/multitrack.c:9559
 #, fuzzy
 msgid "LiVES: Selected effect"
 msgstr "LiVES: Dosya Seç"
 
-#: src/multitrack.c:9569
+#: src/multitrack.c:9570
 msgid "_View/Edit this effect"
 msgstr ""
 
-#: src/multitrack.c:9572
+#: src/multitrack.c:9573
 msgid "_View this effect"
 msgstr ""
 
-#: src/multitrack.c:9580
+#: src/multitrack.c:9581
 #, fuzzy
 msgid "_Delete this effect"
 msgstr "Klip ayarlarını sil"
 
-#: src/multitrack.c:9631
+#: src/multitrack.c:9632
 #, fuzzy
 msgid "Cannot insert after this effect"
 msgstr "Seçim _sonrası ekle"
 
-#: src/multitrack.c:9660
+#: src/multitrack.c:9661
 msgid "This effect cannot be moved"
 msgstr ""
 
-#: src/multitrack.c:9706
+#: src/multitrack.c:9707
 #, c-format
 msgid "  %d to %d selected  "
 msgstr ""
 
-#: src/multitrack.c:9709 src/multitrack.c:9945
+#: src/multitrack.c:9710 src/multitrack.c:9946
 #, c-format
 msgid "%.2f sec."
 msgstr "%.2f sn."
 
-#: src/multitrack.c:9916
+#: src/multitrack.c:9917
 #, fuzzy, c-format
 msgid "%d frames"
 msgstr "çerçeve"
 
-#: src/multitrack.c:10270
+#: src/multitrack.c:10271
 msgid ""
 "\n"
 "==============================\n"
 "Switched to Multitrack mode\n"
 msgstr ""
 
-#: src/multitrack.c:11877
+#: src/multitrack.c:11878
 msgid "Drag the time slider to where you"
 msgstr ""
 
-#: src/multitrack.c:11878
+#: src/multitrack.c:11879
 msgid "want to set effect parameters"
 msgstr ""
 
-#: src/multitrack.c:11879
+#: src/multitrack.c:11880
 msgid "Set parameters, then click \"Apply\"\n"
 msgstr ""
 
-#: src/multitrack.c:11880
+#: src/multitrack.c:11881
 msgid ""
 "NODES are points where parameters\n"
 "have been set.\n"
 "Nodes can be deleted."
 msgstr ""
 
-#: src/multitrack.c:11883
+#: src/multitrack.c:11884
 #, fuzzy
 msgid "Effect has no parameters.\n"
 msgstr "Parametre yok"
 
-#: src/multitrack.c:11970
+#: src/multitrack.c:11971
 #, c-format
 msgid "%s output"
 msgstr ""
 
-#: src/multitrack.c:11976
+#: src/multitrack.c:11977
 #, c-format
 msgid "layer %d"
 msgstr "%d katman"
 
-#: src/multitrack.c:11978
+#: src/multitrack.c:11979
 #, fuzzy
 msgid "audio track"
 msgstr "ses"
 
-#: src/multitrack.c:11979
+#: src/multitrack.c:11980
 #, c-format
 msgid "%s to %s"
 msgstr "%s'den %s'e"
 
-#: src/multitrack.c:12030
+#: src/multitrack.c:12031
 msgid "_Prev filter map"
 msgstr ""
 
-#: src/multitrack.c:12041
+#: src/multitrack.c:12042
 #, fuzzy
 msgid "Insert _before"
 msgstr "Seçim _öncesi ekle"
 
-#: src/multitrack.c:12051
+#: src/multitrack.c:12052
 #, fuzzy
 msgid "Insert _after"
 msgstr "Seçim _sonrası ekle"
 
-#: src/multitrack.c:12066
+#: src/multitrack.c:12067
 msgid "_Next filter map"
 msgstr ""
 
-#: src/multitrack.c:12081
+#: src/multitrack.c:12082
 msgid ""
 "\n"
 "\n"
@@ -9661,32 +9676,32 @@ msgid ""
 "current time.\n"
 msgstr ""
 
-#: src/multitrack.c:12093
+#: src/multitrack.c:12094
 msgid ""
 "Drag a compositor anywhere\n"
 "on the timeline\n"
 "to apply it to the selected region."
 msgstr ""
 
-#: src/multitrack.c:12100
+#: src/multitrack.c:12101
 msgid ""
 "Drag a transition anywhere\n"
 "on the timeline\n"
 "to apply it to the selected region."
 msgstr ""
 
-#: src/multitrack.c:12108
+#: src/multitrack.c:12109
 msgid ""
 "Effects can be dragged\n"
 "onto blocks on the timeline."
 msgstr ""
 
-#: src/multitrack.c:12310
+#: src/multitrack.c:12311
 #, fuzzy
 msgid "LiVES: Selected block/frame"
 msgstr "LiVES: Dosya Seç"
 
-#: src/multitrack.c:12316
+#: src/multitrack.c:12317
 #, fuzzy
 msgid "_Select this block"
 msgstr ""
@@ -9694,256 +9709,256 @@ msgstr ""
 "\n"
 "Seçim kilitlendi.\n"
 
-#: src/multitrack.c:12326
+#: src/multitrack.c:12327
 msgid "_Split block here"
 msgstr ""
 
-#: src/multitrack.c:12334
+#: src/multitrack.c:12335
 msgid "List _effects here"
 msgstr ""
 
-#: src/multitrack.c:12343 src/multitrack.c:12421
+#: src/multitrack.c:12344 src/multitrack.c:12422
 #, fuzzy, c-format
 msgid "_Adjust %s"
 msgstr "Kontrastı ayarla"
 
-#: src/multitrack.c:12358
+#: src/multitrack.c:12359
 #, fuzzy
 msgid "_Delete this block"
 msgstr "_Seçimi sil"
 
-#: src/multitrack.c:12402
+#: src/multitrack.c:12403
 #, fuzzy
 msgid "_Insert here"
 msgstr "_Çerçeve _ekle"
 
-#: src/multitrack.c:12408
+#: src/multitrack.c:12409
 #, fuzzy
 msgid "_Insert audio here"
 msgstr "Ses uyacak şekilde ekle"
 
-#: src/multitrack.c:13852
+#: src/multitrack.c:13853
 #, c-format
 msgid "Inserted gap in selected tracks from time %.4f to %.4f\n"
 msgstr ""
 
-#: src/multitrack.c:13886
+#: src/multitrack.c:13887
 #, c-format
 msgid "Inserted gap in track %s from time %.4f to %.4f\n"
 msgstr ""
 
-#: src/multitrack.c:14088
+#: src/multitrack.c:14089
 #, c-format
 msgid "Undid %s\n"
 msgstr ""
 
-#: src/multitrack.c:14288
+#: src/multitrack.c:14289
 #, c-format
 msgid "Redid %s\n"
 msgstr ""
 
-#: src/multitrack.c:14314
+#: src/multitrack.c:14315
 #, fuzzy
 msgid "Multitrack details"
 msgstr "Çoklu parça kip tuşları"
 
-#: src/multitrack.c:14326
+#: src/multitrack.c:14327
 #, fuzzy
 msgid ""
 "\n"
 " (variable)"
 msgstr "değişken"
 
-#: src/multitrack.c:14550 src/multitrack.c:17658 src/multitrack.c:17670
+#: src/multitrack.c:14551 src/multitrack.c:17659 src/multitrack.c:17671
 #, fuzzy, c-format
 msgid "track %s"
 msgstr "CD parçası %d"
 
-#: src/multitrack.c:14555 src/multitrack.c:17663
+#: src/multitrack.c:14556 src/multitrack.c:17664
 #, c-format
 msgid "tracks %s and %s"
 msgstr ""
 
-#: src/multitrack.c:14561 src/multitrack.c:17673
+#: src/multitrack.c:14562 src/multitrack.c:17674
 #, fuzzy
 msgid "selected tracks"
 msgstr "Parça seçilmesi"
 
-#: src/multitrack.c:14565
+#: src/multitrack.c:14566
 #, c-format
 msgid "Added %s %s to %s from %.4f to %.4f\n"
 msgstr ""
 
-#: src/multitrack.c:14594
+#: src/multitrack.c:14595
 #, c-format
 msgid "Added effect %s to track %s from %.4f to %.4f\n"
 msgstr ""
 
-#: src/multitrack.c:14889
+#: src/multitrack.c:14890
 #, fuzzy, c-format
 msgid "rendered %d frames to new clip.\n"
 msgstr "Çerçeveler%d panodan%s ekleniyor..."
 
-#: src/multitrack.c:14979
+#: src/multitrack.c:14980
 msgid "Cleaning up..."
 msgstr "Temizleniyor..."
 
-#: src/multitrack.c:15661
+#: src/multitrack.c:15662
 msgid "_Pause"
 msgstr "_Duraklat"
 
-#: src/multitrack.c:15662
+#: src/multitrack.c:15663
 msgid "Pause (p)"
 msgstr "Duraklat (p)"
 
-#: src/multitrack.c:15808
+#: src/multitrack.c:15809
 msgid "Press 'm' during playback"
 msgstr ""
 
-#: src/multitrack.c:15809
+#: src/multitrack.c:15810
 msgid "to make a mark on the timeline"
 msgstr ""
 
-#: src/multitrack.c:16106
+#: src/multitrack.c:16107
 #, c-format
 msgid ""
 "Inserted audio %.4f to %.4f from clip %s into backing audio from time %.4f "
 "to %.4f\n"
 msgstr ""
 
-#: src/multitrack.c:16353
+#: src/multitrack.c:16354
 #, c-format
 msgid ""
 "Inserted frames %d to %d from clip %s into track %s from time %.4f to %.4f\n"
 msgstr ""
 
-#: src/multitrack.c:16926
+#: src/multitrack.c:16927
 #, c-format
 msgid ""
 "Time region %.3f to %.3f\n"
 "selected.\n"
 msgstr ""
 
-#: src/multitrack.c:16930
+#: src/multitrack.c:16931
 msgid ""
 "select one or more tracks\n"
 "to create a region.\n"
 msgstr ""
 
-#: src/multitrack.c:16932
+#: src/multitrack.c:16933
 #, c-format
 msgid "%d video tracks selected.\n"
 msgstr ""
 
-#: src/multitrack.c:16934
+#: src/multitrack.c:16935
 msgid ""
 "Double click on timeline\n"
 "to deselect time region."
 msgstr ""
 
-#: src/multitrack.c:16941
+#: src/multitrack.c:16942
 msgid ""
 "Single click on an effect\n"
 "to select it."
 msgstr ""
 
-#: src/multitrack.c:16942
+#: src/multitrack.c:16943
 msgid ""
 "Double click on an effect\n"
 "to edit it."
 msgstr ""
 
-#: src/multitrack.c:16943
+#: src/multitrack.c:16944
 msgid ""
 "Right click on an effect\n"
 "for context menu.\n"
 msgstr ""
 
-#: src/multitrack.c:16945
+#: src/multitrack.c:16946
 msgid ""
 "Effect order can be changed at\n"
 "FILTER MAPS"
 msgstr ""
 
-#: src/multitrack.c:16952
+#: src/multitrack.c:16953
 msgid ""
 "You can select an effect,\n"
 "then use the INSERT BEFORE"
 msgstr ""
 
-#: src/multitrack.c:16953
+#: src/multitrack.c:16954
 msgid "or INSERT AFTER buttons to move it."
 msgstr ""
 
-#: src/multitrack.c:16989
+#: src/multitrack.c:16990
 msgid ""
 "You can click and drag\n"
 "below the timeline"
 msgstr ""
 
-#: src/multitrack.c:16990
+#: src/multitrack.c:16991
 msgid "to select a time region.\n"
 msgstr ""
 
-#: src/multitrack.c:17227 src/multitrack.c:17240
+#: src/multitrack.c:17228 src/multitrack.c:17241
 msgid "Click on another effect,"
 msgstr ""
 
-#: src/multitrack.c:17228 src/multitrack.c:17241
+#: src/multitrack.c:17229 src/multitrack.c:17242
 msgid ""
 "and the selected one\n"
 "will be inserted"
 msgstr ""
 
-#: src/multitrack.c:17229
+#: src/multitrack.c:17230
 msgid "after it.\n"
 msgstr ""
 
-#: src/multitrack.c:17242
+#: src/multitrack.c:17243
 msgid "before it.\n"
 msgstr ""
 
-#: src/multitrack.c:17473
+#: src/multitrack.c:17474
 #, c-format
 msgid "Removed parameter values for effect %s at time %.4f\n"
 msgstr ""
 
-#: src/multitrack.c:17681
+#: src/multitrack.c:17682
 #, c-format
 msgid "Set parameter values for %s %s on %s at time %.4f\n"
 msgstr ""
 
-#: src/multitrack.c:18170 src/multitrack.c:19792
+#: src/multitrack.c:18171 src/multitrack.c:19793
 #, fuzzy
 msgid "_Autoreload each time"
 msgstr "Altyazıları otomatik yükle"
 
-#: src/multitrack.c:18278
+#: src/multitrack.c:18279
 #, fuzzy, c-format
 msgid "Saved layout to %s\n"
 msgstr "Yerleşim Düzenini _Kaydet"
 
-#: src/multitrack.c:19698
+#: src/multitrack.c:19699
 #, fuzzy
 msgid "clips and frames"
 msgstr "Boş _çerçeve"
 
-#: src/multitrack.c:19702
+#: src/multitrack.c:19703
 msgid "clips"
 msgstr "klipler"
 
-#: src/multitrack.c:19705
+#: src/multitrack.c:19706
 msgid "frames"
 msgstr "çerçeve"
 
-#: src/multitrack.c:19715
+#: src/multitrack.c:19716
 #, fuzzy
 msgid ""
 "\n"
 "Auto reload layout.\n"
 msgstr "Altyazıları otomatik yükle"
 
-#: src/multitrack.c:19718
+#: src/multitrack.c:19719
 #, c-format
 msgid ""
 "%s\n"
@@ -9951,70 +9966,70 @@ msgid ""
 "Therefore it could not be loaded properly.\n"
 msgstr ""
 
-#: src/multitrack.c:19857
+#: src/multitrack.c:19858
 msgid "auto backup"
 msgstr ""
 
-#: src/multitrack.c:19860
+#: src/multitrack.c:19861
 #, fuzzy, c-format
 msgid ""
 "\n"
 "Unable to load layout file %s\n"
 msgstr "Çıktı dosyası açılamadı !"
 
-#: src/multitrack.c:19880
+#: src/multitrack.c:19881
 #, fuzzy, c-format
 msgid "Loading layout from %s..."
 msgstr "Klip ayarlardan yükleniyor %s"
 
-#: src/multitrack.c:19913
+#: src/multitrack.c:19914
 #, c-format
 msgid "Got %d events...processing..."
 msgstr ""
 
-#: src/multitrack.c:19928
+#: src/multitrack.c:19929
 msgid "Checking and rebuilding event list"
 msgstr ""
 
-#: src/multitrack.c:19954
+#: src/multitrack.c:19955
 #, c-format
 msgid "%d errors detected.\n"
 msgstr ""
 
-#: src/multitrack.c:20005
+#: src/multitrack.c:20006
 #, c-format
 msgid "Multitrack fps set to %.3f\n"
 msgstr ""
 
-#: src/multitrack.c:20965
+#: src/multitrack.c:20966
 msgid "LiVES: Multitrack audio mixer"
 msgstr ""
 
-#: src/multitrack.c:21002
+#: src/multitrack.c:21003
 msgid "_Reset values"
 msgstr "_Değerleri sıfırla"
 
-#: src/multitrack.c:21006
+#: src/multitrack.c:21007
 #, fuzzy
 msgid "_Close mixer"
 msgstr "_Pencereyi Kapat"
 
-#: src/multitrack.c:21048
+#: src/multitrack.c:21049
 #, fuzzy
 msgid ""
 "_Invert backing audio\n"
 "and layer volumes"
 msgstr "Geçersiz ses çalar % s\n"
 
-#: src/multitrack.c:21054
+#: src/multitrack.c:21055
 msgid "Adjust backing and layer audio values so that they sum to 1.0"
 msgstr ""
 
-#: src/multitrack.c:21093
+#: src/multitrack.c:21094
 msgid "_Gang layer audio"
 msgstr ""
 
-#: src/multitrack.c:21099
+#: src/multitrack.c:21100
 msgid "Adjust all layer audio values to the same value"
 msgstr ""
 
@@ -10037,7 +10052,7 @@ msgstr "Jack audio sunucusu başlıyor..."
 msgid "Started jack audio reader.\n"
 msgstr "Jack audio sunucusu başlıyor..."
 
-#: src/jack.c:1656
+#: src/jack.c:1661
 #, fuzzy
 msgid ""
 "\n"
@@ -10072,7 +10087,7 @@ msgstr "Pulse audio sunucusu başlıyor"
 msgid "LiVES will exit and you can choose another audio player.\n"
 msgstr "LiVES - ses çalar seçin"
 
-#: src/pulse.c:1304
+#: src/pulse.c:1309
 #, fuzzy
 msgid ""
 "\n"

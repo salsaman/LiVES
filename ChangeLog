@@ -1,5 +1,6 @@
 Version 1.8.1
 -------------
+Fix various bugs with the RFX builder menus.
 Fix compilation error (double typedef).
 Fix compilation for GTK+ < 2.24
 Fix regression error in Resize All Frames.
@@ -10,6 +11,8 @@ Add mini tracker player in LiVES (fourKlives).
 
 
 
+
+	
 
 
 

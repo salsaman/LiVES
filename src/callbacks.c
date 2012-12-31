@@ -5897,17 +5897,11 @@ void on_fs_preview_clicked (GtkButton *button, gpointer user_data) {
   int retval;
   gboolean timeout;
 
-  gchar *info_file;
+  gchar *info_file,*thm_dir;
   gchar *file_open_params=NULL;
   gchar *tmp;
   gchar *com;
   gchar *dfile;
-
-#ifndef IS_MINGW
-  info_file=g_strdup_printf ("%s/thm%d/.status",prefs->tmpdir,pid);
-#else
-  info_file=g_strdup_printf ("%s/thm%d/status",prefs->tmpdir,pid);
-#endif
 
   if (mainw->in_fs_preview) {
     end_fs_preview();
@@ -6069,18 +6063,19 @@ void on_fs_preview_clicked (GtkButton *button, gpointer user_data) {
       g_free(thumb);
     }
     g_free(info_file);
-    info_file=g_strdup_printf ("%s/thm%d",prefs->tmpdir,getpid());
+
+    thm_dir=g_strdup_printf ("%s/thm%d",prefs->tmpdir,getpid());
 #ifndef IS_MINGW
-    com=g_strdup_printf("/bin/rm -rf \"%s\"",info_file);
+    com=g_strdup_printf("/bin/rm -rf \"%s\"",thm_dir);
 #else
-    com=g_strdup_printf("DEL /q \"%s\"",info_file);
+    com=g_strdup_printf("DEL /q \"%s\"",thm_dir);
     lives_system(com,TRUE);
     g_free(com);
-    com=g_strdup_printf("RMDIR \"%s\"",info_file);
+    com=g_strdup_printf("RMDIR \"%s\"",thm_dir);
 #endif
     lives_system(com,TRUE);
     g_free(com);
-    g_free(info_file);
+    g_free(thm_dir);
   } 
 
 
@@ -8787,7 +8782,7 @@ void popup_lmap_errors(GtkMenuItem *menuitem, gpointer user_data) {
 
   textwindow=create_text_window(_("layout errors"),NULL,mainw->layout_textbuffer);
 
-  dialog_action_area = GTK_DIALOG (textwindow->dialog)->action_area;
+  dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (textwindow->dialog));
   gtk_widget_show (dialog_action_area);
   gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area), GTK_BUTTONBOX_SPREAD);
 

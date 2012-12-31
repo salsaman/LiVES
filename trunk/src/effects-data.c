@@ -21,9 +21,8 @@
 #endif
 
 #include "main.h"
-
 #include "effects.h"
-
+#include "support.h"
 
 void pconx_delete_all(void) {
   lives_pconnect_t *pconx=mainw->pconx,*pconx_next;
@@ -1746,3 +1745,30 @@ boolean cconx_chain_data_internal(weed_plant_t *ichan) {
   }
   return needs_reinit;
 }
+
+
+
+
+
+static void make_datacon_window(int key, int mode) {
+  GtkWidget *conx_dialog,*cbox;
+  GtkWidget *cancelbutton;
+  GtkWidget *okbutton;
+
+  weed_plant_t *filter=rte_keymode_get_filter(key+1,mode);
+  if (filter==NULL) return;
+
+  conx_dialog=lives_standard_dialog_new(_("LiVES: - Parameter and Alpha Channel Connections"),TRUE);
+  cbox = lives_dialog_get_content_area(LIVES_DIALOG(conx_dialog));
+
+
+
+
+
+
+  gtk_widget_show_all (conx_dialog);
+
+
+}
+
+

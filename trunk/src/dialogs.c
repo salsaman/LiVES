@@ -263,7 +263,7 @@ static GtkWidget* create_warn_dialog (gint warn_mask_number, GtkWindow *transien
     add_xlays_widget(GTK_BOX(dialog_vbox));
   }
 
-  dialog_action_area = GTK_DIALOG (dialog)->action_area;
+  dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (dialog));
   gtk_widget_show (dialog_action_area);
   gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area), GTK_BUTTONBOX_END);
 

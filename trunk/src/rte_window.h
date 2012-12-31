@@ -18,10 +18,10 @@ void update_pwindow (gint key, gint i, GList *list);
 GtkWidget *rte_window;
 
 
-void rte_set_defs_activate (GtkMenuItem *m, gpointer user_data);
+void rte_set_defs_activate (GtkMenuItem *, gpointer user_data);
 void rte_set_defs_cancel (GtkButton *, lives_rfx_t *);
 void rte_set_defs_ok (GtkButton *, lives_rfx_t *);
-void rte_reset_defs_clicked (GtkButton *button, lives_rfx_t *rfx);
+void rte_reset_defs_clicked (GtkButton *, lives_rfx_t *rfx);
 void rte_set_key_defs (GtkButton *, lives_rfx_t *);
 void on_save_rte_defs_activate (GtkMenuItem *, gpointer);
 gboolean on_clear_all_clicked (GtkButton *, gpointer user_data);

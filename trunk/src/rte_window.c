@@ -36,6 +36,7 @@ static GtkWidget *dummy_radio;
 static GtkWidget **nlabels;
 static GtkWidget **type_labels;
 static GtkWidget **param_buttons;
+static GtkWidget **conx_buttons;
 static GtkWidget **clear_buttons;
 static GtkWidget **info_buttons;
 static GtkWidget *clear_all_button;
@@ -1046,7 +1047,20 @@ void on_clear_clicked (GtkButton *button, gpointer user_data) {
 }
 
 
-void on_params_clicked (GtkButton *button, gpointer user_data) {
+static void on_datacon_clicked (GtkButton *button, gpointer user_data) {
+  gint idx=GPOINTER_TO_INT(user_data);
+  int modes=rte_getmodespk();
+  gint key=(gint)(idx/modes);
+  gint mode=idx-key*modes;
+
+  //if (datacon_dialog!=NULL) on_datacon_cancel_clicked(NULL,NULL);
+
+  //make_datacon_window(key,mode);
+
+}
+
+
+static void on_params_clicked (GtkButton *button, gpointer user_data) {
   gint idx=GPOINTER_TO_INT(user_data);
   int modes=rte_getmodespk();
   gint key=(gint)(idx/modes);
@@ -1091,8 +1105,7 @@ void on_params_clicked (GtkButton *button, gpointer user_data) {
 }
 
 
-gboolean
-on_rtew_delete_event (GtkWidget *widget, GdkEvent *event, gpointer user_data) {
+static gboolean on_rtew_delete_event (GtkWidget *widget, GdkEvent *event, gpointer user_data) {
 
   if (hash_list!=NULL) {
     g_list_free_strings(hash_list);
@@ -1120,14 +1133,14 @@ on_rtew_delete_event (GtkWidget *widget, GdkEvent *event, gpointer user_data) {
   g_free(type_labels);
   g_free(info_buttons);
   g_free(param_buttons);
+  g_free(conx_buttons);
   g_free(clear_buttons);
   rte_window=NULL;
   return FALSE;
 }
 
 
-void 
-on_rtew_ok_clicked (GtkButton *button, gpointer user_data) {
+static void on_rtew_ok_clicked (GtkButton *button, gpointer user_data) {
   gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
   on_rtew_delete_event (NULL,NULL,NULL);
 }
@@ -1154,22 +1167,25 @@ enum {
 
 
 void fx_changed (GtkComboBox *combo, gpointer user_data) {
+  GtkTreeIter iter1;
+  GtkTreeModel *model;
+
+  weed_plant_t *filter;
+
+  gchar *txt;
+  gchar *tmp;
+  gchar *hashname1;
+  gchar *hashname2=(gchar *)g_object_get_data(G_OBJECT(combo),"hashname");
+
   gint key_mode=GPOINTER_TO_INT(user_data);
   int modes=rte_getmodespk();
   gint key=(gint)(key_mode/modes);
   gint mode=key_mode-key*modes;
+  gint idx=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(combo),"idx"));
 
-  GtkTreeIter iter1;
-  GtkTreeModel *model;
-
-  gchar *hashname1;
-  gchar *hashname2=(gchar *)g_object_get_data(G_OBJECT(combo),"hashname");
   gint error;
-  gchar *tmp;
 
-  int i;
-
-  gchar *txt;
+  register int i;
 
   if (gtk_combo_box_get_active(combo)==-1) return; // -1 is returned after we set our own text (without the type)
 
@@ -1206,6 +1222,14 @@ void fx_changed (GtkComboBox *combo, gpointer user_data) {
     }
     return;
   }
+
+  // set parameters button sensitive/insensitive
+  filter=rte_keymode_get_filter(key+1,mode);
+  if (num_in_params(filter,TRUE,TRUE)>0) gtk_widget_set_sensitive(param_buttons[idx],TRUE);
+  else gtk_widget_set_sensitive(param_buttons[idx],FALSE);
+
+  if ((weed_plant_has_leaf(filter,"out_parameter_templates")&&weed_get_plantptr_value(filter,"out_parameter_templates",&error)!=NULL)||num_alpha_channels(filter,TRUE)>1) gtk_widget_set_sensitive(conx_buttons[idx],TRUE);
+  else gtk_widget_set_sensitive(conx_buttons[idx],FALSE);
 
   // prevents a segfault
   gtk_combo_box_get_active_iter(combo,&iter1);
@@ -1315,20 +1339,11 @@ GtkTreeModel *rte_window_fx_model (void) {
 
 
 GtkWidget * create_rte_window (void) {
-  int i,j,idx;
-
-  gint winsize_h;
-  gint winsize_v;
-
-  gint scr_width,scr_height;
-
   GtkWidget *rte_window;
   GtkWidget *table;
   GtkWidget *hbox;
   GtkWidget *hbox2;
-  GtkWidget *eventbox;
-  GSList *mode_group = NULL;
-  GSList *grab_group = NULL;
+
   GtkWidget *vbox;
   GtkWidget *label;
   GtkWidget *combo;
@@ -1338,13 +1353,26 @@ GtkWidget * create_rte_window (void) {
 
   GtkWidget *scrolledwindow;
 
+  GSList *mode_group = NULL;
+  GSList *grab_group = NULL;
+
   GtkAccelGroup *rtew_accel_group;
+
+  GtkTreeModel *model;
+
+  weed_plant_t *filter;
+
+  gchar *tmp,*tmp2;
 
   int modes=rte_getmodespk();
 
-  gchar *tmp;
+  register int i,j;
+  int idx,error;
 
-  GtkTreeModel *model;
+  gint winsize_h;
+  gint winsize_v;
+
+  gint scr_width,scr_height;
 
   ///////////////////////////////////////////////////////////////////////////
 
@@ -1367,6 +1395,7 @@ GtkWidget * create_rte_window (void) {
   combo_entries=(GtkWidget **)g_malloc((prefs->rte_keys_virtual)*modes*sizeof(GtkWidget *));
   info_buttons=(GtkWidget **)g_malloc((prefs->rte_keys_virtual)*modes*sizeof(GtkWidget *));
   param_buttons=(GtkWidget **)g_malloc((prefs->rte_keys_virtual)*modes*sizeof(GtkWidget *));
+  conx_buttons=(GtkWidget **)g_malloc((prefs->rte_keys_virtual)*modes*sizeof(GtkWidget *));
   clear_buttons=(GtkWidget **)g_malloc((prefs->rte_keys_virtual)*modes*sizeof(GtkWidget *));
   nlabels=(GtkWidget **)g_malloc((prefs->rte_keys_virtual)*modes*sizeof(GtkWidget *));
   type_labels=(GtkWidget **)g_malloc((prefs->rte_keys_virtual)*modes*sizeof(GtkWidget *));
@@ -1387,7 +1416,7 @@ GtkWidget * create_rte_window (void) {
 
   // dummy button for "no grab", we dont show this...there is a button instead
   dummy_radio = gtk_radio_button_new_with_label (grab_group, _("Key grab"));
-  grab_group = gtk_radio_button_group (GTK_RADIO_BUTTON (dummy_radio));
+  grab_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (dummy_radio));
 
   name_list=weed_get_all_names(1);
   name_type_list=weed_get_all_names(2);
@@ -1401,35 +1430,18 @@ GtkWidget * create_rte_window (void) {
 		      (GtkAttachOptions) (GTK_EXPAND | GTK_FILL), 0, 0);
     gtk_container_set_border_width (GTK_CONTAINER (hbox), 12);
     
-    label = gtk_label_new (g_strdup_printf(_("Ctrl-%d"),i+1));
-    if (palette->style&STYLE_1) {
-      gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-    }
-    
+    label = lives_standard_label_new ((tmp=g_strdup_printf(_("Ctrl-%d"),i+1)));
+    g_free(tmp);
+
     gtk_box_pack_start (GTK_BOX (hbox), label, TRUE, FALSE, 0);
 
-    key_checks[i] = gtk_check_button_new ();
-    eventbox=gtk_event_box_new();
-    label=gtk_label_new (_("Key active"));
-
-    gtk_container_add(GTK_CONTAINER(eventbox),label);
-    g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
-		      G_CALLBACK (label_act_toggle),
-		      key_checks[i]);
-
-    if (palette->style&STYLE_1) {
-      gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-      gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-      gtk_widget_modify_bg (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
-    }
-    
     hbox2 = gtk_hbox_new (FALSE, 0);
-    gtk_box_pack_start (GTK_BOX (hbox), hbox2, FALSE, FALSE, 10);
-    gtk_box_pack_start (GTK_BOX (hbox2), key_checks[i], FALSE, FALSE, 10);
-    gtk_box_pack_start (GTK_BOX (hbox2), eventbox, FALSE, FALSE, 10);
-    GTK_WIDGET_SET_FLAGS (key_checks[i], GTK_CAN_DEFAULT|GTK_CAN_FOCUS);
 
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(key_checks[i]),mainw->rte&(GU641<<i));
+    key_checks[i] = lives_standard_check_button_new (_("Key active"),FALSE,LIVES_BOX(hbox2),NULL);
+    
+    gtk_box_pack_start (GTK_BOX (hbox), hbox2, FALSE, FALSE, 10);
+
+    lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(key_checks[i]),mainw->rte&(GU641<<i));
 
     ch_fns[i]=g_signal_connect_after (GTK_OBJECT (key_checks[i]), "toggled",
                       G_CALLBACK (rte_on_off_callback_hook),GINT_TO_POINTER (i+1));
@@ -1439,29 +1451,11 @@ GtkWidget * create_rte_window (void) {
     hbox2 = gtk_hbox_new (FALSE, 0);
     gtk_box_pack_start (GTK_BOX (hbox), hbox2, FALSE, FALSE, 10);
 
-    key_grabs[i]=gtk_radio_button_new(grab_group);
-    grab_group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (key_grabs[i]));
-
-    gtk_box_pack_start (GTK_BOX (hbox2), key_grabs[i], FALSE, FALSE, 10);
-
-    label=gtk_label_new_with_mnemonic (_ ("Key grab"));
-    gtk_label_set_mnemonic_widget (GTK_LABEL (label),key_grabs[i]);
-
-    eventbox=gtk_event_box_new();
-    gtk_container_add(GTK_CONTAINER(eventbox),label);
-    gtk_widget_set_tooltip_text( eventbox, _("Grab keyboard for this effect key"));
-    lives_tooltips_copy(key_grabs[i],eventbox);
-    g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
-		      G_CALLBACK (label_act_toggle),
-		      key_grabs[i]);
-    if (palette->style&STYLE_1) {
-      gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-      gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-      gtk_widget_modify_bg (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
-    }
-    gtk_box_pack_start (GTK_BOX (hbox2), eventbox, FALSE, FALSE, 10);
-
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(key_grabs[i]),mainw->rte_keys==i);
+    key_grabs[i]=lives_standard_radio_button_new((tmp=g_strdup(_ ("Key grab"))),FALSE,grab_group,LIVES_BOX(hbox2),
+						 (tmp2=g_strdup(_("Grab keyboard for this effect key"))));
+    g_free(tmp); g_free(tmp2);
+    grab_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (key_grabs[i]));
+    lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(key_grabs[i]),mainw->rte_keys==i);
 
     gr_fns[i]=g_signal_connect_after (GTK_OBJECT (key_grabs[i]), "toggled",
 				      G_CALLBACK (grabkeys_callback_hook),GINT_TO_POINTER (i));
@@ -1482,39 +1476,19 @@ GtkWidget * create_rte_window (void) {
       hbox2 = gtk_hbox_new (FALSE, 0);
       gtk_box_pack_start (GTK_BOX (hbox), hbox2, FALSE, FALSE, 10);
       
-      mode_radios[idx]=gtk_radio_button_new(mode_group);
-      mode_group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (mode_radios[idx]));
-      
-      gtk_box_pack_start (GTK_BOX (hbox2), mode_radios[idx], FALSE, FALSE, 10);
+      mode_radios[idx]=lives_standard_radio_button_new(_ ("Mode active"),FALSE,mode_group,LIVES_BOX(hbox2),NULL);
+      mode_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (mode_radios[idx]));
 
-      label=gtk_label_new_with_mnemonic (_ ("Mode active"));
-      gtk_label_set_mnemonic_widget (GTK_LABEL (label),mode_radios[idx]);
-
-      eventbox=gtk_event_box_new();
-      gtk_container_add(GTK_CONTAINER(eventbox),label);
-      g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
-			G_CALLBACK (label_act_toggle),
-			mode_radios[idx]);
-      if (palette->style&STYLE_1) {
-	gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-	gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-	gtk_widget_modify_bg (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
-      }
-      gtk_box_pack_start (GTK_BOX (hbox2), eventbox, FALSE, FALSE, 10);
-
-
-      if (rte_key_getmode(i+1)==j) gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(mode_radios[idx]),TRUE);
+      if (rte_key_getmode(i+1)==j) lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(mode_radios[idx]),TRUE);
 
       mode_ra_fns[idx]=g_signal_connect_after (GTK_OBJECT (mode_radios[idx]), "toggled",
 					       G_CALLBACK (rtemode_callback_hook),GINT_TO_POINTER (idx));
 
-      type_labels[idx] = gtk_label_new ("");
-      if (palette->style&STYLE_1) {
-	gtk_widget_modify_fg(type_labels[idx], GTK_STATE_NORMAL, &palette->normal_fore);
-      }
+      type_labels[idx] = lives_standard_label_new ("");
 
       info_buttons[idx] = gtk_button_new_with_label (_("Info"));
       param_buttons[idx] = gtk_button_new_with_label (_("Set Parameters"));
+      conx_buttons[idx] = gtk_button_new_with_label (_("Set Connections"));
       clear_buttons[idx] = gtk_button_new_with_label (_("Clear"));
 
       vbox = gtk_vbox_new (FALSE, 15);
@@ -1524,10 +1498,7 @@ GtkWidget * create_rte_window (void) {
       hbox = gtk_hbox_new (FALSE, 12);
       gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 0);
 
-      nlabels[idx] = gtk_label_new (_("Effect name:"));
-      if (palette->style&STYLE_1) {
-	gtk_widget_modify_fg(nlabels[idx], GTK_STATE_NORMAL, &palette->normal_fore);
-      }
+      nlabels[idx] = lives_standard_label_new (_("Effect name:"));
 
       gtk_box_pack_start (GTK_BOX (hbox), nlabels[idx], FALSE, FALSE, 0);
 
@@ -1544,6 +1515,7 @@ GtkWidget * create_rte_window (void) {
       lives_combo_set_entry_text_column(LIVES_COMBO(combo),NAME_TYPE_COLUMN);
 
       g_object_set_data (G_OBJECT(combo), "hashname", (gpointer)g_strdup(""));
+      g_object_set_data (G_OBJECT(combo), "idx", GINT_TO_POINTER(idx));
       gtk_box_pack_start (GTK_BOX (hbox), combo, TRUE, TRUE, 0);
 
 
@@ -1568,13 +1540,27 @@ GtkWidget * create_rte_window (void) {
 
       g_signal_connect (GTK_OBJECT (param_buttons[idx]), "clicked",
 			G_CALLBACK (on_params_clicked),GINT_TO_POINTER (idx));
+
+      g_signal_connect (GTK_OBJECT (param_buttons[idx]), "clicked",
+			G_CALLBACK (on_datacon_clicked),GINT_TO_POINTER (idx));
       
       type_label_set_text(i,j);
 
       gtk_box_pack_start (GTK_BOX (hbox), type_labels[idx], FALSE, FALSE, 0);
-      gtk_box_pack_start (GTK_BOX (hbox), info_buttons[idx], FALSE, FALSE, 0);
-      gtk_box_pack_start (GTK_BOX (hbox), param_buttons[idx], FALSE, FALSE, 0);
-      gtk_box_pack_start (GTK_BOX (hbox), clear_buttons[idx], FALSE, FALSE, 0);
+      gtk_box_pack_end (GTK_BOX (hbox), info_buttons[idx], FALSE, FALSE, 0);
+      gtk_box_pack_end (GTK_BOX (hbox), conx_buttons[idx], FALSE, FALSE, 0);
+      gtk_box_pack_end (GTK_BOX (hbox), param_buttons[idx], FALSE, FALSE, 0);
+      gtk_box_pack_end (GTK_BOX (hbox), clear_buttons[idx], FALSE, FALSE, 0);
+
+      filter=rte_keymode_get_filter(i+1,j);
+
+      if (num_in_params(filter,TRUE,TRUE)>0) gtk_widget_set_sensitive(param_buttons[idx],TRUE);
+      else gtk_widget_set_sensitive(param_buttons[idx],FALSE);
+
+      if ((weed_plant_has_leaf(filter,"out_parameter_templates")&&weed_get_plantptr_value(filter,"out_parameter_templates",&error)!=NULL)||num_alpha_channels(filter,TRUE)>1) gtk_widget_set_sensitive(conx_buttons[idx],TRUE);
+      else gtk_widget_set_sensitive(conx_buttons[idx],FALSE);
+
+
 
       }
   }
@@ -1715,10 +1701,13 @@ void rtew_set_mode_radio (gint key, gint mode) {
 
 
 void redraw_pwindow (gint key, gint mode) {
-  gint keyw=0,modew=0;
   GList *child_list;
-  int i;
   lives_rfx_t *rfx;
+
+  GtkWidget *action_area;
+
+  gint keyw=0,modew=0;
+  int i;
 
   if (fx_dialog[1]!=NULL) {
     rfx=(lives_rfx_t *)g_object_get_data(G_OBJECT(fx_dialog[1]),"rfx");
@@ -1730,10 +1719,11 @@ void redraw_pwindow (gint key, gint mode) {
       // rip out the contents
       if (mainw->invis==NULL) mainw->invis=gtk_vbox_new(FALSE,0);
       child_list=gtk_container_get_children(GTK_CONTAINER(lives_dialog_get_content_area(GTK_DIALOG(fx_dialog[1]))));
-      gtk_container_set_focus_child(GTK_CONTAINER(GTK_DIALOG(fx_dialog[1])->action_area),NULL);
+      action_area=lives_dialog_get_action_area(LIVES_DIALOG(fx_dialog[1]));
+      gtk_container_set_focus_child(GTK_CONTAINER(action_area),NULL);
       for (i=0;i<g_list_length(child_list);i++) {
 	GtkWidget *widget=(GtkWidget *)g_list_nth_data(child_list,i);
-	if (widget!=GTK_DIALOG (fx_dialog[1])->action_area) {
+	if (widget!=action_area) {
 	  // we have to do this, because using gtk_widget_destroy() here 
 	  // can causes a crash [bug in gtk+ ???]
 	  gtk_widget_reparent (widget,mainw->invis);
@@ -1872,7 +1862,8 @@ void rte_reset_defs_clicked (GtkButton *button, lives_rfx_t *rfx) {
   weed_plant_t *filter,*inst;
 
   GList *child_list;
-  GtkWidget *pbox,*fxdialog,*cancelbutton;
+
+  GtkWidget *pbox,*fxdialog,*cancelbutton,*action_area;
 
   int error;
   int nchans;
@@ -1972,9 +1963,11 @@ void rte_reset_defs_clicked (GtkButton *button, lives_rfx_t *rfx) {
   if (mainw->invis==NULL) mainw->invis=gtk_vbox_new(FALSE,0);
   child_list=gtk_container_get_children(GTK_CONTAINER(lives_dialog_get_content_area(GTK_DIALOG(fxdialog))));
 
+  action_area=lives_dialog_get_action_area(LIVES_DIALOG (fxdialog));
+
   for (i=0;i<g_list_length(child_list);i++) {
     GtkWidget *widget=(GtkWidget *)g_list_nth_data(child_list,i);
-    if (widget!=GTK_DIALOG (fxdialog)->action_area) {
+    if (widget!=action_area) {
       // we have to do this, because using gtk_widget_destroy() here 
       // can causes a crash [bug in gtk+ ???]
       gtk_widget_reparent (widget,mainw->invis);
@@ -1989,8 +1982,6 @@ void rte_reset_defs_clicked (GtkButton *button, lives_rfx_t *rfx) {
   gtk_widget_queue_draw(fxdialog);
 
 }
-
-
 
 
 void load_default_keymap(void) {

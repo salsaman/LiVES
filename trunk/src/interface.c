@@ -79,9 +79,7 @@ call_cancel                  (GtkWidget       *widget,
 
 
 
-GtkWidget*
-create_fileselection (const gchar *title, gint preview_type, gpointer free_on_cancel)
-{
+GtkWidget *create_fileselection (const gchar *title, gint preview_type, gpointer free_on_cancel) {
   // 1 - video and audio open
   // preview type 2 is export audio
   // preview_type 3 was save_file, no longer used (deprecated)
@@ -141,6 +139,8 @@ create_fileselection (const gchar *title, gint preview_type, gpointer free_on_ca
   gtk_widget_show_all (fileselection);
   return fileselection;
 }
+
+
 
 
 
@@ -291,7 +291,7 @@ xprocess * create_processing (const gchar *text) {
   GtkWidget *dialog_vbox1;
   GtkWidget *vbox2;
   GtkWidget *vbox3;
-  GtkWidget *dialog_action_area1;
+  GtkWidget *dialog_action_area;
   xprocess *procw=(xprocess*)(g_malloc(sizeof(xprocess)));
   gchar tmp_label[256];
 
@@ -417,9 +417,9 @@ xprocess * create_processing (const gchar *text) {
   }
 
 
-  dialog_action_area1 = GTK_DIALOG (procw->processing)->action_area;
-  gtk_widget_show (dialog_action_area1);
-  gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area1), GTK_BUTTONBOX_END);
+  dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (procw->processing));
+  gtk_widget_show (dialog_action_area);
+  gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area), GTK_BUTTONBOX_END);
 
   procw->stop_button = gtk_button_new_with_mnemonic (_ ("_Enough"));
   procw->preview_button = gtk_button_new_with_mnemonic (_ ("_Preview"));
@@ -956,7 +956,7 @@ create_encoder_prep_dialog (const gchar *text1, const gchar *text2, gboolean opt
   }
 
 
-  dialog_action_area = GTK_DIALOG (dialog)->action_area;
+  dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (dialog));
   gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area), GTK_BUTTONBOX_END);
 
   if (text2!=NULL) {
@@ -994,7 +994,7 @@ create_dialog3 (const gchar *text, gboolean is_blocking, gint mask) {
   GtkWidget *dialog3;
   GtkWidget *dialog_vbox3;
   GtkWidget *info_text;
-  GtkWidget *dialog_action_area3;
+  GtkWidget *dialog_action_area;
   GtkWidget *info_ok_button;
   GtkWidget *details_button;
   GtkWidget *checkbutton;
@@ -1067,10 +1067,9 @@ create_dialog3 (const gchar *text, gboolean is_blocking, gint mask) {
                       GINT_TO_POINTER(mask));
   }
 
-  dialog_action_area3 = GTK_DIALOG (dialog3)->action_area;
-  gtk_widget_show (dialog_action_area3);
-  gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area3), GTK_BUTTONBOX_END);
-
+  dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (dialog3));
+  gtk_widget_show (dialog_action_area);
+  gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area), GTK_BUTTONBOX_END);
 
   if (mainw->iochan!=NULL) {
     details_button = gtk_button_new_with_mnemonic(_("Show _Details"));
@@ -1163,7 +1162,7 @@ text_window *create_text_window (const gchar *title, const gchar *text, GtkTextB
   }
 
   if (mytext!=NULL||mainw->iochan!=NULL) {
-    dialog_action_area = GTK_DIALOG (textwindow->dialog)->action_area;
+    dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (textwindow->dialog));
     gtk_widget_show (dialog_action_area);
     gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area), GTK_BUTTONBOX_END);
 
@@ -1270,7 +1269,7 @@ create_insert_dialog (void)
   GtkWidget *vseparator1;
   GtkWidget *vseparator2;
   GtkWidget *hseparator1;
-  GtkWidget *dialog_action_area3;
+  GtkWidget *dialog_action_area;
   GtkWidget *cancelbutton1;
   GtkWidget *okbutton1;
   GtkAccelGroup *accel_group=GTK_ACCEL_GROUP(gtk_accel_group_new ());
@@ -1511,9 +1510,9 @@ create_insert_dialog (void)
                     (GtkAttachOptions) (GTK_FILL),
                     (GtkAttachOptions) (GTK_FILL), 0, 0);
 
-  dialog_action_area3 = GTK_DIALOG (insertw->insert_dialog)->action_area;
-  gtk_widget_show (dialog_action_area3);
-  gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area3), GTK_BUTTONBOX_END);
+  dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (insertw->insert_dialog));
+  gtk_widget_show (dialog_action_area);
+  gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area), GTK_BUTTONBOX_END);
 
   cancelbutton1 = gtk_button_new_from_stock ("gtk-cancel");
   gtk_widget_show (cancelbutton1);
@@ -1573,7 +1572,7 @@ create_opensel_dialog (void)
   GtkWidget *spinbutton23;
   GObject *spinbutton24_adj;
   GtkWidget *spinbutton24;
-  GtkWidget *dialog_action_area9;
+  GtkWidget *dialog_action_area;
   GtkWidget *cancelbutton7;
   GtkWidget *okbutton6;
 
@@ -1644,9 +1643,9 @@ create_opensel_dialog (void)
   gtk_spin_button_set_numeric (GTK_SPIN_BUTTON (spinbutton24), TRUE);
 
 
-  dialog_action_area9 = GTK_DIALOG (opensel_dialog)->action_area;
-  gtk_widget_show (dialog_action_area9);
-  gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area9), GTK_BUTTONBOX_END);
+  dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (opensel_dialog));
+  gtk_widget_show (dialog_action_area);
+  gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area), GTK_BUTTONBOX_END);
 
   cancelbutton7 = gtk_button_new_from_stock ("gtk-cancel");
   gtk_widget_show (cancelbutton7);
@@ -1889,7 +1888,7 @@ _entryw* create_location_dialog (int type) {
 
 
 
-  dialog_action_area = GTK_DIALOG (locw->dialog)->action_area;
+  dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (locw->dialog));
   gtk_widget_show (dialog_action_area);
   gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area), GTK_BUTTONBOX_END);
 
@@ -2140,7 +2139,7 @@ _entryw* create_rename_dialog (gint type) {
 
   gtk_entry_set_activates_default (GTK_ENTRY (renamew->entry), TRUE);
 
-  dialog_action_area = GTK_DIALOG (renamew->dialog)->action_area;
+  dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (renamew->dialog));
   gtk_widget_show (dialog_action_area);
   gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area), GTK_BUTTONBOX_END);
 
@@ -2318,7 +2317,7 @@ GtkWidget *create_combo_dialog (gint type, gpointer user_data) {
     add_deinterlace_checkbox(GTK_BOX(dialog_vbox));
   }
 
-  dialog_action_area = GTK_DIALOG (combo_dialog)->action_area;
+  dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (combo_dialog));
   gtk_widget_show (dialog_action_area);
   gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area), GTK_BUTTONBOX_END);
 
@@ -2718,7 +2717,7 @@ create_cdtrack_dialog (gint type, gpointer user_data)
 
   }
 
-  dialog_action_area = GTK_DIALOG (cd_dialog)->action_area;
+  dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (cd_dialog));
   gtk_widget_show (dialog_action_area);
   gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area), GTK_BUTTONBOX_END);
 
@@ -2806,7 +2805,7 @@ aud_dialog_t *create_audfade_dialog (gint type) {
   GtkWidget *label61;
   GtkWidget *label62;
   GObject *spinbutton35_adj;
-  GtkWidget *dialog_action_area11;
+  GtkWidget *dialog_action_area;
   GtkWidget *cancelbutton9;
   GtkWidget *okbutton8;
   gchar *label_text=NULL,*label_text2=NULL;
@@ -2926,9 +2925,9 @@ aud_dialog_t *create_audfade_dialog (gint type) {
 
   add_fill_to_box(GTK_BOX(hbox));
 
-  dialog_action_area11 = GTK_DIALOG (audd->dialog)->action_area;
-  gtk_widget_show (dialog_action_area11);
-  gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area11), GTK_BUTTONBOX_END);
+  dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (audd->dialog));
+  gtk_widget_show (dialog_action_area);
+  gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area), GTK_BUTTONBOX_END);
 
   cancelbutton9 = gtk_button_new_from_stock ("gtk-cancel");
   gtk_widget_show (cancelbutton9);
@@ -2974,7 +2973,7 @@ create_rp_dialog (void)
   GtkWidget *hbox23;
   GtkWidget *label91;
   GObject *spinbutton52_adj;
-  GtkWidget *dialog_action_area14;
+  GtkWidget *dialog_action_area;
   GtkWidget *cancelbutton12;
   GtkWidget *okbutton11;
 
@@ -3122,9 +3121,9 @@ create_rp_dialog (void)
   gtk_widget_show (xranw->maxsize);
   gtk_box_pack_start (GTK_BOX (hbox23), xranw->maxsize, FALSE, FALSE, 10);
 
-  dialog_action_area14 = GTK_DIALOG (xranw->rp_dialog)->action_area;
-  gtk_widget_show (dialog_action_area14);
-  gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area14), GTK_BUTTONBOX_END);
+  dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (xranw->rp_dialog));
+  gtk_widget_show (dialog_action_area);
+  gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area), GTK_BUTTONBOX_END);
 
   cancelbutton12 = gtk_button_new_from_stock ("gtk-cancel");
   gtk_widget_show (cancelbutton12);
@@ -3341,7 +3340,7 @@ _commentsw* create_comments_dialog (file *sfile, gchar *filename) {
     }
   }
 
-  dialog_action_area = GTK_DIALOG (commentsw->comments_dialog)->action_area;
+  dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (commentsw->comments_dialog));
   gtk_widget_show (dialog_action_area);
   gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area), GTK_BUTTONBOX_END);
 
@@ -3362,24 +3361,38 @@ _commentsw* create_comments_dialog (file *sfile, gchar *filename) {
 }
 
 
+static void set_child_colour(GtkWidget *widget, gpointer data) {
+  GtkWidget *parent;
+
+  if (GTK_IS_BUTTON(widget)) return;
+  if (GTK_IS_CONTAINER(widget)) {
+    gtk_container_forall(GTK_CONTAINER(widget),set_child_colour,NULL);
+    return;
+  }
+
+  parent=lives_widget_get_parent(widget);
+
+  if (GTK_IS_LABEL(widget)&&GTK_IS_BOX(parent)) {
+    gtk_widget_modify_fg(widget, GTK_STATE_NORMAL, &palette->normal_fore);
+  }
+}
 
 
 
-gchar *choose_file(gchar *dir, gchar *fname, gchar **filt, GtkFileChooserAction act, const char *title, 
-		   GtkWidget *extra_widget) {
+gchar *choose_file(gchar *dir, gchar *fname, gchar **filt, GtkFileChooserAction act, const char *title, GtkWidget *extra_widget) {
   // new style file chooser
 
   // in/out values are in utf8 encoding
 
-  GList *children;
-
   GtkWidget *chooser;
   GtkFileFilter *filter;
-  gchar *filename;
-  int i;
-  gint response;
+
+  gchar *filename=NULL;
   gchar *mytitle;
   gchar *tmp;
+
+  int i;
+  gint response;
 
   if (title==NULL) {
     if (act==GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER) {
@@ -3406,6 +3419,7 @@ gchar *choose_file(gchar *dir, gchar *fname, gchar **filt, GtkFileChooserAction 
   g_free(mytitle);
 
   gtk_file_chooser_set_local_only(GTK_FILE_CHOOSER(chooser),TRUE);
+
   if (dir!=NULL) {
     gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(chooser),(tmp=g_filename_from_utf8(dir,-1,NULL,NULL,NULL)));
     gtk_file_chooser_add_shortcut_folder(GTK_FILE_CHOOSER(chooser),tmp,NULL);
@@ -3415,13 +3429,11 @@ gchar *choose_file(gchar *dir, gchar *fname, gchar **filt, GtkFileChooserAction 
   gtk_file_chooser_set_do_overwrite_confirmation(GTK_FILE_CHOOSER(chooser),TRUE);
 #endif
   if (palette->style&STYLE_1) {
+
     gtk_widget_modify_bg(chooser, GTK_STATE_NORMAL, &palette->normal_back);
-    children=gtk_container_get_children(GTK_CONTAINER(chooser));
-    while (children!=NULL) {
-      GtkWidget *child=(GtkWidget *)children->data;
-      gtk_widget_modify_fg(child, GTK_STATE_NORMAL, &palette->normal_fore);
-      children=children->next;
-    }
+
+    gtk_container_forall(GTK_CONTAINER(chooser),set_child_colour,NULL);
+
   }
 
   if (filt!=NULL) {
@@ -3442,22 +3454,79 @@ gchar *choose_file(gchar *dir, gchar *fname, gchar **filt, GtkFileChooserAction 
     }
   }
 
-  if (extra_widget!=NULL) gtk_file_chooser_set_extra_widget(GTK_FILE_CHOOSER(chooser),extra_widget);
+  gtk_container_set_border_width (GTK_CONTAINER (chooser), 10);
+  gtk_window_set_position (GTK_WINDOW (chooser), GTK_WIN_POS_CENTER_ALWAYS);
+  gtk_window_set_modal (GTK_WINDOW (chooser), TRUE);
+
+  if (prefs->show_gui) {
+    if (mainw->multitrack==NULL) gtk_window_set_transient_for(GTK_WINDOW(chooser),GTK_WINDOW(mainw->LiVES));
+    else gtk_window_set_transient_for(GTK_WINDOW(chooser),GTK_WINDOW(mainw->multitrack->window));
+  }
+
+  if (prefs->gui_monitor!=0) {
+   gint xcen=mainw->mgeom[prefs->gui_monitor-1].x+(mainw->mgeom[prefs->gui_monitor-1].width-chooser->allocation.width)/2;
+   gint ycen=mainw->mgeom[prefs->gui_monitor-1].y+(mainw->mgeom[prefs->gui_monitor-1].height-chooser->allocation.height)/2;
+   gtk_window_move(GTK_WINDOW(chooser),xcen,ycen);
+  }
 
   gtk_widget_show(chooser);
 
-  if ((response=gtk_dialog_run(GTK_DIALOG(chooser)))==GTK_RESPONSE_CANCEL) {
-    gtk_widget_destroy(chooser);
-    return NULL;
-  }
+  gtk_widget_grab_focus (chooser);
 
-  filename=g_filename_to_utf8((tmp=gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(chooser))),-1,NULL,NULL,NULL);
-  g_free(tmp);
+  if (extra_widget==mainw->LiVES) return (gchar *)chooser; // kludge to allow custom adding of extra widgets
+
+  if (extra_widget!=NULL) gtk_file_chooser_set_extra_widget(GTK_FILE_CHOOSER(chooser),extra_widget);
+  
+  if ((response=gtk_dialog_run(GTK_DIALOG(chooser)))!=GTK_RESPONSE_CANCEL) {
+    filename=g_filename_to_utf8((tmp=gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(chooser))),-1,NULL,NULL,NULL);
+    g_free(tmp);
+  }
 
   gtk_widget_destroy(chooser);
 
   return filename;
 
+}
+
+
+
+
+gchar *choose_file_with_preview (const gchar *title, gchar *dir, GtkFileChooserAction act, gint preview_type) {
+  // 0 - import/export script (rfxbuilder: remove)
+
+  // 1 - video and audio open
+  // preview type 2 is import audio
+
+  GtkWidget *chooser;
+
+  gchar titles[256];
+
+  gchar *filename=NULL,*tmp;
+
+  gint response;
+
+  g_snprintf(titles,256,_("LiVES: - %s"),title);
+
+  chooser=(GtkWidget *)choose_file(dir,NULL,NULL,act,titles,mainw->LiVES);
+  
+  widget_add_preview(GTK_BOX (lives_dialog_get_content_area(LIVES_DIALOG(chooser))),
+		     GTK_BOX (lives_dialog_get_action_area(LIVES_DIALOG(chooser))),
+		     GTK_BOX (lives_dialog_get_content_area(LIVES_DIALOG(chooser))),
+		     preview_type);
+
+
+  if (prefs->fileselmax) gtk_window_maximize (GTK_WINDOW(chooser));
+
+  if ((response=gtk_dialog_run(GTK_DIALOG(chooser)))!=GTK_RESPONSE_CANCEL) {
+    filename=g_filename_to_utf8((tmp=gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(chooser))),-1,NULL,NULL,NULL);
+    g_free(tmp);
+  }
+
+  gtk_widget_destroy(chooser);
+
+  if (filename==NULL) on_cancel_button1_clicked(NULL,NULL);
+
+  return filename;
 }
 
 
@@ -3602,7 +3671,7 @@ _entryw* create_cds_dialog (gint type) {
     add_warn_check(GTK_BOX(dialog_vbox),WARN_MASK_EXIT_MT);
   }
 
-  dialog_action_area = GTK_DIALOG (cdsw->dialog)->action_area;
+  dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (cdsw->dialog));
   gtk_widget_show (dialog_action_area);
   gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area), GTK_BUTTONBOX_END);
 

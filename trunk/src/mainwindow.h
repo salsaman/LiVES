@@ -678,6 +678,12 @@ typedef struct {
   GtkWidget *vj_reset;
   GtkWidget *mt_menu;
   GtkWidget *troubleshoot;
+  GtkWidget *export_custom_rfx;
+  GtkWidget *delete_custom_rfx;
+  GtkWidget *edit_test_rfx;
+  GtkWidget *rename_test_rfx;
+  GtkWidget *delete_test_rfx;
+  GtkWidget *promote_test_rfx;
 
   /// for the fileselection preview
   GtkWidget *fs_playarea;

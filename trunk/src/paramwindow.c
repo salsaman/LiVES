@@ -849,19 +849,12 @@ void on_render_fx_pre_activate (GtkMenuItem *menuitem, lives_rfx_t *rfx) {
     }
   }
 
-  fx_dialog[n] = gtk_dialog_new ();
+
   txt=g_strdup_printf ("LiVES: - %s",_(rfx->menu_text));
-  gtk_window_set_title (GTK_WINDOW (fx_dialog[n]), txt);
+  fx_dialog[n] = lives_standard_dialog_new (txt,FALSE);
   g_free (txt);
 
-  if (prefs->gui_monitor!=0) {
-    gtk_window_set_screen(GTK_WINDOW(fx_dialog[n]),mainw->mgeom[prefs->gui_monitor-1].screen);
-  }
-
   if (rfx->status==RFX_STATUS_WEED&&rfx->is_template) is_defaults=TRUE;
-
-  gtk_container_set_border_width (GTK_CONTAINER (fx_dialog[n]), 20);
-  gtk_window_set_position (GTK_WINDOW (fx_dialog[n]), GTK_WIN_POS_CENTER_ALWAYS);
 
   if (menuitem!=NULL) {
     // activated from the menu for a rendered effect
@@ -872,12 +865,7 @@ void on_render_fx_pre_activate (GtkMenuItem *menuitem, lives_rfx_t *rfx) {
     gtk_window_set_modal (GTK_WINDOW (fx_dialog[n]), TRUE);
   }
 
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_bg(fx_dialog[n], GTK_STATE_NORMAL, &palette->normal_back);
-    gtk_dialog_set_has_separator(GTK_DIALOG(fx_dialog[n]),FALSE);
-  }
-
-  pbox = top_dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(fx_dialog[n]));
+  pbox = top_dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(fx_dialog[n]));
 
   g_object_set_data(G_OBJECT(fx_dialog[n]),"rfx",rfx);
 
@@ -910,7 +898,7 @@ void on_render_fx_pre_activate (GtkMenuItem *menuitem, lives_rfx_t *rfx) {
 
   has_param=make_param_box(GTK_VBOX (pbox), rfx);
 
-  dialog_action_area = GTK_DIALOG (fx_dialog[n])->action_area;
+  dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (fx_dialog[n]));
   gtk_container_set_border_width (GTK_CONTAINER (dialog_action_area), 80);
   gtk_box_set_spacing (GTK_BOX (dialog_action_area),10);
   gtk_button_box_set_child_size (GTK_BUTTON_BOX (dialog_action_area), DEF_BUTTON_WIDTH, -1);
@@ -1458,17 +1446,17 @@ gboolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, gboolean ad
       if (group!=NULL) rbgroup=group->rbgroup;
       else rbgroup=NULL;
 
-      radiobutton=lives_standard_radio_button_new(name,use_mnemonic,rbgroup,(LiVESBox *)hbox,param->desc);
+      radiobutton=lives_standard_radio_button_new(name,use_mnemonic,rbgroup,LIVES_BOX(hbox),param->desc);
 
       if (group==NULL) {
 	if (rfx->status==RFX_STATUS_WEED) {
 	  usrgrp_to_livesgrp[1]=add_usrgrp_to_livesgrp (usrgrp_to_livesgrp[1], 
-							gtk_radio_button_get_group (GTK_RADIO_BUTTON (radiobutton)), 
+							lives_radio_button_get_group (LIVES_RADIO_BUTTON (radiobutton)), 
 							param->group);
 	}
 	else {
 	  usrgrp_to_livesgrp[0]=add_usrgrp_to_livesgrp (usrgrp_to_livesgrp[0], 
-							gtk_radio_button_get_group (GTK_RADIO_BUTTON (radiobutton)), 
+							lives_radio_button_get_group (LIVES_RADIO_BUTTON (radiobutton)), 
 							param->group);
 	}
       }
@@ -1476,7 +1464,7 @@ gboolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, gboolean ad
       group=get_group(rfx,param);
 
       if (group!=NULL) {
-	group->rbgroup=gtk_radio_button_get_group (GTK_RADIO_BUTTON (radiobutton));
+	group->rbgroup=lives_radio_button_get_group (GTK_RADIO_BUTTON (radiobutton));
 	if (get_bool_param(param->value)) {
 	  group->active_param=pnum+1;
 	}

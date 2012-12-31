@@ -123,6 +123,7 @@ void make_custom_submenus(void) {
   mainw->custom_gens_submenu = gtk_menu_item_new_with_mnemonic (_ ("_Custom Generators"));
   mainw->custom_effects_submenu = gtk_menu_item_new_with_mnemonic (_ ("_Custom Effects"));
   mainw->custom_utilities_submenu = gtk_menu_item_new_with_mnemonic (_("Custom _Utilities"));
+
 }
 
 
@@ -216,14 +217,8 @@ create_LiVES (void)
   GObject *spinbutton_pb_fps_adj;
 
   GtkWidget *new_test_rfx;
-  GtkWidget *edit_test_rfx;
-  GtkWidget *rename_test_rfx;
-  GtkWidget *delete_test_rfx;
-  GtkWidget *promote_test_rfx;
   GtkWidget *copy_rfx;
   GtkWidget *import_custom_rfx;
-  GtkWidget *export_custom_rfx;
-  GtkWidget *delete_custom_rfx;
   GtkWidget *rebuild_rfx;
   GtkWidget *assign_rte_keys;
 
@@ -1063,9 +1058,9 @@ create_LiVES (void)
   mainw->utilities_submenu = gtk_menu_item_new_with_mnemonic (_("_Utilities"));
   gtk_widget_show (mainw->utilities_submenu);
 
-  mainw->custom_tools_menu=NULL;
-
   mainw->custom_utilities_menu=NULL;
+
+  mainw->custom_tools_submenu = gtk_menu_item_new_with_mnemonic (_("Custom _Tools"));
 
   mainw->custom_tools_separator = gtk_menu_item_new ();
   gtk_widget_set_sensitive (mainw->custom_tools_separator, FALSE);
@@ -1074,14 +1069,11 @@ create_LiVES (void)
   mainw->gens_submenu = gtk_menu_item_new_with_mnemonic (_("_Generate"));
   gtk_widget_show (mainw->gens_submenu);
 
-  mainw->custom_gens_menu=NULL;
-
   // add RFX plugins
   mainw->rte_separator=NULL;
   mainw->custom_gens_menu=NULL;
   mainw->rendered_fx=NULL;
-
-  mainw->custom_tools_submenu = gtk_menu_item_new_with_mnemonic (_("Custom _Tools"));
+  mainw->custom_tools_menu=NULL;
 
   if (!mainw->foreign&&capable->smog_version_correct) {
     splash_msg(_("Loading rendered effect plugins..."),.2);
@@ -1411,17 +1403,17 @@ create_LiVES (void)
   gtk_widget_show(copy_rfx);
   gtk_container_add (GTK_CONTAINER (rfx_menu), copy_rfx);
 
-  edit_test_rfx=gtk_menu_item_new_with_mnemonic (_ ("_Edit Test RFX Script..."));
-  gtk_widget_show(edit_test_rfx);
-  gtk_container_add (GTK_CONTAINER (rfx_menu), edit_test_rfx);
+  mainw->edit_test_rfx=gtk_menu_item_new_with_mnemonic (_ ("_Edit Test RFX Script..."));
+  gtk_widget_show(mainw->edit_test_rfx);
+  gtk_container_add (GTK_CONTAINER (rfx_menu), mainw->edit_test_rfx);
 
-  rename_test_rfx=gtk_menu_item_new_with_mnemonic (_ ("Rena_me Test RFX Script..."));
-  gtk_widget_show(rename_test_rfx);
-  gtk_container_add (GTK_CONTAINER (rfx_menu), rename_test_rfx);
+  mainw->rename_test_rfx=gtk_menu_item_new_with_mnemonic (_ ("Rena_me Test RFX Script..."));
+  gtk_widget_show(mainw->rename_test_rfx);
+  gtk_container_add (GTK_CONTAINER (rfx_menu), mainw->rename_test_rfx);
 
-  delete_test_rfx=gtk_menu_item_new_with_mnemonic (_ ("_Delete Test RFX Script..."));
-  gtk_widget_show(delete_test_rfx);
-  gtk_container_add (GTK_CONTAINER (rfx_menu), delete_test_rfx);
+  mainw->delete_test_rfx=gtk_menu_item_new_with_mnemonic (_ ("_Delete Test RFX Script..."));
+  gtk_widget_show(mainw->delete_test_rfx);
+  gtk_container_add (GTK_CONTAINER (rfx_menu), mainw->delete_test_rfx);
 
   separator6 = gtk_menu_item_new ();
   gtk_widget_show (separator6);
@@ -1431,9 +1423,9 @@ create_LiVES (void)
   gtk_widget_show(mainw->run_test_rfx_submenu);
   gtk_container_add (GTK_CONTAINER (rfx_menu), mainw->run_test_rfx_submenu);
   
-  promote_test_rfx=gtk_menu_item_new_with_mnemonic (_ ("_Promote Test Rendered Effect/Tool/Generator..."));
-  gtk_widget_show(promote_test_rfx);
-  gtk_container_add (GTK_CONTAINER (rfx_menu), promote_test_rfx);
+  mainw->promote_test_rfx=gtk_menu_item_new_with_mnemonic (_ ("_Promote Test Rendered Effect/Tool/Generator..."));
+  gtk_widget_show(mainw->promote_test_rfx);
+  gtk_container_add (GTK_CONTAINER (rfx_menu), mainw->promote_test_rfx);
 
   separator6 = gtk_menu_item_new ();
   gtk_widget_show (separator6);
@@ -1444,13 +1436,13 @@ create_LiVES (void)
   gtk_widget_show(import_custom_rfx);
   gtk_container_add (GTK_CONTAINER (rfx_menu), import_custom_rfx);
 
-  export_custom_rfx=gtk_menu_item_new_with_mnemonic (_ ("E_xport Custom RFX script..."));
-  gtk_widget_show(export_custom_rfx);
-  gtk_container_add (GTK_CONTAINER (rfx_menu), export_custom_rfx);
+  mainw->export_custom_rfx=gtk_menu_item_new_with_mnemonic (_ ("E_xport Custom RFX script..."));
+  gtk_widget_show(mainw->export_custom_rfx);
+  gtk_container_add (GTK_CONTAINER (rfx_menu), mainw->export_custom_rfx);
 
-  delete_custom_rfx=gtk_menu_item_new_with_mnemonic (_ ("De_lete Custom RFX Script..."));
-  gtk_widget_show(delete_custom_rfx);
-  gtk_container_add (GTK_CONTAINER (rfx_menu), delete_custom_rfx);
+  mainw->delete_custom_rfx=gtk_menu_item_new_with_mnemonic (_ ("De_lete Custom RFX Script..."));
+  gtk_widget_show(mainw->delete_custom_rfx);
+  gtk_container_add (GTK_CONTAINER (rfx_menu), mainw->delete_custom_rfx);
 
   separator6 = gtk_menu_item_new ();
   gtk_widget_show (separator6);
@@ -1462,6 +1454,30 @@ create_LiVES (void)
   gtk_container_add (GTK_CONTAINER (rfx_menu), rebuild_rfx);
 
 
+  if (mainw->num_rendered_effects_custom>0) {
+    gtk_widget_set_sensitive(mainw->delete_custom_rfx,TRUE);
+    gtk_widget_set_sensitive(mainw->export_custom_rfx,TRUE);
+  }
+  else {
+    gtk_widget_set_sensitive(mainw->delete_custom_rfx,FALSE);
+    gtk_widget_set_sensitive(mainw->export_custom_rfx,FALSE);
+  }
+  
+  if (mainw->num_rendered_effects_test>0) {
+    gtk_widget_set_sensitive(mainw->run_test_rfx_submenu,TRUE);
+    gtk_widget_set_sensitive(mainw->promote_test_rfx,TRUE);
+    gtk_widget_set_sensitive(mainw->delete_test_rfx,TRUE);
+    gtk_widget_set_sensitive(mainw->rename_test_rfx,TRUE);
+    gtk_widget_set_sensitive(mainw->edit_test_rfx,TRUE);
+  }
+  else {
+    gtk_widget_set_sensitive(mainw->run_test_rfx_submenu,FALSE);
+    gtk_widget_set_sensitive(mainw->promote_test_rfx,FALSE);
+    gtk_widget_set_sensitive(mainw->delete_test_rfx,FALSE);
+    gtk_widget_set_sensitive(mainw->rename_test_rfx,FALSE);
+    gtk_widget_set_sensitive(mainw->edit_test_rfx,FALSE);
+  }
+  
   mainw->open_lives2lives = gtk_menu_item_new_with_mnemonic (_("Receive _LiVES stream from..."));
 
   separator19 = gtk_menu_item_new ();
@@ -2727,28 +2743,28 @@ create_LiVES (void)
   g_signal_connect (GTK_OBJECT (copy_rfx), "activate",
 		    G_CALLBACK (on_copy_rfx_activate),
 		    GINT_TO_POINTER (RFX_STATUS_TEST));
-  g_signal_connect (GTK_OBJECT (edit_test_rfx), "activate",
+  g_signal_connect (GTK_OBJECT (mainw->edit_test_rfx), "activate",
 		    G_CALLBACK (on_edit_rfx_activate),
 		    GINT_TO_POINTER (RFX_STATUS_TEST));
-  g_signal_connect (GTK_OBJECT (rename_test_rfx), "activate",
+  g_signal_connect (GTK_OBJECT (mainw->rename_test_rfx), "activate",
 		    G_CALLBACK (on_rename_rfx_activate),
 		    GINT_TO_POINTER (RFX_STATUS_TEST));
   g_signal_connect (GTK_OBJECT (rebuild_rfx), "activate",
 		    G_CALLBACK (on_rebuild_rfx_activate),
 		    NULL);
-  g_signal_connect (GTK_OBJECT (delete_test_rfx), "activate",
+  g_signal_connect (GTK_OBJECT (mainw->delete_test_rfx), "activate",
 		    G_CALLBACK (on_delete_rfx_activate),
 		    GINT_TO_POINTER (RFX_STATUS_TEST));
-  g_signal_connect (GTK_OBJECT (delete_custom_rfx), "activate",
+  g_signal_connect (GTK_OBJECT (mainw->delete_custom_rfx), "activate",
 		    G_CALLBACK (on_delete_rfx_activate),
 		    GINT_TO_POINTER (RFX_STATUS_CUSTOM));
   g_signal_connect (GTK_OBJECT (import_custom_rfx), "activate",
 		    G_CALLBACK (on_import_rfx_activate),
 		    GINT_TO_POINTER (RFX_STATUS_CUSTOM));
-  g_signal_connect (GTK_OBJECT (export_custom_rfx), "activate",
+  g_signal_connect (GTK_OBJECT (mainw->export_custom_rfx), "activate",
 		    G_CALLBACK (on_export_rfx_activate),
 		    GINT_TO_POINTER (RFX_STATUS_CUSTOM));
-  g_signal_connect (GTK_OBJECT (promote_test_rfx), "activate",
+  g_signal_connect (GTK_OBJECT (mainw->promote_test_rfx), "activate",
 		    G_CALLBACK (on_promote_rfx_activate),
 		    GINT_TO_POINTER (RFX_STATUS_TEST));
 

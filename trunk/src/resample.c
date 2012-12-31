@@ -1144,7 +1144,7 @@ create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox) {
   GtkWidget *vbox25;
   GSList *radiobutton32_group = NULL;
   GtkWidget *label93;
-  GtkWidget *dialog_action_area15;
+  GtkWidget *dialog_action_area;
   GtkWidget *cancelbutton13;
   GtkWidget *okbutton12;
   GtkWidget *label;
@@ -1943,9 +1943,9 @@ create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox) {
 
 
   if (type<3||type>4) {
-    dialog_action_area15 = GTK_DIALOG (resaudw->dialog)->action_area;
-    gtk_widget_show (dialog_action_area15);
-    gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area15), GTK_BUTTONBOX_END);
+    dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (resaudw->dialog));
+    gtk_widget_show (dialog_action_area);
+    gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area), GTK_BUTTONBOX_END);
     
     cancelbutton13 = gtk_button_new_from_stock ("gtk-cancel");
     gtk_widget_show (cancelbutton13);
@@ -2032,7 +2032,7 @@ create_new_pb_speed (gshort type)
   GtkWidget *spinbutton_pb_speed;
   GObject *spinbutton_pb_time_adj;
   GtkWidget *spinbutton_pb_time=NULL;
-  GtkWidget *dialog_action_area6;
+  GtkWidget *dialog_action_area;
   GtkWidget *cancelbutton4;
   GtkWidget *change_pb_ok;
   GtkWidget *change_audio_speed;
@@ -2135,8 +2135,8 @@ create_new_pb_speed (gshort type)
   gtk_box_pack_start (GTK_BOX (dialog_vbox6), hbox, TRUE, TRUE, 20);
 
 
-  dialog_action_area6 = GTK_DIALOG (new_pb_speed)->action_area;
-  gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area6), GTK_BUTTONBOX_END);
+  dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (new_pb_speed));
+  gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area), GTK_BUTTONBOX_END);
 
   cancelbutton4 = gtk_button_new_from_stock ("gtk-cancel");
   gtk_dialog_add_action_widget (GTK_DIALOG (new_pb_speed), cancelbutton4, GTK_RESPONSE_CANCEL);

@@ -236,6 +236,7 @@ int num_compound_fx(weed_plant_t *plant) {
 
 
 
+
 static gboolean has_non_alpha_palette(weed_plant_t *ctmpl) {
   int *plist;
   int error;
@@ -380,6 +381,41 @@ lives_fx_cat_t weed_filter_subcategorise (weed_plant_t *pl, lives_fx_cat_t categ
 
   return LIVES_FX_CAT_NONE;
 }
+
+
+int num_alpha_channels(weed_plant_t *filter, boolean out) {
+  // get number of alpha channels (in or out) for filter; including optional
+
+  weed_plant_t **ctmpls;
+
+  int count=0;
+  int nchans,error;
+
+  register int i;
+
+  if (out) {
+    if (!weed_plant_has_leaf(filter,"out_channel_templates")||weed_get_plantptr_value(filter,"out_channel_templates",&error)==NULL) return FALSE;
+    nchans=weed_leaf_num_elements(filter,"out_channel_templates");
+    ctmpls=weed_get_plantptr_array(filter,"out_channel_templates",&error);
+    for (i=0;i<nchans;i++) {
+      if (has_non_alpha_palette(ctmpls[i])) continue;
+      count++;
+    }
+  }
+  else {
+    if (!weed_plant_has_leaf(filter,"in_channel_templates")||weed_get_plantptr_value(filter,"in_channel_templates",&error)==NULL) return FALSE;
+    nchans=weed_leaf_num_elements(filter,"in_channel_templates");
+    ctmpls=weed_get_plantptr_array(filter,"in_channel_templates",&error);
+    for (i=0;i<nchans;i++) {
+      if (has_non_alpha_palette(ctmpls[i])) continue;
+      count++;
+    }
+  }
+  weed_free(ctmpls);
+  return count;
+
+}
+
 
 
 ////////////////////////////////////////////////////////////////////////

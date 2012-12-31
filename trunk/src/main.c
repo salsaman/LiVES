@@ -2902,7 +2902,7 @@ void sensitize(void) {
   gtk_widget_set_sensitive (mainw->add_live_menu,TRUE);
   gtk_widget_set_sensitive (mainw->export_proj, mainw->current_file>0);
   gtk_widget_set_sensitive (mainw->import_proj, mainw->current_file==-1);
-
+  
   if (!mainw->foreign) {
     for (i=1;i<=mainw->num_rendered_effects_builtin+mainw->num_rendered_effects_custom+
 	   mainw->num_rendered_effects_test;i++) 
@@ -2917,7 +2917,7 @@ void sensitize(void) {
     }
     else gtk_widget_set_sensitive(mainw->rendered_fx[0].menuitem,FALSE);
   }
-
+  
   gtk_widget_set_sensitive (mainw->record_perf, TRUE);
   gtk_widget_set_sensitive (mainw->export_submenu, mainw->current_file>0&&(cfile->achans>0));
   gtk_widget_set_sensitive (mainw->recaudio_submenu, TRUE);

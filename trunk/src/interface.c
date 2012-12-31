@@ -3362,17 +3362,13 @@ _commentsw* create_comments_dialog (file *sfile, gchar *filename) {
 
 
 static void set_child_colour(GtkWidget *widget, gpointer data) {
-  GtkWidget *parent;
-
   if (GTK_IS_BUTTON(widget)) return;
   if (GTK_IS_CONTAINER(widget)) {
     gtk_container_forall(GTK_CONTAINER(widget),set_child_colour,NULL);
     return;
   }
 
-  parent=lives_widget_get_parent(widget);
-
-  if (GTK_IS_LABEL(widget)&&GTK_IS_BOX(parent)) {
+  if (GTK_IS_LABEL(widget)) {
     gtk_widget_modify_fg(widget, GTK_STATE_NORMAL, &palette->normal_fore);
   }
 }
@@ -3436,19 +3432,19 @@ gchar *choose_file(gchar *dir, gchar *fname, gchar **filt, GtkFileChooserAction 
 
   }
 
+  if (dir!=NULL) gtk_file_chooser_set_current_folder_uri (GTK_FILE_CHOOSER(chooser), dir);
+  if (fname!=NULL) gtk_file_chooser_set_current_name(GTK_FILE_CHOOSER(chooser),fname);
+
   if (filt!=NULL) {
     filter=gtk_file_filter_new();
     gtk_file_filter_add_pattern(filter,filt[0]);
     for (i=1;filt[i]!=NULL;i++) gtk_file_filter_add_pattern(filter,filt[i]);
     gtk_file_chooser_set_filter(GTK_FILE_CHOOSER(chooser),filter);
-    if (fname!=NULL) gtk_file_chooser_set_current_name(GTK_FILE_CHOOSER(chooser),fname);
-    else if (i==1&&act==GTK_FILE_CHOOSER_ACTION_SAVE) gtk_file_chooser_set_current_name(GTK_FILE_CHOOSER(chooser),filt[0]);
+    if (fname==NULL&&i==1&&act==GTK_FILE_CHOOSER_ACTION_SAVE) gtk_file_chooser_set_current_name(GTK_FILE_CHOOSER(chooser),filt[0]);
   }
   else {
     if (fname!=NULL&&dir!=NULL) {
-      gchar *ffname=g_strconcat(dir,fname,NULL);
-      gtk_file_chooser_set_current_folder_uri (GTK_FILE_CHOOSER(chooser), dir);
-      gtk_file_chooser_set_current_name (GTK_FILE_CHOOSER(chooser), fname);
+      gchar *ffname=g_build_filename(dir,fname,NULL);
       gtk_file_chooser_select_filename(GTK_FILE_CHOOSER(chooser),ffname);
       g_free(ffname);
     }

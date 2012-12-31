@@ -4276,6 +4276,8 @@ void on_export_rfx_activate (GtkMenuItem *menuitem, gpointer user_data) {
   if (script_name==NULL||!strlen(script_name)) return;  // user cancelled
 
   filename = choose_file (NULL,script_name,NULL,GTK_FILE_CHOOSER_ACTION_SAVE,_ ("LiVES: - Export Script to..."),NULL);
+
+  if (filename==NULL) return;
   
   rfx_script_from=g_build_filename (capable->home_dir,LIVES_CONFIG_DIR,
 				    PLUGIN_RENDERED_EFFECTS_CUSTOM_SCRIPTS,script_name,NULL);
@@ -4744,28 +4746,30 @@ void add_rfx_effects(void) {
 	   +mainw->num_rendered_effects_test;i++) {
       if (mainw->rendered_fx!=NULL) {
 	if (mainw->rendered_fx[i].menuitem!=NULL) {
-	  gtk_widget_unparent(mainw->rendered_fx[i].menuitem);
+	  gtk_widget_destroy(mainw->rendered_fx[i].menuitem);
 	  threaded_dialog_spin();
 	}
       }
     }
+    
     threaded_dialog_spin();
-    if (mainw->rte_separator!=NULL) {
-      if (mainw->custom_effects_separator!=NULL) gtk_widget_unparent (mainw->custom_effects_separator);
-      if (mainw->custom_effects_menu!=NULL) gtk_widget_unparent (mainw->custom_effects_menu);
-      if (mainw->custom_effects_submenu!=NULL) gtk_widget_unparent (mainw->custom_effects_submenu);
-      if (mainw->custom_gens_menu!=NULL) gtk_widget_unparent (mainw->custom_gens_menu);
-      if (mainw->custom_gens_submenu!=NULL) gtk_widget_unparent (mainw->custom_gens_submenu);
-      if (mainw->gens_menu!=NULL) gtk_widget_unparent (mainw->gens_menu);
 
-      // next line causes errors when unparenting custom_tools_menu (bug in gtk+ ?)
-      //if (mainw->custom_utilities_separator!=NULL) gtk_widget_unparent (mainw->custom_utilities_separator);
-      if (mainw->custom_utilities_menu!=NULL) gtk_widget_unparent (mainw->custom_utilities_menu);
-      if (mainw->custom_utilities_submenu!=NULL) gtk_widget_unparent (mainw->custom_utilities_submenu);
-      if (mainw->custom_tools_menu!=NULL) gtk_widget_unparent (mainw->custom_tools_menu);
-      if (mainw->utilities_menu!=NULL) gtk_widget_unparent (mainw->utilities_menu);
-      if (mainw->run_test_rfx_menu!=NULL) gtk_widget_unparent (mainw->run_test_rfx_menu);
+    if (mainw->rte_separator!=NULL) {
+      if (mainw->custom_effects_separator!=NULL) gtk_widget_destroy (mainw->custom_effects_separator);
+      if (mainw->custom_effects_menu!=NULL) gtk_widget_destroy (mainw->custom_effects_menu);
+      if (mainw->custom_effects_submenu!=NULL) gtk_widget_destroy (mainw->custom_effects_submenu);
+      if (mainw->custom_gens_menu!=NULL) gtk_widget_destroy (mainw->custom_gens_menu);
+      if (mainw->custom_gens_submenu!=NULL) gtk_widget_destroy (mainw->custom_gens_submenu);
+      if (mainw->gens_menu!=NULL) gtk_widget_destroy (mainw->gens_menu);
+
+      if (mainw->custom_utilities_separator!=NULL) gtk_widget_destroy (mainw->custom_utilities_separator);
+      if (mainw->custom_utilities_menu!=NULL) gtk_widget_destroy (mainw->custom_utilities_menu);
+      if (mainw->custom_utilities_submenu!=NULL) gtk_widget_destroy (mainw->custom_utilities_submenu);
+      if (mainw->custom_tools_menu!=NULL) gtk_widget_destroy (mainw->custom_tools_menu);
+      if (mainw->utilities_menu!=NULL) gtk_widget_destroy (mainw->utilities_menu);
+      if (mainw->run_test_rfx_menu!=NULL) gtk_widget_destroy (mainw->run_test_rfx_menu);
     }
+
     gtk_widget_queue_draw(mainw->effects_menu);
     while (g_main_context_iteration(NULL,FALSE));
     threaded_dialog_spin();
@@ -5020,7 +5024,7 @@ void add_rfx_effects(void) {
   
   gtk_container_add (GTK_CONTAINER (mainw->effects_menu), mainw->custom_effects_separator);
   threaded_dialog_spin();
-    
+
   // now we need to add to the effects menu and set a callback
   for (rfx=&mainw->rendered_fx[(plugin_idx=1)];plugin_idx<=rfx_slot_count;rfx=&mainw->rendered_fx[++plugin_idx]) {
     threaded_dialog_spin();
@@ -5033,27 +5037,27 @@ void add_rfx_effects(void) {
     rfx->extra=NULL;
     rfx->menuitem=NULL;
 
-      switch (rfx->status) {
-      case RFX_STATUS_BUILTIN:
-	mainw->num_rendered_effects_builtin++;
-	break;
-      case RFX_STATUS_CUSTOM:
-	mainw->num_rendered_effects_custom++;
-	break;
-      case RFX_STATUS_TEST:
-	mainw->num_rendered_effects_test++;
-	break;
-      default:
-	break;
-      }
-      
+    switch (rfx->status) {
+    case RFX_STATUS_BUILTIN:
+      mainw->num_rendered_effects_builtin++;
+      break;
+    case RFX_STATUS_CUSTOM:
+      mainw->num_rendered_effects_custom++;
+      break;
+    case RFX_STATUS_TEST:
+      mainw->num_rendered_effects_test++;
+      break;
+    default:
+      break;
+    }
+
     if (!(rfx->props&RFX_PROPS_MAY_RESIZE)&&rfx->min_frames>=0&&rfx->num_in_channels==1) {
       // add resizing effects to tools menu later
       g_snprintf (txt,61,"_%s",_(rfx->menu_text));
       if (rfx->num_params) g_strappend (txt,64,"...");
       menuitem = gtk_image_menu_item_new_with_mnemonic(txt);
       gtk_widget_show(menuitem);
-      
+
       switch (rfx->status) {
       case RFX_STATUS_BUILTIN:
 	gtk_container_add (GTK_CONTAINER (mainw->effects_menu), menuitem);
@@ -5068,7 +5072,7 @@ void add_rfx_effects(void) {
       default:
 	break;
       }
-      
+
       if (rfx->props&RFX_PROPS_SLOW) {
 	rfx_image = gtk_image_new_from_stock ("gtk-no", GTK_ICON_SIZE_MENU);
       }
@@ -5092,7 +5096,6 @@ void add_rfx_effects(void) {
       rfx->menuitem=menuitem;
     }
   }
-
 
   threaded_dialog_spin();
 

@@ -59,7 +59,7 @@ void add_suffix_check(GtkBox *box, const gchar *ext) {
 
   gtk_box_pack_start (GTK_BOX (hbox), checkbutton, FALSE, FALSE, 10);
   gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, 10);
-  GTK_WIDGET_SET_FLAGS (checkbutton, GTK_CAN_DEFAULT|GTK_CAN_FOCUS);
+  lives_widget_set_can_focus_and_default (checkbutton);
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (checkbutton), mainw->fx1_bool);
   g_signal_connect_after (GTK_OBJECT (checkbutton), "toggled",
 			  G_CALLBACK (on_boolean_toggled),
@@ -91,7 +91,7 @@ static GtkWidget *add_deinterlace_checkbox(GtkBox *for_deint) {
   gtk_box_pack_start (for_deint, hbox, FALSE, FALSE, 10);
   gtk_box_pack_start (GTK_BOX (hbox), checkbutton, FALSE, FALSE, 10);
   gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, 10);
-  GTK_WIDGET_SET_FLAGS (checkbutton, GTK_CAN_DEFAULT|GTK_CAN_FOCUS);
+  lives_widget_set_can_focus_and_default (checkbutton);
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (checkbutton), mainw->open_deint);
   g_signal_connect_after (GTK_OBJECT (checkbutton), "toggled",
 			  G_CALLBACK (on_boolean_toggled),
@@ -375,11 +375,11 @@ xprocess * create_processing (const gchar *text) {
 
   gtk_dialog_add_action_widget (GTK_DIALOG (procw->processing), procw->preview_button, 1);
   gtk_widget_hide(procw->preview_button);
-  GTK_WIDGET_SET_FLAGS (procw->preview_button, GTK_CAN_DEFAULT);
+  lives_widget_set_can_focus_and_default (procw->preview_button);
     
   gtk_dialog_add_action_widget (GTK_DIALOG (procw->processing), procw->pause_button, 0);
   gtk_widget_hide(procw->pause_button);
-  GTK_WIDGET_SET_FLAGS (procw->pause_button, GTK_CAN_DEFAULT);
+  lives_widget_set_can_focus_and_default (procw->pause_button);
 
 
   if (mainw->current_file>-1) {
@@ -394,13 +394,13 @@ xprocess * create_processing (const gchar *text) {
       // the "enough" button for opening
       gtk_dialog_add_action_widget (GTK_DIALOG (procw->processing), procw->stop_button, 0);
       gtk_widget_show(procw->stop_button);
-      GTK_WIDGET_SET_FLAGS (procw->stop_button, GTK_CAN_DEFAULT);
+      lives_widget_set_can_focus_and_default (procw->stop_button);
     }
   }
   
   procw->cancel_button = gtk_button_new_with_mnemonic (_ ("_Cancel"));
   gtk_dialog_add_action_widget (GTK_DIALOG (procw->processing), procw->cancel_button, GTK_RESPONSE_CANCEL);
-  GTK_WIDGET_SET_FLAGS (procw->cancel_button, GTK_CAN_DEFAULT);
+  lives_widget_set_can_focus_and_default (procw->cancel_button);
 
   gtk_widget_add_accelerator (procw->cancel_button, "activate", mainw->accel_group,
                               GDK_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
@@ -742,7 +742,7 @@ create_info_window (gint audio_channels, gboolean is_mt) {
   gtk_widget_set_size_request (button8, -1, 78);
   gtk_container_set_border_width (GTK_CONTAINER (button8), 12);
   gtk_button_set_relief (GTK_BUTTON (button8), GTK_RELIEF_NONE);
-  GTK_WIDGET_SET_FLAGS (button8, GTK_CAN_DEFAULT);
+  lives_widget_set_can_focus_and_default (button8);
   gtk_widget_grab_default (button8);
 
   if (palette->style&STYLE_1) {
@@ -922,11 +922,11 @@ create_encoder_prep_dialog (const gchar *text1, const gchar *text2, gboolean opt
   }
 
   gtk_dialog_add_action_widget (GTK_DIALOG (dialog), cancelbutton, GTK_RESPONSE_CANCEL);
-  GTK_WIDGET_SET_FLAGS (cancelbutton, GTK_CAN_DEFAULT);
+  lives_widget_set_can_focus_and_default (cancelbutton);
 
   gtk_dialog_add_action_widget (GTK_DIALOG (dialog), okbutton, GTK_RESPONSE_OK);
 
-  GTK_WIDGET_SET_FLAGS (okbutton, GTK_CAN_DEFAULT);
+  lives_widget_set_can_focus_and_default (okbutton);
   gtk_widget_grab_default (okbutton);
 
   gtk_widget_show_all (dialog);
@@ -1007,7 +1007,7 @@ create_dialog3 (const gchar *text, gboolean is_blocking, gint mask) {
     gtk_box_pack_start (GTK_BOX (hbox), checkbutton, FALSE, FALSE, 0);
     gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, 10);
     gtk_widget_show_all (hbox);
-    GTK_WIDGET_SET_FLAGS (checkbutton, GTK_CAN_DEFAULT|GTK_CAN_FOCUS);
+    lives_widget_set_can_focus_and_default (checkbutton);
     g_signal_connect (GTK_OBJECT (checkbutton), "toggled",
                       G_CALLBACK (on_warn_mask_toggled),
                       GINT_TO_POINTER(mask));
@@ -1032,7 +1032,7 @@ create_dialog3 (const gchar *text, gboolean is_blocking, gint mask) {
 
 
   if (mainw->iochan==NULL) {
-    GTK_WIDGET_SET_FLAGS (info_ok_button, GTK_CAN_DEFAULT|GTK_CAN_FOCUS);
+    lives_widget_set_can_focus_and_default (info_ok_button);
     gtk_widget_grab_focus (info_ok_button);
     gtk_widget_grab_default (info_ok_button);
   }
@@ -1128,7 +1128,7 @@ text_window *create_text_window (const gchar *title, const gchar *text, GtkTextB
     else {
       gtk_dialog_add_action_widget (GTK_DIALOG (textwindow->dialog), okbutton, GTK_RESPONSE_OK);
       gtk_widget_set_size_request (okbutton, 586, 78);
-      GTK_WIDGET_SET_FLAGS (okbutton, GTK_CAN_DEFAULT);
+      lives_widget_set_can_focus_and_default (okbutton);
       gtk_widget_grab_default (okbutton);
       gtk_widget_grab_focus (okbutton);
       gtk_container_set_border_width (GTK_CONTAINER (okbutton), 12);
@@ -1285,7 +1285,7 @@ create_insert_dialog (void)
 
   gtk_box_pack_start (GTK_BOX (hbox), insertw->fit_checkbutton, FALSE, FALSE, 5);
   gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, 5);
-  GTK_WIDGET_SET_FLAGS (insertw->fit_checkbutton, GTK_CAN_DEFAULT|GTK_CAN_FOCUS);
+  lives_widget_set_can_focus_and_default (insertw->fit_checkbutton);
 
   gtk_widget_set_sensitive(GTK_WIDGET(insertw->fit_checkbutton),cfile->achans>0&&clipboard->achans==0);
 
@@ -1463,12 +1463,12 @@ create_insert_dialog (void)
   cancelbutton1 = gtk_button_new_from_stock ("gtk-cancel");
   gtk_widget_show (cancelbutton1);
   gtk_dialog_add_action_widget (GTK_DIALOG (insertw->insert_dialog), cancelbutton1, GTK_RESPONSE_CANCEL);
-  GTK_WIDGET_SET_FLAGS (cancelbutton1, GTK_CAN_FOCUS);
+  lives_widget_set_can_focus_and_default (cancelbutton1);
 
   okbutton1 = gtk_button_new_from_stock ("gtk-ok");
   gtk_widget_show (okbutton1);
   gtk_dialog_add_action_widget (GTK_DIALOG (insertw->insert_dialog), okbutton1, GTK_RESPONSE_OK);
-  GTK_WIDGET_SET_FLAGS (okbutton1, GTK_CAN_DEFAULT|GTK_CAN_FOCUS);
+  lives_widget_set_can_focus_and_default (okbutton1);
   gtk_widget_grab_default(okbutton1);
   gtk_widget_grab_focus(okbutton1);
 
@@ -1594,12 +1594,12 @@ GtkWidget *create_opensel_dialog (void) {
   cancelbutton7 = gtk_button_new_from_stock ("gtk-cancel");
   gtk_widget_show (cancelbutton7);
   gtk_dialog_add_action_widget (GTK_DIALOG (opensel_dialog), cancelbutton7, GTK_RESPONSE_CANCEL);
-  GTK_WIDGET_SET_FLAGS (cancelbutton7, GTK_CAN_DEFAULT);
+  lives_widget_set_can_focus_and_default (cancelbutton7);
 
   okbutton6 = gtk_button_new_from_stock ("gtk-ok");
   gtk_widget_show (okbutton6);
   gtk_dialog_add_action_widget (GTK_DIALOG (opensel_dialog), okbutton6, GTK_RESPONSE_OK);
-  GTK_WIDGET_SET_FLAGS (okbutton6, GTK_CAN_DEFAULT);
+  lives_widget_set_can_focus_and_default (okbutton6);
   gtk_widget_grab_default(okbutton6);
 
   widget_add_preview (opensel_dialog,GTK_BOX (dialog_vbox9), GTK_BOX (dialog_vbox9), GTK_BOX(dialog_vbox9), 3);
@@ -1704,24 +1704,9 @@ _entryw* create_location_dialog (int type) {
   gtk_widget_show (hbox);
   gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, TRUE, TRUE, 0);
 
-  if (type==1)
-    label = gtk_label_new (_ ("URL : "));
-  else
-    label = gtk_label_new (_ ("Youtube URL : "));
+  locw->entry = lives_standard_entry_new (type==1?_ ("URL : "):_ ("Youtube URL : "),FALSE,"",-1,32768,LIVES_BOX(hbox),NULL);
 
-  gtk_widget_show (label);
-  gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 0);
-  gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_LEFT);
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg (label, GTK_STATE_NORMAL, &palette->normal_fore);
-  }
-
-  locw->entry = gtk_entry_new_with_max_length (32768);
-  gtk_widget_show (locw->entry);
-  gtk_box_pack_start (GTK_BOX (hbox), locw->entry, TRUE, TRUE, 0);
-  gtk_entry_set_activates_default (GTK_ENTRY (locw->entry), TRUE);
-
-
+  gtk_widget_show_all (hbox);
 
   if (type==1) {
     hbox=gtk_hbox_new (FALSE, 0);
@@ -1746,7 +1731,7 @@ _entryw* create_location_dialog (int type) {
     gtk_box_pack_start (GTK_BOX(dialog_vbox), hbox, FALSE, FALSE, 10);
     gtk_box_pack_start (GTK_BOX (hbox), checkbutton, FALSE, FALSE, 10);
     gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, 10);
-    GTK_WIDGET_SET_FLAGS (checkbutton, GTK_CAN_DEFAULT|GTK_CAN_FOCUS);
+    lives_widget_set_can_focus_and_default (checkbutton);
     
     g_signal_connect (GTK_OBJECT (checkbutton), "toggled",
 		      G_CALLBACK (on_boolean_toggled),
@@ -1763,20 +1748,9 @@ _entryw* create_location_dialog (int type) {
     
     gtk_box_pack_start(GTK_BOX(dialog_vbox),hbox,TRUE,FALSE,0);
 
-    locw->dir_entry = gtk_entry_new_with_max_length (32768);
+    locw->dir_entry = lives_standard_entry_new (_("Download to _Directory : "),TRUE,"",-1,32768,LIVES_BOX(hbox),NULL);
+    gtk_widget_show_all (hbox);
 
-    label=gtk_label_new_with_mnemonic (_("Download to _Directory : "));
-    gtk_label_set_mnemonic_widget (GTK_LABEL (label),locw->dir_entry);
-
-    gtk_box_pack_start(GTK_BOX(hbox),label,FALSE,FALSE,10);
-    
-    if (palette->style&STYLE_1) {
-      gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-    }
-
-    gtk_widget_show (locw->dir_entry);
-    gtk_box_pack_start (GTK_BOX (hbox), locw->dir_entry, TRUE, TRUE, 10);
-    gtk_entry_set_activates_default (GTK_ENTRY (locw->dir_entry), TRUE);
 
     // add dir, with filechooser button
     buttond = gtk_file_chooser_button_new(_("Download Directory..."),GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER);
@@ -1799,35 +1773,14 @@ _entryw* create_location_dialog (int type) {
     
     gtk_box_pack_start(GTK_BOX(dialog_vbox),hbox,TRUE,FALSE,0);
 
-    locw->name_entry = gtk_entry_new_with_max_length (32768);
+    locw->name_entry = lives_standard_entry_new (_("Download _File Name : "),TRUE,"",-1,32768,LIVES_BOX(hbox),NULL);
 
-
-    label=gtk_label_new_with_mnemonic (_("Download _File Name : "));
+    label=lives_standard_label_new (_(".webm"));
     gtk_label_set_mnemonic_widget (GTK_LABEL (label),locw->name_entry);
 
     gtk_box_pack_start(GTK_BOX(hbox),label,FALSE,FALSE,10);
     
-    if (palette->style&STYLE_1) {
-      gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-    }
-
-
-    gtk_box_pack_start (GTK_BOX (hbox), locw->name_entry, TRUE, TRUE, 0);
-    gtk_entry_set_activates_default (GTK_ENTRY (locw->name_entry), TRUE);
-
-
-    label=gtk_label_new (_(".webm"));
-    gtk_label_set_mnemonic_widget (GTK_LABEL (label),locw->name_entry);
-
-    gtk_box_pack_start(GTK_BOX(hbox),label,FALSE,FALSE,10);
-    
-    if (palette->style&STYLE_1) {
-      gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-    }
-
     gtk_widget_show_all (hbox);
-
-
   }
 
 
@@ -1839,12 +1792,12 @@ _entryw* create_location_dialog (int type) {
   cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
   gtk_widget_show (cancelbutton);
   gtk_dialog_add_action_widget (GTK_DIALOG (locw->dialog), cancelbutton, GTK_RESPONSE_CANCEL);
-  GTK_WIDGET_SET_FLAGS (cancelbutton, GTK_CAN_DEFAULT);
+  lives_widget_set_can_focus_and_default (cancelbutton);
 
   okbutton = gtk_button_new_from_stock ("gtk-ok");
   gtk_widget_show (okbutton);
   gtk_dialog_add_action_widget (GTK_DIALOG (locw->dialog), okbutton, GTK_RESPONSE_OK);
-  GTK_WIDGET_SET_FLAGS (okbutton, GTK_CAN_DEFAULT);
+  lives_widget_set_can_focus_and_default (okbutton);
   gtk_widget_grab_default (okbutton);
 
 
@@ -2050,7 +2003,8 @@ _entryw* create_rename_dialog (gint type) {
     gtk_entry_set_completion (GTK_ENTRY (renamew->entry), completion);
   }
   else {
-    renamew->entry = gtk_entry_new_with_max_length (type==6?PATH_MAX:128);
+    renamew->entry = gtk_entry_new();
+    gtk_entry_set_max_length (GTK_ENTRY(renamew->entry),type==6?PATH_MAX:128);
     if (type==2&&strlen (mainw->set_name)) {
       gtk_entry_set_text (GTK_ENTRY (renamew->entry),mainw->set_name);
     }
@@ -2090,7 +2044,7 @@ _entryw* create_rename_dialog (gint type) {
   cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
   gtk_widget_show (cancelbutton);
   gtk_dialog_add_action_widget (GTK_DIALOG (renamew->dialog), cancelbutton, GTK_RESPONSE_CANCEL);
-  GTK_WIDGET_SET_FLAGS (cancelbutton, GTK_CAN_DEFAULT);
+  lives_widget_set_can_focus_and_default (cancelbutton);
 
   if (type==6) {
     okbutton = gtk_button_new_from_stock ("gtk-go-forward");
@@ -2099,7 +2053,7 @@ _entryw* create_rename_dialog (gint type) {
   else okbutton = gtk_button_new_from_stock ("gtk-ok");
   gtk_widget_show (okbutton);
   gtk_dialog_add_action_widget (GTK_DIALOG (renamew->dialog), okbutton, GTK_RESPONSE_OK);
-  GTK_WIDGET_SET_FLAGS (okbutton, GTK_CAN_DEFAULT);
+  lives_widget_set_can_focus_and_default (okbutton);
   gtk_widget_grab_default (okbutton);
 
 
@@ -2268,7 +2222,7 @@ GtkWidget *create_combo_dialog (gint type, gpointer user_data) {
   cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
   gtk_widget_show (cancelbutton);
   gtk_dialog_add_action_widget (GTK_DIALOG (combo_dialog), cancelbutton, GTK_RESPONSE_CANCEL);
-  GTK_WIDGET_SET_FLAGS (cancelbutton, GTK_CAN_DEFAULT);
+  lives_widget_set_can_focus_and_default (cancelbutton);
 
   gtk_widget_add_accelerator (cancelbutton, "activate", accel_group,
                               GDK_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
@@ -2276,7 +2230,7 @@ GtkWidget *create_combo_dialog (gint type, gpointer user_data) {
   okbutton = gtk_button_new_from_stock ("gtk-ok");
   gtk_widget_show (okbutton);
   gtk_dialog_add_action_widget (GTK_DIALOG (combo_dialog), okbutton, GTK_RESPONSE_OK);
-  GTK_WIDGET_SET_FLAGS (okbutton, GTK_CAN_DEFAULT);
+  lives_widget_set_can_focus_and_default (okbutton);
   gtk_widget_grab_default (okbutton);
 
   gtk_window_add_accel_group (GTK_WINDOW (combo_dialog), accel_group);
@@ -2668,7 +2622,7 @@ create_cdtrack_dialog (gint type, gpointer user_data)
   cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
   gtk_widget_show (cancelbutton);
   gtk_dialog_add_action_widget (GTK_DIALOG (cd_dialog), cancelbutton, GTK_RESPONSE_CANCEL);
-  GTK_WIDGET_SET_FLAGS (cancelbutton, GTK_CAN_DEFAULT);
+  lives_widget_set_can_focus_and_default (cancelbutton);
 
   gtk_widget_add_accelerator (cancelbutton, "activate", accel_group,
                               GDK_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
@@ -2676,7 +2630,7 @@ create_cdtrack_dialog (gint type, gpointer user_data)
   okbutton = gtk_button_new_from_stock ("gtk-ok");
   gtk_widget_show (okbutton);
   gtk_dialog_add_action_widget (GTK_DIALOG (cd_dialog), okbutton, GTK_RESPONSE_OK);
-  GTK_WIDGET_SET_FLAGS (okbutton, GTK_CAN_DEFAULT);
+  lives_widget_set_can_focus_and_default (okbutton);
   gtk_widget_grab_default (okbutton);
   
   g_signal_connect_after (GTK_OBJECT (spinbutton35), "value_changed",
@@ -2876,12 +2830,12 @@ aud_dialog_t *create_audfade_dialog (gint type) {
   cancelbutton9 = gtk_button_new_from_stock ("gtk-cancel");
   gtk_widget_show (cancelbutton9);
   gtk_dialog_add_action_widget (GTK_DIALOG (audd->dialog), cancelbutton9, GTK_RESPONSE_CANCEL);
-  GTK_WIDGET_SET_FLAGS (cancelbutton9, GTK_CAN_DEFAULT);
+  lives_widget_set_can_focus_and_default (cancelbutton9);
 
   okbutton8 = gtk_button_new_from_stock ("gtk-ok");
   gtk_widget_show (okbutton8);
   gtk_dialog_add_action_widget (GTK_DIALOG (audd->dialog), okbutton8, GTK_RESPONSE_OK);
-  GTK_WIDGET_SET_FLAGS (okbutton8, GTK_CAN_DEFAULT);
+  lives_widget_set_can_focus_and_default (okbutton8);
   gtk_widget_grab_default (okbutton8);
 
 
@@ -3020,7 +2974,7 @@ create_rp_dialog (void)
 
   gtk_box_pack_start (GTK_BOX (hbox), xranw->subdir_check, FALSE, FALSE, 10);
   gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, 10);
-  GTK_WIDGET_SET_FLAGS (xranw->subdir_check, GTK_CAN_DEFAULT|GTK_CAN_FOCUS);
+  lives_widget_set_can_focus_and_default (xranw->subdir_check);
   gtk_widget_show_all(hbox);
 
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(xranw->subdir_check),TRUE);
@@ -3072,12 +3026,12 @@ create_rp_dialog (void)
   cancelbutton12 = gtk_button_new_from_stock ("gtk-cancel");
   gtk_widget_show (cancelbutton12);
   gtk_dialog_add_action_widget (GTK_DIALOG (xranw->rp_dialog), cancelbutton12, GTK_RESPONSE_CANCEL);
-  GTK_WIDGET_SET_FLAGS (cancelbutton12, GTK_CAN_DEFAULT);
+  lives_widget_set_can_focus_and_default (cancelbutton12);
 
   okbutton11 = gtk_button_new_from_stock ("gtk-ok");
   gtk_widget_show (okbutton11);
   gtk_dialog_add_action_widget (GTK_DIALOG (xranw->rp_dialog), okbutton11, GTK_RESPONSE_OK);
-  GTK_WIDGET_SET_FLAGS (okbutton11, GTK_CAN_DEFAULT);
+  lives_widget_set_can_focus_and_default (okbutton11);
   gtk_widget_grab_default (okbutton11);
 
   g_signal_connect(okbutton11, "clicked", G_CALLBACK (on_xmms_ran_ok_clicked),NULL);
@@ -3291,13 +3245,13 @@ _commentsw* create_comments_dialog (file *sfile, gchar *filename) {
   cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
   gtk_widget_show (cancelbutton);
   gtk_dialog_add_action_widget (GTK_DIALOG (commentsw->comments_dialog), cancelbutton, GTK_RESPONSE_CANCEL);
-  GTK_WIDGET_SET_FLAGS (cancelbutton, GTK_CAN_DEFAULT);
+  lives_widget_set_can_focus_and_default (cancelbutton);
 
   okbutton = gtk_button_new_from_stock ("gtk-ok");
   gtk_widget_show (okbutton);
   gtk_dialog_add_action_widget (GTK_DIALOG (commentsw->comments_dialog), okbutton, GTK_RESPONSE_OK);
 
-  GTK_WIDGET_SET_FLAGS (okbutton, GTK_CAN_DEFAULT|GTK_CAN_FOCUS);
+  lives_widget_set_can_focus_and_default (okbutton);
   gtk_widget_grab_focus (okbutton);
   gtk_widget_grab_default (okbutton);
 
@@ -3575,20 +3529,8 @@ _entryw* create_cds_dialog (gint type) {
     hbox = gtk_hbox_new (FALSE, 0);
     gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, FALSE, FALSE, 10);
     
-    cdsw->entry = gtk_entry_new_with_max_length (128);
-    if (strlen (mainw->set_name)) {
-      gtk_entry_set_text (GTK_ENTRY (cdsw->entry),mainw->set_name);
-    }
-    
-    label=gtk_label_new_with_mnemonic (_("Clip set _name"));
-    gtk_label_set_mnemonic_widget (GTK_LABEL (label),cdsw->entry);
-    if (palette->style&STYLE_1&&mainw!=NULL) {
-      gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-    }
-    gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 10);
-    gtk_box_pack_start (GTK_BOX (hbox), cdsw->entry, FALSE, TRUE, 0);
-    gtk_entry_set_width_chars (GTK_ENTRY (cdsw->entry),32);
-    gtk_entry_set_activates_default(GTK_ENTRY(cdsw->entry),TRUE);
+    cdsw->entry = lives_standard_entry_new (_("Clip set _name"),TRUE,strlen (mainw->set_name)?mainw->set_name:"",32,128,LIVES_BOX(hbox),NULL);
+
     gtk_widget_show_all (hbox);
 
     checkbutton = gtk_check_button_new ();
@@ -3609,7 +3551,7 @@ _entryw* create_cds_dialog (gint type) {
     gtk_box_pack_start (GTK_BOX (hbox), checkbutton, FALSE, FALSE, 0);
     gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, 10);
     gtk_widget_show_all (hbox);
-    GTK_WIDGET_SET_FLAGS (checkbutton, GTK_CAN_DEFAULT|GTK_CAN_FOCUS);
+    lives_widget_set_can_focus_and_default (checkbutton);
     
     if ((type==0&&prefs->ar_layout)||(type==1&&!mainw->only_close)) {
       gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(checkbutton),TRUE);
@@ -3661,7 +3603,7 @@ _entryw* create_cds_dialog (gint type) {
   else if (type==1) gtk_button_set_label(GTK_BUTTON(savebutton),_("_Save clip set"));
   else if (type==2) gtk_button_set_label(GTK_BUTTON(savebutton),_("_Wipe layout"));
   if (type!=4) gtk_dialog_add_action_widget (GTK_DIALOG (cdsw->dialog), savebutton, 2-(type==2));
-  GTK_WIDGET_SET_FLAGS (savebutton, GTK_CAN_DEFAULT);
+  lives_widget_set_can_focus_and_default (savebutton);
   if (type==1||type==2)gtk_widget_grab_default(savebutton);
 
   return cdsw;
@@ -3706,12 +3648,12 @@ void do_layout_recover_dialog(void) {
   cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
   gtk_widget_show (cancelbutton);
   gtk_dialog_add_action_widget (GTK_DIALOG (mdialog), cancelbutton, GTK_RESPONSE_CANCEL);
-  GTK_WIDGET_SET_FLAGS (cancelbutton, GTK_CAN_FOCUS);
+  lives_widget_set_can_focus_and_default (cancelbutton);
 
   okbutton = gtk_button_new_from_stock ("gtk-ok");
   gtk_widget_show (okbutton);
   gtk_dialog_add_action_widget (GTK_DIALOG (mdialog), okbutton, GTK_RESPONSE_OK);
-  GTK_WIDGET_SET_FLAGS (okbutton, GTK_CAN_DEFAULT|GTK_CAN_FOCUS);
+  lives_widget_set_can_focus_and_default (okbutton);
   gtk_widget_grab_default(okbutton);
   gtk_widget_grab_focus(okbutton);
 
@@ -3876,7 +3818,7 @@ GtkWidget *create_cleardisk_advanced_dialog(void) {
   okbutton = gtk_button_new_from_stock ("gtk-ok");
   gtk_dialog_add_action_widget (GTK_DIALOG (dialog), okbutton, GTK_RESPONSE_OK);
 
-  GTK_WIDGET_SET_FLAGS (okbutton, GTK_CAN_DEFAULT);
+  lives_widget_set_can_focus_and_default (okbutton);
   gtk_widget_grab_default (okbutton);
   gtk_button_set_label(GTK_BUTTON(okbutton),_("_Accept"));
 

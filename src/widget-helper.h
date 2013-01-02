@@ -23,6 +23,7 @@ typedef enum {
 #ifdef GUI_GTK
 typedef GtkObject                         LiVESObject;
 typedef GtkWidget                         LiVESWidget;
+typedef GtkContainer                      LiVESContainer;
 typedef GtkDialog                         LiVESDialog;
 typedef GtkBox                            LiVESBox;
 typedef GtkComboBox                       LiVESCombo;
@@ -31,6 +32,14 @@ typedef GtkToggleButton                   LiVESToggleButton;
 typedef GtkTextView                       LiVESTextView;
 typedef GtkEntry                          LiVESEntry;
 typedef GtkRadioButton                    LiVESRadioButton;
+
+#if GTK_CHECK_VERSION(3,0,0)
+typedef GtkRange                          LiVESRuler;
+#else
+typedef GtkRuler                          LiVESRuler;
+#endif
+
+typedef GtkRange                          LiVESRange;
 
 typedef GtkAdjustment                     LiVESAdjustment;
 
@@ -60,13 +69,22 @@ typedef gpointer                          LiVESObjectPtr;
 #define LIVES_WINDOW(widget) GTK_WINDOW(widget)
 #define LIVES_XWINDOW(widget) GDK_WINDOW(widget)
 #define LIVES_BOX(widget) GTK_BOX(widget)
+#define LIVES_CONTAINER(widget) GTK_CONTAINER(widget)
 #define LIVES_DIALOG(widget) GTK_DIALOG(widget)
 #define LIVES_COMBO(widget) GTK_COMBO_BOX(widget)
 #define LIVES_COMBO_BOX(widget) GTK_COMBO_BOX(widget)
 #define LIVES_RADIO_BUTTON(widget) GTK_RADIO_BUTTON(widget)
 #define LIVES_TOGGLE_BUTTON(widget) GTK_TOGGLE_BUTTON(widget)
 
-#define LIVES_WIDGET_IS_SENSITIVE(widget) GTK_WIDGET_IS_SENSITIVE(widget)
+#if GTK_CHECK_VERSION(3,0,0)
+#define LIVES_RULER(widget) GTK_SCALE(widget)
+#else
+#define LIVES_RULER(widget) GTK_RULER(widget)
+#endif
+
+#define LIVES_RANGE(widget) GTK_RANGE(widget)
+
+
 #define LIVES_IS_COMBO(widget) GTK_IS_COMBO_BOX(widget)
 
 #define LIVES_INTERP_BEST   GDK_INTERP_HYPER
@@ -260,9 +278,15 @@ LiVESWidget *lives_widget_get_parent(LiVESWidget *widget);
 
 LiVESXWindow *lives_widget_get_xwindow(LiVESWidget *widget);
 
-// compound functions (composed of basic functions)
+void lives_widget_set_can_focus_and_default(LiVESWidget *widget);
 
-void lives_tooltips_copy(LiVESWidget *dest, LiVESWidget *source);
+void lives_container_remove(LiVESContainer *container, LiVESWidget *widget);
+
+double lives_ruler_get_value(LiVESRuler *ruler);
+void lives_ruler_set_value(LiVESRuler *ruler, double value);
+
+
+// compound functions (composed of basic functions)
 
 LiVESWidget *lives_standard_label_new(const char *text);
 
@@ -280,13 +304,21 @@ LiVESWidget *lives_standard_entry_new(const char *labeltext, boolean use_mnemoni
 
 LiVESWidget *lives_standard_dialog_new(const gchar *title, boolean add_std_buttons);
 
+LiVESWidget *lives_standard_hruler_new(void);
+
+
+
+
 // util functions
 
+LiVESWidget *lives_entry_new_with_max_length(int max);
+
+void lives_widget_unparent(LiVESWidget *widget);
+
+void lives_tooltips_copy(LiVESWidget *dest, LiVESWidget *source);
 
 
 int get_box_child_index (LiVESBox *box, LiVESWidget *tchild);
-
-void set_fg_colour(gint red, gint green, gint blue);
 
 boolean label_act_toggle (LiVESWidget *, LiVESEventButton *, LiVESToggleButton *);
 boolean widget_act_toggle (LiVESWidget *, LiVESToggleButton *);

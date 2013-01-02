@@ -1114,13 +1114,13 @@ _vppaw *on_vpp_advanced_clicked (GtkButton *button, gpointer user_data) {
   savebutton = gtk_button_new_from_stock ("gtk-save-as");
   gtk_widget_show (savebutton);
   gtk_dialog_add_action_widget (GTK_DIALOG (vppa->dialog), savebutton, 1);
-  GTK_WIDGET_SET_FLAGS (savebutton, GTK_CAN_DEFAULT);
+  lives_widget_set_can_focus_and_default (savebutton);
   gtk_widget_set_tooltip_text( savebutton, _("Save settings to an alternate file.\n"));
 
   okbutton = gtk_button_new_from_stock ("gtk-ok");
   gtk_widget_show (okbutton);
   gtk_dialog_add_action_widget (GTK_DIALOG (vppa->dialog), okbutton, GTK_RESPONSE_OK);
-  GTK_WIDGET_SET_FLAGS (okbutton, GTK_CAN_DEFAULT);
+  lives_widget_set_can_focus_and_default (okbutton);
 
   g_signal_connect (GTK_OBJECT (cancelbutton), "clicked",
 		    G_CALLBACK (on_vppa_cancel_clicked),
@@ -2673,7 +2673,7 @@ void on_decplug_advanced_clicked (GtkButton *button, gpointer user_data) {
   okbutton = gtk_button_new_from_stock ("gtk-ok");
   gtk_widget_show (okbutton);
   gtk_dialog_add_action_widget (GTK_DIALOG (dialog), okbutton, GTK_RESPONSE_OK);
-  GTK_WIDGET_SET_FLAGS (okbutton, GTK_CAN_DEFAULT);
+  lives_widget_set_can_focus_and_default (okbutton);
 
   g_signal_connect (GTK_OBJECT (cancelbutton), "clicked",
 		    G_CALLBACK (dpa_cancel_clicked),

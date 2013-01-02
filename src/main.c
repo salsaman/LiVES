@@ -2509,7 +2509,7 @@ int main (int argc, char *argv[]) {
 
 #ifdef LIVES_NO_DEBUG
   // don't crash on GTK+ fatals
-  g_log_set_always_fatal ((GLogLevelFlags)0);
+  //g_log_set_always_fatal ((GLogLevelFlags)0);
 #endif
 
   g_log_set_default_handler(lives_log_handler,NULL);
@@ -3511,8 +3511,9 @@ void load_preview_image(gboolean update_always) {
     switch (mainw->prv_link) {
     case PRV_PTR:
       //cf. hrule_reset
-      if ((GTK_RULER (mainw->hruler)->position=cfile->pointer_time=
-	   calc_time_from_frame(mainw->current_file,mainw->preview_frame))>0.) {
+      cfile->pointer_time=calc_time_from_frame(mainw->current_file,mainw->preview_frame);
+      lives_ruler_set_value(LIVES_RULER(mainw->hruler),cfile->pointer_time);
+      if (cfile->pointer_time>0.) {
 	gtk_widget_set_sensitive (mainw->rewind, TRUE);
 	gtk_widget_set_sensitive (mainw->trim_to_pstart, cfile->achans>0);
 	gtk_widget_set_sensitive (mainw->m_rewindbutton, TRUE);
@@ -5850,7 +5851,7 @@ void switch_to_file(gint old_file, gint new_file) {
   }
   
   if (new_file>0) {
-    GTK_RULER (mainw->hruler)->position=cfile->pointer_time;
+    lives_ruler_set_value (LIVES_RULER(mainw->hruler),cfile->pointer_time);
     if (!cfile->opening&&(cfile->clip_type==CLIP_TYPE_DISK||cfile->clip_type==CLIP_TYPE_FILE)) {
       active_image = gtk_image_new_from_stock ("gtk-close", GTK_ICON_SIZE_MENU);
     }

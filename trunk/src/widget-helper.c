@@ -378,9 +378,71 @@ LiVESXWindow *lives_widget_get_xwindow(LiVESWidget *widget) {
 }
 
 
+void lives_widget_set_can_focus_and_default(LiVESWidget *widget) {
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(2,18,0)
+  gtk_widget_set_can_focus(widget,TRUE);
+  gtk_widget_set_can_default(widget,TRUE);
+#else
+  GTK_WIDGET_SET_FLAGS (widget, GTK_CAN_DEFAULT|GTK_CAN_FOCUS);
+#endif
+#endif
+}
+
+
+boolean lives_widget_is_sensitive(LiVESWidget *widget) {
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(2,18,0)
+  return gtk_widget_is_sensitive(widget);
+#else
+  return GTK_WIDGET_IS_SENSITIVE (widget);
+#endif
+#endif
+}
+
+
+void lives_container_remove(LiVESContainer *container, LiVESWidget *widget) {
+#ifdef GUI_GTK
+  gtk_container_remove(container,widget);
+#endif
+}
+
+
+void lives_ruler_set_range(LiVESRuler *ruler, double lower, double upper, double position, double max_size) {
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3,0,0)
+  gtk_range_set_range(GTK_RANGE(ruler),upper,lower);
+  gtk_range_set_value(GTK_RANGE(ruler),position);
+#else
+  gtk_ruler_set_range(ruler,lower,upper,position,max_size);
+#endif
+#endif
+}
+
+
+double lives_ruler_get_value(LiVESRuler *ruler) {
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3,0,0)
+  return gtk_range_get_value(range);
+#else
+  return ruler->position;
+#endif
+#endif
+}
+
+void lives_ruler_set_value(LiVESRuler *ruler, double value) {
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3,0,0)
+  gtk_range_set_value(range,value);
+#else
+  ruler->position=value;
+#endif
+#endif
+}
+
+
 
 // compound functions
-
 
 
 void lives_tooltips_copy(LiVESWidget *dest, LiVESWidget *source) {
@@ -473,7 +535,7 @@ LiVESWidget *lives_standard_check_button_new(const char *labeltext, boolean use_
   
   gtk_box_pack_start (GTK_BOX (hbox), checkbutton, FALSE, FALSE, W_PACKING_WIDTH);
   gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, W_PACKING_WIDTH);
-  GTK_WIDGET_SET_FLAGS (checkbutton, GTK_CAN_DEFAULT|GTK_CAN_FOCUS);
+  lives_widget_set_can_focus_and_default(checkbutton);
 #endif
 
   return checkbutton;
@@ -499,7 +561,8 @@ LiVESWidget *lives_standard_radio_button_new(const char *labeltext, boolean use_
 
   if (tooltip!=NULL) lives_tooltips_set(radiobutton, tooltip);
 
-  GTK_WIDGET_SET_FLAGS (radiobutton, GTK_CAN_DEFAULT|GTK_CAN_FOCUS);
+  lives_widget_set_can_focus_and_default(radiobutton);
+
   if (GTK_IS_HBOX(box)) hbox=GTK_WIDGET(box);
   else {
     hbox = gtk_hbox_new (FALSE, 0);
@@ -567,7 +630,7 @@ LiVESWidget *lives_standard_spin_button_new(const char *labeltext, boolean use_m
   g_free (txt);
 
   gtk_entry_set_width_chars (GTK_ENTRY (spinbutton),maxlen+dp<4?4:maxlen+dp+1);
-  GTK_WIDGET_SET_FLAGS (spinbutton, GTK_CAN_DEFAULT|GTK_CAN_FOCUS);
+  lives_widget_set_can_focus_and_default(spinbutton);
   gtk_entry_set_activates_default (GTK_ENTRY (spinbutton), TRUE);
   gtk_spin_button_set_update_policy (GTK_SPIN_BUTTON (spinbutton),GTK_UPDATE_ALWAYS);
   if (use_mnemonic) {
@@ -740,11 +803,11 @@ LiVESWidget *lives_standard_dialog_new(const gchar *title, boolean add_std_butto
     GtkWidget *okbutton = gtk_button_new_from_stock ("gtk-ok");
 
     gtk_dialog_add_action_widget (GTK_DIALOG (dialog), cancelbutton, GTK_RESPONSE_CANCEL);
-    GTK_WIDGET_SET_FLAGS (cancelbutton, GTK_CAN_DEFAULT);
+    lives_widget_set_can_focus_and_default(cancelbutton);
 
     gtk_dialog_add_action_widget (GTK_DIALOG (dialog), okbutton, GTK_RESPONSE_OK);
 
-    GTK_WIDGET_SET_FLAGS (okbutton, GTK_CAN_DEFAULT);
+    lives_widget_set_can_focus_and_default(okbutton);
     gtk_widget_grab_default (okbutton);
   }
 
@@ -754,16 +817,40 @@ LiVESWidget *lives_standard_dialog_new(const gchar *title, boolean add_std_butto
 
 }
 
+
+LiVESWidget *lives_standard_hruler_new(void) {
+  LiVESWidget *hruler=NULL;
+
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3,0,0)
+  hruler=gtk_scale_new(GTK_ORIENTATION_HORIZONTAL,NULL);
+  gtk_scale_set_draw_value(GTK_SCALE(hruler),FALSE);
+  gtk_scale_set_has_origin(GTK_SCALE(hruler),FALSE);
+  gtk_scale_set_digits(GTK_SCALE(hruler),8);
+#else
+  hruler=gtk_hruler_new();
+#endif
+#endif
+
+  return hruler;
+}
+
+
+
 // utils
 
+void lives_widget_unparent(LiVESWidget *widget) {
+  lives_container_remove(LIVES_CONTAINER(lives_widget_get_parent(widget)),widget);
+}
+
 boolean label_act_toggle (LiVESWidget *widget, LiVESEventButton *event, LiVESToggleButton *togglebutton) {
-  if (!LIVES_WIDGET_IS_SENSITIVE(togglebutton)) return FALSE;
+  if (!lives_widget_is_sensitive(LIVES_WIDGET(togglebutton))) return FALSE;
   lives_toggle_button_set_active (togglebutton, !lives_toggle_button_get_active(togglebutton));
   return FALSE;
 }
 
 boolean widget_act_toggle (LiVESWidget *widget, LiVESToggleButton *togglebutton) {
-  if (!LIVES_WIDGET_IS_SENSITIVE(togglebutton)) return FALSE;
+  if (!lives_widget_is_sensitive(LIVES_WIDGET(togglebutton))) return FALSE;
   lives_toggle_button_set_active (togglebutton, TRUE);
   return FALSE;
 }
@@ -771,20 +858,6 @@ boolean widget_act_toggle (LiVESWidget *widget, LiVESToggleButton *togglebutton)
 LIVES_INLINE void toggle_button_toggle (LiVESToggleButton *tbutton) {
   if (lives_toggle_button_get_active(tbutton)) lives_toggle_button_set_active(tbutton,FALSE);
   else lives_toggle_button_set_active(tbutton,FALSE);
-}
-
-
-void set_fg_colour(gint red, gint green, gint blue) {
-  // TODO *** - replace with cairo functions
-  GdkColor col;
-  col.red=red*255;
-  col.green=green*255;
-  col.blue=blue*255;
-  if (mainw->general_gc==NULL) {
-    if (mainw->multitrack==NULL) mainw->general_gc=gdk_gc_new(GDK_DRAWABLE(lives_widget_get_xwindow(mainw->LiVES)));
-    else mainw->general_gc=gdk_gc_new(GDK_DRAWABLE(lives_widget_get_xwindow(mainw->multitrack->window)));
-  }
-  gdk_gc_set_rgb_fg_color(mainw->general_gc,&col);
 }
 
 
@@ -806,12 +879,12 @@ void text_view_set_text(LiVESTextView *textview, const gchar *text) {
 
 int get_box_child_index (LiVESBox *box, LiVESWidget *tchild) {
   GList *list=gtk_container_get_children(GTK_CONTAINER(box));
-  GtkBoxChild *child;
+  GtkWidget *child;
   int i=0;
 
   while (list!=NULL) {
-    child=(GtkBoxChild *)list->data;
-    if (child->widget==tchild) return i;
+    child=(GtkWidget *)list->data;
+    if (child==tchild) return i;
     list=list->next;
     i++;
   }
@@ -907,8 +980,8 @@ GdkPixbuf *pixbuf;
     mask = gdk_bitmap_create_from_data (NULL, cursormask_bits,
 					1, 1);
     hidden_cursor = gdk_cursor_new_from_pixmap (source, mask, &fg, &bg, 0, 0);
-    gdk_pixmap_unref (source);
-    gdk_pixmap_unref (mask);
+    g_object_unref (source);
+    g_object_unref (mask);
   }
 #endif 
   if (GDK_IS_WINDOW(window))

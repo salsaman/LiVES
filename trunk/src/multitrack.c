@@ -803,8 +803,8 @@ static void draw_block (lives_mt *mt,track_rect *block, gint x1, gint x2) {
 		     eventbox->allocation.height-1, offset_end, eventbox->allocation.height-1);
     }
     else {
+      cairo_t *cr = gdk_cairo_create (lives_widget_get_xwindow(eventbox));
       if ((!is_audio_eventbox(mt,eventbox))&&track>-1) {
-	cairo_t *cr = gdk_cairo_create (lives_widget_get_xwindow(eventbox));
 	filenum=get_frame_event_clip(block->start_event,track);
 	last_framenum=-1;
 	for (i=offset_start;i<offset_end;i+=BLOCK_THUMB_WIDTH) {
@@ -839,13 +839,13 @@ static void draw_block (lives_mt *mt,track_rect *block, gint x1, gint x2) {
 	  }
 	}
 	if (thumbnail!=NULL) lives_object_unref(thumbnail);
-	cairo_destroy (cr);
       }
       else {
-	set_fg_colour(audcol.red>>8,audcol.green>>8,audcol.blue>>8);
-	gdk_draw_rectangle (GDK_DRAWABLE(eventbox->window), mainw->general_gc, TRUE, offset_start, 0, 
-			    offset_end-offset_start, eventbox->allocation.height-1);
+	cairo_set_source_rgb(cr,audcol.red/65535.,audcol.green/65535.,audcol.blue/65535.);
+	cairo_rectangle(cr,offset_start,0,offset_end-offset_start,eventbox->allocation.height-1);
+	cairo_fill(cr);
       }
+      cairo_destroy (cr);
       gdk_draw_line (GDK_DRAWABLE(eventbox->window), mt->window->style->black_gc, offset_start, 0, offset_start, 
 		     eventbox->allocation.height-1);
       gdk_draw_line (GDK_DRAWABLE(eventbox->window), mt->window->style->black_gc, offset_end, 
@@ -2115,9 +2115,9 @@ void scroll_tracks (lives_mt *mt, gint top_track) {
 
   while (table_children!=NULL) {
     GtkRequisition req;
-    GtkTableChild *child=(GtkTableChild *)table_children->data;
-    req=child->widget->requisition;
-    gtk_widget_set_size_request(child->widget,req.width,25);
+    GtkWidget *child=(GtkWidget *)table_children->data;
+    req=child->requisition;
+    gtk_widget_set_size_request(child,req.width,25);
     table_children=table_children->next;
   }
   gtk_widget_show_all(mt->timeline_table);
@@ -2342,7 +2342,7 @@ static void rerenumber_clips(const char *lfile) {
 
 void mt_clip_select (lives_mt *mt, gboolean scroll) {
   GList *list=gtk_container_get_children(GTK_CONTAINER (mt->clip_inner_box));
-  GtkBoxChild *clipbox=NULL;
+  GtkWidget *clipbox=NULL;
   gint len;
   int i;
   gboolean was_neg=FALSE;
@@ -2375,12 +2375,12 @@ void mt_clip_select (lives_mt *mt, gboolean scroll) {
   mt->file_selected=mt_file_from_clip(mt,mt->clip_selected);
 
   for (i=0;i<len;i++) {
-    clipbox=(GtkBoxChild *)g_list_nth_data (list,i);
+    clipbox=(GtkWidget *)g_list_nth_data (list,i);
     if (i==mt->clip_selected) {
       GtkAdjustment *adj;
       gint value=(adj=GTK_RANGE(GTK_SCROLLED_WINDOW(mt->clip_scroll)->hscrollbar)->adjustment)->upper*(mt->clip_selected+.5)/len;
       if (scroll) gtk_adjustment_clamp_page(adj,value-adj->page_size/2,value+adj->page_size/2);
-      gtk_widget_set_state(clipbox->widget,GTK_STATE_SELECTED);
+      gtk_widget_set_state(clipbox,GTK_STATE_SELECTED);
       gtk_widget_set_sensitive (mt->adjust_start_end, mainw->files[mt->file_selected]->frames>0);
       if (mt->current_track>-1) {
 	gtk_widget_set_sensitive (mt->insert, mainw->files[mt->file_selected]->frames>0);
@@ -2391,7 +2391,7 @@ void mt_clip_select (lives_mt *mt, gboolean scroll) {
 	gtk_widget_set_sensitive (mt->insert, FALSE);
       }
     }
-    else gtk_widget_set_state(clipbox->widget,GTK_STATE_NORMAL);
+    else gtk_widget_set_state(clipbox,GTK_STATE_NORMAL);
   }
 }
 
@@ -7119,34 +7119,34 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   gtk_toolbar_set_icon_size (GTK_TOOLBAR(btoolbar),GTK_ICON_SIZE_SMALL_TOOLBAR);
 
   gtk_widget_ref(mainw->m_sepwinbutton);
-  gtk_widget_unparent(mainw->m_sepwinbutton);
+  lives_widget_unparent(mainw->m_sepwinbutton);
   gtk_toolbar_insert(GTK_TOOLBAR(btoolbar),GTK_TOOL_ITEM(mainw->m_sepwinbutton),-1);
   gtk_widget_unref(mainw->m_sepwinbutton);
 
   gtk_widget_ref(mainw->m_rewindbutton);
-  gtk_widget_unparent(mainw->m_rewindbutton);
+  lives_widget_unparent(mainw->m_rewindbutton);
   gtk_toolbar_insert(GTK_TOOLBAR(btoolbar),GTK_TOOL_ITEM(mainw->m_rewindbutton),-1);
   gtk_widget_unref(mainw->m_rewindbutton);
 
   gtk_widget_ref(mainw->m_playbutton);
-  gtk_widget_unparent(mainw->m_playbutton);
+  lives_widget_unparent(mainw->m_playbutton);
   gtk_toolbar_insert(GTK_TOOLBAR(btoolbar),GTK_TOOL_ITEM(mainw->m_playbutton),-1);
   gtk_widget_unref(mainw->m_playbutton);
 
   gtk_widget_ref(mainw->m_stopbutton);
-  gtk_widget_unparent(mainw->m_stopbutton);
+  lives_widget_unparent(mainw->m_stopbutton);
   gtk_toolbar_insert(GTK_TOOLBAR(btoolbar),GTK_TOOL_ITEM(mainw->m_stopbutton),-1);
   gtk_widget_unref(mainw->m_stopbutton);
 
 
   /*  gtk_widget_ref(mainw->m_playselbutton);
-  gtk_widget_unparent(mainw->m_playselbutton);
+  lives_widget_unparent(mainw->m_playselbutton);
   gtk_toolbar_insert(GTK_TOOLBAR(btoolbar),GTK_TOOL_ITEM(mainw->m_playselbutton),-1);
   gtk_widget_unref(mainw->m_playselbutton);*/
 
 
   gtk_widget_ref(mainw->m_loopbutton);
-  gtk_widget_unparent(mainw->m_loopbutton);
+  lives_widget_unparent(mainw->m_loopbutton);
   gtk_toolbar_insert(GTK_TOOLBAR(btoolbar),GTK_TOOL_ITEM(mainw->m_loopbutton),-1);
   gtk_widget_unref(mainw->m_loopbutton);
 
@@ -7351,14 +7351,14 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
 
 
   gtk_widget_ref(mainw->m_mutebutton);
-  gtk_widget_unparent(mainw->m_mutebutton);
+  lives_widget_unparent(mainw->m_mutebutton);
   gtk_toolbar_insert(GTK_TOOLBAR(btoolbar),GTK_TOOL_ITEM(mainw->m_mutebutton),-1);
   gtk_widget_unref(mainw->m_mutebutton);
 
 
 #ifndef HAVE_GTK_NICE_VERSION
   gtk_widget_ref(mainw->vol_label);
-  gtk_widget_unparent(mainw->vol_label);
+  lives_widget_unparent(mainw->vol_label);
   gtk_toolbar_insert(GTK_TOOLBAR(btoolbar),GTK_TOOL_ITEM(mainw->vol_label),-1);
   gtk_widget_unref(mainw->vol_label);
 #else
@@ -7366,7 +7366,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
 #endif
 
   gtk_widget_ref(mainw->vol_toolitem);
-  gtk_widget_unparent(mainw->vol_toolitem);
+  lives_widget_unparent(mainw->vol_toolitem);
   gtk_toolbar_insert(GTK_TOOLBAR(btoolbar),GTK_TOOL_ITEM(mainw->vol_toolitem),-1);
   gtk_widget_unref(mainw->vol_toolitem);
 
@@ -8434,44 +8434,44 @@ gboolean multitrack_delete (lives_mt *mt, gboolean save_layout) {
 
 
   gtk_widget_ref(mainw->m_sepwinbutton);
-  gtk_widget_unparent(mainw->m_sepwinbutton);
+  lives_widget_unparent(mainw->m_sepwinbutton);
   gtk_toolbar_insert(GTK_TOOLBAR(mainw->btoolbar),GTK_TOOL_ITEM(mainw->m_sepwinbutton),0);
   gtk_widget_unref(mainw->m_sepwinbutton);
 
   gtk_widget_ref(mainw->m_rewindbutton);
-  gtk_widget_unparent(mainw->m_rewindbutton);
+  lives_widget_unparent(mainw->m_rewindbutton);
   gtk_toolbar_insert(GTK_TOOLBAR(mainw->btoolbar),GTK_TOOL_ITEM(mainw->m_rewindbutton),1);
   gtk_widget_unref(mainw->m_rewindbutton);
 
   gtk_widget_ref(mainw->m_playbutton);
-  gtk_widget_unparent(mainw->m_playbutton);
+  lives_widget_unparent(mainw->m_playbutton);
   gtk_toolbar_insert(GTK_TOOLBAR(mainw->btoolbar),GTK_TOOL_ITEM(mainw->m_playbutton),2);
   gtk_widget_unref(mainw->m_playbutton);
 
   gtk_widget_ref(mainw->m_stopbutton);
-  gtk_widget_unparent(mainw->m_stopbutton);
+  lives_widget_unparent(mainw->m_stopbutton);
   gtk_toolbar_insert(GTK_TOOLBAR(mainw->btoolbar),GTK_TOOL_ITEM(mainw->m_stopbutton),3);
   gtk_widget_unref(mainw->m_stopbutton);
 
   /*  gtk_widget_ref(mainw->m_playselbutton);
-  gtk_widget_unparent(mainw->m_playselbutton);
+  lives_widget_unparent(mainw->m_playselbutton);
   gtk_toolbar_insert(GTK_TOOLBAR(mainw->btoolbar),GTK_TOOL_ITEM(mainw->m_playselbutton),4);
   gtk_widget_unref(mainw->m_playselbutton);*/
 
   gtk_widget_ref(mainw->m_loopbutton);
-  gtk_widget_unparent(mainw->m_loopbutton);
+  lives_widget_unparent(mainw->m_loopbutton);
   gtk_toolbar_insert(GTK_TOOLBAR(mainw->btoolbar),GTK_TOOL_ITEM(mainw->m_loopbutton),5);
   gtk_widget_unref(mainw->m_loopbutton);
 
   gtk_widget_ref(mainw->m_mutebutton);
-  gtk_widget_unparent(mainw->m_mutebutton);
+  lives_widget_unparent(mainw->m_mutebutton);
   gtk_toolbar_insert(GTK_TOOLBAR(mainw->btoolbar),GTK_TOOL_ITEM(mainw->m_mutebutton),6);
   gtk_widget_unref(mainw->m_mutebutton);
 
 #ifndef HAVE_GTK_NICE_VERSION
 
   gtk_widget_ref(mainw->vol_label);
-  gtk_widget_unparent(mainw->vol_label);
+  lives_widget_unparent(mainw->vol_label);
   gtk_toolbar_insert(GTK_TOOLBAR(mainw->btoolbar),GTK_TOOL_ITEM(mainw->vol_label),7);
   gtk_widget_unref(mainw->vol_label);
 #else
@@ -8479,7 +8479,7 @@ gboolean multitrack_delete (lives_mt *mt, gboolean save_layout) {
 #endif
 
   gtk_widget_ref(mainw->vol_toolitem);
-  gtk_widget_unparent(mainw->vol_toolitem);
+  lives_widget_unparent(mainw->vol_toolitem);
   gtk_toolbar_insert(GTK_TOOLBAR(mainw->btoolbar),GTK_TOOL_ITEM(mainw->vol_toolitem),-1);
   gtk_widget_unref(mainw->vol_toolitem);
 
@@ -9771,7 +9771,7 @@ void mt_clear_timeline(lives_mt *mt) {
 void mt_delete_clips(lives_mt *mt, gint file) {
   // close eventbox(es) for a given file
   GList *list=gtk_container_get_children(GTK_CONTAINER (mt->clip_inner_box)),*list_next;
-  GtkBoxChild *child;
+  GtkWidget *child;
   GtkWidget *label1,*label2;
   gint neg=0,i=0;
   gboolean removed=FALSE;
@@ -9784,8 +9784,8 @@ void mt_delete_clips(lives_mt *mt, gint file) {
       if (list->prev!=NULL) list->prev->next=list->next;
       if (list->next!=NULL) list->next->prev=list->prev;
 
-      child=(GtkBoxChild *)list->data;
-      gtk_widget_destroy(child->widget);
+      child=(GtkWidget *)list->data;
+      gtk_widget_destroy(child);
 
       label1=(GtkWidget *)g_list_nth_data(mt->clip_labels,i*2);
       label2=(GtkWidget *)g_list_nth_data(mt->clip_labels,i*2+1);
@@ -10202,7 +10202,6 @@ gboolean on_multitrack_activate (GtkMenuItem *menuitem, weed_plant_t *event_list
       gtk_widget_hide(mainw->custom_gens_menu);
       gtk_widget_hide(mainw->custom_gens_submenu);
     }
-    gtk_widget_hide (mainw->LiVES);
   }
 
   gtk_widget_hide(multi->aparam_separator); // no longer used
@@ -10302,6 +10301,10 @@ gboolean on_multitrack_activate (GtkMenuItem *menuitem, weed_plant_t *event_list
 #endif
 
   multi->no_expose=FALSE;
+
+  if (prefs->show_gui)
+    gtk_widget_hide (mainw->LiVES);
+  
   while (g_main_context_iteration(NULL,FALSE));
   redraw_all_event_boxes(multi);
 
@@ -11566,8 +11569,8 @@ void polymorph (lives_mt *mt, lives_mt_poly_state_t poly) {
   case (POLY_IN_OUT) :
     g_signal_handler_block (mt->spinbutton_in,mt->spin_in_func);
     g_signal_handler_block (mt->spinbutton_out,mt->spin_out_func);
-    if (lives_widget_get_parent(mt->in_out_box)!=NULL) gtk_widget_unparent (mt->in_out_box);
-    if (lives_widget_get_parent(mt->avel_box)!=NULL) gtk_widget_unparent (mt->avel_box);
+    if (lives_widget_get_parent(mt->in_out_box)!=NULL) lives_widget_unparent (mt->in_out_box);
+    if (lives_widget_get_parent(mt->avel_box)!=NULL) lives_widget_unparent (mt->avel_box);
 
     break;
   case (POLY_PARAMS) :
@@ -16487,25 +16490,35 @@ void draw_region (lives_mt *mt) {
 gint expose_timeline_reg_event (GtkWidget *timeline, GdkEventExpose *event, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   GList *tl_marks=mt->tl_marks;
-  gint ebwidth;
+
+  cairo_t *cr;
+
   gdouble time;
+
+  gint ebwidth;
   gint offset;
 
   if (event->count>0) return FALSE;
   if (mainw->playing_file>-1||mt->is_rendering) return FALSE;
   draw_region (mt);
 
-  set_fg_colour(0,0,255);
+  cr = gdk_cairo_create (lives_widget_get_xwindow(mt->timeline_reg));
+
+  cairo_set_source_rgb(cr,0.,0.,1.);
 
   while (tl_marks!=NULL) {
     time=strtod((char *)tl_marks->data,NULL);
     ebwidth=GTK_WIDGET(mt->timeline)->allocation.width;
     offset=(time-mt->tl_min)/(mt->tl_max-mt->tl_min)*(gdouble)ebwidth;
-    gdk_draw_line (GDK_DRAWABLE(mt->timeline_reg->window), mainw->general_gc, offset, 1, offset, 
-		   mt->timeline_reg->allocation.height-2);
+
+    cairo_move_to(cr,offset,1);
+    cairo_line_to(cr,offset,mt->timeline_reg->allocation.height-2);
+    cairo_stroke(cr);
+
     tl_marks=tl_marks->next;
   }
 
+  cairo_destroy(cr);
 
   return FALSE;
 }
@@ -16585,6 +16598,7 @@ static void draw_soundwave(GtkWidget *ebox, gint start, gint width, gint chnum, 
   gint track=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"layer_number"));
   track_rect *block=(track_rect *)g_object_get_data (G_OBJECT(eventbox), "blocks");
 
+  cairo_t *cr = gdk_cairo_create (lives_widget_get_xwindow(ebox));
 
   aofile=-1;
   afd=-1;
@@ -16619,23 +16633,22 @@ static void draw_soundwave(GtkWidget *ebox, gint start, gint width, gint chnum, 
     seek=get_audio_frame_seek(block->start_event,track);
     vel=get_audio_frame_vel(block->start_event,track);
 
-    gdk_draw_line(GDK_DRAWABLE(ebox->window),mt->window->style->fg_gc[0],offset_start,0,offset_start,
-		  ebox->allocation.height);
-    gdk_draw_line(GDK_DRAWABLE(ebox->window),mt->window->style->fg_gc[0],offset_start,0,offset_end,0);
-    gdk_draw_line(GDK_DRAWABLE(ebox->window),mt->window->style->fg_gc[0],offset_end,0,offset_end,
-		  ebox->allocation.height);
-    gdk_draw_line(GDK_DRAWABLE(ebox->window),mt->window->style->fg_gc[0],offset_end,ebox->allocation.height-1,
-		  offset_start,ebox->allocation.height-1);
+    cairo_set_source_rgb(cr,0.,0.,0.);
+    cairo_set_line_width(cr,1.);
+    cairo_rectangle(cr,offset_start,0,offset_end-offset_start,ebox->allocation.height-1);
+    cairo_stroke(cr);
 
-    set_fg_colour(128,128,128); // mid grey
+    cairo_set_source_rgb(cr,0.5,0.5,0.5);
+
     for (i=offset_start;i<=offset_end;i++) {
       secs=((gdouble)i/ebox->allocation.width*tl_span+mt->tl_min-offset_startd)*vel;
       secs+=seek;
       if (secs>mainw->files[fnum]->laudio_time) break;
       ypos=get_float_audio_val_at_time(fnum,secs,chnum,cfile->achans)*.5;
-      gdk_draw_line(GDK_DRAWABLE(ebox->window),mainw->general_gc,i,
-		    (float)ebox->allocation.height/2.,i,(.5-ypos)*(float)ebox->allocation.height);
 
+      cairo_move_to(cr,i,(float)ebox->allocation.height/2.);
+      cairo_line_to(cr,i,(.5-ypos)*(float)ebox->allocation.height);
+      cairo_stroke(cr);
     }
     block=block->next;
 
@@ -16645,6 +16658,8 @@ static void draw_soundwave(GtkWidget *ebox, gint start, gint width, gint chnum, 
       g_free(filename);
     }
   }
+
+  cairo_destroy(cr);
 
   if (afd!=-1) close(afd);
 
@@ -17192,15 +17207,25 @@ weed_plant_t *get_next_fm (lives_mt *mt, gint current_track, weed_plant_t *event
 
 
 static void add_mark_at(lives_mt *mt, gdouble time) {
+  cairo_t *cr;
+
   gchar *tstring=g_strdup_printf("%.6f",time);
   gint offset;
-
-  set_fg_colour(0,0,255);
 
   gtk_widget_set_sensitive(mt->clear_marks,TRUE);
   mt->tl_marks=g_list_append(mt->tl_marks,tstring);
   offset=(time-mt->tl_min)/(mt->tl_max-mt->tl_min)*(gdouble)mt->timeline->allocation.width;
-  gdk_draw_line (GDK_DRAWABLE(mt->timeline_reg->window), mainw->general_gc, offset, 1, offset, mt->timeline_reg->allocation.height-2);
+
+  cr = gdk_cairo_create (lives_widget_get_xwindow(mt->timeline_reg));
+
+  cairo_set_source_rgb(cr,0.,0.,1.);
+
+  cairo_move_to(cr,offset,1);
+  cairo_line_to(cr,offset,mt->timeline_reg->allocation.height-2);
+  cairo_stroke(cr);
+
+  cairo_destroy(cr);
+
 }
 
 

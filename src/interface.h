@@ -20,14 +20,13 @@
 
 void load_theme (void);
 
-GtkWidget* create_fileselection (const gchar *title, gint preview_type, gpointer free_on_cancel);
 GtkWidget* create_window4 (void);
 GtkWidget* create_dialog2 (gint warning_mask);
 GtkWidget* create_dialog3 (const gchar *text, gboolean is_blocking, gint warning_mask);
 GtkWidget* create_opensel_dialog (void);
 GtkWidget* create_encoder_prep_dialog (const gchar *text1, const gchar *text2, gboolean opt_resize);
 
-void widget_add_preview(GtkBox *for_preview, GtkBox *for_button, GtkBox *for_deinterlace, gint preview_type);  ///< for fileselector preview
+void widget_add_preview(GtkWidget *widget, LiVESBox *for_preview, LiVESBox *for_button, LiVESBox *for_deinterlace, int preview_type);  ///< for fileselector preview
 
 gboolean do_audio_choice_dialog(short startup_phase);
 

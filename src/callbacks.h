@@ -196,6 +196,13 @@ void
 on_ok_button1_clicked                  (GtkButton       *button,
                                         gpointer         user_data);
 
+
+void on_ok_file_open_clicked(GtkFileChooser *chooser, GSList *fnames);
+
+void on_ok_filesel_open_clicked (GtkFileChooser *chooser, gpointer user_data);
+
+
+
 void
 open_sel_range_activate                 (void);
 
@@ -226,7 +233,7 @@ on_open_sel_ok_button_clicked                  (GtkButton       *button,
 void on_save_textview_clicked (GtkButton *button, gpointer user_data);
 
 void
-on_cancel_button1_clicked              (GtkButton       *button,
+on_cancel_button1_clicked              (GtkWidget       *widget,
                                         gpointer         user_data);
 
 gboolean on_cancel_button1_clicked_del(GtkWidget *widget, GdkEvent *event, gpointer user_data);
@@ -307,7 +314,7 @@ void
 on_spinbutton_end_value_changed          (GtkSpinButton   *spinbutton,
 					  gpointer         user_data);
 
-void on_open_new_audio_clicked (GtkButton *, gpointer opt_filename);
+void on_open_new_audio_clicked (GtkFileChooser *chooser, gpointer opt_filename);
 
 void on_load_audio_activate (GtkMenuItem *, gpointer user_data);
 
@@ -322,9 +329,7 @@ void
 on_xmms_play_audio_activate                  (GtkMenuItem     *menuitem,
 					      gpointer         user_data);
 
-void 
-on_xmms_ok_clicked                (GtkButton     *menuitem,
-					 gpointer         user_data);
+void on_xmms_ok_clicked (GtkFileChooser *chooser, gpointer user_data);
 
 void 
 on_xmms_stop_audio_activate                (GtkMenuItem     *menuitem,
@@ -457,9 +462,8 @@ gboolean
 frame_context           (GtkWidget       *widget,
 			  GdkEventButton  *event,
 			  gpointer         which);
-void
-on_fs_preview_clicked                  (GtkButton       *button,
-                                        gpointer         user_data);
+
+void on_fs_preview_clicked (GtkWidget *widget, gpointer user_data);
 
 
 void
@@ -469,14 +473,6 @@ on_restore_activate                      (GtkMenuItem     *menuitem,
 void
 on_backup_activate                      (GtkMenuItem     *menuitem,
 					 gpointer         user_data);
-
-void
-on_backup_ok_clicked                  (GtkButton       *button,
-				       gpointer         user_data);
-
-void
-on_restore_ok_clicked                  (GtkButton       *button,
-				       gpointer         user_data);
 
 void
 on_xmms_ran_ok_clicked                  (GtkButton       *button,
@@ -576,9 +572,7 @@ void
 on_fade_audio_activate (GtkMenuItem     *menuitem,
 			  gpointer         user_data);
 
-void
-on_ok_append_audio_clicked                      (GtkButton *button,
-						 GtkEntry *entry);
+void on_ok_append_audio_clicked (GtkFileChooser *chooser, gpointer user_data);
 
 void
 on_resample_video_activate (GtkMenuItem     *menuitem,

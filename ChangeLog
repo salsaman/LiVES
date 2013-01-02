@@ -4,6 +4,8 @@ Fix various bugs with the RFX builder menus.
 Fix compilation error (double typedef).
 Fix compilation for GTK+ < 2.24
 Fix regression error in Resize All Frames.
+Fix regression in Append Audio.
+Fix crash in audio previews (open/append new audio).
 Add experimental neural_net compound effect.
 Add motion_analyser compound effect.
 Add mini tracker player in LiVES (fourKlives).
@@ -12,7 +14,7 @@ Add mini tracker player in LiVES (fourKlives).
 
 
 
-	
+
 
 
 

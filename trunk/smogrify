@@ -3103,6 +3103,7 @@ if (defined($ARGV[0])) {
 
 	$audio_bak="audio.bak";
 
+
 	# resample $audio_out (if required)
 	unless ($arate==$nrate&&$achans==$nchans&&$asamps==$nsamps&&$nsigned==$signed&&$nendian==$endian) {
 	    $audio_in=$audio_out; #audio.new
@@ -3112,17 +3113,21 @@ if (defined($ARGV[0])) {
 		unlink "$pidfile"; 
 		exit 1;
 	    }
+
 	    unlink "$audio_in"; #audio.new
 	    smog_rename( "$audio_out","$audio_in");  #audio.bak -> audio.new
 	    $audio_out=$audio_in; #audio.new
 	}
 
 	unless (&rc_get("conserve_space") eq "true") {
+	    smog_rename("$audio_out","keep_$audio_out");
 	    &backup_audio;
 	    if ($panic) {
+		unlink "keep_$audio_out";
 		unlink "$pidfile"; 
 		exit 1;
 	    }
+	    smog_rename("keep_$audio_out","$audio_out");
 	}
 
 	# cat audio audio.new -> audiodump
@@ -6326,13 +6331,14 @@ sub ogg_open {
     
     unless (&location("ogg123") eq "") {
 	smog_system("ogg123 -d wav -f \"$audio_in\" \"$file\" >$nulfile 2>&1");
-	$f_size= -s $audiofile;
+	$f_size= -s $audio_in;
     }
 
     if ($f_size==0) {
 	&othera_open;
 	return;
     }
+
 
     $file=$audio_in;
     $is_audio=1;
@@ -6360,7 +6366,7 @@ sub ogg_open {
     if ($f_size==0) {
 	$f_size= -s $audio_in;
     }
-
+    
 }
 
 

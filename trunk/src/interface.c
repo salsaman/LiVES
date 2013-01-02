@@ -67,81 +67,6 @@ void add_suffix_check(GtkBox *box, const gchar *ext) {
   
 }
 
-static gboolean
-call_cancel                  (GtkWidget       *widget,
-			      GdkEvent        *event,
-		      	      gpointer         user_data)
-{
-  on_cancel_button1_clicked(NULL,user_data);
-  return FALSE;
-}
-
-
-
-
-GtkWidget *create_fileselection (const gchar *title, gint preview_type, gpointer free_on_cancel) {
-  // 1 - video and audio open
-  // preview type 2 is export audio
-  // preview_type 3 was save_file, no longer used (deprecated)
-
-
-  GtkWidget *fileselection;
-  GtkWidget *ok_button;
-  GtkWidget *cancel_button;
-
-  gchar titles[256];
-  g_snprintf(titles,256,"LiVES: - %s",title);
-
-  fileselection = gtk_file_selection_new (titles);
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_bg(fileselection, GTK_STATE_NORMAL, &palette->normal_back);
-  }
-
-  gtk_container_set_border_width (GTK_CONTAINER (fileselection), 10);
-  gtk_window_set_position (GTK_WINDOW (fileselection), GTK_WIN_POS_CENTER_ALWAYS);
-  gtk_window_set_modal (GTK_WINDOW (fileselection), TRUE);
-
-  if (prefs->show_gui) {
-    if (mainw->multitrack==NULL) gtk_window_set_transient_for(GTK_WINDOW(fileselection),GTK_WINDOW(mainw->LiVES));
-    else gtk_window_set_transient_for(GTK_WINDOW(fileselection),GTK_WINDOW(mainw->multitrack->window));
-  }
-
-  if (prefs->gui_monitor!=0) {
-   gint xcen=mainw->mgeom[prefs->gui_monitor-1].x+(mainw->mgeom[prefs->gui_monitor-1].width-fileselection->allocation.width)/2;
-   gint ycen=mainw->mgeom[prefs->gui_monitor-1].y+(mainw->mgeom[prefs->gui_monitor-1].height-fileselection->allocation.height)/2;
-   gtk_window_move(GTK_WINDOW(fileselection),xcen,ycen);
-  }
-
-  if (prefs->fileselmax) {
-    gtk_window_maximize (GTK_WINDOW(fileselection));
-  }
-
-  ok_button = GTK_FILE_SELECTION (fileselection)->ok_button;
-  GTK_WIDGET_SET_FLAGS (ok_button, GTK_CAN_DEFAULT);
-
-  cancel_button = GTK_FILE_SELECTION (fileselection)->cancel_button;
-  GTK_WIDGET_SET_FLAGS (cancel_button, GTK_CAN_DEFAULT);
-
-  gtk_widget_grab_focus (fileselection);
-  
-  if (preview_type==1||preview_type==2) {
-    widget_add_preview(GTK_BOX (GTK_FILE_SELECTION(fileselection)->main_vbox),
-		       GTK_BOX (GTK_FILE_SELECTION (fileselection)->action_area),
-		       GTK_BOX(GTK_FILE_SELECTION(fileselection)->main_vbox),preview_type);
-
-    g_signal_connect (GTK_OBJECT (fileselection), "delete_event",
-                      G_CALLBACK (call_cancel),
-                      free_on_cancel);
-  }
-
-  g_signal_connect (cancel_button, "clicked",G_CALLBACK (on_cancel_button1_clicked),free_on_cancel);
-
-  gtk_widget_show_all (fileselection);
-  return fileselection;
-}
-
-
-
 
 
 static GtkWidget *add_deinterlace_checkbox(GtkBox *for_deint) {
@@ -179,12 +104,29 @@ static GtkWidget *add_deinterlace_checkbox(GtkBox *for_deint) {
 }
 
 
+static void pv_sel_changed(GtkFileChooser *chooser, gpointer user_data) {
+  GSList *slist=gtk_file_chooser_get_filenames (chooser);
+  GtkWidget *pbutton=(GtkWidget *)user_data;
 
-void widget_add_preview(GtkBox *for_preview, GtkBox *for_button, GtkBox *for_deint, gint preview_type) {
+  if (slist==NULL||slist->data==NULL||g_slist_length(slist)>1||!(g_file_test((gchar *)slist->data,G_FILE_TEST_IS_REGULAR))) {
+    gtk_widget_set_sensitive(pbutton,FALSE);
+  }
+  else gtk_widget_set_sensitive(pbutton,TRUE);
+  
+  if (slist!=NULL) {
+    g_list_free_strings((GList *)slist);
+    g_slist_free(slist);
+  }
+}
+
+
+
+
+
+void widget_add_preview(GtkWidget *widget, LiVESBox *for_preview, LiVESBox *for_button, LiVESBox *for_deint, int preview_type) {
   // preview type 1 - video and audio, fileselector
   // preview type 2 - audio only, fileselector
   // preview type 3 - range preview
-
 
   GtkWidget *preview_button=NULL;
   GtkWidget *fs_label;
@@ -200,15 +142,11 @@ void widget_add_preview(GtkBox *for_preview, GtkBox *for_button, GtkBox *for_dei
 
     gtk_container_set_border_width (GTK_CONTAINER(mainw->fs_playframe), 10);
 
-    fs_label = gtk_label_new (_ ("Preview"));
+    fs_label = lives_standard_label_new (_ ("Preview"));
     gtk_widget_show (fs_label);
     gtk_frame_set_label_widget (GTK_FRAME (mainw->fs_playframe), fs_label);
     gtk_label_set_justify (GTK_LABEL (fs_label), GTK_JUSTIFY_RIGHT);
 
-    if (palette->style&STYLE_1) {
-      gtk_widget_modify_fg(fs_label, GTK_STATE_NORMAL, &palette->normal_fore);
-    }
-    
     gtk_box_pack_start (for_preview, mainw->fs_playframe, FALSE, FALSE, 0);
     gtk_widget_set_size_request (mainw->fs_playarea, DEFAULT_FRAME_HSIZE, DEFAULT_FRAME_VSIZE);
 
@@ -231,25 +169,33 @@ void widget_add_preview(GtkBox *for_preview, GtkBox *for_button, GtkBox *for_dei
   else if (preview_type==3) {
     preview_button = gtk_button_new_with_mnemonic (_ ("Click here to _Preview the video"));
   }
+
   gtk_widget_show (preview_button);
 
   if (palette->style&STYLE_1) {
     gtk_widget_modify_bg(preview_button, GTK_STATE_NORMAL, &palette->menu_and_bars);
   }
 
-  gtk_box_pack_start (for_button, preview_button, TRUE, TRUE, 0);
-
+  gtk_box_pack_start (for_button, preview_button, FALSE, FALSE, 10);
 
   if (preview_type==1||preview_type==3) {
     add_deinterlace_checkbox(for_deint);
   }
 
+
   g_signal_connect (GTK_OBJECT (preview_button), "clicked",
 		    G_CALLBACK (on_fs_preview_clicked),
 		    GINT_TO_POINTER (preview_type));
 
-}
+  if (GTK_IS_FILE_CHOOSER(widget)) {
+    gtk_widget_set_sensitive(preview_button,FALSE);
+    
+    g_signal_connect (GTK_OBJECT (widget), "selection_changed",
+		      G_CALLBACK (pv_sel_changed),
+		      (gpointer)preview_button);
+  }
 
+}
 
 
 static gboolean procdets_pressed (GtkWidget *ahbox, GdkEventButton *event, gpointer user_data) {
@@ -1559,9 +1505,7 @@ create_insert_dialog (void)
 
 
 
-GtkWidget*
-create_opensel_dialog (void)
-{
+GtkWidget *create_opensel_dialog (void) {
   GtkWidget *opensel_dialog;
   GtkWidget *dialog_vbox9;
   GtkWidget *vbox15;
@@ -1658,7 +1602,7 @@ create_opensel_dialog (void)
   GTK_WIDGET_SET_FLAGS (okbutton6, GTK_CAN_DEFAULT);
   gtk_widget_grab_default(okbutton6);
 
-  widget_add_preview (GTK_BOX (dialog_vbox9), GTK_BOX (dialog_vbox9), GTK_BOX(dialog_vbox9), 3);
+  widget_add_preview (opensel_dialog,GTK_BOX (dialog_vbox9), GTK_BOX (dialog_vbox9), GTK_BOX(dialog_vbox9), 3);
 
   g_signal_connect_after (GTK_OBJECT (spinbutton23), "value_changed",
                             G_CALLBACK (on_spin_value_changed),
@@ -3485,44 +3429,66 @@ gchar *choose_file(gchar *dir, gchar *fname, gchar **filt, GtkFileChooserAction 
 }
 
 
+static void chooser_response(GtkDialog *dialog, gint response, gpointer user_data) {
+  int type=GPOINTER_TO_INT(user_data);
+
+  if (response!=GTK_RESPONSE_CANCEL) {
+    switch (type) {
+    case 1:
+      on_ok_filesel_open_clicked(GTK_FILE_CHOOSER(dialog),NULL);
+      break;
+    case 2:
+      on_open_new_audio_clicked(GTK_FILE_CHOOSER(dialog),NULL);
+      break;
+    case 3:
+      on_ok_file_open_clicked(GTK_FILE_CHOOSER(dialog),NULL);
+      break;
+    case 4:
+      on_xmms_ok_clicked(GTK_FILE_CHOOSER(dialog),NULL);
+      break;
+    case 5:
+      on_ok_append_audio_clicked(GTK_FILE_CHOOSER(dialog),NULL);
+      break;
+    default:
+      break;
+    }
+  }
+  else on_cancel_button1_clicked(GTK_WIDGET(dialog),NULL);
+}
 
 
-gchar *choose_file_with_preview (const gchar *title, gchar *dir, GtkFileChooserAction act, gint preview_type) {
-  // 0 - import/export script (rfxbuilder: remove)
 
-  // 1 - video and audio open
-  // preview type 2 is import audio
+
+void choose_file_with_preview (gchar *dir, const gchar *title, gint preview_type) {
+  // preview_type 1 - video and audio open (single - opensel)
+  // preview type 2 - import audio
+  // preview_type 3 - video and audio open (multiple)
+  // type 4 xmms
+  // type 5 append audio
 
   GtkWidget *chooser;
 
   gchar titles[256];
 
-  gchar *filename=NULL,*tmp;
-
-  gint response;
-
   g_snprintf(titles,256,_("LiVES: - %s"),title);
 
-  chooser=(GtkWidget *)choose_file(dir,NULL,NULL,act,titles,mainw->LiVES);
+  chooser=(GtkWidget *)choose_file(dir,NULL,NULL,GTK_FILE_CHOOSER_ACTION_OPEN,titles,mainw->LiVES);
   
-  widget_add_preview(GTK_BOX (lives_dialog_get_content_area(LIVES_DIALOG(chooser))),
-		     GTK_BOX (lives_dialog_get_action_area(LIVES_DIALOG(chooser))),
-		     GTK_BOX (lives_dialog_get_content_area(LIVES_DIALOG(chooser))),
-		     preview_type);
+  if (preview_type==3) gtk_file_chooser_set_select_multiple(GTK_FILE_CHOOSER(chooser),TRUE);
 
+  widget_add_preview(chooser,LIVES_BOX(lives_dialog_get_content_area(LIVES_DIALOG(chooser))),
+		     LIVES_BOX(lives_dialog_get_content_area(LIVES_DIALOG(chooser))),
+		     LIVES_BOX(lives_dialog_get_action_area(LIVES_DIALOG(chooser))),
+		     preview_type==3?1:preview_type>3?2:preview_type);
 
-  if (prefs->fileselmax) gtk_window_maximize (GTK_WINDOW(chooser));
-
-  if ((response=gtk_dialog_run(GTK_DIALOG(chooser)))!=GTK_RESPONSE_CANCEL) {
-    filename=g_filename_to_utf8((tmp=gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(chooser))),-1,NULL,NULL,NULL);
-    g_free(tmp);
+  if (prefs->fileselmax) {
+    gtk_window_set_resizable (GTK_WINDOW(chooser),TRUE);
+    gtk_window_maximize (GTK_WINDOW(chooser));
+    gtk_widget_queue_draw(chooser);
+    while (g_main_context_iteration(NULL,FALSE));
   }
 
-  gtk_widget_destroy(chooser);
-
-  if (filename==NULL) on_cancel_button1_clicked(NULL,NULL);
-
-  return filename;
+  g_signal_connect (chooser, "response", G_CALLBACK (chooser_response), GINT_TO_POINTER(preview_type));
 }
 
 

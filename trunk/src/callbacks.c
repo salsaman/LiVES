@@ -513,19 +513,13 @@ void on_fileread_clicked (GtkFileChooser *fch, gpointer user_data) {
 
 
 
-void
-on_filesel_complex_clicked                      (GtkButton *button,
-						 GtkEntry *entry)
-{
+void on_filesel_complex_clicked (GtkButton *button, GtkEntry *entry) {
   size_t chklen=strlen(LIVES_TMP_NAME);
 
   // append /livestmp
   on_filesel_simple_clicked (NULL,entry);
 
   // TODO - dirsep
-
-
-
 #ifndef IS_MINGW
   if (strcmp(file_name+strlen(file_name)-1,"/")) {
     g_strappend(file_name,PATH_MAX,"/");
@@ -545,8 +539,7 @@ on_filesel_complex_clicked                      (GtkButton *button,
 }
 
 
-void
-on_filesel_simple_clicked (GtkButton *button, GtkEntry *entry) {
+void on_filesel_simple_clicked (GtkButton *button, GtkEntry *entry) {
   // callback for directory browsing buttons
   gchar *dirname;
   gchar *fname=g_strdup(gtk_entry_get_text(entry));
@@ -563,17 +556,9 @@ on_filesel_simple_clicked (GtkButton *button, GtkEntry *entry) {
 
 
 
-
-void
-on_open_activate                      (GtkMenuItem     *menuitem,
-				       gpointer         user_data)
-{
-
+void on_open_sel_activate (GtkMenuItem *menuitem, gpointer user_data) {
   // OPEN A FILE
 
-
-  GtkWidget *fileselection;
-
   if (mainw->multitrack!=NULL) {
     if (mainw->multitrack->idlefunc>0) {
       g_source_remove(mainw->multitrack->idlefunc);
@@ -584,47 +569,43 @@ on_open_activate                      (GtkMenuItem     *menuitem,
     gtk_widget_set_sensitive (mainw->m_playbutton, TRUE);
   }
 
-  while (g_main_context_iteration(NULL,FALSE));
-
-  fileselection = create_fileselection (_ ("Select File"),1,NULL);
-
-  if (strlen(mainw->vid_load_dir)) {
-    gtk_file_selection_set_filename(GTK_FILE_SELECTION(fileselection),mainw->vid_load_dir);
-  }
-
-  gtk_file_selection_set_select_multiple(GTK_FILE_SELECTION(fileselection),TRUE);
-
-  g_signal_connect (GTK_FILE_SELECTION(fileselection)->ok_button, "clicked",G_CALLBACK (on_ok_button1_clicked),NULL);
-  gtk_widget_show (fileselection);
+  choose_file_with_preview(strlen(mainw->vid_load_dir)?mainw->vid_load_dir:NULL,_ ("Select File"),1);
 }
 
-void
-on_open_sel_activate                      (GtkMenuItem     *menuitem,
-					   gpointer         user_data)
-{
-  GtkWidget *fileselection;
 
-  if (mainw->multitrack!=NULL) {
-    if (mainw->multitrack->idlefunc>0) {
-      g_source_remove(mainw->multitrack->idlefunc);
-      mainw->multitrack->idlefunc=0;
-    }
-    mt_desensitise(mainw->multitrack);
-    gtk_widget_set_sensitive(mainw->multitrack->playall,TRUE);
-    gtk_widget_set_sensitive (mainw->m_playbutton, TRUE);
-  }
 
+void on_ok_filesel_open_clicked (GtkFileChooser *chooser, gpointer user_data) {
+  gchar *fname=gtk_file_chooser_get_filename (chooser);
+  gchar *tmp;
+
+  if (fname==NULL) return;
+
+  g_snprintf(file_name,PATH_MAX,"%s",(tmp=g_filename_to_utf8(fname,-1,NULL,NULL,NULL)));
+  g_free(tmp); g_free(fname);
+
+  end_fs_preview();
+  gtk_widget_destroy(GTK_WIDGET(chooser));
+
+  g_snprintf(mainw->vid_load_dir,PATH_MAX,"%s",file_name);
+  get_dirname(mainw->vid_load_dir);
+
+  if (mainw->multitrack==NULL) gtk_widget_queue_draw(mainw->LiVES);
+  else gtk_widget_queue_draw(mainw->multitrack->window);
   while (g_main_context_iteration(NULL,FALSE));
+  
+  mainw->fs_playarea=NULL;
+  
+  if (prefs->save_directories) {
+    set_pref ("vid_load_dir",(tmp=g_filename_from_utf8(mainw->vid_load_dir,-1,NULL,NULL,NULL)));
+    g_free(tmp);
+  }
+  
+  mainw->cancelled=CANCEL_NONE;
 
-  fileselection = create_fileselection (_ ("Select File"),1,NULL);
-
-  if (strlen(mainw->vid_load_dir)) {
-    gtk_file_selection_set_filename(GTK_FILE_SELECTION(fileselection),mainw->vid_load_dir);
-  } 
-  g_signal_connect (GTK_FILE_SELECTION(fileselection)->ok_button, "clicked",
-		    G_CALLBACK (on_open_sel_ok_button_clicked),NULL);
-  gtk_widget_show (fileselection);
+  open_sel_range_activate();
 }
+
+
 
 void
 on_open_vcd_activate                      (GtkMenuItem     *menuitem,
@@ -1018,7 +999,7 @@ on_stop_clicked (GtkMenuItem     *menuitem,
   // resume to allow return
   if (mainw->effects_paused) {
 #ifndef IS_MINGW
-    com=g_strdup_printf("%s stopsubsub %s SIGCONT 2>/dev/null",prefs->backend_sync,cfile->handle);
+    com=g_strdup_printf("%s stopsubsub \"%s\" SIGCONT 2>/dev/null",prefs->backend_sync,cfile->handle);
     lives_system(com,TRUE);
 #else
     FILE *rfile;
@@ -1479,80 +1460,36 @@ on_export_proj_activate                      (GtkMenuItem     *menuitem,
 
 
 
-void
-on_restore_activate (GtkMenuItem *menuitem, gpointer user_data) {
-  GtkWidget *fileselection;
-  while (g_main_context_iteration(NULL,FALSE));
-
-  fileselection = create_fileselection (_ ("Restore .lv1 file"),0,NULL);
-  if (strlen(mainw->proj_load_dir)) {
-    gtk_file_selection_set_filename(GTK_FILE_SELECTION(fileselection), mainw->proj_load_dir);
-  }
-  gtk_file_selection_complete(GTK_FILE_SELECTION(fileselection), "*.lv1");
-  g_signal_connect (GTK_FILE_SELECTION(fileselection)->ok_button, "clicked",G_CALLBACK (on_restore_ok_clicked),NULL);
-  gtk_widget_show (fileselection);
-}
 
 
+void on_backup_activate (GtkMenuItem *menuitem, gpointer user_data) {
+  gchar *filt[]={"*.lv1",NULL};
+  gchar *file_name = choose_file (strlen(mainw->proj_save_dir)?mainw->proj_save_dir:NULL,NULL,filt,
+				  GTK_FILE_CHOOSER_ACTION_SAVE,_ ("Backup as .lv1 file"),NULL);
 
-void
-on_backup_activate (GtkMenuItem *menuitem, gpointer user_data) {
-  GtkWidget *fileselection;
-
-  while (g_main_context_iteration(NULL,FALSE));
-
-  fileselection = create_fileselection (_ ("Backup as .lv1 file"),0,NULL);
-  if (strlen(mainw->proj_save_dir)) {
-    gtk_file_selection_set_filename(GTK_FILE_SELECTION(fileselection), mainw->proj_save_dir);
-  }
-  gtk_file_selection_complete(GTK_FILE_SELECTION(fileselection), "*.lv1");
-  g_signal_connect (GTK_FILE_SELECTION(fileselection)->ok_button, "clicked",G_CALLBACK (on_backup_ok_clicked),NULL);
-  gtk_widget_show (fileselection);
-
-}
-
-
-void
-on_backup_ok_clicked                  (GtkButton       *button,
-				       gpointer         user_data)
-{
-  gchar *tmp;
-  g_snprintf(file_name,PATH_MAX,"%s",(tmp=g_filename_to_utf8
-				 (gtk_file_selection_get_filename(GTK_FILE_SELECTION
-								  (gtk_widget_get_toplevel(GTK_WIDGET(button)))),
-				  -1,NULL,NULL,NULL)));
-  g_free(tmp);
-  gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
-
-  gtk_widget_queue_draw(mainw->LiVES);
-  while (g_main_context_iteration(NULL,FALSE));
+  if (file_name==NULL) return;
 
   backup_file(mainw->current_file,1,cfile->frames,file_name);
 
   g_snprintf(mainw->proj_save_dir,PATH_MAX,"%s",file_name);
   get_dirname (mainw->proj_save_dir);
+  g_free(file_name);
 }
 
-void
-on_restore_ok_clicked                  (GtkButton       *button,
-                                        gpointer         user_data)
-{
-  gchar *tmp;
-  g_snprintf(file_name,PATH_MAX,"%s",(tmp=g_filename_to_utf8
-				 (gtk_file_selection_get_filename(GTK_FILE_SELECTION
-								  (gtk_widget_get_toplevel(GTK_WIDGET(button)))),
-				  -1,NULL,NULL,NULL)));
-  g_free(tmp);
-  gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
 
-  gtk_widget_queue_draw(mainw->LiVES);
-  while (g_main_context_iteration(NULL,FALSE));
+
+void on_restore_activate (GtkMenuItem *menuitem, gpointer user_data) {
+  gchar *filt[]={"*.lv1",NULL};
+  gchar *file_name = choose_file (strlen(mainw->proj_load_dir)?mainw->proj_load_dir:NULL,NULL,filt,
+				  GTK_FILE_CHOOSER_ACTION_OPEN,_ ("Restore .lv1 file"),NULL);
+
+  if (file_name==NULL) return;
 
   restore_file(file_name);
 
   g_snprintf(mainw->proj_load_dir,PATH_MAX,"%s",file_name);
   get_dirname (mainw->proj_load_dir);
-
+  g_free(file_name);
 }
 
 
@@ -1951,7 +1888,7 @@ on_undo_activate                      (GtkMenuItem     *menuitem,
       audfile=g_strdup_printf("%s/%s/audio.bak",prefs->tmpdir,cfile->handle);
       if (g_file_test (audfile, G_FILE_TEST_EXISTS)) {
 	// restore overwritten audio
-	com=g_strdup_printf("%s undo_audio %s",prefs->backend_sync,cfile->handle);
+	com=g_strdup_printf("%s undo_audio \"%s\"",prefs->backend_sync,cfile->handle);
 	mainw->com_failed=FALSE;
 	unlink (cfile->info_file);
 	lives_system(com,FALSE);
@@ -5248,6 +5185,7 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
 		g_snprintf(vid_open_dir,PATH_MAX,"%s",cfile->file_name);
 		get_dirname(vid_open_dir);
 		needs_update=TRUE;
+		g_free(new_file_name);
 	      }
 	      continue;
 	    }
@@ -5871,7 +5809,7 @@ donate_activate                     (GtkMenuItem     *menuitem,
 
 
 
-void on_fs_preview_clicked (GtkButton *button, gpointer user_data) {
+void on_fs_preview_clicked (GtkWidget *widget, gpointer user_data) {
   // file selector preview
   gdouble start_time=0.;
 
@@ -5899,7 +5837,7 @@ void on_fs_preview_clicked (GtkButton *button, gpointer user_data) {
 
   gchar *info_file,*thm_dir;
   gchar *file_open_params=NULL;
-  gchar *tmp;
+  gchar *tmp,*tmp2;
   gchar *com;
   gchar *dfile;
 
@@ -5937,10 +5875,10 @@ void on_fs_preview_clicked (GtkButton *button, gpointer user_data) {
   else {
     // open file
     g_snprintf(file_name,PATH_MAX,"%s",
-	       (tmp=g_filename_to_utf8(gtk_file_selection_get_filename
-				       (GTK_FILE_SELECTION(gtk_widget_get_toplevel
-							   (GTK_WIDGET(button)))),-1,NULL,NULL,NULL)));
-    g_free(tmp);
+	       (tmp=g_filename_to_utf8((tmp2=gtk_file_chooser_get_filename (GTK_FILE_CHOOSER(gtk_widget_get_toplevel(widget)))),
+				       -1,NULL,NULL,NULL)));
+    g_free(tmp); g_free(tmp2);
+    
   }
 
 
@@ -6141,7 +6079,7 @@ void on_fs_preview_clicked (GtkButton *button, gpointer user_data) {
       return;
     }
 
-    
+
     do {
       retval=0;
       timeout=FALSE;
@@ -6191,41 +6129,44 @@ void on_fs_preview_clicked (GtkButton *button, gpointer user_data) {
 
     unlink(info_file);
 
-    owidth=width;
-    oheight=height;
+    if (preview_type!=2) {
 
-    // -20 since border width was set to 10 pixels
-    fwidth=mainw->fs_playalign->allocation.width-20;
-    fheight=mainw->fs_playalign->allocation.height-20;
-
-    calc_maxspect(fwidth,fheight,
-    		  &width,&height);
-
-    width=(width>>1)<<1;
-    height=(height>>1)<<1;
-
-    if (width>owidth && height>oheight) {
-      width=owidth;
-      height=oheight;
+      owidth=width;
+      oheight=height;
+      
+      // -20 since border width was set to 10 pixels
+      fwidth=mainw->fs_playalign->allocation.width-20;
+      fheight=mainw->fs_playalign->allocation.height-20;
+      
+      calc_maxspect(fwidth,fheight,
+		    &width,&height);
+      
+      width=(width>>1)<<1;
+      height=(height>>1)<<1;
+      
+      if (width>owidth && height>oheight) {
+	width=owidth;
+	height=oheight;
+      }
+      
+      gtk_alignment_set(GTK_ALIGNMENT(mainw->fs_playalign),0.5,
+			0.5,0.,
+			(float)height/(float)fheight);
+      
+      
+      while (g_main_context_iteration(NULL,FALSE));
+      
+      blank=lives_pixbuf_new_blank(fwidth+20,fheight+20,WEED_PALETTE_RGB24);
+      
+      cr = gdk_cairo_create (lives_widget_get_xwindow(mainw->fs_playarea));
+      gdk_cairo_set_source_pixbuf (cr, blank, 0, 0);
+      cairo_paint (cr);
+      cairo_destroy (cr);
+      lives_object_unref(blank);
+      
+      while (g_main_context_iteration(NULL,FALSE));
     }
 
-    gtk_alignment_set(GTK_ALIGNMENT(mainw->fs_playalign),0.5,
-		      0.5,0.,
-		      (float)height/(float)fheight);
-
-
-    while (g_main_context_iteration(NULL,FALSE));
-    
-    blank=lives_pixbuf_new_blank(fwidth+20,fheight+20,WEED_PALETTE_RGB24);
-    
-    cr = gdk_cairo_create (lives_widget_get_xwindow(mainw->fs_playarea));
-    gdk_cairo_set_source_pixbuf (cr, blank, 0, 0);
-    cairo_paint (cr);
-    cairo_destroy (cr);
-    lives_object_unref(blank);
-
-    while (g_main_context_iteration(NULL,FALSE));
-	
     if (prefs->audio_player==AUD_PLAYER_JACK) {
       file_open_params=g_strdup_printf("%s %s -ao jack",mainw->file_open_params!=NULL?
 				       mainw->file_open_params:"",get_deinterlace_string());
@@ -6255,7 +6196,7 @@ void on_fs_preview_clicked (GtkButton *button, gpointer user_data) {
 
     if (prefs->pause_xmms&&capable->has_xmms) lives_system("xmms -u",TRUE);
     
-    gtk_widget_set_app_paintable(mainw->fs_playarea,TRUE);
+    if (preview_type!=2) gtk_widget_set_app_paintable(mainw->fs_playarea,TRUE);
     
     mainw->com_failed=FALSE;
 
@@ -6287,75 +6228,73 @@ void on_fs_preview_clicked (GtkButton *button, gpointer user_data) {
 
 
 
-void
-on_ok_button1_clicked                  (GtkButton       *button,
-                                        gpointer         user_data)
-{
-  // FILE OPENING
+
+void on_open_activate (GtkMenuItem *menuitem, gpointer user_data) {
+  // OPEN A FILE
+
+  if (mainw->multitrack!=NULL) {
+    if (mainw->multitrack->idlefunc>0) {
+      g_source_remove(mainw->multitrack->idlefunc);
+      mainw->multitrack->idlefunc=0;
+    }
+    mt_desensitise(mainw->multitrack);
+    gtk_widget_set_sensitive(mainw->multitrack->playall,TRUE);
+    gtk_widget_set_sensitive (mainw->m_playbutton, TRUE);
+  }
+
+  choose_file_with_preview(strlen(mainw->vid_load_dir)?mainw->vid_load_dir:NULL,_ ("Select File"),3);
+}
 
 
 
 
-  GtkWidget *filesel;
-  gchar **fnames;
-  int i=0;
+void on_ok_file_open_clicked(GtkFileChooser *chooser, GSList *fnames) {
+  GSList *ofnames;
   gchar *tmp;
 
-  if (user_data==NULL) {
-    g_snprintf(file_name,PATH_MAX,"%s",(tmp=g_filename_to_utf8
-				   (gtk_file_selection_get_filename(GTK_FILE_SELECTION
-								    ((filesel=gtk_widget_get_toplevel
-								      (GTK_WIDGET(button))))),-1,NULL,NULL,NULL)));
-    g_free(tmp);
+  if (chooser!=NULL) {
+    fnames=gtk_file_chooser_get_filenames (chooser);
 
-				 
-    g_snprintf(mainw->vid_load_dir,PATH_MAX,"%s",file_name);
-    get_dirname(mainw->vid_load_dir);
-    fnames=gtk_file_selection_get_selections(GTK_FILE_SELECTION(filesel));
     end_fs_preview();
-    gtk_widget_destroy(filesel);
-  
+    gtk_widget_destroy(GTK_WIDGET(chooser));
+
+    if (fnames==NULL) return;
+
+    if (fnames->data==NULL) {
+      g_list_free_strings((GList *)fnames);
+      g_slist_free(fnames);
+      return;
+    }
+
+    g_snprintf(mainw->vid_load_dir,PATH_MAX,"%s",(gchar *)fnames->data);
+    get_dirname(mainw->vid_load_dir);
+
     if (mainw->multitrack==NULL) gtk_widget_queue_draw(mainw->LiVES);
     else gtk_widget_queue_draw(mainw->multitrack->window);
     while (g_main_context_iteration(NULL,FALSE));
     
     mainw->fs_playarea=NULL;
-
+    
     if (prefs->save_directories) {
       set_pref ("vid_load_dir",(tmp=g_filename_from_utf8(mainw->vid_load_dir,-1,NULL,NULL,NULL)));
       g_free(tmp);
     }
-
+    
     mainw->cancelled=CANCEL_NONE;
   }
-  else {
-    fnames=(gchar **)user_data;
 
-    if (mainw->multitrack!=NULL) {
-      if (mainw->multitrack->idlefunc>0) {
-	g_source_remove(mainw->multitrack->idlefunc);
-	mainw->multitrack->idlefunc=0;
-      }
-      mt_desensitise(mainw->multitrack);
-      gtk_widget_set_sensitive(mainw->multitrack->playall,TRUE);
-      gtk_widget_set_sensitive (mainw->m_playbutton, TRUE);
-    }
-    
-    while (g_main_context_iteration(NULL,FALSE));
-  }
+  ofnames=fnames;
 
-  if (fnames[0]!=NULL&&fnames[1]!=NULL) mainw->opening_multi=TRUE;
-  mainw->img_concat_clip=-1;
-
-  while (fnames[i]!=NULL&&mainw->cancelled==CANCEL_NONE) {
-    g_snprintf(file_name,PATH_MAX,"%s",fnames[i]);
+  while (fnames!=NULL&&mainw->cancelled==CANCEL_NONE) {
+    g_snprintf(file_name,PATH_MAX,"%s",(gchar *)fnames->data);
+    g_free(fnames->data);
     open_file(file_name);
-    i++;
+    fnames=fnames->next;
   }
+
+  g_slist_free(ofnames);
 
   mainw->opening_multi=FALSE;
-
-  g_strfreev(fnames);
 
   if (mainw->multitrack!=NULL) {
     polymorph(mainw->multitrack,POLY_NONE);
@@ -6366,10 +6305,13 @@ on_ok_button1_clicked                  (GtkButton       *button,
 
 }
 
+
+
 // files dragged onto target from outside - try to open them
 void drag_from_outside(GtkWidget *widget, GdkDragContext *dcon, gint x, gint y, 
 		       GtkSelectionData *data, guint info, guint time, gpointer user_data) {
-  gchar *filelist=(gchar *)data->data,*nfilelist,**array,**fnames;
+  GSList *fnames=NULL;
+  gchar *filelist=(gchar *)data->data,*nfilelist,**array;
   int nfiles,i;
 
   if (filelist==NULL) {
@@ -6396,14 +6338,11 @@ void drag_from_outside(GtkWidget *widget, GdkDragContext *dcon, gint x, gint y,
   array=g_strsplit(nfilelist,"\n",nfiles);
   g_free(nfilelist);
 
-  fnames=(gchar **)g_malloc((nfiles+1)*sizeof(char *));
-
   for (i=0;i<nfiles;i++) {
-    fnames[i]=array[i];
+    fnames=g_slist_append(fnames,array[i]);
   }
-  fnames[i]=NULL;
 
-  on_ok_button1_clicked(NULL,(gpointer)fnames);
+  on_ok_file_open_clicked(NULL,fnames);
 
   // fn will free array elements and fnames
 
@@ -6413,30 +6352,6 @@ void drag_from_outside(GtkWidget *widget, GdkDragContext *dcon, gint x, gint y,
 }
 
 
-
-void
-on_open_sel_ok_button_clicked                  (GtkButton       *button,
-						gpointer         user_data)
-{
-  gchar *tmp;
-  g_snprintf(file_name,PATH_MAX,"%s",(tmp=g_filename_to_utf8
-				      (gtk_file_selection_get_filename(GTK_FILE_SELECTION
-								       (gtk_widget_get_toplevel(GTK_WIDGET(button)))),
-				       -1,NULL,NULL,NULL)));
-  g_free(tmp);
-
-  g_snprintf(mainw->vid_load_dir,PATH_MAX,"%s",file_name);
-  get_dirname(mainw->vid_load_dir);
-  gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
-
-  gtk_widget_queue_draw(mainw->LiVES);
-  while (g_main_context_iteration(NULL,FALSE));
-  if (prefs->save_directories) {
-    set_pref ("vid_load_dir",(tmp=g_filename_from_utf8(mainw->vid_load_dir,-1,NULL,NULL,NULL)));
-    g_free(tmp);
-  }
-  open_sel_range_activate();
-}
 
 
 void
@@ -6476,7 +6391,7 @@ open_sel_range_activate(void)
 }
 
 
-void on_open_new_audio_clicked (GtkButton *button, gpointer user_data) {
+void on_open_new_audio_clicked (GtkFileChooser *chooser, gpointer user_data) {
   // open audio file
   gchar *a_type;
   gchar *com,*mesg,*tmp;
@@ -6533,10 +6448,9 @@ void on_open_new_audio_clicked (GtkButton *button, gpointer user_data) {
   oundo_end=cfile->undo_end;
 
   if (user_data==NULL) {
-    g_snprintf(file_name,PATH_MAX,"%s",(tmp=g_filename_to_utf8(gtk_file_selection_get_filename
-							       (GTK_FILE_SELECTION(gtk_widget_get_toplevel
-										   (GTK_WIDGET(button)))),
-							       -1,NULL,NULL,NULL)));
+    gchar *filename=gtk_file_chooser_get_filename(chooser);
+    g_snprintf(file_name,PATH_MAX,"%s",(tmp=g_filename_to_utf8(filename,-1,NULL,NULL,NULL)));
+    g_free(filename);
     g_free(tmp);
   }
   else g_snprintf(file_name,PATH_MAX,"%s",(char *)user_data);
@@ -6544,7 +6458,7 @@ void on_open_new_audio_clicked (GtkButton *button, gpointer user_data) {
   g_snprintf(mainw->audio_dir,PATH_MAX,"%s",file_name);
   get_dirname(mainw->audio_dir);
   end_fs_preview();
-  gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
+  gtk_widget_destroy(GTK_WIDGET(chooser));
   while (g_main_context_iteration(NULL,FALSE));
   mainw->fs_playarea=NULL;
 
@@ -6840,11 +6754,12 @@ void on_save_textview_clicked (GtkButton *button, gpointer user_data) {
 
 
 
-void on_cancel_button1_clicked (GtkButton *button, gpointer user_data) {
+void on_cancel_button1_clicked (GtkWidget *widget, gpointer user_data) {
   // generic cancel callback
 
   end_fs_preview();
-  if (button!=NULL) gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
+
+  if (widget!=NULL) gtk_widget_destroy(gtk_widget_get_toplevel(widget));
   while (g_main_context_iteration (NULL,FALSE));
 
   if (user_data!=NULL) {
@@ -6868,7 +6783,7 @@ void on_cancel_button1_clicked (GtkButton *button, gpointer user_data) {
 
 
 gboolean on_cancel_button1_clicked_del(GtkWidget *widget, GdkEvent *event, gpointer user_data) {
-  on_cancel_button1_clicked(GTK_BUTTON(widget),user_data);
+  on_cancel_button1_clicked(widget,user_data);
   return TRUE;
 }
 
@@ -8308,19 +8223,21 @@ void on_erase_subs_activate (GtkMenuItem *menuitem, gpointer user_data) {
 }
 
 
-void
-on_load_audio_activate (GtkMenuItem *menuitem, gpointer user_data) {
-  GtkWidget *fileselection;
 
-  // try to repaint the screen, as it may take a few seconds to get a directory listing
-  while (g_main_context_iteration(NULL,FALSE));
 
-  fileselection = create_fileselection (_ ("Select Audio File"),2,NULL);
-  if (strlen(mainw->audio_dir)) {
-    gtk_file_selection_set_filename(GTK_FILE_SELECTION(fileselection), mainw->audio_dir);
+
+void on_load_audio_activate (GtkMenuItem *menuitem, gpointer user_data) {
+  if (mainw->multitrack!=NULL) {
+    if (mainw->multitrack->idlefunc>0) {
+      g_source_remove(mainw->multitrack->idlefunc);
+      mainw->multitrack->idlefunc=0;
+    }
+    mt_desensitise(mainw->multitrack);
+    gtk_widget_set_sensitive(mainw->multitrack->playall,TRUE);
+    gtk_widget_set_sensitive (mainw->m_playbutton, TRUE);
   }
-  g_signal_connect (GTK_FILE_SELECTION(fileselection)->ok_button, "clicked",G_CALLBACK (on_open_new_audio_clicked),NULL);
-  gtk_widget_show (fileselection);
+
+  choose_file_with_preview(strlen(mainw->audio_dir)?mainw->audio_dir:NULL,_ ("Select Audio File"),2);
 }
 
 
@@ -8657,17 +8574,12 @@ on_load_vcd_ok_clicked                (GtkButton     *button,
 }
 
 
-void
-on_xmms_play_audio_activate (GtkMenuItem *menuitem, gpointer user_data) {
-  GtkWidget *fileselection;
 
-  while (g_main_context_iteration(NULL,FALSE));
-
-  fileselection = create_fileselection (_ ("Select Audio File"),2,NULL);
-  g_signal_connect(GTK_FILE_SELECTION(fileselection)->ok_button, "clicked", G_CALLBACK (on_xmms_ok_clicked),NULL);
-  gtk_file_selection_set_filename(GTK_FILE_SELECTION(fileselection), mainw->audio_dir);
-  gtk_widget_show (fileselection);
+void on_xmms_play_audio_activate (GtkMenuItem *menuitem, gpointer user_data) {
+  choose_file_with_preview(strlen(mainw->audio_dir)?mainw->audio_dir:NULL,_ ("Select File"),4);
 }
+
+
 
 void
 on_xmms_random_audio_activate                (GtkMenuItem     *menuitem,
@@ -8679,15 +8591,15 @@ on_xmms_random_audio_activate                (GtkMenuItem     *menuitem,
 }
 
 
-void on_xmms_ok_clicked                (GtkButton     *button,
-					gpointer         user_data)
-{
+void on_xmms_ok_clicked (GtkFileChooser *chooser, gpointer user_data) {
+  gchar *tmp;
   gchar *com=g_strdup_printf("%s xmmsplay \"%s\"",prefs->backend_sync,
-			     gtk_file_selection_get_filename(GTK_FILE_SELECTION
-							     (gtk_widget_get_toplevel(GTK_WIDGET(button)))));
+			     (tmp=gtk_file_chooser_get_filename(chooser)));
+  g_free(tmp);
+  end_fs_preview();
   lives_system(com,TRUE);
   g_free(com);
-  gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
+  gtk_widget_destroy(GTK_WIDGET(chooser));
 }
 
 
@@ -9519,7 +9431,7 @@ void on_effects_paused (GtkButton *button, gpointer user_data) {
 
     else {
 #ifndef IS_MINGW
-      com=g_strdup_printf("%s stopsubsub %s SIGCONT 2>/dev/null",prefs->backend_sync,cfile->handle);
+      com=g_strdup_printf("%s stopsubsub \"%s\" SIGCONT 2>/dev/null",prefs->backend_sync,cfile->handle);
       lives_system(com,TRUE);
 #else
       FILE *rfile;
@@ -9554,7 +9466,7 @@ void on_effects_paused (GtkButton *button, gpointer user_data) {
     
     if (!mainw->effects_paused) {
       mainw->timeout_ticks-=xticks;
-      com=g_strdup_printf("%s pause %s",prefs->backend_sync,cfile->handle);
+      com=g_strdup_printf("%s pause \"%s\"",prefs->backend_sync,cfile->handle);
       if (!mainw->preview) {
 	gtk_button_set_label(GTK_BUTTON(button),_ ("Resume"));
 	if (!cfile->nokeep) {
@@ -9570,7 +9482,7 @@ void on_effects_paused (GtkButton *button, gpointer user_data) {
 #endif
     } else {
       mainw->timeout_ticks+=xticks;
-      com=g_strdup_printf("%s resume %s",prefs->backend_sync,cfile->handle);
+      com=g_strdup_printf("%s resume \"%s\"",prefs->backend_sync,cfile->handle);
       if (!mainw->preview) {
 	if (cfile->opening) gtk_button_set_label(GTK_BUTTON(button),_ ("Pause/_Enough"));
 	else gtk_button_set_label(GTK_BUTTON(button),_ ("Pause"));
@@ -10650,7 +10562,7 @@ on_capture_activate                (GtkMenuItem     *menuitem,
     return;
   }
 
-  com=g_strdup_printf("%s get_window_id %s",prefs->backend,cfile->handle);
+  com=g_strdup_printf("%s get_window_id \"%s\"",prefs->backend,cfile->handle);
   mainw->com_failed=FALSE;
   lives_system(com,FALSE);
   g_free(com);
@@ -10685,7 +10597,7 @@ on_capture_activate                (GtkMenuItem     *menuitem,
   mainw->foreign_visual=g_strdup(array[5]);
   g_strfreev(array);
 
-  com=g_strdup_printf("%s close %s",prefs->backend,cfile->handle);
+  com=g_strdup_printf("%s close \"%s\"",prefs->backend,cfile->handle);
   lives_system(com,TRUE);
   g_free(com);
   g_free(cfile);
@@ -10853,52 +10765,33 @@ on_encoder_ofmt_changed (GtkComboBox *combo, gpointer user_data) {
 
 // TODO - move all this to audio.c
 
-void
-on_export_audio_activate (GtkMenuItem *menuitem, gpointer user_data) {
-  GtkWidget *fileselection;
+void on_export_audio_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
-  if (cfile->end>0&&!GPOINTER_TO_INT (user_data)) {
-    fileselection = create_fileselection (_ ("Export Selected Audio as..."),0,NULL);
-  }
-  else {
-    fileselection = create_fileselection (_ ("Export Audio as..."),0,NULL);
-  }
-
-  if (strlen(mainw->audio_dir)) {
-    gtk_file_selection_set_filename(GTK_FILE_SELECTION(fileselection), mainw->audio_dir);
-  }
-  gtk_file_selection_complete(GTK_FILE_SELECTION(fileselection), "*.wav");
-  g_signal_connect (GTK_FILE_SELECTION(fileselection)->ok_button, "clicked",G_CALLBACK (on_ok_export_audio_clicked),
-		    user_data);
-  gtk_widget_show (fileselection);
-}
-
-
-void
-on_ok_export_audio_clicked                      (GtkButton *button,
-						 gpointer user_data)
-{
   gchar *com,*tmp;
   gint nrate=cfile->arps;
   gdouble start,end;
   gint asigned=!(cfile->signed_endian&AFORM_UNSIGNED);
 
-  gchar *filename=g_filename_to_utf8 (gtk_file_selection_get_filename
-				      (GTK_FILE_SELECTION(gtk_widget_get_toplevel(GTK_WIDGET(button)))),-1,NULL,NULL,NULL);
+  gchar *filt[]={"*.wav",NULL};
+  gchar *filename,*file_name;
 
-  if (strrchr(filename,'.')==NULL) {
-    g_snprintf(file_name,PATH_MAX,"%s.wav",filename);
+  if (cfile->end>0&&!GPOINTER_TO_INT (user_data)) {
+    filename = choose_file (strlen(mainw->audio_dir)?mainw->audio_dir:NULL,NULL,
+			    filt,GTK_FILE_CHOOSER_ACTION_SAVE,_ ("Export Selected Audio as..."),NULL);
   }
   else {
-    g_snprintf(file_name,PATH_MAX,"%s",filename);
+    filename = choose_file (strlen(mainw->audio_dir)?mainw->audio_dir:NULL,NULL,
+			    filt,GTK_FILE_CHOOSER_ACTION_SAVE,_ ("Export Audio as..."),NULL);
   }
+
+  if (filename==NULL) return;
+  file_name=ensure_extension(filename,".wav");
   g_free (filename);
   
-  gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
-  gtk_widget_queue_draw(mainw->LiVES);
-  while (g_main_context_iteration(NULL,FALSE));
-
-  if (!check_file(file_name,TRUE)) return;
+  if (!check_file(file_name,FALSE)) {
+    g_free(file_name);
+    return;
+  }
 
   // warn if arps!=arate
   if ((prefs->audio_player==AUD_PLAYER_SOX||prefs->audio_player==AUD_PLAYER_JACK||
@@ -10921,7 +10814,7 @@ on_ok_export_audio_clicked                      (GtkButton *button,
 
   d_print (mainw->msg);
   
-  com=g_strdup_printf ("%s export_audio %s %.8f %.8f %d %d %d %d %d %s",prefs->backend,cfile->handle,
+  com=g_strdup_printf ("%s export_audio \"%s\" %.8f %.8f %d %d %d %d %d \"%s\"",prefs->backend,cfile->handle,
 		       start,end,cfile->arps,cfile->achans,cfile->asampsize,asigned,nrate,
 		       (tmp=g_filename_from_utf8 (file_name,-1,NULL,NULL,NULL)));
   g_free(tmp);
@@ -10932,6 +10825,7 @@ on_ok_export_audio_clicked                      (GtkButton *button,
   g_free (com);
 
   if (mainw->com_failed) {
+    g_free(file_name);
     d_print_failed();
     return;
   }
@@ -10947,15 +10841,15 @@ on_ok_export_audio_clicked                      (GtkButton *button,
   }
   else {
     d_print_done();
-    get_dirname (file_name);
     g_snprintf (mainw->audio_dir,PATH_MAX,"%s",file_name);
+    get_dirname (mainw->audio_dir);
   }
+  g_free(file_name);
 }
 
 
-void
-on_append_audio_activate (GtkMenuItem *menuitem, gpointer user_data) {
-  GtkWidget *fileselection;
+void on_append_audio_activate (GtkMenuItem *menuitem, gpointer user_data) {
+
   
   if (!(prefs->warning_mask&WARN_MASK_LAYOUT_ALTER_AUDIO)&&
       (mainw->xlays=layout_audio_is_affected(mainw->current_file,0.))!=NULL) {
@@ -10972,43 +10866,38 @@ on_append_audio_activate (GtkMenuItem *menuitem, gpointer user_data) {
     mainw->xlays=NULL;
   }
 
-  fileselection = create_fileselection (_ ("Append Audio File..."),2,NULL);
-  if (strlen(mainw->audio_dir)) {
-    gtk_file_selection_set_filename(GTK_FILE_SELECTION(fileselection), mainw->audio_dir);
-  }
-  g_signal_connect (GTK_FILE_SELECTION(fileselection)->ok_button, "clicked",G_CALLBACK (on_ok_append_audio_clicked),NULL);
-  gtk_widget_show (fileselection);
+  choose_file_with_preview(strlen(mainw->audio_dir)?mainw->audio_dir:NULL,_ ("Append Audio File"),5);
+
 }
 
 
 
 
-void
-on_ok_append_audio_clicked                      (GtkButton *button,
-						 GtkEntry *entry)
-{
+void on_ok_append_audio_clicked (GtkFileChooser *chooser, gpointer user_data) {
 
-  gchar *com,*tmp;
+  gchar *com,*tmp,*tmp2;
   gchar *a_type;
   gint asigned=!(cfile->signed_endian&AFORM_UNSIGNED);
   gint aendian=!(cfile->signed_endian&AFORM_BIG_ENDIAN);
 
-  g_snprintf(file_name,PATH_MAX,"%s",(tmp=g_filename_to_utf8(gtk_file_selection_get_filename
-							     (GTK_FILE_SELECTION(gtk_widget_get_toplevel
-										 (GTK_WIDGET(button)))),
+  g_snprintf(file_name,PATH_MAX,"%s",(tmp=g_filename_to_utf8((tmp2=gtk_file_chooser_get_filename(chooser)),
 							     -1,NULL,NULL,NULL)));
-  g_free(tmp);
+  g_free(tmp); g_free(tmp2);
 
-  gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
+  end_fs_preview();
+  gtk_widget_destroy(GTK_WIDGET(chooser));
 
   gtk_widget_queue_draw(mainw->LiVES);
   while (g_main_context_iteration(NULL,FALSE));
   
   a_type=file_name+strlen(file_name)-3;
 
+  g_snprintf(mainw->audio_dir,PATH_MAX,"%s",file_name);
+  get_dirname(mainw->audio_dir);
+
   if (!g_ascii_strncasecmp(a_type,".it",2)||!g_ascii_strncasecmp(a_type,"mp3",3)||!g_ascii_strncasecmp(a_type,"ogg",3)||
       !g_ascii_strncasecmp(a_type,"wav",3)||!g_ascii_strncasecmp(a_type,"mod",3)||!g_ascii_strncasecmp(a_type,"xm",2)) {
-    com=g_strdup_printf ("%s append_audio %s %s %d %d %d %d %d %s",prefs->backend,cfile->handle,
+    com=g_strdup_printf ("%s append_audio \"%s\" \"%s\" %d %d %d %d %d \"%s\"",prefs->backend,cfile->handle,
 			 a_type,cfile->arate,
 			 cfile->achans,cfile->asampsize,asigned,aendian,
 			 (tmp=g_filename_from_utf8 (file_name,-1,NULL,NULL,NULL)));
@@ -11037,7 +10926,7 @@ on_ok_append_audio_clicked                      (GtkButton *button,
     mainw->error=FALSE;
     mainw->com_failed=FALSE;
     unlink (cfile->info_file);
-    com=g_strdup_printf ("%s cancel_audio %s",prefs->backend,cfile->handle);
+    com=g_strdup_printf ("%s cancel_audio \"%s\"",prefs->backend,cfile->handle);
     lives_system (com,FALSE);
     if (!mainw->com_failed) {
       do_auto_dialog(_("Cancelling"),0);
@@ -11057,7 +10946,7 @@ on_ok_append_audio_clicked                      (GtkButton *button,
   else {
     gtk_widget_queue_draw(mainw->LiVES);
     while (g_main_context_iteration(NULL,FALSE));
-    com=g_strdup_printf ("%s commit_audio %s",prefs->backend,cfile->handle);
+    com=g_strdup_printf ("%s commit_audio \"%s\"",prefs->backend,cfile->handle);
     mainw->com_failed=FALSE;
     mainw->cancelled=CANCEL_NONE;
     mainw->error=FALSE;
@@ -11155,7 +11044,7 @@ on_trim_audio_activate (GtkMenuItem     *menuitem,
   d_print(msg);
   g_free(msg);
 
-  com=g_strdup_printf("%s trim_audio %s %.8f %.8f %d %d %d %d %d",prefs->backend, cfile->handle, 
+  com=g_strdup_printf("%s trim_audio \"%s\" %.8f %.8f %d %d %d %d %d",prefs->backend, cfile->handle, 
 		      start, end, cfile->arate, 
 		      cfile->achans, cfile->asampsize, !(cfile->signed_endian&AFORM_UNSIGNED),
 		      !(cfile->signed_endian&AFORM_BIG_ENDIAN));
@@ -11300,7 +11189,7 @@ on_fade_audio_activate (GtkMenuItem     *menuitem,
 
   if (!prefs->conserve_space) {
     mainw->error=FALSE;
-    com=g_strdup_printf("%s backup_audio %s",prefs->backend_sync,cfile->handle);
+    com=g_strdup_printf("%s backup_audio \"%s\"",prefs->backend_sync,cfile->handle);
     lives_system(com,FALSE);
     g_free(com);
 
@@ -11477,7 +11366,7 @@ on_del_audio_activate (GtkMenuItem     *menuitem,
     g_free(msg);
   }
 
-  com=g_strdup_printf("%s delete_audio %s %.8f %.8f %d %d %d", prefs->backend, 
+  com=g_strdup_printf("%s delete_audio \"%s\" %.8f %.8f %d %d %d", prefs->backend, 
 		      cfile->handle, start, end, cfile->arps, 
 		      cfile->achans, cfile->asampsize);
   unlink (cfile->info_file);
@@ -11773,7 +11662,7 @@ on_recaudclip_ok_clicked                      (GtkButton *button,
 
     if (!prefs->conserve_space) {
       mainw->error=FALSE;
-      com=g_strdup_printf("%s backup_audio %s",prefs->backend_sync,mainw->files[old_file]->handle);
+      com=g_strdup_printf("%s backup_audio \"%s\"",prefs->backend_sync,mainw->files[old_file]->handle);
       lives_system(com,FALSE);
       g_free(com);
 
@@ -11806,7 +11695,7 @@ on_recaudclip_ok_clicked                      (GtkButton *button,
       
       if (!prefs->conserve_space&&type==1) {
 	// try to recover backup
-	com=g_strdup_printf("%s undo_audio %s",prefs->backend_sync,mainw->files[old_file]->handle);
+	com=g_strdup_printf("%s undo_audio \"%s\"",prefs->backend_sync,mainw->files[old_file]->handle);
 	lives_system(com,FALSE);
 	g_free(com);
 	backr=TRUE;
@@ -12043,7 +11932,7 @@ void on_lerrors_clear_clicked (GtkButton *button, gpointer user_data) {
 
   clear_lmap_errors();
   save_layout_map(NULL,NULL,NULL,NULL);
-  if (close) on_cancel_button1_clicked(button,textwindow);
+  if (close) on_cancel_button1_clicked(GTK_WIDGET(button),textwindow);
   else {
     gtk_widget_queue_draw(gtk_widget_get_toplevel(GTK_WIDGET(button)));
     gtk_widget_set_sensitive(textwindow->clear_button,FALSE);

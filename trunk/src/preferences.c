@@ -5836,7 +5836,7 @@ on_prefs_close_clicked(GtkButton *button, gpointer user_data)
     g_list_free (future_prefs->disabled_decoders);
   }
 
-  on_cancel_button1_clicked(button, user_data);
+  on_cancel_button1_clicked(GTK_WIDGET(button), user_data);
 
   prefsw=NULL;
 
@@ -5967,7 +5967,7 @@ on_prefs_revert_clicked(GtkButton *button, gpointer user_data)
   lives_set_cursor_style(LIVES_CURSOR_BUSY,lives_widget_get_xwindow(prefsw->prefs_dialog));
   while (g_main_context_iteration(NULL,FALSE)); // force busy cursor
 
-  on_cancel_button1_clicked(button, prefsw);
+  on_cancel_button1_clicked(GTK_WIDGET(button), prefsw);
 
   lives_set_cursor_style(LIVES_CURSOR_BUSY,NULL);
   while (g_main_context_iteration(NULL,FALSE)); // force busy cursor

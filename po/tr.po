@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2013-01-02 22:55-0300\n"
+"POT-Creation-Date: 2013-01-03 20:15-0300\n"
 "PO-Revision-Date: 2011-08-18 12:12+0000\n"
 "Last-Translator: salsaman <salsaman@gmail.com>\n"
 "Language-Team: Turkish <tr@li.org>\n"
@@ -753,8 +753,8 @@ msgstr ""
 "arasında geçiş yapamazsınız.\n"
 "Lütfen Tercihlerden çalma seçeneklerini ayarlayın ve tekrar deneyin.\n"
 
-#: src/main.c:5836 src/callbacks.c:7182 src/callbacks.c:7330
-#: src/callbacks.c:7656 src/callbacks.c:7673 src/gui.c:3705
+#: src/main.c:5836 src/callbacks.c:7188 src/callbacks.c:7336
+#: src/callbacks.c:7662 src/callbacks.c:7679 src/gui.c:3705
 #: src/saveplay.c:2315 src/saveplay.c:2349 src/saveplay.c:2954
 #: src/saveplay.c:3064 src/saveplay.c:3086 src/multitrack.c:8570
 #: src/multitrack.c:10260
@@ -762,8 +762,8 @@ msgstr ""
 msgid " (%d %% scale)"
 msgstr ""
 
-#: src/main.c:5838 src/callbacks.c:7184 src/callbacks.c:7332
-#: src/callbacks.c:7658 src/gui.c:3709 src/saveplay.c:2317 src/saveplay.c:2351
+#: src/main.c:5838 src/callbacks.c:7190 src/callbacks.c:7338
+#: src/callbacks.c:7664 src/gui.c:3709 src/saveplay.c:2317 src/saveplay.c:2351
 #, fuzzy, c-format
 msgid "LiVES: - Play Window%s"
 msgstr "LiVES: - Oynatma Penceresi"
@@ -1143,8 +1143,8 @@ msgstr "Deinterlace uygula"
 msgid "If this is set, frames will be deinterlaced as they are imported."
 msgstr ""
 
-#: src/interface.c:145 src/callbacks.c:9689 src/callbacks.c:9719
-#: src/callbacks.c:9720 src/gui.c:3119 src/gui.c:3682 src/saveplay.c:2196
+#: src/interface.c:145 src/callbacks.c:9695 src/callbacks.c:9725
+#: src/callbacks.c:9726 src/gui.c:3119 src/gui.c:3682 src/saveplay.c:2196
 #: src/saveplay.c:2977 src/dialogs.c:1344 src/dialogs.c:1345
 #: src/dialogs.c:1573 src/dialogs.c:1574 src/framedraw.c:230
 #: src/multitrack.c:7382
@@ -1181,7 +1181,7 @@ msgstr ""
 "\n"
 "Lütfen Bekleyin"
 
-#: src/interface.c:303 src/callbacks.c:9456 src/callbacks.c:9490
+#: src/interface.c:303 src/callbacks.c:9462 src/callbacks.c:9496
 #: src/dialogs.c:2422
 msgid ""
 "\n"
@@ -1206,7 +1206,7 @@ msgstr "_Önizleme"
 msgid "Paus_e"
 msgstr "Durakla_t"
 
-#: src/interface.c:374 src/callbacks.c:9487
+#: src/interface.c:374 src/callbacks.c:9493
 msgid "Pause/_Enough"
 msgstr "Duraklat/_Yeterli"
 
@@ -1863,7 +1863,7 @@ msgstr ""
 msgid "Saving as set %s..."
 msgstr "Ayarlar kaydediliyor %s..."
 
-#: src/callbacks.c:572 src/callbacks.c:6245 src/callbacks.c:8579
+#: src/callbacks.c:572 src/callbacks.c:6251 src/callbacks.c:8585
 msgid "Select File"
 msgstr "Dosya Seçin"
 
@@ -2011,7 +2011,7 @@ msgstr "Ayarları sil"
 msgid "Set %s was permanently deleted from the disk.\n"
 msgstr ""
 
-#: src/callbacks.c:1750 src/callbacks.c:11860
+#: src/callbacks.c:1750 src/callbacks.c:11866
 msgid "Insert Silence"
 msgstr "Sessiz ekle"
 
@@ -2111,7 +2111,7 @@ msgid ""
 "Are you sure you wish to continue ?\n"
 msgstr ""
 
-#: src/callbacks.c:2837 src/callbacks.c:11788
+#: src/callbacks.c:2837 src/callbacks.c:11794
 msgid ""
 "\n"
 "Insertion will cause audio to shift in some multitrack layouts.\n"
@@ -2180,8 +2180,8 @@ msgid ""
 "Are you sure you wish to continue ?\n"
 msgstr ""
 
-#: src/callbacks.c:3427 src/callbacks.c:11009 src/callbacks.c:11255
-#: src/callbacks.c:11321
+#: src/callbacks.c:3427 src/callbacks.c:11015 src/callbacks.c:11261
+#: src/callbacks.c:11327
 msgid ""
 "\n"
 "Deletion will cause missing audio in some multitrack layouts.\n"
@@ -2195,7 +2195,7 @@ msgid ""
 "Are you sure you wish to continue ?\n"
 msgstr ""
 
-#: src/callbacks.c:3465 src/callbacks.c:11303
+#: src/callbacks.c:3465 src/callbacks.c:11309
 msgid ""
 "\n"
 "Deletion will cause audio to shift in some multitrack layouts.\n"
@@ -2428,7 +2428,7 @@ msgid ""
 "Homepage: http://lives.sourceforge.net"
 msgstr ""
 
-#: src/callbacks.c:6025
+#: src/callbacks.c:6031
 #, fuzzy
 msgid ""
 "\n"
@@ -2439,7 +2439,7 @@ msgstr ""
 "\n"
 "Dosyayı açmak için mplayer yüklemeniz gerekebilir.\n"
 
-#: src/callbacks.c:6028
+#: src/callbacks.c:6034
 #, fuzzy
 msgid ""
 "\n"
@@ -2450,7 +2450,7 @@ msgstr ""
 "\n"
 "Dosyayı açmak için mplayer yüklemeniz gerekebilir.\n"
 
-#: src/callbacks.c:6408 src/callbacks.c:8291
+#: src/callbacks.c:6414 src/callbacks.c:8297
 msgid ""
 "\n"
 "Loading new audio may cause missing audio in some multitrack layouts.\n"
@@ -2458,176 +2458,176 @@ msgid ""
 "."
 msgstr ""
 
-#: src/callbacks.c:6505
+#: src/callbacks.c:6511
 #, fuzzy, c-format
 msgid "Opening audio %s, type %s..."
 msgstr "%s Ses dosyası  ekleniyor"
 
-#: src/callbacks.c:6538 src/saveplay.c:453
+#: src/callbacks.c:6544 src/saveplay.c:453
 msgid "Opening audio"
 msgstr "Ses açılıyor"
 
-#: src/callbacks.c:6547 src/callbacks.c:6587 src/callbacks.c:8389
-#: src/callbacks.c:8431 src/callbacks.c:8474 src/callbacks.c:10933
+#: src/callbacks.c:6553 src/callbacks.c:6593 src/callbacks.c:8395
+#: src/callbacks.c:8437 src/callbacks.c:8480 src/callbacks.c:10939
 msgid "Cancelling"
 msgstr "İptal ediliyor"
 
-#: src/callbacks.c:6606 src/callbacks.c:8540
+#: src/callbacks.c:6612 src/callbacks.c:8546
 #, c-format
 msgid "New audio: %d Hz %d channel(s) %d bps\n"
 msgstr "Yeni ses: %d Hz %d kanal %d bps\n"
 
-#: src/callbacks.c:6634 src/callbacks.c:8516 src/callbacks.c:10963
-#: src/callbacks.c:11657
+#: src/callbacks.c:6640 src/callbacks.c:8522 src/callbacks.c:10969
+#: src/callbacks.c:11663
 #, fuzzy
 msgid "Committing audio"
 msgstr "Ses dışa aktarılıyor"
 
-#: src/callbacks.c:6646 src/callbacks.c:8547
+#: src/callbacks.c:6652 src/callbacks.c:8553
 msgid "New Audio"
 msgstr "Yeni ses"
 
-#: src/callbacks.c:6926 src/saveplay.c:3438
+#: src/callbacks.c:6932 src/saveplay.c:3438
 #, c-format
 msgid "%d frames are enough !\n"
 msgstr "%d çerçeve yeterli !\n"
 
-#: src/callbacks.c:7044
+#: src/callbacks.c:7050
 #, fuzzy
 msgid "LiVES: - Encoder debug output"
 msgstr "LIVES - Kodlama seçenekleri"
 
-#: src/callbacks.c:7081 src/gui.c:1916
+#: src/callbacks.c:7087 src/gui.c:1916
 msgid "Fullscreen playback (f)"
 msgstr "Tam ekran oynatma (f)"
 
-#: src/callbacks.c:7083
+#: src/callbacks.c:7089
 msgid "Fullscreen playback off (f)"
 msgstr "Tam ekran oynatma (f)"
 
-#: src/callbacks.c:7296 src/gui.c:1901
+#: src/callbacks.c:7302 src/gui.c:1901
 msgid "Double size (d)"
 msgstr "Çift boyut (d)"
 
-#: src/callbacks.c:7303
+#: src/callbacks.c:7309
 msgid "Single size (d)"
 msgstr "Tek boyut (d)"
 
-#: src/callbacks.c:7434 src/callbacks.c:7435
+#: src/callbacks.c:7440 src/callbacks.c:7441
 msgid "Hide the play window (s)"
 msgstr "Oynatma penceresini gizle (s)"
 
-#: src/callbacks.c:7444 src/gui.c:1740
+#: src/callbacks.c:7450 src/gui.c:1740
 msgid "Show the play window (s)"
 msgstr "Oynatma penceresini göster (s)"
 
-#: src/callbacks.c:7445 src/gui.c:1890
+#: src/callbacks.c:7451 src/gui.c:1890
 #, fuzzy
 msgid "Play in separate window (s)"
 msgstr "Oynatma penceresini gizle (s)"
 
-#: src/callbacks.c:7521 src/gui.c:3950 src/saveplay.c:2346
+#: src/callbacks.c:7527 src/gui.c:3950 src/saveplay.c:2346
 #, fuzzy
 msgid "LiVES: - Streaming"
 msgstr "LiVES: - Uyarı !"
 
-#: src/callbacks.c:7773
+#: src/callbacks.c:7779
 msgid "Switch continuous looping off (o)"
 msgstr ""
 
-#: src/callbacks.c:7780 src/gui.c:1791
+#: src/callbacks.c:7786 src/gui.c:1791
 msgid "Switch continuous looping on (o)"
 msgstr ""
 
-#: src/callbacks.c:7848
+#: src/callbacks.c:7854
 #, c-format
 msgid "Audio volume (%.2f)"
 msgstr "Ses hacmi (%.2f)"
 
-#: src/callbacks.c:7893 src/callbacks.c:7894 src/gui.c:3582
+#: src/callbacks.c:7899 src/callbacks.c:7900 src/gui.c:3582
 msgid "Unmute the audio (z)"
 msgstr "Sesi kesme (z)"
 
-#: src/callbacks.c:7905 src/callbacks.c:7906 src/gui.c:1804 src/gui.c:3581
+#: src/callbacks.c:7911 src/callbacks.c:7912 src/gui.c:1804 src/gui.c:3581
 msgid "Mute the audio (z)"
 msgstr "Sesi kes (z)"
 
-#: src/callbacks.c:8043
+#: src/callbacks.c:8049
 #, fuzzy
 msgid "Reversing clipboard..."
 msgstr "Panoya %s ..."
 
-#: src/callbacks.c:8057
+#: src/callbacks.c:8063
 #, fuzzy
 msgid "Reversing clipboard"
 msgstr "Panoyu temizle"
 
-#: src/callbacks.c:8085
+#: src/callbacks.c:8091
 msgid "LiVES: Load subtitles from..."
 msgstr ""
 
-#: src/callbacks.c:8152 src/saveplay.c:882
+#: src/callbacks.c:8158 src/saveplay.c:882
 #, c-format
 msgid "Loaded subtitle file: %s\n"
 msgstr "Yüklenen altyazı dosyası: %s\n"
 
-#: src/callbacks.c:8221
+#: src/callbacks.c:8227
 msgid "Subtitles were erased.\n"
 msgstr "Altyazılar silindi.\n"
 
-#: src/callbacks.c:8240
+#: src/callbacks.c:8246
 msgid "Select Audio File"
 msgstr "Ses dosyasını seçin"
 
-#: src/callbacks.c:8251
+#: src/callbacks.c:8257
 msgid "Please set your CD play device in Tools | Preferences | Misc\n"
 msgstr ""
 "Lütfen Araçlar | Tercihler | Çeşitli  menüsünden CD oynatma aygıtını "
 "ayarlayınız.\n"
 
-#: src/callbacks.c:8323
+#: src/callbacks.c:8329
 #, fuzzy, c-format
 msgid "Opening CD track %d from %s..."
 msgstr "CD parçası açılıyor..."
 
-#: src/callbacks.c:8328
+#: src/callbacks.c:8334
 #, c-format
 msgid "CD track %d"
 msgstr "CD parçası %d"
 
-#: src/callbacks.c:8375
+#: src/callbacks.c:8381
 msgid "Opening CD track..."
 msgstr "CD parçası açılıyor..."
 
-#: src/callbacks.c:8417 src/callbacks.c:8463
+#: src/callbacks.c:8423 src/callbacks.c:8469
 msgid "Error loading CD track\n"
 msgstr "CD parçası yüklenirken hata veriyor\n"
 
-#: src/callbacks.c:8640
+#: src/callbacks.c:8646
 msgid "Selecting tracks"
 msgstr "Parça seçilmesi"
 
-#: src/callbacks.c:8695
+#: src/callbacks.c:8701
 msgid "layout errors"
 msgstr "Düzen hataları"
 
-#: src/callbacks.c:8705
+#: src/callbacks.c:8711
 msgid "Close _Window"
 msgstr "Pencere Kapat"
 
-#: src/callbacks.c:8716
+#: src/callbacks.c:8722
 msgid "Clear _Errors"
 msgstr "Hataları sil"
 
-#: src/callbacks.c:8727
+#: src/callbacks.c:8733
 msgid "_Delete affected layouts"
 msgstr "Etkilenen düzenleri sil"
 
-#: src/callbacks.c:9426 src/callbacks.c:9471
+#: src/callbacks.c:9432 src/callbacks.c:9477
 msgid "Resume"
 msgstr "Devam Et"
 
-#: src/callbacks.c:9427
+#: src/callbacks.c:9433
 msgid ""
 "\n"
 "Paused\n"
@@ -2637,28 +2637,28 @@ msgstr ""
 "Duraklatıldı\n"
 "(İşleme devam etmek için tıklayınız )"
 
-#: src/callbacks.c:9428 src/callbacks.c:9477
+#: src/callbacks.c:9434 src/callbacks.c:9483
 msgid "paused..."
 msgstr "duraklatıldı..."
 
-#: src/callbacks.c:9455 src/callbacks.c:9488
+#: src/callbacks.c:9461 src/callbacks.c:9494
 msgid "Pause"
 msgstr "Durdur"
 
-#: src/callbacks.c:9457 src/callbacks.c:9491
+#: src/callbacks.c:9463 src/callbacks.c:9497
 #, fuzzy
 msgid "resumed..."
 msgstr "duraklatıldı..."
 
-#: src/callbacks.c:9473
+#: src/callbacks.c:9479
 msgid "Keep"
 msgstr "Koru"
 
-#: src/callbacks.c:9474
+#: src/callbacks.c:9480
 msgid "Enough"
 msgstr "Yeter"
 
-#: src/callbacks.c:9475
+#: src/callbacks.c:9481
 #, fuzzy
 msgid ""
 "\n"
@@ -2670,31 +2670,31 @@ msgstr ""
 "Duraklatıldı\n"
 "(İşleme devam etmek için tıklayınız )"
 
-#: src/callbacks.c:9489
+#: src/callbacks.c:9495
 msgid "Cancel"
 msgstr "İptal"
 
-#: src/callbacks.c:9628
+#: src/callbacks.c:9634
 #, fuzzy
 msgid "Stop"
 msgstr "_Durdur"
 
-#: src/callbacks.c:10120 src/multitrack.c:12396
+#: src/callbacks.c:10126 src/multitrack.c:12396
 #, fuzzy
 msgid "LiVES: Selected frame"
 msgstr "LiVES: Dosya Seç"
 
-#: src/callbacks.c:10127
+#: src/callbacks.c:10133
 #, fuzzy
 msgid "_Save frame as..."
 msgstr "%s... çerçeve olarak kaydet"
 
-#: src/callbacks.c:10371
+#: src/callbacks.c:10377
 #, c-format
 msgid "Audio is ahead of video by %.4f secs. at frame %d, with fps %.4f\n"
 msgstr ""
 
-#: src/callbacks.c:10449
+#: src/callbacks.c:10455
 msgid ""
 "\n"
 "\n"
@@ -2703,7 +2703,7 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/callbacks.c:10455
+#: src/callbacks.c:10461
 msgid ""
 "\n"
 "\n"
@@ -2711,7 +2711,7 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/callbacks.c:10531 src/callbacks.c:11575
+#: src/callbacks.c:10537 src/callbacks.c:11581
 msgid ""
 "\n"
 "Record time must be greater than 0.\n"
@@ -2719,7 +2719,7 @@ msgstr ""
 "\n"
 "Kayıt süresi 0'dan büyük olmalıdır.\n"
 
-#: src/callbacks.c:10542
+#: src/callbacks.c:10548
 msgid ""
 "Capture an External Window:\n"
 "\n"
@@ -2728,17 +2728,17 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/callbacks.c:10547
+#: src/callbacks.c:10553
 msgid "External window was released.\n"
 msgstr ""
 
-#: src/callbacks.c:10581
+#: src/callbacks.c:10587
 msgid ""
 "Click on a Window to Capture it\n"
 "Press 'q' to stop recording"
 msgstr ""
 
-#: src/callbacks.c:10611
+#: src/callbacks.c:10617
 #, c-format
 msgid ""
 "\n"
@@ -2748,24 +2748,24 @@ msgid ""
 "(Default of %.3f frames per second will be used.)\n"
 msgstr ""
 
-#: src/callbacks.c:10637
+#: src/callbacks.c:10643
 #, fuzzy
 msgid "LiVES was unable to capture this window. Sorry.\n"
 msgstr ""
 "LiVES görüntü yakalanamadı\n"
 "\n"
 
-#: src/callbacks.c:10781
+#: src/callbacks.c:10787
 #, fuzzy
 msgid "Export Selected Audio as..."
 msgstr "_Seçili Sesi Çıkart..."
 
-#: src/callbacks.c:10785
+#: src/callbacks.c:10791
 #, fuzzy
 msgid "Export Audio as..."
 msgstr "Ses _Çıkart..."
 
-#: src/callbacks.c:10800
+#: src/callbacks.c:10806
 msgid ""
 "\n"
 "\n"
@@ -2774,92 +2774,92 @@ msgid ""
 "rate.\n"
 msgstr ""
 
-#: src/callbacks.c:10806
+#: src/callbacks.c:10812
 #, fuzzy, c-format
 msgid "Exporting audio frames %d to %d as %s..."
 msgstr "Çerçeveler siliniyor %d to %d%s..."
 
-#: src/callbacks.c:10811
+#: src/callbacks.c:10817
 #, fuzzy, c-format
 msgid "Exporting audio as %s..."
 msgstr "Ses dışa aktarılıyor"
 
-#: src/callbacks.c:10837
+#: src/callbacks.c:10843
 msgid "Exporting audio"
 msgstr "Ses dışa aktarılıyor"
 
-#: src/callbacks.c:10870
+#: src/callbacks.c:10876
 #, fuzzy
 msgid "Append Audio File"
 msgstr "Ses Dosyası Ekleme..."
 
-#: src/callbacks.c:10912
+#: src/callbacks.c:10918
 #, c-format
 msgid "Appending audio file %s..."
 msgstr "%s Ses dosyası  ekleniyor"
 
-#: src/callbacks.c:10923
+#: src/callbacks.c:10929
 msgid "Appending audio"
 msgstr "ses ekleniyor"
 
-#: src/callbacks.c:10979
+#: src/callbacks.c:10985
 msgid "Append Audio"
 msgstr "Ses ekle"
 
-#: src/callbacks.c:11041
+#: src/callbacks.c:11047
 #, fuzzy, c-format
 msgid "Padding audio to %.2f seconds..."
 msgstr "Çerçeveler siliniyor %d to %d%s..."
 
-#: src/callbacks.c:11043
+#: src/callbacks.c:11049
 #, c-format
 msgid "Trimming audio from %.2f to %.2f seconds..."
 msgstr ""
 
-#: src/callbacks.c:11062
+#: src/callbacks.c:11068
 msgid "Trimming/Padding audio"
 msgstr "Ses Kırpılıyor/Dolgulanıyor"
 
-#: src/callbacks.c:11070
+#: src/callbacks.c:11076
 msgid "Trim/Pad Audio"
 msgstr "Ses Kırp/Dolgu"
 
-#: src/callbacks.c:11145
+#: src/callbacks.c:11151
 #, fuzzy
 msgid "Fading audio in"
 msgstr "ses ekleniyor"
 
-#: src/callbacks.c:11146
+#: src/callbacks.c:11152
 #, fuzzy
 msgid "Fade audio in"
 msgstr "Kaybol"
 
-#: src/callbacks.c:11151
+#: src/callbacks.c:11157
 #, fuzzy
 msgid "Fading audio out"
 msgstr "ses ekleniyor"
 
-#: src/callbacks.c:11152
+#: src/callbacks.c:11158
 #, fuzzy
 msgid "Fade audio out"
 msgstr "Kaybol"
 
-#: src/callbacks.c:11175
+#: src/callbacks.c:11181
 #, c-format
 msgid "%s over %.1f seconds..."
 msgstr ""
 
-#: src/callbacks.c:11177
+#: src/callbacks.c:11183
 #, c-format
 msgid "%s from time %.2f seconds to %.2f seconds..."
 msgstr ""
 
-#: src/callbacks.c:11184
+#: src/callbacks.c:11190
 #, fuzzy
 msgid "Fading audio..."
 msgstr "Tüm sesler siliniyor..."
 
-#: src/callbacks.c:11287
+#: src/callbacks.c:11293
 #, fuzzy
 msgid ""
 "\n"
@@ -2870,38 +2870,38 @@ msgstr ""
 "Bu dosyayı kapatınca tüm çerçeveler silinecek.\n"
 "Emin misiniz ?"
 
-#: src/callbacks.c:11290
+#: src/callbacks.c:11296
 msgid "Deleting all audio..."
 msgstr "Tüm sesler siliniyor..."
 
-#: src/callbacks.c:11296
+#: src/callbacks.c:11302
 #, fuzzy, c-format
 msgid "Deleting audio from %.2f to %.2f seconds..."
 msgstr "Çerçeveler siliniyor %d to %d%s..."
 
-#: src/callbacks.c:11383
+#: src/callbacks.c:11389
 msgid "Deleting Audio"
 msgstr "Ses siliniyor"
 
-#: src/callbacks.c:11390
+#: src/callbacks.c:11396
 msgid "Delete Audio"
 msgstr "Sesi sil"
 
-#: src/callbacks.c:11730
+#: src/callbacks.c:11736
 msgid "Record new audio"
 msgstr "Yeni ses kaydet"
 
-#: src/callbacks.c:11821
+#: src/callbacks.c:11827
 #, fuzzy, c-format
 msgid "Inserting silence from %.2f to %.2f seconds..."
 msgstr "Zamanlar%d panodan%s ekleniyor..."
 
-#: src/callbacks.c:11850
+#: src/callbacks.c:11856
 #, fuzzy
 msgid "Inserting Silence"
 msgstr "Sessiz ekle"
 
-#: src/callbacks.c:11952
+#: src/callbacks.c:11958
 #, c-format
 msgid ""
 "\n"

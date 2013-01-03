@@ -5895,8 +5895,9 @@ void on_fs_preview_clicked (GtkWidget *widget, gpointer user_data) {
 
     clear_mainw_msg();
     
-
     if (capable->has_identify) {
+      mainw->error=FALSE;
+
       // make thumb from any image file
       com=g_strdup_printf("%s make_thumb thm%d %d %d \"%s\" \"%s\"",prefs->backend_sync,pid,DEFAULT_FRAME_HSIZE,
 			  DEFAULT_FRAME_VSIZE,prefs->image_ext,(tmp=g_filename_from_utf8(file_name,-1,NULL,NULL,NULL)));
@@ -5904,7 +5905,7 @@ void on_fs_preview_clicked (GtkWidget *widget, gpointer user_data) {
       lives_system(com,FALSE);
       g_free(com);
       
-#define LIVES_FILE_READ_TIMEOUT  (5 * U_SEC) // 5 sec timeout
+#define LIVES_FILE_READ_TIMEOUT  (10 * U_SEC) // 5 sec timeout
       
       do {
 	retval=0;
@@ -5912,6 +5913,7 @@ void on_fs_preview_clicked (GtkWidget *widget, gpointer user_data) {
 	alarm_handle=lives_alarm_set(LIVES_FILE_READ_TIMEOUT);
 	
 	while (!((ifile=fopen (info_file,"r")) || (timeout=lives_alarm_get(alarm_handle)))) {
+	  while (g_main_context_iteration(NULL,FALSE));
 	  g_usleep (prefs->sleep_time);
 	}
 	
@@ -5934,10 +5936,14 @@ void on_fs_preview_clicked (GtkWidget *widget, gpointer user_data) {
 	return;
       }
       
-      array=g_strsplit(mainw->msg,"|",3);
-      width=atoi(array[1]);
-      height=atoi(array[2]);
-      g_strfreev(array);
+      if (!mainw->error) {
+	array=g_strsplit(mainw->msg,"|",3);
+	width=atoi(array[1]);
+	height=atoi(array[2]);
+	g_strfreev(array);
+      }
+      else height=width=0;
+      mainw->error=FALSE;
     }
     else {
       height=width=0;
@@ -5954,8 +5960,8 @@ void on_fs_preview_clicked (GtkWidget *widget, gpointer user_data) {
 	fwidth=mainw->fs_playalign->allocation.width-20;
 	fheight=mainw->fs_playalign->allocation.height-20;
 
-	owidth=width;
-	oheight=height;
+	owidth=width=lives_pixbuf_get_width(pixbuf);
+	oheight=height=lives_pixbuf_get_height(pixbuf);
 
 	calc_maxspect(fwidth,fheight,
 		      &width,&height);
@@ -6085,7 +6091,7 @@ void on_fs_preview_clicked (GtkWidget *widget, gpointer user_data) {
       timeout=FALSE;
       clear_mainw_msg();
       
-#define LIVES_LONGER_TIMEOUT  (30 * U_SEC) // 30 second timeout
+#define LIVES_LONGER_TIMEOUT  (10 * U_SEC) // 10 second timeout
 
       alarm_handle=lives_alarm_set(LIVES_LONGER_TIMEOUT);
     

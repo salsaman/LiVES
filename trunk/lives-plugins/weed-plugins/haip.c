@@ -273,7 +273,7 @@ int haip_process (weed_plant_t *inst, weed_timecode_t timestamp) {
   unsigned char *pt;
   int count;
 
-  int luma,adj,num_pts;
+  int luma,adj;
 
   sdata=weed_get_voidptr_value(inst,"plugin_internal",&error);
 
@@ -321,7 +321,7 @@ int haip_process (weed_plant_t *inst, weed_timecode_t timestamp) {
       luma=calc_luma(pt);
       adj=0;
 
-      num_pts=make_eight_table(pt,irowstride,luma,adj);
+      make_eight_table(pt,irowstride,luma,adj);
       if (((count<<7)>>7)==count) select_dir(sdata);
       count--;
     }

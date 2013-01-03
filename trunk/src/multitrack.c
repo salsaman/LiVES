@@ -1221,7 +1221,7 @@ static gboolean add_mt_param_box(lives_mt *mt) {
   int error;
   gboolean res=FALSE;
 
-  gdouble cur_time=GTK_RULER (mt->timeline)->position;
+  gdouble cur_time=lives_ruler_get_value(LIVES_RULER (mt->timeline));
 
   tc=get_event_timecode((weed_plant_t *)mt->init_event);
   deinit_event=(weed_plant_t *)weed_get_voidptr_value(mt->init_event,"deinit_event",&error);
@@ -2443,11 +2443,11 @@ void redraw_all_event_boxes(lives_mt *mt) {
 }
 
 void set_timeline_end_secs (lives_mt *mt, gdouble secs) {
-  gdouble pos=GTK_RULER (mt->timeline)->position;
+  gdouble pos=lives_ruler_get_value(LIVES_RULER (mt->timeline));
 
   mt->end_secs=secs;
 
-  gtk_ruler_set_range (GTK_RULER (mt->timeline), mt->tl_min, mt->tl_max, mt->tl_min, mt->end_secs+1./mt->fps);
+  lives_ruler_set_range (LIVES_RULER (mt->timeline), mt->tl_min, mt->tl_max, mt->tl_min, mt->end_secs+1./mt->fps);
   gtk_widget_queue_draw (mt->timeline);
   gtk_widget_queue_draw (mt->timeline_table);
   gtk_spin_button_set_range (GTK_SPIN_BUTTON (mt->spinbutton_start),0.,mt->end_secs);
@@ -2455,7 +2455,7 @@ void set_timeline_end_secs (lives_mt *mt, gdouble secs) {
 
   set_time_scrollbar(mt);
 
-  GTK_RULER (mt->timeline)->position=pos;
+  lives_ruler_set_value(LIVES_RULER (mt->timeline),pos);
 
   redraw_all_event_boxes(mt);
 }
@@ -2489,7 +2489,7 @@ static weed_timecode_t set_play_position(lives_mt *mt) {
   }
   else {
 #endif
-    tc=q_gint64(GTK_RULER(mt->timeline)->position*U_SEC,cfile->fps);
+    tc=q_gint64(lives_ruler_get_value(LIVES_RULER(mt->timeline))*U_SEC,cfile->fps);
 #ifdef ENABLE_JACK_TRANSPORT
   }
 #endif
@@ -2513,7 +2513,7 @@ void mt_show_current_frame(lives_mt *mt, gboolean return_layer) {
 
   weed_timecode_t curr_tc;
 
-  gdouble ptr_time=GTK_RULER(mt->timeline)->position;
+  gdouble ptr_time=lives_ruler_get_value(LIVES_RULER(mt->timeline));
 
   weed_plant_t *frame_layer=mainw->frame_layer;
 
@@ -2734,7 +2734,7 @@ void mt_show_current_frame(lives_mt *mt, gboolean return_layer) {
 
   mainw->frame_layer=frame_layer;
 
-  GTK_RULER(mt->timeline)->position=ptr_time;
+  lives_ruler_set_value(LIVES_RULER(mt->timeline),ptr_time);
   gtk_widget_queue_draw(mt->timeline);
 
   if (needs_idlefunc) {
@@ -2749,12 +2749,12 @@ void mt_tl_move(lives_mt *mt, gdouble pos_rel) {
   gdouble pos;
   if (mainw->playing_file>-1) return;
 
-  pos=GTK_RULER (mt->timeline)->position+pos_rel;
+  pos=lives_ruler_get_value(LIVES_RULER (mt->timeline))+pos_rel;
 
   pos=q_dbl(pos,mt->fps)/U_SEC;
   if (pos<0.) pos=0.;
 
-  mt->ptr_time=GTK_RULER (mt->timeline)->position=pos;
+  mt->ptr_time=lives_ruler_set_value(LIVES_RULER (mt->timeline),pos);
 
   if (pos>0.) {
     gtk_widget_set_sensitive (mt->rewind,TRUE);
@@ -2857,7 +2857,7 @@ static void mt_zoom (lives_mt *mt, gdouble scale) {
   gdouble tl_cur;
 
 
-  if (scale>0.) tl_cur=GTK_RULER(mt->timeline)->position;  // center on cursor
+  if (scale>0.) tl_cur=lives_ruler_get_value(LIVES_RULER(mt->timeline));  // center on cursor
   else {
     tl_cur=mt->tl_min+tl_span; // center on middle of screen
     scale=-scale;
@@ -2876,8 +2876,8 @@ static void mt_zoom (lives_mt *mt, gdouble scale) {
 
   if (mt->tl_min==mt->tl_max) mt->tl_max=mt->tl_min+1./mt->fps;
 
-  GTK_RULER(mt->timeline)->upper=mt->tl_max;
-  GTK_RULER(mt->timeline)->lower=mt->tl_min;
+  lives_ruler_set_upper(LIVES_RULER(mt->timeline),mt->tl_max);
+  lives_ruler_set_lower(LIVES_RULER(mt->timeline),mt->tl_min);
 
   set_time_scrollbar(mt);
 
@@ -3435,7 +3435,7 @@ gboolean mt_selblock (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModif
   // ctrl-Enter - select block at current time/track
   lives_mt *mt=(lives_mt *)user_data;
   GtkWidget *eventbox;
-  gdouble timesecs=GTK_RULER (mt->timeline)->position;
+  gdouble timesecs=lives_ruler_get_value(LIVES_RULER(mt->timeline));
 
   unselect_all(mt);
 
@@ -3749,7 +3749,7 @@ on_drag_clip_end           (GtkWidget       *widget,
 
   if (mt->cursor_style!=LIVES_CURSOR_BLOCK) return FALSE;
 
-  osecs=GTK_RULER (mt->timeline)->position;
+  osecs=lives_ruler_get_value(LIVES_RULER(mt->timeline));
 
   set_cursor_style(mt,LIVES_CURSOR_BUSY,0,0,0,0,0);
 
@@ -3772,7 +3772,7 @@ on_drag_clip_end           (GtkWidget       *widget,
       track_select(mt);
       
       if (mainw->playing_file==-1) {
-	GTK_RULER (mt->timeline)->position=timesecs;
+	lives_ruler_set_value(LIVES_RULER (mt->timeline),timesecs);
 	if (!mt->is_paused) {
 	  if (mt->poly_state==POLY_FX_STACK) {
 	    polymorph(mt,POLY_FX_STACK);
@@ -3788,7 +3788,7 @@ on_drag_clip_end           (GtkWidget       *widget,
 
       if (mainw->playing_file==-1&&(mainw->files[mt->file_selected]->laudio_time>((mainw->files[mt->file_selected]->start-1.)/mainw->files[mt->file_selected]->fps)||(mainw->files[mt->file_selected]->laudio_time>0.&&mt->opts.ign_ins_sel))) insert_audio_here_cb(NULL,(gpointer)mt);
       set_cursor_style(mt,LIVES_CURSOR_NORMAL,0,0,0,0,0);
-      if (mt->is_paused) GTK_RULER (mt->timeline)->position=osecs;
+      if (mt->is_paused) lives_ruler_set_value(LIVES_RULER (mt->timeline),osecs);
       return FALSE;
     }
   }
@@ -3809,7 +3809,7 @@ on_drag_clip_end           (GtkWidget       *widget,
       track_select(mt);
 
       if (mainw->playing_file==-1) {
-	GTK_RULER (mt->timeline)->position=timesecs;
+	lives_ruler_set_value(LIVES_RULER (mt->timeline),timesecs);
 	if (!mt->is_paused) {
 	  mt_show_current_frame(mt, FALSE);
 	  if (timesecs>0.) {
@@ -3824,7 +3824,7 @@ on_drag_clip_end           (GtkWidget       *widget,
     }
   }
 
-  if (mt->is_paused) GTK_RULER (mt->timeline)->position=osecs;
+  if (mt->is_paused) lives_ruler_set_value(LIVES_RULER (mt->timeline),osecs);
   set_cursor_style(mt,LIVES_CURSOR_NORMAL,0,0,0,0,0);
 
   return FALSE;
@@ -5022,7 +5022,7 @@ static gboolean timecode_string_validate(GtkEntry *entry, lives_mt *mt) {
 
   }
   
-  pos=GTK_RULER (mt->timeline)->position;
+  pos=lives_ruler_get_value(LIVES_RULER(mt->timeline));
 
   pos=q_dbl(pos,mt->fps)/U_SEC;
   if (pos<0.) pos=0.;
@@ -5036,7 +5036,7 @@ static gboolean timecode_string_validate(GtkEntry *entry, lives_mt *mt) {
     mt->idlefunc=mt_idle_add(mt);
   }
 
-  pos=GTK_RULER (mt->timeline)->position;
+  pos=lives_ruler_get_value(LIVES_RULER(mt->timeline));
 
   pos=q_dbl(pos,mt->fps)/U_SEC;
   if (pos<0.) pos=0.;
@@ -5079,7 +5079,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   gdouble pos;
 
   if (!timecode_string_validate(GTK_ENTRY(entry),mt)) {
-    pos=GTK_RULER (mt->timeline)->position;
+    pos=lives_ruler_get_value(LIVES_RULER(mt->timeline));
     pos=q_dbl(pos,mt->fps)/U_SEC;
     if (pos<0.) pos=0.;
     time_to_string(mt,pos,TIMECODE_LENGTH);
@@ -9128,7 +9128,7 @@ void mt_init_tracks (lives_mt *mt, gboolean set_min_max) {
 	draw_region(mt);
       }
     }
-    mt_tl_move(mt,-GTK_RULER (mt->timeline)->position);
+    mt_tl_move(mt,-lives_ruler_get_value(LIVES_RULER(mt->timeline)));
   }
   else mt->was_undo_redo=FALSE;
 
@@ -10416,7 +10416,7 @@ static track_rect *move_block (lives_mt *mt, track_rect *block, gdouble timesecs
   track_select(mt);
   mt->clip_selected=mt_clip_from_file(mt,clip);
   mt_clip_select(mt,TRUE);
-  mt_tl_move(mt,timesecs-GTK_RULER (mt->timeline)->position);
+  mt_tl_move(mt,timesecs-lives_ruler_get_value(LIVES_RULER(mt->timeline)));
 
   if (new_track!=-1) insert_here_cb(NULL,(gpointer)mt);
   else {
@@ -11682,7 +11682,7 @@ void polymorph (lives_mt *mt, lives_mt_poly_state_t poly) {
       GtkWidget *oeventbox;
 
       if (block!=NULL) {
-	secs=GTK_RULER(mt->timeline)->position;
+	secs=lives_ruler_get_value(LIVES_RULER(mt->timeline));
 	if (mt->context_time!=-1.&&mt->use_context) secs=mt->context_time;
 	if (is_audio_eventbox(mt,block->eventbox)&&(oeventbox=(GtkWidget *)g_object_get_data(G_OBJECT(block->eventbox),
 										"owner"))!=NULL) {
@@ -11895,7 +11895,7 @@ void polymorph (lives_mt *mt, lives_mt_poly_state_t poly) {
 
     if (eventbox==NULL) break; /// < can happen during mt exit
 
-    secs=GTK_RULER(mt->timeline)->position;
+    secs=lives_ruler_get_value(LIVES_RULER(mt->timeline));
     if (mt->context_time!=-1.&&mt->use_context) secs=mt->context_time;
 
     block=get_block_from_time(eventbox,secs,mt);
@@ -12559,7 +12559,7 @@ gboolean on_track_release (GtkWidget *eventbox, GdkEventButton *event, gpointer 
 	gdk_window_get_pointer(lives_widget_get_xwindow(eventbox), &x, &y, NULL);
 	timesecs=get_time_from_x(mt,x);
 
-	mt_tl_move(mt,timesecs-GTK_RULER(mt->timeline)->position);
+	mt_tl_move(mt,timesecs-lives_ruler_get_value(LIVES_RULER(mt->timeline)));
       }
     }
 
@@ -12658,7 +12658,7 @@ gboolean on_track_click (GtkWidget *eventbox, GdkEventButton *event, gpointer us
 
       if (mainw->playing_file==-1) {
 	mt->fm_edit_event=NULL;
-	mt_tl_move(mt,timesecs-GTK_RULER (mt->timeline)->position);
+	mt_tl_move(mt,timesecs-lives_ruler_get_value(LIVES_RULER(mt->timeline)));
       }
 
       // for a double click, gdk normally sends 2 single click events, 
@@ -12844,7 +12844,7 @@ void animate_multitrack (lives_mt *mt) {
 
   time_to_string(mt,currtime,TIMECODE_LENGTH);
 
-  GTK_RULER (mt->timeline)->position=currtime;
+  lives_ruler_set_value(LIVES_RULER (mt->timeline),currtime);
   gtk_widget_queue_draw (mt->timeline);
 
   if (mt->redraw_block) return; // don't update during expose event, otherwise we might leave lines
@@ -13034,25 +13034,25 @@ void list_fx_here_cb (GtkMenuItem *menuitem, gpointer user_data) {
 
 void tc_to_rs (GtkMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
-  mt->region_start=GTK_RULER(mt->timeline)->position;
+  mt->region_start=lives_ruler_get_value(LIVES_RULER(mt->timeline));
   on_timeline_release(mt->timeline_reg,NULL,mt);
 }
 
 void tc_to_re (GtkMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
-  mt->region_end=GTK_RULER(mt->timeline)->position;
+  mt->region_end=lives_ruler_get_value(LIVES_RULER(mt->timeline));
   on_timeline_release(mt->timeline_reg,NULL,mt);
 }
 
 
 void rs_to_tc (GtkMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
-  mt_tl_move(mt,mt->region_start-GTK_RULER(mt->timeline)->position);
+  mt_tl_move(mt,mt->region_start-lives_ruler_get_value(LIVES_RULER(mt->timeline)));
 }
 
 void re_to_tc (GtkMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
-  mt_tl_move(mt,mt->region_end-GTK_RULER(mt->timeline)->position);
+  mt_tl_move(mt,mt->region_end-lives_ruler_get_value(LIVES_RULER(mt->timeline)));
 }
 
 
@@ -13087,14 +13087,14 @@ void select_all_time (GtkMenuItem *menuitem, gpointer user_data) {
 
 void select_from_zero_time (GtkMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
-  if (mt->region_start==0.&&mt->region_end==0.) mt->region_end=GTK_RULER (mt->timeline)->position;
+  if (mt->region_start==0.&&mt->region_end==0.) mt->region_end=lives_ruler_get_value(LIVES_RULER(mt->timeline));
   mt->region_start=0.;
   on_timeline_release(mt->timeline_reg,NULL,mt);
 }
 
 void select_to_end_time (GtkMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
-  if (mt->region_start==0.&&mt->region_end==0.) mt->region_start=GTK_RULER (mt->timeline)->position;
+  if (mt->region_start==0.&&mt->region_end==0.) mt->region_start=lives_ruler_get_value(LIVES_RULER(mt->timeline));
   mt->region_end=mt->end_secs;
   on_timeline_release(mt->timeline_reg,NULL,mt);
 }
@@ -13937,7 +13937,7 @@ multitrack_undo            (GtkMenuItem     *menuitem,
   mt_desensitise(mt);
 
   mt->was_undo_redo=TRUE;
-  mt->ptr_time=GTK_RULER(mt->timeline)->position;
+  mt->ptr_time=lives_ruler_get_value(LIVES_RULER(mt->timeline));
 
   if (mt->block_selected!=NULL) block_is_selected=TRUE;
   
@@ -14083,7 +14083,7 @@ multitrack_undo            (GtkMenuItem     *menuitem,
     mt_set_undoable(mt,undo->action,undo->extra,TRUE);
   }
   mt_set_redoable(mt,last_undo->action,last_undo->extra,TRUE);
-  GTK_RULER(mt->timeline)->position=mt->ptr_time;
+  lives_ruler_set_value(LIVES_RULER(mt->timeline),mt->ptr_time);
   gtk_widget_queue_draw(mt->timeline);
 
   utxt=g_utf8_strdown((tmp=get_undo_text(last_undo->action,last_undo->extra)),-1);
@@ -14150,7 +14150,7 @@ multitrack_redo            (GtkMenuItem     *menuitem,
   if (mt->block_selected!=NULL) block_is_selected=TRUE; // TODO *** - need to set track and time 
 
   mt->was_undo_redo=TRUE;
-  mt->ptr_time=GTK_RULER(mt->timeline)->position;
+  mt->ptr_time=lives_ruler_get_value(LIVES_RULER(mt->timeline));
 
   if (last_redo->action!=MT_UNDO_NONE) {
     current_track=mt->current_track;
@@ -14273,7 +14273,7 @@ multitrack_redo            (GtkMenuItem     *menuitem,
   last_redo=(mt_undo *)g_list_nth_data(mt->undos,g_list_length(mt->undos)-1-mt->undo_offset);
   mt_set_undoable(mt,last_redo->action,last_redo->extra,TRUE);
 
-  GTK_RULER(mt->timeline)->position=mt->ptr_time;
+  lives_ruler_set_value(LIVES_RULER(mt->timeline),mt->ptr_time);
   gtk_widget_queue_draw(mt->timeline);
 
 
@@ -14377,7 +14377,7 @@ static void add_effect_inner(lives_mt *mt, int num_in_tracks, int *in_tracks, in
   weed_timecode_t end_tc=get_event_timecode(end_event);
   gboolean did_backup=mt->did_backup;
   gboolean has_params;
-  gdouble timesecs=GTK_RULER (mt->timeline)->position;
+  gdouble timesecs=lives_ruler_get_value(LIVES_RULER(mt->timeline));
   weed_timecode_t tc=q_gint64(timesecs*U_SEC,mt->fps);
   lives_rfx_t *rfx;
 
@@ -14461,7 +14461,7 @@ static void add_effect_inner(lives_mt *mt, int num_in_tracks, int *in_tracks, in
   rfx_free(rfx);
   g_free(rfx);
 
-  mt_tl_move(mt,start_tc/U_SEC-GTK_RULER (mt->timeline)->position);
+  mt_tl_move(mt,start_tc/U_SEC-lives_ruler_get_value(LIVES_RULER(mt->timeline)));
 
   if (has_params) {
     polymorph(mt,POLY_PARAMS);
@@ -14649,7 +14649,7 @@ void on_mt_delfx_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
 static void mt_jumpto (lives_mt *mt, lives_direction_t dir) {
   GtkWidget *eventbox;
-  weed_timecode_t tc=q_gint64(GTK_RULER (mt->timeline)->position*U_SEC,mt->fps);
+  weed_timecode_t tc=q_gint64(lives_ruler_get_value(LIVES_RULER(mt->timeline))*U_SEC,mt->fps);
   gdouble secs=tc/U_SEC;
   track_rect *block;
   weed_timecode_t start_tc,end_tc;
@@ -14699,7 +14699,7 @@ static void mt_jumpto (lives_mt *mt, lives_direction_t dir) {
   if (secs<0.) secs=0.;
   if (secs>mt->end_secs) set_timeline_end_secs (mt, secs);
   mt->fm_edit_event=NULL;
-  mt_tl_move(mt,secs-GTK_RULER(mt->timeline)->position);
+  mt_tl_move(mt,secs-lives_ruler_get_value(LIVES_RULER(mt->timeline)));
 }
 
 
@@ -15123,7 +15123,7 @@ void update_filter_events(lives_mt *mt, weed_plant_t *first_event, weed_timecode
 void on_split_activate (GtkMenuItem *menuitem, gpointer user_data) {
   // split current block at current time
   lives_mt *mt=(lives_mt *)user_data;
-  gdouble timesecs=GTK_RULER (mt->timeline)->position;
+  gdouble timesecs=lives_ruler_get_value(LIVES_RULER(mt->timeline));
   gboolean did_backup=mt->did_backup;
   weed_timecode_t tc;
 
@@ -15158,7 +15158,7 @@ void on_split_activate (GtkMenuItem *menuitem, gpointer user_data) {
 void on_split_curr_activate (GtkMenuItem *menuitem, gpointer user_data) {
   // split current track at current time
   lives_mt *mt=(lives_mt *)user_data;
-  gdouble timesecs=GTK_RULER (mt->timeline)->position;
+  gdouble timesecs=lives_ruler_get_value(LIVES_RULER(mt->timeline));
   gboolean did_backup=mt->did_backup;
   weed_timecode_t tc;
   GtkWidget *eventbox;
@@ -15197,7 +15197,7 @@ void on_split_sel_activate (GtkMenuItem *menuitem, gpointer user_data) {
   GtkWidget *eventbox;
   gint track;
   track_rect *block;
-  gdouble timesecs=GTK_RULER (mt->timeline)->position;
+  gdouble timesecs=lives_ruler_get_value(LIVES_RULER(mt->timeline));
   gboolean did_backup=mt->did_backup;
 
   if (mt->selected_tracks==NULL) return;
@@ -15715,7 +15715,7 @@ void mt_prepare_for_playback(lives_mt *mt) {
   gtk_widget_set_sensitive (mt->rewind,FALSE);
   gtk_widget_set_sensitive (mainw->m_rewindbutton, FALSE);
 
-  if (!mt->is_paused&&!mt->playing_sel) mt->ptr_time=GTK_RULER(mt->timeline)->position;
+  if (!mt->is_paused&&!mt->playing_sel) mt->ptr_time=lives_ruler_get_value(LIVES_RULER(mt->timeline));
 
   mainw->must_resize=TRUE;
 
@@ -15743,11 +15743,11 @@ void mt_post_playback(lives_mt *mt) {
   if (mainw->cancelled!=CANCEL_USER_PAUSED&&!((mainw->cancelled==CANCEL_NONE||mainw->cancelled==CANCEL_NO_MORE_PREVIEW)&&
 					      mt->is_paused)) {
     gtk_widget_set_sensitive (mt->stop,FALSE);
-    mt_tl_move(mt,mt->ptr_time-GTK_RULER (mt->timeline)->position);
+    mt_tl_move(mt,mt->ptr_time-lives_ruler_get_value(LIVES_RULER(mt->timeline)));
   }
   else {
     mt->is_paused=TRUE;
-    if (GTK_RULER(mt->timeline)->position>0.) {
+    if (lives_ruler_get_value(LIVES_RULER(mt->timeline))>0.) {
       gtk_widget_set_sensitive (mt->rewind,TRUE);
       gtk_widget_set_sensitive (mainw->m_rewindbutton, TRUE);
     }
@@ -15761,7 +15761,7 @@ void mt_post_playback(lives_mt *mt) {
     if (mt->poly_state==POLY_PARAMS) {
       if (mt->init_event!=NULL) {
 	gtk_spin_button_set_value(GTK_SPIN_BUTTON(mt->node_spinbutton),
-				  (GTK_RULER(mt->timeline)->position-get_event_timecode(mt->init_event)/U_SEC));
+				  (lives_ruler_get_value(LIVES_RULER(mt->timeline))-get_event_timecode(mt->init_event)/U_SEC));
 	gtk_widget_set_sensitive(mt->apply_fx_button,FALSE);
       }
     }
@@ -15813,7 +15813,7 @@ void multitrack_playall (lives_mt *mt) {
   add_context_label(mt,_("to make a mark on the timeline"));
 
   if (mt->opts.follow_playback) {
-    gdouble currtime=GTK_RULER(mt->timeline)->position;
+    gdouble currtime=lives_ruler_get_value(LIVES_RULER(mt->timeline));
     if (currtime>mt->tl_max||currtime<mt->tl_min) {
       gdouble page=mt->tl_max-mt->tl_min;
       mt->tl_min=currtime-page*.25;
@@ -15876,11 +15876,11 @@ void multitrack_play_sel (GtkMenuItem *menuitem, gpointer user_data) {
   gdouble ptr_time;
   lives_mt *mt=(lives_mt *)user_data;
 
-  ptr_time=GTK_RULER(mt->timeline)->position;
+  ptr_time=lives_ruler_get_value(LIVES_RULER(mt->timeline));
   if (!mt->is_paused) mt->ptr_time=ptr_time;
 
   if (ptr_time<mt->region_start||ptr_time>=mt->region_end) {
-    GTK_RULER(mt->timeline)->position=mt->region_start;
+    lives_ruler_set_value(LIVES_RULER(mt->timeline),mt->region_start);
   }
 
   // set loop start point to region start, and pb_start to current position
@@ -15910,7 +15910,7 @@ void multitrack_adj_start_end (GtkMenuItem *menuitem, gpointer user_data) {
 void multitrack_insert (GtkMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   file *sfile=mainw->files[mt->file_selected];
-  gdouble secs=GTK_RULER (mt->timeline)->position;
+  gdouble secs=lives_ruler_get_value(LIVES_RULER(mt->timeline));
   GtkWidget *eventbox;
   weed_timecode_t ins_start=(sfile->start-1.)/sfile->fps*U_SEC;
   weed_timecode_t ins_end=(gdouble)(sfile->end)/sfile->fps*U_SEC;
@@ -16021,7 +16021,7 @@ void multitrack_insert (GtkMenuItem *menuitem, gpointer user_data) {
 void multitrack_audio_insert (GtkMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   file *sfile=mainw->files[mt->file_selected];
-  gdouble secs=GTK_RULER (mt->timeline)->position;
+  gdouble secs=lives_ruler_get_value(LIVES_RULER(mt->timeline));
   GtkWidget *eventbox=(GtkWidget *)mt->audio_draws->data;
   weed_timecode_t ins_start=q_gint64((sfile->start-1.)/sfile->fps*U_SEC,mt->fps);
   weed_timecode_t ins_end=q_gint64((gdouble)sfile->end/sfile->fps*U_SEC,mt->fps);
@@ -16825,7 +16825,7 @@ on_timeline_update (GtkWidget *widget, GdkEventMotion *event, gpointer user_data
   if (!mt->region_updating) {
     if (mt->tl_mouse) {
       mt->fm_edit_event=NULL;
-      mt_tl_move(mt,pos-GTK_RULER (mt->timeline)->position);
+      mt_tl_move(mt,pos-lives_ruler_get_value(LIVES_RULER(mt->timeline)));
     }
     return TRUE;
   }
@@ -17038,7 +17038,7 @@ on_timeline_release (GtkWidget *eventbox, GdkEventButton *event, gpointer user_d
     if (mt->region_start==mt->region_end) gtk_widget_queue_draw (mt->timeline);
   }
   else {
-    if (eventbox!=mt->timeline_reg) mt_tl_move(mt,pos-GTK_RULER (mt->timeline)->position);
+    if (eventbox!=mt->timeline_reg) mt_tl_move(mt,pos-lives_ruler_get_value(LIVES_RULER(mt->timeline)));
     gtk_widget_set_sensitive (mt->fx_region, FALSE);
     gtk_widget_set_sensitive (mt->ins_gap_cur, FALSE);
     gtk_widget_set_sensitive (mt->ins_gap_sel, FALSE);
@@ -17052,7 +17052,7 @@ on_timeline_release (GtkWidget *eventbox, GdkEventButton *event, gpointer user_d
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(mt->spinbutton_start),mt->region_start);
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(mt->spinbutton_end),mt->region_end);
 
-  pos=GTK_RULER(mt->timeline)->position;
+  pos=lives_ruler_get_value(LIVES_RULER(mt->timeline));
   if (pos>mt->region_end-1./mt->fps) gtk_widget_set_sensitive(mt->tc_to_rs,FALSE);
   else gtk_widget_set_sensitive(mt->tc_to_rs,TRUE);
   if (pos<mt->region_start+1./mt->fps) gtk_widget_set_sensitive(mt->tc_to_re,FALSE);
@@ -17106,7 +17106,7 @@ on_timeline_press (GtkWidget *widget, GdkEventButton *event, gpointer user_data)
 
   if (widget==mt->timeline_eb) {
     mt->fm_edit_event=NULL;
-    mt_tl_move(mt,pos-GTK_RULER(mt->timeline)->position);
+    mt_tl_move(mt,pos-lives_ruler_get_value(LIVES_RULER(mt->timeline)));
     mt->tl_mouse=TRUE;
   }
 
@@ -17236,7 +17236,7 @@ gboolean mt_mark_callback (GtkAccelGroup *group, GObject *obj, guint keyval, Gdk
 
   if (mainw->playing_file==-1) return TRUE;
 
-  cur_time=GTK_RULER (mt->timeline)->position;
+  cur_time=lives_ruler_get_value(LIVES_RULER(mt->timeline));
 
   add_mark_at(mt, cur_time);
   return TRUE;
@@ -17273,7 +17273,7 @@ void on_fx_insb_clicked  (GtkWidget *button, gpointer user_data) {
 void on_prev_fm_clicked  (GtkWidget *button, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   weed_timecode_t tc;
-  gdouble secs=GTK_RULER(mt->timeline)->position;
+  gdouble secs=lives_ruler_get_value(LIVES_RULER(mt->timeline));
   tc=q_gint64(secs*U_SEC,mt->fps);
   weed_plant_t *event;
 
@@ -17283,7 +17283,7 @@ void on_prev_fm_clicked  (GtkWidget *button, gpointer user_data) {
 
   if (event!=NULL) tc=get_event_timecode(event);
 
-  mt_tl_move(mt,tc/U_SEC-GTK_RULER(mt->timeline)->position);
+  mt_tl_move(mt,tc/U_SEC-lives_ruler_get_value(LIVES_RULER(mt->timeline)));
 }
 
 
@@ -17291,7 +17291,7 @@ void on_next_fm_clicked  (GtkWidget *button, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   weed_timecode_t tc;
   weed_plant_t *event;
-  gdouble secs=GTK_RULER(mt->timeline)->position;
+  gdouble secs=lives_ruler_get_value(LIVES_RULER(mt->timeline));
   tc=q_gint64(secs*U_SEC,mt->fps);
 
   event=get_frame_event_at(mt->event_list,tc,mt->fm_edit_event,TRUE);
@@ -17300,7 +17300,7 @@ void on_next_fm_clicked  (GtkWidget *button, gpointer user_data) {
 
   if (event!=NULL) tc=get_event_timecode(event);
 
-  mt_tl_move(mt,tc/U_SEC-GTK_RULER(mt->timeline)->position);
+  mt_tl_move(mt,tc/U_SEC-lives_ruler_get_value(LIVES_RULER(mt->timeline)));
 
 }
 
@@ -17380,7 +17380,7 @@ on_node_spin_value_changed           (GtkSpinButton   *spinbutton,
   if (!mt->block_tl_move) {
     timesecs=otc/U_SEC;
     mt->block_node_spin=TRUE;
-    mt_tl_move(mt,timesecs-GTK_RULER (mt->timeline)->position);
+    mt_tl_move(mt,timesecs-lives_ruler_get_value(LIVES_RULER(mt->timeline)));
     mt->block_node_spin=FALSE;
   }
 

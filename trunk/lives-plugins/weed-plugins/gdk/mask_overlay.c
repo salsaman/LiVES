@@ -199,7 +199,7 @@ int masko_init(weed_plant_t *inst) {
   }
   else {
     make_mask(pbuf,mode,video_width,video_height,sdata->xmap,sdata->ymap);
-    gdk_pixbuf_unref(pbuf);
+    g_object_unref(pbuf);
   }
 
   weed_free(mfile);

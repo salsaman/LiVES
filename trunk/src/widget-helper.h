@@ -283,7 +283,11 @@ void lives_widget_set_can_focus_and_default(LiVESWidget *widget);
 void lives_container_remove(LiVESContainer *container, LiVESWidget *widget);
 
 double lives_ruler_get_value(LiVESRuler *ruler);
-void lives_ruler_set_value(LiVESRuler *ruler, double value);
+double lives_ruler_set_value(LiVESRuler *ruler, double value);
+
+void lives_ruler_set_range(LiVESRuler *ruler, double lower, double upper, double position, double max_size);
+double lives_ruler_set_upper(LiVESRuler *ruler, double value);
+double lives_ruler_set_lower(LiVESRuler *ruler, double value);
 
 
 // compound functions (composed of basic functions)

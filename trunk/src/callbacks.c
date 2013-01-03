@@ -3807,7 +3807,7 @@ on_playall_activate                    (GtkMenuItem     *menuitem,
     unlink(cfile->info_file);
 
     play_file();
-    GTK_RULER (mainw->hruler)->position=cfile->pointer_time;
+    lives_ruler_set_value(LIVES_RULER (mainw->hruler),cfile->pointer_time);
     get_play_times();
     mainw->noswitch=FALSE;
   }
@@ -3845,7 +3845,7 @@ on_playsel_activate                      (GtkMenuItem     *menuitem,
   play_file();
 
   mainw->playing_sel=FALSE;
-  GTK_RULER (mainw->hruler)->position=cfile->pointer_time;
+  lives_ruler_set_value(LIVES_RULER (mainw->hruler),cfile->pointer_time);
   gtk_widget_queue_draw (mainw->hruler);
 
   // in case we are rendering and previewing, in case we now have audio
@@ -4037,11 +4037,11 @@ on_rewind_activate                    (GtkMenuItem     *menuitem,
 				       gpointer         user_data)
 {
   if (mainw->multitrack!=NULL) {
-    mt_tl_move(mainw->multitrack,-GTK_RULER (mainw->multitrack->timeline)->position);
+    mt_tl_move(mainw->multitrack,-lives_ruler_get_value(LIVES_RULER (mainw->multitrack->timeline)));
     return;
   }
 
-  cfile->pointer_time=GTK_RULER (mainw->hruler)->position=0.;
+  cfile->pointer_time=lives_ruler_set_value(LIVES_RULER (mainw->hruler),0.);
   gtk_widget_queue_draw (mainw->hruler);
   gtk_widget_set_sensitive (mainw->rewind, FALSE);
   gtk_widget_set_sensitive (mainw->m_rewindbutton, FALSE);
@@ -4054,7 +4054,7 @@ on_stop_activate (GtkMenuItem *menuitem, gpointer user_data) {
   if (mainw->multitrack!=NULL&&mainw->multitrack->is_paused&&mainw->playing_file==-1) {
     mainw->multitrack->is_paused=FALSE;
     mainw->multitrack->playing_sel=FALSE;
-    mt_tl_move(mainw->multitrack,mainw->multitrack->ptr_time-GTK_RULER (mainw->multitrack->timeline)->position);
+    mt_tl_move(mainw->multitrack,mainw->multitrack->ptr_time-lives_ruler_get_value(LIVES_RULER (mainw->multitrack->timeline)));
     gtk_widget_set_sensitive (mainw->stop, FALSE);
     gtk_widget_set_sensitive (mainw->m_stopbutton, FALSE);
     return;
@@ -10003,10 +10003,11 @@ on_hrule_update           (GtkWidget       *widget,
   if (x<0) x=0;
 
   // figure out where ptr should be even when > cfile->frames
-  if ((GTK_RULER (mainw->hruler)->position=cfile->pointer_time=
+  
+  if ((lives_ruler_set_value(LIVES_RULER (mainw->hruler),(cfile->pointer_time=
        calc_time_from_frame(mainw->current_file,calc_frame_from_time
-			    (mainw->current_file,(gdouble)x/mainw->vidbar->allocation.width*cfile->total_time)))<=0.) 
-    GTK_RULER (mainw->hruler)->position=cfile->pointer_time=(gdouble)x/mainw->vidbar->allocation.width*cfile->total_time;
+			    (mainw->current_file,(gdouble)x/mainw->vidbar->allocation.width*cfile->total_time)))))<=0.) 
+    lives_ruler_set_value(LIVES_RULER (mainw->hruler),(cfile->pointer_time=(gdouble)x/mainw->vidbar->allocation.width*cfile->total_time));
   gtk_widget_queue_draw (mainw->hruler);
   get_play_times();
   return FALSE;
@@ -10024,11 +10025,11 @@ on_hrule_reset           (GtkWidget       *widget,
 
   gdk_window_get_pointer(lives_widget_get_xwindow (mainw->LiVES), &x, NULL, NULL);
   if (x<0) x=0;
-  if ((GTK_RULER (mainw->hruler)->position=cfile->pointer_time=
+  if ((lives_ruler_set_value(LIVES_RULER (mainw->hruler),(cfile->pointer_time=
        calc_time_from_frame(mainw->current_file,
 			    calc_frame_from_time(mainw->current_file,(gdouble)x/
-						 mainw->vidbar->allocation.width*cfile->total_time)))<=0.) 
-    GTK_RULER (mainw->hruler)->position=cfile->pointer_time=(gdouble)x/mainw->vidbar->allocation.width*cfile->total_time;
+						 mainw->vidbar->allocation.width*cfile->total_time)))))<=0.) 
+    lives_ruler_set_value(LIVES_RULER (mainw->hruler),(cfile->pointer_time=(gdouble)x/mainw->vidbar->allocation.width*cfile->total_time));
 
   if (!mainw->hrule_blocked) {
     g_signal_handler_block (mainw->eventbox5,mainw->hrule_func);
@@ -10066,11 +10067,11 @@ on_hrule_set           (GtkWidget       *widget,
   if (mainw->current_file<=0) return FALSE;
   gdk_window_get_pointer(lives_widget_get_xwindow (mainw->LiVES), &x, NULL, NULL);
   if (x<0) x=0;
-  if ((GTK_RULER (mainw->hruler)->position=cfile->pointer_time=
+  if ((lives_ruler_set_value(LIVES_RULER (mainw->hruler),(cfile->pointer_time=
        calc_time_from_frame(mainw->current_file,calc_frame_from_time(mainw->current_file,
 								     (gdouble)x/mainw->vidbar->allocation.width*
-								     cfile->total_time)))<=0.) 
-    GTK_RULER (mainw->hruler)->position=cfile->pointer_time=(gdouble)x/mainw->vidbar->allocation.width*cfile->total_time;
+								     cfile->total_time)))))<=0.) 
+    lives_ruler_set_value(LIVES_RULER (mainw->hruler),(cfile->pointer_time=(gdouble)x/mainw->vidbar->allocation.width*cfile->total_time));
   gtk_widget_queue_draw (mainw->hruler);
   get_play_times();
   if (mainw->hrule_blocked) {

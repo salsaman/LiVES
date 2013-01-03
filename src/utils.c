@@ -2444,7 +2444,7 @@ void get_play_times(void) {
 			 allocheight-prefs->bar_height);
 	}
       }
-      GTK_RULER (mainw->hruler)->position=offset*cfile->total_time/allocwidth;
+      lives_ruler_set_value(LIVES_RULER (mainw->hruler),offset*cfile->total_time/allocwidth);
       gtk_widget_queue_draw (mainw->hruler);
     }
     if (cfile->achans>0&&cfile->is_loaded&&prefs->audio_src!=AUDIO_SRC_EXT) {
@@ -2532,7 +2532,7 @@ void get_play_times(void) {
       }
     }
     if (cfile->frames==0) {
-      GTK_RULER (mainw->hruler)->position=offset*cfile->total_time/allocwidth;
+      lives_ruler_set_value(LIVES_RULER (mainw->hruler),offset*cfile->total_time/allocwidth);
       gtk_widget_queue_draw (mainw->hruler);
     }
   }
@@ -2548,7 +2548,7 @@ void get_play_times(void) {
       gtk_widget_show (mainw->laudio_draw);
       gtk_widget_show (mainw->raudio_draw);
 
-      GTK_RULER (mainw->hruler)->upper=cfile->total_time;
+      lives_ruler_set_upper(LIVES_RULER (mainw->hruler),cfile->total_time);
       gtk_widget_queue_draw(mainw->hruler);
 
       draw_little_bars(cfile->pointer_time);

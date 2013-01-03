@@ -84,7 +84,7 @@ void add_message_scroller(GtkWidget *conter) {
     gtk_text_buffer_get_start_iter(tbuff,&start_iter);
     gtk_text_buffer_get_end_iter(tbuff,&end_iter);
     all_text=gtk_text_buffer_get_text(tbuff,&start_iter,&end_iter,TRUE);
-    //gtk_widget_destroy(mainw->textview1);
+    gtk_widget_destroy(mainw->textview1);
   }
 
   if (mainw->scrolledwindow!=NULL) {
@@ -103,8 +103,14 @@ void add_message_scroller(GtkWidget *conter) {
 
   tbuff=gtk_text_view_get_buffer(GTK_TEXT_VIEW(mainw->textview1));
   if (tbuff!=NULL && all_text!=NULL) {
+    GtkTextIter end_iter;
+    GtkTextMark *mark;
     gtk_text_buffer_set_text(tbuff,all_text,-1);
     g_free(all_text);
+    gtk_text_buffer_get_end_iter(tbuff,&end_iter);
+    mark=gtk_text_buffer_create_mark(tbuff,NULL,&end_iter,FALSE);
+    gtk_text_view_scroll_mark_onscreen(GTK_TEXT_VIEW (mainw->textview1),mark);
+    gtk_text_buffer_delete_mark (tbuff,mark);
   }
 
   gtk_widget_set_size_request (mainw->textview1, -1, 50);

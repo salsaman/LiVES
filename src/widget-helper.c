@@ -430,7 +430,7 @@ double lives_ruler_get_value(LiVESRuler *ruler) {
 #endif
 }
 
-void lives_ruler_set_value(LiVESRuler *ruler, double value) {
+double lives_ruler_set_value(LiVESRuler *ruler, double value) {
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3,0,0)
   gtk_range_set_value(range,value);
@@ -438,6 +438,31 @@ void lives_ruler_set_value(LiVESRuler *ruler, double value) {
   ruler->position=value;
 #endif
 #endif
+  return value;
+}
+
+
+double lives_ruler_set_upper(LiVESRuler *ruler, double value) {
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3,0,0)
+  gtk_adjustment_set_upper(gtk_range_get_adjustment(GTK_RANGE(ruler)),value);
+#else
+  ruler->upper=value;
+#endif
+#endif
+  return value;
+}
+
+
+double lives_ruler_set_lower(LiVESRuler *ruler, double value) {
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3,0,0)
+  gtk_adjustment_set_lower(gtk_range_get_adjustment(GTK_RANGE(ruler)),value);
+#else
+  ruler->lower=value;
+#endif
+#endif
+  return value;
 }
 
 

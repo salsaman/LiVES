@@ -1901,9 +1901,9 @@ void lives_osc_cb_mtctimeset(void *context, int arglen, const void *vargs, OSCTi
   if (time<0.) return lives_osc_notify_failure();
 
   time=q_dbl(time,mainw->multitrack->fps)/U_SEC;
-  mt_tl_move(mainw->multitrack,time-GTK_RULER(mainw->multitrack->timeline)->position);
+  mt_tl_move(mainw->multitrack,time-lives_ruler_get_value(LIVES_RULER(mainw->multitrack->timeline)));
 
-  msg=g_strdup_printf("%.8f",GTK_RULER(mainw->multitrack->timeline)->position);
+  msg=g_strdup_printf("%.8f",lives_ruler_get_value(LIVES_RULER(mainw->multitrack->timeline)));
   lives_osc_notify_success(msg);
   g_free(msg);
 }
@@ -1913,7 +1913,7 @@ void lives_osc_cb_mtctimeget(void *context, int arglen, const void *vargs, OSCTi
 
   if (mainw->multitrack==NULL) return lives_osc_notify_failure();
 
-  msg=g_strdup_printf("%.8f",GTK_RULER(mainw->multitrack->timeline)->position);
+  msg=g_strdup_printf("%.8f",lives_ruler_get_value(LIVES_RULER(mainw->multitrack->timeline)));
   lives_status_send(msg);
   g_free(msg);
 }

@@ -1508,7 +1508,7 @@ GtkWidget * create_rte_window (void) {
 #if GTK_CHECK_VERSION(2,24,0)
       combo = gtk_combo_box_new_with_model_and_entry (model);
 #else
-      combo = gtk_combo_box_new_with_entry ();
+      combo = gtk_combo_box_entry_new ();
       gtk_combo_box_set_model(GTK_COMBO_BOX(combo),model);
 #endif
 

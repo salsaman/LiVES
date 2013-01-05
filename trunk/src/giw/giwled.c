@@ -57,10 +57,10 @@ static guint giw_led_signals[LAST_SIGNAL] = { 0 };
 * Widget's Functions *
 *********************/
 
-GtkType
+GType
 giw_led_get_type ()
 {
-  static GtkType led_type = 0;
+  static GType led_type = 0;
 
   if (!led_type)
     {

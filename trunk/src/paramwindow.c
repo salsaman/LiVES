@@ -416,6 +416,8 @@ void transition_add_in_out(GtkBox *vbox, lives_rfx_t *rfx, gboolean add_audio_ch
   GtkWidget *hseparator;
   GSList *radiobutton_group = NULL;
 
+  gchar *tmp,*tmp2;
+
   hbox = gtk_hbox_new (FALSE, 0);
   gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 10);
 
@@ -451,37 +453,23 @@ void transition_add_in_out(GtkBox *vbox, lives_rfx_t *rfx, gboolean add_audio_ch
   if (add_audio_check) {
     int error;
     weed_plant_t *filter=weed_instance_get_filter((weed_plant_t *)rfx->source,FALSE);
-    GtkWidget *checkbutton = gtk_check_button_new ();
 
-    if (weed_plant_has_leaf(mainw->multitrack->init_event,"host_audio_transition")&&
-	weed_get_boolean_value(mainw->multitrack->init_event,"host_audio_transition",&error)==WEED_FALSE) 
-      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(checkbutton),FALSE);
-    else gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (checkbutton), TRUE);
-
-    gtk_widget_set_tooltip_text( checkbutton, _("Check the box to make audio transition with the video"));
-    eventbox=gtk_event_box_new();
-    lives_tooltips_copy(eventbox,checkbutton);
-    label=gtk_label_new_with_mnemonic (_("Crossfade audio"));
-    gtk_label_set_mnemonic_widget (GTK_LABEL (label),checkbutton);
-
-    gtk_container_add(GTK_CONTAINER(eventbox),label);
-    g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
-		      G_CALLBACK (label_act_toggle),
-		      checkbutton);
-    if (palette->style&STYLE_1) {
-      gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-      gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-      gtk_widget_modify_bg (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
-    }
+    GtkWidget *checkbutton;
 
     hbox2 = gtk_hbox_new (FALSE, 0);
 
     if (has_video_chans_in(filter,FALSE)) 
       gtk_box_pack_start (GTK_BOX (hbox), hbox2, FALSE, FALSE, 10);
 
-    gtk_box_pack_start (GTK_BOX (hbox2), checkbutton, FALSE, FALSE, 10);
-    gtk_box_pack_start (GTK_BOX (hbox2), eventbox, FALSE, FALSE, 10);
-    GTK_WIDGET_SET_FLAGS (checkbutton, GTK_CAN_DEFAULT|GTK_CAN_FOCUS);
+    checkbutton = lives_standard_check_button_new ((tmp=g_strdup(_("Crossfade audio"))),FALSE,LIVES_BOX(hbox2),
+						   (tmp2=g_strdup(_("Check the box to make audio transition with the video"))));
+
+    g_free(tmp); g_free(tmp2);
+
+    if (weed_plant_has_leaf(mainw->multitrack->init_event,"host_audio_transition")&&
+	weed_get_boolean_value(mainw->multitrack->init_event,"host_audio_transition",&error)==WEED_FALSE) 
+      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(checkbutton),FALSE);
+    else gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (checkbutton), TRUE);
 
     g_signal_connect_after (GTK_OBJECT (checkbutton), "toggled",
 			    G_CALLBACK (after_transaudio_toggled),
@@ -645,8 +633,7 @@ static gboolean add_sizes(GtkBox *vbox, gboolean add_fps, lives_rfx_t *rfx) {
 
   if (!chk_params) {
     hseparator = gtk_hseparator_new ();
-    if (added) gtk_box_pack_start (vbox, hseparator, TRUE, TRUE, 0);
-    
+
     if (!rfx->is_template) {
       lives_param_t param;
       // add "aspectratio" widget
@@ -657,6 +644,9 @@ static gboolean add_sizes(GtkBox *vbox, gboolean add_fps, lives_rfx_t *rfx) {
       param.widgets[0]=spinbuttonh;
       check_for_special (&param,-101,vbox,rfx);
     }
+
+    if (added) gtk_box_pack_start (vbox, hseparator, FALSE, FALSE, 10);
+    
   }
 
   return added;
@@ -939,10 +929,10 @@ void on_render_fx_pre_activate (GtkMenuItem *menuitem, lives_rfx_t *rfx) {
 
   }
 
-  GTK_WIDGET_SET_FLAGS (cancelbutton, GTK_CAN_DEFAULT|GTK_CAN_FOCUS);
+  lives_widget_set_can_focus_and_default (cancelbutton);
 
   if (lives_widget_get_parent(okbutton)!=NULL) {
-    GTK_WIDGET_SET_FLAGS (okbutton, GTK_CAN_DEFAULT|GTK_CAN_FOCUS);
+    lives_widget_set_can_focus_and_default (okbutton);
     gtk_widget_grab_default (okbutton);
   }
 

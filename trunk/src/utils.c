@@ -2287,8 +2287,8 @@ void get_play_times(void) {
 
 
   // draw timer bars
-  allocwidth=mainw->video_draw->allocation.width;
-  allocheight=mainw->video_draw->allocation.height;
+  allocwidth=lives_widget_get_allocation_width(mainw->video_draw);
+  allocheight=lives_widget_get_allocation_height(mainw->video_draw);
 
   
   if (mainw->laudio_drawable!=NULL) {
@@ -2642,8 +2642,8 @@ void get_play_times(void) {
 
 void draw_little_bars (gdouble ptrtime) {
   //draw the vertical player bars
-  gdouble allocheight=mainw->video_draw->allocation.height-prefs->bar_height;
-  gdouble offset=ptrtime/cfile->total_time*mainw->vidbar->allocation.width;
+  gdouble allocheight=lives_widget_get_allocation_height(mainw->video_draw)-prefs->bar_height;
+  gdouble offset=ptrtime/cfile->total_time*lives_widget_get_allocation_width(mainw->vidbar);
   gint frame;
 
   if (!prefs->show_gui) return;
@@ -3137,8 +3137,8 @@ prepare_to_play_foreign(void) {
   while (g_main_context_iteration(NULL,FALSE));
 
   // size must be exact, must not be larger than play window or we end up with nothing
-  mainw->pwidth=mainw->playframe->allocation.width-H_RESIZE_ADJUST+2;
-  mainw->pheight=mainw->playframe->allocation.height-V_RESIZE_ADJUST+2;
+  mainw->pwidth=lives_widget_get_allocation_width(mainw->playframe)-H_RESIZE_ADJUST+2;
+  mainw->pheight=lives_widget_get_allocation_height(mainw->playframe)-V_RESIZE_ADJUST+2;
 
   cfile->hsize=mainw->pwidth;
   cfile->vsize=mainw->pheight;

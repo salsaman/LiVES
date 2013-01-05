@@ -2364,8 +2364,8 @@ void play_file (void) {
     // pwidth and pheight are playback width and height
     if (!mainw->sep_win&&!mainw->foreign) {
       do {
-	mainw->pwidth=mainw->playframe->allocation.width-H_RESIZE_ADJUST;
-	mainw->pheight=mainw->playframe->allocation.height-V_RESIZE_ADJUST;
+	mainw->pwidth=lives_widget_get_allocation_width(mainw->playframe)-H_RESIZE_ADJUST;
+	mainw->pheight=lives_widget_get_allocation_height(mainw->playframe)-V_RESIZE_ADJUST;
 	if (mainw->pwidth*mainw->pheight==0) {
 	  gtk_widget_queue_draw (mainw->playframe);
 	  mainw->noswitch=TRUE;
@@ -2922,8 +2922,8 @@ void play_file (void) {
   if (mainw->foreign) {
     // recording from external window capture
 
-    mainw->pwidth=mainw->playframe->allocation.width-H_RESIZE_ADJUST;
-    mainw->pheight=mainw->playframe->allocation.height-V_RESIZE_ADJUST;
+    mainw->pwidth=lives_widget_get_allocation_width(mainw->playframe)-H_RESIZE_ADJUST;
+    mainw->pheight=lives_widget_get_allocation_height(mainw->playframe)-V_RESIZE_ADJUST;
 
     cfile->hsize=mainw->pwidth;
     cfile->vsize=mainw->pheight;
@@ -2981,7 +2981,8 @@ void play_file (void) {
     gtk_widget_show(mainw->t_double);
   }
 
-  if (mainw->eventbox->allocation.height+mainw->menubar->allocation.height>mainw->scr_height-2) {
+  if (lives_widget_get_allocation_height(mainw->eventbox)+lives_widget_get_allocation_height(mainw->menubar)
+      >mainw->scr_height-2) {
     // the screen grew too much...remaximise it
     gtk_window_unmaximize (GTK_WINDOW(mainw->LiVES));
     mainw->noswitch=TRUE;

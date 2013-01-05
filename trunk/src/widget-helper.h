@@ -21,9 +21,13 @@ typedef enum {
 
 
 #ifdef GUI_GTK
+
+#define GTK_VERSION_3 GTK_CHECK_VERSION(3,0,0) // set to 2,0,0 for testing
+
 typedef GtkObject                         LiVESObject;
 typedef GtkWidget                         LiVESWidget;
 typedef GtkContainer                      LiVESContainer;
+typedef GtkBin                            LiVESBin;
 typedef GtkDialog                         LiVESDialog;
 typedef GtkBox                            LiVESBox;
 typedef GtkComboBox                       LiVESCombo;
@@ -33,8 +37,8 @@ typedef GtkTextView                       LiVESTextView;
 typedef GtkEntry                          LiVESEntry;
 typedef GtkRadioButton                    LiVESRadioButton;
 
-#if GTK_CHECK_VERSION(3,0,0)
-typedef GtkRange                          LiVESRuler;
+#if GTK_VERSION_3
+typedef GtkScale                          LiVESRuler;
 #else
 typedef GtkRuler                          LiVESRuler;
 #endif
@@ -70,13 +74,14 @@ typedef gpointer                          LiVESObjectPtr;
 #define LIVES_XWINDOW(widget) GDK_WINDOW(widget)
 #define LIVES_BOX(widget) GTK_BOX(widget)
 #define LIVES_CONTAINER(widget) GTK_CONTAINER(widget)
+#define LIVES_BIN(widget) GTK_BIN(widget)
 #define LIVES_DIALOG(widget) GTK_DIALOG(widget)
 #define LIVES_COMBO(widget) GTK_COMBO_BOX(widget)
 #define LIVES_COMBO_BOX(widget) GTK_COMBO_BOX(widget)
 #define LIVES_RADIO_BUTTON(widget) GTK_RADIO_BUTTON(widget)
 #define LIVES_TOGGLE_BUTTON(widget) GTK_TOGGLE_BUTTON(widget)
 
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_VERSION_3
 #define LIVES_RULER(widget) GTK_SCALE(widget)
 #else
 #define LIVES_RULER(widget) GTK_RULER(widget)
@@ -288,6 +293,16 @@ double lives_ruler_set_value(LiVESRuler *ruler, double value);
 void lives_ruler_set_range(LiVESRuler *ruler, double lower, double upper, double position, double max_size);
 double lives_ruler_set_upper(LiVESRuler *ruler, double value);
 double lives_ruler_set_lower(LiVESRuler *ruler, double value);
+
+int lives_widget_get_allocation_x(LiVESWidget *widget);
+int lives_widget_get_allocation_y(LiVESWidget *widget);
+int lives_widget_get_allocation_width(LiVESWidget *widget);
+int lives_widget_get_allocation_height(LiVESWidget *widget);
+
+LiVESWidget *lives_bin_get_child(LiVESBin *bin);
+
+boolean lives_widget_is_sensitive(LiVESWidget *widget);
+boolean lives_widget_is_visible(LiVESWidget *widget);
 
 
 // compound functions (composed of basic functions)

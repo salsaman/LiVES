@@ -823,9 +823,9 @@ gboolean apply_prefs(gboolean skip_warn) {
       if (mainw->multitrack==NULL) {
 	if (prefs->gui_monitor!=0) {
 	  gint xcen=mainw->mgeom[prefs->gui_monitor-1].x+(mainw->mgeom[prefs->gui_monitor-1].width-
-							  mainw->LiVES->allocation.width)/2;
+							  lives_widget_get_allocation_width(mainw->LiVES))/2;
 	  gint ycen=mainw->mgeom[prefs->gui_monitor-1].y+(mainw->mgeom[prefs->gui_monitor-1].height-
-							  mainw->LiVES->allocation.height)/2;
+							  lives_widget_get_allocation_height(mainw->LiVES))/2;
 	  gtk_window_move(GTK_WINDOW(mainw->LiVES),xcen,ycen);
 	  
 	}
@@ -836,9 +836,9 @@ gboolean apply_prefs(gboolean skip_warn) {
       else {
 	if (prefs->gui_monitor!=0) {
 	  gint xcen=mainw->mgeom[prefs->gui_monitor-1].x+(mainw->mgeom[prefs->gui_monitor-1].width-
-							  mainw->multitrack->window->allocation.width)/2;
+							  lives_widget_get_allocation_width(mainw->multitrack->window))/2;
 	  gint ycen=mainw->mgeom[prefs->gui_monitor-1].y+(mainw->mgeom[prefs->gui_monitor-1].height-
-							  mainw->multitrack->window->allocation.height)/2;
+							  lives_widget_get_allocation_height(mainw->multitrack->window))/2;
 	  gtk_window_move(GTK_WINDOW(mainw->multitrack->window),xcen,ycen);
 	}
 	
@@ -2776,7 +2776,7 @@ _prefsw *create_prefs_dialog (void) {
 
   gtk_widget_set_sensitive(advbutton,prefs->instant_open);
 
-  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_instant_open), "toggled", GTK_SIGNAL_FUNC(instopen_toggled), advbutton);
+  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_instant_open), "toggled", G_CALLBACK(instopen_toggled), advbutton);
 
 
 
@@ -3085,7 +3085,7 @@ _prefsw *create_prefs_dialog (void) {
 
   prefsw_set_astream_settings(mainw->vpp);
 
-  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_stream_audio), "toggled", GTK_SIGNAL_FUNC(stream_audio_toggled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_stream_audio), "toggled", G_CALLBACK(stream_audio_toggled), NULL);
 
 
 
@@ -3251,8 +3251,8 @@ _prefsw *create_prefs_dialog (void) {
 
   gtk_widget_show_all(hbox);
 
-  g_signal_connect(GTK_OBJECT(prefsw->rextaudio), "toggled", GTK_SIGNAL_FUNC(toggle_set_insensitive), prefsw->checkbutton_aclips);
-  g_signal_connect(GTK_OBJECT(prefsw->rextaudio), "toggled", GTK_SIGNAL_FUNC(toggle_set_insensitive), prefsw->checkbutton_afollow);
+  g_signal_connect(GTK_OBJECT(prefsw->rextaudio), "toggled", G_CALLBACK(toggle_set_insensitive), prefsw->checkbutton_aclips);
+  g_signal_connect(GTK_OBJECT(prefsw->rextaudio), "toggled", G_CALLBACK(toggle_set_insensitive), prefsw->checkbutton_afollow);
 
 
 
@@ -5556,187 +5556,187 @@ _prefsw *create_prefs_dialog (void) {
   g_signal_connect(dirbutton6, "clicked", G_CALLBACK (on_filesel_complex_clicked),prefsw->tmpdir_entry);
 
   // Connect signals for 'Apply' button activity handling
-  g_signal_connect(GTK_OBJECT(prefsw->wpp_entry), "changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->frei0r_entry), "changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->ladspa_entry), "changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->fs_max_check), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->recent_check), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->stop_screensaver_check), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->open_maximised_check), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->show_tool), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->mouse_scroll), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_ce_maxspect), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->rb_startup_ce), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->rb_startup_mt), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->wpp_entry), "changed", G_CALLBACK(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->frei0r_entry), "changed", G_CALLBACK(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->ladspa_entry), "changed", G_CALLBACK(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->fs_max_check), "toggled", G_CALLBACK(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->recent_check), "toggled", G_CALLBACK(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->stop_screensaver_check), "toggled", G_CALLBACK(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->open_maximised_check), "toggled", G_CALLBACK(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->show_tool), "toggled", G_CALLBACK(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->mouse_scroll), "toggled", G_CALLBACK(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_ce_maxspect), "toggled", G_CALLBACK(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->rb_startup_ce), "toggled", G_CALLBACK(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->rb_startup_mt), "toggled", G_CALLBACK(apply_button_set_enabled), NULL);
   g_signal_connect(GTK_OBJECT(prefsw->spinbutton_crit_ds), "value_changed", 
-		   GTK_SIGNAL_FUNC(spinbutton_crit_ds_value_changed), NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->spinbutton_gmoni), "value_changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->spinbutton_pmoni), "value_changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->forcesmon), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_stream_audio), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), 
+		   G_CALLBACK(spinbutton_crit_ds_value_changed), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->spinbutton_gmoni), "value_changed", G_CALLBACK(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->spinbutton_pmoni), "value_changed", G_CALLBACK(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->forcesmon), "toggled", G_CALLBACK(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_stream_audio), "toggled", G_CALLBACK(apply_button_set_enabled), 
 		   NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_rec_after_pb), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), 
+  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_rec_after_pb), "toggled", G_CALLBACK(apply_button_set_enabled), 
 		   NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->spinbutton_warn_ds), "value_changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), 
+  g_signal_connect(GTK_OBJECT(prefsw->spinbutton_warn_ds), "value_changed", G_CALLBACK(apply_button_set_enabled), 
 		   NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->mt_enter_prompt), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
-  g_signal_connect(GTK_OBJECT(mt_enter_defs), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_render_prompt), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), 
+  g_signal_connect(GTK_OBJECT(prefsw->mt_enter_prompt), "toggled", G_CALLBACK(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(mt_enter_defs), "toggled", G_CALLBACK(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_render_prompt), "toggled", G_CALLBACK(apply_button_set_enabled), 
 		   NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->spinbutton_mt_def_width), "value_changed", GTK_SIGNAL_FUNC(apply_button_set_enabled),
+  g_signal_connect(GTK_OBJECT(prefsw->spinbutton_mt_def_width), "value_changed", G_CALLBACK(apply_button_set_enabled),
 		   NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->spinbutton_mt_def_height), "value_changed", GTK_SIGNAL_FUNC(apply_button_set_enabled),
+  g_signal_connect(GTK_OBJECT(prefsw->spinbutton_mt_def_height), "value_changed", G_CALLBACK(apply_button_set_enabled),
 		   NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->spinbutton_mt_def_fps), "value_changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), 
+  g_signal_connect(GTK_OBJECT(prefsw->spinbutton_mt_def_fps), "value_changed", G_CALLBACK(apply_button_set_enabled), 
 		   NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->backaudio_checkbutton), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->pertrack_checkbutton), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->spinbutton_mt_undo_buf), "value_changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), 
+  g_signal_connect(GTK_OBJECT(prefsw->backaudio_checkbutton), "toggled", G_CALLBACK(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->pertrack_checkbutton), "toggled", G_CALLBACK(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->spinbutton_mt_undo_buf), "value_changed", G_CALLBACK(apply_button_set_enabled), 
 		   NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_mt_exit_render), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), 
+  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_mt_exit_render), "toggled", G_CALLBACK(apply_button_set_enabled), 
 		   NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->spinbutton_mt_ab_time), "value_changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), 
+  g_signal_connect(GTK_OBJECT(prefsw->spinbutton_mt_ab_time), "value_changed", G_CALLBACK(apply_button_set_enabled), 
 		   NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->mt_autoback_always), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->mt_autoback_never), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->mt_autoback_every), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
-  g_signal_connect(GTK_EDITABLE(prefsw->video_open_entry), "changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->spinbutton_ocp), "value_changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->jpeg), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
-  g_signal_connect(GTK_OBJECT(png), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_instant_open), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), 
+  g_signal_connect(GTK_OBJECT(prefsw->mt_autoback_always), "toggled", G_CALLBACK(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->mt_autoback_never), "toggled", G_CALLBACK(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->mt_autoback_every), "toggled", G_CALLBACK(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_EDITABLE(prefsw->video_open_entry), "changed", G_CALLBACK(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->spinbutton_ocp), "value_changed", G_CALLBACK(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->jpeg), "toggled", G_CALLBACK(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(png), "toggled", G_CALLBACK(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_instant_open), "toggled", G_CALLBACK(apply_button_set_enabled), 
 		   NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_auto_deint), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_nobord), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_concat_images), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), 
+  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_auto_deint), "toggled", G_CALLBACK(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_nobord), "toggled", G_CALLBACK(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_concat_images), "toggled", G_CALLBACK(apply_button_set_enabled), 
 		   NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->pbq_combo), "changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_show_stats), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
-  g_signal_connect(GTK_OBJECT(pp_combo), "changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->audp_combo), "changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
-  g_signal_connect(GTK_EDITABLE(prefsw->audio_command_entry), "changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_afollow), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_aclips), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->rdesk_audio), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->rframes), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->rfps), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->reffects), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->rclips), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->raudio), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->rextaudio), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->spinbutton_rec_gb), "value_changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->encoder_combo), "changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->ofmt_combo), "changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->pbq_combo), "changed", G_CALLBACK(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_show_stats), "toggled", G_CALLBACK(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(pp_combo), "changed", G_CALLBACK(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->audp_combo), "changed", G_CALLBACK(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_EDITABLE(prefsw->audio_command_entry), "changed", G_CALLBACK(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_afollow), "toggled", G_CALLBACK(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_aclips), "toggled", G_CALLBACK(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->rdesk_audio), "toggled", G_CALLBACK(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->rframes), "toggled", G_CALLBACK(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->rfps), "toggled", G_CALLBACK(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->reffects), "toggled", G_CALLBACK(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->rclips), "toggled", G_CALLBACK(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->raudio), "toggled", G_CALLBACK(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->rextaudio), "toggled", G_CALLBACK(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->spinbutton_rec_gb), "value_changed", G_CALLBACK(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->encoder_combo), "changed", G_CALLBACK(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->ofmt_combo), "changed", G_CALLBACK(apply_button_set_enabled), NULL);
 
   if (prefsw->acodec_combo!=NULL) 
-    g_signal_connect(GTK_OBJECT(prefsw->acodec_combo), "changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_antialias), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->spinbutton_rte_keys), "value_changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), 
+    g_signal_connect(GTK_OBJECT(prefsw->acodec_combo), "changed", G_CALLBACK(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_antialias), "toggled", G_CALLBACK(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->spinbutton_rte_keys), "value_changed", G_CALLBACK(apply_button_set_enabled), 
 		   NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_threads), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_threads), "toggled", GTK_SIGNAL_FUNC(toggle_set_sensitive), 
+  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_threads), "toggled", G_CALLBACK(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_threads), "toggled", G_CALLBACK(toggle_set_sensitive), 
 		   (gpointer)prefsw->spinbutton_nfx_threads);
-  g_signal_connect(GTK_OBJECT(prefsw->spinbutton_nfx_threads), "value_changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), 
+  g_signal_connect(GTK_OBJECT(prefsw->spinbutton_nfx_threads), "value_changed", G_CALLBACK(apply_button_set_enabled), 
 		   NULL);
-  g_signal_connect(GTK_EDITABLE(prefsw->vid_load_dir_entry), "changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
-  g_signal_connect(GTK_EDITABLE(prefsw->vid_save_dir_entry), "changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
-  g_signal_connect(GTK_EDITABLE(prefsw->audio_dir_entry), "changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
-  g_signal_connect(GTK_EDITABLE(prefsw->image_dir_entry), "changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
-  g_signal_connect(GTK_EDITABLE(prefsw->proj_dir_entry), "changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
-  g_signal_connect(GTK_EDITABLE(prefsw->tmpdir_entry), "changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_warn_fps), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_warn_fsize), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->spinbutton_warn_fsize), "value_changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), 
+  g_signal_connect(GTK_EDITABLE(prefsw->vid_load_dir_entry), "changed", G_CALLBACK(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_EDITABLE(prefsw->vid_save_dir_entry), "changed", G_CALLBACK(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_EDITABLE(prefsw->audio_dir_entry), "changed", G_CALLBACK(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_EDITABLE(prefsw->image_dir_entry), "changed", G_CALLBACK(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_EDITABLE(prefsw->proj_dir_entry), "changed", G_CALLBACK(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_EDITABLE(prefsw->tmpdir_entry), "changed", G_CALLBACK(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_warn_fps), "toggled", G_CALLBACK(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_warn_fsize), "toggled", G_CALLBACK(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->spinbutton_warn_fsize), "value_changed", G_CALLBACK(apply_button_set_enabled), 
 		   NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_warn_save_set), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), 
+  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_warn_save_set), "toggled", G_CALLBACK(apply_button_set_enabled), 
 		   NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_warn_mplayer), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), 
+  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_warn_mplayer), "toggled", G_CALLBACK(apply_button_set_enabled), 
 		   NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_warn_rendered_fx), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), 
+  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_warn_rendered_fx), "toggled", G_CALLBACK(apply_button_set_enabled), 
 		   NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_warn_encoders), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), 
+  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_warn_encoders), "toggled", G_CALLBACK(apply_button_set_enabled), 
 		   NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_warn_dup_set), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), 
+  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_warn_dup_set), "toggled", G_CALLBACK(apply_button_set_enabled), 
 		   NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_warn_layout_clips), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), 
+  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_warn_layout_clips), "toggled", G_CALLBACK(apply_button_set_enabled), 
 		   NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_warn_layout_close), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), 
+  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_warn_layout_close), "toggled", G_CALLBACK(apply_button_set_enabled), 
 		   NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_warn_layout_delete), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled),
+  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_warn_layout_delete), "toggled", G_CALLBACK(apply_button_set_enabled),
 		   NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_warn_layout_shift), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), 
+  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_warn_layout_shift), "toggled", G_CALLBACK(apply_button_set_enabled), 
 		   NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_warn_layout_alter), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), 
+  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_warn_layout_alter), "toggled", G_CALLBACK(apply_button_set_enabled), 
 		   NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_warn_layout_adel), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), 
+  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_warn_layout_adel), "toggled", G_CALLBACK(apply_button_set_enabled), 
 		   NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_warn_layout_ashift), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled),
+  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_warn_layout_ashift), "toggled", G_CALLBACK(apply_button_set_enabled),
 		   NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_warn_layout_aalt), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), 
+  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_warn_layout_aalt), "toggled", G_CALLBACK(apply_button_set_enabled), 
 		   NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_warn_layout_popup), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled),
+  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_warn_layout_popup), "toggled", G_CALLBACK(apply_button_set_enabled),
 		   NULL);
   g_signal_connect(GTK_OBJECT(prefsw->checkbutton_warn_discard_layout), "toggled", 
-		   GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_warn_mt_achans), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), 
+		   G_CALLBACK(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_warn_mt_achans), "toggled", G_CALLBACK(apply_button_set_enabled), 
 		   NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_warn_mt_no_jack), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), 
+  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_warn_mt_no_jack), "toggled", G_CALLBACK(apply_button_set_enabled), 
 		   NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_warn_after_dvgrab), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), 
+  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_warn_after_dvgrab), "toggled", G_CALLBACK(apply_button_set_enabled), 
 		   NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_warn_yuv4m_open), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), 
+  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_warn_yuv4m_open), "toggled", G_CALLBACK(apply_button_set_enabled), 
 		   NULL);
   g_signal_connect(GTK_OBJECT(prefsw->checkbutton_warn_mt_backup_space), "toggled", 
-		   GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_warn_after_crash), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), 
+		   G_CALLBACK(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_warn_after_crash), "toggled", G_CALLBACK(apply_button_set_enabled), 
 		   NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_warn_no_pulse), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), 
+  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_warn_no_pulse), "toggled", G_CALLBACK(apply_button_set_enabled), 
 		   NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->check_midi), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->ins_speed), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
-  g_signal_connect(GTK_OBJECT(ins_resample), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->check_xmms_pause), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
-  g_signal_connect(GTK_EDITABLE(prefsw->cdplay_entry), "changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->spinbutton_def_fps), "value_changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), 
+  g_signal_connect(GTK_OBJECT(prefsw->check_midi), "toggled", G_CALLBACK(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->ins_speed), "toggled", G_CALLBACK(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(ins_resample), "toggled", G_CALLBACK(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->check_xmms_pause), "toggled", G_CALLBACK(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_EDITABLE(prefsw->cdplay_entry), "changed", G_CALLBACK(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->spinbutton_def_fps), "value_changed", G_CALLBACK(apply_button_set_enabled), 
 		   NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->theme_combo), "changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->spinbutton_bwidth), "value_changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->theme_combo), "changed", G_CALLBACK(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->spinbutton_bwidth), "value_changed", G_CALLBACK(apply_button_set_enabled), NULL);
 #ifdef ENABLE_OSC
-  g_signal_connect(GTK_OBJECT(prefsw->spinbutton_osc_udp), "value_changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), 
+  g_signal_connect(GTK_OBJECT(prefsw->spinbutton_osc_udp), "value_changed", G_CALLBACK(apply_button_set_enabled), 
 		   NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->enable_OSC_start), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->enable_OSC), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->enable_OSC_start), "toggled", G_CALLBACK(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->enable_OSC), "toggled", G_CALLBACK(apply_button_set_enabled), NULL);
 #endif
 
 #ifndef ENABLE_JACK_TRANSPORT
-  g_signal_connect(GTK_EDITABLE(prefsw->jack_tserver_entry), "changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_start_tjack), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_jack_master), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_jack_client), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_jack_tb_start), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), 
+  g_signal_connect(GTK_EDITABLE(prefsw->jack_tserver_entry), "changed", G_CALLBACK(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_start_tjack), "toggled", G_CALLBACK(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_jack_master), "toggled", G_CALLBACK(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_jack_client), "toggled", G_CALLBACK(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_jack_tb_start), "toggled", G_CALLBACK(apply_button_set_enabled), 
 		   NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_jack_tb_client), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), 
+  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_jack_tb_client), "toggled", G_CALLBACK(apply_button_set_enabled), 
 		   NULL);
 #endif
 
 #ifdef ENABLE_JACK
-  g_signal_connect(GTK_EDITABLE(prefsw->jack_aserver_entry), "changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_start_ajack), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_jack_pwp), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_EDITABLE(prefsw->jack_aserver_entry), "changed", G_CALLBACK(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_start_ajack), "toggled", G_CALLBACK(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_jack_pwp), "toggled", G_CALLBACK(apply_button_set_enabled), NULL);
 #endif
 
 #ifdef ENABLE_OSC
 #ifdef OMC_JS_IMPL
-  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_omc_js), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
-  g_signal_connect(GTK_EDITABLE(prefsw->omc_js_entry), "changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_omc_js), "toggled", G_CALLBACK(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_EDITABLE(prefsw->omc_js_entry), "changed", G_CALLBACK(apply_button_set_enabled), NULL);
 #endif
 #ifdef OMC_MIDI_IMPL
-  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_omc_midi), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->alsa_midi), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
-  g_signal_connect(GTK_OBJECT(raw_midi_button), "toggled", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
-  g_signal_connect(GTK_EDITABLE(prefsw->omc_midi_entry), "changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->spinbutton_midicr), "value_changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->spinbutton_midirpt), "value_changed", GTK_SIGNAL_FUNC(apply_button_set_enabled), 
+  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_omc_midi), "toggled", G_CALLBACK(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->alsa_midi), "toggled", G_CALLBACK(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(raw_midi_button), "toggled", G_CALLBACK(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_EDITABLE(prefsw->omc_midi_entry), "changed", G_CALLBACK(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->spinbutton_midicr), "value_changed", G_CALLBACK(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->spinbutton_midirpt), "value_changed", G_CALLBACK(apply_button_set_enabled), 
 		   NULL);
 #endif
 #endif

@@ -2619,8 +2619,8 @@ void on_decplug_advanced_clicked (GtkButton *button, gpointer user_data) {
   gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (scrolledwindow), vbox);
 
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(GTK_BIN(scrolledwindow)->child, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_bg(GTK_BIN(scrolledwindow)->child, GTK_STATE_NORMAL, &palette->normal_back);
+    gtk_widget_modify_fg(lives_bin_get_child(LIVES_BIN(scrolledwindow)), GTK_STATE_NORMAL, &palette->normal_fore);
+    gtk_widget_modify_bg(lives_bin_get_child(LIVES_BIN(scrolledwindow)), GTK_STATE_NORMAL, &palette->normal_back);
   }
   
   label=gtk_label_new(_("Enabled Video Decoders (uncheck to disable)"));

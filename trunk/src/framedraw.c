@@ -316,8 +316,8 @@ void framedraw_redraw (lives_special_framedraw_rect_t * framedraw, gboolean relo
 
   if (mainw->current_file<1||cfile==NULL) return;
   
-  fd_width=mainw->framedraw->allocation.width;
-  fd_height=mainw->framedraw->allocation.height;
+  fd_width=lives_widget_get_allocation_width(mainw->framedraw);
+  fd_height=lives_widget_get_allocation_height(mainw->framedraw);
     
   width=cfile->hsize;
   height=cfile->vsize;
@@ -574,7 +574,7 @@ void after_framedraw_frame_spinbutton_changed (GtkSpinButton *spinbutton, lives_
   // update the single frame/framedraw preview
   // after the "frame number" spinbutton has changed
   mainw->framedraw_frame=gtk_spin_button_get_value_as_int(spinbutton);
-  if (GTK_WIDGET_VISIBLE(mainw->framedraw_preview)) {
+  if (lives_widget_is_visible(mainw->framedraw_preview)) {
     if (mainw->framedraw_preview!=NULL) gtk_widget_set_sensitive(mainw->framedraw_preview,FALSE);
     while (g_main_context_iteration(NULL,FALSE));
     load_rfx_preview(framedraw->rfx);
@@ -635,8 +635,8 @@ void redraw_framedraw_image(void) {
   cairo_t *cr;
   LiVESPixbuf *pixbuf;
 
-  int fd_width=mainw->framedraw->allocation.width;
-  int fd_height=mainw->framedraw->allocation.height;
+  int fd_width=lives_widget_get_allocation_width(mainw->framedraw);
+  int fd_height=lives_widget_get_allocation_height(mainw->framedraw);
 
   int width,height;
 
@@ -789,8 +789,8 @@ gboolean on_framedraw_mouse_start (GtkWidget *widget, GdkEventButton *event, liv
 	gdouble offsx;
 	gdouble offsy;
 
-	fd_width=mainw->framedraw->allocation.width;
-	fd_height=mainw->framedraw->allocation.height;
+	fd_width=lives_widget_get_allocation_width(mainw->framedraw);
+	fd_height=lives_widget_get_allocation_height(mainw->framedraw);
   
 	offsx=(gdouble)xstart/(gdouble)fd_width;
 	offsy=(gdouble)ystart/(gdouble)fd_height;
@@ -855,8 +855,8 @@ gboolean on_framedraw_mouse_update (GtkWidget *widget, GdkEventButton *event, li
       xend=xcurrent;
       yend=ycurrent;
 
-      fd_width=mainw->framedraw->allocation.width;
-      fd_height=mainw->framedraw->allocation.height;
+      fd_width=lives_widget_get_allocation_width(mainw->framedraw);
+      fd_height=lives_widget_get_allocation_height(mainw->framedraw);
       
       width=cfile->hsize;
       height=cfile->vsize;
@@ -910,8 +910,8 @@ gboolean on_framedraw_mouse_reset (GtkWidget *widget, GdkEventButton *event, liv
     b1_held=FALSE;
   }
 
-  fd_width=mainw->framedraw->allocation.width;
-  fd_height=mainw->framedraw->allocation.height;
+  fd_width=lives_widget_get_allocation_width(mainw->framedraw);
+  fd_height=lives_widget_get_allocation_height(mainw->framedraw);
     
   width=cfile->hsize;
   height=cfile->vsize;
@@ -1008,8 +1008,8 @@ void draw_rect_demask (lives_colRGBA32_t *col, int x1, int y1, int x2, int y2, b
 
   if (mainw->current_file<1||cfile==NULL) return;
 
-  fd_width=mainw->framedraw->allocation.width;
-  fd_height=mainw->framedraw->allocation.height;
+  fd_width=lives_widget_get_allocation_width(mainw->framedraw);
+  fd_height=lives_widget_get_allocation_height(mainw->framedraw);
   
   width=cfile->hsize;
   height=cfile->vsize;

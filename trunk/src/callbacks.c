@@ -5957,8 +5957,8 @@ void on_fs_preview_clicked (GtkWidget *widget, gpointer user_data) {
       g_free(tmp);
 
       if (error==NULL) {
-	fwidth=mainw->fs_playalign->allocation.width-20;
-	fheight=mainw->fs_playalign->allocation.height-20;
+	fwidth=lives_widget_get_allocation_width(mainw->fs_playalign)-20;
+	fheight=lives_widget_get_allocation_height(mainw->fs_playalign)-20;
 
 	owidth=width=lives_pixbuf_get_width(pixbuf);
 	oheight=height=lives_pixbuf_get_height(pixbuf);
@@ -6141,8 +6141,8 @@ void on_fs_preview_clicked (GtkWidget *widget, gpointer user_data) {
       oheight=height;
       
       // -20 since border width was set to 10 pixels
-      fwidth=mainw->fs_playalign->allocation.width-20;
-      fheight=mainw->fs_playalign->allocation.height-20;
+      fwidth=lives_widget_get_allocation_width(mainw->fs_playalign)-20;
+      fheight=lives_widget_get_allocation_height(mainw->fs_playalign)-20;
       
       calc_maxspect(fwidth,fheight,
 		    &width,&height);
@@ -7224,8 +7224,8 @@ void on_full_screen_activate (GtkMenuItem *menuitem, gpointer user_data) {
 	  // in-frame window
 	  while (g_main_context_iteration(NULL,FALSE));
 	  
-	  mainw->pwidth=mainw->playframe->allocation.width-H_RESIZE_ADJUST;
-	  mainw->pheight=mainw->playframe->allocation.height-V_RESIZE_ADJUST;
+	  mainw->pwidth=lives_widget_get_allocation_width(mainw->playframe)-H_RESIZE_ADJUST;
+	  mainw->pheight=lives_widget_get_allocation_height(mainw->playframe)-V_RESIZE_ADJUST;
 	  
 	  // double size
 	  if (mainw->double_size) {
@@ -7323,8 +7323,8 @@ on_double_size_activate               (GtkMenuItem     *menuitem,
     block_expose();
     do {
       while (g_main_context_iteration (NULL, FALSE));
-      mainw->pwidth=mainw->playframe->allocation.width-H_RESIZE_ADJUST;
-      mainw->pheight=mainw->playframe->allocation.height-V_RESIZE_ADJUST;
+      mainw->pwidth=lives_widget_get_allocation_width(mainw->playframe)-H_RESIZE_ADJUST;
+      mainw->pheight=lives_widget_get_allocation_height(mainw->playframe)-V_RESIZE_ADJUST;
     } while (!(mainw->pwidth*mainw->pheight));
     unblock_expose();
 
@@ -7572,8 +7572,8 @@ on_sepwin_activate               (GtkMenuItem     *menuitem,
 	  
 	  gtk_widget_queue_draw (mainw->playframe);
 	  while (g_main_context_iteration (NULL, FALSE));
-	  mainw->pwidth=mainw->playframe->allocation.width-H_RESIZE_ADJUST;
-	  mainw->pheight=mainw->playframe->allocation.height-V_RESIZE_ADJUST;
+	  mainw->pwidth=lives_widget_get_allocation_width(mainw->playframe)-H_RESIZE_ADJUST;
+	  mainw->pheight=lives_widget_get_allocation_height(mainw->playframe)-V_RESIZE_ADJUST;
 	}
 	else {
 	  if (mainw->ext_playback) {
@@ -9102,15 +9102,15 @@ expose_vid_event (GtkWidget *widget, GdkEventExpose *event) {
   }
   else {
     ex=ey=0;
-    ew=mainw->video_draw->allocation.width;
-    eh=mainw->video_draw->allocation.height;
+    ew=lives_widget_get_allocation_width(mainw->video_draw);
+    eh=lives_widget_get_allocation_height(mainw->video_draw);
   }
 
   block_expose();
 
   if (mainw->video_drawable!=NULL) {
     gdk_drawable_get_size(GDK_DRAWABLE(mainw->video_drawable),&width,NULL);
-    if (width!=mainw->LiVES->allocation.width) {
+    if (width!=lives_widget_get_allocation_width(mainw->LiVES)) {
       gdk_drawable_unref(GDK_DRAWABLE(mainw->video_drawable));
       mainw->video_drawable=NULL;
     }
@@ -9118,8 +9118,8 @@ expose_vid_event (GtkWidget *widget, GdkEventExpose *event) {
 
   if (mainw->video_drawable==NULL) {
     mainw->video_drawable = gdk_pixmap_new(lives_widget_get_xwindow(mainw->video_draw),
-					   mainw->video_draw->allocation.width,
-					   mainw->video_draw->allocation.height,
+					   lives_widget_get_allocation_width(mainw->video_draw),
+					   lives_widget_get_allocation_height(mainw->video_draw),
 					   -1);
     get_play_times();
   }
@@ -9129,8 +9129,8 @@ expose_vid_event (GtkWidget *widget, GdkEventExpose *event) {
                         mainw->video_draw->style->bg_gc[GTK_WIDGET_STATE (widget)],
                         TRUE,
                         0, 0,
-                        mainw->video_draw->allocation.width,
-                        mainw->video_draw->allocation.height
+                        lives_widget_get_allocation_width(mainw->video_draw),
+                        lives_widget_get_allocation_height(mainw->video_draw)
                         );
   }
 
@@ -9169,15 +9169,15 @@ expose_laud_event (GtkWidget *widget, GdkEventExpose *event) {
   }
   else {
     ex=ey=0;
-    ew=mainw->laudio_draw->allocation.width;
-    eh=mainw->laudio_draw->allocation.height;
+    ew=lives_widget_get_allocation_width(mainw->laudio_draw);
+    eh=lives_widget_get_allocation_height(mainw->laudio_draw);
   }
 
   block_expose();
 
   if (mainw->laudio_drawable!=NULL) {
     gdk_drawable_get_size(GDK_DRAWABLE(mainw->laudio_drawable),&width,NULL);
-    if (width!=mainw->LiVES->allocation.width) {
+    if (width!=lives_widget_get_allocation_width(mainw->LiVES)) {
       gdk_drawable_unref(GDK_DRAWABLE(mainw->laudio_drawable));
       mainw->laudio_drawable=NULL;
     }
@@ -9235,15 +9235,15 @@ expose_raud_event (GtkWidget *widget, GdkEventExpose *event) {
   }
   else {
     ex=ey=0;
-    ew=mainw->raudio_draw->allocation.width;
-    eh=mainw->raudio_draw->allocation.height;
+    ew=lives_widget_get_allocation_width(mainw->raudio_draw);
+    eh=lives_widget_get_allocation_height(mainw->raudio_draw);
   }
 
   block_expose();
 
   if (mainw->raudio_drawable!=NULL) {
     gdk_drawable_get_size(GDK_DRAWABLE(mainw->raudio_drawable),&width,NULL);
-    if (width!=mainw->LiVES->allocation.width) {
+    if (width!=lives_widget_get_allocation_width(mainw->LiVES)) {
       gdk_drawable_unref(GDK_DRAWABLE(mainw->raudio_drawable));
       mainw->raudio_drawable=NULL;
     }
@@ -9866,27 +9866,27 @@ on_mouse_sel_update           (GtkWidget       *widget,
 
     if (mainw->sel_move==SEL_MOVE_AUTO) 
       sel_current=calc_frame_from_time3(mainw->current_file,
-					(gdouble)x/(gdouble)mainw->vidbar->allocation.width*cfile->total_time);
+					(gdouble)x/(gdouble)lives_widget_get_allocation_width(mainw->vidbar)*cfile->total_time);
     else
       sel_current=calc_frame_from_time(mainw->current_file,
-				       (gdouble)x/(gdouble)mainw->vidbar->allocation.width*cfile->total_time);
+				       (gdouble)x/(gdouble)lives_widget_get_allocation_width(mainw->vidbar)*cfile->total_time);
 
 
     if (mainw->sel_move==SEL_MOVE_SINGLE) {
       sel_current=calc_frame_from_time3(mainw->current_file,
-					(gdouble)x/(gdouble)mainw->vidbar->allocation.width*cfile->total_time);
+					(gdouble)x/(gdouble)lives_widget_get_allocation_width(mainw->vidbar)*cfile->total_time);
       gtk_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_start),sel_current);
       gtk_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_end),sel_current);
     }
 
     if (mainw->sel_move==SEL_MOVE_START||(mainw->sel_move==SEL_MOVE_AUTO&&sel_current<mainw->sel_start)) {
       sel_current=calc_frame_from_time(mainw->current_file,
-				       (gdouble)x/(gdouble)mainw->vidbar->allocation.width*cfile->total_time);
+				       (gdouble)x/(gdouble)lives_widget_get_allocation_width(mainw->vidbar)*cfile->total_time);
       gtk_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_start),sel_current);
     }
     else if (mainw->sel_move==SEL_MOVE_END||(mainw->sel_move==SEL_MOVE_AUTO&&sel_current>mainw->sel_start)) {
       sel_current=calc_frame_from_time2(mainw->current_file,
-					(gdouble)x/(gdouble)mainw->vidbar->allocation.width*cfile->total_time);
+					(gdouble)x/(gdouble)lives_widget_get_allocation_width(mainw->vidbar)*cfile->total_time);
       gtk_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_end),sel_current-1);
     }
   }
@@ -9920,12 +9920,12 @@ on_mouse_sel_start           (GtkWidget       *widget,
   gdk_window_get_pointer(lives_widget_get_xwindow (mainw->LiVES), &x, NULL, NULL);
 
   mainw->sel_start=calc_frame_from_time(mainw->current_file,
-					(gdouble)x/(gdouble)mainw->vidbar->allocation.width*cfile->total_time);
+					(gdouble)x/(gdouble)lives_widget_get_allocation_width(mainw->vidbar)*cfile->total_time);
 
   
   if (event->button==3&&!mainw->selwidth_locked) {
     mainw->sel_start=calc_frame_from_time3(mainw->current_file,
-					   (gdouble)x/(gdouble)mainw->vidbar->allocation.width*cfile->total_time);
+					   (gdouble)x/(gdouble)lives_widget_get_allocation_width(mainw->vidbar)*cfile->total_time);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_start),mainw->sel_start);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_end),mainw->sel_start);
     mainw->sel_move=SEL_MOVE_AUTO;
@@ -9934,7 +9934,7 @@ on_mouse_sel_start           (GtkWidget       *widget,
   else {
     if (event->button==2&&!mainw->selwidth_locked) {
       mainw->sel_start=calc_frame_from_time3(mainw->current_file,
-					     (gdouble)x/(gdouble)mainw->vidbar->allocation.width*cfile->total_time);
+					     (gdouble)x/(gdouble)lives_widget_get_allocation_width(mainw->vidbar)*cfile->total_time);
       gtk_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_start),mainw->sel_start);
       gtk_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_end),(gint)mainw->sel_start);
       mainw->sel_move=SEL_MOVE_SINGLE;
@@ -9949,7 +9949,7 @@ on_mouse_sel_start           (GtkWidget       *widget,
 	}
 	else {
 	  mainw->sel_start=calc_frame_from_time2(mainw->current_file,
-						 (gdouble)x/(gdouble)mainw->vidbar->allocation.width*cfile->total_time);
+						 (gdouble)x/(gdouble)lives_widget_get_allocation_width(mainw->vidbar)*cfile->total_time);
 	  gtk_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_end),mainw->sel_start-1);
 	  mainw->sel_move=SEL_MOVE_END;
 	}
@@ -10012,8 +10012,9 @@ on_hrule_update           (GtkWidget       *widget,
   
   if ((lives_ruler_set_value(LIVES_RULER (mainw->hruler),(cfile->pointer_time=
        calc_time_from_frame(mainw->current_file,calc_frame_from_time
-			    (mainw->current_file,(gdouble)x/mainw->vidbar->allocation.width*cfile->total_time)))))<=0.) 
-    lives_ruler_set_value(LIVES_RULER (mainw->hruler),(cfile->pointer_time=(gdouble)x/mainw->vidbar->allocation.width*cfile->total_time));
+			    (mainw->current_file,(gdouble)x/lives_widget_get_allocation_width(mainw->vidbar)*cfile->total_time)))))<=0.) 
+    lives_ruler_set_value(LIVES_RULER (mainw->hruler),(cfile->pointer_time=(gdouble)x/
+						       lives_widget_get_allocation_width(mainw->vidbar)*cfile->total_time));
   gtk_widget_queue_draw (mainw->hruler);
   get_play_times();
   return FALSE;
@@ -10034,8 +10035,9 @@ on_hrule_reset           (GtkWidget       *widget,
   if ((lives_ruler_set_value(LIVES_RULER (mainw->hruler),(cfile->pointer_time=
        calc_time_from_frame(mainw->current_file,
 			    calc_frame_from_time(mainw->current_file,(gdouble)x/
-						 mainw->vidbar->allocation.width*cfile->total_time)))))<=0.) 
-    lives_ruler_set_value(LIVES_RULER (mainw->hruler),(cfile->pointer_time=(gdouble)x/mainw->vidbar->allocation.width*cfile->total_time));
+						 lives_widget_get_allocation_width(mainw->vidbar)*cfile->total_time)))))<=0.) 
+    lives_ruler_set_value(LIVES_RULER (mainw->hruler),(cfile->pointer_time=(gdouble)x/
+						       lives_widget_get_allocation_width(mainw->vidbar)*cfile->total_time));
 
   if (!mainw->hrule_blocked) {
     g_signal_handler_block (mainw->eventbox5,mainw->hrule_func);
@@ -10075,9 +10077,10 @@ on_hrule_set           (GtkWidget       *widget,
   if (x<0) x=0;
   if ((lives_ruler_set_value(LIVES_RULER (mainw->hruler),(cfile->pointer_time=
        calc_time_from_frame(mainw->current_file,calc_frame_from_time(mainw->current_file,
-								     (gdouble)x/mainw->vidbar->allocation.width*
+								     (gdouble)x/lives_widget_get_allocation_width(mainw->vidbar)*
 								     cfile->total_time)))))<=0.) 
-    lives_ruler_set_value(LIVES_RULER (mainw->hruler),(cfile->pointer_time=(gdouble)x/mainw->vidbar->allocation.width*cfile->total_time));
+    lives_ruler_set_value(LIVES_RULER (mainw->hruler),(cfile->pointer_time=(gdouble)x/
+						       lives_widget_get_allocation_width(mainw->vidbar)*cfile->total_time));
   gtk_widget_queue_draw (mainw->hruler);
   get_play_times();
   if (mainw->hrule_blocked) {

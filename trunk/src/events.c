@@ -4929,9 +4929,9 @@ GtkWidget *create_event_list_dialog (weed_plant_t *event_list, weed_timecode_t s
 
  if (prefs->gui_monitor!=0) {
    gint xcen=mainw->mgeom[prefs->gui_monitor-1].x+
-     (mainw->mgeom[prefs->gui_monitor-1].width-event_dialog->allocation.width)/2;
+     (mainw->mgeom[prefs->gui_monitor-1].width-lives_widget_get_allocation_width(event_dialog))/2;
    gint ycen=mainw->mgeom[prefs->gui_monitor-1].y+
-     (mainw->mgeom[prefs->gui_monitor-1].height-event_dialog->allocation.height)/2;
+     (mainw->mgeom[prefs->gui_monitor-1].height-lives_widget_get_allocation_height(event_dialog))/2;
    gtk_window_set_screen(GTK_WINDOW(event_dialog),mainw->mgeom[prefs->gui_monitor-1].screen);
    gtk_window_move(GTK_WINDOW(event_dialog),xcen,ycen);
  }

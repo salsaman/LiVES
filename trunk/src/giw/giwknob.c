@@ -100,10 +100,10 @@ void knob_calculate_title_sizes(GiwKnob *knob);
 * Widget's Functions * 
 *********************/
 
-GtkType
+GType
 giw_knob_get_type ()
 {
-  static GtkType knob_type = 0;
+  static GType knob_type = 0;
 
   if (!knob_type)
     {

@@ -1385,8 +1385,10 @@ static omclearn_w *create_omclearn_dialog(void) {
 		    NULL);
   
   if (prefs->gui_monitor!=0) {
-    gint xcen=mainw->mgeom[prefs->gui_monitor-1].x+(mainw->mgeom[prefs->gui_monitor-1].width-omclw->dialog->allocation.width)/2;
-    gint ycen=mainw->mgeom[prefs->gui_monitor-1].y+(mainw->mgeom[prefs->gui_monitor-1].height-omclw->dialog->allocation.height)/2;
+    gint xcen=mainw->mgeom[prefs->gui_monitor-1].x+(mainw->mgeom[prefs->gui_monitor-1].width
+						    -lives_widget_get_allocation_width(omclw->dialog))/2;
+    gint ycen=mainw->mgeom[prefs->gui_monitor-1].y+(mainw->mgeom[prefs->gui_monitor-1].height
+						    -lives_widget_get_allocation_height(omclw->dialog))/2;
     gtk_window_set_screen(GTK_WINDOW(omclw->dialog),mainw->mgeom[prefs->gui_monitor-1].screen);
     gtk_window_move(GTK_WINDOW(omclw->dialog),xcen,ycen);
   }

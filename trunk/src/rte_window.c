@@ -1641,9 +1641,9 @@ GtkWidget * create_rte_window (void) {
 
   if (prefs->gui_monitor!=0) {
     gint xcen=mainw->mgeom[prefs->gui_monitor-1].x+(mainw->mgeom[prefs->gui_monitor-1].width-
-						    rte_window->allocation.width)/2;
+						    lives_widget_get_allocation_width(rte_window))/2;
     gint ycen=mainw->mgeom[prefs->gui_monitor-1].y+(mainw->mgeom[prefs->gui_monitor-1].height-
-						    rte_window->allocation.height)/2;
+						    lives_widget_get_allocation_height(rte_window))/2;
     gtk_window_set_screen(GTK_WINDOW(rte_window),mainw->mgeom[prefs->gui_monitor-1].screen);
     gtk_window_move(GTK_WINDOW(rte_window),xcen,ycen);
   }

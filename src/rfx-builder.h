@@ -147,8 +147,7 @@ typedef struct {
   GtkWidget *param_min_label;
   GtkWidget *param_max_label;
   GtkWidget *param_step_label;
-  GtkWidget *param_wrap_label;
-  GtkWidget *param_wrap_eventbox;
+  GtkWidget *param_wrap_hbox;
   GtkWidget *param_wrap_checkbutton;
   GtkWidget *param_strlist_hbox;
   GtkWidget *param_def_combo;

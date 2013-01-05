@@ -1010,9 +1010,9 @@ static void lives_init(_ign_opts *ign_opts) {
 
     if (prefs->gui_monitor!=0) {
       gint xcen=mainw->mgeom[prefs->gui_monitor-1].x+(mainw->mgeom[prefs->gui_monitor-1].width-
-						      mainw->LiVES->allocation.width)/2;
+						      lives_widget_get_allocation_width(mainw->LiVES))/2;
       gint ycen=mainw->mgeom[prefs->gui_monitor-1].y+(mainw->mgeom[prefs->gui_monitor-1].height-
-						      mainw->LiVES->allocation.height)/2;
+						      lives_widget_get_allocation_height(mainw->LiVES))/2;
       gtk_window_set_screen(GTK_WINDOW(mainw->LiVES),mainw->mgeom[prefs->gui_monitor-1].screen);
       gtk_window_move(GTK_WINDOW(mainw->LiVES),xcen,ycen);
 
@@ -3240,8 +3240,8 @@ void load_start_image(gint frame) {
   do {
     width=cfile->hsize;
     height=cfile->vsize;
-    rwidth=mainw->image272->allocation.width;
-    rheight=mainw->image272->allocation.height;
+    rwidth=lives_widget_get_allocation_width(mainw->image272);
+    rheight=lives_widget_get_allocation_height(mainw->image272);
     calc_maxspect(rwidth,rheight,&width,&height);
 
     layer=weed_plant_new(WEED_PLANT_CHANNEL);
@@ -3275,7 +3275,7 @@ void load_start_image(gint frame) {
       load_start_image(0);
       return;
     }
-  } while (rwidth!=mainw->image272->allocation.width||rheight!=mainw->image272->allocation.height);
+  } while (rwidth!=lives_widget_get_allocation_width(mainw->image272)||rheight!=lives_widget_get_allocation_height(mainw->image272));
 
   threaded_dialog_spin();
 
@@ -3360,8 +3360,8 @@ void load_end_image(gint frame) {
   do {
     width=cfile->hsize;
     height=cfile->vsize;
-    rwidth=mainw->image273->allocation.width;
-    rheight=mainw->image273->allocation.height;
+    rwidth=lives_widget_get_allocation_width(mainw->image273);
+    rheight=lives_widget_get_allocation_height(mainw->image273);
     calc_maxspect(rwidth,rheight,&width,&height);
 
     layer=weed_plant_new(WEED_PLANT_CHANNEL);
@@ -3396,7 +3396,7 @@ void load_end_image(gint frame) {
       load_end_image(0);
       return;
     }
-  } while (rwidth!=mainw->image273->allocation.width||rheight!=mainw->image273->allocation.height);
+  } while (rwidth!=lives_widget_get_allocation_width(mainw->image273)||rheight!=lives_widget_get_allocation_height(mainw->image273));
 
   threaded_dialog_spin();
   mainw->noswitch=noswitch;
@@ -4186,8 +4186,8 @@ static void get_max_opsize(int *opwidth, int *opheight) {
     if (mainw->fs&&!mainw->is_rendering) {
       if (!mainw->sep_win) {
 	do {
-	  *opwidth=mainw->playframe->allocation.width;
-	  *opheight=mainw->playframe->allocation.height;
+	  *opwidth=lives_widget_get_allocation_width(mainw->playframe);
+	  *opheight=lives_widget_get_allocation_height(mainw->playframe);
 	  if (*opwidth * *opheight==0) {
 	    while (g_main_context_iteration(NULL,FALSE));
 	  }
@@ -4214,8 +4214,8 @@ static void get_max_opsize(int *opwidth, int *opheight) {
       else {
 	if (!mainw->sep_win) {
 	  do {
-	    *opwidth=mainw->playframe->allocation.width;
-	    *opheight=mainw->playframe->allocation.height;
+	    *opwidth=lives_widget_get_allocation_width(mainw->playframe);
+	    *opheight=lives_widget_get_allocation_height(mainw->playframe);
 	    if (*opwidth * *opheight==0) {
 	      while (g_main_context_iteration(NULL,FALSE));
 	    }
@@ -5014,8 +5014,8 @@ void load_frame_image(gint frame) {
       }
 
       if (mainw->multitrack==NULL&&mainw->play_window==NULL&&prefs->ce_maxspect) {
-	gint rwidth=mainw->image274->allocation.width;
-	gint rheight=mainw->image274->allocation.height;
+	int rwidth=lives_widget_get_allocation_width(mainw->image274);
+	int rheight=lives_widget_get_allocation_height(mainw->image274);
 	if (mainw->double_size) {
 	  mainw->pwidth*=2;
 	  mainw->pheight*=2;
@@ -5206,8 +5206,8 @@ void load_frame_image(gint frame) {
       // set again, in case vpp was turned off because of preview conditions
       if (!mainw->sep_win) {
 	do {
-	  mainw->pwidth=mainw->playframe->allocation.width;
-	  mainw->pheight=mainw->playframe->allocation.height;
+	  mainw->pwidth=lives_widget_get_allocation_width(mainw->playframe);
+	  mainw->pheight=lives_widget_get_allocation_height(mainw->playframe);
 	  if (mainw->pwidth * mainw->pheight==0) {
 	    while (g_main_context_iteration(NULL,FALSE));
 	  }
@@ -5228,8 +5228,8 @@ void load_frame_image(gint frame) {
     }
 
     if (mainw->play_window!=NULL&&!mainw->fs) {
-      mainw->pwidth=mainw->play_window->allocation.width;
-      mainw->pheight=mainw->play_window->allocation.height;
+      mainw->pwidth=lives_widget_get_allocation_width(mainw->play_window);
+      mainw->pheight=lives_widget_get_allocation_height(mainw->play_window);
     }
 
 

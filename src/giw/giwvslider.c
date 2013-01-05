@@ -80,10 +80,10 @@ void vslider_free_legends(GiwVSlider *vslider);
 // A function that calculates width and height of the legend's the layout
 void vslider_calculate_legends_sizes(GiwVSlider *vslider); 
 
-GtkType
+GType
 giw_vslider_get_type ()
 {
-  static GtkType vslider_type = 0;
+  static GType vslider_type = 0;
 
   if (!vslider_type)
     {

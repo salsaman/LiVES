@@ -713,7 +713,7 @@ LIVES_INLINE gchar *get_track_name(lives_mt *mt, int track_num, gboolean is_audi
 
 
 LIVES_INLINE gdouble get_time_from_x(lives_mt *mt, gint x) {
-  gdouble time=(gdouble)x/(gdouble)mt->timeline->allocation.width*(mt->tl_max-mt->tl_min)+mt->tl_min;
+  gdouble time=(gdouble)x/(gdouble)lives_widget_get_allocation_width(mt->timeline)*(mt->tl_max-mt->tl_min)+mt->tl_min;
   if (time<0.) time=0.;
   else if (time>mt->end_secs+1./mt->fps) time=mt->end_secs+1./mt->fps;
   return q_dbl(time,mt->fps)/U_SEC;
@@ -732,7 +732,7 @@ static gint get_track_height(lives_mt *mt) {
   while (glist!=NULL) {
     eventbox=(GtkWidget *)glist->data;
     if (GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"hidden"))==0) 
-      return GTK_WIDGET(eventbox)->allocation.height;
+      return lives_widget_get_allocation_height(eventbox);
     glist=glist->next;
   }
 
@@ -775,11 +775,11 @@ static void draw_block (lives_mt *mt,track_rect *block, gint x1, gint x2) {
   if (offset_startd>=mt->tl_max) return;
 
   // block to right of drawing area
-  offset_start=(int)((offset_startd-mt->tl_min)/tl_span*eventbox->allocation.width+.5);
+  offset_start=(int)((offset_startd-mt->tl_min)/tl_span*lives_widget_get_allocation_width(eventbox)+.5);
   if ((x1>0||x2>0)&&offset_start>(x1+x2)) return;
 
   offset_endd=get_event_timecode(block->end_event)/U_SEC+(!is_audio_eventbox(mt,eventbox))/cfile->fps;
-  offset_end=(offset_endd-mt->tl_min)/tl_span*eventbox->allocation.width;
+  offset_end=(offset_endd-mt->tl_min)/tl_span*lives_widget_get_allocation_width(eventbox);
 
   //if (offset_end+offset_start>eventbox->allocation.width) offset_end=eventbox->allocation.width-offset_start;
 
@@ -791,7 +791,7 @@ static void draw_block (lives_mt *mt,track_rect *block, gint x1, gint x2) {
     track=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"layer_number"));
     if (BLOCK_DRAW_TYPE==BLOCK_DRAW_SIMPLE) {
       gdk_draw_line (GDK_DRAWABLE(eventbox->window), mt->window->style->black_gc, offset_start, 0, offset_start, 
-		     eventbox->allocation.height);
+		     lives_widget_get_allocation_height(eventbox));
       gdk_draw_line (GDK_DRAWABLE(eventbox->window), mt->window->style->black_gc, offset_end, 
 		     eventbox->allocation.height, offset_end, 0);
       gdk_draw_line (GDK_DRAWABLE(eventbox->window), mt->window->style->black_gc, offset_start, 0, offset_end, 
@@ -810,14 +810,15 @@ static void draw_block (lives_mt *mt,track_rect *block, gint x1, gint x2) {
 	for (i=offset_start;i<offset_end;i+=BLOCK_THUMB_WIDTH) {
 	  if (i>x2) break;
 	  event=get_frame_event_at(mt->event_list,tc,event,FALSE);
-	  tc+=tl_span/eventbox->allocation.width*width*U_SEC;
+	  tc+=tl_span/lives_widget_get_allocation_width(eventbox)*width*U_SEC;
 	  if (i+width>=0) {
 	    // create a small thumb
 	    framenum=get_frame_event_frame(event,track);
 	    
 	    if (thumbnail!=NULL) lives_object_unref(thumbnail);
 	    thumbnail=NULL;
-	    if (framenum!=last_framenum) thumbnail=make_thumb(mt,filenum,width,eventbox->allocation.height-1,
+	    if (framenum!=last_framenum) thumbnail=make_thumb(mt,filenum,width,
+							      lives_widget_get_allocation_height(eventbox)-1,
 							      framenum,FALSE);
 	    last_framenum=framenum;
 	    // render it in the eventbox
@@ -827,7 +828,7 @@ static void draw_block (lives_mt *mt,track_rect *block, gint x1, gint x2) {
 		width=offset_end-i;
 		// crop to width
 		cairo_new_path(cr);
-		cairo_rectangle(cr,0,0,i+width,eventbox->allocation.height-1);
+		cairo_rectangle(cr,0,0,i+width,lives_widget_get_allocation_height(eventbox)-1);
 		cairo_clip(cr);
 	      }
 	      cairo_paint (cr);
@@ -842,7 +843,7 @@ static void draw_block (lives_mt *mt,track_rect *block, gint x1, gint x2) {
       }
       else {
 	cairo_set_source_rgb(cr,audcol.red/65535.,audcol.green/65535.,audcol.blue/65535.);
-	cairo_rectangle(cr,offset_start,0,offset_end-offset_start,eventbox->allocation.height-1);
+	cairo_rectangle(cr,offset_start,0,offset_end-offset_start,lives_widget_get_allocation_height(eventbox)-1);
 	cairo_fill(cr);
       }
       cairo_destroy (cr);
@@ -935,10 +936,10 @@ static void draw_aparams(lives_mt *mt, GtkWidget *eventbox, GList *param_list, w
   start_tc=get_event_timecode(init_event);
   end_tc=get_event_timecode(deinit_event);
 
-  offset_start=(gint)((start_tc/U_SEC-mt->tl_min)/tl_span*eventbox->allocation.width+.5);
-  offset_end=(gint)((end_tc/U_SEC-mt->tl_min)/tl_span*eventbox->allocation.width+.5);
+  offset_start=(gint)((start_tc/U_SEC-mt->tl_min)/tl_span*lives_widget_get_allocation_width(eventbox)+.5);
+  offset_end=(gint)((end_tc/U_SEC-mt->tl_min)/tl_span*lives_widget_get_allocation_width(eventbox)+.5);
 
-  if (offset_end<0||offset_start>eventbox->allocation.width) {
+  if (offset_end<0||offset_start>lives_widget_get_allocation_width(eventbox)) {
     weed_free(in_params);
     weed_free(pchainx);
     return;
@@ -963,8 +964,9 @@ static void draw_aparams(lives_mt *mt, GtkWidget *eventbox, GList *param_list, w
 				     xheight
 				     );
 #else
-  pixbuf=gdk_pixbuf_get_from_drawable(NULL,GDK_DRAWABLE(eventbox->window),NULL,0,0,0,0,eventbox->allocation.width,
-				      eventbox->allocation.height);
+  pixbuf=gdk_pixbuf_get_from_drawable(NULL,GDK_DRAWABLE(eventbox->window),NULL,0,0,0,0,
+				      lives_widget_get_allocation_width(eventbox),
+				      lives_widget_get_allocation_height(eventbox));
 #endif
   
   gdk_cairo_set_source_pixbuf (cr, pixbuf, 0, 0);
@@ -1008,7 +1010,7 @@ static void draw_aparams(lives_mt *mt, GtkWidget *eventbox, GList *param_list, w
 	continue;
       }
 
-      y=(1.-ratio)*(double)eventbox->allocation.height;
+      y=(1.-ratio)*(double)lives_widget_get_allocation_height(eventbox);
 
       cairo_move_to(cr, i-1, y-1);
       cairo_line_to(cr, i, y);
@@ -1105,7 +1107,7 @@ static gint expose_track_event (GtkWidget *eventbox, GdkEventExpose *event, gpoi
   if (mt->idlefunc>0) g_source_remove(mt->idlefunc);
   mt->idlefunc=0;
 
-  if (width>eventbox->allocation.width-startx) width=eventbox->allocation.width-startx;
+  if (width>lives_widget_get_allocation_width(eventbox)-startx) width=lives_widget_get_allocation_width(eventbox)-startx;
 
   if (GPOINTER_TO_INT(g_object_get_data (G_OBJECT(eventbox), "drawn"))) {
     bgimage=(GdkPixbuf *)g_object_get_data (G_OBJECT(eventbox), "bgimg");
@@ -1126,7 +1128,7 @@ static gint expose_track_event (GtkWidget *eventbox, GdkEventExpose *event, gpoi
   set_cursor_style(mt,LIVES_CURSOR_BUSY,0,0,0,0,0);
 
   mt->redraw_block=TRUE; // stop drawing cursor during playback
-  gdk_window_clear_area (lives_widget_get_xwindow(eventbox), startx, 0, width, eventbox->allocation.height);
+  gdk_window_clear_area (lives_widget_get_xwindow(eventbox), startx, 0, width, lives_widget_get_allocation_height(eventbox));
   mt->redraw_block=FALSE;
 
   block=(track_rect *)g_object_get_data (G_OBJECT(eventbox), "blocks");
@@ -1154,8 +1156,9 @@ static gint expose_track_event (GtkWidget *eventbox, GdkEventExpose *event, gpoi
 					     xheight
 					     ))!=NULL) {
 #else
-  bgimage=gdk_pixbuf_get_from_drawable(NULL,GDK_DRAWABLE(eventbox->window),NULL,0,0,0,0,eventbox->allocation.width,
-				       eventbox->allocation.height);
+  bgimage=gdk_pixbuf_get_from_drawable(NULL,GDK_DRAWABLE(eventbox->window),NULL,0,0,0,0,
+				       lives_widget_get_allocation_width(eventbox),
+				       lives_widget_get_allocation_height(eventbox));
 #endif
 #if GTK_CHECK_VERSION(3,0,0)
     }
@@ -3584,7 +3587,7 @@ static gboolean in_out_ebox_pressed (GtkWidget *eventbox, GdkEventButton *event,
 
   if (mt->block_selected!=NULL) return FALSE;
 
-  ebwidth=GTK_WIDGET(mt->timeline)->allocation.width;
+  ebwidth=lives_widget_get_allocation_width(mt->timeline);
   file=mt_file_from_clip(mt,mt->clip_selected);
   sfile=mainw->files[file];
 
@@ -3694,7 +3697,7 @@ static gboolean clip_ebox_pressed (GtkWidget *eventbox, GdkEventButton *event, g
   mt->clip_selected=get_box_child_index(GTK_BOX(mt->clip_inner_box),eventbox);
   mt_clip_select(mt,FALSE);
   
-  ebwidth=GTK_WIDGET(mt->timeline)->allocation.width;
+  ebwidth=lives_widget_get_allocation_width(mt->timeline);
   file=mt_file_from_clip(mt,mt->clip_selected);
   sfile=mainw->files[file];
 
@@ -10275,8 +10278,10 @@ gboolean on_multitrack_activate (GtkMenuItem *menuitem, weed_plant_t *event_list
   }
 
   if (prefs->gui_monitor!=0) {
-    gint xcen=mainw->mgeom[prefs->gui_monitor-1].x+(mainw->mgeom[prefs->gui_monitor-1].width-multi->window->allocation.width)/2;
-    gint ycen=mainw->mgeom[prefs->gui_monitor-1].y+(mainw->mgeom[prefs->gui_monitor-1].height-multi->window->allocation.height)/2;
+    gint xcen=mainw->mgeom[prefs->gui_monitor-1].x+(mainw->mgeom[prefs->gui_monitor-1].width-
+						    lives_widget_get_allocation_width(multi->window))/2;
+    gint ycen=mainw->mgeom[prefs->gui_monitor-1].y+(mainw->mgeom[prefs->gui_monitor-1].height-
+						    lives_widget_get_allocation_height(multi->window))/2;
     gtk_window_set_screen(GTK_WINDOW(multi->window),mainw->mgeom[prefs->gui_monitor-1].screen);
     gtk_window_move(GTK_WINDOW(multi->window),xcen,ycen);
   }
@@ -10686,8 +10691,8 @@ static void update_in_image(lives_mt *mt) {
     frame_start=mainw->files[filenum]->start;
   }
 
-  calc_maxspect(mt->poly_box->allocation.width/2-IN_OUT_SEP,mt->poly_box->allocation.height-
-		((block==NULL||block->ordered)?mainw->spinbutton_start->allocation.height:0),&width,&height);
+  calc_maxspect(lives_widget_get_allocation_width(mt->poly_box)/2-IN_OUT_SEP,lives_widget_get_allocation_height(mt->poly_box)-
+		((block==NULL||block->ordered)?lives_widget_get_allocation_height(mainw->spinbutton_start):0),&width,&height);
 
   thumb=make_thumb(mt,filenum,width,height,frame_start,FALSE);
   gtk_image_set_from_pixbuf (GTK_IMAGE(mt->in_image),thumb);
@@ -10714,8 +10719,8 @@ static void update_out_image(lives_mt *mt, weed_timecode_t end_tc) {
     frame_end=mainw->files[filenum]->end;
   }
 
-  calc_maxspect(mt->poly_box->allocation.width/2-IN_OUT_SEP,mt->poly_box->allocation.height-
-		((block==NULL||block->ordered)?mainw->spinbutton_start->allocation.height:0),&width,&height);
+  calc_maxspect(lives_widget_get_allocation_width(mt->poly_box)/2-IN_OUT_SEP,lives_widget_get_allocation_height(mt->poly_box)-
+		((block==NULL||block->ordered)?lives_widget_get_allocation_height(mainw->spinbutton_end):0),&width,&height);
 
   thumb=make_thumb(mt,filenum,width,height,frame_end,FALSE);
   gtk_image_set_from_pixbuf (GTK_IMAGE(mt->out_image),thumb);
@@ -11551,8 +11556,10 @@ void polymorph (lives_mt *mt, lives_mt_poly_state_t poly) {
 
   if (poly==mt->poly_state&&poly!=POLY_PARAMS&&poly!=POLY_FX_STACK) return;
 
-  if (mt->poly_box->allocation.width>1&&mt->poly_box->allocation.height>1) {
-    calc_maxspect(mt->poly_box->allocation.width/2-IN_OUT_SEP,mt->poly_box->allocation.height-((block==NULL||block->ordered)?mainw->spinbutton_start->allocation.height:0),&width,&height);
+  if (lives_widget_get_allocation_width(mt->poly_box)>1&&lives_widget_get_allocation_height(mt->poly_box)>1) {
+    calc_maxspect(lives_widget_get_allocation_width(mt->poly_box)/2-IN_OUT_SEP,
+		  lives_widget_get_allocation_height(mt->poly_box)-
+		  ((block==NULL||block->ordered)?lives_widget_get_allocation_height(mainw->spinbutton_start):0),&width,&height);
     
     xxwidth=width;
     xxheight=height;
@@ -12223,7 +12230,7 @@ static void mouse_select_move(GtkWidget *widget, lives_mt *mt) {
   for (i=0;i<mt->num_video_tracks;i++) {
     xeventbox=(GtkWidget *)g_list_nth_data(mt->video_draws,i);
     if (GPOINTER_TO_INT(g_object_get_data(G_OBJECT(xeventbox),"hidden"))==0) {
-      xheight=xeventbox->allocation.height;
+      xheight=lives_widget_get_allocation_height(xeventbox);
       checkbutton=(GtkWidget *)g_object_get_data(G_OBJECT(xeventbox),"checkbutton");
       gdk_window_get_position(lives_widget_get_xwindow(xeventbox),&rel_x,&rel_y);
       if (start_y>(rel_y+xheight/2)||(start_y+height)<(rel_y+xheight/2)) {
@@ -12530,7 +12537,7 @@ gboolean on_track_release (GtkWidget *eventbox, GdkEventButton *event, gpointer 
       GdkScreen *screen;
       gint abs_x,abs_y;
 
-      gint height=GTK_WIDGET(g_list_nth_data(mt->video_draws,0))->allocation.height;
+      gint height=lives_widget_get_allocation_height(LIVES_WIDGET(g_list_nth_data(mt->video_draws,0)));
       gdk_display_get_pointer(mt->display,&screen,&abs_x,&abs_y,NULL);
 #if GLIB_CHECK_VERSION(2,8,0)
       gdk_display_warp_pointer(mt->display,screen,abs_x+mt->hotspot_x,abs_y+mt->hotspot_y-height/2);
@@ -12548,7 +12555,8 @@ gboolean on_track_release (GtkWidget *eventbox, GdkEventButton *event, gpointer 
       start_tc=get_event_timecode(mt->putative_block->start_event);
 
       // timecodes per pixel
-      tcpp=U_SEC*((mt->tl_max-mt->tl_min)/(gdouble)GTK_WIDGET(g_list_nth_data(mt->video_draws,0))->allocation.width);
+      tcpp=U_SEC*((mt->tl_max-mt->tl_min)/
+		  (gdouble)lives_widget_get_allocation_width(LIVES_WIDGET(g_list_nth_data(mt->video_draws,0))));
 
       // need to move at least 1.5 pixels, or to another track
       if ((track!=mt->current_track||(tc-start_tc>(tcpp*3/2))||(start_tc-tc>(tcpp*3/2)))&&
@@ -12685,7 +12693,7 @@ gboolean on_track_click (GtkWidget *eventbox, GdkEventButton *event, gpointer us
 	    GdkScreen *screen;
 	    gint abs_x,abs_y;
 	    
-	    gint ebwidth=GTK_WIDGET(mt->timeline)->allocation.width;
+	    gint ebwidth=lives_widget_get_allocation_width(mt->timeline);
 	    
 	    gdouble width=((end_secs=(get_event_timecode(block->end_event)/U_SEC))-
 			   (start_secs=(get_event_timecode(block->start_event)/U_SEC))+1./mt->fps);
@@ -12698,8 +12706,8 @@ gboolean on_track_click (GtkWidget *eventbox, GdkEventButton *event, gpointer us
 	    }
 
 	    if (!is_audio_eventbox(mt,eventbox)) 
-	      height=GTK_WIDGET(g_list_nth_data(mt->video_draws,0))->allocation.height;
-	    else height=GTK_WIDGET(mt->audio_draws->data)->allocation.height;
+	      height=lives_widget_get_allocation_height(LIVES_WIDGET(g_list_nth_data(mt->video_draws,0)));
+	    else height=lives_widget_get_allocation_height(LIVES_WIDGET(mt->audio_draws->data));
 	    
 	    width=(width/(mt->tl_max-mt->tl_min)*(gdouble)ebwidth);
 	    if (width>ebwidth) width=ebwidth;
@@ -12768,7 +12776,7 @@ void unpaint_line(lives_mt *mt, GtkWidget *eventbox) {
   if (mt->redraw_block) return; // don't update during expose event, otherwise we might leave lines
   if (!GTK_WIDGET_VISIBLE(eventbox)) return;
 
-  ebwidth=GTK_WIDGET(mt->timeline)->allocation.width;
+  ebwidth=lives_widget_get_allocation_width(mt->timeline);
   if ((st_image=(GdkImage *)g_object_get_data(G_OBJECT(eventbox),"backup_image"))!=NULL) {
     // draw over old pointer value
     bth=((guint64)((guint)(GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"backup_timepos_h")))))<<32;
@@ -12828,7 +12836,7 @@ void animate_multitrack (lives_mt *mt) {
   int i;
   gint len=g_list_length (mt->video_draws);
   gdouble currtime=mainw->currticks/U_SEC;
-  gint ebwidth=GTK_WIDGET(mt->timeline)->allocation.width;
+  gint ebwidth=lives_widget_get_allocation_width(mt->timeline);
   gboolean expanded=FALSE;
   gdouble tl_page;
   gboolean is_video=FALSE;
@@ -13291,8 +13299,8 @@ mt_view_ctx_toggled                (GtkMenuItem     *menuitem,
     gtk_widget_queue_resize(mt->window);
   }
 
-  mt->play_window_width=mt->play_box->allocation.width;
-  mt->play_window_height=mt->play_box->allocation.height;
+  mt->play_window_width=lives_widget_get_allocation_width(mt->play_box);
+  mt->play_window_height=lives_widget_get_allocation_height(mt->play_box);
 }
 
 
@@ -16508,11 +16516,11 @@ gint expose_timeline_reg_event (GtkWidget *timeline, GdkEventExpose *event, gpoi
 
   while (tl_marks!=NULL) {
     time=strtod((char *)tl_marks->data,NULL);
-    ebwidth=GTK_WIDGET(mt->timeline)->allocation.width;
+    ebwidth=lives_widget_get_allocation_width(mt->timeline);
     offset=(time-mt->tl_min)/(mt->tl_max-mt->tl_min)*(gdouble)ebwidth;
 
     cairo_move_to(cr,offset,1);
-    cairo_line_to(cr,offset,mt->timeline_reg->allocation.height-2);
+    cairo_line_to(cr,offset,lives_widget_get_allocation_height(mt->timeline_reg)-2);
     cairo_stroke(cr);
 
     tl_marks=tl_marks->next;
@@ -16584,8 +16592,8 @@ static void draw_soundwave(GtkWidget *ebox, gint start, gint width, gint chnum, 
   gint offset_start,offset_end;  // pixel values
   gdouble tl_span=mt->tl_max-mt->tl_min;
 
-  gdouble start_secs=(gdouble)start/ebox->allocation.width*tl_span+mt->tl_min;
-  gdouble end_secs=(gdouble)(start+width)/ebox->allocation.width*tl_span+mt->tl_min;
+  gdouble start_secs=(gdouble)start/lives_widget_get_allocation_width(ebox)*tl_span+mt->tl_min;
+  gdouble end_secs=(gdouble)(start+width)/lives_widget_get_allocation_width(ebox)*tl_span+mt->tl_min;
 
   gdouble secs;
   int i;
@@ -16615,14 +16623,14 @@ static void draw_soundwave(GtkWidget *ebox, gint start, gint width, gint chnum, 
       return;
     }
 
-    offset_start=(int)((offset_startd-mt->tl_min)/tl_span*ebox->allocation.width+.5);
+    offset_start=(int)((offset_startd-mt->tl_min)/tl_span*lives_widget_get_allocation_width(ebox)+.5);
     if ((start>0||width>0)&&offset_start>(start+width)) {
       if (afd!=-1) close(afd);
       return;
     }
 
     offset_endd=get_event_timecode(block->end_event)/U_SEC+1./cfile->fps;
-    offset_end=(offset_endd-mt->tl_min)/tl_span*ebox->allocation.width;
+    offset_end=(offset_endd-mt->tl_min)/tl_span*lives_widget_get_allocation_width(ebox);
 
     if (offset_end<start_secs) {
       block=block->next;
@@ -16635,19 +16643,19 @@ static void draw_soundwave(GtkWidget *ebox, gint start, gint width, gint chnum, 
 
     cairo_set_source_rgb(cr,0.,0.,0.);
     cairo_set_line_width(cr,1.);
-    cairo_rectangle(cr,offset_start,0,offset_end-offset_start,ebox->allocation.height-1);
+    cairo_rectangle(cr,offset_start,0,offset_end-offset_start,lives_widget_get_allocation_height(ebox)-1);
     cairo_stroke(cr);
 
     cairo_set_source_rgb(cr,0.5,0.5,0.5);
 
     for (i=offset_start;i<=offset_end;i++) {
-      secs=((gdouble)i/ebox->allocation.width*tl_span+mt->tl_min-offset_startd)*vel;
+      secs=((gdouble)i/lives_widget_get_allocation_width(ebox)*tl_span+mt->tl_min-offset_startd)*vel;
       secs+=seek;
       if (secs>mainw->files[fnum]->laudio_time) break;
       ypos=get_float_audio_val_at_time(fnum,secs,chnum,cfile->achans)*.5;
 
-      cairo_move_to(cr,i,(float)ebox->allocation.height/2.);
-      cairo_line_to(cr,i,(.5-ypos)*(float)ebox->allocation.height);
+      cairo_move_to(cr,i,(float)lives_widget_get_allocation_height(ebox)/2.);
+      cairo_line_to(cr,i,(.5-ypos)*(float)lives_widget_get_allocation_height(ebox));
       cairo_stroke(cr);
     }
     block=block->next;
@@ -16694,7 +16702,7 @@ gint mt_expose_laudtrack_event (GtkWidget *ebox, GdkEventExpose *event, gpointer
     return FALSE;
   }
 
-  if (width>ebox->allocation.width-startx) width=ebox->allocation.width-startx;
+  if (width>lives_widget_get_allocation_width(ebox)-startx) width=lives_widget_get_allocation_width(ebox)-startx;
 
   if (GPOINTER_TO_INT(g_object_get_data (G_OBJECT(ebox), "drawn"))) {
     bgimage=(GdkPixbuf *)g_object_get_data (G_OBJECT(ebox), "bgimg");
@@ -16707,7 +16715,7 @@ gint mt_expose_laudtrack_event (GtkWidget *ebox, GdkEventExpose *event, gpointer
     }
   }
 
-  gdk_window_clear_area (lives_widget_get_xwindow(ebox), startx, 0, width, ebox->allocation.height);
+  gdk_window_clear_area (lives_widget_get_xwindow(ebox), startx, 0, width, lives_widget_get_allocation_height(ebox));
   draw_soundwave(ebox,startx,width,0,mt);
 
 
@@ -16721,8 +16729,8 @@ gint mt_expose_laudtrack_event (GtkWidget *ebox, GdkEventExpose *event, gpointer
 					     xheight
 					     ))!=NULL) {
 #else
-  bgimage=gdk_pixbuf_get_from_drawable(NULL,GDK_DRAWABLE(ebox->window),NULL,0,0,0,0,ebox->allocation.width,
-				       ebox->allocation.height);
+      bgimage=gdk_pixbuf_get_from_drawable(NULL,GDK_DRAWABLE(ebox->window),NULL,0,0,0,0,lives_widget_get_allocation_width(ebox),
+					   lives_widget_get_allocation_height(ebox));
 #endif
 #if GTK_CHECK_VERSION(3,0,0)
     }
@@ -16761,7 +16769,7 @@ gint mt_expose_raudtrack_event (GtkWidget *ebox, GdkEventExpose *event, gpointer
     return FALSE;
   }
 
-  if (width>ebox->allocation.width-startx) width=ebox->allocation.width-startx;
+  if (width>lives_widget_get_allocation_width(ebox)-startx) width=lives_widget_get_allocation_width(ebox)-startx;
 
   if (GPOINTER_TO_INT(g_object_get_data (G_OBJECT(ebox), "drawn"))) {
     bgimage=(GdkPixbuf *)g_object_get_data (G_OBJECT(ebox), "bgimg");
@@ -16774,7 +16782,7 @@ gint mt_expose_raudtrack_event (GtkWidget *ebox, GdkEventExpose *event, gpointer
     }
   }
 
-  gdk_window_clear_area (lives_widget_get_xwindow(ebox), startx, 0, width, ebox->allocation.height);
+  gdk_window_clear_area (lives_widget_get_xwindow(ebox), startx, 0, width, lives_widget_get_allocation_height(ebox));
   draw_soundwave(ebox,startx,width,1,mt);
 
 #if GTK_CHECK_VERSION(3,0,0)
@@ -16787,8 +16795,8 @@ gint mt_expose_raudtrack_event (GtkWidget *ebox, GdkEventExpose *event, gpointer
 					     xheight
 					     ))!=NULL) {
 #else
-  bgimage=gdk_pixbuf_get_from_drawable(NULL,GDK_DRAWABLE(ebox->window),NULL,0,0,0,0,ebox->allocation.width,
-				       ebox->allocation.height);
+      bgimage=gdk_pixbuf_get_from_drawable(NULL,GDK_DRAWABLE(ebox->window),NULL,0,0,0,0,lives_widget_get_allocation_width(ebox),
+					   lives_widget_get_allocation_height(ebox));
 
 #endif
 #if GTK_CHECK_VERSION(3,0,0)
@@ -17214,14 +17222,14 @@ static void add_mark_at(lives_mt *mt, gdouble time) {
 
   gtk_widget_set_sensitive(mt->clear_marks,TRUE);
   mt->tl_marks=g_list_append(mt->tl_marks,tstring);
-  offset=(time-mt->tl_min)/(mt->tl_max-mt->tl_min)*(gdouble)mt->timeline->allocation.width;
+  offset=(time-mt->tl_min)/(mt->tl_max-mt->tl_min)*(gdouble)lives_widget_get_allocation_width(mt->timeline);
 
   cr = gdk_cairo_create (lives_widget_get_xwindow(mt->timeline_reg));
 
   cairo_set_source_rgb(cr,0.,0.,1.);
 
   cairo_move_to(cr,offset,1);
-  cairo_line_to(cr,offset,mt->timeline_reg->allocation.height-2);
+  cairo_line_to(cr,offset,lives_widget_get_allocation_height(mt->timeline_reg)-2);
   cairo_stroke(cr);
 
   cairo_destroy(cr);
@@ -21000,8 +21008,10 @@ void amixer_show (GtkButton *button, gpointer user_data) {
   gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (scrolledwindow), amixer->main_hbox);
   
   if (prefs->gui_monitor!=0) {
-    gint xcen=mainw->mgeom[prefs->gui_monitor-1].x+(mainw->mgeom[prefs->gui_monitor-1].width-amixerw->allocation.width)/2;
-    gint ycen=mainw->mgeom[prefs->gui_monitor-1].y+(mainw->mgeom[prefs->gui_monitor-1].height-amixerw->allocation.height)/2;
+    gint xcen=mainw->mgeom[prefs->gui_monitor-1].x+(mainw->mgeom[prefs->gui_monitor-1].width-
+						    lives_widget_get_allocation_width(amixerw))/2;
+    gint ycen=mainw->mgeom[prefs->gui_monitor-1].y+(mainw->mgeom[prefs->gui_monitor-1].height-
+						    lives_widget_get_allocation_height(amixerw))/2;
     gtk_window_set_screen(GTK_WINDOW(amixerw),mainw->mgeom[prefs->gui_monitor-1].screen);
     gtk_window_move(GTK_WINDOW(amixerw),xcen,ycen);
   }

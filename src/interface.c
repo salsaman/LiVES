@@ -3358,8 +3358,10 @@ gchar *choose_file(gchar *dir, gchar *fname, gchar **filt, GtkFileChooserAction 
   }
 
   if (prefs->gui_monitor!=0) {
-   gint xcen=mainw->mgeom[prefs->gui_monitor-1].x+(mainw->mgeom[prefs->gui_monitor-1].width-chooser->allocation.width)/2;
-   gint ycen=mainw->mgeom[prefs->gui_monitor-1].y+(mainw->mgeom[prefs->gui_monitor-1].height-chooser->allocation.height)/2;
+    gint xcen=mainw->mgeom[prefs->gui_monitor-1].x+(mainw->mgeom[prefs->gui_monitor-1].width
+						    -lives_widget_get_allocation_width(chooser))/2;
+   gint ycen=mainw->mgeom[prefs->gui_monitor-1].y+(mainw->mgeom[prefs->gui_monitor-1].height-
+						   lives_widget_get_allocation_height(chooser))/2;
    gtk_window_move(GTK_WINDOW(chooser),xcen,ycen);
   }
 
@@ -3721,8 +3723,8 @@ GtkWidget *create_cleardisk_advanced_dialog(void) {
   
   // Apply theme background to scrolled window
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(GTK_BIN(scrollw)->child, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_bg(GTK_BIN(scrollw)->child, GTK_STATE_NORMAL, &palette->normal_back);
+    gtk_widget_modify_fg(lives_bin_get_child(LIVES_BIN(scrollw)), GTK_STATE_NORMAL, &palette->normal_fore);
+    gtk_widget_modify_bg(lives_bin_get_child(LIVES_BIN(scrollw)), GTK_STATE_NORMAL, &palette->normal_back);
   }
 
 

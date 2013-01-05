@@ -176,8 +176,8 @@ rfx_build_window_t *make_rfx_build_window (const gchar *script_name, lives_rfx_s
   
   // Apply theme background to scrolled window
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(GTK_BIN(scrollw)->child, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_bg(GTK_BIN(scrollw)->child, GTK_STATE_NORMAL, &palette->normal_back);
+    gtk_widget_modify_fg(lives_bin_get_child(LIVES_BIN(scrollw)), GTK_STATE_NORMAL, &palette->normal_fore);
+    gtk_widget_modify_bg(lives_bin_get_child(LIVES_BIN(scrollw)), GTK_STATE_NORMAL, &palette->normal_back);
   }
 
 
@@ -520,7 +520,7 @@ rfx_build_window_t *make_rfx_build_window (const gchar *script_name, lives_rfx_s
   cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
   gtk_widget_show (cancelbutton);
   gtk_dialog_add_action_widget (GTK_DIALOG (rfxbuilder->dialog), cancelbutton, GTK_RESPONSE_CANCEL);
-  GTK_WIDGET_SET_FLAGS (cancelbutton, GTK_CAN_DEFAULT);
+  lives_widget_set_can_focus_and_default (cancelbutton);
 
   gtk_widget_add_accelerator (cancelbutton, "activate", accel_group,
                               GDK_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
@@ -529,7 +529,7 @@ rfx_build_window_t *make_rfx_build_window (const gchar *script_name, lives_rfx_s
   okbutton = gtk_button_new_from_stock ("gtk-ok");
   gtk_widget_show (okbutton);
   gtk_dialog_add_action_widget (GTK_DIALOG (rfxbuilder->dialog), okbutton, GTK_RESPONSE_OK);
-  GTK_WIDGET_SET_FLAGS (okbutton, GTK_CAN_DEFAULT);
+  lives_widget_set_can_focus_and_default (okbutton);
 
   g_signal_connect (GTK_OBJECT (okbutton), "clicked",
 		    G_CALLBACK (on_rfxbuilder_ok),
@@ -856,12 +856,12 @@ void on_list_table_clicked (GtkButton *button, gpointer user_data) {
   cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
   gtk_widget_show (cancelbutton);
   gtk_dialog_add_action_widget (GTK_DIALOG (dialog), cancelbutton, GTK_RESPONSE_CANCEL);
-  GTK_WIDGET_SET_FLAGS (cancelbutton, GTK_CAN_DEFAULT);
+  lives_widget_set_can_focus_and_default (cancelbutton);
 
   okbutton = gtk_button_new_from_stock ("gtk-ok");
   gtk_widget_show (okbutton);
   gtk_dialog_add_action_widget (GTK_DIALOG (dialog), okbutton, GTK_RESPONSE_OK);
-  GTK_WIDGET_SET_FLAGS (okbutton, GTK_CAN_DEFAULT);
+  lives_widget_set_can_focus_and_default (okbutton);
 
   if (rfxbuilder->table_type==RFX_TABLE_TYPE_REQUIREMENTS) {
     g_signal_connect (GTK_OBJECT (okbutton), "clicked",
@@ -1251,12 +1251,12 @@ void on_properties_clicked (GtkButton *button, gpointer user_data) {
   cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
   gtk_widget_show (cancelbutton);
   gtk_dialog_add_action_widget (GTK_DIALOG (dialog), cancelbutton, GTK_RESPONSE_CANCEL);
-  GTK_WIDGET_SET_FLAGS (cancelbutton, GTK_CAN_DEFAULT);
+  lives_widget_set_can_focus_and_default (cancelbutton);
 
   okbutton = gtk_button_new_from_stock ("gtk-ok");
   gtk_widget_show (okbutton);
   gtk_dialog_add_action_widget (GTK_DIALOG (dialog), okbutton, GTK_RESPONSE_OK);
-  GTK_WIDGET_SET_FLAGS (okbutton, GTK_CAN_DEFAULT);
+  lives_widget_set_can_focus_and_default (okbutton);
 
   g_signal_connect (GTK_OBJECT (okbutton), "clicked",
 		    G_CALLBACK (on_properties_ok),
@@ -2231,38 +2231,15 @@ GtkWidget * make_param_dialog (gint pnum, rfx_build_window_t *rfxbuilder) {
 
   // wrap
 
-  hbox = gtk_hbox_new (FALSE, 0);
-  gtk_widget_show (hbox);
-  gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, TRUE, TRUE, 0);
+  rfxbuilder->param_wrap_hbox = gtk_hbox_new (FALSE, 0);
+  gtk_box_pack_start (GTK_BOX (dialog_vbox), rfxbuilder->param_wrap_hbox, TRUE, TRUE, 0);
 
-  rfxbuilder->param_wrap_eventbox=gtk_event_box_new();
+  rfxbuilder->param_wrap_checkbutton = lives_standard_check_button_new ((tmp=g_strdup(_("_Wrap value"))),TRUE,LIVES_BOX(rfxbuilder->param_wrap_hbox),
+									(tmp2=g_strdup(_ ("Whether the value wraps max->min and min->max."))));
 
-  rfxbuilder->param_wrap_label = gtk_label_new_with_mnemonic (_("_Wrap: "));
-  gtk_widget_show (rfxbuilder->param_wrap_label);
-  gtk_widget_show (rfxbuilder->param_wrap_eventbox);
+  g_free(tmp); g_free(tmp2);
 
-  gtk_container_add(GTK_CONTAINER(rfxbuilder->param_wrap_eventbox),rfxbuilder->param_wrap_label);
-
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(rfxbuilder->param_wrap_label, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_fg(rfxbuilder->param_wrap_eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_bg (rfxbuilder->param_wrap_eventbox, GTK_STATE_NORMAL, &palette->normal_back);
-  }
-
-  rfxbuilder->param_wrap_checkbutton = gtk_check_button_new ();
-  gtk_box_pack_start (GTK_BOX (hbox), rfxbuilder->param_wrap_eventbox, FALSE, FALSE, 10);
-  gtk_box_pack_start (GTK_BOX (hbox), rfxbuilder->param_wrap_checkbutton, FALSE, FALSE, 10);
-  gtk_widget_show (rfxbuilder->param_wrap_checkbutton);
-  GTK_WIDGET_SET_FLAGS (rfxbuilder->param_wrap_checkbutton, GTK_CAN_DEFAULT|GTK_CAN_FOCUS);
-  gtk_widget_set_tooltip_text( rfxbuilder->param_wrap_checkbutton,(_ ("Whether the value wraps max->min and min->max.")));
-  gtk_label_set_mnemonic_widget (GTK_LABEL (rfxbuilder->param_wrap_label),rfxbuilder->param_wrap_checkbutton);
-
-  g_signal_connect (GTK_OBJECT (rfxbuilder->param_wrap_eventbox), "button_press_event",
-		    G_CALLBACK (label_act_toggle),
-		    rfxbuilder->param_wrap_checkbutton);
-
-
-
+  gtk_widget_show_all (rfxbuilder->param_wrap_hbox);
 
   dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (dialog));
   gtk_widget_show (dialog_action_area);
@@ -2271,12 +2248,12 @@ GtkWidget * make_param_dialog (gint pnum, rfx_build_window_t *rfxbuilder) {
   cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
   gtk_widget_show (cancelbutton);
   gtk_dialog_add_action_widget (GTK_DIALOG (dialog), cancelbutton, GTK_RESPONSE_CANCEL);
-  GTK_WIDGET_SET_FLAGS (cancelbutton, GTK_CAN_DEFAULT);
+  lives_widget_set_can_focus_and_default (cancelbutton);
 
   okbutton = gtk_button_new_from_stock ("gtk-ok");
   gtk_widget_show (okbutton);
   gtk_dialog_add_action_widget (GTK_DIALOG (dialog), okbutton, GTK_RESPONSE_OK);
-  GTK_WIDGET_SET_FLAGS (okbutton, GTK_CAN_DEFAULT);
+  lives_widget_set_can_focus_and_default (okbutton);
 
   g_signal_connect (GTK_OBJECT (dialog), "delete_event",
 		    G_CALLBACK (gtk_true),
@@ -2504,9 +2481,7 @@ void on_param_type_changed (GtkComboBox *param_type_combo, gpointer user_data) {
   gtk_widget_hide (rfxbuilder->bg_label);
   gtk_widget_hide (rfxbuilder->spinbutton_param_step);
   gtk_widget_hide (rfxbuilder->param_step_label);
-  gtk_widget_hide (rfxbuilder->param_wrap_label);
-  gtk_widget_hide (rfxbuilder->param_wrap_checkbutton);
-  gtk_widget_hide (rfxbuilder->param_wrap_eventbox);
+  gtk_widget_hide_all (rfxbuilder->param_wrap_hbox);
 
   if (!strcmp (ctext,"string_list")) {
     gint defindex;
@@ -2554,9 +2529,7 @@ void on_param_type_changed (GtkComboBox *param_type_combo, gpointer user_data) {
       gtk_label_set_text (GTK_LABEL (rfxbuilder->param_max_label),(_("Maximum value: ")));
       gtk_widget_show (rfxbuilder->spinbutton_param_step);
       gtk_widget_show (rfxbuilder->param_step_label);
-      gtk_widget_show (rfxbuilder->param_wrap_label);
-      gtk_widget_show (rfxbuilder->param_wrap_checkbutton);
-      gtk_widget_show (rfxbuilder->param_wrap_eventbox);
+      gtk_widget_show_all (rfxbuilder->param_wrap_hbox);
 
       gtk_spin_button_set_digits (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_def),
 				  gtk_spin_button_get_value_as_int (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_dp)));
@@ -2834,12 +2807,12 @@ GtkWidget * make_param_window_dialog (gint pnum, rfx_build_window_t *rfxbuilder)
   cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
   gtk_widget_show (cancelbutton);
   gtk_dialog_add_action_widget (GTK_DIALOG (dialog), cancelbutton, GTK_RESPONSE_CANCEL);
-  GTK_WIDGET_SET_FLAGS (cancelbutton, GTK_CAN_DEFAULT);
+  lives_widget_set_can_focus_and_default (cancelbutton);
 
   okbutton = gtk_button_new_from_stock ("gtk-ok");
   gtk_widget_show (okbutton);
   gtk_dialog_add_action_widget (GTK_DIALOG (dialog), okbutton, GTK_RESPONSE_OK);
-  GTK_WIDGET_SET_FLAGS (okbutton, GTK_CAN_DEFAULT);
+  lives_widget_set_can_focus_and_default (okbutton);
 
   g_signal_connect (GTK_OBJECT (dialog), "delete_event",
 		    G_CALLBACK (gtk_true),
@@ -3032,12 +3005,12 @@ GtkWidget * make_trigger_dialog (gint tnum, rfx_build_window_t *rfxbuilder) {
   cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
   gtk_widget_show (cancelbutton);
   gtk_dialog_add_action_widget (GTK_DIALOG (dialog), cancelbutton, GTK_RESPONSE_CANCEL);
-  GTK_WIDGET_SET_FLAGS (cancelbutton, GTK_CAN_DEFAULT);
+  lives_widget_set_can_focus_and_default (cancelbutton);
 
   okbutton = gtk_button_new_from_stock ("gtk-ok");
   gtk_widget_show (okbutton);
   gtk_dialog_add_action_widget (GTK_DIALOG (dialog), okbutton, GTK_RESPONSE_OK);
-  GTK_WIDGET_SET_FLAGS (okbutton, GTK_CAN_DEFAULT);
+  lives_widget_set_can_focus_and_default (okbutton);
 
   g_signal_connect (GTK_OBJECT (dialog), "delete_event",
 		    G_CALLBACK (gtk_true),
@@ -3177,12 +3150,12 @@ void on_code_clicked (GtkButton *button, gpointer user_data) {
   cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
   gtk_widget_show (cancelbutton);
   gtk_dialog_add_action_widget (GTK_DIALOG (dialog), cancelbutton, GTK_RESPONSE_CANCEL);
-  GTK_WIDGET_SET_FLAGS (cancelbutton, GTK_CAN_DEFAULT);
+  lives_widget_set_can_focus_and_default (cancelbutton);
 
   okbutton = gtk_button_new_from_stock ("gtk-ok");
   gtk_widget_show (okbutton);
   gtk_dialog_add_action_widget (GTK_DIALOG (dialog), okbutton, GTK_RESPONSE_OK);
-  GTK_WIDGET_SET_FLAGS (okbutton, GTK_CAN_DEFAULT);
+  lives_widget_set_can_focus_and_default (okbutton);
 
   g_signal_connect (GTK_OBJECT (okbutton), "clicked",
 		    G_CALLBACK (on_code_ok),
@@ -4549,13 +4522,13 @@ gchar *prompt_for_script_name(const gchar *sname, lives_rfx_status_t status) {
   cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
   gtk_widget_show (cancelbutton);
   gtk_dialog_add_action_widget (GTK_DIALOG (dialog), cancelbutton, GTK_RESPONSE_CANCEL);
-  GTK_WIDGET_SET_FLAGS (cancelbutton, GTK_CAN_DEFAULT);
+  lives_widget_set_can_focus_and_default (cancelbutton);
 
   copy_script_okbutton = gtk_button_new_from_stock ("gtk-ok");
   gtk_widget_show (copy_script_okbutton);
 
   gtk_dialog_add_action_widget (GTK_DIALOG (dialog), copy_script_okbutton, GTK_RESPONSE_OK);
-  GTK_WIDGET_SET_FLAGS (copy_script_okbutton, GTK_CAN_DEFAULT);
+  lives_widget_set_can_focus_and_default (copy_script_okbutton);
   gtk_widget_grab_default (copy_script_okbutton);
 
   g_signal_connect (GTK_OBJECT (dialog), "delete_event",

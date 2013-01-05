@@ -335,24 +335,6 @@ void lives_tooltips_set(LiVESWidget *widget, const char *tip_text) {
 }
 
 
-/*
- * Set active string to the combo box
- */
-void lives_combo_set_active_string(LiVESCombo *combo, const char *active_str) {
-
-#ifdef GUI_GTK
-  gtk_entry_set_text(GTK_ENTRY(gtk_bin_get_child(GTK_BIN(combo))),active_str);
-#endif
-
-}
-
-LiVESWidget *lives_combo_get_entry(LiVESCombo *widget) {
-#ifdef GUI_GTK
-  return gtk_bin_get_child(GTK_BIN(widget));
-#endif
-}
-
-
 LiVESSList *lives_radio_button_get_group(LiVESRadioButton *rbutton) {
 #ifdef GUI_GTK
   return gtk_radio_button_get_group(rbutton);
@@ -400,6 +382,16 @@ boolean lives_widget_is_sensitive(LiVESWidget *widget) {
 #endif
 }
 
+boolean lives_widget_is_visible(LiVESWidget *widget) {
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(2,18,0)
+  return gtk_widget_get_visible(widget);
+#else
+  return GTK_WIDGET_VISIBLE (widget);
+#endif
+#endif
+}
+
 
 void lives_container_remove(LiVESContainer *container, LiVESWidget *widget) {
 #ifdef GUI_GTK
@@ -410,7 +402,7 @@ void lives_container_remove(LiVESContainer *container, LiVESWidget *widget) {
 
 void lives_ruler_set_range(LiVESRuler *ruler, double lower, double upper, double position, double max_size) {
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_VERSION_3
   gtk_range_set_range(GTK_RANGE(ruler),upper,lower);
   gtk_range_set_value(GTK_RANGE(ruler),position);
 #else
@@ -422,8 +414,8 @@ void lives_ruler_set_range(LiVESRuler *ruler, double lower, double upper, double
 
 double lives_ruler_get_value(LiVESRuler *ruler) {
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3,0,0)
-  return gtk_range_get_value(range);
+#if GTK_VERSION_3
+  return gtk_range_get_value(GTK_RANGE(ruler));
 #else
   return ruler->position;
 #endif
@@ -432,8 +424,8 @@ double lives_ruler_get_value(LiVESRuler *ruler) {
 
 double lives_ruler_set_value(LiVESRuler *ruler, double value) {
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3,0,0)
-  gtk_range_set_value(range,value);
+#if GTK_VERSION_3
+  gtk_range_set_value(GTK_RANGE(ruler),value);
 #else
   ruler->position=value;
 #endif
@@ -444,7 +436,7 @@ double lives_ruler_set_value(LiVESRuler *ruler, double value) {
 
 double lives_ruler_set_upper(LiVESRuler *ruler, double value) {
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_VERSION_3
   gtk_adjustment_set_upper(gtk_range_get_adjustment(GTK_RANGE(ruler)),value);
 #else
   ruler->upper=value;
@@ -456,13 +448,80 @@ double lives_ruler_set_upper(LiVESRuler *ruler, double value) {
 
 double lives_ruler_set_lower(LiVESRuler *ruler, double value) {
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_VERSION_3
   gtk_adjustment_set_lower(gtk_range_get_adjustment(GTK_RANGE(ruler)),value);
 #else
   ruler->lower=value;
 #endif
 #endif
   return value;
+}
+
+
+int lives_widget_get_allocation_x(LiVESWidget *widget) {
+  int x=0;
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(2,18,0)
+  GtkAllocation alloc;
+  gtk_widget_get_allocation(widget,&alloc);
+  x=alloc.x;
+#else
+  x=widget->allocation.x;
+#endif
+#endif
+  return x;
+}
+
+
+int lives_widget_get_allocation_y(LiVESWidget *widget) {
+  int y=0;
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(2,18,0)
+  GtkAllocation alloc;
+  gtk_widget_get_allocation(widget,&alloc);
+  y=alloc.y;
+#else
+  y=widget->allocation.y;
+#endif
+#endif
+  return y;
+}
+
+int lives_widget_get_allocation_width(LiVESWidget *widget) {
+  int width=0;
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(2,18,0)
+  GtkAllocation alloc;
+  gtk_widget_get_allocation(widget,&alloc);
+  width=alloc.width;
+#else
+  width=widget->allocation.width;
+#endif
+#endif
+  return width;
+}
+
+int lives_widget_get_allocation_height(LiVESWidget *widget) {
+  int height=0;
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(2,18,0)
+  GtkAllocation alloc;
+  gtk_widget_get_allocation(widget,&alloc);
+  height=alloc.height;
+#else
+  height=widget->allocation.height;
+#endif
+#endif
+  return height;
+}
+
+
+LiVESWidget *lives_bin_get_child(LiVESBin *bin) {
+  LiVESWidget *child=NULL;
+#ifdef GUI_GTK
+  child=gtk_bin_get_child(bin);
+#endif
+  return child;
 }
 
 
@@ -847,7 +906,7 @@ LiVESWidget *lives_standard_hruler_new(void) {
   LiVESWidget *hruler=NULL;
 
 #ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_VERSION_3
   hruler=gtk_scale_new(GTK_ORIENTATION_HORIZONTAL,NULL);
   gtk_scale_set_draw_value(GTK_SCALE(hruler),FALSE);
   gtk_scale_set_has_origin(GTK_SCALE(hruler),FALSE);
@@ -1029,4 +1088,21 @@ void get_border_size (LiVESWidget *win, int *bx, int *by) {
   *by=wy-rect.y;
 }
 
+
+
+
+/*
+ * Set active string to the combo box
+ */
+void lives_combo_set_active_string(LiVESCombo *combo, const char *active_str) {
+
+#ifdef GUI_GTK
+  gtk_entry_set_text(GTK_ENTRY(lives_bin_get_child(LIVES_BIN(combo))),active_str);
+#endif
+
+}
+
+LiVESWidget *lives_combo_get_entry(LiVESCombo *widget) {
+  return lives_bin_get_child(LIVES_BIN(widget));
+}
 

@@ -202,6 +202,9 @@ void check_for_special (lives_param_t *param, gint num, GtkBox *pbox, lives_rfx_
   GtkWidget *buttond;
   GtkWidget *label;
   GList *slist;
+
+  gchar *tmp,*tmp2;
+
   // check if this parameter is part of a special window
   // as we are drawing the paramwindow
 
@@ -252,38 +255,20 @@ void check_for_special (lives_param_t *param, gint num, GtkBox *pbox, lives_rfx_
 						 NULL);
       
       box = gtk_hbox_new (FALSE, 10);
-      gtk_box_pack_start (GTK_BOX (GTK_WIDGET (pbox)), box, TRUE, FALSE, 0);
+      gtk_box_pack_start (GTK_BOX (GTK_WIDGET (pbox)), box, FALSE, FALSE, 20);
       
       
+      add_fill_to_box(GTK_BOX(box));
       
-      
-      checkbutton = gtk_check_button_new ();
-      gtk_widget_set_tooltip_text( checkbutton, (_("Maintain aspect ratio of original frame")));
-      eventbox=gtk_event_box_new();
-      lives_tooltips_copy(eventbox,checkbutton);
-      label=gtk_label_new_with_mnemonic (_("Maintain _Aspect Ratio"));
-      
-      
-      gtk_container_add(GTK_CONTAINER(eventbox),label);
-      g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
-			G_CALLBACK (label_act_toggle),
-			checkbutton);
-      if (palette->style&STYLE_1) {
-	gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-	gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-	gtk_widget_modify_bg (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
-      }
-      
-      gtk_label_set_mnemonic_widget (GTK_LABEL (label),checkbutton);
-      
-      hbox = gtk_hbox_new (FALSE, 10);
-      gtk_box_pack_start (GTK_BOX (box), hbox, FALSE, FALSE, 10);
-      add_fill_to_box(GTK_BOX(hbox));
-      gtk_box_pack_start (GTK_BOX (hbox), checkbutton, FALSE, FALSE, 10);
-      gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, 10);
-      add_fill_to_box(GTK_BOX(hbox));
-      GTK_WIDGET_SET_FLAGS (checkbutton, GTK_CAN_DEFAULT|GTK_CAN_FOCUS);
-      gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (checkbutton), TRUE);
+      checkbutton = lives_standard_check_button_new ((tmp=g_strdup(_("Maintain _Aspect Ratio"))),TRUE,
+						     LIVES_BOX(box),(tmp2=g_strdup(_("Maintain aspect ratio of original frame"))));
+
+      g_free(tmp); g_free(tmp2);
+
+      add_fill_to_box(GTK_BOX(box));
+
+      gtk_widget_show_all(box);
+
       aspect.checkbutton=checkbutton;
       aspect.height_widget=param->widgets[0];
     }
@@ -314,7 +299,7 @@ void check_for_special (lives_param_t *param, gint num, GtkBox *pbox, lives_rfx_
       gtk_box_pack_start(GTK_BOX(box),buttond,FALSE,FALSE,10);
       gtk_box_reorder_child(GTK_BOX(box),buttond,epos); // insert after label, before textbox
 
-      if (!GTK_WIDGET_IS_SENSITIVE(GTK_WIDGET(param->widgets[0]))) gtk_widget_set_sensitive(buttond,FALSE);
+      if (!lives_widget_is_sensitive(param->widgets[0])) gtk_widget_set_sensitive(buttond,FALSE);
 
       g_signal_connect (GTK_FILE_CHOOSER(buttond), "selection-changed",G_CALLBACK (on_fileread_clicked),(gpointer)param->widgets[0]);
 
@@ -360,7 +345,7 @@ void check_for_special (lives_param_t *param, gint num, GtkBox *pbox, lives_rfx_
 	gtk_widget_modify_bg (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
       }
 
-      if (!GTK_WIDGET_IS_SENSITIVE(GTK_WIDGET(param->widgets[0]))) gtk_widget_set_sensitive(checkbutton,FALSE);
+      if (!lives_widget_is_sensitive(param->widgets[0])) gtk_widget_set_sensitive(checkbutton,FALSE);
       gtk_widget_show_all(hbox);
 
       g_signal_connect_after (GTK_OBJECT (checkbutton), "toggled",

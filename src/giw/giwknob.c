@@ -28,7 +28,10 @@ James Scott Jr <skoona@users.sourceforge.net>
 #include <stdlib.h>
 #include <string.h>
 
+#include "main.h"
+
 #include "giw/giwknob.h"
+
 
 #define KNOB_DEFAULT_SIZE 150
 
@@ -107,6 +110,25 @@ giw_knob_get_type ()
 
   if (!knob_type)
     {
+
+#if GTK_VERSION_3
+      static const GTypeInfo knob_info =
+      {
+	sizeof (GiwKnobClass),
+	(GBaseInitFunc)NULL,
+	(GBaseFinalizeFunc)NULL,
+	(GClassInitFunc) giw_knob_class_init,
+	(GClassFinalizeFunc)NULL,
+	(gconstpointer)NULL,
+	sizeof (GiwKnob),
+	0, // n_preallocs
+	(GInstanceInitFunc) giw_knob_init
+	//(const GTypeValueTable *)NULL
+      };
+
+      knob_type = g_type_register_static (gtk_widget_get_type (), "GiwKnob", &knob_info, 0);
+
+#else
       static const GtkTypeInfo knob_info =
       {
 	"GiwKnob",
@@ -120,6 +142,8 @@ giw_knob_get_type ()
       };
 
       knob_type = gtk_type_unique (gtk_widget_get_type (), &knob_info);
+#endif
+
     }
 
   return knob_type;
@@ -134,7 +158,11 @@ giw_knob_class_init (GiwKnobClass *xclass)
   object_class = (GtkObjectClass*) xclass;
   widget_class = (GtkWidgetClass*) xclass;
 
+#if GTK_VERSION_3
+  // parent_class is set in g_type_register_static()
+#else
   parent_class = (GtkWidgetClass *)gtk_type_class (gtk_widget_get_type ());
+#endif
 
   object_class->destroy = giw_knob_destroy;
 
@@ -171,7 +199,11 @@ giw_knob_new (GtkAdjustment *adjustment)
   
   g_return_val_if_fail (adjustment != NULL, NULL);
 
+#if GTK_VERSION_3
+  knob = g_object_new (GIW_TYPE_KNOB, NULL);
+#else
   knob = (GiwKnob *)gtk_type_new (giw_knob_get_type ());
+#endif
   giw_knob_set_adjustment(knob, adjustment);
   
   // Without this, in the first draw, the pointer wouldn't be in the right value
@@ -187,7 +219,11 @@ giw_knob_new_with_adjustment (gdouble value,
 {
   GiwKnob *knob;
 
+#if GTK_VERSION_3
+  knob = g_object_new (GIW_TYPE_KNOB, NULL);
+#else
   knob = (GiwKnob *)gtk_type_new (giw_knob_get_type ());
+#endif
   giw_knob_set_adjustment(knob, (GtkAdjustment*) gtk_adjustment_new (value, lower, upper, 1.0, 1.0, 1.0));
   
   // Without this, in the first draw, the pointer wouldn't be in the right value
@@ -237,7 +273,12 @@ giw_knob_realize (GtkWidget *widget)
   g_return_if_fail (widget != NULL);
   g_return_if_fail (GIW_IS_KNOB (widget));
 
+#if GTK_CHECK_VERSION(2,20,0)
+  gtk_widget_set_realized(widget,TRUE);
+#else
   GTK_WIDGET_SET_FLAGS (widget, GTK_REALIZED);
+#endif
+
   knob = GIW_KNOB (widget);
 
   attributes.x = widget->allocation.x;
@@ -630,12 +671,12 @@ giw_knob_set_adjustment (GiwKnob *knob,
   knob->adjustment = adjustment;
   gtk_object_ref (GTK_OBJECT (knob->adjustment));
   
-  gtk_signal_connect (GTK_OBJECT (adjustment), "changed",
-		      (GtkSignalFunc) giw_knob_adjustment_changed,
-		      (gpointer) knob);
-  gtk_signal_connect (GTK_OBJECT (adjustment), "value_changed",
-		      (GtkSignalFunc) giw_knob_adjustment_value_changed,
-		      (gpointer) knob);
+  g_signal_connect (GTK_OBJECT (adjustment), "changed",
+		    (GCallback) giw_knob_adjustment_changed,
+		    (gpointer) knob);
+  g_signal_connect (GTK_OBJECT (adjustment), "value_changed",
+		    (GCallback) giw_knob_adjustment_value_changed,
+		    (gpointer) knob);
 
   gtk_adjustment_value_changed(knob->adjustment);
     

@@ -359,14 +359,29 @@ LiVESXWindow *lives_widget_get_xwindow(LiVESWidget *widget) {
 #endif
 }
 
-
-void lives_widget_set_can_focus_and_default(LiVESWidget *widget) {
+void lives_widget_set_can_focus(LiVESWidget *widget, boolean state) {
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(2,18,0)
-  gtk_widget_set_can_focus(widget,TRUE);
-  gtk_widget_set_can_default(widget,TRUE);
+  gtk_widget_set_can_focus(widget,state);
 #else
-  GTK_WIDGET_SET_FLAGS (widget, GTK_CAN_DEFAULT|GTK_CAN_FOCUS);
+  if (state)
+    GTK_WIDGET_SET_FLAGS (widget, GTK_CAN_FOCUS);
+  else
+    GTK_WIDGET_UNSET_FLAGS (widget, GTK_CAN_FOCUS);
+#endif
+#endif
+}
+
+
+void lives_widget_set_can_default(LiVESWidget *widget, boolean state) {
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(2,18,0)
+  gtk_widget_set_can_default(widget,state);
+#else
+  if (state)
+    GTK_WIDGET_SET_FLAGS (widget, GTK_CAN_DEFAULT);
+  else
+    GTK_WIDGET_UNSET_FLAGS (widget, GTK_CAN_DEFAULT);
 #endif
 #endif
 }
@@ -565,7 +580,7 @@ LiVESWidget *lives_standard_label_new(const char *text) {
 
   label=gtk_label_new(text);
 
-  if (palette->style&STYLE_1) {
+  if (mainw!=NULL&&mainw->is_ready&&(palette->style&STYLE_1)) {
     gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
   gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_LEFT);
@@ -603,7 +618,7 @@ LiVESWidget *lives_standard_check_button_new(const char *labeltext, boolean use_
 		    G_CALLBACK (label_act_toggle),
 		    checkbutton);
   
-  if (palette->style&STYLE_1) {
+  if (mainw!=NULL&&mainw->is_ready&&(palette->style&STYLE_1)) {
     gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
     gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
     gtk_widget_modify_bg (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
@@ -670,7 +685,7 @@ LiVESWidget *lives_standard_radio_button_new(const char *labeltext, boolean use_
   g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
 		    G_CALLBACK (label_act_toggle),
 		    radiobutton);
-  if (palette->style&STYLE_1) {
+  if (mainw!=NULL&&mainw->is_ready&&(palette->style&STYLE_1)) {
     gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
     gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
     gtk_widget_modify_bg (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
@@ -728,7 +743,7 @@ LiVESWidget *lives_standard_spin_button_new(const char *labeltext, boolean use_m
   if (tooltip!=NULL) lives_tooltips_copy(eventbox,spinbutton);
   gtk_container_add(GTK_CONTAINER(eventbox),label);
 
-  if (palette->style&STYLE_1) {
+  if (mainw!=NULL&&mainw->is_ready&&(palette->style&STYLE_1)) {
     gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
     gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
     gtk_widget_modify_bg (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
@@ -783,7 +798,7 @@ LiVESWidget *lives_standard_combo_new (const char *labeltext, boolean use_mnemon
   if (tooltip!=NULL) lives_tooltips_copy(eventbox,combo);
   gtk_container_add(GTK_CONTAINER(eventbox),label);
 
-  if (palette->style&STYLE_1) {
+  if (mainw!=NULL&&mainw->is_ready&&(palette->style&STYLE_1)) {
     gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
     gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
     gtk_widget_modify_bg (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
@@ -847,7 +862,7 @@ LiVESWidget *lives_standard_entry_new(const char *labeltext, boolean use_mnemoni
   }
   else label = lives_standard_label_new (labeltext);
 
-  if (palette->style&STYLE_1) {
+  if (mainw!=NULL&&mainw->is_ready&&(palette->style&STYLE_1)) {
     gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
 
@@ -877,7 +892,7 @@ LiVESWidget *lives_standard_dialog_new(const gchar *title, boolean add_std_butto
   gtk_container_set_border_width (GTK_CONTAINER (dialog), W_BORDER_WIDTH);
   gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_CENTER_ALWAYS);
 
-  if (palette->style&STYLE_1) {
+  if (mainw!=NULL&&mainw->is_ready&&(palette->style&STYLE_1)) {
     gtk_widget_modify_bg(dialog, GTK_STATE_NORMAL, &palette->normal_back);
     gtk_dialog_set_has_separator(GTK_DIALOG(dialog),FALSE);
   }
@@ -1105,4 +1120,11 @@ void lives_combo_set_active_string(LiVESCombo *combo, const char *active_str) {
 LiVESWidget *lives_combo_get_entry(LiVESCombo *widget) {
   return lives_bin_get_child(LIVES_BIN(widget));
 }
+
+
+void lives_widget_set_can_focus_and_default(LiVESWidget *widget) {
+  lives_widget_set_can_focus(widget,TRUE);
+  lives_widget_set_can_default(widget,TRUE);
+}
+
 

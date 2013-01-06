@@ -2121,8 +2121,8 @@ _prefsw *create_prefs_dialog (void) {
   
   // Apply theme background to scrolled window
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(GTK_BIN(prefsw->scrollw_right_gui)->child, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_bg(GTK_BIN(prefsw->scrollw_right_gui)->child, GTK_STATE_NORMAL, &palette->normal_back);
+    gtk_widget_modify_fg(lives_bin_get_child(LIVES_BIN(prefsw->scrollw_right_gui)), GTK_STATE_NORMAL, &palette->normal_fore);
+    gtk_widget_modify_bg(lives_bin_get_child(LIVES_BIN(prefsw->scrollw_right_gui)), GTK_STATE_NORMAL, &palette->normal_back);
   }
 
   gtk_widget_show (prefsw->vbox_right_gui);
@@ -2360,8 +2360,8 @@ _prefsw *create_prefs_dialog (void) {
   
   // Apply theme background to scrolled window
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(GTK_BIN(prefsw->scrollw_right_multitrack)->child, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_bg(GTK_BIN(prefsw->scrollw_right_multitrack)->child, GTK_STATE_NORMAL, &palette->normal_back);
+    gtk_widget_modify_fg(lives_bin_get_child(LIVES_BIN(prefsw->scrollw_right_multitrack)), GTK_STATE_NORMAL, &palette->normal_fore);
+    gtk_widget_modify_bg(lives_bin_get_child(LIVES_BIN(prefsw->scrollw_right_multitrack)), GTK_STATE_NORMAL, &palette->normal_back);
   }
 
   hbox1 = gtk_hbox_new (FALSE, 0);
@@ -2512,57 +2512,47 @@ _prefsw *create_prefs_dialog (void) {
   gtk_container_set_border_width(GTK_CONTAINER (hbox), 20);
   gtk_box_pack_start (GTK_BOX (hbox3), hbox, FALSE, TRUE, 0);
   // --- 
-  prefsw->backaudio_checkbutton = gtk_check_button_new ();
-  prefsw->pertrack_checkbutton = gtk_check_button_new();
+
+  hbox4 = gtk_hbox_new (FALSE, 0);
+
+  hbox = gtk_hbox_new (FALSE, 0);
+  gtk_container_set_border_width(GTK_CONTAINER (hbox), 20);
+  gtk_box_pack_start (GTK_BOX (hbox4), hbox, FALSE, FALSE, 0);
+
+  prefsw->backaudio_checkbutton = lives_standard_check_button_new (_("Enable backing audio track"),FALSE,LIVES_BOX(hbox),NULL);
+
+  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->backaudio_checkbutton), prefs->mt_backaudio>0);
+
+
+// ---
+
+  hbox = gtk_hbox_new (FALSE, 0);
+  gtk_container_set_border_width(GTK_CONTAINER (hbox), 20);
+  gtk_box_pack_start (GTK_BOX (hbox4), hbox, FALSE, FALSE, 0);
+
+  prefsw->pertrack_checkbutton = lives_standard_check_button_new(_("Audio track per video track"),FALSE,LIVES_BOX(hbox),NULL);
+
+  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->pertrack_checkbutton), prefs->mt_pertrack_audio);
+
+
+  // must be done after creating check buttons
   resaudw=create_resaudw(4, NULL, prefsw->vbox_right_multitrack);
   // ---
-  hbox4 = gtk_hbox_new (FALSE, 0);
-  gtk_widget_show (hbox4);
-  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_multitrack), hbox4, TRUE, TRUE, 0);
-  // ---
-  eventbox = gtk_event_box_new();
-  label = gtk_label_new_with_mnemonic (_("Enable backing audio track"));
-  gtk_container_add(GTK_CONTAINER(eventbox), label);
-  gtk_label_set_mnemonic_widget (GTK_LABEL(label), prefsw->backaudio_checkbutton);
-  g_signal_connect (GTK_OBJECT (eventbox), "button_press_event", G_CALLBACK (label_act_toggle), 
-		    prefsw->backaudio_checkbutton); 
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_bg(eventbox, GTK_STATE_NORMAL, &palette->normal_back);
-  }
-  hbox = gtk_hbox_new (FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (hbox), prefsw->backaudio_checkbutton, FALSE, FALSE, 5);
-  gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, 5);
-  gtk_widget_show_all(hbox);
-  gtk_container_set_border_width(GTK_CONTAINER (hbox), 20);
-  gtk_box_pack_start (GTK_BOX (hbox4), hbox, FALSE, FALSE, 0);
-  GTK_WIDGET_SET_FLAGS (prefsw->backaudio_checkbutton, GTK_CAN_DEFAULT|GTK_CAN_FOCUS);
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->backaudio_checkbutton), prefs->mt_backaudio>0);
+
+
+  // must be done after resaudw
   gtk_widget_set_sensitive(prefsw->backaudio_checkbutton, 
 			   gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(resaudw->aud_checkbutton)));
-  // ---
-  eventbox = gtk_event_box_new();
-  label = gtk_label_new_with_mnemonic (_("Audio track per video track"));
-  gtk_label_set_mnemonic_widget (GTK_LABEL(label), prefsw->pertrack_checkbutton);
-  gtk_container_add(GTK_CONTAINER(eventbox), label);
-  g_signal_connect (GTK_OBJECT (eventbox), "button_press_event", G_CALLBACK (label_act_toggle), 
-		    prefsw->pertrack_checkbutton); 
+
   gtk_widget_set_sensitive(prefsw->pertrack_checkbutton, 
 			   gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(resaudw->aud_checkbutton)));
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_bg(eventbox, GTK_STATE_NORMAL, &palette->normal_back);
-  }
-  hbox = gtk_hbox_new (FALSE, 0);
-  gtk_box_pack_end (GTK_BOX (hbox), eventbox, FALSE, FALSE, 5);
-  gtk_box_pack_end (GTK_BOX (hbox), prefsw->pertrack_checkbutton, FALSE, FALSE, 5);
-  gtk_widget_show_all(hbox);
-  gtk_container_set_border_width(GTK_CONTAINER (hbox), 20);
-  gtk_box_pack_start (GTK_BOX (hbox4), hbox, FALSE, FALSE, 0);
-  GTK_WIDGET_SET_FLAGS (prefsw->pertrack_checkbutton, GTK_CAN_DEFAULT|GTK_CAN_FOCUS);
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->pertrack_checkbutton), prefs->mt_pertrack_audio);
+  
+  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_multitrack), hbox4, TRUE, TRUE, 0);
+  gtk_widget_show_all (hbox4);
+
+
+
+
   // ---
   hseparator = gtk_hseparator_new ();
   gtk_widget_show (hseparator);
@@ -2733,8 +2723,8 @@ _prefsw *create_prefs_dialog (void) {
   
   // Apply theme background to scrolled window
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(GTK_BIN(prefsw->scrollw_right_decoding)->child, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_bg(GTK_BIN(prefsw->scrollw_right_decoding)->child, GTK_STATE_NORMAL, &palette->normal_back);
+    gtk_widget_modify_fg(lives_bin_get_child(LIVES_BIN(prefsw->scrollw_right_decoding)), GTK_STATE_NORMAL, &palette->normal_fore);
+    gtk_widget_modify_bg(lives_bin_get_child(LIVES_BIN(prefsw->scrollw_right_decoding)), GTK_STATE_NORMAL, &palette->normal_back);
   }
 
 
@@ -2985,8 +2975,8 @@ _prefsw *create_prefs_dialog (void) {
   
   // Apply theme background to scrolled window
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(GTK_BIN(prefsw->scrollw_right_playback)->child, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_bg(GTK_BIN(prefsw->scrollw_right_playback)->child, GTK_STATE_NORMAL, &palette->normal_back);
+    gtk_widget_modify_fg(lives_bin_get_child(LIVES_BIN(prefsw->scrollw_right_playback)), GTK_STATE_NORMAL, &palette->normal_fore);
+    gtk_widget_modify_bg(lives_bin_get_child(LIVES_BIN(prefsw->scrollw_right_playback)), GTK_STATE_NORMAL, &palette->normal_back);
   }
 
 
@@ -3291,8 +3281,8 @@ _prefsw *create_prefs_dialog (void) {
   
   // Apply theme background to scrolled window
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(GTK_BIN(prefsw->scrollw_right_recording)->child, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_bg(GTK_BIN(prefsw->scrollw_right_recording)->child, GTK_STATE_NORMAL, &palette->normal_back);
+    gtk_widget_modify_fg(lives_bin_get_child(LIVES_BIN(prefsw->scrollw_right_recording)), GTK_STATE_NORMAL, &palette->normal_fore);
+    gtk_widget_modify_bg(lives_bin_get_child(LIVES_BIN(prefsw->scrollw_right_recording)), GTK_STATE_NORMAL, &palette->normal_back);
   }
 
   hbox = gtk_hbox_new(FALSE, 0);
@@ -3468,8 +3458,8 @@ _prefsw *create_prefs_dialog (void) {
   
   // Apply theme background to scrolled window
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(GTK_BIN(prefsw->scrollw_right_encoding)->child, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_bg(GTK_BIN(prefsw->scrollw_right_encoding)->child, GTK_STATE_NORMAL, &palette->normal_back);
+    gtk_widget_modify_fg(lives_bin_get_child(LIVES_BIN(prefsw->scrollw_right_encoding)), GTK_STATE_NORMAL, &palette->normal_fore);
+    gtk_widget_modify_bg(lives_bin_get_child(LIVES_BIN(prefsw->scrollw_right_encoding)), GTK_STATE_NORMAL, &palette->normal_back);
   }
 
   hbox11 = gtk_hbox_new (FALSE, 0);
@@ -3596,8 +3586,8 @@ _prefsw *create_prefs_dialog (void) {
   
   // Apply theme background to scrolled window
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(GTK_BIN(prefsw->scrollw_right_effects)->child, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_bg(GTK_BIN(prefsw->scrollw_right_effects)->child, GTK_STATE_NORMAL, &palette->normal_back);
+    gtk_widget_modify_fg(lives_bin_get_child(LIVES_BIN(prefsw->scrollw_right_effects)), GTK_STATE_NORMAL, &palette->normal_fore);
+    gtk_widget_modify_bg(lives_bin_get_child(LIVES_BIN(prefsw->scrollw_right_effects)), GTK_STATE_NORMAL, &palette->normal_back);
   }
 
   hbox = gtk_hbox_new(FALSE, 0);
@@ -3700,8 +3690,8 @@ _prefsw *create_prefs_dialog (void) {
   
   // Apply theme background to scrolled window
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(GTK_BIN(prefsw->scrollw_right_directories)->child, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_bg(GTK_BIN(prefsw->scrollw_right_directories)->child, GTK_STATE_NORMAL, &palette->normal_back);
+    gtk_widget_modify_fg(lives_bin_get_child(LIVES_BIN(prefsw->scrollw_right_directories)), GTK_STATE_NORMAL, &palette->normal_fore);
+    gtk_widget_modify_bg(lives_bin_get_child(LIVES_BIN(prefsw->scrollw_right_directories)), GTK_STATE_NORMAL, &palette->normal_back);
   }
 
 
@@ -3971,8 +3961,8 @@ _prefsw *create_prefs_dialog (void) {
 
   // Apply theme background to scrolled window
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(GTK_BIN(prefsw->scrollw_right_warnings)->child, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_bg(GTK_BIN(prefsw->scrollw_right_warnings)->child, GTK_STATE_NORMAL, &palette->normal_back);
+    gtk_widget_modify_fg(lives_bin_get_child(LIVES_BIN(prefsw->scrollw_right_warnings)), GTK_STATE_NORMAL, &palette->normal_fore);
+    gtk_widget_modify_bg(lives_bin_get_child(LIVES_BIN(prefsw->scrollw_right_warnings)), GTK_STATE_NORMAL, &palette->normal_back);
   }
 
   gtk_container_set_border_width (GTK_CONTAINER (prefsw->vbox_right_warnings), 20);
@@ -4557,8 +4547,8 @@ _prefsw *create_prefs_dialog (void) {
   
   // Apply theme background to scrolled window
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(GTK_BIN(prefsw->scrollw_right_misc)->child, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_bg(GTK_BIN(prefsw->scrollw_right_misc)->child, GTK_STATE_NORMAL, &palette->normal_back);
+    gtk_widget_modify_fg(lives_bin_get_child(LIVES_BIN(prefsw->scrollw_right_misc)), GTK_STATE_NORMAL, &palette->normal_fore);
+    gtk_widget_modify_bg(lives_bin_get_child(LIVES_BIN(prefsw->scrollw_right_misc)), GTK_STATE_NORMAL, &palette->normal_back);
   }
 
   prefsw->check_midi = gtk_check_button_new();
@@ -4738,8 +4728,8 @@ _prefsw *create_prefs_dialog (void) {
   
   // Apply theme background to scrolled window
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(GTK_BIN(prefsw->scrollw_right_themes)->child, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_bg(GTK_BIN(prefsw->scrollw_right_themes)->child, GTK_STATE_NORMAL, &palette->normal_back);
+    gtk_widget_modify_fg(lives_bin_get_child(LIVES_BIN(prefsw->scrollw_right_themes)), GTK_STATE_NORMAL, &palette->normal_fore);
+    gtk_widget_modify_bg(lives_bin_get_child(LIVES_BIN(prefsw->scrollw_right_themes)), GTK_STATE_NORMAL, &palette->normal_back);
   }
 
   hbox93 = gtk_hbox_new (FALSE, 0);
@@ -4800,8 +4790,8 @@ _prefsw *create_prefs_dialog (void) {
   
   // Apply theme background to scrolled window
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(GTK_BIN(prefsw->scrollw_right_net)->child, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_bg(GTK_BIN(prefsw->scrollw_right_net)->child, GTK_STATE_NORMAL, &palette->normal_back);
+    gtk_widget_modify_fg(lives_bin_get_child(LIVES_BIN(prefsw->scrollw_right_net)), GTK_STATE_NORMAL, &palette->normal_fore);
+    gtk_widget_modify_bg(lives_bin_get_child(LIVES_BIN(prefsw->scrollw_right_net)), GTK_STATE_NORMAL, &palette->normal_back);
   }
 
   hbox94 = gtk_hbox_new (FALSE, 0);
@@ -4934,8 +4924,8 @@ _prefsw *create_prefs_dialog (void) {
    
   // Apply theme background to scrolled window
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(GTK_BIN(prefsw->scrollw_right_jack)->child, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_bg(GTK_BIN(prefsw->scrollw_right_jack)->child, GTK_STATE_NORMAL, &palette->normal_back);
+    gtk_widget_modify_fg(lives_bin_get_child(LIVES_BIN(prefsw->scrollw_right_jack)), GTK_STATE_NORMAL, &palette->normal_fore);
+    gtk_widget_modify_bg(lives_bin_get_child(LIVES_BIN(prefsw->scrollw_right_jack)), GTK_STATE_NORMAL, &palette->normal_back);
   }
 
 
@@ -5247,8 +5237,8 @@ _prefsw *create_prefs_dialog (void) {
 
   // Apply theme background to scrolled window
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(GTK_BIN(prefsw->scrollw_right_midi)->child, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_bg(GTK_BIN(prefsw->scrollw_right_midi)->child, GTK_STATE_NORMAL, &palette->normal_back);
+    gtk_widget_modify_fg(lives_bin_get_child(LIVES_BIN(prefsw->scrollw_right_midi)), GTK_STATE_NORMAL, &palette->normal_fore);
+    gtk_widget_modify_bg(lives_bin_get_child(LIVES_BIN(prefsw->scrollw_right_midi)), GTK_STATE_NORMAL, &palette->normal_back);
   }
 
   gtk_container_set_border_width (GTK_CONTAINER (prefsw->vbox_right_midi), 20);
@@ -5529,7 +5519,7 @@ _prefsw *create_prefs_dialog (void) {
   prefsw->cancelbutton = gtk_button_new_from_stock ("gtk-revert-to-saved");
   gtk_widget_show (prefsw->cancelbutton);
   gtk_dialog_add_action_widget (GTK_DIALOG (prefsw->prefs_dialog), prefsw->cancelbutton, GTK_RESPONSE_CANCEL);
-  GTK_WIDGET_SET_FLAGS (prefsw->cancelbutton, GTK_CAN_DEFAULT);
+  lives_widget_set_can_focus_and_default (prefsw->cancelbutton);
   // Set 'Close' button as inactive since there is no changes yet
   gtk_widget_set_sensitive(prefsw->cancelbutton, FALSE);
    
@@ -5537,7 +5527,7 @@ _prefsw *create_prefs_dialog (void) {
   prefsw->applybutton = gtk_button_new_from_stock ("gtk-apply");
   gtk_widget_show (prefsw->applybutton);
   gtk_dialog_add_action_widget (GTK_DIALOG (prefsw->prefs_dialog), prefsw->applybutton, 0);
-  GTK_WIDGET_SET_FLAGS (prefsw->applybutton, GTK_CAN_DEFAULT);
+  lives_widget_set_can_focus_and_default (prefsw->applybutton);
   // Set 'Apply' button as inactive since there is no changes yet
   gtk_widget_set_sensitive(prefsw->applybutton, FALSE);
    
@@ -5545,7 +5535,7 @@ _prefsw *create_prefs_dialog (void) {
   prefsw->closebutton = gtk_button_new_from_stock ("gtk-close");
   gtk_widget_show(prefsw->closebutton);
   gtk_dialog_add_action_widget(GTK_DIALOG(prefsw->prefs_dialog), prefsw->closebutton, GTK_RESPONSE_OK);
-  GTK_WIDGET_SET_FLAGS (prefsw->closebutton, GTK_CAN_DEFAULT);
+  lives_widget_set_can_focus_and_default (prefsw->closebutton);
 
    
   g_signal_connect(dirbutton1, "clicked", G_CALLBACK (on_filesel_simple_clicked),prefsw->vid_load_dir_entry);

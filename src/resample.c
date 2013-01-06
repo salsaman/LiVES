@@ -1267,7 +1267,7 @@ create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox) {
 
     gtk_entry_set_text (GTK_ENTRY (combo_entry2),tmp);
     g_free (tmp);
-    GTK_WIDGET_UNSET_FLAGS (combo_entry2, GTK_CAN_FOCUS);
+    lives_widget_set_can_focus (combo_entry2, FALSE);
     
     label95 = gtk_label_new (_("         Channels "));
     if (palette->style&STYLE_1) {
@@ -1287,7 +1287,7 @@ create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox) {
     tmp=g_strdup_printf ("%d",(gint)mainw->fx2_val);
     gtk_entry_set_text (GTK_ENTRY (combo_entry3),tmp);
     g_free (tmp);
-    GTK_WIDGET_UNSET_FLAGS (combo_entry3, GTK_CAN_FOCUS);
+    lives_widget_set_can_focus (combo_entry3, FALSE);
     
     label96 = gtk_label_new (_("        Sample Size "));
     if (palette->style&STYLE_1) {
@@ -1307,7 +1307,7 @@ create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox) {
     tmp=g_strdup_printf ("%d",(gint)mainw->fx3_val);
     gtk_entry_set_text (GTK_ENTRY (combo_entry1),tmp);
     g_free (tmp);
-    GTK_WIDGET_UNSET_FLAGS (combo_entry1, GTK_CAN_FOCUS);
+    lives_widget_set_can_focus (combo_entry1, FALSE);
 
     vseparator3 = gtk_vseparator_new ();
     gtk_widget_show (vseparator3);
@@ -1467,7 +1467,6 @@ create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox) {
 
   resaudw->aud_checkbutton = NULL;
 
-
   if (type<9||type==11) {
     frame7 = gtk_frame_new (NULL);
     gtk_widget_show (frame7);
@@ -1481,40 +1480,18 @@ create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox) {
     gtk_widget_show(xvbox);
     gtk_container_add (GTK_CONTAINER (frame7), xvbox);
     
-    resaudw->aud_checkbutton = gtk_check_button_new ();
-
     if (type>2&&type<5) {
-
-      eventbox=gtk_event_box_new();
-      label=gtk_label_new_with_mnemonic (_("_Enable audio"));
-      gtk_label_set_mnemonic_widget (GTK_LABEL (label),resaudw->aud_checkbutton);
-
-      gtk_container_add(GTK_CONTAINER(eventbox),label);
-      g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
-			G_CALLBACK (label_act_toggle),
-			resaudw->aud_checkbutton);
-
-      if (palette->style&STYLE_1) {
-	gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-	gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-	gtk_widget_modify_bg (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
-      }
-
       resaudw->aud_hbox = gtk_hbox_new (FALSE, 0);
       gtk_box_pack_start (GTK_BOX (xvbox), resaudw->aud_hbox, FALSE, FALSE, 0);
 
-      gtk_box_pack_start (GTK_BOX (resaudw->aud_hbox), resaudw->aud_checkbutton, FALSE, FALSE, 10);
-      gtk_box_pack_start (GTK_BOX (resaudw->aud_hbox), eventbox, FALSE, FALSE, 10);
-      GTK_WIDGET_SET_FLAGS (resaudw->aud_checkbutton, GTK_CAN_DEFAULT|GTK_CAN_FOCUS);
+      resaudw->aud_checkbutton = lives_standard_check_button_new (_("_Enable audio"),TRUE,LIVES_BOX(resaudw->aud_hbox),NULL);
+
       if (rdet!=NULL) gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (resaudw->aud_checkbutton), rdet->achans>0);
       else gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (resaudw->aud_checkbutton), prefs->mt_def_achans>0);
 
       gtk_widget_show_all(resaudw->aud_hbox);
     }
-
-
-
-
+    else resaudw->aud_checkbutton = gtk_check_button_new ();
 
     hbox25 = gtk_hbox_new (FALSE, 0);
 
@@ -1950,7 +1927,7 @@ create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox) {
     cancelbutton13 = gtk_button_new_from_stock ("gtk-cancel");
     gtk_widget_show (cancelbutton13);
     gtk_dialog_add_action_widget (GTK_DIALOG (resaudw->dialog), cancelbutton13, GTK_RESPONSE_CANCEL);
-    GTK_WIDGET_SET_FLAGS (cancelbutton13, GTK_CAN_DEFAULT);
+    lives_widget_set_can_focus_and_default (cancelbutton13);
     
     gtk_widget_add_accelerator (cancelbutton13, "activate", mainw->accel_group,
                               GDK_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
@@ -1959,7 +1936,7 @@ create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox) {
     okbutton12 = gtk_button_new_from_stock ("gtk-ok");
     gtk_widget_show (okbutton12);
     gtk_dialog_add_action_widget (GTK_DIALOG (resaudw->dialog), okbutton12, GTK_RESPONSE_OK);
-    GTK_WIDGET_SET_FLAGS (okbutton12, GTK_CAN_DEFAULT);
+    lives_widget_set_can_focus_and_default (okbutton12);
     gtk_widget_grab_default (okbutton12);
 
     if (type<8||type==11) {
@@ -2140,11 +2117,11 @@ create_new_pb_speed (gshort type)
 
   cancelbutton4 = gtk_button_new_from_stock ("gtk-cancel");
   gtk_dialog_add_action_widget (GTK_DIALOG (new_pb_speed), cancelbutton4, GTK_RESPONSE_CANCEL);
-  GTK_WIDGET_SET_FLAGS (cancelbutton4, GTK_CAN_DEFAULT);
+  lives_widget_set_can_focus_and_default (cancelbutton4);
 
   change_pb_ok = gtk_button_new_from_stock ("gtk-ok");
   gtk_dialog_add_action_widget (GTK_DIALOG (new_pb_speed), change_pb_ok, GTK_RESPONSE_OK);
-  GTK_WIDGET_SET_FLAGS (change_pb_ok, GTK_CAN_DEFAULT);
+  lives_widget_set_can_focus_and_default (change_pb_ok);
   gtk_widget_grab_default (change_pb_ok);
   gtk_widget_grab_focus(spinbutton_pb_speed);
 

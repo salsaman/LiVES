@@ -2083,30 +2083,11 @@ GtkWidget *events_rec_dialog (gboolean allow_mt) {
   hbox = gtk_hbox_new (FALSE, 0);
   gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 20);
 
-  radiobutton = gtk_radio_button_new (NULL);
-  gtk_radio_button_set_group (GTK_RADIO_BUTTON (radiobutton), radiobutton_group);
-  radiobutton_group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (radiobutton));
-
-  gtk_box_pack_start (GTK_BOX (hbox), radiobutton, FALSE, FALSE, 10);
-
-  label=gtk_label_new_with_mnemonic (_ ("_Preview events"));
-  gtk_label_set_mnemonic_widget (GTK_LABEL (label),radiobutton);
-
-  eventbox=gtk_event_box_new();
-  gtk_container_add(GTK_CONTAINER(eventbox),label);
-  g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
-		    G_CALLBACK (label_act_toggle),
-		    radiobutton);
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_bg (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
-  }
-  gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, 10);
+  radiobutton = lives_standard_radio_button_new (_ ("_Preview events"),TRUE,radiobutton_group,LIVES_BOX(hbox),NULL);
+  radiobutton_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (radiobutton));
 
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (radiobutton),TRUE);
 
-  GTK_WIDGET_SET_FLAGS (radiobutton, GTK_CAN_DEFAULT|GTK_CAN_FOCUS);
   g_signal_connect (GTK_OBJECT (radiobutton), "toggled",
 		    G_CALLBACK (set_render_choice),
 		    GINT_TO_POINTER (RENDER_CHOICE_PREVIEW));
@@ -2116,28 +2097,9 @@ GtkWidget *events_rec_dialog (gboolean allow_mt) {
     hbox = gtk_hbox_new (FALSE, 0);
     gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 20);
 
-    radiobutton = gtk_radio_button_new (NULL);
-    gtk_radio_button_set_group (GTK_RADIO_BUTTON (radiobutton), radiobutton_group);
-    radiobutton_group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (radiobutton));
-    
-    gtk_box_pack_start (GTK_BOX (hbox), radiobutton, FALSE, FALSE, 10);
-    
-    label=gtk_label_new_with_mnemonic (_ ("Render events to _same clip"));
-    gtk_label_set_mnemonic_widget (GTK_LABEL (label),radiobutton);
-    
-    eventbox=gtk_event_box_new();
-    gtk_container_add(GTK_CONTAINER(eventbox),label);
-    g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
-		      G_CALLBACK (label_act_toggle),
-		      radiobutton);
-    if (palette->style&STYLE_1) {
-      gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-      gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-      gtk_widget_modify_bg (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
-    }
-    gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, 10);
+    radiobutton = lives_standard_radio_button_new (_ ("Render events to _same clip"),TRUE,radiobutton_group,LIVES_BOX(hbox),NULL);
+    radiobutton_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (radiobutton));
 
-    GTK_WIDGET_SET_FLAGS (radiobutton, GTK_CAN_DEFAULT|GTK_CAN_FOCUS);
     g_signal_connect (GTK_OBJECT (radiobutton), "toggled",
                       G_CALLBACK (set_render_choice),
                       GINT_TO_POINTER (RENDER_CHOICE_SAME_CLIP));
@@ -2147,28 +2109,9 @@ GtkWidget *events_rec_dialog (gboolean allow_mt) {
   hbox = gtk_hbox_new (FALSE, 0);
   gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 20);
 
-  radiobutton = gtk_radio_button_new (NULL);
-  gtk_radio_button_set_group (GTK_RADIO_BUTTON (radiobutton), radiobutton_group);
-  radiobutton_group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (radiobutton));
+  radiobutton = lives_standard_radio_button_new (_ ("Render events to _new clip"),TRUE,radiobutton_group,LIVES_BOX(hbox),NULL);
+  radiobutton_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (radiobutton));
     
-  gtk_box_pack_start (GTK_BOX (hbox), radiobutton, FALSE, FALSE, 10);
-    
-  label=gtk_label_new_with_mnemonic (_ ("Render events to _new clip"));
-  gtk_label_set_mnemonic_widget (GTK_LABEL (label),radiobutton);
-    
-  eventbox=gtk_event_box_new();
-  gtk_container_add(GTK_CONTAINER(eventbox),label);
-  g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
-		    G_CALLBACK (label_act_toggle),
-		    radiobutton);
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_bg (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
-  }
-  gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, 10);
-  
-  GTK_WIDGET_SET_FLAGS (radiobutton, GTK_CAN_DEFAULT|GTK_CAN_FOCUS);
   g_signal_connect (GTK_OBJECT (radiobutton), "toggled",
 		    G_CALLBACK (set_render_choice),
 		    GINT_TO_POINTER (RENDER_CHOICE_NEW_CLIP));
@@ -2178,29 +2121,9 @@ GtkWidget *events_rec_dialog (gboolean allow_mt) {
   hbox = gtk_hbox_new (FALSE, 0);
   gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 20);
 
-  radiobutton = gtk_radio_button_new (NULL);
-  gtk_radio_button_set_group (GTK_RADIO_BUTTON (radiobutton), radiobutton_group);
-  radiobutton_group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (radiobutton));
-    
-  gtk_box_pack_start (GTK_BOX (hbox), radiobutton, FALSE, FALSE, 10);
-    
-  label=gtk_label_new_with_mnemonic (_("View/edit events in _multitrack window (test)"));
-  gtk_label_set_mnemonic_widget (GTK_LABEL (label),radiobutton);
-    
-  eventbox=gtk_event_box_new();
-  gtk_container_add(GTK_CONTAINER(eventbox),label);
-  g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
-		    G_CALLBACK (label_act_toggle),
-		    radiobutton);
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_bg (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
-  }
+  radiobutton = lives_standard_radio_button_new (_ ("View/edit events in _multitrack window (test)"),TRUE,radiobutton_group,LIVES_BOX(hbox),NULL);
+  radiobutton_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (radiobutton));
 
-  gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, 10);
-
-  GTK_WIDGET_SET_FLAGS (radiobutton, GTK_CAN_DEFAULT|GTK_CAN_FOCUS);
   g_signal_connect (GTK_OBJECT (radiobutton), "toggled",
 		    G_CALLBACK (set_render_choice),
 		    GINT_TO_POINTER (RENDER_CHOICE_MULTITRACK));
@@ -2212,36 +2135,18 @@ GtkWidget *events_rec_dialog (gboolean allow_mt) {
   hbox = gtk_hbox_new (FALSE, 0);
   gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 20);
 
-  radiobutton = gtk_radio_button_new (NULL);
-  gtk_radio_button_set_group (GTK_RADIO_BUTTON (radiobutton), radiobutton_group);
-  radiobutton_group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (radiobutton));
-    
-  gtk_box_pack_start (GTK_BOX (hbox), radiobutton, FALSE, FALSE, 10);
+  radiobutton = lives_standard_radio_button_new (_ ("View/edit events in _event window"),TRUE,radiobutton_group,LIVES_BOX(hbox),NULL);
+  radiobutton_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (radiobutton));
 
   if (mainw->stored_event_list!=NULL) gtk_widget_set_sensitive(radiobutton,FALSE);
     
-  label=gtk_label_new_with_mnemonic (_("View/edit events in _event window"));
-  gtk_label_set_mnemonic_widget (GTK_LABEL (label),radiobutton);
-    
-  eventbox=gtk_event_box_new();
-  gtk_container_add(GTK_CONTAINER(eventbox),label);
-  g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
-		    G_CALLBACK (label_act_toggle),
-		    radiobutton);
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_bg (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
-  }
-  gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, 10);
-
-  GTK_WIDGET_SET_FLAGS (radiobutton, GTK_CAN_DEFAULT|GTK_CAN_FOCUS);
   g_signal_connect (GTK_OBJECT (radiobutton), "toggled",
 		    G_CALLBACK (set_render_choice),
 		    GINT_TO_POINTER (RENDER_CHOICE_EVENT_LIST));
 
   cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
-  GTK_WIDGET_SET_FLAGS (cancelbutton, GTK_CAN_DEFAULT|GTK_CAN_FOCUS);
+  lives_widget_set_can_focus_and_default (cancelbutton);
+
   gtk_dialog_add_action_widget (GTK_DIALOG (e_rec_dialog), cancelbutton, GTK_RESPONSE_CANCEL);
 
   g_signal_connect (GTK_OBJECT (cancelbutton), "clicked",
@@ -2257,7 +2162,7 @@ GtkWidget *events_rec_dialog (gboolean allow_mt) {
   okbutton = gtk_button_new_from_stock ("gtk-ok");
   gtk_widget_show (okbutton);
   gtk_dialog_add_action_widget (GTK_DIALOG (e_rec_dialog), okbutton, GTK_RESPONSE_OK);
-  GTK_WIDGET_SET_FLAGS (okbutton, GTK_CAN_DEFAULT|GTK_CAN_FOCUS);
+  lives_widget_set_can_focus_and_default (okbutton);
   gtk_widget_grab_default (okbutton);
   gtk_widget_show_all (e_rec_dialog);
 
@@ -4920,7 +4825,7 @@ GtkWidget *create_event_list_dialog (weed_plant_t *event_list, weed_timecode_t s
  gtk_widget_show (ok_button);
  gtk_container_add (GTK_CONTAINER (hbuttonbox), ok_button);
 
- GTK_WIDGET_SET_FLAGS (ok_button, GTK_CAN_DEFAULT|GTK_CAN_FOCUS);
+ lives_widget_set_can_focus_and_default (ok_button);
  gtk_widget_grab_default (ok_button);
  
  g_signal_connect (GTK_OBJECT (ok_button), "clicked",
@@ -5073,8 +4978,8 @@ render_details *create_render_details (gint type) {
   
   // Apply theme background to scrolled window
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(GTK_BIN(scrollw)->child, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_bg(GTK_BIN(scrollw)->child, GTK_STATE_NORMAL, &palette->normal_back);
+    gtk_widget_modify_fg(lives_bin_get_child(LIVES_BIN(scrollw)), GTK_STATE_NORMAL, &palette->normal_fore);
+    gtk_widget_modify_bg(lives_bin_get_child(LIVES_BIN(scrollw)), GTK_STATE_NORMAL, &palette->normal_back);
   }
 
   gtk_widget_show (top_vbox);
@@ -5372,12 +5277,12 @@ render_details *create_render_details (gint type) {
   }
   else add_fill_to_box(GTK_BOX (lives_dialog_get_action_area(LIVES_DIALOG(rdet->dialog))));
 
-  GTK_WIDGET_SET_FLAGS (cancelbutton, GTK_CAN_FOCUS);
+  lives_widget_set_can_focus_and_default (cancelbutton);
 
 
   rdet->okbutton = gtk_button_new_from_stock ("gtk-ok");
   gtk_dialog_add_action_widget (GTK_DIALOG (rdet->dialog), rdet->okbutton, GTK_RESPONSE_OK);
-  GTK_WIDGET_SET_FLAGS (rdet->okbutton, GTK_CAN_DEFAULT|GTK_CAN_FOCUS);
+  lives_widget_set_can_focus_and_default (rdet->okbutton);
   gtk_widget_grab_default (rdet->okbutton);
 
 

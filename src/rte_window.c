@@ -986,7 +986,7 @@ on_rte_info_clicked (GtkButton *button, gpointer user_data) {
   gtk_widget_show (ok_button);
 
   gtk_container_add (GTK_CONTAINER (hbuttonbox), ok_button);
-  GTK_WIDGET_SET_FLAGS (ok_button, GTK_CAN_DEFAULT);
+  lives_widget_set_can_focus_and_default (ok_button);
   gtk_widget_grab_default (ok_button);
 
   g_signal_connect (GTK_OBJECT (ok_button), "clicked",
@@ -1592,23 +1592,23 @@ GtkWidget * create_rte_window (void) {
   gtk_button_box_set_layout (GTK_BUTTON_BOX (hbuttonbox), GTK_BUTTONBOX_SPREAD);
 
   gtk_container_add (GTK_CONTAINER (hbuttonbox), clear_all_button);
-  GTK_WIDGET_SET_FLAGS (clear_all_button, GTK_CAN_DEFAULT);
+  lives_widget_set_can_focus_and_default (clear_all_button);
 
   save_keymap_button = gtk_button_new_with_mnemonic (_("_Save as default keymap"));
 
   gtk_container_add (GTK_CONTAINER (hbuttonbox), save_keymap_button);
-  GTK_WIDGET_SET_FLAGS (save_keymap_button, GTK_CAN_DEFAULT);
+  lives_widget_set_can_focus_and_default (save_keymap_button);
 
   load_keymap_button = gtk_button_new_with_mnemonic (_("_Load default keymap"));
 
   gtk_container_add (GTK_CONTAINER (hbuttonbox), load_keymap_button);
-  GTK_WIDGET_SET_FLAGS (load_keymap_button, GTK_CAN_DEFAULT);
+  lives_widget_set_can_focus_and_default (load_keymap_button);
 
   ok_button = gtk_button_new_with_mnemonic (_("Close _window"));
 
   gtk_container_add (GTK_CONTAINER (hbuttonbox), ok_button);
-  GTK_WIDGET_SET_FLAGS (ok_button, GTK_CAN_DEFAULT);
-  
+  lives_widget_set_can_focus_and_default (ok_button);
+
 
   rtew_accel_group = GTK_ACCEL_GROUP(gtk_accel_group_new ());
   gtk_window_add_accel_group (GTK_WINDOW (rte_window), rtew_accel_group);

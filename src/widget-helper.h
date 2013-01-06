@@ -283,7 +283,8 @@ LiVESWidget *lives_widget_get_parent(LiVESWidget *widget);
 
 LiVESXWindow *lives_widget_get_xwindow(LiVESWidget *widget);
 
-void lives_widget_set_can_focus_and_default(LiVESWidget *widget);
+void lives_widget_set_can_focus(LiVESWidget *widget, boolean state);
+void lives_widget_set_can_default(LiVESWidget *widget, boolean state);
 
 void lives_container_remove(LiVESContainer *container, LiVESWidget *widget);
 
@@ -358,6 +359,9 @@ void unhide_cursor(LiVESXWindow *window);
 void hide_cursor(LiVESXWindow *window);
 
 void get_border_size (LiVESWidget *win, int *bx, int *by);
+
+void lives_widget_set_can_focus_and_default(LiVESWidget *widget);
+
 
 #endif
 

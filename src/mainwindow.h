@@ -532,9 +532,6 @@ typedef struct {
   /// stored clips
   gint clipstore[FN_KEYS-1];
 
-  /// GdkGC (graphics context)
-  GdkGC *gc;
-
   /// key function for autorepeat ctrl-arrows
   guint ksnoop;
 

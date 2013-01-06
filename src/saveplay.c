@@ -3033,7 +3033,7 @@ void play_file (void) {
     }
     else {
       // or resize it back to single size
-      if (!GTK_WIDGET_VISIBLE (mainw->play_window)) {
+      if (!lives_widget_is_visible (mainw->play_window)) {
 
 	block_expose();
 	mainw->noswitch=TRUE;

@@ -26,6 +26,8 @@ James Scott Jr <skoona@users.sourceforge.net>
 #include <stdio.h>
 #include <string.h>
 
+#include "main.h"
+
 #include "giw/giwvslider.h" 
 
 
@@ -87,6 +89,24 @@ giw_vslider_get_type ()
 
   if (!vslider_type)
     {
+#if GTK_VERSION_3
+      static const GTypeInfo vslider_info =
+      {
+	sizeof (GiwVSliderClass),
+	(GBaseInitFunc)NULL,
+	(GBaseFinalizeFunc)NULL,
+	(GClassInitFunc) giw_vslider_class_init,
+	(GClassFinalizeFunc)NULL,
+	(gconstpointer)NULL,
+	sizeof (GiwVSlider),
+	0, // n_preallocs
+	(GInstanceInitFunc) giw_vslider_init
+	//(const GTypeValueTable *)NULL
+      };
+
+      vslider_type = g_type_register_static (gtk_widget_get_type (), "GiwVSlider", &vslider_info, 0);
+
+#else
       static const GtkTypeInfo vslider_info =
       {
 	"GiwVSlider",
@@ -100,6 +120,8 @@ giw_vslider_get_type ()
       };
 
       vslider_type = gtk_type_unique (gtk_widget_get_type (), &vslider_info);
+
+#endif
     }
 
   return vslider_type;
@@ -114,7 +136,11 @@ giw_vslider_class_init (GiwVSliderClass *xclass)
   object_class = (GtkObjectClass*) xclass;
   widget_class = (GtkWidgetClass*) xclass;
 
+#if GTK_VERSION_3
+  // parent_class is set in g_type_register_static()
+#else
   parent_class = (GtkWidgetClass *)gtk_type_class (gtk_widget_get_type ());
+#endif
 
   object_class->destroy = giw_vslider_destroy;
 
@@ -153,7 +179,11 @@ giw_vslider_new (GtkAdjustment *adjustment)
 
   g_return_val_if_fail (adjustment != NULL, NULL);
   
+#if GTK_VERSION_3
+  vslider = g_object_new (GIW_TYPE_VSLIDER, NULL);
+#else
   vslider = (GiwVSlider *)gtk_type_new (giw_vslider_get_type ());
+#endif
   
   giw_vslider_set_adjustment(vslider, adjustment);
   
@@ -167,7 +197,11 @@ giw_vslider_new_with_adjustment (gdouble value,
 {
   GiwVSlider *vslider;
   
+#if GTK_VERSION_3
+  vslider = g_object_new (GIW_TYPE_VSLIDER, NULL);
+#else
   vslider = (GiwVSlider *)gtk_type_new (giw_vslider_get_type ());
+#endif
   
   giw_vslider_set_adjustment(vslider, (GtkAdjustment*) gtk_adjustment_new (value, lower, upper, 1.0, 1.0, 1.0));
   
@@ -211,7 +245,12 @@ giw_vslider_realize (GtkWidget *widget)
   g_return_if_fail (widget != NULL);
   g_return_if_fail (GIW_IS_VSLIDER (widget));
 
+#if GTK_CHECK_VERSION(2,20,0)
+  gtk_widget_set_realized(widget,TRUE);
+#else
   GTK_WIDGET_SET_FLAGS (widget, GTK_REALIZED);
+#endif
+
   vslider = GIW_VSLIDER (widget);
 
   // Creating the widget->window
@@ -584,10 +623,10 @@ giw_vslider_set_adjustment (GiwVSlider *vslider,
   g_object_ref (GTK_OBJECT (vslider->adjustment));
   
   g_signal_connect (GTK_OBJECT (adjustment), "changed",
-		      (GtkSignalFunc) giw_vslider_adjustment_changed,
+		      (GCallback) giw_vslider_adjustment_changed,
 		      (gpointer) vslider);
   g_signal_connect (GTK_OBJECT (adjustment), "value_changed",
-		      (GtkSignalFunc) giw_vslider_adjustment_value_changed,
+		      (GCallback) giw_vslider_adjustment_value_changed,
 		      (gpointer) vslider);
 
   gtk_adjustment_value_changed(vslider->adjustment);

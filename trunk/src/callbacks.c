@@ -6317,7 +6317,12 @@ void on_ok_file_open_clicked(GtkFileChooser *chooser, GSList *fnames) {
 void drag_from_outside(GtkWidget *widget, GdkDragContext *dcon, gint x, gint y, 
 		       GtkSelectionData *data, guint info, guint time, gpointer user_data) {
   GSList *fnames=NULL;
-  gchar *filelist=(gchar *)data->data,*nfilelist,**array;
+#if GTK_VERSION_3
+  gchar *filelist=(gchar *)gtk_selection_data_get_data(data);
+#else
+  gchar *filelist=(gchar *)data->data;
+#endif
+  gchar *nfilelist,**array;
   int nfiles,i;
 
   if (filelist==NULL) {
@@ -6326,13 +6331,13 @@ void drag_from_outside(GtkWidget *widget, GdkDragContext *dcon, gint x, gint y,
   }
 
   if (mainw->multitrack!=NULL&&widget==mainw->multitrack->window) {
-    if (!GTK_WIDGET_SENSITIVE(mainw->multitrack->open_menu)) {
+    if (!lives_widget_is_sensitive(mainw->multitrack->open_menu)) {
       gtk_drag_finish(dcon,FALSE,FALSE,time);
       return;
     }
   }
   else {
-    if (!GTK_WIDGET_SENSITIVE(mainw->open)) {
+    if (!lives_widget_is_sensitive(mainw->open)) {
       gtk_drag_finish(dcon,FALSE,FALSE,time);
       return;
     }
@@ -8717,7 +8722,7 @@ void popup_lmap_errors(GtkMenuItem *menuitem, gpointer user_data) {
 		    textwindow);
 
   gtk_container_set_border_width (GTK_CONTAINER (button), 12);
-  GTK_WIDGET_SET_FLAGS (button, GTK_CAN_DEFAULT|GTK_CAN_FOCUS);
+  lives_widget_set_can_focus_and_default (button);
 
   textwindow->clear_button = gtk_button_new_with_mnemonic (_("Clear _Errors"));
   gtk_widget_show (textwindow->clear_button);
@@ -8728,14 +8733,14 @@ void popup_lmap_errors(GtkMenuItem *menuitem, gpointer user_data) {
 		    GINT_TO_POINTER(FALSE));
 
   gtk_container_set_border_width (GTK_CONTAINER (textwindow->clear_button), 12);
-  GTK_WIDGET_SET_FLAGS (textwindow->clear_button, GTK_CAN_DEFAULT|GTK_CAN_FOCUS);
+  lives_widget_set_can_focus_and_default (textwindow->clear_button);
 
   textwindow->delete_button = gtk_button_new_with_mnemonic (_("_Delete affected layouts"));
   gtk_widget_show (textwindow->delete_button);
   gtk_dialog_add_action_widget (GTK_DIALOG (textwindow->dialog), textwindow->delete_button, GTK_RESPONSE_CANCEL);
 
   gtk_container_set_border_width (GTK_CONTAINER (textwindow->delete_button), 12);
-  GTK_WIDGET_SET_FLAGS (textwindow->delete_button, GTK_CAN_DEFAULT|GTK_CAN_FOCUS);
+  lives_widget_set_can_focus_and_default (textwindow->delete_button);
 
   g_signal_connect (GTK_OBJECT (textwindow->delete_button), "clicked",
 		    G_CALLBACK (on_lerrors_delete_clicked),
@@ -9281,11 +9286,6 @@ expose_raud_event (GtkWidget *widget, GdkEventExpose *event) {
 gboolean config_event (GtkWidget *widget, GdkEventConfigure *event, gpointer user_data) {
 
   if (mainw->is_ready) {
-    if (mainw->gc==NULL) {
-      mainw->gc=gdk_gc_new (GDK_DRAWABLE (lives_widget_get_xwindow(mainw->LiVES)));
-      // this is nice, but it sets button text and entries too
-      //gdk_gc_set_rgb_fg_color (GDK_GC (mainw->LiVES->style->fg_gc[2]),&palette->black);
-    }
     if (mainw->current_file>-1) {
       get_play_times();
     }

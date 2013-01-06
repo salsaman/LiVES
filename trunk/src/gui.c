@@ -283,6 +283,7 @@ create_LiVES (void)
 
   //gtk_window_present(GTK_WINDOW(mainw->LiVES));
 
+  // TODO - can we use just DEFAULT_DROP ?
   gtk_drag_dest_set(mainw->LiVES,GTK_DEST_DEFAULT_ALL,mainw->target_table,2,
 		    (GdkDragAction)(GDK_ACTION_COPY|GDK_ACTION_MOVE|GDK_ACTION_LINK));
 
@@ -2022,7 +2023,8 @@ create_LiVES (void)
   gtk_entry_set_editable (GTK_ENTRY (mainw->framecounter), FALSE);
   gtk_entry_set_has_frame (GTK_ENTRY (mainw->framecounter), FALSE);
   gtk_entry_set_width_chars (GTK_ENTRY (mainw->framecounter), 18);
-  GTK_WIDGET_UNSET_FLAGS (mainw->framecounter, GTK_CAN_FOCUS);
+
+  lives_widget_set_can_focus (mainw->framecounter, FALSE);
 
   mainw->curf_label = gtk_label_new (_("                                                            "));
   gtk_widget_show (mainw->curf_label);
@@ -2146,7 +2148,8 @@ create_LiVES (void)
 
   gtk_widget_show (mainw->spinbutton_start);
   gtk_box_pack_start (GTK_BOX (hbox3), mainw->spinbutton_start, TRUE, FALSE, 0);
-  GTK_WIDGET_SET_FLAGS (mainw->spinbutton_start, GTK_CAN_DEFAULT|GTK_CAN_FOCUS);
+  lives_widget_set_can_focus_and_default (mainw->spinbutton_start);
+
   gtk_spin_button_set_numeric (GTK_SPIN_BUTTON (mainw->spinbutton_start), TRUE);
   gtk_spin_button_set_update_policy (GTK_SPIN_BUTTON (mainw->spinbutton_start),GTK_UPDATE_ALWAYS);
   gtk_widget_set_tooltip_text( mainw->spinbutton_start, _("The first selected frame in this clip"));
@@ -2175,7 +2178,8 @@ create_LiVES (void)
   gtk_widget_show (mainw->spinbutton_end);
   gtk_box_pack_start (GTK_BOX (hbox3), mainw->spinbutton_end, TRUE, FALSE, 0);
   gtk_entry_set_width_chars (GTK_ENTRY (mainw->spinbutton_end),10);
-  GTK_WIDGET_SET_FLAGS (mainw->spinbutton_end, GTK_CAN_DEFAULT|GTK_CAN_FOCUS);
+  lives_widget_set_can_focus_and_default (mainw->spinbutton_end);
+
   gtk_spin_button_set_numeric (GTK_SPIN_BUTTON (mainw->spinbutton_end), TRUE);
   gtk_spin_button_set_update_policy (GTK_SPIN_BUTTON (mainw->spinbutton_end),GTK_UPDATE_ALWAYS);
   gtk_widget_set_tooltip_text( mainw->spinbutton_end, _("The last selected frame in this clip"));
@@ -2956,7 +2960,7 @@ create_LiVES (void)
   mainw->video_drawable=NULL;
   mainw->plug=NULL;
 
-  GTK_WIDGET_SET_FLAGS (mainw->LiVES, GTK_CAN_FOCUS);
+  lives_widget_set_can_focus (mainw->LiVES, TRUE);
   gtk_widget_grab_focus(mainw->textview1);
 
 }
@@ -3861,7 +3865,7 @@ void resize_play_window (void) {
     }
 
     if (mainw->fs) {
-      if (!GTK_WIDGET_VISIBLE (mainw->play_window)) {
+      if (!lives_widget_is_visible (mainw->play_window)) {
 	gtk_widget_show (mainw->play_window);
 	// be careful, the user could switch out of sepwin here !
 	mainw->noswitch=TRUE;
@@ -3891,7 +3895,7 @@ void resize_play_window (void) {
 	mainw->pheight=mainw->mgeom[pmonitor-1].height;
       }
 
-      if (GTK_WIDGET_VISIBLE (mainw->play_window)) {
+      if (lives_widget_is_visible (mainw->play_window)) {
 	// store old postion of window
 	gtk_window_get_position (GTK_WINDOW (mainw->play_window),&opwx,&opwy);
 	if (opwx*opwy) {

@@ -70,7 +70,7 @@ struct _dvgrabw *create_camwindow (s_cam *cam, gint type)
   gtk_label_set_mnemonic_widget(GTK_LABEL(label),buttond);
 
   gtk_box_pack_start(GTK_BOX(hbox),buttond,FALSE,FALSE,10);
-  GTK_WIDGET_SET_FLAGS (buttond, GTK_CAN_DEFAULT);
+  lives_widget_set_can_focus_and_default (buttond);
 
 
   hbox = gtk_hbox_new (FALSE,10);
@@ -144,25 +144,25 @@ struct _dvgrabw *create_camwindow (s_cam *cam, gint type)
 
   button3 = gtk_button_new_from_stock(GTK_STOCK_MEDIA_REWIND);
   gtk_container_add (GTK_CONTAINER (hbuttonbox1), button3);
-  GTK_WIDGET_SET_FLAGS (button3, GTK_CAN_DEFAULT);
+  lives_widget_set_can_focus (button3,TRUE);
 
   button4 = gtk_button_new_from_stock(GTK_STOCK_MEDIA_FORWARD);
   gtk_container_add (GTK_CONTAINER (hbuttonbox1), button4);
-  GTK_WIDGET_SET_FLAGS (button4, GTK_CAN_DEFAULT);
+  lives_widget_set_can_focus (button4,TRUE);
 
   dvgrabw->stop = gtk_button_new_from_stock (GTK_STOCK_MEDIA_STOP);
   gtk_container_add (GTK_CONTAINER (hbuttonbox1), dvgrabw->stop);
-  GTK_WIDGET_SET_FLAGS (dvgrabw->stop, GTK_CAN_DEFAULT);
+  lives_widget_set_can_focus_and_default (dvgrabw->stop);
   gtk_widget_set_sensitive(dvgrabw->stop,FALSE);
 
   dvgrabw->play = gtk_button_new_from_stock (GTK_STOCK_MEDIA_PLAY);
   gtk_container_add (GTK_CONTAINER (hbuttonbox1), dvgrabw->play);
-  GTK_WIDGET_SET_FLAGS (dvgrabw->play, GTK_CAN_DEFAULT);
+  lives_widget_set_can_focus_and_default (dvgrabw->play);
   gtk_button_set_use_stock(GTK_BUTTON(dvgrabw->play),TRUE);
 
   dvgrabw->grab = gtk_button_new_from_stock (GTK_STOCK_MEDIA_RECORD);
   gtk_container_add (GTK_CONTAINER (hbuttonbox1), dvgrabw->grab);
-  GTK_WIDGET_SET_FLAGS (dvgrabw->grab, GTK_CAN_DEFAULT);
+  lives_widget_set_can_focus_and_default (dvgrabw->grab);
 
   image=gtk_image_new_from_stock(GTK_STOCK_MEDIA_RECORD,GTK_ICON_SIZE_BUTTON);
   gtk_button_set_label(GTK_BUTTON(dvgrabw->grab),_("_Grab"));
@@ -180,7 +180,7 @@ struct _dvgrabw *create_camwindow (s_cam *cam, gint type)
 
   dvgrabw->quit = gtk_button_new_from_stock (GTK_STOCK_CLOSE);
   gtk_container_add (GTK_CONTAINER (hbuttonbox2), dvgrabw->quit);
-  GTK_WIDGET_SET_FLAGS (dvgrabw->quit, GTK_CAN_DEFAULT);
+  lives_widget_set_can_focus_and_default (dvgrabw->quit);
 
   image=gtk_image_new_from_stock(GTK_STOCK_CLOSE,GTK_ICON_SIZE_BUTTON);
   gtk_button_set_label(GTK_BUTTON(dvgrabw->quit),_("_Close Window"));

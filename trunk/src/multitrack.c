@@ -3045,7 +3045,7 @@ static void fubar(lives_mt *mt) {
 
 
 
-static gboolean notebook_page(GtkWidget *nb, GtkNotebookPage *nbp, guint tab, gpointer user_data) {
+static gboolean notebook_page(GtkWidget *nb, GtkWidget *nbp, guint tab, gpointer user_data) {
   guint page;
   lives_mt *mt=(lives_mt *)user_data;
 
@@ -3889,7 +3889,7 @@ void mt_init_start_end_spins(lives_mt *mt) {
   mt->spinbutton_start = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_start_adj), 1, 3);
 
   gtk_box_pack_start (GTK_BOX (hbox), mt->spinbutton_start, TRUE, FALSE, MAIN_SPIN_SPACER);
-  GTK_WIDGET_SET_FLAGS (mt->spinbutton_start, GTK_CAN_DEFAULT|GTK_CAN_FOCUS);
+  lives_widget_set_can_focus_and_default (mt->spinbutton_start);
   gtk_spin_button_set_numeric (GTK_SPIN_BUTTON (mt->spinbutton_start), TRUE);
   gtk_spin_button_set_update_policy (GTK_SPIN_BUTTON (mt->spinbutton_start),GTK_UPDATE_ALWAYS);
 
@@ -3916,7 +3916,7 @@ void mt_init_start_end_spins(lives_mt *mt) {
   gtk_box_pack_start (GTK_BOX (hbox), mt->spinbutton_end, TRUE, FALSE, MAIN_SPIN_SPACER);
   gtk_entry_set_width_chars (GTK_ENTRY (mt->spinbutton_end),12);
 
-  GTK_WIDGET_SET_FLAGS (mt->spinbutton_end, GTK_CAN_DEFAULT|GTK_CAN_FOCUS);
+  lives_widget_set_can_focus_and_default (mt->spinbutton_end);
   gtk_spin_button_set_numeric (GTK_SPIN_BUTTON (mt->spinbutton_end), TRUE);
   gtk_spin_button_set_update_policy (GTK_SPIN_BUTTON (mt->spinbutton_end),GTK_UPDATE_ALWAYS);
 
@@ -7644,7 +7644,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
 
   gtk_box_pack_start (GTK_BOX (hbox), mt->checkbutton_avel_reverse, FALSE, FALSE, 10);
   gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, 10);
-  GTK_WIDGET_SET_FLAGS (mt->checkbutton_avel_reverse, GTK_CAN_DEFAULT|GTK_CAN_FOCUS);
+  lives_widget_set_can_focus_and_default (mt->checkbutton_avel_reverse);
 
   mt->check_avel_rev_func=g_signal_connect_after (GTK_OBJECT (mt->checkbutton_avel_reverse), "toggled",
 						  G_CALLBACK (avel_reverse_toggled),
@@ -7738,7 +7738,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   gtk_box_pack_start(GTK_BOX(hbox),mt->checkbutton_start_anchored,TRUE,FALSE,10);
 
   gtk_container_add (GTK_CONTAINER (mt->in_eventbox), hbox);
-  GTK_WIDGET_SET_FLAGS (mt->checkbutton_start_anchored, GTK_CAN_DEFAULT|GTK_CAN_FOCUS);
+  lives_widget_set_can_focus_and_default (mt->checkbutton_start_anchored);
   
   mt->spin_in_func=g_signal_connect_after (GTK_OBJECT (mt->spinbutton_in), "value_changed",
 					   G_CALLBACK (in_out_start_changed),
@@ -7812,7 +7812,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
 
   gtk_container_add (GTK_CONTAINER (mt->out_eventbox), hbox);
 
-  GTK_WIDGET_SET_FLAGS (mt->checkbutton_end_anchored, GTK_CAN_DEFAULT|GTK_CAN_FOCUS);
+  lives_widget_set_can_focus_and_default (mt->checkbutton_end_anchored);
 
   mt->spin_out_func=g_signal_connect_after (GTK_OBJECT (mt->spinbutton_out), "value_changed",
 					    G_CALLBACK (in_out_end_changed),
@@ -8763,7 +8763,7 @@ void mt_init_tracks (lives_mt *mt, gboolean set_min_max) {
   mt->block_selected=NULL;
 
   if (mt->timeline_eb==NULL) {
-    mt->timeline = gtk_hruler_new();
+    mt->timeline = lives_standard_hruler_new();
     mt->timeline_reg=gtk_event_box_new();
     label=gtk_label_new (""); // dummy label
     gtk_container_add (GTK_CONTAINER (mt->timeline_reg), label);
@@ -18199,27 +18199,9 @@ void on_save_event_list_activate (GtkMenuItem *menuitem, gpointer user_data) {
   esave_dir=g_build_filename(prefs->tmpdir,mainw->set_name,"layouts",G_DIR_SEPARATOR_S,NULL);
   g_mkdir_with_parents(esave_dir,S_IRWXU);
 
-  ar_checkbutton = gtk_check_button_new ();
-  eventbox=gtk_event_box_new();
-  label=gtk_label_new_with_mnemonic (_("_Autoreload each time"));
-  gtk_label_set_mnemonic_widget (GTK_LABEL (label),ar_checkbutton);
-
-  gtk_container_add(GTK_CONTAINER(eventbox),label);
-  g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
-		    G_CALLBACK (label_act_toggle),
-		    ar_checkbutton);
-
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_bg (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
-  }
-
   hbox = gtk_hbox_new (FALSE, 0);
 
-  gtk_box_pack_start (GTK_BOX (hbox), ar_checkbutton, FALSE, FALSE, 10);
-  gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, 10);
-  GTK_WIDGET_SET_FLAGS (ar_checkbutton, GTK_CAN_DEFAULT|GTK_CAN_FOCUS);
+  ar_checkbutton = lives_standard_check_button_new (_("_Autoreload each time"),TRUE,LIVES_BOX(hbox),NULL);
 
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ar_checkbutton),prefs->ar_layout);
   g_signal_connect (GTK_OBJECT (ar_checkbutton), "toggled",
@@ -19819,31 +19801,11 @@ weed_plant_t *load_event_list(lives_mt *mt, gchar *eload_file) {
 
     startdir=g_strdup(eload_dir);
 
-    ar_checkbutton = gtk_check_button_new ();
-    gtk_widget_show(ar_checkbutton);
-    eventbox=gtk_event_box_new();
-    gtk_widget_show(eventbox);
-    label=gtk_label_new_with_mnemonic (_("_Autoreload each time"));
-    gtk_widget_show(label);
-    gtk_label_set_mnemonic_widget (GTK_LABEL (label),ar_checkbutton);
-    
-    gtk_container_add(GTK_CONTAINER(eventbox),label);
-    g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
-		      G_CALLBACK (label_act_toggle),
-		      ar_checkbutton);
-    
-    if (palette->style&STYLE_1) {
-      gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-      gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-      gtk_widget_modify_bg (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
-    }
-    
     hbox = gtk_hbox_new (FALSE, 0);
-    gtk_widget_show(hbox);
-    
-    gtk_box_pack_start (GTK_BOX (hbox), ar_checkbutton, FALSE, FALSE, 10);
-    gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, 10);
-    GTK_WIDGET_SET_FLAGS (ar_checkbutton, GTK_CAN_DEFAULT|GTK_CAN_FOCUS);
+
+    ar_checkbutton = lives_standard_check_button_new (_("_Autoreload each time"),TRUE,LIVES_BOX(hbox),NULL);
+
+    gtk_widget_show_all(hbox);
     
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ar_checkbutton),prefs->ar_layout);
     g_signal_connect (GTK_OBJECT (ar_checkbutton), "toggled",
@@ -21037,11 +20999,11 @@ void amixer_show (GtkButton *button, gpointer user_data) {
 
   reset_button = gtk_button_new_with_mnemonic (_("_Reset values"));
   gtk_container_add (GTK_CONTAINER (hbuttonbox), reset_button);
-  GTK_WIDGET_SET_FLAGS (reset_button, GTK_CAN_DEFAULT);
+  lives_widget_set_can_focus_and_default (reset_button);
 
   close_button = gtk_button_new_with_mnemonic (_("_Close mixer"));
   gtk_container_add (GTK_CONTAINER (hbuttonbox), close_button);
-  GTK_WIDGET_SET_FLAGS (close_button, GTK_CAN_DEFAULT);
+  lives_widget_set_can_focus_and_default (close_button);
 
 
   gtk_widget_add_accelerator (close_button, "clicked", accel_group,
@@ -21110,7 +21072,7 @@ void amixer_show (GtkButton *button, gpointer user_data) {
     add_fill_to_box(GTK_BOX(hbox));
     
     gtk_box_pack_start (GTK_BOX (hbox), amixer->inv_checkbutton, FALSE, FALSE, 0);
-    GTK_WIDGET_SET_FLAGS (amixer->inv_checkbutton, GTK_CAN_DEFAULT|GTK_CAN_FOCUS);
+    lives_widget_set_can_focus_and_default (amixer->inv_checkbutton);
 
     add_fill_to_box(GTK_BOX(hbox));
   }
@@ -21158,7 +21120,7 @@ void amixer_show (GtkButton *button, gpointer user_data) {
     add_fill_to_box(GTK_BOX(hbox));
 
     gtk_box_pack_end (GTK_BOX (vbox), eventbox, FALSE, FALSE, 10);
-    GTK_WIDGET_SET_FLAGS (amixer->gang_checkbutton, GTK_CAN_DEFAULT|GTK_CAN_FOCUS);
+    lives_widget_set_can_focus_and_default (amixer->gang_checkbutton);
   }
 
   add_fill_to_box(GTK_BOX(vbox2));

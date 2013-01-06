@@ -683,7 +683,6 @@ static void lives_init(_ign_opts *ign_opts) {
   mainw->rte=EFFECT_NONE;
 
   mainw->must_resize=FALSE;
-  mainw->gc=NULL;
 
   mainw->preview_box = NULL;
   mainw->prv_link=PRV_FREE;

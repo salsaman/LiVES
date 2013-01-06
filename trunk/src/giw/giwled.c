@@ -23,7 +23,9 @@ James Scott Jr <skoona@users.sourceforge.net>
 #include <math.h>
 #include <stdio.h>
 
-#include <giw/giwled.h>
+#include "main.h"
+
+#include "giw/giwled.h"
 
 #define LED_DEFAULT_SIZE 14
 
@@ -64,6 +66,24 @@ giw_led_get_type ()
 
   if (!led_type)
     {
+#if GTK_VERSION_3
+      static const GTypeInfo led_info =
+      {
+	sizeof (GiwLedClass),
+	(GBaseInitFunc)NULL,
+	(GBaseFinalizeFunc)NULL,
+	(GClassInitFunc) giw_led_class_init,
+	(GClassFinalizeFunc)NULL,
+	(gconstpointer)NULL,
+	sizeof (GiwLed),
+	0, // n_preallocs
+	(GInstanceInitFunc) giw_led_init
+	//(const GTypeValueTable *)NULL
+      };
+
+      led_type = g_type_register_static (gtk_widget_get_type (), "GiwLed", &led_info, 0);
+
+#else
       static const GtkTypeInfo led_info =
       {
 	"GiwLed",
@@ -77,6 +97,9 @@ giw_led_get_type ()
       };
 
       led_type = gtk_type_unique (gtk_widget_get_type() , &led_info);
+
+#endif
+
     }
 
   return led_type;
@@ -91,7 +114,11 @@ giw_led_class_init (GiwLedClass *xclass)
   object_class = (GtkObjectClass*) xclass;
   widget_class = (GtkWidgetClass*) xclass;
 
+#if GTK_VERSION_3
+  // parent_class is set in g_type_register_static()
+#else
   parent_class = (GtkWidgetClass *)gtk_type_class (gtk_widget_get_type ());
+#endif
 
   object_class->destroy = giw_led_destroy;
 
@@ -136,7 +163,11 @@ giw_led_new (void)
 {
   GiwLed *led;
 
+#if GTK_VERSION_3
+  led = g_object_new (GIW_TYPE_LED, NULL);
+#else
   led = (GiwLed *)gtk_type_new (giw_led_get_type ());
+#endif
   
   return GTK_WIDGET (led);
 }
@@ -160,12 +191,17 @@ giw_led_realize (GtkWidget *widget)
   g_return_if_fail (widget != NULL);
   g_return_if_fail (GIW_IS_LED (widget));
 
+#if GTK_CHECK_VERSION(2,20,0)
+  gtk_widget_set_realized(widget,TRUE);
+#else
   GTK_WIDGET_SET_FLAGS (widget, GTK_REALIZED);
+#endif
 
   attributes.x = widget->allocation.x;
   attributes.y = widget->allocation.y;
   attributes.width = widget->allocation.width;
   attributes.height = widget->allocation.height;
+
   attributes.wclass = GDK_INPUT_OUTPUT;
   attributes.window_type = GDK_WINDOW_CHILD;
   attributes.event_mask = gtk_widget_get_events (widget) | 

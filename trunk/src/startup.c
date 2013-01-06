@@ -459,7 +459,7 @@ gboolean do_audio_choice_dialog(short startup_phase) {
   gtk_button_set_label(GTK_BUTTON(okbutton),_("_Next"));
   gtk_widget_show (okbutton);
   gtk_dialog_add_action_widget (GTK_DIALOG (dialog), okbutton, GTK_RESPONSE_OK);
-  GTK_WIDGET_SET_FLAGS (okbutton, GTK_CAN_DEFAULT|GTK_CAN_FOCUS);
+  lives_widget_set_can_focus_and_default (okbutton);
   gtk_widget_grab_default(okbutton);
   gtk_widget_grab_focus(okbutton);
 
@@ -651,7 +651,7 @@ gboolean do_startup_tests(gboolean tshoot) {
   else okbutton = gtk_button_new_from_stock ("gtk-ok");
   gtk_widget_show (okbutton);
   gtk_dialog_add_action_widget (GTK_DIALOG (dialog), okbutton, GTK_RESPONSE_OK);
-  GTK_WIDGET_SET_FLAGS (okbutton, GTK_CAN_DEFAULT|GTK_CAN_FOCUS);
+  lives_widget_set_can_focus_and_default (okbutton);
   gtk_widget_grab_default(okbutton);
   gtk_widget_grab_focus(okbutton);
 
@@ -1125,7 +1125,7 @@ void do_startup_interface_query(void) {
   gtk_button_set_label(GTK_BUTTON(okbutton),_("_Finish"));
   gtk_widget_show (okbutton);
   gtk_dialog_add_action_widget (GTK_DIALOG (dialog), okbutton, GTK_RESPONSE_OK);
-  GTK_WIDGET_SET_FLAGS (okbutton, GTK_CAN_DEFAULT|GTK_CAN_FOCUS);
+  lives_widget_set_can_focus_and_default (okbutton);
   gtk_widget_grab_default(okbutton);
   gtk_widget_grab_focus(okbutton);
 

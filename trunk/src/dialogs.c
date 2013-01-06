@@ -101,33 +101,15 @@ static void add_xlays_widget(GtkBox *box) {
 
 
 void add_warn_check (GtkBox *box, gint warn_mask_number) {
-  GtkWidget *checkbutton = gtk_check_button_new ();
-  GtkWidget *eventbox,*hbox;
-  GtkWidget *label=gtk_label_new_with_mnemonic 
-    (_("Do _not show this warning any more\n(can be turned back on from Preferences/Warnings)"));
+  GtkWidget *checkbutton;
+  GtkWidget *hbox=gtk_hbox_new (FALSE, 0);
 
-  gtk_label_set_mnemonic_widget (GTK_LABEL (label),checkbutton);
+  checkbutton=lives_standard_check_button_new (
+					       _("Do _not show this warning any more\n(can be turned back on from Preferences/Warnings)"),
+					       TRUE,LIVES_BOX(box),NULL);
 
-  eventbox=gtk_event_box_new();
-
-  gtk_container_add(GTK_CONTAINER(eventbox),label);
-  g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
-		    G_CALLBACK (label_act_toggle),
-		      checkbutton);
-  
-  hbox = gtk_hbox_new (FALSE, 0);
-  
-  if (mainw->is_ready&&palette->style&STYLE_1&&mainw!=NULL) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_bg (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
-  }
-  
-  gtk_box_pack_start (box, hbox, FALSE, FALSE, 10);
-  gtk_box_pack_start (GTK_BOX (hbox), checkbutton, FALSE, FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, 10);
-  gtk_widget_show_all (hbox);
-  GTK_WIDGET_SET_FLAGS (checkbutton, GTK_CAN_DEFAULT|GTK_CAN_FOCUS);
+  gtk_widget_show_all(hbox);
+ 
   g_signal_connect (GTK_OBJECT (checkbutton), "toggled",
 		    G_CALLBACK (on_warn_mask_toggled),
                       GINT_TO_POINTER(warn_mask_number));
@@ -268,11 +250,11 @@ static GtkWidget* create_warn_dialog (gint warn_mask_number, GtkWindow *transien
   gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area), GTK_BUTTONBOX_END);
 
   gtk_widget_show (warning_cancelbutton);
-  GTK_WIDGET_SET_FLAGS (warning_cancelbutton, GTK_CAN_DEFAULT);
+  lives_widget_set_can_focus_and_default (warning_cancelbutton);
 
   gtk_widget_show (warning_okbutton);
 
-  GTK_WIDGET_SET_FLAGS (warning_okbutton, GTK_CAN_DEFAULT);
+  lives_widget_set_can_focus_and_default (warning_okbutton);
   gtk_widget_grab_default (warning_okbutton);
 
 
@@ -655,7 +637,7 @@ gboolean check_storage_space(file *sfile, gboolean is_processing) {
       if (mainw->next_ds_warn_level>(dsval>>1)) mainw->next_ds_warn_level=dsval>>1;
       if (mainw->next_ds_warn_level<prefs->ds_crit_level) mainw->next_ds_warn_level=prefs->ds_crit_level;
       if (is_processing&&sfile!=NULL&&sfile->proc_ptr!=NULL&&!mainw->effects_paused&&
-	  GTK_WIDGET_VISIBLE(sfile->proc_ptr->pause_button)) {
+	  lives_widget_is_visible(sfile->proc_ptr->pause_button)) {
 	on_effects_paused(GTK_BUTTON(sfile->proc_ptr->pause_button),NULL);
 	did_pause=TRUE;
       }
@@ -681,7 +663,7 @@ gboolean check_storage_space(file *sfile, gboolean is_processing) {
     }
     else if (ds==LIVES_STORAGE_STATUS_CRITICAL) {
       if (is_processing&&sfile!=NULL&&sfile->proc_ptr!=NULL&&!mainw->effects_paused&&
-	  GTK_WIDGET_VISIBLE(sfile->proc_ptr->pause_button)) {
+	  lives_widget_is_visible(sfile->proc_ptr->pause_button)) {
 	on_effects_paused(GTK_BUTTON(sfile->proc_ptr->pause_button),NULL);
 	did_pause=TRUE;
       }
@@ -715,7 +697,7 @@ gboolean check_storage_space(file *sfile, gboolean is_processing) {
 	if (sfile->op_ds_warn_level>(dsval>>1)) sfile->op_ds_warn_level=dsval>>1;
 	if (sfile->op_ds_warn_level<prefs->ds_crit_level) sfile->op_ds_warn_level=prefs->ds_crit_level;
 	if (is_processing&&sfile!=NULL&&sfile->proc_ptr!=NULL&&!mainw->effects_paused&&
-	    GTK_WIDGET_VISIBLE(sfile->proc_ptr->pause_button)) {
+	    lives_widget_is_visible(sfile->proc_ptr->pause_button)) {
 	  on_effects_paused(GTK_BUTTON(sfile->proc_ptr->pause_button),NULL);
 	  did_pause=TRUE;
 	}
@@ -741,7 +723,7 @@ gboolean check_storage_space(file *sfile, gboolean is_processing) {
       }
       else if (ds==LIVES_STORAGE_STATUS_CRITICAL) {
 	if (is_processing&&sfile!=NULL&&sfile->proc_ptr!=NULL&&!mainw->effects_paused&&
-	    GTK_WIDGET_VISIBLE(sfile->proc_ptr->pause_button)) {
+	    lives_widget_is_visible(sfile->proc_ptr->pause_button)) {
 	  on_effects_paused(GTK_BUTTON(sfile->proc_ptr->pause_button),NULL);
 	  did_pause=TRUE;
 	}
@@ -2440,8 +2422,8 @@ static void create_threaded_dialog(gchar *text, gboolean has_cancel) {
       GtkWidget *enoughbutton = gtk_button_new_with_mnemonic (_ ("_Enough"));
       gtk_widget_show (enoughbutton);
       gtk_dialog_add_action_widget (GTK_DIALOG (procw->processing), enoughbutton, GTK_RESPONSE_CANCEL);
-      GTK_WIDGET_SET_FLAGS (enoughbutton, GTK_CAN_DEFAULT);
-      
+      lives_widget_set_can_focus_and_default (enoughbutton);
+
       g_signal_connect (GTK_OBJECT (enoughbutton), "clicked",
 			G_CALLBACK (on_dth_cancel_clicked),
 			GINT_TO_POINTER(1));
@@ -2450,7 +2432,7 @@ static void create_threaded_dialog(gchar *text, gboolean has_cancel) {
     }
 
     gtk_dialog_add_action_widget (GTK_DIALOG (procw->processing), cancelbutton, GTK_RESPONSE_CANCEL);
-    GTK_WIDGET_SET_FLAGS (cancelbutton, GTK_CAN_DEFAULT);
+    lives_widget_set_can_focus_and_default (cancelbutton);
 
     g_signal_connect (GTK_OBJECT (cancelbutton), "clicked",
                       G_CALLBACK (on_dth_cancel_clicked),

@@ -1,6 +1,6 @@
 // callbacks.h
 // LiVES
-// (c) G. Finch <salsaman@xs4all.nl,salsaman@gmail.com> 2003 - 2012
+// (c) G. Finch <salsaman@xs4all.nl,salsaman@gmail.com> 2003 - 2013
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -12,10 +12,7 @@ on_LiVES_delete_event                  (GtkWidget       *widget,
                                         GdkEvent        *event,
                                         gpointer         user_data);
 
-gboolean
-return_true                  (GtkWidget       *widget,
-			      GdkEvent        *event,
-			      gpointer         user_data);
+gboolean return_true (GtkWidget *, GdkEvent *, gpointer);
 
 void
 on_open_activate                      (GtkMenuItem     *menuitem,
@@ -284,10 +281,6 @@ void
 on_mute_activate                (GtkMenuItem     *menuitem,
 				 gpointer         user_data);
 
-
-void
-on_general_button_clicked            (GtkButton       *button,
-				      gpointer         user_data);
 
 void
 on_details_button_clicked            (GtkButton       *button,

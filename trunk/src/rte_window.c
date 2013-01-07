@@ -1,6 +1,6 @@
 // rte_window.c
 // LiVES (lives-exe)
-// (c) G. Finch 2005 - 2012
+// (c) G. Finch 2005 - 2013
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -42,6 +42,8 @@ static GtkWidget **info_buttons;
 static GtkWidget *clear_all_button;
 static GtkWidget *save_keymap_button;
 static GtkWidget *load_keymap_button;
+
+static GtkWidget *datacon_dialog=NULL;
 
 static gulong *ch_fns;
 static gulong *gr_fns;
@@ -1055,7 +1057,7 @@ static void on_datacon_clicked (GtkButton *button, gpointer user_data) {
 
   //if (datacon_dialog!=NULL) on_datacon_cancel_clicked(NULL,NULL);
 
-  //make_datacon_window(key,mode);
+  datacon_dialog=make_datacon_window(key,mode);
 
 }
 
@@ -1192,7 +1194,7 @@ void fx_changed (GtkComboBox *combo, gpointer user_data) {
   gtk_combo_box_get_active_iter(combo,&iter1);
   model=gtk_combo_box_get_model(combo);
 
-  gtk_tree_model_get(model,&iter1,HASH_COLUMN,&hashname1);
+  gtk_tree_model_get(model,&iter1,HASH_COLUMN,&hashname1,-1);
 
   if (!strcmp(hashname1,hashname2)) {
     g_free(hashname1);
@@ -1235,7 +1237,7 @@ void fx_changed (GtkComboBox *combo, gpointer user_data) {
   gtk_combo_box_get_active_iter(combo,&iter1);
   model=gtk_combo_box_get_model(combo);
 
-  gtk_tree_model_get(model,&iter1,NAME_COLUMN,&txt);
+  gtk_tree_model_get(model,&iter1,NAME_COLUMN,&txt,-1);
   gtk_entry_set_text (GTK_ENTRY (combo_entries[key_mode]),txt);
   g_free(txt);
   g_free(hashname2);
@@ -1541,7 +1543,7 @@ GtkWidget * create_rte_window (void) {
       g_signal_connect (GTK_OBJECT (param_buttons[idx]), "clicked",
 			G_CALLBACK (on_params_clicked),GINT_TO_POINTER (idx));
 
-      g_signal_connect (GTK_OBJECT (param_buttons[idx]), "clicked",
+      g_signal_connect (GTK_OBJECT (conx_buttons[idx]), "clicked",
 			G_CALLBACK (on_datacon_clicked),GINT_TO_POINTER (idx));
       
       type_label_set_text(i,j);

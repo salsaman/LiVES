@@ -9,6 +9,8 @@ Fix crash in audio previews (open/append new audio).
 Add experimental neural_net compound effect.
 Add motion_analyser compound effect.
 Add mini tracker player in LiVES (fourKlives).
+Various widget updates.
+Make preview in fileselctor more responsive.
 
 
 

@@ -1,6 +1,6 @@
 // widget-helper.h
 // LiVES
-// (c) G. Finch 2012 <salsaman@gmail.com>
+// (c) G. Finch 2012 - 2013 <salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -24,6 +24,7 @@ typedef enum {
 
 #define GTK_VERSION_3 GTK_CHECK_VERSION(3,0,0) // set to 2,0,0 for testing
 
+typedef GdkEvent                          LiVESEvent;
 typedef GtkObject                         LiVESObject;
 typedef GtkWidget                         LiVESWidget;
 typedef GtkContainer                      LiVESContainer;
@@ -32,6 +33,7 @@ typedef GtkDialog                         LiVESDialog;
 typedef GtkBox                            LiVESBox;
 typedef GtkComboBox                       LiVESCombo;
 typedef GtkComboBox                       LiVESComboBox;
+typedef GtkButton                         LiVESButton;
 typedef GtkToggleButton                   LiVESToggleButton;
 typedef GtkTextView                       LiVESTextView;
 typedef GtkEntry                          LiVESEntry;
@@ -78,6 +80,7 @@ typedef gpointer                          LiVESObjectPtr;
 #define LIVES_DIALOG(widget) GTK_DIALOG(widget)
 #define LIVES_COMBO(widget) GTK_COMBO_BOX(widget)
 #define LIVES_COMBO_BOX(widget) GTK_COMBO_BOX(widget)
+#define LIVES_BUTTON(widget) GTK_BUTTON(widget)
 #define LIVES_RADIO_BUTTON(widget) GTK_RADIO_BUTTON(widget)
 #define LIVES_TOGGLE_BUTTON(widget) GTK_TOGGLE_BUTTON(widget)
 
@@ -361,6 +364,10 @@ void hide_cursor(LiVESXWindow *window);
 void get_border_size (LiVESWidget *win, int *bx, int *by);
 
 void lives_widget_set_can_focus_and_default(LiVESWidget *widget);
+
+void lives_general_button_clicked (LiVESButton *button, LiVESObjectPtr data_to_free);
+
+boolean lives_general_delete_event(LiVESWidget *widget, LiVESEvent *event, LiVESObjectPtr data_to_free);
 
 
 #endif

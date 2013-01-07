@@ -1,6 +1,6 @@
 // effects-weed.c
 // LiVES (lives-exe)
-// (c) G. Finch 2005 - 2012 (salsaman@gmail.com)
+// (c) G. Finch 2005 - 2013 (salsaman@gmail.com)
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -237,7 +237,7 @@ int num_compound_fx(weed_plant_t *plant) {
 
 
 
-static gboolean has_non_alpha_palette(weed_plant_t *ctmpl) {
+gboolean has_non_alpha_palette(weed_plant_t *ctmpl) {
   int *plist;
   int error;
   int npals=0;
@@ -250,6 +250,28 @@ static gboolean has_non_alpha_palette(weed_plant_t *ctmpl) {
   plist=weed_get_int_array(ctmpl,"palette_list",&error);
   for (i=0;i<npals;i++) {
     if (!weed_palette_is_alpha_palette(plist[i])) {
+      weed_free(plist);
+      return TRUE;
+    }
+  }
+  weed_free(plist);
+  return FALSE;
+}
+
+
+gboolean has_alpha_palette(weed_plant_t *ctmpl) {
+  int *plist;
+  int error;
+  int npals=0;
+
+  register int i;
+
+  if (!weed_plant_has_leaf(ctmpl,"palette_list")) return TRUE; ///< most probably audio
+  npals=weed_leaf_num_elements(ctmpl,"palette_list");
+
+  plist=weed_get_int_array(ctmpl,"palette_list",&error);
+  for (i=0;i<npals;i++) {
+    if (weed_palette_is_alpha_palette(plist[i])) {
       weed_free(plist);
       return TRUE;
     }
@@ -382,6 +404,17 @@ lives_fx_cat_t weed_filter_subcategorise (weed_plant_t *pl, lives_fx_cat_t categ
   return LIVES_FX_CAT_NONE;
 }
 
+
+gchar* weed_seed_type_to_text(int seed_type) {
+  switch (seed_type) {
+  case WEED_SEED_INT: return g_strdup(_("integer"));
+  case WEED_SEED_INT64: return g_strdup(_("int64"));
+  case WEED_SEED_BOOLEAN: return g_strdup(_("boolean"));
+  case WEED_SEED_DOUBLE: return g_strdup(_("double"));
+  case WEED_SEED_STRING: return g_strdup(_("string"));
+  default: return g_strdup(_("pointer"));
+  }
+}
 
 int num_alpha_channels(weed_plant_t *filter, boolean out) {
   // get number of alpha channels (in or out) for filter; including optional

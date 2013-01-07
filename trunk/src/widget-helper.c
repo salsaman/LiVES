@@ -1,6 +1,6 @@
 // widget-helper.c
 // LiVES
-// (c) G. Finch 2012 <salsaman@gmail.com>
+// (c) G. Finch 2012 - 2013 <salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -1125,6 +1125,29 @@ LiVESWidget *lives_combo_get_entry(LiVESCombo *widget) {
 void lives_widget_set_can_focus_and_default(LiVESWidget *widget) {
   lives_widget_set_can_focus(widget,TRUE);
   lives_widget_set_can_default(widget,TRUE);
+}
+
+
+
+void lives_general_button_clicked (LiVESButton *button, LiVESObjectPtr data_to_free) {
+  // destroy the button top-level and free data
+
+#ifdef GUI_GTK
+  gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
+
+  if (data_to_free!=NULL) g_free(data_to_free);
+#endif
+}
+
+
+boolean lives_general_delete_event(LiVESWidget *widget, LiVESEvent *event, LiVESObjectPtr data_to_free) {
+#ifdef GUI_GTK
+  gtk_widget_destroy(widget);
+
+  if (data_to_free!=NULL) g_free(data_to_free);
+#endif
+
+  return TRUE;
 }
 
 

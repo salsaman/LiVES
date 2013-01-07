@@ -1,6 +1,6 @@
 // callbacks.c
 // LiVES
-// (c) G. Finch 2003 - 2012 <salsaman@gmail.com>
+// (c) G. Finch 2003 - 2013 <salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -480,11 +480,7 @@ void lives_exit (void) {
 
 
 
-gboolean
-return_true                  (GtkWidget       *widget,
-			      GdkEvent        *event,
-		      	      gpointer         user_data)
-{
+gboolean return_true (GtkWidget *widget, GdkEvent *event, gpointer user_data) {
   // event callback that just returns TRUE
   return TRUE;
 }
@@ -5733,7 +5729,7 @@ on_about_activate                     (GtkMenuItem     *menuitem,
 			 "name", "LiVES",
 			 "version", LiVES_VERSION,
 			 "comments",comments,
-			 "copyright", "(C) 2002-2012 salsaman <salsaman@gmail.com> and others",
+			 "copyright", "(C) 2002-2013 salsaman <salsaman@gmail.com> and others",
 			 "website", "http://lives.sourceforge.net",
 			 //			 "authors", authors,
 			 "license", license,
@@ -5745,7 +5741,7 @@ on_about_activate                     (GtkMenuItem     *menuitem,
 
 #else
 
-  gchar *mesg=g_strdup_printf(_ ("LiVES Version %s\n(c) G. Finch (salsaman) %s\n\nReleased under the GPL 3 or later (http://www.gnu.org/licenses/gpl.txt)\nLiVES is distributed WITHOUT WARRANTY\n\nContact the author at:\nsalsaman@gmail.com\nHomepage: http://lives.sourceforge.net"),LiVES_VERSION,"2002-2012");
+  gchar *mesg=g_strdup_printf(_ ("LiVES Version %s\n(c) G. Finch (salsaman) %s\n\nReleased under the GPL 3 or later (http://www.gnu.org/licenses/gpl.txt)\nLiVES is distributed WITHOUT WARRANTY\n\nContact the author at:\nsalsaman@gmail.com\nHomepage: http://lives.sourceforge.net"),LiVES_VERSION,"2002-2013");
   do_error_dialog(mesg);
   g_free(mesg);
 
@@ -6793,12 +6789,6 @@ void on_cancel_button1_clicked (GtkWidget *widget, gpointer user_data) {
 }
 
 
-gboolean on_cancel_button1_clicked_del(GtkWidget *widget, GdkEvent *event, gpointer user_data) {
-  on_cancel_button1_clicked(widget,user_data);
-  return TRUE;
-}
-
-
 
 
 void
@@ -7028,18 +7018,6 @@ void on_cancel_keep_button_clicked (GtkButton *button, gpointer user_data) {
   if (com!=NULL) g_free(com);
 }
 
-
-void
-on_general_button_clicked            (GtkButton       *button,
-				      gpointer         user_data)
-{
-  gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
-
-  if (user_data!=NULL) {
-    g_free(user_data);
-  }
-
-}
 
 
 
@@ -8718,7 +8696,7 @@ void popup_lmap_errors(GtkMenuItem *menuitem, gpointer user_data) {
   gtk_dialog_add_action_widget (GTK_DIALOG (textwindow->dialog), button, GTK_RESPONSE_OK);
 
   g_signal_connect (GTK_OBJECT (button), "clicked",
-		    G_CALLBACK (on_general_button_clicked),
+		    G_CALLBACK (lives_general_button_clicked),
 		    textwindow);
 
   gtk_container_set_border_width (GTK_CONTAINER (button), 12);
@@ -11942,7 +11920,7 @@ void on_lerrors_clear_clicked (GtkButton *button, gpointer user_data) {
 
   clear_lmap_errors();
   save_layout_map(NULL,NULL,NULL,NULL);
-  if (close) on_cancel_button1_clicked(GTK_WIDGET(button),textwindow);
+  if (close) lives_general_button_clicked(button,textwindow);
   else {
     gtk_widget_queue_draw(gtk_widget_get_toplevel(GTK_WIDGET(button)));
     gtk_widget_set_sensitive(textwindow->clear_button,FALSE);

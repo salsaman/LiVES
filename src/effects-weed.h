@@ -57,6 +57,9 @@ weed_plant_t *weed_instance_get_filter(weed_plant_t *inst, boolean get_compound_
 int num_compound_fx(weed_plant_t *plant); // return number of filters in a compund fx (1 if it is not compound) - works for filter or inst
 void load_compound_fx(void);
 
+gboolean has_non_alpha_palette(weed_plant_t *ctmpl);
+gboolean has_alpha_palette(weed_plant_t *ctmpl);
+
 gboolean is_audio_channel_in(weed_plant_t *inst, int chnum);
 gboolean has_video_chans_in(weed_plant_t *filter, gboolean count_opt);
 gboolean has_audio_chans_in(weed_plant_t *filter, gboolean count_opt);
@@ -72,6 +75,8 @@ boolean has_video_filters(boolean analysers_only);
 lives_fx_cat_t weed_filter_categorise (weed_plant_t *pl, int in_channels, int out_channels);
 lives_fx_cat_t weed_filter_subcategorise (weed_plant_t *pl, lives_fx_cat_t category, gboolean count_opt);
 #endif
+
+gchar* weed_seed_type_to_text(int seed_type);
 
 gboolean has_usable_palette(weed_plant_t *chantmpl);
 int check_weed_palette_list (int *palette_list, int num_palettes, int palette);

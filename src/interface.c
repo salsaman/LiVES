@@ -438,8 +438,7 @@ xprocess * create_processing (const gchar *text) {
 
 
 
-fileinfo*
-create_info_window (gint audio_channels, gboolean is_mt) {
+fileinfo *create_info_window (gint audio_channels, gboolean is_mt) {
   GtkWidget *vbox5;
   GtkWidget *frame4;
   GtkWidget *fixed3;
@@ -750,11 +749,11 @@ create_info_window (gint audio_channels, gboolean is_mt) {
   }
 
   g_signal_connect (GTK_OBJECT (button8), "clicked",
-                      G_CALLBACK (on_cancel_button1_clicked),
+                      G_CALLBACK (lives_general_button_clicked),
                       filew);
 
   g_signal_connect (GTK_OBJECT (filew->info_window), "delete_event",
-                      G_CALLBACK (on_cancel_button1_clicked_del),
+                      G_CALLBACK (lives_general_delete_event),
                       filew);
 
   accel_group = GTK_ACCEL_GROUP(gtk_accel_group_new ());
@@ -1038,7 +1037,7 @@ create_dialog3 (const gchar *text, gboolean is_blocking, gint mask) {
   }
 
   g_signal_connect (GTK_OBJECT (info_ok_button), "clicked",
-		    G_CALLBACK (on_general_button_clicked),
+		    G_CALLBACK (lives_general_button_clicked),
 		    NULL);
 
   return dialog3;
@@ -1136,7 +1135,7 @@ text_window *create_text_window (const gchar *title, const gchar *text, GtkTextB
 
     
     g_signal_connect (GTK_OBJECT (okbutton), "clicked",
-		      G_CALLBACK (on_cancel_button1_clicked),
+		      G_CALLBACK (lives_general_button_clicked),
 		      textwindow);
     
   }
@@ -1479,7 +1478,7 @@ create_insert_dialog (void)
                       G_CALLBACK (on_boolean_toggled),
                       &mainw->insert_after);
   g_signal_connect (GTK_OBJECT (cancelbutton1), "clicked",
-                      G_CALLBACK (on_cancel_button1_clicked),
+                      G_CALLBACK (lives_general_button_clicked),
                       insertw);
   g_signal_connect (GTK_OBJECT (okbutton1), "clicked",
                       G_CALLBACK (on_insert_activate),
@@ -1802,7 +1801,7 @@ _entryw* create_location_dialog (int type) {
 
 
   g_signal_connect (GTK_OBJECT (cancelbutton), "clicked",
-		    G_CALLBACK (on_cancel_button1_clicked),
+		    G_CALLBACK (lives_general_button_clicked),
 		    locw);
 
   if (type==1) 
@@ -2059,7 +2058,7 @@ _entryw* create_rename_dialog (gint type) {
 
   if (type!=4&&type!=2&&type!=5) {
     g_signal_connect (GTK_OBJECT (cancelbutton), "clicked",
-		      G_CALLBACK (on_cancel_button1_clicked),
+		      G_CALLBACK (lives_general_button_clicked),
 		      renamew);
   }
   else {
@@ -2651,7 +2650,7 @@ create_cdtrack_dialog (gint type, gpointer user_data)
 
   if (type!=4&&type!=5) {
     g_signal_connect (GTK_OBJECT (cancelbutton), "clicked",
-		      G_CALLBACK (on_cancel_button1_clicked),
+		      G_CALLBACK (lives_general_button_clicked),
 		      NULL);
   }
 
@@ -3035,7 +3034,7 @@ create_rp_dialog (void)
   gtk_widget_grab_default (okbutton11);
 
   g_signal_connect(okbutton11, "clicked", G_CALLBACK (on_xmms_ran_ok_clicked),NULL);
-  g_signal_connect(cancelbutton12, "clicked", G_CALLBACK (on_cancel_button1_clicked),xranw);
+  g_signal_connect(cancelbutton12, "clicked", G_CALLBACK (lives_general_button_clicked),xranw);
   g_signal_connect(button13, "clicked", G_CALLBACK (on_filesel_simple_clicked),xranw->dir);
   g_signal_connect (GTK_OBJECT (xranw->rp_dialog), "delete_event",
                       G_CALLBACK (return_true),

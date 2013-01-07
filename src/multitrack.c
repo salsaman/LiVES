@@ -8790,11 +8790,11 @@ void mt_init_tracks (lives_mt *mt, gboolean set_min_max) {
     g_signal_connect (GTK_OBJECT (mt->timeline), "motion_notify_event",
 		      G_CALLBACK (return_true),
 		      NULL);
-    
+
     g_signal_connect (GTK_OBJECT (mt->timeline_eb), "motion_notify_event",
 		      G_CALLBACK (on_timeline_update),
 		      (gpointer)mt);
-    
+
     g_signal_connect (GTK_OBJECT (mt->timeline_eb), "button_release_event",
 		      G_CALLBACK (on_timeline_release),
 		      (gpointer)mt);
@@ -8802,7 +8802,7 @@ void mt_init_tracks (lives_mt *mt, gboolean set_min_max) {
     g_signal_connect (GTK_OBJECT (mt->timeline_eb), "button_press_event",
 		      G_CALLBACK (on_timeline_press),
 		      (gpointer)mt);
-    
+
     g_signal_connect (GTK_OBJECT (mt->timeline_reg), "motion_notify_event",
 		      G_CALLBACK (on_timeline_update),
 		      (gpointer)mt);
@@ -18119,8 +18119,6 @@ void on_save_event_list_activate (GtkMenuItem *menuitem, gpointer user_data) {
   int retval2;
   double *layout_map_audio;
   GtkWidget *ar_checkbutton;
-  GtkWidget *eventbox;
-  GtkWidget *label;
   GtkWidget *hbox;
   gboolean orig_ar_layout=prefs->ar_layout,ar_layout;
   weed_plant_t *event_list;
@@ -19773,8 +19771,6 @@ weed_plant_t *load_event_list(lives_mt *mt, gchar *eload_file) {
   gboolean retval=TRUE;
 
   GtkWidget *ar_checkbutton;
-  GtkWidget *eventbox;
-  GtkWidget *label;
   GtkWidget *hbox;
 
   if (eload_file==NULL) {

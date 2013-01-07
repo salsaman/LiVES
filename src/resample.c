@@ -1941,7 +1941,7 @@ create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox) {
 
     if (type<8||type==11) {
       g_signal_connect (GTK_OBJECT (cancelbutton13), "clicked",
-			G_CALLBACK (on_cancel_button1_clicked),
+			G_CALLBACK (lives_general_button_clicked),
 			resaudw);
 
       if (type==1) {
@@ -2132,7 +2132,7 @@ create_new_pb_speed (gshort type)
 		    G_CALLBACK (on_boolean_toggled),
 		    &mainw->fx1_bool);
   g_signal_connect (GTK_OBJECT (cancelbutton4), "clicked",
-		    G_CALLBACK (on_cancel_button1_clicked),
+		    G_CALLBACK (lives_general_button_clicked),
 		    NULL);
   if (type==1) {
     g_signal_connect (GTK_OBJECT (change_pb_ok), "clicked",

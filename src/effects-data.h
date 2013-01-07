@@ -120,3 +120,8 @@ boolean cconx_chain_data(int key, int mode);
 gchar *cconx_list(int okey, int omode, int ocnum);
 
 boolean cconx_chain_data_internal(weed_plant_t *ichan);
+
+
+//////////////////////////////////////////////////////////
+
+GtkWidget *make_datacon_window(int key, int mode);

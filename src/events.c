@@ -2043,7 +2043,6 @@ GtkWidget *events_rec_dialog (gboolean allow_mt) {
   GtkWidget *dialog_vbox;
   GtkWidget *vbox;
   GtkWidget *hbox;
-  GtkWidget *eventbox;
   GtkWidget *label;
   GtkWidget *radiobutton;
   GtkWidget *okbutton;

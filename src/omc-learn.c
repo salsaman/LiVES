@@ -1378,6 +1378,7 @@ static omclearn_w *create_omclearn_dialog(void) {
   gtk_container_add (GTK_CONTAINER (hbuttonbox), ok_button);
   
   lives_widget_set_can_focus_and_default (ok_button);
+
   gtk_widget_grab_default (ok_button);
   
   g_signal_connect (GTK_OBJECT (ok_button), "clicked",

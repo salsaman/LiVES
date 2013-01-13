@@ -8,7 +8,7 @@
 // functions for chaining and data passing between fx plugins
 
 
-//#define DEBUG_PCONX
+#define DEBUG_PCONX
 
 #if HAVE_SYSTEM_WEED
 #include <weed/weed.h>
@@ -364,6 +364,7 @@ void pconx_add_connection(int okey, int omode, int opnum, int ikey, int imode, i
 #ifdef DEBUG_PCONX
     g_print("added another pconx from %d %d %d to %d %d %d\n",okey,omode,opnum,ikey,imode,ipnum);
 #endif
+ g_print("mpc is %p\n",mainw->pconx);
 
     pthread_mutex_unlock(&mainw->data_mutex);
 
@@ -531,7 +532,7 @@ boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, weed_plant_t *dpa
 
   register int i;
 
-   if (dparam==sparam) return FALSE;
+  if (dparam==sparam) return FALSE;
 
   nsvals=weed_leaf_num_elements(sparam,"value");
   ondvals=ndvals=weed_leaf_num_elements(dparam,"value");
@@ -1132,6 +1133,8 @@ boolean pconx_chain_data(int key, int mode) {
   int copyto=-1;
 
   register int i;
+
+  g_print("pt a\n");
 
   if (key>-1) {
     if (mainw->is_rendering) {
@@ -1783,45 +1786,55 @@ boolean cconx_chain_data_internal(weed_plant_t *ichan) {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// cannel/param connection window
+// channel/param connection window
 
 // still TODO - high priority:
-// autoscale buttons
-// discon all button
 
-// add a new nb page
-// read off vals *
-// ad to map *
-
-// add to defualt keymap
+// add to default keymap
 
 // read from keymap
-// free data after
+
+// add a new nb page
+
+// show values
 
 
-static GtkWidget *acbutton,*apbutton;
+static lives_pconnect_t *pconx;
+static lives_cconnect_t *cconx;
 
-typedef struct {
-  weed_plant_t *filter;
-  GtkWidget **cfxcombo;
-  GtkWidget **pfxcombo;
-  GtkWidget **pcombo;
-  GtkWidget **ccombo;
-  GtkWidget **acheck;
-  GtkWidget *allcheckc;
-  gint num_alpha;
-  gint num_params;
-} lives_conx_w;
+static GtkWidget *acbutton,*apbutton,*disconbutton;
 
+
+static void do_chan_connected_error(lives_conx_w *);
+static void do_param_connected_error(lives_conx_w *);
+static void do_param_incompatible_error(lives_conx_w *);
 
 
 enum {
   KEY_COLUMN,
   NAME_COLUMN,
-  IDX_COLUMN,
+  KEYVAL_COLUMN,
+  MODEVAL_COLUMN,
   NUM_COLUMNS
 };
 
+
+
+static void disconbutton_clicked(GtkButton *button, gpointer user_data) {
+  // disconnect all channels/params
+  lives_conx_w *conxwp=(lives_conx_w *)user_data;
+
+  register int i;
+
+  for (i=0;i<conxwp->num_alpha;i++) {
+    gtk_combo_box_set_active (LIVES_COMBO(conxwp->cfxcombo[i]),0);
+  }
+
+  for (i=0;i<conxwp->num_params;i++) {
+    gtk_combo_box_set_active (LIVES_COMBO(conxwp->pfxcombo[i]),0);
+  }
+
+}
 
 
 static void apbutton_clicked(GtkButton *button, gpointer user_data) {
@@ -1837,21 +1850,22 @@ static void apbutton_clicked(GtkButton *button, gpointer user_data) {
   weed_plant_t **iparams,**oparams;
   weed_plant_t *filter,*param,*oparam;
 
-  int fidx;
+  int fidx,key,mode;
   int niparams;
   int error;
 
-  register int i,j=0,k=0,l=0;
+  register int i,j=0,k=0;
 
   if (!gtk_combo_box_get_active_iter(GTK_COMBO_BOX(combo),&iter)) return;
   model=gtk_combo_box_get_model(GTK_COMBO_BOX(combo));
 
-  gtk_tree_model_get(model,&iter,IDX_COLUMN,&fidx,-1);
-
+  gtk_tree_model_get(model,&iter,KEYVAL_COLUMN,&key,MODEVAL_COLUMN,&mode,-1);
+  fidx=rte_keymode_get_filter_idx(key,mode);
 
   if (fidx==-1) return;
 
   tpath=gtk_tree_model_get_path(model,&iter);
+  gtk_tree_model_get_iter(model,&iter,tpath);
 
   // find the receiving filter/instance
   filter=get_weed_filter(fidx);
@@ -1859,30 +1873,37 @@ static void apbutton_clicked(GtkButton *button, gpointer user_data) {
   iparams=weed_get_plantptr_array(filter,"in_parameter_templates",&error);
   niparams=weed_leaf_num_elements(filter,"in_parameter_templates");
 
-  oparams=weed_get_plantptr_array(conxwp->filter,"out_parameter_templates",&error);
+  oparams=weed_get_plantptr_array(rte_keymode_get_filter(conxwp->okey+1,conxwp->omode),"out_parameter_templates",&error);
 
   // set all pcombo with params
   for (i=0;i<niparams;i++) {
 
     param=iparams[j++];
-    oparam=oparams[k];
 
-    if (weed_plant_has_leaf(param,"host_internal_connection")) continue;
-
-    if (params_compatible(oparam,param)) {
-      if (k>0) {
-	model=gtk_combo_box_get_model(GTK_COMBO_BOX(conxwp->pfxcombo[k]));
-	gtk_tree_model_get_iter(model,&iter,tpath);
-	gtk_combo_box_set_active_iter(LIVES_COMBO(conxwp->pfxcombo[k]),&iter);
-	while (g_main_context_iteration(NULL,FALSE));
-      }
-      gtk_combo_box_set_active(LIVES_COMBO(conxwp->pcombo[k++]),l);
+    if (weed_plant_has_leaf(param,"host_internal_connection")) {
+      i--;
+      continue;
     }
 
-    l++;
+    if (pconx_get_out_param(key,mode,j-1,NULL)!=NULL) continue;
+
+    oparam=oparams[k];
+
+    if (!params_compatible(oparam,param)) continue;
+ 
+    if (k>0) {
+      model=gtk_combo_box_get_model(GTK_COMBO_BOX(conxwp->pfxcombo[k]));
+      gtk_tree_model_get_iter(model,&iter,tpath);
+      gtk_combo_box_set_active_iter(LIVES_COMBO(conxwp->pfxcombo[k]),&iter);
+      while (g_main_context_iteration(NULL,FALSE));
+    }
+    gtk_combo_box_set_active(LIVES_COMBO(conxwp->pcombo[k++]),i);
 
     if (k>=conxwp->num_params) break;
   }
+
+  // TODO - set others to blank ??
+
 
   gtk_tree_path_free(tpath);
 
@@ -1902,19 +1923,20 @@ static void acbutton_clicked(GtkButton *button, gpointer user_data) {
   GtkTreeModel *model;
   GtkTreePath *tpath;
 
-  weed_plant_t **ichans,**ochans;
+  weed_plant_t **ichans;
   weed_plant_t *filter,*chan;
 
-  int fidx;
+  int fidx,key,mode;
   int nichans;
   int error;
 
-  register int i,j=0,k=0,l=0;
+  register int i,j=0,k=0;
 
   if (!gtk_combo_box_get_active_iter(GTK_COMBO_BOX(combo),&iter)) return;
   model=gtk_combo_box_get_model(GTK_COMBO_BOX(combo));
 
-  gtk_tree_model_get(model,&iter,IDX_COLUMN,&fidx,-1);
+  gtk_tree_model_get(model,&iter,KEYVAL_COLUMN,&key,MODEVAL_COLUMN,&mode,-1);
+  fidx=rte_keymode_get_filter_idx(key,mode);
 
 
   if (fidx==-1) return;
@@ -1927,14 +1949,17 @@ static void acbutton_clicked(GtkButton *button, gpointer user_data) {
   ichans=weed_get_plantptr_array(filter,"in_channel_templates",&error);
   nichans=weed_leaf_num_elements(filter,"in_channel_templates");
 
-  ochans=weed_get_plantptr_array(conxwp->filter,"out_channel_templates",&error);
-
-  // set all pcombo with params
+  // set all ccombo with chans
   for (i=0;i<nichans;i++) {
 
     chan=ichans[j++];
 
-    if (!has_alpha_palette(chan)) continue;
+    if (!has_alpha_palette(chan)) {
+      i--;
+      continue;
+    }
+
+    if (cconx_get_out_alpha(key,mode,j-1)!=NULL) continue;
 
     if (k>0) {
       model=gtk_combo_box_get_model(GTK_COMBO_BOX(conxwp->cfxcombo[k]));
@@ -1942,17 +1967,16 @@ static void acbutton_clicked(GtkButton *button, gpointer user_data) {
       gtk_combo_box_set_active_iter(LIVES_COMBO(conxwp->cfxcombo[k]),&iter);
       while (g_main_context_iteration(NULL,FALSE));
     }
-    gtk_combo_box_set_active(LIVES_COMBO(conxwp->ccombo[k++]),l);
-
-    l++;
-
+    gtk_combo_box_set_active(LIVES_COMBO(conxwp->ccombo[k++]),i);
     if (k>=conxwp->num_alpha) break;
   }
+
+  // TODO - set others to blank
+
 
   gtk_tree_path_free(tpath);
 
   weed_free(ichans);
-  weed_free(ochans);
 }
 
 
@@ -1970,7 +1994,7 @@ static void dfxc_changed(GtkWidget *combo, gpointer user_data) {
 
   gchar *channame;
 
-  int fidx;
+  int fidx,key,mode;
   int nichans;
   int error;
   int ours=-1;
@@ -1980,7 +2004,8 @@ static void dfxc_changed(GtkWidget *combo, gpointer user_data) {
   if (!gtk_combo_box_get_active_iter(GTK_COMBO_BOX(combo),&iter)) return;
   model=gtk_combo_box_get_model(GTK_COMBO_BOX(combo));
 
-  gtk_tree_model_get(model,&iter,IDX_COLUMN,&fidx,-1);
+  gtk_tree_model_get(model,&iter,KEYVAL_COLUMN,&key,MODEVAL_COLUMN,&mode,-1);
+  fidx=rte_keymode_get_filter_idx(key,mode);
 
   for (i=0;i<conxwp->num_alpha;i++) {
     if (conxwp->cfxcombo[i]==combo) {
@@ -1990,7 +2015,7 @@ static void dfxc_changed(GtkWidget *combo, gpointer user_data) {
   }
 
   if (fidx==-1) {
-    lives_combo_set_active_string (LIVES_COMBO(combo),mainw->string_constants[LIVES_STRING_CONSTANT_NONE]);
+    gtk_combo_box_set_active (LIVES_COMBO(combo),0);
     lives_combo_populate(LIVES_COMBO(conxwp->ccombo[ours]),NULL);
     lives_combo_set_active_string (LIVES_COMBO(conxwp->ccombo[ours]),"");
     if (ours==0) gtk_widget_set_sensitive(acbutton,FALSE);
@@ -2046,7 +2071,7 @@ static void dfxp_changed(GtkWidget *combo, gpointer user_data) {
 
   int defelems,pflags,stype;
 
-  int fidx;
+  int fidx,key,mode;
   int niparams;
   int error;
   int ours=-1;
@@ -2066,15 +2091,15 @@ static void dfxp_changed(GtkWidget *combo, gpointer user_data) {
 
   model=gtk_combo_box_get_model(GTK_COMBO_BOX(combo));
 
-  gtk_tree_model_get(model,&iter,IDX_COLUMN,&fidx,-1);
-
+  gtk_tree_model_get(model,&iter,KEYVAL_COLUMN,&key,MODEVAL_COLUMN,&mode,-1);
+  fidx=rte_keymode_get_filter_idx(key,mode);
 
   if (fidx==-1) {
     GtkWidget *acheck=conxwp->acheck[ours];
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(acheck),FALSE);
     gtk_widget_set_sensitive(acheck,FALSE);
 
-    lives_combo_set_active_string (LIVES_COMBO(combo),mainw->string_constants[LIVES_STRING_CONSTANT_NONE]);
+    gtk_combo_box_set_active (LIVES_COMBO(combo),0);
 
     lives_combo_populate(LIVES_COMBO(conxwp->pcombo[ours]),NULL);
     lives_combo_set_active_string (LIVES_COMBO(conxwp->pcombo[ours]),"");
@@ -2156,7 +2181,7 @@ static void dpp_changed(GtkWidget *combo, gpointer user_data) {
 
   weed_plant_t *param=NULL,*oparam;
 
-  weed_plant_t *filter=conxwp->filter;
+  weed_plant_t *filter=rte_keymode_get_filter(conxwp->okey+1,conxwp->omode);
 
   GtkWidget *acheck;
   GtkWidget *fxcombo;
@@ -2169,12 +2194,33 @@ static void dpp_changed(GtkWidget *combo, gpointer user_data) {
 
   int niparams;
 
-  int fidx,ours=-1,error;
+  int fidx,key,mode,ours=-1,error;
   gint idx=gtk_combo_box_get_active(GTK_COMBO_BOX(combo));
+
+  boolean hasone=FALSE;
 
   register int i,j=0;
 
-  if (idx==-1) return;
+  if (idx==-1) {
+    for (i=0;i<conxwp->num_params;i++) if (gtk_combo_box_get_active(GTK_COMBO_BOX(conxwp->pcombo[i]))>-1) {
+	hasone=TRUE;
+	break;
+      }
+    if (!hasone) for (i=0;i<conxwp->num_alpha;i++) if (gtk_combo_box_get_active(GTK_COMBO_BOX(conxwp->ccombo[i]))>-1) {
+	hasone=TRUE;
+	break;
+      }
+    if (!hasone) gtk_widget_set_sensitive(disconbutton,FALSE);
+
+    if (conxwp->ikeys[conxwp->num_alpha+ours]!=0) pconx_delete(conxwp->okey,conxwp->omode,ours,
+							       conxwp->ikeys[conxwp->num_alpha+ours]-1,
+							       conxwp->imodes[conxwp->num_alpha+ours],
+							       j);
+    conxwp->ikeys[conxwp->num_alpha+ours]=0;
+    conxwp->imodes[conxwp->num_alpha+ours]=0;
+
+    return;
+  }
 
   for (i=0;i<conxwp->num_params;i++) {
     if (conxwp->pcombo[i]==combo) {
@@ -2186,8 +2232,11 @@ static void dpp_changed(GtkWidget *combo, gpointer user_data) {
   fxcombo=conxwp->pfxcombo[ours];
 
   if (!gtk_combo_box_get_active_iter(GTK_COMBO_BOX(fxcombo),&iter)) return;
+
   model=gtk_combo_box_get_model(GTK_COMBO_BOX(fxcombo));
-  gtk_tree_model_get(model,&iter,IDX_COLUMN,&fidx,-1);
+
+  gtk_tree_model_get(model,&iter,KEYVAL_COLUMN,&key,MODEVAL_COLUMN,&mode,-1);
+  fidx=rte_keymode_get_filter_idx(key,mode);
 
   oparams=weed_get_plantptr_array(filter,"out_parameter_templates",&error);
   oparam=oparams[ours];
@@ -2199,7 +2248,7 @@ static void dpp_changed(GtkWidget *combo, gpointer user_data) {
   niparams=weed_leaf_num_elements(filter,"in_parameter_templates");
 
   for (i=0;i<niparams;i++) {
-    param=iparams[j];
+    param=iparams[i];
     if (weed_plant_has_leaf(param,"host_internal_connection")) continue;
     if (j==idx) break;
     j++;
@@ -2208,11 +2257,20 @@ static void dpp_changed(GtkWidget *combo, gpointer user_data) {
   weed_free(iparams);
   weed_free(oparams);
 
+  j=i;
+
   if (!params_compatible(oparam,param)) {
-    // do dialog
+    do_param_incompatible_error(conxwp);
     return;
 
   }
+
+  if (pconx_get_out_param(key,mode,j,NULL)!=NULL) {
+    // dest param already has a connection
+    do_param_connected_error(conxwp);
+    return;
+  }
+
 
   acheck=conxwp->acheck[ours];
 
@@ -2232,8 +2290,214 @@ static void dpp_changed(GtkWidget *combo, gpointer user_data) {
 
   weed_free(paramname);
 
+  if (conxwp->ikeys[conxwp->num_alpha+ours]!=0) pconx_delete(conxwp->okey,conxwp->omode,ours,
+							     conxwp->ikeys[conxwp->num_alpha+ours]-1,
+							     conxwp->imodes[conxwp->num_alpha+ours],
+							     j);
+
+  pconx_add_connection(conxwp->okey,conxwp->omode,ours,key-1,mode,j,lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(acheck)));
+  g_print("mpc 2 is %p\n",mainw->pconx);
+  conxwp->ikeys[conxwp->num_alpha+ours]=key;
+  conxwp->imodes[conxwp->num_alpha+ours]=mode;
+
+  gtk_widget_set_sensitive(disconbutton,TRUE);
+
 }
 
+
+static void dpc_changed(GtkWidget *combo, gpointer user_data) {
+  lives_conx_w *conxwp=(lives_conx_w *)user_data;
+
+  weed_plant_t **ichans,**ochans;
+
+  weed_plant_t *filter;
+  weed_plant_t *chan;
+
+  GtkTreeModel *model;
+
+  GtkTreeIter iter;
+
+  GtkWidget *fxcombo;
+
+  boolean hasone=FALSE;
+
+  int nichans,nochans;
+
+  int key,mode,fidx,ours=-1,error;
+
+  gint idx=gtk_combo_box_get_active(GTK_COMBO_BOX(combo));
+
+  register int i,j=0;
+
+  for (i=0;i<conxwp->num_alpha;i++) {
+    if (conxwp->ccombo[i]==combo) {
+      ours=i;
+      break;
+    }
+  }
+
+  if (gtk_combo_box_get_active(GTK_COMBO_BOX(combo))==-1) {
+
+    for (i=0;i<conxwp->num_alpha;i++) if (gtk_combo_box_get_active(GTK_COMBO_BOX(conxwp->ccombo[i]))>-1) {
+	hasone=TRUE;
+	break;
+      }
+    if (!hasone) for (i=0;i<conxwp->num_params;i++) if (gtk_combo_box_get_active(GTK_COMBO_BOX(conxwp->pcombo[i]))>-1) {
+	hasone=TRUE;
+	break;
+      }
+
+    if (!hasone) gtk_widget_set_sensitive(disconbutton,FALSE);
+
+    if (conxwp->ikeys[ours]!=0) cconx_delete(conxwp->okey,conxwp->omode,ours,
+					     conxwp->ikeys[ours]-1,
+					     conxwp->imodes[ours],
+					     j);
+
+    conxwp->ikeys[ours]=0;
+    conxwp->imodes[ours]=0;
+
+    return;
+  }
+
+
+  fxcombo=conxwp->cfxcombo[ours];
+
+  if (!gtk_combo_box_get_active_iter(GTK_COMBO_BOX(fxcombo),&iter)) return;
+
+  model=gtk_combo_box_get_model(GTK_COMBO_BOX(fxcombo));
+  gtk_tree_model_get(model,&iter,KEYVAL_COLUMN,&key,MODEVAL_COLUMN,&mode,-1);
+  fidx=rte_keymode_get_filter_idx(key,mode);
+
+  // find the receiving filter/instance
+  filter=get_weed_filter(fidx);
+
+  ichans=weed_get_plantptr_array(filter,"in_channel_templates",&error);
+  nichans=weed_leaf_num_elements(filter,"in_channel_templates");
+
+  for (i=0;i<nichans;i++) {
+    chan=ichans[i];
+    if (!has_alpha_palette(chan)) continue;
+    if (j==idx) break;
+    j++;
+  }
+
+  weed_free(ichans);
+
+  j=i;
+
+  if (cconx_get_out_alpha(key,mode,j)!=NULL) {
+    // dest chan already has a connection
+    do_chan_connected_error(conxwp);
+    return;
+  }
+
+  if (conxwp->ikeys[ours]!=0) cconx_delete(conxwp->okey,conxwp->omode,ours,
+					   conxwp->ikeys[ours]-1,
+					   conxwp->imodes[ours],
+					   j);
+
+  filter=rte_keymode_get_filter(conxwp->okey+1,conxwp->omode);
+  ochans=weed_get_plantptr_array(filter,"out_channel_templates",&error);
+  nochans=weed_leaf_num_elements(filter,"out_channel_templates");
+
+  for (i=0;i<nochans;i++) {
+    chan=ochans[i];
+    if (!has_alpha_palette(chan)) {
+      ours++;
+      continue;
+    }
+    if (i==ours) break;
+  }
+
+  weed_free(ochans);
+
+
+  cconx_add_connection(conxwp->okey,conxwp->omode,ours,key-1,mode,j);
+
+  conxwp->ikeys[ours]=key;
+  conxwp->imodes[ours]=mode;
+
+  gtk_widget_set_sensitive(disconbutton,TRUE);
+
+}
+
+
+
+static void on_allcheck_toggled(GtkToggleButton *button, gpointer user_data) {
+ lives_conx_w *conxwp=(lives_conx_w *)user_data;
+ boolean on=lives_toggle_button_get_active(button);
+
+ register int i;
+
+ for (i=0;i<conxwp->num_params;i++) {
+   if (lives_widget_is_sensitive(conxwp->acheck[i])) lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(conxwp->acheck[i]),on);
+ }
+
+}
+
+
+static void on_acheck_toggled(GtkToggleButton *acheck, gpointer user_data) {
+  lives_conx_w *conxwp=(lives_conx_w *)user_data;
+
+  weed_plant_t **iparams;
+  weed_plant_t *param,*filter;
+
+  GtkTreeModel *model;
+
+  GtkTreeIter iter;
+
+  GtkWidget *fxcombo;
+
+  boolean on=lives_toggle_button_get_active(acheck);
+
+  int ours=-1,fidx,key,mode,error,niparams;
+  gint idx;
+
+  register int i,j=0;
+
+  for (i=0;i<conxwp->num_params;i++) {
+    if (conxwp->acheck[i]==(GtkWidget *)acheck) {
+      ours=i;
+      break;
+    }
+  }
+
+  idx=gtk_combo_box_get_active(GTK_COMBO_BOX(conxwp->pcombo[ours]));
+
+  fxcombo=conxwp->pfxcombo[ours];
+
+  model=gtk_combo_box_get_model(GTK_COMBO_BOX(fxcombo));
+  gtk_combo_box_get_active_iter(GTK_COMBO_BOX(fxcombo),&iter);
+
+  gtk_tree_model_get(model,&iter,KEYVAL_COLUMN,&key,MODEVAL_COLUMN,&mode,-1);
+
+  fidx=rte_keymode_get_filter_idx(key,mode);
+
+
+  // find the receiving filter/instance
+  filter=get_weed_filter(fidx);
+
+  iparams=weed_get_plantptr_array(filter,"in_parameter_templates",&error);
+  niparams=weed_leaf_num_elements(filter,"in_parameter_templates");
+
+  for (i=0;i<niparams;i++) {
+    param=iparams[j];
+    if (weed_plant_has_leaf(param,"host_internal_connection")) continue;
+    if (j==idx) break;
+    j++;
+  }
+
+  j=i;
+
+  weed_free(iparams);
+
+  // TODO ***
+
+  //pconx_delete(conxwp->okey,conxwp->omode,ours,key-1,mode,j);
+  //pconx_add_connection(conxwp->okey,conxwp->omode,ours,key-1,mode,j,on);
+
+}
 
 
 GtkTreeModel *inparam_fx_model (boolean is_chans) {
@@ -2255,13 +2519,14 @@ GtkTreeModel *inparam_fx_model (boolean is_chans) {
 
   register int i,j;
 
-  tstore=gtk_tree_store_new (NUM_COLUMNS, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INT);
+  tstore=gtk_tree_store_new (NUM_COLUMNS, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INT, G_TYPE_INT);
 
   gtk_tree_store_append (tstore, &iter1, NULL);  /* Acquire an iterator */
   gtk_tree_store_set(tstore,&iter1,
 		     KEY_COLUMN,mainw->string_constants[LIVES_STRING_CONSTANT_NONE],
 		     NAME_COLUMN,mainw->string_constants[LIVES_STRING_CONSTANT_NONE],
-		     IDX_COLUMN,-1,
+		     KEYVAL_COLUMN,0,
+		     MODEVAL_COLUMN,0,
 		     -1);
 
 
@@ -2288,11 +2553,11 @@ GtkTreeModel *inparam_fx_model (boolean is_chans) {
       if (!key_added) {
 	// add key
 	gtk_tree_store_append (tstore, &iter1, NULL);  /* Acquire an iterator */
-	gtk_tree_store_set(tstore,&iter1,KEY_COLUMN,keystr,NAME_COLUMN,keystr,IDX_COLUMN,-1,-1);
+	gtk_tree_store_set(tstore,&iter1,KEY_COLUMN,keystr,NAME_COLUMN,keystr,KEYVAL_COLUMN,0,MODEVAL_COLUMN,0,-1);
 	key_added=TRUE;
       }
       gtk_tree_store_append (tstore, &iter2, &iter1);
-      gtk_tree_store_set(tstore,&iter2,KEY_COLUMN,text,NAME_COLUMN,text,IDX_COLUMN,idx,-1);
+      gtk_tree_store_set(tstore,&iter2,KEY_COLUMN,text,NAME_COLUMN,text,KEYVAL_COLUMN,i,MODEVAL_COLUMN,j,-1);
 
       weed_free(fxname); weed_free(text);
     }
@@ -2334,6 +2599,12 @@ static GtkWidget *conx_scroll_new(weed_plant_t *filter, lives_conx_w *conxwp) {
 
   register int i,j=0,x=0;
 
+  conxwp->cfxcombo=conxwp->ccombo=conxwp->pcombo=conxwp->pfxcombo=conxwp->acheck=NULL;
+
+  conxwp->ikeys=(int *)g_malloc((conxwp->num_params+conxwp->num_alpha)*sizint);
+  conxwp->imodes=(int *)g_malloc((conxwp->num_params+conxwp->num_alpha)*sizint);
+
+  for (i=0;i<conxwp->num_params+conxwp->num_alpha;i++) conxwp->ikeys[i]=conxwp->imodes[i]=0;
 
   lctext=g_strdup(_("Connected to -->"));
 
@@ -2403,6 +2674,11 @@ static GtkWidget *conx_scroll_new(weed_plant_t *filter, lives_conx_w *conxwp) {
       g_signal_connect(GTK_OBJECT (conxwp->cfxcombo[x]), "changed",
 		       G_CALLBACK (dfxc_changed),(gpointer)conxwp);
       
+
+      g_signal_connect(GTK_OBJECT (conxwp->ccombo[x]), "changed",
+		       G_CALLBACK (dpc_changed),(gpointer)conxwp);
+      
+
       x++;
     }
 
@@ -2438,6 +2714,10 @@ static GtkWidget *conx_scroll_new(weed_plant_t *filter, lives_conx_w *conxwp) {
     conxwp->allcheckc=lives_standard_check_button_new(_("Autoscale All"),FALSE,LIVES_BOX(hbox2),NULL);
 
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(conxwp->allcheckc),TRUE);
+
+    g_signal_connect_after (GTK_OBJECT (conxwp->allcheckc), "toggled",
+			    G_CALLBACK (on_allcheck_toggled),
+			    (gpointer)conxwp);
 
     for (i=0;i<conxwp->num_params;i++) {
       hbox=gtk_hbox_new (FALSE, 0);
@@ -2507,6 +2787,10 @@ static GtkWidget *conx_scroll_new(weed_plant_t *filter, lives_conx_w *conxwp) {
       gtk_widget_set_sensitive(conxwp->acheck[x],FALSE);
       g_object_set_data(G_OBJECT(conxwp->acheck[x]),"available",GINT_TO_POINTER(hasrange));
 
+      g_signal_connect_after (GTK_OBJECT (conxwp->acheck[x]), "toggled",
+			      G_CALLBACK (on_acheck_toggled),
+			      (gpointer)conxwp);
+
       g_signal_connect(GTK_OBJECT (conxwp->pfxcombo[x]), "changed",
 		       G_CALLBACK (dfxp_changed),(gpointer)conxwp);
 
@@ -2529,11 +2813,37 @@ static GtkWidget *conx_scroll_new(weed_plant_t *filter, lives_conx_w *conxwp) {
 }
 
 
+static void conxw_cancel_clicked(GtkWidget *button, gpointer user_data) {
+  lives_conx_w *conxwp=(lives_conx_w *)user_data;
+
+  if (conxwp->cfxcombo!=NULL) g_free(conxwp->cfxcombo);
+  if (conxwp->ccombo!=NULL) g_free(conxwp->ccombo);
+  if (conxwp->pfxcombo!=NULL) g_free(conxwp->pfxcombo);
+  if (conxwp->pcombo!=NULL) g_free(conxwp->pcombo);
+  if (conxwp->acheck!=NULL) g_free(conxwp->acheck);
+
+  if (button==NULL) return;
+
+  mainw->pconx=pconx;
+  mainw->cconx=cconx;
+
+ lives_general_button_clicked(LIVES_BUTTON(button),NULL);
+}
+
+
+
+static void conxw_ok_clicked(GtkWidget *button, gpointer user_data) {
+ conxw_cancel_clicked(NULL,user_data);
+ lives_general_button_clicked(LIVES_BUTTON(button),NULL);
+}
+
+
+
 
 GtkWidget *make_datacon_window(int key, int mode) {
   weed_plant_t *filter=rte_keymode_get_filter(key+1,mode);
 
-  GtkWidget *conx_dialog,*cbox,*abox;
+  GtkWidget *cbox,*abox;
   GtkWidget *scrolledwindow;
 
   GtkWidget *cancelbutton;
@@ -2550,9 +2860,16 @@ GtkWidget *make_datacon_window(int key, int mode) {
 
   acbutton=apbutton=NULL;
 
-  conxw.filter=filter;
+  pconx=mainw->pconx;
+  cconx=mainw->cconx;
+
+  conxw.okey=key;
+  conxw.omode=mode;
+
   conxw.num_alpha=num_alpha_channels(filter,TRUE);
   conxw.num_params=weed_leaf_num_elements(filter,"out_parameter_templates");
+
+  conxw.ntabs=1;
 
   if (prefs->gui_monitor==0) {
     scr_width=mainw->scr_width;
@@ -2566,16 +2883,16 @@ GtkWidget *make_datacon_window(int key, int mode) {
   winsize_h=scr_width-200;
   winsize_v=scr_height-200;
 
-  conx_dialog=lives_standard_dialog_new(_("LiVES: - Parameter and Alpha Channel Connections"),FALSE);
-  gtk_widget_set_size_request (conx_dialog, winsize_h, winsize_v);
+  conxw.conx_dialog=lives_standard_dialog_new(_("LiVES: - Parameter and Alpha Channel Connections"),FALSE);
+  gtk_widget_set_size_request (conxw.conx_dialog, winsize_h, winsize_v);
 
-  cbox = lives_dialog_get_content_area(LIVES_DIALOG(conx_dialog));
+  cbox = lives_dialog_get_content_area(LIVES_DIALOG(conxw.conx_dialog));
 
   scrolledwindow = conx_scroll_new(filter,&conxw);
 
   gtk_box_pack_start (GTK_BOX (cbox), scrolledwindow, TRUE, TRUE, 0);
 
-  abox = lives_dialog_get_action_area(LIVES_DIALOG(conx_dialog));
+  abox = lives_dialog_get_action_area(LIVES_DIALOG(conxw.conx_dialog));
 
   if (conxw.num_alpha>0) {
     acbutton = gtk_button_new_with_mnemonic (_("Auto Connect Channels"));
@@ -2588,6 +2905,7 @@ GtkWidget *make_datacon_window(int key, int mode) {
 
 
   }
+
   if (conxw.num_params>0) {
     apbutton = gtk_button_new_with_mnemonic (_("Auto Connect Parameters"));
     gtk_box_pack_start (GTK_BOX (abox), apbutton, FALSE, FALSE, 10);
@@ -2599,31 +2917,61 @@ GtkWidget *make_datacon_window(int key, int mode) {
 
   }
 
+  disconbutton = gtk_button_new_with_mnemonic (_("Disconnect All"));
+  gtk_box_pack_start (GTK_BOX (abox), disconbutton, FALSE, FALSE, 10);
+  gtk_widget_set_sensitive(disconbutton,FALSE);
+
+  g_signal_connect (GTK_OBJECT (disconbutton), "clicked",
+		    G_CALLBACK (disconbutton_clicked),
+		    (gpointer)&conxw);
+
   if (conxw.num_alpha>0||conxw.num_params>0) add_fill_to_box(GTK_BOX(abox));
 
   cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
-  gtk_dialog_add_action_widget (GTK_DIALOG (conx_dialog), cancelbutton, GTK_RESPONSE_CANCEL);
+  gtk_dialog_add_action_widget (GTK_DIALOG (conxw.conx_dialog), cancelbutton, GTK_RESPONSE_CANCEL);
 
   okbutton = gtk_button_new_from_stock ("gtk-ok");
-  gtk_dialog_add_action_widget (GTK_DIALOG (conx_dialog), okbutton, GTK_RESPONSE_OK);
+  gtk_dialog_add_action_widget (GTK_DIALOG (conxw.conx_dialog), okbutton, GTK_RESPONSE_OK);
 
   lives_widget_set_can_focus_and_default (okbutton);
   gtk_widget_grab_default(okbutton);
 
 
   g_signal_connect (GTK_OBJECT (cancelbutton), "clicked",
-		    G_CALLBACK (lives_general_button_clicked),
-		    NULL);
+		    G_CALLBACK (conxw_cancel_clicked),
+		    (gpointer)&conxw);
 
 
   g_signal_connect (GTK_OBJECT (okbutton), "clicked",
-		    G_CALLBACK (lives_general_button_clicked),
-		    NULL);
+		    G_CALLBACK (conxw_ok_clicked),
+		    (gpointer)&conxw);
 
 
-  gtk_widget_show_all (conx_dialog);
+  gtk_widget_show_all (conxw.conx_dialog);
 
-  return conx_dialog;
+  return conxw.conx_dialog;
 }
 
 
+static void do_chan_connected_error( lives_conx_w *conxwp) {
+
+  do_error_dialog_with_check_transient(_("Input channel is already connected"),TRUE,0,GTK_WINDOW(conxwp->conx_dialog));
+
+
+}
+
+
+static void do_param_connected_error( lives_conx_w *conxwp) {
+
+  do_error_dialog_with_check_transient(_("Input parameter is already connected"),TRUE,0,GTK_WINDOW(conxwp->conx_dialog));
+
+
+}
+
+
+static void do_param_incompatible_error( lives_conx_w *conxwp) {
+
+  do_error_dialog_with_check_transient(_("Input and output parameters are not compatible"),TRUE,0,GTK_WINDOW(conxwp->conx_dialog));
+
+
+}

@@ -439,8 +439,7 @@ do_blocking_error_dialog(const gchar *text) {
 }
 
 
-void 
-do_error_dialog_with_check_transient(const gchar *text, gboolean is_blocking, gint warn_mask_number, GtkWindow *transient) {
+void do_error_dialog_with_check_transient(const gchar *text, gboolean is_blocking, gint warn_mask_number, GtkWindow *transient) {
   // show error/info box
 
   GtkWidget *err_box;

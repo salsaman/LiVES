@@ -118,7 +118,7 @@ int alpham_process (weed_plant_t *inst, weed_timecode_t timestamp) {
   if (nm<1.) nm=1.;
 
   for (i=0;i<n*m;i++) {
-    vals[i]/=nm; // get average val
+    vals[i]/=(double)nm; // get average val
     if (xdiv) vals[i]/=(double)width;
     if (ydiv) vals[i]/=(double)height;
   }

@@ -3335,7 +3335,7 @@ weed_plant_t *weed_apply_effects (weed_plant_t **layers, weed_plant_t *filter_ma
 
   void *pdata;
 
-  weed_plant_t *instance,*layer;
+  weed_plant_t *filter,*instance,*layer;
   lives_filter_error_t filter_error;
 
   boolean needs_reinit;
@@ -3365,14 +3365,18 @@ weed_plant_t *weed_apply_effects (weed_plant_t **layers, weed_plant_t *filter_ma
 	    interpolate_params(instance,mainw->pchains[i],tc); // interpolate parameters during preview
 	  }
 
-	  if (mainw->pconx!=NULL&&!(mainw->preview||mainw->is_rendering)) {
-	    // chain any data pipelines
-	    pthread_mutex_lock(&mainw->data_mutex);
-	    needs_reinit=pconx_chain_data(i,key_modes[i]);
-	    pthread_mutex_unlock(&mainw->data_mutex);
+	  filter=weed_instance_get_filter(instance,TRUE);
 
-	    if (needs_reinit) {
-	      weed_reinit_effect(instance,FALSE);
+	  if (!is_pure_audio(filter,TRUE)) {
+	    if (mainw->pconx!=NULL&&!(mainw->preview||mainw->is_rendering)) {
+	      // chain any data pipelines
+	      pthread_mutex_lock(&mainw->data_mutex);
+	      needs_reinit=pconx_chain_data(i,key_modes[i]);
+	      pthread_mutex_unlock(&mainw->data_mutex);
+	      
+	      if (needs_reinit) {
+		weed_reinit_effect(instance,FALSE);
+	      }
 	    }
 	  }
 

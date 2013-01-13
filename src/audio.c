@@ -2511,7 +2511,7 @@ gboolean get_audio_from_plugin(float *fbuffer, int nchans, int arate, int nsamps
     weed_set_voidptr_value(channel,"audio_data",fbuffer);
     
     weed_set_double_value(inst,"fps",cfile->pb_fps);
-    
+
     if (mainw->agen_needs_reinit) {
       // allow main thread to complete the reinit so we do not delay; just return silence
       memset(fbuffer,0,nsamps*nchans*sizeof(float));

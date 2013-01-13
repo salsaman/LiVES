@@ -124,4 +124,26 @@ boolean cconx_chain_data_internal(weed_plant_t *ichan);
 
 //////////////////////////////////////////////////////////
 
+
+typedef struct {
+  int okey;
+  int omode;
+  int num_alpha;
+  int num_params;
+  int ntabs;
+
+  // per tab part
+  GtkWidget *conx_dialog;
+  GtkWidget **cfxcombo;
+  GtkWidget **pfxcombo;
+  GtkWidget **pcombo;
+  GtkWidget **ccombo;
+  GtkWidget **acheck;
+  GtkWidget *allcheckc;
+  int *ikeys;
+  int *imodes;
+} lives_conx_w;
+
+
 GtkWidget *make_datacon_window(int key, int mode);
+

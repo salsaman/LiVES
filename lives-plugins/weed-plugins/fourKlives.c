@@ -685,10 +685,14 @@ int fourk_process (weed_plant_t *inst, weed_timecode_t timestamp) {
   int error;
   int chans,nsamps,inter;
 
+  weed_plant_t **in_params=weed_get_plantptr_array(inst,"in_parameters",&error);
+
   weed_plant_t *out_channel=weed_get_plantptr_value(inst,"out_channels",&error);
+
   float *dst=weed_get_voidptr_value(out_channel,"audio_data",&error);
 
-  weed_plant_t **in_params=weed_get_plantptr_array(inst,"in_parameters",&error);
+  double tempo=weed_get_double_value(in_params[1],"value",&error);
+  double bfreq=weed_get_double_value(in_params[2],"value",&error);
 
   _sdata *sdata=weed_get_voidptr_value(inst,"plugin_internal",&error);
 
@@ -705,8 +709,8 @@ int fourk_process (weed_plant_t *inst, weed_timecode_t timestamp) {
     set_live_row(sdata,i,(rand()%(sdata->maxtracks*1000-1))/1000.f+1.);  // 2nd val can be 2 (?) to npat (?)
   }
 
-  //set_tempo(sdata,rand()%255000/1000.f+8.); // bpm: maybe 8. to 263. ?
-  //set_base_freq(sdata,rand()%255000/100.f+145.); // 145. to 400.
+  set_tempo(sdata,tempo*255.+8.); // bpm: maybe 8. to 263. ?
+  set_base_freq(sdata,bfreq*255.-128.); // 145. to 400.
 
   syna_play(sdata,dst,nsamps,chans,inter); // dlen is number of samps....does interleaved
 
@@ -755,13 +759,14 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
     in_params[0]=weed_string_list_init("tune_name","_Tune",0,(const char ** const)tunes);
     weed_set_int_value(in_params[0],"flags",WEED_PARAMETER_REINIT_ON_VALUE_CHANGE);
 
-    for (i=1;i<=NCHANNELS;i++) {
+    in_params[1]=weed_float_init("tempo","_Tempo",.5,0.,1.);
+    in_params[2]=weed_float_init("bfreq","Base _Frequency",.5,0.,1.);
+
+
+    for (i=3;i<NCHANNELS+3;i++) {
       // TODO - unique name
       in_params[i]=weed_float_init("cparam","cparam",.5,0.,1.);
     }
-
-    in_params[i++]=weed_float_init("tempo","_Tempo",.5,0.,1.);
-    in_params[i++]=weed_float_init("bfreq","Base _Frequency",.5,0.,1.);
 
     in_params[i]=NULL;
 

@@ -131,9 +131,9 @@ typedef struct {
   int num_alpha;
   int num_params;
   int ntabs;
+  GtkWidget *conx_dialog;
 
   // per tab part
-  GtkWidget *conx_dialog;
   GtkWidget **cfxcombo;
   GtkWidget **pfxcombo;
   GtkWidget **pcombo;
@@ -142,6 +142,9 @@ typedef struct {
   GtkWidget *allcheckc;
   int *ikeys;
   int *imodes;
+  int *idx;
+  gulong *dpp_func;
+  gulong *acheck_func;
 } lives_conx_w;
 
 

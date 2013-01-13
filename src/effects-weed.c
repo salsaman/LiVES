@@ -427,8 +427,9 @@ int num_alpha_channels(weed_plant_t *filter, boolean out) {
   register int i;
 
   if (out) {
-    if (!weed_plant_has_leaf(filter,"out_channel_templates")||weed_get_plantptr_value(filter,"out_channel_templates",&error)==NULL) return FALSE;
+    if (!weed_plant_has_leaf(filter,"out_channel_templates")) return FALSE;
     nchans=weed_leaf_num_elements(filter,"out_channel_templates");
+    if (nchans==0) return FALSE;
     ctmpls=weed_get_plantptr_array(filter,"out_channel_templates",&error);
     for (i=0;i<nchans;i++) {
       if (has_non_alpha_palette(ctmpls[i])) continue;
@@ -436,8 +437,9 @@ int num_alpha_channels(weed_plant_t *filter, boolean out) {
     }
   }
   else {
-    if (!weed_plant_has_leaf(filter,"in_channel_templates")||weed_get_plantptr_value(filter,"in_channel_templates",&error)==NULL) return FALSE;
+    if (!weed_plant_has_leaf(filter,"in_channel_templates")) return FALSE;
     nchans=weed_leaf_num_elements(filter,"in_channel_templates");
+    if (nchans==0) return FALSE;
     ctmpls=weed_get_plantptr_array(filter,"in_channel_templates",&error);
     for (i=0;i<nchans;i++) {
       if (has_non_alpha_palette(ctmpls[i])) continue;
@@ -3367,7 +3369,8 @@ weed_plant_t *weed_apply_effects (weed_plant_t **layers, weed_plant_t *filter_ma
 
 	  filter=weed_instance_get_filter(instance,TRUE);
 
-	  if (!is_pure_audio(filter,TRUE)) {
+	  // TODO *** enable this, and apply pconx to audio gens in audio.c
+	  //if (!is_pure_audio(filter,TRUE)) {
 	    if (mainw->pconx!=NULL&&!(mainw->preview||mainw->is_rendering)) {
 	      // chain any data pipelines
 	      pthread_mutex_lock(&mainw->data_mutex);
@@ -3378,7 +3381,7 @@ weed_plant_t *weed_apply_effects (weed_plant_t **layers, weed_plant_t *filter_ma
 		weed_reinit_effect(instance,FALSE);
 	      }
 	    }
-	  }
+	    //}
 
 	apply_inst3:
 

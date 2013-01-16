@@ -94,7 +94,6 @@ void pconx_delete(int okey, int omode, int opnum, int ikey, int imode, int ipnum
   pthread_mutex_lock(&mainw->data_mutex);
 
   while (pconx!=NULL) {
-    g_print("pt c %d %d %d %d\n",pconx->okey,okey,pconx->omode,omode);
     pconx_next=pconx->next;
     if (okey==-1||(pconx->okey==okey&&pconx->omode==omode)) {
       if (ikey==-1) {
@@ -117,11 +116,9 @@ void pconx_delete(int okey, int omode, int opnum, int ikey, int imode, int ipnum
       for (i=0;i<pconx->nparams;i++) {
 	maxcons+=pconx->nconns[i];
       }
-      g_print("pt d %d %d\n",pconx->nparams,maxcons);
 
       for (i=0;pconx!=NULL&&i<pconx->nparams;i++) {
 	totcons+=pconx->nconns[i];
-	g_print("pt e %d %d\n",pconx->params[i],opnum);
 
 	if (okey!=-1&&pconx->params[i]!=opnum) {
 	  j+=totcons;
@@ -129,9 +126,7 @@ void pconx_delete(int okey, int omode, int opnum, int ikey, int imode, int ipnum
 	}
 
 	for (;j<totcons;j++) {
-	  g_print("pt f %d %d %d %d %d %d\n",pconx->ikey[j],ikey,pconx->imode[j],imode,pconx->ipnum[j],ipnum);
 	  if (pconx->ikey[j]==ikey && pconx->imode[j]==imode && (ipnum==-1||pconx->ipnum[j]==ipnum)) {
-	    g_print("rem con to %d %d\n",ikey,omode); 
 	    maxcons--;
 	    for (k=j;k<maxcons;k++) {
 	      pconx->ikey[k]=pconx->ikey[k+1];
@@ -150,6 +145,7 @@ void pconx_delete(int okey, int omode, int opnum, int ikey, int imode, int ipnum
 	    if (pconx->nconns[i]==0) {
 	      pconx->nparams--;
 	      for (k=i;k<pconx->nparams;k++) {
+		pconx->params[k]=pconx->params[k+1];
 		pconx->nconns[k]=pconx->nconns[k+1];
 	      }
 
@@ -286,9 +282,6 @@ void pconx_add_connection(int okey, int omode, int opnum, int ikey, int imode, i
 	// located !
 	// add connection to existing
 
-	// increment nconns for this param
-	pconx->nconns[i]++;
-
 	for (j=0;j<pconx->nparams;j++) {
 	  if (j<i) {
 	    // calc posn
@@ -298,13 +291,25 @@ void pconx_add_connection(int okey, int omode, int opnum, int ikey, int imode, i
 	}
 
 	// if already there, do not add again, just update autoscale
-	for (j=posn;j<totcons;j++) {
+	for (j=posn;j<posn+pconx->nconns[i];j++) {
 	  if (pconx->ikey[j]==ikey&&pconx->imode[j]==imode&&pconx->ipnum[j]==ipnum) {
 	    pconx->autoscale[j]=autoscale;
 	    pthread_mutex_unlock(&mainw->data_mutex);
 	    return;
 	  }
+
+	  // add in order key/mode/chan
+	  if (pconx->ikey[j]>ikey||(pconx->ikey[j]==ikey&&pconx->imode[j]>imode)||
+	      (pconx->ikey[j]==ikey&&pconx->imode[j]==imode&&pconx->ipnum[j]>ipnum)) break;
+
 	}
+
+	// increment nconns for this param
+	pconx->nconns[i]++;
+
+	totcons++;
+
+	posn=j;
 
 	// make space for new
 	pconx->ikey=(int *)g_realloc(pconx->ikey,totcons*sizint);
@@ -1325,7 +1330,7 @@ void cconx_delete(int okey, int omode, int ocnum, int ikey, int imode, int icnum
 	maxcons+=cconx->nconns[i];
       }
 
-      for (i=0;i<cconx->nchans;i++) {
+      for (i=0;cconx!=NULL&&i<cconx->nchans;i++) {
 	totcons+=cconx->nconns[i];
 
 	if (okey!=-1&&cconx->chans[i]!=ocnum) {
@@ -1351,6 +1356,7 @@ void cconx_delete(int okey, int omode, int ocnum, int ikey, int imode, int icnum
 	    if (cconx->nconns[i]==0) {
 	      cconx->nchans--;
 	      for (k=i;k<cconx->nchans;k++) {
+		cconx->chans[k]=cconx->chans[k+1];
 		cconx->nconns[k]=cconx->nconns[k+1];
 	      }
 
@@ -1478,10 +1484,9 @@ void cconx_add_connection(int okey, int omode, int ocnum, int ikey, int imode, i
     // see if already in chans
     
     for (i=0;i<cconx->nchans;i++) {
-      
-      if (cconx->chans[i]==icnum) {
+ 
+      if (cconx->chans[i]==ocnum) {
 	// add connection to existing
-	cconx->nconns[i]++;
 
 	for (j=0;j<cconx->nchans;j++) {
 	  if (j<i) {
@@ -1492,11 +1497,20 @@ void cconx_add_connection(int okey, int omode, int ocnum, int ikey, int imode, i
 	}
 
 	// if already there, do not add again
-	for (j=posn;j<totcons;j++) {
+	for (j=posn;j<posn+cconx->nconns[i];j++) {
 	  if (cconx->ikey[j]==ikey&&cconx->imode[j]==imode&&cconx->icnum[j]==icnum) {
 	    return;
 	  }
+
+	  // add in order key/mode/chan
+	  if (cconx->ikey[j]>ikey||(cconx->ikey[j]==ikey&&cconx->imode[j]>imode)||
+	      (cconx->ikey[j]==ikey&&cconx->imode[j]==imode&&cconx->icnum[j]>icnum)) break;
+	      
 	}
+
+	posn=j; // we will insert here
+	cconx->nconns[i]++;
+	totcons++;
 
 	// make space for new
 	cconx->ikey=(int *)g_realloc(cconx->ikey,totcons*sizint);
@@ -1791,9 +1805,10 @@ boolean cconx_chain_data_internal(weed_plant_t *ichan) {
 
 // still TODO - high priority:
 
-// fix del/re-add
+// check why disconn. broken for params
 
-// show values
+// show values (autoscale)
+
 
 // add to default keymap
 
@@ -1803,6 +1818,7 @@ boolean cconx_chain_data_internal(weed_plant_t *ichan) {
 
 // show values w. nb pages
 
+// add expanders
 
 static lives_pconnect_t *pconx;
 static lives_cconnect_t *cconx;
@@ -2214,35 +2230,9 @@ static void dpp_changed(GtkWidget *combo, gpointer user_data) {
     }
   }
 
-  fxcombo=conxwp->pfxcombo[ours];
 
-  if (!gtk_combo_box_get_active_iter(GTK_COMBO_BOX(fxcombo),&iter)) return;
 
-  model=gtk_combo_box_get_model(GTK_COMBO_BOX(fxcombo));
 
-  gtk_tree_model_get(model,&iter,KEYVAL_COLUMN,&key,MODEVAL_COLUMN,&mode,-1);
-  fidx=rte_keymode_get_filter_idx(key,mode);
-
-  oparams=weed_get_plantptr_array(filter,"out_parameter_templates",&error);
-  oparam=oparams[ours];
-
-  // find the receiving filter/instance
-  filter=get_weed_filter(fidx);
-
-  iparams=weed_get_plantptr_array(filter,"in_parameter_templates",&error);
-  niparams=weed_leaf_num_elements(filter,"in_parameter_templates");
-
-  for (i=0;i<niparams;i++) {
-    param=iparams[i];
-    if (weed_plant_has_leaf(param,"host_internal_connection")) continue;
-    if (j==idx) break;
-    j++;
-  }
-
-  weed_free(iparams);
-  weed_free(oparams);
-
-  j=i;
 
 
 
@@ -2272,6 +2262,49 @@ static void dpp_changed(GtkWidget *combo, gpointer user_data) {
 
     return;
   }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  fxcombo=conxwp->pfxcombo[ours];
+
+  if (!gtk_combo_box_get_active_iter(GTK_COMBO_BOX(fxcombo),&iter)) return;
+
+  model=gtk_combo_box_get_model(GTK_COMBO_BOX(fxcombo));
+
+  gtk_tree_model_get(model,&iter,KEYVAL_COLUMN,&key,MODEVAL_COLUMN,&mode,-1);
+  fidx=rte_keymode_get_filter_idx(key,mode);
+
+  oparams=weed_get_plantptr_array(filter,"out_parameter_templates",&error);
+  oparam=oparams[ours];
+
+  // find the receiving filter/instance
+  filter=get_weed_filter(fidx);
+
+  iparams=weed_get_plantptr_array(filter,"in_parameter_templates",&error);
+  niparams=weed_leaf_num_elements(filter,"in_parameter_templates");
+
+  for (i=0;i<niparams;i++) {
+    param=iparams[i];
+    if (weed_plant_has_leaf(param,"host_internal_connection")) continue;
+    if (j==idx) break;
+    j++;
+  }
+
+  weed_free(iparams);
+  weed_free(oparams);
+
+  j=i;
 
 
   if (!params_compatible(oparam,param)) {
@@ -2364,7 +2397,7 @@ static void dpc_changed(GtkWidget *combo, gpointer user_data) {
     }
   }
 
-  if (gtk_combo_box_get_active(GTK_COMBO_BOX(combo))==-1) {
+  if (idx==-1) {
 
     for (i=0;i<conxwp->num_alpha;i++) if (gtk_combo_box_get_active(GTK_COMBO_BOX(conxwp->ccombo[i]))>-1) {
 	hasone=TRUE;
@@ -2582,7 +2615,7 @@ GtkTreeModel *inparam_fx_model (boolean is_chans) {
 	if (num_alpha_channels(filter,FALSE)==0) continue;
 	
       fxname=weed_get_string_value(filter,"name",&error);
-      text=g_strdup_printf("(%d,%d) %s",i,j,fxname);
+      text=g_strdup_printf("(%d,%d) %s",i,j+1,fxname);
 
       if (!key_added) {
 	// add key
@@ -2634,7 +2667,7 @@ static GtkWidget *conx_scroll_new(weed_plant_t *filter, lives_conx_w *conxwp) {
   register int i,j=0,x=0;
 
   conxwp->cfxcombo=conxwp->ccombo=conxwp->pcombo=conxwp->pfxcombo=conxwp->acheck=NULL;
-  conxwp->dpp_func=conxwp->acheck_func=NULL;
+  conxwp->dpp_func=conxwp->dpc_func=conxwp->acheck_func=NULL;
 
   conxwp->ikeys=(int *)g_malloc((conxwp->num_params+conxwp->num_alpha)*sizint);
   conxwp->imodes=(int *)g_malloc((conxwp->num_params+conxwp->num_alpha)*sizint);
@@ -2661,6 +2694,8 @@ static GtkWidget *conx_scroll_new(weed_plant_t *filter, lives_conx_w *conxwp) {
 
   if (conxwp->num_alpha>0) {
     weed_plant_t **ochans=weed_get_plantptr_array(filter,"out_channel_templates",&error);
+
+    conxwp->dpc_func=(gulong *)g_malloc(conxwp->num_alpha*sizeof(gulong));
 
     conxwp->cfxcombo=(GtkWidget **)g_malloc(conxwp->num_alpha*sizeof(GtkWidget *));
 
@@ -2711,8 +2746,8 @@ static GtkWidget *conx_scroll_new(weed_plant_t *filter, lives_conx_w *conxwp) {
 		       G_CALLBACK (dfxc_changed),(gpointer)conxwp);
       
 
-      g_signal_connect(GTK_OBJECT (conxwp->ccombo[x]), "changed",
-		       G_CALLBACK (dpc_changed),(gpointer)conxwp);
+      conxwp->dpc_func[x]=g_signal_connect(GTK_OBJECT (conxwp->ccombo[x]), "changed",
+					G_CALLBACK (dpc_changed),(gpointer)conxwp);
       
 
       x++;
@@ -2733,7 +2768,6 @@ static GtkWidget *conx_scroll_new(weed_plant_t *filter, lives_conx_w *conxwp) {
     weed_plant_t **oparams=weed_get_plantptr_array(filter,"out_parameter_templates",&error);
 
     conxwp->pfxcombo=(GtkWidget **)g_malloc(conxwp->num_params*sizeof(GtkWidget *));
-
     conxwp->pcombo=(GtkWidget **)g_malloc(conxwp->num_params*sizeof(GtkWidget *));
     conxwp->dpp_func=(gulong *)g_malloc(conxwp->num_params*sizeof(gulong));
     conxwp->acheck_func=(gulong *)g_malloc(conxwp->num_params*sizeof(gulong));
@@ -2861,6 +2895,7 @@ static void conxw_cancel_clicked(GtkWidget *button, gpointer user_data) {
   if (conxwp->pcombo!=NULL) g_free(conxwp->pcombo);
   if (conxwp->acheck!=NULL) g_free(conxwp->acheck);
   if (conxwp->dpp_func!=NULL) g_free(conxwp->dpp_func);
+  if (conxwp->dpc_func!=NULL) g_free(conxwp->dpp_func);
   if (conxwp->acheck_func!=NULL) g_free(conxwp->acheck_func);
 
   g_free(conxwp->ikeys);
@@ -2869,8 +2904,8 @@ static void conxw_cancel_clicked(GtkWidget *button, gpointer user_data) {
 
   if (button==NULL) return;
 
-  mainw->pconx=pconx;
-  mainw->cconx=cconx;
+  //mainw->pconx=pconx;
+  //mainw->cconx=cconx;
 
  lives_general_button_clicked(LIVES_BUTTON(button),NULL);
 }
@@ -2881,6 +2916,240 @@ static void conxw_ok_clicked(GtkWidget *button, gpointer user_data) {
  conxw_cancel_clicked(NULL,user_data);
  lives_general_button_clicked(LIVES_BUTTON(button),NULL);
 }
+
+
+static void set_to_keymode_vals(GtkComboBox *combo, int xkey, int xmode) {
+  GtkTreeIter iter,piter;
+  GtkTreeModel *model;
+
+  int key,mode;
+
+  model=gtk_combo_box_get_model(combo);
+  if (!gtk_tree_model_get_iter_first(model,&piter)) return;
+
+  do {
+    if (gtk_tree_model_iter_children(model,&iter,&piter)) {
+      do {
+	gtk_tree_model_get(model,&iter,KEYVAL_COLUMN,&key,MODEVAL_COLUMN,&mode,-1);
+	if (key==xkey+1&&mode==xmode) goto iter_found;
+      } while (gtk_tree_model_iter_next(model,&iter));
+    }
+  } while (gtk_tree_model_iter_next(model,&piter));
+
+
+iter_found:
+  gtk_combo_box_set_active_iter(combo,&iter);
+
+}
+
+static int lastckey,lastcmode;
+static int lastpkey,lastpmode;
+
+static boolean show_existing(lives_conx_w *conxwp) {
+  lives_cconnect_t *cconx=cconx_find(conxwp->okey,conxwp->omode);
+  lives_pconnect_t *pconx=pconx_find(conxwp->okey,conxwp->omode);
+
+  GtkWidget *cfxcombo,*ccombo;
+  GtkWidget *pfxcombo,*pcombo;
+
+  weed_plant_t **ochans,**ichans;
+  weed_plant_t **iparams;
+
+  weed_plant_t *ofilter=rte_keymode_get_filter(conxwp->okey+1,conxwp->omode),*filter;
+
+  weed_plant_t *chan,*param;
+
+  int ikey,imode,icnum,error,nochans,ipnum,nichans,niparams;
+
+  int curckey=FX_KEYS_MAX+1,curcmode=0;
+  int curpkey=FX_KEYS_MAX+1,curpmode=0;
+
+  int posn=0,cidx,pidx;
+
+  register int i,j,k,l;
+
+  // ASSUME FOR NOW THAT EACH OPARAM/OCHAN is mapped to maybe multiple key/modes, but only a single param/chan witin that
+  // TODO - update gui with ---> expander to handle this
+
+
+  if (cconx==NULL) goto show_ex_params;
+
+  // find lowest key/mode which has not been done
+  for (i=0;i<cconx->nchans;i++) {
+    for (j=posn;j<posn+cconx->nconns[i];j++) {
+      ikey=cconx->ikey[j];
+      imode=cconx->imode[j];
+
+      if ((ikey<curckey||(ikey==curckey&&imode<curcmode)) && (ikey>lastckey||(ikey==lastckey&&imode>lastcmode))) {
+	curckey=ikey;
+	curcmode=imode;
+      }
+
+    }
+    posn+=cconx->nconns[i];
+  }
+
+
+  // now have curckey and curcmode - set fx and param combos
+  lastckey=curckey;
+  lastcmode=curcmode;
+  posn=0;
+
+  for (i=0;i<cconx->nchans;i++) {
+    cidx=cconx->chans[i];
+    for (j=posn;j<posn+cconx->nconns[i];j++) {
+      ikey=cconx->ikey[j];
+      imode=cconx->imode[j];
+
+      if (ikey==curckey&&imode==curcmode) {
+	      
+	// find the row
+	ochans=weed_get_plantptr_array(ofilter,"out_channel_templates",&error);
+	nochans=weed_leaf_num_elements(ofilter,"out_channel_templates");
+	      
+	l=0;
+	      
+	for (k=0;k<nochans;k++) {
+	  chan=ochans[k];
+	  if (!has_alpha_palette(chan)) continue;
+	  if (k==cidx) break;
+	  l++;
+	}
+	      
+	weed_free(ochans);
+
+	// row is l
+	cfxcombo=conxwp->cfxcombo[l];
+
+	// set it to the value which has ikey/imode
+	set_to_keymode_vals(GTK_COMBO_BOX(cfxcombo),ikey,imode);
+
+	// set channel
+	ccombo=conxwp->ccombo[l];
+	icnum=cconx->icnum[j];
+
+
+	filter=rte_keymode_get_filter(ikey+1,imode);
+	ichans=weed_get_plantptr_array(filter,"in_channel_templates",&error);
+	nichans=weed_leaf_num_elements(filter,"in_channel_templates");
+	
+	cidx=l;
+
+	l=0;
+	
+	for (k=0;k<nichans;k++) {
+	  chan=ichans[k];
+	  if (!has_alpha_palette(chan)) continue;
+	  if (k==icnum) break;
+	  l++;
+	}
+	      
+	weed_free(ichans);
+
+	g_signal_handler_block(ccombo,conxwp->dpc_func[cidx]);
+	gtk_combo_box_set_active(GTK_COMBO_BOX(ccombo),l);
+	g_signal_handler_unblock(ccombo,conxwp->dpc_func[cidx]);
+	      
+	conxwp->ikeys[cidx]=ikey+1;
+	conxwp->imodes[cidx]=imode;
+	conxwp->idx[cidx]=icnum;
+
+	gtk_widget_set_sensitive(disconbutton,TRUE);
+	
+	break; // TODO ***
+      }
+      
+      
+    }
+    posn+=cconx->nconns[i];
+  }
+
+
+
+ show_ex_params:
+
+
+  if (pconx==NULL) goto show_ex_done;
+
+  // find lowest key/mode which has not been done
+  for (i=0;i<pconx->nparams;i++) {
+    for (j=posn;j<posn+pconx->nconns[i];j++) {
+      ikey=pconx->ikey[j];
+      imode=pconx->imode[j];
+
+      if ((ikey<curpkey||(ikey==curpkey&&imode<curpmode)) && (ikey>lastpkey||(ikey==lastpkey&&imode>lastpmode))) {
+	curpkey=ikey;
+	curpmode=imode;
+      }
+
+    }
+    posn+=pconx->nconns[i];
+  }
+
+
+  // now have curpkey and curpmode - set fx and param combos and autoscale
+  lastpkey=curpkey;
+  lastpmode=curpmode;
+  posn=0;
+
+  for (i=0;i<pconx->nparams;i++) {
+    pidx=pconx->params[i];
+    for (j=posn;j<posn+pconx->nconns[i];j++) {
+      ikey=pconx->ikey[j];
+      imode=pconx->imode[j];
+
+      if (ikey==curpkey&&imode==curpmode) {
+	      
+	l=pidx;
+
+	// row is l
+	pfxcombo=conxwp->pfxcombo[l];
+
+	// set it to the value which has ikey/imode
+	set_to_keymode_vals(GTK_COMBO_BOX(pfxcombo),ikey,imode);
+
+	// set channel
+	pcombo=conxwp->pcombo[l];
+	ipnum=pconx->ipnum[j];
+
+	filter=rte_keymode_get_filter(ikey+1,imode);
+	iparams=weed_get_plantptr_array(filter,"in_parameter_templates",&error);
+	niparams=weed_leaf_num_elements(filter,"in_parameter_templates");
+	
+	l=0;
+	
+	for (k=0;k<niparams;k++) {
+	  param=iparams[k];
+	  if (weed_plant_has_leaf(param,"host_internal_connection")) continue;
+	  if (k==ipnum) break;
+	  l++;
+	}
+	      
+	weed_free(iparams);
+
+	g_signal_handler_block(pcombo,conxwp->dpp_func[pidx]);
+	gtk_combo_box_set_active(GTK_COMBO_BOX(pcombo),l);
+	g_signal_handler_unblock(pcombo,conxwp->dpp_func[pidx]);
+	      
+	conxwp->ikeys[conxwp->num_alpha+pidx]=ikey+1;
+	conxwp->imodes[conxwp->num_alpha+pidx]=imode;
+	conxwp->idx[conxwp->num_alpha+pidx]=ipnum;
+
+	gtk_widget_set_sensitive(disconbutton,TRUE);
+	
+	break; // TODO ***
+      }
+      
+      
+    }
+    posn+=pconx->nconns[i];
+  }
+
+ show_ex_done:
+
+  return FALSE;
+}
+
 
 
 
@@ -2899,6 +3168,8 @@ GtkWidget *make_datacon_window(int key, int mode) {
   int winsize_h;
   int winsize_v;
 
+  boolean needsanother=TRUE;
+
   static lives_conx_w conxw;
 
   if (filter==NULL) return NULL;
@@ -2915,7 +3186,7 @@ GtkWidget *make_datacon_window(int key, int mode) {
   conxw.num_alpha=num_alpha_channels(filter,TRUE);
   conxw.num_params=weed_leaf_num_elements(filter,"out_parameter_templates");
 
-  conxw.ntabs=1;
+  conxw.ntabs=0;
 
   if (prefs->gui_monitor==0) {
     scr_width=mainw->scr_width;
@@ -2932,11 +3203,7 @@ GtkWidget *make_datacon_window(int key, int mode) {
   conxw.conx_dialog=lives_standard_dialog_new(_("LiVES: - Parameter and Alpha Channel Connections"),FALSE);
   gtk_widget_set_size_request (conxw.conx_dialog, winsize_h, winsize_v);
 
-  cbox = lives_dialog_get_content_area(LIVES_DIALOG(conxw.conx_dialog));
 
-  scrolledwindow = conx_scroll_new(filter,&conxw);
-
-  gtk_box_pack_start (GTK_BOX (cbox), scrolledwindow, TRUE, TRUE, 0);
 
   abox = lives_dialog_get_action_area(LIVES_DIALOG(conxw.conx_dialog));
 
@@ -2973,6 +3240,18 @@ GtkWidget *make_datacon_window(int key, int mode) {
 
   if (conxw.num_alpha>0||conxw.num_params>0) add_fill_to_box(GTK_BOX(abox));
 
+  cbox = lives_dialog_get_content_area(LIVES_DIALOG(conxw.conx_dialog));
+
+  lastckey=lastcmode=lastpkey=lastpmode=-1;
+
+  while (needsanother) {
+    scrolledwindow = conx_scroll_new(filter,&conxw);
+    needsanother=show_existing(&conxw);
+  }
+
+  gtk_box_pack_start (GTK_BOX (cbox), scrolledwindow, TRUE, TRUE, 0);
+
+
   cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
   gtk_dialog_add_action_widget (GTK_DIALOG (conxw.conx_dialog), cancelbutton, GTK_RESPONSE_CANCEL);
 
@@ -3003,7 +3282,6 @@ static void do_chan_connected_error( lives_conx_w *conxwp) {
 
   do_error_dialog_with_check_transient(_("Input channel is already connected"),TRUE,0,GTK_WINDOW(conxwp->conx_dialog));
 
-
 }
 
 
@@ -3011,13 +3289,11 @@ static void do_param_connected_error( lives_conx_w *conxwp) {
 
   do_error_dialog_with_check_transient(_("Input parameter is already connected"),TRUE,0,GTK_WINDOW(conxwp->conx_dialog));
 
-
 }
 
 
 static void do_param_incompatible_error( lives_conx_w *conxwp) {
 
   do_error_dialog_with_check_transient(_("Input and output parameters are not compatible"),TRUE,0,GTK_WINDOW(conxwp->conx_dialog));
-
 
 }

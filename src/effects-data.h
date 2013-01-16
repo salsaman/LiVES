@@ -143,6 +143,7 @@ typedef struct {
   int *ikeys;
   int *imodes;
   int *idx;
+  gulong *dpc_func;
   gulong *dpp_func;
   gulong *acheck_func;
 } lives_conx_w;

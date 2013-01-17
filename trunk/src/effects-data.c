@@ -2951,6 +2951,7 @@ static boolean show_existing(lives_conx_w *conxwp) {
 
   GtkWidget *cfxcombo,*ccombo;
   GtkWidget *pfxcombo,*pcombo;
+  GtkWidget *acheck;
 
   weed_plant_t **ochans,**ichans;
   weed_plant_t **iparams;
@@ -3110,6 +3111,14 @@ static boolean show_existing(lives_conx_w *conxwp) {
 
 	// set channel
 	pcombo=conxwp->pcombo[l];
+	acheck=conxwp->acheck[l];
+
+	gtk_widget_set_sensitive(acheck,TRUE);
+
+	g_signal_handler_block(acheck,conxwp->acheck_func[l]);
+	lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(acheck),pconx->autoscale[j]);
+	g_signal_handler_unblock(acheck,conxwp->acheck_func[l]);
+
 	ipnum=pconx->ipnum[j];
 
 	filter=rte_keymode_get_filter(ikey+1,imode);
@@ -3130,6 +3139,8 @@ static boolean show_existing(lives_conx_w *conxwp) {
 	g_signal_handler_block(pcombo,conxwp->dpp_func[pidx]);
 	gtk_combo_box_set_active(GTK_COMBO_BOX(pcombo),l);
 	g_signal_handler_unblock(pcombo,conxwp->dpp_func[pidx]);
+
+	g_object_set_data(G_OBJECT(pcombo),"idx",GINT_TO_POINTER(l));
 	      
 	conxwp->ikeys[conxwp->num_alpha+pidx]=ikey+1;
 	conxwp->imodes[conxwp->num_alpha+pidx]=imode;

@@ -3487,7 +3487,7 @@ gboolean check_dev_busy(gchar *devstr) {
 
 
 void activate_url_inner(const gchar *link) {
-#ifdef HAVE_GTK_NICE_VERSION
+#if GTK_CHECK_VERSION(2,14,0)
   GError *err=NULL;
   gtk_show_uri(NULL,link,GDK_CURRENT_TIME,&err);
 #else

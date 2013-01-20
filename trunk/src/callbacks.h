@@ -551,7 +551,7 @@ on_recaudsel_activate (GtkMenuItem     *menuitem,
 void
 on_recaudclip_ok_clicked                      (GtkButton *button,
 					       gpointer user_data);
-#ifdef HAVE_GTK_NICE_VERSION
+#if GTK_CHECK_VERSION(2,14,0)
 void
 on_volume_slider_value_changed           (GtkScaleButton   *sbutton,
 					  gpointer user_data);

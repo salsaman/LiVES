@@ -1156,7 +1156,7 @@ void add_to_winmenu(void) {
 
   cfile->menuentry = gtk_image_menu_item_new_with_label(cfile->clip_type!=CLIP_TYPE_VIDEODEV?(tmp=g_path_get_basename(cfile->name)):(tmp=g_strdup(cfile->name)));
   g_free(tmp);
-#ifdef HAVE_GTK_VERSION216
+#if GTK_CHECK_VERSION(2,16,0)
   gtk_image_menu_item_set_always_show_image(GTK_IMAGE_MENU_ITEM(cfile->menuentry),TRUE);
 #endif
   gtk_widget_show (cfile->menuentry);

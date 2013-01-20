@@ -1207,6 +1207,7 @@ void * lives_malloc(size_t size);
 void *lives_memcpy(void *dest, const void *src, size_t n);
 void *lives_memset(void *s, int c, size_t n);
 void lives_free(void *ptr); ///< calls mainw->free_fn
+void *lives_calloc(size_t nmemb, size_t size);
 
 /// values of mainw->free_fn
 void lives_free_normal(void *ptr);

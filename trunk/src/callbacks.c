@@ -5703,7 +5703,7 @@ on_about_activate                     (GtkMenuItem     *menuitem,
                                         gpointer         user_data)
 {
 
-#ifdef HAVE_GTK_NICE_VERSION
+#if GTK_CHECK_VERSION(2,14,0)
   gchar *license = g_strdup(_(
         "This program is free software; you can redistribute it and/or modify\n"
         "it under the terms of the GNU General Public License as published by\n"
@@ -7818,7 +7818,7 @@ on_ping_pong_activate                (GtkMenuItem     *menuitem,
 }
 
 
-#ifdef HAVE_GTK_NICE_VERSION
+#if GTK_CHECK_VERSION(2,14,0)
 void
 on_volume_slider_value_changed           (GtkScaleButton   *sbutton,
 					  gpointer user_data) {

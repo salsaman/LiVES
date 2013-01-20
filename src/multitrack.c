@@ -7358,14 +7358,13 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   gtk_toolbar_insert(GTK_TOOLBAR(btoolbar),GTK_TOOL_ITEM(mainw->m_mutebutton),-1);
   gtk_widget_unref(mainw->m_mutebutton);
 
-
-#ifndef HAVE_GTK_NICE_VERSION
+#if GTK_CHECK_VERSION(2,14,0)
+  gtk_scale_button_set_orientation (GTK_SCALE_BUTTON(mainw->volume_scale),GTK_ORIENTATION_VERTICAL);
+#else
   gtk_widget_ref(mainw->vol_label);
   lives_widget_unparent(mainw->vol_label);
   gtk_toolbar_insert(GTK_TOOLBAR(btoolbar),GTK_TOOL_ITEM(mainw->vol_label),-1);
   gtk_widget_unref(mainw->vol_label);
-#else
-  gtk_scale_button_set_orientation (GTK_SCALE_BUTTON(mainw->volume_scale),GTK_ORIENTATION_VERTICAL);
 #endif
 
   gtk_widget_ref(mainw->vol_toolitem);
@@ -8471,14 +8470,13 @@ gboolean multitrack_delete (lives_mt *mt, gboolean save_layout) {
   gtk_toolbar_insert(GTK_TOOLBAR(mainw->btoolbar),GTK_TOOL_ITEM(mainw->m_mutebutton),6);
   gtk_widget_unref(mainw->m_mutebutton);
 
-#ifndef HAVE_GTK_NICE_VERSION
-
+#if GTK_CHECK_VERSION(2,14,0)
+  gtk_scale_button_set_orientation (GTK_SCALE_BUTTON(mainw->volume_scale),GTK_ORIENTATION_HORIZONTAL);
+#else
   gtk_widget_ref(mainw->vol_label);
   lives_widget_unparent(mainw->vol_label);
   gtk_toolbar_insert(GTK_TOOLBAR(mainw->btoolbar),GTK_TOOL_ITEM(mainw->vol_label),7);
   gtk_widget_unref(mainw->vol_label);
-#else
-  gtk_scale_button_set_orientation (GTK_SCALE_BUTTON(mainw->volume_scale),GTK_ORIENTATION_HORIZONTAL);
 #endif
 
   gtk_widget_ref(mainw->vol_toolitem);

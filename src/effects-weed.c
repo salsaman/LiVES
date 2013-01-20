@@ -100,6 +100,15 @@ LIVES_INLINE void *lives_memset(void *s, int c, size_t n) {
   return memset(s,c,n);
 }
 
+LIVES_INLINE void *lives_calloc(size_t nmemb, size_t size) {
+  #ifdef GUI_GTK
+  #if GTK_CHECK_VERSION(2,24,0)
+  return g_try_malloc0_n(nmemb,size);
+  #endif
+  #endif
+  return calloc(nmemb,size);
+}
+
 
 ////////////////////////////////////////////////////////////////////////////
 
@@ -9184,6 +9193,8 @@ gboolean interpolate_params(weed_plant_t *inst, void **pchains, weed_timecode_t 
 ////// hashnames
 
 gchar *make_weed_hashname(int filter_idx, gboolean fullname) {
+  // return value should be freed after use
+
   weed_plant_t *filter,*plugin_info;
   gchar *plugin_name,*filter_name,*filter_author,*filter_version,*hashname;
   int error,version;

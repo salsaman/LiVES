@@ -49,19 +49,19 @@ static gulong *ch_fns;
 static gulong *gr_fns;
 static gulong *mode_ra_fns;
 
-static gint keyw=-1,modew=-1;
+static int keyw=-1,modew=-1;
 
 static GList *hash_list;
 static GList *name_list;
 static GList *name_type_list;
 
 
-static gboolean ca_canc;
+static boolean ca_canc;
 
 //////////////////////////////////////////////////////////////////////////////
 
 
-void type_label_set_text (gint key, gint mode) {
+void type_label_set_text (int key, int mode) {
   int modes=rte_getmodespk();
   int idx=key*modes+mode;
   gchar *type=rte_keymode_get_type(key+1,mode);
@@ -90,7 +90,7 @@ void on_rtei_ok_clicked (GtkButton *button, gpointer user_data) {
 }
 
 
-gboolean on_clear_all_clicked (GtkButton *button, gpointer user_data) {
+boolean on_clear_all_clicked (GtkButton *button, gpointer user_data) {
   int modes=rte_getmodespk();
   int i,j;
 
@@ -124,14 +124,16 @@ gboolean on_clear_all_clicked (GtkButton *button, gpointer user_data) {
 }
 
 
-static gboolean save_keymap2_file(gchar *kfname) {
-  int i,j;
+static boolean save_keymap2_file(gchar *kfname) {
+  // save perkey defaults
   int slen;
   int version=1;
   int modes=rte_getmodespk();
   int kfd;
   int retval;
-  gchar *hashname;
+  int i,j;
+
+  gchar *hashname,*tmp;
 
   do {
     retval=0;
@@ -149,7 +151,9 @@ static gboolean save_keymap2_file(gchar *kfname) {
 	for (j=0;j<modes;j++) {
 	  if (rte_keymode_valid(i,j,TRUE)) {
 	    lives_write_le(kfd,&i,4,TRUE);
-	    hashname=g_strdup_printf("Weed%s",make_weed_hashname(rte_keymode_get_filter_idx(i,j),TRUE));
+	    if (mainw->write_failed) break;
+	    hashname=g_strdup_printf("Weed%s",(tmp=make_weed_hashname(rte_keymode_get_filter_idx(i,j),TRUE)));
+	    g_free(tmp);
 	    slen=strlen(hashname);
 	    lives_write_le(kfd,&slen,4,TRUE);
 	    lives_write(kfd,hashname,slen,TRUE);
@@ -173,7 +177,200 @@ static gboolean save_keymap2_file(gchar *kfname) {
 }
 
 
-gboolean on_save_keymap_clicked (GtkButton *button, gpointer user_data) {
+
+static boolean save_keymap3_file(gchar *kfname) {
+  // save data connections
+
+  gchar *hashname;
+
+  int version=1;
+
+  int slen;
+  int kfd;
+  int retval;
+  int count=0,totcons=0,nconns;
+
+  register int i,j=0;
+
+  do {
+    retval=0;
+    kfd=creat(kfname,S_IRUSR|S_IWUSR);
+    if (kfd==-1) {
+      retval=do_write_failed_error_s_with_retry (kfname,g_strerror(errno),GTK_WINDOW(rte_window));
+    }
+    else {
+      mainw->write_failed=FALSE;
+      
+      lives_write_le(kfd,&version,4,TRUE);
+
+
+      if (mainw->cconx!=NULL) {
+	lives_cconnect_t *cconx=mainw->cconx;
+	int nchans;
+
+	while (cconx!=NULL) {
+	  count++;
+	  cconx=cconx->next;
+	}
+
+	lives_write_le(kfd,&count,4,TRUE);
+	if (mainw->write_failed) goto write_failed1;
+
+	cconx=mainw->cconx;
+	while (cconx!=NULL) {
+	  lives_write_le(kfd,&cconx->okey,4,TRUE);
+	  if (mainw->write_failed) goto write_failed1;
+
+	  lives_write_le(kfd,&cconx->omode,4,TRUE);
+	  if (mainw->write_failed) goto write_failed1;
+
+	  hashname=make_weed_hashname(rte_keymode_get_filter_idx(cconx->okey+1,cconx->omode),TRUE);
+	  slen=strlen(hashname);
+	  lives_write_le(kfd,&slen,4,TRUE);
+	  lives_write(kfd,hashname,slen,TRUE);
+	  g_free(hashname);
+
+	  nchans=cconx->nchans;
+	  lives_write_le(kfd,&nchans,4,TRUE);
+	  if (mainw->write_failed) goto write_failed1;
+
+	  for (i=0;i<nchans;i++) {
+	    lives_write_le(kfd,&cconx->chans[i],4,TRUE);
+	    if (mainw->write_failed) goto write_failed1;
+
+	    nconns=cconx->nconns[i];
+	    lives_write_le(kfd,&nconns,4,TRUE);
+	    if (mainw->write_failed) goto write_failed1;
+
+	    totcons+=nconns;
+
+	    while (j<totcons) {
+	      lives_write_le(kfd,&cconx->ikey[j],4,TRUE);
+	      if (mainw->write_failed) goto write_failed1;
+
+	      lives_write_le(kfd,&cconx->imode[j],4,TRUE);
+	      if (mainw->write_failed) goto write_failed1;
+	      
+	      hashname=make_weed_hashname(rte_keymode_get_filter_idx(cconx->ikey[j]+1,cconx->imode[j]),TRUE);
+	      slen=strlen(hashname);
+	      lives_write_le(kfd,&slen,4,TRUE);
+	      lives_write(kfd,hashname,slen,TRUE);
+	      g_free(hashname);
+
+	      lives_write_le(kfd,&cconx->icnum[j],4,TRUE);
+	      if (mainw->write_failed) goto write_failed1;
+
+	      j++;
+	    }
+
+	  }
+
+	  cconx=cconx->next;
+	}
+      }
+      else {
+	lives_write_le(kfd,&count,4,TRUE);
+	if (mainw->write_failed) goto write_failed1;
+      }
+
+
+      if (mainw->pconx!=NULL) {
+	lives_pconnect_t *pconx=mainw->pconx;
+
+	int nparams;
+
+	totcons=0;
+	count=0;
+	j=0;
+
+	while (pconx!=NULL) {
+	  count++;
+	  pconx=pconx->next;
+	}
+
+	lives_write_le(kfd,&count,4,TRUE);
+	if (mainw->write_failed) goto write_failed1;
+
+	pconx=mainw->pconx;
+	while (pconx!=NULL) {
+	  lives_write_le(kfd,&pconx->okey,4,TRUE);
+	  if (mainw->write_failed) goto write_failed1;
+
+	  lives_write_le(kfd,&pconx->omode,4,TRUE);
+	  if (mainw->write_failed) goto write_failed1;
+
+	  hashname=make_weed_hashname(rte_keymode_get_filter_idx(pconx->okey+1,pconx->omode),TRUE);
+	  slen=strlen(hashname);
+	  lives_write_le(kfd,&slen,4,TRUE);
+	  lives_write(kfd,hashname,slen,TRUE);
+	  g_free(hashname);
+
+	  nparams=pconx->nparams;
+	  lives_write_le(kfd,&nparams,4,TRUE);
+	  if (mainw->write_failed) goto write_failed1;
+
+	  for (i=0;i<nparams;i++) {
+	    lives_write_le(kfd,&pconx->params[i],4,TRUE);
+	    if (mainw->write_failed) goto write_failed1;
+
+	    nconns=pconx->nconns[i];
+	    lives_write_le(kfd,&nconns,4,TRUE);
+	    if (mainw->write_failed) goto write_failed1;
+
+	    totcons+=nconns;
+
+	    while (j<totcons) {
+	      lives_write_le(kfd,&pconx->ikey[j],4,TRUE);
+	      if (mainw->write_failed) goto write_failed1;
+
+	      lives_write_le(kfd,&pconx->imode[j],4,TRUE);
+	      if (mainw->write_failed) goto write_failed1;
+
+	      hashname=make_weed_hashname(rte_keymode_get_filter_idx(pconx->ikey[j]+1,pconx->imode[j]),TRUE);
+	      slen=strlen(hashname);
+	      lives_write_le(kfd,&slen,4,TRUE);
+	      lives_write(kfd,hashname,slen,TRUE);
+	      g_free(hashname);
+
+	      lives_write_le(kfd,&pconx->ipnum[j],4,TRUE);
+	      if (mainw->write_failed) goto write_failed1;
+
+	      lives_write_le(kfd,&pconx->autoscale[j],4,TRUE);
+	      if (mainw->write_failed) goto write_failed1;
+
+	      j++;
+	    }
+
+	  }
+
+	  pconx=pconx->next;
+	}
+
+      }
+      else {
+	lives_write_le(kfd,&count,4,TRUE);
+	if (mainw->write_failed) goto write_failed1;
+      }
+
+
+    write_failed1:
+      close(kfd);
+      
+      if (mainw->write_failed) {
+	retval=do_write_failed_error_s_with_retry(kfname,NULL,GTK_WINDOW(rte_window));
+	mainw->write_failed=FALSE;
+      }
+    }
+  } while (retval==LIVES_RETRY);
+
+  if (retval==LIVES_CANCEL) return FALSE;
+  return TRUE;
+
+}
+
+
+
+static boolean on_save_keymap_clicked (GtkButton *button, gpointer user_data) {
   // save as keymap type 1 file - to allow backwards compatibility with older versions of LiVES
   // default.keymap
 
@@ -188,22 +385,27 @@ gboolean on_save_keymap_clicked (GtkButton *button, gpointer user_data) {
   // format is binary
   // (4 bytes key) (4 bytes hlen) (hlen bytes hashname) then a dump of the weed plant default values
 
+  // if we have data connections, we will save a third file
+
+
+  FILE *kfile;
+  GList *list=NULL;
+
+  gchar *msg,*tmp;
+  gchar *keymap_file=g_build_filename(capable->home_dir,LIVES_CONFIG_DIR,"default.keymap",NULL);
+  gchar *keymap_file2=g_build_filename(capable->home_dir,LIVES_CONFIG_DIR,"default.keymap2",NULL);
+  gchar *keymap_file3=g_build_filename(capable->home_dir,LIVES_CONFIG_DIR,"default.keymap3",NULL);
+
+  boolean update=FALSE;
 
   int modes=rte_getmodespk();
   int i,j;
   int retval;
-
-  FILE *kfile;
-  gchar *msg,*tmp;
-  GList *list=NULL;
-  gboolean update=FALSE;
-
-  gchar *keymap_file=g_build_filename(capable->home_dir,LIVES_CONFIG_DIR,"default.keymap",NULL);
-  gchar *keymap_file2=g_build_filename(capable->home_dir,LIVES_CONFIG_DIR,"default.keymap2",NULL);
  
   if (button!=NULL) {
     if (!do_warning_dialog_with_check_transient
 	((_("\n\nClick 'OK' to save this keymap as your default\n\n")),0,GTK_WINDOW(rte_window))) {
+      g_free(keymap_file3);
       g_free(keymap_file2);
       g_free(keymap_file);
       return FALSE;
@@ -234,7 +436,8 @@ gboolean on_save_keymap_clicked (GtkButton *button, gpointer user_data) {
 	for (i=1;i<=prefs->rte_keys_virtual;i++) {
 	  for (j=0;j<modes;j++) {
 	    if (rte_keymode_valid(i,j,TRUE)) {
-	      lives_fputs(g_strdup_printf("%d|Weed%s\n",i,make_weed_hashname(rte_keymode_get_filter_idx(i,j),TRUE)),kfile);
+	      lives_fputs(g_strdup_printf("%d|Weed%s\n",i,(tmp=make_weed_hashname(rte_keymode_get_filter_idx(i,j),TRUE))),kfile);
+	      g_free(tmp);
 	    }
 	  }
 	}
@@ -263,6 +466,18 @@ gboolean on_save_keymap_clicked (GtkButton *button, gpointer user_data) {
   }
   else unlink(keymap_file2);
 
+
+  // if we have data connections, save them
+  if (mainw->pconx!=NULL||mainw->cconx!=NULL) {
+    if (!save_keymap3_file(keymap_file3)) {
+      unlink(keymap_file3);
+      retval=LIVES_CANCEL;
+    }
+  }
+  else unlink(keymap_file3);
+
+
+  g_free(keymap_file3);
   g_free(keymap_file2);
   g_free(keymap_file);
 
@@ -278,7 +493,7 @@ gboolean on_save_keymap_clicked (GtkButton *button, gpointer user_data) {
 void on_save_rte_defs_activate (GtkMenuItem *menuitem, gpointer user_data) {
   int fd,i;
   int retval;
-  gint numfx;
+  int numfx;
   gchar *msg;
 
   if (prefs->fxdefsfile==NULL) {
@@ -481,7 +696,7 @@ void load_rte_defs (void) {
 static void check_clear_all_button (void) {
   int modes=rte_getmodespk();
   int i,j;
-  gboolean hasone=FALSE;
+  boolean hasone=FALSE;
 
   for (i=0;i<prefs->rte_keys_virtual;i++) {
     for (j=modes-1;j>=0;j--) {
@@ -495,8 +710,8 @@ static void check_clear_all_button (void) {
 
 
 
-static gboolean read_perkey_defaults(int kfd, int key, int mode, int version) {
-  gboolean ret=TRUE;
+static boolean read_perkey_defaults(int kfd, int key, int mode, int version) {
+  boolean ret=TRUE;
   int nparams;
   ssize_t bytes=lives_read_le(kfd,&nparams,4,TRUE);
 
@@ -518,7 +733,413 @@ static gboolean read_perkey_defaults(int kfd, int key, int mode, int version) {
 
 
 
-gboolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
+static boolean load_datacons(const gchar *fname, uint8_t **badkeymap) {
+  ssize_t bytes;
+
+  gchar *hashname;
+
+  boolean ret=TRUE;
+  boolean is_valid,is_valid2;
+  boolean eof=FALSE;
+
+  int kfd;
+
+  int retval;
+
+  int hlen;
+
+  int version,nchans,nparams,nconns,ncconx,npconx;
+
+  int okey,omode,ocnum,opnum,ikey,imode,icnum,ipnum,autoscale;
+
+  int maxmodes=rte_getmodespk();
+
+  register int i,j,k,count;
+  
+
+  
+  do {
+    retval=0;
+    if ((kfd=open(fname,O_RDONLY))==-1) {
+      retval=do_read_failed_error_s_with_retry(fname,g_strerror(errno),NULL);
+    }
+    else {
+#ifdef IS_MINGW
+      setmode(fd, O_BINARY);
+#endif
+      mainw->read_failed=FALSE;
+
+      bytes=lives_read_le(kfd,&version,4,TRUE);
+      if (bytes<4) {
+	eof=TRUE;
+	break;
+      }
+
+      bytes=lives_read_le(kfd,&ncconx,4,TRUE);
+      if (bytes<4) {
+	eof=TRUE;
+	break;
+      }
+
+      for (count=0;count<ncconx;count++) {
+	is_valid=TRUE;
+
+	bytes=lives_read_le(kfd,&okey,4,TRUE);
+	if (bytes<4) {
+	  eof=TRUE;
+	  break;
+	}
+
+	if (okey<0||okey>=prefs->rte_keys_virtual) is_valid=FALSE;
+
+	bytes=lives_read_le(kfd,&omode,4,TRUE);
+	if (bytes<4) {
+	  eof=TRUE;
+	  break;
+	}
+
+	  
+	bytes=lives_read_le(kfd,&hlen,4,TRUE);
+	if (bytes<4) {
+	  eof=TRUE;
+	  break;
+	}
+	  
+	hashname=(gchar *)g_try_malloc(hlen+1);
+
+	if (hashname==NULL) {
+	  eof=TRUE;
+	  break;
+	}
+
+	bytes=read(kfd,hashname,hlen);
+	if (bytes<hlen) {
+	  eof=TRUE;
+	  g_free(hashname);
+	  break;
+	}
+	  
+	memset(hashname+hlen,0,1);
+	  
+	  
+	// if we had bad/missing fx, adjust the omode value
+	for (i=0;i<omode;i++) omode-=badkeymap[okey][omode];
+
+	if (omode<0||omode>maxmodes) is_valid=FALSE;
+
+
+	if (is_valid) {
+	  int fidx=rte_keymode_get_filter_idx(okey+1,omode);
+	  if (fidx==-1) is_valid=FALSE;
+	  else {
+	    gchar *hashname2=make_weed_hashname(fidx,TRUE);
+	    if (strcmp(hashname,hashname2)) is_valid=FALSE;
+	    g_free(hashname2);
+	  }
+	}
+
+	g_free(hashname);
+
+	bytes=lives_read_le(kfd,&nchans,4,TRUE);
+	if (bytes<4) {
+	  eof=TRUE;
+	  break;
+	}
+
+	for (i=0;i<nchans;i++) {
+	  is_valid2=is_valid;
+
+	  bytes=lives_read_le(kfd,&ocnum,4,TRUE);
+	  if (bytes<4) {
+	    eof=TRUE;
+	    break;
+	  }
+
+	  // TODO - check ocnum
+
+
+	  bytes=lives_read_le(kfd,&nconns,4,TRUE);
+	  if (bytes<4) {
+	    eof=TRUE;
+	    break;
+	  }
+
+	  for (j=0;j<nconns;j++) {
+	    bytes=lives_read_le(kfd,&ikey,4,TRUE);
+	    if (bytes<4) {
+	      eof=TRUE;
+	      break;
+	    }
+
+	    bytes=lives_read_le(kfd,&imode,4,TRUE);
+	    if (bytes<4) {
+	      eof=TRUE;
+	      break;
+	    }
+
+	    bytes=lives_read_le(kfd,&hlen,4,TRUE);
+	    if (bytes<4) {
+	      eof=TRUE;
+	      break;
+	    }
+	      
+	    hashname=(gchar *)g_try_malloc(hlen+1);
+
+	    if (hashname==NULL) {
+	      eof=TRUE;
+	      break;
+	    }
+
+	    bytes=read(kfd,hashname,hlen);
+	    if (bytes<hlen) {
+	      eof=TRUE;
+	      g_free(hashname);
+	      break;
+	    }
+	      
+	    memset(hashname+hlen,0,1);
+	  
+	      
+	    // if we had bad/missing fx, adjust the omode value
+	    for (k=0;k<imode;k++) imode-=badkeymap[ikey][imode];
+
+	    if (imode<0||imode>maxmodes) is_valid2=FALSE;
+
+
+	    if (is_valid2) {
+	      int fidx=rte_keymode_get_filter_idx(ikey+1,imode);
+	      if (fidx==-1) is_valid2=FALSE;
+	      else {
+		gchar *hashname2=make_weed_hashname(fidx,TRUE);
+		if (strcmp(hashname,hashname2)) is_valid2=FALSE;
+		g_free(hashname2);
+	      }
+	    }
+
+	    g_free(hashname);
+
+	    bytes=lives_read_le(kfd,&icnum,4,TRUE);
+	    if (bytes<4) {
+	      eof=TRUE;
+	      break;
+	    }
+
+	    // TODO - check icnum
+
+
+	    if (is_valid2) cconx_add_connection(okey,omode,ocnum,ikey,imode,icnum);
+
+
+
+	  }
+
+	  if (eof) break;
+
+
+	}
+
+	if (eof) break;
+
+
+      }
+
+      if (eof) break;
+
+      // params
+
+
+
+      bytes=lives_read_le(kfd,&npconx,4,TRUE);
+      if (bytes<4) {
+	eof=TRUE;
+	break;
+      }
+
+      for (count=0;count<npconx;count++) {
+	is_valid=TRUE;
+
+	bytes=lives_read_le(kfd,&okey,4,TRUE);
+	if (bytes<4) {
+	  eof=TRUE;
+	  break;
+	}
+
+	if (okey<0||okey>=prefs->rte_keys_virtual) is_valid=FALSE;
+
+	bytes=lives_read_le(kfd,&omode,4,TRUE);
+	if (bytes<4) {
+	  eof=TRUE;
+	  break;
+	}
+
+	  
+	bytes=lives_read_le(kfd,&hlen,4,TRUE);
+	if (bytes<4) {
+	  eof=TRUE;
+	  break;
+	}
+
+	hashname=(gchar *)g_try_malloc(hlen);
+
+	if (hashname==NULL) {
+	  eof=TRUE;
+	  break;
+	}
+
+	bytes=read(kfd,hashname,hlen);
+	if (bytes<hlen) {
+	  eof=TRUE;
+	  g_free(hashname);
+	  break;
+	}
+	  
+	memset(hashname+hlen,0,1);
+	  
+	  
+	// if we had bad/missing fx, adjust the omode value
+	for (i=0;i<omode;i++) omode-=badkeymap[okey][omode];
+
+	if (omode<0||omode>maxmodes) is_valid=FALSE;
+
+
+	if (is_valid) {
+	  int fidx=rte_keymode_get_filter_idx(okey+1,omode);
+	  if (fidx==-1) is_valid=FALSE;
+	  else {
+	    gchar *hashname2=make_weed_hashname(fidx,TRUE);
+	    if (strcmp(hashname,hashname2)) is_valid=FALSE;
+	    g_free(hashname2);
+	  }
+	}
+
+	g_free(hashname);
+
+	bytes=lives_read_le(kfd,&nparams,4,TRUE);
+	if (bytes<4) {
+	  eof=TRUE;
+	  break;
+	}
+
+	for (i=0;i<nparams;i++) {
+	  is_valid2=is_valid;
+
+	  bytes=lives_read_le(kfd,&opnum,4,TRUE);
+	  if (bytes<4) {
+	    eof=TRUE;
+	    break;
+	  }
+
+	  // TODO - check opnum
+
+
+	  bytes=lives_read_le(kfd,&nconns,4,TRUE);
+	  if (bytes<4) {
+	    eof=TRUE;
+	    break;
+	  }
+
+	  for (j=0;j<nconns;j++) {
+	    bytes=lives_read_le(kfd,&ikey,4,TRUE);
+	    if (bytes<4) {
+	      eof=TRUE;
+	      break;
+	    }
+
+	    bytes=lives_read_le(kfd,&imode,4,TRUE);
+	    if (bytes<4) {
+	      eof=TRUE;
+	      break;
+	    }
+
+	    bytes=lives_read_le(kfd,&hlen,4,TRUE);
+	    if (bytes<4) {
+	      eof=TRUE;
+	      break;
+	    }
+	      
+	    hashname=(gchar *)g_try_malloc(hlen+1);
+
+	    if (hashname==NULL) {
+	      eof=TRUE;
+	      break;
+	    }
+
+	    bytes=read(kfd,hashname,hlen);
+	    if (bytes<hlen) {
+	      eof=TRUE;
+	      g_free(hashname);
+	      break;
+	    }
+	      
+	    memset(hashname+hlen,0,1);
+	  
+	    // if we had bad/missing fx, adjust the omode value
+	    for (k=0;k<imode;k++) imode-=badkeymap[ikey][imode];
+
+	    if (imode<0||imode>maxmodes) is_valid2=FALSE;
+
+	    if (is_valid2) {
+	      int fidx=rte_keymode_get_filter_idx(ikey+1,imode);
+	      if (fidx==-1) is_valid2=FALSE;
+	      else {
+		gchar *hashname2=make_weed_hashname(fidx,TRUE);
+		if (strcmp(hashname,hashname2)) is_valid2=FALSE;
+		g_free(hashname2);
+	      }
+	    }
+
+	    g_free(hashname);
+
+	    bytes=lives_read_le(kfd,&ipnum,4,TRUE);
+	    if (bytes<4) {
+	      eof=TRUE;
+	      break;
+	    }
+
+	    // TODO - check ipnum
+
+	    bytes=lives_read_le(kfd,&autoscale,4,TRUE);
+	    if (bytes<4) {
+	      eof=TRUE;
+	      break;
+	    }
+
+	    if (is_valid2) {
+	      pconx_add_connection(okey,omode,opnum,ikey,imode,ipnum,autoscale);
+	    }
+
+
+	  }
+
+	  if (eof) break;
+
+
+	}
+
+	if (eof) break;
+
+
+      }
+
+
+
+
+      close(kfd);
+	
+    }
+  } while (retval==LIVES_RETRY);
+
+  if (retval==LIVES_CANCEL) {
+    d_print_cancelled();
+    return FALSE;
+  }
+
+  return ret;
+}
+
+
+
+boolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
   // show file errors at this level
   FILE *kfile=NULL;
 
@@ -537,23 +1158,31 @@ gboolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
 
   gchar *keymap_file=g_build_filename(capable->home_dir,LIVES_CONFIG_DIR,"default.keymap",NULL);
   gchar *keymap_file2=g_build_filename(capable->home_dir,LIVES_CONFIG_DIR,"default.keymap2",NULL);
+  gchar *keymap_file3=g_build_filename(capable->home_dir,LIVES_CONFIG_DIR,"default.keymap3",NULL);
 
   int *def_modes;
+  uint8_t **badkeymap;
+
+  boolean notfound=FALSE;
+  boolean has_error=FALSE;
+  boolean eof=FALSE;
 
   int modes=rte_getmodespk();
-  int i;
   int kfd=-1;
   int version;
   int hlen;
   int retval;
 
-  gint key,mode;
-  gint update=0;
+  int key,mode;
+  int update=0;
 
-  gboolean notfound=FALSE;
-  gboolean has_error=FALSE;
-  gboolean eof=FALSE;
+  register int i;
 
+
+  badkeymap=(uint8_t **)g_malloc(prefs->rte_keys_virtual*sizeof(uint8_t *));
+  for (i=0;i<prefs->rte_keys_virtual;i++) {
+    badkeymap[i]=(uint8_t *)lives_calloc(modes,1);
+  }
 
   def_modes=(int *)g_malloc(prefs->rte_keys_virtual*sizint);
   for (i=0;i<prefs->rte_keys_virtual;i++) def_modes[i]=-1;
@@ -612,6 +1241,13 @@ gboolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
     g_free(def_modes);
     return FALSE;
   }
+
+
+  badkeymap=(uint8_t **)g_malloc(prefs->rte_keys_virtual*sizeof(uint8_t *));
+  for (i=0;i<prefs->rte_keys_virtual;i++) {
+    badkeymap[i]=(uint8_t *)lives_calloc(modes,1);
+  }
+
 
   if (keymap_file2==NULL) {
     // version 1 file
@@ -699,7 +1335,6 @@ gboolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
       // newer style
 
       // file format is: (4 bytes int)key(4 bytes int)hlen(hlen bytes)hashname
-      // TODO - ensure le format !
 
       //read key and hashname
       bytes=lives_read_le(kfd,&key,4,TRUE);
@@ -714,7 +1349,12 @@ gboolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
 	break;
       }
 
-      hashname=(gchar *)g_malloc(hlen+1);
+      hashname=(gchar *)g_try_malloc(hlen+1);
+
+      if (hashname==NULL) {
+	eof=TRUE;
+	break;
+      }
 
       bytes=read(kfd,hashname,hlen);
       if (bytes<hlen) {
@@ -753,6 +1393,7 @@ gboolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
       g_free(tmp);
       notfound=TRUE;
       g_free(hashname);
+      badkeymap[key-1][def_modes[key-1]]++;
       if (keymap_file2!=NULL) {
 	// read param defaults
 	if (!read_perkey_defaults(kfd,-1,-1,version)) break; // file read error
@@ -771,6 +1412,7 @@ gboolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
       g_free(tmp);
       notfound=TRUE;
       g_free(hashname);
+      badkeymap[key-1][def_modes[key-1]]++;
       if (keymap_file2!=NULL) {
 	// read param defaults
 	if (!read_perkey_defaults(kfd,-1,-1,version)) break; // file read error
@@ -786,6 +1428,7 @@ gboolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
 	       (_("This version of LiVES cannot mix generators/non-generators on the same key (%d) !\n"),key)));
       LIVES_ERROR(tmp);
       g_free(tmp);
+      badkeymap[key-1][def_modes[key-1]]++;
       if (keymap_file2!=NULL) {
 	// read param defaults
 	if (!read_perkey_defaults(kfd,-1,-1,version)) break; // file read error
@@ -831,18 +1474,39 @@ gboolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
     }
     else d_print_done();
   }
-
   else {
     if (kfd!=-1) close(kfd);
+    g_free(keymap_file2);
     d_print_done();
   }
 
-  if (mainw->is_ready) {
-    check_clear_all_button();
-    if (notfound) do_warning_dialog_with_check_transient(_("\n\nSome effects could not be located.\n\n"),
-							 0,GTK_WINDOW(rte_window));
+  if (update==0) {
+    if (g_file_test(keymap_file3,G_FILE_TEST_EXISTS)) {
+
+      msg=g_strdup_printf(_("Loading data connection map from %s..."),keymap_file3);
+      d_print(msg);
+      g_free(msg);
+
+      if (load_datacons(keymap_file3,badkeymap)) d_print_done();
+    }
+    
+    if (mainw->is_ready) {
+      check_clear_all_button();
+      if (notfound) do_warning_dialog_with_check_transient(_("\n\nSome effects could not be located.\n\n"),
+							   0,GTK_WINDOW(rte_window));
+    }
+    else load_rte_defs(); // file errors shown inside
+
   }
-  else load_rte_defs(); // file errors shown inside
+
+  for (i=0;i<prefs->rte_keys_virtual;i++) {
+    g_free(badkeymap[i]);
+  }
+
+  g_free(badkeymap);
+
+  g_free(keymap_file3);
+
   g_free(def_modes);
 
   return FALSE;
@@ -855,8 +1519,8 @@ void
 on_rte_info_clicked (GtkButton *button, gpointer user_data) {
   gint key_mode=GPOINTER_TO_INT(user_data);
   int modes=rte_getmodespk();
-  gint key=(gint)(key_mode/modes);
-  gint mode=key_mode-key*modes;
+  int key=(int)(key_mode/modes);
+  int mode=key_mode-key*modes;
 
   gchar *type;
   weed_plant_t *filter;
@@ -876,6 +1540,7 @@ on_rte_info_clicked (GtkButton *button, gpointer user_data) {
   gchar *filter_name;
   gchar *filter_author;
   gchar *filter_description;
+
   int filter_version;
   int weed_error;
 
@@ -1012,10 +1677,12 @@ void on_clear_clicked (GtkButton *button, gpointer user_data) {
 
   gint idx=GPOINTER_TO_INT(user_data);
   int modes=rte_getmodespk();
-  gint key=(gint)(idx/modes);
-  gint mode=idx-key*modes;
+  int key=(int)(idx/modes);
+  int mode=idx-key*modes;
 
-  int i,newmode;
+  int newmode;
+
+  register int i;
 
   weed_delete_effectkey (key+1,mode);
 
@@ -1052,8 +1719,8 @@ void on_clear_clicked (GtkButton *button, gpointer user_data) {
 static void on_datacon_clicked (GtkButton *button, gpointer user_data) {
   gint idx=GPOINTER_TO_INT(user_data);
   int modes=rte_getmodespk();
-  gint key=(gint)(idx/modes);
-  gint mode=idx-key*modes;
+  int key=(int)(idx/modes);
+  int mode=idx-key*modes;
 
   //if (datacon_dialog!=NULL) on_datacon_cancel_clicked(NULL,NULL);
 
@@ -1065,8 +1732,8 @@ static void on_datacon_clicked (GtkButton *button, gpointer user_data) {
 static void on_params_clicked (GtkButton *button, gpointer user_data) {
   gint idx=GPOINTER_TO_INT(user_data);
   int modes=rte_getmodespk();
-  gint key=(gint)(idx/modes);
-  gint mode=idx-key*modes;
+  int key=(int)(idx/modes);
+  int mode=idx-key*modes;
 
   weed_plant_t *inst;
   lives_rfx_t *rfx;
@@ -1107,7 +1774,7 @@ static void on_params_clicked (GtkButton *button, gpointer user_data) {
 }
 
 
-static gboolean on_rtew_delete_event (GtkWidget *widget, GdkEvent *event, gpointer user_data) {
+static boolean on_rtew_delete_event (GtkWidget *widget, GdkEvent *event, gpointer user_data) {
 
   if (hash_list!=NULL) {
     g_list_free_strings(hash_list);
@@ -1181,11 +1848,11 @@ void fx_changed (GtkComboBox *combo, gpointer user_data) {
 
   gint key_mode=GPOINTER_TO_INT(user_data);
   int modes=rte_getmodespk();
-  gint key=(gint)(key_mode/modes);
-  gint mode=key_mode-key*modes;
+  int key=(int)(key_mode/modes);
+  int mode=key_mode-key*modes;
   gint idx=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(combo),"idx"));
 
-  gint error;
+  int error;
 
   register int i;
 
@@ -1368,13 +2035,14 @@ GtkWidget * create_rte_window (void) {
 
   int modes=rte_getmodespk();
 
-  register int i,j;
   int idx,error;
 
-  gint winsize_h;
-  gint winsize_v;
+  int winsize_h;
+  int winsize_v;
 
-  gint scr_width,scr_height;
+  int scr_width,scr_height;
+
+  register int i,j;
 
   ///////////////////////////////////////////////////////////////////////////
 
@@ -1665,8 +2333,7 @@ void refresh_rte_window (void) {
 }
 
 
-void 
-on_assign_rte_keys_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void on_assign_rte_keys_activate (GtkMenuItem *menuitem, gpointer user_data) {
   if (rte_window!=NULL) {
     on_rtew_ok_clicked(GTK_BUTTON(dummy_radio), user_data);
     return;
@@ -1677,14 +2344,14 @@ on_assign_rte_keys_activate (GtkMenuItem *menuitem, gpointer user_data) {
 }
 
 
-void rtew_set_keych (gint key, gboolean on) {
+void rtew_set_keych (int key, boolean on) {
   g_signal_handler_block(key_checks[key],ch_fns[key]);
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(key_checks[key]),on);
   g_signal_handler_unblock(key_checks[key],ch_fns[key]);
 }
 
 
-void rtew_set_keygr (gint key) {
+void rtew_set_keygr (int key) {
   if (key>=0) {
     g_signal_handler_block(key_grabs[key],gr_fns[key]);
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(key_grabs[key]),TRUE);
@@ -1695,20 +2362,20 @@ void rtew_set_keygr (gint key) {
   }
 }
 
-void rtew_set_mode_radio (gint key, gint mode) {
+void rtew_set_mode_radio (int key, int mode) {
   int modes=rte_getmodespk();
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(mode_radios[key*modes+mode]),TRUE);
+  lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON(mode_radios[key*modes+mode]),TRUE);
 }
 
 
 
-void redraw_pwindow (gint key, gint mode) {
+void redraw_pwindow (int key, int mode) {
   GList *child_list;
   lives_rfx_t *rfx;
 
   GtkWidget *action_area;
 
-  gint keyw=0,modew=0;
+  int keyw=0,modew=0;
   int i;
 
   if (fx_dialog[1]!=NULL) {
@@ -1750,10 +2417,10 @@ void restore_pwindow (lives_rfx_t *rfx) {
 }
 
 
-void update_pwindow (gint key, gint i, GList *list) {
+void update_pwindow (int key, int i, GList *list) {
   const weed_plant_t *inst;
   lives_rfx_t *rfx;
-  gint keyw,modew;
+  int keyw,modew;
 
   if (fx_dialog[1]!=NULL) {
     keyw=GPOINTER_TO_INT (g_object_get_data (G_OBJECT (fx_dialog[1]),"key"));
@@ -1786,7 +2453,7 @@ void rte_set_defs_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
 
 void rte_set_key_defs (GtkButton *button, lives_rfx_t *rfx) {
-  gint key,mode;
+  int key,mode;
   if (mainw->textwidget_focus!=NULL) {
     GtkWidget *textwidget=(GtkWidget *)g_object_get_data (G_OBJECT (mainw->textwidget_focus),"textwidget");
     after_param_text_changed(textwidget,rfx);
@@ -1803,10 +2470,11 @@ void rte_set_key_defs (GtkButton *button, lives_rfx_t *rfx) {
 
 
 void rte_set_defs_ok (GtkButton *button, lives_rfx_t *rfx) {
-  int i;
   weed_plant_t **ptmpls,*filter;
-  int error;
   lives_colRGB24_t *rgbp;
+
+  int i;
+  int error;
 
   if (mainw->textwidget_focus!=NULL) {
     GtkWidget *textwidget=(GtkWidget *)g_object_get_data (G_OBJECT (mainw->textwidget_focus),"textwidget");

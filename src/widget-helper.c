@@ -1000,7 +1000,7 @@ void adjustment_configure(LiVESAdjustment *adjustment,
 		     double page_size) {
   g_object_freeze_notify (G_OBJECT(adjustment));
 
-#ifdef HAVE_GTK_NICE_VERSION
+#if GTK_CHECK_VERSION(2,14,0)
   gtk_adjustment_configure(adjustment,value,lower,upper,step_increment,page_increment,page_size);
   g_object_thaw_notify (G_OBJECT(adjustment));
   return;

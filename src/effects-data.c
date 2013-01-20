@@ -1805,16 +1805,18 @@ boolean cconx_chain_data_internal(weed_plant_t *ichan) {
 
 // still TODO - high priority:
 
-// check why disconn. broken for params
+// check why errors not being shown
 
-// show values (autoscale)
-
+// copy pconx/cconx for cancel
 
 // add to default keymap
 
 // read from keymap
 
-// add a new nb page
+
+// low priority:
+
+// add a new nb page, limit to one key/mode per page
 
 // show values w. nb pages
 

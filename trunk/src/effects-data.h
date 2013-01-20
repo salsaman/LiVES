@@ -44,7 +44,7 @@ struct _lives_pconnect_t {
 void pconx_add_connection(int okey, int omode, int opnum, int ikey, int imode, int ipnum, boolean autoscale);
 
 /// return if ikey/imode/ipnum is mapped to an out param
-weed_plant_t *pconx_get_out_param(int ikey, int imode, int ipnum, boolean *autoscale);
+weed_plant_t *pconx_get_out_param(boolean use_filter, int ikey, int imode, int ipnum, boolean *autoscale);
 
 // free all connections (and set mainw->pconx to NULL)
 void pconx_delete_all();
@@ -104,7 +104,7 @@ struct _lives_cconnect_t {
 void cconx_add_connection(int okey, int omode, int ocnum, int ikey, int imode, int icnum);
 
 /// return if ikey/imode/ichan is mapped to an out alpha
-weed_plant_t *cconx_get_out_chan(int ikey, int imode, int ipnum);
+weed_plant_t *cconx_get_out_chan(boolean use_filter, int ikey, int imode, int ipnum);
 
 // free all connections (and set mainw->cconx to NULL)
 void cconx_delete_all();

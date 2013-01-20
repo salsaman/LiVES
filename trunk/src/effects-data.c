@@ -50,6 +50,65 @@ void pconx_delete_all(void) {
 }
 
 
+static lives_pconnect_t *pconx_new (int okey, int omode) {
+  lives_pconnect_t *pconx=(lives_pconnect_t *)g_malloc0(sizeof(struct _lives_pconnect_t));
+  pconx->next=NULL;
+  pconx->okey=okey;
+  pconx->omode=omode;
+  pconx->nparams=0;
+  pconx->nconns=NULL;
+  return pconx;
+}
+
+
+static lives_pconnect_t *pconx_copy(lives_pconnect_t *spconx) {
+  lives_pconnect_t *pconx=NULL,*dpconx,*last_dpconx;
+
+  int totcons=0;
+
+  register int i,j=0;
+
+  while (spconx!=NULL) {
+    dpconx=pconx_new(spconx->okey,spconx->omode);
+    if (pconx==NULL) pconx=dpconx;
+    else last_dpconx->next=dpconx;
+
+    dpconx->nparams=spconx->nparams;
+
+    dpconx->nconns=(int *)g_malloc(dpconx->nparams*sizint);
+    dpconx->params=(int *)g_malloc(dpconx->nparams*sizint);
+
+    dpconx->ikey=dpconx->imode=dpconx->ipnum=dpconx->autoscale=NULL;
+
+    j=0;
+
+    for (i=0;i<dpconx->nparams;i++) {
+      dpconx->params[i]=spconx->params[i];
+      dpconx->nconns[i]=spconx->nconns[i];
+      totcons+=dpconx->nconns[i];
+
+      dpconx->ikey=(int *)g_realloc(dpconx->ikey,totcons*sizint);
+      dpconx->imode=(int *)g_realloc(dpconx->imode,totcons*sizint);
+      dpconx->ipnum=(int *)g_realloc(dpconx->ipnum,totcons*sizint);
+      dpconx->autoscale=(int *)g_realloc(dpconx->autoscale,totcons*sizint);
+
+      while (j<totcons) {
+	dpconx->ikey[j]=spconx->ikey[j];
+	dpconx->imode[j]=spconx->imode[j];
+	dpconx->ipnum[j]=spconx->ipnum[j];
+	dpconx->autoscale[j]=spconx->autoscale[j];
+	j++;
+      }
+    }
+
+    spconx=spconx->next;
+    last_dpconx=dpconx;
+  }
+
+  return pconx;
+}
+
+
 
 gchar *pconx_list(int okey, int omode, int opnum) {
   gchar *st1=g_strdup(""),*st2;
@@ -206,16 +265,6 @@ void pconx_remap_mode(int key, int omode, int nmode) {
   }
 }
 
-
-static lives_pconnect_t *pconx_new (int okey, int omode) {
-  lives_pconnect_t *pconx=(lives_pconnect_t *)g_malloc0(sizeof(struct _lives_pconnect_t));
-  pconx->next=NULL;
-  pconx->okey=okey;
-  pconx->omode=omode;
-  pconx->nparams=0;
-  pconx->nconns=NULL;
-  return pconx;
-}
 
 
 static void pconx_append(lives_pconnect_t *pconx) {
@@ -413,31 +462,44 @@ void pconx_add_connection(int okey, int omode, int opnum, int ikey, int imode, i
 
 
 
-weed_plant_t *pconx_get_out_param(int ikey, int imode, int ipnum, int *autoscale) {
+weed_plant_t *pconx_get_out_param(boolean use_filt, int ikey, int imode, int ipnum, int *autoscale) {
   // walk all pconx and find one which has ikey/imode/ipnum as destination
   // then all we need do is copy the "value" leaf
 
   lives_pconnect_t *pconx=mainw->pconx;
 
-  weed_plant_t *inst;
+  weed_plant_t *inst=NULL,*filter=NULL;
 
   int totcons,error;
   register int i,j;
 
   while (pconx!=NULL) {
-    if (mainw->is_rendering) {
-      inst=get_new_inst_for_keymode(pconx->okey,pconx->omode);
+    if (!use_filt) {
+      if (mainw->is_rendering) {
+	inst=get_new_inst_for_keymode(pconx->okey,pconx->omode);
+      }
+      else {
+	inst=rte_keymode_get_instance(pconx->okey+1,pconx->omode);
+      }
+      if (inst==NULL) {
+	pconx=pconx->next;
+	continue;
+      }
+      if (!weed_plant_has_leaf(inst,"out_parameters")) {
+	pconx=pconx->next;
+	continue;
+      }
     }
     else {
-      inst=rte_keymode_get_instance(pconx->okey+1,pconx->omode);
-    }
-    if (inst==NULL) {
-      pconx=pconx->next;
-      continue;
-    }
-    if (!weed_plant_has_leaf(inst,"out_parameters")) {
-      pconx=pconx->next;
-      continue;
+      filter=rte_keymode_get_filter(pconx->okey+1,pconx->omode);
+      if (filter==NULL) {
+	pconx=pconx->next;
+	continue;
+      }
+      if (!weed_plant_has_leaf(filter,"out_parameter_templates")) {
+	pconx=pconx->next;
+	continue;
+      }
     }
     totcons=0;
     j=0;
@@ -445,9 +507,12 @@ weed_plant_t *pconx_get_out_param(int ikey, int imode, int ipnum, int *autoscale
       totcons+=pconx->nconns[i];
       for (;j<totcons;j++) {
 	if (pconx->ikey[j]==ikey && pconx->imode[j]==imode && pconx->ipnum[j]==ipnum) {
-	  weed_plant_t **outparams=weed_get_plantptr_array(inst,"out_parameters",&error);
+	  weed_plant_t **outparams;
 	  weed_plant_t *param=NULL;
-	  if (i<weed_leaf_num_elements(inst,"out_parameters")) {
+	  if (filter==NULL) outparams=weed_get_plantptr_array(inst,"out_parameters",&error);
+	  else outparams=weed_get_plantptr_array(filter,"out_parameter_templates",&error);
+	  if ((filter!=NULL&&pconx->params[i]<weed_leaf_num_elements(filter,"out_parameter_templates"))||
+	      (filter==NULL&&pconx->params[i]<weed_leaf_num_elements(inst,"out_parameters"))) {
 	    param=outparams[pconx->params[i]];
 	    if (autoscale!=NULL) *autoscale=pconx->autoscale[j];
 	  }
@@ -478,16 +543,41 @@ static boolean params_compatible(weed_plant_t *sparam, weed_plant_t *dparam) {
 
   int error;
 
-  weed_plant_t *dptmpl=weed_get_plantptr_value(dparam,"template",&error);
+  weed_plant_t *dptmpl;
 
-  int dtype=weed_leaf_seed_type(dparam,"value");
-  int stype=weed_leaf_seed_type(sparam,"value");
+  int dtype;
 
-  int ndvals=weed_leaf_num_elements(dparam,"value");
-  int nsvals=weed_leaf_num_elements(sparam,"value");
+  int stype;
 
-  int dhint=weed_get_int_value(dptmpl,"hint",&error);
-  int dflags=weed_get_int_value(dptmpl,"flags",&error);
+  int ndvals;
+  int nsvals;
+
+  int dhint;
+  int dflags;
+
+  if (WEED_PLANT_IS_PARAMETER(dparam)) {
+    dptmpl=weed_get_plantptr_value(dparam,"template",&error);
+    dtype=weed_leaf_seed_type(dparam,"value");
+    ndvals=weed_leaf_num_elements(dparam,"value");
+  }
+  else {
+    dptmpl=dparam;
+    dtype=weed_leaf_seed_type(dparam,"default");
+    ndvals=weed_leaf_num_elements(dparam,"default");
+  }
+
+  if (WEED_PLANT_IS_PARAMETER(sparam)) {
+    stype=weed_leaf_seed_type(sparam,"value");
+    nsvals=weed_leaf_num_elements(sparam,"value");
+  }
+  else {
+    stype=weed_leaf_seed_type(sparam,"default");
+    nsvals=weed_leaf_num_elements(sparam,"default");
+  }
+
+  dhint=weed_get_int_value(dptmpl,"hint",&error);
+  dflags=weed_get_int_value(dptmpl,"flags",&error);
+
 
   if (dhint==WEED_HINT_COLOR) {
     int cspace=weed_get_int_value(dptmpl,"colorspace",&error);
@@ -1167,7 +1257,7 @@ boolean pconx_chain_data(int key, int mode) {
     else inparams=weed_get_plantptr_array(inst,"in_parameters",&error);
 
     for (i=0;i<nparams;i++) {
-      if ((oparam=pconx_get_out_param(key,mode,i,&autoscale))!=NULL) {
+      if ((oparam=pconx_get_out_param(FALSE,key,mode,i,&autoscale))!=NULL) {
 	//#define DEBUG_PCONX
 #ifdef DEBUG_PCONX
 	g_print("got pconx to %d %d %d\n",key,mode,i);
@@ -1270,6 +1360,64 @@ void cconx_delete_all(void) {
     cconx=cconx_next;
   }
   mainw->cconx=NULL;
+}
+
+
+static lives_cconnect_t *cconx_new (int okey, int omode) {
+  lives_cconnect_t *cconx=(lives_cconnect_t *)g_malloc0(sizeof(struct _lives_cconnect_t));
+  cconx->next=NULL;
+  cconx->okey=okey;
+  cconx->omode=omode;
+  cconx->nchans=0;
+  cconx->nconns=NULL;
+  return cconx;
+}
+
+
+
+static lives_cconnect_t *cconx_copy(lives_cconnect_t *scconx) {
+  lives_cconnect_t *cconx=NULL,*dcconx,*last_dcconx;
+
+  int totcons=0;
+
+  register int i,j=0;
+
+  while (scconx!=NULL) {
+    dcconx=cconx_new(scconx->okey,scconx->omode);
+    if (cconx==NULL) cconx=dcconx;
+    else last_dcconx->next=dcconx;
+
+    dcconx->nchans=scconx->nchans;
+    
+    dcconx->nconns=(int *)g_malloc(dcconx->nchans*sizint);
+    dcconx->chans=(int *)g_malloc(dcconx->nchans*sizint);
+
+    dcconx->ikey=dcconx->imode=dcconx->icnum=NULL;
+
+    j=0;
+
+    for (i=0;i<dcconx->nchans;i++) {
+      dcconx->chans[i]=scconx->chans[i];
+      dcconx->nconns[i]=scconx->nconns[i];
+      totcons+=dcconx->nconns[i];
+
+      dcconx->ikey=(int *)g_realloc(dcconx->ikey,totcons*sizint);
+      dcconx->imode=(int *)g_realloc(dcconx->imode,totcons*sizint);
+      dcconx->icnum=(int *)g_realloc(dcconx->icnum,totcons*sizint);
+
+      while (j<totcons) {
+	dcconx->ikey[j]=scconx->ikey[j];
+	dcconx->imode[j]=scconx->imode[j];
+	dcconx->icnum[j]=scconx->icnum[j];
+	j++;
+      }
+    }
+
+    scconx=scconx->next;
+    last_dcconx=dcconx;
+  }
+
+  return cconx;
 }
 
 
@@ -1415,17 +1563,6 @@ void cconx_remap_mode(int key, int omode, int nmode) {
   }
 }
 
-
-
-static lives_cconnect_t *cconx_new (int okey, int omode) {
-  lives_cconnect_t *cconx=(lives_cconnect_t *)g_malloc0(sizeof(struct _lives_cconnect_t));
-  cconx->next=NULL;
-  cconx->okey=okey;
-  cconx->omode=omode;
-  cconx->nchans=0;
-  cconx->nconns=NULL;
-  return cconx;
-}
 
 
 static void cconx_append(lives_cconnect_t *cconx) {
@@ -1599,31 +1736,44 @@ void cconx_add_connection(int okey, int omode, int ocnum, int ikey, int imode, i
 
 
 
-weed_plant_t *cconx_get_out_alpha(int ikey, int imode, int icnum) {
+weed_plant_t *cconx_get_out_alpha(boolean use_filt, int ikey, int imode, int icnum) {
   // walk all cconx and find one which has ikey/imode/icnum as destination
   // then all we need do is convert the pixel_data
 
   lives_cconnect_t *cconx=mainw->cconx;
 
-  weed_plant_t *inst;
+  weed_plant_t *inst=NULL,*filter=NULL;
 
   int totcons,error;
   register int i,j;
 
   while (cconx!=NULL) {
-    if (mainw->is_rendering) {
-      inst=get_new_inst_for_keymode(cconx->okey,cconx->omode);
+    if (!use_filt) {
+      if (mainw->is_rendering) {
+	inst=get_new_inst_for_keymode(cconx->okey,cconx->omode);
+      }
+      else {
+	inst=rte_keymode_get_instance(cconx->okey+1,cconx->omode);
+      }
+      if (inst==NULL) {
+	cconx=cconx->next;
+	continue;
+      }
+      if (!weed_plant_has_leaf(inst,"out_channels")) {
+	cconx=cconx->next;
+	continue;
+      }
     }
     else {
-      inst=rte_keymode_get_instance(cconx->okey+1,cconx->omode);
-    }
-    if (inst==NULL) {
-      cconx=cconx->next;
-      continue;
-    }
-    if (!weed_plant_has_leaf(inst,"out_channels")) {
-      cconx=cconx->next;
-      continue;
+      filter=rte_keymode_get_filter(cconx->okey+1,cconx->omode);
+      if (filter==NULL) {
+	cconx=cconx->next;
+	continue;
+      }
+      if (!weed_plant_has_leaf(filter,"out_parameter_templates")) {
+	cconx=cconx->next;
+	continue;
+      }
     }
     totcons=0;
     j=0;
@@ -1631,9 +1781,13 @@ weed_plant_t *cconx_get_out_alpha(int ikey, int imode, int icnum) {
       totcons+=cconx->nconns[i];
       for (;j<totcons;j++) {
 	if (cconx->ikey[j]==ikey && cconx->imode[j]==imode && cconx->icnum[j]==icnum) {
-	  weed_plant_t **outchans=weed_get_plantptr_array(inst,"out_channels",&error);
+	  weed_plant_t **outchans;
 	  weed_plant_t *channel=NULL;
-	  if (cconx->chans[i]<weed_leaf_num_elements(inst,"out_channels")) {
+
+	  if (filter==NULL) outchans=weed_get_plantptr_array(inst,"out_channels",&error);
+	  else outchans=weed_get_plantptr_array(filter,"out_channel_templates",&error);
+	  if ((filter!=NULL&&cconx->chans[i]<weed_leaf_num_elements(filter,"out_channel_templates"))||
+	      (filter==NULL&&cconx->chans[i]<weed_leaf_num_elements(inst,"out_channels"))) {
 	    channel=outchans[cconx->chans[i]];
 	  }
 	  weed_free(outchans);
@@ -1774,7 +1928,7 @@ boolean cconx_chain_data(int key, int mode) {
   }
 
   while ((ichan=(key==-2?(weed_plant_t *)pp_get_chan(mainw->vpp->play_params,i):get_enabled_channel(inst,i,TRUE)))!=NULL) {
-    if ((ochan=cconx_get_out_alpha(key,mode,i++))!=NULL) {
+    if ((ochan=cconx_get_out_alpha(FALSE,key,mode,i++))!=NULL) {
       if (cconx_convert_pixel_data(ichan,ochan)) needs_reinit=TRUE;
     }
   }
@@ -1907,7 +2061,7 @@ static void apbutton_clicked(GtkButton *button, gpointer user_data) {
       continue;
     }
 
-    if (pconx_get_out_param(key,mode,j-1,NULL)!=NULL) continue;
+    if (pconx_get_out_param(TRUE,key,mode,j-1,NULL)!=NULL) continue;
 
     oparam=oparams[k];
 
@@ -1981,7 +2135,7 @@ static void acbutton_clicked(GtkButton *button, gpointer user_data) {
       continue;
     }
 
-    if (cconx_get_out_alpha(key,mode,j-1)!=NULL) continue;
+    if (cconx_get_out_alpha(TRUE,key,mode,j-1)!=NULL) continue;
 
     if (k>0) {
       model=gtk_combo_box_get_model(GTK_COMBO_BOX(conxwp->cfxcombo[k]));
@@ -2233,20 +2387,16 @@ static void dpp_changed(GtkWidget *combo, gpointer user_data) {
   }
 
 
-
-
-
-
-
   if (idx==-1) {
-    for (i=0;i<conxwp->num_params;i++) if (gtk_combo_box_get_active(GTK_COMBO_BOX(conxwp->pcombo[i]))>-1) {
+    for (i=0;i<conxwp->num_alpha;i++) if (gtk_combo_box_get_active(GTK_COMBO_BOX(conxwp->ccombo[i]))>-1) {
 	hasone=TRUE;
 	break;
       }
-    if (!hasone) for (i=0;i<conxwp->num_alpha;i++) if (gtk_combo_box_get_active(GTK_COMBO_BOX(conxwp->ccombo[i]))>-1) {
+    if (!hasone) for (i=0;i<conxwp->num_params;i++) if (GPOINTER_TO_INT(g_object_get_data(G_OBJECT(conxwp->pcombo[i]),"idx"))>-1) {
 	hasone=TRUE;
 	break;
       }
+
     if (!hasone) gtk_widget_set_sensitive(disconbutton,FALSE);
 
     if (conxwp->ikeys[conxwp->num_alpha+ours]!=0) {
@@ -2264,17 +2414,6 @@ static void dpp_changed(GtkWidget *combo, gpointer user_data) {
 
     return;
   }
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -2312,15 +2451,14 @@ static void dpp_changed(GtkWidget *combo, gpointer user_data) {
   if (!params_compatible(oparam,param)) {
     do_param_incompatible_error(conxwp);
     lives_combo_set_active_string (LIVES_COMBO(combo),"");
-    g_object_set_data(G_OBJECT(combo),"idx",GINT_TO_POINTER(-1));
     return;
 
   }
 
-  if (pconx_get_out_param(key,mode,j,NULL)!=NULL) {
+  if (pconx_get_out_param(TRUE,key-1,mode,j,NULL)!=NULL) {
     // dest param already has a connection
     do_param_connected_error(conxwp);
-    g_object_set_data(G_OBJECT(combo),"idx",GINT_TO_POINTER(-1));
+    lives_combo_set_active_string (LIVES_COMBO(combo),"");
     return;
   }
 
@@ -2450,9 +2588,10 @@ static void dpc_changed(GtkWidget *combo, gpointer user_data) {
 
   j=i;
 
-  if (cconx_get_out_alpha(key,mode,j)!=NULL) {
+  if (cconx_get_out_alpha(TRUE,key-1,mode,j)!=NULL) {
     // dest chan already has a connection
     do_chan_connected_error(conxwp);
+    lives_combo_set_active_string (LIVES_COMBO(combo),"");
     return;
   }
 
@@ -2904,10 +3043,14 @@ static void conxw_cancel_clicked(GtkWidget *button, gpointer user_data) {
   g_free(conxwp->imodes);
   g_free(conxwp->idx);
 
+  pconx_delete_all();
+  cconx_delete_all();
+
   if (button==NULL) return;
 
-  //mainw->pconx=pconx;
-  //mainw->cconx=cconx;
+  // restore old values
+  mainw->pconx=pconx;
+  mainw->cconx=cconx;
 
  lives_general_button_clicked(LIVES_BUTTON(button),NULL);
 }
@@ -2915,8 +3058,18 @@ static void conxw_cancel_clicked(GtkWidget *button, gpointer user_data) {
 
 
 static void conxw_ok_clicked(GtkWidget *button, gpointer user_data) {
- conxw_cancel_clicked(NULL,user_data);
- lives_general_button_clicked(LIVES_BUTTON(button),NULL);
+  lives_cconnect_t *cconx_bak=mainw->cconx;
+  lives_pconnect_t *pconx_bak=mainw->pconx;
+
+  mainw->pconx=pconx;
+  mainw->cconx=cconx;
+
+  conxw_cancel_clicked(NULL,user_data);
+
+  mainw->cconx=cconx_bak;
+  mainw->pconx=pconx_bak;
+
+  lives_general_button_clicked(LIVES_BUTTON(button),NULL);
 }
 
 
@@ -3189,9 +3342,8 @@ GtkWidget *make_datacon_window(int key, int mode) {
 
   acbutton=apbutton=NULL;
 
-  // TODO *** copy !
-  pconx=mainw->pconx;
-  cconx=mainw->cconx;
+  pconx=pconx_copy(mainw->pconx);
+  cconx=cconx_copy(mainw->cconx);
 
   conxw.okey=key;
   conxw.omode=mode;

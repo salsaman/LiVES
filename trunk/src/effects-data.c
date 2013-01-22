@@ -1957,16 +1957,7 @@ boolean cconx_chain_data_internal(weed_plant_t *ichan) {
 
 // channel/param connection window
 
-// still TODO - high priority:
-
-// check why errors not being shown
-
-// copy pconx/cconx for cancel
-
-// add to default keymap
-
-// read from keymap
-
+// still TODO 
 
 // low priority:
 

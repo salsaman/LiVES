@@ -15316,7 +15316,8 @@ void on_delblock_activate (GtkMenuItem *menuitem, gpointer user_data) {
   g_free(block);
 
   gtk_widget_queue_draw (eventbox);
-  if (cfile->achans>0&&mt->audio_draws!=NULL&&mt->opts.back_audio_tracks>0&&eventbox==mt->audio_draws->data&&GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"expanded"))) {
+  if (cfile->achans>0&&mt->audio_draws!=NULL&&mt->opts.back_audio_tracks>0&&eventbox==mt->audio_draws->data&&
+      GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"expanded"))) {
     GtkWidget *xeventbox=(GtkWidget *)g_object_get_data(G_OBJECT(eventbox),"achan0");
     if (xeventbox!=NULL) gtk_widget_queue_draw (xeventbox);
     xeventbox=(GtkWidget *)g_object_get_data(G_OBJECT(eventbox),"achan1");
@@ -15370,13 +15371,16 @@ void on_delblock_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
   remove_end_blank_frames(mt->event_list);
 
-  if ((!mt->moving_block||get_first_frame_event(mt->event_list)==NULL)&&mt->avol_fx!=-1&&blocknext==NULL&&mt->audio_draws!=NULL&&get_first_event(mt->event_list)!=NULL) {
+  if ((!mt->moving_block||get_first_frame_event(mt->event_list)==NULL)&&mt->avol_fx!=-1&&blocknext==NULL&&
+      mt->audio_draws!=NULL&&get_first_event(mt->event_list)!=NULL) {
     apply_avol_filter(mt);
   }
 
   mt->did_backup=did_backup;
-  if (!did_backup&&mt->framedraw!=NULL&&mt->current_rfx!=NULL&&mt->init_event!=NULL&&mt->poly_state==POLY_PARAMS&&weed_plant_has_leaf(mt->init_event,"in_tracks")) {
-    weed_timecode_t tc=q_gint64(gtk_spin_button_get_value(GTK_SPIN_BUTTON(mt->node_spinbutton))*U_SEC+get_event_timecode(mt->init_event),mt->fps);
+  if (!did_backup&&mt->framedraw!=NULL&&mt->current_rfx!=NULL&&mt->init_event!=NULL&&
+      mt->poly_state==POLY_PARAMS&&weed_plant_has_leaf(mt->init_event,"in_tracks")) {
+    weed_timecode_t tc=q_gint64(gtk_spin_button_get_value(GTK_SPIN_BUTTON(mt->node_spinbutton))*U_SEC+
+				get_event_timecode(mt->init_event),mt->fps);
     get_track_index(mt,tc);
   }
 

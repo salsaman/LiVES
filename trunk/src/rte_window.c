@@ -1491,7 +1491,6 @@ boolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
     }
   }
 
-  g_free(keymap_file);
 
   if (keymap_file2==NULL) {
     g_list_free_strings(list);
@@ -1508,7 +1507,6 @@ boolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
   }
   else {
     if (kfd!=-1) close(kfd);
-    g_free(keymap_file2);
     d_print_done();
   }
 
@@ -1536,6 +1534,8 @@ boolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
   }
 
   g_free(badkeymap);
+
+  g_free(keymap_file); // frees keymap_file2 if applicable
 
   g_free(keymap_file3);
 

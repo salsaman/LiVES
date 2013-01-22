@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2013-01-20 11:02-0300\n"
+"POT-Creation-Date: 2013-01-20 11:22-0300\n"
 "PO-Revision-Date: 2011-08-18 11:57+0000\n"
 "Last-Translator: salsaman <salsaman@gmail.com>\n"
 "Language-Team: Arabic <ar@li.org>\n"
@@ -5829,59 +5829,59 @@ msgstr ""
 msgid "%s [unstable] (%s)"
 msgstr ""
 
-#: src/effects-data.c:2605
+#: src/effects-data.c:2678
 #, c-format
 msgid "Key slot %d"
 msgstr ""
 
-#: src/effects-data.c:2680
+#: src/effects-data.c:2753
 msgid "Connected to -->"
 msgstr ""
 
-#: src/effects-data.c:2706
+#: src/effects-data.c:2779
 #, fuzzy
 msgid "Alpha Channel Connections"
 msgstr "ال_تحديد"
 
-#: src/effects-data.c:2781
+#: src/effects-data.c:2854
 #, fuzzy
 msgid "Parameter Data Connections"
 msgstr "ال_تحديد"
 
-#: src/effects-data.c:2788
+#: src/effects-data.c:2861
 msgid "Autoscale All"
 msgstr ""
 
-#: src/effects-data.c:2860
+#: src/effects-data.c:2933
 msgid "Autoscale"
 msgstr ""
 
-#: src/effects-data.c:3216
+#: src/effects-data.c:3302
 msgid "LiVES: - Parameter and Alpha Channel Connections"
 msgstr ""
 
-#: src/effects-data.c:3224
+#: src/effects-data.c:3310
 #, fuzzy
 msgid "Auto Connect Channels"
 msgstr "ال_تحديد"
 
-#: src/effects-data.c:3236
+#: src/effects-data.c:3322
 msgid "Auto Connect Parameters"
 msgstr ""
 
-#: src/effects-data.c:3246
+#: src/effects-data.c:3332
 msgid "Disconnect All"
 msgstr ""
 
-#: src/effects-data.c:3296
+#: src/effects-data.c:3382
 msgid "Input channel is already connected"
 msgstr ""
 
-#: src/effects-data.c:3303
+#: src/effects-data.c:3389
 msgid "Input parameter is already connected"
 msgstr ""
 
-#: src/effects-data.c:3310
+#: src/effects-data.c:3396
 msgid "Input and output parameters are not compatible"
 msgstr ""
 

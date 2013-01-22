@@ -2522,6 +2522,24 @@ gboolean get_audio_from_plugin(float *fbuffer, int nchans, int arate, int nsamps
     weed_set_int64_value(channel,"timecode",tc);
   }
 
+
+  if (mainw->pconx!=NULL&&!(mainw->preview||mainw->is_rendering)) {
+    // chain any data pipelines
+    if (!pthread_mutex_trylock(&mainw->data_mutex)) {
+      mainw->agen_needs_reinit=pconx_chain_data(mainw->agen_key-1,rte_key_getmode(mainw->agen_key));
+      pthread_mutex_unlock(&mainw->data_mutex);
+      
+      if (mainw->agen_needs_reinit) {
+	// allow main thread to complete the reinit so we do not delay; just return silence
+	memset(fbuffer,0,nsamps*nchans*sizeof(float));
+	pthread_mutex_unlock(&mainw->interp_mutex);
+	return FALSE;
+      }
+    }
+  }
+
+
+
   weed_leaf_get(filter,"process_func",0,(void *)&process_func_ptr_ptr);
   process_func=process_func_ptr_ptr[0];
 

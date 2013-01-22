@@ -3379,7 +3379,7 @@ weed_plant_t *weed_apply_effects (weed_plant_t **layers, weed_plant_t *filter_ma
 	  filter=weed_instance_get_filter(instance,TRUE);
 
 	  // TODO *** enable this, and apply pconx to audio gens in audio.c
-	  //if (!is_pure_audio(filter,TRUE)) {
+	  if (!is_pure_audio(filter,TRUE)) {
 	    if (mainw->pconx!=NULL&&!(mainw->preview||mainw->is_rendering)) {
 	      // chain any data pipelines
 	      pthread_mutex_lock(&mainw->data_mutex);
@@ -3390,7 +3390,7 @@ weed_plant_t *weed_apply_effects (weed_plant_t **layers, weed_plant_t *filter_ma
 		weed_reinit_effect(instance,FALSE);
 	      }
 	    }
-	    //}
+	  }
 
 	apply_inst3:
 
@@ -5789,12 +5789,20 @@ weed_plant_t **weed_params_create (weed_plant_t *filter, gboolean in) {
 
 static void set_default_channel_sizes (weed_plant_t **in_channels, weed_plant_t **out_channels) {
   // set some reasonable default channel sizes when we first init the effect
-  int error,i,j;
   weed_plant_t *channel,*chantmpl;
+
   void **pixel_data;
+
+  int *rowstrides;
+
+  boolean is_gen=TRUE;
+  boolean has_aud_in_chans=FALSE;
+
+  int def_rowstride;
   int numplanes,width,height;
-  int *rowstrides,def_rowstride;
-  gboolean is_gen=TRUE;
+  int error;
+
+  register int i,j;
 
   // ignore filters with no in/out channels (e.g. data processors)
   if ((in_channels==NULL||in_channels[0]==NULL)&&(out_channels==NULL||out_channels[0]==NULL)) return;
@@ -5841,6 +5849,8 @@ static void set_default_channel_sizes (weed_plant_t **in_channels, weed_plant_t 
       weed_set_boolean_value(channel,"audio_interleaf",WEED_FALSE);
       weed_set_int_value(channel,"audio_data_length",0);
       weed_set_voidptr_value(channel,"audio_data",NULL);
+
+      has_aud_in_chans=TRUE;
     }
   }
 
@@ -5873,7 +5883,7 @@ static void set_default_channel_sizes (weed_plant_t **in_channels, weed_plant_t 
       weed_set_voidptr_value(channel,"pixel_data",NULL);
     }
     else {
-      if (mainw->current_file==-1) {
+      if (mainw->current_file==-1||!has_aud_in_chans) {
 	weed_set_int_value(channel,"audio_channels",DEFAULT_AUDIO_CHANS);
 	weed_set_int_value(channel,"audio_rate",DEFAULT_AUDIO_RATE);
       }
@@ -7392,6 +7402,32 @@ weed_plant_t *weed_inst_in_param (weed_plant_t *inst, int param_num, boolean ski
       weed_free(in_params);
     }
 
+   } while (weed_plant_has_leaf(inst,"host_next_instance")&&(inst=weed_get_plantptr_value(inst,"host_next_instance",&error))!=NULL);
+
+  return NULL;
+}
+
+
+
+
+
+weed_plant_t *weed_inst_out_param (weed_plant_t *inst, int param_num) {
+  weed_plant_t **out_params;
+  weed_plant_t *param;
+  int error,num_params;
+
+  do {
+    if (!weed_plant_has_leaf(inst,"out_parameters")) continue; // has no out_parameters
+
+    num_params=weed_leaf_num_elements(inst,"out_parameters");
+
+    if (num_params>param_num) {
+      out_params=weed_get_plantptr_array(inst,"out_parameters",&error);
+      param=out_params[param_num];
+      weed_free(out_params);
+      return param;
+    }
+    param_num-=num_params;
    } while (weed_plant_has_leaf(inst,"host_next_instance")&&(inst=weed_get_plantptr_value(inst,"host_next_instance",&error))!=NULL);
 
   return NULL;

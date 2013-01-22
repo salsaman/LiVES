@@ -485,10 +485,7 @@ weed_plant_t *pconx_get_out_param(boolean use_filt, int ikey, int imode, int ipn
 	pconx=pconx->next;
 	continue;
       }
-      if (!weed_plant_has_leaf(inst,"out_parameters")) {
-	pconx=pconx->next;
-	continue;
-      }
+      filter=weed_instance_get_filter(inst,TRUE);
     }
     else {
       filter=rte_keymode_get_filter(pconx->okey+1,pconx->omode);
@@ -496,10 +493,10 @@ weed_plant_t *pconx_get_out_param(boolean use_filt, int ikey, int imode, int ipn
 	pconx=pconx->next;
 	continue;
       }
-      if (!weed_plant_has_leaf(filter,"out_parameter_templates")) {
-	pconx=pconx->next;
-	continue;
-      }
+    }
+    if (!weed_plant_has_leaf(filter,"out_parameter_templates")) {
+      pconx=pconx->next;
+      continue;
     }
     totcons=0;
     j=0;
@@ -507,16 +504,18 @@ weed_plant_t *pconx_get_out_param(boolean use_filt, int ikey, int imode, int ipn
       totcons+=pconx->nconns[i];
       for (;j<totcons;j++) {
 	if (pconx->ikey[j]==ikey && pconx->imode[j]==imode && pconx->ipnum[j]==ipnum) {
-	  weed_plant_t **outparams;
 	  weed_plant_t *param=NULL;
-	  if (filter==NULL) outparams=weed_get_plantptr_array(inst,"out_parameters",&error);
-	  else outparams=weed_get_plantptr_array(filter,"out_parameter_templates",&error);
-	  if ((filter!=NULL&&pconx->params[i]<weed_leaf_num_elements(filter,"out_parameter_templates"))||
-	      (filter==NULL&&pconx->params[i]<weed_leaf_num_elements(inst,"out_parameters"))) {
-	    param=outparams[pconx->params[i]];
-	    if (autoscale!=NULL) *autoscale=pconx->autoscale[j];
+	  if (use_filt) {
+	    weed_plant_t **outparams=weed_get_plantptr_array(filter,"out_parameter_templates",&error);
+	    if (pconx->params[i]<weed_leaf_num_elements(filter,"out_parameter_templates")) {
+	      param=outparams[pconx->params[i]];
+	    }
+	    weed_free(outparams);
 	  }
-	  weed_free(outparams);
+	  else {
+	    param=weed_inst_out_param(inst,pconx->params[i]);
+	  }
+	  if (autoscale!=NULL) *autoscale=pconx->autoscale[j];
 	  return param;
 	}
       }
@@ -658,6 +657,7 @@ boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, weed_plant_t *dpa
     nmin=weed_leaf_num_elements(dptmpl,"min");
   }
 
+  g_print("got %d and %d\n",stype,dtype);
 
   switch (stype) {
   case WEED_SEED_STRING:
@@ -707,7 +707,6 @@ boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, weed_plant_t *dpa
 	double *mind=weed_get_double_array(dptmpl,"min",&error);
 
 	double *mins=NULL,*maxs=NULL;
-
 
 	if (autoscale) {
 	  mins=weed_get_double_array(sptmpl,"min",&error);
@@ -1217,6 +1216,7 @@ boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, weed_plant_t *dpa
 
 
 boolean pconx_chain_data(int key, int mode) {
+
   weed_plant_t **inparams;
   weed_plant_t *oparam;
   weed_plant_t *inst=NULL;
@@ -1253,14 +1253,15 @@ boolean pconx_chain_data(int key, int mode) {
   }
 
   if (nparams>0) {
+
     if (key==-2) inparams=mainw->vpp->play_params;
     else inparams=weed_get_plantptr_array(inst,"in_parameters",&error);
 
     for (i=0;i<nparams;i++) {
       if ((oparam=pconx_get_out_param(FALSE,key,mode,i,&autoscale))!=NULL) {
-	//#define DEBUG_PCONX
+	//	#define DEBUG_PCONX
 #ifdef DEBUG_PCONX
-	g_print("got pconx to %d %d %d\n",key,mode,i);
+	g_print("got pconx from %d %d %d\n",key,mode,i);
 #endif
 	changed=pconx_convert_value_data(inst,i,key==-2?(weed_plant_t *)pp_get_param(mainw->vpp->play_params,i):inparams[i],oparam,autoscale);
 
@@ -1759,10 +1760,8 @@ weed_plant_t *cconx_get_out_alpha(boolean use_filt, int ikey, int imode, int icn
 	cconx=cconx->next;
 	continue;
       }
-      if (!weed_plant_has_leaf(inst,"out_channels")) {
-	cconx=cconx->next;
-	continue;
-      }
+
+      filter=weed_instance_get_filter(inst,TRUE);
     }
     else {
       filter=rte_keymode_get_filter(cconx->okey+1,cconx->omode);
@@ -1770,10 +1769,10 @@ weed_plant_t *cconx_get_out_alpha(boolean use_filt, int ikey, int imode, int icn
 	cconx=cconx->next;
 	continue;
       }
-      if (!weed_plant_has_leaf(filter,"out_parameter_templates")) {
-	cconx=cconx->next;
-	continue;
-      }
+    }
+    if (!weed_plant_has_leaf(filter,"out_channel_templates")) {
+      cconx=cconx->next;
+      continue;
     }
     totcons=0;
     j=0;
@@ -1783,12 +1782,18 @@ weed_plant_t *cconx_get_out_alpha(boolean use_filt, int ikey, int imode, int icn
 	if (cconx->ikey[j]==ikey && cconx->imode[j]==imode && cconx->icnum[j]==icnum) {
 	  weed_plant_t **outchans;
 	  weed_plant_t *channel=NULL;
-
-	  if (filter==NULL) outchans=weed_get_plantptr_array(inst,"out_channels",&error);
-	  else outchans=weed_get_plantptr_array(filter,"out_channel_templates",&error);
-	  if ((filter!=NULL&&cconx->chans[i]<weed_leaf_num_elements(filter,"out_channel_templates"))||
-	      (filter==NULL&&cconx->chans[i]<weed_leaf_num_elements(inst,"out_channels"))) {
-	    channel=outchans[cconx->chans[i]];
+	  if (use_filt) {
+	    outchans=weed_get_plantptr_array(filter,"out_channel_templates",&error);
+	    if (cconx->chans[i]<weed_leaf_num_elements(filter,"out_channel_templates")) {
+	      channel=outchans[cconx->chans[i]];
+	    }
+	  }
+	  else {
+	    while (weed_plant_has_leaf(inst,"host_next_instance")) inst=weed_get_plantptr_value(inst,"host_next_instance",&error);
+	    outchans=weed_get_plantptr_array(inst,"out_channels",&error);
+	    if (cconx->chans[i]<weed_leaf_num_elements(inst,"out_channels")) {
+	      channel=outchans[cconx->chans[i]];
+	    }
 	  }
 	  weed_free(outchans);
 	  return channel;

@@ -734,6 +734,10 @@ static boolean read_perkey_defaults(int kfd, int key, int mode, int version) {
 
 
 static boolean load_datacons(const gchar *fname, uint8_t **badkeymap) {
+  weed_plant_t **ochans,**ichans,**iparams;
+
+  weed_plant_t *filter;
+
   ssize_t bytes;
 
   gchar *hashname;
@@ -749,6 +753,8 @@ static boolean load_datacons(const gchar *fname, uint8_t **badkeymap) {
   int hlen;
 
   int version,nchans,nparams,nconns,ncconx,npconx;
+
+  int nichans,nochans,niparams,noparams,error;
 
   int okey,omode,ocnum,opnum,ikey,imode,icnum,ipnum,autoscale;
 
@@ -855,8 +861,15 @@ static boolean load_datacons(const gchar *fname, uint8_t **badkeymap) {
 	    break;
 	  }
 
-	  // TODO - check ocnum
-
+	  // check ocnum
+	  filter=rte_keymode_get_filter(okey+1,omode);
+	  nochans=weed_leaf_num_elements(filter,"out_channel_templates");
+	  if (ocnum>=nochans) is_valid2=FALSE;
+	  else {
+	    ochans=weed_get_plantptr_array(filter,"out_channel_templates",&error);
+	    if (!has_alpha_palette(ochans[ocnum])) is_valid2=FALSE;
+	    weed_free(ochans);
+	  }
 
 	  bytes=lives_read_le(kfd,&nconns,4,TRUE);
 	  if (bytes<4) {
@@ -924,7 +937,16 @@ static boolean load_datacons(const gchar *fname, uint8_t **badkeymap) {
 	      break;
 	    }
 
-	    // TODO - check icnum
+	    // check icnum
+	    filter=rte_keymode_get_filter(ikey+1,imode);
+	    nichans=weed_leaf_num_elements(filter,"in_channel_templates");
+	    if (icnum>=nichans) is_valid2=FALSE;
+	    else {
+	      ichans=weed_get_plantptr_array(filter,"in_channel_templates",&error);
+	      if (!has_alpha_palette(ichans[icnum])) is_valid2=FALSE;
+	      weed_free(ichans);
+	    }
+
 
 
 	    if (is_valid2) cconx_add_connection(okey,omode,ocnum,ikey,imode,icnum);
@@ -1029,8 +1051,10 @@ static boolean load_datacons(const gchar *fname, uint8_t **badkeymap) {
 	    break;
 	  }
 
-	  // TODO - check opnum
-
+	  // check opnum
+	  filter=rte_keymode_get_filter(okey+1,omode);
+	  noparams=weed_leaf_num_elements(filter,"out_parameter_templates");
+	  if (opnum>=noparams) is_valid2=FALSE;
 
 	  bytes=lives_read_le(kfd,&nconns,4,TRUE);
 	  if (bytes<4) {
@@ -1096,7 +1120,15 @@ static boolean load_datacons(const gchar *fname, uint8_t **badkeymap) {
 	      break;
 	    }
 
-	    // TODO - check ipnum
+	    // check ipnum
+	    filter=rte_keymode_get_filter(ikey+1,imode);
+	    niparams=weed_leaf_num_elements(filter,"in_parameter_templates");
+	    if (ipnum>=niparams) is_valid2=FALSE;
+	    else {
+	      iparams=weed_get_plantptr_array(filter,"in_parameter_templates",&error);
+	      if (weed_plant_has_leaf(iparams[ipnum],"host_internal_connection")) is_valid2=FALSE;
+	      weed_free(iparams);
+	    }
 
 	    bytes=lives_read_le(kfd,&autoscale,4,TRUE);
 	    if (bytes<4) {

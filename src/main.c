@@ -312,6 +312,8 @@ static gboolean pre_init(void) {
 
   palette=(_palette*)(g_malloc(sizeof(_palette)));
 
+  widget_opts.swap_label=FALSE;
+
   prefs->show_gui=TRUE;
   prefs->show_splash=TRUE;
   prefs->show_playwin=TRUE;

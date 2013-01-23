@@ -146,10 +146,7 @@ void framedraw_add_label(GtkVBox *box) {
   GtkWidget *label;
 
   // TRANSLATORS - Preview refers to preview window; keep this phrase short
-  label=gtk_label_new(_("You can click in Preview to change these values"));
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-  }
+  label=lives_standard_label_new(_("You can click in Preview to change these values"));
   gtk_box_pack_start (GTK_BOX (box), label, FALSE, FALSE, 0);
 }
 
@@ -189,8 +186,8 @@ void widget_add_framedraw (GtkVBox *box, gint start, gint end, gboolean add_prev
   GtkWidget *vbox;
   GtkWidget *hbox;
   GtkWidget *label;
-  GObject *spinbutton_adj;
-  GtkWidget *label2;
+  GtkAdjustment *spinbutton_adj;
+  //  GtkWidget *label2;
   GtkWidget *frame;
  
   lives_rfx_t *rfx;
@@ -227,12 +224,8 @@ void widget_add_framedraw (GtkVBox *box, gint start, gint end, gboolean add_prev
 
   mainw->fd_frame=frame;
 
-  label = gtk_label_new (_("Preview"));
+  label = lives_standard_label_new (_("Preview"));
   gtk_frame_set_label_widget (GTK_FRAME (frame), label);
-  gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_LEFT);
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-  }
 
   gtk_frame_set_shadow_type (GTK_FRAME(frame), GTK_SHADOW_IN);
   mainw->framedraw=gtk_event_box_new();
@@ -256,25 +249,18 @@ void widget_add_framedraw (GtkVBox *box, gint start, gint end, gboolean add_prev
 
   hbox = gtk_hbox_new (FALSE, 2);
   gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 0);
-  gtk_container_set_border_width (GTK_CONTAINER (hbox), 10);
 
-  spinbutton_adj = (GObject *)gtk_adjustment_new (start, start, end, 1., 10., 0.);
-  mainw->framedraw_spinbutton = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 1, 0);
-  gtk_box_pack_start (GTK_BOX (hbox), mainw->framedraw_spinbutton, FALSE, FALSE, 0);
+  mainw->framedraw_spinbutton = lives_standard_spin_button_new (_("    _Frame"),
+								TRUE,start,start,end,1.,10.,0,LIVES_BOX(hbox),NULL);
 
-  label2 = gtk_label_new_with_mnemonic (_("    _Frame"));
-  gtk_box_pack_start (GTK_BOX (hbox), label2, FALSE, FALSE, 0);
-  gtk_label_set_justify (GTK_LABEL (label2), GTK_JUSTIFY_LEFT);
-
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label2, GTK_STATE_NORMAL, &palette->normal_fore);
-  }
+  spinbutton_adj=gtk_spin_button_get_adjustment(GTK_SPIN_BUTTON(mainw->framedraw_spinbutton));
 
   mainw->framedraw_scale=gtk_hscale_new_with_range(0,1,1);
   gtk_box_pack_start (GTK_BOX (hbox), mainw->framedraw_scale, TRUE, TRUE, 0);
-  gtk_range_set_adjustment(GTK_RANGE(mainw->framedraw_scale),GTK_ADJUSTMENT(spinbutton_adj));
+  gtk_range_set_adjustment(GTK_RANGE(mainw->framedraw_scale),spinbutton_adj);
   gtk_scale_set_draw_value(GTK_SCALE(mainw->framedraw_scale),FALSE);
-  gtk_label_set_mnemonic_widget (GTK_LABEL (label2),mainw->framedraw_scale);
+
+  //gtk_label_set_mnemonic_widget (GTK_LABEL (label2),mainw->framedraw_scale);
 
   rfx=(lives_rfx_t *)g_object_get_data(G_OBJECT(gtk_widget_get_toplevel(GTK_WIDGET(box))),"rfx");
   mainw->framedraw_preview = gtk_button_new_from_stock ("gtk-refresh");

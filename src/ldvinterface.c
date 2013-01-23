@@ -1,6 +1,6 @@
 // ldvinterface.c
 // LiVES
-// (c) G. Finch 2006-2011 <salsaman@xs4all.nl,salsaman@gmail.com>
+// (c) G. Finch 2006-2013 <salsaman@xs4all.nl,salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -20,7 +20,6 @@ struct _dvgrabw *create_camwindow (s_cam *cam, gint type)
   GtkWidget *image;
   GtkWidget *vbox;
   GtkWidget *hbox;
-  GtkWidget *eventbox;
   GtkWidget *label;
   GtkWidget *hseparator;
   GtkWidget *direntry;
@@ -53,6 +52,8 @@ struct _dvgrabw *create_camwindow (s_cam *cam, gint type)
   hbox = gtk_hbox_new (FALSE,10);
   gtk_box_pack_start(GTK_BOX(vbox),hbox,FALSE,FALSE,10);
 
+
+  // TODO - lives_standard_dir_entry_new
   label=gtk_label_new_with_mnemonic(_("Save _directory :"));
   gtk_box_pack_start(GTK_BOX(hbox),label,FALSE,FALSE,10);
   if (palette->style&STYLE_1) {
@@ -73,61 +74,27 @@ struct _dvgrabw *create_camwindow (s_cam *cam, gint type)
   lives_widget_set_can_focus_and_default (buttond);
 
 
+  //////////////////
+
   hbox = gtk_hbox_new (FALSE,10);
   gtk_box_pack_start(GTK_BOX(vbox),hbox,FALSE,FALSE,10);
 
-  label=gtk_label_new_with_mnemonic(_("File_name:"));
-  gtk_box_pack_start(GTK_BOX(hbox),label,FALSE,FALSE,10);
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-  }
+  dvgrabw->filent=lives_standard_entry_new(_("File_name:"),TRUE,type==CAM_FORMAT_DV?"dvgrab-":"hdvgrab-",-1,-1,LIVES_BOX(hbox),NULL);
 
-  dvgrabw->filent=gtk_entry_new();
-
-  gtk_box_pack_start(GTK_BOX(hbox),dvgrabw->filent,FALSE,FALSE,0);
-  if (type==CAM_FORMAT_DV) gtk_entry_set_text(GTK_ENTRY(dvgrabw->filent),"dvgrab-");
-  else gtk_entry_set_text(GTK_ENTRY(dvgrabw->filent),"hdvgrab-");
-  gtk_label_set_mnemonic_widget(GTK_LABEL(label),dvgrabw->filent);
-
-
-  if (type==CAM_FORMAT_DV) label=gtk_label_new("%d.dv");
-  else label=gtk_label_new("%d.mpg");
+  if (type==CAM_FORMAT_DV) label=lives_standard_label_new("%d.dv");
+  else label=lives_standard_label_new("%d.mpg");
   gtk_box_pack_start(GTK_BOX(hbox),label,FALSE,FALSE,0);
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-  }
 
-  label=gtk_label_new(_("(files will not be overwritten)"));
+  label=lives_standard_label_new(_("(files will not be overwritten)"));
   gtk_box_pack_end(GTK_BOX(hbox),label,FALSE,FALSE,0);
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-  }
 
-  dvgrabw->split=gtk_check_button_new();
-
-  eventbox=gtk_event_box_new();
-  lives_tooltips_copy(eventbox,dvgrabw->split);
-  label=gtk_label_new_with_mnemonic (_("_Split into scenes"));
-  gtk_label_set_mnemonic_widget (GTK_LABEL (label),dvgrabw->split);
-  
-  gtk_container_add(GTK_CONTAINER(eventbox),label);
-  g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
-		    G_CALLBACK (label_act_toggle),
-		    dvgrabw->split);
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_bg (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
-  }
-  
   hbox = gtk_hbox_new (FALSE, 0);
-  
   gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 10);
-  
-  gtk_box_pack_start (GTK_BOX (hbox), dvgrabw->split, FALSE, FALSE, 10);
-  gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, 10);
+
+  dvgrabw->split=lives_standard_check_button_new(_("_Split into scenes"),FALSE,LIVES_BOX(hbox),NULL);
 
 
+  // TODO - widget_opts.editable
   dvgrabw->status_entry=gtk_entry_new();
 
   gtk_box_pack_start(GTK_BOX(vbox),dvgrabw->status_entry,FALSE,FALSE,0);
@@ -168,11 +135,8 @@ struct _dvgrabw *create_camwindow (s_cam *cam, gint type)
   gtk_button_set_label(GTK_BUTTON(dvgrabw->grab),_("_Grab"));
   gtk_button_set_image(GTK_BUTTON(dvgrabw->grab),image);
 
-  label=gtk_label_new(_("\nUse this tool to control your camera and grab clips.\nAfter grabbing your clips, you can close this window \nand then load them into LiVES.\n"));
+  label=lives_standard_label_new(_("\nUse this tool to control your camera and grab clips.\nAfter grabbing your clips, you can close this window \nand then load them into LiVES.\n"));
   gtk_box_pack_start(GTK_BOX(vbox),label,FALSE,FALSE,40);
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-  }
 
 
   hbuttonbox2 = gtk_hbutton_box_new ();

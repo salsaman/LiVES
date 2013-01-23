@@ -2388,29 +2388,27 @@ static void create_threaded_dialog(gchar *text, gboolean has_cancel) {
   gtk_box_pack_start (GTK_BOX (vbox2), vbox3, TRUE, TRUE, 0);
 
   g_snprintf(tmp_label,256,"%s...\n",text);
-  procw->label = gtk_label_new (tmp_label);
+  procw->label = lives_standard_label_new (tmp_label);
   gtk_widget_show (procw->label);
   //gtk_widget_set_size_request (procw->label, PROG_LABEL_WIDTH, -1);
   gtk_box_pack_start (GTK_BOX (vbox3), procw->label, FALSE, FALSE, 0);
-  gtk_widget_modify_fg(procw->label, GTK_STATE_NORMAL, &palette->normal_fore);
-  gtk_label_set_justify (GTK_LABEL (procw->label), GTK_JUSTIFY_LEFT);
 
   procw->progressbar = gtk_progress_bar_new ();
   gtk_widget_show (procw->progressbar);
   gtk_box_pack_start (GTK_BOX (vbox3), procw->progressbar, FALSE, FALSE, 0);
   gtk_widget_modify_fg(procw->progressbar, GTK_STATE_NORMAL, &palette->normal_fore);
 
-  procw->label2 = gtk_label_new (_("\nPlease Wait"));
+  widget_opts.justify=LIVES_JUSTIFY_CENTER;
+  procw->label2 = lives_standard_label_new (_("\nPlease Wait"));
+  widget_opts.justify=LIVES_JUSTIFY_DEFAULT;
   gtk_widget_show (procw->label2);
   gtk_box_pack_start (GTK_BOX (vbox3), procw->label2, FALSE, FALSE, 0);
-  gtk_label_set_justify (GTK_LABEL (procw->label2), GTK_JUSTIFY_CENTER);
-  gtk_widget_modify_fg(procw->label2, GTK_STATE_NORMAL, &palette->normal_fore);
 
-  procw->label3 = gtk_label_new (PROCW_STRETCHER);
+  widget_opts.justify=LIVES_JUSTIFY_CENTER;
+  procw->label3 = lives_standard_label_new (PROCW_STRETCHER);
+  widget_opts.justify=LIVES_JUSTIFY_DEFAULT;
   gtk_widget_show (procw->label3);
   gtk_box_pack_start (GTK_BOX (vbox3), procw->label3, FALSE, FALSE, 0);
-  gtk_label_set_justify (GTK_LABEL (procw->label3), GTK_JUSTIFY_CENTER);
-  gtk_widget_modify_fg(procw->label3, GTK_STATE_NORMAL, &palette->normal_fore);
   gtk_progress_bar_set_pulse_step(GTK_PROGRESS_BAR(procw->progressbar),.01);
 
   if (has_cancel) {

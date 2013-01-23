@@ -614,6 +614,19 @@ LiVESWidget *lives_standard_check_button_new(const char *labeltext, boolean use_
   else label=lives_standard_label_new (labeltext);
 
   gtk_container_add(GTK_CONTAINER(eventbox),label);
+
+  if (GTK_IS_HBOX(box)) hbox=GTK_WIDGET(box);
+  else {
+    hbox = gtk_hbox_new (FALSE, 0);
+    gtk_box_pack_start (GTK_BOX (box), hbox, FALSE, FALSE, W_PACKING_WIDTH);
+  }
+  
+  gtk_box_set_homogeneous(GTK_BOX(hbox),FALSE);
+  
+
+  if (!widget_opts.swap_label)
+    gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, W_PACKING_WIDTH);
+
   g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
 		    G_CALLBACK (label_act_toggle),
 		    checkbutton);
@@ -624,16 +637,11 @@ LiVESWidget *lives_standard_check_button_new(const char *labeltext, boolean use_
     gtk_widget_modify_bg (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
   }
   
-  if (GTK_IS_HBOX(box)) hbox=GTK_WIDGET(box);
-  else {
-    hbox = gtk_hbox_new (FALSE, 0);
-    gtk_box_pack_start (GTK_BOX (box), hbox, FALSE, FALSE, W_PACKING_WIDTH);
-  }
-  
-  gtk_box_set_homogeneous(GTK_BOX(hbox),FALSE);
-  
   gtk_box_pack_start (GTK_BOX (hbox), checkbutton, FALSE, FALSE, W_PACKING_WIDTH);
-  gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, W_PACKING_WIDTH);
+
+  if (widget_opts.swap_label)
+    gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, W_PACKING_WIDTH);
+
   lives_widget_set_can_focus_and_default(checkbutton);
 #endif
 
@@ -670,8 +678,6 @@ LiVESWidget *lives_standard_radio_button_new(const char *labeltext, boolean use_
 
   gtk_box_set_homogeneous(GTK_BOX(hbox),FALSE);
 
-  gtk_box_pack_start (GTK_BOX (hbox), radiobutton, FALSE, FALSE, W_PACKING_WIDTH);
-      
   if (use_mnemonic) {
     label=gtk_label_new_with_mnemonic (labeltext);
     gtk_label_set_mnemonic_widget (GTK_LABEL (label),radiobutton);
@@ -682,6 +688,12 @@ LiVESWidget *lives_standard_radio_button_new(const char *labeltext, boolean use_
   eventbox=gtk_event_box_new();
   if (tooltip!=NULL) lives_tooltips_copy(eventbox,radiobutton);
   gtk_container_add(GTK_CONTAINER(eventbox),label);
+
+  if (widget_opts.swap_label)
+    gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, W_PACKING_WIDTH);
+
+  gtk_box_pack_start (GTK_BOX (hbox), radiobutton, FALSE, FALSE, W_PACKING_WIDTH);
+
   g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
 		    G_CALLBACK (label_act_toggle),
 		    radiobutton);
@@ -690,7 +702,8 @@ LiVESWidget *lives_standard_radio_button_new(const char *labeltext, boolean use_
     gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
     gtk_widget_modify_bg (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
   }
-  gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, W_PACKING_WIDTH);
+  if (!widget_opts.swap_label)
+    gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, W_PACKING_WIDTH);
  
 #endif
 
@@ -756,8 +769,11 @@ LiVESWidget *lives_standard_spin_button_new(const char *labeltext, boolean use_m
     gtk_box_pack_start (GTK_BOX (box), hbox, FALSE, FALSE, W_PACKING_WIDTH);
   }
 
-  gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, W_PACKING_WIDTH);
+  if (!widget_opts.swap_label)
+    gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, W_PACKING_WIDTH);
   gtk_box_pack_start (GTK_BOX (hbox), spinbutton, FALSE, FALSE, W_PACKING_WIDTH);
+  if (widget_opts.swap_label)
+    gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, W_PACKING_WIDTH);
 
 #endif
 
@@ -811,8 +827,11 @@ LiVESWidget *lives_standard_combo_new (const char *labeltext, boolean use_mnemon
     gtk_box_pack_start (GTK_BOX (box), hbox, FALSE, FALSE, W_PACKING_WIDTH);
   }
 
-  gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, W_PACKING_WIDTH);
+  if (!widget_opts.swap_label)
+    gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, W_PACKING_WIDTH);
   gtk_box_pack_start (GTK_BOX (hbox), combo, FALSE, TRUE, W_PACKING_WIDTH);
+  if (widget_opts.swap_label)
+    gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, W_PACKING_WIDTH);
 
   gtk_editable_set_editable (GTK_EDITABLE(entry),FALSE);
   gtk_entry_set_activates_default(entry,TRUE);
@@ -867,9 +886,14 @@ LiVESWidget *lives_standard_entry_new(const char *labeltext, boolean use_mnemoni
   }
 
   if (tooltip!=NULL) lives_tooltips_copy(label,entry);
-  gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, W_PACKING_WIDTH);
+
+  if (!widget_opts.swap_label)
+    gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, W_PACKING_WIDTH);
   
   gtk_box_pack_start (GTK_BOX (hbox), entry, TRUE, TRUE, W_PACKING_WIDTH);
+
+  if (widget_opts.swap_label)
+    gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, W_PACKING_WIDTH);
 #endif
 
   return entry;

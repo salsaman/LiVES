@@ -16,6 +16,7 @@ typedef enum {
 } lives_cursor_t;
 
 
+
 #define W_PACKING_WIDTH 10 // packing width for widgets with labels
 #define W_BORDER_WIDTH 20 // dialog border width
 
@@ -369,6 +370,16 @@ void lives_general_button_clicked (LiVESButton *button, LiVESObjectPtr data_to_f
 
 boolean lives_general_delete_event(LiVESWidget *widget, LiVESEvent *event, LiVESObjectPtr data_to_free);
 
+
+
+
+typedef struct {
+  boolean swap_label; // swap label/widget position
+
+
+} widget_opts_t;
+
+widget_opts_t widget_opts;
 
 #endif
 

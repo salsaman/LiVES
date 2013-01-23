@@ -2603,98 +2603,51 @@ _prefsw *create_prefs_dialog (void) {
   gtk_widget_show (hbox5);
   gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_multitrack), hbox5, TRUE, FALSE, 0);
   // ---
-  label = gtk_label_new (_("Auto backup layouts"));
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-  }
-  gtk_widget_show (label);
-  gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_LEFT);
+  label = lives_standard_label_new (_("Auto backup layouts"));
   gtk_box_pack_start (GTK_BOX (hbox5), label, FALSE, TRUE, 0);
   // ---
-  prefsw->mt_autoback_every = gtk_radio_button_new(autoback_group);
-  autoback_group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (prefsw->mt_autoback_every));
-  label = gtk_label_new_with_mnemonic(_("_Every"));
-  gtk_label_set_mnemonic_widget(GTK_LABEL(label), prefsw->mt_autoback_every);
-  eventbox = gtk_event_box_new();
-  gtk_container_add(GTK_CONTAINER(eventbox), label);
-  g_signal_connect(GTK_OBJECT(eventbox), "button_press_event", G_CALLBACK(label_act_toggle), prefsw->mt_autoback_every);
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_bg(eventbox, GTK_STATE_NORMAL, &palette->normal_back);
-  }
+
   hbox = gtk_hbox_new(FALSE, 0);
-  gtk_box_pack_start(GTK_BOX(hbox), prefsw->mt_autoback_every, FALSE, FALSE, 5);
-  gtk_box_pack_start(GTK_BOX(hbox), eventbox, FALSE, FALSE, 5);
-  gtk_container_set_border_width(GTK_CONTAINER (hbox), 10);
-  gtk_widget_show_all(hbox);
+  prefsw->mt_autoback_every = lives_standard_radio_button_new(_("_Every"),TRUE,autoback_group,LIVES_BOX(hbox),NULL);
+  autoback_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (prefsw->mt_autoback_every));
   gtk_box_pack_start (GTK_BOX (hbox5), hbox, TRUE, TRUE, 0);
+
   // ---
-  label = gtk_label_new_with_mnemonic (_("seconds"));
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-  }
-  gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_LEFT);
-  // ---
-  spinbutton_adj = (GObject *)gtk_adjustment_new (30, 10, 1800, 1, 10, 0);
-  prefsw->spinbutton_mt_ab_time = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 1, 0);
-  gtk_label_set_mnemonic_widget (GTK_LABEL (label), prefsw->spinbutton_mt_ab_time);
+
   hbox = gtk_hbox_new (FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (hbox), prefsw->spinbutton_mt_ab_time, TRUE, FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 20);
-  gtk_widget_show_all(hbox);
-  gtk_container_set_border_width(GTK_CONTAINER (hbox), 10);
-  gtk_box_pack_start (GTK_BOX (hbox5), hbox, FALSE, TRUE, 0);
+  widget_opts.swap_label=TRUE;
+  prefsw->spinbutton_mt_ab_time = lives_standard_spin_button_new (_("seconds"),FALSE,120.,10.,1800.,1.,10.,0,LIVES_BOX(hbox),NULL);
+  widget_opts.swap_label=FALSE;
+  gtk_box_pack_start (GTK_BOX (hbox5), hbox, TRUE, TRUE, 0);
+
   add_fill_to_box(GTK_BOX(hbox5));
   // ---
-  prefsw->mt_autoback_always = gtk_radio_button_new(autoback_group);
-  autoback_group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (prefsw->mt_autoback_always));
-  label = gtk_label_new_with_mnemonic(_("After every _change"));
-  gtk_label_set_mnemonic_widget(GTK_LABEL(label), prefsw->mt_autoback_always);
-  eventbox = gtk_event_box_new();
-  gtk_container_add(GTK_CONTAINER(eventbox), label);
-  g_signal_connect(GTK_OBJECT(eventbox), "button_press_event", G_CALLBACK(label_act_toggle), prefsw->mt_autoback_always);
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_bg(eventbox, GTK_STATE_NORMAL, &palette->normal_back);
-  }
+
   hbox = gtk_hbox_new(FALSE, 0);
-  gtk_box_pack_start(GTK_BOX(hbox), prefsw->mt_autoback_always, FALSE, FALSE, 5);
-  gtk_box_pack_start(GTK_BOX(hbox), eventbox, FALSE, FALSE, 5);
-  gtk_container_set_border_width(GTK_CONTAINER (hbox), 10);
-  gtk_widget_show_all(hbox);
+  prefsw->mt_autoback_always = lives_standard_radio_button_new(_("After every _change"),TRUE,autoback_group,LIVES_BOX(hbox),NULL);
+  autoback_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (prefsw->mt_autoback_always));
   gtk_box_pack_start (GTK_BOX (hbox5), hbox, TRUE, TRUE, 0);
   // ---
-  prefsw->mt_autoback_never = gtk_radio_button_new(autoback_group);
-  autoback_group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (prefsw->mt_autoback_never));
-  label = gtk_label_new_with_mnemonic(_("_Never"));
-  gtk_label_set_mnemonic_widget(GTK_LABEL(label), prefsw->mt_autoback_never);
-  eventbox = gtk_event_box_new();
-  gtk_container_add(GTK_CONTAINER(eventbox), label);
-  g_signal_connect(GTK_OBJECT(eventbox), "button_press_event", G_CALLBACK(label_act_toggle), prefsw->mt_autoback_never);
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_bg(eventbox, GTK_STATE_NORMAL, &palette->normal_back);
-  }
+
   hbox = gtk_hbox_new(FALSE, 0);
-  gtk_box_pack_start(GTK_BOX(hbox), prefsw->mt_autoback_never, FALSE, FALSE, 5);
-  gtk_box_pack_start(GTK_BOX(hbox), eventbox, FALSE, FALSE, 5);
-  gtk_container_set_border_width(GTK_CONTAINER (hbox), 10);
-  gtk_widget_show_all(hbox);
+  prefsw->mt_autoback_never = lives_standard_radio_button_new(_("_Never"),TRUE,autoback_group,LIVES_BOX(hbox),NULL);
+  autoback_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (prefsw->mt_autoback_never));
   gtk_box_pack_start (GTK_BOX (hbox5), hbox, TRUE, TRUE, 0);
+
+  gtk_widget_show_all(hbox5);
+
+
   // ---
   g_signal_connect (GTK_OBJECT (prefsw->mt_autoback_every), "toggled", G_CALLBACK (on_mtbackevery_toggled), prefsw); 
 
   if (prefs->mt_auto_back==0) {
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(prefsw->mt_autoback_always),TRUE);
+    lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->mt_autoback_always),TRUE);
   }
   else if (prefs->mt_auto_back==-1) {
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(prefsw->mt_autoback_never),TRUE);
+    lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->mt_autoback_never),TRUE);
   }
   else {
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(prefsw->mt_autoback_every),TRUE);
+    lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->mt_autoback_every),TRUE);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(prefsw->spinbutton_mt_ab_time),prefs->mt_auto_back);
   }
   // ---

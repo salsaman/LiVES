@@ -1711,6 +1711,18 @@ void save_file (int clip, int start, int end, const char *filename) {
   }
   g_free(tmp);
 
+
+  // re-read values in case they were resampled
+
+  if (arate!=0) arate=cfile->arate;
+
+  if (!cfile->ratio_fps) {
+    fps_string=g_strdup_printf ("%.3f",cfile->fps);
+  }
+  else {
+    fps_string=g_strdup_printf ("%.8f",cfile->fps);
+  }
+
   // if startframe is -ve, we will use the links created for safe_symlinks - in /tmp
   // for non-safe symlinks, cfile will be our new links file
   // for save_all, cfile will be sfile

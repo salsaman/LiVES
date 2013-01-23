@@ -313,6 +313,7 @@ static gboolean pre_init(void) {
   palette=(_palette*)(g_malloc(sizeof(_palette)));
 
   widget_opts.swap_label=FALSE;
+  widget_opts.justify=LIVES_JUSTIFY_DEFAULT;
 
   prefs->show_gui=TRUE;
   prefs->show_splash=TRUE;

@@ -1,6 +1,6 @@
 // paramwindow.c
 // LiVES
-// (c) G. Finch 2004 - 2012 <salsaman@gmail.com>
+// (c) G. Finch 2004 - 2013 <salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -411,8 +411,6 @@ void transition_add_in_out(GtkBox *vbox, lives_rfx_t *rfx, gboolean add_audio_ch
   GtkWidget *radiobutton_in;
   GtkWidget *radiobutton_out;
   GtkWidget *hbox,*hbox2;
-  GtkWidget *label;
-  GtkWidget *eventbox;
   GtkWidget *hseparator;
   GSList *radiobutton_group = NULL;
 
@@ -421,29 +419,9 @@ void transition_add_in_out(GtkBox *vbox, lives_rfx_t *rfx, gboolean add_audio_ch
   hbox = gtk_hbox_new (FALSE, 0);
   gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 10);
 
-  radiobutton_in=gtk_radio_button_new(NULL);
-  gtk_radio_button_set_group (GTK_RADIO_BUTTON (radiobutton_in), radiobutton_group);
-  radiobutton_group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (radiobutton_in));
+  radiobutton_in=lives_standard_radio_button_new(_ ("Transition _In"),TRUE,radiobutton_group,LIVES_BOX(hbox),NULL);
+  radiobutton_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (radiobutton_in));
 
-  gtk_box_pack_start (GTK_BOX (hbox), radiobutton_in, FALSE, FALSE, 10);
-
-  label=gtk_label_new_with_mnemonic (_ ("Transition _In"));
-  gtk_label_set_mnemonic_widget (GTK_LABEL (label),radiobutton_in);
-
-  eventbox=gtk_event_box_new();
-  gtk_container_add(GTK_CONTAINER(eventbox),label);
-  gtk_widget_set_tooltip_text( eventbox, _("Transition in"));
-  lives_tooltips_copy(radiobutton_in,eventbox);
-  g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
-		    G_CALLBACK (label_act_toggle),
-		    radiobutton_in);
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_bg (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
-  }
-  gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, 10);
-  
   g_signal_connect_after (GTK_OBJECT (radiobutton_in), "toggled",
 			  G_CALLBACK (transition_in_pressed),
 			  (gpointer)rfx);
@@ -479,26 +457,9 @@ void transition_add_in_out(GtkBox *vbox, lives_rfx_t *rfx, gboolean add_audio_ch
     
   }
 
-  radiobutton_out=gtk_radio_button_new(radiobutton_group);
-
-  gtk_box_pack_end (GTK_BOX (hbox), radiobutton_out, FALSE, FALSE, 10);
-
-  label=gtk_label_new_with_mnemonic (_ ("Transition _Out"));
-  gtk_label_set_mnemonic_widget (GTK_LABEL (label),radiobutton_out);
-
-  eventbox=gtk_event_box_new();
-  gtk_container_add(GTK_CONTAINER(eventbox),label);
-  gtk_widget_set_tooltip_text( eventbox, _("Transition out"));
-  lives_tooltips_copy(radiobutton_out,eventbox);
-  g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
-		    G_CALLBACK (label_act_toggle),
-		    radiobutton_out);
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_bg (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
-  }
-  gtk_box_pack_end (GTK_BOX (hbox), eventbox, FALSE, FALSE, 10);
+  widget_opts.pack_end=TRUE;
+  radiobutton_out=lives_standard_radio_button_new(_ ("Transition _Out"),TRUE,radiobutton_group,LIVES_BOX(hbox),NULL);
+  widget_opts.pack_end=FALSE;
   
   g_signal_connect_after (GTK_OBJECT (radiobutton_out), "toggled",
 			  G_CALLBACK (transition_out_pressed),

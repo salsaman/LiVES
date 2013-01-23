@@ -1,6 +1,6 @@
 // paramspecial.c
 // LiVES
-// (c) G. Finch 2004 - 2012 <salsaman@xs4all.nl,salsaman@gmail.com>
+// (c) G. Finch 2004 - 2013 <salsaman@xs4all.nl,salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -197,10 +197,8 @@ static void passwd_toggle_vis(GtkToggleButton *b, gpointer entry) {
 void check_for_special (lives_param_t *param, gint num, GtkBox *pbox, lives_rfx_t *rfx) {
   GtkWidget *checkbutton;
   GtkWidget *hbox;
-  GtkWidget *eventbox;
   GtkWidget *box;
   GtkWidget *buttond;
-  GtkWidget *label;
   GList *slist;
 
   gchar *tmp,*tmp2;
@@ -326,24 +324,9 @@ void check_for_special (lives_param_t *param, gint num, GtkBox *pbox, lives_rfx_
       hbox = gtk_hbox_new (FALSE, 10);
       gtk_box_pack_start (GTK_BOX (GTK_WIDGET (box)), hbox, FALSE, FALSE, 10);
       
-      eventbox=gtk_event_box_new();
-      gtk_box_pack_start (GTK_BOX (GTK_WIDGET (hbox)), eventbox, FALSE, FALSE, 10);
-      label=gtk_label_new (_("Display Password"));
+      checkbutton = lives_standard_check_button_new (_("Display Password"),FALSE,LIVES_BOX(hbox),NULL);
 
-      checkbutton = gtk_check_button_new ();
-      gtk_box_pack_start (GTK_BOX (GTK_WIDGET (hbox)), checkbutton, FALSE, FALSE, 10);
       gtk_button_set_focus_on_click (GTK_BUTTON(checkbutton),FALSE);
-
-      gtk_container_add(GTK_CONTAINER(eventbox),label);
-      g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
-			G_CALLBACK (label_act_toggle),
-			checkbutton);
-
-      if (palette->style&STYLE_1) {
-	gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-	gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-	gtk_widget_modify_bg (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
-      }
 
       if (!lives_widget_is_sensitive(param->widgets[0])) gtk_widget_set_sensitive(checkbutton,FALSE);
       gtk_widget_show_all(hbox);

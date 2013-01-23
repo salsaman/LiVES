@@ -583,7 +583,7 @@ LiVESWidget *lives_standard_label_new(const char *text) {
   if (mainw!=NULL&&mainw->is_ready&&(palette->style&STYLE_1)) {
     gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
-  gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_LEFT);
+  gtk_label_set_justify (GTK_LABEL (label), widget_opts.justify);
 #endif
 
   return label;
@@ -609,7 +609,7 @@ LiVESWidget *lives_standard_check_button_new(const char *labeltext, boolean use_
   if (use_mnemonic) {
     label=gtk_label_new_with_mnemonic (labeltext);
     gtk_label_set_mnemonic_widget (GTK_LABEL (label),checkbutton);
-    gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_LEFT);
+    gtk_label_set_justify (GTK_LABEL (label), widget_opts.justify);
   }
   else label=lives_standard_label_new (labeltext);
 
@@ -681,7 +681,7 @@ LiVESWidget *lives_standard_radio_button_new(const char *labeltext, boolean use_
   if (use_mnemonic) {
     label=gtk_label_new_with_mnemonic (labeltext);
     gtk_label_set_mnemonic_widget (GTK_LABEL (label),radiobutton);
-    gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_LEFT);
+    gtk_label_set_justify (GTK_LABEL (label), widget_opts.justify);
   }
   else label=lives_standard_label_new (labeltext);
 
@@ -748,7 +748,7 @@ LiVESWidget *lives_standard_spin_button_new(const char *labeltext, boolean use_m
   if (use_mnemonic) {
     label=gtk_label_new_with_mnemonic (labeltext);
     gtk_label_set_mnemonic_widget (GTK_LABEL (label),spinbutton);
-    gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_LEFT);
+    gtk_label_set_justify (GTK_LABEL (label), widget_opts.justify);
   }
   else label=lives_standard_label_new (labeltext);
 
@@ -806,7 +806,7 @@ LiVESWidget *lives_standard_combo_new (const char *labeltext, boolean use_mnemon
   if (use_mnemonic) {
     label = gtk_label_new_with_mnemonic (labeltext);
     gtk_label_set_mnemonic_widget (GTK_LABEL (label), GTK_WIDGET(entry));
-    gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_LEFT);
+    gtk_label_set_justify (GTK_LABEL (label), widget_opts.justify);
   }
   else label = lives_standard_label_new (labeltext);
 
@@ -877,7 +877,7 @@ LiVESWidget *lives_standard_entry_new(const char *labeltext, boolean use_mnemoni
   if (use_mnemonic) {
     label = gtk_label_new_with_mnemonic (labeltext);
     gtk_label_set_mnemonic_widget (GTK_LABEL (label),entry);
-    gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_LEFT);
+    gtk_label_set_justify (GTK_LABEL (label), widget_opts.justify);
   }
   else label = lives_standard_label_new (labeltext);
 

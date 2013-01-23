@@ -25,6 +25,14 @@ typedef enum {
 
 #define GTK_VERSION_3 GTK_CHECK_VERSION(3,0,0) // set to 2,0,0 for testing
 
+typedef GtkJustification LiVESJustification;
+
+#define LIVES_JUSTIFY_LEFT   GTK_JUSTIFY_LEFT
+#define LIVES_JUSTIFY_RIGHT  GTK_JUSTIFY_RIGHT
+#define LIVES_JUSTIFY_CENTER GTK_JUSTIFY_CENTER
+#define LIVES_JUSTIFY_FILL   GTK_JUSTIFY_RIGHT
+
+
 typedef GdkEvent                          LiVESEvent;
 typedef GtkObject                         LiVESObject;
 typedef GtkWidget                         LiVESWidget;
@@ -371,12 +379,12 @@ void lives_general_button_clicked (LiVESButton *button, LiVESObjectPtr data_to_f
 boolean lives_general_delete_event(LiVESWidget *widget, LiVESEvent *event, LiVESObjectPtr data_to_free);
 
 
-
+#define LIVES_JUSTIFY_DEFAULT LIVES_JUSTIFY_LEFT
 
 typedef struct {
   boolean swap_label; // swap label/widget position
-
-
+  boolean pack_end;
+  LiVESJustification justify;
 } widget_opts_t;
 
 widget_opts_t widget_opts;

@@ -45,14 +45,14 @@ void on_warn_mask_toggled (GtkToggleButton *togglebutton, gpointer user_data)
 {
   GtkWidget *tbutton;
 
-  if (gtk_toggle_button_get_active(togglebutton)) prefs->warning_mask|=GPOINTER_TO_INT(user_data);
+  if (lives_toggle_button_get_active(togglebutton)) prefs->warning_mask|=GPOINTER_TO_INT(user_data);
   else prefs->warning_mask^=GPOINTER_TO_INT(user_data);
   set_int_pref("lives_warning_mask",prefs->warning_mask);
 
   if ((tbutton=(GtkWidget *)g_object_get_data(G_OBJECT(togglebutton),"auto"))!=NULL) {
     // this is for the cds window - disable autoreload if we are not gonna show this window
-    if (gtk_toggle_button_get_active(togglebutton)) {
-      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tbutton),FALSE);
+    if (lives_toggle_button_get_active(togglebutton)) {
+      lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(tbutton),FALSE);
       gtk_widget_set_sensitive(tbutton,FALSE);
     }
     else {
@@ -2082,7 +2082,7 @@ gboolean do_comments_dialog (file *sfile, gchar *filename) {
       g_snprintf (sfile->author,256,"%s",gtk_entry_get_text (GTK_ENTRY (commentsw->author_entry)));
       g_snprintf (sfile->comment,256,"%s",gtk_entry_get_text (GTK_ENTRY (commentsw->comment_entry)));
       
-      if (encoding&&sfile->subt!=NULL&&gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(commentsw->subt_checkbutton))) {
+      if (encoding&&sfile->subt!=NULL&&lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(commentsw->subt_checkbutton))) {
 	gchar *ext=get_extension(gtk_entry_get_text(GTK_ENTRY(commentsw->subt_entry)));
 	if (strcmp(ext,"sub")&&strcmp(ext,"srt")) {
 	  if (!do_sub_type_warning(ext,sfile->subt->type==SUBTITLE_TYPE_SRT?"srt":"sub")) {

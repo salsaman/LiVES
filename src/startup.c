@@ -1,6 +1,6 @@
 // startup.c
 // LiVES
-// (c) G. Finch 2010 - 2012 <salsaman@gmail.com>
+// (c) G. Finch 2010 - 2013 <salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -174,7 +174,7 @@ gboolean do_tempdir_query(void) {
 static void on_init_aplayer_toggled (GtkToggleButton *tbutton, gpointer user_data) {
   gint audp=GPOINTER_TO_INT(user_data);
 
-  if (!gtk_toggle_button_get_active(tbutton)) return;
+  if (!lives_toggle_button_get_active(tbutton)) return;
 
   prefs->audio_player=audp;
 
@@ -280,16 +280,9 @@ gboolean do_audio_choice_dialog(short startup_phase) {
 
   dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(dialog));
   
-  label=gtk_label_new(msg);
+  label=lives_standard_label_new(msg);
   gtk_container_add (GTK_CONTAINER (dialog_vbox), label);
   g_free(msg);
-
-
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-  }
-
-
 
 
   radiobutton0 = gtk_radio_button_new (NULL);
@@ -320,7 +313,7 @@ gboolean do_audio_choice_dialog(short startup_phase) {
   gtk_radio_button_set_group (GTK_RADIO_BUTTON (radiobutton0), radiobutton_group);
   radiobutton_group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (radiobutton0));
   if (prefs->audio_player==AUD_PLAYER_PULSE) {
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(radiobutton0),TRUE);
+    lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(radiobutton0),TRUE);
     set_pref("audio_player","pulse");
   }
 
@@ -357,7 +350,7 @@ gboolean do_audio_choice_dialog(short startup_phase) {
 
   if (prefs->audio_player==AUD_PLAYER_JACK||!capable->has_pulse_audio) {
     prefs->audio_player=AUD_PLAYER_JACK;
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(radiobutton1),TRUE);
+    lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(radiobutton1),TRUE);
     set_pref("audio_player","jack");
   }
 
@@ -393,7 +386,7 @@ gboolean do_audio_choice_dialog(short startup_phase) {
     radiobutton_group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (radiobutton2));
 
     if (prefs->audio_player==AUD_PLAYER_SOX) {
-      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(radiobutton2),TRUE);
+      lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(radiobutton2),TRUE);
       set_pref("audio_player","sox");
     }
 
@@ -428,7 +421,7 @@ gboolean do_audio_choice_dialog(short startup_phase) {
     radiobutton_group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (radiobutton3));
 
     if (prefs->audio_player==AUD_PLAYER_MPLAYER) {
-      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(radiobutton3),TRUE);
+      lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(radiobutton3),TRUE);
       set_pref("audio_player","mplayer");
     }
 
@@ -488,11 +481,7 @@ gboolean do_audio_choice_dialog(short startup_phase) {
 
 
 static void add_test(GtkWidget *table, gint row, gchar *ttext, gboolean noskip) {
-  GtkWidget *label=gtk_label_new(ttext);
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-  }
-  gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_LEFT);
+  GtkWidget *label=lives_standard_label_new(ttext);
 
   gtk_table_attach (GTK_TABLE (table), label, 0, 1, row, row+1, (GtkAttachOptions)0, (GtkAttachOptions)0, 10, 10);
   gtk_widget_show(label);
@@ -500,10 +489,8 @@ static void add_test(GtkWidget *table, gint row, gchar *ttext, gboolean noskip) 
   if (!noskip) {
     GtkWidget *image=gtk_image_new_from_stock(GTK_STOCK_REMOVE,GTK_ICON_SIZE_LARGE_TOOLBAR);
     // TRANSLATORS - as in "skipped test"
-    label=gtk_label_new(_("Skipped"));
-    if (palette->style&STYLE_1) {
-      gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-    }
+    label=lives_standard_label_new(_("Skipped"));
+
     gtk_table_attach (GTK_TABLE (table), label, 1, 2, row, row+1, (GtkAttachOptions)0, (GtkAttachOptions)0, 10, 10);
     gtk_widget_show(label);
 
@@ -517,12 +504,8 @@ static void add_test(GtkWidget *table, gint row, gchar *ttext, gboolean noskip) 
 
 static gboolean pass_test(GtkWidget *table, gint row) {
   // TRANSLATORS - as in "passed test"
-  GtkWidget *label=gtk_label_new(_("Passed"));
+  GtkWidget *label=lives_standard_label_new(_("Passed"));
   GtkWidget *image=gtk_image_new_from_stock(GTK_STOCK_APPLY,GTK_ICON_SIZE_LARGE_TOOLBAR);
-
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-  }
 
   gtk_table_attach (GTK_TABLE (table), label, 1, 2, row, row+1, (GtkAttachOptions)0, (GtkAttachOptions)0, 10, 10);
   gtk_widget_show(label);
@@ -539,21 +522,13 @@ static gboolean fail_test(GtkWidget *table, gint row, gchar *ftext) {
   GtkWidget *label;
   GtkWidget *image=gtk_image_new_from_stock(GTK_STOCK_CANCEL,GTK_ICON_SIZE_LARGE_TOOLBAR);
 
-  label=gtk_label_new(ftext);
+  label=lives_standard_label_new(ftext);
 
   gtk_table_attach (GTK_TABLE (table), label, 3, 4, row, row+1, (GtkAttachOptions)0, (GtkAttachOptions)0, 10, 10);
   gtk_widget_show(label);
   
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-  }
-  
   // TRANSLATORS - as in "failed test"
-  label=gtk_label_new(_("Failed"));
-
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-  }
+  label=lives_standard_label_new(_("Failed"));
 
   gtk_table_attach (GTK_TABLE (table), label, 1, 2, row, row+1, (GtkAttachOptions)0, (GtkAttachOptions)0, 10, 10);
   gtk_widget_show(label);
@@ -630,15 +605,8 @@ gboolean do_startup_tests(gboolean tshoot) {
 
   dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(dialog));
 
-  label=gtk_label_new(_("LiVES will now run some basic configuration tests\n"));
+  label=lives_standard_label_new(_("LiVES will now run some basic configuration tests\n"));
   gtk_container_add (GTK_CONTAINER (dialog_vbox), label);
-
-
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-  }
-
-
 
   cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
   gtk_widget_show (cancelbutton);
@@ -958,23 +926,14 @@ gboolean do_startup_tests(gboolean tshoot) {
   if (tshoot) {
     gtk_widget_hide(cancelbutton); 
     if (imgext_switched) {
-      label=gtk_label_new(_("\n\n    Image decoding type has been switched to jpeg. You can revert this in Preferences/Decoding.    \n"));
+      label=lives_standard_label_new(_("\n\n    Image decoding type has been switched to jpeg. You can revert this in Preferences/Decoding.    \n"));
       gtk_container_add (GTK_CONTAINER (dialog_vbox), label);
-      
-      if (palette->style&STYLE_1) {
-	gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-      }
     }
     gtk_widget_show(label);
   }
   else {
-    label=gtk_label_new(_("\n\n    Click Cancel to exit and install any missing components, or Next to continue    \n"));
+    label=lives_standard_label_new(_("\n\n    Click Cancel to exit and install any missing components, or Next to continue    \n"));
     gtk_container_add (GTK_CONTAINER (dialog_vbox), label);
-
-    if (palette->style&STYLE_1) {
-      gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-    }
-    
     gtk_widget_show(label);
   }
 
@@ -1033,16 +992,9 @@ void do_startup_interface_query(void) {
 
   dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(dialog));
   
-  label=gtk_label_new(msg);
+  label=lives_standard_label_new(msg);
   gtk_container_add (GTK_CONTAINER (dialog_vbox), label);
   g_free(msg);
-
-
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-  }
-
-
 
 
   radiobutton0 = gtk_radio_button_new (NULL);
@@ -1073,11 +1025,7 @@ void do_startup_interface_query(void) {
   gtk_radio_button_set_group (GTK_RADIO_BUTTON (radiobutton0), radiobutton_group);
   radiobutton_group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (radiobutton0));
 
-  label=gtk_label_new(_("This is the best choice for simple editing tasks and for VJs\n"));
-
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-  }
+  label=lives_standard_label_new(_("This is the best choice for simple editing tasks and for VJs\n"));
 
   gtk_box_pack_start (GTK_BOX (dialog_vbox), label, FALSE, FALSE, 10);
 
@@ -1105,11 +1053,7 @@ void do_startup_interface_query(void) {
   gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, 10);
 
 
-  label=gtk_label_new(_("This is a better choice for complex editing tasks involving multiple clips.\n"));
-
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-  }
+  label=lives_standard_label_new(_("This is a better choice for complex editing tasks involving multiple clips.\n"));
 
   gtk_box_pack_start (GTK_BOX (dialog_vbox), label, FALSE, FALSE, 10);
 
@@ -1118,7 +1062,7 @@ void do_startup_interface_query(void) {
   radiobutton_group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (radiobutton1));
 
   if (prefs->startup_interface==STARTUP_MT) {
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(radiobutton1),TRUE);
+    lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(radiobutton1),TRUE);
   }
 
   okbutton = gtk_button_new_from_stock ("gtk-go-forward");
@@ -1135,7 +1079,7 @@ void do_startup_interface_query(void) {
   gtk_dialog_run(GTK_DIALOG(dialog));
 
 
-  if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(radiobutton1))) 
+  if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(radiobutton1))) 
     future_prefs->startup_interface=prefs->startup_interface=STARTUP_MT;
   
   set_int_pref("startup_interface",prefs->startup_interface);

@@ -321,6 +321,7 @@ boolean lives_widget_is_visible(LiVESWidget *widget);
 // compound functions (composed of basic functions)
 
 LiVESWidget *lives_standard_label_new(const char *text);
+LiVESWidget *lives_standard_label_new_with_mnemonic(const char *text, LiVESWidget *mnemonic_widget);
 
 LiVESWidget *lives_standard_check_button_new(const char *label, boolean use_mnemonic, LiVESBox *box, const char *tooltip);
 LiVESWidget *lives_standard_radio_button_new(const char *labeltext, boolean use_mnemonic, LiVESSList *rbgroup, 
@@ -334,7 +335,7 @@ LiVESWidget *lives_standard_combo_new (const char *labeltext, boolean use_mnemon
 LiVESWidget *lives_standard_entry_new(const char *labeltext, boolean use_mnemonic, char *txt, int dispwidth, int maxchars, LiVESBox *box, 
 				      const char *tooltip);
 
-LiVESWidget *lives_standard_dialog_new(const gchar *title, boolean add_std_buttons);
+LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_buttons);
 
 LiVESWidget *lives_standard_hruler_new(void);
 

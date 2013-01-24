@@ -1,6 +1,6 @@
 // paramspecial.h
 // LiVES
-// (c) G. Finch 2004 - 2009 <salsaman@xs4all.nl,salsaman@gmail.com>
+// (c) G. Finch 2004 - 2013 <salsaman@xs4all.nl,salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -23,7 +23,7 @@ typedef struct {
 
 typedef struct {
   lives_rfx_t *rfx;
-  gboolean added;
+  boolean added;
   gint type;
   gint xstart_param;
   gint ystart_param;
@@ -56,7 +56,7 @@ void init_special (void);
 
 gint add_to_special (const gchar *special_string, lives_rfx_t *);
 
-void check_for_special (lives_param_t *, gint num, GtkBox *, lives_rfx_t *);
+void check_for_special (lives_param_t *, int num, GtkBox *, lives_rfx_t *);
 
 void fd_connect_spinbutton(lives_rfx_t *);
 
@@ -71,7 +71,7 @@ void special_cleanup (void);
 lives_special_mergealign_t mergealign;
 void setmergealign (void);
 
-gboolean is_perchannel_multi(lives_rfx_t *rfx, gint i);
+boolean is_perchannel_multi(lives_rfx_t *rfx, int i);
 
 #include "framedraw.h"
 

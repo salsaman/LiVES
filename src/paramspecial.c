@@ -190,11 +190,11 @@ void fd_connect_spinbutton(lives_rfx_t *rfx) {
 
 
 static void passwd_toggle_vis(GtkToggleButton *b, gpointer entry) {
-  gtk_entry_set_visibility(GTK_ENTRY(entry),gtk_toggle_button_get_active(b));
+  gtk_entry_set_visibility(GTK_ENTRY(entry),lives_toggle_button_get_active(b));
 }
 
 
-void check_for_special (lives_param_t *param, gint num, GtkBox *pbox, lives_rfx_t *rfx) {
+void check_for_special (lives_param_t *param, int num, GtkBox *pbox, lives_rfx_t *rfx) {
   GtkWidget *checkbutton;
   GtkWidget *hbox;
   GtkWidget *box;
@@ -347,8 +347,8 @@ void check_for_special (lives_param_t *param, gint num, GtkBox *pbox, lives_rfx_
 
 
 void after_aspect_width_changed (GtkSpinButton *spinbutton, gpointer user_data) {
-  if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (aspect.checkbutton))) {
-    gboolean keepeven=FALSE;
+  if (lives_toggle_button_get_active (LIVES_TOGGLE_BUTTON (aspect.checkbutton))) {
+    boolean keepeven=FALSE;
     gint width=gtk_spin_button_get_value_as_int (spinbutton);
     gint height=gtk_spin_button_get_value_as_int (GTK_SPIN_BUTTON (aspect.height_widget));
     g_signal_handler_block (aspect.height_widget,aspect.height_func);
@@ -376,8 +376,8 @@ void after_aspect_width_changed (GtkSpinButton *spinbutton, gpointer user_data) 
 
 
 void after_aspect_height_changed (GtkToggleButton *spinbutton, gpointer user_data){
-  if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (aspect.checkbutton))) {
-    gboolean keepeven=FALSE;
+  if (lives_toggle_button_get_active (LIVES_TOGGLE_BUTTON (aspect.checkbutton))) {
+    boolean keepeven=FALSE;
     gint height=gtk_spin_button_get_value_as_int (GTK_SPIN_BUTTON (spinbutton));
     gint width=gtk_spin_button_get_value_as_int (GTK_SPIN_BUTTON (aspect.width_widget));
 
@@ -483,7 +483,7 @@ void setmergealign (void) {
 }
 
 
-gboolean mt_framedraw(lives_mt *mt, GdkPixbuf *pixbuf) {
+boolean mt_framedraw(lives_mt *mt, GdkPixbuf *pixbuf) {
   if (framedraw.added) {
     switch (framedraw.type) {
     case FD_RECT_MULTRECT:
@@ -503,7 +503,7 @@ gboolean mt_framedraw(lives_mt *mt, GdkPixbuf *pixbuf) {
 }
 
 
-gboolean is_perchannel_multi(lives_rfx_t *rfx, gint i) {
+boolean is_perchannel_multi(lives_rfx_t *rfx, int i) {
   // updated for weed spec 1.1
   if (rfx->params[i].multi==PVAL_MULTI_PER_CHANNEL) return TRUE;
   return FALSE;

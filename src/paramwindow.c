@@ -393,7 +393,7 @@ static void transition_out_pressed(GtkToggleButton *tbut, gpointer rfx) {
 static void after_transaudio_toggled(GtkToggleButton *togglebutton, gpointer rfx) {
   weed_plant_t *init_event=mainw->multitrack->init_event;
 
-  if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(togglebutton))) 
+  if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(togglebutton))) 
     weed_set_boolean_value(init_event,"host_audio_transition",WEED_TRUE);
   else weed_set_boolean_value(init_event,"host_audio_transition",WEED_FALSE);
 
@@ -446,8 +446,8 @@ void transition_add_in_out(GtkBox *vbox, lives_rfx_t *rfx, gboolean add_audio_ch
 
     if (weed_plant_has_leaf(mainw->multitrack->init_event,"host_audio_transition")&&
 	weed_get_boolean_value(mainw->multitrack->init_event,"host_audio_transition",&error)==WEED_FALSE) 
-      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(checkbutton),FALSE);
-    else gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (checkbutton), TRUE);
+      lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(checkbutton),FALSE);
+    else lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (checkbutton), TRUE);
 
     g_signal_connect_after (GTK_OBJECT (checkbutton), "toggled",
 			    G_CALLBACK (after_transaudio_toggled),
@@ -619,77 +619,41 @@ static gboolean add_sizes(GtkBox *vbox, gboolean add_fps, lives_rfx_t *rfx) {
 
 static void add_gen_to(GtkBox *vbox, lives_rfx_t *rfx) {
   // add "generate to clipboard/new clip" for rendered generators
+  LiVESSList *radiobutton_group = NULL;
 
   GtkWidget *radiobutton;
-  GtkWidget *label;
-  GtkWidget *eventbox;
   GtkWidget *hseparator;
 
-  GSList *radiobutton_group = NULL;
-
   GtkWidget *hbox = gtk_hbox_new (FALSE, 0);
+
+  gchar *tmp,*tmp2;
+
   gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 10);
   
-  radiobutton = gtk_radio_button_new (NULL);
-  gtk_radio_button_set_group (GTK_RADIO_BUTTON (radiobutton), radiobutton_group);
-  radiobutton_group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (radiobutton));
+  radiobutton = lives_standard_radio_button_new ((tmp=g_strdup(_ ("Generate to _Clipboard"))),
+						 TRUE,radiobutton_group,LIVES_BOX(hbox),
+						 (tmp2=g_strdup(_("Generate frames to the clipboard"))));
 
-  gtk_box_pack_start (GTK_BOX (hbox), radiobutton, FALSE, FALSE, 10);
+  g_free(tmp); g_free(tmp2);
 
-  label=gtk_label_new_with_mnemonic (_ ("Generate to _Clipboard"));
-  gtk_label_set_mnemonic_widget (GTK_LABEL (label),radiobutton);
-
-  eventbox=gtk_event_box_new();
-  gtk_container_add(GTK_CONTAINER(eventbox),label);
-  gtk_widget_set_tooltip_text( eventbox, _("Generate frames to the clipboard"));
-  lives_tooltips_copy(radiobutton,eventbox);
-  g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
-		    G_CALLBACK (label_act_toggle),
-		    radiobutton);
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_bg (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
-  }
-  gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, 10);
+  radiobutton_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (radiobutton));
   
-  radiobutton=gtk_radio_button_new(radiobutton_group);
+  widget_opts.pack_end=TRUE;
+  radiobutton=lives_standard_radio_button_new((tmp=g_strdup(_("Generate to _New Clip"))),
+					      TRUE,radiobutton_group,LIVES_BOX(hbox),
+					      (tmp2=g_strdup(_("Generate frames to a new clip"))));
+  widget_opts.pack_end=FALSE;
 
-  gtk_box_pack_end (GTK_BOX (hbox), radiobutton, FALSE, FALSE, 10);
-
-  label=gtk_label_new_with_mnemonic (_ ("Generate to _New Clip"));
-  gtk_label_set_mnemonic_widget (GTK_LABEL (label),radiobutton);
-
-  eventbox=gtk_event_box_new();
-  gtk_container_add(GTK_CONTAINER(eventbox),label);
-  gtk_widget_set_tooltip_text( eventbox, _("Generate frames to a new clip"));
-  lives_tooltips_copy(radiobutton,eventbox);
-  g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
-		    G_CALLBACK (label_act_toggle),
-		    radiobutton);
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_bg (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
-  }
-  gtk_box_pack_end (GTK_BOX (hbox), eventbox, FALSE, FALSE, 10);
-  
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(hbox, GTK_STATE_NORMAL, &palette->normal_fore);
-  }
+  g_free(tmp); g_free(tmp2);
 
   hseparator = gtk_hseparator_new ();
   gtk_box_pack_start (vbox, hseparator, FALSE, FALSE, 0);
 
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (radiobutton), !mainw->gen_to_clipboard);
+  lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (radiobutton), !mainw->gen_to_clipboard);
 
   g_signal_connect_after (GTK_OBJECT (radiobutton), "toggled",
 			  G_CALLBACK (gen_cb_toggled),
 			  (gpointer)rfx);
-
-
-
-
 
 }
 
@@ -1354,10 +1318,8 @@ gboolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, gboolean ad
       }
       
       if (rfx->status==RFX_STATUS_WEED&&(disp_string=get_weed_display_string((weed_plant_t *)rfx->source,pnum))!=NULL) {
-	dlabel=gtk_label_new (g_strdup_printf("(%s)",_ (disp_string)));
-	if (palette->style&STYLE_1) {
-	  gtk_widget_modify_fg(dlabel, GTK_STATE_NORMAL, &palette->normal_fore);
-	}
+	dlabel=lives_standard_label_new ((tmp=g_strdup_printf("(%s)",_ (disp_string))));
+	g_free(tmp);
 	weed_free(disp_string);
 	gtk_box_pack_start (GTK_BOX (hbox), dlabel, FALSE, FALSE, 10);
 	param->widgets[1]=dlabel;
@@ -1365,7 +1327,7 @@ gboolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, gboolean ad
 
 
       checkbutton=lives_standard_check_button_new(name,use_mnemonic,(LiVESBox *)hbox,param->desc);
-      gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (checkbutton), get_bool_param(param->value));
+      lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (checkbutton), get_bool_param(param->value));
       g_signal_connect_after (GTK_OBJECT (checkbutton), "toggled",
 			      G_CALLBACK (after_boolean_param_toggled),
 			      (gpointer)rfx);
@@ -1385,10 +1347,8 @@ gboolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, gboolean ad
       }
       
       if (rfx->status==RFX_STATUS_WEED&&(disp_string=get_weed_display_string((weed_plant_t *)rfx->source,pnum))!=NULL) {
-	dlabel=gtk_label_new (g_strdup_printf("(%s)",_ (disp_string)));
-	if (palette->style&STYLE_1) {
-	  gtk_widget_modify_fg(dlabel, GTK_STATE_NORMAL, &palette->normal_fore);
-	}
+	dlabel=lives_standard_label_new ((tmp=g_strdup_printf("(%s)",_ (disp_string))));
+	g_free(tmp);
 	weed_free(disp_string);
 	gtk_box_pack_start (GTK_BOX (hbox), dlabel, FALSE, FALSE, 10);
 	param->widgets[1]=dlabel;
@@ -1426,7 +1386,7 @@ gboolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, gboolean ad
 			      G_CALLBACK (after_boolean_param_toggled),
 			      (gpointer)rfx);
 
-      gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (radiobutton), get_bool_param(param->value));
+      lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (radiobutton), get_bool_param(param->value));
 
       // store parameter so we know whose trigger to use
       g_object_set_data (G_OBJECT (radiobutton),"param_number",GINT_TO_POINTER (pnum));
@@ -1444,7 +1404,8 @@ gboolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, gboolean ad
     }
 
     if (rfx->status==RFX_STATUS_WEED&&(disp_string=get_weed_display_string((weed_plant_t *)rfx->source,pnum))!=NULL) {
-      dlabel=gtk_label_new (g_strdup_printf("%s",_ (disp_string)));
+      dlabel=lives_standard_label_new ((tmp=g_strdup_printf("%s",_ (disp_string))));
+      g_free(tmp);
       weed_free(disp_string);
       gtk_box_pack_start (GTK_BOX (hbox), dlabel, FALSE, FALSE, 10);
       param->widgets[1]=dlabel;
@@ -1526,16 +1487,11 @@ gboolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, gboolean ad
     else gtk_widget_set_tooltip_text( cbutton, (_("Click to set the colour")));
 
     if (use_mnemonic) {
-      labelcname=gtk_label_new_with_mnemonic (_(name));
-      gtk_label_set_mnemonic_widget (GTK_LABEL (labelcname),cbutton);
+      labelcname=lives_standard_label_new_with_mnemonic (_(name),cbutton);
     }
-    else labelcname=gtk_label_new (_(name));
+    else labelcname=lives_standard_label_new (_(name));
     if (param->desc!=NULL) gtk_widget_set_tooltip_text( labelcname, param->desc);
 
-    gtk_label_set_justify (GTK_LABEL (labelcname), GTK_JUSTIFY_LEFT);
-    if (palette->style&STYLE_1) {
-      gtk_widget_modify_fg(labelcname, GTK_STATE_NORMAL, &palette->normal_fore);
-    }
     gtk_box_pack_start (GTK_BOX (hbox), labelcname, FALSE, FALSE, 10);
 
     spinbutton_red = lives_standard_spin_button_new((tmp=g_strdup(_("_Red"))), TRUE, rgb.red, 0., 255., 1., 1., 0, 
@@ -1617,24 +1573,11 @@ gboolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, gboolean ad
 
       gtk_text_buffer_set_text (textbuffer, txt, -1);
     }
-    else {
-      param->widgets[0]=entry=gtk_entry_new();
-      if (param->hidden) gtk_widget_set_sensitive(entry,FALSE);
-      if (param->desc!=NULL) gtk_widget_set_tooltip_text( entry, param->desc);
-      gtk_entry_set_text (GTK_ENTRY (entry),txt);
-      gtk_entry_set_max_length(GTK_ENTRY (entry),(gint)param->max);
-      gtk_entry_set_width_chars (GTK_ENTRY (entry),(gint)param->max);
-      gtk_entry_set_activates_default (GTK_ENTRY (entry), TRUE);
-    }
-    g_free (txt);
 
-    if (use_mnemonic) label = gtk_label_new_with_mnemonic (_(name));
-    else label = gtk_label_new (_(name));
-    if (param->desc!=NULL) gtk_widget_set_tooltip_text( label, param->desc);
+    if (use_mnemonic) label = lives_standard_label_new_with_mnemonic (_(name),NULL);
+    else label = lives_standard_label_new (_(name));
+    if (param->desc!=NULL) gtk_widget_set_tooltip_text(label, param->desc);
 
-    if (palette->style&STYLE_1) {
-      gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-    }
     gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 10);
 
     blockfunc=g_signal_connect_after (G_OBJECT (hbox), "set-focus-child", G_CALLBACK (after_param_text_focus_changed), 
@@ -1649,9 +1592,12 @@ gboolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, gboolean ad
       gtk_box_pack_start (GTK_BOX (hbox), scrolledwindow, TRUE, TRUE, 10);
     }
     else {
+      param->widgets[0]=entry=lives_standard_entry_new(NULL,FALSE,txt,(int)param->max,(int)param->max,LIVES_BOX(hbox),param->desc);
+      if (param->hidden) gtk_widget_set_sensitive(entry,FALSE);
       if (use_mnemonic) gtk_label_set_mnemonic_widget (GTK_LABEL (label),entry);
-      gtk_box_pack_start (GTK_BOX (hbox), entry, TRUE, TRUE, 10);
     }
+
+    g_free (txt);
 
     g_object_set_data(G_OBJECT(hbox),"textwidget",(gpointer)param->widgets[0]);
     g_object_set_data(G_OBJECT(param->widgets[0]),"blockfunc",(gpointer)blockfunc);
@@ -1724,13 +1670,9 @@ void add_label_to_box (GtkBox *box, gboolean do_trans, const gchar *text) {
     gtk_label_set_markup_with_mnemonic (GTK_LABEL(label),markup);
     g_free(markup);
   }
-  else label = gtk_label_new_with_mnemonic (text);
+  else label = lives_standard_label_new_with_mnemonic (text,NULL);
 
   gtk_box_pack_start (box, label, FALSE, FALSE, 10);
-  gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_LEFT);
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-  }
   gtk_widget_show(label);
 }
 
@@ -1775,7 +1717,7 @@ after_boolean_param_toggled        (GtkToggleButton *togglebutton,
 
   if (mainw->block_param_updates) return; // updates are blocked when we update visually
 
-  set_bool_param(param->value,(new_bool=gtk_toggle_button_get_active (togglebutton)));
+  set_bool_param(param->value,(new_bool=lives_toggle_button_get_active (togglebutton)));
 
   if (mainw->framedraw_preview!=NULL) gtk_widget_set_sensitive(mainw->framedraw_preview,TRUE);
 
@@ -2845,7 +2787,7 @@ gint set_param_from_list(GList *plist, lives_param_t *param, gint pnum, gboolean
     set_bool_param(param->value,(atoi ((gchar *)g_list_nth_data (plist,pnum++))));
     if (upd) {
       if (param->widgets[0]&&GTK_IS_TOGGLE_BUTTON (param->widgets[0])) {
-	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (param->widgets[0]),get_bool_param(param->value));
+	lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (param->widgets[0]),get_bool_param(param->value));
       }
     }
     break;

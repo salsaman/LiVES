@@ -1,6 +1,6 @@
 // ldvgrab.c
 // LiVES
-// (c) G. Finch 2006 <salsaman@xs4all.nl,salsaman@gmail.com>
+// (c) G. Finch 2006 - 2013 <salsaman@xs4all.nl,salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -256,7 +256,7 @@ gboolean rec(s_cam *cam) {
 
   if (cam->pgid!=0) return FALSE;
 
-  if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(dvgrabw->split))) splits=g_strdup("-autosplit ");
+  if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(dvgrabw->split))) splits=g_strdup("-autosplit ");
   else splits=g_strdup("");
 
   if (cam->format==CAM_FORMAT_DV) {

@@ -947,12 +947,7 @@ _vppaw *on_vpp_advanced_clicked (GtkButton *button, gpointer user_data) {
   if (tmpvpp->get_description!=NULL) {
     desc=(tmpvpp->get_description)();
     if (desc!=NULL) {
-      label = gtk_label_new (desc);
-      
-      if (palette->style&STYLE_1) {
-	gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-      }
-      
+      label = lives_standard_label_new (desc);
       gtk_box_pack_start (GTK_BOX (dialog_vbox), label, FALSE, FALSE, 10);
     }
   }
@@ -973,7 +968,8 @@ _vppaw *on_vpp_advanced_clicked (GtkButton *button, gpointer user_data) {
     }
 
     // fps
-    combo = lives_standard_combo_new ((tmp=g_strdup(_("_FPS"))),TRUE,fps_list_strings,LIVES_BOX(dialog_vbox),(tmp2=g_strdup(_("Fixed framerate for plugin.\n"))));
+    combo = lives_standard_combo_new ((tmp=g_strdup(_("_FPS"))),TRUE,fps_list_strings,
+				      LIVES_BOX(dialog_vbox),(tmp2=g_strdup(_("Fixed framerate for plugin.\n"))));
     g_free(tmp);
     g_free(tmp2);
     vppa->fps_entry=lives_combo_get_entry(LIVES_COMBO(combo));
@@ -1766,10 +1762,10 @@ gboolean check_encoder_restrictions (gboolean get_extension, gboolean user_audio
 
   // audio endianness check - what should we do for big-endian machines ?
   if (((mainw->save_with_sound||rdet!=NULL)&&(resaudw==NULL||resaudw->aud_checkbutton==NULL||
-					      gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(resaudw->aud_checkbutton))))
+					      lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(resaudw->aud_checkbutton))))
       &&prefs->encoder.audio_codec!=AUDIO_CODEC_NONE&&(arate*achans*asampsize)) {
     if (rdet!=NULL&&!rdet->is_encoding) {
-      if (mainw->endian!=AFORM_BIG_ENDIAN && (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(resaudw->rb_bigend)))) 
+      if (mainw->endian!=AFORM_BIG_ENDIAN && (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(resaudw->rb_bigend)))) 
 	swap_endian=TRUE;
     }
     else {
@@ -1908,8 +1904,8 @@ gboolean check_encoder_restrictions (gboolean get_extension, gboolean user_audio
       if (!strncmp (checks[r],"asigned=",8)&&
 	  ((mainw->save_with_sound||rdet!=NULL)&&(resaudw==NULL||
 						  resaudw->aud_checkbutton==NULL||
-						  gtk_toggle_button_get_active
-						  (GTK_TOGGLE_BUTTON(resaudw->aud_checkbutton))))&&
+						  lives_toggle_button_get_active
+						  (LIVES_TOGGLE_BUTTON(resaudw->aud_checkbutton))))&&
 	  prefs->encoder.audio_codec!=AUDIO_CODEC_NONE
 	  &&(arate*achans*asampsize)) {
 	array=g_strsplit(checks[r],"=",2);
@@ -1934,8 +1930,8 @@ gboolean check_encoder_restrictions (gboolean get_extension, gboolean user_audio
       
       if (!strncmp (checks[r],"arate=",6)&&((mainw->save_with_sound||rdet!=NULL)&&(resaudw==NULL||
 										   resaudw->aud_checkbutton==NULL||
-										   gtk_toggle_button_get_active
-										   (GTK_TOGGLE_BUTTON
+										   lives_toggle_button_get_active
+										   (LIVES_TOGGLE_BUTTON
 										    (resaudw->aud_checkbutton))))&&
 	  prefs->encoder.audio_codec!=AUDIO_CODEC_NONE&&(arate*achans*asampsize)) {
 	// we only perform this test if we are encoding with audio
@@ -2068,8 +2064,8 @@ gboolean check_encoder_restrictions (gboolean get_extension, gboolean user_audio
       rdet->arate=(gint)atoi (gtk_entry_get_text(GTK_ENTRY(resaudw->entry_arate)));
       rdet->achans=(gint)atoi (gtk_entry_get_text(GTK_ENTRY(resaudw->entry_achans)));
       rdet->asamps=(gint)atoi (gtk_entry_get_text(GTK_ENTRY(resaudw->entry_asamps)));
-      rdet->aendian=get_signed_endian(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(resaudw->rb_unsigned)),
-				      gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(resaudw->rb_littleend)));
+      rdet->aendian=get_signed_endian(lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(resaudw->rb_unsigned)),
+				      lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(resaudw->rb_littleend)));
 
       if (swap_endian||width!=rdet->width||height!=rdet->height||best_fps_delta!=0.||best_arate!=rdet->arate||
 	  ((asigned==1&&(rdet->aendian&AFORM_UNSIGNED))||(asigned==2&&!(rdet->aendian&AFORM_SIGNED)))) {
@@ -2080,15 +2076,15 @@ gboolean check_encoder_restrictions (gboolean get_extension, gboolean user_audio
 	  rdet->width=width;
 	  rdet->height=height;
 	  if (best_arate!=-1) rdet->arate=best_arate;
-	  else gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(resaudw->aud_checkbutton),FALSE);
+	  else lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(resaudw->aud_checkbutton),FALSE);
 
-	  if (asigned==1) gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(resaudw->rb_signed),TRUE);
-	  else if (asigned==2) gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(resaudw->rb_unsigned),TRUE);
+	  if (asigned==1) lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(resaudw->rb_signed),TRUE);
+	  else if (asigned==2) lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(resaudw->rb_unsigned),TRUE);
 
 	  if (swap_endian) {
-	    if (!gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(resaudw->rb_bigend))) 
-	      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(resaudw->rb_bigend),TRUE);
-	    else gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(resaudw->rb_littleend),TRUE);
+	    if (!lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(resaudw->rb_bigend))) 
+	      lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(resaudw->rb_bigend),TRUE);
+	    else lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(resaudw->rb_littleend),TRUE);
 	  }
 
 	  if (best_fps_delta>0.) {
@@ -2543,7 +2539,7 @@ static void dpa_cancel_clicked (GtkWidget *button, gpointer user_data) {
 }
 
 static void on_dpa_cb_toggled(GtkToggleButton *button, gchar *decname) {
-  if (!gtk_toggle_button_get_active(button))
+  if (!lives_toggle_button_get_active(button))
     // unchecked is disabled
     future_prefs->disabled_decoders_new=g_list_append(future_prefs->disabled_decoders_new,g_strdup(decname));
   else 
@@ -2555,7 +2551,6 @@ void on_decplug_advanced_clicked (GtkButton *button, gpointer user_data) {
   GtkWidget *hbox;
   GtkWidget *vbox;
   GtkWidget *checkbutton;
-  GtkWidget *eventbox;
   GtkWidget *scrolledwindow;
   GtkWidget *label;
   GtkWidget *dialog;
@@ -2623,44 +2618,25 @@ void on_decplug_advanced_clicked (GtkButton *button, gpointer user_data) {
     gtk_widget_modify_bg(lives_bin_get_child(LIVES_BIN(scrolledwindow)), GTK_STATE_NORMAL, &palette->normal_back);
   }
   
-  label=gtk_label_new(_("Enabled Video Decoders (uncheck to disable)"));
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-  }
+  label=lives_standard_label_new(_("Enabled Video Decoders (uncheck to disable)"));
   gtk_box_pack_start (GTK_BOX (vbox), label, FALSE, FALSE, 10);
 
   while (decoder_plugin!=NULL) {
     lives_decoder_sys_t *dpsys=(lives_decoder_sys_t *)decoder_plugin->data;
     hbox = gtk_hbox_new (FALSE, 0);
     gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 10);
+    ltext=g_strdup_printf("%s   (%s)",dpsys->name,(*dpsys->version)());
 
-    checkbutton=gtk_check_button_new();
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(checkbutton),
+    checkbutton=lives_standard_check_button_new(ltext,FALSE,LIVES_BOX(hbox),NULL);
+
+    g_free(ltext);
+
+    lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(checkbutton),
 				 lives_list_index(future_prefs->disabled_decoders,dpsys->name)==-1);
 
     g_signal_connect_after (GTK_OBJECT (checkbutton), "toggled",
 			    G_CALLBACK (on_dpa_cb_toggled),
 			    dpsys->name);
-
-
-    eventbox = gtk_event_box_new();
-    ltext=g_strdup_printf("%s   (%s)",dpsys->name,(*dpsys->version)());
-    label=gtk_label_new(ltext);
-    g_free(ltext);
-
-    gtk_label_set_mnemonic_widget(GTK_LABEL(label), checkbutton);
-    gtk_container_add(GTK_CONTAINER(eventbox), label);
-    g_signal_connect(GTK_OBJECT(eventbox), "button_press_event", 
-		     G_CALLBACK(label_act_toggle), checkbutton);
-
-    if (palette->style&STYLE_1) {
-      gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-      gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-      gtk_widget_modify_bg(eventbox, GTK_STATE_NORMAL, &palette->normal_back);
-    }
-
-    gtk_box_pack_start (GTK_BOX (hbox), checkbutton, FALSE, FALSE, 10);
-    gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, 10);
 
     decoder_plugin=decoder_plugin->next;
   }

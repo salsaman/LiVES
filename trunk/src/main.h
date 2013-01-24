@@ -1194,7 +1194,7 @@ void popup_lmap_errors(GtkMenuItem *, gpointer);
 
 
 // paramspecial.c
-gboolean mt_framedraw(lives_mt *, GdkPixbuf *);
+boolean mt_framedraw(lives_mt *, GdkPixbuf *);
 
 // paramwindow.c
 void add_fill_to_box (GtkBox *);

@@ -1104,7 +1104,7 @@ gboolean textparm_callback (GtkAccelGroup *group, GObject *obj, guint keyval, Gd
 
 
 gboolean grabkeys_callback_hook (GtkToggleButton *button, gpointer user_data) {
-  if (!gtk_toggle_button_get_active(button)) return TRUE;
+  if (!lives_toggle_button_get_active(button)) return TRUE;
   mainw->last_grabable_effect=GPOINTER_TO_INT(user_data);
   grabkeys_callback (NULL, NULL, 0, (GdkModifierType)0, user_data);
   return TRUE;
@@ -1125,7 +1125,7 @@ gboolean rtemode_callback_hook (GtkToggleButton *button, gpointer user_data) {
   gint key=(gint)(key_mode/modes);
   gint mode=key_mode-key*modes;
 
-  if (!gtk_toggle_button_get_active(button)) return TRUE;
+  if (!lives_toggle_button_get_active(button)) return TRUE;
 
   rte_key_setmode(key+1,mode);
   return TRUE;

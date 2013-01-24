@@ -1,6 +1,6 @@
 // yuv4mpeg.c
 // LiVES
-// (c) G. Finch 2004 - 2012 <salsaman@xs4all.nl,salsaman@gmail.com>
+// (c) G. Finch 2004 - 2013 <salsaman@xs4all.nl,salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -649,7 +649,7 @@ on_live_tvcard_activate                      (GtkMenuItem     *menuitem,
     gint width=0,height=0;
     gint input=gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(tvcardw->spinbuttoni));
     
-    if (!gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(tvcardw->radiobuttond))) {
+    if (!lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(tvcardw->radiobuttond))) {
       width=gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(tvcardw->spinbuttonw));
       height=gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(tvcardw->spinbuttonh));
       fps=gtk_spin_button_get_value(GTK_SPIN_BUTTON(tvcardw->spinbuttonf));

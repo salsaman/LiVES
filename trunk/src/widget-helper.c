@@ -590,6 +590,23 @@ LiVESWidget *lives_standard_label_new(const char *text) {
 }
 
 
+LiVESWidget *lives_standard_label_new_with_mnemonic(const char *text, LiVESWidget *mnemonic_widget) {
+  LiVESWidget *label=NULL;
+#ifdef GUI_GTK
+
+  label=gtk_label_new_with_mnemonic(text);
+
+  if (mainw!=NULL&&mainw->is_ready&&(palette->style&STYLE_1)) {
+    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
+  }
+  gtk_label_set_justify (GTK_LABEL (label), widget_opts.justify);
+  if (mnemonic_widget!=NULL) gtk_label_set_mnemonic_widget (GTK_LABEL(label),mnemonic_widget);
+#endif
+
+  return label;
+}
+
+
 LiVESWidget *lives_standard_check_button_new(const char *labeltext, boolean use_mnemonic, LiVESBox *box, 
 					     const char *tooltip) {
   LiVESWidget *checkbutton=NULL;
@@ -598,22 +615,24 @@ LiVESWidget *lives_standard_check_button_new(const char *labeltext, boolean use_
 
 
 #ifdef GUI_GTK
-  LiVESWidget *eventbox;
+  LiVESWidget *eventbox=NULL;
   LiVESWidget *label;
   LiVESWidget *hbox;
 
   checkbutton = gtk_check_button_new ();
   if (tooltip!=NULL) lives_tooltips_set(checkbutton, tooltip);
-  eventbox=gtk_event_box_new();
-  if (tooltip!=NULL) lives_tooltips_copy(eventbox,checkbutton);
-  if (use_mnemonic) {
-    label=gtk_label_new_with_mnemonic (labeltext);
-    gtk_label_set_mnemonic_widget (GTK_LABEL (label),checkbutton);
-    gtk_label_set_justify (GTK_LABEL (label), widget_opts.justify);
-  }
-  else label=lives_standard_label_new (labeltext);
 
-  gtk_container_add(GTK_CONTAINER(eventbox),label);
+  if (labeltext!=NULL) {
+    eventbox=gtk_event_box_new();
+    if (tooltip!=NULL) lives_tooltips_copy(eventbox,checkbutton);
+
+    if (use_mnemonic) {
+      label=lives_standard_label_new_with_mnemonic (labeltext,checkbutton);
+    }
+    else label=lives_standard_label_new (labeltext);
+
+    gtk_container_add(GTK_CONTAINER(eventbox),label);
+  }
 
   if (GTK_IS_HBOX(box)) hbox=GTK_WIDGET(box);
   else {
@@ -624,22 +643,22 @@ LiVESWidget *lives_standard_check_button_new(const char *labeltext, boolean use_
   gtk_box_set_homogeneous(GTK_BOX(hbox),FALSE);
   
 
-  if (!widget_opts.swap_label)
+  if (!widget_opts.swap_label&&eventbox!=NULL)
     gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, W_PACKING_WIDTH);
 
-  g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
-		    G_CALLBACK (label_act_toggle),
-		    checkbutton);
+  if (eventbox!=NULL) 
+    g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
+		      G_CALLBACK (label_act_toggle),
+		      checkbutton);
   
-  if (mainw!=NULL&&mainw->is_ready&&(palette->style&STYLE_1)) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
+  if (eventbox!=NULL&&mainw!=NULL&&mainw->is_ready&&(palette->style&STYLE_1)) {
     gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
     gtk_widget_modify_bg (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
   }
   
   gtk_box_pack_start (GTK_BOX (hbox), checkbutton, FALSE, FALSE, W_PACKING_WIDTH);
 
-  if (widget_opts.swap_label)
+  if (widget_opts.swap_label&&eventbox!=NULL)
     gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, W_PACKING_WIDTH);
 
   lives_widget_set_can_focus_and_default(checkbutton);
@@ -660,7 +679,7 @@ LiVESWidget *lives_standard_radio_button_new(const char *labeltext, boolean use_
 
 
 #ifdef GUI_GTK
-  LiVESWidget *eventbox;
+  LiVESWidget *eventbox=NULL;
   LiVESWidget *label;
   LiVESWidget *hbox;
 
@@ -678,33 +697,36 @@ LiVESWidget *lives_standard_radio_button_new(const char *labeltext, boolean use_
 
   gtk_box_set_homogeneous(GTK_BOX(hbox),FALSE);
 
-  if (use_mnemonic) {
-    label=gtk_label_new_with_mnemonic (labeltext);
-    gtk_label_set_mnemonic_widget (GTK_LABEL (label),radiobutton);
-    gtk_label_set_justify (GTK_LABEL (label), widget_opts.justify);
+  if (labeltext!=NULL) {
+    if (use_mnemonic) {
+      label=lives_standard_label_new_with_mnemonic (labeltext,radiobutton);
+    }
+    else label=lives_standard_label_new (labeltext);
+    
+    eventbox=gtk_event_box_new();
+    if (tooltip!=NULL) lives_tooltips_copy(eventbox,radiobutton);
+    gtk_container_add(GTK_CONTAINER(eventbox),label);
+
+    if (widget_opts.swap_label&&eventbox!=NULL)
+      gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, W_PACKING_WIDTH);
   }
-  else label=lives_standard_label_new (labeltext);
-
-  eventbox=gtk_event_box_new();
-  if (tooltip!=NULL) lives_tooltips_copy(eventbox,radiobutton);
-  gtk_container_add(GTK_CONTAINER(eventbox),label);
-
-  if (widget_opts.swap_label)
-    gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, W_PACKING_WIDTH);
 
   gtk_box_pack_start (GTK_BOX (hbox), radiobutton, FALSE, FALSE, W_PACKING_WIDTH);
 
-  g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
-		    G_CALLBACK (label_act_toggle),
-		    radiobutton);
-  if (mainw!=NULL&&mainw->is_ready&&(palette->style&STYLE_1)) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_bg (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
+  if (eventbox!=NULL) {
+    g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
+		      G_CALLBACK (label_act_toggle),
+		      radiobutton);
+    
+    if (mainw!=NULL&&mainw->is_ready&&(palette->style&STYLE_1)) {
+      gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
+      gtk_widget_modify_bg (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
+    }
+    
+    if (!widget_opts.swap_label)
+      gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, W_PACKING_WIDTH);
   }
-  if (!widget_opts.swap_label)
-    gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, W_PACKING_WIDTH);
- 
+
 #endif
 
   return radiobutton;
@@ -722,7 +744,7 @@ LiVESWidget *lives_standard_spin_button_new(const char *labeltext, boolean use_m
 
 
 #ifdef GUI_GTK
-  LiVESWidget *eventbox;
+  LiVESWidget *eventbox=NULL;
   LiVESWidget *label;
   LiVESWidget *hbox;
   LiVESObject *adj;
@@ -745,34 +767,35 @@ LiVESWidget *lives_standard_spin_button_new(const char *labeltext, boolean use_m
   lives_widget_set_can_focus_and_default(spinbutton);
   gtk_entry_set_activates_default (GTK_ENTRY (spinbutton), TRUE);
   gtk_spin_button_set_update_policy (GTK_SPIN_BUTTON (spinbutton),GTK_UPDATE_ALWAYS);
-  if (use_mnemonic) {
-    label=gtk_label_new_with_mnemonic (labeltext);
-    gtk_label_set_mnemonic_widget (GTK_LABEL (label),spinbutton);
-    gtk_label_set_justify (GTK_LABEL (label), widget_opts.justify);
-  }
-  else label=lives_standard_label_new (labeltext);
 
-  eventbox=gtk_event_box_new();
-  if (tooltip!=NULL) lives_tooltips_copy(eventbox,spinbutton);
-  gtk_container_add(GTK_CONTAINER(eventbox),label);
-
-  if (mainw!=NULL&&mainw->is_ready&&(palette->style&STYLE_1)) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_bg (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
+  if (labeltext!=NULL) {
+    if (use_mnemonic) {
+      label=lives_standard_label_new_with_mnemonic (labeltext,spinbutton);
+    }
+    else label=lives_standard_label_new (labeltext);
+    
+    eventbox=gtk_event_box_new();
+    if (tooltip!=NULL) lives_tooltips_copy(eventbox,spinbutton);
+    gtk_container_add(GTK_CONTAINER(eventbox),label);
+    
+    if (mainw!=NULL&&mainw->is_ready&&(palette->style&STYLE_1)) {
+      gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
+      gtk_widget_modify_bg (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
+    }
   }
 
   if (GTK_IS_HBOX(box)) hbox=GTK_WIDGET(box);
-
   else {
     hbox = gtk_hbox_new (TRUE, 0);
     gtk_box_pack_start (GTK_BOX (box), hbox, FALSE, FALSE, W_PACKING_WIDTH);
   }
 
-  if (!widget_opts.swap_label)
+  if (!widget_opts.swap_label&&eventbox!=NULL)
     gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, W_PACKING_WIDTH);
+
   gtk_box_pack_start (GTK_BOX (hbox), spinbutton, FALSE, FALSE, W_PACKING_WIDTH);
-  if (widget_opts.swap_label)
+
+  if (widget_opts.swap_label&&eventbox!=NULL)
     gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, W_PACKING_WIDTH);
 
 #endif
@@ -793,7 +816,7 @@ LiVESWidget *lives_standard_combo_new (const char *labeltext, boolean use_mnemon
 
 
 #ifdef GUI_GTK
-  LiVESWidget *eventbox;
+  LiVESWidget *eventbox=NULL;
   LiVESWidget *label;
   LiVESWidget *hbox;
   LiVESEntry *entry;
@@ -803,34 +826,32 @@ LiVESWidget *lives_standard_combo_new (const char *labeltext, boolean use_mnemon
 
   entry=(LiVESEntry *)lives_combo_get_entry(LIVES_COMBO(combo));
 
-  if (use_mnemonic) {
-    label = gtk_label_new_with_mnemonic (labeltext);
-    gtk_label_set_mnemonic_widget (GTK_LABEL (label), GTK_WIDGET(entry));
-    gtk_label_set_justify (GTK_LABEL (label), widget_opts.justify);
-  }
-  else label = lives_standard_label_new (labeltext);
-
-  eventbox=gtk_event_box_new();
-  if (tooltip!=NULL) lives_tooltips_copy(eventbox,combo);
-  gtk_container_add(GTK_CONTAINER(eventbox),label);
-
-  if (mainw!=NULL&&mainw->is_ready&&(palette->style&STYLE_1)) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_bg (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
+  if (labeltext!=NULL) {
+    if (use_mnemonic) {
+      label = lives_standard_label_new_with_mnemonic (labeltext,LIVES_WIDGET(entry));
+    }
+    else label = lives_standard_label_new (labeltext);
+    
+    eventbox=gtk_event_box_new();
+    if (tooltip!=NULL) lives_tooltips_copy(eventbox,combo);
+    gtk_container_add(GTK_CONTAINER(eventbox),label);
+    
+    if (mainw!=NULL&&mainw->is_ready&&(palette->style&STYLE_1)) {
+      gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
+      gtk_widget_modify_bg (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
+    }
   }
 
   if (GTK_IS_HBOX(box)) hbox=GTK_WIDGET(box);
-
   else {
     hbox = gtk_hbox_new (TRUE, 0);
     gtk_box_pack_start (GTK_BOX (box), hbox, FALSE, FALSE, W_PACKING_WIDTH);
   }
 
-  if (!widget_opts.swap_label)
+  if (!widget_opts.swap_label&&eventbox!=NULL)
     gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, W_PACKING_WIDTH);
   gtk_box_pack_start (GTK_BOX (hbox), combo, FALSE, TRUE, W_PACKING_WIDTH);
-  if (widget_opts.swap_label)
+  if (widget_opts.swap_label&&eventbox!=NULL)
     gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, W_PACKING_WIDTH);
 
   gtk_editable_set_editable (GTK_EDITABLE(entry),FALSE);
@@ -851,7 +872,7 @@ LiVESWidget *lives_standard_entry_new(const char *labeltext, boolean use_mnemoni
   LiVESWidget *entry=NULL;
 
 #ifdef GUI_GTK
-  LiVESWidget *label;
+  LiVESWidget *label=NULL;
 
   LiVESWidget *hbox;
 
@@ -874,25 +895,21 @@ LiVESWidget *lives_standard_entry_new(const char *labeltext, boolean use_mnemoni
   if (dispwidth!=-1) gtk_entry_set_width_chars (GTK_ENTRY (entry),dispwidth);
   gtk_entry_set_activates_default (GTK_ENTRY (entry), TRUE);
 
-  if (use_mnemonic) {
-    label = gtk_label_new_with_mnemonic (labeltext);
-    gtk_label_set_mnemonic_widget (GTK_LABEL (label),entry);
-    gtk_label_set_justify (GTK_LABEL (label), widget_opts.justify);
-  }
-  else label = lives_standard_label_new (labeltext);
+  if (labeltext!=NULL) {
+    if (use_mnemonic) {
+      label = lives_standard_label_new_with_mnemonic (labeltext,entry);
+    }
+    else label = lives_standard_label_new (labeltext);
 
-  if (mainw!=NULL&&mainw->is_ready&&(palette->style&STYLE_1)) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
+    if (tooltip!=NULL) lives_tooltips_copy(label,entry);
   }
 
-  if (tooltip!=NULL) lives_tooltips_copy(label,entry);
-
-  if (!widget_opts.swap_label)
+  if (!widget_opts.swap_label&&label!=NULL)
     gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, W_PACKING_WIDTH);
   
   gtk_box_pack_start (GTK_BOX (hbox), entry, TRUE, TRUE, W_PACKING_WIDTH);
 
-  if (widget_opts.swap_label)
+  if (widget_opts.swap_label&&label!=NULL)
     gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, W_PACKING_WIDTH);
 #endif
 
@@ -901,7 +918,7 @@ LiVESWidget *lives_standard_entry_new(const char *labeltext, boolean use_mnemoni
 
 
 
-LiVESWidget *lives_standard_dialog_new(const gchar *title, boolean add_std_buttons) {
+LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_buttons) {
   LiVESWidget *dialog=NULL;
 
 #ifdef GUI_GTK

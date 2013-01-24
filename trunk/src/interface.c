@@ -769,13 +769,13 @@ fileinfo *create_info_window (gint audio_channels, gboolean is_mt) {
 static void on_resizecb_toggled (GtkToggleButton *t, gpointer user_data) {
   GtkWidget *cb=(GtkWidget *)user_data;
 
-  if (!gtk_toggle_button_get_active(t)) {
+  if (!lives_toggle_button_get_active(t)) {
     gtk_widget_set_sensitive(cb,FALSE);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(cb),FALSE);
+    lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(cb),FALSE);
   }
   else {
     gtk_widget_set_sensitive(cb,TRUE);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(cb),prefs->enc_letterbox);
+    lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(cb),prefs->enc_letterbox);
   }
 }
 
@@ -1883,41 +1883,30 @@ _entryw* create_rename_dialog (gint type) {
   gtk_widget_show (dialog_vbox);
 
   if (type==4) {
-    label = gtk_label_new (_("You need to enter a name for the current clip set.\nThis will allow you reload the layout with the same clips later.\nPlease enter the set name you wish to use.\nLiVES will remind you to save the clip set later when you try to exit.\n"));
+    label = lives_standard_label_new 
+      (_("You need to enter a name for the current clip set.\nThis will allow you reload the layout with the same clips later.\nPlease enter the set name you wish to use.\nLiVES will remind you to save the clip set later when you try to exit.\n"));
     gtk_widget_show (label);
     gtk_box_pack_start (GTK_BOX (dialog_vbox), label, FALSE, FALSE, 0);
-    gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_LEFT);
-    if (palette->style&STYLE_1) {
-      gtk_widget_modify_fg (label, GTK_STATE_NORMAL, &palette->normal_fore);
-    }
   }
 
   if (type==5) {
-    label = gtk_label_new (_("In order to export this project, you must enter a name for this clip set.\nThis will also be used for the project name.\n"));
+    label = lives_standard_label_new 
+      (_("In order to export this project, you must enter a name for this clip set.\nThis will also be used for the project name.\n"));
     gtk_widget_show (label);
     gtk_box_pack_start (GTK_BOX (dialog_vbox), label, FALSE, FALSE, 0);
-    gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_LEFT);
-    if (palette->style&STYLE_1) {
-      gtk_widget_modify_fg (label, GTK_STATE_NORMAL, &palette->normal_fore);
-    }
   }
 
 
   if (type==6) {
-    label = gtk_label_new (_("Welcome to LiVES !\nThis startup wizard will guide you through the\ninitial install so that you can get the most from this application.\n"));
+    label = lives_standard_label_new 
+      (_("Welcome to LiVES !\nThis startup wizard will guide you through the\ninitial install so that you can get the most from this application.\n"));
     gtk_widget_show (label);
     gtk_box_pack_start (GTK_BOX (dialog_vbox), label, FALSE, FALSE, 0);
-    gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_CENTER);
-    if (palette->style&STYLE_1) {
-      gtk_widget_modify_fg (label, GTK_STATE_NORMAL, &palette->normal_fore);
-    }
-    label = gtk_label_new (_("\nFirst of all you need to choose a working directory for LiVES.\nThis should be a directory with plenty of disk space available.\n"));
+
+    label = lives_standard_label_new 
+      (_("\nFirst of all you need to choose a working directory for LiVES.\nThis should be a directory with plenty of disk space available.\n"));
     gtk_widget_show (label);
     gtk_box_pack_start (GTK_BOX (dialog_vbox), label, FALSE, FALSE, 0);
-    gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_LEFT);
-    if (palette->style&STYLE_1) {
-      gtk_widget_modify_fg (label, GTK_STATE_NORMAL, &palette->normal_fore);
-    }
   }
 
 
@@ -1950,17 +1939,13 @@ _entryw* create_rename_dialog (gint type) {
     label = gtk_label_new (_("New name "));
   }
   else if (type==2||type==3||type==4||type==5) {
-    label = gtk_label_new (_("Set name "));
+    label = lives_standard_label_new (_("Set name "));
   }
   else {
-    label = gtk_label_new ("");
+    label = lives_standard_label_new ("");
   }
   gtk_widget_show (label);
   gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 0);
-  gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_LEFT);
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg (label, GTK_STATE_NORMAL, &palette->normal_fore);
-  }
 
 
   if (type==3) {
@@ -2119,7 +2104,7 @@ void on_liveinp_advanced_clicked (GtkButton *button, gpointer user_data) {
 static void rb_tvcarddef_toggled(GtkToggleButton *tbut, gpointer user_data) {
   lives_tvcardw_t *tvcardw=(lives_tvcardw_t *)(user_data);
 
-  if (!gtk_toggle_button_get_active(tbut)) {
+  if (!lives_toggle_button_get_active(tbut)) {
     gtk_widget_set_sensitive(tvcardw->spinbuttonw,TRUE);
     gtk_widget_set_sensitive(tvcardw->spinbuttonh,TRUE);
     gtk_widget_set_sensitive(tvcardw->spinbuttonf,TRUE);
@@ -2193,11 +2178,8 @@ GtkWidget *create_combo_dialog (gint type, gpointer user_data) {
     label_text=g_strdup(_("Select input device:"));
   }
 
-  label = gtk_label_new (label_text);
+  label = lives_standard_label_new (label_text);
   if (label_text!=NULL) g_free(label_text);
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg (label, GTK_STATE_NORMAL, &palette->normal_fore);
-  }
 
   gtk_box_pack_start (GTK_BOX (dialog_vbox), label, TRUE, TRUE, 0);
   gtk_widget_show (label);
@@ -2267,7 +2249,6 @@ create_cdtrack_dialog (gint type, gpointer user_data)
   GtkWidget *hbox17b;
   GtkWidget *label;
   GtkWidget *label62=NULL;
-  GtkWidget *label62b;
   GObject *spinbutton35_adj=NULL;
   GtkWidget *spinbutton35;
   GObject *spinbutton36_adj;
@@ -2349,15 +2330,11 @@ create_cdtrack_dialog (gint type, gpointer user_data)
     label_text=g_strdup(_("Device:        fw:"));
   }
 
-  label = gtk_label_new (label_text);
+  label = lives_standard_label_new (label_text);
   g_free(label_text);
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg (label, GTK_STATE_NORMAL, &palette->normal_fore);
-  }
 
   gtk_widget_show (label);
   gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 0);
-  gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_LEFT);
 
   if (type==0||type==1||type==2) {
     spinbutton35_adj = (GObject *)gtk_adjustment_new (mainw->fx1_val, 1., 256., 1., 10., 0.);
@@ -2411,14 +2388,10 @@ create_cdtrack_dialog (gint type, gpointer user_data)
       gtk_widget_show (hbox17b);
       gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox17b, TRUE, TRUE, 0);
       
-      label62b=gtk_label_new(_("Audio ID  "));
-      if (palette->style&STYLE_1) {
-	gtk_widget_modify_fg (label62b, GTK_STATE_NORMAL, &palette->normal_fore);
-      }
+      label=lives_standard_label_new(_("Audio ID  "));
       
-      gtk_widget_show (label62b);
-      gtk_box_pack_start (GTK_BOX (hbox17b), label62b, FALSE, FALSE, 0);
-      gtk_label_set_justify (GTK_LABEL (label62b), GTK_JUSTIFY_LEFT);
+      gtk_widget_show (label);
+      gtk_box_pack_start (GTK_BOX (hbox17b), label, FALSE, FALSE, 0);
       
       gtk_widget_show (spinbutton36b);
       gtk_box_pack_start (GTK_BOX (hbox17b), spinbutton36b, FALSE, TRUE, 0);

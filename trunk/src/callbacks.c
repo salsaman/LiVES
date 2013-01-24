@@ -678,7 +678,7 @@ on_autoreload_toggled                (GtkToggleButton *togglebutton,
     prefs->ar_layout=!prefs->ar_layout;
     if (cdsw->warn_checkbutton!=NULL) {
       if (prefs->ar_layout) {
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(cdsw->warn_checkbutton),FALSE);
+	lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(cdsw->warn_checkbutton),FALSE);
 	gtk_widget_set_sensitive(cdsw->warn_checkbutton,FALSE);
       }
       else {
@@ -2674,7 +2674,7 @@ on_insert_pre_activate                    (GtkMenuItem     *menuitem,
   mainw->fx1_bool=FALSE;
   mainw->fx1_val=1;
 
-  mainw->fx2_bool=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(insertw->with_sound));
+  mainw->fx2_bool=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(insertw->with_sound));
 }
 
 
@@ -4111,16 +4111,16 @@ on_encoder_entry_changed (GtkComboBox *combo, gpointer ptr) {
     GList *ofmt = NULL;
     ofmt = g_list_append(ofmt,g_strdup(mainw->string_constants[LIVES_STRING_CONSTANT_ANY]));
 
-    g_signal_handler_block(GTK_COMBO_BOX(rdet->encoder_combo), rdet->encoder_name_fn);
+    g_signal_handler_block(rdet->encoder_combo, rdet->encoder_name_fn);
     // ---
     lives_combo_set_active_string(LIVES_COMBO(rdet->encoder_combo), mainw->string_constants[LIVES_STRING_CONSTANT_ANY]);
     // ---
-    g_signal_handler_unblock(GTK_COMBO_BOX(rdet->encoder_combo), rdet->encoder_name_fn);
+    g_signal_handler_unblock(rdet->encoder_combo, rdet->encoder_name_fn);
 
     lives_combo_populate(LIVES_COMBO(rdet->ofmt_combo), ofmt);
-    g_signal_handler_block (GTK_COMBO_BOX(rdet->ofmt_combo), rdet->encoder_ofmt_fn);
+    g_signal_handler_block (rdet->ofmt_combo, rdet->encoder_ofmt_fn);
     lives_combo_set_active_string(LIVES_COMBO(rdet->ofmt_combo),mainw->string_constants[LIVES_STRING_CONSTANT_ANY]);
-    g_signal_handler_unblock (GTK_COMBO_BOX(rdet->ofmt_combo), rdet->encoder_ofmt_fn);
+    g_signal_handler_unblock (rdet->ofmt_combo, rdet->encoder_ofmt_fn);
 
     g_list_free(ofmt);
     if (prefs->acodec_list!=NULL) {
@@ -4168,19 +4168,19 @@ on_encoder_entry_changed (GtkComboBox *combo, gpointer ptr) {
     g_free (msg);
 
     if (prefsw != NULL) {
-      g_signal_handler_block(GTK_COMBO_BOX(prefsw->encoder_combo), prefsw->encoder_name_fn);
+      g_signal_handler_block(prefsw->encoder_combo, prefsw->encoder_name_fn);
       // ---
       lives_combo_set_active_string(LIVES_COMBO(prefsw->encoder_combo), prefs->encoder.name);
       // ---
-      g_signal_handler_unblock(GTK_COMBO_BOX(prefsw->encoder_combo), prefsw->encoder_name_fn);
+      g_signal_handler_unblock(prefsw->encoder_combo, prefsw->encoder_name_fn);
     }
 
     if (rdet != NULL) {
-      g_signal_handler_block(GTK_COMBO_BOX(rdet->encoder_combo), rdet->encoder_name_fn);
+      g_signal_handler_block(rdet->encoder_combo, rdet->encoder_name_fn);
       // ---
       lives_combo_set_active_string(LIVES_COMBO(rdet->encoder_combo), rdet->encoder_name);
       // ---
-      g_signal_handler_unblock(GTK_COMBO_BOX(rdet->encoder_combo), rdet->encoder_name_fn);
+      g_signal_handler_unblock(rdet->encoder_combo, rdet->encoder_name_fn);
     }
 
     dummy_list = plugin_request(PLUGIN_ENCODERS, prefs->encoder.name, "init");
@@ -4201,19 +4201,19 @@ on_encoder_entry_changed (GtkComboBox *combo, gpointer ptr) {
     do_plugin_encoder_error(future_prefs->encoder.name);
 
     if (prefsw!=NULL) {
-      g_signal_handler_block(GTK_COMBO_BOX(prefsw->encoder_combo), prefsw->encoder_name_fn);
+      g_signal_handler_block(prefsw->encoder_combo, prefsw->encoder_name_fn);
       // ---
       lives_combo_set_active_string(LIVES_COMBO(prefsw->encoder_combo), prefs->encoder.name);
       // ---
-      g_signal_handler_unblock(GTK_COMBO_BOX(prefsw->encoder_combo), prefsw->encoder_name_fn);
+      g_signal_handler_unblock(prefsw->encoder_combo, prefsw->encoder_name_fn);
     }
 
     if (rdet!=NULL) {
-      g_signal_handler_block (GTK_COMBO_BOX(rdet->encoder_combo), rdet->encoder_name_fn);
+      g_signal_handler_block (rdet->encoder_combo, rdet->encoder_name_fn);
       // ---
       lives_combo_set_active_string(LIVES_COMBO(rdet->encoder_combo), rdet->encoder_name);
       // ---
-      g_signal_handler_unblock (GTK_COMBO_BOX(rdet->encoder_combo), rdet->encoder_name_fn);
+      g_signal_handler_unblock (rdet->encoder_combo, rdet->encoder_name_fn);
     }
 
     plugin_request(PLUGIN_ENCODERS, prefs->encoder.name, "init");
@@ -4236,20 +4236,20 @@ on_encoder_entry_changed (GtkComboBox *combo, gpointer ptr) {
 
     if (prefsw!=NULL) {
       // we have to block here, otherwise on_ofmt_changed gets called for every added entry !
-      g_signal_handler_block(GTK_COMBO_BOX(prefsw->ofmt_combo), prefsw->encoder_ofmt_fn);
+      g_signal_handler_block(prefsw->ofmt_combo, prefsw->encoder_ofmt_fn);
 
       lives_combo_populate(LIVES_COMBO(prefsw->ofmt_combo), ofmt);
 
-      g_signal_handler_unblock(GTK_COMBO_BOX(prefsw->ofmt_combo), prefsw->encoder_ofmt_fn);
+      g_signal_handler_unblock(prefsw->ofmt_combo, prefsw->encoder_ofmt_fn);
     }
 
     if (rdet!=NULL) {
       // we have to block here, otherwise on_ofmt_changed gets called for every added entry !
-      g_signal_handler_block (GTK_COMBO_BOX(rdet->ofmt_combo), rdet->encoder_ofmt_fn);
+      g_signal_handler_block (rdet->ofmt_combo, rdet->encoder_ofmt_fn);
 
       lives_combo_populate(LIVES_COMBO(rdet->ofmt_combo), ofmt);
 
-      g_signal_handler_unblock(GTK_COMBO_BOX(rdet->ofmt_combo), rdet->encoder_ofmt_fn);
+      g_signal_handler_unblock(rdet->ofmt_combo, rdet->encoder_ofmt_fn);
     }
     
     g_list_free(ofmt);
@@ -4288,7 +4288,7 @@ void
 on_insertwsound_toggled                (GtkToggleButton *togglebutton,
                                         gpointer         user_data)
 {
-  if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(togglebutton))) {
+  if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(togglebutton))) {
     gtk_widget_set_sensitive (insertw->fit_checkbutton,FALSE);
   }
   else {
@@ -4304,7 +4304,7 @@ on_insfitaudio_toggled                (GtkToggleButton *togglebutton,
 {
   mainw->fx1_bool=!mainw->fx1_bool;
 
-  if (gtk_toggle_button_get_active(togglebutton)) {
+  if (lives_toggle_button_get_active(togglebutton)) {
     gtk_widget_set_sensitive(insertw->with_sound,FALSE);
     gtk_widget_set_sensitive(insertw->without_sound,FALSE);
     gtk_widget_set_sensitive(insertw->spinbutton_times,FALSE);
@@ -8610,7 +8610,7 @@ void on_xmms_ran_ok_clicked                (GtkButton     *button,
 
   com=g_strdup_printf("%s xmmsrandom \"%s\" %d %d %d %d \"%s\"",prefs->backend,cfile->handle,
 		      gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(xranw->numtracks)),
-		      gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(xranw->subdir_check)),
+		      lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(xranw->subdir_check)),
 		      gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(xranw->minsize)),
 		      gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(xranw->maxsize)),
 		      (tmp=g_filename_from_utf8 (dir,-1,NULL,NULL,NULL)));
@@ -8956,7 +8956,7 @@ void
 on_prv_link_toggled                (GtkToggleButton *togglebutton,
 				    gpointer         user_data)
 {
-  if (!gtk_toggle_button_get_active(togglebutton)) return;
+  if (!lives_toggle_button_get_active(togglebutton)) return;
   mainw->prv_link=GPOINTER_TO_INT(user_data);
   if (mainw->is_processing&&(mainw->prv_link==PRV_START||mainw->prv_link==PRV_END)) {
     // block spinbutton in play window
@@ -10482,10 +10482,10 @@ on_capture_activate                (GtkMenuItem     *menuitem,
     mainw->rec_achans=(gint)atoi (gtk_entry_get_text(GTK_ENTRY(resaudw->entry_achans)));
     mainw->rec_asamps=(gint)atoi (gtk_entry_get_text(GTK_ENTRY(resaudw->entry_asamps)));
   
-    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(resaudw->rb_unsigned))) {
+    if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(resaudw->rb_unsigned))) {
       mainw->rec_signed_endian=AFORM_UNSIGNED;
     }
-    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(resaudw->rb_bigend))) {
+    if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(resaudw->rb_bigend))) {
       mainw->rec_signed_endian|=AFORM_BIG_ENDIAN;
     }
   }
@@ -10495,7 +10495,7 @@ on_capture_activate                (GtkMenuItem     *menuitem,
 
   mainw->rec_fps=gtk_spin_button_get_value(GTK_SPIN_BUTTON(resaudw->fps_spinbutton));
 
-  if (!gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(resaudw->unlim_radiobutton))) {
+  if (!lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(resaudw->unlim_radiobutton))) {
     rec_end_time=(gtk_spin_button_get_value(GTK_SPIN_BUTTON(resaudw->hour_spinbutton))*60.
 		  +gtk_spin_button_get_value(GTK_SPIN_BUTTON(resaudw->minute_spinbutton)))*60.
       +gtk_spin_button_get_value(GTK_SPIN_BUTTON(resaudw->second_spinbutton));
@@ -11410,7 +11410,7 @@ on_rb_audrec_time_toggled                (GtkToggleButton *togglebutton,
 					  gpointer         user_data)
 {
   _resaudw *resaudw=(_resaudw *)user_data;  
-  if (gtk_toggle_button_get_active(togglebutton)) {
+  if (lives_toggle_button_get_active(togglebutton)) {
     gtk_widget_set_sensitive(resaudw->hour_spinbutton,TRUE);
     gtk_widget_set_sensitive(resaudw->minute_spinbutton,TRUE);
     gtk_widget_set_sensitive(resaudw->second_spinbutton,TRUE);
@@ -11525,7 +11525,7 @@ on_recaudclip_ok_clicked                      (GtkButton *button,
   cfile->achans=(gint)atoi (gtk_entry_get_text(GTK_ENTRY(resaudw->entry_achans)));
   cfile->asampsize=(gint)atoi (gtk_entry_get_text(GTK_ENTRY(resaudw->entry_asamps)));
 
-  if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(resaudw->unlim_radiobutton))) {
+  if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(resaudw->unlim_radiobutton))) {
     mainw->rec_end_time=-1.;
     mainw->rec_samples=-1;
   }
@@ -11536,10 +11536,10 @@ on_recaudclip_ok_clicked                      (GtkButton *button,
     mainw->rec_samples=mainw->rec_end_time*cfile->arate;
   }
 
-  if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(resaudw->rb_unsigned))) {
+  if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(resaudw->rb_unsigned))) {
     asigned=0;
   }
-  if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(resaudw->rb_bigend))) {
+  if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(resaudw->rb_bigend))) {
     aendian=0;
   }
 
@@ -11876,10 +11876,10 @@ void on_ins_silence_details_clicked (GtkButton *button, gpointer user_data) {
   cfile->arps=cfile->arate=(gint)atoi (gtk_entry_get_text(GTK_ENTRY(resaudw->entry_arate)));
   cfile->achans=(gint)atoi (gtk_entry_get_text(GTK_ENTRY(resaudw->entry_achans)));
   cfile->asampsize=(gint)atoi (gtk_entry_get_text(GTK_ENTRY(resaudw->entry_asamps)));
-  if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(resaudw->rb_unsigned))) {
+  if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(resaudw->rb_unsigned))) {
     asigned=0;
   }
-  if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(resaudw->rb_bigend))) {
+  if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(resaudw->rb_bigend))) {
     aendian=0;
   }
   cfile->signed_endian=get_signed_endian(asigned,aendian);

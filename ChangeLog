@@ -1,3 +1,16 @@
+Version 1.8.2
+-------------
+Add another fix for double tyedef compilation error.
+
+
+
+
+
+
+
+
+
+
 Version 1.8.1 (26 January 2013)
 ------------------------------
 Fix various bugs with the RFX builder menus.

@@ -1,5 +1,5 @@
-Version 1.8.1
--------------
+Version 1.8.1 (26 January 2013)
+------------------------------
 Fix various bugs with the RFX builder menus.
 Fix compilation error (double typedef).
 Fix compilation for GTK+ < 2.24

@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2013-01-25 22:10-0300\n"
+"POT-Creation-Date: 2013-01-25 22:40-0300\n"
 "PO-Revision-Date: 2012-01-07 19:27+0000\n"
 "Last-Translator: Akmal Xushvaqov <akmalxster@gmail.com>\n"
 "Language-Team: Uzbek <uz@li.org>\n"
@@ -11051,8 +11051,9 @@ msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
+#, fuzzy
 msgid "_Wrap Around"
-msgstr ""
+msgstr "qiymat"
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 msgid "_X Center"

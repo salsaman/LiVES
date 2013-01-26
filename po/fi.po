@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2013-01-25 22:10-0300\n"
+"POT-Creation-Date: 2013-01-25 22:40-0300\n"
 "PO-Revision-Date: 2012-01-20 00:23+0000\n"
 "Last-Translator: Tuomas Lähteenmäki <Unknown>\n"
 "Language-Team: Finnish <fi@li.org>\n"
@@ -11841,8 +11841,9 @@ msgstr "Jack-välityspalvelu"
 
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
+#, fuzzy
 msgid "_Wrap Around"
-msgstr ""
+msgstr "arvo"
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 msgid "_X Center"

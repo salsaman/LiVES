@@ -4,9 +4,6 @@
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
-#include "main.h"
-
-#ifdef ENABLE_OSC
 
 #ifndef IS_MINGW
 #include <netinet/in.h>
@@ -23,6 +20,10 @@
 #include "../libweed/weed-effects.h"
 #include "../libweed/weed-host.h"
 #endif
+
+#include "main.h"
+
+#ifdef ENABLE_OSC
 
 #include "osc.h"
 #include "htmsocket.h"

@@ -741,9 +741,6 @@ AC_SUBST(WEED_SLICE_LIBS)
 
 AM_CONDITIONAL(HAVE_SYSTEM_WEED_SLICE,$HAVE_SYSTEM_WEED_SLICE)
 
-if test "$HAVE_SYSTEM_WEED" = "false"; then
-WEED_MAKEFILES=libweed/Makefile
-fi
 
 PKG_CHECK_MODULES(WEED_UTILS, libweed-utils >= 0.6.0, HAVE_SYSTEM_WEED_UTILS=true, HAVE_SYSTEM_WEED_UTILS=false)
 
@@ -756,9 +753,6 @@ AC_SUBST(WEED_UTILS_LIBS)
 
 AM_CONDITIONAL(HAVE_SYSTEM_WEED_UTILS,$HAVE_SYSTEM_WEED_UTILS)
 
-if test "$HAVE_SYSTEM_WEED_UTILS" = "false"; then
-WEED_MAKEFILES=libweed/Makefile
-fi
 
 PKG_CHECK_MODULES(WEED_COMPAT, libweed-compat >= 0.7.0, HAVE_SYSTEM_WEED_COMPAT=true, HAVE_SYSTEM_WEED_COMPAT=false)
 
@@ -771,9 +765,6 @@ if test "$HAVE_SYSTEM_WEED_COMPAT" = "false"; then
 echo "...will try to build from included sources"
 fi
 
-if test "$HAVE_SYSTEM_WEED_COMPAT" = "false"; then
-WEED_MAKEFILES=libweed/Makefile
-fi
 
 PKG_CHECK_MODULES(WEED_PLUGIN_UTILS, libweed-plugin-utils >= 0.9.0, HAVE_SYSTEM_WEED_PLUGIN_UTILS=true, HAVE_SYSTEM_WEED_PLUGIN_UTILS=false)
 
@@ -786,18 +777,13 @@ fi
 
 AM_CONDITIONAL(HAVE_SYSTEM_WEED_PLUGIN_UTILS,$HAVE_SYSTEM_WEED_PLUGIN_UTILS)
 
-if test "$HAVE_SYSTEM_WEED_PLUGIN_UTILS" = "false"; then
-WEED_MAKEFILES=libweed/Makefile
-fi
 
 AM_CONDITIONAL(BUILD_EXPERIMENTAL,false)
 
-dnl AC_OUTPUT needs to be more parameterised !!!!!!
 
-
-
-# find -name Makefile.am | sed "s/\.\///g" | sed "s/\.am//g" >> configure.in
-AC_OUTPUT([ 
+dnl find -name Makefile.am | sed "s/\.\///g" | sed "s/\.am//g" >> configure.in
+AC_CONFIG_FILES([
+libweed/Makefile
 libOSC/Makefile
 libOSC/client/Makefile
 libOSC/sendOSC/Makefile
@@ -825,12 +811,12 @@ lives-plugins/themes/editor/Makefile
 lives-plugins/themes/crayons/Makefile
 lives-plugins/themes/crayons-bright/Makefile
 lives-plugins/themes/Makefile
-$WEED_MAKEFILES
 lives-plugins/weed-plugins/Makefile
 lives-plugins/weed-plugins/gdk/Makefile
 lives-plugins/weed-plugins/cairo/Makefile
 lives-plugins/marcos-encoders/Makefile
 ])
+AC_OUTPUT
 
 dnl lives-plugins/weed-plugins/supercollider/Makefile
 dnl lives-plugins/weed-plugins/experimental/Makefile

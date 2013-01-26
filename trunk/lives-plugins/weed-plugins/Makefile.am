@@ -143,7 +143,7 @@ fxpluginslib_LTLIBRARIES = RGBdelay.la \
 	warpTV.la \
 	xeffect.la
 
-EXTRA_DIST=data icons fourKlives.h
+EXTRA_DIST=data icons syna.h
 
 install-data-local:
 	mkdir -p "$(DESTDIR)$(fxpluginslibdir)"

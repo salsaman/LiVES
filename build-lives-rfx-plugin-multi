@@ -1,14 +1,14 @@
 #!/usr/bin/perl
 
 
-# build-lives-rfx-plugin-multi - Copyright G. Finch (salsaman) 2005 - 2012
+# build-lives-rfx-plugin-multi - Copyright G. Finch (salsaman) 2005 - 2013
 # Released under the GPL 3 or later - see file COPYING or www.gnu.org for details
 
 
 #########################################################
 
 if ($^O eq "MSWin32") {
-    use File::Path qw(make_path);
+    use File::Path qw(mkpath);
 
 
     $installdir="C:\\Program Files\\LiVES";
@@ -146,7 +146,7 @@ print "Deleting scripted plugins from $outdir\n";
 print "Building all in $indir\n";
 
 if ($^O eq "MSWin32") {
-    make_path("$outdir");
+    mkpath("$outdir");
 } else {
     `/bin/mkdir -p $outdir`;
 }

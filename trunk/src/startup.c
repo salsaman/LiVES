@@ -15,9 +15,9 @@
 
 
 
-static gboolean prompt_existing_dir(gchar *dirname, guint64 freespace, gboolean wrtable) {
+static boolean prompt_existing_dir(gchar *dirname, guint64 freespace, boolean wrtable) {
   gchar *msg;
-  gboolean res=FALSE;
+  boolean res=FALSE;
 
   if (wrtable) {
     gchar *fspstr=lives_format_storage_space_string(freespace);
@@ -38,8 +38,8 @@ static gboolean prompt_existing_dir(gchar *dirname, guint64 freespace, gboolean 
 
 
 
-static gboolean prompt_new_dir(gchar *dirname, guint64 freespace, gboolean wrtable) {
-  gboolean res=FALSE;
+static boolean prompt_new_dir(gchar *dirname, guint64 freespace, boolean wrtable) {
+  boolean res=FALSE;
   gchar *msg;
   if (wrtable) {
     gchar *fspstr=lives_format_storage_space_string(freespace);
@@ -58,9 +58,9 @@ static gboolean prompt_new_dir(gchar *dirname, guint64 freespace, gboolean wrtab
 
 
 
-gboolean do_tempdir_query(void) {
-  gint response;
-  gboolean ok=FALSE;
+boolean do_tempdir_query(void) {
+  int response;
+  boolean ok=FALSE;
   _entryw *tdentry;
   gchar *dirname;
   guint64 freesp;
@@ -198,7 +198,7 @@ static void on_init_aplayer_toggled (GtkToggleButton *tbutton, gpointer user_dat
 
 
 
-gboolean do_audio_choice_dialog(short startup_phase) {
+boolean do_audio_choice_dialog(short startup_phase) {
   GtkWidget *dialog,*dialog_vbox,*radiobutton0,*radiobutton1,*radiobutton2,*radiobutton3,*label;
   GtkWidget *okbutton,*cancelbutton;
   GtkWidget *eventbox,*hbox;
@@ -480,7 +480,7 @@ gboolean do_audio_choice_dialog(short startup_phase) {
 }
 
 
-static void add_test(GtkWidget *table, gint row, gchar *ttext, gboolean noskip) {
+static void add_test(GtkWidget *table, gint row, gchar *ttext, boolean noskip) {
   GtkWidget *label=lives_standard_label_new(ttext);
 
   gtk_table_attach (GTK_TABLE (table), label, 0, 1, row, row+1, (GtkAttachOptions)0, (GtkAttachOptions)0, 10, 10);
@@ -502,7 +502,7 @@ static void add_test(GtkWidget *table, gint row, gchar *ttext, gboolean noskip) 
 }
 
 
-static gboolean pass_test(GtkWidget *table, gint row) {
+static boolean pass_test(GtkWidget *table, gint row) {
   // TRANSLATORS - as in "passed test"
   GtkWidget *label=lives_standard_label_new(_("Passed"));
   GtkWidget *image=gtk_image_new_from_stock(GTK_STOCK_APPLY,GTK_ICON_SIZE_LARGE_TOOLBAR);
@@ -518,7 +518,7 @@ static gboolean pass_test(GtkWidget *table, gint row) {
 }
 
 
-static gboolean fail_test(GtkWidget *table, gint row, gchar *ftext) {
+static boolean fail_test(GtkWidget *table, gint row, gchar *ftext) {
   GtkWidget *label;
   GtkWidget *image=gtk_image_new_from_stock(GTK_STOCK_CANCEL,GTK_ICON_SIZE_LARGE_TOOLBAR);
 
@@ -548,7 +548,7 @@ LIVES_INLINE gchar *get_resource(gchar *fname) {
 
 
 
-gboolean do_startup_tests(gboolean tshoot) {
+boolean do_startup_tests(boolean tshoot) {
   GtkWidget *dialog;
   GtkWidget *dialog_vbox;
 
@@ -563,7 +563,7 @@ gboolean do_startup_tests(gboolean tshoot) {
 
   size_t fsize;
 
-  gboolean success,success2,success3,success4;
+  boolean success,success2,success3,success4;
 
   gint response,res;
   gint current_file=mainw->current_file;

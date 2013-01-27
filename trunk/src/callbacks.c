@@ -480,11 +480,6 @@ void lives_exit (void) {
 
 
 
-gboolean return_true (GtkWidget *widget, GdkEvent *event, gpointer user_data) {
-  // event callback that just returns TRUE
-  return TRUE;
-}
-
 
 void on_fileread_clicked (GtkFileChooser *fch, gpointer user_data) {
   GtkWidget *tentry=GTK_WIDGET(user_data);

@@ -295,6 +295,7 @@ struct _mt {
   GtkWidget *prev_fm_button;
   GtkWidget *fx_ibefore_button;
   GtkWidget *fx_iafter_button;
+  GtkWidget *rename_track;
   GtkWidget *cback_audio;
   GtkWidget *aload_subs;
   GtkWidget *load_vals;

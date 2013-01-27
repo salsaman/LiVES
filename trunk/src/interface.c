@@ -3591,12 +3591,10 @@ void do_layout_recover_dialog(void) {
 
   dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(mdialog));
   
-  label = gtk_label_new (_("\nLiVES has detected a multitrack layout from a previous session.\nWould you like to try and recover it ?\n"));
-  gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_CENTER);
+  widget_opts.justify=LIVES_JUSTIFY_CENTER;
+  label = lives_standard_label_new (_("\nLiVES has detected a multitrack layout from a previous session.\nWould you like to try and recover it ?\n"));
+  widget_opts.justify=LIVES_JUSTIFY_DEFAULT;
 
-  if (mainw!=NULL&&palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-  }
 
   gtk_container_add (GTK_CONTAINER (dialog_vbox), label);
 

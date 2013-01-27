@@ -1,7 +1,7 @@
 Version 1.8.2
 -------------
-Add another fix for double tyedef compilation error.
-
+Add (another) fix for double tyedef compilation error.
+Allow renaming of tracks in multitrack window.
 
 
 

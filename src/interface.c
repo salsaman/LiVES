@@ -3574,19 +3574,11 @@ void do_layout_recover_dialog(void) {
   GtkWidget *okbutton;
   GtkWidget *cancelbutton;
 
-  GtkWidget *mdialog=gtk_dialog_new ();
+  GtkWidget *mdialog=lives_standard_dialog_new (_("LiVES: recover layout ?"),FALSE);
 
-  gtk_window_set_title (GTK_WINDOW (mdialog), _("LiVES: recover layout ?"));
-  gtk_window_set_position (GTK_WINDOW (mdialog), GTK_WIN_POS_CENTER_ALWAYS);
-  gtk_window_set_default_size (GTK_WINDOW (mdialog), 450, 200);
 
   if (prefs->show_gui) {
     gtk_window_set_transient_for(GTK_WINDOW(mdialog),GTK_WINDOW(mainw->LiVES));
-  }
-
-  if (palette->style&STYLE_1) {
-    gtk_dialog_set_has_separator(GTK_DIALOG(mdialog),FALSE);
-    gtk_widget_modify_bg(mdialog, GTK_STATE_NORMAL, &palette->normal_back);
   }
 
   dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(mdialog));

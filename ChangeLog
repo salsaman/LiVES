@@ -1,8 +1,8 @@
-Version 1.8.2
--------------
+Version 1.8.2 (27 January 2013)
+-------------------------------
 Add (another) fix for double tyedef compilation error.
 Allow renaming of tracks in multitrack window.
-
+Fix weed_plugin_utils lib versioning issue.
 
 
 

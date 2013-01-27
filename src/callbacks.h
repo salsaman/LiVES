@@ -12,8 +12,6 @@ on_LiVES_delete_event                  (GtkWidget       *widget,
                                         GdkEvent        *event,
                                         gpointer         user_data);
 
-gboolean return_true (GtkWidget *, GdkEvent *, gpointer);
-
 void
 on_open_activate                      (GtkMenuItem     *menuitem,
 				       gpointer         user_data);

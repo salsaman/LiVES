@@ -18,6 +18,12 @@
 // basic functions
 
 
+boolean return_true (LiVESWidget *widget, LiVESEvent *event, LiVESObjectPtr user_data) {
+  // event callback that just returns TRUE
+  return TRUE;
+}
+
+
 
 LIVES_INLINE void lives_object_unref(LiVESObjectPtr object) {
 #ifdef GUI_GTK
@@ -926,6 +932,8 @@ LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_button
   dialog = gtk_dialog_new ();
   gtk_window_set_title (GTK_WINDOW (dialog), title);
 
+  gtk_window_set_modal (GTK_WINDOW (dialog), TRUE);
+
   if (prefs->gui_monitor!=0) {
     gtk_window_set_screen(GTK_WINDOW(dialog),mainw->mgeom[prefs->gui_monitor-1].screen);
   }
@@ -939,10 +947,16 @@ LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_button
   }
 
   if (add_std_buttons) {
+    GtkAccelGroup *accel_group=GTK_ACCEL_GROUP(gtk_accel_group_new ());
     GtkWidget *cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
     GtkWidget *okbutton = gtk_button_new_from_stock ("gtk-ok");
 
+    gtk_window_add_accel_group (GTK_WINDOW (dialog), accel_group);
+
     gtk_dialog_add_action_widget (GTK_DIALOG (dialog), cancelbutton, GTK_RESPONSE_CANCEL);
+
+    gtk_widget_add_accelerator (cancelbutton, "activate", accel_group,
+				GDK_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
     lives_widget_set_can_focus_and_default(cancelbutton);
 
     gtk_dialog_add_action_widget (GTK_DIALOG (dialog), okbutton, GTK_RESPONSE_OK);
@@ -950,6 +964,10 @@ LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_button
     lives_widget_set_can_focus_and_default(okbutton);
     gtk_widget_grab_default (okbutton);
   }
+
+  g_signal_connect (GTK_OBJECT (dialog), "delete_event",
+                      G_CALLBACK (return_true),
+                      NULL);
 
 #endif
 

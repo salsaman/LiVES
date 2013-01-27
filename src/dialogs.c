@@ -2542,23 +2542,9 @@ void do_splash_progress(void) {
 }
 
 
-
-
-
-
-
-
-
-
-
 void 
 response_ok (GtkButton *button, gpointer user_data) {
   gtk_dialog_response (GTK_DIALOG (gtk_widget_get_toplevel(GTK_WIDGET(button))), GTK_RESPONSE_OK);
-}
-
-void 
-response_cancel (GtkButton *button, gpointer user_data) {
-  gtk_dialog_response (GTK_DIALOG (gtk_widget_get_toplevel(GTK_WIDGET(button))), GTK_RESPONSE_CANCEL);
 }
 
 

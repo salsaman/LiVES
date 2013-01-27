@@ -1837,6 +1837,7 @@ _entryw* create_rename_dialog (gint type) {
 
   // type 6 = initial tempdir
 
+  // type 7 = rename track in mt
 
   GtkWidget *dialog_vbox;
   GtkWidget *hbox;
@@ -1848,16 +1849,33 @@ _entryw* create_rename_dialog (gint type) {
   GtkWidget *dirbutton1;
   GtkWidget *dirimage1;
 
-  _entryw *renamew=(_entryw*)(g_malloc(sizeof(_entryw)));
-
   GtkAccelGroup *accel_group=GTK_ACCEL_GROUP(gtk_accel_group_new ());
+
+  gchar *title=NULL;
+
+  _entryw *renamew=(_entryw*)(g_malloc(sizeof(_entryw)));
 
   renamew->setlist=NULL;
 
-  renamew->dialog = gtk_dialog_new ();
-  gtk_window_add_accel_group (GTK_WINDOW (renamew->dialog), accel_group);
+  if (type==1) {
+    title=g_strdup(_("LiVES: - Rename Clip"));
+  }
+  else if (type==2||type==4||type==5) {
+    title=g_strdup(_("LiVES: - Enter Set Name"));
+  }
+  else if (type==3) {
+    title=g_strdup(_("LiVES: - Enter a Set Name to Reload"));
+  }
+  else if (type==6) {
+    title=g_strdup(_("LiVES: - Choose a Working Directory"));
+  }
+  else if (type==7) {
+    title=g_strdup(_("LiVES: - Rename Current Track"));
+  }
 
-  gtk_window_set_position (GTK_WINDOW (renamew->dialog), GTK_WIN_POS_CENTER_ALWAYS);
+  renamew->dialog = lives_standard_dialog_new (title,FALSE);
+
+  gtk_window_add_accel_group (GTK_WINDOW (renamew->dialog), accel_group);
 
   if (prefs->show_gui) {
     if (mainw->multitrack==NULL) {
@@ -1868,31 +1886,19 @@ _entryw* create_rename_dialog (gint type) {
     else gtk_window_set_transient_for(GTK_WINDOW(renamew->dialog),GTK_WINDOW(mainw->multitrack->window));
   }
 
-  gtk_window_set_modal (GTK_WINDOW (renamew->dialog), TRUE);
-
-  if (palette->style&STYLE_1) {
-    gtk_dialog_set_has_separator(GTK_DIALOG(renamew->dialog),FALSE);
-    gtk_widget_modify_bg (renamew->dialog, GTK_STATE_NORMAL, &palette->normal_back);
-  }
-
-  if (type!=6) gtk_window_set_default_size (GTK_WINDOW (renamew->dialog), 500, 200);
-
-  gtk_container_set_border_width (GTK_CONTAINER (renamew->dialog), 10);
+  //  if (type!=6) gtk_window_set_default_size (GTK_WINDOW (renamew->dialog), 500, 200);
 
   dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(renamew->dialog));
-  gtk_widget_show (dialog_vbox);
 
   if (type==4) {
     label = lives_standard_label_new 
       (_("You need to enter a name for the current clip set.\nThis will allow you reload the layout with the same clips later.\nPlease enter the set name you wish to use.\nLiVES will remind you to save the clip set later when you try to exit.\n"));
-    gtk_widget_show (label);
     gtk_box_pack_start (GTK_BOX (dialog_vbox), label, FALSE, FALSE, 0);
   }
 
   if (type==5) {
     label = lives_standard_label_new 
       (_("In order to export this project, you must enter a name for this clip set.\nThis will also be used for the project name.\n"));
-    gtk_widget_show (label);
     gtk_box_pack_start (GTK_BOX (dialog_vbox), label, FALSE, FALSE, 0);
   }
 
@@ -1900,43 +1906,29 @@ _entryw* create_rename_dialog (gint type) {
   if (type==6) {
     label = lives_standard_label_new 
       (_("Welcome to LiVES !\nThis startup wizard will guide you through the\ninitial install so that you can get the most from this application.\n"));
-    gtk_widget_show (label);
     gtk_box_pack_start (GTK_BOX (dialog_vbox), label, FALSE, FALSE, 0);
 
     label = lives_standard_label_new 
       (_("\nFirst of all you need to choose a working directory for LiVES.\nThis should be a directory with plenty of disk space available.\n"));
-    gtk_widget_show (label);
     gtk_box_pack_start (GTK_BOX (dialog_vbox), label, FALSE, FALSE, 0);
   }
 
 
   hbox = gtk_hbox_new (FALSE, 0);
-  gtk_widget_show (hbox);
+
   if (type==3) {
     gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, TRUE, FALSE, 40);
   }
-  else if (type!=6) {
+  else if (type!=6&&type!=7) {
     gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, TRUE, TRUE, 0);
   }
   else {
     gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, TRUE, TRUE, 40);
   }
 
-  if (type==1) {
-    gtk_window_set_title (GTK_WINDOW (renamew->dialog), _("LiVES: - Rename Clip"));
-  }
-  else if (type==2||type==4||type==5) {
-    gtk_window_set_title (GTK_WINDOW (renamew->dialog), _("LiVES: - Enter Set Name"));
-  }
-  else if (type==3) {
-    gtk_window_set_title (GTK_WINDOW (renamew->dialog), _("LiVES: - Enter a Set Name to Reload"));
-  }
-  else if (type==6) {
-    gtk_window_set_title (GTK_WINDOW (renamew->dialog), _("LiVES: - Choose a Working Directory"));
-  }
 
-  if (type==1) {
-    label = gtk_label_new (_("New name "));
+  if (type==1||type==7) {
+    label = lives_standard_label_new (_("New name "));
   }
   else if (type==2||type==3||type==4||type==5) {
     label = lives_standard_label_new (_("Set name "));
@@ -1944,7 +1936,7 @@ _entryw* create_rename_dialog (gint type) {
   else {
     label = lives_standard_label_new ("");
   }
-  gtk_widget_show (label);
+
   gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 0);
 
 
@@ -1966,7 +1958,6 @@ _entryw* create_rename_dialog (gint type) {
       gtk_entry_set_text(GTK_ENTRY(renamew->entry),prefs->ar_clipset_name);
     }
 
-    gtk_widget_show (set_combo);
     gtk_box_pack_start (GTK_BOX (hbox), set_combo, TRUE, TRUE, 0);
 
     xlist=renamew->setlist;
@@ -1990,7 +1981,7 @@ _entryw* create_rename_dialog (gint type) {
   }
   else {
     renamew->entry = gtk_entry_new();
-    gtk_entry_set_max_length (GTK_ENTRY(renamew->entry),type==6?PATH_MAX:128);
+    gtk_entry_set_max_length (GTK_ENTRY(renamew->entry),type==6?PATH_MAX:type==7?16:128);
     if (type==2&&strlen (mainw->set_name)) {
       gtk_entry_set_text (GTK_ENTRY (renamew->entry),mainw->set_name);
     }
@@ -2002,16 +1993,13 @@ _entryw* create_rename_dialog (gint type) {
       g_free(tmpdir);
     }
     gtk_box_pack_start (GTK_BOX (hbox), renamew->entry, TRUE, TRUE, 0);
-    gtk_widget_show (renamew->entry);
   }
 
 
   if (type==6) {
     dirbutton1 = gtk_button_new ();
-    gtk_widget_show (dirbutton1);
     
     dirimage1 = gtk_image_new_from_stock ("gtk-open", GTK_ICON_SIZE_BUTTON);
-    gtk_widget_show (dirimage1);
 
     gtk_container_add (GTK_CONTAINER (dirbutton1), dirimage1);
 
@@ -2024,20 +2012,23 @@ _entryw* create_rename_dialog (gint type) {
   gtk_entry_set_activates_default (GTK_ENTRY (renamew->entry), TRUE);
 
   dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (renamew->dialog));
-  gtk_widget_show (dialog_action_area);
+
   gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area), GTK_BUTTONBOX_END);
 
   cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
-  gtk_widget_show (cancelbutton);
+
   gtk_dialog_add_action_widget (GTK_DIALOG (renamew->dialog), cancelbutton, GTK_RESPONSE_CANCEL);
   lives_widget_set_can_focus_and_default (cancelbutton);
+
+  gtk_widget_add_accelerator (cancelbutton, "activate", accel_group,
+			      GDK_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
 
   if (type==6) {
     okbutton = gtk_button_new_from_stock ("gtk-go-forward");
     gtk_button_set_label(GTK_BUTTON(okbutton),_("_Next"));
   }
   else okbutton = gtk_button_new_from_stock ("gtk-ok");
-  gtk_widget_show (okbutton);
+
   gtk_dialog_add_action_widget (GTK_DIALOG (renamew->dialog), okbutton, GTK_RESPONSE_OK);
   lives_widget_set_can_focus_and_default (okbutton);
   gtk_widget_grab_default (okbutton);
@@ -2048,11 +2039,7 @@ _entryw* create_rename_dialog (gint type) {
 		      G_CALLBACK (lives_general_button_clicked),
 		      renamew);
   }
-  else {
-    g_signal_connect (GTK_OBJECT (cancelbutton), "clicked",
-		      G_CALLBACK (response_cancel),
-		      renamew);
-  }
+
   if (type==1) {
     g_signal_connect (GTK_OBJECT (okbutton), "clicked",
 		      G_CALLBACK (on_rename_set_name),
@@ -2063,19 +2050,12 @@ _entryw* create_rename_dialog (gint type) {
 		      G_CALLBACK (on_load_set_ok),
 		      GINT_TO_POINTER(FALSE));
   }
-  else if (type==4||type==2||type==5||type==6) {
-    g_signal_connect (GTK_OBJECT (okbutton), "clicked",
-		      G_CALLBACK (response_ok),
-		      NULL);
-  }
 
-  g_signal_connect (GTK_OBJECT (renamew->dialog), "delete_event",
-                      G_CALLBACK (return_true),
-                      NULL);
 
   gtk_widget_add_accelerator (cancelbutton, "activate", accel_group,
                               GDK_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
 
+  gtk_widget_show_all(renamew->dialog);
 
   return renamew;
 }

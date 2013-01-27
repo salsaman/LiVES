@@ -54,6 +54,8 @@
 
 #define BORD_HEIGHT 10
 
+static void on_rename_track_activate (GtkMenuItem *, gpointer mt);
+
 /// used to match clips from the event recorder with renumbered clips (without gaps)
 static int renumbered_clips[MAX_FILES+1];
 static gdouble lfps[MAX_FILES+1]; ///< table of layout fps
@@ -6312,6 +6314,14 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
     gtk_widget_modify_bg(menuitem_menu, GTK_STATE_NORMAL, &palette->menu_and_bars);
   }
 
+  mt->rename_track = gtk_image_menu_item_new_with_mnemonic (_("Rename current track"));
+  gtk_container_add (GTK_CONTAINER (menuitem_menu), mt->rename_track);
+
+  separator = gtk_menu_item_new ();
+  gtk_container_add (GTK_CONTAINER (menuitem_menu), separator);
+  gtk_widget_set_sensitive (separator, FALSE);
+
+
   mt->cback_audio = gtk_image_menu_item_new_with_mnemonic (_("Make _Backing Audio current track"));
   gtk_container_add (GTK_CONTAINER (menuitem_menu), mt->cback_audio);
 
@@ -6970,6 +6980,9 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   g_signal_connect (GTK_OBJECT (sticky), "activate",
 		    G_CALLBACK (on_sticky_activate),
 		    NULL);
+  g_signal_connect (GTK_OBJECT (mt->rename_track), "activate",
+		    G_CALLBACK (on_rename_track_activate),
+		    (gpointer)mt);
   g_signal_connect (GTK_OBJECT (mt->cback_audio), "activate",
 		    G_CALLBACK (on_cback_audio_activate),
 		    (gpointer)mt);
@@ -9371,6 +9384,14 @@ GtkWidget *add_audio_track (lives_mt *mt, gint track, gboolean behind) {
 }
 
 
+static void set_track_label(GtkEventBox *xeventbox, int tnum) {
+  GtkWidget *label=GTK_WIDGET(g_object_get_data(G_OBJECT(xeventbox),"label"));
+  const gchar *tname=g_object_get_data(G_OBJECT(xeventbox),"track_name");
+  gchar *newtext=g_strdup_printf(_("%s (layer %d)"),tname,tnum);
+  gtk_label_set_text(GTK_LABEL(label),newtext);
+  g_free(newtext);
+}
+
 
 void add_video_track (lives_mt *mt, gboolean behind) {
   // add another video track to our timeline_table
@@ -9440,9 +9461,10 @@ void add_video_track (lives_mt *mt, gboolean behind) {
       g_object_set_data (G_OBJECT(xeventbox),"layer_number",GINT_TO_POINTER(i+1));
       g_object_set_data (G_OBJECT(xcheckbutton),"layer_number",GINT_TO_POINTER(i+1));
       g_object_set_data (G_OBJECT(xarrow),"layer_number",GINT_TO_POINTER(i+1));
-      label=GTK_WIDGET(g_object_get_data(G_OBJECT(xeventbox),"label"));
-      newtext=g_strdup_printf(_("%s (layer %d)"),g_object_get_data(G_OBJECT(xeventbox),"track_name"),i+1);
-      gtk_label_set_text(GTK_LABEL(label),newtext);
+
+
+      set_track_label(GTK_EVENT_BOX(xeventbox),i+1);
+
       if (mt->opts.pertrack_audio) {
 	GtkWidget *aeventbox=(GtkWidget *)g_object_get_data(G_OBJECT(xeventbox),"atrack");
 	g_object_set_data (G_OBJECT(aeventbox),"layer_number",GINT_TO_POINTER(i+1));
@@ -14718,6 +14740,44 @@ void on_jumpnext_activate (GtkMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   mt_jumpto(mt,DIRECTION_POSITIVE);
 }
+
+
+
+static void on_rename_track_activate (GtkMenuItem *menuitem, gpointer user_data) {
+  lives_mt *mt=(lives_mt *)user_data;
+  _entryw *rnentry;
+  GtkWidget *xeventbox;
+
+  gchar *cname;
+
+  int response;
+
+  if (mt->current_track<0) return;
+
+  xeventbox=(GtkWidget *)g_list_nth_data(mt->video_draws,mt->current_track);
+
+  cname=(gchar *)g_object_get_data(G_OBJECT(xeventbox),"track_name");
+
+  rnentry=create_rename_dialog(7);
+
+  response=gtk_dialog_run(GTK_DIALOG(rnentry->dialog));
+  
+  if (response==GTK_RESPONSE_CANCEL) return; // destroyed and freed in a callback
+
+  g_free(cname);
+
+  cname=g_strdup(gtk_entry_get_text(GTK_ENTRY(rnentry->entry)));
+
+  gtk_widget_destroy(rnentry->dialog);
+  g_free(rnentry);
+
+  g_object_set_data (G_OBJECT(xeventbox),"track_name",cname);
+
+  set_track_label(GTK_EVENT_BOX(xeventbox),mt->current_track);
+
+
+}  
+
 
 
 void on_cback_audio_activate (GtkMenuItem *menuitem, gpointer user_data) {

@@ -173,7 +173,9 @@ static GtkWidget* create_warn_dialog (gint warn_mask_number, GtkWindow *transien
     }
 
     gtk_window_set_title (GTK_WINDOW (dialog), _("LiVES: - Warning !"));
-    mainw->warning_label = gtk_label_new (_("warning"));
+    widget_opts.justify=LIVES_JUSTIFY_CENTER;
+    mainw->warning_label = lives_standard_label_new (_("warning"));
+    widget_opts.justify=LIVES_JUSTIFY_DEFAULT;
     warning_cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
     gtk_dialog_add_action_widget (GTK_DIALOG (dialog), warning_cancelbutton, GTK_RESPONSE_CANCEL);
     warning_okbutton = gtk_button_new_from_stock ("gtk-ok");
@@ -182,7 +184,9 @@ static GtkWidget* create_warn_dialog (gint warn_mask_number, GtkWindow *transien
   case LIVES_DIALOG_YESNO:
     dialog = gtk_message_dialog_new (transient,GTK_DIALOG_MODAL,GTK_MESSAGE_QUESTION,GTK_BUTTONS_NONE,"%s","");
     gtk_window_set_title (GTK_WINDOW (dialog), _("LiVES: - Question"));
-    mainw->warning_label = gtk_label_new (_("question"));
+    widget_opts.justify=LIVES_JUSTIFY_CENTER;
+    mainw->warning_label = lives_standard_label_new (_("question"));
+    widget_opts.justify=LIVES_JUSTIFY_DEFAULT;
     warning_cancelbutton = gtk_button_new_from_stock ("gtk-no");
     gtk_dialog_add_action_widget (GTK_DIALOG (dialog), warning_cancelbutton, LIVES_NO);
     warning_okbutton = gtk_button_new_from_stock ("gtk-yes");
@@ -191,11 +195,12 @@ static GtkWidget* create_warn_dialog (gint warn_mask_number, GtkWindow *transien
   case LIVES_DIALOG_ABORT_CANCEL_RETRY:
     dialog = gtk_message_dialog_new (transient,GTK_DIALOG_MODAL,GTK_MESSAGE_ERROR,GTK_BUTTONS_NONE,"%s","");
     gtk_window_set_title (GTK_WINDOW (dialog), _("LiVES: - File Error"));
-    mainw->warning_label = gtk_label_new (_("File Error"));
+    widget_opts.justify=LIVES_JUSTIFY_CENTER;
+    mainw->warning_label = lives_standard_label_new (_("File Error"));
+    widget_opts.justify=LIVES_JUSTIFY_DEFAULT;
     abortbutton = gtk_button_new_from_stock ("gtk-quit");
     gtk_button_set_label(GTK_BUTTON(abortbutton),_("_Abort"));
     gtk_dialog_add_action_widget (GTK_DIALOG (dialog), abortbutton, LIVES_ABORT);
-    gtk_widget_show (abortbutton);
     warning_cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
     gtk_dialog_add_action_widget (GTK_DIALOG (dialog), warning_cancelbutton, LIVES_CANCEL);
     warning_okbutton = gtk_button_new_from_stock ("gtk-refresh");
@@ -207,8 +212,8 @@ static GtkWidget* create_warn_dialog (gint warn_mask_number, GtkWindow *transien
     break;
   }
 
-  if (palette->style&STYLE_1) {
-    //gtk_dialog_set_has_separator(GTK_DIALOG(dialog),FALSE);
+  if (mainw!=NULL&&mainw->is_ready&&palette->style&STYLE_1) {
+    gtk_dialog_set_has_separator(GTK_DIALOG(dialog),FALSE);
     gtk_widget_modify_bg(dialog, GTK_STATE_NORMAL, &palette->normal_back);
   }
 
@@ -220,17 +225,10 @@ static GtkWidget* create_warn_dialog (gint warn_mask_number, GtkWindow *transien
   g_free(textx);
 
   dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(dialog));
-  gtk_widget_show (dialog_vbox);
 
-  gtk_widget_show (mainw->warning_label);
   gtk_box_pack_start (GTK_BOX (dialog_vbox), mainw->warning_label, TRUE, TRUE, 0);
-  gtk_label_set_justify (GTK_LABEL (mainw->warning_label), GTK_JUSTIFY_CENTER);
   gtk_label_set_line_wrap (GTK_LABEL (mainw->warning_label), FALSE);
   gtk_label_set_selectable (GTK_LABEL (mainw->warning_label), TRUE);
-
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(mainw->warning_label, GTK_STATE_NORMAL, &palette->normal_fore);
-  }
 
   if (mainw->add_clear_ds_adv) {
     mainw->add_clear_ds_adv=FALSE;
@@ -246,17 +244,15 @@ static GtkWidget* create_warn_dialog (gint warn_mask_number, GtkWindow *transien
   }
 
   dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (dialog));
-  gtk_widget_show (dialog_action_area);
+
   gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area), GTK_BUTTONBOX_END);
 
-  gtk_widget_show (warning_cancelbutton);
   lives_widget_set_can_focus_and_default (warning_cancelbutton);
-
-  gtk_widget_show (warning_okbutton);
 
   lives_widget_set_can_focus_and_default (warning_okbutton);
   gtk_widget_grab_default (warning_okbutton);
 
+  gtk_widget_show_all(dialog);
 
   return dialog;
 }

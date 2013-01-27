@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2013-01-27 14:24-0300\n"
+"POT-Creation-Date: 2013-01-27 15:18-0300\n"
 "PO-Revision-Date: 2011-11-07 16:24+0000\n"
 "Last-Translator: lhquark <Unknown>\n"
 "Language-Team: Simplified Chinese <zh_CN@li.org>\n"
@@ -926,132 +926,132 @@ msgstr ""
 "MPlayer 的音频播放器只推荐用于测试目的。\n"
 "\n"
 
-#: src/startup.c:270
+#: src/startup.c:269
 msgid "LiVES: - Choose an audio player"
 msgstr "LIVES： -选择一款音频播放器"
 
-#: src/startup.c:292
+#: src/startup.c:283
 msgid "Use _pulse audio player"
 msgstr "音频播放器使用_pulse"
 
-#: src/startup.c:326
+#: src/startup.c:305
 msgid "Use _jack audio player"
 msgstr "音频播放器使用_jack"
 
-#: src/startup.c:364
+#: src/startup.c:325
 msgid "Use _sox audio player"
 msgstr "音频播放器使用_sox"
 
-#: src/startup.c:399
+#: src/startup.c:346
 msgid "Use _mplayer audio player"
 msgstr "音频播放器使用_mplayer"
 
-#: src/startup.c:452 src/startup.c:617 src/interface.c:2028
+#: src/startup.c:368 src/startup.c:529 src/interface.c:2028
 msgid "_Next"
 msgstr "下一步(_N)"
 
-#: src/startup.c:492
+#: src/startup.c:408
 msgid "Skipped"
 msgstr "已跳过"
 
-#: src/startup.c:507
+#: src/startup.c:423
 msgid "Passed"
 msgstr "已通过"
 
-#: src/startup.c:531
+#: src/startup.c:447
 msgid "Failed"
 msgstr "已失败"
 
-#: src/startup.c:591
+#: src/startup.c:507
 msgid "LiVES: - Testing Configuration"
 msgstr "LIVES： - 测试配置"
 
-#: src/startup.c:594
+#: src/startup.c:510
 msgid "LiVES: - Troubleshoot"
 msgstr "LIVES： - 疑难解答"
 
-#: src/startup.c:608
+#: src/startup.c:520
 msgid "LiVES will now run some basic configuration tests\n"
 msgstr "LIVES 现在将进行一些基本的配置测试\n"
 
-#: src/startup.c:640
+#: src/startup.c:552
 msgid "Checking for \"sox\" presence"
 msgstr "检查\"sox\"的存在"
 
-#: src/startup.c:644
+#: src/startup.c:556
 msgid ""
 "You should install sox to be able to use all the audio features in LiVES"
 msgstr "要使用 LIVES 的所有音频功能您应该安装 sox"
 
-#: src/startup.c:652
+#: src/startup.c:564
 msgid "Checking if sox can convert audio"
 msgstr "检查 sox 是否可以转换音频"
 
-#: src/startup.c:675
+#: src/startup.c:587
 msgid "Unable to allocate 176400 bytes memory."
 msgstr ""
 
-#: src/startup.c:690
+#: src/startup.c:602
 #, fuzzy, c-format
 msgid "Unable to write to: %s"
 msgstr "无法打开设备 %s\n"
 
-#: src/startup.c:704 src/startup.c:836
+#: src/startup.c:616 src/startup.c:748
 #, c-format
 msgid "Command failed: %s"
 msgstr ""
 
-#: src/startup.c:726
+#: src/startup.c:638
 msgid "You should install sox_fmt_all or similar"
 msgstr "您应该安装 sox_fmt_all 或类似软件包"
 
-#: src/startup.c:754
+#: src/startup.c:666
 msgid "Checking for \"mplayer\" presence"
 msgstr "检查\"mplayer\"是否存在"
 
-#: src/startup.c:758
+#: src/startup.c:670
 msgid ""
 "You should install mplayer to be able to use all the decoding features in "
 "LiVES"
 msgstr "要使用 LIVES 全部的解码功能，需要安装 mplayer"
 
-#: src/startup.c:784
+#: src/startup.c:696
 msgid "Checking if mplayer can convert audio"
 msgstr "检查 mplayer 是否可以转换音频"
 
-#: src/startup.c:797
+#: src/startup.c:709
 msgid "You should install mplayer with pcm/wav support"
 msgstr "您应该安装带 pcm/wav 支持的 mplayer"
 
-#: src/startup.c:814
+#: src/startup.c:726
 msgid "Checking if mplayer can decode to png/alpha"
 msgstr "检查 mplayer 是否可以解码为 png/alpha"
 
-#: src/startup.c:857
+#: src/startup.c:769
 msgid "You may wish to upgrade mplayer to a newer version"
 msgstr "您可能要升级到 mplayer 的新版本"
 
-#: src/startup.c:883
+#: src/startup.c:795
 msgid "Checking if mplayer can decode to jpeg"
 msgstr "检查 mplayer 是否可以解码为 jpeg"
 
-#: src/startup.c:902
+#: src/startup.c:814
 msgid "You should install mplayer with either png/alpha or jpeg support"
 msgstr "您应该安装带 png/alpha 或 jpeg 支持的 mplayer"
 
-#: src/startup.c:903
+#: src/startup.c:815
 msgid "You may wish to add jpeg output support to mplayer"
 msgstr "您可能需要向 mplayer 添加 jpeg 输出支持"
 
-#: src/startup.c:912
+#: src/startup.c:824
 msgid "Checking for \"convert\" presence"
 msgstr "检查\"convert\"是否存在"
 
-#: src/startup.c:916
+#: src/startup.c:828
 msgid "Install imageMagick to be able to use all of the rendered effects"
 msgstr "安装 imageMagic 以使用所有的渲染效果"
 
-#: src/startup.c:929
+#: src/startup.c:841
 msgid ""
 "\n"
 "\n"
@@ -1059,7 +1059,7 @@ msgid ""
 "Preferences/Decoding.    \n"
 msgstr ""
 
-#: src/startup.c:935
+#: src/startup.c:847
 msgid ""
 "\n"
 "\n"
@@ -1070,7 +1070,7 @@ msgstr ""
 "\n"
 "    点击\"取消\"退出然后安装缺失的任何组件或者\"下一步\"继续    \n"
 
-#: src/startup.c:969
+#: src/startup.c:881
 msgid ""
 "\n"
 "\n"
@@ -1080,7 +1080,7 @@ msgstr ""
 "\n"
 "最后您可以为 LIVES 选择一个默认的启动界面。\n"
 
-#: src/startup.c:970
+#: src/startup.c:882
 msgid ""
 "\n"
 "\n"
@@ -1090,7 +1090,7 @@ msgstr ""
 "\n"
 "LIVES有两个主要的用户界面，您可以选择任意一个作为启动界面\n"
 
-#: src/startup.c:971
+#: src/startup.c:883
 msgid ""
 "\n"
 "\n"
@@ -1100,29 +1100,29 @@ msgstr ""
 "\n"
 "默认的画面以后在首选项中可以随时修改。\n"
 
-#: src/startup.c:982
+#: src/startup.c:893
 msgid "LiVES: - Choose the startup interface"
 msgstr "LIVES： - 选择启动界面"
 
-#: src/startup.c:1004
+#: src/startup.c:904
 msgid "Start in _Clip Edit mode"
 msgstr "以剪辑编辑模式启动(_C)"
 
-#: src/startup.c:1028
+#: src/startup.c:907
 #, fuzzy
 msgid "This is the best choice for simple editing tasks and for VJs\n"
 msgstr "这是简单的编辑任务或 VJ 们的最佳选择\n"
 
-#: src/startup.c:1036
+#: src/startup.c:913
 msgid "Start in _Multitrack mode"
 msgstr "多轨道模式启动(_M)"
 
-#: src/startup.c:1056
+#: src/startup.c:915
 msgid ""
 "This is a better choice for complex editing tasks involving multiple clips.\n"
 msgstr "这更适合包含多剪辑片段的复杂编辑任务。\n"
 
-#: src/startup.c:1069
+#: src/startup.c:924
 msgid "_Finish"
 msgstr "完成(_F)"
 

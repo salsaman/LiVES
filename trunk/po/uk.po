@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2013-01-27 14:24-0300\n"
+"POT-Creation-Date: 2013-01-27 15:18-0300\n"
 "PO-Revision-Date: 2013-01-23 20:50+0000\n"
 "Last-Translator: Yuri Chornoivan <yurchor@gmail.com>\n"
 "Language-Team: Ukrainian <translation@linux.org.ua>\n"
@@ -978,92 +978,92 @@ msgstr ""
 "Звуковий програвач Mplayer варто використовувати лише з метою тестування.\n"
 "\n"
 
-#: src/startup.c:270
+#: src/startup.c:269
 msgid "LiVES: - Choose an audio player"
 msgstr "LiVES: - Вибір звукового програвача"
 
-#: src/startup.c:292
+#: src/startup.c:283
 msgid "Use _pulse audio player"
 msgstr "Вик_ористовувати програвач PulseAudio"
 
-#: src/startup.c:326
+#: src/startup.c:305
 msgid "Use _jack audio player"
 msgstr "Ви_користовувати звуковий програвач Jack"
 
-#: src/startup.c:364
+#: src/startup.c:325
 msgid "Use _sox audio player"
 msgstr "Вико_ристовувати звуковий програвач Sox"
 
-#: src/startup.c:399
+#: src/startup.c:346
 msgid "Use _mplayer audio player"
 msgstr "В_икористовувати звуковий програвач mplayer"
 
-#: src/startup.c:452 src/startup.c:617 src/interface.c:2028
+#: src/startup.c:368 src/startup.c:529 src/interface.c:2028
 msgid "_Next"
 msgstr "_Далі"
 
-#: src/startup.c:492
+#: src/startup.c:408
 msgid "Skipped"
 msgstr "Пропущено"
 
-#: src/startup.c:507
+#: src/startup.c:423
 msgid "Passed"
 msgstr "Пройдено"
 
-#: src/startup.c:531
+#: src/startup.c:447
 msgid "Failed"
 msgstr "Невдача"
 
-#: src/startup.c:591
+#: src/startup.c:507
 msgid "LiVES: - Testing Configuration"
 msgstr "LiVES: - перевірка налаштувань"
 
-#: src/startup.c:594
+#: src/startup.c:510
 msgid "LiVES: - Troubleshoot"
 msgstr "LiVES: - усування вад"
 
-#: src/startup.c:608
+#: src/startup.c:520
 msgid "LiVES will now run some basic configuration tests\n"
 msgstr "Зараз LiVES виконає декілька перевірок основних налаштувань\n"
 
-#: src/startup.c:640
+#: src/startup.c:552
 msgid "Checking for \"sox\" presence"
 msgstr "Перевірка наявності «sox»"
 
-#: src/startup.c:644
+#: src/startup.c:556
 msgid ""
 "You should install sox to be able to use all the audio features in LiVES"
 msgstr ""
 "Щоб мати змогу скористатися всіма можливостями з обробки звуку у LiVES, вам "
 "слід встановити sox"
 
-#: src/startup.c:652
+#: src/startup.c:564
 msgid "Checking if sox can convert audio"
 msgstr "Перевірка можливості перетворення звукових даних sox"
 
-#: src/startup.c:675
+#: src/startup.c:587
 msgid "Unable to allocate 176400 bytes memory."
 msgstr "Не вдалося отримати 176400 байтів пам’яті."
 
-#: src/startup.c:690
+#: src/startup.c:602
 #, c-format
 msgid "Unable to write to: %s"
 msgstr "Не вдалося виконати запис до %s"
 
-#: src/startup.c:704 src/startup.c:836
+#: src/startup.c:616 src/startup.c:748
 #, c-format
 msgid "Command failed: %s"
 msgstr "Помилка команди: %s"
 
-#: src/startup.c:726
+#: src/startup.c:638
 msgid "You should install sox_fmt_all or similar"
 msgstr "Вам слід встановити sox_fmt_all або подібну програму"
 
-#: src/startup.c:754
+#: src/startup.c:666
 msgid "Checking for \"mplayer\" presence"
 msgstr "Перевірка наявності «mplayer»"
 
-#: src/startup.c:758
+#: src/startup.c:670
 msgid ""
 "You should install mplayer to be able to use all the decoding features in "
 "LiVES"
@@ -1071,45 +1071,45 @@ msgstr ""
 "Щоб мати змогу скористатися всіма можливостями з декодування звуку у LiVES, "
 "вам слід встановити mplayer"
 
-#: src/startup.c:784
+#: src/startup.c:696
 msgid "Checking if mplayer can convert audio"
 msgstr "Перевірка можливості перетворення звуку за допомогою mplayer"
 
-#: src/startup.c:797
+#: src/startup.c:709
 msgid "You should install mplayer with pcm/wav support"
 msgstr "Щоб скористатися підтримкою pcm/wav, вам слід встановити mplayer"
 
-#: src/startup.c:814
+#: src/startup.c:726
 msgid "Checking if mplayer can decode to png/alpha"
 msgstr "Перевірка можливості декодування png/alpha за допомогою mplayer"
 
-#: src/startup.c:857
+#: src/startup.c:769
 msgid "You may wish to upgrade mplayer to a newer version"
 msgstr "Вам варто оновити пакунок mplayer"
 
-#: src/startup.c:883
+#: src/startup.c:795
 msgid "Checking if mplayer can decode to jpeg"
 msgstr "Перевірка можливості декодування jpeg за допомогою mplayer"
 
-#: src/startup.c:902
+#: src/startup.c:814
 msgid "You should install mplayer with either png/alpha or jpeg support"
 msgstr ""
 "Щоб скористатися підтримкою png/alpha або jpeg, вам слід встановити mplayer"
 
-#: src/startup.c:903
+#: src/startup.c:815
 msgid "You may wish to add jpeg output support to mplayer"
 msgstr "Вам варто додати підтримку виведення у форматі jpeg до пакунка mplayer"
 
-#: src/startup.c:912
+#: src/startup.c:824
 msgid "Checking for \"convert\" presence"
 msgstr "Перевірка наявності «convert»"
 
-#: src/startup.c:916
+#: src/startup.c:828
 msgid "Install imageMagick to be able to use all of the rendered effects"
 msgstr ""
 "Щоб мати змогу скористатися усіма ефектами обробки, встановіть imageMagick"
 
-#: src/startup.c:929
+#: src/startup.c:841
 msgid ""
 "\n"
 "\n"
@@ -1122,7 +1122,7 @@ msgstr ""
 "попереднього типу можна за допомогою пункту «Налаштування-"
 ">Декодування».    \n"
 
-#: src/startup.c:935
+#: src/startup.c:847
 msgid ""
 "\n"
 "\n"
@@ -1135,7 +1135,7 @@ msgstr ""
 "додаткові компоненти, а бо натисніть кнопку «Далі», щоб продовжити "
 "роботу    \n"
 
-#: src/startup.c:969
+#: src/startup.c:881
 msgid ""
 "\n"
 "\n"
@@ -1145,7 +1145,7 @@ msgstr ""
 "\n"
 "Нарешті, ви можете вибрати типовий інтерфейс запуску LiVES.\n"
 
-#: src/startup.c:970
+#: src/startup.c:882
 msgid ""
 "\n"
 "\n"
@@ -1156,7 +1156,7 @@ msgstr ""
 "У LiVES передбачено два основних інтерфейси, ви можете запускати програму з "
 "будь-яким з цих інтерфейсів.\n"
 
-#: src/startup.c:971
+#: src/startup.c:883
 msgid ""
 "\n"
 "\n"
@@ -1167,32 +1167,32 @@ msgstr ""
 "Типовий інтерфейс згодом можна змінити за допомогою діалогового вікна "
 "«Параметри».\n"
 
-#: src/startup.c:982
+#: src/startup.c:893
 msgid "LiVES: - Choose the startup interface"
 msgstr "LiVES: - вибір інтерфейсу запуску"
 
-#: src/startup.c:1004
+#: src/startup.c:904
 msgid "Start in _Clip Edit mode"
 msgstr "Запускати у режимі редагування _кліпів"
 
-#: src/startup.c:1028
+#: src/startup.c:907
 msgid "This is the best choice for simple editing tasks and for VJs\n"
 msgstr ""
 "Цей режим є найкращим вибором для простих завдань з редагування і для ві-"
 "джеїв\n"
 
-#: src/startup.c:1036
+#: src/startup.c:913
 msgid "Start in _Multitrack mode"
 msgstr "Запускати у _багатодоріжковому режимі"
 
-#: src/startup.c:1056
+#: src/startup.c:915
 msgid ""
 "This is a better choice for complex editing tasks involving multiple clips.\n"
 msgstr ""
 "Цей режим буде кращим вибором для складних завдань з одночасного редагування "
 "декількох кліпів.\n"
 
-#: src/startup.c:1069
+#: src/startup.c:924
 msgid "_Finish"
 msgstr "_Завершити"
 

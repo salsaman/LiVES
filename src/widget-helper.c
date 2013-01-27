@@ -586,7 +586,7 @@ LiVESWidget *lives_standard_label_new(const char *text) {
 
   label=gtk_label_new(text);
 
-  if (mainw!=NULL&&(mainw->is_ready||(mainw->multitrack!=NULL&&mainw->multitrack->is_ready))&&(palette->style&STYLE_1)) {
+  if (mainw!=NULL&&mainw->is_ready&&(palette->style&STYLE_1)) {
     gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
   gtk_label_set_justify (GTK_LABEL (label), widget_opts.justify);

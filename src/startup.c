@@ -21,13 +21,16 @@ static boolean prompt_existing_dir(gchar *dirname, guint64 freespace, boolean wr
 
   if (wrtable) {
     gchar *fspstr=lives_format_storage_space_string(freespace);
-    msg=g_strdup_printf(_("A directory named\n%s\nalready exists. Do you wish to use this directory ?\n\n(Free space = %s)\n"),dirname,fspstr);
+    msg=g_strdup_printf
+      (_("A directory named\n%s\nalready exists. Do you wish to use this directory ?\n\n(Free space = %s)\n"),dirname,fspstr);
     g_free(fspstr);
     res=do_yesno_dialog(msg);
   }
   else
     {
-      msg=g_strdup_printf(_("A directory named\n%s\nalready exists.\nLiVES could not write to this directory or read its free space.\nPlease select another location.\n"),dirname);
+      msg=g_strdup_printf
+	(_("A directory named\n%s\nalready exists.\nLiVES could not write to this directory or read its free space.\nPlease select another location.\n"),
+	 dirname);
       do_error_dialog(msg);
     }
   g_free(msg);
@@ -51,6 +54,7 @@ static boolean prompt_new_dir(gchar *dirname, guint64 freespace, boolean wrtable
     msg=g_strdup_printf(_("\nLiVES could not write to the directory\n%s\nPlease try again and choose a different location.\n"),dirname);
     do_error_dialog(msg);
   }
+
   g_free(msg);
   return res;
 }
@@ -201,7 +205,7 @@ static void on_init_aplayer_toggled (GtkToggleButton *tbutton, gpointer user_dat
 boolean do_audio_choice_dialog(short startup_phase) {
   GtkWidget *dialog,*dialog_vbox,*radiobutton0,*radiobutton1,*radiobutton2,*radiobutton3,*label;
   GtkWidget *okbutton,*cancelbutton;
-  GtkWidget *eventbox,*hbox;
+  GtkWidget *hbox;
   GSList *radiobutton_group = NULL;
   gchar *txt0,*txt1,*txt2,*txt3,*txt4,*txt5,*txt6,*txt7,*msg;
 
@@ -266,17 +270,7 @@ boolean do_audio_choice_dialog(short startup_phase) {
   g_free(txt6);
   g_free(txt7);
 
-  dialog = gtk_dialog_new ();
-  gtk_window_set_title (GTK_WINDOW (dialog), _("LiVES: - Choose an audio player"));
-
-  gtk_window_set_modal (GTK_WINDOW (dialog), TRUE);
-  gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_CENTER_ALWAYS);
-  gtk_window_set_default_size (GTK_WINDOW (dialog), 350, 200);
-
-  if (palette->style&STYLE_1) {
-    gtk_dialog_set_has_separator(GTK_DIALOG(dialog),FALSE);
-    gtk_widget_modify_bg(dialog, GTK_STATE_NORMAL, &palette->normal_back);
-  }
+  dialog = lives_standard_dialog_new (_("LiVES: - Choose an audio player"),FALSE);
 
   dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(dialog));
   
@@ -285,164 +279,90 @@ boolean do_audio_choice_dialog(short startup_phase) {
   g_free(msg);
 
 
-  radiobutton0 = gtk_radio_button_new (NULL);
 
 #ifdef HAVE_PULSE_AUDIO
-  eventbox=gtk_event_box_new();
-  label=gtk_label_new_with_mnemonic ( _("Use _pulse audio player"));
-  gtk_label_set_mnemonic_widget (GTK_LABEL (label), radiobutton0);
-
-  gtk_container_add(GTK_CONTAINER(eventbox),label);
-  g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
-		    G_CALLBACK (label_act_toggle),
-		    radiobutton0);
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_bg (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
-  }
-
   hbox = gtk_hbox_new (FALSE, 0);
   gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, FALSE, FALSE, 10);
 
-  gtk_box_pack_start (GTK_BOX (hbox), radiobutton0, FALSE, FALSE, 10);
-  gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, 10);
+  radiobutton0 = lives_standard_radio_button_new ( _("Use _pulse audio player"),TRUE,radiobutton_group,LIVES_BOX(hbox),NULL);
+  radiobutton_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (radiobutton0));
 
   if (prefs->audio_player==-1) prefs->audio_player=AUD_PLAYER_PULSE;
 
-  gtk_radio_button_set_group (GTK_RADIO_BUTTON (radiobutton0), radiobutton_group);
-  radiobutton_group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (radiobutton0));
   if (prefs->audio_player==AUD_PLAYER_PULSE) {
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(radiobutton0),TRUE);
     set_pref("audio_player","pulse");
   }
 
+  g_signal_connect (GTK_OBJECT (radiobutton0), "toggled",
+                      G_CALLBACK (on_init_aplayer_toggled),
+                      GINT_TO_POINTER(AUD_PLAYER_PULSE));
+
+
 #endif
 
-  radiobutton1 = gtk_radio_button_new(NULL);
+
 #ifdef ENABLE_JACK
-
-  eventbox=gtk_event_box_new();
-  label=gtk_label_new_with_mnemonic ( _("Use _jack audio player"));
-  gtk_label_set_mnemonic_widget (GTK_LABEL (label), radiobutton1);
-
-  gtk_container_add(GTK_CONTAINER(eventbox),label);
-  g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
-		    G_CALLBACK (label_act_toggle),
-		    radiobutton1);
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_bg (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
-  }
-
   hbox = gtk_hbox_new (FALSE, 0);
   gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, FALSE, FALSE, 10);
 
-  gtk_box_pack_start (GTK_BOX (hbox), radiobutton1, FALSE, FALSE, 10);
-  gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, 10);
+  radiobutton1 = lives_standard_radio_button_new(_("Use _jack audio player"),TRUE,radiobutton_group,LIVES_BOX(hbox),NULL);
+  radiobutton_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (radiobutton1));
 
-
-  if (prefs->audio_player==-1) prefs->audio_player=AUD_PLAYER_JACK;
-
-  gtk_radio_button_set_group (GTK_RADIO_BUTTON (radiobutton1), radiobutton_group);
-  radiobutton_group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (radiobutton1));
-
-  if (prefs->audio_player==AUD_PLAYER_JACK||!capable->has_pulse_audio) {
+  if (prefs->audio_player==AUD_PLAYER_JACK||!capable->has_pulse_audio||prefs->audio_player==-1) {
     prefs->audio_player=AUD_PLAYER_JACK;
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(radiobutton1),TRUE);
     set_pref("audio_player","jack");
   }
 
+  g_signal_connect (GTK_OBJECT (radiobutton1), "toggled",
+                      G_CALLBACK (on_init_aplayer_toggled),
+                      GINT_TO_POINTER(AUD_PLAYER_JACK));
+
 
 #endif
 
-  radiobutton2 = gtk_radio_button_new (NULL);
   if (capable->has_sox_play) {
-
-    eventbox=gtk_event_box_new();
-    label=gtk_label_new_with_mnemonic ( _("Use _sox audio player"));
-    gtk_label_set_mnemonic_widget (GTK_LABEL (label), radiobutton2);
-    
-    gtk_container_add(GTK_CONTAINER(eventbox),label);
-    g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
-		      G_CALLBACK (label_act_toggle),
-		      radiobutton2);
-    if (palette->style&STYLE_1) {
-      gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-      gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-      gtk_widget_modify_bg (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
-    }
-    
     hbox = gtk_hbox_new (FALSE, 0);
     gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, FALSE, FALSE, 10);
-    
-    gtk_box_pack_start (GTK_BOX (hbox), radiobutton2, FALSE, FALSE, 10);
-    gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, 10);
+
+    radiobutton2 = lives_standard_radio_button_new (_("Use _sox audio player"),TRUE,radiobutton_group,LIVES_BOX(hbox),NULL);
+    radiobutton_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (radiobutton2));
 
     if (prefs->audio_player==-1) prefs->audio_player=AUD_PLAYER_SOX;
-
-    gtk_radio_button_set_group (GTK_RADIO_BUTTON (radiobutton2), radiobutton_group);
-    radiobutton_group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (radiobutton2));
 
     if (prefs->audio_player==AUD_PLAYER_SOX) {
       lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(radiobutton2),TRUE);
       set_pref("audio_player","sox");
     }
 
+    g_signal_connect (GTK_OBJECT (radiobutton2), "toggled",
+                      G_CALLBACK (on_init_aplayer_toggled),
+                      GINT_TO_POINTER(AUD_PLAYER_SOX));
+
 
   }
 
-  radiobutton3 = gtk_radio_button_new (NULL);
   if (capable->has_mplayer) {
-    eventbox=gtk_event_box_new();
-    label=gtk_label_new_with_mnemonic ( _("Use _mplayer audio player"));
-    gtk_label_set_mnemonic_widget (GTK_LABEL (label), radiobutton3);
-    
-    gtk_container_add(GTK_CONTAINER(eventbox),label);
-    g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
-		      G_CALLBACK (label_act_toggle),
-		      radiobutton3);
-    if (palette->style&STYLE_1) {
-      gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-      gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-      gtk_widget_modify_bg (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
-    }
-    
     hbox = gtk_hbox_new (FALSE, 0);
     gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, FALSE, FALSE, 10);
-    
-    gtk_box_pack_start (GTK_BOX (hbox), radiobutton3, FALSE, FALSE, 10);
-    gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, 10);
+
+    radiobutton3 = lives_standard_radio_button_new (_("Use _mplayer audio player"),TRUE,radiobutton_group,LIVES_BOX(hbox),NULL);
 
     if (prefs->audio_player==-1) prefs->audio_player=AUD_PLAYER_MPLAYER;
-
-    gtk_radio_button_set_group (GTK_RADIO_BUTTON (radiobutton3), radiobutton_group);
-    radiobutton_group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (radiobutton3));
 
     if (prefs->audio_player==AUD_PLAYER_MPLAYER) {
       lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(radiobutton3),TRUE);
       set_pref("audio_player","mplayer");
     }
+						    
+    g_signal_connect (GTK_OBJECT (radiobutton3), "toggled",
+		      G_CALLBACK (on_init_aplayer_toggled),
+                      GINT_TO_POINTER(AUD_PLAYER_MPLAYER));
+
 
   }
 
-
-  g_signal_connect (GTK_OBJECT (radiobutton0), "toggled",
-                      G_CALLBACK (on_init_aplayer_toggled),
-                      GINT_TO_POINTER(AUD_PLAYER_PULSE));
-
-  g_signal_connect (GTK_OBJECT (radiobutton1), "toggled",
-                      G_CALLBACK (on_init_aplayer_toggled),
-                      GINT_TO_POINTER(AUD_PLAYER_JACK));
-
-  g_signal_connect (GTK_OBJECT (radiobutton2), "toggled",
-                      G_CALLBACK (on_init_aplayer_toggled),
-                      GINT_TO_POINTER(AUD_PLAYER_SOX));
-
-  g_signal_connect (GTK_OBJECT (radiobutton3), "toggled",
-                      G_CALLBACK (on_init_aplayer_toggled),
-                      GINT_TO_POINTER(AUD_PLAYER_MPLAYER));
 
   cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
   gtk_widget_show (cancelbutton);
@@ -572,6 +492,8 @@ boolean do_startup_tests(boolean tshoot) {
 
   gchar *image_ext=g_strdup(prefs->image_ext);
 
+  gchar *title;
+
   boolean imgext_switched=FALSE;
 
   mainw->suppress_dprint=TRUE;
@@ -585,23 +507,17 @@ boolean do_startup_tests(boolean tshoot) {
     mt_desensitise(mainw->multitrack);
   }
 
-  dialog = gtk_dialog_new ();
-
   if (!tshoot) {
-    gtk_window_set_title (GTK_WINDOW (dialog), _("LiVES: - Testing Configuration"));
+    title=g_strdup(_("LiVES: - Testing Configuration"));
   }
   else {
-    gtk_window_set_title (GTK_WINDOW (dialog), _("LiVES: - Troubleshoot"));
+    title=g_strdup(_("LiVES: - Troubleshoot"));
   }
 
-  gtk_window_set_modal (GTK_WINDOW (dialog), TRUE);
-  gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_CENTER_ALWAYS);
-  gtk_window_set_default_size (GTK_WINDOW (dialog), 350, 200);
 
-  if (palette->style&STYLE_1) {
-    gtk_dialog_set_has_separator(GTK_DIALOG(dialog),FALSE);
-    gtk_widget_modify_bg(dialog, GTK_STATE_NORMAL, &palette->normal_back);
-  }
+  dialog = lives_standard_dialog_new (title,FALSE);
+
+  g_free(title);
 
   dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(dialog));
 
@@ -962,7 +878,7 @@ void do_startup_interface_query(void) {
 
   GtkWidget *dialog,*dialog_vbox,*radiobutton0,*radiobutton1,*label;
   GtkWidget *okbutton;
-  GtkWidget *eventbox,*hbox;
+  GtkWidget *hbox;
   GSList *radiobutton_group = NULL;
   gchar *txt1,*txt2,*txt3,*msg;
 
@@ -978,17 +894,7 @@ void do_startup_interface_query(void) {
   g_free(txt2);
   g_free(txt3);
 
-  dialog = gtk_dialog_new ();
-  gtk_window_set_title (GTK_WINDOW (dialog), _("LiVES: - Choose the startup interface"));
-
-  gtk_window_set_modal (GTK_WINDOW (dialog), TRUE);
-  gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_CENTER_ALWAYS);
-  gtk_window_set_default_size (GTK_WINDOW (dialog), 600, 200);
-
-  if (palette->style&STYLE_1) {
-    gtk_dialog_set_has_separator(GTK_DIALOG(dialog),FALSE);
-    gtk_widget_modify_bg(dialog, GTK_STATE_NORMAL, &palette->normal_back);
-  }
+  dialog = lives_standard_dialog_new (_("LiVES: - Choose the startup interface"),FALSE);
 
   dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(dialog));
   
@@ -997,69 +903,22 @@ void do_startup_interface_query(void) {
   g_free(msg);
 
 
-  radiobutton0 = gtk_radio_button_new (NULL);
-
-
-  eventbox=gtk_event_box_new();
-  label=gtk_label_new_with_mnemonic ( _("Start in _Clip Edit mode"));
-  gtk_label_set_mnemonic_widget (GTK_LABEL (label), radiobutton0);
-
-  gtk_container_add(GTK_CONTAINER(eventbox),label);
-  g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
-		    G_CALLBACK (label_act_toggle),
-		    radiobutton0);
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_bg (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
-  }
-
   hbox = gtk_hbox_new (FALSE, 0);
   gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, FALSE, FALSE, 10);
-
-  gtk_box_pack_start (GTK_BOX (hbox), radiobutton0, FALSE, FALSE, 10);
-  gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, 10);
-
-
-
-  gtk_radio_button_set_group (GTK_RADIO_BUTTON (radiobutton0), radiobutton_group);
-  radiobutton_group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (radiobutton0));
+  radiobutton0 = lives_standard_radio_button_new (_("Start in _Clip Edit mode"),TRUE,radiobutton_group,LIVES_BOX(hbox),NULL);
+  radiobutton_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (radiobutton0));
 
   label=lives_standard_label_new(_("This is the best choice for simple editing tasks and for VJs\n"));
 
   gtk_box_pack_start (GTK_BOX (dialog_vbox), label, FALSE, FALSE, 10);
 
-  radiobutton1 = gtk_radio_button_new(NULL);
-
-
-  eventbox=gtk_event_box_new();
-  label=gtk_label_new_with_mnemonic ( _("Start in _Multitrack mode"));
-  gtk_label_set_mnemonic_widget (GTK_LABEL (label), radiobutton1);
-
-  gtk_container_add(GTK_CONTAINER(eventbox),label);
-  g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
-		    G_CALLBACK (label_act_toggle),
-		    radiobutton1);
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_bg (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
-  }
-
   hbox = gtk_hbox_new (FALSE, 0);
   gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, FALSE, FALSE, 10);
-
-  gtk_box_pack_start (GTK_BOX (hbox), radiobutton1, FALSE, FALSE, 10);
-  gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, 10);
-
+  radiobutton1 = lives_standard_radio_button_new (_("Start in _Multitrack mode"),TRUE,radiobutton_group,LIVES_BOX(hbox),NULL);
 
   label=lives_standard_label_new(_("This is a better choice for complex editing tasks involving multiple clips.\n"));
 
   gtk_box_pack_start (GTK_BOX (dialog_vbox), label, FALSE, FALSE, 10);
-
-
-  gtk_radio_button_set_group (GTK_RADIO_BUTTON (radiobutton1), radiobutton_group);
-  radiobutton_group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (radiobutton1));
 
   if (prefs->startup_interface==STARTUP_MT) {
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(radiobutton1),TRUE);

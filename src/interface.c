@@ -936,45 +936,30 @@ create_encoder_prep_dialog (const gchar *text1, const gchar *text2, gboolean opt
 // Information/error dialog
 GtkWidget*
 create_dialog3 (const gchar *text, gboolean is_blocking, gint mask) {
-  GtkWidget *dialog3;
-  GtkWidget *dialog_vbox3;
+  GtkWidget *dialog;
+  GtkWidget *dialog_vbox;
   GtkWidget *info_text;
   GtkWidget *dialog_action_area;
   GtkWidget *info_ok_button;
   GtkWidget *details_button;
   GtkWidget *checkbutton;
-  GtkWidget *label;
   GtkWidget *hbox;
-  GtkWidget *eventbox;
   gchar *form_text;
   gchar *textx;
 
-  dialog3 = gtk_dialog_new ();
-  gtk_window_set_title (GTK_WINDOW (dialog3), "LiVES");
-  if (is_blocking) gtk_window_set_modal (GTK_WINDOW (dialog3), TRUE);
-  gtk_window_set_position (GTK_WINDOW (dialog3), GTK_WIN_POS_CENTER_ALWAYS);
-  gtk_window_set_default_size (GTK_WINDOW (dialog3), 350, 200);
-  if (mainw!=NULL) {
-    if (palette->style&STYLE_1) {
-      gtk_widget_modify_bg(dialog3, GTK_STATE_NORMAL, &palette->normal_back);
-      gtk_dialog_set_has_separator(GTK_DIALOG(dialog3),FALSE);
-    }
-  }
+  dialog = lives_standard_dialog_new (_("LiVES"),FALSE);
+  if (!is_blocking) gtk_window_set_modal (GTK_WINDOW (dialog), FALSE);
 
-  dialog_vbox3 = lives_dialog_get_content_area(GTK_DIALOG(dialog3));
-  gtk_widget_show (dialog_vbox3);
+  dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(dialog));
+  gtk_widget_show (dialog_vbox);
 
   textx=insert_newlines(text,MAX_MSG_WIDTH_CHARS);
 
   form_text=g_strdup_printf("\n\n%s",textx);
 
-  info_text = gtk_label_new (form_text);
+  info_text = lives_standard_label_new (form_text);
   g_free(form_text);
   g_free(textx);
-
-  if (mainw!=NULL&&palette->style&STYLE_1) {
-    gtk_widget_modify_fg(info_text, GTK_STATE_NORMAL, &palette->normal_fore);
-  }
 
   gtk_label_set_selectable (GTK_LABEL (info_text), TRUE);
 
@@ -982,52 +967,38 @@ create_dialog3 (const gchar *text, gboolean is_blocking, gint mask) {
 
   hbox = gtk_hbox_new (FALSE, 0);
   gtk_widget_show (hbox);
-  gtk_box_pack_start (GTK_BOX (dialog_vbox3), hbox, FALSE, FALSE, 10);
+  gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, FALSE, FALSE, 10);
 
   gtk_box_pack_start (GTK_BOX (hbox), info_text, FALSE, FALSE, 20);
   gtk_label_set_justify (GTK_LABEL (info_text), GTK_JUSTIFY_CENTER);
   gtk_label_set_line_wrap (GTK_LABEL (info_text), FALSE);
   
   if (mask>0) {
-    checkbutton = gtk_check_button_new ();
-    eventbox=gtk_event_box_new();
-    label=gtk_label_new_with_mnemonic (_("Do _not show this warning any more\n(can be turned back on from Preferences/Warnings)"));
-    gtk_container_add (GTK_CONTAINER (eventbox), label);
-    g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
-		      G_CALLBACK (label_act_toggle),
-		      checkbutton);
-    gtk_label_set_mnemonic_widget (GTK_LABEL (label),checkbutton);
-    if (palette->style&STYLE_1&&mainw!=NULL) {
-      gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-      gtk_widget_modify_bg (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
-    }
     hbox = gtk_hbox_new (FALSE, 0);
-    gtk_box_pack_start (GTK_BOX (dialog_vbox3), hbox, FALSE, FALSE, 10);
-    gtk_box_pack_start (GTK_BOX (hbox), checkbutton, FALSE, FALSE, 0);
-    gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, 10);
-    gtk_widget_show_all (hbox);
+    gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, FALSE, FALSE, 10);
+    checkbutton = lives_standard_check_button_new (
+						   _("Do _not show this warning any more\n(can be turned back on from Preferences/Warnings)"),
+						   TRUE,LIVES_BOX(hbox),NULL);
     lives_widget_set_can_focus_and_default (checkbutton);
     g_signal_connect (GTK_OBJECT (checkbutton), "toggled",
                       G_CALLBACK (on_warn_mask_toggled),
                       GINT_TO_POINTER(mask));
   }
 
-  dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (dialog3));
+  dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (dialog));
   gtk_widget_show (dialog_action_area);
   gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area), GTK_BUTTONBOX_END);
 
   if (mainw->iochan!=NULL) {
     details_button = gtk_button_new_with_mnemonic(_("Show _Details"));
-    gtk_widget_show (details_button);
-    gtk_dialog_add_action_widget (GTK_DIALOG (dialog3), details_button, GTK_RESPONSE_YES);
+    gtk_dialog_add_action_widget (GTK_DIALOG (dialog), details_button, GTK_RESPONSE_YES);
     g_signal_connect (GTK_OBJECT (details_button), "clicked",
 		      G_CALLBACK (on_details_button_clicked),
 		      NULL);
   }
   
   info_ok_button = gtk_button_new_from_stock ("gtk-ok");
-  gtk_widget_show (info_ok_button);
-  gtk_dialog_add_action_widget (GTK_DIALOG (dialog3), info_ok_button, GTK_RESPONSE_OK);
+  gtk_dialog_add_action_widget (GTK_DIALOG (dialog), info_ok_button, GTK_RESPONSE_OK);
 
 
   if (mainw->iochan==NULL) {
@@ -1040,7 +1011,9 @@ create_dialog3 (const gchar *text, gboolean is_blocking, gint mask) {
 		    G_CALLBACK (lives_general_button_clicked),
 		    NULL);
 
-  return dialog3;
+  gtk_widget_show_all(dialog);
+
+  return dialog;
 }
 
 

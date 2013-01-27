@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: fr\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2013-01-27 14:24-0300\n"
+"POT-Creation-Date: 2013-01-27 15:18-0300\n"
 "PO-Revision-Date: 2012-01-11 01:14+0000\n"
 "Last-Translator: salsaman <salsaman@gmail.com>\n"
 "Language-Team: Français <kwizart@gmail.com>\n"
@@ -970,93 +970,93 @@ msgstr ""
 "Le lecteur audio MPLAYER est seulement recommandé dans le but de test.\n"
 "\n"
 
-#: src/startup.c:270
+#: src/startup.c:269
 msgid "LiVES: - Choose an audio player"
 msgstr "LiVES: - choisir un lecteur audio"
 
-#: src/startup.c:292
+#: src/startup.c:283
 msgid "Use _pulse audio player"
 msgstr "Utilise le lecteur audio _pulse"
 
-#: src/startup.c:326
+#: src/startup.c:305
 msgid "Use _jack audio player"
 msgstr "Utiliser le lecteur audio jack"
 
-#: src/startup.c:364
+#: src/startup.c:325
 msgid "Use _sox audio player"
 msgstr "Utilise le lecteur audio _sox"
 
-#: src/startup.c:399
+#: src/startup.c:346
 msgid "Use _mplayer audio player"
 msgstr "Utilise le lecteur audui _mplayer"
 
-#: src/startup.c:452 src/startup.c:617 src/interface.c:2028
+#: src/startup.c:368 src/startup.c:529 src/interface.c:2028
 msgid "_Next"
 msgstr "_Suivant"
 
-#: src/startup.c:492
+#: src/startup.c:408
 #, fuzzy
 msgid "Skipped"
 msgstr "Ignorer"
 
-#: src/startup.c:507
+#: src/startup.c:423
 msgid "Passed"
 msgstr ""
 
-#: src/startup.c:531
+#: src/startup.c:447
 msgid "Failed"
 msgstr "Échoué"
 
-#: src/startup.c:591
+#: src/startup.c:507
 msgid "LiVES: - Testing Configuration"
 msgstr "LiVES: - Test de Configuration"
 
-#: src/startup.c:594
+#: src/startup.c:510
 msgid "LiVES: - Troubleshoot"
 msgstr "LiVES : - Dépannage"
 
-#: src/startup.c:608
+#: src/startup.c:520
 msgid "LiVES will now run some basic configuration tests\n"
 msgstr "LiVES va maintenant lancer quelques tests de configuration de base\n"
 
-#: src/startup.c:640
+#: src/startup.c:552
 msgid "Checking for \"sox\" presence"
 msgstr "Vérification de la présence de \"sox\""
 
-#: src/startup.c:644
+#: src/startup.c:556
 msgid ""
 "You should install sox to be able to use all the audio features in LiVES"
 msgstr ""
 "Vous devriez installer sox pour utiliser toutes les fonctionnalités audio de "
 "LiVES"
 
-#: src/startup.c:652
+#: src/startup.c:564
 msgid "Checking if sox can convert audio"
 msgstr "Vérifie si sox peut convertir du son"
 
-#: src/startup.c:675
+#: src/startup.c:587
 msgid "Unable to allocate 176400 bytes memory."
 msgstr "Impossible d'allouer 176400 octets en mémoire."
 
-#: src/startup.c:690
+#: src/startup.c:602
 #, c-format
 msgid "Unable to write to: %s"
 msgstr "Impossible d'écrire sur : %s"
 
-#: src/startup.c:704 src/startup.c:836
+#: src/startup.c:616 src/startup.c:748
 #, c-format
 msgid "Command failed: %s"
 msgstr "La commande a échoué : %s"
 
-#: src/startup.c:726
+#: src/startup.c:638
 msgid "You should install sox_fmt_all or similar"
 msgstr "Vous devriez installer sox_fmt_all ou équivalent"
 
-#: src/startup.c:754
+#: src/startup.c:666
 msgid "Checking for \"mplayer\" presence"
 msgstr "Vérifie si \"mplayer\" est présent"
 
-#: src/startup.c:758
+#: src/startup.c:670
 msgid ""
 "You should install mplayer to be able to use all the decoding features in "
 "LiVES"
@@ -1064,45 +1064,45 @@ msgstr ""
 "Vous devriez installer mplayer pour pouvoir utiliser toutes les "
 "fonctionnalité de décodage de LiVES"
 
-#: src/startup.c:784
+#: src/startup.c:696
 msgid "Checking if mplayer can convert audio"
 msgstr "Vérifie si mplayer peut convertir du son"
 
-#: src/startup.c:797
+#: src/startup.c:709
 msgid "You should install mplayer with pcm/wav support"
 msgstr "Vous devriez installer mplayer avec la prise en charge de pcm/wav"
 
-#: src/startup.c:814
+#: src/startup.c:726
 msgid "Checking if mplayer can decode to png/alpha"
 msgstr "Vérifie si mplayer peut décoder en png/alpha"
 
-#: src/startup.c:857
+#: src/startup.c:769
 msgid "You may wish to upgrade mplayer to a newer version"
 msgstr "Il est suggéré d'utiliser une version plus récente de mplayer"
 
-#: src/startup.c:883
+#: src/startup.c:795
 msgid "Checking if mplayer can decode to jpeg"
 msgstr "Vérifie si mplayer peut décoder en jpeg"
 
-#: src/startup.c:902
+#: src/startup.c:814
 msgid "You should install mplayer with either png/alpha or jpeg support"
 msgstr ""
 "Vous devriez installer mplayer avec la prise en charge du jpeg ou du png/"
 "alpha"
 
-#: src/startup.c:903
+#: src/startup.c:815
 msgid "You may wish to add jpeg output support to mplayer"
 msgstr "Vous pouvez ajouter le support de sortie jpeg à mplayer"
 
-#: src/startup.c:912
+#: src/startup.c:824
 msgid "Checking for \"convert\" presence"
 msgstr "Vérification de la présence de la commande \"convert\""
 
-#: src/startup.c:916
+#: src/startup.c:828
 msgid "Install imageMagick to be able to use all of the rendered effects"
 msgstr "Installer imageMagick pour pouvoir utiliser tous les effets"
 
-#: src/startup.c:929
+#: src/startup.c:841
 msgid ""
 "\n"
 "\n"
@@ -1110,7 +1110,7 @@ msgid ""
 "Preferences/Decoding.    \n"
 msgstr ""
 
-#: src/startup.c:935
+#: src/startup.c:847
 msgid ""
 "\n"
 "\n"
@@ -1122,7 +1122,7 @@ msgstr ""
 "    Cliquez sur Annuler pour quitter et installer les composants manquants, "
 "ou sur Suivant pour continuer    \n"
 
-#: src/startup.c:969
+#: src/startup.c:881
 msgid ""
 "\n"
 "\n"
@@ -1133,44 +1133,44 @@ msgstr ""
 "Finalement, vous pouvez choisir L'interface de démarrage par défaut pour "
 "LiVES\n"
 
-#: src/startup.c:970
+#: src/startup.c:882
 msgid ""
 "\n"
 "\n"
 "LiVES has two main interfaces and you can start up with either of them.\n"
 msgstr ""
 
-#: src/startup.c:971
+#: src/startup.c:883
 msgid ""
 "\n"
 "\n"
 "The default can always be changed later from Preferences.\n"
 msgstr ""
 
-#: src/startup.c:982
+#: src/startup.c:893
 #, fuzzy
 msgid "LiVES: - Choose the startup interface"
 msgstr "LiVES: - choisir un lecteur audio"
 
-#: src/startup.c:1004
+#: src/startup.c:904
 msgid "Start in _Clip Edit mode"
 msgstr ""
 
-#: src/startup.c:1028
+#: src/startup.c:907
 msgid "This is the best choice for simple editing tasks and for VJs\n"
 msgstr ""
 
-#: src/startup.c:1036
+#: src/startup.c:913
 #, fuzzy
 msgid "Start in _Multitrack mode"
 msgstr "Mode _multitrack"
 
-#: src/startup.c:1056
+#: src/startup.c:915
 msgid ""
 "This is a better choice for complex editing tasks involving multiple clips.\n"
 msgstr ""
 
-#: src/startup.c:1069
+#: src/startup.c:924
 msgid "_Finish"
 msgstr ""
 

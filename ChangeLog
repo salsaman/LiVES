@@ -1,3 +1,12 @@
+Version 1.8.3
+-------------
+Minor widget fixes with startup dialogs (regression).
+
+
+
+
+
+
 Version 1.8.2 (27 January 2013)
 -------------------------------
 Add (another) fix for double tyedef compilation error.

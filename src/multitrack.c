@@ -10046,7 +10046,10 @@ gboolean on_multitrack_activate (GtkMenuItem *menuitem, weed_plant_t *event_list
   mainw->frame_layer=NULL;
 
   if (prefs->mt_enter_prompt&&mainw->stored_event_list==NULL&&prefs->show_gui&&!(mainw->recoverable_layout&&prefs->startup_interface==STARTUP_CE)) {
+    boolean isready=mainw->is_ready;
+    mainw->is_ready=TRUE;
     rdet=create_render_details(3);  // WARNING !! - rdet is global in events.h
+    mainw->is_ready=isready;
     rdet->enc_changed=FALSE;
     gtk_widget_show_all(rdet->always_hbox);
     do {

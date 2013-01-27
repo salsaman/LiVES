@@ -2812,12 +2812,16 @@ gboolean startup_message_fatal(const gchar *msg) {
 }
 
 gboolean startup_message_nonfatal(const gchar *msg) {
+  mainw->is_ready=TRUE;
   do_error_dialog (msg);
+  mainw->is_ready=FALSE;
   return TRUE;
 }
 
 gboolean startup_message_nonfatal_dismissable(const gchar *msg, gint warning_mask) {
+  mainw->is_ready=TRUE;
   do_error_dialog_with_check (msg, warning_mask);
+  mainw->is_ready=FALSE;
   return TRUE;
 }
 

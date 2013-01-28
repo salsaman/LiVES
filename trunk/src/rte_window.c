@@ -2316,7 +2316,7 @@ GtkWidget * create_rte_window (void) {
   gtk_window_add_accel_group (GTK_WINDOW (rte_window), rtew_accel_group);
 
   gtk_widget_add_accelerator (ok_button, "activate", rtew_accel_group,
-                              GDK_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
+                              LIVES_KEY_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
 
   g_signal_connect (GTK_OBJECT (rte_window), "delete_event",
 		    G_CALLBACK (on_rtew_ok_clicked),

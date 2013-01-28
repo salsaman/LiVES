@@ -246,26 +246,18 @@ xprocess * create_processing (const gchar *text) {
   GtkWidget *label;
   GtkWidget *details_arrow;
 
-  procw->processing = gtk_dialog_new ();
-  gtk_container_set_border_width (GTK_CONTAINER (procw->processing), 10);
+  widget_opts.non_modal=TRUE;
+  procw->processing = lives_standard_dialog_new (_("LiVES: - Processing..."),FALSE);
+  widget_opts.non_modal=FALSE;
+
   gtk_window_add_accel_group (GTK_WINDOW (procw->processing), mainw->accel_group);
 
-  gtk_window_set_resizable (GTK_WINDOW (procw->processing), FALSE);
 
-  
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_bg(procw->processing, GTK_STATE_NORMAL, &palette->normal_back);
-  }
-  gtk_window_set_title (GTK_WINDOW (procw->processing), _("LiVES: - Processing..."));
   if (mainw->multitrack==NULL) gtk_window_set_transient_for(GTK_WINDOW(procw->processing),GTK_WINDOW(mainw->LiVES));
   else gtk_window_set_transient_for(GTK_WINDOW(procw->processing),GTK_WINDOW(mainw->multitrack->window));
-  gtk_window_set_position (GTK_WINDOW (procw->processing), GTK_WIN_POS_CENTER_ALWAYS);
 
   dialog_vbox1 = lives_dialog_get_content_area(GTK_DIALOG(procw->processing));
   gtk_widget_show (dialog_vbox1);
-
-
-  gtk_dialog_set_has_separator(GTK_DIALOG(procw->processing),FALSE);
 
   vbox2 = gtk_vbox_new (FALSE, 0);
   gtk_widget_show (vbox2);
@@ -403,7 +395,7 @@ xprocess * create_processing (const gchar *text) {
   lives_widget_set_can_focus_and_default (procw->cancel_button);
 
   gtk_widget_add_accelerator (procw->cancel_button, "activate", mainw->accel_group,
-                              GDK_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
+                              LIVES_KEY_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
 
   g_signal_connect (GTK_OBJECT (procw->stop_button), "clicked",
 		    G_CALLBACK (on_stop_clicked),
@@ -760,7 +752,7 @@ fileinfo *create_info_window (gint audio_channels, gboolean is_mt) {
   gtk_window_add_accel_group (GTK_WINDOW (filew->info_window), accel_group);
 
   gtk_widget_add_accelerator (button8, "activate", accel_group,
-                              GDK_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
+                              LIVES_KEY_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
 
 
   return filew;
@@ -1469,7 +1461,7 @@ create_insert_dialog (void)
                       NULL);
 
   gtk_widget_add_accelerator (cancelbutton1, "activate", accel_group,
-                              GDK_Escape,  (GdkModifierType)0, (GtkAccelFlags)0);
+                              LIVES_KEY_Escape,  (GdkModifierType)0, (GtkAccelFlags)0);
 
 
   return insertw;
@@ -1794,7 +1786,7 @@ _entryw* create_location_dialog (int type) {
                       NULL);
 
   gtk_widget_add_accelerator (cancelbutton, "activate", accel_group,
-                              GDK_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
+                              LIVES_KEY_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
 
   return locw;
 }
@@ -1994,7 +1986,7 @@ _entryw* create_rename_dialog (gint type) {
   lives_widget_set_can_focus_and_default (cancelbutton);
 
   gtk_widget_add_accelerator (cancelbutton, "activate", accel_group,
-			      GDK_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
+			      LIVES_KEY_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
 
   if (type==6) {
     okbutton = gtk_button_new_from_stock ("gtk-go-forward");
@@ -2026,7 +2018,7 @@ _entryw* create_rename_dialog (gint type) {
 
 
   gtk_widget_add_accelerator (cancelbutton, "activate", accel_group,
-                              GDK_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
+                              LIVES_KEY_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
 
   gtk_widget_show_all(renamew->dialog);
 
@@ -2161,7 +2153,7 @@ GtkWidget *create_combo_dialog (gint type, gpointer user_data) {
   lives_widget_set_can_focus_and_default (cancelbutton);
 
   gtk_widget_add_accelerator (cancelbutton, "activate", accel_group,
-                              GDK_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
+                              LIVES_KEY_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
 
   okbutton = gtk_button_new_from_stock ("gtk-ok");
   gtk_widget_show (okbutton);
@@ -2552,7 +2544,7 @@ create_cdtrack_dialog (gint type, gpointer user_data)
   lives_widget_set_can_focus_and_default (cancelbutton);
 
   gtk_widget_add_accelerator (cancelbutton, "activate", accel_group,
-                              GDK_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
+                              LIVES_KEY_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
 
   okbutton = gtk_button_new_from_stock ("gtk-ok");
   gtk_widget_show (okbutton);
@@ -3512,7 +3504,7 @@ _entryw* create_cds_dialog (gint type) {
   gtk_widget_show (cancelbutton);
   gtk_dialog_add_action_widget (GTK_DIALOG (cdsw->dialog), cancelbutton, 0);
   gtk_widget_add_accelerator (cancelbutton, "activate", accel_group,
-                              GDK_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
+                              LIVES_KEY_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
 
   discardbutton = gtk_button_new_from_stock ("gtk-delete");
   gtk_widget_show (discardbutton);
@@ -3582,7 +3574,7 @@ void do_layout_recover_dialog(void) {
   g_signal_connect (okbutton, "clicked",G_CALLBACK (recover_layout),NULL);
 
   gtk_widget_add_accelerator (cancelbutton, "activate", mainw->accel_group,
-                              GDK_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
+                              LIVES_KEY_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
 
   gtk_widget_show_all(mdialog);
 }

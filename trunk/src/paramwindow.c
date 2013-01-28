@@ -827,7 +827,7 @@ void on_render_fx_pre_activate (GtkMenuItem *menuitem, lives_rfx_t *rfx) {
     gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area), GTK_BUTTONBOX_END);
     gtk_dialog_add_action_widget (GTK_DIALOG (fx_dialog[n]), cancelbutton, GTK_RESPONSE_CANCEL);
     gtk_widget_add_accelerator (cancelbutton, "activate", fxw_accel_group,
-				GDK_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
+				LIVES_KEY_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
 
     if (is_defaults) {
       okbutton = gtk_button_new_with_mnemonic (_("Set as default"));
@@ -850,7 +850,7 @@ void on_render_fx_pre_activate (GtkMenuItem *menuitem, lives_rfx_t *rfx) {
     }
     gtk_dialog_add_action_widget (GTK_DIALOG (fx_dialog[n]), cancelbutton, GTK_RESPONSE_CANCEL);
     gtk_widget_add_accelerator (cancelbutton, "activate", fxw_accel_group,
-				GDK_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
+				LIVES_KEY_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
 
   }
 

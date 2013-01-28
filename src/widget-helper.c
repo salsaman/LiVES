@@ -932,7 +932,8 @@ LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_button
   dialog = gtk_dialog_new ();
   gtk_window_set_title (GTK_WINDOW (dialog), title);
 
-  gtk_window_set_modal (GTK_WINDOW (dialog), TRUE);
+  gtk_window_set_deletable(GTK_WINDOW(dialog), FALSE);
+  gtk_window_set_resizable (GTK_WINDOW (dialog), FALSE);
 
   if (prefs->gui_monitor!=0) {
     gtk_window_set_screen(GTK_WINDOW(dialog),mainw->mgeom[prefs->gui_monitor-1].screen);
@@ -956,7 +957,7 @@ LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_button
     gtk_dialog_add_action_widget (GTK_DIALOG (dialog), cancelbutton, GTK_RESPONSE_CANCEL);
 
     gtk_widget_add_accelerator (cancelbutton, "activate", accel_group,
-				GDK_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
+				LIVES_KEY_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
     lives_widget_set_can_focus_and_default(cancelbutton);
 
     gtk_dialog_add_action_widget (GTK_DIALOG (dialog), okbutton, GTK_RESPONSE_OK);
@@ -968,6 +969,12 @@ LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_button
   g_signal_connect (GTK_OBJECT (dialog), "delete_event",
                       G_CALLBACK (return_true),
                       NULL);
+
+  gtk_widget_show(dialog);
+
+  if (!widget_opts.non_modal)
+    gtk_window_set_modal (GTK_WINDOW (dialog), TRUE);
+
 
 #endif
 

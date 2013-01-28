@@ -162,6 +162,8 @@ typedef GLogLevelFlags LiVESLogLevelFlags;
 #define LIVES_KEY_Page_Up GDK_KEY_Page_Up
 #define LIVES_KEY_Page_Down GDK_KEY_Page_Down
 
+#define LIVES_KEY_Escape GDK_KEY_Escape
+
 #else
 #define LIVES_KEY_Left GDK_Left
 #define LIVES_KEY_Right GDK_Right
@@ -204,6 +206,7 @@ typedef GLogLevelFlags LiVESLogLevelFlags;
 #define LIVES_KEY_Page_Up GDK_Page_Up
 #define LIVES_KEY_Page_Down GDK_Page_Down
 
+#define LIVES_KEY_Escape GDK_Escape
 
 #endif
 
@@ -387,7 +390,8 @@ boolean lives_general_delete_event(LiVESWidget *, LiVESEvent *delevent, LiVESObj
 typedef struct {
   boolean swap_label; // swap label/widget position
   boolean pack_end;
-  LiVESJustification justify;
+  boolean non_modal; // non-modal for dialogs
+  LiVESJustification justify; // justify for labels
 } widget_opts_t;
 
 widget_opts_t widget_opts;

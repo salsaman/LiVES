@@ -2042,36 +2042,28 @@ _prefsw *create_prefs_dialog (void) {
   GtkTreeModel *model;
   guint selected_idx;
 
+  GtkAccelGroup *accel_group=GTK_ACCEL_GROUP(gtk_accel_group_new ());
+
   // Allocate memory for the preferences structure
   prefsw = (_prefsw*)(g_malloc(sizeof(_prefsw)));
   prefsw->right_shown = NULL;
   mainw->prefs_need_restart = FALSE;
 
   // Create new modal dialog window and set some attributes
-  prefsw->prefs_dialog = gtk_dialog_new ();
-  gtk_container_set_border_width (GTK_CONTAINER (prefsw->prefs_dialog), 10);
-  gtk_window_set_title (GTK_WINDOW (prefsw->prefs_dialog), _("LiVES: - Preferences"));
-  gtk_window_set_position (GTK_WINDOW (prefsw->prefs_dialog), GTK_WIN_POS_CENTER_ALWAYS);
-  gtk_window_set_modal (GTK_WINDOW (prefsw->prefs_dialog), TRUE);
+  prefsw->prefs_dialog = lives_standard_dialog_new (_("LiVES: - Preferences"),FALSE);
+  gtk_window_add_accel_group (GTK_WINDOW (prefsw->prefs_dialog), accel_group);
+
   gtk_window_set_default_size (GTK_WINDOW (prefsw->prefs_dialog), PREF_WIN_WIDTH, PREF_WIN_HEIGHT);
-  gtk_window_set_resizable (GTK_WINDOW (prefsw->prefs_dialog), FALSE);
+  gtk_widget_set_size_request (prefsw->prefs_dialog, PREF_WIN_WIDTH, PREF_WIN_HEIGHT);
 
   if (prefs->show_gui) {
     if (mainw->multitrack==NULL) gtk_window_set_transient_for(GTK_WINDOW(prefsw->prefs_dialog),GTK_WINDOW(mainw->LiVES));
     else gtk_window_set_transient_for(GTK_WINDOW(prefsw->prefs_dialog),GTK_WINDOW(mainw->multitrack->window));
   }
 
-  gtk_widget_modify_bg(prefsw->prefs_dialog, GTK_STATE_NORMAL, &palette->normal_back);
-  gtk_widget_modify_fg(prefsw->prefs_dialog, GTK_STATE_NORMAL, &palette->normal_fore);
-
-  if (palette->style & STYLE_1) {
-    gtk_dialog_set_has_separator(GTK_DIALOG(prefsw->prefs_dialog), FALSE);
-  }
   // Get dialog's vbox and show it
   dialog_vbox_main = lives_dialog_get_content_area(GTK_DIALOG(prefsw->prefs_dialog));
   gtk_widget_show (dialog_vbox_main);
-
-  gtk_widget_set_size_request (prefsw->prefs_dialog, PREF_WIN_WIDTH, PREF_WIN_HEIGHT);
 
   // Create dialog horizontal panels
   dialog_hpaned = gtk_hpaned_new();
@@ -5489,6 +5481,9 @@ _prefsw *create_prefs_dialog (void) {
   gtk_widget_show(prefsw->closebutton);
   gtk_dialog_add_action_widget(GTK_DIALOG(prefsw->prefs_dialog), prefsw->closebutton, GTK_RESPONSE_OK);
   lives_widget_set_can_focus_and_default (prefsw->closebutton);
+
+  gtk_widget_add_accelerator (prefsw->closebutton, "activate", accel_group,
+			      LIVES_KEY_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
 
    
   g_signal_connect(dirbutton1, "clicked", G_CALLBACK (on_filesel_simple_clicked),prefsw->vid_load_dir_entry);

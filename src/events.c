@@ -1,6 +1,6 @@
 // events.c
 // LiVES
-// (c) G. Finch 2005 - 2012 <salsaman@gmail.com>
+// (c) G. Finch 2005 - 2013 <salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -2154,7 +2154,7 @@ GtkWidget *events_rec_dialog (gboolean allow_mt) {
 
   accel_group = GTK_ACCEL_GROUP(gtk_accel_group_new ());
   gtk_widget_add_accelerator (cancelbutton, "activate", accel_group,
-                              GDK_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
+                              LIVES_KEY_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
 
   gtk_window_add_accel_group (GTK_WINDOW (e_rec_dialog), accel_group);
 
@@ -5286,7 +5286,7 @@ render_details *create_render_details (gint type) {
 
 
   gtk_widget_add_accelerator (cancelbutton, "activate", rdet_accel_group,
-                              GDK_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
+                              LIVES_KEY_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
 
 
   gtk_widget_show_all (rdet->dialog);

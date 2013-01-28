@@ -165,7 +165,7 @@ static GtkWidget* create_warn_dialog (gint warn_mask_number, GtkWindow *transien
 
   switch (diat) {
   case LIVES_DIALOG_WARN:
-    dialog = gtk_message_dialog_new (transient,GTK_DIALOG_MODAL,GTK_MESSAGE_WARNING,GTK_BUTTONS_NONE,"%s","");
+    dialog = gtk_message_dialog_new (transient,0,GTK_MESSAGE_WARNING,GTK_BUTTONS_NONE,"%s","");
 
     if (mainw->add_clear_ds_button) {
       mainw->add_clear_ds_button=FALSE;
@@ -182,7 +182,7 @@ static GtkWidget* create_warn_dialog (gint warn_mask_number, GtkWindow *transien
     gtk_dialog_add_action_widget (GTK_DIALOG (dialog), warning_okbutton, GTK_RESPONSE_OK);
     break;
   case LIVES_DIALOG_YESNO:
-    dialog = gtk_message_dialog_new (transient,GTK_DIALOG_MODAL,GTK_MESSAGE_QUESTION,GTK_BUTTONS_NONE,"%s","");
+    dialog = gtk_message_dialog_new (transient,0,GTK_MESSAGE_QUESTION,GTK_BUTTONS_NONE,"%s","");
     gtk_window_set_title (GTK_WINDOW (dialog), _("LiVES: - Question"));
     widget_opts.justify=LIVES_JUSTIFY_CENTER;
     mainw->warning_label = lives_standard_label_new (_("question"));
@@ -193,7 +193,7 @@ static GtkWidget* create_warn_dialog (gint warn_mask_number, GtkWindow *transien
     gtk_dialog_add_action_widget (GTK_DIALOG (dialog), warning_okbutton, LIVES_YES);
     break;
   case LIVES_DIALOG_ABORT_CANCEL_RETRY:
-    dialog = gtk_message_dialog_new (transient,GTK_DIALOG_MODAL,GTK_MESSAGE_ERROR,GTK_BUTTONS_NONE,"%s","");
+    dialog = gtk_message_dialog_new (transient,0,GTK_MESSAGE_ERROR,GTK_BUTTONS_NONE,"%s","");
     gtk_window_set_title (GTK_WINDOW (dialog), _("LiVES: - File Error"));
     widget_opts.justify=LIVES_JUSTIFY_CENTER;
     mainw->warning_label = lives_standard_label_new (_("File Error"));
@@ -218,6 +218,9 @@ static GtkWidget* create_warn_dialog (gint warn_mask_number, GtkWindow *transien
   }
 
   gtk_window_set_deletable(GTK_WINDOW(dialog), FALSE);
+  gtk_window_set_resizable (GTK_WINDOW (dialog), FALSE);
+
+  gtk_container_set_border_width (GTK_CONTAINER (dialog), W_BORDER_WIDTH);
 
   textx=insert_newlines(text,MAX_MSG_WIDTH_CHARS);
   gtk_label_set_text(GTK_LABEL(mainw->warning_label),textx);
@@ -253,6 +256,7 @@ static GtkWidget* create_warn_dialog (gint warn_mask_number, GtkWindow *transien
   gtk_widget_grab_default (warning_okbutton);
 
   gtk_widget_show_all(dialog);
+  gtk_window_set_modal (GTK_WINDOW (dialog), TRUE);
 
   return dialog;
 }
@@ -2347,65 +2351,48 @@ static xprocess *procw=NULL;
 
 static void create_threaded_dialog(gchar *text, gboolean has_cancel) {
 
-  GtkWidget *dialog_vbox1;
-  GtkWidget *vbox2;
-  GtkWidget *vbox3;
+  GtkWidget *dialog_vbox;
+  GtkWidget *vbox;
   gchar tmp_label[256];
  
   procw=(xprocess*)(g_malloc(sizeof(xprocess)));
 
-  procw->processing = gtk_dialog_new ();
-  gtk_window_set_position (GTK_WINDOW (procw->processing), GTK_WIN_POS_CENTER_ALWAYS);
-  gtk_container_set_border_width (GTK_CONTAINER (procw->processing), 10);
-  gtk_window_add_accel_group (GTK_WINDOW (procw->processing), mainw->accel_group);
-  
-  gtk_widget_show(procw->processing);
+  procw->processing = lives_standard_dialog_new (_("LiVES: - Processing..."),FALSE);
 
-  gtk_widget_modify_bg(procw->processing, GTK_STATE_NORMAL, &palette->normal_back);
-  gtk_window_set_title (GTK_WINDOW (procw->processing), _("LiVES: - Processing..."));
+  gtk_window_add_accel_group (GTK_WINDOW (procw->processing), mainw->accel_group);
 
   if (mainw->multitrack==NULL) gtk_window_set_transient_for(GTK_WINDOW(procw->processing),GTK_WINDOW(mainw->LiVES));
   else gtk_window_set_transient_for(GTK_WINDOW(procw->processing),GTK_WINDOW(mainw->multitrack->window));
 
-  gtk_window_set_modal (GTK_WINDOW (procw->processing), TRUE);
+  dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(procw->processing));
 
-  dialog_vbox1 = lives_dialog_get_content_area(GTK_DIALOG(procw->processing));
+  gtk_widget_show (dialog_vbox);
 
-  gtk_widget_show (dialog_vbox1);
-
-  gtk_dialog_set_has_separator(GTK_DIALOG(procw->processing),FALSE);
-
-  vbox2 = gtk_vbox_new (FALSE, 0);
-  gtk_widget_show (vbox2);
-  gtk_box_pack_start (GTK_BOX (dialog_vbox1), vbox2, TRUE, TRUE, 0);
-
-  vbox3 = gtk_vbox_new (FALSE, 0);
-  gtk_widget_show (vbox3);
-  gtk_box_pack_start (GTK_BOX (vbox2), vbox3, TRUE, TRUE, 0);
+  vbox = gtk_vbox_new (FALSE, 0);
+  gtk_widget_show (vbox);
+  gtk_box_pack_start (GTK_BOX (dialog_vbox), vbox, TRUE, TRUE, 0);
 
   g_snprintf(tmp_label,256,"%s...\n",text);
   procw->label = lives_standard_label_new (tmp_label);
-  gtk_widget_show (procw->label);
-  //gtk_widget_set_size_request (procw->label, PROG_LABEL_WIDTH, -1);
-  gtk_box_pack_start (GTK_BOX (vbox3), procw->label, FALSE, FALSE, 0);
+  gtk_box_pack_start (GTK_BOX (vbox), procw->label, FALSE, FALSE, 0);
 
   procw->progressbar = gtk_progress_bar_new ();
-  gtk_widget_show (procw->progressbar);
-  gtk_box_pack_start (GTK_BOX (vbox3), procw->progressbar, FALSE, FALSE, 0);
-  gtk_widget_modify_fg(procw->progressbar, GTK_STATE_NORMAL, &palette->normal_fore);
+  gtk_progress_bar_set_pulse_step(GTK_PROGRESS_BAR(procw->progressbar),.01);
+  gtk_box_pack_start (GTK_BOX (vbox), procw->progressbar, FALSE, FALSE, 0);
+
+  if (mainw!=NULL&&mainw->is_ready&&(palette->style&STYLE_1)) {
+    gtk_widget_modify_fg(procw->progressbar, GTK_STATE_NORMAL, &palette->normal_fore);
+  }
 
   widget_opts.justify=LIVES_JUSTIFY_CENTER;
   procw->label2 = lives_standard_label_new (_("\nPlease Wait"));
   widget_opts.justify=LIVES_JUSTIFY_DEFAULT;
-  gtk_widget_show (procw->label2);
-  gtk_box_pack_start (GTK_BOX (vbox3), procw->label2, FALSE, FALSE, 0);
+  gtk_box_pack_start (GTK_BOX (vbox), procw->label2, FALSE, FALSE, 0);
 
   widget_opts.justify=LIVES_JUSTIFY_CENTER;
   procw->label3 = lives_standard_label_new (PROCW_STRETCHER);
   widget_opts.justify=LIVES_JUSTIFY_DEFAULT;
-  gtk_widget_show (procw->label3);
-  gtk_box_pack_start (GTK_BOX (vbox3), procw->label3, FALSE, FALSE, 0);
-  gtk_progress_bar_set_pulse_step(GTK_PROGRESS_BAR(procw->progressbar),.01);
+  gtk_box_pack_start (GTK_BOX (vbox), procw->label3, FALSE, FALSE, 0);
 
   if (has_cancel) {
     GtkWidget *cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
@@ -2434,13 +2421,9 @@ static void create_threaded_dialog(gchar *text, gboolean has_cancel) {
     mainw->cancel_type=CANCEL_SOFT;
   }
 
-
-  gtk_window_set_resizable (GTK_WINDOW (procw->processing), FALSE);
-
-  gtk_widget_queue_draw(procw->processing);
+  gtk_widget_show_all(procw->processing);
 
   lives_set_cursor_style(LIVES_CURSOR_BUSY,lives_widget_get_xwindow(procw->processing));
-
 }
 
 

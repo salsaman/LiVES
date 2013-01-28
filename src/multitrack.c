@@ -1,6 +1,6 @@
 // multitrack.c
 // LiVES
-// (c) G. Finch 2005 - 2012 <salsaman@gmail.com>
+// (c) G. Finch 2005 - 2013 <salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -21198,7 +21198,7 @@ void amixer_show (GtkButton *button, gpointer user_data) {
 		    (gpointer)mt);
 
   gtk_widget_add_accelerator (close_button, "activate", accel_group,
-                              GDK_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
+                              LIVES_KEY_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
 
 
 

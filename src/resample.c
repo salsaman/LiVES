@@ -1,6 +1,6 @@
 // resample.c
 // LiVES
-// (c) G. Finch 2004 - 2012 <salsaman@gmail.com>
+// (c) G. Finch 2004 - 2013 <salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -1930,7 +1930,7 @@ create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox) {
     lives_widget_set_can_focus_and_default (cancelbutton13);
     
     gtk_widget_add_accelerator (cancelbutton13, "activate", mainw->accel_group,
-                              GDK_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
+                              LIVES_KEY_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
     
       
     okbutton12 = gtk_button_new_from_stock ("gtk-ok");

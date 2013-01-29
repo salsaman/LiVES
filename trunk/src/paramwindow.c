@@ -1160,7 +1160,7 @@ gboolean make_param_box(GtkVBox *top_vbox, lives_rfx_t *rfx) {
       else if (!j&&!strcmp (array[j],"hseparator")&&has_param) {
 	hbox = gtk_hbox_new (FALSE, 0);
 	gtk_box_pack_start (GTK_BOX (param_vbox), hbox, FALSE, FALSE, 10);
-	add_hsep_to_box (GTK_BOX (hbox));
+	add_hsep_to_box (LIVES_BOX (hbox),TRUE);
 	j=num_tok;  // ignore anything after hseparator
       }
       else if (!strncmp (array[j],"fill",4)) {
@@ -1190,7 +1190,7 @@ gboolean make_param_box(GtkVBox *top_vbox, lives_rfx_t *rfx) {
 	  if (!strcmp (label_text+strlen (label_text)-1,"\"")) {
 	    memset (label_text+strlen (label_text)-1,0,1);
 	  }
-	  add_label_to_box (GTK_BOX (hbox),TRUE,label_text);
+	  add_param_label_to_box (GTK_BOX (hbox),TRUE,label_text);
 	}}}
     g_strfreev (array);
   }
@@ -1218,7 +1218,7 @@ gboolean make_param_box(GtkVBox *top_vbox, lives_rfx_t *rfx) {
       hbox = gtk_hbox_new (FALSE, 0);
       gtk_box_pack_start (GTK_BOX (param_vbox), hbox, FALSE, FALSE, 20);
       add_fill_to_box(GTK_BOX(hbox));
-      add_label_to_box(GTK_BOX(hbox),FALSE,_("No parameters"));
+      add_param_label_to_box(GTK_BOX(hbox),FALSE,_("No parameters"));
       add_fill_to_box(GTK_BOX(hbox));
     }
     
@@ -1299,7 +1299,7 @@ gboolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, gboolean ad
   gboolean was_num=FALSE;
 
   if (pnum>=rfx->num_params) {
-    add_label_to_box (box,FALSE,(_("Invalid parameter")));
+    add_param_label_to_box (box,FALSE,(_("Invalid parameter")));
     return FALSE;
   }
 
@@ -1646,19 +1646,8 @@ gboolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, gboolean ad
   return was_num;
 }
 
-void add_hsep_to_box (GtkBox *box) {
-  GtkWidget *hseparator = gtk_hseparator_new ();
-  gtk_box_pack_start (box, hseparator, TRUE, TRUE, 0);
-  gtk_widget_show(hseparator);
-}
 
-void add_fill_to_box (GtkBox *box) {
-  GtkWidget *blank_label = gtk_label_new ("");
-  gtk_box_pack_start (box, blank_label, TRUE, TRUE, 0);
-  gtk_widget_show(blank_label);
-}
-
-void add_label_to_box (GtkBox *box, gboolean do_trans, const gchar *text) {
+void add_param_label_to_box (GtkBox *box, gboolean do_trans, const gchar *text) {
   GtkWidget *label;
 
   gtk_box_set_homogeneous(GTK_BOX(box),FALSE);
@@ -1666,7 +1655,7 @@ void add_label_to_box (GtkBox *box, gboolean do_trans, const gchar *text) {
   if (do_trans) {
     char *markup;
     markup=g_markup_printf_escaped("<span weight=\"bold\" style=\"italic\">%s</span>",_(text));
-    label = gtk_label_new(NULL);
+    label = lives_standard_label_new(NULL);
     gtk_label_set_markup_with_mnemonic (GTK_LABEL(label),markup);
     g_free(markup);
   }

@@ -32,9 +32,7 @@ void on_render_fx_activate (GtkMenuItem *, lives_rfx_t *);
 gboolean make_param_box(GtkVBox *, lives_rfx_t *);
 
 gboolean add_param_to_box (GtkBox *, lives_rfx_t *, gint param_number, gboolean add_slider);
-void add_hsep_to_box (GtkBox *);
-void add_fill_to_box (GtkBox *);
-void add_label_to_box (GtkBox *box, gboolean do_trans, const gchar *text);
+void add_param_label_to_box (GtkBox *box, gboolean do_trans, const gchar *text);
 
 GSList *add_usrgrp_to_livesgrp (GSList *u2l, GSList *rbgroup, gint usr_number);
 lives_widget_group_t *livesgrp_from_usrgrp (GSList *u2l, gint usrgrp);

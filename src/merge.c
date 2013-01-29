@@ -1,6 +1,6 @@
 // merge.c
 // LiVES (lives-exe)
-// (c) G. Finch 2003 - 2012 (salsaman@gmail.com)
+// (c) G. Finch 2003 - 2013 (salsaman@gmail.com)
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -30,7 +30,6 @@ void create_merge_dialog (void) {
   GtkWidget *hbox;
   GtkWidget *label;
   GtkWidget *fit_button;
-  GtkWidget *hseparator;
   GtkWidget *transition_combo;
   GObject *spinbutton_adj;
   GtkWidget *dialog_action_area;
@@ -76,32 +75,23 @@ void create_merge_dialog (void) {
 
 
 
-  merge_opts->merge_dialog = gtk_dialog_new ();
-  gtk_container_set_border_width (GTK_CONTAINER (merge_opts->merge_dialog), 10);
-  gtk_window_set_title (GTK_WINDOW (merge_opts->merge_dialog), _("LiVES: - Merge"));
-  gtk_window_set_position (GTK_WINDOW (merge_opts->merge_dialog), GTK_WIN_POS_CENTER_ALWAYS);
-  gtk_window_set_modal (GTK_WINDOW (merge_opts->merge_dialog), TRUE);
-  gtk_window_set_default_size (GTK_WINDOW(merge_opts->merge_dialog), 720, -1);
-  gtk_dialog_set_has_separator(GTK_DIALOG(merge_opts->merge_dialog),FALSE);
+  merge_opts->merge_dialog = lives_standard_dialog_new (_("LiVES: - Merge"),FALSE);
+  gtk_widget_show(merge_opts->merge_dialog);
 
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_bg (merge_opts->merge_dialog, GTK_STATE_NORMAL, &palette->normal_back);
-  }
-
-  if (!prefs->show_gui) {
+  if (prefs->show_gui) {
     gtk_window_set_transient_for(GTK_WINDOW(merge_opts->merge_dialog),GTK_WINDOW(mainw->LiVES));
   }
 
   dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(merge_opts->merge_dialog));
-  gtk_widget_show (dialog_vbox);
 
   vbox = gtk_vbox_new (FALSE, 0);
-  gtk_widget_show (vbox);
+
   gtk_box_pack_start (GTK_BOX (dialog_vbox), vbox, TRUE, TRUE, 0);
+  gtk_widget_show(vbox);
 
   hbox = gtk_hbox_new (FALSE, 0);
-  gtk_widget_show (hbox);
   gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 19);
+  gtk_widget_show(hbox);
 
   txt=g_strdup_printf(_ ("Merge Clipboard [ %d Frames ]       With Selection [ %d Frames ]"),clipboard->frames,cfile->end-cfile->start+1);
   if (prefs->ins_resample&&clipboard->fps!=cfile->fps) {
@@ -112,84 +102,45 @@ void create_merge_dialog (void) {
     }
   }
 
-  label = gtk_label_new (txt);
+  label = lives_standard_label_new (txt);
   g_free(txt);
-  gtk_widget_show (label);
+
   gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 0);
-  gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_LEFT);
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg (label, GTK_STATE_NORMAL, &palette->normal_fore);
-  }
+  gtk_widget_show(label);
 
-  label = gtk_label_new ("");
-  gtk_widget_show (label);
-  gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 0);
-  gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_LEFT);
+  add_fill_to_box(LIVES_BOX(hbox));
 
-  align_start_button = gtk_radio_button_new (NULL);
+  align_start_button = lives_standard_radio_button_new (_("Align _Starts"),TRUE,radiobutton_align_group,LIVES_BOX(hbox),NULL);
+  radiobutton_align_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (align_start_button));
+  gtk_widget_show(align_start_button);
 
-  gtk_widget_show (align_start_button);
-  gtk_box_pack_start (GTK_BOX (hbox),align_start_button, TRUE, FALSE, 0);
-  gtk_radio_button_set_group (GTK_RADIO_BUTTON (align_start_button), radiobutton_align_group);
-  radiobutton_align_group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (align_start_button));
+  add_fill_to_box(LIVES_BOX(hbox));
 
-  label = gtk_label_new_with_mnemonic ( _("Align _Starts"));
-  gtk_widget_show (label);
-  gtk_label_set_mnemonic_widget (GTK_LABEL (label),align_start_button);
-  gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 0);
-  gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_LEFT);
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg (label, GTK_STATE_NORMAL, &palette->normal_fore);
-  }
+  align_end_button = lives_standard_radio_button_new (_("Align _Ends"),TRUE,radiobutton_align_group,LIVES_BOX(hbox),NULL);
+  gtk_widget_show(align_end_button);
 
-  label = gtk_label_new ("");
-  gtk_widget_show (label);
-  gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 0);
-  gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_LEFT);
-
-  align_end_button = gtk_radio_button_new (radiobutton_align_group);
-  gtk_widget_show (align_end_button);
-  gtk_box_pack_start (GTK_BOX (hbox), align_end_button, TRUE, FALSE, 0);
-  radiobutton_align_group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (align_end_button));
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg (align_end_button, GTK_STATE_NORMAL, &palette->normal_fore);
-  }
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(align_end_button),!mainw->last_transition_align_start);
-  
-
-  label = gtk_label_new_with_mnemonic ( _("Align _Ends"));
-  gtk_widget_show (label);
-  gtk_label_set_mnemonic_widget (GTK_LABEL (label),align_end_button);
-  gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 0);
-  gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_LEFT);
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg (label, GTK_STATE_NORMAL, &palette->normal_fore);
-  }
 
   hbox = gtk_hbox_new (FALSE, 0);
   gtk_widget_show (hbox);
   gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, TRUE, 22);
 
-  spinbutton_adj = (GObject *)gtk_adjustment_new (1, 1, (gint)((cfile->end-cfile->start+1)/cb_frames), 1, 10, 0);
-  merge_opts->spinbutton_loops = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 1, 0);
+
   merge_opts->ins_frame_button = gtk_radio_button_new (NULL);
+
   merge_opts->drop_frame_button = gtk_radio_button_new (NULL);
+
   fit_button = gtk_check_button_new ();
 
-  gtk_spin_button_set_value (GTK_SPIN_BUTTON (merge_opts->spinbutton_loops),mainw->last_transition_loops);
+
 
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(fit_button),mainw->last_transition_loop_to_fit);
 
-  gtk_widget_set_sensitive(merge_opts->spinbutton_loops,!mainw->last_transition_loop_to_fit);
-
   if ((cfile->end-cfile->start+1)<cb_frames) {
     // hide loop controls if selection is smaller than clipboard
-    label = gtk_label_new (_("What to do with extra clipboard frames -"));
+    label = lives_standard_label_new (_("What to do with extra clipboard frames -"));
     gtk_widget_show (label);
     gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 0);
-    if (palette->style&STYLE_1) {
-      gtk_widget_modify_fg (label, GTK_STATE_NORMAL, &palette->normal_fore);
-    }
 
     gtk_widget_show (merge_opts->ins_frame_button);
     gtk_box_pack_start (GTK_BOX (hbox), merge_opts->ins_frame_button, TRUE, FALSE, 0);
@@ -218,36 +169,35 @@ void create_merge_dialog (void) {
     radiobutton_insdrop_group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (merge_opts->drop_frame_button));
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(merge_opts->drop_frame_button),!mainw->last_transition_ins_frames);
   }
-  else if ((cfile->end-cfile->start+1)>cb_frames) {
-    
-    label = gtk_label_new_with_mnemonic (_("Number of Times to Loop Clipboard"));
-    gtk_widget_show (label);
-    gtk_label_set_mnemonic_widget (GTK_LABEL (label),merge_opts->spinbutton_loops);
-    gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 0);
-    gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_LEFT);
-    if (palette->style&STYLE_1) {
-      gtk_widget_modify_fg (label, GTK_STATE_NORMAL, &palette->normal_fore);
-    }
-    gtk_widget_show (merge_opts->spinbutton_loops);
-    gtk_box_pack_start (GTK_BOX (hbox), merge_opts->spinbutton_loops, TRUE, FALSE, 0);
-
-    gtk_widget_show (fit_button);
-    gtk_box_pack_start (GTK_BOX (hbox), fit_button, FALSE, FALSE, 0);
-    label = gtk_label_new_with_mnemonic (_ ("_Loop Clipboard to Fit Selection"));
-    gtk_label_set_mnemonic_widget (GTK_LABEL (label),fit_button);
-    gtk_widget_show (label);
-    gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 0);
-    if (palette->style&STYLE_1) {
-      gtk_widget_modify_fg (label, GTK_STATE_NORMAL, &palette->normal_fore);
-    }
-  }
   else {
-    gtk_widget_hide(hbox);
+    if ((cfile->end-cfile->start+1)>cb_frames) {
+      merge_opts->spinbutton_loops = lives_standard_spin_button_new 
+	(_("Number of Times to Loop Clipboard"),FALSE,1.,1.,
+	 (int)((cfile->end-cfile->start+1)/cb_frames), 1., 10., 0, LIVES_BOX(hbox), NULL);
+      gtk_widget_show (merge_opts->spinbutton_loops);
+      
+      
+      gtk_widget_show (fit_button);
+      gtk_box_pack_start (GTK_BOX (hbox), fit_button, FALSE, FALSE, 0);
+      label = gtk_label_new_with_mnemonic (_ ("_Loop Clipboard to Fit Selection"));
+      gtk_label_set_mnemonic_widget (GTK_LABEL (label),fit_button);
+      gtk_widget_show (label);
+      gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 0);
+      if (palette->style&STYLE_1) {
+	gtk_widget_modify_fg (label, GTK_STATE_NORMAL, &palette->normal_fore);
+      }
+    }
+    else {
+      spinbutton_adj = (GObject *)gtk_adjustment_new (1, 1, (gint)((cfile->end-cfile->start+1)/cb_frames), 1, 10, 0);
+      merge_opts->spinbutton_loops = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 1, 0);
+      gtk_widget_hide(hbox);
+    }
   }
 
-  hseparator = gtk_hseparator_new ();
-  gtk_widget_show (hseparator);
-  gtk_box_pack_start (GTK_BOX (vbox), hseparator, FALSE, TRUE, 0);
+  gtk_spin_button_set_value (GTK_SPIN_BUTTON (merge_opts->spinbutton_loops),mainw->last_transition_loops);
+  gtk_widget_set_sensitive(merge_opts->spinbutton_loops,!mainw->last_transition_loop_to_fit);
+
+  add_hsep_to_box(LIVES_BOX(vbox),FALSE);
   
   hbox = gtk_hbox_new (TRUE, 0);
   gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 10);
@@ -259,9 +209,8 @@ void create_merge_dialog (void) {
 
   mainw->last_transition_idx=merge_opts->list_to_rfx_index[defstart];
 
-  hseparator = gtk_hseparator_new ();
-  gtk_widget_show (hseparator);
-  gtk_box_pack_start (GTK_BOX (vbox), hseparator, FALSE, TRUE, 0);
+  add_hsep_to_box(LIVES_BOX(vbox),FALSE);
+
 
   do_onchange_init(rfx);
 

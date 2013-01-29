@@ -188,6 +188,9 @@ typedef int lives_pgid_t;
 /// maximum fps we will allow (gdouble)
 #define FPS_MAX 200.
 
+#define MAX_FRAME_WIDTH 100000.
+#define MAX_FRAME_HEIGHT 100000.
+
 #define ENABLE_DVD_GRAB
 
 #define FP_BITS 16 /// max fp bits [apparently 16 is faster]

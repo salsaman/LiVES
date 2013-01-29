@@ -2052,32 +2052,18 @@ GtkWidget *events_rec_dialog (gboolean allow_mt) {
 
   render_choice=RENDER_CHOICE_PREVIEW;
 
-  e_rec_dialog = gtk_dialog_new ();
-  gtk_window_set_title (GTK_WINDOW (e_rec_dialog), _("LiVES: - Events recorded"));
-  gtk_window_set_position (GTK_WINDOW (e_rec_dialog), GTK_WIN_POS_CENTER_ALWAYS);
-  gtk_window_set_modal (GTK_WINDOW (e_rec_dialog), TRUE);
-  if (palette->style&STYLE_1) {
-    gtk_dialog_set_has_separator(GTK_DIALOG(e_rec_dialog),FALSE);
-    gtk_widget_modify_bg (e_rec_dialog, GTK_STATE_NORMAL, &palette->normal_back);
-  }
+  e_rec_dialog = lives_standard_dialog_new (_("LiVES: - Events recorded"),FALSE);
 
   if (prefs->show_gui) gtk_window_set_transient_for(GTK_WINDOW(e_rec_dialog),GTK_WINDOW(mainw->LiVES));
-  gtk_window_set_modal (GTK_WINDOW (e_rec_dialog), TRUE);
 
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(e_rec_dialog));
-  gtk_widget_show (dialog_vbox);
 
   vbox = gtk_vbox_new (FALSE, 0);
-  gtk_widget_show (vbox);
   gtk_box_pack_start (GTK_BOX (dialog_vbox), vbox, TRUE, TRUE, 0);
 
-  label = gtk_label_new (_("   Events were recorded. What would you like to do with them ?    "));
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-  }
+  label = lives_standard_label_new (_("   Events were recorded. What would you like to do with them ?    "));
 
   gtk_box_pack_start (GTK_BOX (vbox), label, TRUE, TRUE, 20);
-  gtk_widget_show (label);
 
   hbox = gtk_hbox_new (FALSE, 0);
   gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 20);
@@ -4524,11 +4510,9 @@ GtkWidget *create_event_list_dialog (weed_plant_t *event_list, weed_timecode_t s
  winsize_h=scr_width-100;
  winsize_v=scr_height-100;
  
- event_dialog = gtk_dialog_new ();
+ event_dialog = lives_standard_dialog_new (_("LiVES: Event list"),FALSE);
 
- gtk_widget_modify_bg(event_dialog, GTK_STATE_NORMAL, &palette->menu_and_bars);
- gtk_window_set_title (GTK_WINDOW (event_dialog), _("LiVES: Event list"));
- gtk_window_add_accel_group (GTK_WINDOW (event_dialog), mainw->accel_group);
+ //gtk_window_add_accel_group (GTK_WINDOW (event_dialog), mainw->accel_group);
  
  top_vbox=lives_dialog_get_content_area(LIVES_DIALOG(event_dialog));
 
@@ -4699,15 +4683,8 @@ GtkWidget *create_event_list_dialog (weed_plant_t *event_list, weed_timecode_t s
      tc_secs=tc/U_SECL;
      tc-=tc_secs*U_SECL;
      text=g_strdup_printf(_("Timecode=%"PRId64".%"PRId64),tc_secs,tc);
-     label = gtk_label_new (text);
+     label = lives_standard_label_new (text);
      g_free(text);
-     
-     gtk_widget_show (label);
-
-     if (palette->style&STYLE_1) {
-       gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-     }
-
      
      gtk_table_attach (GTK_TABLE (table), label, 0, 1, currow, currow+1,
 		       (GtkAttachOptions) (GTK_EXPAND),
@@ -4717,46 +4694,38 @@ GtkWidget *create_event_list_dialog (weed_plant_t *event_list, weed_timecode_t s
      hint=get_event_hint (event);
      switch (hint) {
      case WEED_EVENT_HINT_FRAME:
-       label = gtk_label_new ("Frame");
+       label = lives_standard_label_new ("Frame");
        break;
      case WEED_EVENT_HINT_FILTER_INIT:
-       label = gtk_label_new ("Filter on");
+       label = lives_standard_label_new ("Filter on");
        break;
      case WEED_EVENT_HINT_FILTER_DEINIT:
-       label = gtk_label_new ("Filter off");
+       label = lives_standard_label_new ("Filter off");
        break;
      case WEED_EVENT_HINT_PARAM_CHANGE:
-       label = gtk_label_new ("Parameter change");
+       label = lives_standard_label_new ("Parameter change");
        break;
      case WEED_EVENT_HINT_FILTER_MAP:
-       label = gtk_label_new ("Filter map");
+       label = lives_standard_label_new ("Filter map");
        break;
      case WEED_EVENT_HINT_MARKER:
-       label = gtk_label_new ("Marker");
+       label = lives_standard_label_new ("Marker");
        break;
      default:
        text=g_strdup_printf("unknown event hint %d",hint);
-       label = gtk_label_new (text);
+       label = lives_standard_label_new (text);
        g_free(text);
      }
-     
-     if (palette->style&STYLE_1) {
-       gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-     }
 
-     gtk_widget_show (label);
      gtk_table_attach (GTK_TABLE (table), label, 1, 2, currow, currow+1,
 		     (GtkAttachOptions) (GTK_EXPAND),
 		     (GtkAttachOptions) (0), 0, 0);
      
      // event id
      text=g_strdup_printf(("Event id=%p"),(void *)event);
-     label = gtk_label_new (text);
+     label = lives_standard_label_new (text);
      g_free(text);
-     gtk_widget_show (label);
-     if (palette->style&STYLE_1) {
-       gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-     }
+
      gtk_table_attach (GTK_TABLE (table), label, 2, 3, currow, currow+1,
 		       (GtkAttachOptions) (GTK_EXPAND),
 		       (GtkAttachOptions) (0), 0, 0);
@@ -4787,7 +4756,6 @@ GtkWidget *create_event_list_dialog (weed_plant_t *event_list, weed_timecode_t s
 							"text", VALUE_COLUMN,
 							NULL);
      gtk_tree_view_append_column (GTK_TREE_VIEW (tree), column);
-     gtk_widget_show (tree);
      
      gtk_table_attach (GTK_TABLE (table), tree, 3, 6, currow, currow+1,
 		       (GtkAttachOptions) (GTK_FILL|GTK_EXPAND),
@@ -4799,7 +4767,6 @@ GtkWidget *create_event_list_dialog (weed_plant_t *event_list, weed_timecode_t s
  }
 
  scrolledwindow = gtk_scrolled_window_new (NULL, NULL);
- gtk_widget_show (scrolledwindow);
  gtk_box_pack_start (GTK_BOX (top_vbox), scrolledwindow, TRUE, TRUE, 0);
 
  gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrolledwindow), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
@@ -4844,6 +4811,8 @@ GtkWidget *create_event_list_dialog (weed_plant_t *event_list, weed_timecode_t s
     gtk_window_maximize (GTK_WINDOW(event_dialog));
   }
 
+  gtk_widget_show_all(event_dialog);
+
  return event_dialog;
 }
 
@@ -4886,8 +4855,6 @@ render_details *create_render_details (gint type) {
   GtkWidget *alabel;
   GtkWidget *hsep;
 
-  GObject *spinbutton_adj;
-
   GtkAccelGroup *rdet_accel_group;
 
   GList *ofmt_all=NULL;
@@ -4903,6 +4870,8 @@ render_details *create_render_details (gint type) {
   gchar **array;
 
   gchar *tmp,*tmp2;
+
+  gchar *title;
 
   if (type==1) specified=TRUE;
 
@@ -4934,20 +4903,17 @@ render_details *create_render_details (gint type) {
   }
 
   rdet->enc_changed=FALSE;
-  rdet->dialog = gtk_dialog_new ();
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_bg(rdet->dialog, GTK_STATE_NORMAL, &palette->normal_back);
-    if (type==1) gtk_dialog_set_has_separator(GTK_DIALOG(rdet->dialog),FALSE);
-  }
 
-  if (type==3||type==4) gtk_window_set_title (GTK_WINDOW (rdet->dialog), _("LiVES: Multitrack details"));
-  else if (type==1) gtk_window_set_title (GTK_WINDOW (rdet->dialog), _("LiVES: Encoding details"));
-  else gtk_window_set_title (GTK_WINDOW (rdet->dialog), _("LiVES: New clip details"));
+  if (type==3||type==4) title=g_strdup(_("LiVES: Multitrack details"));
+  else if (type==1) title=g_strdup(_("LiVES: Encoding details"));
+  else title=g_strdup(_("LiVES: New clip details"));
 
-  gtk_container_set_border_width (GTK_CONTAINER (rdet->dialog), 10);
-  gtk_window_set_default_size (GTK_WINDOW (rdet->dialog), 300, 200);
+  rdet->dialog = lives_standard_dialog_new (title,FALSE);
+
+  g_free(title);
+
   if (prefs->show_gui&&mainw->is_ready) gtk_window_set_transient_for(GTK_WINDOW(rdet->dialog),GTK_WINDOW(mainw->LiVES));
-  gtk_window_set_modal (GTK_WINDOW (rdet->dialog), TRUE);
+
   rdet_accel_group = GTK_ACCEL_GROUP(gtk_accel_group_new ());
   gtk_window_add_accel_group (GTK_WINDOW (rdet->dialog), rdet_accel_group);
 
@@ -4996,54 +4962,26 @@ render_details *create_render_details (gint type) {
     gtk_widget_modify_bg (frame, GTK_STATE_NORMAL, &palette->normal_back);
   }
   
-  label = gtk_label_new (_("Video"));
+  label = lives_standard_label_new (_("Video"));
   gtk_frame_set_label_widget (GTK_FRAME (frame), label);
-  
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-  }
   
   hbox = gtk_hbox_new (FALSE, 50);
   gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 10);
   
-  label = gtk_label_new_with_mnemonic (_ ("_Width"));
-  
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-  }
-  
-  spinbutton_adj = (GObject *)gtk_adjustment_new (rdet->width, 2., 100000., 1, 16, 0);
-  
-  rdet->spinbutton_width = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 1, 0);
-  gtk_spin_button_set_numeric (GTK_SPIN_BUTTON (rdet->spinbutton_width),TRUE);
-  gtk_entry_set_activates_default (GTK_ENTRY (rdet->spinbutton_width), TRUE);
+  rdet->spinbutton_width = lives_standard_spin_button_new 
+    (_("_Width"),TRUE,rdet->width,2.,MAX_FRAME_WIDTH,1.,16.,0,LIVES_BOX(hbox),NULL);
   
   g_signal_connect_after (GTK_OBJECT (rdet->spinbutton_width), "value_changed",
 			  G_CALLBACK (rdetw_spinw_changed),
 			  rdet);
   
-  gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 10);
-  gtk_box_pack_start (GTK_BOX (hbox), rdet->spinbutton_width, FALSE, FALSE, 10);
   
-  label = gtk_label_new_with_mnemonic (_ ("_Height"));
-  
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-  }
-  
-  spinbutton_adj = (GObject *)gtk_adjustment_new (rdet->height, 2., 10000., 1, 16, 0);
-  
-  rdet->spinbutton_height = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 1, 0);
-  gtk_spin_button_set_numeric (GTK_SPIN_BUTTON (rdet->spinbutton_height),TRUE);
-  gtk_entry_set_activates_default (GTK_ENTRY (rdet->spinbutton_height), TRUE);
+  rdet->spinbutton_height = lives_standard_spin_button_new 
+    (_("_Height"),TRUE,rdet->height,2.,MAX_FRAME_WIDTH,1.,16.,0,LIVES_BOX(hbox),NULL);
   
   g_signal_connect_after (GTK_OBJECT (rdet->spinbutton_height), "value_changed",
 			  G_CALLBACK (rdetw_spinh_changed),
 			  rdet);
-  
-
-  gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 10);
-  gtk_box_pack_start (GTK_BOX (hbox), rdet->spinbutton_height, FALSE, FALSE, 10);
 
   // add aspect button
   if (type==1) {
@@ -5060,18 +4998,9 @@ render_details *create_render_details (gint type) {
 
   hbox = gtk_hbox_new (FALSE, 0);
   gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 10);
-  
-  label = gtk_label_new_with_mnemonic (_ ("_Frames per second"));
-  
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-  }
-  
-  spinbutton_adj = (GObject *)gtk_adjustment_new (rdet->fps, 1., FPS_MAX, 1, 10, 0);
-  
-  rdet->spinbutton_fps = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 1, 3);
-  gtk_spin_button_set_numeric (GTK_SPIN_BUTTON (rdet->spinbutton_fps),TRUE);
-  gtk_entry_set_activates_default (GTK_ENTRY (rdet->spinbutton_fps), TRUE);
+
+  rdet->spinbutton_fps = lives_standard_spin_button_new 
+    (_("_Frames per second"),TRUE,rdet->fps,1.,FPS_MAX,1.,10.,0,LIVES_BOX(hbox),NULL);
   
   if (type==4&&mainw->multitrack->event_list!=NULL) gtk_widget_set_sensitive(rdet->spinbutton_fps,FALSE);
   
@@ -5079,9 +5008,7 @@ render_details *create_render_details (gint type) {
 			  G_CALLBACK (rdetw_spinf_changed),
 			  rdet);
   
-  gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 10);
-  gtk_box_pack_start (GTK_BOX (hbox), rdet->spinbutton_fps, FALSE, FALSE, 10);
-  
+  // TODO
   rdet->pertrack_checkbutton = gtk_check_button_new ();
   rdet->backaudio_checkbutton = gtk_check_button_new ();
   
@@ -5098,7 +5025,8 @@ render_details *create_render_details (gint type) {
     hbox = gtk_hbox_new (FALSE, 0);
     gtk_box_pack_start (GTK_BOX (top_vbox), hbox, FALSE, FALSE, 10);
 
-    rdet->backaudio_checkbutton=lives_standard_check_button_new(_("Enable _backing audio track"),TRUE,LIVES_BOX(hbox),NULL);
+    rdet->backaudio_checkbutton=lives_standard_check_button_new
+      (_("Enable _backing audio track"),TRUE,LIVES_BOX(hbox),NULL);
 
     add_fill_to_box(LIVES_BOX(hbox));
 
@@ -5107,7 +5035,8 @@ render_details *create_render_details (gint type) {
     gtk_widget_set_sensitive(rdet->backaudio_checkbutton, 
 			     gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(resaudw->aud_checkbutton)));
 
-    rdet->pertrack_checkbutton=lives_standard_check_button_new(_("Audio track _per video track"),TRUE,LIVES_BOX(hbox),NULL);
+    rdet->pertrack_checkbutton=lives_standard_check_button_new 
+      (_("Audio track _per video track"),TRUE,LIVES_BOX(hbox),NULL);
 
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (rdet->pertrack_checkbutton), prefs->mt_pertrack_audio);
 
@@ -5252,10 +5181,7 @@ render_details *create_render_details (gint type) {
   }
 
 
-  rdet->always_checkbutton = gtk_check_button_new ();
-  
   rdet->always_hbox = gtk_hbox_new (TRUE, 20);
-
 
   rdet->always_checkbutton=lives_standard_check_button_new ((tmp=g_strdup(_("_Always use these values"))),TRUE,
 							    LIVES_BOX(rdet->always_hbox),

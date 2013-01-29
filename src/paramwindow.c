@@ -766,7 +766,9 @@ void on_render_fx_pre_activate (GtkMenuItem *menuitem, lives_rfx_t *rfx) {
 
 
   txt=g_strdup_printf ("LiVES: - %s",_(rfx->menu_text));
+  if (menuitem==NULL) widget_opts.non_modal=TRUE;
   fx_dialog[n] = lives_standard_dialog_new (txt,FALSE);
+  if (menuitem==NULL) widget_opts.non_modal=FALSE;
   g_free (txt);
 
   if (rfx->status==RFX_STATUS_WEED&&rfx->is_template) is_defaults=TRUE;
@@ -777,7 +779,6 @@ void on_render_fx_pre_activate (GtkMenuItem *menuitem, lives_rfx_t *rfx) {
       if (mainw->multitrack==NULL) gtk_window_set_transient_for(GTK_WINDOW(fx_dialog[n]),GTK_WINDOW(mainw->LiVES));
       else gtk_window_set_transient_for(GTK_WINDOW(fx_dialog[n]),GTK_WINDOW(mainw->multitrack->window));
     }
-    gtk_window_set_modal (GTK_WINDOW (fx_dialog[n]), TRUE);
   }
 
   pbox = top_dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(fx_dialog[n]));
@@ -814,9 +815,9 @@ void on_render_fx_pre_activate (GtkMenuItem *menuitem, lives_rfx_t *rfx) {
   has_param=make_param_box(GTK_VBOX (pbox), rfx);
 
   dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (fx_dialog[n]));
-  gtk_container_set_border_width (GTK_CONTAINER (dialog_action_area), 80);
-  gtk_box_set_spacing (GTK_BOX (dialog_action_area),10);
-  gtk_button_box_set_child_size (GTK_BUTTON_BOX (dialog_action_area), DEF_BUTTON_WIDTH, -1);
+  //gtk_container_set_border_width (GTK_CONTAINER (dialog_action_area), 80);
+  //gtk_box_set_spacing (GTK_BOX (dialog_action_area),10);
+  //gtk_button_box_set_child_size (GTK_BUTTON_BOX (dialog_action_area), DEF_BUTTON_WIDTH, -1);
 
   cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
     

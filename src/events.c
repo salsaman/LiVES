@@ -4854,6 +4854,7 @@ render_details *create_render_details (gint type) {
   GtkWidget *cancelbutton;
   GtkWidget *alabel;
   GtkWidget *hsep;
+  GtkWidget *daa;
 
   GtkAccelGroup *rdet_accel_group;
 
@@ -5030,7 +5031,7 @@ render_details *create_render_details (gint type) {
 
     add_fill_to_box(LIVES_BOX(hbox));
 
-    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (rdet->backaudio_checkbutton), prefs->mt_backaudio>0);
+    lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (rdet->backaudio_checkbutton), prefs->mt_backaudio>0);
     
     gtk_widget_set_sensitive(rdet->backaudio_checkbutton, 
 			     gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(resaudw->aud_checkbutton)));
@@ -5038,7 +5039,7 @@ render_details *create_render_details (gint type) {
     rdet->pertrack_checkbutton=lives_standard_check_button_new 
       (_("Audio track _per video track"),TRUE,LIVES_BOX(hbox),NULL);
 
-    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (rdet->pertrack_checkbutton), prefs->mt_pertrack_audio);
+    lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (rdet->pertrack_checkbutton), prefs->mt_pertrack_audio);
 
     gtk_widget_set_sensitive(rdet->pertrack_checkbutton, 
 			     gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(resaudw->aud_checkbutton)));
@@ -5192,7 +5193,14 @@ render_details *create_render_details (gint type) {
 
   add_fill_to_box(LIVES_BOX(rdet->always_hbox));
 
-  gtk_box_pack_start (GTK_BOX (lives_dialog_get_action_area(LIVES_DIALOG(rdet->dialog))), rdet->always_hbox, TRUE, FALSE, 20);
+  daa=lives_dialog_get_action_area(LIVES_DIALOG(rdet->dialog));
+
+  gtk_box_pack_start (GTK_BOX (daa), rdet->always_hbox, FALSE, FALSE, 20);
+
+  add_fill_to_box(GTK_BOX (daa));
+
+  gtk_button_box_set_child_size (GTK_BUTTON_BOX (daa), DEF_BUTTON_WIDTH, -1);
+  gtk_button_box_set_layout (GTK_BUTTON_BOX (daa), GTK_BUTTONBOX_SPREAD);
 
 
   cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
@@ -5200,7 +5208,7 @@ render_details *create_render_details (gint type) {
     gtk_dialog_add_action_widget (GTK_DIALOG (rdet->dialog), cancelbutton, GTK_RESPONSE_CANCEL);
 
   }
-  else add_fill_to_box(GTK_BOX (lives_dialog_get_action_area(LIVES_DIALOG(rdet->dialog))));
+  else add_fill_to_box(GTK_BOX (daa));
 
   lives_widget_set_can_focus_and_default (cancelbutton);
 

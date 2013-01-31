@@ -857,7 +857,7 @@ LiVESWidget *lives_standard_combo_new (const char *labeltext, boolean use_mnemon
 
   if (!widget_opts.swap_label&&eventbox!=NULL)
     gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, W_PACKING_WIDTH);
-  gtk_box_pack_start (GTK_BOX (hbox), combo, FALSE, TRUE, W_PACKING_WIDTH);
+  gtk_box_pack_start (GTK_BOX (hbox), combo, FALSE, FALSE, W_PACKING_WIDTH);
   if (widget_opts.swap_label&&eventbox!=NULL)
     gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, W_PACKING_WIDTH);
 

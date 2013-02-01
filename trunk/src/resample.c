@@ -1641,130 +1641,106 @@ create_new_pb_speed (gshort type)
   // type 1 = change speed
   // type 2 = resample
 
-
   GtkWidget *new_pb_speed;
-  GtkWidget *dialog_vbox6;
-  GtkWidget *vbox6;
+  GtkWidget *dialog_vbox;
+  GtkWidget *vbox;
   GtkWidget *hbox;
-  GtkWidget *eventbox;
+  GtkWidget *ca_hbox;
   GtkWidget *label;
-  GtkWidget *alabel;
+  GtkWidget *label2;
   GtkWidget *radiobutton1=NULL;
   GtkWidget *radiobutton2=NULL;
-  GSList *rbgroup = NULL;
-  GObject *spinbutton_pb_speed_adj;
   GtkWidget *spinbutton_pb_speed;
-  GObject *spinbutton_pb_time_adj;
   GtkWidget *spinbutton_pb_time=NULL;
   GtkWidget *dialog_action_area;
-  GtkWidget *cancelbutton4;
+  GtkWidget *cancelbutton;
   GtkWidget *change_pb_ok;
   GtkWidget *change_audio_speed;
+
+  GSList *rbgroup = NULL;
+
   gchar label_text[256];
 
-  new_pb_speed = gtk_dialog_new ();
-  gtk_container_set_border_width (GTK_CONTAINER (new_pb_speed), 10);
+  gchar *title=NULL;
+
   if (type==1) {
-    gtk_window_set_title (GTK_WINDOW (new_pb_speed), _("LiVES: - Change playback speed"));
+    title=g_strdup( _("LiVES: - Change playback speed"));
   }
-  else if (type==2) {
-    gtk_window_set_title (GTK_WINDOW (new_pb_speed), _("LiVES: - Resample Video"));
+  else {
+    title=g_strdup(_("LiVES: - Resample Video"));
   }
-  gtk_window_set_position (GTK_WINDOW (new_pb_speed), GTK_WIN_POS_CENTER_ALWAYS);
-  gtk_window_set_modal (GTK_WINDOW (new_pb_speed), TRUE);
-  gtk_window_set_default_size (GTK_WINDOW (new_pb_speed), 300, 200);
+
+  new_pb_speed = lives_standard_dialog_new (title,FALSE);
+  g_free(title);
 
   if (prefs->show_gui) {
     gtk_window_set_transient_for(GTK_WINDOW(new_pb_speed),GTK_WINDOW(mainw->LiVES));
   }
 
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_bg(new_pb_speed, GTK_STATE_NORMAL, &palette->normal_back);
-    gtk_dialog_set_has_separator(GTK_DIALOG(new_pb_speed),FALSE);
-  }
+  dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(new_pb_speed));
 
-  dialog_vbox6 = lives_dialog_get_content_area(GTK_DIALOG(new_pb_speed));
-
-  vbox6 = gtk_vbox_new (FALSE, 10);
-  gtk_box_pack_start (GTK_BOX (dialog_vbox6), vbox6, TRUE, TRUE, 20);
+  vbox = gtk_vbox_new (FALSE, 10);
+  gtk_box_pack_start (GTK_BOX (dialog_vbox), vbox, TRUE, TRUE, 20);
 
   if (type==1) {
-    g_snprintf(label_text,256,_("\n\nCurrent playback speed is %.3f frames per second.\n\nPlease enter the desired playback speed\nin _frames per second"),cfile->fps);
+    g_snprintf(label_text,256,
+	       _("\n\nCurrent playback speed is %.3f frames per second.\n\nPlease enter the desired playback speed\nin _frames per second"),cfile->fps);
   }
   else if (type==2) {
-    g_snprintf(label_text,256,_("\n\nCurrent playback speed is %.3f frames per second.\n\nPlease enter the _resampled rate\nin frames per second"),cfile->fps);
+    g_snprintf(label_text,256,
+	       _("\n\nCurrent playback speed is %.3f frames per second.\n\nPlease enter the _resampled rate\nin frames per second"),cfile->fps);
   }
-  label = gtk_label_new_with_mnemonic (label_text);
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-  }
-  spinbutton_pb_speed_adj = (GObject *)gtk_adjustment_new (cfile->fps, 1, FPS_MAX, 0.01, .1, 0.);
-  spinbutton_pb_speed = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_pb_speed_adj), 1, 3);
-  gtk_label_set_mnemonic_widget (GTK_LABEL (label), spinbutton_pb_speed);
+
+  label=lives_standard_label_new_with_mnemonic(label_text,NULL);
 
   hbox = gtk_hbox_new (FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (vbox6), label, TRUE, TRUE, 0);
-  gtk_box_pack_start (GTK_BOX (vbox6), hbox, FALSE, FALSE, 0);
+  gtk_box_pack_start (GTK_BOX (vbox), label, TRUE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 0);
 
   if (type==2) {
-    add_fill_to_box(GTK_BOX(hbox));
-    gtk_box_pack_start (GTK_BOX (hbox), spinbutton_pb_speed, TRUE, TRUE, 10);
+    add_fill_to_box(LIVES_BOX(hbox));
+    spinbutton_pb_speed = lives_standard_spin_button_new (NULL,FALSE,cfile->fps,1.,FPS_MAX,.01,.1,3,LIVES_BOX(hbox),NULL);
     add_fill_to_box(GTK_BOX(hbox));
   }
   else {
-    radiobutton1 = gtk_radio_button_new (NULL);
-    rbgroup=gtk_radio_button_get_group (GTK_RADIO_BUTTON (radiobutton1));
+    radiobutton1 = lives_standard_radio_button_new (NULL,FALSE,rbgroup,LIVES_BOX(hbox),NULL);
+    rbgroup=lives_radio_button_get_group (LIVES_RADIO_BUTTON (radiobutton1));
 
-    gtk_box_pack_start (GTK_BOX (hbox), radiobutton1, TRUE, FALSE, 0);
-    gtk_box_pack_start (GTK_BOX (hbox), spinbutton_pb_speed, TRUE, TRUE, 10);
 
-    label=gtk_label_new_with_mnemonic(_("OR enter the desired clip length in _seconds"));
-    gtk_box_pack_start (GTK_BOX (vbox6), label, TRUE, TRUE, 0);
-    if (palette->style&STYLE_1) {
-      gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-    }
+    spinbutton_pb_speed = lives_standard_spin_button_new (NULL,FALSE,cfile->fps,1.,FPS_MAX,.01,.1,3,LIVES_BOX(hbox),NULL);
+
+    label2=lives_standard_label_new_with_mnemonic(_("OR enter the desired clip length in _seconds"),NULL);
+    gtk_box_pack_start (GTK_BOX (vbox), label2, TRUE, TRUE, 0);
 
     hbox = gtk_hbox_new (FALSE, 0);
-    radiobutton2 = gtk_radio_button_new (rbgroup);
-    gtk_box_pack_start (GTK_BOX (vbox6), hbox, FALSE, FALSE, 0);
-    gtk_box_pack_start (GTK_BOX (hbox), radiobutton2, TRUE, FALSE, 0);
+    gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 0);
+    radiobutton2 = lives_standard_radio_button_new (NULL,FALSE,rbgroup,LIVES_BOX(hbox),NULL);
 
 
-    spinbutton_pb_time_adj = (GObject *)gtk_adjustment_new ((gdouble)((gint)(cfile->frames/cfile->fps*100.))/100., 1./FPS_MAX, cfile->frames, 1., 10., 0.);
-    spinbutton_pb_time = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_pb_time_adj), 1, 2);
-    gtk_box_pack_start (GTK_BOX (hbox), spinbutton_pb_time, TRUE, TRUE, 10);
-    gtk_entry_set_activates_default (GTK_ENTRY (spinbutton_pb_time), TRUE);
-    gtk_label_set_mnemonic_widget (GTK_LABEL (label), spinbutton_pb_time);
+    spinbutton_pb_time = lives_standard_spin_button_new (NULL,FALSE,
+							 (gdouble)((gint)(cfile->frames/cfile->fps*100.))/100., 
+							 1./FPS_MAX, cfile->frames, 1., 10., 2, LIVES_BOX(hbox),NULL);
+
+    gtk_label_set_mnemonic_widget (GTK_LABEL (label2), spinbutton_pb_time);
 
   }
-  gtk_entry_set_activates_default (GTK_ENTRY (spinbutton_pb_speed), TRUE);
 
-  hbox = gtk_hbox_new (FALSE, 0);
-  change_audio_speed = gtk_check_button_new();
-  alabel=gtk_label_new_with_mnemonic (_("Change the _audio speed as well"));
-  eventbox=gtk_event_box_new();
+  gtk_label_set_mnemonic_widget (GTK_LABEL (label), spinbutton_pb_speed);
 
-  gtk_box_pack_start (GTK_BOX (hbox), change_audio_speed, FALSE, FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, 0);
-  gtk_label_set_mnemonic_widget (GTK_LABEL (alabel),change_audio_speed);
-  gtk_container_add(GTK_CONTAINER(eventbox),alabel);
-  g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
-		    G_CALLBACK (label_act_toggle),
-		    change_audio_speed);
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(alabel, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_bg (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
-  }
-  gtk_box_pack_start (GTK_BOX (dialog_vbox6), hbox, TRUE, TRUE, 20);
+
+  ca_hbox = gtk_hbox_new (FALSE, 0);
+  change_audio_speed = lives_standard_check_button_new
+    (_("Change the _audio speed as well"),TRUE,LIVES_BOX(ca_hbox),NULL);
+
+  gtk_box_pack_start (GTK_BOX (dialog_vbox), ca_hbox, TRUE, TRUE, 20);
 
 
   dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (new_pb_speed));
   gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area), GTK_BUTTONBOX_END);
 
-  cancelbutton4 = gtk_button_new_from_stock ("gtk-cancel");
-  gtk_dialog_add_action_widget (GTK_DIALOG (new_pb_speed), cancelbutton4, GTK_RESPONSE_CANCEL);
-  lives_widget_set_can_focus_and_default (cancelbutton4);
+  cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
+  gtk_dialog_add_action_widget (GTK_DIALOG (new_pb_speed), cancelbutton, GTK_RESPONSE_CANCEL);
+  lives_widget_set_can_focus_and_default (cancelbutton);
 
   change_pb_ok = gtk_button_new_from_stock ("gtk-ok");
   gtk_dialog_add_action_widget (GTK_DIALOG (new_pb_speed), change_pb_ok, GTK_RESPONSE_OK);
@@ -1778,7 +1754,7 @@ create_new_pb_speed (gshort type)
   g_signal_connect (GTK_OBJECT (change_audio_speed), "toggled",
 		    G_CALLBACK (on_boolean_toggled),
 		    &mainw->fx1_bool);
-  g_signal_connect (GTK_OBJECT (cancelbutton4), "clicked",
+  g_signal_connect (GTK_OBJECT (cancelbutton), "clicked",
 		    G_CALLBACK (lives_general_button_clicked),
 		    NULL);
   if (type==1) {
@@ -1811,9 +1787,9 @@ create_new_pb_speed (gshort type)
   }
 
   gtk_widget_show_all (new_pb_speed);
+
   if (type!=1||cfile->achans==0) {
-    gtk_widget_hide (change_audio_speed);
-    gtk_widget_hide (alabel);
+    gtk_widget_hide (ca_hbox);
   }
 
 }

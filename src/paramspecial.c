@@ -435,15 +435,16 @@ void setmergealign (void) {
   lives_param_t *param;
   gint cb_frames=clipboard->frames;
 
-  // TODO - tidy
-
   if (prefs->ins_resample&&clipboard->fps!=cfile->fps) {
     cb_frames=count_resampled_frames(clipboard->frames,clipboard->fps,cfile->fps);
   }
 
-  if (cfile->end-cfile->start+1>(cb_frames*gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON (merge_opts->spinbutton_loops)))&&!merge_opts->loop_to_fit) {
+  if (cfile->end-cfile->start+1>(cb_frames*((merge_opts!=NULL&&merge_opts->spinbutton_loops!=NULL)?
+					    gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON (merge_opts->spinbutton_loops)):1))
+      &&!merge_opts->loop_to_fit) {
     // set special transalign widgets to their default values
-    if (mergealign.start_widget!=NULL&&GTK_IS_SPIN_BUTTON (mergealign.start_widget)&&(param=&(mergealign.rfx->params[mergealign.start_param]))->type==LIVES_PARAM_NUM) {
+    if (mergealign.start_widget!=NULL&&GTK_IS_SPIN_BUTTON
+	(mergealign.start_widget)&&(param=&(mergealign.rfx->params[mergealign.start_param]))->type==LIVES_PARAM_NUM) {
       if (param->dp) {
 	gtk_spin_button_set_value (GTK_SPIN_BUTTON (mergealign.start_widget),get_double_param (param->def));
       }
@@ -451,7 +452,8 @@ void setmergealign (void) {
 	gtk_spin_button_set_value (GTK_SPIN_BUTTON (mergealign.start_widget),(gdouble)get_int_param (param->def));
       }
     }
-    if (mergealign.end_widget!=NULL&&GTK_IS_SPIN_BUTTON (mergealign.end_widget)&&(param=&(mergealign.rfx->params[mergealign.end_param]))->type==LIVES_PARAM_NUM) {
+    if (mergealign.end_widget!=NULL&&GTK_IS_SPIN_BUTTON 
+	(mergealign.end_widget)&&(param=&(mergealign.rfx->params[mergealign.end_param]))->type==LIVES_PARAM_NUM) {
       if (param->dp) {
 	gtk_spin_button_set_value (GTK_SPIN_BUTTON (mergealign.end_widget),get_double_param (param->def));
       }
@@ -463,19 +465,23 @@ void setmergealign (void) {
   else {
     if (merge_opts->align_start) {
       // set special transalign widgets to min/max values
-      if (mergealign.start_widget!=NULL&&GTK_IS_SPIN_BUTTON (mergealign.start_widget)&&(param=&(mergealign.rfx->params[mergealign.start_param]))->type==LIVES_PARAM_NUM) {
+      if (mergealign.start_widget!=NULL&&GTK_IS_SPIN_BUTTON 
+	  (mergealign.start_widget)&&(param=&(mergealign.rfx->params[mergealign.start_param]))->type==LIVES_PARAM_NUM) {
 	gtk_spin_button_set_value (GTK_SPIN_BUTTON (mergealign.start_widget),(gdouble)param->min);
       }
-      if (mergealign.end_widget!=NULL&&GTK_IS_SPIN_BUTTON (mergealign.end_widget)&&(param=&(mergealign.rfx->params[mergealign.end_param]))->type==LIVES_PARAM_NUM) {
+      if (mergealign.end_widget!=NULL&&GTK_IS_SPIN_BUTTON 
+	  (mergealign.end_widget)&&(param=&(mergealign.rfx->params[mergealign.end_param]))->type==LIVES_PARAM_NUM) {
 	gtk_spin_button_set_value (GTK_SPIN_BUTTON (mergealign.end_widget),(gdouble)param->max);
       }
     }
     else {
       // set special transalign widgets to max/min values
-      if (mergealign.start_widget!=NULL&&GTK_IS_SPIN_BUTTON (mergealign.start_widget)&&(param=&(mergealign.rfx->params[mergealign.start_param]))->type==LIVES_PARAM_NUM) {
+      if (mergealign.start_widget!=NULL&&GTK_IS_SPIN_BUTTON 
+	  (mergealign.start_widget)&&(param=&(mergealign.rfx->params[mergealign.start_param]))->type==LIVES_PARAM_NUM) {
 	gtk_spin_button_set_value (GTK_SPIN_BUTTON (mergealign.start_widget),(gdouble)param->max);
       }
-      if (mergealign.end_widget!=NULL&&GTK_IS_SPIN_BUTTON (mergealign.end_widget)&&(param=&(mergealign.rfx->params[mergealign.end_param]))->type==LIVES_PARAM_NUM) {
+      if (mergealign.end_widget!=NULL&&GTK_IS_SPIN_BUTTON 
+	  (mergealign.end_widget)&&(param=&(mergealign.rfx->params[mergealign.end_param]))->type==LIVES_PARAM_NUM) {
 	gtk_spin_button_set_value (GTK_SPIN_BUTTON (mergealign.end_widget),(gdouble)param->min);
       }
     }

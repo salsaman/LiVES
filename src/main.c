@@ -106,6 +106,7 @@ GtkTargetEntry target_table[]  = {
 };
 
 
+
 /////////////////////////////////
 #ifdef NO_COMPILE // never compile this
 void tr_msg(void) {
@@ -253,6 +254,15 @@ void get_monitors(void) {
 static gboolean pre_init(void) {
   // stuff which should be done *before* mainwindow is created
   // returns TRUE if we expect to load a theme
+
+  static const widget_opts_t def_widget_opts = {
+    FALSE, // no_gui
+    FALSE, // swap_label
+    FALSE, //pack_end
+    FALSE, // non_modal
+    LIVES_JUSTIFY_DEFAULT // justify
+  };
+
   pthread_mutexattr_t mattr;
 
   gchar buff[256];
@@ -312,8 +322,7 @@ static gboolean pre_init(void) {
 
   palette=(_palette*)(g_malloc(sizeof(_palette)));
 
-  widget_opts.swap_label=FALSE;
-  widget_opts.justify=LIVES_JUSTIFY_DEFAULT;
+  widget_opts = def_widget_opts;
 
   prefs->show_gui=TRUE;
   prefs->show_splash=TRUE;
@@ -2511,7 +2520,7 @@ int main (int argc, char *argv[]) {
 
 #ifdef LIVES_NO_DEBUG
   // don't crash on GTK+ fatals
-  g_log_set_always_fatal ((GLogLevelFlags)0);
+  //g_log_set_always_fatal ((GLogLevelFlags)0);
 #endif
 
   g_log_set_default_handler(lives_log_handler,NULL);

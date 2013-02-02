@@ -113,7 +113,6 @@ typedef struct {
   gboolean fileselmax;
   gboolean show_recent;
   gint warn_file_size;
-  gboolean pause_xmms;
   gboolean midisynch;
   gint dl_bandwidth;
   gboolean conserve_space;
@@ -456,7 +455,6 @@ typedef struct {
   GtkWidget *checkbutton_warn_after_dvgrab;
   GtkWidget *checkbutton_warn_no_pulse;
   GtkWidget *checkbutton_show_stats;
-  GtkWidget *check_xmms_pause;
   GtkWidget *checkbutton_warn_fsize;
   GtkWidget *checkbutton_warn_mt_achans;
   GtkWidget *checkbutton_warn_mt_no_jack;

@@ -6191,8 +6191,6 @@ void on_fs_preview_clicked (GtkWidget *widget, gpointer user_data) {
     
     g_free(tmp);
 
-    if (prefs->pause_xmms&&capable->has_xmms) lives_system("xmms -u",TRUE);
-    
     if (preview_type!=2) gtk_widget_set_app_paintable(mainw->fs_playarea,TRUE);
     
     mainw->com_failed=FALSE;
@@ -6680,7 +6678,6 @@ void end_fs_preview(void) {
 
   if (mainw->in_fs_preview) {
 #ifndef IS_MINGW
-    if (prefs->pause_xmms&&capable->has_xmms) lives_system("xmms -u",TRUE);
     com=g_strdup_printf ("%s stopsubsub fsp%d 2>/dev/null",prefs->backend_sync,(mypid=lives_getpid()));
     lives_system (com,TRUE);
 #else
@@ -8557,115 +8554,6 @@ on_load_vcd_ok_clicked                (GtkButton     *button,
   open_sel_range_activate();
 }
 
-
-
-void on_xmms_play_audio_activate (GtkMenuItem *menuitem, gpointer user_data) {
-  choose_file_with_preview(strlen(mainw->audio_dir)?mainw->audio_dir:NULL,_ ("Select File"),4);
-}
-
-
-
-void
-on_xmms_random_audio_activate                (GtkMenuItem     *menuitem,
-					    gpointer         user_data)
-{
-  xranw = create_rp_dialog();
-  gtk_widget_show (xranw->rp_dialog);
-  g_snprintf(file_name,PATH_MAX,"%s",mainw->xmms_dir);
-}
-
-
-void on_xmms_ok_clicked (GtkFileChooser *chooser, gpointer user_data) {
-  gchar *tmp;
-  gchar *com=g_strdup_printf("%s xmmsplay \"%s\"",prefs->backend_sync,
-			     (tmp=gtk_file_chooser_get_filename(chooser)));
-  g_free(tmp);
-  end_fs_preview();
-  lives_system(com,TRUE);
-  g_free(com);
-  gtk_widget_destroy(GTK_WIDGET(chooser));
-}
-
-
-void on_xmms_ran_ok_clicked                (GtkButton     *button,
-					gpointer         user_data)
-{
-  gchar *com,*tmp;
-  gint curr_file=mainw->current_file;
-  // we need to do some extra work, because we could be called whilst an effect is processing
-
-  gchar *dir=g_strdup(gtk_entry_get_text(GTK_ENTRY(xranw->dir)));
-  get_dirname(dir);
-
-  // an example of using 'get_temp_handle()' ////////////////////
-  if (!get_temp_handle(mainw->first_free_file,TRUE)) {
-    g_free(dir);
-    return;
-  }
-
-  com=g_strdup_printf("%s xmmsrandom \"%s\" %d %d %d %d \"%s\"",prefs->backend,cfile->handle,
-		      gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(xranw->numtracks)),
-		      lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(xranw->subdir_check)),
-		      gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(xranw->minsize)),
-		      gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(xranw->maxsize)),
-		      (tmp=g_filename_from_utf8 (dir,-1,NULL,NULL,NULL)));
-  g_free(tmp);
-  g_free(dir);
-
-  gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
-  while (g_main_context_iteration(NULL,FALSE));
-  g_free(xranw);
-
-
-  mainw->com_failed=FALSE;
-  lives_system(com,TRUE);
-  g_free(com);
-
-  if (!mainw->com_failed) do_progress_dialog(TRUE,TRUE,_ ("Selecting tracks"));
-
-  com=g_strdup_printf("%s close \"%s\"",prefs->backend,cfile->handle);
-  lives_system(com,FALSE);
-  g_free(com);
-  g_free(cfile);
-  cfile=NULL;
-  if (mainw->first_free_file==-1||mainw->first_free_file>mainw->current_file) mainw->first_free_file=mainw->current_file;
-
-  mainw->current_file=curr_file;
-  ////////////////////////////////////////
-
-  if (mainw->current_file>-1&&!(cfile->proc_ptr==NULL)) {
-    // if we are in another processing dialogue
-    desensitize();
-    procw_desensitize();
-  }
-  else {
-    // or not
-    if (mainw->current_file>-1) {
-      sensitize();
-    }
-    else {
-      close_current_file(curr_file);
-    }
-  }
-
-  if (mainw->error) {
-    do_error_dialog(mainw->msg);
-  }
-
-  clear_mainw_msg();
-
-  g_snprintf(mainw->xmms_dir,PATH_MAX,"%s",file_name);
-
-}
-
-
-void on_xmms_stop_audio_activate                (GtkMenuItem     *menuitem,
-						 gpointer         user_data)
-{
-  gchar *com=g_strdup_printf("%s xmmsstop",prefs->backend);
-  lives_system(com,TRUE);
-  g_free(com);
-}
 
 
 void popup_lmap_errors(GtkMenuItem *menuitem, gpointer user_data) {

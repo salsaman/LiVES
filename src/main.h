@@ -620,7 +620,6 @@ typedef struct {
   boolean can_write_to_tempdir;
 
   // the following may need checking before use
-  boolean has_xmms;
   boolean has_dvgrab;
   boolean has_sox_play;
   boolean has_sox_sox;

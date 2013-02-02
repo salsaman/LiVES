@@ -2086,7 +2086,6 @@ void play_file (void) {
   gint arate;
   gchar *com;
   gchar *com2=g_strdup (" ");
-  gchar *com4=g_strdup (" ");
   gchar *com3=g_strdup (" ");
   gchar *stopcom=NULL;
   gchar *msg;
@@ -2450,22 +2449,17 @@ void play_file (void) {
   }
 
 
-  if (prefs->pause_xmms&&cfile->achans>0&&!mainw->mute&&capable->has_xmms) {
-    g_free (com3);
-    com3=g_strdup ("xmms -u;");
-  }
   if (!mainw->foreign&&prefs->midisynch&&!mainw->preview) {
-    g_free (com4);
-    com4=g_strdup  ("midistart");
+    g_free (com3);
+    com3=g_strdup  ("midistart");
   }
-  com=g_strconcat (com2,com3,com4,NULL);
+  com=g_strconcat (com2,com3,NULL);
   if (strlen (com)) {
     // allow this to fail - not all sub-commands may be present
     lives_system (com,TRUE);
   }
-  g_free (com); g_free (com2); g_free (com3); g_free (com4);
-  com4=g_strdup (" ");
-  com3=NULL;
+  g_free (com); g_free (com2); g_free (com3);
+  com3=g_strdup (" ");
   com2=NULL;
   com=NULL;
 
@@ -2520,11 +2514,11 @@ void play_file (void) {
     
       if (cfile->achans>0||(!cfile->is_loaded&&!mainw->is_generating)) {
 	if (loop) {
-	  g_free (com4);
+	  g_free (com3);
 #ifndef IS_MINGW
-	  com4=g_strdup_printf ("/bin/touch \"%s\" 2>/dev/null;",stfile);
+	  com3=g_strdup_printf ("/bin/touch \"%s\" 2>/dev/null;",stfile);
 #else
-	  com4=g_strdup_printf ("touch.exe \"%s\" 2>NUL;",stfile);
+	  com3=g_strdup_printf ("touch.exe \"%s\" 2>NUL;",stfile);
 #endif
 	}
 	
@@ -2532,7 +2526,7 @@ void play_file (void) {
 	  com2=g_strdup_printf("%s stop_audio %s",prefs->backend_sync,cfile->handle);
 	}
     
-	stopcom=g_strconcat (com4,com2,NULL);
+	stopcom=g_strconcat (com3,com2,NULL);
       }
 
       g_free(stfile);
@@ -2564,7 +2558,7 @@ void play_file (void) {
     }
   }
 
-  g_free (com4);
+  g_free (com3);
 
   // if recording, set up recorder (jack or pulse)
   if (!mainw->foreign&&!mainw->preview&&(prefs->audio_src==AUDIO_SRC_EXT||(mainw->record&&mainw->agen_key!=0))&&
@@ -2903,7 +2897,6 @@ void play_file (void) {
     }
   }
 
-  if (capable->has_xmms&&prefs->pause_xmms&&cfile->achans>0&&!mainw->mute) lives_system("xmms -u",TRUE);
   if (!mainw->foreign&&prefs->midisynch) lives_system ("midistop",TRUE);
 
   if (mainw->ext_playback) {

@@ -2143,8 +2143,7 @@ do_messages_window (void) {
 
 void 
 do_text_window (const gchar *title, const gchar *text) {
-  text_window *textwindow=create_text_window (title,text,NULL);
-  gtk_widget_show (textwindow->dialog);
+  create_text_window (title,text,NULL);
 }
 
 

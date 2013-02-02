@@ -74,17 +74,6 @@ typedef struct __insertw {
 
 _insertw* create_insert_dialog (void);
 
-typedef struct __xranw {
-  // xmms random play
-  GtkWidget *rp_dialog;
-  GtkWidget *numtracks;
-  GtkWidget *dir;
-  GtkWidget *subdir_check;
-  GtkWidget *minsize;
-  GtkWidget *maxsize;
-} _xranw;
-
-_xranw* create_rp_dialog (void);
 
 typedef struct __commentsw {
   GtkWidget *comments_dialog;
@@ -135,7 +124,6 @@ aud_dialog_t *create_audfade_dialog (gint type);
 GtkWidget *create_combo_dialog (gint type, gpointer user_data);
 
 _commentsw *commentsw;
-_xranw *xranw;
 _entryw *renamew;
 _entryw *locw;
 _insertw *insertw;

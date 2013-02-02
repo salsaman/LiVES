@@ -1013,7 +1013,6 @@ static void lives_init(_ign_opts *ign_opts) {
     g_snprintf(future_prefs->theme,64,"%s",prefs->theme);
 
     prefs->stop_screensaver=get_boolean_pref("stop_screensaver");
-    prefs->pause_xmms=get_boolean_pref("pause_xmms_on_playback");
     prefs->open_maximised=get_boolean_pref("open_maximised");
     future_prefs->show_tool=prefs->show_tool=get_boolean_pref("show_toolbar");
     memset (future_prefs->vpp_name,0,64);
@@ -1362,7 +1361,6 @@ static void lives_init(_ign_opts *ign_opts) {
       }
       g_snprintf(mainw->audio_dir,PATH_MAX,"%s",prefs->def_audio_dir);
       ensure_isdir(mainw->audio_dir);
-      g_snprintf(mainw->xmms_dir,PATH_MAX,"%s",mainw->audio_dir);
       
       get_pref_utf8("image_dir",prefs->def_image_dir,PATH_MAX);
       if (!strlen(prefs->def_image_dir)) {
@@ -1886,7 +1884,6 @@ capability *get_capabilities (void) {
   capable->has_identify=FALSE;
   capable->has_sox_play=FALSE;
   capable->has_sox_sox=FALSE;
-  capable->has_xmms=FALSE;
   capable->has_dvgrab=FALSE;
   capable->has_cdda2wav=FALSE;
   capable->has_autolives=FALSE;
@@ -2044,9 +2041,6 @@ capability *get_capabilities (void) {
 
   get_location("sox",string,256);
   if (strlen(string)) capable->has_sox_sox=TRUE;
-
-  get_location("xmms",string,256);
-  if (strlen(string)) capable->has_xmms=TRUE;
 
   get_location("dvgrab",string,256);
   if (strlen(string)) capable->has_dvgrab=TRUE;

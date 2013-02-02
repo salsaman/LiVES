@@ -451,7 +451,6 @@ gboolean apply_prefs(gboolean skip_warn) {
   gint pbq=PB_QUALITY_MED;
 
   gdouble default_fps=gtk_spin_button_get_value(GTK_SPIN_BUTTON(prefsw->spinbutton_def_fps));
-  gboolean pause_xmms=FALSE;
   gboolean antialias=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_antialias));
   gboolean fx_threads=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_threads));
   gint nfx_threads=gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(prefsw->spinbutton_nfx_threads));
@@ -878,15 +877,6 @@ gboolean apply_prefs(gboolean skip_warn) {
     }
   }
 
-  if (capable->has_xmms) {
-    pause_xmms=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->check_xmms_pause));
-    // pause xmms during playback
-    if (prefs->pause_xmms!=pause_xmms) {
-      prefs->pause_xmms=pause_xmms;
-      set_boolean_pref("pause_xmms_on_playback",pause_xmms);
-    }
-  }
-  
   // midi synch
   if (prefs->midisynch!=midisynch) {
     prefs->midisynch=midisynch;
@@ -4563,28 +4553,6 @@ _prefsw *create_prefs_dialog (void) {
   gtk_container_set_border_width(GTK_CONTAINER (hbox99), 20);
   gtk_widget_show_all(hbox99);
   // ---
-  prefsw->check_xmms_pause = gtk_check_button_new();
-  eventbox = gtk_event_box_new();
-  label = gtk_label_new_with_mnemonic(_("Pause xmms during audio playback"));
-  gtk_label_set_mnemonic_widget(GTK_LABEL(label), prefsw->check_xmms_pause);
-  gtk_container_add(GTK_CONTAINER(eventbox), label);
-  g_signal_connect(GTK_OBJECT(eventbox), "button_press_event", G_CALLBACK(label_act_toggle), prefsw->check_xmms_pause);
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_bg(eventbox, GTK_STATE_NORMAL, &palette->normal_back);
-  }
-  hbox = gtk_hbox_new(FALSE, 0);
-  gtk_box_pack_start(GTK_BOX(hbox), prefsw->check_xmms_pause, FALSE, FALSE, 5);
-  gtk_box_pack_start(GTK_BOX(hbox), eventbox, FALSE, FALSE, 5);
-  gtk_container_set_border_width(GTK_CONTAINER (hbox), 20);
-  gtk_box_pack_start (GTK_BOX(prefsw->vbox_right_misc), hbox, FALSE, FALSE, 10);
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->check_xmms_pause), prefs->pause_xmms);
-   
-  if (capable->has_xmms) {
-    gtk_widget_show_all(hbox);
-  }
-  // ---  
   hbox19 = gtk_hbox_new (FALSE, 0);
   gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_misc), hbox19, TRUE, TRUE, 0);
    
@@ -5633,7 +5601,6 @@ _prefsw *create_prefs_dialog (void) {
   g_signal_connect(GTK_OBJECT(prefsw->check_midi), "toggled", G_CALLBACK(apply_button_set_enabled), NULL);
   g_signal_connect(GTK_OBJECT(prefsw->ins_speed), "toggled", G_CALLBACK(apply_button_set_enabled), NULL);
   g_signal_connect(GTK_OBJECT(ins_resample), "toggled", G_CALLBACK(apply_button_set_enabled), NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->check_xmms_pause), "toggled", G_CALLBACK(apply_button_set_enabled), NULL);
   g_signal_connect(GTK_EDITABLE(prefsw->cdplay_entry), "changed", G_CALLBACK(apply_button_set_enabled), NULL);
   g_signal_connect(GTK_OBJECT(prefsw->spinbutton_def_fps), "value_changed", G_CALLBACK(apply_button_set_enabled), 
 		   NULL);

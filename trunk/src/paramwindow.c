@@ -38,7 +38,7 @@
 #include "giw/giwknob.h"
 #endif
 
-extern gboolean do_effect (lives_rfx_t *, gboolean is_preview); //effects.c in LiVES
+extern boolean do_effect (lives_rfx_t *, boolean is_preview); //effects.c in LiVES
 extern void on_realfx_activate (GtkMenuItem *, gpointer rfx); // effects.c in LiVES
 
 GtkWidget *fx_dialog[2];
@@ -267,7 +267,7 @@ static lives_widget_group_t *get_group(lives_rfx_t *rfx, lives_param_t *param) {
 
 
 void on_render_fx_activate (GtkMenuItem *menuitem, lives_rfx_t *rfx) {
-  gboolean has_lmap_error=FALSE;
+  boolean has_lmap_error=FALSE;
 
   if (menuitem!=NULL&&!(prefs->warning_mask&WARN_MASK_LAYOUT_ALTER_FRAMES)&&rfx->num_in_channels>0&&
       (mainw->xlays=layout_frame_is_affected(mainw->current_file,1))!=NULL) {
@@ -341,7 +341,7 @@ static void gen_fps_changed (GtkSpinButton *spin, gpointer user_data) {
 
 
 
-static void trans_in_out_pressed(lives_rfx_t *rfx, gboolean in) {
+static void trans_in_out_pressed(lives_rfx_t *rfx, boolean in) {
   weed_plant_t **in_params;
 
   weed_plant_t *inst=(weed_plant_t *)rfx->source;
@@ -406,7 +406,7 @@ static void gen_cb_toggled(GtkToggleButton *tbut, gpointer rfx) {
 
 
 
-void transition_add_in_out(GtkBox *vbox, lives_rfx_t *rfx, gboolean add_audio_check) {
+void transition_add_in_out(GtkBox *vbox, lives_rfx_t *rfx, boolean add_audio_check) {
   // add in/out radios for multitrack transitions
   GtkWidget *radiobutton_in;
   GtkWidget *radiobutton_out;
@@ -479,7 +479,7 @@ void transition_add_in_out(GtkBox *vbox, lives_rfx_t *rfx, gboolean add_audio_ch
 
 
 
-static gboolean add_sizes(GtkBox *vbox, gboolean add_fps, lives_rfx_t *rfx) {
+static boolean add_sizes(GtkBox *vbox, boolean add_fps, lives_rfx_t *rfx) {
   // add size settings for generators and resize effects
   int i,error;
   weed_plant_t *filter=weed_instance_get_filter((weed_plant_t *)rfx->source,TRUE);
@@ -494,8 +494,8 @@ static gboolean add_sizes(GtkBox *vbox, gboolean add_fps, lives_rfx_t *rfx) {
 
   gdouble def_fps=0.;
 
-  gboolean added=add_fps;
-  gboolean chk_params=(vbox==NULL);
+  boolean added=add_fps;
+  boolean chk_params=(vbox==NULL);
 
   // add fps
 
@@ -670,16 +670,16 @@ void on_render_fx_pre_activate (GtkMenuItem *menuitem, lives_rfx_t *rfx) {
   GtkAccelGroup *fxw_accel_group;
 
   gchar *txt;
-  gboolean no_process=FALSE;
+  boolean no_process=FALSE;
 
-  gboolean is_realtime=FALSE;
-  gboolean is_defaults=FALSE;
+  boolean is_realtime=FALSE;
+  boolean is_defaults=FALSE;
 
   int n=0;
 
-  gboolean has_lmap_error=FALSE;
+  boolean has_lmap_error=FALSE;
 
-  gboolean has_param;
+  boolean has_param;
 
   if (!check_storage_space((mainw->current_file>-1)?cfile:NULL,FALSE)) return;
 
@@ -691,15 +691,9 @@ void on_render_fx_pre_activate (GtkMenuItem *menuitem, lives_rfx_t *rfx) {
       if (!do_layout_alter_frames_warning()) {
 	g_list_free_strings(mainw->xlays);
 	g_list_free(mainw->xlays);
+	
 	mainw->xlays=NULL;
-	return;
       }
-      add_lmap_error(LMAP_ERROR_ALTER_FRAMES,cfile->name,(gpointer)cfile->layout_map,mainw->current_file,0,0.,
-		     cfile->stored_layout_frame>0);
-      has_lmap_error=TRUE;
-      g_list_free_strings(mainw->xlays);
-      g_list_free(mainw->xlays);
-      mainw->xlays=NULL;
     }
   }
 
@@ -815,9 +809,6 @@ void on_render_fx_pre_activate (GtkMenuItem *menuitem, lives_rfx_t *rfx) {
   has_param=make_param_box(GTK_VBOX (pbox), rfx);
 
   dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (fx_dialog[n]));
-  //gtk_container_set_border_width (GTK_CONTAINER (dialog_action_area), 80);
-  //gtk_box_set_spacing (GTK_BOX (dialog_action_area),10);
-  //gtk_button_box_set_child_size (GTK_BUTTON_BOX (dialog_action_area), DEF_BUTTON_WIDTH, -1);
 
   cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
     
@@ -980,7 +971,7 @@ static int num_in_params_for_nth_instance(weed_plant_t *inst, int idx) {
 
 
 
-gboolean make_param_box(GtkVBox *top_vbox, lives_rfx_t *rfx) {
+boolean make_param_box(GtkVBox *top_vbox, lives_rfx_t *rfx) {
   // make a dynamic parameter window
 
   // returns TRUE if we added any parameters
@@ -990,8 +981,8 @@ gboolean make_param_box(GtkVBox *top_vbox, lives_rfx_t *rfx) {
   GtkWidget *hbox=NULL;
 
   gchar **array;
-  gboolean used[rfx->num_params];
-  gboolean has_box=FALSE;
+  boolean used[rfx->num_params];
+  boolean has_box=FALSE;
   gchar *line;
   gchar *type=NULL;
   GList *hints=NULL;
@@ -1008,10 +999,10 @@ gboolean make_param_box(GtkVBox *top_vbox, lives_rfx_t *rfx) {
   // put whole thing in scrolled window
   GtkWidget *scrolledwindow;
 
-  gboolean internal=FALSE;
-  gboolean noslid;
-  gboolean has_param=FALSE;
-  gboolean chk_params=FALSE;
+  boolean internal=FALSE;
+  boolean noslid;
+  boolean has_param=FALSE;
+  boolean chk_params=FALSE;
 
   if (top_vbox==NULL) {
     // just check how many non-hidden params without displaying
@@ -1261,7 +1252,7 @@ gboolean make_param_box(GtkVBox *top_vbox, lives_rfx_t *rfx) {
 
 
 
-gboolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, gboolean add_slider) {
+boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, boolean add_slider) {
   // box here is vbox inside top_hbox inside top_dialog
 
   // add paramter pnum for rfx to box
@@ -1292,12 +1283,12 @@ gboolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, gboolean ad
   gulong spinfunc,blockfunc;
   gchar *name;
   gchar *txt,*tmp,*tmp2;
-  gboolean use_mnemonic;
+  boolean use_mnemonic;
 
   lives_colRGB24_t rgb;
   GdkColor colr;
   char *disp_string;
-  gboolean was_num=FALSE;
+  boolean was_num=FALSE;
 
   if (pnum>=rfx->num_params) {
     add_param_label_to_box (box,FALSE,(_("Invalid parameter")));
@@ -1376,7 +1367,7 @@ gboolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, gboolean ad
       group=get_group(rfx,param);
 
       if (group!=NULL) {
-	group->rbgroup=lives_radio_button_get_group (GTK_RADIO_BUTTON (radiobutton));
+	group->rbgroup=lives_radio_button_get_group (LIVES_RADIO_BUTTON (radiobutton));
 	if (get_bool_param(param->value)) {
 	  group->active_param=pnum+1;
 	}
@@ -1452,16 +1443,16 @@ gboolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, gboolean ad
 	scale=giw_knob_new(GTK_ADJUSTMENT(spinbutton_adj));
 	gtk_widget_set_size_request(scale,GIW_KNOB_WIDTH,GIW_KNOB_HEIGHT);
 	giw_knob_set_legends_digits(GIW_KNOB(scale),0);
-	if (palette->style&STYLE_1) {
-	  gtk_widget_modify_bg (scale, GTK_STATE_NORMAL, &palette->normal_back);
-	  gtk_widget_modify_text(scale, GTK_STATE_NORMAL, &palette->normal_back);
-	  gtk_widget_modify_fg(scale, GTK_STATE_NORMAL, &palette->normal_fore);
-	}
 	gtk_box_pack_start (GTK_BOX (hbox), scale, FALSE, FALSE, 10);
 	add_fill_to_box (GTK_BOX (hbox));
       }
 #endif
-      if (param->desc!=NULL) gtk_widget_set_tooltip_text( scale, param->desc);
+      if (palette->style&STYLE_1) {
+	gtk_widget_modify_bg (scale, GTK_STATE_NORMAL, &palette->normal_back);
+	gtk_widget_modify_text(scale, GTK_STATE_NORMAL, &palette->normal_back);
+	gtk_widget_modify_fg(scale, GTK_STATE_NORMAL, &palette->normal_fore);
+      }
+      if (param->desc!=NULL) gtk_widget_set_tooltip_text(scale, param->desc);
     }
     break;
     
@@ -1491,7 +1482,7 @@ gboolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, gboolean ad
       labelcname=lives_standard_label_new_with_mnemonic (_(name),cbutton);
     }
     else labelcname=lives_standard_label_new (_(name));
-    if (param->desc!=NULL) gtk_widget_set_tooltip_text( labelcname, param->desc);
+    if (param->desc!=NULL) gtk_widget_set_tooltip_text(labelcname, param->desc);
 
     gtk_box_pack_start (GTK_BOX (hbox), labelcname, FALSE, FALSE, 10);
 
@@ -1613,12 +1604,12 @@ gboolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, gboolean ad
     combo=lives_standard_combo_new(name, use_mnemonic, param->list, (LiVESBox *)box, param->desc);
 
     if (rfx->status==RFX_STATUS_WEED&&(disp_string=get_weed_display_string((weed_plant_t *)rfx->source,pnum))!=NULL) {
-      gtk_entry_set_text (GTK_ENTRY(gtk_bin_get_child(GTK_BIN(combo))),disp_string);
+      lives_combo_set_active_string (LIVES_COMBO(combo),disp_string);
       weed_free(disp_string);
     }
     else if (param->list!=NULL) {
-      gtk_entry_set_text (GTK_ENTRY(gtk_bin_get_child(GTK_BIN(combo))), 
-			  (gchar *)g_list_nth_data (param->list,get_int_param (param->value)));
+      lives_combo_set_active_string (LIVES_COMBO(combo), 
+				     (gchar *)g_list_nth_data (param->list,get_int_param (param->value)));
     }
 
     blockfunc=g_signal_connect_after (G_OBJECT (combo), "changed", 
@@ -1648,7 +1639,7 @@ gboolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, gboolean ad
 }
 
 
-void add_param_label_to_box (GtkBox *box, gboolean do_trans, const gchar *text) {
+void add_param_label_to_box (GtkBox *box, boolean do_trans, const gchar *text) {
   GtkWidget *label;
 
   gtk_box_set_homogeneous(GTK_BOX(box),FALSE);
@@ -1702,7 +1693,7 @@ after_boolean_param_toggled        (GtkToggleButton *togglebutton,
 {
   gint param_number=GPOINTER_TO_INT (g_object_get_data (G_OBJECT (togglebutton),"param_number"));
   lives_param_t *param=&rfx->params[param_number];
-  gboolean old_bool=get_bool_param(param->value),new_bool;
+  boolean old_bool=get_bool_param(param->value),new_bool;
   int copyto=-1;
 
   if (mainw->block_param_updates) return; // updates are blocked when we update visually
@@ -1901,9 +1892,9 @@ void update_weed_color_value(weed_plant_t *inst, int pnum, int c1, int c2, int c
   int *maxs=NULL,*mins=NULL;
   double rmaxd,rmind,gmaxd,gmind,bmaxd,bmind;
   double *maxds=NULL,*minds=NULL;
-  gboolean is_default=(weed_get_int_value(param,"type",&error)==WEED_PLANT_PARAMETER_TEMPLATE);
+  boolean is_default=(weed_get_int_value(param,"type",&error)==WEED_PLANT_PARAMETER_TEMPLATE);
 
-  gboolean is_int;
+  boolean is_int;
 
   if (mainw->block_param_updates) return; // updates are blocked when we update visually
 
@@ -2275,7 +2266,7 @@ after_param_alpha_changed           (GtkSpinButton   *spinbutton,
 }
 
 
-gboolean after_param_text_focus_changed (GtkWidget *hbox, GtkWidget *child, lives_rfx_t *rfx) {
+boolean after_param_text_focus_changed (GtkWidget *hbox, GtkWidget *child, lives_rfx_t *rfx) {
   // for non realtime effects
   // we don't usually want to run the trigger every single time the user presses a key in a text widget
   // so we only update when the user clicks OK or focusses out of the widget
@@ -2468,7 +2459,7 @@ after_string_list_changed (GtkComboBox *combo, lives_rfx_t *rfx) {
       if (disp_string!=NULL) {
 	gulong blockfunc=(gulong)g_object_get_data(G_OBJECT(combo),"blockfunc");
 	g_signal_handler_block(combo,blockfunc);
-	gtk_entry_set_text (GTK_ENTRY(gtk_bin_get_child(GTK_BIN(combo))),disp_string);
+	lives_combo_set_active_string (LIVES_COMBO(combo),disp_string);
 	g_signal_handler_unblock(combo,blockfunc);
 	weed_free(disp_string);
       } 
@@ -2541,7 +2532,7 @@ gchar **param_marshall_to_argv (lives_rfx_t *rfx) {
 
 
 
-gchar *param_marshall (lives_rfx_t *rfx, gboolean with_min_max) {
+gchar *param_marshall (lives_rfx_t *rfx, boolean with_min_max) {
   // this function will marshall all parameters into a space separated string
   // in case of string parameters, these will be surrounded by " and all 
   // quotes will be escaped \"
@@ -2668,7 +2659,7 @@ gchar *reconstruct_string (GList *plist, gint start, gint *offs) {
 
   gchar *word=NULL;
   int i;
-  gboolean lastword=FALSE;
+  boolean lastword=FALSE;
   gchar *ret=g_strdup (""),*ret2;
 
   gchar *tmp;
@@ -2712,7 +2703,7 @@ gchar *reconstruct_string (GList *plist, gint start, gint *offs) {
 }
 
 
-void param_demarshall (lives_rfx_t *rfx, GList *plist, gboolean with_min_max, gboolean upd) {
+void param_demarshall (lives_rfx_t *rfx, GList *plist, boolean with_min_max, boolean upd) {
   int i;
   gint pnum=0;
   lives_param_t *param;
@@ -2756,7 +2747,7 @@ GList *argv_to_marshalled_list (lives_rfx_t *rfx, gint argc, gchar **argv) {
 
 
 
-gint set_param_from_list(GList *plist, lives_param_t *param, gint pnum, gboolean with_min_max, gboolean upd) {
+gint set_param_from_list(GList *plist, lives_param_t *param, gint pnum, boolean with_min_max, boolean upd) {
   // update values for param using values in plist
   // if upd is TRUE, the widgets for that param also are updated
 
@@ -2880,7 +2871,7 @@ gint set_param_from_list(GList *plist, lives_param_t *param, gint pnum, gboolean
       if (param->change_blocked) break;
       set_int_param(param->value,int_value);
       if (upd&&param->widgets[0]!=NULL&&GTK_IS_COMBO(param->widgets[0])&&int_value<g_list_length(param->list))
-	gtk_entry_set_text(GTK_ENTRY(gtk_bin_get_child(GTK_BIN(param->widgets[0]))),(gchar *)g_list_nth_data(param->list,int_value));
+	lives_combo_set_active_string(LIVES_COMBO(param->widgets[0]),(gchar *)g_list_nth_data(param->list,int_value));
       break;
     }
   default:
@@ -2982,7 +2973,7 @@ on_pwcolsel (GtkButton *button, lives_rfx_t *rfx)
 
 
 
-void update_visual_params(lives_rfx_t *rfx, gboolean update_hidden) {
+void update_visual_params(lives_rfx_t *rfx, boolean update_hidden) {
   // update parameters visually from an rfx object
   int i,j,error;
   weed_plant_t *inst=(weed_plant_t *)rfx->source;

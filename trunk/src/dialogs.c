@@ -79,8 +79,9 @@ static void add_xlays_widget(GtkBox *box) {
   if (palette->style&STYLE_1) {
     label=gtk_expander_get_label_widget(GTK_EXPANDER(expander));
     gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_text(textview, GTK_STATE_NORMAL, &palette->info_text);
-    gtk_widget_modify_base(textview, GTK_STATE_NORMAL, &palette->info_base);
+    gtk_widget_modify_fg(label, GTK_STATE_PRELIGHT, &palette->normal_fore);
+    gtk_widget_modify_fg(expander, GTK_STATE_PRELIGHT, &palette->normal_fore);
+    gtk_widget_modify_bg(expander, GTK_STATE_PRELIGHT, &palette->normal_back);
   }
 
   gtk_text_buffer_insert_at_cursor(textbuffer,"\n",strlen("\n"));

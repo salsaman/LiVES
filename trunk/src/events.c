@@ -4932,7 +4932,8 @@ render_details *create_render_details (gint type) {
     scrh=mainw->scr_height;
   }
 
-  gtk_widget_set_size_request (scrollw, scrw*.8, scrh*.75);
+  if (!specified) gtk_widget_set_size_request (scrollw, scrw*.8, scrh*.75);
+  else gtk_widget_set_size_request (scrollw, scrw*.35, scrh*.4);
 
   gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrollw), GTK_POLICY_AUTOMATIC, 
 				  GTK_POLICY_AUTOMATIC);
@@ -5177,7 +5178,7 @@ render_details *create_render_details (gint type) {
     future_prefs->encoder.of_allowed_acodecs=prefs->encoder.of_allowed_acodecs;
     set_acodec_list_from_allowed(NULL,rdet);
     
-    gtk_window_set_default_size (GTK_WINDOW (rdet->dialog), 300, 400);
+    //gtk_window_set_default_size (GTK_WINDOW (rdet->dialog), 300, 400);
     
   }
 
@@ -5199,9 +5200,10 @@ render_details *create_render_details (gint type) {
 
   add_fill_to_box(GTK_BOX (daa));
 
-  gtk_button_box_set_child_size (GTK_BUTTON_BOX (daa), DEF_BUTTON_WIDTH, -1);
-  gtk_button_box_set_layout (GTK_BUTTON_BOX (daa), GTK_BUTTONBOX_SPREAD);
-
+  if (!specified) {
+    gtk_button_box_set_child_size (GTK_BUTTON_BOX (daa), DEF_BUTTON_WIDTH, -1);
+    gtk_button_box_set_layout (GTK_BUTTON_BOX (daa), GTK_BUTTONBOX_SPREAD);
+  }
 
   cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
   if (!(prefs->startup_interface==STARTUP_MT&&!mainw->is_ready)) {
@@ -5213,7 +5215,13 @@ render_details *create_render_details (gint type) {
   lives_widget_set_can_focus_and_default (cancelbutton);
 
 
-  rdet->okbutton = gtk_button_new_from_stock ("gtk-ok");
+  if (!specified)
+    rdet->okbutton = gtk_button_new_from_stock ("gtk-ok");
+  else  {
+    rdet->okbutton = gtk_button_new_from_stock ("gtk-go-forward");
+    gtk_button_set_label(GTK_BUTTON(rdet->okbutton),_("_Next"));
+  }
+
   gtk_dialog_add_action_widget (GTK_DIALOG (rdet->dialog), rdet->okbutton, GTK_RESPONSE_OK);
   lives_widget_set_can_focus_and_default (rdet->okbutton);
   gtk_widget_grab_default (rdet->okbutton);

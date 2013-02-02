@@ -46,6 +46,12 @@
 // height of preview widgets in sepwin
 #define PREVIEW_BOX_HT 100
 
+// height of msg area
+#define MSG_AREA_HEIGHT 50
+
+// clip editor hrule height
+#define CE_HRULE_HEIGHT 20
+
 /// number of function keys
 #define FN_KEYS 12
 
@@ -230,20 +236,20 @@ typedef struct {
   gchar set_name[256];   // actually 128 is the limit now
 
   // playback
-  gboolean faded;
-  gboolean double_size;
-  gboolean sep_win;
-  gboolean fs;
-  gboolean loop;
-  gboolean loop_cont;
-  gboolean ping_pong;
-  gboolean mute;
-  gboolean must_resize; ///< fixed playback size in gui; playback plugins have their own fwidth and fheight
+  boolean faded;
+  boolean double_size;
+  boolean sep_win;
+  boolean fs;
+  boolean loop;
+  boolean loop_cont;
+  boolean ping_pong;
+  boolean mute;
+  boolean must_resize; ///< fixed playback size in gui; playback plugins have their own fwidth and fheight
   gint audio_start;
   gint audio_end;
 
-  gboolean ext_playback; ///< using external video playback plugin
-  volatile gboolean ext_keyboard; ///< keyboard codes must be polled from video playback plugin
+  boolean ext_playback; ///< using external video playback plugin
+  volatile boolean ext_keyboard; ///< keyboard codes must be polled from video playback plugin
 
   gint ptr_x;
   gint ptr_y;
@@ -252,28 +258,28 @@ typedef struct {
 
 
   // flags
-  gboolean save_with_sound;
-  gboolean ccpd_with_sound;
-  gboolean selwidth_locked;
-  gboolean is_ready;
-  gboolean opening_loc;  ///< opening location (streaming)
-  gboolean dvgrab_preview;
-  gboolean switch_during_pb;
-  gboolean clip_switched; ///< for recording - did we switch clips ?
-  gboolean record;
+  boolean save_with_sound;
+  boolean ccpd_with_sound;
+  boolean selwidth_locked;
+  boolean is_ready;
+  boolean opening_loc;  ///< opening location (streaming)
+  boolean dvgrab_preview;
+  boolean switch_during_pb;
+  boolean clip_switched; ///< for recording - did we switch clips ?
+  boolean record;
 
-  gboolean in_fs_preview;
+  boolean in_fs_preview;
   volatile lives_cancel_t cancelled;
 
-  gboolean error;
+  boolean error;
 
   lives_cancel_type_t cancel_type;
 
   weed_plant_t *event_list; ///< current event_list, for recording
   weed_plant_t *stored_event_list; ///< stored mt -> clip editor
-  gboolean stored_event_list_changed;
-  gboolean stored_event_list_auto_changed;
-  gboolean stored_layout_save_all_vals;
+  boolean stored_event_list_changed;
+  boolean stored_event_list_auto_changed;
+  boolean stored_layout_save_all_vals;
   gchar stored_layout_name[PATH_MAX];
 
   GList *stored_layout_undos;
@@ -288,20 +294,20 @@ typedef struct {
 
   lives_whentostop_t whentostop;
 
-  gboolean noframedrop;
+  boolean noframedrop;
 
   gint play_start;
   gint play_end;
-  gboolean playing_sel;
-  gboolean preview;
+  boolean playing_sel;
+  boolean preview;
 
-  gboolean is_processing;
-  gboolean is_rendering;
-  gboolean resizing;
+  boolean is_processing;
+  boolean is_rendering;
+  boolean resizing;
 
-  gboolean foreign;  ///< for external window capture
-  gboolean record_foreign;
-  gboolean t_hidden;
+  boolean foreign;  ///< for external window capture
+  boolean record_foreign;
+  boolean t_hidden;
 
   // recording from an external window
   guint foreign_key;
@@ -315,7 +321,7 @@ typedef struct {
   gchar *foreign_visual;
 
   /// some VJ effects
-  gboolean nervous;
+  boolean nervous;
 
   lives_rfx_t *rendered_fx;
   gint num_rendered_effects_builtin;
@@ -325,9 +331,9 @@ typedef struct {
   // for the merge dialog
   gint last_transition_idx;
   gint last_transition_loops;
-  gboolean last_transition_loop_to_fit;
-  gboolean last_transition_align_start;
-  gboolean last_transition_ins_frames;
+  boolean last_transition_loop_to_fit;
+  boolean last_transition_align_start;
+  boolean last_transition_ins_frames;
 
 
   guint64 rte; ///< current max for VJ mode == 64 effects on fg clip
@@ -354,13 +360,13 @@ typedef struct {
   gint scr_height;
   lives_toy_t toy_type;
   lives_pid_t toy_alives_pid; // 0, or thread for autolives toy
-  gboolean autolives_reset_fx;
+  boolean autolives_reset_fx;
 
-  gboolean toy_go_wild;
+  boolean toy_go_wild;
 
   // copy/paste
-  gboolean insert_after;
-  gboolean with_sound;
+  boolean insert_after;
+  boolean with_sound;
 
   // selection
   gint sel_start;
@@ -377,7 +383,7 @@ typedef struct {
 #define PREFS_THEME_CHANGED (1<<0)
 #define PREFS_JACK_CHANGED (1<<1)
 #define PREFS_TEMPDIR_CHANGED (1<<2)
-  gboolean prefs_need_restart;
+  boolean prefs_need_restart;
 
   /// default sizes for when no file is loaded
   gint def_width;
@@ -391,15 +397,15 @@ typedef struct {
 
   // end of static-ish info
   gchar first_info_file[PATH_MAX];
-  gboolean leave_files;
-  gboolean was_set;
+  boolean leave_files;
+  boolean was_set;
 
   /// extra parameters for opening special files
   gchar *file_open_params;
-  gboolean open_deint;
+  boolean open_deint;
 
   gint last_dprint_file;
-  gboolean no_switch_dprint;
+  boolean no_switch_dprint;
 
   /// actual frame being displayed
   gint actual_frame;
@@ -422,21 +428,21 @@ typedef struct {
   gint64 stream_ticks;  ///< ticks since first frame sent to playback plugin
   gint64 last_display_ticks; /// currticks when last display was shown (used for fixed fps)
 
-  gboolean size_warn; ///< warn the user that incorrectly sized frames were found
+  boolean size_warn; ///< warn the user that incorrectly sized frames were found
 
   /// set to TRUE during frame load/display operation. If TRUE we should not switch clips, 
   /// close the current clip, or call load_frame_image()
-  gboolean noswitch; 
+  boolean noswitch; 
   gint new_clip;
 
   gint aud_file_to_kill; ///< # of audio file to kill on crash
 
-  gboolean reverse_pb; ///< used in osc.c
+  boolean reverse_pb; ///< used in osc.c
 
   /// TODO - make this a mutex and more finely grained : things we need to block are (clip switches, clip closure, effects on/off, etc)
-  gboolean osc_block;
+  boolean osc_block;
 
-  gboolean osc_auto; ///< bypass user choices automatically
+  boolean osc_auto; ///< bypass user choices automatically
 
   /// encode width, height and fps set externally
   gint osc_enc_width;
@@ -450,7 +456,7 @@ typedef struct {
   gdouble fixed_fpsd; ///< <=0. means free playback
 
   /// video playback plugin was updated; write settings to a file
-  gboolean write_vpp_file;
+  boolean write_vpp_file;
 
   volatile gshort scratch;
 #define SCRATCH_NONE 0
@@ -459,10 +465,10 @@ typedef struct {
 #define SCRATCH_JUMP 2
 
   /// internal fx
-  gboolean internal_messaging;
-  lives_render_error_t (*progress_fn) (gboolean reset);
+  boolean internal_messaging;
+  lives_render_error_t (*progress_fn) (boolean reset);
 
-  volatile gboolean threaded_dialog;
+  volatile boolean threaded_dialog;
 
   // fx controls
   gdouble fx1_val;
@@ -487,15 +493,15 @@ typedef struct {
   gint fx3_end;
   gint fx4_end;
 
-  gboolean fx1_bool;
-  gboolean fx2_bool;
-  gboolean fx3_bool;
-  gboolean fx4_bool;
-  gboolean fx5_bool;
-  gboolean fx6_bool;
+  boolean fx1_bool;
+  boolean fx2_bool;
+  boolean fx3_bool;
+  boolean fx4_bool;
+  boolean fx5_bool;
+  boolean fx6_bool;
 
-  gboolean effects_paused;
-  gboolean did_rfx_preview;
+  boolean effects_paused;
+  boolean did_rfx_preview;
 
   //function pointers
   guint kb_timer;
@@ -519,15 +525,15 @@ typedef struct {
   gulong sepwin_cb_func;
 
   // for jack transport
-  gboolean jack_can_stop;
-  gboolean jack_can_start;
+  boolean jack_can_stop;
+  boolean jack_can_start;
 
-  volatile gboolean video_seek_ready;
+  volatile boolean video_seek_ready;
 
   // selection pointers
   gulong mouse_fn1;
-  gboolean mouse_blocked;
-  gboolean hrule_blocked;
+  boolean mouse_blocked;
+  boolean hrule_blocked;
 
   /// stored clips
   gint clipstore[FN_KEYS-1];
@@ -723,7 +729,7 @@ typedef struct {
   weed_plant_t *frame_layer;
   GtkWidget *plug;
   gulong pw_exp_func;
-  gboolean pw_exp_is_blocked;
+  boolean pw_exp_is_blocked;
 
   // frame preview in the separate window
   GtkWidget *preview_box;
@@ -847,8 +853,8 @@ typedef struct {
 
   GtkWidget *resize_menuitem;
 
-  gboolean only_close; ///< only close clips - do not exit
-  gboolean is_exiting; ///< set during shutdown (inverse of only_close then)
+  boolean only_close; ///< only close clips - do not exit
+  boolean is_exiting; ///< set during shutdown (inverse of only_close then)
 
 #ifdef ENABLE_JACK
   jack_driver_t *jackd; ///< jack audio playback device
@@ -881,11 +887,11 @@ typedef struct {
   GList *xlays;
 
   gchar *recovery_file;  ///< the filename of our recover file
-  gboolean leave_recovery;
+  boolean leave_recovery;
 
-  gboolean unordered_blocks; ///< are we recording unordered blocks ?
+  boolean unordered_blocks; ///< are we recording unordered blocks ?
 
-  gboolean no_exit; ///< if TRUE, do not exit after saving set
+  boolean no_exit; ///< if TRUE, do not exit after saving set
 
   mt_opts multi_opts; ///< some multitrack options that survive between mt calls
 
@@ -923,7 +929,7 @@ typedef struct {
   gint rec_asamps;
   gint rec_signed_endian;
 
-  gboolean suppress_dprint; ///< tidy up, e.g. by blocking "switched to file..." and "closed file..." messages
+  boolean suppress_dprint; ///< tidy up, e.g. by blocking "switched to file..." and "closed file..." messages
 
   gchar *string_constants[NUM_LIVES_STRING_CONSTANTS];
   gchar *any_string;  ///< localised text saying "Any", for encoder and output format
@@ -934,28 +940,28 @@ typedef struct {
 
   gint opening_frames; ///< count of frames so far opened, updated after preview (currently)
 
-  gboolean show_procd; ///< override showing of "processing..." dialog
+  boolean show_procd; ///< override showing of "processing..." dialog
 
-  gboolean block_param_updates; ///< block visual param changes from updating real values
-  gboolean no_interp; ///< block interpolation (for single frame previews)
+  boolean block_param_updates; ///< block visual param changes from updating real values
+  boolean no_interp; ///< block interpolation (for single frame previews)
 
   weed_timecode_t cevent_tc; ///< timecode of currently processing event
 
-  gboolean opening_multi; ///< flag to indicate multiple file selection
+  boolean opening_multi; ///< flag to indicate multiple file selection
 
-  gboolean record_paused; ///< pause during recording
+  boolean record_paused; ///< pause during recording
 
-  gboolean record_starting; ///< start recording at next frame
+  boolean record_starting; ///< start recording at next frame
 
   gint img_concat_clip;  ///< when opening multiple, image files can get concatenated here (prefs->concat_images)
 
   GdkGC *general_gc;  ///< used for colour drawing
 
   /// rendered generators
-  gboolean gen_to_clipboard;
-  gboolean is_generating;
+  boolean gen_to_clipboard;
+  boolean is_generating;
 
-  gboolean keep_pre;
+  boolean keep_pre;
 
   GtkWidget *textwidget_focus;
 
@@ -966,7 +972,7 @@ typedef struct {
 
 
   /// external control inputs
-  gboolean ext_cntl[MAX_EXT_CNTL];
+  boolean ext_cntl[MAX_EXT_CNTL];
 
   #ifdef ALSA_MIDI
   snd_seq_t *seq_handle;
@@ -982,24 +988,24 @@ typedef struct {
   GtkWidget *splash_label;
   GtkWidget *splash_progress;
 
-  gboolean recoverable_layout;
+  boolean recoverable_layout;
 
-  gboolean soft_debug; ///< for testing
+  boolean soft_debug; ///< for testing
 
   /// encoder text output
   GIOChannel *iochan;
   GtkTextView *optextview;
 
-  gboolean has_custom_tools;
-  gboolean has_custom_gens;
-  gboolean has_custom_utilities;
+  boolean has_custom_tools;
+  boolean has_custom_gens;
+  boolean has_custom_utilities;
 
   /// decoders
-  gboolean decoders_loaded;
+  boolean decoders_loaded;
   GList *decoder_list;
 
-  gboolean go_away;
-  gboolean debug; ///< debug crashes and asserts
+  boolean go_away;
+  boolean debug; ///< debug crashes and asserts
 
   gchar *subt_save_file; ///< name of file to save subtitles to
 
@@ -1014,7 +1020,7 @@ typedef struct {
 
   int log_fd;
 
-  gboolean jack_trans_poll;
+  boolean jack_trans_poll;
 
 #define LIVES_MAX_ALARMS 1024
 #define LIVES_NO_ALARM_TICKS -1
@@ -1024,22 +1030,22 @@ typedef struct {
 
   // stuff specific to audio gens (will be extended to all rt audio fx)
   volatile int agen_key; ///< which fx key is generating audio [1 based] (or 0 for none)
-  volatile gboolean agen_needs_reinit;
+  volatile boolean agen_needs_reinit;
   gint64 agen_samps_count; ///< count of samples since init
 
-  gboolean aplayer_broken;
+  boolean aplayer_broken;
 
-  gboolean com_failed;
-  gboolean write_failed;
-  gboolean read_failed;
-  gboolean chdir_failed;
+  boolean com_failed;
+  boolean write_failed;
+  boolean read_failed;
+  boolean chdir_failed;
 
-  gboolean add_clear_ds_button;
-  gboolean add_clear_ds_adv;
-  gboolean tried_ds_recover;
+  boolean add_clear_ds_button;
+  boolean add_clear_ds_adv;
+  boolean tried_ds_recover;
 
-  gboolean has_session_tmpdir;
-  gboolean startup_error;
+  boolean has_session_tmpdir;
+  boolean startup_error;
 
   gchar *read_failed_file;
   gchar *write_failed_file;
@@ -1070,9 +1076,9 @@ typedef struct {
   GtkWidget *param_vbox;
   GtkWidget *spinbutton_loops;
 
-  gboolean loop_to_fit;
-  gboolean align_start;
-  gboolean ins_frames;
+  boolean loop_to_fit;
+  boolean align_start;
+  boolean ins_frames;
   int *list_to_rfx_index;
   GList *trans_list;
 

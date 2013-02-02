@@ -16,7 +16,7 @@
 
 // generic plugins
 
-GList *get_plugin_list (const gchar *plugin_type, gboolean allow_nonex, const gchar *plugdir, const gchar *filter_ext);
+GList *get_plugin_list (const gchar *plugin_type, boolean allow_nonex, const gchar *plugdir, const gchar *filter_ext);
 #define PLUGIN_ENCODERS "encoders"
 #define PLUGIN_DECODERS "decoders"
 #define PLUGIN_VID_PLAYBACK "playback/video"
@@ -34,14 +34,14 @@ GList *plugin_request (const gchar *plugin_type, const gchar *plugin_name, const
 GList *plugin_request_with_blanks (const gchar *plugin_type, const gchar *plugin_name, const gchar *request);
 GList *plugin_request_by_line (const gchar *plugin_type, const gchar *plugin_name, const gchar *request);
 GList *plugin_request_by_space (const gchar *plugin_type, const gchar *plugin_name, const gchar *request);
-GList *plugin_request_common (const gchar *plugin_type, const gchar *plugin_name, const gchar *request, const gchar *delim, gboolean allow_blanks);
+GList *plugin_request_common (const gchar *plugin_type, const gchar *plugin_name, const gchar *request, const gchar *delim, boolean allow_blanks);
 
 #ifndef  __WEED_EFFECTS_H__
 typedef weed_plant_t *(*weed_bootstrap_f) (weed_default_getter_f *value, int num_versions, int *plugin_versions);
 #endif
 
 /// video playback plugins
-typedef gboolean (*plugin_keyfunc) (gboolean down, guint16 unicode, guint16 keymod);
+typedef boolean (*plugin_keyfunc) (boolean down, guint16 unicode, guint16 keymod);
 
 
 typedef struct {
@@ -55,18 +55,18 @@ typedef struct {
   const char *(*get_description) (void);
 
   gint *(*get_palette_list) (void);
-  gboolean (*set_palette) (int palette);
+  boolean (*set_palette) (int palette);
   guint64 (*get_capabilities) (int palette);
 
-  gboolean (*render_frame) (int hsize, int vsize, int64_t timecode, void **pixel_data, void **return_data,
+  boolean (*render_frame) (int hsize, int vsize, int64_t timecode, void **pixel_data, void **return_data,
 			    weed_plant_t **play_params);
 
   // optional
-  gboolean (*init_screen) (int width, int height, gboolean fullscreen, uint64_t window_id, int argc, gchar **argv);
+  boolean (*init_screen) (int width, int height, boolean fullscreen, uint64_t window_id, int argc, gchar **argv);
   void (*exit_screen) (guint16 mouse_x, guint16 mouse_y);
   void (*module_unload) (void);
   const gchar *(*get_fps_list) (int palette);
-  gboolean (*set_fps) (gdouble fps);
+  boolean (*set_fps) (gdouble fps);
   
   const char *(*get_init_rfx) (void);
 
@@ -74,7 +74,7 @@ typedef struct {
   const weed_plant_t **(*get_play_params) (weed_bootstrap_f f); 
   
   // only for display plugins
-  gboolean (*send_keycodes) (plugin_keyfunc);
+  boolean (*send_keycodes) (plugin_keyfunc);
 
   // optional for YUV palettes
   int *(*get_yuv_palette_sampling) (int palette);
@@ -123,7 +123,7 @@ typedef struct {
 #define DEF_VPP_HSIZE 320.
 #define DEF_VPP_VSIZE 240.
 
-_vid_playback_plugin *open_vid_playback_plugin (const gchar *name, gboolean in_use);
+_vid_playback_plugin *open_vid_playback_plugin (const gchar *name, boolean in_use);
 void vid_playback_plugin_exit (void);
 void close_vid_playback_plugin(_vid_playback_plugin *);
 gint64 get_best_audio(_vid_playback_plugin *);
@@ -238,8 +238,8 @@ typedef struct {
   gint arate;
   gint achans;
   gint asamps;
-  gboolean asigned;
-  gboolean ainterleaf;
+  boolean asigned;
+  boolean ainterleaf;
   gchar audio_name[512]; ///< name of audio codec, e.g. "vorbis" or NULL
 
   int seek_flag;
@@ -272,7 +272,7 @@ typedef struct {
   lives_clip_data_t *(*get_clip_data)(char *URI, lives_clip_data_t *cdata);
 
   /// frame starts at 0 in these functions; height is height of primary plane
-  gboolean (*get_frame)(const lives_clip_data_t *, int64_t frame, int *rowstrides, int height, void **pixel_data);
+  boolean (*get_frame)(const lives_clip_data_t *, int64_t frame, int *rowstrides, int height, void **pixel_data);
 
   /// call this for each cdata before unloading the module
   void (*clip_data_free)(lives_clip_data_t *);
@@ -305,7 +305,7 @@ lives_decoder_sys_t *open_decoder_plugin(const gchar *plname);
 void get_mime_type(gchar *text, int maxlen, const lives_clip_data_t *);
 void unload_decoder_plugins(void);
 
-gboolean decplugin_supports_palette (const lives_decoder_t *dplug, int palette);
+boolean decplugin_supports_palette (const lives_decoder_t *dplug, int palette);
 
 
 
@@ -368,7 +368,7 @@ typedef struct {
 
   gchar *label;
   gint flags;
-  gboolean use_mnemonic;
+  boolean use_mnemonic;
   fn_ptr interp_func;
   fn_ptr display_func;
   gint hidden;
@@ -381,10 +381,10 @@ typedef struct {
 
   gdouble step_size;
   //gint copy_to;
-  gboolean transition;
-  gboolean reinit;
+  boolean transition;
+  boolean reinit;
 
-  gboolean wrap;
+  boolean wrap;
   gint group;
   lives_param_type_t type;
 
@@ -408,11 +408,11 @@ typedef struct {
 
   /// TODO - change to GtkWidget **widgets, terminated with a NULL
   GtkWidget *widgets[MAX_PARAM_WIDGETS]; ///< widgets which hold value/RGBA settings
-  gboolean onchange; ///< is there a trigger ?
+  boolean onchange; ///< is there a trigger ?
 
-  gboolean changed;
+  boolean changed;
 
-  gboolean change_blocked;
+  boolean change_blocked;
 
   void *source;
 
@@ -464,12 +464,12 @@ typedef struct {
   void *source;  ///< points to the source (e.g. a weed_plant_t)
   void *extra;  ///< for future use
   gchar delim[2];
-  gboolean is_template;
+  boolean is_template;
 
 } lives_rfx_t;
 
 
-gboolean check_rfx_for_lives (lives_rfx_t *);
+boolean check_rfx_for_lives (lives_rfx_t *);
 
 void do_rfx_cleanup(lives_rfx_t *);
 
@@ -479,7 +479,7 @@ void sort_rfx_array (lives_rfx_t *in_array, gint num_elements);
 
 gint find_rfx_plugin_by_name (const gchar *name, gshort status);
 
-void rfx_copy (lives_rfx_t *src, lives_rfx_t *dest, gboolean full);
+void rfx_copy (lives_rfx_t *src, lives_rfx_t *dest, boolean full);
 
 void rfx_params_free(lives_rfx_t *rfx);
 
@@ -487,7 +487,7 @@ void rfx_free(lives_rfx_t *rfx);
 
 void rfx_free_all (void);
 
-void param_copy (lives_param_t *src, lives_param_t *dest, gboolean full);
+void param_copy (lives_param_t *src, lives_param_t *dest, boolean full);
 
 
 typedef struct {
@@ -508,13 +508,13 @@ typedef struct {
 
 
 
-gboolean get_bool_param(void *value);
+boolean get_bool_param(void *value);
 gint get_int_param(void *value);
 gdouble get_double_param(void *value);
 void get_colRGB24_param(void *value, lives_colRGB24_t *rgb);
 void get_colRGBA32_param(void *value, lives_colRGBA32_t *rgba);
 
-void set_bool_param(void *value, gboolean );
+void set_bool_param(void *value, boolean );
 void set_int_param(void *value, gint );
 void set_double_param(void *value, gdouble );
 void set_colRGB24_param(void *value, gshort red, gshort green, gshort blue);
@@ -527,8 +527,8 @@ void rfx_params_store_free (lives_rfx_t *, void **store);
 
 GList *array_to_string_list (gchar **array, gint offset, gint len);
 
-lives_rfx_t *weed_to_rfx (weed_plant_t *plant, gboolean show_reinits);
-lives_param_t *weed_params_to_rfx(gint npar, weed_plant_t *instance, gboolean show_reinits);
+lives_rfx_t *weed_to_rfx (weed_plant_t *plant, boolean show_reinits);
+lives_param_t *weed_params_to_rfx(gint npar, weed_plant_t *instance, boolean show_reinits);
 
 gchar *plugin_run_param_window(const gchar *get_com, GtkVBox *vbox, lives_rfx_t **ret_rfx);
 

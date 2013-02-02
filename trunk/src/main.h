@@ -479,28 +479,28 @@ typedef struct {
   gint insert_end;
   gint progress_start;
   gint progress_end;
-  gboolean changed;
+  boolean changed;
   GtkWidget *menuentry;
-  gboolean orig_file_name;
-  gboolean was_renamed;
-  gboolean is_untitled;
+  boolean orig_file_name;
+  boolean was_renamed;
+  boolean is_untitled;
   gdouble pb_fps;
   gdouble freeze_fps;
-  gboolean play_paused;
+  boolean play_paused;
   
   //opening/restoring status
-  gboolean opening;
-  gboolean opening_audio;
-  gboolean opening_only_audio;
-  gboolean opening_loc;
-  gboolean restoring;
-  gboolean is_loaded;  ///< should we continue loading if we come back to this clip
+  boolean opening;
+  boolean opening_audio;
+  boolean opening_only_audio;
+  boolean opening_loc;
+  boolean restoring;
+  boolean is_loaded;  ///< should we continue loading if we come back to this clip
 
   /// don't show preview/pause buttons on processing
-  gboolean nopreview;
+  boolean nopreview;
 
   /// don't show the 'keep' button - e.g. for operations which resize frames
-  gboolean nokeep;
+  boolean nokeep;
 
   // various times; total time is calculated as the gint64est of video, laudio and raudio
   gdouble total_time;
@@ -536,8 +536,8 @@ typedef struct {
   gint undo_end;
   gchar undo_text[32];
   gchar redo_text[32];
-  gboolean undoable;
-  gboolean redoable;
+  boolean undoable;
+  boolean redoable;
 
   // used for storing undo values
   gint undo1_int;
@@ -547,9 +547,9 @@ typedef struct {
   guint undo1_uint;
   gdouble undo1_dbl;
   gdouble undo2_dbl;
-  gboolean undo1_boolean;
-  gboolean undo2_boolean;
-  gboolean undo3_boolean;
+  boolean undo1_boolean;
+  boolean undo2_boolean;
+  boolean undo3_boolean;
 
   gint undo_arate; ///< audio playback rate
   guint undo_signed_endian;
@@ -575,7 +575,7 @@ typedef struct {
 
 #define IMG_BUFF_SIZE 4096 ///< chunk size for reading images
 
-  gboolean ratio_fps; ///< if the fps was set by a ratio
+  boolean ratio_fps; ///< if the fps was set by a ratio
 
   int64_t aseek_pos; ///< audio seek posn. (bytes) for when we switch clips
 
@@ -584,7 +584,7 @@ typedef struct {
   gchar mime_type[256];
 
 
-  gboolean deinterlace; ///< auto deinterlace
+  boolean deinterlace; ///< auto deinterlace
 
   lives_image_type_t img_type;
 
@@ -599,11 +599,11 @@ typedef struct {
   gchar *op_dir;
   guint64 op_ds_warn_level; ///< current disk space warning level for any output directory
 
-  gboolean no_proc_sys_errors; ///< skip system error dialogs in processing
-  gboolean no_proc_read_errors; ///< skip read error dialogs in processing
-  gboolean no_proc_write_errors; ///< skip write error dialogs in processing
+  boolean no_proc_sys_errors; ///< skip system error dialogs in processing
+  boolean no_proc_read_errors; ///< skip read error dialogs in processing
+  boolean no_proc_write_errors; ///< skip write error dialogs in processing
 
-  gboolean keep_without_preview; ///< allow keep, even when nopreview is set - TODO use only nopreview and nokeep
+  boolean keep_without_preview; ///< allow keep, even when nopreview is set - TODO use only nopreview and nokeep
 
   // TODO - change to lives_clip_t
 } file;
@@ -612,31 +612,31 @@ typedef struct {
 
 typedef struct {
   // the following can be assumed TRUE, they are checked on startup
-  gboolean has_smogrify;
-  gboolean smog_version_correct;
-  gboolean can_read_from_config;
-  gboolean can_write_to_config;
-  gboolean can_write_to_tmp;
-  gboolean can_write_to_tempdir;
+  boolean has_smogrify;
+  boolean smog_version_correct;
+  boolean can_read_from_config;
+  boolean can_write_to_config;
+  boolean can_write_to_tmp;
+  boolean can_write_to_tempdir;
 
   // the following may need checking before use
-  gboolean has_xmms;
-  gboolean has_dvgrab;
-  gboolean has_sox_play;
-  gboolean has_sox_sox;
-  gboolean has_autolives;
-  gboolean has_mplayer;
-  gboolean has_convert;
-  gboolean has_composite;
-  gboolean has_identify;
-  gboolean has_cdda2wav;
-  gboolean has_midistartstop;
-  gboolean has_jackd;
-  gboolean has_pulse_audio;
-  gboolean has_xwininfo;
-  gboolean has_gdb;
-  gboolean has_gconftool_2;
-  gboolean has_xdg_screensaver;
+  boolean has_xmms;
+  boolean has_dvgrab;
+  boolean has_sox_play;
+  boolean has_sox_sox;
+  boolean has_autolives;
+  boolean has_mplayer;
+  boolean has_convert;
+  boolean has_composite;
+  boolean has_identify;
+  boolean has_cdda2wav;
+  boolean has_midistartstop;
+  boolean has_jackd;
+  boolean has_pulse_audio;
+  boolean has_xwininfo;
+  boolean has_gdb;
+  boolean has_gconftool_2;
+  boolean has_xdg_screensaver;
 
   /// home directory - default location for config file - locale encoding
   gchar home_dir[PATH_MAX];
@@ -650,9 +650,9 @@ typedef struct {
   gchar startup_msg[256];
 
   // plugins
-  gboolean has_encoder_plugins;
+  boolean has_encoder_plugins;
 
-  gboolean has_python;
+  boolean has_python;
   guint64 python_version;
 
   gshort cpu_bits;
@@ -661,7 +661,7 @@ typedef struct {
   gchar *myname_full;
   gchar *myname;
 
-  gboolean has_stderr;
+  boolean has_stderr;
 
   gint nmonitors;
 
@@ -991,7 +991,6 @@ void set_main_title(const gchar *filename, gint or_untitled_number);
 void set_record (void);
 
 //gui.c
-//gui.c
 void  create_LiVES (void);
 void enable_record (void);
 void toggle_record (void);
@@ -1181,7 +1180,7 @@ lives_cancel_t check_for_bad_ffmpeg(void);
 
 // plugins.c
 GList *get_external_window_hints(lives_rfx_t *rfx);
-gboolean check_encoder_restrictions (gboolean get_extension, gboolean user_audio, gboolean save_all);
+gboolean check_encoder_restrictions (boolean get_extension, boolean user_audio, boolean save_all);
 
 //callbacks.c
 void lives_exit (void);

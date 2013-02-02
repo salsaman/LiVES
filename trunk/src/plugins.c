@@ -1,6 +1,6 @@
 // plugins.c
 // LiVES
-// (c) G. Finch 2003 - 2012 <salsaman@xs4all.nl,salsaman@gmail.com>
+// (c) G. Finch 2003 - 2013 <salsaman@xs4all.nl,salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -31,14 +31,14 @@
 
 const char *anames[AUDIO_CODEC_MAX]={"mp3","pcm","mp2","vorbis","AC3","AAC","AMR_NB","raw","wma2",""};
 
-static gboolean list_plugins;
+static boolean list_plugins;
 
 
 ///////////////////////
 // command-line plugins
 
 
-static GList *get_plugin_result (const gchar *command, const gchar *delim, gboolean allow_blanks) {
+static GList *get_plugin_result (const gchar *command, const gchar *delim, boolean allow_blanks) {
 
   GList *list=NULL;
   gchar **array;
@@ -48,7 +48,7 @@ static GList *get_plugin_result (const gchar *command, const gchar *delim, gbool
   int retval;
   int alarm_handle;
   gint error;
-  gboolean timeout;
+  boolean timeout;
 
   gchar *msg,*buf;
 
@@ -199,7 +199,7 @@ GList * plugin_request_by_space (const gchar *plugin_type, const gchar *plugin_n
 
 
 GList * plugin_request_common (const gchar *plugin_type, const gchar *plugin_name, const gchar *request, 
-			       const gchar *delim, gboolean allow_blanks) {
+			       const gchar *delim, boolean allow_blanks) {
   // returns a GList of responses to -request, or NULL on error
   // by_line says whether we split on '\n' or on '|'
 
@@ -283,7 +283,7 @@ GList * plugin_request_common (const gchar *plugin_type, const gchar *plugin_nam
 //////////////////
 // get list of plugins of various types
 
-GList *get_plugin_list (const gchar *plugin_type, gboolean allow_nonex, const gchar *plugdir, const gchar *filter_ext) {
+GList *get_plugin_list (const gchar *plugin_type, boolean allow_nonex, const gchar *plugdir, const gchar *filter_ext) {
   // returns a GList * of plugins of type plugin_type
   // returns empty list if there are no plugins of that type
 
@@ -870,7 +870,6 @@ _vppaw *on_vpp_advanced_clicked (GtkButton *button, gpointer user_data) {
   GtkWidget *cancelbutton;
   GtkWidget *okbutton;
   GtkWidget *savebutton;
-  GObject *spinbutton_adj;
 
   gchar *title;
   gchar *tmp,*tmp2;
@@ -908,9 +907,13 @@ _vppaw *on_vpp_advanced_clicked (GtkButton *button, gpointer user_data) {
   vppa->spinbuttonh=vppa->spinbuttonw=NULL;
   vppa->pal_entry=vppa->fps_entry=NULL;
 
-  vppa->dialog = gtk_dialog_new ();
+  pversion=(tmpvpp->version)();
 
-  gtk_window_set_position (GTK_WINDOW (vppa->dialog), GTK_WIN_POS_CENTER_ALWAYS);
+  title=g_strdup_printf("LiVES: - %s",pversion);
+
+  vppa->dialog = lives_standard_dialog_new (title,FALSE);
+  g_free(title);
+
   if (prefs->show_gui) {
     if (prefsw!=NULL) gtk_window_set_transient_for(GTK_WINDOW(vppa->dialog),GTK_WINDOW(prefsw->prefs_dialog));
     else {
@@ -919,29 +922,7 @@ _vppaw *on_vpp_advanced_clicked (GtkButton *button, gpointer user_data) {
     }
   }
 
-  if (prefs->gui_monitor!=0) {
-    gtk_window_set_screen(GTK_WINDOW(vppa->dialog),mainw->mgeom[prefs->gui_monitor-1].screen);
-  }
-
-  gtk_window_set_modal (GTK_WINDOW (vppa->dialog), TRUE);
-
-  if (palette->style&STYLE_1) {
-    gtk_dialog_set_has_separator(GTK_DIALOG(vppa->dialog),FALSE);
-    gtk_widget_modify_bg (vppa->dialog, GTK_STATE_NORMAL, &palette->normal_back);
-  }
-
-  gtk_window_set_default_size (GTK_WINDOW (vppa->dialog), 600, 400);
-
-  gtk_container_set_border_width (GTK_CONTAINER (vppa->dialog), 10);
-
-  pversion=(tmpvpp->version)();
-  title=g_strdup_printf("LiVES: - %s",pversion);
-  gtk_window_set_title (GTK_WINDOW (vppa->dialog), title);
-  g_free(title);
-
   dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(vppa->dialog));
-  gtk_widget_show (dialog_vbox);
-
 
   // the filling...
   if (tmpvpp->get_description!=NULL) {
@@ -999,33 +980,17 @@ _vppaw *on_vpp_advanced_clicked (GtkButton *button, gpointer user_data) {
     gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, FALSE, FALSE, 10);
     
     add_fill_to_box(GTK_BOX(hbox));
-    label=gtk_label_new_with_mnemonic(_("_Width"));
-    if (palette->style&STYLE_1) {
-      gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-    }
-    gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 10);
-    
-    spinbutton_adj = (GObject *)gtk_adjustment_new (tmpvpp->fwidth>0?tmpvpp->fwidth:DEF_VPP_HSIZE, 4., 100000, 4, 4, 0.);
-    vppa->spinbuttonw = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 4, 0);
 
-    gtk_label_set_mnemonic_widget (GTK_LABEL (label),vppa->spinbuttonw);
-    gtk_box_pack_start (GTK_BOX (hbox), vppa->spinbuttonw, FALSE, FALSE, 10);
-    gtk_spin_button_set_update_policy (GTK_SPIN_BUTTON (vppa->spinbuttonw),GTK_UPDATE_IF_VALID);
-    
+    vppa->spinbuttonw = lives_standard_spin_button_new (_("_Width"),TRUE,
+							tmpvpp->fwidth>0?tmpvpp->fwidth:DEF_VPP_HSIZE, 
+							4., MAX_FRAME_WIDTH, 4., 4., 0, LIVES_BOX(hbox),NULL);
+
     add_fill_to_box(GTK_BOX(hbox));
     
-    label=gtk_label_new_with_mnemonic(_("_Height"));
-    if (palette->style&STYLE_1) {
-      gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-    }
-    gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 10);
-    
-    spinbutton_adj = (GObject *)gtk_adjustment_new (tmpvpp->fheight>0?tmpvpp->fheight:DEF_VPP_VSIZE, 4., 100000, 4, 4, 0.);
-    vppa->spinbuttonh = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 4, 0);
+    vppa->spinbuttonh = lives_standard_spin_button_new (_("_Height"),TRUE,
+							tmpvpp->fheight>0?tmpvpp->fheight:DEF_VPP_VSIZE, 
+							4., MAX_FRAME_HEIGHT, 4., 4., 0, LIVES_BOX(hbox),NULL);
 
-    gtk_label_set_mnemonic_widget (GTK_LABEL (label),vppa->spinbuttonh);
-    gtk_box_pack_start (GTK_BOX (hbox), vppa->spinbuttonh, FALSE, FALSE, 10);
-    gtk_spin_button_set_update_policy (GTK_SPIN_BUTTON (vppa->spinbuttonh),GTK_UPDATE_IF_VALID);
     add_fill_to_box(GTK_BOX(hbox));
   }
 
@@ -1051,7 +1016,8 @@ _vppaw *on_vpp_advanced_clicked (GtkButton *button, gpointer user_data) {
       }
     }
 
-    combo = lives_standard_combo_new ((tmp=g_strdup(_("_Colourspace"))),TRUE,pal_list_strings,LIVES_BOX(dialog_vbox),tmp2=g_strdup(_("Colourspace input to the plugin.\n")));
+    combo = lives_standard_combo_new ((tmp=g_strdup(_("_Colourspace"))),TRUE,pal_list_strings,
+				      LIVES_BOX(dialog_vbox),tmp2=g_strdup(_("Colourspace input to the plugin.\n")));
     g_free(tmp);
     g_free(tmp2);
     vppa->pal_entry=lives_combo_get_entry(LIVES_COMBO(combo));
@@ -1076,11 +1042,9 @@ _vppaw *on_vpp_advanced_clicked (GtkButton *button, gpointer user_data) {
     GtkWidget *scrolledwindow = gtk_scrolled_window_new (NULL, NULL);
     gtk_widget_set_size_request (scrolledwindow, RFX_WINSIZE_H, RFX_WINSIZE_V/2);
     gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrolledwindow), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
-    gtk_widget_show (scrolledwindow);
     
     gtk_box_pack_start (GTK_BOX (dialog_vbox), scrolledwindow, TRUE, TRUE, 0);
 
-    gtk_widget_show (vbox);
     gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (scrolledwindow), vbox);
 
 #ifndef IS_MINGW
@@ -1104,17 +1068,14 @@ _vppaw *on_vpp_advanced_clicked (GtkButton *button, gpointer user_data) {
 
 
   cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
-  gtk_widget_show (cancelbutton);
   gtk_dialog_add_action_widget (GTK_DIALOG (vppa->dialog), cancelbutton, GTK_RESPONSE_CANCEL);
 
   savebutton = gtk_button_new_from_stock ("gtk-save-as");
-  gtk_widget_show (savebutton);
   gtk_dialog_add_action_widget (GTK_DIALOG (vppa->dialog), savebutton, 1);
   lives_widget_set_can_focus_and_default (savebutton);
   gtk_widget_set_tooltip_text( savebutton, _("Save settings to an alternate file.\n"));
 
   okbutton = gtk_button_new_from_stock ("gtk-ok");
-  gtk_widget_show (okbutton);
   gtk_dialog_add_action_widget (GTK_DIALOG (vppa->dialog), okbutton, GTK_RESPONSE_OK);
   lives_widget_set_can_focus_and_default (okbutton);
 
@@ -1205,7 +1166,7 @@ const weed_plant_t *pp_get_chan(weed_plant_t **pparams, int idx) {
 
 
 
-_vid_playback_plugin *open_vid_playback_plugin (const gchar *name, gboolean in_use) {
+_vid_playback_plugin *open_vid_playback_plugin (const gchar *name, boolean in_use) {
   // this is called on startup or when the user selects a new playback plugin
 
   // if in_use is TRUE, it is our active vpp
@@ -1219,7 +1180,7 @@ _vid_playback_plugin *open_vid_playback_plugin (const gchar *name, gboolean in_u
   gchar *plugname=g_strdup_printf ("%s%s%s/%s.dll",prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_VID_PLAYBACK,name);
 #endif
   void *handle=dlopen(plugname,RTLD_LAZY);
-  gboolean OK=TRUE;
+  boolean OK=TRUE;
   gchar *msg,*tmp;
   gchar **array;
   const gchar *fps_list;
@@ -1256,18 +1217,18 @@ _vid_playback_plugin *open_vid_playback_plugin (const gchar *name, gboolean in_u
   if ((vpp->get_palette_list=(gint* (*)())dlsym (handle,"get_palette_list"))==NULL) {
     OK=FALSE;
   }
-  if ((vpp->set_palette=(gboolean (*)(int))dlsym (handle,"set_palette"))==NULL) {
+  if ((vpp->set_palette=(boolean (*)(int))dlsym (handle,"set_palette"))==NULL) {
     OK=FALSE;
   }
   if ((vpp->get_capabilities=(guint64 (*)(int))dlsym (handle,"get_capabilities"))==NULL) {
     OK=FALSE;
   }
-  if ((vpp->render_frame=(gboolean (*)(int, int, int64_t, void**, void**, weed_plant_t **)) 
+  if ((vpp->render_frame=(boolean (*)(int, int, int64_t, void**, void**, weed_plant_t **)) 
        dlsym (handle,"render_frame"))==NULL) {
     OK=FALSE;
   }
   if ((vpp->get_fps_list=(const gchar* (*)(int))dlsym (handle,"get_fps_list"))!=NULL) {
-    if ((vpp->set_fps=(gboolean (*)(gdouble))dlsym (handle,"set_fps"))==NULL) {
+    if ((vpp->set_fps=(boolean (*)(gdouble))dlsym (handle,"set_fps"))==NULL) {
       OK=FALSE;
     }
   }
@@ -1307,9 +1268,9 @@ _vid_playback_plugin *open_vid_playback_plugin (const gchar *name, gboolean in_u
 
   vpp->get_yuv_palette_clamping=(int* (*)(int))dlsym (handle,"get_yuv_palette_clamping");
   vpp->set_yuv_palette_clamping=(int (*)(int))dlsym (handle,"set_yuv_palette_clamping");
-  vpp->send_keycodes=(gboolean (*)(plugin_keyfunc))dlsym (handle,"send_keycodes");
+  vpp->send_keycodes=(boolean (*)(plugin_keyfunc))dlsym (handle,"send_keycodes");
   vpp->get_audio_fmts=(int* (*)())dlsym (handle,"get_audio_fmts");
-  vpp->init_screen=(gboolean (*)(int, int, gboolean, uint64_t, int, gchar**))dlsym (handle,"init_screen");
+  vpp->init_screen=(boolean (*)(int, int, boolean, uint64_t, int, gchar**))dlsym (handle,"init_screen");
   vpp->exit_screen=(void (*)(guint16, guint16))dlsym (handle,"exit_screen");
   vpp->module_unload=(void (*)())dlsym (handle,"module_unload");
 
@@ -1653,17 +1614,17 @@ void do_plugin_encoder_error(const gchar *plugin_name) {
 }
 
 
-gboolean check_encoder_restrictions (gboolean get_extension, gboolean user_audio, gboolean save_all) {
+boolean check_encoder_restrictions (boolean get_extension, boolean user_audio, boolean save_all) {
   gchar **checks;
   gchar **array=NULL;
   gchar **array2;
   gint pieces,numtok;
-  gboolean calc_aspect=FALSE;
+  boolean calc_aspect=FALSE;
   gchar aspect_buffer[512];
   gint hblock=2,vblock=2;
   int i,r,val;
   GList *ofmt_all=NULL;
-  gboolean sizer=FALSE;
+  boolean sizer=FALSE;
 
   // for auto resizing/resampling
   gdouble best_fps=0.;
@@ -1673,13 +1634,13 @@ gboolean check_encoder_restrictions (gboolean get_extension, gboolean user_audio
 
   gdouble best_fps_delta=0.;
   gint best_arate_delta=0;
-  gboolean allow_aspect_override=FALSE;
+  boolean allow_aspect_override=FALSE;
 
   gint best_fps_num=0,best_fps_denom=0;
   gdouble fps;
   gint arate,achans,asampsize,asigned=0;
 
-  gboolean swap_endian=FALSE;
+  boolean swap_endian=FALSE;
 
   if (rdet==NULL) {
     width=owidth=cfile->hsize;
@@ -2046,7 +2007,7 @@ gboolean check_encoder_restrictions (gboolean get_extension, gboolean user_audio
 
   if (((width!=owidth||height!=oheight)&&width*height>0)||(best_fps_delta>0.)||(best_arate_delta>0&&best_arate>0)||
       best_arate<0||asigned!=0||swap_endian) {
-    gboolean ofx1_bool=mainw->fx1_bool;
+    boolean ofx1_bool=mainw->fx1_bool;
     mainw->fx1_bool=FALSE;
     if ((width!=owidth||height!=oheight)&&width*height>0) {
       if (!capable->has_convert&&rdet==NULL&&mainw->fx_candidates[FX_CANDIDATE_RESIZER].delegate==-1) {
@@ -2147,7 +2108,7 @@ GList *filter_encoders_by_img_ext(GList *encoders, const gchar *img_ext) {
   if (capable->python_version<3000000) blacklist[0]=g_strdup("multi_encoder3");
 
   while (list!=NULL) {
-    gboolean skip=FALSE;
+    boolean skip=FALSE;
     i=0;
 
     listnext=list->next;
@@ -2203,7 +2164,7 @@ GList *filter_encoders_by_img_ext(GList *encoders, const gchar *img_ext) {
 // decoder plugins
 
 
-LIVES_INLINE gboolean decplugin_supports_palette (const lives_decoder_t *dplug, int palette) {
+LIVES_INLINE boolean decplugin_supports_palette (const lives_decoder_t *dplug, int palette) {
   register int i=0;
   int cpal;
   while ((cpal=dplug->cdata->palettes[i++])!=WEED_PALETTE_END) if (cpal==palette) return TRUE;
@@ -2239,7 +2200,7 @@ static GList *load_decoders(void) {
 
 
 
-static gboolean sanity_check_cdata(lives_clip_data_t *cdata) {
+static boolean sanity_check_cdata(lives_clip_data_t *cdata) {
   if (cdata->nframes<=0 || cdata->nframes >= INT_MAX) {
     return FALSE;
   }
@@ -2397,7 +2358,7 @@ lives_decoder_sys_t *open_decoder_plugin(const gchar *plname) {
   lives_decoder_sys_t *dplug;
 
   gchar *plugname;
-  gboolean OK=TRUE;
+  boolean OK=TRUE;
   const gchar *err;
 
   if (!strcmp(plname,"ogg_theora_decoder")) {
@@ -2433,7 +2394,7 @@ lives_decoder_sys_t *open_decoder_plugin(const gchar *plname) {
        dlsym (dplug->handle,"get_clip_data"))==NULL) {
     OK=FALSE;
   }
-  if ((dplug->get_frame=(gboolean (*)(const lives_clip_data_t*, int64_t, int*, int, void**))
+  if ((dplug->get_frame=(boolean (*)(const lives_clip_data_t*, int64_t, int*, int, void**))
        dlsym (dplug->handle,"get_frame"))==NULL) {
     OK=FALSE;
   }
@@ -2548,6 +2509,8 @@ static void on_dpa_cb_toggled(GtkToggleButton *button, gchar *decname) {
 
 
 void on_decplug_advanced_clicked (GtkButton *button, gpointer user_data) {
+  GList *decoder_plugin;
+
   GtkWidget *hbox;
   GtkWidget *vbox;
   GtkWidget *checkbutton;
@@ -2558,12 +2521,8 @@ void on_decplug_advanced_clicked (GtkButton *button, gpointer user_data) {
   GtkWidget *cancelbutton;
   GtkWidget *okbutton;
 
-  gchar *title,*ltext;
-
-  GList *decoder_plugin;
-
+  gchar *ltext;
   gchar *decplugdir=g_strdup_printf("%s%s%s",prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_DECODERS);
-
 
   if (!mainw->decoders_loaded) {
     mainw->decoder_list=load_decoders();
@@ -2572,9 +2531,8 @@ void on_decplug_advanced_clicked (GtkButton *button, gpointer user_data) {
 
   decoder_plugin=mainw->decoder_list;
 
-  dialog = gtk_dialog_new ();
+  dialog = lives_standard_dialog_new (_("LiVES: - Decoder Plugins"),FALSE);
 
-  gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_CENTER_ALWAYS);
   if (prefs->show_gui) {
     if (prefsw!=NULL) gtk_window_set_transient_for(GTK_WINDOW(dialog),GTK_WINDOW(prefsw->prefs_dialog));
     else {
@@ -2582,25 +2540,6 @@ void on_decplug_advanced_clicked (GtkButton *button, gpointer user_data) {
       else gtk_window_set_transient_for(GTK_WINDOW(dialog),GTK_WINDOW(mainw->multitrack->window));
     }
   }
-
-  if (prefs->gui_monitor!=0) {
-    gtk_window_set_screen(GTK_WINDOW(dialog),mainw->mgeom[prefs->gui_monitor-1].screen);
-  }
-
-  gtk_window_set_modal (GTK_WINDOW (dialog), TRUE);
-
-  if (palette->style&STYLE_1) {
-    gtk_dialog_set_has_separator(GTK_DIALOG(dialog),FALSE);
-    gtk_widget_modify_bg (dialog, GTK_STATE_NORMAL, &palette->normal_back);
-  }
-
-  gtk_window_set_default_size (GTK_WINDOW (dialog), 600, 400);
-
-  gtk_container_set_border_width (GTK_CONTAINER (dialog), 10);
-
-  title=g_strdup(_("LiVES: - Decoder Plugins"));
-  gtk_window_set_title (GTK_WINDOW (dialog), title);
-  g_free(title);
 
   dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(dialog));
 
@@ -2612,6 +2551,7 @@ void on_decplug_advanced_clicked (GtkButton *button, gpointer user_data) {
 
   vbox = gtk_vbox_new (FALSE, 0);
   gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (scrolledwindow), vbox);
+  gtk_widget_set_size_request (scrolledwindow, RFX_WINSIZE_H, RFX_WINSIZE_V);
 
   if (palette->style&STYLE_1) {
     gtk_widget_modify_fg(lives_bin_get_child(LIVES_BIN(scrolledwindow)), GTK_STATE_NORMAL, &palette->normal_fore);
@@ -2673,7 +2613,7 @@ void on_decplug_advanced_clicked (GtkButton *button, gpointer user_data) {
 
 
 
-gboolean check_rfx_for_lives (lives_rfx_t *rfx) {
+boolean check_rfx_for_lives (lives_rfx_t *rfx) {
   // check that an RFX is suitable for loading (cf. check_for_lives in effects-weed.c)
   if (rfx->num_in_channels==2&&rfx->props&RFX_PROPS_MAY_RESIZE) {
     gchar *tmp;
@@ -2931,7 +2871,7 @@ void sort_rfx_array (lives_rfx_t *in, gint num) {
   // sort rfx array into UTF-8 order by menu entry
   register int i;
   int start=1,min_val=0;
-  gboolean used[num];
+  boolean used[num];
   gint sorted=1;
   gchar *min_string=NULL;
   lives_rfx_t *rfx;
@@ -2983,7 +2923,7 @@ void sort_rfx_array (lives_rfx_t *in, gint num) {
 }
 
 
-void rfx_copy (lives_rfx_t *src, lives_rfx_t *dest, gboolean full) {
+void rfx_copy (lives_rfx_t *src, lives_rfx_t *dest, boolean full) {
   // Warning, does not copy all fields (full will do that)
   dest->name=g_strdup (src->name);
   dest->menu_text=g_strdup (src->menu_text);
@@ -3047,7 +2987,7 @@ void rfx_free_all (void) {
 }
 
 
-void param_copy (lives_param_t *src, lives_param_t *dest, gboolean full) {
+void param_copy (lives_param_t *src, lives_param_t *dest, boolean full) {
   // rfxbuilder.c uses this to copy params to a temporary copy and back again
 
   dest->name=g_strdup (src->name);
@@ -3098,8 +3038,8 @@ void param_copy (lives_param_t *src, lives_param_t *dest, gboolean full) {
 
 }
 
-gboolean get_bool_param(void *value) {
-  gboolean ret;
+boolean get_bool_param(void *value) {
+  boolean ret;
   lives_memcpy(&ret,value,4);
   return ret;
 }
@@ -3124,7 +3064,7 @@ void get_colRGBA32_param(void *value, lives_colRGBA32_t *rgba) {
   lives_memcpy(rgba,value,sizeof(lives_colRGBA32_t));
 }
 
-void set_bool_param(void *value, gboolean _const) {
+void set_bool_param(void *value, boolean _const) {
   set_int_param(value,!!_const);
 }
 
@@ -3180,7 +3120,7 @@ gint find_rfx_plugin_by_name (const gchar *name, gshort status) {
 
 
 
-lives_param_t *weed_params_to_rfx(gint npar, weed_plant_t *inst, gboolean show_reinits) {
+lives_param_t *weed_params_to_rfx(gint npar, weed_plant_t *inst, boolean show_reinits) {
   int i,j;
   lives_param_t *rpar=(lives_param_t *)g_malloc(npar*sizeof(lives_param_t));
   int param_hint;
@@ -3197,7 +3137,7 @@ lives_param_t *weed_params_to_rfx(gint npar, weed_plant_t *inst, gboolean show_r
   double red_mind=0.,red_maxd=1.,green_mind=0.,green_maxd=1.,blue_mind=0.,blue_maxd=1.,*maxd=NULL,*mind=NULL;
   int flags=0;
   int nwpars=0,poffset=0;
-  gboolean col_int;
+  boolean col_int;
 
   weed_plant_t *wtmpl;
   weed_plant_t **wpars=NULL,*wpar=NULL;
@@ -3548,7 +3488,7 @@ lives_param_t *weed_params_to_rfx(gint npar, weed_plant_t *inst, gboolean show_r
 
 
 
-lives_rfx_t *weed_to_rfx (weed_plant_t *plant, gboolean show_reinits) {
+lives_rfx_t *weed_to_rfx (weed_plant_t *plant, boolean show_reinits) {
   // return an RFX for a weed effect; set rfx->source to an INSTANCE of the filter (first instance for compound fx)
   int error;
   weed_plant_t *filter,*inst;

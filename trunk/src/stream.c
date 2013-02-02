@@ -1123,7 +1123,6 @@ lives_pandh_w* create_pandh_dialog (gint type) {
   gtk_box_pack_start (GTK_BOX (dialog_vbox), label, TRUE, TRUE, 10);
 
   hseparator = gtk_hseparator_new ();
-  gtk_widget_show (hseparator);
   gtk_box_pack_start (GTK_BOX (dialog_vbox), hseparator, TRUE, TRUE, 20);
 
   label=lives_standard_label_new(_("Select the host to receive the stream from (or allow any host to stream)."));

@@ -1316,12 +1316,11 @@ static omclearn_w *create_omclearn_dialog(void) {
   omclw->top_vbox = lives_dialog_get_content_area(GTK_DIALOG(omclw->dialog));
 
   omclw->table = gtk_table_new (omclw->tbl_rows, 4, FALSE);
-  gtk_widget_show (omclw->table);
 
   gtk_table_set_col_spacings(GTK_TABLE(omclw->table),20);
 
   scrolledwindow = gtk_scrolled_window_new (NULL, NULL);
-  gtk_widget_show (scrolledwindow);
+
   gtk_box_pack_start (GTK_BOX (omclw->top_vbox), scrolledwindow, TRUE, TRUE, 0);
   
   gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrolledwindow), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
@@ -1335,7 +1334,6 @@ static omclearn_w *create_omclearn_dialog(void) {
   gtk_viewport_set_shadow_type (GTK_VIEWPORT (gtk_bin_get_child (GTK_BIN (scrolledwindow))),GTK_SHADOW_IN);
   
   hbuttonbox = gtk_hbutton_box_new ();
-  gtk_widget_show (hbuttonbox);
   
   gtk_box_pack_start (GTK_BOX (omclw->top_vbox), hbuttonbox, TRUE, TRUE, 0);
   
@@ -1343,7 +1341,7 @@ static omclearn_w *create_omclearn_dialog(void) {
   gtk_button_box_set_layout (GTK_BUTTON_BOX (hbuttonbox), GTK_BUTTONBOX_SPREAD);
   
   omclw->clear_button = gtk_button_new_with_mnemonic (_("Clear _unmatched"));
-  gtk_widget_show (omclw->clear_button);
+
   gtk_container_add (GTK_CONTAINER (hbuttonbox), omclw->clear_button);
   
 
@@ -1354,7 +1352,7 @@ static omclearn_w *create_omclearn_dialog(void) {
   gtk_widget_set_sensitive(omclw->clear_button,FALSE);
 
   omclw->del_all_button = gtk_button_new_with_mnemonic (_("_Delete all"));
-  gtk_widget_show (omclw->del_all_button);
+
   gtk_container_add (GTK_CONTAINER (hbuttonbox), omclw->del_all_button);
   
 
@@ -1366,7 +1364,7 @@ static omclearn_w *create_omclearn_dialog(void) {
 
 
   ok_button = gtk_button_new_with_mnemonic (_("Close _window"));
-  gtk_widget_show (ok_button);
+
   gtk_container_add (GTK_CONTAINER (hbuttonbox), ok_button);
   
   lives_widget_set_can_focus_and_default (ok_button);
@@ -1389,6 +1387,9 @@ static omclearn_w *create_omclearn_dialog(void) {
   if (prefs->open_maximised) {
     gtk_window_maximize (GTK_WINDOW(omclw->dialog));
   }
+
+  if (prefs->show_gui)
+    gtk_widget_show_all(omclw->dialog);
   
   return omclw;
 }

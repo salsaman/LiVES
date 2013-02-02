@@ -113,7 +113,7 @@ void add_message_scroller(GtkWidget *conter) {
     gtk_text_buffer_delete_mark (tbuff,mark);
   }
 
-  gtk_widget_set_size_request (mainw->textview1, -1, 50);
+  gtk_widget_set_size_request (mainw->textview1, -1, MSG_AREA_HEIGHT);
   gtk_text_view_set_editable (GTK_TEXT_VIEW (mainw->textview1), FALSE);
   gtk_text_view_set_wrap_mode (GTK_TEXT_VIEW (mainw->textview1), GTK_WRAP_WORD);
   gtk_text_view_set_cursor_visible (GTK_TEXT_VIEW (mainw->textview1), FALSE);
@@ -2219,7 +2219,7 @@ create_LiVES (void)
   mainw->hruler = lives_standard_hruler_new();
   lives_ruler_set_range (LIVES_RULER (mainw->hruler), 0., 1000000., 0., 1000000.);
 
-  gtk_widget_set_size_request (mainw->hruler, -1, 20);
+  gtk_widget_set_size_request (mainw->hruler, -1, CE_HRULE_HEIGHT);
   gtk_container_add (GTK_CONTAINER (mainw->eventbox5), mainw->hruler);
 
   gtk_widget_modify_bg (mainw->hruler, GTK_STATE_NORMAL, &palette->normal_back);

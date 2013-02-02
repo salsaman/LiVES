@@ -926,6 +926,7 @@ void do_startup_interface_query(void) {
 
   okbutton = gtk_button_new_from_stock ("gtk-go-forward");
   gtk_button_set_label(GTK_BUTTON(okbutton),_("_Finish"));
+
   gtk_widget_show (okbutton);
   gtk_dialog_add_action_widget (GTK_DIALOG (dialog), okbutton, GTK_RESPONSE_OK);
   lives_widget_set_can_focus_and_default (okbutton);

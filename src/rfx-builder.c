@@ -811,7 +811,7 @@ void on_list_table_clicked (GtkButton *button, gpointer user_data) {
       on_table_add_row (NULL,(gpointer)rfxbuilder);
     }
   }
-  gtk_widget_set_size_request (scrolledwindow,500,100);
+  gtk_widget_set_size_request (scrolledwindow,RFX_WINSIZE_H*5/6,RFX_WINSIZE_V/4);
   gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrolledwindow), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
 
   gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (scrolledwindow), rfxbuilder->table);
@@ -2996,7 +2996,7 @@ GtkWidget * make_trigger_dialog (gint tnum, rfx_build_window_t *rfxbuilder) {
     gtk_widget_grab_focus(rfxbuilder->code_textview);
   }
     
-  gtk_widget_set_size_request (scrolledwindow,400,100);
+  gtk_widget_set_size_request (scrolledwindow,RFX_WINSIZE_H*2/3,RFX_WINSIZE_V/4);
 
   dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (dialog));
   gtk_widget_show (dialog_action_area);
@@ -3141,7 +3141,7 @@ void on_code_clicked (GtkButton *button, gpointer user_data) {
     }
   }
 
-  gtk_widget_set_size_request (scrolledwindow,600,400);
+  gtk_widget_set_size_request (scrolledwindow,RFX_WINSIZE_H,RFX_WINSIZE_V);
 
   dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (dialog));
   gtk_widget_show (dialog_action_area);

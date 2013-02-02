@@ -316,17 +316,6 @@ void on_save_subs_activate (GtkMenuItem *menuitem, gpointer entry_widget);
 void on_erase_subs_activate (GtkMenuItem *menuitem, gpointer user_data);
 
 
-void
-on_xmms_play_audio_activate                  (GtkMenuItem     *menuitem,
-					      gpointer         user_data);
-
-void on_xmms_ok_clicked (GtkFileChooser *chooser, gpointer user_data);
-
-void 
-on_xmms_stop_audio_activate                (GtkMenuItem     *menuitem,
-					    gpointer         user_data);
-
-
 void 
 on_insfitaudio_toggled                (GtkToggleButton *togglebutton,
 				       gpointer         user_data);
@@ -465,10 +454,6 @@ void
 on_backup_activate                      (GtkMenuItem     *menuitem,
 					 gpointer         user_data);
 
-void
-on_xmms_ran_ok_clicked                  (GtkButton       *button,
-				       gpointer         user_data);
-
 
 void
 on_record_perf_activate                      (GtkMenuItem     *menuitem,
@@ -483,9 +468,6 @@ gboolean fps_reset_callback (GtkAccelGroup *, GObject *, guint, GdkModifierType,
 gboolean mute_audio_callback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer);
 
 
-void
-on_xmms_random_audio_activate                (GtkMenuItem     *menuitem,
-					      gpointer         user_data);
 
 gboolean
 on_stop_activate_by_del                  (GtkWidget       *widget,

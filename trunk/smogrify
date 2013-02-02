@@ -559,22 +559,6 @@ if (defined($ARGV[0])) {
     }
 
 
-	if ($command eq "xmmsstop") {
-	$xmms_command=&location("xmms");
-	unless ($xmms_command eq "") {
-	    smog_system("\"$xmms_command\" -s");
-	}
-	exit 0;
-    }
-
-    if ($command eq "xmmsplay") {
-	$xmms_command=&location("xmms");
-	unless ($xmms_command eq "") {
-	    smog_system("\"$xmms_command\" -p \"$ARGV[1]\" &");
-	}
-	exit 0;
-    }
-
     if ($command eq "pause") {
 	if ($^O eq "MSWin32") {
 	    $smres=smog_system("touch.exe \"$tmpdir\\$ARGV[1]\\pause\"");
@@ -3616,70 +3600,6 @@ if (defined($ARGV[0])) {
 	&sig_complete($arate,$achans,$asamps,$asigned,$aendian,$f_size);
 	exit 0;
     }
-
-    if ($command eq "xmmsrandom") {
-	# to be deprecated
-	$trackstoplay=$ARGV[2];
-	$descend=$ARGV[3];
-	$minmeg=$ARGV[4];
-	$maxmeg=$ARGV[5];
-	$origdir=$dir=$ARGV[6];
-	$meg=1024*1024;
-
-	$xmms_command=&location("xmms");
-	unless ($xmms_command eq "") {
-	    $first=1;
-	    $tracks=0;
-	    # give up if we tried 200 files and didn't get an audio file
-	    $giveup=200;
-
-	    do {
-		opendir DIR,$dir;
-		@length=readdir(DIR);
-		$count=scalar(@length);
-		closedir DIR;
-		
-		if ($count>0) {
-		    $filetoplay=int(rand $count);
-		    $file=$length[$filetoplay];
-
-		    if ((-d "$dir$file")&&$descend==1) {
-			unless ($file =~ /^\./) {
-			    $dir="$dir$file/";
-			}
-		    }
-		    elsif (-f "$dir$file") {
-			$size=-s "$dir$file";
-			if (($size>$minmeg*$meg)&&($size<$maxmeg*$meg)) {
-			    $ext=&get_ext("$file");
-			    # TODO - add more extensions (and allow editing thru prefs...)
-			    if (($ext eq ".mp3")||($ext eq ".ogg")||($ext=".mod")) {
-				$tracks++;
-				$giveup=200;
-				if ($first==1) {
-				    smog_system("\"$xmms_command\" -p \"$dir$file\"");
-				    $first=0;
-				}
-				else {
-				    smog_system("\"$xmms_command\" -p -e \"$dir$file\"");
-				}
-			    }
-			}
-			$dir=$origdir;
-		    }
-		}
-		else {
-		    $giveup=0;
-		}
-	    } while ($tracks<$trackstoplay&&($giveup--)>0);
-	    if ($giveup<=0) {
-		&sig_error("$GUI_NAME could not find enough tracks fitting your request.","Try again with different values.");
-	    }
-	}
-	&sig_complete;
-	exit 0;
-    }
-
 
     if ($command eq "insert") {
 	# with_audio: 0, no audio, 1 video and audio, 2 ONLY audio

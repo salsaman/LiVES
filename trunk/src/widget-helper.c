@@ -590,6 +590,7 @@ LiVESWidget *lives_standard_label_new(const char *text) {
     gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
   gtk_label_set_justify (GTK_LABEL (label), widget_opts.justify);
+  gtk_label_set_line_wrap (GTK_LABEL (label), FALSE);
 #endif
 
   return label;
@@ -606,6 +607,8 @@ LiVESWidget *lives_standard_label_new_with_mnemonic(const char *text, LiVESWidge
     gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
   gtk_label_set_justify (GTK_LABEL (label), widget_opts.justify);
+  gtk_label_set_line_wrap (GTK_LABEL (label), FALSE);
+
   if (mnemonic_widget!=NULL) gtk_label_set_mnemonic_widget (GTK_LABEL(label),mnemonic_widget);
 #endif
 

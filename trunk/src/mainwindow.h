@@ -224,7 +224,6 @@ typedef struct {
   gchar image_dir[PATH_MAX];
   gchar proj_load_dir[PATH_MAX];
   gchar proj_save_dir[PATH_MAX];
-  gchar xmms_dir[PATH_MAX];
   gint untitled_number;
   gint cap_number;
   gint clips_available;
@@ -653,9 +652,6 @@ typedef struct {
   GtkWidget *resample_audio;
   GtkWidget *resample_video;
   GtkWidget *preferences;
-  GtkWidget *xmms_play_audio;
-  GtkWidget *xmms_random_audio;
-  GtkWidget *xmms_stop_audio;
   GtkWidget *rename;
   GtkWidget *toys;
   GtkWidget *toy_none;

@@ -1288,29 +1288,6 @@ create_LiVES (void)
   gtk_widget_set_sensitive (separator19, FALSE);
   gtk_widget_show (separator19);
 
-  mainw->xmms_play_audio = gtk_menu_item_new_with_mnemonic (_("Play _Music Using xmms..."));
-  gtk_container_add (GTK_CONTAINER (audio_menu), mainw->xmms_play_audio);
-  gtk_widget_set_sensitive (mainw->xmms_play_audio, TRUE);
-
-  mainw->xmms_random_audio = gtk_menu_item_new_with_mnemonic (_("Random Music _Using xmms..."));
-  gtk_container_add (GTK_CONTAINER (audio_menu), mainw->xmms_random_audio);
-  gtk_widget_set_sensitive (mainw->xmms_random_audio, TRUE);
-
-  mainw->xmms_stop_audio = gtk_menu_item_new_with_mnemonic (_("Stop xmms _Playing"));
-  gtk_container_add (GTK_CONTAINER (audio_menu), mainw->xmms_stop_audio);
-  gtk_widget_set_sensitive (mainw->xmms_stop_audio, TRUE);
-  
-  gtk_widget_show (mainw->xmms_stop_audio);
-  gtk_widget_show (mainw->xmms_play_audio);
-  gtk_widget_show (mainw->xmms_random_audio);
-  gtk_widget_show (separator9);
-  
-  if (!capable->has_xmms) {
-    gtk_widget_set_sensitive (mainw->xmms_stop_audio,FALSE);
-    gtk_widget_set_sensitive (mainw->xmms_play_audio,FALSE);
-    gtk_widget_set_sensitive (mainw->xmms_random_audio,FALSE);
-  }
-
   info = gtk_menu_item_new_with_mnemonic (_("_Info"));
   gtk_widget_show (info);
   gtk_container_add (GTK_CONTAINER(mainw->menubar), info);
@@ -2713,18 +2690,6 @@ create_LiVES (void)
     
     g_signal_connect (GTK_OBJECT (mainw->eject_cd), "activate",
                       G_CALLBACK (on_eject_cd_activate),
-                      NULL);
-  }
-
-  if (capable->has_xmms) {
-    g_signal_connect (GTK_OBJECT (mainw->xmms_play_audio), "activate",
-                      G_CALLBACK (on_xmms_play_audio_activate),
-                      NULL);
-    g_signal_connect (GTK_OBJECT (mainw->xmms_random_audio), "activate",
-                      G_CALLBACK (on_xmms_random_audio_activate),
-                      NULL); 
-    g_signal_connect (GTK_OBJECT (mainw->xmms_stop_audio), "activate",
-                      G_CALLBACK (on_xmms_stop_audio_activate),
                       NULL);
   }
 

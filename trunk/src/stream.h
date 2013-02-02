@@ -1,6 +1,6 @@
 // stream.h
 // LiVES
-// (c) G. Finch 2008 <salsaman@xs4all.nl,salsaman@gmail.com>
+// (c) G. Finch 2008 - 2013 <salsaman@xs4all.nl,salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -24,10 +24,10 @@ typedef struct {
 
   // TODO - use lives_stream_control_t for these
   size_t dsize;
-  gboolean data_ready;
+  boolean data_ready;
   void *handle;
 
-  volatile gboolean reading;
+  volatile boolean reading;
   void *buffer;
   volatile size_t bufoffs;
 } lives_vstream_t;

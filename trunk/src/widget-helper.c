@@ -971,7 +971,8 @@ LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_button
                       G_CALLBACK (return_true),
                       NULL);
 
-  gtk_widget_show(dialog);
+  if (!widget_opts.no_gui) 
+    gtk_widget_show(dialog);
 
   if (!widget_opts.non_modal)
     gtk_window_set_modal (GTK_WINDOW (dialog), TRUE);
@@ -1221,7 +1222,8 @@ void add_hsep_to_box (LiVESBox *box, boolean expand) {
 #ifdef GUI_GTK
   GtkWidget *hseparator = gtk_hseparator_new ();
   gtk_box_pack_start (box, hseparator, expand, TRUE, 0);
-  gtk_widget_show(hseparator);
+  if (!widget_opts.no_gui) 
+    gtk_widget_show(hseparator);
 #endif
 }
 
@@ -1229,6 +1231,7 @@ void add_fill_to_box (LiVESBox *box) {
 #ifdef GUI_GTK
   GtkWidget *blank_label = gtk_label_new ("");
   gtk_box_pack_start (box, blank_label, TRUE, TRUE, 0);
-  gtk_widget_show(blank_label);
+  if (!widget_opts.no_gui) 
+    gtk_widget_show(blank_label);
 #endif
 }

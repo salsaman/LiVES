@@ -64,7 +64,7 @@ static OSCbuf obuf;
 static gchar byarr[OSC_BUF_SIZE];
 static lives_omc_macro_t omc_macros[N_OMC_MACROS];
 static GSList *omc_node_list;
-static gboolean omc_macros_inited=FALSE;
+static boolean omc_macros_inited=FALSE;
 
 //////////////////////////////////////////////////////////////
 
@@ -93,7 +93,7 @@ static void omc_match_node_free(lives_omc_match_node_t *mnode) {
 
 
 
-static void remove_all_nodes(gboolean every, omclearn_w *omclw) {
+static void remove_all_nodes(boolean every, omclearn_w *omclw) {
   lives_omc_match_node_t *mnode;
   GSList *slist_last=NULL,*slist_next;
   GSList *slist=omc_node_list;
@@ -174,7 +174,7 @@ const gchar * get_js_filename(void) {
 #endif
 
 
-gboolean js_open(void) {
+boolean js_open(void) {
   gchar *msg;
 
   if (!(prefs->omc_dev_opts&OMC_DEV_JS)) return TRUE;
@@ -275,7 +275,7 @@ gchar *midi_fname;
 #endif
 
 
-gboolean midi_open(void) {
+boolean midi_open(void) {
 
 #ifndef IS_MINGW  
   gchar *msg;
@@ -410,7 +410,7 @@ gchar *midi_mangle(void) {
   ssize_t bytes,tot=0,allowed=prefs->midi_rpt;
   unsigned char midbuf[4],xbuf[4];
   gint target=1,mtype=0,idx;
-  gboolean got_target=FALSE;
+  boolean got_target=FALSE;
   gchar *str;
 
 #ifdef ALSA_MIDI
@@ -418,7 +418,7 @@ gchar *midi_mangle(void) {
   struct pollfd *pfd=NULL;
   snd_seq_event_t *ev;
   int typeNumber;
-  gboolean hasmore=FALSE;
+  boolean hasmore=FALSE;
 
   if (mainw->seq_handle!=NULL) {
 
@@ -1031,7 +1031,8 @@ static void omc_learner_add_row(gint type, gint detail, lives_omc_match_node_t *
        else valstr=g_strdup("-");
      }
 
-     gtk_tree_store_set (mnode->gtkstore, &iter2, TITLE_COLUMN, vname, VALUE_COLUMN, valstr, FILTER_COLUMN, mnode->matchp[i], RANGE_COLUMN, strval, OFFS1_COLUMN, strval2, SCALE_COLUMN, strval3, OFFS2_COLUMN, strval4, -1);
+     gtk_tree_store_set (mnode->gtkstore, &iter2, TITLE_COLUMN, vname, VALUE_COLUMN, valstr, FILTER_COLUMN, mnode->matchp[i], 
+			 RANGE_COLUMN, strval, OFFS1_COLUMN, strval2, SCALE_COLUMN, strval3, OFFS2_COLUMN, strval4, -1);
 
      g_free (strval);
      g_free (strval2);
@@ -1074,13 +1075,9 @@ static void omc_learner_add_row(gint type, gint detail, lives_omc_match_node_t *
      break;
    }
 
-   label = gtk_label_new (labelt);
+   label = lives_standard_label_new (labelt);
    gtk_widget_show (label);
    
-   if (palette->style&STYLE_1) {
-     gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-   }
-
    if (labelt!=NULL) g_free(labelt);
      
    omclw->tbl_currow++;
@@ -1313,13 +1310,8 @@ static omclearn_w *create_omclearn_dialog(void) {
   winsize_h=scr_width-100;
   winsize_v=scr_height-100;
   
-  omclw->dialog = gtk_dialog_new ();
+  omclw->dialog = lives_standard_dialog_new (_("LiVES: OMC learner"),FALSE);
   
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_bg(omclw->dialog, GTK_STATE_NORMAL, &palette->menu_and_bars);
-  }
-
-  gtk_window_set_title (GTK_WINDOW (omclw->dialog), _("LiVES: OMC learner"));
   gtk_window_add_accel_group (GTK_WINDOW (omclw->dialog), mainw->accel_group);
   omclw->top_vbox = lives_dialog_get_content_area(GTK_DIALOG(omclw->dialog));
 
@@ -1681,7 +1673,7 @@ static int get_nfixed(gint type, const gchar *string) {
 
 
 
-static gboolean match_filtered_params(lives_omc_match_node_t *mnode, const gchar *sig, int nfixed) {
+static boolean match_filtered_params(lives_omc_match_node_t *mnode, const gchar *sig, int nfixed) {
   int i;
   gchar **array=g_strsplit(sig," ",-1);
 
@@ -1821,7 +1813,7 @@ static lives_omc_match_node_t *lives_omc_match_node_new(gint str_type, gint inde
     mnode->offs1=(gint *)g_malloc(mnode->nvars*sizint);
     mnode->min=(gint *)g_malloc(mnode->nvars*sizint);
     mnode->max=(gint *)g_malloc(mnode->nvars*sizint);
-    mnode->matchp=(gboolean *)g_malloc(mnode->nvars*sizeof(gboolean));
+    mnode->matchp=(boolean *)g_malloc(mnode->nvars*sizeof(boolean));
     mnode->matchi=(gint *)g_malloc(mnode->nvars*sizint);
   }
 
@@ -2037,13 +2029,13 @@ lives_omc_match_node_t *omc_learn(const gchar *string, gint str_type, gint idx, 
 
 // in playback mode, we match the string with our database, and then convert/append the variables
 
-gboolean omc_process_string(gint supertype, const gchar *string, gboolean learn, omclearn_w *omclw) {
+boolean omc_process_string(gint supertype, const gchar *string, boolean learn, omclearn_w *omclw) {
   // only need to set omclw if learn is TRUE
   
   // returns TRUE if we learn new, or if we carry out an action
   // retruns FALSE otherwise
 
-  gboolean ret=FALSE;
+  boolean ret=FALSE;
   int type=0,idx=-1;
   lives_omc_match_node_t *mnode;
 

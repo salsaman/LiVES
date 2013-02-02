@@ -24,7 +24,7 @@
 
 #ifdef OMC_JS_IMPL
 gchar *js_mangle(void);
-gboolean js_open(void);
+boolean js_open(void);
 void js_close(void);
 const gchar *get_js_filename(void);
 #endif
@@ -32,7 +32,7 @@ const gchar *get_js_filename(void);
 #ifdef OMC_MIDI_IMPL
 gchar *midi_mangle(void);
 const gchar *get_midi_filename(void);
-gboolean midi_open(void);
+boolean midi_open(void);
 void midi_close(void);
 #endif
 
@@ -79,7 +79,7 @@ typedef struct {
   gint *min; ///< min values of params
   gint *max; ///< max values of params
 
-  gboolean *matchp; ///< do we need to match this pval ?
+  boolean *matchp; ///< do we need to match this pval ?
   gint *matchi; ///< match value
 
   // enumerated by number of params in target macro
@@ -151,7 +151,7 @@ void on_midi_learn_activate (GtkMenuItem *, gpointer);
 
 /// process a string (i.e. convert to an OSC message and pass to OSC subsys)
 /// only need to set omclw if learn is TRUE
-gboolean omc_process_string(gint supertype, const gchar *string, gboolean learn, omclearn_w *omclw);
+boolean omc_process_string(gint supertype, const gchar *string, boolean learn, omclearn_w *omclw);
 
 
 

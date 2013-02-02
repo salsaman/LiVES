@@ -1,6 +1,6 @@
 // stream.c
 // LiVES
-// (c) G. Finch 2008 - 2012 <salsaman@xs4all.nl,salsaman@gmail.com>
+// (c) G. Finch 2008 - 2013 <salsaman@xs4all.nl,salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -27,9 +27,9 @@ static gchar pckbuf[L2L_PACKET_LEN*2];
 static int pckoffs=0;
 static size_t pcksize=0;
 
-static gboolean has_last_delta_ticks;
+static boolean has_last_delta_ticks;
 static gchar *hdr=NULL;
-static gboolean fps_can_change;
+static boolean fps_can_change;
 
 static LIVES_INLINE G_GNUC_CONST gint64 abs64(gint64 a) {
     return ((a>0)?a:-a);
@@ -39,7 +39,7 @@ static LIVES_INLINE G_GNUC_CONST gint64 abs64(gint64 a) {
 #ifdef USE_STRMBUF
 
 #define STREAM_BUF_SIZE 1024*1024*128 // allow 8MB buffer size; actually we use twice this much: - TODO - make pref
-static volatile gboolean buffering;
+static volatile boolean buffering;
 
 void *streambuf (void *arg) {
   // read bytes from udp port and load into ringbuffer
@@ -114,7 +114,7 @@ static size_t l2l_rcv_packet(lives_vstream_t *lstream, size_t buflen, void *buf)
 }
 
 
-static gboolean lives_stream_in_chunks(lives_vstream_t *lstream, size_t buflen, guchar *buf, int xx) {
+static boolean lives_stream_in_chunks(lives_vstream_t *lstream, size_t buflen, guchar *buf, int xx) {
   // read first from pckbuf, then from streambuf
   size_t copied=0;
   if (pckoffs<L2L_PACKET_LEN) {
@@ -153,7 +153,7 @@ static size_t l2l_rcv_packet(lives_vstream_t *lstream, size_t buflen, void *buf)
 }
 
 
-static gboolean lives_stream_in_chunks(lives_vstream_t *lstream, size_t buflen, guchar *buf, int bfsize) {
+static boolean lives_stream_in_chunks(lives_vstream_t *lstream, size_t buflen, guchar *buf, int bfsize) {
   // return FALSE if we could not set socket buffer size
 
   size_t copied;
@@ -193,7 +193,7 @@ static gboolean lives_stream_in_chunks(lives_vstream_t *lstream, size_t buflen, 
 #endif
 
 static void l2l_get_packet_sync(lives_vstream_t *lstream) {
-  gboolean sync=FALSE;
+  boolean sync=FALSE;
 
   if (pckoffs==pcksize) {
     pcksize=l2l_rcv_packet(lstream, L2L_PACKET_LEN, pckbuf);
@@ -254,7 +254,7 @@ static void l2l_get_packet_sync(lives_vstream_t *lstream) {
 
 static gchar *l2l_get_packet_header(lives_vstream_t *lstream) {
   gchar hdr_buf[1024];
-  gboolean sync=FALSE;
+  boolean sync=FALSE;
   size_t hdrsize=0,csize;
 
   if (pckoffs==pcksize) {
@@ -372,7 +372,7 @@ static gchar *l2l_get_packet_header(lives_vstream_t *lstream) {
 }
 
 
-static gboolean l2l_parse_packet_header(lives_vstream_t *lstream, gint strtype, gint strid) {
+static boolean l2l_parse_packet_header(lives_vstream_t *lstream, gint strtype, gint strid) {
   gchar **array=g_strsplit(hdr," ",-1);
   gint pid=-1,ptype=-1;
   
@@ -421,7 +421,7 @@ static gboolean l2l_parse_packet_header(lives_vstream_t *lstream, gint strtype, 
 
 void lives2lives_read_stream(const gchar *host, int port) {
   lives_vstream_t *lstream=(lives_vstream_t *)g_malloc(sizeof(lives_vstream_t));
-  gboolean done=FALSE;
+  boolean done=FALSE;
   gint old_file=mainw->current_file,new_file;
   gchar *tmp,*tmp2;
   gchar *msg;
@@ -684,12 +684,12 @@ void lives2lives_read_stream(const gchar *host, int port) {
 void weed_layer_set_from_lives2lives(weed_plant_t *layer, gint clip, lives_vstream_t *lstream) {
   static int64_t last_delta_ticks=0;
   int64_t currticks;
-  gboolean done;
+  boolean done;
   int error;
   void **pixel_data;
   int myflags=0;
   size_t framedataread=0;
-  gboolean timeout=FALSE; // TODO
+  boolean timeout=FALSE; // TODO
   gint width=0;
   gint height=0;
   size_t target_size;
@@ -1050,7 +1050,7 @@ void on_open_lives2lives_activate (GtkMenuItem *menuitem, gpointer user_data) {
   gint response=gtk_dialog_run (GTK_DIALOG (pandh->dialog));
 
   if (response==GTK_RESPONSE_OK) {
-    if (!gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(pandh->rb_anyhost))) {
+    if (!lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(pandh->rb_anyhost))) {
       host=g_strdup_printf("%s.%s.%s.%s",gtk_entry_get_text(GTK_ENTRY(pandh->entry1)),
 			   gtk_entry_get_text(GTK_ENTRY(pandh->entry2)),
 			   gtk_entry_get_text(GTK_ENTRY(pandh->entry3)),gtk_entry_get_text(GTK_ENTRY(pandh->entry4)));
@@ -1100,117 +1100,58 @@ lives_pandh_w* create_pandh_dialog (gint type) {
   GtkWidget *dialog_vbox;
   GtkWidget *hbox;
   GtkWidget *label;
-  GtkWidget *radiobutton;
-  GtkWidget *cancelbutton;
-  GtkWidget *okbutton;
-  GObject *spinbutton_adj;
   GtkWidget *hseparator;
-  GtkWidget *eventbox;
 
-  GSList *radiobutton_group = NULL;
+  LiVESSList *radiobutton_group = NULL;
 
   lives_pandh_w *pandhw=(lives_pandh_w *)(g_malloc(sizeof(lives_pandh_w)));
 
-  pandhw->dialog = gtk_dialog_new ();
+  gchar *tmp,*tmp2;
 
-  gtk_window_set_position (GTK_WINDOW (pandhw->dialog), GTK_WIN_POS_CENTER_ALWAYS);
+  pandhw->dialog = lives_standard_dialog_new (_("LiVES: - Receive LiVES stream"),TRUE);
+
   if (prefs->show_gui) {
     gtk_window_set_transient_for(GTK_WINDOW(pandhw->dialog),GTK_WINDOW(mainw->LiVES));
   }
-  gtk_window_set_modal (GTK_WINDOW (pandhw->dialog), TRUE);
-
-  if (palette->style&STYLE_1) {
-    gtk_dialog_set_has_separator(GTK_DIALOG(pandhw->dialog),FALSE);
-    gtk_widget_modify_bg (pandhw->dialog, GTK_STATE_NORMAL, &palette->normal_back);
-  }
-
-  gtk_window_set_default_size (GTK_WINDOW (pandhw->dialog), 300, 200);
-
-  gtk_container_set_border_width (GTK_CONTAINER (pandhw->dialog), 10);
-
-  if (type==0)
-    gtk_window_set_title (GTK_WINDOW (pandhw->dialog), _("LiVES: - Receive LiVES stream"));
 
   dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(pandhw->dialog));
 
-  label=gtk_label_new(_("You can receive streams from another copy of LiVES."));
+  label=lives_standard_label_new(_("You can receive streams from another copy of LiVES."));
   gtk_box_pack_start (GTK_BOX (dialog_vbox), label, TRUE, TRUE, 10);
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-  }
 
-  label=gtk_label_new(_("In the source copy of LiVES, you must select Advanced/Send stream to LiVES\nor select the lives2lives_stream playback plugin in Preferences."));
+  label=lives_standard_label_new(_("In the source copy of LiVES, you must select Advanced/Send stream to LiVES\nor select the lives2lives_stream playback plugin in Preferences."));
   gtk_box_pack_start (GTK_BOX (dialog_vbox), label, TRUE, TRUE, 10);
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-  }
 
   hseparator = gtk_hseparator_new ();
   gtk_widget_show (hseparator);
-  gtk_box_pack_start (GTK_BOX (dialog_vbox), hseparator, TRUE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (dialog_vbox), hseparator, TRUE, TRUE, 20);
 
-  label=gtk_label_new(_("Select the host to receive the stream from (or allow any host to stream)."));
+  label=lives_standard_label_new(_("Select the host to receive the stream from (or allow any host to stream)."));
   gtk_box_pack_start (GTK_BOX (dialog_vbox), label, TRUE, TRUE, 10);
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-  }
 
   hbox = gtk_hbox_new (FALSE, 0);
   gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, TRUE, TRUE, 10);
 
-  pandhw->rb_anyhost = gtk_radio_button_new (NULL);
-  gtk_radio_button_set_group (GTK_RADIO_BUTTON (pandhw->rb_anyhost), radiobutton_group);
-  radiobutton_group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (pandhw->rb_anyhost));
+  pandhw->rb_anyhost = lives_standard_radio_button_new ((tmp=g_strdup(_("Accept LiVES streams from _any host")))
+							,TRUE,radiobutton_group,LIVES_BOX(hbox),
+							(tmp2=g_strdup(_("Accept incoming LiVES streams from any connected host."))));
+  radiobutton_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (pandhw->rb_anyhost));
 
-  gtk_box_pack_start (GTK_BOX (hbox), pandhw->rb_anyhost, FALSE, FALSE, 10);
+  g_free(tmp); g_free(tmp2);
 
-  label=gtk_label_new_with_mnemonic (_ ("Accept LiVES streams from _any host"));
-  gtk_label_set_mnemonic_widget (GTK_LABEL (label),pandhw->rb_anyhost);
-
-  eventbox=gtk_event_box_new();
-  gtk_container_add(GTK_CONTAINER(eventbox),label);
-  gtk_widget_set_tooltip_text( eventbox, _("Accept incoming LiVES streams from any connected host."));
-  g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
-		    G_CALLBACK (label_act_toggle),
-		    pandhw->rb_anyhost);
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_bg (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
-  }
-  gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, 10);
-  
   g_signal_connect_after (GTK_OBJECT (pandhw->rb_anyhost), "toggled",
 			  G_CALLBACK (pandhw_anyhost_toggled),
 			  (gpointer)pandhw);
 
-  radiobutton=gtk_radio_button_new(radiobutton_group);
-
   hbox = gtk_hbox_new (FALSE, 0);
   gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, TRUE, TRUE, 10);
 
-  gtk_box_pack_start (GTK_BOX (hbox), radiobutton, FALSE, FALSE, 10);
 
-  label=gtk_label_new_with_mnemonic (_ ("Accept LiVES streams only from the _specified host:"));
-  gtk_label_set_mnemonic_widget (GTK_LABEL (label),radiobutton);
-
-  eventbox=gtk_event_box_new();
-  gtk_container_add(GTK_CONTAINER(eventbox),label);
-  gtk_widget_set_tooltip_text( eventbox, _("Accept LiVES streams from the specified host only."));
-  g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
-		    G_CALLBACK (label_act_toggle),
-		    radiobutton);
-
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_bg (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
-  }
-  gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, 10);
+  lives_standard_radio_button_new ((tmp=g_strdup(_("Accept LiVES streams only from the _specified host:")))
+				   ,TRUE,radiobutton_group,LIVES_BOX(hbox),
+				   (tmp2=g_strdup(_("Accept LiVES streams from the specified host only."))));
   
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(hbox, GTK_STATE_NORMAL, &palette->normal_fore);
-  }
+  g_free(tmp); g_free(tmp2);
 
   ////////////////////////////////////
 
@@ -1218,83 +1159,23 @@ lives_pandh_w* create_pandh_dialog (gint type) {
   hbox = gtk_hbox_new (FALSE, 0);
   gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, TRUE, TRUE, 10);
 
-  pandhw->entry1 = gtk_entry_new ();
-  gtk_entry_set_max_length(GTK_ENTRY (pandhw->entry1),3);
-  gtk_entry_set_width_chars (GTK_ENTRY (pandhw->entry1),3);
-  gtk_box_pack_start (GTK_BOX (hbox), pandhw->entry1, FALSE, FALSE, 10);
-  gtk_entry_set_text(GTK_ENTRY(pandhw->entry1),"127");
-
-  label=gtk_label_new(".");
-  gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 0);
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-  }
-
-  pandhw->entry2 = gtk_entry_new ();
-  gtk_entry_set_max_length(GTK_ENTRY (pandhw->entry2),3);
-  gtk_entry_set_width_chars (GTK_ENTRY (pandhw->entry2),3);
-  gtk_box_pack_start (GTK_BOX (hbox), pandhw->entry2, FALSE, FALSE, 10);
-  gtk_entry_set_text(GTK_ENTRY(pandhw->entry2),"0");
-
-  label=gtk_label_new(".");
-  gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 0);
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-  }
-
-  pandhw->entry3 = gtk_entry_new ();
-  gtk_entry_set_max_length(GTK_ENTRY (pandhw->entry3),3);
-  gtk_entry_set_width_chars (GTK_ENTRY (pandhw->entry3),3);
-  gtk_box_pack_start (GTK_BOX (hbox), pandhw->entry3, FALSE, FALSE, 10);
-  gtk_entry_set_text(GTK_ENTRY(pandhw->entry3),"0");
-
-  label=gtk_label_new(".");
-  gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 0);
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-  }
-
-  pandhw->entry4 = gtk_entry_new ();
-  gtk_entry_set_max_length(GTK_ENTRY (pandhw->entry4),3);
-  gtk_entry_set_width_chars (GTK_ENTRY (pandhw->entry4),3);
-  gtk_box_pack_start (GTK_BOX (hbox), pandhw->entry4, FALSE, FALSE, 10);
-  gtk_entry_set_text(GTK_ENTRY(pandhw->entry4),"1");
+  pandhw->entry1 = lives_standard_entry_new ("",FALSE,"127",3,3,LIVES_BOX(hbox),NULL);
+  pandhw->entry2 = lives_standard_entry_new (".",FALSE,"0",3,3,LIVES_BOX(hbox),NULL);
+  pandhw->entry3 = lives_standard_entry_new (".",FALSE,"0",3,3,LIVES_BOX(hbox),NULL);
+  pandhw->entry4 = lives_standard_entry_new (".",FALSE,"0",3,3,LIVES_BOX(hbox),NULL);
 
   gtk_widget_set_sensitive(pandhw->entry1,FALSE);
   gtk_widget_set_sensitive(pandhw->entry2,FALSE);
   gtk_widget_set_sensitive(pandhw->entry3,FALSE);
   gtk_widget_set_sensitive(pandhw->entry4,FALSE);
 
-  label=gtk_label_new(_("Enter the port number to listen for LiVES streams on:"));
+  label=lives_standard_label_new(_("Enter the port number to listen for LiVES streams on:"));
   gtk_box_pack_start (GTK_BOX (dialog_vbox), label, TRUE, TRUE, 10);
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-  }
 
   hbox = gtk_hbox_new (FALSE, 0);
   gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, TRUE, TRUE, 10);
 
-  label=gtk_label_new(_("Port"));
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-  }
-  gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 0);
-  spinbutton_adj = (GObject *)gtk_adjustment_new (48888, 1., 65535., 1., 1., 0.);
-  pandhw->port_spin = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 1., 0);
-  gtk_entry_set_activates_default (GTK_ENTRY(pandhw->port_spin), TRUE);
-  gtk_label_set_mnemonic_widget (GTK_LABEL (label),pandhw->port_spin);
-  gtk_box_pack_start (GTK_BOX (hbox), pandhw->port_spin, FALSE, FALSE, 10);
-  gtk_spin_button_set_update_policy (GTK_SPIN_BUTTON (pandhw->port_spin),GTK_UPDATE_IF_VALID);
-
-
-  cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
-  gtk_dialog_add_action_widget (GTK_DIALOG (pandhw->dialog), cancelbutton, GTK_RESPONSE_CANCEL);
-  lives_widget_set_can_focus_and_default (cancelbutton);
-
-  okbutton = gtk_button_new_from_stock ("gtk-ok");
-  gtk_dialog_add_action_widget (GTK_DIALOG (pandhw->dialog), okbutton, GTK_RESPONSE_OK);
-  lives_widget_set_can_focus_and_default (okbutton);
-  gtk_widget_grab_default (okbutton);
+  pandhw->port_spin = lives_standard_spin_button_new (_("Port"),FALSE,48888.,1.,65535,1.,1.,0,LIVES_BOX(hbox),NULL);
 
   gtk_widget_show_all (pandhw->dialog);
 

@@ -259,6 +259,7 @@ static gboolean pre_init(void) {
     FALSE, // no_gui
     FALSE, // swap_label
     FALSE, //pack_end
+    FALSE, // line_wrap
     FALSE, // non_modal
     LIVES_JUSTIFY_DEFAULT // justify
   };

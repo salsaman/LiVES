@@ -10604,12 +10604,14 @@ void clear_context (lives_mt *mt) {
 void add_context_label (lives_mt *mt, const gchar *text) {
   // WARNING - do not add > 8 lines of text (including newlines) - otherwise the window can get resized
 
-  GtkWidget *label=gtk_label_new (text);
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-  }
-  gtk_label_set_line_wrap (GTK_LABEL (label), TRUE);
-  gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_CENTER);
+  GtkWidget *label;
+
+  widget_opts.justify=LIVES_JUSTIFY_CENTER;
+  widget_opts.line_wrap=TRUE;
+  label=lives_standard_label_new (text);
+  widget_opts.line_wrap=FALSE;
+  widget_opts.justify=LIVES_JUSTIFY_DEFAULT;
+
   gtk_widget_show (label);
   gtk_box_pack_start (GTK_BOX (mt->context_box), label, FALSE, FALSE, 0);
 }

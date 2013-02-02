@@ -22,13 +22,14 @@ void load_theme (void);
 
 GtkWidget* create_window4 (void);
 GtkWidget* create_dialog2 (gint warning_mask);
-GtkWidget* create_dialog3 (const gchar *text, gboolean is_blocking, gint warning_mask);
+GtkWidget* create_dialog3 (const gchar *text, boolean is_blocking, gint warning_mask);
 GtkWidget* create_opensel_dialog (void);
-GtkWidget* create_encoder_prep_dialog (const gchar *text1, const gchar *text2, gboolean opt_resize);
+GtkWidget* create_encoder_prep_dialog (const gchar *text1, const gchar *text2, boolean opt_resize);
 
-void widget_add_preview(GtkWidget *widget, LiVESBox *for_preview, LiVESBox *for_button, LiVESBox *for_deinterlace, int preview_type);  ///< for fileselector preview
+void widget_add_preview(GtkWidget *widget, LiVESBox *for_preview, LiVESBox *for_button, 
+			LiVESBox *for_deinterlace, int preview_type);  ///< for fileselector preview
 
-gboolean do_audio_choice_dialog(short startup_phase);
+boolean do_audio_choice_dialog(short startup_phase);
 
 void do_layout_recover_dialog(void);
 
@@ -48,7 +49,7 @@ typedef struct _fileinfo {
   GtkWidget *textview_rrate;
 } fileinfo;
 
-fileinfo* create_info_window (gint audio_channels, gboolean is_mt);
+fileinfo* create_info_window (gint audio_channels, boolean is_mt);
 
 
 typedef struct {
@@ -100,12 +101,12 @@ text_window* create_text_window (const gchar *title_part, const gchar *text, Gtk
 typedef struct {
   GtkWidget *dialog;
   GtkWidget *time_spin;
-  gboolean is_sel;
+  boolean is_sel;
 } aud_dialog_t;
 
 
 typedef struct {
-  gboolean use_advanced;
+  boolean use_advanced;
   GtkWidget *advbutton;
   GtkWidget *adv_vbox;
   GtkWidget *combod;

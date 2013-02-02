@@ -231,7 +231,6 @@ static GtkWidget* create_warn_dialog (gint warn_mask_number, GtkWindow *transien
   dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(dialog));
 
   gtk_box_pack_start (GTK_BOX (dialog_vbox), mainw->warning_label, TRUE, TRUE, 0);
-  gtk_label_set_line_wrap (GTK_LABEL (mainw->warning_label), FALSE);
   gtk_label_set_selectable (GTK_LABEL (mainw->warning_label), TRUE);
 
   if (mainw->add_clear_ds_adv) {

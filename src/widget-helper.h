@@ -395,6 +395,7 @@ typedef struct {
   boolean no_gui; // show nothing !
   boolean swap_label; // swap label/widget position
   boolean pack_end;
+  boolean line_wrap; // line wrapping for labels
   boolean non_modal; // non-modal for dialogs
   LiVESJustification justify; // justify for labels
 } widget_opts_t;

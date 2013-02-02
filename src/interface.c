@@ -143,10 +143,11 @@ void widget_add_preview(GtkWidget *widget, LiVESBox *for_preview, LiVESBox *for_
 
     gtk_container_set_border_width (GTK_CONTAINER(mainw->fs_playframe), 10);
 
+    widget_opts.justify=LIVES_JUSTIFY_RIGHT;
     fs_label = lives_standard_label_new (_ ("Preview"));
+    widget_opts.justify=LIVES_JUSTIFY_DEFAULT;
     gtk_widget_show (fs_label);
     gtk_frame_set_label_widget (GTK_FRAME (mainw->fs_playframe), fs_label);
-    gtk_label_set_justify (GTK_LABEL (fs_label), GTK_JUSTIFY_RIGHT);
 
     gtk_box_pack_start (for_preview, mainw->fs_playframe, FALSE, FALSE, 0);
     gtk_widget_set_size_request (mainw->fs_playarea, DEFAULT_FRAME_HSIZE, DEFAULT_FRAME_VSIZE);
@@ -199,9 +200,9 @@ void widget_add_preview(GtkWidget *widget, LiVESBox *for_preview, LiVESBox *for_
 }
 
 
-static gboolean procdets_pressed (GtkWidget *ahbox, GdkEventButton *event, gpointer user_data) {
+static boolean procdets_pressed (GtkWidget *ahbox, GdkEventButton *event, gpointer user_data) {
   GtkWidget *arrow=(GtkWidget *)user_data;
-  gboolean expanded=!(g_object_get_data(G_OBJECT(arrow),"expanded"));
+  boolean expanded=!(g_object_get_data(G_OBJECT(arrow),"expanded"));
   GtkWidget *hbox=gtk_widget_get_parent(GTK_WIDGET(arrow));
 
   gtk_widget_destroy(arrow);
@@ -269,16 +270,12 @@ xprocess * create_processing (const gchar *text) {
   gtk_box_pack_start (GTK_BOX (vbox2), vbox3, TRUE, TRUE, 0);
 
   g_snprintf(tmp_label,256,"%s...\n",text);
-  procw->label = gtk_label_new (tmp_label);
+  procw->label = lives_standard_label_new (tmp_label);
   gtk_widget_show (procw->label);
 
   //gtk_widget_set_size_request (procw->label, PROG_LABEL_WIDTH, -1);
 
   gtk_box_pack_start (GTK_BOX (vbox3), procw->label, TRUE, TRUE, 0);
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(procw->label, GTK_STATE_NORMAL, &palette->normal_fore);
-  }
-  gtk_label_set_justify (GTK_LABEL (procw->label), GTK_JUSTIFY_LEFT);
 
   procw->progressbar = gtk_progress_bar_new ();
   gtk_widget_show (procw->progressbar);
@@ -287,23 +284,20 @@ xprocess * create_processing (const gchar *text) {
     gtk_widget_modify_fg(procw->progressbar, GTK_STATE_NORMAL, &palette->normal_fore);
   }
 
+  widget_opts.justify=LIVES_JUSTIFY_CENTER;
   if (mainw->internal_messaging&&mainw->rte!=0) {
-    procw->label2 = gtk_label_new (_("\n\nPlease Wait\n\nRemember to switch off effects (ctrl-0) afterwards !"));
+    procw->label2 = lives_standard_label_new (_("\n\nPlease Wait\n\nRemember to switch off effects (ctrl-0) afterwards !"));
   }
 #ifdef RT_AUDIO
   else if (mainw->jackd_read!=NULL||mainw->pulsed_read!=NULL) procw->label2 = gtk_label_new ("");
 #endif
-  else procw->label2=gtk_label_new (_("\nPlease Wait"));
+  else procw->label2=lives_standard_label_new (_("\nPlease Wait"));
+  widget_opts.justify=LIVES_JUSTIFY_DEFAULT;
 
   gtk_widget_show (procw->label2);
   //gtk_widget_set_size_request (procw->label2, PROG_LABEL_WIDTH, -1);
 
   gtk_box_pack_start (GTK_BOX (vbox3), procw->label2, FALSE, FALSE, 0);
-
-  gtk_label_set_justify (GTK_LABEL (procw->label2), GTK_JUSTIFY_CENTER);
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(procw->label2, GTK_STATE_NORMAL, &palette->normal_fore);
-  }
 
   procw->label3 = gtk_label_new (PROCW_STRETCHER);
   gtk_widget_show (procw->label3);
@@ -337,12 +331,11 @@ xprocess * create_processing (const gchar *text) {
 
     g_object_set_data(G_OBJECT(details_arrow),"expanded",GINT_TO_POINTER(FALSE));
 
-    label=gtk_label_new (_ ("Show details"));
+    label=lives_standard_label_new (_ ("Show details"));
     gtk_box_pack_end (GTK_BOX (hbox), label, TRUE, FALSE, 10);
     gtk_box_pack_end (GTK_BOX (hbox), details_arrow, TRUE, FALSE, 10);
 
     if (palette->style&STYLE_1) {
-      gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
       gtk_widget_modify_fg(details_arrow, GTK_STATE_NORMAL, &palette->normal_fore);
       gtk_widget_modify_bg(ahbox, GTK_STATE_NORMAL, &palette->normal_back);
     }
@@ -431,7 +424,7 @@ xprocess * create_processing (const gchar *text) {
 
 
 
-fileinfo *create_info_window (gint audio_channels, gboolean is_mt) {
+fileinfo *create_info_window (gint audio_channels, boolean is_mt) {
   GtkWidget *vbox5;
   GtkWidget *frame4;
   GtkWidget *fixed3;
@@ -776,7 +769,7 @@ static void on_resizecb_toggled (GtkToggleButton *t, gpointer user_data) {
 
 
 GtkWidget*
-create_encoder_prep_dialog (const gchar *text1, const gchar *text2, gboolean opt_resize)
+create_encoder_prep_dialog (const gchar *text1, const gchar *text2, boolean opt_resize)
 {
   GtkWidget *dialog;
   GtkWidget *dialog_vbox;
@@ -798,10 +791,10 @@ create_encoder_prep_dialog (const gchar *text1, const gchar *text2, gboolean opt
 
   dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(dialog));
 
+  widget_opts.justify=LIVES_JUSTIFY_CENTER;
   label = lives_standard_label_new (text1);
+  widget_opts.justify=LIVES_JUSTIFY_DEFAULT;
   gtk_box_pack_start (GTK_BOX (dialog_vbox), label, TRUE, TRUE, 0);
-
-  gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_CENTER);
 
   if (opt_resize) {      
     if (text2!=NULL) labeltext=g_strdup (_("<------------- (Check the box to re_size as suggested)"));
@@ -881,7 +874,7 @@ create_encoder_prep_dialog (const gchar *text1, const gchar *text2, gboolean opt
 
 // Information/error dialog
 GtkWidget*
-create_dialog3 (const gchar *text, gboolean is_blocking, gint mask) {
+create_dialog3 (const gchar *text, boolean is_blocking, gint mask) {
   GtkWidget *dialog;
   GtkWidget *dialog_vbox;
   GtkWidget *info_text;
@@ -903,7 +896,9 @@ create_dialog3 (const gchar *text, gboolean is_blocking, gint mask) {
 
   form_text=g_strdup_printf("\n\n%s",textx);
 
+  widget_opts.justify=LIVES_JUSTIFY_CENTER;
   info_text = lives_standard_label_new (form_text);
+  widget_opts.justify=LIVES_JUSTIFY_DEFAULT;
   g_free(form_text);
   g_free(textx);
 
@@ -916,8 +911,6 @@ create_dialog3 (const gchar *text, gboolean is_blocking, gint mask) {
   gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, FALSE, FALSE, 10);
 
   gtk_box_pack_start (GTK_BOX (hbox), info_text, FALSE, FALSE, 20);
-  gtk_label_set_justify (GTK_LABEL (info_text), GTK_JUSTIFY_CENTER);
-  gtk_label_set_line_wrap (GTK_LABEL (info_text), FALSE);
   
   if (mask>0) {
     hbox = gtk_hbox_new (FALSE, 0);
@@ -3097,7 +3090,7 @@ _entryw* create_cds_dialog (gint type) {
   gtk_widget_show (label);
   gtk_box_pack_start (GTK_BOX (dialog_vbox), label, TRUE, TRUE, 0);
   gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_CENTER);
-  gtk_label_set_line_wrap (GTK_LABEL (label), FALSE);
+
   if (palette->style&STYLE_1) {
     gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
   }

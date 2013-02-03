@@ -208,6 +208,23 @@ void lives_exit (void) {
 	  g_list_free(cfile->layout_map);
 	}
 
+	if (cfile->laudio_drawable!=NULL) {
+#if GTK_CHECK_VERSION(3,0,0)
+	  cairo_surface_destroy(cfile->laudio_drawable);
+#else
+	  g_object_unref(G_OBJECT(cfile->laudio_drawable));
+#endif
+	}
+
+	if (cfile->raudio_drawable!=NULL) {
+#if GTK_CHECK_VERSION(3,0,0)
+	  cairo_surface_destroy(cfile->raudio_drawable);
+#else
+	  g_object_unref(G_OBJECT(cfile->raudio_drawable));
+#endif
+	}
+
+
 	if (mainw->files[i]->clip_type==CLIP_TYPE_FILE&&mainw->files[i]->ext_src!=NULL) {
 	  // must do this before we move it
 	  gchar *ppath=g_build_filename(prefs->tmpdir,cfile->handle,NULL);
@@ -444,6 +461,30 @@ void lives_exit (void) {
   g_free(mainw->recovery_file);
 
   for (i=0;i<NUM_LIVES_STRING_CONSTANTS;i++) g_free(mainw->string_constants[i]);
+
+  if (mainw->video_drawable!=NULL) {
+#if GTK_CHECK_VERSION(3,0,0)
+    cairo_surface_destroy(mainw->video_drawable);
+#else
+    g_object_unref(G_OBJECT(mainw->video_drawable));
+#endif
+  }
+
+  if (mainw->blank_laudio_drawable!=NULL) {
+#if GTK_CHECK_VERSION(3,0,0)
+    cairo_surface_destroy(mainw->blank_laudio_drawable);
+#else
+    g_object_unref(G_OBJECT(mainw->blank_laudio_drawable));
+#endif
+  }
+
+  if (mainw->blank_raudio_drawable!=NULL) {
+#if GTK_CHECK_VERSION(3,0,0)
+    cairo_surface_destroy(mainw->blank_raudio_drawable);
+#else
+    g_object_unref(G_OBJECT(mainw->blank_raudio_drawable));
+#endif
+  }
 
   if (mainw->foreign_visual!=NULL) g_free(mainw->foreign_visual);
   if (mainw->read_failed_file!=NULL) g_free(mainw->read_failed_file);
@@ -8945,10 +8986,13 @@ on_spinbutton_end_value_changed          (GtkSpinButton   *spinbutton,
 
 // for the timer bars
 
-gint
-expose_vid_event (GtkWidget *widget, GdkEventExpose *event) {
+boolean expose_vid_event (GtkWidget *widget, GdkEventExpose *event) {
   gint ex,ey,ew,eh;
   gint width;
+
+#if GTK_CHECK_VERSION(3,0,0)
+  cairo_t *cr;
+#endif
 
   if (!prefs->show_gui||mainw->multitrack!=NULL||
       (mainw->fs&&(prefs->play_monitor==prefs->gui_monitor||
@@ -8975,22 +9019,55 @@ expose_vid_event (GtkWidget *widget, GdkEventExpose *event) {
   block_expose();
 
   if (mainw->video_drawable!=NULL) {
+    // check if a resize happened
+
+#if GTK_CHECK_VERSION(3,0,0)
+    width = cairo_image_surface_get_width (mainw->video_drawable);
+#else
     gdk_drawable_get_size(GDK_DRAWABLE(mainw->video_drawable),&width,NULL);
+#endif
     if (width!=lives_widget_get_allocation_width(mainw->LiVES)) {
-      gdk_drawable_unref(GDK_DRAWABLE(mainw->video_drawable));
+#if GTK_CHECK_VERSION(3,0,0)
+      cairo_surface_destroy(mainw->video_drawable);
+#else
+      g_object_unref(G_OBJECT(mainw->video_drawable));
+#endif
       mainw->video_drawable=NULL;
     }
   }
 
   if (mainw->video_drawable==NULL) {
+#if GTK_CHECK_VERSION(3,0,0)
+    cr = gdk_cairo_create (lives_widget_get_xwindow(widget));
+
+    mainw->video_drawable = cairo_surface_create_similar_image(cairo_get_target(cr),
+							       CAIRO_FORMAT_RGB24,
+							       lives_widget_get_allocation_width(mainw->video_draw),
+							       lives_widget_get_allocation_height(mainw->video_draw));
+    cairo_destroy(cr);
+
+#else
     mainw->video_drawable = gdk_pixmap_new(lives_widget_get_xwindow(mainw->video_draw),
 					   lives_widget_get_allocation_width(mainw->video_draw),
 					   lives_widget_get_allocation_height(mainw->video_draw),
 					   -1);
+#endif
     get_play_times();
   }
 
   if (mainw->current_file==-1) {
+#if GTK_CHECK_VERSION(3,0,0)
+    GdkRGBA color;
+    cr=cairo_create(mainw->video_drawable);
+    gtk_style_context_get_bg_color (gtk_widget_get_style_context (widget),GTK_WIDGET_STATE (widget),&color);
+    gdk_cairo_set_source_rgba (cr, &color);
+
+    cairo_rectangle(cr,0,0,
+		    lives_widget_get_allocation_width(mainw->video_draw),
+		    lives_widget_get_allocation_height(mainw->video_draw));
+    cairo_fill(cr);
+    cairo_destroy (cr);
+#else
     gdk_draw_rectangle (mainw->video_drawable,
                         mainw->video_draw->style->bg_gc[GTK_WIDGET_STATE (widget)],
                         TRUE,
@@ -8998,24 +9075,220 @@ expose_vid_event (GtkWidget *widget, GdkEventExpose *event) {
                         lives_widget_get_allocation_width(mainw->video_draw),
                         lives_widget_get_allocation_height(mainw->video_draw)
                         );
+#endif
   }
 
+#if GTK_CHECK_VERSION(3,0,0)
+  cr = gdk_cairo_create (lives_widget_get_xwindow(mainw->video_draw));
+  cairo_set_source_surface (cr, mainw->video_drawable, ex, ey);
+  cairo_rectangle (cr,ex,ey,ew,eh);
+  cairo_paint(cr);
+  cairo_destroy(cr);
+#else
   gdk_draw_pixmap(lives_widget_get_xwindow(widget),
 		  widget->style->fg_gc[GTK_WIDGET_STATE (widget)],
 		  mainw->video_drawable,
 		  ex, ey,
 		  ex, ey,
 		  ew, eh);
-  
+#endif
+
   unblock_expose();
   return FALSE;
   
 }
 
-gint
-expose_laud_event (GtkWidget *widget, GdkEventExpose *event) {
+
+static void redraw_laudio(int ex, int ey, int ew, int eh) {
+  int width;
+
+  block_expose();
+
+  if (mainw->laudio_drawable!=NULL) {
+    // check if a resize happened
+
+#if GTK_CHECK_VERSION(3,0,0)
+    width = cairo_image_surface_get_width (mainw->laudio_drawable);
+#else
+    gdk_drawable_get_size(GDK_DRAWABLE(mainw->laudio_drawable),&width,NULL);
+#endif
+    if (width!=lives_widget_get_allocation_width(mainw->LiVES)) {
+#if GTK_CHECK_VERSION(3,0,0)
+      cairo_surface_destroy(mainw->laudio_drawable);
+#else
+      g_object_unref(G_OBJECT(mainw->laudio_drawable));
+#endif
+      mainw->laudio_drawable=NULL;
+    }
+  }
+
+  if (mainw->laudio_drawable==NULL) {
+#if GTK_CHECK_VERSION(3,0,0)
+    cr = gdk_cairo_create (lives_widget_get_xwindow(mainw->laudio_draw));
+
+    mainw->laudio_drawable = cairo_surface_create_similar_image(cairo_get_target(cr),
+							       CAIRO_FORMAT_RGB24,
+							       lives_widget_get_allocation_width(mainw->laudio_draw),
+							       lives_widget_get_allocation_height(mainw->laudio_draw));
+    cairo_destroy(cr);
+
+#else
+    mainw->laudio_drawable = gdk_pixmap_new(lives_widget_get_xwindow(mainw->laudio_draw),
+					   lives_widget_get_allocation_width(mainw->laudio_draw),
+					   lives_widget_get_allocation_height(mainw->laudio_draw),
+					   -1);
+#endif
+    get_play_times();
+
+    if (1||mainw->current_file==-1) mainw->blank_laudio_drawable=mainw->laudio_drawable;
+    else cfile->laudio_drawable=mainw->laudio_drawable;
+
+  }
+
+
+  if (mainw->current_file==-1) {
+#if GTK_CHECK_VERSION(3,0,0)
+    GdkRGBA color;
+    cr=cairo_create(mainw->laudio_drawable);
+    gtk_style_context_get_bg_color (gtk_widget_get_style_context (mainw->laudio_draw),GTK_WIDGET_STATE (mainw->laudio_draw),&color);
+    gdk_cairo_set_source_rgba (cr, &color);
+
+    cairo_rectangle(cr,0,0,
+		    lives_widget_get_allocation_width(mainw->laudio_draw),
+		    lives_widget_get_allocation_height(mainw->laudio_draw));
+    cairo_fill(cr);
+    cairo_destroy (cr);
+#else
+    gdk_draw_rectangle (mainw->laudio_drawable,
+                        mainw->laudio_draw->style->bg_gc[GTK_WIDGET_STATE (mainw->laudio_draw)],
+                        TRUE,
+                        0, 0,
+                        lives_widget_get_allocation_width(mainw->laudio_draw),
+                        lives_widget_get_allocation_height(mainw->laudio_draw)
+                        );
+#endif
+  }
+
+
+
+#if GTK_CHECK_VERSION(3,0,0)
+  cr = gdk_cairo_create (lives_widget_get_xwindow(mainw->laudio_draw));
+  cairo_set_source_surface (cr, mainw->laudio_drawable, ex, ey);
+  cairo_rectangle (cr,ex,ey,ew,eh);
+  cairo_paint(cr);
+  cairo_destroy(cr);
+#else
+  gdk_draw_pixmap(lives_widget_get_xwindow(mainw->laudio_draw),
+		  mainw->laudio_draw->style->fg_gc[GTK_WIDGET_STATE (mainw->laudio_draw)],
+		  mainw->laudio_drawable,
+		  ex, ey,
+		  ex, ey,
+		  ew, eh);
+#endif
+
+  unblock_expose();
+}
+
+
+
+
+static void redraw_raudio(int ex, int ey, int ew, int eh) {
+  int width;
+
+  block_expose();
+
+  if (mainw->raudio_drawable!=NULL) {
+    // check if a resize happened
+
+#if GTK_CHECK_VERSION(3,0,0)
+    width = cairo_image_surface_get_width (mainw->raudio_drawable);
+#else
+    gdk_drawable_get_size(GDK_DRAWABLE(mainw->raudio_drawable),&width,NULL);
+#endif
+    if (width!=lives_widget_get_allocation_width(mainw->LiVES)) {
+#if GTK_CHECK_VERSION(3,0,0)
+      cairo_surface_destroy(mainw->raudio_drawable);
+#else
+      g_object_unref(G_OBJECT(mainw->raudio_drawable));
+#endif
+      mainw->raudio_drawable=NULL;
+    }
+  }
+
+  if (mainw->raudio_drawable==NULL) {
+#if GTK_CHECK_VERSION(3,0,0)
+    cr = gdk_cairo_create (lives_widget_get_xwindow(mainw->raudio_draw));
+
+    mainw->raudio_drawable = cairo_surface_create_similar_image(cairo_get_target(cr),
+							       CAIRO_FORMAT_RGB24,
+							       lives_widget_get_allocation_width(mainw->raudio_draw),
+							       lives_widget_get_allocation_height(mainw->raudio_draw));
+    cairo_destroy(cr);
+
+#else
+    mainw->raudio_drawable = gdk_pixmap_new(lives_widget_get_xwindow(mainw->raudio_draw),
+					   lives_widget_get_allocation_width(mainw->raudio_draw),
+					   lives_widget_get_allocation_height(mainw->raudio_draw),
+					   -1);
+#endif
+    get_play_times();
+  }
+
+  // TODO - *** 
+  if (mainw->current_file==-1) {
+#if GTK_CHECK_VERSION(3,0,0)
+    GdkRGBA color;
+    cr=cairo_create(mainw->raudio_drawable);
+    gtk_style_context_get_bg_color (gtk_widget_get_style_context (mainw->raudio_draw),GTK_WIDGET_STATE (mainw->raudio_draw),&color);
+    gdk_cairo_set_source_rgba (cr, &color);
+
+    cairo_rectangle(cr,0,0,
+		    lives_widget_get_allocation_width(mainw->raudio_draw),
+		    lives_widget_get_allocation_height(mainw->raudio_draw));
+    cairo_fill(cr);
+    cairo_destroy (cr);
+#else
+    gdk_draw_rectangle (mainw->raudio_drawable,
+                        mainw->raudio_draw->style->bg_gc[GTK_WIDGET_STATE (mainw->raudio_draw)],
+                        TRUE,
+                        0, 0,
+                        lives_widget_get_allocation_width(mainw->raudio_draw),
+                        lives_widget_get_allocation_height(mainw->raudio_draw)
+                        );
+#endif
+  }
+
+#if GTK_CHECK_VERSION(3,0,0)
+  cr = gdk_cairo_create (lives_widget_get_xwindow(mainw->raudio_draw));
+  cairo_set_source_surface (cr, mainw->raudio_drawable, ex, ey);
+  cairo_rectangle (cr,ex,ey,ew,eh);
+  cairo_paint(cr);
+  cairo_destroy(cr);
+#else
+  gdk_draw_pixmap(lives_widget_get_xwindow(mainw->raudio_draw),
+		  mainw->raudio_draw->style->fg_gc[GTK_WIDGET_STATE (mainw->raudio_draw)],
+		  mainw->raudio_drawable,
+		  ex, ey,
+		  ex, ey,
+		  ew, eh);
+#endif
+
+  if (1||mainw->current_file==-1) mainw->blank_raudio_drawable=mainw->raudio_drawable;
+  else cfile->raudio_drawable=mainw->raudio_drawable;
+
+  unblock_expose();
+}
+
+
+
+
+
+boolean expose_laud_event (GtkWidget *widget, GdkEventExpose *event) {
   gint ex,ey,ew,eh;
-  gint width;
+
+#if GTK_CHECK_VERSION(3,0,0)
+  cairo_t *cr;
+#endif
 
   if (!prefs->show_gui||mainw->multitrack!=NULL||
       (mainw->fs&&(prefs->play_monitor==prefs->gui_monitor||
@@ -9025,7 +9298,7 @@ expose_laud_event (GtkWidget *widget, GdkEventExpose *event) {
     return FALSE;
   }
 
-  if (!mainw->is_ready||(event!=NULL&&event->count>0)) return TRUE;
+  if ((event!=NULL&&event->count>0)) return TRUE;
 
   if (event!=NULL) {
     ex=event->area.x;
@@ -9039,49 +9312,20 @@ expose_laud_event (GtkWidget *widget, GdkEventExpose *event) {
     eh=lives_widget_get_allocation_height(mainw->laudio_draw);
   }
 
-  block_expose();
+  redraw_laudio(ex,ey,ew,eh);
 
-  if (mainw->laudio_drawable!=NULL) {
-    gdk_drawable_get_size(GDK_DRAWABLE(mainw->laudio_drawable),&width,NULL);
-    if (width!=lives_widget_get_allocation_width(mainw->LiVES)) {
-      gdk_drawable_unref(GDK_DRAWABLE(mainw->laudio_drawable));
-      mainw->laudio_drawable=NULL;
-    }
-  }
-
-  if (mainw->laudio_drawable==NULL) {
-    mainw->laudio_drawable = gdk_pixmap_new(lives_widget_get_xwindow(mainw->laudio_draw),
-					    mainw->laudio_draw->allocation.width,
-					    mainw->laudio_draw->allocation.height,
-					    -1);
-    get_play_times();
-  }
-  
-  if (mainw->current_file==-1) {
-    gdk_draw_rectangle (mainw->laudio_drawable,
-                        mainw->laudio_draw->style->bg_gc[GTK_WIDGET_STATE (widget)],
-                        TRUE,
-                        0, 0,
-                        mainw->laudio_draw->allocation.width,
-                        mainw->laudio_draw->allocation.height
-                        );
-  }
-  gdk_draw_pixmap(lives_widget_get_xwindow(widget),
-		  widget->style->fg_gc[GTK_WIDGET_STATE (widget)],
-		  mainw->laudio_drawable,
-		  ex, ey,
-		  ex, ey,
-		  ew, eh);
-
-  unblock_expose();
   return FALSE;
+  
 }
 
 
-gint
-expose_raud_event (GtkWidget *widget, GdkEventExpose *event) {
+
+boolean expose_raud_event (GtkWidget *widget, GdkEventExpose *event) {
   gint ex,ey,ew,eh;
-  gint width;
+
+#if GTK_CHECK_VERSION(3,0,0)
+  cairo_t *cr;
+#endif
 
   if (!prefs->show_gui||mainw->multitrack!=NULL||
       (mainw->fs&&(prefs->play_monitor==prefs->gui_monitor||
@@ -9091,7 +9335,7 @@ expose_raud_event (GtkWidget *widget, GdkEventExpose *event) {
     return FALSE;
   }
 
-  if (!mainw->is_ready||(event!=NULL&&event->count>0)) return TRUE;
+  if ((event!=NULL&&event->count>0)) return TRUE;
 
   if (event!=NULL) {
     ex=event->area.x;
@@ -9105,46 +9349,15 @@ expose_raud_event (GtkWidget *widget, GdkEventExpose *event) {
     eh=lives_widget_get_allocation_height(mainw->raudio_draw);
   }
 
-  block_expose();
+  redraw_raudio(ex,ey,ew,eh);
 
-  if (mainw->raudio_drawable!=NULL) {
-    gdk_drawable_get_size(GDK_DRAWABLE(mainw->raudio_drawable),&width,NULL);
-    if (width!=lives_widget_get_allocation_width(mainw->LiVES)) {
-      gdk_drawable_unref(GDK_DRAWABLE(mainw->raudio_drawable));
-      mainw->raudio_drawable=NULL;
-    }
-  }
-
-  if (mainw->raudio_drawable==NULL) {
-    mainw->raudio_drawable = gdk_pixmap_new(lives_widget_get_xwindow(mainw->raudio_draw),
-					    mainw->raudio_draw->allocation.width,
-					    mainw->raudio_draw->allocation.height,
-					    -1);
-    get_play_times();
-  }
-
-  if (mainw->current_file==-1) {
-    gdk_draw_rectangle (mainw->raudio_drawable,
-			mainw->raudio_draw->style->bg_gc[GTK_WIDGET_STATE (widget)],
-                        TRUE,
-                        0, 0,
-                        mainw->raudio_draw->allocation.width,
-                        mainw->raudio_draw->allocation.height
-                        );
-  }
-  gdk_draw_pixmap(lives_widget_get_xwindow(widget),
-		  widget->style->fg_gc[GTK_WIDGET_STATE (widget)],
-		  mainw->raudio_drawable,
-		  ex, ey,
-		  ex, ey,
-		  ew, eh);
-  
-  unblock_expose();
   return FALSE;
+  
 }
 
 
-gboolean config_event (GtkWidget *widget, GdkEventConfigure *event, gpointer user_data) {
+
+boolean config_event (GtkWidget *widget, GdkEventConfigure *event, gpointer user_data) {
 
   if (mainw->is_ready) {
     if (mainw->current_file>-1) {
@@ -9173,7 +9386,7 @@ gboolean config_event (GtkWidget *widget, GdkEventConfigure *event, gpointer use
 }
 
 
-gint expose_play_window (GtkWidget *widget, GdkEventExpose *event) {
+boolean expose_play_window (GtkWidget *widget, GdkEventExpose *event) {
   GdkRegion *reg;
   GdkRectangle rect;
   cairo_t *cr;

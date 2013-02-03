@@ -755,22 +755,33 @@ static gboolean is_audio_eventbox(lives_mt *mt, GtkWidget *ebox) {
 
 static void draw_block (lives_mt *mt,track_rect *block, gint x1, gint x2) {
   // x1 is start point of drawing area (in pixels), x2 is width of drawing area (in pixels)
+  cairo_t *cr;
 
-  gdouble tl_span=mt->tl_max-mt->tl_min;
-  GtkWidget *eventbox=block->eventbox;
+#if GTK_CHECK_VERSION(3,0,0)
+  GdkRGBA bgcolor;
+#endif
+
   weed_plant_t *event=block->start_event;
+
   weed_timecode_t tc=get_event_timecode(event);
 
+  GtkWidget *eventbox=block->eventbox;
+
+  GdkPixbuf *thumbnail=NULL;
+
+  gdouble tl_span=mt->tl_max-mt->tl_min;
   gdouble offset_startd=tc/U_SEC;
   gdouble offset_endd;
-  gint offset_start;
-  gint offset_end;
-  int i,filenum,track;
-  GdkPixbuf *thumbnail=NULL;
-  int framenum,last_framenum;
-  gint width=BLOCK_THUMB_WIDTH;
 
-  gint hidden=(gint)GPOINTER_TO_INT(g_object_get_data (G_OBJECT(eventbox), "hidden"));
+  int offset_start;
+  int offset_end;
+  int i,filenum,track;
+
+  int framenum,last_framenum;
+  int width=BLOCK_THUMB_WIDTH;
+
+  int hidden=(int)GPOINTER_TO_INT(g_object_get_data (G_OBJECT(eventbox), "hidden"));
+
   if (hidden) return;
 
   // block to right of screen
@@ -788,24 +799,31 @@ static void draw_block (lives_mt *mt,track_rect *block, gint x1, gint x2) {
   // end of block before drawing area
   if (offset_end<x1) return;
 
+  cr = gdk_cairo_create (lives_widget_get_xwindow(eventbox));
+  cairo_set_line_width(cr,1.);
+
+#if GTK_CHECK_VERSION(3,0,0)
+  gtk_style_context_get_bg_color (gtk_widget_get_style_context (mt->window),GTK_WIDGET_STATE (mt->window),&bgcolor);
+#endif
+
   switch (block->state) {
   case BLOCK_UNSELECTED:
+
     track=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"layer_number"));
     if (BLOCK_DRAW_TYPE==BLOCK_DRAW_SIMPLE) {
-      gdk_draw_line (GDK_DRAWABLE(eventbox->window), mt->window->style->black_gc, offset_start, 0, offset_start, 
-		     lives_widget_get_allocation_height(eventbox));
-      gdk_draw_line (GDK_DRAWABLE(eventbox->window), mt->window->style->black_gc, offset_end, 
-		     eventbox->allocation.height, offset_end, 0);
-      gdk_draw_line (GDK_DRAWABLE(eventbox->window), mt->window->style->black_gc, offset_start, 0, offset_end, 
-		     eventbox->allocation.height);
-      gdk_draw_line (GDK_DRAWABLE(eventbox->window), mt->window->style->black_gc, offset_start, 
-		     eventbox->allocation.height, offset_end, 0);
-      gdk_draw_line (GDK_DRAWABLE(eventbox->window), mt->window->style->black_gc, offset_start, 0, offset_end, 0);
-      gdk_draw_line (GDK_DRAWABLE(eventbox->window), mt->window->style->black_gc, offset_start, 
-		     eventbox->allocation.height-1, offset_end, eventbox->allocation.height-1);
+      cairo_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
+      cairo_new_path(cr);
+      cairo_rectangle(cr,offset_start, 0, offset_end, lives_widget_get_allocation_height(eventbox));
+
+      cairo_move_to(cr,offset_start,0);
+      cairo_line_to(cr,offset_end, lives_widget_get_allocation_height(eventbox));
+
+      cairo_move_to(cr,offset_end,0);
+      cairo_line_to(cr,offset_start, lives_widget_get_allocation_height(eventbox));
+
+      cairo_stroke(cr);
     }
     else {
-      cairo_t *cr = gdk_cairo_create (lives_widget_get_xwindow(eventbox));
       if ((!is_audio_eventbox(mt,eventbox))&&track>-1) {
 	filenum=get_frame_event_clip(block->start_event,track);
 	last_framenum=-1;
@@ -820,7 +838,7 @@ static void draw_block (lives_mt *mt,track_rect *block, gint x1, gint x2) {
 	    if (thumbnail!=NULL) lives_object_unref(thumbnail);
 	    thumbnail=NULL;
 	    if (framenum!=last_framenum) thumbnail=make_thumb(mt,filenum,width,
-							      lives_widget_get_allocation_height(eventbox)-1,
+							      lives_widget_get_allocation_height(eventbox),
 							      framenum,FALSE);
 	    last_framenum=framenum;
 	    // render it in the eventbox
@@ -830,7 +848,7 @@ static void draw_block (lives_mt *mt,track_rect *block, gint x1, gint x2) {
 		width=offset_end-i;
 		// crop to width
 		cairo_new_path(cr);
-		cairo_rectangle(cr,0,0,i+width,lives_widget_get_allocation_height(eventbox)-1);
+		cairo_rectangle(cr,0,0,i+width,lives_widget_get_allocation_height(eventbox));
 		cairo_clip(cr);
 	      }
 	      cairo_paint (cr);
@@ -845,17 +863,15 @@ static void draw_block (lives_mt *mt,track_rect *block, gint x1, gint x2) {
       }
       else {
 	cairo_set_source_rgb(cr,audcol.red/65535.,audcol.green/65535.,audcol.blue/65535.);
-	cairo_rectangle(cr,offset_start,0,offset_end-offset_start,lives_widget_get_allocation_height(eventbox)-1);
+	cairo_new_path(cr);
+	cairo_rectangle(cr,offset_start,0,offset_end-offset_start,lives_widget_get_allocation_height(eventbox));
 	cairo_fill(cr);
       }
-      cairo_destroy (cr);
-      gdk_draw_line (GDK_DRAWABLE(eventbox->window), mt->window->style->black_gc, offset_start, 0, offset_start, 
-		     eventbox->allocation.height-1);
-      gdk_draw_line (GDK_DRAWABLE(eventbox->window), mt->window->style->black_gc, offset_end, 
-		     eventbox->allocation.height-1, offset_end, 0);
-      gdk_draw_line (GDK_DRAWABLE(eventbox->window), mt->window->style->black_gc, offset_start, 0, offset_end, 0);
-      gdk_draw_line (GDK_DRAWABLE(eventbox->window), mt->window->style->black_gc, offset_start, 
-		     eventbox->allocation.height-1, offset_end, eventbox->allocation.height-1);
+      cairo_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
+      cairo_new_path(cr);
+      cairo_rectangle(cr,offset_start, 0, offset_end, lives_widget_get_allocation_height(eventbox));
+      cairo_stroke(cr);
+
       if (mainw->playing_file>-1) unpaint_lines(mt);
       mt->redraw_block=TRUE; // stop drawing cursor during playback
       if (mainw->playing_file>-1&&mainw->cancelled==CANCEL_NONE) process_one(FALSE);
@@ -863,21 +879,33 @@ static void draw_block (lives_mt *mt,track_rect *block, gint x1, gint x2) {
     }
     break;
   case BLOCK_SELECTED:
+#if GTK_CHECK_VERSION(3,0,0)
+    cairo_new_path(cr);
+    gdk_cairo_set_source_rgba (cr, &bgcolor);
+    cairo_rectangle(cr,offset_start, 0, offset_end, lives_widget_get_allocation_height(eventbox));
+    cairo_fill(cr);
+
+#else
     gdk_draw_rectangle (GDK_DRAWABLE(eventbox->window), mt->window->style->bg_gc[0], TRUE, offset_start, 0, 
 			offset_end-offset_start, eventbox->allocation.height-1);
-    gdk_draw_line (GDK_DRAWABLE(eventbox->window), mt->window->style->black_gc, offset_start, 0, offset_start, 
-		   eventbox->allocation.height-1);
-    gdk_draw_line (GDK_DRAWABLE(eventbox->window), mt->window->style->black_gc, offset_end, eventbox->allocation.height-1, 
-		   offset_end, 0);
-    gdk_draw_line (GDK_DRAWABLE(eventbox->window), mt->window->style->black_gc, offset_start, 0, offset_end, 
-		   eventbox->allocation.height-1);
-    gdk_draw_line (GDK_DRAWABLE(eventbox->window), mt->window->style->black_gc, offset_start, 
-		   eventbox->allocation.height-1, offset_end, 0);
-    gdk_draw_line (GDK_DRAWABLE(eventbox->window), mt->window->style->black_gc, offset_start, 0, offset_end, 0);
-    gdk_draw_line (GDK_DRAWABLE(eventbox->window), mt->window->style->black_gc, offset_start, 
-		   eventbox->allocation.height-1, offset_end, eventbox->allocation.height-1);
+#endif
+    cairo_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
+    cairo_new_path(cr);
+    cairo_rectangle(cr,offset_start, 0, offset_end, lives_widget_get_allocation_height(eventbox));
+
+    cairo_move_to(cr,offset_start,0);
+    cairo_line_to(cr,offset_end, lives_widget_get_allocation_height(eventbox));
+    
+    cairo_move_to(cr,offset_end,0);
+    cairo_line_to(cr,offset_start, lives_widget_get_allocation_height(eventbox));
+
+    cairo_stroke(cr);
+
     break;
   }
+
+  cairo_destroy (cr);
+
   if (mainw->playing_file>-1) unpaint_lines(mt);
   mt->redraw_block=TRUE; // stop drawing cursor during playback
   if (mainw->playing_file>-1&&mainw->cancelled==CANCEL_NONE) process_one(FALSE);
@@ -975,7 +1003,7 @@ static void draw_aparams(lives_mt *mt, GtkWidget *eventbox, GList *param_list, w
   cairo_paint (cr);
 
   cairo_set_line_width(cr,1.);
-  cairo_set_source_rgba(cr, 0., 0., 0., 1.); ///< opaque black
+  cairo_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
 
   //cairo_set_operator (cr, CAIRO_OPERATOR_DEST_OVER);
   for (i=startpos;i<startx+width;i++) {
@@ -12205,14 +12233,22 @@ void mouse_select_end(GtkWidget *widget, lives_mt *mt) {
 
 
 static void mouse_select_move(GtkWidget *widget, lives_mt *mt) {
+  cairo_t *cr;
+
+#if GTK_CHECK_VERSION(3,0,0)
+  GdkRGBA bgcolor;
+#endif
+
+  GtkWidget *xeventbox;
+  GtkWidget *checkbutton;
+
   gint x,y;
   gint start_x,start_y,width,height;
   gint current_track=mt->current_track;
   int i;
-  GtkWidget *xeventbox;
+
   gint rel_x,rel_y,min_x;
   gint offs_y_start,offs_y_end,xheight;
-  GtkWidget *checkbutton;
 
   if (mt->block_selected!=NULL) unselect_all(mt);
 
@@ -12245,8 +12281,18 @@ static void mouse_select_move(GtkWidget *widget, lives_mt *mt) {
   if (start_x<0) start_x=0;
   if (start_y<0) start_y=0;
 
+  cr = gdk_cairo_create (lives_widget_get_xwindow(mt->tl_eventbox));
+
+#if GTK_CHECK_VERSION(3,0,0)
+    gtk_style_context_get_bg_color (gtk_widget_get_style_context (mt->window),GTK_WIDGET_STATE (mt->window),&bgcolor);
+    gdk_cairo_set_source_rgba (cr, &bgcolor);
+
+    cairo_rectangle(cr,start_x,start_y,width,height);
+    cairo_fill(cr);
+#else
   gdk_draw_rectangle (GDK_DRAWABLE(mt->tl_eventbox->window), mt->window->style->black_gc, TRUE, 
 		      start_x, start_y, width, height);
+#endif
 
   for (i=0;i<mt->num_video_tracks;i++) {
     xeventbox=(GtkWidget *)g_list_nth_data(mt->video_draws,i);
@@ -12279,8 +12325,14 @@ static void mouse_select_move(GtkWidget *widget, lives_mt *mt) {
       offs_y_end=xheight;
       if (start_y<rel_y+xheight) {
 	offs_y_start=start_y-rel_y;
-	gdk_draw_line (xeventbox->window, mt->window->style->black_gc, start_x-rel_x, offs_y_start, 
-		       start_x+width-rel_x-1, offs_y_start);
+	cairo_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
+	cairo_new_path(cr);
+
+	cairo_move_to(cr,start_x-rel_x,offs_y_start);
+	cairo_line_to(cr,start_x+width-rel_x-1, offs_y_start);
+
+	cairo_stroke(cr);
+		       
       }
       if (start_y+height<rel_y+xheight) {
 	offs_y_end=start_y-rel_y+height;
@@ -12318,6 +12370,8 @@ static void mouse_select_move(GtkWidget *widget, lives_mt *mt) {
     on_timeline_update(mt->timeline_eb,NULL,mt);
     mt->region_updating=FALSE;
   }
+
+  cairo_destroy (cr);
   
 }
 
@@ -16533,6 +16587,8 @@ void multitrack_view_sel_events (GtkMenuItem *menuitem, gpointer user_data) {
 // region functions
 
 void draw_region (lives_mt *mt) {
+  cairo_t *cr;
+
   gdouble start,end;
   if (mt->region_start==mt->region_end) return;
 
@@ -16555,7 +16611,14 @@ void draw_region (lives_mt *mt) {
     gtk_widget_set_sensitive(mt->re_to_tc,TRUE);
   }
 
-  gdk_draw_rectangle (GDK_DRAWABLE(mt->timeline_reg->window), mt->window->style->black_gc, TRUE, (start-mt->tl_min)*mt->timeline->allocation.width/(mt->tl_max-mt->tl_min), 0, (end-start)*mt->timeline->allocation.width/(mt->tl_max-mt->tl_min),mt->timeline_reg->allocation.height-2);
+  cr = gdk_cairo_create (lives_widget_get_xwindow(mt->timeline_reg));
+  cairo_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
+  cairo_rectangle(cr,(start-mt->tl_min)*mt->timeline->allocation.width/(mt->tl_max-mt->tl_min), 
+		  0, 
+		  (end-start)*mt->timeline->allocation.width/(mt->tl_max-mt->tl_min), 
+		  mt->timeline_reg->allocation.height-2);
+  cairo_fill(cr);
+  cairo_destroy(cr);
 }
 
 gint expose_timeline_reg_event (GtkWidget *timeline, GdkEventExpose *event, gpointer user_data) {

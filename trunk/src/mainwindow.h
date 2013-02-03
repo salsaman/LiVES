@@ -52,6 +52,9 @@
 // clip editor hrule height
 #define CE_HRULE_HEIGHT 20
 
+// clip edit vid/aud bar height
+#define CE_VIDBAR_HEIGHT 10
+
 /// number of function keys
 #define FN_KEYS 12
 
@@ -806,11 +809,22 @@ typedef struct {
 
   // timer bars
   GtkWidget *video_draw;
-  GdkPixmap *video_drawable;
   GtkWidget *laudio_draw;
-  GdkPixmap *laudio_drawable;
   GtkWidget *raudio_draw;
+
+#if GTK_CHECK_VERSION(3,0,0)
+  cairo_surface_t *video_drawable;
+  cairo_surface_t *laudio_drawable;
+  cairo_surface_t *raudio_drawable;
+  cairo_surface_t *blank_laudio_drawable;
+  cairo_surface_t *blank_raudio_drawable;
+#else
+  GdkPixmap *video_drawable;
+  GdkPixmap *laudio_drawable;
   GdkPixmap *raudio_drawable;
+  GdkPixmap *blank_laudio_drawable;
+  GdkPixmap *blank_raudio_drawable;
+#endif
 
   // framecounter
   GtkWidget *framebar;

@@ -375,7 +375,7 @@ void framedraw_redraw (lives_special_framedraw_rect_t * framedraw, gboolean relo
     ystart -=  (int)((2.*((double)ystart/(double)height)) * (double)((fd_height - height)>>1)+.5);
     yend -=  (int)((2.*((double)yend/(double)height)) * (double)((fd_height - height)>>1)+.5);
 
-    cairo_set_source_rgba(cr, 1., 0., 0., 1.);
+    cairo_set_source_rgb(cr, 1., 0., 0.);
     cairo_rectangle(cr,xstart-1,ystart-1,xend-xstart+2,yend-ystart+2);
     cairo_stroke (cr);
 
@@ -388,7 +388,7 @@ void framedraw_redraw (lives_special_framedraw_rect_t * framedraw, gboolean relo
     xstart -=  (int)((2.*((double)xstart/(double)width)) * (double)((fd_width - width)>>1)+.5);
     ystart -=  (int)((2.*((double)ystart/(double)height)) * (double)((fd_height - height)>>1)+.5);
 
-    cairo_set_source_rgba(cr, 1., 0., 0., 1.);
+    cairo_set_source_rgb(cr, 1., 0., 0.);
 
     cairo_move_to(cr,xstart,ystart-3);
     cairo_line_to(cr,xstart,ystart+3);

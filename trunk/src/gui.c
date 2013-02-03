@@ -2231,7 +2231,7 @@ create_LiVES (void)
   gtk_box_pack_start (GTK_BOX (vbox2), mainw->vidbar, TRUE, TRUE, 0);
 
   mainw->video_draw = gtk_drawing_area_new ();
-  gtk_drawing_area_size(GTK_DRAWING_AREA(mainw->video_draw),lives_widget_get_allocation_width(mainw->LiVES),10);
+  gtk_widget_set_size_request(mainw->video_draw,lives_widget_get_allocation_width(mainw->LiVES),CE_VIDBAR_HEIGHT);
   gtk_widget_show (mainw->video_draw);
   gtk_box_pack_start (GTK_BOX (vbox2), mainw->video_draw, TRUE, TRUE, 0);
   gtk_widget_modify_bg (mainw->video_draw, GTK_STATE_NORMAL, &palette->normal_back);
@@ -2249,7 +2249,7 @@ create_LiVES (void)
   }
 
   mainw->laudio_draw = gtk_drawing_area_new ();
-  gtk_drawing_area_size(GTK_DRAWING_AREA(mainw->laudio_draw),lives_widget_get_allocation_width(mainw->LiVES),10);
+  gtk_widget_set_size_request(mainw->laudio_draw,lives_widget_get_allocation_width(mainw->LiVES),CE_VIDBAR_HEIGHT);
   gtk_widget_show (mainw->laudio_draw);
   gtk_box_pack_start (GTK_BOX (vbox2), mainw->laudio_draw, TRUE, TRUE, 0);
   gtk_widget_modify_bg (mainw->laudio_draw, GTK_STATE_NORMAL, &palette->normal_back);
@@ -2267,7 +2267,7 @@ create_LiVES (void)
   }
 
   mainw->raudio_draw = gtk_drawing_area_new ();
-  gtk_drawing_area_size(GTK_DRAWING_AREA(mainw->raudio_draw),lives_widget_get_allocation_width(mainw->LiVES),10);
+  gtk_widget_set_size_request(mainw->raudio_draw,lives_widget_get_allocation_width(mainw->LiVES),CE_VIDBAR_HEIGHT);
   gtk_widget_show (mainw->raudio_draw);
   gtk_box_pack_start (GTK_BOX (vbox2), mainw->raudio_draw, TRUE, TRUE, 0);
   gtk_widget_modify_bg (mainw->raudio_draw, GTK_STATE_NORMAL, &palette->normal_back);
@@ -2920,8 +2920,8 @@ create_LiVES (void)
                       GINT_TO_POINTER (2));
 
   gtk_window_add_accel_group (GTK_WINDOW (mainw->LiVES), mainw->accel_group);
-  mainw->laudio_drawable=NULL;
-  mainw->raudio_drawable=NULL;
+  mainw->laudio_drawable=mainw->blank_laudio_drawable=NULL;
+  mainw->raudio_drawable=mainw->blank_raudio_drawable=NULL;
   mainw->video_drawable=NULL;
   mainw->plug=NULL;
 

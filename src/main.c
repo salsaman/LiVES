@@ -84,13 +84,13 @@ mainwindow *mainw;
 
 //////////////////////////////////////////
 
-static gboolean no_recover=FALSE,auto_recover=FALSE;
-static gboolean upgrade_error=FALSE;
+static boolean no_recover=FALSE,auto_recover=FALSE;
+static boolean upgrade_error=FALSE;
 static gchar start_file[PATH_MAX];
 static gdouble start=0.;
 static gint end=0;
 
-static gboolean theme_expected;
+static boolean theme_expected;
 
 static _ign_opts ign_opts;
 
@@ -251,7 +251,7 @@ void get_monitors(void) {
 
 
 
-static gboolean pre_init(void) {
+static boolean pre_init(void) {
   // stuff which should be done *before* mainwindow is created
   // returns TRUE if we expect to load a theme
 
@@ -268,7 +268,7 @@ static gboolean pre_init(void) {
 
   gchar buff[256];
   int i;
-  gboolean needs_update=FALSE;
+  boolean needs_update=FALSE;
 
   sizint=sizeof(gint);
   sizdbl=sizeof(gdouble);
@@ -2163,7 +2163,7 @@ void print_opthelp(void) {
 
 //// things to do - on startup
 #ifdef HAVE_YUV4MPEG
-static gboolean open_yuv4m_startup(gpointer data) {
+static boolean open_yuv4m_startup(gpointer data) {
   on_open_yuv4m_activate(NULL,data);
   return FALSE;
 }
@@ -2173,8 +2173,8 @@ static gboolean open_yuv4m_startup(gpointer data) {
 /////////////////////////////////
 
 
-static gboolean lives_startup(gpointer data) {
-  gboolean got_files=FALSE;
+static boolean lives_startup(gpointer data) {
+  boolean got_files=FALSE;
   gchar *tmp;
 
   if (!mainw->foreign) {
@@ -2684,7 +2684,7 @@ int main (int argc, char *argv[]) {
         }
 	if (!strcmp(charopt,"aplayer")) {
 	  gchar buff[256];
-	  gboolean apl_valid=FALSE;
+	  boolean apl_valid=FALSE;
 
 	  g_snprintf(buff,256,"%s",optarg);
 	  // override aplayer default
@@ -2807,7 +2807,7 @@ int main (int argc, char *argv[]) {
 
 
 
-gboolean startup_message_fatal(const gchar *msg) {
+boolean startup_message_fatal(const gchar *msg) {
   splash_end();
   do_blocking_error_dialog (msg);
   mainw->startup_error=TRUE;
@@ -2815,14 +2815,14 @@ gboolean startup_message_fatal(const gchar *msg) {
   return TRUE;
 }
 
-gboolean startup_message_nonfatal(const gchar *msg) {
+boolean startup_message_nonfatal(const gchar *msg) {
   mainw->is_ready=TRUE;
   do_error_dialog (msg);
   mainw->is_ready=FALSE;
   return TRUE;
 }
 
-gboolean startup_message_nonfatal_dismissable(const gchar *msg, gint warning_mask) {
+boolean startup_message_nonfatal_dismissable(const gchar *msg, gint warning_mask) {
   mainw->is_ready=TRUE;
   do_error_dialog_with_check (msg, warning_mask);
   mainw->is_ready=FALSE;
@@ -3182,7 +3182,7 @@ void load_start_image(gint frame) {
   weed_plant_t *layer;
   weed_timecode_t tc;
   gint rwidth,rheight,width,height;
-  gboolean noswitch=mainw->noswitch;
+  boolean noswitch=mainw->noswitch;
   LiVESInterpType interp;
 
 
@@ -3302,7 +3302,7 @@ void load_end_image(gint frame) {
   weed_plant_t *layer;
   weed_timecode_t tc;
   gint rwidth,rheight,width,height;
-  gboolean noswitch=mainw->noswitch;
+  boolean noswitch=mainw->noswitch;
   LiVESInterpType interp;
 
   if (!prefs->show_gui) return;
@@ -3417,7 +3417,7 @@ void load_end_image(gint frame) {
 
 
 
-void load_preview_image(gboolean update_always) {
+void load_preview_image(boolean update_always) {
   // this is for the sepwin preview
   // update_always==TRUE = update widgets from mainw->preview_frame
   GdkPixbuf *pixbuf=NULL;
@@ -3585,7 +3585,7 @@ static void pbsize_set(GdkPixbufLoader *pbload, gint width, gint height, gpointe
 
 #ifdef USE_LIBPNG
 
-gboolean layer_from_png(FILE *fp, weed_plant_t *layer, gboolean prog) {
+boolean layer_from_png(FILE *fp, weed_plant_t *layer, boolean prog) {
   png_structp png_ptr;
   png_infop info_ptr;
 
@@ -3601,7 +3601,7 @@ gboolean layer_from_png(FILE *fp, weed_plant_t *layer, gboolean prog) {
   unsigned char **row_ptrs;
 
   size_t bsize=fread(buff,1,8,fp),framesize;
-  gboolean is_png = !png_sig_cmp(buff, 0, bsize);
+  boolean is_png = !png_sig_cmp(buff, 0, bsize);
 
   float screen_gamma=2.2;
   double file_gamma;
@@ -3807,7 +3807,7 @@ static boolean weed_layer_new_from_file_progressive(weed_plant_t *layer,
 
 #ifdef USE_LIBPNG
   {
-    gboolean ret;
+    boolean ret;
     FILE *fp=fopen(fname,"rb");
     if (!fp) return FALSE;
     ret=layer_from_png(fp,layer,FALSE);
@@ -3903,7 +3903,7 @@ static weed_plant_t *render_subs_from_file(file *sfile, double xtime, weed_plant
 
 
 
-gboolean pull_frame_at_size (weed_plant_t *layer, const gchar *image_ext, weed_timecode_t tc, int width, int height, 
+boolean pull_frame_at_size (weed_plant_t *layer, const gchar *image_ext, weed_timecode_t tc, int width, int height, 
 			     int target_palette) {
   // pull a frame from an external source into a layer
   // the "clip" and "frame" leaves must be set in layer
@@ -4019,7 +4019,7 @@ gboolean pull_frame_at_size (weed_plant_t *layer, const gchar *image_ext, weed_t
 	return TRUE;
       }
       else {
-	gboolean ret;
+	boolean ret;
 	gchar *fname=g_strdup_printf("%s/%s/%08d.%s",prefs->tmpdir,sfile->handle,frame,image_ext);
 	if (height*width==0) {
 	  ret=weed_layer_new_from_file_progressive(layer,fname,0,0,image_ext,&gerror);
@@ -4077,7 +4077,7 @@ gboolean pull_frame_at_size (weed_plant_t *layer, const gchar *image_ext, weed_t
 }
 
 
-gboolean pull_frame (weed_plant_t *layer, const gchar *image_ext, weed_timecode_t tc) {
+boolean pull_frame (weed_plant_t *layer, const gchar *image_ext, weed_timecode_t tc) {
   // pull a frame from an external source into a layer
   // the "clip" and "frame" leaves must be set in layer
   // tc is used instead of "frame" for some sources (e.g. generator plugins)
@@ -4273,14 +4273,14 @@ void load_frame_image(gint frame) {
 
   LiVESInterpType interp;
 
-  gboolean was_preview;
-  gboolean rec_after_pb=FALSE;
+  boolean was_preview;
+  boolean rec_after_pb=FALSE;
   int weed_error;
   int retval;
   int layer_palette,cpal;
 
   int opwidth=0,opheight=0;
-  gboolean noswitch=mainw->noswitch;
+  boolean noswitch=mainw->noswitch;
   gint pmonitor;
   int pwidth,pheight;
   int lb_width=0,lb_height=0;
@@ -4783,7 +4783,7 @@ void load_frame_image(gint frame) {
     ////////////////////////
 #ifdef ENABLE_JACK
     if (!mainw->foreign&&mainw->jackd!=NULL&&prefs->audio_player==AUD_PLAYER_JACK) {
-      gboolean timeout;
+      boolean timeout;
       int alarm_handle=lives_alarm_set(LIVES_ACONNECT_TIMEOUT);
       while (!(timeout=lives_alarm_get(alarm_handle))&&jack_get_msgq(mainw->jackd)!=NULL) {
 	sched_yield(); // wait for seek
@@ -4795,7 +4795,7 @@ void load_frame_image(gint frame) {
 #endif
 #ifdef HAVE_PULSE_AUDIO
     if (!mainw->foreign&&mainw->pulsed!=NULL&&prefs->audio_player==AUD_PLAYER_PULSE) {
-      gboolean timeout;
+      boolean timeout;
       int alarm_handle=lives_alarm_set(LIVES_ACONNECT_TIMEOUT);
       while (!(timeout=lives_alarm_get(alarm_handle))&&pulse_get_msgq(mainw->pulsed)!=NULL) {
 	sched_yield(); // wait for seek
@@ -4993,7 +4993,7 @@ void load_frame_image(gint frame) {
       }
     }
     else {
-      gboolean size_ok=FALSE;
+      boolean size_ok=FALSE;
 
       pmonitor=prefs->play_monitor;
 
@@ -5377,7 +5377,7 @@ void load_frame_image(gint frame) {
 
 /** Save a pixbuf to a file using the specified imgtype and the specified quality/compression value */
 
-GError *lives_pixbuf_save(GdkPixbuf *pixbuf, gchar *fname, lives_image_type_t imgtype, int quality, gboolean do_chmod, 
+GError *lives_pixbuf_save(GdkPixbuf *pixbuf, gchar *fname, lives_image_type_t imgtype, int quality, boolean do_chmod, 
 			  GError **gerrorptr) {
   // CALLER should check for errors
 
@@ -5424,7 +5424,7 @@ void close_current_file(gint file_to_switch_to) {
   gint index=-1;
   gint old_file=mainw->current_file;
   GList *list_index;
-  gboolean need_new_blend_file=FALSE;
+  boolean need_new_blend_file=FALSE;
 
   if (mainw->playing_file==-1) {
     if (mainw->current_file!=mainw->scrap_file) desensitize();
@@ -5992,7 +5992,7 @@ void switch_audio_clip(gint new_file, boolean activate) {
   if (prefs->audio_player==AUD_PLAYER_JACK) {
 #ifdef ENABLE_JACK
     if (mainw->jackd!=NULL) {
-      gboolean timeout;
+      boolean timeout;
       int alarm_handle=lives_alarm_set(LIVES_ACONNECT_TIMEOUT);
       if (!activate) mainw->jackd->in_use=FALSE;
 
@@ -6089,7 +6089,7 @@ void switch_audio_clip(gint new_file, boolean activate) {
  if (prefs->audio_player==AUD_PLAYER_PULSE) {
 #ifdef HAVE_PULSE_AUDIO
     if (mainw->pulsed!=NULL) {
-      gboolean timeout;
+      boolean timeout;
       int alarm_handle=lives_alarm_set(LIVES_ACONNECT_TIMEOUT);
       while (!(timeout=lives_alarm_get(alarm_handle))&&pulse_get_msgq(mainw->pulsed)!=NULL) {
 	sched_yield(); // wait for seek
@@ -6190,7 +6190,7 @@ void do_quick_switch (gint new_file) {
 
   gint ovsize=mainw->pheight;
   gint ohsize=mainw->pwidth;
-  gboolean osc_block;
+  boolean osc_block;
 
   if (mainw->current_file<1||mainw->files[new_file]==NULL) return;
 

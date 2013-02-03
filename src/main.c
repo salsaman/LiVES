@@ -5580,6 +5580,22 @@ void close_current_file(gint file_to_switch_to) {
 #endif
     }
 
+    if (cfile->laudio_drawable!=NULL) {
+#if GTK_CHECK_VERSION(3,0,0)
+      cairo_surface_destroy(cfile->laudio_drawable);
+#else
+      g_object_unref(G_OBJECT(cfile->laudio_drawable));
+#endif
+    }
+
+    if (cfile->raudio_drawable!=NULL) {
+#if GTK_CHECK_VERSION(3,0,0)
+      cairo_surface_destroy(cfile->raudio_drawable);
+#else
+      g_object_unref(G_OBJECT(cfile->raudio_drawable));
+#endif
+    }
+
     g_free(cfile);
     cfile=NULL;
 

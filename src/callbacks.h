@@ -141,7 +141,7 @@ on_rev_clipboard_activate              (GtkMenuItem     *menuitem,
                                         gpointer         user_data);
 
 void 
-on_encoder_entry_changed(GtkComboBox *combo, gpointer ptr);
+on_encoder_entry_changed(GtkComboBox *, gpointer ptr);
 
 void 
 on_vid_playback_plugin_changed (GtkEntry *vpp_entry, gpointer user_data);
@@ -192,9 +192,9 @@ on_ok_button1_clicked                  (GtkButton       *button,
                                         gpointer         user_data);
 
 
-void on_ok_file_open_clicked(GtkFileChooser *chooser, GSList *fnames);
+void on_ok_file_open_clicked(GtkFileChooser *, GSList *fnames);
 
-void on_ok_filesel_open_clicked (GtkFileChooser *chooser, gpointer user_data);
+void on_ok_filesel_open_clicked (GtkFileChooser *, gpointer);
 
 
 
@@ -225,13 +225,13 @@ on_open_sel_ok_button_clicked                  (GtkButton       *button,
                                         gpointer         user_data);
 
 
-void on_save_textview_clicked (GtkButton *button, gpointer user_data);
+void on_save_textview_clicked (GtkButton *, gpointer);
 
 void
 on_cancel_button1_clicked              (GtkWidget       *widget,
                                         gpointer         user_data);
 
-gboolean on_cancel_button1_clicked_del(GtkWidget *widget, GdkEvent *event, gpointer user_data);
+gboolean on_cancel_button1_clicked_del(GtkWidget *, GdkEvent *, gpointer);
 
 
 void
@@ -305,15 +305,15 @@ void
 on_spinbutton_end_value_changed          (GtkSpinButton   *spinbutton,
 					  gpointer         user_data);
 
-void on_open_new_audio_clicked (GtkFileChooser *chooser, gpointer opt_filename);
+void on_open_new_audio_clicked (GtkFileChooser *, gpointer opt_filename);
 
-void on_load_audio_activate (GtkMenuItem *, gpointer user_data);
+void on_load_audio_activate (GtkMenuItem *, gpointer);
 
-void on_load_subs_activate (GtkMenuItem *menuitem, gpointer user_data);
+void on_load_subs_activate (GtkMenuItem *, gpointer);
 
-void on_save_subs_activate (GtkMenuItem *menuitem, gpointer entry_widget);
+void on_save_subs_activate (GtkMenuItem *, gpointer entry_widget);
 
-void on_erase_subs_activate (GtkMenuItem *menuitem, gpointer user_data);
+void on_erase_subs_activate (GtkMenuItem *, gpointer);
 
 
 void 
@@ -349,14 +349,12 @@ void
 on_spin_end_value_changed           (GtkSpinButton   *spinbutton,
 				       gpointer         user_data);
 
-gint
-expose_vid_event (GtkWidget *widget, GdkEventExpose *event);
 
-gint
-expose_laud_event (GtkWidget *widget, GdkEventExpose *event);
+boolean expose_vid_event (GtkWidget *, GdkEventExpose *);
 
-gint
-expose_raud_event (GtkWidget *widget, GdkEventExpose *event);
+boolean expose_laud_event (GtkWidget *, GdkEventExpose *);
+
+boolean expose_raud_event (GtkWidget *, GdkEventExpose *);
 
 
 
@@ -368,7 +366,7 @@ void
 on_recent_activate                      (GtkMenuItem     *menuitem,
 					 gpointer         user_data);
 
-gboolean config_event (GtkWidget *widget, GdkEventConfigure *event, gpointer user_data);
+boolean config_event (GtkWidget *, GdkEventConfigure *, gpointer);
 
 void
 changed_fps_during_pb           (GtkSpinButton   *spinbutton,
@@ -459,13 +457,13 @@ void
 on_record_perf_activate                      (GtkMenuItem     *menuitem,
 					      gpointer         user_data);
 
-gboolean record_toggle_callback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer user_data);
+gboolean record_toggle_callback (GtkAccelGroup *, GObject *, guint keyval, GdkModifierType mod, gpointer);
 
 
-gboolean fps_reset_callback (GtkAccelGroup *, GObject *, guint, GdkModifierType, gpointer user_data);
+gboolean fps_reset_callback (GtkAccelGroup *, GObject *, guint keyval, GdkModifierType mod, gpointer);
 
 
-gboolean mute_audio_callback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer);
+gboolean mute_audio_callback (GtkAccelGroup *, GObject *, guint keyval, GdkModifierType mod, gpointer);
 
 
 
@@ -532,20 +530,16 @@ void
 on_recaudclip_ok_clicked                      (GtkButton *button,
 					       gpointer user_data);
 #if GTK_CHECK_VERSION(2,14,0)
-void
-on_volume_slider_value_changed           (GtkScaleButton   *sbutton,
-					  gpointer user_data);
+void on_volume_slider_value_changed (GtkScaleButton *, gpointer);
 #else
-void
-on_volume_slider_value_changed           (GtkRange   *slider,
-					  gpointer user_data);
+void on_volume_slider_value_changed (GtkRange *, gpointer);
 #endif
 
 void
 on_fade_audio_activate (GtkMenuItem     *menuitem,
 			  gpointer         user_data);
 
-void on_ok_append_audio_clicked (GtkFileChooser *chooser, gpointer user_data);
+void on_ok_append_audio_clicked (GtkFileChooser *, gpointer);
 
 void
 on_resample_video_activate (GtkMenuItem     *menuitem,
@@ -585,8 +579,7 @@ void
 on_sticky_activate               (GtkMenuItem     *menuitem,
 				  gpointer         user_data);
 
-void 
-on_resaudw_asamps_changed (GtkWidget *irrelevant, gpointer rubbish);
+void on_resaudw_asamps_changed (GtkWidget *, gpointer);
 
 
 void 
@@ -606,8 +599,7 @@ void
 on_show_messages_activate            (GtkMenuItem     *menuitem,
 				      gpointer         user_data);
 
-gboolean
-on_hrule_enter (GtkWidget *widget, GdkEventCrossing *event, gpointer user_data);
+gboolean on_hrule_enter (GtkWidget *, GdkEventCrossing *, gpointer);
 
 gboolean
 on_hrule_update           (GtkWidget       *widget,
@@ -650,23 +642,23 @@ void
 on_preview_spinbutton_changed          (GtkSpinButton   *spinbutton,
 					  gpointer         user_data);
 
-gboolean prevclip_callback (GtkAccelGroup *, GObject *, guint, GdkModifierType, gpointer user_data);
+gboolean prevclip_callback (GtkAccelGroup *, GObject *, guint, GdkModifierType, gpointer );
 
-gboolean nextclip_callback (GtkAccelGroup *, GObject *, guint, GdkModifierType, gpointer user_data);
+gboolean nextclip_callback (GtkAccelGroup *, GObject *, guint, GdkModifierType, gpointer );
 
-gboolean freeze_callback (GtkAccelGroup *, GObject *, guint, GdkModifierType, gpointer user_data);
+gboolean freeze_callback (GtkAccelGroup *, GObject *, guint, GdkModifierType, gpointer );
 
-gboolean storeclip_callback (GtkAccelGroup *, GObject *, guint, GdkModifierType, gpointer user_data);
+gboolean storeclip_callback (GtkAccelGroup *, GObject *, guint, GdkModifierType, gpointer );
 
-gboolean nervous_callback (GtkAccelGroup *, GObject *, guint, GdkModifierType, gpointer user_data);
+gboolean nervous_callback (GtkAccelGroup *, GObject *, guint, GdkModifierType, gpointer );
 
 gboolean show_sync_callback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer clip_number);
 
-void on_save_set_activate (GtkMenuItem *, gpointer user_data);
+void on_save_set_activate (GtkMenuItem *, gpointer );
 
 void on_save_set_ok (void);
 
-void on_load_set_activate (GtkMenuItem *, gpointer user_data);
+void on_load_set_activate (GtkMenuItem *, gpointer );
 
 gboolean on_load_set_ok (GtkButton *, gpointer skip_threaded_dialog);
 
@@ -695,8 +687,7 @@ void
 on_vj_reset_activate            (GtkMenuItem     *menuitem,
 				 gpointer         user_data);
 
-gint
-expose_play_window (GtkWidget *widget, GdkEventExpose *event);
+boolean expose_play_window (GtkWidget *, GdkEventExpose *);
 
 void
 on_prv_link_toggled                (GtkToggleButton *togglebutton,
@@ -709,14 +700,14 @@ void
 on_ins_silence_activate (GtkMenuItem     *menuitem,
 			 gpointer         user_data);
 
-void on_ins_silence_details_clicked (GtkButton *, gpointer user_data);
+void on_ins_silence_details_clicked (GtkButton *, gpointer);
 
 void on_lerrors_close_clicked (GtkButton *, gpointer);
 void on_lerrors_clear_clicked (GtkButton *, gpointer);
 void on_lerrors_delete_clicked (GtkButton *, gpointer);
 
-void drag_from_outside(GtkWidget *widget, GdkDragContext *dcon, gint x, gint y, 
-		       GtkSelectionData *data, guint info, guint time, gpointer user_data);
+void drag_from_outside(GtkWidget *, GdkDragContext *, gint x, gint y, 
+		       GtkSelectionData *, guint info, guint time, gpointer user_data);
 
 
 

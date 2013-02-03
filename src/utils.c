@@ -2292,6 +2292,19 @@ void get_play_times(void) {
 
   
   if (mainw->laudio_drawable!=NULL) {
+#if GTK_CHECK_VERSION(3,0,0)
+    GdkRGBA color;
+    cairo_t *cr=cairo_create(mainw->laudio_drawable);
+    gtk_style_context_get_bg_color (gtk_widget_get_style_context (mainw->laudio_draw),GTK_WIDGET_STATE (widget),&color);
+    gdk_cairo_set_source_rgba (cr, &color);
+
+    cairo_rectangle(cr,0,0,
+		    allocwidth,
+		    allocheight));
+    cairo_fill(cr);
+    cairo_destroy (cr);
+
+#else
     gdk_draw_rectangle (mainw->laudio_drawable,
 			mainw->laudio_draw->style->bg_gc[GTK_WIDGET_STATE (mainw->laudio_draw)],
 			TRUE,
@@ -2299,10 +2312,24 @@ void get_play_times(void) {
 			allocwidth,
 			allocheight
 			);
+#endif
   }
   
   
   if (mainw->raudio_drawable!=NULL) {
+#if GTK_CHECK_VERSION(3,0,0)
+    GdkRGBA color;
+    cairo_t *cr=cairo_create(mainw->raudio_drawable);
+    gtk_style_context_get_bg_color (gtk_widget_get_style_context (mainw->raudio_draw),GTK_WIDGET_STATE (widget),&color);
+    gdk_cairo_set_source_rgba (cr, &color);
+
+    cairo_rectangle(cr,0,0,
+		    allocwidth,
+		    allocheight));
+    cairo_fill(cr);
+    cairo_destroy (cr);
+
+#else
     gdk_draw_rectangle (mainw->raudio_drawable,
 			mainw->raudio_draw->style->bg_gc[GTK_WIDGET_STATE (mainw->raudio_draw)],
 			TRUE,
@@ -2310,9 +2337,23 @@ void get_play_times(void) {
 			allocwidth,
 			allocheight
 			);
+#endif
   }
 
   if (mainw->video_drawable!=NULL) {
+#if GTK_CHECK_VERSION(3,0,0)
+    GdkRGBA color;
+    cairo_t *cr=cairo_create(mainw->video_drawable);
+    gtk_style_context_get_bg_color (gtk_widget_get_style_context (mainw->video_draw),GTK_WIDGET_STATE (widget),&color);
+    gdk_cairo_set_source_rgba (cr, &color);
+
+    cairo_rectangle(cr,0,0,
+		    allocwidth,
+		    allocheight));
+    cairo_fill(cr);
+    cairo_destroy (cr);
+
+#else
     gdk_draw_rectangle (mainw->video_drawable,
 			mainw->video_draw->style->bg_gc[GTK_WIDGET_STATE (mainw->video_draw)],
 			TRUE,
@@ -2320,6 +2361,7 @@ void get_play_times(void) {
 			allocwidth,
 			allocheight
 			);
+#endif
   }
 
   if (cfile->frames>0) {
@@ -2328,6 +2370,28 @@ void get_play_times(void) {
 
     
     if (mainw->video_drawable!=NULL) {
+#if GTK_CHECK_VERSION(3,0,0)
+      cairo_t *cr=cairo_create(mainw->video_drawable);
+      
+      cairo_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
+      
+      cairo_rectangle(cr,0,0,
+		      cfile->video_time/cfile->total_time*allocwidth-1,
+		      prefs->bar_height);
+      
+      cairo_fill(cr);
+      
+      cairo_set_source_rgb(cr, 1., 1., 1.); ///< opaque white
+      
+      cairo_rectangle(cr,offset_left, 0,
+		      offset_right-offset_left,
+		      prefs->bar_height);
+      
+      cairo_fill(cr);
+      
+      cairo_destroy (cr);
+
+#else
       gdk_draw_rectangle (mainw->video_drawable,
 			  mainw->video_draw->style->black_gc,
 			  TRUE,
@@ -2341,6 +2405,7 @@ void get_play_times(void) {
 			  offset_left, 0,
 			  offset_right-offset_left,
 			  prefs->bar_height);
+#endif
     }
   }
   if (cfile->achans>0) {
@@ -2358,6 +2423,38 @@ void get_play_times(void) {
     
     
     if (mainw->laudio_drawable!=NULL) {
+#if GTK_CHECK_VERSION(3,0,0)
+      GdkRGBA color;
+      cairo_t *cr=cairo_create(mainw->laudio_drawable);
+      
+      cairo_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
+      
+      cairo_rectangle(cr,0,0,
+		      cfile->laudio_time/cfile->total_time*allocwidth-1,
+		      prefs->bar_height);
+      
+      cairo_fill(cr);
+      
+      cairo_set_source_rgb(cr, 1., 1., 1.); ///< opaque white
+      
+      cairo_rectangle(cr,offset_left, 0,
+		      offset_right-offset_left,
+		      prefs->bar_height);
+      
+      cairo_fill(cr);
+      
+      gtk_style_context_get_bg_color (gtk_widget_get_style_context (mainw->laudio_draw),
+				      GTK_WIDGET_STATE (mainw->laudio_draw),&color);
+      gdk_cairo_set_source_rgba (cr, &color);
+      
+      cairo_rectangle(cr,cfile->laudio_time/cfile->total_time*allocwidth, 0,
+		      allocwidth-(cfile->laudio_time/cfile->total_time*allocwidth),
+		      prefs->bar_height);
+      
+      cairo_destroy (cr);
+
+#else
+
       gdk_draw_rectangle (mainw->laudio_drawable,
 			  mainw->laudio_draw->style->black_gc,
 			  TRUE,
@@ -2380,9 +2477,41 @@ void get_play_times(void) {
 			  cfile->laudio_time/cfile->total_time*allocwidth, 0,
 			  allocwidth-(cfile->laudio_time/cfile->total_time*allocwidth),
 			  prefs->bar_height);
+#endif
     }
     if (cfile->achans>1) {
       if (mainw->raudio_drawable!=NULL) {
+#if GTK_CHECK_VERSION(3,0,0)
+	GdkRGBA color;
+	cairo_t *cr=cairo_create(mainw->raudio_drawable);
+      
+	cairo_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
+	
+	cairo_rectangle(cr,0,0,
+			cfile->raudio_time/cfile->total_time*allocwidth-1,
+			prefs->bar_height);
+	
+	cairo_fill(cr);
+	
+	cairo_set_source_rgb(cr, 1., 1., 1.); ///< opaque white
+	
+	cairo_rectangle(cr,offset_left, 0,
+			offset_right-offset_left,
+			prefs->bar_height);
+      
+	cairo_fill(cr);
+      
+	gtk_style_context_get_bg_color (gtk_widget_get_style_context (mainw->raudio_draw),
+					GTK_WIDGET_STATE (mainw->raudio_draw),&color);
+	gdk_cairo_set_source_rgba (cr, &color);
+      
+	cairo_rectangle(cr,cfile->raudio_time/cfile->total_time*allocwidth, 0,
+		      allocwidth-(cfile->raudio_time/cfile->total_time*allocwidth),
+			prefs->bar_height);
+      
+	cairo_destroy (cr);
+
+#else
 	gdk_draw_rectangle (mainw->raudio_drawable,
 			    mainw->raudio_draw->style->black_gc,
 			    TRUE,
@@ -2404,6 +2533,7 @@ void get_play_times(void) {
 			    cfile->raudio_time/cfile->total_time*allocwidth, 0,
 			    allocwidth-(cfile->raudio_time/cfile->total_time*allocwidth),
 			    prefs->bar_height);
+#endif
       }
     }
   }
@@ -2414,6 +2544,36 @@ void get_play_times(void) {
       offset=(mainw->actual_frame-.5)/cfile->fps;
       offset/=cfile->total_time/allocwidth;
       if (mainw->video_drawable!=NULL) {
+#if GTK_CHECK_VERSION(3,0,0)
+	GdkRGBA color;
+	cairo_t *cr=cairo_create(mainw->video_drawable);
+
+	cairo_set_line_width(cr,1.);
+      
+	if (offset>=offset_left&&offset<=offset_right) {
+	  cairo_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
+	  cairo_move_to(cr, offset, 0);
+	  cairo_line_to(cr, offset, prefs->bar_height);
+	}
+	else {
+	  cairo_set_source_rgb(cr, 1., 1., 1.); ///< opaque white
+	  cairo_move_to(cr, offset, 0);
+	  cairo_line_to(cr, offset, prefs->bar_height);
+	}
+
+	if (palette->style&STYLE_3||palette->style==STYLE_PLAIN) { // light style
+	  cairo_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
+	  cairo_move_to(cr, offset, prefs->bar_height);
+	  cairo_line_to(cr, offset, allocheight-prefs->bar_height);
+	}
+	else {
+	  cairo_set_source_rgb(cr, 1., 1., 1.); ///< opaque white
+	  cairo_move_to(cr, offset, prefs->bar_height);
+	  cairo_line_to(cr, offset, allocheight-prefs->bar_height);
+	}
+
+	cairo_destroy(cr);
+#else
 	if (offset>=offset_left&&offset<=offset_right) {
 	  gdk_draw_line (mainw->video_drawable,
 			 mainw->video_draw->style->black_gc,
@@ -2443,6 +2603,7 @@ void get_play_times(void) {
 			 offset,
 			 allocheight-prefs->bar_height);
 	}
+#endif
       }
       lives_ruler_set_value(LIVES_RULER (mainw->hruler),offset*cfile->total_time/allocwidth);
       gtk_widget_queue_draw (mainw->hruler);
@@ -2465,6 +2626,37 @@ void get_play_times(void) {
       }
       else offset=allocwidth*(mainw->aframeno-.5)/cfile->fps/cfile->total_time;
       if (mainw->laudio_drawable!=NULL) {
+
+#if GTK_CHECK_VERSION(3,0,0)
+	GdkRGBA color;
+	cairo_t *cr=cairo_create(mainw->laudio_drawable);
+
+	cairo_set_line_width(cr,1.);
+      
+	if (offset>=offset_left&&offset<=offset_right) {
+	  cairo_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
+	  cairo_move_to(cr, offset, 0);
+	  cairo_line_to(cr, offset, prefs->bar_height);
+	}
+	else {
+	  cairo_set_source_rgb(cr, 1., 1., 1.); ///< opaque white
+	  cairo_move_to(cr, offset, 0);
+	  cairo_line_to(cr, offset, prefs->bar_height);
+	}
+
+	if (palette->style&STYLE_3||palette->style==STYLE_PLAIN) { // light style
+	  cairo_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
+	  cairo_move_to(cr, offset, prefs->bar_height);
+	  cairo_line_to(cr, offset, allocheight-prefs->bar_height);
+	}
+	else {
+	  cairo_set_source_rgb(cr, 1., 1., 1.); ///< opaque white
+	  cairo_move_to(cr, offset, prefs->bar_height);
+	  cairo_line_to(cr, offset, allocheight-prefs->bar_height);
+	}
+
+	cairo_destroy(cr);
+#else
 	if ((offset>=offset_left&&offset<=offset_right)||mainw->loop) {
 	  gdk_draw_line (mainw->laudio_drawable,
 			 mainw->laudio_draw->style->black_gc,
@@ -2494,10 +2686,42 @@ void get_play_times(void) {
 			 offset,
 			 allocheight-prefs->bar_height);
 	}
+#endif
       }
 
       if (cfile->achans>1) {
 	if (mainw->raudio_drawable!=NULL) {
+
+#if GTK_CHECK_VERSION(3,0,0)
+	  GdkRGBA color;
+	  cairo_t *cr=cairo_create(mainw->raudio_drawable);
+	  
+	  cairo_set_line_width(cr,1.);
+	  
+	  if (offset>=offset_left&&offset<=offset_right) {
+	    cairo_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
+	    cairo_move_to(cr, offset, 0);
+	    cairo_line_to(cr, offset, prefs->bar_height);
+	  }
+	  else {
+	    cairo_set_source_rgb(cr, 1., 1., 1.); ///< opaque white
+	    cairo_move_to(cr, offset, 0);
+	    cairo_line_to(cr, offset, prefs->bar_height);
+	  }
+	  
+	  if (palette->style&STYLE_3||palette->style==STYLE_PLAIN) { // light style
+	    cairo_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
+	    cairo_move_to(cr, offset, prefs->bar_height);
+	    cairo_line_to(cr, offset, allocheight-prefs->bar_height);
+	  }
+	  else {
+	    cairo_set_source_rgb(cr, 1., 1., 1.); ///< opaque white
+	    cairo_move_to(cr, offset, prefs->bar_height);
+	    cairo_line_to(cr, offset, allocheight-prefs->bar_height);
+	  }
+	  
+	  cairo_destroy(cr);
+#else
 	  if ((offset>=offset_left&&offset<=offset_right)||mainw->loop) {
 	    gdk_draw_line (mainw->raudio_drawable,
 			   mainw->raudio_draw->style->black_gc,
@@ -2528,6 +2752,8 @@ void get_play_times(void) {
 			   offset,
 			   allocheight-prefs->bar_height);
 	  }
+#endif
+
 	}
       }
     }
@@ -2653,6 +2879,36 @@ void draw_little_bars (gdouble ptrtime) {
 
   if (cfile->frames>0) {
     if (mainw->video_drawable!=NULL) {
+#if GTK_CHECK_VERSION(3,0,0)
+	GdkRGBA color;
+	cairo_t *cr=cairo_create(mainw->video_drawable);
+
+	cairo_set_line_width(cr,1.);
+      
+	if (offset>=offset_left&&offset<=offset_right) {
+	  cairo_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
+	  cairo_move_to(cr, offset, 0);
+	  cairo_line_to(cr, offset, prefs->bar_height);
+	}
+	else {
+	  cairo_set_source_rgb(cr, 1., 1., 1.); ///< opaque white
+	  cairo_move_to(cr, offset, 0);
+	  cairo_line_to(cr, offset, prefs->bar_height);
+	}
+
+	if (palette->style&STYLE_3||palette->style==STYLE_PLAIN) { // light style
+	  cairo_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
+	  cairo_move_to(cr, offset, prefs->bar_height);
+	  cairo_line_to(cr, offset, allocheight-prefs->bar_height);
+	}
+	else {
+	  cairo_set_source_rgb(cr, 1., 1., 1.); ///< opaque white
+	  cairo_move_to(cr, offset, prefs->bar_height);
+	  cairo_line_to(cr, offset, allocheight-prefs->bar_height);
+	}
+
+	cairo_destroy(cr);
+#else
       if (frame>=cfile->start&&frame<=cfile->end) {
 	gdk_draw_line (mainw->video_drawable,
 		       mainw->video_draw->style->black_gc,
@@ -2682,6 +2938,8 @@ void draw_little_bars (gdouble ptrtime) {
 		       offset,
 		       allocheight);
       }
+#endif
+
     }
   }
 
@@ -2689,6 +2947,36 @@ void draw_little_bars (gdouble ptrtime) {
 
   if (cfile->achans>0) {
     if (mainw->laudio_drawable!=NULL) {
+#if GTK_CHECK_VERSION(3,0,0)
+	GdkRGBA color;
+	cairo_t *cr=cairo_create(mainw->laudio_drawable);
+
+	cairo_set_line_width(cr,1.);
+      
+	if (offset>=offset_left&&offset<=offset_right) {
+	  cairo_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
+	  cairo_move_to(cr, offset, 0);
+	  cairo_line_to(cr, offset, prefs->bar_height);
+	}
+	else {
+	  cairo_set_source_rgb(cr, 1., 1., 1.); ///< opaque white
+	  cairo_move_to(cr, offset, 0);
+	  cairo_line_to(cr, offset, prefs->bar_height);
+	}
+
+	if (palette->style&STYLE_3||palette->style==STYLE_PLAIN) { // light style
+	  cairo_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
+	  cairo_move_to(cr, offset, prefs->bar_height);
+	  cairo_line_to(cr, offset, allocheight-prefs->bar_height);
+	}
+	else {
+	  cairo_set_source_rgb(cr, 1., 1., 1.); ///< opaque white
+	  cairo_move_to(cr, offset, prefs->bar_height);
+	  cairo_line_to(cr, offset, allocheight-prefs->bar_height);
+	}
+
+	cairo_destroy(cr);
+#else
       if ((frame>=cfile->start&&frame<=cfile->end)||mainw->loop) {
 	gdk_draw_line (mainw->laudio_drawable,
 		       mainw->laudio_draw->style->black_gc,
@@ -2718,10 +3006,42 @@ void draw_little_bars (gdouble ptrtime) {
 		       offset,
 		       allocheight);
       }
+#endif
     }
     if (cfile->achans>1) {
       if (mainw->raudio_drawable!=NULL) {
 	if ((frame>=cfile->start&&frame<=cfile->end)||mainw->loop) {
+
+#if GTK_CHECK_VERSION(3,0,0)
+	GdkRGBA color;
+	cairo_t *cr=cairo_create(mainw->raudio_drawable);
+
+	cairo_set_line_width(cr,1.);
+      
+	if (offset>=offset_left&&offset<=offset_right) {
+	  cairo_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
+	  cairo_move_to(cr, offset, 0);
+	  cairo_line_to(cr, offset, prefs->bar_height);
+	}
+	else {
+	  cairo_set_source_rgb(cr, 1., 1., 1.); ///< opaque white
+	  cairo_move_to(cr, offset, 0);
+	  cairo_line_to(cr, offset, prefs->bar_height);
+	}
+
+	if (palette->style&STYLE_3||palette->style==STYLE_PLAIN) { // light style
+	  cairo_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
+	  cairo_move_to(cr, offset, prefs->bar_height);
+	  cairo_line_to(cr, offset, allocheight-prefs->bar_height);
+	}
+	else {
+	  cairo_set_source_rgb(cr, 1., 1., 1.); ///< opaque white
+	  cairo_move_to(cr, offset, prefs->bar_height);
+	  cairo_line_to(cr, offset, allocheight-prefs->bar_height);
+	}
+
+	cairo_destroy(cr);
+#else
 	  gdk_draw_line (mainw->raudio_drawable,
 			 mainw->raudio_draw->style->black_gc,
 			 offset, 0,
@@ -2751,6 +3071,8 @@ void draw_little_bars (gdouble ptrtime) {
 			 offset,
 			 allocheight);
 	}
+#endif
+
       }
     }
   }

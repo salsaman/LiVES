@@ -3388,6 +3388,9 @@ void create_cfile(void) {
   g_snprintf(cfile->info_file,PATH_MAX,"%s",stfile);
   g_free(stfile);
   
+  cfile->laudio_drawable=NULL;
+  cfile->raudio_drawable=NULL;
+
   // remember to set cfile->is_loaded=TRUE !!!!!!!!!!
 }
 

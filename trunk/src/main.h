@@ -956,22 +956,22 @@ void close_scrap_file (void);
 
 // main.c
 void catch_sigint(int signum);
-gboolean startup_message_fatal(const gchar *msg);
-gboolean startup_message_nonfatal(const gchar *msg);
-gboolean startup_message_nonfatal_dismissable(const gchar *msg, gint warning_mask);
+boolean startup_message_fatal(const gchar *msg);
+boolean startup_message_nonfatal(const gchar *msg);
+boolean startup_message_nonfatal_dismissable(const gchar *msg, gint warning_mask);
 capability *get_capabilities(void);
 void get_monitors(void);
 void load_start_image(gint frame);
 void load_end_image(gint frame);
-void load_preview_image(gboolean update_always);
+void load_preview_image(boolean update_always);
 
-gboolean pull_frame(weed_plant_t *layer, const gchar *image_ext, weed_timecode_t tc);
-gboolean pull_frame_at_size (weed_plant_t *layer, const gchar *image_ext, weed_timecode_t tc, 
+boolean pull_frame(weed_plant_t *layer, const gchar *image_ext, weed_timecode_t tc);
+boolean pull_frame_at_size (weed_plant_t *layer, const gchar *image_ext, weed_timecode_t tc, 
 			     int width, int height, int target_palette);
 LiVESPixbuf *pull_lives_pixbuf_at_size(int clip, int frame, const char *image_ext, weed_timecode_t tc, 
 				       int width, int height, LiVESInterpType interp);
 GError * lives_pixbuf_save(GdkPixbuf *pixbuf, gchar *fname, lives_image_type_t imgtype, 
-			   int quality, gboolean do_chmod, GError **gerrorptr);
+			   int quality, boolean do_chmod, GError **gerrorptr);
 
 void load_frame_image(gint frame);
 void sensitize(void);

@@ -3482,6 +3482,9 @@ prepare_to_play_foreign(void) {
 #else
 #ifdef USE_X11
   vissi=gdk_visual_get_best_with_depth (mainw->foreign_bpp);
+
+  // TODO : try
+  //mainw->foreign_cmap=gdk_colormap_get_system_for_screen (gdk_window_get_screen(mainw->foreign_window));
   mainw->foreign_cmap=gdk_x11_colormap_foreign_new(vissi, 
 						   gdk_x11_colormap_get_xcolormap(gdk_colormap_new(vissi,TRUE)));
 

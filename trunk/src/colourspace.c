@@ -10821,21 +10821,16 @@ boolean pixbuf_to_layer(weed_plant_t *layer, LiVESPixbuf *pixbuf) {
 #ifdef GUI_GTK
 
 
-LIVES_INLINE int get_weed_palette_for_cairo(void) {
+LIVES_INLINE int get_weed_palette_for_lives_painter(void) {
   // TODO - should move to weed-compat.h
   return (capable->byte_order==LIVES_BIG_ENDIAN)?WEED_PALETTE_ARGB32:WEED_PALETTE_BGRA32;
 }
 
-static void pdfree(void *data) {
-  weed_free(data);
-}
 
-static cairo_user_data_key_t crkey;
-
-cairo_t *layer_to_cairo(weed_plant_t *layer) {
-  // convert a weed layer to cairo
-  // the layer shares pixel_data with cairo
-  // so it should be copied before the cairo is destroyed
+lives_painter_t *layer_to_lives_painter(weed_plant_t *layer) {
+  // convert a weed layer to lives_painter
+  // the layer shares pixel_data with lives_painter
+  // so it should be copied before the lives_painter is destroyed
 
   // "width","rowstrides" and "current_palette" of layer may all change
 
@@ -10848,20 +10843,20 @@ cairo_t *layer_to_cairo(weed_plant_t *layer) {
 
   guchar *src,*dst,*orig_pixel_data,*pixel_data;
 
-  cairo_surface_t *surf;
-  cairo_t *cairo;
-  cairo_format_t cform;
+  lives_painter_surface_t *surf;
+  lives_painter_t *cairo;
+  lives_painter_format_t cform;
 
 
   width=weed_get_int_value(layer,"width",&error);
 
   pal=weed_get_int_value(layer,"current_palette",&error);
   if (pal==WEED_PALETTE_A8) {
-    cform=CAIRO_FORMAT_A8;
+    cform=LIVES_PAINTER_FORMAT_A8;
     widthx=width;
   }
   else if (pal==WEED_PALETTE_A1) {
-    cform=CAIRO_FORMAT_A1;
+    cform=LIVES_PAINTER_FORMAT_A1;
     widthx=width>>3;
   }
   else {
@@ -10871,7 +10866,7 @@ cairo_t *layer_to_cairo(weed_plant_t *layer) {
     else {
       convert_layer_palette(layer,WEED_PALETTE_BGRA32,0);
     }
-    cform=CAIRO_FORMAT_ARGB32;
+    cform=LIVES_PAINTER_FORMAT_ARGB32;
     widthx=width<<2;
   }
 
@@ -10879,7 +10874,7 @@ cairo_t *layer_to_cairo(weed_plant_t *layer) {
 
   irowstride=weed_get_int_value(layer,"rowstrides",&error);
 
-  orowstride=cairo_format_stride_for_width(cform,width);
+  orowstride=lives_painter_format_stride_for_width(cform,width);
 
   orig_pixel_data=src=(guchar *)weed_get_voidptr_value(layer,"pixel_data",&error);
 
@@ -10900,7 +10895,7 @@ cairo_t *layer_to_cairo(weed_plant_t *layer) {
     weed_set_int_value(layer,"rowstrides",orowstride);
   }
 
-  if (cform==CAIRO_FORMAT_ARGB32 && weed_palette_has_alpha_channel(pal)) {
+  if (cform==LIVES_PAINTER_FORMAT_ARGB32 && weed_palette_has_alpha_channel(pal)) {
     int flags=0;
     if (weed_plant_has_leaf(layer,"flags")) flags=weed_get_int_value(layer,"flags",&error);
     if (!(flags&WEED_CHANNEL_ALPHA_PREMULT)) {
@@ -10911,41 +10906,42 @@ cairo_t *layer_to_cairo(weed_plant_t *layer) {
     }
   }
 
-  surf=cairo_image_surface_create_for_data(pixel_data,
+  surf=lives_painter_image_surface_create_for_data(pixel_data,
 					   cform, 
 					   width, height,
 					   orowstride);
 
-  cairo=cairo_create(surf);
-  cairo_surface_destroy(surf);
+  if (surf==NULL) return NULL;
 
-  if (pixel_data!=src) {
-    cairo_set_user_data(cairo, &crkey, pixel_data, pdfree);
-  }
+  cairo=lives_painter_create(surf);
+  lives_painter_surface_destroy(surf);
 
   return cairo;
 }
 
 
 
-boolean cairo_to_layer(cairo_t *cairo, weed_plant_t *layer) {
-  // updates a weed_layer from a cairo_t
+boolean lives_painter_to_layer(lives_painter_t *lives_painter, weed_plant_t *layer) {
+  // updates a weed_layer from a lives_painter_t
   // unlike doing this the other way around
-  // the cairo is not destroyed (data is copied)
+  // the lives_painter is not destroyed (data is copied)
+
+  // TODO *** - keep the surface around using lives_painter_surface_reference() and destroy it when the "pixel_data" is freed or changed
+
   void *pixel_data,*src;
 
   int width,height,rowstride;
 
-  cairo_surface_t *surface=cairo_get_target(cairo);
-  cairo_format_t  cform;
+  lives_painter_surface_t *surface=lives_painter_get_target(lives_painter);
+  lives_painter_format_t  cform;
 
   // flush to ensure all writing to the image was done
-  cairo_surface_flush (surface);
+  lives_painter_surface_flush (surface);
 
-  src = cairo_image_surface_get_data (surface);
-  width = cairo_image_surface_get_width (surface);
-  height = cairo_image_surface_get_height (surface);
-  rowstride = cairo_image_surface_get_stride (surface);
+  src = lives_painter_image_surface_get_data (surface);
+  width = lives_painter_image_surface_get_width (surface);
+  height = lives_painter_image_surface_get_height (surface);
+  rowstride = lives_painter_image_surface_get_stride (surface);
 
   pixel_data=g_try_malloc(CEIL(height*rowstride,32));
 
@@ -10959,10 +10955,10 @@ boolean cairo_to_layer(cairo_t *cairo, weed_plant_t *layer) {
   weed_set_int_value(layer,"width",width);
   weed_set_int_value(layer,"height",height);
 
-  cform = cairo_image_surface_get_format (surface);
+  cform = lives_painter_image_surface_get_format (surface);
 
   switch (cform) {
-  case CAIRO_FORMAT_ARGB32:
+  case LIVES_PAINTER_FORMAT_ARGB32:
     if (capable->byte_order==LIVES_BIG_ENDIAN) {
       weed_set_int_value(layer,"current_palette",WEED_PALETTE_ARGB32);
     }
@@ -10984,11 +10980,11 @@ boolean cairo_to_layer(cairo_t *cairo, weed_plant_t *layer) {
     }
     break;
 
-  case CAIRO_FORMAT_A8:
+  case LIVES_PAINTER_FORMAT_A8:
     weed_set_int_value(layer,"current_palette",WEED_PALETTE_A8);
     break;
 
-  case CAIRO_FORMAT_A1:
+  case LIVES_PAINTER_FORMAT_A1:
     weed_set_int_value(layer,"current_palette",WEED_PALETTE_A1);
     break;
 

@@ -20,6 +20,35 @@ typedef enum {
 #define W_PACKING_WIDTH 10 // packing width for widgets with labels
 #define W_BORDER_WIDTH 20 // dialog border width
 
+#ifdef PAINTER_CAIRO
+typedef cairo_t lives_painter_t;
+typedef cairo_surface_t lives_painter_surface_t;
+
+typedef cairo_format_t lives_painter_format_t;
+
+#define LIVES_PAINTER_FORMAT_A1   CAIRO_FORMAT_A1
+#define LIVES_PAINTER_FORMAT_A8   CAIRO_FORMAT_A8
+#define LIVES_PAINTER_FORMAT_ARGB32 CAIRO_FORMAT_ARGB32
+
+
+typedef cairo_content_t lives_painter_content_t; // eg. color, alpha, color+alpha
+
+#define LIVES_PAINTER_CONTENT_COLOR CAIRO_CONTENT_COLOR
+
+
+typedef cairo_operator_t lives_painter_operator_t;
+
+#define LIVES_PAINTER_OPERATOR_DEST_OUT CAIRO_OPERATOR_DEST_OUT
+
+
+typedef cairo_fill_rule_t lives_painter_fill_rule_t;
+
+#define LIVES_PAINTER_FILL_RULE_WINDING  CAIRO_FILL_RULE_WINDING 
+#define LIVES_PAINTER_FILL_RULE_EVEN_ODD CAIRO_FILL_RULE_EVEN_ODD 
+
+
+#endif
+
 
 #ifdef GUI_GTK
 
@@ -86,6 +115,7 @@ typedef gpointer                          LiVESObjectPtr;
 #define LIVES_BOX(widget) GTK_BOX(widget)
 #define LIVES_CONTAINER(widget) GTK_CONTAINER(widget)
 #define LIVES_BIN(widget) GTK_BIN(widget)
+#define LIVES_ADJUSTMENT(widget) GTK_ADJUSTMENT(widget)
 #define LIVES_DIALOG(widget) GTK_DIALOG(widget)
 #define LIVES_COMBO(widget) GTK_COMBO_BOX(widget)
 #define LIVES_COMBO_BOX(widget) GTK_COMBO_BOX(widget)
@@ -247,9 +277,66 @@ typedef (void *)(LiVESPixbufDestroyNotify(uchar *, gpointer));
 
 // basic functions (wrappers for Toolkit functions)
 
+// lives_painter_functions
+
+lives_painter_t *lives_painter_create(lives_painter_surface_t *target);
+lives_painter_t *lives_painter_create_from_widget(LiVESWidget *);
+void lives_painter_set_source_pixbuf (lives_painter_t *, const LiVESPixbuf *, double pixbuf_x, double pixbuf_y);
+
+lives_painter_surface_t *lives_painter_surface_create_similar (lives_painter_surface_t *, 
+							       lives_painter_content_t, int width, int height);
+lives_painter_surface_t *lives_painter_image_surface_create_for_data(uint8_t *data, lives_painter_format_t, 
+								     int width, int height, int stride);
+
+void lives_painter_surface_flush(lives_painter_surface_t *);
+
+void lives_painter_destroy(lives_painter_t *);
+void lives_painter_surface_destroy(lives_painter_surface_t *);
+
+void lives_painter_new_path(lives_painter_t *);
+
+void lives_painter_paint(lives_painter_t *);
+void lives_painter_fill(lives_painter_t *);
+void lives_painter_stroke(lives_painter_t *);
+void lives_painter_clip(lives_painter_t *);
+
+void lives_painter_set_source_rgb(lives_painter_t *, double red, double green, double blue);
+void lives_painter_set_source_rgba(lives_painter_t *, double red, double green, double blue, double alpha);
+
+void lives_painter_set_line_width(lives_painter_t *, double width);
+
+void lives_painter_rectangle(lives_painter_t *, double x, double y, double width, double height);
+void lives_painter_line_to(lives_painter_t *, double x, double y);
+void lives_painter_move_to(lives_painter_t *, double x, double y);
+
+void lives_painter_set_operator(lives_painter_t *, lives_painter_operator_t);
+
+void lives_painter_set_fill_rule(lives_painter_t *, lives_painter_fill_rule_t);
+
+
+lives_painter_surface_t *lives_painter_get_target(lives_painter_t *);
+int lives_painter_format_stride_for_width(lives_painter_format_t, int width);
+
+uint8_t *lives_painter_image_surface_get_data(lives_painter_surface_t *);
+int lives_painter_image_surface_get_width(lives_painter_surface_t *);
+int lives_painter_image_surface_get_height(lives_painter_surface_t *);
+int lives_painter_image_surface_get_stride(lives_painter_surface_t *);
+lives_painter_format_t lives_painter_image_surface_get_format(lives_painter_surface_t *);
+
+
+
+
+// utils
+
 boolean return_true (LiVESWidget *, LiVESEvent *, LiVESObjectPtr);
 
+
+// object funcs.
+
 void lives_object_unref(LiVESObjectPtr);
+
+
+// lives_pixbuf functions
 
 int lives_pixbuf_get_width(const LiVESPixbuf *);
 int lives_pixbuf_get_height(const LiVESPixbuf *);
@@ -270,6 +357,8 @@ LiVESPixbuf *lives_pixbuf_new_from_file_at_scale(const char *filename, int width
 
 LiVESPixbuf *lives_pixbuf_scale_simple(const LiVESPixbuf *src, int dest_width, int dest_height, 
 				       LiVESInterpType interp_type);
+
+// basic widget fns
 
 
 LiVESWidget *lives_dialog_get_content_area(LiVESDialog *);
@@ -321,6 +410,22 @@ LiVESWidget *lives_bin_get_child(LiVESBin *);
 
 boolean lives_widget_is_sensitive(LiVESWidget *);
 boolean lives_widget_is_visible(LiVESWidget *);
+boolean lives_widget_is_realized(LiVESWidget *);
+
+
+double lives_adjustment_get_upper(LiVESAdjustment *);
+double lives_adjustment_get_lower(LiVESAdjustment *);
+double lives_adjustment_get_page_size(LiVESAdjustment *);
+
+void lives_adjustment_set_upper(LiVESAdjustment *, double upper);
+void lives_adjustment_set_lower(LiVESAdjustment *, double lower);
+void lives_adjustment_set_page_size(LiVESAdjustment *, double page_size);
+
+
+
+
+
+
 
 
 // compound functions (composed of basic functions)

@@ -3689,10 +3689,10 @@ void make_play_window(void) {
 
   if ((mainw->current_file==-1||(!cfile->is_loaded&&!mainw->preview)||
        (cfile->frames==0&&(mainw->multitrack==NULL||mainw->playing_file==-1)))&&mainw->imframe!=NULL) {
-    cairo_t *cr = gdk_cairo_create (lives_widget_get_xwindow(mainw->play_window));
-    gdk_cairo_set_source_pixbuf (cr, mainw->imframe, (GdkModifierType)0, 0);
-    cairo_paint (cr);
-    cairo_destroy (cr);
+    lives_painter_t *cr = lives_painter_create_from_widget (mainw->play_window);
+    lives_painter_set_source_pixbuf (cr, mainw->imframe, (GdkModifierType)0, 0);
+    lives_painter_paint (cr);
+    lives_painter_destroy (cr);
   }
 
   gtk_widget_set_tooltip_text( mainw->m_sepwinbutton,_ ("Hide Play Window"));

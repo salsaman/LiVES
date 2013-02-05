@@ -813,11 +813,11 @@ typedef struct {
   GtkWidget *raudio_draw;
 
 #if GTK_CHECK_VERSION(3,0,0)
-  cairo_surface_t *video_drawable;
-  cairo_surface_t *laudio_drawable;
-  cairo_surface_t *raudio_drawable;
-  cairo_surface_t *blank_laudio_drawable;
-  cairo_surface_t *blank_raudio_drawable;
+  lives_painter_surface_t *video_drawable;
+  lives_painter_surface_t *laudio_drawable;
+  lives_painter_surface_t *raudio_drawable;
+  lives_painter_surface_t *blank_laudio_drawable;
+  lives_painter_surface_t *blank_raudio_drawable;
 #else
   GdkPixmap *video_drawable;
   GdkPixmap *laudio_drawable;

@@ -2294,15 +2294,15 @@ void get_play_times(void) {
   if (mainw->laudio_drawable!=NULL) {
 #if GTK_CHECK_VERSION(3,0,0)
     GdkRGBA color;
-    cairo_t *cr=cairo_create(mainw->laudio_drawable);
+    lives_painter_t *cr=lives_painter_create(mainw->laudio_drawable);
     gtk_style_context_get_bg_color (gtk_widget_get_style_context (mainw->laudio_draw),GTK_WIDGET_STATE (widget),&color);
-    gdk_cairo_set_source_rgba (cr, &color);
+    lives_painter_set_source_rgba (cr, &color);
 
-    cairo_rectangle(cr,0,0,
+    lives_painter_rectangle(cr,0,0,
 		    allocwidth,
 		    allocheight));
-    cairo_fill(cr);
-    cairo_destroy (cr);
+    lives_painter_fill(cr);
+    lives_painter_destroy (cr);
 
 #else
     gdk_draw_rectangle (mainw->laudio_drawable,
@@ -2319,15 +2319,15 @@ void get_play_times(void) {
   if (mainw->raudio_drawable!=NULL) {
 #if GTK_CHECK_VERSION(3,0,0)
     GdkRGBA color;
-    cairo_t *cr=cairo_create(mainw->raudio_drawable);
+    lives_painter_t *cr=lives_painter_create(mainw->raudio_drawable);
     gtk_style_context_get_bg_color (gtk_widget_get_style_context (mainw->raudio_draw),GTK_WIDGET_STATE (widget),&color);
-    gdk_cairo_set_source_rgba (cr, &color);
+    lives_painter_set_source_rgba (cr, &color);
 
-    cairo_rectangle(cr,0,0,
+    lives_painter_rectangle(cr,0,0,
 		    allocwidth,
 		    allocheight));
-    cairo_fill(cr);
-    cairo_destroy (cr);
+    lives_painter_fill(cr);
+    lives_painter_destroy (cr);
 
 #else
     gdk_draw_rectangle (mainw->raudio_drawable,
@@ -2343,15 +2343,15 @@ void get_play_times(void) {
   if (mainw->video_drawable!=NULL) {
 #if GTK_CHECK_VERSION(3,0,0)
     GdkRGBA color;
-    cairo_t *cr=cairo_create(mainw->video_drawable);
+    lives_painter_t *cr=lives_painter_create(mainw->video_drawable);
     gtk_style_context_get_bg_color (gtk_widget_get_style_context (mainw->video_draw),GTK_WIDGET_STATE (widget),&color);
-    gdk_cairo_set_source_rgba (cr, &color);
+    lives_painter_set_source_rgba (cr, &color);
 
-    cairo_rectangle(cr,0,0,
+    lives_painter_rectangle(cr,0,0,
 		    allocwidth,
 		    allocheight));
-    cairo_fill(cr);
-    cairo_destroy (cr);
+    lives_painter_fill(cr);
+    lives_painter_destroy (cr);
 
 #else
     gdk_draw_rectangle (mainw->video_drawable,
@@ -2371,25 +2371,25 @@ void get_play_times(void) {
     
     if (mainw->video_drawable!=NULL) {
 #if GTK_CHECK_VERSION(3,0,0)
-      cairo_t *cr=cairo_create(mainw->video_drawable);
+      lives_painter_t *cr=lives_painter_create(mainw->video_drawable);
       
-      cairo_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
+      lives_painter_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
       
-      cairo_rectangle(cr,0,0,
+      lives_painter_rectangle(cr,0,0,
 		      cfile->video_time/cfile->total_time*allocwidth-1,
 		      prefs->bar_height);
       
-      cairo_fill(cr);
+      lives_painter_fill(cr);
       
-      cairo_set_source_rgb(cr, 1., 1., 1.); ///< opaque white
+      lives_painter_set_source_rgb(cr, 1., 1., 1.); ///< opaque white
       
-      cairo_rectangle(cr,offset_left, 0,
+      lives_painter_rectangle(cr,offset_left, 0,
 		      offset_right-offset_left,
 		      prefs->bar_height);
       
-      cairo_fill(cr);
+      lives_painter_fill(cr);
       
-      cairo_destroy (cr);
+      lives_painter_destroy (cr);
 
 #else
       gdk_draw_rectangle (mainw->video_drawable,
@@ -2425,33 +2425,33 @@ void get_play_times(void) {
     if (mainw->laudio_drawable!=NULL) {
 #if GTK_CHECK_VERSION(3,0,0)
       GdkRGBA color;
-      cairo_t *cr=cairo_create(mainw->laudio_drawable);
+      lives_painter_t *cr=lives_painter_create(mainw->laudio_drawable);
       
-      cairo_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
+      lives_painter_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
       
-      cairo_rectangle(cr,0,0,
+      lives_painter_rectangle(cr,0,0,
 		      cfile->laudio_time/cfile->total_time*allocwidth-1,
 		      prefs->bar_height);
       
-      cairo_fill(cr);
+      lives_painter_fill(cr);
       
-      cairo_set_source_rgb(cr, 1., 1., 1.); ///< opaque white
+      lives_painter_set_source_rgb(cr, 1., 1., 1.); ///< opaque white
       
-      cairo_rectangle(cr,offset_left, 0,
+      lives_painter_rectangle(cr,offset_left, 0,
 		      offset_right-offset_left,
 		      prefs->bar_height);
       
-      cairo_fill(cr);
+      lives_painter_fill(cr);
       
       gtk_style_context_get_bg_color (gtk_widget_get_style_context (mainw->laudio_draw),
 				      GTK_WIDGET_STATE (mainw->laudio_draw),&color);
-      gdk_cairo_set_source_rgba (cr, &color);
+      lives_painter_set_source_rgba (cr, &color);
       
-      cairo_rectangle(cr,cfile->laudio_time/cfile->total_time*allocwidth, 0,
+      lives_painter_rectangle(cr,cfile->laudio_time/cfile->total_time*allocwidth, 0,
 		      allocwidth-(cfile->laudio_time/cfile->total_time*allocwidth),
 		      prefs->bar_height);
       
-      cairo_destroy (cr);
+      lives_painter_destroy (cr);
 
 #else
 
@@ -2483,33 +2483,33 @@ void get_play_times(void) {
       if (mainw->raudio_drawable!=NULL) {
 #if GTK_CHECK_VERSION(3,0,0)
 	GdkRGBA color;
-	cairo_t *cr=cairo_create(mainw->raudio_drawable);
+	lives_painter_t *cr=lives_painter_create(mainw->raudio_drawable);
       
-	cairo_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
+	lives_painter_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
 	
-	cairo_rectangle(cr,0,0,
+	lives_painter_rectangle(cr,0,0,
 			cfile->raudio_time/cfile->total_time*allocwidth-1,
 			prefs->bar_height);
 	
-	cairo_fill(cr);
+	lives_painter_fill(cr);
 	
-	cairo_set_source_rgb(cr, 1., 1., 1.); ///< opaque white
+	lives_painter_set_source_rgb(cr, 1., 1., 1.); ///< opaque white
 	
-	cairo_rectangle(cr,offset_left, 0,
+	lives_painter_rectangle(cr,offset_left, 0,
 			offset_right-offset_left,
 			prefs->bar_height);
       
-	cairo_fill(cr);
+	lives_painter_fill(cr);
       
 	gtk_style_context_get_bg_color (gtk_widget_get_style_context (mainw->raudio_draw),
 					GTK_WIDGET_STATE (mainw->raudio_draw),&color);
-	gdk_cairo_set_source_rgba (cr, &color);
+	lives_painter_set_source_rgba (cr, &color);
       
-	cairo_rectangle(cr,cfile->raudio_time/cfile->total_time*allocwidth, 0,
+	lives_painter_rectangle(cr,cfile->raudio_time/cfile->total_time*allocwidth, 0,
 		      allocwidth-(cfile->raudio_time/cfile->total_time*allocwidth),
 			prefs->bar_height);
       
-	cairo_destroy (cr);
+	lives_painter_destroy (cr);
 
 #else
 	gdk_draw_rectangle (mainw->raudio_drawable,
@@ -2546,33 +2546,33 @@ void get_play_times(void) {
       if (mainw->video_drawable!=NULL) {
 #if GTK_CHECK_VERSION(3,0,0)
 	GdkRGBA color;
-	cairo_t *cr=cairo_create(mainw->video_drawable);
+	lives_painter_t *cr=lives_painter_create(mainw->video_drawable);
 
-	cairo_set_line_width(cr,1.);
+	lives_painter_set_line_width(cr,1.);
       
 	if (offset>=offset_left&&offset<=offset_right) {
-	  cairo_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
-	  cairo_move_to(cr, offset, 0);
-	  cairo_line_to(cr, offset, prefs->bar_height);
+	  lives_painter_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
+	  lives_painter_move_to(cr, offset, 0);
+	  lives_painter_line_to(cr, offset, prefs->bar_height);
 	}
 	else {
-	  cairo_set_source_rgb(cr, 1., 1., 1.); ///< opaque white
-	  cairo_move_to(cr, offset, 0);
-	  cairo_line_to(cr, offset, prefs->bar_height);
+	  lives_painter_set_source_rgb(cr, 1., 1., 1.); ///< opaque white
+	  lives_painter_move_to(cr, offset, 0);
+	  lives_painter_line_to(cr, offset, prefs->bar_height);
 	}
 
 	if (palette->style&STYLE_3||palette->style==STYLE_PLAIN) { // light style
-	  cairo_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
-	  cairo_move_to(cr, offset, prefs->bar_height);
-	  cairo_line_to(cr, offset, allocheight-prefs->bar_height);
+	  lives_painter_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
+	  lives_painter_move_to(cr, offset, prefs->bar_height);
+	  lives_painter_line_to(cr, offset, allocheight-prefs->bar_height);
 	}
 	else {
-	  cairo_set_source_rgb(cr, 1., 1., 1.); ///< opaque white
-	  cairo_move_to(cr, offset, prefs->bar_height);
-	  cairo_line_to(cr, offset, allocheight-prefs->bar_height);
+	  lives_painter_set_source_rgb(cr, 1., 1., 1.); ///< opaque white
+	  lives_painter_move_to(cr, offset, prefs->bar_height);
+	  lives_painter_line_to(cr, offset, allocheight-prefs->bar_height);
 	}
 
-	cairo_destroy(cr);
+	lives_painter_destroy(cr);
 #else
 	if (offset>=offset_left&&offset<=offset_right) {
 	  gdk_draw_line (mainw->video_drawable,
@@ -2629,33 +2629,33 @@ void get_play_times(void) {
 
 #if GTK_CHECK_VERSION(3,0,0)
 	GdkRGBA color;
-	cairo_t *cr=cairo_create(mainw->laudio_drawable);
+	lives_painter_t *cr=lives_painter_create(mainw->laudio_drawable);
 
-	cairo_set_line_width(cr,1.);
+	lives_painter_set_line_width(cr,1.);
       
 	if (offset>=offset_left&&offset<=offset_right) {
-	  cairo_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
-	  cairo_move_to(cr, offset, 0);
-	  cairo_line_to(cr, offset, prefs->bar_height);
+	  lives_painter_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
+	  lives_painter_move_to(cr, offset, 0);
+	  lives_painter_line_to(cr, offset, prefs->bar_height);
 	}
 	else {
-	  cairo_set_source_rgb(cr, 1., 1., 1.); ///< opaque white
-	  cairo_move_to(cr, offset, 0);
-	  cairo_line_to(cr, offset, prefs->bar_height);
+	  lives_painter_set_source_rgb(cr, 1., 1., 1.); ///< opaque white
+	  lives_painter_move_to(cr, offset, 0);
+	  lives_painter_line_to(cr, offset, prefs->bar_height);
 	}
 
 	if (palette->style&STYLE_3||palette->style==STYLE_PLAIN) { // light style
-	  cairo_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
-	  cairo_move_to(cr, offset, prefs->bar_height);
-	  cairo_line_to(cr, offset, allocheight-prefs->bar_height);
+	  lives_painter_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
+	  lives_painter_move_to(cr, offset, prefs->bar_height);
+	  lives_painter_line_to(cr, offset, allocheight-prefs->bar_height);
 	}
 	else {
-	  cairo_set_source_rgb(cr, 1., 1., 1.); ///< opaque white
-	  cairo_move_to(cr, offset, prefs->bar_height);
-	  cairo_line_to(cr, offset, allocheight-prefs->bar_height);
+	  lives_painter_set_source_rgb(cr, 1., 1., 1.); ///< opaque white
+	  lives_painter_move_to(cr, offset, prefs->bar_height);
+	  lives_painter_line_to(cr, offset, allocheight-prefs->bar_height);
 	}
 
-	cairo_destroy(cr);
+	lives_painter_destroy(cr);
 #else
 	if ((offset>=offset_left&&offset<=offset_right)||mainw->loop) {
 	  gdk_draw_line (mainw->laudio_drawable,
@@ -2694,33 +2694,33 @@ void get_play_times(void) {
 
 #if GTK_CHECK_VERSION(3,0,0)
 	  GdkRGBA color;
-	  cairo_t *cr=cairo_create(mainw->raudio_drawable);
+	  lives_painter_t *cr=lives_painter_create(mainw->raudio_drawable);
 	  
-	  cairo_set_line_width(cr,1.);
+	  lives_painter_set_line_width(cr,1.);
 	  
 	  if (offset>=offset_left&&offset<=offset_right) {
-	    cairo_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
-	    cairo_move_to(cr, offset, 0);
-	    cairo_line_to(cr, offset, prefs->bar_height);
+	    lives_painter_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
+	    lives_painter_move_to(cr, offset, 0);
+	    lives_painter_line_to(cr, offset, prefs->bar_height);
 	  }
 	  else {
-	    cairo_set_source_rgb(cr, 1., 1., 1.); ///< opaque white
-	    cairo_move_to(cr, offset, 0);
-	    cairo_line_to(cr, offset, prefs->bar_height);
+	    lives_painter_set_source_rgb(cr, 1., 1., 1.); ///< opaque white
+	    lives_painter_move_to(cr, offset, 0);
+	    lives_painter_line_to(cr, offset, prefs->bar_height);
 	  }
 	  
 	  if (palette->style&STYLE_3||palette->style==STYLE_PLAIN) { // light style
-	    cairo_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
-	    cairo_move_to(cr, offset, prefs->bar_height);
-	    cairo_line_to(cr, offset, allocheight-prefs->bar_height);
+	    lives_painter_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
+	    lives_painter_move_to(cr, offset, prefs->bar_height);
+	    lives_painter_line_to(cr, offset, allocheight-prefs->bar_height);
 	  }
 	  else {
-	    cairo_set_source_rgb(cr, 1., 1., 1.); ///< opaque white
-	    cairo_move_to(cr, offset, prefs->bar_height);
-	    cairo_line_to(cr, offset, allocheight-prefs->bar_height);
+	    lives_painter_set_source_rgb(cr, 1., 1., 1.); ///< opaque white
+	    lives_painter_move_to(cr, offset, prefs->bar_height);
+	    lives_painter_line_to(cr, offset, allocheight-prefs->bar_height);
 	  }
 	  
-	  cairo_destroy(cr);
+	  lives_painter_destroy(cr);
 #else
 	  if ((offset>=offset_left&&offset<=offset_right)||mainw->loop) {
 	    gdk_draw_line (mainw->raudio_drawable,
@@ -2881,33 +2881,33 @@ void draw_little_bars (gdouble ptrtime) {
     if (mainw->video_drawable!=NULL) {
 #if GTK_CHECK_VERSION(3,0,0)
 	GdkRGBA color;
-	cairo_t *cr=cairo_create(mainw->video_drawable);
+	lives_painter_t *cr=lives_painter_create(mainw->video_drawable);
 
-	cairo_set_line_width(cr,1.);
+	lives_painter_set_line_width(cr,1.);
       
 	if (offset>=offset_left&&offset<=offset_right) {
-	  cairo_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
-	  cairo_move_to(cr, offset, 0);
-	  cairo_line_to(cr, offset, prefs->bar_height);
+	  lives_painter_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
+	  lives_painter_move_to(cr, offset, 0);
+	  lives_painter_line_to(cr, offset, prefs->bar_height);
 	}
 	else {
-	  cairo_set_source_rgb(cr, 1., 1., 1.); ///< opaque white
-	  cairo_move_to(cr, offset, 0);
-	  cairo_line_to(cr, offset, prefs->bar_height);
+	  lives_painter_set_source_rgb(cr, 1., 1., 1.); ///< opaque white
+	  lives_painter_move_to(cr, offset, 0);
+	  lives_painter_line_to(cr, offset, prefs->bar_height);
 	}
 
 	if (palette->style&STYLE_3||palette->style==STYLE_PLAIN) { // light style
-	  cairo_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
-	  cairo_move_to(cr, offset, prefs->bar_height);
-	  cairo_line_to(cr, offset, allocheight-prefs->bar_height);
+	  lives_painter_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
+	  lives_painter_move_to(cr, offset, prefs->bar_height);
+	  lives_painter_line_to(cr, offset, allocheight-prefs->bar_height);
 	}
 	else {
-	  cairo_set_source_rgb(cr, 1., 1., 1.); ///< opaque white
-	  cairo_move_to(cr, offset, prefs->bar_height);
-	  cairo_line_to(cr, offset, allocheight-prefs->bar_height);
+	  lives_painter_set_source_rgb(cr, 1., 1., 1.); ///< opaque white
+	  lives_painter_move_to(cr, offset, prefs->bar_height);
+	  lives_painter_line_to(cr, offset, allocheight-prefs->bar_height);
 	}
 
-	cairo_destroy(cr);
+	lives_painter_destroy(cr);
 #else
       if (frame>=cfile->start&&frame<=cfile->end) {
 	gdk_draw_line (mainw->video_drawable,
@@ -2949,33 +2949,33 @@ void draw_little_bars (gdouble ptrtime) {
     if (mainw->laudio_drawable!=NULL) {
 #if GTK_CHECK_VERSION(3,0,0)
 	GdkRGBA color;
-	cairo_t *cr=cairo_create(mainw->laudio_drawable);
+	lives_painter_t *cr=lives_painter_create(mainw->laudio_drawable);
 
-	cairo_set_line_width(cr,1.);
+	lives_painter_set_line_width(cr,1.);
       
 	if (offset>=offset_left&&offset<=offset_right) {
-	  cairo_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
-	  cairo_move_to(cr, offset, 0);
-	  cairo_line_to(cr, offset, prefs->bar_height);
+	  lives_painter_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
+	  lives_painter_move_to(cr, offset, 0);
+	  lives_painter_line_to(cr, offset, prefs->bar_height);
 	}
 	else {
-	  cairo_set_source_rgb(cr, 1., 1., 1.); ///< opaque white
-	  cairo_move_to(cr, offset, 0);
-	  cairo_line_to(cr, offset, prefs->bar_height);
+	  lives_painter_set_source_rgb(cr, 1., 1., 1.); ///< opaque white
+	  lives_painter_move_to(cr, offset, 0);
+	  lives_painter_line_to(cr, offset, prefs->bar_height);
 	}
 
 	if (palette->style&STYLE_3||palette->style==STYLE_PLAIN) { // light style
-	  cairo_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
-	  cairo_move_to(cr, offset, prefs->bar_height);
-	  cairo_line_to(cr, offset, allocheight-prefs->bar_height);
+	  lives_painter_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
+	  lives_painter_move_to(cr, offset, prefs->bar_height);
+	  lives_painter_line_to(cr, offset, allocheight-prefs->bar_height);
 	}
 	else {
-	  cairo_set_source_rgb(cr, 1., 1., 1.); ///< opaque white
-	  cairo_move_to(cr, offset, prefs->bar_height);
-	  cairo_line_to(cr, offset, allocheight-prefs->bar_height);
+	  lives_painter_set_source_rgb(cr, 1., 1., 1.); ///< opaque white
+	  lives_painter_move_to(cr, offset, prefs->bar_height);
+	  lives_painter_line_to(cr, offset, allocheight-prefs->bar_height);
 	}
 
-	cairo_destroy(cr);
+	lives_painter_destroy(cr);
 #else
       if ((frame>=cfile->start&&frame<=cfile->end)||mainw->loop) {
 	gdk_draw_line (mainw->laudio_drawable,
@@ -3014,33 +3014,33 @@ void draw_little_bars (gdouble ptrtime) {
 
 #if GTK_CHECK_VERSION(3,0,0)
 	GdkRGBA color;
-	cairo_t *cr=cairo_create(mainw->raudio_drawable);
+	lives_painter_t *cr=lives_painter_create(mainw->raudio_drawable);
 
-	cairo_set_line_width(cr,1.);
+	lives_painter_set_line_width(cr,1.);
       
 	if (offset>=offset_left&&offset<=offset_right) {
-	  cairo_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
-	  cairo_move_to(cr, offset, 0);
-	  cairo_line_to(cr, offset, prefs->bar_height);
+	  lives_painter_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
+	  lives_painter_move_to(cr, offset, 0);
+	  lives_painter_line_to(cr, offset, prefs->bar_height);
 	}
 	else {
-	  cairo_set_source_rgb(cr, 1., 1., 1.); ///< opaque white
-	  cairo_move_to(cr, offset, 0);
-	  cairo_line_to(cr, offset, prefs->bar_height);
+	  lives_painter_set_source_rgb(cr, 1., 1., 1.); ///< opaque white
+	  lives_painter_move_to(cr, offset, 0);
+	  lives_painter_line_to(cr, offset, prefs->bar_height);
 	}
 
 	if (palette->style&STYLE_3||palette->style==STYLE_PLAIN) { // light style
-	  cairo_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
-	  cairo_move_to(cr, offset, prefs->bar_height);
-	  cairo_line_to(cr, offset, allocheight-prefs->bar_height);
+	  lives_painter_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
+	  lives_painter_move_to(cr, offset, prefs->bar_height);
+	  lives_painter_line_to(cr, offset, allocheight-prefs->bar_height);
 	}
 	else {
-	  cairo_set_source_rgb(cr, 1., 1., 1.); ///< opaque white
-	  cairo_move_to(cr, offset, prefs->bar_height);
-	  cairo_line_to(cr, offset, allocheight-prefs->bar_height);
+	  lives_painter_set_source_rgb(cr, 1., 1., 1.); ///< opaque white
+	  lives_painter_move_to(cr, offset, prefs->bar_height);
+	  lives_painter_line_to(cr, offset, allocheight-prefs->bar_height);
 	}
 
-	cairo_destroy(cr);
+	lives_painter_destroy(cr);
 #else
 	  gdk_draw_line (mainw->raudio_drawable,
 			 mainw->raudio_draw->style->black_gc,

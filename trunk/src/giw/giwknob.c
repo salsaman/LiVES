@@ -20,7 +20,7 @@ Alexandre Pereira Bueno - alpebu@yahoo.com.br
 James Scott Jr <skoona@users.sourceforge.net>
 */
 
-// additional code G. Finch (salsaman@gmail.com) 2010 - 2012
+// additional code G. Finch (salsaman@gmail.com) 2010 - 2013
 
 
 #include <math.h>
@@ -42,6 +42,14 @@ static void giw_knob_destroy                  (GtkObject        *object);
 static void giw_knob_realize                  (GtkWidget        *widget);
 static void giw_knob_size_request             (GtkWidget      *widget,
 					       GtkRequisition *requisition);
+#if GTK_CHECK_VERSION(3,0,0)
+static void giw_knob_get_preferred_width (GtkWidget *widget,
+					  gint      *minimal_width,
+					  gint      *natural_width);
+static void giw_knob_get_preferred_height (GtkWidget *widget,
+					   gint      *minimal_height,
+					   gint      *natural_height);
+#endif
 static void giw_knob_size_allocate            (GtkWidget     *widget,
 					       GtkAllocation *allocation);
 static gint giw_knob_expose                   (GtkWidget        *widget,
@@ -54,6 +62,9 @@ static gint giw_knob_motion_notify            (GtkWidget        *widget,
 						GdkEventMotion   *event);
 static void giw_knob_style_set	              (GtkWidget      *widget,
 			                        GtkStyle       *previous_style);
+#if GTK_CHECK_VERSION(3,0,0)
+static void giw_knob_style_updated	              (GtkWidget      *widget);
+#endif
 /* Local data */
 
 static GtkWidgetClass *parent_class = NULL;
@@ -169,11 +180,18 @@ giw_knob_class_init (GiwKnobClass *xclass)
   widget_class->realize = giw_knob_realize;
   widget_class->expose_event = giw_knob_expose;
   widget_class->size_request = giw_knob_size_request;
+#if GTK_CHECK_VERSION(3,0,0)
+  widget_class->get_preferred_width = giw_knob_get_preferred_width;
+  widget_class->get_preferred_height = giw_knob_get_preferred_height;
+#endif
   widget_class->size_allocate = giw_knob_size_allocate;
   widget_class->button_press_event = giw_knob_button_press;
   widget_class->button_release_event = giw_knob_button_release;
   widget_class->motion_notify_event = giw_knob_motion_notify;
   widget_class->style_set = giw_knob_style_set;
+#if GTK_CHECK_VERSION(3,0,0)
+  widget_class->style_updated = giw_knob_style_updated;
+#endif
 }
 
 static void
@@ -207,7 +225,7 @@ giw_knob_new (GtkAdjustment *adjustment)
   giw_knob_set_adjustment(knob, adjustment);
   
   // Without this, in the first draw, the pointer wouldn't be in the right value
-  knob_set_angle(knob, knob_calculate_angle_with_value(knob, knob->adjustment->value));
+  knob_set_angle(knob, knob_calculate_angle_with_value(knob, gtk_adjustment_get_value(adjustment)));
     
   return GTK_WIDGET (knob);
 }
@@ -227,7 +245,7 @@ giw_knob_new_with_adjustment (gdouble value,
   giw_knob_set_adjustment(knob, (GtkAdjustment*) gtk_adjustment_new (value, lower, upper, 1.0, 1.0, 1.0));
   
   // Without this, in the first draw, the pointer wouldn't be in the right value
-  knob_set_angle(knob, knob_calculate_angle_with_value(knob, knob->adjustment->value));
+  knob_set_angle(knob, knob_calculate_angle_with_value(knob, gtk_adjustment_get_value(knob->adjustment)));
   
   return GTK_WIDGET (knob);
 }
@@ -255,7 +273,7 @@ giw_knob_destroy (GtkObject *object)
     knob->legends=NULL;
   }
   if (knob->title_str)
-    g_free(knob->title_str);  
+    g_free(knob->title_str);
   if (knob->title)
     g_object_unref(G_OBJECT(knob->title));
 
@@ -269,6 +287,10 @@ giw_knob_realize (GtkWidget *widget)
   GiwKnob *knob;
   GdkWindowAttr attributes;
   gint attributes_mask;
+
+#if GTK_CHECK_VERSION(3,0,0)
+  GtkStyleContext stylecon;
+#endif
   
   g_return_if_fail (widget != NULL);
   g_return_if_fail (GIW_IS_KNOB (widget));
@@ -281,10 +303,10 @@ giw_knob_realize (GtkWidget *widget)
 
   knob = GIW_KNOB (widget);
 
-  attributes.x = widget->allocation.x;
-  attributes.y = widget->allocation.y;
-  attributes.width = widget->allocation.width;
-  attributes.height = widget->allocation.height;
+  attributes.x = lives_widget_get_allocation_x(widget);
+  attributes.y = lives_widget_get_allocation_y(widget);
+  attributes.width = lives_widget_get_allocation_width(widget);
+  attributes.height = lives_widget_get_allocation_height(widget);
   attributes.wclass = GDK_INPUT_OUTPUT;
   attributes.window_type = GDK_WINDOW_CHILD;
   attributes.event_mask = gtk_widget_get_events (widget) | 
@@ -295,13 +317,24 @@ giw_knob_realize (GtkWidget *widget)
   attributes.colormap = gtk_widget_get_colormap (widget);
 
   attributes_mask = GDK_WA_X | GDK_WA_Y | GDK_WA_VISUAL | GDK_WA_COLORMAP;
+
+#if GTK_CHECK_VERSION(2,18,0)
+  gtk_widget_set_window(widget,gdk_window_new (lives_widget_get_xwindow(lives_widget_get_parent(widget)), &attributes, attributes_mask));
+#else
   widget->window = gdk_window_new (widget->parent->window, &attributes, attributes_mask);
+#endif
 
-  widget->style = gtk_style_attach (widget->style, widget->window);
+#if GTK_CHECK_VERSION(3,0,0)
+  stylecon=gtk_style_context_new();
+  gtk_style_context_set_path(stylecon,gtk_widget_get_path(widget));
+  gtk_style_context_set_state(stylecon,GTK_STATE_FLAG_ACTIVE);
+  gtk_style_context_set_background(stylecon,lives_widget_get_xwindow(lives_widget_get_parent(widget)));
+#else
+  widget->style = gtk_style_attach (widget->style, lives_widget_get_xwindow(widget));
+  gtk_style_set_background (widget->style, lives_widget_get_xwindow(widget), GTK_STATE_ACTIVE);
+#endif
 
-  gdk_window_set_user_data (widget->window, widget);
-
-  gtk_style_set_background (widget->style, widget->window, GTK_STATE_ACTIVE);
+  gdk_window_set_user_data (lives_widget_get_xwindow(widget), widget);
     
   // Create the initial legends
   knob_build_legends(knob);
@@ -314,6 +347,34 @@ giw_knob_size_request (GtkWidget      *widget,
   requisition->width = KNOB_DEFAULT_SIZE;
   requisition->height = KNOB_DEFAULT_SIZE;
 }
+
+#if GTK_CHECK_VERSION(3,0,0)
+
+static void
+giw_knob_get_preferred_width (GtkWidget *widget,
+    gint      *minimal_width,
+    gint      *natural_width)
+{
+  GtkRequisition requisition;
+
+  giw_knob_size_request (widget, &requisition);
+
+  *minimal_width = *natural_width = requisition.width;
+}
+
+static void
+giw_knob_get_preferred_height (GtkWidget *widget,
+    gint      *minimal_height,
+    gint      *natural_height)
+{
+  GtkRequisition requisition;
+
+  giw_knob_size_request (widget, &requisition);
+
+  *minimal_height = *natural_height = requisition.height;
+}
+
+#endif
 
 static void
 giw_knob_size_allocate (GtkWidget     *widget,
@@ -328,13 +389,12 @@ giw_knob_size_allocate (GtkWidget     *widget,
   widget->allocation = *allocation;
   knob = GIW_KNOB (widget);
 
-  if (GTK_WIDGET_REALIZED (widget))
+  if (lives_widget_is_realized (widget))
     {
-
-      gdk_window_move_resize (widget->window,
+      gdk_window_move_resize (lives_widget_get_xwindow(widget),
 			      allocation->x, allocation->y,
 			      allocation->width, allocation->height);
-
+      
     }
   knob_calculate_sizes(knob);
 }
@@ -360,7 +420,9 @@ giw_knob_expose (GtkWidget      *widget,
       
   knob=GIW_KNOB(widget);
 
-  rect.x=0;rect.y=0;rect.width=widget->allocation.width;rect.height=widget->allocation.height;
+  rect.x=0;rect.y=0;
+  rect.width=lives_widget_get_allocation_width(widget);
+  rect.height=lives_widget_get_allocation_height(widget);
       
   // Drawing backgorund
   gtk_paint_flat_box (widget->style,
@@ -389,8 +451,8 @@ giw_knob_expose (GtkWidget      *widget,
 
  
   // The center
-  xc = widget->allocation.width/2;
-  yc = widget->allocation.height/2;
+  xc = lives_widget_get_allocation_width(widget)/2;
+  yc = lives_widget_get_allocation_height(widget)/2;
     
   // Draw the knob
   s = sin(knob->angle);
@@ -517,8 +579,8 @@ giw_knob_button_press (GtkWidget      *widget,
   /* To verify if the pointer is in the knob, the distance between the pointer and the center
   of the circle is calculated, if it's less the the radius of the circle , it's in!!*/
    
-  xc = widget->allocation.width/2;
-  yc = widget->allocation.height/2;
+  xc = lives_widget_get_allocation_width(widget)/2;
+  yc = lives_widget_get_allocation_height(widget)/2;
   
   dx = abs((int)event->x - xc);
   dy = abs((int)event->y - yc);
@@ -580,8 +642,8 @@ giw_knob_motion_notify (GtkWidget      *widget,
     x = event->x;
     y = event->y;
 
-    if (event->is_hint || (event->window != widget->window))
-      gdk_window_get_pointer (widget->window, &x, &y, NULL);
+    if (event->is_hint || (event->window != lives_widget_get_xwindow(widget)))
+      gdk_window_get_pointer (lives_widget_get_xwindow(widget), &x, &y, NULL);
 
     knob_update_mouse (knob, x, y);
   }
@@ -591,8 +653,8 @@ giw_knob_motion_notify (GtkWidget      *widget,
     x = event->x;
     y = event->y;
 
-    if (event->is_hint || (event->window != widget->window))
-      gdk_window_get_pointer (widget->window, &x, &y, NULL);
+    if (event->is_hint || (event->window != lives_widget_get_xwindow(widget)))
+      gdk_window_get_pointer (lives_widget_get_xwindow(widget), &x, &y, NULL);
 
     knob_update_false_mouse (knob, x, y);
   }
@@ -627,6 +689,15 @@ giw_knob_style_set (GtkWidget *widget,
   knob_calculate_title_sizes(knob);
 }
 
+#if GTK_CHECK_VERSION(3,0,0)
+static void
+giw_knob_style_updated (GtkWidget *widget)
+{
+  giw_knob_style_set(widget,NULL);
+}
+
+#endif
+
 /******************
 * Users Functions * 
 ******************/
@@ -637,7 +708,7 @@ giw_knob_get_value (GiwKnob *knob)
   g_return_val_if_fail (knob != NULL, 0.0);
   g_return_val_if_fail (GIW_IS_KNOB (knob), 0.0);
 
-  return(knob->adjustment->value);
+  return (gtk_adjustment_get_value(knob->adjustment));
 }
 
 void 
@@ -648,7 +719,7 @@ giw_knob_set_value (GiwKnob *knob,
   g_return_if_fail (GIW_IS_KNOB (knob));
   
   
-  if (value!=knob->adjustment->value){
+  if (value!=gtk_adjustment_get_value(knob->adjustment)) {
     knob_set_value(knob, value);  
     gtk_adjustment_value_changed(knob->adjustment);
   }
@@ -802,8 +873,8 @@ knob_update_mouse (GiwKnob *knob, gint x, gint y)
   g_return_if_fail (knob != NULL);
   g_return_if_fail (GIW_IS_KNOB (knob));
 
-  xc = GTK_WIDGET(knob)->allocation.width / 2;
-  yc = GTK_WIDGET(knob)->allocation.height / 2;
+  xc = lives_widget_get_allocation_width(LIVES_WIDGET(knob))/2;
+  yc = lives_widget_get_allocation_height(LIVES_WIDGET(knob))/2;
 
   // Calculating the new angle
   if (knob->angle != atan2(yc-y, x-xc)){
@@ -820,8 +891,8 @@ knob_update_false_mouse (GiwKnob *knob, gint x, gint y)
   g_return_if_fail (knob != NULL);
   g_return_if_fail (GIW_IS_KNOB (knob));
 
-  xc = GTK_WIDGET(knob)->allocation.width / 2;
-  yc = GTK_WIDGET(knob)->allocation.height / 2;
+  xc = lives_widget_get_allocation_width(LIVES_WIDGET(knob))/2;
+  yc = lives_widget_get_allocation_height(LIVES_WIDGET(knob))/2;
 
   // Calculating the new angle
   knob->false_angle = atan2(yc-y, x-xc);
@@ -852,15 +923,15 @@ knob_calculate_sizes (GiwKnob *knob)
   widget=GTK_WIDGET(knob);
   
   // Getting the radius and size
-  if (widget->allocation.width < widget->allocation.height){
-    knob->size=widget->allocation.width;
+  if (lives_widget_get_allocation_width(widget) < lives_widget_get_allocation_height(widget)){
+    knob->size=lives_widget_get_allocation_width(widget);
     knob->x=0;
-    knob->y=widget->allocation.height/2-knob->size/2;
+    knob->y=lives_widget_get_allocation_height(widget)/2-knob->size/2;
   }
   else{
-    knob->size=widget->allocation.height;
+    knob->size=lives_widget_get_allocation_height(widget);
     knob->y=0;
-    knob->x=widget->allocation.width/2-knob->size/2;
+    knob->x=lives_widget_get_allocation_width(widget)/2-knob->size/2;
   }
     
   // The distance between the radius and the widget limits is the bigger dimension of the legends plus the major_ticks_size, so it's the half of size, less the bigger dimension of the legends less the major_ticks size (wich depends of the radius), them, with some algebra, it results in this equation:
@@ -896,7 +967,8 @@ knob_calculate_value_with_angle (GiwKnob *knob, gdouble angle)
   if (angle<=(5.0*M_PI/4.0)) d_angle=(5.0*M_PI/4.0)-angle;
   if (angle>=(7.0*M_PI/4.0)) d_angle=(13.0*M_PI/4.0)-angle;
 
-  return(knob->adjustment->lower+fabs(knob->adjustment->upper-knob->adjustment->lower)*d_angle/(3.0*M_PI/2.0));
+  return(lives_adjustment_get_lower(knob->adjustment)+
+	 fabs(lives_adjustment_get_upper(knob->adjustment)-lives_adjustment_get_lower(knob->adjustment))*d_angle/(3.0*M_PI/2.0));
 }
 
 gdouble 
@@ -907,7 +979,8 @@ knob_calculate_angle_with_value (GiwKnob *knob, gdouble value)
   g_return_val_if_fail (knob != NULL, 0.0);
   g_return_val_if_fail (GIW_IS_KNOB (knob), 0.0);
   
-  angle=(value-knob->adjustment->lower)*(3.0*M_PI/2.0)/fabs(knob->adjustment->upper-knob->adjustment->lower);
+  angle=(value-lives_adjustment_get_lower(knob->adjustment))*
+    (3.0*M_PI/2.0)/fabs(lives_adjustment_get_upper(knob->adjustment)-lives_adjustment_get_lower(knob->adjustment));
     
     // Now, the angle is relative to the 3 o'clock position, and need to be changed in order to be ralative to the initial angle ((5.0*M_PI/4.0)
   angle=(5.0*M_PI/4.0)-angle; 
@@ -946,7 +1019,7 @@ knob_set_value (GiwKnob *knob,
   g_return_if_fail (knob != NULL);
   g_return_if_fail (GIW_IS_KNOB (knob));
   
-  knob->adjustment->value=value;
+  gtk_adjustment_set_value(knob->adjustment,value);
 }
 
 void
@@ -968,7 +1041,11 @@ knob_build_legends(GiwKnob *knob)
     knob->legends=g_new(PangoLayout*, knob->major_ticks);
     str=g_new(gchar, knob->legends_digits+1); // +1 for the '/0'
     for (loop=0; loop<knob->major_ticks; loop++){
-      snprintf(str,knob->legends_digits+1,"%f",knob->adjustment->lower+loop*(knob->adjustment->upper-knob->adjustment->lower)/(knob->major_ticks-1)); // Creating the legends string
+      snprintf(str,knob->legends_digits+1,"%f",
+	       lives_adjustment_get_lower(knob->adjustment)+
+	       loop*(lives_adjustment_get_upper(knob->adjustment)-
+		     lives_adjustment_get_lower(knob->adjustment))/
+	       (knob->major_ticks-1)); // Creating the legends string
       knob->legends[loop]=gtk_widget_create_pango_layout (widget, str); 
     }
     g_free(str);

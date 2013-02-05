@@ -210,7 +210,7 @@ void lives_exit (void) {
 
 	if (cfile->laudio_drawable!=NULL) {
 #if GTK_CHECK_VERSION(3,0,0)
-	  cairo_surface_destroy(cfile->laudio_drawable);
+	  lives_painter_surface_destroy(cfile->laudio_drawable);
 #else
 	  g_object_unref(G_OBJECT(cfile->laudio_drawable));
 #endif
@@ -218,7 +218,7 @@ void lives_exit (void) {
 
 	if (cfile->raudio_drawable!=NULL) {
 #if GTK_CHECK_VERSION(3,0,0)
-	  cairo_surface_destroy(cfile->raudio_drawable);
+	  lives_painter_surface_destroy(cfile->raudio_drawable);
 #else
 	  g_object_unref(G_OBJECT(cfile->raudio_drawable));
 #endif
@@ -464,7 +464,7 @@ void lives_exit (void) {
 
   if (mainw->video_drawable!=NULL) {
 #if GTK_CHECK_VERSION(3,0,0)
-    cairo_surface_destroy(mainw->video_drawable);
+    lives_painter_surface_destroy(mainw->video_drawable);
 #else
     g_object_unref(G_OBJECT(mainw->video_drawable));
 #endif
@@ -472,7 +472,7 @@ void lives_exit (void) {
 
   if (mainw->blank_laudio_drawable!=NULL) {
 #if GTK_CHECK_VERSION(3,0,0)
-    cairo_surface_destroy(mainw->blank_laudio_drawable);
+    lives_painter_surface_destroy(mainw->blank_laudio_drawable);
 #else
     g_object_unref(G_OBJECT(mainw->blank_laudio_drawable));
 #endif
@@ -480,7 +480,7 @@ void lives_exit (void) {
 
   if (mainw->blank_raudio_drawable!=NULL) {
 #if GTK_CHECK_VERSION(3,0,0)
-    cairo_surface_destroy(mainw->blank_raudio_drawable);
+    lives_painter_surface_destroy(mainw->blank_raudio_drawable);
 #else
     g_object_unref(G_OBJECT(mainw->blank_raudio_drawable));
 #endif
@@ -5849,7 +5849,7 @@ void on_fs_preview_clicked (GtkWidget *widget, gpointer user_data) {
 
   FILE *ifile=NULL;
 
-  cairo_t *cr;
+  lives_painter_t *cr;
 
   LiVESPixbuf *blank;
 
@@ -6013,10 +6013,10 @@ void on_fs_preview_clicked (GtkWidget *widget, gpointer user_data) {
 
 	blank=lives_pixbuf_new_blank(fwidth+20,fheight+20,WEED_PALETTE_RGB24);
 
-	cr = gdk_cairo_create (lives_widget_get_xwindow(mainw->fs_playarea));
-	gdk_cairo_set_source_pixbuf (cr, blank, 0, 0);
-	cairo_paint (cr);
-	cairo_destroy (cr);
+	cr = lives_painter_create_from_widget (mainw->fs_playarea);
+	lives_painter_set_source_pixbuf (cr, blank, 0, 0);
+	lives_painter_paint (cr);
+	lives_painter_destroy (cr);
 	lives_object_unref(blank);
 
 	while (g_main_context_iteration(NULL,FALSE));
@@ -6025,10 +6025,10 @@ void on_fs_preview_clicked (GtkWidget *widget, gpointer user_data) {
 	offs_x=(fwidth-width)/2;
 	offs_y=(fheight-height)/2;
 
-	cr = gdk_cairo_create (lives_widget_get_xwindow(mainw->fs_playarea));
-	gdk_cairo_set_source_pixbuf (cr, pixbuf, offs_x, offs_y);
-	cairo_paint (cr);
-	cairo_destroy (cr);
+	cr = lives_painter_create_from_widget (mainw->fs_playarea);
+	lives_painter_set_source_pixbuf (cr, pixbuf, offs_x, offs_y);
+	lives_painter_paint (cr);
+	lives_painter_destroy (cr);
       }	
       else {
 	g_error_free(error);
@@ -6196,10 +6196,10 @@ void on_fs_preview_clicked (GtkWidget *widget, gpointer user_data) {
       
       blank=lives_pixbuf_new_blank(fwidth+20,fheight+20,WEED_PALETTE_RGB24);
       
-      cr = gdk_cairo_create (lives_widget_get_xwindow(mainw->fs_playarea));
-      gdk_cairo_set_source_pixbuf (cr, blank, 0, 0);
-      cairo_paint (cr);
-      cairo_destroy (cr);
+      cr = lives_painter_create_from_widget (mainw->fs_playarea);
+      lives_painter_set_source_pixbuf (cr, blank, 0, 0);
+      lives_painter_paint (cr);
+      lives_painter_destroy (cr);
       lives_object_unref(blank);
       
       while (g_main_context_iteration(NULL,FALSE));
@@ -7863,7 +7863,7 @@ void
 on_volume_slider_value_changed           (GtkRange   *slider,
 					  gpointer user_data) {
   gchar *ttip;
-  mainw->volume=(GTK_ADJUSTMENT(slider->adjustment))->value;
+  mainw->volume=gtk_adjustment_get_value(gtk_range_get_adjustment(slider));
 
 
 #endif
@@ -8991,7 +8991,7 @@ boolean expose_vid_event (GtkWidget *widget, GdkEventExpose *event) {
   gint width;
 
 #if GTK_CHECK_VERSION(3,0,0)
-  cairo_t *cr;
+  lives_painter_t *cr;
 #endif
 
   if (!prefs->show_gui||mainw->multitrack!=NULL||
@@ -9022,13 +9022,13 @@ boolean expose_vid_event (GtkWidget *widget, GdkEventExpose *event) {
     // check if a resize happened
 
 #if GTK_CHECK_VERSION(3,0,0)
-    width = cairo_image_surface_get_width (mainw->video_drawable);
+    width = lives_painter_image_surface_get_width (mainw->video_drawable);
 #else
     gdk_drawable_get_size(GDK_DRAWABLE(mainw->video_drawable),&width,NULL);
 #endif
     if (width!=lives_widget_get_allocation_width(mainw->LiVES)) {
 #if GTK_CHECK_VERSION(3,0,0)
-      cairo_surface_destroy(mainw->video_drawable);
+      lives_painter_surface_destroy(mainw->video_drawable);
 #else
       g_object_unref(G_OBJECT(mainw->video_drawable));
 #endif
@@ -9038,13 +9038,13 @@ boolean expose_vid_event (GtkWidget *widget, GdkEventExpose *event) {
 
   if (mainw->video_drawable==NULL) {
 #if GTK_CHECK_VERSION(3,0,0)
-    cr = gdk_cairo_create (lives_widget_get_xwindow(widget));
+    cr = lives_painter_create_from_widget (widget);
 
-    mainw->video_drawable = cairo_surface_create_similar_image(cairo_get_target(cr),
-							       CAIRO_FORMAT_RGB24,
+    mainw->video_drawable = lives_painter_surface_create_similar_image(lives_painter_get_target(cr),
+							       LIVES_PAINTER_CONTENT_COLOR,
 							       lives_widget_get_allocation_width(mainw->video_draw),
 							       lives_widget_get_allocation_height(mainw->video_draw));
-    cairo_destroy(cr);
+    lives_painter_destroy(cr);
 
 #else
     mainw->video_drawable = gdk_pixmap_new(lives_widget_get_xwindow(mainw->video_draw),
@@ -9058,15 +9058,15 @@ boolean expose_vid_event (GtkWidget *widget, GdkEventExpose *event) {
   if (mainw->current_file==-1) {
 #if GTK_CHECK_VERSION(3,0,0)
     GdkRGBA color;
-    cr=cairo_create(mainw->video_drawable);
+    cr=lives_painter_create(mainw->video_drawable);
     gtk_style_context_get_bg_color (gtk_widget_get_style_context (widget),GTK_WIDGET_STATE (widget),&color);
-    gdk_cairo_set_source_rgba (cr, &color);
+    lives_painter_set_source_rgba (cr, &color);
 
-    cairo_rectangle(cr,0,0,
+    lives_painter_rectangle(cr,0,0,
 		    lives_widget_get_allocation_width(mainw->video_draw),
 		    lives_widget_get_allocation_height(mainw->video_draw));
-    cairo_fill(cr);
-    cairo_destroy (cr);
+    lives_painter_fill(cr);
+    lives_painter_destroy (cr);
 #else
     gdk_draw_rectangle (mainw->video_drawable,
                         mainw->video_draw->style->bg_gc[GTK_WIDGET_STATE (widget)],
@@ -9079,11 +9079,11 @@ boolean expose_vid_event (GtkWidget *widget, GdkEventExpose *event) {
   }
 
 #if GTK_CHECK_VERSION(3,0,0)
-  cr = gdk_cairo_create (lives_widget_get_xwindow(mainw->video_draw));
-  cairo_set_source_surface (cr, mainw->video_drawable, ex, ey);
-  cairo_rectangle (cr,ex,ey,ew,eh);
-  cairo_paint(cr);
-  cairo_destroy(cr);
+  cr = lives_painter_create_from_widget (mainw->video_draw);
+  lives_painter_set_source_surface (cr, mainw->video_drawable, ex, ey);
+  lives_painter_rectangle (cr,ex,ey,ew,eh);
+  lives_painter_paint(cr);
+  lives_painter_destroy(cr);
 #else
   gdk_draw_pixmap(lives_widget_get_xwindow(widget),
 		  widget->style->fg_gc[GTK_WIDGET_STATE (widget)],
@@ -9108,13 +9108,13 @@ static void redraw_laudio(int ex, int ey, int ew, int eh) {
     // check if a resize happened
 
 #if GTK_CHECK_VERSION(3,0,0)
-    width = cairo_image_surface_get_width (mainw->laudio_drawable);
+    width = lives_painter_image_surface_get_width (mainw->laudio_drawable);
 #else
     gdk_drawable_get_size(GDK_DRAWABLE(mainw->laudio_drawable),&width,NULL);
 #endif
     if (width!=lives_widget_get_allocation_width(mainw->LiVES)) {
 #if GTK_CHECK_VERSION(3,0,0)
-      cairo_surface_destroy(mainw->laudio_drawable);
+      lives_painter_surface_destroy(mainw->laudio_drawable);
 #else
       g_object_unref(G_OBJECT(mainw->laudio_drawable));
 #endif
@@ -9124,13 +9124,13 @@ static void redraw_laudio(int ex, int ey, int ew, int eh) {
 
   if (mainw->laudio_drawable==NULL) {
 #if GTK_CHECK_VERSION(3,0,0)
-    cr = gdk_cairo_create (lives_widget_get_xwindow(mainw->laudio_draw));
+    cr = lives_painter_create_from_widget (mainw->laudio_draw);
 
-    mainw->laudio_drawable = cairo_surface_create_similar_image(cairo_get_target(cr),
-							       CAIRO_FORMAT_RGB24,
+    mainw->laudio_drawable = lives_painter_surface_create_similar_image(lives_painter_get_target(cr),
+							       LIVES_PAINTER_CONTENT_COLOR,
 							       lives_widget_get_allocation_width(mainw->laudio_draw),
 							       lives_widget_get_allocation_height(mainw->laudio_draw));
-    cairo_destroy(cr);
+    lives_painter_destroy(cr);
 
 #else
     mainw->laudio_drawable = gdk_pixmap_new(lives_widget_get_xwindow(mainw->laudio_draw),
@@ -9149,15 +9149,15 @@ static void redraw_laudio(int ex, int ey, int ew, int eh) {
   if (mainw->current_file==-1) {
 #if GTK_CHECK_VERSION(3,0,0)
     GdkRGBA color;
-    cr=cairo_create(mainw->laudio_drawable);
+    cr=lives_painter_create(mainw->laudio_drawable);
     gtk_style_context_get_bg_color (gtk_widget_get_style_context (mainw->laudio_draw),GTK_WIDGET_STATE (mainw->laudio_draw),&color);
-    gdk_cairo_set_source_rgba (cr, &color);
+    lives_painter_set_source_rgba (cr, &color);
 
-    cairo_rectangle(cr,0,0,
+    lives_painter_rectangle(cr,0,0,
 		    lives_widget_get_allocation_width(mainw->laudio_draw),
 		    lives_widget_get_allocation_height(mainw->laudio_draw));
-    cairo_fill(cr);
-    cairo_destroy (cr);
+    lives_painter_fill(cr);
+    lives_painter_destroy (cr);
 #else
     gdk_draw_rectangle (mainw->laudio_drawable,
                         mainw->laudio_draw->style->bg_gc[GTK_WIDGET_STATE (mainw->laudio_draw)],
@@ -9172,11 +9172,11 @@ static void redraw_laudio(int ex, int ey, int ew, int eh) {
 
 
 #if GTK_CHECK_VERSION(3,0,0)
-  cr = gdk_cairo_create (lives_widget_get_xwindow(mainw->laudio_draw));
-  cairo_set_source_surface (cr, mainw->laudio_drawable, ex, ey);
-  cairo_rectangle (cr,ex,ey,ew,eh);
-  cairo_paint(cr);
-  cairo_destroy(cr);
+  cr = lives_painter_create_from_widget (mainw->laudio_draw);
+  lives_painter_set_source_surface (cr, mainw->laudio_drawable, ex, ey);
+  lives_painter_rectangle (cr,ex,ey,ew,eh);
+  lives_painter_paint(cr);
+  lives_painter_destroy(cr);
 #else
   gdk_draw_pixmap(lives_widget_get_xwindow(mainw->laudio_draw),
 		  mainw->laudio_draw->style->fg_gc[GTK_WIDGET_STATE (mainw->laudio_draw)],
@@ -9201,13 +9201,13 @@ static void redraw_raudio(int ex, int ey, int ew, int eh) {
     // check if a resize happened
 
 #if GTK_CHECK_VERSION(3,0,0)
-    width = cairo_image_surface_get_width (mainw->raudio_drawable);
+    width = lives_painter_image_surface_get_width (mainw->raudio_drawable);
 #else
     gdk_drawable_get_size(GDK_DRAWABLE(mainw->raudio_drawable),&width,NULL);
 #endif
     if (width!=lives_widget_get_allocation_width(mainw->LiVES)) {
 #if GTK_CHECK_VERSION(3,0,0)
-      cairo_surface_destroy(mainw->raudio_drawable);
+      lives_painter_surface_destroy(mainw->raudio_drawable);
 #else
       g_object_unref(G_OBJECT(mainw->raudio_drawable));
 #endif
@@ -9217,13 +9217,13 @@ static void redraw_raudio(int ex, int ey, int ew, int eh) {
 
   if (mainw->raudio_drawable==NULL) {
 #if GTK_CHECK_VERSION(3,0,0)
-    cr = gdk_cairo_create (lives_widget_get_xwindow(mainw->raudio_draw));
+    cr = lives_painter_create_from_widget (mainw->raudio_draw);
 
-    mainw->raudio_drawable = cairo_surface_create_similar_image(cairo_get_target(cr),
-							       CAIRO_FORMAT_RGB24,
+    mainw->raudio_drawable = lives_painter_surface_create_similar_image(lives_painter_get_target(cr),
+							       LIVES_PAINTER_CONTENT_COLOR,
 							       lives_widget_get_allocation_width(mainw->raudio_draw),
 							       lives_widget_get_allocation_height(mainw->raudio_draw));
-    cairo_destroy(cr);
+    lives_painter_destroy(cr);
 
 #else
     mainw->raudio_drawable = gdk_pixmap_new(lives_widget_get_xwindow(mainw->raudio_draw),
@@ -9238,15 +9238,15 @@ static void redraw_raudio(int ex, int ey, int ew, int eh) {
   if (mainw->current_file==-1) {
 #if GTK_CHECK_VERSION(3,0,0)
     GdkRGBA color;
-    cr=cairo_create(mainw->raudio_drawable);
+    cr=lives_painter_create(mainw->raudio_drawable);
     gtk_style_context_get_bg_color (gtk_widget_get_style_context (mainw->raudio_draw),GTK_WIDGET_STATE (mainw->raudio_draw),&color);
-    gdk_cairo_set_source_rgba (cr, &color);
+    lives_painter_set_source_rgba (cr, &color);
 
-    cairo_rectangle(cr,0,0,
+    lives_painter_rectangle(cr,0,0,
 		    lives_widget_get_allocation_width(mainw->raudio_draw),
 		    lives_widget_get_allocation_height(mainw->raudio_draw));
-    cairo_fill(cr);
-    cairo_destroy (cr);
+    lives_painter_fill(cr);
+    lives_painter_destroy (cr);
 #else
     gdk_draw_rectangle (mainw->raudio_drawable,
                         mainw->raudio_draw->style->bg_gc[GTK_WIDGET_STATE (mainw->raudio_draw)],
@@ -9259,11 +9259,11 @@ static void redraw_raudio(int ex, int ey, int ew, int eh) {
   }
 
 #if GTK_CHECK_VERSION(3,0,0)
-  cr = gdk_cairo_create (lives_widget_get_xwindow(mainw->raudio_draw));
-  cairo_set_source_surface (cr, mainw->raudio_drawable, ex, ey);
-  cairo_rectangle (cr,ex,ey,ew,eh);
-  cairo_paint(cr);
-  cairo_destroy(cr);
+  cr = lives_painter_create_from_widget (mainw->raudio_draw);
+  lives_painter_set_source_surface (cr, mainw->raudio_drawable, ex, ey);
+  lives_painter_rectangle (cr,ex,ey,ew,eh);
+  lives_painter_paint(cr);
+  lives_painter_destroy(cr);
 #else
   gdk_draw_pixmap(lives_widget_get_xwindow(mainw->raudio_draw),
 		  mainw->raudio_draw->style->fg_gc[GTK_WIDGET_STATE (mainw->raudio_draw)],
@@ -9287,7 +9287,7 @@ boolean expose_laud_event (GtkWidget *widget, GdkEventExpose *event) {
   gint ex,ey,ew,eh;
 
 #if GTK_CHECK_VERSION(3,0,0)
-  cairo_t *cr;
+  lives_painter_t *cr;
 #endif
 
   if (!prefs->show_gui||mainw->multitrack!=NULL||
@@ -9324,7 +9324,7 @@ boolean expose_raud_event (GtkWidget *widget, GdkEventExpose *event) {
   gint ex,ey,ew,eh;
 
 #if GTK_CHECK_VERSION(3,0,0)
-  cairo_t *cr;
+  lives_painter_t *cr;
 #endif
 
   if (!prefs->show_gui||mainw->multitrack!=NULL||
@@ -9389,7 +9389,7 @@ boolean config_event (GtkWidget *widget, GdkEventConfigure *event, gpointer user
 boolean expose_play_window (GtkWidget *widget, GdkEventExpose *event) {
   GdkRegion *reg;
   GdkRectangle rect;
-  cairo_t *cr;
+  lives_painter_t *cr;
 
   // only act on last event
   if (event->count>0) {
@@ -9424,16 +9424,16 @@ boolean expose_play_window (GtkWidget *widget, GdkEventExpose *event) {
 	g_free(tmp);
       }
       
-      cr = gdk_cairo_create (lives_widget_get_xwindow(mainw->play_window));
-      gdk_cairo_set_source_pixbuf (cr, GDK_PIXBUF(mainw->camframe), 0, 0);
-      cairo_paint (cr);
-      cairo_destroy (cr);
+      cr = lives_painter_create_from_widget (mainw->play_window);
+      lives_painter_set_source_pixbuf (cr, mainw->camframe, 0, 0);
+      lives_painter_paint (cr);
+      lives_painter_destroy (cr);
     }
     else {
-      cr = gdk_cairo_create (lives_widget_get_xwindow(mainw->play_window));
-      gdk_cairo_set_source_pixbuf (cr, GDK_PIXBUF(mainw->imframe), 0, 0);
-      cairo_paint (cr);
-      cairo_destroy (cr);
+      cr = lives_painter_create_from_widget (mainw->play_window);
+      lives_painter_set_source_pixbuf (cr, mainw->imframe, 0, 0);
+      lives_painter_paint (cr);
+      lives_painter_destroy (cr);
     }
 
     unblock_expose();
@@ -9444,16 +9444,16 @@ boolean expose_play_window (GtkWidget *widget, GdkEventExpose *event) {
     if (!mainw->pw_exp_is_blocked) g_signal_handler_block(mainw->play_window,mainw->pw_exp_func);
     mainw->pw_exp_is_blocked=TRUE;
     block_expose();
-    if (rect.width>lives_pixbuf_get_width(GDK_PIXBUF (mainw->multitrack->sepwin_pixbuf))) {
-      rect.width=lives_pixbuf_get_width(GDK_PIXBUF (mainw->multitrack->sepwin_pixbuf));
+    if (rect.width>lives_pixbuf_get_width(mainw->multitrack->sepwin_pixbuf)) {
+      rect.width=lives_pixbuf_get_width(mainw->multitrack->sepwin_pixbuf);
     }
-    if (rect.height>lives_pixbuf_get_height(GDK_PIXBUF (mainw->multitrack->sepwin_pixbuf))) {
-      rect.height=lives_pixbuf_get_height(GDK_PIXBUF (mainw->multitrack->sepwin_pixbuf));
+    if (rect.height>lives_pixbuf_get_height(mainw->multitrack->sepwin_pixbuf)) {
+      rect.height=lives_pixbuf_get_height(mainw->multitrack->sepwin_pixbuf);
     }
-    cr = gdk_cairo_create (lives_widget_get_xwindow(mainw->play_window));
-    gdk_cairo_set_source_pixbuf (cr, GDK_PIXBUF(mainw->multitrack->sepwin_pixbuf), 0, 0);
-    cairo_paint (cr);
-    cairo_destroy (cr);
+    cr = lives_painter_create_from_widget (mainw->play_window);
+    lives_painter_set_source_pixbuf (cr, mainw->multitrack->sepwin_pixbuf, 0, 0);
+    lives_painter_paint (cr);
+    lives_painter_destroy (cr);
     unblock_expose();
     g_signal_handler_unblock(mainw->play_window,mainw->pw_exp_func);
     mainw->pw_exp_is_blocked=FALSE;

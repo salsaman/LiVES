@@ -20,6 +20,8 @@ Alexandre Pereira Bueno - alpebu@yahoo.com.br
 James Scott Jr <skoona@users.sourceforge.net>
 */
 
+// additional code G. Finch (salsaman@gmail.com) 2010 - 2013
+
 #include <math.h>
 #include <stdio.h>
 
@@ -42,6 +44,14 @@ static void giw_led_destroy                  (GtkObject        *object);
 static void giw_led_realize                  (GtkWidget        *widget);
 static void giw_led_size_request             (GtkWidget      *widget,
 					       GtkRequisition *requisition);
+#if GTK_CHECK_VERSION(3,0,0)
+static void giw_led_get_preferred_width (GtkWidget *widget,
+					 gint      *minimal_width,
+					 gint      *natural_width);
+static void giw_led_get_preferred_height (GtkWidget *widget,
+					  gint      *minimal_height,
+					  gint      *natural_height);
+#endif
 static void giw_led_size_allocate            (GtkWidget     *widget,
 					       GtkAllocation *allocation);
 static gint giw_led_expose                   (GtkWidget        *widget,
@@ -125,6 +135,10 @@ giw_led_class_init (GiwLedClass *xclass)
   widget_class->realize = giw_led_realize;
   widget_class->expose_event = giw_led_expose;
   widget_class->size_request = giw_led_size_request;
+#if GTK_CHECK_VERSION(3,0,0)
+  widget_class->get_preferred_width = giw_led_get_preferred_width;
+  widget_class->get_preferred_height = giw_led_get_preferred_height;
+#endif
   widget_class->size_allocate = giw_led_size_allocate;
   widget_class->button_press_event = giw_led_button_press;
   
@@ -197,11 +211,11 @@ giw_led_realize (GtkWidget *widget)
   GTK_WIDGET_SET_FLAGS (widget, GTK_REALIZED);
 #endif
 
-  attributes.x = widget->allocation.x;
-  attributes.y = widget->allocation.y;
-  attributes.width = widget->allocation.width;
-  attributes.height = widget->allocation.height;
 
+  attributes.x = lives_widget_get_allocation_x(widget);
+  attributes.y = lives_widget_get_allocation_y(widget);
+  attributes.width = lives_widget_get_allocation_width(widget);
+  attributes.height = lives_widget_get_allocation_height(widget);
   attributes.wclass = GDK_INPUT_OUTPUT;
   attributes.window_type = GDK_WINDOW_CHILD;
   attributes.event_mask = gtk_widget_get_events (widget) | 
@@ -212,13 +226,25 @@ giw_led_realize (GtkWidget *widget)
   attributes.colormap = gtk_widget_get_colormap (widget);
 
   attributes_mask = GDK_WA_X | GDK_WA_Y | GDK_WA_VISUAL | GDK_WA_COLORMAP;
+
+#if GTK_CHECK_VERSION(2,18,0)
+  gtk_widget_set_window(widget,gdk_window_new (lives_widget_get_xwindow(lives_widget_get_parent(widget)), &attributes, attributes_mask));
+#else
   widget->window = gdk_window_new (widget->parent->window, &attributes, attributes_mask);
+#endif
 
-  widget->style = gtk_style_attach (widget->style, widget->window);
+#if GTK_CHECK_VERSION(3,0,0)
+  stylecon=gtk_style_context_new();
+  gtk_style_context_set_path(stylecon,gtk_widget_get_path(widget));
+  gtk_style_context_set_state(stylecon,GTK_STATE_FLAG_ACTIVE);
+  gtk_style_context_set_background(stylecon,lives_widget_get_xwindow(lives_widget_get_parent(widget)));
+#else
+  widget->style = gtk_style_attach (widget->style, lives_widget_get_xwindow(widget));
+  gtk_style_set_background (widget->style, lives_widget_get_xwindow(widget), GTK_STATE_ACTIVE);
+#endif
 
-  gdk_window_set_user_data (widget->window, widget);
+  gdk_window_set_user_data (lives_widget_get_xwindow(widget), widget);
 
-  gtk_style_set_background (widget->style, widget->window, GTK_STATE_ACTIVE);
 }
 
 static void 
@@ -233,6 +259,35 @@ giw_led_size_request (GtkWidget      *widget,
   requisition->height = LED_DEFAULT_SIZE;
 }
 
+#if GTK_CHECK_VERSION(3,0,0)
+
+static void
+giw_led_get_preferred_width (GtkWidget *widget,
+    gint      *minimal_width,
+    gint      *natural_width)
+{
+  GtkRequisition requisition;
+
+  giw_led_size_request (widget, &requisition);
+
+  *minimal_width = *natural_width = requisition.width;
+}
+
+static void
+giw_led_get_preferred_height (GtkWidget *widget,
+    gint      *minimal_height,
+    gint      *natural_height)
+{
+  GtkRequisition requisition;
+
+  giw_led_size_request (widget, &requisition);
+
+  *minimal_height = *natural_height = requisition.height;
+}
+
+#endif
+
+
 static void
 giw_led_size_allocate (GtkWidget     *widget,
 			GtkAllocation *allocation)
@@ -246,13 +301,12 @@ giw_led_size_allocate (GtkWidget     *widget,
   widget->allocation = *allocation;
   led = GIW_LED (widget);
 
-  if (GTK_WIDGET_REALIZED (widget))
+  if (lives_widget_is_realized (widget))
     {
-
-      gdk_window_move_resize (widget->window,
+      gdk_window_move_resize (lives_widget_get_xwindow(widget),
 			      allocation->x, allocation->y,
 			      allocation->width, allocation->height);
-
+      
     }
   
   // The size of the led will be the lower dimension of the widget  
@@ -287,7 +341,9 @@ giw_led_expose (GtkWidget      *widget,
     
   led=GIW_LED(widget);
 
-  rect.x=0;rect.y=0;rect.width=widget->allocation.width;rect.height=widget->allocation.height;
+  rect.x=0;rect.y=0;
+  rect.width=lives_widget_get_allocation_width(widget);
+  rect.height=lives_widget_get_allocation_height(widget);
       
   // Drawing backgorund
   gtk_paint_flat_box (widget->style,
@@ -373,8 +429,8 @@ giw_led_button_press (GtkWidget      *widget,
     
   if (led->enable_mouse==0) return(FALSE);
   
-  dx = event->x - widget->allocation.width/2;
-  dy = widget->allocation.height/2 - event->y;
+  dx = event->x - lives_widget_get_allocation_width(widget)/2;
+  dy = lives_widget_get_allocation_height(widget)/2 - event->y;
   
   d=sqrt(dx*dx+dy*dy); // Distance between the pointer and the center
   

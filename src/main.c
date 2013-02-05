@@ -5281,12 +5281,12 @@ void load_frame_image(gint frame) {
     // internal player, double size or fullscreen, or multitrack
 
     if (mainw->play_window!=NULL&&GDK_IS_WINDOW (lives_widget_get_xwindow(mainw->play_window))) {
-      cairo_t *cr = gdk_cairo_create (lives_widget_get_xwindow(mainw->play_window));
+      lives_painter_t *cr = lives_painter_create_from_widget(mainw->play_window);
       block_expose();
 
-      gdk_cairo_set_source_pixbuf (cr, pixbuf, 0, 0);
-      cairo_paint (cr);
-      cairo_destroy (cr);
+      lives_painter_set_source_pixbuf (cr, pixbuf, 0, 0);
+      lives_painter_paint (cr);
+      lives_painter_destroy (cr);
 
       unblock_expose();
     }
@@ -5317,7 +5317,7 @@ void load_frame_image(gint frame) {
     gchar fname[PATH_MAX];
     gint xwidth,xheight;
     GError *gerror=NULL;
-    cairo_t *cr = gdk_cairo_create (lives_widget_get_xwindow(mainw->playarea));
+    lives_painter_t *cr = lives_painter_create_from_widget (mainw->playarea);
       
 
     if (mainw->rec_vid_frames==-1) gtk_entry_set_text(GTK_ENTRY(mainw->framecounter),(tmp=g_strdup_printf("%9d",frame)));
@@ -5356,9 +5356,9 @@ void load_frame_image(gint frame) {
       } while (gerror!=NULL);
 
 
-      gdk_cairo_set_source_pixbuf (cr, pixbuf, 0, 0);
-      cairo_paint (cr);
-      cairo_destroy (cr);
+      lives_painter_set_source_pixbuf (cr, pixbuf, 0, 0);
+      lives_painter_paint (cr);
+      lives_painter_destroy (cr);
 
       lives_object_unref(pixbuf);
       cfile->frames=frame;
@@ -5582,7 +5582,7 @@ void close_current_file(gint file_to_switch_to) {
 
     if (cfile->laudio_drawable!=NULL) {
 #if GTK_CHECK_VERSION(3,0,0)
-      cairo_surface_destroy(cfile->laudio_drawable);
+      lives_painter_surface_destroy(cfile->laudio_drawable);
 #else
       g_object_unref(G_OBJECT(cfile->laudio_drawable));
 #endif
@@ -5590,7 +5590,7 @@ void close_current_file(gint file_to_switch_to) {
 
     if (cfile->raudio_drawable!=NULL) {
 #if GTK_CHECK_VERSION(3,0,0)
-      cairo_surface_destroy(cfile->raudio_drawable);
+      lives_painter_surface_destroy(cfile->raudio_drawable);
 #else
       g_object_unref(G_OBJECT(cfile->raudio_drawable));
 #endif

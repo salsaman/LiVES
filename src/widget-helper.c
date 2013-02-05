@@ -18,6 +18,236 @@
 // basic functions
 
 
+
+////////////////////////////////////////////////////
+//lives_painter functions
+
+lives_painter_t *lives_painter_create(lives_painter_surface_t *target) {
+  lives_painter_t *cr=NULL;
+#ifdef PAINTER_CAIRO
+  cr=cairo_create(target);
+#endif
+  return cr;
+
+}
+
+lives_painter_t *lives_painter_create_from_widget(LiVESWidget *widget) {
+  lives_painter_t *cr=NULL;
+#ifdef PAINTER_CAIRO
+#ifdef GUI_GTK
+  LiVESXWindow *window=lives_widget_get_xwindow(widget);
+  if (window!=NULL) {
+    cr=gdk_cairo_create(window);
+  }
+#endif
+#endif
+  return cr;
+}
+
+
+void lives_painter_set_source_pixbuf (lives_painter_t *cr, const LiVESPixbuf *pixbuf, double pixbuf_x, double pixbuf_y) {
+#ifdef PAINTER_CAIRO
+  gdk_cairo_set_source_pixbuf(cr,pixbuf,pixbuf_x,pixbuf_y);
+#endif
+
+}
+
+void lives_painter_paint(lives_painter_t *cr) {
+#ifdef PAINTER_CAIRO
+  cairo_paint(cr);
+#endif
+}
+
+void lives_painter_fill(lives_painter_t *cr) {
+#ifdef PAINTER_CAIRO
+  cairo_fill(cr);
+#endif
+}
+
+void lives_painter_stroke(lives_painter_t *cr) {
+#ifdef PAINTER_CAIRO
+  cairo_stroke(cr);
+#endif
+}
+
+void lives_painter_clip(lives_painter_t *cr) {
+#ifdef PAINTER_CAIRO
+  cairo_clip(cr);
+#endif
+}
+
+void lives_painter_destroy(lives_painter_t *cr) {
+#ifdef PAINTER_CAIRO
+  cairo_destroy(cr);
+#endif
+}
+
+void lives_painter_surface_destroy(lives_painter_surface_t *surf) {
+#ifdef PAINTER_CAIRO
+  cairo_surface_destroy(surf);
+#endif
+}
+
+void lives_painter_new_path(lives_painter_t *cr) {
+#ifdef PAINTER_CAIRO
+  cairo_new_path(cr);
+#endif
+}
+
+
+void lives_painter_set_line_width(lives_painter_t *cr, double width) {
+#ifdef PAINTER_CAIRO
+  cairo_set_line_width(cr,width);
+#endif
+
+}
+
+
+void lives_painter_move_to(lives_painter_t *cr, double x, double y) {
+#ifdef PAINTER_CAIRO
+  cairo_move_to(cr,x,y);
+#endif
+
+}
+
+ void lives_painter_line_to(lives_painter_t *cr, double x, double y) {
+#ifdef PAINTER_CAIRO
+  cairo_line_to(cr,x,y);
+#endif
+
+}
+
+void lives_painter_rectangle(lives_painter_t *cr, double x, double y, double width, double height) {
+#ifdef PAINTER_CAIRO
+  cairo_rectangle(cr,x,y,width,height);
+#endif
+
+}
+ 
+void lives_painter_set_operator(lives_painter_t *cr, lives_painter_operator_t op) {
+#ifdef PAINTER_CAIRO
+  cairo_set_operator(cr,op);
+#endif
+}
+
+void lives_painter_set_source_rgb(lives_painter_t *cr, double red, double green, double blue) {
+#ifdef PAINTER_CAIRO
+  cairo_set_source_rgb(cr,red,green,blue);
+#endif
+}
+
+void lives_painter_set_source_rgba(lives_painter_t *cr, double red, double green, double blue, double alpha) {
+#ifdef PAINTER_CAIRO
+   cairo_set_source_rgba(cr,red,green,blue,alpha);
+#endif
+}
+
+void lives_painter_set_fill_rule(lives_painter_t *cr, lives_painter_fill_rule_t fill_rule) {
+#ifdef PAINTER_CAIRO
+  cairo_set_fill_rule(cr,fill_rule);
+#endif
+}
+
+
+lives_painter_surface_t *lives_painter_surface_create_similar (lives_painter_surface_t *other, 
+    lives_painter_content_t content, int width, int height) {
+
+  lives_painter_surface_t *surf=NULL;
+#ifdef PAINTER_CAIRO
+  surf=cairo_surface_create_similar(other,content,width,height);
+#endif  
+  return surf;
+}
+
+
+void lives_painter_surface_flush(lives_painter_surface_t *surf) {
+#ifdef PAINTER_CAIRO
+  cairo_surface_flush(surf);
+#endif
+}
+
+
+
+lives_painter_surface_t *lives_painter_image_surface_create_for_data(uint8_t *data, lives_painter_format_t format, 
+								     int width, int height, int stride) {
+  lives_painter_surface_t *surf=NULL;
+#ifdef PAINTER_CAIRO
+  surf=cairo_image_surface_create_for_data(data,format,width,height,stride);
+#endif
+  return surf;
+}
+
+
+////////////////////////// painter info funcs
+
+lives_painter_surface_t *lives_painter_get_target(lives_painter_t *cr) {
+
+ lives_painter_surface_t *surf=NULL;
+#ifdef PAINTER_CAIRO
+  surf=cairo_get_target(cr);
+#endif  
+  return surf;
+
+}
+
+
+int lives_painter_format_stride_for_width(lives_painter_format_t form, int width) {
+  int stride=-1;
+#ifdef PAINTER_CAIRO
+  stride=cairo_format_stride_for_width(form,width);
+#endif
+  return stride;
+}
+
+
+uint8_t *lives_painter_image_surface_get_data(lives_painter_surface_t *surf) {
+  uint8_t *data=NULL;
+#ifdef PAINTER_CAIRO
+  data=cairo_image_surface_get_data(surf);
+#endif
+  return data;
+}
+
+
+int lives_painter_image_surface_get_width(lives_painter_surface_t *surf) {
+  int width=0;
+#ifdef PAINTER_CAIRO
+  width=cairo_image_surface_get_width(surf);
+#endif
+  return width;
+}
+
+
+int lives_painter_image_surface_get_height(lives_painter_surface_t *surf) {
+  int height=0;
+#ifdef PAINTER_CAIRO
+  height=cairo_image_surface_get_height(surf);
+#endif
+  return height;
+}
+
+
+int lives_painter_image_surface_get_stride(lives_painter_surface_t *surf) {
+  int stride=0;
+#ifdef PAINTER_CAIRO
+  stride=cairo_image_surface_get_stride(surf);
+#endif
+  return stride;
+}
+
+
+lives_painter_format_t lives_painter_image_surface_get_format(lives_painter_surface_t *surf) {
+  lives_painter_format_t format=0;
+#ifdef PAINTER_CAIRO
+  format=cairo_image_surface_get_format(surf);
+#endif
+  return format;
+}
+
+
+////////////////////////////////////////////////////////
+
+
 boolean return_true (LiVESWidget *widget, LiVESEvent *event, LiVESObjectPtr user_data) {
   // event callback that just returns TRUE
   return TRUE;
@@ -414,6 +644,17 @@ boolean lives_widget_is_visible(LiVESWidget *widget) {
 }
 
 
+boolean lives_widget_is_realized(LiVESWidget *widget) {
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(2,18,0)
+  return gtk_widget_get_realized(widget);
+#else
+  return GTK_WIDGET_REALIZED (widget);
+#endif
+#endif
+}
+
+
 void lives_container_remove(LiVESContainer *container, LiVESWidget *widget) {
 #ifdef GUI_GTK
   gtk_container_remove(container,widget);
@@ -544,6 +785,91 @@ LiVESWidget *lives_bin_get_child(LiVESBin *bin) {
 #endif
   return child;
 }
+
+
+
+double lives_adjustment_get_upper(LiVESAdjustment *adj) {
+  double upper=0;
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(2,14,0)
+  upper=gtk_adjustment_get_upper(adj);
+#else
+  upper=adj->upper;
+#endif
+#endif
+  return upper;
+}
+
+
+double lives_adjustment_get_lower(LiVESAdjustment *adj) {
+  double lower=0;
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(2,14,0)
+  lower=gtk_adjustment_get_lower(adj);
+#else
+  lower=adj->lower;
+#endif
+#endif
+  return lower;
+}
+
+
+
+double lives_adjustment_get_page_size(LiVESAdjustment *adj) {
+  double page_size=0;
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(2,14,0)
+  page_size=gtk_adjustment_get_page_size(adj);
+#else
+  page_size=adj->page_size;
+#endif
+#endif
+  return page_size;
+}
+
+
+
+void lives_adjustment_set_upper(LiVESAdjustment *adj, double upper) {
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(2,14,0)
+  gtk_adjustment_set_upper(adj,upper);
+#else
+  adj->upper=upper;
+#endif
+#endif
+}
+
+
+void lives_adjustment_set_lower(LiVESAdjustment *adj, double lower) {
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(2,14,0)
+  gtk_adjustment_set_lower(adj,lower);
+#else
+  adj->lower=lower;
+#endif
+#endif
+}
+
+
+void lives_adjustment_set_page_size(LiVESAdjustment *adj, double page_size) {
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(2,14,0)
+  gtk_adjustment_set_page_size(adj,page_size);
+#else
+  adj->page_size=page_size;
+#endif
+#endif
+}
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1085,24 +1411,22 @@ void adjustment_configure(LiVESAdjustment *adjustment,
 		     double page_increment,
 		     double page_size) {
   g_object_freeze_notify (G_OBJECT(adjustment));
-
+#ifdef GUI_GTK
 #if GTK_CHECK_VERSION(2,14,0)
   gtk_adjustment_configure(adjustment,value,lower,upper,step_increment,page_increment,page_size);
-  g_object_thaw_notify (G_OBJECT(adjustment));
-  return;
 #else
-
-
   adjustment->upper=upper;
   adjustment->lower=lower;
   adjustment->value=value;
   adjustment->step_increment=step_increment;
   adjustment->page_increment=page_increment;
   adjustment->page_size=page_size;
+#endif
+#endif
 
   g_object_thaw_notify (G_OBJECT(adjustment));
-#endif
 }
+
 
 
 void lives_set_cursor_style(lives_cursor_t cstyle, LiVESXWindow *window) {
@@ -1137,16 +1461,16 @@ void hide_cursor(LiVESXWindow *window) {
   //make the cursor invisible in playback windows
 
 #if GTK_CHECK_VERSION(3,0,0)
-cairo_surface_t *s;
+lives_painter_surface_t *s;
 GdkPixbuf *pixbuf;
 
  if (hidden_cursor==NULL) {
-   s = cairo_image_surface_create (CAIRO_FORMAT_A1, 1, 1);
+   s = lives_painter_image_surface_create (LIVES_PAINTER_FORMAT_A1, 1, 1);
    pixbuf = gdk_pixbuf_get_from_surface (s,
 					 0, 0,
 					 1, 1);
    
-   cairo_surface_destroy (s);
+   lives_painter_surface_destroy (s);
    
    hidden_cursor = gdk_cursor_new_from_pixbuf (gdk_display_get_default(), pixbuf, 0, 0);
    
@@ -1169,14 +1493,12 @@ GdkPixbuf *pixbuf;
     g_object_unref (mask);
   }
 #endif 
-  if (GDK_IS_WINDOW(window))
-    gdk_window_set_cursor (window, hidden_cursor);
+  if (GDK_IS_WINDOW(window)) gdk_window_set_cursor (window, hidden_cursor);
 }
 
 
 void unhide_cursor(LiVESXWindow *window) {
-  if (GDK_IS_WINDOW(window))
-    gdk_window_set_cursor(window,NULL);
+  if (GDK_IS_WINDOW(window)) gdk_window_set_cursor(window,NULL);
 }
 
 
@@ -1253,3 +1575,7 @@ void add_fill_to_box (LiVESBox *box) {
     gtk_widget_show(blank_label);
 #endif
 }
+
+
+
+

@@ -296,7 +296,7 @@ void framedraw_redraw (lives_special_framedraw_rect_t * framedraw, gboolean relo
 
   double xstartf,ystartf,xendf,yendf;
 
-  cairo_t *cr;
+  lives_painter_t *cr;
 
   if (!GDK_IS_DRAWABLE(lives_widget_get_xwindow(mainw->framedraw))) return;
 
@@ -322,10 +322,10 @@ void framedraw_redraw (lives_special_framedraw_rect_t * framedraw, gboolean relo
   // resize to correct size
   resize_layer(mainw->fd_layer, width, height, LIVES_INTERP_BEST);
   
-  cr=layer_to_cairo(mainw->fd_layer);
+  cr=layer_to_lives_painter(mainw->fd_layer);
 
 
-  // draw on the cairo
+  // draw on the lives_painter
 
   switch (framedraw->type) {
   case FD_RECT_DEMASK:
@@ -347,12 +347,12 @@ void framedraw_redraw (lives_special_framedraw_rect_t * framedraw, gboolean relo
 
     // create a mask which is only opaque within the clipping area
 
-    cairo_rectangle(cr,0,0,width,height);
-    cairo_rectangle(cr,xstart,ystart,xend-xstart+1,yend-ystart+1);
-    cairo_set_operator(cr,CAIRO_OPERATOR_DEST_OUT);
-    cairo_set_source_rgba(cr, .0, .0, .0, .5);
-    cairo_set_fill_rule(cr, CAIRO_FILL_RULE_EVEN_ODD);
-    cairo_fill (cr);
+    lives_painter_rectangle(cr,0,0,width,height);
+    lives_painter_rectangle(cr,xstart,ystart,xend-xstart+1,yend-ystart+1);
+    lives_painter_set_operator(cr, LIVES_PAINTER_OPERATOR_DEST_OUT);
+    lives_painter_set_source_rgba(cr, .0, .0, .0, .5);
+    lives_painter_set_fill_rule(cr, LIVES_PAINTER_FILL_RULE_EVEN_ODD);
+    lives_painter_fill (cr);
 
     break;
   case FD_RECT_MULTRECT:
@@ -375,9 +375,9 @@ void framedraw_redraw (lives_special_framedraw_rect_t * framedraw, gboolean relo
     ystart -=  (int)((2.*((double)ystart/(double)height)) * (double)((fd_height - height)>>1)+.5);
     yend -=  (int)((2.*((double)yend/(double)height)) * (double)((fd_height - height)>>1)+.5);
 
-    cairo_set_source_rgb(cr, 1., 0., 0.);
-    cairo_rectangle(cr,xstart-1,ystart-1,xend-xstart+2,yend-ystart+2);
-    cairo_stroke (cr);
+    lives_painter_set_source_rgb(cr, 1., 0., 0.);
+    lives_painter_rectangle(cr,xstart-1,ystart-1,xend-xstart+2,yend-ystart+2);
+    lives_painter_stroke (cr);
 
     break;
   case FD_SINGLEPOINT:
@@ -388,22 +388,22 @@ void framedraw_redraw (lives_special_framedraw_rect_t * framedraw, gboolean relo
     xstart -=  (int)((2.*((double)xstart/(double)width)) * (double)((fd_width - width)>>1)+.5);
     ystart -=  (int)((2.*((double)ystart/(double)height)) * (double)((fd_height - height)>>1)+.5);
 
-    cairo_set_source_rgb(cr, 1., 0., 0.);
+    lives_painter_set_source_rgb(cr, 1., 0., 0.);
 
-    cairo_move_to(cr,xstart,ystart-3);
-    cairo_line_to(cr,xstart,ystart+3);
+    lives_painter_move_to(cr,xstart,ystart-3);
+    lives_painter_line_to(cr,xstart,ystart+3);
 
-    cairo_move_to(cr,xstart-3,ystart);
-    cairo_line_to(cr,xstart+3,ystart);
+    lives_painter_move_to(cr,xstart-3,ystart);
+    lives_painter_line_to(cr,xstart+3,ystart);
 
-    cairo_stroke (cr);
+    lives_painter_stroke (cr);
 
     break;
   }
 
-  cairo_to_layer(cr, mainw->fd_layer);
+  lives_painter_to_layer(cr, mainw->fd_layer);
 
-  cairo_destroy(cr);
+  lives_painter_destroy(cr);
 
   redraw_framedraw_image ();
 }
@@ -618,7 +618,7 @@ void load_framedraw_image(LiVESPixbuf *pixbuf) {
 
 
 void redraw_framedraw_image(void) {
-  cairo_t *cr;
+  lives_painter_t *cr;
   LiVESPixbuf *pixbuf;
 
   int fd_width=lives_widget_get_allocation_width(mainw->framedraw);
@@ -649,13 +649,13 @@ void redraw_framedraw_image(void) {
   // layer to pixbuf
   pixbuf=layer_to_pixbuf(mainw->fd_layer);
 
-  // get cairo for window
-  cr = gdk_cairo_create (lives_widget_get_xwindow(mainw->framedraw));
+  // get lives_painter for window
+  cr = lives_painter_create_from_widget (mainw->framedraw);
 
-  // set source pixbuf for cairo
-  gdk_cairo_set_source_pixbuf (cr, pixbuf, (fd_width-width)>>1, (fd_height-height)>>1);
-  cairo_paint (cr);
-  cairo_destroy(cr);
+  // set source pixbuf for lives_painter
+  lives_painter_set_source_pixbuf (cr, pixbuf, (fd_width-width)>>1, (fd_height-height)>>1);
+  lives_painter_paint (cr);
+  lives_painter_destroy(cr);
 
   // convert pixbuf back to layer
   if (pixbuf_to_layer(mainw->fd_layer,pixbuf)) {
@@ -983,7 +983,7 @@ void after_framedraw_widget_changed (GtkWidget *widget, lives_special_framedraw_
 // various drawing functions
 
 void draw_rect_demask (lives_colRGBA32_t *col, int x1, int y1, int x2, int y2, boolean filled) {
-  cairo_t *cr;
+  lives_painter_t *cr;
   int width,height;
   int fd_width;
   int fd_height;
@@ -1019,24 +1019,24 @@ void draw_rect_demask (lives_colRGBA32_t *col, int x1, int y1, int x2, int y2, b
   y2 -= (fd_height-height)>>1;
   
 
-  cr=layer_to_cairo(mainw->fd_layer);
+  cr=layer_to_lives_painter(mainw->fd_layer);
 
-  // draw on the cairo
+  // draw on the lives_painter
 
-  cairo_set_source_rgba(cr, (double)col->red/255., (double)col->green/255.,(double)col->blue/255.,(double)col->alpha/255.);
+  lives_painter_set_source_rgba(cr, (double)col->red/255., (double)col->green/255.,(double)col->blue/255.,(double)col->alpha/255.);
   
-  cairo_rectangle(cr,  MIN (x1,x2), MIN (y1,y2), ABS (x2-x1), ABS (y2-y1));
+  lives_painter_rectangle(cr,  MIN (x1,x2), MIN (y1,y2), ABS (x2-x1), ABS (y2-y1));
   
-  cairo_stroke (cr);
+  lives_painter_stroke (cr);
 
   if (filled) {
-    cairo_clip(cr);
-    cairo_paint(cr);
+    lives_painter_clip(cr);
+    lives_painter_paint(cr);
   }
 
-  cairo_to_layer(cr, mainw->fd_layer);
+  lives_painter_to_layer(cr, mainw->fd_layer);
 
-  cairo_destroy(cr);
+  lives_painter_destroy(cr);
 
 }
 

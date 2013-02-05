@@ -1,7 +1,7 @@
 // pangotext.c
 // text handling code
 // (c) A. Penkov 2010
-// (c) G. Finch 2010 - 2012
+// (c) G. Finch 2010 - 2013
 // pieces of code taken and modified from scribbler.c
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
@@ -59,9 +59,9 @@ static void getxypos(PangoLayout *layout, double *px, double *py, int weight, in
     *py = d;
 }
 
-static void fill_bckg(cairo_t *cr, double x, double y, double dx, double dy) {
-  cairo_rectangle(cr, x, y, dx, dy);
-  cairo_fill(cr);
+static void fill_bckg(lives_painter_t *cr, double x, double y, double dx, double dy) {
+  lives_painter_rectangle(cr, x, y, dx, dy);
+  lives_painter_fill(cr);
 }
 
 
@@ -121,8 +121,8 @@ weed_plant_t *render_text_to_layer(weed_plant_t *layer, const char *text, const 
   double b_alpha=(double)bg_col->alpha/255.;
   double f_alpha=(double)fg_col->alpha/255.;
 
-  cairo_t *cairo;
-  cairo_surface_t *surface;
+  lives_painter_t *lives_painter;
+  lives_painter_surface_t *surface;
   void *src;
 
   PangoLayout *layout;
@@ -137,12 +137,12 @@ weed_plant_t *render_text_to_layer(weed_plant_t *layer, const char *text, const 
   cent = center ? 1 : 0;
   rise = rising ? 1 : 0;
 
-  // do cairo and pango things
+  // do lives_painter and pango things
 
-  cairo=layer_to_cairo(layer); ///< layer is destroyed (unless error, then cairo is NULL)
-  if (cairo==NULL) return layer; ///< error occured
+  lives_painter=layer_to_lives_painter(layer); ///< layer is destroyed (unless error, then cairo is NULL)
+  if (lives_painter==NULL) return layer; ///< error occured
   
-  layout = pango_cairo_create_layout(cairo);
+  layout = pango_cairo_create_layout(lives_painter);
   
   if (layout) { 
     PangoFontDescription *font;
@@ -165,43 +165,43 @@ weed_plant_t *render_text_to_layer(weed_plant_t *layer, const char *text, const 
     if (cent) pango_layout_set_alignment(layout, PANGO_ALIGN_CENTER);
     else pango_layout_set_alignment(layout, PANGO_ALIGN_LEFT);
     
-    cairo_move_to(cairo, x_text, y_text);
+    lives_painter_move_to(lives_painter, x_text, y_text);
 
     switch(mode) {
     case LIVES_TEXT_MODE_FOREGROUND_AND_BACKGROUND:
-      cairo_set_source_rgba(cairo,bg->red, bg->green, bg->blue, b_alpha);
-      fill_bckg(cairo, x_pos, y_pos, dwidth, dheight);
-      cairo_move_to(cairo, x_text, y_text);
-      cairo_set_source_rgba(cairo,fg->red, fg->green, fg->blue, f_alpha);
+      lives_painter_set_source_rgba(lives_painter,bg->red, bg->green, bg->blue, b_alpha);
+      fill_bckg(lives_painter, x_pos, y_pos, dwidth, dheight);
+      lives_painter_move_to(lives_painter, x_text, y_text);
+      lives_painter_set_source_rgba(lives_painter,fg->red, fg->green, fg->blue, f_alpha);
       break;
     case LIVES_TEXT_MODE_BACKGROUND_ONLY:
-      cairo_set_source_rgba(cairo,bg->red, bg->green, bg->blue, b_alpha);
-      fill_bckg(cairo, x_pos, y_pos, dwidth, dheight);
-      cairo_move_to(cairo, x_pos, y_pos);
-      cairo_set_source_rgba(cairo,fg->red, fg->green, fg->blue, f_alpha);
+      lives_painter_set_source_rgba(lives_painter,bg->red, bg->green, bg->blue, b_alpha);
+      fill_bckg(lives_painter, x_pos, y_pos, dwidth, dheight);
+      lives_painter_move_to(lives_painter, x_pos, y_pos);
+      lives_painter_set_source_rgba(lives_painter,fg->red, fg->green, fg->blue, f_alpha);
       pango_layout_set_text(layout, "", -1);
       break;
     case LIVES_TEXT_MODE_FOREGROUND_ONLY:
     default:
-      cairo_set_source_rgba(cairo,fg->red, fg->green, fg->blue, f_alpha);
+      lives_painter_set_source_rgba(lives_painter,fg->red, fg->green, fg->blue, f_alpha);
       break;
     }
     
-    pango_cairo_show_layout(cairo, layout);
+    pango_cairo_show_layout(lives_painter, layout);
     
     // do not !!
-    //cairo_paint(cairo);
+    //lives_painter_paint(lives_painter);
     
-    cairo_to_layer(cairo,layer);
+    lives_painter_to_layer(lives_painter,layer);
 
     g_object_unref(layout);
     pango_font_description_free(font);
   }
 
-  surface=cairo_get_target(cairo);
-  src=cairo_image_surface_get_data (surface);
+  surface=lives_painter_get_target(lives_painter);
+  src=lives_painter_image_surface_get_data (surface);
   g_free(src);
-  cairo_destroy(cairo);
+  lives_painter_destroy(lives_painter);
   return layer;
 }
 

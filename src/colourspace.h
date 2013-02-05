@@ -132,8 +132,8 @@ void weed_layer_free (weed_plant_t *layer);
 weed_plant_t *weed_layer_new(int width, int height, int *rowstrides, int current_palette);
 int weed_layer_get_palette(weed_plant_t *layer);
 
-cairo_t *layer_to_cairo(weed_plant_t *layer);
-boolean cairo_to_layer(cairo_t *cairo, weed_plant_t *layer);
+lives_painter_t *layer_to_lives_painter(weed_plant_t *layer);
+boolean lives_painter_to_layer(lives_painter_t *cairo, weed_plant_t *layer);
 
 void alpha_unpremult(weed_plant_t *layer, boolean un);
 
@@ -154,7 +154,7 @@ boolean weed_palette_is_lower_quality(int p1, int p2);  ///< return TRUE if p1 i
 boolean weed_palette_is_resizable(int pal);
 gdouble weed_palette_get_compression_ratio (int pal);
 
-int get_weed_palette_for_cairo(void);
+int get_weed_palette_for_lives_painter(void);
 
 #define BLACK_THRESH 20 ///< if R,G and B values are all <= this, we consider it a "black" pixel
 boolean lives_pixbuf_is_all_black(LiVESPixbuf *pixbuf);

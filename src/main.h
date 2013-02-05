@@ -52,6 +52,7 @@ POSSIBILITY OF SUCH DAMAGES.
 #define HAS_LIVES_MAIN_H
 
 #define GUI_GTK
+#define PAINTER_CAIRO
 
 #ifdef GUI_GTK
 
@@ -606,8 +607,8 @@ typedef struct {
   boolean keep_without_preview; ///< allow keep, even when nopreview is set - TODO use only nopreview and nokeep
 
 #if GTK_CHECK_VERSION(3,0,0)
-  cairo_surface_t *laudio_drawable;
-  cairo_surface_t *raudio_drawable;
+  lives_painter_surface_t *laudio_drawable;
+  lives_painter_surface_t *raudio_drawable;
 #else
   GdkPixmap *laudio_drawable;
   GdkPixmap *raudio_drawable;

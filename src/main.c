@@ -3250,6 +3250,10 @@ void load_start_image(gint frame) {
   do {
     width=cfile->hsize;
     height=cfile->vsize;
+
+    // TODO *** - if width*height==0, show broken frame image
+
+
     rwidth=lives_widget_get_allocation_width(mainw->image272);
     rheight=lives_widget_get_allocation_height(mainw->image272);
     calc_maxspect(rwidth,rheight,&width,&height);
@@ -3838,7 +3842,7 @@ static boolean weed_layer_new_from_file_progressive(weed_plant_t *layer,
   do_not_free=pixbuf_to_layer(layer,pixbuf);
 
   if (do_not_free) {
-    mainw->do_not_free=gdk_pixbuf_get_pixels(pixbuf);
+    mainw->do_not_free=lives_pixbuf_get_pixels_readonly(pixbuf);
     mainw->free_fn=lives_free_with_check;
   }
   g_object_unref(pixbuf);

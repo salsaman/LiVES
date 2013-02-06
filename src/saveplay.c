@@ -2135,7 +2135,7 @@ void play_file (void) {
   mainw->pre_src_audio_file=mainw->current_file;
 
   // enable the freeze button
-  gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), GDK_BackSpace, (GdkModifierType)GDK_CONTROL_MASK, 
+  gtk_accel_group_connect (GTK_ACCEL_GROUP (mainw->accel_group), LIVES_KEY_BackSpace, (GdkModifierType)LIVES_CONTROL_MASK, 
 			   (GtkAccelFlags)0, (freeze_closure=g_cclosure_new (G_CALLBACK (freeze_callback),NULL,NULL)));
 
   if (mainw->multitrack!=NULL) {

@@ -312,8 +312,8 @@ static void set_cursor_style(lives_mt *mt, gint cstyle, gint width, gint height,
 	  if (thumbnail!=NULL) {
 	    trow=lives_pixbuf_get_rowstride(thumbnail);
 	    twidth=lives_pixbuf_get_width(thumbnail);
-	    cpixels=gdk_pixbuf_get_pixels(pixbuf)+(i*4);
-	    tpixels=gdk_pixbuf_get_pixels(thumbnail);
+	    cpixels=lives_pixbuf_get_pixels(pixbuf)+(i*4);
+	    tpixels=lives_pixbuf_get_pixels(thumbnail);
 
 	    if (!lives_pixbuf_get_has_alpha(thumbnail)) {
 	      twidth3=twidth*3;
@@ -345,7 +345,7 @@ static void set_cursor_style(lives_mt *mt, gint cstyle, gint width, gint height,
   case LIVES_CURSOR_AUDIO_BLOCK:
     pixbuf=lives_pixbuf_new (TRUE, width, height);
     trow=lives_pixbuf_get_rowstride(pixbuf);
-    cpixels=gdk_pixbuf_get_pixels(pixbuf);
+    cpixels=lives_pixbuf_get_pixels(pixbuf);
     for (j=0;j<height;j++) {
       for (k=0;k<width;k++) {
 	cpixels[0]=audcol.red;
@@ -360,7 +360,7 @@ static void set_cursor_style(lives_mt *mt, gint cstyle, gint width, gint height,
   case LIVES_CURSOR_FX_BLOCK:
     pixbuf=lives_pixbuf_new (TRUE, width, height);
     trow=lives_pixbuf_get_rowstride(pixbuf);
-    cpixels=gdk_pixbuf_get_pixels(pixbuf);
+    cpixels=lives_pixbuf_get_pixels(pixbuf);
     for (j=0;j<height;j++) {
       for (k=0;k<width;k++) {
 	cpixels[0]=fxcol.red;
@@ -3879,7 +3879,7 @@ on_clipbox_enter (GtkWidget *widget, GdkEventCrossing *event, gpointer user_data
 
 
 void mt_init_start_end_spins(lives_mt *mt) {
-  GtkWidget *hbox,*btoolbar;
+  GtkWidget *hbox,*btoolbar,*label,*eventbox;
   GObject *spinbutton_start_adj;
   GObject *spinbutton_end_adj;
   
@@ -3888,28 +3888,41 @@ void mt_init_start_end_spins(lives_mt *mt) {
   
   gtk_box_pack_start (GTK_BOX (mt->top_vbox), hbox, FALSE, FALSE, 6);
 
+
+  eventbox = gtk_event_box_new ();
+  gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, 20);
+
+  if (palette->style&STYLE_1) {
+    gtk_widget_modify_bg(eventbox, GTK_STATE_NORMAL, &palette->menu_and_bars);
+  }
+
   btoolbar=gtk_toolbar_new();
-  gtk_box_pack_start (GTK_BOX (hbox), btoolbar, FALSE, FALSE, 20);
+  gtk_container_add (GTK_CONTAINER (eventbox), btoolbar);
 
   gtk_toolbar_set_show_arrow(GTK_TOOLBAR(btoolbar),FALSE);
-
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_bg(btoolbar, GTK_STATE_NORMAL, &palette->menu_and_bars);
-    gtk_widget_modify_bg(btoolbar, GTK_STATE_PRELIGHT, &palette->menu_and_bars);
-  }
-  if (palette->style&STYLE_1) {
-    gtk_widget_modify_bg(btoolbar, GTK_STATE_INSENSITIVE, &palette->normal_back);
-  }
 
   gtk_toolbar_set_style (GTK_TOOLBAR (btoolbar), GTK_TOOLBAR_TEXT);
 
 
-  mt->amixer_button=GTK_WIDGET(gtk_tool_button_new(NULL,_ ("Audio mixer (ctrl-m)")));
+  mt->amixer_button=GTK_WIDGET(gtk_tool_button_new(NULL,NULL));
+
+  label=lives_standard_label_new(_ ("Audio mixer (ctrl-m)"));
+  gtk_tool_button_set_label_widget(GTK_TOOL_BUTTON(mt->amixer_button),label);
 
   gtk_toolbar_insert(GTK_TOOLBAR(btoolbar),GTK_TOOL_ITEM(mt->amixer_button),-1);
 
+  if (palette->style&STYLE_1) {
+    gtk_widget_modify_bg(btoolbar, GTK_STATE_NORMAL, &palette->menu_and_bars);
+
+    gtk_widget_modify_bg(mt->amixer_button, GTK_STATE_NORMAL, &palette->menu_and_bars);
+    gtk_widget_modify_bg(label, GTK_STATE_NORMAL, &palette->menu_and_bars);
+
+    gtk_widget_modify_bg(btoolbar, GTK_STATE_PRELIGHT, &palette->menu_and_bars);
+    gtk_widget_modify_bg(btoolbar, GTK_STATE_INSENSITIVE, &palette->menu_and_bars);
+  }
+
   gtk_widget_add_accelerator (mt->amixer_button, "clicked", mt->accel_group,
-                              GDK_m, GDK_CONTROL_MASK,
+                              LIVES_KEY_m, GDK_CONTROL_MASK,
                               GTK_ACCEL_VISIBLE);
 
   if (cfile->achans==0||!mt->opts.pertrack_audio) gtk_widget_set_sensitive(mt->amixer_button,FALSE);
@@ -5578,7 +5591,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
 
 
   gtk_widget_add_accelerator (mt->close, "activate", mt->accel_group,
-                              GDK_w, GDK_CONTROL_MASK,
+                              LIVES_KEY_w, LIVES_CONTROL_MASK,
                               GTK_ACCEL_VISIBLE);
 
   mt->recent_menu = gtk_menu_item_new_with_mnemonic (_("_Recent Files..."));
@@ -5666,7 +5679,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   gtk_widget_set_sensitive (mt->save_event_list, FALSE);
 
   gtk_widget_add_accelerator (mt->save_event_list, "activate", mt->accel_group,
-                              GDK_s, GDK_CONTROL_MASK,
+                              LIVES_KEY_s, LIVES_CONTROL_MASK,
                               GTK_ACCEL_VISIBLE);
 
   mt->load_event_list = gtk_image_menu_item_new_with_mnemonic (_("_Load layout..."));
@@ -5677,7 +5690,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   gtk_container_add (GTK_CONTAINER (menuitem_menu), mt->clear_event_list);
 
   gtk_widget_add_accelerator (mt->clear_event_list, "activate", mt->accel_group,
-                              GDK_d, GDK_CONTROL_MASK,
+                              LIVES_KEY_d, LIVES_CONTROL_MASK,
                               GTK_ACCEL_VISIBLE);
 
   gtk_widget_set_sensitive(mt->clear_event_list,mt->event_list!=NULL);
@@ -5715,7 +5728,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   gtk_container_add (GTK_CONTAINER (menuitem_menu), mt->quit);
 
   gtk_widget_add_accelerator (mt->quit, "activate", mt->accel_group,
-                              GDK_q, GDK_CONTROL_MASK,
+                              LIVES_KEY_q, LIVES_CONTROL_MASK,
                               GTK_ACCEL_VISIBLE);
 
   // Edit
@@ -5736,7 +5749,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   gtk_widget_set_sensitive (mt->undo, FALSE);
 
   gtk_widget_add_accelerator (mt->undo, "activate", mt->accel_group,
-                              GDK_u, GDK_CONTROL_MASK,
+                              LIVES_KEY_u, LIVES_CONTROL_MASK,
                               GTK_ACCEL_VISIBLE);
   
   image = gtk_image_new_from_stock ("gtk-undo", GTK_ICON_SIZE_MENU);
@@ -5758,7 +5771,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   gtk_widget_set_sensitive (mt->redo, FALSE);
 
   gtk_widget_add_accelerator (mt->redo, "activate", mt->accel_group,
-                              GDK_z, GDK_CONTROL_MASK,
+                              LIVES_KEY_z, LIVES_CONTROL_MASK,
                               GTK_ACCEL_VISIBLE);
 
   image = gtk_image_new_from_stock ("gtk-redo", GTK_ICON_SIZE_MENU);
@@ -5784,7 +5797,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   gtk_container_add (GTK_CONTAINER (menuitem_menu), mt->clipedit);
 
   gtk_widget_add_accelerator (mt->clipedit, "activate", mt->accel_group,
-                              GDK_e, GDK_CONTROL_MASK,
+                              LIVES_KEY_e, LIVES_CONTROL_MASK,
                               GTK_ACCEL_VISIBLE);
 
 
@@ -5796,7 +5809,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   gtk_container_add (GTK_CONTAINER (menuitem_menu), mt->adjust_start_end);
 
   gtk_widget_add_accelerator (mt->adjust_start_end, "activate", mt->accel_group,
-                              GDK_x, GDK_CONTROL_MASK,
+                              LIVES_KEY_x, LIVES_CONTROL_MASK,
                               GTK_ACCEL_VISIBLE);
   gtk_widget_set_sensitive (mt->adjust_start_end, FALSE);
 
@@ -5805,10 +5818,10 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   gtk_container_add (GTK_CONTAINER (menuitem_menu), mt->insert);
 
   gtk_widget_add_accelerator (mt->insert, "activate", mt->accel_group,
-                              GDK_i, (GdkModifierType)0,
+                              LIVES_KEY_i, (GdkModifierType)0,
                               GTK_ACCEL_VISIBLE);
   gtk_widget_add_accelerator (mt->insert, "activate", mt->accel_group,
-                              GDK_i, GDK_CONTROL_MASK,
+                              LIVES_KEY_i, LIVES_CONTROL_MASK,
                               (GtkAccelFlags)0);
   gtk_widget_set_sensitive (mt->insert, FALSE);
 
@@ -5817,7 +5830,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   gtk_container_add (GTK_CONTAINER (menuitem_menu), mt->audio_insert);
 
   gtk_widget_add_accelerator (mt->audio_insert, "activate", mt->accel_group,
-                              GDK_i, GDK_CONTROL_MASK,
+                              LIVES_KEY_i, LIVES_CONTROL_MASK,
                               GTK_ACCEL_VISIBLE);
   gtk_widget_set_sensitive (mt->audio_insert, FALSE);
 
@@ -5827,7 +5840,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   gtk_widget_set_sensitive (mt->delblock, FALSE);
 
   gtk_widget_add_accelerator (mt->delblock, "activate", mt->accel_group,
-                              GDK_d, GDK_CONTROL_MASK,
+                              LIVES_KEY_d, LIVES_CONTROL_MASK,
                               GTK_ACCEL_VISIBLE);
 
 
@@ -5835,7 +5848,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   gtk_container_add (GTK_CONTAINER (menuitem_menu), mt->jumpback);
 
   gtk_widget_add_accelerator (mt->jumpback, "activate", mt->accel_group,
-                              GDK_j, GDK_CONTROL_MASK,
+                              LIVES_KEY_j, LIVES_CONTROL_MASK,
                               GTK_ACCEL_VISIBLE);
 
   gtk_widget_set_sensitive (mt->jumpback, FALSE);
@@ -5844,7 +5857,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   gtk_container_add (GTK_CONTAINER (menuitem_menu), mt->jumpnext);
 
   gtk_widget_add_accelerator (mt->jumpnext, "activate", mt->accel_group,
-                              GDK_l, GDK_CONTROL_MASK,
+                              LIVES_KEY_l, LIVES_CONTROL_MASK,
                               GTK_ACCEL_VISIBLE);
 
   gtk_widget_set_sensitive (mt->jumpnext, FALSE);
@@ -5879,7 +5892,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
 
   mt->playall = gtk_image_menu_item_new_with_mnemonic (_("_Play from Timeline Position"));
   gtk_widget_add_accelerator (mt->playall, "activate", mt->accel_group,
-                              GDK_p, (GdkModifierType)0,
+                              LIVES_KEY_p, (GdkModifierType)0,
                               GTK_ACCEL_VISIBLE);
   gtk_widget_set_sensitive (mt->playall, FALSE);
 
@@ -5891,7 +5904,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
 
   mt->playsel = gtk_image_menu_item_new_with_mnemonic (_("Pla_y selected time only"));
   gtk_widget_add_accelerator (mt->playsel, "activate", mt->accel_group,
-                              GDK_y, (GdkModifierType)0,
+                              LIVES_KEY_y, (GdkModifierType)0,
                               GTK_ACCEL_VISIBLE);
   gtk_container_add (GTK_CONTAINER (menuitem_menu), mt->playsel);
   gtk_widget_set_sensitive (mt->playsel, FALSE);
@@ -5900,7 +5913,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   gtk_container_add (GTK_CONTAINER (menuitem_menu), mt->stop);
   gtk_widget_set_sensitive (mt->stop, FALSE);
   gtk_widget_add_accelerator (mt->stop, "activate", mt->accel_group,
-                              GDK_q, (GdkModifierType)0,
+                              LIVES_KEY_q, (GdkModifierType)0,
                               GTK_ACCEL_VISIBLE);
 
   image = gtk_image_new_from_stock ("gtk-stop", GTK_ICON_SIZE_MENU);
@@ -5914,7 +5927,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   gtk_widget_set_sensitive (mt->rewind, FALSE);
 
   gtk_widget_add_accelerator (mt->rewind, "activate", mt->accel_group,
-                              GDK_w, (GdkModifierType)0,
+                              LIVES_KEY_w, (GdkModifierType)0,
                               GTK_ACCEL_VISIBLE);
 
   separator = gtk_menu_item_new ();
@@ -5926,7 +5939,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(full_screen),mainw->fs);
 
   gtk_widget_add_accelerator (full_screen, "activate", mt->accel_group,
-                              GDK_f, (GdkModifierType)0,
+                              LIVES_KEY_f, (GdkModifierType)0,
                               GTK_ACCEL_VISIBLE);
 
   mt->sepwin = gtk_check_menu_item_new_with_mnemonic (_("Play in _Separate Window"));
@@ -5934,7 +5947,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mt->sepwin),mainw->sep_win);
 
   gtk_widget_add_accelerator (mt->sepwin, "activate", mt->accel_group,
-                              GDK_s, (GdkModifierType)0,
+                              LIVES_KEY_s, (GdkModifierType)0,
                               GTK_ACCEL_VISIBLE);
 
   mt->loop_continue = gtk_check_menu_item_new_with_mnemonic (_("L_oop Continuously"));
@@ -5942,7 +5955,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mt->loop_continue),mainw->loop_cont);
 
   gtk_widget_add_accelerator (mt->loop_continue, "activate", mt->accel_group,
-                              GDK_o, (GdkModifierType)0,
+                              LIVES_KEY_o, (GdkModifierType)0,
                               GTK_ACCEL_VISIBLE);
 
   mt->mute_audio = gtk_check_menu_item_new_with_mnemonic (_("_Mute"));
@@ -5950,7 +5963,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mt->mute_audio),mainw->mute);
 
   gtk_widget_add_accelerator (mt->mute_audio, "activate", mt->accel_group,
-                              GDK_z, (GdkModifierType)0,
+                              LIVES_KEY_z, (GdkModifierType)0,
                               GTK_ACCEL_VISIBLE);
 
 
@@ -5961,7 +5974,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   sticky = gtk_check_menu_item_new_with_mnemonic (_("Separate Window 'S_ticky' Mode"));
 
   gtk_widget_add_accelerator (sticky, "activate", mt->accel_group,
-                              GDK_t, (GdkModifierType)0,
+                              LIVES_KEY_t, (GdkModifierType)0,
                               GTK_ACCEL_VISIBLE);
 
   gtk_container_add (GTK_CONTAINER (menuitem_menu), sticky);
@@ -6357,7 +6370,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   gtk_container_add (GTK_CONTAINER (menuitem_menu), mt->cback_audio);
 
   gtk_widget_add_accelerator (mt->cback_audio, "activate", mt->accel_group,
-                              GDK_b, GDK_CONTROL_MASK,
+                              LIVES_KEY_b, LIVES_CONTROL_MASK,
                               GTK_ACCEL_VISIBLE);
 
   separator = gtk_menu_item_new ();
@@ -6368,7 +6381,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   gtk_container_add (GTK_CONTAINER (menuitem_menu), mt->add_vid_behind);
 
   gtk_widget_add_accelerator (mt->add_vid_behind, "activate", mt->accel_group,
-                              GDK_t, GDK_CONTROL_MASK,
+                              LIVES_KEY_t, LIVES_CONTROL_MASK,
                               GTK_ACCEL_VISIBLE);
 
 
@@ -6376,7 +6389,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   gtk_container_add (GTK_CONTAINER (menuitem_menu), mt->add_vid_front);
 
   gtk_widget_add_accelerator (mt->add_vid_front, "activate", mt->accel_group,
-                              GDK_t, (GdkModifierType)(GDK_CONTROL_MASK|GDK_SHIFT_MASK),
+                              LIVES_KEY_t, (GdkModifierType)(LIVES_CONTROL_MASK|LIVES_SHIFT_MASK),
                               GTK_ACCEL_VISIBLE);
 
 
@@ -6393,7 +6406,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
 		    (gpointer)mt);
 
   gtk_widget_add_accelerator (menuitem, "activate", mt->accel_group,
-                              GDK_s, (GdkModifierType)GDK_CONTROL_MASK,
+                              LIVES_KEY_s, (GdkModifierType)LIVES_CONTROL_MASK,
                               GTK_ACCEL_VISIBLE);
 
 
@@ -6438,7 +6451,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
 		    (gpointer)mt);
 
   gtk_widget_add_accelerator (mt->remove_gaps, "activate", mt->accel_group,
-                              GDK_g, GDK_CONTROL_MASK,
+                              LIVES_KEY_g, LIVES_CONTROL_MASK,
                               GTK_ACCEL_VISIBLE);
 
   mt->remove_first_gaps = gtk_menu_item_new_with_mnemonic ("");
@@ -6449,7 +6462,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
 		    (gpointer)mt);
 
   gtk_widget_add_accelerator (mt->remove_first_gaps, "activate", mt->accel_group,
-                              GDK_f, GDK_CONTROL_MASK,
+                              LIVES_KEY_f, LIVES_CONTROL_MASK,
                               GTK_ACCEL_VISIBLE);
 
 
@@ -6470,7 +6483,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   gtk_container_add (GTK_CONTAINER (menuitem_menu), mt->select_track);
 
   gtk_widget_add_accelerator (mt->select_track, "activate", mt->accel_group,
-                              GDK_space, GDK_CONTROL_MASK,
+                              LIVES_KEY_Space, LIVES_CONTROL_MASK,
                               GTK_ACCEL_VISIBLE);
 
   menuitem = gtk_menu_item_new_with_mnemonic (_("Select _all video tracks"));
@@ -6495,7 +6508,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
 		    (gpointer)mt);
 
   gtk_widget_add_accelerator (menuitem, "activate", mt->accel_group,
-                              GDK_a, GDK_CONTROL_MASK,
+                              LIVES_KEY_a, LIVES_CONTROL_MASK,
                               GTK_ACCEL_VISIBLE);
 
   menuitem = gtk_menu_item_new_with_mnemonic (_("Select from _zero time"));
@@ -6609,7 +6622,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   gtk_widget_show (menuitem);
   gtk_container_add (GTK_CONTAINER (menuitem_menu), menuitem);
   gtk_widget_add_accelerator (menuitem, "activate", mt->accel_group,
-                              GDK_p, GDK_CONTROL_MASK,
+                              LIVES_KEY_p, LIVES_CONTROL_MASK,
                               GTK_ACCEL_VISIBLE);
 
   image = gtk_image_new_from_stock ("gtk-preferences", GTK_ICON_SIZE_MENU);
@@ -6639,7 +6652,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   gtk_widget_set_sensitive (mt->render, FALSE);
 
   gtk_widget_add_accelerator (mt->render, "activate", mt->accel_group,
-                              GDK_r, GDK_CONTROL_MASK,
+                              LIVES_KEY_r, LIVES_CONTROL_MASK,
                               GTK_ACCEL_VISIBLE);
 
   // TODO - render selected time
@@ -6695,14 +6708,14 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   gtk_container_add (GTK_CONTAINER (menuitem_menu), mt->view_clips);
 
   gtk_widget_add_accelerator (mt->view_clips, "activate", mt->accel_group,
-                              GDK_c, (GdkModifierType)0,
+                              LIVES_KEY_c, (GdkModifierType)0,
                               GTK_ACCEL_VISIBLE);
 
   mt->view_in_out = gtk_menu_item_new_with_mnemonic (_("Block _In/out points"));
   gtk_container_add (GTK_CONTAINER (menuitem_menu), mt->view_in_out);
 
   gtk_widget_add_accelerator (mt->view_in_out, "activate", mt->accel_group,
-                              GDK_n, (GdkModifierType)0,
+                              LIVES_KEY_n, (GdkModifierType)0,
                               GTK_ACCEL_VISIBLE);
 
   gtk_widget_set_sensitive(mt->view_in_out,FALSE);
@@ -6711,7 +6724,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   gtk_container_add (GTK_CONTAINER (menuitem_menu), mt->view_effects);
 
   gtk_widget_add_accelerator (mt->view_effects, "activate", mt->accel_group,
-                              GDK_e, (GdkModifierType)0,
+                              LIVES_KEY_e, (GdkModifierType)0,
                               GTK_ACCEL_VISIBLE);
 
   show_messages = gtk_image_menu_item_new_with_mnemonic (_("Show _Messages"));
@@ -6744,7 +6757,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   gtk_container_add (GTK_CONTAINER (menuitem_menu), view_ctx);
 
   gtk_widget_add_accelerator (view_ctx, "activate", mt->accel_group,
-                              GDK_d, (GdkModifierType)0,
+                              LIVES_KEY_d, (GdkModifierType)0,
                               GTK_ACCEL_VISIBLE);
 
   mt->change_max_disp = gtk_menu_item_new_with_mnemonic (_("Maximum tracks to display..."));
@@ -6762,25 +6775,25 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   gtk_container_add (GTK_CONTAINER (menuitem_menu), ccursor);
 
   gtk_widget_add_accelerator (ccursor, "activate", mt->accel_group,
-                              GDK_c, (GdkModifierType)GDK_CONTROL_MASK,
+                              LIVES_KEY_c, (GdkModifierType)LIVES_CONTROL_MASK,
                               GTK_ACCEL_VISIBLE);
 
   zoom_in = gtk_menu_item_new_with_mnemonic (_("_Zoom in"));
   gtk_container_add (GTK_CONTAINER (menuitem_menu), zoom_in);
 
   gtk_widget_add_accelerator (zoom_in, "activate", mt->accel_group,
-                              GDK_plus, (GdkModifierType)GDK_CONTROL_MASK,
+                              LIVES_KEY_Plus, (GdkModifierType)LIVES_CONTROL_MASK,
                               GTK_ACCEL_VISIBLE);
 
   gtk_widget_add_accelerator (zoom_in, "activate", mt->accel_group,
-                              GDK_equal, (GdkModifierType)GDK_CONTROL_MASK,
+                              LIVES_KEY_Equal, (GdkModifierType)LIVES_CONTROL_MASK,
                               (GtkAccelFlags)0);
 
   zoom_out = gtk_menu_item_new_with_mnemonic (_("_Zoom out"));
   gtk_container_add (GTK_CONTAINER (menuitem_menu), zoom_out);
 
   gtk_widget_add_accelerator (zoom_out, "activate", mt->accel_group,
-                              GDK_minus, (GdkModifierType)GDK_CONTROL_MASK,
+                              LIVES_KEY_Minus, (GdkModifierType)LIVES_CONTROL_MASK,
                               GTK_ACCEL_VISIBLE);
 
 
@@ -7132,7 +7145,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
                       G_CALLBACK (on_mt_list_fx_activate),
                       (gpointer)mt);
 
-  gtk_accel_group_connect (GTK_ACCEL_GROUP (mt->accel_group), GDK_m, (GdkModifierType)0, (GtkAccelFlags)0, 
+  gtk_accel_group_connect (GTK_ACCEL_GROUP (mt->accel_group), LIVES_KEY_m, (GdkModifierType)0, (GtkAccelFlags)0, 
 			   g_cclosure_new (G_CALLBACK (mt_mark_callback),(gpointer)mt,NULL));
 
   mt->insa_eventbox=gtk_event_box_new();
@@ -8002,7 +8015,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
 		    (gpointer)mt);
 
 
-  gtk_widget_add_events (mt->tl_eventbox, GDK_BUTTON1_MOTION_MASK | GDK_BUTTON_RELEASE_MASK | GDK_BUTTON_PRESS_MASK|GDK_SCROLL_MASK);
+  gtk_widget_add_events (mt->tl_eventbox, GDK_BUTTON1_MOTION_MASK | GDK_BUTTON_RELEASE_MASK | GDK_BUTTON_PRESS_MASK| GDK_SCROLL_MASK);
   mt->mouse_mot2=g_signal_connect (GTK_OBJECT (mt->tl_eventbox), "motion_notify_event",
 				  G_CALLBACK (on_track_move),
 				  (gpointer)mt);
@@ -8081,27 +8094,27 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
 
   mainw->multitrack=mt;
 
-  gtk_accel_group_connect (GTK_ACCEL_GROUP (mt->accel_group), GDK_Page_Up, GDK_CONTROL_MASK, (GtkAccelFlags)0,
+  gtk_accel_group_connect (GTK_ACCEL_GROUP (mt->accel_group), LIVES_KEY_Page_Up, LIVES_CONTROL_MASK, (GtkAccelFlags)0,
 			   g_cclosure_new (G_CALLBACK (mt_prevclip),mt,NULL));
-  gtk_accel_group_connect (GTK_ACCEL_GROUP (mt->accel_group), GDK_Page_Down, GDK_CONTROL_MASK, (GtkAccelFlags)0, 
+  gtk_accel_group_connect (GTK_ACCEL_GROUP (mt->accel_group), LIVES_KEY_Page_Down, LIVES_CONTROL_MASK, (GtkAccelFlags)0, 
 			   g_cclosure_new (G_CALLBACK (mt_nextclip),mt,NULL));
 
-  gtk_accel_group_connect (GTK_ACCEL_GROUP (mt->accel_group), GDK_Left, GDK_CONTROL_MASK, (GtkAccelFlags)0, 
+  gtk_accel_group_connect (GTK_ACCEL_GROUP (mt->accel_group), LIVES_KEY_Left, LIVES_CONTROL_MASK, (GtkAccelFlags)0, 
 			   g_cclosure_new (G_CALLBACK (mt_tlback),mt,NULL));
-  gtk_accel_group_connect (GTK_ACCEL_GROUP (mt->accel_group), GDK_Right, GDK_CONTROL_MASK, (GtkAccelFlags)0, 
+  gtk_accel_group_connect (GTK_ACCEL_GROUP (mt->accel_group), LIVES_KEY_Right, LIVES_CONTROL_MASK, (GtkAccelFlags)0, 
 			   g_cclosure_new (G_CALLBACK (mt_tlfor),mt,NULL));
 
-  gtk_accel_group_connect (GTK_ACCEL_GROUP (mt->accel_group), GDK_Left, GDK_SHIFT_MASK, (GtkAccelFlags)0, 
+  gtk_accel_group_connect (GTK_ACCEL_GROUP (mt->accel_group), LIVES_KEY_Left, LIVES_SHIFT_MASK, (GtkAccelFlags)0, 
 			   g_cclosure_new (G_CALLBACK (mt_tlback_frame),mt,NULL));
-  gtk_accel_group_connect (GTK_ACCEL_GROUP (mt->accel_group), GDK_Right, GDK_SHIFT_MASK, (GtkAccelFlags)0, 
+  gtk_accel_group_connect (GTK_ACCEL_GROUP (mt->accel_group), LIVES_KEY_Right, LIVES_SHIFT_MASK, (GtkAccelFlags)0, 
 			   g_cclosure_new (G_CALLBACK (mt_tlfor_frame),mt,NULL));
 
-  gtk_accel_group_connect (GTK_ACCEL_GROUP (mt->accel_group), GDK_Up, GDK_CONTROL_MASK, (GtkAccelFlags)0, 
+  gtk_accel_group_connect (GTK_ACCEL_GROUP (mt->accel_group), LIVES_KEY_Up, LIVES_CONTROL_MASK, (GtkAccelFlags)0, 
 			   g_cclosure_new (G_CALLBACK (mt_trup),mt,NULL));
-  gtk_accel_group_connect (GTK_ACCEL_GROUP (mt->accel_group), GDK_Down, GDK_CONTROL_MASK, (GtkAccelFlags)0, 
+  gtk_accel_group_connect (GTK_ACCEL_GROUP (mt->accel_group), LIVES_KEY_Down, LIVES_CONTROL_MASK, (GtkAccelFlags)0, 
 			   g_cclosure_new (G_CALLBACK (mt_trdown),mt,NULL));
 
-  gtk_accel_group_connect (GTK_ACCEL_GROUP (mt->accel_group), GDK_Return, GDK_CONTROL_MASK, (GtkAccelFlags)0, 
+  gtk_accel_group_connect (GTK_ACCEL_GROUP (mt->accel_group), LIVES_KEY_Return, LIVES_CONTROL_MASK, (GtkAccelFlags)0, 
 			   g_cclosure_new (G_CALLBACK (mt_selblock),mt,NULL));
 
   mt->last_direction=DIRECTION_POSITIVE;
@@ -10351,6 +10364,7 @@ boolean on_multitrack_activate (GtkMenuItem *menuitem, weed_plant_t *event_list)
     gtk_widget_hide (mainw->LiVES);
   
   while (g_main_context_iteration(NULL,FALSE));
+
   redraw_all_event_boxes(multi);
 
   // this must be done right at the end
@@ -16617,10 +16631,10 @@ void draw_region (lives_mt *mt) {
 
   cr = lives_painter_create_from_widget (mt->timeline_reg);
   lives_painter_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
-  lives_painter_rectangle(cr,(start-mt->tl_min)*mt->timeline->allocation.width/(mt->tl_max-mt->tl_min), 
-		  0, 
-		  (end-start)*mt->timeline->allocation.width/(mt->tl_max-mt->tl_min), 
-		  mt->timeline_reg->allocation.height-2);
+  lives_painter_rectangle(cr,(start-mt->tl_min)*lives_widget_get_allocation_width(mt->timeline)/(mt->tl_max-mt->tl_min), 
+			  0, 
+			  (end-start)*lives_widget_get_allocation_width(mt->timeline)/(mt->tl_max-mt->tl_min), 
+			  lives_widget_get_allocation_height(mt->timeline_reg)-2);
   lives_painter_fill(cr);
   lives_painter_destroy(cr);
 }
@@ -21126,7 +21140,7 @@ void amixer_show (GtkButton *button, gpointer user_data) {
 
 
   gtk_widget_add_accelerator (close_button, "clicked", accel_group,
-                              GDK_m, GDK_CONTROL_MASK,
+                              LIVES_KEY_m, LIVES_CONTROL_MASK,
                               (GtkAccelFlags)0);
 
   gtk_window_add_accel_group (GTK_WINDOW (amixerw), accel_group);

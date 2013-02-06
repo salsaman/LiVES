@@ -110,6 +110,7 @@ typedef GdkInterpType                     LiVESInterpType;
 typedef gpointer                          LiVESObjectPtr;
 
 #define LIVES_WIDGET(widget) GTK_WIDGET(widget)
+#define LIVES_PIXBUF(widget) GDK_PIXBUF(widget)
 #define LIVES_WINDOW(widget) GTK_WINDOW(widget)
 #define LIVES_XWINDOW(widget) GDK_WINDOW(widget)
 #define LIVES_BOX(widget) GTK_BOX(widget)
@@ -160,8 +161,13 @@ typedef GLogLevelFlags LiVESLogLevelFlags;
 #define LIVES_KEY_BackSpace GDK_KEY_BackSpace
 #define LIVES_KEY_Return GDK_KEY_Return
 #define LIVES_KEY_Tab GDK_KEY_Tab
-
-#define LIVES_KEY_q GDK_KEY_q
+#define LIVES_KEY_Home GDK_KEY_Home
+#define LIVES_KEY_End GDK_KEY_End
+#define LIVES_KEY_Slash GDK_KEY_slash
+#define LIVES_KEY_Space GDK_KEY_space
+#define LIVES_KEY_Plus GDK_KEY_plus
+#define LIVES_KEY_Minus GDK_KEY_minus
+#define LIVES_KEY_Equal GDK_KEY_equal
 
 #define LIVES_KEY_1 GDK_KEY_1
 #define LIVES_KEY_2 GDK_KEY_2
@@ -174,7 +180,32 @@ typedef GLogLevelFlags LiVESLogLevelFlags;
 #define LIVES_KEY_9 GDK_KEY_9
 #define LIVES_KEY_0 GDK_KEY_0
 
+#define LIVES_KEY_a GDK_KEY_a
+#define LIVES_KEY_b GDK_KEY_b
+#define LIVES_KEY_c GDK_KEY_c
+#define LIVES_KEY_d GDK_KEY_d
+#define LIVES_KEY_e GDK_KEY_e
+#define LIVES_KEY_f GDK_KEY_f
+#define LIVES_KEY_g GDK_KEY_g
+#define LIVES_KEY_h GDK_KEY_h
+#define LIVES_KEY_i GDK_KEY_i
+#define LIVES_KEY_j GDK_KEY_j
+#define LIVES_KEY_k GDK_KEY_k
+#define LIVES_KEY_l GDK_KEY_l
+#define LIVES_KEY_m GDK_KEY_m
+#define LIVES_KEY_n GDK_KEY_n
+#define LIVES_KEY_o GDK_KEY_o
+#define LIVES_KEY_p GDK_KEY_p
 #define LIVES_KEY_q GDK_KEY_q
+#define LIVES_KEY_r GDK_KEY_r
+#define LIVES_KEY_s GDK_KEY_s
+#define LIVES_KEY_t GDK_KEY_t
+#define LIVES_KEY_u GDK_KEY_u
+#define LIVES_KEY_v GDK_KEY_v
+#define LIVES_KEY_w GDK_KEY_w
+#define LIVES_KEY_x GDK_KEY_x
+#define LIVES_KEY_y GDK_KEY_y
+#define LIVES_KEY_z GDK_KEY_z
 
 #define LIVES_KEY_F1 GDK_KEY_F1
 #define LIVES_KEY_F2 GDK_KEY_F2
@@ -204,8 +235,13 @@ typedef GLogLevelFlags LiVESLogLevelFlags;
 #define LIVES_KEY_BackSpace GDK_BackSpace
 #define LIVES_KEY_Return GDK_Return
 #define LIVES_KEY_Tab GDK_Tab
-
-#define LIVES_KEY_q GDK_q
+#define LIVES_KEY_Home GDK_Home
+#define LIVES_KEY_End GDK_End
+#define LIVES_KEY_Slash GDK_slash
+#define LIVES_KEY_Space GDK_space
+#define LIVES_KEY_Plus GDK_plus
+#define LIVES_KEY_Minus GDK_minus
+#define LIVES_KEY_Equal GDK_equal
 
 #define LIVES_KEY_1 GDK_1
 #define LIVES_KEY_2 GDK_2
@@ -218,7 +254,32 @@ typedef GLogLevelFlags LiVESLogLevelFlags;
 #define LIVES_KEY_9 GDK_9
 #define LIVES_KEY_0 GDK_0
 
+#define LIVES_KEY_a GDK_a
+#define LIVES_KEY_b GDK_b
+#define LIVES_KEY_c GDK_c
+#define LIVES_KEY_d GDK_d
+#define LIVES_KEY_e GDK_e
+#define LIVES_KEY_f GDK_f
+#define LIVES_KEY_g GDK_g
+#define LIVES_KEY_h GDK_h
+#define LIVES_KEY_i GDK_i
+#define LIVES_KEY_j GDK_j
+#define LIVES_KEY_k GDK_k
+#define LIVES_KEY_l GDK_l
+#define LIVES_KEY_m GDK_m
+#define LIVES_KEY_n GDK_n
+#define LIVES_KEY_o GDK_o
+#define LIVES_KEY_p GDK_p
 #define LIVES_KEY_q GDK_q
+#define LIVES_KEY_r GDK_r
+#define LIVES_KEY_s GDK_s
+#define LIVES_KEY_t GDK_t
+#define LIVES_KEY_u GDK_u
+#define LIVES_KEY_v GDK_v
+#define LIVES_KEY_w GDK_w
+#define LIVES_KEY_x GDK_x
+#define LIVES_KEY_y GDK_y
+#define LIVES_KEY_z GDK_z
 
 #define LIVES_KEY_F1 GDK_F1
 #define LIVES_KEY_F2 GDK_F2

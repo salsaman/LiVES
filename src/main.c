@@ -3842,7 +3842,7 @@ static boolean weed_layer_new_from_file_progressive(weed_plant_t *layer,
   do_not_free=pixbuf_to_layer(layer,pixbuf);
 
   if (do_not_free) {
-    mainw->do_not_free=lives_pixbuf_get_pixels_readonly(pixbuf);
+    mainw->do_not_free=(gpointer)lives_pixbuf_get_pixels_readonly(pixbuf);
     mainw->free_fn=lives_free_with_check;
   }
   g_object_unref(pixbuf);

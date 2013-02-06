@@ -11,27 +11,27 @@
 
 
 typedef struct {
-  guchar u0;
-  guchar y0;
-  guchar v0;
-  guchar y1;
+  uint8_t u0;
+  uint8_t y0;
+  uint8_t v0;
+  uint8_t y1;
 } uyvy_macropixel;
 
 typedef struct {
-  guchar y0;
-  guchar u0;
-  guchar y1;
-  guchar v0;
+  uint8_t y0;
+  uint8_t u0;
+  uint8_t y1;
+  uint8_t v0;
 } yuyv_macropixel;
 
 
 typedef struct {
-  guchar u2;
-  guchar y0;
-  guchar y1;
-  guchar v2;
-  guchar y2;
-  guchar y3;
+  uint8_t u2;
+  uint8_t y0;
+  uint8_t y1;
+  uint8_t v2;
+  uint8_t y2;
+  uint8_t y3;
 } yuv411_macropixel;
 
 
@@ -40,10 +40,10 @@ typedef struct {
 typedef struct {
   void *src;
   void *srcp[4];
-  gint hsize;
-  gint vsize;
-  gint irowstrides[4];
-  gint orowstrides[4];
+  int hsize;
+  int vsize;
+  int irowstrides[4];
+  int orowstrides[4];
   void *dest;
   void *destp[4];
   boolean in_alpha;
@@ -145,14 +145,14 @@ boolean weed_palette_is_rgb_palette(int pal);
 boolean weed_palette_is_yuv_palette(int pal);
 boolean weed_palette_is_float_palette(int pal);
 boolean weed_palette_has_alpha_channel(int pal);
-gint weed_palette_get_bits_per_macropixel(int pal);
-gint weed_palette_get_pixels_per_macropixel(int pal);
-gint weed_palette_get_numplanes(int pal);
-gdouble weed_palette_get_plane_ratio_horizontal(int pal, int plane);
-gdouble weed_palette_get_plane_ratio_vertical(int pal, int plane);
+int weed_palette_get_bits_per_macropixel(int pal);
+int weed_palette_get_pixels_per_macropixel(int pal);
+int weed_palette_get_numplanes(int pal);
+double weed_palette_get_plane_ratio_horizontal(int pal, int plane);
+double weed_palette_get_plane_ratio_vertical(int pal, int plane);
 boolean weed_palette_is_lower_quality(int p1, int p2);  ///< return TRUE if p1 is lower quality than p2
 boolean weed_palette_is_resizable(int pal);
-gdouble weed_palette_get_compression_ratio (int pal);
+double weed_palette_get_compression_ratio (int pal);
 
 int get_weed_palette_for_lives_painter(void);
 
@@ -165,7 +165,7 @@ void lives_pixbuf_set_opaque(LiVESPixbuf *pixbuf);
 const char *weed_palette_get_name(int pal);
 const char *weed_yuv_clamping_get_name(int clamping);
 const char *weed_yuv_subspace_get_name(int subspace);
-gchar *weed_palette_get_name_full(int pal, int clamped, int subspace);
+char *weed_palette_get_name_full(int pal, int clamped, int subspace);
 
 
 #ifdef USE_SWSCALE

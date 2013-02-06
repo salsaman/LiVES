@@ -4971,7 +4971,7 @@ void add_rfx_effects(void) {
   gtk_widget_set_tooltip_text( menuitem,_("See: VJ - show VJ keys. Set the realtime effects, and then apply them here."));
   
   gtk_widget_add_accelerator (menuitem, "activate", mainw->accel_group,
-			      GDK_e, GDK_CONTROL_MASK,
+			      LIVES_KEY_e, LIVES_CONTROL_MASK,
 			      GTK_ACCEL_VISIBLE);
 
   g_signal_connect (GTK_OBJECT (menuitem), "activate",

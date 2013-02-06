@@ -4958,7 +4958,7 @@ static void load_compound_plugin(gchar *plugin_name, gchar *plugin_path) {
 	fnum=weed_get_idx_for_hashname(buff,TRUE);
 	if (fnum==-1) {
 	  d_print((tmp=g_strdup_printf(_("Invalid effect %s found in compound effect %s, line %d\n"),buff,plugin_name,line)));
-	  LIVES_ERROR(tmp);
+	  LIVES_INFO(tmp);
 	  g_free(tmp);
 	  ok=FALSE;
 	  break;

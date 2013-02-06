@@ -599,7 +599,7 @@ void load_framedraw_image(LiVESPixbuf *pixbuf) {
     mainw->fd_layer_orig=weed_layer_new(0,0,NULL,WEED_PALETTE_END);
 
     if (pixbuf_to_layer(mainw->fd_layer_orig,pixbuf)) {
-      mainw->do_not_free=gdk_pixbuf_get_pixels(pixbuf);
+      mainw->do_not_free=lives_pixbuf_get_pixels_readonly(pixbuf);
       mainw->free_fn=lives_free_with_check;
     }
     g_object_unref(pixbuf);

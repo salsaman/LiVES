@@ -771,8 +771,8 @@ void cancel_process(gboolean visible) {
     if (mainw->preview_box!=NULL&&!mainw->preview) gtk_widget_set_tooltip_text( mainw->p_playbutton,_ ("Play all"));
     if (accelerators_swapped) {
       if (!mainw->preview) gtk_widget_set_tooltip_text( mainw->m_playbutton,_ ("Play all"));
-      gtk_widget_remove_accelerator (cfile->proc_ptr->preview_button, mainw->accel_group, GDK_p, (GdkModifierType)0);
-      gtk_widget_add_accelerator (mainw->playall, "activate", mainw->accel_group, GDK_p, (GdkModifierType)0, 
+      gtk_widget_remove_accelerator (cfile->proc_ptr->preview_button, mainw->accel_group, LIVES_KEY_p, (GdkModifierType)0);
+      gtk_widget_add_accelerator (mainw->playall, "activate", mainw->accel_group, LIVES_KEY_p, (GdkModifierType)0, 
 				  GTK_ACCEL_VISIBLE);
     }
     if (cfile->proc_ptr!=NULL) {
@@ -1324,8 +1324,8 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
 			 (prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL))&&mainw->playing_file==-1) {
       if (mainw->preview_box!=NULL) gtk_widget_set_tooltip_text( mainw->p_playbutton,_ ("Preview"));
       gtk_widget_set_tooltip_text( mainw->m_playbutton,_ ("Preview"));
-      gtk_widget_remove_accelerator (mainw->playall, mainw->accel_group, GDK_p, (GdkModifierType)0);
-      gtk_widget_add_accelerator (cfile->proc_ptr->preview_button, "clicked", mainw->accel_group, GDK_p,
+      gtk_widget_remove_accelerator (mainw->playall, mainw->accel_group, LIVES_KEY_p, (GdkModifierType)0);
+      gtk_widget_add_accelerator (cfile->proc_ptr->preview_button, "clicked", mainw->accel_group, LIVES_KEY_p,
 				  (GdkModifierType)0, (GtkAccelFlags)0);
       accelerators_swapped=TRUE;
     }
@@ -1553,8 +1553,8 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
 	gtk_widget_grab_default (cfile->proc_ptr->preview_button);
 	if (mainw->preview_box!=NULL) gtk_widget_set_tooltip_text( mainw->p_playbutton,_ ("Preview"));
 	gtk_widget_set_tooltip_text( mainw->m_playbutton,_ ("Preview"));
-	gtk_widget_remove_accelerator (mainw->playall, mainw->accel_group, GDK_p, (GdkModifierType)0);
-	gtk_widget_add_accelerator (cfile->proc_ptr->preview_button, "clicked", mainw->accel_group, GDK_p,
+	gtk_widget_remove_accelerator (mainw->playall, mainw->accel_group, LIVES_KEY_p, (GdkModifierType)0);
+	gtk_widget_add_accelerator (cfile->proc_ptr->preview_button, "clicked", mainw->accel_group, LIVES_KEY_p,
 				    (GdkModifierType)0, (GtkAccelFlags)0);
 	accelerators_swapped=TRUE;
       }
@@ -1626,8 +1626,8 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
 									 _("Play all"));
     if (accelerators_swapped) {
       if (!mainw->preview) gtk_widget_set_tooltip_text( mainw->m_playbutton,_ ("Play all"));
-      gtk_widget_remove_accelerator (cfile->proc_ptr->preview_button, mainw->accel_group, GDK_p, (GdkModifierType)0);
-      gtk_widget_add_accelerator (mainw->playall, "activate", mainw->accel_group, GDK_p, (GdkModifierType)0,
+      gtk_widget_remove_accelerator (cfile->proc_ptr->preview_button, mainw->accel_group, LIVES_KEY_p, (GdkModifierType)0);
+      gtk_widget_add_accelerator (mainw->playall, "activate", mainw->accel_group, LIVES_KEY_p, (GdkModifierType)0,
 				  GTK_ACCEL_VISIBLE);
       accelerators_swapped=FALSE;
     }

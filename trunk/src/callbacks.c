@@ -9407,11 +9407,11 @@ boolean expose_play_window (GtkWidget *widget, GdkEventExpose *event) {
     mainw->pw_exp_is_blocked=TRUE;
     block_expose();
 
-    if (rect.width>lives_pixbuf_get_width(GDK_PIXBUF (mainw->imframe))) {
-      rect.width=lives_pixbuf_get_width(GDK_PIXBUF (mainw->imframe));
+    if (rect.width>lives_pixbuf_get_width(LIVES_PIXBUF (mainw->imframe))) {
+      rect.width=lives_pixbuf_get_width(LIVES_PIXBUF (mainw->imframe));
     }
-    if (rect.height>lives_pixbuf_get_height(GDK_PIXBUF (mainw->imframe))) {
-      rect.height=lives_pixbuf_get_height(GDK_PIXBUF (mainw->imframe));
+    if (rect.height>lives_pixbuf_get_height(LIVES_PIXBUF (mainw->imframe))) {
+      rect.height=lives_pixbuf_get_height(LIVES_PIXBUF (mainw->imframe));
     }
 
     if (mainw->current_file>0&&cfile!=NULL&&
@@ -9917,8 +9917,8 @@ on_mouse_scroll           (GtkWidget       *widget,
 
   kstate=event->state;
 
-  if (kstate==GDK_SHIFT_MASK) type=2; // bg
-  else if (kstate==GDK_CONTROL_MASK) type=0; // fg or bg
+  if (kstate==LIVES_SHIFT_MASK) type=2; // bg
+  else if (kstate==LIVES_CONTROL_MASK) type=0; // fg or bg
 
   if (event->direction==GDK_SCROLL_UP) prevclip_callback(NULL,NULL,0,(GdkModifierType)0,GINT_TO_POINTER(type));
   else if (event->direction==GDK_SCROLL_DOWN) nextclip_callback(NULL,NULL,0,(GdkModifierType)0,GINT_TO_POINTER(type));

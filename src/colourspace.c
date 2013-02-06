@@ -10294,7 +10294,9 @@ boolean resize_layer (weed_plant_t *layer, int width, int height, LiVESInterpTyp
   if (iwidth==width&&iheight==height) return TRUE; // no resize needed
 
   if (width<=0||height<=0) {
-    g_printerr("unable to scale layer to %d x %d for palette %d\n",width,height,palette);
+    char *msg=g_strdup_printf("unable to scale layer to %d x %d for palette %d\n",width,height,palette);
+    LIVES_WARN(msg);
+    g_free(msg);
     return FALSE;
   }
 

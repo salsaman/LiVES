@@ -254,7 +254,7 @@ int lives_painter_image_surface_get_stride(lives_painter_surface_t *surf) {
 
 
 lives_painter_format_t lives_painter_image_surface_get_format(lives_painter_surface_t *surf) {
-  lives_painter_format_t format=0;
+  lives_painter_format_t format=(lives_painter_format_t)0;
 #ifdef PAINTER_CAIRO
   format=cairo_image_surface_get_format(surf);
 #endif
@@ -1351,7 +1351,7 @@ LiVESWidget *lives_standard_combo_new (const char *labeltext, boolean use_mnemon
 }
 
 
-LiVESWidget *lives_standard_entry_new(const char *labeltext, boolean use_mnemonic, char *txt, int dispwidth, int maxchars, LiVESBox *box, 
+LiVESWidget *lives_standard_entry_new(const char *labeltext, boolean use_mnemonic, const char *txt, int dispwidth, int maxchars, LiVESBox *box, 
 					     const char *tooltip) {
 
   LiVESWidget *entry=NULL;

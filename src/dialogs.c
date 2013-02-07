@@ -166,7 +166,7 @@ static GtkWidget* create_warn_dialog (gint warn_mask_number, GtkWindow *transien
 
   switch (diat) {
   case LIVES_DIALOG_WARN:
-    dialog = gtk_message_dialog_new (transient,0,GTK_MESSAGE_WARNING,GTK_BUTTONS_NONE,"%s","");
+    dialog = gtk_message_dialog_new (transient,(GtkDialogFlags)0,GTK_MESSAGE_WARNING,GTK_BUTTONS_NONE,"%s","");
 
     if (mainw->add_clear_ds_button) {
       mainw->add_clear_ds_button=FALSE;
@@ -183,7 +183,7 @@ static GtkWidget* create_warn_dialog (gint warn_mask_number, GtkWindow *transien
     gtk_dialog_add_action_widget (GTK_DIALOG (dialog), warning_okbutton, GTK_RESPONSE_OK);
     break;
   case LIVES_DIALOG_YESNO:
-    dialog = gtk_message_dialog_new (transient,0,GTK_MESSAGE_QUESTION,GTK_BUTTONS_NONE,"%s","");
+    dialog = gtk_message_dialog_new (transient,(GtkDialogFlags)0,GTK_MESSAGE_QUESTION,GTK_BUTTONS_NONE,"%s","");
     gtk_window_set_title (GTK_WINDOW (dialog), _("LiVES: - Question"));
     widget_opts.justify=LIVES_JUSTIFY_CENTER;
     mainw->warning_label = lives_standard_label_new (_("question"));
@@ -194,7 +194,7 @@ static GtkWidget* create_warn_dialog (gint warn_mask_number, GtkWindow *transien
     gtk_dialog_add_action_widget (GTK_DIALOG (dialog), warning_okbutton, LIVES_YES);
     break;
   case LIVES_DIALOG_ABORT_CANCEL_RETRY:
-    dialog = gtk_message_dialog_new (transient,0,GTK_MESSAGE_ERROR,GTK_BUTTONS_NONE,"%s","");
+    dialog = gtk_message_dialog_new (transient,(GtkDialogFlags)0,GTK_MESSAGE_ERROR,GTK_BUTTONS_NONE,"%s","");
     gtk_window_set_title (GTK_WINDOW (dialog), _("LiVES: - File Error"));
     widget_opts.justify=LIVES_JUSTIFY_CENTER;
     mainw->warning_label = lives_standard_label_new (_("File Error"));

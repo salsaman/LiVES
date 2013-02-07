@@ -1128,7 +1128,7 @@ boolean make_param_box(GtkVBox *top_vbox, lives_rfx_t *rfx) {
     for (j=0;j<num_tok;j++) {
       if (!strcmp(array[j],"nextfilter")) {
 	// handling for compound fx - add an offset to the param number
-	poffset+=num_in_params_for_nth_instance(rfx->source,inum);
+	poffset+=num_in_params_for_nth_instance((weed_plant_t *)rfx->source,inum);
 	inum++;
 	continue;
       }

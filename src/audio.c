@@ -283,7 +283,7 @@ void sample_move_d16_float (float *dst, short *src, uint64_t nsamples, uint64_t 
   while (nsamples--) {
 
     if (rev_endian) {
-      memcpy(&srcx,src+1,1);
+      memcpy(&srcx,src+1,2);
       srcxs=(srcx[0]<<8) + srcx[1];
       srcp=&srcxs;
     }
@@ -743,15 +743,15 @@ static void audio_process_events_to(weed_timecode_t tc) {
       
     case WEED_EVENT_HINT_FILTER_INIT:
       {
-	weed_plant_t *deinit_event=weed_get_voidptr_value (event,"deinit_event",&error);
-	if (get_event_timecode((weed_plant_t *)deinit_event)<tc) break;
+	weed_plant_t *deinit_event=(weed_plant_t *)weed_get_voidptr_value (event,"deinit_event",&error);
+	if (get_event_timecode(deinit_event)<tc) break;
 	process_events(event,TRUE,ctc);
       }
       break;
     case WEED_EVENT_HINT_FILTER_DEINIT:
       {
-	weed_plant_t *init_event=weed_get_voidptr_value (event,"init_event",&error);
-	if (weed_plant_has_leaf((weed_plant_t *)init_event,"host_tag")) {
+	weed_plant_t *init_event=(weed_plant_t *)weed_get_voidptr_value (event,"init_event",&error);
+	if (weed_plant_has_leaf(init_event,"host_tag")) {
 	  process_events(event,TRUE,ctc);
 	}
       }
@@ -2677,7 +2677,7 @@ boolean apply_rte_audio(int nframes) {
     }
   }
 
-  fltbuf=g_malloc(cfile->achans*sizeof(float *));
+  fltbuf=(float **)g_malloc(cfile->achans*sizeof(float *));
 
 
   if (mainw->agen_key==0) {

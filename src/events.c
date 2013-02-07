@@ -2266,7 +2266,7 @@ void add_track_to_avol_init(weed_plant_t *filter, weed_plant_t *event, int nbtra
 
   // add a new value to in_tracks
   num_in_tracks=weed_leaf_num_elements(event,"in_tracks")+1;
-  new_in_tracks=g_malloc(num_in_tracks*sizint);
+  new_in_tracks=(int *)g_malloc(num_in_tracks*sizint);
   for (i=0;i<num_in_tracks;i++) {
     new_in_tracks[i]=x++;
   }
@@ -2286,11 +2286,11 @@ void add_track_to_avol_init(weed_plant_t *filter, weed_plant_t *event, int nbtra
     pchange=(weed_plant_t *)pchainx[i];
     bval=WEED_FALSE;
     while (pchange!=NULL) {
-      fill_param_vals_to(pchange,in_ptmpls[i],behind?num_in_tracks-1:1);
-      if (weed_plant_has_leaf(pchange,"ignore")) {
-	numigns=weed_leaf_num_elements(pchange,"ignore")+1;
-	igns=weed_get_boolean_array(pchange,"ignore",&error);
-	nigns=g_malloc(numigns*sizint);
+      fill_param_vals_to((weed_plant_t *)pchange,in_ptmpls[i],behind?num_in_tracks-1:1);
+      if (weed_plant_has_leaf((weed_plant_t *)pchange,"ignore")) {
+	numigns=weed_leaf_num_elements((weed_plant_t *)pchange,"ignore")+1;
+	igns=weed_get_boolean_array((weed_plant_t *)pchange,"ignore",&error);
+	nigns=(int *)g_malloc(numigns*sizint);
 
 	for (j=0;j<numigns;j++) {
 	  if (behind) {
@@ -2303,11 +2303,11 @@ void add_track_to_avol_init(weed_plant_t *filter, weed_plant_t *event, int nbtra
 	    else nigns[j]=igns[j-1];
 	  }
 	}
-	weed_set_boolean_array(pchange,"ignore",numigns,nigns);
+	weed_set_boolean_array((weed_plant_t *)pchange,"ignore",numigns,nigns);
 	weed_free(igns);
 	g_free(nigns);
       }
-      pchange=weed_get_voidptr_value(pchange,"next_change",&error);
+      pchange=weed_get_voidptr_value((weed_plant_t *)pchange,"next_change",&error);
       bval=WEED_TRUE;
     }
   }
@@ -3145,7 +3145,7 @@ weed_plant_t *process_events (weed_plant_t *next_event, boolean process_audio, w
       key=atoi (key_string);
       weed_free (key_string);
 
-      filter_name=weed_get_string_value (init_event,"filter",&error);
+      filter_name=weed_get_string_value ((weed_plant_t *)init_event,"filter",&error);
       idx=weed_get_idx_for_hashname (filter_name,TRUE);
       weed_free (filter_name);
       
@@ -3664,7 +3664,7 @@ lives_render_error_t render_events (gboolean reset) {
     case WEED_EVENT_HINT_FILTER_DEINIT:
       init_event=weed_get_voidptr_value (event,"init_event",&weed_error);
 
-      filter_name=weed_get_string_value (init_event,"filter",&weed_error);
+      filter_name=weed_get_string_value ((weed_plant_t *)init_event,"filter",&weed_error);
       // for now, assume we can find hashname
       idx=weed_get_idx_for_hashname (filter_name,TRUE);
       weed_free (filter_name);

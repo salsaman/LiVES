@@ -1588,7 +1588,11 @@ void adjustment_configure(LiVESAdjustment *adjustment,
 
 
 void lives_set_cursor_style(lives_cursor_t cstyle, LiVESXWindow *window) {
+#if GTK_CHECK_VERSION(3,0,0)
   if (mainw->cursor!=NULL) g_object_unref(mainw->cursor);
+#else
+  if (mainw->cursor!=NULL) gdk_cursor_unref(mainw->cursor);
+#endif
   mainw->cursor=NULL;
 
   if (window==NULL) {

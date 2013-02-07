@@ -310,9 +310,15 @@ typedef struct {
 
   // recording from an external window
   guint foreign_key;
+
+
+#if GTK_CHECK_VERSION(3,0,0)
+  Window foreign_id;
+#else
   GdkNativeWindow foreign_id;
   GdkColormap *foreign_cmap;
   GdkPixmap *foreign_map;
+#endif
   GdkWindow *foreign_window;
   gint foreign_width;
   gint foreign_height;
@@ -962,7 +968,9 @@ typedef struct {
 
   gint img_concat_clip;  ///< when opening multiple, image files can get concatenated here (prefs->concat_images)
 
+#if !GTK_CHECK_VERSION(3,0,0)
   GdkGC *general_gc;  ///< used for colour drawing
+#endif
 
   /// rendered generators
   boolean gen_to_clipboard;

@@ -853,7 +853,11 @@ static void lives_init(_ign_opts *ign_opts) {
 
   mainw->opening_frames=-1;
 
+#ifdef GUI_GTK
+#if !GTK_CHECK_VERSION(3,0,0)
   mainw->general_gc=NULL;
+#endif
+#endif
 
   mainw->show_procd=TRUE;
 
@@ -2108,7 +2112,7 @@ capability *get_capabilities (void) {
 
 void print_notice() {
   g_printerr("\nLiVES %s\n",LiVES_VERSION);
-  g_printerr("Copyright 2002-2012 Gabriel Finch (salsaman@gmail.com) and others.\n");
+  g_printerr("Copyright 2002-2013 Gabriel Finch (salsaman@gmail.com) and others.\n");
   g_printerr("LiVES comes with ABSOLUTELY NO WARRANTY\nThis is free software, and you are welcome to redistribute it\nunder certain conditions; see the file COPYING for details.\n\n");
 }
 
@@ -2323,9 +2327,14 @@ static boolean lives_startup(gpointer data) {
 		}}}}}}}}
 
   else {
-  // capture mode
+    // capture mode
     mainw->foreign_key=atoi(zargv[2]);
+
+#if GTK_CHECK_VERSION(3,0,0)
+    mainw->foreign_id=(Window)atoi(zargv[3]);
+#else
     mainw->foreign_id=(GdkNativeWindow)atoi(zargv[3]);
+#endif
     mainw->foreign_width=atoi(zargv[4]);
     mainw->foreign_height=atoi(zargv[5]);
     g_snprintf(prefs->image_ext,16,"%s",zargv[6]);
@@ -2412,7 +2421,11 @@ static boolean lives_startup(gpointer data) {
 
   mainw->go_away=FALSE;
 
+#if GTK_CHECK_VERSION(3,0,0)
+  mainw->kb_timer=g_timeout_add(KEY_RPT_INTERVAL,&ext_triggers_poll,NULL);
+#else
   mainw->kb_timer=gtk_timeout_add(KEY_RPT_INTERVAL,&ext_triggers_poll,NULL);
+#endif
 
 #ifdef HAVE_YUV4MPEG
   if (strlen(prefs->yuvin)>0) g_idle_add(open_yuv4m_startup,NULL);
@@ -5331,15 +5344,17 @@ void load_frame_image(gint frame) {
       g_free(tmp);
     }
 
-    gdk_window_get_size(mainw->foreign_window,&xwidth,&xheight);
 
 #if GTK_CHECK_VERSION(3,0,0)
+    xwidth=gdk_window_get_width(mainw->foreign_window);
+    xheight=gdk_window_get_height(mainw->foreign_window);
     if ((pixbuf=gdk_pixbuf_get_from_window (mainw->foreign_window,
 					      0,0,
 					      xwidth,
 					      xheight
 					      ))!=NULL) {
 #else
+    gdk_window_get_size(mainw->foreign_window,&xwidth,&xheight);
     if ((pixbuf=gdk_pixbuf_get_from_drawable (NULL,GDK_DRAWABLE(mainw->foreign_window),
 					      mainw->foreign_cmap,0,0,0,0,
 					      xwidth,

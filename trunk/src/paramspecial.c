@@ -152,7 +152,7 @@ add_to_special (const gchar *sp_string, lives_rfx_t *rfx) {
     if (mainw->multitrack==NULL) extra_width=RFX_EXTRA_WIDTH;
     else {
       mainw->multitrack->framedraw=&framedraw;
-      gtk_widget_modify_bg (mainw->multitrack->fd_frame, GTK_STATE_NORMAL, &palette->light_red);
+      lives_widget_set_bg_color (mainw->multitrack->fd_frame, GTK_STATE_NORMAL, &palette->light_red);
     }
     g_free(ign);
   }

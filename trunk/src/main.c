@@ -1007,7 +1007,7 @@ static void lives_init(_ign_opts *ign_opts) {
     prefs->no_bandwidth=FALSE;
     prefs->ocp=get_int_pref ("open_compression_percent");
 
-    colour_equal(&palette->fade_colour,&palette->black);
+    lives_widget_color_copy(&palette->fade_colour,&palette->black);
 
     // we set the theme here in case it got reset to 'none'
     set_pref("gui_theme",prefs->theme);
@@ -1619,18 +1619,18 @@ static void lives_init(_ign_opts *ign_opts) {
     if (mainw->vpp!=NULL&&mainw->vpp->get_audio_fmts!=NULL) mainw->vpp->audio_codec=get_best_audio(mainw->vpp);
 
     // toolbar buttons
-    gtk_widget_modify_bg (mainw->tb_hbox, GTK_STATE_NORMAL, &palette->fade_colour);
-    gtk_widget_modify_bg (mainw->toolbar, GTK_STATE_NORMAL, &palette->fade_colour);
-    gtk_widget_modify_bg (mainw->t_stopbutton, GTK_STATE_PRELIGHT, &palette->fade_colour);
-    gtk_widget_modify_bg (mainw->t_bckground, GTK_STATE_PRELIGHT, &palette->fade_colour);
-    gtk_widget_modify_bg (mainw->t_sepwin, GTK_STATE_PRELIGHT, &palette->fade_colour);
-    gtk_widget_modify_bg (mainw->t_double, GTK_STATE_PRELIGHT, &palette->fade_colour);
-    gtk_widget_modify_bg (mainw->t_fullscreen, GTK_STATE_PRELIGHT, &palette->fade_colour);
-    gtk_widget_modify_bg (mainw->t_faster, GTK_STATE_PRELIGHT, &palette->fade_colour);
-    gtk_widget_modify_bg (mainw->t_slower, GTK_STATE_PRELIGHT, &palette->fade_colour);
-    gtk_widget_modify_bg (mainw->t_forward, GTK_STATE_PRELIGHT, &palette->fade_colour);
-    gtk_widget_modify_bg (mainw->t_back, GTK_STATE_PRELIGHT, &palette->fade_colour);
-    gtk_widget_modify_bg (mainw->t_infobutton, GTK_STATE_PRELIGHT, &palette->fade_colour);
+    lives_widget_set_bg_color (mainw->tb_hbox, GTK_STATE_NORMAL, &palette->fade_colour);
+    lives_widget_set_bg_color (mainw->toolbar, GTK_STATE_NORMAL, &palette->fade_colour);
+    lives_widget_set_bg_color (mainw->t_stopbutton, GTK_STATE_PRELIGHT, &palette->fade_colour);
+    lives_widget_set_bg_color (mainw->t_bckground, GTK_STATE_PRELIGHT, &palette->fade_colour);
+    lives_widget_set_bg_color (mainw->t_sepwin, GTK_STATE_PRELIGHT, &palette->fade_colour);
+    lives_widget_set_bg_color (mainw->t_double, GTK_STATE_PRELIGHT, &palette->fade_colour);
+    lives_widget_set_bg_color (mainw->t_fullscreen, GTK_STATE_PRELIGHT, &palette->fade_colour);
+    lives_widget_set_bg_color (mainw->t_faster, GTK_STATE_PRELIGHT, &palette->fade_colour);
+    lives_widget_set_bg_color (mainw->t_slower, GTK_STATE_PRELIGHT, &palette->fade_colour);
+    lives_widget_set_bg_color (mainw->t_forward, GTK_STATE_PRELIGHT, &palette->fade_colour);
+    lives_widget_set_bg_color (mainw->t_back, GTK_STATE_PRELIGHT, &palette->fade_colour);
+    lives_widget_set_bg_color (mainw->t_infobutton, GTK_STATE_PRELIGHT, &palette->fade_colour);
     
 
   }
@@ -1705,102 +1705,97 @@ void do_start_messages(void) {
 
 // TODO - allow user definable themes
 void set_palette_colours (void) {
-  // bitmap transparencies
-  GdkColor opaque={0,0,0,0};
-  GdkColor trans={0xFF,0xFF,0xFF,0xFF};
-  colour_equal (&palette->bm_opaque,&opaque);
-  colour_equal (&palette->bm_trans,&trans);
 
   // set configurable colours and theme colours for the app
-  gdk_color_parse ("black", &palette->black);
-  gdk_color_parse ("white", &palette->white);
-  gdk_color_parse ("SeaGreen3", &palette->light_green);
-  gdk_color_parse ("dark red", &palette->dark_red);
-  gdk_color_parse ("light blue", &palette->light_blue);
-  gdk_color_parse ("light yellow", &palette->light_yellow);
-  gdk_color_parse ("grey10", &palette->grey20);
-  gdk_color_parse ("grey25", &palette->grey25);
-  gdk_color_parse ("grey45", &palette->grey45);
-  gdk_color_parse ("grey60", &palette->grey60);
-  gdk_color_parse ("pink", &palette->pink);
-  gdk_color_parse ("salmon", &palette->light_red);
-  gdk_color_parse ("DarkOrange4", &palette->dark_orange);
+  lives_color_parse ("black", &palette->black);
+  lives_color_parse ("white", &palette->white);
+  lives_color_parse ("SeaGreen3", &palette->light_green);
+  lives_color_parse ("dark red", &palette->dark_red);
+  lives_color_parse ("light blue", &palette->light_blue);
+  lives_color_parse ("light yellow", &palette->light_yellow);
+  lives_color_parse ("grey10", &palette->grey20);
+  lives_color_parse ("grey25", &palette->grey25);
+  lives_color_parse ("grey45", &palette->grey45);
+  lives_color_parse ("grey60", &palette->grey60);
+  lives_color_parse ("pink", &palette->pink);
+  lives_color_parse ("salmon", &palette->light_red);
+  lives_color_parse ("DarkOrange4", &palette->dark_orange);
 
-  colour_equal(&palette->banner_fade_text,&palette->white);
+  lives_widget_color_copy(&palette->banner_fade_text,&palette->white);
   palette->style=STYLE_PLAIN;
 
   // STYLE_PLAIN will overwrite this
   if (!(strcmp(prefs->theme,"pinks"))) {
     
-    palette->normal_back.red=228*256;
-    palette->normal_back.green=196*256;
-    palette->normal_back.blue=196*256;
+    palette->normal_back.red=228.*LIVES_WIDGET_COLOR_SCALE;
+    palette->normal_back.green=196.*LIVES_WIDGET_COLOR_SCALE;
+    palette->normal_back.blue=196.*LIVES_WIDGET_COLOR_SCALE;
       
-    colour_equal(&palette->normal_fore,&palette->black);
-    colour_equal(&palette->menu_and_bars,&palette->pink);
-    colour_equal(&palette->info_text,&palette->normal_fore);
-    colour_equal(&palette->info_base,&palette->normal_back);
+    lives_widget_color_copy(&palette->normal_fore,&palette->black);
+    lives_widget_color_copy(&palette->menu_and_bars,&palette->pink);
+    lives_widget_color_copy(&palette->info_text,&palette->normal_fore);
+    lives_widget_color_copy(&palette->info_base,&palette->normal_back);
     palette->style=STYLE_1|STYLE_2|STYLE_3|STYLE_4|STYLE_5;
   }
   else {
     if (!(strcmp(prefs->theme,"cutting_room"))) {
 
-      palette->normal_back.red=224*256;
-      palette->normal_back.green=224*256;
-      palette->normal_back.blue=128*256;
+      palette->normal_back.red=224.*LIVES_WIDGET_COLOR_SCALE;
+      palette->normal_back.green=224.*LIVES_WIDGET_COLOR_SCALE;
+      palette->normal_back.blue=128.*LIVES_WIDGET_COLOR_SCALE;
 	  
-      colour_equal(&palette->normal_fore,&palette->black);
-      colour_equal(&palette->menu_and_bars,&palette->white);
-      colour_equal(&palette->info_text,&palette->normal_fore);
-      colour_equal(&palette->info_base,&palette->white);
+      lives_widget_color_copy(&palette->normal_fore,&palette->black);
+      lives_widget_color_copy(&palette->menu_and_bars,&palette->white);
+      lives_widget_color_copy(&palette->info_text,&palette->normal_fore);
+      lives_widget_color_copy(&palette->info_base,&palette->white);
       palette->style=STYLE_1|STYLE_2|STYLE_3|STYLE_4;
     }
     else {
       if (!(strcmp(prefs->theme,"camera"))) {
 
-	palette->normal_back.red=30*256;
-	palette->normal_back.green=144*256;
-	palette->normal_back.blue=232*256;
+	palette->normal_back.red=30.*LIVES_WIDGET_COLOR_SCALE;
+	palette->normal_back.green=144.*LIVES_WIDGET_COLOR_SCALE;
+	palette->normal_back.blue=232.*LIVES_WIDGET_COLOR_SCALE;
 	  
-	colour_equal(&palette->normal_fore,&palette->black);
-	colour_equal(&palette->menu_and_bars,&palette->white);
-	colour_equal(&palette->info_base,&palette->normal_back);
-	colour_equal(&palette->info_text,&palette->normal_fore);
+	lives_widget_color_copy(&palette->normal_fore,&palette->black);
+	lives_widget_color_copy(&palette->menu_and_bars,&palette->white);
+	lives_widget_color_copy(&palette->info_base,&palette->normal_back);
+	lives_widget_color_copy(&palette->info_text,&palette->normal_fore);
 	palette->style=STYLE_1|STYLE_2|STYLE_3|STYLE_4;
       }
       else {
 	if (!(strcmp(prefs->theme,"editor"))) {
-	  colour_equal(&palette->normal_back,&palette->grey25);
-	  colour_equal(&palette->normal_fore,&palette->white);
-	  colour_equal(&palette->menu_and_bars,&palette->grey60);
-	  colour_equal(&palette->info_base,&palette->grey20);
-	  colour_equal(&palette->info_text,&palette->white);
+	  lives_widget_color_copy(&palette->normal_back,&palette->grey25);
+	  lives_widget_color_copy(&palette->normal_fore,&palette->white);
+	  lives_widget_color_copy(&palette->menu_and_bars,&palette->grey60);
+	  lives_widget_color_copy(&palette->info_base,&palette->grey20);
+	  lives_widget_color_copy(&palette->info_text,&palette->white);
 	  palette->style=STYLE_1|STYLE_2|STYLE_3|STYLE_4|STYLE_5;
 	}
 	else {
 	  if (!(strcmp(prefs->theme,"crayons-bright"))) {
-	    colour_equal(&palette->normal_back,&palette->black);
-	    colour_equal(&palette->normal_fore,&palette->white);
+	    lives_widget_color_copy(&palette->normal_back,&palette->black);
+	    lives_widget_color_copy(&palette->normal_fore,&palette->white);
 
-	    palette->menu_and_bars.red=225*256;
-	    palette->menu_and_bars.green=160*256;
-	    palette->menu_and_bars.blue=80*256;
+	    palette->menu_and_bars.red=225.*LIVES_WIDGET_COLOR_SCALE;
+	    palette->menu_and_bars.green=160.*LIVES_WIDGET_COLOR_SCALE;
+	    palette->menu_and_bars.blue=80.*LIVES_WIDGET_COLOR_SCALE;
 
-	    palette->info_base.red=200*256;
-	    palette->info_base.green=190*256;
-	    palette->info_base.blue=52*256;
+	    palette->info_base.red=200.*LIVES_WIDGET_COLOR_SCALE;
+	    palette->info_base.green=190.*LIVES_WIDGET_COLOR_SCALE;
+	    palette->info_base.blue=52.*LIVES_WIDGET_COLOR_SCALE;
 	      
-	    colour_equal(&palette->info_text,&palette->black);
+	    lives_widget_color_copy(&palette->info_text,&palette->black);
 
 	    palette->style=STYLE_1|STYLE_2|STYLE_3|STYLE_4;
 	  }
 	  else {
 	    if (!(strcmp(prefs->theme,"crayons"))) {
-	      colour_equal(&palette->normal_back,&palette->grey25);
-	      colour_equal(&palette->normal_fore,&palette->white);
-	      colour_equal(&palette->menu_and_bars,&palette->grey60);
-	      colour_equal(&palette->info_base,&palette->grey20);
-	      colour_equal(&palette->info_text,&palette->white);
+	      lives_widget_color_copy(&palette->normal_back,&palette->grey25);
+	      lives_widget_color_copy(&palette->normal_fore,&palette->white);
+	      lives_widget_color_copy(&palette->menu_and_bars,&palette->grey60);
+	      lives_widget_color_copy(&palette->info_base,&palette->grey20);
+	      lives_widget_color_copy(&palette->info_text,&palette->white);
 
 	      palette->style=STYLE_1|STYLE_2|STYLE_3|STYLE_4|STYLE_5;
 

@@ -234,10 +234,14 @@ giw_led_realize (GtkWidget *widget)
 #endif
 
 #if GTK_CHECK_VERSION(3,0,0)
-  stylecon=gtk_style_context_new();
-  gtk_style_context_set_path(stylecon,gtk_widget_get_path(widget));
+  stylecon=gt_widget_get_style_context(widget);
+  if (!stylecon) {
+    stylecon=gtk_style_context_new();
+    gtk_style_context_set_path(stylecon,gtk_widget_get_path(widget));
+  }
+  gtk_style_context_add_class(stylecon,"giwled");
   gtk_style_context_set_state(stylecon,GTK_STATE_FLAG_ACTIVE);
-  gtk_style_context_set_background(stylecon,lives_widget_get_xwindow(lives_widget_get_parent(widget)));
+  gtk_style_context_set_background(stylecon,lives_widget_get_xwindow(widget));
 #else
   widget->style = gtk_style_attach (widget->style, lives_widget_get_xwindow(widget));
   gtk_style_set_background (widget->style, lives_widget_get_xwindow(widget), GTK_STATE_ACTIVE);
@@ -330,8 +334,13 @@ giw_led_expose (GtkWidget      *widget,
 {  
   GiwLed *led;
   GdkRectangle rect;
+
+#if GTK_CHECK_VERSION(3,0,0)
+  lives_painter_t *cr;
+#else
   GdkGC *gc; // To put the on and off colors
-  
+#endif
+
   g_return_val_if_fail (widget != NULL, FALSE);
   g_return_val_if_fail (GIW_IS_LED (widget), FALSE);
   g_return_val_if_fail (event != NULL, FALSE);
@@ -345,7 +354,70 @@ giw_led_expose (GtkWidget      *widget,
   rect.width=lives_widget_get_allocation_width(widget);
   rect.height=lives_widget_get_allocation_height(widget);
       
-  // Drawing backgorund
+  // Drawing background
+#if GTK_CHECK_VERSION(3,0,0)
+  cr = lives_painter_create_from_widget (widget);
+  gtk_render_background(gtk_widget_get_style_context(widget),
+			cr,
+			0,
+			0,
+			rect.width,
+			rect.height);
+
+  if (led->on)
+    lives_painter_set_source_rgb (cr, 1., 1., 1.);
+  else
+    lives_painter_set_source_rgb (cr, 
+				  (double)(led->color_off->red)/65535.,
+				  (double)(led->color_off->green)/65535.,
+				  (double)(led->color_off->blue)/65535.
+				  );
+  
+  lives_painter_arc(cr,
+		    led->x+2,
+		    led->y+2,
+		    led->radius,
+		    0.,
+		    2.*M_PI);
+  
+  if (led->on) lives_painter_set_source_rgb (cr, 0., 0., 0.);
+
+  lives_painter_arc(cr,
+		    led->x+2,
+		    led->y+2,
+		    led->radius+2,
+		    -45./M_PI,
+		    57.5/M_PI);
+
+  lives_painter_arc(cr,
+		    led->x+2,
+		    led->y+2,
+		    led->radius+3,
+		    led->radius+3,
+		    -32/M_PI,
+		    37.5/M_PI);
+
+  if (led->on) 
+    lives_painter_set_source_rgb (cr, 
+				  (double)(led->color_off->red)/65535.,
+				  (double)(led->color_off->green)/65535.,
+				  (double)(led->color_off->blue)/65535.
+				  );
+
+  lives_painter_stroke(cr);
+
+  lives_painter_arc(cr,
+		    led->x+2,
+		    led->y+2,
+		    led->size-4,
+		    0,
+		    2.*M_PI);
+
+  lives_painter_fill(cr);
+
+  lives_painter_destroy(cr);
+
+#else
   gtk_paint_flat_box (widget->style,
 		      widget->window,
 		      (GtkStateType)(widget->parent==NULL?GTK_STATE_NORMAL:widget->parent->state),
@@ -357,7 +429,6 @@ giw_led_expose (GtkWidget      *widget,
 		      0, 
 		      -1,
 		      -1);
-  
   
   gc=gdk_gc_new(widget->window); // Allocating memory
   gdk_gc_copy(gc, widget->style->fg_gc[widget->state]); 
@@ -410,6 +481,7 @@ giw_led_expose (GtkWidget      *widget,
                 64*360);
 
   g_object_unref(gc);
+#endif
   
   return FALSE;
 }

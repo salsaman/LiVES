@@ -406,16 +406,16 @@ typedef enum {
 
 
 typedef struct {
-  gshort red;
-  gshort green;
-  gshort blue;
+  uint16_t red;
+  uint16_t green;
+  uint16_t blue;
 } lives_colRGB24_t;
 
 typedef struct {
-  gshort red;
-  gshort green;
-  gshort blue;
-  gshort alpha;
+  uint16_t red;
+  uint16_t green;
+  uint16_t blue;
+  uint16_t alpha;
 } lives_colRGBA32_t;
 
 

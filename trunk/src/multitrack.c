@@ -61,8 +61,8 @@ static int renumbered_clips[MAX_FILES+1];
 static gdouble lfps[MAX_FILES+1]; ///< table of layout fps
 static void **pchain; ///< param chain for currently being edited filter
 
-static GdkColor audcol;
-static GdkColor fxcol;
+static lives_colRGB24_t audcol;
+static lives_colRGB24_t fxcol;
 
 static gint xachans,xarate,xasamps,xse;
 static boolean ptaud;
@@ -803,7 +803,7 @@ static void draw_block (lives_mt *mt,track_rect *block, gint x1, gint x2) {
   lives_painter_set_line_width(cr,1.);
 
 #if GTK_CHECK_VERSION(3,0,0)
-  gtk_style_context_get_bg_color (gtk_widget_get_style_context (mt->window),GTK_WIDGET_STATE (mt->window),&bgcolor);
+  lives_widget_get_bg_color(mt->window,&bgcolor);
 #endif
 
   switch (block->state) {
@@ -862,7 +862,7 @@ static void draw_block (lives_mt *mt,track_rect *block, gint x1, gint x2) {
 	if (thumbnail!=NULL) lives_object_unref(thumbnail);
       }
       else {
-	lives_painter_set_source_rgb(cr,audcol.red/65535.,audcol.green/65535.,audcol.blue/65535.);
+	lives_painter_set_source_rgb(cr,(double)audcol.red/65535.,(double)audcol.green/65535.,(double)audcol.blue/65535.);
 	lives_painter_new_path(cr);
 	lives_painter_rectangle(cr,offset_start,0,offset_end-offset_start,lives_widget_get_allocation_height(eventbox));
 	lives_painter_fill(cr);
@@ -1276,7 +1276,7 @@ static boolean add_mt_param_box(lives_mt *mt) {
   mt->fx_params_label=gtk_label_new(ltext);
 
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(mt->fx_params_label, GTK_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_fg_color(mt->fx_params_label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
   gtk_box_pack_start (GTK_BOX (mt->fx_box), mt->fx_params_label, FALSE, FALSE, 0);
 
@@ -1799,16 +1799,16 @@ void scroll_tracks (lives_mt *mt, gint top_track) {
 
       if (palette->style&STYLE_1) {
 	if (palette->style&STYLE_3) {
-	  if (labelbox!=NULL) gtk_widget_modify_bg (labelbox, GTK_STATE_SELECTED, &palette->menu_and_bars);
-	  if (ahbox!=NULL) gtk_widget_modify_bg (ahbox, GTK_STATE_SELECTED, &palette->menu_and_bars);
-	  gtk_widget_modify_fg (label, GTK_STATE_SELECTED, &palette->info_text);
-	  gtk_widget_modify_fg (arrow, GTK_STATE_SELECTED, &palette->info_text);
+	  if (labelbox!=NULL) lives_widget_set_bg_color (labelbox, GTK_STATE_SELECTED, &palette->menu_and_bars);
+	  if (ahbox!=NULL) lives_widget_set_bg_color (ahbox, GTK_STATE_SELECTED, &palette->menu_and_bars);
+	  lives_widget_set_fg_color (label, GTK_STATE_SELECTED, &palette->info_text);
+	  lives_widget_set_fg_color (arrow, GTK_STATE_SELECTED, &palette->info_text);
 	}
 	else {
-	  if (labelbox!=NULL) gtk_widget_modify_bg (labelbox, GTK_STATE_SELECTED, &palette->normal_back);
-	  if (ahbox!=NULL) gtk_widget_modify_bg (ahbox, GTK_STATE_SELECTED, &palette->normal_back);
-	  gtk_widget_modify_fg (label, GTK_STATE_SELECTED, &palette->normal_fore);
-	  gtk_widget_modify_fg (arrow, GTK_STATE_SELECTED, &palette->normal_fore);
+	  if (labelbox!=NULL) lives_widget_set_bg_color (labelbox, GTK_STATE_SELECTED, &palette->normal_back);
+	  if (ahbox!=NULL) lives_widget_set_bg_color (ahbox, GTK_STATE_SELECTED, &palette->normal_back);
+	  lives_widget_set_fg_color (label, GTK_STATE_SELECTED, &palette->normal_fore);
+	  lives_widget_set_fg_color (arrow, GTK_STATE_SELECTED, &palette->normal_fore);
 	}
       }
       gtk_container_add (GTK_CONTAINER (labelbox), hbox);
@@ -1835,7 +1835,7 @@ void scroll_tracks (lives_mt *mt, gint top_track) {
 			(GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
 			(GtkAttachOptions) (GTK_FILL), 0, 0);
 
-      gtk_widget_modify_bg((GtkWidget *)mt->audio_draws->data, GTK_STATE_NORMAL, &palette->white);
+      lives_widget_set_bg_color((GtkWidget *)mt->audio_draws->data, GTK_STATE_NORMAL, &palette->white);
 
       
       g_signal_connect (GTK_OBJECT (mt->audio_draws->data), "button_press_event",
@@ -1861,7 +1861,7 @@ void scroll_tracks (lives_mt *mt, gint top_track) {
 					       (gpointer)mt);
 	g_object_set_data (G_OBJECT(xeventbox),"expose_func",(gpointer)exp_track_func);
 
-	gtk_widget_modify_bg(xeventbox, GTK_STATE_NORMAL, &palette->white);
+	lives_widget_set_bg_color(xeventbox, GTK_STATE_NORMAL, &palette->white);
 	
 	if (cfile->achans>1) {
 	  xeventbox=(GtkWidget *)g_object_get_data(G_OBJECT(mt->audio_draws->data),"achan1");
@@ -1874,7 +1874,7 @@ void scroll_tracks (lives_mt *mt, gint top_track) {
 						 G_CALLBACK (mt_expose_raudtrack_event),
 						 (gpointer)mt);
 	  
-	  gtk_widget_modify_bg(xeventbox, GTK_STATE_NORMAL, &palette->white);
+	  lives_widget_set_bg_color(xeventbox, GTK_STATE_NORMAL, &palette->white);
 	  g_object_set_data (G_OBJECT(xeventbox),"expose_func",(gpointer)exp_track_func);
 	}
 	aud_tracks+=cfile->achans;
@@ -1909,26 +1909,26 @@ void scroll_tracks (lives_mt *mt, gint top_track) {
 
       if (palette->style&STYLE_1) {
 	if (palette->style&STYLE_3) {
-	  gtk_widget_modify_bg (labelbox, GTK_STATE_SELECTED, &palette->menu_and_bars);
-	  gtk_widget_modify_bg (ahbox, GTK_STATE_SELECTED, &palette->menu_and_bars);
-	  gtk_widget_modify_fg (label, GTK_STATE_SELECTED, &palette->info_text);
-	  gtk_widget_modify_fg (arrow, GTK_STATE_SELECTED, &palette->info_text);
-	  gtk_widget_modify_fg (checkbutton, GTK_STATE_SELECTED, &palette->info_text);
+	  lives_widget_set_bg_color (labelbox, GTK_STATE_SELECTED, &palette->menu_and_bars);
+	  lives_widget_set_bg_color (ahbox, GTK_STATE_SELECTED, &palette->menu_and_bars);
+	  lives_widget_set_fg_color (label, GTK_STATE_SELECTED, &palette->info_text);
+	  lives_widget_set_fg_color (arrow, GTK_STATE_SELECTED, &palette->info_text);
+	  lives_widget_set_fg_color (checkbutton, GTK_STATE_SELECTED, &palette->info_text);
 	}
 	else {
-	  gtk_widget_modify_bg (labelbox, GTK_STATE_SELECTED, &palette->normal_back);
-	  gtk_widget_modify_bg (ahbox, GTK_STATE_SELECTED, &palette->normal_back);
-	  gtk_widget_modify_fg (label, GTK_STATE_SELECTED, &palette->normal_fore);
-	  gtk_widget_modify_fg (arrow, GTK_STATE_SELECTED, &palette->normal_fore);
-	  gtk_widget_modify_fg (checkbutton, GTK_STATE_SELECTED, &palette->normal_fore);
+	  lives_widget_set_bg_color (labelbox, GTK_STATE_SELECTED, &palette->normal_back);
+	  lives_widget_set_bg_color (ahbox, GTK_STATE_SELECTED, &palette->normal_back);
+	  lives_widget_set_fg_color (label, GTK_STATE_SELECTED, &palette->normal_fore);
+	  lives_widget_set_fg_color (arrow, GTK_STATE_SELECTED, &palette->normal_fore);
+	  lives_widget_set_fg_color (checkbutton, GTK_STATE_SELECTED, &palette->normal_fore);
 	}
 #ifdef ENABLE_GIW
 	if (prefs->lamp_buttons) {
 	  if (0&&palette->style&STYLE_3) {
-	    gtk_widget_modify_bg (checkbutton, GTK_STATE_SELECTED, &palette->normal_back);
+	    lives_widget_set_bg_color (checkbutton, GTK_STATE_SELECTED, &palette->normal_back);
 	  }
 	  else {
-	    gtk_widget_modify_bg (checkbutton, GTK_STATE_SELECTED, &palette->menu_and_bars);
+	    lives_widget_set_bg_color (checkbutton, GTK_STATE_SELECTED, &palette->menu_and_bars);
 	  }
 	}
 #endif
@@ -1960,7 +1960,7 @@ void scroll_tracks (lives_mt *mt, gint top_track) {
 			(GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
 			(GtkAttachOptions) (GTK_FILL), 0, 0);
 
-      gtk_widget_modify_bg(eventbox, GTK_STATE_NORMAL, &palette->white);
+      lives_widget_set_bg_color(eventbox, GTK_STATE_NORMAL, &palette->white);
 
       if (!prefs->lamp_buttons) {
 	seltrack_func=g_signal_connect_after (GTK_OBJECT (checkbutton), "toggled",
@@ -2024,16 +2024,16 @@ void scroll_tracks (lives_mt *mt, gint top_track) {
 	  
 	  if (palette->style&STYLE_1) {
 	    if (palette->style&STYLE_3) {
-	      gtk_widget_modify_bg (labelbox, GTK_STATE_SELECTED, &palette->menu_and_bars);
-	      gtk_widget_modify_bg (ahbox, GTK_STATE_SELECTED, &palette->menu_and_bars);
-	      gtk_widget_modify_fg (label, GTK_STATE_SELECTED, &palette->info_text);
-	      gtk_widget_modify_fg (arrow, GTK_STATE_SELECTED, &palette->info_text);
+	      lives_widget_set_bg_color (labelbox, GTK_STATE_SELECTED, &palette->menu_and_bars);
+	      lives_widget_set_bg_color (ahbox, GTK_STATE_SELECTED, &palette->menu_and_bars);
+	      lives_widget_set_fg_color (label, GTK_STATE_SELECTED, &palette->info_text);
+	      lives_widget_set_fg_color (arrow, GTK_STATE_SELECTED, &palette->info_text);
 	    }
 	    else {
-	      gtk_widget_modify_bg (labelbox, GTK_STATE_SELECTED, &palette->normal_back);
-	      gtk_widget_modify_bg (ahbox, GTK_STATE_SELECTED, &palette->normal_back);
-	      gtk_widget_modify_fg (label, GTK_STATE_SELECTED, &palette->normal_fore);
-	      gtk_widget_modify_fg (arrow, GTK_STATE_SELECTED, &palette->normal_fore);
+	      lives_widget_set_bg_color (labelbox, GTK_STATE_SELECTED, &palette->normal_back);
+	      lives_widget_set_bg_color (ahbox, GTK_STATE_SELECTED, &palette->normal_back);
+	      lives_widget_set_fg_color (label, GTK_STATE_SELECTED, &palette->normal_fore);
+	      lives_widget_set_fg_color (arrow, GTK_STATE_SELECTED, &palette->normal_fore);
 	    }
 	  }
 	  
@@ -2048,7 +2048,7 @@ void scroll_tracks (lives_mt *mt, gint top_track) {
 	  g_object_set_data (G_OBJECT(aeventbox),"ahbox",ahbox);
 	  g_object_set_data (G_OBJECT(ahbox),"eventbox",aeventbox);
 	  g_object_set_data(G_OBJECT(labelbox),"layer_number",GINT_TO_POINTER(GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"layer_number"))));
-	  gtk_widget_modify_bg(aeventbox, GTK_STATE_NORMAL, &palette->white);
+	  lives_widget_set_bg_color(aeventbox, GTK_STATE_NORMAL, &palette->white);
 	  
 	  g_signal_connect (GTK_OBJECT (labelbox), "button_press_event",
 			    G_CALLBACK (atrack_ebox_pressed),
@@ -2097,7 +2097,7 @@ void scroll_tracks (lives_mt *mt, gint top_track) {
 						     (gpointer)mt);
 	      g_object_set_data (G_OBJECT(xeventbox),"expose_func",(gpointer)exp_track_func);
 	      
-	      gtk_widget_modify_bg(xeventbox, GTK_STATE_NORMAL, &palette->white);
+	      lives_widget_set_bg_color(xeventbox, GTK_STATE_NORMAL, &palette->white);
 
 	      rows++;
 	      if (rows==mt->max_disp_vtracks) break;
@@ -2116,7 +2116,7 @@ void scroll_tracks (lives_mt *mt, gint top_track) {
 				  (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
 				  (GtkAttachOptions) (GTK_FILL), 0, 0);
 		
-		gtk_widget_modify_bg(xeventbox, GTK_STATE_NORMAL, &palette->white);
+		lives_widget_set_bg_color(xeventbox, GTK_STATE_NORMAL, &palette->white);
 		exp_track_func=g_signal_connect_after (GTK_OBJECT (xeventbox), "expose_event",
 						       G_CALLBACK (mt_expose_raudtrack_event),
 						       (gpointer)mt);
@@ -3030,7 +3030,7 @@ static void notebook_error(GtkNotebook *nb, guint tab, lives_mt_nb_error_t err, 
   }
 
   gtk_label_set_justify (GTK_LABEL (mt->nb_label), GTK_JUSTIFY_CENTER);
-  gtk_widget_modify_fg(mt->nb_label, GTK_STATE_NORMAL, &palette->normal_fore);
+  lives_widget_set_fg_color(mt->nb_label, GTK_STATE_NORMAL, &palette->normal_fore);
   gtk_container_add(GTK_CONTAINER(gtk_notebook_get_nth_page(GTK_NOTEBOOK(nb),page)),mt->nb_label);
   gtk_widget_show(mt->nb_label);
   gtk_widget_hide(mt->poly_box);
@@ -3425,12 +3425,12 @@ static void populate_filter_box(GtkWidget *box, gint ninchans, lives_mt *mt) {
 	gtk_widget_add_events (xeventbox, GDK_BUTTON_RELEASE_MASK | GDK_BUTTON_PRESS_MASK);
 	if (palette->style&STYLE_1) {
 	  if (palette->style&STYLE_3) {
-	    gtk_widget_modify_bg(xeventbox, GTK_STATE_NORMAL, &palette->normal_back);
-	    gtk_widget_modify_bg(xeventbox, GTK_STATE_SELECTED, &palette->menu_and_bars);
+	    lives_widget_set_bg_color(xeventbox, GTK_STATE_NORMAL, &palette->normal_back);
+	    lives_widget_set_bg_color(xeventbox, GTK_STATE_SELECTED, &palette->menu_and_bars);
 	  }
 	  else {
-	    gtk_widget_modify_bg(xeventbox, GTK_STATE_NORMAL, &palette->menu_and_bars);
-	    gtk_widget_modify_bg(xeventbox, GTK_STATE_SELECTED, &palette->normal_back);
+	    lives_widget_set_bg_color(xeventbox, GTK_STATE_NORMAL, &palette->menu_and_bars);
+	    lives_widget_set_bg_color(xeventbox, GTK_STATE_SELECTED, &palette->normal_back);
 	  }
 	}
 
@@ -3442,8 +3442,8 @@ static void populate_filter_box(GtkWidget *box, gint ninchans, lives_mt *mt) {
 	g_free(txt);
 	
 	if (palette->style&STYLE_1) {
-	  gtk_widget_modify_fg (label, GTK_STATE_NORMAL, &palette->info_text);
-	  gtk_widget_modify_fg (label, GTK_STATE_SELECTED, &palette->info_text);
+	  lives_widget_set_fg_color (label, GTK_STATE_NORMAL, &palette->info_text);
+	  lives_widget_set_fg_color (label, GTK_STATE_SELECTED, &palette->info_text);
 	}
 	gtk_container_set_border_width (GTK_CONTAINER (xeventbox), 5);
 	gtk_box_pack_start (GTK_BOX (vbox), label, FALSE, FALSE, 0);
@@ -3667,7 +3667,7 @@ static void do_clip_context (lives_mt *mt, GdkEventButton *event, file *sfile) {
   gtk_menu_set_title (GTK_MENU(menu),_("LiVES: Selected clip"));
 
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_bg(menu, GTK_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_bg_color(menu, GTK_STATE_NORMAL, &palette->menu_and_bars);
   }
 
   if (sfile->frames>0) {
@@ -3893,7 +3893,7 @@ void mt_init_start_end_spins(lives_mt *mt) {
   gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, 20);
 
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_bg(eventbox, GTK_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_bg_color(eventbox, GTK_STATE_NORMAL, &palette->menu_and_bars);
   }
 
   btoolbar=gtk_toolbar_new();
@@ -3912,13 +3912,13 @@ void mt_init_start_end_spins(lives_mt *mt) {
   gtk_toolbar_insert(GTK_TOOLBAR(btoolbar),GTK_TOOL_ITEM(mt->amixer_button),-1);
 
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_bg(btoolbar, GTK_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_bg_color(btoolbar, GTK_STATE_NORMAL, &palette->menu_and_bars);
 
-    gtk_widget_modify_bg(mt->amixer_button, GTK_STATE_NORMAL, &palette->menu_and_bars);
-    gtk_widget_modify_bg(label, GTK_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_bg_color(mt->amixer_button, GTK_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_bg_color(label, GTK_STATE_NORMAL, &palette->menu_and_bars);
 
-    gtk_widget_modify_bg(btoolbar, GTK_STATE_PRELIGHT, &palette->menu_and_bars);
-    gtk_widget_modify_bg(btoolbar, GTK_STATE_INSENSITIVE, &palette->menu_and_bars);
+    lives_widget_set_bg_color(btoolbar, GTK_STATE_PRELIGHT, &palette->menu_and_bars);
+    lives_widget_set_bg_color(btoolbar, GTK_STATE_INSENSITIVE, &palette->menu_and_bars);
   }
 
   gtk_widget_add_accelerator (mt->amixer_button, "clicked", mt->accel_group,
@@ -3941,7 +3941,7 @@ void mt_init_start_end_spins(lives_mt *mt) {
 
   mt->l_sel_arrow = gtk_arrow_new (GTK_ARROW_LEFT, GTK_SHADOW_OUT);
   gtk_box_pack_start (GTK_BOX (hbox), mt->l_sel_arrow, FALSE, FALSE, 0);
-  gtk_widget_modify_fg(mt->l_sel_arrow, GTK_STATE_NORMAL, &palette->normal_fore);
+  lives_widget_set_fg_color(mt->l_sel_arrow, GTK_STATE_NORMAL, &palette->normal_fore);
 
   gtk_entry_set_width_chars (GTK_ENTRY (mt->spinbutton_start),12);
   mt->sel_label = gtk_label_new(NULL);
@@ -3951,11 +3951,11 @@ void mt_init_start_end_spins(lives_mt *mt) {
 
   gtk_box_pack_start (GTK_BOX (hbox), mt->sel_label, FALSE, FALSE, 0);
   gtk_label_set_justify (GTK_LABEL (mt->sel_label), GTK_JUSTIFY_LEFT);
-  gtk_widget_modify_fg(mt->sel_label, GTK_STATE_NORMAL, &palette->normal_fore);
+  lives_widget_set_fg_color(mt->sel_label, GTK_STATE_NORMAL, &palette->normal_fore);
 
   mt->r_sel_arrow = gtk_arrow_new (GTK_ARROW_RIGHT, GTK_SHADOW_OUT);
   gtk_box_pack_start (GTK_BOX (hbox), mt->r_sel_arrow, FALSE, FALSE, 3);
-  gtk_widget_modify_fg(mt->r_sel_arrow, GTK_STATE_NORMAL, &palette->normal_fore);
+  lives_widget_set_fg_color(mt->r_sel_arrow, GTK_STATE_NORMAL, &palette->normal_fore);
 
   spinbutton_end_adj = (GObject *)gtk_adjustment_new (0., 0., 0., 1./mt->fps, 1./mt->fps, 0.);
   mt->spinbutton_end = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_end_adj), 1, 3);
@@ -3967,15 +3967,15 @@ void mt_init_start_end_spins(lives_mt *mt) {
   gtk_spin_button_set_update_policy (GTK_SPIN_BUTTON (mt->spinbutton_end),GTK_UPDATE_ALWAYS);
 
   if (palette->style&STYLE_1&&palette->style&STYLE_2) {
-    gtk_widget_modify_base(mt->spinbutton_start, GTK_STATE_NORMAL, &palette->normal_back);
-    gtk_widget_modify_base(mt->spinbutton_start, GTK_STATE_INSENSITIVE, &palette->normal_back);
-    gtk_widget_modify_base(mt->spinbutton_end, GTK_STATE_NORMAL, &palette->normal_back);
-    gtk_widget_modify_base(mt->spinbutton_end, GTK_STATE_INSENSITIVE, &palette->normal_back);
-    gtk_widget_modify_text(mt->spinbutton_start, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_text(mt->spinbutton_start, GTK_STATE_INSENSITIVE, &palette->normal_fore);
-    gtk_widget_modify_text(mt->spinbutton_end, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_text(mt->spinbutton_end, GTK_STATE_INSENSITIVE, &palette->normal_fore);
-    gtk_widget_modify_fg(mt->sel_label, GTK_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_base_color(mt->spinbutton_start, GTK_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_base_color(mt->spinbutton_start, GTK_STATE_INSENSITIVE, &palette->normal_back);
+    lives_widget_set_base_color(mt->spinbutton_end, GTK_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_base_color(mt->spinbutton_end, GTK_STATE_INSENSITIVE, &palette->normal_back);
+    lives_widget_set_text_color(mt->spinbutton_start, GTK_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_text_color(mt->spinbutton_start, GTK_STATE_INSENSITIVE, &palette->normal_fore);
+    lives_widget_set_text_color(mt->spinbutton_end, GTK_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_text_color(mt->spinbutton_end, GTK_STATE_INSENSITIVE, &palette->normal_fore);
+    lives_widget_set_fg_color(mt->sel_label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
 
   mt->spin_start_func=g_signal_connect_after (GTK_OBJECT (mt->spinbutton_start), "value_changed",
@@ -4744,8 +4744,8 @@ static void on_insa_toggled (GtkToggleButton *tbutton, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   mt->opts.insert_audio=gtk_toggle_button_get_active(tbutton);
   if (prefs->lamp_buttons) {
-    if (mt->opts.insert_audio) gtk_widget_modify_bg(GTK_WIDGET(tbutton), GTK_STATE_PRELIGHT, &palette->light_green);
-    else gtk_widget_modify_bg(GTK_WIDGET(tbutton), GTK_STATE_PRELIGHT, &palette->dark_red);
+    if (mt->opts.insert_audio) lives_widget_set_bg_color(GTK_WIDGET(tbutton), GTK_STATE_PRELIGHT, &palette->light_green);
+    else lives_widget_set_bg_color(GTK_WIDGET(tbutton), GTK_STATE_PRELIGHT, &palette->dark_red);
   }
 }
 
@@ -4753,8 +4753,8 @@ static void on_snapo_toggled (GtkToggleButton *tbutton, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   mt->opts.snap_over=gtk_toggle_button_get_active(tbutton);
   if (prefs->lamp_buttons) {
-    if (mt->opts.snap_over) gtk_widget_modify_bg(GTK_WIDGET(tbutton), GTK_STATE_PRELIGHT, &palette->light_green);
-    else gtk_widget_modify_bg(GTK_WIDGET(tbutton), GTK_STATE_PRELIGHT, &palette->dark_red);
+    if (mt->opts.snap_over) lives_widget_set_bg_color(GTK_WIDGET(tbutton), GTK_STATE_PRELIGHT, &palette->light_green);
+    else lives_widget_set_bg_color(GTK_WIDGET(tbutton), GTK_STATE_PRELIGHT, &palette->dark_red);
   }
 }
 
@@ -5419,9 +5419,9 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   mt->window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
   if (palette->style&STYLE_1) {
     if (palette->style&STYLE_3) {
-      gtk_widget_modify_bg(mt->window, GTK_STATE_NORMAL, &palette->normal_back);
+      lives_widget_set_bg_color(mt->window, GTK_STATE_NORMAL, &palette->normal_back);
     }
-    else gtk_widget_modify_bg(mt->window, GTK_STATE_NORMAL, &palette->menu_and_bars);
+    else lives_widget_set_bg_color(mt->window, GTK_STATE_NORMAL, &palette->menu_and_bars);
   }
 
   gtk_drag_dest_set(mt->window,GTK_DEST_DEFAULT_ALL,mainw->target_table,2,
@@ -5441,7 +5441,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   gtk_box_pack_start (GTK_BOX (menu_hbox), menubar, TRUE, TRUE, 0);
 
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_bg(menubar, GTK_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_bg_color(menubar, GTK_STATE_NORMAL, &palette->menu_and_bars);
   }
 
 
@@ -5453,7 +5453,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (menuitem), menuitem_menu);
 
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_bg(menuitem_menu, GTK_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_bg_color(menuitem_menu, GTK_STATE_NORMAL, &palette->menu_and_bars);
   }
 
 
@@ -5466,7 +5466,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (mt->open_menu), menuitem_menu2);
 
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_bg(menuitem_menu2, GTK_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_bg_color(menuitem_menu2, GTK_STATE_NORMAL, &palette->menu_and_bars);
   }
 
   menuitem = gtk_menu_item_new_with_mnemonic (_("_Open File/Directory"));
@@ -5492,7 +5492,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
     open_loc_submenu=gtk_menu_new();
     gtk_menu_item_set_submenu (GTK_MENU_ITEM (open_loc_menu), open_loc_submenu);
     if (palette->style&STYLE_1) {
-      gtk_widget_modify_bg(open_loc_submenu, GTK_STATE_NORMAL, &palette->menu_and_bars);
+      lives_widget_set_bg_color(open_loc_submenu, GTK_STATE_NORMAL, &palette->menu_and_bars);
     }
 
     menuitem = gtk_menu_item_new_with_mnemonic (_("Open _Youtube Clip..."));
@@ -5524,7 +5524,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
     vcd_dvd_submenu=gtk_menu_new();
     gtk_menu_item_set_submenu (GTK_MENU_ITEM (vcd_dvd_menu), vcd_dvd_submenu);
     if (palette->style&STYLE_1) {
-      gtk_widget_modify_bg(vcd_dvd_submenu, GTK_STATE_NORMAL, &palette->menu_and_bars);
+      lives_widget_set_bg_color(vcd_dvd_submenu, GTK_STATE_NORMAL, &palette->menu_and_bars);
     }
     
     
@@ -5560,7 +5560,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
 
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (device_menu), device_submenu);
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_bg(device_submenu, GTK_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_bg_color(device_submenu, GTK_STATE_NORMAL, &palette->menu_and_bars);
   }
 
   menuitem = gtk_menu_item_new_with_mnemonic (_("Import from _Firewire Device (dv)"));
@@ -5629,7 +5629,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   gtk_container_add (GTK_CONTAINER (recent_submenu), mt->recent4);
 
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_bg(recent_submenu, GTK_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_bg_color(recent_submenu, GTK_STATE_NORMAL, &palette->menu_and_bars);
   }
   
   gtk_widget_show (recent_submenu);
@@ -5740,7 +5740,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (menuitem), menuitem_menu);
 
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_bg(menuitem_menu, GTK_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_bg_color(menuitem_menu, GTK_STATE_NORMAL, &palette->menu_and_bars);
   }
 
   mt->undo = gtk_image_menu_item_new_with_mnemonic (_("_Undo"));
@@ -5887,7 +5887,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (menuitem), menuitem_menu);
 
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_bg(menuitem_menu, GTK_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_bg_color(menuitem_menu, GTK_STATE_NORMAL, &palette->menu_and_bars);
   }
 
   mt->playall = gtk_image_menu_item_new_with_mnemonic (_("_Play from Timeline Position"));
@@ -5993,7 +5993,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (menuitem), menuitem_menu);
 
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_bg(menuitem_menu, GTK_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_bg_color(menuitem_menu, GTK_STATE_NORMAL, &palette->menu_and_bars);
   }
 
   mt->move_fx = gtk_check_menu_item_new_with_mnemonic (_("_Move effects with blocks"));
@@ -6016,7 +6016,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (mt->atrans_menuitem), mt->submenu_atransfx);
 
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_bg(mt->submenu_atransfx, GTK_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_bg_color(mt->submenu_atransfx, GTK_STATE_NORMAL, &palette->menu_and_bars);
   }
 
   separator = gtk_menu_item_new ();
@@ -6043,7 +6043,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (mt->fx_block), submenu_menu);
 
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_bg(submenu_menu, GTK_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_bg_color(submenu_menu, GTK_STATE_NORMAL, &palette->menu_and_bars);
   }
 
 
@@ -6064,7 +6064,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (mt->fx_blockv), submenu_menuv);
 
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_bg(submenu_menuv, GTK_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_bg_color(submenu_menuv, GTK_STATE_NORMAL, &palette->menu_and_bars);
   }
 
 
@@ -6084,7 +6084,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (mt->fx_blocka), submenu_menua);
 
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_bg(submenu_menua, GTK_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_bg_color(submenu_menua, GTK_STATE_NORMAL, &palette->menu_and_bars);
   }
 
 
@@ -6099,7 +6099,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (mt->fx_region), submenu_menu2);
 
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_bg(submenu_menu2, GTK_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_bg_color(submenu_menu2, GTK_STATE_NORMAL, &palette->menu_and_bars);
   }
 
   tname=lives_fx_cat_to_text(LIVES_FX_CAT_EFFECT,TRUE); // effects
@@ -6116,7 +6116,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (mt->fx_region_1), submenu_menu3);
 
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_bg(submenu_menu3, GTK_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_bg_color(submenu_menu3, GTK_STATE_NORMAL, &palette->menu_and_bars);
   }
 
 
@@ -6133,7 +6133,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (mt->fx_region_1v), submenu_menu4v);
 
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_bg(submenu_menu4v, GTK_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_bg_color(submenu_menu4v, GTK_STATE_NORMAL, &palette->menu_and_bars);
   }
 
   
@@ -6151,7 +6151,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (mt->fx_region_1a), submenu_menu4a);
 
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_bg(submenu_menu4a, GTK_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_bg_color(submenu_menu4a, GTK_STATE_NORMAL, &palette->menu_and_bars);
   }
 
   
@@ -6170,7 +6170,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (mt->fx_region_2), submenu_menu4);
 
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_bg(submenu_menu4, GTK_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_bg_color(submenu_menu4, GTK_STATE_NORMAL, &palette->menu_and_bars);
   }
 
 
@@ -6186,7 +6186,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (mt->fx_region_2av), submenu_menu10);
 
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_bg(submenu_menu10, GTK_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_bg_color(submenu_menu10, GTK_STATE_NORMAL, &palette->menu_and_bars);
   }
 
 
@@ -6202,7 +6202,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (mt->fx_region_2v), submenu_menu11);
 
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_bg(submenu_menu11, GTK_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_bg_color(submenu_menu11, GTK_STATE_NORMAL, &palette->menu_and_bars);
   }
 
 
@@ -6220,7 +6220,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (mt->fx_region_2a), submenu_menu12);
 
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_bg(submenu_menu12, GTK_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_bg_color(submenu_menu12, GTK_STATE_NORMAL, &palette->menu_and_bars);
   }
 
 
@@ -6238,7 +6238,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (mt->fx_region_3), submenu_menu5);
 
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_bg(submenu_menu5, GTK_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_bg_color(submenu_menu5, GTK_STATE_NORMAL, &palette->menu_and_bars);
   }
 
   num_filters=rte_get_numfilters();
@@ -6355,7 +6355,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (menuitem), menuitem_menu);
 
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_bg(menuitem_menu, GTK_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_bg_color(menuitem_menu, GTK_STATE_NORMAL, &palette->menu_and_bars);
   }
 
   mt->rename_track = gtk_image_menu_item_new_with_mnemonic (_("Rename current track"));
@@ -6476,7 +6476,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (menuitem), menuitem_menu);
 
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_bg(menuitem_menu, GTK_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_bg_color(menuitem_menu, GTK_STATE_NORMAL, &palette->menu_and_bars);
   }
 
   mt->select_track = gtk_check_menu_item_new_with_mnemonic (_("_Select Current Track"));
@@ -6532,7 +6532,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (menuitem), selcopy_menu);
 
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_bg(selcopy_menu, GTK_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_bg_color(selcopy_menu, GTK_STATE_NORMAL, &palette->menu_and_bars);
   }
 
   mt->tc_to_rs = gtk_menu_item_new_with_mnemonic (_("_Timecode to region start"));
@@ -6576,7 +6576,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (menuitem), menuitem_menu);
 
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_bg(menuitem_menu, GTK_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_bg_color(menuitem_menu, GTK_STATE_NORMAL, &palette->menu_and_bars);
   }
 
 
@@ -6644,7 +6644,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (menuitem), menuitem_menu);
 
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_bg(menuitem_menu, GTK_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_bg_color(menuitem_menu, GTK_STATE_NORMAL, &palette->menu_and_bars);
   }
 
   mt->render = gtk_image_menu_item_new_with_mnemonic (_("_Render all to new clip"));
@@ -6700,7 +6700,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (menuitem), menuitem_menu);
 
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_bg(menuitem_menu, GTK_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_bg_color(menuitem_menu, GTK_STATE_NORMAL, &palette->menu_and_bars);
   }
 
 
@@ -6745,7 +6745,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (mt->aparam_menuitem), mt->aparam_submenu);
 
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_bg(mt->aparam_submenu, GTK_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_bg_color(mt->aparam_submenu, GTK_STATE_NORMAL, &palette->menu_and_bars);
   }
 
   mt->view_audio = gtk_check_menu_item_new_with_mnemonic (_("Show backing _audio track"));
@@ -6835,7 +6835,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (menuitem), menuitem_menu);
 
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_bg(menuitem_menu, GTK_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_bg_color(menuitem_menu, GTK_STATE_NORMAL, &palette->menu_and_bars);
   }
 
   show_mt_keys = gtk_menu_item_new_with_mnemonic (_("_Show multitrack keys"));
@@ -6901,7 +6901,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
 
   submenu = gtk_menu_new ();
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_bg(submenu, GTK_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_bg_color(submenu, GTK_STATE_NORMAL, &palette->menu_and_bars);
   }
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (mt->mm_menuitem), submenu);
 
@@ -6937,7 +6937,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
 
   submenu = gtk_menu_new ();
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_bg(submenu, GTK_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_bg_color(submenu, GTK_STATE_NORMAL, &palette->menu_and_bars);
   }
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (mt->ins_menuitem), submenu);
 
@@ -7161,7 +7161,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   gtk_container_add(GTK_CONTAINER(eventbox),hbox);
 
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_bg(eventbox, GTK_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_bg_color(eventbox, GTK_STATE_NORMAL, &palette->menu_and_bars);
   }
 
   // play buttons
@@ -7172,7 +7172,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   gtk_toolbar_set_show_arrow(GTK_TOOLBAR(btoolbar),FALSE);
 
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_bg(btoolbar, GTK_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_bg_color(btoolbar, GTK_STATE_NORMAL, &palette->menu_and_bars);
   }
 
   gtk_toolbar_set_style (GTK_TOOLBAR (btoolbar), GTK_TOOLBAR_ICONS);
@@ -7222,8 +7222,8 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
 
   mt->tc_func=g_signal_connect_after (G_OBJECT (mt->timecode),"focus_out_event", G_CALLBACK (after_timecode_changed), (gpointer) mt);
 
-  gtk_widget_modify_base(mt->timecode, GTK_STATE_NORMAL, &palette->black);
-  gtk_widget_modify_text(mt->timecode, GTK_STATE_NORMAL, &palette->light_green);
+  lives_widget_set_base_color(mt->timecode, GTK_STATE_NORMAL, &palette->black);
+  lives_widget_set_text_color(mt->timecode, GTK_STATE_NORMAL, &palette->light_green);
 
 
   gtk_widget_set_tooltip_text( mt->insa_checkbutton, _("Select whether video clips are inserted and moved with their audio or not"));
@@ -7239,7 +7239,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
 		    mt->insa_checkbutton);
 
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_bg(mt->insa_eventbox, GTK_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_bg_color(mt->insa_eventbox, GTK_STATE_NORMAL, &palette->menu_and_bars);
   }
 
   gtk_box_pack_start (GTK_BOX (hbox), hbox2, FALSE, FALSE, 2);
@@ -7256,8 +7256,8 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   if (prefs->lamp_buttons) {
     on_insa_toggled(GTK_TOGGLE_BUTTON(mt->insa_checkbutton),mt);
     gtk_toggle_button_set_mode(GTK_TOGGLE_BUTTON(mt->insa_checkbutton),FALSE);
-    gtk_widget_modify_bg(mt->insa_checkbutton, GTK_STATE_ACTIVE, &palette->light_green);
-    gtk_widget_modify_bg(mt->insa_checkbutton, GTK_STATE_NORMAL, &palette->dark_red);
+    lives_widget_set_bg_color(mt->insa_checkbutton, GTK_STATE_ACTIVE, &palette->light_green);
+    lives_widget_set_bg_color(mt->insa_checkbutton, GTK_STATE_NORMAL, &palette->dark_red);
   }
 
   mt->snapo_checkbutton = gtk_check_button_new ();
@@ -7274,7 +7274,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
 		    G_CALLBACK (label_act_toggle),
 		    mt->snapo_checkbutton);
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_bg(eventbox, GTK_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_bg_color(eventbox, GTK_STATE_NORMAL, &palette->menu_and_bars);
   }
 
   gtk_box_pack_start (GTK_BOX (hbox), hbox2, FALSE, FALSE, 2);
@@ -7289,8 +7289,8 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
 
   if (prefs->lamp_buttons) {
     gtk_toggle_button_set_mode(GTK_TOGGLE_BUTTON(mt->snapo_checkbutton),FALSE);
-    gtk_widget_modify_bg(mt->snapo_checkbutton, GTK_STATE_ACTIVE, &palette->light_green);
-    gtk_widget_modify_bg(mt->snapo_checkbutton, GTK_STATE_NORMAL, &palette->dark_red);
+    lives_widget_set_bg_color(mt->snapo_checkbutton, GTK_STATE_ACTIVE, &palette->light_green);
+    lives_widget_set_bg_color(mt->snapo_checkbutton, GTK_STATE_NORMAL, &palette->dark_red);
     
     on_snapo_toggled(GTK_TOGGLE_BUTTON(mt->snapo_checkbutton),mt);
   }
@@ -7319,7 +7319,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   gtk_toolbar_set_show_arrow(GTK_TOOLBAR(btoolbar),FALSE);
 
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_bg(btoolbar, GTK_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_bg_color(btoolbar, GTK_STATE_NORMAL, &palette->menu_and_bars);
   }
 
   gtk_toolbar_set_style (GTK_TOOLBAR (btoolbar), GTK_TOOLBAR_TEXT);
@@ -7343,7 +7343,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   gtk_toolbar_set_show_arrow(GTK_TOOLBAR(btoolbar),FALSE);
 
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_bg(btoolbar, GTK_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_bg_color(btoolbar, GTK_STATE_NORMAL, &palette->menu_and_bars);
   }
 
   gtk_toolbar_set_style (GTK_TOOLBAR (btoolbar), GTK_TOOLBAR_TEXT);
@@ -7355,7 +7355,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
 
   submenu = gtk_menu_new ();
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_bg(submenu, GTK_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_bg_color(submenu, GTK_STATE_NORMAL, &palette->menu_and_bars);
   }
   gtk_menu_tool_button_set_menu (GTK_MENU_TOOL_BUTTON (mt->grav_menuitem), submenu);
 
@@ -7402,7 +7402,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   gtk_toolbar_set_show_arrow(GTK_TOOLBAR(btoolbar),FALSE);
 
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_bg(btoolbar, GTK_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_bg_color(btoolbar, GTK_STATE_NORMAL, &palette->menu_and_bars);
   }
 
   gtk_toolbar_set_style (GTK_TOOLBAR (btoolbar), GTK_TOOLBAR_ICONS);
@@ -7442,9 +7442,9 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   gtk_box_pack_start (GTK_BOX (mt->hbox), frame, FALSE, FALSE, 0);
   mt->fd_frame=frame;
 
-  gtk_widget_modify_bg (frame, GTK_STATE_NORMAL, &palette->normal_back);
-  gtk_widget_modify_fg (frame, GTK_STATE_NORMAL, &palette->normal_fore);
-  gtk_widget_modify_fg (gtk_frame_get_label_widget(GTK_FRAME(frame)), GTK_STATE_NORMAL, &palette->normal_fore);
+  lives_widget_set_bg_color (frame, GTK_STATE_NORMAL, &palette->normal_back);
+  lives_widget_set_fg_color (frame, GTK_STATE_NORMAL, &palette->normal_fore);
+  lives_widget_set_fg_color (gtk_frame_get_label_widget(GTK_FRAME(frame)), GTK_STATE_NORMAL, &palette->normal_fore);
 
   eventbox=gtk_event_box_new();
   gtk_widget_set_size_request (eventbox, mt->play_window_width, mt->play_window_height);
@@ -7454,7 +7454,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
 
   gtk_container_add (GTK_CONTAINER (frame), eventbox);
   gtk_container_add (GTK_CONTAINER (eventbox), mt->play_box);
-  gtk_widget_modify_bg (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
+  lives_widget_set_bg_color (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
   gtk_container_add (GTK_CONTAINER (mt->play_box), mt->play_blank);
 
   gtk_widget_add_events (eventbox, GDK_BUTTON1_MOTION_MASK | GDK_BUTTON_RELEASE_MASK | GDK_BUTTON_PRESS_MASK | GDK_ENTER_NOTIFY | GDK_LEAVE_NOTIFY);
@@ -7481,8 +7481,8 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
 
   mt->nb = gtk_notebook_new ();
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_bg (mt->nb, GTK_STATE_NORMAL, &palette->normal_back);
-    gtk_widget_modify_bg (mt->nb, GTK_STATE_ACTIVE, &palette->menu_and_bars);
+    lives_widget_set_bg_color (mt->nb, GTK_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_bg_color (mt->nb, GTK_STATE_ACTIVE, &palette->menu_and_bars);
   }
 
   hbox = gtk_hbox_new (FALSE, 0);
@@ -7500,7 +7500,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
 
   gtk_notebook_set_tab_label (GTK_NOTEBOOK (mt->nb), gtk_notebook_get_nth_page (GTK_NOTEBOOK (mt->nb), 0), label);
 
-  gtk_widget_modify_fg (gtk_notebook_get_tab_label(GTK_NOTEBOOK(mt->nb),hbox), GTK_STATE_NORMAL, &palette->normal_fore);
+  lives_widget_set_fg_color (gtk_notebook_get_tab_label(GTK_NOTEBOOK(mt->nb),hbox), GTK_STATE_NORMAL, &palette->normal_fore);
 
 
   gtk_paned_pack1 (GTK_PANED (mt->hpaned), mt->nb, TRUE, FALSE);
@@ -7522,7 +7522,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (mt->clip_scroll), mt->clip_inner_box);
 
   if (palette->style&STYLE_4) {
-    gtk_widget_modify_bg(GTK_BIN(mt->clip_scroll)->child, GTK_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_bg_color(GTK_BIN(mt->clip_scroll)->child, GTK_STATE_NORMAL, &palette->normal_back);
   }
 
 
@@ -7531,7 +7531,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
 
   gtk_container_add (GTK_CONTAINER (mt->nb), hbox);
   gtk_notebook_set_tab_label (GTK_NOTEBOOK (mt->nb), gtk_notebook_get_nth_page (GTK_NOTEBOOK (mt->nb), 1), label);
-  gtk_widget_modify_fg (gtk_notebook_get_tab_label(GTK_NOTEBOOK(mt->nb),hbox), GTK_STATE_NORMAL, &palette->normal_fore);
+  lives_widget_set_fg_color (gtk_notebook_get_tab_label(GTK_NOTEBOOK(mt->nb),hbox), GTK_STATE_NORMAL, &palette->normal_fore);
 
 
 
@@ -7540,7 +7540,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
 
   gtk_container_add (GTK_CONTAINER (mt->nb), hbox);
   gtk_notebook_set_tab_label (GTK_NOTEBOOK (mt->nb), gtk_notebook_get_nth_page (GTK_NOTEBOOK (mt->nb), 2), label);
-  gtk_widget_modify_fg (gtk_notebook_get_tab_label(GTK_NOTEBOOK(mt->nb),hbox), GTK_STATE_NORMAL, &palette->normal_fore);
+  lives_widget_set_fg_color (gtk_notebook_get_tab_label(GTK_NOTEBOOK(mt->nb),hbox), GTK_STATE_NORMAL, &palette->normal_fore);
 
 
   tname=lives_fx_cat_to_text(LIVES_FX_CAT_EFFECT,TRUE); // effects
@@ -7550,7 +7550,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
 
   gtk_container_add (GTK_CONTAINER (mt->nb), hbox);
   gtk_notebook_set_tab_label (GTK_NOTEBOOK (mt->nb), gtk_notebook_get_nth_page (GTK_NOTEBOOK (mt->nb), 3), label);
-  gtk_widget_modify_fg (gtk_notebook_get_tab_label(GTK_NOTEBOOK(mt->nb),hbox), GTK_STATE_NORMAL, &palette->normal_fore);
+  lives_widget_set_fg_color (gtk_notebook_get_tab_label(GTK_NOTEBOOK(mt->nb),hbox), GTK_STATE_NORMAL, &palette->normal_fore);
 
 
 
@@ -7561,7 +7561,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
 
   gtk_container_add (GTK_CONTAINER (mt->nb), hbox);
   gtk_notebook_set_tab_label (GTK_NOTEBOOK (mt->nb), gtk_notebook_get_nth_page (GTK_NOTEBOOK (mt->nb), 4), label);
-  gtk_widget_modify_fg (gtk_notebook_get_tab_label(GTK_NOTEBOOK(mt->nb),hbox), GTK_STATE_NORMAL, &palette->normal_fore);
+  lives_widget_set_fg_color (gtk_notebook_get_tab_label(GTK_NOTEBOOK(mt->nb),hbox), GTK_STATE_NORMAL, &palette->normal_fore);
 
 
   tname=lives_fx_cat_to_text(LIVES_FX_CAT_COMPOSITOR,TRUE); // compositors
@@ -7571,7 +7571,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
 
   gtk_container_add (GTK_CONTAINER (mt->nb), hbox);
   gtk_notebook_set_tab_label (GTK_NOTEBOOK (mt->nb), gtk_notebook_get_nth_page (GTK_NOTEBOOK (mt->nb), 5), label);
-  gtk_widget_modify_fg (gtk_notebook_get_tab_label(GTK_NOTEBOOK(mt->nb),hbox), GTK_STATE_NORMAL, &palette->normal_fore);
+  lives_widget_set_fg_color (gtk_notebook_get_tab_label(GTK_NOTEBOOK(mt->nb),hbox), GTK_STATE_NORMAL, &palette->normal_fore);
 
 
   label=gtk_label_new (_("Params."));
@@ -7580,7 +7580,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
 
   gtk_container_add (GTK_CONTAINER (mt->nb), hbox);
   gtk_notebook_set_tab_label (GTK_NOTEBOOK (mt->nb), gtk_notebook_get_nth_page (GTK_NOTEBOOK (mt->nb), 6), label);
-  gtk_widget_modify_fg (gtk_notebook_get_tab_label(GTK_NOTEBOOK(mt->nb),hbox), 
+  lives_widget_set_fg_color (gtk_notebook_get_tab_label(GTK_NOTEBOOK(mt->nb),hbox), 
 			GTK_STATE_NORMAL, &palette->normal_fore);
 
 
@@ -7625,7 +7625,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, TRUE, 0);
 
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_fg_color(label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
 
     
@@ -7664,7 +7664,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
 
   mt->fx_label=gtk_label_new("");
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(mt->fx_label, GTK_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_fg_color(mt->fx_label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
 
   gtk_box_pack_end (GTK_BOX (hbox), mt->fx_label, FALSE, FALSE, 20);
@@ -7692,10 +7692,10 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
 		    mt->checkbutton_avel_reverse);
 
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-    if (palette->style&STYLE_3) gtk_widget_modify_bg(eventbox, GTK_STATE_NORMAL, &palette->normal_back);
-    else gtk_widget_modify_bg(eventbox, GTK_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_fg_color(label, GTK_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_fg_color(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
+    if (palette->style&STYLE_3) lives_widget_set_bg_color(eventbox, GTK_STATE_NORMAL, &palette->normal_back);
+    else lives_widget_set_bg_color(eventbox, GTK_STATE_NORMAL, &palette->menu_and_bars);
   }
 
   gtk_box_pack_start (GTK_BOX (hbox), mt->checkbutton_avel_reverse, FALSE, FALSE, 10);
@@ -7713,7 +7713,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
 
   label = gtk_label_new_with_mnemonic (_("_Velocity  "));
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_fg_color(label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
   gtk_box_pack_start(GTK_BOX(hbox),label,FALSE,TRUE,0);
 
@@ -7758,9 +7758,9 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
 		    (gpointer)mt);
 
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-    if (palette->style&STYLE_3) gtk_widget_modify_bg(eventbox, GTK_STATE_NORMAL, &palette->normal_back);
-    else gtk_widget_modify_bg(eventbox, GTK_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_fg_color(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
+    if (palette->style&STYLE_3) lives_widget_set_bg_color(eventbox, GTK_STATE_NORMAL, &palette->normal_back);
+    else lives_widget_set_bg_color(eventbox, GTK_STATE_NORMAL, &palette->menu_and_bars);
   }
 
   mt->in_hbox = gtk_hbox_new (FALSE, 0);
@@ -7779,10 +7779,10 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
 		    mt->checkbutton_start_anchored);
 
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_fg(mt->in_eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-    if (palette->style&STYLE_3) gtk_widget_modify_bg(mt->in_eventbox, GTK_STATE_NORMAL, &palette->normal_back);
-    else gtk_widget_modify_bg(mt->in_eventbox, GTK_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_fg_color(label, GTK_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_fg_color(mt->in_eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
+    if (palette->style&STYLE_3) lives_widget_set_bg_color(mt->in_eventbox, GTK_STATE_NORMAL, &palette->normal_back);
+    else lives_widget_set_bg_color(mt->in_eventbox, GTK_STATE_NORMAL, &palette->menu_and_bars);
   }
 
   gtk_box_pack_start (GTK_BOX (mt->in_hbox), mt->in_eventbox, FALSE, FALSE, 10);
@@ -7809,7 +7809,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   gtk_box_pack_start (GTK_BOX (mt->in_hbox), mt->start_in_label, FALSE, FALSE, 10);
 
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(mt->start_in_label, GTK_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_fg_color(mt->start_in_label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
 
   vbox = gtk_vbox_new (FALSE, 0);
@@ -7831,9 +7831,9 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
 		    (gpointer)mt);
 
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-    if (palette->style&STYLE_3) gtk_widget_modify_bg(eventbox, GTK_STATE_NORMAL, &palette->normal_back);
-    else gtk_widget_modify_bg(eventbox, GTK_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_fg_color(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
+    if (palette->style&STYLE_3) lives_widget_set_bg_color(eventbox, GTK_STATE_NORMAL, &palette->normal_back);
+    else lives_widget_set_bg_color(eventbox, GTK_STATE_NORMAL, &palette->menu_and_bars);
   }
 
   mt->out_hbox = gtk_hbox_new (FALSE, 0);
@@ -7853,10 +7853,10 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
 		    mt->checkbutton_end_anchored);
 
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_fg(mt->out_eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-    if (palette->style&STYLE_3) gtk_widget_modify_bg(mt->out_eventbox, GTK_STATE_NORMAL, &palette->normal_back);
-    else gtk_widget_modify_bg(mt->out_eventbox, GTK_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_fg_color(label, GTK_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_fg_color(mt->out_eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
+    if (palette->style&STYLE_3) lives_widget_set_bg_color(mt->out_eventbox, GTK_STATE_NORMAL, &palette->normal_back);
+    else lives_widget_set_bg_color(mt->out_eventbox, GTK_STATE_NORMAL, &palette->menu_and_bars);
   }
 
   gtk_box_pack_start (GTK_BOX (mt->out_hbox), mt->out_eventbox, FALSE, FALSE, 10);
@@ -7882,7 +7882,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   gtk_box_pack_start (GTK_BOX (mt->out_hbox), mt->end_out_label, FALSE, FALSE, 10);
 
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(mt->end_out_label, GTK_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_fg_color(mt->end_out_label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
 
   g_signal_handler_block (mt->spinbutton_in,mt->spin_in_func);
@@ -7900,9 +7900,9 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   polymorph(mt,POLY_CLIPS);
 
   mt->context_frame = gtk_frame_new (_("Info"));
-  gtk_widget_modify_bg (mt->context_frame, GTK_STATE_NORMAL, &palette->normal_back);
-  gtk_widget_modify_fg (mt->context_frame, GTK_STATE_NORMAL, &palette->normal_fore);
-  gtk_widget_modify_fg (gtk_frame_get_label_widget(GTK_FRAME(mt->context_frame)), GTK_STATE_NORMAL, &palette->normal_fore);
+  lives_widget_set_bg_color (mt->context_frame, GTK_STATE_NORMAL, &palette->normal_back);
+  lives_widget_set_fg_color (mt->context_frame, GTK_STATE_NORMAL, &palette->normal_fore);
+  lives_widget_set_fg_color (gtk_frame_get_label_widget(GTK_FRAME(mt->context_frame)), GTK_STATE_NORMAL, &palette->normal_fore);
 
   gtk_paned_pack2 (GTK_PANED (mt->hpaned), mt->context_frame, TRUE, TRUE);
 
@@ -7915,24 +7915,24 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
     hseparator = gtk_hseparator_new ();
     gtk_box_pack_start (GTK_BOX (mt->top_vbox), hseparator, FALSE, FALSE, 2);
     if (palette->style&STYLE_5) {
-      gtk_widget_modify_fg(hseparator, GTK_STATE_NORMAL, &palette->normal_back);
-      gtk_widget_modify_bg(hseparator, GTK_STATE_NORMAL, &palette->normal_back);
+      lives_widget_set_fg_color(hseparator, GTK_STATE_NORMAL, &palette->normal_back);
+      lives_widget_set_bg_color(hseparator, GTK_STATE_NORMAL, &palette->normal_back);
     }
   }
   else {
     hseparator = gtk_hseparator_new ();
     gtk_box_pack_start (GTK_BOX (mt->top_vbox), hseparator, FALSE, FALSE, 0);
     if (palette->style&STYLE_5) {
-      gtk_widget_modify_fg(hseparator, GTK_STATE_NORMAL, &palette->normal_back);
-      gtk_widget_modify_bg(hseparator, GTK_STATE_NORMAL, &palette->normal_back);
+      lives_widget_set_fg_color(hseparator, GTK_STATE_NORMAL, &palette->normal_back);
+      lives_widget_set_bg_color(hseparator, GTK_STATE_NORMAL, &palette->normal_back);
     }
     mt->sep_image = gtk_image_new_from_pixbuf (mainw->imsep);
     gtk_box_pack_start (GTK_BOX (mt->top_vbox), mt->sep_image, FALSE, FALSE, 0);
     hseparator = gtk_hseparator_new ();
     gtk_box_pack_start (GTK_BOX (mt->top_vbox), hseparator, FALSE, FALSE, 0);
     if (palette->style&STYLE_5) {
-      gtk_widget_modify_fg(hseparator, GTK_STATE_NORMAL, &palette->normal_back);
-      gtk_widget_modify_bg(hseparator, GTK_STATE_NORMAL, &palette->normal_back);
+      lives_widget_set_fg_color(hseparator, GTK_STATE_NORMAL, &palette->normal_back);
+      lives_widget_set_bg_color(hseparator, GTK_STATE_NORMAL, &palette->normal_back);
     }
   }
 
@@ -7958,8 +7958,8 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   gtk_box_pack_start (GTK_BOX (tl_vbox), eventbox, FALSE, FALSE, 0);
 
   if (palette->style&STYLE_1) {
-    if (palette->style&STYLE_3) gtk_widget_modify_bg(eventbox, GTK_STATE_NORMAL, &palette->normal_back);
-    else gtk_widget_modify_bg(eventbox, GTK_STATE_NORMAL, &palette->menu_and_bars);
+    if (palette->style&STYLE_3) lives_widget_set_bg_color(eventbox, GTK_STATE_NORMAL, &palette->normal_back);
+    else lives_widget_set_bg_color(eventbox, GTK_STATE_NORMAL, &palette->menu_and_bars);
   }
 
   g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
@@ -8002,8 +8002,8 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   gtk_box_pack_start (GTK_BOX (mt->tl_hbox), mt->tl_eventbox, TRUE, TRUE, 0);
 
   if (palette->style&STYLE_1) {
-    if (palette->style&STYLE_3) gtk_widget_modify_bg(mt->tl_eventbox, GTK_STATE_NORMAL, &palette->normal_back);
-    else gtk_widget_modify_bg(mt->tl_eventbox, GTK_STATE_NORMAL, &palette->menu_and_bars);
+    if (palette->style&STYLE_3) lives_widget_set_bg_color(mt->tl_eventbox, GTK_STATE_NORMAL, &palette->normal_back);
+    else lives_widget_set_bg_color(mt->tl_eventbox, GTK_STATE_NORMAL, &palette->menu_and_bars);
   }
 
   g_signal_connect (GTK_OBJECT (mt->tl_eventbox), "button_press_event",
@@ -8035,7 +8035,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   label=gtk_label_new(_("Scroll"));
 
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_fg_color(label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
 
   gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 10);
@@ -8546,7 +8546,7 @@ boolean multitrack_delete (lives_mt *mt, boolean save_layout) {
     mainw->playarea = gtk_hbox_new (FALSE,0);
 
     gtk_container_add (GTK_CONTAINER (mainw->pl_eventbox), mainw->playarea);
-    gtk_widget_modify_bg (mainw->playframe, GTK_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_bg_color (mainw->playframe, GTK_STATE_NORMAL, &palette->normal_back);
     gtk_widget_show(mainw->playarea);
     gtk_widget_set_app_paintable(mainw->playarea,TRUE);
   }
@@ -8785,7 +8785,7 @@ void mt_init_tracks (lives_mt *mt, boolean set_min_max) {
     label=gtk_label_new (_("Timeline (seconds)"));
     
     if (palette->style&STYLE_1) {
-      gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
+      lives_widget_set_fg_color(label, GTK_STATE_NORMAL, &palette->normal_fore);
     }
     gtk_table_attach (GTK_TABLE (mt->timeline_table_header), label, 0, 7, 0, 2, GTK_FILL, (GtkAttachOptions)0, 0, 0);
   }
@@ -8820,10 +8820,10 @@ void mt_init_tracks (lives_mt *mt, boolean set_min_max) {
     
     if (palette->style&STYLE_1) {
       if (palette->style&STYLE_3) {
-	gtk_widget_modify_fg (mt->timeline, GTK_STATE_NORMAL, &palette->normal_fore);
-	gtk_widget_modify_bg (mt->timeline, GTK_STATE_NORMAL, &palette->normal_back);
-	gtk_widget_modify_bg (mt->timeline_eb, GTK_STATE_NORMAL, &palette->menu_and_bars);
-	gtk_widget_modify_bg (mt->timeline_reg, GTK_STATE_NORMAL, &palette->menu_and_bars);
+	lives_widget_set_fg_color (mt->timeline, GTK_STATE_NORMAL, &palette->normal_fore);
+	lives_widget_set_bg_color (mt->timeline, GTK_STATE_NORMAL, &palette->normal_back);
+	lives_widget_set_bg_color (mt->timeline_eb, GTK_STATE_NORMAL, &palette->menu_and_bars);
+	lives_widget_set_bg_color (mt->timeline_reg, GTK_STATE_NORMAL, &palette->menu_and_bars);
       }
     }
 
@@ -9271,8 +9271,8 @@ GtkWidget *add_audio_track (lives_mt *mt, gint track, boolean behind) {
 
   if (palette->style&STYLE_1) {
     if (!(palette->style&STYLE_3)) {
-      gtk_widget_modify_fg (label, GTK_STATE_NORMAL, &palette->normal_back);
-      gtk_widget_modify_fg (label, GTK_STATE_SELECTED, &palette->normal_back);
+      lives_widget_set_fg_color (label, GTK_STATE_NORMAL, &palette->normal_back);
+      lives_widget_set_fg_color (label, GTK_STATE_SELECTED, &palette->normal_back);
     }
   }
 
@@ -9536,8 +9536,8 @@ void add_video_track (lives_mt *mt, boolean behind) {
 
   if (palette->style&STYLE_1) {
     if (!(palette->style&STYLE_3)) {
-      gtk_widget_modify_fg (label, GTK_STATE_NORMAL, &palette->normal_back);
-      gtk_widget_modify_fg (label, GTK_STATE_SELECTED, &palette->normal_back);
+      lives_widget_set_fg_color (label, GTK_STATE_NORMAL, &palette->normal_back);
+      lives_widget_set_fg_color (label, GTK_STATE_SELECTED, &palette->normal_back);
     }
   }
 
@@ -9612,7 +9612,7 @@ void do_effect_context (lives_mt *mt, GdkEventButton *event) {
   gtk_menu_set_title (GTK_MENU(menu),_("LiVES: Selected effect"));
 
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_bg(menu, GTK_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_bg_color(menu, GTK_STATE_NORMAL, &palette->menu_and_bars);
   }
 
   fhash=weed_get_string_value(mt->selected_init_event,"filter",&error);
@@ -9935,9 +9935,9 @@ void mt_init_clips (lives_mt *mt, gint orig_file, boolean add) {
       eventbox=gtk_event_box_new();
       if (palette->style&STYLE_1) {
 	if (palette->style&STYLE_3) {
-	  gtk_widget_modify_bg (eventbox, GTK_STATE_SELECTED, &palette->menu_and_bars);
+	  lives_widget_set_bg_color (eventbox, GTK_STATE_SELECTED, &palette->menu_and_bars);
 	}
-	else gtk_widget_modify_bg (eventbox, GTK_STATE_SELECTED, &palette->normal_back);
+	else lives_widget_set_bg_color (eventbox, GTK_STATE_SELECTED, &palette->normal_back);
       }
       gtk_widget_add_events (eventbox, GDK_BUTTON_RELEASE_MASK | GDK_BUTTON_PRESS_MASK | GDK_ENTER_NOTIFY);
       g_signal_connect (GTK_OBJECT(eventbox), "enter-notify-event",G_CALLBACK (on_clipbox_enter),(gpointer)mt);
@@ -9952,7 +9952,7 @@ void mt_init_clips (lives_mt *mt, gint orig_file, boolean add) {
       gtk_container_add (GTK_CONTAINER (eventbox), vbox);
       gtk_box_pack_start (GTK_BOX (mt->clip_inner_box), eventbox, FALSE, FALSE, 0);
       if (palette->style&STYLE_4) {
-	gtk_widget_modify_bg(eventbox, GTK_STATE_NORMAL, &palette->normal_back);
+	lives_widget_set_bg_color(eventbox, GTK_STATE_NORMAL, &palette->normal_back);
       }
 
       g_snprintf (filename,PATH_MAX,"%s",(tmp=g_path_get_basename(mainw->files[i]->name)));
@@ -9960,8 +9960,8 @@ void mt_init_clips (lives_mt *mt, gint orig_file, boolean add) {
       get_basename(filename);
       g_snprintf (clip_name,CLIP_LABEL_LENGTH,"  %s  ",filename);
       label=gtk_label_new (clip_name);
-      if (palette->style&STYLE_3) gtk_widget_modify_fg (label, GTK_STATE_SELECTED, &palette->info_text);
-      if (palette->style&STYLE_4) gtk_widget_modify_fg (label, GTK_STATE_NORMAL, &palette->normal_fore);
+      if (palette->style&STYLE_3) lives_widget_set_fg_color (label, GTK_STATE_SELECTED, &palette->info_text);
+      if (palette->style&STYLE_4) lives_widget_set_fg_color (label, GTK_STATE_NORMAL, &palette->normal_fore);
       gtk_box_pack_start (GTK_BOX (vbox), label, FALSE, FALSE, 0);
       gtk_box_pack_start (GTK_BOX (vbox), thumb_image, FALSE, FALSE, 0);
       
@@ -9969,36 +9969,36 @@ void mt_init_clips (lives_mt *mt, gint orig_file, boolean add) {
 	gchar *tmp;
 	label=gtk_label_new ((tmp=g_strdup_printf (_("%d frames"),mainw->files[i]->frames)));
 	g_free(tmp);
-	if (palette->style&STYLE_3) gtk_widget_modify_fg (label, GTK_STATE_SELECTED, &palette->info_text);
-	if (palette->style&STYLE_4) gtk_widget_modify_fg (label, GTK_STATE_NORMAL, &palette->normal_fore);
+	if (palette->style&STYLE_3) lives_widget_set_fg_color (label, GTK_STATE_SELECTED, &palette->info_text);
+	if (palette->style&STYLE_4) lives_widget_set_fg_color (label, GTK_STATE_NORMAL, &palette->normal_fore);
 	gtk_box_pack_start (GTK_BOX (vbox), label, FALSE, FALSE, 0);
 
 	label=gtk_label_new ("");
 	mt->clip_labels=g_list_append(mt->clip_labels,label);
 
-	if (palette->style&STYLE_3) gtk_widget_modify_fg (label, GTK_STATE_SELECTED, &palette->info_text);
-	if (palette->style&STYLE_4) gtk_widget_modify_fg (label, GTK_STATE_NORMAL, &palette->normal_fore);
+	if (palette->style&STYLE_3) lives_widget_set_fg_color (label, GTK_STATE_SELECTED, &palette->info_text);
+	if (palette->style&STYLE_4) lives_widget_set_fg_color (label, GTK_STATE_NORMAL, &palette->normal_fore);
 	gtk_box_pack_start (GTK_BOX (vbox), label, FALSE, FALSE, 0);
 
 	label=gtk_label_new ("");
 	mt->clip_labels=g_list_append(mt->clip_labels,label);
 
-	if (palette->style&STYLE_3) gtk_widget_modify_fg (label, GTK_STATE_SELECTED, &palette->info_text);
-	if (palette->style&STYLE_4) gtk_widget_modify_fg (label, GTK_STATE_NORMAL, &palette->normal_fore);
+	if (palette->style&STYLE_3) lives_widget_set_fg_color (label, GTK_STATE_SELECTED, &palette->info_text);
+	if (palette->style&STYLE_4) lives_widget_set_fg_color (label, GTK_STATE_NORMAL, &palette->normal_fore);
 	gtk_box_pack_start (GTK_BOX (vbox), label, FALSE, FALSE, 0);
 
 	set_clip_labels_variable(mt,i);
       }
       else {
 	label=gtk_label_new (g_strdup (_("audio only")));
-	if (palette->style&STYLE_3) gtk_widget_modify_fg (label, GTK_STATE_SELECTED, &palette->info_text);
-	if (palette->style&STYLE_4) gtk_widget_modify_fg (label, GTK_STATE_NORMAL, &palette->normal_fore);
+	if (palette->style&STYLE_3) lives_widget_set_fg_color (label, GTK_STATE_SELECTED, &palette->info_text);
+	if (palette->style&STYLE_4) lives_widget_set_fg_color (label, GTK_STATE_NORMAL, &palette->normal_fore);
 	gtk_box_pack_start (GTK_BOX (vbox), label, FALSE, FALSE, 0);
 	mt->clip_labels=g_list_append(mt->clip_labels,label);
 
 	label=gtk_label_new (g_strdup_printf (_("%.2f sec."),mainw->files[i]->laudio_time));
-	if (palette->style&STYLE_3) gtk_widget_modify_fg (label, GTK_STATE_SELECTED, &palette->info_text);
-	if (palette->style&STYLE_4) gtk_widget_modify_fg (label, GTK_STATE_NORMAL, &palette->normal_fore);
+	if (palette->style&STYLE_3) lives_widget_set_fg_color (label, GTK_STATE_SELECTED, &palette->info_text);
+	if (palette->style&STYLE_4) lives_widget_set_fg_color (label, GTK_STATE_NORMAL, &palette->normal_fore);
 	gtk_box_pack_start (GTK_BOX (vbox), label, FALSE, FALSE, 0);
 	mt->clip_labels=g_list_append(mt->clip_labels,label);
       }
@@ -10621,15 +10621,15 @@ void clear_context (lives_mt *mt) {
   
   mt->context_box = gtk_vbox_new (FALSE, 4);
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_bg(mt->context_box, GTK_STATE_NORMAL, &palette->info_base);
+    lives_widget_set_bg_color(mt->context_box, GTK_STATE_NORMAL, &palette->info_base);
   }
 
   gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (mt->context_scroll), mt->context_box);
 
   // Apply theme background to scrolled window
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(GTK_BIN(mt->context_scroll)->child, GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_bg(GTK_BIN(mt->context_scroll)->child, GTK_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_fg_color(GTK_BIN(mt->context_scroll)->child, GTK_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_bg_color(GTK_BIN(mt->context_scroll)->child, GTK_STATE_NORMAL, &palette->normal_back);
   }
 
   if (mt->opts.show_ctx) gtk_widget_show_all (mt->context_frame);
@@ -11655,7 +11655,7 @@ void polymorph (lives_mt *mt, lives_mt_poly_state_t poly) {
     if (mt->mt_frame_preview) {
       // put blank back in preview window
       gtk_widget_ref (mainw->playarea);
-      gtk_widget_modify_bg (mt->fd_frame, GTK_STATE_NORMAL, &palette->normal_back);
+      lives_widget_set_bg_color (mt->fd_frame, GTK_STATE_NORMAL, &palette->normal_back);
     }
     if (pchain!=NULL&&poly!=POLY_PARAMS) {
       g_free(pchain);
@@ -12055,12 +12055,12 @@ void polymorph (lives_mt *mt, lives_mt_poly_state_t poly) {
 	    gtk_widget_add_events (xeventbox, GDK_BUTTON_RELEASE_MASK | GDK_BUTTON_PRESS_MASK);
 	    if (palette->style&STYLE_1) {
 	      if (palette->style&STYLE_3) {
-		gtk_widget_modify_bg(xeventbox, GTK_STATE_NORMAL, &palette->normal_back);
-		gtk_widget_modify_bg(xeventbox, GTK_STATE_SELECTED, &palette->menu_and_bars);
+		lives_widget_set_bg_color(xeventbox, GTK_STATE_NORMAL, &palette->normal_back);
+		lives_widget_set_bg_color(xeventbox, GTK_STATE_SELECTED, &palette->menu_and_bars);
 	      }
 	      else {
-		gtk_widget_modify_bg(xeventbox, GTK_STATE_NORMAL, &palette->menu_and_bars);
-		gtk_widget_modify_bg(xeventbox, GTK_STATE_SELECTED, &palette->normal_back);
+		lives_widget_set_bg_color(xeventbox, GTK_STATE_NORMAL, &palette->menu_and_bars);
+		lives_widget_set_bg_color(xeventbox, GTK_STATE_SELECTED, &palette->normal_back);
 	      }
 	    }
 
@@ -12074,8 +12074,8 @@ void polymorph (lives_mt *mt, lives_mt_poly_state_t poly) {
 	    g_free(fname);
 
 	    if (palette->style&STYLE_1) {
-	      gtk_widget_modify_fg (label, GTK_STATE_NORMAL, &palette->info_text);
-	      gtk_widget_modify_fg (label, GTK_STATE_SELECTED, &palette->info_text);
+	      lives_widget_set_fg_color (label, GTK_STATE_NORMAL, &palette->info_text);
+	      lives_widget_set_fg_color (label, GTK_STATE_SELECTED, &palette->info_text);
 	    }
 	    gtk_container_set_border_width (GTK_CONTAINER (xeventbox), 5);
 	    gtk_box_pack_start (GTK_BOX (vbox), label, FALSE, FALSE, 0);
@@ -12148,7 +12148,7 @@ void polymorph (lives_mt *mt, lives_mt_poly_state_t poly) {
       label=gtk_label_new(_("\n\nNo effects at current track,\ncurrent time.\n"));
       gtk_box_pack_start (GTK_BOX (mt->fx_list_box), label, TRUE, TRUE, 0);
       gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_CENTER);
-      gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
+      lives_widget_set_fg_color(label, GTK_STATE_NORMAL, &palette->normal_fore);
       gtk_widget_show(mt->fx_list_box);
       gtk_widget_show(label);
     }
@@ -12241,10 +12241,6 @@ void mouse_select_end(GtkWidget *widget, lives_mt *mt) {
 
 static void mouse_select_move(GtkWidget *widget, lives_mt *mt) {
   lives_painter_t *cr;
-
-#if GTK_CHECK_VERSION(3,0,0)
-  GdkRGBA bgcolor;
-#endif
 
   GtkWidget *xeventbox;
   GtkWidget *checkbutton;
@@ -12393,7 +12389,7 @@ void do_block_context (lives_mt *mt, GdkEventButton *event, track_rect *block) {
   gtk_menu_set_title (GTK_MENU(menu),_("LiVES: Selected block/frame"));
 
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_bg(menu, GTK_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_bg_color(menu, GTK_STATE_NORMAL, &palette->menu_and_bars);
   }
   
   selblock = gtk_menu_item_new_with_mnemonic (_("_Select this block"));
@@ -12475,7 +12471,7 @@ void do_track_context (lives_mt *mt, GdkEventButton *event, gdouble timesecs, gi
   gtk_menu_set_title (GTK_MENU(menu),_("LiVES: Selected frame"));
 
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_bg(menu, GTK_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_bg_color(menu, GTK_STATE_NORMAL, &palette->menu_and_bars);
   }
 
   if (mt->file_selected>0&&((track<0&&mainw->files[mt->file_selected]->achans>0&&
@@ -15846,7 +15842,7 @@ void mt_prepare_for_playback(lives_mt *mt) {
 
   if (mt->mt_frame_preview) {
     // put blank back in preview window
-    if (mt->framedraw!=NULL) gtk_widget_modify_bg (mt->fd_frame, GTK_STATE_NORMAL, &palette->normal_back);
+    if (mt->framedraw!=NULL) lives_widget_set_bg_color (mt->fd_frame, GTK_STATE_NORMAL, &palette->normal_back);
     
   }
   else {
@@ -20859,16 +20855,16 @@ static void on_amixer_reset_clicked (GtkButton *button, lives_mt *mt) {
 static void after_amixer_gang_toggled (GtkToggleButton *toggle, lives_amixer_t *amixer) {
   gtk_widget_set_sensitive(amixer->inv_checkbutton,(gtk_toggle_button_get_active(toggle)));
   if (prefs->lamp_buttons) {
-    if (gtk_toggle_button_get_active(toggle)) gtk_widget_modify_bg(GTK_WIDGET(toggle), GTK_STATE_PRELIGHT, &palette->light_green);
-    else gtk_widget_modify_bg(GTK_WIDGET(toggle), GTK_STATE_PRELIGHT, &palette->dark_red);
+    if (gtk_toggle_button_get_active(toggle)) lives_widget_set_bg_color(GTK_WIDGET(toggle), GTK_STATE_PRELIGHT, &palette->light_green);
+    else lives_widget_set_bg_color(GTK_WIDGET(toggle), GTK_STATE_PRELIGHT, &palette->dark_red);
   }
 }
 
 
 static void after_amixer_inv_toggled (GtkToggleButton *toggle, lives_amixer_t *amixer) {
   if (prefs->lamp_buttons) {
-    if (gtk_toggle_button_get_active(toggle)) gtk_widget_modify_bg(GTK_WIDGET(toggle), GTK_STATE_PRELIGHT, &palette->light_green);
-    else gtk_widget_modify_bg(GTK_WIDGET(toggle), GTK_STATE_PRELIGHT, &palette->dark_red);
+    if (gtk_toggle_button_get_active(toggle)) lives_widget_set_bg_color(GTK_WIDGET(toggle), GTK_STATE_PRELIGHT, &palette->light_green);
+    else lives_widget_set_bg_color(GTK_WIDGET(toggle), GTK_STATE_PRELIGHT, &palette->dark_red);
   }
 }
 
@@ -20989,7 +20985,7 @@ GtkWidget * amixer_add_channel_slider (lives_mt *mt, gint i) {
     giw_vslider_set_major_ticks_number(GIW_VSLIDER(amixer->ch_sliders[i]),5);
     giw_vslider_set_minor_ticks_number(GIW_VSLIDER(amixer->ch_sliders[i]),4);
     if (palette->style&STYLE_1) {
-      gtk_widget_modify_bg(amixer->ch_sliders[i], GTK_STATE_NORMAL, &palette->normal_back);
+      lives_widget_set_bg_color(amixer->ch_sliders[i], GTK_STATE_NORMAL, &palette->normal_back);
     }
   }
   else {
@@ -21010,7 +21006,7 @@ GtkWidget * amixer_add_channel_slider (lives_mt *mt, gint i) {
 						   (gpointer)mt);
   
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(amixer->ch_sliders[i], GTK_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_fg_color(amixer->ch_sliders[i], GTK_STATE_NORMAL, &palette->normal_fore);
   }
   
   tname=get_track_name(mt,i-mt->opts.back_audio_tracks,TRUE);
@@ -21020,7 +21016,7 @@ GtkWidget * amixer_add_channel_slider (lives_mt *mt, gint i) {
   g_object_set_data(G_OBJECT(amixer->ch_sliders[i]),"label",label);
   
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_fg_color(label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
   
   vbox = gtk_vbox_new (FALSE, 15);
@@ -21090,7 +21086,7 @@ void amixer_show (GtkButton *button, gpointer user_data) {
   winsize_v=scr_height*2/3;
 
   amixerw = gtk_window_new (GTK_WINDOW_TOPLEVEL);
-  gtk_widget_modify_bg(amixerw, GTK_STATE_NORMAL, &palette->menu_and_bars);
+  lives_widget_set_bg_color(amixerw, GTK_STATE_NORMAL, &palette->menu_and_bars);
   gtk_window_set_title (GTK_WINDOW (amixerw), _("LiVES: Multitrack audio mixer"));
 
   top_vbox = gtk_vbox_new (FALSE, 15);
@@ -21117,7 +21113,7 @@ void amixer_show (GtkButton *button, gpointer user_data) {
   else gtk_window_set_default_size (GTK_WINDOW (amixerw), winsize_h, winsize_v);
 
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_bg(gtk_bin_get_child (GTK_BIN (scrolledwindow)), GTK_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_bg_color(gtk_bin_get_child (GTK_BIN (scrolledwindow)), GTK_STATE_NORMAL, &palette->normal_back);
   }
   
   gtk_viewport_set_shadow_type (GTK_VIEWPORT (gtk_bin_get_child (GTK_BIN (scrolledwindow))),GTK_SHADOW_IN);
@@ -21162,8 +21158,8 @@ void amixer_show (GtkButton *button, gpointer user_data) {
   if (prefs->lamp_buttons) {
     amixer->inv_checkbutton = gtk_check_button_new_with_label (" ");
     gtk_toggle_button_set_mode(GTK_TOGGLE_BUTTON(amixer->inv_checkbutton),FALSE);
-    gtk_widget_modify_bg(amixer->inv_checkbutton, GTK_STATE_ACTIVE, &palette->light_green);
-    gtk_widget_modify_bg(amixer->inv_checkbutton, GTK_STATE_NORMAL, &palette->dark_red);
+    lives_widget_set_bg_color(amixer->inv_checkbutton, GTK_STATE_ACTIVE, &palette->light_green);
+    lives_widget_set_bg_color(amixer->inv_checkbutton, GTK_STATE_NORMAL, &palette->dark_red);
 
     g_signal_connect_after (GTK_OBJECT (amixer->inv_checkbutton), "toggled",
 			    G_CALLBACK (after_amixer_inv_toggled),
@@ -21179,7 +21175,7 @@ void amixer_show (GtkButton *button, gpointer user_data) {
     label=gtk_label_new_with_mnemonic(_("_Invert backing audio\nand layer volumes"));
     
     if (palette->style&STYLE_1) {
-      gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
+      lives_widget_set_fg_color(label, GTK_STATE_NORMAL, &palette->normal_fore);
     }
     
     gtk_widget_set_tooltip_text( amixer->inv_checkbutton, _("Adjust backing and layer audio values so that they sum to 1.0"));
@@ -21193,9 +21189,9 @@ void amixer_show (GtkButton *button, gpointer user_data) {
 		      amixer->inv_checkbutton);
     
     if (palette->style&STYLE_1) {
-      gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-      gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-      gtk_widget_modify_bg (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
+      lives_widget_set_fg_color(label, GTK_STATE_NORMAL, &palette->normal_fore);
+      lives_widget_set_fg_color(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
+      lives_widget_set_bg_color (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
     }
     
     gtk_box_pack_start (GTK_BOX (vbox), eventbox, FALSE, FALSE, 10);
@@ -21214,8 +21210,8 @@ void amixer_show (GtkButton *button, gpointer user_data) {
   if (prefs->lamp_buttons) {
     amixer->gang_checkbutton = gtk_check_button_new_with_label (" ");
     gtk_toggle_button_set_mode(GTK_TOGGLE_BUTTON(amixer->gang_checkbutton),FALSE);
-    gtk_widget_modify_bg(amixer->gang_checkbutton, GTK_STATE_ACTIVE, &palette->light_green);
-    gtk_widget_modify_bg(amixer->gang_checkbutton, GTK_STATE_NORMAL, &palette->dark_red);
+    lives_widget_set_bg_color(amixer->gang_checkbutton, GTK_STATE_ACTIVE, &palette->light_green);
+    lives_widget_set_bg_color(amixer->gang_checkbutton, GTK_STATE_NORMAL, &palette->dark_red);
   }
   else amixer->gang_checkbutton = gtk_check_button_new ();
 
@@ -21224,7 +21220,7 @@ void amixer_show (GtkButton *button, gpointer user_data) {
     label=gtk_label_new_with_mnemonic(_("_Gang layer audio"));
     
     if (palette->style&STYLE_1) {
-      gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
+      lives_widget_set_fg_color(label, GTK_STATE_NORMAL, &palette->normal_fore);
     }
 
     gtk_widget_set_tooltip_text( amixer->gang_checkbutton, _("Adjust all layer audio values to the same value"));
@@ -21240,9 +21236,9 @@ void amixer_show (GtkButton *button, gpointer user_data) {
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(amixer->gang_checkbutton),mt->opts.gang_audio);
     
     if (palette->style&STYLE_1) {
-      gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
-      gtk_widget_modify_fg(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-      gtk_widget_modify_bg (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
+      lives_widget_set_fg_color(label, GTK_STATE_NORMAL, &palette->normal_fore);
+      lives_widget_set_fg_color(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
+      lives_widget_set_bg_color (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
     }
     
     hbox = gtk_hbox_new (FALSE, 0);

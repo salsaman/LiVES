@@ -2295,7 +2295,7 @@ void get_play_times(void) {
 #if GTK_CHECK_VERSION(3,0,0)
     GdkRGBA color;
     lives_painter_t *cr=lives_painter_create(mainw->laudio_drawable);
-    gtk_style_context_get_bg_color (gtk_widget_get_style_context (mainw->laudio_draw),GTK_WIDGET_STATE (widget),&color);
+    lives_widget_get_bg_color(mainw->laudio_draw,&color);
     lives_painter_set_source_rgba (cr, &color);
 
     lives_painter_rectangle(cr,0,0,
@@ -2320,7 +2320,7 @@ void get_play_times(void) {
 #if GTK_CHECK_VERSION(3,0,0)
     GdkRGBA color;
     lives_painter_t *cr=lives_painter_create(mainw->raudio_drawable);
-    gtk_style_context_get_bg_color (gtk_widget_get_style_context (mainw->raudio_draw),GTK_WIDGET_STATE (widget),&color);
+    lives_widget_get_bg_color(mainw->raudio_draw,&color);
     lives_painter_set_source_rgba (cr, &color);
 
     lives_painter_rectangle(cr,0,0,
@@ -2344,7 +2344,7 @@ void get_play_times(void) {
 #if GTK_CHECK_VERSION(3,0,0)
     GdkRGBA color;
     lives_painter_t *cr=lives_painter_create(mainw->video_drawable);
-    gtk_style_context_get_bg_color (gtk_widget_get_style_context (mainw->video_draw),GTK_WIDGET_STATE (widget),&color);
+    lives_widget_get_bg_color(mainw->video_draw,&color);
     lives_painter_set_source_rgba (cr, &color);
 
     lives_painter_rectangle(cr,0,0,
@@ -2443,8 +2443,7 @@ void get_play_times(void) {
       
       lives_painter_fill(cr);
       
-      gtk_style_context_get_bg_color (gtk_widget_get_style_context (mainw->laudio_draw),
-				      GTK_WIDGET_STATE (mainw->laudio_draw),&color);
+      lives_widget_get_bg_color(mainw->laudio_draw,&color);
       lives_painter_set_source_rgba (cr, &color);
       
       lives_painter_rectangle(cr,cfile->laudio_time/cfile->total_time*allocwidth, 0,
@@ -2501,8 +2500,7 @@ void get_play_times(void) {
       
 	lives_painter_fill(cr);
       
-	gtk_style_context_get_bg_color (gtk_widget_get_style_context (mainw->raudio_draw),
-					GTK_WIDGET_STATE (mainw->raudio_draw),&color);
+	lives_widget_get_bg_color(mainw->raudio_draw,&color);
 	lives_painter_set_source_rgba (cr, &color);
       
 	lives_painter_rectangle(cr,cfile->raudio_time/cfile->total_time*allocwidth, 0,
@@ -3901,14 +3899,6 @@ void reget_afilesize (int fileno) {
 
 
 
-
-void
-colour_equal(GdkColor *c1, const GdkColor *c2) {
-  c1->pixel=c2->pixel;
-  c1->red=c2->red;
-  c1->green=c2->green;
-  c1->blue=c2->blue;
-}
 
 
 gboolean

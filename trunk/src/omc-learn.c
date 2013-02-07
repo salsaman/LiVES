@@ -708,7 +708,7 @@ static void omc_macro_row_add_params(lives_omc_match_node_t *mnode, gint row, om
   mnode->treev2 = gtk_tree_view_new_with_model (GTK_TREE_MODEL (mnode->gtkstore2));
 
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_base(mnode->treev2, GTK_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_base_color(mnode->treev2, GTK_STATE_NORMAL, &palette->menu_and_bars);
   }
 
   renderer = gtk_cell_renderer_text_new ();
@@ -1087,7 +1087,7 @@ static void omc_learner_add_row(gint type, gint detail, lives_omc_match_node_t *
 
    // properties
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_base(mnode->treev1, GTK_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_base_color(mnode->treev1, GTK_STATE_NORMAL, &palette->menu_and_bars);
   }
 
    renderer = gtk_cell_renderer_text_new ();
@@ -1328,7 +1328,7 @@ static omclearn_w *create_omclearn_dialog(void) {
   gtk_widget_set_size_request (scrolledwindow, winsize_h, winsize_v);
   
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_bg(gtk_bin_get_child (GTK_BIN (scrolledwindow)), GTK_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_bg_color(gtk_bin_get_child (GTK_BIN (scrolledwindow)), GTK_STATE_NORMAL, &palette->normal_back);
   }
   
   gtk_viewport_set_shadow_type (GTK_VIEWPORT (gtk_bin_get_child (GTK_BIN (scrolledwindow))),GTK_SHADOW_IN);

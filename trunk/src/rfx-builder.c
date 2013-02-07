@@ -144,7 +144,7 @@ rfx_build_window_t *make_rfx_build_window (const gchar *script_name, lives_rfx_s
     gtk_window_set_transient_for(GTK_WINDOW(rfxbuilder->dialog),GTK_WINDOW(mainw->LiVES));
   }
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_bg(rfxbuilder->dialog, GTK_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_bg_color(rfxbuilder->dialog, GTK_STATE_NORMAL, &palette->normal_back);
     gtk_dialog_set_has_separator(GTK_DIALOG(rfxbuilder->dialog),FALSE);
   }
 
@@ -176,8 +176,8 @@ rfx_build_window_t *make_rfx_build_window (const gchar *script_name, lives_rfx_s
   
   // Apply theme background to scrolled window
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(lives_bin_get_child(LIVES_BIN(scrollw)), GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_bg(lives_bin_get_child(LIVES_BIN(scrollw)), GTK_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_fg_color(lives_bin_get_child(LIVES_BIN(scrollw)), GTK_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_bg_color(lives_bin_get_child(LIVES_BIN(scrollw)), GTK_STATE_NORMAL, &palette->normal_back);
   }
 
 
@@ -197,7 +197,7 @@ rfx_build_window_t *make_rfx_build_window (const gchar *script_name, lives_rfx_s
   gtk_box_pack_start (GTK_BOX (hbox), label, TRUE, FALSE, 0);
 
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg (label, GTK_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_fg_color (label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
 
   rfxbuilder->type_effect1_radiobutton = gtk_radio_button_new (NULL);
@@ -211,7 +211,7 @@ rfx_build_window_t *make_rfx_build_window (const gchar *script_name, lives_rfx_s
   gtk_box_pack_start (GTK_BOX (hbox), label, TRUE, FALSE, 0);
 
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg (label, GTK_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_fg_color (label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
 
   gtk_widget_show (rfxbuilder->type_effect1_radiobutton);
@@ -226,7 +226,7 @@ rfx_build_window_t *make_rfx_build_window (const gchar *script_name, lives_rfx_s
   gtk_box_pack_start (GTK_BOX (hbox), label, TRUE, FALSE, 0);
 
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg (label, GTK_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_fg_color (label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
 
   gtk_widget_show (rfxbuilder->type_effect2_radiobutton);
@@ -240,7 +240,7 @@ rfx_build_window_t *make_rfx_build_window (const gchar *script_name, lives_rfx_s
   gtk_box_pack_start (GTK_BOX (hbox), label, TRUE, FALSE, 0);
 
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg (label, GTK_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_fg_color (label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
 
   gtk_widget_show (rfxbuilder->type_effect0_radiobutton);
@@ -253,7 +253,7 @@ rfx_build_window_t *make_rfx_build_window (const gchar *script_name, lives_rfx_s
   gtk_box_pack_start (GTK_BOX (hbox), label, TRUE, FALSE, 0);
 
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg (label, GTK_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_fg_color (label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
 
   gtk_widget_show (rfxbuilder->type_tool_radiobutton);
@@ -267,7 +267,7 @@ rfx_build_window_t *make_rfx_build_window (const gchar *script_name, lives_rfx_s
   gtk_box_pack_start (GTK_BOX (hbox), label, TRUE, FALSE, 0);
 
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg (label, GTK_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_fg_color (label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
 
   gtk_widget_show (rfxbuilder->type_utility_radiobutton);
@@ -286,7 +286,7 @@ rfx_build_window_t *make_rfx_build_window (const gchar *script_name, lives_rfx_s
   gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 0);
 
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg (label, GTK_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_fg_color (label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
 
   rfxbuilder->name_entry = gtk_entry_new ();
@@ -305,7 +305,7 @@ rfx_build_window_t *make_rfx_build_window (const gchar *script_name, lives_rfx_s
   gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 0);
 
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg (label, GTK_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_fg_color (label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
 
   spinbutton_adj = (GObject *)gtk_adjustment_new (rfxbuilder->plugin_version, rfxbuilder->plugin_version, 1000000., 1., 1., 0.);
@@ -322,7 +322,7 @@ rfx_build_window_t *make_rfx_build_window (const gchar *script_name, lives_rfx_s
   gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 0);
 
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg (label, GTK_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_fg_color (label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
 
   rfxbuilder->author_entry = gtk_entry_new ();
@@ -342,7 +342,7 @@ rfx_build_window_t *make_rfx_build_window (const gchar *script_name, lives_rfx_s
   gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 0);
 
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg (label, GTK_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_fg_color (label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
 
   rfxbuilder->url_entry = gtk_entry_new ();
@@ -362,7 +362,7 @@ rfx_build_window_t *make_rfx_build_window (const gchar *script_name, lives_rfx_s
   gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 0);
 
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg (label, GTK_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_fg_color (label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
 
   rfxbuilder->menu_text_entry = gtk_entry_new ();
@@ -387,7 +387,7 @@ rfx_build_window_t *make_rfx_build_window (const gchar *script_name, lives_rfx_s
   gtk_box_pack_start (GTK_BOX (hbox), rfxbuilder->action_desc_label, FALSE, FALSE, 0);
 
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg (rfxbuilder->action_desc_label, GTK_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_fg_color (rfxbuilder->action_desc_label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
 
   rfxbuilder->action_desc_entry = gtk_entry_new ();
@@ -405,7 +405,7 @@ rfx_build_window_t *make_rfx_build_window (const gchar *script_name, lives_rfx_s
   gtk_box_pack_start (GTK_BOX (hbox), rfxbuilder->min_frames_label, FALSE, FALSE, 0);
 
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg (rfxbuilder->min_frames_label, GTK_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_fg_color (rfxbuilder->min_frames_label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
 
   spinbutton_adj = (GObject *)gtk_adjustment_new (1., 1., 1000., 1., 1., 0);
@@ -759,7 +759,7 @@ void on_list_table_clicked (GtkButton *button, gpointer user_data) {
     gtk_window_set_transient_for(GTK_WINDOW(dialog),GTK_WINDOW(mainw->LiVES));
   }
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_bg(dialog, GTK_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_bg_color(dialog, GTK_STATE_NORMAL, &palette->normal_back);
     gtk_dialog_set_has_separator(GTK_DIALOG(dialog),FALSE);
   }
 
@@ -1193,7 +1193,7 @@ void on_properties_clicked (GtkButton *button, gpointer user_data) {
     gtk_window_set_transient_for(GTK_WINDOW(dialog),GTK_WINDOW(rfxbuilder->dialog));
   }
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_bg(dialog, GTK_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_bg_color(dialog, GTK_STATE_NORMAL, &palette->normal_back);
     gtk_dialog_set_has_separator(GTK_DIALOG(dialog),FALSE);
   }
 
@@ -1214,7 +1214,7 @@ void on_properties_clicked (GtkButton *button, gpointer user_data) {
   label=gtk_label_new_with_mnemonic (_ ("_Slow (hint to GUI)"));
   gtk_label_set_mnemonic_widget (GTK_LABEL (label),rfxbuilder->prop_slow);
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_fg_color(label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
   gtk_box_pack_start (GTK_BOX (hbox), rfxbuilder->prop_slow, FALSE, FALSE, 0);
   gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 10);
@@ -1233,7 +1233,7 @@ void on_properties_clicked (GtkButton *button, gpointer user_data) {
     label=gtk_label_new_with_mnemonic (_ ("_Batch mode generator"));
     gtk_label_set_mnemonic_widget (GTK_LABEL (label),rfxbuilder->prop_batchg);
     if (palette->style&STYLE_1) {
-      gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
+      lives_widget_set_fg_color(label, GTK_STATE_NORMAL, &palette->normal_fore);
     }
     gtk_box_pack_start (GTK_BOX (hbox), rfxbuilder->prop_batchg, FALSE, FALSE, 0);
     gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 10);
@@ -1945,7 +1945,7 @@ GtkWidget * make_param_dialog (gint pnum, rfx_build_window_t *rfxbuilder) {
     gtk_window_set_transient_for(GTK_WINDOW(dialog),GTK_WINDOW(mainw->LiVES));
   }
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_bg(dialog, GTK_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_bg_color(dialog, GTK_STATE_NORMAL, &palette->normal_back);
     gtk_dialog_set_has_separator(GTK_DIALOG(dialog),FALSE);
   }
 
@@ -1967,7 +1967,7 @@ GtkWidget * make_param_dialog (gint pnum, rfx_build_window_t *rfxbuilder) {
   gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 0);
 
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg (label, GTK_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_fg_color (label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
 
   rfxbuilder->param_name_entry = gtk_entry_new ();
@@ -1992,7 +1992,7 @@ GtkWidget * make_param_dialog (gint pnum, rfx_build_window_t *rfxbuilder) {
   gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 0);
 
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg (label, GTK_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_fg_color (label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
 
   rfxbuilder->param_label_entry = gtk_entry_new ();
@@ -2015,7 +2015,7 @@ GtkWidget * make_param_dialog (gint pnum, rfx_build_window_t *rfxbuilder) {
   gtk_box_pack_start (GTK_BOX (hbox), rfxbuilder->bg_label, FALSE, FALSE, 0);
 
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg (rfxbuilder->bg_label, GTK_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_fg_color (rfxbuilder->bg_label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
 
   spinbutton_adj = (GObject *)gtk_adjustment_new (0., 0., 16., 1., 1., 0.);
@@ -2079,7 +2079,7 @@ GtkWidget * make_param_dialog (gint pnum, rfx_build_window_t *rfxbuilder) {
   gtk_box_pack_start (GTK_BOX (hbox), rfxbuilder->param_dp_label, FALSE, FALSE, 0);
 
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg (rfxbuilder->param_dp_label, GTK_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_fg_color (rfxbuilder->param_dp_label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
 
   spinbutton_adj = (GObject *)gtk_adjustment_new (0., 0., 16., 1., 1., 0.);
@@ -2107,7 +2107,7 @@ GtkWidget * make_param_dialog (gint pnum, rfx_build_window_t *rfxbuilder) {
   gtk_box_pack_start (GTK_BOX (hbox), rfxbuilder->param_def_label, FALSE, FALSE, 0);
 
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg (rfxbuilder->param_def_label, GTK_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_fg_color (rfxbuilder->param_def_label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
 
   spinbutton_adj = (GObject *)gtk_adjustment_new (0., -G_MAXINT, G_MAXINT, 1., 1., 0.);
@@ -2127,7 +2127,7 @@ GtkWidget * make_param_dialog (gint pnum, rfx_build_window_t *rfxbuilder) {
 
   label = gtk_label_new_with_mnemonic (_("_Default: "));
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_fg_color(label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
   gtk_widget_show (label);
   gtk_box_pack_start (GTK_BOX (rfxbuilder->param_strlist_hbox), label, FALSE, FALSE, 0);
@@ -2174,7 +2174,7 @@ GtkWidget * make_param_dialog (gint pnum, rfx_build_window_t *rfxbuilder) {
   gtk_box_pack_start (GTK_BOX (hbox), rfxbuilder->param_min_label, FALSE, FALSE, 0);
 
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg (rfxbuilder->param_min_label, GTK_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_fg_color (rfxbuilder->param_min_label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
 
   spinbutton_adj = (GObject *)gtk_adjustment_new (0., -G_MAXINT, G_MAXINT, 1., 1., 0.);
@@ -2195,7 +2195,7 @@ GtkWidget * make_param_dialog (gint pnum, rfx_build_window_t *rfxbuilder) {
   gtk_box_pack_start (GTK_BOX (hbox), rfxbuilder->param_max_label, FALSE, FALSE, 0);
 
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg (rfxbuilder->param_max_label, GTK_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_fg_color (rfxbuilder->param_max_label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
 
   spinbutton_adj = (GObject *)gtk_adjustment_new (RFX_DEF_NUM_MAX, -G_MAXINT, G_MAXINT, 1., 1., 0.);
@@ -2217,7 +2217,7 @@ GtkWidget * make_param_dialog (gint pnum, rfx_build_window_t *rfxbuilder) {
   gtk_box_pack_start (GTK_BOX (hbox), rfxbuilder->param_step_label, FALSE, FALSE, 0);
 
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg (rfxbuilder->param_step_label, GTK_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_fg_color (rfxbuilder->param_step_label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
 
   spinbutton_adj = (GObject *)gtk_adjustment_new (1., 1., G_MAXINT, 1., 1., 0.);
@@ -2687,7 +2687,7 @@ GtkWidget * make_param_window_dialog (gint pnum, rfx_build_window_t *rfxbuilder)
     gtk_window_set_transient_for(GTK_WINDOW(dialog),GTK_WINDOW(mainw->LiVES));
   }
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_bg(dialog, GTK_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_bg_color(dialog, GTK_STATE_NORMAL, &palette->normal_back);
     gtk_dialog_set_has_separator(GTK_DIALOG(dialog),FALSE);
   }
 
@@ -2782,7 +2782,7 @@ GtkWidget * make_param_window_dialog (gint pnum, rfx_build_window_t *rfxbuilder)
   gtk_box_pack_start (GTK_BOX (hbox), rfxbuilder->paramw_rest_label, FALSE, FALSE, 0);
 
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg (rfxbuilder->paramw_rest_label, GTK_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_fg_color (rfxbuilder->paramw_rest_label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
 
   rfxbuilder->paramw_rest_entry = gtk_entry_new ();
@@ -2929,7 +2929,7 @@ GtkWidget * make_trigger_dialog (gint tnum, rfx_build_window_t *rfxbuilder) {
     gtk_window_set_transient_for(GTK_WINDOW(dialog),GTK_WINDOW(mainw->LiVES));
   }
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_bg(dialog, GTK_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_bg_color(dialog, GTK_STATE_NORMAL, &palette->normal_back);
     gtk_dialog_set_has_separator(GTK_DIALOG(dialog),FALSE);
   }
 
@@ -2950,7 +2950,7 @@ GtkWidget * make_trigger_dialog (gint tnum, rfx_build_window_t *rfxbuilder) {
   gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 0);
 
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg (label, GTK_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_fg_color (label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
 
   if (tnum>=0) whenlist = g_list_append (whenlist, (gpointer)(rfxbuilder->copy_triggers[tnum].when?
@@ -3043,7 +3043,7 @@ void on_code_clicked (GtkButton *button, gpointer user_data) {
     gtk_window_set_transient_for(GTK_WINDOW(dialog),GTK_WINDOW(mainw->LiVES));
   }
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_bg(dialog, GTK_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_bg_color(dialog, GTK_STATE_NORMAL, &palette->normal_back);
     gtk_dialog_set_has_separator(GTK_DIALOG(dialog),FALSE);
   }
 
@@ -4415,7 +4415,7 @@ gchar *prompt_for_script_name(const gchar *sname, lives_rfx_status_t status) {
   if (palette->style&STYLE_1) {
     gtk_dialog_set_has_separator(GTK_DIALOG(dialog),FALSE);
   }
-  gtk_widget_modify_bg (dialog, GTK_STATE_NORMAL, &palette->normal_back);
+  lives_widget_set_bg_color (dialog, GTK_STATE_NORMAL, &palette->normal_back);
   //gtk_window_set_default_size (GTK_WINDOW (dialog), 300, 200);
   gtk_container_set_border_width (GTK_CONTAINER (dialog), 10);
 
@@ -4453,7 +4453,7 @@ gchar *prompt_for_script_name(const gchar *sname, lives_rfx_status_t status) {
     gtk_widget_show (label);
     gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 0);
     if (palette->style&STYLE_1) {
-      gtk_widget_modify_fg (label, GTK_STATE_NORMAL, &palette->normal_fore);
+      lives_widget_set_fg_color (label, GTK_STATE_NORMAL, &palette->normal_fore);
     }
   }
   else {
@@ -4470,7 +4470,7 @@ gchar *prompt_for_script_name(const gchar *sname, lives_rfx_status_t status) {
     gtk_widget_show (label);
     gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 0);
     if (palette->style&STYLE_1) {
-      gtk_widget_modify_fg (label, GTK_STATE_NORMAL, &palette->normal_fore);
+      lives_widget_set_fg_color (label, GTK_STATE_NORMAL, &palette->normal_fore);
     }
   }
   
@@ -4503,7 +4503,7 @@ gchar *prompt_for_script_name(const gchar *sname, lives_rfx_status_t status) {
       gtk_widget_show (label);
       gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 0);
       if (palette->style&STYLE_1) {
-	gtk_widget_modify_fg (label, GTK_STATE_NORMAL, &palette->normal_fore);
+	lives_widget_set_fg_color (label, GTK_STATE_NORMAL, &palette->normal_fore);
       }
     }
     else {
@@ -4760,21 +4760,21 @@ void add_rfx_effects(void) {
   mainw->run_test_rfx_menu=gtk_menu_new();
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (mainw->run_test_rfx_submenu), mainw->run_test_rfx_menu);
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_bg(mainw->run_test_rfx_menu, GTK_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_bg_color(mainw->run_test_rfx_menu, GTK_STATE_NORMAL, &palette->menu_and_bars);
   }
   gtk_widget_show(mainw->run_test_rfx_menu);
 
   mainw->custom_effects_menu=gtk_menu_new();
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (mainw->custom_effects_submenu), mainw->custom_effects_menu);
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_bg(mainw->custom_effects_menu, GTK_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_bg_color(mainw->custom_effects_menu, GTK_STATE_NORMAL, &palette->menu_and_bars);
   }
 
   mainw->custom_tools_menu=gtk_menu_new();
 
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (mainw->custom_tools_submenu), mainw->custom_tools_menu);
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_bg(mainw->custom_tools_menu, GTK_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_bg_color(mainw->custom_tools_menu, GTK_STATE_NORMAL, &palette->menu_and_bars);
   }
 
 #ifdef IS_MINGW
@@ -5087,20 +5087,20 @@ void add_rfx_effects(void) {
   mainw->utilities_menu=gtk_menu_new();
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (mainw->utilities_submenu), mainw->utilities_menu);
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_bg(mainw->utilities_menu, GTK_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_bg_color(mainw->utilities_menu, GTK_STATE_NORMAL, &palette->menu_and_bars);
   }
 
   mainw->gens_menu=gtk_menu_new();
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (mainw->gens_submenu), mainw->gens_menu);
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_bg(mainw->gens_menu, GTK_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_bg_color(mainw->gens_menu, GTK_STATE_NORMAL, &palette->menu_and_bars);
   }
 
 
   mainw->custom_gens_menu=gtk_menu_new();
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (mainw->custom_gens_submenu), mainw->custom_gens_menu);
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_bg(mainw->custom_gens_menu, GTK_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_bg_color(mainw->custom_gens_menu, GTK_STATE_NORMAL, &palette->menu_and_bars);
   }
 
   gtk_container_add (GTK_CONTAINER (mainw->gens_menu), mainw->custom_gens_submenu);
@@ -5112,7 +5112,7 @@ void add_rfx_effects(void) {
   mainw->custom_utilities_menu=gtk_menu_new();
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (mainw->custom_utilities_submenu), mainw->custom_utilities_menu);
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_bg(mainw->custom_utilities_menu, GTK_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_bg_color(mainw->custom_utilities_menu, GTK_STATE_NORMAL, &palette->menu_and_bars);
   }
 
   gtk_container_add (GTK_CONTAINER (mainw->custom_tools_menu), mainw->custom_utilities_separator);

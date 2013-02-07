@@ -5739,6 +5739,7 @@ on_about_activate                     (GtkMenuItem     *menuitem,
                                         gpointer         user_data)
 {
 
+#ifdef GUI_GTK
 #if GTK_CHECK_VERSION(2,14,0)
   gchar *license = g_strdup(_(
         "This program is free software; you can redistribute it and/or modify\n"
@@ -5774,16 +5775,13 @@ on_about_activate                     (GtkMenuItem     *menuitem,
 
   g_free(comments);
   g_free(license);
-
-#else
+  return;
+#endif
+#endif
 
   gchar *mesg=g_strdup_printf(_ ("LiVES Version %s\n(c) G. Finch (salsaman) %s\n\nReleased under the GPL 3 or later (http://www.gnu.org/licenses/gpl.txt)\nLiVES is distributed WITHOUT WARRANTY\n\nContact the author at:\nsalsaman@gmail.com\nHomepage: http://lives.sourceforge.net"),LiVES_VERSION,"2002-2013");
   do_error_dialog(mesg);
   g_free(mesg);
-
-#endif
-
-
   
 }
 
@@ -6095,9 +6093,9 @@ void on_fs_preview_clicked (GtkWidget *widget, gpointer user_data) {
 
     }
 
-    gtk_widget_modify_bg (mainw->fs_playarea, GTK_STATE_NORMAL, &palette->black);
-    gtk_widget_modify_bg (mainw->fs_playframe, GTK_STATE_NORMAL, &palette->black);
-    gtk_widget_modify_bg (mainw->fs_playalign, GTK_STATE_NORMAL, &palette->black);
+    lives_widget_set_bg_color (mainw->fs_playarea, GTK_STATE_NORMAL, &palette->black);
+    lives_widget_set_bg_color (mainw->fs_playframe, GTK_STATE_NORMAL, &palette->black);
+    lives_widget_set_bg_color (mainw->fs_playalign, GTK_STATE_NORMAL, &palette->black);
 
     mainw->in_fs_preview=TRUE;
 
@@ -8987,12 +8985,13 @@ on_spinbutton_end_value_changed          (GtkSpinButton   *spinbutton,
 // for the timer bars
 
 boolean expose_vid_event (GtkWidget *widget, GdkEventExpose *event) {
-  gint ex,ey,ew,eh;
-  gint width;
-
 #if GTK_CHECK_VERSION(3,0,0)
+  LiVESWidgetColor color;
   lives_painter_t *cr;
 #endif
+
+  gint ex,ey,ew,eh;
+  gint width;
 
   if (!prefs->show_gui||mainw->multitrack!=NULL||
       (mainw->fs&&(prefs->play_monitor==prefs->gui_monitor||
@@ -9057,11 +9056,9 @@ boolean expose_vid_event (GtkWidget *widget, GdkEventExpose *event) {
 
   if (mainw->current_file==-1) {
 #if GTK_CHECK_VERSION(3,0,0)
-    GdkRGBA color;
     cr=lives_painter_create(mainw->video_drawable);
-    gtk_style_context_get_bg_color (gtk_widget_get_style_context (widget),GTK_WIDGET_STATE (widget),&color);
+    lives_widget_get_bg_color(mainw->video_draw,&color);
     lives_painter_set_source_rgba (cr, &color);
-
     lives_painter_rectangle(cr,0,0,
 		    lives_widget_get_allocation_width(mainw->video_draw),
 		    lives_widget_get_allocation_height(mainw->video_draw));
@@ -9069,7 +9066,7 @@ boolean expose_vid_event (GtkWidget *widget, GdkEventExpose *event) {
     lives_painter_destroy (cr);
 #else
     gdk_draw_rectangle (mainw->video_drawable,
-                        mainw->video_draw->style->bg_gc[GTK_WIDGET_STATE (widget)],
+			mainw->video_draw->style->bg_gc[GTK_STATE_NORMAL],
                         TRUE,
                         0, 0,
                         lives_widget_get_allocation_width(mainw->video_draw),
@@ -9079,14 +9076,15 @@ boolean expose_vid_event (GtkWidget *widget, GdkEventExpose *event) {
   }
 
 #if GTK_CHECK_VERSION(3,0,0)
-  cr = lives_painter_create_from_widget (mainw->video_draw);
-  lives_painter_set_source_surface (cr, mainw->video_drawable, ex, ey);
+  cr=lives_painter_create(mainw->video_drawable);
+  lives_widget_get_fg_color(mainw->video_draw,&color);
+  lives_painter_set_source_rgba (cr, &color);
   lives_painter_rectangle (cr,ex,ey,ew,eh);
   lives_painter_paint(cr);
   lives_painter_destroy(cr);
 #else
   gdk_draw_pixmap(lives_widget_get_xwindow(widget),
-		  widget->style->fg_gc[GTK_WIDGET_STATE (widget)],
+		  mainw->video_draw->style->fg_gc[GTK_STATE_NORMAL],
 		  mainw->video_drawable,
 		  ex, ey,
 		  ex, ey,
@@ -9100,6 +9098,11 @@ boolean expose_vid_event (GtkWidget *widget, GdkEventExpose *event) {
 
 
 static void redraw_laudio(int ex, int ey, int ew, int eh) {
+#if GTK_CHECK_VERSION(3,0,0)
+  LiVESWidgetColor color;
+  lives_painter_t *cr;
+#endif
+
   int width;
 
   block_expose();
@@ -9148,9 +9151,8 @@ static void redraw_laudio(int ex, int ey, int ew, int eh) {
 
   if (mainw->current_file==-1) {
 #if GTK_CHECK_VERSION(3,0,0)
-    GdkRGBA color;
     cr=lives_painter_create(mainw->laudio_drawable);
-    gtk_style_context_get_bg_color (gtk_widget_get_style_context (mainw->laudio_draw),GTK_WIDGET_STATE (mainw->laudio_draw),&color);
+    lives_widget_get_bg_color(mainw->laudio_draw,&color);
     lives_painter_set_source_rgba (cr, &color);
 
     lives_painter_rectangle(cr,0,0,
@@ -9160,7 +9162,7 @@ static void redraw_laudio(int ex, int ey, int ew, int eh) {
     lives_painter_destroy (cr);
 #else
     gdk_draw_rectangle (mainw->laudio_drawable,
-                        mainw->laudio_draw->style->bg_gc[GTK_WIDGET_STATE (mainw->laudio_draw)],
+			mainw->laudio_draw->style->bg_gc[GTK_STATE_NORMAL],
                         TRUE,
                         0, 0,
                         lives_widget_get_allocation_width(mainw->laudio_draw),
@@ -9172,14 +9174,15 @@ static void redraw_laudio(int ex, int ey, int ew, int eh) {
 
 
 #if GTK_CHECK_VERSION(3,0,0)
-  cr = lives_painter_create_from_widget (mainw->laudio_draw);
-  lives_painter_set_source_surface (cr, mainw->laudio_drawable, ex, ey);
+  cr=lives_painter_create(mainw->laudio_drawable);
+  lives_widget_get_fg_color(mainw->laudio_draw,&color);
+  lives_painter_set_source_rgba (cr, &color);
   lives_painter_rectangle (cr,ex,ey,ew,eh);
   lives_painter_paint(cr);
   lives_painter_destroy(cr);
 #else
   gdk_draw_pixmap(lives_widget_get_xwindow(mainw->laudio_draw),
-		  mainw->laudio_draw->style->fg_gc[GTK_WIDGET_STATE (mainw->laudio_draw)],
+		  mainw->laudio_draw->style->fg_gc[GTK_STATE_NORMAL],
 		  mainw->laudio_drawable,
 		  ex, ey,
 		  ex, ey,
@@ -9193,6 +9196,11 @@ static void redraw_laudio(int ex, int ey, int ew, int eh) {
 
 
 static void redraw_raudio(int ex, int ey, int ew, int eh) {
+#if GTK_CHECK_VERSION(3,0,0)
+  LiVESWidgetColor color;
+  lives_painter_t *cr;
+#endif
+
   int width;
 
   block_expose();
@@ -9237,9 +9245,8 @@ static void redraw_raudio(int ex, int ey, int ew, int eh) {
   // TODO - *** 
   if (mainw->current_file==-1) {
 #if GTK_CHECK_VERSION(3,0,0)
-    GdkRGBA color;
     cr=lives_painter_create(mainw->raudio_drawable);
-    gtk_style_context_get_bg_color (gtk_widget_get_style_context (mainw->raudio_draw),GTK_WIDGET_STATE (mainw->raudio_draw),&color);
+    lives_widget_get_bg_color(mainw->laudio_draw,&color);
     lives_painter_set_source_rgba (cr, &color);
 
     lives_painter_rectangle(cr,0,0,
@@ -9249,7 +9256,7 @@ static void redraw_raudio(int ex, int ey, int ew, int eh) {
     lives_painter_destroy (cr);
 #else
     gdk_draw_rectangle (mainw->raudio_drawable,
-                        mainw->raudio_draw->style->bg_gc[GTK_WIDGET_STATE (mainw->raudio_draw)],
+			mainw->raudio_draw->style->bg_gc[GTK_STATE_NORMAL],
                         TRUE,
                         0, 0,
                         lives_widget_get_allocation_width(mainw->raudio_draw),
@@ -9258,15 +9265,18 @@ static void redraw_raudio(int ex, int ey, int ew, int eh) {
 #endif
   }
 
+
 #if GTK_CHECK_VERSION(3,0,0)
-  cr = lives_painter_create_from_widget (mainw->raudio_draw);
-  lives_painter_set_source_surface (cr, mainw->raudio_drawable, ex, ey);
+  cr=lives_painter_create(mainw->raudio_drawable);
+  lives_widget_get_fg_color(mainw->raudio_draw,&color);
+  lives_painter_set_source_rgba (cr, &color);
+
   lives_painter_rectangle (cr,ex,ey,ew,eh);
   lives_painter_paint(cr);
   lives_painter_destroy(cr);
 #else
   gdk_draw_pixmap(lives_widget_get_xwindow(mainw->raudio_draw),
-		  mainw->raudio_draw->style->fg_gc[GTK_WIDGET_STATE (mainw->raudio_draw)],
+		  mainw->raudio_draw->style->fg_gc[GTK_STATE_NORMAL],
 		  mainw->raudio_drawable,
 		  ex, ey,
 		  ex, ey,
@@ -9285,10 +9295,6 @@ static void redraw_raudio(int ex, int ey, int ew, int eh) {
 
 boolean expose_laud_event (GtkWidget *widget, GdkEventExpose *event) {
   gint ex,ey,ew,eh;
-
-#if GTK_CHECK_VERSION(3,0,0)
-  lives_painter_t *cr;
-#endif
 
   if (!prefs->show_gui||mainw->multitrack!=NULL||
       (mainw->fs&&(prefs->play_monitor==prefs->gui_monitor||
@@ -9322,10 +9328,6 @@ boolean expose_laud_event (GtkWidget *widget, GdkEventExpose *event) {
 
 boolean expose_raud_event (GtkWidget *widget, GdkEventExpose *event) {
   gint ex,ey,ew,eh;
-
-#if GTK_CHECK_VERSION(3,0,0)
-  lives_painter_t *cr;
-#endif
 
   if (!prefs->show_gui||mainw->multitrack!=NULL||
       (mainw->fs&&(prefs->play_monitor==prefs->gui_monitor||
@@ -10203,7 +10205,7 @@ gboolean frame_context (GtkWidget *widget, GdkEventButton *event, gpointer which
   gtk_menu_set_title (GTK_MENU(menu),_("LiVES: Selected frame"));
 
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_bg(menu, GTK_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_bg_color(menu, GTK_STATE_NORMAL, &palette->menu_and_bars);
   }
 
   if (cfile->frames>0||mainw->multitrack!=NULL) {

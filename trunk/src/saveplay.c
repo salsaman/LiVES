@@ -2208,7 +2208,7 @@ void play_file (void) {
     }
     
     if (palette->style&STYLE_1) {
-      gtk_widget_modify_fg(gtk_frame_get_label_widget(GTK_FRAME(mainw->playframe)), 
+      lives_widget_set_fg_color(gtk_frame_get_label_widget(GTK_FRAME(mainw->playframe)), 
 			   GTK_STATE_NORMAL, &palette->normal_fore);
     }
     

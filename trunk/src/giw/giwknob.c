@@ -410,6 +410,10 @@ giw_knob_expose (GtkWidget      *widget,
   guint dx1, dy1, dx2, dy2;
   gint counter=0;
   GdkRectangle rect;
+
+#if GTK_CHECK_VERSION(3,0,0)
+  lives_painter_t *cr;
+#endif
   
   g_return_val_if_fail (widget != NULL, FALSE);
   g_return_val_if_fail (GIW_IS_KNOB (widget), FALSE);
@@ -423,7 +427,71 @@ giw_knob_expose (GtkWidget      *widget,
   rect.x=0;rect.y=0;
   rect.width=lives_widget_get_allocation_width(widget);
   rect.height=lives_widget_get_allocation_height(widget);
-      
+
+  // The center
+  xc = lives_widget_get_allocation_width(widget)/2;
+  yc = lives_widget_get_allocation_height(widget)/2;
+    
+  s = sin(knob->angle);
+  c = cos(knob->angle);
+
+
+#if GTK_CHECK_VERSION(3,0,0)
+  cr = lives_painter_create_from_widget (widget);
+  gtk_render_background(gtk_widget_get_style_context(widget),
+			cr,
+			0,
+			0,
+			rect.width,
+			rect.height);
+
+  lives_painter_set_source_rgb (cr, 0., 0., 0.);
+
+  lives_painter_arc(cr,
+		    knob->x+((knob->size/2)-knob->radius),
+		    knob->y+((knob->size/2)-knob->radius),
+		    knob->radius*2,
+		    0,
+		    2.*M_PI);
+
+  lives_painter_fill(cr);
+
+  lives_painter_set_source_rgb (cr, 1., 1., 1.);
+
+  lives_painter_move_to(cr,
+			xc+c*((float)knob->radius*0.6),
+			yc-s*((float)knob->radius*0.6));
+
+  lives_painter_line_to(cr,
+			xc+c*knob->radius,
+			yc-s*knob->radius);
+
+  lives_painter_arc(cr,
+		    xc+c*((float)knob->radius*0.8)-knob->radius*0.1,
+		    yc-s*((float)knob->radius*0.8)-knob->radius*0.1,
+		    knob->radius*0.2,
+		    0,
+		    2.*M_PI);
+
+  lives_painter_fill(cr);
+
+  if ((knob->mouse_policy==GIW_KNOB_MOUSE_DELAYED) & (knob->button!=0)) {
+    s = sin(knob->false_angle);
+    c = cos(knob->false_angle);
+
+    lives_widget_get_fg_state_color (widget, GTK_STATE_FLAG_PRELIGHT, &color);
+
+    lives_painter_move_to(cr,
+			  xc+c*((float)knob->radius*0.8),
+			  yc-s*((float)knob->radius*0.8));
+    lives_painter_line_to(cr,
+			  xc+c*knob->radius,
+			  yc-s*knob->radius);
+
+
+  }
+
+#else
   // Drawing backgorund
   gtk_paint_flat_box (widget->style,
 			widget->window,
@@ -450,14 +518,6 @@ giw_knob_expose (GtkWidget      *widget,
  
 
  
-  // The center
-  xc = lives_widget_get_allocation_width(widget)/2;
-  yc = lives_widget_get_allocation_height(widget)/2;
-    
-  // Draw the knob
-  s = sin(knob->angle);
-  c = cos(knob->angle);
-
   gdk_draw_line (widget->window,
 			widget->style->white_gc,
 			xc+c*((float)knob->radius*0.6),
@@ -556,6 +616,8 @@ giw_knob_expose (GtkWidget      *widget,
                         xc-knob->title_width/2,
 			knob->size-knob->title_height-5, // 5 pixels to separate from the borders
 			knob->title);
+
+#endif
     
   return FALSE;
 }

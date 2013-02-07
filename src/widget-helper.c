@@ -22,7 +22,7 @@
 ////////////////////////////////////////////////////
 //lives_painter functions
 
-lives_painter_t *lives_painter_create(lives_painter_surface_t *target) {
+LIVES_INLINE lives_painter_t *lives_painter_create(lives_painter_surface_t *target) {
   lives_painter_t *cr=NULL;
 #ifdef PAINTER_CAIRO
   cr=cairo_create(target);
@@ -31,7 +31,7 @@ lives_painter_t *lives_painter_create(lives_painter_surface_t *target) {
 
 }
 
-lives_painter_t *lives_painter_create_from_widget(LiVESWidget *widget) {
+LIVES_INLINE lives_painter_t *lives_painter_create_from_widget(LiVESWidget *widget) {
   lives_painter_t *cr=NULL;
 #ifdef PAINTER_CAIRO
 #ifdef GUI_GTK
@@ -45,57 +45,57 @@ lives_painter_t *lives_painter_create_from_widget(LiVESWidget *widget) {
 }
 
 
-void lives_painter_set_source_pixbuf (lives_painter_t *cr, const LiVESPixbuf *pixbuf, double pixbuf_x, double pixbuf_y) {
+LIVES_INLINE void lives_painter_set_source_pixbuf (lives_painter_t *cr, const LiVESPixbuf *pixbuf, double pixbuf_x, double pixbuf_y) {
 #ifdef PAINTER_CAIRO
   gdk_cairo_set_source_pixbuf(cr,pixbuf,pixbuf_x,pixbuf_y);
 #endif
 
 }
 
-void lives_painter_paint(lives_painter_t *cr) {
+LIVES_INLINE void lives_painter_paint(lives_painter_t *cr) {
 #ifdef PAINTER_CAIRO
   cairo_paint(cr);
 #endif
 }
 
-void lives_painter_fill(lives_painter_t *cr) {
+LIVES_INLINE void lives_painter_fill(lives_painter_t *cr) {
 #ifdef PAINTER_CAIRO
   cairo_fill(cr);
 #endif
 }
 
-void lives_painter_stroke(lives_painter_t *cr) {
+LIVES_INLINE void lives_painter_stroke(lives_painter_t *cr) {
 #ifdef PAINTER_CAIRO
   cairo_stroke(cr);
 #endif
 }
 
-void lives_painter_clip(lives_painter_t *cr) {
+LIVES_INLINE void lives_painter_clip(lives_painter_t *cr) {
 #ifdef PAINTER_CAIRO
   cairo_clip(cr);
 #endif
 }
 
-void lives_painter_destroy(lives_painter_t *cr) {
+LIVES_INLINE void lives_painter_destroy(lives_painter_t *cr) {
 #ifdef PAINTER_CAIRO
   cairo_destroy(cr);
 #endif
 }
 
-void lives_painter_surface_destroy(lives_painter_surface_t *surf) {
+LIVES_INLINE void lives_painter_surface_destroy(lives_painter_surface_t *surf) {
 #ifdef PAINTER_CAIRO
   cairo_surface_destroy(surf);
 #endif
 }
 
-void lives_painter_new_path(lives_painter_t *cr) {
+LIVES_INLINE void lives_painter_new_path(lives_painter_t *cr) {
 #ifdef PAINTER_CAIRO
   cairo_new_path(cr);
 #endif
 }
 
 
-void lives_painter_set_line_width(lives_painter_t *cr, double width) {
+LIVES_INLINE void lives_painter_set_line_width(lives_painter_t *cr, double width) {
 #ifdef PAINTER_CAIRO
   cairo_set_line_width(cr,width);
 #endif
@@ -103,61 +103,61 @@ void lives_painter_set_line_width(lives_painter_t *cr, double width) {
 }
 
 
-void lives_painter_move_to(lives_painter_t *cr, double x, double y) {
+LIVES_INLINE void lives_painter_move_to(lives_painter_t *cr, double x, double y) {
 #ifdef PAINTER_CAIRO
   cairo_move_to(cr,x,y);
 #endif
 
 }
 
- void lives_painter_line_to(lives_painter_t *cr, double x, double y) {
+LIVES_INLINE void lives_painter_line_to(lives_painter_t *cr, double x, double y) {
 #ifdef PAINTER_CAIRO
   cairo_line_to(cr,x,y);
 #endif
 
 }
 
-void lives_painter_rectangle(lives_painter_t *cr, double x, double y, double width, double height) {
+LIVES_INLINE void lives_painter_rectangle(lives_painter_t *cr, double x, double y, double width, double height) {
 #ifdef PAINTER_CAIRO
   cairo_rectangle(cr,x,y,width,height);
 #endif
 
 }
 
-void lives_painter_arc(lives_painter_t *cr, double xc, double yc, double radius, double angle1, double angle2) {
+LIVES_INLINE void lives_painter_arc(lives_painter_t *cr, double xc, double yc, double radius, double angle1, double angle2) {
 #ifdef PAINTER_CAIRO
   cairo_arc(cr,xc,yc,radius,angle1,angle2);
 #endif
 
 }
  
-void lives_painter_set_operator(lives_painter_t *cr, lives_painter_operator_t op) {
+LIVES_INLINE void lives_painter_set_operator(lives_painter_t *cr, lives_painter_operator_t op) {
 #ifdef PAINTER_CAIRO
   cairo_set_operator(cr,op);
 #endif
 }
 
-void lives_painter_set_source_rgb(lives_painter_t *cr, double red, double green, double blue) {
+LIVES_INLINE void lives_painter_set_source_rgb(lives_painter_t *cr, double red, double green, double blue) {
 #ifdef PAINTER_CAIRO
   cairo_set_source_rgb(cr,red,green,blue);
 #endif
 }
 
-void lives_painter_set_source_rgba(lives_painter_t *cr, double red, double green, double blue, double alpha) {
+LIVES_INLINE void lives_painter_set_source_rgba(lives_painter_t *cr, double red, double green, double blue, double alpha) {
 #ifdef PAINTER_CAIRO
    cairo_set_source_rgba(cr,red,green,blue,alpha);
 #endif
 }
 
-void lives_painter_set_fill_rule(lives_painter_t *cr, lives_painter_fill_rule_t fill_rule) {
+LIVES_INLINE void lives_painter_set_fill_rule(lives_painter_t *cr, lives_painter_fill_rule_t fill_rule) {
 #ifdef PAINTER_CAIRO
   cairo_set_fill_rule(cr,fill_rule);
 #endif
 }
 
 
-lives_painter_surface_t *lives_painter_surface_create_similar (lives_painter_surface_t *other, 
-    lives_painter_content_t content, int width, int height) {
+LIVES_INLINE lives_painter_surface_t *lives_painter_surface_create_similar (lives_painter_surface_t *other, 
+									    lives_painter_content_t content, int width, int height) {
 
   lives_painter_surface_t *surf=NULL;
 #ifdef PAINTER_CAIRO
@@ -167,7 +167,7 @@ lives_painter_surface_t *lives_painter_surface_create_similar (lives_painter_sur
 }
 
 
-void lives_painter_surface_flush(lives_painter_surface_t *surf) {
+LIVES_INLINE void lives_painter_surface_flush(lives_painter_surface_t *surf) {
 #ifdef PAINTER_CAIRO
   cairo_surface_flush(surf);
 #endif
@@ -175,14 +175,24 @@ void lives_painter_surface_flush(lives_painter_surface_t *surf) {
 
 
 
-lives_painter_surface_t *lives_painter_image_surface_create_for_data(uint8_t *data, lives_painter_format_t format, 
-								     int width, int height, int stride) {
+LIVES_INLINE lives_painter_surface_t *lives_painter_image_surface_create_for_data(uint8_t *data, lives_painter_format_t format, 
+										  int width, int height, int stride) {
   lives_painter_surface_t *surf=NULL;
 #ifdef PAINTER_CAIRO
   surf=cairo_image_surface_create_for_data(data,format,width,height,stride);
 #endif
   return surf;
 }
+
+
+LIVES_INLINE lives_painter_surface_t *lives_painter_image_surface_create(lives_painter_format_t format, int width, int height) {
+  lives_painter_surface_t *surf=NULL;
+#ifdef PAINTER_CAIRO
+  surf=cairo_image_surface_create(format,width,height);
+#endif
+  return surf;
+}
+
 
 
 ////////////////////////// painter info funcs
@@ -316,7 +326,7 @@ LIVES_INLINE void lives_widget_set_base_color(LiVESWidget *widget, LiVESWidgetSt
 LIVES_INLINE void lives_widget_get_bg_state_color(LiVESWidget *widget, LiVESWidgetState state, LiVESWidgetColor *color) {
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3,0,0)
-  gtk_style_context_get_background_color (gtk_widget_get_style_context (widget), state, &color);
+  gtk_style_context_get_background_color (gtk_widget_get_style_context (widget), state, color);
 #else
   lives_widget_color_copy(color,&gtk_widget_get_style(widget)->bg[state]);
 #endif
@@ -327,7 +337,7 @@ LIVES_INLINE void lives_widget_get_bg_state_color(LiVESWidget *widget, LiVESWidg
 LIVES_INLINE void lives_widget_get_fg_state_color(LiVESWidget *widget, LiVESWidgetState state, LiVESWidgetColor *color) {
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3,0,0)
-  gtk_style_context_get_color (gtk_widget_get_style_context (widget), GTK_STATE_NORMAL, &color);
+  gtk_style_context_get_color (gtk_widget_get_style_context (widget), GTK_STATE_NORMAL, color);
 #else
   lives_widget_color_copy(color,&gtk_widget_get_style(widget)->fg[GTK_STATE_NORMAL]);
 #endif
@@ -606,6 +616,20 @@ LIVES_INLINE LiVESPixbuf *lives_pixbuf_scale_simple(const LiVESPixbuf *src, int 
 
 #endif
 
+}
+
+
+LIVES_INLINE LiVESAdjustment *lives_adjustment_new(double value, double lower, double upper, 
+						   double step_increment, double page_increment, double page_size) {
+  LiVESAdjustment *adj=NULL;
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3,0,0)
+  adj=gtk_adjustment_new(value,lower,upper,step_increment,page_increment,page_size);
+#else
+  adj=GTK_ADJUSTMENT(gtk_adjustment_new(value,lower,upper,step_increment,page_increment,page_size));
+#endif
+#endif
+  return adj;
 }
 
 
@@ -1013,6 +1037,7 @@ void lives_combo_populate(LiVESCombo *combo, LiVESList *list) {
 
   gtk_combo_box_set_active(combo,-1);
   count = gtk_tree_model_iter_n_children(gtk_combo_box_get_model(combo),NULL);
+
   while (count-- > 0) gtk_combo_box_remove_text(combo,0);
 
   // add the new list
@@ -1201,13 +1226,13 @@ LiVESWidget *lives_standard_spin_button_new(const char *labeltext, boolean use_m
   LiVESWidget *eventbox=NULL;
   LiVESWidget *label;
   LiVESWidget *hbox;
-  LiVESObject *adj;
+  LiVESAdjustment *adj;
 
   char *txt;
   size_t maxlen;
 
-  adj = gtk_adjustment_new (val, min, max, step, page, 0.);
-  spinbutton = gtk_spin_button_new (GTK_ADJUSTMENT (adj), 1, dp);
+  adj = lives_adjustment_new (val, min, max, step, page, 0.);
+  spinbutton = gtk_spin_button_new (adj, 1, dp);
   if (tooltip!=NULL) lives_tooltips_set(spinbutton, tooltip);
   txt=g_strdup_printf ("%d",(int)max);
   maxlen=strlen (txt);
@@ -1405,7 +1430,10 @@ LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_button
 
   if (mainw!=NULL&&mainw->is_ready&&(palette->style&STYLE_1)) {
     lives_widget_set_bg_color(dialog, GTK_STATE_NORMAL, &palette->normal_back);
+
+#if !GTK_CHECK_VERSION(3,0,0)
     gtk_dialog_set_has_separator(GTK_DIALOG(dialog),FALSE);
+#endif
   }
 
   if (add_std_buttons) {
@@ -1560,7 +1588,7 @@ void adjustment_configure(LiVESAdjustment *adjustment,
 
 
 void lives_set_cursor_style(lives_cursor_t cstyle, LiVESXWindow *window) {
-  if (mainw->cursor!=NULL) gdk_cursor_unref(mainw->cursor);
+  if (mainw->cursor!=NULL) g_object_unref(mainw->cursor);
   mainw->cursor=NULL;
 
   if (window==NULL) {

@@ -1545,8 +1545,8 @@ void mt_memory_free(void) {
     g_list_free (mainw->multitrack->video_draws);
   }
   
-  gtk_widget_unref(mainw->multitrack->clip_scroll);
-  gtk_widget_unref(mainw->multitrack->in_out_box);
+  g_object_unref(mainw->multitrack->clip_scroll);
+  g_object_unref(mainw->multitrack->in_out_box);
   
   g_list_free(mainw->multitrack->tl_marks);
   
@@ -5758,8 +5758,10 @@ on_about_activate                     (GtkMenuItem     *menuitem,
 
   gchar *comments= g_strdup(_("A video editor and VJ program."));
 
+#if !GTK_CHECK_VERSION(3,0,0)
   gtk_about_dialog_set_url_hook (activate_url, NULL, NULL);
   gtk_about_dialog_set_email_hook (activate_url, NULL, NULL);
+#endif
 
   gtk_show_about_dialog (NULL,
 			 //        "logo", logo,
@@ -5768,8 +5770,11 @@ on_about_activate                     (GtkMenuItem     *menuitem,
 			 "comments",comments,
 			 "copyright", "(C) 2002-2013 salsaman <salsaman@gmail.com> and others",
 			 "website", "http://lives.sourceforge.net",
-			 //			 "authors", authors,
 			 "license", license,
+#if GTK_CHECK_VERSION(3,0,0)
+			 "authors", "salsaman@gmail.com",
+			 "license-type", GTK_LICENSE_GPL_3_0,
+#endif
 			 NULL);
 
 
@@ -9389,8 +9394,17 @@ boolean config_event (GtkWidget *widget, GdkEventConfigure *event, gpointer user
 
 
 boolean expose_play_window (GtkWidget *widget, GdkEventExpose *event) {
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3,0,0)
+#ifdef PAINTER_CAIRO
+  const cairo_region_t *reg;
+  cairo_rectangle_int_t rect;
+#endif
+#else
   GdkRegion *reg;
   GdkRectangle rect;
+#endif
+#endif
   lives_painter_t *cr;
 
   // only act on last event
@@ -9400,7 +9414,15 @@ boolean expose_play_window (GtkWidget *widget, GdkEventExpose *event) {
 
   reg=event->region;
 
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3,0,0)
+#ifdef PAINTER_CAIRO
+  cairo_region_get_extents(reg,&rect);
+#endif
+#else
   gdk_region_get_clipbox(reg,&rect);
+#endif
+#endif
 
   if ((mainw->multitrack==NULL||mainw->multitrack->sepwin_pixbuf==NULL)&&
       (mainw->current_file==-1||!cfile->is_loaded||(cfile->clip_type!=CLIP_TYPE_FILE&&
@@ -10676,7 +10698,11 @@ on_capture_activate                (GtkMenuItem     *menuitem,
   }
 
   array=g_strsplit(mainw->msg,"|",5);
+#if GTK_CHECK_VERSION(3,0,0)
+  mainw->foreign_id=(Window)atoi(array[1]);
+#else
   mainw->foreign_id=(GdkNativeWindow)atoi(array[1]);
+#endif
   mainw->foreign_width=atoi(array[2]);
   mainw->foreign_height=atoi(array[3]);
   mainw->foreign_bpp=atoi(array[4]);

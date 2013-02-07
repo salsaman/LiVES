@@ -68,7 +68,11 @@ typedef GtkJustification LiVESJustification;
 
 
 typedef GdkEvent                          LiVESEvent;
+#if GTK_CHECK_VERSION(3,0,0)
+#define GTK_OBJECT(a)                     a
+#else
 typedef GtkObject                         LiVESObject;
+#endif
 typedef GtkWidget                         LiVESWidget;
 typedef GtkContainer                      LiVESContainer;
 typedef GtkBin                            LiVESBin;
@@ -85,7 +89,7 @@ typedef GtkRadioButton                    LiVESRadioButton;
 
 #if GTK_CHECK_VERSION(3,0,0)
 #define LIVES_WIDGET_COLOR_SCALE (1./256.)
-typedef GdkRGBAColor                      LiVESWidgetColor;
+typedef GdkRGBA                           LiVESWidgetColor;
 typedef GtkStateFlags LiVESWidgetState;
 #else
 #define LIVES_WIDGET_COLOR_SCALE 256.
@@ -359,7 +363,7 @@ typedef (void *)(LiVESPixbufDestroyNotify(uchar *, gpointer));
 lives_painter_t *lives_painter_create(lives_painter_surface_t *target);
 lives_painter_t *lives_painter_create_from_widget(LiVESWidget *);
 void lives_painter_set_source_pixbuf (lives_painter_t *, const LiVESPixbuf *, double pixbuf_x, double pixbuf_y);
-
+lives_painter_surface_t *lives_painter_image_surface_create(lives_painter_format_t format, int width, int height);
 lives_painter_surface_t *lives_painter_surface_create_similar (lives_painter_surface_t *, 
 							       lives_painter_content_t, int width, int height);
 lives_painter_surface_t *lives_painter_image_surface_create_for_data(uint8_t *data, lives_painter_format_t, 
@@ -454,6 +458,8 @@ LiVESWidgetColor *lives_widget_color_copy(LiVESWidgetColor *c1orNULL, const LiVE
 LiVESWidget *lives_dialog_get_content_area(LiVESDialog *);
 LiVESWidget *lives_dialog_get_action_area(LiVESDialog *);
 
+LiVESAdjustment *lives_adjustment_new(double value, double lower, double upper, 
+						   double step_increment, double page_increment, double page_size);
 LiVESWidget *lives_combo_new(void);
 
 void lives_combo_append_text(LiVESCombo *, const char *text);

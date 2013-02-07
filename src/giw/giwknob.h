@@ -48,6 +48,10 @@ typedef struct _GiwKnobClass   GiwKnobClass;
 
 struct _GiwKnob
 {
+#if GTK_VERSION_3
+  GObject parent_instance;
+#endif
+
   GtkWidget widget;
   
   // Dimensions of knob components 
@@ -105,9 +109,16 @@ struct _GiwKnob
 
 struct _GiwKnobClass
 {
+#if GTK_VERSION_3
+  GObjectClass parent_class;
+#else
   GtkWidgetClass parent_class;
+#endif
 };
 
+#if GTK_CHECK_VERSION(3,0,0)
+G_DEFINE_TYPE(GiwKnob, giw_knob, G_TYPE_OBJECT);
+#endif
 
 GtkWidget*     giw_knob_new                    (GtkAdjustment *adjustment);
 GtkWidget*     giw_knob_new_with_adjustment    (gdouble value, gdouble lower, gdouble upper);

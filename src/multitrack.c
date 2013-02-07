@@ -280,7 +280,11 @@ static void set_cursor_style(lives_mt *mt, gint cstyle, gint width, gint height,
 
   unsigned int cwidth,cheight;
 
+#if GTK_CHECK_VERSION(3,0,0)
+  if (mt->cursor!=NULL) g_object_unref(mt->cursor);
+#else
   if (mt->cursor!=NULL) gdk_cursor_unref(mt->cursor);
+#endif
   mt->cursor=NULL;
 
   gdk_display_get_maximal_cursor_size(gdk_screen_get_display(gtk_widget_get_screen(mt->window)),&cwidth,&cheight);
@@ -881,7 +885,7 @@ static void draw_block (lives_mt *mt,track_rect *block, gint x1, gint x2) {
   case BLOCK_SELECTED:
 #if GTK_CHECK_VERSION(3,0,0)
     lives_painter_new_path(cr);
-    lives_painter_set_source_rgba (cr, &bgcolor);
+    lives_painter_set_source_rgba (cr, bgcolor.red, bgcolor.green, bgcolor.blue, bgcolor.alpha);
     lives_painter_rectangle(cr,offset_start, 0, offset_end, lives_widget_get_allocation_height(eventbox));
     lives_painter_fill(cr);
 
@@ -984,16 +988,16 @@ static void draw_aparams(lives_mt *mt, GtkWidget *eventbox, GList *param_list, w
   // TODO - make one function
   cr = lives_painter_create_from_widget (eventbox);
 
-  gdk_window_get_size(eventbox->window,&xwidth,&xheight);
-
 #if GTK_CHECK_VERSION(3,0,0)
-  gdk_window_get_size(eventbox->window,&xwidth,&xheight);
+  xwidth=gdk_window_get_width(lives_widget_get_xwindow(eventbox));
+  xheight=gdk_window_get_height(lives_widget_get_xwindow(eventbox));
   pixbuf=gdk_pixbuf_get_from_window (lives_widget_get_xwindow(eventbox),
 				     0,0,
 				     xwidth,
 				     xheight
 				     );
 #else
+  gdk_window_get_size(eventbox->window,&xwidth,&xheight);
   pixbuf=gdk_pixbuf_get_from_drawable(NULL,GDK_DRAWABLE(eventbox->window),NULL,0,0,0,0,
 				      lives_widget_get_allocation_width(eventbox),
 				      lives_widget_get_allocation_height(eventbox));
@@ -1104,19 +1108,45 @@ static void redraw_eventbox(lives_mt *mt, GtkWidget *eventbox) {
 
 
 static gint expose_track_event (GtkWidget *eventbox, GdkEventExpose *event, gpointer user_data) {
-  track_rect *block;
   lives_mt *mt=(lives_mt *)user_data;
-  GdkRegion *reg=event->region;
+
+  track_rect *block;
+  track_rect *sblock=NULL;
+
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3,0,0)
+#ifdef PAINTER_CAIRO
+  const cairo_region_t *reg;
+  cairo_rectangle_int_t rect;
+  gint xwidth,xheight;
+#endif
+#else
+  GdkRegion *reg;
   GdkRectangle rect;
+#endif
+#endif
+
+  GdkPixbuf *bgimage;
+
+  gulong idlefunc;
+
   gint hidden;
   gint startx,width;
-  GdkPixbuf *bgimage;
-  track_rect *sblock=NULL;
-  gulong idlefunc;
 
   if (mt->no_expose) return TRUE;
 
+  reg=event->region;
+
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3,0,0)
+#ifdef PAINTER_CAIRO
+  cairo_region_get_extents(reg,&rect);
+#endif
+#else
   gdk_region_get_clipbox(reg,&rect);
+#endif
+#endif
+
   startx=rect.x;
   width=rect.width;
 
@@ -1177,7 +1207,8 @@ static gint expose_track_event (GtkWidget *eventbox, GdkEventExpose *event, gpoi
   }
 
 #if GTK_CHECK_VERSION(3,0,0)
-  gdk_window_get_size(lives_widget_get_xwindow(eventbox),&xwidth,&xheight);
+  xwidth=gdk_window_get_width(lives_widget_get_xwindow(eventbox));
+  xheight=gdk_window_get_height(lives_widget_get_xwindow(eventbox));
   bgimage=gdk_pixbuf_get_from_window (lives_widget_get_xwindow(eventbox),
 				      0,0,
 				      xwidth,
@@ -1937,7 +1968,11 @@ void scroll_tracks (lives_mt *mt, gint top_track) {
 
 #ifdef ENABLE_GIW
       if (prefs->lamp_buttons) {
+#if GTK_CHECK_VERSION(3,0,0)
+	giw_led_set_rgba(GIW_LED(checkbutton),palette->light_green,palette->dark_red);
+#else
 	giw_led_set_colors(GIW_LED(checkbutton),palette->light_green,palette->dark_red);
+#endif
       }
 #endif
 
@@ -2146,10 +2181,10 @@ void scroll_tracks (lives_mt *mt, gint top_track) {
   table_children=gtk_container_get_children(GTK_CONTAINER(mt->timeline_table));
 
   while (table_children!=NULL) {
-    GtkRequisition req;
+    //GtkRequisition req;
     GtkWidget *child=(GtkWidget *)table_children->data;
-    req=child->requisition;
-    gtk_widget_set_size_request(child,req.width,25);
+    //req=child->requisition;
+    gtk_widget_set_size_request(child,-1,MT_TRACK_HEIGHT);
     table_children=table_children->next;
   }
 
@@ -2411,7 +2446,7 @@ void mt_clip_select (lives_mt *mt, boolean scroll) {
     clipbox=(GtkWidget *)g_list_nth_data (list,i);
     if (i==mt->clip_selected) {
       GtkAdjustment *adj;
-      gint value=lives_adjustment_get_upper(adj=(gtk_range_get_adjustment(GTK_RANGE(GTK_SCROLLED_WINDOW(mt->clip_scroll)->hscrollbar))))
+      gint value=lives_adjustment_get_upper((adj=gtk_scrolled_window_get_hadjustment(GTK_SCROLLED_WINDOW(mt->clip_scroll))))
 	*(mt->clip_selected+.5)/len;
       if (scroll) gtk_adjustment_clamp_page(adj,value-lives_adjustment_get_page_size(adj)/2,
 					    value+lives_adjustment_get_page_size(adj)/2);
@@ -7522,7 +7557,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (mt->clip_scroll), mt->clip_inner_box);
 
   if (palette->style&STYLE_4) {
-    lives_widget_set_bg_color(GTK_BIN(mt->clip_scroll)->child, GTK_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_bg_color(lives_bin_get_child(LIVES_BIN(mt->clip_scroll)), GTK_STATE_NORMAL, &palette->normal_back);
   }
 
 
@@ -10628,8 +10663,8 @@ void clear_context (lives_mt *mt) {
 
   // Apply theme background to scrolled window
   if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(GTK_BIN(mt->context_scroll)->child, GTK_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_bg_color(GTK_BIN(mt->context_scroll)->child, GTK_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_fg_color(lives_bin_get_child(LIVES_BIN(mt->context_scroll)), GTK_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_bg_color(lives_bin_get_child(LIVES_BIN(mt->context_scroll)), GTK_STATE_NORMAL, &palette->normal_back);
   }
 
   if (mt->opts.show_ctx) gtk_widget_show_all (mt->context_frame);
@@ -14073,7 +14108,7 @@ multitrack_undo            (GtkMenuItem     *menuitem,
     while (vlist!=NULL) {
       eventbox=GTK_WIDGET(vlist->data);
       label=GTK_WIDGET(g_object_get_data(G_OBJECT(eventbox),"label"));
-      txt=g_strdup(gtk_label_get_text(GTK_LABEL(label)));
+      txt=g_strdup(lives_label_get_text(LIVES_LABEL(label)));
       label_list=g_list_append(label_list,txt);
       vlist=vlist->next;
     }
@@ -14137,8 +14172,7 @@ multitrack_undo            (GtkMenuItem     *menuitem,
     while (vlist!=NULL) {
       eventbox=GTK_WIDGET(vlist->data);
       label=GTK_WIDGET(g_object_get_data(G_OBJECT(eventbox),"label"));
-      g_free(GTK_LABEL(label)->text);
-      GTK_LABEL(label)->text=(gchar *)llist->data;
+      gtk_label_set_text(GTK_LABEL(label),(const gchar *)llist->data);
       vlist=vlist->next;
       llist=llist->next;
     }
@@ -14261,7 +14295,7 @@ multitrack_redo            (GtkMenuItem     *menuitem,
     while (vlist!=NULL) {
       eventbox=GTK_WIDGET(vlist->data);
       label=GTK_WIDGET(g_object_get_data(G_OBJECT(eventbox),"label"));
-      txt=g_strdup(gtk_label_get_text(GTK_LABEL(label)));
+      txt=g_strdup(lives_label_get_text(LIVES_LABEL(label)));
       label_list=g_list_append(label_list,txt);
       vlist=vlist->next;
     }
@@ -14325,8 +14359,7 @@ multitrack_redo            (GtkMenuItem     *menuitem,
     while (vlist!=NULL) {
       eventbox=GTK_WIDGET(vlist->data);
       label=GTK_WIDGET(g_object_get_data(G_OBJECT(eventbox),"label"));
-      g_free(GTK_LABEL(label)->text);
-      GTK_LABEL(label)->text=(gchar *)llist->data;
+      gtk_label_set_text(GTK_LABEL(label),(const gchar *)llist->data);
       vlist=vlist->next;
       llist=llist->next;
     }
@@ -16819,8 +16852,20 @@ static void draw_soundwave(GtkWidget *ebox, gint start, gint width, gint chnum, 
 
 boolean mt_expose_laudtrack_event (GtkWidget *ebox, GdkEventExpose *event, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
-  GdkRegion *reg=event->region;
+
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3,0,0)
+#ifdef PAINTER_CAIRO
+  const cairo_region_t *reg;
+  cairo_rectangle_int_t rect;
+  int xwidth,xheight;
+#endif
+#else
+  GdkRegion *reg;
   GdkRectangle rect;
+#endif
+#endif
+
   GdkPixbuf *bgimage;
 
   int startx,width;
@@ -16828,7 +16873,18 @@ boolean mt_expose_laudtrack_event (GtkWidget *ebox, GdkEventExpose *event, gpoin
 
   if (mt->no_expose) return TRUE;
 
+  reg=event->region;
+
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3,0,0)
+#ifdef PAINTER_CAIRO
+  cairo_region_get_extents(reg,&rect);
+#endif
+#else
   gdk_region_get_clipbox(reg,&rect);
+#endif
+#endif
+
   startx=rect.x;
   width=rect.width;
 
@@ -16858,7 +16914,8 @@ boolean mt_expose_laudtrack_event (GtkWidget *ebox, GdkEventExpose *event, gpoin
   draw_soundwave(ebox,startx,width,0,mt);
 
 #if GTK_CHECK_VERSION(3,0,0)
-  gdk_window_get_size(lives_widget_get_xwindow(ebox),&xwidth,&xheight);
+  xwidth=gdk_window_get_width(lives_widget_get_xwindow(ebox));
+  xheight=gdk_window_get_height(lives_widget_get_xwindow(ebox));
   bgimage=gdk_pixbuf_get_from_window (lives_widget_get_xwindow(ebox),
 				      0,0,
 				      xwidth,
@@ -16882,20 +16939,39 @@ boolean mt_expose_laudtrack_event (GtkWidget *ebox, GdkEventExpose *event, gpoin
 
 boolean mt_expose_raudtrack_event (GtkWidget *ebox, GdkEventExpose *event, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
-  GdkRegion *reg=event->region;
+
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3,0,0)
+#ifdef PAINTER_CAIRO
+  const cairo_region_t *reg;
+  cairo_rectangle_int_t rect;
+  int xwidth,xheight;
+#endif
+#else
+  GdkRegion *reg;
   GdkRectangle rect;
+#endif
+#endif
+
   GdkPixbuf *bgimage;
 
   int startx,width;
   int hidden;
 
-#if GTK_CHECK_VERSION(3,0,0)
-  int xwidth,xheight;
-#endif
-
   if (mt->no_expose) return TRUE;
 
+  reg=event->region;
+
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3,0,0)
+#ifdef PAINTER_CAIRO
+  cairo_region_get_extents(reg,&rect);
+#endif
+#else
   gdk_region_get_clipbox(reg,&rect);
+#endif
+#endif
+
   startx=rect.x;
   width=rect.width;
 
@@ -16925,7 +17001,8 @@ boolean mt_expose_raudtrack_event (GtkWidget *ebox, GdkEventExpose *event, gpoin
   draw_soundwave(ebox,startx,width,1,mt);
 
 #if GTK_CHECK_VERSION(3,0,0)
-  gdk_window_get_size(lives_widget_get_xwindow(ebox),&xwidth,&xheight);
+  xwidth=gdk_window_get_width(lives_widget_get_xwindow(ebox));
+  xheight=gdk_window_get_height(lives_widget_get_xwindow(ebox));
   bgimage=gdk_pixbuf_get_from_window (lives_widget_get_xwindow(ebox),
 				      0,0,
 				      xwidth,
@@ -21113,10 +21190,10 @@ void amixer_show (GtkButton *button, gpointer user_data) {
   else gtk_window_set_default_size (GTK_WINDOW (amixerw), winsize_h, winsize_v);
 
   if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color(gtk_bin_get_child (GTK_BIN (scrolledwindow)), GTK_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_bg_color(lives_bin_get_child (LIVES_BIN (scrolledwindow)), GTK_STATE_NORMAL, &palette->normal_back);
   }
   
-  gtk_viewport_set_shadow_type (GTK_VIEWPORT (gtk_bin_get_child (GTK_BIN (scrolledwindow))),GTK_SHADOW_IN);
+  gtk_viewport_set_shadow_type (GTK_VIEWPORT (lives_bin_get_child (LIVES_BIN (scrolledwindow))),GTK_SHADOW_IN);
 
   gtk_box_pack_start (GTK_BOX (top_vbox), scrolledwindow, TRUE, TRUE, 0);
   gtk_container_add (GTK_CONTAINER (amixerw), top_vbox);

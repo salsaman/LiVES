@@ -1004,11 +1004,12 @@ LIVES_INLINE void lives_adjustment_set_page_size(LiVESAdjustment *adj, double pa
 }
 
 
-
-
-
-
-
+LIVES_INLINE const char *lives_label_get_text(LiVESLabel *label) {
+#ifdef GUI_GTK
+  return gtk_label_get_text(label);
+#endif
+  return NULL;
+}
 
 
 

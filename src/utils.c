@@ -2296,11 +2296,11 @@ void get_play_times(void) {
     GdkRGBA color;
     lives_painter_t *cr=lives_painter_create(mainw->laudio_drawable);
     lives_widget_get_bg_color(mainw->laudio_draw,&color);
-    lives_painter_set_source_rgba (cr, &color);
+    lives_painter_set_source_rgba (cr, color.red, color.green, color.blue, color.alpha);
 
     lives_painter_rectangle(cr,0,0,
 		    allocwidth,
-		    allocheight));
+		    allocheight);
     lives_painter_fill(cr);
     lives_painter_destroy (cr);
 
@@ -2321,11 +2321,11 @@ void get_play_times(void) {
     GdkRGBA color;
     lives_painter_t *cr=lives_painter_create(mainw->raudio_drawable);
     lives_widget_get_bg_color(mainw->raudio_draw,&color);
-    lives_painter_set_source_rgba (cr, &color);
+    lives_painter_set_source_rgba (cr, color.red, color.green, color.blue, color.alpha);
 
     lives_painter_rectangle(cr,0,0,
 		    allocwidth,
-		    allocheight));
+		    allocheight);
     lives_painter_fill(cr);
     lives_painter_destroy (cr);
 
@@ -2345,11 +2345,11 @@ void get_play_times(void) {
     GdkRGBA color;
     lives_painter_t *cr=lives_painter_create(mainw->video_drawable);
     lives_widget_get_bg_color(mainw->video_draw,&color);
-    lives_painter_set_source_rgba (cr, &color);
+    lives_painter_set_source_rgba (cr, color.red, color.green, color.blue, color.alpha);
 
     lives_painter_rectangle(cr,0,0,
 		    allocwidth,
-		    allocheight));
+		    allocheight);
     lives_painter_fill(cr);
     lives_painter_destroy (cr);
 
@@ -2444,7 +2444,7 @@ void get_play_times(void) {
       lives_painter_fill(cr);
       
       lives_widget_get_bg_color(mainw->laudio_draw,&color);
-      lives_painter_set_source_rgba (cr, &color);
+      lives_painter_set_source_rgba (cr, color.red, color.green, color.blue, color.alpha);
       
       lives_painter_rectangle(cr,cfile->laudio_time/cfile->total_time*allocwidth, 0,
 		      allocwidth-(cfile->laudio_time/cfile->total_time*allocwidth),
@@ -2501,7 +2501,7 @@ void get_play_times(void) {
 	lives_painter_fill(cr);
       
 	lives_widget_get_bg_color(mainw->raudio_draw,&color);
-	lives_painter_set_source_rgba (cr, &color);
+	lives_painter_set_source_rgba (cr, color.red, color.green, color.blue, color.alpha);
       
 	lives_painter_rectangle(cr,cfile->raudio_time/cfile->total_time*allocwidth, 0,
 		      allocwidth-(cfile->raudio_time/cfile->total_time*allocwidth),
@@ -2543,7 +2543,6 @@ void get_play_times(void) {
       offset/=cfile->total_time/allocwidth;
       if (mainw->video_drawable!=NULL) {
 #if GTK_CHECK_VERSION(3,0,0)
-	GdkRGBA color;
 	lives_painter_t *cr=lives_painter_create(mainw->video_drawable);
 
 	lives_painter_set_line_width(cr,1.);
@@ -2626,7 +2625,6 @@ void get_play_times(void) {
       if (mainw->laudio_drawable!=NULL) {
 
 #if GTK_CHECK_VERSION(3,0,0)
-	GdkRGBA color;
 	lives_painter_t *cr=lives_painter_create(mainw->laudio_drawable);
 
 	lives_painter_set_line_width(cr,1.);
@@ -2691,7 +2689,6 @@ void get_play_times(void) {
 	if (mainw->raudio_drawable!=NULL) {
 
 #if GTK_CHECK_VERSION(3,0,0)
-	  GdkRGBA color;
 	  lives_painter_t *cr=lives_painter_create(mainw->raudio_drawable);
 	  
 	  lives_painter_set_line_width(cr,1.);
@@ -2878,12 +2875,11 @@ void draw_little_bars (gdouble ptrtime) {
   if (cfile->frames>0) {
     if (mainw->video_drawable!=NULL) {
 #if GTK_CHECK_VERSION(3,0,0)
-	GdkRGBA color;
 	lives_painter_t *cr=lives_painter_create(mainw->video_drawable);
 
 	lives_painter_set_line_width(cr,1.);
       
-	if (offset>=offset_left&&offset<=offset_right) {
+	if (frame>=cfile->start&&frame<=cfile->end) {
 	  lives_painter_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
 	  lives_painter_move_to(cr, offset, 0);
 	  lives_painter_line_to(cr, offset, prefs->bar_height);
@@ -2921,7 +2917,7 @@ void draw_little_bars (gdouble ptrtime) {
 		       offset,
 		       prefs->bar_height);
       }
-      
+
       if (palette->style&STYLE_3||palette->style==STYLE_PLAIN) { // light style
 	gdk_draw_line (mainw->video_drawable,
 		       mainw->video_draw->style->black_gc,
@@ -2946,12 +2942,11 @@ void draw_little_bars (gdouble ptrtime) {
   if (cfile->achans>0) {
     if (mainw->laudio_drawable!=NULL) {
 #if GTK_CHECK_VERSION(3,0,0)
-	GdkRGBA color;
 	lives_painter_t *cr=lives_painter_create(mainw->laudio_drawable);
 
 	lives_painter_set_line_width(cr,1.);
       
-	if (offset>=offset_left&&offset<=offset_right) {
+	if (frame>=cfile->start&&frame<=cfile->end) {
 	  lives_painter_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
 	  lives_painter_move_to(cr, offset, 0);
 	  lives_painter_line_to(cr, offset, prefs->bar_height);
@@ -3006,17 +3001,17 @@ void draw_little_bars (gdouble ptrtime) {
       }
 #endif
     }
+
     if (cfile->achans>1) {
       if (mainw->raudio_drawable!=NULL) {
 	if ((frame>=cfile->start&&frame<=cfile->end)||mainw->loop) {
 
 #if GTK_CHECK_VERSION(3,0,0)
-	GdkRGBA color;
 	lives_painter_t *cr=lives_painter_create(mainw->raudio_drawable);
 
 	lives_painter_set_line_width(cr,1.);
       
-	if (offset>=offset_left&&offset<=offset_right) {
+	if (frame>=cfile->start&&frame<=cfile->end) {
 	  lives_painter_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
 	  lives_painter_move_to(cr, offset, 0);
 	  lives_painter_line_to(cr, offset, prefs->bar_height);
@@ -3040,6 +3035,7 @@ void draw_little_bars (gdouble ptrtime) {
 
 	lives_painter_destroy(cr);
 #else
+	if (frame>=cfile->start&&frame<=cfile->end) {
 	  gdk_draw_line (mainw->raudio_drawable,
 			 mainw->raudio_draw->style->black_gc,
 			 offset, 0,
@@ -3071,6 +3067,7 @@ void draw_little_bars (gdouble ptrtime) {
 	}
 #endif
 
+	}
       }
     }
   }
@@ -3469,7 +3466,7 @@ prepare_to_play_foreign(void) {
 #ifdef USE_X11
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3,0,0)
-  mainw->foreign_window=gdk_window_foreign_new_for_display(mainw->foreign_id,gdk_display_get_default());
+  mainw->foreign_window=gdk_x11_window_foreign_new_for_display(gdk_display_get_default(),mainw->foreign_id);
 #else
   mainw->foreign_window=gdk_window_foreign_new(mainw->foreign_id);
 #endif

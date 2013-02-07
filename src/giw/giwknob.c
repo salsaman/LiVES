@@ -38,17 +38,19 @@ James Scott Jr <skoona@users.sourceforge.net>
 /* Forward declarations */
 static void giw_knob_class_init               (GiwKnobClass    *klass);
 static void giw_knob_init                     (GiwKnob         *knob);
-static void giw_knob_destroy                  (GtkObject        *object);
 static void giw_knob_realize                  (GtkWidget        *widget);
 static void giw_knob_size_request             (GtkWidget      *widget,
 					       GtkRequisition *requisition);
 #if GTK_CHECK_VERSION(3,0,0)
+static void giw_knob_destroy                  (GObject        *object);
 static void giw_knob_get_preferred_width (GtkWidget *widget,
 					  gint      *minimal_width,
 					  gint      *natural_width);
 static void giw_knob_get_preferred_height (GtkWidget *widget,
 					   gint      *minimal_height,
 					   gint      *natural_height);
+#else
+static void giw_knob_destroy                  (GtkObject        *object);
 #endif
 static void giw_knob_size_allocate            (GtkWidget     *widget,
 					       GtkAllocation *allocation);
@@ -113,7 +115,28 @@ void knob_calculate_title_sizes(GiwKnob *knob);
 /*********************
 * Widget's Functions * 
 *********************/
+#if GTK_CHECK_VERSION(3,0,0)
+static GObject *
+giw_knob_constructor (GType                  gtype,
+		     guint                  n_properties,
+		     GObjectConstructParam *properties)
+{
+  GObject *obj;
 
+  {
+    /* Always chain up to the parent constructor */
+    obj = G_OBJECT_CLASS (giw_knob_parent_class)->constructor (gtype, n_properties, properties);
+  }
+  
+  /* update the object state depending on constructor properties */
+
+  giw_knob_init(GIW_KNOB(obj));
+
+  return obj;
+}
+
+
+#else
 GType
 giw_knob_get_type ()
 {
@@ -121,25 +144,6 @@ giw_knob_get_type ()
 
   if (!knob_type)
     {
-
-#if GTK_VERSION_3
-      static const GTypeInfo knob_info =
-      {
-	sizeof (GiwKnobClass),
-	(GBaseInitFunc)NULL,
-	(GBaseFinalizeFunc)NULL,
-	(GClassInitFunc) giw_knob_class_init,
-	(GClassFinalizeFunc)NULL,
-	(gconstpointer)NULL,
-	sizeof (GiwKnob),
-	0, // n_preallocs
-	(GInstanceInitFunc) giw_knob_init
-	//(const GTypeValueTable *)NULL
-      };
-
-      knob_type = g_type_register_static (gtk_widget_get_type (), "GiwKnob", &knob_info, 0);
-
-#else
       static const GtkTypeInfo knob_info =
       {
 	"GiwKnob",
@@ -153,36 +157,41 @@ giw_knob_get_type ()
       };
 
       knob_type = gtk_type_unique (gtk_widget_get_type (), &knob_info);
-#endif
 
     }
 
   return knob_type;
 }
+#endif
+
 
 static void
 giw_knob_class_init (GiwKnobClass *xclass)
 {
-  GtkObjectClass *object_class;
+#if GTK_CHECK_VERSION(3,0,0)
+  GObjectClass *object_class = G_OBJECT_CLASS (xclass);
+#else
+  GtkObjectClass *object_class = (GtkObjectClass*) xclass;
+#endif
   GtkWidgetClass *widget_class;
 
-  object_class = (GtkObjectClass*) xclass;
   widget_class = (GtkWidgetClass*) xclass;
 
-#if GTK_VERSION_3
-  // parent_class is set in g_type_register_static()
+#if GTK_CHECK_VERSION(3,0,0)
+  object_class->constructor = giw_knob_constructor;
+  object_class->finalize = giw_knob_destroy;
 #else
   parent_class = (GtkWidgetClass *)gtk_type_class (gtk_widget_get_type ());
+  object_class->destroy = giw_knob_destroy;
 #endif
 
-  object_class->destroy = giw_knob_destroy;
-
   widget_class->realize = giw_knob_realize;
-  widget_class->expose_event = giw_knob_expose;
-  widget_class->size_request = giw_knob_size_request;
 #if GTK_CHECK_VERSION(3,0,0)
   widget_class->get_preferred_width = giw_knob_get_preferred_width;
   widget_class->get_preferred_height = giw_knob_get_preferred_height;
+#else
+  widget_class->expose_event = giw_knob_expose;
+  widget_class->size_request = giw_knob_size_request;
 #endif
   widget_class->size_allocate = giw_knob_size_allocate;
   widget_class->button_press_event = giw_knob_button_press;
@@ -250,9 +259,12 @@ giw_knob_new_with_adjustment (gdouble value,
   return GTK_WIDGET (knob);
 }
 
-static void
-giw_knob_destroy (GtkObject *object)
-{
+
+#if GTK_VERSION_3
+static void giw_knob_destroy (GObject *object) {
+#else
+static void giw_knob_destroy (GtkObject *object) {
+#endif
   GiwKnob *knob;
   gint loop;
 
@@ -277,8 +289,12 @@ giw_knob_destroy (GtkObject *object)
   if (knob->title)
     g_object_unref(G_OBJECT(knob->title));
 
+#if GTK_VERSION_3
+  G_OBJECT_CLASS (giw_knob_parent_class)->finalize (object);
+#else
   if (GTK_OBJECT_CLASS (parent_class)->destroy)
     (* GTK_OBJECT_CLASS (parent_class)->destroy) (object);
+#endif
 }
 
 static void
@@ -289,7 +305,7 @@ giw_knob_realize (GtkWidget *widget)
   gint attributes_mask;
 
 #if GTK_CHECK_VERSION(3,0,0)
-  GtkStyleContext stylecon;
+  GtkStyleContext *stylecon;
 #endif
   
   g_return_if_fail (widget != NULL);
@@ -314,9 +330,14 @@ giw_knob_realize (GtkWidget *widget)
     GDK_BUTTON_RELEASE_MASK | GDK_POINTER_MOTION_MASK |
     GDK_POINTER_MOTION_HINT_MASK;
   attributes.visual = gtk_widget_get_visual (widget);
-  attributes.colormap = gtk_widget_get_colormap (widget);
 
-  attributes_mask = GDK_WA_X | GDK_WA_Y | GDK_WA_VISUAL | GDK_WA_COLORMAP;
+  attributes_mask = GDK_WA_X | GDK_WA_Y | GDK_WA_VISUAL;
+  
+
+#if !GTK_CHECK_VERSION(3,0,0)
+  attributes_mask |= GDK_WA_COLORMAP;
+  attributes.colormap = gtk_widget_get_colormap (widget);
+#endif
 
 #if GTK_CHECK_VERSION(2,18,0)
   gtk_widget_set_window(widget,gdk_window_new (lives_widget_get_xwindow(lives_widget_get_parent(widget)), &attributes, attributes_mask));
@@ -386,7 +407,12 @@ giw_knob_size_allocate (GtkWidget     *widget,
   g_return_if_fail (GIW_IS_KNOB (widget));
   g_return_if_fail (allocation != NULL);
 
+#if GTK_CHECK_VERSION(2,18,0)
+  gtk_widget_set_allocation(widget,allocation);
+#else
   widget->allocation = *allocation;
+#endif
+
   knob = GIW_KNOB (widget);
 
   if (lives_widget_is_realized (widget))
@@ -479,7 +505,7 @@ giw_knob_expose (GtkWidget      *widget,
     s = sin(knob->false_angle);
     c = cos(knob->false_angle);
 
-    lives_widget_get_fg_state_color (widget, GTK_STATE_FLAG_PRELIGHT, &color);
+    //lives_widget_get_fg_state_color (widget, GTK_STATE_FLAG_PRELIGHT, &color);
 
     lives_painter_move_to(cr,
 			  xc+c*((float)knob->radius*0.8),
@@ -905,7 +931,7 @@ giw_knob_adjustment_value_changed (GtkAdjustment *adjustment,
 
   knob = GIW_KNOB (data);
    
-  knob_set_angle(knob, knob_calculate_angle_with_value(knob, adjustment->value));
+  knob_set_angle(knob, knob_calculate_angle_with_value(knob, gtk_adjustment_get_value(adjustment)));
     
   gtk_widget_queue_draw(GTK_WIDGET(knob));
 }
@@ -1167,7 +1193,16 @@ knob_calculate_legends_sizes(GiwKnob *knob)
   widget=GTK_WIDGET(knob);
   
   if (knob->legends!=NULL){
+
+#if GTK_CHECK_VERSION(3,0,0)
+    GValue *fontdesc;
+    gtk_style_context_get_property(gtk_widget_get_style_context(widget),
+				   GTK_STYLE_PROPERTY_FONT,gtk_widget_get_state(widget),fontdesc);
+    pango_layout_set_font_description (knob->legends[0], &fontdesc);
+    g_value_unset(fontdesc);
+#else
     pango_layout_set_font_description (knob->legends[0], widget->style->font_desc);  
+#endif
     pango_layout_get_size(knob->legends[0], &(knob->legend_width), &(knob->legend_height));
     knob->legend_width/=PANGO_SCALE;
     knob->legend_height/=PANGO_SCALE;
@@ -1185,7 +1220,15 @@ knob_calculate_title_sizes(GiwKnob *knob)
 
   widget=GTK_WIDGET(knob);
 
-  pango_layout_set_font_description (knob->title, widget->style->font_desc);  
+#if GTK_CHECK_VERSION(3,0,0)
+  GValue *fontdesc;
+  gtk_style_context_get_property(gtk_widget_get_style_context(widget),
+				 GTK_STYLE_PROPERTY_FONT,gtk_widget_get_state(widget),fontdesc);
+  pango_layout_set_font_description (knob->legends[0], &fontdesc);
+  g_value_unset(fontdesc);
+#else
+  pango_layout_set_font_description (knob->legends[0], widget->style->font_desc);  
+#endif
   pango_layout_get_size(knob->title, &(knob->title_width), &(knob->title_height));
   knob->title_width/=PANGO_SCALE;
   knob->title_height/=PANGO_SCALE;

@@ -68,7 +68,28 @@ static guint giw_led_signals[LAST_SIGNAL] = { 0 };
 /*********************
 * Widget's Functions *
 *********************/
+#if GTK_CHECK_VERSION(3,0,0)
+static GObject *
+giw_led_constructor (GType                  gtype,
+		     guint                  n_properties,
+		     GObjectConstructParam *properties)
+{
+  GObject *obj;
 
+  {
+    /* Always chain up to the parent constructor */
+    obj = G_OBJECT_CLASS (giw_led_parent_class)->constructor (gtype, n_properties, properties);
+  }
+  
+  /* update the object state depending on constructor properties */
+
+  giw_led_init(GIW_LED(obj));
+
+  return obj;
+}
+
+
+#else
 GType
 giw_led_get_type ()
 {
@@ -76,24 +97,6 @@ giw_led_get_type ()
 
   if (!led_type)
     {
-#if GTK_VERSION_3
-      static const GTypeInfo led_info =
-      {
-	sizeof (GiwLedClass),
-	(GBaseInitFunc)NULL,
-	(GBaseFinalizeFunc)NULL,
-	(GClassInitFunc) giw_led_class_init,
-	(GClassFinalizeFunc)NULL,
-	(gconstpointer)NULL,
-	sizeof (GiwLed),
-	0, // n_preallocs
-	(GInstanceInitFunc) giw_led_init
-	//(const GTypeValueTable *)NULL
-      };
-
-      led_type = g_type_register_static (gtk_widget_get_type (), "GiwLed", &led_info, 0);
-
-#else
       static const GtkTypeInfo led_info =
       {
 	"GiwLed",
@@ -107,30 +110,30 @@ giw_led_get_type ()
       };
 
       led_type = gtk_type_unique (gtk_widget_get_type() , &led_info);
-
-#endif
-
     }
 
   return led_type;
 }
+#endif
 
 static void
 giw_led_class_init (GiwLedClass *xclass)
 {
-  GtkObjectClass *object_class;
+#if GTK_CHECK_VERSION(3,0,0)
+  GObjectClass *object_class = G_OBJECT_CLASS (xclass);
+#else
+  GtkObjectClass *object_class = (GtkObjectClass*) xclass;
+#endif
   GtkWidgetClass *widget_class;
 
-  object_class = (GtkObjectClass*) xclass;
   widget_class = (GtkWidgetClass*) xclass;
 
-#if GTK_VERSION_3
-  // parent_class is set in g_type_register_static()
+#if GTK_CHECK_VERSION(3,0,0)
+  object_class->constructor = giw_led_constructor;
 #else
   parent_class = (GtkWidgetClass *)gtk_type_class (gtk_widget_get_type ());
-#endif
-
   object_class->destroy = giw_led_destroy;
+#endif
 
   widget_class->realize = giw_led_realize;
   widget_class->expose_event = giw_led_expose;
@@ -186,15 +189,16 @@ giw_led_new (void)
   return GTK_WIDGET (led);
 }
 
-static void
-giw_led_destroy (GtkObject *object)
-{
+#if !GTK_VERSION_3
+static void giw_led_destroy (GtkObject *object) {
   g_return_if_fail (object != NULL);
   g_return_if_fail (GIW_IS_LED (object));
     
   if (GTK_OBJECT_CLASS (parent_class)->destroy)
     (* GTK_OBJECT_CLASS (parent_class)->destroy) (object);
 }
+#endif
+
 
 static void
 giw_led_realize (GtkWidget *widget)
@@ -548,6 +552,20 @@ giw_led_get_mode (GiwLed *led)
   return (led->on);
 }
 
+#if GTK_CHECK_VERSION(3,0,0)
+void
+giw_led_set_rgba (GiwLed *led,
+		  GdkRGBA on_color,
+		  GdkRGBA off_color) {
+  g_return_if_fail (led != NULL);
+  g_return_if_fail (GIW_IS_LED (led));
+
+  led->color_on=on_color;
+  led->color_off=off_color;
+
+  gtk_widget_queue_draw(GTK_WIDGET(led));
+}
+#endif
 void
 giw_led_set_colors (GiwLed *led,
 			GdkColor on_color,
@@ -556,8 +574,19 @@ giw_led_set_colors (GiwLed *led,
   g_return_if_fail (led != NULL);
   g_return_if_fail (GIW_IS_LED (led));
 
+#if GTK_CHECK_VERSION(3,0,0)
+  led->color_on.red=(gdouble)on_color.red/65535.;
+  led->color_on.green=(gdouble)on_color.green/65535.;
+  led->color_on.blue=(gdouble)on_color.blue/65535.;
+  led->color_on.alpha=1.;
+  led->color_off.red=(gdouble)off_color.red/65535.;
+  led->color_off.green=(gdouble)off_color.green/65535.;
+  led->color_off.blue=(gdouble)off_color.blue/65535.;
+  led->color_off.alpha=1.;
+#else
   led->color_on=on_color;
   led->color_off=off_color;
+#endif
   gtk_widget_queue_draw(GTK_WIDGET(led));
 }
 

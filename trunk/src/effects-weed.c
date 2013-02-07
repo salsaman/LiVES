@@ -1125,7 +1125,7 @@ static gboolean align (void **pixel_data, size_t alignment, int numplanes, int h
   int i;
   int memerror;
   gboolean needs_change=FALSE;
-  void *npixel_data;
+  uint8_t *npixel_data;
   void **new_pixel_data;
   size_t size,totsize=0;
 
@@ -1144,7 +1144,7 @@ static gboolean align (void **pixel_data, size_t alignment, int numplanes, int h
   // try contiguous first
 
 
-  if ((memerror=posix_memalign(&npixel_data,alignment,totsize))) return FALSE;
+  if ((memerror=posix_memalign((void **)&npixel_data,alignment,totsize))) return FALSE;
 
   new_pixel_data=(void **)g_malloc(numplanes*(sizeof(void *)));
 
@@ -1180,7 +1180,7 @@ static gboolean align (void **pixel_data, size_t alignment, int numplanes, int h
 
   // non-contiguous
   for (i=0;i<numplanes;i++) {
-    if ((memerror=posix_memalign(&npixel_data,alignment,height*rowstrides[i]))) return FALSE;
+    if ((memerror=posix_memalign((void **)&npixel_data,alignment,height*rowstrides[i]))) return FALSE;
     memcpy(npixel_data,pixel_data[i],height*rowstrides[i]);
     new_pixel_data[i]=npixel_data;
   }
@@ -2720,7 +2720,7 @@ static lives_filter_error_t weed_apply_audio_instance_inner (weed_plant_t *inst,
     if (weed_get_boolean_value(channel,"audio_interleaf",&error)==WEED_TRUE) {
       // handle case where plugin NEEDS interleaved
       weed_set_boolean_value(layers[i],"audio_interleaf",WEED_TRUE);
-      if (!float_interleave(adata,nsamps,nchans)) {
+      if (!float_interleave((float *)adata,nsamps,nchans)) {
 	weed_free(in_tracks);
 	weed_free(out_tracks);
 	weed_free(in_channels);
@@ -2867,10 +2867,10 @@ lives_filter_error_t weed_apply_audio_instance (weed_plant_t *init_event, float 
     // set init_event to NULL before passing it to the inner function
     init_event=NULL;
 
-    in_tracks=weed_malloc(sizint);
+    in_tracks=(int *)weed_malloc(sizint);
     in_tracks[0]=0;
 
-    out_tracks=weed_malloc(sizint);
+    out_tracks=(int *)weed_malloc(sizint);
     out_tracks[0]=0;
 
   }
@@ -3123,7 +3123,7 @@ lives_filter_error_t weed_apply_audio_instance (weed_plant_t *init_event, float 
       layers[i]=weed_plant_new(WEED_PLANT_CHANNEL);
       
       // copy audio into layer audio
-      in_abuf=g_malloc(nchans*nsf);
+      in_abuf=(float *)g_malloc(nchans*nsf);
 
       // non-interleaved
       for (j=0;j<nchans;j++) {
@@ -4813,7 +4813,7 @@ static weed_plant_t *create_compound_filter(gchar *plugin_name, int nfilts, int 
       count+=weed_leaf_num_elements(xfilter,"in_parameter_templates");
       params=weed_get_plantptr_array(xfilter,"in_parameter_templates",&error);
 
-      in_params=g_realloc(in_params,count*sizeof(weed_plant_t *));
+      in_params=(weed_plant_t **)g_realloc(in_params,count*sizeof(weed_plant_t *));
       x=0;
 
       for (j=xcount;j<count;j++) {
@@ -4855,7 +4855,7 @@ static weed_plant_t *create_compound_filter(gchar *plugin_name, int nfilts, int 
       count+=weed_leaf_num_elements(xfilter,"out_parameter_templates");
       params=weed_get_plantptr_array(xfilter,"out_parameter_templates",&error);
 
-      out_params=g_realloc(out_params,count*sizeof(weed_plant_t *));
+      out_params=(weed_plant_t **)g_realloc(out_params,count*sizeof(weed_plant_t *));
       x=0;
 
       for (j=xcount;j<count;j++) {
@@ -4963,7 +4963,7 @@ static void load_compound_plugin(gchar *plugin_name, gchar *plugin_path) {
 	  ok=FALSE;
 	  break;
 	}
-	filters=g_realloc(filters,++nfilts*sizeof(int));
+	filters=(int *)g_realloc(filters,++nfilts*sizeof(int));
 	filters[nfilts-1]=fnum;
 	break;
       case 2:
@@ -6021,7 +6021,7 @@ weed_plant_t *weed_instance_from_filter(weed_plant_t *filter) {
       ninpar=num_in_params(filter,FALSE,FALSE);
       if (ninpar==0) xinp=NULL;
       else {
-	xinp=g_malloc((ninpar+1)*sizeof(weed_plant_t *));
+	xinp=(weed_plant_t **)g_malloc((ninpar+1)*sizeof(weed_plant_t *));
 	x=0;
 	for (j=poffset;j<poffset+ninpar;j++) xinp[x++]=inp[j];
 	xinp[x]=NULL;
@@ -6586,7 +6586,7 @@ void weed_deinit_effect(int hotkey) {
 #ifdef ENABLE_JACK
 	if (mainw->jackd_read==NULL) {
 	  mainw->jackd->in_use=FALSE; // deactivate writer
-	  jack_rec_audio_to_clip(-1,0,0); //activate reader
+	  jack_rec_audio_to_clip(-1,0,(lives_rec_audio_type_t)0); //activate reader
 	  mainw->jackd_read->frames_written+=mainw->jackd->frames_written; // ensure time continues monotonically
 	  if (mainw->record) mainw->jackd->playing_file=mainw->ascrap_file; // if recording, continue to write to 
 	}
@@ -6596,7 +6596,7 @@ void weed_deinit_effect(int hotkey) {
 #ifdef HAVE_PULSE_AUDIO
 	if (mainw->pulsed_read==NULL) {
 	  mainw->pulsed->in_use=FALSE; // deactivate writer
-	  pulse_rec_audio_to_clip(-1,0,0); //activate reader
+	  pulse_rec_audio_to_clip(-1,0,(lives_rec_audio_type_t)0); //activate reader
 	  mainw->pulsed_read->frames_written+=mainw->pulsed->frames_written; // ensure time continues monotonically
 	  if (mainw->record) mainw->pulsed->playing_file=mainw->ascrap_file; // if recording, continue to write to 
         }

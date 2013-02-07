@@ -1821,7 +1821,7 @@ boolean cconx_convert_pixel_data(weed_plant_t *dchan, weed_plant_t *schan) {
 
   weed_plant_t *dtmpl=weed_get_plantptr_value(dchan,"template",&error);
 
-  void *spdata,*dpdata;
+  uint8_t *spdata,*dpdata;
 
   register int i;
 
@@ -1837,7 +1837,7 @@ boolean cconx_convert_pixel_data(weed_plant_t *dchan, weed_plant_t *schan) {
   opal=weed_get_int_value(dchan,"current_palette",&error);
   orow=weed_get_int_value(dchan,"rowstrides",&error);
 
-  spdata=weed_get_voidptr_value(schan,"pixel_data",&error);
+  spdata=(uint8_t *)weed_get_voidptr_value(schan,"pixel_data",&error);
 
   if (ipal==opal&&iwidth==owidth&&iheight==oheight&&irow==orow) {
     /// everything matches - we can just do a steal
@@ -1860,7 +1860,7 @@ boolean cconx_convert_pixel_data(weed_plant_t *dchan, weed_plant_t *schan) {
     weed_free(palettes);
   }
 
-  dpdata=weed_get_voidptr_value(dchan,"pixel_data",&error);
+  dpdata=(uint8_t *)weed_get_voidptr_value(dchan,"pixel_data",&error);
 
   if (dpdata!=NULL) {
     g_free(dpdata);
@@ -1872,7 +1872,7 @@ boolean cconx_convert_pixel_data(weed_plant_t *dchan, weed_plant_t *schan) {
   weed_set_int_value(dchan,"current_palette",ipal);
 
   if (pal_ok) {
-    weed_set_voidptr_value(dchan,"pixel_data",spdata);
+    weed_set_voidptr_value(dchan,"pixel_data",(void *)spdata);
     weed_set_int_value(dchan,"rowstrides",irow);
     
     /// caller - do not free in dchan
@@ -1880,17 +1880,17 @@ boolean cconx_convert_pixel_data(weed_plant_t *dchan, weed_plant_t *schan) {
     return FALSE;
   }
   create_empty_pixel_data(dchan,FALSE,TRUE);
-  dpdata=weed_get_voidptr_value(dchan,"pixel_data",&error);
+  dpdata=(uint8_t *)weed_get_voidptr_value(dchan,"pixel_data",&error);
   
   orow=weed_get_int_value(dchan,"rowstrides",&error);
 
   if (irow==orow) {
-    memcpy(dpdata,spdata,irow*iheight);
+    memcpy((void *)dpdata,(void *)spdata,irow*iheight);
   }
   else {
     int ipwidth = iwidth * weed_palette_get_bits_per_macropixel(ipal) / 8;
     for (i=0;i<iheight;i++) {
-      memcpy(dpdata,spdata,ipwidth);
+      memcpy((void *)dpdata,(void *)spdata,ipwidth);
       spdata+=irow;
       dpdata+=orow;
     }

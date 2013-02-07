@@ -2607,7 +2607,7 @@ void rte_reset_defs_clicked (GtkButton *button, lives_rfx_t *rfx) {
     ninpar=num_in_params(filter,FALSE,FALSE);
     if (ninpar==0) xinp=NULL;
 
-    xinp=g_malloc((ninpar+1)*sizeof(weed_plant_t *));
+    xinp=(weed_plant_t **)g_malloc((ninpar+1)*sizeof(weed_plant_t *));
     x=0;
     for (i=poffset;i<poffset+ninpar;i++) xinp[x++]=inp[i];
     xinp[x]=NULL;

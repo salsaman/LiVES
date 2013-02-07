@@ -539,7 +539,7 @@ LiVESWidget *lives_standard_spin_button_new(const char *labeltext, boolean use_m
 LiVESWidget *lives_standard_combo_new (const char *labeltext, boolean use_mnemonic, LiVESList *list, LiVESBox *, 
 				       const char *tooltip);
 
-LiVESWidget *lives_standard_entry_new(const char *labeltext, boolean use_mnemonic, char *txt, int dispwidth, int maxchars, LiVESBox *, 
+LiVESWidget *lives_standard_entry_new(const char *labeltext, boolean use_mnemonic, const char *txt, int dispwidth, int maxchars, LiVESBox *, 
 				      const char *tooltip);
 
 LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_buttons);

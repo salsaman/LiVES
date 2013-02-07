@@ -4418,7 +4418,7 @@ static void load_weed_plugin (gchar *plugin_name, gchar *plugin_path, gchar *dir
 		    gtk_menu_item_set_submenu (GTK_MENU_ITEM (pkg_menu), pkg_submenu);
 		    
 		    if (palette->style&STYLE_1) {
-		      gtk_widget_modify_bg(pkg_submenu, GTK_STATE_NORMAL, &palette->menu_and_bars);
+		      lives_widget_set_bg_color(pkg_submenu, GTK_STATE_NORMAL, &palette->menu_and_bars);
 		    }
 		    
 		    gtk_widget_show (pkg_menu);

@@ -137,7 +137,7 @@ void framedraw_connect(lives_special_framedraw_rect_t *framedraw, gint width, gi
 
   framedraw_connect_spinbutton(framedraw,rfx);
 
-  gtk_widget_modify_bg (mainw->fd_frame, GTK_STATE_NORMAL, &palette->light_red);
+  lives_widget_set_bg_color (mainw->fd_frame, GTK_STATE_NORMAL, &palette->light_red);
   framedraw_redraw(framedraw, TRUE, NULL);
 }
 
@@ -218,8 +218,8 @@ void widget_add_framedraw (GtkVBox *box, gint start, gint end, gboolean add_prev
   add_fill_to_box(GTK_BOX(hbox));
   gtk_box_pack_start (GTK_BOX (hbox), frame, FALSE, FALSE, 0);
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_bg (frame, GTK_STATE_NORMAL, &palette->normal_back);
-    gtk_widget_modify_fg (frame, GTK_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_bg_color (frame, GTK_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_fg_color (frame, GTK_STATE_NORMAL, &palette->normal_fore);
   }
 
   mainw->fd_frame=frame;
@@ -230,7 +230,7 @@ void widget_add_framedraw (GtkVBox *box, gint start, gint end, gboolean add_prev
   gtk_frame_set_shadow_type (GTK_FRAME(frame), GTK_SHADOW_IN);
   mainw->framedraw=gtk_event_box_new();
   gtk_widget_set_size_request (mainw->framedraw, width, height);
-  gtk_widget_modify_bg (mainw->framedraw, GTK_STATE_NORMAL, &palette->normal_back);
+  lives_widget_set_bg_color (mainw->framedraw, GTK_STATE_NORMAL, &palette->normal_back);
   gtk_widget_set_events (mainw->framedraw, GDK_BUTTON1_MOTION_MASK | GDK_BUTTON_RELEASE_MASK | 
 			 GDK_BUTTON_PRESS_MASK| GDK_ENTER_NOTIFY_MASK | GDK_LEAVE_NOTIFY_MASK);
 
@@ -239,8 +239,8 @@ void widget_add_framedraw (GtkVBox *box, gint start, gint end, gboolean add_prev
   gtk_container_add (GTK_CONTAINER (frame), mainw->framedraw);
 
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_bg (mainw->framedraw, GTK_STATE_NORMAL, &palette->normal_back);
-    gtk_widget_modify_fg (mainw->framedraw, GTK_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_bg_color (mainw->framedraw, GTK_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_fg_color (mainw->framedraw, GTK_STATE_NORMAL, &palette->normal_fore);
   }
 
   g_signal_connect_after (GTK_OBJECT (mainw->framedraw), "expose_event",

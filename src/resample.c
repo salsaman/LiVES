@@ -1221,7 +1221,7 @@ _resaudw *create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox
     gtk_box_pack_start (GTK_BOX (vboxx), frame, TRUE, TRUE, 0);
     
     if (palette->style&STYLE_1) {
-      gtk_widget_modify_bg (frame, GTK_STATE_NORMAL, &palette->normal_back);
+      lives_widget_set_bg_color (frame, GTK_STATE_NORMAL, &palette->normal_back);
     }
     
     hbox2 = gtk_hbox_new (FALSE, 0);
@@ -1321,7 +1321,7 @@ _resaudw *create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox
     gtk_box_pack_start (GTK_BOX (vboxx), frame, TRUE, TRUE, 0);
 
     if (palette->style&STYLE_1) {
-      gtk_widget_modify_bg (frame, GTK_STATE_NORMAL, &palette->normal_back);
+      lives_widget_set_bg_color (frame, GTK_STATE_NORMAL, &palette->normal_back);
     }
 
     vbox2 = gtk_vbox_new (FALSE, 0);
@@ -1482,7 +1482,7 @@ _resaudw *create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox
     if (type>=3&&type!=11) label_aud = lives_standard_label_new (_("Audio"));
     else label_aud = lives_standard_label_new (_("New"));
 
-    if (type==3&&type!=11&&palette->style&STYLE_1) gtk_widget_modify_bg(frame, GTK_STATE_NORMAL, &palette->normal_back);
+    if (type==3&&type!=11&&palette->style&STYLE_1) lives_widget_set_bg_color(frame, GTK_STATE_NORMAL, &palette->normal_back);
 
     gtk_frame_set_label_widget (GTK_FRAME (frame), label_aud);
 
@@ -1494,7 +1494,7 @@ _resaudw *create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox
     gtk_box_pack_start (GTK_BOX (vboxx), frame, TRUE, TRUE, 0);
 
     if (palette->style&STYLE_1) {
-      gtk_widget_modify_bg (frame, GTK_STATE_NORMAL, &palette->normal_back);
+      lives_widget_set_bg_color (frame, GTK_STATE_NORMAL, &palette->normal_back);
     }
     
     hbox = gtk_hbox_new (FALSE, 0);

@@ -38,7 +38,7 @@ struct _dvgrabw *create_camwindow (s_cam *cam, gint type)
   gtk_window_set_modal (GTK_WINDOW (dvgrabw->window), TRUE);
   gtk_window_set_position (GTK_WINDOW (dvgrabw->window), GTK_WIN_POS_CENTER_ALWAYS);
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_bg(dvgrabw->window, GTK_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_bg_color(dvgrabw->window, GTK_STATE_NORMAL, &palette->normal_back);
   }
 
   if (prefs->show_gui) {
@@ -57,7 +57,7 @@ struct _dvgrabw *create_camwindow (s_cam *cam, gint type)
   label=gtk_label_new_with_mnemonic(_("Save _directory :"));
   gtk_box_pack_start(GTK_BOX(hbox),label,FALSE,FALSE,10);
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(label, GTK_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_fg_color(label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
 
   direntry=gtk_entry_new();

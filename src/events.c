@@ -4732,7 +4732,7 @@ GtkWidget *create_event_list_dialog (weed_plant_t *event_list, weed_timecode_t s
      
      // properties
      tree = gtk_tree_view_new_with_model (GTK_TREE_MODEL (gtkstore));
-     gtk_widget_modify_base(tree, GTK_STATE_NORMAL, &palette->menu_and_bars);
+     lives_widget_set_base_color(tree, GTK_STATE_NORMAL, &palette->menu_and_bars);
      
      renderer = gtk_cell_renderer_text_new ();
      column = gtk_tree_view_column_new_with_attributes (NULL,
@@ -4774,7 +4774,7 @@ GtkWidget *create_event_list_dialog (weed_plant_t *event_list, weed_timecode_t s
  gtk_widget_set_size_request (scrolledwindow, winsize_h, winsize_v);
  
  if (palette->style&STYLE_1) {
-   gtk_widget_modify_bg(gtk_bin_get_child (GTK_BIN (scrolledwindow)), GTK_STATE_NORMAL, &palette->normal_back);
+   lives_widget_set_bg_color(gtk_bin_get_child (GTK_BIN (scrolledwindow)), GTK_STATE_NORMAL, &palette->normal_back);
  }
  
  gtk_viewport_set_shadow_type (GTK_VIEWPORT (gtk_bin_get_child (GTK_BIN (scrolledwindow))),GTK_SHADOW_IN);
@@ -4945,8 +4945,8 @@ render_details *create_render_details (gint type) {
   
   // Apply theme background to scrolled window
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(lives_bin_get_child(LIVES_BIN(scrollw)), GTK_STATE_NORMAL, &palette->normal_fore);
-    gtk_widget_modify_bg(lives_bin_get_child(LIVES_BIN(scrollw)), GTK_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_fg_color(lives_bin_get_child(LIVES_BIN(scrollw)), GTK_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_bg_color(lives_bin_get_child(LIVES_BIN(scrollw)), GTK_STATE_NORMAL, &palette->normal_back);
   }
 
   gtk_widget_show (top_vbox);
@@ -4961,7 +4961,7 @@ render_details *create_render_details (gint type) {
   gtk_container_add (GTK_CONTAINER (frame), vbox);
   
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_bg (frame, GTK_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_bg_color (frame, GTK_STATE_NORMAL, &palette->normal_back);
   }
   
   label = lives_standard_label_new (_("Video"));

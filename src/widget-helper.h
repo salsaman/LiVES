@@ -7,6 +7,10 @@
 #ifndef HAS_LIVES_WIDGET_HELPER_H
 #define HAS_LIVES_WIDGET_HELPER_H
 
+#ifndef M_PI
+#define M_PI 3.1415926536
+#endif
+
 typedef enum {
   LIVES_CURSOR_NORMAL=0,  ///< must be zero
   LIVES_CURSOR_BLOCK,
@@ -19,6 +23,7 @@ typedef enum {
 
 #define W_PACKING_WIDTH 10 // packing width for widgets with labels
 #define W_BORDER_WIDTH 20 // dialog border width
+
 
 #ifdef PAINTER_CAIRO
 typedef cairo_t lives_painter_t;
@@ -76,6 +81,17 @@ typedef GtkToggleButton                   LiVESToggleButton;
 typedef GtkTextView                       LiVESTextView;
 typedef GtkEntry                          LiVESEntry;
 typedef GtkRadioButton                    LiVESRadioButton;
+
+
+#if GTK_CHECK_VERSION(3,0,0)
+#define LIVES_WIDGET_COLOR_SCALE (1./256.)
+typedef GdkRGBAColor                      LiVESWidgetColor;
+typedef GtkStateFlags LiVESWidgetState;
+#else
+#define LIVES_WIDGET_COLOR_SCALE 256.
+typedef GdkColor                          LiVESWidgetColor;
+typedef GtkStateType LiVESWidgetState;
+#endif
 
 #if GTK_VERSION_3
 typedef GtkScale                          LiVESRuler;
@@ -367,6 +383,7 @@ void lives_painter_set_source_rgba(lives_painter_t *, double red, double green, 
 void lives_painter_set_line_width(lives_painter_t *, double width);
 
 void lives_painter_rectangle(lives_painter_t *, double x, double y, double width, double height);
+void lives_painter_arc(lives_painter_t *, double xc, double yc, double radius, double angle1, double angle2);
 void lives_painter_line_to(lives_painter_t *, double x, double y);
 void lives_painter_move_to(lives_painter_t *, double x, double y);
 
@@ -420,6 +437,18 @@ LiVESPixbuf *lives_pixbuf_scale_simple(const LiVESPixbuf *src, int dest_width, i
 				       LiVESInterpType interp_type);
 
 // basic widget fns
+
+void lives_widget_set_bg_color(LiVESWidget *, LiVESWidgetState state, const LiVESWidgetColor *);
+void lives_widget_set_fg_color(LiVESWidget *, LiVESWidgetState state, const LiVESWidgetColor *);
+void lives_widget_set_text_color(LiVESWidget *, LiVESWidgetState state, const LiVESWidgetColor *);
+void lives_widget_set_base_color(LiVESWidget *, LiVESWidgetState state, const LiVESWidgetColor *);
+
+void lives_widget_get_fg_state_color(LiVESWidget *, LiVESWidgetState state, LiVESWidgetColor *);
+void lives_widget_get_bg_state_color(LiVESWidget *, LiVESWidgetState state, LiVESWidgetColor *);
+
+boolean lives_color_parse(const char *spec, LiVESWidgetColor *);
+
+LiVESWidgetColor *lives_widget_color_copy(LiVESWidgetColor *c1orNULL, const LiVESWidgetColor *c2);
 
 
 LiVESWidget *lives_dialog_get_content_area(LiVESDialog *);
@@ -514,6 +543,9 @@ LiVESWidget *lives_standard_hruler_new(void);
 
 
 // util functions
+
+void lives_widget_get_fg_color(LiVESWidget *, LiVESWidgetColor *);
+void lives_widget_get_bg_color(LiVESWidget *, LiVESWidgetColor *);
 
 LiVESWidget *lives_entry_new_with_max_length(int max);
 

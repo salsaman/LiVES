@@ -466,7 +466,7 @@ void transition_add_in_out(GtkBox *vbox, lives_rfx_t *rfx, boolean add_audio_che
 			  (gpointer)rfx);
   
   if (palette->style&STYLE_1) {
-    gtk_widget_modify_fg(hbox, GTK_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_fg_color(hbox, GTK_STATE_NORMAL, &palette->normal_fore);
   }
 
   hseparator = gtk_hseparator_new ();
@@ -1224,7 +1224,7 @@ boolean make_param_box(GtkVBox *top_vbox, lives_rfx_t *rfx) {
       gtk_widget_set_size_request (scrolledwindow, RFX_WINSIZE_H, RFX_WINSIZE_V);
     
     if (palette->style&STYLE_1) {
-      gtk_widget_modify_bg(gtk_bin_get_child (GTK_BIN (scrolledwindow)), GTK_STATE_NORMAL, &palette->normal_back);
+      lives_widget_set_bg_color(gtk_bin_get_child (GTK_BIN (scrolledwindow)), GTK_STATE_NORMAL, &palette->normal_back);
     }
     gtk_viewport_set_shadow_type (GTK_VIEWPORT (gtk_bin_get_child (GTK_BIN (scrolledwindow))),GTK_SHADOW_IN);
   }
@@ -1448,9 +1448,9 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, boolean add_
       }
 #endif
       if (palette->style&STYLE_1) {
-	gtk_widget_modify_bg (scale, GTK_STATE_NORMAL, &palette->normal_back);
-	gtk_widget_modify_text(scale, GTK_STATE_NORMAL, &palette->normal_back);
-	gtk_widget_modify_fg(scale, GTK_STATE_NORMAL, &palette->normal_fore);
+	lives_widget_set_bg_color (scale, GTK_STATE_NORMAL, &palette->normal_back);
+	lives_widget_set_text_color(scale, GTK_STATE_NORMAL, &palette->normal_back);
+	lives_widget_set_fg_color(scale, GTK_STATE_NORMAL, &palette->normal_fore);
       }
       if (param->desc!=NULL) gtk_widget_set_tooltip_text(scale, param->desc);
     }
@@ -1471,7 +1471,7 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, boolean add_
     colr.green=rgb.green<<8;
     colr.blue=rgb.blue<<8;
 
-    cbutton = gtk_color_button_new_with_color(&colr);
+    cbutton = gtk_color_button_new_with_color(&colr); // TODO ***
     gtk_color_button_set_title (GTK_COLOR_BUTTON(cbutton),_("LiVES: - Select Colour"));
 
     g_object_set_data (G_OBJECT (cbutton),"param_number",GINT_TO_POINTER (pnum));

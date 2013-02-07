@@ -159,30 +159,27 @@ typedef struct {
 #define STYLE_5 1<<4 ///< drop down menu text col. in mt
 #define STYLE_6 1<<4 ///< separator col. in mt
 
-  GdkColor white;
-  GdkColor black;
-  GdkColor light_blue;
-  GdkColor light_yellow;
-  GdkColor pink;
-  GdkColor light_red;
-  GdkColor dark_red;
-  GdkColor light_green;
-  GdkColor grey20;
-  GdkColor grey25;
-  GdkColor grey45;
-  GdkColor grey60;
-  GdkColor dark_orange;
-  GdkColor fade_colour;
-  GdkColor normal_back;
-  GdkColor normal_fore;
+  LiVESWidgetColor white;
+  LiVESWidgetColor black;
+  LiVESWidgetColor light_blue;
+  LiVESWidgetColor light_yellow;
+  LiVESWidgetColor pink;
+  LiVESWidgetColor light_red;
+  LiVESWidgetColor dark_red;
+  LiVESWidgetColor light_green;
+  LiVESWidgetColor grey20;
+  LiVESWidgetColor grey25;
+  LiVESWidgetColor grey45;
+  LiVESWidgetColor grey60;
+  LiVESWidgetColor dark_orange;
+  LiVESWidgetColor fade_colour;
+  LiVESWidgetColor normal_back;
+  LiVESWidgetColor normal_fore;
 
-  GdkColor menu_and_bars;
-  GdkColor banner_fade_text;
-  GdkColor info_text;
-  GdkColor info_base;
-
-  GdkColor bm_opaque;
-  GdkColor bm_trans;
+  LiVESWidgetColor menu_and_bars;
+  LiVESWidgetColor banner_fade_text;
+  LiVESWidgetColor info_text;
+  LiVESWidgetColor info_base;
 
 } _palette;
 

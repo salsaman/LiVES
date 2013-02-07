@@ -42,11 +42,18 @@ typedef struct _GiwLedClass   GiwLedClass;
 
 struct _GiwLed
 {
+#if GTK_CHECK_VERSION(3,0,0)
+  GObject parent_instance;
+#endif
   GtkWidget widget;
 
   gboolean on; //0 for false
+#if GTK_CHECK_VERSION(3,0,0)
+  GdkRGBA color_on, color_off;
+#else
   GdkColor color_on, color_off;
-  
+#endif
+
   guint size; // Size of the led
   guint x, y; // Position inside the widget's window
   
@@ -57,16 +64,27 @@ struct _GiwLed
 
 struct _GiwLedClass
 {
+#if GTK_CHECK_VERSION(3,0,0)
+  GObjectClass parent_class;
+#else
   GtkWidgetClass parent_class;
-  
+#endif
+
   void (* mode_changed) (GiwLed *led); //Signal emited when the mode is chaged (on to off, or off to on)
 };
 
+
+#if GTK_CHECK_VERSION(3,0,0)
+G_DEFINE_TYPE(GiwLed, giw_led, G_TYPE_OBJECT);
+#endif
 
 GtkWidget*     giw_led_new                    (void);
 GType          giw_led_get_type               (void);
 void           giw_led_set_mode               (GiwLed *led, guint8 mode);    
 guint8         giw_led_get_mode               (GiwLed *led);    
+#if GTK_CHECK_VERSION(3,0,0)
+void           giw_led_set_rgba               (GiwLed *led, GdkRGBA on_color, GdkRGBA off_color);
+#endif
 void           giw_led_set_colors             (GiwLed *led, GdkColor on_color, GdkColor off_color);
 void           giw_led_enable_mouse           (GiwLed *led, gboolean option);
 

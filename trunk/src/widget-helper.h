@@ -85,7 +85,7 @@ typedef GtkToggleButton                   LiVESToggleButton;
 typedef GtkTextView                       LiVESTextView;
 typedef GtkEntry                          LiVESEntry;
 typedef GtkRadioButton                    LiVESRadioButton;
-
+typedef GtkLabel                          LiVESLabel;
 
 #if GTK_CHECK_VERSION(3,0,0)
 #define LIVES_WIDGET_COLOR_SCALE (1./256.)
@@ -141,6 +141,7 @@ typedef gpointer                          LiVESObjectPtr;
 #define LIVES_COMBO(widget) GTK_COMBO_BOX(widget)
 #define LIVES_COMBO_BOX(widget) GTK_COMBO_BOX(widget)
 #define LIVES_BUTTON(widget) GTK_BUTTON(widget)
+#define LIVES_LABEL(widget) GTK_LABEL(widget)
 #define LIVES_RADIO_BUTTON(widget) GTK_RADIO_BUTTON(widget)
 #define LIVES_TOGGLE_BUTTON(widget) GTK_TOGGLE_BUTTON(widget)
 
@@ -517,7 +518,7 @@ void lives_adjustment_set_upper(LiVESAdjustment *, double upper);
 void lives_adjustment_set_lower(LiVESAdjustment *, double lower);
 void lives_adjustment_set_page_size(LiVESAdjustment *, double page_size);
 
-
+const char *lives_label_get_text(LiVESLabel *);
 
 
 

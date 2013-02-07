@@ -49,6 +49,9 @@ typedef struct _GiwVSliderClass   GiwVSliderClass;
 
 struct _GiwVSlider
 {
+#if GTK_CHECK_VERSION(3,0,0)
+  GObject parent_instance;
+#endif
   GtkWidget widget;
 
   GtkAdjustment *adjustment;
@@ -83,8 +86,16 @@ struct _GiwVSlider
 
 struct _GiwVSliderClass
 {
+#if GTK_CHECK_VERSION(3,0,0)
+  GObjectClass parent_class;
+#else
   GtkWidgetClass parent_class;
+#endif
 };
+
+#if GTK_CHECK_VERSION(3,0,0)
+G_DEFINE_TYPE(GiwVSlider, giw_vslider, G_TYPE_OBJECT);
+#endif
 
 GtkWidget*     giw_vslider_new                    (GtkAdjustment *adjustment);
 GtkWidget*     giw_vslider_new_with_adjustment    (gdouble value, gdouble lower, gdouble upper);

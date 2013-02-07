@@ -9063,7 +9063,7 @@ boolean expose_vid_event (GtkWidget *widget, GdkEventExpose *event) {
 #if GTK_CHECK_VERSION(3,0,0)
     cr=lives_painter_create(mainw->video_drawable);
     lives_widget_get_bg_color(mainw->video_draw,&color);
-    lives_painter_set_source_rgba (cr, &color);
+    lives_painter_set_source_rgba (cr, color.red, color.green, color.blue, color.alpha);
     lives_painter_rectangle(cr,0,0,
 		    lives_widget_get_allocation_width(mainw->video_draw),
 		    lives_widget_get_allocation_height(mainw->video_draw));
@@ -9083,7 +9083,7 @@ boolean expose_vid_event (GtkWidget *widget, GdkEventExpose *event) {
 #if GTK_CHECK_VERSION(3,0,0)
   cr=lives_painter_create(mainw->video_drawable);
   lives_widget_get_fg_color(mainw->video_draw,&color);
-  lives_painter_set_source_rgba (cr, &color);
+  lives_painter_set_source_rgba (cr, color.red, color.green, color.blue, color.alpha);
   lives_painter_rectangle (cr,ex,ey,ew,eh);
   lives_painter_paint(cr);
   lives_painter_destroy(cr);
@@ -9158,7 +9158,7 @@ static void redraw_laudio(int ex, int ey, int ew, int eh) {
 #if GTK_CHECK_VERSION(3,0,0)
     cr=lives_painter_create(mainw->laudio_drawable);
     lives_widget_get_bg_color(mainw->laudio_draw,&color);
-    lives_painter_set_source_rgba (cr, &color);
+    lives_painter_set_source_rgba (cr, color.red, color.green, color.blue, color.alpha);
 
     lives_painter_rectangle(cr,0,0,
 		    lives_widget_get_allocation_width(mainw->laudio_draw),
@@ -9181,7 +9181,7 @@ static void redraw_laudio(int ex, int ey, int ew, int eh) {
 #if GTK_CHECK_VERSION(3,0,0)
   cr=lives_painter_create(mainw->laudio_drawable);
   lives_widget_get_fg_color(mainw->laudio_draw,&color);
-  lives_painter_set_source_rgba (cr, &color);
+  lives_painter_set_source_rgba (cr, color.red, color.green, color.blue, color.alpha);
   lives_painter_rectangle (cr,ex,ey,ew,eh);
   lives_painter_paint(cr);
   lives_painter_destroy(cr);
@@ -9252,7 +9252,7 @@ static void redraw_raudio(int ex, int ey, int ew, int eh) {
 #if GTK_CHECK_VERSION(3,0,0)
     cr=lives_painter_create(mainw->raudio_drawable);
     lives_widget_get_bg_color(mainw->laudio_draw,&color);
-    lives_painter_set_source_rgba (cr, &color);
+    lives_painter_set_source_rgba (cr, color.red, color.green, color.blue, color.alpha);
 
     lives_painter_rectangle(cr,0,0,
 		    lives_widget_get_allocation_width(mainw->raudio_draw),
@@ -9274,7 +9274,7 @@ static void redraw_raudio(int ex, int ey, int ew, int eh) {
 #if GTK_CHECK_VERSION(3,0,0)
   cr=lives_painter_create(mainw->raudio_drawable);
   lives_widget_get_fg_color(mainw->raudio_draw,&color);
-  lives_painter_set_source_rgba (cr, &color);
+  lives_painter_set_source_rgba (cr, color.red, color.green, color.blue, color.alpha);
 
   lives_painter_rectangle (cr,ex,ey,ew,eh);
   lives_painter_paint(cr);

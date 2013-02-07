@@ -32,6 +32,7 @@
 #define FX_BLOCK_WIDTH 80
 #define FX_BLOCK_HEIGHT 20
 
+#define MT_TRACK_HEIGHT 25
 
 #define TIMECODE_LENGTH 14 ///< length of timecode text entry, must be >12
 

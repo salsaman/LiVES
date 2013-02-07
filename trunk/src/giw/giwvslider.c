@@ -92,6 +92,29 @@ void vslider_free_legends(GiwVSlider *vslider);
 // A function that calculates width and height of the legend's the layout
 void vslider_calculate_legends_sizes(GiwVSlider *vslider); 
 
+
+#if GTK_CHECK_VERSION(3,0,0)
+static GObject *
+giw_vslider_constructor (GType                  gtype,
+			 guint                  n_properties,
+			 GObjectConstructParam *properties)
+{
+  GObject *obj;
+
+  {
+    /* Always chain up to the parent constructor */
+    obj = G_OBJECT_CLASS (giw_vslider_parent_class)->constructor (gtype, n_properties, properties);
+  }
+  
+  /* update the object state depending on constructor properties */
+
+  giw_vslider_init(GIW_VSLIDER(obj));
+
+  return obj;
+}
+
+
+#else
 GType
 giw_vslider_get_type ()
 {
@@ -99,24 +122,6 @@ giw_vslider_get_type ()
 
   if (!vslider_type)
     {
-#if GTK_VERSION_3
-      static const GTypeInfo vslider_info =
-      {
-	sizeof (GiwVSliderClass),
-	(GBaseInitFunc)NULL,
-	(GBaseFinalizeFunc)NULL,
-	(GClassInitFunc) giw_vslider_class_init,
-	(GClassFinalizeFunc)NULL,
-	(gconstpointer)NULL,
-	sizeof (GiwVSlider),
-	0, // n_preallocs
-	(GInstanceInitFunc) giw_vslider_init
-	//(const GTypeValueTable *)NULL
-      };
-
-      vslider_type = g_type_register_static (gtk_widget_get_type (), "GiwVSlider", &vslider_info, 0);
-
-#else
       static const GtkTypeInfo vslider_info =
       {
 	"GiwVSlider",
@@ -130,29 +135,34 @@ giw_vslider_get_type ()
       };
 
       vslider_type = gtk_type_unique (gtk_widget_get_type (), &vslider_info);
-
-#endif
     }
 
   return vslider_type;
 }
 
+#endif
+
+
 static void
 giw_vslider_class_init (GiwVSliderClass *xclass)
 {
-  GtkObjectClass *object_class;
+#if GTK_CHECK_VERSION(3,0,0)
+  GObjectClass *object_class = G_OBJECT_CLASS (xclass);
+#else
+  GtkObjectClass *object_class = (GtkObjectClass*) xclass;
+#endif
   GtkWidgetClass *widget_class;
 
-  object_class = (GtkObjectClass*) xclass;
   widget_class = (GtkWidgetClass*) xclass;
 
-#if GTK_VERSION_3
-  // parent_class is set in g_type_register_static()
+#if GTK_CHECK_VERSION(3,0,0)
+  object_class->constructor = giw_vslider_constructor;
+  object_class->finalize = giw_vslider_destroy;
 #else
   parent_class = (GtkWidgetClass *)gtk_type_class (gtk_widget_get_type ());
+  object_class->destroy = giw_vslider_destroy;
 #endif
 
-  object_class->destroy = giw_vslider_destroy;
 
   widget_class->realize = giw_vslider_realize;
   widget_class->expose_event = giw_vslider_expose;
@@ -225,9 +235,11 @@ giw_vslider_new_with_adjustment (gdouble value,
   return GTK_WIDGET (vslider);
 }
 
-static void
-giw_vslider_destroy (GtkObject *object)
-{
+#if GTK_VERSION_3
+static void giw_vslider_destroy (GObject *object) {
+#else
+static void giw_vslider_destroy (GtkObject *object) {
+#endif
   GiwVSlider *vslider;
   gint loop;
 
@@ -248,8 +260,12 @@ giw_vslider_destroy (GtkObject *object)
     vslider->legends=NULL;
   }
     
+#if GTK_VERSION_3
+  G_OBJECT_CLASS (giw_knob_parent_class)->finalize (object);
+#else
   if (GTK_OBJECT_CLASS (parent_class)->destroy)
     (* GTK_OBJECT_CLASS (parent_class)->destroy) (object);
+#endif
 }
 
 static void

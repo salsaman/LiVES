@@ -1147,7 +1147,7 @@ int jack_open_device(jack_driver_t *jackd) {
      just decides to stop calling us. */
   jack_on_shutdown(jackd->client, jack_shutdown, jackd);
 
-  jack_set_process_callback ((void *)jackd->client, audio_process, jackd);  
+  jack_set_process_callback ((jack_client_t *)jackd->client, audio_process, jackd);  
 
   return 0;
 

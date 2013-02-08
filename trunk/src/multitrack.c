@@ -9450,7 +9450,7 @@ GtkWidget *add_audio_track (lives_mt *mt, gint track, boolean behind) {
 
 static void set_track_label(GtkEventBox *xeventbox, int tnum) {
   GtkWidget *label=GTK_WIDGET(g_object_get_data(G_OBJECT(xeventbox),"label"));
-  const gchar *tname=g_object_get_data(G_OBJECT(xeventbox),"track_name");
+  const gchar *tname=(const gchar *)g_object_get_data(G_OBJECT(xeventbox),"track_name");
   gchar *newtext=g_strdup_printf(_("%s (layer %d)"),tname,tnum);
   gtk_label_set_text(GTK_LABEL(label),newtext);
   g_free(newtext);

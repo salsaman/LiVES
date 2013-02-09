@@ -49,7 +49,7 @@ typedef struct _GiwKnobClass   GiwKnobClass;
 struct _GiwKnob
 {
 #if GTK_VERSION_3
-  GObject parent_instance;
+  GObject parent;
 #endif
 
   GtkWidget widget;
@@ -110,19 +110,16 @@ struct _GiwKnob
 struct _GiwKnobClass
 {
 #if GTK_VERSION_3
-  GObjectClass parent_class;
+  GObjectClass parent;
 #else
   GtkWidgetClass parent_class;
 #endif
 };
 
-#if GTK_CHECK_VERSION(3,0,0)
-G_DEFINE_TYPE(GiwKnob, giw_knob, G_TYPE_OBJECT);
-#endif
 
+GType          giw_knob_get_type               (void);
 GtkWidget*     giw_knob_new                    (GtkAdjustment *adjustment);
 GtkWidget*     giw_knob_new_with_adjustment    (gdouble value, gdouble lower, gdouble upper);
-GType          giw_knob_get_type               (void);
 gdouble        giw_knob_get_value              (GiwKnob *knob);
 void           giw_knob_set_value              (GiwKnob *knob, gdouble value);
 void           giw_knob_set_adjustment         (GiwKnob *knob, GtkAdjustment *adjustment);

@@ -93,9 +93,8 @@ struct _GiwVSliderClass
 #endif
 };
 
-#if GTK_CHECK_VERSION(3,0,0)
-G_DEFINE_TYPE(GiwVSlider, giw_vslider, G_TYPE_OBJECT);
-#endif
+
+
 
 GtkWidget*     giw_vslider_new                    (GtkAdjustment *adjustment);
 GtkWidget*     giw_vslider_new_with_adjustment    (gdouble value, gdouble lower, gdouble upper);

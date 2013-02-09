@@ -3196,7 +3196,7 @@ static void set_poly_tab(lives_mt *mt, guint tab) {
   gint page=poly_tab_to_page(tab);
 
   if (gtk_notebook_get_current_page(GTK_NOTEBOOK(mt->nb))==page) notebook_page(mt->nb,NULL,tab,mt);
-  else gtk_notebook_set_page(GTK_NOTEBOOK(mt->nb),page);
+  else gtk_notebook_set_current_page(GTK_NOTEBOOK(mt->nb),page);
 }
 
 

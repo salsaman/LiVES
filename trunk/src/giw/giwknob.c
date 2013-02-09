@@ -42,20 +42,23 @@ static void giw_knob_realize                  (GtkWidget        *widget);
 static void giw_knob_size_request             (GtkWidget      *widget,
 					       GtkRequisition *requisition);
 #if GTK_CHECK_VERSION(3,0,0)
-static void giw_knob_destroy                  (GObject        *object);
 static void giw_knob_get_preferred_width (GtkWidget *widget,
 					  gint      *minimal_width,
 					  gint      *natural_width);
 static void giw_knob_get_preferred_height (GtkWidget *widget,
 					   gint      *minimal_height,
 					   gint      *natural_height);
+static gboolean giw_knob_draw                (GtkWidget *widget, cairo_t *cairo);
+static void giw_knob_destroy (GtkWidget *widget);
+static void giw_knob_style_updated             (GtkWidget *widget);
 #else
-static void giw_knob_destroy                  (GtkObject        *object);
-#endif
-static void giw_knob_size_allocate            (GtkWidget     *widget,
-					       GtkAllocation *allocation);
+static void giw_knob_destroy (GtkObject *object);
 static gint giw_knob_expose                   (GtkWidget        *widget,
 						GdkEventExpose   *event);
+#endif
+
+static void giw_knob_size_allocate            (GtkWidget     *widget,
+					       GtkAllocation *allocation);
 static gint giw_knob_button_press             (GtkWidget        *widget,
 						GdkEventButton   *event);
 static gint giw_knob_button_release           (GtkWidget        *widget,
@@ -64,13 +67,10 @@ static gint giw_knob_motion_notify            (GtkWidget        *widget,
 						GdkEventMotion   *event);
 static void giw_knob_style_set	              (GtkWidget      *widget,
 			                        GtkStyle       *previous_style);
-#if GTK_CHECK_VERSION(3,0,0)
-static void giw_knob_style_updated	              (GtkWidget      *widget);
-#endif
+#if !GTK_CHECK_VERSION(3,0,0)
 /* Local data */
-
 static GtkWidgetClass *parent_class = NULL;
-
+#endif
 // Changes the value, by mouse position
 void knob_update_mouse                             (GiwKnob *knob, gint x, gint y);
 
@@ -115,28 +115,6 @@ void knob_calculate_title_sizes(GiwKnob *knob);
 /*********************
 * Widget's Functions * 
 *********************/
-#if GTK_CHECK_VERSION(3,0,0)
-static GObject *
-giw_knob_constructor (GType                  gtype,
-		     guint                  n_properties,
-		     GObjectConstructParam *properties)
-{
-  GObject *obj;
-
-  {
-    /* Always chain up to the parent constructor */
-    obj = G_OBJECT_CLASS (giw_knob_parent_class)->constructor (gtype, n_properties, properties);
-  }
-  
-  /* update the object state depending on constructor properties */
-
-  giw_knob_init(GIW_KNOB(obj));
-
-  return obj;
-}
-
-
-#else
 GType
 giw_knob_get_type ()
 {
@@ -144,25 +122,42 @@ giw_knob_get_type ()
 
   if (!knob_type)
     {
+#if GTK_CHECK_VERSION(3,0,0)
+      static const GTypeInfo knob_info =
+	{
+	  sizeof (GiwKnobClass),
+	  NULL,   /* base_init */
+	  NULL,   /* base_finalize */
+	  giw_knob_class_init,   /* class_init */
+	  NULL,   /* class_finalize */
+	  NULL,   /* class_data */
+	  sizeof (GiwKnob),
+	  0,      /* n_preallocs */
+	  giw_knob_init/* instance_init */
+	};
+
+      knob_type = g_type_register_static (G_TYPE_OBJECT, "GiwTypeKnob", &knob_info, 0);
+
+#else
       static const GtkTypeInfo knob_info =
-      {
-	"GiwKnob",
-	sizeof (GiwKnob),
-	sizeof (GiwKnobClass),
-	(GtkClassInitFunc) giw_knob_class_init,
-	(GtkObjectInitFunc) giw_knob_init,
-	/*(GtkArgSetFunc)*/ NULL,
-	/*(GtkArgGetFunc)*/ NULL,
-	(GtkClassInitFunc) NULL,
-      };
-
+	{
+	  "GiwKnob",
+	    sizeof (GiwKnob),
+	  sizeof (GiwKnobClass),
+	  (GtkClassInitFunc) giw_knob_class_init,
+	  (GtkObjectInitFunc) giw_knob_init,
+	    /*(GtkArgSetFunc)*/ NULL,
+	    /*(GtkArgGetFunc)*/ NULL,
+	    (GtkClassInitFunc) NULL,
+	};
+      
       knob_type = gtk_type_unique (gtk_widget_get_type (), &knob_info);
-
-    }
+#endif
+}
 
   return knob_type;
 }
-#endif
+
 
 
 static void
@@ -178,17 +173,19 @@ giw_knob_class_init (GiwKnobClass *xclass)
   widget_class = (GtkWidgetClass*) xclass;
 
 #if GTK_CHECK_VERSION(3,0,0)
-  object_class->constructor = giw_knob_constructor;
-  object_class->finalize = giw_knob_destroy;
+  widget_class->destroy = giw_knob_destroy;
 #else
   parent_class = (GtkWidgetClass *)gtk_type_class (gtk_widget_get_type ());
   object_class->destroy = giw_knob_destroy;
 #endif
 
   widget_class->realize = giw_knob_realize;
+
 #if GTK_CHECK_VERSION(3,0,0)
   widget_class->get_preferred_width = giw_knob_get_preferred_width;
   widget_class->get_preferred_height = giw_knob_get_preferred_height;
+  widget_class->draw = giw_knob_draw;
+  widget_class->style_updated = giw_knob_style_updated;
 #else
   widget_class->expose_event = giw_knob_expose;
   widget_class->size_request = giw_knob_size_request;
@@ -198,9 +195,6 @@ giw_knob_class_init (GiwKnobClass *xclass)
   widget_class->button_release_event = giw_knob_button_release;
   widget_class->motion_notify_event = giw_knob_motion_notify;
   widget_class->style_set = giw_knob_style_set;
-#if GTK_CHECK_VERSION(3,0,0)
-  widget_class->style_updated = giw_knob_style_updated;
-#endif
 }
 
 static void
@@ -259,9 +253,8 @@ giw_knob_new_with_adjustment (gdouble value,
   return GTK_WIDGET (knob);
 }
 
-
-#if GTK_VERSION_3
-static void giw_knob_destroy (GObject *object) {
+#if GTK_CHECK_VERSION(3,0,0)
+static void giw_knob_destroy (GtkWidget *object) {
 #else
 static void giw_knob_destroy (GtkObject *object) {
 #endif
@@ -290,7 +283,7 @@ static void giw_knob_destroy (GtkObject *object) {
     g_object_unref(G_OBJECT(knob->title));
 
 #if GTK_VERSION_3
-  G_OBJECT_CLASS (giw_knob_parent_class)->finalize (object);
+  //G_OBJECT_CLASS (giw_knob_parent_class)->finalize (object);
 #else
   if (GTK_OBJECT_CLASS (parent_class)->destroy)
     (* GTK_OBJECT_CLASS (parent_class)->destroy) (object);
@@ -424,6 +417,14 @@ giw_knob_size_allocate (GtkWidget     *widget,
     }
   knob_calculate_sizes(knob);
 }
+
+
+#if GTK_CHECK_VERSION(3,0,0)
+ static gboolean giw_knob_draw (GtkWidget *widget, cairo_t *cairo) {
+
+   return FALSE;
+ }
+#else
 
 static gint
 giw_knob_expose (GtkWidget      *widget,
@@ -647,6 +648,8 @@ giw_knob_expose (GtkWidget      *widget,
     
   return FALSE;
 }
+
+#endif
 
 static gint
 giw_knob_button_press (GtkWidget      *widget,

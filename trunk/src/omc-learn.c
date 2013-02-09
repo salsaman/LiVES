@@ -1337,7 +1337,9 @@ static omclearn_w *create_omclearn_dialog(void) {
   
   gtk_box_pack_start (GTK_BOX (omclw->top_vbox), hbuttonbox, TRUE, TRUE, 0);
   
+#if !GTK_CHECK_VERSION(3,0,0)
   gtk_button_box_set_child_size (GTK_BUTTON_BOX (hbuttonbox), DEF_BUTTON_WIDTH, -1);
+#endif
   gtk_button_box_set_layout (GTK_BUTTON_BOX (hbuttonbox), GTK_BUTTONBOX_SPREAD);
   
   omclw->clear_button = gtk_button_new_with_mnemonic (_("Clear _unmatched"));

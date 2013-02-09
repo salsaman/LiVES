@@ -105,6 +105,10 @@ struct _GiwKnob
   
   // The title's dimensions
   gint title_width, title_height;
+
+  gulong chsig;
+  gulong vchsig;
+
 };
 
 struct _GiwKnobClass

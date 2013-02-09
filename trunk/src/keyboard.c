@@ -79,6 +79,13 @@ static void handle_omc_events(void) {
 
 gboolean ext_triggers_poll(gpointer data) {
 
+#if GTK_CHECK_VERSION(3,0,0)
+  if (mainw->kb_timer_end) {
+    mainw->kb_timer_end=FALSE;
+    return FALSE;
+  }
+#endif
+
   if (mainw->playing_file>-1) plugin_poll_keyboard(); ///< keyboard control during playback
 
   // check for external controller events

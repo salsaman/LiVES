@@ -4784,7 +4784,9 @@ GtkWidget *create_event_list_dialog (weed_plant_t *event_list, weed_timecode_t s
 
  gtk_box_pack_start (GTK_BOX (top_vbox), hbuttonbox, TRUE, TRUE, 0);
 
+#if !GTK_CHECK_VERSION(3,0,0)
  gtk_button_box_set_child_size (GTK_BUTTON_BOX (hbuttonbox), DEF_BUTTON_WIDTH, -1);
+#endif
  gtk_button_box_set_layout (GTK_BUTTON_BOX (hbuttonbox), GTK_BUTTONBOX_SPREAD);
 
  ok_button = gtk_button_new_with_mnemonic (_("Close _window"));
@@ -5201,7 +5203,9 @@ render_details *create_render_details (gint type) {
   add_fill_to_box(GTK_BOX (daa));
 
   if (!specified) {
+#if !GTK_CHECK_VERSION(3,0,0)
     gtk_button_box_set_child_size (GTK_BUTTON_BOX (daa), DEF_BUTTON_WIDTH, -1);
+#endif
     gtk_button_box_set_layout (GTK_BUTTON_BOX (daa), GTK_BUTTONBOX_SPREAD);
   }
 

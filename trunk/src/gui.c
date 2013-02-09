@@ -1804,7 +1804,7 @@ create_LiVES (void)
 #if GTK_CHECK_VERSION(2,16,0) 
   mainw->volume_scale=gtk_volume_button_new();
   gtk_scale_button_set_value(GTK_SCALE_BUTTON(mainw->volume_scale),mainw->volume);
-  gtk_scale_button_set_orientation (GTK_SCALE_BUTTON(mainw->volume_scale),GTK_ORIENTATION_HORIZONTAL);
+  lives_scale_button_set_orientation (LIVES_SCALE_BUTTON(mainw->volume_scale),LIVES_ORIENTATION_HORIZONTAL);
 #else
   mainw->volume_scale=gtk_hscale_new(GTK_ADJUSTMENT(spinbutton_adj));
   gtk_scale_set_draw_value(GTK_SCALE(mainw->volume_scale),FALSE);
@@ -2000,7 +2000,7 @@ create_LiVES (void)
   mainw->framecounter = gtk_entry_new ();
   gtk_widget_show (mainw->framecounter);
   gtk_box_pack_start (GTK_BOX (mainw->framebar), mainw->framecounter, FALSE, TRUE, 0);
-  gtk_entry_set_editable (GTK_ENTRY (mainw->framecounter), FALSE);
+  lives_entry_set_editable (LIVES_ENTRY (mainw->framecounter), FALSE);
   gtk_entry_set_has_frame (GTK_ENTRY (mainw->framecounter), FALSE);
   gtk_entry_set_width_chars (GTK_ENTRY (mainw->framecounter), 18);
 
@@ -2109,8 +2109,13 @@ create_LiVES (void)
   // the actual playback image for the internal player
   mainw->image274 = gtk_image_new_from_pixbuf (NULL);
   gtk_widget_show (mainw->image274);
-  gtk_widget_ref(mainw->image274);
-  gtk_object_sink (GTK_OBJECT (mainw->image274));
+  g_object_ref(mainw->image274);
+
+#if GTK_CHECK_VERSION(3,0,0)
+  g_object_ref_sink (G_OBJECT (mainw->image274));
+#else
+  gtk_object_sink (G_OBJECT (mainw->image274));
+#endif
 
   label16 = gtk_label_new (_("Last Frame"));
   gtk_widget_show (label16);
@@ -3312,7 +3317,7 @@ make_preview_box (void) {
 
   mainw->preview_box = gtk_vbox_new (FALSE, 0);
   gtk_widget_show (mainw->preview_box);
-  gtk_widget_ref(mainw->preview_box);
+  g_object_ref(mainw->preview_box);
 
   eventbox=gtk_event_box_new();
   gtk_widget_show (eventbox);

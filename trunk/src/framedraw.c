@@ -298,8 +298,6 @@ void framedraw_redraw (lives_special_framedraw_rect_t * framedraw, gboolean relo
 
   lives_painter_t *cr;
 
-  if (!GDK_IS_DRAWABLE(lives_widget_get_xwindow(mainw->framedraw))) return;
-
   if (mainw->current_file<1||cfile==NULL) return;
   
   fd_width=lives_widget_get_allocation_width(mainw->framedraw);
@@ -626,7 +624,6 @@ void redraw_framedraw_image(void) {
 
   int width,height;
 
-  if (!GDK_IS_DRAWABLE(lives_widget_get_xwindow(mainw->framedraw))) return;
 
   if (mainw->fd_layer_orig==NULL) return;
 
@@ -652,12 +649,14 @@ void redraw_framedraw_image(void) {
   // get lives_painter for window
   cr = lives_painter_create_from_widget (mainw->framedraw);
 
-  // set source pixbuf for lives_painter
-  lives_painter_set_source_pixbuf (cr, pixbuf, (fd_width-width)>>1, (fd_height-height)>>1);
-  lives_painter_paint (cr);
-  lives_painter_destroy(cr);
+  if (cr!=NULL) {
+    // set source pixbuf for lives_painter
+    lives_painter_set_source_pixbuf (cr, pixbuf, (fd_width-width)>>1, (fd_height-height)>>1);
+    lives_painter_paint (cr);
+    lives_painter_destroy(cr);
+  }
 
-  // convert pixbuf back to layer
+  // convert pixbuf back to layer (layer_to_pixbuf destroys it)
   if (pixbuf_to_layer(mainw->fd_layer,pixbuf)) {
     mainw->do_not_free=(gpointer)lives_pixbuf_get_pixels_readonly(pixbuf);
     mainw->free_fn=lives_free_with_check;
@@ -990,8 +989,6 @@ void draw_rect_demask (lives_colRGBA32_t *col, int x1, int y1, int x2, int y2, b
 
   if (mainw->fd_layer_orig==NULL) return;
 
-  if (!GDK_IS_DRAWABLE(lives_widget_get_xwindow(mainw->framedraw))) return;
-
   if (mainw->current_file<1||cfile==NULL) return;
 
   fd_width=lives_widget_get_allocation_width(mainw->framedraw);
@@ -1022,6 +1019,8 @@ void draw_rect_demask (lives_colRGBA32_t *col, int x1, int y1, int x2, int y2, b
   cr=layer_to_lives_painter(mainw->fd_layer);
 
   // draw on the lives_painter
+
+  if (cr==NULL) return;
 
   lives_painter_set_source_rgba(cr, (double)col->red/255., (double)col->green/255.,(double)col->blue/255.,(double)col->alpha/255.);
   

@@ -82,6 +82,9 @@ struct _GiwVSlider
   // Types for drawing the button (they change when the button in pressed, or the pointer is over it)
   GtkStateType button_state;
   GtkShadowType button_shadow;
+
+  gulong chsig;
+  gulong vchsig;
 };
 
 struct _GiwVSliderClass

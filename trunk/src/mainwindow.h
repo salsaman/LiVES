@@ -1062,6 +1062,10 @@ typedef struct {
   boolean has_session_tmpdir;
   boolean startup_error;
 
+#if GTK_CHECK_VERSION(3,0,0)
+  boolean kb_timer_end;
+#endif
+
   gchar *read_failed_file;
   gchar *write_failed_file;
   gchar *bad_aud_file;

@@ -2422,6 +2422,7 @@ static boolean lives_startup(gpointer data) {
   mainw->go_away=FALSE;
 
 #if GTK_CHECK_VERSION(3,0,0)
+  mainw->kb_timer_end=FALSE;
   mainw->kb_timer=g_timeout_add(KEY_RPT_INTERVAL,&ext_triggers_poll,NULL);
 #else
   mainw->kb_timer=gtk_timeout_add(KEY_RPT_INTERVAL,&ext_triggers_poll,NULL);

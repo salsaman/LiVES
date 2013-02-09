@@ -40,10 +40,13 @@ enum {
 
 static void giw_led_class_init               (GiwLedClass    *klass);
 static void giw_led_init                     (GiwLed         *led);
-static void giw_led_destroy                  (GtkObject        *object);
 static void giw_led_realize                  (GtkWidget        *widget);
+static void giw_led_size_allocate            (GtkWidget     *widget,
+					       GtkAllocation *allocation);
+static gint giw_led_button_press             (GtkWidget        *widget,
+					      GdkEventButton   *event);
 static void giw_led_size_request             (GtkWidget      *widget,
-					       GtkRequisition *requisition);
+					      GtkRequisition *requisition);
 #if GTK_CHECK_VERSION(3,0,0)
 static void giw_led_get_preferred_width (GtkWidget *widget,
 					 gint      *minimal_width,
@@ -51,45 +54,26 @@ static void giw_led_get_preferred_width (GtkWidget *widget,
 static void giw_led_get_preferred_height (GtkWidget *widget,
 					  gint      *minimal_height,
 					  gint      *natural_height);
-#endif
-static void giw_led_size_allocate            (GtkWidget     *widget,
-					       GtkAllocation *allocation);
+static void giw_led_destroy                  (GtkWidget        *widget);
+static gboolean giw_led_draw                (GtkWidget *widget, cairo_t *cairo);
+#else
 static gint giw_led_expose                   (GtkWidget        *widget,
-						GdkEventExpose   *event);
-static gint giw_led_button_press             (GtkWidget        *widget,
-						GdkEventButton   *event);
+					      GdkEventExpose   *event);
+static void giw_led_destroy                  (GtkObject        *object);
+#endif
 
 /* Local data */
 
+#if !GTK_CHECK_VERSION(3,0,0)
 static GtkWidgetClass *parent_class = NULL;
+#endif
 
 static guint giw_led_signals[LAST_SIGNAL] = { 0 };
 
 /*********************
 * Widget's Functions *
 *********************/
-#if GTK_CHECK_VERSION(3,0,0)
-static GObject *
-giw_led_constructor (GType                  gtype,
-		     guint                  n_properties,
-		     GObjectConstructParam *properties)
-{
-  GObject *obj;
 
-  {
-    /* Always chain up to the parent constructor */
-    obj = G_OBJECT_CLASS (giw_led_parent_class)->constructor (gtype, n_properties, properties);
-  }
-  
-  /* update the object state depending on constructor properties */
-
-  giw_led_init(GIW_LED(obj));
-
-  return obj;
-}
-
-
-#else
 GType
 giw_led_get_type ()
 {
@@ -97,24 +81,44 @@ giw_led_get_type ()
 
   if (!led_type)
     {
+#if GTK_CHECK_VERSION(3,0,0)
+      static const GTypeInfo led_info =
+	{
+	  sizeof (GiwLedClass),
+	  NULL,   /* base_init */
+	  NULL,   /* base_finalize */
+	  giw_led_class_init,   /* class_init */
+	  NULL,   /* class_finalize */
+	  NULL,   /* class_data */
+	  sizeof (GiwLed),
+	  0,      /* n_preallocs */
+	  giw_led_init/* instance_init */
+	};
+      
+      led_type = g_type_register_static (G_TYPE_OBJECT, "GiwTypeVslider", &led_info, 0);
+      
+#else
       static const GtkTypeInfo led_info =
-      {
+	{
 	"GiwLed",
-	sizeof (GiwLed),
-	sizeof (GiwLedClass),
-	(GtkClassInitFunc) giw_led_class_init,
-	(GtkObjectInitFunc) giw_led_init,
-	/*(GtkArgSetFunc)*/ NULL,
-	/*(GtkArgGetFunc)*/ NULL,
-	(GtkClassInitFunc) NULL,
-      };
-
+	  sizeof (GiwLed),
+	  sizeof (GiwLedClass),
+	  (GtkClassInitFunc) giw_led_class_init,
+	  (GtkObjectInitFunc) giw_led_init,
+	  /*(GtkArgSetFunc)*/ NULL,
+	  /*(GtkArgGetFunc)*/ NULL,
+	  (GtkClassInitFunc) NULL,
+	  };
+      
       led_type = gtk_type_unique (gtk_widget_get_type() , &led_info);
+
+#endif
+
     }
 
   return led_type;
 }
-#endif
+
 
 static void
 giw_led_class_init (GiwLedClass *xclass)
@@ -128,19 +132,20 @@ giw_led_class_init (GiwLedClass *xclass)
 
   widget_class = (GtkWidgetClass*) xclass;
 
-#if GTK_CHECK_VERSION(3,0,0)
-  object_class->constructor = giw_led_constructor;
-#else
+#if !GTK_CHECK_VERSION(3,0,0)
   parent_class = (GtkWidgetClass *)gtk_type_class (gtk_widget_get_type ());
   object_class->destroy = giw_led_destroy;
 #endif
 
   widget_class->realize = giw_led_realize;
-  widget_class->expose_event = giw_led_expose;
-  widget_class->size_request = giw_led_size_request;
 #if GTK_CHECK_VERSION(3,0,0)
   widget_class->get_preferred_width = giw_led_get_preferred_width;
   widget_class->get_preferred_height = giw_led_get_preferred_height;
+  widget_class->draw = giw_led_draw;
+  widget_class->destroy = giw_led_destroy;
+#else
+  widget_class->expose_event = giw_led_expose;
+  widget_class->size_request = giw_led_size_request;
 #endif
   widget_class->size_allocate = giw_led_size_allocate;
   widget_class->button_press_event = giw_led_button_press;
@@ -189,15 +194,20 @@ giw_led_new (void)
   return GTK_WIDGET (led);
 }
 
-#if !GTK_VERSION_3
+#if GTK_VERSION_3
+static void giw_led_destroy (GtkWidget *object) {
+#else
 static void giw_led_destroy (GtkObject *object) {
+#endif
   g_return_if_fail (object != NULL);
   g_return_if_fail (GIW_IS_LED (object));
     
+#if !GTK_CHECK_VERSION(3,0,0)
   if (GTK_OBJECT_CLASS (parent_class)->destroy)
     (* GTK_OBJECT_CLASS (parent_class)->destroy) (object);
-}
 #endif
+}
+
 
 
 static void
@@ -205,6 +215,10 @@ giw_led_realize (GtkWidget *widget)
 {
   GdkWindowAttr attributes;
   gint attributes_mask;
+
+#if GTK_CHECK_VERSION(3,0,0)
+  GtkStyleContext *stylecon;
+#endif
 
   g_return_if_fail (widget != NULL);
   g_return_if_fail (GIW_IS_LED (widget));
@@ -227,9 +241,13 @@ giw_led_realize (GtkWidget *widget)
     GDK_BUTTON_RELEASE_MASK | GDK_POINTER_MOTION_MASK |
     GDK_POINTER_MOTION_HINT_MASK;
   attributes.visual = gtk_widget_get_visual (widget);
-  attributes.colormap = gtk_widget_get_colormap (widget);
 
-  attributes_mask = GDK_WA_X | GDK_WA_Y | GDK_WA_VISUAL | GDK_WA_COLORMAP;
+  attributes_mask = GDK_WA_X | GDK_WA_Y | GDK_WA_VISUAL;
+
+#if !GTK_CHECK_VERSION(3,0,0)
+  attributes_mask |= GDK_WA_COLORMAP;
+  attributes.colormap = gtk_widget_get_colormap (widget);
+#endif
 
 #if GTK_CHECK_VERSION(2,18,0)
   gtk_widget_set_window(widget,gdk_window_new (lives_widget_get_xwindow(lives_widget_get_parent(widget)), &attributes, attributes_mask));
@@ -238,7 +256,7 @@ giw_led_realize (GtkWidget *widget)
 #endif
 
 #if GTK_CHECK_VERSION(3,0,0)
-  stylecon=gt_widget_get_style_context(widget);
+  stylecon=gtk_widget_get_style_context(widget);
   if (!stylecon) {
     stylecon=gtk_style_context_new();
     gtk_style_context_set_path(stylecon,gtk_widget_get_path(widget));
@@ -306,7 +324,12 @@ giw_led_size_allocate (GtkWidget     *widget,
   g_return_if_fail (GIW_IS_LED (widget));
   g_return_if_fail (allocation != NULL);
 
+#if GTK_CHECK_VERSION(2,18,0)
+  gtk_widget_set_allocation(widget,allocation);
+#else
   widget->allocation = *allocation;
+#endif
+
   led = GIW_LED (widget);
 
   if (lives_widget_is_realized (widget))
@@ -318,19 +341,26 @@ giw_led_size_allocate (GtkWidget     *widget,
     }
   
   // The size of the led will be the lower dimension of the widget  
-  if (widget->allocation.width > widget->allocation.height){
-    led->size=widget->allocation.height;
+  if (lives_widget_get_allocation_width(widget) > lives_widget_get_allocation_height(widget)){
+    led->size=lives_widget_get_allocation_height(widget);
     led->radius=led->size-4;
-    led->x=(widget->allocation.width/2)-(led->size/2);
+    led->x=(lives_widget_get_allocation_width(widget)/2)-(led->size/2);
     led->y=0;
   }
   else{
-    led->size=widget->allocation.width;
+    led->size=lives_widget_get_allocation_width(widget);
     led->radius=led->size-4;
     led->x=0;
-    led->y=(widget->allocation.height/2)-(led->size/2);
+    led->y=(lives_widget_get_allocation_height(widget)/2)-(led->size/2);
   }
 }
+
+#if GTK_CHECK_VERSION(3,0,0)
+ static gboolean giw_led_draw (GtkWidget *widget, cairo_t *cairo) {
+
+   return FALSE;
+ }
+#else
 
 static gint
 giw_led_expose (GtkWidget      *widget,
@@ -489,6 +519,7 @@ giw_led_expose (GtkWidget      *widget,
   
   return FALSE;
 }
+#endif
 
 static gint
 giw_led_button_press (GtkWidget      *widget,

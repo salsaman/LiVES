@@ -74,10 +74,6 @@ struct _GiwLedClass
 };
 
 
-#if GTK_CHECK_VERSION(3,0,0)
-G_DEFINE_TYPE(GiwLed, giw_led, G_TYPE_OBJECT);
-#endif
-
 GtkWidget*     giw_led_new                    (void);
 GType          giw_led_get_type               (void);
 void           giw_led_set_mode               (GiwLed *led, guint8 mode);    

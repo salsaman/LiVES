@@ -448,10 +448,16 @@ void lives_osc_cb_play (void *context, int arglen, const void *vargs, OSCTimeTag
   }
 
   // re - add the timer, as we will hang here, and we want to receive messages still during playback
+#if !GTK_CHECK_VERSION(3,0,0)
   gtk_timeout_remove (mainw->kb_timer);
   mainw->kb_timer=gtk_timeout_add(KEY_RPT_INTERVAL,&ext_triggers_poll,NULL);
-
+#else
+  mainw->kb_timer=g_timeout_add(KEY_RPT_INTERVAL,&ext_triggers_poll,NULL);
+#endif  
   on_playall_activate(NULL,NULL);
+#if GTK_CHECK_VERSION(3,0,0)
+    mainw->kb_timer_end=TRUE;
+#endif
 
   mainw->osc_auto=FALSE;
 }
@@ -462,11 +468,18 @@ void lives_osc_cb_playsel (void *context, int arglen, const void *vargs, OSCTime
     mainw->osc_auto=TRUE; ///< request early notifiction of success
 
     // re - add the timer, as we will hang here, and we want to receive messages still during playback
+#if !GTK_CHECK_VERSION(3,0,0)
     gtk_timeout_remove (mainw->kb_timer);
     mainw->kb_timer=gtk_timeout_add(KEY_RPT_INTERVAL,&ext_triggers_poll,NULL);
+#else
+    mainw->kb_timer=g_timeout_add(KEY_RPT_INTERVAL,&ext_triggers_poll,NULL);
+#endif
 
     if (mainw->multitrack==NULL) on_playsel_activate(NULL,NULL);
     else multitrack_play_sel(NULL, mainw->multitrack);
+#if GTK_CHECK_VERSION(3,0,0)
+    mainw->kb_timer_end=TRUE;
+#endif
     mainw->osc_auto=FALSE; ///< request early notifiction of success
   }
 }
@@ -504,10 +517,18 @@ void lives_osc_cb_play_forward (void *context, int arglen, const void *vargs, OS
     mainw->osc_auto=TRUE; ///< request early notifiction of success
 
     // re - add the timer, as we will hang here, and we want to receive messages still during playback
+#if !GTK_CHECK_VERSION(3,0,0)
     gtk_timeout_remove (mainw->kb_timer);
     mainw->kb_timer=gtk_timeout_add(KEY_RPT_INTERVAL,&ext_triggers_poll,NULL);
+#else
+    mainw->kb_timer=g_timeout_add(KEY_RPT_INTERVAL,&ext_triggers_poll,NULL);
+#endif
 
     on_playall_activate(NULL,NULL);
+
+#if GTK_CHECK_VERSION(3,0,0)
+    mainw->kb_timer_end=TRUE;
+#endif
     mainw->osc_auto=FALSE;
   }
   else if (mainw->current_file>0) {
@@ -530,11 +551,19 @@ void lives_osc_cb_play_backward (void *context, int arglen, const void *vargs, O
     mainw->reverse_pb=TRUE;
 
     // re - add the timer, as we will hang here, and we want to receive messages still during playback
-    gtk_timeout_remove (mainw->kb_timer);
-    mainw->kb_timer=gtk_timeout_add(KEY_RPT_INTERVAL,&ext_triggers_poll,NULL);
-
+#if !GTK_CHECK_VERSION(3,0,0)
+  gtk_timeout_remove (mainw->kb_timer);
+  mainw->kb_timer=gtk_timeout_add(KEY_RPT_INTERVAL,&ext_triggers_poll,NULL);
+#else
+  mainw->kb_timer=g_timeout_add(KEY_RPT_INTERVAL,&ext_triggers_poll,NULL);
+#endif  
+    mainw->osc_auto=TRUE; ///< request early notifiction of success
 
     on_playall_activate(NULL,NULL);
+#if GTK_CHECK_VERSION(3,0,0)
+    mainw->kb_timer_end=TRUE;
+#endif
+    mainw->osc_auto=FALSE;
   }
   else if (mainw->current_file>0) {
     if (cfile->pb_fps>0||(cfile->play_paused&&cfile->freeze_fps>0)) dirchange_callback(NULL,NULL,0,(GdkModifierType)0,GINT_TO_POINTER(TRUE));
@@ -841,13 +870,24 @@ void lives_osc_cb_fx_enable(void *context, int arglen, const void *vargs, OSCTim
     if (!mainw->osc_block) {
       if (mainw->playing_file==-1&&count==0) {
 	// re - add the timer, as we hang here if a generator is started, and we want to receive messages still during playback
+#if !GTK_CHECK_VERSION(3,0,0)
 	gtk_timeout_remove (mainw->kb_timer);
 	mainw->kb_timer=gtk_timeout_add(KEY_RPT_INTERVAL,&ext_triggers_poll,NULL);
+#else
+	mainw->kb_timer=g_timeout_add(KEY_RPT_INTERVAL,&ext_triggers_poll,NULL);
+#endif
       }
+      // TODO ***
+      //mainw->osc_auto=TRUE; ///< request early notifiction of success
       rte_on_off_callback(NULL,NULL,0,(GdkModifierType)0,GINT_TO_POINTER(effect_key));
+      mainw->osc_auto=FALSE;
+#if GTK_CHECK_VERSION(3,0,0)
+    mainw->kb_timer_end=TRUE;
+#endif
     }
   }
   mainw->last_grabable_effect=grab;
+
   if (prefs->omc_noisy) lives_osc_notify_success(NULL);
 }
 
@@ -882,10 +922,19 @@ void lives_osc_cb_fx_toggle(void *context, int arglen, const void *vargs, OSCTim
   if (!mainw->osc_block) {
     if (!(mainw->rte&(GU641<<(effect_key-1)))&&mainw->playing_file==-1&&count==0&&via_shortcut) {
       // re - add the timer, as we hang here if a generator is started, and we want to receive messages still during playback
+#if !GTK_CHECK_VERSION(3,0,0)
       gtk_timeout_remove (mainw->kb_timer);
       mainw->kb_timer=gtk_timeout_add(KEY_RPT_INTERVAL,&ext_triggers_poll,NULL);
+#else
+      mainw->kb_timer=g_timeout_add(KEY_RPT_INTERVAL,&ext_triggers_poll,NULL);
+#endif
     }
+    // TODO ***
+    //mainw->osc_auto=TRUE; ///< request early notifiction of success
     rte_on_off_callback(NULL,NULL,0,(GdkModifierType)0,GINT_TO_POINTER(effect_key));
+#if GTK_CHECK_VERSION(3,0,0)
+    mainw->kb_timer_end=TRUE;
+#endif
   }
   if (prefs->omc_noisy) lives_osc_notify_success(NULL);
 }

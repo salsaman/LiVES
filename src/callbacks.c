@@ -130,7 +130,11 @@ void lives_exit (void) {
     mainw->current_file=-1;
 
     if (!mainw->only_close) {
-      gtk_timeout_remove (mainw->kb_timer);
+#if GTK_CHECK_VERSION(3,0,0)
+    mainw->kb_timer_end=TRUE;
+#else
+    gtk_timeout_remove (mainw->kb_timer);
+#endif
 #ifdef HAVE_PULSE_AUDIO
       if (mainw->pulsed!=NULL) pulse_close_client(mainw->pulsed);
       if (mainw->pulsed_read!=NULL) pulse_close_client(mainw->pulsed_read);

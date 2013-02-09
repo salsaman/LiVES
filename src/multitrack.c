@@ -1188,7 +1188,7 @@ static gint expose_track_event (GtkWidget *eventbox, GdkEventExpose *event, gpoi
   set_cursor_style(mt,LIVES_CURSOR_BUSY,0,0,0,0,0);
 
   mt->redraw_block=TRUE; // stop drawing cursor during playback
-  gdk_window_clear_area (lives_widget_get_xwindow(eventbox), startx, 0, width, lives_widget_get_allocation_height(eventbox));
+  lives_widget_clear_area (eventbox, startx, 0, width, lives_widget_get_allocation_height(eventbox));
   mt->redraw_block=FALSE;
 
   block=(track_rect *)g_object_get_data (G_OBJECT(eventbox), "blocks");
@@ -2217,14 +2217,14 @@ boolean track_arrow_pressed (GtkWidget *ebox, GdkEventButton *event, gpointer us
   }
 
 
-  gtk_widget_ref(new_arrow);
+  g_object_ref(new_arrow);
 
   g_object_set_data(G_OBJECT(eventbox),"arrow",new_arrow);
 
   lives_tooltips_copy(new_arrow,arrow);
 
   // must do this after we update object data, to avoid a race condition
-  gtk_widget_unref(arrow);
+  g_object_unref(arrow);
   gtk_widget_destroy(arrow);
 
   scroll_tracks(mt,mt->top_track);
@@ -2609,7 +2609,7 @@ void mt_show_current_frame(lives_mt *mt, boolean return_layer) {
       mt->mt_frame_preview=TRUE;
 
       if (lives_widget_get_parent(mt->play_blank)!=NULL) {
-	gtk_widget_ref(mt->play_blank);
+	g_object_ref(mt->play_blank);
 	gtk_container_remove (GTK_CONTAINER(mt->play_box),mt->play_blank);
       }
 
@@ -6632,7 +6632,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   mt->gens_submenu = gtk_menu_item_new_with_mnemonic (_("_Generate"));
   gtk_container_add (GTK_CONTAINER (menuitem_menu), mt->gens_submenu);
 
-  gtk_widget_ref(mainw->gens_menu);
+  g_object_ref(mainw->gens_menu);
   gtk_menu_detach(GTK_MENU(mainw->gens_menu));
 
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (mt->gens_submenu), mainw->gens_menu);
@@ -7213,37 +7213,37 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   gtk_toolbar_set_style (GTK_TOOLBAR (btoolbar), GTK_TOOLBAR_ICONS);
   gtk_toolbar_set_icon_size (GTK_TOOLBAR(btoolbar),GTK_ICON_SIZE_SMALL_TOOLBAR);
 
-  gtk_widget_ref(mainw->m_sepwinbutton);
+  g_object_ref(mainw->m_sepwinbutton);
   lives_widget_unparent(mainw->m_sepwinbutton);
   gtk_toolbar_insert(GTK_TOOLBAR(btoolbar),GTK_TOOL_ITEM(mainw->m_sepwinbutton),-1);
-  gtk_widget_unref(mainw->m_sepwinbutton);
+  g_object_unref(mainw->m_sepwinbutton);
 
-  gtk_widget_ref(mainw->m_rewindbutton);
+  g_object_ref(mainw->m_rewindbutton);
   lives_widget_unparent(mainw->m_rewindbutton);
   gtk_toolbar_insert(GTK_TOOLBAR(btoolbar),GTK_TOOL_ITEM(mainw->m_rewindbutton),-1);
-  gtk_widget_unref(mainw->m_rewindbutton);
+  g_object_unref(mainw->m_rewindbutton);
 
-  gtk_widget_ref(mainw->m_playbutton);
+  g_object_ref(mainw->m_playbutton);
   lives_widget_unparent(mainw->m_playbutton);
   gtk_toolbar_insert(GTK_TOOLBAR(btoolbar),GTK_TOOL_ITEM(mainw->m_playbutton),-1);
-  gtk_widget_unref(mainw->m_playbutton);
+  g_object_unref(mainw->m_playbutton);
 
-  gtk_widget_ref(mainw->m_stopbutton);
+  g_object_ref(mainw->m_stopbutton);
   lives_widget_unparent(mainw->m_stopbutton);
   gtk_toolbar_insert(GTK_TOOLBAR(btoolbar),GTK_TOOL_ITEM(mainw->m_stopbutton),-1);
-  gtk_widget_unref(mainw->m_stopbutton);
+  g_object_unref(mainw->m_stopbutton);
 
 
-  /*  gtk_widget_ref(mainw->m_playselbutton);
+  /*  g_object_ref(mainw->m_playselbutton);
   lives_widget_unparent(mainw->m_playselbutton);
   gtk_toolbar_insert(GTK_TOOLBAR(btoolbar),GTK_TOOL_ITEM(mainw->m_playselbutton),-1);
-  gtk_widget_unref(mainw->m_playselbutton);*/
+  g_object_unref(mainw->m_playselbutton);*/
 
 
-  gtk_widget_ref(mainw->m_loopbutton);
+  g_object_ref(mainw->m_loopbutton);
   lives_widget_unparent(mainw->m_loopbutton);
   gtk_toolbar_insert(GTK_TOOLBAR(btoolbar),GTK_TOOL_ITEM(mainw->m_loopbutton),-1);
-  gtk_widget_unref(mainw->m_loopbutton);
+  g_object_unref(mainw->m_loopbutton);
 
 
 
@@ -7445,24 +7445,24 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
 
 
 
-  gtk_widget_ref(mainw->m_mutebutton);
+  g_object_ref(mainw->m_mutebutton);
   lives_widget_unparent(mainw->m_mutebutton);
   gtk_toolbar_insert(GTK_TOOLBAR(btoolbar),GTK_TOOL_ITEM(mainw->m_mutebutton),-1);
-  gtk_widget_unref(mainw->m_mutebutton);
+  g_object_unref(mainw->m_mutebutton);
 
 #if GTK_CHECK_VERSION(2,14,0)
-  gtk_scale_button_set_orientation (GTK_SCALE_BUTTON(mainw->volume_scale),GTK_ORIENTATION_VERTICAL);
+  lives_scale_button_set_orientation (LIVES_SCALE_BUTTON(mainw->volume_scale),LIVES_ORIENTATION_VERTICAL);
 #else
-  gtk_widget_ref(mainw->vol_label);
+  g_object_ref(mainw->vol_label);
   lives_widget_unparent(mainw->vol_label);
   gtk_toolbar_insert(GTK_TOOLBAR(btoolbar),GTK_TOOL_ITEM(mainw->vol_label),-1);
-  gtk_widget_unref(mainw->vol_label);
+  g_object_unref(mainw->vol_label);
 #endif
 
-  gtk_widget_ref(mainw->vol_toolitem);
+  g_object_ref(mainw->vol_toolitem);
   lives_widget_unparent(mainw->vol_toolitem);
   gtk_toolbar_insert(GTK_TOOLBAR(btoolbar),GTK_TOOL_ITEM(mainw->vol_toolitem),-1);
-  gtk_widget_unref(mainw->vol_toolitem);
+  g_object_unref(mainw->vol_toolitem);
 
 
 
@@ -7544,7 +7544,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
 
   // poly clip scroll
   mt->clip_scroll = gtk_scrolled_window_new (NULL, NULL);
-  gtk_widget_ref (mt->clip_scroll);
+  g_object_ref (mt->clip_scroll);
   gtk_widget_set_events (mt->clip_scroll, GDK_SCROLL_MASK);
   g_signal_connect (GTK_OBJECT (mt->clip_scroll), "scroll_event",
                       G_CALLBACK (on_mouse_scroll),
@@ -7624,7 +7624,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
   // params contents
 
   mt->fx_base_box = gtk_vbox_new (FALSE, 0);
-  gtk_widget_ref(mt->fx_base_box);
+  g_object_ref(mt->fx_base_box);
 
   mt->fx_contents_box=gtk_vbox_new(FALSE,10);
 
@@ -7711,7 +7711,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
 
   // poly audio velocity
   mt->avel_box = gtk_vbox_new (FALSE, 0);
-  gtk_widget_ref (mt->avel_box);
+  g_object_ref (mt->avel_box);
 
   hbox = gtk_hbox_new (FALSE, 0);
   gtk_box_pack_start(GTK_BOX(mt->avel_box),hbox,FALSE,FALSE,8);
@@ -7770,7 +7770,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
 
   // poly in_out_box
   mt->in_out_box = gtk_hbox_new (FALSE, 0);
-  gtk_widget_ref (mt->in_out_box);
+  g_object_ref (mt->in_out_box);
 
   vbox = gtk_vbox_new (FALSE, 0);
   gtk_box_pack_start(GTK_BOX(mt->in_out_box),vbox,FALSE,TRUE,0);
@@ -8517,56 +8517,56 @@ boolean multitrack_delete (lives_mt *mt, boolean save_layout) {
   g_signal_handler_unblock(mainw->mute_audio,mainw->mute_audio_func);
 
 
-  gtk_widget_ref(mainw->m_sepwinbutton);
+  g_object_ref(mainw->m_sepwinbutton);
   lives_widget_unparent(mainw->m_sepwinbutton);
   gtk_toolbar_insert(GTK_TOOLBAR(mainw->btoolbar),GTK_TOOL_ITEM(mainw->m_sepwinbutton),0);
-  gtk_widget_unref(mainw->m_sepwinbutton);
+  g_object_unref(mainw->m_sepwinbutton);
 
-  gtk_widget_ref(mainw->m_rewindbutton);
+  g_object_ref(mainw->m_rewindbutton);
   lives_widget_unparent(mainw->m_rewindbutton);
   gtk_toolbar_insert(GTK_TOOLBAR(mainw->btoolbar),GTK_TOOL_ITEM(mainw->m_rewindbutton),1);
-  gtk_widget_unref(mainw->m_rewindbutton);
+  g_object_unref(mainw->m_rewindbutton);
 
-  gtk_widget_ref(mainw->m_playbutton);
+  g_object_ref(mainw->m_playbutton);
   lives_widget_unparent(mainw->m_playbutton);
   gtk_toolbar_insert(GTK_TOOLBAR(mainw->btoolbar),GTK_TOOL_ITEM(mainw->m_playbutton),2);
-  gtk_widget_unref(mainw->m_playbutton);
+  g_object_unref(mainw->m_playbutton);
 
-  gtk_widget_ref(mainw->m_stopbutton);
+  g_object_ref(mainw->m_stopbutton);
   lives_widget_unparent(mainw->m_stopbutton);
   gtk_toolbar_insert(GTK_TOOLBAR(mainw->btoolbar),GTK_TOOL_ITEM(mainw->m_stopbutton),3);
-  gtk_widget_unref(mainw->m_stopbutton);
+  g_object_unref(mainw->m_stopbutton);
 
-  /*  gtk_widget_ref(mainw->m_playselbutton);
+  /*  g_object_ref(mainw->m_playselbutton);
   lives_widget_unparent(mainw->m_playselbutton);
   gtk_toolbar_insert(GTK_TOOLBAR(mainw->btoolbar),GTK_TOOL_ITEM(mainw->m_playselbutton),4);
-  gtk_widget_unref(mainw->m_playselbutton);*/
+  g_object_unref(mainw->m_playselbutton);*/
 
-  gtk_widget_ref(mainw->m_loopbutton);
+  g_object_ref(mainw->m_loopbutton);
   lives_widget_unparent(mainw->m_loopbutton);
   gtk_toolbar_insert(GTK_TOOLBAR(mainw->btoolbar),GTK_TOOL_ITEM(mainw->m_loopbutton),5);
-  gtk_widget_unref(mainw->m_loopbutton);
+  g_object_unref(mainw->m_loopbutton);
 
-  gtk_widget_ref(mainw->m_mutebutton);
+  g_object_ref(mainw->m_mutebutton);
   lives_widget_unparent(mainw->m_mutebutton);
   gtk_toolbar_insert(GTK_TOOLBAR(mainw->btoolbar),GTK_TOOL_ITEM(mainw->m_mutebutton),6);
-  gtk_widget_unref(mainw->m_mutebutton);
+  g_object_unref(mainw->m_mutebutton);
 
 #if GTK_CHECK_VERSION(2,14,0)
-  gtk_scale_button_set_orientation (GTK_SCALE_BUTTON(mainw->volume_scale),GTK_ORIENTATION_HORIZONTAL);
+  lives_scale_button_set_orientation (LIVES_SCALE_BUTTON(mainw->volume_scale),LIVES_ORIENTATION_HORIZONTAL);
 #else
-  gtk_widget_ref(mainw->vol_label);
+  g_object_ref(mainw->vol_label);
   lives_widget_unparent(mainw->vol_label);
   gtk_toolbar_insert(GTK_TOOLBAR(mainw->btoolbar),GTK_TOOL_ITEM(mainw->vol_label),7);
-  gtk_widget_unref(mainw->vol_label);
+  g_object_unref(mainw->vol_label);
 #endif
 
-  gtk_widget_ref(mainw->vol_toolitem);
+  g_object_ref(mainw->vol_toolitem);
   lives_widget_unparent(mainw->vol_toolitem);
   gtk_toolbar_insert(GTK_TOOLBAR(mainw->btoolbar),GTK_TOOL_ITEM(mainw->vol_toolitem),-1);
-  gtk_widget_unref(mainw->vol_toolitem);
+  g_object_unref(mainw->vol_toolitem);
 
-  gtk_widget_ref(mainw->gens_menu);
+  g_object_ref(mainw->gens_menu);
   gtk_menu_detach(GTK_MENU(mainw->gens_menu));
 
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (mainw->gens_submenu), mainw->gens_menu);
@@ -9278,7 +9278,7 @@ GtkWidget *add_audio_track (lives_mt *mt, gint track, boolean behind) {
   gint nachans=0;
   int i;
 
-  gtk_widget_ref(audio_draw);
+  g_object_ref(audio_draw);
 
   g_object_set_data (G_OBJECT(audio_draw), "blocks", (gpointer)NULL);
   g_object_set_data (G_OBJECT(audio_draw), "block_last", (gpointer)NULL);
@@ -9298,11 +9298,11 @@ GtkWidget *add_audio_track (lives_mt *mt, gint track, boolean behind) {
     label=gtk_label_new (tmp);
     g_free(tmp);
   }
-  gtk_widget_ref(label);
+  g_object_ref(label);
 
   arrow = gtk_arrow_new (GTK_ARROW_RIGHT, GTK_SHADOW_OUT);
   gtk_widget_set_tooltip_text( arrow, _("Show/hide audio details"));
-  gtk_widget_ref(arrow);
+  g_object_ref(arrow);
 
   if (palette->style&STYLE_1) {
     if (!(palette->style&STYLE_3)) {
@@ -9323,7 +9323,7 @@ GtkWidget *add_audio_track (lives_mt *mt, gint track, boolean behind) {
   // add channel subtracks
   for (i=0;i<cfile->achans;i++) {
     eventbox=gtk_event_box_new();
-    gtk_widget_ref(eventbox);
+    g_object_ref(eventbox);
     pname=g_strdup_printf("achan%d",i);
     g_object_set_data(G_OBJECT(audio_draw),pname,eventbox);
     g_free(pname);
@@ -9488,15 +9488,15 @@ void add_video_track (lives_mt *mt, boolean behind) {
     giw_led_enable_mouse(GIW_LED(checkbutton),TRUE);
   }
 #endif
-  gtk_widget_ref(checkbutton);
+  g_object_ref(checkbutton);
   gtk_widget_set_tooltip_text( checkbutton, _("Select track"));
 
   arrow = gtk_arrow_new (GTK_ARROW_RIGHT, GTK_SHADOW_OUT);
   gtk_widget_set_tooltip_text( arrow, _("Show/hide audio"));
-  gtk_widget_ref(arrow);
+  g_object_ref(arrow);
 
   eventbox=gtk_event_box_new();
-  gtk_widget_ref(eventbox);
+  g_object_ref(eventbox);
 
   g_object_set_data (G_OBJECT(eventbox),"track_name",g_strdup_printf(_("Video %d"),mt->num_video_tracks));
   g_object_set_data (G_OBJECT(eventbox),"checkbutton",(gpointer)checkbutton);
@@ -9567,7 +9567,7 @@ void add_video_track (lives_mt *mt, boolean behind) {
   label=gtk_label_new ((tmp=g_strdup_printf(_("%s (layer %d)"),g_object_get_data (G_OBJECT(eventbox),"track_name"),
 					    GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"layer_number")))));
   g_free(tmp);
-  gtk_widget_ref(label);
+  g_object_ref(label);
 
   if (palette->style&STYLE_1) {
     if (!(palette->style&STYLE_3)) {
@@ -11689,7 +11689,7 @@ void polymorph (lives_mt *mt, lives_mt_poly_state_t poly) {
 
     if (mt->mt_frame_preview) {
       // put blank back in preview window
-      gtk_widget_ref (mainw->playarea);
+      g_object_ref (mainw->playarea);
       lives_widget_set_bg_color (mt->fd_frame, GTK_STATE_NORMAL, &palette->normal_back);
     }
     if (pchain!=NULL&&poly!=POLY_PARAMS) {
@@ -12878,7 +12878,7 @@ void unpaint_line(lives_mt *mt, GtkWidget *eventbox) {
   int ebwidth;
 
   if (mt->redraw_block) return; // don't update during expose event, otherwise we might leave lines
-  if (!GTK_WIDGET_VISIBLE(eventbox)) return;
+  if (!lives_widget_is_visible(eventbox)) return;
 
   ebwidth=lives_widget_get_allocation_width(mt->timeline);
 
@@ -12979,7 +12979,7 @@ void animate_multitrack (lives_mt *mt) {
       is_video=TRUE;
     }
     expanded=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"expanded"));
-    if (GTK_WIDGET_VISIBLE(eventbox)) {
+    if (lives_widget_is_visible(eventbox)) {
       unpaint_line(mt,eventbox);
 
       if (offset>0&&offset<ebwidth) {
@@ -13004,7 +13004,7 @@ void animate_multitrack (lives_mt *mt) {
       if (is_video) {
 	aeventbox=GTK_WIDGET(g_object_get_data(G_OBJECT(eventbox),"atrack"));
 	expanded=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(aeventbox),"expanded"));
-	if (GTK_WIDGET_VISIBLE(aeventbox)) {
+	if (lives_widget_is_visible(aeventbox)) {
 	  unpaint_line(mt,aeventbox);
 
 	  if (offset>0&&offset<ebwidth) {
@@ -13026,7 +13026,7 @@ void animate_multitrack (lives_mt *mt) {
       }
       if (expanded) eventbox=(GtkWidget *)g_object_get_data(G_OBJECT(aeventbox),"achan0");
       else continue;
-      if (GTK_WIDGET_VISIBLE(eventbox)) {
+      if (lives_widget_is_visible(eventbox)) {
 	unpaint_line(mt,eventbox);
 
 	if (offset>0&&offset<ebwidth) {
@@ -13049,7 +13049,7 @@ void animate_multitrack (lives_mt *mt) {
       // expanded right audio
       if (cfile->achans>1) eventbox=(GtkWidget *)g_object_get_data(G_OBJECT(aeventbox),"achan1");
       else continue;
-      if (GTK_WIDGET_VISIBLE(eventbox)) {
+      if (lives_widget_is_visible(eventbox)) {
 	unpaint_line(mt,eventbox);
 
 	if (offset>0&&offset<ebwidth) {
@@ -15869,7 +15869,7 @@ void mt_prepare_for_playback(lives_mt *mt) {
   pb_loop_event=mt->pb_loop_event;
   pb_filter_map=mainw->filter_map; // keep a copy of this, in case we are rendering
   pb_afilter_map=mainw->afilter_map; // keep a copy of this, in case we are rendering
-  pb_audio_needs_prerender=GTK_WIDGET_SENSITIVE(mt->prerender_aud);
+  pb_audio_needs_prerender=lives_widget_is_sensitive(mt->prerender_aud);
 
   mt_desensitise(mt);
 
@@ -15879,7 +15879,7 @@ void mt_prepare_for_playback(lives_mt *mt) {
     
   }
   else {
-    gtk_widget_ref(mt->play_blank);
+    g_object_ref(mt->play_blank);
     gtk_container_remove (GTK_CONTAINER(mt->play_box),mt->play_blank);
   }
 
@@ -15976,7 +15976,7 @@ void multitrack_playall (lives_mt *mt) {
     mt->idlefunc=0;
   }
 
-  gtk_widget_ref(mt->context_scroll); // this allows us to get our old messages back
+  g_object_ref(mt->context_scroll); // this allows us to get our old messages back
   gtk_container_remove (GTK_CONTAINER (mt->context_frame), mt->context_scroll);
   mt->context_scroll=NULL;
   clear_context(mt);
@@ -16029,7 +16029,7 @@ void multitrack_playall (lives_mt *mt) {
 
   if (mt->opts.show_ctx) gtk_widget_show_all(mt->context_frame);
 
-  gtk_widget_unref(mt->context_scroll);
+  g_object_unref(mt->context_scroll);
 
   if (!mt->is_rendering) {
     mt_sensitise(mt);
@@ -16910,7 +16910,7 @@ boolean mt_expose_laudtrack_event (GtkWidget *ebox, GdkEventExpose *event, gpoin
     }
   }
 
-  gdk_window_clear_area (lives_widget_get_xwindow(ebox), startx, 0, width, lives_widget_get_allocation_height(ebox));
+  lives_widget_clear_area (ebox, startx, 0, width, lives_widget_get_allocation_height(ebox));
   draw_soundwave(ebox,startx,width,0,mt);
 
 #if GTK_CHECK_VERSION(3,0,0)
@@ -16997,7 +16997,7 @@ boolean mt_expose_raudtrack_event (GtkWidget *ebox, GdkEventExpose *event, gpoin
     }
   }
 
-  gdk_window_clear_area (lives_widget_get_xwindow(ebox), startx, 0, width, lives_widget_get_allocation_height(ebox));
+  lives_widget_clear_area (ebox, startx, 0, width, lives_widget_get_allocation_height(ebox));
   draw_soundwave(ebox,startx,width,1,mt);
 
 #if GTK_CHECK_VERSION(3,0,0)
@@ -21200,7 +21200,9 @@ void amixer_show (GtkButton *button, gpointer user_data) {
 
   hbuttonbox = gtk_hbutton_box_new ();
   gtk_box_pack_start (GTK_BOX (top_vbox), hbuttonbox, FALSE, TRUE, 20);
+#if !GTK_CHECK_VERSION(3,0,0)
   gtk_button_box_set_child_size (GTK_BUTTON_BOX (hbuttonbox), DEF_BUTTON_WIDTH, -1);
+#endif
   gtk_button_box_set_layout (GTK_BUTTON_BOX (hbuttonbox), GTK_BUTTONBOX_SPREAD);
 
   reset_button = gtk_button_new_with_mnemonic (_("_Reset values"));

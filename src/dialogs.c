@@ -214,7 +214,7 @@ static GtkWidget* create_warn_dialog (gint warn_mask_number, GtkWindow *transien
   }
 
   if (mainw!=NULL&&mainw->is_ready&&palette->style&STYLE_1) {
-    gtk_dialog_set_has_separator(GTK_DIALOG(dialog),FALSE);
+    lives_dialog_set_has_separator(GTK_DIALOG(dialog),FALSE);
     lives_widget_set_bg_color(dialog, GTK_STATE_NORMAL, &palette->normal_back);
   }
 

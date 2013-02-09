@@ -1678,7 +1678,10 @@ on_rte_info_clicked (GtkButton *button, gpointer user_data) {
   hbuttonbox = gtk_hbutton_box_new ();
   gtk_widget_show (hbuttonbox);
   gtk_box_pack_start (GTK_BOX (vbox), hbuttonbox, TRUE, TRUE, 0);
+
+#if !GTK_CHECK_VERSION(3,0,0)
   gtk_button_box_set_child_size (GTK_BUTTON_BOX (hbuttonbox), DEF_BUTTON_WIDTH, -1);
+#endif
   gtk_button_box_set_layout (GTK_BUTTON_BOX (hbuttonbox), GTK_BUTTONBOX_SPREAD);
 
   ok_button = gtk_button_new_from_stock ("gtk-ok");
@@ -2226,7 +2229,7 @@ GtkWidget * create_rte_window (void) {
       gtk_entry_set_text (GTK_ENTRY (combo_entries[idx]),(tmp=rte_keymode_get_filter_name(i+1,j)));
       g_free(tmp);
  
-      gtk_entry_set_editable (GTK_ENTRY (combo_entries[idx]), FALSE);
+      lives_entry_set_editable (LIVES_ENTRY (combo_entries[idx]), FALSE);
       
       hbox = gtk_hbox_new (FALSE, 12);
       gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 0);
@@ -2290,7 +2293,9 @@ GtkWidget * create_rte_window (void) {
 
   hbuttonbox = gtk_hbutton_box_new ();
   gtk_box_pack_start (GTK_BOX (top_vbox), hbuttonbox, FALSE, TRUE, 20);
+#if !GTK_CHECK_VERSION(3,0,0)
   gtk_button_box_set_child_size (GTK_BUTTON_BOX (hbuttonbox), DEF_BUTTON_WIDTH, -1);
+#endif
   gtk_button_box_set_layout (GTK_BUTTON_BOX (hbuttonbox), GTK_BUTTONBOX_SPREAD);
 
   gtk_container_add (GTK_CONTAINER (hbuttonbox), clear_all_button);

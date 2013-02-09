@@ -2870,7 +2870,7 @@ gint set_param_from_list(GList *plist, lives_param_t *param, gint pnum, boolean 
       gint int_value=atoi ((gchar *)g_list_nth_data (plist,pnum++));
       if (param->change_blocked) break;
       set_int_param(param->value,int_value);
-      if (upd&&param->widgets[0]!=NULL&&GTK_IS_COMBO(param->widgets[0])&&int_value<g_list_length(param->list))
+      if (upd&&param->widgets[0]!=NULL&&LIVES_IS_COMBO(param->widgets[0])&&int_value<g_list_length(param->list))
 	lives_combo_set_active_string(LIVES_COMBO(param->widgets[0]),(gchar *)g_list_nth_data(param->list,int_value));
       break;
     }

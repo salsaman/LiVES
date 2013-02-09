@@ -64,7 +64,7 @@ struct _dvgrabw *create_camwindow (s_cam *cam, gint type)
   gtk_box_pack_start(GTK_BOX(hbox),direntry,TRUE,TRUE,0);
   gtk_entry_set_text(GTK_ENTRY(direntry),(tmp=g_filename_to_utf8(g_get_current_dir(),-1,NULL,NULL,NULL)));
   g_free(tmp);
-  gtk_entry_set_editable(GTK_ENTRY(direntry),FALSE);
+  lives_entry_set_editable(LIVES_ENTRY(direntry),FALSE);
 
   buttond = gtk_file_chooser_button_new(_("Save directory"),GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER);
   gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(buttond),g_get_current_dir());

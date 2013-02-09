@@ -2874,7 +2874,7 @@ static GtkWidget *conx_scroll_new(weed_plant_t *filter, lives_conx_w *conxwp) {
 
       fx_entry = lives_combo_get_entry(LIVES_COMBO(conxwp->cfxcombo[x]));
       gtk_entry_set_text (GTK_ENTRY (fx_entry),mainw->string_constants[LIVES_STRING_CONSTANT_NONE]);
-      gtk_entry_set_editable (GTK_ENTRY (fx_entry), FALSE);
+      lives_entry_set_editable (LIVES_ENTRY (fx_entry), FALSE);
 
 
       conxwp->ccombo[x]=lives_standard_combo_new("",FALSE,NULL,LIVES_BOX(hbox),NULL);
@@ -2984,7 +2984,7 @@ static GtkWidget *conx_scroll_new(weed_plant_t *filter, lives_conx_w *conxwp) {
 
       fx_entry = lives_combo_get_entry(LIVES_COMBO(conxwp->pfxcombo[x]));
       gtk_entry_set_text (GTK_ENTRY (fx_entry),mainw->string_constants[LIVES_STRING_CONSTANT_NONE]);
-      gtk_entry_set_editable (GTK_ENTRY (fx_entry), FALSE);
+      lives_entry_set_editable (LIVES_ENTRY (fx_entry), FALSE);
 
 
       conxwp->pcombo[x]=lives_standard_combo_new("",FALSE,NULL,LIVES_BOX(hbox),NULL);

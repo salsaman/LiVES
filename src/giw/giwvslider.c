@@ -725,7 +725,12 @@ giw_vslider_set_adjustment (GiwVSlider *vslider,
 
   // Freeing the last one
   if (vslider->adjustment){
+#if GTK_CHECK_VERSION(3,0,0)
+    g_signal_handler_disconnect((gpointer)(vslider->adjustment),vslider->chsig);
+    g_signal_handler_disconnect((gpointer)(vslider->adjustment),vslider->vchsig);
+#else
     gtk_signal_disconnect_by_data (GTK_OBJECT (vslider->adjustment), (gpointer) vslider);
+#endif
     g_object_unref (G_OBJECT (vslider->adjustment));
     vslider->adjustment=NULL;
   }
@@ -733,12 +738,12 @@ giw_vslider_set_adjustment (GiwVSlider *vslider,
   vslider->adjustment = adjustment;
   g_object_ref (GTK_OBJECT (vslider->adjustment));
   
-  g_signal_connect (GTK_OBJECT (adjustment), "changed",
-		      (GCallback) giw_vslider_adjustment_changed,
-		      (gpointer) vslider);
-  g_signal_connect (GTK_OBJECT (adjustment), "value_changed",
-		      (GCallback) giw_vslider_adjustment_value_changed,
-		      (gpointer) vslider);
+  vslider->chsig = g_signal_connect (GTK_OBJECT (adjustment), "changed",
+				     (GCallback) giw_vslider_adjustment_changed,
+				     (gpointer) vslider);
+  vslider->vchsig = g_signal_connect (GTK_OBJECT (adjustment), "value_changed",
+				      (GCallback) giw_vslider_adjustment_value_changed,
+				      (gpointer) vslider);
 
   gtk_adjustment_value_changed(vslider->adjustment);
     

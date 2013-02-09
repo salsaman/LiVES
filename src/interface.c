@@ -1440,7 +1440,7 @@ GtkWidget *create_opensel_dialog (void) {
 
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(opensel_dialog, GTK_STATE_NORMAL, &palette->normal_back);
-    gtk_dialog_set_has_separator(GTK_DIALOG(opensel_dialog),FALSE);
+    lives_dialog_set_has_separator(LIVES_DIALOG(opensel_dialog),FALSE);
   }
 
   gtk_container_set_border_width (GTK_CONTAINER (opensel_dialog), 10);
@@ -1554,7 +1554,7 @@ _entryw* create_location_dialog (int type) {
 
   locw->dialog = gtk_dialog_new ();
   if (palette->style&STYLE_1) {
-    gtk_dialog_set_has_separator(GTK_DIALOG(locw->dialog),FALSE);
+    lives_dialog_set_has_separator(GTK_DIALOG(locw->dialog),FALSE);
     lives_widget_set_bg_color (locw->dialog, GTK_STATE_NORMAL, &palette->normal_back);
   }
 
@@ -2154,7 +2154,7 @@ create_cdtrack_dialog (gint type, gpointer user_data)
   }
 
   if (palette->style&STYLE_1) {
-    gtk_dialog_set_has_separator(GTK_DIALOG(cd_dialog),FALSE);
+    lives_dialog_set_has_separator(GTK_DIALOG(cd_dialog),FALSE);
     lives_widget_set_bg_color (cd_dialog, GTK_STATE_NORMAL, &palette->normal_back);
   }
 
@@ -2561,7 +2561,7 @@ aud_dialog_t *create_audfade_dialog (gint type) {
   }
 
   if (palette->style&STYLE_1) {
-    gtk_dialog_set_has_separator(GTK_DIALOG(audd->dialog),FALSE);
+    lives_dialog_set_has_separator(GTK_DIALOG(audd->dialog),FALSE);
     lives_widget_set_bg_color (audd->dialog, GTK_STATE_NORMAL, &palette->normal_back);
   }
 
@@ -3042,7 +3042,7 @@ _entryw* create_cds_dialog (gint type) {
   gtk_window_add_accel_group (GTK_WINDOW (cdsw->dialog), accel_group);
   gtk_window_set_title (GTK_WINDOW (cdsw->dialog), _("LiVES: - Cancel/Discard/Save"));
   if (palette->style&STYLE_1) {
-    gtk_dialog_set_has_separator(GTK_DIALOG(cdsw->dialog),FALSE);
+    lives_dialog_set_has_separator(GTK_DIALOG(cdsw->dialog),FALSE);
     lives_widget_set_bg_color(cdsw->dialog, GTK_STATE_NORMAL, &palette->normal_back);
   }
 
@@ -3253,7 +3253,7 @@ GtkWidget *create_cleardisk_advanced_dialog(void) {
     dialog = gtk_dialog_new ();
     gtk_window_set_title (GTK_WINDOW (dialog), _("LiVES: - Disk Recovery Options"));
     if (palette->style&STYLE_1) {
-      gtk_dialog_set_has_separator(GTK_DIALOG(dialog),FALSE);
+      lives_dialog_set_has_separator(GTK_DIALOG(dialog),FALSE);
       lives_widget_set_bg_color(dialog, GTK_STATE_NORMAL, &palette->normal_back);
     }
     

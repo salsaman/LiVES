@@ -145,7 +145,7 @@ rfx_build_window_t *make_rfx_build_window (const gchar *script_name, lives_rfx_s
   }
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(rfxbuilder->dialog, GTK_STATE_NORMAL, &palette->normal_back);
-    gtk_dialog_set_has_separator(GTK_DIALOG(rfxbuilder->dialog),FALSE);
+    lives_dialog_set_has_separator(GTK_DIALOG(rfxbuilder->dialog),FALSE);
   }
 
   gtk_window_add_accel_group (GTK_WINDOW (rfxbuilder->dialog), accel_group);
@@ -760,7 +760,7 @@ void on_list_table_clicked (GtkButton *button, gpointer user_data) {
   }
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(dialog, GTK_STATE_NORMAL, &palette->normal_back);
-    gtk_dialog_set_has_separator(GTK_DIALOG(dialog),FALSE);
+    lives_dialog_set_has_separator(GTK_DIALOG(dialog),FALSE);
   }
 
   gtk_container_set_border_width (GTK_CONTAINER (dialog), 10);
@@ -1194,7 +1194,7 @@ void on_properties_clicked (GtkButton *button, gpointer user_data) {
   }
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(dialog, GTK_STATE_NORMAL, &palette->normal_back);
-    gtk_dialog_set_has_separator(GTK_DIALOG(dialog),FALSE);
+    lives_dialog_set_has_separator(GTK_DIALOG(dialog),FALSE);
   }
 
   gtk_container_set_border_width (GTK_CONTAINER (dialog), 10);
@@ -1946,7 +1946,7 @@ GtkWidget * make_param_dialog (gint pnum, rfx_build_window_t *rfxbuilder) {
   }
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(dialog, GTK_STATE_NORMAL, &palette->normal_back);
-    gtk_dialog_set_has_separator(GTK_DIALOG(dialog),FALSE);
+    lives_dialog_set_has_separator(GTK_DIALOG(dialog),FALSE);
   }
 
   gtk_container_set_border_width (GTK_CONTAINER (dialog), 10);
@@ -2481,7 +2481,7 @@ void on_param_type_changed (GtkComboBox *param_type_combo, gpointer user_data) {
   gtk_widget_hide (rfxbuilder->bg_label);
   gtk_widget_hide (rfxbuilder->spinbutton_param_step);
   gtk_widget_hide (rfxbuilder->param_step_label);
-  gtk_widget_hide_all (rfxbuilder->param_wrap_hbox);
+  gtk_widget_hide (rfxbuilder->param_wrap_hbox);
 
   if (!strcmp (ctext,"string_list")) {
     gint defindex;
@@ -2688,7 +2688,7 @@ GtkWidget * make_param_window_dialog (gint pnum, rfx_build_window_t *rfxbuilder)
   }
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(dialog, GTK_STATE_NORMAL, &palette->normal_back);
-    gtk_dialog_set_has_separator(GTK_DIALOG(dialog),FALSE);
+    lives_dialog_set_has_separator(GTK_DIALOG(dialog),FALSE);
   }
 
   gtk_container_set_border_width (GTK_CONTAINER (dialog), 10);
@@ -2846,8 +2846,8 @@ void on_paramw_kw_changed (GtkComboBox *combo, gpointer user_data) {
   }
   else {
     gtk_label_set_text (GTK_LABEL (rfxbuilder->paramw_rest_label),(_("Row:    ")));
-    gtk_widget_hide_all (gtk_widget_get_parent(rfxbuilder->paramw_sp_combo));
-    gtk_widget_hide_all (gtk_widget_get_parent(rfxbuilder->paramw_spsub_combo));
+    gtk_widget_hide (gtk_widget_get_parent(rfxbuilder->paramw_sp_combo));
+    gtk_widget_hide (gtk_widget_get_parent(rfxbuilder->paramw_spsub_combo));
     gtk_widget_grab_focus (rfxbuilder->paramw_rest_entry);
   }
 
@@ -2873,7 +2873,7 @@ void on_paramw_sp_changed (GtkComboBox *combo, gpointer user_data) {
     gtk_label_set_text (GTK_LABEL (rfxbuilder->paramw_rest_label),
 			(tmpx=g_strdup_printf(_("Linked parameters (%d):    "),npars)));
     g_free(tmpx);
-    gtk_widget_hide_all (gtk_widget_get_parent(rfxbuilder->paramw_spsub_combo));
+    gtk_widget_hide (gtk_widget_get_parent(rfxbuilder->paramw_spsub_combo));
     gtk_widget_grab_focus (rfxbuilder->paramw_rest_entry);
   }
 
@@ -2930,7 +2930,7 @@ GtkWidget * make_trigger_dialog (gint tnum, rfx_build_window_t *rfxbuilder) {
   }
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(dialog, GTK_STATE_NORMAL, &palette->normal_back);
-    gtk_dialog_set_has_separator(GTK_DIALOG(dialog),FALSE);
+    lives_dialog_set_has_separator(GTK_DIALOG(dialog),FALSE);
   }
 
   gtk_container_set_border_width (GTK_CONTAINER (dialog), 10);
@@ -3044,7 +3044,7 @@ void on_code_clicked (GtkButton *button, gpointer user_data) {
   }
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(dialog, GTK_STATE_NORMAL, &palette->normal_back);
-    gtk_dialog_set_has_separator(GTK_DIALOG(dialog),FALSE);
+    lives_dialog_set_has_separator(GTK_DIALOG(dialog),FALSE);
   }
 
   gtk_container_set_border_width (GTK_CONTAINER (dialog), 10);
@@ -4413,7 +4413,7 @@ gchar *prompt_for_script_name(const gchar *sname, lives_rfx_status_t status) {
   gtk_window_set_modal (GTK_WINDOW (dialog), TRUE);
 
   if (palette->style&STYLE_1) {
-    gtk_dialog_set_has_separator(GTK_DIALOG(dialog),FALSE);
+    lives_dialog_set_has_separator(GTK_DIALOG(dialog),FALSE);
   }
   lives_widget_set_bg_color (dialog, GTK_STATE_NORMAL, &palette->normal_back);
   //gtk_window_set_default_size (GTK_WINDOW (dialog), 300, 200);

@@ -66,6 +66,9 @@ typedef GtkJustification LiVESJustification;
 #define LIVES_JUSTIFY_CENTER GTK_JUSTIFY_CENTER
 #define LIVES_JUSTIFY_FILL   GTK_JUSTIFY_RIGHT
 
+typedef GtkOrientation LiVESOrientation;
+#define LIVES_ORIENTATION_HORIZONTAL GTK_ORIENTATION_HORIZONTAL
+#define LIVES_ORIENTATION_VERTICAL   GTK_ORIENTATION_VERTICAL
 
 typedef GdkEvent                          LiVESEvent;
 #if GTK_CHECK_VERSION(3,0,0)
@@ -78,6 +81,7 @@ typedef GtkContainer                      LiVESContainer;
 typedef GtkBin                            LiVESBin;
 typedef GtkDialog                         LiVESDialog;
 typedef GtkBox                            LiVESBox;
+typedef GtkEntry                          LiVESEntry;
 typedef GtkComboBox                       LiVESCombo;
 typedef GtkComboBox                       LiVESComboBox;
 typedef GtkButton                         LiVESButton;
@@ -85,6 +89,7 @@ typedef GtkToggleButton                   LiVESToggleButton;
 typedef GtkTextView                       LiVESTextView;
 typedef GtkEntry                          LiVESEntry;
 typedef GtkRadioButton                    LiVESRadioButton;
+typedef GtkScaleButton                    LiVESScaleButton;
 typedef GtkLabel                          LiVESLabel;
 
 #if GTK_CHECK_VERSION(3,0,0)
@@ -134,6 +139,7 @@ typedef gpointer                          LiVESObjectPtr;
 #define LIVES_WINDOW(widget) GTK_WINDOW(widget)
 #define LIVES_XWINDOW(widget) GDK_WINDOW(widget)
 #define LIVES_BOX(widget) GTK_BOX(widget)
+#define LIVES_ENTRY(widget) GTK_ENTRY(widget)
 #define LIVES_CONTAINER(widget) GTK_CONTAINER(widget)
 #define LIVES_BIN(widget) GTK_BIN(widget)
 #define LIVES_ADJUSTMENT(widget) GTK_ADJUSTMENT(widget)
@@ -143,10 +149,12 @@ typedef gpointer                          LiVESObjectPtr;
 #define LIVES_BUTTON(widget) GTK_BUTTON(widget)
 #define LIVES_LABEL(widget) GTK_LABEL(widget)
 #define LIVES_RADIO_BUTTON(widget) GTK_RADIO_BUTTON(widget)
+#define LIVES_SCALE_BUTTON(widget) GTK_SCALE_BUTTON(widget)
 #define LIVES_TOGGLE_BUTTON(widget) GTK_TOGGLE_BUTTON(widget)
 
 #if GTK_VERSION_3
 #define LIVES_RULER(widget) GTK_SCALE(widget)
+#define LIVES_ORIENTABLE(widget) GTK_ORIENTABLE(widget)
 #else
 #define LIVES_RULER(widget) GTK_RULER(widget)
 #endif
@@ -367,6 +375,8 @@ void lives_painter_set_source_pixbuf (lives_painter_t *, const LiVESPixbuf *, do
 lives_painter_surface_t *lives_painter_image_surface_create(lives_painter_format_t format, int width, int height);
 lives_painter_surface_t *lives_painter_surface_create_similar (lives_painter_surface_t *, 
 							       lives_painter_content_t, int width, int height);
+lives_painter_surface_t *lives_painter_surface_create_similar_image(lives_painter_surface_t *other, 
+								    lives_painter_format_t format, int width, int height);
 lives_painter_surface_t *lives_painter_image_surface_create_for_data(uint8_t *data, lives_painter_format_t, 
 								     int width, int height, int stride);
 
@@ -520,9 +530,15 @@ void lives_adjustment_set_page_size(LiVESAdjustment *, double page_size);
 
 const char *lives_label_get_text(LiVESLabel *);
 
+void lives_entry_set_editable(LiVESEntry *, boolean editable);
 
+void lives_scale_button_set_orientation(LiVESScaleButton *, LiVESOrientation orientation);
 
+void lives_widget_clear_area(LiVESWidget *, int x, int y, int width, int height);
 
+// optional
+
+void lives_dialog_set_has_separator(LiVESDialog *dialog, boolean has);
 
 
 // compound functions (composed of basic functions)

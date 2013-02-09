@@ -826,19 +826,24 @@ giw_knob_set_adjustment (GiwKnob *knob,
 
   // Freeing the last one
   if (knob->adjustment){
+#if GTK_CHECK_VERSION(3,0,0)
+    g_signal_handler_disconnect((gpointer)(knob->adjustment),knob->chsig);
+    g_signal_handler_disconnect((gpointer)(knob->adjustment),knob->vchsig);
+#else
     gtk_signal_disconnect_by_data (GTK_OBJECT (knob->adjustment), (gpointer) knob);
+#endif
     g_object_unref (GTK_OBJECT (knob->adjustment));
   }
    
   knob->adjustment = adjustment;
-  gtk_object_ref (GTK_OBJECT (knob->adjustment));
+  g_object_ref (GTK_OBJECT (knob->adjustment));
   
-  g_signal_connect (GTK_OBJECT (adjustment), "changed",
-		    (GCallback) giw_knob_adjustment_changed,
-		    (gpointer) knob);
-  g_signal_connect (GTK_OBJECT (adjustment), "value_changed",
-		    (GCallback) giw_knob_adjustment_value_changed,
-		    (gpointer) knob);
+  knob->chsig = g_signal_connect (GTK_OBJECT (adjustment), "changed",
+				  (GCallback) giw_knob_adjustment_changed,
+				  (gpointer) knob);
+  knob->vchsig = g_signal_connect (GTK_OBJECT (adjustment), "value_changed",
+				   (GCallback) giw_knob_adjustment_value_changed,
+				   (gpointer) knob);
 
   gtk_adjustment_value_changed(knob->adjustment);
     

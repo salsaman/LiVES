@@ -194,6 +194,19 @@ LIVES_INLINE lives_painter_surface_t *lives_painter_image_surface_create(lives_p
 }
 
 
+LIVES_INLINE lives_painter_surface_t *lives_painter_surface_create_similar_image(lives_painter_surface_t *other, lives_painter_format_t format, int width, int height) {
+  lives_painter_surface_t *surf=NULL;
+#ifdef PAINTER_CAIRO
+#if CAIRO_VERSION >= CAIRO_VERSION_ENCODE(1, 12, 0)
+  surf=cairo_surface_create_similar_image(other,format,width,height);
+#else
+  surf=cairo_image_surface_create(format,width,height);
+#endif
+#endif
+  return surf;
+}
+
+
 
 ////////////////////////// painter info funcs
 
@@ -656,6 +669,18 @@ LIVES_INLINE void lives_combo_append_text(LiVESCombo *combo, const char *text) {
 #endif
 }
 
+#ifdef GUI_GTK
+static void lives_combo_remove_all_text(LiVESCombo *combo) {
+#if GTK_CHECK_VERSION(3,0,0)
+  gtk_combo_box_text_remove_all(GTK_COMBO_BOX_TEXT(combo));
+#else
+  int count = gtk_tree_model_iter_n_children(gtk_combo_box_get_model(combo),
+					     NULL);
+  while (count-- > 0) gtk_combo_box_remove_text(combo,0);
+#endif
+}
+#endif
+
 
 
 LIVES_INLINE void lives_combo_set_entry_text_column(LiVESCombo *combo, int column) {
@@ -1012,6 +1037,58 @@ LIVES_INLINE const char *lives_label_get_text(LiVESLabel *label) {
 }
 
 
+LIVES_INLINE void lives_entry_set_editable(LiVESEntry *entry, boolean editable) {
+#ifdef GUI_GTK
+  gtk_editable_set_editable(GTK_EDITABLE(entry),editable);
+#endif
+}
+
+LIVES_INLINE void lives_dialog_set_has_separator(LiVESDialog *dialog, boolean has) {
+#ifdef GUI_GTK
+#if !GTK_CHECK_VERSION(3,0,0)
+  gtk_dialog_set_has_separator(dialog,has);
+#endif
+#endif
+
+
+}
+
+LIVES_INLINE void lives_scale_button_set_orientation(LiVESScaleButton *scale, LiVESOrientation orientation) {
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3,0,0)
+  gtk_orientable_set_orientation(GTK_ORIENTABLE(scale),orientation);
+#else
+  gtk_scale_button_set_orientation (scale,orientation);
+#endif
+#endif
+}
+
+
+
+
+LIVES_INLINE void lives_widget_clear_area(LiVESWidget *widget, int x, int y, int width, int height) {
+#ifdef GUI_GTK
+  GdkWindow *window=lives_widget_get_xwindow(widget);
+#if GTK_CHECK_VERSION(3,0,0)
+#ifdef PAINTER_CAIRO
+  GdkRGBA color;
+  cairo_t *cr=gdk_cairo_create(window);
+
+  lives_widget_get_bg_state_color(widget,gtk_widget_get_state(widget),&color);
+  lives_painter_set_source_rgba (cr, color.red, color.green, color.blue, color.alpha);
+  
+  lives_painter_rectangle(cr,x,y,
+			  width,
+			  height);
+  lives_painter_fill(cr);
+  lives_painter_destroy (cr);
+#endif
+#else
+  gdk_window_clear_area(window,x,y,width,height);
+#endif
+#endif
+
+}
 
 
 
@@ -1034,12 +1111,10 @@ void lives_tooltips_copy(LiVESWidget *dest, LiVESWidget *source) {
 
 void lives_combo_populate(LiVESCombo *combo, LiVESList *list) {
   // remove any current list
-  int count;
 
   gtk_combo_box_set_active(combo,-1);
-  count = gtk_tree_model_iter_n_children(gtk_combo_box_get_model(combo),NULL);
 
-  while (count-- > 0) gtk_combo_box_remove_text(combo,0);
+  lives_combo_remove_all_text(combo);
 
   // add the new list
   while (list!=NULL) {
@@ -1433,7 +1508,7 @@ LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_button
     lives_widget_set_bg_color(dialog, GTK_STATE_NORMAL, &palette->normal_back);
 
 #if !GTK_CHECK_VERSION(3,0,0)
-    gtk_dialog_set_has_separator(GTK_DIALOG(dialog),FALSE);
+    lives_dialog_set_has_separator(GTK_DIALOG(dialog),FALSE);
 #endif
   }
 

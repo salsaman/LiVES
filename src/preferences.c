@@ -1787,7 +1787,7 @@ void on_prefDomainChanged(GtkTreeSelection *widget, gpointer dummy)
     //
     // Hide currently shown widget
     if (prefsw->right_shown){
-      gtk_widget_hide_all(prefsw->right_shown);
+      gtk_widget_hide(prefsw->right_shown);
     }
     //
     switch (idx){

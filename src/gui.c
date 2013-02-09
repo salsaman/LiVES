@@ -2114,7 +2114,7 @@ create_LiVES (void)
 #if GTK_CHECK_VERSION(3,0,0)
   g_object_ref_sink (G_OBJECT (mainw->image274));
 #else
-  gtk_object_sink (G_OBJECT (mainw->image274));
+  gtk_object_sink (GTK_OBJECT (mainw->image274));
 #endif
 
   label16 = gtk_label_new (_("Last Frame"));

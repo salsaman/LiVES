@@ -192,19 +192,14 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 
     weed_plant_t *in_chantmpls[]={weed_channel_template_init("in channel 0",0,palette_list),NULL};
     weed_plant_t *out_chantmpls[]={weed_channel_template_init("out channel 0",0,palette_list),NULL};
-    weed_plant_t *in_params[]={weed_float_init("xshift","_X shift (pixels)",0.,-1.,1.),
-			       weed_float_init("yshift","_Y shift (pixels)",0.,-1.,1.),
+    weed_plant_t *in_params[]={weed_float_init("xshift","_X shift (ratio)",0.,-1.,1.),
+			       weed_float_init("yshift","_Y shift (ratio)",0.,-1.,1.),
 			       weed_switch_init("transbg","_Transparent edges",WEED_FALSE),
 			       NULL};
 
     weed_plant_t *filter_class=weed_filter_class_init("shift","salsaman",1,WEED_FILTER_HINT_MAY_THREAD,NULL,&shift_process,NULL,
 						      in_chantmpls,out_chantmpls,in_params,NULL);
 
-
-    weed_plant_t *gui=weed_parameter_template_get_gui(in_params[0]);
-    weed_set_int_value(gui,"decimals",0);
-    gui=weed_parameter_template_get_gui(in_params[1]);
-    weed_set_int_value(gui,"decimals",0);
 
     weed_plugin_info_add_filter_class (plugin_info,filter_class);
 

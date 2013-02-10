@@ -1875,7 +1875,7 @@ void scroll_tracks (lives_mt *mt, gint top_track) {
       g_signal_connect (GTK_OBJECT (mt->audio_draws->data), "button_release_event",
 			G_CALLBACK (on_track_release),
 			(gpointer)mt);
-      exp_track_func=g_signal_connect_after (GTK_OBJECT (mt->audio_draws->data), "expose_event",
+      exp_track_func=g_signal_connect_after (GTK_OBJECT (mt->audio_draws->data), LIVES_WIDGET_EVENT_DAMAGE_EVENT,
 					     G_CALLBACK (expose_track_event),
 					     (gpointer)mt);
       g_object_set_data (G_OBJECT(mt->audio_draws->data),"expose_func",(gpointer)exp_track_func);
@@ -1887,7 +1887,7 @@ void scroll_tracks (lives_mt *mt, gint top_track) {
 			  (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
 			  (GtkAttachOptions) (GTK_FILL), 0, 0);
 	
-	exp_track_func=g_signal_connect_after (GTK_OBJECT (xeventbox), "expose_event",
+	exp_track_func=g_signal_connect_after (GTK_OBJECT (xeventbox), LIVES_WIDGET_EVENT_DAMAGE_EVENT,
 					       G_CALLBACK (mt_expose_laudtrack_event),
 					       (gpointer)mt);
 	g_object_set_data (G_OBJECT(xeventbox),"expose_func",(gpointer)exp_track_func);
@@ -1901,7 +1901,7 @@ void scroll_tracks (lives_mt *mt, gint top_track) {
 			    (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
 			    (GtkAttachOptions) (GTK_FILL), 0, 0);
 	  
-	  exp_track_func=g_signal_connect_after (GTK_OBJECT (xeventbox), "expose_event",
+	  exp_track_func=g_signal_connect_after (GTK_OBJECT (xeventbox), LIVES_WIDGET_EVENT_DAMAGE_EVENT,
 						 G_CALLBACK (mt_expose_raudtrack_event),
 						 (gpointer)mt);
 	  
@@ -2013,7 +2013,7 @@ void scroll_tracks (lives_mt *mt, gint top_track) {
 
       g_object_set_data(G_OBJECT(checkbutton),"tfunc",(gpointer)seltrack_func);
 
-      exp_track_func=g_signal_connect_after (GTK_OBJECT (eventbox), "expose_event",
+      exp_track_func=g_signal_connect_after (GTK_OBJECT (eventbox), LIVES_WIDGET_EVENT_DAMAGE_EVENT,
 			      G_CALLBACK (expose_track_event),
 			      (gpointer)mt);
       g_object_set_data (G_OBJECT(eventbox),"expose_func",(gpointer)exp_track_func);
@@ -2103,7 +2103,7 @@ void scroll_tracks (lives_mt *mt, gint top_track) {
 	  g_signal_connect (GTK_OBJECT (aeventbox), "button_release_event",
 			    G_CALLBACK (on_track_release),
 			    (gpointer)mt);
-	  exp_track_func=g_signal_connect_after (GTK_OBJECT (aeventbox), "expose_event",
+	  exp_track_func=g_signal_connect_after (GTK_OBJECT (aeventbox), LIVES_WIDGET_EVENT_DAMAGE_EVENT,
 						 G_CALLBACK (expose_track_event),
 						 (gpointer)mt);
 	  g_object_set_data (G_OBJECT(aeventbox),"expose_func",(gpointer)exp_track_func);
@@ -2127,7 +2127,7 @@ void scroll_tracks (lives_mt *mt, gint top_track) {
 				(GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
 				(GtkAttachOptions) (GTK_FILL), 0, 0);
 	      
-	      exp_track_func=g_signal_connect_after (GTK_OBJECT (xeventbox), "expose_event",
+	      exp_track_func=g_signal_connect_after (GTK_OBJECT (xeventbox), LIVES_WIDGET_EVENT_DAMAGE_EVENT,
 						     G_CALLBACK (mt_expose_laudtrack_event),
 						     (gpointer)mt);
 	      g_object_set_data (G_OBJECT(xeventbox),"expose_func",(gpointer)exp_track_func);
@@ -2152,7 +2152,7 @@ void scroll_tracks (lives_mt *mt, gint top_track) {
 				  (GtkAttachOptions) (GTK_FILL), 0, 0);
 		
 		lives_widget_set_bg_color(xeventbox, GTK_STATE_NORMAL, &palette->white);
-		exp_track_func=g_signal_connect_after (GTK_OBJECT (xeventbox), "expose_event",
+		exp_track_func=g_signal_connect_after (GTK_OBJECT (xeventbox), LIVES_WIDGET_EVENT_DAMAGE_EVENT,
 						       G_CALLBACK (mt_expose_raudtrack_event),
 						       (gpointer)mt);
 		
@@ -8895,7 +8895,7 @@ void mt_init_tracks (lives_mt *mt, boolean set_min_max) {
 		      G_CALLBACK (on_timeline_press),
 		      (gpointer)mt);
     
-    g_signal_connect_after (GTK_OBJECT (mt->timeline_reg), "expose_event",
+    g_signal_connect_after (GTK_OBJECT (mt->timeline_reg), LIVES_WIDGET_EVENT_DAMAGE_EVENT,
 			    G_CALLBACK (expose_timeline_reg_event),
 			    (gpointer)mt);
     
@@ -9489,7 +9489,9 @@ void add_video_track (lives_mt *mt, boolean behind) {
   }
 #endif
   g_object_ref(checkbutton);
-  gtk_widget_set_tooltip_text( checkbutton, _("Select track"));
+
+  if (LIVES_IS_WIDGET(checkbutton))
+    gtk_widget_set_tooltip_text( checkbutton, _("Select track"));
 
   arrow = gtk_arrow_new (GTK_ARROW_RIGHT, GTK_SHADOW_OUT);
   gtk_widget_set_tooltip_text( arrow, _("Show/hide audio"));
@@ -11966,6 +11968,7 @@ void polymorph (lives_mt *mt, lives_mt_poly_state_t poly) {
 	  mt->idlefunc=0;
 	  needs_idlefunc=TRUE;
 	}
+	gdk_window_process_updates(lives_widget_get_xwindow(mt->window),TRUE);
 	mt->block_tl_move=TRUE;
 	on_node_spin_value_changed(GTK_SPIN_BUTTON(mt->node_spinbutton),mt); // force parameter interpolation
 	mt->block_tl_move=FALSE;

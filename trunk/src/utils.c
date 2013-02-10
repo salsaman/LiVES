@@ -3415,7 +3415,9 @@ prepare_to_play_foreign(void) {
   gint new_file=mainw->first_free_file;
 #ifdef GUI_GTK
 #ifdef USE_X11
+#if !GTK_CHECK_VERSION(3,0,0)
   GdkVisual *vissi;
+#endif
 #endif
 #endif
 

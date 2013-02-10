@@ -829,8 +829,8 @@ LIVES_INLINE void lives_container_remove(LiVESContainer *container, LiVESWidget 
 
 LIVES_INLINE void lives_ruler_set_range(LiVESRuler *ruler, double lower, double upper, double position, double max_size) {
 #ifdef GUI_GTK
-#if GTK_VERSION_3
-  gtk_range_set_range(GTK_RANGE(ruler),upper,lower);
+#if GTK_CHECK_VERSION(3,0,0)
+  gtk_range_set_range(GTK_RANGE(ruler),lower,upper);
   gtk_range_set_value(GTK_RANGE(ruler),position);
 #else
   gtk_ruler_set_range(ruler,lower,upper,position,max_size);
@@ -841,7 +841,7 @@ LIVES_INLINE void lives_ruler_set_range(LiVESRuler *ruler, double lower, double 
 
 LIVES_INLINE double lives_ruler_get_value(LiVESRuler *ruler) {
 #ifdef GUI_GTK
-#if GTK_VERSION_3
+#if GTK_CHECK_VERSION(3,0,0)
   return gtk_range_get_value(GTK_RANGE(ruler));
 #else
   return ruler->position;
@@ -852,7 +852,7 @@ LIVES_INLINE double lives_ruler_get_value(LiVESRuler *ruler) {
 
 LIVES_INLINE double lives_ruler_set_value(LiVESRuler *ruler, double value) {
 #ifdef GUI_GTK
-#if GTK_VERSION_3
+#if GTK_CHECK_VERSION(3,0,0)
   gtk_range_set_value(GTK_RANGE(ruler),value);
 #else
   ruler->position=value;
@@ -864,7 +864,7 @@ LIVES_INLINE double lives_ruler_set_value(LiVESRuler *ruler, double value) {
 
 LIVES_INLINE double lives_ruler_set_upper(LiVESRuler *ruler, double value) {
 #ifdef GUI_GTK
-#if GTK_VERSION_3
+#if GTK_CHECK_VERSION(3,0,0)
   gtk_adjustment_set_upper(gtk_range_get_adjustment(GTK_RANGE(ruler)),value);
 #else
   ruler->upper=value;
@@ -876,7 +876,7 @@ LIVES_INLINE double lives_ruler_set_upper(LiVESRuler *ruler, double value) {
 
 LIVES_INLINE double lives_ruler_set_lower(LiVESRuler *ruler, double value) {
 #ifdef GUI_GTK
-#if GTK_VERSION_3
+#if GTK_CHECK_VERSION(3,0,0)
   gtk_adjustment_set_lower(gtk_range_get_adjustment(GTK_RANGE(ruler)),value);
 #else
   ruler->lower=value;
@@ -1555,7 +1555,7 @@ LiVESWidget *lives_standard_hruler_new(void) {
   LiVESWidget *hruler=NULL;
 
 #ifdef GUI_GTK
-#if GTK_VERSION_3
+#if GTK_CHECK_VERSION(3,0,0)
   hruler=gtk_scale_new(GTK_ORIENTATION_HORIZONTAL,NULL);
   gtk_scale_set_draw_value(GTK_SCALE(hruler),FALSE);
   gtk_scale_set_has_origin(GTK_SCALE(hruler),FALSE);

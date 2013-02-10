@@ -607,6 +607,7 @@ typedef struct {
   boolean keep_without_preview; ///< allow keep, even when nopreview is set - TODO use only nopreview and nokeep
 
 #if GTK_CHECK_VERSION(3,0,0)
+#undef ENABLE_GIW
   lives_painter_surface_t *laudio_drawable;
   lives_painter_surface_t *raudio_drawable;
 #else

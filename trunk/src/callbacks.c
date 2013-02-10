@@ -6354,7 +6354,7 @@ void on_ok_file_open_clicked(GtkFileChooser *chooser, GSList *fnames) {
 void drag_from_outside(GtkWidget *widget, GdkDragContext *dcon, gint x, gint y, 
 		       GtkSelectionData *data, guint info, guint time, gpointer user_data) {
   GSList *fnames=NULL;
-#if GTK_VERSION_3
+#if GTK_CHECK_VERSION(3,0,0)
   gchar *filelist=(gchar *)gtk_selection_data_get_data(data);
 #else
   gchar *filelist=(gchar *)data->data;

@@ -123,9 +123,7 @@ giw_led_get_type ()
 static void
 giw_led_class_init (GiwLedClass *xclass)
 {
-#if GTK_CHECK_VERSION(3,0,0)
-  GObjectClass *object_class = G_OBJECT_CLASS (xclass);
-#else
+#if !GTK_CHECK_VERSION(3,0,0)
   GtkObjectClass *object_class = (GtkObjectClass*) xclass;
 #endif
   GtkWidgetClass *widget_class;
@@ -185,7 +183,7 @@ giw_led_new (void)
 {
   GiwLed *led;
 
-#if GTK_VERSION_3
+#if GTK_CHECK_VERSION(3,0,0)
   led = g_object_new (GIW_TYPE_LED, NULL);
 #else
   led = (GiwLed *)gtk_type_new (giw_led_get_type ());
@@ -194,7 +192,7 @@ giw_led_new (void)
   return GTK_WIDGET (led);
 }
 
-#if GTK_VERSION_3
+#if GTK_CHECK_VERSION(3,0,0)
 static void giw_led_destroy (GtkWidget *object) {
 #else
 static void giw_led_destroy (GtkObject *object) {

@@ -42,7 +42,7 @@
 
 */
 
-/* (C) Gabriel "Salsaman" Finch, 2005 - 2007 */
+/* (C) Gabriel "Salsaman" Finch, 2005 - 2013 */
 
 #ifndef __WEED_PLUGIN_UTILS_H__
 #define __WEED_PLUGIN_UTILS_H__
@@ -69,6 +69,7 @@ extern "C"
   weed_plant_t *weed_audio_channel_template_init (const char *name, int flags);
   void weed_plugin_info_add_filter_class (weed_plant_t *plugin_info, weed_plant_t *filter_class);
   weed_plant_t *weed_parameter_template_get_gui (weed_plant_t *paramt);
+  weed_plant_t *weed_parameter_get_gui(weed_plant_t *param);
   weed_plant_t *weed_filter_class_get_gui (weed_plant_t *filter);
   
   weed_plant_t *weed_integer_init (const char *name, const char *label, int def, int min, int max);

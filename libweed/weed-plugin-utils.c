@@ -300,7 +300,18 @@ weed_plant_t *weed_filter_class_get_gui (weed_plant_t *filter) {
   weed_leaf_set(filter,"gui",WEED_SEED_PLANTPTR,1,&gui);
   return gui;
 }
+
   
+weed_plant_t *weed_parameter_get_gui(weed_plant_t *param) {
+  weed_plant_t *template,*gui;
+
+  if (_leaf_exists(param,"template")) {
+    weed_leaf_get(param,"template",0,&template);
+    return weed_parameter_template_get_gui(template);
+  }
+  return NULL;
+}
+
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////

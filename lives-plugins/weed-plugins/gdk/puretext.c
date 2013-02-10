@@ -48,6 +48,13 @@ static int package_version=2; // version of this package
 #include <gdk/gdk.h>
 #include <pango/pangocairo.h>
 
+static gboolean is_big_endian() {
+  int32_t testint = 0x12345678;
+  char *pMem;
+  pMem = (char *) &testint;
+  if (pMem[0] == 0x78) return FALSE;
+  return TRUE;
+}
 
 
 // defines for configure dialog elements
@@ -179,26 +186,193 @@ typedef struct {
 
 
 /////////////////////////////////////////////
+static int unal[256][256];
+static int al[256][256];
 
+static void init_unal(void) {
+  // premult to postmult and vice-versa
 
-static GdkPixbuf *pl_channel_to_pixbuf (weed_plant_t *channel);
-static gboolean pl_pixbuf_to_channel(weed_plant_t *channel, GdkPixbuf *pixbuf);
-static GdkPixbuf *pl_gdk_pixbuf_cheat(GdkColorspace colorspace, gboolean has_alpha, int bits_per_sample, int width, int height, guchar *buf);
-
-inline G_GNUC_CONST int pl_gdk_rowstride_value (int rowstride) {
-  // from gdk-pixbuf.c
-  /* Always align rows to 32-bit boundaries */
-  return (rowstride + 3) & ~3;
+  register int i,j;
+  
+  for (i=0;i<256;i++) { //alpha val
+    for (j=0;j<256;j++) { // val to be converted
+      unal[i][j]=(float)j*255./(float)i;
+      al[i][j]=(float)j*(float)i/255.;
+    }
+  }
 }
 
-inline int G_GNUC_CONST pl_gdk_last_rowstride_value (int width, int nchans) {
-  // from gdk pixbuf docs
-  return width*(((nchans<<3)+7)>>3);
+static void alpha_unpremult(guchar *ptr, int width, int height, int rowstride, int pal, int un) {
+  int aoffs,coffs,psizel;
+  int alpha;
+  int psize=4;
+
+  register int i,j,p;
+
+  switch (pal) {
+  case WEED_PALETTE_BGRA32:
+    psizel=3;
+    coffs=0;
+    aoffs=3;
+    break;
+  case WEED_PALETTE_ARGB32:
+    psizel=4;
+    coffs=1;
+    aoffs=0;
+    break;
+  default:
+    return;
+  }
+
+  if (un) {
+    for (i=0;i<height;i++) {
+      for (j=0;j<width;j+=psize) {
+	alpha=ptr[j+aoffs];
+	for (p=coffs;p<psizel;p++) {
+	  ptr[j+p]=unal[alpha][ptr[j+p]];
+	}
+      }
+      ptr+=rowstride;
+    }
+  }
+  else {
+    for (i=0;i<height;i++) {
+      for (j=0;j<width;j+=psize) {
+	alpha=ptr[j+aoffs];
+	for (p=coffs;p<psizel;p++) {
+	  ptr[j+p]=al[alpha][ptr[j+p]];
+	}
+      }
+      ptr+=rowstride;
+    }
+  }
+
 }
 
-static void plugin_free_buffer (guchar *pixels, gpointer data) {
-  return;
+
+
+static cairo_t *channel_to_cairo(weed_plant_t *channel) {
+  // convert a weed channel to cairo
+  // the channel shares pixel_data with cairo
+  // so it should be copied before the cairo is destroyed
+
+  // "width","rowstrides" and "current_palette" of channel may all change
+
+  int irowstride,orowstride;
+  int width;
+  int height;
+  int pal;
+  int error;
+  int flags=0;
+
+  register int i;
+
+  guchar *src,*dst,*pixel_data;
+
+  cairo_surface_t *surf;
+  cairo_t *cairo;
+  cairo_format_t cform=CAIRO_FORMAT_ARGB32;
+
+  width=weed_get_int_value(channel,"width",&error)*4;
+  height=weed_get_int_value(channel,"height",&error);
+  pal=weed_get_int_value(channel,"current_palette",&error);
+  irowstride=weed_get_int_value(channel,"rowstrides",&error);
+
+  orowstride=cairo_format_stride_for_width(cform,width);
+
+  src=(guchar *)weed_get_voidptr_value(channel,"pixel_data",&error);
+
+  pixel_data=(guchar *)weed_malloc(height*orowstride);
+
+  if (pixel_data==NULL) return NULL;
+
+  if (irowstride==orowstride) {
+    weed_memcpy((void *)pixel_data,(void *)src,irowstride*height);
+  }
+  else {
+    dst=pixel_data;
+    for (i=0;i<height;i++) {
+      weed_memcpy((void *)dst,(void *)src,width);
+      weed_memset((void *)dst+width,0,width-orowstride);
+      dst+=orowstride;
+      src+=irowstride;
+    }
+  }
+
+  if (weed_plant_has_leaf(channel,"flags")) flags=weed_get_int_value(channel,"flags",&error);
+  if (!(flags&WEED_CHANNEL_ALPHA_PREMULT)) {
+    // if we have post-multiplied alpha, pre multiply
+    alpha_unpremult(pixel_data,width,height,orowstride,pal,FALSE);
+  }
+
+  surf=cairo_image_surface_create_for_data(pixel_data,
+					   cform, 
+					   width, height,
+					   orowstride);
+
+  if (surf==NULL) {
+    weed_free(pixel_data);
+    return NULL;
+  }
+
+  cairo=cairo_create(surf);
+  cairo_surface_destroy(surf);
+
+  return cairo;
 }
+
+
+
+static void cairo_to_channel(cairo_t *cairo, weed_plant_t *channel) {
+  // updates a weed_channel from a cairo_t
+  cairo_surface_t *surface=cairo_get_target(cairo);
+
+  cairo_format_t cform=CAIRO_FORMAT_ARGB32;
+
+  int error;
+
+  guchar *src,*dst,*pixel_data=(guchar *)weed_get_voidptr_value(channel,"pixel_data",&error);
+
+  int flags=0;
+
+  int height=weed_get_int_value(channel,"height",&error);
+  int irowstride,orowstride=weed_get_int_value(channel,"rowstrides",&error);
+  int width=weed_get_int_value(channel,"width",&error)*4;
+
+  register int i;
+
+  // flush to ensure all writing to the image was done
+  cairo_surface_flush (surface);
+
+  src = cairo_image_surface_get_data (surface);
+
+  irowstride=cairo_format_stride_for_width(cform,width);
+
+  if (irowstride==orowstride) {
+    weed_memcpy((void *)pixel_data,(void *)src,irowstride*height);
+  }
+  else {
+    dst=pixel_data;
+    for (i=0;i<height;i++) {
+      weed_memcpy((void *)dst,(void *)src,width);
+      weed_memset((void *)(dst+width),0,width-orowstride);
+      dst+=orowstride;
+      src+=irowstride;
+    }
+  }
+
+
+  if (weed_plant_has_leaf(channel,"flags")) flags=weed_get_int_value(channel,"flags",&error);
+  if (!(flags&WEED_CHANNEL_ALPHA_PREMULT)) {
+    int pal=weed_get_int_value(channel,"current_palette",&error);
+
+    // un-premultiply the alpha
+    alpha_unpremult(pixel_data,width,height,orowstride,pal,TRUE);
+  }
+
+
+}
+
 
 static char **fonts_available = NULL;
 static int num_fonts_available = 0;
@@ -208,9 +382,9 @@ static char *stringdup(const char *s, size_t n) {
   char *ret;
   size_t len=strlen(s);
   if (len>=n) len=n-1;
-  ret=malloc(len+1);
-  memcpy(ret,s,len);
-  memset(ret+len,0,1);
+  ret=weed_malloc(len+1);
+  weed_memcpy(ret,s,len);
+  weed_memset(ret+len,0,1);
   return ret;
 }
 
@@ -649,10 +823,12 @@ static void proctext(sdata_t *sdata, weed_timecode_t tc, char *xtext, cairo_t *c
     }
       
     if (sdata->bool1) 
-      setxypos(dwidth,dheight,width/2+sin(sdata->count/4.+(sdata->dbl3-1.)*9.)*radX,height/2-cos(-sdata->count/4.-(sdata->dbl3-1.)*8.)*radY,&sdata->x_text,&sdata->y_text);
+      setxypos(dwidth,dheight,width/2+sin(sdata->count/4.+(sdata->dbl3-1.)*9.)*radX,
+	       height/2-cos(-sdata->count/4.-(sdata->dbl3-1.)*8.)*radY,&sdata->x_text,&sdata->y_text);
       
     else
-      setxypos(dwidth,dheight,width/2+sin(sdata->count/4.+(sdata->dbl3-1.)*8.)*radX,height/2-cos(-sdata->count/4.-(sdata->dbl3-1.)*8.)*radY,&sdata->x_text,&sdata->y_text);
+      setxypos(dwidth,dheight,width/2+sin(sdata->count/4.+(sdata->dbl3-1.)*8.)*radX,
+	       height/2-cos(-sdata->count/4.-(sdata->dbl3-1.)*8.)*radY,&sdata->x_text,&sdata->y_text);
       
     if (!strncmp(xtext,".",1)) sdata->int1++;
       
@@ -774,25 +950,26 @@ int puretext_deinit(weed_plant_t *inst) {
 
 
 int puretext_process (weed_plant_t *inst, weed_timecode_t tc) {
-
-  GdkPixbuf *pixbuf = NULL;
-  GdkPixbuf *pixbuf_new = NULL;
-
-  size_t toffs;
-    
-  int alpha_threshold = 0;
   int error;
 
-  register int i,j;
-
-  weed_plant_t *in_channel=  in_channel=weed_get_plantptr_value(inst,"in_channels",&error);
+  weed_plant_t *in_channel=weed_get_plantptr_value(inst,"in_channels",&error);
   weed_plant_t *out_channel=weed_get_plantptr_value(inst,"out_channels",&error);
   weed_plant_t **in_params=weed_get_plantptr_array(inst,"in_parameters",&error);
 
-  unsigned char *src=weed_get_voidptr_value(in_channel,"pixel_data",&error);
-  unsigned char *dst=weed_get_voidptr_value(out_channel,"pixel_data",&error);
+  sdata_t *sdata=(sdata_t *)weed_get_voidptr_value(inst,"plugin_internal",&error);
 
-  int irowstride=weed_get_int_value(in_channel,"rowstrides",&error);
+  guchar *bgdata=NULL;
+
+  pt_subst_t *xsubst;
+
+  cairo_t *cairo;
+
+  guchar *dst=weed_get_voidptr_value(out_channel,"pixel_data",&error);
+
+  size_t toffs;
+    
+  //int alpha_threshold = 0;
+
   int orowstride=weed_get_int_value(out_channel,"rowstrides",&error);
 
   int width=weed_get_int_value(out_channel,"width",&error);
@@ -801,11 +978,8 @@ int puretext_process (weed_plant_t *inst, weed_timecode_t tc) {
 
   int mode=weed_get_int_value(in_params[P_MODE],"value",&error);
 
-  sdata_t *sdata=(sdata_t *)weed_get_voidptr_value(inst,"plugin_internal",&error);
-
-  unsigned char *bgdata=NULL;
-
-  pt_subst_t *xsubst;
+  register int i,j;
+  
 
   weed_free(in_params); // must weed free because we got an array
 
@@ -835,20 +1009,6 @@ int puretext_process (weed_plant_t *inst, weed_timecode_t tc) {
 
   sdata->count=0;
 
-  if (dst!=src&&src!=NULL) {
-    // if not inplace, copy in pixel_data to out pixel_data
-    if (irowstride==orowstride&&irowstride==width*3) {
-      weed_memcpy(dst,src,width*3*height);
-    }
-    else {
-      for (i=0;i<height;i++) {
-	weed_memcpy(dst,src,width*3);
-	dst+=orowstride;
-	src+=irowstride;
-      }
-    }
-  }
-
   if (sdata->mode==PT_WORD_COALESCE) {
     // backup original data
     bgdata=weed_malloc(height*orowstride);
@@ -859,18 +1019,11 @@ int puretext_process (weed_plant_t *inst, weed_timecode_t tc) {
 
   // THINGS TO TO WITH TEXTS AND PANGO
   if((!in_channel) || (in_channel == out_channel))
-    pixbuf = pl_channel_to_pixbuf(out_channel);
+    cairo = channel_to_cairo(out_channel);
   else
-    pixbuf = pl_channel_to_pixbuf(in_channel);
+    cairo = channel_to_cairo(in_channel);
 
-  if(pixbuf) {
-    // do cairo and pango things
-    GdkPixmap *pixmap = NULL;
-    gdk_pixbuf_render_pixmap_and_mask(pixbuf, &pixmap, NULL, alpha_threshold);
-    if(pixmap) {
-      cairo_t *cairo = gdk_cairo_create(pixmap);
       if(cairo) {
-	PangoContext *ctx=pango_cairo_create_context(cairo);
 	// TODO - get real offset of start in bytes
 
 	if (sdata->text_type==TEXT_TYPE_ASCII) {
@@ -882,8 +1035,8 @@ int puretext_process (weed_plant_t *inst, weed_timecode_t tc) {
 
 	// loop from start char to end char
 	for (i=sdata->start;i<sdata->start+(sdata->length==0?1:sdata->length);i++) {
-	  PangoLayout *layout = pango_layout_new(ctx);
-	  if(layout) { 
+	  PangoLayout *layout = pango_cairo_create_layout(cairo);
+	  if (layout) { 
 	    PangoFontDescription *font;
 	    char *xtext;
 
@@ -936,7 +1089,7 @@ int puretext_process (weed_plant_t *inst, weed_timecode_t tc) {
 	    pango_layout_set_text(layout, (char *)xtext, -1);
 
 	    // default colour - opaque white
-	    sdata->fg.red=sdata->fg.green=sdata->fg.blue=65535;
+	    sdata->fg.red=sdata->fg.green=sdata->fg.blue=255.;
 	    sdata->fg_alpha=1.;
 
 	    cairo_save(cairo);
@@ -969,29 +1122,16 @@ int puretext_process (weed_plant_t *inst, weed_timecode_t tc) {
 
 	} // end loop
 
-	g_object_unref(ctx);
-
-	// and finally convert backwards
-	pixbuf_new = gdk_pixbuf_get_from_drawable(pixbuf, pixmap, NULL,	\
-						  0, 0,			\
-						  0, 0,			\
-						  -1, -1);
-	pl_pixbuf_to_channel(out_channel, pixbuf_new);
-	g_object_unref(pixbuf_new);
-
+	cairo_to_channel(cairo,out_channel);
 	cairo_destroy(cairo);
       }
-
-    }
-    g_object_unref(pixmap);
-  }
 
 
   if (sdata->mode==PT_WORD_COALESCE) {
     if (sdata->dbl1>0.) {
-      unsigned char *b_data=bgdata;
+      guchar *b_data=bgdata;
       int width3=width*3;
-      unsigned char *dstx=dst=weed_get_voidptr_value(out_channel,"pixel_data",&error);
+      guchar *dstx=dst=weed_get_voidptr_value(out_channel,"pixel_data",&error);
       
       for (i=0;i<height;i++) {
 	for (j=0;j<width3;j+=3) {
@@ -1040,9 +1180,6 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
   weed_plant_t *plugin_info=weed_plugin_info_init(weed_boot,num_versions,api_versions);
 
   if (plugin_info!=NULL) {
-    int palette_list[]={WEED_PALETTE_BGR24,WEED_PALETTE_RGB24,WEED_PALETTE_END};
-    weed_plant_t *in_chantmpls[]={weed_channel_template_init("in channel 0",0,palette_list),NULL};
-    weed_plant_t *out_chantmpls[]={weed_channel_template_init("out channel 0",WEED_CHANNEL_CAN_DO_INPLACE,palette_list),NULL};
     weed_plant_t *in_params[P_END+1],*gui;
     weed_plant_t *filter_class;
     PangoContext *ctx;
@@ -1052,7 +1189,27 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 
     char *deftextfile;
 
+    int palette_list[2];
+    weed_plant_t *in_chantmpls[2];
+    weed_plant_t *out_chantmpls[2];
+
     int flags,error;
+
+    if (is_big_endian())
+      palette_list[0]=WEED_PALETTE_ARGB32;
+    else 
+      palette_list[0]=WEED_PALETTE_BGRA32;
+
+    palette_list[1]=WEED_PALETTE_END;
+
+    in_chantmpls[0]=weed_channel_template_init("in channel 0",0,palette_list);
+    in_chantmpls[1]=NULL;
+
+    out_chantmpls[0]=weed_channel_template_init("out channel 0",WEED_CHANNEL_CAN_DO_INPLACE,palette_list);
+    out_chantmpls[1]=NULL;
+
+    init_unal();
+
 
     // this section contains code
     // for configure fonts available
@@ -1105,7 +1262,8 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 
     g_free(deftextfile);
 
-    filter_class=weed_filter_class_init("puretext","Salsaman & Aleksej Penkov",1,0,&puretext_init,&puretext_process,NULL,in_chantmpls,out_chantmpls,in_params,NULL);
+    filter_class=weed_filter_class_init("puretext","Salsaman & Aleksej Penkov",1,0,&puretext_init,&puretext_process,NULL,
+					in_chantmpls,out_chantmpls,in_params,NULL);
 
     gui=weed_filter_class_get_gui(filter_class);
     weed_set_string_value(gui,"layout_scheme","RFX");
@@ -1136,105 +1294,4 @@ void weed_desetup(void) {
   fonts_available = NULL;
 }
 
-
-
-static GdkPixbuf *pl_channel_to_pixbuf (weed_plant_t *channel) {
-  int error;
-  GdkPixbuf *pixbuf;
-  int palette=weed_get_int_value(channel,"current_palette",&error);
-  int width=weed_get_int_value(channel,"width",&error);
-  int height=weed_get_int_value(channel,"height",&error);
-  int irowstride=weed_get_int_value(channel,"rowstrides",&error);
-  int rowstride,orowstride;
-  guchar *pixel_data=(guchar *)weed_get_voidptr_value(channel,"pixel_data",&error),*pixels,*end;
-  gboolean cheat=FALSE;
-  gint n_channels;
-
-  switch (palette) {
-  case WEED_PALETTE_RGB24:
-  case WEED_PALETTE_BGR24:
-  case WEED_PALETTE_YUV888:
-    if (irowstride==pl_gdk_rowstride_value(width*3)) {
-      pixbuf=pl_gdk_pixbuf_cheat(GDK_COLORSPACE_RGB, FALSE, 8, width, height, pixel_data);
-      cheat=TRUE;
-    }
-    else pixbuf=gdk_pixbuf_new (GDK_COLORSPACE_RGB, FALSE, 8, width, height);
-    n_channels=3;
-    break;
-  case WEED_PALETTE_RGBA32:
-  case WEED_PALETTE_BGRA32:
-  case WEED_PALETTE_ARGB32:
-  case WEED_PALETTE_YUVA8888:
-    if (irowstride==pl_gdk_rowstride_value(width*4)) {
-      pixbuf=pl_gdk_pixbuf_cheat(GDK_COLORSPACE_RGB, TRUE, 8, width, height, pixel_data);
-      cheat=TRUE;
-    }
-    else pixbuf=gdk_pixbuf_new (GDK_COLORSPACE_RGB, TRUE, 8, width, height);
-    n_channels=4;
-    break;
-  default:
-    return NULL;
-  }
-  pixels=gdk_pixbuf_get_pixels (pixbuf);
-  orowstride=gdk_pixbuf_get_rowstride(pixbuf);
-  
-  if (irowstride>orowstride) rowstride=orowstride;
-  else rowstride=irowstride;
-  end=pixels+orowstride*height;
-
-  if (!cheat) {
-    gboolean done=FALSE;
-    for (;pixels<end&&!done;pixels+=orowstride) {
-      if (pixels+orowstride>=end) {
-	orowstride=rowstride=pl_gdk_last_rowstride_value(width,n_channels);
-	done=TRUE;
-      }
-      weed_memcpy(pixels,pixel_data,rowstride);
-      if (rowstride<orowstride) weed_memset (pixels+rowstride,0,orowstride-rowstride);
-      pixel_data+=irowstride;
-    }
-  }
-  return pixbuf;
-}
-
-
-
-static gboolean pl_pixbuf_to_channel(weed_plant_t *channel, GdkPixbuf *pixbuf) {
-  // return TRUE if we can use the original pixbuf pixels
-  
-  int error;
-  int rowstride=gdk_pixbuf_get_rowstride(pixbuf);
-  int width=gdk_pixbuf_get_width(pixbuf);
-  int height=gdk_pixbuf_get_height(pixbuf);
-  int n_channels=gdk_pixbuf_get_n_channels(pixbuf);
-  guchar *in_pixel_data=(guchar *)gdk_pixbuf_get_pixels(pixbuf);
-  int out_rowstride=weed_get_int_value(channel,"rowstrides",&error);
-  guchar *dst=weed_get_voidptr_value(channel,"pixel_data",&error);
-
-  register int i;
-
-  if(dst == in_pixel_data)
-    return TRUE;
-
-  if (rowstride==pl_gdk_last_rowstride_value(width,n_channels)&&rowstride==out_rowstride) {
-    weed_memcpy(dst,in_pixel_data,rowstride*height);
-    return FALSE;
-  }
-
-  for (i=0;i<height;i++) {
-    if (i==height-1) rowstride=pl_gdk_last_rowstride_value(width,n_channels);
-    weed_memcpy(dst,in_pixel_data,rowstride);
-    in_pixel_data+=rowstride;
-    dst+=out_rowstride;
-  }
-
-  return FALSE;
-}
-
-static GdkPixbuf *pl_gdk_pixbuf_cheat(GdkColorspace colorspace, gboolean has_alpha, int bits_per_sample, int width, int height, guchar *buf) {
-  // we can cheat if our buffer is correctly sized
-  int channels=has_alpha?4:3;
-  int rowstride=pl_gdk_rowstride_value(width*channels);
-  return gdk_pixbuf_new_from_data (buf, colorspace, has_alpha, bits_per_sample, width, height, rowstride, plugin_free_buffer, NULL);
-}
 

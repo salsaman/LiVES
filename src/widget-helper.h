@@ -57,8 +57,6 @@ typedef cairo_fill_rule_t lives_painter_fill_rule_t;
 
 #ifdef GUI_GTK
 
-#define GTK_VERSION_3 GTK_CHECK_VERSION(3,0,0) // set to 2,0,0 for testing
-
 typedef GtkJustification LiVESJustification;
 
 #define LIVES_JUSTIFY_LEFT   GTK_JUSTIFY_LEFT
@@ -72,9 +70,11 @@ typedef GtkOrientation LiVESOrientation;
 
 typedef GdkEvent                          LiVESEvent;
 #if GTK_CHECK_VERSION(3,0,0)
+#define LIVES_WIDGET_EVENT_DAMAGE_EVENT "damage_event"
 #define GTK_OBJECT(a)                     a
 #else
 typedef GtkObject                         LiVESObject;
+#define LIVES_WIDGET_EVENT_DAMAGE_EVENT "expose_event"
 #endif
 typedef GtkWidget                         LiVESWidget;
 typedef GtkContainer                      LiVESContainer;
@@ -102,7 +102,7 @@ typedef GdkColor                          LiVESWidgetColor;
 typedef GtkStateType LiVESWidgetState;
 #endif
 
-#if GTK_VERSION_3
+#if GTK_CHECK_VERSION(3,0,0)
 typedef GtkScale                          LiVESRuler;
 #else
 typedef GtkRuler                          LiVESRuler;
@@ -152,7 +152,7 @@ typedef gpointer                          LiVESObjectPtr;
 #define LIVES_SCALE_BUTTON(widget) GTK_SCALE_BUTTON(widget)
 #define LIVES_TOGGLE_BUTTON(widget) GTK_TOGGLE_BUTTON(widget)
 
-#if GTK_VERSION_3
+#if GTK_CHECK_VERSION(3,0,0)
 #define LIVES_RULER(widget) GTK_SCALE(widget)
 #define LIVES_ORIENTABLE(widget) GTK_ORIENTABLE(widget)
 #else
@@ -162,6 +162,7 @@ typedef gpointer                          LiVESObjectPtr;
 #define LIVES_RANGE(widget) GTK_RANGE(widget)
 
 
+#define LIVES_IS_WIDGET(widget) GTK_IS_WIDGET(widget)
 #define LIVES_IS_COMBO(widget) GTK_IS_COMBO_BOX(widget)
 
 #define LIVES_INTERP_BEST   GDK_INTERP_HYPER

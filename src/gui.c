@@ -2414,13 +2414,13 @@ create_LiVES (void)
   mainw->config_func=g_signal_connect_after (GTK_OBJECT (mainw->video_draw), "configure_event",
 					     G_CALLBACK (config_event),
 					     NULL);
-  mainw->vidbar_func=g_signal_connect_after (GTK_OBJECT (mainw->video_draw), "expose_event",
+  mainw->vidbar_func=g_signal_connect_after (GTK_OBJECT (mainw->video_draw), LIVES_WIDGET_EVENT_DAMAGE_EVENT,
 		    G_CALLBACK (expose_vid_event),
 		    NULL);
-  mainw->laudbar_func=g_signal_connect_after (GTK_OBJECT (mainw->laudio_draw), "expose_event",
+  mainw->laudbar_func=g_signal_connect_after (GTK_OBJECT (mainw->laudio_draw), LIVES_WIDGET_EVENT_DAMAGE_EVENT,
 		    G_CALLBACK (expose_laud_event),
 		    NULL);
-  mainw->raudbar_func=g_signal_connect_after (GTK_OBJECT (mainw->raudio_draw), "expose_event",
+  mainw->raudbar_func=g_signal_connect_after (GTK_OBJECT (mainw->raudio_draw), LIVES_WIDGET_EVENT_DAMAGE_EVENT,
 		    G_CALLBACK (expose_raud_event),
 		    NULL);
   mainw->pb_fps_func=g_signal_connect_after (GTK_OBJECT (mainw->spinbutton_pb_fps), "value_changed",
@@ -3705,7 +3705,7 @@ void make_play_window(void) {
 
   gtk_widget_set_tooltip_text( mainw->m_sepwinbutton,_ ("Hide Play Window"));
 
-  mainw->pw_exp_func=g_signal_connect_after (GTK_OBJECT (mainw->play_window), "expose_event",
+  mainw->pw_exp_func=g_signal_connect_after (GTK_OBJECT (mainw->play_window), LIVES_WIDGET_EVENT_DAMAGE_EVENT,
 					     G_CALLBACK (expose_play_window),
 					     NULL);
   

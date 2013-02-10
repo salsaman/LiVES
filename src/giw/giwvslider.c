@@ -146,9 +146,7 @@ giw_vslider_get_type ()
 static void
 giw_vslider_class_init (GiwVSliderClass *xclass)
 {
-#if GTK_CHECK_VERSION(3,0,0)
-  GObjectClass *object_class = G_OBJECT_CLASS (xclass);
-#else
+#if !GTK_CHECK_VERSION(3,0,0)
   GtkObjectClass *object_class = (GtkObjectClass*) xclass;
 #endif
   GtkWidgetClass *widget_class;
@@ -205,7 +203,7 @@ giw_vslider_new (GtkAdjustment *adjustment)
 
   g_return_val_if_fail (adjustment != NULL, NULL);
   
-#if GTK_VERSION_3
+#if GTK_CHECK_VERSION(3,0,0)
   vslider = g_object_new (GIW_TYPE_VSLIDER, NULL);
 #else
   vslider = (GiwVSlider *)gtk_type_new (giw_vslider_get_type ());
@@ -223,7 +221,7 @@ giw_vslider_new_with_adjustment (gdouble value,
 {
   GiwVSlider *vslider;
   
-#if GTK_VERSION_3
+#if GTK_CHECK_VERSION(3,0,0)
   vslider = g_object_new (GIW_TYPE_VSLIDER, NULL);
 #else
   vslider = (GiwVSlider *)gtk_type_new (giw_vslider_get_type ());
@@ -234,7 +232,7 @@ giw_vslider_new_with_adjustment (gdouble value,
   return GTK_WIDGET (vslider);
 }
 
-#if GTK_VERSION_3
+#if GTK_CHECK_VERSION(3,0,0)
 static void giw_vslider_destroy (GtkWidget *object) {
 #else
 static void giw_vslider_destroy (GtkObject *object) {
@@ -259,7 +257,7 @@ static void giw_vslider_destroy (GtkObject *object) {
     vslider->legends=NULL;
   }
     
-#if GTK_VERSION_3
+#if GTK_CHECK_VERSION(3,0,0)
   //  G_OBJECT_CLASS (giw_knob_parent_class)->finalize (object);
 #else
   if (GTK_OBJECT_CLASS (parent_class)->destroy)

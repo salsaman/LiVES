@@ -48,7 +48,7 @@ typedef struct _GiwKnobClass   GiwKnobClass;
 
 struct _GiwKnob
 {
-#if GTK_VERSION_3
+#if GTK_CHECK_VERSION(3,0,0)
   GObject parent;
 #endif
 
@@ -113,7 +113,7 @@ struct _GiwKnob
 
 struct _GiwKnobClass
 {
-#if GTK_VERSION_3
+#if GTK_CHECK_VERSION(3,0,0)
   GObjectClass parent;
 #else
   GtkWidgetClass parent_class;

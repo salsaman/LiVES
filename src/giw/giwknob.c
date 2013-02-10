@@ -163,9 +163,7 @@ giw_knob_get_type ()
 static void
 giw_knob_class_init (GiwKnobClass *xclass)
 {
-#if GTK_CHECK_VERSION(3,0,0)
-  GObjectClass *object_class = G_OBJECT_CLASS (xclass);
-#else
+#if !GTK_CHECK_VERSION(3,0,0)
   GtkObjectClass *object_class = (GtkObjectClass*) xclass;
 #endif
   GtkWidgetClass *widget_class;
@@ -220,7 +218,7 @@ giw_knob_new (GtkAdjustment *adjustment)
   
   g_return_val_if_fail (adjustment != NULL, NULL);
 
-#if GTK_VERSION_3
+#if GTK_CHECK_VERSION(3,0,0)
   knob = g_object_new (GIW_TYPE_KNOB, NULL);
 #else
   knob = (GiwKnob *)gtk_type_new (giw_knob_get_type ());
@@ -240,7 +238,7 @@ giw_knob_new_with_adjustment (gdouble value,
 {
   GiwKnob *knob;
 
-#if GTK_VERSION_3
+#if GTK_CHECK_VERSION(3,0,0)
   knob = g_object_new (GIW_TYPE_KNOB, NULL);
 #else
   knob = (GiwKnob *)gtk_type_new (giw_knob_get_type ());
@@ -282,7 +280,7 @@ static void giw_knob_destroy (GtkObject *object) {
   if (knob->title)
     g_object_unref(G_OBJECT(knob->title));
 
-#if GTK_VERSION_3
+#if GTK_CHECK_VERSION(3,0,0)
   //G_OBJECT_CLASS (giw_knob_parent_class)->finalize (object);
 #else
   if (GTK_OBJECT_CLASS (parent_class)->destroy)

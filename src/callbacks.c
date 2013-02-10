@@ -136,11 +136,14 @@ void lives_exit (void) {
     gtk_timeout_remove (mainw->kb_timer);
 #endif
 #ifdef HAVE_PULSE_AUDIO
-      if (mainw->pulsed!=NULL) pulse_close_client(mainw->pulsed);
-      if (mainw->pulsed_read!=NULL) pulse_close_client(mainw->pulsed_read);
-      pulse_shutdown();
+    pthread_mutex_lock(&mainw->abuf_mutex);
+    if (mainw->pulsed!=NULL) pulse_close_client(mainw->pulsed);
+    if (mainw->pulsed_read!=NULL) pulse_close_client(mainw->pulsed_read);
+    pulse_shutdown();
+    pthread_mutex_unlock(&mainw->abuf_mutex);
 #endif
 #ifdef ENABLE_JACK
+      pthread_mutex_lock(&mainw->abuf_mutex);
       lives_jack_end();
       if (mainw->jackd!=NULL) {
 	jack_close_device(mainw->jackd);
@@ -148,6 +151,7 @@ void lives_exit (void) {
       if (mainw->jackd_read!=NULL) {
 	jack_close_device(mainw->jackd_read);
       }
+      pthread_mutex_unlock(&mainw->abuf_mutex);
 #endif
     }
 

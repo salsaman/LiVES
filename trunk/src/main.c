@@ -984,6 +984,10 @@ static void lives_init(_ign_opts *ign_opts) {
   mainw->agen_needs_reinit=FALSE;
   mainw->agen_samps_count=0;
 
+  mainw->draw_blocked=FALSE;
+
+  mainw->ce_frame_height=mainw->ce_frame_width=-1;
+
   /////////////////////////////////////////////////// add new stuff just above here ^^
 
 
@@ -2844,14 +2848,18 @@ void set_main_title(const gchar *file, gint untitled) {
   gchar short_file[256];
 
   if (file!=NULL) {
-    if (untitled) title=g_strdup_printf(_ ("LiVES-%s: <Untitled%d> %dx%d : %d frames %d bpp %.3f fps"),LiVES_VERSION,untitled,cfile->hsize,cfile->vsize,cfile->frames,cfile->bpp,cfile->fps);
+    if (untitled) title=g_strdup_printf(_ ("LiVES-%s: <Untitled%d> %dx%d : %d frames %d bpp %.3f fps"),LiVES_VERSION,untitled,
+					cfile->hsize,cfile->vsize,cfile->frames,cfile->bpp,cfile->fps);
     else {
       g_snprintf(short_file,256,"%s",file);
       if (cfile->restoring||(cfile->opening&&cfile->frames==123456789)) {
-	title=g_strdup_printf(_("LiVES-%s: <%s> %dx%d : ??? frames ??? bpp %.3f fps"),LiVES_VERSION,(tmp=g_path_get_basename(file)),cfile->hsize,cfile->vsize,cfile->fps);
+	title=g_strdup_printf(_("LiVES-%s: <%s> %dx%d : ??? frames ??? bpp %.3f fps"),LiVES_VERSION,
+			      (tmp=g_path_get_basename(file)),cfile->hsize,cfile->vsize,cfile->fps);
       }
       else {
-	title=g_strdup_printf(_ ("LiVES-%s: <%s> %dx%d : %d frames %d bpp %.3f fps"),LiVES_VERSION,cfile->clip_type!=CLIP_TYPE_VIDEODEV?(tmp=g_path_get_basename(file)):(tmp=g_strdup(file)),cfile->hsize,cfile->vsize,cfile->frames,cfile->bpp,cfile->fps);
+	title=g_strdup_printf(_ ("LiVES-%s: <%s> %dx%d : %d frames %d bpp %.3f fps"),LiVES_VERSION,
+			      cfile->clip_type!=CLIP_TYPE_VIDEODEV?(tmp=g_path_get_basename(file))
+			      :(tmp=g_strdup(file)),cfile->hsize,cfile->vsize,cfile->frames,cfile->bpp,cfile->fps);
       }
       g_free(tmp);
     }
@@ -3263,8 +3271,14 @@ void load_start_image(gint frame) {
     // TODO *** - if width*height==0, show broken frame image
 
 
+#if GTK_CHECK_VERSION(3,0,0)
+    rwidth=mainw->ce_frame_width;
+    rheight=mainw->ce_frame_height;
+#else
     rwidth=lives_widget_get_allocation_width(mainw->image272);
     rheight=lives_widget_get_allocation_height(mainw->image272);
+#endif
+
     calc_maxspect(rwidth,rheight,&width,&height);
 
     layer=weed_plant_new(WEED_PLANT_CHANNEL);
@@ -3280,7 +3294,24 @@ void load_start_image(gint frame) {
     weed_plant_free(layer);
   
     if (GDK_IS_PIXBUF(start_pixbuf)) {
+#if GTK_CHECK_VERSION(3,0,0)
+      lives_painter_t *cr = lives_painter_create_from_widget (mainw->image272);
+      int x0=(rwidth-width)/4.;
+      int y0=(rheight-height)/4.;
+      lives_painter_set_source_rgb (cr, 0., 0., 0.);
+      lives_painter_rectangle(cr,0,0,
+			      rwidth,
+			      rheight);
+      lives_painter_fill(cr);
+      lives_painter_set_source_pixbuf (cr, start_pixbuf, x0, y0);
+      lives_painter_rectangle(cr,x0,y0,
+			      width,
+			      height);
+      lives_painter_fill(cr);
+      lives_painter_destroy(cr);
+#else
       gtk_image_set_from_pixbuf(GTK_IMAGE(mainw->image272),start_pixbuf);
+#endif
     }
     if (start_pixbuf!=NULL) {
       if (G_IS_OBJECT(start_pixbuf)) {
@@ -3290,6 +3321,7 @@ void load_start_image(gint frame) {
 
     start_pixbuf=NULL;
 
+#if !GTK_CHECK_VERSION(3,0,0)
     gtk_widget_queue_resize(mainw->image272);
 
     while (g_main_context_iteration(NULL,FALSE));
@@ -3299,7 +3331,9 @@ void load_start_image(gint frame) {
       return;
     }
   } while (rwidth!=lives_widget_get_allocation_width(mainw->image272)||rheight!=lives_widget_get_allocation_height(mainw->image272));
-
+#else
+  } while (FALSE);
+#endif
   threaded_dialog_spin();
 
 
@@ -3383,8 +3417,15 @@ void load_end_image(gint frame) {
   do {
     width=cfile->hsize;
     height=cfile->vsize;
+
+#if GTK_CHECK_VERSION(3,0,0)
+    rwidth=mainw->ce_frame_width;
+    rheight=mainw->ce_frame_height;
+#else
     rwidth=lives_widget_get_allocation_width(mainw->image273);
     rheight=lives_widget_get_allocation_height(mainw->image273);
+#endif
+
     calc_maxspect(rwidth,rheight,&width,&height);
 
     layer=weed_plant_new(WEED_PLANT_CHANNEL);
@@ -3401,7 +3442,24 @@ void load_end_image(gint frame) {
     weed_plant_free(layer);
   
     if (GDK_IS_PIXBUF(end_pixbuf)) {
+#if GTK_CHECK_VERSION(3,0,0)
+      lives_painter_t *cr = lives_painter_create_from_widget (mainw->image273);
+      int x0=(rwidth-width)/4.;
+      int y0=(rheight-height)/4.;
+      lives_painter_set_source_rgb (cr, 0., 0., 0.);
+      lives_painter_rectangle(cr,0,0,
+			      rwidth,
+			      rheight);
+      lives_painter_fill(cr);
+      lives_painter_set_source_pixbuf (cr, end_pixbuf, x0, y0);
+      lives_painter_rectangle(cr,0,0,
+			      rwidth,
+			      rheight);
+      lives_painter_fill(cr);
+      lives_painter_destroy(cr);
+#else
       gtk_image_set_from_pixbuf(GTK_IMAGE(mainw->image273),end_pixbuf);
+#endif
     }
     if (end_pixbuf!=NULL) {
       if (G_IS_OBJECT(end_pixbuf)) {
@@ -3411,6 +3469,7 @@ void load_end_image(gint frame) {
 
     end_pixbuf=NULL;
 
+#if !GTK_CHECK_VERSION(3,0,0)
     gtk_widget_queue_resize(mainw->image273);
 
     while (g_main_context_iteration(NULL,FALSE));
@@ -3420,7 +3479,9 @@ void load_end_image(gint frame) {
       return;
     }
   } while (rwidth!=lives_widget_get_allocation_width(mainw->image273)||rheight!=lives_widget_get_allocation_height(mainw->image273));
-
+#else
+  } while (FALSE);
+#endif
   threaded_dialog_spin();
   mainw->noswitch=noswitch;
 
@@ -6377,6 +6438,9 @@ void resize (gdouble scale) {
 
   hsize=(scr_width-(72+bx))/3;
   vsize=(scr_height-(HSPACE+hspace+by));
+
+  mainw->ce_frame_width=hsize;
+  mainw->ce_frame_height=vsize;
 
   if (scale<0.) {
     // foreign capture

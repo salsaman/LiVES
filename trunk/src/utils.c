@@ -2557,6 +2557,7 @@ void get_play_times(void) {
 	  lives_painter_move_to(cr, offset, 0);
 	  lives_painter_line_to(cr, offset, prefs->bar_height);
 	}
+	lives_painter_stroke(cr);
 
 	if (palette->style&STYLE_3||palette->style==STYLE_PLAIN) { // light style
 	  lives_painter_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
@@ -2568,6 +2569,8 @@ void get_play_times(void) {
 	  lives_painter_move_to(cr, offset, prefs->bar_height);
 	  lives_painter_line_to(cr, offset, allocheight-prefs->bar_height);
 	}
+
+	lives_painter_stroke(cr);
 
 	lives_painter_destroy(cr);
 #else
@@ -2639,6 +2642,7 @@ void get_play_times(void) {
 	  lives_painter_move_to(cr, offset, 0);
 	  lives_painter_line_to(cr, offset, prefs->bar_height);
 	}
+	lives_painter_stroke(cr);
 
 	if (palette->style&STYLE_3||palette->style==STYLE_PLAIN) { // light style
 	  lives_painter_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
@@ -2650,6 +2654,7 @@ void get_play_times(void) {
 	  lives_painter_move_to(cr, offset, prefs->bar_height);
 	  lives_painter_line_to(cr, offset, allocheight-prefs->bar_height);
 	}
+	lives_painter_stroke(cr);
 
 	lives_painter_destroy(cr);
 #else
@@ -2703,6 +2708,7 @@ void get_play_times(void) {
 	    lives_painter_move_to(cr, offset, 0);
 	    lives_painter_line_to(cr, offset, prefs->bar_height);
 	  }
+	  lives_painter_stroke(cr);
 	  
 	  if (palette->style&STYLE_3||palette->style==STYLE_PLAIN) { // light style
 	    lives_painter_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
@@ -2714,6 +2720,7 @@ void get_play_times(void) {
 	    lives_painter_move_to(cr, offset, prefs->bar_height);
 	    lives_painter_line_to(cr, offset, allocheight-prefs->bar_height);
 	  }
+	  lives_painter_stroke(cr);
 	  
 	  lives_painter_destroy(cr);
 #else
@@ -2853,9 +2860,12 @@ void get_play_times(void) {
     if (ptrtime<0.) ptrtime=0.;
     draw_little_bars(ptrtime);
   }
-  gtk_widget_queue_draw(mainw->video_draw);
-  gtk_widget_queue_draw(mainw->laudio_draw);
-  gtk_widget_queue_draw(mainw->raudio_draw);
+
+  if (!mainw->draw_blocked) {
+    gtk_widget_queue_draw(mainw->video_draw);
+    gtk_widget_queue_draw(mainw->laudio_draw);
+    gtk_widget_queue_draw(mainw->raudio_draw);
+  }
   gtk_widget_queue_draw(mainw->vidbar);
   gtk_widget_queue_draw(mainw->hruler);
 }
@@ -2889,6 +2899,7 @@ void draw_little_bars (gdouble ptrtime) {
 	  lives_painter_move_to(cr, offset, 0);
 	  lives_painter_line_to(cr, offset, prefs->bar_height);
 	}
+	lives_painter_stroke(cr);
 
 	if (palette->style&STYLE_3||palette->style==STYLE_PLAIN) { // light style
 	  lives_painter_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
@@ -2900,8 +2911,10 @@ void draw_little_bars (gdouble ptrtime) {
 	  lives_painter_move_to(cr, offset, prefs->bar_height);
 	  lives_painter_line_to(cr, offset, allocheight-prefs->bar_height);
 	}
+	lives_painter_stroke(cr);
 
 	lives_painter_destroy(cr);
+
 #else
       if (frame>=cfile->start&&frame<=cfile->end) {
 	gdk_draw_line (mainw->video_drawable,
@@ -2956,6 +2969,7 @@ void draw_little_bars (gdouble ptrtime) {
 	  lives_painter_move_to(cr, offset, 0);
 	  lives_painter_line_to(cr, offset, prefs->bar_height);
 	}
+	lives_painter_stroke(cr);
 
 	if (palette->style&STYLE_3||palette->style==STYLE_PLAIN) { // light style
 	  lives_painter_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
@@ -2967,6 +2981,7 @@ void draw_little_bars (gdouble ptrtime) {
 	  lives_painter_move_to(cr, offset, prefs->bar_height);
 	  lives_painter_line_to(cr, offset, allocheight-prefs->bar_height);
 	}
+	lives_painter_stroke(cr);
 
 	lives_painter_destroy(cr);
 #else
@@ -3021,6 +3036,7 @@ void draw_little_bars (gdouble ptrtime) {
 	  lives_painter_move_to(cr, offset, 0);
 	  lives_painter_line_to(cr, offset, prefs->bar_height);
 	}
+	lives_painter_stroke(cr);
 
 	if (palette->style&STYLE_3||palette->style==STYLE_PLAIN) { // light style
 	  lives_painter_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
@@ -3032,6 +3048,7 @@ void draw_little_bars (gdouble ptrtime) {
 	  lives_painter_move_to(cr, offset, prefs->bar_height);
 	  lives_painter_line_to(cr, offset, allocheight-prefs->bar_height);
 	}
+	lives_painter_stroke(cr);
 
 	lives_painter_destroy(cr);
 #else

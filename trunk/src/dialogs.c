@@ -2454,6 +2454,7 @@ void threaded_dialog_spin (void) {
 
   gtk_widget_queue_draw(procw->processing);
   while (g_main_context_iteration(NULL,FALSE));
+
 }
 
 

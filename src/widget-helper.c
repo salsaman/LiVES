@@ -52,6 +52,14 @@ LIVES_INLINE void lives_painter_set_source_pixbuf (lives_painter_t *cr, const Li
 
 }
 
+
+LIVES_INLINE void lives_painter_set_source_surface (lives_painter_t *cr, lives_painter_surface_t *surface, double x, double y) {
+#ifdef PAINTER_CAIRO
+  cairo_set_source_surface(cr,surface,x,y);
+#endif
+
+}
+
 LIVES_INLINE void lives_painter_paint(lives_painter_t *cr) {
 #ifdef PAINTER_CAIRO
   cairo_paint(cr);
@@ -156,17 +164,6 @@ LIVES_INLINE void lives_painter_set_fill_rule(lives_painter_t *cr, lives_painter
 }
 
 
-LIVES_INLINE lives_painter_surface_t *lives_painter_surface_create_similar (lives_painter_surface_t *other, 
-									    lives_painter_content_t content, int width, int height) {
-
-  lives_painter_surface_t *surf=NULL;
-#ifdef PAINTER_CAIRO
-  surf=cairo_surface_create_similar(other,content,width,height);
-#endif  
-  return surf;
-}
-
-
 LIVES_INLINE void lives_painter_surface_flush(lives_painter_surface_t *surf) {
 #ifdef PAINTER_CAIRO
   cairo_surface_flush(surf);
@@ -185,23 +182,25 @@ LIVES_INLINE lives_painter_surface_t *lives_painter_image_surface_create_for_dat
 }
 
 
-LIVES_INLINE lives_painter_surface_t *lives_painter_image_surface_create(lives_painter_format_t format, int width, int height) {
+LIVES_INLINE lives_painter_surface_t *lives_painter_surface_create_from_widget(LiVESWidget *widget, lives_painter_format_t format, 
+									       int width, int height) {
   lives_painter_surface_t *surf=NULL;
 #ifdef PAINTER_CAIRO
-  surf=cairo_image_surface_create(format,width,height);
+#if GTK_CHECK_VERSION(3,0,0)
+  LiVESXWindow *window=lives_widget_get_xwindow(widget);
+  if (window!=NULL) {
+  surf=gdk_window_create_similar_surface(window,format,width,height);
+}
+#endif
 #endif
   return surf;
 }
 
 
-LIVES_INLINE lives_painter_surface_t *lives_painter_surface_create_similar_image(lives_painter_surface_t *other, lives_painter_format_t format, int width, int height) {
+LIVES_INLINE lives_painter_surface_t *lives_painter_image_surface_create(lives_painter_format_t format, int width, int height) {
   lives_painter_surface_t *surf=NULL;
 #ifdef PAINTER_CAIRO
-#if CAIRO_VERSION >= CAIRO_VERSION_ENCODE(1, 12, 0)
-  surf=cairo_surface_create_similar_image(other,format,width,height);
-#else
   surf=cairo_image_surface_create(format,width,height);
-#endif
 #endif
   return surf;
 }
@@ -1052,6 +1051,27 @@ LIVES_INLINE void lives_dialog_set_has_separator(LiVESDialog *dialog, boolean ha
 
 
 }
+
+
+
+LIVES_INLINE void lives_widget_set_hexpand(LiVESWidget *widget, boolean state) {
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3,0,0)
+  gtk_widget_set_hexpand(widget,state);
+#endif
+#endif
+}
+
+
+LIVES_INLINE void lives_widget_set_vexpand(LiVESWidget *widget, boolean state) {
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3,0,0)
+  gtk_widget_set_vexpand(widget,state);
+#endif
+#endif
+}
+
+
 
 LIVES_INLINE void lives_scale_button_set_orientation(LiVESScaleButton *scale, LiVESOrientation orientation) {
 #ifdef GUI_GTK

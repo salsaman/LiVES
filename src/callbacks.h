@@ -350,11 +350,23 @@ on_spin_end_value_changed           (GtkSpinButton   *spinbutton,
 				       gpointer         user_data);
 
 
-boolean expose_vid_event (GtkWidget *, GdkEventExpose *);
+#if GTK_CHECK_VERSION(3,0,0)
+boolean expose_vid_event (GtkWidget *, lives_painter_t *cr, gpointer user_data);
+#else
+boolean expose_vid_event (GtkWidget *, GdkEventExpose *event);
+#endif
 
-boolean expose_laud_event (GtkWidget *, GdkEventExpose *);
+#if GTK_CHECK_VERSION(3,0,0)
+boolean expose_laud_event (GtkWidget *, lives_painter_t *cr, gpointer user_data);
+#else
+boolean expose_laud_event (GtkWidget *, GdkEventExpose *event);
+#endif
 
-boolean expose_raud_event (GtkWidget *, GdkEventExpose *);
+#if GTK_CHECK_VERSION(3,0,0)
+boolean expose_raud_event (GtkWidget *, lives_painter_t *cr, gpointer user_data);
+#else
+boolean expose_raud_event (GtkWidget *, GdkEventExpose *event);
+#endif
 
 
 

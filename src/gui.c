@@ -132,6 +132,23 @@ void make_custom_submenus(void) {
 
 }
 
+#if GTK_CHECK_VERSION(3,0,0)
+static boolean expose_sim (GtkWidget *widget, lives_painter_t *cr, gpointer user_data) {
+  if (mainw->current_file>0) {
+    load_start_image(cfile->start);
+  }
+  return TRUE;
+
+}
+
+static boolean expose_eim (GtkWidget *widget, lives_painter_t *cr, gpointer user_data) {
+  if (mainw->current_file>0) {
+    load_end_image(cfile->end);
+  }
+  return TRUE;
+
+}
+#endif
 
 void 
 create_LiVES (void)
@@ -263,6 +280,17 @@ create_LiVES (void)
   mainw->image272 = gtk_image_new_from_pixbuf (NULL);
   mainw->image273 = gtk_image_new_from_pixbuf (NULL);
   mainw->imframe=mainw->imsep=NULL;
+
+#if GTK_CHECK_VERSION(3,0,0)
+  g_signal_connect_after (GTK_OBJECT (mainw->image272), LIVES_WIDGET_EVENT_EXPOSE_EVENT,
+			  G_CALLBACK (expose_sim),
+			  NULL);
+
+  g_signal_connect_after (GTK_OBJECT (mainw->image273), LIVES_WIDGET_EVENT_EXPOSE_EVENT,
+			  G_CALLBACK (expose_eim),
+			  NULL);
+
+#endif
 
   if (palette->style&STYLE_1) {
     load_theme();
@@ -1948,7 +1976,12 @@ create_LiVES (void)
   gtk_widget_show (mainw->eventbox);
   gtk_box_pack_start (GTK_BOX (mainw->vbox1), mainw->eventbox, TRUE, TRUE, 0);
   gtk_container_add (GTK_CONTAINER (mainw->eventbox), vbox4);
-  lives_widget_set_bg_color (mainw->eventbox, GTK_STATE_NORMAL, &palette->normal_back);
+
+  if (palette->style&STYLE_1) {
+    lives_widget_set_bg_color (mainw->eventbox, GTK_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_bg_color (vbox4, GTK_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_bg_color (mainw->vbox1, GTK_STATE_NORMAL, &palette->normal_back);
+  }
 
   gtk_widget_set_events (mainw->eventbox, GDK_SCROLL_MASK);
 
@@ -2019,7 +2052,10 @@ create_LiVES (void)
   hbox1 = gtk_hbox_new (FALSE, 0);
   gtk_widget_show(hbox1);
   gtk_box_pack_start (GTK_BOX (vbox4), hbox1, FALSE, FALSE, 0);
-  lives_widget_set_bg_color (hbox1, GTK_STATE_NORMAL, &palette->normal_back);
+  if (palette->style&STYLE_1) {
+    lives_widget_set_bg_color (hbox1, GTK_STATE_NORMAL, &palette->normal_back);
+  }
+  lives_widget_set_vexpand(hbox1,FALSE);
 
   mainw->eventbox3 = gtk_event_box_new ();
   gtk_widget_show (mainw->eventbox3);
@@ -2030,12 +2066,16 @@ create_LiVES (void)
   gtk_widget_show (mainw->frame1);
   gtk_container_add (GTK_CONTAINER (mainw->eventbox3), mainw->frame1);
   lives_widget_set_bg_color (mainw->frame1, GTK_STATE_NORMAL, &palette->normal_back);
+  lives_widget_set_vexpand(mainw->frame1,FALSE);
+  lives_widget_set_hexpand(mainw->frame1,FALSE);
 
   gtk_container_set_border_width (GTK_CONTAINER(mainw->eventbox3), 10);
   gtk_frame_set_shadow_type (GTK_FRAME(mainw->frame1), GTK_SHADOW_IN);
 
   gtk_widget_show (mainw->image272);
   gtk_container_add (GTK_CONTAINER (mainw->frame1), mainw->image272);
+  lives_widget_set_vexpand(mainw->image272,FALSE);
+  lives_widget_set_hexpand(mainw->image272,FALSE);
 
   label15 = gtk_label_new (_("First Frame"));
   gtk_widget_show (label15);
@@ -2075,18 +2115,24 @@ create_LiVES (void)
   mainw->eventbox4 = gtk_event_box_new ();
   gtk_box_pack_start (GTK_BOX (hbox1), mainw->eventbox4, TRUE, FALSE, 0);
   lives_widget_set_bg_color (mainw->eventbox4, GTK_STATE_NORMAL, &palette->normal_back);
+  lives_widget_set_vexpand(mainw->eventbox4,FALSE);
+  lives_widget_set_hexpand(mainw->eventbox4,FALSE);
   gtk_widget_show (mainw->eventbox4);
 
   mainw->frame2 = gtk_frame_new (NULL);
   gtk_widget_show (mainw->frame2);
   gtk_container_add (GTK_CONTAINER (mainw->eventbox4), mainw->frame2);
   lives_widget_set_bg_color (mainw->frame2, GTK_STATE_NORMAL, &palette->normal_back);
+  lives_widget_set_vexpand(mainw->frame2,FALSE);
+  lives_widget_set_hexpand(mainw->frame2,FALSE);
 
   gtk_container_set_border_width (GTK_CONTAINER(mainw->eventbox4), 10);
   gtk_frame_set_shadow_type (GTK_FRAME(mainw->frame2), GTK_SHADOW_IN);
   
   gtk_widget_show (mainw->image273);
   gtk_container_add (GTK_CONTAINER (mainw->frame2), mainw->image273);
+  lives_widget_set_vexpand(mainw->image273,FALSE);
+  lives_widget_set_hexpand(mainw->image273,FALSE);
 
   // default frame sizes
   mainw->def_width=DEFAULT_FRAME_HSIZE;
@@ -2142,7 +2188,10 @@ create_LiVES (void)
   mainw->arrow1 = gtk_arrow_new (GTK_ARROW_LEFT, GTK_SHADOW_OUT);
   gtk_widget_show (mainw->arrow1);
   gtk_box_pack_start (GTK_BOX (hbox3), mainw->arrow1, FALSE, FALSE, 0);
-  lives_widget_set_fg_color(mainw->arrow1, GTK_STATE_NORMAL, &palette->normal_fore);
+
+  if (palette->style&STYLE_1) {
+    lives_widget_set_fg_color(mainw->arrow1, GTK_STATE_NORMAL, &palette->normal_fore);
+  }
 
   gtk_entry_set_width_chars (GTK_ENTRY (mainw->spinbutton_start),10);
   mainw->sel_label = gtk_label_new(NULL);
@@ -2151,12 +2200,18 @@ create_LiVES (void)
   gtk_widget_show (mainw->sel_label);
   gtk_box_pack_start (GTK_BOX (hbox3), mainw->sel_label, FALSE, FALSE, 0);
   gtk_label_set_justify (GTK_LABEL (mainw->sel_label), GTK_JUSTIFY_LEFT);
-  lives_widget_set_fg_color(mainw->sel_label, GTK_STATE_NORMAL, &palette->normal_fore);
+
+  if (palette->style&STYLE_1) {
+    lives_widget_set_fg_color(mainw->sel_label, GTK_STATE_NORMAL, &palette->normal_fore);
+  }
 
   mainw->arrow2 = gtk_arrow_new (GTK_ARROW_RIGHT, GTK_SHADOW_OUT);
   gtk_widget_show (mainw->arrow2);
   gtk_box_pack_start (GTK_BOX (hbox3), mainw->arrow2, FALSE, FALSE, 0);
-  lives_widget_set_fg_color(mainw->arrow2, GTK_STATE_NORMAL, &palette->normal_fore);
+
+  if (palette->style&STYLE_1) {
+    lives_widget_set_fg_color(mainw->arrow2, GTK_STATE_NORMAL, &palette->normal_fore);
+  }
 
   spinbutton_end_adj = (GObject *)gtk_adjustment_new (0., 0., 0., 1., 100., 0.);
   mainw->spinbutton_end = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_end_adj), 1, 0);
@@ -2170,6 +2225,8 @@ create_LiVES (void)
   gtk_widget_set_tooltip_text( mainw->spinbutton_end, _("The last selected frame in this clip"));
 
   if (palette->style&STYLE_1&&palette->style&STYLE_2) {
+#if !GTK_CHECK_VERSION(3,0,0)
+    // background colour seems to be broken in gtk+3 !!!
     lives_widget_set_base_color(mainw->spinbutton_start, GTK_STATE_NORMAL, &palette->normal_back);
     lives_widget_set_base_color(mainw->spinbutton_start, GTK_STATE_INSENSITIVE, &palette->normal_back);
     lives_widget_set_base_color(mainw->spinbutton_end, GTK_STATE_NORMAL, &palette->normal_back);
@@ -2178,6 +2235,7 @@ create_LiVES (void)
     lives_widget_set_text_color(mainw->spinbutton_start, GTK_STATE_INSENSITIVE, &palette->normal_fore);
     lives_widget_set_text_color(mainw->spinbutton_end, GTK_STATE_NORMAL, &palette->normal_fore);
     lives_widget_set_text_color(mainw->spinbutton_end, GTK_STATE_INSENSITIVE, &palette->normal_fore);
+#endif
     lives_widget_set_fg_color(mainw->sel_label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
 
@@ -2199,7 +2257,9 @@ create_LiVES (void)
   mainw->eventbox5 = gtk_event_box_new ();
   gtk_box_pack_start (GTK_BOX (vbox4), mainw->eventbox5, FALSE, FALSE, 0);
 
-  lives_widget_set_bg_color (mainw->eventbox5, GTK_STATE_NORMAL, &palette->normal_back);
+  if (palette->style&STYLE_1) {
+    lives_widget_set_bg_color (mainw->eventbox5, GTK_STATE_NORMAL, &palette->normal_back);
+  }
 
   mainw->hruler = lives_standard_hruler_new();
   lives_ruler_set_range (LIVES_RULER (mainw->hruler), 0., 1000000., 0., 1000000.);
@@ -2219,7 +2279,9 @@ create_LiVES (void)
   gtk_widget_show (mainw->eventbox2);
   gtk_box_pack_start (GTK_BOX (vbox4), mainw->eventbox2, TRUE, TRUE, 0);
   gtk_widget_add_events (mainw->eventbox2, GDK_BUTTON1_MOTION_MASK | GDK_BUTTON_RELEASE_MASK | GDK_BUTTON_PRESS_MASK);
-  lives_widget_set_bg_color (mainw->eventbox2, GTK_STATE_NORMAL, &palette->normal_back);
+  if (palette->style&STYLE_1) {
+    lives_widget_set_bg_color (mainw->eventbox2, GTK_STATE_NORMAL, &palette->normal_back);
+  }
 
   vbox2 = gtk_vbox_new (FALSE, 0);
   gtk_widget_show (vbox2);
@@ -2232,6 +2294,7 @@ create_LiVES (void)
   }
   else {
     lives_widget_set_fg_color (mainw->vidbar, GTK_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_bg_color (vbox2, GTK_STATE_NORMAL, &palette->normal_back);
     gtk_widget_hide (mainw->vidbar);
   }
 
@@ -2242,8 +2305,9 @@ create_LiVES (void)
   gtk_widget_set_size_request(mainw->video_draw,lives_widget_get_allocation_width(mainw->LiVES),CE_VIDBAR_HEIGHT);
   gtk_widget_show (mainw->video_draw);
   gtk_box_pack_start (GTK_BOX (vbox2), mainw->video_draw, TRUE, TRUE, 0);
-  lives_widget_set_bg_color (mainw->video_draw, GTK_STATE_NORMAL, &palette->normal_back);
-
+  if (palette->style&STYLE_1) {
+    lives_widget_set_bg_color (mainw->video_draw, GTK_STATE_NORMAL, &palette->normal_back);
+  }
   mainw->laudbar = gtk_label_new (_("Left Audio"));
   gtk_box_pack_start (GTK_BOX (vbox2), mainw->laudbar, TRUE, TRUE, 0);
   gtk_label_set_justify (GTK_LABEL (mainw->laudbar), GTK_JUSTIFY_LEFT);
@@ -2260,7 +2324,9 @@ create_LiVES (void)
   gtk_widget_set_size_request(mainw->laudio_draw,lives_widget_get_allocation_width(mainw->LiVES),CE_VIDBAR_HEIGHT);
   gtk_widget_show (mainw->laudio_draw);
   gtk_box_pack_start (GTK_BOX (vbox2), mainw->laudio_draw, TRUE, TRUE, 0);
-  lives_widget_set_bg_color (mainw->laudio_draw, GTK_STATE_NORMAL, &palette->normal_back);
+  if (palette->style&STYLE_1) {
+    lives_widget_set_bg_color (mainw->laudio_draw, GTK_STATE_NORMAL, &palette->normal_back);
+  }
 
   mainw->raudbar = gtk_label_new (_("Right Audio"));
   gtk_box_pack_start (GTK_BOX (vbox2), mainw->raudbar, TRUE, TRUE, 0);
@@ -2278,11 +2344,14 @@ create_LiVES (void)
   gtk_widget_set_size_request(mainw->raudio_draw,lives_widget_get_allocation_width(mainw->LiVES),CE_VIDBAR_HEIGHT);
   gtk_widget_show (mainw->raudio_draw);
   gtk_box_pack_start (GTK_BOX (vbox2), mainw->raudio_draw, TRUE, TRUE, 0);
-  lives_widget_set_bg_color (mainw->raudio_draw, GTK_STATE_NORMAL, &palette->normal_back);
+  if (palette->style&STYLE_1) {
+    lives_widget_set_bg_color (mainw->raudio_draw, GTK_STATE_NORMAL, &palette->normal_back);
+  }
 
   mainw->message_box=gtk_vbox_new(FALSE, 0);
   gtk_widget_show (mainw->message_box);
   gtk_box_pack_start (GTK_BOX (vbox4), mainw->message_box, TRUE, TRUE, 0);
+  lives_widget_set_vexpand(mainw->message_box,TRUE);
 
   mainw->textview1=NULL;
   mainw->scrolledwindow=NULL;
@@ -2414,13 +2483,13 @@ create_LiVES (void)
   mainw->config_func=g_signal_connect_after (GTK_OBJECT (mainw->video_draw), "configure_event",
 					     G_CALLBACK (config_event),
 					     NULL);
-  mainw->vidbar_func=g_signal_connect_after (GTK_OBJECT (mainw->video_draw), LIVES_WIDGET_EVENT_DAMAGE_EVENT,
+  mainw->vidbar_func=g_signal_connect_after (GTK_OBJECT (mainw->video_draw), LIVES_WIDGET_EVENT_EXPOSE_EVENT,
 		    G_CALLBACK (expose_vid_event),
 		    NULL);
-  mainw->laudbar_func=g_signal_connect_after (GTK_OBJECT (mainw->laudio_draw), LIVES_WIDGET_EVENT_DAMAGE_EVENT,
+  mainw->laudbar_func=g_signal_connect_after (GTK_OBJECT (mainw->laudio_draw), LIVES_WIDGET_EVENT_EXPOSE_EVENT,
 		    G_CALLBACK (expose_laud_event),
 		    NULL);
-  mainw->raudbar_func=g_signal_connect_after (GTK_OBJECT (mainw->raudio_draw), LIVES_WIDGET_EVENT_DAMAGE_EVENT,
+  mainw->raudbar_func=g_signal_connect_after (GTK_OBJECT (mainw->raudio_draw), LIVES_WIDGET_EVENT_EXPOSE_EVENT,
 		    G_CALLBACK (expose_raud_event),
 		    NULL);
   mainw->pb_fps_func=g_signal_connect_after (GTK_OBJECT (mainw->spinbutton_pb_fps), "value_changed",
@@ -3274,6 +3343,7 @@ block_expose (void) {
   // otherwise we get into a loop of expose events
   // symptoms - strace shows the app looping on poll() and it is otherwise
   // unresponsive
+  mainw->draw_blocked=TRUE;
   g_signal_handler_block(mainw->video_draw,mainw->config_func);
   g_signal_handler_block(mainw->video_draw,mainw->vidbar_func);
   g_signal_handler_block(mainw->laudio_draw,mainw->laudbar_func);
@@ -3283,6 +3353,7 @@ block_expose (void) {
 void 
 unblock_expose (void) {
   // unblock expose/config events
+  mainw->draw_blocked=FALSE;
   g_signal_handler_unblock(mainw->video_draw,mainw->config_func);
   g_signal_handler_unblock(mainw->video_draw,mainw->vidbar_func);
   g_signal_handler_unblock(mainw->laudio_draw,mainw->laudbar_func);
@@ -3705,7 +3776,7 @@ void make_play_window(void) {
 
   gtk_widget_set_tooltip_text( mainw->m_sepwinbutton,_ ("Hide Play Window"));
 
-  mainw->pw_exp_func=g_signal_connect_after (GTK_OBJECT (mainw->play_window), LIVES_WIDGET_EVENT_DAMAGE_EVENT,
+  mainw->pw_exp_func=g_signal_connect_after (GTK_OBJECT (mainw->play_window), LIVES_WIDGET_EVENT_EXPOSE_EVENT,
 					     G_CALLBACK (expose_play_window),
 					     NULL);
   

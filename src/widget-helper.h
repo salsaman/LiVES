@@ -70,11 +70,11 @@ typedef GtkOrientation LiVESOrientation;
 
 typedef GdkEvent                          LiVESEvent;
 #if GTK_CHECK_VERSION(3,0,0)
-#define LIVES_WIDGET_EVENT_DAMAGE_EVENT "damage_event"
+#define LIVES_WIDGET_EVENT_EXPOSE_EVENT "draw"
 #define GTK_OBJECT(a)                     a
 #else
 typedef GtkObject                         LiVESObject;
-#define LIVES_WIDGET_EVENT_DAMAGE_EVENT "expose_event"
+#define LIVES_WIDGET_EVENT_EXPOSE_EVENT "expose_event"
 #endif
 typedef GtkWidget                         LiVESWidget;
 typedef GtkContainer                      LiVESContainer;
@@ -373,14 +373,12 @@ typedef (void *)(LiVESPixbufDestroyNotify(uchar *, gpointer));
 lives_painter_t *lives_painter_create(lives_painter_surface_t *target);
 lives_painter_t *lives_painter_create_from_widget(LiVESWidget *);
 void lives_painter_set_source_pixbuf (lives_painter_t *, const LiVESPixbuf *, double pixbuf_x, double pixbuf_y);
+void lives_painter_set_source_surface (lives_painter_t *, lives_painter_surface_t *, double x, double y);
 lives_painter_surface_t *lives_painter_image_surface_create(lives_painter_format_t format, int width, int height);
-lives_painter_surface_t *lives_painter_surface_create_similar (lives_painter_surface_t *, 
-							       lives_painter_content_t, int width, int height);
-lives_painter_surface_t *lives_painter_surface_create_similar_image(lives_painter_surface_t *other, 
-								    lives_painter_format_t format, int width, int height);
 lives_painter_surface_t *lives_painter_image_surface_create_for_data(uint8_t *data, lives_painter_format_t, 
 								     int width, int height, int stride);
-
+lives_painter_surface_t *lives_painter_surface_create_from_widget(LiVESWidget *, lives_painter_format_t, 
+								  int width, int height);
 void lives_painter_surface_flush(lives_painter_surface_t *);
 
 void lives_painter_destroy(lives_painter_t *);
@@ -540,7 +538,8 @@ void lives_widget_clear_area(LiVESWidget *, int x, int y, int width, int height)
 // optional
 
 void lives_dialog_set_has_separator(LiVESDialog *dialog, boolean has);
-
+void lives_widget_set_hexpand(LiVESWidget *, boolean state);
+void lives_widget_set_vexpand(LiVESWidget *, boolean state);
 
 // compound functions (composed of basic functions)
 

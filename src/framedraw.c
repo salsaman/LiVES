@@ -243,7 +243,7 @@ void widget_add_framedraw (GtkVBox *box, gint start, gint end, gboolean add_prev
     lives_widget_set_fg_color (mainw->framedraw, GTK_STATE_NORMAL, &palette->normal_fore);
   }
 
-  g_signal_connect_after (GTK_OBJECT (mainw->framedraw), LIVES_WIDGET_EVENT_DAMAGE_EVENT,
+  g_signal_connect_after (GTK_OBJECT (mainw->framedraw), LIVES_WIDGET_EVENT_EXPOSE_EVENT,
 			  G_CALLBACK (expose_fd_event), NULL);
 
 

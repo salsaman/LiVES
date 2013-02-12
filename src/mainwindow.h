@@ -1066,6 +1066,11 @@ typedef struct {
   boolean kb_timer_end;
 #endif
 
+  boolean draw_blocked; // block drawing of timeline bars : prevents an infinite loop
+
+  gint ce_frame_height;
+  gint ce_frame_width;
+
   gchar *read_failed_file;
   gchar *write_failed_file;
   gchar *bad_aud_file;

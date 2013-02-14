@@ -35,6 +35,8 @@
 #define V_RESIZE_ADJUST 36
 #define H_RESIZE_ADJUST 22
 
+#define CE_FRAME_HSPACE 320
+
 // sepwin/screen size safety margins in pixels
 #define DSIZE_SAFETY_H 100
 #define DSIZE_SAFETY_V 100
@@ -552,6 +554,8 @@ typedef struct {
 
   GtkWidget *frame1;
   GtkWidget *frame2;
+  GtkWidget *freventbox0;
+  GtkWidget *freventbox1;
   GtkWidget *playframe;
   GtkWidget *pl_eventbox;
   GdkPixbuf *imframe;
@@ -730,8 +734,6 @@ typedef struct {
   GtkWidget *play_window;
   weed_plant_t *frame_layer;
   GtkWidget *plug;
-  gulong pw_exp_func;
-  boolean pw_exp_is_blocked;
 
   // frame preview in the separate window
   GtkWidget *preview_box;

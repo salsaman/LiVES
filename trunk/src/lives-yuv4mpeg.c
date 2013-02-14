@@ -406,11 +406,6 @@ void on_open_yuv4m_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
   // if not playing, start playing
   if (mainw->playing_file==-1) {
-    if (mainw->play_window!=NULL&&old_file==-1) {
-      // usually preview or load_preview_frame would do this
-      g_signal_handler_block(mainw->play_window,mainw->pw_exp_func);
-      mainw->pw_exp_is_blocked=TRUE;
-    }
 
     // temp kludge, symlink audiodump.pcm to wav file, then pretend we are playing
     // an opening preview . Doesn't work with fifo.

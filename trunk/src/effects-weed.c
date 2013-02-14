@@ -6958,12 +6958,6 @@ gboolean weed_generator_start (weed_plant_t *inst) {
       mainw->playing_sel=FALSE;
     }
 
-    if (mainw->play_window!=NULL&&old_file==-1) {
-      // usually preview or load_preview_frame would do this
-      g_signal_handler_block(mainw->play_window,mainw->pw_exp_func);
-      mainw->pw_exp_is_blocked=TRUE;
-    }
-
     play_file();
 
 
@@ -6998,10 +6992,7 @@ gboolean weed_generator_start (weed_plant_t *inst) {
     }
 
     if (mainw->cancelled==CANCEL_GENERATOR_END) mainw->cancelled=CANCEL_NONE;
-    if (old_file==-1&&mainw->play_window!=NULL) {
-      g_signal_handler_block(mainw->play_window,mainw->pw_exp_func);
-      mainw->pw_exp_is_blocked=TRUE;
-    }
+
   }
 
   return TRUE;

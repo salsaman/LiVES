@@ -137,16 +137,20 @@ static boolean expose_sim (GtkWidget *widget, lives_painter_t *cr, gpointer user
   if (mainw->current_file>0) {
     load_start_image(cfile->start);
   }
+  else load_start_image(0);
   return TRUE;
-
 }
 
 static boolean expose_eim (GtkWidget *widget, lives_painter_t *cr, gpointer user_data) {
   if (mainw->current_file>0) {
     load_end_image(cfile->end);
   }
+  else load_end_image(0);
   return TRUE;
+}
 
+static boolean expose_pim (GtkWidget *widget, lives_painter_t *cr, gpointer user_data) {
+  return TRUE;
 }
 #endif
 
@@ -281,25 +285,31 @@ create_LiVES (void)
   mainw->image273 = gtk_image_new_from_pixbuf (NULL);
   mainw->imframe=mainw->imsep=NULL;
 
-#if GTK_CHECK_VERSION(3,0,0)
-  g_signal_connect_after (GTK_OBJECT (mainw->image272), LIVES_WIDGET_EVENT_EXPOSE_EVENT,
-			  G_CALLBACK (expose_sim),
-			  NULL);
-
-  g_signal_connect_after (GTK_OBJECT (mainw->image273), LIVES_WIDGET_EVENT_EXPOSE_EVENT,
-			  G_CALLBACK (expose_eim),
-			  NULL);
-
-#endif
+  gtk_widget_show(mainw->image272);
+  gtk_widget_show(mainw->image273);
 
   if (palette->style&STYLE_1) {
     load_theme();
   }
 
+
+#if GTK_CHECK_VERSION(3,0,0)
+  g_signal_connect (GTK_OBJECT (mainw->image272), LIVES_WIDGET_EVENT_EXPOSE_EVENT,
+		    G_CALLBACK (expose_sim),
+		    NULL);
+
+  g_signal_connect (GTK_OBJECT (mainw->image273), LIVES_WIDGET_EVENT_EXPOSE_EVENT,
+		    G_CALLBACK (expose_eim),
+		    NULL);
+#else
+
   if (mainw->imframe!=NULL) {
     gtk_image_set_from_pixbuf(GTK_IMAGE(mainw->image272),mainw->imframe);
     gtk_image_set_from_pixbuf(GTK_IMAGE(mainw->image273),mainw->imframe);
   }
+
+#endif
+
 
   mainw->accel_group = GTK_ACCEL_GROUP(gtk_accel_group_new ());
   
@@ -2064,16 +2074,26 @@ create_LiVES (void)
 
   mainw->frame1 = gtk_frame_new (NULL);
   gtk_widget_show (mainw->frame1);
+  gtk_container_set_border_width (GTK_CONTAINER (mainw->frame1), 10);
   gtk_container_add (GTK_CONTAINER (mainw->eventbox3), mainw->frame1);
   lives_widget_set_bg_color (mainw->frame1, GTK_STATE_NORMAL, &palette->normal_back);
   lives_widget_set_vexpand(mainw->frame1,FALSE);
   lives_widget_set_hexpand(mainw->frame1,FALSE);
 
-  gtk_container_set_border_width (GTK_CONTAINER(mainw->eventbox3), 10);
+  //gtk_container_set_border_width (GTK_CONTAINER(mainw->eventbox3), 10);
   gtk_frame_set_shadow_type (GTK_FRAME(mainw->frame1), GTK_SHADOW_IN);
 
+  mainw->freventbox0=gtk_event_box_new();
+  gtk_widget_show(mainw->freventbox0);
+  if (palette->style&STYLE_1) {
+    lives_widget_set_bg_color (mainw->freventbox0, GTK_STATE_NORMAL, &palette->normal_back);
+  }
+  lives_widget_set_vexpand(mainw->freventbox0,FALSE);
+  lives_widget_set_hexpand(mainw->freventbox0,FALSE);
+  gtk_container_add (GTK_CONTAINER (mainw->frame1), mainw->freventbox0);
+
   gtk_widget_show (mainw->image272);
-  gtk_container_add (GTK_CONTAINER (mainw->frame1), mainw->image272);
+  gtk_container_add (GTK_CONTAINER (mainw->freventbox0), mainw->image272);
   lives_widget_set_vexpand(mainw->image272,FALSE);
   lives_widget_set_hexpand(mainw->image272,FALSE);
 
@@ -2121,16 +2141,27 @@ create_LiVES (void)
 
   mainw->frame2 = gtk_frame_new (NULL);
   gtk_widget_show (mainw->frame2);
+  gtk_container_set_border_width (GTK_CONTAINER (mainw->frame2), 10);
   gtk_container_add (GTK_CONTAINER (mainw->eventbox4), mainw->frame2);
   lives_widget_set_bg_color (mainw->frame2, GTK_STATE_NORMAL, &palette->normal_back);
   lives_widget_set_vexpand(mainw->frame2,FALSE);
   lives_widget_set_hexpand(mainw->frame2,FALSE);
 
-  gtk_container_set_border_width (GTK_CONTAINER(mainw->eventbox4), 10);
+  //gtk_container_set_border_width (GTK_CONTAINER(mainw->eventbox4), 10);
   gtk_frame_set_shadow_type (GTK_FRAME(mainw->frame2), GTK_SHADOW_IN);
+
+  mainw->freventbox1=gtk_event_box_new();
+  gtk_widget_show(mainw->freventbox1);
+  if (palette->style&STYLE_1) {
+    lives_widget_set_bg_color (mainw->freventbox1, GTK_STATE_NORMAL, &palette->normal_back);
+  }
+  lives_widget_set_vexpand(mainw->freventbox1,FALSE);
+  lives_widget_set_hexpand(mainw->freventbox1,FALSE);
+
+  gtk_container_add (GTK_CONTAINER (mainw->frame2), mainw->freventbox1);
   
   gtk_widget_show (mainw->image273);
-  gtk_container_add (GTK_CONTAINER (mainw->frame2), mainw->image273);
+  gtk_container_add (GTK_CONTAINER (mainw->freventbox1), mainw->image273);
   lives_widget_set_vexpand(mainw->image273,FALSE);
   lives_widget_set_hexpand(mainw->image273,FALSE);
 
@@ -2147,17 +2178,20 @@ create_LiVES (void)
     }
   }
 
-  gtk_widget_set_size_request (mainw->eventbox3, mainw->def_width, mainw->def_height);
+  /*  gtk_widget_set_size_request (mainw->eventbox3, mainw->def_width, mainw->def_height);
   gtk_widget_set_size_request (mainw->frame1, mainw->def_width, mainw->def_height);
   gtk_widget_set_size_request (mainw->frame2, mainw->def_width, mainw->def_height);
   gtk_widget_set_size_request (mainw->eventbox4, mainw->def_width, mainw->def_height);
-  
+  */
   // the actual playback image for the internal player
   mainw->image274 = gtk_image_new_from_pixbuf (NULL);
   gtk_widget_show (mainw->image274);
   g_object_ref(mainw->image274);
 
 #if GTK_CHECK_VERSION(3,0,0)
+  g_signal_connect (GTK_OBJECT (mainw->image274), LIVES_WIDGET_EVENT_EXPOSE_EVENT,
+		    G_CALLBACK (expose_pim),
+		    NULL);
   g_object_ref_sink (G_OBJECT (mainw->image274));
 #else
   gtk_object_sink (GTK_OBJECT (mainw->image274));
@@ -3042,6 +3076,8 @@ fade_background(void) {
 
   lives_widget_set_bg_color (mainw->frame1, GTK_STATE_NORMAL, &palette->fade_colour);
   lives_widget_set_bg_color (mainw->frame2, GTK_STATE_NORMAL, &palette->fade_colour);
+  lives_widget_set_bg_color (mainw->freventbox0, GTK_STATE_NORMAL, &palette->fade_colour);
+  lives_widget_set_bg_color (mainw->freventbox1, GTK_STATE_NORMAL, &palette->fade_colour);
   gtk_frame_set_shadow_type (GTK_FRAME(mainw->frame1), GTK_SHADOW_NONE);
   gtk_frame_set_label (GTK_FRAME(mainw->frame1), "");
   gtk_frame_set_shadow_type (GTK_FRAME(mainw->frame2), GTK_SHADOW_NONE);
@@ -3182,6 +3218,8 @@ unfade_background(void) {
   lives_widget_set_bg_color (mainw->eventbox4, GTK_STATE_NORMAL, &palette->normal_back);
   lives_widget_set_bg_color (mainw->frame1, GTK_STATE_NORMAL, &palette->normal_back);
   lives_widget_set_bg_color (mainw->frame2, GTK_STATE_NORMAL, &palette->normal_back);
+  lives_widget_set_bg_color (mainw->freventbox0, GTK_STATE_NORMAL, &palette->normal_back);
+  lives_widget_set_bg_color (mainw->freventbox1, GTK_STATE_NORMAL, &palette->normal_back);
 
   gtk_frame_set_shadow_type (GTK_FRAME(mainw->frame2), GTK_SHADOW_IN);
   lives_widget_set_bg_color (mainw->playframe, GTK_STATE_NORMAL, &palette->normal_back);
@@ -3776,33 +3814,16 @@ void make_play_window(void) {
 
   gtk_widget_set_tooltip_text( mainw->m_sepwinbutton,_ ("Hide Play Window"));
 
-  mainw->pw_exp_func=g_signal_connect_after (GTK_OBJECT (mainw->play_window), LIVES_WIDGET_EVENT_EXPOSE_EVENT,
-					     G_CALLBACK (expose_play_window),
-					     NULL);
-  
   g_signal_connect (GTK_OBJECT (mainw->play_window), "delete_event",
 		    G_CALLBACK (on_stop_activate_by_del),
 		    NULL);
   
   
-  if (((mainw->current_file>-1&&(cfile->is_loaded||(cfile->clip_type!=CLIP_TYPE_DISK&&
-						    cfile->clip_type!=CLIP_TYPE_FILE)))||
-       (mainw->preview&&cfile->frames>0))&&(mainw->multitrack!=NULL||mainw->playing_file>-1)) {
-    g_signal_handler_block(mainw->play_window,mainw->pw_exp_func);
-    mainw->pw_exp_is_blocked=TRUE;
-  }
-  else mainw->pw_exp_is_blocked=FALSE;
-
 
   if (!mainw->ext_playback) {
     // be careful, the user could switch out of sepwin here !
     if (mainw->multitrack!=NULL&&mainw->multitrack->idlefunc>0) g_source_remove(mainw->multitrack->idlefunc);
     mainw->noswitch=TRUE;
-
-    if (mainw->current_file>-1) {
-      g_signal_handler_block(mainw->play_window,mainw->pw_exp_func);
-      mainw->pw_exp_is_blocked=TRUE;
-    }
 
     while (g_main_context_iteration(NULL,FALSE));
     if (mainw->multitrack!=NULL&&mainw->multitrack->idlefunc>0) {
@@ -4135,8 +4156,6 @@ kill_play_window (void) {
   // plug our player back into internal window
 
   if (mainw->play_window!=NULL) {
-    if (!mainw->pw_exp_is_blocked)
-      g_signal_handler_block(mainw->play_window,mainw->pw_exp_func);
     if (mainw->preview_box!=NULL&&lives_widget_get_parent(mainw->preview_box)!=NULL) {
       // preview_box is refed, so it will survive
       gtk_container_remove (GTK_CONTAINER (mainw->play_window), mainw->preview_box);

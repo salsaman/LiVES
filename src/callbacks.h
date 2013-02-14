@@ -699,8 +699,6 @@ void
 on_vj_reset_activate            (GtkMenuItem     *menuitem,
 				 gpointer         user_data);
 
-boolean expose_play_window (GtkWidget *, GdkEventExpose *);
-
 void
 on_prv_link_toggled                (GtkToggleButton *togglebutton,
 				    gpointer         user_data);

@@ -1095,7 +1095,8 @@ void add_to_winmenu(void) {
 void
 remove_from_winmenu(void) {
   gtk_container_remove(GTK_CONTAINER(mainw->winmenu), cfile->menuentry);
-  gtk_widget_destroy(cfile->menuentry);
+  if (LIVES_IS_WIDGET(cfile->menuentry))
+    gtk_widget_destroy(cfile->menuentry);
   mainw->cliplist=g_list_remove (mainw->cliplist, GINT_TO_POINTER (mainw->current_file));
   if (cfile->clip_type==CLIP_TYPE_DISK||cfile->clip_type==CLIP_TYPE_FILE) {
     mainw->clips_available--;

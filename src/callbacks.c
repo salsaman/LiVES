@@ -7559,10 +7559,6 @@ on_sepwin_activate               (GtkMenuItem     *menuitem,
 	  resize_play_window();
 	}
 	
-	if (!mainw->pw_exp_is_blocked) g_signal_handler_block(mainw->play_window,mainw->pw_exp_func);
-	mainw->pw_exp_is_blocked=TRUE;
-     
-	
 	if (mainw->play_window!=NULL&&GDK_IS_WINDOW(lives_widget_get_xwindow(mainw->play_window))) {
 	  hide_cursor(lives_widget_get_xwindow(mainw->play_window));
 	  gtk_widget_set_app_paintable(mainw->play_window,TRUE);
@@ -9379,7 +9375,6 @@ boolean expose_raud_event (GtkWidget *widget, GdkEventExpose *event) {
 
 
 boolean config_event (GtkWidget *widget, GdkEventConfigure *event, gpointer user_data) {
-
   if (mainw->is_ready) {
     if (mainw->current_file>-1) {
       get_play_times();
@@ -9405,101 +9400,6 @@ boolean config_event (GtkWidget *widget, GdkEventConfigure *event, gpointer user
   }
   return FALSE;
 }
-
-
-boolean expose_play_window (GtkWidget *widget, GdkEventExpose *event) {
-#ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3,0,0)
-#ifdef PAINTER_CAIRO
-  const cairo_region_t *reg;
-  cairo_rectangle_int_t rect;
-#endif
-#else
-  GdkRegion *reg;
-  GdkRectangle rect;
-#endif
-#endif
-  lives_painter_t *cr;
-
-  // only act on last event
-  if (event->count>0) {
-    return TRUE;
-  }
-
-  reg=event->region;
-
-#ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3,0,0)
-#ifdef PAINTER_CAIRO
-  cairo_region_get_extents(reg,&rect);
-#endif
-#else
-  gdk_region_get_clipbox(reg,&rect);
-#endif
-#endif
-
-  if ((mainw->multitrack==NULL||mainw->multitrack->sepwin_pixbuf==NULL)&&
-      (mainw->current_file==-1||!cfile->is_loaded||(cfile->clip_type!=CLIP_TYPE_FILE&&
-						    cfile->clip_type!=CLIP_TYPE_DISK))&&mainw->imframe!=NULL) {
-    if (!mainw->pw_exp_is_blocked) g_signal_handler_block(mainw->play_window,mainw->pw_exp_func);
-    mainw->pw_exp_is_blocked=TRUE;
-    block_expose();
-
-    if (rect.width>lives_pixbuf_get_width(LIVES_PIXBUF (mainw->imframe))) {
-      rect.width=lives_pixbuf_get_width(LIVES_PIXBUF (mainw->imframe));
-    }
-    if (rect.height>lives_pixbuf_get_height(LIVES_PIXBUF (mainw->imframe))) {
-      rect.height=lives_pixbuf_get_height(LIVES_PIXBUF (mainw->imframe));
-    }
-
-    if (mainw->current_file>0&&cfile!=NULL&&
-	(cfile->clip_type==CLIP_TYPE_YUV4MPEG||cfile->clip_type==CLIP_TYPE_VIDEODEV)) {
-      if (mainw->camframe==NULL) {
-	GError *error=NULL;
-	gchar *tmp=g_strdup_printf("%s/%s/camera/frame.jpg",prefs->prefix_dir,THEME_DIR);
-	mainw->camframe=lives_pixbuf_new_from_file(tmp,&error);
-	if (mainw->camframe!=NULL) gdk_pixbuf_saturate_and_pixelate(mainw->camframe,mainw->camframe,0.0,FALSE);
-	g_free(tmp);
-      }
-      
-      cr = lives_painter_create_from_widget (mainw->play_window);
-      lives_painter_set_source_pixbuf (cr, mainw->camframe, 0, 0);
-      lives_painter_paint (cr);
-      lives_painter_destroy (cr);
-    }
-    else {
-      cr = lives_painter_create_from_widget (mainw->play_window);
-      lives_painter_set_source_pixbuf (cr, mainw->imframe, 0, 0);
-      lives_painter_paint (cr);
-      lives_painter_destroy (cr);
-    }
-
-    unblock_expose();
-    g_signal_handler_unblock(mainw->play_window,mainw->pw_exp_func);
-    mainw->pw_exp_is_blocked=FALSE;
-  }
-  if (mainw->multitrack!=NULL&&mainw->multitrack->sepwin_pixbuf!=NULL) {
-    if (!mainw->pw_exp_is_blocked) g_signal_handler_block(mainw->play_window,mainw->pw_exp_func);
-    mainw->pw_exp_is_blocked=TRUE;
-    block_expose();
-    if (rect.width>lives_pixbuf_get_width(mainw->multitrack->sepwin_pixbuf)) {
-      rect.width=lives_pixbuf_get_width(mainw->multitrack->sepwin_pixbuf);
-    }
-    if (rect.height>lives_pixbuf_get_height(mainw->multitrack->sepwin_pixbuf)) {
-      rect.height=lives_pixbuf_get_height(mainw->multitrack->sepwin_pixbuf);
-    }
-    cr = lives_painter_create_from_widget (mainw->play_window);
-    lives_painter_set_source_pixbuf (cr, mainw->multitrack->sepwin_pixbuf, 0, 0);
-    lives_painter_paint (cr);
-    lives_painter_destroy (cr);
-    unblock_expose();
-    g_signal_handler_unblock(mainw->play_window,mainw->pw_exp_func);
-    mainw->pw_exp_is_blocked=FALSE;
-  }
-  return FALSE;
-}
-
-
 
 
 
@@ -9689,8 +9589,6 @@ on_preview_clicked                     (GtkButton       *button,
 
       if (mainw->multitrack==NULL&&!cfile->is_loaded) {
 	if (mainw->play_window!=NULL) {
-	  if (!mainw->pw_exp_is_blocked) g_signal_handler_block(mainw->play_window,mainw->pw_exp_func);
-	  mainw->pw_exp_is_blocked=TRUE;
 	  cfile->is_loaded=TRUE;
 	  resize_play_window();
 	  cfile->is_loaded=FALSE;
@@ -9711,8 +9609,6 @@ on_preview_clicked                     (GtkButton       *button,
     if (user_data!=NULL) {
       // called from multitrack
       if (mainw->play_window!=NULL) {
-	if (!mainw->pw_exp_is_blocked) g_signal_handler_block(mainw->play_window,mainw->pw_exp_func);
-	mainw->pw_exp_is_blocked=TRUE;
 	resize_play_window();
       }
       if (mainw->multitrack!=NULL&&mainw->multitrack->is_rendering) {
@@ -9822,13 +9718,6 @@ on_preview_clicked                     (GtkButton       *button,
 	    gtk_widget_set_sensitive (mainw->files[i]->menuentry, TRUE);
 	    }}}*/
       if (mainw->play_window!=NULL) {
-	if (!cfile->opening_audio) {
-	  g_signal_handlers_block_matched(mainw->play_window,
-					  (GSignalMatchType)(G_SIGNAL_MATCH_FUNC|G_SIGNAL_MATCH_UNBLOCKED),
-					  0,0,0,(gpointer)expose_play_window,NULL);
-	  if (mainw->pw_exp_is_blocked) g_signal_handler_unblock(mainw->play_window,mainw->pw_exp_func);
-	  mainw->pw_exp_is_blocked=FALSE;
-	}
 	resize_play_window();
       }
     }

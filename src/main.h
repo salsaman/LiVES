@@ -972,6 +972,7 @@ boolean startup_message_nonfatal(const gchar *msg);
 boolean startup_message_nonfatal_dismissable(const gchar *msg, gint warning_mask);
 capability *get_capabilities(void);
 void get_monitors(void);
+void set_ce_frame_from_pixbuf(GtkImage *image, GdkPixbuf *pixbuf);
 void load_start_image(gint frame);
 void load_end_image(gint frame);
 void load_preview_image(boolean update_always);

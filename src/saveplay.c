@@ -2364,8 +2364,6 @@ void play_file (void) {
 	g_free(title);
 	g_free(xtrabit);
       }
-      if (!mainw->pw_exp_is_blocked) g_signal_handler_block(mainw->play_window,mainw->pw_exp_func);
-      mainw->pw_exp_is_blocked=TRUE;
     }
   
     if (!mainw->foreign&&!mainw->sep_win) {
@@ -3038,16 +3036,6 @@ void play_file (void) {
     }
     else {
       // or resize it back to single size
-      if (!lives_widget_is_visible (mainw->play_window)) {
-
-	block_expose();
-	mainw->noswitch=TRUE;
-	g_signal_handler_block(mainw->play_window,mainw->pw_exp_func);
-	mainw->pw_exp_is_blocked=TRUE;
-	while (g_main_context_iteration (NULL,FALSE));
-	mainw->noswitch=FALSE;
-	unblock_expose();
-      }
       if (mainw->current_file>-1&&cfile->is_loaded&&cfile->frames>0&&!mainw->is_rendering&&
 	  (cfile->clip_type!=CLIP_TYPE_GENERATOR)) {
 	if (mainw->preview_box==NULL) {
@@ -3078,9 +3066,6 @@ void play_file (void) {
 
 	  gtk_widget_queue_draw (mainw->LiVES);
 	  mainw->noswitch=TRUE;
-
-	  g_signal_handler_block(mainw->play_window,mainw->pw_exp_func);
-	  mainw->pw_exp_is_blocked=TRUE;
 
 	  while (g_main_context_iteration (NULL,FALSE));
 	  if (mainw->play_window!=NULL) {

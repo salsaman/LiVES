@@ -2101,6 +2101,9 @@ create_LiVES (void)
   lives_widget_set_hexpand(mainw->image272,FALSE);
 
   label15 = lives_standard_label_new (_("First Frame"));
+  if (palette->style&STYLE_1) {
+    lives_widget_set_fg_color(label15, GTK_STATE_NORMAL, &palette->normal_fore);
+  }
   gtk_widget_show (label15);
   gtk_frame_set_label_widget (GTK_FRAME (mainw->frame1), label15);
 
@@ -2114,13 +2117,12 @@ create_LiVES (void)
     lives_widget_set_bg_color (mainw->playframe, GTK_STATE_NORMAL, &palette->normal_back);
   }
 
-  pf_label = gtk_label_new (_("Play"));
-  gtk_widget_show (pf_label);
-  gtk_frame_set_label_widget (GTK_FRAME (mainw->playframe), pf_label);
-  gtk_label_set_justify (GTK_LABEL (pf_label), GTK_JUSTIFY_LEFT);
+  pf_label = lives_standard_label_new (_("Play"));
   if (palette->style&STYLE_1) {
     lives_widget_set_fg_color(pf_label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
+  gtk_widget_show (pf_label);
+  gtk_frame_set_label_widget (GTK_FRAME (mainw->playframe), pf_label);
 
   mainw->pl_eventbox = gtk_event_box_new ();
   lives_widget_set_bg_color (mainw->pl_eventbox, GTK_STATE_NORMAL, &palette->normal_back);
@@ -2203,10 +2205,9 @@ create_LiVES (void)
   gtk_object_sink (GTK_OBJECT (mainw->image274));
 #endif
 
-  label16 = gtk_label_new (_("Last Frame"));
+  label16 = lives_standard_label_new (_("Last Frame"));
   gtk_widget_show (label16);
   gtk_frame_set_label_widget (GTK_FRAME (mainw->frame2), label16);
-  gtk_label_set_justify (GTK_LABEL (label16), GTK_JUSTIFY_RIGHT);
   if (palette->style&STYLE_1) {
     lives_widget_set_fg_color(label16, GTK_STATE_NORMAL, &palette->normal_fore);
   }

@@ -139,7 +139,7 @@ weed_plant_t *render_text_to_layer(weed_plant_t *layer, const char *text, const 
 
   // do lives_painter and pango things
 
-  lives_painter=layer_to_lives_painter(layer); ///< layer is destroyed (unless error, then cairo is NULL)
+  lives_painter=layer_to_lives_painter(layer);
   if (lives_painter==NULL) return layer; ///< error occured
   
   layout = pango_cairo_create_layout(lives_painter);

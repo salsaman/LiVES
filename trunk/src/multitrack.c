@@ -58,14 +58,12 @@
 #if GTK_CHECK_VERSION(3,0,0)
 static boolean expose_timeline_reg_event (GtkWidget *, lives_painter_t *cr, gpointer mt);
 static boolean mt_expose_laudtrack_event (GtkWidget *ebox, lives_painter_t *, gpointer mt);
-//static boolean mt_expose_raudtrack_event (GtkWidget *ebox, lives_painter_t *, gpointer mt);
+static boolean mt_expose_raudtrack_event (GtkWidget *ebox, lives_painter_t *, gpointer mt);
 #else
 static boolean expose_timeline_reg_event (GtkWidget *, GdkEventExpose *, gpointer mt);
 static boolean mt_expose_laudtrack_event (GtkWidget *ebox, GdkEventExpose *, gpointer mt);
-//static boolean mt_expose_raudtrack_event (GtkWidget *ebox, GdkEventExpose *, gpointer mt);
-#endif
-
 static boolean mt_expose_raudtrack_event (GtkWidget *ebox, GdkEventExpose *, gpointer mt);
+#endif
 
 static void on_rename_track_activate (GtkMenuItem *, gpointer mt);
 
@@ -1123,7 +1121,7 @@ static void redraw_eventbox(lives_mt *mt, GtkWidget *eventbox) {
 
 
 #if GTK_CHECK_VERSION(3,0,0)
-static boolean expose_track_event (GtkWidget *eventbox, lives_painter_t *cr, gpointer user_data) {
+static boolean expose_track_event (GtkWidget *eventbox, lives_painter_t *cairo, gpointer user_data) {
 #else
 static gint expose_track_event (GtkWidget *eventbox, GdkEventExpose *event, gpointer user_data) {
 #endif
@@ -1135,9 +1133,12 @@ static gint expose_track_event (GtkWidget *eventbox, GdkEventExpose *event, gpoi
 #if !GTK_CHECK_VERSION(3,0,0)
   GdkRegion *reg;
   GdkRectangle rect;
+  lives_painter_t *cairo=NULL;
 #else
   int xwidth,xheight;
 #endif
+
+  lives_painter_t *cr=cairo;
 
   GdkPixbuf *bgimage;
 
@@ -1184,10 +1185,10 @@ static gint expose_track_event (GtkWidget *eventbox, GdkEventExpose *event, gpoi
   if (GPOINTER_TO_INT(g_object_get_data (G_OBJECT(eventbox), "drawn"))) {
     bgimage=(GdkPixbuf *)g_object_get_data (G_OBJECT(eventbox), "bgimg");
     if (bgimage!=NULL&&lives_pixbuf_get_width(bgimage)>0) {
-      //      lives_painter_t *cr = lives_painter_create_from_widget (eventbox);
+      if (cairo==NULL) cr = lives_painter_create_from_widget (eventbox);
       lives_painter_set_source_pixbuf (cr, bgimage, startx, 0);
       lives_painter_paint (cr);
-      //lives_painter_destroy (cr);
+      if (cairo==NULL) lives_painter_destroy (cr);
       if (is_audio_eventbox(mt,eventbox)&&mt->avol_init_event!=NULL&&mt->aparam_view_list!=NULL) 
 	draw_aparams(mt,eventbox,mt->aparam_view_list,mt->avol_init_event,startx,width);
       if (mt->block_selected!=NULL) draw_block(mt,mt->block_selected,-1,-1); // oops - causes expose to be called in a loop - seems we cannot stop this
@@ -1764,7 +1765,6 @@ void scroll_tracks (lives_mt *mt, gint top_track) {
   boolean expanded;
   GtkWidget *xeventbox,*aeventbox;
   gint hidden;
-  gulong exp_track_func;
 
   lives_adjustment_set_page_size(LIVES_ADJUSTMENT(mt->vadjustment),(double)mt->max_disp_vtracks);
   lives_adjustment_set_upper(LIVES_ADJUSTMENT(mt->vadjustment),(double)(mt->num_video_tracks*2-1));
@@ -1890,9 +1890,9 @@ void scroll_tracks (lives_mt *mt, gint top_track) {
       g_signal_connect (GTK_OBJECT (mt->audio_draws->data), "button_release_event",
 			G_CALLBACK (on_track_release),
 			(gpointer)mt);
-      exp_track_func=g_signal_connect (GTK_OBJECT (mt->audio_draws->data), LIVES_WIDGET_EVENT_EXPOSE_EVENT,
-				       G_CALLBACK (expose_track_event),
-				       (gpointer)mt);
+      g_signal_connect (GTK_OBJECT (mt->audio_draws->data), LIVES_WIDGET_EVENT_EXPOSE_EVENT,
+			G_CALLBACK (expose_track_event),
+			(gpointer)mt);
 
       if (expanded) {
 	xeventbox=(GtkWidget *)g_object_get_data(G_OBJECT(mt->audio_draws->data),"achan0");
@@ -1901,9 +1901,9 @@ void scroll_tracks (lives_mt *mt, gint top_track) {
 			  (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
 			  (GtkAttachOptions) (GTK_FILL), 0, 0);
 	
-	exp_track_func=g_signal_connect (GTK_OBJECT (xeventbox), LIVES_WIDGET_EVENT_EXPOSE_EVENT,
-					 G_CALLBACK (mt_expose_laudtrack_event),
-					 (gpointer)mt);
+	g_signal_connect (GTK_OBJECT (xeventbox), LIVES_WIDGET_EVENT_EXPOSE_EVENT,
+			  G_CALLBACK (mt_expose_laudtrack_event),
+			  (gpointer)mt);
 
 	lives_widget_set_bg_color(xeventbox, GTK_STATE_NORMAL, &palette->white);
 	
@@ -1914,9 +1914,9 @@ void scroll_tracks (lives_mt *mt, gint top_track) {
 			    (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
 			    (GtkAttachOptions) (GTK_FILL), 0, 0);
 	  
-	  exp_track_func=g_signal_connect (GTK_OBJECT (xeventbox), LIVES_WIDGET_EVENT_EXPOSE_EVENT,
-					   G_CALLBACK (mt_expose_raudtrack_event),
-					   (gpointer)mt);
+	  g_signal_connect (GTK_OBJECT (xeventbox), LIVES_WIDGET_EVENT_EXPOSE_EVENT,
+			    G_CALLBACK (mt_expose_raudtrack_event),
+			    (gpointer)mt);
 	  
 	  lives_widget_set_bg_color(xeventbox, GTK_STATE_NORMAL, &palette->white);
 	}
@@ -2025,9 +2025,9 @@ void scroll_tracks (lives_mt *mt, gint top_track) {
 
       g_object_set_data(G_OBJECT(checkbutton),"tfunc",(gpointer)seltrack_func);
 
-      exp_track_func=g_signal_connect (GTK_OBJECT (eventbox), LIVES_WIDGET_EVENT_EXPOSE_EVENT,
-				       G_CALLBACK (expose_track_event),
-				       (gpointer)mt);
+      g_signal_connect (GTK_OBJECT (eventbox), LIVES_WIDGET_EVENT_EXPOSE_EVENT,
+			G_CALLBACK (expose_track_event),
+			(gpointer)mt);
       gtk_widget_set_app_paintable(eventbox,TRUE);
 
       g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
@@ -2115,9 +2115,9 @@ void scroll_tracks (lives_mt *mt, gint top_track) {
 	  g_signal_connect (GTK_OBJECT (aeventbox), "button_release_event",
 			    G_CALLBACK (on_track_release),
 			    (gpointer)mt);
-	  exp_track_func=g_signal_connect (GTK_OBJECT (aeventbox), LIVES_WIDGET_EVENT_EXPOSE_EVENT,
-					   G_CALLBACK (expose_track_event),
-					   (gpointer)mt);
+	  g_signal_connect (GTK_OBJECT (aeventbox), LIVES_WIDGET_EVENT_EXPOSE_EVENT,
+			    G_CALLBACK (expose_track_event),
+			    (gpointer)mt);
 	  
 
 	  rows++;
@@ -2138,9 +2138,9 @@ void scroll_tracks (lives_mt *mt, gint top_track) {
 				(GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
 				(GtkAttachOptions) (GTK_FILL), 0, 0);
 	      
-	      exp_track_func=g_signal_connect (GTK_OBJECT (xeventbox), LIVES_WIDGET_EVENT_EXPOSE_EVENT,
-					       G_CALLBACK (mt_expose_laudtrack_event),
-					       (gpointer)mt);
+	      g_signal_connect (GTK_OBJECT (xeventbox), LIVES_WIDGET_EVENT_EXPOSE_EVENT,
+				G_CALLBACK (mt_expose_laudtrack_event),
+				(gpointer)mt);
 	      
 	      lives_widget_set_bg_color(xeventbox, GTK_STATE_NORMAL, &palette->white);
 
@@ -2162,9 +2162,9 @@ void scroll_tracks (lives_mt *mt, gint top_track) {
 				  (GtkAttachOptions) (GTK_FILL), 0, 0);
 		
 		lives_widget_set_bg_color(xeventbox, GTK_STATE_NORMAL, &palette->white);
-		exp_track_func=g_signal_connect (GTK_OBJECT (xeventbox), LIVES_WIDGET_EVENT_EXPOSE_EVENT,
-						 G_CALLBACK (mt_expose_raudtrack_event),
-						 (gpointer)mt);
+		g_signal_connect (GTK_OBJECT (xeventbox), LIVES_WIDGET_EVENT_EXPOSE_EVENT,
+				  G_CALLBACK (mt_expose_raudtrack_event),
+				  (gpointer)mt);
 		
 		
 		rows++;
@@ -2596,7 +2596,9 @@ void mt_show_current_frame(lives_mt *mt, boolean return_layer) {
 
   weed_plant_t *frame_layer=mainw->frame_layer;
 
+#if GTK_CHECK_VERSION(3,0,0)
   lives_painter_t *cr;
+#endif
 
   gint current_file;
   gint actual_frame;
@@ -3026,26 +3028,30 @@ static void notebook_error(GtkNotebook *nb, guint tab, lives_mt_nb_error_t err, 
   if (mt->nb_label!=NULL) gtk_widget_destroy(mt->nb_label);
   mt->nb_label=NULL;
 
+  widget_opts.justify=LIVES_JUSTIFY_CENTER;
+
   switch(err) {
   case NB_ERROR_SEL:
-    mt->nb_label=gtk_label_new(_("\n\nPlease select a block\nin the timeline by\nright or double clicking on it.\n"));
+    mt->nb_label=lives_standard_label_new(_("\n\nPlease select a block\nin the timeline by\nright or double clicking on it.\n"));
     break;
   case NB_ERROR_NOEFFECT:
-    mt->nb_label=gtk_label_new(_("\n\nNo effect selected.\nSelect an effect in FX stack first to view its parameters.\n"));
+    mt->nb_label=lives_standard_label_new(_("\n\nNo effect selected.\nSelect an effect in FX stack first to view its parameters.\n"));
     break;
   case NB_ERROR_NOCLIP:
-    mt->nb_label=gtk_label_new(_("\n\nNo clips loaded.\n"));
+    mt->nb_label=lives_standard_label_new(_("\n\nNo clips loaded.\n"));
     break;
   case NB_ERROR_NOTRANS:
-    mt->nb_label=gtk_label_new(_("You must select two video tracks\nand a time region\nto apply transitions.\n\nAlternately, you can enable Autotransitions from the Effects menu\nbefore inserting clips into the timeline."));
+    mt->nb_label=lives_standard_label_new(_("You must select two video tracks\nand a time region\nto apply transitions.\n\nAlternately, you can enable Autotransitions from the Effects menu\nbefore inserting clips into the timeline."));
     break;
   case NB_ERROR_NOCOMP:
-    mt->nb_label=gtk_label_new(_("\n\nYou must select at least one video track\nand a time region\nto apply compositors.\n"));
+    mt->nb_label=lives_standard_label_new(_("\n\nYou must select at least one video track\nand a time region\nto apply compositors.\n"));
     break;
   }
 
-  gtk_label_set_justify (GTK_LABEL (mt->nb_label), GTK_JUSTIFY_CENTER);
-  lives_widget_set_fg_color(mt->nb_label, GTK_STATE_NORMAL, &palette->normal_fore);
+  widget_opts.justify=LIVES_JUSTIFY_DEFAULT;
+
+  lives_widget_set_hexpand(mt->nb_label,TRUE);
+
   gtk_container_add(GTK_CONTAINER(gtk_notebook_get_nth_page(GTK_NOTEBOOK(nb),page)),mt->nb_label);
   gtk_widget_show(mt->nb_label);
   gtk_widget_hide(mt->poly_box);
@@ -7253,6 +7259,10 @@ static boolean expose_pb (GtkWidget *widget, lives_painter_t *cr, gpointer user_
   lives_widget_set_base_color(mt->timecode, GTK_STATE_NORMAL, &palette->black);
   lives_widget_set_text_color(mt->timecode, GTK_STATE_NORMAL, &palette->light_green);
 
+  lives_widget_set_bg_color(mt->timecode, GTK_STATE_INSENSITIVE, &palette->black);
+  lives_widget_set_base_color(mt->timecode, GTK_STATE_INSENSITIVE, &palette->black);
+  lives_widget_set_text_color(mt->timecode, GTK_STATE_INSENSITIVE, &palette->light_green);
+
   gtk_widget_set_tooltip_text( mt->insa_checkbutton, _("Select whether video clips are inserted and moved with their audio or not"));
   hbox2 = lives_hbox_new (FALSE, 0);
 
@@ -7538,6 +7548,7 @@ static boolean expose_pb (GtkWidget *widget, lives_painter_t *cr, gpointer user_
   mt->poly_box = lives_vbox_new (FALSE, 0);
 
   lives_widget_set_vexpand(mt->poly_box,FALSE);
+  lives_widget_set_hexpand(mt->poly_box,TRUE);
 
   gtk_container_add (GTK_CONTAINER (hbox), mt->poly_box);
 
@@ -7815,6 +7826,10 @@ static boolean expose_pb (GtkWidget *widget, lives_painter_t *cr, gpointer user_
   mt->in_out_box = lives_hbox_new (FALSE, 0);
   g_object_ref (mt->in_out_box);
 
+  lives_widget_set_hexpand(mt->in_out_box,TRUE);
+  lives_widget_set_vexpand(mt->in_out_box,TRUE);
+
+
   vbox = lives_vbox_new (FALSE, 0);
   gtk_box_pack_start(GTK_BOX(mt->in_out_box),vbox,FALSE,TRUE,0);
 
@@ -7823,6 +7838,8 @@ static boolean expose_pb (GtkWidget *widget, lives_painter_t *cr, gpointer user_
   gtk_spin_button_set_numeric (GTK_SPIN_BUTTON (mt->spinbutton_in),TRUE);
 
   mt->in_image=gtk_image_new();
+  lives_widget_set_hexpand(mt->in_image,TRUE);
+  lives_widget_set_vexpand(mt->in_image,TRUE);
   eventbox=gtk_event_box_new();
   gtk_container_add (GTK_CONTAINER (eventbox), mt->in_image);
   gtk_box_pack_start(GTK_BOX(vbox),eventbox,FALSE,FALSE,0);
@@ -7896,6 +7913,8 @@ static boolean expose_pb (GtkWidget *widget, lives_painter_t *cr, gpointer user_
   mt->spinbutton_out = gtk_spin_button_new (GTK_ADJUSTMENT (mt->spinbutton_out_adj), 1./mt->fps, 2);
   gtk_spin_button_set_numeric (GTK_SPIN_BUTTON (mt->spinbutton_out),TRUE);
   mt->out_image=gtk_image_new();
+  lives_widget_set_hexpand(mt->out_image,TRUE);
+  lives_widget_set_vexpand(mt->out_image,TRUE);
 
   eventbox=gtk_event_box_new();
   gtk_container_add (GTK_CONTAINER (eventbox), mt->out_image);
@@ -10632,15 +10651,18 @@ static track_rect *move_block (lives_mt *mt, track_rect *block, gdouble timesecs
   block = (track_rect *)g_object_get_data(G_OBJECT(eventbox),"block_last");
 
   if (!did_backup) {
-    if (mt->avol_fx!=-1&&(block==NULL||block->next==NULL)&&mt->audio_draws!=NULL&&mt->audio_draws->data!=NULL&&get_first_event(mt->event_list)!=NULL) {
+    if (mt->avol_fx!=-1&&(block==NULL||block->next==NULL)&&mt->audio_draws!=NULL&&
+	mt->audio_draws->data!=NULL&&get_first_event(mt->event_list)!=NULL) {
       apply_avol_filter(mt);
     }
   }
 
   mt->did_backup=did_backup;
 
-  if (!did_backup&&mt->framedraw!=NULL&&mt->current_rfx!=NULL&&mt->init_event!=NULL&&mt->poly_state==POLY_PARAMS&&weed_plant_has_leaf(mt->init_event,"in_tracks")) {
-    weed_timecode_t tc=q_gint64(gtk_spin_button_get_value(GTK_SPIN_BUTTON(mt->node_spinbutton))*U_SEC+get_event_timecode(mt->init_event),mt->fps);
+  if (!did_backup&&mt->framedraw!=NULL&&mt->current_rfx!=NULL&&mt->init_event!=NULL&&
+      mt->poly_state==POLY_PARAMS&&weed_plant_has_leaf(mt->init_event,"in_tracks")) {
+    weed_timecode_t tc=q_gint64(gtk_spin_button_get_value(GTK_SPIN_BUTTON(mt->node_spinbutton))*U_SEC+
+				get_event_timecode(mt->init_event),mt->fps);
     get_track_index(mt,tc);
   }
 
@@ -12061,6 +12083,8 @@ void polymorph (lives_mt *mt, lives_mt_poly_state_t poly) {
 
     mt->fx_list_box=lives_vbox_new(FALSE,0);
     mt->fx_list_scroll = gtk_scrolled_window_new (NULL, NULL);
+    lives_widget_set_hexpand(mt->fx_list_scroll,TRUE);
+
     gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (mt->fx_list_scroll), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
     gtk_box_pack_start (GTK_BOX (mt->fx_list_box), mt->fx_list_scroll, TRUE, TRUE, 0);
     gtk_box_pack_start(GTK_BOX(mt->poly_box),mt->fx_list_box,TRUE,TRUE,0);
@@ -12261,6 +12285,7 @@ void polymorph (lives_mt *mt, lives_mt_poly_state_t poly) {
     }
     mt->fx_list_box=lives_vbox_new(FALSE,0);
     mt->fx_list_scroll = gtk_scrolled_window_new (NULL, NULL);
+    lives_widget_set_hexpand(mt->fx_list_scroll,TRUE);
     gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (mt->fx_list_scroll), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
     gtk_box_pack_start (GTK_BOX (mt->fx_list_box), mt->fx_list_scroll, TRUE, TRUE, 0);
     gtk_box_pack_start(GTK_BOX(mt->poly_box),mt->fx_list_box,TRUE,TRUE,0);
@@ -16715,11 +16740,15 @@ void draw_region (lives_mt *mt) {
 
 
 #if GTK_CHECK_VERSION(3,0,0)
-static boolean expose_timeline_reg_event (GtkWidget *widget, lives_painter_t *cr, gpointer user_data) {
+static boolean expose_timeline_reg_event (GtkWidget *timeline, lives_painter_t *cairo, gpointer user_data) {
   GdkEventExpose *event=NULL;
 #else
 static boolean expose_timeline_reg_event (GtkWidget *timeline, GdkEventExpose *event, gpointer user_data) {
+  lives_painter_t *cairo=NULL;
 #endif
+
+  lives_painter_t *cr=cairo;
+
   lives_mt *mt=(lives_mt *)user_data;
   GList *tl_marks=mt->tl_marks;
 
@@ -16731,6 +16760,8 @@ static boolean expose_timeline_reg_event (GtkWidget *timeline, GdkEventExpose *e
   if (event!=NULL&&event->count>0) return FALSE;
   if (mainw->playing_file>-1||mt->is_rendering) return FALSE;
   draw_region (mt);
+
+  if (cairo==NULL) cr=lives_painter_create_from_widget(timeline);
 
   lives_painter_set_source_rgb(cr,0.,0.,1.);
 
@@ -16745,6 +16776,8 @@ static boolean expose_timeline_reg_event (GtkWidget *timeline, GdkEventExpose *e
 
     tl_marks=tl_marks->next;
   }
+
+  if (cairo==NULL) lives_painter_destroy(cr);
 
   return TRUE;
 }
@@ -16765,7 +16798,7 @@ static float get_float_audio_val_at_time(gint fnum, gdouble secs, gint chnum, gi
   gchar *filename;
 
   bytes=secs*afile->arate*afile->achans*afile->asampsize/8;
-  if (bytes==0) return;
+  if (bytes==0) return 0.;
 
   apos=((int64_t)(bytes/afile->achans/(afile->asampsize/8)))*afile->achans*(afile->asampsize/8); // quantise
 
@@ -16906,12 +16939,16 @@ static void draw_soundwave(GtkWidget *ebox, gint start, gint width, gint chnum, 
 
 
 #if GTK_CHECK_VERSION(3,0,0)
-static boolean mt_expose_laudtrack_event (GtkWidget *ebox, lives_painter_t *cr, gpointer user_data) {
+static boolean mt_expose_laudtrack_event (GtkWidget *ebox, lives_painter_t *cairo, gpointer user_data) {
   GdkEventExpose *event=NULL;
   int xwidth,xheight;
 #else
 static boolean mt_expose_laudtrack_event (GtkWidget *ebox, GdkEventExpose *event, gpointer user_data) {
+  lives_painter_t *cairo=NULL;
 #endif
+
+  lives_painter_t *cr=cairo;
+
   lives_mt *mt=(lives_mt *)user_data;
 
 #if !GTK_CHECK_VERSION(3,0,0)
@@ -16947,6 +16984,8 @@ static boolean mt_expose_laudtrack_event (GtkWidget *ebox, GdkEventExpose *event
 
   if (width>lives_widget_get_allocation_width(ebox)-startx) width=lives_widget_get_allocation_width(ebox)-startx;
 
+  if (cairo==NULL) cr = lives_painter_create_from_widget (ebox);
+
   if (GPOINTER_TO_INT(g_object_get_data (G_OBJECT(ebox), "drawn"))) {
     bgimage=(GdkPixbuf *)g_object_get_data (G_OBJECT(ebox), "bgimg");
     if (bgimage!=NULL&&lives_pixbuf_get_width(bgimage)>0) {
@@ -16979,24 +17018,28 @@ static boolean mt_expose_laudtrack_event (GtkWidget *ebox, GdkEventExpose *event
     g_object_set_data (G_OBJECT(ebox), "bgimg",bgimage);
   }
 
+  if (cairo==NULL) lives_painter_destroy (cr);
+
   return FALSE;
 }
 
 
+#if GTK_CHECK_VERSION(3,0,0)
+static boolean mt_expose_raudtrack_event (GtkWidget *ebox, lives_painter_t *cairo, gpointer user_data) {
+  GdkEventExpose *event=NULL;
+  int xwidth,xheight;
+#else
 static boolean mt_expose_raudtrack_event (GtkWidget *ebox, GdkEventExpose *event, gpointer user_data) {
+  lives_painter_t *cairo=NULL;
+#endif
+
+  lives_painter_t *cr=cairo;
+
   lives_mt *mt=(lives_mt *)user_data;
 
-#ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3,0,0)
-#ifdef PAINTER_CAIRO
-  const cairo_region_t *reg;
-  cairo_rectangle_int_t rect;
-  int xwidth,xheight;
-#endif
-#else
+#if !GTK_CHECK_VERSION(3,0,0)
   GdkRegion *reg;
   GdkRectangle rect;
-#endif
 #endif
 
   GdkPixbuf *bgimage;
@@ -17004,26 +17047,19 @@ static boolean mt_expose_raudtrack_event (GtkWidget *ebox, GdkEventExpose *event
   int startx,width;
   int hidden;
 
-  if (mt->no_expose) return TRUE;
-
+#if !GTK_CHECK_VERSION(3,0,0)
   reg=event->region;
-
-#ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3,0,0)
-#ifdef PAINTER_CAIRO
-  cairo_region_get_extents(reg,&rect);
-#endif
-#else
   gdk_region_get_clipbox(reg,&rect);
-#endif
-#endif
-
   startx=rect.x;
   width=rect.width;
 
   if (event!=NULL&&event->count>0) {
     return TRUE;
   }
+#else
+  startx=0;
+  width=lives_widget_get_allocation_width(ebox);
+#endif
 
   hidden=(gint)GPOINTER_TO_INT(g_object_get_data (G_OBJECT(ebox), "hidden"));
   if (hidden!=0) {
@@ -17031,6 +17067,8 @@ static boolean mt_expose_raudtrack_event (GtkWidget *ebox, GdkEventExpose *event
   }
 
   if (width>lives_widget_get_allocation_width(ebox)-startx) width=lives_widget_get_allocation_width(ebox)-startx;
+
+  if (cairo==NULL) cr = lives_painter_create_from_widget (ebox);
 
   if (GPOINTER_TO_INT(g_object_get_data (G_OBJECT(ebox), "drawn"))) {
     bgimage=(GdkPixbuf *)g_object_get_data (G_OBJECT(ebox), "bgimg");
@@ -17064,6 +17102,8 @@ static boolean mt_expose_raudtrack_event (GtkWidget *ebox, GdkEventExpose *event
     g_object_set_data (G_OBJECT(ebox), "drawn",GINT_TO_POINTER(TRUE));
     g_object_set_data (G_OBJECT(ebox), "bgimg",bgimage);
   }
+
+  if (cairo==NULL) lives_painter_destroy (cr);
 
   return FALSE;
 }

@@ -7454,6 +7454,7 @@ on_sepwin_activate               (GtkMenuItem     *menuitem,
   if (mainw->multitrack!=NULL) {
     unpaint_lines(mainw->multitrack);
     mainw->multitrack->redraw_block=TRUE; // stop pb cursor from updating
+    mt_show_current_frame(mainw->multitrack, FALSE);
   }
 
   fnamex=g_build_filename(prefs->prefix_dir,ICON_DIR,"sepwin.png",NULL);
@@ -7617,6 +7618,7 @@ on_sepwin_activate               (GtkMenuItem     *menuitem,
 	}
 	kill_play_window();
 	if (mainw->multitrack==NULL) add_to_playframe();
+
 	hide_cursor(lives_widget_get_xwindow(mainw->playarea));
 	if (mainw->multitrack==NULL&&(cfile->frames==1||cfile->play_paused)&&
 	    !mainw->noswitch&&(cfile->clip_type==CLIP_TYPE_DISK||
@@ -7640,7 +7642,10 @@ on_sepwin_activate               (GtkMenuItem     *menuitem,
       gtk_widget_show(mainw->multitrack->play_box);
       gtk_widget_show(lives_widget_get_parent(mainw->multitrack->play_box));
       gtk_widget_show(lives_widget_get_parent(lives_widget_get_parent(mainw->multitrack->play_box)));
+      if (mainw->playing_file>-1) mt_show_current_frame(mainw->multitrack, FALSE);
     }
+
+
   }
 }
 
@@ -9090,7 +9095,7 @@ boolean expose_vid_event (GtkWidget *widget, GdkEventExpose *event) {
 
 #if GTK_CHECK_VERSION(3,0,0)
   lives_painter_set_source_surface (cr, mainw->video_drawable,0.,0.);
-  lives_painter_rectangle (cr,0,0,ew,eh);
+  lives_painter_rectangle (cr,ex,ey,ew,eh);
   lives_painter_paint(cr);
 #else
   gdk_draw_pixmap(lives_widget_get_xwindow(widget),
@@ -9291,7 +9296,6 @@ static void redraw_laudio(lives_painter_t *cr, int ex, int ey, int ew, int eh) {
 
 #if GTK_CHECK_VERSION(3,0,0)
 boolean expose_laud_event (GtkWidget *widget, lives_painter_t *cr, gpointer user_data) {
-  LiVESWidgetColor color;
   GdkEventExpose *event=NULL;
 
 #else
@@ -9334,7 +9338,6 @@ boolean expose_laud_event (GtkWidget *widget, GdkEventExpose *event) {
 
 #if GTK_CHECK_VERSION(3,0,0)
 boolean expose_raud_event (GtkWidget *widget, lives_painter_t *cr, gpointer user_data) {
-  LiVESWidgetColor color;
   GdkEventExpose *event=NULL;
 
 #else

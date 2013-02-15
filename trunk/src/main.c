@@ -3194,25 +3194,38 @@ procw_desensitize(void) {
 
 
 
-void set_ce_frame_from_pixbuf(GtkImage *image, GdkPixbuf *pixbuf) {
+ void set_ce_frame_from_pixbuf(GtkImage *image, GdkPixbuf *pixbuf, lives_painter_t *cairo) {
 #if GTK_CHECK_VERSION(3,0,0)
-  lives_painter_t *cr = lives_painter_create_from_widget (LIVES_WIDGET(image));
-  int width=lives_pixbuf_get_width(pixbuf);
-  int height=lives_pixbuf_get_height(pixbuf);
+  
   int rwidth=lives_widget_get_allocation_width(LIVES_WIDGET(image));
-  int cx=(rwidth-width)/2;
+  int rheight=lives_widget_get_allocation_height(LIVES_WIDGET(image));
 
-  lives_painter_set_source_rgba (cr, 0., 0., 0., 0.);
+  lives_painter_t *cr;
+
+  LiVESWidgetColor color;
+
+  if (cairo==NULL) cr=lives_painter_create_from_widget (LIVES_WIDGET(image));
+  else cr=cairo;
+
+  lives_widget_get_bg_color(LIVES_WIDGET(image),&color);
+  lives_painter_set_source_rgba (cr, color.red, color.green, color.blue, color.alpha);
   lives_painter_rectangle(cr,0,0,
-			  width,
-			  height);
+			  rwidth,
+			  rheight);
   lives_painter_fill(cr);
-  lives_painter_set_source_pixbuf (cr, pixbuf, cx, 0);
-  lives_painter_rectangle(cr,cx,0,
-			  width,
-			  height);
-  lives_painter_fill(cr);
-  lives_painter_destroy(cr);
+  
+  if (pixbuf!=NULL) {
+    int width=lives_pixbuf_get_width(pixbuf);
+    int height=lives_pixbuf_get_height(pixbuf);
+    int cx=(rwidth-width)/2;
+    int cy=(rheight-height)/2;
+    lives_painter_set_source_pixbuf (cr, pixbuf, cx, cy);
+    lives_painter_rectangle(cr,cx,cy,
+			    width,
+			    height);
+    lives_painter_fill(cr);
+  }
+  if (cairo==NULL) lives_painter_destroy(cr);
 #else
   gtk_image_set_from_pixbuf(image,pixbuf);
 #endif
@@ -3244,7 +3257,7 @@ void load_start_image(gint frame) {
       if (mainw->camframe!=NULL) gdk_pixbuf_saturate_and_pixelate(mainw->camframe,mainw->camframe,0.0,FALSE);
       g_free(tmp);
     }
-    set_ce_frame_from_pixbuf(GTK_IMAGE(mainw->image272),mainw->camframe);
+    set_ce_frame_from_pixbuf(GTK_IMAGE(mainw->image272),mainw->camframe,NULL);
     return;
   }
 
@@ -3252,10 +3265,10 @@ void load_start_image(gint frame) {
       (cfile->clip_type!=CLIP_TYPE_DISK&&cfile->clip_type!=CLIP_TYPE_FILE)) {
     threaded_dialog_spin();
     if (!(mainw->imframe==NULL)) {
-      set_ce_frame_from_pixbuf(GTK_IMAGE(mainw->image272),mainw->imframe);
+      set_ce_frame_from_pixbuf(GTK_IMAGE(mainw->image272),mainw->imframe,NULL);
     }
     else {
-      set_ce_frame_from_pixbuf(GTK_IMAGE(mainw->image272),NULL);
+      set_ce_frame_from_pixbuf(GTK_IMAGE(mainw->image272),NULL,NULL);
     }
     threaded_dialog_spin();
     return;
@@ -3278,8 +3291,7 @@ void load_start_image(gint frame) {
     weed_plant_free(layer);
   
     if (GDK_IS_PIXBUF(start_pixbuf)) {
-  // TODO ***
-      set_ce_frame_from_pixbuf(GTK_IMAGE(mainw->image272),start_pixbuf);
+      set_ce_frame_from_pixbuf(GTK_IMAGE(mainw->image272),start_pixbuf,NULL);
     }
     if (start_pixbuf!=NULL) {
       if (G_IS_OBJECT(start_pixbuf)) {
@@ -3324,7 +3336,7 @@ void load_start_image(gint frame) {
     weed_plant_free(layer);
   
     if (GDK_IS_PIXBUF(start_pixbuf)) {
-      set_ce_frame_from_pixbuf(GTK_IMAGE(mainw->image272),start_pixbuf);
+      set_ce_frame_from_pixbuf(GTK_IMAGE(mainw->image272),start_pixbuf,NULL);
     }
     if (start_pixbuf!=NULL) {
       if (G_IS_OBJECT(start_pixbuf)) {
@@ -3377,7 +3389,7 @@ void load_end_image(gint frame) {
       if (mainw->camframe!=NULL) gdk_pixbuf_saturate_and_pixelate(mainw->camframe,mainw->camframe,0.0,FALSE);
       g_free(tmp);
     }
-    set_ce_frame_from_pixbuf(GTK_IMAGE(mainw->image273),mainw->camframe);
+    set_ce_frame_from_pixbuf(GTK_IMAGE(mainw->image273),mainw->camframe,NULL);
     return;
   }
 
@@ -3385,10 +3397,10 @@ void load_end_image(gint frame) {
       (cfile->clip_type!=CLIP_TYPE_DISK&&cfile->clip_type!=CLIP_TYPE_FILE)) {
     threaded_dialog_spin();
     if (!(mainw->imframe==NULL)) {
-       set_ce_frame_from_pixbuf(GTK_IMAGE(mainw->image273),mainw->imframe);
+      set_ce_frame_from_pixbuf(GTK_IMAGE(mainw->image273),mainw->imframe,NULL);
     }
     else {
-      set_ce_frame_from_pixbuf(GTK_IMAGE(mainw->image273),NULL);
+      set_ce_frame_from_pixbuf(GTK_IMAGE(mainw->image273),NULL,NULL);
     }
     threaded_dialog_spin();
     return;
@@ -3413,7 +3425,7 @@ void load_end_image(gint frame) {
     weed_plant_free(layer);
   
     if (GDK_IS_PIXBUF(end_pixbuf)) {
-      set_ce_frame_from_pixbuf(GTK_IMAGE(mainw->image273),end_pixbuf);
+      set_ce_frame_from_pixbuf(GTK_IMAGE(mainw->image273),end_pixbuf,NULL);
     }
     if (end_pixbuf!=NULL) {
       if (G_IS_OBJECT(end_pixbuf)) {
@@ -3455,7 +3467,7 @@ void load_end_image(gint frame) {
     weed_plant_free(layer);
   
     if (GDK_IS_PIXBUF(end_pixbuf)) {
-      set_ce_frame_from_pixbuf(GTK_IMAGE(mainw->image273),end_pixbuf);
+      set_ce_frame_from_pixbuf(GTK_IMAGE(mainw->image273),end_pixbuf,NULL);
     }
     if (end_pixbuf!=NULL) {
       if (G_IS_OBJECT(end_pixbuf)) {
@@ -3504,7 +3516,7 @@ void load_preview_image(boolean update_always) {
       g_free(tmp);
     }
     pixbuf=lives_pixbuf_scale_simple(mainw->camframe,mainw->pwidth,mainw->pheight,LIVES_INTERP_BEST);
-    set_ce_frame_from_pixbuf(GTK_IMAGE(mainw->preview_image),pixbuf);
+    set_ce_frame_from_pixbuf(GTK_IMAGE(mainw->preview_image),pixbuf,NULL);
     lives_object_unref(pixbuf);
     mainw->preview_frame=1;
     g_signal_handler_block(mainw->preview_spinbutton,mainw->preview_spin_func);
@@ -3517,7 +3529,7 @@ void load_preview_image(boolean update_always) {
 
   if (mainw->current_file<0||cfile==NULL||!cfile->frames||(cfile->clip_type!=CLIP_TYPE_DISK&&
 							   cfile->clip_type!=CLIP_TYPE_FILE)) {
-    set_ce_frame_from_pixbuf(GTK_IMAGE(mainw->preview_image), mainw->imframe);
+    set_ce_frame_from_pixbuf(GTK_IMAGE(mainw->preview_image), mainw->imframe,NULL);
     mainw->preview_frame=0;
     g_signal_handler_block(mainw->preview_spinbutton,mainw->preview_spin_func);
     gtk_spin_button_set_range(GTK_SPIN_BUTTON(mainw->preview_spinbutton),0,0);
@@ -3571,7 +3583,7 @@ void load_preview_image(boolean update_always) {
     }
     weed_plant_free(layer);
   }
-  set_ce_frame_from_pixbuf(GTK_IMAGE(mainw->preview_image), pixbuf);
+  set_ce_frame_from_pixbuf(GTK_IMAGE(mainw->preview_image), pixbuf, NULL);
 
 
   if (update_always) {
@@ -5365,7 +5377,7 @@ void load_frame_image(gint frame) {
 
       unblock_expose();
     }
-    else set_ce_frame_from_pixbuf(GTK_IMAGE(mainw->image274),pixbuf);
+    else set_ce_frame_from_pixbuf(GTK_IMAGE(mainw->image274),pixbuf,NULL);
 
     if (mainw->multitrack!=NULL&&!cfile->opening) animate_multitrack(mainw->multitrack);
 

@@ -334,8 +334,7 @@ create_LiVES (void)
 
   if (palette->style==STYLE_PLAIN) {
     // if gtk_widget_ensure_style is used, we can't grab external frames...
-#if GTK_CHECK_VERSION(3,0,0)
-#else
+#if !GTK_CHECK_VERSION(3,0,0)
     if (!mainw->foreign) {
       gtk_widget_ensure_style(mainw->LiVES);
     }
@@ -2076,7 +2075,10 @@ create_LiVES (void)
   gtk_widget_show (mainw->frame1);
   gtk_container_set_border_width (GTK_CONTAINER (mainw->frame1), 10);
   gtk_container_add (GTK_CONTAINER (mainw->eventbox3), mainw->frame1);
-  lives_widget_set_bg_color (mainw->frame1, GTK_STATE_NORMAL, &palette->normal_back);
+  if (palette->style&STYLE_1) {
+    lives_widget_set_bg_color (mainw->frame1, GTK_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_fg_color (mainw->frame1, GTK_STATE_NORMAL, &palette->normal_fore);
+  }
   lives_widget_set_vexpand(mainw->frame1,FALSE);
   lives_widget_set_hexpand(mainw->frame1,FALSE);
 
@@ -2097,13 +2099,9 @@ create_LiVES (void)
   lives_widget_set_vexpand(mainw->image272,FALSE);
   lives_widget_set_hexpand(mainw->image272,FALSE);
 
-  label15 = gtk_label_new (_("First Frame"));
+  label15 = lives_standard_label_new (_("First Frame"));
   gtk_widget_show (label15);
   gtk_frame_set_label_widget (GTK_FRAME (mainw->frame1), label15);
-  gtk_label_set_justify (GTK_LABEL (label15), GTK_JUSTIFY_LEFT);
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(label15, GTK_STATE_NORMAL, &palette->normal_fore);
-  }
 
   mainw->playframe = gtk_frame_new (NULL);
   gtk_widget_hide (mainw->playframe);
@@ -2111,7 +2109,9 @@ create_LiVES (void)
   gtk_widget_set_size_request (mainw->playframe, DEFAULT_FRAME_HSIZE, DEFAULT_FRAME_VSIZE);
   gtk_container_set_border_width (GTK_CONTAINER (mainw->playframe), 10);
   gtk_frame_set_shadow_type (GTK_FRAME(mainw->playframe), GTK_SHADOW_IN);
-  lives_widget_set_bg_color (mainw->playframe, GTK_STATE_NORMAL, &palette->normal_back);
+  if (palette->style&STYLE_1) {
+    lives_widget_set_bg_color (mainw->playframe, GTK_STATE_NORMAL, &palette->normal_back);
+  }
 
   pf_label = gtk_label_new (_("Play"));
   gtk_widget_show (pf_label);
@@ -2143,7 +2143,9 @@ create_LiVES (void)
   gtk_widget_show (mainw->frame2);
   gtk_container_set_border_width (GTK_CONTAINER (mainw->frame2), 10);
   gtk_container_add (GTK_CONTAINER (mainw->eventbox4), mainw->frame2);
-  lives_widget_set_bg_color (mainw->frame2, GTK_STATE_NORMAL, &palette->normal_back);
+  if (palette->style&STYLE_1) {
+    lives_widget_set_bg_color (mainw->frame2, GTK_STATE_NORMAL, &palette->normal_back);
+  }
   lives_widget_set_vexpand(mainw->frame2,FALSE);
   lives_widget_set_hexpand(mainw->frame2,FALSE);
 

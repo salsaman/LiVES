@@ -376,7 +376,7 @@ struct _mt {
 
   GList *aparam_view_list;
 
-  GdkPixbuf *sepwin_pixbuf;
+  GdkPixbuf *frame_pixbuf;
 
   gulong spin_in_func;
   gulong spin_out_func;

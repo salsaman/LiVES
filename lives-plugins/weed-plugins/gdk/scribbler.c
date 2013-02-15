@@ -148,7 +148,7 @@ static cairo_t *channel_to_cairo(weed_plant_t *channel) {
   // "width","rowstrides" and "current_palette" of channel may all change
 
   int irowstride,orowstride;
-  int width;
+  int width,widthx;
   int height;
   int pal;
   int error;
@@ -162,10 +162,12 @@ static cairo_t *channel_to_cairo(weed_plant_t *channel) {
   cairo_t *cairo;
   cairo_format_t cform=CAIRO_FORMAT_ARGB32;
 
-  width=weed_get_int_value(channel,"width",&error)*4;
+  width=weed_get_int_value(channel,"width",&error);
   height=weed_get_int_value(channel,"height",&error);
   pal=weed_get_int_value(channel,"current_palette",&error);
   irowstride=weed_get_int_value(channel,"rowstrides",&error);
+
+  widthx=width*4;
 
   orowstride=cairo_format_stride_for_width(cform,width);
 
@@ -181,8 +183,8 @@ static cairo_t *channel_to_cairo(weed_plant_t *channel) {
   else {
     dst=pixel_data;
     for (i=0;i<height;i++) {
-      weed_memcpy((void *)dst,(void *)src,width);
-      weed_memset((void *)dst+width,0,width-orowstride);
+      weed_memcpy((void *)dst,(void *)src,widthx);
+      weed_memset((void *)(dst+widthx),0,widthx-orowstride);
       dst+=orowstride;
       src+=irowstride;
     }
@@ -191,7 +193,7 @@ static cairo_t *channel_to_cairo(weed_plant_t *channel) {
   if (weed_plant_has_leaf(channel,"flags")) flags=weed_get_int_value(channel,"flags",&error);
   if (!(flags&WEED_CHANNEL_ALPHA_PREMULT)) {
     // if we have post-multiplied alpha, pre multiply
-    alpha_unpremult(pixel_data,width,height,orowstride,pal,FALSE);
+    alpha_unpremult(pixel_data,widthx,height,orowstride,pal,FALSE);
   }
 
   surf=cairo_image_surface_create_for_data(pixel_data,
@@ -226,7 +228,7 @@ static void cairo_to_channel(cairo_t *cairo, weed_plant_t *channel) {
 
   int height=weed_get_int_value(channel,"height",&error);
   int irowstride,orowstride=weed_get_int_value(channel,"rowstrides",&error);
-  int width=weed_get_int_value(channel,"width",&error)*4;
+  int width=weed_get_int_value(channel,"width",&error),widthx=width*4;
 
   register int i;
 
@@ -243,8 +245,8 @@ static void cairo_to_channel(cairo_t *cairo, weed_plant_t *channel) {
   else {
     dst=pixel_data;
     for (i=0;i<height;i++) {
-      weed_memcpy((void *)dst,(void *)src,width);
-      weed_memset((void *)(dst+width),0,width-orowstride);
+      weed_memcpy((void *)dst,(void *)src,widthx);
+      weed_memset((void *)(dst+widthx),0,widthx-orowstride);
       dst+=orowstride;
       src+=irowstride;
     }
@@ -256,7 +258,7 @@ static void cairo_to_channel(cairo_t *cairo, weed_plant_t *channel) {
     int pal=weed_get_int_value(channel,"current_palette",&error);
 
     // un-premultiply the alpha
-    alpha_unpremult(pixel_data,width,height,orowstride,pal,TRUE);
+    alpha_unpremult(pixel_data,widthx,height,orowstride,pal,TRUE);
   }
 
 

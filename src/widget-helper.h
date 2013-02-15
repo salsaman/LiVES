@@ -628,6 +628,7 @@ typedef struct {
   boolean pack_end;
   boolean line_wrap; // line wrapping for labels
   boolean non_modal; // non-modal for dialogs
+  int packing_width; // default should be W_PACKING_WIDTH
   LiVESJustification justify; // justify for labels
 } widget_opts_t;
 

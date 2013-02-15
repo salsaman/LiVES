@@ -1217,7 +1217,9 @@ boolean make_param_box(GtkVBox *top_vbox, lives_rfx_t *rfx) {
     scrolledwindow = gtk_scrolled_window_new (NULL, NULL);
     gtk_widget_show (scrolledwindow);
     gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrolledwindow), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
-    
+    lives_widget_set_hexpand(scrolledwindow,TRUE);
+    lives_widget_set_vexpand(scrolledwindow,TRUE);
+
     gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (scrolledwindow), top_hbox);
     gtk_box_pack_start (GTK_BOX (top_vbox), scrolledwindow, TRUE, TRUE, 0);
     if (mainw->multitrack==NULL||rfx->status!=RFX_STATUS_WEED) 
@@ -1281,14 +1283,18 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, boolean add_
   lives_widget_group_t *group;
   GSList *rbgroup;
   gulong spinfunc,blockfunc;
-  gchar *name;
-  gchar *txt,*tmp,*tmp2;
-  boolean use_mnemonic;
 
   lives_colRGB24_t rgb;
   GdkColor colr;
+
+  gchar *name;
+  gchar *txt,*tmp,*tmp2;
   char *disp_string;
+
+  boolean use_mnemonic;
   boolean was_num=FALSE;
+
+  int packwidth=widget_opts.packing_width;
 
   if (pnum>=rfx->num_params) {
     add_param_label_to_box (box,FALSE,(_("Invalid parameter")));
@@ -1384,7 +1390,7 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, boolean add_
       g_object_set_data (G_OBJECT (radiobutton),"param_number",GINT_TO_POINTER (pnum));
       param->widgets[0]=radiobutton;
       if (param->hidden) gtk_widget_set_sensitive(radiobutton,FALSE);
-      }
+    }
     break;
   case LIVES_PARAM_NUM :
     was_num=TRUE;
@@ -1462,8 +1468,11 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, boolean add_
     if (GTK_IS_HBOX(box)) hbox=GTK_WIDGET(box);
     else {
       hbox = lives_hbox_new (FALSE, 0);
-      gtk_box_pack_start (GTK_BOX (box), hbox, FALSE, FALSE, 10);
+      gtk_box_pack_start (GTK_BOX (box), hbox, FALSE, FALSE, 0);
     }
+
+    lives_box_set_spacing(LIVES_BOX(hbox),0);
+    lives_widget_set_hexpand(hbox,FALSE);
 
     // colsel button
 
@@ -1484,7 +1493,9 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, boolean add_
     else labelcname=lives_standard_label_new (_(name));
     if (param->desc!=NULL) gtk_widget_set_tooltip_text(labelcname, param->desc);
 
-    gtk_box_pack_start (GTK_BOX (hbox), labelcname, FALSE, FALSE, 10);
+    gtk_box_pack_start (GTK_BOX (hbox), labelcname, FALSE, FALSE, 0);
+
+    widget_opts.packing_width=0;
 
     spinbutton_red = lives_standard_spin_button_new((tmp=g_strdup(_("_Red"))), TRUE, rgb.red, 0., 255., 1., 1., 0, 
 						    (LiVESBox *)hbox, (tmp2=g_strdup(_("The red value (0 - 255)"))));
@@ -1499,7 +1510,9 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, boolean add_
     g_free(tmp);
     g_free(tmp2);
 
-    gtk_box_pack_start (GTK_BOX (hbox), cbutton, TRUE, TRUE, 20);
+    widget_opts.packing_width=packwidth;
+
+    gtk_box_pack_start (GTK_BOX (hbox), cbutton, TRUE, TRUE, packwidth);
 
     g_signal_connect (GTK_OBJECT (cbutton), "color-set",
 		      G_CALLBACK (on_pwcolsel),
@@ -1539,7 +1552,6 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, boolean add_
 
     hbox = lives_hbox_new (FALSE, 0);
     gtk_box_pack_start (GTK_BOX (box), hbox, FALSE, FALSE, 0);
-    lives_box_set_homogeneous(GTK_BOX(box),FALSE);
 
     if (rfx->status==RFX_STATUS_WEED&&(disp_string=get_weed_display_string((weed_plant_t *)rfx->source,pnum))!=NULL) {
       if (param->max==0.) txt=g_strdup (disp_string);

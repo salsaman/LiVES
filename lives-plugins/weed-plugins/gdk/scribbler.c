@@ -207,6 +207,7 @@ static cairo_t *channel_to_cairo(weed_plant_t *channel) {
   }
 
   cairo=cairo_create(surf);
+  weed_free(pixel_data);
   cairo_surface_destroy(surf);
 
   return cairo;

@@ -10831,8 +10831,6 @@ LIVES_INLINE int get_weed_palette_for_lives_painter(void) {
 
 lives_painter_t *layer_to_lives_painter(weed_plant_t *layer) {
   // convert a weed layer to lives_painter
-  // the layer shares pixel_data with lives_painter
-  // so it should be copied before the lives_painter is destroyed
 
   // "width","rowstrides" and "current_palette" of layer may all change
 
@@ -10915,7 +10913,7 @@ lives_painter_t *layer_to_lives_painter(weed_plant_t *layer) {
 
   if (surf==NULL) return NULL;
 
-  cairo=lives_painter_create(surf);
+  cairo=lives_painter_create(surf); // this copies the pixel_data
   lives_painter_surface_destroy(surf);
 
   return cairo;
@@ -10925,8 +10923,6 @@ lives_painter_t *layer_to_lives_painter(weed_plant_t *layer) {
 
 boolean lives_painter_to_layer(lives_painter_t *lives_painter, weed_plant_t *layer) {
   // updates a weed_layer from a lives_painter_t
-  // unlike doing this the other way around
-  // the lives_painter is not destroyed (data is copied)
 
   // TODO *** - keep the surface around using lives_painter_surface_reference() and destroy it when the "pixel_data" is freed or changed
 
@@ -10944,6 +10940,12 @@ boolean lives_painter_to_layer(lives_painter_t *lives_painter, weed_plant_t *lay
   width = lives_painter_image_surface_get_width (surface);
   height = lives_painter_image_surface_get_height (surface);
   rowstride = lives_painter_image_surface_get_stride (surface);
+
+  if (weed_plant_has_leaf(layer,"pixel_data")) {
+    int error;
+    pixel_data=weed_get_voidptr_value(layer,"pixel_data",&error);
+    if (pixel_data!=NULL&&pixel_data!=src) g_free(pixel_data);
+  }
 
   pixel_data=g_try_malloc(CEIL(height*rowstride,32));
 

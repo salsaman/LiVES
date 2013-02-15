@@ -261,6 +261,7 @@ static boolean pre_init(void) {
     FALSE, //pack_end
     FALSE, // line_wrap
     FALSE, // non_modal
+    W_PACKING_WIDTH, // def packing width
     LIVES_JUSTIFY_DEFAULT // justify
   };
 

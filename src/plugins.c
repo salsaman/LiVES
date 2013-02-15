@@ -3296,7 +3296,10 @@ lives_param_t *weed_params_to_rfx(gint npar, weed_plant_t *inst, boolean show_re
 	if (weed_plant_has_leaf(gui,"step_size")) rpar[i].step_size=weed_get_double_value(gui,"step_size",&error);
 	if (weed_plant_has_leaf(gui,"decimals")) rpar[i].dp=weed_get_int_value(gui,"decimals",&error);
       }
-      if (rpar[i].step_size==0.) rpar[i].step_size=1./(double)lives_10pow(rpar[i].dp);
+      if (rpar[i].step_size==0.) {
+	if (rpar[i].max-rpar[i].min>1.) rpar[i].step_size=1.;
+	else rpar[i].step_size=1./(double)lives_10pow(rpar[i].dp);
+      }
       break;
     case WEED_HINT_TEXT:
       if (weed_plant_has_leaf(wtmpl,"default")&&weed_leaf_num_elements(wtmpl,"default")>1) {

@@ -157,7 +157,7 @@ void framedraw_add_reset(GtkVBox *box, lives_special_framedraw_rect_t *framedraw
   framedraw_add_label(box);
 
   mainw->framedraw_reset = gtk_button_new_from_stock ("gtk-refresh");
-  hbox_rst = gtk_hbox_new (FALSE, 0);
+  hbox_rst = lives_hbox_new (FALSE, 0);
   gtk_box_pack_start (GTK_BOX (box), hbox_rst, FALSE, FALSE, 0);
   
   gtk_button_set_label (GTK_BUTTON (mainw->framedraw_reset),_ ("_Reset Values"));
@@ -198,11 +198,11 @@ void widget_add_framedraw (GtkVBox *box, gint start, gint end, gboolean add_prev
 
   mainw->framedraw_reset=NULL;
 
-  vseparator = gtk_vseparator_new ();
+  vseparator = lives_vseparator_new ();
   gtk_box_pack_start (GTK_BOX (lives_widget_get_parent(LIVES_WIDGET (box))), vseparator, FALSE, FALSE, 0);
   gtk_widget_show (vseparator);
 
-  vbox = gtk_vbox_new (FALSE, 0);
+  vbox = lives_vbox_new (FALSE, 0);
   gtk_box_pack_start (GTK_BOX (lives_widget_get_parent(LIVES_WIDGET (box))), vbox, FALSE, FALSE, 0);
   gtk_container_set_border_width (GTK_CONTAINER (vbox), 10);
 
@@ -210,7 +210,7 @@ void widget_add_framedraw (GtkVBox *box, gint start, gint end, gboolean add_prev
   width/=fd_scale;
   height/=fd_scale;
  
-  hbox = gtk_hbox_new (FALSE, 0);
+  hbox = lives_hbox_new (FALSE, 0);
   gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 0);
   add_fill_to_box(GTK_BOX(hbox));
   frame = gtk_frame_new (NULL);
@@ -247,7 +247,7 @@ void widget_add_framedraw (GtkVBox *box, gint start, gint end, gboolean add_prev
 			  G_CALLBACK (expose_fd_event), NULL);
 
 
-  hbox = gtk_hbox_new (FALSE, 2);
+  hbox = lives_hbox_new (FALSE, 2);
   gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 0);
 
   mainw->framedraw_spinbutton = lives_standard_spin_button_new (_("    _Frame"),

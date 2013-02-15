@@ -1117,13 +1117,13 @@ lives_pandh_w* create_pandh_dialog (gint type) {
   label=lives_standard_label_new(_("In the source copy of LiVES, you must select Advanced/Send stream to LiVES\nor select the lives2lives_stream playback plugin in Preferences."));
   gtk_box_pack_start (GTK_BOX (dialog_vbox), label, TRUE, TRUE, 10);
 
-  hseparator = gtk_hseparator_new ();
+  hseparator = lives_hseparator_new ();
   gtk_box_pack_start (GTK_BOX (dialog_vbox), hseparator, TRUE, TRUE, 20);
 
   label=lives_standard_label_new(_("Select the host to receive the stream from (or allow any host to stream)."));
   gtk_box_pack_start (GTK_BOX (dialog_vbox), label, TRUE, TRUE, 10);
 
-  hbox = gtk_hbox_new (FALSE, 0);
+  hbox = lives_hbox_new (FALSE, 0);
   gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, TRUE, TRUE, 10);
 
   pandhw->rb_anyhost = lives_standard_radio_button_new ((tmp=g_strdup(_("Accept LiVES streams from _any host")))
@@ -1137,7 +1137,7 @@ lives_pandh_w* create_pandh_dialog (gint type) {
 			  G_CALLBACK (pandhw_anyhost_toggled),
 			  (gpointer)pandhw);
 
-  hbox = gtk_hbox_new (FALSE, 0);
+  hbox = lives_hbox_new (FALSE, 0);
   gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, TRUE, TRUE, 10);
 
 
@@ -1150,7 +1150,7 @@ lives_pandh_w* create_pandh_dialog (gint type) {
   ////////////////////////////////////
 
 
-  hbox = gtk_hbox_new (FALSE, 0);
+  hbox = lives_hbox_new (FALSE, 0);
   gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, TRUE, TRUE, 10);
 
   pandhw->entry1 = lives_standard_entry_new ("",FALSE,"127",3,3,LIVES_BOX(hbox),NULL);
@@ -1166,7 +1166,7 @@ lives_pandh_w* create_pandh_dialog (gint type) {
   label=lives_standard_label_new(_("Enter the port number to listen for LiVES streams on:"));
   gtk_box_pack_start (GTK_BOX (dialog_vbox), label, TRUE, TRUE, 10);
 
-  hbox = gtk_hbox_new (FALSE, 0);
+  hbox = lives_hbox_new (FALSE, 0);
   gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, TRUE, TRUE, 10);
 
   pandhw->port_spin = lives_standard_spin_button_new (_("Port"),FALSE,48888.,1.,65535,1.,1.,0,LIVES_BOX(hbox),NULL);

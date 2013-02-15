@@ -103,7 +103,7 @@ static void add_xlays_widget(GtkBox *box) {
 
 void add_warn_check (GtkBox *box, gint warn_mask_number) {
   GtkWidget *checkbutton;
-  GtkWidget *hbox=gtk_hbox_new (FALSE, 0);
+  GtkWidget *hbox=lives_hbox_new (FALSE, 0);
 
   checkbutton=lives_standard_check_button_new (
 					       _("Do _not show this warning any more\n(can be turned back on from Preferences/Warnings)"),
@@ -136,7 +136,7 @@ static void add_clear_ds_button(GtkDialog* dialog) {
 static void add_clear_ds_adv(GtkBox *box) {
   // add a button which opens up  Recover/Repair widget
   GtkWidget *button = gtk_button_new_with_mnemonic(_(" _Advanced Settings >>"));
-  GtkWidget *hbox = gtk_hbox_new (FALSE, 0);
+  GtkWidget *hbox = lives_hbox_new (FALSE, 0);
 
   gtk_box_pack_start (GTK_BOX(hbox), button, FALSE, FALSE, 20);
   gtk_box_pack_start (box, hbox, FALSE, FALSE, 10);
@@ -2367,7 +2367,7 @@ static void create_threaded_dialog(gchar *text, gboolean has_cancel) {
 
   gtk_widget_show (dialog_vbox);
 
-  vbox = gtk_vbox_new (FALSE, 0);
+  vbox = lives_vbox_new (FALSE, 0);
   gtk_widget_show (vbox);
   gtk_box_pack_start (GTK_BOX (dialog_vbox), vbox, TRUE, TRUE, 0);
 

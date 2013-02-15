@@ -2818,7 +2818,7 @@ static GtkWidget *conx_scroll_new(weed_plant_t *filter, lives_conx_w *conxwp) {
   gtk_widget_show (scrolledwindow);
   gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrolledwindow), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
 
-  top_vbox=gtk_vbox_new (FALSE, 0);
+  top_vbox=lives_vbox_new (FALSE, 0);
 
     
   gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (scrolledwindow), top_vbox);
@@ -2846,7 +2846,7 @@ static GtkWidget *conx_scroll_new(weed_plant_t *filter, lives_conx_w *conxwp) {
 
       if (!has_alpha_palette(chan)) continue;
 
-      hbox=gtk_hbox_new (FALSE, 0);
+      hbox=lives_hbox_new (FALSE, 0);
       gtk_box_pack_start (GTK_BOX (top_vbox), hbox, FALSE, FALSE, 10);
 
       channame=weed_get_string_value(chan,"name",&error);
@@ -2895,7 +2895,7 @@ static GtkWidget *conx_scroll_new(weed_plant_t *filter, lives_conx_w *conxwp) {
   }
 
   if (conxwp->num_alpha>0&&conxwp->num_params>0) {
-    hseparator = gtk_hseparator_new ();
+    hseparator = lives_hseparator_new ();
     gtk_widget_show (hseparator);
     gtk_box_pack_start (GTK_BOX (top_vbox), hseparator, FALSE, FALSE, 10);
   }
@@ -2916,9 +2916,9 @@ static GtkWidget *conx_scroll_new(weed_plant_t *filter, lives_conx_w *conxwp) {
     label=lives_standard_label_new(_("Parameter Data Connections"));
     gtk_box_pack_start (GTK_BOX (top_vbox), label, FALSE, FALSE, 10);
 
-    hbox=gtk_hbox_new (FALSE, 0);
+    hbox=lives_hbox_new (FALSE, 0);
     gtk_box_pack_start (GTK_BOX (top_vbox), hbox, FALSE, FALSE, 10);
-    hbox2=gtk_hbox_new (FALSE, 0);
+    hbox2=lives_hbox_new (FALSE, 0);
     gtk_box_pack_end (GTK_BOX (hbox), hbox2, FALSE, FALSE, 10);
     conxwp->allcheckc=lives_standard_check_button_new(_("Autoscale All"),FALSE,LIVES_BOX(hbox2),NULL);
 
@@ -2929,7 +2929,7 @@ static GtkWidget *conx_scroll_new(weed_plant_t *filter, lives_conx_w *conxwp) {
 			    (gpointer)conxwp);
 
     for (i=0;i<conxwp->num_params;i++) {
-      hbox=gtk_hbox_new (FALSE, 0);
+      hbox=lives_hbox_new (FALSE, 0);
       gtk_box_pack_start (GTK_BOX (top_vbox), hbox, FALSE, FALSE, 10);
 
       param=oparams[i];

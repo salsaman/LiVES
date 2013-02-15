@@ -645,8 +645,76 @@ LIVES_INLINE LiVESAdjustment *lives_adjustment_new(double value, double lower, d
 }
 
 
+LIVES_INLINE void lives_box_set_homogeneous(LiVESBox *box, boolean homogenous) {
+#ifdef GUI_GTK
+  gtk_box_set_homogeneous(box,homogenous);
+#endif
+}
+
+
+LIVES_INLINE void lives_box_set_spacing(LiVESBox *box, int spacing) {
+#ifdef GUI_GTK
+  gtk_box_set_spacing(box,spacing);
+#endif
+}
+
+
+LIVES_INLINE LiVESWidget *lives_hbox_new(boolean homogeneous, int spacing) {
+  LiVESWidget *hbox=NULL;
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3,0,0)
+  hbox=gtk_box_new(LIVES_ORIENTATION_HORIZONTAL,spacing);
+  lives_box_set_homogeneous(LIVES_BOX(hbox),homogeneous);
+#else
+  hbox=gtk_hbox_new(homogenous,spacing);
+#endif
+#endif
+  return hbox;
+}
+
+
+LIVES_INLINE LiVESWidget *lives_vbox_new(boolean homogeneous, int spacing) {
+  LiVESWidget *vbox=NULL;
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3,0,0)
+  vbox=gtk_box_new(LIVES_ORIENTATION_VERTICAL,spacing);
+  lives_box_set_homogeneous(LIVES_BOX(vbox),homogeneous);
+#else
+  vbox=gtk_vbox_new(homogenous,spacing);
+#endif
+#endif
+  return vbox;
+}
+
+
+LIVES_INLINE LiVESWidget *lives_hseparator_new(void) {
+  LiVESWidget *hsep=NULL;
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3,0,0)
+  hsep=gtk_separator_new(LIVES_ORIENTATION_HORIZONTAL);
+#else
+  hsep=gtk_hseparator_new();
+#endif
+#endif
+  return hsep;
+}
+
+
+LIVES_INLINE LiVESWidget *lives_vseparator_new(void) {
+  LiVESWidget *vsep=NULL;
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3,0,0)
+  vsep=gtk_separator_new(LIVES_ORIENTATION_VERTICAL);
+#else
+  vsep=gtk_vseparator_new();
+#endif
+#endif
+  return vsep;
+}
+
+
 LIVES_INLINE LiVESWidget *lives_combo_new(void) {
-  LiVESWidget *combo;
+  LiVESWidget *combo=NULL;
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(2,24,0)
   combo = gtk_combo_box_text_new_with_entry ();
@@ -1221,11 +1289,11 @@ LiVESWidget *lives_standard_check_button_new(const char *labeltext, boolean use_
   if (box!=NULL) {
     if (GTK_IS_HBOX(box)) hbox=GTK_WIDGET(box);
     else {
-      hbox = gtk_hbox_new (FALSE, 0);
+      hbox = lives_hbox_new (FALSE, 0);
       gtk_box_pack_start (GTK_BOX (box), hbox, FALSE, FALSE, W_PACKING_WIDTH);
     }
     
-    gtk_box_set_homogeneous(GTK_BOX(hbox),FALSE);
+    lives_box_set_homogeneous(LIVES_BOX(hbox),FALSE);
     
     
     if (!widget_opts.swap_label&&eventbox!=NULL)
@@ -1287,11 +1355,11 @@ LiVESWidget *lives_standard_radio_button_new(const char *labeltext, boolean use_
   if (box!=NULL) {
     if (GTK_IS_HBOX(box)) hbox=GTK_WIDGET(box);
     else {
-      hbox = gtk_hbox_new (FALSE, 0);
+      hbox = lives_hbox_new (FALSE, 0);
       gtk_box_pack_start (GTK_BOX (box), hbox, FALSE, FALSE, W_PACKING_WIDTH);
     }
     
-    gtk_box_set_homogeneous(GTK_BOX(hbox),FALSE);
+    lives_box_set_homogeneous(LIVES_BOX(hbox),FALSE);
     
     if (widget_opts.swap_label&&eventbox!=NULL)
       gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, W_PACKING_WIDTH);
@@ -1362,7 +1430,7 @@ LiVESWidget *lives_standard_spin_button_new(const char *labeltext, boolean use_m
   if (box!=NULL) {
     if (GTK_IS_HBOX(box)) hbox=GTK_WIDGET(box);
     else {
-      hbox = gtk_hbox_new (TRUE, 0);
+      hbox = lives_hbox_new (TRUE, 0);
       gtk_box_pack_start (GTK_BOX (box), hbox, FALSE, FALSE, W_PACKING_WIDTH);
     }
     
@@ -1422,7 +1490,7 @@ LiVESWidget *lives_standard_combo_new (const char *labeltext, boolean use_mnemon
   if (box!=NULL) {
     if (GTK_IS_HBOX(box)) hbox=GTK_WIDGET(box);
     else {
-      hbox = gtk_hbox_new (TRUE, 0);
+      hbox = lives_hbox_new (TRUE, 0);
       gtk_box_pack_start (GTK_BOX (box), hbox, FALSE, FALSE, W_PACKING_WIDTH);
     }
     
@@ -1482,11 +1550,11 @@ LiVESWidget *lives_standard_entry_new(const char *labeltext, boolean use_mnemoni
     if (GTK_IS_HBOX(box)) hbox=GTK_WIDGET(box);
     
     else {
-      hbox = gtk_hbox_new (TRUE, 0);
+      hbox = lives_hbox_new (TRUE, 0);
       gtk_box_pack_start (GTK_BOX (box), hbox, FALSE, FALSE, W_PACKING_WIDTH);
     }
     
-    gtk_box_set_homogeneous(GTK_BOX(hbox),FALSE);
+    lives_box_set_homogeneous(LIVES_BOX(hbox),FALSE);
 
     if (!widget_opts.swap_label&&label!=NULL)
       gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, W_PACKING_WIDTH);
@@ -1818,7 +1886,7 @@ boolean lives_general_delete_event(LiVESWidget *widget, LiVESEvent *event, LiVES
 
 void add_hsep_to_box (LiVESBox *box, boolean expand) {
 #ifdef GUI_GTK
-  GtkWidget *hseparator = gtk_hseparator_new ();
+  GtkWidget *hseparator = lives_hseparator_new ();
   gtk_box_pack_start (box, hseparator, expand, TRUE, 0);
   if (!widget_opts.no_gui) 
     gtk_widget_show(hseparator);

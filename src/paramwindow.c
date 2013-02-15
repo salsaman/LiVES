@@ -416,7 +416,7 @@ void transition_add_in_out(GtkBox *vbox, lives_rfx_t *rfx, boolean add_audio_che
 
   gchar *tmp,*tmp2;
 
-  hbox = gtk_hbox_new (FALSE, 0);
+  hbox = lives_hbox_new (FALSE, 0);
   gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 10);
 
   radiobutton_in=lives_standard_radio_button_new(_ ("Transition _In"),TRUE,radiobutton_group,LIVES_BOX(hbox),NULL);
@@ -434,7 +434,7 @@ void transition_add_in_out(GtkBox *vbox, lives_rfx_t *rfx, boolean add_audio_che
 
     GtkWidget *checkbutton;
 
-    hbox2 = gtk_hbox_new (FALSE, 0);
+    hbox2 = lives_hbox_new (FALSE, 0);
 
     if (has_video_chans_in(filter,FALSE)) 
       gtk_box_pack_start (GTK_BOX (hbox), hbox2, FALSE, FALSE, 10);
@@ -469,7 +469,7 @@ void transition_add_in_out(GtkBox *vbox, lives_rfx_t *rfx, boolean add_audio_che
     lives_widget_set_fg_color(hbox, GTK_STATE_NORMAL, &palette->normal_fore);
   }
 
-  hseparator = gtk_hseparator_new ();
+  hseparator = lives_hseparator_new ();
   gtk_box_pack_start (vbox, hseparator, FALSE, FALSE, 0);
 
 }
@@ -501,7 +501,7 @@ static boolean add_sizes(GtkBox *vbox, boolean add_fps, lives_rfx_t *rfx) {
 
 
   if (add_fps) {
-    hbox = gtk_hbox_new (FALSE, 0);
+    hbox = lives_hbox_new (FALSE, 0);
     gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 20);
     
     add_fill_to_box(GTK_BOX(hbox));
@@ -546,7 +546,7 @@ static boolean add_sizes(GtkBox *vbox, boolean add_fps, lives_rfx_t *rfx) {
     label=lives_standard_label_new(ltxt);
     g_free(ltxt);
 
-    hbox = gtk_hbox_new (FALSE, 0);
+    hbox = lives_hbox_new (FALSE, 0);
     gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 10);
     gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 10);
 
@@ -593,7 +593,7 @@ static boolean add_sizes(GtkBox *vbox, boolean add_fps, lives_rfx_t *rfx) {
 
 
   if (!chk_params) {
-    hseparator = gtk_hseparator_new ();
+    hseparator = lives_hseparator_new ();
 
     if (!rfx->is_template) {
       lives_param_t param;
@@ -624,7 +624,7 @@ static void add_gen_to(GtkBox *vbox, lives_rfx_t *rfx) {
   GtkWidget *radiobutton;
   GtkWidget *hseparator;
 
-  GtkWidget *hbox = gtk_hbox_new (FALSE, 0);
+  GtkWidget *hbox = lives_hbox_new (FALSE, 0);
 
   gchar *tmp,*tmp2;
 
@@ -646,7 +646,7 @@ static void add_gen_to(GtkBox *vbox, lives_rfx_t *rfx) {
 
   g_free(tmp); g_free(tmp2);
 
-  hseparator = gtk_hseparator_new ();
+  hseparator = lives_hseparator_new ();
   gtk_box_pack_start (vbox, hseparator, FALSE, FALSE, 0);
 
   lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (radiobutton), !mainw->gen_to_clipboard);
@@ -782,9 +782,9 @@ void on_render_fx_pre_activate (GtkMenuItem *menuitem, lives_rfx_t *rfx) {
   if (rfx->status!=RFX_STATUS_WEED&&!no_process) {
     // rendered fx preview
 
-    GtkWidget *hbox = gtk_hbox_new (FALSE, 0);
+    GtkWidget *hbox = lives_hbox_new (FALSE, 0);
     gtk_box_pack_start (GTK_BOX (top_dialog_vbox), hbox, FALSE, FALSE, 0);
-    pbox = gtk_vbox_new (FALSE, 0);
+    pbox = lives_vbox_new (FALSE, 0);
     gtk_box_pack_start (GTK_BOX (hbox), pbox, FALSE, FALSE, 0);
     
     // add preview window
@@ -1019,12 +1019,12 @@ boolean make_param_box(GtkVBox *top_vbox, lives_rfx_t *rfx) {
 
     // paramwindow start, everything goes in top_hbox
     
-    top_hbox = gtk_hbox_new (FALSE, 10);
+    top_hbox = lives_hbox_new (FALSE, 10);
     
     // param_vbox holds the dynamic parameters
-    param_vbox = gtk_vbox_new (FALSE, 10);
+    param_vbox = lives_vbox_new (FALSE, 10);
     gtk_box_pack_start (GTK_BOX (top_hbox), param_vbox, TRUE, TRUE, 10);
-    gtk_box_set_spacing (GTK_BOX (param_vbox), 5);
+    lives_box_set_spacing (GTK_BOX (param_vbox), 5);
   }
 
   switch (rfx->status) {
@@ -1140,7 +1140,7 @@ boolean make_param_box(GtkVBox *top_vbox, lives_rfx_t *rfx) {
 	    param->type==LIVES_PARAM_UNDISPLAYABLE) continue;
 	// parameter, eg. p1
 	if (!has_box) {
-	  hbox = gtk_hbox_new (TRUE, 0);
+	  hbox = lives_hbox_new (TRUE, 0);
 	  gtk_box_pack_start (GTK_BOX (param_vbox), hbox, FALSE, FALSE, 10);
 	  has_box=TRUE;
 	  has_param=TRUE;
@@ -1150,7 +1150,7 @@ boolean make_param_box(GtkVBox *top_vbox, lives_rfx_t *rfx) {
 	has_param=TRUE;
       }
       else if (!j&&!strcmp (array[j],"hseparator")&&has_param) {
-	hbox = gtk_hbox_new (FALSE, 0);
+	hbox = lives_hbox_new (FALSE, 0);
 	gtk_box_pack_start (GTK_BOX (param_vbox), hbox, FALSE, FALSE, 10);
 	add_hsep_to_box (LIVES_BOX (hbox),TRUE);
 	j=num_tok;  // ignore anything after hseparator
@@ -1159,7 +1159,7 @@ boolean make_param_box(GtkVBox *top_vbox, lives_rfx_t *rfx) {
 	// can be filln
 	if (strlen (array[j])==4||!(length=atoi (array[j]+4))) length=1;
 	if (!has_box) {
-	  hbox = gtk_hbox_new (FALSE, 0);
+	  hbox = lives_hbox_new (FALSE, 0);
 	  gtk_box_pack_start (GTK_BOX (param_vbox), hbox, FALSE, FALSE, 10);
 	  has_box=TRUE;
 	}
@@ -1170,7 +1170,7 @@ boolean make_param_box(GtkVBox *top_vbox, lives_rfx_t *rfx) {
       else if (!strncmp (array[j],"\"",1)) {
 	// label
 	if (!has_box) {
-	  hbox = gtk_hbox_new (FALSE, 0);
+	  hbox = lives_hbox_new (FALSE, 0);
 	  gtk_box_pack_start (GTK_BOX (param_vbox), hbox, FALSE, FALSE, 10);
 	  has_box=TRUE;
 	}
@@ -1207,7 +1207,7 @@ boolean make_param_box(GtkVBox *top_vbox, lives_rfx_t *rfx) {
 
   if (!chk_params) {
     if (!has_param) {
-      hbox = gtk_hbox_new (FALSE, 0);
+      hbox = lives_hbox_new (FALSE, 0);
       gtk_box_pack_start (GTK_BOX (param_vbox), hbox, FALSE, FALSE, 20);
       add_fill_to_box(GTK_BOX(hbox));
       add_param_label_to_box(GTK_BOX(hbox),FALSE,_("No parameters"));
@@ -1305,7 +1305,7 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, boolean add_
 
       if (GTK_IS_HBOX(box)) hbox=GTK_WIDGET(box);
       else {
-	hbox = gtk_hbox_new (FALSE, 0);
+	hbox = lives_hbox_new (FALSE, 0);
 	gtk_box_pack_start (GTK_BOX (box), hbox, FALSE, FALSE, 10);
       }
       
@@ -1334,7 +1334,7 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, boolean add_
 
       if (GTK_IS_HBOX(box)) hbox=GTK_WIDGET(box);
       else {
-	hbox = gtk_hbox_new (FALSE, 0);
+	hbox = lives_hbox_new (FALSE, 0);
 	gtk_box_pack_start (GTK_BOX (box), hbox, FALSE, FALSE, 10);
       }
       
@@ -1391,7 +1391,7 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, boolean add_
 
     if (GTK_IS_HBOX(box)) hbox=GTK_WIDGET(box);
     else {
-      hbox = gtk_hbox_new (FALSE, 0);
+      hbox = lives_hbox_new (FALSE, 0);
       gtk_box_pack_start (GTK_BOX (box), hbox, FALSE, FALSE, 10);
     }
 
@@ -1461,7 +1461,7 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, boolean add_
 
     if (GTK_IS_HBOX(box)) hbox=GTK_WIDGET(box);
     else {
-      hbox = gtk_hbox_new (FALSE, 0);
+      hbox = lives_hbox_new (FALSE, 0);
       gtk_box_pack_start (GTK_BOX (box), hbox, FALSE, FALSE, 10);
     }
 
@@ -1537,9 +1537,9 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, boolean add_
 
   case LIVES_PARAM_STRING:
 
-    hbox = gtk_hbox_new (FALSE, 0);
+    hbox = lives_hbox_new (FALSE, 0);
     gtk_box_pack_start (GTK_BOX (box), hbox, FALSE, FALSE, 0);
-    gtk_box_set_homogeneous(GTK_BOX(box),FALSE);
+    lives_box_set_homogeneous(GTK_BOX(box),FALSE);
 
     if (rfx->status==RFX_STATUS_WEED&&(disp_string=get_weed_display_string((weed_plant_t *)rfx->source,pnum))!=NULL) {
       if (param->max==0.) txt=g_strdup (disp_string);
@@ -1642,7 +1642,7 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, boolean add_
 void add_param_label_to_box (GtkBox *box, boolean do_trans, const gchar *text) {
   GtkWidget *label;
 
-  gtk_box_set_homogeneous(GTK_BOX(box),FALSE);
+  lives_box_set_homogeneous(GTK_BOX(box),FALSE);
 
   if (do_trans) {
     char *markup;

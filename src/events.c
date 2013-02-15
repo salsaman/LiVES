@@ -2058,14 +2058,14 @@ GtkWidget *events_rec_dialog (gboolean allow_mt) {
 
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(e_rec_dialog));
 
-  vbox = gtk_vbox_new (FALSE, 0);
+  vbox = lives_vbox_new (FALSE, 0);
   gtk_box_pack_start (GTK_BOX (dialog_vbox), vbox, TRUE, TRUE, 0);
 
   label = lives_standard_label_new (_("   Events were recorded. What would you like to do with them ?    "));
 
   gtk_box_pack_start (GTK_BOX (vbox), label, TRUE, TRUE, 20);
 
-  hbox = gtk_hbox_new (FALSE, 0);
+  hbox = lives_hbox_new (FALSE, 0);
   gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 20);
 
   radiobutton = lives_standard_radio_button_new (_ ("_Preview events"),TRUE,radiobutton_group,LIVES_BOX(hbox),NULL);
@@ -2079,7 +2079,7 @@ GtkWidget *events_rec_dialog (gboolean allow_mt) {
 
   if (!mainw->clip_switched&&(cfile->clip_type==CLIP_TYPE_DISK||cfile->clip_type==CLIP_TYPE_FILE)) {
 
-    hbox = gtk_hbox_new (FALSE, 0);
+    hbox = lives_hbox_new (FALSE, 0);
     gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 20);
 
     radiobutton = lives_standard_radio_button_new (_ ("Render events to _same clip"),TRUE,radiobutton_group,LIVES_BOX(hbox),NULL);
@@ -2091,7 +2091,7 @@ GtkWidget *events_rec_dialog (gboolean allow_mt) {
   }
 
 
-  hbox = gtk_hbox_new (FALSE, 0);
+  hbox = lives_hbox_new (FALSE, 0);
   gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 20);
 
   radiobutton = lives_standard_radio_button_new (_ ("Render events to _new clip"),TRUE,radiobutton_group,LIVES_BOX(hbox),NULL);
@@ -2103,7 +2103,7 @@ GtkWidget *events_rec_dialog (gboolean allow_mt) {
   
 
 
-  hbox = gtk_hbox_new (FALSE, 0);
+  hbox = lives_hbox_new (FALSE, 0);
   gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 20);
 
   radiobutton = lives_standard_radio_button_new (_ ("View/edit events in _multitrack window (test)"),TRUE,radiobutton_group,LIVES_BOX(hbox),NULL);
@@ -2117,7 +2117,7 @@ GtkWidget *events_rec_dialog (gboolean allow_mt) {
 
 
 
-  hbox = gtk_hbox_new (FALSE, 0);
+  hbox = lives_hbox_new (FALSE, 0);
   gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 20);
 
   radiobutton = lives_standard_radio_button_new (_ ("View/edit events in _event window"),TRUE,radiobutton_group,LIVES_BOX(hbox),NULL);
@@ -4940,7 +4940,7 @@ render_details *create_render_details (gint type) {
   gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrollw), GTK_POLICY_AUTOMATIC, 
 				  GTK_POLICY_AUTOMATIC);
   
-  top_vbox = gtk_vbox_new (FALSE, 0);
+  top_vbox = lives_vbox_new (FALSE, 0);
 
   gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (scrollw), top_vbox);
   gtk_box_pack_start (GTK_BOX (dialog_vbox), scrollw, TRUE, TRUE, 0);
@@ -4959,7 +4959,7 @@ render_details *create_render_details (gint type) {
   gtk_widget_show (frame);
 
   if (type!=1) gtk_box_pack_start (GTK_BOX (top_vbox), frame, TRUE, TRUE, 0);
-  vbox = gtk_vbox_new (FALSE, 0);
+  vbox = lives_vbox_new (FALSE, 0);
   gtk_container_add (GTK_CONTAINER (frame), vbox);
   
   if (palette->style&STYLE_1) {
@@ -4969,7 +4969,7 @@ render_details *create_render_details (gint type) {
   label = lives_standard_label_new (_("Video"));
   gtk_frame_set_label_widget (GTK_FRAME (frame), label);
   
-  hbox = gtk_hbox_new (FALSE, 50);
+  hbox = lives_hbox_new (FALSE, 50);
   gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 10);
   
   rdet->spinbutton_width = lives_standard_spin_button_new 
@@ -5000,7 +5000,7 @@ render_details *create_render_details (gint type) {
   }
 
 
-  hbox = gtk_hbox_new (FALSE, 0);
+  hbox = lives_hbox_new (FALSE, 0);
   gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 10);
 
   rdet->spinbutton_fps = lives_standard_spin_button_new 
@@ -5026,7 +5026,7 @@ render_details *create_render_details (gint type) {
     
     gtk_box_pack_start (GTK_BOX (top_vbox), label, FALSE, FALSE, 10);
     
-    hbox = gtk_hbox_new (FALSE, 0);
+    hbox = lives_hbox_new (FALSE, 0);
     gtk_box_pack_start (GTK_BOX (top_vbox), hbox, FALSE, FALSE, 10);
 
     rdet->backaudio_checkbutton=lives_standard_check_button_new
@@ -5070,7 +5070,7 @@ render_details *create_render_details (gint type) {
 
   }
 
-  hsep = gtk_hseparator_new ();
+  hsep = lives_hseparator_new ();
   label= lives_standard_label_new ("");
   if (!specified) {
     gtk_box_pack_start (GTK_BOX (top_vbox), hsep, TRUE, TRUE, 0);
@@ -5185,7 +5185,7 @@ render_details *create_render_details (gint type) {
   }
 
 
-  rdet->always_hbox = gtk_hbox_new (TRUE, 20);
+  rdet->always_hbox = lives_hbox_new (TRUE, 20);
 
   rdet->always_checkbutton=lives_standard_check_button_new ((tmp=g_strdup(_("_Always use these values"))),TRUE,
 							    LIVES_BOX(rdet->always_hbox),

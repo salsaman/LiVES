@@ -94,6 +94,7 @@ void add_message_scroller(GtkWidget *conter) {
   mainw->scrolledwindow = gtk_scrolled_window_new (NULL, NULL);
   gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(mainw->scrolledwindow),GTK_POLICY_AUTOMATIC,GTK_POLICY_ALWAYS);
   gtk_widget_show (mainw->scrolledwindow);
+  lives_widget_set_vexpand(mainw->scrolledwindow,TRUE);
 
   gtk_container_add (GTK_CONTAINER(conter), mainw->scrolledwindow);
 
@@ -349,11 +350,11 @@ create_LiVES (void)
  
   gtk_window_set_title (GTK_WINDOW (mainw->LiVES), "LiVES");
 
-  mainw->vbox1 = gtk_vbox_new (FALSE, 0);
+  mainw->vbox1 = lives_vbox_new (FALSE, 0);
   gtk_container_add (GTK_CONTAINER (mainw->LiVES), mainw->vbox1);
   gtk_widget_show (mainw->vbox1);
 
-  mainw->menu_hbox = gtk_hbox_new (FALSE, 0);
+  mainw->menu_hbox = lives_hbox_new (FALSE, 0);
   gtk_widget_show (mainw->menu_hbox);
   gtk_box_pack_start (GTK_BOX (mainw->vbox1), mainw->menu_hbox, FALSE, FALSE, 0);
 
@@ -1871,7 +1872,7 @@ create_LiVES (void)
 
   mainw->play_window=NULL;
 
-  mainw->tb_hbox=gtk_hbox_new (FALSE, 0);
+  mainw->tb_hbox=lives_hbox_new (FALSE, 0);
   mainw->toolbar = gtk_toolbar_new ();
   lives_widget_set_bg_color (mainw->tb_hbox, GTK_STATE_NORMAL, &palette->fade_colour);
   lives_widget_set_bg_color (mainw->toolbar, GTK_STATE_NORMAL, &palette->fade_colour);
@@ -1978,7 +1979,7 @@ create_LiVES (void)
   gtk_widget_show_all (mainw->tb_hbox);
   gtk_widget_hide (mainw->tb_hbox);
 
-  vbox4 = gtk_vbox_new (FALSE, 0);
+  vbox4 = lives_vbox_new (FALSE, 0);
   gtk_widget_show (vbox4);
 
   mainw->eventbox = gtk_event_box_new ();
@@ -1998,7 +1999,7 @@ create_LiVES (void)
                       G_CALLBACK (on_mouse_scroll),
                       NULL);
 
-  mainw->framebar = gtk_hbox_new (FALSE, 0);
+  mainw->framebar = lives_hbox_new (FALSE, 0);
   gtk_widget_show (mainw->framebar);
   gtk_box_pack_start (GTK_BOX (vbox4), mainw->framebar, FALSE, FALSE, 0);
   gtk_container_set_border_width (GTK_CONTAINER (mainw->framebar), 2);
@@ -2058,7 +2059,7 @@ create_LiVES (void)
 
   gtk_widget_hide(mainw->framebar);
 
-  hbox1 = gtk_hbox_new (FALSE, 0);
+  hbox1 = lives_hbox_new (FALSE, 0);
   gtk_widget_show(hbox1);
   gtk_box_pack_start (GTK_BOX (vbox4), hbox1, FALSE, FALSE, 0);
   if (palette->style&STYLE_1) {
@@ -2126,7 +2127,7 @@ create_LiVES (void)
   gtk_container_add (GTK_CONTAINER (mainw->playframe), mainw->pl_eventbox);
   gtk_widget_show(mainw->pl_eventbox);
 
-  mainw->playarea = gtk_hbox_new (FALSE,0);
+  mainw->playarea = lives_hbox_new (FALSE,0);
 
   gtk_container_add (GTK_CONTAINER (mainw->pl_eventbox), mainw->playarea);
 
@@ -2190,6 +2191,9 @@ create_LiVES (void)
   gtk_widget_show (mainw->image274);
   g_object_ref(mainw->image274);
 
+  lives_widget_set_hexpand(mainw->image274,TRUE);
+  lives_widget_set_vexpand(mainw->image274,TRUE);
+
 #if GTK_CHECK_VERSION(3,0,0)
   g_signal_connect (GTK_OBJECT (mainw->image274), LIVES_WIDGET_EVENT_EXPOSE_EVENT,
 		    G_CALLBACK (expose_pim),
@@ -2206,7 +2210,7 @@ create_LiVES (void)
   if (palette->style&STYLE_1) {
     lives_widget_set_fg_color(label16, GTK_STATE_NORMAL, &palette->normal_fore);
   }
-  hbox3 = gtk_hbox_new (FALSE, 0);
+  hbox3 = lives_hbox_new (FALSE, 0);
   gtk_widget_show (hbox3);
   gtk_box_pack_start (GTK_BOX (vbox4), hbox3, FALSE, TRUE, 0);
 
@@ -2278,7 +2282,7 @@ create_LiVES (void)
   gtk_widget_set_sensitive(mainw->spinbutton_start,FALSE);
   gtk_widget_set_sensitive(mainw->spinbutton_end,FALSE);
 
-  mainw->hseparator = gtk_hseparator_new ();
+  mainw->hseparator = lives_hseparator_new ();
 
   if (palette->style&STYLE_1) {
     gtk_box_pack_start (GTK_BOX (vbox4), mainw->sep_image, FALSE, TRUE, 20);
@@ -2319,7 +2323,7 @@ create_LiVES (void)
     lives_widget_set_bg_color (mainw->eventbox2, GTK_STATE_NORMAL, &palette->normal_back);
   }
 
-  vbox2 = gtk_vbox_new (FALSE, 0);
+  vbox2 = lives_vbox_new (FALSE, 0);
   gtk_widget_show (vbox2);
   gtk_container_add (GTK_CONTAINER (mainw->eventbox2), vbox2);
 
@@ -2384,10 +2388,9 @@ create_LiVES (void)
     lives_widget_set_bg_color (mainw->raudio_draw, GTK_STATE_NORMAL, &palette->normal_back);
   }
 
-  mainw->message_box=gtk_vbox_new(FALSE, 0);
+  mainw->message_box=lives_vbox_new(FALSE, 0);
   gtk_widget_show (mainw->message_box);
   gtk_box_pack_start (GTK_BOX (vbox4), mainw->message_box, TRUE, TRUE, 0);
-  lives_widget_set_vexpand(mainw->message_box,TRUE);
 
   mainw->textview1=NULL;
   mainw->scrolledwindow=NULL;
@@ -3426,7 +3429,7 @@ make_preview_box (void) {
   gchar buff[PATH_MAX];
   gchar *fnamex;
 
-  mainw->preview_box = gtk_vbox_new (FALSE, 0);
+  mainw->preview_box = lives_vbox_new (FALSE, 0);
   gtk_widget_show (mainw->preview_box);
   g_object_ref(mainw->preview_box);
 
@@ -3443,8 +3446,12 @@ make_preview_box (void) {
   gtk_widget_show (mainw->preview_image);
   gtk_container_add (GTK_CONTAINER (eventbox), mainw->preview_image);
 
-  hbox = gtk_hbox_new (FALSE, 10);
+  lives_widget_set_hexpand(mainw->preview_box,TRUE);
+  lives_widget_set_vexpand(mainw->preview_box,TRUE);
+
+  hbox = lives_hbox_new (FALSE, 10);
   gtk_widget_show (hbox);
+  lives_widget_set_vexpand(hbox,FALSE);
   gtk_box_pack_start (GTK_BOX (mainw->preview_box), hbox, FALSE, FALSE, 0);
   gtk_container_set_border_width (GTK_CONTAINER (hbox), 10);
 
@@ -3467,11 +3474,13 @@ make_preview_box (void) {
   gtk_widget_set_tooltip_text( mainw->preview_spinbutton, _("Frame number to preview"));
   lives_tooltips_copy(mainw->preview_scale,mainw->preview_spinbutton);
 
-  hbox_rb = gtk_hbox_new (FALSE, 10);
+  hbox_rb = lives_hbox_new (FALSE, 10);
+  lives_widget_set_vexpand(hbox_rb,FALSE);
   gtk_box_pack_start (GTK_BOX (mainw->preview_box), hbox_rb, FALSE, FALSE, 0);
   gtk_widget_show (hbox_rb);
 
-  hbox = gtk_hbox_new (FALSE, 0);
+  hbox = lives_hbox_new (FALSE, 0);
+  lives_widget_set_vexpand(hbox,FALSE);
   gtk_box_pack_start (GTK_BOX (hbox_rb), hbox, TRUE, FALSE, 0);
 
   radiobutton_free=gtk_radio_button_new(NULL);
@@ -3500,7 +3509,7 @@ make_preview_box (void) {
   gtk_widget_show_all (hbox);
 
 
-  hbox = gtk_hbox_new (FALSE, 0);
+  hbox = lives_hbox_new (FALSE, 0);
   gtk_box_pack_start (GTK_BOX (hbox_rb), hbox, TRUE, FALSE, 0);
 
   radiobutton_start=gtk_radio_button_new(NULL);
@@ -3531,7 +3540,7 @@ make_preview_box (void) {
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (radiobutton_start), mainw->prv_link==PRV_START);
 
 
-  hbox = gtk_hbox_new (FALSE, 0);
+  hbox = lives_hbox_new (FALSE, 0);
   gtk_box_pack_start (GTK_BOX (hbox_rb), hbox, TRUE, FALSE, 0);
 
   radiobutton_end=gtk_radio_button_new(NULL);
@@ -3561,7 +3570,7 @@ make_preview_box (void) {
 
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (radiobutton_end), mainw->prv_link==PRV_END);
 
-  hbox = gtk_hbox_new (FALSE, 0);
+  hbox = lives_hbox_new (FALSE, 0);
   gtk_box_pack_start (GTK_BOX (hbox_rb), hbox, TRUE, FALSE, 0);
 
   radiobutton_ptr=gtk_radio_button_new(NULL);
@@ -3591,12 +3600,12 @@ make_preview_box (void) {
 
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (radiobutton_ptr), mainw->prv_link==PRV_PTR);
 
-  hseparator = gtk_hseparator_new ();
+  hseparator = lives_hseparator_new ();
   gtk_widget_show (hseparator);
   gtk_box_pack_start (GTK_BOX (mainw->preview_box), hseparator, TRUE, TRUE, 0);
 
   // buttons
-  hbox_buttons = gtk_hbox_new (FALSE, 0);
+  hbox_buttons = lives_hbox_new (FALSE, 0);
   gtk_widget_show (hbox_buttons);
   gtk_box_pack_start (GTK_BOX (mainw->preview_box), hbox_buttons, TRUE, TRUE, 0);
 
@@ -4179,7 +4188,7 @@ add_to_playframe (void) {
   ///////////////////////////////////////////////////
   if (mainw->plug==NULL) {
     if (!mainw->foreign&&(!mainw->sep_win||prefs->sepwin_type==0)) {
-      mainw->plug = gtk_hbox_new (FALSE,0);
+      mainw->plug = lives_hbox_new (FALSE,0);
       gtk_container_add(GTK_CONTAINER(mainw->playarea),mainw->plug);
       lives_widget_set_bg_color (mainw->plug, GTK_STATE_NORMAL, &palette->normal_back);
       gtk_widget_show (mainw->plug);
@@ -4230,7 +4239,7 @@ void splash_init(void) {
   }
 
   
-  vbox = gtk_vbox_new (FALSE, 10);
+  vbox = lives_vbox_new (FALSE, 10);
   gtk_container_add (GTK_CONTAINER (mainw->splash_window), vbox);
 
   splash_pix=gdk_pixbuf_new_from_file(tmp,&error);
@@ -4258,7 +4267,7 @@ void splash_init(void) {
     lives_widget_set_fg_color(mainw->splash_progress, GTK_STATE_NORMAL, &palette->normal_fore);
   }
 
-  hbox = gtk_hbox_new (FALSE, 10);
+  hbox = lives_hbox_new (FALSE, 10);
 
   gtk_box_pack_start (GTK_BOX (hbox), mainw->splash_progress, TRUE, TRUE, 20);
 

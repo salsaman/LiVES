@@ -82,10 +82,10 @@ void create_merge_dialog (void) {
 
   dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(merge_opts->merge_dialog));
 
-  vbox = gtk_vbox_new (FALSE, 0);
+  vbox = lives_vbox_new (FALSE, 0);
   gtk_box_pack_start (GTK_BOX (dialog_vbox), vbox, TRUE, TRUE, 0);
 
-  hbox = gtk_hbox_new (FALSE, 0);
+  hbox = lives_hbox_new (FALSE, 0);
   gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 19);
 
   txt=g_strdup_printf(_ ("Merge Clipboard [ %d Frames ]       With Selection [ %d Frames ]"),clipboard->frames,cfile->end-cfile->start+1);
@@ -115,7 +115,7 @@ void create_merge_dialog (void) {
 
 
 
-  hbox = gtk_hbox_new (FALSE, 0);
+  hbox = lives_hbox_new (FALSE, 0);
   gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, TRUE, 22);
 
   if ((cfile->end-cfile->start+1)<cb_frames) {
@@ -156,7 +156,7 @@ void create_merge_dialog (void) {
 
   add_hsep_to_box(LIVES_BOX(vbox),FALSE);
   
-  hbox = gtk_hbox_new (TRUE, 0);
+  hbox = lives_hbox_new (TRUE, 0);
   gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 10);
 
   transition_combo = lives_standard_combo_new (_("_Transition Method:"),TRUE,merge_opts->trans_list,LIVES_BOX(hbox),NULL);
@@ -171,7 +171,7 @@ void create_merge_dialog (void) {
   do_onchange_init(rfx);
 
   // now the dynamic part...
-  merge_opts->param_vbox = gtk_vbox_new (FALSE, 0);
+  merge_opts->param_vbox = lives_vbox_new (FALSE, 0);
   gtk_container_set_border_width (GTK_CONTAINER(merge_opts->param_vbox), 10);
 
   gtk_box_pack_start (GTK_BOX (vbox), merge_opts->param_vbox, TRUE, TRUE, 0);

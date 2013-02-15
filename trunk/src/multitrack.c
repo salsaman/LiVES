@@ -1307,7 +1307,7 @@ static boolean add_mt_param_box(lives_mt *mt) {
     gtk_widget_destroy(mt->fx_box);
   }
 
-  mt->fx_box=gtk_vbox_new(FALSE,0);
+  mt->fx_box=lives_vbox_new(FALSE,0);
   gtk_box_pack_end(GTK_BOX(mt->fx_base_box),mt->fx_box,TRUE,TRUE,0);
 
   ltext=mt_params_label(mt);
@@ -1837,7 +1837,7 @@ void scroll_tracks (lives_mt *mt, gint top_track) {
       arrow=(GTK_WIDGET(g_object_get_data(G_OBJECT(mt->audio_draws->data),"arrow")));
       
       labelbox=gtk_event_box_new();
-      hbox=gtk_hbox_new(FALSE,10);
+      hbox=lives_hbox_new(FALSE,10);
       ahbox=gtk_event_box_new();
       
       gtk_widget_set_state(label,GTK_STATE_NORMAL);
@@ -1945,7 +1945,7 @@ void scroll_tracks (lives_mt *mt, gint top_track) {
       arrow=(GTK_WIDGET(g_object_get_data(G_OBJECT(eventbox),"arrow")));
       checkbutton=(GTK_WIDGET(g_object_get_data(G_OBJECT(eventbox),"checkbutton")));
       labelbox=gtk_event_box_new();
-      hbox=gtk_hbox_new(FALSE,10);
+      hbox=lives_hbox_new(FALSE,10);
       ahbox=gtk_event_box_new();
       gtk_widget_set_state(label,GTK_STATE_NORMAL);
       gtk_widget_set_state(arrow,GTK_STATE_NORMAL);
@@ -2063,7 +2063,7 @@ void scroll_tracks (lives_mt *mt, gint top_track) {
 	  arrow=(GTK_WIDGET(g_object_get_data(G_OBJECT(aeventbox),"arrow")));
 	  
 	  labelbox=gtk_event_box_new();
-	  hbox=gtk_hbox_new(FALSE,10);
+	  hbox=lives_hbox_new(FALSE,10);
 	  ahbox=gtk_event_box_new();
 	  
 	  gtk_widget_set_state(label,GTK_STATE_NORMAL);
@@ -2629,7 +2629,7 @@ void mt_show_current_frame(lives_mt *mt, boolean return_layer) {
       }
 
       if (GTK_IS_WIDGET(mainw->playarea)) gtk_widget_destroy (mainw->playarea);
-      mainw->playarea = gtk_hbox_new (FALSE,0);
+      mainw->playarea = lives_hbox_new (FALSE,0);
       gtk_widget_show(mainw->playarea);
       gtk_container_add (GTK_CONTAINER (mt->play_box), mainw->playarea);
       //gtk_widget_set_app_paintable(mainw->playarea,TRUE);
@@ -3449,7 +3449,7 @@ static void populate_filter_box(GtkWidget *box, gint ninchans, lives_mt *mt) {
 	  }
 	}
 
-	vbox=gtk_vbox_new(FALSE,0);
+	vbox=lives_vbox_new(FALSE,0);
 
 	gtk_container_set_border_width (GTK_CONTAINER (vbox), 5);
 	gtk_container_add (GTK_CONTAINER (xeventbox), vbox);
@@ -3899,7 +3899,7 @@ void mt_init_start_end_spins(lives_mt *mt) {
   GObject *spinbutton_end_adj;
 
 
-  hbox = gtk_hbox_new (FALSE, 0);
+  hbox = lives_hbox_new (FALSE, 0);
   gtk_widget_show (hbox);
   
   gtk_box_pack_start (GTK_BOX (mt->top_vbox), hbox, FALSE, FALSE, 6);
@@ -5457,10 +5457,10 @@ static boolean expose_pb (GtkWidget *widget, lives_painter_t *cr, gpointer user_
 		    G_CALLBACK (drag_from_outside),
 		    NULL);
 
-  mt->top_vbox = gtk_vbox_new (FALSE, 0);
+  mt->top_vbox = lives_vbox_new (FALSE, 0);
   gtk_container_add (GTK_CONTAINER (mt->window), mt->top_vbox);
 
-  menu_hbox = gtk_hbox_new (FALSE, 0);
+  menu_hbox = lives_hbox_new (FALSE, 0);
   gtk_box_pack_start (GTK_BOX (mt->top_vbox), menu_hbox, FALSE, FALSE, 0);
 
   menubar = gtk_menu_bar_new ();
@@ -7182,7 +7182,7 @@ static boolean expose_pb (GtkWidget *widget, lives_painter_t *cr, gpointer user_
   if (msg!=NULL) g_free(msg);
 
   eventbox = gtk_event_box_new ();
-  hbox = gtk_hbox_new (FALSE, 0);
+  hbox = lives_hbox_new (FALSE, 0);
   gtk_box_pack_start (GTK_BOX (mt->top_vbox), eventbox, FALSE, FALSE, 0);
   gtk_container_add(GTK_CONTAINER(eventbox),hbox);
 
@@ -7254,7 +7254,7 @@ static boolean expose_pb (GtkWidget *widget, lives_painter_t *cr, gpointer user_
   lives_widget_set_text_color(mt->timecode, GTK_STATE_NORMAL, &palette->light_green);
 
   gtk_widget_set_tooltip_text( mt->insa_checkbutton, _("Select whether video clips are inserted and moved with their audio or not"));
-  hbox2 = gtk_hbox_new (FALSE, 0);
+  hbox2 = lives_hbox_new (FALSE, 0);
 
   lives_tooltips_copy(mt->insa_eventbox,mt->insa_checkbutton);
   label=gtk_label_new_with_mnemonic (_("Insert with _audio"));
@@ -7289,7 +7289,7 @@ static boolean expose_pb (GtkWidget *widget, lives_painter_t *cr, gpointer user_
 
   mt->snapo_checkbutton = gtk_check_button_new ();
   gtk_widget_set_tooltip_text( mt->snapo_checkbutton, _("Select whether timeline selection snaps to overlap between selected tracks or not"));
-  hbox2 = gtk_hbox_new (FALSE, 0);
+  hbox2 = lives_hbox_new (FALSE, 0);
 
   eventbox=gtk_event_box_new();
   lives_tooltips_copy(eventbox,mt->snapo_checkbutton);
@@ -7330,7 +7330,7 @@ static boolean expose_pb (GtkWidget *widget, lives_painter_t *cr, gpointer user_
   // add toolbar
 
   /*  volind=GTK_WIDGET(gtk_tool_item_new());
-  mainw->volind_hbox=gtk_hbox_new(TRUE,0);
+  mainw->volind_hbox=lives_hbox_new(TRUE,0);
   gtk_container_add(GTK_CONTAINER(volind),mainw->volind_hbox);
   gtk_toolbar_insert(GTK_TOOLBAR(mainw->btoolbar),GTK_TOOL_ITEM(mainw->vol_label),7);
   */
@@ -7458,10 +7458,10 @@ static boolean expose_pb (GtkWidget *widget, lives_painter_t *cr, gpointer user_
 
 
 
-  hseparator = gtk_hseparator_new ();
+  hseparator = lives_hseparator_new ();
   gtk_box_pack_start (GTK_BOX (mt->top_vbox), hseparator, FALSE, FALSE, 0);
 
-  mt->hbox = gtk_hbox_new (FALSE, 0);
+  mt->hbox = lives_hbox_new (FALSE, 0);
   gtk_box_pack_start (GTK_BOX (mt->top_vbox), mt->hbox, FALSE, FALSE, 0);
 
   mt->play_blank = gtk_image_new_from_pixbuf (mainw->imframe);
@@ -7477,9 +7477,13 @@ static boolean expose_pb (GtkWidget *widget, lives_painter_t *cr, gpointer user_
 
   eventbox=gtk_event_box_new();
   gtk_widget_set_size_request (eventbox, mt->play_window_width, mt->play_window_height);
-  mt->play_box = gtk_vbox_new (FALSE, BORD_HEIGHT);
+  mt->play_box = lives_vbox_new (FALSE, BORD_HEIGHT);
   gtk_widget_set_app_paintable(mt->play_box,TRUE);
   gtk_widget_set_size_request (mt->play_box, mt->play_window_width, mt->play_window_height);
+
+  lives_widget_set_hexpand(mt->play_box,FALSE);
+  lives_widget_set_vexpand(mt->play_box,FALSE);
+
 
 #if GTK_CHECK_VERSION(3,0,0)
   g_signal_connect (GTK_OBJECT (mt->play_box), LIVES_WIDGET_EVENT_EXPOSE_EVENT,
@@ -7491,6 +7495,7 @@ static boolean expose_pb (GtkWidget *widget, lives_painter_t *cr, gpointer user_
   gtk_container_add (GTK_CONTAINER (eventbox), mt->play_box);
   lives_widget_set_bg_color (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
   gtk_container_add (GTK_CONTAINER (mt->play_box), mt->play_blank);
+
 
   gtk_widget_add_events (eventbox, GDK_BUTTON1_MOTION_MASK | GDK_BUTTON_RELEASE_MASK | GDK_BUTTON_PRESS_MASK | GDK_ENTER_NOTIFY | GDK_LEAVE_NOTIFY);
 
@@ -7522,7 +7527,7 @@ static boolean expose_pb (GtkWidget *widget, lives_painter_t *cr, gpointer user_
   }
 
 
-  hbox = gtk_hbox_new (FALSE, 0);
+  hbox = lives_hbox_new (FALSE, 0);
 
   gtk_container_add (GTK_CONTAINER (mt->nb), hbox);
 
@@ -7530,7 +7535,9 @@ static boolean expose_pb (GtkWidget *widget, lives_painter_t *cr, gpointer user_
 
 
   // prepare polymorph box
-  mt->poly_box = gtk_vbox_new (FALSE, 0);
+  mt->poly_box = lives_vbox_new (FALSE, 0);
+
+  lives_widget_set_vexpand(mt->poly_box,FALSE);
 
   gtk_container_add (GTK_CONTAINER (hbox), mt->poly_box);
 
@@ -7556,7 +7563,9 @@ static boolean expose_pb (GtkWidget *widget, lives_painter_t *cr, gpointer user_
 
   gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (mt->clip_scroll), GTK_POLICY_AUTOMATIC, GTK_POLICY_NEVER);
 
-  mt->clip_inner_box = gtk_hbox_new (FALSE, 10);
+  lives_widget_set_hexpand(mt->clip_scroll,TRUE);
+
+  mt->clip_inner_box = lives_hbox_new (FALSE, 10);
 
   gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (mt->clip_scroll), mt->clip_inner_box);
 
@@ -7566,7 +7575,9 @@ static boolean expose_pb (GtkWidget *widget, lives_painter_t *cr, gpointer user_
 
 
   label=gtk_label_new (_("In/out"));
-  hbox = gtk_hbox_new (FALSE, 0);
+  hbox = lives_hbox_new (FALSE, 0);
+  lives_widget_set_hexpand(hbox,TRUE);
+  lives_widget_set_vexpand(hbox,TRUE);
 
   gtk_container_add (GTK_CONTAINER (mt->nb), hbox);
   gtk_notebook_set_tab_label (GTK_NOTEBOOK (mt->nb), gtk_notebook_get_nth_page (GTK_NOTEBOOK (mt->nb), 1), label);
@@ -7578,7 +7589,9 @@ static boolean expose_pb (GtkWidget *widget, lives_painter_t *cr, gpointer user_
 
 
   label=gtk_label_new (_("FX stack"));
-  hbox = gtk_hbox_new (FALSE, 0);
+  hbox = lives_hbox_new (FALSE, 0);
+  lives_widget_set_hexpand(hbox,TRUE);
+  lives_widget_set_vexpand(hbox,TRUE);
 
   gtk_container_add (GTK_CONTAINER (mt->nb), hbox);
   gtk_notebook_set_tab_label (GTK_NOTEBOOK (mt->nb), gtk_notebook_get_nth_page (GTK_NOTEBOOK (mt->nb), 2), label);
@@ -7591,7 +7604,9 @@ static boolean expose_pb (GtkWidget *widget, lives_painter_t *cr, gpointer user_
   tname=lives_fx_cat_to_text(LIVES_FX_CAT_EFFECT,TRUE); // effects
   label=gtk_label_new (tname);
   g_free(tname);
-  hbox = gtk_hbox_new (FALSE, 0);
+  hbox = lives_hbox_new (FALSE, 0);
+  lives_widget_set_hexpand(hbox,TRUE);
+  lives_widget_set_vexpand(hbox,TRUE);
 
   gtk_container_add (GTK_CONTAINER (mt->nb), hbox);
   gtk_notebook_set_tab_label (GTK_NOTEBOOK (mt->nb), gtk_notebook_get_nth_page (GTK_NOTEBOOK (mt->nb), 3), label);
@@ -7605,7 +7620,9 @@ static boolean expose_pb (GtkWidget *widget, lives_painter_t *cr, gpointer user_
   tname=lives_fx_cat_to_text(LIVES_FX_CAT_TRANSITION,TRUE); // transitions
   label=gtk_label_new (tname);
   g_free(tname);
-  hbox = gtk_hbox_new (FALSE, 0);
+  hbox = lives_hbox_new (FALSE, 0);
+  lives_widget_set_hexpand(hbox,TRUE);
+  lives_widget_set_vexpand(hbox,TRUE);
 
   gtk_container_add (GTK_CONTAINER (mt->nb), hbox);
   gtk_notebook_set_tab_label (GTK_NOTEBOOK (mt->nb), gtk_notebook_get_nth_page (GTK_NOTEBOOK (mt->nb), 4), label);
@@ -7618,7 +7635,9 @@ static boolean expose_pb (GtkWidget *widget, lives_painter_t *cr, gpointer user_
   tname=lives_fx_cat_to_text(LIVES_FX_CAT_COMPOSITOR,TRUE); // compositors
   label=gtk_label_new (tname);
   g_free(tname);
-  hbox = gtk_hbox_new (FALSE, 0);
+  hbox = lives_hbox_new (FALSE, 0);
+  lives_widget_set_hexpand(hbox,TRUE);
+  lives_widget_set_vexpand(hbox,TRUE);
 
   gtk_container_add (GTK_CONTAINER (mt->nb), hbox);
   gtk_notebook_set_tab_label (GTK_NOTEBOOK (mt->nb), gtk_notebook_get_nth_page (GTK_NOTEBOOK (mt->nb), 5), label);
@@ -7629,7 +7648,9 @@ static boolean expose_pb (GtkWidget *widget, lives_painter_t *cr, gpointer user_
 #endif
 
   label=gtk_label_new (_("Params."));
-  hbox = gtk_hbox_new (FALSE, 0);
+  hbox = lives_hbox_new (FALSE, 0);
+  lives_widget_set_hexpand(hbox,TRUE);
+  lives_widget_set_vexpand(hbox,TRUE);
 
 
   gtk_container_add (GTK_CONTAINER (mt->nb), hbox);
@@ -7645,15 +7666,15 @@ static boolean expose_pb (GtkWidget *widget, lives_painter_t *cr, gpointer user_
 
   // params contents
 
-  mt->fx_base_box = gtk_vbox_new (FALSE, 0);
+  mt->fx_base_box = lives_vbox_new (FALSE, 0);
   g_object_ref(mt->fx_base_box);
 
-  mt->fx_contents_box=gtk_vbox_new(FALSE,10);
+  mt->fx_contents_box=lives_vbox_new(FALSE,10);
 
   gtk_box_pack_end (GTK_BOX (mt->fx_base_box), mt->fx_contents_box, FALSE, FALSE, 0);
 
 
-  hbox=gtk_hbox_new(FALSE,10);
+  hbox=lives_hbox_new(FALSE,10);
   gtk_box_pack_end (GTK_BOX (mt->fx_contents_box), hbox, FALSE, FALSE, 0);
 
   mt->apply_fx_button = gtk_button_new_with_mnemonic (_("_Apply"));
@@ -7691,7 +7712,7 @@ static boolean expose_pb (GtkWidget *widget, lives_painter_t *cr, gpointer user_
   gtk_box_pack_start (GTK_BOX (hbox), mt->node_scale, TRUE, TRUE, 10);
   
 
-  hbox=gtk_hbox_new(FALSE,10);
+  hbox=lives_hbox_new(FALSE,10);
   gtk_box_pack_end (GTK_BOX (mt->fx_contents_box), hbox, FALSE, FALSE, 0);
 
   mt->del_node_button = gtk_button_new_with_mnemonic (_("_Del. node"));
@@ -7732,10 +7753,10 @@ static boolean expose_pb (GtkWidget *widget, lives_painter_t *cr, gpointer user_
   mt_init_clips (mt,orig_file,FALSE);
 
   // poly audio velocity
-  mt->avel_box = gtk_vbox_new (FALSE, 0);
+  mt->avel_box = lives_vbox_new (FALSE, 0);
   g_object_ref (mt->avel_box);
 
-  hbox = gtk_hbox_new (FALSE, 0);
+  hbox = lives_hbox_new (FALSE, 0);
   gtk_box_pack_start(GTK_BOX(mt->avel_box),hbox,FALSE,FALSE,8);
 
   mt->checkbutton_avel_reverse = gtk_check_button_new ();
@@ -7764,7 +7785,7 @@ static boolean expose_pb (GtkWidget *widget, lives_painter_t *cr, gpointer user_
 						  mt);
 
 
-  hbox = gtk_hbox_new (FALSE, 8);
+  hbox = lives_hbox_new (FALSE, 8);
   gtk_box_pack_start(GTK_BOX(mt->avel_box),hbox,FALSE,FALSE,10);
 
 
@@ -7791,10 +7812,10 @@ static boolean expose_pb (GtkWidget *widget, lives_painter_t *cr, gpointer user_
   gtk_widget_show_all(mt->avel_box);
 
   // poly in_out_box
-  mt->in_out_box = gtk_hbox_new (FALSE, 0);
+  mt->in_out_box = lives_hbox_new (FALSE, 0);
   g_object_ref (mt->in_out_box);
 
-  vbox = gtk_vbox_new (FALSE, 0);
+  vbox = lives_vbox_new (FALSE, 0);
   gtk_box_pack_start(GTK_BOX(mt->in_out_box),vbox,FALSE,TRUE,0);
 
   mt->spinbutton_in_adj = (GObject *)gtk_adjustment_new (0.,0.,0.,1./mt->fps,1.,0.);
@@ -7820,7 +7841,7 @@ static boolean expose_pb (GtkWidget *widget, lives_painter_t *cr, gpointer user_
     else lives_widget_set_bg_color(eventbox, GTK_STATE_NORMAL, &palette->menu_and_bars);
   }
 
-  mt->in_hbox = gtk_hbox_new (FALSE, 0);
+  mt->in_hbox = lives_hbox_new (FALSE, 0);
   gtk_box_pack_start(GTK_BOX(vbox),mt->in_hbox,TRUE,FALSE,0);
   gtk_box_pack_start(GTK_BOX(mt->in_hbox),mt->spinbutton_in,FALSE,FALSE,0);
 
@@ -7845,7 +7866,7 @@ static boolean expose_pb (GtkWidget *widget, lives_painter_t *cr, gpointer user_
   gtk_box_pack_start (GTK_BOX (mt->in_hbox), mt->in_eventbox, FALSE, FALSE, 10);
 
 
-  hbox = gtk_hbox_new (FALSE, 0);
+  hbox = lives_hbox_new (FALSE, 0);
 
   gtk_box_pack_start(GTK_BOX(hbox),label,FALSE,FALSE,10);
   gtk_box_pack_start(GTK_BOX(hbox),mt->checkbutton_start_anchored,TRUE,FALSE,10);
@@ -7869,7 +7890,7 @@ static boolean expose_pb (GtkWidget *widget, lives_painter_t *cr, gpointer user_
     lives_widget_set_fg_color(mt->start_in_label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
 
-  vbox = gtk_vbox_new (FALSE, 0);
+  vbox = lives_vbox_new (FALSE, 0);
   gtk_box_pack_end(GTK_BOX(mt->in_out_box),vbox,FALSE,TRUE,0);
   mt->spinbutton_out_adj = (GObject *)gtk_adjustment_new (0.,0.,0.,1./mt->fps,1.,0.);
   mt->spinbutton_out = gtk_spin_button_new (GTK_ADJUSTMENT (mt->spinbutton_out_adj), 1./mt->fps, 2);
@@ -7893,7 +7914,7 @@ static boolean expose_pb (GtkWidget *widget, lives_painter_t *cr, gpointer user_
     else lives_widget_set_bg_color(eventbox, GTK_STATE_NORMAL, &palette->menu_and_bars);
   }
 
-  mt->out_hbox = gtk_hbox_new (FALSE, 0);
+  mt->out_hbox = lives_hbox_new (FALSE, 0);
   gtk_box_pack_start(GTK_BOX(vbox),mt->out_hbox,TRUE,FALSE,0);
 
   gtk_box_pack_start(GTK_BOX(mt->out_hbox),mt->spinbutton_out,FALSE,FALSE,0);
@@ -7918,7 +7939,7 @@ static boolean expose_pb (GtkWidget *widget, lives_painter_t *cr, gpointer user_
 
   gtk_box_pack_start (GTK_BOX (mt->out_hbox), mt->out_eventbox, FALSE, FALSE, 10);
 
-  hbox = gtk_hbox_new (FALSE, 0);
+  hbox = lives_hbox_new (FALSE, 0);
 
   gtk_box_pack_start(GTK_BOX(hbox),label,FALSE,FALSE,10);
   gtk_box_pack_start(GTK_BOX(hbox),mt->checkbutton_end_anchored,TRUE,FALSE,10);
@@ -7969,7 +7990,7 @@ static boolean expose_pb (GtkWidget *widget, lives_painter_t *cr, gpointer user_
 
   if (mainw->imsep==NULL) {
     mt->sep_image=NULL;
-    hseparator = gtk_hseparator_new ();
+    hseparator = lives_hseparator_new ();
     gtk_box_pack_start (GTK_BOX (mt->top_vbox), hseparator, FALSE, FALSE, 2);
     if (palette->style&STYLE_5) {
       lives_widget_set_fg_color(hseparator, GTK_STATE_NORMAL, &palette->normal_back);
@@ -7977,7 +7998,7 @@ static boolean expose_pb (GtkWidget *widget, lives_painter_t *cr, gpointer user_
     }
   }
   else {
-    hseparator = gtk_hseparator_new ();
+    hseparator = lives_hseparator_new ();
     gtk_box_pack_start (GTK_BOX (mt->top_vbox), hseparator, FALSE, FALSE, 0);
     if (palette->style&STYLE_5) {
       lives_widget_set_fg_color(hseparator, GTK_STATE_NORMAL, &palette->normal_back);
@@ -7985,7 +8006,7 @@ static boolean expose_pb (GtkWidget *widget, lives_painter_t *cr, gpointer user_
     }
     mt->sep_image = gtk_image_new_from_pixbuf (mainw->imsep);
     gtk_box_pack_start (GTK_BOX (mt->top_vbox), mt->sep_image, FALSE, FALSE, 0);
-    hseparator = gtk_hseparator_new ();
+    hseparator = lives_hseparator_new ();
     gtk_box_pack_start (GTK_BOX (mt->top_vbox), hseparator, FALSE, FALSE, 0);
     if (palette->style&STYLE_5) {
       lives_widget_set_fg_color(hseparator, GTK_STATE_NORMAL, &palette->normal_back);
@@ -8007,7 +8028,7 @@ static boolean expose_pb (GtkWidget *widget, lives_painter_t *cr, gpointer user_
 		    G_CALLBACK (paned_pos),
 		    (gpointer)mt);
 
-  tl_vbox = gtk_vbox_new (FALSE, 0);
+  tl_vbox = lives_vbox_new (FALSE, 0);
   gtk_container_set_border_width (GTK_CONTAINER (tl_vbox), 0);
 
   gtk_container_add (GTK_CONTAINER (mt->vpaned), tl_vbox);
@@ -8038,7 +8059,7 @@ static boolean expose_pb (GtkWidget *widget, lives_painter_t *cr, gpointer user_
 				   (gpointer)mt);
   g_signal_handler_block (eventbox,mt->mouse_mot1);
 
-  hbox = gtk_hbox_new (FALSE, 0);
+  hbox = lives_hbox_new (FALSE, 0);
   gtk_container_add (GTK_CONTAINER (eventbox), hbox);
 
   vadjustment = (GObject *)gtk_adjustment_new (1.0,1.0,1.0,1.0,1.0,1.0);
@@ -8048,7 +8069,7 @@ static boolean expose_pb (GtkWidget *widget, lives_painter_t *cr, gpointer user_
   gtk_box_pack_start (GTK_BOX (hbox), mt->timeline_table_header, TRUE, TRUE, 0);
   gtk_box_pack_end (GTK_BOX (hbox), scrollbar, FALSE, FALSE, 10);
 
-  mt->tl_hbox = gtk_hbox_new (FALSE, 0);
+  mt->tl_hbox = lives_hbox_new (FALSE, 0);
   gtk_container_set_border_width (GTK_CONTAINER (mt->tl_hbox), 0);
     
   gtk_box_pack_start (GTK_BOX (tl_vbox), mt->tl_hbox, TRUE, TRUE, 0);
@@ -8093,7 +8114,7 @@ static boolean expose_pb (GtkWidget *widget, lives_painter_t *cr, gpointer user_
 
 
   eventbox = gtk_event_box_new ();
-  hbox=gtk_hbox_new(FALSE,0);
+  hbox=lives_hbox_new(FALSE,0);
 
   if (palette->style&STYLE_1) {
     if (palette->style&STYLE_3) lives_widget_set_bg_color(eventbox, GTK_STATE_NORMAL, &palette->normal_back);
@@ -8613,7 +8634,7 @@ boolean multitrack_delete (lives_mt *mt, boolean save_layout) {
       mainw->plug=NULL;
     }
 
-    mainw->playarea = gtk_hbox_new (FALSE,0);
+    mainw->playarea = lives_hbox_new (FALSE,0);
 
     gtk_container_add (GTK_CONTAINER (mainw->pl_eventbox), mainw->playarea);
     lives_widget_set_bg_color (mainw->playframe, GTK_STATE_NORMAL, &palette->normal_back);
@@ -10010,7 +10031,7 @@ void mt_init_clips (lives_mt *mt, gint orig_file, boolean add) {
 
       clips_to_files[count]=i;
 
-      vbox = gtk_vbox_new (FALSE, 6);
+      vbox = lives_vbox_new (FALSE, 6);
 
       thumb_image=gtk_image_new();
       gtk_image_set_from_pixbuf(GTK_IMAGE(thumb_image),thumbnail);
@@ -10682,7 +10703,7 @@ void clear_context (lives_mt *mt) {
   gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (mt->context_scroll), GTK_POLICY_AUTOMATIC, 
 				  GTK_POLICY_AUTOMATIC);
   
-  mt->context_box = gtk_vbox_new (FALSE, 4);
+  mt->context_box = lives_vbox_new (FALSE, 4);
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(mt->context_box, GTK_STATE_NORMAL, &palette->info_base);
   }
@@ -12038,13 +12059,13 @@ void polymorph (lives_mt *mt, lives_mt_poly_state_t poly) {
     frame_event=get_frame_event_at(mt->event_list,tc,shortcut,TRUE);
     filter_map=mt->fm_edit_event=get_filter_map_before(frame_event,-1000000,NULL);
 
-    mt->fx_list_box=gtk_vbox_new(FALSE,0);
+    mt->fx_list_box=lives_vbox_new(FALSE,0);
     mt->fx_list_scroll = gtk_scrolled_window_new (NULL, NULL);
     gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (mt->fx_list_scroll), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
     gtk_box_pack_start (GTK_BOX (mt->fx_list_box), mt->fx_list_scroll, TRUE, TRUE, 0);
     gtk_box_pack_start(GTK_BOX(mt->poly_box),mt->fx_list_box,TRUE,TRUE,0);
 
-    mt->fx_list_vbox=gtk_vbox_new(FALSE,10);
+    mt->fx_list_vbox=lives_vbox_new(FALSE,10);
     gtk_container_set_border_width (GTK_CONTAINER (mt->fx_list_vbox), 10);
     gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (mt->fx_list_scroll), mt->fx_list_vbox);
 
@@ -12129,7 +12150,7 @@ void polymorph (lives_mt *mt, lives_mt_poly_state_t poly) {
 	    }
 
 	    if (init_event==mt->selected_init_event) gtk_widget_set_state(xeventbox,GTK_STATE_SELECTED);
-	    vbox=gtk_vbox_new(FALSE,0);
+	    vbox=lives_vbox_new(FALSE,0);
 
 	    gtk_container_set_border_width (GTK_CONTAINER (vbox), 5);
 	    gtk_container_add (GTK_CONTAINER (xeventbox), vbox);
@@ -12238,13 +12259,13 @@ void polymorph (lives_mt *mt, lives_mt_poly_state_t poly) {
       clear_context(mt);
       add_context_label (mt,(_("Effects can be dragged\nonto blocks on the timeline.")));
     }
-    mt->fx_list_box=gtk_vbox_new(FALSE,0);
+    mt->fx_list_box=lives_vbox_new(FALSE,0);
     mt->fx_list_scroll = gtk_scrolled_window_new (NULL, NULL);
     gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (mt->fx_list_scroll), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
     gtk_box_pack_start (GTK_BOX (mt->fx_list_box), mt->fx_list_scroll, TRUE, TRUE, 0);
     gtk_box_pack_start(GTK_BOX(mt->poly_box),mt->fx_list_box,TRUE,TRUE,0);
 
-    mt->fx_list_vbox=gtk_vbox_new(FALSE,10);
+    mt->fx_list_vbox=lives_vbox_new(FALSE,10);
     gtk_container_set_border_width (GTK_CONTAINER (mt->fx_list_vbox), 10);
     gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (mt->fx_list_scroll), mt->fx_list_vbox);
 
@@ -18432,7 +18453,7 @@ void on_save_event_list_activate (GtkMenuItem *menuitem, gpointer user_data) {
   esave_dir=g_build_filename(prefs->tmpdir,mainw->set_name,"layouts",G_DIR_SEPARATOR_S,NULL);
   g_mkdir_with_parents(esave_dir,S_IRWXU);
 
-  hbox = gtk_hbox_new (FALSE, 0);
+  hbox = lives_hbox_new (FALSE, 0);
 
   ar_checkbutton = lives_standard_check_button_new (_("_Autoreload each time"),TRUE,LIVES_BOX(hbox),NULL);
 
@@ -20032,7 +20053,7 @@ weed_plant_t *load_event_list(lives_mt *mt, gchar *eload_file) {
 
     startdir=g_strdup(eload_dir);
 
-    hbox = gtk_hbox_new (FALSE, 0);
+    hbox = lives_hbox_new (FALSE, 0);
 
     ar_checkbutton = lives_standard_check_button_new (_("_Autoreload each time"),TRUE,LIVES_BOX(hbox),NULL);
 
@@ -21121,7 +21142,7 @@ GtkWidget * amixer_add_channel_slider (lives_mt *mt, gint i) {
     lives_widget_set_fg_color(label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
   
-  vbox = gtk_vbox_new (FALSE, 15);
+  vbox = lives_vbox_new (FALSE, 15);
   gtk_box_pack_start (GTK_BOX (vbox), label, FALSE, FALSE, 10);
   gtk_box_pack_start (GTK_BOX (vbox), amixer->ch_sliders[i], TRUE, TRUE, 50);
   gtk_box_pack_start (GTK_BOX (vbox), spinbutton, FALSE, FALSE, 10);
@@ -21191,9 +21212,9 @@ void amixer_show (GtkButton *button, gpointer user_data) {
   lives_widget_set_bg_color(amixerw, GTK_STATE_NORMAL, &palette->menu_and_bars);
   gtk_window_set_title (GTK_WINDOW (amixerw), _("LiVES: Multitrack audio mixer"));
 
-  top_vbox = gtk_vbox_new (FALSE, 15);
+  top_vbox = lives_vbox_new (FALSE, 15);
 
-  amixer->main_hbox = gtk_hbox_new (FALSE, 20);
+  amixer->main_hbox = lives_hbox_new (FALSE, 20);
 
   scrolledwindow = gtk_scrolled_window_new (NULL, NULL);
   gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrolledwindow), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
@@ -21250,12 +21271,12 @@ void amixer_show (GtkButton *button, gpointer user_data) {
     gtk_box_pack_start (GTK_BOX (amixer->main_hbox), vbox, FALSE, FALSE, 10);
   }
 
-  vbox2 = gtk_vbox_new (FALSE, 15);
+  vbox2 = lives_vbox_new (FALSE, 15);
   gtk_box_pack_start (GTK_BOX (amixer->main_hbox), vbox2, FALSE, FALSE, 10);
 
   add_fill_to_box(GTK_BOX(vbox2));
 
-  vbox = gtk_vbox_new (FALSE, 15);
+  vbox = lives_vbox_new (FALSE, 15);
   gtk_box_pack_start (GTK_BOX (vbox2), vbox, TRUE, TRUE, 10);
   
     
@@ -21300,7 +21321,7 @@ void amixer_show (GtkButton *button, gpointer user_data) {
     
     gtk_box_pack_start (GTK_BOX (vbox), eventbox, FALSE, FALSE, 10);
     
-    hbox = gtk_hbox_new (FALSE, 0);
+    hbox = lives_hbox_new (FALSE, 0);
     gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 10);
     add_fill_to_box(GTK_BOX(hbox));
     
@@ -21345,7 +21366,7 @@ void amixer_show (GtkButton *button, gpointer user_data) {
       lives_widget_set_bg_color (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
     }
     
-    hbox = gtk_hbox_new (FALSE, 0);
+    hbox = lives_hbox_new (FALSE, 0);
     gtk_box_pack_end (GTK_BOX (vbox), hbox, FALSE, FALSE, 10);
     add_fill_to_box(GTK_BOX(hbox));
     

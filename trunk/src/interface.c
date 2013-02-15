@@ -54,7 +54,7 @@ void add_suffix_check(GtkBox *box, const gchar *ext) {
     lives_widget_set_bg_color (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
   }
   
-  hbox = gtk_hbox_new (FALSE, 0);
+  hbox = lives_hbox_new (FALSE, 0);
   gtk_box_pack_start (GTK_BOX (box), hbox, FALSE, FALSE, 10);
   gtk_container_set_border_width (GTK_CONTAINER(hbox), 10);
 
@@ -71,7 +71,7 @@ void add_suffix_check(GtkBox *box, const gchar *ext) {
 
 
 static GtkWidget *add_deinterlace_checkbox(GtkBox *for_deint) {
-  GtkWidget *hbox=gtk_hbox_new (FALSE, 0);
+  GtkWidget *hbox=lives_hbox_new (FALSE, 0);
   GtkWidget *checkbutton = gtk_check_button_new ();
   GtkWidget *eventbox=gtk_event_box_new();
   GtkWidget *label=gtk_label_new_with_mnemonic (_ ("Apply Deinterlace"));
@@ -261,11 +261,11 @@ xprocess * create_processing (const gchar *text) {
   dialog_vbox1 = lives_dialog_get_content_area(GTK_DIALOG(procw->processing));
   gtk_widget_show (dialog_vbox1);
 
-  vbox2 = gtk_vbox_new (FALSE, 0);
+  vbox2 = lives_vbox_new (FALSE, 0);
   gtk_widget_show (vbox2);
   gtk_box_pack_start (GTK_BOX (dialog_vbox1), vbox2, TRUE, TRUE, 0);
 
-  vbox3 = gtk_vbox_new (FALSE, 0);
+  vbox3 = lives_vbox_new (FALSE, 0);
   gtk_widget_show (vbox3);
   gtk_box_pack_start (GTK_BOX (vbox2), vbox3, TRUE, TRUE, 0);
 
@@ -317,7 +317,7 @@ xprocess * create_processing (const gchar *text) {
     ahbox=gtk_event_box_new();
     gtk_box_pack_start (GTK_BOX (vbox3), ahbox, FALSE, FALSE, 10);
 
-    hbox = gtk_hbox_new (FALSE, 0);
+    hbox = lives_hbox_new (FALSE, 0);
     gtk_container_add (GTK_CONTAINER (ahbox), hbox);
 
     label=gtk_label_new("");
@@ -459,7 +459,7 @@ fileinfo *create_info_window (gint audio_channels, boolean is_mt) {
     lives_widget_set_bg_color(filew->info_window, GTK_STATE_NORMAL, &palette->normal_back);
   }
 
-  vbox5 = gtk_vbox_new (FALSE, 0);
+  vbox5 = lives_vbox_new (FALSE, 0);
   gtk_widget_show (vbox5);
   gtk_container_add (GTK_CONTAINER (filew->info_window), vbox5);
 
@@ -800,7 +800,7 @@ create_encoder_prep_dialog (const gchar *text1, const gchar *text2, boolean opt_
     if (text2!=NULL) labeltext=g_strdup (_("<------------- (Check the box to re_size as suggested)"));
     else labeltext=g_strdup (_("<------------- (Check the box to use the _size recommendation)"));
 
-    hbox = gtk_hbox_new (FALSE, 0);
+    hbox = lives_hbox_new (FALSE, 0);
     gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, FALSE, FALSE, 10);
 
     checkbutton = lives_standard_check_button_new (labeltext,TRUE,LIVES_BOX(hbox),NULL);
@@ -816,7 +816,7 @@ create_encoder_prep_dialog (const gchar *text1, const gchar *text2, boolean opt_
 
   if (text2!=NULL&&(mainw->fx1_bool||opt_resize)) {
 
-    hbox = gtk_hbox_new (FALSE, 0);
+    hbox = lives_hbox_new (FALSE, 0);
     if (capable->has_composite&&capable->has_convert) {
       // only offer this if we have "composite" and "convert" - for now... TODO ****
       gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, FALSE, FALSE, 10);
@@ -906,14 +906,14 @@ create_dialog3 (const gchar *text, boolean is_blocking, gint mask) {
 
   gtk_widget_show (info_text);
 
-  hbox = gtk_hbox_new (FALSE, 0);
+  hbox = lives_hbox_new (FALSE, 0);
   gtk_widget_show (hbox);
   gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, FALSE, FALSE, 10);
 
   gtk_box_pack_start (GTK_BOX (hbox), info_text, FALSE, FALSE, 20);
   
   if (mask>0) {
-    hbox = gtk_hbox_new (FALSE, 0);
+    hbox = lives_hbox_new (FALSE, 0);
     gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, FALSE, FALSE, 10);
     checkbutton = lives_standard_check_button_new (
 						   _("Do _not show this warning any more\n(can be turned back on from Preferences/Warnings)"),
@@ -1148,12 +1148,12 @@ create_insert_dialog (void)
   dialog_vbox3 = lives_dialog_get_content_area(GTK_DIALOG(insertw->insert_dialog));
   gtk_widget_show (dialog_vbox3);
 
-  hbox15 = gtk_hbox_new (FALSE, 0);
+  hbox15 = lives_hbox_new (FALSE, 0);
   gtk_widget_show (hbox15);
   gtk_box_pack_start (GTK_BOX (dialog_vbox3), hbox15, TRUE, TRUE, 0);
 
 
-  hbox = gtk_hbox_new (FALSE, 0);
+  hbox = lives_hbox_new (FALSE, 0);
   gtk_box_pack_start (GTK_BOX (hbox15), hbox, FALSE, FALSE, 10);
   label=gtk_label_new_with_mnemonic(_("_Number of times to insert"));
   if (palette->style&STYLE_1) {
@@ -1189,7 +1189,7 @@ create_insert_dialog (void)
     lives_widget_set_bg_color (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
   }
 
-  hbox = gtk_hbox_new (FALSE, 0);
+  hbox = lives_hbox_new (FALSE, 0);
   gtk_box_pack_start (GTK_BOX (hbox15), hbox, FALSE, FALSE, 10);
 
   gtk_box_pack_start (GTK_BOX (hbox), insertw->fit_checkbutton, FALSE, FALSE, 5);
@@ -1201,7 +1201,7 @@ create_insert_dialog (void)
   gtk_widget_show_all(hbox);
 
 
-  hseparator1 = gtk_hseparator_new ();
+  hseparator1 = lives_hseparator_new ();
   gtk_widget_show (hseparator1);
   gtk_box_pack_start (GTK_BOX (dialog_vbox3), hseparator1, TRUE, TRUE, 0);
 
@@ -1212,7 +1212,7 @@ create_insert_dialog (void)
   gtk_table_set_row_spacings (GTK_TABLE (table2), 10);
 
 
-  hbox = gtk_hbox_new (FALSE, 0);
+  hbox = lives_hbox_new (FALSE, 0);
 
   radiobutton1=gtk_radio_button_new(NULL);
   gtk_radio_button_set_group (GTK_RADIO_BUTTON (radiobutton1), radiobutton1_group);
@@ -1249,7 +1249,7 @@ create_insert_dialog (void)
 
 
 
-  hbox = gtk_hbox_new (FALSE, 0);
+  hbox = lives_hbox_new (FALSE, 0);
 
   radiobutton4=gtk_radio_button_new(NULL);
   gtk_radio_button_set_group (GTK_RADIO_BUTTON (radiobutton4), radiobutton1_group);
@@ -1285,7 +1285,7 @@ create_insert_dialog (void)
 
 
 
-  hbox = gtk_hbox_new (FALSE, 0);
+  hbox = lives_hbox_new (FALSE, 0);
 
   insertw->with_sound=gtk_radio_button_new(NULL);
   gtk_radio_button_set_group (GTK_RADIO_BUTTON (insertw->with_sound), radiobutton2_group);
@@ -1318,7 +1318,7 @@ create_insert_dialog (void)
 
   if (cfile->achans==0&&clipboard->achans==0) gtk_widget_set_sensitive(insertw->with_sound,FALSE);
 
-  hbox = gtk_hbox_new (FALSE, 0);
+  hbox = lives_hbox_new (FALSE, 0);
 
   insertw->without_sound=gtk_radio_button_new(NULL);
 
@@ -1353,13 +1353,13 @@ create_insert_dialog (void)
   gtk_widget_set_sensitive (insertw->with_sound, clipboard->achans>0||cfile->achans>0);
   gtk_widget_set_sensitive (insertw->without_sound, clipboard->achans>0||cfile->achans>0);
 
-  vseparator1 = gtk_vseparator_new ();
+  vseparator1 = lives_vseparator_new ();
   gtk_widget_show (vseparator1);
   gtk_table_attach (GTK_TABLE (table2), vseparator1, 1, 2, 0, 1,
                     (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
                     (GtkAttachOptions) (GTK_FILL), 0, 0);
 
-  vseparator2 = gtk_vseparator_new ();
+  vseparator2 = lives_vseparator_new ();
   gtk_widget_show (vseparator2);
   gtk_table_attach (GTK_TABLE (table2), vseparator2, 1, 2, 1, 2,
                     (GtkAttachOptions) (GTK_FILL),
@@ -1450,7 +1450,7 @@ GtkWidget *create_opensel_dialog (void) {
   dialog_vbox9 = lives_dialog_get_content_area(GTK_DIALOG(opensel_dialog));
   gtk_widget_show (dialog_vbox9);
 
-  vbox15 = gtk_vbox_new (FALSE, 0);
+  vbox15 = lives_vbox_new (FALSE, 0);
   gtk_widget_show (vbox15);
   gtk_box_pack_start (GTK_BOX (dialog_vbox9), vbox15, TRUE, TRUE, 0);
 
@@ -1609,7 +1609,7 @@ _entryw* create_location_dialog (int type) {
     lives_widget_set_fg_color (label, GTK_STATE_NORMAL, &palette->normal_fore);
   }
 
-  hbox = gtk_hbox_new (FALSE, 0);
+  hbox = lives_hbox_new (FALSE, 0);
   gtk_widget_show (hbox);
   gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, TRUE, TRUE, 0);
 
@@ -1618,7 +1618,7 @@ _entryw* create_location_dialog (int type) {
   gtk_widget_show_all (hbox);
 
   if (type==1) {
-    hbox=gtk_hbox_new (FALSE, 0);
+    hbox=lives_hbox_new (FALSE, 0);
     checkbutton = gtk_check_button_new ();
     eventbox=gtk_event_box_new();
     label=gtk_label_new_with_mnemonic (_("Do not send bandwidth information"));
@@ -1653,7 +1653,7 @@ _entryw* create_location_dialog (int type) {
   }
 
   if (type==2) {
-    hbox=gtk_hbox_new (FALSE, 0);
+    hbox=lives_hbox_new (FALSE, 0);
     
     gtk_box_pack_start(GTK_BOX(dialog_vbox),hbox,TRUE,FALSE,0);
 
@@ -1678,7 +1678,7 @@ _entryw* create_location_dialog (int type) {
 
 
 
-    hbox=gtk_hbox_new (FALSE, 0);
+    hbox=lives_hbox_new (FALSE, 0);
     
     gtk_box_pack_start(GTK_BOX(dialog_vbox),hbox,TRUE,FALSE,0);
 
@@ -1822,7 +1822,7 @@ _entryw* create_rename_dialog (gint type) {
   }
 
 
-  hbox = gtk_hbox_new (FALSE, 0);
+  hbox = lives_hbox_new (FALSE, 0);
 
   if (type==3) {
     gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, TRUE, FALSE, 40);
@@ -2162,7 +2162,7 @@ create_cdtrack_dialog (gint type, gpointer user_data)
   dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(cd_dialog));
   gtk_widget_show (dialog_vbox);
 
-  hbox = gtk_hbox_new (FALSE, 50);
+  hbox = lives_hbox_new (FALSE, 50);
   gtk_widget_show (hbox);
   gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, TRUE, TRUE, 0);
 
@@ -2210,7 +2210,7 @@ create_cdtrack_dialog (gint type, gpointer user_data)
 
   if (type==1||type==4) {
 
-    hbox17 = gtk_hbox_new (FALSE, 50);
+    hbox17 = lives_hbox_new (FALSE, 50);
 
     if (type==1) spinbutton36_adj = (GObject *)gtk_adjustment_new (mainw->fx2_val, 1, 1024, 1, 10, 0);
     else spinbutton36_adj = (GObject *)gtk_adjustment_new (1, 1, 69, 1, 1, 0);
@@ -2235,7 +2235,7 @@ create_cdtrack_dialog (gint type, gpointer user_data)
 
 
     if (type==1) {
-      hbox17b = gtk_hbox_new (FALSE, 50);
+      hbox17b = lives_hbox_new (FALSE, 50);
       if (type==1) spinbutton36b_adj = (GObject *)gtk_adjustment_new (mainw->fx3_val, 128, 159, 1, 1, 0);
       spinbutton36b = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton36b_adj), 1, 0);
       gtk_entry_set_activates_default (GTK_ENTRY(spinbutton36b), TRUE);
@@ -2283,9 +2283,9 @@ create_cdtrack_dialog (gint type, gpointer user_data)
     olist=g_list_append(olist,(gpointer)"i420");
 
 
-    gtk_box_set_spacing(GTK_BOX(dialog_vbox),20);
+    lives_box_set_spacing(GTK_BOX(dialog_vbox),20);
 
-    hbox = gtk_hbox_new (FALSE, 50);
+    hbox = lives_hbox_new (FALSE, 50);
     gtk_widget_show (hbox);
     gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, FALSE, FALSE, 20);
     
@@ -2298,7 +2298,7 @@ create_cdtrack_dialog (gint type, gpointer user_data)
     add_fill_to_box(GTK_BOX(hbox));
 
 
-    tvcardw->adv_vbox = gtk_vbox_new (FALSE, 50);
+    tvcardw->adv_vbox = lives_vbox_new (FALSE, 50);
     gtk_widget_show (tvcardw->adv_vbox);
     gtk_box_pack_start (GTK_BOX (dialog_vbox), tvcardw->adv_vbox, TRUE, TRUE, 20);
     
@@ -2306,7 +2306,7 @@ create_cdtrack_dialog (gint type, gpointer user_data)
     // add input, width, height, fps, driver and outfmt
 
 
-    hbox = gtk_hbox_new (FALSE, 0);
+    hbox = lives_hbox_new (FALSE, 0);
     label=gtk_label_new_with_mnemonic(_("Input number"));
     if (palette->style&STYLE_1) {
       lives_widget_set_fg_color(label, GTK_STATE_NORMAL, &palette->normal_fore);
@@ -2324,7 +2324,7 @@ create_cdtrack_dialog (gint type, gpointer user_data)
     gtk_widget_show_all (hbox);
 
 
-    hbox = gtk_hbox_new (FALSE, 0);
+    hbox = lives_hbox_new (FALSE, 0);
 
     tvcardw->radiobuttond = gtk_radio_button_new (NULL);
     gtk_radio_button_set_group (GTK_RADIO_BUTTON (tvcardw->radiobuttond), radiobutton_group);
@@ -2360,7 +2360,7 @@ create_cdtrack_dialog (gint type, gpointer user_data)
 
 
 
-    hbox = gtk_hbox_new (FALSE, 0);
+    hbox = lives_hbox_new (FALSE, 0);
 
     radiobutton = gtk_radio_button_new (radiobutton_group);
     
@@ -2420,7 +2420,7 @@ create_cdtrack_dialog (gint type, gpointer user_data)
     gtk_widget_show_all (hbox);
 
 
-    hbox = gtk_hbox_new (FALSE, 0);
+    hbox = lives_hbox_new (FALSE, 0);
 
 
 
@@ -2569,7 +2569,7 @@ aud_dialog_t *create_audfade_dialog (gint type) {
   dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(audd->dialog));
   gtk_widget_show (dialog_vbox);
 
-  hbox = gtk_hbox_new (FALSE, 50);
+  hbox = lives_hbox_new (FALSE, 50);
   gtk_widget_show (hbox);
   gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, TRUE, TRUE, 0);
 
@@ -2625,7 +2625,7 @@ aud_dialog_t *create_audfade_dialog (gint type) {
   gtk_box_pack_start (GTK_BOX (hbox), label62, FALSE, FALSE, 10);
   gtk_label_set_justify (GTK_LABEL (label62), GTK_JUSTIFY_LEFT);
 
-  hbox = gtk_hbox_new (FALSE, 50);
+  hbox = lives_hbox_new (FALSE, 50);
   gtk_widget_show (hbox);
   gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, TRUE, TRUE, 0);
 
@@ -2760,7 +2760,7 @@ _commentsw* create_comments_dialog (file *sfile, gchar *filename) {
 
     gtk_box_pack_start (GTK_BOX (dialog_vbox), expander, TRUE, TRUE, 0);
 
-    vbox = gtk_vbox_new (FALSE, 0);
+    vbox = lives_vbox_new (FALSE, 0);
     gtk_widget_show (vbox);
 
     add_fill_to_box(LIVES_BOX(vbox));
@@ -2769,7 +2769,7 @@ _commentsw* create_comments_dialog (file *sfile, gchar *filename) {
 
     // options
 
-    hbox = gtk_hbox_new (FALSE, 0);
+    hbox = lives_hbox_new (FALSE, 0);
     gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 10);
 
     commentsw->subt_checkbutton = lives_standard_check_button_new (_("Save _subtitles to file"),TRUE,LIVES_BOX(hbox),NULL);
@@ -2781,7 +2781,7 @@ _commentsw* create_comments_dialog (file *sfile, gchar *filename) {
     else lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(commentsw->subt_checkbutton),TRUE);
 
 
-    hbox = gtk_hbox_new (FALSE, 0);
+    hbox = lives_hbox_new (FALSE, 0);
     gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 10);
 
     commentsw->subt_entry=lives_standard_entry_new(_("Subtitle file"),FALSE,NULL,32,-1,LIVES_BOX(hbox),NULL);
@@ -3099,7 +3099,7 @@ _entryw* create_cds_dialog (gint type) {
   if (type==1) {
     GtkWidget *eventbox,*checkbutton;
 
-    hbox = gtk_hbox_new (FALSE, 0);
+    hbox = lives_hbox_new (FALSE, 0);
     gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, FALSE, FALSE, 10);
     
     cdsw->entry = lives_standard_entry_new (_("Clip set _name"),TRUE,strlen (mainw->set_name)?mainw->set_name:"",32,128,LIVES_BOX(hbox),NULL);
@@ -3119,7 +3119,7 @@ _entryw* create_cds_dialog (gint type) {
       lives_widget_set_fg_color(label, GTK_STATE_NORMAL, &palette->normal_fore);
       lives_widget_set_bg_color (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
     }
-    hbox = gtk_hbox_new (FALSE, 0);
+    hbox = lives_hbox_new (FALSE, 0);
     gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, FALSE, FALSE, 10);
     gtk_box_pack_start (GTK_BOX (hbox), checkbutton, FALSE, FALSE, 0);
     gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, 10);
@@ -3277,7 +3277,7 @@ GtkWidget *create_cleardisk_advanced_dialog(void) {
 				  GTK_POLICY_AUTOMATIC);
 
 
-  vbox = gtk_vbox_new (FALSE, 0);
+  vbox = lives_vbox_new (FALSE, 0);
 
   gtk_container_set_border_width (GTK_CONTAINER (vbox), 20);
 
@@ -3291,7 +3291,7 @@ GtkWidget *create_cleardisk_advanced_dialog(void) {
 
 
   // ---
-  hbox = gtk_hbox_new (FALSE, 0);
+  hbox = lives_hbox_new (FALSE, 0);
   gtk_widget_show (hbox);
   gtk_box_pack_start (GTK_BOX (vbox), hbox, TRUE, TRUE, 0);
 
@@ -3318,7 +3318,7 @@ GtkWidget *create_cleardisk_advanced_dialog(void) {
 			  GINT_TO_POINTER(LIVES_CDISK_LEAVE_ORPHAN_SETS));
 
   // ---
-  hbox = gtk_hbox_new (FALSE, 0);
+  hbox = lives_hbox_new (FALSE, 0);
   gtk_widget_show (hbox);
   gtk_box_pack_start (GTK_BOX (vbox), hbox, TRUE, TRUE, 0);
 
@@ -3348,7 +3348,7 @@ GtkWidget *create_cleardisk_advanced_dialog(void) {
 
 
   // ---
-  hbox = gtk_hbox_new (FALSE, 0);
+  hbox = lives_hbox_new (FALSE, 0);
   gtk_widget_show (hbox);
   gtk_box_pack_start (GTK_BOX (vbox), hbox, TRUE, TRUE, 0);
 

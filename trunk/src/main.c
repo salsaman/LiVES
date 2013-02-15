@@ -3583,6 +3583,7 @@ void load_preview_image(boolean update_always) {
     }
     weed_plant_free(layer);
   }
+
   set_ce_frame_from_pixbuf(GTK_IMAGE(mainw->preview_image), pixbuf, NULL);
 
 

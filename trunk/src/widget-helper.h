@@ -470,6 +470,16 @@ LiVESWidget *lives_dialog_get_action_area(LiVESDialog *);
 
 LiVESAdjustment *lives_adjustment_new(double value, double lower, double upper, 
 						   double step_increment, double page_increment, double page_size);
+
+void lives_box_set_homogeneous(LiVESBox *, boolean homogeneous);
+void lives_box_set_spacing(LiVESBox *, int spacing);
+
+LiVESWidget *lives_hbox_new(boolean homogeneous, int spacing);
+LiVESWidget *lives_vbox_new(boolean homogeneous, int spacing);
+
+LiVESWidget *lives_hseparator_new(void);
+LiVESWidget *lives_vseparator_new(void);
+
 LiVESWidget *lives_combo_new(void);
 
 void lives_combo_append_text(LiVESCombo *, const char *text);

@@ -156,10 +156,10 @@ rfx_build_window_t *make_rfx_build_window (const gchar *script_name, lives_rfx_s
 			       PREF_RFXDIALOG_H:mainw->scr_height-60);
 
   dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(rfxbuilder->dialog));
-  gtk_box_set_spacing (GTK_BOX (dialog_vbox), 8);
+  lives_box_set_spacing (GTK_BOX (dialog_vbox), 8);
   gtk_widget_show (dialog_vbox);
 
-  top_vbox = gtk_vbox_new (FALSE, 10);
+  top_vbox = lives_vbox_new (FALSE, 10);
   gtk_widget_show (top_vbox);
 
 
@@ -187,7 +187,7 @@ rfx_build_window_t *make_rfx_build_window (const gchar *script_name, lives_rfx_s
 
 
   // types
-  hbox = gtk_hbox_new (FALSE, 20);
+  hbox = lives_hbox_new (FALSE, 20);
   gtk_widget_show (hbox);
   gtk_box_pack_start (GTK_BOX (top_vbox), hbox, TRUE, TRUE, 0);
 
@@ -277,7 +277,7 @@ rfx_build_window_t *make_rfx_build_window (const gchar *script_name, lives_rfx_s
 
   // name
 
-  hbox = gtk_hbox_new (FALSE, 0);
+  hbox = lives_hbox_new (FALSE, 0);
   gtk_widget_show (hbox);
   gtk_box_pack_start (GTK_BOX (top_vbox), hbox, TRUE, TRUE, 0);
 
@@ -296,7 +296,7 @@ rfx_build_window_t *make_rfx_build_window (const gchar *script_name, lives_rfx_s
 
   // version
 
-  hbox = gtk_hbox_new (FALSE, 0);
+  hbox = lives_hbox_new (FALSE, 0);
   gtk_widget_show (hbox);
   gtk_box_pack_start (GTK_BOX (top_vbox), hbox, TRUE, TRUE, 0);
 
@@ -333,7 +333,7 @@ rfx_build_window_t *make_rfx_build_window (const gchar *script_name, lives_rfx_s
 
   // URL
 
-  hbox = gtk_hbox_new (FALSE, 0);
+  hbox = lives_hbox_new (FALSE, 0);
   gtk_widget_show (hbox);
   gtk_box_pack_start (GTK_BOX (top_vbox), hbox, TRUE, TRUE, 0);
 
@@ -353,7 +353,7 @@ rfx_build_window_t *make_rfx_build_window (const gchar *script_name, lives_rfx_s
 
   // menu entry
 
-  hbox = gtk_hbox_new (FALSE, 0);
+  hbox = lives_hbox_new (FALSE, 0);
   gtk_widget_show (hbox);
   gtk_box_pack_start (GTK_BOX (top_vbox), hbox, TRUE, TRUE, 0);
 
@@ -371,14 +371,14 @@ rfx_build_window_t *make_rfx_build_window (const gchar *script_name, lives_rfx_s
   gtk_widget_set_tooltip_text( rfxbuilder->menu_text_entry,(_ ("The text to show in the menu.")));
 
 
-  rfxbuilder->action_desc_hsep = gtk_hseparator_new ();
+  rfxbuilder->action_desc_hsep = lives_hseparator_new ();
   gtk_widget_show (rfxbuilder->action_desc_hsep);
   gtk_box_pack_start (GTK_BOX (top_vbox), rfxbuilder->action_desc_hsep, FALSE, TRUE, 0);
 
 
   // action description
 
-  hbox = gtk_hbox_new (FALSE, 0);
+  hbox = lives_hbox_new (FALSE, 0);
   gtk_widget_show (hbox);
   gtk_box_pack_start (GTK_BOX (top_vbox), hbox, TRUE, TRUE, 0);
 
@@ -396,7 +396,7 @@ rfx_build_window_t *make_rfx_build_window (const gchar *script_name, lives_rfx_s
   gtk_widget_set_tooltip_text( rfxbuilder->action_desc_entry,
 			(_ ("Describe what the plugin is doing. E.g. \"Edge detecting\"")));
 
-  hbox = gtk_hbox_new (FALSE, 0);
+  hbox = lives_hbox_new (FALSE, 0);
   gtk_widget_show (hbox);
   gtk_box_pack_start (GTK_BOX (top_vbox), hbox, TRUE, TRUE, 0);
 
@@ -418,7 +418,7 @@ rfx_build_window_t *make_rfx_build_window (const gchar *script_name, lives_rfx_s
   // requirements
 
 
-  hseparator = gtk_hseparator_new ();
+  hseparator = lives_hseparator_new ();
   gtk_widget_show (hseparator);
   gtk_box_pack_start (GTK_BOX (top_vbox), hseparator, FALSE, TRUE, 0);
 
@@ -428,7 +428,7 @@ rfx_build_window_t *make_rfx_build_window (const gchar *script_name, lives_rfx_s
   gtk_widget_set_tooltip_text( rfxbuilder->requirements_button,
 			(_ ("Enter any binaries required by the plugin.")));
 
-  hseparator = gtk_hseparator_new ();
+  hseparator = lives_hseparator_new ();
   gtk_widget_show (hseparator);
   gtk_box_pack_start (GTK_BOX (top_vbox), hseparator, FALSE, TRUE, 0);
 
@@ -438,7 +438,7 @@ rfx_build_window_t *make_rfx_build_window (const gchar *script_name, lives_rfx_s
   gtk_widget_set_tooltip_text( rfxbuilder->properties_button,
 			(_ ("Set properties for the plugin. Optional.")));
 
-  hseparator = gtk_hseparator_new ();
+  hseparator = lives_hseparator_new ();
   gtk_widget_show (hseparator);
   gtk_box_pack_start (GTK_BOX (top_vbox), hseparator, FALSE, TRUE, 0);
 
@@ -448,7 +448,7 @@ rfx_build_window_t *make_rfx_build_window (const gchar *script_name, lives_rfx_s
   gtk_widget_set_tooltip_text( rfxbuilder->params_button,
 			(_ ("Set up parameters used in pre/loop/post/trigger code. Optional.")));
 
-  hseparator = gtk_hseparator_new ();
+  hseparator = lives_hseparator_new ();
   gtk_widget_show (hseparator);
   gtk_box_pack_start (GTK_BOX (top_vbox), hseparator, FALSE, TRUE, 0);
 
@@ -458,7 +458,7 @@ rfx_build_window_t *make_rfx_build_window (const gchar *script_name, lives_rfx_s
   gtk_widget_set_tooltip_text( rfxbuilder->param_window_button,
 			(_ ("Set hints about how to lay out the parameter window. Optional.")));
 
-  hseparator = gtk_hseparator_new ();
+  hseparator = lives_hseparator_new ();
   gtk_widget_show (hseparator);
   gtk_box_pack_start (GTK_BOX (top_vbox), hseparator, FALSE, TRUE, 0);
 
@@ -472,7 +472,7 @@ rfx_build_window_t *make_rfx_build_window (const gchar *script_name, lives_rfx_s
   g_list_free(langc);
   gtk_widget_show_all(gtk_widget_get_parent(rfxbuilder->langc_combo));
 
-  hseparator = gtk_hseparator_new ();
+  hseparator = lives_hseparator_new ();
   gtk_widget_show (hseparator);
   gtk_box_pack_start (GTK_BOX (top_vbox), hseparator, FALSE, TRUE, 0);
 
@@ -482,7 +482,7 @@ rfx_build_window_t *make_rfx_build_window (const gchar *script_name, lives_rfx_s
   gtk_widget_set_tooltip_text( rfxbuilder->pre_button,
 			(_ ("Code to be executed before the loop. Optional.")));
 
-  hseparator = gtk_hseparator_new ();
+  hseparator = lives_hseparator_new ();
   gtk_widget_show (hseparator);
   gtk_box_pack_start (GTK_BOX (top_vbox), hseparator, FALSE, TRUE, 0);
 
@@ -492,7 +492,7 @@ rfx_build_window_t *make_rfx_build_window (const gchar *script_name, lives_rfx_s
   gtk_widget_set_tooltip_text( rfxbuilder->loop_button,
 			(_ ("Loop code to be applied to each frame.")));
 
-  hseparator = gtk_hseparator_new ();
+  hseparator = lives_hseparator_new ();
   gtk_widget_show (hseparator);
   gtk_box_pack_start (GTK_BOX (top_vbox), hseparator, FALSE, TRUE, 0);
 
@@ -502,7 +502,7 @@ rfx_build_window_t *make_rfx_build_window (const gchar *script_name, lives_rfx_s
   gtk_widget_set_tooltip_text( rfxbuilder->post_button,
 			(_ ("Code to be executed after the loop. Optional.")));
 
-  hseparator = gtk_hseparator_new ();
+  hseparator = lives_hseparator_new ();
   gtk_widget_show (hseparator);
   gtk_box_pack_start (GTK_BOX (top_vbox), hseparator, FALSE, TRUE, 0);
 
@@ -766,10 +766,10 @@ void on_list_table_clicked (GtkButton *button, gpointer user_data) {
   gtk_container_set_border_width (GTK_CONTAINER (dialog), 10);
 
   dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(dialog));
-  gtk_box_set_spacing (GTK_BOX (dialog_vbox), 10);
+  lives_box_set_spacing (GTK_BOX (dialog_vbox), 10);
   gtk_widget_show (dialog_vbox);
 
-  hbox = gtk_hbox_new (FALSE, 0);
+  hbox = lives_hbox_new (FALSE, 0);
   gtk_widget_show (hbox);
   gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, TRUE, TRUE, 0);
 
@@ -819,7 +819,7 @@ void on_list_table_clicked (GtkButton *button, gpointer user_data) {
 
 
   // button box on right
-  vseparator = gtk_vseparator_new ();
+  vseparator = lives_vseparator_new ();
   gtk_widget_show (vseparator);
   gtk_box_pack_start (GTK_BOX (hbox), vseparator, TRUE, TRUE, 10);
 
@@ -1201,10 +1201,10 @@ void on_properties_clicked (GtkButton *button, gpointer user_data) {
   gtk_window_set_default_size (GTK_WINDOW (rfxbuilder->dialog), 300, 200);
 
   dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(dialog));
-  gtk_box_set_spacing (GTK_BOX (dialog_vbox), 10);
+  lives_box_set_spacing (GTK_BOX (dialog_vbox), 10);
   gtk_widget_show (dialog_vbox);
 
-  hbox = gtk_hbox_new (FALSE, 0);
+  hbox = lives_hbox_new (FALSE, 0);
   if (rfxbuilder->type!=RFX_BUILD_TYPE_EFFECT0) {
     gtk_widget_show (hbox);
   }
@@ -1225,7 +1225,7 @@ void on_properties_clicked (GtkButton *button, gpointer user_data) {
   }
 
   if (rfxbuilder->type==RFX_BUILD_TYPE_EFFECT0) {
-    hbox = gtk_hbox_new (FALSE, 0);
+    hbox = lives_hbox_new (FALSE, 0);
     gtk_widget_show (hbox);
     gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, TRUE, TRUE, 0);
     
@@ -1953,12 +1953,12 @@ GtkWidget * make_param_dialog (gint pnum, rfx_build_window_t *rfxbuilder) {
   //gtk_window_set_default_size (GTK_WINDOW (rfxbuilder->dialog), 300, 200);
 
   dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(dialog));
-  gtk_box_set_spacing (GTK_BOX (dialog_vbox), 10);
+  lives_box_set_spacing (GTK_BOX (dialog_vbox), 10);
   gtk_widget_show (dialog_vbox);
 
   // name
 
-  hbox = gtk_hbox_new (FALSE, 0);
+  hbox = lives_hbox_new (FALSE, 0);
   gtk_widget_show (hbox);
   gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, TRUE, TRUE, 0);
 
@@ -1983,7 +1983,7 @@ GtkWidget * make_param_dialog (gint pnum, rfx_build_window_t *rfxbuilder) {
 
   // label
 
-  hbox = gtk_hbox_new (FALSE, 0);
+  hbox = lives_hbox_new (FALSE, 0);
   gtk_widget_show (hbox);
   gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, TRUE, TRUE, 0);
 
@@ -2007,7 +2007,7 @@ GtkWidget * make_param_dialog (gint pnum, rfx_build_window_t *rfxbuilder) {
 
   // group
 
-  hbox = gtk_hbox_new (FALSE, 0);
+  hbox = lives_hbox_new (FALSE, 0);
   gtk_widget_show (hbox);
   gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, TRUE, TRUE, 0);
 
@@ -2070,7 +2070,7 @@ GtkWidget * make_param_dialog (gint pnum, rfx_build_window_t *rfxbuilder) {
 
   // dp
 
-  hbox = gtk_hbox_new (FALSE, 0);
+  hbox = lives_hbox_new (FALSE, 0);
   gtk_widget_show (hbox);
   gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, TRUE, TRUE, 0);
 
@@ -2090,7 +2090,7 @@ GtkWidget * make_param_dialog (gint pnum, rfx_build_window_t *rfxbuilder) {
     gtk_spin_button_set_value (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_dp),(gdouble)rfxbuilder->copy_params[pnum].dp);
   }
 
-  hseparator = gtk_hseparator_new ();
+  hseparator = lives_hseparator_new ();
   gtk_widget_show (hseparator);
   gtk_box_pack_start (GTK_BOX (dialog_vbox), hseparator, FALSE, TRUE, 0);
   gtk_label_set_mnemonic_widget (GTK_LABEL (rfxbuilder->param_dp_label),rfxbuilder->spinbutton_param_dp);
@@ -2098,7 +2098,7 @@ GtkWidget * make_param_dialog (gint pnum, rfx_build_window_t *rfxbuilder) {
 
   // default val
 
-  hbox = gtk_hbox_new (FALSE, 0);
+  hbox = lives_hbox_new (FALSE, 0);
   gtk_widget_show (hbox);
   gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, TRUE, TRUE, 0);
 
@@ -2122,7 +2122,7 @@ GtkWidget * make_param_dialog (gint pnum, rfx_build_window_t *rfxbuilder) {
   gtk_button_set_use_underline (GTK_BUTTON (rfxbuilder->param_strdef_button),TRUE);
   gtk_box_pack_start (GTK_BOX (hbox), rfxbuilder->param_strdef_button, TRUE, FALSE, 0);
 
-  rfxbuilder->param_strlist_hbox = gtk_hbox_new (FALSE, 0);
+  rfxbuilder->param_strlist_hbox = lives_hbox_new (FALSE, 0);
   gtk_box_pack_start (GTK_BOX (dialog_vbox), rfxbuilder->param_strlist_hbox, TRUE, TRUE, 0);
 
   label = gtk_label_new_with_mnemonic (_("_Default: "));
@@ -2165,7 +2165,7 @@ GtkWidget * make_param_dialog (gint pnum, rfx_build_window_t *rfxbuilder) {
 
   // min
 
-  hbox = gtk_hbox_new (FALSE, 0);
+  hbox = lives_hbox_new (FALSE, 0);
   gtk_widget_show (hbox);
   gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, TRUE, TRUE, 0);
 
@@ -2186,7 +2186,7 @@ GtkWidget * make_param_dialog (gint pnum, rfx_build_window_t *rfxbuilder) {
 
   // max
 
-  hbox = gtk_hbox_new (FALSE, 0);
+  hbox = lives_hbox_new (FALSE, 0);
   gtk_widget_show (hbox);
   gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, TRUE, TRUE, 0);
 
@@ -2208,7 +2208,7 @@ GtkWidget * make_param_dialog (gint pnum, rfx_build_window_t *rfxbuilder) {
 
   // step size
 
-  hbox = gtk_hbox_new (FALSE, 0);
+  hbox = lives_hbox_new (FALSE, 0);
   gtk_widget_show (hbox);
   gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, TRUE, TRUE, 0);
 
@@ -2231,7 +2231,7 @@ GtkWidget * make_param_dialog (gint pnum, rfx_build_window_t *rfxbuilder) {
 
   // wrap
 
-  rfxbuilder->param_wrap_hbox = gtk_hbox_new (FALSE, 0);
+  rfxbuilder->param_wrap_hbox = lives_hbox_new (FALSE, 0);
   gtk_box_pack_start (GTK_BOX (dialog_vbox), rfxbuilder->param_wrap_hbox, TRUE, TRUE, 0);
 
   rfxbuilder->param_wrap_checkbutton = lives_standard_check_button_new ((tmp=g_strdup(_("_Wrap value"))),TRUE,LIVES_BOX(rfxbuilder->param_wrap_hbox),
@@ -2694,7 +2694,7 @@ GtkWidget * make_param_window_dialog (gint pnum, rfx_build_window_t *rfxbuilder)
   gtk_container_set_border_width (GTK_CONTAINER (dialog), 10);
 
   dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(dialog));
-  gtk_box_set_spacing (GTK_BOX (dialog_vbox), 10);
+  lives_box_set_spacing (GTK_BOX (dialog_vbox), 10);
   gtk_widget_show (dialog_vbox);
 
   if (pnum>=0) {
@@ -2773,7 +2773,7 @@ GtkWidget * make_param_window_dialog (gint pnum, rfx_build_window_t *rfxbuilder)
 
   // paramwindow rest
 
-  hbox = gtk_hbox_new (FALSE, 0);
+  hbox = lives_hbox_new (FALSE, 0);
   gtk_widget_show (hbox);
   gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, TRUE, TRUE, 0);
 
@@ -2937,11 +2937,11 @@ GtkWidget * make_trigger_dialog (gint tnum, rfx_build_window_t *rfxbuilder) {
   //gtk_window_set_default_size (GTK_WINDOW (rfxbuilder->dialog), 300, 200);
 
   dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(dialog));
-  gtk_box_set_spacing (GTK_BOX (dialog_vbox), 10);
+  lives_box_set_spacing (GTK_BOX (dialog_vbox), 10);
   gtk_widget_show (dialog_vbox);
 
   // when
-  hbox = gtk_hbox_new (FALSE, 0);
+  hbox = lives_hbox_new (FALSE, 0);
   gtk_widget_show (hbox);
   gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, TRUE, TRUE, 0);
 
@@ -3051,7 +3051,7 @@ void on_code_clicked (GtkButton *button, gpointer user_data) {
   //gtk_window_set_default_size (GTK_WINDOW (rfxbuilder->dialog), 300, 200);
 
   dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(dialog));
-  gtk_box_set_spacing (GTK_BOX (dialog_vbox), 10);
+  lives_box_set_spacing (GTK_BOX (dialog_vbox), 10);
   gtk_widget_show (dialog_vbox);
 
 
@@ -4422,17 +4422,17 @@ gchar *prompt_for_script_name(const gchar *sname, lives_rfx_status_t status) {
   vbox = lives_dialog_get_content_area(GTK_DIALOG(dialog));
   gtk_widget_show (vbox);
 
-  hbox = gtk_hbox_new (FALSE, 0);
+  hbox = lives_hbox_new (FALSE, 0);
   gtk_widget_show (hbox);
   gtk_box_pack_start (GTK_BOX (vbox), hbox, TRUE, TRUE, 0);
 
-  vbox = gtk_vbox_new (FALSE, 0);
+  vbox = lives_vbox_new (FALSE, 0);
   gtk_widget_show (vbox);
   gtk_box_pack_start (GTK_BOX (hbox), vbox, TRUE, TRUE, 0);
 
   add_fill_to_box(LIVES_BOX(vbox));
 
-  hbox = gtk_hbox_new (FALSE, 0);
+  hbox = lives_hbox_new (FALSE, 0);
   gtk_widget_show (hbox);
   gtk_box_pack_start (GTK_BOX (vbox), hbox, TRUE, TRUE, 0);
 
@@ -4496,7 +4496,7 @@ gchar *prompt_for_script_name(const gchar *sname, lives_rfx_status_t status) {
       label = gtk_label_new (_ ("New script name: "));
     }
     if (copy_mode||rename_mode) {
-      hbox = gtk_hbox_new (FALSE, 0);
+      hbox = lives_hbox_new (FALSE, 0);
       gtk_widget_show (hbox);
       gtk_box_pack_start (GTK_BOX (vbox), hbox, TRUE, TRUE, 0);
 

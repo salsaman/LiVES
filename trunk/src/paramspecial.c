@@ -252,7 +252,7 @@ void check_for_special (lives_param_t *param, int num, GtkBox *pbox, lives_rfx_t
 						 G_CALLBACK (after_aspect_height_changed),
 						 NULL);
       
-      box = gtk_hbox_new (FALSE, 10);
+      box = lives_hbox_new (FALSE, 10);
       gtk_box_pack_start (GTK_BOX (GTK_WIDGET (pbox)), box, FALSE, FALSE, 20);
       
       
@@ -321,7 +321,7 @@ void check_for_special (lives_param_t *param, int num, GtkBox *pbox, lives_rfx_t
 	if (box==NULL) continue;
       }
 
-      hbox = gtk_hbox_new (FALSE, 10);
+      hbox = lives_hbox_new (FALSE, 10);
       gtk_box_pack_start (GTK_BOX (GTK_WIDGET (box)), hbox, FALSE, FALSE, 10);
       
       checkbutton = lives_standard_check_button_new (_("Display Password"),FALSE,LIVES_BOX(hbox),NULL);

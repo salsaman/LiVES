@@ -976,7 +976,7 @@ _vppaw *on_vpp_advanced_clicked (GtkButton *button, gpointer user_data) {
   // frame size
 
   if (!(tmpvpp->capabilities&VPP_LOCAL_DISPLAY)) {
-    hbox = gtk_hbox_new (FALSE, 0);
+    hbox = lives_hbox_new (FALSE, 0);
     gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, FALSE, FALSE, 10);
     
     add_fill_to_box(GTK_BOX(hbox));
@@ -1038,7 +1038,7 @@ _vppaw *on_vpp_advanced_clicked (GtkButton *button, gpointer user_data) {
   // extra params
 
   if (tmpvpp->get_init_rfx!=NULL) {
-    GtkWidget *vbox=gtk_vbox_new (FALSE, 0);
+    GtkWidget *vbox=lives_vbox_new (FALSE, 0);
     GtkWidget *scrolledwindow = gtk_scrolled_window_new (NULL, NULL);
     gtk_widget_set_size_request (scrolledwindow, RFX_WINSIZE_H, RFX_WINSIZE_V/2);
     gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrolledwindow), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
@@ -2549,7 +2549,7 @@ void on_decplug_advanced_clicked (GtkButton *button, gpointer user_data) {
 
   gtk_container_add (GTK_CONTAINER(dialog_vbox), scrolledwindow);
 
-  vbox = gtk_vbox_new (FALSE, 0);
+  vbox = lives_vbox_new (FALSE, 0);
   gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (scrolledwindow), vbox);
   gtk_widget_set_size_request (scrolledwindow, RFX_WINSIZE_H, RFX_WINSIZE_V);
 
@@ -2563,7 +2563,7 @@ void on_decplug_advanced_clicked (GtkButton *button, gpointer user_data) {
 
   while (decoder_plugin!=NULL) {
     lives_decoder_sys_t *dpsys=(lives_decoder_sys_t *)decoder_plugin->data;
-    hbox = gtk_hbox_new (FALSE, 0);
+    hbox = lives_hbox_new (FALSE, 0);
     gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 10);
     ltext=g_strdup_printf("%s   (%s)",dpsys->name,(*dpsys->version)());
 

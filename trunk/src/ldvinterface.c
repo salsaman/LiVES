@@ -46,10 +46,10 @@ struct _dvgrabw *create_camwindow (s_cam *cam, gint type)
     else gtk_window_set_transient_for(GTK_WINDOW(dvgrabw->window),GTK_WINDOW(mainw->multitrack->window));
   }
 
-  vbox=gtk_vbox_new(FALSE,10);
+  vbox=lives_vbox_new(FALSE,10);
   gtk_container_add (GTK_CONTAINER (dvgrabw->window), vbox);
 
-  hbox = gtk_hbox_new (FALSE,10);
+  hbox = lives_hbox_new (FALSE,10);
   gtk_box_pack_start(GTK_BOX(vbox),hbox,FALSE,FALSE,10);
 
 
@@ -76,7 +76,7 @@ struct _dvgrabw *create_camwindow (s_cam *cam, gint type)
 
   //////////////////
 
-  hbox = gtk_hbox_new (FALSE,10);
+  hbox = lives_hbox_new (FALSE,10);
   gtk_box_pack_start(GTK_BOX(vbox),hbox,FALSE,FALSE,10);
 
   dvgrabw->filent=lives_standard_entry_new(_("File_name:"),TRUE,type==CAM_FORMAT_DV?"dvgrab-":"hdvgrab-",-1,-1,LIVES_BOX(hbox),NULL);
@@ -88,7 +88,7 @@ struct _dvgrabw *create_camwindow (s_cam *cam, gint type)
   label=lives_standard_label_new(_("(files will not be overwritten)"));
   gtk_box_pack_end(GTK_BOX(hbox),label,FALSE,FALSE,0);
 
-  hbox = gtk_hbox_new (FALSE, 0);
+  hbox = lives_hbox_new (FALSE, 0);
   gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 10);
 
   dvgrabw->split=lives_standard_check_button_new(_("_Split into scenes"),FALSE,LIVES_BOX(hbox),NULL);
@@ -102,7 +102,7 @@ struct _dvgrabw *create_camwindow (s_cam *cam, gint type)
   gtk_editable_set_editable (GTK_EDITABLE(dvgrabw->status_entry),FALSE);
 
 
-  hseparator = gtk_hseparator_new ();
+  hseparator = lives_hseparator_new ();
   gtk_box_pack_start (GTK_BOX (vbox), hseparator, FALSE, TRUE, 10);
 
   hbuttonbox1 = gtk_hbutton_box_new ();

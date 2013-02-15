@@ -1201,7 +1201,7 @@ void save_file (int clip, int start, int end, const char *filename) {
   // get file extension
   check_encoder_restrictions (TRUE,FALSE,save_all);
 
-  hbox = gtk_hbox_new (FALSE, 0);
+  hbox = lives_hbox_new (FALSE, 0);
   mainw->fx1_bool=TRUE;
   add_suffix_check(GTK_BOX(hbox),prefs->encoder.of_def_ext);
   gtk_widget_show_all(hbox);

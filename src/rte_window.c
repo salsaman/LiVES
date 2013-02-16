@@ -1675,7 +1675,7 @@ on_rte_info_clicked (GtkButton *button, gpointer user_data) {
   gtk_text_buffer_set_text (textbuffer, filter_description, -1);
   gtk_box_pack_start (GTK_BOX (hbox), textview, TRUE, TRUE, 0);
   
-  hbuttonbox = gtk_hbutton_box_new ();
+  hbuttonbox = lives_hbutton_box_new ();
   gtk_widget_show (hbuttonbox);
   gtk_box_pack_start (GTK_BOX (vbox), hbuttonbox, TRUE, TRUE, 0);
 
@@ -2291,7 +2291,7 @@ GtkWidget * create_rte_window (void) {
 
   gtk_container_add (GTK_CONTAINER (rte_window), top_vbox);
 
-  hbuttonbox = gtk_hbutton_box_new ();
+  hbuttonbox = lives_hbutton_box_new ();
   gtk_box_pack_start (GTK_BOX (top_vbox), hbuttonbox, FALSE, TRUE, 20);
 #if !GTK_CHECK_VERSION(3,0,0)
   gtk_button_box_set_child_size (GTK_BUTTON_BOX (hbuttonbox), DEF_BUTTON_WIDTH, -1);

@@ -900,10 +900,6 @@ void recover_layout_cancelled(GtkButton *, gpointer user_data);
 boolean write_backup_layout_numbering(lives_mt *);
 
 
-// internal functions
-void mouse_select_end(GtkWidget *, lives_mt *);
-
-
 // amixer funcs
 void amixer_show (GtkButton *, gpointer mt);
 void on_amixer_close_clicked (GtkButton *, lives_mt *mt);

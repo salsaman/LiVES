@@ -1844,7 +1844,7 @@ create_LiVES (void)
   gtk_scale_button_set_value(GTK_SCALE_BUTTON(mainw->volume_scale),mainw->volume);
   lives_scale_button_set_orientation (LIVES_SCALE_BUTTON(mainw->volume_scale),LIVES_ORIENTATION_HORIZONTAL);
 #else
-  mainw->volume_scale=gtk_hscale_new(GTK_ADJUSTMENT(spinbutton_adj));
+  mainw->volume_scale=lives_hscale_new(GTK_ADJUSTMENT(spinbutton_adj));
   gtk_scale_set_draw_value(GTK_SCALE(mainw->volume_scale),FALSE);
   if (capable->smog_version_correct) {
     gtk_toolbar_insert(GTK_TOOLBAR(mainw->btoolbar),GTK_TOOL_ITEM(mainw->vol_label),-1);
@@ -3447,6 +3447,8 @@ make_preview_box (void) {
   gtk_widget_show (mainw->preview_image);
   gtk_container_add (GTK_CONTAINER (eventbox), mainw->preview_image);
 
+  gtk_widget_set_size_request(mainw->preview_image,mainw->pwidth,mainw->pheight);
+
   lives_widget_set_hexpand(mainw->preview_box,TRUE);
   lives_widget_set_vexpand(mainw->preview_box,TRUE);
 
@@ -3465,7 +3467,7 @@ make_preview_box (void) {
   lives_widget_set_text_color(mainw->preview_spinbutton, GTK_STATE_INSENSITIVE, &palette->black);
 
   // damn thing crashes if max<min
-  mainw->preview_scale=gtk_hscale_new_with_range(0,cfile->frames?cfile->frames>0:1,1);
+  mainw->preview_scale=lives_hscale_new_with_range(0,cfile->frames?cfile->frames>0:1,1);
   gtk_widget_show(mainw->preview_scale);
 
   gtk_box_pack_start (GTK_BOX (hbox), mainw->preview_scale, TRUE, TRUE, 0);
@@ -4009,8 +4011,25 @@ void resize_play_window (void) {
       if (mainw->vpp!=NULL&&(!mainw->preview||mainw->multitrack!=NULL)) {
 	gboolean fixed_size=FALSE;
 
-	gdk_window_get_pointer (gdk_get_default_root_window (), &mainw->ptr_x, &mainw->ptr_y, NULL);
-	if (pmonitor==0) mainw->ptr_x=mainw->ptr_y=-1;
+	mainw->ptr_x=mainw->ptr_y=-1;
+	if (pmonitor==0) {
+	  // fullscreen playback on all screens (of first display)
+	  // get mouse position to warp it back after playback ends
+#if GTK_CHECK_VERSION(3,0,0)
+	  // in future we will handle multiple displays, so we will get the mouse device for the first screen of that display
+	  GdkDevice *device=mainw->mgeom[0].mouse_device;
+	  if (device!=NULL) {
+	    // create a fake event to pass in the device
+	    GdkEventButton *event;
+	    event=(GdkEventButton *)gdk_event_new(GDK_BUTTON_PRESS);
+	    event->device=device;
+	    lives_widget_get_pointer ((LiVESXEvent *)event, NULL, &mainw->ptr_x, &mainw->ptr_y, NULL);
+	    gdk_event_free((GdkEvent *)event);
+	  }
+#else
+	  lives_widget_get_pointer (NULL, NULL, &mainw->ptr_x, &mainw->ptr_y, NULL);
+#endif
+	}
 	if (mainw->vpp->fheight>-1&&mainw->vpp->fwidth>-1) {	  
 	  // fixed o/p size for stream
 	  if (!(mainw->vpp->fwidth*mainw->vpp->fheight)) {
@@ -4283,7 +4302,7 @@ void splash_init(void) {
 
   while (g_main_context_iteration(NULL,FALSE));
 
-  lives_set_cursor_style(LIVES_CURSOR_BUSY,lives_widget_get_xwindow(mainw->splash_window));
+  lives_set_cursor_style(LIVES_CURSOR_BUSY,mainw->splash_window);
 
   gtk_window_set_auto_startup_notification(TRUE);
 

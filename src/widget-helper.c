@@ -277,7 +277,7 @@ lives_painter_format_t lives_painter_image_surface_get_format(lives_painter_surf
 ////////////////////////////////////////////////////////
 
 
-boolean return_true (LiVESWidget *widget, LiVESEvent *event, LiVESObjectPtr user_data) {
+boolean return_true (LiVESWidget *widget, LiVESXEvent *event, LiVESObjectPtr user_data) {
   // event callback that just returns TRUE
   return TRUE;
 }
@@ -713,6 +713,124 @@ LIVES_INLINE LiVESWidget *lives_vseparator_new(void) {
 }
 
 
+LIVES_INLINE LiVESWidget *lives_hbutton_box_new(void) {
+  LiVESWidget *bbox=NULL;
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3,0,0)
+  bbox=gtk_button_box_new(LIVES_ORIENTATION_HORIZONTAL);
+#else
+  bbox=gtk_hbutton_box_new();
+#endif
+#endif
+  return bbox;
+}
+
+
+LIVES_INLINE LiVESWidget *lives_vbutton_box_new(void) {
+  LiVESWidget *bbox=NULL;
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3,0,0)
+  bbox=gtk_button_box_new(LIVES_ORIENTATION_VERTICAL);
+#else
+  bbox=gtk_vbutton_box_new();
+#endif
+#endif
+  return bbox;
+}
+
+
+LIVES_INLINE LiVESWidget *lives_hscale_new(LiVESAdjustment *adj) {
+  LiVESWidget *hscale=NULL;
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3,0,0)
+  hscale=gtk_scale_new(LIVES_ORIENTATION_HORIZONTAL,adj);
+#else
+  hscale=gtk_hscale_new(adj);
+#endif
+#endif
+  return hscale;
+}
+
+
+LIVES_INLINE LiVESWidget *lives_hscale_new_with_range(double min, double max, double step) {
+  LiVESWidget *hscale=NULL;
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3,0,0)
+  hscale=gtk_scale_new_with_range(LIVES_ORIENTATION_HORIZONTAL,min,max,step);
+#else
+  hscale=gtk_hscale_new_with_range(min,max,step);
+#endif
+#endif
+  return hscale;
+}
+
+
+
+LIVES_INLINE LiVESWidget *lives_vscale_new(LiVESAdjustment *adj) {
+  LiVESWidget *vscale=NULL;
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3,0,0)
+  vscale=gtk_scale_new(LIVES_ORIENTATION_VERTICAL,adj);
+#else
+  vscale=gtk_vscale_new(adj);
+#endif
+#endif
+  return vscale;
+}
+
+
+LIVES_INLINE LiVESWidget *lives_hpaned_new(void) {
+  LiVESWidget *hpaned=NULL;
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3,0,0)
+  hpaned=gtk_paned_new(LIVES_ORIENTATION_HORIZONTAL);
+#else
+  hpaned=gtk_hpaned_new();
+#endif
+#endif
+  return hpaned;
+}
+
+
+LIVES_INLINE LiVESWidget *lives_vpaned_new(void) {
+  LiVESWidget *vpaned=NULL;
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3,0,0)
+  vpaned=gtk_paned_new(LIVES_ORIENTATION_VERTICAL);
+#else
+  vpaned=gtk_vpaned_new();
+#endif
+#endif
+  return vpaned;
+}
+
+
+LIVES_INLINE LiVESWidget *lives_hscrollbar_new(LiVESAdjustment *adj) {
+  LiVESWidget *hscrollbar=NULL;
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3,0,0)
+  hscrollbar=gtk_scrollbar_new(LIVES_ORIENTATION_HORIZONTAL,adj);
+#else
+  hscrollbar=gtk_hscrollbar_new(adj);
+#endif
+#endif
+  return hscrollbar;
+}
+
+
+LIVES_INLINE LiVESWidget *lives_vscrollbar_new(LiVESAdjustment *adj) {
+  LiVESWidget *vscrollbar=NULL;
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3,0,0)
+  vscrollbar=gtk_scrollbar_new(LIVES_ORIENTATION_VERTICAL,adj);
+#else
+  vscrollbar=gtk_vscrollbar_new(adj);
+#endif
+#endif
+  return vscrollbar;
+}
+
+
 LIVES_INLINE LiVESWidget *lives_combo_new(void) {
   LiVESWidget *combo=NULL;
 #ifdef GUI_GTK
@@ -1096,6 +1214,19 @@ LIVES_INLINE void lives_adjustment_set_page_size(LiVESAdjustment *adj, double pa
 }
 
 
+LIVES_INLINE LiVESAdjustment *lives_tree_view_get_hadjustment(LiVESTreeView *tview) {
+  LiVESAdjustment *adj=NULL;
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3,0,0)
+  adj=gtk_scrollable_get_hadjustment(GTK_SCROLLABLE(tview));
+#else
+  adj=gtk_tree_view_get_hadjustment(tview);
+#endif
+#endif
+  return adj;
+}
+
+
 LIVES_INLINE const char *lives_label_get_text(LiVESLabel *label) {
 #ifdef GUI_GTK
   return gtk_label_get_text(label);
@@ -1178,6 +1309,76 @@ LIVES_INLINE void lives_widget_clear_area(LiVESWidget *widget, int x, int y, int
 
 }
 
+
+LIVES_INLINE LiVESXWindow *lives_widget_get_pointer(LiVESXEvent *event, LiVESWidget *widget, int *x, int *y, LiVESModifierType *mask) {
+  LiVESXWindow *xwindow=NULL;
+
+#ifdef GUI_GTK
+  LiVESXWindow *xwin;
+
+  if (widget==NULL) xwin=gdk_get_default_root_window ();
+  else xwin=lives_widget_get_xwindow(widget);
+
+  if (xwin==NULL) {
+    LIVES_ERROR("Tried to get pointer for windowless widget");
+    return NULL;
+  }
+
+#if GTK_CHECK_VERSION(3,0,0)
+  GdkDeviceManager *device_manager =
+    gdk_display_get_device_manager(gdk_window_get_display(xwin));
+  GdkDevice *device = gdk_device_manager_get_client_pointer (device_manager);
+
+  // following crashes
+  //GdkDevice *device=gdk_event_get_source_device(event);
+
+  xwindow=gdk_window_get_device_position (xwin,device,x,y,mask);
+#else
+  xwindow=gdk_window_get_pointer(xwin,x,y,mask);
+#endif
+#endif
+  return xwindow;
+}
+
+
+LIVES_INLINE LiVESXWindow *lives_display_get_window_at_pointer 
+(LiVESXDevice *device, LiVESXDisplay *display, int *win_x, int *win_y) {
+  LiVESXWindow *xwindow=NULL;
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3,0,0)
+  xwindow=gdk_device_get_window_at_position (device,win_x,win_y);
+#else
+  xwindow=gdk_display_get_window_at_pointer(display,win_x,win_y);
+#endif
+#endif
+  return xwindow;
+}
+
+
+LIVES_INLINE void lives_display_get_pointer 
+(LiVESXDevice *device, LiVESXDisplay *display, LiVESXScreen **screen, int *x, int *y, LiVESModifierType *mask) {
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3,0,0)
+  gdk_device_get_position (device,screen,x,y);
+#else
+  gdk_display_get_pointer(display,screen,x,y,mask);
+#endif
+#endif
+}
+
+
+LIVES_INLINE void lives_display_warp_pointer 
+(LiVESXDevice *device, LiVESXDisplay *display, LiVESXScreen *screen, int x, int y) {
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3,0,0)
+  gdk_device_warp (device,screen,x,y);
+#else
+#if GLIB_CHECK_VERSION(2,8,0)
+  gdk_display_warp_pointer(display,screen,x,y);
+#endif
+#endif
+#endif
+}
 
 
 
@@ -1662,6 +1863,16 @@ LiVESWidget *lives_standard_hruler_new(void) {
 
 
 // utils
+LIVES_INLINE void lives_cursor_unref(LiVESXCursor *cursor) {
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3,0,0)
+  g_object_unref(G_OBJECT(cursor));
+#else
+  gdk_cursor_unref(cursor);
+#endif
+#endif
+}
+
 
 void lives_widget_get_bg_color(LiVESWidget *widget, LiVESWidgetColor *color) {
 #ifdef GUI_GTK
@@ -1679,7 +1890,7 @@ void lives_widget_unparent(LiVESWidget *widget) {
   lives_container_remove(LIVES_CONTAINER(lives_widget_get_parent(widget)),widget);
 }
 
-boolean label_act_toggle (LiVESWidget *widget, LiVESEventButton *event, LiVESToggleButton *togglebutton) {
+boolean label_act_toggle (LiVESWidget *widget, LiVESXEventButton *event, LiVESToggleButton *togglebutton) {
   if (!lives_widget_is_sensitive(LIVES_WIDGET(togglebutton))) return FALSE;
   lives_toggle_button_set_active (togglebutton, !lives_toggle_button_get_active(togglebutton));
   return FALSE;
@@ -1754,19 +1965,17 @@ void adjustment_configure(LiVESAdjustment *adjustment,
 
 
 
-void lives_set_cursor_style(lives_cursor_t cstyle, LiVESXWindow *window) {
-#if GTK_CHECK_VERSION(3,0,0)
-  if (mainw->cursor!=NULL) g_object_unref(mainw->cursor);
-#else
-  if (mainw->cursor!=NULL) gdk_cursor_unref(mainw->cursor);
-#endif
+void lives_set_cursor_style(lives_cursor_t cstyle, LiVESWidget *widget) {
+  LiVESXWindow *window;
+  if (mainw->cursor!=NULL) lives_cursor_unref(mainw->cursor);
   mainw->cursor=NULL;
 
-  if (window==NULL) {
+  if (widget==NULL) {
     if (mainw->multitrack==NULL&&mainw->is_ready) window=lives_widget_get_xwindow(mainw->LiVES);
     else if (mainw->multitrack!=NULL&&mainw->multitrack->is_ready) window=lives_widget_get_xwindow(mainw->multitrack->window);
     else return;
   }
+  else window=lives_widget_get_xwindow(widget);
 
   switch(cstyle) {
   case LIVES_CURSOR_NORMAL:
@@ -1877,7 +2086,7 @@ void lives_general_button_clicked (LiVESButton *button, LiVESObjectPtr data_to_f
 }
 
 
-boolean lives_general_delete_event(LiVESWidget *widget, LiVESEvent *event, LiVESObjectPtr data_to_free) {
+boolean lives_general_delete_event(LiVESWidget *widget, LiVESXEvent *event, LiVESObjectPtr data_to_free) {
 #ifdef GUI_GTK
   gtk_widget_destroy(widget);
 

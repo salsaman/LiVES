@@ -1440,7 +1440,7 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, boolean add_
 #ifdef ENABLE_GIW
       if (!prefs->lamp_buttons) {
 #endif
-	scale=gtk_hscale_new(GTK_ADJUSTMENT(spinbutton_adj));
+	scale=lives_hscale_new(GTK_ADJUSTMENT(spinbutton_adj));
 	gtk_scale_set_draw_value(GTK_SCALE(scale),FALSE);
 	gtk_box_pack_start (GTK_BOX (hbox), scale, TRUE, TRUE, 0);
 #ifdef ENABLE_GIW

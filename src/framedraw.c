@@ -255,7 +255,7 @@ void widget_add_framedraw (GtkVBox *box, gint start, gint end, gboolean add_prev
 
   spinbutton_adj=gtk_spin_button_get_adjustment(GTK_SPIN_BUTTON(mainw->framedraw_spinbutton));
 
-  mainw->framedraw_scale=gtk_hscale_new_with_range(0,1,1);
+  mainw->framedraw_scale=lives_hscale_new_with_range(0,1,1);
   gtk_box_pack_start (GTK_BOX (hbox), mainw->framedraw_scale, TRUE, TRUE, 0);
   gtk_range_set_adjustment(GTK_RANGE(mainw->framedraw_scale),spinbutton_adj);
   gtk_scale_set_draw_value(GTK_SCALE(mainw->framedraw_scale),FALSE);
@@ -733,7 +733,7 @@ gboolean on_framedraw_mouse_start (GtkWidget *widget, GdkEventButton *event, liv
   if (mainw->multitrack!=NULL&&mainw->multitrack->track_index==-1) return FALSE;
 
   if (event->button==1) {
-    gdk_window_get_pointer(lives_widget_get_xwindow(widget), &xstart, &ystart, NULL);
+    lives_widget_get_pointer((LiVESXEvent *)event, widget, &xstart, &ystart, NULL);
 
     b1_held=TRUE;
 
@@ -814,7 +814,7 @@ gboolean on_framedraw_mouse_update (GtkWidget *widget, GdkEventButton *event, li
   if (framedraw==NULL) return FALSE;
   if (mainw->multitrack!=NULL&&mainw->multitrack->track_index==-1) return FALSE;
 
-  gdk_window_get_pointer(lives_widget_get_xwindow(widget), &xcurrent, &ycurrent, NULL);
+  lives_widget_get_pointer((LiVESXEvent *)event, widget, &xcurrent, &ycurrent, NULL);
 
   switch (framedraw->type) {
   case FD_RECT_DEMASK:
@@ -889,7 +889,7 @@ gboolean on_framedraw_mouse_reset (GtkWidget *widget, GdkEventButton *event, liv
   if (framedraw==NULL) return FALSE;
   if (mainw->multitrack!=NULL&&mainw->multitrack->track_index==-1) return FALSE;
 
-  gdk_window_get_pointer(lives_widget_get_xwindow(widget), &xend, &yend, NULL);
+  lives_widget_get_pointer((LiVESXEvent *)event, widget, &xend, &yend, NULL);
   // user released the mouse button in framedraw widget
   if (event->button==1) {
     b1_held=FALSE;

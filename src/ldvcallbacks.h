@@ -1,18 +1,18 @@
 // ldvcallbacks.h
 // LiVES
-// (c) G. Finch 2006 <salsaman@xs4all.nl,salsaman@gmail.com>
+// (c) G. Finch 2006 - 2013 <salsaman@xs4all.nl,salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
 
-void on_camgrab_clicked (GtkButton *button, gpointer user_data);
-void on_camplay_clicked (GtkButton *button, gpointer user_data);
-void on_camstop_clicked (GtkButton *button, gpointer user_data);
-void on_camrew_clicked (GtkButton *button, gpointer user_data);
-void on_camff_clicked (GtkButton *button, gpointer user_data);
-void on_cameject_clicked (GtkButton *button, gpointer user_data);
-void on_camfile_clicked (GtkFileChooser *ch, gpointer entry);
-void on_campause_clicked (GtkButton *button, gpointer user_data);
-void on_camquit_clicked (GtkButton *button, gpointer user_data);
+void on_camgrab_clicked (GtkButton *, gpointer s_cam);
+void on_camplay_clicked (GtkButton *, gpointer s_cam);
+void on_camstop_clicked (GtkButton *, gpointer s_cam);
+void on_camrew_clicked (GtkButton *, gpointer s_cam);
+void on_camff_clicked (GtkButton *, gpointer s_cam);
+void on_cameject_clicked (GtkButton *, gpointer s_cam);
+void on_camfile_clicked (GtkFileChooser *, gpointer entry);
+void on_campause_clicked (GtkButton *, gpointer s_cam);
+void on_camquit_clicked (GtkButton *, gpointer s_cam);
 
-gboolean on_camdelete_event (GtkWidget *widget, GdkEvent *event, gpointer user_data);
+boolean on_camdelete_event (GtkWidget *, GdkEvent *, gpointer s_cam);

@@ -190,8 +190,14 @@ void get_monitors(void) {
   GSList *dlist,*dislist;
   GdkDisplay *disp;
   GdkScreen *screen;
+#if GTK_CHECK_VERSION(3,0,0)
+  GdkDeviceManager *devman;
+  GList *devlist;
+  register int k;
+#endif
+
   gint nscreens,nmonitors;
-  int i,j,idx=0;
+  register int i,j,idx=0;
 
   if (mainw->mgeom!=NULL) g_free(mainw->mgeom);
   mainw->mgeom=NULL;
@@ -216,31 +222,46 @@ void get_monitors(void) {
 
   if (prefs->force_single_monitor) capable->nmonitors=1; // force for clone mode
 
-  if (capable->nmonitors>1) {
-    mainw->mgeom=(lives_mgeometry_t *)g_malloc(capable->nmonitors*sizeof(lives_mgeometry_t));
-    dlist=dislist;
+  mainw->mgeom=(lives_mgeometry_t *)g_malloc(capable->nmonitors*sizeof(lives_mgeometry_t));
+  dlist=dislist;
 
-    while (dlist!=NULL) {
-      disp=(GdkDisplay *)dlist->data;
+  while (dlist!=NULL) {
+    disp=(GdkDisplay *)dlist->data;
 
-      // get screens
-      nscreens=gdk_display_get_n_screens(disp);
-      for (i=0;i<nscreens;i++) {
-	screen=gdk_display_get_screen(disp,i);
-	nmonitors=gdk_screen_get_n_monitors(screen);
-	for (j=0;j<nmonitors;j++) {
-	  GdkRectangle rect;
-	  gdk_screen_get_monitor_geometry(screen,j,&(rect));
-	  mainw->mgeom[idx].x=rect.x;
-	  mainw->mgeom[idx].y=rect.y;
-	  mainw->mgeom[idx].width=rect.width;
-	  mainw->mgeom[idx].height=rect.height;
-	  mainw->mgeom[idx].screen=screen;
-	  idx++;
+#if GTK_CHECK_VERSION(3,0,0)
+    devman=gdk_display_get_device_manager(disp);
+    devlist=gdk_device_manager_list_devices(devman,GDK_DEVICE_TYPE_MASTER);
+#endif
+    // get screens
+    nscreens=gdk_display_get_n_screens(disp);
+    for (i=0;i<nscreens;i++) {
+      screen=gdk_display_get_screen(disp,i);
+      nmonitors=gdk_screen_get_n_monitors(screen);
+      for (j=0;j<nmonitors;j++) {
+	GdkRectangle rect;
+	gdk_screen_get_monitor_geometry(screen,j,&(rect));
+	mainw->mgeom[idx].x=rect.x;
+	mainw->mgeom[idx].y=rect.y;
+	mainw->mgeom[idx].width=rect.width;
+	mainw->mgeom[idx].height=rect.height;
+#if GTK_CHECK_VERSION(3,0,0)
+	// get (virtual) mouse device for this screen
+	for (k=0;k<g_list_length(devlist);k++) {
+	  GdkDevice *device=(GdkDevice *)g_list_nth_data(devlist,k);
+	  if (gdk_device_get_display(device)==disp&&
+	      gdk_device_get_source(device)==GDK_SOURCE_MOUSE) 
+	    mainw->mgeom[idx].mouse_device=device;
 	}
+#endif
+	mainw->mgeom[idx].disp=disp;
+	mainw->mgeom[idx].screen=screen;
+	idx++;
       }
-      dlist=dlist->next;
     }
+#if GTK_CHECK_VERSION(3,0,0)
+    g_list_free(devlist);
+#endif
+    dlist=dlist->next;
   }
 
   g_slist_free(dislist);
@@ -3524,19 +3545,23 @@ void load_preview_image(boolean update_always) {
     gtk_spin_button_set_range(GTK_SPIN_BUTTON(mainw->preview_spinbutton),1,1);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(mainw->preview_spinbutton),1);
     g_signal_handler_unblock(mainw->preview_spinbutton,mainw->preview_spin_func);
-    gtk_widget_queue_resize(mainw->preview_box);
+    gtk_widget_set_size_request(mainw->preview_image,mainw->pwidth,mainw->pheight);
     return;
   }
 
   if (mainw->current_file<0||cfile==NULL||!cfile->frames||(cfile->clip_type!=CLIP_TYPE_DISK&&
 							   cfile->clip_type!=CLIP_TYPE_FILE)) {
-    set_ce_frame_from_pixbuf(GTK_IMAGE(mainw->preview_image), mainw->imframe,NULL);
+
     mainw->preview_frame=0;
     g_signal_handler_block(mainw->preview_spinbutton,mainw->preview_spin_func);
     gtk_spin_button_set_range(GTK_SPIN_BUTTON(mainw->preview_spinbutton),0,0);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(mainw->preview_spinbutton),0);
     g_signal_handler_unblock(mainw->preview_spinbutton,mainw->preview_spin_func);
-    gtk_widget_queue_resize(mainw->preview_box);
+    if (mainw->imframe!=NULL) {
+      set_ce_frame_from_pixbuf(GTK_IMAGE(mainw->preview_image), mainw->imframe, NULL);
+      gtk_widget_set_size_request(mainw->preview_image,lives_pixbuf_get_width(mainw->imframe),lives_pixbuf_get_height(mainw->imframe));
+    }
+    else set_ce_frame_from_pixbuf(GTK_IMAGE(mainw->preview_image), NULL, NULL);
     return;
   }
 
@@ -3586,7 +3611,7 @@ void load_preview_image(boolean update_always) {
   }
 
   set_ce_frame_from_pixbuf(GTK_IMAGE(mainw->preview_image), pixbuf, NULL);
-
+  gtk_widget_set_size_request(mainw->preview_image,mainw->pwidth,mainw->pheight);
 
   if (update_always) {
     // set spins from current frame

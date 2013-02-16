@@ -823,7 +823,7 @@ void on_list_table_clicked (GtkButton *button, gpointer user_data) {
   gtk_widget_show (vseparator);
   gtk_box_pack_start (GTK_BOX (hbox), vseparator, TRUE, TRUE, 10);
 
-  button_box=gtk_vbutton_box_new();
+  button_box=lives_vbutton_box_new();
   gtk_box_pack_start (GTK_BOX (hbox), button_box, FALSE, FALSE, 0);
   gtk_widget_show (button_box);
 

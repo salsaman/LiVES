@@ -68,7 +68,15 @@ typedef GtkOrientation LiVESOrientation;
 #define LIVES_ORIENTATION_HORIZONTAL GTK_ORIENTATION_HORIZONTAL
 #define LIVES_ORIENTATION_VERTICAL   GTK_ORIENTATION_VERTICAL
 
-typedef GdkEvent                          LiVESEvent;
+typedef GdkEvent                          LiVESXEvent;
+typedef GdkDisplay                        LiVESXDisplay;
+typedef GdkScreen                         LiVESXScreen;
+typedef GdkDevice                         LiVESXDevice;
+
+#if GTK_CHECK_VERSION(3,0,0)
+typedef GdkDeviceManager                  LiVESXDeviceManager;
+#endif
+
 #if GTK_CHECK_VERSION(3,0,0)
 #define LIVES_WIDGET_EVENT_EXPOSE_EVENT "draw"
 #define GTK_OBJECT(a)                     a
@@ -91,6 +99,7 @@ typedef GtkEntry                          LiVESEntry;
 typedef GtkRadioButton                    LiVESRadioButton;
 typedef GtkScaleButton                    LiVESScaleButton;
 typedef GtkLabel                          LiVESLabel;
+typedef GtkTreeView                       LiVESTreeView;
 
 #if GTK_CHECK_VERSION(3,0,0)
 #define LIVES_WIDGET_COLOR_SCALE (1./256.)
@@ -116,7 +125,9 @@ typedef GdkPixbuf                         LiVESPixbuf;
 
 typedef GdkWindow                         LiVESXWindow;
 
-typedef GdkEventButton                    LiVESEventButton;
+typedef GdkEventButton                    LiVESXEventButton;
+
+typedef GdkCursor                         LiVESXCursor;
 
 typedef GError                            LiVESError;
 
@@ -151,6 +162,7 @@ typedef gpointer                          LiVESObjectPtr;
 #define LIVES_RADIO_BUTTON(widget) GTK_RADIO_BUTTON(widget)
 #define LIVES_SCALE_BUTTON(widget) GTK_SCALE_BUTTON(widget)
 #define LIVES_TOGGLE_BUTTON(widget) GTK_TOGGLE_BUTTON(widget)
+#define LIVES_TREE_VIEW(widget) GTK_TREE_VIEW(widget)
 
 #if GTK_CHECK_VERSION(3,0,0)
 #define LIVES_RULER(widget) GTK_SCALE(widget)
@@ -161,6 +173,7 @@ typedef gpointer                          LiVESObjectPtr;
 
 #define LIVES_RANGE(widget) GTK_RANGE(widget)
 
+#define LIVES_XEVENT(event) GDK_EVENT(event)
 
 #define LIVES_IS_WIDGET(widget) GTK_IS_WIDGET(widget)
 #define LIVES_IS_COMBO(widget) GTK_IS_COMBO_BOX(widget)
@@ -175,6 +188,8 @@ typedef GLogLevelFlags LiVESLogLevelFlags;
 #define LIVES_LOG_LEVEL_MASK G_LOG_LEVEL_MASK
 #define LIVES_LOG_LEVEL_CRITICAL G_LOG_LEVEL_CRITICAL
 #define LIVES_LOG_FATAL_MASK G_LOG_FATAL_MASK
+
+typedef GdkModifierType LiVESModifierType;
 
 #define LIVES_CONTROL_MASK GDK_CONTROL_MASK
 #define LIVES_ALT_MASK     GDK_MOD1_MASK
@@ -420,7 +435,7 @@ lives_painter_format_t lives_painter_image_surface_get_format(lives_painter_surf
 
 // utils
 
-boolean return_true (LiVESWidget *, LiVESEvent *, LiVESObjectPtr);
+boolean return_true (LiVESWidget *, LiVESXEvent *, LiVESObjectPtr);
 
 
 // object funcs.
@@ -480,6 +495,19 @@ LiVESWidget *lives_vbox_new(boolean homogeneous, int spacing);
 LiVESWidget *lives_hseparator_new(void);
 LiVESWidget *lives_vseparator_new(void);
 
+LiVESWidget *lives_hbutton_box_new(void);
+LiVESWidget *lives_vbutton_box_new(void);
+
+LiVESWidget *lives_hscale_new(LiVESAdjustment *);
+LiVESWidget *lives_hscale_new_with_range(double min, double max, double step);
+LiVESWidget *lives_vscale_new(LiVESAdjustment *);
+
+LiVESWidget *lives_hpaned_new(void);
+LiVESWidget *lives_vpaned_new(void);
+
+LiVESWidget *lives_hscrollbar_new(LiVESAdjustment *);
+LiVESWidget *lives_vscrollbar_new(LiVESAdjustment *);
+
 LiVESWidget *lives_combo_new(void);
 
 void lives_combo_append_text(LiVESCombo *, const char *text);
@@ -537,6 +565,8 @@ void lives_adjustment_set_upper(LiVESAdjustment *, double upper);
 void lives_adjustment_set_lower(LiVESAdjustment *, double lower);
 void lives_adjustment_set_page_size(LiVESAdjustment *, double page_size);
 
+LiVESAdjustment *lives_tree_view_get_hadjustment(LiVESTreeView *);
+
 const char *lives_label_get_text(LiVESLabel *);
 
 void lives_entry_set_editable(LiVESEntry *, boolean editable);
@@ -545,9 +575,14 @@ void lives_scale_button_set_orientation(LiVESScaleButton *, LiVESOrientation ori
 
 void lives_widget_clear_area(LiVESWidget *, int x, int y, int width, int height);
 
+LiVESXWindow *lives_widget_get_pointer(LiVESXEvent *, LiVESWidget *, int *x, int *y, LiVESModifierType *mask);
+LiVESXWindow *lives_display_get_window_at_pointer (LiVESXDevice *, LiVESXDisplay *, int *win_x, int *win_y);
+void lives_display_get_pointer (LiVESXDevice *, LiVESXDisplay *, LiVESXScreen **, int *x, int *y, LiVESModifierType *mask);
+void lives_display_warp_pointer (LiVESXDevice *, LiVESXDisplay *, LiVESXScreen *, int x, int y);
+
 // optional
 
-void lives_dialog_set_has_separator(LiVESDialog *dialog, boolean has);
+void lives_dialog_set_has_separator(LiVESDialog *, boolean has);
 void lives_widget_set_hexpand(LiVESWidget *, boolean state);
 void lives_widget_set_vexpand(LiVESWidget *, boolean state);
 
@@ -576,6 +611,7 @@ LiVESWidget *lives_standard_hruler_new(void);
 
 
 // util functions
+void lives_cursor_unref(LiVESXCursor *cursor);
 
 void lives_widget_get_fg_color(LiVESWidget *, LiVESWidgetColor *);
 void lives_widget_get_bg_color(LiVESWidget *, LiVESWidgetColor *);
@@ -589,7 +625,7 @@ void lives_tooltips_copy(LiVESWidget *dest, LiVESWidget *source);
 
 int get_box_child_index (LiVESBox *, LiVESWidget *child);
 
-boolean label_act_toggle (LiVESWidget *, LiVESEventButton *, LiVESToggleButton *);
+boolean label_act_toggle (LiVESWidget *, LiVESXEventButton *, LiVESToggleButton *);
 boolean widget_act_toggle (LiVESWidget *, LiVESToggleButton *);
 
 void gtk_tooltips_copy(LiVESWidget *dest, LiVESWidget *source);
@@ -600,7 +636,7 @@ void adjustment_configure(LiVESAdjustment *, double value, double lower, double 
 char *text_view_get_text(LiVESTextView *);
 void text_view_set_text(LiVESTextView *, const char *text);
 
-void lives_set_cursor_style(lives_cursor_t cstyle, LiVESXWindow *);
+void lives_set_cursor_style(lives_cursor_t cstyle, LiVESWidget *);
 
 void toggle_button_toggle (LiVESToggleButton *);
 
@@ -613,7 +649,7 @@ void lives_widget_set_can_focus_and_default(LiVESWidget *);
 
 void lives_general_button_clicked (LiVESButton *, LiVESObjectPtr data_to_free);
 
-boolean lives_general_delete_event(LiVESWidget *, LiVESEvent *delevent, LiVESObjectPtr data_to_free);
+boolean lives_general_delete_event(LiVESWidget *, LiVESXEvent *delevent, LiVESObjectPtr data_to_free);
 
 void add_hsep_to_box (LiVESBox *, boolean expand);
 

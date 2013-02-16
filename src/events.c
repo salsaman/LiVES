@@ -4779,7 +4779,7 @@ GtkWidget *create_event_list_dialog (weed_plant_t *event_list, weed_timecode_t s
  
  gtk_viewport_set_shadow_type (GTK_VIEWPORT (gtk_bin_get_child (GTK_BIN (scrolledwindow))),GTK_SHADOW_IN);
 
- hbuttonbox = gtk_hbutton_box_new ();
+ hbuttonbox = lives_hbutton_box_new ();
  gtk_widget_show (hbuttonbox);
 
  gtk_box_pack_start (GTK_BOX (top_vbox), hbuttonbox, TRUE, TRUE, 0);

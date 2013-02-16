@@ -2056,7 +2056,7 @@ _prefsw *create_prefs_dialog (void) {
   gtk_widget_show (dialog_vbox_main);
 
   // Create dialog horizontal panels
-  dialog_hpaned = gtk_hpaned_new();
+  dialog_hpaned = lives_hpaned_new();
   gtk_widget_show (dialog_hpaned);
   gtk_paned_set_position(GTK_PANED(dialog_hpaned),PREFS_PANED_POS);
 
@@ -2079,7 +2079,7 @@ _prefsw *create_prefs_dialog (void) {
   // Place list on the left panel
   pref_init_list(prefsw->prefs_list);
   
-  list_scroll = gtk_scrolled_window_new(gtk_tree_view_get_hadjustment(GTK_TREE_VIEW(prefsw->prefs_list)), NULL);
+  list_scroll = gtk_scrolled_window_new(lives_tree_view_get_hadjustment(LIVES_TREE_VIEW(prefsw->prefs_list)), NULL);
   gtk_widget_show(list_scroll);
   gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (list_scroll), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
   gtk_container_add (GTK_CONTAINER (list_scroll), prefsw->prefs_list);
@@ -5864,9 +5864,6 @@ void on_prefs_revert_clicked(GtkButton *button, gpointer user_data) {
     g_list_free_strings (future_prefs->disabled_decoders);
     g_list_free (future_prefs->disabled_decoders);
   }
-
-  lives_set_cursor_style(LIVES_CURSOR_BUSY,lives_widget_get_xwindow(prefsw->prefs_dialog));
-  while (g_main_context_iteration(NULL,FALSE)); // force busy cursor
 
   lives_general_button_clicked(button, prefsw);
 

@@ -187,11 +187,13 @@ typedef struct {
 
 
 typedef struct {
-  gint x;
-  gint y;
-  gint width;
-  gint height;
-  GdkScreen *screen;
+  int x;
+  int y;
+  int width;
+  int height;
+  LiVESXDevice *mouse_device;
+  LiVESXDisplay *disp;
+  LiVESXScreen *screen;
 } lives_mgeometry_t;
 
 // constant strings

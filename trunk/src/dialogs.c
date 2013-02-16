@@ -162,6 +162,8 @@ static GtkWidget* create_warn_dialog (gint warn_mask_number, GtkWindow *transien
   GtkWidget *warning_okbutton=NULL;
   GtkWidget *abortbutton=NULL;
 
+  GtkAccelGroup *accel_group=GTK_ACCEL_GROUP(gtk_accel_group_new ());
+
   gchar *textx;
 
   switch (diat) {
@@ -213,6 +215,8 @@ static GtkWidget* create_warn_dialog (gint warn_mask_number, GtkWindow *transien
     break;
   }
 
+  gtk_window_add_accel_group (GTK_WINDOW (dialog), accel_group);
+
   if (mainw!=NULL&&mainw->is_ready&&palette->style&STYLE_1) {
     lives_dialog_set_has_separator(GTK_DIALOG(dialog),FALSE);
     lives_widget_set_bg_color(dialog, GTK_STATE_NORMAL, &palette->normal_back);
@@ -251,6 +255,9 @@ static GtkWidget* create_warn_dialog (gint warn_mask_number, GtkWindow *transien
   gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area), GTK_BUTTONBOX_END);
 
   lives_widget_set_can_focus_and_default (warning_cancelbutton);
+
+  gtk_widget_add_accelerator (warning_cancelbutton, "activate", accel_group,
+			      LIVES_KEY_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
 
   lives_widget_set_can_focus_and_default (warning_okbutton);
   gtk_widget_grab_default (warning_okbutton);
@@ -1714,7 +1721,7 @@ gboolean do_auto_dialog (const gchar *text, gint type) {
   lives_set_cursor_style(LIVES_CURSOR_BUSY,NULL);
   while (g_main_context_iteration(NULL,FALSE));
 
-  lives_set_cursor_style(LIVES_CURSOR_BUSY,lives_widget_get_xwindow(proc_ptr->processing));
+  lives_set_cursor_style(LIVES_CURSOR_BUSY,proc_ptr->processing);
 
   if (type==0) {
     clear_mainw_msg();
@@ -2422,7 +2429,7 @@ static void create_threaded_dialog(gchar *text, gboolean has_cancel) {
 
   gtk_widget_show_all(procw->processing);
 
-  lives_set_cursor_style(LIVES_CURSOR_BUSY,lives_widget_get_xwindow(procw->processing));
+  lives_set_cursor_style(LIVES_CURSOR_BUSY,procw->processing);
 }
 
 
@@ -2501,7 +2508,7 @@ void end_threaded_dialog(void) {
     }
     else gtk_widget_queue_draw(mainw->multitrack->window);
   }
-  else lives_set_cursor_style(LIVES_CURSOR_NORMAL,lives_widget_get_xwindow(mainw->splash_window));
+  else lives_set_cursor_style(LIVES_CURSOR_NORMAL,mainw->splash_window);
   if (procw!=NULL) {
     g_free(procw);
     procw=NULL;
@@ -2516,7 +2523,7 @@ void end_threaded_dialog(void) {
 
 void do_splash_progress(void) {
   mainw->threaded_dialog=TRUE;
-  lives_set_cursor_style(LIVES_CURSOR_BUSY,lives_widget_get_xwindow(mainw->splash_window));
+  lives_set_cursor_style(LIVES_CURSOR_BUSY,mainw->splash_window);
   splash_prog();
 }
 

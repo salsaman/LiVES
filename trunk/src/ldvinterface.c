@@ -105,7 +105,7 @@ struct _dvgrabw *create_camwindow (s_cam *cam, gint type)
   hseparator = lives_hseparator_new ();
   gtk_box_pack_start (GTK_BOX (vbox), hseparator, FALSE, TRUE, 10);
 
-  hbuttonbox1 = gtk_hbutton_box_new ();
+  hbuttonbox1 = lives_hbutton_box_new ();
 
   gtk_box_pack_start(GTK_BOX(vbox),hbuttonbox1,FALSE,FALSE,0);
 
@@ -139,7 +139,7 @@ struct _dvgrabw *create_camwindow (s_cam *cam, gint type)
   gtk_box_pack_start(GTK_BOX(vbox),label,FALSE,FALSE,40);
 
 
-  hbuttonbox2 = gtk_hbutton_box_new ();
+  hbuttonbox2 = lives_hbutton_box_new ();
   gtk_box_pack_start(GTK_BOX(vbox),hbuttonbox2,FALSE,FALSE,0);
 
   dvgrabw->quit = gtk_button_new_from_stock (GTK_STOCK_CLOSE);

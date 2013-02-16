@@ -2891,6 +2891,7 @@ gchar *choose_file(gchar *dir, gchar *fname, gchar **filt, GtkFileChooserAction 
     g_free(tmp);
   }
 #if GLIB_CHECK_VERSION(2,8,0)
+  // TODO - use check_file(...,TRUE) otherwise
   gtk_file_chooser_set_do_overwrite_confirmation(GTK_FILE_CHOOSER(chooser),TRUE);
 #endif
   if (palette->style&STYLE_1) {

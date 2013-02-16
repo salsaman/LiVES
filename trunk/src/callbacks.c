@@ -9866,7 +9866,7 @@ on_mouse_sel_update           (GtkWidget       *widget,
   if (mainw->current_file>-1&&mainw->sel_start>0) {
     gint x,sel_current;
 
-    gdk_window_get_pointer(lives_widget_get_xwindow(mainw->LiVES), &x, NULL, NULL);
+    lives_widget_get_pointer((LiVESXEvent *)event, mainw->LiVES, &x, NULL, NULL);
 
     if (mainw->sel_move==SEL_MOVE_AUTO) 
       sel_current=calc_frame_from_time3(mainw->current_file,
@@ -9921,7 +9921,7 @@ on_mouse_sel_start           (GtkWidget       *widget,
   gint x;
   if (mainw->current_file<=0) return FALSE;
 
-  gdk_window_get_pointer(lives_widget_get_xwindow (mainw->LiVES), &x, NULL, NULL);
+  lives_widget_get_pointer((LiVESXEvent *)event, mainw->LiVES, &x, NULL, NULL);
 
   mainw->sel_start=calc_frame_from_time(mainw->current_file,
 					(gdouble)x/(gdouble)lives_widget_get_allocation_width(mainw->vidbar)*cfile->total_time);
@@ -10009,7 +10009,7 @@ on_hrule_update           (GtkWidget       *widget,
   gint x;
   if (mainw->current_file<=0) return FALSE;
 
-  gdk_window_get_pointer(lives_widget_get_xwindow(mainw->LiVES), &x, NULL, NULL);
+  lives_widget_get_pointer((LiVESXEvent *)event, mainw->LiVES, &x, NULL, NULL);
   if (x<0) x=0;
 
   // figure out where ptr should be even when > cfile->frames
@@ -10034,7 +10034,7 @@ on_hrule_reset           (GtkWidget       *widget,
   gint x;
   if (mainw->current_file<=0) return FALSE;
 
-  gdk_window_get_pointer(lives_widget_get_xwindow (mainw->LiVES), &x, NULL, NULL);
+  lives_widget_get_pointer((LiVESXEvent *)event, mainw->LiVES, &x, NULL, NULL);
   if (x<0) x=0;
   if ((lives_ruler_set_value(LIVES_RULER (mainw->hruler),(cfile->pointer_time=
        calc_time_from_frame(mainw->current_file,
@@ -10077,7 +10077,7 @@ on_hrule_set           (GtkWidget       *widget,
   // button press
   gint x;
   if (mainw->current_file<=0) return FALSE;
-  gdk_window_get_pointer(lives_widget_get_xwindow (mainw->LiVES), &x, NULL, NULL);
+  lives_widget_get_pointer((LiVESXEvent *)event, (mainw->LiVES), &x, NULL, NULL);
   if (x<0) x=0;
   if ((lives_ruler_set_value(LIVES_RULER (mainw->hruler),(cfile->pointer_time=
        calc_time_from_frame(mainw->current_file,calc_frame_from_time(mainw->current_file,

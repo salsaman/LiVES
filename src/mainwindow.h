@@ -37,7 +37,7 @@
 
 #define CE_FRAME_HSPACE 320
 
-// sepwin/screen size safety margins in pixels
+/// sepwin/screen size safety margins in pixels
 #define DSIZE_SAFETY_H 100
 #define DSIZE_SAFETY_V 100
 
@@ -45,16 +45,16 @@
 #define DEF_GEN_WIDTH 640
 #define DEF_GEN_HEIGHT 480
 
-// height of preview widgets in sepwin
+/// height of preview widgets in sepwin
 #define PREVIEW_BOX_HT 100
 
-// height of msg area
+/// height of msg area
 #define MSG_AREA_HEIGHT 50
 
-// clip editor hrule height
+/// clip editor hrule height
 #define CE_HRULE_HEIGHT 20
 
-// clip edit vid/aud bar height
+/// clip edit vid/aud bar height
 #define CE_VIDBAR_HEIGHT 10
 
 /// number of function keys
@@ -112,7 +112,7 @@ typedef enum {
 } lives_dialog_t;
 
 
-// return values from abort/cancel/retry dialog and yes/no dialog
+/// return values from abort/cancel/retry dialog and yes/no dialog
 enum {
   LIVES_NO=0,
   LIVES_YES,
@@ -123,7 +123,7 @@ enum {
 };
 
 
-// various return conditions from rendering (multitrack or after recording)
+/// various return conditions from rendering (multitrack or after recording)
 typedef enum {
   LIVES_RENDER_ERROR_NONE=0,
   LIVES_RENDER_READY,
@@ -139,7 +139,7 @@ typedef enum {
 } lives_render_error_t;
 
 
-// disk/storage status values
+/// disk/storage status values
 typedef enum {
   LIVES_STORAGE_STATUS_UNKNOWN=0,
   LIVES_STORAGE_STATUS_NORMAL,
@@ -185,18 +185,18 @@ typedef struct {
 
 } _palette;
 
-
+/// screen details
 typedef struct {
   int x;
   int y;
   int width;
   int height;
-  LiVESXDevice *mouse_device;
+  LiVESXDevice *mouse_device; ///< unused for gtk+ < 3.0.0
   LiVESXDisplay *disp;
   LiVESXScreen *screen;
 } lives_mgeometry_t;
 
-// constant strings
+/// constant strings
 enum {
   LIVES_STRING_CONSTANT_ANY=0,
   LIVES_STRING_CONSTANT_NONE,

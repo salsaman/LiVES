@@ -102,11 +102,11 @@ typedef GtkLabel                          LiVESLabel;
 typedef GtkTreeView                       LiVESTreeView;
 
 #if GTK_CHECK_VERSION(3,0,0)
-#define LIVES_WIDGET_COLOR_SCALE (1./256.)
+#define LIVES_WIDGET_COLOR_SCALE (1./256.) ///< value to divide LiVESWidgetColor component by to get 0. - 255.
 typedef GdkRGBA                           LiVESWidgetColor;
 typedef GtkStateFlags LiVESWidgetState;
 #else
-#define LIVES_WIDGET_COLOR_SCALE 256.
+#define LIVES_WIDGET_COLOR_SCALE 256.     ///< value to divide LiVESWidgetColor component by to get 0. - 255.
 typedef GdkColor                          LiVESWidgetColor;
 typedef GtkStateType LiVESWidgetState;
 #endif
@@ -645,6 +645,7 @@ void hide_cursor(LiVESXWindow *);
 
 void get_border_size (LiVESWidget *win, int *bx, int *by);
 
+void lives_widget_set_can_focus(LiVESWidget *, boolean state);
 void lives_widget_set_can_focus_and_default(LiVESWidget *);
 
 void lives_general_button_clicked (LiVESButton *, LiVESObjectPtr data_to_free);

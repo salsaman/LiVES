@@ -53,6 +53,11 @@ void lives_exit (void) {
     gchar *com;
     gchar *cwd;
 
+    if (mainw->multitrack!=NULL&&mainw->multitrack->idlefunc>0) {
+      g_source_remove(mainw->multitrack->idlefunc);
+      mainw->multitrack->idlefunc=0;
+    }
+
     threaded_dialog_spin();
 
     if (mainw->toy_type!=LIVES_TOY_NONE) {
@@ -61,12 +66,6 @@ void lives_exit (void) {
 
     if (mainw->stored_event_list!=NULL||mainw->sl_undo_mem!=NULL) {
       stored_event_list_free_all(FALSE);
-    }
-
-    if (mainw->multitrack!=NULL&&mainw->multitrack->idlefunc>0) {
-       g_source_remove(mainw->multitrack->idlefunc);
-       mainw->multitrack->idlefunc=0;
-       //g_usleep(prefs->sleep_time); // needs a small pause 
     }
 
     if (mainw->multitrack!=NULL&&!mainw->only_close) {
@@ -478,19 +477,19 @@ void lives_exit (void) {
 #endif
   }
 
-  if (mainw->blank_laudio_drawable!=NULL) {
+  if (mainw->laudio_drawable!=NULL) {
 #if GTK_CHECK_VERSION(3,0,0)
-    lives_painter_surface_destroy(mainw->blank_laudio_drawable);
+    lives_painter_surface_destroy(mainw->laudio_drawable);
 #else
-    g_object_unref(G_OBJECT(mainw->blank_laudio_drawable));
+    g_object_unref(G_OBJECT(mainw->laudio_drawable));
 #endif
   }
 
-  if (mainw->blank_raudio_drawable!=NULL) {
+  if (mainw->raudio_drawable!=NULL) {
 #if GTK_CHECK_VERSION(3,0,0)
-    lives_painter_surface_destroy(mainw->blank_raudio_drawable);
+    lives_painter_surface_destroy(mainw->raudio_drawable);
 #else
-    g_object_unref(G_OBJECT(mainw->blank_raudio_drawable));
+    g_object_unref(G_OBJECT(mainw->raudio_drawable));
 #endif
   }
 
@@ -505,7 +504,7 @@ void lives_exit (void) {
   mainw->multitrack=NULL;
   mainw->is_ready=FALSE;
 
-  end_threaded_dialog();
+  //end_threaded_dialog();
 
   if (mainw->mgeom!=NULL) g_free(mainw->mgeom);
 
@@ -9833,17 +9832,11 @@ on_mouse_scroll           (GtkWidget       *widget,
 
   if (!prefs->mouse_scroll_clips||mainw->noswitch) return FALSE;
 
-  if (!gtk_window_has_toplevel_focus(GTK_WINDOW(mainw->LiVES))&&
-      ((mainw->multitrack!=NULL&&!(widget==mainw->multitrack->clip_scroll))||
-       (mainw->multitrack==NULL&&mainw->playing_file==-1
-	&&(mainw->play_window==NULL||!gtk_window_is_active(GTK_WINDOW(mainw->play_window)))))) return FALSE;
-  
   if (mainw->multitrack!=NULL) {
     if (event->direction==GDK_SCROLL_UP) mt_prevclip(NULL,NULL,0,(GdkModifierType)0,user_data);
     else if (event->direction==GDK_SCROLL_DOWN) mt_nextclip(NULL,NULL,0,(GdkModifierType)0,user_data);
     return FALSE;
   }
-
 
   kstate=event->state;
 

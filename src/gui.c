@@ -151,6 +151,7 @@ static boolean expose_eim (GtkWidget *widget, lives_painter_t *cr, gpointer user
 }
 
 static boolean expose_pim (GtkWidget *widget, lives_painter_t *cr, gpointer user_data) {
+  load_preview_image(TRUE);
   return TRUE;
 }
 #endif
@@ -2197,9 +2198,6 @@ create_LiVES (void)
   lives_widget_set_vexpand(mainw->image274,TRUE);
 
 #if GTK_CHECK_VERSION(3,0,0)
-  g_signal_connect (GTK_OBJECT (mainw->image274), LIVES_WIDGET_EVENT_EXPOSE_EVENT,
-		    G_CALLBACK (expose_pim),
-		    NULL);
   g_object_ref_sink (G_OBJECT (mainw->image274));
 #else
   gtk_object_sink (GTK_OBJECT (mainw->image274));
@@ -3037,8 +3035,8 @@ create_LiVES (void)
                       GINT_TO_POINTER (2));
 
   gtk_window_add_accel_group (GTK_WINDOW (mainw->LiVES), mainw->accel_group);
-  mainw->laudio_drawable=mainw->blank_laudio_drawable=NULL;
-  mainw->raudio_drawable=mainw->blank_raudio_drawable=NULL;
+  mainw->laudio_drawable=NULL;
+  mainw->raudio_drawable=NULL;
   mainw->video_drawable=NULL;
   mainw->plug=NULL;
 
@@ -3435,7 +3433,19 @@ make_preview_box (void) {
   g_object_ref(mainw->preview_box);
 
   eventbox=gtk_event_box_new();
+  gtk_widget_set_events (eventbox, GDK_SCROLL_MASK);
   gtk_widget_show (eventbox);
+
+  g_signal_connect (GTK_OBJECT (eventbox), "scroll_event",
+		    G_CALLBACK (on_mouse_scroll),
+		    NULL);
+
+#if GTK_CHECK_VERSION(3,0,0)
+  g_signal_connect (GTK_OBJECT (eventbox), LIVES_WIDGET_EVENT_EXPOSE_EVENT,
+		    G_CALLBACK (expose_pim),
+		    NULL);
+#endif
+
   gtk_box_pack_start (GTK_BOX (mainw->preview_box), eventbox, TRUE, TRUE, 0);
 
   g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
@@ -3848,9 +3858,7 @@ void make_play_window(void) {
     if (mainw->play_window==NULL) return;
   }
 
-  g_signal_connect (GTK_OBJECT (mainw->play_window), "scroll_event",
-		    G_CALLBACK (on_mouse_scroll),
-		    NULL);
+
 
 }
 

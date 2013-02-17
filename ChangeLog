@@ -1,6 +1,11 @@
 Version 1.8.3
 -------------
+Fix crash in recording external audio with pulse player.
 Minor widget fixes with startup dialogs (regression).
+Enable compilation with gtk+ 3.
+
+
+
 
 
 
@@ -9,7 +14,7 @@ Minor widget fixes with startup dialogs (regression).
 
 Version 1.8.2 (27 January 2013)
 -------------------------------
-Add (another) fix for double tyedef compilation error.
+Add (another) fix for double typedef compilation error.
 Allow renaming of tracks in multitrack window.
 Fix weed_plugin_utils lib versioning issue.
 

@@ -3426,8 +3426,7 @@ switch_aud_to_mplayer(gboolean set_in_prefs) {
 
 
 
-void
-prepare_to_play_foreign(void) {
+void prepare_to_play_foreign(void) {
   // here we are going to 'play' a captured external window
   gint new_file=mainw->first_free_file;
 #ifdef GUI_GTK

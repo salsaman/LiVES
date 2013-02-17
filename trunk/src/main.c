@@ -153,6 +153,7 @@ void catch_sigint(int signum) {
       if (mainw->foreign) {
 	exit (signum);
       }
+
       if (signum==LIVES_SIGABRT||signum==LIVES_SIGSEGV) {
 	signal (LIVES_SIGSEGV, SIG_DFL);
 	signal (LIVES_SIGABRT, SIG_DFL);
@@ -244,13 +245,16 @@ void get_monitors(void) {
 	mainw->mgeom[idx].y=rect.y;
 	mainw->mgeom[idx].width=rect.width;
 	mainw->mgeom[idx].height=rect.height;
+	mainw->mgeom[idx].mouse_device=NULL;
 #if GTK_CHECK_VERSION(3,0,0)
 	// get (virtual) mouse device for this screen
 	for (k=0;k<g_list_length(devlist);k++) {
 	  GdkDevice *device=(GdkDevice *)g_list_nth_data(devlist,k);
 	  if (gdk_device_get_display(device)==disp&&
-	      gdk_device_get_source(device)==GDK_SOURCE_MOUSE) 
+	      gdk_device_get_source(device)==GDK_SOURCE_MOUSE) { 
 	    mainw->mgeom[idx].mouse_device=device;
+	    break;
+	  }
 	}
 #endif
 	mainw->mgeom[idx].disp=disp;
@@ -3521,6 +3525,8 @@ void load_end_image(gint frame) {
 
 
 
+
+
 void load_preview_image(boolean update_always) {
   // this is for the sepwin preview
   // update_always==TRUE = update widgets from mainw->preview_frame
@@ -3528,6 +3534,7 @@ void load_preview_image(boolean update_always) {
   gint preview_frame;
 
   if (!prefs->show_gui) return;
+
 
   if (mainw->current_file>-1&&cfile!=NULL&&(cfile->clip_type==CLIP_TYPE_YUV4MPEG||cfile->clip_type==CLIP_TYPE_VIDEODEV)) {
     if (mainw->camframe==NULL) {
@@ -3580,7 +3587,7 @@ void load_preview_image(boolean update_always) {
 	break;
       default:
 	preview_frame=mainw->preview_frame>0?mainw->preview_frame:1;
-	if (preview_frame>cfile->frames) preview_frame=mainw->preview_frame=cfile->frames;
+	if (preview_frame>cfile->frames) preview_frame=cfile->frames;
 	break;
       }
 

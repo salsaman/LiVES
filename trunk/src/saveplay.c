@@ -2786,7 +2786,7 @@ void play_file (void) {
     if (!mainw->preview&&!mainw->foreign) jack_pb_stop();
 
     // tell jack client to close audio file
-    if (mainw->jackd->playing_file>0) {
+    if (mainw->jackd!=NULL&&mainw->jackd->playing_file>0) {
       gboolean timeout;
       int alarm_handle=lives_alarm_set(LIVES_ACONNECT_TIMEOUT);
       while (!(timeout=lives_alarm_get(alarm_handle))&&jack_get_msgq(mainw->jackd)!=NULL) {
@@ -2815,7 +2815,7 @@ void play_file (void) {
     if (mainw->pulsed_read!=NULL||mainw->aud_rec_fd!=-1) pulse_rec_audio_end(TRUE);
 
     // tell pulse client to close audio file
-    if (mainw->pulsed->playing_file>0||mainw->pulsed->fd>0) {
+    if (mainw->pulsed!=NULL&&(mainw->pulsed->playing_file>0||mainw->pulsed->fd>0)) {
       gboolean timeout;
       int alarm_handle=lives_alarm_set(LIVES_ACONNECT_TIMEOUT);
       while (!(timeout=lives_alarm_get(alarm_handle))&&pulse_get_msgq(mainw->pulsed)!=NULL) {

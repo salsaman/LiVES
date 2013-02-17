@@ -1346,6 +1346,7 @@ LIVES_INLINE LiVESXWindow *lives_display_get_window_at_pointer
   LiVESXWindow *xwindow=NULL;
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3,0,0)
+  if (device==NULL) return NULL;
   xwindow=gdk_device_get_window_at_position (device,win_x,win_y);
 #else
   xwindow=gdk_display_get_window_at_pointer(display,win_x,win_y);
@@ -1359,6 +1360,7 @@ LIVES_INLINE void lives_display_get_pointer
 (LiVESXDevice *device, LiVESXDisplay *display, LiVESXScreen **screen, int *x, int *y, LiVESModifierType *mask) {
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3,0,0)
+  if (device==NULL) return;
   gdk_device_get_position (device,screen,x,y);
 #else
   gdk_display_get_pointer(display,screen,x,y,mask);
@@ -1371,6 +1373,7 @@ LIVES_INLINE void lives_display_warp_pointer
 (LiVESXDevice *device, LiVESXDisplay *display, LiVESXScreen *screen, int x, int y) {
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3,0,0)
+  if (device==NULL) return;
   gdk_device_warp (device,screen,x,y);
 #else
 #if GLIB_CHECK_VERSION(2,8,0)

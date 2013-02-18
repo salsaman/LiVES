@@ -42,6 +42,7 @@ static void giw_knob_realize                  (GtkWidget        *widget);
 static void giw_knob_size_request             (GtkWidget      *widget,
 					       GtkRequisition *requisition);
 #if GTK_CHECK_VERSION(3,0,0)
+static void giw_knob_dispose (GObject *object);
 static void giw_knob_get_preferred_width (GtkWidget *widget,
 					  gint      *minimal_width,
 					  gint      *natural_width);
@@ -49,7 +50,6 @@ static void giw_knob_get_preferred_height (GtkWidget *widget,
 					   gint      *minimal_height,
 					   gint      *natural_height);
 static gboolean giw_knob_draw                (GtkWidget *widget, cairo_t *cairo);
-static void giw_knob_destroy (GtkWidget *widget);
 static void giw_knob_style_updated             (GtkWidget *widget);
 #else
 static void giw_knob_destroy (GtkObject *object);
@@ -67,10 +67,6 @@ static gint giw_knob_motion_notify            (GtkWidget        *widget,
 						GdkEventMotion   *event);
 static void giw_knob_style_set	              (GtkWidget      *widget,
 			                        GtkStyle       *previous_style);
-#if !GTK_CHECK_VERSION(3,0,0)
-/* Local data */
-static GtkWidgetClass *parent_class = NULL;
-#endif
 // Changes the value, by mouse position
 void knob_update_mouse                             (GiwKnob *knob, gint x, gint y);
 
@@ -112,6 +108,14 @@ void knob_calculate_legends_sizes(GiwKnob *knob);
 // A function that calculates width and height of the title's the layout
 void knob_calculate_title_sizes(GiwKnob *knob);  
 
+
+#if GTK_CHECK_VERSION(3,0,0)
+G_DEFINE_TYPE (GiwKnob, giw_knob, GTK_TYPE_WIDGET)
+#define parent_class giw_knob_parent_class
+#else
+static GtkWidgetClass *parent_class = NULL;
+
+
 /*********************
 * Widget's Functions * 
 *********************/
@@ -122,23 +126,6 @@ giw_knob_get_type ()
 
   if (!knob_type)
     {
-#if GTK_CHECK_VERSION(3,0,0)
-      static const GTypeInfo knob_info =
-	{
-	  sizeof (GiwKnobClass),
-	  NULL,   /* base_init */
-	  NULL,   /* base_finalize */
-	  giw_knob_class_init,   /* class_init */
-	  NULL,   /* class_finalize */
-	  NULL,   /* class_data */
-	  sizeof (GiwKnob),
-	  0,      /* n_preallocs */
-	  giw_knob_init/* instance_init */
-	};
-
-      knob_type = g_type_register_static (G_TYPE_OBJECT, "GiwTypeKnob", &knob_info, 0);
-
-#else
       static const GtkTypeInfo knob_info =
 	{
 	  "GiwKnob",
@@ -152,18 +139,19 @@ giw_knob_get_type ()
 	};
       
       knob_type = gtk_type_unique (gtk_widget_get_type (), &knob_info);
-#endif
-}
+    }
 
   return knob_type;
 }
 
-
+#endif
 
 static void
 giw_knob_class_init (GiwKnobClass *xclass)
 {
-#if !GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3,0,0)
+  GObjectClass *object_class = G_OBJECT_CLASS(xclass);
+#else
   GtkObjectClass *object_class = (GtkObjectClass*) xclass;
 #endif
   GtkWidgetClass *widget_class;
@@ -171,7 +159,7 @@ giw_knob_class_init (GiwKnobClass *xclass)
   widget_class = (GtkWidgetClass*) xclass;
 
 #if GTK_CHECK_VERSION(3,0,0)
-  widget_class->destroy = giw_knob_destroy;
+  object_class->dispose = giw_knob_dispose;
 #else
   parent_class = (GtkWidgetClass *)gtk_type_class (gtk_widget_get_type ());
   object_class->destroy = giw_knob_destroy;
@@ -209,6 +197,11 @@ giw_knob_init (GiwKnob *knob)
   knob->minor_ticks_size=3;
   knob->legends_digits=3;
   knob->title=NULL;
+
+#if GTK_CHECK_VERSION(2,18,0)
+  gtk_widget_set_has_window(GTK_WIDGET(knob),TRUE);
+#endif
+
 }
 
 GtkWidget*
@@ -252,7 +245,7 @@ giw_knob_new_with_adjustment (gdouble value,
 }
 
 #if GTK_CHECK_VERSION(3,0,0)
-static void giw_knob_destroy (GtkWidget *object) {
+static void giw_knob_dispose (GObject *object) {
 #else
 static void giw_knob_destroy (GtkObject *object) {
 #endif
@@ -281,7 +274,7 @@ static void giw_knob_destroy (GtkObject *object) {
     g_object_unref(G_OBJECT(knob->title));
 
 #if GTK_CHECK_VERSION(3,0,0)
-  //G_OBJECT_CLASS (giw_knob_parent_class)->finalize (object);
+  G_OBJECT_CLASS (giw_knob_parent_class)->dispose (object);
 #else
   if (GTK_OBJECT_CLASS (parent_class)->destroy)
     (* GTK_OBJECT_CLASS (parent_class)->destroy) (object);
@@ -320,13 +313,13 @@ giw_knob_realize (GtkWidget *widget)
     GDK_EXPOSURE_MASK | GDK_BUTTON_PRESS_MASK | 
     GDK_BUTTON_RELEASE_MASK | GDK_POINTER_MOTION_MASK |
     GDK_POINTER_MOTION_HINT_MASK;
-  attributes.visual = gtk_widget_get_visual (widget);
 
-  attributes_mask = GDK_WA_X | GDK_WA_Y | GDK_WA_VISUAL;
+  attributes_mask = GDK_WA_X | GDK_WA_Y;
   
 
 #if !GTK_CHECK_VERSION(3,0,0)
-  attributes_mask |= GDK_WA_COLORMAP;
+  attributes_mask |= GDK_WA_COLORMAP | GDK_WA_VISUAL;
+  attributes.visual = gtk_widget_get_visual (widget);
   attributes.colormap = gtk_widget_get_colormap (widget);
 #endif
 
@@ -352,6 +345,9 @@ giw_knob_realize (GtkWidget *widget)
   knob_build_legends(knob);
 }
 
+
+
+
 static void 
 giw_knob_size_request (GtkWidget      *widget,
 		       GtkRequisition *requisition)
@@ -371,7 +367,7 @@ giw_knob_get_preferred_width (GtkWidget *widget,
 
   giw_knob_size_request (widget, &requisition);
 
-  *minimal_width = *natural_width = requisition.width;
+  *minimal_width = *natural_width = requisition.width/4.;
 }
 
 static void
@@ -383,7 +379,7 @@ giw_knob_get_preferred_height (GtkWidget *widget,
 
   giw_knob_size_request (widget, &requisition);
 
-  *minimal_height = *natural_height = requisition.height;
+  *minimal_height = *natural_height = requisition.height/4.;
 }
 
 #endif
@@ -420,14 +416,13 @@ giw_knob_size_allocate (GtkWidget     *widget,
 #if GTK_CHECK_VERSION(3,0,0)
  static gboolean giw_knob_draw (GtkWidget *widget, cairo_t *cairo) {
 
-   return FALSE;
- }
 #else
 
 static gint
 giw_knob_expose (GtkWidget      *widget,
 		 GdkEventExpose *event)
 {
+#endif
   GiwKnob *knob;
   gdouble s,c;
   gint xc, yc;
@@ -436,16 +431,13 @@ giw_knob_expose (GtkWidget      *widget,
   gint counter=0;
   GdkRectangle rect;
 
-#if GTK_CHECK_VERSION(3,0,0)
-  lives_painter_t *cr;
-#endif
-  
   g_return_val_if_fail (widget != NULL, FALSE);
   g_return_val_if_fail (GIW_IS_KNOB (widget), FALSE);
+#if !GTK_CHECK_VERSION(3,0,0)
   g_return_val_if_fail (event != NULL, FALSE);
-
   if (event->count > 0)
     return FALSE;
+#endif
       
   knob=GIW_KNOB(widget);
 
@@ -462,43 +454,44 @@ giw_knob_expose (GtkWidget      *widget,
 
 
 #if GTK_CHECK_VERSION(3,0,0)
-  cr = lives_painter_create_from_widget (widget);
   gtk_render_background(gtk_widget_get_style_context(widget),
-			cr,
+			cairo,
 			0,
 			0,
 			rect.width,
 			rect.height);
 
-  lives_painter_set_source_rgb (cr, 0., 0., 0.);
+  cairo_set_source_rgb (cairo, 0., 0., 0.);
 
-  lives_painter_arc(cr,
-		    knob->x+((knob->size/2)-knob->radius),
-		    knob->y+((knob->size/2)-knob->radius),
-		    knob->radius*2,
-		    0,
-		    2.*M_PI);
+  cairo_arc(cairo,
+	    knob->x+((knob->size/2)),
+	    knob->y+((knob->size/2)),
+	    knob->radius,
+	    0,
+	    2.*M_PI);
 
-  lives_painter_fill(cr);
+  cairo_fill(cairo);
 
-  lives_painter_set_source_rgb (cr, 1., 1., 1.);
+  cairo_set_source_rgb (cairo, 1., 1., 1.);
 
-  lives_painter_move_to(cr,
-			xc+c*((float)knob->radius*0.6),
-			yc-s*((float)knob->radius*0.6));
+  cairo_move_to(cairo,
+		xc+c*((float)knob->radius*0.6),
+		yc-s*((float)knob->radius*0.6));
 
-  lives_painter_line_to(cr,
-			xc+c*knob->radius,
-			yc-s*knob->radius);
+  cairo_line_to(cairo,
+		xc+c*knob->radius,
+		yc-s*knob->radius);
 
-  lives_painter_arc(cr,
-		    xc+c*((float)knob->radius*0.8)-knob->radius*0.1,
-		    yc-s*((float)knob->radius*0.8)-knob->radius*0.1,
-		    knob->radius*0.2,
-		    0,
-		    2.*M_PI);
+  cairo_stroke(cairo);
 
-  lives_painter_fill(cr);
+  cairo_arc(cairo,
+	    xc+c*((float)knob->radius*0.8),
+	    yc-s*((float)knob->radius*0.8),
+	    knob->radius/2*0.1,
+	    0,
+	    2.*M_PI);
+
+  cairo_fill(cairo);
 
   if ((knob->mouse_policy==GIW_KNOB_MOUSE_DELAYED) & (knob->button!=0)) {
     s = sin(knob->false_angle);
@@ -506,15 +499,72 @@ giw_knob_expose (GtkWidget      *widget,
 
     //lives_widget_get_fg_state_color (widget, GTK_STATE_FLAG_PRELIGHT, &color);
 
-    lives_painter_move_to(cr,
-			  xc+c*((float)knob->radius*0.8),
-			  yc-s*((float)knob->radius*0.8));
-    lives_painter_line_to(cr,
-			  xc+c*knob->radius,
-			  yc-s*knob->radius);
+    cairo_move_to(cairo,
+		  xc+c*((float)knob->radius*0.8),
+		  yc-s*((float)knob->radius*0.8));
+    cairo_line_to(cairo,
+		  xc+c*knob->radius,
+		  yc-s*knob->radius);
 
 
   }
+
+  // Now, draw the ticks
+  // The major ticks (and legends)
+  if (knob->major_ticks!=0)
+    for (loop1=(3.0*M_PI/2.0); loop1>=-0.0001; loop1-=knob->d_major_ticks){ // -0.0001 (and not 0) to avoid rounding errors
+      s=sin(loop1-M_PI/4.0);
+      c=cos(loop1-M_PI/4.0);
+      dx1=c*knob->radius;
+      dy1=s*knob->radius;
+      dx2=c*(knob->radius+knob->major_ticks_size);
+      dy2=s*(knob->radius+knob->major_ticks_size);
+      cairo_move_to (cairo,
+		     xc+dx1,
+		     yc-dy1);
+
+      cairo_line_to(cairo,
+		    xc+dx2,
+		    yc-dy2);
+
+      cairo_stroke(cairo);
+
+      // Drawing the legends
+      if (knob->legends_digits!=0)
+        gtk_render_layout (gtk_widget_get_style_context(widget),
+			   cairo,
+			   xc+(c*knob->legend_radius)-(knob->legend_width/2),
+			   yc-(s*knob->legend_radius)-(knob->legend_height/2),
+			   knob->legends[counter]);
+      counter++;
+    }
+
+
+  // The minor ticks
+  if (knob->minor_ticks!=0)
+    for (loop1=(3.0*M_PI/2.0); loop1>=0.0; loop1-=knob->d_minor_ticks){
+      s=sin(loop1-M_PI/4.0);
+      c=cos(loop1-M_PI/4.0);
+      dx1=c*knob->radius;
+      dy1=s*knob->radius;
+      dx2=c*(knob->radius+knob->minor_ticks_size);
+      dy2=s*(knob->radius+knob->minor_ticks_size);
+      cairo_move_to (cairo,
+		     xc+dx1,
+		     yc-dy1);
+      cairo_line_to (cairo,
+		     xc+dx2,
+		     yc-dy2); 
+      cairo_stroke(cairo);
+    }
+
+  // Draw the title
+  if (knob->title_str!=NULL) // font_str==NULL means no title
+    gtk_render_layout (gtk_widget_get_style_context(widget),
+		       cairo,
+		       xc-knob->title_width/2,
+		       knob->size-knob->title_height-5, // 5 pixels to separate from the borders
+		       knob->title);
 
 #else
   // Drawing backgorund
@@ -601,15 +651,15 @@ giw_knob_expose (GtkWidget      *widget,
       // Drawing the legends
       if (knob->legends_digits!=0)
         gtk_paint_layout (widget->style,
-			widget->window,
-			GTK_STATE_NORMAL,
-			TRUE,
-			&rect,
-			widget,
-			NULL,
-                        xc+(c*knob->legend_radius)-(knob->legend_width/2),
-			yc-(s*knob->legend_radius)-(knob->legend_height/2),
-			knob->legends[counter]);
+			  widget->window,
+			  GTK_STATE_NORMAL,
+			  TRUE,
+			  &rect,
+			  widget,
+			  NULL,
+			  xc+(c*knob->legend_radius)-(knob->legend_width/2),
+			  yc-(s*knob->legend_radius)-(knob->legend_height/2),
+			  knob->legends[counter]);
       counter++;
     }
   // The minor ticks
@@ -632,22 +682,21 @@ giw_knob_expose (GtkWidget      *widget,
   // Draw the title
   if (knob->title_str!=NULL) // font_str==NULL means no title
     gtk_paint_layout (widget->style,
-			widget->window,
-			GTK_STATE_NORMAL,
-			TRUE,
-			&rect,
-			widget,
-			NULL,
-                        xc-knob->title_width/2,
-			knob->size-knob->title_height-5, // 5 pixels to separate from the borders
-			knob->title);
+		      widget->window,
+		      GTK_STATE_NORMAL,
+		      TRUE,
+		      &rect,
+		      widget,
+		      NULL,
+		      xc-knob->title_width/2,
+		      knob->size-knob->title_height-5, // 5 pixels to separate from the borders
+		      knob->title);
 
 #endif
     
   return FALSE;
 }
 
-#endif
 
 static gint
 giw_knob_button_press (GtkWidget      *widget,
@@ -732,7 +781,7 @@ giw_knob_motion_notify (GtkWidget      *widget,
     y = event->y;
 
     if (event->is_hint || (event->window != lives_widget_get_xwindow(widget)))
-      gdk_window_get_pointer (lives_widget_get_xwindow(widget), &x, &y, NULL);
+      gtk_widget_get_pointer (widget, &x, &y);
 
     knob_update_mouse (knob, x, y);
   }
@@ -743,7 +792,7 @@ giw_knob_motion_notify (GtkWidget      *widget,
     y = event->y;
 
     if (event->is_hint || (event->window != lives_widget_get_xwindow(widget)))
-      gdk_window_get_pointer (lives_widget_get_xwindow(widget), &x, &y, NULL);
+      gtk_widget_get_pointer (widget, &x, &y);
 
     knob_update_false_mouse (knob, x, y);
   }
@@ -782,7 +831,7 @@ giw_knob_style_set (GtkWidget *widget,
 static void
 giw_knob_style_updated (GtkWidget *widget)
 {
-  giw_knob_style_set(widget,NULL);
+
 }
 
 #endif
@@ -1201,11 +1250,8 @@ knob_calculate_legends_sizes(GiwKnob *knob)
   if (knob->legends!=NULL){
 
 #if GTK_CHECK_VERSION(3,0,0)
-    GValue *fontdesc;
-    gtk_style_context_get_property(gtk_widget_get_style_context(widget),
-				   GTK_STYLE_PROPERTY_FONT,gtk_widget_get_state(widget),fontdesc);
-    pango_layout_set_font_description (knob->legends[0], &fontdesc);
-    g_value_unset(fontdesc);
+    pango_layout_set_font_description (knob->legends[0], 
+				       gtk_style_context_get_font(gtk_widget_get_style_context(widget),gtk_widget_get_state(widget)));
 #else
     pango_layout_set_font_description (knob->legends[0], widget->style->font_desc);  
 #endif
@@ -1219,7 +1265,7 @@ void
 knob_calculate_title_sizes(GiwKnob *knob) 
 {
   GtkWidget *widget;
-    
+
   g_return_if_fail (knob != NULL);
   
   if (knob->title == NULL) return;
@@ -1227,11 +1273,8 @@ knob_calculate_title_sizes(GiwKnob *knob)
   widget=GTK_WIDGET(knob);
 
 #if GTK_CHECK_VERSION(3,0,0)
-  GValue *fontdesc;
-  gtk_style_context_get_property(gtk_widget_get_style_context(widget),
-				 GTK_STYLE_PROPERTY_FONT,gtk_widget_get_state(widget),fontdesc);
-  pango_layout_set_font_description (knob->legends[0], &fontdesc);
-  g_value_unset(fontdesc);
+  pango_layout_set_font_description (knob->legends[0], 
+				     gtk_style_context_get_font(gtk_widget_get_style_context(widget),gtk_widget_get_state(widget)));
 #else
   pango_layout_set_font_description (knob->legends[0], widget->style->font_desc);  
 #endif

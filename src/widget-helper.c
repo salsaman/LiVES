@@ -1284,60 +1284,11 @@ LIVES_INLINE void lives_scale_button_set_orientation(LiVESScaleButton *scale, Li
 
 
 
-
-LIVES_INLINE void lives_widget_clear_area(LiVESWidget *widget, int x, int y, int width, int height) {
+LIVES_INLINE void lives_widget_get_pointer(LiVESWidget *widget, int *x, int *y) {
 #ifdef GUI_GTK
-  GdkWindow *window=lives_widget_get_xwindow(widget);
-#if GTK_CHECK_VERSION(3,0,0)
-#ifdef PAINTER_CAIRO
-  GdkRGBA color;
-  cairo_t *cr=gdk_cairo_create(window);
-
-  lives_widget_get_bg_state_color(widget,gtk_widget_get_state(widget),&color);
-  lives_painter_set_source_rgba (cr, color.red, color.green, color.blue, color.alpha);
-  
-  lives_painter_rectangle(cr,x,y,
-			  width,
-			  height);
-  lives_painter_fill(cr);
-  lives_painter_destroy (cr);
-#endif
-#else
-  gdk_window_clear_area(window,x,y,width,height);
-#endif
+  gtk_widget_get_pointer(widget,x,y);
 #endif
 
-}
-
-
-LIVES_INLINE LiVESXWindow *lives_widget_get_pointer(LiVESXEvent *event, LiVESWidget *widget, int *x, int *y, LiVESModifierType *mask) {
-  LiVESXWindow *xwindow=NULL;
-
-#ifdef GUI_GTK
-  LiVESXWindow *xwin;
-
-  if (widget==NULL) xwin=gdk_get_default_root_window ();
-  else xwin=lives_widget_get_xwindow(widget);
-
-  if (xwin==NULL) {
-    LIVES_ERROR("Tried to get pointer for windowless widget");
-    return NULL;
-  }
-
-#if GTK_CHECK_VERSION(3,0,0)
-  GdkDeviceManager *device_manager =
-    gdk_display_get_device_manager(gdk_window_get_display(xwin));
-  GdkDevice *device = gdk_device_manager_get_client_pointer (device_manager);
-
-  // following crashes
-  //GdkDevice *device=gdk_event_get_source_device(event);
-
-  xwindow=gdk_window_get_device_position (xwin,device,x,y,mask);
-#else
-  xwindow=gdk_window_get_pointer(xwin,x,y,mask);
-#endif
-#endif
-  return xwindow;
 }
 
 

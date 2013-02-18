@@ -1001,7 +1001,7 @@ static boolean load_datacons(const gchar *fname, uint8_t **badkeymap) {
 	  break;
 	}
 
-	hashname=(gchar *)g_try_malloc(hlen);
+	hashname=(gchar *)g_try_malloc(hlen+1);
 
 	if (hashname==NULL) {
 	  eof=TRUE;

@@ -49,7 +49,7 @@ static void giw_vslider_get_preferred_width (GtkWidget *widget,
 static void giw_vslider_get_preferred_height (GtkWidget *widget,
 					      gint      *minimal_height,
 					      gint      *natural_height);
-static void giw_vslider_destroy                  (GtkWidget        *widget);
+static void giw_vslider_dispose                  (GObject        *object);
 static gboolean giw_vslider_draw                (GtkWidget *widget, cairo_t *cairo);
 static void giw_vslider_style_updated             (GtkWidget *widget);
 #else
@@ -74,10 +74,6 @@ static void giw_vslider_style_set	              (GtkWidget      *widget,
 
 /* Local data and functions */
 
-#if !GTK_CHECK_VERSION(3,0,0)
-static GtkWidgetClass *parent_class = NULL;
-#endif
-
 // A function that calculates distances and sizes for a later drawing..
 void vslider_calculate_sizes(GiwVSlider *vslider); 
 
@@ -97,6 +93,13 @@ void vslider_free_legends(GiwVSlider *vslider);
 void vslider_calculate_legends_sizes(GiwVSlider *vslider); 
 
 
+#if GTK_CHECK_VERSION(3,0,0)
+G_DEFINE_TYPE (GiwVSlider, giw_vslider, GTK_TYPE_WIDGET)
+#define parent_class giw_vslider_parent_class
+#else
+static GtkWidgetClass *parent_class = NULL;
+
+
 GType
 giw_vslider_get_type ()
 {
@@ -104,22 +107,6 @@ giw_vslider_get_type ()
 
   if (!vslider_type)
     {
-#if GTK_CHECK_VERSION(3,0,0)
-      static const GTypeInfo vslider_info =
-	{
-	  sizeof (GiwVSliderClass),
-	  NULL,   /* base_init */
-	  NULL,   /* base_finalize */
-	  giw_vslider_class_init,   /* class_init */
-	  NULL,   /* class_finalize */
-	  NULL,   /* class_data */
-	  sizeof (GiwVSlider),
-	  0,      /* n_preallocs */
-	  giw_vslider_init/* instance_init */
-	};
-      
-      vslider_type = g_type_register_static (G_TYPE_OBJECT, "GiwTypeVSlider", &vslider_info, 0);
-#else
       static const GtkTypeInfo vslider_info =
 	{
 	  "GiwVSlider",
@@ -133,20 +120,19 @@ giw_vslider_get_type ()
 	};
       
       vslider_type = gtk_type_unique (gtk_widget_get_type (), &vslider_info);
-
-#endif
-
     }
 
   return vslider_type;
 }
 
-
+#endif
 
 static void
 giw_vslider_class_init (GiwVSliderClass *xclass)
 {
-#if !GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3,0,0)
+  GObjectClass *object_class = G_OBJECT_CLASS(xclass);
+#else
   GtkObjectClass *object_class = (GtkObjectClass*) xclass;
 #endif
   GtkWidgetClass *widget_class;
@@ -154,7 +140,7 @@ giw_vslider_class_init (GiwVSliderClass *xclass)
   widget_class = (GtkWidgetClass*) xclass;
 
 #if GTK_CHECK_VERSION(3,0,0)
-  widget_class->destroy = giw_vslider_destroy;
+  object_class->dispose = giw_vslider_dispose;
 #else
   parent_class = (GtkWidgetClass *)gtk_type_class (gtk_widget_get_type ());
   object_class->destroy = giw_vslider_destroy;
@@ -194,6 +180,11 @@ giw_vslider_init (GiwVSlider *vslider)
   // Conditions for a unpressed button
   vslider->button_state=GTK_STATE_NORMAL;
   vslider->button_shadow=GTK_SHADOW_OUT;
+
+#if GTK_CHECK_VERSION(2,18,0)
+  gtk_widget_set_has_window(GTK_WIDGET(vslider),TRUE);
+#endif
+
 }
 
 GtkWidget*
@@ -233,7 +224,7 @@ giw_vslider_new_with_adjustment (gdouble value,
 }
 
 #if GTK_CHECK_VERSION(3,0,0)
-static void giw_vslider_destroy (GtkWidget *object) {
+static void giw_vslider_dispose (GObject *object) {
 #else
 static void giw_vslider_destroy (GtkObject *object) {
 #endif
@@ -258,7 +249,7 @@ static void giw_vslider_destroy (GtkObject *object) {
   }
     
 #if GTK_CHECK_VERSION(3,0,0)
-  //  G_OBJECT_CLASS (giw_knob_parent_class)->finalize (object);
+  G_OBJECT_CLASS (giw_vslider_parent_class)->dispose (object);
 #else
   if (GTK_OBJECT_CLASS (parent_class)->destroy)
     (* GTK_OBJECT_CLASS (parent_class)->destroy) (object);
@@ -297,13 +288,13 @@ giw_vslider_realize (GtkWidget *widget)
   attributes.event_mask = gtk_widget_get_events (widget) | 
     GDK_EXPOSURE_MASK | GDK_BUTTON_PRESS_MASK | 
     GDK_BUTTON_RELEASE_MASK | GDK_POINTER_MOTION_MASK;
-  attributes.visual = gtk_widget_get_visual (widget);
 
 
-  attributes_mask = GDK_WA_X | GDK_WA_Y | GDK_WA_VISUAL;
+  attributes_mask = GDK_WA_X | GDK_WA_Y;
 
 #if !GTK_CHECK_VERSION(3,0,0)
-  attributes_mask |= GDK_WA_COLORMAP;
+  attributes_mask |= GDK_WA_COLORMAP | GDK_WA_VISUAL;
+  attributes.visual = gtk_widget_get_visual (widget);
   attributes.colormap = gtk_widget_get_colormap (widget);
 #endif
 
@@ -329,6 +320,8 @@ giw_vslider_realize (GtkWidget *widget)
   // Creating the legends
   vslider_build_legends(vslider);
 }
+
+
 
 static void 
 giw_vslider_size_request (GtkWidget      *widget,
@@ -675,7 +668,7 @@ giw_vslider_style_set (GtkWidget *widget,
 static void
 giw_vslider_style_updated (GtkWidget *widget)
 {
-  giw_vslider_style_set(widget,NULL);
+
 }
 
 #endif
@@ -913,10 +906,6 @@ vslider_build_legends(GiwVSlider *vslider)
   gint loop;
   gchar *str;
 
-#if GTK_CHECK_VERSION(3,0,0)
-    GValue *fontdesc;
-#endif
-
   g_return_if_fail (vslider != NULL);
   
   widget=GTK_WIDGET(vslider);
@@ -936,10 +925,8 @@ vslider_build_legends(GiwVSlider *vslider)
       vslider->legends[loop]=gtk_widget_create_pango_layout (widget, str); 
 
 #if GTK_CHECK_VERSION(3,0,0)
-    gtk_style_context_get_property(gtk_widget_get_style_context(widget),
-				   GTK_STYLE_PROPERTY_FONT,gtk_widget_get_state(widget),fontdesc);
-    pango_layout_set_font_description (vslider->legends[0], &fontdesc);
-    g_value_unset(fontdesc);
+      pango_layout_set_font_description (vslider->legends[loop], 
+					 gtk_style_context_get_font(gtk_widget_get_style_context(widget),gtk_widget_get_state(widget)));
 #else
       pango_layout_set_font_description(vslider->legends[loop], widget->style->font_desc); // Setting te correct font  
 #endif
@@ -983,11 +970,8 @@ vslider_calculate_legends_sizes(GiwVSlider *vslider)
 
   if (vslider->legends!=NULL){
 #if GTK_CHECK_VERSION(3,0,0)
-    GValue *fontdesc;
-    gtk_style_context_get_property(gtk_widget_get_style_context(widget),
-				   GTK_STYLE_PROPERTY_FONT,gtk_widget_get_state(widget),fontdesc);
-    pango_layout_set_font_description (vslider->legends[0], &fontdesc);
-    g_value_unset(fontdesc);
+    pango_layout_set_font_description (vslider->legends[0], 
+				       gtk_style_context_get_font(gtk_widget_get_style_context(widget),gtk_widget_get_state(widget)));
 #else
     pango_layout_set_font_description (vslider->legends[0], widget->style->font_desc);  
 #endif

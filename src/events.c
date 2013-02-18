@@ -59,24 +59,28 @@ LIVES_INLINE int get_event_hint (weed_plant_t *plant) {
 
 LIVES_INLINE weed_plant_t *get_prev_event(weed_plant_t *event) {
   int error;
+  if (event==NULL) return NULL;
   if (!weed_plant_has_leaf(event,"previous")) return NULL;
   return (weed_plant_t *)weed_get_voidptr_value(event,"previous",&error);
 }
 
 LIVES_INLINE weed_plant_t *get_next_event(weed_plant_t *event) {
   int error;
+  if (event==NULL) return NULL;
   if (!weed_plant_has_leaf(event,"next")) return NULL;
   return (weed_plant_t *)weed_get_voidptr_value(event,"next",&error);
 }
 
 LIVES_INLINE weed_plant_t *get_first_event(weed_plant_t *event_list) {
   int error;
+  if (event_list==NULL) return NULL;
   if (!weed_plant_has_leaf(event_list,"first")) return NULL;
   return (weed_plant_t *)weed_get_voidptr_value(event_list,"first",&error);
 }
 
 LIVES_INLINE weed_plant_t *get_last_event(weed_plant_t *event_list) {
   int error;
+  if (event_list==NULL) return NULL;
   if (!weed_plant_has_leaf(event_list,"last")) return NULL;
   return (weed_plant_t *)weed_get_voidptr_value(event_list,"last",&error);
 }

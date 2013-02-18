@@ -4025,17 +4025,16 @@ void resize_play_window (void) {
 	  // get mouse position to warp it back after playback ends
 #if GTK_CHECK_VERSION(3,0,0)
 	  // in future we will handle multiple displays, so we will get the mouse device for the first screen of that display
-	  GdkDevice *device=mainw->mgeom[0].mouse_device;
+	  LiVESXDevice *device=mainw->mgeom[0].mouse_device;
 	  if (device!=NULL) {
-	    // create a fake event to pass in the device
-	    GdkEventButton *event;
-	    event=(GdkEventButton *)gdk_event_new(GDK_BUTTON_PRESS);
-	    event->device=device;
-	    lives_widget_get_pointer ((LiVESXEvent *)event, NULL, &mainw->ptr_x, &mainw->ptr_y, NULL);
-	    gdk_event_free((GdkEvent *)event);
-	  }
 #else
-	  lives_widget_get_pointer (NULL, NULL, &mainw->ptr_x, &mainw->ptr_y, NULL);
+	  LiVESXDevice *device=NULL;
+#endif
+	    LiVESXScreen *screen;
+	    LiVESXDisplay *display=mainw->mgeom[0].disp;
+	    lives_display_get_pointer(device,display,&screen,&mainw->ptr_x,&mainw->ptr_y,NULL);
+#if GTK_CHECK_VERSION(3,0,0)
+	  }
 #endif
 	}
 	if (mainw->vpp->fheight>-1&&mainw->vpp->fwidth>-1) {	  

@@ -138,6 +138,8 @@ void framedraw_connect(lives_special_framedraw_rect_t *framedraw, gint width, gi
   framedraw_connect_spinbutton(framedraw,rfx);
 
   lives_widget_set_bg_color (mainw->fd_frame, GTK_STATE_NORMAL, &palette->light_red);
+
+  //lives_widget_set_bg_color (mainw->fd_frame, GTK_STATE_FOCUSED, &palette->light_red);
   framedraw_redraw(framedraw, TRUE, NULL);
 }
 
@@ -733,7 +735,7 @@ gboolean on_framedraw_mouse_start (GtkWidget *widget, GdkEventButton *event, liv
   if (mainw->multitrack!=NULL&&mainw->multitrack->track_index==-1) return FALSE;
 
   if (event->button==1) {
-    lives_widget_get_pointer((LiVESXEvent *)event, widget, &xstart, &ystart, NULL);
+    lives_widget_get_pointer(widget, &xstart, &ystart);
 
     b1_held=TRUE;
 
@@ -814,7 +816,7 @@ gboolean on_framedraw_mouse_update (GtkWidget *widget, GdkEventButton *event, li
   if (framedraw==NULL) return FALSE;
   if (mainw->multitrack!=NULL&&mainw->multitrack->track_index==-1) return FALSE;
 
-  lives_widget_get_pointer((LiVESXEvent *)event, widget, &xcurrent, &ycurrent, NULL);
+  lives_widget_get_pointer(widget, &xcurrent, &ycurrent);
 
   switch (framedraw->type) {
   case FD_RECT_DEMASK:
@@ -889,7 +891,7 @@ gboolean on_framedraw_mouse_reset (GtkWidget *widget, GdkEventButton *event, liv
   if (framedraw==NULL) return FALSE;
   if (mainw->multitrack!=NULL&&mainw->multitrack->track_index==-1) return FALSE;
 
-  lives_widget_get_pointer((LiVESXEvent *)event, widget, &xend, &yend, NULL);
+  lives_widget_get_pointer(widget, &xend, &yend);
   // user released the mouse button in framedraw widget
   if (event->button==1) {
     b1_held=FALSE;

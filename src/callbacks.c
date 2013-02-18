@@ -5764,28 +5764,33 @@ on_about_activate                     (GtkMenuItem     *menuitem,
         "Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA.\n"));
 
   gchar *comments= g_strdup(_("A video editor and VJ program."));
+  gchar *title= g_strdup(_("About LiVES"));
 
-#if !GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3,0,0)
+  gchar *authors[2]={"salsaman@gmail.com",NULL};
+#else
   gtk_about_dialog_set_url_hook (activate_url, NULL, NULL);
   gtk_about_dialog_set_email_hook (activate_url, NULL, NULL);
 #endif
 
-  gtk_show_about_dialog (NULL,
-			 //        "logo", logo,
+  gtk_show_about_dialog (GTK_WINDOW(mainw->LiVES),
+			 "logo", NULL,
 			 "name", "LiVES",
 			 "version", LiVES_VERSION,
 			 "comments",comments,
 			 "copyright", "(C) 2002-2013 salsaman <salsaman@gmail.com> and others",
 			 "website", "http://lives.sourceforge.net",
 			 "license", license,
+			 "title", title,
 #if GTK_CHECK_VERSION(3,0,0)
-			 "authors", "salsaman@gmail.com",
+			 "authors", authors,
 			 "license-type", GTK_LICENSE_GPL_3_0,
 #endif
 			 NULL);
 
 
   g_free(comments);
+  g_free(title);
   g_free(license);
   return;
 #endif
@@ -9859,7 +9864,7 @@ on_mouse_sel_update           (GtkWidget       *widget,
   if (mainw->current_file>-1&&mainw->sel_start>0) {
     gint x,sel_current;
 
-    lives_widget_get_pointer((LiVESXEvent *)event, mainw->LiVES, &x, NULL, NULL);
+    lives_widget_get_pointer(mainw->LiVES, &x, NULL);
 
     if (mainw->sel_move==SEL_MOVE_AUTO) 
       sel_current=calc_frame_from_time3(mainw->current_file,
@@ -9914,7 +9919,7 @@ on_mouse_sel_start           (GtkWidget       *widget,
   gint x;
   if (mainw->current_file<=0) return FALSE;
 
-  lives_widget_get_pointer((LiVESXEvent *)event, mainw->LiVES, &x, NULL, NULL);
+  lives_widget_get_pointer(mainw->LiVES, &x, NULL);
 
   mainw->sel_start=calc_frame_from_time(mainw->current_file,
 					(gdouble)x/(gdouble)lives_widget_get_allocation_width(mainw->vidbar)*cfile->total_time);
@@ -10002,7 +10007,7 @@ on_hrule_update           (GtkWidget       *widget,
   gint x;
   if (mainw->current_file<=0) return FALSE;
 
-  lives_widget_get_pointer((LiVESXEvent *)event, mainw->LiVES, &x, NULL, NULL);
+  lives_widget_get_pointer(mainw->LiVES, &x, NULL);
   if (x<0) x=0;
 
   // figure out where ptr should be even when > cfile->frames
@@ -10027,7 +10032,7 @@ on_hrule_reset           (GtkWidget       *widget,
   gint x;
   if (mainw->current_file<=0) return FALSE;
 
-  lives_widget_get_pointer((LiVESXEvent *)event, mainw->LiVES, &x, NULL, NULL);
+  lives_widget_get_pointer(mainw->LiVES, &x, NULL);
   if (x<0) x=0;
   if ((lives_ruler_set_value(LIVES_RULER (mainw->hruler),(cfile->pointer_time=
        calc_time_from_frame(mainw->current_file,
@@ -10070,7 +10075,7 @@ on_hrule_set           (GtkWidget       *widget,
   // button press
   gint x;
   if (mainw->current_file<=0) return FALSE;
-  lives_widget_get_pointer((LiVESXEvent *)event, (mainw->LiVES), &x, NULL, NULL);
+  lives_widget_get_pointer(mainw->LiVES, &x, NULL);
   if (x<0) x=0;
   if ((lives_ruler_set_value(LIVES_RULER (mainw->hruler),(cfile->pointer_time=
        calc_time_from_frame(mainw->current_file,calc_frame_from_time(mainw->current_file,

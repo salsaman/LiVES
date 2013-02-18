@@ -50,7 +50,7 @@ typedef struct _GiwVSliderClass   GiwVSliderClass;
 struct _GiwVSlider
 {
 #if GTK_CHECK_VERSION(3,0,0)
-  GObject parent_instance;
+  GtkWidget parent_instance;
 #endif
   GtkWidget widget;
 
@@ -89,11 +89,7 @@ struct _GiwVSlider
 
 struct _GiwVSliderClass
 {
-#if GTK_CHECK_VERSION(3,0,0)
-  GObjectClass parent_class;
-#else
   GtkWidgetClass parent_class;
-#endif
 };
 
 
@@ -101,7 +97,7 @@ struct _GiwVSliderClass
 
 GtkWidget*     giw_vslider_new                    (GtkAdjustment *adjustment);
 GtkWidget*     giw_vslider_new_with_adjustment    (gdouble value, gdouble lower, gdouble upper);
-GType          giw_vslider_get_type               (void);
+GType          giw_vslider_get_type               (void) G_GNUC_CONST;
 void           giw_vslider_set_value              (GiwVSlider *vslider, gdouble value);   
 gdouble        giw_vslider_get_value              (GiwVSlider *vslider);   
 GtkAdjustment *giw_vslider_get_adjustment         (GiwVSlider *vslider);

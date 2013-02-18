@@ -22,6 +22,8 @@ typedef enum {
 
 
 #define W_PACKING_WIDTH 10 // packing width for widgets with labels
+#define W_PACKING_HEIGHT 10 // packing height for widgets
+
 #define W_BORDER_WIDTH 20 // dialog border width
 
 
@@ -176,6 +178,11 @@ typedef gpointer                          LiVESObjectPtr;
 #define LIVES_XEVENT(event) GDK_EVENT(event)
 
 #define LIVES_IS_WIDGET(widget) GTK_IS_WIDGET(widget)
+#if GTK_CHECK_VERSION(3,0,0)
+#define LIVES_IS_HBOX(widget) (GTK_IS_BOX(widget)&&gtk_orientable_get_orientation(GTK_ORIENTABLE(widget))==GTK_ORIENTATION_HORIZONTAL)
+#else
+#define LIVES_IS_HBOX(widget) GTK_IS_HBOX(widget)
+#endif
 #define LIVES_IS_COMBO(widget) GTK_IS_COMBO_BOX(widget)
 
 #define LIVES_INTERP_BEST   GDK_INTERP_HYPER
@@ -573,9 +580,7 @@ void lives_entry_set_editable(LiVESEntry *, boolean editable);
 
 void lives_scale_button_set_orientation(LiVESScaleButton *, LiVESOrientation orientation);
 
-void lives_widget_clear_area(LiVESWidget *, int x, int y, int width, int height);
-
-LiVESXWindow *lives_widget_get_pointer(LiVESXEvent *, LiVESWidget *, int *x, int *y, LiVESModifierType *mask);
+void lives_widget_get_pointer(LiVESWidget *, int *x, int *y);
 LiVESXWindow *lives_display_get_window_at_pointer (LiVESXDevice *, LiVESXDisplay *, int *win_x, int *win_y);
 void lives_display_get_pointer (LiVESXDevice *, LiVESXDisplay *, LiVESXScreen **, int *x, int *y, LiVESModifierType *mask);
 void lives_display_warp_pointer (LiVESXDevice *, LiVESXDisplay *, LiVESXScreen *, int x, int y);
@@ -666,6 +671,7 @@ typedef struct {
   boolean line_wrap; // line wrapping for labels
   boolean non_modal; // non-modal for dialogs
   int packing_width; // default should be W_PACKING_WIDTH
+  int packing_height; // default should be W_PACKING_HEIGHT
   LiVESJustification justify; // justify for labels
 } widget_opts_t;
 

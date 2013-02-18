@@ -142,6 +142,7 @@ typedef int lives_pgid_t;
 #define PLUGIN_COMPOUND_DIR "/share/lives/plugins/"
 #define PLUGIN_EXEC_DIR "/lives/plugins/"
 #define ICON_DIR "/share/lives/icons/"
+#define DESKTOP_ICON_DIR "/share/app-install/icons/"
 #define DATA_DIR "/share/lives/"
 #define LIVES_CONFIG_DIR ".lives-dir/"
 #define LIVES_TMP_NAME "livestmp"
@@ -607,7 +608,6 @@ typedef struct {
   boolean keep_without_preview; ///< allow keep, even when nopreview is set - TODO use only nopreview and nokeep
 
 #if GTK_CHECK_VERSION(3,0,0)
-#undef ENABLE_GIW
   lives_painter_surface_t *laudio_drawable;
   lives_painter_surface_t *raudio_drawable;
 #else

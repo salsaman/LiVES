@@ -1941,6 +1941,8 @@ _entryw* create_rename_dialog (gint type) {
   lives_widget_set_can_focus_and_default (okbutton);
   gtk_widget_grab_default (okbutton);
 
+  gtk_widget_grab_focus (renamew->entry);
+
 
   if (type!=4&&type!=2&&type!=5) {
     g_signal_connect (GTK_OBJECT (cancelbutton), "clicked",
@@ -3271,6 +3273,7 @@ GtkWidget *create_cleardisk_advanced_dialog(void) {
   dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(dialog));
 
   scrollw = gtk_scrolled_window_new (NULL, NULL);
+  gtk_widget_set_size_request (scrollw, 450, 300);
 
   gtk_container_add (GTK_CONTAINER (dialog_vbox), scrollw);
    

@@ -287,6 +287,7 @@ static boolean pre_init(void) {
     FALSE, // line_wrap
     FALSE, // non_modal
     W_PACKING_WIDTH, // def packing width
+    W_PACKING_HEIGHT, // def packing height
     LIVES_JUSTIFY_DEFAULT // justify
   };
 
@@ -360,7 +361,11 @@ static boolean pre_init(void) {
   g_snprintf(prefs->aplayer,512,"%s","sox");
   prefs->open_decorated=TRUE;
 
+#ifdef ENABLE_GIW
   prefs->lamp_buttons=TRUE;
+#else
+  prefs->lamp_buttons=FALSE;
+#endif
 
   prefs->autoload_subs=TRUE;
   prefs->show_subtitles=TRUE;
@@ -1762,7 +1767,9 @@ void set_palette_colours (void) {
     palette->normal_back.red=228.*LIVES_WIDGET_COLOR_SCALE;
     palette->normal_back.green=196.*LIVES_WIDGET_COLOR_SCALE;
     palette->normal_back.blue=196.*LIVES_WIDGET_COLOR_SCALE;
-      
+#if GTK_CHECK_VERSION(3,0,0)
+    palette->normal_back.alpha=1.;
+#endif      
     lives_widget_color_copy(&palette->normal_fore,&palette->black);
     lives_widget_color_copy(&palette->menu_and_bars,&palette->pink);
     lives_widget_color_copy(&palette->info_text,&palette->normal_fore);
@@ -1775,6 +1782,9 @@ void set_palette_colours (void) {
       palette->normal_back.red=224.*LIVES_WIDGET_COLOR_SCALE;
       palette->normal_back.green=224.*LIVES_WIDGET_COLOR_SCALE;
       palette->normal_back.blue=128.*LIVES_WIDGET_COLOR_SCALE;
+#if GTK_CHECK_VERSION(3,0,0)
+      palette->normal_back.alpha=1.;
+#endif      
 	  
       lives_widget_color_copy(&palette->normal_fore,&palette->black);
       lives_widget_color_copy(&palette->menu_and_bars,&palette->white);
@@ -1788,6 +1798,9 @@ void set_palette_colours (void) {
 	palette->normal_back.red=30.*LIVES_WIDGET_COLOR_SCALE;
 	palette->normal_back.green=144.*LIVES_WIDGET_COLOR_SCALE;
 	palette->normal_back.blue=232.*LIVES_WIDGET_COLOR_SCALE;
+#if GTK_CHECK_VERSION(3,0,0)
+	palette->normal_back.alpha=1.;
+#endif      
 	  
 	lives_widget_color_copy(&palette->normal_fore,&palette->black);
 	lives_widget_color_copy(&palette->menu_and_bars,&palette->white);
@@ -1812,10 +1825,16 @@ void set_palette_colours (void) {
 	    palette->menu_and_bars.red=225.*LIVES_WIDGET_COLOR_SCALE;
 	    palette->menu_and_bars.green=160.*LIVES_WIDGET_COLOR_SCALE;
 	    palette->menu_and_bars.blue=80.*LIVES_WIDGET_COLOR_SCALE;
+#if GTK_CHECK_VERSION(3,0,0)
+	    palette->menu_and_bars.alpha=1.;
+#endif      
 
 	    palette->info_base.red=200.*LIVES_WIDGET_COLOR_SCALE;
 	    palette->info_base.green=190.*LIVES_WIDGET_COLOR_SCALE;
 	    palette->info_base.blue=52.*LIVES_WIDGET_COLOR_SCALE;
+#if GTK_CHECK_VERSION(3,0,0)
+	    palette->info_base.alpha=1.;
+#endif      
 	      
 	    lives_widget_color_copy(&palette->info_text,&palette->black);
 
@@ -2201,8 +2220,10 @@ static boolean open_yuv4m_startup(gpointer data) {
 
 
 static boolean lives_startup(gpointer data) {
+  GError *gerr=NULL;
   boolean got_files=FALSE;
   gchar *tmp;
+  gchar *icon;
 
   if (!mainw->foreign) {
     if (prefs->show_splash) splash_init();
@@ -2212,6 +2233,12 @@ static boolean lives_startup(gpointer data) {
   splash_msg(_("Starting GUI..."),0.);
 
   create_LiVES ();
+
+  icon=g_build_filename(prefs->prefix_dir,DESKTOP_ICON_DIR,"lives.png",NULL);
+  gtk_window_set_default_icon_from_file(icon,&gerr);
+  g_free(icon);
+
+  if (gerr!=NULL) g_error_free(gerr);
 
   gtk_widget_queue_draw(mainw->LiVES);
   while (g_main_context_iteration(NULL,FALSE));

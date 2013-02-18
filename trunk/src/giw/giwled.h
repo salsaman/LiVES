@@ -43,7 +43,7 @@ typedef struct _GiwLedClass   GiwLedClass;
 struct _GiwLed
 {
 #if GTK_CHECK_VERSION(3,0,0)
-  GObject parent_instance;
+  GtkWidget parent_instance;
 #endif
   GtkWidget widget;
 
@@ -64,18 +64,14 @@ struct _GiwLed
 
 struct _GiwLedClass
 {
-#if GTK_CHECK_VERSION(3,0,0)
-  GObjectClass parent_class;
-#else
   GtkWidgetClass parent_class;
-#endif
 
   void (* mode_changed) (GiwLed *led); //Signal emited when the mode is chaged (on to off, or off to on)
 };
 
 
 GtkWidget*     giw_led_new                    (void);
-GType          giw_led_get_type               (void);
+GType          giw_led_get_type               (void) G_GNUC_CONST;
 void           giw_led_set_mode               (GiwLed *led, guint8 mode);    
 guint8         giw_led_get_mode               (GiwLed *led);    
 #if GTK_CHECK_VERSION(3,0,0)

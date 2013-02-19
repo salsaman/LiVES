@@ -107,10 +107,29 @@ typedef GtkTreeView                       LiVESTreeView;
 #define LIVES_WIDGET_COLOR_SCALE (1./256.) ///< value to divide LiVESWidgetColor component by to get 0. - 255.
 typedef GdkRGBA                           LiVESWidgetColor;
 typedef GtkStateFlags LiVESWidgetState;
+
+#define LIVES_WIDGET_STATE_NORMAL         GTK_STATE_FLAG_NORMAL
+#define LIVES_WIDGET_STATE_ACTIVE         GTK_STATE_FLAG_ACTIVE
+#define LIVES_WIDGET_STATE_PRELIGHT       GTK_STATE_FLAG_PRELIGHT
+#define LIVES_WIDGET_STATE_SELECTED       GTK_STATE_FLAG_SELECTED
+#define LIVES_WIDGET_STATE_INSENSITIVE    GTK_STATE_FLAG_INSENSITIVE
+#define LIVES_WIDGET_STATE_INCONSISTENT   GTK_STATE_FLAG_INCONSISTENT
+#define LIVES_WIDGET_STATE_FOCUSED        GTK_STATE_FLAG_FOCUSED
+#define LIVES_WIDGET_STATE_BACKDROP       GTK_STATE_FLAG_BACKDROP
+
 #else
 #define LIVES_WIDGET_COLOR_SCALE 256.     ///< value to divide LiVESWidgetColor component by to get 0. - 255.
 typedef GdkColor                          LiVESWidgetColor;
 typedef GtkStateType LiVESWidgetState;
+
+#define LIVES_WIDGET_STATE_NORMAL         GTK_STATE_NORMAL
+#define LIVES_WIDGET_STATE_ACTIVE         GTK_STATE_ACTIVE
+#define LIVES_WIDGET_STATE_PRELIGHT       GTK_STATE_PRELIGHT
+#define LIVES_WIDGET_STATE_SELECTED       GTK_STATE_SELECTED
+#define LIVES_WIDGET_STATE_INSENSITIVE    GTK_STATE_INSENSITIVE
+#define LIVES_WIDGET_STATE_INCONSISTENT   GTK_STATE_INSENSITIVE+1
+#define LIVES_WIDGET_STATE_FOCUSED        GTK_STATE_INSENSITIVE+2
+#define LIVES_WIDGET_STATE_BACKDROP       GTK_STATE_INSENSITIVE+3
 #endif
 
 #if GTK_CHECK_VERSION(3,0,0)
@@ -140,6 +159,7 @@ typedef gboolean                          boolean;
 typedef GList                             LiVESList;
 typedef GSList                            LiVESSList;
 
+typedef GtkAccelGroup                     LiVESAccelGroup;
 
 typedef GdkPixbufDestroyNotify            LiVESPixbufDestroyNotify;
 

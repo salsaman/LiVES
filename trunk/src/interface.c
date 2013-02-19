@@ -252,9 +252,6 @@ xprocess * create_processing (const gchar *text) {
   procw->processing = lives_standard_dialog_new (_("LiVES: - Processing..."),FALSE);
   widget_opts.non_modal=FALSE;
 
-  gtk_window_add_accel_group (GTK_WINDOW (procw->processing), mainw->accel_group);
-
-
   if (mainw->multitrack==NULL) gtk_window_set_transient_for(GTK_WINDOW(procw->processing),GTK_WINDOW(mainw->LiVES));
   else gtk_window_set_transient_for(GTK_WINDOW(procw->processing),GTK_WINDOW(mainw->multitrack->window));
 

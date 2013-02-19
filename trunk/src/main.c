@@ -154,6 +154,9 @@ void catch_sigint(int signum) {
 	exit (signum);
       }
 
+      if (mainw->multitrack!=NULL) mainw->multitrack->idlefunc=0;
+      mainw->fatal=TRUE;
+
       if (signum==LIVES_SIGABRT||signum==LIVES_SIGSEGV) {
 	signal (LIVES_SIGSEGV, SIG_DFL);
 	signal (LIVES_SIGABRT, SIG_DFL);
@@ -302,7 +305,7 @@ static boolean pre_init(void) {
   sizshrt=sizeof(gshort);
 
   mainw=(mainwindow*)(g_malloc(sizeof(mainwindow)));
-  mainw->is_ready=FALSE;
+  mainw->is_ready=mainw->fatal=FALSE;
 
   mainw->free_fn=lives_free_normal;
   mainw->do_not_free=NULL;
@@ -3260,6 +3263,8 @@ procw_desensitize(void) {
   if (cairo==NULL) cr=lives_painter_create_from_widget (LIVES_WIDGET(image));
   else cr=cairo;
 
+  if (cr==NULL) return;
+
   lives_widget_get_bg_color(LIVES_WIDGET(image),&color);
   lives_painter_set_source_rgba (cr, color.red, color.green, color.blue, color.alpha);
   lives_painter_rectangle(cr,0,0,
@@ -3592,6 +3597,7 @@ void load_preview_image(boolean update_always) {
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(mainw->preview_spinbutton),0);
     g_signal_handler_unblock(mainw->preview_spinbutton,mainw->preview_spin_func);
     if (mainw->imframe!=NULL) {
+      g_print("pt a\n");
       set_ce_frame_from_pixbuf(GTK_IMAGE(mainw->preview_image), mainw->imframe, NULL);
       gtk_widget_set_size_request(mainw->preview_image,lives_pixbuf_get_width(mainw->imframe),lives_pixbuf_get_height(mainw->imframe));
     }

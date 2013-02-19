@@ -265,6 +265,7 @@ typedef struct {
   boolean ccpd_with_sound;
   boolean selwidth_locked;
   boolean is_ready;
+  boolean fatal; ///< got fatal signal
   boolean opening_loc;  ///< opening location (streaming)
   boolean dvgrab_preview;
   boolean switch_during_pb;

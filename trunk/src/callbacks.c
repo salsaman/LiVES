@@ -54,7 +54,7 @@ void lives_exit (void) {
     gchar *cwd;
 
     if (mainw->multitrack!=NULL&&mainw->multitrack->idlefunc>0) {
-      g_source_remove(mainw->multitrack->idlefunc);
+      //g_source_remove(mainw->multitrack->idlefunc);
       mainw->multitrack->idlefunc=0;
     }
 
@@ -192,7 +192,7 @@ void lives_exit (void) {
     }
     else if (!mainw->only_close) g_snprintf(future_prefs->tmpdir,256,"NULL");
 
-    if (mainw->leave_files) {
+    if (mainw->leave_files&&!mainw->fatal) {
       gchar *msg;
       msg=g_strdup_printf(_("Saving as set %s..."),mainw->set_name);
       d_print(msg);
@@ -1716,7 +1716,7 @@ on_quit_activate                      (GtkMenuItem     *menuitem,
   }
 
   if (mainw->multitrack!=NULL&&!mainw->only_close) mt_memory_free();
-  else if (mainw->multitrack!=NULL) wipe_layout(mainw->multitrack);
+  else if (mainw->multitrack!=NULL) wipe_layout(mainw->multitrack);;
 
   mainw->was_set=mainw->leave_files=mainw->leave_recovery=FALSE;
 

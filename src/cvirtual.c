@@ -1,6 +1,6 @@
 // cvirtual.c
 // LiVES
-// (c) G. Finch 2008 - 2012 <salsaman@xs4all.nl,salsaman@gmail.com>
+// (c) G. Finch 2008 - 2013 <salsaman@xs4all.nl,salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -19,15 +19,15 @@
 
 
 /** count virtual frames between start and end (inclusive) */
-LIVES_INLINE gint count_virtual_frames(int *findex, int start, int end) {
+LIVES_INLINE int count_virtual_frames(int *findex, int start, int end) {
   register int i;
-  gint count=0;
+  int count=0;
   for (i=start-1;i<end;i++) if (findex[i]!=-1) count++;
   return count;
 }
 
 
-void create_frame_index(gint fileno, gboolean init, gint start_offset, gint nframes) {
+void create_frame_index(int fileno, boolean init, int start_offset, int nframes) {
   register int i;
   file *sfile=mainw->files[fileno];
   if (sfile==NULL||sfile->frame_index!=NULL) return;
@@ -43,7 +43,7 @@ void create_frame_index(gint fileno, gboolean init, gint start_offset, gint nfra
 
 
 // save frame_index to disk
-gboolean save_frame_index(gint fileno) {
+boolean save_frame_index(int fileno) {
   int fd,i;
   int retval;
   gchar *fname;
@@ -89,7 +89,7 @@ gboolean save_frame_index(gint fileno) {
 
 
 // load frame_index from disk
-gboolean load_frame_index(gint fileno) {
+boolean load_frame_index(int fileno) {
   int fd,i;
   int retval;
   gchar *fname;
@@ -187,9 +187,14 @@ void del_frame_index(file *sfile) {
 
 
 
-gboolean check_clip_integrity(file *sfile, const lives_clip_data_t *cdata) {
-  int i;
+boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata) {
+  file *sfile=mainw->files[fileno];
+
   lives_image_type_t empirical_img_type=sfile->img_type;
+
+  int first_real_frame=0;
+
+  register int i;
 
   // check clip integrity upon loading
 
@@ -208,8 +213,29 @@ gboolean check_clip_integrity(file *sfile, const lives_clip_data_t *cdata) {
       if (g_file_test(frame,G_FILE_TEST_EXISTS)) empirical_img_type=IMG_TYPE_PNG;
       else empirical_img_type=IMG_TYPE_JPEG;
       g_free(frame);
+      first_real_frame=i+1;
       break;
     }
+  }
+
+  // TODO *** check frame count
+
+  if (sfile->frames>0&&(sfile->hsize*sfile->vsize==0)) {
+    if (first_real_frame>0) {
+      sfile->img_type=empirical_img_type;
+      get_frames_sizes(fileno,first_real_frame);
+    }
+    else {
+      if (!prefs->auto_nobord) {
+	sfile->hsize=cdata->frame_width*weed_palette_get_pixels_per_macropixel(cdata->current_palette);
+	sfile->vsize=cdata->frame_height;
+      }
+      else {
+	sfile->hsize=cdata->width*weed_palette_get_pixels_per_macropixel(cdata->current_palette);
+	sfile->vsize=cdata->height;
+      }
+    }
+    goto mismatch;
   }
 
   if (sfile->fps!=cdata->fps) goto mismatch;
@@ -231,12 +257,12 @@ gboolean check_clip_integrity(file *sfile, const lives_clip_data_t *cdata) {
 
 
 
-gboolean check_if_non_virtual(gint fileno, gint start, gint end) {
+boolean check_if_non_virtual(int fileno, int start, int end) {
   // check if there are no virtual frames from start to end inclusive in clip fileno
 
   register int i;
   file *sfile=mainw->files[fileno];
-  gboolean bad_header=FALSE;
+  boolean bad_header=FALSE;
 
   if (sfile->clip_type!=CLIP_TYPE_FILE) return TRUE;
 
@@ -352,7 +378,7 @@ boolean virtual_to_images(int sfileno, int sframe, int eframe, boolean update_pr
 
 
 
-void insert_images_in_virtual (gint sfileno, gint where, gint frames) {
+void insert_images_in_virtual (int sfileno, int where, int frames) {
   // insert physical (frames) images into sfile at position where [0 = before first frame]
   // this is the virtual (book-keeping) part
 
@@ -388,7 +414,7 @@ void insert_images_in_virtual (gint sfileno, gint where, gint frames) {
 
 
 
-void delete_frames_from_virtual (gint sfileno, gint start, gint end) {
+void delete_frames_from_virtual (int sfileno, int start, int end) {
   // delete (frames) images from sfile at position start to end
   // this is the virtual (book-keeping) part
 
@@ -425,7 +451,7 @@ void delete_frames_from_virtual (gint sfileno, gint start, gint end) {
 
 
 
-void restore_frame_index_back (gint sfileno) {
+void restore_frame_index_back (int sfileno) {
   // undo an operation
   // this is the virtual (book-keeping) part
 
@@ -453,7 +479,7 @@ void restore_frame_index_back (gint sfileno) {
 
 
 
-void clean_images_from_virtual (file *sfile, gint oldframes) {
+void clean_images_from_virtual (file *sfile, int oldframes) {
   // remove images on disk where the frame_index points to a frame in
   // the original clip
 
@@ -498,7 +524,7 @@ void clean_images_from_virtual (file *sfile, gint oldframes) {
 }
 
 
-int *frame_index_copy(int *findex, gint nframes) {
+int *frame_index_copy(int *findex, int nframes) {
   // like it says on the label
   // copy first nframes from findex and return them
   // no checking is done to make sure nframes is in range
@@ -512,7 +538,7 @@ int *frame_index_copy(int *findex, gint nframes) {
 }
 
 
-gboolean is_virtual_frame(int sfileno, int frame) {
+boolean is_virtual_frame(int sfileno, int frame) {
   // frame is virtual if it is still inside a video clip (read only)
   // once a frame is on disk as an image it is no longer virtual
 

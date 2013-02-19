@@ -390,7 +390,7 @@ typedef (void *)(LiVESPixbufDestroyNotify(uchar *, gpointer));
 
 #define LIVES_INTERP_BEST   Qt::SmoothTransformation
 #define LIVES_INTERP_NORMAL Qt::SmoothTransformation
-#define LIVES_INTERP_BEST   Qt::FastTransformation
+#define LIVES_INTERP_FAST   Qt::FastTransformation
 
 
 #endif
@@ -437,6 +437,8 @@ void lives_painter_set_source_rgb(lives_painter_t *, double red, double green, d
 void lives_painter_set_source_rgba(lives_painter_t *, double red, double green, double blue, double alpha);
 
 void lives_painter_set_line_width(lives_painter_t *, double width);
+
+void lives_painter_translate(lives_painter_t *, double x, double y);
 
 void lives_painter_rectangle(lives_painter_t *, double x, double y, double width, double height);
 void lives_painter_arc(lives_painter_t *, double xc, double yc, double radius, double angle1, double angle2);

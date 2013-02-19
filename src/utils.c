@@ -1878,7 +1878,7 @@ gboolean check_frame_count(gint idx) {
   // for files of type CLIP_TYPE_DISK
   // - check the image files (e.g. jpeg or png)
 
-  // use a "goldilocks" algorithm (just the right frames, not too few and not too many
+  // use a "goldilocks" algorithm (just the right frames, not too few and not too many)
 
   // ingores gaps
 
@@ -1959,7 +1959,18 @@ void get_frame_count(gint idx) {
 }
 
 
+void get_frames_sizes(int fileno, int frame) {
+  file *sfile=mainw->files[fileno];
+  LiVESPixbuf *pixbuf;
+  
+  if ((pixbuf=pull_lives_pixbuf(fileno,frame,mainw->files[fileno]->img_type==IMG_TYPE_JPEG?"jpg":"png",0))) {
+    sfile->hsize=lives_pixbuf_get_width(pixbuf);
+    sfile->vsize=lives_pixbuf_get_height(pixbuf);
+    g_print("got %d x %d\n",sfile->hsize,sfile->vsize);
+    g_object_unref(pixbuf);
+  }
 
+}
 
 
 

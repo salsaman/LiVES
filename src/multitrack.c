@@ -1473,16 +1473,20 @@ void track_select (lives_mt *mt) {
     if (hidden==0) {
       labelbox=(GtkWidget *)g_object_get_data(G_OBJECT(eventbox),"labelbox");
       ahbox=(GtkWidget *)g_object_get_data(G_OBJECT(eventbox),"ahbox");
+      checkbutton=(GtkWidget *)g_object_get_data (G_OBJECT(eventbox), "checkbutton");
       if (i==mt->current_track) {
+	
 	if (!mt->aud_track_selected) {
 	  if (labelbox!=NULL) gtk_widget_set_state(labelbox,LIVES_WIDGET_STATE_PRELIGHT);
 	  if (ahbox!=NULL) gtk_widget_set_state(ahbox,LIVES_WIDGET_STATE_PRELIGHT);
+	  if (checkbutton!=NULL) {
+	    gtk_widget_set_state(checkbutton,LIVES_WIDGET_STATE_PRELIGHT);
+	    gtk_widget_queue_draw(checkbutton);
+	  }
 	  gtk_widget_set_sensitive (mt->jumpback, g_object_get_data(G_OBJECT(eventbox),"blocks")!=NULL);
 	  gtk_widget_set_sensitive (mt->jumpnext, g_object_get_data(G_OBJECT(eventbox),"blocks")!=NULL);
 	}
 
-	checkbutton=(GtkWidget *)g_object_get_data (G_OBJECT(eventbox), "checkbutton");
-	
 #ifdef ENABLE_GIW
 	if ((prefs->lamp_buttons&&!giw_led_get_mode(GIW_LED(checkbutton)))||(!prefs->lamp_buttons&&
 #else			
@@ -1508,6 +1512,10 @@ void track_select (lives_mt *mt) {
     else {
 	if (labelbox!=NULL) gtk_widget_set_state(labelbox,LIVES_WIDGET_STATE_NORMAL);
 	if (ahbox!=NULL) gtk_widget_set_state(ahbox,LIVES_WIDGET_STATE_NORMAL);
+	if (checkbutton!=NULL) {
+	  gtk_widget_set_state(checkbutton,LIVES_WIDGET_STATE_NORMAL);
+	  gtk_widget_queue_draw(checkbutton);
+	}
       }
     }
   }
@@ -5133,10 +5141,20 @@ static boolean expose_pb (GtkWidget *widget, lives_painter_t *cr, gpointer user_
 }
 
 static boolean draw_cool_toggle (GtkWidget *widget, lives_painter_t *cr, gpointer user_data) {
-  int rwidth=lives_widget_get_allocation_width(LIVES_WIDGET(widget));
-  int rheight=lives_widget_get_allocation_height(LIVES_WIDGET(widget));
+  double rwidth=(double)lives_widget_get_allocation_width(LIVES_WIDGET(widget));
+  double rheight=(double)lives_widget_get_allocation_height(LIVES_WIDGET(widget));
 
   double rad;
+
+  double scalex=1.;
+  double scaley=.8;
+
+  lives_painter_translate(cr,rwidth*(1.-scalex)/2.,rheight*(1.-scaley)/2.);
+
+  rwidth*=scalex;
+  rheight*=scaley;
+
+  // draw the inside
 
   if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(widget))) {
       lives_painter_set_source_rgba (cr, palette->light_green.red, palette->light_green.green,
@@ -5165,12 +5183,79 @@ static boolean draw_cool_toggle (GtkWidget *widget, lives_painter_t *cr, gpointe
 
   rad=rwidth/4.;
 
+  lives_painter_move_to(cr,rwidth/4.,rwidth/4.);
+  lives_painter_line_to(cr,0.,rwidth/4.);
   lives_painter_arc(cr,rwidth/4.,rwidth/4.,rad,M_PI,1.5*M_PI);
+  lives_painter_line_to(cr,rwidth/4.,rwidth/4.);
+  lives_painter_fill(cr);
+
+  lives_painter_move_to(cr,rwidth/4.*3.,rwidth/4.);
+  lives_painter_line_to(cr,rwidth/4.*3.,0.);
   lives_painter_arc(cr,rwidth/4.*3.,rwidth/4.,rad,-M_PI/2.,0.);
+  lives_painter_line_to(cr,rwidth/4.*3.,rwidth/4.);
+  lives_painter_fill(cr);
+
+  lives_painter_move_to(cr,rwidth/4.,rheight-rwidth/4.);
+  lives_painter_line_to(cr,rwidth/4.,rheight);
   lives_painter_arc(cr,rwidth/4.,rheight-rwidth/4.,rad,M_PI/2.,M_PI);
+  lives_painter_line_to(cr,rwidth/4.,rheight-rwidth/4.);
+  lives_painter_fill(cr);
+
+  lives_painter_move_to(cr,rwidth/4.*3.,rheight-rwidth/4.);
+  lives_painter_line_to(cr,rwidth,rheight-rwidth/4.);
+  lives_painter_arc(cr,rwidth/4.*3.,rheight-rwidth/4.,rad,0.,M_PI/2.);
+  lives_painter_line_to(cr,rwidth/4.*3.,rheight-rwidth/4.);
+  lives_painter_fill(cr);
+
+
+  // draw the surround
+
+  lives_painter_new_path(cr);
+
+  lives_painter_set_source_rgba (cr, 0., 0., 0., .8);
+  lives_painter_set_line_width(cr,1.);
+
+  lives_painter_arc(cr,rwidth/4.,rwidth/4.,rad,M_PI,1.5*M_PI);
+  lives_painter_stroke(cr);
+  lives_painter_arc(cr,rwidth/4.*3.,rwidth/4.,rad,-M_PI/2.,0.);
+  lives_painter_stroke(cr);
+  lives_painter_arc(cr,rwidth/4.,rheight-rwidth/4.,rad,M_PI/2.,M_PI);
+  lives_painter_stroke(cr);
   lives_painter_arc(cr,rwidth/4.*3.,rheight-rwidth/4.,rad,0.,M_PI/2.);
 
-  lives_painter_fill(cr);
+  lives_painter_stroke(cr);
+
+  lives_painter_move_to(cr,rwidth/4.,0);
+  lives_painter_line_to(cr,rwidth/4.*3.,0);
+
+  lives_painter_stroke(cr);
+
+  lives_painter_move_to(cr,rwidth/4.,rheight);
+  lives_painter_line_to(cr,rwidth/4.*3.,rheight);
+
+  lives_painter_stroke(cr);
+
+  lives_painter_move_to(cr,0.,rwidth/4.);
+  lives_painter_line_to(cr,0.,rheight-rwidth/4.);
+
+  lives_painter_stroke(cr);
+
+  lives_painter_move_to(cr,rwidth,rwidth/4.);
+  lives_painter_line_to(cr,rwidth,rheight-rwidth/4.);
+
+  lives_painter_stroke(cr);
+
+  if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(widget))) {
+    lives_painter_set_source_rgba (cr, 1., 1., 1., .6);
+
+    lives_painter_move_to(cr,rwidth/4.,rwidth/4.);
+    lives_painter_line_to(cr,rwidth/4.*3.,rheight-rwidth/4.);
+    lives_painter_stroke(cr);
+
+    lives_painter_move_to(cr,rwidth/4.,rheight-rwidth/4.);
+    lives_painter_line_to(cr,rwidth/4.*3.,rwidth/4.);
+    lives_painter_stroke(cr);
+  }
 
   return TRUE;
 }
@@ -14874,7 +14959,9 @@ void mt_add_block_effect (GtkMenuItem *menuitem, gpointer user_data) {
   add_effect_inner(mt,1,&selected_track,1,&selected_track,start_event,end_event);
 
   filter_name=weed_filter_get_name(mt->current_fx);
-  text=g_strdup_printf(_("Added effect %s to track %s from %.4f to %.4f\n"),filter_name,(tmp=get_track_name(mt,selected_track,mt->aud_track_selected)),start_tc/U_SEC,q_gint64(end_tc+U_SEC/mt->fps,mt->fps)/U_SEC);
+  text=g_strdup_printf(_("Added effect %s to track %s from %.4f to %.4f\n"),filter_name,
+		       (tmp=get_track_name(mt,selected_track,mt->aud_track_selected)),
+		       start_tc/U_SEC,q_gint64(end_tc+U_SEC/mt->fps,mt->fps)/U_SEC);
   g_free(tmp);
   d_print(text);
   g_free(text);

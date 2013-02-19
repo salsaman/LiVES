@@ -112,6 +112,7 @@ void knob_calculate_title_sizes(GiwKnob *knob);
 #if GTK_CHECK_VERSION(3,0,0)
 G_DEFINE_TYPE (GiwKnob, giw_knob, GTK_TYPE_WIDGET)
 #define parent_class giw_knob_parent_class
+
 #else
 static GtkWidgetClass *parent_class = NULL;
 
@@ -415,7 +416,7 @@ giw_knob_size_allocate (GtkWidget     *widget,
 
 #if GTK_CHECK_VERSION(3,0,0)
  static gboolean giw_knob_draw (GtkWidget *widget, cairo_t *cairo) {
-
+   //GdkRGBA color;
 #else
 
 static gint
@@ -471,6 +472,21 @@ giw_knob_expose (GtkWidget      *widget,
 	    2.*M_PI);
 
   cairo_fill(cairo);
+
+  // not working
+  /*
+  gtk_style_context_get_color (gtk_widget_get_style_context (widget), gtk_widget_get_state(widget), &color);
+  cairo_set_source_rgba (cairo, color.red, color.green, color.blue, color.alpha);
+
+  cairo_arc(cairo,
+	    knob->x+((knob->size/2)),
+	    knob->y+((knob->size/2)),
+	    knob->radius/4.*3.,
+	    0,
+	    2.*M_PI);
+
+	    cairo_fill(cairo);*/
+
 
   cairo_set_source_rgb (cairo, 1., 1., 1.);
 
@@ -567,7 +583,7 @@ giw_knob_expose (GtkWidget      *widget,
 		       knob->title);
 
 #else
-  // Drawing backgorund
+  // Drawing background
   gtk_paint_flat_box (widget->style,
 			widget->window,
 			GTK_STATE_NORMAL,

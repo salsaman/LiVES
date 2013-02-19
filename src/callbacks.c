@@ -4953,22 +4953,27 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
   // (user_data TRUE skips threaded dialog and allows use of
   // return value FALSE to indicate error)
 
-  gchar *com;
-  gint last_file=-1,new_file=-1;
-  gint current_file=mainw->current_file;
-  gint clipnum=0;
-  gchar *msg;
-  gchar *ordfile;
-  gchar *subfname;
-  gchar vid_open_dir[PATH_MAX];
   FILE *orderfile;
-  gboolean added_recovery=FALSE;
-  gchar set_name[128];
-  gboolean skip_threaded_dialog=(gboolean)GPOINTER_TO_INT(user_data);
+
   const lives_clip_data_t *cdata=NULL;
   lives_image_type_t img_type;
 
+  gchar *msg;
+  gchar *com;
+  gchar *ordfile;
+  gchar *subfname;
+  gchar vid_open_dir[PATH_MAX];
+  gchar set_name[128];
   gchar *cwd;
+
+  boolean added_recovery=FALSE;
+  boolean skip_threaded_dialog=(boolean)GPOINTER_TO_INT(user_data);
+  boolean needs_update=FALSE;
+
+  gint last_file=-1,new_file=-1;
+  gint current_file=mainw->current_file;
+  gint clipnum=0;
+
 
   threaded_dialog_spin();
 
@@ -5100,7 +5105,8 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
 	
 	recover_layout_map(MAX_FILES);
 
-	msg=g_strdup_printf (_ ("%d clips and %d layouts were recovered from set (%s).\n"),clipnum,g_list_length(mainw->current_layouts_map),mainw->set_name);
+	msg=g_strdup_printf (_ ("%d clips and %d layouts were recovered from set (%s).\n"),
+			     clipnum,g_list_length(mainw->current_layouts_map),mainw->set_name);
 	d_print (msg);
 	g_free (msg);
 
@@ -5202,7 +5208,6 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
     if (load_frame_index(mainw->current_file)) {
       gboolean next=FALSE;
       gchar *orig_file_name=g_strdup(cfile->file_name);
-      gboolean needs_update=FALSE;
 
       // cd to clip directory - so decoder plugins can read temp files
       gchar *ppath=g_build_filename(prefs->tmpdir,cfile->handle,NULL);
@@ -5240,15 +5245,10 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
 	  next=TRUE;
 	}
 	else {
-	  if (!check_clip_integrity(cfile,cdata)) {
+	  if (!check_clip_integrity(mainw->current_file,cdata)) {
 	    needs_update=TRUE;
 	  }
 	}
-
-	if (needs_update) {
-	  save_clip_values(mainw->current_file);
-	}
-
 	break;
       }
       g_free(orig_file_name);
@@ -5267,14 +5267,26 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
       
     }
     else {
-      if (!check_frame_count(mainw->current_file)) get_frame_count(mainw->current_file);
+      if (!check_frame_count(mainw->current_file)) {
+	get_frame_count(mainw->current_file);
+	needs_update=TRUE;
+      }
+      if (cfile->frames>0&&(cfile->hsize*cfile->vsize==0)) {
+	get_frames_sizes(mainw->current_file,1);
+	if (cfile->hsize*cfile->vsize>0) needs_update=TRUE;
+      }
     }
 
     last_file=new_file;
 
-    // read the plaback fps, play frame, and name
+    // read the playback fps, play frame, and name
     open_set_file (mainw->set_name,++clipnum);
     threaded_dialog_spin();
+
+    if (needs_update) {
+      save_clip_values(mainw->current_file);
+      needs_update=FALSE;
+    }
 
     if (mainw->cached_list!=NULL) {
       g_list_free_strings(mainw->cached_list);

@@ -3364,8 +3364,6 @@ GtkWidget *make_datacon_window(int key, int mode) {
   conxw.conx_dialog=lives_standard_dialog_new(_("LiVES: - Parameter and Alpha Channel Connections"),FALSE);
   gtk_widget_set_size_request (conxw.conx_dialog, winsize_h, winsize_v);
 
-
-
   abox = lives_dialog_get_action_area(LIVES_DIALOG(conxw.conx_dialog));
 
   if (conxw.num_alpha>0) {

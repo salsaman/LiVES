@@ -312,9 +312,8 @@ create_LiVES (void)
 
 #endif
 
-
   mainw->accel_group = GTK_ACCEL_GROUP(gtk_accel_group_new ());
-  
+
   mainw->layout_textbuffer=gtk_text_buffer_new(NULL);
   g_object_ref(mainw->layout_textbuffer);
   mainw->affected_layouts_map=NULL;
@@ -3457,7 +3456,15 @@ make_preview_box (void) {
   gtk_widget_show (mainw->preview_image);
   gtk_container_add (GTK_CONTAINER (eventbox), mainw->preview_image);
 
-  gtk_widget_set_size_request(mainw->preview_image,mainw->pwidth,mainw->pheight);
+  if (mainw->current_file<0||cfile->frames==0) {
+    if (mainw->imframe!=NULL) {
+      gtk_widget_set_size_request(mainw->preview_image,
+				  lives_pixbuf_get_width(mainw->imframe),lives_pixbuf_get_height(mainw->imframe));
+
+    }
+  }
+  else
+    gtk_widget_set_size_request(mainw->preview_image,mainw->pwidth,mainw->pheight);
 
   lives_widget_set_hexpand(mainw->preview_box,TRUE);
   lives_widget_set_vexpand(mainw->preview_box,TRUE);

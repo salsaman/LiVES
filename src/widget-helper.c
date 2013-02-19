@@ -291,6 +291,7 @@ LIVES_INLINE void lives_object_unref(LiVESObjectPtr object) {
 }
 
 
+
 LIVES_INLINE void lives_widget_set_bg_color(LiVESWidget *widget, LiVESWidgetState state, const LiVESWidgetColor *color) {
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3,0,0)
@@ -1769,6 +1770,7 @@ LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_button
 
     gtk_widget_add_accelerator (cancelbutton, "activate", accel_group,
 				LIVES_KEY_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
+
     lives_widget_set_can_focus_and_default(cancelbutton);
 
     gtk_dialog_add_action_widget (GTK_DIALOG (dialog), okbutton, GTK_RESPONSE_OK);

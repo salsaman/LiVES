@@ -2076,6 +2076,21 @@ create_LiVES (void)
   gtk_widget_show (mainw->frame1);
   gtk_container_set_border_width (GTK_CONTAINER (mainw->frame1), 10);
   gtk_container_add (GTK_CONTAINER (mainw->eventbox3), mainw->frame1);
+
+#if GTK_CHECK_VERSION(3,0,0)
+  if (1) {
+    GtkCssProvider *provider=gtk_css_provider_new ();
+    gtk_widget_set_name(mainw->frame1,"frame1");
+    gtk_css_provider_load_from_data (GTK_CSS_PROVIDER (provider),
+				     " #frame1 {\n"
+				     "   border-style: none\n"
+				     "}\n", -1, NULL);
+    gtk_style_context_add_provider(gtk_widget_get_style_context(mainw->frame1),
+				   GTK_STYLE_PROVIDER(provider),GTK_STYLE_PROVIDER_PRIORITY_USER);
+    g_object_unref(provider);
+  }
+#endif
+
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color (mainw->frame1, GTK_STATE_NORMAL, &palette->normal_back);
     lives_widget_set_fg_color (mainw->frame1, GTK_STATE_NORMAL, &palette->normal_fore);
@@ -2112,6 +2127,22 @@ create_LiVES (void)
   gtk_box_pack_start (GTK_BOX (hbox1), mainw->playframe, TRUE, FALSE, 0);
   gtk_widget_set_size_request (mainw->playframe, DEFAULT_FRAME_HSIZE, DEFAULT_FRAME_VSIZE);
   gtk_container_set_border_width (GTK_CONTAINER (mainw->playframe), 10);
+
+#if GTK_CHECK_VERSION(3,0,0)
+  if (1) {
+    GtkCssProvider *provider=gtk_css_provider_new ();
+    gtk_widget_set_name(mainw->playframe,"playframe");
+    gtk_css_provider_load_from_data (GTK_CSS_PROVIDER (provider),
+				     " #playframe {\n"
+				     "   border-style: none\n"
+				     "}\n", -1, NULL);
+    gtk_style_context_add_provider(gtk_widget_get_style_context(mainw->playframe),
+				   GTK_STYLE_PROVIDER(provider),GTK_STYLE_PROVIDER_PRIORITY_USER);
+    g_object_unref(provider);
+  }
+#endif
+
+
   gtk_frame_set_shadow_type (GTK_FRAME(mainw->playframe), GTK_SHADOW_IN);
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color (mainw->playframe, GTK_STATE_NORMAL, &palette->normal_back);
@@ -2151,6 +2182,20 @@ create_LiVES (void)
   }
   lives_widget_set_vexpand(mainw->frame2,FALSE);
   lives_widget_set_hexpand(mainw->frame2,FALSE);
+
+#if GTK_CHECK_VERSION(3,0,0)
+  if (1) {
+    GtkCssProvider *provider=gtk_css_provider_new ();
+    gtk_widget_set_name(mainw->frame2,"frame2");
+    gtk_css_provider_load_from_data (GTK_CSS_PROVIDER (provider),
+				     " #frame2 {\n"
+				     "   border-style: none\n"
+				     "}\n", -1, NULL);
+    gtk_style_context_add_provider(gtk_widget_get_style_context(mainw->frame2),
+				   GTK_STYLE_PROVIDER(provider),GTK_STYLE_PROVIDER_PRIORITY_USER);
+    g_object_unref(provider);
+  }
+#endif
 
   //gtk_container_set_border_width (GTK_CONTAINER(mainw->eventbox4), 10);
   gtk_frame_set_shadow_type (GTK_FRAME(mainw->frame2), GTK_SHADOW_IN);
@@ -3385,20 +3430,24 @@ block_expose (void) {
   // symptoms - strace shows the app looping on poll() and it is otherwise
   // unresponsive
   mainw->draw_blocked=TRUE;
+#if !GTK_CHECK_VERSION(3,0,0)
   g_signal_handler_block(mainw->video_draw,mainw->config_func);
   g_signal_handler_block(mainw->video_draw,mainw->vidbar_func);
   g_signal_handler_block(mainw->laudio_draw,mainw->laudbar_func);
   g_signal_handler_block(mainw->raudio_draw,mainw->raudbar_func);
+#endif
 }
 
 void 
 unblock_expose (void) {
   // unblock expose/config events
   mainw->draw_blocked=FALSE;
+#if !GTK_CHECK_VERSION(3,0,0)
   g_signal_handler_unblock(mainw->video_draw,mainw->config_func);
   g_signal_handler_unblock(mainw->video_draw,mainw->vidbar_func);
   g_signal_handler_unblock(mainw->laudio_draw,mainw->laudbar_func);
   g_signal_handler_unblock(mainw->raudio_draw,mainw->raudbar_func);
+#endif
 }
 
 

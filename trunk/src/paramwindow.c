@@ -1435,7 +1435,6 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, boolean add_
 
     if (add_slider) {
       spinbutton_adj=gtk_spin_button_get_adjustment(GTK_SPIN_BUTTON(spinbutton));
-
 #ifdef ENABLE_GIW
       if (!prefs->lamp_buttons) {
 #endif
@@ -1449,6 +1448,8 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, boolean add_
 	gtk_widget_set_size_request(scale,GIW_KNOB_WIDTH,GIW_KNOB_HEIGHT);
 	giw_knob_set_legends_digits(GIW_KNOB(scale),0);
 	gtk_box_pack_start (GTK_BOX (hbox), scale, FALSE, FALSE, widget_opts.packing_width);
+	lives_widget_set_fg_color(scale,LIVES_WIDGET_STATE_NORMAL,&palette->black);
+	lives_widget_set_fg_color(scale,LIVES_WIDGET_STATE_PRELIGHT,&palette->dark_orange);
 	add_fill_to_box (GTK_BOX (hbox));
       }
 #endif

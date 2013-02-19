@@ -5151,19 +5151,20 @@ void recover_layout_map(gint numclips) {
 
 
 
-static gboolean recover_files(gchar *recovery_file, gboolean auto_recover) {
+static boolean recover_files(gchar *recovery_file, boolean auto_recover) {
   FILE *rfile;
   gchar buff[256],*buffptr;
   gchar *clipdir;
   gchar *cwd=g_get_current_dir();
 
   int retval;
-  gint new_file,clipnum=0;
+  int new_file,clipnum=0;
 
-  gboolean last_was_normal_file=FALSE;
-  gboolean is_scrap;
-  gboolean is_ascrap;
-  gboolean did_set_check=FALSE;
+  boolean last_was_normal_file=FALSE;
+  boolean is_scrap;
+  boolean is_ascrap;
+  boolean did_set_check=FALSE;
+  boolean needs_update=FALSE;
 
   const lives_clip_data_t *cdata=NULL;
 
@@ -5420,10 +5421,16 @@ static gboolean recover_files(gchar *recovery_file, gboolean auto_recover) {
       }
 
       if (cfile->ext_src!=NULL) {
-	check_clip_integrity(cfile,cdata);
+	check_clip_integrity(mainw->current_file,cdata);
       }
       else {
-	if (is_scrap||!check_frame_count(mainw->current_file)) get_frame_count(mainw->current_file);
+	if (is_scrap||!check_frame_count(mainw->current_file)) {
+	  get_frame_count(mainw->current_file);
+	  needs_update=TRUE;
+	}
+	if (!is_scrap&&cfile->frames>0&&(cfile->hsize*cfile->vsize==0)) {
+	  get_frames_sizes(mainw->current_file,1);
+	}
 	if (is_ascrap&&cfile->afilesize==0) reget_afilesize(mainw->current_file);
       }
   
@@ -5446,6 +5453,11 @@ static gboolean recover_files(gchar *recovery_file, gboolean auto_recover) {
 	get_total_time (cfile);
 	if (cfile->achans) cfile->aseek_pos=(int64_t)((gdouble)(cfile->frameno-1.)/cfile->fps*cfile->arate*
 						   cfile->achans*(cfile->asampsize/8));
+
+	if (needs_update) {
+	  save_clip_values(mainw->current_file);
+	  needs_update=FALSE;
+	}
 	
 	// add to clip menu
 	threaded_dialog_spin();

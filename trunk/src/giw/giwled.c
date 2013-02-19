@@ -351,7 +351,6 @@ giw_led_size_allocate (GtkWidget     *widget,
 #if GTK_CHECK_VERSION(3,0,0)
  static gboolean giw_led_draw (GtkWidget *widget, cairo_t *cairo) {
 
-
 #else
 
 static gint
@@ -394,11 +393,12 @@ giw_led_expose (GtkWidget      *widget,
   if (led->on)
     cairo_set_source_rgb (cairo, 1., 1., 1.);
   else
-    cairo_set_source_rgb (cairo, 
-			  (double)(led->color_off.red)/65535.,
-			  (double)(led->color_off.green)/65535.,
-			  (double)(led->color_off.blue)/65535.
-			  );
+    cairo_set_source_rgba (cairo, 
+			   led->color_off.red,
+			   led->color_off.green,
+			   led->color_off.blue,
+			   led->color_off.alpha
+			   );
   
   cairo_arc(cairo,
 	    rect.width/2+2,

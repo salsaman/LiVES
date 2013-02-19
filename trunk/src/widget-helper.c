@@ -103,6 +103,14 @@ LIVES_INLINE void lives_painter_new_path(lives_painter_t *cr) {
 }
 
 
+LIVES_INLINE void lives_painter_translate(lives_painter_t *cr, double x, double y) {
+#ifdef PAINTER_CAIRO
+  cairo_translate(cr,x,y);
+#endif
+
+}
+
+
 LIVES_INLINE void lives_painter_set_line_width(lives_painter_t *cr, double width) {
 #ifdef PAINTER_CAIRO
   cairo_set_line_width(cr,width);

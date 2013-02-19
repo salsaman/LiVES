@@ -94,6 +94,26 @@ typedef int lives_pgid_t;
 // needed for gdk_x11_screen_get_window_manager_name()
 
 #include <gdk/gdkx.h>
+
+#ifndef GDK_IS_X11_DISPLAY 
+#define GDK_IS_X11_DISPLAY(display) (TRUE)
+#endif
+
+#ifndef GDK_IS_WIN32_DISPLAY 
+#define GDK_IS_WIN32_DISPLAY(display) (FALSE)
+#endif
+
+
+#else
+
+#ifndef GDK_IS_X11_DISPLAY 
+#define GDK_IS_X11_DISPLAY(display) (FALSE)
+#endif
+
+#ifndef GDK_IS_WIN32_DISPLAY 
+#define GDK_IS_WIN32_DISPLAY(display) (TRUE)
+#endif
+
 #endif
 
 #endif // GUI_GTK
@@ -982,6 +1002,8 @@ boolean pull_frame_at_size (weed_plant_t *layer, const gchar *image_ext, weed_ti
 			     int width, int height, int target_palette);
 LiVESPixbuf *pull_lives_pixbuf_at_size(int clip, int frame, const char *image_ext, weed_timecode_t tc, 
 				       int width, int height, LiVESInterpType interp);
+LiVESPixbuf *pull_lives_pixbuf(int clip, int frame, const char *image_ext, weed_timecode_t tc);
+
 GError * lives_pixbuf_save(GdkPixbuf *pixbuf, gchar *fname, lives_image_type_t imgtype, 
 			   int quality, boolean do_chmod, GError **gerrorptr);
 
@@ -1144,6 +1166,7 @@ gboolean get_clip_value(int which, lives_clip_details_t, void *retval, size_t ma
 void save_clip_value(int which, lives_clip_details_t, void *val);
 gboolean check_frame_count(gint idx);
 void get_frame_count(gint idx);
+void get_frames_sizes(int fileno, int frame_to_test);
 gint count_resampled_frames (gint in_frames, gdouble orig_fps, gdouble resampled_fps);
 gboolean int_array_contains_value(int *array, int num_elems, int value);
 gboolean check_for_lock_file(const gchar *set_name, gint type);

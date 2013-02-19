@@ -392,24 +392,28 @@ giw_vslider_size_allocate (GtkWidget     *widget,
 
 #if GTK_CHECK_VERSION(3,0,0)
  static gboolean giw_vslider_draw (GtkWidget *widget, cairo_t *cairo) {
-
-   return FALSE;
- }
+   GdkRGBA color;
 #else
 static gint
 giw_vslider_expose (GtkWidget      *widget,
 		 GdkEventExpose *event)
 {
+#endif
+
   GiwVSlider *vslider;
   gint loop, loop2;
   GdkRectangle rect;
-      
-  g_return_val_if_fail (widget != NULL, FALSE);
-  g_return_val_if_fail (GIW_IS_VSLIDER (widget), FALSE);
+
+#if !GTK_CHECK_VERSION(3,0,0)
+
   g_return_val_if_fail (event != NULL, FALSE);
 
   if (event->count > 0)
     return FALSE;
+#endif
+      
+  g_return_val_if_fail (widget != NULL, FALSE);
+  g_return_val_if_fail (GIW_IS_VSLIDER (widget), FALSE);
   
   vslider = GIW_VSLIDER (widget);
 
@@ -417,8 +421,104 @@ giw_vslider_expose (GtkWidget      *widget,
   rect.width=lives_widget_get_allocation_width(widget);
   rect.height=lives_widget_get_allocation_height(widget);
 
+
+#if GTK_CHECK_VERSION(3,0,0)
+  gtk_render_background(gtk_widget_get_style_context(widget),
+			cairo,
+			0,
+			0,
+			rect.width,
+			rect.height);
   
-  // Drawing backgorund
+  cairo_set_line_width(cairo,1.);
+
+  // Drawing all the ticks and legends
+  for (loop=0; loop<vslider->major_ticks; loop++){
+    // Legends
+    if (vslider->legend_digits!=0)
+      gtk_render_layout (gtk_widget_get_style_context(widget),
+			 cairo,
+			 0,
+			 vslider->y+(gint)(vslider->major_dy*(gdouble)loop)-(vslider->legend_height/2),
+			 vslider->legends[loop]);
+
+    gtk_style_context_get_color (gtk_widget_get_style_context (widget), gtk_widget_get_state(widget), &color);
+    cairo_set_source_rgba (cairo, color.red, color.green, color.blue, color.alpha);
+
+    // Major ticks
+    cairo_move_to(cairo,
+		  vslider->legend_width-5, 
+		  vslider->y+(gint)(vslider->major_dy*(gdouble)loop));
+
+
+    cairo_line_to(cairo,
+		  vslider->legend_width,
+		  vslider->y+(gint)(vslider->major_dy*(gdouble)loop));
+
+    cairo_stroke(cairo);
+
+    // Minor ticks
+    for (loop2=1; loop2<vslider->minor_ticks+1; loop2++)
+      if (loop!=vslider->major_ticks-1) { // If it's not the last one
+        cairo_move_to(cairo,
+		      vslider->legend_width-3, 
+		      vslider->y+(gint)(vslider->major_dy*(gdouble)loop)+vslider->minor_dy*(gdouble)loop2);
+    
+	cairo_line_to(cairo,
+		      vslider->legend_width,
+		      vslider->y+(gint)(vslider->major_dy*(gdouble)loop)+vslider->minor_dy*(gdouble)loop2);
+
+	cairo_stroke(cairo);
+      }
+  }
+
+  //Drawing the back hole
+  cairo_set_source_rgba (cairo, 0.,0.,0.,1.);
+  cairo_rectangle (cairo,
+		   vslider->x+vslider->width/2-2,
+		   vslider->y,
+		   4,
+		   vslider->height);
+
+  cairo_fill(cairo);
+
+  gtk_style_context_get_background_color (gtk_widget_get_style_context (widget), gtk_widget_get_state(widget), &color);
+  cairo_set_source_rgba (cairo, color.red, color.green, color.blue, color.alpha);
+
+  cairo_rectangle (cairo,
+		   vslider->x+vslider->width/2-2,
+		   vslider->y,
+		   4,
+		   vslider->height);
+
+  cairo_stroke(cairo);
+
+  gtk_style_context_get_color (gtk_widget_get_style_context (widget), gtk_widget_get_state(widget), &color);
+  cairo_set_source_rgba (cairo, color.red, color.green, color.blue, color.alpha);
+
+  cairo_rectangle (cairo,
+		   vslider->button_x,
+		   vslider->button_y,
+		   vslider->button_w,
+		   vslider->button_h);
+
+  cairo_fill(cairo);
+
+
+  // The phanton button
+  if ((vslider->mouse_policy == GIW_VSLIDER_MOUSE_DELAYED) && (vslider->button !=0 ))
+    gtk_render_slider (gtk_widget_get_style_context(widget),
+		       cairo,
+		       vslider->pbutton_x,
+		       vslider->pbutton_y,
+		       vslider->pbutton_w,
+		       vslider->pbutton_h,
+		       GTK_ORIENTATION_VERTICAL);
+
+#else
+
+
+  // Drawing background
   gtk_paint_flat_box (widget->style,
 			widget->window,
 			GTK_STATE_NORMAL,
@@ -515,15 +615,15 @@ giw_vslider_expose (GtkWidget      *widget,
 			vslider->pbutton_w,
 			vslider->pbutton_h,
 			GTK_ORIENTATION_VERTICAL);
+#endif
  
   return(0);
 }
 
-#endif
 
 static gboolean
 giw_vslider_button_press (GtkWidget        *widget,
-			GdkEventButton   *event)
+			  GdkEventButton   *event)
 {
   GiwVSlider *vslider;
  
@@ -552,7 +652,7 @@ giw_vslider_button_press (GtkWidget        *widget,
 
 static gboolean 
 giw_vslider_button_release (GtkWidget        *widget,
-			GdkEventButton   *event)
+			    GdkEventButton   *event)
 {
   GiwVSlider *vslider;
   

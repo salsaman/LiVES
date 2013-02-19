@@ -3953,7 +3953,7 @@ static boolean weed_layer_new_from_file_progressive(weed_plant_t *layer,
   }
 #endif
 
-  pixbuf=lives_pixbuf_new_from_file_at_scale(fname,width,height,FALSE,gerror);
+  pixbuf=lives_pixbuf_new_from_file_at_scale(fname,width>0?width:-1,height>0?height:-1,FALSE,gerror);
 
 #endif
 
@@ -4246,7 +4246,8 @@ LiVESPixbuf *pull_lives_pixbuf_at_size(int clip, int frame, const char *image_ex
     pixbuf=layer_to_pixbuf(layer);
   }
   weed_plant_free(layer);
-  if (pixbuf!=NULL&&(lives_pixbuf_get_width(pixbuf)!=width||lives_pixbuf_get_height(pixbuf)!=height)) {
+  if (pixbuf!=NULL&&((width!=0&&lives_pixbuf_get_width(pixbuf)!=width)
+		     ||(height!=0&&lives_pixbuf_get_height(pixbuf)!=height))) {
     GdkPixbuf *pixbuf2;
     threaded_dialog_spin();
     // TODO - could use resize plugin here
@@ -4258,7 +4259,9 @@ LiVESPixbuf *pull_lives_pixbuf_at_size(int clip, int frame, const char *image_ex
   return pixbuf;
 }
 
-
+LIVES_INLINE LiVESPixbuf *pull_lives_pixbuf(int clip, int frame, const char *image_ext, weed_timecode_t tc) {
+  return pull_lives_pixbuf_at_size(clip,frame,image_ext,tc,0,0,LIVES_INTERP_NORMAL);
+}
 
 static void get_max_opsize(int *opwidth, int *opheight) {
   // calc max output size for display

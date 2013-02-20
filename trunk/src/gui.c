@@ -3518,13 +3518,16 @@ make_preview_box (void) {
   lives_widget_set_hexpand(mainw->preview_box,TRUE);
   lives_widget_set_vexpand(mainw->preview_box,TRUE);
 
+  mainw->preview_controls=lives_vbox_new (FALSE, 0);
+  gtk_box_pack_start (GTK_BOX (mainw->preview_box), mainw->preview_controls, FALSE, FALSE, 0);
+  lives_widget_set_vexpand(mainw->preview_controls,FALSE);
+
   hbox = lives_hbox_new (FALSE, 10);
   gtk_widget_show (hbox);
-  lives_widget_set_vexpand(hbox,FALSE);
-  gtk_box_pack_start (GTK_BOX (mainw->preview_box), hbox, FALSE, FALSE, 0);
+  gtk_box_pack_start (GTK_BOX (mainw->preview_controls), hbox, FALSE, FALSE, 0);
   gtk_container_set_border_width (GTK_CONTAINER (hbox), 10);
 
-  spinbutton_adj = (GObject *)gtk_adjustment_new (1., 1., cfile->frames, 1., 10., 0.);
+  spinbutton_adj = (GObject *)gtk_adjustment_new (1., 1., mainw->current_file>-1?cfile->frames:1., 1., 10., 0.);
   mainw->preview_spinbutton = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 1, 0);
   gtk_entry_set_width_chars (GTK_ENTRY (mainw->preview_spinbutton),8);
   gtk_widget_show (mainw->preview_spinbutton);
@@ -3533,7 +3536,7 @@ make_preview_box (void) {
   lives_widget_set_text_color(mainw->preview_spinbutton, GTK_STATE_INSENSITIVE, &palette->black);
 
   // damn thing crashes if max<min
-  mainw->preview_scale=lives_hscale_new_with_range(0,cfile->frames?cfile->frames>0:1,1);
+  mainw->preview_scale=lives_hscale_new_with_range(0,(mainw->current_file>-1&&cfile->frames)?cfile->frames>0:1,1);
   gtk_widget_show(mainw->preview_scale);
 
   gtk_box_pack_start (GTK_BOX (hbox), mainw->preview_scale, TRUE, TRUE, 0);
@@ -3545,7 +3548,7 @@ make_preview_box (void) {
 
   hbox_rb = lives_hbox_new (FALSE, 10);
   lives_widget_set_vexpand(hbox_rb,FALSE);
-  gtk_box_pack_start (GTK_BOX (mainw->preview_box), hbox_rb, FALSE, FALSE, 0);
+  gtk_box_pack_start (GTK_BOX (mainw->preview_controls), hbox_rb, FALSE, FALSE, 0);
   gtk_widget_show (hbox_rb);
 
   hbox = lives_hbox_new (FALSE, 0);
@@ -3671,12 +3674,12 @@ make_preview_box (void) {
 
   hseparator = lives_hseparator_new ();
   gtk_widget_show (hseparator);
-  gtk_box_pack_start (GTK_BOX (mainw->preview_box), hseparator, TRUE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (mainw->preview_controls), hseparator, TRUE, TRUE, 0);
 
   // buttons
   hbox_buttons = lives_hbox_new (FALSE, 0);
   gtk_widget_show (hbox_buttons);
-  gtk_box_pack_start (GTK_BOX (mainw->preview_box), hbox_buttons, TRUE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (mainw->preview_controls), hbox_buttons, TRUE, TRUE, 0);
 
   rewind_img=gtk_image_new_from_stock ("gtk-media-rewind", gtk_toolbar_get_icon_size (GTK_TOOLBAR (mainw->btoolbar)));
   mainw->p_rewindbutton=gtk_button_new();
@@ -3687,7 +3690,7 @@ make_preview_box (void) {
   gtk_widget_show (mainw->p_rewindbutton);
   gtk_widget_show (rewind_img);
   gtk_widget_set_tooltip_text( mainw->p_rewindbutton,_ ("Rewind"));
-  gtk_widget_set_sensitive (mainw->p_rewindbutton, cfile->pointer_time>0.);
+  gtk_widget_set_sensitive (mainw->p_rewindbutton, mainw->current_file>-1&&cfile->pointer_time>0.);
 
   play_img=gtk_image_new_from_stock ("gtk-media-play", gtk_toolbar_get_icon_size (GTK_TOOLBAR (mainw->btoolbar)));
   mainw->p_playbutton=gtk_button_new();
@@ -3711,7 +3714,7 @@ make_preview_box (void) {
   gtk_widget_show (mainw->p_playselbutton);
   gtk_widget_show (playsel_img);
   gtk_widget_set_tooltip_text( mainw->p_playselbutton,_ ("Play Selection"));
-  gtk_widget_set_sensitive (mainw->p_playselbutton, cfile->frames>0);
+  gtk_widget_set_sensitive (mainw->p_playselbutton, mainw->current_file>-1&&cfile->frames>0);
 
   fnamex=g_build_filename(prefs->prefix_dir,ICON_DIR,"loop.png",NULL);
   g_snprintf (buff,PATH_MAX,"%s",fnamex);
@@ -3780,6 +3783,8 @@ make_preview_box (void) {
 						   G_CALLBACK (on_preview_spinbutton_changed),
 						   NULL);
 
+  gtk_widget_show_all(mainw->preview_box);
+
 }
 
 
@@ -3801,11 +3806,31 @@ disable_record (void) {
 }
 
 
-void make_play_window(void) {
-  //  separate window
 
+void play_window_set_title(void) {
   gchar *xtrabit;
   gchar *title;
+
+  if (mainw->sepwin_scale!=100.) xtrabit=g_strdup_printf(_(" (%d %% scale)"),(int)mainw->sepwin_scale);
+  else xtrabit=g_strdup("");
+
+  if (mainw->playing_file>-1) {
+    title=g_strdup_printf(_("LiVES: - Play Window%s"),xtrabit);
+    gtk_window_set_title (GTK_WINDOW (mainw->play_window), title);
+  }
+  else {
+    title=g_strdup_printf("%s%s",gtk_window_get_title(GTK_WINDOW
+						      (mainw->multitrack==NULL?mainw->LiVES:
+						       mainw->multitrack->window)),xtrabit);
+    gtk_window_set_title(GTK_WINDOW(mainw->play_window),title);
+  }
+  g_free(title);
+  g_free(xtrabit);
+}
+
+
+void make_play_window(void) {
+  //  separate window
 
   if (mainw->playing_file>-1) {
     unhide_cursor(lives_widget_get_xwindow(mainw->playarea));
@@ -3835,19 +3860,33 @@ void make_play_window(void) {
   resize_play_window();
   if (mainw->play_window==NULL) return;
 
-  if (mainw->playing_file==-1&&mainw->current_file>0&&cfile->frames>0&&mainw->multitrack==NULL) {
+  //if (mainw->playing_file==-1&&mainw->current_file>0&&cfile->frames>0&&mainw->multitrack==NULL) {
+  if (mainw->multitrack==NULL&&mainw->playing_file==-1) {
+
     if (mainw->preview_box==NULL) {
       // create the preview box that shows frames
       make_preview_box();
     }
-    if (cfile->is_loaded) {
-      //and add it the play window
-      gtk_container_add (GTK_CONTAINER (mainw->play_window), mainw->preview_box);
-      gtk_widget_set_size_request(mainw->preview_box,-1,PREVIEW_BOX_HT);
 
-      if (mainw->is_processing&&!cfile->nopreview) gtk_widget_set_tooltip_text( mainw->p_playbutton,_ ("Preview")); 
+    //if (cfile->is_loaded) {
+    //and add it the play window
+    gtk_container_add (GTK_CONTAINER (mainw->play_window), mainw->preview_box);
+    //gtk_widget_set_size_request(mainw->preview_box,-1,PREVIEW_BOX_HT);
+
+    if (mainw->is_processing&&mainw->current_file>-1&&!cfile->nopreview) 
+      gtk_widget_set_tooltip_text( mainw->p_playbutton,_ ("Preview")); 
+
+    if (mainw->current_file>-1&&cfile->is_loaded) {
       gtk_widget_grab_focus (mainw->preview_scale);
+    }
+    else {
+      gtk_widget_hide(mainw->preview_controls);
+    }
 
+    if (mainw->playing_file>-1) {
+      gtk_widget_hide(mainw->preview_box);
+    }
+    else {
       if (mainw->is_processing&&(mainw->prv_link==PRV_START||mainw->prv_link==PRV_END)) {
 	// block spinbutton in play window
 	gtk_widget_set_sensitive(mainw->preview_spinbutton,FALSE);
@@ -3860,29 +3899,14 @@ void make_play_window(void) {
       gtk_widget_queue_resize(mainw->preview_box);
       // be careful, the user could switch out of sepwin here !
       mainw->noswitch=TRUE;
-
+      
       while (g_main_context_iteration(NULL,FALSE));
       mainw->noswitch=FALSE;
       if (mainw->play_window==NULL) return;
-   }
+    }
   }
 
-
-  if (mainw->sepwin_scale!=100.) xtrabit=g_strdup_printf(_(" (%d %% scale)"),(int)mainw->sepwin_scale);
-  else xtrabit=g_strdup("");
-
-  if (mainw->playing_file>-1) {
-    title=g_strdup_printf(_("LiVES: - Play Window%s"),xtrabit);
-    gtk_window_set_title (GTK_WINDOW (mainw->play_window), title);
-  }
-  else {
-    title=g_strdup_printf("%s%s",gtk_window_get_title(GTK_WINDOW
-						      (mainw->multitrack==NULL?mainw->LiVES:
-						       mainw->multitrack->window)),xtrabit);
-    gtk_window_set_title(GTK_WINDOW(mainw->play_window),title);
-  }
-  g_free(title);
-  g_free(xtrabit);
+  play_window_set_title();
 
   if ((mainw->current_file==-1||(!cfile->is_loaded&&!mainw->preview)||
        (cfile->frames==0&&(mainw->multitrack==NULL||mainw->playing_file==-1)))&&mainw->imframe!=NULL) {

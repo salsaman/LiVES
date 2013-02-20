@@ -1016,23 +1016,13 @@ text_window *create_text_window (const gchar *title, const gchar *text, GtkTextB
 
     okbutton = gtk_button_new_with_mnemonic (_("_Close Window"));
 
-    if (mainw->iochan!=NULL) {
-      GtkWidget *savebutton = gtk_button_new_with_mnemonic (_("_Save to file"));
-      gtk_dialog_add_action_widget (GTK_DIALOG (textwindow->dialog), savebutton, GTK_RESPONSE_YES);
-      gtk_dialog_add_action_widget (GTK_DIALOG (textwindow->dialog), okbutton, GTK_RESPONSE_OK);
+    GtkWidget *savebutton = gtk_button_new_with_mnemonic (_("_Save to file"));
+    gtk_dialog_add_action_widget (GTK_DIALOG (textwindow->dialog), savebutton, GTK_RESPONSE_YES);
+    gtk_dialog_add_action_widget (GTK_DIALOG (textwindow->dialog), okbutton, GTK_RESPONSE_OK);
     
-      g_signal_connect (GTK_OBJECT (savebutton), "clicked",
-			G_CALLBACK (on_save_textview_clicked),
-			textwindow->textview);
-    }
-    else {
-      gtk_dialog_add_action_widget (GTK_DIALOG (textwindow->dialog), okbutton, GTK_RESPONSE_OK);
-      gtk_widget_set_size_request (okbutton, TXTWIN_OK_WIDTH, TXTWIN_OK_HEIGHT);
-      lives_widget_set_can_focus_and_default (okbutton);
-      gtk_widget_grab_default (okbutton);
-      gtk_widget_grab_focus (okbutton);
-      gtk_container_set_border_width (GTK_CONTAINER (okbutton), 12);
-    }
+    g_signal_connect (GTK_OBJECT (savebutton), "clicked",
+		      G_CALLBACK (on_save_textview_clicked),
+		      textwindow->textview);
     
     g_signal_connect (GTK_OBJECT (okbutton), "clicked",
 		      G_CALLBACK (lives_general_button_clicked),

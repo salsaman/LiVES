@@ -808,6 +808,7 @@ typedef struct {
   gint opwy;
 
   // sepwin buttons
+  GtkWidget *preview_controls;
   GtkWidget *p_playbutton;
   GtkWidget *p_playselbutton;
   GtkWidget *p_rewindbutton;

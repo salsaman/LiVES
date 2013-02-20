@@ -693,23 +693,34 @@ void on_vppa_ok_clicked (GtkButton *button, gpointer user_data) {
 
 	      }
 
-	      if (vpp->set_yuv_palette_clamping!=NULL) (*vpp->set_yuv_palette_clamping)(vpp->YUV_clamping);
-
-#ifdef RT_AUDIO
-	      if (mainw->vpp->audio_codec!=AUDIO_CODEC_NONE&&prefs->stream_audio_out) {
-		start_audio_stream();
-	      }
-#endif
 
 	      if (prefs->play_monitor!=0) {
 		if (mainw->play_window!=NULL) {
 #ifdef USE_X11
-		  xwinid=(uint64_t)GDK_WINDOW_XID(lives_widget_get_xwindow(mainw->play_window));
+		  if (lives_widget_get_display_type(mainw->play_window)==LIVES_XDISPLAY_X11)
+		    xwin=(uint64_t)GDK_WINDOW_XID (lives_widget_get_xwindow(mainw->play_window));
+		  else
 #else
-		  xwinid=(uint64_t)gdk_win32_drawable_get_handle (lives_widget_get_xwindow(mainw->play_window));
+		    if (lives_widget_get_display_type(mainw->play_window)==LIVES_XDISPLAY_WIN32)
+		      xwin=(uint64_t)gdk_win32_drawable_get_handle (lives_widget_get_xwindow(mainw->play_window));
+		    else 
 #endif
+		      {
+			LIVES_WARNING("Unsupported display type for playback plugin");
+			return;
+		      }
 		}
 	      }
+
+#ifdef RT_AUDIO
+	      if (vpp->set_yuv_palette_clamping!=NULL) (*vpp->set_yuv_palette_clamping)(vpp->YUV_clamping);
+	      
+	      if (mainw->vpp->audio_codec!=AUDIO_CODEC_NONE&&prefs->stream_audio_out) {
+		start_audio_stream();
+	      }
+
+#endif
+
 	      
 	      if (vpp->init_screen!=NULL) {
 		(*vpp->init_screen)(mainw->pwidth,mainw->pheight,TRUE,xwinid,vpp->extra_argc,vpp->extra_argv);

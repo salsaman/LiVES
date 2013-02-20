@@ -800,6 +800,7 @@ void make_play_window(void);
 void resize_play_window (void);
 void kill_play_window (void);
 void make_preview_box (void);
+void play_window_set_title(void);
 void add_to_playframe (void);
 GtkWidget* create_cdtrack_dialog (gint type, gpointer user_data);
 GtkTextView *create_output_textview(void);

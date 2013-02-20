@@ -5430,6 +5430,7 @@ static boolean recover_files(gchar *recovery_file, boolean auto_recover) {
 	}
 	if (!is_scrap&&cfile->frames>0&&(cfile->hsize*cfile->vsize==0)) {
 	  get_frames_sizes(mainw->current_file,1);
+	  needs_update=TRUE;
 	}
 	if (is_ascrap&&cfile->afilesize==0) reget_afilesize(mainw->current_file);
       }

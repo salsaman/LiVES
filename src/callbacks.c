@@ -6113,14 +6113,6 @@ void on_fs_preview_clicked (GtkWidget *widget, gpointer user_data) {
 
     g_free(dfile);
 
-    if (preview_type==1||preview_type==3) {
-#ifdef USE_X11
-      xwin=(uint64_t)GDK_WINDOW_XID (lives_widget_get_xwindow(mainw->fs_playarea));
-#else
-      xwin=(uint64_t)gdk_win32_drawable_get_handle (lives_widget_get_xwindow(mainw->fs_playarea));
-#endif
-
-    }
 
     lives_widget_set_bg_color (mainw->fs_playarea, GTK_STATE_NORMAL, &palette->black);
     lives_widget_set_bg_color (mainw->fs_playframe, GTK_STATE_NORMAL, &palette->black);
@@ -6244,6 +6236,27 @@ void on_fs_preview_clicked (GtkWidget *widget, gpointer user_data) {
       file_open_params=g_strdup_printf("%s %s -ao null",mainw->file_open_params!=NULL?
 				       mainw->file_open_params:"",get_deinterlace_string());
     }
+
+
+    if (preview_type==1||preview_type==3) {
+#ifdef USE_X11
+      if (lives_widget_get_display_type(mainw->fs_playarea)==LIVES_XDISPLAY_X11)
+	xwin=(uint64_t)GDK_WINDOW_XID (lives_widget_get_xwindow(mainw->fs_playarea));
+      else
+#else
+	if (lives_widget_get_display_type(mainw->fs_playarea)==LIVES_XDISPLAY_WIN32)
+	  xwin=(uint64_t)gdk_win32_drawable_get_handle (lives_widget_get_xwindow(mainw->fs_playarea));
+	else 
+#endif
+	  {
+	    LIVES_WARNING("Unsupported display type for preview");
+	    end_fs_preview();
+	    g_free(info_file);
+	    return;
+	  }
+    }
+
+
 
     if (file_open_params!=NULL) {
       com=g_strdup_printf("%s fs_preview fsp%d %"PRIu64" %d %d %.2f %d \"%s\" \"%s\"",prefs->backend,getpid(),
@@ -6800,22 +6813,33 @@ void on_save_textview_clicked (GtkButton *button, gpointer user_data) {
   if ((fd=creat(save_file,S_IRUSR|S_IWUSR))==-1) {
 #endif
     gtk_widget_show(gtk_widget_get_toplevel(GTK_WIDGET(button)));
-    do_file_perm_error(save_file);
+    do_write_failed_error_s(save_file,g_strerror(errno));
     g_free(save_file);
     return;
   }
-
-  g_free(save_file);
 
   btext=text_view_get_text(textview);
   
   gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
   while (g_main_context_iteration (NULL,FALSE));
 
+  mainw->write_failed=FALSE;
   lives_write(fd,btext,strlen(btext),FALSE);
   g_free(btext);
   
   close (fd);
+
+  if (mainw->write_failed) {
+    do_write_failed_error_s(save_file,g_strerror(errno));
+  }
+  else {
+    gchar *msg=g_strdup_printf(_("Text was saved as\n%s\n"),save_file);
+    do_blocking_error_dialog(msg);
+    g_free(msg);
+  }
+
+  g_free(save_file);
+
 }
 
 

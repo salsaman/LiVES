@@ -6960,7 +6960,9 @@ gboolean weed_generator_start (weed_plant_t *inst) {
 
     play_file();
 
-
+    if (mainw->play_window!=NULL) {
+      gtk_widget_queue_draw(mainw->play_window);
+    }
   }
   else {
     // already playing

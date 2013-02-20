@@ -1966,7 +1966,6 @@ void get_frames_sizes(int fileno, int frame) {
   if ((pixbuf=pull_lives_pixbuf(fileno,frame,mainw->files[fileno]->img_type==IMG_TYPE_JPEG?"jpg":"png",0))) {
     sfile->hsize=lives_pixbuf_get_width(pixbuf);
     sfile->vsize=lives_pixbuf_get_height(pixbuf);
-    g_print("got %d x %d\n",sfile->hsize,sfile->vsize);
     g_object_unref(pixbuf);
   }
 
@@ -2791,7 +2790,8 @@ void get_play_times(void) {
       gtk_widget_queue_draw(mainw->hruler);
 
       draw_little_bars(cfile->pointer_time);
-      if (mainw->playing_file==-1&&prefs->sepwin_type==1&&mainw->sep_win&&cfile->is_loaded) {
+
+      if (mainw->playing_file==-1&&mainw->play_window!=NULL&&cfile->is_loaded) {
 	if (mainw->preview_box==NULL) {
 	  // create the preview box that shows frames
 	  make_preview_box();
@@ -2801,9 +2801,11 @@ void get_play_times(void) {
 					       cfile->clip_type==CLIP_TYPE_FILE)&&!mainw->is_rendering) {
 	  gtk_widget_queue_draw(mainw->play_window);
 	  gtk_container_add (GTK_CONTAINER (mainw->play_window), mainw->preview_box);
+	  play_window_set_title();
+	  load_preview_image(FALSE);
 	}
-	load_preview_image(FALSE);
       }
+
     }
     else {
       gtk_widget_hide (mainw->hruler);

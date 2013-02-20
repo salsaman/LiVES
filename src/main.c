@@ -3277,6 +3277,7 @@ procw_desensitize(void) {
     int height=lives_pixbuf_get_height(pixbuf);
     int cx=(rwidth-width)/2;
     int cy=(rheight-height)/2;
+
     lives_painter_set_source_pixbuf (cr, pixbuf, cx, cy);
     lives_painter_rectangle(cr,cx,cy,
 			    width,
@@ -3597,9 +3598,8 @@ void load_preview_image(boolean update_always) {
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(mainw->preview_spinbutton),0);
     g_signal_handler_unblock(mainw->preview_spinbutton,mainw->preview_spin_func);
     if (mainw->imframe!=NULL) {
-      g_print("pt a\n");
-      set_ce_frame_from_pixbuf(GTK_IMAGE(mainw->preview_image), mainw->imframe, NULL);
       gtk_widget_set_size_request(mainw->preview_image,lives_pixbuf_get_width(mainw->imframe),lives_pixbuf_get_height(mainw->imframe));
+      set_ce_frame_from_pixbuf(GTK_IMAGE(mainw->preview_image), mainw->imframe, NULL);
     }
     else set_ce_frame_from_pixbuf(GTK_IMAGE(mainw->preview_image), NULL, NULL);
     return;
@@ -5860,16 +5860,33 @@ void close_current_file(gint file_to_switch_to) {
     gtk_widget_hide(mainw->redo);
     gtk_widget_show(mainw->undo);
     gtk_widget_set_sensitive(mainw->undo,FALSE);
-    
-    if (mainw->preview_box!=NULL&&lives_widget_get_parent(mainw->preview_box)!=NULL) {
-      g_object_unref(mainw->preview_box);
-      gtk_container_remove (GTK_CONTAINER (mainw->play_window), mainw->preview_box);
-      mainw->preview_box=NULL;
-    }
-    if (mainw->play_window!=NULL&&!mainw->fs) {
-      resize_play_window();
-    }
 
+
+    if (mainw->playing_file==-1&&mainw->play_window!=NULL) {
+      // if the clip is loaded
+      if (mainw->preview_box==NULL) {
+	// create the preview box that shows frames...
+	make_preview_box();
+      }
+      // add it the play window...
+      if (lives_widget_get_parent(mainw->preview_box)==NULL) {
+	gtk_widget_queue_draw(mainw->play_window);
+	gtk_container_add (GTK_CONTAINER (mainw->play_window), mainw->preview_box);
+      }
+
+      gtk_widget_hide(mainw->preview_controls);
+
+      // and resize it
+      resize_play_window();
+
+      play_window_set_title();
+
+      load_preview_image(FALSE);
+      gtk_widget_queue_resize(mainw->preview_box);
+
+      //while (g_main_context_iteration (NULL,FALSE));
+    }
+      
     if (mainw->multitrack==NULL) {
       resize(1);
       load_start_image (0);
@@ -5916,8 +5933,6 @@ void switch_to_file(gint old_file, gint new_file) {
   gchar title[256];
   GtkWidget *active_image;
   gint orig_file=mainw->current_file;
-
-  gchar *xtrabit,*xtitle;
 
   // should use close_current_file
   if (new_file==-1||new_file>MAX_FILES) {
@@ -5995,7 +6010,7 @@ void switch_to_file(gint old_file, gint new_file) {
     sensitize();
   }
 
-  if ((mainw->playing_file==-1&&prefs->sepwin_type==1&&mainw->sep_win&&new_file>0&&cfile->is_loaded)
+  if ((mainw->playing_file==-1&&mainw->play_window!=NULL&&cfile->is_loaded)
       &&orig_file!=new_file) {
     // if the clip is loaded
     if (mainw->preview_box==NULL) {
@@ -6007,21 +6022,18 @@ void switch_to_file(gint old_file, gint new_file) {
       gtk_widget_queue_draw(mainw->play_window);
       gtk_container_add (GTK_CONTAINER (mainw->play_window), mainw->preview_box);
     }
+
+    gtk_widget_show(mainw->preview_controls);
+
     // and resize it
     resize_play_window();
 
-    if (mainw->sepwin_scale!=100.) xtrabit=g_strdup_printf(_(" (%d %% scale)"),(int)mainw->sepwin_scale);
-    else xtrabit=g_strdup("");
-    xtitle=g_strdup_printf(_("LiVES: - Play Window%s"),xtrabit);
-    if (mainw->play_window!=NULL)
-      gtk_window_set_title (GTK_WINDOW (mainw->play_window), xtitle);
-    g_free(xtitle);
-    g_free(xtrabit);
+    play_window_set_title();
 
     load_preview_image(FALSE);
     gtk_widget_queue_resize(mainw->preview_box);
 
-    while (g_main_context_iteration (NULL,FALSE));
+    //while (g_main_context_iteration (NULL,FALSE));
   }
   
   if (new_file>0) {

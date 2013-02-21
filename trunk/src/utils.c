@@ -2802,8 +2802,8 @@ void get_play_times(void) {
 	  gtk_widget_queue_draw(mainw->play_window);
 	  gtk_container_add (GTK_CONTAINER (mainw->play_window), mainw->preview_box);
 	  play_window_set_title();
-	  load_preview_image(FALSE);
 	}
+	load_preview_image(FALSE);
       }
 
     }

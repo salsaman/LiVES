@@ -1370,13 +1370,13 @@ LIVES_INLINE uint64_t lives_widget_get_xwinid(LiVESWidget *widget, const gchar *
   uint64_t xwin=-1;
 #ifdef GUI_GTK
 #ifdef GDK_WINDOWING_X11
-  if (lives_widget_get_display_type(mainw->fs_playarea)==LIVES_DISPLAY_TYPE_X11)
-    xwin=(uint64_t)GDK_WINDOW_XID (lives_widget_get_xwindow(mainw->fs_playarea));
+  if (lives_widget_get_display_type(widget)==LIVES_DISPLAY_TYPE_X11)
+    xwin=(uint64_t)GDK_WINDOW_XID (lives_widget_get_xwindow(widget));
   else
 #endif
 #ifdef GDK_WINDOWING_WIN32
-    if (lives_widget_get_display_type(mainw->fs_playarea)==LIVES_DISPLAY_TYPE_WIN32)
-      xwin=(uint64_t)gdk_win32_drawable_get_handle (lives_widget_get_xwindow(mainw->fs_playarea));
+    if (lives_widget_get_display_type(widget)==LIVES_DISPLAY_TYPE_WIN32)
+      xwin=(uint64_t)gdk_win32_drawable_get_handle (lives_widget_get_xwindow(widget));
     else 
 #endif
 #endif

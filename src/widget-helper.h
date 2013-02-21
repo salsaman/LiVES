@@ -20,6 +20,12 @@ typedef enum {
 } lives_cursor_t;
 
 
+typedef enum {
+  LIVES_DISPLAY_TYPE_UNKNOWN=0,
+  LIVES_DISPLAY_TYPE_X11,
+  LIVES_DISPLAY_TYPE_WIN32
+} lives_display_t;
+
 
 #define W_PACKING_WIDTH 10 // packing width for widgets with labels
 #define W_PACKING_HEIGHT 10 // packing height for widgets
@@ -602,10 +608,14 @@ void lives_entry_set_editable(LiVESEntry *, boolean editable);
 
 void lives_scale_button_set_orientation(LiVESScaleButton *, LiVESOrientation orientation);
 
-void lives_widget_get_pointer(LiVESWidget *, int *x, int *y);
+void lives_widget_get_pointer(LiVESXDevice *, LiVESWidget *, int *x, int *y);
 LiVESXWindow *lives_display_get_window_at_pointer (LiVESXDevice *, LiVESXDisplay *, int *win_x, int *win_y);
 void lives_display_get_pointer (LiVESXDevice *, LiVESXDisplay *, LiVESXScreen **, int *x, int *y, LiVESModifierType *mask);
 void lives_display_warp_pointer (LiVESXDevice *, LiVESXDisplay *, LiVESXScreen *, int x, int y);
+
+lives_display_t lives_widget_get_display_type(LiVESWidget *widget);
+
+uint64_t lives_widget_get_xwinid(LiVESWidget *, const gchar *failure_msg);
 
 // optional
 

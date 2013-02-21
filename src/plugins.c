@@ -696,19 +696,8 @@ void on_vppa_ok_clicked (GtkButton *button, gpointer user_data) {
 
 	      if (prefs->play_monitor!=0) {
 		if (mainw->play_window!=NULL) {
-#ifdef USE_X11
-		  if (lives_widget_get_display_type(mainw->play_window)==LIVES_XDISPLAY_X11)
-		    xwin=(uint64_t)GDK_WINDOW_XID (lives_widget_get_xwindow(mainw->play_window));
-		  else
-#else
-		    if (lives_widget_get_display_type(mainw->play_window)==LIVES_XDISPLAY_WIN32)
-		      xwin=(uint64_t)gdk_win32_drawable_get_handle (lives_widget_get_xwindow(mainw->play_window));
-		    else 
-#endif
-		      {
-			LIVES_WARNING("Unsupported display type for playback plugin");
-			return;
-		      }
+		  xwinid=lives_widget_get_xwinid(mainw->play_window,"Unsupported display type for playback plugin");
+		  if (xwinid==-1) return;
 		}
 	      }
 

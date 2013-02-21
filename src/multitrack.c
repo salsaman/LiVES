@@ -3236,7 +3236,8 @@ on_drag_filter_end           (GtkWidget       *widget,
       labelbox=(GtkWidget *)g_object_get_data(G_OBJECT(eventbox),"labelbox");
       if (lives_widget_get_xwindow(eventbox)==window||lives_widget_get_xwindow(labelbox)==window) {
 	if (lives_widget_get_xwindow(labelbox)!=window) {
-	  lives_widget_get_pointer(mt->timeline, &mt->sel_x, &mt->sel_y);
+	  lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[prefs->gui_monitor>0?prefs->gui_monitor-1:0].mouse_device, 
+				   mt->timeline, &mt->sel_x, &mt->sel_y);
 	  timesecs=get_time_from_x(mt,mt->sel_x);
 	}
 	tchan=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"layer_number"));
@@ -3257,7 +3258,8 @@ on_drag_filter_end           (GtkWidget       *widget,
       ahbox=(GtkWidget *)g_object_get_data(G_OBJECT(eventbox),"ahbox");
       if (lives_widget_get_xwindow(eventbox)==window||lives_widget_get_xwindow(labelbox)==window||lives_widget_get_xwindow(ahbox)==window) {
 	if (lives_widget_get_xwindow(labelbox)!=window) {
-	  lives_widget_get_pointer(mt->timeline, &mt->sel_x, &mt->sel_y);
+	  lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[prefs->gui_monitor>0?prefs->gui_monitor-1:0].mouse_device, 
+				   mt->timeline, &mt->sel_x, &mt->sel_y);
 	  timesecs=get_time_from_x(mt,mt->sel_x);
 	}
 	tchan=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"layer_number"));
@@ -3782,7 +3784,8 @@ on_drag_clip_end           (GtkWidget       *widget,
       // insert in backing audio
       if (lives_widget_get_xwindow(labelbox)==window||lives_widget_get_xwindow(ahbox)==window) timesecs=0.;
       else {
-	lives_widget_get_pointer(mt->timeline, &mt->sel_x, &mt->sel_y);
+	lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[prefs->gui_monitor>0?prefs->gui_monitor-1:0].mouse_device, 
+				 mt->timeline, &mt->sel_x, &mt->sel_y);
 	timesecs=get_time_from_x(mt,mt->sel_x);
       }
       mt->current_track=-1;
@@ -3818,7 +3821,8 @@ on_drag_clip_end           (GtkWidget       *widget,
     if (lives_widget_get_xwindow(eventbox)==window||lives_widget_get_xwindow(labelbox)==window||lives_widget_get_xwindow(ahbox)==window) {
       if (lives_widget_get_xwindow(labelbox)==window||lives_widget_get_xwindow(ahbox)==window) timesecs=0.;
       else {
-	lives_widget_get_pointer(mt->timeline, &mt->sel_x, &mt->sel_y);
+	lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[prefs->gui_monitor>0?prefs->gui_monitor-1:0].mouse_device, 
+				 mt->timeline, &mt->sel_x, &mt->sel_y);
 	timesecs=get_time_from_x(mt,mt->sel_x);
       }
       mt->current_track=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"layer_number"));
@@ -12471,7 +12475,8 @@ static void mouse_select_start(GtkWidget *widget, GdkEventButton *event, lives_m
   gtk_widget_set_sensitive(mt->mm_menuitem,FALSE);
   gtk_widget_set_sensitive(mt->view_sel_events,FALSE);
   
-  lives_widget_get_pointer(mt->timeline, &mt->sel_x, &mt->sel_y);
+  lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[prefs->gui_monitor>0?prefs->gui_monitor-1:0].mouse_device, 
+			   mt->timeline, &mt->sel_x, &mt->sel_y);
   timesecs=get_time_from_x(mt,mt->sel_x);
   mt->region_start=mt->region_end=mt->region_init=timesecs;
 
@@ -12479,7 +12484,8 @@ static void mouse_select_start(GtkWidget *widget, GdkEventButton *event, lives_m
   on_timeline_update(mt->timeline_eb,NULL,mt);
   mt->region_updating=FALSE;
 
-  lives_widget_get_pointer(mt->tl_eventbox, &mt->sel_x, &mt->sel_y);
+  lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[prefs->gui_monitor>0?prefs->gui_monitor-1:0].mouse_device, 
+			   mt->tl_eventbox, &mt->sel_x, &mt->sel_y);
   gdk_window_get_position(lives_widget_get_xwindow(mt->timeline_eb), &min_x, NULL);
 
   if (mt->sel_x<min_x) mt->sel_x=min_x;
@@ -12494,7 +12500,8 @@ static void mouse_select_start(GtkWidget *widget, GdkEventButton *event, lives_m
 
 static void mouse_select_end(GtkWidget *widget, GdkEventButton *event, lives_mt *mt) {
   mt->tl_selecting=FALSE;
-  lives_widget_get_pointer(mt->timeline, &mt->sel_x, &mt->sel_y);
+  lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[prefs->gui_monitor>0?prefs->gui_monitor-1:0].mouse_device, 
+			   mt->timeline, &mt->sel_x, &mt->sel_y);
   gtk_widget_set_sensitive(mt->mm_menuitem,TRUE);
   gtk_widget_queue_draw(mt->tl_eventbox);
   on_timeline_release(mt->timeline_reg,NULL,mt);
@@ -12517,7 +12524,8 @@ static void mouse_select_move(GtkWidget *widget, GdkEventMotion *event, lives_mt
 
   if (mt->block_selected!=NULL) unselect_all(mt);
 
-  lives_widget_get_pointer(mt->tl_eventbox, &x, &y);
+  lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[prefs->gui_monitor>0?prefs->gui_monitor-1:0].mouse_device, 
+			   mt->tl_eventbox, &x, &y);
   gdk_window_get_position(lives_widget_get_xwindow(mt->timeline_eb), &min_x, NULL);
 
   if (x<min_x) x=min_x;
@@ -12823,7 +12831,8 @@ boolean on_track_release (GtkWidget *eventbox, GdkEventButton *event, gpointer u
 
   set_cursor_style(mt,LIVES_CURSOR_BUSY,0,0,0,0,0);
 
-  lives_widget_get_pointer(eventbox, &x, &y);
+  lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[prefs->gui_monitor>0?prefs->gui_monitor-1:0].mouse_device, 
+			   eventbox, &x, &y);
   timesecs=get_time_from_x(mt,x);
   tc=timesecs*U_SECL;
 
@@ -12897,7 +12906,8 @@ boolean on_track_release (GtkWidget *eventbox, GdkEventButton *event, gpointer u
 	move_block(mt,mt->putative_block,timesecs,old_track,track);
 	mt->putative_block=NULL;
 
-	lives_widget_get_pointer(eventbox, &x, &y);
+	lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[prefs->gui_monitor>0?prefs->gui_monitor-1:0].mouse_device, 
+				 eventbox, &x, &y);
 	timesecs=get_time_from_x(mt,x);
 
 	mt_tl_move(mt,timesecs-lives_ruler_get_value(LIVES_RULER(mt->timeline)));
@@ -12973,7 +12983,8 @@ boolean on_track_click (GtkWidget *eventbox, GdkEventButton *event, gpointer use
 
   gtk_widget_set_sensitive(mt->mm_menuitem,FALSE);
 
-  lives_widget_get_pointer(eventbox, &x, &y);
+  lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[prefs->gui_monitor>0?prefs->gui_monitor-1:0].mouse_device, 
+			   eventbox, &x, &y);
 
   timesecs=get_time_from_x(mt,x+mt->hotspot_x);
 
@@ -17226,7 +17237,8 @@ boolean on_timeline_update (GtkWidget *widget, GdkEventMotion *event, gpointer u
 
   if (mainw->playing_file>-1) return TRUE;
 
-  lives_widget_get_pointer(widget, &x, NULL);
+  lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[prefs->gui_monitor>0?prefs->gui_monitor-1:0].mouse_device, 
+			   widget, &x, NULL);
   pos=get_time_from_x(mt,x);
 
   if (!mt->region_updating) {
@@ -17503,7 +17515,8 @@ on_timeline_press (GtkWidget *widget, GdkEventButton *event, gpointer user_data)
 
   if (mainw->playing_file>-1) return FALSE;
 
-  lives_widget_get_pointer(widget, &x, NULL);
+  lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[prefs->gui_monitor>0?prefs->gui_monitor-1:0].mouse_device, 
+			   widget, &x, NULL);
   pos=get_time_from_x(mt,x);
   if (widget==mt->timeline_reg) {
     mt->region_start=mt->region_end=mt->region_init=pos;

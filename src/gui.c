@@ -4143,11 +4143,8 @@ void resize_play_window (void) {
 	if (pmonitor!=0) {
 	  fullscreen=FALSE;
 	  if (mainw->play_window!=NULL) {
-#ifdef USE_X11
-	    xwinid=(uint64_t)GDK_WINDOW_XID(lives_widget_get_xwindow(mainw->play_window));
-#else
-	    xwinid=(uint64_t)gdk_win32_drawable_get_handle (lives_widget_get_xwindow(mainw->play_window));
-#endif
+	    xwinid=lives_widget_get_xwinid(mainw->play_window,"Unsupported display type for playback plugin");
+	    if (xwinid==-1) return;
 	  }
 	}
 	if (mainw->ext_playback) {

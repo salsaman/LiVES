@@ -690,17 +690,23 @@ gboolean on_framedraw_enter (GtkWidget *widget, GdkEventCrossing *event, lives_s
   case FD_RECT_DEMASK:
   case FD_RECT_MULTRECT:
     if (mainw->multitrack==NULL) {
-      cursor=gdk_cursor_new_for_display (gdk_display_get_default(), GDK_TOP_LEFT_CORNER);
+      cursor=gdk_cursor_new_for_display 
+	(mainw->mgeom[prefs->gui_monitor>0?prefs->gui_monitor-1:0].disp,
+	 GDK_TOP_LEFT_CORNER);
       gdk_window_set_cursor (lives_widget_get_xwindow(mainw->framedraw), cursor);
     }
     else {
-      cursor=gdk_cursor_new_for_display (mainw->multitrack->display, GDK_TOP_LEFT_CORNER);
+      cursor=gdk_cursor_new_for_display 
+	(mainw->mgeom[prefs->gui_monitor>0?prefs->gui_monitor-1:0].disp,
+	 GDK_TOP_LEFT_CORNER);
       gdk_window_set_cursor (lives_widget_get_xwindow(mainw->multitrack->play_box), cursor);
     }
     break;
   case FD_SINGLEPOINT:
     if (mainw->multitrack==NULL) {
-      cursor=gdk_cursor_new_for_display (gdk_display_get_default(), GDK_CROSSHAIR);
+      cursor=gdk_cursor_new_for_display 
+	(mainw->mgeom[prefs->gui_monitor>0?prefs->gui_monitor-1:0].disp,
+	 GDK_CROSSHAIR);
       gdk_window_set_cursor (lives_widget_get_xwindow(mainw->framedraw), cursor);
     }
     else {
@@ -735,7 +741,8 @@ gboolean on_framedraw_mouse_start (GtkWidget *widget, GdkEventButton *event, liv
   if (mainw->multitrack!=NULL&&mainw->multitrack->track_index==-1) return FALSE;
 
   if (event->button==1) {
-    lives_widget_get_pointer(widget, &xstart, &ystart);
+    lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[prefs->gui_monitor>0?prefs->gui_monitor-1:0].mouse_device, 
+			     widget, &xstart, &ystart);
 
     b1_held=TRUE;
 
@@ -743,7 +750,9 @@ gboolean on_framedraw_mouse_start (GtkWidget *widget, GdkEventButton *event, liv
 	(mainw->multitrack==NULL||mainw->multitrack->cursor_style==0)) {
       GdkCursor *cursor;
       if (mainw->multitrack==NULL) {
-	cursor=gdk_cursor_new_for_display (gdk_display_get_default(), GDK_BOTTOM_RIGHT_CORNER);
+	cursor=gdk_cursor_new_for_display 
+	  (mainw->mgeom[prefs->gui_monitor>0?prefs->gui_monitor-1:0].disp, 
+	   GDK_BOTTOM_RIGHT_CORNER);
 	gdk_window_set_cursor (lives_widget_get_xwindow(mainw->framedraw), cursor);
       }
       else {
@@ -816,7 +825,8 @@ gboolean on_framedraw_mouse_update (GtkWidget *widget, GdkEventButton *event, li
   if (framedraw==NULL) return FALSE;
   if (mainw->multitrack!=NULL&&mainw->multitrack->track_index==-1) return FALSE;
 
-  lives_widget_get_pointer(widget, &xcurrent, &ycurrent);
+  lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[prefs->gui_monitor>0?prefs->gui_monitor-1:0].mouse_device, 
+			   widget, &xcurrent, &ycurrent);
 
   switch (framedraw->type) {
   case FD_RECT_DEMASK:
@@ -891,7 +901,8 @@ gboolean on_framedraw_mouse_reset (GtkWidget *widget, GdkEventButton *event, liv
   if (framedraw==NULL) return FALSE;
   if (mainw->multitrack!=NULL&&mainw->multitrack->track_index==-1) return FALSE;
 
-  lives_widget_get_pointer(widget, &xend, &yend);
+  lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[prefs->gui_monitor>0?prefs->gui_monitor-1:0].mouse_device, 
+			   widget, &xend, &yend);
   // user released the mouse button in framedraw widget
   if (event->button==1) {
     b1_held=FALSE;

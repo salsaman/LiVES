@@ -6239,21 +6239,12 @@ void on_fs_preview_clicked (GtkWidget *widget, gpointer user_data) {
 
 
     if (preview_type==1||preview_type==3) {
-#ifdef USE_X11
-      if (lives_widget_get_display_type(mainw->fs_playarea)==LIVES_XDISPLAY_X11)
-	xwin=(uint64_t)GDK_WINDOW_XID (lives_widget_get_xwindow(mainw->fs_playarea));
-      else
-#else
-	if (lives_widget_get_display_type(mainw->fs_playarea)==LIVES_XDISPLAY_WIN32)
-	  xwin=(uint64_t)gdk_win32_drawable_get_handle (lives_widget_get_xwindow(mainw->fs_playarea));
-	else 
-#endif
-	  {
-	    LIVES_WARNING("Unsupported display type for preview");
-	    end_fs_preview();
-	    g_free(info_file);
-	    return;
-	  }
+      xwin=lives_widget_get_xwinid(mainw->fs_playarea,"Unsupported display type for preview.");
+      if (xwin==-1) {
+	end_fs_preview();
+	g_free(info_file);
+	return;
+      }
     }
 
 
@@ -9900,7 +9891,8 @@ on_mouse_sel_update           (GtkWidget       *widget,
   if (mainw->current_file>-1&&mainw->sel_start>0) {
     gint x,sel_current;
 
-    lives_widget_get_pointer(mainw->LiVES, &x, NULL);
+    lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[prefs->gui_monitor>0?prefs->gui_monitor-1:0].mouse_device, 
+			     mainw->LiVES, &x, NULL);
 
     if (mainw->sel_move==SEL_MOVE_AUTO) 
       sel_current=calc_frame_from_time3(mainw->current_file,
@@ -9955,7 +9947,8 @@ on_mouse_sel_start           (GtkWidget       *widget,
   gint x;
   if (mainw->current_file<=0) return FALSE;
 
-  lives_widget_get_pointer(mainw->LiVES, &x, NULL);
+  lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[prefs->gui_monitor>0?prefs->gui_monitor-1:0].mouse_device, 
+			   mainw->LiVES, &x, NULL);
 
   mainw->sel_start=calc_frame_from_time(mainw->current_file,
 					(gdouble)x/(gdouble)lives_widget_get_allocation_width(mainw->vidbar)*cfile->total_time);
@@ -10031,7 +10024,9 @@ on_mouse_sel_start           (GtkWidget       *widget,
 gboolean
 on_hrule_enter (GtkWidget *widget, GdkEventCrossing *event, gpointer user_data) {
   GdkCursor *cursor;
-  cursor=gdk_cursor_new_for_display (gdk_display_get_default(), GDK_CENTER_PTR);
+  cursor=gdk_cursor_new_for_display 
+    (mainw->mgeom[prefs->gui_monitor>0?prefs->gui_monitor-1:0].disp,
+     GDK_CENTER_PTR);
   gdk_window_set_cursor (lives_widget_get_xwindow(widget), cursor);
   return FALSE;
 }
@@ -10043,7 +10038,8 @@ on_hrule_update           (GtkWidget       *widget,
   gint x;
   if (mainw->current_file<=0) return FALSE;
 
-  lives_widget_get_pointer(mainw->LiVES, &x, NULL);
+  lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[prefs->gui_monitor>0?prefs->gui_monitor-1:0].mouse_device, 
+			   mainw->LiVES, &x, NULL);
   if (x<0) x=0;
 
   // figure out where ptr should be even when > cfile->frames
@@ -10068,7 +10064,8 @@ on_hrule_reset           (GtkWidget       *widget,
   gint x;
   if (mainw->current_file<=0) return FALSE;
 
-  lives_widget_get_pointer(mainw->LiVES, &x, NULL);
+  lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[prefs->gui_monitor>0?prefs->gui_monitor-1:0].mouse_device, 
+			   mainw->LiVES, &x, NULL);
   if (x<0) x=0;
   if ((lives_ruler_set_value(LIVES_RULER (mainw->hruler),(cfile->pointer_time=
        calc_time_from_frame(mainw->current_file,
@@ -10111,7 +10108,8 @@ on_hrule_set           (GtkWidget       *widget,
   // button press
   gint x;
   if (mainw->current_file<=0) return FALSE;
-  lives_widget_get_pointer(mainw->LiVES, &x, NULL);
+  lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[prefs->gui_monitor>0?prefs->gui_monitor-1:0].mouse_device, 
+			   mainw->LiVES, &x, NULL);
   if (x<0) x=0;
   if ((lives_ruler_set_value(LIVES_RULER (mainw->hruler),(cfile->pointer_time=
        calc_time_from_frame(mainw->current_file,calc_frame_from_time(mainw->current_file,
@@ -10490,9 +10488,8 @@ on_capture_activate                (GtkMenuItem     *menuitem,
   gint response;
   gdouble rec_end_time=-1.;
 
-#if GTK_CHECK_VERSION(3,0,0)
-#else
-#ifndef USE_X11
+#if !GTK_CHECK_VERSION(3,0,0)
+#ifndef GDK_WINDOWING_X11
   do_blocking_error_dialog(_("\n\nThis function will only work with X11.\nPlease send a patch to get it working on other platforms.\n\n"));
   return;
 #endif

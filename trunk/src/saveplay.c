@@ -2091,7 +2091,7 @@ void play_file (void) {
   gchar *msg;
   gchar *stfile;
   gchar *xtrabit,*title;
-#ifdef USE_X11
+#ifdef GDK_WINDOWING_X11
   gchar *tmp;
 #endif
 
@@ -2113,8 +2113,8 @@ void play_file (void) {
 #endif
   gboolean has_audio_buffers=FALSE;
 
-#ifdef USE_X11
-  uint64_t awinid=0;
+#ifdef GDK_WINDOWING_X11
+  uint64_t awinid=-1;
 #endif
 
   if (audio_player!=AUD_PLAYER_JACK&&audio_player!=AUD_PLAYER_PULSE) mainw->aud_file_to_kill=mainw->current_file;
@@ -2408,16 +2408,16 @@ void play_file (void) {
   if (prefs->stop_screensaver) {
     g_free (com2);
     com2=NULL;
-#ifdef USE_X11
+#ifdef GDK_WINDOWING_X11
     if (!prefs->show_gui&&prefs->show_playwin&&mainw->play_window!=NULL) {
-      awinid=(uint64_t)GDK_WINDOW_XID (lives_widget_get_xwindow(mainw->play_window));
+      awinid=lives_widget_get_xwinid(mainw->play_window,NULL);
     }
     else if (prefs->show_gui) {
       if (mainw->multitrack!=NULL) {
-	awinid=(uint64_t)GDK_WINDOW_XID (lives_widget_get_xwindow(mainw->multitrack->window));
+	awinid=lives_widget_get_xwinid(mainw->multitrack->window,NULL);
       }
       else if (mainw->LiVES!=NULL) {
-	awinid=(uint64_t)GDK_WINDOW_XID (lives_widget_get_xwindow(mainw->LiVES));
+	awinid=lives_widget_get_xwinid(mainw->LiVES,NULL);
       }
     }
 
@@ -2430,7 +2430,7 @@ void play_file (void) {
       g_free(xnew);
       com2=tmp;
     }
-    if (capable->has_xdg_screensaver) {
+    if (capable->has_xdg_screensaver&&awinid!=-1) {
       gchar *xnew=g_strdup_printf(" xdg-screensaver suspend %"PRIu64" 2>/dev/null ;",awinid);
       tmp=g_strconcat (com2,xnew,NULL);
       g_free(com2);
@@ -2866,7 +2866,7 @@ void play_file (void) {
   // allow this to fail - not all sub-commands may be present
   if (prefs->stop_screensaver) {
 
-#ifdef USE_X11
+#ifdef GDK_WINDOWING_X11
     com=g_strdup("xset s on 2>/dev/null; xset +dpms 2>/dev/null ;");
     
     if (capable->has_gconftool_2) {
@@ -2876,7 +2876,7 @@ void play_file (void) {
       g_free(xnew);
       com=tmp;
     }
-    if (capable->has_xdg_screensaver) {
+    if (capable->has_xdg_screensaver&&awinid!=-1) {
       gchar *xnew=g_strdup_printf(" xdg-screensaver resume %"PRIu64" 2>/dev/null ;",awinid);
       tmp=g_strconcat (com,xnew,NULL);
       g_free(com);

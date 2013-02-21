@@ -1679,6 +1679,8 @@ static void lives_init(_ign_opts *ign_opts) {
 
 
 void do_start_messages(void) {
+  gchar *endian;
+
   d_print("\n");
   d_print(_("Checking optional dependencies:"));
   if (capable->has_mplayer) d_print(_ ("mplayer...detected..."));
@@ -1702,11 +1704,11 @@ void do_start_messages(void) {
   if (capable->has_xwininfo) d_print(_ ("xwininfo...detected..."));
   else d_print(_ ("xwininfo...NOT DETECTED..."));
 
-#ifdef USE_X11
+#ifdef GDK_WINDOWING_X11
   prefs->wm=g_strdup(gdk_x11_screen_get_window_manager_name (gdk_screen_get_default()));
 #else
 #ifdef IS_MINGW
-  prefs->wm=g_strdup((_("Windows")));
+  prefs->wm=g_strdup_printf(_("Windows version %04X"),WINVER);
 #else
   prefs->wm=g_strdup((_("UNKNOWN - please patch me !")));
 #endif
@@ -1718,7 +1720,36 @@ void do_start_messages(void) {
   g_snprintf(mainw->msg,512,_("number of monitors detected: %d\n"),capable->nmonitors);
   d_print(mainw->msg);
 
-  g_snprintf(mainw->msg,512,_("Number of CPUs detected: %d\n"),capable->ncpus);
+  g_snprintf(mainw->msg,512,_("Number of CPUs detected: %d "),capable->ncpus);
+  d_print(mainw->msg);
+
+  if (capable->byte_order==LIVES_LITTLE_ENDIAN) endian=g_strdup(_("little endian"));
+  else endian=g_strdup(_("big endian"));
+  g_snprintf(mainw->msg,512,_("(%d bits, %s)\n"),capable->cpu_bits,endian);
+  d_print(mainw->msg);
+  g_free(endian);
+
+  g_snprintf(mainw->msg,512,_("GUI type is: "));
+  d_print(mainw->msg);
+
+#ifdef GUI_GTK
+  g_snprintf(mainw->msg,512,_("GTK+ version %d.%d.%d (compiled with %d.%d.%d)"),
+	     gtk_get_major_version(),
+	     gtk_get_minor_version(),
+	     gtk_get_micro_version(),
+	     GTK_MAJOR_VERSION,
+	     GTK_MINOR_VERSION,
+	     GTK_MICRO_VERSION
+	     );
+  d_print(mainw->msg);
+#endif
+
+#ifdef PAINTER_CAIRO
+  g_snprintf(mainw->msg,512,_(", with cairo support"));
+  d_print(mainw->msg);
+#endif
+
+  g_snprintf(mainw->msg,512,"\n");
   d_print(mainw->msg);
 
   g_snprintf(mainw->msg,512,_ ("Temp directory is %s\n"),prefs->tmpdir);

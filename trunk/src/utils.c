@@ -3443,8 +3443,8 @@ void prepare_to_play_foreign(void) {
   // here we are going to 'play' a captured external window
   gint new_file=mainw->first_free_file;
 #ifdef GUI_GTK
-#ifdef USE_X11
 #if !GTK_CHECK_VERSION(3,0,0)
+#if GDK_WINDOWING_X11
   GdkVisual *vissi;
 #endif
 #endif
@@ -3493,17 +3493,33 @@ void prepare_to_play_foreign(void) {
   cfile->hsize=mainw->pwidth;
   cfile->vsize=mainw->pheight;
 
+  mainw->foreign_window=NULL;
 
-#ifdef USE_X11
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3,0,0)
-  mainw->foreign_window=gdk_x11_window_foreign_new_for_display(gdk_display_get_default(),mainw->foreign_id);
+
+#ifdef GDK_WINDOWING_X11
+  mainw->foreign_window=gdk_x11_window_foreign_new_for_display
+    (mainw->mgeom[prefs->gui_monitor>0?prefs->gui_monitor-1:0].disp,
+     mainw->foreign_id);
+  gdk_window_set_keep_above(mainw->foreign_window,TRUE);
 #else
+#ifdef GDK_WINDOWING_WIN32
+  if (mainw->foreign_window==NULL)
+    mainw->foreign_window=gdk_win32_window_foreign_new_for_display
+      (mainw->mgeom[prefs->gui_monitor>0?prefs->gui_monitor-1:0].disp,
+       mainw->foreign_id);
+#endif
+
+#endif // W
+
+  if (mainw->foreign_window!=NULL) gdk_window_set_keep_above(mainw->foreign_window,TRUE);
+
+#else // 3,0,0
   mainw->foreign_window=gdk_window_foreign_new(mainw->foreign_id);
 #endif
-  gdk_window_set_keep_above(mainw->foreign_window,TRUE);
 #endif
-#endif
+
   // seems not to work
   //gdk_window_reparent(mainw->foreign_window, mainw->playarea->window, 0, 0);
   //while (g_main_context_iteration(NULL,FALSE));
@@ -3512,8 +3528,8 @@ void prepare_to_play_foreign(void) {
   //vissi=gdk_x11_screen_lookup_visual(gdk_screen_get_default(),hextodec(mainw->foreign_visual));
 
 
-#ifdef USE_X11
 #ifdef GUI_GTK
+#ifdef GDK_WINDOWING_X11
 #if !GTK_CHECK_VERSION(3,0,0)
   vissi=gdk_visual_get_best_with_depth (mainw->foreign_bpp);
 

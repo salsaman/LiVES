@@ -59,9 +59,12 @@ POSSIBILITY OF SUCH DAMAGES.
 #include <gtk/gtk.h>
 #include <gdk/gdkkeysyms.h>
 
+#endif
+
 #ifdef IS_MINGW
 
 #undef GDK_WINDOWING_X11
+
 #ifndef WINVER
 #define WINVER 0x0500
 #endif
@@ -77,7 +80,11 @@ POSSIBILITY OF SUCH DAMAGES.
 typedef PROCESS_INFORMATION * lives_pid_t;
 typedef PROCESS_INFORMATION * lives_pgid_t;
 
-#include <gdk/gdkwin32.h>
+#ifdef GUI_GTK
+#ifndef GDK_WINDOWING_WIN32
+#define GDK_WINDOWING_WIN32 TRUE
+#endif
+#endif
 
 #else
 
@@ -87,8 +94,19 @@ typedef int lives_pgid_t;
 #endif
 
 
+
+#ifdef GUI_GTK
+
+#ifdef GDK_WINDOWING_WIN32
+#include <gdk/gdkwin32.h>
+
+#ifndef GDK_IS_WIN32_DISPLAY 
+#define GDK_IS_WIN32_DISPLAY(display) (TRUE)
+#endif
+
+#endif //GDK_WINDOWING_WIN32
+
 #ifdef GDK_WINDOWING_X11
-#define USE_X11
 
 // needed for GDK_WINDOW_XID - for fileselector preview
 // needed for gdk_x11_screen_get_window_manager_name()
@@ -110,13 +128,11 @@ typedef int lives_pgid_t;
 #define GDK_IS_X11_DISPLAY(display) (FALSE)
 #endif
 
-#ifndef GDK_IS_WIN32_DISPLAY 
-#define GDK_IS_WIN32_DISPLAY(display) (TRUE)
-#endif
 
-#endif
+#endif // GDK_WINDOWING_X11
 
 #endif // GUI_GTK
+
 
 #include <stdlib.h>
 #include <stdio.h>

@@ -114,7 +114,7 @@ GdkFilterReturn filter_func(GdkXEvent *xevent, GdkEvent *event, gpointer data) {
   // filter events at X11 level and act on key press/release
   guint modifiers=0;
 
-#ifdef USE_X11
+#ifndef IS_MINGW
   XEvent *xev=(XEvent *)xevent;
   if (xev->type<2||xev->type>3) return GDK_FILTER_CONTINUE;
   modifiers = (gtk_accelerator_get_default_mod_mask() & xev->xkey.state)|NEEDS_TRANSLATION;

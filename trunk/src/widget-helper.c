@@ -1293,9 +1293,20 @@ LIVES_INLINE void lives_scale_button_set_orientation(LiVESScaleButton *scale, Li
 
 
 
-LIVES_INLINE void lives_widget_get_pointer(LiVESWidget *widget, int *x, int *y) {
+LIVES_INLINE void lives_widget_get_pointer(LiVESXDevice *device, LiVESWidget *widget, int *x, int *y) {
 #ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3,0,0)
+  LiVESXWindow *xwin;
+  if (widget==NULL) xwin=gdk_get_default_root_window ();
+  else xwin=lives_widget_get_xwindow(widget);
+  if (xwin==NULL) {
+    LIVES_ERROR("Tried to get pointer for windowless widget");
+    return;
+  }
+  gdk_window_get_device_position (xwin,device,x,y,NULL);
+#else 
   gtk_widget_get_pointer(widget,x,y);
+#endif
 #endif
 
 }
@@ -1342,6 +1353,40 @@ LIVES_INLINE void lives_display_warp_pointer
 #endif
 #endif
 }
+
+
+LIVES_INLINE lives_display_t lives_widget_get_display_type(LiVESWidget *widget) {
+  lives_display_t dtype=LIVES_DISPLAY_TYPE_UNKNOWN;
+#ifdef GUI_GTK
+  LiVESXDisplay *display=gtk_widget_get_display(widget);
+  if (GDK_IS_X11_DISPLAY(display)) dtype=LIVES_DISPLAY_TYPE_X11;
+  else if (GDK_IS_WIN32_DISPLAY(display)) dtype=LIVES_DISPLAY_TYPE_WIN32;
+#endif
+  return dtype;
+}
+
+
+LIVES_INLINE uint64_t lives_widget_get_xwinid(LiVESWidget *widget, const gchar *msg) {
+  uint64_t xwin=-1;
+#ifdef GUI_GTK
+#ifdef GDK_WINDOWING_X11
+  if (lives_widget_get_display_type(mainw->fs_playarea)==LIVES_DISPLAY_TYPE_X11)
+    xwin=(uint64_t)GDK_WINDOW_XID (lives_widget_get_xwindow(mainw->fs_playarea));
+  else
+#endif
+#ifdef GDK_WINDOWING_WIN32
+    if (lives_widget_get_display_type(mainw->fs_playarea)==LIVES_DISPLAY_TYPE_WIN32)
+      xwin=(uint64_t)gdk_win32_drawable_get_handle (lives_widget_get_xwindow(mainw->fs_playarea));
+    else 
+#endif
+#endif
+      if (msg!=NULL) LIVES_WARN(msg);
+
+  return xwin;
+}
+
+
+
 
 
 

@@ -2694,7 +2694,10 @@ void mt_show_current_frame(lives_mt *mt, boolean return_layer) {
   if (return_layer) return;
 
 #if GTK_CHECK_VERSION(3,0,0)
-    if (mt->frame_pixbuf!=NULL&&mt->frame_pixbuf!=mainw->imframe) g_object_unref(mt->frame_pixbuf);
+  if (mt->frame_pixbuf!=NULL&&mt->frame_pixbuf!=mainw->imframe) {
+    g_object_unref(mt->frame_pixbuf);
+    mt->frame_pixbuf=NULL;
+  }
 #endif
 
   mt->outwidth=cfile->hsize;
@@ -2720,7 +2723,8 @@ void mt_show_current_frame(lives_mt *mt, boolean return_layer) {
     weed_plant_free(mainw->frame_layer);
     mainw->frame_layer=NULL;
 
-    if (mt->framedraw==NULL||!mt_framedraw(mt,pixbuf)) {
+    if (mt->framedraw!=NULL) pixbuf=mt_framedraw(mt,pixbuf);
+
 #if GTK_CHECK_VERSION(3,0,0)
       mt->frame_pixbuf=pixbuf;
 #else
@@ -2728,7 +2732,6 @@ void mt_show_current_frame(lives_mt *mt, boolean return_layer) {
 #endif
       gtk_widget_queue_draw(mt->play_box);
 
-    }
   }
   else {
     // no frame - show blank
@@ -8598,7 +8601,10 @@ boolean multitrack_delete (lives_mt *mt, boolean save_layout) {
     mt->idlefunc=0;
   }
 
-  if (mt->frame_pixbuf!=NULL&&mt->frame_pixbuf!=mainw->imframe) g_object_unref(mt->frame_pixbuf);
+  if (mt->frame_pixbuf!=NULL&&mt->frame_pixbuf!=mainw->imframe) {
+    g_object_unref(mt->frame_pixbuf);
+    mt->frame_pixbuf=NULL;
+  }
 
   if (save_layout||mainw->scrap_file!=-1||mainw->ascrap_file!=-1) {
     gint file_selected=mt->file_selected;

@@ -3281,7 +3281,7 @@ procw_desensitize(void) {
 
 
 
- void set_ce_frame_from_pixbuf(GtkImage *image, GdkPixbuf *pixbuf, lives_painter_t *cairo) {
+void set_ce_frame_from_pixbuf(GtkImage *image, GdkPixbuf *pixbuf, lives_painter_t *cairo) {
 #if GTK_CHECK_VERSION(3,0,0)
   
   int rwidth=lives_widget_get_allocation_width(LIVES_WIDGET(image));

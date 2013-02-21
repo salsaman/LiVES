@@ -489,7 +489,7 @@ void setmergealign (void) {
 }
 
 
-boolean mt_framedraw(lives_mt *mt, GdkPixbuf *pixbuf) {
+LiVESPixbuf *mt_framedraw(lives_mt *mt, LiVESPixbuf *pixbuf) {
   if (framedraw.added) {
     switch (framedraw.type) {
     case FD_RECT_MULTRECT:
@@ -503,9 +503,14 @@ boolean mt_framedraw(lives_mt *mt, GdkPixbuf *pixbuf) {
     }
 
     framedraw_redraw(&framedraw,TRUE,pixbuf);
-    return TRUE;
+    pixbuf=layer_to_pixbuf(mainw->fd_layer);
+
+    weed_plant_free(mainw->fd_layer);
+    mainw->fd_layer=NULL;
+
+    return pixbuf;
   }
-  return FALSE;
+  return pixbuf;
 }
 
 

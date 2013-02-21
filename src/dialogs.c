@@ -2281,7 +2281,7 @@ void do_mt_set_mem_error(gboolean has_mt, gboolean trans) {
 
 
 void do_mt_audchan_error(gint warn_mask) {
-  do_error_dialog_with_check(_("Multitrack is set to 0 audio channels, but this layout has audio.\nYou should adjust the audio settings from the Tools menu.\n"),warn_mask);
+  do_error_dialog_with_check_transient(_("Multitrack is set to 0 audio channels, but this layout has audio.\nYou should adjust the audio settings from the Tools menu.\n"),warn_mask,FALSE,NULL);
 }
 
 void do_mt_no_audchan_error(void) {

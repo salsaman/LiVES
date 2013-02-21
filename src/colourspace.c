@@ -9972,7 +9972,7 @@ static LIVES_INLINE LiVESPixbuf *lives_pixbuf_cheat(boolean has_alpha,
 
 LiVESPixbuf *layer_to_pixbuf (weed_plant_t *layer) {
   // create a weed layer from a pixbuf
-  // layer "pixel_data" is then shared with with the pixbuf pixels 
+  // layer "pixel_data" is then either shared with with the pixbuf pixels, or set to NULL
 
   int error;
   LiVESPixbuf *pixbuf;
@@ -10040,7 +10040,7 @@ LiVESPixbuf *layer_to_pixbuf (weed_plant_t *layer) {
     boolean done=FALSE;
     pixels=lives_pixbuf_get_pixels (pixbuf);
     orowstride=lives_pixbuf_get_rowstride(pixbuf);
-    
+
     if (irowstride>orowstride) rowstride=orowstride;
     else rowstride=irowstride;
     end=pixels+orowstride*height;

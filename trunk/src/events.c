@@ -1023,6 +1023,10 @@ weed_plant_t *insert_frame_event_at (weed_plant_t *event_list, weed_timecode_t t
       }
       event=get_next_event(event);
     }
+
+    // we passed all events in event_list; there was one or more at tc, but none were deinits or frames
+    if (event==NULL) event=get_last_event(event_list);
+
   }
   else {
     // event is after last event, append it
@@ -1032,8 +1036,7 @@ weed_plant_t *insert_frame_event_at (weed_plant_t *event_list, weed_timecode_t t
     return event_list;
   }
 
-
-  // add frame before first frame event
+  // add frame before "event"
   
   if ((new_event_list=append_frame_event(NULL,tc,numframes,clips,frames))==NULL) return NULL;
   // new_event_list is now an event_list with one frame event. We will steal its event and prepend it !
@@ -2395,6 +2398,36 @@ void event_list_add_track (weed_plant_t *event_list, gint layer) {
 }
 
 
+static weed_plant_t *create_frame_event(weed_timecode_t tc, int numframes, int *clips, int *frames) {
+  int error;
+  weed_plant_t *event;
+
+  event=weed_plant_new (WEED_PLANT_EVENT);
+  if (event==NULL) return NULL;
+  error=weed_set_voidptr_value(event,"next",NULL);
+  if (error==WEED_ERROR_MEMORY_ALLOCATION) return NULL;
+  error=weed_set_voidptr_value(event,"previous",NULL);
+  if (error==WEED_ERROR_MEMORY_ALLOCATION) return NULL;
+
+
+
+  ////////////////////////////////////////
+
+  error=weed_set_int64_value (event,"timecode",tc);
+  if (error==WEED_ERROR_MEMORY_ALLOCATION) return NULL;
+  error=weed_set_int_value (event,"hint",WEED_EVENT_HINT_FRAME);
+  if (error==WEED_ERROR_MEMORY_ALLOCATION) return NULL;
+
+  error=weed_set_int_array (event,"clips",numframes,clips);
+  if (error==WEED_ERROR_MEMORY_ALLOCATION) return NULL;
+  error=weed_set_int_array (event,"frames",numframes,frames);
+  if (error==WEED_ERROR_MEMORY_ALLOCATION) return NULL;
+
+  return event;
+}
+
+
+
 weed_plant_t *append_frame_event (weed_plant_t *event_list, weed_timecode_t tc, int numframes, int *clips, int *frames) {
   // append a frame event to an event_list
   weed_plant_t *event,*prev;
@@ -2414,24 +2447,8 @@ weed_plant_t *append_frame_event (weed_plant_t *event_list, weed_timecode_t tc, 
     weed_add_plant_flags(event_list,WEED_LEAF_READONLY_PLUGIN);
   }
 
-  event=weed_plant_new (WEED_PLANT_EVENT);
+  event=create_frame_event(tc,numframes,clips,frames);
   if (event==NULL) return NULL;
-  error=weed_set_voidptr_value(event,"next",NULL);
-  if (error==WEED_ERROR_MEMORY_ALLOCATION) return NULL;
-
-
-
-  ////////////////////////////////////////
-
-  error=weed_set_int64_value (event,"timecode",tc);
-  if (error==WEED_ERROR_MEMORY_ALLOCATION) return NULL;
-  error=weed_set_int_value (event,"hint",WEED_EVENT_HINT_FRAME);
-  if (error==WEED_ERROR_MEMORY_ALLOCATION) return NULL;
-
-  error=weed_set_int_array (event,"clips",numframes,clips);
-  if (error==WEED_ERROR_MEMORY_ALLOCATION) return NULL;
-  error=weed_set_int_array (event,"frames",numframes,frames);
-  if (error==WEED_ERROR_MEMORY_ALLOCATION) return NULL;
 
   if (get_first_event(event_list)==NULL) {
     error=weed_set_voidptr_value(event_list,"first",event);

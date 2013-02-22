@@ -26,8 +26,7 @@ G_BEGIN_DECLS
 
 typedef enum {
   GIW_TIME_UNIT_SECONDS,
-  GIW_TIME_UNIT_MINUTES,
-  GIW_TIME_UNIT_HOURS,
+  GIW_TIME_UNIT_SMH
 } GiwTimeUnit;
 
 
@@ -56,23 +55,18 @@ struct _GiwTimelineClass
 
 
 GType       giw_timeline_get_type            (void) G_GNUC_CONST;
-
 GtkWidget * giw_timeline_new                 (GtkOrientation  orientation);
-
 void        giw_timeline_add_track_widget    (GiwTimeline      *timeline,
-                                            GtkWidget      *widget);
+					      GtkWidget      *widget);
 void        giw_timeline_remove_track_widget (GiwTimeline      *timeline,
-                                            GtkWidget      *widget);
+					      GtkWidget      *widget);
+void        giw_timeline_set_max_size        (GiwTimeline      *timeline,
+					      gdouble         max_size);
+gdouble     giw_timeline_get_max_size        (GiwTimeline    *timeline);
+void        giw_timeline_set_unit            (GiwTimeline    *timeline, 
+					      GiwTimeUnit    unit);
+GiwTimeUnit giw_timeline_get_unit            (GiwTimeline    *timeline);
 
-void        giw_timeline_set_position        (GiwTimeline      *timeline,
-                                            gdouble         position);
-gdouble     giw_timeline_get_position        (GiwTimeline      *timeline);
-void        giw_timeline_set_max_size       (GiwTimeline      *timeline,
-                                            gdouble         max_size);
-void        giw_timeline_get_range           (GiwTimeline      *timeline,
-                                            gdouble        *lower,
-                                            gdouble        *upper,
-                                            gdouble        *max_size);
 
 G_END_DECLS
 

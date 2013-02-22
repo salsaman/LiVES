@@ -1864,6 +1864,7 @@ LiVESWidget *lives_standard_hruler_new(void) {
 #else
   hruler=gtk_hruler_new();
 #endif
+
 #endif
 
   return hruler;

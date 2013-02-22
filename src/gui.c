@@ -18,6 +18,9 @@
 #include "stream.h"
 #include "startup.h"
 
+#ifdef ENABLE_GIW_3
+#include "giw/giwtimeline.h"
+#endif
 
 #ifdef ENABLE_OSC
 #include "omc-learn.h"
@@ -2344,26 +2347,28 @@ create_LiVES (void)
     lives_widget_set_bg_color (mainw->eventbox5, GTK_STATE_NORMAL, &palette->normal_back);
   }
 
+#ifdef ENABLE_GIW_3
+  mainw->hruler=giw_timeline_new(GTK_ORIENTATION_HORIZONTAL);
+#else
   mainw->hruler = lives_standard_hruler_new();
+#endif
   lives_ruler_set_range (LIVES_RULER (mainw->hruler), 0., 1000000., 0., 1000000.);
 
   gtk_widget_set_size_request (mainw->hruler, -1, CE_HRULE_HEIGHT);
   gtk_container_add (GTK_CONTAINER (mainw->eventbox5), mainw->hruler);
 
-  lives_widget_set_bg_color (mainw->hruler, GTK_STATE_NORMAL, &palette->normal_back);
   gtk_widget_add_events (mainw->eventbox5, GDK_POINTER_MOTION_MASK | GDK_BUTTON1_MOTION_MASK | GDK_BUTTON_RELEASE_MASK | 
 			 GDK_BUTTON_PRESS_MASK | GDK_ENTER_NOTIFY);
-
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color (mainw->hruler, GTK_STATE_NORMAL, &palette->normal_fore);
-  }
 
   mainw->eventbox2 = gtk_event_box_new ();
   gtk_widget_show (mainw->eventbox2);
   gtk_box_pack_start (GTK_BOX (vbox4), mainw->eventbox2, TRUE, TRUE, 0);
   gtk_widget_add_events (mainw->eventbox2, GDK_BUTTON1_MOTION_MASK | GDK_BUTTON_RELEASE_MASK | GDK_BUTTON_PRESS_MASK);
+
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color (mainw->eventbox2, GTK_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_bg_color (mainw->hruler, GTK_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_fg_color (mainw->hruler, GTK_STATE_NORMAL, &palette->normal_fore);
   }
 
   vbox2 = lives_vbox_new (FALSE, 0);

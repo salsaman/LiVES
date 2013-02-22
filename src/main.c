@@ -1729,7 +1729,7 @@ void do_start_messages(void) {
   d_print(mainw->msg);
   g_free(endian);
 
-  g_snprintf(mainw->msg,512,_("GUI type is: "));
+  g_snprintf(mainw->msg,512,"%s",_("GUI type is: "));
   d_print(mainw->msg);
 
 #ifdef GUI_GTK
@@ -1745,7 +1745,7 @@ void do_start_messages(void) {
 #endif
 
 #ifdef PAINTER_CAIRO
-  g_snprintf(mainw->msg,512,_(", with cairo support"));
+  g_snprintf(mainw->msg,512,"%s",_(", with cairo support"));
   d_print(mainw->msg);
 #endif
 

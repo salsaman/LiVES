@@ -24,10 +24,6 @@
 // or adjust the currently playing one
 // and it would be nice to be able to read/write event lists in other formats than the default
 
-#ifdef ENABLE_GIW
-#include <math.h>
-#endif
-
 #ifdef HAVE_SYSTEM_WEED
 #include <weed/weed.h>
 #include <weed/weed-palettes.h>
@@ -54,6 +50,10 @@
 #ifdef ENABLE_GIW
 #include "giw/giwvslider.h"
 #include "giw/giwled.h"
+#endif
+
+#ifdef ENABLE_GIW_3
+#include "giw/giwtimeline.h"
 #endif
 
 #define BORD_HEIGHT 10
@@ -9050,7 +9050,12 @@ void mt_init_tracks (lives_mt *mt, boolean set_min_max) {
   mt->block_selected=NULL;
 
   if (mt->timeline_eb==NULL) {
-    mt->timeline = lives_standard_hruler_new();
+
+#ifdef ENABLE_GIW_3
+    mt->timeline=giw_timeline_new(GTK_ORIENTATION_HORIZONTAL);
+#else
+    mt->timeline=lives_standard_hruler_new();
+#endif
     mt->timeline_reg=gtk_event_box_new();
     label=gtk_label_new (""); // dummy label
     gtk_container_add (GTK_CONTAINER (mt->timeline_reg), label);
@@ -9069,8 +9074,10 @@ void mt_init_tracks (lives_mt *mt, boolean set_min_max) {
       }
     }
 
-    gtk_widget_add_events (mt->timeline_eb, GDK_POINTER_MOTION_MASK | GDK_BUTTON1_MOTION_MASK | GDK_BUTTON_RELEASE_MASK | GDK_BUTTON_PRESS_MASK | GDK_ENTER_NOTIFY);
-    gtk_widget_add_events (mt->timeline_reg, GDK_POINTER_MOTION_MASK | GDK_BUTTON1_MOTION_MASK | GDK_BUTTON_RELEASE_MASK | GDK_BUTTON_PRESS_MASK | GDK_ENTER_NOTIFY);
+    gtk_widget_add_events (mt->timeline_eb, GDK_POINTER_MOTION_MASK | GDK_BUTTON1_MOTION_MASK | 
+			   GDK_BUTTON_RELEASE_MASK | GDK_BUTTON_PRESS_MASK | GDK_ENTER_NOTIFY);
+    gtk_widget_add_events (mt->timeline_reg, GDK_POINTER_MOTION_MASK | GDK_BUTTON1_MOTION_MASK | 
+			   GDK_BUTTON_RELEASE_MASK | GDK_BUTTON_PRESS_MASK | GDK_ENTER_NOTIFY);
     g_signal_connect (GTK_OBJECT(mt->timeline_eb), "enter-notify-event",G_CALLBACK (on_tleb_enter),(gpointer)mt);
     g_signal_connect (GTK_OBJECT(mt->timeline_reg), "enter-notify-event",G_CALLBACK (on_tlreg_enter),(gpointer)mt);
     

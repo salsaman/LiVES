@@ -13251,11 +13251,17 @@ void animate_multitrack (lives_mt *mt) {
 			  GINT_TO_POINTER((guint)(((guint64)(currtime*U_SEC))&0XFFFFFFFF))); // lower 4 bytes
 
 	cr = lives_painter_create_from_widget (eventbox);
-	lives_painter_set_source_rgb(cr,0.,0.,0.);
+
+
+	if (lives_painter_set_operator(cr, LIVES_PAINTER_OPERATOR_DIFFERENCE)) 
+	  lives_painter_set_source_rgb(cr,1.,1.,1.);
+	else 
+	  lives_painter_set_source_rgb(cr,0.,0.,0.);
+
 	lives_painter_set_line_width(cr,1.);
 
-	lives_painter_move_to(cr,offset,1);
-	lives_painter_line_to(cr,offset,lives_widget_get_allocation_height(eventbox)-2);
+	lives_painter_move_to(cr,offset,0.);
+	lives_painter_line_to(cr,offset,lives_widget_get_allocation_height(eventbox));
 	
 	lives_painter_stroke(cr);
 	lives_painter_destroy(cr);
@@ -13275,10 +13281,14 @@ void animate_multitrack (lives_mt *mt) {
 			      GINT_TO_POINTER((guint)(((guint64)(currtime*U_SEC))&0XFFFFFFFF))); // lower 4 bytes
 
 	    cr = lives_painter_create_from_widget (aeventbox);
-	    lives_painter_set_source_rgb(cr,0.,0.,0.);
+
+	    if (lives_painter_set_operator(cr, LIVES_PAINTER_OPERATOR_DIFFERENCE)) 
+	      lives_painter_set_source_rgb(cr,1.,1.,1.);
+	    else 
+	      lives_painter_set_source_rgb(cr,0.,0.,0.);
 	    
-	    lives_painter_move_to(cr,offset,1);
-	    lives_painter_line_to(cr,offset,lives_widget_get_allocation_height(aeventbox)-2);
+	    lives_painter_move_to(cr,offset,0.);
+	    lives_painter_line_to(cr,offset,lives_widget_get_allocation_height(aeventbox));
 	    
 	    lives_painter_stroke(cr);
 	    lives_painter_destroy(cr);
@@ -13297,10 +13307,14 @@ void animate_multitrack (lives_mt *mt) {
 			    GINT_TO_POINTER((guint)(((guint64)(currtime*U_SEC))&0XFFFFFFFF))); // lower 4 bytes
 
 	  cr = lives_painter_create_from_widget (eventbox);
-	  lives_painter_set_source_rgb(cr,0.,0.,0.);
 
-	  lives_painter_move_to(cr,offset,1);
-	  lives_painter_line_to(cr,offset,lives_widget_get_allocation_height(eventbox)-2);
+	  if (lives_painter_set_operator(cr, LIVES_PAINTER_OPERATOR_DIFFERENCE)) 
+	    lives_painter_set_source_rgb(cr,1.,1.,1.);
+	  else 
+	    lives_painter_set_source_rgb(cr,0.,0.,0.);
+	    
+	  lives_painter_move_to(cr,offset,0.);
+	  lives_painter_line_to(cr,offset,lives_widget_get_allocation_height(eventbox));
 	
 	  lives_painter_stroke(cr);
 	  lives_painter_destroy(cr);
@@ -13320,10 +13334,14 @@ void animate_multitrack (lives_mt *mt) {
 			    GINT_TO_POINTER((guint)(((guint64)(currtime*U_SEC))&0XFFFFFFFF))); // lower 4 bytes
 
 	  cr = lives_painter_create_from_widget (eventbox);
-	  lives_painter_set_source_rgb(cr,0.,0.,0.);
 
-	  lives_painter_move_to(cr,offset,1);
-	  lives_painter_line_to(cr,offset,lives_widget_get_allocation_height(eventbox)-2);
+	  if (lives_painter_set_operator(cr, LIVES_PAINTER_OPERATOR_DIFFERENCE)) 
+	    lives_painter_set_source_rgb(cr,1.,1.,1.);
+	  else 
+	    lives_painter_set_source_rgb(cr,0.,0.,0.);
+
+	  lives_painter_move_to(cr,offset,0.);
+	  lives_painter_line_to(cr,offset,lives_widget_get_allocation_height(eventbox));
 	
 	  lives_painter_stroke(cr);
 	  lives_painter_destroy(cr);

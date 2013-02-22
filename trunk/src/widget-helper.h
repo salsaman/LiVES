@@ -51,8 +51,15 @@ typedef cairo_content_t lives_painter_content_t; // eg. color, alpha, color+alph
 
 typedef cairo_operator_t lives_painter_operator_t;
 
-#define LIVES_PAINTER_OPERATOR_DEST_OUT CAIRO_OPERATOR_DEST_OUT
+#define LIVES_PAINTER_OPERATOR_UNKNOWN CAIRO_OPERATOR_OVER
+#define LIVES_PAINTER_OPERATOR_DEFAULT CAIRO_OPERATOR_OVER
 
+#define LIVES_PAINTER_OPERATOR_DEST_OUT CAIRO_OPERATOR_DEST_OUT
+#if CAIRO_VERSION < CAIRO_VERSION_ENCODE(1, 10, 0)
+#define LIVES_PAINTER_OPERATOR_DIFFERENCE CAIRO_OPERATOR_OVER
+#else
+#define LIVES_PAINTER_OPERATOR_DIFFERENCE CAIRO_OPERATOR_DIFFERENCE
+#endif
 
 typedef cairo_fill_rule_t lives_painter_fill_rule_t;
 
@@ -451,7 +458,7 @@ void lives_painter_arc(lives_painter_t *, double xc, double yc, double radius, d
 void lives_painter_line_to(lives_painter_t *, double x, double y);
 void lives_painter_move_to(lives_painter_t *, double x, double y);
 
-void lives_painter_set_operator(lives_painter_t *, lives_painter_operator_t);
+boolean lives_painter_set_operator(lives_painter_t *, lives_painter_operator_t);
 
 void lives_painter_set_fill_rule(lives_painter_t *, lives_painter_fill_rule_t);
 

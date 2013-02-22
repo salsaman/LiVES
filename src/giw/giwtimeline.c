@@ -42,7 +42,7 @@
 
 #define DEFAULT_TIMELINE_FONT_SCALE  PANGO_SCALE_SMALL
 #define MINIMUM_INCR              5
-
+#define DEFAULT_MAX_SIZE 100000000.
 
 enum
 {
@@ -150,7 +150,7 @@ giw_timeline_class_init (GiwTimelineClass *klass)
   widget_class->style_updated        = giw_timeline_style_updated;
   widget_class->draw                 = giw_timeline_draw;
 
-   g_type_class_add_private (object_class, sizeof (GiwTimelinePrivate));
+  g_type_class_add_private (object_class, sizeof (GiwTimelinePrivate));
 
 #ifndef GTK_PARAM_READABLE
 #define GTK_PARAM_READABLE G_PARAM_READABLE|G_PARAM_STATIC_NAME|G_PARAM_STATIC_NICK|G_PARAM_STATIC_BLURB
@@ -168,16 +168,6 @@ giw_timeline_class_init (GiwTimelineClass *klass)
                                                       GTK_ORIENTATION_HORIZONTAL,
                                                       GTK_PARAM_READWRITE));
   
-  /*  g_object_class_install_property (object_class,
-                                   PROP_LOWER,
-                                   g_param_spec_enum ("unit",
-						      "Unit",
-						      "Unit of timeline",
-						      GiwTimeUnit,
-						      GIW_TIME_UNIT_SECONDS,
-						      GTK_PARAM_READWRITE));*/
-
-
   g_object_class_install_property (object_class,
                                    PROP_MAX_SIZE,
                                    g_param_spec_double ("max-size",
@@ -206,7 +196,7 @@ giw_timeline_init (GiwTimeline *timeline)
 
   priv->orientation   = GTK_ORIENTATION_HORIZONTAL;
   priv->unit          = GIW_TIME_UNIT_SECONDS;
-  priv->max_size      = 10000000.;
+  priv->max_size      = DEFAULT_MAX_SIZE;
   priv->backing_store = NULL;
   priv->font_scale    = DEFAULT_TIMELINE_FONT_SCALE;
 }
@@ -225,9 +215,9 @@ giw_timeline_dispose (GObject *object)
 
 static void
 giw_timeline_set_property (GObject      *object,
-                         guint         prop_id,
-                         const GValue *value,
-                         GParamSpec   *pspec)
+			   guint         prop_id,
+			   const GValue *value,
+			   GParamSpec   *pspec)
 {
   GiwTimeline        *timeline = GIW_TIMELINE (object);
   GiwTimelinePrivate *priv  = GIW_TIMELINE_GET_PRIVATE (timeline);
@@ -240,7 +230,7 @@ giw_timeline_set_property (GObject      *object,
       break;
 
     case PROP_UNIT:
-      //giw_timeline_set_unit (timeline, g_value_get_int (value));
+      giw_timeline_set_unit (timeline, g_value_get_int (value));
       break;
 
     case PROP_MAX_SIZE:
@@ -256,9 +246,9 @@ giw_timeline_set_property (GObject      *object,
 
 static void
 giw_timeline_get_property (GObject    *object,
-                         guint       prop_id,
-                         GValue     *value,
-                         GParamSpec *pspec)
+			   guint       prop_id,
+			   GValue     *value,
+			   GParamSpec *pspec)
 {
   GiwTimeline        *timeline = GIW_TIMELINE (object);
   GiwTimelinePrivate *priv  = GIW_TIMELINE_GET_PRIVATE (timeline);
@@ -291,7 +281,6 @@ giw_timeline_get_property (GObject    *object,
  *
  * Return value: a new #GiwTimeline widget.
  *
- * Since: GIW 2.8
  **/
 GtkWidget *
 giw_timeline_new (GtkOrientation orientation)
@@ -313,7 +302,6 @@ giw_timeline_new (GtkOrientation orientation)
  * for the track widget's children, regardless of whether they are
  * ordinary children of off-screen children.
  *
- * Since: GIW 2.8
  */
 void
 giw_timeline_add_track_widget (GiwTimeline *timeline,
@@ -343,7 +331,6 @@ giw_timeline_add_track_widget (GiwTimeline *timeline,
  * Removes a previously added track widget from the timeline. See
  * giw_timeline_add_track_widget().
  *
- * Since: GIW 2.8
  */
 void
 giw_timeline_remove_track_widget (GiwTimeline *timeline,
@@ -368,17 +355,16 @@ giw_timeline_remove_track_widget (GiwTimeline *timeline,
 /**
  * giw_timeline_set_unit:
  * @timeline: a #GiwTimeline
- * @unit:  the #GiwUnit to set the timeline to
+ * @unit:  the #GiwTimeUnit to set the timeline to
  *
  * This sets the unit of the timeline.
  *
- * Since: GIW 2.8
  */
 
-/*
+
 void
 giw_timeline_set_unit (GiwTimeline *timeline,
-		       GiwUnit   unit)
+		       GiwTimeUnit   unit)
 {
   GiwTimelinePrivate *priv;
 
@@ -394,24 +380,23 @@ giw_timeline_set_unit (GiwTimeline *timeline,
       gtk_widget_queue_draw (GTK_WIDGET (timeline));
     }
 }
-*/
+
 /**
  * giw_timeline_get_unit:
  * @timeline: a #GiwTimeline
  *
  * Return value: the unit currently used in the @timeline widget.
  *
- * Since: GIW 2.8
  **/
- /*
-GiwUnit
+
+GiwTimeUnit
 giw_timeline_get_unit (GiwTimeline *timeline)
 {
   g_return_val_if_fail (GIW_IS_TIMELINE (timeline), 0);
 
   return GIW_TIMELINE_GET_PRIVATE (timeline)->unit;
 }
- */
+
 
 
 /**
@@ -422,7 +407,7 @@ giw_timeline_get_unit (GiwTimeline *timeline)
  *
  * Since: GIW 2.8
  **/
-gdouble
+static gdouble
 giw_timeline_get_position (GiwTimeline *timeline)
 {
   GtkWidget *widget;
@@ -438,16 +423,13 @@ giw_timeline_get_position (GiwTimeline *timeline)
 }
 
 /**
- * giw_timeline_set_range:
+ * giw_timeline_set_max_size:
  * @timeline: a #GiwTimeline
- * @lower: the lower limit of the timeline
- * @upper: the upper limit of the timeline
  * @max_size: the maximum size of the timeline used when calculating the space to
  * leave for the text
  *
- * This sets the range of the timeline.
+ * This sets the max_size of the timeline.
  *
- * Since: GIW 2.8
  */
 void
 giw_timeline_set_max_size (GiwTimeline *timeline,
@@ -470,6 +452,25 @@ giw_timeline_set_max_size (GiwTimeline *timeline,
   gtk_widget_queue_draw (GTK_WIDGET (timeline));
 }
 
+
+
+gdouble 
+giw_timeline_get_max_size (GiwTimeline *timeline)
+{
+  GiwTimelinePrivate *priv;
+
+  g_return_val_if_fail (GIW_IS_TIMELINE (timeline), 0.0);
+
+  priv = GIW_TIMELINE_GET_PRIVATE (timeline);
+
+  return priv->max_size;
+}
+
+
+
+
+
+
 /**
  * giw_timeline_get_range:
  * @timeline: a #GiwTimeline
@@ -481,9 +482,8 @@ giw_timeline_set_max_size (GiwTimeline *timeline,
  * Retrieves values indicating the range and current position of a #GiwTimeline.
  * See giw_timeline_set_range().
  *
- * Since: GIW 2.8
  **/
-void
+static void
 giw_timeline_get_range (GiwTimeline *timeline,
 			gdouble   *lower,
 			gdouble   *upper,
@@ -697,7 +697,7 @@ giw_timeline_style_updated (GtkWidget *widget)
 
 static gboolean
 giw_timeline_draw (GtkWidget *widget,
-                 cairo_t   *cr)
+		   cairo_t   *cr)
 {
   GiwTimeline        *timeline = GIW_TIMELINE (widget);
   GiwTimelinePrivate *priv  = GIW_TIMELINE_GET_PRIVATE (timeline);
@@ -810,13 +810,23 @@ giw_timeline_draw_ticks (GiwTimeline *timeline)
    *   scale looks consistent with an accompanying vtimeline.
    */
   scale = ceil (max_size);
-  //g_snprintf (unit_str, sizeof (unit_str), "%d:%d:%d", scale);
 
-  scaleh=(int)((double)scale/3600.);
-  scalem=(int)((double)(scale-scaleh*3600)/60.);
-  scales=scale-scaleh*3600-scalem*60;
+  if (priv->unit==GIW_TIME_UNIT_SECONDS) {
+    g_snprintf (unit_str, sizeof (unit_str), "%d", scale);
+  }
+  else {
+    scaleh=(int)((double)scale/3600.);
+    scalem=(int)((double)(scale-scaleh*3600)/60.);
+    scales=scale-scaleh*3600-scalem*60;
 
-  g_snprintf (unit_str, sizeof (unit_str), "%02d:%02d:%02d", scaleh,scalem,scales);
+    if (scale<0) {
+      scalem=-scalem;
+      scales=-scales;
+    }
+
+    g_snprintf (unit_str, sizeof (unit_str), "%02d:%02d:%02d", scaleh,scalem,scales);
+  }
+
     
   text_size = strlen (unit_str) * digit_height + 1;
 
@@ -889,11 +899,21 @@ giw_timeline_draw_ticks (GiwTimeline *timeline)
           if (i == 0)
             {
 	      curi=(int)cur;
-	      curh=(int)(cur/3600.);
-	      curm=(int)((double)(curi-curh*3600)/60.);
-	      curs=curi-curh*3600-curm*60;
+	      if (priv->unit==GIW_TIME_UNIT_SECONDS) {
+		g_snprintf (unit_str, sizeof (unit_str), "%d", curi);
+	      }
+	      else {
+		curh=(int)(cur/3600.);
+		curm=(int)((double)(curi-curh*3600)/60.);
+		curs=curi-curh*3600-curm*60;
+
+		if (curi<0) {
+		  curm=-curm;
+		  curs=-curs;
+		}
 	      
-	      g_snprintf (unit_str, sizeof (unit_str), "%02d:%02d:%02d", curh,curm,curs);
+		g_snprintf (unit_str, sizeof (unit_str), "%02d:%02d:%02d", curh,curm,curs);
+	      }
 
               if (priv->orientation == GTK_ORIENTATION_HORIZONTAL)
                 {

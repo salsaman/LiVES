@@ -9027,10 +9027,12 @@ void mt_init_tracks (lives_mt *mt, boolean set_min_max) {
   g_list_free(tlist);
   mt->num_video_tracks=0;
 
+#ifndef ENABLE_GIW_3
   if (mt->timeline_table==NULL) {
     label=lives_standard_label_new (_("Timeline (seconds)"));
     gtk_table_attach (GTK_TABLE (mt->timeline_table_header), label, 0, 7, 0, 2, GTK_FILL, (GtkAttachOptions)0, 0, 0);
   }
+#endif
 
   mt->current_track=0;
 
@@ -9053,6 +9055,7 @@ void mt_init_tracks (lives_mt *mt, boolean set_min_max) {
 
 #ifdef ENABLE_GIW_3
     mt->timeline=giw_timeline_new(GTK_ORIENTATION_HORIZONTAL);
+    giw_timeline_set_unit(GIW_TIMELINE(mt->timeline),GIW_TIME_UNIT_SMH);
 #else
     mt->timeline=lives_standard_hruler_new();
 #endif
@@ -16579,7 +16582,8 @@ void multitrack_audio_insert (GtkMenuItem *menuitem, gpointer user_data) {
 }
 
  
-void insert_frames (gint filenum, weed_timecode_t offset_start, weed_timecode_t offset_end, weed_timecode_t tc, lives_direction_t direction, GtkWidget *eventbox, lives_mt *mt, track_rect *in_block) {
+void insert_frames (gint filenum, weed_timecode_t offset_start, weed_timecode_t offset_end, weed_timecode_t tc, 
+		    lives_direction_t direction, GtkWidget *eventbox, lives_mt *mt, track_rect *in_block) {
   // insert the selected frames from mainw->files[filenum] from source file filenum into mt->event_list starting at timeline timecode tc
   // if in_block is non-NULL, then we extend (existing) in_block with the new frames; otherwise we create a new block and insert it into eventbox
 
@@ -16745,12 +16749,15 @@ void insert_frames (gint filenum, weed_timecode_t offset_start, weed_timecode_t 
     if (clips!=NULL) weed_free(clips);
     if (frames!=NULL) weed_free(frames);
     
-    if (direction==DIRECTION_POSITIVE) last_tc+=U_SEC/mt->fps;
+    if (direction==DIRECTION_POSITIVE) {
+      last_tc+=U_SEC/mt->fps;
+      last_tc=q_gint64(last_tc,mt->fps);
+    }
     else {
       if (last_tc<U_SEC/mt->fps) break;
       last_tc-=U_SEC/mt->fps;
+      last_tc=q_gint64(last_tc,mt->fps);
     }
-    last_tc=q_gint64(last_tc,mt->fps);
     if (sfile->event_list==NULL) if ((direction==DIRECTION_POSITIVE&&(++frame>sfile->frames))||
 				     (direction==DIRECTION_NEGATIVE&&(--frame<1))) {
       break;

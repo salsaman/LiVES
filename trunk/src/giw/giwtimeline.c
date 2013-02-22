@@ -779,18 +779,19 @@ giw_timeline_draw_ticks (GiwTimeline *timeline)
     {
       cairo_rectangle (cr,
                        border.left,
-                       height + border.top,
+                       height - border.bottom,
                        allocation.width - (border.left + border.right),
                        1);
     }
   else
     {
       cairo_rectangle (cr,
-                       height + border.left,
+                       border.left,
                        border.top,
                        1,
                        allocation.height - (border.top + border.bottom));
     }
+  cairo_stroke(cr);
 
   giw_timeline_get_range (timeline, &lower, &upper, &max_size);
 
@@ -878,6 +879,8 @@ giw_timeline_draw_ticks (GiwTimeline *timeline)
           end   = ceil  (lower / subd_incr) * subd_incr;
         }
 
+      cairo_set_line_width(cr, 1.);
+
       for (cur = start; cur <= end; cur += subd_incr)
         {
           pos = ROUND ((cur - lower) * increment);
@@ -894,6 +897,7 @@ giw_timeline_draw_ticks (GiwTimeline *timeline)
                                height + border.left - length, pos,
                                length,                        1);
             }
+	  cairo_stroke(cr);
 
           /* draw label */
           if (i == 0)

@@ -1023,6 +1023,7 @@ boolean make_param_box(GtkVBox *top_vbox, lives_rfx_t *rfx) {
     
     // param_vbox holds the dynamic parameters
     param_vbox = lives_vbox_new (FALSE, widget_opts.packing_height);
+
     gtk_box_pack_start (GTK_BOX (top_hbox), param_vbox, TRUE, TRUE, widget_opts.packing_width);
     lives_box_set_spacing (GTK_BOX (param_vbox), widget_opts.packing_height/2);
   }

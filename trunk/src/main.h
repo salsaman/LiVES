@@ -59,6 +59,12 @@ POSSIBILITY OF SUCH DAMAGES.
 #include <gtk/gtk.h>
 #include <gdk/gdkkeysyms.h>
 
+#if GTK_CHECK_VERSION(3,0,0)
+#ifdef ENABLE_GIW
+#define ENABLE_GIW_3
+#endif
+#endif
+
 #endif
 
 #ifdef IS_MINGW
@@ -646,6 +652,7 @@ typedef struct {
 #if GTK_CHECK_VERSION(3,0,0)
   lives_painter_surface_t *laudio_drawable;
   lives_painter_surface_t *raudio_drawable;
+
 #else
   GdkPixmap *laudio_drawable;
   GdkPixmap *raudio_drawable;

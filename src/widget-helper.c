@@ -147,10 +147,15 @@ LIVES_INLINE void lives_painter_arc(lives_painter_t *cr, double xc, double yc, d
 
 }
  
-LIVES_INLINE void lives_painter_set_operator(lives_painter_t *cr, lives_painter_operator_t op) {
+LIVES_INLINE boolean lives_painter_set_operator(lives_painter_t *cr, lives_painter_operator_t op) {
+  // if op was not LIVES_PAINTER_OPERATOR_DEFAULT, and FALSE is returned, then the operation failed,
+  // and op was set to the default
 #ifdef PAINTER_CAIRO
   cairo_set_operator(cr,op);
+  if (op==LIVES_PAINTER_OPERATOR_UNKNOWN) return FALSE;
+  return TRUE;
 #endif
+  return FALSE;
 }
 
 LIVES_INLINE void lives_painter_set_source_rgb(lives_painter_t *cr, double red, double green, double blue) {

@@ -288,8 +288,7 @@ gboolean do_warning_dialog_with_check (const gchar *text, gint warn_mask_number)
 
 
 
-gboolean
-do_warning_dialog_with_check_transient(const gchar *text, gint warn_mask_number, GtkWindow *transient) {
+gboolean do_warning_dialog_with_check_transient(const gchar *text, gint warn_mask_number, GtkWindow *transient) {
   // show OK/CANCEL, returns FALSE if cancelled
   GtkWidget *warning;
   gint response=1;
@@ -456,13 +455,12 @@ void do_error_dialog_with_check_transient(const gchar *text, gboolean is_blockin
   err_box=create_dialog3(mytext,is_blocking,warn_mask_number);
   if (mytext!=NULL) g_free(mytext);
   if (transient!=NULL) gtk_window_set_transient_for(GTK_WINDOW(err_box),transient);
-  gtk_widget_show(err_box);
   if (prefs->present) gtk_window_present (GTK_WINDOW (err_box));
   gdk_window_raise (lives_widget_get_xwindow(err_box));
 
   if (is_blocking) {
     gtk_dialog_run(GTK_DIALOG (err_box));
-    if (mainw!=NULL&&mainw->is_ready) {
+    if (mainw!=NULL&&mainw->is_ready&&transient!=NULL) {
       gtk_widget_queue_draw(GTK_WIDGET(transient));
     }
   }

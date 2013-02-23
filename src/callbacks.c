@@ -132,7 +132,7 @@ void lives_exit (void) {
 #if GTK_CHECK_VERSION(3,0,0)
     mainw->kb_timer_end=TRUE;
 #else
-    gtk_timeout_remove (mainw->kb_timer);
+    if (mainw->kb_timer!=NULL) gtk_timeout_remove (mainw->kb_timer);
 #endif
 #ifdef HAVE_PULSE_AUDIO
     pthread_mutex_lock(&mainw->abuf_mutex);

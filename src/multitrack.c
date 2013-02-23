@@ -4631,7 +4631,6 @@ static weed_plant_t *load_event_list_inner (lives_mt *mt, int fd, boolean show_e
     
     if (weed_plant_has_leaf(event_list,"audio_channels")) {
       gint achans=weed_get_int_value(event_list,"audio_channels",&error);
-      g_print("achans is %d\n",achans);
       if (achans>=0&&mt!=NULL) {
 	if (achans>2) {
 	  gchar *err=g_strdup_printf(_("\nThis has an invalid number of audio channels (%d) for LiVES.\nIt cannot be loaded.\n"),achans);

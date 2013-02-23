@@ -2285,7 +2285,7 @@ void get_play_times(void) {
   gdouble allocwidth;
   gdouble allocheight;
 
-  if (mainw->current_file==-1||mainw->foreign||cfile==NULL||mainw->multitrack!=NULL) return;
+  if (mainw->current_file==-1||mainw->foreign||cfile==NULL||mainw->multitrack!=NULL||mainw->recoverable_layout) return;
 
   if (mainw->playing_file==-1) {
     get_total_time (cfile);

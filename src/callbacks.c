@@ -9410,7 +9410,7 @@ boolean expose_raud_event (GtkWidget *widget, GdkEventExpose *event) {
 
 boolean config_event (GtkWidget *widget, GdkEventConfigure *event, gpointer user_data) {
   if (mainw->is_ready) {
-    if (mainw->current_file>-1) {
+    if (mainw->current_file>-1&&!mainw->recoverable_layout) {
       get_play_times();
     }
   }

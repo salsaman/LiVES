@@ -1733,10 +1733,20 @@ void do_start_messages(void) {
   d_print(mainw->msg);
 
 #ifdef GUI_GTK
-  g_snprintf(mainw->msg,512,_("GTK+ version %d.%d.%d (compiled with %d.%d.%d)"),
+  g_snprintf(mainw->msg,512,_("GTK+ "
+#if GTK_CHECK_VERSION(3,0,0)
+"version %d.%d.%d ("
+#endif
+"compiled with %d.%d.%d"
+#if GTK_CHECK_VERSION(3,0,0)
+")"
+#endif
+),
+#if GTK_CHECK_VERSION(3,0,0)
 	     gtk_get_major_version(),
 	     gtk_get_minor_version(),
 	     gtk_get_micro_version(),
+#endif
 	     GTK_MAJOR_VERSION,
 	     GTK_MINOR_VERSION,
 	     GTK_MICRO_VERSION

@@ -1364,6 +1364,7 @@ LIVES_INLINE lives_display_t lives_widget_get_display_type(LiVESWidget *widget) 
   lives_display_t dtype=LIVES_DISPLAY_TYPE_UNKNOWN;
 #ifdef GUI_GTK
   LiVESXDisplay *display=gtk_widget_get_display(widget);
+  display=display; // stop compiler complaining
   if (GDK_IS_X11_DISPLAY(display)) dtype=LIVES_DISPLAY_TYPE_X11;
   else if (GDK_IS_WIN32_DISPLAY(display)) dtype=LIVES_DISPLAY_TYPE_WIN32;
 #endif

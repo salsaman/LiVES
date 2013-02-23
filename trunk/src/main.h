@@ -69,8 +69,6 @@ POSSIBILITY OF SUCH DAMAGES.
 
 #ifdef IS_MINGW
 
-#undef GDK_WINDOWING_X11
-
 #ifndef WINVER
 #define WINVER 0x0500
 #endif
@@ -88,11 +86,17 @@ typedef PROCESS_INFORMATION * lives_pgid_t;
 
 #ifdef GUI_GTK
 #ifndef GDK_WINDOWING_WIN32
-#define GDK_WINDOWING_WIN32 TRUE
+#define GDK_WINDOWING_WIN32
 #endif
 #endif
 
-#else
+#else // IS_MINGW
+
+#ifdef GUI_GTK
+#ifndef GDK_WINDOWING_X11
+#define GDK_WINDOWING_X11
+#endif
+#endif
 
 typedef pid_t lives_pid_t;
 typedef int lives_pgid_t;
@@ -133,7 +137,6 @@ typedef int lives_pgid_t;
 #ifndef GDK_IS_X11_DISPLAY 
 #define GDK_IS_X11_DISPLAY(display) (FALSE)
 #endif
-
 
 #endif // GDK_WINDOWING_X11
 

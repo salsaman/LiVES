@@ -52,12 +52,6 @@ void add_to_special (const gchar *sp_string, lives_rfx_t *rfx) {
   gchar **array=g_strsplit (sp_string,"|",-1);
   int num_widgets=get_token_count(sp_string,'|')-2;
   int i,pnum;
-  int *ign;
-
-  weed_plant_t *param,*paramtmpl,*init_event=NULL;
-  int num_in_tracks=0,error;
-
-  void **pchains=NULL,*pchange;
 
   // TODO - make sure only one of each of these
 
@@ -114,12 +108,6 @@ void add_to_special (const gchar *sp_string, lives_rfx_t *rfx) {
     if (num_widgets>stdwidgets) framedraw.extra_params=
 				  (gint *)g_malloc(((framedraw.num_extra=(num_widgets-stdwidgets)))*sizint);
 
-    if (rfx->status==RFX_STATUS_WEED&&mainw->multitrack!=NULL&&(init_event=mainw->multitrack->init_event)!=NULL) {
-      num_in_tracks=weed_leaf_num_elements(init_event,"in_tracks");
-      pchains=weed_get_voidptr_array(init_event,"in_parameters",&error);
-    }
-    ign=(int *)g_malloc(num_in_tracks*sizint);
-    for (i=0;i<num_in_tracks;i++) ign[i]=WEED_FALSE;
     for (i=0;i<num_widgets;i++) {
       pnum=atoi(array[i+2]);
       if (rfx->status==RFX_STATUS_WEED) {
@@ -139,17 +127,10 @@ void add_to_special (const gchar *sp_string, lives_rfx_t *rfx) {
       if (i>=stdwidgets) framedraw.extra_params[i-stdwidgets]=pnum;
     }
 
-    if (rfx->status==RFX_STATUS_WEED) {
-      weed_free(pchains);
-    }
-
-
-
     if (mainw->multitrack!=NULL) {
       mainw->multitrack->framedraw=&framedraw;
       lives_widget_set_bg_color (mainw->multitrack->fd_frame, GTK_STATE_NORMAL, &palette->light_red);
     }
-    g_free(ign);
   }
   else if (!strcmp (array[0],"fileread")) {
     fileread=g_list_append(fileread,GINT_TO_POINTER(atoi(array[1])));

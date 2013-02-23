@@ -3072,7 +3072,7 @@ void update_visual_params(lives_rfx_t *rfx, boolean update_hidden) {
 	    pattern=g_strdup_printf("%%.%df",dp);
 	  }
 	}
-	
+
 	list=g_list_append(list,g_strdup_printf(pattern,vald));
 	list=g_list_append(list,g_strdup_printf(pattern,mind));
 	list=g_list_append(list,g_strdup_printf(pattern,maxd));

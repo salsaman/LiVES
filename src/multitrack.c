@@ -1480,6 +1480,9 @@ void track_select (lives_mt *mt) {
 	  if (labelbox!=NULL) gtk_widget_set_state(labelbox,LIVES_WIDGET_STATE_PRELIGHT);
 	  if (ahbox!=NULL) gtk_widget_set_state(ahbox,LIVES_WIDGET_STATE_PRELIGHT);
 	  if (checkbutton!=NULL) {
+	    // gtk 3+ idiocy...
+	    gtk_widget_set_state(checkbutton,LIVES_WIDGET_STATE_NORMAL);
+	    gtk_widget_queue_draw(checkbutton);
 	    gtk_widget_set_state(checkbutton,LIVES_WIDGET_STATE_PRELIGHT);
 	    gtk_widget_queue_draw(checkbutton);
 	  }
@@ -1910,11 +1913,13 @@ void scroll_tracks (lives_mt *mt, gint top_track) {
       ahbox=gtk_event_box_new();
       gtk_widget_set_state(label,LIVES_WIDGET_STATE_NORMAL);
       gtk_widget_set_state(arrow,LIVES_WIDGET_STATE_NORMAL);
+      gtk_widget_set_state(checkbutton,LIVES_WIDGET_STATE_NORMAL);
 
       if (palette->style&STYLE_1) {
 	if (palette->style&STYLE_3) {
 	  lives_widget_set_bg_color (labelbox, LIVES_WIDGET_STATE_PRELIGHT, &palette->menu_and_bars);
 	  lives_widget_set_bg_color (ahbox, LIVES_WIDGET_STATE_PRELIGHT, &palette->menu_and_bars);
+	  lives_widget_set_bg_color (checkbutton, LIVES_WIDGET_STATE_PRELIGHT, &palette->menu_and_bars);
 	  lives_widget_set_fg_color (label, LIVES_WIDGET_STATE_PRELIGHT, &palette->info_text);
 	  lives_widget_set_fg_color (arrow, LIVES_WIDGET_STATE_PRELIGHT, &palette->info_text);
 	  lives_widget_set_fg_color (checkbutton, LIVES_WIDGET_STATE_PRELIGHT, &palette->info_text);
@@ -1922,22 +1927,12 @@ void scroll_tracks (lives_mt *mt, gint top_track) {
 	else {
 	  lives_widget_set_bg_color (labelbox, LIVES_WIDGET_STATE_PRELIGHT, &palette->normal_back);
 	  lives_widget_set_bg_color (ahbox, LIVES_WIDGET_STATE_PRELIGHT, &palette->normal_back);
+	  lives_widget_set_bg_color (checkbutton, LIVES_WIDGET_STATE_PRELIGHT, &palette->normal_back);
 	  lives_widget_set_fg_color (label, LIVES_WIDGET_STATE_PRELIGHT, &palette->normal_fore);
 	  lives_widget_set_fg_color (arrow, LIVES_WIDGET_STATE_PRELIGHT, &palette->normal_fore);
 	  lives_widget_set_fg_color (checkbutton, LIVES_WIDGET_STATE_PRELIGHT, &palette->normal_fore);
 	}
-#ifdef ENABLE_GIW
-	if (prefs->lamp_buttons) {
-	  if (0&&palette->style&STYLE_3) {
-	    lives_widget_set_bg_color (checkbutton, LIVES_WIDGET_STATE_PRELIGHT, &palette->normal_back);
-	  }
-	  else {
-	    lives_widget_set_bg_color (checkbutton, LIVES_WIDGET_STATE_PRELIGHT, &palette->menu_and_bars);
-	  }
-	}
-#endif
       }
-
 
 #ifdef ENABLE_GIW
       if (prefs->lamp_buttons) {
@@ -3809,7 +3804,10 @@ on_drag_clip_end           (GtkWidget       *widget,
 	gtk_widget_queue_draw (mt->timeline);
       }
 
-      if (mainw->playing_file==-1&&(mainw->files[mt->file_selected]->laudio_time>((mainw->files[mt->file_selected]->start-1.)/mainw->files[mt->file_selected]->fps)||(mainw->files[mt->file_selected]->laudio_time>0.&&mt->opts.ign_ins_sel))) insert_audio_here_cb(NULL,(gpointer)mt);
+      if (mainw->playing_file==-1&&(mainw->files[mt->file_selected]->laudio_time>
+				    ((mainw->files[mt->file_selected]->start-1.)/mainw->files[mt->file_selected]->fps)||
+				    (mainw->files[mt->file_selected]->laudio_time>0.&&mt->opts.ign_ins_sel))) 
+	insert_audio_here_cb(NULL,(gpointer)mt);
       set_cursor_style(mt,LIVES_CURSOR_NORMAL,0,0,0,0,0);
       if (mt->is_paused) lives_ruler_set_value(LIVES_RULER (mt->timeline),osecs);
       return FALSE;
@@ -4566,7 +4564,8 @@ static void set_mt_play_sizes(lives_mt *mt, gint width, gint height) {
   }
 }
 
-static weed_plant_t *load_event_list_inner (lives_mt *mt, int fd, boolean show_errors, gint *num_events, unsigned char **mem, unsigned char *mem_end) {
+static weed_plant_t *load_event_list_inner (lives_mt *mt, int fd, boolean show_errors, gint *num_events, 
+					    unsigned char **mem, unsigned char *mem_end) {
   weed_plant_t *event,*eventprev=NULL;
   weed_plant_t *event_list;
   int error;
@@ -4632,7 +4631,7 @@ static weed_plant_t *load_event_list_inner (lives_mt *mt, int fd, boolean show_e
     
     if (weed_plant_has_leaf(event_list,"audio_channels")) {
       gint achans=weed_get_int_value(event_list,"audio_channels",&error);
-
+      g_print("achans is %d\n",achans);
       if (achans>=0&&mt!=NULL) {
 	if (achans>2) {
 	  gchar *err=g_strdup_printf(_("\nThis has an invalid number of audio channels (%d) for LiVES.\nIt cannot be loaded.\n"),achans);
@@ -13862,13 +13861,15 @@ static void remove_gaps_inner (GtkMenuItem *menuitem, gpointer user_data, boolea
   }
   
   if (!did_backup) {
-    if (mt->avol_fx!=-1&&(block==NULL||block->next==NULL)&&mt->audio_draws!=NULL&&mt->audio_draws->data!=NULL&&get_first_event(mt->event_list)!=NULL) {
+    if (mt->avol_fx!=-1&&(block==NULL||block->next==NULL)&&mt->audio_draws!=NULL&&
+	mt->audio_draws->data!=NULL&&get_first_event(mt->event_list)!=NULL) {
       apply_avol_filter(mt);
     }
   }
 
   mt->did_backup=did_backup;
-  if (!did_backup&&mt->framedraw!=NULL&&mt->current_rfx!=NULL&&mt->init_event!=NULL&&mt->poly_state==POLY_PARAMS&&weed_plant_has_leaf(mt->init_event,"in_tracks")) {
+  if (!did_backup&&mt->framedraw!=NULL&&mt->current_rfx!=NULL&&mt->init_event!=NULL&&
+      mt->poly_state==POLY_PARAMS&&weed_plant_has_leaf(mt->init_event,"in_tracks")) {
     tc=q_gint64(gtk_spin_button_get_value(GTK_SPIN_BUTTON(mt->node_spinbutton))*U_SEC+get_event_timecode(mt->init_event),mt->fps);
     get_track_index(mt,tc);
   }

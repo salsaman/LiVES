@@ -887,7 +887,6 @@ create_dialog3 (const gchar *text, boolean is_blocking, gint mask) {
   if (!is_blocking) gtk_window_set_modal (GTK_WINDOW (dialog), FALSE);
 
   dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(dialog));
-  gtk_widget_show (dialog_vbox);
 
   textx=insert_newlines(text,MAX_MSG_WIDTH_CHARS);
 
@@ -901,10 +900,7 @@ create_dialog3 (const gchar *text, boolean is_blocking, gint mask) {
 
   gtk_label_set_selectable (GTK_LABEL (info_text), TRUE);
 
-  gtk_widget_show (info_text);
-
   hbox = lives_hbox_new (FALSE, 0);
-  gtk_widget_show (hbox);
   gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, FALSE, FALSE, 10);
 
   gtk_box_pack_start (GTK_BOX (hbox), info_text, FALSE, FALSE, 20);
@@ -922,7 +918,6 @@ create_dialog3 (const gchar *text, boolean is_blocking, gint mask) {
   }
 
   dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (dialog));
-  gtk_widget_show (dialog_action_area);
   gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area), GTK_BUTTONBOX_END);
 
   if (mainw->iochan!=NULL) {

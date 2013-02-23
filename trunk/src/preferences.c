@@ -5835,7 +5835,8 @@ select_pref_list_row(guint selected_idx)
 }
 
 void on_prefs_revert_clicked(GtkButton *button, gpointer user_data) {
-  int i;
+  boolean needs_idlefunc=FALSE;
+  register int i;
 
   if (future_prefs->vpp_argv != NULL) {
     for ( i = 0; future_prefs->vpp_argv[i] != NULL; g_free(future_prefs->vpp_argv[i++]) );
@@ -5868,7 +5869,16 @@ void on_prefs_revert_clicked(GtkButton *button, gpointer user_data) {
   lives_general_button_clicked(button, prefsw);
 
   lives_set_cursor_style(LIVES_CURSOR_BUSY,NULL);
-  while (g_main_context_iteration(NULL,FALSE)); // force busy cursor
+
+  if (mainw->multitrack!=NULL&&mainw->multitrack->idlefunc>0) {
+    needs_idlefunc=TRUE;
+    g_source_remove(mainw->multitrack->idlefunc);
+    mainw->multitrack->idlefunc=0;
+  }
+  while (g_main_context_iteration(NULL,FALSE));
+  if (needs_idlefunc) {
+    mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
+  }
 
   prefsw = NULL;
 

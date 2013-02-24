@@ -977,7 +977,6 @@ int puretext_process (weed_plant_t *inst, weed_timecode_t tc) {
 
   int width=weed_get_int_value(out_channel,"width",&error);
   int height=weed_get_int_value(out_channel,"height",&error);
-  int palette=weed_get_int_value(out_channel,"current_palette",&error);
 
   int mode=weed_get_int_value(in_params[P_MODE],"value",&error);
 
@@ -1101,12 +1100,6 @@ int puretext_process (weed_plant_t *inst, weed_timecode_t tc) {
 	    proctext(sdata,tc,(char *)xtext,cairo,layout,font,width,height);
 
 	    free(xtext);
-
-	    if (palette==WEED_PALETTE_BGR24) {
-	      int tmp=sdata->fg.red;
-	      sdata->fg.red=sdata->fg.blue;
-	      sdata->fg.blue=tmp;
-	    }
 
 	    cairo_move_to(cairo, sdata->x_text, sdata->y_text);
 

@@ -1,6 +1,6 @@
 // framedraw.c
 // LiVES
-// (c) G. Finch (salsaman@xs4all.nl,salsaman@gmail.com) 2002 - 2012
+// (c) G. Finch (salsaman@xs4all.nl,salsaman@gmail.com) 2002 - 2013
 // see file COPYING for licensing details : released under the GNU GPL 3 or later
 
 // functions for the 'framedraw' widget - lets users draw on frames :-)
@@ -17,6 +17,7 @@
 #include "interface.h"
 #include "effects.h"
 #include "cvirtual.h"
+#include "framedraw.h"
 
 // set by mouse button press
 static gint xstart,ystart;
@@ -325,11 +326,11 @@ void framedraw_redraw (lives_special_framedraw_rect_t * framedraw, gboolean relo
   // her we dont offset because we are drawing in the pixbuf, not the widget
 
   switch (framedraw->type) {
-  case FD_RECT_DEMASK:
-    xstartf=(gint)(gtk_spin_button_get_value (GTK_SPIN_BUTTON (framedraw->xstart_widget)));
-    ystartf=(gint)(gtk_spin_button_get_value (GTK_SPIN_BUTTON (framedraw->ystart_widget)));
-    xendf=(gint)(gtk_spin_button_get_value (GTK_SPIN_BUTTON (framedraw->xend_widget)));
-    yendf=(gint)(gtk_spin_button_get_value (GTK_SPIN_BUTTON (framedraw->yend_widget)));
+  case LIVES_PARAM_SPECIAL_TYPE_RECT_DEMASK:
+    xstartf=(gint)(gtk_spin_button_get_value (GTK_SPIN_BUTTON (framedraw->xstart_param->widgets[0])));
+    ystartf=(gint)(gtk_spin_button_get_value (GTK_SPIN_BUTTON (framedraw->ystart_param->widgets[0])));
+    xendf=(gint)(gtk_spin_button_get_value (GTK_SPIN_BUTTON (framedraw->xend_param->widgets[0])));
+    yendf=(gint)(gtk_spin_button_get_value (GTK_SPIN_BUTTON (framedraw->yend_param->widgets[0])));
 
     // scale values
     xstartf=xstartf/(double)cfile->hsize*(double)width;
@@ -348,12 +349,12 @@ void framedraw_redraw (lives_special_framedraw_rect_t * framedraw, gboolean relo
     lives_painter_fill (cr);
 
     break;
-  case FD_RECT_MULTRECT:
-    xstartf=gtk_spin_button_get_value (GTK_SPIN_BUTTON (framedraw->xstart_widget));
-    ystartf=gtk_spin_button_get_value (GTK_SPIN_BUTTON (framedraw->ystart_widget));
+  case LIVES_PARAM_SPECIAL_TYPE_RECT_MULTRECT:
+    xstartf=gtk_spin_button_get_value (GTK_SPIN_BUTTON (framedraw->xstart_param->widgets[0]));
+    ystartf=gtk_spin_button_get_value (GTK_SPIN_BUTTON (framedraw->ystart_param->widgets[0]));
 
-    xendf=xstartf+gtk_spin_button_get_value (GTK_SPIN_BUTTON (framedraw->xend_widget));
-    yendf=ystartf+gtk_spin_button_get_value (GTK_SPIN_BUTTON (framedraw->yend_widget));
+    xendf=xstartf+gtk_spin_button_get_value (GTK_SPIN_BUTTON (framedraw->xend_param->widgets[0]));
+    yendf=ystartf+gtk_spin_button_get_value (GTK_SPIN_BUTTON (framedraw->yend_param->widgets[0]));
 
     // scale values
     xstartf *=(double)width;
@@ -367,10 +368,10 @@ void framedraw_redraw (lives_special_framedraw_rect_t * framedraw, gboolean relo
     lives_painter_stroke (cr);
 
     break;
-  case FD_SINGLEPOINT:
+  case LIVES_PARAM_SPECIAL_TYPE_SINGLEPOINT:
 
-    xstartf=(gint)(gtk_spin_button_get_value (GTK_SPIN_BUTTON (framedraw->xstart_widget))*(double)width);
-    ystartf=(gint)(gtk_spin_button_get_value (GTK_SPIN_BUTTON (framedraw->ystart_widget))*(double)height);
+    xstartf=(gint)(gtk_spin_button_get_value (GTK_SPIN_BUTTON (framedraw->xstart_param->widgets[0]))*(double)width);
+    ystartf=(gint)(gtk_spin_button_get_value (GTK_SPIN_BUTTON (framedraw->ystart_param->widgets[0]))*(double)height);
 
     lives_painter_set_source_rgb(cr, 1., 0., 0.);
 
@@ -383,6 +384,11 @@ void framedraw_redraw (lives_special_framedraw_rect_t * framedraw, gboolean relo
     lives_painter_stroke (cr);
 
     break;
+
+  default:
+
+    break;
+
   }
 
   lives_painter_to_layer(cr, mainw->fd_layer);
@@ -510,6 +516,7 @@ void load_rfx_preview(lives_rfx_t *rfx) {
   if (max_frame>0) {
     if (rfx->num_in_channels==0) {
       gtk_spin_button_set_range (GTK_SPIN_BUTTON (mainw->framedraw_spinbutton),1,tot_frames);
+      gtk_widget_queue_draw(mainw->framedraw_scale);
     }
     
     if (mainw->framedraw_frame>max_frame) {
@@ -671,8 +678,8 @@ gboolean on_framedraw_enter (GtkWidget *widget, GdkEventCrossing *event, lives_s
   if (mainw->multitrack!=NULL&&(mainw->multitrack->track_index==-1||mainw->multitrack->cursor_style!=0)) return FALSE;
 
   switch (framedraw->type) {
-  case FD_RECT_DEMASK:
-  case FD_RECT_MULTRECT:
+  case LIVES_PARAM_SPECIAL_TYPE_RECT_DEMASK:
+  case LIVES_PARAM_SPECIAL_TYPE_RECT_MULTRECT:
     if (mainw->multitrack==NULL) {
       cursor=gdk_cursor_new_for_display 
 	(mainw->mgeom[prefs->gui_monitor>0?prefs->gui_monitor-1:0].disp,
@@ -686,7 +693,7 @@ gboolean on_framedraw_enter (GtkWidget *widget, GdkEventCrossing *event, lives_s
       gdk_window_set_cursor (lives_widget_get_xwindow(mainw->multitrack->play_box), cursor);
     }
     break;
-  case FD_SINGLEPOINT:
+  case LIVES_PARAM_SPECIAL_TYPE_SINGLEPOINT:
     if (mainw->multitrack==NULL) {
       cursor=gdk_cursor_new_for_display 
 	(mainw->mgeom[prefs->gui_monitor>0?prefs->gui_monitor-1:0].disp,
@@ -698,6 +705,10 @@ gboolean on_framedraw_enter (GtkWidget *widget, GdkEventCrossing *event, lives_s
       gdk_window_set_cursor (lives_widget_get_xwindow(mainw->multitrack->play_box), cursor);
     }
     break;
+
+  default:
+    break;
+
   }
   return FALSE;
 }
@@ -737,7 +748,7 @@ gboolean on_framedraw_mouse_start (GtkWidget *widget, GdkEventButton *event, liv
 
     b1_held=TRUE;
 
-    if ((framedraw->type==FD_RECT_MULTRECT||framedraw->type==FD_RECT_DEMASK)&&
+    if ((framedraw->type==LIVES_PARAM_SPECIAL_TYPE_RECT_MULTRECT||framedraw->type==LIVES_PARAM_SPECIAL_TYPE_RECT_DEMASK)&&
 	(mainw->multitrack==NULL||mainw->multitrack->cursor_style==0)) {
       GdkCursor *cursor;
       if (mainw->multitrack==NULL) {
@@ -763,7 +774,7 @@ gboolean on_framedraw_mouse_start (GtkWidget *widget, GdkEventButton *event, liv
 
 
     switch (framedraw->type) {
-     case (FD_RECT_MULTRECT): 
+     case (LIVES_PARAM_SPECIAL_TYPE_RECT_MULTRECT): 
       {
 
 	double offsx;
@@ -773,10 +784,10 @@ gboolean on_framedraw_mouse_start (GtkWidget *widget, GdkEventButton *event, liv
 	offsy=(double)ystart/(double)height;
 	
 	noupdate=TRUE;
-	gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xstart_widget),offsx);
-	gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->ystart_widget),offsy);
-	gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xend_widget),0.);
-	gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->yend_widget),0.);
+	gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xstart_param->widgets[0]),offsx);
+	gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->ystart_param->widgets[0]),offsy);
+	gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xend_param->widgets[0]),0.);
+	gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->yend_param->widgets[0]),0.);
 	noupdate=FALSE;
 
 	framedraw_redraw (framedraw, FALSE, NULL);
@@ -824,7 +835,7 @@ gboolean on_framedraw_mouse_update (GtkWidget *widget, GdkEventButton *event, li
   ycurrent-=(fd_height-height)/2.;
 
   switch (framedraw->type) {
-  case FD_RECT_DEMASK:
+  case LIVES_PARAM_SPECIAL_TYPE_RECT_DEMASK:
     if (b1_held) {
 
       // TODO - allow user selectable line colour
@@ -839,7 +850,7 @@ gboolean on_framedraw_mouse_update (GtkWidget *widget, GdkEventButton *event, li
 
     }
     break;
-  case FD_RECT_MULTRECT:
+  case LIVES_PARAM_SPECIAL_TYPE_RECT_MULTRECT:
     if (b1_held) {
        double xscale,yscale;
 
@@ -850,8 +861,8 @@ gboolean on_framedraw_mouse_update (GtkWidget *widget, GdkEventButton *event, li
 
 
       noupdate=TRUE;
-      gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xend_widget),xscale);
-      gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->yend_widget),yscale);
+      gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xend_param->widgets[0]),xscale);
+      gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->yend_param->widgets[0]),yscale);
       noupdate=FALSE;
 
       framedraw_redraw (framedraw, FALSE, NULL);
@@ -864,6 +875,10 @@ gboolean on_framedraw_mouse_update (GtkWidget *widget, GdkEventButton *event, li
 
     }
     break;
+
+  default:
+    break;
+
   }
 
   return FALSE;
@@ -899,7 +914,7 @@ gboolean on_framedraw_mouse_reset (GtkWidget *widget, GdkEventButton *event, liv
 
 
   switch (framedraw->type) {
-  case FD_RECT_DEMASK:
+  case LIVES_PARAM_SPECIAL_TYPE_RECT_DEMASK:
     xstart*=(double)cfile->hsize/(double)width;
     ystart*=(double)cfile->vsize/(double)height;
 
@@ -919,10 +934,10 @@ gboolean on_framedraw_mouse_reset (GtkWidget *widget, GdkEventButton *event, liv
     if (yend>=cfile->vsize) yend=cfile->vsize-1;
     
     noupdate=TRUE;
-    gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xstart_widget),MIN (xstart,xend));
-    gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->ystart_widget),MIN (ystart,yend));
-    gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xend_widget),MAX (xstart,xend));
-    gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->yend_widget),MAX (ystart,yend));
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xstart_param->widgets[0]),MIN (xstart,xend));
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->ystart_param->widgets[0]),MIN (ystart,yend));
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xend_param->widgets[0]),MAX (xstart,xend));
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->yend_param->widgets[0]),MAX (ystart,yend));
     noupdate=FALSE;
 
     framedraw_redraw (framedraw, FALSE, NULL);
@@ -937,19 +952,22 @@ gboolean on_framedraw_mouse_reset (GtkWidget *widget, GdkEventButton *event, liv
     break;
 
 
-  case FD_RECT_MULTRECT:
+  case LIVES_PARAM_SPECIAL_TYPE_RECT_MULTRECT:
     //if (mainw->multitrack!=NULL) on_frame_preview_clicked(NULL,mainw->multitrack);
     break;
 
-  case FD_SINGLEPOINT:
+  case LIVES_PARAM_SPECIAL_TYPE_SINGLEPOINT:
     offsx=(double)xend/(double)width;
     //offsy=(gdouble)yend/(gdouble)(fd_height+FD_HT_ADJ*2);
     offsy=(double)yend/(double)height;
 
     noupdate=TRUE;
-    gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xstart_widget),offsx);
-    gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->ystart_widget),offsy);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xstart_param->widgets[0]),offsx);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->ystart_param->widgets[0]),offsy);
     noupdate=FALSE;
+    break;
+
+  default:
     break;
   }
 
@@ -1034,16 +1052,16 @@ void on_framedraw_reset_clicked (GtkButton *button, lives_special_framedraw_rect
   gdouble x_min,x_max,y_min,y_max;
   // TODO ** - set to defaults
 
-  gtk_spin_button_get_range (GTK_SPIN_BUTTON (framedraw->xstart_widget),&x_min,NULL);
-  gtk_spin_button_get_range (GTK_SPIN_BUTTON (framedraw->ystart_widget),&y_min,NULL);
-  gtk_spin_button_get_range (GTK_SPIN_BUTTON (framedraw->xend_widget),NULL,&x_max);
-  gtk_spin_button_get_range (GTK_SPIN_BUTTON (framedraw->yend_widget),NULL,&y_max);
+  gtk_spin_button_get_range (GTK_SPIN_BUTTON (framedraw->xstart_param->widgets[0]),&x_min,NULL);
+  gtk_spin_button_get_range (GTK_SPIN_BUTTON (framedraw->ystart_param->widgets[0]),&y_min,NULL);
+  gtk_spin_button_get_range (GTK_SPIN_BUTTON (framedraw->xend_param->widgets[0]),NULL,&x_max);
+  gtk_spin_button_get_range (GTK_SPIN_BUTTON (framedraw->yend_param->widgets[0]),NULL,&y_max);
 
   noupdate=TRUE;
-  gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xend_widget),x_max);
-  gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->yend_widget),y_max);
-  gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xstart_widget),x_min);
-  gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->ystart_widget),y_min);
+  gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xend_param->widgets[0]),x_max);
+  gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->yend_param->widgets[0]),y_max);
+  gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xstart_param->widgets[0]),x_min);
+  gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->ystart_param->widgets[0]),y_min);
   noupdate=FALSE;
 
   framedraw_redraw (framedraw, FALSE, NULL);

@@ -41,6 +41,10 @@
 extern boolean do_effect (lives_rfx_t *, boolean is_preview); //effects.c in LiVES
 extern void on_realfx_activate (GtkMenuItem *, gpointer rfx); // effects.c in LiVES
 
+
+static void after_param_text_buffer_changed (GtkTextBuffer *textbuffer, lives_rfx_t *rfx);
+
+
 GtkWidget *fx_dialog[2];
 
 // TODO -
@@ -481,21 +485,31 @@ void transition_add_in_out(GtkBox *vbox, lives_rfx_t *rfx, boolean add_audio_che
 
 static boolean add_sizes(GtkBox *vbox, boolean add_fps, lives_rfx_t *rfx) {
   // add size settings for generators and resize effects
-  int i,error;
-  weed_plant_t *filter=weed_instance_get_filter((weed_plant_t *)rfx->source,TRUE);
-  int num_chans=weed_leaf_num_elements(filter,"out_channel_templates");
-  weed_plant_t **ctmpls=weed_get_plantptr_array(filter,"out_channel_templates",&error),*tmpl;
-  gchar *cname,*ltxt;
+  static lives_param_t aspect_width,aspect_height;
+
   GtkWidget *label,*hbox,*hseparator;
   GtkWidget *spinbuttonh=NULL,*spinbuttonw=NULL;
   GtkWidget *spinbuttonf;
-  int def_width=0,max_width,width_step;
-  int def_height=0,max_height,height_step;
 
-  gdouble def_fps=0.;
+  int error;
+
+  weed_plant_t *filter=weed_instance_get_filter((weed_plant_t *)rfx->source,TRUE),*tmpl;
+
+  weed_plant_t **ctmpls=weed_get_plantptr_array(filter,"out_channel_templates",&error);
+
+  double def_fps=0.;
+
+  gchar *cname,*ltxt;
 
   boolean added=add_fps;
   boolean chk_params=(vbox==NULL);
+
+  int num_chans=weed_leaf_num_elements(filter,"out_channel_templates");
+
+  int def_width=0,max_width,width_step;
+  int def_height=0,max_height,height_step;
+
+  register int i;
 
   // add fps
 
@@ -596,14 +610,15 @@ static boolean add_sizes(GtkBox *vbox, boolean add_fps, lives_rfx_t *rfx) {
     hseparator = lives_hseparator_new ();
 
     if (!rfx->is_template) {
-      lives_param_t param;
       // add "aspectratio" widget
       init_special();
-      add_to_special("aspect|-100|-101|",rfx); // use virtual parameter numbers -100 and -101
-      param.widgets[0]=spinbuttonw;
-      check_for_special (&param,-100,vbox,rfx);
-      param.widgets[0]=spinbuttonh;
-      check_for_special (&param,-101,vbox,rfx);
+
+      aspect_width.widgets[0]=spinbuttonw;
+      aspect_height.widgets[0]=spinbuttonh;
+
+      set_aspect_ratio_widgets(&aspect_width,&aspect_height);
+      check_for_special (rfx,&aspect_width,vbox);
+      check_for_special (rfx,&aspect_height,vbox);
     }
 
     if (added) gtk_box_pack_start (vbox, hseparator, FALSE, FALSE, widget_opts.packing_height);
@@ -777,6 +792,10 @@ void on_render_fx_pre_activate (GtkMenuItem *menuitem, lives_rfx_t *rfx) {
 
   pbox = top_dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(fx_dialog[n]));
 
+  lives_widget_set_hexpand(pbox,TRUE);
+  lives_widget_set_vexpand(pbox,TRUE);
+
+
   g_object_set_data(G_OBJECT(fx_dialog[n]),"rfx",rfx);
 
   if (rfx->status!=RFX_STATUS_WEED&&!no_process) {
@@ -784,8 +803,16 @@ void on_render_fx_pre_activate (GtkMenuItem *menuitem, lives_rfx_t *rfx) {
 
     GtkWidget *hbox = lives_hbox_new (FALSE, 0);
     gtk_box_pack_start (GTK_BOX (top_dialog_vbox), hbox, FALSE, FALSE, 0);
+
+    lives_widget_set_hexpand(hbox,TRUE);
+    lives_widget_set_vexpand(hbox,TRUE);
+
+
     pbox = lives_vbox_new (FALSE, 0);
     gtk_box_pack_start (GTK_BOX (hbox), pbox, FALSE, FALSE, 0);
+
+    lives_widget_set_hexpand(pbox,TRUE);
+    lives_widget_set_vexpand(pbox,TRUE);
     
     // add preview window
     if (rfx->num_in_channels>0) {
@@ -1276,6 +1303,7 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, boolean add_
   GtkWidget *dlabel=NULL;
   GtkWidget *textview=NULL;
   GtkWidget *scrolledwindow;
+
   GtkAdjustment *spinbutton_adj;
 
   GtkTextBuffer *textbuffer=NULL;
@@ -1294,7 +1322,7 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, boolean add_
   boolean use_mnemonic;
   boolean was_num=FALSE;
 
-  int packwidth=widget_opts.packing_width;
+  int packwidth=widget_opts.packing_width,old_packwidth;
 
   if (pnum>=rfx->num_params) {
     add_param_label_to_box (box,FALSE,(_("Invalid parameter")));
@@ -1305,15 +1333,21 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, boolean add_
 
   name=g_strdup_printf ("%s",param->label);
   use_mnemonic=param->use_mnemonic;
+
+  if (GTK_IS_HBOX(box)) {
+    hbox=GTK_WIDGET(box);
+    widget_opts.packing_width>>=2;
+  }
+  else {
+    hbox = lives_hbox_new (FALSE, 0);
+    gtk_box_pack_start (GTK_BOX (box), hbox, FALSE, FALSE, widget_opts.packing_height);
+  }
+
+  old_packwidth=widget_opts.packing_width;
+
   switch (param->type) {
   case LIVES_PARAM_BOOL :
     if (!param->group) {
-
-      if (GTK_IS_HBOX(box)) hbox=GTK_WIDGET(box);
-      else {
-	hbox = lives_hbox_new (FALSE, 0);
-	gtk_box_pack_start (GTK_BOX (box), hbox, FALSE, FALSE, widget_opts.packing_height);
-      }
       
       if (rfx->status==RFX_STATUS_WEED&&(disp_string=get_weed_display_string((weed_plant_t *)rfx->source,pnum))!=NULL) {
 	dlabel=lives_standard_label_new ((tmp=g_strdup_printf("(%s)",_ (disp_string))));
@@ -1395,12 +1429,6 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, boolean add_
   case LIVES_PARAM_NUM :
     was_num=TRUE;
 
-    if (GTK_IS_HBOX(box)) hbox=GTK_WIDGET(box);
-    else {
-      hbox = lives_hbox_new (FALSE, 0);
-      gtk_box_pack_start (GTK_BOX (box), hbox, FALSE, FALSE, widget_opts.packing_height);
-    }
-
     if (rfx->status==RFX_STATUS_WEED&&(disp_string=get_weed_display_string((weed_plant_t *)rfx->source,pnum))!=NULL) {
       dlabel=lives_standard_label_new ((tmp=g_strdup_printf("%s",_ (disp_string))));
       g_free(tmp);
@@ -1466,12 +1494,6 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, boolean add_
   case LIVES_PARAM_COLRGB24 :
     get_colRGB24_param(param->value,&rgb);
 
-    if (GTK_IS_HBOX(box)) hbox=GTK_WIDGET(box);
-    else {
-      hbox = lives_hbox_new (FALSE, 0);
-      gtk_box_pack_start (GTK_BOX (box), hbox, FALSE, FALSE, 0);
-    }
-
     lives_box_set_spacing(LIVES_BOX(hbox),0);
     lives_widget_set_hexpand(hbox,FALSE);
 
@@ -1483,6 +1505,7 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, boolean add_
 
     cbutton = gtk_color_button_new_with_color(&colr); // TODO ***
     gtk_color_button_set_title (GTK_COLOR_BUTTON(cbutton),_("LiVES: - Select Colour"));
+    gtk_color_button_set_color(GTK_COLOR_BUTTON(cbutton),&colr);
 
     g_object_set_data (G_OBJECT (cbutton),"param_number",GINT_TO_POINTER (pnum));
     if (param->desc!=NULL) gtk_widget_set_tooltip_text( cbutton, param->desc);
@@ -1511,7 +1534,7 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, boolean add_
     g_free(tmp);
     g_free(tmp2);
 
-    widget_opts.packing_width=packwidth;
+    widget_opts.packing_width=old_packwidth;
 
     gtk_box_pack_start (GTK_BOX (hbox), cbutton, TRUE, TRUE, packwidth);
 
@@ -1547,12 +1570,11 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, boolean add_
       //gtk_widget_set_sensitive(spinbutton_alpha,FALSE);
       gtk_widget_set_sensitive(cbutton,FALSE);
     }
+
+
     break;
 
   case LIVES_PARAM_STRING:
-
-    hbox = lives_hbox_new (FALSE, 0);
-    gtk_box_pack_start (GTK_BOX (box), hbox, FALSE, FALSE, 0);
 
     if (rfx->status==RFX_STATUS_WEED&&(disp_string=get_weed_display_string((weed_plant_t *)rfx->source,pnum))!=NULL) {
       if (param->max==0.) txt=g_strdup (disp_string);
@@ -1569,14 +1591,19 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, boolean add_
       if (param->hidden) gtk_widget_set_sensitive(textview,FALSE);
       if (param->desc!=NULL) gtk_widget_set_tooltip_text( textview, param->desc);
       textbuffer=gtk_text_view_get_buffer (GTK_TEXT_VIEW (textview));
-      g_object_set_data(G_OBJECT(textview),"textbuffer",(gpointer)textbuffer);
 
+      if (rfx->status==RFX_STATUS_WEED&&param->special_type!=LIVES_PARAM_SPECIAL_TYPE_FILEREAD) {
+	g_signal_connect_after (G_OBJECT (textbuffer), "changed", G_CALLBACK (after_param_text_buffer_changed), 
+				(gpointer) rfx);
+      }
 
       gtk_text_view_set_editable (GTK_TEXT_VIEW (textview), TRUE);
       gtk_text_view_set_wrap_mode (GTK_TEXT_VIEW (textview), GTK_WRAP_WORD);
       gtk_text_view_set_cursor_visible (GTK_TEXT_VIEW (textview), TRUE);
 
       gtk_text_buffer_set_text (textbuffer, txt, -1);
+
+      g_object_set_data(G_OBJECT(textbuffer),"textview",textview);
     }
 
     if (use_mnemonic) label = lives_standard_label_new_with_mnemonic (_(name),NULL);
@@ -1598,6 +1625,12 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, boolean add_
     }
     else {
       param->widgets[0]=entry=lives_standard_entry_new(NULL,FALSE,txt,(int)param->max,(int)param->max,LIVES_BOX(hbox),param->desc);
+
+      if (rfx->status==RFX_STATUS_WEED&&param->special_type==LIVES_PARAM_SPECIAL_TYPE_FILEREAD) {
+	g_signal_connect_after (G_OBJECT (entry), "changed", G_CALLBACK (after_param_text_changed), 
+				(gpointer) rfx);
+      }
+
       if (param->hidden) gtk_widget_set_sensitive(entry,FALSE);
       if (use_mnemonic) gtk_label_set_mnemonic_widget (GTK_LABEL (label),entry);
     }
@@ -1638,10 +1671,12 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, boolean add_
     break;
 
   }
+
+  widget_opts.packing_width=packwidth;
   
   // see if there were any 'special' hints
   //mainw->block_param_updates=FALSE; // need to keep blocked until last param widget has been created
-  check_for_special (param,pnum,GTK_BOX(lives_widget_get_parent(LIVES_WIDGET(box))),rfx);
+  check_for_special (rfx,param,GTK_BOX(lives_widget_get_parent(LIVES_WIDGET(box))));
   //mainw->block_param_updates=TRUE;
 
   g_free (name);
@@ -2286,51 +2321,53 @@ boolean after_param_text_focus_changed (GtkWidget *hbox, GtkWidget *child, lives
 
   GtkWidget *textwidget;
 
+  if (rfx==NULL) return FALSE;
+
   if (mainw->multitrack!=NULL) {
     if (child!=NULL)
       gtk_window_remove_accel_group(GTK_WINDOW(mainw->multitrack->window),mainw->multitrack->accel_group);
     else
       gtk_window_add_accel_group(GTK_WINDOW(mainw->multitrack->window),mainw->multitrack->accel_group);
 
-    // effects and generators make their own arrangements to be updated in multitrack
-    // rfx scraps don't  (for example vpp advanced in prefs)
-    if (rfx->status!=RFX_STATUS_SCRAP) return FALSE;
+  }
+  
+  if (mainw->textwidget_focus!=NULL) {
+    textwidget=(GtkWidget *)g_object_get_data (G_OBJECT (mainw->textwidget_focus),"textwidget");
+    after_param_text_changed(textwidget,rfx);
   }
 
   if (hbox!=NULL) {
-    if (mainw->textwidget_focus!=NULL) {
-      textwidget=(GtkWidget *)g_object_get_data (G_OBJECT (mainw->textwidget_focus),"textwidget");
-      after_param_text_changed(textwidget,rfx);
-    }
     mainw->textwidget_focus=hbox;
-    return FALSE;
   }
 
-  // for non-realtime, function is only called when focus leaves the textwidget
-  textwidget=(GtkWidget *)g_object_get_data (G_OBJECT (mainw->textwidget_focus),"textwidget");
-  after_param_text_changed(textwidget,rfx);
   return FALSE;
 }
 
-void 
-after_param_text_changed (GtkWidget *textwidget, lives_rfx_t *rfx) {
-  GtkWidget *textbuffer=NULL;
-
-  gint param_number=GPOINTER_TO_INT (g_object_get_data (G_OBJECT (textwidget),"param_number"));
-  lives_param_t *param=&rfx->params[param_number];
-  gchar *old_text=(gchar *)param->value;
+void after_param_text_changed (GtkWidget *textwidget, lives_rfx_t *rfx) {
+  GtkTextBuffer *textbuffer=NULL;
+  gint param_number;
+  lives_param_t *param;
+  gchar *old_text;
   int copyto=-1;
+
+  if (rfx==NULL||rfx->params==NULL||textwidget==NULL) return;
+
+  param_number=GPOINTER_TO_INT (g_object_get_data (G_OBJECT (textwidget),"param_number"));
+
+  param=&rfx->params[param_number];
+
+  old_text=(gchar *)param->value;
 
   if (mainw->block_param_updates) return; // updates are blocked when we update visually
 
-  if ((gint)param->max>RFX_TEXT_MAGIC||param->max==0.) {
+  if (GTK_IS_TEXT_VIEW(textwidget)) {
     GtkTextIter start_iter,end_iter;
-    textbuffer=(GtkWidget *)g_object_get_data (G_OBJECT (textwidget),"textbuffer");
+    textbuffer=gtk_text_view_get_buffer(GTK_TEXT_VIEW(textwidget));
  
-    gtk_text_buffer_get_start_iter(GTK_TEXT_BUFFER(textbuffer),&start_iter);
-    gtk_text_buffer_get_end_iter(GTK_TEXT_BUFFER(textbuffer),&end_iter);
+    gtk_text_buffer_get_start_iter(textbuffer,&start_iter);
+    gtk_text_buffer_get_end_iter(textbuffer,&end_iter);
     
-    param->value=gtk_text_buffer_get_text (GTK_TEXT_BUFFER(textbuffer),&start_iter,&end_iter,FALSE);
+    param->value=g_strdup(gtk_text_buffer_get_text (textbuffer,&start_iter,&end_iter,FALSE));
   }
   else {
     param->value=g_strdup (gtk_entry_get_text (GTK_ENTRY (textwidget)));
@@ -2404,6 +2441,11 @@ after_param_text_changed (GtkWidget *textwidget, lives_rfx_t *rfx) {
   }
   param->changed=TRUE;
 
+}
+
+static void after_param_text_buffer_changed (GtkTextBuffer *textbuffer, lives_rfx_t *rfx) {
+  GtkWidget *textview=(GtkWidget *)g_object_get_data(G_OBJECT(textbuffer),"textview");
+  after_param_text_changed(textview,rfx);
 }
 
 
@@ -2863,9 +2905,11 @@ gint set_param_from_list(GList *plist, lives_param_t *param, gint pnum, boolean 
     param->value=reconstruct_string (plist,pnum,&offs);
     if (upd) {
       if (param->widgets[0]!=NULL) {
-	if ((gint)param->max>RFX_TEXT_MAGIC||param->max==0.) {
-	  GtkTextBuffer *textbuffer=GTK_TEXT_BUFFER (g_object_get_data(G_OBJECT(param->widgets[0]),"textbuffer"));
-	  gtk_text_buffer_set_text (textbuffer, (gchar *)param->value, -1);
+	if (GTK_IS_TEXT_VIEW(param->widgets[0])) {
+	  GtkTextBuffer *textbuffer=gtk_text_view_get_buffer(GTK_TEXT_VIEW(param->widgets[0]));
+	  gchar *string=g_strdup((gchar *)param->value); // work around bug in glib ???
+	  gtk_text_buffer_set_text (textbuffer, string, -1);
+	  g_free(string);
 	}
 	else {
 	  gtk_entry_set_text (GTK_ENTRY (param->widgets[0]),(gchar *)param->value);
@@ -2964,14 +3008,17 @@ void do_onchange (GObject *object, lives_rfx_t *rfx) {
 
 
 
-void
-on_pwcolsel (GtkButton *button, lives_rfx_t *rfx)
-{
+void on_pwcolsel (GtkButton *button, lives_rfx_t *rfx) {
   GdkColor selected;
   gint pnum=GPOINTER_TO_INT (g_object_get_data (G_OBJECT (button),"param_number"));
   lives_param_t *param=&rfx->params[pnum];
 
   gtk_color_button_get_color(GTK_COLOR_BUTTON(button),&selected);
+
+  set_colRGB24_param(param->value,
+		     (gint)((selected.red+128)/257),
+		     (gint)((selected.green+128)/257),
+		     (gint)((selected.blue+128)/257));
 
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(param->widgets[0]),(gdouble)(gint)((selected.red+128)/257));
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(param->widgets[1]),(gdouble)(gint)((selected.green+128)/257));

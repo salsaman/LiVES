@@ -17,8 +17,13 @@ typedef struct {
 #define RFX_TEXT_MAGIC 80
 #define RFX_DEF_NUM_MAX 1000000.
 
+#if GTK_CHECK_VERSION(3,0,0)
+#define RFX_WINSIZE_H 820
+#define RFX_WINSIZE_V 480
+#else
 #define RFX_WINSIZE_H 600
 #define RFX_WINSIZE_V 400
+#endif
 
 #define DEF_BUTTON_WIDTH 80
 

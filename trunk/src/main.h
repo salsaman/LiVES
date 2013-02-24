@@ -768,7 +768,7 @@ extern capability *capable;
 #endif // ifndef PRI64d
 
 
-// common defs for mainwindow
+// common defs for mainwindow (retain this order)
 #include "plugins.h"
 #include "colourspace.h"
 #include "paramspecial.h"

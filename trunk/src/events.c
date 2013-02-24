@@ -4867,6 +4867,8 @@ render_details *create_render_details (gint type) {
   // type == 3 :: enter multitrack (!specified)
   // type == 4 :: change during multitrack (!specified)
 
+  static lives_param_t aspect_width,aspect_height;
+
   GtkWidget *label;
   GtkWidget *top_vbox;
   GtkWidget *dialog_vbox;
@@ -5010,14 +5012,15 @@ render_details *create_render_details (gint type) {
 
   // add aspect button
   if (type==1) {
-    lives_param_t param;
     // add "aspectratio" widget
     init_special();
-    add_to_special("aspect|-100|-101|",NULL);
-    param.widgets[0]=rdet->spinbutton_width;
-    check_for_special (&param,-100,GTK_BOX(vbox),NULL);
-    param.widgets[0]=rdet->spinbutton_height;
-    check_for_special (&param,-101,GTK_BOX(vbox),NULL);
+
+    aspect_width.widgets[0]=rdet->spinbutton_width;
+    aspect_height.widgets[0]=rdet->spinbutton_height;
+
+    set_aspect_ratio_widgets(&aspect_width,&aspect_height);
+    check_for_special (NULL,&aspect_width,LIVES_BOX(vbox));
+    check_for_special (NULL,&aspect_height,LIVES_BOX(vbox));
   }
 
 

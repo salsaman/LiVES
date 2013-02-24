@@ -22,6 +22,7 @@
 #include "effects.h"
 #include "support.h"
 #include "paramwindow.h"
+#include "framedraw.h"
 
 static lives_special_aspect_t aspect;
 static lives_special_framedraw_rect_t framedraw;
@@ -31,82 +32,79 @@ static GList *passwd_widgets;
 // TODO - rewrite all of this more sensibly
 
 
-void 
-init_special (void) {
-  aspect.width_param=aspect.height_param=-1;
-  aspect.width_widget=aspect.height_widget=NULL;
-  framedraw.type=FD_NONE;
-  framedraw.xstart_param=framedraw.ystart_param=framedraw.xend_param=framedraw.yend_param=-1;
+void init_special (void) {
+  framedraw.type=LIVES_PARAM_SPECIAL_TYPE_NONE;
+  aspect.width_param=aspect.height_param=NULL;
+  aspect.checkbutton=NULL;
+  framedraw.xstart_param=framedraw.ystart_param=framedraw.xend_param=framedraw.yend_param=NULL;
+  framedraw.stdwidgets=0;
   framedraw.extra_params=NULL;
   framedraw.num_extra=0;
-  framedraw.xstart_widget=framedraw.ystart_widget=framedraw.xend_widget=framedraw.yend_widget=NULL;
   framedraw.added=FALSE;
-  mergealign.start_param=mergealign.end_param=-1;
-  mergealign.start_widget=mergealign.end_widget=NULL;
+  mergealign.start_param=mergealign.end_param=NULL;
   passwd_widgets=NULL;
   fileread=NULL;
 }
 
 
+
+
+
 void add_to_special (const gchar *sp_string, lives_rfx_t *rfx) {
   gchar **array=g_strsplit (sp_string,"|",-1);
   int num_widgets=get_token_count(sp_string,'|')-2;
-  int i,pnum;
+  int pnum;
+
+  register int i;
 
   // TODO - make sure only one of each of these
 
 
   if (!strcmp (array[0],"aspect")) {
-    // aspect button
-    if (fx_dialog[1]!=NULL) {
-      g_strfreev(array);
-      return;
-    }
-    aspect.width_param=atoi (array[1]);
-    aspect.height_param=atoi (array[2]);
+    aspect.width_param=&rfx->params[atoi(array[1])];
+    aspect.height_param=&rfx->params[atoi(array[2])];
   }
   else if (!strcmp (array[0],"mergealign")) {
     // align start/end
-    if (fx_dialog[1]!=NULL) {
+    /*    if (fx_dialog[1]!=NULL) {
       g_strfreev(array);
       return;
-    }
-    mergealign.start_param=atoi (array[1]);
-    mergealign.end_param=atoi (array[2]);
+      }*/
+    mergealign.start_param=&rfx->params[atoi(array[1])];
+    mergealign.end_param=&rfx->params[atoi(array[2])];
     mergealign.rfx=rfx;
   }
   else if (!strcmp (array[0],"framedraw")) {
-    gint stdwidgets=0;
     if (fx_dialog[1]!=NULL) {
       g_strfreev(array);
       return;
     }
     framedraw.rfx=rfx;
     if (!strcmp (array[1],"rectdemask")) {
-      framedraw.type=FD_RECT_DEMASK;
-      framedraw.xstart_param=atoi (array[2]);
-      framedraw.ystart_param=atoi (array[3]);
-      framedraw.xend_param=atoi (array[4]);
-      framedraw.yend_param=atoi (array[5]);
-      stdwidgets=4;
+      framedraw.type=LIVES_PARAM_SPECIAL_TYPE_RECT_DEMASK;
+      framedraw.xstart_param=&rfx->params[atoi (array[2])];
+      framedraw.ystart_param=&rfx->params[atoi (array[3])];
+      framedraw.xend_param=&rfx->params[atoi (array[4])];
+      framedraw.yend_param=&rfx->params[atoi (array[5])];
+      framedraw.stdwidgets=4;
     }
     else if (!strcmp (array[1],"multrect")) {
-      framedraw.type=FD_RECT_MULTRECT;
-      framedraw.xstart_param=atoi (array[2]);
-      framedraw.ystart_param=atoi (array[3]);
-      framedraw.xend_param=atoi (array[4]);
-      framedraw.yend_param=atoi (array[5]);
-      stdwidgets=4;
+      framedraw.type=LIVES_PARAM_SPECIAL_TYPE_RECT_MULTRECT;
+      framedraw.xstart_param=&rfx->params[atoi (array[2])];
+      framedraw.ystart_param=&rfx->params[atoi (array[3])];
+      framedraw.xend_param=&rfx->params[atoi (array[4])];
+      framedraw.yend_param=&rfx->params[atoi (array[5])];
+      framedraw.stdwidgets=4;
     }
     else if (!strcmp (array[1],"singlepoint")) {
-      framedraw.type=FD_SINGLEPOINT;
-      framedraw.xstart_param=framedraw.xend_param=atoi (array[2]);
-      framedraw.ystart_param=framedraw.yend_param=atoi (array[3]);
-      stdwidgets=2;
+      framedraw.type=LIVES_PARAM_SPECIAL_TYPE_SINGLEPOINT;
+      framedraw.xstart_param=&rfx->params[atoi (array[2])];
+      framedraw.ystart_param=&rfx->params[atoi (array[3])];
+      framedraw.stdwidgets=2;
     }
 
-    if (num_widgets>stdwidgets) framedraw.extra_params=
-				  (gint *)g_malloc(((framedraw.num_extra=(num_widgets-stdwidgets)))*sizint);
+    if (num_widgets>framedraw.stdwidgets) framedraw.extra_params=
+				  (gint *)g_malloc(((framedraw.num_extra=(num_widgets-framedraw.stdwidgets)))*sizint);
 
     for (i=0;i<num_widgets;i++) {
       pnum=atoi(array[i+2]);
@@ -124,7 +122,7 @@ void add_to_special (const gchar *sp_string, lives_rfx_t *rfx) {
 	  }
 	}
       }
-      if (i>=stdwidgets) framedraw.extra_params[i-stdwidgets]=pnum;
+      if (i>=framedraw.stdwidgets) framedraw.extra_params[i-framedraw.stdwidgets]=pnum;
     }
 
     if (mainw->multitrack!=NULL) {
@@ -132,12 +130,19 @@ void add_to_special (const gchar *sp_string, lives_rfx_t *rfx) {
       lives_widget_set_bg_color (mainw->multitrack->fd_frame, GTK_STATE_NORMAL, &palette->light_red);
     }
   }
+
+  // can be multiple of each of these
+
   else if (!strcmp (array[0],"fileread")) {
-    fileread=g_list_append(fileread,GINT_TO_POINTER(atoi(array[1])));
+    int idx=atoi(array[1]);
+    fileread=g_list_append(fileread,(gpointer)&rfx->params[idx]);
+
+    // ensure we get an entry and not a text_view
+    if ((gint)rfx->params[idx].max>RFX_TEXT_MAGIC) rfx->params[idx].max=(gdouble)RFX_TEXT_MAGIC;
   }
   else if (!strcmp (array[0],"password")) {
     int idx=atoi(array[1]);
-    passwd_widgets=g_list_append(passwd_widgets,GINT_TO_POINTER(idx));
+    passwd_widgets=g_list_append(passwd_widgets,(gpointer)&rfx->params[idx]);
 
     // ensure we get an entry and not a text_view
     if ((gint)rfx->params[idx].max>RFX_TEXT_MAGIC) rfx->params[idx].max=(gdouble)RFX_TEXT_MAGIC;
@@ -149,7 +154,7 @@ void add_to_special (const gchar *sp_string, lives_rfx_t *rfx) {
 
 void fd_tweak(lives_rfx_t *rfx) {
   if (rfx->props&RFX_PROPS_MAY_RESIZE) {
-    if (framedraw.type!=FD_NONE) {
+    if (framedraw.type!=LIVES_PARAM_SPECIAL_TYPE_NONE) {
       // for effects which can resize, and have a special framedraw, we will use original sized image
       gtk_widget_hide(mainw->framedraw_preview);
       gtk_widget_set_sensitive(mainw->framedraw_spinbutton,TRUE);
@@ -169,63 +174,74 @@ static void passwd_toggle_vis(GtkToggleButton *b, gpointer entry) {
 }
 
 
-void check_for_special (lives_param_t *param, int num, GtkBox *pbox, lives_rfx_t *rfx) {
+ void check_for_special (lives_rfx_t *rfx, lives_param_t *param, LiVESBox *pbox) {
   GtkWidget *checkbutton;
   GtkWidget *hbox;
   GtkWidget *box;
   GtkWidget *buttond;
   GList *slist;
 
+
   gchar *tmp,*tmp2;
 
   // check if this parameter is part of a special window
   // as we are drawing the paramwindow
 
-  if (num==framedraw.xstart_param) {
-    framedraw.xstart_widget=param->widgets[0];
-    if (framedraw.type==FD_RECT_DEMASK)
+  if (param==framedraw.xstart_param) {
+    param->special_type=framedraw.type;
+    param->special_type_index=0;
+    if (framedraw.type==LIVES_PARAM_SPECIAL_TYPE_RECT_DEMASK)
       gtk_spin_button_set_value (GTK_SPIN_BUTTON (param->widgets[0]),0.);
     g_signal_connect_after (GTK_OBJECT (param->widgets[0]), "value_changed", G_CALLBACK (after_framedraw_widget_changed), &framedraw);
   }
-  if (num==framedraw.ystart_param) {
-    framedraw.ystart_widget=param->widgets[0];
-    if (framedraw.type==FD_RECT_DEMASK)
+  if (param==framedraw.ystart_param) {
+    param->special_type=framedraw.type;
+    param->special_type_index=1;
+    if (framedraw.type==LIVES_PARAM_SPECIAL_TYPE_RECT_DEMASK)
       gtk_spin_button_set_value (GTK_SPIN_BUTTON (param->widgets[0]),0.);
     g_signal_connect_after (GTK_OBJECT (param->widgets[0]), "value_changed", G_CALLBACK (after_framedraw_widget_changed), &framedraw);
   }
   if (mainw->current_file>-1) {
-    if (num==framedraw.xend_param) {
-      framedraw.xend_widget=param->widgets[0];
-      if (framedraw.type==FD_RECT_DEMASK)
+    if (param==framedraw.xend_param) {
+      param->special_type=framedraw.type;
+      param->special_type_index=2;
+      if (framedraw.type==LIVES_PARAM_SPECIAL_TYPE_RECT_DEMASK)
 	gtk_spin_button_set_value (GTK_SPIN_BUTTON (param->widgets[0]),(gdouble)cfile->hsize);
       g_signal_connect_after (GTK_OBJECT (param->widgets[0]), "value_changed", G_CALLBACK (after_framedraw_widget_changed), &framedraw);
     }
-    if (num==framedraw.yend_param) {
-      framedraw.yend_widget=param->widgets[0];
-      if (framedraw.type==FD_RECT_DEMASK)
+    if (param==framedraw.yend_param) {
+      param->special_type=framedraw.type;
+      param->special_type_index=3;
+      if (framedraw.type==LIVES_PARAM_SPECIAL_TYPE_RECT_DEMASK)
 	gtk_spin_button_set_value (GTK_SPIN_BUTTON (param->widgets[0]),(gdouble)cfile->vsize);
       g_signal_connect_after (GTK_OBJECT (param->widgets[0]), "value_changed", G_CALLBACK (after_framedraw_widget_changed), &framedraw);
-  }
-    if (framedraw.xstart_widget!=NULL&&framedraw.ystart_widget!=NULL&&framedraw.xend_widget!=NULL&&framedraw.yend_widget!=NULL&&!framedraw.added) {
-      if (mainw->multitrack==NULL) {
-	framedraw_connect(&framedraw,cfile->hsize,cfile->vsize,rfx); // turn passive preview->active
-	framedraw_add_reset(GTK_VBOX(GTK_WIDGET(pbox)),&framedraw);
+    }
+
+
+    if (framedraw.stdwidgets>0&&!framedraw.added) {
+      if (framedraw.xstart_param!=NULL&&framedraw.xstart_param->widgets[0]!=NULL&&
+	  framedraw.ystart_param!=NULL&&framedraw.ystart_param->widgets[0]!=NULL) {
+	if (framedraw.stdwidgets==2||(framedraw.xend_param!=NULL&&framedraw.xend_param->widgets[0]!=NULL&&
+			    framedraw.yend_param!=NULL&&framedraw.yend_param->widgets[0]!=NULL)) {
+	  if (mainw->multitrack==NULL) {
+	    framedraw_connect(&framedraw,cfile->hsize,cfile->vsize,rfx); // turn passive preview->active
+	    framedraw_add_reset(GTK_VBOX(GTK_WIDGET(pbox)),&framedraw);
+	  }
+	  else {
+	    mainw->framedraw=mainw->image274;
+	  }
+	  framedraw.added=TRUE;
+	}
       }
-      else {
-	mainw->framedraw=mainw->image274;
-      }
-      framedraw.added=TRUE;
     }
     
-    
-    if (num==aspect.width_param) {
+    if (param==aspect.width_param) {
       gtk_spin_button_set_value (GTK_SPIN_BUTTON (param->widgets[0]),(gdouble)cfile->hsize);
       aspect.width_func=g_signal_connect_after (GTK_OBJECT (param->widgets[0]), "value_changed",
 						G_CALLBACK (after_aspect_width_changed),
 						NULL);
-      aspect.width_widget=param->widgets[0];
     }
-    if (num==aspect.height_param) {
+    if (param==aspect.height_param) {
       gtk_spin_button_set_value (GTK_SPIN_BUTTON (param->widgets[0]),(gdouble)cfile->vsize);
       aspect.height_func=g_signal_connect_after (GTK_OBJECT (param->widgets[0]), "value_changed",
 						 G_CALLBACK (after_aspect_height_changed),
@@ -247,17 +263,18 @@ void check_for_special (lives_param_t *param, int num, GtkBox *pbox, lives_rfx_t
       gtk_widget_show_all(box);
 
       aspect.checkbutton=checkbutton;
-      aspect.height_widget=param->widgets[0];
     }
-    if (num==mergealign.start_param) mergealign.start_widget=param->widgets[0];
-    if (num==mergealign.end_param) mergealign.end_widget=param->widgets[0];
   }
 
   slist=fileread;
   while (slist!=NULL) {
-    if (num==GPOINTER_TO_INT(slist->data)) {
+    if (param==(lives_param_t *)(slist->data)) {
       GList *clist;
       gint epos;
+
+      param->special_type=LIVES_PARAM_SPECIAL_TYPE_FILEREAD;
+
+      if (param->widgets[0]==NULL) continue;
 
       box=lives_widget_get_parent(param->widgets[0]);
 
@@ -292,8 +309,12 @@ void check_for_special (lives_param_t *param, int num, GtkBox *pbox, lives_rfx_t
 
   slist=passwd_widgets;
   while (slist!=NULL) {
-    if (num==GPOINTER_TO_INT(slist->data)) {
+    if (param==(lives_param_t *)(slist->data)) {
+      if (param->widgets[0]==NULL) continue;
+
       box=lives_widget_get_parent(param->widgets[0]);
+
+      param->special_type=LIVES_PARAM_SPECIAL_TYPE_PASSWORD;
 
       while (!GTK_IS_VBOX(box)) {
 	box=lives_widget_get_parent(box);
@@ -329,8 +350,8 @@ void after_aspect_width_changed (GtkSpinButton *spinbutton, gpointer user_data) 
   if (lives_toggle_button_get_active (LIVES_TOGGLE_BUTTON (aspect.checkbutton))) {
     boolean keepeven=FALSE;
     gint width=gtk_spin_button_get_value_as_int (spinbutton);
-    gint height=gtk_spin_button_get_value_as_int (GTK_SPIN_BUTTON (aspect.height_widget));
-    g_signal_handler_block (aspect.height_widget,aspect.height_func);
+    gint height=gtk_spin_button_get_value_as_int (GTK_SPIN_BUTTON (aspect.height_param->widgets[0]));
+    g_signal_handler_block (aspect.height_param->widgets[0],aspect.height_func);
 
     if (((cfile->hsize>>1)<<1)==cfile->hsize&&((cfile->vsize>>1)<<1)==cfile->vsize) {
       // try to keep even
@@ -348,8 +369,8 @@ void after_aspect_width_changed (GtkSpinButton *spinbutton, gpointer user_data) 
       }
     }
 
-    gtk_spin_button_set_value (GTK_SPIN_BUTTON (aspect.height_widget), (gdouble)height);
-    g_signal_handler_unblock (aspect.height_widget,aspect.height_func);
+    gtk_spin_button_set_value (GTK_SPIN_BUTTON (aspect.height_param->widgets[0]), (gdouble)height);
+    g_signal_handler_unblock (aspect.height_param->widgets[0],aspect.height_func);
   }
 }
 
@@ -358,9 +379,9 @@ void after_aspect_height_changed (GtkToggleButton *spinbutton, gpointer user_dat
   if (lives_toggle_button_get_active (LIVES_TOGGLE_BUTTON (aspect.checkbutton))) {
     boolean keepeven=FALSE;
     gint height=gtk_spin_button_get_value_as_int (GTK_SPIN_BUTTON (spinbutton));
-    gint width=gtk_spin_button_get_value_as_int (GTK_SPIN_BUTTON (aspect.width_widget));
+    gint width=gtk_spin_button_get_value_as_int (GTK_SPIN_BUTTON (aspect.width_param->widgets[0]));
 
-    g_signal_handler_block (aspect.width_widget,aspect.width_func);
+    g_signal_handler_block (aspect.width_param->widgets[0],aspect.width_func);
 
     if (((cfile->hsize>>1)<<1)==cfile->hsize&&((cfile->vsize>>1)<<1)==cfile->vsize) {
       // try to keep even
@@ -379,8 +400,8 @@ void after_aspect_height_changed (GtkToggleButton *spinbutton, gpointer user_dat
       }
     }
 
-    gtk_spin_button_set_value (GTK_SPIN_BUTTON (aspect.width_widget), (gdouble)width);
-    g_signal_handler_unblock (aspect.width_widget,aspect.width_func);
+    gtk_spin_button_set_value (GTK_SPIN_BUTTON (aspect.width_param->widgets[0]), (gdouble)width);
+    g_signal_handler_unblock (aspect.width_param->widgets[0],aspect.width_func);
   }
 }
 
@@ -409,6 +430,11 @@ void special_cleanup (void) {
 }
 
 
+void set_aspect_ratio_widgets (lives_param_t *w, lives_param_t *h) {
+  aspect.width_param=w;
+  aspect.height_param=h;
+}
+
 
 void setmergealign (void) {
   lives_param_t *param;
@@ -422,46 +448,46 @@ void setmergealign (void) {
 					    gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON (merge_opts->spinbutton_loops)):1))
       &&!merge_opts->loop_to_fit) {
     // set special transalign widgets to their default values
-    if (mergealign.start_widget!=NULL&&GTK_IS_SPIN_BUTTON
-	(mergealign.start_widget)&&(param=&(mergealign.rfx->params[mergealign.start_param]))->type==LIVES_PARAM_NUM) {
+    if (mergealign.start_param!=NULL&&mergealign.start_param->widgets[0]!=NULL&&GTK_IS_SPIN_BUTTON
+	(mergealign.start_param->widgets[0])&&(param=mergealign.start_param)->type==LIVES_PARAM_NUM) {
       if (param->dp) {
-	gtk_spin_button_set_value (GTK_SPIN_BUTTON (mergealign.start_widget),get_double_param (param->def));
+	gtk_spin_button_set_value (GTK_SPIN_BUTTON (param->widgets[0]),get_double_param (param->def));
       }
       else {
-	gtk_spin_button_set_value (GTK_SPIN_BUTTON (mergealign.start_widget),(gdouble)get_int_param (param->def));
+	gtk_spin_button_set_value (GTK_SPIN_BUTTON (param->widgets[0]),(gdouble)get_int_param (param->def));
       }
     }
-    if (mergealign.end_widget!=NULL&&GTK_IS_SPIN_BUTTON 
-	(mergealign.end_widget)&&(param=&(mergealign.rfx->params[mergealign.end_param]))->type==LIVES_PARAM_NUM) {
+    if (mergealign.end_param!=NULL&&mergealign.end_param->widgets[0]!=NULL&&GTK_IS_SPIN_BUTTON 
+	(mergealign.end_param->widgets[0])&&(param=mergealign.end_param)->type==LIVES_PARAM_NUM) {
       if (param->dp) {
-	gtk_spin_button_set_value (GTK_SPIN_BUTTON (mergealign.end_widget),get_double_param (param->def));
+	gtk_spin_button_set_value (GTK_SPIN_BUTTON (param->widgets[0]),get_double_param (param->def));
       }
       else {
-	gtk_spin_button_set_value (GTK_SPIN_BUTTON (mergealign.end_widget),(gdouble)get_int_param (param->def));
+	gtk_spin_button_set_value (GTK_SPIN_BUTTON (param->widgets[0]),(gdouble)get_int_param (param->def));
       }
     }
   }
   else {
     if (merge_opts->align_start) {
       // set special transalign widgets to min/max values
-      if (mergealign.start_widget!=NULL&&GTK_IS_SPIN_BUTTON 
-	  (mergealign.start_widget)&&(param=&(mergealign.rfx->params[mergealign.start_param]))->type==LIVES_PARAM_NUM) {
-	gtk_spin_button_set_value (GTK_SPIN_BUTTON (mergealign.start_widget),(gdouble)param->min);
+      if (mergealign.start_param!=NULL&&mergealign.start_param->widgets[0]!=NULL&&GTK_IS_SPIN_BUTTON 
+	  (mergealign.start_param->widgets[0])&&(param=mergealign.start_param)->type==LIVES_PARAM_NUM) {
+	gtk_spin_button_set_value (GTK_SPIN_BUTTON (param->widgets[0]),(gdouble)param->min);
       }
-      if (mergealign.end_widget!=NULL&&GTK_IS_SPIN_BUTTON 
-	  (mergealign.end_widget)&&(param=&(mergealign.rfx->params[mergealign.end_param]))->type==LIVES_PARAM_NUM) {
-	gtk_spin_button_set_value (GTK_SPIN_BUTTON (mergealign.end_widget),(gdouble)param->max);
+      if (mergealign.end_param!=NULL&&mergealign.end_param->widgets[0]!=NULL&&GTK_IS_SPIN_BUTTON 
+	  (mergealign.end_param->widgets[0])&&(param=mergealign.end_param)->type==LIVES_PARAM_NUM) {
+	gtk_spin_button_set_value (GTK_SPIN_BUTTON (param->widgets[0]),(gdouble)param->max);
       }
     }
     else {
       // set special transalign widgets to max/min values
-      if (mergealign.start_widget!=NULL&&GTK_IS_SPIN_BUTTON 
-	  (mergealign.start_widget)&&(param=&(mergealign.rfx->params[mergealign.start_param]))->type==LIVES_PARAM_NUM) {
-	gtk_spin_button_set_value (GTK_SPIN_BUTTON (mergealign.start_widget),(gdouble)param->max);
+      if (mergealign.start_param!=NULL&&mergealign.start_param->widgets[0]!=NULL&&GTK_IS_SPIN_BUTTON 
+	  (mergealign.start_param->widgets[0])&&(param=mergealign.start_param)->type==LIVES_PARAM_NUM) {
+	gtk_spin_button_set_value (GTK_SPIN_BUTTON (param->widgets[0]),(gdouble)param->max);
       }
-      if (mergealign.end_widget!=NULL&&GTK_IS_SPIN_BUTTON 
-	  (mergealign.end_widget)&&(param=&(mergealign.rfx->params[mergealign.end_param]))->type==LIVES_PARAM_NUM) {
-	gtk_spin_button_set_value (GTK_SPIN_BUTTON (mergealign.end_widget),(gdouble)param->min);
+      if (mergealign.end_param!=NULL&&mergealign.end_param->widgets[0]!=NULL&&GTK_IS_SPIN_BUTTON 
+	  (mergealign.end_param->widgets[0])&&(param=mergealign.end_param)->type==LIVES_PARAM_NUM) {
+	gtk_spin_button_set_value (GTK_SPIN_BUTTON (param->widgets[0]),(gdouble)param->min);
       }
     }
   }
@@ -471,7 +497,7 @@ void setmergealign (void) {
 LiVESPixbuf *mt_framedraw(lives_mt *mt, LiVESPixbuf *pixbuf) {
   if (framedraw.added) {
     switch (framedraw.type) {
-    case FD_RECT_MULTRECT:
+    case LIVES_PARAM_SPECIAL_TYPE_RECT_MULTRECT:
       if (mt->track_index==-1) {
 	// TODO - hide widgets
       }
@@ -479,6 +505,10 @@ LiVESPixbuf *mt_framedraw(lives_mt *mt, LiVESPixbuf *pixbuf) {
 	//
       }
       break;
+
+    default:
+      break;
+
     }
 
     framedraw_redraw(&framedraw,TRUE,pixbuf);

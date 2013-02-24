@@ -268,7 +268,13 @@ for ($i=0;$i<@params;$i++) {
 }
 
 if ($in_channels==2) {
-    print OUT "        \$nwidth=\$width;\n\$nheight=\$height;\n";
+    print OUT "   \$nwidth=\$width;\n\$nheight=\$height;\n\n";
+    print OUT "    if (\$img_ext2 eq \".png\") {\n";
+    print OUT "        \$img_prefix2=\"PNG32:\";\n";
+    print OUT "    } else {\n";
+    print OUT "        \$img_prefix2=\"\";\n";
+    print OUT "    }\n";
+
 }
 
 
@@ -276,11 +282,24 @@ print OUT "\n";
 
 if ($in_channels==0&&!$is_batch_gen) {
     # script writer MUST set this themselves
-    print OUT "    \$end=0;\n";
+    print OUT "    \$end=0;\n\n";
 }
 
+print OUT "   if (\$img_ext eq \".png\") {\n";
+print OUT "        \$img_prefix=\"PNG32:\";\n";
+print OUT "   } else {\n";
+print OUT "        \$img_prefix=\"\";\n";
+print OUT "   }\n\n";
+
+print OUT "   if (\$out_ext eq \".png\") {\n";
+print OUT "        \$out_prefix=\"PNG32:\";\n";
+print OUT "   } else {\n";
+print OUT "        \$out_prefix=\"\";\n";
+print OUT "   }\n\n";
+
+
 if (@pre) {
-    &gen_pre; 
+    &gen_pre;
 }
 
 print OUT "\n";
@@ -289,16 +308,38 @@ print OUT "\n";
 
 unless ($is_batch_gen) {
     print OUT "\n################# loop through frames #################\n";
+
+    print OUT "   if (\$img_ext eq \".png\") {\n";
+    print OUT "        \$img_prefix=\"PNG32:\";\n";
+    print OUT "   } else {\n";
+    print OUT "        \$img_prefix=\"\";\n";
+    print OUT "   }\n\n";
+
+    print OUT "   if (\$out_ext eq \".png\") {\n";
+    print OUT "        \$out_prefix=\"PNG32:\";\n";
+    print OUT "   } else {\n";
+    print OUT "        \$out_prefix=\"\";\n";
+    print OUT "   }\n\n";
+
+
 	if ($in_channels==2) {
 	    print OUT "    \$frame2=\$start2;\n";
 	    print OUT "    unless (defined(\$img_ext2)) {\n";
 	    print OUT "        \$img_ext2=\$img_ext;\n";
-	    print OUT "    }\n";
+	    print OUT "    }\n\n";
 
 	    print OUT "    if (!(\$img_ext2 eq \$img_ext) && &location(\"convert\") eq \"\") {\n";
 	    print OUT "         &sig_error(\"'convert' is required by this plugin.\",\"Please install imagemagick and try again.\");\n";
 	    print OUT "         exit 1;\n";
-	    print OUT "    }\n";
+	    print OUT "    }\n\n";
+
+
+	    print OUT "    if (\$img_ext2 eq \".png\") {\n";
+	    print OUT "        \$img_prefix2=\"PNG32:\";\n";
+	    print OUT "    } else {\n";
+	    print OUT "        \$img_prefix2=\"\";\n";
+	    print OUT "    }\n\n";
+
 
 	}
 
@@ -316,7 +357,7 @@ unless ($is_batch_gen) {
 	print OUT "        \$in2=\"\$clipboard/\$name2\$img_ext2\";\n";
 
 
-	print OUT "        unless (-f \$in2) {\n";
+	print OUT "        unless (-f \$in2f) {\n";
 	print OUT "            # end of clipboard reached, loop back to start\n";
 	print OUT "            \$frame2=\$start2;\n";
 	print OUT "            \$name2=&mkname(\$frame2);\n";
@@ -325,8 +366,8 @@ unless ($is_batch_gen) {
 
 
 	print OUT "        unless (\$img_ext2 eq \$img_ext) {\n";
-	print OUT "            system(\"\$convert_command \$in2 \$clipboard/\$name2\$img_ext\");\n";
-	print OUT "            \$in2=\"\$clipboard/\$name2\$img_ext\";\n";
+	print OUT "            system(\"\$convert_command \$img_prefix2\\\"\$in2\\\" \$img_prefix\\\"\$clipboard/\$name2\$img_ext\\\"\");\n";
+	print OUT "            \$img_prefix2=\$img_prefix;\n";
 	print OUT "        }\n";
 
 
@@ -363,8 +404,8 @@ unless ($is_batch_gen) {
     
     print OUT "        \$opfailed=0;\n";
     print OUT "        if (! -f \$out) {\n";
-    print OUT "            print STDERR \"Warning: effect plugin $plugin_name skipped frame \$frame !\n\";\n";
-    print OUT "            print STDERR \"Retrying\n\";\n";
+    print OUT "            print STDERR \"Warning: effect plugin $plugin_name skipped frame \$frame !\\n\";\n";
+    print OUT "            print STDERR \"Retrying\\n\";\n";
 
     print OUT "            \$frame--;\n";
     print OUT "            \$opfailed=1;\n";

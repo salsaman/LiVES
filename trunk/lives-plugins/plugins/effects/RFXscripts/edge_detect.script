@@ -52,7 +52,7 @@ radius|_Radius|num0|1|1|8|
 
 # loop code
 <loop>
-system("$convert_command $in -edge $p0 $out");
+system("$convert_command $img_prefix$in -edge $p0 $out_prefix$out");
 </loop>
 
 # post loop code

@@ -45,6 +45,8 @@ layout|p0|"frame(s) from clipboard, "|p1|"frame(s) from selection"|
 $antialias=&rc_get("antialias");
 $resize_ext=$out_ext;
 $input_ext=".tmp";
+$resize_prefix=$out_prefix;
+$input_prefix=$in_prefix2;
 $lc=$p0;
 </pre>
 

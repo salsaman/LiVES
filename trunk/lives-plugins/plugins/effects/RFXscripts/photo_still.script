@@ -48,7 +48,7 @@ layout|p1|"frames"|fill|
 <pre>
 #make flash frame
 $cstring=&RGB24_to_string($p2_red,$p2_green,$p2_blue);
-`$convert_command -size $width!x$height! xc:$cstring flash$img_ext`;
+system("$convert_command -size $width!x$height! xc:$cstring $img_prefix"."flash$img_ext");
 
 $has_store=0;
 
@@ -62,7 +62,7 @@ $i=$frame-$start;
 if ($p1&&!$has_store) {
 	$has_store=1;
 	if ($p3) {
-		system("$convert_command $in -modulate 100,0,100 store$img_ext");
+		system("$convert_command $img_prefix$in -modulate 100,0,100 $img_prefix"."store$img_ext");
 	}
 	else {
 		`cp $in store$img_ext`;

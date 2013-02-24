@@ -84,9 +84,9 @@ $cstring=&RGB24_to_string($p0_red,$p0_green,$p0_blue);
 $pcint=int($p3+.5);
 $pcstring="$pcint/$pcint/$pcint";
 
-system("$convert_command -size $width!x$height! xc:$cstring blank$img_ext >/dev/null 2>&1");
-system("$composite_command -compose multiply $in blank$img_ext $name.tmp >/dev/null 2>&1");
-system("$composite_command -compose plus -dissolve $pcstring $name.tmp $in $out >/dev/null 2>&1");
+system("$convert_command -size $width!x$height! xc:$cstring $img_prefix"."blank$img_ext >/dev/null 2>&1");
+system("$composite_command -compose multiply $img_prefix$in $img_prefix"."blank$img_ext $name.tmp >/dev/null 2>&1");
+system("$composite_command -compose plus -dissolve $pcstring $name.tmp $img_prefix$in $out_prefix$out >/dev/null 2>&1");
 
 unlink "$name.tmp";
 	

@@ -28,7 +28,7 @@ convert
 width|_Width|num0|640|1|10000|
 height|_Height|num0|480|1|10000|
 nframes|_Number of frames|num0|100|1|100000|
-test|_Image File|string||80|
+imgfile|_Image File|string||80|
 fps|_Frames per second|num3|25.000|1.000|200.000|
 nsize|Use _Natural image size|bool|0|
 </params>
@@ -65,9 +65,9 @@ $fps=$p4;
 
 <loop>
 if ($p5) {
-	`$convert_command "$p3" $out`;
+	`$convert_command "$p3" $out_prefix$out`;
 } else {
-	`$convert_command "$p3" -resize $p0!x$p1! $out`;
+	`$convert_command "$p3" -resize $p0!x$p1! $out_prefix$out`;
 }
 </loop>
 

@@ -52,6 +52,9 @@ $zoom=-1;
 $depth=1;
 $antialias="false";
 $resize_ext=$out_ext;
+$resize_prefix=$out_prefix;
+$input_ext=$img_ext;
+$input_prefix=$img_prefix;
 </pre>
 
 # loop code (list)

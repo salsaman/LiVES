@@ -59,7 +59,7 @@ $cstring=&RGB24_to_string($p1_red,$p1_green,$p1_blue);
 
 # loop code (list)
 <loop>
-system("$convert_command -background $cstring $in -wave $amp" . "x$wave -crop $width"."x$height $out");
+system("$convert_command -background $cstring $img_prefix$in -wave $amp" . "x$wave -crop $width"."x$height $out_prefix$out");
 $amp+=$ampstep;
 $wave+=$wavestep;
 if ($wave>=$p0) {

@@ -66,21 +66,20 @@ $pc_start=$p2; # fade amount
 <loop>
 # merge frame from diff frames ago at 90%
 $from=&mkname(int($frame-$diff));
-if (-f "$from$out_ext") {
-    $fromimg="$from$out_ext";
+if (-f "$from$out_prefix$out_ext") {
+    $fromimg="$out_prefix$from$out_ext";
 }
 else {
     if (-f "$from$img_ext") {
-        $fromimg="$from$img_ext";
+        $fromimg="$img_prefix$from$img_ext";
     }
     else {
         # must make sure we have an input image
-        $fromimg=$in;
+        $fromimg="$img_prefix$in";
     }
 }
-$toimg=$out;
 
-`$composite_command -compose plus -dissolve $pc_start -geometry $width!x$height!+$x!+$y! $fromimg -size $owidth!x$oheight! $in $out >/dev/null 2>&1`;
+`$composite_command -compose plus -dissolve $pc_start -geometry $width!x$height!+$x!+$y! $fromimg -size $owidth!x$oheight! $img_prefix$in $out_prefix$out >/dev/null 2>&1`;
 
 # make the diff grow at the beginning and shrink at the end
 $diff+=(rand ($p1*2+1))-$p1+1;

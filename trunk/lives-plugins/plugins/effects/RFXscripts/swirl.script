@@ -53,7 +53,7 @@ sstep|Swirl s_tep|num0|1|-100|100|
 
 # loop code
 <loop>
-system("$convert_command $in -swirl $p0 $out");
+system("$convert_command $img_prefix$in -swirl $p0 $out_prefix$out");
 $p0+=$p1;
 </loop>
 

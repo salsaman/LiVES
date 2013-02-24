@@ -45,7 +45,7 @@ $step=($p1-$p0)/($end-$start+1);
 </pre>
 
 <loop>
-system("$convert_command $in -modulate 100,$p0,100 $out");
+system("$convert_command $img_prefix$in -modulate 100,$p0,100 $out_prefix$out");
 $p0+=$step;
 </loop>
 

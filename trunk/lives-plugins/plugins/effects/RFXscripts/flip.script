@@ -51,7 +51,7 @@ convert
 
 # loop code (list)
 <loop>
-system("$convert_command $in -flip $out");
+system("$convert_command $img_prefix$in -flip $out_prefix$out");
 </loop>
 
 # post loop code (list)

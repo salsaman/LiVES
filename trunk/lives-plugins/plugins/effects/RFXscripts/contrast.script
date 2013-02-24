@@ -54,10 +54,10 @@ dec|_Decrease Contrast|bool|0|1|
 # loop code
 <loop>
 if ($p0) {
-    system("$convert_command $in -contrast $out");
+    system("$convert_command $img_prefix$in -contrast $out_prefix$out");
 }
 else {
-    system("$convert_command $in +contrast $out");
+    system("$convert_command $img_prefix$in +contrast $out_prefix$out");
 }
 </loop>
 

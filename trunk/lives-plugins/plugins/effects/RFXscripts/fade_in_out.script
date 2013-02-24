@@ -47,7 +47,7 @@ layout|p1|p2|
 <pre>
 #make overlay frame
 $cstring=&RGB24_to_string($p0_red,$p0_green,$p0_blue);
-`$convert_command -size $width!x$height! xc:$cstring fade$img_ext`;
+`$convert_command -size $width!x$height! xc:$cstring $img_prefix"."fade$img_ext`;
 
 #initial value
 my $fval=0.;
@@ -63,7 +63,7 @@ if ($p1) {
 
 <loop>
 # blend fade image with frame, by amount $fval
-system("$composite_command -compose plus -dissolve ".int($fval)." fade$img_ext -size $width!x$height! $in $out");
+system("$composite_command -compose plus -dissolve ".int($fval)." $img_prefix"."fade$img_ext -size $width!x$height! $img_prefix$in $out_prefix$out");
 
 #increase or decrease fade amount
 $fval+=$fstep;

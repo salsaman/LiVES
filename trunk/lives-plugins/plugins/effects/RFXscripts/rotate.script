@@ -85,7 +85,7 @@ else {
 
 # loop code
 <loop>
-system ("$convert_command $in -background $cstring -rotate $deg $out");
+system ("$convert_command $img_prefix$in -background $cstring -rotate $deg $out_prefix$out");
 if ($p4) {
    $imresact="none";
    &get_image_size($out);

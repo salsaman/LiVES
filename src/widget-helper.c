@@ -1803,6 +1803,9 @@ LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_button
   gtk_window_set_deletable(GTK_WINDOW(dialog), FALSE);
   gtk_window_set_resizable (GTK_WINDOW (dialog), FALSE);
 
+  lives_widget_set_hexpand(dialog,TRUE);
+  lives_widget_set_vexpand(dialog,TRUE);
+
   if (prefs->gui_monitor!=0) {
     gtk_window_set_screen(GTK_WINDOW(dialog),mainw->mgeom[prefs->gui_monitor-1].screen);
   }
@@ -2125,6 +2128,8 @@ void add_fill_to_box (LiVESBox *box) {
 #ifdef GUI_GTK
   GtkWidget *blank_label = gtk_label_new ("");
   gtk_box_pack_start (box, blank_label, TRUE, TRUE, 0);
+  lives_widget_set_hexpand(blank_label,FALSE);
+  lives_widget_set_vexpand(blank_label,FALSE);
   if (!widget_opts.no_gui) 
     gtk_widget_show(blank_label);
 #endif

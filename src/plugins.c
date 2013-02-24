@@ -2726,6 +2726,8 @@ void render_fx_get_params (lives_rfx_t *rfx, const gchar *plugin_name, gshort st
     cparam->change_blocked=FALSE;
     cparam->source=NULL;
     cparam->source_type=LIVES_RFX_SOURCE_RFX;
+    cparam->special_type=LIVES_PARAM_SPECIAL_TYPE_NONE;
+    cparam->special_type_index=0;
 
 #ifdef DEBUG_RENDER_FX_P
     g_printerr("Got parameter %s\n",cparam->name);
@@ -3185,6 +3187,8 @@ lives_param_t *weed_params_to_rfx(gint npar, weed_plant_t *inst, boolean show_re
     rpar[i].change_blocked=FALSE;
     rpar[i].source=wtmpl;
     rpar[i].source_type=LIVES_RFX_SOURCE_WEED;
+    rpar[i].special_type=LIVES_PARAM_SPECIAL_TYPE_NONE;
+    rpar[i].special_type_index=0;
 
     if (flags&WEED_PARAMETER_VARIABLE_ELEMENTS&&!(flags&WEED_PARAMETER_ELEMENT_PER_CHANNEL)) {
       rpar[i].hidden|=HIDDEN_MULTI;

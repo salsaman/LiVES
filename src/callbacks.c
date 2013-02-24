@@ -9040,6 +9040,8 @@ boolean expose_vid_event (GtkWidget *widget, GdkEventExpose *event) {
   gint ex,ey,ew,eh;
   gint width;
 
+  if (mainw->recoverable_layout) return FALSE;
+
   if (mainw->draw_blocked) return TRUE;
 
   if (!prefs->show_gui||mainw->multitrack!=NULL||
@@ -9335,6 +9337,8 @@ boolean expose_laud_event (GtkWidget *widget, GdkEventExpose *event) {
 #endif
   gint ex,ey,ew,eh;
 
+  if (mainw->recoverable_layout) return FALSE;
+
   if (mainw->draw_blocked) return TRUE;
 
   if (!prefs->show_gui||mainw->multitrack!=NULL||
@@ -9376,6 +9380,8 @@ boolean expose_raud_event (GtkWidget *widget, GdkEventExpose *event) {
   lives_painter_t *cr=NULL;
 #endif
   gint ex,ey,ew,eh;
+
+  if (mainw->recoverable_layout) return FALSE;
 
   if (mainw->draw_blocked) return TRUE;
 

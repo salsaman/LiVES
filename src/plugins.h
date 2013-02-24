@@ -358,7 +358,23 @@ typedef enum {
 } lives_rfx_source_t;
 
 
+typedef enum {
+  LIVES_PARAM_SPECIAL_TYPE_NONE=0, // normal parameter type
 
+  // framedraw types
+  LIVES_PARAM_SPECIAL_TYPE_RECT_DEMASK,  ///< type may be used in framedraw
+  LIVES_PARAM_SPECIAL_TYPE_RECT_MULTRECT,  ///< type may be used in framedraw
+  LIVES_PARAM_SPECIAL_TYPE_SINGLEPOINT,  ///< type may be used in framedraw
+
+  // text widget types
+  LIVES_PARAM_SPECIAL_TYPE_FILEREAD,
+  LIVES_PARAM_SPECIAL_TYPE_PASSWORD,
+
+  // misc types
+  LIVES_PARAM_SPECIAL_TYPE_MERGEALIGN,
+  LIVES_PARAM_SPECIAL_TYPE_ASPECT_RATIO
+
+} lives_param_special_t;
 
 
 typedef struct {
@@ -417,6 +433,10 @@ typedef struct {
   void *source;
 
   lives_rfx_source_t source_type;
+
+  // this may change
+  lives_param_special_t special_type; // the visual modification type (see paramspecial.h)
+  int special_type_index; // index within special_type (e.g for DEMASK, 0==left, 1==top, 2==width, 3==height)
 
 } lives_param_t;
 

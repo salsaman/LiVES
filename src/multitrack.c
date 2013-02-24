@@ -46,6 +46,7 @@
 #include "interface.h"
 #include "audio.h"
 #include "startup.h"
+#include "framedraw.h"
 
 #ifdef ENABLE_GIW
 #include "giw/giwvslider.h"

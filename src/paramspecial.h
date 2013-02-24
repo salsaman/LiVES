@@ -8,14 +8,32 @@
 // dynamic window generation from parameter arrays :-)
 // special widgets
 
-// TODO - refactor all of this using lives_param_special_t
+// TODO - refactor all of this using lives_special_t, use a union
+
+#ifndef HAS_LIVES_PARAMSPECIAL_H
+#define HAS_LIVES_PARAMSPECIAL_H
 
 typedef struct {
-  gint height_param;
-  gint width_param;
-  GtkWidget *height_widget;
-  GtkWidget *width_widget;
-  GtkWidget *checkbutton;
+  lives_rfx_t *rfx;
+  boolean added;
+  lives_param_special_t type;
+  lives_param_t *xstart_param;
+  lives_param_t *ystart_param;
+  lives_param_t *xend_param;
+  lives_param_t *yend_param;
+
+  int stdwidgets; // 2 for singlepoint, 4 for demask, multrect
+  int *extra_params;
+  int num_extra;
+  LiVESWidget **extra_widgets;
+} lives_special_framedraw_rect_t;
+
+
+
+typedef struct {
+  lives_param_t *height_param;
+  lives_param_t *width_param;
+  LiVESWidget *checkbutton;
   gulong width_func;
   gulong height_func;
 } lives_special_aspect_t;
@@ -23,32 +41,8 @@ typedef struct {
 
 typedef struct {
   lives_rfx_t *rfx;
-  boolean added;
-  gint type;
-  gint xstart_param;
-  gint ystart_param;
-  gint xend_param;
-  gint yend_param;
-  gint *extra_params;
-  gint num_extra;
-  GtkWidget *xstart_widget;
-  GtkWidget *ystart_widget;
-  GtkWidget *xend_widget;
-  GtkWidget *yend_widget;
-  GtkWidget **extra_widgets;
-} lives_special_framedraw_rect_t;
-
-#define FD_NONE 0
-#define FD_RECT_DEMASK 1
-#define FD_RECT_MULTRECT 2
-#define FD_SINGLEPOINT 3
-
-typedef struct {
-  lives_rfx_t *rfx;
-  gint start_param;
-  gint end_param;
-  GtkWidget *start_widget;
-  GtkWidget *end_widget;
+  lives_param_t *start_param;
+  lives_param_t *end_param;
 } lives_special_mergealign_t;
 ////////////////////////////////
 
@@ -56,7 +50,7 @@ void init_special (void);
 
 void add_to_special (const gchar *special_string, lives_rfx_t *);
 
-void check_for_special (lives_param_t *, int num, GtkBox *, lives_rfx_t *);
+void check_for_special (lives_rfx_t *, lives_param_t *param, GtkBox *);
 
 void fd_connect_spinbutton(lives_rfx_t *);
 
@@ -68,11 +62,15 @@ void after_aspect_height_changed (GtkToggleButton *, gpointer);
 
 void special_cleanup (void);
 
-lives_special_mergealign_t mergealign;
 void setmergealign (void);
 
-boolean is_perchannel_multi(lives_rfx_t *rfx, int i);
+void set_aspect_ratio_widgets (lives_param_t *w, lives_param_t *h);
 
-#include "framedraw.h"
+boolean is_perchannel_multi(lives_rfx_t *rfx, int pnum);
 
-#define RFX_EXTRA_WIDTH 200 /* extra width in pixels for framedraw */
+
+lives_special_mergealign_t mergealign;
+
+
+#endif
+

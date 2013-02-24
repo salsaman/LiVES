@@ -57,7 +57,7 @@ layout|p1|p2|fill|p5|
 $end=$p7;
 $cstring0=&RGB24_to_string($p6_red,$p6_green,$p6_blue);
 
-$tmpimg="temp$img_ext";
+$tmpimg="temp.jpg";
 
 `$convert_command -size $p8!x$p9! xc:$cstring0 $tmpimg`;
 

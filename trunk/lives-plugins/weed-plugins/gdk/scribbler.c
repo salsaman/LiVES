@@ -40,8 +40,8 @@ static int package_version=2; // version of this package
 #include <stdlib.h>
 #include <string.h>
 
-#include <gdk/gdk.h>
 #include <pango/pangocairo.h>
+#include <gdk/gdk.h>
 
 static gboolean is_big_endian() {
   int32_t testint = 0x12345678;
@@ -382,17 +382,6 @@ int scribbler_process (weed_plant_t *inst, weed_timecode_t timestamp) {
   top=weed_get_double_value(in_params[P_TOP],"value",&error);
 
 
-  if (palette==WEED_PALETTE_BGRA32) {
-    int tmp=fg->red;
-    fg->red=fg->blue;
-    fg->blue=tmp;
-
-    tmp=bg->red;
-    bg->red=bg->blue;
-    bg->blue=tmp;
-  }
-
-
   weed_free(in_params); // must weed free because we got an array
 
   // THINGS TO TO WITH TEXTS AND PANGO
@@ -431,22 +420,22 @@ int scribbler_process (weed_plant_t *inst, weed_timecode_t timestamp) {
 
       switch (mode) {
       case 1:
-	cairo_set_source_rgba(cairo,bg->red/255.0, bg->green/255.0, bg->blue/255.0, b_alpha);
+	cairo_set_source_rgba(cairo,(double)bg->red/255.0, (double)bg->green/255.0, (double)bg->blue/255.0, b_alpha);
 	fill_bckg(cairo, x_pos, y_pos, dwidth, dheight);
 	cairo_move_to(cairo, x_text, y_text);
-	cairo_set_source_rgba(cairo,fg->red/255.0, fg->green/255.0, fg->blue/255.0, f_alpha);
+	cairo_set_source_rgba(cairo,(double)fg->red/255.0, (double)fg->green/255.0, (double)fg->blue/255.0, f_alpha);
 	pango_layout_set_text(layout, text, -1);
 	break;
       case 2:
-	cairo_set_source_rgba(cairo,bg->red/255.0, bg->green/255.0, bg->blue/255.0, b_alpha);
+	cairo_set_source_rgba(cairo,(double)bg->red/255.0, (double)bg->green/255.0, (double)bg->blue/255.0, b_alpha);
 	fill_bckg(cairo, x_pos, y_pos, dwidth, dheight);
 	cairo_move_to(cairo, x_pos, y_pos);
-	cairo_set_source_rgba(cairo,fg->red/255.0, fg->green/255.0, fg->blue/255.0, f_alpha);
+	cairo_set_source_rgba(cairo,(double)fg->red/255.0, (double)fg->green/255.0, (double)fg->blue/255.0, f_alpha);
 	pango_layout_set_text(layout, "", -1);
 	break;
       case 0:
       default:
-	cairo_set_source_rgba(cairo,fg->red/255.0, fg->green/255.0, fg->blue/255.0, f_alpha);
+	cairo_set_source_rgba(cairo,(double)fg->red/255.0, (double)fg->green/255.0, (double)fg->blue/255.0, f_alpha);
 	break;
       }
 

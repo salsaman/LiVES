@@ -43,7 +43,7 @@ levels|_Levels|num0|8|2|255|
 </pre>
 
 <loop>
-system("$convert_command $in -posterize $p0 $out");
+system("$convert_command $img_prefix$in -posterize $p0 $out_prefix$out");
 </loop>
 
 <post>

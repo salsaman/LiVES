@@ -67,6 +67,9 @@ $antialias=&rc_get("antialias");
 
 # this is for resize_frame
 $resize_ext=".mgk2";
+$resize_prefix=$out_prefix;
+$input_ext=$img_ext;
+$input_prefix=$img_prefix;
 
 $factor=$width;
 if ($height>$width) {
@@ -76,7 +79,7 @@ $rscale=$p0/100.;
 $rstep=($p1-$p0)/($end-$start)/100.;
 
 # make a background frame
-system("$convert_command -size $width!x$height! xc:$cstring blank$img_ext");
+system("$convert_command -size $width!x$height! xc:$cstring $img_prefix"."blank$img_ext");
 
 
 if ($p4) {
@@ -130,7 +133,7 @@ if ($rscale<1.) {
 	&resize_frame($name,$hsize,$vsize);
 
         # composite does not recognise -antialias
-        system("$composite_command -compose plus -dissolve 100 -geometry +$x!+$y! $name$resize_ext blank$img_ext $out >/dev/null 2>&1");
+        system("$composite_command -compose plus -dissolve 100 -geometry +$x!+$y! $resize_prefix$name$resize_ext $img_prefix"."blank$img_ext $out_prefix$out >/dev/null 2>&1");
 	unlink "$name$resize_ext";
     }
     else {
@@ -140,6 +143,9 @@ if ($rscale<1.) {
 else {
     if ($rscale>1.) {
        $resize_ext=$out_ext;
+       $resize_prefix=$out_prefix;
+       $input_ext=$img_ext;
+       $input_prefix=$img_prefix;
        &zoom_frame($name,$center_x,$center_y,$width,$height,$rscale);
     }
     else {

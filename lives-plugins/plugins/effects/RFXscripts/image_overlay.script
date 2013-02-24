@@ -125,7 +125,7 @@ if ( $ani )
 </pre>
 
 <loop>
-system("$composite_command -alpha on -dissolve $alfa1 -geometry $actualSizeX$asp"."x"."$actualSizeY$asp"."+"."$actualX"."+"."$actualY \"$img\" \"$in\" \"$out\"");
+system("$composite_command -alpha on -dissolve $alfa1 -geometry $actualSizeX$asp"."x"."$actualSizeY$asp"."+"."$actualX"."+"."$actualY \"$img\" \"$img_prefix$in\" \"$out_prefix$out\"");
 if ( $ani )
 {
 	$actualX+=$deltaX;

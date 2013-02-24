@@ -56,6 +56,9 @@ special|aspect|0|1|
 <pre>
 $antialias=&rc_get("antialias");
 $resize_ext=$out_ext;
+$resize_prefix=$out_prefix;
+$input_ext=$img_ext;
+$input_prefix=$img_prefix;
 $nwidth=$p0;
 $nheight=$p1;
 </pre>

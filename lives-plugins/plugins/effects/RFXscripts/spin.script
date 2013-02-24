@@ -53,6 +53,7 @@ $antialias="false";
 # this is for resize_frame
 $resize=0;
 $resize_ext=$input_ext=$out_ext;
+$resize_prefix=$input_prefix=$out_prefix;
 
 if (!$p1) {
     if ($end>$start) {
@@ -66,7 +67,7 @@ else {
 </pre>
 
 <loop>
-system ("$convert_command -background $cstring $in -rotate $p0 $out");
+system ("$convert_command -background $cstring $img_prefix$in -rotate $p0 $out_prefix$out");
 if ($p2==1) {
     &resize_frame($name,$width,$height);
 }

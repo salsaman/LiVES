@@ -74,10 +74,10 @@ while ($x<$width) {
 </pre>
 
 <loop>
-`$composite_command -compose plus -dissolve 100 -resize $width!x$height! $in2 $in mask.png $out.png`;
-`$convert_command $out.png $out$img_ext`;
-rename "$out$img_ext","$out";
-unlink "$out.png";
+`$composite_command -compose plus -dissolve 100 -resize $width!x$height! $img_prefix2$in2 $in mask.png $out_prefix$out.png`;
+`$convert_command $out_prefix$out.png $out$img_ext`;
+rename "$out_prefix$out$img_ext","$out";
+unlink "$out_prefix$out.png";
 </loop>
 
 <post>

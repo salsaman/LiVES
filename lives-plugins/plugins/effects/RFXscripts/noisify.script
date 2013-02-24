@@ -117,7 +117,7 @@ if ($p2||$p6) {
 else {
    $totnoise=$param x $cnl;
 }
-`$convert_command $in $totnoise $out`;
+`$convert_command $img_prefix$in $totnoise $out_prefix$out`;
 $fstep++;
 </loop>
 

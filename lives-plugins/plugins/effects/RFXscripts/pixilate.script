@@ -45,7 +45,7 @@ layout|p0|fill|p1|fill|
 </pre>
 
 <loop>
-system("$convert_command $in -scale ".int($width/$p0+.5)."!x".int($height/$p1+.5)."! -scale $width!x$height! $out");
+system("$convert_command $img_prefix$in -scale ".int($width/$p0+.5)."!x".int($height/$p1+.5)."! -scale $width!x$height! $out_prefix$out");
 </loop>
 
 <post>

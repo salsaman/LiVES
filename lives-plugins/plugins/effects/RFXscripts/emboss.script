@@ -43,7 +43,7 @@ radius|_Radius|num0|1|1|100|
 </pre>
 
 <loop>
-system("$convert_command $in -emboss $p0 $out");
+system("$convert_command $img_prefix$in -emboss $p0 $out_prefix$out");
 </loop>
 
 <post>

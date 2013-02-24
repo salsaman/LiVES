@@ -78,7 +78,7 @@ $mycount=0;
 </pre>
 
 <loop>
-system("$composite_command -compose plus -dissolve ".int($p0)." -geometry $p2!x$p3!+$x!+$y! $in2 -size $width!x$height! $in $out");
+system("$composite_command -compose plus -dissolve ".int($p0)." -geometry $p2!x$p3!+$x!+$y! $img_prefix2$in2 -size $width!x$height! $in $out_prefix$out");
 $p0+=$mystep;
 if (($p1>0&&$p0>$p1*1.)||($p1<0&&$p0<$p1*1.)) {$p0=$p1*1.;}
 if (++$mycount==$p7) {$p0=$myorig_val; $mycount=0;}

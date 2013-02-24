@@ -55,10 +55,10 @@ $cver_new=(&get_convert_version_hash>=5005004);
 # loop code (list)
 <loop>
 if ($cver_new) {
-   system("$convert_command $in -fill $bgcol -colorize 100/100/100 $out");
+   system("$convert_command $img_prefix$in -fill $bgcol -colorize 100/100/100 $out_prefix$out");
 }
 else {
-     system("$mogrify_command -pen $bgcol -colorize 100/100/100 $in $out");
+     system("$mogrify_command -pen $bgcol -colorize 100/100/100 $img_prefix$in $out_prefix$out");
 }
 </loop>
 

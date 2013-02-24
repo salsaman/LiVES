@@ -74,24 +74,24 @@ if ($p9) {
 <loop>
 if ($p3) {
                 # transparent over
-        	system("$convert_command +antialias $in2 -scale $rwidth!x$rheight! resize.png");
+        	system("$convert_command +antialias $img_prefix2$in2 -scale $rwidth!x$rheight! resize.png");
                 if (!$p2) {
                     system("$convert_command resize.png -threshold $p0 -monochrome mask.png");
                 }
                 else {
                     system("$convert_command resize.png -threshold ".(65535-$p0)." -negate -monochrome mask.png");
                 }
-                system("$composite_command -compose over -geometry $rwidth!x$rheight! resize.png -geometry +$xoff!+$yoff! -size $width!x$height! $in mask.png $frame.tmp");
+                system("$composite_command -compose over -geometry $rwidth!x$rheight! resize.png -geometry +$xoff!+$yoff! -size $width!x$height! $img_prefix$in mask.png $frame.tmp");
         }
         else {
         	#transparent under
                 if ($antialias eq "false") {
-                    system("$convert_command +antialias $in2 -scale $width!x$height! resize.png");
+                    system("$convert_command +antialias $img_prefix2$in2 -scale $width!x$height! resize.png");
                 }
                 else {
-                    system("$convert_command $in2 -resize $width!x$height! resize.png");
+                    system("$convert_command $img_prefix2$in2 -resize $width!x$height! resize.png");
                 }
-                system("$convert_command $in -resize $rwidth!x$rheight! resize2.png");
+                system("$convert_command $img_prefix$in -resize $rwidth!x$rheight! resize2.png");
                 if (!$p2) {
                     system("$convert_command -threshold ".($p0)." resize2.png -monochrome mask.png");
                 }
@@ -101,7 +101,7 @@ if ($p3) {
         	system("$composite_command -compose over -geometry $rwidth!x$rheight! resize2.png -geometry +$xoff!+$yoff! -size $width!x$height! resize.png mask.png $frame.tmp");
         }
         
-        system("$convert_command +matte $frame.tmp $out");
+        system("$convert_command +matte $frame.tmp $out_prefix$out");
         unlink "$frame.tmp";
 </loop>
 

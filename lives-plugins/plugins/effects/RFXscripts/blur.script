@@ -66,7 +66,7 @@ else {
 
 # loop code
 <loop>
-system("$convert_command $in -blur $p0"."x$p1 $out");
+system("$convert_command $img_prefix$in -blur $p0"."x$p1 $out_prefix$out");
 $p0+=$radstep;
 $p1+=$sigstep;
 </loop>

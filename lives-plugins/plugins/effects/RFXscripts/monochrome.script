@@ -51,7 +51,7 @@ convert
 
 # loop code (list)
 <loop>
-system("$convert_command $in -modulate 100,0 $out");
+system("$convert_command $img_prefix$in -modulate 100,0 $out_prefix$out");
 </loop>
 
 # post loop code (list)

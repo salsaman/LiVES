@@ -57,9 +57,7 @@ layout|p1|p2|fill|p5|
 $end=$p7;
 $cstring0=&RGB24_to_string($p6_red,$p6_green,$p6_blue);
 
-$tmpimg="temp.jpg";
-
-`$convert_command -size $p8!x$p9! xc:$cstring0 $tmpimg`;
+system("$convert_command -size $p8!x$p9! xc:$cstring0 $out_prefix"."temp$out_ext");
 
 $p10--;
 
@@ -141,13 +139,13 @@ $fps=$p11;
 $cstring1=&RGB24_to_string($p3_red,$p3_green,$p3_blue);
 $cstring2=&RGB24_to_string($p4_red,$p4_green,$p4_blue);
 
-`$convert_command $tmpimg -fill $cstring1 -stroke $cstring2 $font -pointsize $p5 -draw \"text $p1 $p2 '$p0'\" $out`;
+system("$convert_command $out_prefix"."temp$out_ext -fill $cstring1 -stroke $cstring2 $font -pointsize $p5 -draw \"text $p1 $p2 '$p0'\" $out_prefix$out");
 
 $nwidth=$p8; $nheight=$p9;
 </loop>
 
 <post>
-unlink $tmping;
+unlink "temp$out_ext";
 </post>
 
 <onchange>

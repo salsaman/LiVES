@@ -63,8 +63,8 @@ if (($frame+$diff>$end)||$diff==0) {
 else {
      $from=&mkname(int($frame+$diff));
      if (-f "$from$img_ext") {
-    	     $fromimg="$from$img_ext";
-    	   `$composite_command -compose plus -dissolve $pc_start $fromimg -size $width!x$height! $in $out >/dev/null 2>&1`;
+    	     $fromimg="$img_prefix$from$img_ext";
+    	   `$composite_command -compose plus -dissolve $pc_start $fromimg -size $width!x$height! $img_prefix$in $out_prefix$out >/dev/null 2>&1`;
 	   }
 	   else {
      	   	`cp $in $out`;

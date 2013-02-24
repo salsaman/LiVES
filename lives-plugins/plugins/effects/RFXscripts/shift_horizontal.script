@@ -49,7 +49,7 @@ layout|p1|"(pixels)"|
 unless ($p2==1) {
     # make a background frame
     $cstring=&RGB24_to_string($p3_red,$p3_green,$p3_blue);
-    system("$convert_command -size $width!x$height! xc:$cstring blank$img_ext");
+    system("$convert_command -size $width!x$height! xc:$cstring $img_prefix"."blank$img_ext");
 }
 </pre>
 
@@ -58,11 +58,11 @@ if ($p0>=0) {
     $p0="+".$p0;
 }
 if ($p2==1) {
-    system("$convert_command $in -roll $p0+0 $out");
+    system("$convert_command $img_prefix$in -roll $p0+0 $out_prefix$out");
 }
 else {
     # composite translated original on blank
-    system("$composite_command -compose plus -dissolve 100 -geometry $width!x$height! $in -geometry $p0!+0! blank$img_ext $out");
+    system("$composite_command -compose plus -dissolve 100 -geometry $width!x$height! $img_prefix$in -geometry $p0!+0! $img_prefix"."blank$img_ext $out_prefix$out");
 }
 $p0+=$p1;
 </loop>

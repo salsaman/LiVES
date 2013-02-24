@@ -54,11 +54,14 @@ $antialias="false";
 <loop>
 $input_ext=$img_ext;
 $resize_ext=".mgk2";
+$resize_prefix=$img_prefix;
 &resize_frame($name,int($width/2),int($height/2));
 $input_ext=$resize_ext;
 $resize_ext=$out_ext;
+$input_prefix=$resize_prefix;
+$resize_prefix=$out_prefix;
 &resize_frame($name,$width,$height);
-unlink "$name$input_ext";
+unlink "$name$img_prefix$input_ext";
 </loop>
 
 # post loop code (list)

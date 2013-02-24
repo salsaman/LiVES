@@ -52,7 +52,7 @@ radius|_Radius|num0|1|1|100|
 
 # loop code (list)
 <loop>
-system("$convert_command $in -charcoal $p0 $out");
+system("$convert_command $img_prefix$in -charcoal $p0 $out_prefix$out");
 </loop>
 
 # post loop code (list)

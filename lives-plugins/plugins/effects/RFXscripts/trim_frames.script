@@ -60,6 +60,9 @@ special|aspect|5|6|
 <pre>
 $antialias=&rc_get("antialias");
 $resize_ext=$out_ext;
+$resize_prefix=$out_prefix;
+$input_ext=$img_ext;
+$input_prefix=$img_prefix;
 $xwidth=$nwidth=$p2-$p0+1;
 $xheight=$nheight=$p3-$p1+1;
 if ($nwidth<1||$nwidth>$width) {
@@ -71,7 +74,7 @@ if ($nheight<1||$nheight>$height) {
 
 if ($p7) {
     $cstring1=&RGB24_to_string($p10_red,$p10_green,$p10_blue);
-    system("$convert_command -size $p5!x$p6! xc:$cstring1 blank$img_ext");
+    system("$convert_command -size $p5!x$p6! xc:$cstring1 $img_prefix"."blank$img_ext");
     $nwidth=$p5;
     $nheight=$p6;
 }
@@ -80,7 +83,7 @@ if ($p7) {
 <loop>
 &trim_frame($name,$width,$height,$p0,$p1,$nwidth,$nheight);
 if ($p7) {	
-    system("$composite_command -compose plus -dissolve 100 -geometry $xwidth!x$xheight!+$p8!+$p9! $out -size $p5!x$p6! blank$img_ext $out");
+    system("$composite_command -compose plus -dissolve 100 -geometry $xwidth!x$xheight!+$p8!+$p9! $out_prefix$out -size $p5!x$p6! $img_prefix"."blank$img_ext $out");
 }
 </loop>
 

@@ -54,7 +54,7 @@ $step=($p1-$p0)/($end-$start+1);
 
 # loop code
 <loop>
-system("$convert_command $in -spread ".int($p0)." $out");
+system("$convert_command $img_prefix$in -spread ".int($p0)." $out_prefix$out");
 $p0+=$step;
 </loop>
 

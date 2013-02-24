@@ -57,7 +57,7 @@ if ($to_do<=0) {
 }
 	 
 if ($to_do>0) {
-    system("$convert_command $in -negate $out");
+    system("$convert_command $img_prefix$in -negate $out_prefix$out");
 }
 $to_do--;
 </loop>

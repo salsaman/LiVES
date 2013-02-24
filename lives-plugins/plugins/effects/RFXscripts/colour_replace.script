@@ -59,7 +59,7 @@ layout|p1|
 
 # loop code (list)
 <loop>
-`$convert_command $in -fill $cstring2 -opaque $cstring1 $out`;
+`$convert_command $img_prefix$in -fill $cstring2 -opaque $cstring1 $out_prefix$out`;
 </loop>
 
 # post loop code (list)

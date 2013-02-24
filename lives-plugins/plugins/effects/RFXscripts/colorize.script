@@ -88,10 +88,10 @@ $pcstring="$p3/$p3/$p3";
 
 # a bit nasty as the syntax changed
 if ($cver_new) {
-    system("$convert_command $in -fill $cstring -colorize $pcstring $out >/dev/null 2>&1");
+    system("$convert_command $img_prefix$in -fill $cstring -colorize $pcstring $out_prefix$out >/dev/null 2>&1");
 }
 else {
-    system("mogrify -colorspace RGB -type truecolor -pen $cstring -colorize $pcstring $in $out >/dev/null 2>&1");
+    system("mogrify -quiet -pen $cstring -colorize $pcstring $in $out >/dev/null 2>&1");
 }
 
 #builder will handle wrapping

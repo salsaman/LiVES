@@ -43,7 +43,7 @@ midtone|_Midtone|num0|65|0|100|
 </pre>
 
 <loop>
-`$convert_command $in -sepia-tone $p0% $out`;
+`$convert_command $img_prefix$in -sepia-tone $p0% $out_prefix$out`;
 </loop>
 
 <post>

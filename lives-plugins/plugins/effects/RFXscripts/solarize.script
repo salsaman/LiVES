@@ -53,7 +53,7 @@ step|Step _Value|num0|-1000|-65535|65535|
 
 # loop code (list)
 <loop>
-system("$convert_command $in -solarize $p0 $out");
+system("$convert_command $img_prefix$in -solarize $p0 $out_prefix$out");
 $p0+=$p1;
 if ($p0>65535||$p0<0) {
     $p1=-$p1;

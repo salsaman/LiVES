@@ -73,11 +73,22 @@ $timeout=2;
 my $retmsg=&get_newmsg;
 
 unless ($retmsg eq "pong") {
-    print "Could not connect to LiVES; try starting it with: lives -oscstart $remote_port\n";
+    print "\nCould not connect to LiVES; try starting it with: lives -oscstart $remote_port\nor activate OMC from Preferences/Networking.\n\n";
     exit 2;
 }
 
-#print "got $retmsg\n";
+
+# get number of clips, print and exit
+`$sendOMC /clip/count`;
+
+
+$numclips=&get_newmsg;
+
+if ($numclips<2) {
+    print "\nYou need at least 2 clips open to be able to test all effects.\n\n";
+    exit 3;
+}
+
 
 # reset and clear fx map
 `$sendOMC /effect_key/reset`;
@@ -90,10 +101,12 @@ unless ($retmsg eq "pong") {
 $loopcont=&get_newmsg;
 
 `$sendOMC /video/loop/set,$loopcont`;
-#`$sendOMC /clip/select,1`;
+`$sendOMC /clip/select,1`;
 `$sendOMC /video/play`;
 
 $ready=0;
+
+$totfx=$totparams=0;
 
 for ($j=0;;$j++) {
     # get next fx name
@@ -108,6 +121,8 @@ for ($j=0;;$j++) {
 	    next unless ($retmsg=~ /^frei0rFrei0r/);
 	}
 	print "testing $retmsg\n";
+
+	$totfx++;
 
 	# map to key 1 and enable it
 	`$sendOMC /effect_key/map/clear`;
@@ -132,39 +147,49 @@ for ($j=0;;$j++) {
 	
 	if ($nparms>20) {
 	    $nparms=20;
+	    print "Only testing the first 20\n";
 	}
 	
 #	    &sleep200;
+
+	$totparams+=$nparams;
 	
 	for ($i=0;$i<$nparms;$i++) {
 	    `$sendOMC /effect_key/parameter/name/get,1,$i`;
 	    $pname=&get_newmsg;
-	    print ("Testing param $i, $pname\n");
 	    
+	    print ("Testing param $i, $pname\n");
+
+
 	    `$sendOMC /effect_key/parameter/type/get,1,$i`;
-	    $ptypename=&get_newmsg;
-	    if ($ptypename eq "WEED_HINT_INTEGER") {
+	    $ptype=&get_newmsg;
+	    if ($ptype==1) {
+		$ptypename="WEED_HINT_INTEGER";
 		$ptype=1;
 		$ptname="int";
 	    }
-	    elsif ($ptypename eq "WEED_HINT_FLOAT") {
+	    elsif ($ptype==2) {
+		$ptypename="WEED_HINT_FLOAT";
 		$ptype=2;
 		$ptname="float";
 	    }
-	    elsif ($ptypename eq "WEED_HINT_SWITCH") {
+	    elsif ($ptype==3) {
+		$ptypename="WEED_HINT_SWITCH";
 		$ptype=3;
 		$ptname="bool";
 	    }
-	    elsif ($ptypename eq "WEED_HINT_TEXT") {
+	    elsif ($ptype==4) {
+		$ptypename="WEED_HINT_TEXT";
 		$ptype=4;
 		$ptname="string";
 	    }
-	    elsif ($ptypename eq "WEED_HINT_COLOR") {
+	    elsif ($ptype==5) {
+		$ptypename="WEED_HINT_COLOR";
 		$ptype=5;
 		$ptname="colour";
 	    }
 	    
-	    print("param type is $ptype ($ptname)\n");
+	    print("param type is $ptname\n");
 	    
 	    `$sendOMC /effect_key/parameter/default/get,1,$i`;
 	    $pdef=&get_newmsg;
@@ -185,7 +210,7 @@ for ($j=0;;$j++) {
 		
 		print("max value is $pmax\n");
 		
-		if ($ptypename eq "WEED_HINT_SWITCH") {
+		if ($ptype==3) {
 		    $pmin=0;
 		    $pmax=1;
 		}
@@ -210,7 +235,7 @@ for ($j=0;;$j++) {
 
 	    print("nvalues is $pnvals\n");
 	    
-	    if ($pnvals!=1&&($ptypename ne "WEED_HINT_COLOR"&&$pnvals==3)&&$ptypename ne "WEED_HINT_TEXT") {
+	    if ($pnvals!=1&&($ptype!=5&&$pnvals==3)&&$ptype!=4) {
 		print "WARNING: value of $value may be invalid.\n";
 		next;
 		
@@ -333,7 +358,7 @@ for ($j=0;;$j++) {
 
 `$sendOMC /video/stop`;
 
-
+print "/nAll tests complete, tested $totfx effects and $totparams parameters.\n\n";
 
 exit 0;
 

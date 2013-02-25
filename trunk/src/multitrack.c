@@ -1715,7 +1715,7 @@ static gint get_top_track_for(lives_mt *mt, gint track) {
 
 
 
-void scroll_tracks (lives_mt *mt, gint top_track) {
+ void scroll_tracks (lives_mt *mt, gint top_track, boolean set_value) {
   int rows=0;
   GList *vdraws=mt->video_draws;
   GList *table_children;
@@ -1734,7 +1734,8 @@ void scroll_tracks (lives_mt *mt, gint top_track) {
   lives_adjustment_set_page_size(LIVES_ADJUSTMENT(mt->vadjustment),(double)mt->max_disp_vtracks);
   lives_adjustment_set_upper(LIVES_ADJUSTMENT(mt->vadjustment),(double)(mt->num_video_tracks*2-1));
 
-  gtk_adjustment_set_value(GTK_ADJUSTMENT(mt->vadjustment),(gdouble)top_track);
+  if (set_value)
+    gtk_adjustment_set_value(GTK_ADJUSTMENT(mt->vadjustment),(gdouble)top_track);
 
   if (top_track<0) top_track=0;
   if (top_track>=g_list_length(mt->video_draws)) top_track=g_list_length(mt->video_draws)-1;
@@ -2143,6 +2144,12 @@ void scroll_tracks (lives_mt *mt, gint top_track) {
 			     (double)(get_top_track_for(mt,mt->num_video_tracks-1)+
 				      (int)lives_adjustment_get_page_size(LIVES_ADJUSTMENT(mt->vadjustment))));
 
+
+  if (gtk_adjustment_get_value(GTK_ADJUSTMENT(mt->vadjustment))+lives_adjustment_get_page_size(LIVES_ADJUSTMENT(mt->vadjustment))>
+      lives_adjustment_get_upper(LIVES_ADJUSTMENT(mt->vadjustment)))
+    lives_adjustment_set_upper(LIVES_ADJUSTMENT(mt->vadjustment),gtk_adjustment_get_value(GTK_ADJUSTMENT(mt->vadjustment))+
+			       lives_adjustment_get_page_size(LIVES_ADJUSTMENT(mt->vadjustment)));
+
   table_children=gtk_container_get_children(GTK_CONTAINER(mt->timeline_table));
 
   while (table_children!=NULL) {
@@ -2192,7 +2199,7 @@ boolean track_arrow_pressed (GtkWidget *ebox, GdkEventButton *event, gpointer us
   g_object_unref(arrow);
   gtk_widget_destroy(arrow);
 
-  scroll_tracks(mt,mt->top_track);
+  scroll_tracks(mt,mt->top_track,FALSE);
   track_select(mt);
   return FALSE;
 }
@@ -2841,7 +2848,7 @@ boolean mt_tlback_frame (GtkAccelGroup *group, GObject *obj, guint keyval, GdkMo
 
 static void scroll_track_on_screen(lives_mt *mt, gint track) {
   if (track>mt->top_track) track=get_top_track_for(mt,track);
-  scroll_tracks(mt,track);
+  scroll_tracks(mt,track,track!=mt->top_track);
  
   return;
 }
@@ -2849,10 +2856,9 @@ static void scroll_track_on_screen(lives_mt *mt, gint track) {
 
 
 
-void
-scroll_track_by_scrollbar (GtkVScrollbar *sbar, gpointer user_data) {
+void scroll_track_by_scrollbar (GtkScrollbar *sbar, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
-  scroll_tracks(mt,gtk_adjustment_get_value(gtk_range_get_adjustment(GTK_RANGE(sbar))));
+  scroll_tracks(mt,gtk_adjustment_get_value(gtk_range_get_adjustment(GTK_RANGE(sbar))),FALSE);
   track_select(mt);
 }
 
@@ -4805,7 +4811,7 @@ gchar *set_values_from_defs(lives_mt *mt, boolean from_prefs) {
     retval=mt_set_vals_string();
   }
 
-  if (mt->is_ready) scroll_tracks(mt,0);
+  if (mt->is_ready) scroll_tracks(mt,0,TRUE);
 
   if (cfile->achans==0) {
     mt->avol_fx=-1;
@@ -8213,9 +8219,9 @@ static boolean draw_cool_toggle (GtkWidget *widget, lives_painter_t *cr, gpointe
   mt->vadjustment = (GObject *)lives_adjustment_new (0.0,0.0,1.0,1.0,mt->max_disp_vtracks,1.0);
   mt->scrollbar=lives_vscrollbar_new(LIVES_ADJUSTMENT(mt->vadjustment));
 
-  g_signal_connect (GTK_OBJECT (mt->scrollbar), "value_changed",
-		    G_CALLBACK (scroll_track_by_scrollbar),
-		    (gpointer)mt);
+  g_signal_connect_after (GTK_OBJECT (mt->scrollbar), "value_changed",
+			  G_CALLBACK (scroll_track_by_scrollbar),
+			  (gpointer)mt);
 
   mt->tl_eventbox=gtk_event_box_new();
   gtk_box_pack_start (GTK_BOX (mt->tl_hbox), mt->tl_eventbox, TRUE, TRUE, 0);
@@ -13636,7 +13642,7 @@ mt_view_audio_toggled                (GtkMenuItem     *menuitem,
 					      GINT_TO_POINTER(TRACK_I_HIDDEN_USER));
   else g_object_set_data(G_OBJECT(mt->audio_draws->data),"hidden",GINT_TO_POINTER(0));
 
-  scroll_tracks(mt,mt->top_track);
+  scroll_tracks(mt,mt->top_track,FALSE);
   track_select(mt);
 }
 
@@ -20893,7 +20899,7 @@ void mt_change_disp_tracks_ok (GtkButton *button, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
   mt->max_disp_vtracks=mainw->fx1_val;
-  scroll_tracks(mt,mt->top_track);
+  scroll_tracks(mt,mt->top_track,FALSE);
 }
 
 
@@ -21055,7 +21061,7 @@ void mt_change_vals_activate (GtkMenuItem *menuitem, gpointer user_data) {
     gtk_widget_show(mt->normalise_aud);
     gtk_widget_show(mt->view_audio);
   }
-  scroll_tracks(mt,mt->top_track);
+  scroll_tracks(mt,mt->top_track,FALSE);
 }
 
 

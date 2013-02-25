@@ -6,6 +6,8 @@
 # e.g. lives-rte-test.pl localhost 49999 49998
 # or just lives-rte-test.pl to use defaults 
 
+$frei0r_test=1;
+
 if (&location("sendOSC") eq "") {
     print "You must have sendOSC installed to run this.\n";
     exit 1;
@@ -88,7 +90,7 @@ unless ($retmsg eq "pong") {
 $loopcont=&get_newmsg;
 
 `$sendOMC /video/loop/set,$loopcont`;
-`$sendOMC /clip/select,1`;
+#`$sendOMC /clip/select,1`;
 `$sendOMC /video/play`;
 
 $ready=0;
@@ -102,7 +104,9 @@ for ($j=0;;$j++) {
 	last;
     }
     else {
-	next unless ($retmsg=~ /^frei0rFrei0r/);
+	if (defined($frei0r_test)) {
+	    next unless ($retmsg=~ /^frei0rFrei0r/);
+	}
 	print "testing $retmsg\n";
 
 	# map to key 1 and enable it
@@ -111,20 +115,20 @@ for ($j=0;;$j++) {
 	`$sendOMC /effect_key/enable,1`;
 	
 	#if trans, set bg
-	`$sendOMC /effect_key/inchannels/active/get,1`;
+	`$sendOMC /effect_key/inchannel/active/count,1`;
 	$nchans=&get_newmsg;
 	if ($nchans==2) {
 	    `$sendOMC /clip/background/select,2`;
 	}
 	
-	#print("number of active in channels is $nchans\n");
+	print("number of active in channels is $nchans\n");
 	
 
 	#test each parameter in turn - get value, set to min, max, default
 	`$sendOMC /effect_key/parameter/count,1`;
 	$nparms=&get_newmsg;
 	
-	#print "Effect has $nparms params\n";
+	print "Effect has $nparms params\n";
 	
 	if ($nparms>20) {
 	    $nparms=20;
@@ -138,30 +142,36 @@ for ($j=0;;$j++) {
 	    print ("Testing param $i, $pname\n");
 	    
 	    `$sendOMC /effect_key/parameter/type/get,1,$i`;
-	    $ptype=&get_newmsg;
-	    if ($ptype==1) {
+	    $ptypename=&get_newmsg;
+	    if ($ptypename eq "WEED_HINT_INTEGER") {
+		$ptype=1;
 		$ptname="int";
 	    }
-	    if ($ptype==2) {
+	    elsif ($ptypename eq "WEED_HINT_FLOAT") {
+		$ptype=2;
 		$ptname="float";
 	    }
-	    if ($ptype==3) {
+	    elsif ($ptypename eq "WEED_HINT_SWITCH") {
+		$ptype=3;
 		$ptname="bool";
 	    }
-	    if ($ptype==4) {
+	    elsif ($ptypename eq "WEED_HINT_TEXT") {
+		$ptype=4;
 		$ptname="string";
 	    }
-	    if ($ptype==5) {
+	    elsif ($ptypename eq "WEED_HINT_COLOR") {
+		$ptype=5;
 		$ptname="colour";
 	    }
 	    
-	    print("param type is $ptname\n");
+	    print("param type is $ptype ($ptname)\n");
 	    
 	    `$sendOMC /effect_key/parameter/default/get,1,$i`;
 	    $pdef=&get_newmsg;
 	    
 	    print("default value is $pdef\n");
 	    
+
 	    # set to min, max, def; bool on/off; text "LiVES test"
 	    
 	    if ($ptype != 3 && $ptype != 4) {
@@ -175,8 +185,13 @@ for ($j=0;;$j++) {
 		
 		print("max value is $pmax\n");
 		
+		if ($ptypename eq "WEED_HINT_SWITCH") {
+		    $pmin=0;
+		    $pmax=1;
+		}
+
 		if ($pdef<$pmin || $pdef > $pmax) {
-		    #print ("DEFAULT OUT OF RANGE ($pdef) $retmsg: $pname\n");
+		    print ("DEFAULT OUT OF RANGE ($pdef) $retmsg: $pname\n");
 		}
 		
 		
@@ -187,13 +202,16 @@ for ($j=0;;$j++) {
 	    }
 	    
 	    #check nvalues in param
-	    `$sendOMC /effect_key/parameter/value/count,1,$i`;
-	    $pnvals=&get_newmsg;
+	    `$sendOMC /effect_key/parameter/value/get,1,$i`;
+	    $value=&get_newmsg;
+
+	    @elems=split(",",$value);
+	    $pnvals=@elems;
+
 	    print("nvalues is $pnvals\n");
 	    
-	    if ($pnvals!=1) {
-		print "not testing ARRAY\n";
-		exit 0;
+	    if ($pnvals!=1&&($ptypename ne "WEED_HINT_COLOR"&&$pnvals==3)&&$ptypename ne "WEED_HINT_TEXT") {
+		print "WARNING: value of $value may be invalid.\n";
 		next;
 		
 	    }
@@ -208,7 +226,7 @@ for ($j=0;;$j++) {
 		$test=(split/,/,$pmin)[1];
 		
 		if ($test eq "") {
-		    print "min needs expand\n";
+#		    print "min needs expand\n";
 		    
 		    if ($csp==1) {
 			$pmin="$pmin,$pmin,$pmin";
@@ -222,7 +240,7 @@ for ($j=0;;$j++) {
 		$test=(split/,/,$pmax)[1];
 		
 		if ($test eq "") {
-		    print "max needs expand\n";
+#		    print "max needs expand\n";
 		    
 		    if ($csp==1) {
 			$pmax="$pmax,$pmax,$pmax";
@@ -236,7 +254,7 @@ for ($j=0;;$j++) {
 		$test=(split/,/,$pdef)[1];
 		
 		if ($test eq "") {
-		    print "def needs expand\n";
+#		    print "def needs expand\n";
 		    
 		    if ($csp==1) {
 			$pdef="$pdef,$pdef,$pdef";

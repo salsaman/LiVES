@@ -402,7 +402,7 @@ static gchar *lives_osc_format_result(weed_plant_t *plant, const gchar *key, int
 
 void lives_osc_cb_test(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   int val=lives_osc_get_num_arguments (vargs);
-  g_print("got %d\n",val);
+  g_printerr("got %d\n",val);
 }
 
 /* /video/play */
@@ -853,7 +853,9 @@ void lives_osc_cb_fx_map(void *context, int arglen, const void *vargs, OSCTimeTa
 
 void lives_osc_cb_fx_enable(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   // if via_shortcut and not playing, we ignore unless a generator starts (which starts playback)
-
+#if GTK_CHECK_VERSION(3,0,0)
+  boolean new_timer_added=FALSE;
+#endif
   int count;
   int effect_key;
   gint grab=mainw->last_grabable_effect;
@@ -875,6 +877,7 @@ void lives_osc_cb_fx_enable(void *context, int arglen, const void *vargs, OSCTim
 	mainw->kb_timer=gtk_timeout_add(KEY_RPT_INTERVAL,&ext_triggers_poll,NULL);
 #else
 	mainw->kb_timer=g_timeout_add(KEY_RPT_INTERVAL,&ext_triggers_poll,NULL);
+	new_timer_added=TRUE;
 #endif
       }
       // TODO ***
@@ -882,7 +885,8 @@ void lives_osc_cb_fx_enable(void *context, int arglen, const void *vargs, OSCTim
       rte_on_off_callback(NULL,NULL,0,(GdkModifierType)0,GINT_TO_POINTER(effect_key));
       mainw->osc_auto=FALSE;
 #if GTK_CHECK_VERSION(3,0,0)
-    mainw->kb_timer_end=TRUE;
+      if (new_timer_added)
+	mainw->kb_timer_end=TRUE;
 #endif
     }
   }
@@ -4515,7 +4519,6 @@ void lives_osc_cb_rte_getnchannels(void *context, int arglen, const void *vargs,
   }
 
   if (effect_key<1||effect_key>FX_MAX) return lives_osc_notify_failure();
-  //g_print("key %d pnum %d",effect_key,pnum);
   plant=rte_keymode_get_instance(effect_key,mode);
   if (plant==NULL) plant=rte_keymode_get_filter(effect_key,mode);
   if (plant==NULL) return lives_osc_notify_failure();
@@ -6577,6 +6580,10 @@ static int lives_osc_get_packet(lives_osc *o) {
     if(NetworkReceivePacket(o->packet)) {
       /* OSC must accept this packet (OSC will auto-invoke it, see source !) */
       OSCAcceptPacket(o->packet);
+
+#ifdef DEBUG_OSC
+      g_print("got osc msg %s\n",OSCPacketBufferGetBuffer((OSCPacketBuffer)o->packet));
+#endif
       /* Is this really productive ? */
       OSCBeProductiveWhileWaiting();
       // here we call the callbacks

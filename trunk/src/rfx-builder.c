@@ -2996,7 +2996,7 @@ GtkWidget * make_trigger_dialog (gint tnum, rfx_build_window_t *rfxbuilder) {
     gtk_widget_grab_focus(rfxbuilder->code_textview);
   }
     
-  gtk_widget_set_size_request (scrolledwindow,RFX_WINSIZE_H*2/3,RFX_WINSIZE_V/4);
+  gtk_widget_set_size_request (scrolledwindow,RFX_WINSIZE_H*2./3.,RFX_WINSIZE_V/4.);
 
   dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (dialog));
   gtk_widget_show (dialog_action_area);

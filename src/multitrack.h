@@ -757,7 +757,7 @@ void remove_first_gaps (GtkMenuItem *, gpointer mt);
 void on_insgap_sel_activate (GtkMenuItem *, gpointer mt);
 void on_insgap_cur_activate (GtkMenuItem *, gpointer mt);
 void on_split_activate (GtkMenuItem *, gpointer mt);
-void scroll_tracks (lives_mt *, gint top_track);
+void scroll_tracks (lives_mt *, gint top_track, boolean set_value);
 boolean track_arrow_pressed (GtkWidget *ahbox, GdkEventButton *, gpointer mt);
 void track_select (lives_mt *); ///< must call after setting mt->current_track
 boolean mt_track_is_audio(lives_mt *, int ntrack); ///< return TRUE if ntrack is a valid backing audio track
@@ -782,7 +782,7 @@ void unselect_all (lives_mt *); ///< unselect all blocks
 void insert_frames (gint filenum, weed_timecode_t offset_start, weed_timecode_t offset_end, weed_timecode_t tc, lives_direction_t direction, GtkWidget *eventbox, lives_mt *, track_rect *in_block);
 void insert_audio (gint filenum, weed_timecode_t offset_start, weed_timecode_t offset_end, weed_timecode_t tc, gdouble avel, lives_direction_t direction, GtkWidget *eventbox, lives_mt *, track_rect *in_block);
 void on_seltrack_toggled (GtkWidget *, gpointer mt);
-void scroll_track_by_scrollbar (GtkVScrollbar *sbar, gpointer mt);
+void scroll_track_by_scrollbar (GtkScrollbar *sbar, gpointer mt);
 
 // block functions
 void in_out_start_changed (GtkWidget *, gpointer mt);

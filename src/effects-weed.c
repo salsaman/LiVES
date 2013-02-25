@@ -4298,12 +4298,17 @@ static void load_weed_plugin (gchar *plugin_name, gchar *plugin_path, gchar *dir
 
   int filters_in_plugin;
   int mode=-1,kmode=0;
-  int i;
+  int pkg_posn=0;
+
+  char cwd[PATH_MAX];
+
+  char *pwd;
 
   gchar *string,*filter_type;
   gchar *filter_name;
-  char cwd[PATH_MAX],*pwd;
   gchar *pkg=NULL,*pkgstring;
+
+  register int i;
 
   static int key=-1;
 
@@ -4413,6 +4418,7 @@ static void load_weed_plugin (gchar *plugin_name, gchar *plugin_path, gchar *dir
 		    
 		    pkg_menu=gtk_menu_item_new_with_label (pkgstring);
 		    gtk_container_add (GTK_CONTAINER (mainw->rte_defs), pkg_menu);
+		    gtk_menu_reorder_child(GTK_MENU(mainw->rte_defs),pkg_menu,pkg_posn++);
 		    
 		    pkg_submenu=gtk_menu_new();
 		    gtk_menu_item_set_submenu (GTK_MENU_ITEM (pkg_menu), pkg_submenu);

@@ -70,6 +70,8 @@ int tzoom_process (weed_plant_t *inst, weed_timecode_t timecode) {
 
   if (pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_BGR24||pal==WEED_PALETTE_YUV888) psize=3;
 
+  if (pal==WEED_PALETTE_UYVY||pal==WEED_PALETTE_YUYV) width>>=1; // 2 pixels per macropixel
+
   in_params=weed_get_plantptr_array(inst,"in_parameters",&error);
 
   scale=weed_get_double_value(in_params[0],"value",&error);

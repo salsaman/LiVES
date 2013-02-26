@@ -83,6 +83,8 @@ int mirrory_process (weed_plant_t *inst, weed_timecode_t timestamp) {
 
   if (pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_BGR24||pal==WEED_PALETTE_YUV888) psize=3;
 
+  if (pal==WEED_PALETTE_UYVY||pal==WEED_PALETTE_YUYV) width>>=1; // 2 pixels per macropixel
+
   width*=psize;
 
   if (weed_plant_has_leaf(inst,"plugin_combined")&&weed_get_boolean_value(inst,"plugin_combined",&error)==WEED_TRUE) {

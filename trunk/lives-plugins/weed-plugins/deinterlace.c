@@ -96,17 +96,22 @@ int deinterlace_process (weed_plant_t *inst, weed_timecode_t tc) {
   
   int luma_offs=0;
 
-  if (palette==WEED_PALETTE_ARGB32||palette==WEED_PALETTE_RGBA32||palette==WEED_PALETTE_BGRA32||palette==WEED_PALETTE_YUVA8888||palette==WEED_PALETTE_UYVY||palette==WEED_PALETTE_YUYV) psize=4;
-  
-  if (palette==WEED_PALETTE_YUV444P||palette==WEED_PALETTE_YUVA4444P||palette==WEED_PALETTE_YUV420P||palette==WEED_PALETTE_YVU420P||palette==WEED_PALETTE_YUV422P) psize=1;
-  
+  if (palette==WEED_PALETTE_UYVY||palette==WEED_PALETTE_YUYV) width>>=1; // 2 pixels per macropixel
 
-  if (palette==WEED_PALETTE_ARGB32||palette==WEED_PALETTE_RGBA32||palette==WEED_PALETTE_BGRA32||palette==WEED_PALETTE_RGB24||palette==WEED_PALETTE_BGR24) luma_offs=1;
+  if (palette==WEED_PALETTE_ARGB32||palette==WEED_PALETTE_RGBA32||palette==WEED_PALETTE_BGRA32||
+      palette==WEED_PALETTE_YUVA8888||palette==WEED_PALETTE_UYVY||palette==WEED_PALETTE_YUYV) psize=4;
+  
+  if (palette==WEED_PALETTE_YUV444P||palette==WEED_PALETTE_YUVA4444P||palette==WEED_PALETTE_YUV420P||
+      palette==WEED_PALETTE_YVU420P||palette==WEED_PALETTE_YUV422P) psize=1;
+
+  if (palette==WEED_PALETTE_ARGB32||palette==WEED_PALETTE_RGBA32||palette==WEED_PALETTE_BGRA32||
+      palette==WEED_PALETTE_RGB24||palette==WEED_PALETTE_BGR24) luma_offs=1;
 
   psize2=psize*2;
   psize3=psize*3;
-  
+
   widthx=width*psize;
+
   
   src+=irowstride;
   dst+=orowstride;

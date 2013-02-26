@@ -487,7 +487,7 @@ static boolean add_sizes(GtkBox *vbox, boolean add_fps, lives_rfx_t *rfx) {
   // add size settings for generators and resize effects
   static lives_param_t aspect_width,aspect_height;
 
-  GtkWidget *label,*hbox,*hseparator;
+  GtkWidget *label,*hbox;
   GtkWidget *spinbuttonh=NULL,*spinbuttonw=NULL;
   GtkWidget *spinbuttonf;
 
@@ -509,12 +509,17 @@ static boolean add_sizes(GtkBox *vbox, boolean add_fps, lives_rfx_t *rfx) {
   int def_width=0,max_width,width_step;
   int def_height=0,max_height,height_step;
 
+  int opw=widget_opts.packing_width;
+
   register int i;
 
   // add fps
 
 
   if (add_fps) {
+
+    add_hsep_to_box(vbox,FALSE);
+
     hbox = lives_hbox_new (FALSE, 0);
     gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 20);
     
@@ -535,6 +540,7 @@ static boolean add_sizes(GtkBox *vbox, boolean add_fps, lives_rfx_t *rfx) {
   }
 
 
+  widget_opts.packing_width>>=2;
   
   for (i=0;i<num_chans;i++) {
     tmpl=ctmpls[i];
@@ -604,11 +610,10 @@ static boolean add_sizes(GtkBox *vbox, boolean add_fps, lives_rfx_t *rfx) {
 
   }
 
+  widget_opts.packing_width=opw;
 
 
   if (!chk_params) {
-    hseparator = lives_hseparator_new ();
-
     if (!rfx->is_template) {
       // add "aspectratio" widget
       init_special();
@@ -621,8 +626,6 @@ static boolean add_sizes(GtkBox *vbox, boolean add_fps, lives_rfx_t *rfx) {
       check_for_special (rfx,&aspect_height,vbox);
     }
 
-    if (added) gtk_box_pack_start (vbox, hseparator, FALSE, FALSE, widget_opts.packing_height);
-    
   }
 
   return added;
@@ -1245,6 +1248,7 @@ boolean make_param_box(GtkVBox *top_vbox, lives_rfx_t *rfx) {
     scrolledwindow = gtk_scrolled_window_new (NULL, NULL);
     gtk_widget_show (scrolledwindow);
     gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrolledwindow), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+
     lives_widget_set_hexpand(scrolledwindow,TRUE);
     lives_widget_set_vexpand(scrolledwindow,TRUE);
 
@@ -1256,7 +1260,11 @@ boolean make_param_box(GtkVBox *top_vbox, lives_rfx_t *rfx) {
     if (palette->style&STYLE_1) {
       lives_widget_set_bg_color(gtk_bin_get_child (GTK_BIN (scrolledwindow)), GTK_STATE_NORMAL, &palette->normal_back);
     }
-    gtk_viewport_set_shadow_type (GTK_VIEWPORT (gtk_bin_get_child (GTK_BIN (scrolledwindow))),GTK_SHADOW_IN);
+    gtk_viewport_set_shadow_type (GTK_VIEWPORT (lives_bin_get_child (LIVES_BIN (scrolledwindow))),GTK_SHADOW_IN);
+
+    lives_widget_set_hexpand(lives_bin_get_child(LIVES_BIN(scrolledwindow)),TRUE);
+    lives_widget_set_vexpand(lives_bin_get_child(LIVES_BIN(scrolledwindow)),TRUE);
+
   }
 
   if (mainw->multitrack==NULL&&rfx->status==RFX_STATUS_WEED&&rfx->is_template) {
@@ -1334,7 +1342,7 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, boolean add_
   name=g_strdup_printf ("%s",param->label);
   use_mnemonic=param->use_mnemonic;
 
-  if (GTK_IS_HBOX(box)) {
+  if (LIVES_IS_HBOX(LIVES_WIDGET(box))) {
     hbox=GTK_WIDGET(box);
     widget_opts.packing_width>>=2;
   }
@@ -1372,7 +1380,7 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, boolean add_
     else {
       group=get_group(rfx,param);
 
-      if (GTK_IS_HBOX(box)) hbox=GTK_WIDGET(box);
+      if (LIVES_IS_HBOX(LIVES_WIDGET(box))) hbox=GTK_WIDGET(box);
       else {
 	hbox = lives_hbox_new (FALSE, 0);
 	gtk_box_pack_start (GTK_BOX (box), hbox, FALSE, FALSE, widget_opts.packing_height);
@@ -1497,6 +1505,8 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, boolean add_
     lives_box_set_spacing(LIVES_BOX(hbox),0);
     lives_widget_set_hexpand(hbox,FALSE);
 
+    lives_box_set_homogeneous(LIVES_BOX(hbox),FALSE);
+
     // colsel button
 
     colr.red=rgb.red<<8;
@@ -1536,7 +1546,7 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, boolean add_
 
     widget_opts.packing_width=old_packwidth;
 
-    gtk_box_pack_start (GTK_BOX (hbox), cbutton, TRUE, TRUE, packwidth);
+    gtk_box_pack_start (GTK_BOX (hbox), cbutton, FALSE, TRUE, packwidth);
 
     g_signal_connect (GTK_OBJECT (cbutton), "color-set",
 		      G_CALLBACK (on_pwcolsel),
@@ -1698,7 +1708,7 @@ void add_param_label_to_box (GtkBox *box, boolean do_trans, const gchar *text) {
   }
   else label = lives_standard_label_new_with_mnemonic (text,NULL);
 
-  if (LIVES_IS_HBOX(box))
+  if (LIVES_IS_HBOX(LIVES_WIDGET(box)))
     gtk_box_pack_start (box, label, FALSE, FALSE, widget_opts.packing_width);
   else
     gtk_box_pack_start (box, label, FALSE, FALSE, widget_opts.packing_height);

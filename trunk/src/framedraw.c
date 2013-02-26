@@ -515,7 +515,10 @@ void load_rfx_preview(lives_rfx_t *rfx) {
 
   if (max_frame>0) {
     if (rfx->num_in_channels==0) {
+      int maxlen=calc_spin_button_width(1.,(double)tot_frames,0);
       gtk_spin_button_set_range (GTK_SPIN_BUTTON (mainw->framedraw_spinbutton),1,tot_frames);
+      gtk_entry_set_width_chars (GTK_ENTRY (mainw->framedraw_spinbutton),maxlen);
+      gtk_widget_queue_draw(mainw->framedraw_spinbutton);
       gtk_widget_queue_draw(mainw->framedraw_scale);
     }
     

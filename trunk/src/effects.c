@@ -202,6 +202,8 @@ gboolean do_effect(lives_rfx_t *rfx, gboolean is_preview) {
     fxcommand=g_strconcat (prefs->backend," \"",cmd,"_",plugin_name,"\" ", pdefault, 
 			   (tmp=param_marshall (rfx, FALSE)), NULL);
 
+    g_print("Vals %d %s\n",cfile->progress_start,fxcommand);
+
     g_free(plugin_name);
     g_free(cmd);
     g_free(pdefault);

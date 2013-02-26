@@ -166,7 +166,7 @@ gboolean do_effect(lives_rfx_t *rfx, gboolean is_preview) {
 
   if (is_preview) {
     // generators start at 1, even though they have no initial frames
-    cfile->progress_start=cfile->undo_start=cfile->start+(rfx->num_in_channels==0?1:0);
+    cfile->progress_start=cfile->undo_start=rfx->num_in_channels==0?1:cfile->start;
     cfile->progress_end=cfile->undo_end=cfile->end;
   }
   else if (rfx->num_in_channels!=2) {
@@ -201,8 +201,6 @@ gboolean do_effect(lives_rfx_t *rfx, gboolean is_preview) {
     else cmd=g_strdup("fxrender");
     fxcommand=g_strconcat (prefs->backend," \"",cmd,"_",plugin_name,"\" ", pdefault, 
 			   (tmp=param_marshall (rfx, FALSE)), NULL);
-
-    g_print("Vals %d %s\n",cfile->progress_start,fxcommand);
 
     g_free(plugin_name);
     g_free(cmd);

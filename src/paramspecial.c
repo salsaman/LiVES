@@ -316,7 +316,7 @@ static void passwd_toggle_vis(GtkToggleButton *b, gpointer entry) {
 
       param->special_type=LIVES_PARAM_SPECIAL_TYPE_PASSWORD;
 
-      while (!GTK_IS_VBOX(box)) {
+      while (!LIVES_IS_VBOX(box)) {
 	box=lives_widget_get_parent(box);
 	if (box==NULL) continue;
       }

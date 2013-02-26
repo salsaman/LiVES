@@ -1392,14 +1392,13 @@ LIVES_INLINE uint64_t lives_widget_get_xwinid(LiVESWidget *widget, const gchar *
 }
 
 
-
-
-
-
 // compound functions
 
 
+
+
 void lives_tooltips_copy(LiVESWidget *dest, LiVESWidget *source) {
+#ifdef GUI_GTK
 #if GTK_CHECK_VERSION(2,12,0)
   gchar *text=gtk_widget_get_tooltip_text(source);
   gtk_widget_set_tooltip_text(dest,text);
@@ -1409,11 +1408,13 @@ void lives_tooltips_copy(LiVESWidget *dest, LiVESWidget *source) {
   if (td==NULL) return;
   gtk_tooltips_set_tip (td->tooltips, dest, td->tip_text, td->tip_private);
 #endif
+#endif
 }
 
 
 void lives_combo_populate(LiVESCombo *combo, LiVESList *list) {
   // remove any current list
+#ifdef GUI_GTK
 
   gtk_combo_box_set_active(combo,-1);
 
@@ -1424,6 +1425,7 @@ void lives_combo_populate(LiVESCombo *combo, LiVESList *list) {
     lives_combo_append_text(LIVES_COMBO(combo),(const char *)list->data);
     list=list->next;
   }
+#endif
 }
 
 
@@ -1591,6 +1593,16 @@ LiVESWidget *lives_standard_radio_button_new(const char *labeltext, boolean use_
 }
 
 
+int calc_spin_button_width(double min, double max, int dp) {
+  char *txt=g_strdup_printf ("%d",(int)max);
+  int maxlen=strlen (txt);
+  g_free (txt);
+  txt=g_strdup_printf ("%d",(int)min);
+  if (strlen (txt)>maxlen) maxlen=strlen (txt);
+  g_free (txt);
+  if (dp>0) maxlen+=3;
+  return maxlen;
+}
 
 
 LiVESWidget *lives_standard_spin_button_new(const char *labeltext, boolean use_mnemonic, double val, double min, 
@@ -1607,23 +1619,15 @@ LiVESWidget *lives_standard_spin_button_new(const char *labeltext, boolean use_m
   LiVESWidget *hbox;
   LiVESAdjustment *adj;
 
-  char *txt;
-  size_t maxlen;
+  int maxlen;
 
   adj = lives_adjustment_new (val, min, max, step, page, 0.);
   spinbutton = gtk_spin_button_new (adj, 1, dp);
   if (tooltip!=NULL) lives_tooltips_set(spinbutton, tooltip);
-  txt=g_strdup_printf ("%d",(int)max);
-  maxlen=strlen (txt);
-  g_free (txt);
-  txt=g_strdup_printf ("%d",(int)min);
-  if (strlen (txt)>maxlen) maxlen=strlen (txt);
-  g_free (txt);
 
-  if (min<0.) maxlen++;
-  if (dp>0) maxlen+=3;
-
+  maxlen=calc_spin_button_width(min,max,dp);
   gtk_entry_set_width_chars (GTK_ENTRY (spinbutton),maxlen);
+
   lives_widget_set_can_focus_and_default(spinbutton);
   gtk_entry_set_activates_default (GTK_ENTRY (spinbutton), TRUE);
   gtk_spin_button_set_update_policy (GTK_SPIN_BUTTON (spinbutton),GTK_UPDATE_ALWAYS);

@@ -213,8 +213,10 @@ typedef gpointer                          LiVESObjectPtr;
 #define LIVES_IS_WIDGET(widget) GTK_IS_WIDGET(widget)
 #if GTK_CHECK_VERSION(3,0,0)
 #define LIVES_IS_HBOX(widget) (GTK_IS_BOX(widget)&&gtk_orientable_get_orientation(GTK_ORIENTABLE(widget))==GTK_ORIENTATION_HORIZONTAL)
+#define LIVES_IS_VBOX(widget) (GTK_IS_BOX(widget)&&gtk_orientable_get_orientation(GTK_ORIENTABLE(widget))==GTK_ORIENTATION_HORIZONTAL)
 #else
 #define LIVES_IS_HBOX(widget) GTK_IS_HBOX(widget)
+#define LIVES_IS_VBOX(widget) GTK_IS_VBOX(widget)
 #endif
 #define LIVES_IS_COMBO(widget) GTK_IS_COMBO_BOX(widget)
 
@@ -624,6 +626,7 @@ lives_display_t lives_widget_get_display_type(LiVESWidget *widget);
 
 uint64_t lives_widget_get_xwinid(LiVESWidget *, const gchar *failure_msg);
 
+
 // optional
 
 void lives_dialog_set_has_separator(LiVESDialog *, boolean has);
@@ -666,6 +669,7 @@ void lives_widget_unparent(LiVESWidget *);
 
 void lives_tooltips_copy(LiVESWidget *dest, LiVESWidget *source);
 
+int calc_spin_button_width(double min, double max, int dp);
 
 int get_box_child_index (LiVESBox *, LiVESWidget *child);
 

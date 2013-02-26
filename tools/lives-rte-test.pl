@@ -152,7 +152,7 @@ for ($j=0;;$j++) {
 	
 #	    &sleep200;
 
-	$totparams+=$nparams;
+	$totparams+=$nparms;
 	
 	for ($i=0;$i<$nparms;$i++) {
 	    `$sendOMC /effect_key/parameter/name/get,1,$i`;
@@ -164,27 +164,22 @@ for ($j=0;;$j++) {
 	    `$sendOMC /effect_key/parameter/type/get,1,$i`;
 	    $ptype=&get_newmsg;
 	    if ($ptype==1) {
-		$ptypename="WEED_HINT_INTEGER";
 		$ptype=1;
 		$ptname="int";
 	    }
 	    elsif ($ptype==2) {
-		$ptypename="WEED_HINT_FLOAT";
 		$ptype=2;
 		$ptname="float";
 	    }
 	    elsif ($ptype==3) {
-		$ptypename="WEED_HINT_SWITCH";
 		$ptype=3;
 		$ptname="bool";
 	    }
 	    elsif ($ptype==4) {
-		$ptypename="WEED_HINT_TEXT";
 		$ptype=4;
 		$ptname="string";
 	    }
 	    elsif ($ptype==5) {
-		$ptypename="WEED_HINT_COLOR";
 		$ptype=5;
 		$ptname="colour";
 	    }
@@ -253,7 +248,7 @@ for ($j=0;;$j++) {
 		if ($test eq "") {
 #		    print "min needs expand\n";
 		    
-		    if ($csp==1) {
+		    if ($csp==1||$csp==3) {
 			$pmin="$pmin,$pmin,$pmin";
 		    }
 		    else {
@@ -281,7 +276,7 @@ for ($j=0;;$j++) {
 		if ($test eq "") {
 #		    print "def needs expand\n";
 		    
-		    if ($csp==1) {
+		    if ($csp==1||$csp==3) {
 			$pdef="$pdef,$pdef,$pdef";
 		    }
 		    else {

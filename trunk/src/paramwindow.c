@@ -1330,7 +1330,9 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, boolean add_
   boolean use_mnemonic;
   boolean was_num=FALSE;
 
-  int packwidth=widget_opts.packing_width,old_packwidth;
+#if GTK_CHECK_VERSION(3,0,0)
+  int def_packing_width=widget_opts.packing_width;
+#endif
 
   if (pnum>=rfx->num_params) {
     add_param_label_to_box (box,FALSE,(_("Invalid parameter")));
@@ -1344,14 +1346,14 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, boolean add_
 
   if (LIVES_IS_HBOX(LIVES_WIDGET(box))) {
     hbox=GTK_WIDGET(box);
-    widget_opts.packing_width>>=2;
+#if GTK_CHECK_VERSION(3,0,0)
+    def_packing_width=widget_opts.packing_width=0;
+#endif
   }
   else {
     hbox = lives_hbox_new (FALSE, 0);
     gtk_box_pack_start (GTK_BOX (box), hbox, FALSE, FALSE, widget_opts.packing_height);
   }
-
-  old_packwidth=widget_opts.packing_width;
 
   switch (param->type) {
   case LIVES_PARAM_BOOL :
@@ -1484,7 +1486,7 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, boolean add_
 	scale=giw_knob_new(GTK_ADJUSTMENT(spinbutton_adj));
 	gtk_widget_set_size_request(scale,GIW_KNOB_WIDTH,GIW_KNOB_HEIGHT);
 	giw_knob_set_legends_digits(GIW_KNOB(scale),0);
-	gtk_box_pack_start (GTK_BOX (hbox), scale, FALSE, FALSE, widget_opts.packing_width);
+	gtk_box_pack_start (GTK_BOX (hbox), scale, TRUE, FALSE, widget_opts.packing_width);
 	lives_widget_set_fg_color(scale,LIVES_WIDGET_STATE_NORMAL,&palette->black);
 	lives_widget_set_fg_color(scale,LIVES_WIDGET_STATE_PRELIGHT,&palette->dark_orange);
 	add_fill_to_box (GTK_BOX (hbox));
@@ -1502,10 +1504,13 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, boolean add_
   case LIVES_PARAM_COLRGB24 :
     get_colRGB24_param(param->value,&rgb);
 
-    lives_box_set_spacing(LIVES_BOX(hbox),0);
     lives_widget_set_hexpand(hbox,FALSE);
 
     lives_box_set_homogeneous(LIVES_BOX(hbox),FALSE);
+
+#if GTK_CHECK_VERSION(3,0,0)
+    widget_opts.packing_width=0;
+#endif
 
     // colsel button
 
@@ -1529,8 +1534,6 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, boolean add_
 
     gtk_box_pack_start (GTK_BOX (hbox), labelcname, FALSE, FALSE, 0);
 
-    widget_opts.packing_width=0;
-
     spinbutton_red = lives_standard_spin_button_new((tmp=g_strdup(_("_Red"))), TRUE, rgb.red, 0., 255., 1., 1., 0, 
 						    (LiVESBox *)hbox, (tmp2=g_strdup(_("The red value (0 - 255)"))));
     g_free(tmp);
@@ -1544,9 +1547,11 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, boolean add_
     g_free(tmp);
     g_free(tmp2);
 
-    widget_opts.packing_width=old_packwidth;
+#if GTK_CHECK_VERSION(3,0,0)
+    widget_opts.packing_width=def_packing_width;;
+#endif
 
-    gtk_box_pack_start (GTK_BOX (hbox), cbutton, FALSE, TRUE, packwidth);
+    gtk_box_pack_start (GTK_BOX (hbox), cbutton, TRUE, TRUE, widget_opts.packing_width);
 
     g_signal_connect (GTK_OBJECT (cbutton), "color-set",
 		      G_CALLBACK (on_pwcolsel),
@@ -1674,7 +1679,6 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, boolean add_
     g_object_set_data (G_OBJECT (combo),"param_number",GINT_TO_POINTER (pnum));
     param->widgets[0]=combo;
     if (param->hidden) gtk_widget_set_sensitive(combo,FALSE);
-
     break;
 
   default:
@@ -1682,7 +1686,6 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, boolean add_
 
   }
 
-  widget_opts.packing_width=packwidth;
   
   // see if there were any 'special' hints
   //mainw->block_param_updates=FALSE; // need to keep blocked until last param widget has been created
@@ -1701,7 +1704,7 @@ void add_param_label_to_box (GtkBox *box, boolean do_trans, const gchar *text) {
 
   if (do_trans) {
     char *markup;
-    markup=g_markup_printf_escaped("<span weight=\"bold\" style=\"italic\">%s</span>",_(text));
+    markup=g_markup_printf_escaped("<span weight=\"bold\" style=\"italic\"> %s </span>",_(text));
     label = lives_standard_label_new(NULL);
     gtk_label_set_markup_with_mnemonic (GTK_LABEL(label),markup);
     g_free(markup);
@@ -1801,7 +1804,6 @@ after_boolean_param_toggled        (GtkToggleButton *togglebutton,
 	weed_free(disp_string);
       }
       if (param->reinit||(copyto!=-1&&rfx->params[copyto].reinit)) {
-	gtk_widget_set_sensitive(GTK_WIDGET(togglebutton),FALSE);
 	weed_reinit_effect(inst,FALSE);
 	return;
       }
@@ -1913,9 +1915,6 @@ after_param_value_changed           (GtkSpinButton   *spinbutton,
 	weed_free(disp_string);
       }
       if (param->reinit||(copyto!=-1&&rfx->params[copyto].reinit)) {
-
-	// this is important; because widget gets destroyed/reparented
-	gtk_widget_set_sensitive(GTK_WIDGET(spinbutton),FALSE);
 	weed_reinit_effect(inst,FALSE);
 	return; // spinbutton is no longer valid
       }
@@ -2111,8 +2110,6 @@ after_param_red_changed           (GtkSpinButton   *spinbutton,
       }
       
       if (param->reinit||(copyto!=-1&&rfx->params[copyto].reinit)) {
-	// this is important; because widget gets destroyed/reparented
-	gtk_widget_set_sensitive(GTK_WIDGET(spinbutton),FALSE);
 	weed_reinit_effect(inst,FALSE);
 	return; // spinbutton is no longer valid
       }
@@ -2183,8 +2180,6 @@ after_param_green_changed           (GtkSpinButton   *spinbutton,
       }
       
       if (param->reinit||(copyto!=-1&&rfx->params[copyto].reinit)) {
-	// this is important; because widget gets destroyed/reparented
-	gtk_widget_set_sensitive(GTK_WIDGET(spinbutton),FALSE);
 	weed_reinit_effect(inst,FALSE);
 	return; // spinbutton is no longer valid
       }
@@ -2254,8 +2249,6 @@ after_param_blue_changed           (GtkSpinButton   *spinbutton,
       }
       
       if (param->reinit||(copyto!=-1&&rfx->params[copyto].reinit)) {
-	// this is important; because widget gets destroyed/reparented
-	gtk_widget_set_sensitive(GTK_WIDGET(spinbutton),FALSE);
 	weed_reinit_effect(inst,FALSE);
 	return; // spinbutton is no longer valid
       }
@@ -2420,7 +2413,6 @@ void after_param_text_changed (GtkWidget *textwidget, lives_rfx_t *rfx) {
       }
 
       if (param->reinit||(copyto!=-1&&rfx->params[copyto].reinit)) {
-	gtk_widget_set_sensitive(textwidget,FALSE);
 	weed_reinit_effect(inst,FALSE);
 	return;
       }
@@ -2513,7 +2505,6 @@ after_string_list_changed (GtkComboBox *combo, lives_rfx_t *rfx) {
     
       
       if (param->reinit||(copyto!=-1&&rfx->params[copyto].reinit)) {
-	gtk_widget_set_sensitive(GTK_WIDGET(combo),FALSE);
 	weed_reinit_effect(inst,FALSE);
 	return;
       }

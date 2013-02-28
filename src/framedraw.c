@@ -1052,19 +1052,40 @@ void draw_rect_demask (lives_colRGBA32_t *col, int x1, int y1, int x2, int y2, b
 
 
 void on_framedraw_reset_clicked (GtkButton *button, lives_special_framedraw_rect_t *framedraw) {
-  gdouble x_min,x_max,y_min,y_max;
-  // TODO ** - set to defaults
+  //gdouble x_min,x_max,y_min,y_max;
+  // reset to defaults
 
-  gtk_spin_button_get_range (GTK_SPIN_BUTTON (framedraw->xstart_param->widgets[0]),&x_min,NULL);
+  /*  gtk_spin_button_get_range (GTK_SPIN_BUTTON (framedraw->xstart_param->widgets[0]),&x_min,NULL);
   gtk_spin_button_get_range (GTK_SPIN_BUTTON (framedraw->ystart_param->widgets[0]),&y_min,NULL);
   gtk_spin_button_get_range (GTK_SPIN_BUTTON (framedraw->xend_param->widgets[0]),NULL,&x_max);
   gtk_spin_button_get_range (GTK_SPIN_BUTTON (framedraw->yend_param->widgets[0]),NULL,&y_max);
+  */
 
   noupdate=TRUE;
-  gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xend_param->widgets[0]),x_max);
-  gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->yend_param->widgets[0]),y_max);
-  gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xstart_param->widgets[0]),x_min);
-  gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->ystart_param->widgets[0]),y_min);
+  if (framedraw->xend_param!=NULL) {
+    if (framedraw->xend_param->dp==0)
+      gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xend_param->widgets[0]),(double)get_int_param(framedraw->xend_param->def));
+    else 
+      gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xend_param->widgets[0]),get_double_param(framedraw->xend_param->def));
+  }
+  if (framedraw->yend_param!=NULL) {
+    if (framedraw->yend_param->dp==0)
+      gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->yend_param->widgets[0]),(double)get_int_param(framedraw->yend_param->def));
+    else 
+      gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->yend_param->widgets[0]),get_double_param(framedraw->yend_param->def));
+  }
+  if (framedraw->xstart_param!=NULL) {
+    if (framedraw->xstart_param->dp==0)
+      gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xstart_param->widgets[0]),(double)get_int_param(framedraw->xstart_param->def));
+    else 
+      gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xstart_param->widgets[0]),get_double_param(framedraw->xstart_param->def));
+  }
+  if (framedraw->ystart_param!=NULL) {
+    if (framedraw->ystart_param->dp==0)
+      gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->ystart_param->widgets[0]),(double)get_int_param(framedraw->ystart_param->def));
+    else 
+      gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->ystart_param->widgets[0]),get_double_param(framedraw->ystart_param->def));
+  }
   noupdate=FALSE;
 
   framedraw_redraw (framedraw, FALSE, NULL);

@@ -839,6 +839,10 @@ void on_render_fx_pre_activate (GtkMenuItem *menuitem, lives_rfx_t *rfx) {
 
   has_param=make_param_box(GTK_VBOX (pbox), rfx);
 
+  // update widgets from onchange_init here
+
+
+
   dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (fx_dialog[n]));
 
   cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
@@ -2799,12 +2803,15 @@ GList *argv_to_marshalled_list (lives_rfx_t *rfx, gint argc, gchar **argv) {
 
 gint set_param_from_list(GList *plist, lives_param_t *param, gint pnum, boolean with_min_max, boolean upd) {
   // update values for param using values in plist
-  // if upd is TRUE, the widgets for that param also are updated
+  // if upd is TRUE, the widgets for that param also are updated;
+  // otherwise, we do not update the widgets, but we do update the default
 
   // for LIVES_PARAM_NUM, setting pnum negative avoids having to send min,max
+  // (other types dont have a min/max anyway)
 
-  gint red,green,blue;
-  gint offs=0;
+
+  int red,green,blue;
+  int offs=0;
   gint maxlen=g_list_length(plist)-1;
 
   if (ABS(pnum)>maxlen) return 0;
@@ -2821,6 +2828,7 @@ gint set_param_from_list(GList *plist, lives_param_t *param, gint pnum, boolean 
 	lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (param->widgets[0]),get_bool_param(param->value));
       }
     }
+    else set_bool_param(param->def,(atoi ((gchar *)g_list_nth_data (plist,pnum++))));
     break;
   case LIVES_PARAM_NUM:
     if (param->change_blocked) {
@@ -2850,6 +2858,7 @@ gint set_param_from_list(GList *plist, lives_param_t *param, gint pnum, boolean 
 	  gtk_spin_button_update(GTK_SPIN_BUTTON(param->widgets[0]));
 	}
       }
+      else set_double_param(param->def,double_val);
     }
     else {
       gint int_value=atoi ((gchar *)g_list_nth_data (plist,pnum++));
@@ -2877,6 +2886,7 @@ gint set_param_from_list(GList *plist, lives_param_t *param, gint pnum, boolean 
 	  gtk_spin_button_update(GTK_SPIN_BUTTON(param->widgets[0]));
 	}
       }
+      else set_int_param(param->def,int_value);
     }
     break;
   case LIVES_PARAM_COLRGB24:
@@ -2899,8 +2909,10 @@ gint set_param_from_list(GList *plist, lives_param_t *param, gint pnum, boolean 
 	gtk_spin_button_set_value (GTK_SPIN_BUTTON (param->widgets[2]),(gdouble)blue);
       }
     }
+    else set_colRGB24_param(param->def,red,green,blue);
     break;
   case LIVES_PARAM_STRING:
+    if (param->value!=NULL) g_free(param->value);
     param->value=reconstruct_string (plist,pnum,&offs);
     if (upd) {
       if (param->widgets[0]!=NULL) {
@@ -2915,6 +2927,7 @@ gint set_param_from_list(GList *plist, lives_param_t *param, gint pnum, boolean 
 	}
       }
     }
+    else param->def=g_strdup(param->value);
     pnum+=offs;
     break;
   case LIVES_PARAM_STRING_LIST:
@@ -2924,6 +2937,8 @@ gint set_param_from_list(GList *plist, lives_param_t *param, gint pnum, boolean 
       set_int_param(param->value,int_value);
       if (upd&&param->widgets[0]!=NULL&&LIVES_IS_COMBO(param->widgets[0])&&int_value<g_list_length(param->list))
 	lives_combo_set_active_string(LIVES_COMBO(param->widgets[0]),(gchar *)g_list_nth_data(param->list,int_value));
+      if (!upd) set_int_param(param->def,int_value);
+
       break;
     }
   default:

@@ -186,12 +186,12 @@ gboolean do_effect(lives_rfx_t *rfx, gboolean is_preview) {
       // transition has a few extra bits
       pdefault=g_strdup_printf ("%s %d %d %d %d %d %s %s %d \"%s/%s\"",cfile->handle,rfx->status,
 				cfile->progress_start,cfile->progress_end,cfile->hsize,cfile->vsize,
-				cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",clipboard->img_type==IMG_TYPE_JPEG?
-				"jpg":"png",clipboard->start,prefs->tmpdir,clipboard->handle);
+				get_image_ext_for_type(cfile->img_type),get_image_ext_for_type(clipboard->img_type),
+				clipboard->start,prefs->tmpdir,clipboard->handle);
     }
     else {
       pdefault=g_strdup_printf ("%s %d %d %d %d %d %s",cfile->handle,rfx->status,cfile->progress_start,
-				cfile->progress_end,cfile->hsize,cfile->vsize,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
+				cfile->progress_end,cfile->hsize,cfile->vsize,get_image_ext_for_type(cfile->img_type));
     }
     // and append params
     if (is_preview) {
@@ -440,7 +440,7 @@ gboolean do_effect(lives_rfx_t *rfx, gboolean is_preview) {
   if (mainw->keep_pre) {
     // this comes from a preview which then turned into processing
     gchar *com=g_strdup_printf("%s mv_pre \"%s\" %d %d \"%s\"",prefs->backend_sync, cfile->handle,cfile->progress_start,
-			       cfile->progress_end,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
+			       cfile->progress_end,get_image_ext_for_type(cfile->img_type));
 
     unlink(cfile->info_file);
     mainw->cancelled=CANCEL_NONE;
@@ -658,7 +658,7 @@ lives_render_error_t realfx_progress (gboolean reset) {
 
     frameticks=(i-cfile->start+1.)/cfile->fps*U_SECL;
 
-    if (!pull_frame(layer,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",frameticks)) {
+    if (!pull_frame(layer,get_image_ext_for_type(cfile->img_type),frameticks)) {
       // do_read_failed_error_s() cannot be used here as we dont know the filename
       g_snprintf (mainw->msg,256,"error|missing image %d",i);
       return LIVES_RENDER_WARNING_READ_FRAME;
@@ -712,7 +712,7 @@ lives_render_error_t realfx_progress (gboolean reset) {
       mainw->error=FALSE;
       mainw->cancelled=CANCEL_NONE;
       com=g_strdup_printf ("%s mv_mgk \"%s\" %d %d \"%s\"",prefs->backend,cfile->handle,cfile->start,
-			   cfile->end,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
+			   cfile->end,get_image_ext_for_type(cfile->img_type));
       lives_system (com,FALSE);
       g_free (com);
       mainw->internal_messaging=FALSE;
@@ -1004,7 +1004,7 @@ weed_plant_t *get_blend_layer(weed_timecode_t tc) {
   layer=weed_plant_new(WEED_PLANT_CHANNEL);
   weed_set_int_value(layer,"clip",mainw->blend_file);
   weed_set_int_value(layer,"frame",blend_file->frameno);
-  if (!pull_frame(layer,blend_file->img_type==IMG_TYPE_JPEG?"jpg":"png",tc)) {
+  if (!pull_frame(layer,get_image_ext_for_type(blend_file->img_type),tc)) {
     weed_plant_free(layer);
     layer=NULL;
   }

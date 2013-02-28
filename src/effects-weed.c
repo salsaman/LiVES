@@ -1830,7 +1830,7 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
 
     if (!weed_plant_has_leaf(layer,"pixel_data")||weed_get_voidptr_value(layer,"pixel_data",&error)==NULL) {
       // pull_frame will set pixel_data,width,height,current_palette and rowstrides
-      if (!pull_frame(layer,mainw->files[clip]->img_type==IMG_TYPE_JPEG?"jpg":"png",tc)) return FILTER_ERROR_MISSING_FRAME;
+      if (!pull_frame(layer,get_image_ext_for_type(mainw->files[clip]->img_type),tc)) return FILTER_ERROR_MISSING_FRAME;
     }
 
     // we only apply transitions and compositors to the scrap file
@@ -3473,7 +3473,7 @@ weed_plant_t *weed_apply_effects (weed_plant_t **layers, weed_plant_t *filter_ma
 
   // frame is pulled uneffected here. TODO: Try to pull at target output palette
   if (!weed_plant_has_leaf(layer,"pixel_data")||weed_get_voidptr_value(layer,"pixel_data",&error)==NULL) 
-    if (!pull_frame_at_size(layer,mainw->files[clip]->img_type==IMG_TYPE_JPEG?"jpg":"png",tc,opwidth,opheight,
+    if (!pull_frame_at_size(layer,get_image_ext_for_type(mainw->files[clip]->img_type),tc,opwidth,opheight,
 			    WEED_PALETTE_END)) {
       weed_set_int_value(layer,"current_palette",mainw->files[clip]->img_type==IMG_TYPE_JPEG?
 			 WEED_PALETTE_RGB24:WEED_PALETTE_RGBA32);

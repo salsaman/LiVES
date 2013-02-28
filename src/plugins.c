@@ -871,23 +871,26 @@ _vppaw *on_vpp_advanced_clicked (GtkButton *button, gpointer user_data) {
   GtkWidget *okbutton;
   GtkWidget *savebutton;
 
-  gchar *title;
-  gchar *tmp,*tmp2;
-
-  const gchar *pversion;
-  const gchar *desc;
-  const char *fps_list;
-  int *pal_list;
-  GList *fps_list_strings=NULL;
-  GList *pal_list_strings=NULL;
-
-  const gchar *string;
-
-  gchar *ctext=NULL;
+  GtkAccelGroup *accel_group;
 
   _vppaw *vppa;
 
   _vid_playback_plugin *tmpvpp;
+
+  int *pal_list;
+
+  GList *fps_list_strings=NULL;
+  GList *pal_list_strings=NULL;
+
+  const gchar *string;
+  const gchar *pversion;
+  const gchar *desc;
+  const char *fps_list;
+
+  gchar *title;
+  gchar *tmp,*tmp2;
+
+  gchar *ctext=NULL;
 
   gchar *com;
   
@@ -913,6 +916,9 @@ _vppaw *on_vpp_advanced_clicked (GtkButton *button, gpointer user_data) {
 
   vppa->dialog = lives_standard_dialog_new (title,FALSE);
   g_free(title);
+
+  accel_group = GTK_ACCEL_GROUP(gtk_accel_group_new ());
+  gtk_window_add_accel_group (GTK_WINDOW (vppa->dialog), accel_group);
 
   if (prefs->show_gui) {
     if (prefsw!=NULL) gtk_window_set_transient_for(GTK_WINDOW(vppa->dialog),GTK_WINDOW(prefsw->prefs_dialog));
@@ -1069,10 +1075,15 @@ _vppaw *on_vpp_advanced_clicked (GtkButton *button, gpointer user_data) {
 
   cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
   gtk_dialog_add_action_widget (GTK_DIALOG (vppa->dialog), cancelbutton, GTK_RESPONSE_CANCEL);
+  lives_widget_set_can_focus (cancelbutton,TRUE);
+
+  gtk_widget_add_accelerator (cancelbutton, "activate", accel_group,
+                              LIVES_KEY_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
+
 
   savebutton = gtk_button_new_from_stock ("gtk-save-as");
   gtk_dialog_add_action_widget (GTK_DIALOG (vppa->dialog), savebutton, 1);
-  lives_widget_set_can_focus_and_default (savebutton);
+  lives_widget_set_can_focus (savebutton,TRUE);
   gtk_widget_set_tooltip_text( savebutton, _("Save settings to an alternate file.\n"));
 
   okbutton = gtk_button_new_from_stock ("gtk-ok");

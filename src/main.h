@@ -436,9 +436,9 @@ typedef enum {
 
 
 typedef enum {
-  IMG_TYPE_UNKNOWN=(1<<0),
-  IMG_TYPE_JPEG=(1<<1),
-  IMG_TYPE_PNG=(1<<2)
+  IMG_TYPE_UNKNOWN=0,
+  IMG_TYPE_JPEG,
+  IMG_TYPE_PNG
 } lives_image_type_t;
 
 
@@ -1231,6 +1231,8 @@ gchar *insert_newlines(const gchar *text, int maxwidth);
 
 gint hextodec (const gchar *string);
 gint get_hex_digit (const gchar *c);
+
+const char *get_image_ext_for_type(lives_image_type_t imgtype);
 
 guint32 fastrand(void);
 void fastsrand(guint32 seed);

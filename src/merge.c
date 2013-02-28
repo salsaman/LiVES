@@ -21,10 +21,10 @@
 _merge_opts* merge_opts;
 
 void create_merge_dialog (void) {
+  lives_rfx_t *rfx;
+
   GtkWidget *dialog_vbox;
   GtkWidget *vbox;
-  GSList *radiobutton_align_group = NULL;
-  GSList *radiobutton_insdrop_group = NULL;
   GtkWidget *align_start_button;
   GtkWidget *align_end_button;
   GtkWidget *hbox;
@@ -35,13 +35,19 @@ void create_merge_dialog (void) {
   GtkWidget *cancelbutton;
   GtkWidget *okbutton;
 
-  int i,idx=0;
-  lives_rfx_t *rfx;
+  GSList *radiobutton_align_group = NULL;
+  GSList *radiobutton_insdrop_group = NULL;
 
-  gint cb_frames=clipboard->frames;
+  GtkAccelGroup *accel_group;
+
   gchar *txt;
 
+  int idx=0;
+
+  gint cb_frames=clipboard->frames;
   gint defstart=0;
+
+  register int i;
 
   merge_opts=(_merge_opts*)(g_malloc(sizeof(_merge_opts)));
   merge_opts->list_to_rfx_index=(int *)g_malloc (sizint*(mainw->num_rendered_effects_builtin+
@@ -75,6 +81,9 @@ void create_merge_dialog (void) {
   }
 
   merge_opts->merge_dialog = lives_standard_dialog_new (_("LiVES: - Merge"),FALSE);
+
+  accel_group = GTK_ACCEL_GROUP(gtk_accel_group_new ());
+  gtk_window_add_accel_group (GTK_WINDOW (merge_opts->merge_dialog), accel_group);
 
   if (prefs->show_gui) {
     gtk_window_set_transient_for(GTK_WINDOW(merge_opts->merge_dialog),GTK_WINDOW(mainw->LiVES));
@@ -187,15 +196,21 @@ void create_merge_dialog (void) {
 
   cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
   gtk_dialog_add_action_widget (GTK_DIALOG (merge_opts->merge_dialog), cancelbutton, GTK_RESPONSE_CANCEL);
-  lives_widget_set_can_focus_and_default (cancelbutton);
+  lives_widget_set_can_focus (cancelbutton,TRUE);
 
   okbutton = gtk_button_new_from_stock ("gtk-ok");
   gtk_dialog_add_action_widget (GTK_DIALOG (merge_opts->merge_dialog), okbutton, GTK_RESPONSE_OK);
   lives_widget_set_can_focus_and_default (okbutton);
+  gtk_widget_grab_default (okbutton);
 
   g_signal_connect (GTK_OBJECT (cancelbutton), "clicked",
                       G_CALLBACK (on_merge_cancel_clicked),
                       rfx);
+
+
+  gtk_widget_add_accelerator (cancelbutton, "activate", accel_group,
+                              LIVES_KEY_Escape,  (GdkModifierType)0, (GtkAccelFlags)0);
+
 
   g_signal_connect (GTK_OBJECT (okbutton), "clicked",
                       G_CALLBACK (on_merge_ok_clicked),

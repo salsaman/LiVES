@@ -539,8 +539,9 @@ static boolean add_sizes(GtkBox *vbox, boolean add_fps, lives_rfx_t *rfx) {
     add_fill_to_box(GTK_BOX(hbox));
   }
 
-
+#if GTK_CHECK_VERSION(3,0,0)
   widget_opts.packing_width>>=2;
+#endif
   
   for (i=0;i<num_chans;i++) {
     tmpl=ctmpls[i];
@@ -876,7 +877,7 @@ void on_render_fx_pre_activate (GtkMenuItem *menuitem, lives_rfx_t *rfx) {
 
   }
 
-  lives_widget_set_can_focus_and_default (cancelbutton);
+  lives_widget_set_can_focus (cancelbutton,TRUE);
 
   if (lives_widget_get_parent(okbutton)!=NULL) {
     lives_widget_set_can_focus_and_default (okbutton);
@@ -1601,16 +1602,15 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, boolean add_
       else txt=g_strndup ((gchar *)param->value,(gint)param->max);
     }
 
-    if ((gint)param->max>RFX_TEXT_MAGIC||param->max==0.) {
+    if (((gint)param->max>RFX_TEXT_MAGIC||param->max==0.)&&
+	param->special_type!=LIVES_PARAM_SPECIAL_TYPE_FILEREAD) {
+
       param->widgets[0] = textview = gtk_text_view_new ();
-      if (param->hidden) gtk_widget_set_sensitive(textview,FALSE);
       if (param->desc!=NULL) gtk_widget_set_tooltip_text( textview, param->desc);
       textbuffer=gtk_text_view_get_buffer (GTK_TEXT_VIEW (textview));
 
-      if (rfx->status==RFX_STATUS_WEED&&param->special_type!=LIVES_PARAM_SPECIAL_TYPE_FILEREAD) {
-	g_signal_connect_after (G_OBJECT (textbuffer), "changed", G_CALLBACK (after_param_text_buffer_changed), 
-				(gpointer) rfx);
-      }
+      g_signal_connect_after (G_OBJECT (textbuffer), "changed", G_CALLBACK (after_param_text_buffer_changed), 
+			      (gpointer) rfx);
 
       gtk_text_view_set_editable (GTK_TEXT_VIEW (textview), TRUE);
       gtk_text_view_set_wrap_mode (GTK_TEXT_VIEW (textview), GTK_WRAP_WORD);
@@ -1618,7 +1618,22 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, boolean add_
 
       gtk_text_buffer_set_text (textbuffer, txt, -1);
 
+      scrolledwindow = gtk_scrolled_window_new (NULL, NULL);
+      gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrolledwindow), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+      gtk_container_add (GTK_CONTAINER (scrolledwindow), textview);
+      gtk_box_pack_start (GTK_BOX (hbox), scrolledwindow, TRUE, TRUE, widget_opts.packing_width);
+      gtk_widget_set_size_request(scrolledwindow,-1,RFX_TEXT_SCROLL_HEIGHT);
+
       g_object_set_data(G_OBJECT(textbuffer),"textview",textview);
+    }
+    else {
+      param->widgets[0]=entry=lives_standard_entry_new(NULL,FALSE,txt,(int)param->max,(int)param->max,LIVES_BOX(hbox),param->desc);
+
+      if (rfx->status==RFX_STATUS_WEED&&param->special_type!=LIVES_PARAM_SPECIAL_TYPE_FILEREAD) {
+	g_signal_connect_after (G_OBJECT (entry), "changed", G_CALLBACK (after_param_text_changed), 
+				(gpointer) rfx);
+      }
+
     }
 
     if (use_mnemonic) label = lives_standard_label_new_with_mnemonic (_(name),NULL);
@@ -1630,25 +1645,8 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, boolean add_
     g_signal_connect_after (G_OBJECT (hbox), "set-focus-child", G_CALLBACK (after_param_text_focus_changed), 
 			    (gpointer) rfx);
 
-    if ((gint)param->max>RFX_TEXT_MAGIC||param->max==0.) {
-      scrolledwindow = gtk_scrolled_window_new (NULL, NULL);
-      gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrolledwindow), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
-      
-      gtk_container_add (GTK_CONTAINER (scrolledwindow), textview);
-      if (use_mnemonic) gtk_label_set_mnemonic_widget (GTK_LABEL (label),textview);
-      gtk_box_pack_start (GTK_BOX (hbox), scrolledwindow, TRUE, TRUE, widget_opts.packing_width);
-    }
-    else {
-      param->widgets[0]=entry=lives_standard_entry_new(NULL,FALSE,txt,(int)param->max,(int)param->max,LIVES_BOX(hbox),param->desc);
-
-      if (rfx->status==RFX_STATUS_WEED&&param->special_type==LIVES_PARAM_SPECIAL_TYPE_FILEREAD) {
-	g_signal_connect_after (G_OBJECT (entry), "changed", G_CALLBACK (after_param_text_changed), 
-				(gpointer) rfx);
-      }
-
-      if (param->hidden) gtk_widget_set_sensitive(entry,FALSE);
-      if (use_mnemonic) gtk_label_set_mnemonic_widget (GTK_LABEL (label),entry);
-    }
+    if (param->hidden) gtk_widget_set_sensitive(param->widgets[0],FALSE);
+    if (use_mnemonic) gtk_label_set_mnemonic_widget (GTK_LABEL (label),param->widgets[0]);
 
     g_free (txt);
 

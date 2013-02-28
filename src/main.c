@@ -3381,7 +3381,7 @@ void load_start_image(gint frame) {
     layer=weed_plant_new(WEED_PLANT_CHANNEL);
     weed_set_int_value(layer,"clip",mainw->current_file);
     weed_set_int_value(layer,"frame",frame);
-    if (pull_frame_at_size(layer,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",tc,cfile->hsize,cfile->vsize,
+    if (pull_frame_at_size(layer,get_image_ext_for_type(cfile->img_type),tc,cfile->hsize,cfile->vsize,
 			   WEED_PALETTE_RGB24)) {
       convert_layer_palette(layer,WEED_PALETTE_RGB24,0);
       interp=get_interp_value(prefs->pb_quality);
@@ -3427,7 +3427,7 @@ void load_start_image(gint frame) {
     weed_set_int_value(layer,"clip",mainw->current_file);
     weed_set_int_value(layer,"frame",frame);
 
-    if (pull_frame_at_size(layer,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",tc,width,height,WEED_PALETTE_RGB24)) {
+    if (pull_frame_at_size(layer,get_image_ext_for_type(cfile->img_type),tc,width,height,WEED_PALETTE_RGB24)) {
       convert_layer_palette(layer,WEED_PALETTE_RGB24,0);
       interp=get_interp_value(prefs->pb_quality);
       resize_layer(layer,width,height,interp);
@@ -3515,7 +3515,7 @@ void load_end_image(gint frame) {
     weed_set_int_value(layer,"clip",mainw->current_file);
     weed_set_int_value(layer,"frame",frame);
 
-    if (pull_frame_at_size(layer,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",tc,cfile->hsize,cfile->vsize,
+    if (pull_frame_at_size(layer,get_image_ext_for_type(cfile->img_type),tc,cfile->hsize,cfile->vsize,
 			   WEED_PALETTE_RGB24)) {
       convert_layer_palette(layer,WEED_PALETTE_RGB24,0);
       interp=get_interp_value(prefs->pb_quality);
@@ -3557,7 +3557,7 @@ void load_end_image(gint frame) {
     weed_set_int_value(layer,"clip",mainw->current_file);
     weed_set_int_value(layer,"frame",frame);
 
-    if (pull_frame_at_size(layer,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",tc,width,height,WEED_PALETTE_RGB24)) {
+    if (pull_frame_at_size(layer,get_image_ext_for_type(cfile->img_type),tc,width,height,WEED_PALETTE_RGB24)) {
       convert_layer_palette(layer,WEED_PALETTE_RGB24,0);  
       interp=get_interp_value(prefs->pb_quality);
       resize_layer(layer,width,height,interp);
@@ -3681,7 +3681,7 @@ void load_preview_image(boolean update_always) {
     weed_timecode_t tc=((mainw->preview_frame-1.))/cfile->fps*U_SECL;
     weed_set_int_value(layer,"clip",mainw->current_file);
     weed_set_int_value(layer,"frame",mainw->preview_frame);
-    if (pull_frame_at_size(layer,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",tc,mainw->pwidth,mainw->pheight,
+    if (pull_frame_at_size(layer,get_image_ext_for_type(cfile->img_type),tc,mainw->pwidth,mainw->pheight,
 			   WEED_PALETTE_RGB24)) {
         LiVESInterpType interp=get_interp_value(prefs->pb_quality);
       convert_layer_palette(layer,WEED_PALETTE_RGB24,0);
@@ -4458,7 +4458,7 @@ void load_frame_image(gint frame) {
 
   gchar *framecount=NULL,*tmp;
   gchar *fname_next=NULL,*info_file=NULL;
-  gchar *img_ext=NULL;
+  const gchar *img_ext=NULL;
 
   LiVESInterpType interp;
 
@@ -4728,13 +4728,12 @@ void load_frame_image(gint frame) {
 	}
 	else {
 	  if (!mainw->keep_pre) {
-	    img_ext=g_strdup("mgk");
-	    fname_next=g_strdup_printf("%s/%s/%08d.mgk",prefs->tmpdir,cfile->handle,frame+1);
+	    img_ext="mgk";
 	  }
 	  else {
-	    img_ext=g_strdup("pre");
-	    fname_next=g_strdup_printf("%s/%s/%08d.pre",prefs->tmpdir,cfile->handle,frame+1);
+	    img_ext="pre";
 	  }
+	  fname_next=g_strdup_printf("%s/%s/%08d.pre",prefs->tmpdir,cfile->handle,frame+1);
 	}
       }
       mainw->actual_frame=frame;
@@ -4743,7 +4742,6 @@ void load_frame_image(gint frame) {
     // maybe the performance finished and we weren't looping
     if ((mainw->actual_frame<1||mainw->actual_frame>cfile->frames)&&
 	(cfile->clip_type==CLIP_TYPE_DISK||cfile->clip_type==CLIP_TYPE_FILE)&&!mainw->is_rendering) {
-      if (img_ext!=NULL) g_free(img_ext);
       mainw->noswitch=noswitch;
       if (framecount!=NULL) g_free(framecount);
       return;
@@ -4781,7 +4779,7 @@ void load_frame_image(gint frame) {
 	  mainw->frame_layer=weed_plant_new(WEED_PLANT_CHANNEL);
 	  weed_set_int_value(mainw->frame_layer,"clip",mainw->clip_index[0]);
 	  weed_set_int_value(mainw->frame_layer,"frame",mainw->frame_index[0]);
-	  if (!pull_frame(mainw->frame_layer,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",tc)) {
+	  if (!pull_frame(mainw->frame_layer,get_image_ext_for_type(cfile->img_type),tc)) {
 	    weed_plant_free(mainw->frame_layer);
 	    mainw->frame_layer=NULL;
 	  }
@@ -4809,7 +4807,6 @@ void load_frame_image(gint frame) {
 
 	if (mainw->internal_messaging) {
 	  // this happens if we are calling from multitrack, or apply rte.  We get our mainw->frame_layer and exit.
-	  if (img_ext!=NULL) g_free(img_ext);
 	  mainw->noswitch=noswitch;
 	  if (framecount!=NULL) g_free(framecount);
 	  return;
@@ -4821,7 +4818,7 @@ void load_frame_image(gint frame) {
 	  mainw->frame_layer=weed_plant_new(WEED_PLANT_CHANNEL);
 	  weed_set_int_value(mainw->frame_layer,"clip",mainw->current_file);
 	  weed_set_int_value(mainw->frame_layer,"frame",mainw->actual_frame);
-	  if (img_ext==NULL) img_ext=(cfile->img_type==IMG_TYPE_JPEG?g_strdup("jpg"):g_strdup("png"));
+	  if (img_ext==NULL) img_ext=get_image_ext_for_type(cfile->img_type);
 	  if (!pull_frame_at_size(mainw->frame_layer,img_ext,(weed_timecode_t)mainw->currticks,
 				  cfile->hsize,cfile->vsize,WEED_PALETTE_END)) {
 	    if (mainw->frame_layer!=NULL) weed_layer_free(mainw->frame_layer);
@@ -4846,7 +4843,6 @@ void load_frame_image(gint frame) {
 	  if (mainw->cancelled) {
 	    g_free(fname_next);
 	    g_free(info_file);
-	    if (img_ext!=NULL) g_free(img_ext);
 	    mainw->noswitch=noswitch;
 	    if (framecount!=NULL) g_free(framecount);
 	    return;
@@ -4856,7 +4852,6 @@ void load_frame_image(gint frame) {
 	  mainw->startticks=mainw->currticks+mainw->deltaticks;
 	}
 	  
-	if (img_ext!=NULL) g_free(img_ext);
 	img_ext=NULL;
 	
 	if (mainw->internal_messaging) {

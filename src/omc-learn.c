@@ -1312,7 +1312,6 @@ static omclearn_w *create_omclearn_dialog(void) {
   
   omclw->dialog = lives_standard_dialog_new (_("LiVES: OMC learner"),FALSE);
   
-  gtk_window_add_accel_group (GTK_WINDOW (omclw->dialog), mainw->accel_group);
   omclw->top_vbox = lives_dialog_get_content_area(GTK_DIALOG(omclw->dialog));
 
   omclw->table = gtk_table_new (omclw->tbl_rows, 4, FALSE);

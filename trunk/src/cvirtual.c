@@ -324,15 +324,10 @@ boolean virtual_to_images(int sfileno, int sframe, int eframe, boolean update_pr
 
       while (g_main_context_iteration(NULL,FALSE));
 
-      pixbuf=pull_lives_pixbuf_at_size(sfileno,i,sfile->img_type==IMG_TYPE_JPEG?"jpg":"png",
+      pixbuf=pull_lives_pixbuf_at_size(sfileno,i,get_image_ext_for_type(sfile->img_type),
 				       q_gint64((i-1.)/sfile->fps,sfile->fps),sfile->hsize,sfile->vsize,LIVES_INTERP_BEST);
       
-      if (sfile->img_type==IMG_TYPE_JPEG) {
-	oname=g_strdup_printf("%s/%s/%08d.jpg",prefs->tmpdir,sfile->handle,i);
-      }
-      else if (sfile->img_type==IMG_TYPE_PNG) {
-	oname=g_strdup_printf("%s/%s/%08d.png",prefs->tmpdir,sfile->handle,i);
-      }
+      oname=g_strdup_printf("%s/%s/%08d.%s",prefs->tmpdir,sfile->handle,i,get_image_ext_for_type(sfile->img_type));
 
       do {
 	retval=0;
@@ -503,15 +498,8 @@ void clean_images_from_virtual (file *sfile, int oldframes) {
     threaded_dialog_spin();
 
     if ((i<sfile->frames&&sfile->frame_index[i]!=-1)||i>=sfile->frames) {
-      if (sfile->img_type==IMG_TYPE_JPEG) {
-	iname=g_strdup_printf("%s/%s/%08d.jpg",prefs->tmpdir,sfile->handle,i);
-      }
-      else if (sfile->img_type==IMG_TYPE_PNG) {
-	iname=g_strdup_printf("%s/%s/%08d.png",prefs->tmpdir,sfile->handle,i);
-      }
-      //      else {
-	// ...
-      //}
+      iname=g_strdup_printf("%s/%s/%08d.%s",prefs->tmpdir,sfile->handle,i,get_image_ext_for_type(sfile->img_type));
+
 #ifndef IS_MINGW
       com=g_strdup_printf("/bin/rm -f \"%s\"",iname);
 #else

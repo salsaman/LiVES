@@ -150,7 +150,7 @@ gboolean read_file_details(const gchar *file_name, gboolean is_audio) {
   gboolean timeout;
   gchar *tmp,*com=g_strdup_printf("%s get_details \"%s\" \"%s\" \"%s\" %d %d",prefs->backend_sync,cfile->handle,
 				  (tmp=g_filename_from_utf8(file_name,-1,NULL,NULL,NULL)),
-				  cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",mainw->opening_loc,is_audio);
+				  get_image_ext_for_type(cfile->img_type),mainw->opening_loc,is_audio);
   g_free(tmp);
 
   mainw->com_failed=FALSE;
@@ -907,7 +907,7 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
 
       com=g_strdup_printf("%s insert \"%s\" \"%s\" %d 1 1 \"%s\" 0 %d %d %d",prefs->backend,
 			  mainw->files[mainw->img_concat_clip]->handle,
-			  mainw->files[mainw->img_concat_clip]->img_type==IMG_TYPE_JPEG?"jpg":"png",
+			  get_image_ext_for_type(mainw->files[mainw->img_concat_clip]->img_type),
 			  mainw->files[mainw->img_concat_clip]->frames,
 			  cfile->handle,mainw->files[mainw->img_concat_clip]->frames,
 			  mainw->files[mainw->img_concat_clip]->hsize,mainw->files[mainw->img_concat_clip]->vsize);
@@ -1089,7 +1089,7 @@ void save_frame (GtkMenuItem *menuitem, gpointer user_data) {
   gchar *ttl;
   char *filename;
 
-  filt[0]=g_strdup_printf ("*.%s",cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
+  filt[0]=g_strdup_printf ("*.%s",get_image_ext_for_type(cfile->img_type));
   filt[1]=NULL;
 
   frame=GPOINTER_TO_INT(user_data);
@@ -1943,7 +1943,7 @@ void save_file (int clip, int start, int end, const char *filename) {
 	gboolean bad_header=FALSE;
 
 	com=g_strdup_printf("%s mv_mgk \"%s\" %d %d \"%s\" 1",prefs->backend,sfile->handle,1,sfile->frames,
-			    sfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
+			    get_image_ext_for_type(sfile->img_type));
 
 	unlink(sfile->info_file);
 	lives_system(com,FALSE);
@@ -3678,7 +3678,7 @@ gboolean save_frame_inner(gint clip, gint frame, const gchar *file_name, gint wi
   file *sfile=mainw->files[clip];
 
   if (strrchr(file_name,'.')==NULL) {
-    g_snprintf(full_file_name,PATH_MAX,"%s.%s",file_name,sfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
+    g_snprintf(full_file_name,PATH_MAX,"%s.%s",file_name,get_image_ext_for_type(sfile->img_type));
   }
   else {
     g_snprintf(full_file_name,PATH_MAX,"%s",file_name);

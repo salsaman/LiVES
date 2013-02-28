@@ -5432,8 +5432,9 @@ _prefsw *create_prefs_dialog (void) {
   prefsw->cancelbutton = gtk_button_new_from_stock ("gtk-revert-to-saved");
   gtk_widget_show (prefsw->cancelbutton);
   gtk_dialog_add_action_widget (GTK_DIALOG (prefsw->prefs_dialog), prefsw->cancelbutton, GTK_RESPONSE_CANCEL);
-  lives_widget_set_can_focus_and_default (prefsw->cancelbutton);
-  // Set 'Close' button as inactive since there is no changes yet
+  lives_widget_set_can_focus (prefsw->cancelbutton,TRUE);
+
+  // Set 'Close' button as inactive since there are no changes yet
   gtk_widget_set_sensitive(prefsw->cancelbutton, FALSE);
    
   // Preferences 'Apply' button

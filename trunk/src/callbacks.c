@@ -1814,7 +1814,7 @@ on_undo_activate                      (GtkMenuItem     *menuitem,
       // (set with with_audio==2 [audio only],therfore start,end,where are is secs.; times==-1)
       else com=g_strdup_printf("%s insert \"%s\" \"%s\" %.8f 0. %.8f \"%s\" 2 0 0 0 0 %d %d %d %d %d -1",
 			       prefs->backend,
-			       cfile->handle,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",cfile->undo1_dbl,
+			       cfile->handle,get_image_ext_for_type(cfile->img_type),cfile->undo1_dbl,
 			       cfile->undo2_dbl-cfile->undo1_dbl, cfile->handle, cfile->arps, cfile->achans, 
 			       cfile->asampsize,!(cfile->signed_endian&AFORM_UNSIGNED),
 			       !(cfile->signed_endian&AFORM_BIG_ENDIAN));
@@ -1824,7 +1824,7 @@ on_undo_activate                      (GtkMenuItem     *menuitem,
       cfile->undo1_boolean&=mainw->ccpd_with_sound;
       com=g_strdup_printf("%s insert \"%s\" \"%s\" %d %d %d \"%s\" %d %d 0 0 %.3f %d %d %d %d %d -1",
 			  prefs->backend,cfile->handle,
-			  cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",cfile->undo_start-1,cfile->undo_start,
+			  get_image_ext_for_type(cfile->img_type),cfile->undo_start-1,cfile->undo_start,
 			  cfile->undo_end,cfile->handle, cfile->undo1_boolean, cfile->frames, cfile->fps, 
 			  cfile->arps, cfile->achans, cfile->asampsize, !(cfile->signed_endian&AFORM_UNSIGNED),
 			  !(cfile->signed_endian&AFORM_BIG_ENDIAN));
@@ -1906,7 +1906,7 @@ on_undo_activate                      (GtkMenuItem     *menuitem,
     gchar *audfile;
 
     com=g_strdup_printf("%s undo \"%s\" %d %d \"%s\"",prefs->backend,cfile->handle,cfile->undo_start,cfile->undo_end,
-			cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
+			get_image_ext_for_type(cfile->img_type));
     unlink(cfile->info_file);
     mainw->com_failed=FALSE;
     lives_system(com,FALSE);
@@ -1969,7 +1969,7 @@ on_undo_activate                      (GtkMenuItem     *menuitem,
     if (cfile->frames>cfile->old_frames) {
       com=g_strdup_printf("%s cut \"%s\" %d %d %d %d \"%s\" %.3f %d %d %d",
 			  prefs->backend,cfile->handle,cfile->old_frames+1, 
-			  cfile->frames, FALSE, cfile->frames, cfile->img_type==IMG_TYPE_JPEG?"jpg":"png", 
+			  cfile->frames, FALSE, cfile->frames, get_image_ext_for_type(cfile->img_type), 
 			  cfile->fps, cfile->arate, cfile->achans, cfile->asampsize);
 
       cfile->progress_start=cfile->old_frames+1;
@@ -2408,7 +2408,7 @@ on_redo_activate                      (GtkMenuItem     *menuitem,
   }
 
   com=g_strdup_printf("%s redo \"%s\" %d %d \"%s\"",prefs->backend,cfile->handle,cfile->undo_start,cfile->undo_end,
-		      cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
+		      get_image_ext_for_type(cfile->img_type));
   unlink(cfile->info_file);
   mainw->com_failed=FALSE;
   lives_system(com,FALSE);
@@ -2507,7 +2507,7 @@ on_copy_activate                      (GtkMenuItem     *menuitem,
   clipboard->img_type=cfile->img_type;
 
   com=g_strdup_printf("%s insert \"%s\" \"%s\" 0 %d %d \"%s\" %d 0 0 0 %.3f %d %d %d %d %d",prefs->backend,
-		      clipboard->handle, clipboard->img_type==IMG_TYPE_JPEG?"jpg":"png",
+		      clipboard->handle, get_image_ext_for_type(clipboard->img_type),
 		      start, end, cfile->handle, mainw->ccpd_with_sound, cfile->fps, cfile->arate, 
 		      cfile->achans, cfile->asampsize, !(cfile->signed_endian&AFORM_UNSIGNED),
 		      !(cfile->signed_endian&AFORM_BIG_ENDIAN));
@@ -2650,7 +2650,7 @@ void on_paste_as_new_activate                       (GtkMenuItem     *menuitem,
 
   com=g_strdup_printf("%s insert \"%s\" \"%s\" 0 1 %d \"%s\" %d 0 0 0 %.3f %d %d %d %d %d",
 		      prefs->backend,cfile->handle, 
-		      cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",clipboard->frames, clipboard->handle, 
+		      get_image_ext_for_type(cfile->img_type),clipboard->frames, clipboard->handle, 
 		      mainw->ccpd_with_sound, clipboard->fps, clipboard->arate, clipboard->achans, 
 		      clipboard->asampsize, !(cfile->signed_endian&AFORM_UNSIGNED), 
 		      !(cfile->signed_endian&AFORM_BIG_ENDIAN));
@@ -3099,7 +3099,7 @@ on_insert_activate                    (GtkButton     *button,
 
     com=g_strdup_printf("%s insert \"%s\" \"%s\" %d %d %d \"%s\" %d %d %d %d %.3f %d %d %d %d %d",
 			prefs->backend,cfile->handle, 
-			cfile->img_type==IMG_TYPE_JPEG?"jpg":"png", where, clipboard->frames-remainder_frames+1, 
+			get_image_ext_for_type(cfile->img_type), where, clipboard->frames-remainder_frames+1, 
 			clipboard->frames, clipboard->handle, with_sound, cfile->frames, hsize, vsize, cfile->fps, 
 			cfile->arate, cfile->achans, cfile->asampsize, !(cfile->signed_endian&AFORM_UNSIGNED), 
 			!(cfile->signed_endian&AFORM_BIG_ENDIAN));
@@ -3168,7 +3168,7 @@ on_insert_activate                    (GtkButton     *button,
 
   com=g_strdup_printf("%s insert \"%s\" \"%s\" %d %d %d \"%s\" %d %d %d %d %.3f %d %d %d %d %d %d",
 		      prefs->backend,cfile->handle, 
-		      cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",where, cb_start*leave_backup, cb_end, 
+		      get_image_ext_for_type(cfile->img_type),where, cb_start*leave_backup, cb_end, 
 		      clipboard->handle, with_sound, cfile->frames, hsize, vsize, cfile->fps, cfile->arate, 
 		      cfile->achans, cfile->asampsize, !(cfile->signed_endian&AFORM_UNSIGNED), 
 		      !(cfile->signed_endian&AFORM_BIG_ENDIAN), (int)times_to_insert);
@@ -3201,7 +3201,7 @@ on_insert_activate                    (GtkButton     *button,
     com=g_strdup_printf ("%s undo_insert \"%s\" %d %d %d \"%s\"",
 			 prefs->backend,cfile->handle,where+1,
 			 where+(cb_end-cb_start+1)*(int)times_to_insert,cfile->frames,
-			 cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
+			 get_image_ext_for_type(cfile->img_type));
     lives_system (com,FALSE);
     g_free(com);
 
@@ -3269,7 +3269,7 @@ on_insert_activate                    (GtkButton     *button,
 
     com=g_strdup_printf("%s insert \"%s\" \"%s\" %d %d %d \"%s\" %d %d %d %d %3f %d %d %d %d %d",
 			prefs->backend,cfile->handle, 
-			cfile->img_type==IMG_TYPE_JPEG?"jpg":"png", where, 1, remainder_frames, clipboard->handle, 
+			get_image_ext_for_type(cfile->img_type), where, 1, remainder_frames, clipboard->handle, 
 			with_sound, cfile->frames, hsize, vsize, cfile->fps, cfile->arate, cfile->achans, 
 			cfile->asampsize, !(cfile->signed_endian&AFORM_UNSIGNED), 
 			!(cfile->signed_endian&AFORM_BIG_ENDIAN ));
@@ -3568,7 +3568,7 @@ on_delete_activate                    (GtkMenuItem     *menuitem,
 
   com=g_strdup_printf("%s cut \"%s\" %d %d %d %d \"%s\" %.3f %d %d %d",
 		      prefs->backend,cfile->handle,cfile->start,cfile->end, 
-		      mainw->ccpd_with_sound, cfile->frames, cfile->img_type==IMG_TYPE_JPEG?"jpg":"png", 
+		      mainw->ccpd_with_sound, cfile->frames, get_image_ext_for_type(cfile->img_type), 
 		      cfile->fps, cfile->arate, cfile->achans, cfile->asampsize);
   unlink(cfile->info_file);
   mainw->com_failed=FALSE;
@@ -7029,20 +7029,20 @@ void on_cancel_keep_button_clicked (GtkButton *button, gpointer user_data) {
 	lives_system(com,FALSE);
 	g_free(com);
 	if (!mainw->keep_pre) com=g_strdup_printf("%s mv_mgk \"%s\" %d %d \"%s\"",prefs->backend,cfile->handle,
-						  cfile->start,keep_frames-1,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
+						  cfile->start,keep_frames-1,get_image_ext_for_type(cfile->img_type));
 	else {
 	  com=g_strdup_printf("%s mv_pre \"%s\" %d %d \"%s\" &",prefs->backend_sync,cfile->handle,
-			      cfile->start,keep_frames-1,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
+			      cfile->start,keep_frames-1,get_image_ext_for_type(cfile->img_type));
 	  mainw->keep_pre=FALSE;
 	}
       }
       else {
 	mainw->internal_messaging=FALSE;
 	if (!mainw->keep_pre) com=g_strdup_printf ("%s mv_mgk \"%s\" %d %d \"%s\"",prefs->backend,cfile->handle,
-						   cfile->start,keep_frames-1,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
+						   cfile->start,keep_frames-1,get_image_ext_for_type(cfile->img_type));
 	else {
 	  com=g_strdup_printf("%s mv_pre \"%s\" %d %d \"%s\" &",prefs->backend_sync,cfile->handle,
-			      cfile->start,keep_frames-1,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
+			      cfile->start,keep_frames-1,get_image_ext_for_type(cfile->img_type));
 	  mainw->keep_pre=FALSE;
 	}
       }
@@ -8107,7 +8107,7 @@ on_rev_clipboard_activate                (GtkMenuItem     *menuitem,
 
   d_print(_ ("Reversing clipboard..."));
   com=g_strdup_printf("%s reverse \"%s\" %d %d \"%s\"",prefs->backend,clipboard->handle,1,clipboard->frames,
-		      cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
+		      get_image_ext_for_type(cfile->img_type));
 
   unlink(cfile->info_file);
   mainw->com_failed=FALSE;
@@ -11886,7 +11886,7 @@ on_ins_silence_activate (GtkMenuItem     *menuitem,
   // with_sound is 2 (audio only), therfore start, end, where, are in seconds. rate is -ve to indicate silence
   com=g_strdup_printf("%s insert \"%s\" \"%s\" %.8f 0. %.8f \"%s\" 2 0 0 0 0 %d %d %d %d %d", 
 		      prefs->backend, cfile->handle, 
-		      cfile->img_type==IMG_TYPE_JPEG?"jpg":"png", start, end-start, cfile->handle, -cfile->arps, 
+		      get_image_ext_for_type(cfile->img_type), start, end-start, cfile->handle, -cfile->arps, 
 		      cfile->achans, cfile->asampsize, !(cfile->signed_endian&AFORM_UNSIGNED), 
 		      !(cfile->signed_endian&AFORM_BIG_ENDIAN));
 

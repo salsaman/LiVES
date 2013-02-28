@@ -533,7 +533,7 @@ void load_rfx_preview(lives_rfx_t *rfx) {
     img_ext="pre";
   }
   else {
-    img_ext=cfile->img_type==IMG_TYPE_JPEG?"jpg":"png";
+    img_ext=get_image_ext_for_type(cfile->img_type);
   }
 
   tc=((mainw->framedraw_frame-1.))/cfile->fps*U_SECL;
@@ -574,7 +574,7 @@ void load_framedraw_image(LiVESPixbuf *pixbuf) {
   if (mainw->framedraw_frame>cfile->frames) mainw->framedraw_frame=cfile->frames;
 
   if (pixbuf==NULL) {
-    const gchar *img_ext=cfile->img_type==IMG_TYPE_JPEG?"jpg":"png";
+    const gchar *img_ext=get_image_ext_for_type(cfile->img_type);
 
     // can happen if we preview for rendered generators
     if ((mainw->multitrack==NULL||mainw->current_file!=mainw->multitrack->render_file)&&mainw->framedraw_frame==0) return;

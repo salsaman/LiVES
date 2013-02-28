@@ -2859,7 +2859,7 @@ gboolean do_abort_check(void) {
 
 
 void do_encoder_img_ftm_error(render_details *rdet) {
-  gchar *msg=g_strdup_printf(_("\nThe %s cannot encode clips with image type %s.\nPlease select another encoder from the list.\n"),prefs->encoder.name,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
+  gchar *msg=g_strdup_printf(_("\nThe %s cannot encode clips with image type %s.\nPlease select another encoder from the list.\n"),prefs->encoder.name,get_image_ext_for_type(cfile->img_type));
 
   do_error_dialog_with_check_transient(msg,TRUE,0,GTK_WINDOW(rdet->dialog));
 

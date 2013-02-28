@@ -233,7 +233,7 @@ static LiVESPixbuf *make_thumb (lives_mt *mt, int file, int width, int height, i
 
     if (mainw->files[file]->frames>0) {
       weed_timecode_t tc=(frame-1.)/mainw->files[file]->fps*U_SECL;
-      thumbnail=pull_lives_pixbuf_at_size(file,frame,mainw->files[file]->img_type==IMG_TYPE_JPEG?"jpg":"png",tc,
+      thumbnail=pull_lives_pixbuf_at_size(file,frame,get_image_ext_for_type(mainw->files[file]->img_type),tc,
 					  width,height,LIVES_INTERP_BEST);
     }
     else {

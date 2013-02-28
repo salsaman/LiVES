@@ -1067,7 +1067,13 @@ LIVES_INLINE GList *g_list_append_unique(GList *xlist, const gchar *add) {
 }
 
 
-
+LIVES_INLINE const char *get_image_ext_for_type(lives_image_type_t imgtype) {
+  switch (imgtype) {
+  case IMG_TYPE_JPEG: return "jpg";
+  case IMG_TYPE_PNG: return "png";
+  default: return "";
+  }
+}
 
 
 /* convert to/from a big endian 32 bit float for internal use */
@@ -1884,7 +1890,7 @@ gboolean check_frame_count(gint idx) {
 
   // make sure nth frame is there...
   gchar *frame=g_strdup_printf("%s/%s/%08d.%s",prefs->tmpdir,mainw->files[idx]->handle,mainw->files[idx]->frames,
-			       mainw->files[idx]->img_type==IMG_TYPE_JPEG?"jpg":"png");
+			       get_image_ext_for_type(mainw->files[idx]->img_type));
 
   if (!g_file_test(frame,G_FILE_TEST_EXISTS)) {
     // not enough frames
@@ -1895,7 +1901,7 @@ gboolean check_frame_count(gint idx) {
 
   // ...make sure n + 1 th frame is not
   frame=g_strdup_printf("%s/%s/%08d.%s",prefs->tmpdir,mainw->files[idx]->handle,mainw->files[idx]->frames+1,
-			mainw->files[idx]->img_type==IMG_TYPE_JPEG?"jpg":"png");
+			get_image_ext_for_type(mainw->files[idx]->img_type));
   if (g_file_test(frame,G_FILE_TEST_EXISTS)) {
     // too many frames
     g_free(frame);
@@ -1923,7 +1929,7 @@ void get_frame_count(gint idx) {
   ssize_t bytes;
   gchar *info_file=g_strdup_printf("%s/.check.%d",prefs->tmpdir,getpid());
   gchar *com=g_strdup_printf("%s count_frames \"%s\" \"%s\" > \"%s\"",prefs->backend_sync,mainw->files[idx]->handle,
-			     mainw->files[idx]->img_type==IMG_TYPE_JPEG?"jpg":"png",info_file);
+			     get_image_ext_for_type(mainw->files[idx]->img_type),info_file);
 
   mainw->com_failed=FALSE;
   lives_system(com,FALSE);
@@ -1963,7 +1969,7 @@ void get_frames_sizes(int fileno, int frame) {
   file *sfile=mainw->files[fileno];
   LiVESPixbuf *pixbuf;
   
-  if ((pixbuf=pull_lives_pixbuf(fileno,frame,mainw->files[fileno]->img_type==IMG_TYPE_JPEG?"jpg":"png",0))) {
+  if ((pixbuf=pull_lives_pixbuf(fileno,frame,get_image_ext_for_type(mainw->files[fileno]->img_type),0))) {
     sfile->hsize=lives_pixbuf_get_width(pixbuf);
     sfile->vsize=lives_pixbuf_get_height(pixbuf);
     g_object_unref(pixbuf);
@@ -3622,7 +3628,7 @@ after_foreign_play(void) {
 	  com=g_strdup_printf("%s fill_and_redo_frames \"%s\" %d %d %d \"%s\" %.4f %d %d %d %d %d",
 			      prefs->backend,
 			      cfile->handle,cfile->frames,cfile->hsize,cfile->vsize,
-			      cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",cfile->fps,cfile->arate,
+			      get_image_ext_for_type(cfile->img_type),cfile->fps,cfile->arate,
 			      cfile->achans,cfile->asampsize,!(cfile->signed_endian&AFORM_UNSIGNED),
 			      !(cfile->signed_endian&AFORM_BIG_ENDIAN));
 	  unlink(cfile->info_file);

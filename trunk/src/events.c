@@ -2137,7 +2137,7 @@ GtkWidget *events_rec_dialog (gboolean allow_mt) {
 		    GINT_TO_POINTER (RENDER_CHOICE_EVENT_LIST));
 
   cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
-  lives_widget_set_can_focus_and_default (cancelbutton);
+  lives_widget_set_can_focus (cancelbutton,TRUE);
 
   gtk_dialog_add_action_widget (GTK_DIALOG (e_rec_dialog), cancelbutton, GTK_RESPONSE_CANCEL);
 
@@ -3526,12 +3526,7 @@ lives_render_error_t render_events (gboolean reset) {
 
 	if (prefs->ocp==-1) prefs->ocp=get_int_pref ("open_compression_percent");
 
-	if (cfile->img_type==IMG_TYPE_JPEG) {
-	  if (cfile->old_frames==0) g_snprintf(oname,PATH_MAX,"%s/%s/%08d.jpg",prefs->tmpdir,cfile->handle,out_frame);
-	}
-	else if (cfile->img_type==IMG_TYPE_PNG) {
-	  if (cfile->old_frames==0) g_snprintf(oname,PATH_MAX,"%s/%s/%08d.png",prefs->tmpdir,cfile->handle,out_frame);
-	}
+	if (cfile->old_frames==0) g_snprintf(oname,PATH_MAX,"%s/%s/%08d.%s",prefs->tmpdir,cfile->handle,out_frame,get_image_ext_for_type(cfile->img_type));
 
 	do {
 	  retval=0;
@@ -3720,7 +3715,7 @@ lives_render_error_t render_events (gboolean reset) {
     if (cfile->old_frames==0) cfile->undo_start=cfile->undo_end=0;
     if (mainw->multitrack==NULL||!mainw->multitrack->pr_audio) {
       com=g_strdup_printf ("%s mv_mgk \"%s\" %d %d \"%s\"",prefs->backend,cfile->handle,cfile->undo_start,
-			   cfile->undo_end,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
+			   cfile->undo_end,get_image_ext_for_type(cfile->img_type));
       unlink(cfile->info_file);
       mainw->error=FALSE;
       mainw->com_failed=FALSE;
@@ -4483,352 +4478,362 @@ enum {
 
 GtkWidget *create_event_list_dialog (weed_plant_t *event_list, weed_timecode_t start_tc, weed_timecode_t end_tc) {
   // TODO - some event properties should be editable, e.g. parameter values
+  weed_timecode_t tc,tc_secs;
 
- GtkTreeStore *gtkstore;
- GtkTreeIter iter1,iter2,iter3;
+  GtkTreeStore *gtkstore;
+  GtkTreeIter iter1,iter2,iter3;
 
- gchar **string=NULL;
- int *intval=NULL;
- void **voidval=NULL;
- double *doubval=NULL;
- gint64 *int64val=NULL;
- weed_plant_t *event;
+  gchar **string=NULL;
+  int *intval=NULL;
+  void **voidval=NULL;
+  double *doubval=NULL;
+  gint64 *int64val=NULL;
 
- GtkWidget *event_dialog;
- GtkWidget *tree;
- GtkWidget *table;
- GtkWidget *top_vbox;
- GtkWidget *label;
- GtkWidget *ok_button;
- GtkWidget *hbuttonbox;
- GtkWidget *scrolledwindow;
- GtkCellRenderer *renderer;
- GtkTreeViewColumn *column;
+  weed_plant_t *event;
 
- gint winsize_h,scr_width=mainw->scr_width;
- gint winsize_v,scr_height=mainw->scr_height;
+  GtkWidget *event_dialog;
+  GtkWidget *tree;
+  GtkWidget *table;
+  GtkWidget *top_vbox;
+  GtkWidget *label;
+  GtkWidget *ok_button;
+  GtkWidget *hbuttonbox;
+  GtkWidget *scrolledwindow;
 
- int i,j,num_elems,seed_type,hint,error;
- weed_timecode_t tc,tc_secs;
- gchar *strval=NULL;
- gchar *text;
+  GtkCellRenderer *renderer;
+  GtkTreeViewColumn *column;
 
- char **propnames;
- gchar *oldval=NULL,*final=NULL;
+  GtkAccelGroup *accel_group;
 
- gint rows,currow=0;
+  char **propnames;
 
- if (prefs->event_window_show_frame_events) rows=count_events(event_list,TRUE,start_tc,end_tc);
- else rows=count_events(event_list,TRUE,start_tc,end_tc)-count_events(event_list,FALSE,start_tc,end_tc);
+  gchar *strval=NULL;
+  gchar *text;
+  gchar *oldval=NULL,*final=NULL;
 
- event=get_first_event(event_list);
+  gint winsize_h,scr_width=mainw->scr_width;
+  gint winsize_v,scr_height=mainw->scr_height;
 
- if (prefs->gui_monitor!=0) {
-   scr_width=mainw->mgeom[prefs->gui_monitor-1].width;
-   scr_height=mainw->mgeom[prefs->gui_monitor-1].height;
- }
+  int num_elems,seed_type,hint,error;
+  gint rows,currow=0;
 
- winsize_h=scr_width-100;
- winsize_v=scr_height-100;
+  register int i,j;
+
+  if (prefs->event_window_show_frame_events) rows=count_events(event_list,TRUE,start_tc,end_tc);
+  else rows=count_events(event_list,TRUE,start_tc,end_tc)-count_events(event_list,FALSE,start_tc,end_tc);
+
+  event=get_first_event(event_list);
+
+  if (prefs->gui_monitor!=0) {
+    scr_width=mainw->mgeom[prefs->gui_monitor-1].width;
+    scr_height=mainw->mgeom[prefs->gui_monitor-1].height;
+  }
+
+  winsize_h=scr_width-100;
+  winsize_v=scr_height-100;
  
- event_dialog = lives_standard_dialog_new (_("LiVES: Event list"),FALSE);
+  event_dialog = lives_standard_dialog_new (_("LiVES: Event list"),FALSE);
 
- //gtk_window_add_accel_group (GTK_WINDOW (event_dialog), mainw->accel_group);
- 
- top_vbox=lives_dialog_get_content_area(LIVES_DIALOG(event_dialog));
+  accel_group = GTK_ACCEL_GROUP(gtk_accel_group_new ());
+  gtk_window_add_accel_group (GTK_WINDOW (event_dialog), accel_group);
 
- table = gtk_table_new (rows, 6, TRUE);
- gtk_widget_show (table);
+  top_vbox=lives_dialog_get_content_area(LIVES_DIALOG(event_dialog));
 
- while (event!=NULL) {
-   tc=get_event_timecode (event);
+  table = gtk_table_new (rows, 6, TRUE);
+  gtk_widget_show (table);
 
-   if (end_tc>0) {
-     if (tc<start_tc) {
-       event=get_next_event(event);
-       continue;
-     }
-     if (tc>=end_tc) break;
-   }
+  while (event!=NULL) {
+    tc=get_event_timecode (event);
 
-   if ((prefs->event_window_show_frame_events||!WEED_EVENT_IS_FRAME(event))||weed_plant_has_leaf(event,"audio_clips")) {
-     if (!prefs->event_window_show_frame_events&&WEED_EVENT_IS_FRAME(event)) {
-       // TODO - opts should be all frames, only audio frames, no frames
-       // or even better, filter for any event types
-       rows++;
-       gtk_table_resize(GTK_TABLE(table),rows,6);
-     }
+    if (end_tc>0) {
+      if (tc<start_tc) {
+	event=get_next_event(event);
+	continue;
+      }
+      if (tc>=end_tc) break;
+    }
+
+    if ((prefs->event_window_show_frame_events||!WEED_EVENT_IS_FRAME(event))||weed_plant_has_leaf(event,"audio_clips")) {
+      if (!prefs->event_window_show_frame_events&&WEED_EVENT_IS_FRAME(event)) {
+	// TODO - opts should be all frames, only audio frames, no frames
+	// or even better, filter for any event types
+	rows++;
+	gtk_table_resize(GTK_TABLE(table),rows,6);
+      }
 			
-     gtkstore = gtk_tree_store_new (NUM_COLUMNS, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING);
+      gtkstore = gtk_tree_store_new (NUM_COLUMNS, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING);
 
-     gtk_tree_store_append (gtkstore, &iter1, NULL);  /* Acquire an iterator */
-     gtk_tree_store_set (gtkstore, &iter1, TITLE_COLUMN, "Properties", -1);
+      gtk_tree_store_append (gtkstore, &iter1, NULL);  /* Acquire an iterator */
+      gtk_tree_store_set (gtkstore, &iter1, TITLE_COLUMN, "Properties", -1);
 
-     propnames=weed_plant_list_leaves (event);
+      propnames=weed_plant_list_leaves (event);
    
-     for (i=0;propnames[i]!=NULL;i++) {
-       if (!strcmp(propnames[i],"type")||!strcmp(propnames[i],"hint")||!strcmp(propnames[i],"timecode")) {
-	 weed_free(propnames[i]);
-	 continue;
-       }
-       gtk_tree_store_append (gtkstore, &iter2, &iter1);  /* Acquire a child iterator */
+      for (i=0;propnames[i]!=NULL;i++) {
+	if (!strcmp(propnames[i],"type")||!strcmp(propnames[i],"hint")||!strcmp(propnames[i],"timecode")) {
+	  weed_free(propnames[i]);
+	  continue;
+	}
+	gtk_tree_store_append (gtkstore, &iter2, &iter1);  /* Acquire a child iterator */
        
-       if (oldval!=NULL) {
-	 g_free(oldval);
-	 oldval=NULL;
-       }
+	if (oldval!=NULL) {
+	  g_free(oldval);
+	  oldval=NULL;
+	}
        
-       if (final!=NULL) {
-	 g_free(final);
-	 final=NULL;
-       }
+	if (final!=NULL) {
+	  g_free(final);
+	  final=NULL;
+	}
        
-       num_elems=weed_leaf_num_elements (event,propnames[i]);
-       seed_type=weed_leaf_seed_type (event,propnames[i]);
+	num_elems=weed_leaf_num_elements (event,propnames[i]);
+	seed_type=weed_leaf_seed_type (event,propnames[i]);
        
-       switch (seed_type) {
-       case WEED_SEED_INT:
-	 intval=weed_get_int_array (event,propnames[i],&error);
-	 break;
-       case WEED_SEED_INT64:
-	 int64val=weed_get_int64_array (event,propnames[i],&error);
-	 break;
-       case WEED_SEED_BOOLEAN:
-	 intval=weed_get_boolean_array (event,propnames[i],&error);
-	 break;
-       case WEED_SEED_STRING:
-	 string=weed_get_string_array (event,propnames[i],&error);
-	 break;
-       case WEED_SEED_DOUBLE:
-	 doubval=weed_get_double_array (event,propnames[i],&error);
-	 break;
-       case WEED_SEED_VOIDPTR:
-	 voidval=weed_get_voidptr_array (event,propnames[i],&error);
-	 break;
-       case WEED_SEED_PLANTPTR:
-	 voidval=(void **)weed_get_plantptr_array (event,propnames[i],&error);
-	 break;
-       }
+	switch (seed_type) {
+	case WEED_SEED_INT:
+	  intval=weed_get_int_array (event,propnames[i],&error);
+	  break;
+	case WEED_SEED_INT64:
+	  int64val=weed_get_int64_array (event,propnames[i],&error);
+	  break;
+	case WEED_SEED_BOOLEAN:
+	  intval=weed_get_boolean_array (event,propnames[i],&error);
+	  break;
+	case WEED_SEED_STRING:
+	  string=weed_get_string_array (event,propnames[i],&error);
+	  break;
+	case WEED_SEED_DOUBLE:
+	  doubval=weed_get_double_array (event,propnames[i],&error);
+	  break;
+	case WEED_SEED_VOIDPTR:
+	  voidval=weed_get_voidptr_array (event,propnames[i],&error);
+	  break;
+	case WEED_SEED_PLANTPTR:
+	  voidval=(void **)weed_get_plantptr_array (event,propnames[i],&error);
+	  break;
+	}
        
        
-       for (j=0;j<num_elems;j++) {
-	 switch (seed_type) {
-	 case WEED_SEED_INT:
-	   strval=g_strdup_printf("%d",intval[j]);
-	   break;
-	 case WEED_SEED_INT64:
-	   strval=g_strdup_printf("%"PRId64,int64val[j]);
-	   break;
-	 case WEED_SEED_DOUBLE:
-	   strval=g_strdup_printf("%.4f",doubval[j]);
-	   break;
-	 case WEED_SEED_BOOLEAN:
-	   if (intval[j]==WEED_TRUE) strval=g_strdup(_("TRUE"));
-	   else strval=g_strdup(_("FALSE"));
-	   break;
-	 case WEED_SEED_STRING:
-	   strval=g_strdup(string[j]);
-	   weed_free(string[j]);
-	   break;
-	 case WEED_SEED_VOIDPTR:
-	   if (!(strncmp(propnames[i],"init_event",10))) {
-	     weed_plant_t *ievent=(weed_plant_t *)voidval[j];
-	     if (ievent!=NULL) {
-	       gchar *iname=weed_get_string_value(ievent,"filter",&error);
-	       if (iname!=NULL) {
-		 gchar *fname=weed_filter_get_name(weed_get_idx_for_hashname(iname,TRUE));
-		 strval=g_strdup_printf("%p (%s)",voidval[j],fname);
-		 weed_free(fname);
-	       }
-	       weed_free(iname);
-	     }
-	   }
-	   if (strval==NULL) strval=g_strdup_printf("%p",voidval[j]);
-	   break;
-	 case WEED_SEED_PLANTPTR:
-	   strval=g_strdup_printf("-->%p",voidval[j]);
-	   break;
-	 default:
-	   strval=g_strdup("???");
-	   break;
-	 }
-	 if (j==0) {
-	   if (num_elems==1) {
-	     gtk_tree_store_set (gtkstore, &iter2, KEY_COLUMN, propnames[i], VALUE_COLUMN, strval, -1);
-	   }
-	   else {
-	     gtk_tree_store_set (gtkstore, &iter2, KEY_COLUMN, propnames[i], VALUE_COLUMN, "", -1);
-	     gtk_tree_store_append (gtkstore, &iter3, &iter2);
-	     gtk_tree_store_set (gtkstore, &iter3, VALUE_COLUMN, strval, -1);
-	   }
-       }
-	 else {
-	   gtk_tree_store_append (gtkstore, &iter3, &iter2);
-	   gtk_tree_store_set (gtkstore, &iter3, VALUE_COLUMN, strval, -1);
-	 }
-	 if (strval!=NULL) g_free (strval);
-	 strval=NULL;
-       }
+	for (j=0;j<num_elems;j++) {
+	  switch (seed_type) {
+	  case WEED_SEED_INT:
+	    strval=g_strdup_printf("%d",intval[j]);
+	    break;
+	  case WEED_SEED_INT64:
+	    strval=g_strdup_printf("%"PRId64,int64val[j]);
+	    break;
+	  case WEED_SEED_DOUBLE:
+	    strval=g_strdup_printf("%.4f",doubval[j]);
+	    break;
+	  case WEED_SEED_BOOLEAN:
+	    if (intval[j]==WEED_TRUE) strval=g_strdup(_("TRUE"));
+	    else strval=g_strdup(_("FALSE"));
+	    break;
+	  case WEED_SEED_STRING:
+	    strval=g_strdup(string[j]);
+	    weed_free(string[j]);
+	    break;
+	  case WEED_SEED_VOIDPTR:
+	    if (!(strncmp(propnames[i],"init_event",10))) {
+	      weed_plant_t *ievent=(weed_plant_t *)voidval[j];
+	      if (ievent!=NULL) {
+		gchar *iname=weed_get_string_value(ievent,"filter",&error);
+		if (iname!=NULL) {
+		  gchar *fname=weed_filter_get_name(weed_get_idx_for_hashname(iname,TRUE));
+		  strval=g_strdup_printf("%p (%s)",voidval[j],fname);
+		  weed_free(fname);
+		}
+		weed_free(iname);
+	      }
+	    }
+	    if (strval==NULL) strval=g_strdup_printf("%p",voidval[j]);
+	    break;
+	  case WEED_SEED_PLANTPTR:
+	    strval=g_strdup_printf("-->%p",voidval[j]);
+	    break;
+	  default:
+	    strval=g_strdup("???");
+	    break;
+	  }
+	  if (j==0) {
+	    if (num_elems==1) {
+	      gtk_tree_store_set (gtkstore, &iter2, KEY_COLUMN, propnames[i], VALUE_COLUMN, strval, -1);
+	    }
+	    else {
+	      gtk_tree_store_set (gtkstore, &iter2, KEY_COLUMN, propnames[i], VALUE_COLUMN, "", -1);
+	      gtk_tree_store_append (gtkstore, &iter3, &iter2);
+	      gtk_tree_store_set (gtkstore, &iter3, VALUE_COLUMN, strval, -1);
+	    }
+	  }
+	  else {
+	    gtk_tree_store_append (gtkstore, &iter3, &iter2);
+	    gtk_tree_store_set (gtkstore, &iter3, VALUE_COLUMN, strval, -1);
+	  }
+	  if (strval!=NULL) g_free (strval);
+	  strval=NULL;
+	}
 
-       switch (seed_type) {
-       case WEED_SEED_INT:
-       case WEED_SEED_BOOLEAN:
-	 weed_free(intval);
-	 break;
-       case WEED_SEED_INT64:
-	 weed_free(int64val);
-	 break;
-       case WEED_SEED_DOUBLE:
-	 weed_free(doubval);
-	 break;
-       case WEED_SEED_STRING:
-	 weed_free(string);
-	 break;
-       case WEED_SEED_VOIDPTR:
-       case WEED_SEED_PLANTPTR:
-	 weed_free(voidval);
-	 break;
-       default:
-	 break;
-       }
-       weed_free(propnames[i]);
-     }
+	switch (seed_type) {
+	case WEED_SEED_INT:
+	case WEED_SEED_BOOLEAN:
+	  weed_free(intval);
+	  break;
+	case WEED_SEED_INT64:
+	  weed_free(int64val);
+	  break;
+	case WEED_SEED_DOUBLE:
+	  weed_free(doubval);
+	  break;
+	case WEED_SEED_STRING:
+	  weed_free(string);
+	  break;
+	case WEED_SEED_VOIDPTR:
+	case WEED_SEED_PLANTPTR:
+	  weed_free(voidval);
+	  break;
+	default:
+	  break;
+	}
+	weed_free(propnames[i]);
+      }
 
-     weed_free (propnames);
+      weed_free (propnames);
 
-     // now add the new treeview
+      // now add the new treeview
      
-     g_free(final);
+      g_free(final);
 
-     // timecode
-     tc_secs=tc/U_SECL;
-     tc-=tc_secs*U_SECL;
-     text=g_strdup_printf(_("Timecode=%"PRId64".%"PRId64),tc_secs,tc);
-     label = lives_standard_label_new (text);
-     g_free(text);
+      // timecode
+      tc_secs=tc/U_SECL;
+      tc-=tc_secs*U_SECL;
+      text=g_strdup_printf(_("Timecode=%"PRId64".%"PRId64),tc_secs,tc);
+      label = lives_standard_label_new (text);
+      g_free(text);
      
-     gtk_table_attach (GTK_TABLE (table), label, 0, 1, currow, currow+1,
-		       (GtkAttachOptions) (GTK_EXPAND),
-		       (GtkAttachOptions) (0), 0, 0);
+      gtk_table_attach (GTK_TABLE (table), label, 0, 1, currow, currow+1,
+			(GtkAttachOptions) (GTK_EXPAND),
+			(GtkAttachOptions) (0), 0, 0);
      
-     // event type
-     hint=get_event_hint (event);
-     switch (hint) {
-     case WEED_EVENT_HINT_FRAME:
-       label = lives_standard_label_new ("Frame");
-       break;
-     case WEED_EVENT_HINT_FILTER_INIT:
-       label = lives_standard_label_new ("Filter on");
-       break;
-     case WEED_EVENT_HINT_FILTER_DEINIT:
-       label = lives_standard_label_new ("Filter off");
-       break;
-     case WEED_EVENT_HINT_PARAM_CHANGE:
-       label = lives_standard_label_new ("Parameter change");
-       break;
-     case WEED_EVENT_HINT_FILTER_MAP:
-       label = lives_standard_label_new ("Filter map");
-       break;
-     case WEED_EVENT_HINT_MARKER:
-       label = lives_standard_label_new ("Marker");
-       break;
-     default:
-       text=g_strdup_printf("unknown event hint %d",hint);
-       label = lives_standard_label_new (text);
-       g_free(text);
-     }
+      // event type
+      hint=get_event_hint (event);
+      switch (hint) {
+      case WEED_EVENT_HINT_FRAME:
+	label = lives_standard_label_new ("Frame");
+	break;
+      case WEED_EVENT_HINT_FILTER_INIT:
+	label = lives_standard_label_new ("Filter on");
+	break;
+      case WEED_EVENT_HINT_FILTER_DEINIT:
+	label = lives_standard_label_new ("Filter off");
+	break;
+      case WEED_EVENT_HINT_PARAM_CHANGE:
+	label = lives_standard_label_new ("Parameter change");
+	break;
+      case WEED_EVENT_HINT_FILTER_MAP:
+	label = lives_standard_label_new ("Filter map");
+	break;
+      case WEED_EVENT_HINT_MARKER:
+	label = lives_standard_label_new ("Marker");
+	break;
+      default:
+	text=g_strdup_printf("unknown event hint %d",hint);
+	label = lives_standard_label_new (text);
+	g_free(text);
+      }
 
-     gtk_table_attach (GTK_TABLE (table), label, 1, 2, currow, currow+1,
-		     (GtkAttachOptions) (GTK_EXPAND),
-		     (GtkAttachOptions) (0), 0, 0);
+      gtk_table_attach (GTK_TABLE (table), label, 1, 2, currow, currow+1,
+			(GtkAttachOptions) (GTK_EXPAND),
+			(GtkAttachOptions) (0), 0, 0);
      
-     // event id
-     text=g_strdup_printf(("Event id=%p"),(void *)event);
-     label = lives_standard_label_new (text);
-     g_free(text);
+      // event id
+      text=g_strdup_printf(("Event id=%p"),(void *)event);
+      label = lives_standard_label_new (text);
+      g_free(text);
 
-     gtk_table_attach (GTK_TABLE (table), label, 2, 3, currow, currow+1,
-		       (GtkAttachOptions) (GTK_EXPAND),
-		       (GtkAttachOptions) (0), 0, 0);
+      gtk_table_attach (GTK_TABLE (table), label, 2, 3, currow, currow+1,
+			(GtkAttachOptions) (GTK_EXPAND),
+			(GtkAttachOptions) (0), 0, 0);
      
-     // properties
-     tree = gtk_tree_view_new_with_model (GTK_TREE_MODEL (gtkstore));
-     lives_widget_set_base_color(tree, GTK_STATE_NORMAL, &palette->menu_and_bars);
+      // properties
+      tree = gtk_tree_view_new_with_model (GTK_TREE_MODEL (gtkstore));
+      lives_widget_set_base_color(tree, GTK_STATE_NORMAL, &palette->menu_and_bars);
      
-     renderer = gtk_cell_renderer_text_new ();
-     column = gtk_tree_view_column_new_with_attributes (NULL,
-							renderer,
-							"text", TITLE_COLUMN,
-							NULL);
+      renderer = gtk_cell_renderer_text_new ();
+      column = gtk_tree_view_column_new_with_attributes (NULL,
+							 renderer,
+							 "text", TITLE_COLUMN,
+							 NULL);
 
-     gtk_tree_view_append_column (GTK_TREE_VIEW (tree), column);
+      gtk_tree_view_append_column (GTK_TREE_VIEW (tree), column);
      
-     renderer = gtk_cell_renderer_text_new ();
-     column = gtk_tree_view_column_new_with_attributes ("Keys",
-							renderer,
-							"text", KEY_COLUMN,
-							NULL);
-     gtk_tree_view_append_column (GTK_TREE_VIEW (tree), column);
+      renderer = gtk_cell_renderer_text_new ();
+      column = gtk_tree_view_column_new_with_attributes ("Keys",
+							 renderer,
+							 "text", KEY_COLUMN,
+							 NULL);
+      gtk_tree_view_append_column (GTK_TREE_VIEW (tree), column);
      
      
-     renderer = gtk_cell_renderer_text_new ();
-     column = gtk_tree_view_column_new_with_attributes ("Values",
-							renderer,
-							"text", VALUE_COLUMN,
-							NULL);
-     gtk_tree_view_append_column (GTK_TREE_VIEW (tree), column);
+      renderer = gtk_cell_renderer_text_new ();
+      column = gtk_tree_view_column_new_with_attributes ("Values",
+							 renderer,
+							 "text", VALUE_COLUMN,
+							 NULL);
+      gtk_tree_view_append_column (GTK_TREE_VIEW (tree), column);
      
-     gtk_table_attach (GTK_TABLE (table), tree, 3, 6, currow, currow+1,
-		       (GtkAttachOptions) (GTK_FILL|GTK_EXPAND),
-		       (GtkAttachOptions) (0), 0, 0);
+      gtk_table_attach (GTK_TABLE (table), tree, 3, 6, currow, currow+1,
+			(GtkAttachOptions) (GTK_FILL|GTK_EXPAND),
+			(GtkAttachOptions) (0), 0, 0);
      
-     currow++;
-   }
-   event=get_next_event(event);
- }
+      currow++;
+    }
+    event=get_next_event(event);
+  }
 
- scrolledwindow = gtk_scrolled_window_new (NULL, NULL);
- gtk_box_pack_start (GTK_BOX (top_vbox), scrolledwindow, TRUE, TRUE, 0);
+  scrolledwindow = gtk_scrolled_window_new (NULL, NULL);
+  gtk_box_pack_start (GTK_BOX (top_vbox), scrolledwindow, TRUE, TRUE, 0);
 
- gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrolledwindow), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
- gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (scrolledwindow), table);
- gtk_widget_set_size_request (scrolledwindow, winsize_h, winsize_v);
+  gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrolledwindow), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+  gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (scrolledwindow), table);
+  gtk_widget_set_size_request (scrolledwindow, winsize_h, winsize_v);
  
- if (palette->style&STYLE_1) {
-   lives_widget_set_bg_color(gtk_bin_get_child (GTK_BIN (scrolledwindow)), GTK_STATE_NORMAL, &palette->normal_back);
- }
+  if (palette->style&STYLE_1) {
+    lives_widget_set_bg_color(gtk_bin_get_child (GTK_BIN (scrolledwindow)), GTK_STATE_NORMAL, &palette->normal_back);
+  }
  
- gtk_viewport_set_shadow_type (GTK_VIEWPORT (gtk_bin_get_child (GTK_BIN (scrolledwindow))),GTK_SHADOW_IN);
+  gtk_viewport_set_shadow_type (GTK_VIEWPORT (gtk_bin_get_child (GTK_BIN (scrolledwindow))),GTK_SHADOW_IN);
 
- hbuttonbox = lives_hbutton_box_new ();
- gtk_widget_show (hbuttonbox);
+  hbuttonbox = lives_hbutton_box_new ();
+  gtk_widget_show (hbuttonbox);
 
- gtk_box_pack_start (GTK_BOX (top_vbox), hbuttonbox, TRUE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (top_vbox), hbuttonbox, TRUE, TRUE, 0);
 
 #if !GTK_CHECK_VERSION(3,0,0)
- gtk_button_box_set_child_size (GTK_BUTTON_BOX (hbuttonbox), DEF_BUTTON_WIDTH, -1);
+  gtk_button_box_set_child_size (GTK_BUTTON_BOX (hbuttonbox), DEF_BUTTON_WIDTH, -1);
 #endif
- gtk_button_box_set_layout (GTK_BUTTON_BOX (hbuttonbox), GTK_BUTTONBOX_SPREAD);
+  gtk_button_box_set_layout (GTK_BUTTON_BOX (hbuttonbox), GTK_BUTTONBOX_SPREAD);
 
- ok_button = gtk_button_new_with_mnemonic (_("Close _window"));
- gtk_widget_show (ok_button);
- gtk_container_add (GTK_CONTAINER (hbuttonbox), ok_button);
+  ok_button = gtk_button_new_with_mnemonic (_("Close _window"));
+  gtk_widget_show (ok_button);
+  gtk_container_add (GTK_CONTAINER (hbuttonbox), ok_button);
 
- lives_widget_set_can_focus_and_default (ok_button);
- gtk_widget_grab_default (ok_button);
+  lives_widget_set_can_focus_and_default (ok_button);
+  gtk_widget_grab_default (ok_button);
  
- g_signal_connect (GTK_OBJECT (ok_button), "clicked",
-		   G_CALLBACK (response_ok),
-		   NULL);
+  g_signal_connect (GTK_OBJECT (ok_button), "clicked",
+		    G_CALLBACK (response_ok),
+		    NULL);
 
- if (prefs->gui_monitor!=0) {
-   gint xcen=mainw->mgeom[prefs->gui_monitor-1].x+
-     (mainw->mgeom[prefs->gui_monitor-1].width-lives_widget_get_allocation_width(event_dialog))/2;
-   gint ycen=mainw->mgeom[prefs->gui_monitor-1].y+
-     (mainw->mgeom[prefs->gui_monitor-1].height-lives_widget_get_allocation_height(event_dialog))/2;
-   gtk_window_set_screen(GTK_WINDOW(event_dialog),mainw->mgeom[prefs->gui_monitor-1].screen);
-   gtk_window_move(GTK_WINDOW(event_dialog),xcen,ycen);
- }
+  gtk_widget_add_accelerator (ok_button, "activate", accel_group,
+			      LIVES_KEY_Escape,  (GdkModifierType)0, (GtkAccelFlags)0);
+
+  if (prefs->gui_monitor!=0) {
+    gint xcen=mainw->mgeom[prefs->gui_monitor-1].x+
+      (mainw->mgeom[prefs->gui_monitor-1].width-lives_widget_get_allocation_width(event_dialog))/2;
+    gint ycen=mainw->mgeom[prefs->gui_monitor-1].y+
+      (mainw->mgeom[prefs->gui_monitor-1].height-lives_widget_get_allocation_height(event_dialog))/2;
+    gtk_window_set_screen(GTK_WINDOW(event_dialog),mainw->mgeom[prefs->gui_monitor-1].screen);
+    gtk_window_move(GTK_WINDOW(event_dialog),xcen,ycen);
+  }
 
   if (prefs->open_maximised) {
     gtk_window_maximize (GTK_WINDOW(event_dialog));
@@ -4836,7 +4841,7 @@ GtkWidget *create_event_list_dialog (weed_plant_t *event_list, weed_timecode_t s
 
   gtk_widget_show_all(event_dialog);
 
- return event_dialog;
+  return event_dialog;
 }
 
 
@@ -5082,7 +5087,7 @@ render_details *create_render_details (gint type) {
   
   if (!specified) encoders=filter_encoders_by_img_ext(encoders,prefs->image_ext);
   else {
-    GList *encs=encoders=filter_encoders_by_img_ext(encoders,cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
+    GList *encs=encoders=filter_encoders_by_img_ext(encoders,get_image_ext_for_type(cfile->img_type));
     needs_new_encoder=TRUE;
     while (encs!=NULL) {
       if (!strcmp((char *)encs->data,prefs->encoder.name)) {
@@ -5240,7 +5245,7 @@ render_details *create_render_details (gint type) {
   }
   else add_fill_to_box(GTK_BOX (daa));
 
-  lives_widget_set_can_focus_and_default (cancelbutton);
+  lives_widget_set_can_focus (cancelbutton,TRUE);
 
 
   if (!specified)
@@ -5253,7 +5258,6 @@ render_details *create_render_details (gint type) {
   gtk_dialog_add_action_widget (GTK_DIALOG (rdet->dialog), rdet->okbutton, GTK_RESPONSE_OK);
   lives_widget_set_can_focus_and_default (rdet->okbutton);
   gtk_widget_grab_default (rdet->okbutton);
-
 
   gtk_widget_add_accelerator (cancelbutton, "activate", rdet_accel_group,
                               LIVES_KEY_Escape, (GdkModifierType)0, (GtkAccelFlags)0);

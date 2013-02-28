@@ -3319,20 +3319,22 @@ static boolean show_existing(lives_conx_w *conxwp) {
 GtkWidget *make_datacon_window(int key, int mode) {
   weed_plant_t *filter=rte_keymode_get_filter(key+1,mode);
 
+  static lives_conx_w conxw;
+
   GtkWidget *cbox,*abox;
   GtkWidget *scrolledwindow;
 
   GtkWidget *cancelbutton;
   GtkWidget *okbutton;
 
+  GtkAccelGroup *accel_group;
+
+  boolean needsanother=TRUE;
+
   int scr_width,scr_height;
 
   int winsize_h;
   int winsize_v;
-
-  boolean needsanother=TRUE;
-
-  static lives_conx_w conxw;
 
   if (filter==NULL) return NULL;
 
@@ -3363,6 +3365,9 @@ GtkWidget *make_datacon_window(int key, int mode) {
 
   conxw.conx_dialog=lives_standard_dialog_new(_("LiVES: - Parameter and Alpha Channel Connections"),FALSE);
   gtk_widget_set_size_request (conxw.conx_dialog, winsize_h, winsize_v);
+
+  accel_group = GTK_ACCEL_GROUP(gtk_accel_group_new ());
+  gtk_window_add_accel_group (GTK_WINDOW (conxw.conx_dialog), accel_group);
 
   abox = lives_dialog_get_action_area(LIVES_DIALOG(conxw.conx_dialog));
 
@@ -3419,6 +3424,9 @@ GtkWidget *make_datacon_window(int key, int mode) {
 
   lives_widget_set_can_focus_and_default (okbutton);
   gtk_widget_grab_default(okbutton);
+
+  gtk_widget_add_accelerator (cancelbutton, "activate", accel_group,
+                              LIVES_KEY_Escape,  (GdkModifierType)0, (GtkAccelFlags)0);
 
 
   g_signal_connect (GTK_OBJECT (cancelbutton), "clicked",

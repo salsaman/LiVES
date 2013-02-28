@@ -121,7 +121,7 @@ gboolean auto_resample_resize (gint width,gint height,gdouble fps,gint fps_num,g
 	  if (!prefs->enc_letterbox) {
 	    com=g_strdup_printf ("%s resize_all \"%s\" %d %d %d \"%s\"",prefs->backend,
 				 cfile->handle,cfile->frames,width,height,
-				 cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
+				 get_image_ext_for_type(cfile->img_type));
 	    msg=g_strdup_printf(_("Resizing frames 1 to %d"),cfile->frames);
 	  }
 	  else {
@@ -136,7 +136,7 @@ gboolean auto_resample_resize (gint width,gint height,gdouble fps,gint fps_num,g
 	    reorder_leave_back=TRUE;
 	    com=g_strdup_printf ("%s resize_all \"%s\" %d %d %d \"%s\" %d %d",prefs->backend,cfile->handle,
 				 cfile->frames,width,height,
-				 cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",iwidth,iheight);
+				 get_image_ext_for_type(cfile->img_type),iwidth,iheight);
 	    msg=g_strdup_printf(_("Resizing/letterboxing frames 1 to %d"),cfile->frames);
 	  }
 
@@ -300,7 +300,7 @@ gboolean auto_resample_resize (gint width,gint height,gdouble fps,gint fps_num,g
 	if (!prefs->enc_letterbox) {
 	  com=g_strdup_printf ("%s resize_all \"%s\" %d %d %d \"%s\"",prefs->backend,
 			       cfile->handle,cfile->frames,width,height,
-			       cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
+			       get_image_ext_for_type(cfile->img_type));
 	  msg=g_strdup_printf(_("Resizing frames 1 to %d"),cfile->frames);
 	}
 	else {
@@ -314,7 +314,7 @@ gboolean auto_resample_resize (gint width,gint height,gdouble fps,gint fps_num,g
 
 	  com=g_strdup_printf ("%s resize_all \"%s\" %d %d %d \"%s\" %d %d",prefs->backend,
 			       cfile->handle,cfile->frames,width,height,
-			       cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",iwidth,iheight);
+			       get_image_ext_for_type(cfile->img_type),iwidth,iheight);
 	  msg=g_strdup_printf(_("Resizing/letterboxing frames 1 to %d"),cfile->frames);
 	}
 
@@ -1133,6 +1133,8 @@ _resaudw *create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox
   GtkWidget *hbox;
   GtkWidget *hbox2;
 
+  GtkAccelGroup *accel_group=NULL;
+
   GSList *s1_group=NULL;
   GSList *e1_group=NULL;
   GSList *s2_group=NULL;
@@ -1143,16 +1145,17 @@ _resaudw *create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox
   GList *sampsize = NULL;
   GList *rate = NULL;
 
+  gdouble secs=0.;
 
   gchar *tmp;
 
   gint hours=0,mins=0;
-  gdouble secs=0.;
-
   gint aendian;
 
   gboolean chans_fixed=FALSE;
   gboolean is_8bit;
+
+  _resaudw *resaudw=(_resaudw*)(g_malloc(sizeof(_resaudw)));
 
   if (type==10) {
     if (mainw->multitrack!=NULL) chans_fixed=TRUE; // TODO *
@@ -1164,8 +1167,6 @@ _resaudw *create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox
     mins=(gint)((mainw->rec_end_time-(hours*3600.))/60.);
     secs=mainw->rec_end_time-hours*3600.-mins*60.;
   }
-
-  _resaudw *resaudw=(_resaudw*)(g_malloc(sizeof(_resaudw)));
 
   channels = g_list_append (channels, (gpointer)"1");
   channels = g_list_append (channels, (gpointer)"2");
@@ -1202,6 +1203,9 @@ _resaudw *create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox
 
     resaudw->dialog = lives_standard_dialog_new (title,FALSE);
     g_free(title);
+
+    accel_group = GTK_ACCEL_GROUP(gtk_accel_group_new ());
+    gtk_window_add_accel_group (GTK_WINDOW (resaudw->dialog), accel_group);
 
     if (prefs->show_gui) {
       gtk_window_set_transient_for(GTK_WINDOW(resaudw->dialog),GTK_WINDOW(mainw->LiVES));
@@ -1569,8 +1573,8 @@ _resaudw *create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox
     gtk_dialog_add_action_widget (GTK_DIALOG (resaudw->dialog), cancelbutton, GTK_RESPONSE_CANCEL);
     lives_widget_set_can_focus_and_default (cancelbutton);
     
-    gtk_widget_add_accelerator (cancelbutton, "activate", mainw->accel_group,
-				LIVES_KEY_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
+    if (accel_group!=NULL) gtk_widget_add_accelerator (cancelbutton, "activate", accel_group,
+						       LIVES_KEY_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
     
       
     okbutton = gtk_button_new_from_stock ("gtk-ok");
@@ -1657,6 +1661,8 @@ create_new_pb_speed (gshort type)
   GtkWidget *change_pb_ok;
   GtkWidget *change_audio_speed;
 
+  GtkAccelGroup *accel_group;
+
   GSList *rbgroup = NULL;
 
   gchar label_text[256];
@@ -1672,6 +1678,9 @@ create_new_pb_speed (gshort type)
 
   new_pb_speed = lives_standard_dialog_new (title,FALSE);
   g_free(title);
+
+  accel_group = GTK_ACCEL_GROUP(gtk_accel_group_new ());
+  gtk_window_add_accel_group (GTK_WINDOW (new_pb_speed), accel_group);
 
   if (prefs->show_gui) {
     gtk_window_set_transient_for(GTK_WINDOW(new_pb_speed),GTK_WINDOW(mainw->LiVES));
@@ -1740,7 +1749,10 @@ create_new_pb_speed (gshort type)
 
   cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
   gtk_dialog_add_action_widget (GTK_DIALOG (new_pb_speed), cancelbutton, GTK_RESPONSE_CANCEL);
-  lives_widget_set_can_focus_and_default (cancelbutton);
+  lives_widget_set_can_focus (cancelbutton,TRUE);
+
+  gtk_widget_add_accelerator (cancelbutton, "activate", accel_group,
+                              LIVES_KEY_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
 
   change_pb_ok = gtk_button_new_from_stock ("gtk-ok");
   gtk_dialog_add_action_widget (GTK_DIALOG (new_pb_speed), change_pb_ok, GTK_RESPONSE_OK);
@@ -1973,12 +1985,12 @@ gint reorder_frames(int rwidth, int rheight) {
   gchar *com;
 
   if (rwidth*rheight==0) com=g_strdup_printf("%s reorder \"%s\" \"%s\" %d 0 0 %d %d",prefs->backend,cfile->handle,
-					     cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",!mainw->endian,
+					     get_image_ext_for_type(cfile->img_type),!mainw->endian,
 					     reorder_leave_back,cfile->frames);
   else {
     if (!prefs->enc_letterbox) {
       com=g_strdup_printf("%s reorder \"%s\" \"%s\" %d %d %d 0 %d",prefs->backend,cfile->handle,
-			  cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",!mainw->endian,rwidth,rheight,cfile->frames);
+			  get_image_ext_for_type(cfile->img_type),!mainw->endian,rwidth,rheight,cfile->frames);
     }
     else {
       int iwidth=cfile->hsize,iheight=cfile->vsize;
@@ -1990,7 +2002,7 @@ gint reorder_frames(int rwidth, int rheight) {
       }
   
       com=g_strdup_printf("%s reorder \"%s\" \"%s\" %d %d %d %d %d %d %d",prefs->backend,cfile->handle,
-			  cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",!mainw->endian,rwidth,rheight,
+			  get_image_ext_for_type(cfile->img_type),!mainw->endian,rwidth,rheight,
 			  reorder_leave_back,cfile->frames,iwidth,iheight);
     }
   }
@@ -2083,7 +2095,7 @@ deorder_frames(gint old_frames, gboolean leave_bak) {
   }
   com=g_strdup_printf("%s deorder \"%s\" %d %d %d \"%s\" %d",prefs->backend,cfile->handle,
 		      perf_start,cfile->frames,perf_end,
-		      cfile->img_type==IMG_TYPE_JPEG?"jpg":"png",leave_bak);
+		      get_image_ext_for_type(cfile->img_type),leave_bak);
 
   unlink(cfile->info_file);
   mainw->com_failed=FALSE;
@@ -2128,7 +2140,7 @@ gboolean resample_clipboard(gdouble new_fps) {
 
     // copy .mgk to .img_ext and .img_ext to .bak (i.e redo the resample)
     com=g_strdup_printf("%s redo \"%s\" %d %d \"%s\"",prefs->backend,cfile->handle,1,new_frames,
-			cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
+			get_image_ext_for_type(cfile->img_type));
     unlink(cfile->info_file);
     mainw->com_failed=FALSE;
     lives_system(com,FALSE);
@@ -2159,7 +2171,7 @@ gboolean resample_clipboard(gdouble new_fps) {
       gint old_frames=count_resampled_frames(clipboard->frames,clipboard->fps,clipboard->undo1_dbl);
       mainw->current_file=0;
       com=g_strdup_printf("%s undo \"%s\" %d %d \"%s\"",prefs->backend,cfile->handle,old_frames+1,cfile->frames,
-			  cfile->img_type==IMG_TYPE_JPEG?"jpg":"png");
+			  get_image_ext_for_type(cfile->img_type));
       unlink(cfile->info_file);
       lives_system(com,FALSE);
       cfile->progress_start=old_frames+1;

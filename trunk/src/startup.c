@@ -206,7 +206,11 @@ boolean do_audio_choice_dialog(short startup_phase) {
   GtkWidget *dialog,*dialog_vbox,*radiobutton0,*radiobutton1,*radiobutton2,*radiobutton3,*label;
   GtkWidget *okbutton,*cancelbutton;
   GtkWidget *hbox;
+
+  GtkAccelGroup *accel_group;
+
   GSList *radiobutton_group = NULL;
+
   gchar *txt0,*txt1,*txt2,*txt3,*txt4,*txt5,*txt6,*txt7,*msg;
 
   gint response;
@@ -271,6 +275,9 @@ boolean do_audio_choice_dialog(short startup_phase) {
   g_free(txt7);
 
   dialog = lives_standard_dialog_new (_("LiVES: - Choose an audio player"),FALSE);
+
+  accel_group = GTK_ACCEL_GROUP(gtk_accel_group_new ());
+  gtk_window_add_accel_group (GTK_WINDOW (dialog), accel_group);
 
   dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(dialog));
   
@@ -367,6 +374,9 @@ boolean do_audio_choice_dialog(short startup_phase) {
   cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
   gtk_widget_show (cancelbutton);
   gtk_dialog_add_action_widget (GTK_DIALOG (dialog), cancelbutton, GTK_RESPONSE_CANCEL);
+
+  gtk_widget_add_accelerator (cancelbutton, "activate", accel_group,
+                              LIVES_KEY_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
 
   okbutton = gtk_button_new_from_stock ("gtk-go-forward");
   gtk_button_set_label(GTK_BUTTON(okbutton),_("_Next"));
@@ -477,24 +487,22 @@ boolean do_startup_tests(boolean tshoot) {
   GtkWidget *okbutton;
   GtkWidget *cancelbutton;
 
-  gchar *com,*rname,*afile,*tmp;
+  GtkAccelGroup *accel_group;
 
+  gchar *com,*rname,*afile,*tmp;
+  gchar *image_ext=g_strdup(prefs->image_ext);
+  gchar *title;
   guchar *abuff;
 
   size_t fsize;
 
   boolean success,success2,success3,success4;
+  boolean imgext_switched=FALSE;
 
   gint response,res;
   gint current_file=mainw->current_file;
 
   int out_fd,info_fd;
-
-  gchar *image_ext=g_strdup(prefs->image_ext);
-
-  gchar *title;
-
-  boolean imgext_switched=FALSE;
 
   mainw->suppress_dprint=TRUE;
   mainw->cancelled=CANCEL_NONE;
@@ -517,6 +525,9 @@ boolean do_startup_tests(boolean tshoot) {
 
   dialog = lives_standard_dialog_new (title,FALSE);
 
+  accel_group = GTK_ACCEL_GROUP(gtk_accel_group_new ());
+  gtk_window_add_accel_group (GTK_WINDOW (dialog), accel_group);
+
   g_free(title);
 
   dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(dialog));
@@ -527,6 +538,9 @@ boolean do_startup_tests(boolean tshoot) {
   cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
   gtk_widget_show (cancelbutton);
   gtk_dialog_add_action_widget (GTK_DIALOG (dialog), cancelbutton, GTK_RESPONSE_CANCEL);
+
+  gtk_widget_add_accelerator (cancelbutton, "activate", accel_group,
+                              LIVES_KEY_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
 
   if (!tshoot) {
     okbutton = gtk_button_new_from_stock ("gtk-go-forward");

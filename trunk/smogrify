@@ -346,7 +346,7 @@ if (defined($ARGV[0])) {
 	&rc_set_if_not_set("open_compression_percent",15);
 	&rc_set_if_not_set("conserve_space","false");
 	&rc_set_if_not_set("antialias","true");
-	# resize action when opening images - can be one of: "bound", "default" or "none"
+	# resize action when opening images - can be either: "bound" or "none"
 	&rc_set_if_not_set("image_resize_action","none");
 	&rc_set_if_not_set("encoder",$encoder);
 	&rc_set_if_not_set("output_type","mjpeg");
@@ -6137,10 +6137,8 @@ sub get_image_size {
 	$hsize=$size[0];
 	$vsize=$size[1];
 	
-	if ($imresact eq ""||$imresact eq "default") {
-	    $hsize=$vsize="";
-	}
-	elsif ($imresact eq "bound") {
+
+	if ($imresact eq "bound") {
 	    if ($hsize>$dwidth) {
 		$shrink=$hsize/$dwidth;
 		$hsize/=$shrink;
@@ -6153,6 +6151,9 @@ sub get_image_size {
 	    }
 	    $hsize=int($hsize);
 	    $vsize=int($vsize);
+	}
+	else {
+	    $hsize=$vsize="";
 	}
     }
     if (!defined($hsize)||$hsize eq "") {

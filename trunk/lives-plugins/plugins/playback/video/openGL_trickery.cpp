@@ -31,6 +31,8 @@
 #include "../../../../libweed/weed-plugin-utils.h"
 #endif
 
+
+
 ////////////////////////////////////////////////////////////////////////////////////
 
 static char plugin_version[64]="LiVES openGL trickery playback engine version 1.0";
@@ -286,7 +288,6 @@ fsover|Over-ride _fullscreen setting (for debugging)|bool|0|0 \\n\
 
 const void **get_play_params (func_ptr weed_bootd) {
   weed_bootstrap_f weed_boot=(weed_bootstrap_f)weed_bootd;
-  weed_leaf_set_f owls=weed_leaf_set;
 
   weed_plant_t *gui;
 
@@ -317,8 +318,6 @@ const void **get_play_params (func_ptr weed_bootd) {
     params[6]=NULL;
   }
 
-  // not really sure why this is needed, but for some reason it seems to affect the host version too !!!!
-  weed_leaf_set=owls;
   return (const void **)params;
 }
 

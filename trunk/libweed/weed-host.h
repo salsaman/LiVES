@@ -91,7 +91,7 @@ weed_memset_f weed_memset;
 
 #endif
 
-void weed_init(int api_v, weed_malloc_f, weed_free_f, weed_memcpy_f, weed_memset_f);
+void weed_init(int api_v, weed_malloc_f, weed_free_f, weed_memcpy_f, weed_memset_f) __attribute__ ((visibility("default")));
 
 #ifdef __cplusplus
 }

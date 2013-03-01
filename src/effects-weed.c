@@ -165,7 +165,6 @@ weed_leaf_element_size_f wles;
 weed_leaf_seed_type_f wlst;
 weed_leaf_get_flags_f wlgf;
 weed_leaf_set_f wlsp;
-weed_leaf_set_f wls;
 weed_malloc_f weedmalloc;
 weed_free_f weedfree;
 weed_memcpy_f weedmemcpy;

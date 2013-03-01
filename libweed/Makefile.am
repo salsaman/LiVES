@@ -25,7 +25,7 @@ docs-doxygen:
 endif
 
 WEED_SO_VERSION = 0:6:0
-WEED_PSO_VERSION = 0:11:0
+WEED_PSO_VERSION = 0:12:0
 
 LIBS =
 
@@ -58,27 +58,23 @@ libweedincludedir = "$(includedir)/weed"
 
 libweed_ladir = "$(libdir)/weed"
 
+libweed_la_CFLAGS = -fvisibility=hidden
+
 shared_LDFLAGS = -shared --tag=disable-static
 
 libweed_la_LDFLAGS = -version-info $(WEED_SO_VERSION) $(shared_LDFLAGS)
 
-libweed_slice_la_CFLAGS = @GLIB_CFLAGS@ 
+libweed_slice_la_CFLAGS = @GLIB_CFLAGS@ -fvisibility=hidden
 
 libweed_slice_la_LDFLAGS = @GLIB_LIBS@ -version-info $(WEED_SO_VERSION) $(shared_LDFLAGS)
 
 libweed_utils_la_CFLAGS = $(extra_cflags)
 
-##########################################################################################
-# -DO NOT- REMOVE THE -static, -DO NOT- add --tag=disable-static. You have been warned ! #
-libweed_utils_la_LDFLAGS = $(extra_ldflags) -version-info $(WEED_SO_VERSION) -static     #
-##########################################################################################
+libweed_utils_la_LDFLAGS = $(extra_ldflags) -version-info $(WEED_SO_VERSION)
 
 libweed_plugin_utils_la_CFLAGS = $(extra_cflags)
 
-#################################################################################################
-# -DO NOT- REMOVE THE -static, -DO NOT- add --tag=disable-static. You have been warned !        #
-libweed_plugin_utils_la_LDFLAGS = $(extra_ldflags) -version-info $(WEED_PSO_VERSION) -static     #
-#################################################################################################
+libweed_plugin_utils_la_LDFLAGS = $(extra_ldflags) -version-info $(WEED_PSO_VERSION)
 
 
 uninstall-local:

@@ -12,7 +12,7 @@ shared_ldflags = -dynamiclib -module -avoid-version --tag=disable-static
 
 shared_cflags = -fno-common
 else
-shared_ldflags = -shared -fPIC -DPIC -Wl,-Bsymbolic -module -avoid-version --tag=disable-static
+shared_ldflags = -shared -fPIC -DPIC -module -avoid-version --tag=disable-static
 
 shared_cflags = -fPIC -DPIC
 endif

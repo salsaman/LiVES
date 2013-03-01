@@ -1,10 +1,12 @@
 Version 1.8.3
 -------------
 Fix crash in recording external audio with pulse player (regression).
-Minor widget fixes with startup dialogs (regression).
+Minor widget fixes with startup dialogs and labels (regression).
 Refactor timeline drawing in multitrack.
 Enable compilation with gtk+ 3.
-
+Implement new timeline widget for gtk+ 3.
+Prevent some audio being dropped when re-entering multitrack.
+Various optimisations.
 
 
 

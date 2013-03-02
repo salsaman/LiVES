@@ -12,7 +12,7 @@ shared_ldflags = -dynamiclib -module -avoid-version --tag=disable-static
 
 shared_cflags = -fno-common
 else
-shared_ldflags = -shared -fPIC -DPIC -module -avoid-version --tag=disable-static
+shared_ldflags = -shared -fPIC -DPIC -module -no-undefined -avoid-version --tag=disable-static
 
 shared_cflags = -fPIC -DPIC
 endif
@@ -23,7 +23,7 @@ AM_LDFLAGS = $(shared_ldflags) @WEED_UTILS_LIBS@
 weed_CFLAGS = -DHAVE_SYSTEM_WEED
 else
 if IS_MINGW
-AM_LDFLAGS = $(shared_ldflags) -no-undefined -Wl,../../libweed/.libs/libweed-utils.a
+AM_LDFLAGS = $(shared_ldflags) -Wl,../../libweed/.libs/libweed-utils.a
 else
 AM_LDFLAGS = $(shared_ldflags) ../../libweed/.libs/libweed-utils.la
 endif

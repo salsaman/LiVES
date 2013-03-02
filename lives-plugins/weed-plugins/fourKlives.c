@@ -158,17 +158,20 @@ static int syna_load(_sdata *sdata, const char *tune) {
     FILE    *f;
     long    length;
 
+    int retval;
+
     /* Read the file and call syna_get */
     f=fopen(tune,"rb");
-    if (f==NULL)
-      return(WEED_ERROR_INIT_ERROR);
+    if (f==NULL) return WEED_ERROR_INIT_ERROR;
     fseek(f,0,SEEK_END);
     length=ftell(f);
     fseek(f,0,SEEK_SET);
     sdata->module=weed_malloc(length+1);
-    fread(sdata->module,1,length,f);
+    retval=fread(sdata->module,1,length,f);
     sdata->module[length]=0; /* String ends in zero */
     fclose(f);
+
+    if (retval<length) return WEED_ERROR_INIT_ERROR;
 
     return(syna_get(sdata));
 }
@@ -326,7 +329,7 @@ static int syna_get(_sdata *sdata) {
   return WEED_NO_ERROR;
 }
 
-
+#if 0
 // added by Antti Silvast for setting all live the rows
 static void set_live_rows(_sdata *sdata, int * the_rows) {
   register int i;
@@ -336,6 +339,7 @@ static void set_live_rows(_sdata *sdata, int * the_rows) {
     //pi[i]=0;
   }
 }
+#endif
 
 // added by Antti Silvast for setting just one live row
 static void set_live_row(_sdata *sdata, int channel, int the_row) {

@@ -239,7 +239,7 @@ PKG_CHECK_EXISTS([gtk+-3.0 >= 3.0.0],[HAVE_GTK_VERSION3=true],[HAVE_GTK_VERSION3
 if test "x$HAVE_GTK_VERSION3" = "xfalse"; then
 echo "no"
 else
-echo "yes"
+PKG_CHECK_MODULES(GTK, gtk+-3.0 >= 3.0.0)
 fi
 
 else
@@ -250,13 +250,9 @@ fi
 
 if test "x$HAVE_GTK_VERSION3" = "xfalse"; then
 
-PKG_CHECK_EXISTS([gtk+-2.0 >= 2.4.0],[HAVE_GTK_VERSION204=true],[HAVE_GTK_VERSION204=false])
+echo -n "checking for GTK+ >= 2.4.0... "
 
-if test "x$HAVE_GTK_VERSION204" = "xfalse"; then
 PKG_CHECK_MODULES(GTK, gtk+-2.0 >= 2.4.0)
-else
-echo "checking for GTK+ >= 2.4.0... yes"
-fi
 
 PKG_CHECK_EXISTS([gtk+-2.0 >= 2.16.0],[HAVE_GTK_VERSION216=true],[HAVE_GTK_VERSION216=false])
 
@@ -898,7 +894,8 @@ fi
 
 echo "*******************************************************************"
 echo "LiVES is now configured and ready for building."
-echo "If you are building for MULTILIBS on a 64 bit system, you may wish to re-run this, e.g.: ./configure --libdir=/usr/lib64"
+echo "If you are building for MULTILIBS on a 64 bit system, "
+echo "you may wish to re-run this, e.g.: ./configure --libdir=/usr/lib64"
 echo "In this case you MUST first manually update the library paths in libweed/*.pc files."
 echo  "*******************************************************************"
 

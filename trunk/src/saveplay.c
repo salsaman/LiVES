@@ -1,6 +1,6 @@
 // saveplay.c
 // LiVES (lives-exe)
-// (c) G. Finch 2003 - 2012
+// (c) G. Finch 2003 - 2013
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -1243,11 +1243,7 @@ void save_file (int clip, int start, int end, const char *filename) {
   }
 
   if (filename==NULL) {
-#if GLIB_CHECK_VERSION(2,8,0)
     if (!check_file(full_file_name,strcmp(full_file_name,n_file_name))) {
-#else
-    if (!check_file(full_file_name,TRUE)) {
-#endif
       g_free(full_file_name);
       if (rdet!=NULL) {
 	gtk_widget_destroy (rdet->dialog);
@@ -3669,20 +3665,27 @@ wait_for_stop (const gchar *stop_command) {
 }
 
 
-gboolean save_frame_inner(gint clip, gint frame, const gchar *file_name, gint width, gint height, gboolean allow_over) {
+boolean save_frame_inner(int clip, int frame, const gchar *file_name, int width, int height, boolean from_osc) {
   // save 1 frame as an image (uses imagemagick to convert)
   // width==-1, height==-1 to use "natural" values
-  gint result;
-  gchar *com,*tmp;
-  gchar full_file_name[PATH_MAX];
-  file *sfile=mainw->files[clip];
 
-  if (strrchr(file_name,'.')==NULL) {
+  file *sfile=mainw->files[clip];
+  gchar full_file_name[PATH_MAX];
+  gchar *com,*tmp;
+
+  boolean allow_over=FALSE;
+  int result;
+
+  if (!from_osc&&strrchr(file_name,'.')==NULL) {
     g_snprintf(full_file_name,PATH_MAX,"%s.%s",file_name,get_image_ext_for_type(sfile->img_type));
   }
   else {
     g_snprintf(full_file_name,PATH_MAX,"%s",file_name);
+    if (!allow_over) allow_over=TRUE;
   }
+
+  // TODO - allow overwriting in sandbox
+  if (from_osc&&g_file_test (full_file_name, G_FILE_TEST_EXISTS)) return FALSE;
 
   if (!check_file(full_file_name,!allow_over)) return FALSE;
 
@@ -3754,25 +3757,31 @@ gboolean save_frame_inner(gint clip, gint frame, const gchar *file_name, gint wi
 
 
 void backup_file(int clip, int start, int end, const gchar *file_name) {
-  gchar *com,*tmp;
-  gchar title[256];
-  gchar **array;
-  gchar full_file_name[PATH_MAX];
-  gint withsound=1;
-  gboolean with_perf=FALSE,retval;
-  gint current_file=mainw->current_file;
-
   file *sfile=mainw->files[clip];
+  gchar **array;
+
+  gchar title[256];
+  gchar full_file_name[PATH_MAX];
+
+  gchar *com,*tmp;
+
+  boolean with_perf=FALSE;
+  boolean retval,allow_over;
+
+  int withsound=1;
+  int current_file=mainw->current_file;
 
   if (strrchr(file_name,'.')==NULL) {
     g_snprintf(full_file_name,PATH_MAX,"%s.lv1",file_name);
+    allow_over=FALSE;
    }
   else {
     g_snprintf(full_file_name,PATH_MAX,"%s",file_name);
+    allow_over=TRUE;
   }
 
   // check if file exists
-  if (!check_file(full_file_name,TRUE)) return;
+  if (!check_file(full_file_name,allow_over)) return;
 
   // create header files
   retval=write_headers(sfile); // for pre LiVES 0.9.6

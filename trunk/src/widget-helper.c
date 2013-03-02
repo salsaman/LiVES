@@ -858,6 +858,21 @@ LIVES_INLINE LiVESWidget *lives_combo_new(void) {
 }
 
 
+LIVES_INLINE LiVESWidget *lives_combo_new_with_model (LiVESTreeModel *model) {
+  LiVESWidget *combo=NULL;
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(2,24,0)
+  combo = gtk_combo_box_new_with_model_and_entry (model);
+#else
+  combo = gtk_combo_box_entry_new ();
+  gtk_combo_box_set_model(GTK_COMBO_BOX(combo),model);
+#endif
+#endif
+  return combo;
+
+}
+
+
 LIVES_INLINE void lives_combo_append_text(LiVESCombo *combo, const char *text) {
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(2,24,0)
@@ -1255,47 +1270,98 @@ LIVES_INLINE void lives_entry_set_editable(LiVESEntry *entry, boolean editable) 
 #endif
 }
 
-LIVES_INLINE void lives_dialog_set_has_separator(LiVESDialog *dialog, boolean has) {
+
+
+LIVES_INLINE boolean lives_dialog_set_has_separator(LiVESDialog *dialog, boolean has) {
+  // return TRUE if implemented
+
 #ifdef GUI_GTK
 #if !GTK_CHECK_VERSION(3,0,0)
   gtk_dialog_set_has_separator(dialog,has);
+  return TRUE;
 #endif
 #endif
-
-
+  return FALSE;
 }
 
 
 
-LIVES_INLINE void lives_widget_set_hexpand(LiVESWidget *widget, boolean state) {
+LIVES_INLINE boolean lives_widget_set_hexpand(LiVESWidget *widget, boolean state) {
+  // return TRUE if implemented
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3,0,0)
   gtk_widget_set_hexpand(widget,state);
+  return TRUE;
 #endif
 #endif
+  return FALSE;
 }
 
 
-LIVES_INLINE void lives_widget_set_vexpand(LiVESWidget *widget, boolean state) {
+LIVES_INLINE boolean lives_widget_set_vexpand(LiVESWidget *widget, boolean state) {
+  // return TRUE if implemented
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3,0,0)
   gtk_widget_set_vexpand(widget,state);
+  return TRUE;
 #endif
 #endif
+  return FALSE;
 }
 
 
+LIVES_INLINE boolean lives_image_menu_item_set_always_show_image(LiVESImageMenuItem *item, boolean show) {
+  // return TRUE if implemented
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(2,16,0)
+  gtk_image_menu_item_set_always_show_image(item,show);
+  return TRUE;
+#endif
+#endif
+  return FALSE;
+}
 
-LIVES_INLINE void lives_scale_button_set_orientation(LiVESScaleButton *scale, LiVESOrientation orientation) {
+
+LIVES_INLINE boolean lives_file_chooser_set_do_overwrite_confirmation(LiVESFileChooser *chooser, boolean set) {
+  // return TRUE if implemented
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(2,8,0)
+  gtk_file_chooser_set_do_overwrite_confirmation(chooser,set);
+  return TRUE;
+#endif
+#endif
+  return FALSE;
+}
+
+
+LIVES_INLINE boolean lives_scale_button_set_orientation(LiVESScaleButton *scale, LiVESOrientation orientation) {
+  // return TRUE if implemented
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3,0,0)
   gtk_orientable_set_orientation(GTK_ORIENTABLE(scale),orientation);
+  return TRUE;
 #else
+#if GTK_CHECK_VERSION(2,14,0) 
   gtk_scale_button_set_orientation (scale,orientation);
+  return TRUE;
 #endif
 #endif
+#endif
+  return FALSE;
 }
 
+
+LIVES_INLINE double lives_scale_button_get_value(LiVESScaleButton *scale) {
+  double value=0.;
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(2,14,0)
+  value=gtk_scale_button_get_value(scale);
+#else
+  value=gtk_adjustment_get_value(gtk_range_get_adjustment(scale));
+#endif
+#endif
+  return value;
+}
 
 
 LIVES_INLINE void lives_widget_get_pointer(LiVESXDevice *device, LiVESWidget *widget, int *x, int *y) {
@@ -1426,6 +1492,27 @@ void lives_combo_populate(LiVESCombo *combo, LiVESList *list) {
     list=list->next;
   }
 #endif
+}
+
+
+
+LiVESWidget *lives_volume_button_new(LiVESOrientation orientation, LiVESAdjustment *adj, double volume) {
+  LiVESWidget *volume_scale=NULL;
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(2,14,0) 
+  volume_scale=gtk_volume_button_new();
+  gtk_scale_button_set_value(GTK_SCALE_BUTTON(volume_scale),volume);
+  lives_scale_button_set_orientation (LIVES_SCALE_BUTTON(volume_scale),orientation);
+#else
+  if (orientation==LIVES_ORIENTATION_HORIZONTAL)
+    volume_scale=lives_hscale_new(adj);
+  else 
+    volume_scale=lives_vscale_new(adj);
+
+  gtk_scale_set_draw_value(GTK_SCALE(volume_scale),FALSE);
+#endif
+#endif
+  return volume_scale;
 }
 
 

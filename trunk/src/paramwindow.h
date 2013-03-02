@@ -62,7 +62,7 @@ void on_pwcolsel (GtkButton *button, lives_rfx_t *);
 gchar *param_marshall (lives_rfx_t *rfx, boolean with_min_max);
 gchar **param_marshall_to_argv (lives_rfx_t *rfx);
 void param_demarshall (lives_rfx_t *rfx, GList *plist, boolean with_min_max, boolean update_widgets);
-gint set_param_from_list(GList *plist, lives_param_t *param, gint pnum, boolean with_min_max, boolean upd);
+int set_param_from_list(GList *plist, lives_param_t *param, gint pnum, boolean with_min_max, boolean upd);
 GList *argv_to_marshalled_list (lives_rfx_t *rfx, gint argc, gchar **argv);
 
 /// object should have g_set_object_data "param_number" set to parameter number

@@ -2704,7 +2704,7 @@ static void on_acheck_toggled(GtkToggleButton *acheck, gpointer user_data) {
 }
 
 
-GtkTreeModel *inparam_fx_model (boolean is_chans) {
+static LiVESTreeModel *inparam_fx_model (boolean is_chans) {
   GtkTreeStore *tstore;
 
   GtkTreeIter iter1,iter2;
@@ -2770,7 +2770,7 @@ GtkTreeModel *inparam_fx_model (boolean is_chans) {
 
   }
 
-  return (GtkTreeModel *)tstore;
+  return (LiVESTreeModel *)tstore;
 }
 
 
@@ -2778,7 +2778,7 @@ GtkTreeModel *inparam_fx_model (boolean is_chans) {
 
 
 static GtkWidget *conx_scroll_new(weed_plant_t *filter, lives_conx_w *conxwp) {
-  GtkTreeModel *model;
+  LiVESTreeModel *model;
 
   GtkWidget *label;
   GtkWidget *hseparator;
@@ -2861,12 +2861,7 @@ static GtkWidget *conx_scroll_new(weed_plant_t *filter, lives_conx_w *conxwp) {
       // create combo entry model
       model=inparam_fx_model(TRUE);
 
-#if GTK_CHECK_VERSION(2,24,0)
-      conxwp->cfxcombo[x] = gtk_combo_box_new_with_model_and_entry (model);
-#else
-      conxwp->cfxcombo[x] = gtk_combo_box_entry_new ();
-      gtk_combo_box_set_model(GTK_COMBO_BOX(conxwp->cfxcombo[x]),model);
-#endif
+      conxwp->cfxcombo[x] = lives_combo_new_with_model (model);
 
       lives_combo_set_entry_text_column(LIVES_COMBO(conxwp->cfxcombo[x]),NAME_COLUMN);
 
@@ -2971,12 +2966,7 @@ static GtkWidget *conx_scroll_new(weed_plant_t *filter, lives_conx_w *conxwp) {
       // create combo entry model
       model=inparam_fx_model(FALSE);
 
-#if GTK_CHECK_VERSION(2,24,0)
-      conxwp->pfxcombo[x] = gtk_combo_box_new_with_model_and_entry (model);
-#else
-      conxwp->pfxcombo[x] = gtk_combo_box_entry_new ();
-      gtk_combo_box_set_model(GTK_COMBO_BOX(conxwp->pfxcombo[x]),model);
-#endif
+      conxwp->pfxcombo[x] = lives_combo_new_with_model (model);
 
       lives_combo_set_entry_text_column(LIVES_COMBO(conxwp->pfxcombo[x]),NAME_COLUMN);
 

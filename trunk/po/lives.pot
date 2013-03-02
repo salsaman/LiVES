@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: lives 1.8.3-svn\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2013-03-01 08:50-0300\n"
+"POT-Creation-Date: 2013-03-02 00:46-0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -5516,60 +5516,60 @@ msgstr ""
 msgid "Display Password"
 msgstr ""
 
-#: src/paramwindow.c:426
+#: src/paramwindow.c:436
 msgid "Transition _In"
 msgstr ""
 
-#: src/paramwindow.c:446
+#: src/paramwindow.c:456
 msgid "Crossfade audio"
 msgstr ""
 
-#: src/paramwindow.c:447
+#: src/paramwindow.c:457
 msgid "Check the box to make audio transition with the video"
 msgstr ""
 
-#: src/paramwindow.c:465
+#: src/paramwindow.c:475
 msgid "Transition _Out"
 msgstr ""
 
-#: src/paramwindow.c:533
+#: src/paramwindow.c:543
 msgid "Target _FPS (plugin may override this)"
 msgstr ""
 
-#: src/paramwindow.c:560
+#: src/paramwindow.c:570
 #, c-format
 msgid "%s : size"
 msgstr ""
 
-#: src/paramwindow.c:564
+#: src/paramwindow.c:574
 msgid "New size (pixels)"
 msgstr ""
 
-#: src/paramwindow.c:583 src/plugins.c:990
+#: src/paramwindow.c:593 src/plugins.c:990
 msgid "_Width"
 msgstr ""
 
-#: src/paramwindow.c:602 src/plugins.c:996
+#: src/paramwindow.c:612 src/plugins.c:996
 msgid "_Height"
 msgstr ""
 
-#: src/paramwindow.c:652
+#: src/paramwindow.c:662
 msgid "Generate to _Clipboard"
 msgstr ""
 
-#: src/paramwindow.c:654
+#: src/paramwindow.c:664
 msgid "Generate frames to the clipboard"
 msgstr ""
 
-#: src/paramwindow.c:661
+#: src/paramwindow.c:671
 msgid "Generate to _New Clip"
 msgstr ""
 
-#: src/paramwindow.c:663
+#: src/paramwindow.c:673
 msgid "Generate frames to a new clip"
 msgstr ""
 
-#: src/paramwindow.c:765
+#: src/paramwindow.c:794
 #, c-format
 msgid ""
 "\n"
@@ -5577,55 +5577,55 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/paramwindow.c:860 src/paramwindow.c:870
+#: src/paramwindow.c:889 src/paramwindow.c:899
 msgid "Set as default"
 msgstr ""
 
-#: src/paramwindow.c:862 src/paramwindow.c:874
+#: src/paramwindow.c:891 src/paramwindow.c:903
 msgid "Reset"
 msgstr ""
 
-#: src/paramwindow.c:872 src/rte_window.c:2314 src/omc-learn.c:1367
+#: src/paramwindow.c:901 src/rte_window.c:2314 src/omc-learn.c:1367
 msgid "Close _window"
 msgstr ""
 
-#: src/paramwindow.c:1249
+#: src/paramwindow.c:1285
 msgid "No parameters"
 msgstr ""
 
-#: src/paramwindow.c:1343
+#: src/paramwindow.c:1379
 msgid "Invalid parameter"
 msgstr ""
 
-#: src/paramwindow.c:1527
+#: src/paramwindow.c:1563
 msgid "LiVES: - Select Colour"
 msgstr ""
 
-#: src/paramwindow.c:1532
+#: src/paramwindow.c:1568
 msgid "Click to set the colour"
 msgstr ""
 
-#: src/paramwindow.c:1542
+#: src/paramwindow.c:1578
 msgid "_Red"
 msgstr ""
 
-#: src/paramwindow.c:1543
+#: src/paramwindow.c:1579
 msgid "The red value (0 - 255)"
 msgstr ""
 
-#: src/paramwindow.c:1546
+#: src/paramwindow.c:1582
 msgid "_Green"
 msgstr ""
 
-#: src/paramwindow.c:1547
+#: src/paramwindow.c:1583
 msgid "The green value (0 - 255)"
 msgstr ""
 
-#: src/paramwindow.c:1550
+#: src/paramwindow.c:1586
 msgid "_Blue"
 msgstr ""
 
-#: src/paramwindow.c:1551
+#: src/paramwindow.c:1587
 msgid "The blue value (0 - 255)"
 msgstr ""
 

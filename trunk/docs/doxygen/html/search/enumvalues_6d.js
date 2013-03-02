@@ -1,0 +1,24 @@
+var searchData=
+[
+  ['modeval_5fcolumn',['MODEVAL_COLUMN',['../effects-data_8c.html#a06fc87d81c62e9abb8790b6e5713c55ba45139135f36e68a1ee510466ed52880f',1,'effects-data.c']]],
+  ['mouse_5fmode_5fcopy',['MOUSE_MODE_COPY',['../multitrack_8h.html#ab2c4db1fae60b404ecf508050c68db28a20133c4edd81591447473577547d3848',1,'multitrack.h']]],
+  ['mouse_5fmode_5fmove',['MOUSE_MODE_MOVE',['../multitrack_8h.html#ab2c4db1fae60b404ecf508050c68db28ae17319a3ef01c570b57473880431b921',1,'multitrack.h']]],
+  ['mouse_5fmode_5fselect',['MOUSE_MODE_SELECT',['../multitrack_8h.html#ab2c4db1fae60b404ecf508050c68db28a58280471141bf89c71decf4537515c62',1,'multitrack.h']]],
+  ['mt_5flast_5ffx_5fblock',['MT_LAST_FX_BLOCK',['../multitrack_8h.html#a3dc99ad2d583c5c1e93f614cf59ab326a056d97085486d19672b6a867fb8029d3',1,'multitrack.h']]],
+  ['mt_5flast_5ffx_5fnone',['MT_LAST_FX_NONE',['../multitrack_8h.html#a3dc99ad2d583c5c1e93f614cf59ab326ab43edd2741eaccd59f9a1d5c82b0ca17',1,'multitrack.h']]],
+  ['mt_5flast_5ffx_5fregion',['MT_LAST_FX_REGION',['../multitrack_8h.html#a3dc99ad2d583c5c1e93f614cf59ab326a3270399dfccf473669e5726cc2de27ed',1,'multitrack.h']]],
+  ['mt_5fundo_5fapply_5ffilter',['MT_UNDO_APPLY_FILTER',['../multitrack_8h.html#a7f0e371221c4b0808f44300e5d5ef645ae8d16db8a71afec98edebe47dc7c5ded',1,'multitrack.h']]],
+  ['mt_5fundo_5fdelete_5faudio_5fblock',['MT_UNDO_DELETE_AUDIO_BLOCK',['../multitrack_8h.html#a7f0e371221c4b0808f44300e5d5ef645ab79a973442f17f7f3649365a10f386e5',1,'multitrack.h']]],
+  ['mt_5fundo_5fdelete_5fblock',['MT_UNDO_DELETE_BLOCK',['../multitrack_8h.html#a7f0e371221c4b0808f44300e5d5ef645a55ba69a63eae80c91fb81fa0d627ad23',1,'multitrack.h']]],
+  ['mt_5fundo_5fdelete_5ffilter',['MT_UNDO_DELETE_FILTER',['../multitrack_8h.html#a7f0e371221c4b0808f44300e5d5ef645a08b54f6a1944938f04176852ccad5e45',1,'multitrack.h']]],
+  ['mt_5fundo_5ffilter_5fmap_5fchange',['MT_UNDO_FILTER_MAP_CHANGE',['../multitrack_8h.html#a7f0e371221c4b0808f44300e5d5ef645a5f2b35abd3fe3c3da7213c0ebd58f99f',1,'multitrack.h']]],
+  ['mt_5fundo_5finsert_5faudio_5fblock',['MT_UNDO_INSERT_AUDIO_BLOCK',['../multitrack_8h.html#a7f0e371221c4b0808f44300e5d5ef645a2189b773257c4d008aa47f869bbda642',1,'multitrack.h']]],
+  ['mt_5fundo_5finsert_5fblock',['MT_UNDO_INSERT_BLOCK',['../multitrack_8h.html#a7f0e371221c4b0808f44300e5d5ef645afecd100d9323033ebe3a2d7591c9399e',1,'multitrack.h']]],
+  ['mt_5fundo_5finsert_5fgap',['MT_UNDO_INSERT_GAP',['../multitrack_8h.html#a7f0e371221c4b0808f44300e5d5ef645a3d6974274dafd71c10ebbc9461f60687',1,'multitrack.h']]],
+  ['mt_5fundo_5fmove_5faudio_5fblock',['MT_UNDO_MOVE_AUDIO_BLOCK',['../multitrack_8h.html#a7f0e371221c4b0808f44300e5d5ef645a2a853a4ec35053fc3fb89ade5afe2753',1,'multitrack.h']]],
+  ['mt_5fundo_5fmove_5fblock',['MT_UNDO_MOVE_BLOCK',['../multitrack_8h.html#a7f0e371221c4b0808f44300e5d5ef645ac4c71c740765c9ed4ebddbfc0b4e3242',1,'multitrack.h']]],
+  ['mt_5fundo_5fnone',['MT_UNDO_NONE',['../multitrack_8h.html#a7f0e371221c4b0808f44300e5d5ef645abca91c2ab99ccaa5c77061618ab8e11f',1,'multitrack.h']]],
+  ['mt_5fundo_5fremove_5fgaps',['MT_UNDO_REMOVE_GAPS',['../multitrack_8h.html#a7f0e371221c4b0808f44300e5d5ef645ae9760414d40480e5c3e4971eef825ffe',1,'multitrack.h']]],
+  ['mt_5fundo_5fsplit',['MT_UNDO_SPLIT',['../multitrack_8h.html#a7f0e371221c4b0808f44300e5d5ef645a23d30900dc30eedc79a3bafa7fe2c6a3',1,'multitrack.h']]],
+  ['mt_5fundo_5fsplit_5fmulti',['MT_UNDO_SPLIT_MULTI',['../multitrack_8h.html#a7f0e371221c4b0808f44300e5d5ef645aa607530bd962ee6375b505e232bbdd90',1,'multitrack.h']]]
+];

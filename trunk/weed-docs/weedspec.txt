@@ -119,8 +119,11 @@ Clarified range for AFLOAT.
 15/11/12 salsaman
 added clarifying remarks for number of values in parameter defaults.
 
+01/03/13 salsaman
+corrected description about static function versions
 
-(C) Gabriel "Salsaman" Finch 2005 - 2012
+
+(C) Gabriel "Salsaman" Finch 2005 - 2013
 
 With contributions by: Niels Elburg, Dennis "Jaromil" Rojo, Andraz
 Tori, and Oyvind "Pippin" Kolas.
@@ -212,7 +215,12 @@ See below: leaf flags. The "type" leaf should not be changed by the host.
 == GETTING/SETTING LEAF VALUES ==
 
 
-On calling weed_leaf_set(), the host/plugin programmer does not need to worry about allocating and freeing memory for the data to store. The model (or more precisely the Mediation layer) will take care of that for you. If you store an object the model will make a copy and store that. Later, when you set a new value in this leaf, the model will automatically weed_free() the old value and make a copy of the new value and store the copy. 
+On calling weed_leaf_set(), the host/plugin programmer does not need to 
+worry about allocating and freeing memory for the data to store. 
+The model (or more precisely the Mediation layer) will take care of that for you. 
+If you store an object the model will make a copy and store that. 
+Later, when you set a new value in this leaf, the model will automatically weed_free() 
+the old value and make a copy of the new value and store the copy. 
 
 The exception to this is any seed type of type PTR. If you allocate a
 chunk of data or a complex structure only the pointer value is stored
@@ -223,7 +231,10 @@ pointer types are "store by reference".
 
 The plugin and host programmer can both retrieve and set values by Key.
 
-On weed_leaf_get(), Weed will copy the data stored in the leaf, except for pointer types. For pointer types only the reference to the memory block is copied.
+On weed_leaf_get(), Weed will copy the data stored in the leaf, except for pointer types. 
+For pointer types only the *reference* to the memory block is copied. If you retrieve 
+a string, the copy of the string retrieved should be freed with weed_free() after use.
+
 
 == WEED CORE FUNCTIONS ==
 
@@ -324,10 +335,13 @@ For weed_leaf_set(), num_elems can be 0 and value can then be
 NULL. In this way, just the seed_type of a leaf can be set, without
 setting an explicit value.
 
-weed_leaf_get() will return WEED_ERROR_NOSUCH_LEAF if a leaf does not exist. In this way the existence of a leaf can be determined. To assist with this, weed_leaf_get() can be called with a NULL void * value. The function will then not attempt to copy the value, but will return either WEED_ERROR_NOSUCH_LEAF, WEED_ERROR_NOSUCH_ELEMENT, or WEED_NO_ERROR depending on whether the leaf/element exists or not.
+weed_leaf_get() will return WEED_ERROR_NOSUCH_LEAF if a leaf does not exist.
+In this way the existence of a leaf can be determined. To assist with this, weed_leaf_get() 
+can be called with a NULL void * value. The function will then not attempt to copy the value, 
+but will return either WEED_ERROR_NOSUCH_LEAF, WEED_ERROR_NOSUCH_ELEMENT, or WEED_NO_ERROR 
+depending on whether the leaf/element exists or not.
 
-weed_leaf_set_flags() will return
-WEED_ERROR_NOSUCH_LEAF if the leaf does not exist.
+weed_leaf_set_flags() will return WEED_ERROR_NOSUCH_LEAF if the leaf does not exist.
 
 weed_leaf_delete() will return WEED_ERROR_LEAF_READONLY if the leaf is
 readonly for the host. It will return WEED_ERROR_NOSUCH_LEAF if the
@@ -347,7 +361,7 @@ weed_memset_f(), weed_memcpy_f() have exactly the same
 semantics as malloc, free(), memset() and memcpy() from libc. Their
 purpose is to allow a host to provide a plugin with the
 application-specific memory managment. 
-Plugins MUST NOT use malloc, free and memset, but have to use weed counterparts. 
+Plugins SHOULD NOT use malloc, free and memset, but instead use the weed counterparts. 
 
 == WEED ERRORS ==
 
@@ -383,24 +397,22 @@ variants. This is documented in the Weed Utility Library spec. (TODO).
 
 == COMPILING A HOST WITH WEED ==
 
-A host wishing to use Weed should be linked (shared or static) with libweed, and #include
-<weed/weed.h> and <weed/weed-host.h>
+A host wishing to use the referenc build of Weed should be linked 
+(shared or static) with libweed, and #include
+(at least) <weed/weed.h> and <weed/weed-host.h>
 
-If the host makes use of the Weed Utility Library, it should also be *statically*
-linked with libweed-utils, and #include <weed/weed-utils.h>
-
-Static linking is required, because the plugins may also link against
-this library, and they have their own versions of the core functions.
-
-
-
-
+If the host makes use of the Weed Utility Library, it may also be 
+linked (shared or static) with libweed-utils, and #include <weed/weed-utils.h>
 
 If the host wishes to use Weed effects, it should #include
-<weed/weed-effects.h>.
+<weed/weed-effects.h> and probably <weed/weed-palettes.h>.
 
 If the host wishes to use Weed events, it should #include
 <weed/weed-events.h>.
+
+<weed/weed-compat.h> is provided for compatibily with some external libraries.
+
+
 
 Compiling a plugin with Weed is dealt with below.
 
@@ -489,34 +501,34 @@ which are documented separately.
 
 == COMPILING A PLUGIN WITH WEED ==
 
-An effects plugin wishing to use Weed simply needs to #include <weed/weed.h>,
+An effects plugin wishing to use the reference build of Weed 
+should #include <weed/weed.h>, <weed/weed-palettes.h>,
 <weed/weed-effects.h> and <weed/weed-plugin.h>
 
-These plugins MUST be linked with their own symbols and functions. If using
-gcc, this is done with the flag -Wl,-Bsymbolic.
-
-If the plugin makes use of the Weed Utility Library, it should be *statically*
-linked with libweed-utils, and #include <weed/weed-utils.h>
+If the plugin makes use of the Weed Utility Library, it should be 
+linked (shared or static) with libweed-utils, and #include <weed/weed-utils.h>
 
 If the plugin wishes to use the Weed Plugin Utility Library, it should
-be *statically* linked with libweed-plugin-utils and #include
+be linked (shared or static) with libweed-plugin-utils and #include
 <weed/weed-plugin-utils.h>.
 
-Static linking is required because the plugins are provided their own
-versions of the core functions. Shared linking would make the plugins
-use the host's version of the functions.
+<weed/weed-compat.h> is provided for compatibility with some external libraries.
 
 Plugins should NOT be linked directly with libweed, since the core
 functions are passed from the host, depending on the API version
-agreed by host and plugin. In this way, provided the plugin does not
-use any core functions directly (i.e. by making use of the utility
-libraries), the plugin is guaranteed to be compatible with any future
-version of the Weed library.
+agreed by host and plugin. In this way, the plugin is guaranteed to be 
+compatible with any future version of the Weed library.
+
+IMPORTANT: plugins MUST declare their versions of the weed core functions as 
+static. This is due to the function passing method used. Failure to do this would cause 
+the plugin setting the functions globally (and thus for the host too...leading to potential 
+problems). In the reference implementation this is done automatically in weed-plugin.h.
+
 
 == PLANT TYPES ==
 
-We now describe the various plant types for weed effects, and their mandatory
-and optional leaves.
+There now follows a description of the various plant types for weed effects, 
+and their mandatory and optional leaves.
 
 == PLANT TYPE HOST_INFO ==
 

@@ -38,14 +38,16 @@ void create_merge_dialog (void) {
   GSList *radiobutton_align_group = NULL;
   GSList *radiobutton_insdrop_group = NULL;
 
+  GList *retvals;
+
   GtkAccelGroup *accel_group;
 
   gchar *txt;
 
   int idx=0;
 
-  gint cb_frames=clipboard->frames;
-  gint defstart=0;
+  int cb_frames=clipboard->frames;
+  int defstart=0;
 
   register int i;
 
@@ -177,8 +179,6 @@ void create_merge_dialog (void) {
   add_hsep_to_box(LIVES_BOX(vbox),FALSE);
 
 
-  do_onchange_init(rfx);
-
   // now the dynamic part...
   merge_opts->param_vbox = lives_vbox_new (FALSE, 0);
   gtk_container_set_border_width (GTK_CONTAINER(merge_opts->param_vbox), 10);
@@ -187,6 +187,16 @@ void create_merge_dialog (void) {
 
   rfx=&mainw->rendered_fx[mainw->last_transition_idx];
   make_param_box(GTK_VBOX (merge_opts->param_vbox), rfx);
+  gtk_widget_show_all (merge_opts->param_vbox);
+
+  retvals=do_onchange_init(rfx);
+
+  if (retvals!=NULL) {
+    // now apply visually anything we got from onchange_init
+    //param_demarshall (rfx,retvals,TRUE,TRUE);
+    g_list_free_strings (retvals);
+    g_list_free (retvals);
+  }
 
   // done !
 
@@ -235,14 +245,23 @@ static void bang (GtkWidget *widget, gpointer null) {
 
 
 void on_trans_method_changed (GtkComboBox *combo, gpointer user_data) {
-  int idx;
   lives_rfx_t *rfx;
+
+  GList *retvals;
+
   char *txt=lives_combo_get_active_text (combo);
+
+  int idx;
 
   if (!strlen (txt)) {
     g_free(txt);
     return;
   }
+
+  rfx=&mainw->rendered_fx[mainw->last_transition_idx];
+
+  gtk_container_foreach (GTK_CONTAINER(merge_opts->param_vbox),bang,NULL);
+  on_paramwindow_cancel_clicked (NULL,rfx);
 
   idx=lives_list_index(merge_opts->trans_list,txt);
 
@@ -251,13 +270,18 @@ void on_trans_method_changed (GtkComboBox *combo, gpointer user_data) {
   mainw->last_transition_idx=merge_opts->list_to_rfx_index[idx];
   rfx=&mainw->rendered_fx[mainw->last_transition_idx];
 
-  gtk_container_foreach (GTK_CONTAINER(merge_opts->param_vbox),bang,NULL);
-  on_paramwindow_cancel_clicked (NULL,rfx);
-
-  do_onchange_init(rfx);
-
   make_param_box(GTK_VBOX (merge_opts->param_vbox), rfx);
   gtk_widget_show_all (merge_opts->param_vbox);
+
+  retvals=do_onchange_init(rfx);
+
+  if (retvals!=NULL) {
+    // now apply visually anything we got from onchange_init
+    param_demarshall (rfx,retvals,TRUE,TRUE);
+    g_list_free_strings (retvals);
+    g_list_free (retvals);
+  }
+
   merge_opts->align_start=!merge_opts->align_start;
   on_align_start_end_toggled (NULL,NULL);
 }

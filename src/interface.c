@@ -1046,9 +1046,9 @@ void add_to_winmenu(void) {
 							(tmp=g_path_get_basename(cfile->name)):
 							(tmp=g_strdup(cfile->name)));
   g_free(tmp);
-#if GTK_CHECK_VERSION(2,16,0)
-  gtk_image_menu_item_set_always_show_image(GTK_IMAGE_MENU_ITEM(cfile->menuentry),TRUE);
-#endif
+
+  lives_image_menu_item_set_always_show_image(LIVES_IMAGE_MENU_ITEM(cfile->menuentry),TRUE);
+
   gtk_widget_show (cfile->menuentry);
   gtk_container_add (GTK_CONTAINER (mainw->winmenu), cfile->menuentry);
 
@@ -2840,8 +2840,11 @@ gchar *choose_file(gchar *dir, gchar *fname, gchar **filt, GtkFileChooserAction 
   gchar *mytitle;
   gchar *tmp;
 
-  int i;
+  boolean did_check;
+
   gint response;
+
+  register int i;
 
   if (title==NULL) {
     if (act==GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER) {
@@ -2874,16 +2877,12 @@ gchar *choose_file(gchar *dir, gchar *fname, gchar **filt, GtkFileChooserAction 
     gtk_file_chooser_add_shortcut_folder(GTK_FILE_CHOOSER(chooser),tmp,NULL);
     g_free(tmp);
   }
-#if GLIB_CHECK_VERSION(2,8,0)
-  // TODO - use check_file(...,TRUE) otherwise
-  gtk_file_chooser_set_do_overwrite_confirmation(GTK_FILE_CHOOSER(chooser),TRUE);
-#endif
+
+  did_check=lives_file_chooser_set_do_overwrite_confirmation(LIVES_FILE_CHOOSER(chooser),TRUE);
+
   if (palette->style&STYLE_1) {
-
     lives_widget_set_bg_color(chooser, GTK_STATE_NORMAL, &palette->normal_back);
-
     gtk_container_forall(GTK_CONTAINER(chooser),set_child_colour,NULL);
-
   }
 
   if (dir!=NULL) gtk_file_chooser_set_current_folder_uri (GTK_FILE_CHOOSER(chooser), dir);
@@ -2932,6 +2931,13 @@ gchar *choose_file(gchar *dir, gchar *fname, gchar **filt, GtkFileChooserAction 
   if ((response=gtk_dialog_run(GTK_DIALOG(chooser)))!=GTK_RESPONSE_CANCEL) {
     filename=g_filename_to_utf8((tmp=gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(chooser))),-1,NULL,NULL,NULL);
     g_free(tmp);
+  }
+
+  if (!did_check && act==GTK_FILE_CHOOSER_ACTION_SAVE) {
+    if (!check_file(filename,TRUE)) {
+      g_free(filename);
+      filename=NULL;
+    }
   }
 
   gtk_widget_destroy(chooser);

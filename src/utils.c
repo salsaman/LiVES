@@ -3264,7 +3264,7 @@ gboolean switch_aud_to_jack(void) {
     }
     mainw->aplayer_broken=FALSE;
     gtk_widget_show(mainw->vol_toolitem);
-    gtk_widget_show(mainw->vol_label);
+    if (mainw->vol_label!=NULL) gtk_widget_show(mainw->vol_label);
     gtk_widget_show (mainw->recaudio_submenu);
 
     if (mainw->vpp!=NULL&&mainw->vpp->get_audio_fmts!=NULL) 
@@ -3314,7 +3314,7 @@ gboolean switch_aud_to_pulse(void) {
       }
       mainw->aplayer_broken=FALSE;
       gtk_widget_show(mainw->vol_toolitem);
-      gtk_widget_show(mainw->vol_label);
+      if (mainw->vol_label!=NULL) gtk_widget_show(mainw->vol_label);
       gtk_widget_show (mainw->recaudio_submenu);
 
       prefs->audio_player=AUD_PLAYER_PULSE;
@@ -3354,7 +3354,7 @@ void switch_aud_to_sox(gboolean set_in_prefs) {
   set_pref("audio_play_command",prefs->audio_play_command);
   if (mainw->is_ready) {
     gtk_widget_hide(mainw->vol_toolitem);
-    gtk_widget_hide(mainw->vol_label);
+    if (mainw->vol_label!=NULL) gtk_widget_hide(mainw->vol_label);
     gtk_widget_hide (mainw->recaudio_submenu);
     
     if (mainw->vpp!=NULL&&mainw->vpp->get_audio_fmts!=NULL) 
@@ -3409,7 +3409,7 @@ switch_aud_to_mplayer(gboolean set_in_prefs) {
   set_pref("audio_play_command",prefs->audio_play_command);
   if (mainw->is_ready) {
     gtk_widget_hide(mainw->vol_toolitem);
-    gtk_widget_hide(mainw->vol_label);
+    if (mainw->vol_label!=NULL) gtk_widget_hide(mainw->vol_label);
     gtk_widget_hide (mainw->recaudio_submenu);
 
     if (mainw->vpp!=NULL&&mainw->vpp->get_audio_fmts!=NULL) 

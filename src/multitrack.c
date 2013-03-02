@@ -7571,14 +7571,14 @@ static boolean draw_cool_toggle (GtkWidget *widget, lives_painter_t *cr, gpointe
   gtk_toolbar_insert(GTK_TOOLBAR(btoolbar),GTK_TOOL_ITEM(mainw->m_mutebutton),-1);
   g_object_unref(mainw->m_mutebutton);
 
-#if GTK_CHECK_VERSION(2,14,0)
-  lives_scale_button_set_orientation (LIVES_SCALE_BUTTON(mainw->volume_scale),LIVES_ORIENTATION_VERTICAL);
-#else
-  g_object_ref(mainw->vol_label);
-  lives_widget_unparent(mainw->vol_label);
-  gtk_toolbar_insert(GTK_TOOLBAR(btoolbar),GTK_TOOL_ITEM(mainw->vol_label),-1);
-  g_object_unref(mainw->vol_label);
-#endif
+  if (!lives_scale_button_set_orientation (LIVES_SCALE_BUTTON(mainw->volume_scale),LIVES_ORIENTATION_VERTICAL)) {
+    if (mainw->vol_label!=NULL) {
+      g_object_ref(mainw->vol_label);
+      lives_widget_unparent(mainw->vol_label);
+      gtk_toolbar_insert(GTK_TOOLBAR(btoolbar),GTK_TOOL_ITEM(mainw->vol_label),-1);
+      g_object_unref(mainw->vol_label);
+    }
+  }
 
   g_object_ref(mainw->vol_toolitem);
   lives_widget_unparent(mainw->vol_toolitem);
@@ -8770,14 +8770,14 @@ boolean multitrack_delete (lives_mt *mt, boolean save_layout) {
   gtk_toolbar_insert(GTK_TOOLBAR(mainw->btoolbar),GTK_TOOL_ITEM(mainw->m_mutebutton),6);
   g_object_unref(mainw->m_mutebutton);
 
-#if GTK_CHECK_VERSION(2,14,0)
-  lives_scale_button_set_orientation (LIVES_SCALE_BUTTON(mainw->volume_scale),LIVES_ORIENTATION_HORIZONTAL);
-#else
-  g_object_ref(mainw->vol_label);
-  lives_widget_unparent(mainw->vol_label);
-  gtk_toolbar_insert(GTK_TOOLBAR(mainw->btoolbar),GTK_TOOL_ITEM(mainw->vol_label),7);
-  g_object_unref(mainw->vol_label);
-#endif
+  if (!lives_scale_button_set_orientation (LIVES_SCALE_BUTTON(mainw->volume_scale),LIVES_ORIENTATION_HORIZONTAL)) {
+    if (mainw->vol_label!=NULL) {
+      g_object_ref(mainw->vol_label);
+      lives_widget_unparent(mainw->vol_label);
+      gtk_toolbar_insert(GTK_TOOLBAR(mainw->btoolbar),GTK_TOOL_ITEM(mainw->vol_label),7);
+      g_object_unref(mainw->vol_label);
+    }
+  }
 
   g_object_ref(mainw->vol_toolitem);
   lives_widget_unparent(mainw->vol_toolitem);
@@ -10544,7 +10544,7 @@ boolean on_multitrack_activate (GtkMenuItem *menuitem, weed_plant_t *event_list)
 
   if (prefs->audio_player!=AUD_PLAYER_JACK&&prefs->audio_player!=AUD_PLAYER_PULSE) {
     gtk_widget_hide(mainw->vol_toolitem);
-    gtk_widget_hide(mainw->vol_label);
+    if (mainw->vol_label!=NULL) gtk_widget_hide(mainw->vol_label);
   }
 
   if (!multi->opts.show_ctx) {

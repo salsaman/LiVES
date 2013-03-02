@@ -400,7 +400,7 @@ boolean do_audio_choice_dialog(short startup_phase) {
 
   if (prefs->audio_player==AUD_PLAYER_SOX||prefs->audio_player==AUD_PLAYER_MPLAYER) {
     gtk_widget_hide(mainw->vol_toolitem);
-    gtk_widget_hide(mainw->vol_label);
+    if (mainw->vol_label!=NULL) gtk_widget_hide(mainw->vol_label);
     gtk_widget_hide (mainw->recaudio_submenu);
   }
 

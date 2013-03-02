@@ -224,8 +224,6 @@ create_LiVES (void)
   GtkWidget *image347;
   GtkWidget *menuitem14;
   GtkWidget *menuitem14_menu;
-  GObject *spinbutton_start_adj;
-  GObject *spinbutton_end_adj;
   GtkWidget *about;
   GtkWidget *show_manual;
   GtkWidget *email_author;
@@ -246,8 +244,6 @@ create_LiVES (void)
   GtkWidget *menuitem;
 #endif 
 
-  GObject *spinbutton_pb_fps_adj;
-
   GtkWidget *new_test_rfx;
   GtkWidget *copy_rfx;
   GtkWidget *import_custom_rfx;
@@ -255,7 +251,14 @@ create_LiVES (void)
   GtkWidget *assign_rte_keys;
 
   GtkWidget *tmp_toolbar_icon;
+
+  GObject *spinbutton_pb_fps_adj;
+  GObject *spinbutton_start_adj;
+  GObject *spinbutton_end_adj;
+  LiVESAdjustment *adj;
+
   LiVESWidgetColor normal;
+
   gchar buff[32768];
 
   GdkPixbuf *pixbuf;
@@ -1838,30 +1841,32 @@ create_LiVES (void)
     mainw->m_mutebutton = gtk_menu_item_new ();
   }
 
-  mainw->vol_label=GTK_WIDGET(gtk_tool_item_new());
-  label=gtk_label_new(_("Volume"));
-  gtk_container_add(GTK_CONTAINER(mainw->vol_label),label);
+  adj=lives_adjustment_new(mainw->volume,0.,1.,0.01,0.1,0.);
 
-#if GTK_CHECK_VERSION(2,16,0) 
-  mainw->volume_scale=gtk_volume_button_new();
-  gtk_scale_button_set_value(GTK_SCALE_BUTTON(mainw->volume_scale),mainw->volume);
-  lives_scale_button_set_orientation (LIVES_SCALE_BUTTON(mainw->volume_scale),LIVES_ORIENTATION_HORIZONTAL);
-#else
-  mainw->volume_scale=lives_hscale_new(GTK_ADJUSTMENT(spinbutton_adj));
-  gtk_scale_set_draw_value(GTK_SCALE(mainw->volume_scale),FALSE);
-  if (capable->smog_version_correct) {
-    gtk_toolbar_insert(GTK_TOOLBAR(mainw->btoolbar),GTK_TOOL_ITEM(mainw->vol_label),-1);
+  mainw->volume_scale=lives_volume_button_new(LIVES_ORIENTATION_HORIZONTAL,adj,mainw->volume);
+
+  mainw->vol_label=NULL;
+
+  if (GTK_IS_RANGE(mainw->volume_scale)) {
+    if (capable->smog_version_correct) {
+      mainw->vol_label=GTK_WIDGET(gtk_tool_item_new());
+      label=gtk_label_new(_("Volume"));
+      gtk_container_add(GTK_CONTAINER(mainw->vol_label),label);
+      gtk_toolbar_insert(GTK_TOOLBAR(mainw->btoolbar),GTK_TOOL_ITEM(mainw->vol_label),-1);
+      gtk_widget_show(mainw->vol_label);
+    }
   }
-#endif
+  else g_object_unref(adj);
 
   gtk_widget_show(mainw->volume_scale);
-  gtk_widget_show(mainw->vol_label);
 
   mainw->vol_toolitem=GTK_WIDGET(gtk_tool_item_new());
   gtk_tool_item_set_homogeneous(GTK_TOOL_ITEM(mainw->vol_toolitem),FALSE);
   gtk_tool_item_set_expand(GTK_TOOL_ITEM(mainw->vol_toolitem),TRUE);
 
-  if ((prefs->audio_player==AUD_PLAYER_JACK&&capable->has_jackd)||(prefs->audio_player==AUD_PLAYER_PULSE&&capable->has_pulse_audio)) gtk_widget_show(mainw->vol_toolitem);
+  if ((prefs->audio_player==AUD_PLAYER_JACK&&capable->has_jackd)||
+      (prefs->audio_player==AUD_PLAYER_PULSE&&capable->has_pulse_audio)) 
+    gtk_widget_show(mainw->vol_toolitem);
 
   gtk_container_add(GTK_CONTAINER(mainw->vol_toolitem),mainw->volume_scale);
   if (capable->smog_version_correct) {

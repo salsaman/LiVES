@@ -981,7 +981,7 @@ void create_cfile(void);
 void save_file (int clip, int start, int end, const char *filename);
 void play_file (void);
 void save_frame (GtkMenuItem *menuitem, gpointer user_data);
-gboolean save_frame_inner(gint clip, gint frame, const gchar *file_name, gint width, gint height, gboolean auto_overwrite);
+boolean save_frame_inner(int clip, int frame, const gchar *file_name, int width, int height, boolean from_osc);
 void wait_for_stop (const gchar *stop_command);
 gboolean save_clip_values(gint which_file);
 void add_to_recovery_file (const gchar *handle);

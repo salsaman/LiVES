@@ -158,10 +158,10 @@ static inline weed_data_t **weed_data_new(int seed_type, int num_elems, void *va
     if (weed_seed_is_ptr(seed_type)) data[i]->value=valuev[i];
     else {
       if (seed_type==WEED_SEED_STRING) {
-	size=weed_strlen(valuec[i]);
-	if (size>0) {
-	  data[i]->value=weed_malloc((size=weed_strlen(valuec[i])));
-	  weed_memcpy(data[i]->value,valuec[i],size);
+	if ((size=weed_strlen(valuec[i]))>0) {
+	  if ((data[i]->value=weed_malloc((size=weed_strlen(valuec[i]))))!=NULL) {
+	    weed_memcpy(data[i]->value,valuec[i],size);
+	  }
 	}
 	else data[i]->value=NULL;
 	data[i]->size=size;

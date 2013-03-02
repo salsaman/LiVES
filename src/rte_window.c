@@ -1962,7 +1962,7 @@ void fx_changed (GtkComboBox *combo, gpointer user_data) {
 
 
 
-GtkTreeModel *rte_window_fx_model (void) {
+static LiVESTreeModel *rte_window_fx_model (void) {
   GtkTreeStore *tstore;
 
   GtkTreeIter iter1,iter2;
@@ -2028,7 +2028,7 @@ GtkTreeModel *rte_window_fx_model (void) {
 
   if (pkg!=NULL) g_free(pkg);
 
-  return (GtkTreeModel *)tstore;
+  return (LiVESTreeModel *)tstore;
 }
 
 
@@ -2062,7 +2062,7 @@ GtkWidget * create_rte_window (void) {
 
   GtkAccelGroup *rtew_accel_group;
 
-  GtkTreeModel *model;
+  LiVESTreeModel *model;
 
   weed_plant_t *filter;
 
@@ -2210,12 +2210,7 @@ GtkWidget * create_rte_window (void) {
       // create combo entry model
       model=rte_window_fx_model();
 
-#if GTK_CHECK_VERSION(2,24,0)
-      combo = gtk_combo_box_new_with_model_and_entry (model);
-#else
-      combo = gtk_combo_box_entry_new ();
-      gtk_combo_box_set_model(GTK_COMBO_BOX(combo),model);
-#endif
+      combo = lives_combo_new_with_model (model);
 
       lives_combo_set_entry_text_column(LIVES_COMBO(combo),NAME_TYPE_COLUMN);
 

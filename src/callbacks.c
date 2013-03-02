@@ -1465,7 +1465,7 @@ on_export_proj_activate                      (GtkMenuItem     *menuitem,
   unlink((tmp=g_filename_from_utf8(proj_file,-1,NULL,NULL,NULL)));
   g_free(tmp);
 
-  if (!check_file(proj_file,TRUE)) {
+  if (!check_file(proj_file,FALSE)) {
     g_free(proj_file);
     return;
   }
@@ -7894,22 +7894,9 @@ on_ping_pong_activate                (GtkMenuItem     *menuitem,
 }
 
 
-#if GTK_CHECK_VERSION(2,14,0)
-void
-on_volume_slider_value_changed           (GtkScaleButton   *sbutton,
-					  gpointer user_data) {
+void on_volume_slider_value_changed (LiVESScaleButton *sbutton, gpointer user_data) {
   gchar *ttip;
-  mainw->volume=gtk_scale_button_get_value(sbutton);
-
-#else
-void
-on_volume_slider_value_changed           (GtkRange   *slider,
-					  gpointer user_data) {
-  gchar *ttip;
-  mainw->volume=gtk_adjustment_get_value(gtk_range_get_adjustment(slider));
-
-
-#endif
+  mainw->volume=lives_scale_button_get_value(sbutton);
   ttip=g_strdup_printf(_("Audio volume (%.2f)"),mainw->volume);
   gtk_tool_item_set_tooltip_text(GTK_TOOL_ITEM(mainw->vol_toolitem),_(ttip));
   g_free(ttip);

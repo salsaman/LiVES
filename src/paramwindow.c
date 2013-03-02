@@ -2756,7 +2756,8 @@ gchar *param_marshall (lives_rfx_t *rfx, boolean with_min_max) {
 	cb_frames=count_resampled_frames(clipboard->frames,clipboard->fps,cfile->fps);
       }
 
-      if (cfile->end-cfile->start+1>(cb_frames*(ttl=gtk_spin_button_get_value_as_int
+      if (merge_opts->spinbutton_loops!=NULL&&
+	  cfile->end-cfile->start+1>(cb_frames*(ttl=gtk_spin_button_get_value_as_int
 						(GTK_SPIN_BUTTON (merge_opts->spinbutton_loops))))&&
 	  !merge_opts->loop_to_fit) {
 	end=cb_frames*ttl;
@@ -2877,14 +2878,14 @@ GList *argv_to_marshalled_list (lives_rfx_t *rfx, gint argc, gchar **argv) {
 
 
 
-gint set_param_from_list(GList *plist, lives_param_t *param, gint pnum, boolean with_min_max, boolean upd) {
+int set_param_from_list(GList *plist, lives_param_t *param, gint pnum, boolean with_min_max, boolean upd) {
   // update values for param using values in plist
   // if upd is TRUE, the widgets for that param also are updated;
   // otherwise, we do not update the widgets, but we do update the default
 
   // for LIVES_PARAM_NUM, setting pnum negative avoids having to send min,max
   // (other types dont have a min/max anyway)
-
+  char *tmp; // work around some weirdness in glib
 
   int red,green,blue;
   int offs=0;
@@ -2898,13 +2899,15 @@ gint set_param_from_list(GList *plist, lives_param_t *param, gint pnum, boolean 
       pnum++;
       break;
     }
-    set_bool_param(param->value,(atoi ((gchar *)g_list_nth_data (plist,pnum++))));
+    tmp=g_strdup((gchar *)g_list_nth_data (plist,pnum++));
+    set_bool_param(param->value,(atoi (tmp)));
     if (upd) {
       if (param->widgets[0]&&GTK_IS_TOGGLE_BUTTON (param->widgets[0])) {
 	lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (param->widgets[0]),get_bool_param(param->value));
       }
     }
-    else set_bool_param(param->def,(atoi ((gchar *)g_list_nth_data (plist,pnum++))));
+    else set_bool_param(param->def,(atoi (tmp)));
+    g_free(tmp);
     break;
   case LIVES_PARAM_NUM:
     if (param->change_blocked) {
@@ -2913,12 +2916,19 @@ gint set_param_from_list(GList *plist, lives_param_t *param, gint pnum, boolean 
       break;
     }
     if (param->dp) {
-      gdouble double_val=g_strtod ((gchar *)g_list_nth_data (plist,pnum++),NULL);
+      double double_val;
+      tmp=g_strdup((gchar *)g_list_nth_data (plist,pnum++));
+      double_val=g_strtod (tmp,NULL);
+      g_free(tmp);
       if (with_min_max) {
 	if (ABS(pnum)>maxlen) return 1;
-	param->min=g_strtod ((gchar *)g_list_nth_data (plist,pnum++),NULL);
+	tmp=g_strdup((gchar *)g_list_nth_data (plist,pnum++));
+	param->min=g_strtod (tmp,NULL);
+	g_free(tmp);
 	if (ABS(pnum)>maxlen) return 2;
-	param->max=g_strtod ((gchar *)g_list_nth_data (plist,pnum++),NULL);
+	tmp=g_strdup((gchar *)g_list_nth_data (plist,pnum++));
+	param->max=g_strtod (tmp,NULL);
+	g_free(tmp);
 	if (double_val<param->min) double_val=param->min;
 	if (double_val>param->max) double_val=param->max;
       }
@@ -2937,13 +2947,20 @@ gint set_param_from_list(GList *plist, lives_param_t *param, gint pnum, boolean 
       else set_double_param(param->def,double_val);
     }
     else {
-      gint int_value=atoi ((gchar *)g_list_nth_data (plist,pnum++));
+      gint int_value;
+      tmp=g_strdup((gchar *)g_list_nth_data (plist,pnum++));
+      int_value=atoi (tmp);
+      g_free(tmp);
       if (with_min_max) {
 	gint int_min,int_max;
 	if (ABS(pnum)>maxlen) return 1;
-	int_min=atoi ((gchar *)g_list_nth_data (plist,pnum++));
+	tmp=g_strdup((gchar *)g_list_nth_data (plist,pnum++));
+	int_min=atoi (tmp);
+	g_free(tmp);
 	if (ABS(pnum)>maxlen) return 2;
-	int_max=atoi ((gchar *)g_list_nth_data (plist,pnum++));
+	tmp=g_strdup((gchar *)g_list_nth_data (plist,pnum++));
+	int_max=atoi (tmp);
+	g_free(tmp);
 	if (int_value<int_min) int_value=int_min;
 	if (int_value>int_max) int_value=int_max;
 	param->min=(gdouble)int_min;
@@ -2966,11 +2983,17 @@ gint set_param_from_list(GList *plist, lives_param_t *param, gint pnum, boolean 
     }
     break;
   case LIVES_PARAM_COLRGB24:
-    red=atoi ((gchar *)g_list_nth_data (plist,pnum++)); // red
+    tmp=g_strdup((gchar *)g_list_nth_data (plist,pnum++));
+    red=atoi (tmp);
+    g_free(tmp);
     if (ABS(pnum)>maxlen) return 1;
-    green=atoi ((gchar *)g_list_nth_data (plist,pnum++)); // green
+    tmp=g_strdup((gchar *)g_list_nth_data (plist,pnum++));
+    green=atoi (tmp);
+    g_free(tmp);
     if (ABS(pnum)>maxlen) return 2;
-    blue=atoi ((gchar *)g_list_nth_data (plist,pnum++)); // blue
+    tmp=g_strdup((gchar *)g_list_nth_data (plist,pnum++));
+    blue=atoi (tmp);
+    g_free(tmp);
     if (param->change_blocked) break;
     set_colRGB24_param(param->value,red,green,blue);
 
@@ -3008,7 +3031,10 @@ gint set_param_from_list(GList *plist, lives_param_t *param, gint pnum, boolean 
     break;
   case LIVES_PARAM_STRING_LIST:
     {
-      gint int_value=atoi ((gchar *)g_list_nth_data (plist,pnum++));
+      gint int_value;
+      tmp=g_strdup((gchar *)g_list_nth_data (plist,pnum++));
+      int_value=atoi (tmp);
+      g_free(tmp);
       if (param->change_blocked) break;
       set_int_param(param->value,int_value);
       if (upd&&param->widgets[0]!=NULL&&LIVES_IS_COMBO(param->widgets[0])&&int_value<g_list_length(param->list))

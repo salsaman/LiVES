@@ -8,7 +8,7 @@ if IS_DARWIN
 shared_ldflags = -dynamiclib -module -avoid-version --tag=disable-static
 shared_cflags = -fno-common
 else
-shared_ldflags = -shared -fPIC -DPIC -module -avoid-version --tag=disable-static
+shared_ldflags = -shared -fPIC -DPIC -no-undefined -module -avoid-version --tag=disable-static
 shared_cflags = -fPIC -DPIC
 endif
 
@@ -19,7 +19,7 @@ AM_LDFLAGS = $(shared_ldflags) @GTK_LIBS@ @WEED_UTILS_LIBS@
 weed_CFLAGS = -DHAVE_SYSTEM_WEED
 else
 if IS_MINGW
-AM_LDFLAGS = $(shared_ldflags) @GTK_LIBS@ -no-undefined -D IS_MINGW=1 -Wl,../../../libweed/.libs/libweed-utils.a
+AM_LDFLAGS = $(shared_ldflags) @GTK_LIBS@ -D IS_MINGW=1 -Wl,../../../libweed/.libs/libweed-utils.a
 else
 AM_LDFLAGS = $(shared_ldflags) @GTK_LIBS@ ../../../libweed/.libs/libweed-utils.la
 endif

@@ -103,8 +103,10 @@ static void cleanup(char *s);
    freq=main frequency */
 static int syna_init(_sdata *, int freq);
 
+#if 0
 // Change all the live rows.
 static void set_live_rows(_sdata *, int * the_rows);
+#endif
 
 // Change just one live row.
 // input: channel. Should be larger than 1, maximum according to song's number of channels.

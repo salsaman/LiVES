@@ -360,8 +360,6 @@ int scribbler_process (weed_plant_t *inst, weed_timecode_t timestamp) {
   int width=weed_get_int_value(out_channel,"width",&error);
   int height=weed_get_int_value(out_channel,"height",&error);
 
-  int palette=weed_get_int_value(out_channel,"current_palette",&error);
-
   if (weed_plant_has_leaf(inst,"in_channels")) {
     in_channel=weed_get_plantptr_value(inst,"in_channels",&error);
   }

@@ -52,13 +52,15 @@ GtkWidget *fx_dialog[2];
 // right now this is single threaded because of this
 static GSList *usrgrp_to_livesgrp[2]={NULL,NULL}; // ordered list of lives_widget_group_t
 
-void do_onchange_init(lives_rfx_t *rfx) {
+GList *do_onchange_init(lives_rfx_t *rfx) {
   GList *onchange=NULL;
+  GList *retvals=NULL;
   gchar **array;
   gchar *type;
-  int i;
 
-  if (rfx->status==RFX_STATUS_WEED) return;
+  register int i;
+
+  if (rfx->status==RFX_STATUS_WEED) return NULL;
 
   switch (rfx->status) {
   case RFX_STATUS_BUILTIN:
@@ -79,8 +81,10 @@ void do_onchange_init(lives_rfx_t *rfx) {
 	// create dummy object with data
 	GtkWidget *dummy_widget=gtk_label_new(NULL);
 	g_object_set_data (G_OBJECT (dummy_widget),"param_number",GINT_TO_POINTER (-1));
-	do_onchange (G_OBJECT (dummy_widget),rfx);
+	retvals=do_onchange (G_OBJECT (dummy_widget),rfx);
 	gtk_widget_destroy (dummy_widget);
+	g_strfreev (array);
+	break;
       }
       g_strfreev (array);
     }
@@ -88,6 +92,8 @@ void do_onchange_init(lives_rfx_t *rfx) {
     g_list_free (onchange);
   }
   g_free (type);
+
+  return retvals;
 }
 
 
@@ -291,7 +297,11 @@ void on_render_fx_activate (GtkMenuItem *menuitem, lives_rfx_t *rfx) {
 
   // do onchange|init
   if (menuitem!=NULL) {
-    do_onchange_init(rfx);
+    GList *retvals=do_onchange_init(rfx);
+    if (retvals!=NULL) {
+      g_list_free_strings (retvals);
+      g_list_free (retvals);
+    }
   }
   if (rfx->min_frames>-1) {
     do_effect(rfx,FALSE);
@@ -686,9 +696,13 @@ void on_render_fx_pre_activate (GtkMenuItem *menuitem, lives_rfx_t *rfx) {
   GtkWidget *okbutton;
   GtkWidget *resetbutton=NULL;
   GtkWidget *pbox;
+
   GtkAccelGroup *fxw_accel_group;
 
+  GList *retvals=NULL;
+
   gchar *txt;
+
   boolean no_process=FALSE;
 
   boolean is_realtime=FALSE;
@@ -730,7 +744,7 @@ void on_render_fx_pre_activate (GtkMenuItem *menuitem, lives_rfx_t *rfx) {
     n=1;
   }
   else if (rfx->status!=RFX_STATUS_WEED) {
-    do_onchange_init(rfx);
+    retvals=do_onchange_init(rfx);
   }
 
   if (rfx->min_frames<0) no_process=TRUE;
@@ -747,6 +761,11 @@ void on_render_fx_pre_activate (GtkMenuItem *menuitem, lives_rfx_t *rfx) {
 	mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
       }
 
+      if (retvals!=NULL) {
+	g_list_free_strings (retvals);
+	g_list_free (retvals);
+      }
+
       return;
     }
     
@@ -760,8 +779,18 @@ void on_render_fx_pre_activate (GtkMenuItem *menuitem, lives_rfx_t *rfx) {
 
   if (!no_process&&rfx->num_in_channels>0) {
     // check we have a real clip open
-    if (mainw->current_file<=0) return;
+    if (mainw->current_file<=0) {
+      if (retvals!=NULL) {
+	g_list_free_strings (retvals);
+	g_list_free (retvals);
+      }
+      return;
+    }
     if (cfile->end-cfile->start+1<rfx->min_frames) {
+      if (retvals!=NULL) {
+	g_list_free_strings (retvals);
+	g_list_free (retvals);
+      }
       txt=g_strdup_printf (_("\nYou must select at least %d frames to use this effect.\n\n"),rfx->min_frames);
       do_blocking_error_dialog (txt);
       g_free (txt);
@@ -964,6 +993,13 @@ void on_render_fx_pre_activate (GtkMenuItem *menuitem, lives_rfx_t *rfx) {
 
   // tweak some things to do with framedraw preview
   if (mainw->framedraw!=NULL) fd_tweak(rfx);
+
+  if (retvals!=NULL) {
+    // now apply visually anything we got from onchange_init
+    param_demarshall (rfx,retvals,TRUE,TRUE);
+    g_list_free_strings (retvals);
+    g_list_free (retvals);
+  }
 
 
 }
@@ -1755,6 +1791,7 @@ after_boolean_param_toggled        (GtkToggleButton *togglebutton,
 				    lives_rfx_t *         rfx)
 {
   gint param_number=GPOINTER_TO_INT (g_object_get_data (G_OBJECT (togglebutton),"param_number"));
+  GList *retvals=NULL;
   lives_param_t *param=&rfx->params[param_number];
   boolean old_bool=get_bool_param(param->value),new_bool;
   int copyto=-1;
@@ -1814,7 +1851,11 @@ after_boolean_param_toggled        (GtkToggleButton *togglebutton,
   }
   if (get_bool_param(param->value)!=old_bool&&param->onchange) {
     param->change_blocked=TRUE;
-    do_onchange (G_OBJECT (togglebutton), rfx);
+    retvals=do_onchange (G_OBJECT (togglebutton), rfx);
+    if (retvals!=NULL) {
+      g_list_free_strings (retvals);
+      g_list_free (retvals);
+    }
     while (g_main_context_iteration(NULL,FALSE));
     param->change_blocked=FALSE;
   }
@@ -1832,6 +1873,7 @@ after_param_value_changed           (GtkSpinButton   *spinbutton,
 				     lives_rfx_t *rfx) {
   gint param_number=GPOINTER_TO_INT (g_object_get_data (G_OBJECT (spinbutton),"param_number"));
   lives_param_t *param=&rfx->params[param_number];
+  GList *retvals=NULL;
   gdouble new_double=0.,old_double=0.;
   gint new_int=0,old_int=0;
   int copyto=-1;
@@ -1928,7 +1970,11 @@ after_param_value_changed           (GtkSpinButton   *spinbutton,
 								     (get_int_param(param->value)!=old_int)))&&
       param->onchange) {
     param->change_blocked=TRUE;
-    do_onchange (G_OBJECT (spinbutton), rfx);
+    retvals=do_onchange (G_OBJECT (spinbutton), rfx);
+    if (retvals!=NULL) {
+      g_list_free_strings (retvals);
+      g_list_free (retvals);
+    }
     while (g_main_context_iteration(NULL,FALSE));
     param->change_blocked=FALSE;
   }
@@ -2066,6 +2112,7 @@ void
 after_param_red_changed           (GtkSpinButton   *spinbutton,
 				   lives_rfx_t *rfx) {
   gint param_number=GPOINTER_TO_INT (g_object_get_data (G_OBJECT (spinbutton),"param_number"));
+  GList *retvals=NULL;
   lives_param_t *param=&rfx->params[param_number];
   lives_colRGB24_t old_value;
   gint new_red;
@@ -2120,7 +2167,11 @@ after_param_red_changed           (GtkSpinButton   *spinbutton,
 
   if (new_red!=old_value.red&&param->onchange) {
     param->change_blocked=TRUE;
-    do_onchange (G_OBJECT (spinbutton), rfx);
+    retvals=do_onchange (G_OBJECT (spinbutton), rfx);
+    if (retvals!=NULL) {
+      g_list_free_strings (retvals);
+      g_list_free (retvals);
+    }
     while (g_main_context_iteration(NULL,FALSE));
     param->change_blocked=FALSE;
   }
@@ -2136,6 +2187,7 @@ void
 after_param_green_changed           (GtkSpinButton   *spinbutton,
 				     lives_rfx_t *rfx) {
   gint param_number=GPOINTER_TO_INT (g_object_get_data (G_OBJECT (spinbutton),"param_number"));
+  GList *retvals=NULL;
   lives_param_t *param=&rfx->params[param_number];
   lives_colRGB24_t old_value;
   gint new_green;
@@ -2190,7 +2242,11 @@ after_param_green_changed           (GtkSpinButton   *spinbutton,
 
   if (new_green!=old_value.green&&param->onchange) {
     param->change_blocked=TRUE;
-    do_onchange (G_OBJECT (spinbutton), rfx);
+    retvals=do_onchange (G_OBJECT (spinbutton), rfx);
+    if (retvals!=NULL) {
+      g_list_free_strings (retvals);
+      g_list_free (retvals);
+    }
     while (g_main_context_iteration(NULL,FALSE));
     param->change_blocked=FALSE;
   }
@@ -2205,6 +2261,7 @@ void
 after_param_blue_changed           (GtkSpinButton   *spinbutton,
 				    lives_rfx_t *rfx) {
   gint param_number=GPOINTER_TO_INT (g_object_get_data (G_OBJECT (spinbutton),"param_number"));
+  GList *retvals=NULL;
   lives_param_t *param=&rfx->params[param_number];
   lives_colRGB24_t old_value;
   gint new_blue;
@@ -2259,7 +2316,11 @@ after_param_blue_changed           (GtkSpinButton   *spinbutton,
 
   if (new_blue!=old_value.blue&&param->onchange) {
     param->change_blocked=TRUE;
-    do_onchange (G_OBJECT (spinbutton), rfx);
+    retvals=do_onchange (G_OBJECT (spinbutton), rfx);
+    if (retvals!=NULL) {
+      g_list_free_strings (retvals);
+      g_list_free (retvals);
+    }
     while (g_main_context_iteration(NULL,FALSE));
     param->change_blocked=FALSE;
   }
@@ -2276,6 +2337,7 @@ after_param_alpha_changed           (GtkSpinButton   *spinbutton,
 				     lives_rfx_t *rfx) {
   // not used yet
   gint param_number=GPOINTER_TO_INT (g_object_get_data (G_OBJECT (spinbutton),"param_number"));
+  GList *retvals=NULL;
   lives_param_t *param=&rfx->params[param_number];
   lives_colRGBA32_t old_value;
   gint new_alpha=gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(spinbutton));
@@ -2308,7 +2370,11 @@ after_param_alpha_changed           (GtkSpinButton   *spinbutton,
 
   if (new_alpha!=old_value.alpha&&param->onchange) {
     param->change_blocked=TRUE;
-    do_onchange (G_OBJECT (spinbutton), rfx);
+    retvals=do_onchange (G_OBJECT (spinbutton), rfx);
+    if (retvals!=NULL) {
+      g_list_free_strings (retvals);
+      g_list_free (retvals);
+    }
     while (g_main_context_iteration(NULL,FALSE));
     param->change_blocked=FALSE;
   }
@@ -2350,6 +2416,7 @@ boolean after_param_text_focus_changed (GtkWidget *hbox, GtkWidget *child, lives
 
 void after_param_text_changed (GtkWidget *textwidget, lives_rfx_t *rfx) {
   GtkTextBuffer *textbuffer=NULL;
+  GList *retvals=NULL;
   gint param_number;
   lives_param_t *param;
   gchar *old_text;
@@ -2434,7 +2501,11 @@ void after_param_text_changed (GtkWidget *textwidget, lives_rfx_t *rfx) {
 
   if (strcmp (old_text,(gchar *)param->value)&&param->onchange) {
     param->change_blocked=TRUE;
-    do_onchange (G_OBJECT (textwidget), rfx);
+    retvals=do_onchange (G_OBJECT (textwidget), rfx);
+    if (retvals!=NULL) {
+      g_list_free_strings (retvals);
+      g_list_free (retvals);
+    }
     while (g_main_context_iteration(NULL,FALSE));
     param->change_blocked=FALSE;
   }
@@ -2456,6 +2527,7 @@ static void after_param_text_buffer_changed (GtkTextBuffer *textbuffer, lives_rf
 void 
 after_string_list_changed (GtkComboBox *combo, lives_rfx_t *rfx) {
   gint param_number=GPOINTER_TO_INT (g_object_get_data (G_OBJECT (combo),"param_number"));
+  GList *retvals=NULL;
   lives_param_t *param=&rfx->params[param_number];
   gint old_index=get_int_param(param->value);
   char *txt=lives_combo_get_active_text(combo);
@@ -2522,7 +2594,11 @@ after_string_list_changed (GtkComboBox *combo, lives_rfx_t *rfx) {
 
   if (old_index!=new_index&&param->onchange) {
     param->change_blocked=TRUE;
-    do_onchange(G_OBJECT(combo), rfx);
+    retvals=do_onchange(G_OBJECT(combo), rfx);
+    if (retvals!=NULL) {
+      g_list_free_strings (retvals);
+      g_list_free (retvals);
+    }
     while (g_main_context_iteration(NULL,FALSE));
     param->change_blocked=FALSE;
   }
@@ -2948,16 +3024,17 @@ gint set_param_from_list(GList *plist, lives_param_t *param, gint pnum, boolean 
 }
 
 
-void do_onchange (GObject *object, lives_rfx_t *rfx) {
+GList *do_onchange (GObject *object, lives_rfx_t *rfx) {
   gint which=GPOINTER_TO_INT (g_object_get_data (object,"param_number"));
   gchar *com,*tmp;
   GList *retvals;
-  gint width=0,height=0;
+  int width=0,height=0;
   gchar *plugdir;
 
   const gchar *handle="";
 
-  if (rfx->status==RFX_STATUS_WEED) return;
+  // weed plugins do not have triggers
+  if (rfx->status==RFX_STATUS_WEED) return NULL;
 
   if (which<0) {
     // init
@@ -3007,8 +3084,6 @@ void do_onchange (GObject *object, lives_rfx_t *rfx) {
 
   if (retvals!=NULL) {
     param_demarshall (rfx,retvals,TRUE,which>=0);
-    g_list_free_strings (retvals);
-    g_list_free (retvals);
   }
   else {
     if (which<=0&&mainw->error) {
@@ -3017,6 +3092,8 @@ void do_onchange (GObject *object, lives_rfx_t *rfx) {
     }
   }
   g_free (com);
+
+  return retvals;
 
 }
 

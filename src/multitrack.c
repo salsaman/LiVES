@@ -950,17 +950,17 @@ static void draw_aparams(lives_mt *mt, GtkWidget *eventbox, lives_painter_t *cr,
   int vali,mini,maxi,*valis;
   int i,error,pnum;
   int hint;
+
   gint offset_start,offset_end,startpos;
   gint track;
 
   gchar *fhash;
 
-  void **pchainx=weed_get_voidptr_array(init_event,"in_parameters",&error);
+  void **pchainx=NULL;
 
   fhash=weed_get_string_value(init_event,"filter",&error);
 
   if (fhash==NULL) {
-    weed_free(pchainx);
     return;
   }
 
@@ -980,7 +980,6 @@ static void draw_aparams(lives_mt *mt, GtkWidget *eventbox, lives_painter_t *cr,
 
   if (offset_end<0||offset_start>lives_widget_get_allocation_width(eventbox)) {
     weed_free(in_params);
-    weed_free(pchainx);
     return;
   }
 
@@ -992,12 +991,19 @@ static void draw_aparams(lives_mt *mt, GtkWidget *eventbox, lives_painter_t *cr,
   lives_painter_set_line_width(cr,1.);
   lives_painter_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
 
+  if (weed_plant_has_leaf(init_event,"in_parameters")) {
+    if (weed_leaf_num_elements(init_event,"in_parameters")>0)
+      pchainx=weed_get_voidptr_array(init_event,"in_parameters",&error);
+  }
+
   //lives_painter_set_operator (cr, LIVES_PAINTER_OPERATOR_DEST_OVER);
   for (i=startpos;i<startx+width;i++) {
     dtime=get_time_from_x(mt,i);
     tc=dtime*U_SEC;
     if (tc>=end_tc) break;
-    interpolate_params(inst,pchainx,tc);
+
+    if (pchainx!=NULL) interpolate_params(inst,pchainx,tc);
+
     plist=param_list;
     while (plist!=NULL) {
       pnum=GPOINTER_TO_INT(plist->data);
@@ -3045,11 +3051,11 @@ static void fubar(lives_mt *mt) {
   fhash=weed_get_string_value(mt->init_event,"filter",&error);
   mt->current_fx=weed_get_idx_for_hashname(fhash,TRUE);
   weed_free(fhash);
-  
+
   if (weed_plant_has_leaf(mt->selected_init_event,"in_parameters")&&weed_get_voidptr_value(mt->selected_init_event,"in_parameters",&error)!=NULL) {
     npch=weed_leaf_num_elements(mt->init_event,"in_parameters");
     pchainx=weed_get_voidptr_array(mt->init_event,"in_parameters",&error);
-    pchain=(void **)g_malloc(npch*sizeof(void *)); // because we later g_free(), must use g_malloc and not weed_malloc (althought normally weed_malloc==g_malloc)
+    pchain=(void **)g_malloc(npch*sizeof(void *)); 
     for (i=0;i<npch;i++) pchain[i]=pchainx[i];
     weed_free(pchainx);
   }

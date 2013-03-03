@@ -52,7 +52,7 @@ struct _procvals {
 #define OIL_MEMCPY_MAX_BYTES 1024 // this can be tuned to provide optimal performance
 
 #ifdef ENABLE_OIL
-LIVES_INLINE void *lives_memcpy  (void *dest, const void *src, size_t n) {
+void *lives_memcpy  (void *dest, const void *src, size_t n) {
 #ifndef __cplusplus
   if (n>=32&&n<=OIL_MEMCPY_MAX_BYTES) {
     oil_memcpy((uint8_t *)dest,(const uint8_t *)src,n);
@@ -62,7 +62,7 @@ LIVES_INLINE void *lives_memcpy  (void *dest, const void *src, size_t n) {
   return memcpy(dest,src,n);
 }
 #else
-LIVES_INLINE void *lives_memcpy  (void *dest, const void *src, size_t n) {return memcpy(dest,src,n);}
+void *lives_memcpy  (void *dest, const void *src, size_t n) {return memcpy(dest,src,n);}
 #endif
 
 G_GNUC_MALLOC void * lives_malloc(size_t size) {
@@ -96,11 +96,11 @@ void lives_free(gpointer ptr) {
   (*mainw->free_fn)(ptr);
 }
 
-LIVES_INLINE void *lives_memset(void *s, int c, size_t n) {
+void *lives_memset(void *s, int c, size_t n) {
   return memset(s,c,n);
 }
 
-LIVES_INLINE void *lives_calloc(size_t nmemb, size_t size) {
+void *lives_calloc(size_t nmemb, size_t size) {
   #ifdef GUI_GTK
   #if GTK_CHECK_VERSION(2,24,0)
   return g_try_malloc0_n(nmemb,size);
@@ -1416,13 +1416,13 @@ static lives_filter_error_t process_func_threaded(weed_plant_t *inst, weed_plant
   int dheight,height;
   int nthreads=0;
   int error;
-  gboolean got_invalid=FALSE;
-  gboolean useme=FALSE;
+  boolean got_invalid=FALSE;
 
-  int nchannels=weed_leaf_num_elements(inst,"out_channels");
+  int nchannels=weed_leaf_num_elements(inst,"out_channels"),pal,vrt;
   int retval;
-  int minh;
+  int minh,xminh;
 
+  int slices,slices_per_thread,to_use;
 
   struct _procvals procvals[MAX_FX_THREADS];
   pthread_t dthreads[MAX_FX_THREADS];
@@ -1436,71 +1436,95 @@ static lives_filter_error_t process_func_threaded(weed_plant_t *inst, weed_plant
   register int i,j;
 
   height=weed_get_int_value(out_channels[0],"height",&error);
+  xminh=1;
+
+  for (i=0;i<nchannels;i++) {
+    // min height for slices is 1, unless an out channel has vstep set
+    // or using a compressed yuv palette
+    ctmpl=weed_get_plantptr_value(out_channels[i],"template",&error);
+
+    pal=weed_get_int_value(out_channels[i],"current_palette",&error);
+    vrt=weed_palette_get_plane_ratio_vertical(pal,1);
+    if (vrt!=0.&&vrt<1.) if (xminh<(int)(1./vrt)) xminh=(int)(1./vrt);
+
+    if (weed_plant_has_leaf(ctmpl,"vstep")) { 
+      minh=weed_get_int_value(ctmpl,"vstep",&error);
+      if (minh>xminh) xminh=minh;
+    }
+  }
+
+  if (height%xminh!=0) return FILTER_ERROR_DONT_THREAD;
+
+  slices=height/xminh;
+  slices_per_thread=CEIL((double)slices/(double)prefs->nfx_threads,1.);
+
+  to_use=CEIL((double)slices/(double)slices_per_thread,1.);
+  if (to_use<2) return FILTER_ERROR_DONT_THREAD;
+
+  dheight=slices_per_thread*xminh;
+
+  for (i=0;i<nchannels;i++) {
+    weed_set_int_value(out_channels[i],"offset",0);
+    weed_set_int_value(out_channels[i],"host_height",height);
+    weed_set_int_value(out_channels[i],"height",dheight);
+  }
 
   pthread_mutex_lock(&mainw->data_mutex);
 
-  for (j=0;j<prefs->nfx_threads;j++) {
+  for (j=1;j<to_use;j++) {
     // each thread needs its own copy of the output channels, so it can have its own "offset" and "height"
     // therefore it also needs its own copy of inst
     // but note that "pixel_data" always points to the same memory buffer(s)
     
-    xinst[j]=weed_plant_copy(inst);
+    xinst[j-1]=weed_plant_copy(inst);
     xchannels=(weed_plant_t **)g_malloc(nchannels*sizeof(weed_plant_t *));
     
     for (i=0;i<nchannels;i++) {
       xchannels[i]=weed_plant_copy(out_channels[i]);
-      height=weed_get_int_value(xchannels[i],"height",&error);
-
       ctmpl=weed_get_plantptr_value(out_channels[i],"template",&error);
-      if (weed_plant_has_leaf(ctmpl,"vstep")) 
-	minh=weed_get_int_value(ctmpl,"vstep",&error);
-      else minh=4;
-
-      if (minh<4) minh=4;
-
-      dheight=CEIL((double)height/(double)prefs->nfx_threads,minh);
 
       offset=dheight*j;
 
-      if ((height-offset-dheight)<minh) {
+      if ((height-offset)<dheight) {
 	dheight=height-offset;
-	useme=1;
       }
-      if ((height-offset)<minh) break;
       
       weed_set_int_value(xchannels[i],"offset",offset);
       weed_set_int_value(xchannels[i],"height",dheight);
     }
     
-    weed_set_plantptr_array(xinst[j],"out_channels",nchannels,xchannels);
+    weed_set_plantptr_array(xinst[j-1],"out_channels",nchannels,xchannels);
     g_free(xchannels);
     
-    procvals[j].inst=xinst[j];
+    procvals[j].inst=xinst[j-1];
     procvals[j].tc=tc; // use same timecode for all slices
-    
-    if (offset>=height) break;
-    
-    if (!useme) {
-      // start a thread for processing
-      pthread_create(&dthreads[j],NULL,thread_process_func,&procvals[j]);
-      nthreads++; // actual number of threads used
-    }
-    else {
-      // use main thread
-      tretval=thread_process_func(&procvals[j]);
-      retval=GPOINTER_TO_INT((gpointer)tretval);
-      if (retval==WEED_ERROR_PLUGIN_INVALID) got_invalid=TRUE;
-    }
+
+    // start a thread for processing
+    pthread_create(&dthreads[j-1],NULL,thread_process_func,&procvals[j]);
+    nthreads++; // actual number of threads used
+  }
+
+
+  procvals[0].inst=inst;
+  procvals[0].tc=tc;
+
+  // use main thread for first slices
+  tretval=thread_process_func(&procvals[0]);
+  retval=GPOINTER_TO_INT((gpointer)tretval);
+  if (retval==WEED_ERROR_PLUGIN_INVALID) got_invalid=TRUE;
+
+  for (i=0;i<nchannels;i++) {
+    weed_leaf_delete(out_channels[i],"offset");
+    weed_set_int_value(out_channels[i],"height",weed_get_int_value(out_channels[i],"host_height",&error));
+    weed_leaf_delete(out_channels[i],"host_height");
   }
   
   // wait for threads to finish
-  for (j=0;j<prefs->nfx_threads;j++) {
+  for (j=0;j<nthreads;j++) {
     retval=WEED_NO_ERROR;
     
-    if (j<nthreads) {
-      pthread_join(dthreads[j],&tretval);
-      retval=GPOINTER_TO_INT((gpointer)tretval);
-    }
+    pthread_join(dthreads[j],&tretval);
+    retval=GPOINTER_TO_INT((gpointer)tretval);
     
     xchannels=weed_get_plantptr_array(xinst[j],"out_channels",&error);
     for (i=0;i<nchannels;i++) {
@@ -1583,11 +1607,13 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
   int inwidth,inheight,inpalette,outpalette,channel_flags,filter_flags=0;
   int palette,cpalette;
   int outwidth,outheight;
-  gboolean needs_reinit=FALSE,inplace=FALSE;
+  boolean needs_reinit=FALSE,inplace=FALSE;
   int incwidth,incheight,numplanes=0,width,height;
 
-  gboolean rowstrides_changed;
-  gboolean ignore_palette;
+  boolean rowstrides_changed;
+  boolean ignore_palette;
+  boolean did_thread=FALSE;
+
   int nchr;
 
   lives_filter_error_t retval=FILTER_NO_ERROR;
@@ -1602,10 +1628,10 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
   int flags;
   int num_in_alpha=0,num_out_alpha=0;
 
-  gboolean def_disabled=FALSE;
-  gboolean all_outs_alpha=TRUE,all_ins_alpha=FALSE;
+  boolean def_disabled=FALSE;
+  boolean all_outs_alpha=TRUE,all_ins_alpha=FALSE;
 
-  gint lcount=0;
+  int lcount=0;
 
   register int i,j,k;
 
@@ -1623,8 +1649,11 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
 
       // see if we can multithread
       if ((prefs->nfx_threads=future_prefs->nfx_threads)>1 && 
-	  filter_flags&WEED_FILTER_HINT_MAY_THREAD) retval=process_func_threaded(inst,out_channels,tc);
-      else {
+	  filter_flags&WEED_FILTER_HINT_MAY_THREAD) {
+	retval=process_func_threaded(inst,out_channels,tc);
+	if (retval!=FILTER_ERROR_DONT_THREAD) did_thread=TRUE;
+      }
+      if (!did_thread) {
 	// normal single threaded version
 	int ret;
 	weed_leaf_get(filter,"process_func",0,(void *)&process_func_ptr_ptr);
@@ -2436,8 +2465,11 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
 
   // see if we can multithread
   if ((prefs->nfx_threads=future_prefs->nfx_threads)>1 && 
-      filter_flags&WEED_FILTER_HINT_MAY_THREAD) retval=process_func_threaded(inst,out_channels,tc);
-  else {
+      filter_flags&WEED_FILTER_HINT_MAY_THREAD) {
+    retval=process_func_threaded(inst,out_channels,tc);
+    if (retval!=FILTER_ERROR_DONT_THREAD) did_thread=TRUE;
+  }
+  if (!did_thread) {
     // normal single threaded version
     int ret;
     weed_leaf_get(filter,"process_func",0,(void *)&process_func_ptr_ptr);
@@ -4744,6 +4776,7 @@ void weed_load_all (void) {
   make_fx_defs_menu();
   threaded_dialog_spin();
   if (num_weed_dupes>0) merge_dupes();
+
 }
 
 
@@ -6464,7 +6497,8 @@ gboolean weed_init_effect(int hotkey) {
 	if (is_audio_gen) mainw->agen_needs_reinit=FALSE;
 	return FALSE;
       }
-       set_param_gui_readonly(inst);
+      set_param_gui_readonly(inst);
+      lives_chdir(cwd,FALSE);
       g_free(cwd);
     }
 
@@ -6875,11 +6909,15 @@ weed_plant_t *weed_layer_new_from_generator (weed_plant_t *inst, weed_timecode_t
   weed_plant_t *chantmpl;
   weed_process_f *process_func_ptr_ptr;
   weed_process_f process_func;
+
+  lives_filter_error_t retval;
+
   int num_channels;
   int error;
   int flags;
   int palette;
   int filter_flags=0;
+  boolean did_thread=FALSE;
   gchar *cwd;
 
   if (inst==NULL) return NULL;
@@ -6925,8 +6963,11 @@ weed_plant_t *weed_layer_new_from_generator (weed_plant_t *inst, weed_timecode_t
   if ((prefs->nfx_threads=future_prefs->nfx_threads)>1 && weed_plant_has_leaf(filter,"flags")) 
     filter_flags=weed_get_int_value(filter,"flags",&error);
 
-  if (filter_flags&WEED_FILTER_HINT_MAY_THREAD) process_func_threaded(inst,out_channels,tc);
-  else {
+  if (filter_flags&WEED_FILTER_HINT_MAY_THREAD) {
+    retval=process_func_threaded(inst,out_channels,tc);
+    if (retval!=FILTER_ERROR_DONT_THREAD) did_thread=TRUE;
+  }
+  if (!did_thread) {
     // normal single threaded version
     weed_leaf_get(filter,"process_func",0,(void *)&process_func_ptr_ptr);
     process_func=process_func_ptr_ptr[0];
@@ -8850,7 +8891,7 @@ static gchar *get_default_element_string (weed_plant_t *param, int idx) {
 
 
 
-gboolean interpolate_param(weed_plant_t *inst, int i, void *pchain, weed_timecode_t tc) {
+boolean interpolate_param(weed_plant_t *inst, int i, void *pchain, weed_timecode_t tc) {
   // return FALSE if param has no "value" - this can happen during realtime audio processing, if the effect is inited, but no "value" has been set yet
   weed_plant_t **param_array;
   int error,j;
@@ -8897,8 +8938,8 @@ gboolean interpolate_param(weed_plant_t *inst, int i, void *pchain, weed_timecod
   // if plugin wants to do its own interpolation, we let it
   wtmpl=weed_get_plantptr_value(param,"template",&error);
   if (weed_plant_has_leaf(wtmpl,"interpolate_func")) {
-    gboolean needs_more;
-    gboolean more_available;
+    boolean needs_more;
+    boolean more_available;
     weed_interpolate_f *interpolate_func_ptr;
     weed_interpolate_f interpolate_func;
     weed_plant_t *calc_param=weed_plant_new(WEED_PLANT_PARAMETER),*filter;
@@ -9327,7 +9368,7 @@ gboolean interpolate_param(weed_plant_t *inst, int i, void *pchain, weed_timecod
 }
 
 
-gboolean interpolate_params(weed_plant_t *inst, void **pchains, weed_timecode_t tc) {
+boolean interpolate_params(weed_plant_t *inst, void **pchains, weed_timecode_t tc) {
   // interpolate all in_parameters for filter_instance inst, using void **pchain, which is an array of param_change events in temporal order
   // values are calculated for timecode tc. We skip "hidden" parameters
   void *pchain;
@@ -9347,7 +9388,8 @@ gboolean interpolate_params(weed_plant_t *inst, void **pchains, weed_timecode_t 
     for (i=offset;i<offset+num_params;i++) {
       if (!is_hidden_param(inst,i-offset)) {
 	pchain=pchains[i];
-	if (!interpolate_param(inst,i-offset,pchain,tc)) return FALSE; // FALSE if param is not ready
+	if (pchain!=NULL&&WEED_PLANT_IS_EVENT((weed_plant_t *)pchain)&&WEED_EVENT_IS_PARAM_CHANGE((weed_plant_t *)pchain))
+	  if (!interpolate_param(inst,i-offset,pchain,tc)) return FALSE; // FALSE if param is not ready
       }
     }
 

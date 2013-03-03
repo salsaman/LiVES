@@ -4391,9 +4391,12 @@ gdouble *get_track_visibility_at_tc(weed_plant_t *event_list, gint ntracks, gint
 	    weed_plant_t **in_params=weed_get_plantptr_array(inst,"in_parameters",&error);
 	    weed_plant_t *ttmpl=weed_get_plantptr_value(in_params[tparam],"template",&error);
 	    double trans;
-	    void **pchains=weed_get_voidptr_array(ievent,"in_parameters",&error);
 
-	    interpolate_param(inst,tparam,pchains[tparam],tc);
+	    if (weed_plant_has_leaf(ievent,"in_parameters")&&tparam<weed_leaf_num_elements(ievent,"in_parameters")) {
+	      void **pchains=weed_get_voidptr_array(ievent,"in_parameters",&error);
+	      interpolate_param(inst,tparam,pchains[tparam],tc);
+	      weed_free(pchains);
+	    }
 
 	    if (weed_leaf_seed_type(in_params[tparam],"value")==WEED_SEED_DOUBLE) {
 	      double transd=weed_get_double_value(in_params[tparam],"value",&error);

@@ -1,6 +1,6 @@
 // jack.c
 // LiVES (lives-exe)
-// (c) G. Finch 2005 - 2012
+// (c) G. Finch 2005 - 2013
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -112,15 +112,18 @@ boolean lives_jack_init (void) {
 
 
 
-gdouble jack_transport_get_time(void) {
+uint64_t jack_transport_get_time(void) {
 #ifdef ENABLE_JACK_TRANSPORT
+  uint64_t val;
+
   jack_nframes_t srate; 
   jack_position_t pos;
 
   jack_transport_query (jack_transport_client, &pos);
 
   srate=jack_get_sample_rate(jack_transport_client);
-  return (gdouble)pos.frame/(gdouble)srate;
+  val=(double)pos.frame/(double)srate;
+  if (val>0.) return val;
 #endif
   return 0.;
 }

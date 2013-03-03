@@ -1,13 +1,13 @@
 // rfx-builder.h
 // LiVES
-// (c) G. Finch 2004 - 2009 <salsaman@xs4all.nl,salsaman@gmail.com>
+// (c) G. Finch 2004 - 2013 <salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
 #define RFX_BUILDER "build-lives-rfx-plugin"
 
 /// must match whatever is in RFX_BUILDER
-#define RFX_VERSION "1.7"
+#define RFX_VERSION "1.8"
 
 /// this definition must match with smogrify
 #define RFX_BUILDER_MULTI "build-lives-rfx-plugin-multi"

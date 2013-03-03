@@ -1,6 +1,6 @@
 // framedraw.c
 // LiVES
-// (c) G. Finch (salsaman@xs4all.nl,salsaman@gmail.com) 2002 - 2013
+// (c) G. Finch (salsaman@gmail.com) 2002 - 2013
 // see file COPYING for licensing details : released under the GNU GPL 3 or later
 
 // functions for the 'framedraw' widget - lets users draw on frames :-)
@@ -787,13 +787,21 @@ gboolean on_framedraw_mouse_start (GtkWidget *widget, GdkEventButton *event, liv
 	offsy=(double)ystart/(double)height;
 	
 	noupdate=TRUE;
-	gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xstart_param->widgets[0]),offsx);
-	gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->ystart_param->widgets[0]),offsy);
+	if (framedraw->xstart_param->dp>0)
+	  gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xstart_param->widgets[0]),offsx);
+	else
+	  gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xstart_param->widgets[0]),(int)(offsx*(double)cfile->hsize+.5));
+	if (framedraw->xstart_param->dp>0)
+	  gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->ystart_param->widgets[0]),offsy);
+	else
+	  gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->ystart_param->widgets[0]),(int)(offsy*(double)cfile->vsize+.5));
+
 	gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xend_param->widgets[0]),0.);
 	gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->yend_param->widgets[0]),0.);
 	noupdate=FALSE;
 
 	framedraw_redraw (framedraw, FALSE, NULL);
+
 	if (mainw->framedraw_reset!=NULL) {
 	  gtk_widget_set_sensitive (mainw->framedraw_reset,TRUE);
 	}
@@ -864,11 +872,18 @@ gboolean on_framedraw_mouse_update (GtkWidget *widget, GdkEventButton *event, li
 
 
       noupdate=TRUE;
-      gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xend_param->widgets[0]),xscale);
-      gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->yend_param->widgets[0]),yscale);
+      if (framedraw->xend_param->dp>0)
+	gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xend_param->widgets[0]),xscale);
+      else
+	gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xend_param->widgets[0]),(int)(xscale*(double)cfile->hsize+.5));
+      if (framedraw->yend_param->dp>0)
+	gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->yend_param->widgets[0]),yscale);
+      else 
+	gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->yend_param->widgets[0]),(int)(yscale*(double)cfile->vsize+.5));
       noupdate=FALSE;
 
       framedraw_redraw (framedraw, FALSE, NULL);
+
       if (mainw->framedraw_reset!=NULL) {
 	gtk_widget_set_sensitive (mainw->framedraw_reset,TRUE);
       }
@@ -918,24 +933,12 @@ gboolean on_framedraw_mouse_reset (GtkWidget *widget, GdkEventButton *event, liv
 
   switch (framedraw->type) {
   case LIVES_PARAM_SPECIAL_TYPE_RECT_DEMASK:
-    xstart*=(double)cfile->hsize/(double)width;
-    ystart*=(double)cfile->vsize/(double)height;
+    xstart/=(double)width;
+    ystart/=(double)height;
 
-    xend*=(double)cfile->hsize/(double)width;
-    yend*=(double)cfile->vsize/(double)height;
+    xend/=(double)width;
+    yend/=(double)height;
 
-    if (xstart<0) xstart=0;
-    if (ystart<0) ystart=0;
-
-    if (xend<0) xend=0;
-    if (yend<0) yend=0;
-
-    if (xstart>=cfile->hsize) xstart=cfile->hsize-1;
-    if (ystart>=cfile->vsize) ystart=cfile->vsize-1;
-
-    if (xend>=cfile->hsize) xend=cfile->hsize-1;
-    if (yend>=cfile->vsize) yend=cfile->vsize-1;
-    
     noupdate=TRUE;
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xstart_param->widgets[0]),MIN (xstart,xend));
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->ystart_param->widgets[0]),MIN (ystart,yend));

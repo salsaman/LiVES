@@ -1,6 +1,6 @@
 // paramspecial.c
 // LiVES
-// (c) G. Finch 2004 - 2013 <salsaman@xs4all.nl,salsaman@gmail.com>
+// (c) G. Finch 2004 - 2013 <salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -90,6 +90,14 @@ void add_to_special (const gchar *sp_string, lives_rfx_t *rfx) {
     }
     else if (!strcmp (array[1],"multrect")) {
       framedraw.type=LIVES_PARAM_SPECIAL_TYPE_RECT_MULTRECT;
+      framedraw.xstart_param=&rfx->params[atoi (array[2])];
+      framedraw.ystart_param=&rfx->params[atoi (array[3])];
+      framedraw.xend_param=&rfx->params[atoi (array[4])];
+      framedraw.yend_param=&rfx->params[atoi (array[5])];
+      framedraw.stdwidgets=4;
+    }
+    else if (!strcmp (array[1],"multirect")) {
+      framedraw.type=LIVES_PARAM_SPECIAL_TYPE_RECT_MULTIRECT;
       framedraw.xstart_param=&rfx->params[atoi (array[2])];
       framedraw.ystart_param=&rfx->params[atoi (array[3])];
       framedraw.xend_param=&rfx->params[atoi (array[4])];

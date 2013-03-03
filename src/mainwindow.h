@@ -1,6 +1,6 @@
 // mainwindow.h
 // LiVES (lives-exe)
-// (c) G. Finch <salsaman@xs4all.nl,salsaman@gmail.com> 2003 - 2013
+// (c) G. Finch <salsaman@gmail.com> 2003 - 2013
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -33,7 +33,7 @@
 // parameters for resizing the image frames, and for capture
 // TODO - make prefs
 #define V_RESIZE_ADJUST 36
-#define H_RESIZE_ADJUST 22
+#define H_RESIZE_ADJUST 24
 
 #define CE_FRAME_HSPACE 320
 

@@ -1,6 +1,6 @@
 // jack.h
 // LiVES (lives-exe)
-// (c) G. Finch 2005 - 2009
+// (c) G. Finch 2005 - 2013
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -148,7 +148,7 @@ int64_t jack_audio_seek_bytes (jack_driver_t *, int64_t bytes); ///< seek to byt
 
 void jack_get_rec_avals(jack_driver_t *);
 
-gdouble jack_transport_get_time(void);
+uint64_t jack_transport_get_time(void);
 
 gdouble lives_jack_get_pos(jack_driver_t *);
 

@@ -1,6 +1,6 @@
 // utils.c
 // LiVES
-// (c) G. Finch 2003 - 2012 <salsaman@xs4all.nl,salsaman@gmail.com>
+// (c) G. Finch 2003 - 2012 <salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -1194,7 +1194,7 @@ void calc_aframeno(gint fileno) {
 
 
 
-gint calc_new_playback_position(gint fileno, gint64 otc, gint64 *ntc) {
+int calc_new_playback_position(int fileno, uint64_t otc, uint64_t *ntc) {
   // returns a frame number (floor) using sfile->last_frameno and ntc-otc
   // takes into account looping modes
 
@@ -2091,8 +2091,8 @@ void get_location(const gchar *exe, gchar *val, gint maxlen) {
 }
 
 
-guint64 get_version_hash(const gchar *exe, const gchar *sep, int piece) {
-  // get version hash output
+uint64_t get_version_hash(const gchar *exe, const gchar *sep, int piece) {
+  /// get version hash output for an executable from the backend
   FILE *rfile;
   ssize_t rlen;
   char val[16];
@@ -2104,6 +2104,38 @@ guint64 get_version_hash(const gchar *exe, const gchar *sep, int piece) {
   g_free(com);
   return strtol(val,NULL,10);
 }
+
+#define VER_MAJOR_MULT 1000000
+#define VER_MINOR_MULT 1000
+#define VER_MICRO_MULT 1
+
+uint64_t make_version_hash(const char *ver) {
+  /// convert a version to uint64_t hash, for comparing
+
+  uint64_t hash;
+  int ntok;
+  gchar **array;
+
+  if (ver==NULL) return 0;
+
+  ntok=get_token_count((gchar *)ver,'.');
+  array=g_strsplit(ver,".",-1);
+
+  hash=atoi(array[0])*VER_MAJOR_MULT;
+
+  if (ntok>1) {
+    hash+=atoi(array[1])*VER_MINOR_MULT;
+  }
+
+  if (ntok>2) {
+    hash+=atoi(array[2])*VER_MICRO_MULT;
+  }
+
+  g_strfreev(array);
+
+  return hash;
+}
+
 
 
 gchar *repl_tmpdir(const gchar *entry, gboolean fwd) {
@@ -4839,9 +4871,8 @@ guint get_signed_endian (gboolean is_signed, gboolean little_endian) {
 
 
 
-gint 
-get_token_count (const gchar *string, int delim) {
-  gint pieces=1;
+int get_token_count (const gchar *string, int delim) {
+  int pieces=1;
   if (string==NULL) return 0;
   if (delim<=0||delim>255) return 1;
 

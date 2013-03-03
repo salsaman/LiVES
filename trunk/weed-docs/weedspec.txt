@@ -837,8 +837,7 @@ initialisation, channels MUST NOT be added or removed without reinitialising the
  * "offset" : WEED_SEED_INT : host can achieve multithreading by splitting destination frames into slices, calling the 
    	      		      process_func several times with different "offset"s and reduced height in the 
 			      destination channel. Offset is the number of rows offset of "pixel_data" in the destination 
-			      frame(s). This should never be used for generators, or if the plugin sets 
-			      WEED_FILTER_HINT_NO_THREADING.
+			      frame(s). Will only be used if the plugin sets the filter flag bit WEED_FILTER_HINT_MAY_THREAD.
 
  * "pixel_aspect_ratio"   : WEED_SEED_DOUBLE : physical aspect ratio
                                                of the pixel of the image (pixel aspect ratio 
@@ -1641,7 +1640,9 @@ Palette numbers >=2048 are reserved for custom palettes.
    Indicates that hosts can achieve threading by splitting the destination frame(s) into 
    slices, setting "offset" for those channels, and calling process_func 
    multiple times with the same timestamp. Do not set this if the plugin needs to access the entire 
-   destination frame(s).
+   destination frame(s). The original instance should be passed in as the slice with offset 0. 
+   Use this instance if you want to update any "plugin_*" values. Do not use this on filters which 
+   use the channel flag WEED_CHANNEL_SIZE_CAN_VARY.
 
 
  * WEED_FILTER_PROCESS_LAST  16  [[BR]]

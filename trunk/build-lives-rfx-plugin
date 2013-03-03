@@ -11,7 +11,7 @@
 ########################################################
 # this will auto-generate a LiVES-Perl plugin from the info in $file
 
-$rfx_version="1.7";
+$rfx_version="1.8";
 
 
 if ($ARGV[0] eq "-get") {
@@ -35,7 +35,7 @@ if ($define eq "") {
 
 my $version=substr($define,1);
 
-unless ($version eq $rfx_version) {
+unless (&make_ver_hash($version) <= &make_ver_hash($rfx_version)) {
     print "\n\n  - Invalid script RFX version $version, this builder is for $rfx_version\n";
     exit 4;
 }
@@ -348,7 +348,11 @@ unless ($is_batch_gen) {
     print OUT "	\$name=&mkname(\$frame);\n";
 
     unless ($in_channels==0) {
-	print OUT "	\$in=\"\$name\$img_ext\";\n";
+	print OUT "	\$in=\"\$name\$img_ext\";\n\n";
+	print OUT "     if (!defined(\$end) || \$end==0) {\n";
+	print OUT "         print STDERR \"WARNING: generator plugin did not set \$end !\";\n";
+	print OUT "         &sig_error(\"Generator plugin did not set \$end.\");\n";
+	print OUT "     }\n";
     }
     
     if ($in_channels==2) {
@@ -763,4 +767,20 @@ sub escquotes {
 	    }
 	}
     }
+}
+
+
+sub make_ver_hash {
+    # turn a version like
+    # a.b.c into an integer
+    # a * 1,000,000 plus b * 1,000 plus c
+    # eg. 1.4.6 becomes 10004006
+
+    my ($string)=shift;
+    if ($string eq "") {
+	return 0;
+    }
+    my ($ver_major,$ver_minor,$ver_micro)=split (/[.]/, $string,3);
+    my $version_hash=($ver_major*1000+$ver_minor)*1000;
+    $version_hash;
 }

@@ -1,6 +1,6 @@
 // main.h
 // LiVES
-// (c) G. Finch (salsaman@xs4all.nl,salsaman@gmail.com) 2003 - 2013
+// (c) G. Finch (salsaman@gmail.com) 2003 - 2013
 // see file ../COPYING for full licensing details
 
 /*  This program is free software; you can redistribute it and/or modify
@@ -947,7 +947,7 @@ void do_autolives_needs_clips_error(void);
 void do_pulse_lost_conn_error(void);
 void do_jack_lost_conn_error(void);
 
-gboolean process_one (gboolean visible);
+boolean process_one (boolean visible);
 void do_threaded_dialog(gchar *translated_text, gboolean has_cancel);
 void end_threaded_dialog(void);
 void threaded_dialog_spin (void);
@@ -1117,7 +1117,8 @@ gchar *get_dir(const gchar *filename);
 void get_basename(gchar *filename);
 void get_filename(gchar *filename, gboolean strip_dir);
 gchar *get_extension(const gchar *filename);
-guint64 get_version_hash(const gchar *exe, const gchar *sep, int piece);
+uint64_t get_version_hash(const gchar *exe, const gchar *sep, int piece);
+uint64_t make_version_hash(const char *ver);
 void d_print(const gchar *text);
 void init_clipboard(void);
 gboolean cache_file_contents(const gchar *filename);
@@ -1208,12 +1209,12 @@ void zero_spinbuttons (void);
 void draw_little_bars (gdouble ptrtime);
 void set_sel_label (GtkWidget *label);
 void clear_mainw_msg (void);
-gint get_token_count (const gchar *string, int delim);
+int get_token_count (const gchar *string, int delim);
 LiVESPixbuf *lives_pixbuf_new_blank(int width, int height, int palette);
 gchar *g_strappend (gchar *string, gint len, const gchar *newbit);
 GList *g_list_append_unique(GList *xlist, const gchar *add);
 void find_when_to_stop (void);
-gint calc_new_playback_position(gint fileno, gint64 otc, gint64 *ntc);
+int calc_new_playback_position(int fileno, uint64_t otc, uint64_t *ntc);
 void calc_aframeno(gint fileno);
 void minimise_aspect_delta (gdouble allowed_aspect,gint hblock,gint vblock,gint hsize,gint vsize,gint *width,gint *height);
 LiVESInterpType get_interp_value(gshort quality);

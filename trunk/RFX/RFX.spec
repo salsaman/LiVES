@@ -1,9 +1,9 @@
 ﻿The RFX (Rendered Effects System)
 ---------------------------------
 
-Author: salsaman@xs4all.nl
-Date: 21/01/2008
-API Version: 1.7 GPL
+Author: salsaman@gmail.com
+Date: 3/3/2013
+API Version: 1.8 GPL
 
 Changes
 1.0 First version salsaman@xs4all.nl
@@ -14,6 +14,7 @@ Changes
 1.5 Added note about LC_NUMERIC
 d1.6 Added string_list parameter type
 1.7 Updates for compatibility with realtime effects
+1.8 Add special multirect, deprecate multrect, and remove audiochannel.
 
 --- API Version frozen ---
 
@@ -30,8 +31,7 @@ d1.6 Added string_list parameter type
 - Fix text errors, add note about "$fps"
 - Clarify max length for fileread special keyword.
 
-TODO: 	- change rectdemask to use proportion, to match other framedraws
-	- split into RFX layout and RFX plugin components
+TODO: 	- split into RFX layout and RFX plugin components (?)
 
 
 
@@ -39,7 +39,8 @@ TODO: 	- change rectdemask to use proportion, to match other framedraws
 
 
 Note:
-This license documents a standard. The license of this document is the GNU FDL (GNU Free Documentation License) version 1.3 or higher. The standard itself is released under the GPL v3 or higher.
+This license documents a standard. The license of this document is the GNU FDL (GNU Free Documentation License) version 1.3 or higher. 
+The standard itself is released under the GPL v3 or higher.
 
 See: http://www.gnu.org/copyleft/fdl.html
      http://www.gnu.org/licenses/gpl-3.0.html
@@ -60,7 +61,8 @@ effects from scripts. It currently has features for:
 
 
 Note: RFX layout is now intended to be a standalone component which can be used for passing parameter window descriptions 
-between applications. It consists only of the sections <define>, <params>, <language_code> (and optionally <param_window> and <onchange>). The <name> section is also required, but can be generated ad-hoc by the host.
+between applications. It consists only of the sections <define>, <params>, <language_code> (and optionally <param_window> and <onchange>). 
+The <name> section is also required, but can be generated ad-hoc by the host.
 
 
 
@@ -74,7 +76,7 @@ but with extra default variables and some subroutines to make frame (image)
 processing easier.
 
 The following section describes a script file, and the rules which must be 
-implemented in order to comply with the RFX script version 1.7
+implemented in order to comply with the RFX script version 1.8
 
 
 NOTE: for RFX, the shell variable LC_NUMERIC should be set to "C"; that implies the radix character for 
@@ -162,7 +164,7 @@ RFX version
 E.g.:
 
 <define>
-|1.7
+|1.8
 </define>
 
 As noted, the following assumes the default field delimiter of |.
@@ -441,36 +443,36 @@ special|aspect|1|2
 special|framedraw|rectdemask|1|2|3|4
 
 It is up to individual host authors how they visually interpret the special keyword.
-For benefit of hosts, only one special widget of each type should be used.
+For benefit of hosts, only one special widget with "framedraw" type should be used per plugin.
 
 
 Special widgets
 ---------------
 Suggested interpretation:
 
-  If multi-valued parameters are allowed, each linked parameter can have n values, where n matches the current number of in_channels (including "disabled" channels) to the filter
+  If multi-valued parameters are allowed, each linked parameter can have n values, 
+  where n matches the current number of in_channels (including "disabled" channels) to the filter
   In this case it is up to the host how the currently selected index [n] is chosen.
-
-  If a linked parameter is a float, then the value represents a ratio (e.g. 1.0 = full frame width). If a linked 
-  parameter is an int, then the value is in pixels. In the latter case, the host should set the maximum value as 
-  appropriate.
 
 
 Special type "framedraw" - allows user drawing on a preview frame to control some parameters and vice-versa; origin is top-left
 
+	If a linked parameter has 0 decimal places, then the value is in pixels. If more than 0 decimal places, the value is a ratio 
+	where {1.0,1.0} is the bottom right of the image [as of version 1.8]
+
   Subtype "rectdemask" - >= 4 numeric parameters : demask (only show) a region on the preview frame, from position p0[n],p1[n] to 
                                            p2[n],p3[n]
 
-  Subtype "multrect" - >= 4 numeric parameters : draw a rectangle (outline) on preview frame, offset p0[n]*out_channel1_width,p1[n]*out_channel1_height, scaled by p2[n]*out_channel_width,p3[n]*out_channel_width;
+  Subtype "multrect" - >= 4 numeric parameters : draw a rectangle (outline) on preview frame, offset p0[n]*out_channel1_width,p1[n]*out_channel1_height, scaled by p2[n]*out_channel_width,p3[n]*out_channel_width; [deprecated as of version 1.8]
+
+  Subtype "multirect" - >= 4 numeric parameters : draw a rectangle (outline) on preview frame, position p0[n],p1[n], to position p2[n],p3[n]
 
   Subtype "singlepoint" - >= 2 numeric parameters : draw a "target" point (e.g. crosshair) on the frame, at offset 
-                                            p0[n]*out_channel1_width,p1[n]*out_channel1_height
+                                            p0[n],p1[n]
 
 
 Special type "aspect" - 2 numeric parameters : p0 and p1 may optionally be aspect ratio locked to the corresponding in channel 
                                        width and height; host should provide a way to select/deselect this
-
-Special type "audiochannel" - >=1 any parameters : a parameter marked with this type should have 1 value for each audio channel
 
 Special type "mergealign" – 2 parameters
 The mergealign special widget links together two num type parameters. It has two states. In one state it will set the first parameter to its minimum value and the second parameter to its maximum value. In the second state it will do the opposite, set the first parameter to its maximum, and the second parameter to its minimum.

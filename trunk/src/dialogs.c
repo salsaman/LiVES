@@ -22,27 +22,28 @@ extern void reset_frame_and_clip_index (void);
 
 
 // processing
-static gint64 event_start;
-static gdouble audio_start;
-static gboolean accelerators_swapped;
-static gint frames_done;
-static gint disp_frames_done;
+static uint64_t event_start;
+static double audio_start;
+static boolean accelerators_swapped;
+static int frames_done;
+static int disp_frames_done;
 
-static gint64 last_open_check_ticks;
+static uint64_t last_open_check_ticks;
 
-static gboolean shown_paused_frames;
-static gboolean force_show;
+static uint64_t prev_ticks,elapse_start_ticks;
 
-static gdouble est_time;
+static boolean shown_paused_frames;
+static boolean force_show;
+
+static double est_time;
 
 
 // how often to we count frames when opening
 #define OPEN_CHECK_TICKS (U_SECL/10l)
 
-static volatile gboolean dlg_thread_ready=FALSE;
+static volatile boolean dlg_thread_ready=FALSE;
 
-void on_warn_mask_toggled (GtkToggleButton *togglebutton, gpointer user_data)
-{
+void on_warn_mask_toggled (GtkToggleButton *togglebutton, gpointer user_data) {
   GtkWidget *tbutton;
 
   if (lives_toggle_button_get_active(togglebutton)) prefs->warning_mask|=GPOINTER_TO_INT(user_data);
@@ -856,17 +857,18 @@ static void progbar_pulse_or_fraction(file *sfile, int frames_done) {
 
 
 
-gboolean process_one (gboolean visible) {
-  gint64 new_ticks;
+boolean process_one (boolean visible) {
+  uint64_t new_ticks;
+  uint64_t current_ticks;
 
   lives_time_source_t time_source;
-  gboolean show_frame;
+  boolean show_frame;
 
   lives_rfx_t *xrfx;
 
 #ifdef RT_AUDIO
-  gdouble audio_stretch;
-  gint64 audio_ticks=0;
+  double audio_stretch;
+  uint64_t audio_ticks=0;
 #endif
 
   if (!visible) {
@@ -884,7 +886,9 @@ gboolean process_one (gboolean visible) {
     //         the system clock
     //  in these cases we adjust our audio rate slightly to keep in synch with video
     // - otherwise, we take the time from soundcard by counting samples played (the normal case),   
-    //   and we synch video with that
+    //   and we synch video with that; however, the soundcard time only updates when samples are played -
+    //   so, between updates we interpolate with the system clock and then adjust when we get a new value
+    //   from the card
 
 
     time_source=LIVES_TIME_SOURCE_NONE;
@@ -927,17 +931,34 @@ gboolean process_one (gboolean visible) {
 	  if (mainw->pulsed_read!=NULL&&mainw->aud_rec_fd!=-1&&mainw->agen_key==0&&!mainw->agen_needs_reinit) 
 	    mainw->currticks=lives_pulse_get_time(mainw->pulsed_read,TRUE);
 	  else mainw->currticks=lives_pulse_get_time(mainw->pulsed,TRUE);
+
 	  time_source=LIVES_TIME_SOURCE_SOUNDCARD;
 	}
       }
 #endif
     }
 
+    if (time_source!=LIVES_TIME_SOURCE_NONE) {
+      // soundcard time is only updated after sending audio
+      // so if we get the same value back we interpolate using the system clock
+
+      if (G_UNLIKELY(mainw->currticks<prev_ticks)) mainw->currticks=prev_ticks;
+      else {
+	gettimeofday(&tv, NULL);
+	current_ticks=U_SECL*(tv.tv_sec-mainw->origsecs)+tv.tv_usec*U_SEC_RATIO-mainw->origusecs*U_SEC_RATIO;
+	if (mainw->currticks==prev_ticks) mainw->currticks+=(current_ticks-elapse_start_ticks);
+	else prev_ticks=mainw->currticks;
+	elapse_start_ticks=current_ticks;
+      }
+    }
+
     if (time_source==LIVES_TIME_SOURCE_NONE) {
       // get time from system clock
       gettimeofday(&tv, NULL);
       mainw->currticks=U_SECL*(tv.tv_sec-mainw->origsecs)+tv.tv_usec*U_SEC_RATIO-mainw->origusecs*U_SEC_RATIO;
+      if (G_UNLIKELY(mainw->currticks<prev_ticks)) mainw->currticks=prev_ticks;
       time_source=LIVES_TIME_SOURCE_SYSTEM;
+      prev_ticks=mainw->currticks;
     }
 
     // adjust audio rate slightly if we are behind or ahead
@@ -1212,7 +1233,7 @@ gboolean process_one (gboolean visible) {
 }
 
 
-gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar *text) {
+boolean do_progress_dialog(boolean visible, boolean cancellable, const gchar *text) {
   // monitor progress, return FALSE if the operation was cancelled
 
   // this is the outer loop for playback and all kinds of processing
@@ -1226,7 +1247,7 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
 
   int frames_done;
 
-  gboolean got_err=FALSE;
+  boolean got_err=FALSE;
   
   // translation issues
   if (visible&&text!=NULL) mytext=g_strdup(text);
@@ -1353,6 +1374,9 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
   gettimeofday(&tv, NULL);
   /***************************************************/
 
+  prev_ticks=0;
+  elapse_start_ticks=0;
+
   // [IMPORTANT] we subtract these from every calculation to make the numbers smaller
   mainw->origsecs=tv.tv_sec;
   mainw->origusecs=tv.tv_usec;
@@ -1365,8 +1389,8 @@ gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar 
 	!(mainw->record&&!(prefs->rec_opts&REC_FRAMES)&&cfile->next_event==NULL)) {
       // calculate the start position from jack transport
 
-      gint64 ntc=jack_transport_get_time()*U_SEC;
-      gboolean noframedrop=mainw->noframedrop;
+      uint64_t ntc=jack_transport_get_time()*U_SEC;
+      boolean noframedrop=mainw->noframedrop;
       mainw->noframedrop=FALSE;
       cfile->last_frameno=1;
       if (prefs->jack_opts&JACK_OPTS_TIMEBASE_START) {

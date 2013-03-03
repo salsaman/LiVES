@@ -1,6 +1,6 @@
 // plugins.h
 // LiVES
-// (c) G. Finch 2003-2012 <salsaman@xs4all.nl,salsaman@gmail.com>
+// (c) G. Finch 2003-2012 <salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -364,6 +364,7 @@ typedef enum {
   // framedraw types
   LIVES_PARAM_SPECIAL_TYPE_RECT_DEMASK,  ///< type may be used in framedraw
   LIVES_PARAM_SPECIAL_TYPE_RECT_MULTRECT,  ///< type may be used in framedraw
+  LIVES_PARAM_SPECIAL_TYPE_RECT_MULTIRECT,  ///< type may be used in framedraw
   LIVES_PARAM_SPECIAL_TYPE_SINGLEPOINT,  ///< type may be used in framedraw
 
   // text widget types

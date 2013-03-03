@@ -1,6 +1,6 @@
 // rfx-builder.c
 // LiVES
-// (c) G. Finch 2004 - 2013 <salsaman@xs4all.nl,salsaman@gmail.com>
+// (c) G. Finch 2004 - 2013 <salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -2758,7 +2758,11 @@ GtkWidget * make_param_window_dialog (gint pnum, rfx_build_window_t *rfxbuilder)
   // subtype
 
   spsublist = g_list_append (spsublist, (gpointer)"rectdemask");
-  spsublist = g_list_append (spsublist, (gpointer)"multrect");
+  if (pnum>=0&&spsub!=NULL) {
+    // deprecated value
+    if (!strcmp(spsub,"multrect")) spsublist = g_list_append (spsublist, (gpointer)"multrect");
+  }
+  else spsublist = g_list_append (spsublist, (gpointer)"multirect");
   spsublist = g_list_append (spsublist, (gpointer)"singlepoint");
 
   rfxbuilder->paramw_spsub_combo = lives_standard_combo_new (_("Special _Subtype:         "),TRUE,spsublist,LIVES_BOX(dialog_vbox),NULL);
@@ -2887,7 +2891,7 @@ void on_paramw_spsub_changed (GtkComboBox *combo, gpointer user_data) {
   gchar *ctext=lives_combo_get_active_text(combo);
 
   if (!strcmp (ctext,"rectdemask")||
-      !strcmp (ctext,"multrect")) {
+      !strcmp (ctext,"multrect")||!strcmp(ctext,"multirect")) {
     gtk_label_set_text (GTK_LABEL (rfxbuilder->paramw_rest_label),(_("Linked parameters (4):    ")));
   }
   else if (!strcmp (ctext,"singlepoint")) {
@@ -3667,7 +3671,7 @@ gboolean script_to_rfxbuilder (rfx_build_window_t *rfxbuilder, const gchar *scri
   }
 
   version=g_strdup(tmp+1);
-  if (strcmp(version,RFX_VERSION)) {
+  if (make_version_hash(version)>make_version_hash(RFX_VERSION)) {
     g_list_free_strings(list);
     g_list_free(list);
     g_free(version);
@@ -4889,7 +4893,7 @@ void add_rfx_effects(void) {
 	g_free(def);
 	continue;
       }
-      if (strcmp(def+1,RFX_VERSION)) {
+      if (make_version_hash(def+1)>make_version_hash(RFX_VERSION)) {
 #ifdef DEBUG_RENDER_FX
 	g_print("Invalid version %s instead of %s in %s\n",def+1,RFX_VERSION,plugin_name);
 #endif

@@ -37,6 +37,7 @@ static int package_version=1; // version of this package
 #include "../../libweed/weed-plugin-utils.h" // optional
 #endif
 
+
 /////////////////////////////////////////////////////////////
 
 typedef struct {

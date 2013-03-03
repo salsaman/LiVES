@@ -30,6 +30,7 @@ typedef enum {
   FILTER_ERROR_MISSING_CHANNEL,
   FILTER_ERROR_TEMPLATE_MISMATCH,
   FILTER_ERROR_MEMORY_ERROR,
+  FILTER_ERROR_DONT_THREAD,
 
   /// values >= 512 are info
   FILTER_INFO_REINITED=512
@@ -117,8 +118,8 @@ gboolean weed_parameter_has_variable_elements_strict(weed_plant_t *inst, weed_pl
 
 
 /// parameter interpolation
-gboolean interpolate_param(weed_plant_t *inst, int i, void *pchain, weed_timecode_t tc);
-gboolean interpolate_params(weed_plant_t *inst, void **pchains, weed_timecode_t tc);
+boolean interpolate_param(weed_plant_t *inst, int i, void *pchain, weed_timecode_t tc);
+boolean interpolate_params(weed_plant_t *inst, void **pchains, weed_timecode_t tc);
 
 gboolean weed_plant_serialise(int fd, weed_plant_t *plant, unsigned char **mem);
 weed_plant_t *weed_plant_deserialise(int fd, unsigned char **mem);

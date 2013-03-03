@@ -286,7 +286,7 @@ static void make_path(const char *fname, int pid, const char *ext) {
 
 boolean init_screen (int width, int height, boolean fullscreen, uint64_t window_id, int argc, char **argv) {
   int i=0,idx=0,ret_code;
-  int afd,audio;
+  int afd,audio=0;
 
   int mypid=getpid();
 
@@ -294,7 +294,7 @@ boolean init_screen (int width, int height, boolean fullscreen, uint64_t window_
 
   char cmd[8192];
 
-  char *audfile;
+  char *audfile=NULL;
 
   char **vdevs;
 
@@ -372,19 +372,19 @@ boolean init_screen (int width, int height, boolean fullscreen, uint64_t window_
 
   make_path("livesaudio",mypid,"stream");
 
-  afd=open(xfile,O_RDONLY|O_NONBLOCK);
-  if (afd!=-1) {
-    audio=1;
-    close(afd);
+  if (audfile!=NULL) {
+    afd=open(xfile,O_RDONLY|O_NONBLOCK);
+    if (afd!=-1) {
+      audio=1;
+      close(afd);
+    }
+    
+    if (audio) {
+      snprintf(cmd,8192,"/bin/cat %s > \"%s\" &",xfile,audfile);
+      dummyvar=system(cmd);
+    }
+    dummyvar=dummyvar; // keep compiler happy
   }
-  else audio=0;
-
-  if (audio) {
-    snprintf(cmd,8192,"/bin/cat %s > \"%s\" &",xfile,audfile);
-    dummyvar=system(cmd);
-  }
-  dummyvar=dummyvar; // keep compiler happy
-
   return TRUE;
 }
 

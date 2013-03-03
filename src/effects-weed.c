@@ -4747,7 +4747,31 @@ void weed_load_all (void) {
 }
 
 
-static void weed_filter_free(weed_plant_t *filter) {
+static void weed_free_if_not_in_list(void *ptr, GList **freed_ptrs) {
+  /// avoid duplicate frees when unloading fx plugins
+  GList *list=*freed_ptrs;
+  while (list!=NULL) {
+    if (ptr==(void *)list->data) return;
+    list=list->next;
+  }
+  if (freed_ptrs!=NULL) *freed_ptrs=g_list_append(*freed_ptrs,(gpointer)ptr);
+  weed_free(ptr);
+}
+
+
+static void weed_plant_free_if_not_in_list(weed_plant_t *plant, GList **freed_ptrs) {
+  /// avoid duplicate frees when unloading fx plugins
+  GList *list=*freed_ptrs;
+  while (list!=NULL) {
+    if (plant==(weed_plant_t *)list->data) return;
+    list=list->next;
+  }
+  if (freed_ptrs!=NULL) *freed_ptrs=g_list_append(*freed_ptrs,(gpointer)plant);
+  weed_plant_free(plant);
+}
+
+
+static void weed_filter_free(weed_plant_t *filter, GList **freed_ptrs) {
   int nitems,error,i;
   weed_plant_t **plants,*gui;
   void *func;
@@ -4765,15 +4789,15 @@ static void weed_filter_free(weed_plant_t *filter) {
 	  gui=(weed_get_plantptr_value(plants[i],"gui",&error));
 	  if (weed_plant_has_leaf(gui,"display_func")) {
 	    func=weed_get_voidptr_value(gui,"display_func",&error);
-	    if (func!=NULL) weed_free(func);
+	    if (func!=NULL) weed_free_if_not_in_list(func,freed_ptrs);
 	  }
-	  weed_plant_free(gui);
+	  weed_plant_free_if_not_in_list(gui,freed_ptrs);
 	}
 	if (weed_plant_has_leaf(filter,"interpolate_func")) {
 	  func=weed_get_voidptr_value(filter,"interpolate_func",&error);
-	  if (func!=NULL) weed_free(func);
+	  if (func!=NULL) weed_free_if_not_in_list(func,freed_ptrs);
 	}
-	weed_plant_free(plants[i]);
+	weed_plant_free_if_not_in_list(plants[i],freed_ptrs);
       }
       weed_free(plants);
     }
@@ -4786,17 +4810,17 @@ static void weed_filter_free(weed_plant_t *filter) {
 
   if (weed_plant_has_leaf(filter,"init_func")) {
     func=weed_get_voidptr_value(filter,"init_func",&error);
-    if (func!=NULL) weed_free(func);
+    if (func!=NULL) weed_free_if_not_in_list(func,freed_ptrs);
   }
   
   if (weed_plant_has_leaf(filter,"deinit_func")) {
     func=weed_get_voidptr_value(filter,"deinit_func",&error);
-    if (func!=NULL) weed_free(func);
+    if (func!=NULL) weed_free_if_not_in_list(func,freed_ptrs);
   }
 
   if (weed_plant_has_leaf(filter,"process_func")) {
     func=weed_get_voidptr_value(filter,"process_func",&error);
-    if (func!=NULL) weed_free(func);
+    if (func!=NULL) weed_free_if_not_in_list(func,freed_ptrs);
   }
 
 
@@ -4805,7 +4829,7 @@ static void weed_filter_free(weed_plant_t *filter) {
     nitems=weed_leaf_num_elements(filter,"in_channel_templates");
     if (nitems>0) {
       plants=weed_get_plantptr_array(filter,"in_channel_templates",&error);
-      for (i=0;i<nitems;i++) weed_plant_free(plants[i]);
+      for (i=0;i<nitems;i++) weed_plant_free_if_not_in_list(plants[i],freed_ptrs);
       weed_free(plants);
     }
   }
@@ -4816,7 +4840,7 @@ static void weed_filter_free(weed_plant_t *filter) {
     nitems=weed_leaf_num_elements(filter,"out_channel_templates");
     if (nitems>0) {
       plants=weed_get_plantptr_array(filter,"out_channel_templates",&error);
-      for (i=0;i<nitems;i++) weed_plant_free(plants[i]);
+      for (i=0;i<nitems;i++) weed_plant_free_if_not_in_list(plants[i],freed_ptrs);
       weed_free(plants);
     }
   }
@@ -4829,7 +4853,7 @@ static void weed_filter_free(weed_plant_t *filter) {
       threaded_dialog_spin();
       for (i=0;i<nitems;i++) {
 	if (weed_plant_has_leaf(plants[i],"gui")) weed_plant_free(weed_get_plantptr_value(plants[i],"gui",&error));
-	weed_plant_free(plants[i]);
+	weed_plant_free_if_not_in_list(plants[i],freed_ptrs);
       }
       weed_free(plants);
     }
@@ -4837,7 +4861,7 @@ static void weed_filter_free(weed_plant_t *filter) {
 
 
   // free gui
-  if (weed_plant_has_leaf(filter,"gui")) weed_plant_free(weed_get_plantptr_value(filter,"gui",&error));
+  if (weed_plant_has_leaf(filter,"gui")) weed_plant_free_if_not_in_list(weed_get_plantptr_value(filter,"gui",&error),freed_ptrs);
 
 
   // free filter
@@ -5375,7 +5399,7 @@ static void load_compound_plugin(gchar *plugin_name, gchar *plugin_path) {
 	break;
       }
       if (!ok) {
-	if (filter!=NULL) weed_filter_free(filter);
+	if (filter!=NULL) weed_filter_free(filter,NULL);
 	filter=NULL;
 	break;
       }
@@ -5495,7 +5519,7 @@ void weed_unload_all(void) {
 
   weed_desetup_f desetup_fn;
 
-  GList *pinfo=NULL,*xpinfo;
+  GList *pinfo=NULL,*xpinfo,*freed_ptrs=NULL;
 
   int error;
 
@@ -5518,7 +5542,7 @@ void weed_unload_all(void) {
     filter=weed_filters[i];
 
     if (num_compound_fx(filter)>1) {
-      weed_filter_free(filter);
+      weed_filter_free(filter,&freed_ptrs);
       continue;
     }
 
@@ -5542,8 +5566,10 @@ void weed_unload_all(void) {
       handle=NULL;
       weed_set_voidptr_value(plugin_info,"handle",handle);
     }
-    weed_filter_free(filter);
+    weed_filter_free(filter,&freed_ptrs);
   }
+
+  g_list_free(freed_ptrs);
 
   xpinfo=pinfo;
 

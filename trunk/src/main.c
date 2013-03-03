@@ -304,7 +304,7 @@ static boolean pre_init(void) {
   sizdbl=sizeof(gdouble);
   sizshrt=sizeof(gshort);
 
-  mainw=(mainwindow*)(g_malloc(sizeof(mainwindow)));
+  mainw=(mainwindow*)(g_malloc0(sizeof(mainwindow)));
   mainw->is_ready=mainw->fatal=FALSE;
 
   mainw->free_fn=lives_free_normal;
@@ -331,9 +331,10 @@ static boolean pre_init(void) {
 
   mainw->vrfx_update=NULL;
 
-  prefs=(_prefs *)g_malloc(sizeof(_prefs));
+  prefs=(_prefs *)g_malloc0(sizeof(_prefs));
   future_prefs=(_future_prefs *)g_malloc(sizeof(_future_prefs));
 
+  prefs->wm=NULL;
   prefs->sleep_time=1000;
   mainw->cached_list=NULL;
 
@@ -1495,7 +1496,6 @@ static void lives_init(_ign_opts *ign_opts) {
 
       splash_msg(_("Loading realtime effect plugins..."),.6);
       weed_load_all();
-      load_compound_fx();
 
       // replace any multi choice effects with their delegates
       replace_with_delegates();

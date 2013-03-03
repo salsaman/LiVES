@@ -508,7 +508,7 @@ void on_save_rte_defs_activate (GtkMenuItem *menuitem, gpointer user_data) {
   d_print(msg);
   g_free(msg);
 
-  numfx=rte_get_numfilters();
+  numfx=rte_get_numfilters(FALSE);
 
   do {
     retval=0;

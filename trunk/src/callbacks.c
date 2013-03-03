@@ -463,11 +463,11 @@ void lives_exit (void) {
   if (prefs->fxdefsfile!=NULL) g_free(prefs->fxdefsfile);
   if (prefs->fxsizesfile!=NULL) g_free(prefs->fxsizesfile);
 
-  g_free(prefs->wm);
+  if (prefs->wm!=NULL) g_free(prefs->wm);
 
-  g_free(mainw->recovery_file);
+  if (mainw->recovery_file!=NULL) g_free(mainw->recovery_file);
 
-  for (i=0;i<NUM_LIVES_STRING_CONSTANTS;i++) g_free(mainw->string_constants[i]);
+  for (i=0;i<NUM_LIVES_STRING_CONSTANTS;i++) if (mainw->string_constants[i]!=NULL) g_free(mainw->string_constants[i]);
 
   if (mainw->video_drawable!=NULL) {
 #if GTK_CHECK_VERSION(3,0,0)
@@ -500,7 +500,7 @@ void lives_exit (void) {
 
   unload_decoder_plugins();
 
-  g_free(mainw->multitrack);
+  if (mainw->multitrack!=NULL) g_free(mainw->multitrack);
   mainw->multitrack=NULL;
   mainw->is_ready=FALSE;
 

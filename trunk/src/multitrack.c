@@ -3370,7 +3370,7 @@ static void populate_filter_box(GtkWidget *box, gint ninchans, lives_mt *mt) {
 
   lives_fx_cat_t cat,subcat;
 
-  gint nfilts=rte_get_numfilters();
+  gint nfilts=rte_get_numfilters(FALSE);
   int error,nins;
 
   register int i;
@@ -6379,7 +6379,7 @@ static boolean draw_cool_toggle (GtkWidget *widget, lives_painter_t *cr, gpointe
     lives_widget_set_bg_color(submenu_menu5, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
   }
 
-  num_filters=rte_get_numfilters();
+  num_filters=rte_get_numfilters(FALSE);
   for (i=0;i<num_filters;i++) {
     weed_plant_t *filter=get_weed_filter(i);
     if (filter!=NULL&&!weed_plant_has_leaf(filter,"host_menu_hide")) {

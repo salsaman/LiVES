@@ -463,7 +463,6 @@ int num_alpha_channels(weed_plant_t *filter, boolean out) {
 
 ////////////////////////////////////////////////////////////////////////
 
-#define MAX_WEED_FILTERS 65536
 #define MAX_WEED_INSTANCES 65536
 
 // store keys so we now eg, which rte mask entry to xor when deiniting
@@ -485,7 +484,8 @@ static gint fg_generator_clip;
 
 //////////////////////////////////////////////////////////////////////
 
-static weed_plant_t *weed_filters[MAX_WEED_FILTERS]; // array of filter_classes
+static weed_plant_t **weed_filters; // array of filter_classes
+static weed_plant_t **dupe_weed_filters; // array of duplicate filter_classes (only used during loading)
 
 // each 'hotkey' controls n instances, selectable as 'modes' or banks
 static weed_plant_t **key_to_instance[FX_KEYS_MAX];
@@ -494,10 +494,11 @@ static weed_plant_t **key_to_instance_copy[FX_KEYS_MAX]; // copy for preview dur
 static int *key_to_fx[FX_KEYS_MAX];
 static int key_modes[FX_KEYS_MAX];
 
-// count of how many filters we have loaded
-static gint num_weed_filters;
+static int num_weed_filters; ///< count of how many filters we have loaded
+static int num_weed_dupes; ///< number of duplicate filters (with multiple versions)
 
-static gchar *hashnames[MAX_WEED_FILTERS];
+static gchar **hashnames;
+static gchar **dupe_hashnames;
 
 // per key/mode parameter defaults
 weed_plant_t ***key_defaults[FX_KEYS_MAX_VIRTUAL];
@@ -4033,8 +4034,8 @@ static gint check_for_lives(weed_plant_t *filter, int filter_idx) {
 
 
 
-static gboolean set_in_channel_palettes (gint idx, gint num_channels) {
-  // set in channel palettes for filter[idx]
+static gboolean set_in_channel_palettes (weed_plant_t *filter, gint num_channels) {
+  // set in channel palettes for filter
   // we also enable optional channels if we have to
   // in this case we fill first the mandatory channels,
   // then if necessary the optional channels
@@ -4045,18 +4046,18 @@ static gboolean set_in_channel_palettes (gint idx, gint num_channels) {
 
   int num_elements,i,error;
 
-  if (!weed_plant_has_leaf(weed_filters[idx],"in_channel_templates")) {
+  if (!weed_plant_has_leaf(filter,"in_channel_templates")) {
     if (num_channels>0) return FALSE;
     return TRUE;
   }
 
-  num_elements=weed_leaf_num_elements(weed_filters[idx],"in_channel_templates");
+  num_elements=weed_leaf_num_elements(filter,"in_channel_templates");
 
   if (num_elements<num_channels) return FALSE;
 
   if (num_elements==0) return TRUE;
 
-  chantmpls=weed_get_plantptr_array(weed_filters[idx],"in_channel_templates",&error);
+  chantmpls=weed_get_plantptr_array(filter,"in_channel_templates",&error);
 
   // our start state is with all optional channels disabled
 
@@ -4154,8 +4155,8 @@ static gboolean set_in_channel_palettes (gint idx, gint num_channels) {
 
 
 
-static gboolean set_out_channel_palettes (gint idx, gint num_channels) {
-  // set in channel palettes for filter[idx]
+static gboolean set_out_channel_palettes (weed_plant_t *filter, gint num_channels) {
+  // set in channel palettes for filter
   // we also enable optional channels if we have to
   // in this case we fill first the mandatory channels,
   // then if necessary the optional channels
@@ -4164,14 +4165,14 @@ static gboolean set_out_channel_palettes (gint idx, gint num_channels) {
   weed_plant_t **chantmpls=NULL;
   weed_plant_t **in_chantmpls=NULL;
 
-  int num_elements=weed_leaf_num_elements(weed_filters[idx],"out_channel_templates"),i,error;
-  int num_in_elements=weed_leaf_num_elements(weed_filters[idx],"in_channel_templates");
+  int num_elements=weed_leaf_num_elements(filter,"out_channel_templates"),i,error;
+  int num_in_elements=weed_leaf_num_elements(filter,"in_channel_templates");
 
   int def_palette=WEED_PALETTE_END;
 
   if (num_elements<num_channels) return FALSE;
 
-  chantmpls=weed_get_plantptr_array(weed_filters[idx],"out_channel_templates",&error);
+  chantmpls=weed_get_plantptr_array(filter,"out_channel_templates",&error);
   // our start state is with all optional channels disabled
 
   // fill mandatory channels first; these palettes may change later if we get a frame in a different palette
@@ -4246,7 +4247,7 @@ static gboolean set_out_channel_palettes (gint idx, gint num_channels) {
 
   // now we set match channels
   if (num_in_elements) {
-    in_chantmpls=weed_get_plantptr_array(weed_filters[idx],"in_channel_templates",&error);
+    in_chantmpls=weed_get_plantptr_array(filter,"in_channel_templates",&error);
     if (!weed_plant_has_leaf(in_chantmpls[0],"is_audio")||
 	weed_get_boolean_value(in_chantmpls[0],"is_audio",&error)!=WEED_TRUE) {
       def_palette=weed_get_int_value(in_chantmpls[0],"current_palette",&error);
@@ -4289,23 +4290,19 @@ static void load_weed_plugin (gchar *plugin_name, gchar *plugin_path, gchar *dir
 
   void *handle;
 
-  GtkWidget *menuitem,*menu;
-  GtkWidget *pkg_menu;
-  GtkWidget *pkg_submenu=NULL;
-
-  int error,reason,idx=num_weed_filters;
+  int error,reason,oidx,idx=num_weed_filters;
 
   int filters_in_plugin;
   int mode=-1,kmode=0;
-  int pkg_posn=0;
+  int phashes;
+
+  gchar **phashnames;
 
   char cwd[PATH_MAX];
 
   char *pwd;
 
-  gchar *string,*filter_type;
   gchar *filter_name;
-  gchar *pkg=NULL,*pkgstring;
 
   register int i;
 
@@ -4358,114 +4355,114 @@ static void load_weed_plugin (gchar *plugin_name, gchar *plugin_path, gchar *dir
 
       filters=weed_get_plantptr_array(plugin_info,"filters",&error);
 
-      while (idx<MAX_WEED_FILTERS&&mode<filters_in_plugin-1) {
+      oidx=idx;
+      phashnames=NULL;
+      phashes=0;
+
+      while (mode<filters_in_plugin-1) {
 	mode++;
-	filter_name=weed_get_string_value(filters[mode],"name",&error);
-	if (!(reason=check_for_lives(filters[mode],idx))) {
-	  gboolean dup=FALSE;
-	  weed_filters[idx]=filters[mode];
+	filter=filters[mode];
+
+	filter_name=weed_get_string_value(filter,"name",&error);
+	if (!(reason=check_for_lives(filter,idx))) {
+	  boolean dup=FALSE,pdup=FALSE;
 
 	  num_weed_filters++;
+	  weed_filters=(weed_plant_t **)g_realloc(weed_filters,num_weed_filters*sizeof(weed_plant_t *));
+	  weed_filters[idx]=filter;
+
+	  hashnames=(gchar **)g_realloc(hashnames,num_weed_filters*sizeof(gchar *));
+	  hashnames[idx]=NULL;
 	  hashnames[idx]=make_weed_hashname(idx,TRUE);
+
+	  phashes++;
+	  phashnames=(gchar **)g_realloc(phashnames,phashes*sizeof(gchar *));
+	  phashnames[phashes-1]=make_weed_hashname(idx,FALSE);
+
 	  for (i=0;i<idx;i++) {
+	    if (i>oidx) {
+	      if (!strcmp(phashnames[phashes-1],phashnames[i-oidx-1])) {
+		//g_print("partial dupe: %s and %s\n",phashnames[phashes-1],phashnames[i-oidx-1]);
+		// found a partial match: author and/or version differ
+		// if in the same plugin, we will use the highest version no., others become dupes
+		num_weed_dupes++;
+		dupe_weed_filters=(weed_plant_t **)g_realloc(dupe_weed_filters,num_weed_dupes*sizeof(weed_plant_t *));
+		dupe_hashnames=(gchar **)g_realloc(dupe_hashnames,num_weed_dupes*sizeof(gchar *));
+		if (weed_get_int_value(filter,"version",&error)<
+		    weed_get_int_value(weed_filters[i],"version",&error)) {
+		  // add idx to dupe list
+		  dupe_weed_filters[num_weed_dupes-1]=filter;
+		  dupe_hashnames[num_weed_dupes-1]=hashnames[idx];
+		}
+		else {
+		  // add i to dupe list
+		  dupe_weed_filters[num_weed_dupes-1]=weed_filters[i];
+		  dupe_hashnames[num_weed_dupes-1]=hashnames[i];
+		  weed_filters[i]=filter;
+		  hashnames[i]=hashnames[idx];
+		}
+		phashes--;
+		g_free(phashnames[phashes]);
+		num_weed_filters--;
+		weed_filters=(weed_plant_t **)g_realloc(weed_filters,num_weed_filters*sizeof(weed_plant_t *));
+		hashnames=(gchar **)g_realloc(hashnames,num_weed_filters*sizeof(gchar *));
+		phashnames=(gchar **)g_realloc(phashnames,phashes*sizeof(gchar *));
+		pdup=TRUE;
+		break;
+	      }
+	    }
 	    if (!strcmp(hashnames[idx],hashnames[i])) {
 	      // skip dups
 	      char *msg=g_strdup_printf(_("Found duplicate plugin %s\n"),hashnames[idx]);
 	      LIVES_INFO(msg);
 	      g_free(msg);
 	      g_free(hashnames[idx]);
-	      g_free(filter_name);
-	      hashnames[idx]=NULL;
-	      weed_filters[idx]=NULL;
+	      g_free(phashnames[idx]);
 	      num_weed_filters--;
-	      idx--;
+	      phashes--;
+	      weed_filters=(weed_plant_t **)g_realloc(weed_filters,num_weed_filters*sizeof(weed_plant_t *));
+	      hashnames=(gchar **)g_realloc(hashnames,num_weed_filters*sizeof(gchar *));
+	      phashnames=(gchar **)g_realloc(phashnames,phashes*sizeof(gchar *));
 	      dup=TRUE;
 	      break;
 	    }
 	  }
-	  if (!dup) {
+	  if (dup) continue;
+
+	  // we start with all optional channels disabled (unless forced to use them)
+	  set_in_channel_palettes (filter,enabled_in_channels(filters[mode],FALSE));
+	  set_out_channel_palettes (filter,1);
+
+	  // skip hidden/duplicate filters
+	  if (!pdup&&key<FX_KEYS_PHYSICAL&&kmode<prefs->max_modes_per_key&&
+	      (!weed_plant_has_leaf(filter,"host_menu_hide")||
+	       (weed_get_boolean_value(filter,"host_menu_hide",&error)==WEED_FALSE))) {
+	    key_to_fx[key][kmode++]=idx;
 #ifdef DEBUG_WEED
-	    if (key<FX_KEYS_PHYSICAL) d_print(g_strdup_printf("Loaded filter \"%s\" in plugin \"%s\"; assigned to key ctrl-%d, mode %d.\n",
-							      filter_name,plugin_name,key+1,kmode+1));
-	    else d_print(g_strdup_printf("Loaded filter \"%s\" in plugin \"%s\", no key assigned\n",filter_name,plugin_name));
-#endif
+	    if (!pdup&&key<FX_KEYS_PHYSICAL&&kmode<prefs->max_modes_per_key) 
+	      d_print(g_strdup_printf("Loaded filter \"%s\" in plugin \"%s\"; assigned to key ctrl-%d, mode %d.\n",
+				      filter_name,plugin_name,key+1,kmode));
 
-	    filter=weed_filters[idx];
-	    
-	    // we start with all optional channels disabled (unless forced to use them)
-	    set_in_channel_palettes (idx,enabled_in_channels(filter,FALSE));
-	    set_out_channel_palettes (idx,1);
-	    
-	    // skip hidden channels
-	    if (!weed_plant_has_leaf(filter,"host_menu_hide")||
-		(weed_get_boolean_value(filter,"host_menu_hide",&error)==WEED_FALSE)) {
-	      if (key<FX_KEYS_PHYSICAL) {
-		key_to_fx[key][kmode]=idx;
-	      }
-
-	      if (num_in_params(filter,TRUE,TRUE)>0) {
-		
-		if ((pkgstring=strstr(filter_name,": "))!=NULL) {
-		  // package effect
-		  if (pkg==NULL) {
-		    pkg=filter_name;
-		    filter_name=g_strdup(pkg);
-		    memset(pkgstring,0,1);
-		    /* TRANSLATORS: example " - LADSPA plugins -" */
-		    pkgstring=g_strdup_printf(_(" - %s plugins -"),pkg);
-		    // create new submenu
-		    
-		    pkg_menu=gtk_menu_item_new_with_label (pkgstring);
-		    gtk_container_add (GTK_CONTAINER (mainw->rte_defs), pkg_menu);
-		    gtk_menu_reorder_child(GTK_MENU(mainw->rte_defs),pkg_menu,pkg_posn++);
-		    
-		    pkg_submenu=gtk_menu_new();
-		    gtk_menu_item_set_submenu (GTK_MENU_ITEM (pkg_menu), pkg_submenu);
-		    
-		    if (palette->style&STYLE_1) {
-		      lives_widget_set_bg_color(pkg_submenu, GTK_STATE_NORMAL, &palette->menu_and_bars);
-		    }
-		    
-		    gtk_widget_show (pkg_menu);
-		    gtk_widget_show (pkg_submenu);
-		    g_free(pkgstring);
-		  }
-		  // add to submenu
-		  menu=pkg_submenu;
-		}
-		else {
-		  if (pkg!=NULL) g_free(pkg);
-		  pkg=NULL;
-		  menu=mainw->rte_defs;
-		}
-		
-		filter_type=weed_filter_get_type(weed_filters[idx],TRUE,FALSE);
-		string=g_strdup_printf("%s (%s)",filter_name,filter_type);
-		
-		menuitem=gtk_menu_item_new_with_label (string);
-		gtk_widget_show(menuitem);
-		g_free(string);
-		g_free(filter_type);
-		
-		gtk_container_add (GTK_CONTAINER (menu), menuitem);
-		
-		g_signal_connect (GTK_OBJECT (menuitem), "activate",
-				  G_CALLBACK (rte_set_defs_activate),
-				  GINT_TO_POINTER(idx));
-	      }
-	    }
-
-	    kmode++;
 	  }
-	  idx++;
+	  else {
+	    d_print(g_strdup_printf("Loaded filter \"%s\" in plugin \"%s\", no key assigned\n",filter_name,plugin_name));
+#endif
+	  }
+	  if (!pdup) idx++;
+
 	}
 #ifdef DEBUG_WEED
 	else g_printerr(g_strdup_printf("Unsuitable filter \"%s\" in plugin \"%s\", reason code %d\n",filter_name,plugin_name,reason));
 #endif
 	weed_free(filter_name);
       }
+      for (i=0;i<phashes;i++) {
+	g_free(phashnames[i]);
+      }
+      g_free(phashnames);
       weed_free(filters);
     }
+
   }
   else g_printerr(_("Info: Unable to load plugin %s\nError was: %s\n"),plugin_path,dlerror());
 
@@ -4488,6 +4485,107 @@ void weed_memory_init(void) {
 }
 
 
+
+static void merge_dupes(void) {
+  register int i;
+
+  weed_filters=(weed_plant_t **)g_realloc(weed_filters,(num_weed_filters+num_weed_dupes)*sizeof(weed_plant_t *));
+  hashnames=(gchar **)g_realloc(hashnames,(num_weed_filters+num_weed_dupes)*sizeof(gchar *));
+
+  for (i=num_weed_filters;i<num_weed_filters+num_weed_dupes;i++) {
+    weed_filters[i]=dupe_weed_filters[i-num_weed_filters];
+    hashnames[i]=dupe_hashnames[i-num_weed_filters];
+  }
+
+  if (dupe_weed_filters!=NULL) g_free(dupe_weed_filters);
+  if (dupe_hashnames!=NULL) g_free(dupe_hashnames);
+
+  num_weed_filters+=num_weed_dupes;
+}
+
+
+static void make_fx_defs_menu(void) {
+  weed_plant_t *filter;
+
+  GtkWidget *menuitem,*menu;
+  GtkWidget *pkg_menu;
+  GtkWidget *pkg_submenu=NULL;
+
+  gchar *string,*filter_type,*filter_name;
+  gchar *pkg=NULL,*pkgstring;
+
+  int pkg_posn=0,error;
+
+  register int i;
+
+
+  // menu entries for vj/set defs
+  for (i=0;i<num_weed_filters-num_weed_dupes;i++) {
+    filter=weed_filters[i];
+	    
+    // skip hidden filters
+    if (!weed_plant_has_leaf(filter,"host_menu_hide")||
+	(weed_get_boolean_value(filter,"host_menu_hide",&error)==WEED_FALSE)) {
+
+      if (num_in_params(filter,TRUE,TRUE)>0) {
+	filter_name=weed_get_string_value(filter,"name",&error);
+	if ((pkgstring=strstr(filter_name,": "))!=NULL) {
+	  // package effect
+	  if (pkg==NULL) {
+	    pkg=filter_name;
+	    filter_name=g_strdup(pkg);
+	    memset(pkgstring,0,1);
+	    /* TRANSLATORS: example " - LADSPA plugins -" */
+	    pkgstring=g_strdup_printf(_(" - %s plugins -"),pkg);
+	    // create new submenu
+	      
+	    pkg_menu=gtk_menu_item_new_with_label (pkgstring);
+	    gtk_container_add (GTK_CONTAINER (mainw->rte_defs), pkg_menu);
+	    gtk_menu_reorder_child(GTK_MENU(mainw->rte_defs),pkg_menu,pkg_posn++);
+	      
+	    pkg_submenu=gtk_menu_new();
+	    gtk_menu_item_set_submenu (GTK_MENU_ITEM (pkg_menu), pkg_submenu);
+	      
+	    if (palette->style&STYLE_1) {
+	      lives_widget_set_bg_color(pkg_submenu, GTK_STATE_NORMAL, &palette->menu_and_bars);
+	    }
+	      
+	    gtk_widget_show (pkg_menu);
+	    gtk_widget_show (pkg_submenu);
+	    g_free(pkgstring);
+	  }
+	  // add to submenu
+	  menu=pkg_submenu;
+	}
+	else {
+	  if (pkg!=NULL) g_free(pkg);
+	  pkg=NULL;
+	  menu=mainw->rte_defs;
+	}
+	  
+	filter_type=weed_filter_get_type(filter,TRUE,FALSE);
+	string=g_strdup_printf("%s (%s)",filter_name,filter_type);
+	  
+	menuitem=gtk_menu_item_new_with_label (string);
+	gtk_widget_show(menuitem);
+	g_free(string);
+	g_free(filter_type);
+	  
+	gtk_container_add (GTK_CONTAINER (menu), menuitem);
+	  
+	g_signal_connect (GTK_OBJECT (menuitem), "activate",
+			  G_CALLBACK (rte_set_defs_activate),
+			  GINT_TO_POINTER(i));
+
+	weed_free(filter_name);
+      }
+    }
+  }
+}
+
+
+
+
 void weed_load_all (void) {
   // get list of plugins from directory and create our fx
   int i,j,plugin_idx,subdir_idx;
@@ -4503,6 +4601,10 @@ void weed_load_all (void) {
   gint listlen;
 
   num_weed_filters=0;
+  num_weed_dupes=0;
+
+  weed_filters=dupe_weed_filters=NULL;
+  hashnames=dupe_hashnames=NULL;
 
   threaded_dialog_spin();
   lives_weed_plugin_path=g_build_filename(prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_WEED_FX_BUILTIN,NULL);
@@ -4544,11 +4646,6 @@ void weed_load_all (void) {
   }
 
   next_free_key=FX_KEYS_MAX_VIRTUAL;
-
-  for (i=0;i<MAX_WEED_FILTERS;i++) {
-    weed_filters[i]=NULL;
-    hashnames[i]=NULL;
-  }
 
 
   threaded_dialog_spin();
@@ -4642,6 +4739,11 @@ void weed_load_all (void) {
   d_print(msg);
   g_free(msg);
   threaded_dialog_spin();
+  load_compound_fx();
+  threaded_dialog_spin();
+  make_fx_defs_menu();
+  threaded_dialog_spin();
+  if (num_weed_dupes>0) merge_dupes();
 }
 
 
@@ -5292,7 +5394,12 @@ static void load_compound_plugin(gchar *plugin_name, gchar *plugin_path) {
     weed_free(author);
     weed_set_int_value(filter,"version",version);
     idx=num_weed_filters++;
+
+    weed_filters=(weed_plant_t **)g_realloc(weed_filters,num_weed_filters*sizeof(weed_plant_t *));
     weed_filters[idx]=filter;
+
+    hashnames=(gchar **)g_realloc(hashnames,num_weed_filters*sizeof(gchar *));
+    hashnames[idx]=NULL;
     hashnames[idx]=make_weed_hashname(idx,TRUE);
 
     if (num_in_params(filter,TRUE,TRUE)>0) {
@@ -5449,8 +5556,14 @@ void weed_unload_all(void) {
 
   if (xpinfo!=NULL) g_list_free(xpinfo);
 
-  for (i=0;i<MAX_WEED_FILTERS;i++) {
+  for (i=0;i<num_weed_filters;i++) {
     if (hashnames[i]!=NULL) g_free(hashnames[i]);
+  }
+
+  if (hashnames!=NULL) g_free(hashnames);
+  if (weed_filters!=NULL) g_free(weed_filters);
+
+  for (i=0;i<FX_KEYS_MAX;i++) {
     g_free(key_to_fx[i]);
     g_free(key_to_instance[i]);
     g_free(key_to_instance_copy[i]);
@@ -8377,7 +8490,7 @@ GList *weed_get_all_names (gshort list_type) {
   int i,error;
   gchar *filter_name,*filter_type,*hashname,*string;
 
-  for (i=0;i<num_weed_filters;i++) {
+  for (i=0;i<num_weed_filters-num_weed_dupes;i++) {
     filter_name=weed_get_string_value(weed_filters[i],"name",&error);
     switch (list_type) {
     case 1:
@@ -8409,7 +8522,8 @@ GList *weed_get_all_names (gshort list_type) {
 }
 
 
-gint rte_get_numfilters(void) {
+int rte_get_numfilters(boolean inc_dupes) {
+  if (!inc_dupes) return num_weed_filters-num_weed_dupes;
   return num_weed_filters;
 }
 
@@ -9271,7 +9385,7 @@ gchar *make_weed_hashname(int filter_idx, gboolean fullname) {
 
 
 
-int weed_get_idx_for_hashname (const gchar *hashname, gboolean fullname) {
+int weed_get_idx_for_hashname (const gchar *hashname, boolean fullname) {
   int i;
   gchar *chashname;
 

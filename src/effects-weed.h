@@ -205,7 +205,7 @@ gint rte_switch_keymode (gint key, gint mode, const gchar *hashname);
 
 int rte_getmodespk (void);
 GList *weed_get_all_names (gshort list_type);
-gint rte_get_numfilters(void);
+int rte_get_numfilters(boolean inc_dupes);
 
 /////////////////////////////////////////////////////////
 // key starts at 0

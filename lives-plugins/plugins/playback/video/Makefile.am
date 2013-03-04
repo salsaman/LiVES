@@ -77,17 +77,13 @@ openGL_trickery_la_LDFLAGS = $(shared_ldflags) @X11_LIBS@ @XRENDER_LIBS@ @GL_LIB
 
 
 if HAVE_SYSTEM_WEED
-openGL_trickery_la_LDFLAGS += $(shared_ldflags) @WEED_UTILS_LIBS@ 
 openGL_trickery_la_CPPFLAGS += -DHAVE_SYSTEM_WEED
 else
-openGL_trickery_la_LDFLAGS += $(shared_ldflags) ../../../../libweed/libweed-utils.la
+openGL_trickery_la_LDFLAGS += $(shared_ldflags)
 endif
 
 if HAVE_SYSTEM_WEED_PLUGIN_UTILS
-openGL_trickery_la_LDFLAGS += @WEED_PLUGIN_UTILS_LIBS@
 openGL_trickery_la_CPPFLAGS += -DHAVE_SYSTEM_WEED_PLUGIN_UTILS
-else
-openGL_trickery_la_LDFLAGS += ../../../../libweed/libweed-plugin-utils.la
 endif
 
 

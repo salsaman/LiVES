@@ -15,22 +15,22 @@
 
 #ifdef HAVE_SYSTEM_WEED
 #include <weed/weed.h>
+#include <weed/weed-palettes.h>
 #include <weed/weed-effects.h>
-#include <weed/weed-utils.h>
-#include <weed/weed-plugin.h>
 #else
 #include "../../../../libweed/weed.h"
 #include "../../../../libweed/weed-effects.h"
-#include "../../../../libweed/weed-utils.h"
-#include "../../../../libweed/weed-plugin.h"
+#include "../../../../libweed/weed-palettes.h"
 #endif
 
 #ifdef HAVE_SYSTEM_WEED_PLUGIN_UTILS
-#include <weed/weed-plugin-utils.h>
+#include <weed/weed-plugin.h>
 #else
-#include "../../../../libweed/weed-plugin-utils.h"
+#include "../../../../libweed/weed-plugin.h"
 #endif
 
+#include "../../../../lives-plugins/weed-plugins/weed-utils-code.c"
+#include "../../../../lives-plugins/weed-plugins/weed-plugin-utils.c"
 
 
 ////////////////////////////////////////////////////////////////////////////////////
@@ -2173,7 +2173,8 @@ boolean send_keycodes (keyfunc host_key_fn) {
     pthread_mutex_lock(&dpy_mutex);
     if ((volatile Display *)dpy!=NULL) {
       if (XCheckWindowEvent( dpy, xWin, KeyPressMask | KeyReleaseMask, &xEvent ) ) {
-	keySymbol = XKeycodeToKeysym( dpy, xEvent.xkey.keycode, 0 );
+	int keysyms_per_keycode_return;
+	keySymbol = (KeySym)XGetKeyboardMapping(dpy,xEvent.xkey.keycode,0,&keysyms_per_keycode_return);
 	mod_mask=xEvent.xkey.state;
 	pthread_mutex_unlock(&dpy_mutex);
 

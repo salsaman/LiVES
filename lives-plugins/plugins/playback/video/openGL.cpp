@@ -648,7 +648,8 @@ boolean send_keycodes (keyfunc host_key_fn) {
     pthread_mutex_lock(&dpy_mutex);
     if ((volatile Display *)dpy!=NULL) {
       if (XCheckWindowEvent( dpy, xWin, KeyPressMask | KeyReleaseMask, &xEvent ) ) {
-	keySymbol = XKeycodeToKeysym( dpy, xEvent.xkey.keycode, 0 );
+	int keysyms_per_keycode_return;
+	keySymbol = (KeySym)XGetKeyboardMapping(dpy,xEvent.xkey.keycode,0,&keysyms_per_keycode_return);
 	mod_mask=xEvent.xkey.state;
 	pthread_mutex_unlock(&dpy_mutex);
 

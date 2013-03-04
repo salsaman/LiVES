@@ -59,6 +59,10 @@
 
 #include <glib.h>
 
+#ifdef CHECK_CALLER
+#include <stdio.h>
+#endif
+
 extern weed_default_getter_f weed_default_get;
 
 extern weed_leaf_get_f weed_leaf_get;
@@ -304,6 +308,9 @@ static char **_weed_plant_list_leaves(weed_plant_t *plant) {
 
 static inline int _weed_leaf_set_caller(weed_plant_t *plant, const char *key, int seed_type, int num_elems, 
 					void *value, int caller) {
+#ifdef CHECK_CALLER
+  printf("caller was %d\n",caller);
+#endif
   weed_data_t **data=NULL;
   weed_leaf_t *leaf=weed_find_leaf (plant,key);
   if (leaf==NULL) {

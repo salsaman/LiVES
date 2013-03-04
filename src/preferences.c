@@ -2454,8 +2454,8 @@ _prefsw *create_prefs_dialog (void) {
   prefsw->spinbutton_mt_def_width = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 1, 0);
   gtk_label_set_mnemonic_widget (GTK_LABEL (label), prefsw->spinbutton_mt_def_width);
   hbox = lives_hbox_new (FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (hbox), prefsw->spinbutton_mt_def_width, TRUE, FALSE, 0);
   gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 10);
+  gtk_box_pack_start (GTK_BOX (hbox), prefsw->spinbutton_mt_def_width, TRUE, FALSE, 0);
   gtk_widget_show_all(hbox);
   gtk_container_set_border_width(GTK_CONTAINER (hbox), 20);
   gtk_box_pack_start (GTK_BOX (hbox3), hbox, FALSE, TRUE, 0);
@@ -2471,8 +2471,8 @@ _prefsw *create_prefs_dialog (void) {
   prefsw->spinbutton_mt_def_height = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 1, 0);
   gtk_label_set_mnemonic_widget (GTK_LABEL (label), prefsw->spinbutton_mt_def_height);
   hbox = lives_hbox_new (FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (hbox), prefsw->spinbutton_mt_def_height, TRUE, FALSE, 0);
   gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 0);
+  gtk_box_pack_start (GTK_BOX (hbox), prefsw->spinbutton_mt_def_height, TRUE, FALSE, 0);
   gtk_widget_show_all(hbox);
   gtk_container_set_border_width(GTK_CONTAINER (hbox), 20);
   gtk_box_pack_start (GTK_BOX (hbox3), hbox, FALSE, TRUE, 0);
@@ -2488,8 +2488,8 @@ _prefsw *create_prefs_dialog (void) {
   prefsw->spinbutton_mt_def_fps = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 1, 3);
   gtk_label_set_mnemonic_widget (GTK_LABEL (label),prefsw->spinbutton_mt_def_fps);
   hbox = lives_hbox_new (FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (hbox), prefsw->spinbutton_mt_def_fps, TRUE, FALSE, 0);
   gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 0);
+  gtk_box_pack_start (GTK_BOX (hbox), prefsw->spinbutton_mt_def_fps, TRUE, FALSE, 20);
   gtk_widget_show_all(hbox);
   gtk_container_set_border_width(GTK_CONTAINER (hbox), 20);
   gtk_box_pack_start (GTK_BOX (hbox3), hbox, FALSE, TRUE, 0);

@@ -359,8 +359,8 @@ enum {
 };
 
 
-#define PREF_WIN_WIDTH 960
-#define PREF_WIN_HEIGHT 640
+#define PREF_WIN_WIDTH (mainw->scr_width*.9)
+#define PREF_WIN_HEIGHT (mainw->scr_height*.9)
 
 #define DS_WARN_CRIT_MAX 1000000. ///< MB.
 

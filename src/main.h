@@ -828,24 +828,24 @@ void kill_play_window (void);
 void make_preview_box (void);
 void play_window_set_title(void);
 void add_to_playframe (void);
-GtkWidget* create_cdtrack_dialog (gint type, gpointer user_data);
+GtkWidget* create_cdtrack_dialog (int type, gpointer user_data);
 GtkTextView *create_output_textview(void);
 gchar *choose_file(gchar *dir, gchar *fname, gchar **filt, GtkFileChooserAction act, const char *title, GtkWidget *extra);
-void choose_file_with_preview (gchar *dir, const gchar *title, gint preview_type);
+void choose_file_with_preview (gchar *dir, const gchar *title, int preview_type);
 void add_suffix_check(GtkBox *box, const gchar *ext);
 
 
 // dialogs.c
-gboolean do_progress_dialog(gboolean visible, gboolean cancellable, const gchar *text);
-gboolean do_warning_dialog(const gchar *text);
-gboolean do_warning_dialog_with_check(const gchar *text, gint warn_mask_number);
-gboolean do_warning_dialog_with_check_transient(const gchar *text, gint warn_mask_number, GtkWindow *transient);
-gboolean do_yesno_dialog(const gchar *text) WARN_UNUSED;
+gboolean do_progress_dialog(boolean visible, boolean cancellable, const gchar *text);
+boolean do_warning_dialog(const gchar *text);
+boolean do_warning_dialog_with_check(const gchar *text, int warn_mask_number);
+boolean do_warning_dialog_with_check_transient(const gchar *text, int warn_mask_number, GtkWindow *transient);
+boolean do_yesno_dialog(const gchar *text) WARN_UNUSED;
 int do_abort_cancel_retry_dialog(const gchar *text, GtkWindow *transient) WARN_UNUSED;
 void do_error_dialog(const gchar *text);
-void do_error_dialog_with_check(const gchar *text, gint warn_mask_number);
+void do_error_dialog_with_check(const gchar *text, int warn_mask_number);
 void do_blocking_error_dialog(const gchar *text);
-void do_error_dialog_with_check_transient(const gchar *text, gboolean is_blocking,gint warn_mask_number, 
+void do_error_dialog_with_check_transient(const gchar *text, boolean is_blocking, int warn_mask_number, 
 					  GtkWindow *transient);
 
 
@@ -859,19 +859,19 @@ int do_header_read_error_with_retry(int clip) WARN_UNUSED;
 int do_header_missing_detail_error(int clip, lives_clip_details_t detail) WARN_UNUSED;
 void do_chdir_failed_error(const char *dir);
 void handle_backend_errors(void);
-gboolean check_backend_return(file *sfile);
+boolean check_backend_return(file *sfile);
 
 /** warn about disk space */
 gchar *ds_critical_msg(const gchar *dir, guint64 dsval);
 gchar *ds_warning_msg(const gchar *dir, guint64 dsval, guint64 cwarn, guint64 nwarn);
-gboolean check_storage_space(file *sfile, gboolean is_processing);
+boolean check_storage_space(file *sfile, boolean is_processing);
 
 gchar *get_upd_msg(void);
 gchar *get_new_install_msg(void);
 
 gboolean ask_permission_dialog(int what);
 gboolean do_abort_check(void);
-void add_warn_check (GtkBox *box, gint warn_mask_number);
+void add_warn_check (GtkBox *box, int warn_mask_number);
 void do_memory_error_dialog (void);
 void too_many_files(void);
 void tempdir_warning (void);

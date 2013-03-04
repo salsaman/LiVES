@@ -14724,18 +14724,16 @@ multitrack_redo            (GtkMenuItem     *menuitem,
 
 
 
-void
-multitrack_view_details            (GtkMenuItem     *menuitem,
-				    gpointer         user_data) {
+void multitrack_view_details (GtkMenuItem *menuitem, gpointer user_data) {
   char buff[512];
-  fileinfo *filew;
+  lives_clipinfo_t *filew;
   lives_mt *mt=(lives_mt *)user_data;
   file *rfile=mainw->files[mt->render_file];
   guint bsize=0;
-  gdouble time=0.;
-  gint num_events=0;
+  double time=0.;
+  int num_events=0;
 
-  filew = create_info_window (cfile->achans,TRUE);
+  filew = create_clip_info_window (cfile->achans,TRUE);
 
   g_snprintf(buff,512,"LiVES - %s",_("Multitrack details"));
   gtk_window_set_title (GTK_WINDOW (filew->info_window), buff);

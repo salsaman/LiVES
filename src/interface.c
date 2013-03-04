@@ -421,7 +421,7 @@ xprocess * create_processing (const gchar *text) {
 
 
 
-fileinfo *create_info_window (gint audio_channels, boolean is_mt) {
+lives_clipinfo_t *create_clip_info_window (int audio_channels, boolean is_mt) {
   GtkWidget *vbox5;
   GtkWidget *frame4;
   GtkWidget *fixed3;
@@ -446,7 +446,7 @@ fileinfo *create_info_window (gint audio_channels, boolean is_mt) {
 
   GtkAccelGroup *accel_group;
 
-  fileinfo *filew=(fileinfo*)(g_malloc(sizeof(fileinfo)));
+  lives_clipinfo_t *filew=(lives_clipinfo_t *)(g_malloc(sizeof(lives_clipinfo_t)));
 
   filew->info_window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
   gtk_window_set_position (GTK_WINDOW (filew->info_window), GTK_WIN_POS_CENTER_ALWAYS);
@@ -530,69 +530,41 @@ fileinfo *create_info_window (gint audio_channels, boolean is_mt) {
     gtk_text_view_set_justification (GTK_TEXT_VIEW (filew->textview29), GTK_JUSTIFY_CENTER);
     gtk_text_view_set_cursor_visible (GTK_TEXT_VIEW (filew->textview29), FALSE);
     
-    label45 = gtk_label_new (_("Format"));
+    label45 = lives_standard_label_new (_("Format"));
     gtk_widget_show (label45);
     gtk_fixed_put (GTK_FIXED (fixed3), label45, 44, 64);
     gtk_widget_set_size_request (label45, 125, 20);
-    gtk_label_set_justify (GTK_LABEL (label45), GTK_JUSTIFY_LEFT);
-    if (palette->style&STYLE_1) {
-      lives_widget_set_fg_color(label45, GTK_STATE_NORMAL, &palette->normal_fore);
-    }
 
-    label46 = gtk_label_new (_("Frame size"));
+    label46 = lives_standard_label_new (_("Frame size"));
     gtk_widget_show (label46);
     gtk_fixed_put (GTK_FIXED (fixed3), label46, 18, 152);
     gtk_widget_set_size_request (label46, 145, 20);
-    gtk_label_set_justify (GTK_LABEL (label46), GTK_JUSTIFY_LEFT);
-    if (palette->style&STYLE_1) {
-      lives_widget_set_fg_color(label46, GTK_STATE_NORMAL, &palette->normal_fore);
-    }
 
-    if (!is_mt) label47 = gtk_label_new (_("File size"));
-    else label47 = gtk_label_new (_("Byte size"));
+    if (!is_mt) label47 = lives_standard_label_new (_("File size"));
+    else label47 = lives_standard_label_new (_("Byte size"));
     gtk_widget_show (label47);
     gtk_fixed_put (GTK_FIXED (fixed3), label47, 18, 240);
     gtk_widget_set_size_request (label47, 145, 20);
-    gtk_label_set_justify (GTK_LABEL (label47), GTK_JUSTIFY_LEFT);
-    if (palette->style&STYLE_1) {
-      lives_widget_set_fg_color(label47, GTK_STATE_NORMAL, &palette->normal_fore);
-    }
 
-    label48 = gtk_label_new (_("Total time"));
+    label48 = lives_standard_label_new (_("Total time"));
     gtk_widget_show (label48);
     gtk_fixed_put (GTK_FIXED (fixed3), label48, 450, 240);
     gtk_widget_set_size_request (label48, 145, 20);
-    gtk_label_set_justify (GTK_LABEL (label48), GTK_JUSTIFY_LEFT);
-    if (palette->style&STYLE_1) {
-      lives_widget_set_fg_color(label48, GTK_STATE_NORMAL, &palette->normal_fore);
-    }
 
-    label44 = gtk_label_new (_("FPS"));
+    label44 = lives_standard_label_new (_("FPS"));
     gtk_widget_show (label44);
     gtk_fixed_put (GTK_FIXED (fixed3), label44, 476, 64);
     gtk_widget_set_size_request (label44, 120, 20);
-    gtk_label_set_justify (GTK_LABEL (label44), GTK_JUSTIFY_LEFT);
-    if (palette->style&STYLE_1) {
-      lives_widget_set_fg_color(label44, GTK_STATE_NORMAL, &palette->normal_fore);
-    }
 
-    if (!is_mt) label43 = gtk_label_new (_("Frames"));
-    else label43 = gtk_label_new (_("Events"));
+    if (!is_mt) label43 = lives_standard_label_new (_("Frames"));
+    else label43 = lives_standard_label_new (_("Events"));
     gtk_widget_show (label43);
     gtk_fixed_put (GTK_FIXED (fixed3), label43, 476, 152);
     gtk_widget_set_size_request (label43, 125, 20);
-    gtk_label_set_justify (GTK_LABEL (label43), GTK_JUSTIFY_LEFT);
-    if (palette->style&STYLE_1) {
-      lives_widget_set_fg_color(label43, GTK_STATE_NORMAL, &palette->normal_fore);
-    }
 
-    label40 = gtk_label_new (_("Video"));
+    label40 = lives_standard_label_new (_("Video"));
     gtk_widget_show (label40);
     gtk_frame_set_label_widget (GTK_FRAME (frame4), label40);
-    gtk_label_set_justify (GTK_LABEL (label40), GTK_JUSTIFY_LEFT);
-    if (palette->style&STYLE_1) {
-      lives_widget_set_fg_color(label40, GTK_STATE_NORMAL, &palette->normal_fore);
-    }
   }
 
   if (audio_channels>0) {
@@ -605,18 +577,14 @@ fileinfo *create_info_window (gint audio_channels, boolean is_mt) {
     }
 
     if (audio_channels>1) {
-      left = gtk_label_new (_("Left Audio"));
+      left = lives_standard_label_new (_("Left Audio"));
     }
     else {
-      left = gtk_label_new (_("Audio"));
+      left = lives_standard_label_new (_("Audio"));
     }
 
     gtk_widget_show (left);
     gtk_frame_set_label_widget (GTK_FRAME (frame5), left);
-    gtk_label_set_justify (GTK_LABEL (left), GTK_JUSTIFY_LEFT);
-    if (palette->style&STYLE_1) {
-      lives_widget_set_fg_color(left, GTK_STATE_NORMAL, &palette->normal_fore);
-    }
 
     fixed5 = gtk_fixed_new ();
     gtk_widget_show (fixed5);
@@ -631,14 +599,10 @@ fileinfo *create_info_window (gint audio_channels, boolean is_mt) {
       gtk_text_view_set_justification (GTK_TEXT_VIEW (filew->textview_ltime), GTK_JUSTIFY_CENTER);
       gtk_text_view_set_cursor_visible (GTK_TEXT_VIEW (filew->textview_ltime), FALSE);
       
-      label50 = gtk_label_new (_("Total time"));
+      label50 = lives_standard_label_new (_("Total time"));
       gtk_widget_show (label50);
       gtk_fixed_put (GTK_FIXED (fixed5), label50, 450, 32);
       gtk_widget_set_size_request (label50, 145, 16);
-      gtk_label_set_justify (GTK_LABEL (label50), GTK_JUSTIFY_LEFT);
-      if (palette->style&STYLE_1) {
-	lives_widget_set_fg_color(label50, GTK_STATE_NORMAL, &palette->normal_fore);
-      }
     }
 
     filew->textview_lrate = gtk_text_view_new ();
@@ -649,15 +613,10 @@ fileinfo *create_info_window (gint audio_channels, boolean is_mt) {
     gtk_text_view_set_justification (GTK_TEXT_VIEW (filew->textview_lrate), GTK_JUSTIFY_CENTER);
     gtk_text_view_set_cursor_visible (GTK_TEXT_VIEW (filew->textview_lrate), FALSE);
     
-    label52 = gtk_label_new (_("Rate/size"));
+    label52 = lives_standard_label_new (_("Rate/size"));
     gtk_widget_show (label52);
     gtk_fixed_put (GTK_FIXED (fixed5), label52, 30, 32);
     gtk_widget_set_size_request (label52, 130, 16);
-    gtk_label_set_justify (GTK_LABEL (label52), GTK_JUSTIFY_LEFT);
-    if (palette->style&STYLE_1) {
-      lives_widget_set_fg_color(label52, GTK_STATE_NORMAL, &palette->normal_fore);
-    }
-
 
     if (audio_channels>1) {
       frame6 = gtk_frame_new (NULL);
@@ -681,14 +640,10 @@ fileinfo *create_info_window (gint audio_channels, boolean is_mt) {
 	gtk_text_view_set_justification (GTK_TEXT_VIEW (filew->textview_rtime), GTK_JUSTIFY_CENTER);
 	gtk_text_view_set_cursor_visible (GTK_TEXT_VIEW (filew->textview_rtime), FALSE);
 	
-	label51 = gtk_label_new (_("Total time"));
+	label51 = lives_standard_label_new (_("Total time"));
 	gtk_widget_show (label51);
 	gtk_fixed_put (GTK_FIXED (fixed6), label51, 450, 32);
 	gtk_widget_set_size_request (label51, 145, 16);
-	gtk_label_set_justify (GTK_LABEL (label51), GTK_JUSTIFY_LEFT);
-	if (palette->style&STYLE_1) {
-	  lives_widget_set_fg_color(label51, GTK_STATE_NORMAL, &palette->normal_fore);
-	}
       }
 
       filew->textview_rrate = gtk_text_view_new ();
@@ -699,22 +654,14 @@ fileinfo *create_info_window (gint audio_channels, boolean is_mt) {
       gtk_text_view_set_justification (GTK_TEXT_VIEW (filew->textview_rrate), GTK_JUSTIFY_CENTER);
       gtk_text_view_set_cursor_visible (GTK_TEXT_VIEW (filew->textview_rrate), FALSE);
       
-      label53 = gtk_label_new (_("Rate/size"));
+      label53 = lives_standard_label_new (_("Rate/size"));
       gtk_widget_show (label53);
       gtk_fixed_put (GTK_FIXED (fixed6), label53, 30, 32);
       gtk_widget_set_size_request (label53, 130, 16);
-      gtk_label_set_justify (GTK_LABEL (label53), GTK_JUSTIFY_LEFT);
-      if (palette->style&STYLE_1) {
-	lives_widget_set_fg_color(label53, GTK_STATE_NORMAL, &palette->normal_fore);
-      }
       
-      right = gtk_label_new (_("Right audio"));
+      right = lives_standard_label_new (_("Right audio"));
       gtk_widget_show (right);
       gtk_frame_set_label_widget (GTK_FRAME (frame6), right);
-      gtk_label_set_justify (GTK_LABEL (right), GTK_JUSTIFY_LEFT);
-      if (palette->style&STYLE_1) {
-	lives_widget_set_fg_color(right, GTK_STATE_NORMAL, &palette->normal_fore);
-      }
     }
   }
 
@@ -726,10 +673,6 @@ fileinfo *create_info_window (gint audio_channels, boolean is_mt) {
   gtk_button_set_relief (GTK_BUTTON (button8), GTK_RELIEF_NONE);
   lives_widget_set_can_focus_and_default (button8);
   gtk_widget_grab_default (button8);
-
-  if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color(button8, (GtkStateType)(GTK_STATE_SELECTED|GTK_STATE_ACTIVE), &palette->white);
-  }
 
   g_signal_connect (GTK_OBJECT (button8), "clicked",
                       G_CALLBACK (lives_general_button_clicked),
@@ -749,6 +692,7 @@ fileinfo *create_info_window (gint audio_channels, boolean is_mt) {
   return filew;
 }
 
+
 static void on_resizecb_toggled (GtkToggleButton *t, gpointer user_data) {
   GtkWidget *cb=(GtkWidget *)user_data;
 
@@ -765,9 +709,7 @@ static void on_resizecb_toggled (GtkToggleButton *t, gpointer user_data) {
 
 
 
-GtkWidget*
-create_encoder_prep_dialog (const gchar *text1, const gchar *text2, boolean opt_resize)
-{
+GtkWidget* create_encoder_prep_dialog (const gchar *text1, const gchar *text2, boolean opt_resize) {
   GtkWidget *dialog;
   GtkWidget *dialog_vbox;
   GtkWidget *dialog_action_area;
@@ -870,8 +812,7 @@ create_encoder_prep_dialog (const gchar *text1, const gchar *text2, boolean opt_
 
 
 // Information/error dialog
-GtkWidget*
-create_dialog3 (const gchar *text, boolean is_blocking, gint mask) {
+GtkWidget* create_info_error_dialog (const gchar *text, boolean is_blocking, int mask) {
   GtkWidget *dialog;
   GtkWidget *dialog_vbox;
   GtkWidget *info_text;
@@ -1074,8 +1015,7 @@ void add_to_winmenu(void) {
 
 
 
-void
-remove_from_winmenu(void) {
+void remove_from_winmenu(void) {
   gtk_container_remove(GTK_CONTAINER(mainw->winmenu), cfile->menuentry);
   if (LIVES_IS_WIDGET(cfile->menuentry))
     gtk_widget_destroy(cfile->menuentry);
@@ -1088,9 +1028,7 @@ remove_from_winmenu(void) {
 }
 
 
-_insertw*
-create_insert_dialog (void)
-{
+_insertw* create_insert_dialog (void) {
   GtkWidget *dialog_vbox3;
   GtkWidget *hbox15;
   GtkWidget *hbox;
@@ -1514,8 +1452,6 @@ GtkWidget *create_opensel_dialog (void) {
 
 
 
-// TODO - move all prefs stuff into prefs.c
-
 
 _entryw* create_location_dialog (int type) {
   // type 1 is open location
@@ -1718,7 +1654,7 @@ _entryw* create_location_dialog (int type) {
 
 
 
-_entryw* create_rename_dialog (gint type) {
+_entryw* create_rename_dialog (int type) {
   // type 1 = rename clip in menu
   // type 2 = save clip set
   // type 3 = reload clip set
@@ -1807,13 +1743,13 @@ _entryw* create_rename_dialog (gint type) {
   hbox = lives_hbox_new (FALSE, 0);
 
   if (type==3) {
-    gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, TRUE, FALSE, 40);
+    gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, TRUE, FALSE, widget_opts.packing_height*4);
   }
-  else if (type!=6&&type!=7) {
-    gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, TRUE, TRUE, 0);
+  else if (type!=6&&type!=7&&type!=1) {
+    gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, TRUE, TRUE, widget_opts.packing_height*2);
   }
   else {
-    gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, TRUE, TRUE, 40);
+    gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, TRUE, TRUE, widget_opts.packing_height*4);
   }
 
 
@@ -1827,7 +1763,7 @@ _entryw* create_rename_dialog (gint type) {
     label = lives_standard_label_new ("");
   }
 
-  gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 0);
+  gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, widget_opts.packing_width*4);
 
 
   if (type==3) {
@@ -1999,7 +1935,7 @@ static void after_dialog_combo_changed (GtkWidget *combo, gpointer user_data) {
 }
 
 
-GtkWidget *create_combo_dialog (gint type, gpointer user_data) {
+GtkWidget *create_combo_dialog (int type, gpointer user_data) {
   // create a dialog with combo box selector
 
   // type 1 == 1 combo box
@@ -2063,9 +1999,7 @@ GtkWidget *create_combo_dialog (gint type, gpointer user_data) {
 }
 
 
-GtkWidget*
-create_cdtrack_dialog (gint type, gpointer user_data)
-{
+GtkWidget* create_cdtrack_dialog (int type, gpointer user_data) {
   // general purpose dialog with label and up to 2 spinbuttons
 
   // type 0 = cd track
@@ -2505,7 +2439,7 @@ static void rb_aud_sel_pressed (GtkButton *button,
 
 
 
-aud_dialog_t *create_audfade_dialog (gint type) {
+aud_dialog_t *create_audfade_dialog (int type) {
   // type 0 = fade in
   // type 1 = fade out
 
@@ -2913,10 +2847,10 @@ gchar *choose_file(gchar *dir, gchar *fname, gchar **filt, GtkFileChooserAction 
   }
 
   if (prefs->gui_monitor!=0) {
-    gint xcen=mainw->mgeom[prefs->gui_monitor-1].x+(mainw->mgeom[prefs->gui_monitor-1].width
-						    -lives_widget_get_allocation_width(chooser))/2;
-   gint ycen=mainw->mgeom[prefs->gui_monitor-1].y+(mainw->mgeom[prefs->gui_monitor-1].height-
-						   lives_widget_get_allocation_height(chooser))/2;
+    int xcen=mainw->mgeom[prefs->gui_monitor-1].x+(mainw->mgeom[prefs->gui_monitor-1].width
+						   -lives_widget_get_allocation_width(chooser))/2;
+   int ycen=mainw->mgeom[prefs->gui_monitor-1].y+(mainw->mgeom[prefs->gui_monitor-1].height-
+						  lives_widget_get_allocation_height(chooser))/2;
    gtk_window_move(GTK_WINDOW(chooser),xcen,ycen);
   }
 
@@ -2977,7 +2911,7 @@ static void chooser_response(GtkDialog *dialog, gint response, gpointer user_dat
 
 
 
-void choose_file_with_preview (gchar *dir, const gchar *title, gint preview_type) {
+void choose_file_with_preview (gchar *dir, const gchar *title, int preview_type) {
   // preview_type 1 - video and audio open (single - opensel)
   // preview type 2 - import audio
   // preview_type 3 - video and audio open (multiple)

@@ -15,26 +15,19 @@ endif
 
 
 if HAVE_SYSTEM_WEED
-AM_LDFLAGS = $(shared_ldflags) @GTK_LIBS@ @WEED_UTILS_LIBS@ 
+AM_LDFLAGS = $(shared_ldflags) @GTK_LIBS@ 
 weed_CFLAGS = -DHAVE_SYSTEM_WEED
 else
 if IS_MINGW
-AM_LDFLAGS = $(shared_ldflags) @GTK_LIBS@ -D IS_MINGW=1 -Wl,../../../libweed/.libs/libweed-utils.a
+AM_LDFLAGS = $(shared_ldflags) @GTK_LIBS@ -D IS_MINGW=1
 else
-AM_LDFLAGS = $(shared_ldflags) @GTK_LIBS@ ../../../libweed/.libs/libweed-utils.la
+AM_LDFLAGS = $(shared_ldflags) @GTK_LIBS@
 endif
 weed_CFLAGS =
 endif
 
 if HAVE_SYSTEM_WEED_PLUGIN_UTILS
-AM_LDFLAGS += @WEED_PLUGIN_UTILS_LIBS@
 weed_CFLAGS = -DHAVE_SYSTEM_WEED_PLUGIN_UTILS
-else
-if IS_MINGW
-AM_LDFLAGS += -Wl,../../../libweed/.libs/libweed-plugin-utils.a
-else
-AM_LDFLAGS += ../../../libweed/libweed-plugin-utils.la
-endif
 endif
 
 if HAVE_SYSTEM_WEED_COMPAT

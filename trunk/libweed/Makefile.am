@@ -41,7 +41,7 @@ endif
 
 EXTRA_DIST = libweed.doxygen libweed.pc libweed-plugin-utils.pc libweed_slice.pc libweed-utils.pc libweed-compat.pc
 
-lib_LTLIBRARIES = libweed.la libweed_slice.la libweed-utils.la libweed-plugin-utils.la
+lib_LTLIBRARIES = libweed.la libweed_slice.la libweed-utils.la
 
 libweed_la_SOURCES = weed.c
 
@@ -49,10 +49,9 @@ libweed_slice_la_SOURCES = weed-gslice.c
 
 libweed_utils_la_SOURCES = weed-utils.c 
 
-libweed_plugin_utils_la_SOURCES = weed-plugin-utils.c
 
 libweedinclude_HEADERS = weed.h weed-host.h weed-plugin.h weed-utils.h weed-events.h weed-palettes.h weed-effects.h \
-	weed-plugin-utils.h weed-compat.h
+	weed-compat.h
 
 libweedincludedir = "$(includedir)/weed"
 
@@ -71,10 +70,6 @@ libweed_slice_la_LDFLAGS = @GLIB_LIBS@ -version-info $(WEED_SO_VERSION) $(shared
 libweed_utils_la_CFLAGS = $(extra_cflags)
 
 libweed_utils_la_LDFLAGS = $(extra_ldflags) -version-info $(WEED_SO_VERSION)
-
-libweed_plugin_utils_la_CFLAGS = $(extra_cflags)
-
-libweed_plugin_utils_la_LDFLAGS = $(extra_ldflags) -version-info $(WEED_PSO_VERSION)
 
 
 uninstall-local:

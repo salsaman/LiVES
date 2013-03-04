@@ -5593,18 +5593,15 @@ on_show_messages_activate            (GtkMenuItem     *menuitem,
 }
 
 
-void
-on_show_file_info_activate            (GtkMenuItem     *menuitem,
-				       gpointer         user_data)
-{
+void on_show_file_info_activate (GtkMenuItem *menuitem, gpointer user_data) {
   char buff[512];
-  fileinfo *filew;
+  lives_clipinfo_t *filew;
 
   gchar *sigs,*ends,*tmp;
   
   if (mainw->current_file==-1) return;
 
-  filew = create_info_window (cfile->achans,FALSE);
+  filew = create_clip_info_window (cfile->achans,FALSE);
 
   g_snprintf(buff,512,"LiVES - %s",cfile->name);
   gtk_window_set_title (GTK_WINDOW (filew->info_window), buff);

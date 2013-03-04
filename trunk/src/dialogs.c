@@ -102,7 +102,7 @@ static void add_xlays_widget(GtkBox *box) {
 
 
 
-void add_warn_check (GtkBox *box, gint warn_mask_number) {
+void add_warn_check (GtkBox *box, int warn_mask_number) {
   GtkWidget *checkbutton;
   GtkWidget *hbox=lives_hbox_new (FALSE, 0);
 
@@ -155,7 +155,7 @@ static void add_clear_ds_adv(GtkBox *box) {
 
 
 //Warning or yes/no dialog
-static GtkWidget* create_warn_dialog (gint warn_mask_number, GtkWindow *transient, const gchar *text, lives_dialog_t diat) {
+static GtkWidget* create_warn_dialog (int warn_mask_number, GtkWindow *transient, const gchar *text, lives_dialog_t diat) {
   GtkWidget *dialog;
   GtkWidget *dialog_vbox;
   GtkWidget *dialog_action_area;
@@ -271,13 +271,12 @@ static GtkWidget* create_warn_dialog (gint warn_mask_number, GtkWindow *transien
 
 
 
-gboolean
-do_warning_dialog(const gchar *text) {
+boolean do_warning_dialog(const gchar *text) {
   return do_warning_dialog_with_check(text, 0);
 }
 
 
-gboolean do_warning_dialog_with_check (const gchar *text, gint warn_mask_number) {
+boolean do_warning_dialog_with_check (const gchar *text, int warn_mask_number) {
   if (!prefs->show_gui) {
     return do_warning_dialog_with_check_transient(text,warn_mask_number,NULL);
   } else {
@@ -289,10 +288,10 @@ gboolean do_warning_dialog_with_check (const gchar *text, gint warn_mask_number)
 
 
 
-gboolean do_warning_dialog_with_check_transient(const gchar *text, gint warn_mask_number, GtkWindow *transient) {
+boolean do_warning_dialog_with_check_transient(const gchar *text, int warn_mask_number, GtkWindow *transient) {
   // show OK/CANCEL, returns FALSE if cancelled
   GtkWidget *warning;
-  gint response=1;
+  int response=1;
   gchar *mytext;
 
   if (prefs->warning_mask&warn_mask_number) {
@@ -315,7 +314,7 @@ gboolean do_warning_dialog_with_check_transient(const gchar *text, gint warn_mas
 }
 
 
-gboolean do_yesno_dialog(const gchar *text) {
+boolean do_yesno_dialog(const gchar *text) {
   // show Yes/No, returns TRUE if Yes
   GtkWidget *warning;
   int response;
@@ -406,8 +405,7 @@ int do_abort_cancel_retry_dialog(const gchar *text, GtkWindow *transient) {
 
 
 
-void 
-do_error_dialog(const gchar *text) {
+void do_error_dialog(const gchar *text) {
   // show error/info box
   if (!prefs->show_gui) {
     do_error_dialog_with_check_transient(text,FALSE,0,NULL);
@@ -422,8 +420,7 @@ do_error_dialog(const gchar *text) {
 }
 
 
-void 
-do_error_dialog_with_check(const gchar *text, gint warn_mask_number) {
+void do_error_dialog_with_check(const gchar *text, int warn_mask_number) {
   // show error/info box
   if (!prefs->show_gui) {
     do_error_dialog_with_check_transient(text,FALSE,warn_mask_number,NULL);
@@ -434,8 +431,7 @@ do_error_dialog_with_check(const gchar *text, gint warn_mask_number) {
 }
 
 
-void 
-do_blocking_error_dialog(const gchar *text) {
+void do_blocking_error_dialog(const gchar *text) {
   // show error/info box - blocks until OK is pressed
   if (!prefs->show_gui) {
     do_error_dialog_with_check_transient(text,TRUE,0,NULL);
@@ -446,14 +442,14 @@ do_blocking_error_dialog(const gchar *text) {
 }
 
 
-void do_error_dialog_with_check_transient(const gchar *text, gboolean is_blocking, gint warn_mask_number, GtkWindow *transient) {
+void do_error_dialog_with_check_transient(const gchar *text, boolean is_blocking, int warn_mask_number, GtkWindow *transient) {
   // show error/info box
 
   GtkWidget *err_box;
   gchar *mytext;
   if (prefs->warning_mask&warn_mask_number) return;
   mytext=g_strdup(text);
-  err_box=create_dialog3(mytext,is_blocking,warn_mask_number);
+  err_box=create_info_error_dialog(mytext,is_blocking,warn_mask_number);
   if (mytext!=NULL) g_free(mytext);
   if (transient!=NULL) gtk_window_set_transient_for(GTK_WINDOW(err_box),transient);
   if (prefs->present) gtk_window_present (GTK_WINDOW (err_box));
@@ -508,8 +504,7 @@ void do_aud_during_play_error(void) {
 				       TRUE,0,GTK_WINDOW(prefsw->prefs_dialog));
 }  
 
-void 
-do_memory_error_dialog (void) {
+void do_memory_error_dialog (void) {
   do_error_dialog (_ ("\n\nLiVES was unable to perform this operation due to unsufficient memory.\nPlease try closing some other applications first.\n"));
 }
 
@@ -522,7 +517,7 @@ void handle_backend_errors(void) {
   int pxstart=1;
   gchar **array;
   gchar *addinfo;
-  gint numtok;
+  int numtok;
 
   if (mainw->cancelled) return; // if the user/system cancelled we can expect errors !
 
@@ -580,7 +575,7 @@ void handle_backend_errors(void) {
 
 
 
-gboolean check_backend_return(file *sfile) {
+boolean check_backend_return(file *sfile) {
   // check return code after synchronous (foreground) backend commands
 
   FILE *infofile;
@@ -625,13 +620,16 @@ void pump_io_chan(GIOChannel *iochan) {
 }
 
 
-gboolean check_storage_space(file *sfile, gboolean is_processing) {
+boolean check_storage_space(file *sfile, boolean is_processing) {
   // check storage space in prefs->tmpdir, and if sfile!=NULL, in sfile->op_dir
   guint64 dsval;
-  gchar *msg,*tmp;
+
   int retval;
-  gboolean did_pause=FALSE;
+  boolean did_pause=FALSE;
+
   lives_storage_status_t ds;
+
+  gchar *msg,*tmp;
   gchar *pausstr=g_strdup(_("Processing has been paused."));
 
   do {
@@ -766,7 +764,7 @@ gboolean check_storage_space(file *sfile, gboolean is_processing) {
 
 
 
-void cancel_process(gboolean visible) {
+static void cancel_process(boolean visible) {
   if (prefs->show_player_stats&&!visible&&mainw->fps_measure>0.) {
     // statistics
     gettimeofday(&tv, NULL);
@@ -803,11 +801,11 @@ void cancel_process(gboolean visible) {
 
 
 
-static void disp_fraction(gint done, gint start, gint end, gdouble timesofar, xprocess *proc) {
+static void disp_fraction(int done, int start, int end, double timesofar, xprocess *proc) {
   // display fraction done and estimated time remaining
   gchar *prog_label;
-  gdouble est_time;
-  gdouble fraction_done=(done-start)/(end-start+1.);
+  double est_time;
+  double fraction_done=(done-start)/(end-start+1.);
 
   const char *stretch="                                         ";
 
@@ -832,7 +830,7 @@ static int progress_count;
 #define PROG_LOOP_VAL 50
 
 static void progbar_pulse_or_fraction(file *sfile, int frames_done) {
-  gdouble timesofar;
+  double timesofar;
 
   if (progress_count++>=PROG_LOOP_VAL) {
     if (frames_done<=sfile->progress_end&&sfile->progress_end>0&&!mainw->effects_paused&&
@@ -2944,7 +2942,7 @@ void do_locked_in_vdevs_error(void) {
 
 void do_do_not_close_d (void) {
   gchar *msg=g_strdup(_("\n\nCLEANING AND COPYING FILES. THIS MAY TAKE SOME TIME.\nDO NOT SHUT DOWN OR CLOSE LIVES !\n"));
-  GtkWidget *err_box=create_dialog3(msg,FALSE,0);
+  GtkWidget *err_box=create_info_error_dialog(msg,FALSE,0);
   GtkWindow *transient=NULL;
 
   g_free(msg);

@@ -18,11 +18,7 @@
 
 #define MAX_MSG_WIDTH_CHARS 100 ///< max width of text on warning/error labels
 
-void load_theme (void);
-
-GtkWidget* create_window4 (void);
-GtkWidget* create_dialog2 (gint warning_mask);
-GtkWidget* create_dialog3 (const gchar *text, boolean is_blocking, gint warning_mask);
+GtkWidget* create_info_error_dialog (const gchar *text, boolean is_blocking, int warning_mask);
 GtkWidget* create_opensel_dialog (void);
 GtkWidget* create_encoder_prep_dialog (const gchar *text1, const gchar *text2, boolean opt_resize);
 
@@ -35,7 +31,7 @@ void do_layout_recover_dialog(void);
 
 GtkWidget *create_cleardisk_advanced_dialog(void);
 
-typedef struct _fileinfo {
+typedef struct {
   GtkWidget *info_window;
   GtkWidget *textview24;
   GtkWidget *textview25;
@@ -47,9 +43,9 @@ typedef struct _fileinfo {
   GtkWidget *textview_rtime;
   GtkWidget *textview_lrate;
   GtkWidget *textview_rrate;
-} fileinfo;
+} lives_clipinfo_t;
 
-fileinfo* create_info_window (gint audio_channels, boolean is_mt);
+lives_clipinfo_t * create_clip_info_window (int audio_channels, boolean is_mt);
 
 
 typedef struct {
@@ -61,9 +57,9 @@ typedef struct {
   GList *setlist;
 } _entryw;
 
-_entryw* create_rename_dialog (gint type);
-_entryw* create_location_dialog (gint type);
-_entryw* create_cds_dialog (gint type);
+_entryw* create_rename_dialog (int type);
+_entryw* create_location_dialog (int type);
+_entryw* create_cds_dialog (int type);
 
 typedef struct __insertw {
   GtkWidget *insert_dialog;
@@ -121,8 +117,8 @@ typedef struct {
 
 
 
-aud_dialog_t *create_audfade_dialog (gint type);
-GtkWidget *create_combo_dialog (gint type, gpointer user_data);
+aud_dialog_t *create_audfade_dialog (int type);
+GtkWidget *create_combo_dialog (int type, gpointer user_data);
 
 _commentsw *commentsw;
 _entryw *renamew;

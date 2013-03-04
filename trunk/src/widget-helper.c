@@ -1600,12 +1600,12 @@ LiVESWidget *lives_standard_check_button_new(const char *labeltext, boolean use_
     lives_box_set_homogeneous(LIVES_BOX(hbox),FALSE);
     
     
-    if (!widget_opts.swap_label&&eventbox!=NULL)
+    if (widget_opts.swap_label&&eventbox!=NULL)
       gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, widget_opts.packing_width);
     
     gtk_box_pack_start (GTK_BOX (hbox), checkbutton, FALSE, FALSE, widget_opts.packing_width);
 
-    if (widget_opts.swap_label&&eventbox!=NULL)
+    if (!widget_opts.swap_label&&eventbox!=NULL)
       gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, widget_opts.packing_width);
 
   }

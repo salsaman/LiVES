@@ -1388,7 +1388,7 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, boolean add_
   if (LIVES_IS_HBOX(LIVES_WIDGET(box))) {
     hbox=GTK_WIDGET(box);
 #if GTK_CHECK_VERSION(3,0,0)
-    def_packing_width=widget_opts.packing_width=0;
+    def_packing_width=(widget_opts.packing_width>>1);
 #endif
   }
   else {

@@ -458,7 +458,7 @@ static void pulse_audio_write_process (pa_stream *pstream, size_t nbytes, void *
 	   if (xin_bytes==0) xin_bytes=in_bytes;
 	 }
 
-	 if (!pulsed->in_use||in_bytes==0) {
+	 if (!pulsed->in_use||in_bytes==0||pulsed->mute) {
 	   // reached end of audio with no looping
 	   sample_silence_pulse(pulsed,nframes*pulsed->out_achans*
 				(pulsed->out_asamps>>3),xbytes);

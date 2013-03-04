@@ -586,7 +586,7 @@ static int audio_process (nframes_t nframes, void *arg) {
 
 	if (!from_memory) {
 	  //	if (((gint)(jackd->num_calls/100.))*100==jackd->num_calls) if (mainw->soft_debug) g_print("audio pip\n");
-	  if (mainw->agen_key!=0||mainw->agen_needs_reinit||cache_buffer->bufferf!=NULL) {
+	  if ((mainw->agen_key!=0||mainw->agen_needs_reinit||cache_buffer->bufferf!=NULL)&&!jackd->mute) {
 	    float *fbuffer=NULL;
 
 	    if (mainw->agen_key!=0||mainw->agen_needs_reinit) {

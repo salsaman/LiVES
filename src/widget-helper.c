@@ -1367,6 +1367,7 @@ LIVES_INLINE double lives_scale_button_get_value(LiVESScaleButton *scale) {
 LIVES_INLINE void lives_widget_get_pointer(LiVESXDevice *device, LiVESWidget *widget, int *x, int *y) {
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3,0,0)
+  // try: gdk_event_get_device (event)
   LiVESXWindow *xwin;
   if (widget==NULL) xwin=gdk_get_default_root_window ();
   else xwin=lives_widget_get_xwindow(widget);

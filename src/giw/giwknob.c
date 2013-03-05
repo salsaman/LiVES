@@ -796,8 +796,13 @@ giw_knob_motion_notify (GtkWidget      *widget,
     x = event->x;
     y = event->y;
 
-    if (event->is_hint || (event->window != lives_widget_get_xwindow(widget)))
-      gtk_widget_get_pointer (widget, &x, &y);
+    if (event->is_hint || (event->window != lives_widget_get_xwindow(widget))) 
+      
+      gdk_window_get_device_position (lives_widget_get_xwindow(widget),
+				      gdk_event_get_device ((GdkEvent *)(event)),
+				      &x,
+				      &y,
+				      NULL);
 
     knob_update_mouse (knob, x, y);
   }
@@ -808,7 +813,11 @@ giw_knob_motion_notify (GtkWidget      *widget,
     y = event->y;
 
     if (event->is_hint || (event->window != lives_widget_get_xwindow(widget)))
-      gtk_widget_get_pointer (widget, &x, &y);
+      gdk_window_get_device_position (lives_widget_get_xwindow(widget),
+				      gdk_event_get_device ((GdkEvent *)(event)),
+				      &x,
+				      &y,
+				      NULL);
 
     knob_update_false_mouse (knob, x, y);
   }

@@ -243,6 +243,7 @@ struct _mt {
   GtkWidget *grav_left;
   GtkWidget *grav_right;
   GtkWidget *select_track;
+  GtkWidget *seldesel_menuitem;
   GtkWidget *view_events;
   GtkWidget *view_clips;
   GtkWidget *view_in_out;

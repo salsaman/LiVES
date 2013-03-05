@@ -69,6 +69,7 @@ static boolean mt_expose_audtrack_event (GtkWidget *ebox, GdkEventExpose *, gpoi
 #endif
 
 static void on_rename_track_activate (GtkMenuItem *, gpointer mt);
+static void select_deselect_block(GtkMenuItem *, gpointer mt);
 
 /// used to match clips from the event recorder with renumbered clips (without gaps)
 static int renumbered_clips[MAX_FILES+1];
@@ -1502,7 +1503,7 @@ void track_select (lives_mt *mt) {
 #else			
 	if (
 #endif
-	    !gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(checkbutton)))
+	    !lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(checkbutton)))
 #ifdef ENABLE_GIW
 	  )
 #endif
@@ -3922,7 +3923,7 @@ void mt_init_start_end_spins(lives_mt *mt) {
   }
 
   gtk_widget_add_accelerator (mt->amixer_button, "clicked", mt->accel_group,
-                              LIVES_KEY_m, GDK_CONTROL_MASK,
+                              LIVES_KEY_m, LIVES_CONTROL_MASK,
                               GTK_ACCEL_VISIBLE);
 
   if (cfile->achans==0||!mt->opts.pertrack_audio) gtk_widget_set_sensitive(mt->amixer_button,FALSE);
@@ -6710,6 +6711,16 @@ static boolean draw_cool_toggle (GtkWidget *widget, lives_painter_t *cr, gpointe
   gtk_widget_set_sensitive(mt->rs_to_tc,FALSE);
   gtk_widget_set_sensitive(mt->re_to_tc,FALSE);
 
+  mt->seldesel_menuitem = gtk_menu_item_new_with_mnemonic (_("Select block at current track/time"));
+  gtk_container_add (GTK_CONTAINER (menuitem_menu), menuitem);
+
+  g_signal_connect (GTK_OBJECT (menuitem), "activate",
+		    G_CALLBACK (select_deselect_block),
+		    (gpointer)mt);
+
+  gtk_widget_add_accelerator (mt->seldesel_menuitem, "clicked", mt->accel_group,
+                              LIVES_KEY_Return, LIVES_CONTROL_MASK,
+                              GTK_ACCEL_VISIBLE);
 
   // Tools
 
@@ -13478,13 +13489,18 @@ void re_to_tc (GtkMenuItem *menuitem, gpointer user_data) {
 }
 
 
+static void select_deselect_block(GtkMenuItem *menuitem, gpointer user_data) {
+  /*  lives_mt *mt=(lives_mt *)user_data;
+  track_rect *block;
+  block=get_block_from_time(eventbox,timesecs,mt);
+  select_block(mt);*/
+}
 
 //////////////////////////////////////////////////
 
 
 
-void
-on_move_fx_changed (GtkMenuItem *menuitem, gpointer user_data) {
+void on_move_fx_changed (GtkMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   mt->opts.move_effects=!mt->opts.move_effects;
 }
@@ -15034,10 +15050,13 @@ void on_mt_list_fx_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
 void on_mt_delfx_activate (GtkMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
+  weed_timecode_t start_tc,end_tc;
+  weed_plant_t *deinit_event;
+
+  gchar *fhash,*filter_name,*text;
+
   boolean did_backup=mt->did_backup;
   int error;
-
-  gchar *fhash;
 
   if (mt->selected_init_event==NULL) return;
 
@@ -15052,10 +15071,21 @@ void on_mt_delfx_activate (GtkMenuItem *menuitem, gpointer user_data) {
   mt->current_fx=weed_get_idx_for_hashname(fhash,TRUE);
   weed_free(fhash);
 
+  deinit_event=(weed_plant_t *)weed_get_voidptr_value(mt->selected_init_event,"deinit_event",&error);
+  filter_name=weed_filter_get_name(mt->current_fx);
+  start_tc=get_event_timecode(mt->selected_init_event);
+  end_tc=get_event_timecode(deinit_event);
+  text=g_strdup_printf(_("Deleted %s from %.4f to %.4f\n"),filter_name,start_tc/U_SEC,end_tc/U_SEC);
+  g_free(filter_name);
+
   if (!did_backup) mt_backup(mt,MT_UNDO_DELETE_FILTER,0);
 
   remove_filter_from_event_list(mt->event_list,mt->selected_init_event);
   remove_end_blank_frames(mt->event_list);
+
+  d_print(text);
+  g_free(text);
+  g_free(filter_name);
   
   mt->selected_init_event=NULL;
   mt->current_fx=-1;

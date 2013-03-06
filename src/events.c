@@ -3750,7 +3750,7 @@ lives_render_error_t render_events (gboolean reset) {
 
 
 
-gboolean start_render_effect_events (weed_plant_t *event_list) {
+boolean start_render_effect_events (weed_plant_t *event_list) {
   // this is called to begin rendering effect events from an event_list into cfile
   // it will do a reorder/resample/resize/effect apply all in one pass
 
@@ -3790,7 +3790,7 @@ gboolean start_render_effect_events (weed_plant_t *event_list) {
       d_print_failed();
     }
     else if (mainw->render_error>=LIVES_RENDER_ERROR) d_print_failed();
-    else d_print_cancelled();
+    //else d_print_cancelled();
     cfile->undo_start=oundo_start;
     cfile->undo_end=oundo_end;
     cfile->pb_fps=old_pb_fps;
@@ -3919,13 +3919,13 @@ gboolean has_audio_frame(weed_plant_t *event_list) {
 ///////////////////////////////////////////////////////////////////
 
 
-gboolean render_to_clip (gboolean new_clip) {
+boolean render_to_clip (boolean new_clip) {
   // this function is called to actually start rendering mainw->event_list to a new/current clip
-  gboolean retval=TRUE;
-  gint current_file=mainw->current_file;
-  gboolean response;
-  gint xachans=0,xarate=0,xasamps=0,xse=0;
-  gboolean rendaud=TRUE;
+  boolean retval=TRUE;
+  int current_file=mainw->current_file;
+  boolean response;
+  int xachans=0,xarate=0,xasamps=0,xse=0;
+  boolean rendaud=TRUE;
   gchar *com;
 
   if (mainw->multitrack!=NULL&&mainw->multitrack->pr_audio) d_print(_("Pre-rendering audio..."));

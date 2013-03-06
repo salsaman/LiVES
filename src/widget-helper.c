@@ -1902,7 +1902,7 @@ LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_button
     gtk_window_set_screen(GTK_WINDOW(dialog),mainw->mgeom[prefs->gui_monitor-1].screen);
   }
 
-  gtk_container_set_border_width (GTK_CONTAINER (dialog), W_BORDER_WIDTH);
+  gtk_container_set_border_width (GTK_CONTAINER (dialog), widget_opts.border_width*2);
   gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_CENTER_ALWAYS);
 
   if (mainw!=NULL&&mainw->is_ready&&(palette->style&STYLE_1)) {

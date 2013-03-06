@@ -18,17 +18,17 @@
 
 
 /// call this to add framedraw widget to an hbox
-void widget_add_framedraw (GtkVBox *, gint start, gint end, gboolean add_preview_button, gint width, gint height);
+void widget_add_framedraw (GtkVBox *, int start, int end, boolean add_preview_button, int width, int height);
 
 /// redraw when exposed/frame number changes
-void framedraw_redraw (lives_special_framedraw_rect_t *, gboolean reload_image, GdkPixbuf *);
+void framedraw_redraw (lives_special_framedraw_rect_t *, boolean reload_image, GdkPixbuf *);
 
 /// callback for widgets
 void after_framedraw_widget_changed (GtkWidget *, lives_special_framedraw_rect_t *);
 
 
 /// activate the image for clicks and draws
-void framedraw_connect(lives_special_framedraw_rect_t *, gint width, gint height, lives_rfx_t *);
+void framedraw_connect(lives_special_framedraw_rect_t *, int width, int height, lives_rfx_t *);
 
 /// connect spinbutton to preview
 void framedraw_connect_spinbutton(lives_special_framedraw_rect_t *, lives_rfx_t *);
@@ -54,13 +54,13 @@ void after_framedraw_frame_spinbutton_changed (GtkSpinButton *, lives_special_fr
 void on_framedraw_reset_clicked (GtkButton *, lives_special_framedraw_rect_t *);
 
 
-gboolean on_framedraw_mouse_start (GtkWidget *, GdkEventButton *, lives_special_framedraw_rect_t *);
-gboolean on_framedraw_mouse_update (GtkWidget *, GdkEventButton *, lives_special_framedraw_rect_t *);
-gboolean on_framedraw_mouse_reset (GtkWidget *, GdkEventButton *, lives_special_framedraw_rect_t *);
+boolean on_framedraw_mouse_start (GtkWidget *, GdkEventButton *, lives_special_framedraw_rect_t *);
+boolean on_framedraw_mouse_update (GtkWidget *, GdkEventMotion *, lives_special_framedraw_rect_t *);
+boolean on_framedraw_mouse_reset (GtkWidget *, GdkEventButton *, lives_special_framedraw_rect_t *);
 
 
-gboolean on_framedraw_leave (GtkWidget *, GdkEventCrossing *, lives_special_framedraw_rect_t *);
-gboolean on_framedraw_enter (GtkWidget *, GdkEventCrossing *, lives_special_framedraw_rect_t *);
+boolean on_framedraw_leave (GtkWidget *, GdkEventCrossing *, lives_special_framedraw_rect_t *);
+boolean on_framedraw_enter (GtkWidget *, GdkEventCrossing *, lives_special_framedraw_rect_t *);
 
 // graphics routines
 

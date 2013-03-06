@@ -738,6 +738,7 @@ typedef struct {
   boolean non_modal; // non-modal for dialogs
   int packing_width; // default should be W_PACKING_WIDTH
   int packing_height; // default should be W_PACKING_HEIGHT
+  int border_width; // default should be W_BORDER_WIDTH
   LiVESJustification justify; // justify for labels
 } widget_opts_t;
 

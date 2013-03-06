@@ -49,7 +49,7 @@ static boolean apply_audio_fx;
 // generic
 
 
-gchar *lives_fx_cat_to_text(lives_fx_cat_t cat, gboolean plural) {
+gchar *lives_fx_cat_to_text(lives_fx_cat_t cat, boolean plural) {
 
   // return value should be free'd after use
   switch (cat) {
@@ -142,24 +142,24 @@ gchar *lives_fx_cat_to_text(lives_fx_cat_t cat, gboolean plural) {
 // Rendered effects
 
 
-gboolean do_effect(lives_rfx_t *rfx, gboolean is_preview) {
+boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
   // returns FALSE if the user cancelled
   // leave_info_file is set if a preview turned into actual processing: ie. no params were changed after the preview
   // preview generates .pre files instead of .mgk, so needs special post-processing
 
-  gint oundo_start=cfile->undo_start;
-  gint oundo_end=cfile->undo_end;
+  int oundo_start=cfile->undo_start;
+  int oundo_end=cfile->undo_end;
   gchar effectstring[128];
-  gdouble old_pb_fps=cfile->pb_fps;
+  double old_pb_fps=cfile->pb_fps;
 
   gchar *text;
   gchar *fxcommand=NULL,*cmd;
-  gint current_file=mainw->current_file;
+  int current_file=mainw->current_file;
 
-  gint new_file=current_file;
-  gint ldfile;
+  int new_file=current_file;
+  int ldfile;
 
-  gboolean got_no_frames=FALSE;
+  boolean got_no_frames=FALSE;
   gchar *tmp;
 
   if (rfx->num_in_channels==0&&!is_preview) current_file=mainw->pre_src_file;
@@ -392,7 +392,7 @@ gboolean do_effect(lives_rfx_t *rfx, gboolean is_preview) {
   if (rfx->props&RFX_PROPS_MAY_RESIZE||rfx->num_in_channels==0) {
     // get new frame size
     if (rfx->status!=RFX_STATUS_WEED) { 
-      gint numtok=get_token_count (mainw->msg,'|');
+      int numtok=get_token_count (mainw->msg,'|');
       
       if (numtok>1) {
 	gchar **array=g_strsplit(mainw->msg,"|",numtok);
@@ -423,7 +423,7 @@ gboolean do_effect(lives_rfx_t *rfx, gboolean is_preview) {
     if (rfx->num_in_channels>0) {
       if (cfile->hsize==cfile->ohsize&&cfile->vsize==cfile->ovsize) cfile->undo_action=UNDO_EFFECT;
       else {
-	gboolean bad_header=FALSE;
+	boolean bad_header=FALSE;
 	save_clip_value(mainw->current_file,CLIP_DETAILS_WIDTH,&cfile->hsize);
 	if (mainw->com_failed||mainw->write_failed) bad_header=TRUE;
 	save_clip_value(mainw->current_file,CLIP_DETAILS_HEIGHT,&cfile->vsize);
@@ -483,7 +483,7 @@ gboolean do_effect(lives_rfx_t *rfx, gboolean is_preview) {
     if (rfx->props&RFX_PROPS_BATCHG) {
       // batch mode generators need some extra processing
       gchar *imgdir=g_strdup_printf("%s%s",prefs->tmpdir,cfile->handle);
-      gint img_file=mainw->current_file;
+      int img_file=mainw->current_file;
       
       mainw->suppress_dprint=TRUE;
       open_file_sel(imgdir,0,0);
@@ -608,7 +608,7 @@ gboolean do_effect(lives_rfx_t *rfx, gboolean is_preview) {
 
   
 
-lives_render_error_t realfx_progress (gboolean reset) {
+lives_render_error_t realfx_progress (boolean reset) {
   static int i;
   GError *error=NULL;
   gchar oname[PATH_MAX];
@@ -740,10 +740,10 @@ lives_render_error_t realfx_progress (gboolean reset) {
 
 
 
-gboolean on_realfx_activate_inner(gint type, lives_rfx_t *rfx) {
+boolean on_realfx_activate_inner(int type, lives_rfx_t *rfx) {
   // type can be 0 - apply current realtime effects
   // 1 - resize (using weed filter)
-  gboolean retval;
+  boolean retval;
 
   boolean has_new_audio=FALSE;
 
@@ -816,7 +816,7 @@ gboolean on_realfx_activate_inner(gint type, lives_rfx_t *rfx) {
 
 
 void on_realfx_activate (GtkMenuItem *menuitem, gpointer user_data) {
-  gint type=1;
+  int type=1;
 
   boolean has_lmap_error=FALSE;
 
@@ -1019,7 +1019,7 @@ weed_plant_t *get_blend_layer(weed_timecode_t tc) {
 
 
 
-gboolean rte_on_off_callback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer user_data) {
+boolean rte_on_off_callback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer user_data) {
 // this is the callback which happens when a rte is keyed
   gint key=GPOINTER_TO_INT(user_data);
   guint new_rte=GU641<<(key-1);
@@ -1075,13 +1075,13 @@ gboolean rte_on_off_callback (GtkAccelGroup *group, GObject *obj, guint keyval, 
 
 
 
-gboolean rte_on_off_callback_hook (GtkToggleButton *button, gpointer user_data) {
+boolean rte_on_off_callback_hook (GtkToggleButton *button, gpointer user_data) {
   rte_on_off_callback (NULL, NULL, 0, (GdkModifierType)0, user_data);
   return TRUE;
 }
 
 
-gboolean grabkeys_callback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer user_data) {
+boolean grabkeys_callback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer user_data) {
   // assign the keys to the last key-grabable effect 
   mainw->rte_keys=mainw->last_grabable_effect;
   mainw->osc_block=TRUE;
@@ -1095,7 +1095,7 @@ gboolean grabkeys_callback (GtkAccelGroup *group, GObject *obj, guint keyval, Gd
 
 
 
-gboolean textparm_callback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer user_data) {
+boolean textparm_callback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer user_data) {
   // keyboard linked to first string parameter, until TAB is pressed
   mainw->rte_textparm=get_textparm();
   return TRUE;
@@ -1103,7 +1103,7 @@ gboolean textparm_callback (GtkAccelGroup *group, GObject *obj, guint keyval, Gd
 
 
 
-gboolean grabkeys_callback_hook (GtkToggleButton *button, gpointer user_data) {
+boolean grabkeys_callback_hook (GtkToggleButton *button, gpointer user_data) {
   if (!lives_toggle_button_get_active(button)) return TRUE;
   mainw->last_grabable_effect=GPOINTER_TO_INT(user_data);
   grabkeys_callback (NULL, NULL, 0, (GdkModifierType)0, user_data);
@@ -1111,7 +1111,7 @@ gboolean grabkeys_callback_hook (GtkToggleButton *button, gpointer user_data) {
 }
 
 
-gboolean rtemode_callback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer user_data) {
+boolean rtemode_callback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer user_data) {
   if (mainw->rte_keys==-1) return TRUE;
   rte_key_setmode(0,-1);
   mainw->blend_factor=weed_get_blend_factor(mainw->rte_keys);
@@ -1119,11 +1119,11 @@ gboolean rtemode_callback (GtkAccelGroup *group, GObject *obj, guint keyval, Gdk
 }
 
 
-gboolean rtemode_callback_hook (GtkToggleButton *button, gpointer user_data) {
+boolean rtemode_callback_hook (GtkToggleButton *button, gpointer user_data) {
   gint key_mode=GPOINTER_TO_INT(user_data);
   int modes=rte_getmodespk();
-  gint key=(gint)(key_mode/modes);
-  gint mode=key_mode-key*modes;
+  int key=(int)(key_mode/modes);
+  int mode=key_mode-key*modes;
 
   if (!lives_toggle_button_get_active(button)) return TRUE;
 
@@ -1132,8 +1132,8 @@ gboolean rtemode_callback_hook (GtkToggleButton *button, gpointer user_data) {
 }
 
 
-gboolean swap_fg_bg_callback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer user_data) {
-  gint old_file=mainw->current_file;
+boolean swap_fg_bg_callback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer user_data) {
+  int old_file=mainw->current_file;
 
   if (mainw->playing_file<1||mainw->num_tr_applied==0||mainw->noswitch||mainw->blend_file==-1||
       mainw->blend_file==mainw->current_file||mainw->files[mainw->blend_file]==NULL||mainw->preview||

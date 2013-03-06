@@ -69,7 +69,6 @@ static boolean mt_expose_audtrack_event (GtkWidget *ebox, GdkEventExpose *, gpoi
 #endif
 
 static void on_rename_track_activate (GtkMenuItem *, gpointer mt);
-static void select_deselect_block(GtkMenuItem *, gpointer mt);
 
 /// used to match clips from the event recorder with renumbered clips (without gaps)
 static int renumbered_clips[MAX_FILES+1];
@@ -1496,6 +1495,17 @@ void track_select (lives_mt *mt) {
 	  }
 	  gtk_widget_set_sensitive (mt->jumpback, g_object_get_data(G_OBJECT(eventbox),"blocks")!=NULL);
 	  gtk_widget_set_sensitive (mt->jumpnext, g_object_get_data(G_OBJECT(eventbox),"blocks")!=NULL);
+	}
+	else {
+	  if (labelbox!=NULL) gtk_widget_set_state(labelbox,LIVES_WIDGET_STATE_NORMAL);
+	  if (ahbox!=NULL) gtk_widget_set_state(ahbox,LIVES_WIDGET_STATE_NORMAL);
+	  if (checkbutton!=NULL) {
+	    // gtk 3+ idiocy...
+	    gtk_widget_set_state(checkbutton,LIVES_WIDGET_STATE_PRELIGHT);
+	    gtk_widget_queue_draw(checkbutton);
+	    gtk_widget_set_state(checkbutton,LIVES_WIDGET_STATE_NORMAL);
+	    gtk_widget_queue_draw(checkbutton);
+	  }
 	}
 
 #ifdef ENABLE_GIW
@@ -3459,21 +3469,23 @@ static void populate_filter_box(GtkWidget *box, gint ninchans, lives_mt *mt) {
 
 
 
-
-boolean mt_selblock (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer user_data) {
+static void mt_selblock(GtkMenuItem *menuitem, gpointer user_data) {
   // ctrl-Enter - select block at current time/track
   lives_mt *mt=(lives_mt *)user_data;
   GtkWidget *eventbox;
-  gdouble timesecs=lives_ruler_get_value(LIVES_RULER(mt->timeline));
+  double timesecs=lives_ruler_get_value(LIVES_RULER(mt->timeline));
+  boolean desel=TRUE;
 
-  unselect_all(mt);
-
-  if (mt->current_track==-1) eventbox=(GtkWidget *)mt->audio_draws->data;
+  if (mt->current_track==-1||mt->aud_track_selected) 
+    eventbox=g_list_nth_data(mt->audio_draws,mt->current_track+mt->opts.back_audio_tracks);
   else eventbox=(GtkWidget *)g_list_nth_data(mt->video_draws,mt->current_track);
 
   mt->putative_block=get_block_from_time(eventbox,timesecs,mt);
-  select_block((lives_mt *)user_data);
-  return TRUE;
+
+  if (mt->putative_block!=NULL&&mt->putative_block->state==BLOCK_UNSELECTED) desel=FALSE;
+
+  unselect_all(mt);
+  if (!desel) select_block((lives_mt *)user_data);
 }
 
 
@@ -6711,14 +6723,18 @@ static boolean draw_cool_toggle (GtkWidget *widget, lives_painter_t *cr, gpointe
   gtk_widget_set_sensitive(mt->rs_to_tc,FALSE);
   gtk_widget_set_sensitive(mt->re_to_tc,FALSE);
 
-  mt->seldesel_menuitem = gtk_menu_item_new_with_mnemonic (_("Select block at current track/time"));
-  gtk_container_add (GTK_CONTAINER (menuitem_menu), menuitem);
+  separator = gtk_menu_item_new ();
+  gtk_container_add (GTK_CONTAINER (menuitem_menu), separator);
+  gtk_widget_set_sensitive (separator, FALSE);
 
-  g_signal_connect (GTK_OBJECT (menuitem), "activate",
-		    G_CALLBACK (select_deselect_block),
+  mt->seldesel_menuitem = gtk_menu_item_new_with_mnemonic (_("Select/deselect block at current track/time"));
+  gtk_container_add (GTK_CONTAINER (menuitem_menu), mt->seldesel_menuitem);
+
+  g_signal_connect (GTK_OBJECT (mt->seldesel_menuitem), "activate",
+		    G_CALLBACK (mt_selblock),
 		    (gpointer)mt);
 
-  gtk_widget_add_accelerator (mt->seldesel_menuitem, "clicked", mt->accel_group,
+  gtk_widget_add_accelerator (mt->seldesel_menuitem, "activate", mt->accel_group,
                               LIVES_KEY_Return, LIVES_CONTROL_MASK,
                               GTK_ACCEL_VISIBLE);
 
@@ -8361,9 +8377,6 @@ static boolean draw_cool_toggle (GtkWidget *widget, lives_painter_t *cr, gpointe
 			   g_cclosure_new (G_CALLBACK (mt_trup),mt,NULL));
   gtk_accel_group_connect (GTK_ACCEL_GROUP (mt->accel_group), LIVES_KEY_Down, LIVES_CONTROL_MASK, (GtkAccelFlags)0, 
 			   g_cclosure_new (G_CALLBACK (mt_trdown),mt,NULL));
-
-  gtk_accel_group_connect (GTK_ACCEL_GROUP (mt->accel_group), LIVES_KEY_Return, LIVES_CONTROL_MASK, (GtkAccelFlags)0, 
-			   g_cclosure_new (G_CALLBACK (mt_selblock),mt,NULL));
 
   mt->last_direction=DIRECTION_POSITIVE;
 
@@ -13489,13 +13502,6 @@ void re_to_tc (GtkMenuItem *menuitem, gpointer user_data) {
 }
 
 
-static void select_deselect_block(GtkMenuItem *menuitem, gpointer user_data) {
-  /*  lives_mt *mt=(lives_mt *)user_data;
-  track_rect *block;
-  block=get_block_from_time(eventbox,timesecs,mt);
-  select_block(mt);*/
-}
-
 //////////////////////////////////////////////////
 
 
@@ -14533,7 +14539,7 @@ multitrack_undo            (GtkMenuItem     *menuitem,
   g_free(utxt);
   g_free(msg);
 
-  if (last_undo->action<=1024&&block_is_selected) mt_selblock(NULL, NULL, 0, (GdkModifierType)0, (gpointer)mt);
+  if (last_undo->action<=1024&&block_is_selected) mt_selblock(NULL, (gpointer)mt);
 
   // TODO - make sure this is the effect which is now deleted/added...
   if (mt->poly_state==POLY_PARAMS) {
@@ -14934,23 +14940,25 @@ weed_plant_t *add_blank_frames_up_to (weed_plant_t *event_list, weed_plant_t *st
 
 void mt_add_region_effect (GtkMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
+
+  GList *llist;
+
   weed_plant_t *start_event;
   weed_plant_t *end_event;
+  weed_plant_t *last_frame_event=NULL;
 
   weed_timecode_t start_tc=q_gint64(mt->region_start*U_SEC,mt->fps);
   weed_timecode_t end_tc=q_gint64(mt->region_end*U_SEC-U_SEC/mt->fps,mt->fps);
+  weed_timecode_t last_frame_tc=0;
 
   gchar *filter_name;
   gchar *text,*tname,*track_desc;
-  gint numtracks=g_list_length(mt->selected_tracks);
-  int *tracks=(int *)g_malloc(numtracks*sizint);
-  gint tcount=0,tlast=-1000000,tsmall=-1,ctrack;
-  GList *llist;
-
-  weed_plant_t *last_frame_event=NULL;
-  weed_timecode_t last_frame_tc=0;
-
   gchar *tmp,*tmp1;
+
+  gint numtracks=g_list_length(mt->selected_tracks);
+  gint tcount=0,tlast=-1000000,tsmall=-1,ctrack;
+
+  int *tracks=(int *)g_malloc(numtracks*sizint);
 
   // sort selected tracks into ascending order
   while (tcount<numtracks) {
@@ -15000,8 +15008,7 @@ void mt_add_region_effect (GtkMenuItem *menuitem, gpointer user_data) {
     tname=lives_fx_cat_to_text(LIVES_FX_CAT_COMPOSITOR,FALSE); // compositor
     track_desc=g_strdup(_("selected tracks"));
     break;
-  }
-  g_free(tracks);
+  }  g_free(tracks);
   text=g_strdup_printf(_("Added %s %s to %s from %.4f to %.4f\n"),tname,filter_name,track_desc,start_tc/U_SEC,q_gint64(end_tc+U_SEC/mt->fps,mt->fps)/U_SEC);
   d_print(text);
   g_free(text);
@@ -15048,14 +15055,22 @@ void on_mt_list_fx_activate (GtkMenuItem *menuitem, gpointer user_data) {
   polymorph(mt,POLY_FX_STACK);
 }
 
+
 void on_mt_delfx_activate (GtkMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
+
   weed_timecode_t start_tc,end_tc;
-  weed_plant_t *deinit_event;
+
+  weed_plant_t *deinit_event,*init_event=mt->selected_init_event;
+
+  int *tracks;
 
   gchar *fhash,*filter_name,*text;
+  gchar *tname,*track_desc;
+  gchar *tmp,*tmp1;
 
   boolean did_backup=mt->did_backup;
+  int numtracks;
   int error;
 
   if (mt->selected_init_event==NULL) return;
@@ -15067,16 +15082,41 @@ void on_mt_delfx_activate (GtkMenuItem *menuitem, gpointer user_data) {
     mt->idlefunc=0;
   }
 
-  fhash=weed_get_string_value(mt->selected_init_event,"filter",&error);
+  fhash=weed_get_string_value(init_event,"filter",&error);
   mt->current_fx=weed_get_idx_for_hashname(fhash,TRUE);
   weed_free(fhash);
 
-  deinit_event=(weed_plant_t *)weed_get_voidptr_value(mt->selected_init_event,"deinit_event",&error);
+  deinit_event=(weed_plant_t *)weed_get_voidptr_value(init_event,"deinit_event",&error);
   filter_name=weed_filter_get_name(mt->current_fx);
-  start_tc=get_event_timecode(mt->selected_init_event);
-  end_tc=get_event_timecode(deinit_event);
-  text=g_strdup_printf(_("Deleted %s from %.4f to %.4f\n"),filter_name,start_tc/U_SEC,end_tc/U_SEC);
-  g_free(filter_name);
+  start_tc=get_event_timecode(init_event);
+  end_tc=get_event_timecode(deinit_event)+U_SEC/mt->fps;
+
+  numtracks=weed_leaf_num_elements(init_event,"in_tracks");
+  tracks=weed_get_int_array(init_event,"in_tracks",&error);
+
+  numtracks=enabled_in_channels(get_weed_filter(mt->current_fx),TRUE);  // count repeated channels
+  switch (numtracks) {
+  case 1:
+    tname=lives_fx_cat_to_text(LIVES_FX_CAT_EFFECT,FALSE); // effect
+    track_desc=g_strdup_printf(_("track %s"),(tmp=get_track_name(mt,tracks[0],FALSE)));
+    g_free(tmp);
+    break;
+  case 2:
+    tname=lives_fx_cat_to_text(LIVES_FX_CAT_TRANSITION,FALSE); // transition
+    track_desc=g_strdup_printf(_("tracks %s and %s"),(tmp1=get_track_name(mt,tracks[0],FALSE)),(tmp=get_track_name(mt,tracks[1],FALSE)));
+    g_free(tmp);
+    g_free(tmp1);
+    break;
+  default:
+    tname=lives_fx_cat_to_text(LIVES_FX_CAT_COMPOSITOR,FALSE); // compositor
+    track_desc=g_strdup(_("selected tracks"));
+    break;
+  }  
+
+  weed_free(tracks);
+
+  text=g_strdup_printf(_("Deleted %s %s from %s from %.4f to %.4f\n"),tname,filter_name,track_desc,start_tc/U_SEC,end_tc/U_SEC);
+  g_free(filter_name); g_free(track_desc);
 
   if (!did_backup) mt_backup(mt,MT_UNDO_DELETE_FILTER,0);
 
@@ -15085,7 +15125,6 @@ void on_mt_delfx_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
   d_print(text);
   g_free(text);
-  g_free(filter_name);
   
   mt->selected_init_event=NULL;
   mt->current_fx=-1;

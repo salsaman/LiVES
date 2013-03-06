@@ -11,7 +11,8 @@
 #define DEFAULT_FRAME_HSIZE 320
 #define DEFAULT_FRAME_VSIZE 200
 
-#define PROCW_STRETCHER "                                                                                                                            " ///< blank label to show so our message dialogs are not too small
+/// blank label to show so our message dialogs are not too small
+#define PROCW_STRETCHER "                                                                                                                            "
 
 #define ENC_DETAILS_WIN_H 200 ///< horizontal size in pixels of the encoder output window
 #define ENC_DETAILS_WIN_V 200 ///< vertical size in pixels of the encoder output window

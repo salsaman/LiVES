@@ -6903,7 +6903,8 @@ void on_cancel_keep_button_clicked (GtkButton *button, gpointer user_data) {
   while (g_main_context_iteration(NULL,FALSE));
 
   if ((!mainw->effects_paused||cfile->nokeep)&&(!mainw->is_rendering||
-						(mainw->multitrack!=NULL&&!mainw->multitrack->is_rendering))) {
+						(mainw->multitrack!=NULL&&(!mainw->multitrack->is_rendering||
+									   !mainw->preview)))) {
     // Cancel
     if (mainw->cancel_type==CANCEL_SOFT) {
       // cancel in record audio

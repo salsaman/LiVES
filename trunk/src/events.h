@@ -155,8 +155,8 @@ render_details *create_render_details (gint type);
 ////////////////////////////////////////////////////////////////
 /// rendering
 
-gboolean render_to_clip (gboolean new_clip); ///< render to clip
-gboolean start_render_effect_events (weed_plant_t *event_list); ///< render to clip
+boolean render_to_clip (boolean new_clip); ///< render to clip
+boolean start_render_effect_events (weed_plant_t *event_list); ///< render to clip
 
 
 // effect insertion/updating

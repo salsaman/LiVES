@@ -291,6 +291,7 @@ static boolean pre_init(void) {
     FALSE, // non_modal
     W_PACKING_WIDTH, // def packing width
     W_PACKING_HEIGHT, // def packing height
+    W_BORDER_WIDTH, // def border width
     LIVES_JUSTIFY_DEFAULT // justify
   };
 

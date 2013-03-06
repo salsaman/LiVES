@@ -226,7 +226,7 @@ static GtkWidget* create_warn_dialog (int warn_mask_number, GtkWindow *transient
   gtk_window_set_deletable(GTK_WINDOW(dialog), FALSE);
   gtk_window_set_resizable (GTK_WINDOW (dialog), FALSE);
 
-  gtk_container_set_border_width (GTK_CONTAINER (dialog), W_BORDER_WIDTH);
+  gtk_container_set_border_width (GTK_CONTAINER (dialog), widget_opts.border_width*2);
 
   textx=insert_newlines(text,MAX_MSG_WIDTH_CHARS);
   gtk_label_set_text(GTK_LABEL(mainw->warning_label),textx);
@@ -265,6 +265,11 @@ static GtkWidget* create_warn_dialog (int warn_mask_number, GtkWindow *transient
 
   gtk_widget_show_all(dialog);
   gtk_window_set_modal (GTK_WINDOW (dialog), TRUE);
+
+  if (prefs->present) {
+    gtk_window_present (GTK_WINDOW (dialog));
+    gdk_window_raise (lives_widget_get_xwindow(dialog));
+  }
 
   return dialog;
 }
@@ -452,8 +457,6 @@ void do_error_dialog_with_check_transient(const gchar *text, boolean is_blocking
   err_box=create_info_error_dialog(mytext,is_blocking,warn_mask_number);
   if (mytext!=NULL) g_free(mytext);
   if (transient!=NULL) gtk_window_set_transient_for(GTK_WINDOW(err_box),transient);
-  if (prefs->present) gtk_window_present (GTK_WINDOW (err_box));
-  gdk_window_raise (lives_widget_get_xwindow(err_box));
 
   if (is_blocking) {
     gtk_dialog_run(GTK_DIALOG (err_box));
@@ -2954,7 +2957,8 @@ void do_do_not_close_d (void) {
 
   if (transient!=NULL) gtk_window_set_transient_for(GTK_WINDOW(err_box),transient);
   gtk_widget_show(err_box);
-  if (prefs->present) gtk_window_present (GTK_WINDOW (err_box));
+
+  gtk_window_present (GTK_WINDOW (err_box));
   gdk_window_raise (lives_widget_get_xwindow(err_box));
 }
 

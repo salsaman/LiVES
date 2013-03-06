@@ -506,6 +506,7 @@ LiVESPixbuf *mt_framedraw(lives_mt *mt, LiVESPixbuf *pixbuf) {
   if (framedraw.added) {
     switch (framedraw.type) {
     case LIVES_PARAM_SPECIAL_TYPE_RECT_MULTRECT:
+    case LIVES_PARAM_SPECIAL_TYPE_RECT_MULTIRECT:
       if (mt->track_index==-1) {
 	// TODO - hide widgets
       }

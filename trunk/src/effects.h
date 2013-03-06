@@ -43,12 +43,12 @@ typedef enum {
 } lives_fx_cat_t;
 
 
-gchar *lives_fx_cat_to_text(lives_fx_cat_t cat, gboolean plural);
+gchar *lives_fx_cat_to_text(lives_fx_cat_t cat, boolean plural) WARN_UNUSED;
 
 
 #include "effects-weed.h"
 
-gboolean do_effect(lives_rfx_t *rfx, gboolean is_preview); ///< defined as extern in paramwindow.c
+boolean do_effect(lives_rfx_t *rfx, boolean is_preview); ///< defined as extern in paramwindow.c
 
 void on_render_fx_activate (GtkMenuItem *menuitem, lives_rfx_t *rfx);
 
@@ -56,24 +56,24 @@ void on_render_fx_activate (GtkMenuItem *menuitem, lives_rfx_t *rfx);
 
 // render
 void on_realfx_activate (GtkMenuItem *, gpointer rfx);
-gboolean on_realfx_activate_inner(gint type, lives_rfx_t *rfx);
+boolean on_realfx_activate_inner(gint type, lives_rfx_t *rfx);
 
-lives_render_error_t realfx_progress (gboolean reset);
+lives_render_error_t realfx_progress (boolean reset);
 
 // key callbacks
 
-gboolean textparm_callback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer user_data);
+boolean textparm_callback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer user_data);
 
-gboolean grabkeys_callback (GtkAccelGroup *, GObject *, guint, GdkModifierType, gpointer user_data); ///< for accel groups
-gboolean grabkeys_callback_hook (GtkToggleButton *button, gpointer user_data); ///< for widgets
+boolean grabkeys_callback (GtkAccelGroup *, GObject *, guint, GdkModifierType, gpointer user_data); ///< for accel groups
+boolean grabkeys_callback_hook (GtkToggleButton *button, gpointer user_data); ///< for widgets
 
-gboolean rte_on_off_callback (GtkAccelGroup *, GObject *, guint, GdkModifierType, gpointer user_data); ///< for accel groups
-gboolean rte_on_off_callback_hook (GtkToggleButton *, gpointer user_data); ///< for widgets
+boolean rte_on_off_callback (GtkAccelGroup *, GObject *, guint, GdkModifierType, gpointer user_data); ///< for accel groups
+boolean rte_on_off_callback_hook (GtkToggleButton *, gpointer user_data); ///< for widgets
 
-gboolean rtemode_callback (GtkAccelGroup *, GObject *, guint, GdkModifierType, gpointer user_data); ///< for accel groups
-gboolean rtemode_callback_hook (GtkToggleButton *, gpointer user_data); ///< for widgets
+boolean rtemode_callback (GtkAccelGroup *, GObject *, guint, GdkModifierType, gpointer user_data); ///< for accel groups
+boolean rtemode_callback_hook (GtkToggleButton *, gpointer user_data); ///< for widgets
 
-gboolean swap_fg_bg_callback (GtkAccelGroup *, GObject *, guint, GdkModifierType, gpointer user_data);
+boolean swap_fg_bg_callback (GtkAccelGroup *, GObject *, guint, GdkModifierType, gpointer user_data);
 
 weed_plant_t *get_blend_layer(weed_timecode_t tc);
 

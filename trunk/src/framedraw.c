@@ -20,13 +20,14 @@
 #include "framedraw.h"
 
 // set by mouse button press
-static gint xstart,ystart;
-static gboolean b1_held;
+static double xstart,ystart;
+static double xcurrent,ycurrent;
+static boolean b1_held;
 
 static boolean noupdate=FALSE;
 
-static gdouble calc_fd_scale(gint width, gint height) {
-  gdouble scale=1.;
+static double calc_fd_scale(int width, int height) {
+  double scale=1.;
 
  if (width<MIN_PRE_X) {
     width=MIN_PRE_X;
@@ -35,8 +36,8 @@ static gdouble calc_fd_scale(gint width, gint height) {
     height=MIN_PRE_Y;
   }
 
-  if (width>MAX_PRE_X) scale=(gdouble)width/(gdouble)MAX_PRE_X;
-  if (height>MAX_PRE_Y&&(height/MAX_PRE_Y>scale)) scale=(gdouble)height/(gdouble)MAX_PRE_Y;
+  if (width>MAX_PRE_X) scale=(double)width/(double)MAX_PRE_X;
+  if (height>MAX_PRE_Y&&(height/MAX_PRE_Y>scale)) scale=(double)height/(double)MAX_PRE_Y;
   return scale;
 
 }
@@ -120,7 +121,7 @@ void framedraw_connect_spinbutton(lives_special_framedraw_rect_t *framedraw, liv
 
 
 
-void framedraw_connect(lives_special_framedraw_rect_t *framedraw, gint width, gint height, lives_rfx_t *rfx) {
+void framedraw_connect(lives_special_framedraw_rect_t *framedraw, int width, int height, lives_rfx_t *rfx) {
 
 
   // add mouse fn's so we can draw on frames
@@ -172,13 +173,13 @@ void framedraw_add_reset(GtkVBox *box, lives_special_framedraw_rect_t *framedraw
 }
 
 
-static gboolean expose_fd_event (GtkWidget *widget, GdkEventExpose ev) {
+static boolean expose_fd_event (GtkWidget *widget, GdkEventExpose ev) {
   load_framedraw_image(NULL);
   redraw_framedraw_image();
   return TRUE;
 }
 
-void widget_add_framedraw (GtkVBox *box, gint start, gint end, gboolean add_preview_button, gint width, gint height) {
+void widget_add_framedraw (GtkVBox *box, int start, int end, boolean add_preview_button, int width, int height) {
   // adds the frame draw widget to box
   // the redraw button should be connected to an appropriate redraw function
   // after calling this function
@@ -284,7 +285,7 @@ void widget_add_framedraw (GtkVBox *box, gint start, gint end, gboolean add_prev
 
 
 
-void framedraw_redraw (lives_special_framedraw_rect_t * framedraw, gboolean reload, GdkPixbuf *pixbuf) {
+void framedraw_redraw (lives_special_framedraw_rect_t * framedraw, boolean reload, GdkPixbuf *pixbuf) {
   // this will draw the mask (framedraw_bitmap) and optionally reload the image
   // and then combine them
 
@@ -305,6 +306,7 @@ void framedraw_redraw (lives_special_framedraw_rect_t * framedraw, gboolean relo
   height=cfile->vsize;
   
   calc_maxspect(fd_width,fd_height,&width,&height);
+
   // copy from orig, resize
   // copy orig layer to layer
   if (mainw->fd_layer!=NULL) {
@@ -326,57 +328,133 @@ void framedraw_redraw (lives_special_framedraw_rect_t * framedraw, gboolean relo
   // her we dont offset because we are drawing in the pixbuf, not the widget
 
   switch (framedraw->type) {
-  case LIVES_PARAM_SPECIAL_TYPE_RECT_DEMASK:
-    xstartf=(gint)(gtk_spin_button_get_value (GTK_SPIN_BUTTON (framedraw->xstart_param->widgets[0])));
-    ystartf=(gint)(gtk_spin_button_get_value (GTK_SPIN_BUTTON (framedraw->ystart_param->widgets[0])));
-    xendf=(gint)(gtk_spin_button_get_value (GTK_SPIN_BUTTON (framedraw->xend_param->widgets[0])));
-    yendf=(gint)(gtk_spin_button_get_value (GTK_SPIN_BUTTON (framedraw->yend_param->widgets[0])));
-
+  case LIVES_PARAM_SPECIAL_TYPE_RECT_MULTRECT: // deprecated
     // scale values
-    xstartf=xstartf/(double)cfile->hsize*(double)width;
-    xendf=xendf/(double)cfile->hsize*(double)width;
-    
-    ystartf=ystartf/(double)cfile->vsize*(double)height;
-    yendf=yendf/(double)cfile->vsize*(double)height;
+    if (framedraw->xstart_param->dp==0) {
+      xstartf=(double)gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON (framedraw->xstart_param->widgets[0]));
+      xstartf=xstartf/(double)cfile->hsize*(double)width;
+    }
+    else {
+      xstartf=gtk_spin_button_get_value (GTK_SPIN_BUTTON (framedraw->xstart_param->widgets[0]));
+      xstartf=xstartf*(double)width;
+    }
 
-    // create a mask which is only opaque within the clipping area
+    if (framedraw->xend_param->dp==0) {
+      xendf=(double)gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON (framedraw->xend_param->widgets[0]));
+      xendf=xendf/(double)cfile->hsize*(double)width;
+    }
+    else {
+      xendf=gtk_spin_button_get_value (GTK_SPIN_BUTTON (framedraw->xend_param->widgets[0]));
+      xendf=xendf*(double)width;
+    }
 
-    lives_painter_rectangle(cr,0,0,width,height);
-    lives_painter_rectangle(cr,xstartf,ystartf,xendf-xstartf+1.,yendf-ystartf+1.);
-    lives_painter_set_operator(cr, LIVES_PAINTER_OPERATOR_DEST_OUT);
-    lives_painter_set_source_rgba(cr, .0, .0, .0, .5);
-    lives_painter_set_fill_rule(cr, LIVES_PAINTER_FILL_RULE_EVEN_ODD);
-    lives_painter_fill (cr);
+    if (framedraw->ystart_param->dp==0) {
+      ystartf=(double)gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON (framedraw->ystart_param->widgets[0]));
+      ystartf=ystartf/(double)cfile->vsize*(double)height;
+    }
+    else {
+      ystartf=gtk_spin_button_get_value (GTK_SPIN_BUTTON (framedraw->ystart_param->widgets[0]));
+      ystartf=ystartf*(double)height;
+    }
 
-    break;
-  case LIVES_PARAM_SPECIAL_TYPE_RECT_MULTRECT:
-    xstartf=gtk_spin_button_get_value (GTK_SPIN_BUTTON (framedraw->xstart_param->widgets[0]));
-    ystartf=gtk_spin_button_get_value (GTK_SPIN_BUTTON (framedraw->ystart_param->widgets[0]));
-
-    xendf=xstartf+gtk_spin_button_get_value (GTK_SPIN_BUTTON (framedraw->xend_param->widgets[0]));
-    yendf=ystartf+gtk_spin_button_get_value (GTK_SPIN_BUTTON (framedraw->yend_param->widgets[0]));
-
-    // scale values
-    xstartf *=(double)width;
-    xendf *=(double)width;
-    
-    ystartf *=(double)height;
-    yendf *=(double)height;
+    if (framedraw->yend_param->dp==0) {
+      yendf=gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON (framedraw->yend_param->widgets[0]));
+      yendf=yendf/(double)cfile->vsize*(double)height;
+    }
+    else {
+      yendf=gtk_spin_button_get_value (GTK_SPIN_BUTTON (framedraw->yend_param->widgets[0]));
+      yendf=yendf*(double)height;
+    }
 
     lives_painter_set_source_rgb(cr, 1., 0., 0.);
-    lives_painter_rectangle(cr,xstartf-1.,ystartf-1.,xendf-xstartf+2.,yendf-ystartf+2.);
+    lives_painter_rectangle(cr,xstartf-1.,ystartf-1.,xendf+2.,yendf+2.);
     lives_painter_stroke (cr);
+
+    break;
+  case LIVES_PARAM_SPECIAL_TYPE_RECT_MULTIRECT:
+  case LIVES_PARAM_SPECIAL_TYPE_RECT_DEMASK:
+
+    if (framedraw->xstart_param->dp==0) {
+      xstartf=(double)gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON (framedraw->xstart_param->widgets[0]));
+      xstartf=xstartf/(double)cfile->hsize*(double)width;
+    }
+    else {
+      xstartf=gtk_spin_button_get_value (GTK_SPIN_BUTTON (framedraw->xstart_param->widgets[0]));
+      xstartf=xstartf*(double)width;
+    }
+
+    if (framedraw->xend_param->dp==0) {
+      xendf=(double)gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON (framedraw->xend_param->widgets[0]));
+      xendf=xendf/(double)cfile->hsize*(double)width;
+    }
+    else {
+      xendf=gtk_spin_button_get_value (GTK_SPIN_BUTTON (framedraw->xend_param->widgets[0]));
+      xendf=xendf*(double)width;
+    }
+
+    if (framedraw->ystart_param->dp==0) {
+      ystartf=(double)gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON (framedraw->ystart_param->widgets[0]));
+      ystartf=ystartf/(double)cfile->vsize*(double)height;
+    }
+    else {
+      ystartf=gtk_spin_button_get_value (GTK_SPIN_BUTTON (framedraw->ystart_param->widgets[0]));
+      ystartf=ystartf*(double)height;
+    }
+
+    if (framedraw->yend_param->dp==0) {
+      yendf=(double)gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON (framedraw->yend_param->widgets[0]));
+      yendf=yendf/(double)cfile->vsize*(double)height;
+    }
+    else {
+      yendf=gtk_spin_button_get_value (GTK_SPIN_BUTTON (framedraw->yend_param->widgets[0]));
+      yendf=yendf*(double)height;
+    }
+
+    if (b1_held||framedraw->type==LIVES_PARAM_SPECIAL_TYPE_RECT_MULTIRECT) {
+      lives_painter_set_source_rgb(cr, 1., 0., 0.);
+      lives_painter_rectangle(cr,xstartf-1.,ystartf-1.,xendf-xstartf+2.,yendf-ystartf+2.);
+      lives_painter_stroke (cr);
+    }
+    else {
+      if (!b1_held) {
+	// create a mask which is only opaque within the clipping area
+
+	lives_painter_rectangle(cr,0,0,width,height);
+	lives_painter_rectangle(cr,xstartf,ystartf,xendf-xstartf+1.,yendf-ystartf+1.);
+	lives_painter_set_operator(cr, LIVES_PAINTER_OPERATOR_DEST_OUT);
+	lives_painter_set_source_rgba(cr, .0, .0, .0, .5);
+	lives_painter_set_fill_rule(cr, LIVES_PAINTER_FILL_RULE_EVEN_ODD);
+	lives_painter_fill (cr);
+      }
+    }
 
     break;
   case LIVES_PARAM_SPECIAL_TYPE_SINGLEPOINT:
 
-    xstartf=(gint)(gtk_spin_button_get_value (GTK_SPIN_BUTTON (framedraw->xstart_param->widgets[0]))*(double)width);
-    ystartf=(gint)(gtk_spin_button_get_value (GTK_SPIN_BUTTON (framedraw->ystart_param->widgets[0]))*(double)height);
+    if (framedraw->xstart_param->dp==0) {
+      xstartf=(double)gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON (framedraw->xstart_param->widgets[0]));
+      xstartf=xstartf/(double)cfile->hsize*(double)width;
+    }
+    else {
+      xstartf=gtk_spin_button_get_value (GTK_SPIN_BUTTON (framedraw->xstart_param->widgets[0]));
+      xstartf=xstartf*(double)width;
+    }
+
+    if (framedraw->ystart_param->dp==0) {
+      ystartf=(double)gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON (framedraw->ystart_param->widgets[0]));
+      ystartf=ystartf/(double)cfile->vsize*(double)height;
+    }
+    else {
+      ystartf=gtk_spin_button_get_value (GTK_SPIN_BUTTON (framedraw->ystart_param->widgets[0]));
+      ystartf=ystartf*(double)height;
+    }
 
     lives_painter_set_source_rgb(cr, 1., 0., 0.);
 
     lives_painter_move_to(cr,xstartf,ystartf-3);
     lives_painter_line_to(cr,xstartf,ystartf+3);
+
+    lives_painter_stroke (cr);
 
     lives_painter_move_to(cr,xstartf-3,ystartf);
     lives_painter_line_to(cr,xstartf+3,ystartf);
@@ -494,7 +572,7 @@ void load_rfx_preview(lives_rfx_t *rfx) {
       max_frame=atoi(mainw->msg);
     }
     else {
-      gint numtok=get_token_count (mainw->msg,'|');
+      int numtok=get_token_count (mainw->msg,'|');
       if (numtok>4) {
 	gchar **array=g_strsplit(mainw->msg,"|",numtok);
 	max_frame=atoi(array[0]);
@@ -538,8 +616,8 @@ void load_rfx_preview(lives_rfx_t *rfx) {
 
   tc=((mainw->framedraw_frame-1.))/cfile->fps*U_SECL;
   pixbuf=pull_lives_pixbuf_at_size(mainw->current_file,mainw->framedraw_frame,(gchar *)img_ext,
-				   tc,(gdouble)cfile->hsize,
-				   (gdouble)cfile->vsize,LIVES_INTERP_BEST);
+				   tc,(double)cfile->hsize,
+				   (double)cfile->vsize,LIVES_INTERP_BEST);
 
 
   load_framedraw_image(pixbuf);
@@ -581,7 +659,7 @@ void load_framedraw_image(LiVESPixbuf *pixbuf) {
 
     tc=((mainw->framedraw_frame-1.))/cfile->fps*U_SECL;
     pixbuf=pull_lives_pixbuf_at_size(mainw->current_file,mainw->framedraw_frame,img_ext,tc,
-				     (gdouble)cfile->hsize,(gdouble)cfile->vsize,
+				     (double)cfile->hsize,(double)cfile->vsize,
 				     LIVES_INTERP_BEST);
   }
 
@@ -668,7 +746,7 @@ void redraw_framedraw_image(void) {
 
 // change cursor maybe when we enter or leave the framedraw window
 
-gboolean on_framedraw_enter (GtkWidget *widget, GdkEventCrossing *event, lives_special_framedraw_rect_t *framedraw) {
+boolean on_framedraw_enter (GtkWidget *widget, GdkEventCrossing *event, lives_special_framedraw_rect_t *framedraw) {
   GdkCursor *cursor;
 
   if (framedraw==NULL&&mainw->multitrack!=NULL) {
@@ -683,6 +761,7 @@ gboolean on_framedraw_enter (GtkWidget *widget, GdkEventCrossing *event, lives_s
   switch (framedraw->type) {
   case LIVES_PARAM_SPECIAL_TYPE_RECT_DEMASK:
   case LIVES_PARAM_SPECIAL_TYPE_RECT_MULTRECT:
+  case LIVES_PARAM_SPECIAL_TYPE_RECT_MULTIRECT:
     if (mainw->multitrack==NULL) {
       cursor=gdk_cursor_new_for_display 
 	(mainw->mgeom[prefs->gui_monitor>0?prefs->gui_monitor-1:0].disp,
@@ -716,7 +795,7 @@ gboolean on_framedraw_enter (GtkWidget *widget, GdkEventCrossing *event, lives_s
   return FALSE;
 }
 
-gboolean on_framedraw_leave (GtkWidget *widget, GdkEventCrossing *event, lives_special_framedraw_rect_t *framedraw) {
+boolean on_framedraw_leave (GtkWidget *widget, GdkEventCrossing *event, lives_special_framedraw_rect_t *framedraw) {
   if (framedraw==NULL) return FALSE;
   gdk_window_set_cursor (lives_widget_get_xwindow(mainw->framedraw), NULL);
   return FALSE;
@@ -725,7 +804,7 @@ gboolean on_framedraw_leave (GtkWidget *widget, GdkEventCrossing *event, lives_s
 
 // using these 3 functions, the user can draw on frames
 
-gboolean on_framedraw_mouse_start (GtkWidget *widget, GdkEventButton *event, lives_special_framedraw_rect_t *framedraw) {
+boolean on_framedraw_mouse_start (GtkWidget *widget, GdkEventButton *event, lives_special_framedraw_rect_t *framedraw) {
   // user clicked in the framedraw widget (or multitrack playback widget)
 
   int fd_height;
@@ -734,216 +813,87 @@ gboolean on_framedraw_mouse_start (GtkWidget *widget, GdkEventButton *event, liv
   int width=cfile->hsize;
   int height=cfile->vsize;
 
+  int xstarti,ystarti;
+
   if (framedraw==NULL&&mainw->multitrack!=NULL) framedraw=mainw->multitrack->framedraw;
+
+  if (framedraw==NULL) return FALSE;
+  if (mainw->multitrack!=NULL&&mainw->multitrack->track_index==-1) return FALSE;
 
   if (framedraw==NULL&&mainw->multitrack!=NULL&&event->button==3) {
     // right click brings up context menu
     frame_context(widget,event,GINT_TO_POINTER(0));
   }
 
-  if (framedraw==NULL) return FALSE;
-  if (mainw->multitrack!=NULL&&mainw->multitrack->track_index==-1) return FALSE;
+  if (event->button!=1) return FALSE;
 
+  b1_held=TRUE;
 
-  if (event->button==1) {
-    lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[prefs->gui_monitor>0?prefs->gui_monitor-1:0].mouse_device, 
-			     widget, &xstart, &ystart);
+  lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[prefs->gui_monitor>0?prefs->gui_monitor-1:0].mouse_device, 
+			   widget, &xstarti, &ystarti);
 
-    b1_held=TRUE;
-
-    if ((framedraw->type==LIVES_PARAM_SPECIAL_TYPE_RECT_MULTRECT||framedraw->type==LIVES_PARAM_SPECIAL_TYPE_RECT_DEMASK)&&
-	(mainw->multitrack==NULL||mainw->multitrack->cursor_style==0)) {
-      GdkCursor *cursor;
-      if (mainw->multitrack==NULL) {
-	cursor=gdk_cursor_new_for_display 
-	  (mainw->mgeom[prefs->gui_monitor>0?prefs->gui_monitor-1:0].disp, 
-	   GDK_BOTTOM_RIGHT_CORNER);
-	gdk_window_set_cursor (lives_widget_get_xwindow(widget), cursor);
-      }
-      else {
-	cursor=gdk_cursor_new_for_display (mainw->multitrack->display, GDK_BOTTOM_RIGHT_CORNER);
-	gdk_window_set_cursor (lives_widget_get_xwindow(mainw->multitrack->play_box), cursor);
-      }
+  if ((framedraw->type==LIVES_PARAM_SPECIAL_TYPE_RECT_MULTRECT||
+       framedraw->type==LIVES_PARAM_SPECIAL_TYPE_RECT_MULTIRECT||
+       framedraw->type==LIVES_PARAM_SPECIAL_TYPE_RECT_DEMASK)&&
+      (mainw->multitrack==NULL||mainw->multitrack->cursor_style==0)) {
+    GdkCursor *cursor;
+    if (mainw->multitrack==NULL) {
+      cursor=gdk_cursor_new_for_display 
+	(mainw->mgeom[prefs->gui_monitor>0?prefs->gui_monitor-1:0].disp, 
+	 GDK_BOTTOM_RIGHT_CORNER);
+      gdk_window_set_cursor (lives_widget_get_xwindow(widget), cursor);
     }
-
-
-    fd_width=lives_widget_get_allocation_width(widget);
-    fd_height=lives_widget_get_allocation_height(widget);
-    
-    calc_maxspect(fd_width,fd_height,&width,&height);
-
-    xstart-=(fd_width-width)/2.;
-    ystart-=(fd_height-height)/2.;
-
-
-    switch (framedraw->type) {
-     case (LIVES_PARAM_SPECIAL_TYPE_RECT_MULTRECT): 
-      {
-
-	double offsx;
-	double offsy;
-
-	offsx=(double)xstart/(double)width;
-	offsy=(double)ystart/(double)height;
-	
-	noupdate=TRUE;
-	if (framedraw->xstart_param->dp>0)
-	  gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xstart_param->widgets[0]),offsx);
-	else
-	  gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xstart_param->widgets[0]),(int)(offsx*(double)cfile->hsize+.5));
-	if (framedraw->xstart_param->dp>0)
-	  gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->ystart_param->widgets[0]),offsy);
-	else
-	  gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->ystart_param->widgets[0]),(int)(offsy*(double)cfile->vsize+.5));
-
-	gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xend_param->widgets[0]),0.);
-	gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->yend_param->widgets[0]),0.);
-	noupdate=FALSE;
-
-	framedraw_redraw (framedraw, FALSE, NULL);
-
-	if (mainw->framedraw_reset!=NULL) {
-	  gtk_widget_set_sensitive (mainw->framedraw_reset,TRUE);
-	}
-	if (mainw->framedraw_preview!=NULL) {
-	  gtk_widget_set_sensitive (mainw->framedraw_preview,TRUE);
-	}
-      }
-      break;
-    default:
-      break;
+    else {
+      cursor=gdk_cursor_new_for_display (mainw->multitrack->display, GDK_BOTTOM_RIGHT_CORNER);
+      gdk_window_set_cursor (lives_widget_get_xwindow(mainw->multitrack->play_box), cursor);
     }
   }
 
-  return FALSE;
-}
-
-gboolean on_framedraw_mouse_update (GtkWidget *widget, GdkEventButton *event, lives_special_framedraw_rect_t *framedraw) {
-  // pointer moved in the framedraw widget
-  gint xcurrent,ycurrent;
-
-  lives_colRGBA32_t col;
-
-  int fd_width,fd_height,width,height;
-
-  if (framedraw==NULL&&mainw->multitrack!=NULL) framedraw=mainw->multitrack->framedraw;
-  if (framedraw==NULL) return FALSE;
-  if (mainw->multitrack!=NULL&&mainw->multitrack->track_index==-1) return FALSE;
-
-  lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[prefs->gui_monitor>0?prefs->gui_monitor-1:0].mouse_device, 
-			   widget, &xcurrent, &ycurrent);
-
-
-  width=cfile->hsize;
-  height=cfile->vsize;
 
   fd_width=lives_widget_get_allocation_width(widget);
   fd_height=lives_widget_get_allocation_height(widget);
-      
-  calc_maxspect(fd_width,fd_height,&width,&height);
-
-  xcurrent-=(fd_width-width)/2.;
-  ycurrent-=(fd_height-height)/2.;
-
-  switch (framedraw->type) {
-  case LIVES_PARAM_SPECIAL_TYPE_RECT_DEMASK:
-    if (b1_held) {
-
-      // TODO - allow user selectable line colour
-      col.red=180;
-      col.green=0;
-      col.blue=0;
-      col.alpha=255;
-
-      draw_rect_demask (&col,xstart,ystart,xcurrent,ycurrent,FALSE);
-
-      redraw_framedraw_image();
-
-    }
-    break;
-  case LIVES_PARAM_SPECIAL_TYPE_RECT_MULTRECT:
-    if (b1_held) {
-       double xscale,yscale;
-
-      //yend=yend*(fd_height+FD_HT_ADJ*2)/fd_height;
-
-      xscale=(double)(xcurrent-xstart)/(double)width;
-      yscale=(double)(ycurrent-ystart)/(double)height;
-
-
-      noupdate=TRUE;
-      if (framedraw->xend_param->dp>0)
-	gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xend_param->widgets[0]),xscale);
-      else
-	gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xend_param->widgets[0]),(int)(xscale*(double)cfile->hsize+.5));
-      if (framedraw->yend_param->dp>0)
-	gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->yend_param->widgets[0]),yscale);
-      else 
-	gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->yend_param->widgets[0]),(int)(yscale*(double)cfile->vsize+.5));
-      noupdate=FALSE;
-
-      framedraw_redraw (framedraw, FALSE, NULL);
-
-      if (mainw->framedraw_reset!=NULL) {
-	gtk_widget_set_sensitive (mainw->framedraw_reset,TRUE);
-      }
-      if (mainw->framedraw_preview!=NULL) {
-	gtk_widget_set_sensitive (mainw->framedraw_preview,TRUE);
-      }
-
-    }
-    break;
-
-  default:
-    break;
-
-  }
-
-  return FALSE;
-}
-
-
-gboolean on_framedraw_mouse_reset (GtkWidget *widget, GdkEventButton *event, lives_special_framedraw_rect_t *framedraw) {
-  gint xend,yend;
-  gdouble offsx,offsy;
-  int fd_width,fd_height,width,height;
-
-  if (framedraw==NULL&&mainw->multitrack!=NULL) framedraw=mainw->multitrack->framedraw;
-  if (framedraw==NULL) return FALSE;
-  if (mainw->multitrack!=NULL&&mainw->multitrack->track_index==-1) return FALSE;
-
-  lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[prefs->gui_monitor>0?prefs->gui_monitor-1:0].mouse_device, 
-			   widget, &xend, &yend);
-  // user released the mouse button in framedraw widget
-  if (event->button==1) {
-    b1_held=FALSE;
-  }
-
-  fd_width=lives_widget_get_allocation_width(mainw->framedraw);
-  fd_height=lives_widget_get_allocation_height(mainw->framedraw);
     
-  width=cfile->hsize;
-  height=cfile->vsize;
-  
   calc_maxspect(fd_width,fd_height,&width,&height);
 
-  xend-=(fd_width-width)/2.;
-  yend-=(fd_height-height)/2.;
+  xstart=(double)xstarti-(double)(fd_width-width)/2.;
+  ystart=(double)ystarti-(double)(fd_height-height)/2.;
 
+  xstart/=(double)width;
+  ystart/=(double)height;
+
+  xcurrent=xstart;
+  ycurrent=ystart;
 
   switch (framedraw->type) {
-  case LIVES_PARAM_SPECIAL_TYPE_RECT_DEMASK:
-    xstart/=(double)width;
-    ystart/=(double)height;
-
-    xend/=(double)width;
-    yend/=(double)height;
-
+  case LIVES_PARAM_SPECIAL_TYPE_RECT_MULTRECT: 
+  case LIVES_PARAM_SPECIAL_TYPE_RECT_MULTIRECT: 
+  case LIVES_PARAM_SPECIAL_TYPE_RECT_DEMASK: 
     noupdate=TRUE;
-    gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xstart_param->widgets[0]),MIN (xstart,xend));
-    gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->ystart_param->widgets[0]),MIN (ystart,yend));
-    gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xend_param->widgets[0]),MAX (xstart,xend));
-    gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->yend_param->widgets[0]),MAX (ystart,yend));
+
+    if (framedraw->xstart_param->dp>0)
+      gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xstart_param->widgets[0]),xstart);
+    else
+      gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xstart_param->widgets[0]),(int)(xstart*(double)cfile->hsize+.5));
+    if (framedraw->xstart_param->dp>0)
+      gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->ystart_param->widgets[0]),ystart);
+    else
+      gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->ystart_param->widgets[0]),(int)(ystart*(double)cfile->vsize+.5));
+
+    if (framedraw->type==LIVES_PARAM_SPECIAL_TYPE_RECT_MULTRECT) {
+      gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xend_param->widgets[0]),0.);
+      gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->yend_param->widgets[0]),0.);
+    }
+    else {
+      if (framedraw->xend_param->dp>0)
+	gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xend_param->widgets[0]),xstart);
+      else
+	gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xend_param->widgets[0]),(int)(xstart*(double)cfile->hsize+.5));
+      if (framedraw->xend_param->dp>0)
+	gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->yend_param->widgets[0]),ystart);
+      else
+	gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->yend_param->widgets[0]),(int)(ystart*(double)cfile->vsize+.5));
+    }
+
     noupdate=FALSE;
 
     framedraw_redraw (framedraw, FALSE, NULL);
@@ -956,27 +906,159 @@ gboolean on_framedraw_mouse_reset (GtkWidget *widget, GdkEventButton *event, liv
     }
 
     break;
-
-
-  case LIVES_PARAM_SPECIAL_TYPE_RECT_MULTRECT:
-    //if (mainw->multitrack!=NULL) on_frame_preview_clicked(NULL,mainw->multitrack);
-    break;
-
-  case LIVES_PARAM_SPECIAL_TYPE_SINGLEPOINT:
-    offsx=(double)xend/(double)width;
-    //offsy=(gdouble)yend/(gdouble)(fd_height+FD_HT_ADJ*2);
-    offsy=(double)yend/(double)height;
-
-    noupdate=TRUE;
-    gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xstart_param->widgets[0]),offsx);
-    gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->ystart_param->widgets[0]),offsy);
-    noupdate=FALSE;
-    break;
-
   default:
     break;
   }
 
+  return FALSE;
+}
+
+boolean on_framedraw_mouse_update (GtkWidget *widget, GdkEventMotion *event, lives_special_framedraw_rect_t *framedraw) {
+  // pointer moved in the framedraw widget
+  int xcurrenti,ycurrenti;
+
+  int fd_width,fd_height,width,height;
+
+  if (!b1_held) return FALSE;
+
+  if (framedraw==NULL&&mainw->multitrack!=NULL) framedraw=mainw->multitrack->framedraw;
+  if (framedraw==NULL) return FALSE;
+  if (mainw->multitrack!=NULL&&mainw->multitrack->track_index==-1) return FALSE;
+
+  lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[prefs->gui_monitor>0?prefs->gui_monitor-1:0].mouse_device, 
+			   widget, &xcurrenti, &ycurrenti);
+
+
+  width=cfile->hsize;
+  height=cfile->vsize;
+
+  fd_width=lives_widget_get_allocation_width(widget);
+  fd_height=lives_widget_get_allocation_height(widget);
+      
+  calc_maxspect(fd_width,fd_height,&width,&height);
+
+  xcurrent=(double)xcurrenti-(fd_width-width)/2.;
+  ycurrent=(double)ycurrenti-(fd_height-height)/2.;
+
+  xcurrent/=(double)width;
+  ycurrent/=(double)height;
+
+
+  switch (framedraw->type) {
+  case LIVES_PARAM_SPECIAL_TYPE_RECT_MULTRECT:
+    {
+      double xscale,yscale;
+
+      xscale=xcurrent-xstart;
+      yscale=ycurrent-ystart;
+      
+      noupdate=TRUE;
+
+      if (xscale>0.) {
+	if (framedraw->xend_param->dp>0)
+	  gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xend_param->widgets[0]),xscale);
+	else
+	  gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xend_param->widgets[0]),(int)(xscale*(double)cfile->hsize+.5));
+      }
+      else {
+	if (framedraw->xstart_param->dp>0) {
+	  gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xend_param->widgets[0]),-xscale);
+	  gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xstart_param->widgets[0]),xcurrent);
+	}
+	else {
+	  gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xend_param->widgets[0]),(int)(-xscale*(double)cfile->hsize-.5));
+	  gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xstart_param->widgets[0]),(int)(xcurrent*(double)cfile->hsize+.5));
+	}
+      }
+
+      if (yscale>0.) {
+	if (framedraw->yend_param->dp>0)
+	  gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->yend_param->widgets[0]),yscale);
+	else 
+	  gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->yend_param->widgets[0]),(int)(yscale*(double)cfile->vsize+.5));
+      }
+      else {
+	if (framedraw->xstart_param->dp>0) {
+	  gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->yend_param->widgets[0]),-yscale);
+	  gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->ystart_param->widgets[0]),ycurrent);
+	}
+	else {
+	  gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->yend_param->widgets[0]),(int)(-yscale*(double)cfile->vsize-.5));
+	  gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->ystart_param->widgets[0]),(int)(ycurrent*(double)cfile->vsize+.5));
+	}
+      }
+
+      noupdate=FALSE;
+
+    }
+    break;
+  case LIVES_PARAM_SPECIAL_TYPE_RECT_MULTIRECT:
+  case LIVES_PARAM_SPECIAL_TYPE_RECT_DEMASK:
+    noupdate=TRUE;
+
+    if (xcurrent>xstart) {
+      if (framedraw->xend_param->dp>0)
+	gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xend_param->widgets[0]),xcurrent);
+      else
+	gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xend_param->widgets[0]),(int)(xcurrent*(double)cfile->hsize+.5));
+    }
+    else {
+      if (framedraw->xstart_param->dp>0) {
+	gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xend_param->widgets[0]),xstart);
+	gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xstart_param->widgets[0]),xcurrent);
+      }
+      else {
+	gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xend_param->widgets[0]),(int)(xstart*(double)cfile->hsize+.5));
+	gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xstart_param->widgets[0]),(int)(xcurrent*(double)cfile->hsize+.5));
+      }
+    }
+
+    if (ycurrent>ystart) {
+      if (framedraw->yend_param->dp>0)
+	gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->yend_param->widgets[0]),ycurrent);
+      else 
+	gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->yend_param->widgets[0]),(int)(ycurrent*(double)cfile->vsize+.5));
+    }
+    else {
+      if (framedraw->xstart_param->dp>0) {
+	gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->yend_param->widgets[0]),ystart);
+	gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->ystart_param->widgets[0]),ycurrent);
+      }
+      else {
+	gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->yend_param->widgets[0]),(int)(ystart*(double)cfile->vsize+.5));
+	gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->ystart_param->widgets[0]),(int)(ycurrent*(double)cfile->vsize+.5));
+      }
+    }
+
+    noupdate=FALSE;
+
+    break;
+
+  default:
+    break;
+
+  }
+
+  framedraw_redraw (framedraw, FALSE, NULL);
+
+  if (mainw->framedraw_reset!=NULL) {
+    gtk_widget_set_sensitive (mainw->framedraw_reset,TRUE);
+  }
+  if (mainw->framedraw_preview!=NULL) {
+    gtk_widget_set_sensitive (mainw->framedraw_preview,TRUE);
+  }
+
+
+  return FALSE;
+}
+
+
+boolean on_framedraw_mouse_reset (GtkWidget *widget, GdkEventButton *event, lives_special_framedraw_rect_t *framedraw) {
+  // user released the mouse button in framedraw widget
+  if (event->button==1) return FALSE;
+
+  b1_held=FALSE;
+  framedraw_redraw(framedraw, FALSE, NULL);
   return FALSE;
 }
 
@@ -996,66 +1078,8 @@ void after_framedraw_widget_changed (GtkWidget *widget, lives_special_framedraw_
 
 
 
-
-// various drawing functions
-
-void draw_rect_demask (lives_colRGBA32_t *col, int x1, int y1, int x2, int y2, boolean filled) {
-  lives_painter_t *cr;
-  int width,height;
-  int fd_width;
-  int fd_height;
-
-  if (mainw->fd_layer_orig==NULL) return;
-
-  if (mainw->current_file<1||cfile==NULL) return;
-
-  if (x1==x2||y1==y2) return;
-
-  fd_width=lives_widget_get_allocation_width(mainw->framedraw);
-  fd_height=lives_widget_get_allocation_height(mainw->framedraw);
-  
-  width=cfile->hsize;
-  height=cfile->vsize;
-  
-  calc_maxspect(fd_width,fd_height,&width,&height);
-  // copy from orig, resize
-  // copy orig layer to layer
-
-  if (mainw->fd_layer!=NULL) {
-    weed_layer_free(mainw->fd_layer);
-  }
-  
-  mainw->fd_layer=weed_layer_copy(NULL,mainw->fd_layer_orig);
-  // resize to correct size
-  resize_layer(mainw->fd_layer, width, height, LIVES_INTERP_BEST);
- 
-  cr=layer_to_lives_painter(mainw->fd_layer);
-
-  // draw on the lives_painter
-
-  if (cr==NULL) return;
-
-  lives_painter_set_source_rgba(cr, (double)col->red/255., (double)col->green/255.,(double)col->blue/255.,(double)col->alpha/255.);
-  
-  lives_painter_rectangle(cr,  MIN (x1,x2), MIN (y1,y2), ABS (x2-x1), ABS (y2-y1));
-  
-  lives_painter_stroke (cr);
-
-  if (filled) {
-    lives_painter_clip(cr);
-    lives_painter_paint(cr);
-  }
-
-  lives_painter_to_layer(cr, mainw->fd_layer);
-
-  lives_painter_destroy(cr);
-
-}
-
-
-
 void on_framedraw_reset_clicked (GtkButton *button, lives_special_framedraw_rect_t *framedraw) {
-  //gdouble x_min,x_max,y_min,y_max;
+  //double x_min,x_max,y_min,y_max;
   // reset to defaults
 
   /*  gtk_spin_button_get_range (GTK_SPIN_BUTTON (framedraw->xstart_param->widgets[0]),&x_min,NULL);

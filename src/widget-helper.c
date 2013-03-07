@@ -2207,16 +2207,20 @@ boolean lives_general_delete_event(LiVESWidget *widget, LiVESXEvent *event, LiVE
   return TRUE;
 }
 
-void add_hsep_to_box (LiVESBox *box, boolean expand) {
+LiVESWidget *add_hsep_to_box (LiVESBox *box, boolean expand) {
+  LiVESWidget *widget=NULL;
 #ifdef GUI_GTK
   GtkWidget *hseparator = lives_hseparator_new ();
   gtk_box_pack_start (box, hseparator, expand, TRUE, 0);
   if (!widget_opts.no_gui) 
     gtk_widget_show(hseparator);
+  widget=hseparator;
 #endif
+  return widget;
 }
 
-void add_fill_to_box (LiVESBox *box) {
+LiVESWidget *add_fill_to_box (LiVESBox *box) {
+  LiVESWidget *widget=NULL;
 #ifdef GUI_GTK
   GtkWidget *blank_label = gtk_label_new ("");
   gtk_box_pack_start (box, blank_label, TRUE, TRUE, 0);
@@ -2224,7 +2228,9 @@ void add_fill_to_box (LiVESBox *box) {
   lives_widget_set_vexpand(blank_label,FALSE);
   if (!widget_opts.no_gui) 
     gtk_widget_show(blank_label);
+  widget=blank_label;
 #endif
+  return widget;
 }
 
 

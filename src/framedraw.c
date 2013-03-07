@@ -1055,7 +1055,7 @@ boolean on_framedraw_mouse_update (GtkWidget *widget, GdkEventMotion *event, liv
 
 boolean on_framedraw_mouse_reset (GtkWidget *widget, GdkEventButton *event, lives_special_framedraw_rect_t *framedraw) {
   // user released the mouse button in framedraw widget
-  if (event->button==1) return FALSE;
+  if (event->button!=1) return FALSE;
 
   b1_held=FALSE;
   framedraw_redraw(framedraw, FALSE, NULL);

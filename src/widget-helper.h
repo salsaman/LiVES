@@ -30,7 +30,7 @@ typedef enum {
 #define W_PACKING_WIDTH 10 // packing width for widgets with labels
 #define W_PACKING_HEIGHT 10 // packing height for widgets
 
-#define W_BORDER_WIDTH 20 // dialog border width
+#define W_BORDER_WIDTH 10 // default border width
 
 
 #ifdef PAINTER_CAIRO
@@ -723,9 +723,9 @@ void lives_general_button_clicked (LiVESButton *, LiVESObjectPtr data_to_free);
 
 boolean lives_general_delete_event(LiVESWidget *, LiVESXEvent *delevent, LiVESObjectPtr data_to_free);
 
-void add_hsep_to_box (LiVESBox *, boolean expand);
+LiVESWidget *add_hsep_to_box (LiVESBox *, boolean expand);
 
-void add_fill_to_box (LiVESBox *box);
+LiVESWidget *add_fill_to_box (LiVESBox *box);
 
 
 #define LIVES_JUSTIFY_DEFAULT LIVES_JUSTIFY_LEFT

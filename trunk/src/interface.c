@@ -34,7 +34,7 @@ void add_suffix_check(GtkBox *box, const gchar *ext) {
 
   GtkWidget *checkbutton;
 
-  if (ext==NULL) ltext=g_strdup_printf (_ ("Let LiVES set the _file extension"));
+  if (ext==NULL) ltext=g_strdup (_ ("Let LiVES set the _file extension"));
   else ltext=g_strdup_printf(_ ("Let LiVES set the _file extension (.%s)"),ext);
   checkbutton=lives_standard_check_button_new(ltext,TRUE,box,NULL);
   g_free(ltext);
@@ -52,8 +52,15 @@ static GtkWidget *add_deinterlace_checkbox(GtkBox *for_deint) {
   GtkWidget *hbox=lives_hbox_new (FALSE, 0);
   GtkWidget *checkbutton = lives_standard_check_button_new (_ ("Apply _Deinterlace"),TRUE,LIVES_BOX(hbox),NULL);
 
-  gtk_box_pack_start (for_deint, hbox, FALSE, FALSE, widget_opts.packing_height);
-  
+  if (LIVES_IS_HBOX(for_deint)) {
+    GtkWidget *filler;
+    gtk_box_pack_start (for_deint, hbox, FALSE, FALSE, widget_opts.packing_width);
+    gtk_box_reorder_child(for_deint, hbox, 0);
+    filler=add_fill_to_box(LIVES_BOX(for_deint));
+    if (filler!=NULL) gtk_box_reorder_child(for_deint, filler, 1);
+  }
+  else gtk_box_pack_start (for_deint, hbox, FALSE, FALSE, widget_opts.packing_height);
+
   lives_widget_set_can_focus_and_default (checkbutton);
   lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (checkbutton), mainw->open_deint);
   g_signal_connect_after (GTK_OBJECT (checkbutton), "toggled",

@@ -32,6 +32,8 @@
 #include "../libweed/weed-host.h"
 #endif
 
+#define NEED_DEF_WIDGET_OPTS
+
 #include "main.h"
 #include "interface.h"
 #include "support.h"
@@ -283,18 +285,6 @@ static boolean pre_init(void) {
   // stuff which should be done *before* mainwindow is created
   // returns TRUE if we expect to load a theme
 
-  static const widget_opts_t def_widget_opts = {
-    FALSE, // no_gui
-    FALSE, // swap_label
-    FALSE, //pack_end
-    FALSE, // line_wrap
-    FALSE, // non_modal
-    W_PACKING_WIDTH, // def packing width
-    W_PACKING_HEIGHT, // def packing height
-    W_BORDER_WIDTH, // def border width
-    LIVES_JUSTIFY_DEFAULT // justify
-  };
-
   pthread_mutexattr_t mattr;
 
   gchar buff[256];
@@ -331,6 +321,8 @@ static boolean pre_init(void) {
   pthread_mutex_init(&mainw->data_mutex,&mattr); // mattr because audio filters can pull values from data connections
 
   mainw->vrfx_update=NULL;
+
+  mainw->kb_timer=-1;
 
   prefs=(_prefs *)g_malloc0(sizeof(_prefs));
   future_prefs=(_future_prefs *)g_malloc(sizeof(_future_prefs));
@@ -1809,9 +1801,9 @@ void set_palette_colours (void) {
   // STYLE_PLAIN will overwrite this
   if (!(strcmp(prefs->theme,"pinks"))) {
     
-    palette->normal_back.red=228.*LIVES_WIDGET_COLOR_SCALE;
-    palette->normal_back.green=196.*LIVES_WIDGET_COLOR_SCALE;
-    palette->normal_back.blue=196.*LIVES_WIDGET_COLOR_SCALE;
+    palette->normal_back.red=LIVES_WIDGET_COLOR_SCALE_255(228.);
+    palette->normal_back.green=LIVES_WIDGET_COLOR_SCALE_255(196.);
+    palette->normal_back.blue=LIVES_WIDGET_COLOR_SCALE_255(196.);
 #if GTK_CHECK_VERSION(3,0,0)
     palette->normal_back.alpha=1.;
 #endif      
@@ -1824,9 +1816,9 @@ void set_palette_colours (void) {
   else {
     if (!(strcmp(prefs->theme,"cutting_room"))) {
 
-      palette->normal_back.red=224.*LIVES_WIDGET_COLOR_SCALE;
-      palette->normal_back.green=224.*LIVES_WIDGET_COLOR_SCALE;
-      palette->normal_back.blue=128.*LIVES_WIDGET_COLOR_SCALE;
+      palette->normal_back.red=LIVES_WIDGET_COLOR_SCALE_255(224.);
+      palette->normal_back.green=LIVES_WIDGET_COLOR_SCALE_255(224.);
+      palette->normal_back.blue=LIVES_WIDGET_COLOR_SCALE_255(128.);
 #if GTK_CHECK_VERSION(3,0,0)
       palette->normal_back.alpha=1.;
 #endif      
@@ -1840,9 +1832,9 @@ void set_palette_colours (void) {
     else {
       if (!(strcmp(prefs->theme,"camera"))) {
 
-	palette->normal_back.red=30.*LIVES_WIDGET_COLOR_SCALE;
-	palette->normal_back.green=144.*LIVES_WIDGET_COLOR_SCALE;
-	palette->normal_back.blue=232.*LIVES_WIDGET_COLOR_SCALE;
+	palette->normal_back.red=LIVES_WIDGET_COLOR_SCALE_255(30.);
+	palette->normal_back.green=LIVES_WIDGET_COLOR_SCALE_255(144.);
+	palette->normal_back.blue=LIVES_WIDGET_COLOR_SCALE_255(232.);
 #if GTK_CHECK_VERSION(3,0,0)
 	palette->normal_back.alpha=1.;
 #endif      
@@ -1867,16 +1859,16 @@ void set_palette_colours (void) {
 	    lives_widget_color_copy(&palette->normal_back,&palette->black);
 	    lives_widget_color_copy(&palette->normal_fore,&palette->white);
 
-	    palette->menu_and_bars.red=225.*LIVES_WIDGET_COLOR_SCALE;
-	    palette->menu_and_bars.green=160.*LIVES_WIDGET_COLOR_SCALE;
-	    palette->menu_and_bars.blue=80.*LIVES_WIDGET_COLOR_SCALE;
+	    palette->menu_and_bars.red=LIVES_WIDGET_COLOR_SCALE_255(225.);
+	    palette->menu_and_bars.green=LIVES_WIDGET_COLOR_SCALE_255(160.);
+	    palette->menu_and_bars.blue=LIVES_WIDGET_COLOR_SCALE_255(80.);
 #if GTK_CHECK_VERSION(3,0,0)
 	    palette->menu_and_bars.alpha=1.;
 #endif      
 
-	    palette->info_base.red=200.*LIVES_WIDGET_COLOR_SCALE;
-	    palette->info_base.green=190.*LIVES_WIDGET_COLOR_SCALE;
-	    palette->info_base.blue=52.*LIVES_WIDGET_COLOR_SCALE;
+	    palette->info_base.red=LIVES_WIDGET_COLOR_SCALE_255(200.);
+	    palette->info_base.green=LIVES_WIDGET_COLOR_SCALE_255(190.);
+	    palette->info_base.blue=LIVES_WIDGET_COLOR_SCALE_255(52.);
 #if GTK_CHECK_VERSION(3,0,0)
 	    palette->info_base.alpha=1.;
 #endif      
@@ -2520,6 +2512,8 @@ static boolean lives_startup(gpointer data) {
   if (!prefs->show_gui&&prefs->startup_interface==STARTUP_CE) mainw->is_ready=TRUE;
 
   mainw->go_away=FALSE;
+
+  mainw->exiting=FALSE;
 
 #if GTK_CHECK_VERSION(3,0,0)
   mainw->kb_timer_end=FALSE;

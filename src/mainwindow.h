@@ -821,19 +821,11 @@ typedef struct {
   GtkWidget *laudio_draw;
   GtkWidget *raudio_draw;
 
-#if GTK_CHECK_VERSION(3,0,0)
   lives_painter_surface_t *video_drawable;
   lives_painter_surface_t *laudio_drawable;
   lives_painter_surface_t *raudio_drawable;
   lives_painter_surface_t *blank_laudio_drawable;
   lives_painter_surface_t *blank_raudio_drawable;
-#else
-  GdkPixmap *video_drawable;
-  GdkPixmap *laudio_drawable;
-  GdkPixmap *raudio_drawable;
-  GdkPixmap *blank_laudio_drawable;
-  GdkPixmap *blank_raudio_drawable;
-#endif
 
   // framecounter
   GtkWidget *framebar;
@@ -1053,6 +1045,8 @@ typedef struct {
   volatile int agen_key; ///< which fx key is generating audio [1 based] (or 0 for none)
   volatile boolean agen_needs_reinit;
   gint64 agen_samps_count; ///< count of samples since init
+
+  boolean exiting; ///< flag set during lives_exit()
 
   boolean aplayer_broken;
 

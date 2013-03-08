@@ -1744,6 +1744,7 @@ gboolean do_auto_dialog (const gchar *text, gint type) {
   lives_set_cursor_style(LIVES_CURSOR_BUSY,NULL);
   while (g_main_context_iteration(NULL,FALSE));
 
+  widget_opts.cursor_style=LIVES_CURSOR_NORMAL;
   lives_set_cursor_style(LIVES_CURSOR_BUSY,proc_ptr->processing);
 
   if (type==0) {
@@ -2452,6 +2453,7 @@ static void create_threaded_dialog(gchar *text, gboolean has_cancel) {
 
   gtk_widget_show_all(procw->processing);
 
+  widget_opts.cursor_style=LIVES_CURSOR_NORMAL;
   lives_set_cursor_style(LIVES_CURSOR_BUSY,procw->processing);
 }
 

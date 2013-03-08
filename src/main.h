@@ -652,15 +652,8 @@ typedef struct {
 
   boolean keep_without_preview; ///< allow keep, even when nopreview is set - TODO use only nopreview and nokeep
 
-#if GTK_CHECK_VERSION(3,0,0)
   lives_painter_surface_t *laudio_drawable;
   lives_painter_surface_t *raudio_drawable;
-
-#else
-  GdkPixmap *laudio_drawable;
-  GdkPixmap *raudio_drawable;
-#endif
-
 
   // TODO - change to lives_clip_t
 } file;
@@ -836,7 +829,7 @@ void add_suffix_check(GtkBox *box, const gchar *ext);
 
 
 // dialogs.c
-gboolean do_progress_dialog(boolean visible, boolean cancellable, const gchar *text);
+boolean do_progress_dialog(boolean visible, boolean cancellable, const gchar *text);
 boolean do_warning_dialog(const gchar *text);
 boolean do_warning_dialog_with_check(const gchar *text, int warn_mask_number);
 boolean do_warning_dialog_with_check_transient(const gchar *text, int warn_mask_number, GtkWindow *transient);
@@ -1068,13 +1061,13 @@ void add_message_scroller(GtkWidget *conter);
 
 
 // system calls in utils.c
-int lives_system(const char *com, gboolean allow_error);
+int lives_system(const char *com, boolean allow_error);
 lives_pid_t lives_fork(const char *com);
-ssize_t lives_write(int fd, const void *buf, size_t count, gboolean allow_fail);
-ssize_t lives_write_le(int fd, const void *buf, size_t count, gboolean allow_fail);
-ssize_t lives_read(int fd, void *buf, size_t count, gboolean allow_less);
-ssize_t lives_read_le(int fd, void *buf, size_t count, gboolean allow_less);
-int lives_chdir(const char *path, gboolean allow_fail);
+ssize_t lives_write(int fd, const void *buf, size_t count, boolean allow_fail);
+ssize_t lives_write_le(int fd, const void *buf, size_t count, boolean allow_fail);
+ssize_t lives_read(int fd, void *buf, size_t count, boolean allow_less);
+ssize_t lives_read_le(int fd, void *buf, size_t count, boolean allow_less);
+int lives_chdir(const char *path, boolean allow_fail);
 int lives_fputs(const char *s, FILE *stream);
 char *lives_fgets(char *s, int size, FILE *stream);
 pid_t lives_getpid(void);
@@ -1084,8 +1077,8 @@ void lives_freep(void **ptr);
 void lives_free(gpointer ptr);
 void lives_free_with_check(gpointer ptr);
 #ifdef IS_MINGW
-gboolean lives_win32_suspend_resume_process(DWORD pid, gboolean suspend);
-gboolean lives_win32_kill_subprocesses(DWORD pid, gboolean kill_parent);
+boolean lives_win32_suspend_resume_process(DWORD pid, boolean suspend);
+boolean lives_win32_kill_subprocesses(DWORD pid, boolean kill_parent);
 int lives_win32_get_num_logical_cpus(void);
 #endif
 int lives_kill(lives_pid_t pid, int sig);

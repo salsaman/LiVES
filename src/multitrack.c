@@ -789,7 +789,6 @@ static void draw_block (lives_mt *mt, lives_painter_t *cairo,
   double tl_span=mt->tl_max-mt->tl_min;
   double offset_startd=tc/U_SEC;
   double offset_endd;
-  double cscale=LIVES_WIDGET_COLOR_SCALE*256.;
 
   int offset_start;
   int offset_end;
@@ -899,9 +898,9 @@ static void draw_block (lives_mt *mt, lives_painter_t *cairo,
   case BLOCK_SELECTED:
     lives_painter_new_path(cr);
     lives_painter_set_source_rgba (cr, 
-				   bgcolor.red/cscale,
-				   bgcolor.green/cscale, 
-				   bgcolor.blue/cscale, 
+				   LIVES_WIDGET_COLOR_SCALE(bgcolor.red),
+				   LIVES_WIDGET_COLOR_SCALE(bgcolor.green), 
+				   LIVES_WIDGET_COLOR_SCALE(bgcolor.blue), 
 				   0.6);
     lives_painter_rectangle(cr,offset_start, 0, offset_end-offset_start, lives_widget_get_allocation_height(eventbox));
     lives_painter_fill(cr);
@@ -1245,7 +1244,7 @@ gdouble mt_get_effect_time(lives_mt *mt) {
 }
 
 
-static boolean add_mt_param_box(lives_mt *mt) {
+boolean add_mt_param_box(lives_mt *mt) {
   // here we add a GUI box which will hold effect parameters
 
   // if we set keep_scale to TRUE, the current time slider is kept
@@ -1254,13 +1253,19 @@ static boolean add_mt_param_box(lives_mt *mt) {
   // returns TRUE if we have any parameters
 
   weed_plant_t *deinit_event;
-  gdouble fx_start_time,fx_end_time;
-  gchar *ltext;
+
   weed_timecode_t tc;
-  int error;
+
+  double fx_start_time,fx_end_time;
+  double cur_time=lives_ruler_get_value(LIVES_RULER (mt->timeline));
+
+  gchar *ltext;
+
   boolean res=FALSE;
 
-  gdouble cur_time=lives_ruler_get_value(LIVES_RULER (mt->timeline));
+  int error;
+  int dph=widget_opts.packing_height;
+
 
   tc=get_event_timecode((weed_plant_t *)mt->init_event);
   deinit_event=(weed_plant_t *)weed_get_voidptr_value(mt->init_event,"deinit_event",&error);
@@ -1282,11 +1287,11 @@ static boolean add_mt_param_box(lives_mt *mt) {
 			fx_end_time-fx_start_time, 1./mt->fps, 10./mt->fps, 0.);
   g_signal_handler_unblock(mt->node_spinbutton,mt->node_adj_func);
 
+  widget_opts.packing_height=0;
   res=make_param_box(GTK_VBOX (mt->fx_box), mt->current_rfx);
+  widget_opts.packing_height=dph;
 
-  mt->fx_params_label=lives_standard_label_new(ltext);
-
-  gtk_box_pack_start (GTK_BOX (mt->fx_box), mt->fx_params_label, FALSE, FALSE, 0);
+  gtk_label_set_text(GTK_LABEL(mt->fx_params_label),ltext);
 
   g_free(ltext);
 
@@ -4854,6 +4859,8 @@ void event_list_free_undos(lives_mt *mt) {
   mt->undo_buffer_used=0;
   mt->undo_offset=0;
 
+  if (mainw->exiting) return;
+
   mt_set_undoable(mt,MT_UNDO_NONE,NULL,FALSE);
   mt_set_redoable(mt,MT_UNDO_NONE,NULL,FALSE);
 }
@@ -7881,6 +7888,9 @@ static boolean draw_cool_toggle (GtkWidget *widget, lives_painter_t *cr, gpointe
 
   hbox=lives_hbox_new(FALSE,10);
   gtk_box_pack_end (GTK_BOX (mt->fx_contents_box), hbox, FALSE, FALSE, 0);
+
+  mt->fx_params_label=lives_standard_label_new("");
+  gtk_box_pack_start (GTK_BOX (hbox), mt->fx_params_label, TRUE, TRUE, widget_opts.packing_width);
 
   mt->del_node_button = gtk_button_new_with_mnemonic (_("_Del. node"));
   gtk_box_pack_end (GTK_BOX (hbox), mt->del_node_button, FALSE, FALSE, 0);
@@ -11951,7 +11961,6 @@ void polymorph (lives_mt *mt, lives_mt_poly_state_t poly) {
     break;
   case (POLY_PARAMS) :
     mt->framedraw=NULL;
-    mt->fx_params_label=NULL;
     if (mt->current_rfx!=NULL) {
       rfx_free(mt->current_rfx);
       g_free(mt->current_rfx);

@@ -846,6 +846,8 @@ gdouble mt_get_effect_time(lives_mt *);
 void on_frame_preview_clicked (GtkButton *, gpointer mt);
 void show_preview (lives_mt *, weed_timecode_t tc);
 
+boolean add_mt_param_box(lives_mt *);
+
 // filter list controls
 weed_plant_t *get_prev_fm (lives_mt *, gint current_track, weed_plant_t *frame);
 weed_plant_t *get_next_fm (lives_mt *, gint current_track, weed_plant_t *frame);

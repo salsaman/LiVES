@@ -1775,6 +1775,8 @@ _entryw* create_rename_dialog (int type) {
     gtk_entry_completion_set_popup_completion (completion, TRUE);
     gtk_entry_completion_set_popup_single_match(completion,FALSE);
     gtk_entry_set_completion (GTK_ENTRY (renamew->entry), completion);
+
+
   }
   else {
     renamew->entry = gtk_entry_new();

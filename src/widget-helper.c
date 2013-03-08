@@ -195,16 +195,18 @@ LIVES_INLINE lives_painter_surface_t *lives_painter_image_surface_create_for_dat
 }
 
 
-LIVES_INLINE lives_painter_surface_t *lives_painter_surface_create_from_widget(LiVESWidget *widget, lives_painter_format_t format, 
+LIVES_INLINE lives_painter_surface_t *lives_painter_surface_create_from_widget(LiVESWidget *widget, lives_painter_content_t format, 
 									       int width, int height) {
   lives_painter_surface_t *surf=NULL;
 #ifdef PAINTER_CAIRO
-#if GTK_CHECK_VERSION(3,0,0)
   LiVESXWindow *window=lives_widget_get_xwindow(widget);
   if (window!=NULL) {
-  surf=gdk_window_create_similar_surface(window,format,width,height);
-}
+#if G_ENCODE_VERSION(GDK_MAJOR_VERSION,GDK_MINOR_VERSION) >= G_ENCODE_VERSION(2,22)
+    surf=gdk_window_create_similar_surface(window,format,width,height);
+#else 
+    surf=cairo_image_surface_create(CAIRO_FORMAT_ARGB32,width,height);
 #endif
+}
 #endif
   return surf;
 }
@@ -1461,6 +1463,23 @@ LIVES_INLINE uint64_t lives_widget_get_xwinid(LiVESWidget *widget, const gchar *
 
 // compound functions
 
+void lives_painter_set_source_to_bg(lives_painter_t *cr, LiVESWidget *widget) {
+  LiVESWidgetColor color;
+  lives_widget_get_bg_color(widget, &color);
+
+#if LIVES_WIDGET_COLOR_HAS_ALPHA
+  lives_painter_set_source_rgba (cr, 
+				 LIVES_WIDGET_COLOR_SCALE(color.red), 
+				 LIVES_WIDGET_COLOR_SCALE(color.green), 
+				 LIVES_WIDGET_COLOR_SCALE(color.blue), 
+				 LIVES_WIDGET_COLOR_SCALE(color.alpha));
+#else
+    lives_painter_set_source_rgb (cr, 
+				  LIVES_WIDGET_COLOR_SCALE(color.red), 
+				  LIVES_WIDGET_COLOR_SCALE(color.green), 
+				  LIVES_WIDGET_COLOR_SCALE(color.blue));
+#endif
+}
 
 
 
@@ -2078,6 +2097,9 @@ void adjustment_configure(LiVESAdjustment *adjustment,
 
 void lives_set_cursor_style(lives_cursor_t cstyle, LiVESWidget *widget) {
   LiVESXWindow *window;
+
+  if (widget_opts.cursor_style==cstyle) return;
+
   if (mainw->cursor!=NULL) lives_cursor_unref(mainw->cursor);
   mainw->cursor=NULL;
 
@@ -2092,11 +2114,13 @@ void lives_set_cursor_style(lives_cursor_t cstyle, LiVESWidget *widget) {
   case LIVES_CURSOR_NORMAL:
     if (GDK_IS_WINDOW(window))
       gdk_window_set_cursor (window, NULL);
+    widget_opts.cursor_style=LIVES_CURSOR_NORMAL;
     return;
   case LIVES_CURSOR_BUSY:
     mainw->cursor=gdk_cursor_new(GDK_WATCH);
     if (GDK_IS_WINDOW(window))
       gdk_window_set_cursor (window, mainw->cursor);
+    widget_opts.cursor_style=LIVES_CURSOR_BUSY;
     return;
   default:
     return;
@@ -2219,16 +2243,42 @@ LiVESWidget *add_hsep_to_box (LiVESBox *box, boolean expand) {
   return widget;
 }
 
+#ifdef GUI_GTK
+static gchar spaces[W_MAX_FILLER_LEN+1];
+static boolean spaces_inited=FALSE;
+#endif
+
 LiVESWidget *add_fill_to_box (LiVESBox *box) {
   LiVESWidget *widget=NULL;
 #ifdef GUI_GTK
-  GtkWidget *blank_label = gtk_label_new ("");
+  LiVESWidget *blank_label;
+  static gint old_spaces=-1;
+  static gchar *xspaces=NULL;
+
+  if (!spaces_inited) {
+    register int i;
+    for (i=0;i<W_MAX_FILLER_LEN;i++) {
+      g_snprintf(spaces+i,1," ");
+    }
+  }
+
+  if (widget_opts.filler_len>W_MAX_FILLER_LEN||widget_opts.filler_len<0) return NULL;
+
+  if (widget_opts.filler_len!=old_spaces) {
+    if (xspaces!=NULL) g_free(xspaces);
+    xspaces=g_strndup(spaces,widget_opts.filler_len);
+    old_spaces=widget_opts.filler_len;
+  }
+
+  blank_label = gtk_label_new (xspaces);
+
   gtk_box_pack_start (box, blank_label, TRUE, TRUE, 0);
   lives_widget_set_hexpand(blank_label,FALSE);
   lives_widget_set_vexpand(blank_label,FALSE);
   if (!widget_opts.no_gui) 
     gtk_widget_show(blank_label);
   widget=blank_label;
+
 #endif
   return widget;
 }

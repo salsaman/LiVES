@@ -1212,7 +1212,7 @@ boolean make_param_box(GtkVBox *top_vbox, lives_rfx_t *rfx) {
 	    param->type==LIVES_PARAM_UNDISPLAYABLE) continue;
 	// parameter, eg. p1
 	if (!has_box) {
-	  hbox = lives_hbox_new (TRUE, 0);
+	  hbox = lives_hbox_new (FALSE, 0);
 	  gtk_box_pack_start (GTK_BOX (param_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 	  has_box=TRUE;
 	  has_param=TRUE;
@@ -1385,6 +1385,10 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, boolean add_
   name=g_strdup_printf ("%s",param->label);
   use_mnemonic=param->use_mnemonic;
 
+  // reinit can cause the window to be redrawn, which invalidates the slider adjustment...and bang !
+  // so dont add sliders for such params
+  if (param->reinit) add_slider=FALSE;
+
   if (LIVES_IS_HBOX(LIVES_WIDGET(box))) {
     hbox=GTK_WIDGET(box);
 #if GTK_CHECK_VERSION(3,0,0)
@@ -1527,10 +1531,11 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, boolean add_
 	scale=giw_knob_new(GTK_ADJUSTMENT(spinbutton_adj));
 	gtk_widget_set_size_request(scale,GIW_KNOB_WIDTH,GIW_KNOB_HEIGHT);
 	giw_knob_set_legends_digits(GIW_KNOB(scale),0);
-	gtk_box_pack_start (GTK_BOX (hbox), scale, TRUE, FALSE, widget_opts.packing_width);
+	gtk_box_pack_start (GTK_BOX (hbox), scale, FALSE, FALSE, 0);
+	add_fill_to_box(LIVES_BOX(hbox));
 	lives_widget_set_fg_color(scale,LIVES_WIDGET_STATE_NORMAL,&palette->black);
 	lives_widget_set_fg_color(scale,LIVES_WIDGET_STATE_PRELIGHT,&palette->dark_orange);
-	add_fill_to_box (GTK_BOX (hbox));
+	if (!LIVES_IS_HBOX(LIVES_WIDGET(box))) add_fill_to_box (GTK_BOX (hbox));
       }
 #endif
       if (palette->style&STYLE_1) {
@@ -1794,6 +1799,7 @@ after_boolean_param_toggled        (GtkToggleButton *togglebutton,
   GList *retvals=NULL;
   lives_param_t *param=&rfx->params[param_number];
   boolean old_bool=get_bool_param(param->value),new_bool;
+  boolean was_reinited=FALSE;
   int copyto=-1;
 
   if (mainw->block_param_updates) return; // updates are blocked when we update visually
@@ -1844,10 +1850,12 @@ after_boolean_param_toggled        (GtkToggleButton *togglebutton,
       }
       if (param->reinit||(copyto!=-1&&rfx->params[copyto].reinit)) {
 	weed_reinit_effect(inst,FALSE);
-	return;
+	was_reinited=TRUE;
       }
 
     }
+
+
   }
   if (get_bool_param(param->value)!=old_bool&&param->onchange) {
     param->change_blocked=TRUE;
@@ -1859,8 +1867,8 @@ after_boolean_param_toggled        (GtkToggleButton *togglebutton,
     while (g_main_context_iteration(NULL,FALSE));
     param->change_blocked=FALSE;
   }
-  if (copyto!=-1) update_visual_params(rfx,FALSE);
-  if (mainw->multitrack!=NULL&&rfx->status==RFX_STATUS_WEED) {
+  if (!was_reinited&&copyto!=-1) update_visual_params(rfx,FALSE);
+  if (mainw->multitrack!=NULL) {
     activate_mt_preview(mainw->multitrack);
   }
   param->changed=TRUE;
@@ -1876,6 +1884,7 @@ after_param_value_changed           (GtkSpinButton   *spinbutton,
   GList *retvals=NULL;
   gdouble new_double=0.,old_double=0.;
   gint new_int=0,old_int=0;
+  boolean was_reinited=FALSE;
   int copyto=-1;
 
   if (mainw->block_param_updates) return; // updates are blocked when we update visually
@@ -1960,7 +1969,7 @@ after_param_value_changed           (GtkSpinButton   *spinbutton,
       }
       if (param->reinit||(copyto!=-1&&rfx->params[copyto].reinit)) {
 	weed_reinit_effect(inst,FALSE);
-	return; // spinbutton is no longer valid
+	was_reinited=TRUE;
       }
 
     }
@@ -1978,8 +1987,9 @@ after_param_value_changed           (GtkSpinButton   *spinbutton,
     while (g_main_context_iteration(NULL,FALSE));
     param->change_blocked=FALSE;
   }
-  if (copyto!=-1) update_visual_params(rfx,FALSE);
+  if (!was_reinited&&copyto!=-1) update_visual_params(rfx,FALSE);
   if (mainw->multitrack!=NULL&&rfx->status==RFX_STATUS_WEED) {
+    if (was_reinited) add_mt_param_box(mainw->multitrack);
     activate_mt_preview(mainw->multitrack);
   }
   param->changed=TRUE;
@@ -2118,6 +2128,7 @@ after_param_red_changed           (GtkSpinButton   *spinbutton,
   gint new_red;
   GdkColor colr;
   GtkWidget *cbutton;
+  boolean was_reinited=FALSE;
   int copyto=-1;
 
   if (mainw->block_param_updates) return; // updates are blocked when we update visually
@@ -2160,7 +2171,7 @@ after_param_red_changed           (GtkSpinButton   *spinbutton,
       
       if (param->reinit||(copyto!=-1&&rfx->params[copyto].reinit)) {
 	weed_reinit_effect(inst,FALSE);
-	return; // spinbutton is no longer valid
+	was_reinited=TRUE;
       }
     }
   }
@@ -2175,7 +2186,7 @@ after_param_red_changed           (GtkSpinButton   *spinbutton,
     while (g_main_context_iteration(NULL,FALSE));
     param->change_blocked=FALSE;
   }
-  if (copyto!=-1) update_visual_params(rfx,FALSE);
+  if (!was_reinited&&copyto!=-1) update_visual_params(rfx,FALSE);
   if (mainw->multitrack!=NULL&&rfx->status==RFX_STATUS_WEED) {
     activate_mt_preview(mainw->multitrack);
   }
@@ -2193,6 +2204,7 @@ after_param_green_changed           (GtkSpinButton   *spinbutton,
   gint new_green;
   GdkColor colr;
   GtkWidget *cbutton;
+  boolean was_reinited=FALSE;
   int copyto=-1;
 
   if (mainw->block_param_updates) return; // updates are blocked when we update visually
@@ -2235,7 +2247,7 @@ after_param_green_changed           (GtkSpinButton   *spinbutton,
       
       if (param->reinit||(copyto!=-1&&rfx->params[copyto].reinit)) {
 	weed_reinit_effect(inst,FALSE);
-	return; // spinbutton is no longer valid
+	was_reinited=TRUE;
       }
     }
   }
@@ -2250,7 +2262,7 @@ after_param_green_changed           (GtkSpinButton   *spinbutton,
     while (g_main_context_iteration(NULL,FALSE));
     param->change_blocked=FALSE;
   }
-  if (copyto!=-1) update_visual_params(rfx,FALSE);
+  if (!was_reinited&&copyto!=-1) update_visual_params(rfx,FALSE);
   if (mainw->multitrack!=NULL&&rfx->status==RFX_STATUS_WEED) {
     activate_mt_preview(mainw->multitrack);
   }
@@ -2267,6 +2279,7 @@ after_param_blue_changed           (GtkSpinButton   *spinbutton,
   gint new_blue;
   GdkColor colr;
   GtkWidget *cbutton;
+  boolean was_reinited=FALSE;
   int copyto=-1;
 
   if (mainw->block_param_updates) return; // updates are blocked when we update visually
@@ -2309,7 +2322,7 @@ after_param_blue_changed           (GtkSpinButton   *spinbutton,
       
       if (param->reinit||(copyto!=-1&&rfx->params[copyto].reinit)) {
 	weed_reinit_effect(inst,FALSE);
-	return; // spinbutton is no longer valid
+	was_reinited=TRUE;
       }
     }
   }
@@ -2324,7 +2337,7 @@ after_param_blue_changed           (GtkSpinButton   *spinbutton,
     while (g_main_context_iteration(NULL,FALSE));
     param->change_blocked=FALSE;
   }
-  if (copyto!=-1) update_visual_params(rfx,FALSE);
+  if (!was_reinited&&copyto!=-1) update_visual_params(rfx,FALSE);
   if (mainw->multitrack!=NULL&&rfx->status==RFX_STATUS_WEED) {
     activate_mt_preview(mainw->multitrack);
   }
@@ -2341,6 +2354,7 @@ after_param_alpha_changed           (GtkSpinButton   *spinbutton,
   lives_param_t *param=&rfx->params[param_number];
   lives_colRGBA32_t old_value;
   gint new_alpha=gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(spinbutton));
+  //boolean was_reinited=FALSE;
   int copyto=-1;
 
   if (mainw->block_param_updates) return; // updates are blocked when we update visually
@@ -2420,6 +2434,7 @@ void after_param_text_changed (GtkWidget *textwidget, lives_rfx_t *rfx) {
   gint param_number;
   lives_param_t *param;
   gchar *old_text;
+  boolean was_reinited=FALSE;
   int copyto=-1;
 
   if (rfx==NULL||rfx->params==NULL||textwidget==NULL) return;
@@ -2481,11 +2496,6 @@ void after_param_text_changed (GtkWidget *textwidget, lives_rfx_t *rfx) {
 	if (copyto!=-1) rec_param_change(inst,copyto);
       }
 
-      if (param->reinit||(copyto!=-1&&rfx->params[copyto].reinit)) {
-	weed_reinit_effect(inst,FALSE);
-	return;
-      }
-
       if (disp_string!=NULL) {
 	if ((gint)param->max>RFX_TEXT_MAGIC||param->max==0.) {
 	  gtk_text_buffer_set_text (GTK_TEXT_BUFFER (textbuffer), (gchar *)param->value, -1);
@@ -2494,6 +2504,11 @@ void after_param_text_changed (GtkWidget *textwidget, lives_rfx_t *rfx) {
 	  gtk_entry_set_text(GTK_ENTRY(textwidget),disp_string);
 	}
 	weed_free(disp_string);
+      }
+
+      if (param->reinit||(copyto!=-1&&rfx->params[copyto].reinit)) {
+	weed_reinit_effect(inst,FALSE);
+	was_reinited=TRUE;
       }
 
     }
@@ -2510,7 +2525,7 @@ void after_param_text_changed (GtkWidget *textwidget, lives_rfx_t *rfx) {
     param->change_blocked=FALSE;
   }
   g_free (old_text);
-  if (copyto!=-1) update_visual_params(rfx,FALSE);
+  if (!was_reinited&&copyto!=-1) update_visual_params(rfx,FALSE);
   if (mainw->multitrack!=NULL&&rfx->status==RFX_STATUS_WEED) {
     activate_mt_preview(mainw->multitrack);
   }
@@ -2532,6 +2547,7 @@ after_string_list_changed (GtkComboBox *combo, lives_rfx_t *rfx) {
   gint old_index=get_int_param(param->value);
   char *txt=lives_combo_get_active_text(combo);
   gint new_index=lives_list_index(param->list,txt);
+  boolean was_reinited=FALSE;
   int copyto=-1;
 
   g_free(txt);
@@ -2577,18 +2593,18 @@ after_string_list_changed (GtkComboBox *combo, lives_rfx_t *rfx) {
 	if (copyto!=-1) rec_param_change(inst,copyto);
       }
     
-      
-      if (param->reinit||(copyto!=-1&&rfx->params[copyto].reinit)) {
-	weed_reinit_effect(inst,FALSE);
-	return;
-      }
-
       if (disp_string!=NULL) {
 	g_signal_handlers_block_by_func(combo,after_string_list_changed,(gpointer)rfx);
 	lives_combo_set_active_string (LIVES_COMBO(combo),disp_string);
 	g_signal_handlers_unblock_by_func(combo,after_string_list_changed,(gpointer)rfx);
 	weed_free(disp_string);
       } 
+      
+      if (param->reinit||(copyto!=-1&&rfx->params[copyto].reinit)) {
+	weed_reinit_effect(inst,FALSE);
+	was_reinited=TRUE;
+      }
+
     }
   }
 
@@ -2602,7 +2618,7 @@ after_string_list_changed (GtkComboBox *combo, lives_rfx_t *rfx) {
     while (g_main_context_iteration(NULL,FALSE));
     param->change_blocked=FALSE;
   }
-  if (copyto!=-1) update_visual_params(rfx,FALSE);
+  if (!was_reinited&&copyto!=-1) update_visual_params(rfx,FALSE);
   if (mainw->multitrack!=NULL&&rfx->status==RFX_STATUS_WEED) {
     activate_mt_preview(mainw->multitrack);
   }

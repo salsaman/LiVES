@@ -276,10 +276,27 @@ LIVES_INLINE boolean lives_setenv(const char *name, const char *value) {
 
 
 
-int lives_system(const char *com, gboolean allow_error) {
+int lives_system(const char *com, boolean allow_error) {
   int retval;
+  boolean cnorm=FALSE,mt_needs_idlefunc=FALSE;
 
   // TODO - use g_spawn ?
+
+  if (mainw->is_ready&&widget_opts.cursor_style==LIVES_CURSOR_NORMAL) {
+    cnorm=TRUE;
+    lives_set_cursor_style(LIVES_CURSOR_BUSY,NULL);
+
+    if (mainw->multitrack!=NULL&&mainw->multitrack->idlefunc>0) {
+      g_source_remove(mainw->multitrack->idlefunc);
+      mainw->multitrack->idlefunc=0;
+      mt_needs_idlefunc=TRUE;
+    }
+
+    while (g_main_context_iteration(NULL,FALSE));
+
+    if (mt_needs_idlefunc) mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
+
+  }
 
   retval=system(com);
 
@@ -303,6 +320,9 @@ int lives_system(const char *com, gboolean allow_error) {
 #endif
     if (msg!=NULL) g_free(msg);
   }
+
+  if (cnorm) lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
+
   return retval;
 }
 
@@ -340,7 +360,7 @@ lives_pid_t lives_fork(const char *com) {
 
 
 
-ssize_t lives_write(int fd, const void *buf, size_t count, gboolean allow_fail) {
+ssize_t lives_write(int fd, const void *buf, size_t count, boolean allow_fail) {
   ssize_t retval;
   retval=write(fd, buf, count);
 
@@ -371,7 +391,7 @@ ssize_t lives_write(int fd, const void *buf, size_t count, gboolean allow_fail) 
 
 
 
-ssize_t lives_write_le(int fd, const void *buf, size_t count, gboolean allow_fail) {
+ssize_t lives_write_le(int fd, const void *buf, size_t count, boolean allow_fail) {
   if (capable->byte_order==LIVES_BIG_ENDIAN&&(prefs->bigendbug!=1)) {
     uint8_t xbuf[count];
     reverse_bytes(xbuf,(const uint8_t *)buf,count);
@@ -412,7 +432,7 @@ char *lives_fgets(char *s, int size, FILE *stream) {
 
 
 
-ssize_t lives_read(int fd, void *buf, size_t count, gboolean allow_less) {
+ssize_t lives_read(int fd, void *buf, size_t count, boolean allow_less) {
   ssize_t retval=read(fd, buf, count);
 
   if (retval<count) {
@@ -441,7 +461,7 @@ ssize_t lives_read(int fd, void *buf, size_t count, gboolean allow_less) {
 
 
 
-ssize_t lives_read_le(int fd, void *buf, size_t count, gboolean allow_less) {
+ssize_t lives_read_le(int fd, void *buf, size_t count, boolean allow_less) {
   if (capable->byte_order==LIVES_BIG_ENDIAN&&!prefs->bigendbug) {
     uint8_t xbuf[count];
     ssize_t retval=lives_read(fd,buf,count,allow_less);
@@ -685,7 +705,7 @@ int lives_win32_get_num_logical_cpus(void) {
 
 
 
-static gboolean lives_win32_suspend_resume_threads(DWORD pid, gboolean suspend) {
+static boolean lives_win32_suspend_resume_threads(DWORD pid, boolean suspend) {
   HANDLE hThreadSnap;
   HANDLE hThread;
   THREADENTRY32 te32;
@@ -734,7 +754,7 @@ static gboolean lives_win32_suspend_resume_threads(DWORD pid, gboolean suspend) 
 }
 
 
-gboolean lives_win32_suspend_resume_process(DWORD pid, gboolean suspend) {
+boolean lives_win32_suspend_resume_process(DWORD pid, boolean suspend) {
   HANDLE hProcessSnap;
   HANDLE hProcess;
   PROCESSENTRY32 pe32;
@@ -794,7 +814,7 @@ gboolean lives_win32_suspend_resume_process(DWORD pid, gboolean suspend) {
 
 
 
-gboolean lives_win32_kill_subprocesses(DWORD pid, gboolean kill_parent) {
+boolean lives_win32_kill_subprocesses(DWORD pid, boolean kill_parent) {
   HANDLE hProcessSnap;
   HANDLE hProcess;
   PROCESSENTRY32 pe32;
@@ -2317,11 +2337,11 @@ void get_play_times(void) {
   // and if we are not playing,
   // get play times for video, audio channels, and total (longest) time
   gchar *tmpstr;
-  gdouble offset=0;
-  gdouble offset_left=0;
-  gdouble offset_right=0;
-  gdouble allocwidth;
-  gdouble allocheight;
+  double offset=0;
+  double offset_left=0;
+  double offset_right=0;
+  double allocwidth;
+  double allocheight;
 
   if (mainw->current_file==-1||mainw->foreign||cfile==NULL||mainw->multitrack!=NULL||mainw->recoverable_layout) return;
 
@@ -2333,18 +2353,14 @@ void get_play_times(void) {
 
   if (mainw->laudio_drawable==NULL||mainw->raudio_drawable==NULL) return;
 
-
   // draw timer bars
   allocwidth=lives_widget_get_allocation_width(mainw->video_draw);
   allocheight=lives_widget_get_allocation_height(mainw->video_draw);
 
   
   if (mainw->laudio_drawable!=NULL) {
-#if GTK_CHECK_VERSION(3,0,0)
-    GdkRGBA color;
     lives_painter_t *cr=lives_painter_create(mainw->laudio_drawable);
-    lives_widget_get_bg_color(mainw->laudio_draw,&color);
-    lives_painter_set_source_rgba (cr, color.red, color.green, color.blue, color.alpha);
+    lives_painter_set_source_to_bg(cr,mainw->laudio_draw);
 
     lives_painter_rectangle(cr,0,0,
 		    allocwidth,
@@ -2352,24 +2368,11 @@ void get_play_times(void) {
     lives_painter_fill(cr);
     lives_painter_destroy (cr);
 
-#else
-    gdk_draw_rectangle (mainw->laudio_drawable,
-			mainw->laudio_draw->style->bg_gc[GTK_WIDGET_STATE (mainw->laudio_draw)],
-			TRUE,
-			0, 0,
-			allocwidth,
-			allocheight
-			);
-#endif
   }
   
-  
   if (mainw->raudio_drawable!=NULL) {
-#if GTK_CHECK_VERSION(3,0,0)
-    GdkRGBA color;
     lives_painter_t *cr=lives_painter_create(mainw->raudio_drawable);
-    lives_widget_get_bg_color(mainw->raudio_draw,&color);
-    lives_painter_set_source_rgba (cr, color.red, color.green, color.blue, color.alpha);
+    lives_painter_set_source_to_bg(cr,mainw->raudio_draw);
 
     lives_painter_rectangle(cr,0,0,
 		    allocwidth,
@@ -2377,23 +2380,11 @@ void get_play_times(void) {
     lives_painter_fill(cr);
     lives_painter_destroy (cr);
 
-#else
-    gdk_draw_rectangle (mainw->raudio_drawable,
-			mainw->raudio_draw->style->bg_gc[GTK_WIDGET_STATE (mainw->raudio_draw)],
-			TRUE,
-			0, 0,
-			allocwidth,
-			allocheight
-			);
-#endif
   }
 
   if (mainw->video_drawable!=NULL) {
-#if GTK_CHECK_VERSION(3,0,0)
-    GdkRGBA color;
     lives_painter_t *cr=lives_painter_create(mainw->video_drawable);
-    lives_widget_get_bg_color(mainw->video_draw,&color);
-    lives_painter_set_source_rgba (cr, color.red, color.green, color.blue, color.alpha);
+    lives_painter_set_source_to_bg(cr,mainw->video_draw);
 
     lives_painter_rectangle(cr,0,0,
 		    allocwidth,
@@ -2401,15 +2392,6 @@ void get_play_times(void) {
     lives_painter_fill(cr);
     lives_painter_destroy (cr);
 
-#else
-    gdk_draw_rectangle (mainw->video_drawable,
-			mainw->video_draw->style->bg_gc[GTK_WIDGET_STATE (mainw->video_draw)],
-			TRUE,
-			0, 0,
-			allocwidth,
-			allocheight
-			);
-#endif
   }
 
   if (cfile->frames>0) {
@@ -2418,7 +2400,6 @@ void get_play_times(void) {
 
     
     if (mainw->video_drawable!=NULL) {
-#if GTK_CHECK_VERSION(3,0,0)
       lives_painter_t *cr=lives_painter_create(mainw->video_drawable);
       
       lives_painter_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
@@ -2439,21 +2420,6 @@ void get_play_times(void) {
       
       lives_painter_destroy (cr);
 
-#else
-      gdk_draw_rectangle (mainw->video_drawable,
-			  mainw->video_draw->style->black_gc,
-			  TRUE,
-			  0, 0,
-			  cfile->video_time/cfile->total_time*allocwidth-1,
-			  prefs->bar_height);
-      
-      gdk_draw_rectangle (mainw->video_drawable,
-			  mainw->video_draw->style->white_gc,
-			  TRUE,
-			  offset_left, 0,
-			  offset_right-offset_left,
-			  prefs->bar_height);
-#endif
     }
   }
   if (cfile->achans>0) {
@@ -2471,8 +2437,6 @@ void get_play_times(void) {
     
     
     if (mainw->laudio_drawable!=NULL) {
-#if GTK_CHECK_VERSION(3,0,0)
-      GdkRGBA color;
       lives_painter_t *cr=lives_painter_create(mainw->laudio_drawable);
       
       lives_painter_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
@@ -2491,45 +2455,17 @@ void get_play_times(void) {
       
       lives_painter_fill(cr);
       
-      lives_widget_get_bg_color(mainw->laudio_draw,&color);
-      lives_painter_set_source_rgba (cr, color.red, color.green, color.blue, color.alpha);
-      
+      lives_painter_set_source_to_bg(cr,mainw->laudio_draw);
+
       lives_painter_rectangle(cr,cfile->laudio_time/cfile->total_time*allocwidth, 0,
 		      allocwidth-(cfile->laudio_time/cfile->total_time*allocwidth),
 		      prefs->bar_height);
       
       lives_painter_destroy (cr);
 
-#else
-
-      gdk_draw_rectangle (mainw->laudio_drawable,
-			  mainw->laudio_draw->style->black_gc,
-			  TRUE,
-			  0, 0,
-			  cfile->laudio_time/cfile->total_time*allocwidth-1,
-			  prefs->bar_height);
-    
-    
-      gdk_draw_rectangle (mainw->laudio_drawable,
-			  mainw->laudio_draw->style->white_gc,
-			  TRUE,
-			  offset_left, 0,
-			  offset_right-offset_left,
-			  prefs->bar_height);
-  
-    
-      gdk_draw_rectangle (mainw->laudio_drawable,
-			  mainw->laudio_draw->style->bg_gc[GTK_WIDGET_STATE (mainw->laudio_draw)],
-			  TRUE,
-			  cfile->laudio_time/cfile->total_time*allocwidth, 0,
-			  allocwidth-(cfile->laudio_time/cfile->total_time*allocwidth),
-			  prefs->bar_height);
-#endif
     }
     if (cfile->achans>1) {
       if (mainw->raudio_drawable!=NULL) {
-#if GTK_CHECK_VERSION(3,0,0)
-	GdkRGBA color;
 	lives_painter_t *cr=lives_painter_create(mainw->raudio_drawable);
       
 	lives_painter_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
@@ -2547,9 +2483,8 @@ void get_play_times(void) {
 			prefs->bar_height);
       
 	lives_painter_fill(cr);
-      
-	lives_widget_get_bg_color(mainw->raudio_draw,&color);
-	lives_painter_set_source_rgba (cr, color.red, color.green, color.blue, color.alpha);
+
+	lives_painter_set_source_to_bg(cr,mainw->raudio_draw);
       
 	lives_painter_rectangle(cr,cfile->raudio_time/cfile->total_time*allocwidth, 0,
 		      allocwidth-(cfile->raudio_time/cfile->total_time*allocwidth),
@@ -2557,29 +2492,6 @@ void get_play_times(void) {
       
 	lives_painter_destroy (cr);
 
-#else
-	gdk_draw_rectangle (mainw->raudio_drawable,
-			    mainw->raudio_draw->style->black_gc,
-			    TRUE,
-			    0, 0,
-			    cfile->raudio_time/cfile->total_time*allocwidth-1,
-			    prefs->bar_height);
-      
-	gdk_draw_rectangle (mainw->raudio_drawable,
-			    mainw->raudio_draw->style->white_gc,
-			    TRUE,
-			    offset_left, 0,
-			    offset_right-offset_left,
-			    prefs->bar_height);
-      
-      
-	gdk_draw_rectangle (mainw->raudio_drawable,
-			    mainw->raudio_draw->style->bg_gc[GTK_WIDGET_STATE (mainw->raudio_draw)],
-			    TRUE,
-			    cfile->raudio_time/cfile->total_time*allocwidth, 0,
-			    allocwidth-(cfile->raudio_time/cfile->total_time*allocwidth),
-			    prefs->bar_height);
-#endif
       }
     }
   }
@@ -2590,7 +2502,6 @@ void get_play_times(void) {
       offset=(mainw->actual_frame-.5)/cfile->fps;
       offset/=cfile->total_time/allocwidth;
       if (mainw->video_drawable!=NULL) {
-#if GTK_CHECK_VERSION(3,0,0)
 	lives_painter_t *cr=lives_painter_create(mainw->video_drawable);
 
 	lives_painter_set_line_width(cr,1.);
@@ -2621,37 +2532,7 @@ void get_play_times(void) {
 	lives_painter_stroke(cr);
 
 	lives_painter_destroy(cr);
-#else
-	if (offset>=offset_left&&offset<=offset_right) {
-	  gdk_draw_line (mainw->video_drawable,
-			 mainw->video_draw->style->black_gc,
-			 offset, 0,
-			 offset,
-			 prefs->bar_height);
-	}
-	else {
-	  gdk_draw_line (mainw->video_drawable,
-			 mainw->video_draw->style->white_gc,
-			 offset, 0,
-			 offset,
-			 prefs->bar_height);
-	}
-      
-	if (palette->style&STYLE_3||palette->style==STYLE_PLAIN) { // light style
-	  gdk_draw_line (mainw->video_drawable,
-			 mainw->video_draw->style->black_gc,
-			 offset, prefs->bar_height,
-			 offset,
-			 allocheight-prefs->bar_height);
-	}
-	else {
-	  gdk_draw_line (mainw->video_drawable,
-			 mainw->video_draw->style->white_gc,
-			 offset, prefs->bar_height,
-			 offset,
-			 allocheight-prefs->bar_height);
-	}
-#endif
+
       }
       lives_ruler_set_value(LIVES_RULER (mainw->hruler),offset*cfile->total_time/allocwidth);
       gtk_widget_queue_draw (mainw->hruler);
@@ -2674,8 +2555,6 @@ void get_play_times(void) {
       }
       else offset=allocwidth*(mainw->aframeno-.5)/cfile->fps/cfile->total_time;
       if (mainw->laudio_drawable!=NULL) {
-
-#if GTK_CHECK_VERSION(3,0,0)
 	lives_painter_t *cr=lives_painter_create(mainw->laudio_drawable);
 
 	lives_painter_set_line_width(cr,1.);
@@ -2705,43 +2584,10 @@ void get_play_times(void) {
 	lives_painter_stroke(cr);
 
 	lives_painter_destroy(cr);
-#else
-	if ((offset>=offset_left&&offset<=offset_right)||mainw->loop) {
-	  gdk_draw_line (mainw->laudio_drawable,
-			 mainw->laudio_draw->style->black_gc,
-			 offset, 0,
-			 offset,
-			 prefs->bar_height);
-	}
-	else {
-	  gdk_draw_line (mainw->laudio_drawable,
-			 mainw->laudio_draw->style->white_gc,
-			 offset, 0,
-			 offset,
-			 prefs->bar_height);
-	}
-      
-	if (palette->style&STYLE_3||palette->style==STYLE_PLAIN) { // light style
-	  gdk_draw_line (mainw->laudio_drawable,
-			 mainw->laudio_draw->style->black_gc,
-			 offset, prefs->bar_height,
-			 offset,
-			 allocheight-prefs->bar_height);
-	}
-	else {
-	  gdk_draw_line (mainw->laudio_drawable,
-			 mainw->laudio_draw->style->white_gc,
-			 offset, prefs->bar_height,
-			 offset,
-			 allocheight-prefs->bar_height);
-	}
-#endif
       }
 
       if (cfile->achans>1) {
 	if (mainw->raudio_drawable!=NULL) {
-
-#if GTK_CHECK_VERSION(3,0,0)
 	  lives_painter_t *cr=lives_painter_create(mainw->raudio_drawable);
 	  
 	  lives_painter_set_line_width(cr,1.);
@@ -2771,38 +2617,6 @@ void get_play_times(void) {
 	  lives_painter_stroke(cr);
 	  
 	  lives_painter_destroy(cr);
-#else
-	  if ((offset>=offset_left&&offset<=offset_right)||mainw->loop) {
-	    gdk_draw_line (mainw->raudio_drawable,
-			   mainw->raudio_draw->style->black_gc,
-			   offset, 0,
-			   offset,
-			   prefs->bar_height);
-	  }
-	  else {
-	    gdk_draw_line (mainw->raudio_drawable,
-			   mainw->raudio_draw->style->white_gc,
-			   offset, 0,
-			   offset,
-			   prefs->bar_height);
-	  }
-	  
-	  
-	  if (palette->style&STYLE_3||palette->style==STYLE_PLAIN) { // light style
-	    gdk_draw_line (mainw->raudio_drawable,
-			   mainw->raudio_draw->style->black_gc,
-			   offset, prefs->bar_height,
-			   offset,
-			   allocheight-prefs->bar_height);
-	  }
-	  else {
-	    gdk_draw_line (mainw->raudio_drawable,
-			   mainw->raudio_draw->style->white_gc,
-			   offset, prefs->bar_height,
-			   offset,
-			   allocheight-prefs->bar_height);
-	  }
-#endif
 
 	}
       }
@@ -2935,68 +2749,36 @@ void draw_little_bars (gdouble ptrtime) {
 
   if (cfile->frames>0) {
     if (mainw->video_drawable!=NULL) {
-#if GTK_CHECK_VERSION(3,0,0)
-	lives_painter_t *cr=lives_painter_create(mainw->video_drawable);
+      lives_painter_t *cr=lives_painter_create(mainw->video_drawable);
 
-	lives_painter_set_line_width(cr,1.);
+      lives_painter_set_line_width(cr,1.);
       
-	if (frame>=cfile->start&&frame<=cfile->end) {
-	  lives_painter_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
-	  lives_painter_move_to(cr, offset, 0);
-	  lives_painter_line_to(cr, offset, prefs->bar_height);
-	}
-	else {
-	  lives_painter_set_source_rgb(cr, 1., 1., 1.); ///< opaque white
-	  lives_painter_move_to(cr, offset, 0);
-	  lives_painter_line_to(cr, offset, prefs->bar_height);
-	}
-	lives_painter_stroke(cr);
-
-	if (palette->style&STYLE_3||palette->style==STYLE_PLAIN) { // light style
-	  lives_painter_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
-	  lives_painter_move_to(cr, offset, prefs->bar_height);
-	  lives_painter_line_to(cr, offset, allocheight-prefs->bar_height);
-	}
-	else {
-	  lives_painter_set_source_rgb(cr, 1., 1., 1.); ///< opaque white
-	  lives_painter_move_to(cr, offset, prefs->bar_height);
-	  lives_painter_line_to(cr, offset, allocheight-prefs->bar_height);
-	}
-	lives_painter_stroke(cr);
-
-	lives_painter_destroy(cr);
-
-#else
       if (frame>=cfile->start&&frame<=cfile->end) {
-	gdk_draw_line (mainw->video_drawable,
-		       mainw->video_draw->style->black_gc,
-		       offset, 0,
-		       offset,
-		       prefs->bar_height);
+	lives_painter_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
+	lives_painter_move_to(cr, offset, 0);
+	lives_painter_line_to(cr, offset, prefs->bar_height);
       }
       else {
-	gdk_draw_line (mainw->video_drawable,
-		       mainw->video_draw->style->white_gc,
-		       offset, 0,
-		       offset,
-		       prefs->bar_height);
+	lives_painter_set_source_rgb(cr, 1., 1., 1.); ///< opaque white
+	lives_painter_move_to(cr, offset, 0);
+	lives_painter_line_to(cr, offset, prefs->bar_height);
       }
+      lives_painter_stroke(cr);
 
       if (palette->style&STYLE_3||palette->style==STYLE_PLAIN) { // light style
-	gdk_draw_line (mainw->video_drawable,
-		       mainw->video_draw->style->black_gc,
-		       offset, prefs->bar_height,
-		       offset,
-		       allocheight);
+	lives_painter_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
+	lives_painter_move_to(cr, offset, prefs->bar_height);
+	lives_painter_line_to(cr, offset, allocheight-prefs->bar_height);
       }
       else {
-	gdk_draw_line (mainw->video_drawable,
-		       mainw->video_draw->style->white_gc,
-		       offset, prefs->bar_height,
-		       offset,
-		       allocheight);
+	lives_painter_set_source_rgb(cr, 1., 1., 1.); ///< opaque white
+	lives_painter_move_to(cr, offset, prefs->bar_height);
+	lives_painter_line_to(cr, offset, allocheight-prefs->bar_height);
       }
-#endif
+      lives_painter_stroke(cr);
+
+      lives_painter_destroy(cr);
+
 
     }
   }
@@ -3005,74 +2787,41 @@ void draw_little_bars (gdouble ptrtime) {
 
   if (cfile->achans>0) {
     if (mainw->laudio_drawable!=NULL) {
-#if GTK_CHECK_VERSION(3,0,0)
-	lives_painter_t *cr=lives_painter_create(mainw->laudio_drawable);
+      lives_painter_t *cr=lives_painter_create(mainw->laudio_drawable);
 
-	lives_painter_set_line_width(cr,1.);
+      lives_painter_set_line_width(cr,1.);
       
-	if (frame>=cfile->start&&frame<=cfile->end) {
-	  lives_painter_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
-	  lives_painter_move_to(cr, offset, 0);
-	  lives_painter_line_to(cr, offset, prefs->bar_height);
-	}
-	else {
-	  lives_painter_set_source_rgb(cr, 1., 1., 1.); ///< opaque white
-	  lives_painter_move_to(cr, offset, 0);
-	  lives_painter_line_to(cr, offset, prefs->bar_height);
-	}
-	lives_painter_stroke(cr);
-
-	if (palette->style&STYLE_3||palette->style==STYLE_PLAIN) { // light style
-	  lives_painter_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
-	  lives_painter_move_to(cr, offset, prefs->bar_height);
-	  lives_painter_line_to(cr, offset, allocheight-prefs->bar_height);
-	}
-	else {
-	  lives_painter_set_source_rgb(cr, 1., 1., 1.); ///< opaque white
-	  lives_painter_move_to(cr, offset, prefs->bar_height);
-	  lives_painter_line_to(cr, offset, allocheight-prefs->bar_height);
-	}
-	lives_painter_stroke(cr);
-
-	lives_painter_destroy(cr);
-#else
-      if ((frame>=cfile->start&&frame<=cfile->end)||mainw->loop) {
-	gdk_draw_line (mainw->laudio_drawable,
-		       mainw->laudio_draw->style->black_gc,
-		       offset, 0,
-		       offset,
-		       prefs->bar_height);
+      if (frame>=cfile->start&&frame<=cfile->end) {
+	lives_painter_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
+	lives_painter_move_to(cr, offset, 0);
+	lives_painter_line_to(cr, offset, prefs->bar_height);
       }
       else {
-	gdk_draw_line (mainw->laudio_drawable,
-		       mainw->laudio_draw->style->white_gc,
-		       offset, 0,
-		       offset,
-		       prefs->bar_height);
+	lives_painter_set_source_rgb(cr, 1., 1., 1.); ///< opaque white
+	lives_painter_move_to(cr, offset, 0);
+	lives_painter_line_to(cr, offset, prefs->bar_height);
       }
-      
+      lives_painter_stroke(cr);
+
       if (palette->style&STYLE_3||palette->style==STYLE_PLAIN) { // light style
-	gdk_draw_line (mainw->laudio_drawable,
-		       mainw->laudio_draw->style->black_gc,
-		       offset, prefs->bar_height,
-		       offset,
-		       allocheight);
+	lives_painter_set_source_rgb(cr, 0., 0., 0.); ///< opaque black
+	lives_painter_move_to(cr, offset, prefs->bar_height);
+	lives_painter_line_to(cr, offset, allocheight-prefs->bar_height);
       }
       else {
-	gdk_draw_line (mainw->laudio_drawable,
-		       mainw->laudio_draw->style->white_gc,
-		       offset, prefs->bar_height,
-		       offset,
-		       allocheight);
+	lives_painter_set_source_rgb(cr, 1., 1., 1.); ///< opaque white
+	lives_painter_move_to(cr, offset, prefs->bar_height);
+	lives_painter_line_to(cr, offset, allocheight-prefs->bar_height);
       }
-#endif
+      lives_painter_stroke(cr);
+
+      lives_painter_destroy(cr);
+
     }
 
     if (cfile->achans>1) {
       if (mainw->raudio_drawable!=NULL) {
 	if ((frame>=cfile->start&&frame<=cfile->end)||mainw->loop) {
-
-#if GTK_CHECK_VERSION(3,0,0)
 	lives_painter_t *cr=lives_painter_create(mainw->raudio_drawable);
 
 	lives_painter_set_line_width(cr,1.);
@@ -3102,38 +2851,6 @@ void draw_little_bars (gdouble ptrtime) {
 	lives_painter_stroke(cr);
 
 	lives_painter_destroy(cr);
-#else
-	if (frame>=cfile->start&&frame<=cfile->end) {
-	  gdk_draw_line (mainw->raudio_drawable,
-			 mainw->raudio_draw->style->black_gc,
-			 offset, 0,
-			 offset,
-			 prefs->bar_height);
-	}
-	else {
-	  gdk_draw_line (mainw->raudio_drawable,
-			 mainw->raudio_draw->style->white_gc,
-			 offset, 0,
-			 offset,
-			 prefs->bar_height);
-	}
-	
-	
-	if (palette->style&STYLE_3||palette->style==STYLE_PLAIN) { // light style
-	  gdk_draw_line (mainw->raudio_drawable,
-			 mainw->raudio_draw->style->black_gc,
-			 offset, prefs->bar_height,
-			 offset,
-			 allocheight);
-	}
-	else {
-	  gdk_draw_line (mainw->raudio_drawable,
-			 mainw->raudio_draw->style->white_gc,
-			 offset, prefs->bar_height,
-			 offset,
-			 allocheight);
-	}
-#endif
 
 	}
       }
@@ -4755,11 +4472,16 @@ GList *get_set_list(const gchar *dir) {
 
   if (tldir==NULL) return NULL;
 
+  lives_set_cursor_style(LIVES_CURSOR_BUSY,NULL);
+  while (g_main_context_iteration(NULL,FALSE));
+
+
   while (1) {
     tdirent=readdir(tldir);
 
     if (tdirent==NULL) {
       closedir(tldir);
+      lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
       return setlist;
     }
     
@@ -4789,6 +4511,7 @@ GList *get_set_list(const gchar *dir) {
     g_free(subdirname);
     closedir(subdir);
   }
+
 }
 
 

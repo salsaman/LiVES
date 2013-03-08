@@ -174,7 +174,7 @@ void framedraw_add_reset(GtkVBox *box, lives_special_framedraw_rect_t *framedraw
 
 
 static boolean expose_fd_event (GtkWidget *widget, GdkEventExpose ev) {
-  load_framedraw_image(NULL);
+  //load_framedraw_image(NULL);
   redraw_framedraw_image();
   return TRUE;
 }
@@ -865,6 +865,21 @@ boolean on_framedraw_mouse_start (GtkWidget *widget, GdkEventButton *event, live
   ycurrent=ystart;
 
   switch (framedraw->type) {
+  case LIVES_PARAM_SPECIAL_TYPE_SINGLEPOINT: 
+    noupdate=TRUE;
+
+    if (framedraw->xstart_param->dp>0)
+      gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xstart_param->widgets[0]),xstart);
+    else
+      gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xstart_param->widgets[0]),(int)(xstart*(double)cfile->hsize+.5));
+    if (framedraw->xstart_param->dp>0)
+      gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->ystart_param->widgets[0]),ystart);
+    else
+      gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->ystart_param->widgets[0]),(int)(ystart*(double)cfile->vsize+.5));
+
+    noupdate=FALSE;
+    break;
+
   case LIVES_PARAM_SPECIAL_TYPE_RECT_MULTRECT: 
   case LIVES_PARAM_SPECIAL_TYPE_RECT_MULTIRECT: 
   case LIVES_PARAM_SPECIAL_TYPE_RECT_DEMASK: 
@@ -896,18 +911,19 @@ boolean on_framedraw_mouse_start (GtkWidget *widget, GdkEventButton *event, live
 
     noupdate=FALSE;
 
-    framedraw_redraw (framedraw, FALSE, NULL);
-
-    if (mainw->framedraw_reset!=NULL) {
-      gtk_widget_set_sensitive (mainw->framedraw_reset,TRUE);
-    }
-    if (mainw->framedraw_preview!=NULL) {
-      gtk_widget_set_sensitive (mainw->framedraw_preview,TRUE);
-    }
-
     break;
   default:
     break;
+  }
+
+
+  framedraw_redraw (framedraw, FALSE, NULL);
+
+  if (mainw->framedraw_reset!=NULL) {
+    gtk_widget_set_sensitive (mainw->framedraw_reset,TRUE);
+  }
+  if (mainw->framedraw_preview!=NULL) {
+    gtk_widget_set_sensitive (mainw->framedraw_preview,TRUE);
   }
 
   return FALSE;
@@ -1058,6 +1074,11 @@ boolean on_framedraw_mouse_reset (GtkWidget *widget, GdkEventButton *event, live
   if (event->button!=1) return FALSE;
 
   b1_held=FALSE;
+
+  if (framedraw==NULL&&mainw->multitrack!=NULL) framedraw=mainw->multitrack->framedraw;
+  if (framedraw==NULL) return FALSE;
+  if (mainw->multitrack!=NULL&&mainw->multitrack->track_index==-1) return FALSE;
+
   framedraw_redraw(framedraw, FALSE, NULL);
   return FALSE;
 }

@@ -126,7 +126,9 @@ typedef GtkRange                          LiVESScaleButton;
 
 
 #if GTK_CHECK_VERSION(3,0,0)
-#define LIVES_WIDGET_COLOR_SCALE (1./256.) ///< value to divide LiVESWidgetColor component by to get 0. - 255.
+#define LIVES_WIDGET_COLOR_HAS_ALPHA (1)
+#define LIVES_WIDGET_COLOR_SCALE(x) (x) ///< macro to get 0. to 1.
+#define LIVES_WIDGET_COLOR_SCALE_255(x) ((double)x/255.) ///< macro to convert 0. - 255. to component
 typedef GdkRGBA                           LiVESWidgetColor;
 typedef GtkStateFlags LiVESWidgetState;
 
@@ -140,7 +142,9 @@ typedef GtkStateFlags LiVESWidgetState;
 #define LIVES_WIDGET_STATE_BACKDROP       GTK_STATE_FLAG_BACKDROP
 
 #else
-#define LIVES_WIDGET_COLOR_SCALE 256.     ///< value to divide LiVESWidgetColor component by to get 0. - 255.
+#define LIVES_WIDGET_COLOR_HAS_ALPHA (0)
+#define LIVES_WIDGET_COLOR_SCALE(x) ((double)x/65535.)     ///< macro to get 0. to 1.
+#define LIVES_WIDGET_COLOR_SCALE_255(x) ((int)((double)x*256.+.5))     ///< macro to get 0 - 255
 typedef GdkColor                          LiVESWidgetColor;
 typedef GtkStateType LiVESWidgetState;
 
@@ -452,7 +456,7 @@ void lives_painter_set_source_surface (lives_painter_t *, lives_painter_surface_
 lives_painter_surface_t *lives_painter_image_surface_create(lives_painter_format_t format, int width, int height);
 lives_painter_surface_t *lives_painter_image_surface_create_for_data(uint8_t *data, lives_painter_format_t, 
 								     int width, int height, int stride);
-lives_painter_surface_t *lives_painter_surface_create_from_widget(LiVESWidget *, lives_painter_format_t, 
+lives_painter_surface_t *lives_painter_surface_create_from_widget(LiVESWidget *, lives_painter_content_t, 
 								  int width, int height);
 void lives_painter_surface_flush(lives_painter_surface_t *);
 
@@ -657,6 +661,8 @@ boolean lives_scale_button_set_orientation(LiVESScaleButton *, LiVESOrientation 
 
 // compound functions (composed of basic functions)
 
+void lives_painter_set_source_to_bg(lives_painter_t *, LiVESWidget *);
+
 LiVESWidget *lives_standard_label_new(const char *text);
 LiVESWidget *lives_standard_label_new_with_mnemonic(const char *text, LiVESWidget *mnemonic_widget);
 
@@ -730,6 +736,8 @@ LiVESWidget *add_fill_to_box (LiVESBox *box);
 
 #define LIVES_JUSTIFY_DEFAULT LIVES_JUSTIFY_LEFT
 
+#define W_MAX_FILLER_LEN 65535
+
 typedef struct {
   boolean no_gui; // show nothing !
   boolean swap_label; // swap label/widget position
@@ -739,11 +747,35 @@ typedef struct {
   int packing_width; // default should be W_PACKING_WIDTH
   int packing_height; // default should be W_PACKING_HEIGHT
   int border_width; // default should be W_BORDER_WIDTH
+  int filler_len; // length of extra "fill" between widgets
+  lives_cursor_t cursor_style; // style of cursor
   LiVESJustification justify; // justify for labels
 } widget_opts_t;
 
 
 widget_opts_t widget_opts;
+
+#ifdef NEED_DEF_WIDGET_OPTS
+
+const widget_opts_t def_widget_opts = {
+    FALSE, // no_gui
+    FALSE, // swap_label
+    FALSE, //pack_end
+    FALSE, // line_wrap
+    FALSE, // non_modal
+    W_PACKING_WIDTH, // def packing width
+    W_PACKING_HEIGHT, // def packing height
+    W_BORDER_WIDTH, // def border width
+    8, // def fill width (in chars)
+    LIVES_CURSOR_NORMAL,
+    LIVES_JUSTIFY_DEFAULT // justify
+};
+
+#else
+
+extern const widget_opts_t def_widget_opts;
+
+#endif
 
 #endif
 

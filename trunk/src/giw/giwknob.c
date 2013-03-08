@@ -758,6 +758,8 @@ giw_knob_button_release (GtkWidget      *widget,
 
   knob = GIW_KNOB (widget);
   
+  g_return_val_if_fail (knob->adjustment != NULL,TRUE);
+
   if (knob->mouse_policy==GIW_KNOB_MOUSE_DISABLED) return TRUE;
 	  
      // If the policy is delayed, now that the button was released (if it is), it's time to update the value
@@ -784,10 +786,13 @@ giw_knob_motion_notify (GtkWidget      *widget,
   gint x, y;
 
   g_return_val_if_fail (widget != NULL,TRUE);
+  g_return_val_if_fail (GTK_IS_WIDGET (widget),TRUE);
   g_return_val_if_fail (GIW_IS_KNOB (widget),TRUE);
   g_return_val_if_fail (event != NULL,TRUE);
 
   knob = GIW_KNOB (widget);
+
+  g_return_val_if_fail (knob->adjustment != NULL,TRUE);
   
   if (knob->mouse_policy==GIW_KNOB_MOUSE_DISABLED) return TRUE;
 	  
@@ -797,13 +802,15 @@ giw_knob_motion_notify (GtkWidget      *widget,
     y = event->y;
 
     if (event->is_hint || (event->window != lives_widget_get_xwindow(widget))) 
-      
+#if GTK_CHECK_VERSION(3,0,0)
       gdk_window_get_device_position (lives_widget_get_xwindow(widget),
 				      gdk_event_get_device ((GdkEvent *)(event)),
 				      &x,
 				      &y,
 				      NULL);
-
+#else
+    gdk_window_get_pointer (lives_widget_get_xwindow(widget), &x, &y, NULL);
+#endif
     knob_update_mouse (knob, x, y);
   }
   
@@ -813,11 +820,15 @@ giw_knob_motion_notify (GtkWidget      *widget,
     y = event->y;
 
     if (event->is_hint || (event->window != lives_widget_get_xwindow(widget)))
+#if GTK_CHECK_VERSION(3,0,0)
       gdk_window_get_device_position (lives_widget_get_xwindow(widget),
 				      gdk_event_get_device ((GdkEvent *)(event)),
 				      &x,
 				      &y,
 				      NULL);
+#else
+    gdk_window_get_pointer (lives_widget_get_xwindow(widget), &x, &y, NULL);
+#endif
 
     knob_update_false_mouse (knob, x, y);
   }
@@ -884,6 +895,7 @@ giw_knob_set_value (GiwKnob *knob,
   
   if (value!=gtk_adjustment_get_value(knob->adjustment)) {
     knob_set_value(knob, value);  
+    g_return_if_fail (knob->adjustment != NULL);
     gtk_adjustment_value_changed(knob->adjustment);
   }
 }
@@ -1041,12 +1053,15 @@ knob_update_mouse (GiwKnob *knob, gint x, gint y)
   g_return_if_fail (knob != NULL);
   g_return_if_fail (GIW_IS_KNOB (knob));
 
+  gtk_widget_queue_draw(GTK_WIDGET(knob));
+
   xc = lives_widget_get_allocation_width(LIVES_WIDGET(knob))/2;
   yc = lives_widget_get_allocation_height(LIVES_WIDGET(knob))/2;
 
   // Calculating the new angle
   if (knob->angle != atan2(yc-y, x-xc)){
     knob_set_value(knob, knob_calculate_value_with_angle(knob, atan2(yc-y, x-xc)));
+    g_return_if_fail (knob->adjustment != NULL);
     gtk_adjustment_value_changed(knob->adjustment);
   }
 }
@@ -1146,7 +1161,8 @@ knob_calculate_angle_with_value (GiwKnob *knob, gdouble value)
   
   g_return_val_if_fail (knob != NULL, 0.0);
   g_return_val_if_fail (GIW_IS_KNOB (knob), 0.0);
-  
+  g_return_val_if_fail (knob->adjustment!=NULL, 0.0);
+
   angle=(value-lives_adjustment_get_lower(knob->adjustment))*
     (3.0*M_PI/2.0)/fabs(lives_adjustment_get_upper(knob->adjustment)-lives_adjustment_get_lower(knob->adjustment));
     
@@ -1186,7 +1202,8 @@ knob_set_value (GiwKnob *knob,
 {
   g_return_if_fail (knob != NULL);
   g_return_if_fail (GIW_IS_KNOB (knob));
-  
+  g_return_if_fail (knob->adjustment != NULL);
+
   gtk_adjustment_set_value(knob->adjustment,value);
 }
 

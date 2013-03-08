@@ -49,6 +49,8 @@ gboolean on_LiVES_delete_event (GtkWidget *widget, GdkEvent *event, gpointer use
 void lives_exit (void) {
   register int i;
 
+  if (!mainw->only_close) mainw->exiting=TRUE;
+
   if (mainw->is_ready) {
     gchar *com;
     gchar *cwd;
@@ -132,7 +134,7 @@ void lives_exit (void) {
 #if GTK_CHECK_VERSION(3,0,0)
     mainw->kb_timer_end=TRUE;
 #else
-    if (mainw->kb_timer!=NULL) gtk_timeout_remove (mainw->kb_timer);
+    if (mainw->kb_timer!=-1) gtk_timeout_remove (mainw->kb_timer);
 #endif
 #ifdef HAVE_PULSE_AUDIO
     pthread_mutex_lock(&mainw->abuf_mutex);
@@ -216,19 +218,11 @@ void lives_exit (void) {
 	}
 
 	if (cfile->laudio_drawable!=NULL) {
-#if GTK_CHECK_VERSION(3,0,0)
 	  lives_painter_surface_destroy(cfile->laudio_drawable);
-#else
-	  g_object_unref(G_OBJECT(cfile->laudio_drawable));
-#endif
 	}
 
 	if (cfile->raudio_drawable!=NULL) {
-#if GTK_CHECK_VERSION(3,0,0)
 	  lives_painter_surface_destroy(cfile->raudio_drawable);
-#else
-	  g_object_unref(G_OBJECT(cfile->raudio_drawable));
-#endif
 	}
 
 
@@ -470,27 +464,15 @@ void lives_exit (void) {
   for (i=0;i<NUM_LIVES_STRING_CONSTANTS;i++) if (mainw->string_constants[i]!=NULL) g_free(mainw->string_constants[i]);
 
   if (mainw->video_drawable!=NULL) {
-#if GTK_CHECK_VERSION(3,0,0)
     lives_painter_surface_destroy(mainw->video_drawable);
-#else
-    g_object_unref(G_OBJECT(mainw->video_drawable));
-#endif
   }
 
   if (mainw->laudio_drawable!=NULL) {
-#if GTK_CHECK_VERSION(3,0,0)
     lives_painter_surface_destroy(mainw->laudio_drawable);
-#else
-    g_object_unref(G_OBJECT(mainw->laudio_drawable));
-#endif
   }
 
   if (mainw->raudio_drawable!=NULL) {
-#if GTK_CHECK_VERSION(3,0,0)
     lives_painter_surface_destroy(mainw->raudio_drawable);
-#else
-    g_object_unref(G_OBJECT(mainw->raudio_drawable));
-#endif
   }
 
   if (mainw->foreign_visual!=NULL) g_free(mainw->foreign_visual);
@@ -4934,10 +4916,7 @@ on_load_set_activate            (GtkMenuItem     *menuitem,
     mt_desensitise(mainw->multitrack);
   }
 
-  lives_set_cursor_style(LIVES_CURSOR_BUSY,NULL);
-  while (g_main_context_iteration(NULL,FALSE));
   renamew=create_rename_dialog(3);
-  lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
   gtk_widget_show(renamew->dialog);
 }
 
@@ -9016,10 +8995,12 @@ on_spinbutton_end_value_changed          (GtkSpinButton   *spinbutton,
 
 #if GTK_CHECK_VERSION(3,0,0)
 boolean expose_vid_event (GtkWidget *widget, lives_painter_t *cr, gpointer user_data) {
-  LiVESWidgetColor color;
   GdkEventExpose *event=NULL;
+  boolean dest_cr=FALSE;
 #else
 boolean expose_vid_event (GtkWidget *widget, GdkEventExpose *event) {
+  lives_painter_t *cr=lives_painter_create_from_widget(mainw->video_draw);
+  boolean dest_cr=TRUE;
 #endif
 
   gint ex,ey,ew,eh;
@@ -9056,85 +9037,51 @@ boolean expose_vid_event (GtkWidget *widget, GdkEventExpose *event) {
   if (mainw->video_drawable!=NULL) {
     // check if a resize happened
 
-#if GTK_CHECK_VERSION(3,0,0)
     width = lives_painter_image_surface_get_width (mainw->video_drawable);
-#else
-    gdk_drawable_get_size(GDK_DRAWABLE(mainw->video_drawable),&width,NULL);
-#endif
+
     if (width!=lives_widget_get_allocation_width(mainw->LiVES)) {
-#if GTK_CHECK_VERSION(3,0,0)
       lives_painter_surface_destroy(mainw->video_drawable);
-#else
-      g_object_unref(G_OBJECT(mainw->video_drawable));
-#endif
       mainw->video_drawable=NULL;
     }
   }
 
   if (mainw->video_drawable==NULL) {
-#if GTK_CHECK_VERSION(3,0,0)
     mainw->video_drawable = lives_painter_surface_create_from_widget(mainw->video_draw,
 								       LIVES_PAINTER_CONTENT_COLOR,
 								       lives_widget_get_allocation_width(mainw->video_draw),
 								       lives_widget_get_allocation_height(mainw->video_draw));
-#else
-    mainw->video_drawable = gdk_pixmap_new(lives_widget_get_xwindow(mainw->video_draw),
-					   lives_widget_get_allocation_width(mainw->video_draw),
-					   lives_widget_get_allocation_height(mainw->video_draw),
-					   -1);
-#endif
     block_expose();
     get_play_times();
     unblock_expose();
 
+
   }
 
   if (mainw->current_file==-1) {
-#if GTK_CHECK_VERSION(3,0,0)
     lives_painter_t *cr2=lives_painter_create(mainw->video_drawable);
-    lives_widget_get_bg_color(mainw->video_draw,&color);
-    lives_painter_set_source_rgba (cr2, color.red, color.green, color.blue, color.alpha);
+
+    lives_painter_set_source_to_bg(cr2,mainw->video_draw);
     lives_painter_rectangle(cr2,0,0,
 		    lives_widget_get_allocation_width(mainw->video_draw),
 		    lives_widget_get_allocation_height(mainw->video_draw));
     lives_painter_fill(cr2);
     lives_painter_destroy(cr2);
-#else
-    gdk_draw_rectangle (mainw->video_drawable,
-			mainw->video_draw->style->bg_gc[GTK_STATE_NORMAL],
-                        TRUE,
-                        0, 0,
-                        lives_widget_get_allocation_width(mainw->video_draw),
-                        lives_widget_get_allocation_height(mainw->video_draw)
-                        );
-#endif
   }
 
-
-#if GTK_CHECK_VERSION(3,0,0)
   lives_painter_set_source_surface (cr, mainw->video_drawable,0.,0.);
   lives_painter_rectangle (cr,ex,ey,ew,eh);
   lives_painter_paint(cr);
-#else
-  gdk_draw_pixmap(lives_widget_get_xwindow(widget),
-		  mainw->video_draw->style->fg_gc[GTK_STATE_NORMAL],
-		  mainw->video_drawable,
-		  ex, ey,
-		  ex, ey,
-		  ew, eh);
-#endif
 
   unblock_expose();
-  return FALSE;
+
+  if (dest_cr) lives_painter_destroy(cr);
+
+  return TRUE;
   
 }
 
 
 static void redraw_laudio(lives_painter_t *cr, int ex, int ey, int ew, int eh) {
-#if GTK_CHECK_VERSION(3,0,0)
-  LiVESWidgetColor color;
-#endif
-
   int width;
 
   block_expose();
@@ -9142,33 +9089,20 @@ static void redraw_laudio(lives_painter_t *cr, int ex, int ey, int ew, int eh) {
   if (mainw->laudio_drawable!=NULL) {
     // check if a resize happened
 
-#if GTK_CHECK_VERSION(3,0,0)
     width = lives_painter_image_surface_get_width (mainw->laudio_drawable);
-#else
-    gdk_drawable_get_size(GDK_DRAWABLE(mainw->laudio_drawable),&width,NULL);
-#endif
+
     if (width!=lives_widget_get_allocation_width(mainw->LiVES)) {
-#if GTK_CHECK_VERSION(3,0,0)
       lives_painter_surface_destroy(mainw->laudio_drawable);
-#else
-      g_object_unref(G_OBJECT(mainw->laudio_drawable));
-#endif
       mainw->laudio_drawable=NULL;
     }
   }
 
   if (mainw->laudio_drawable==NULL) {
-#if GTK_CHECK_VERSION(3,0,0)
     mainw->laudio_drawable = lives_painter_surface_create_from_widget(mainw->laudio_draw,
 							       LIVES_PAINTER_CONTENT_COLOR,
 							       lives_widget_get_allocation_width(mainw->laudio_draw),
 							       lives_widget_get_allocation_height(mainw->laudio_draw));
-#else
-    mainw->laudio_drawable = gdk_pixmap_new(lives_widget_get_xwindow(mainw->laudio_draw),
-					   lives_widget_get_allocation_width(mainw->laudio_draw),
-					   lives_widget_get_allocation_height(mainw->laudio_draw),
-					   -1);
-#endif
+
     block_expose();
     get_play_times();
     unblock_expose();
@@ -9180,40 +9114,18 @@ static void redraw_laudio(lives_painter_t *cr, int ex, int ey, int ew, int eh) {
 
 
   if (mainw->current_file==-1) {
-#if GTK_CHECK_VERSION(3,0,0)
     lives_painter_t *cr2=lives_painter_create(mainw->laudio_drawable);
-    lives_widget_get_bg_color(mainw->laudio_draw,&color);
-    lives_painter_set_source_rgba (cr2, color.red, color.green, color.blue, color.alpha);
+    lives_painter_set_source_to_bg(cr2,mainw->laudio_draw);
     lives_painter_rectangle(cr2,0,0,
 		    lives_widget_get_allocation_width(mainw->laudio_draw),
 		    lives_widget_get_allocation_height(mainw->laudio_draw));
     lives_painter_fill(cr2);
     lives_painter_destroy(cr2);
-#else
-    gdk_draw_rectangle (mainw->laudio_drawable,
-			mainw->laudio_draw->style->bg_gc[GTK_STATE_NORMAL],
-                        TRUE,
-                        0, 0,
-                        lives_widget_get_allocation_width(mainw->laudio_draw),
-                        lives_widget_get_allocation_height(mainw->laudio_draw)
-                        );
-#endif
   }
 
-
-
-#if GTK_CHECK_VERSION(3,0,0)
   lives_painter_set_source_surface (cr, mainw->laudio_drawable,0.,0.);
   lives_painter_rectangle (cr,ex,ey,ew,eh);
   lives_painter_paint(cr);
-#else
-  gdk_draw_pixmap(lives_widget_get_xwindow(mainw->laudio_draw),
-		  mainw->laudio_draw->style->fg_gc[GTK_STATE_NORMAL],
-		  mainw->laudio_drawable,
-		  ex, ey,
-		  ex, ey,
-		  ew, eh);
-#endif
 
   unblock_expose();
 }
@@ -9221,10 +9133,7 @@ static void redraw_laudio(lives_painter_t *cr, int ex, int ey, int ew, int eh) {
 
 
 
- static void redraw_raudio(lives_painter_t *cr, int ex, int ey, int ew, int eh) {
-#if GTK_CHECK_VERSION(3,0,0)
-  LiVESWidgetColor color;
-#endif
+static void redraw_raudio(lives_painter_t *cr, int ex, int ey, int ew, int eh) {
 
   int width;
 
@@ -9233,33 +9142,21 @@ static void redraw_laudio(lives_painter_t *cr, int ex, int ey, int ew, int eh) {
   if (mainw->raudio_drawable!=NULL) {
     // check if a resize happened
 
-#if GTK_CHECK_VERSION(3,0,0)
     width = lives_painter_image_surface_get_width (mainw->raudio_drawable);
-#else
-    gdk_drawable_get_size(GDK_DRAWABLE(mainw->raudio_drawable),&width,NULL);
-#endif
+
     if (width!=lives_widget_get_allocation_width(mainw->LiVES)) {
-#if GTK_CHECK_VERSION(3,0,0)
       lives_painter_surface_destroy(mainw->raudio_drawable);
-#else
-      g_object_unref(G_OBJECT(mainw->raudio_drawable));
-#endif
       mainw->raudio_drawable=NULL;
     }
   }
 
   if (mainw->raudio_drawable==NULL) {
-#if GTK_CHECK_VERSION(3,0,0)
     mainw->raudio_drawable = lives_painter_surface_create_from_widget(mainw->raudio_draw,
 							       LIVES_PAINTER_CONTENT_COLOR,
 							       lives_widget_get_allocation_width(mainw->raudio_draw),
 							       lives_widget_get_allocation_height(mainw->raudio_draw));
-#else
-    mainw->raudio_drawable = gdk_pixmap_new(lives_widget_get_xwindow(mainw->raudio_draw),
-					   lives_widget_get_allocation_width(mainw->raudio_draw),
-					   lives_widget_get_allocation_height(mainw->raudio_draw),
-					   -1);
-#endif
+
+
     block_expose();
     get_play_times();
     unblock_expose();
@@ -9267,40 +9164,21 @@ static void redraw_laudio(lives_painter_t *cr, int ex, int ey, int ew, int eh) {
 
   // TODO - *** 
   if (mainw->current_file==-1) {
-#if GTK_CHECK_VERSION(3,0,0)
     lives_painter_t *cr2=lives_painter_create(mainw->raudio_drawable);
-    lives_widget_get_bg_color(mainw->laudio_draw,&color);
-    lives_painter_set_source_rgba (cr2, color.red, color.green, color.blue, color.alpha);
+    lives_painter_set_source_to_bg(cr2,mainw->raudio_draw);
 
     lives_painter_rectangle(cr2,0,0,
 		    lives_widget_get_allocation_width(mainw->raudio_draw),
 		    lives_widget_get_allocation_height(mainw->raudio_draw));
     lives_painter_fill(cr2);
     lives_painter_destroy(cr2);
-#else
-    gdk_draw_rectangle (mainw->raudio_drawable,
-			mainw->raudio_draw->style->bg_gc[GTK_STATE_NORMAL],
-                        TRUE,
-                        0, 0,
-                        lives_widget_get_allocation_width(mainw->raudio_draw),
-                        lives_widget_get_allocation_height(mainw->raudio_draw)
-                        );
-#endif
+
   }
 
 
-#if GTK_CHECK_VERSION(3,0,0)
   lives_painter_set_source_surface (cr, mainw->raudio_drawable, 0., 0.);
   lives_painter_rectangle (cr,ex,ey,ew,eh);
   lives_painter_paint(cr);
-#else
-  gdk_draw_pixmap(lives_widget_get_xwindow(mainw->raudio_draw),
-		  mainw->raudio_draw->style->fg_gc[GTK_STATE_NORMAL],
-		  mainw->raudio_drawable,
-		  ex, ey,
-		  ex, ey,
-		  ew, eh);
-#endif
 
   if (1||mainw->current_file==-1) mainw->blank_raudio_drawable=mainw->raudio_drawable;
   else cfile->raudio_drawable=mainw->raudio_drawable;
@@ -9315,10 +9193,11 @@ static void redraw_laudio(lives_painter_t *cr, int ex, int ey, int ew, int eh) {
 #if GTK_CHECK_VERSION(3,0,0)
 boolean expose_laud_event (GtkWidget *widget, lives_painter_t *cr, gpointer user_data) {
   GdkEventExpose *event=NULL;
-
+  boolean need_cr=TRUE;
 #else
 boolean expose_laud_event (GtkWidget *widget, GdkEventExpose *event) {
-  lives_painter_t *cr=NULL;
+  lives_painter_t *cr;
+  boolean need_cr=TRUE;
 #endif
   gint ex,ey,ew,eh;
 
@@ -9348,9 +9227,13 @@ boolean expose_laud_event (GtkWidget *widget, GdkEventExpose *event) {
     eh=lives_widget_get_allocation_height(mainw->laudio_draw);
   }
 
+  if (need_cr) cr=lives_painter_create_from_widget(mainw->laudio_draw);
+
   redraw_laudio(cr,ex,ey,ew,eh);
 
-  return FALSE;
+  if (need_cr) lives_painter_destroy(cr);
+
+  return TRUE;
   
 }
 
@@ -9359,10 +9242,11 @@ boolean expose_laud_event (GtkWidget *widget, GdkEventExpose *event) {
 #if GTK_CHECK_VERSION(3,0,0)
 boolean expose_raud_event (GtkWidget *widget, lives_painter_t *cr, gpointer user_data) {
   GdkEventExpose *event=NULL;
-
+  boolean need_cr=FALSE;
 #else
 boolean expose_raud_event (GtkWidget *widget, GdkEventExpose *event) {
-  lives_painter_t *cr=NULL;
+  lives_painter_t *cr;
+  boolean need_cr=TRUE;
 #endif
   gint ex,ey,ew,eh;
 
@@ -9392,9 +9276,13 @@ boolean expose_raud_event (GtkWidget *widget, GdkEventExpose *event) {
     eh=lives_widget_get_allocation_height(mainw->raudio_draw);
   }
 
+  if (need_cr) cr=lives_painter_create_from_widget(mainw->raudio_draw);
+
   redraw_raudio(cr,ex,ey,ew,eh);
 
-  return FALSE;
+  if (need_cr) lives_painter_destroy(cr);
+
+  return TRUE;
   
 }
 

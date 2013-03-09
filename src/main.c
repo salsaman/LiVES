@@ -881,12 +881,6 @@ static void lives_init(_ign_opts *ign_opts) {
 
   mainw->opening_frames=-1;
 
-#ifdef GUI_GTK
-#if !GTK_CHECK_VERSION(3,0,0)
-  mainw->general_gc=NULL;
-#endif
-#endif
-
   mainw->show_procd=TRUE;
 
   mainw->framedraw_preview=mainw->framedraw_reset=NULL;
@@ -2437,6 +2431,14 @@ static boolean lives_startup(gpointer data) {
     mainw->rec_asamps=atoi(zargv[11]);
     mainw->rec_achans=atoi(zargv[12]);
     mainw->rec_signed_endian=atoi(zargv[13]);
+
+    if (zargc>14) {
+      mainw->foreign_visual=g_strdup(zargv[14]);
+      if (!strcmp(mainw->foreign_visual,"(null)")) {
+	g_free(mainw->foreign_visual);
+	mainw->foreign_visual=NULL;
+      }
+    }
 
 #ifdef ENABLE_JACK
     if (prefs->audio_player==AUD_PLAYER_JACK&&capable->has_jackd&&mainw->rec_achans>0) {
@@ -5771,19 +5773,11 @@ void close_current_file(gint file_to_switch_to) {
     }
 
     if (cfile->laudio_drawable!=NULL) {
-#if GTK_CHECK_VERSION(3,0,0)
       lives_painter_surface_destroy(cfile->laudio_drawable);
-#else
-      g_object_unref(G_OBJECT(cfile->laudio_drawable));
-#endif
     }
 
     if (cfile->raudio_drawable!=NULL) {
-#if GTK_CHECK_VERSION(3,0,0)
       lives_painter_surface_destroy(cfile->raudio_drawable);
-#else
-      g_object_unref(G_OBJECT(cfile->raudio_drawable));
-#endif
     }
 
     g_free(cfile);

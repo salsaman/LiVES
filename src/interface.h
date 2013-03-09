@@ -14,7 +14,7 @@
 /// blank label to show so our message dialogs are not too small
 #define PROCW_STRETCHER "                                                                                                                            "
 
-#define ENC_DETAILS_WIN_H 200 ///< horizontal size in pixels of the encoder output window
+#define ENC_DETAILS_WIN_H 600 ///< horizontal size in pixels of the encoder output window
 #define ENC_DETAILS_WIN_V 200 ///< vertical size in pixels of the encoder output window
 
 #define MAX_MSG_WIDTH_CHARS 100 ///< max width of text on warning/error labels

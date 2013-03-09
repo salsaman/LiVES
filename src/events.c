@@ -4810,14 +4810,17 @@ GtkWidget *create_event_list_dialog (weed_plant_t *event_list, weed_timecode_t s
 
   gtk_box_pack_start (GTK_BOX (top_vbox), hbuttonbox, TRUE, TRUE, 0);
 
-#if !GTK_CHECK_VERSION(3,0,0)
-  gtk_button_box_set_child_size (GTK_BUTTON_BOX (hbuttonbox), DEF_BUTTON_WIDTH, -1);
-#endif
   gtk_button_box_set_layout (GTK_BUTTON_BOX (hbuttonbox), GTK_BUTTONBOX_SPREAD);
 
   ok_button = gtk_button_new_with_mnemonic (_("Close _window"));
   gtk_widget_show (ok_button);
   gtk_container_add (GTK_CONTAINER (hbuttonbox), ok_button);
+
+#if !GTK_CHECK_VERSION(3,0,0)
+  gtk_button_box_set_child_size (GTK_BUTTON_BOX (hbuttonbox), DEF_BUTTON_WIDTH, -1);
+#else
+  gtk_widget_set_size_request(ok_button,DEF_BUTTON_WIDTH*4,-1);
+#endif
 
   lives_widget_set_can_focus_and_default (ok_button);
   gtk_widget_grab_default (ok_button);
@@ -5235,10 +5238,6 @@ render_details *create_render_details (gint type) {
   add_fill_to_box(GTK_BOX (daa));
 
   if (!specified) {
-#if !GTK_CHECK_VERSION(3,0,0)
-    gtk_button_box_set_child_size (GTK_BUTTON_BOX (daa), DEF_BUTTON_WIDTH, -1);
-#endif
-    gtk_button_box_set_layout (GTK_BUTTON_BOX (daa), GTK_BUTTONBOX_SPREAD);
   }
 
   cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
@@ -5251,8 +5250,16 @@ render_details *create_render_details (gint type) {
   lives_widget_set_can_focus (cancelbutton,TRUE);
 
 
-  if (!specified)
+  if (!specified) {
     rdet->okbutton = gtk_button_new_from_stock ("gtk-ok");
+
+#if !GTK_CHECK_VERSION(3,0,0)
+    gtk_button_box_set_child_size (GTK_BUTTON_BOX (daa), DEF_BUTTON_WIDTH, -1);
+#endif
+
+    gtk_button_box_set_layout (GTK_BUTTON_BOX (daa), GTK_BUTTONBOX_SPREAD);
+
+  }
   else  {
     rdet->okbutton = gtk_button_new_from_stock ("gtk-go-forward");
     gtk_button_set_label(GTK_BUTTON(rdet->okbutton),_("_Next"));

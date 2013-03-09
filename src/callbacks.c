@@ -10513,7 +10513,7 @@ on_capture_activate                (GtkMenuItem     *menuitem,
     return;
   }
 
-  array=g_strsplit(mainw->msg,"|",5);
+  array=g_strsplit(mainw->msg,"|",-1);
 #if GTK_CHECK_VERSION(3,0,0)
   mainw->foreign_id=(Window)atoi(array[1]);
 #else
@@ -10541,10 +10541,10 @@ on_capture_activate                (GtkMenuItem     *menuitem,
   g_free (msg);
 
   // start another copy of LiVES and wait for it to return values
-  com=g_strdup_printf("%s -capture %d %u %d %d %s %d %d %.4f %d %d %d %d",capable->myname_full,getpid(),
+  com=g_strdup_printf("%s -capture %d %u %d %d %s %d %d %.4f %d %d %d %d \"%s\"",capable->myname_full,getpid(),
 		      (unsigned int)mainw->foreign_id,mainw->foreign_width,mainw->foreign_height,prefs->image_ext,
 		      mainw->foreign_bpp,mainw->rec_vid_frames,mainw->rec_fps,mainw->rec_arate,
-		      mainw->rec_asamps,mainw->rec_achans,mainw->rec_signed_endian);
+		      mainw->rec_asamps,mainw->rec_achans,mainw->rec_signed_endian,mainw->foreign_visual);
 
   // force the dialog to disappear
   while (g_main_context_iteration(NULL,FALSE));
@@ -10577,11 +10577,22 @@ on_capture_activate                (GtkMenuItem     *menuitem,
 
 void on_capture2_activate(void) {
   // this is in the second copy of lives, we are now going to grab frames from the X window
-  int capture_fd;
-  gchar *capfile=g_strdup_printf("%s/.capture.%d",prefs->tmpdir,mainw->foreign_key);
-  int i;
+  gchar *capfilename=g_strdup_printf(".capture.%d",mainw->foreign_key);
+  gchar *capfile=g_build_filename(prefs->tmpdir,capfilename,NULL);
+
   gchar buf[32];
-  prepare_to_play_foreign();
+
+  boolean retval;
+  int capture_fd;
+  register int i;
+
+
+  retval=prepare_to_play_foreign();
+
+  if (mainw->foreign_visual!=NULL) g_free(mainw->foreign_visual);
+
+  if (!retval) exit (2);
+
   mainw->record_foreign=TRUE;  // for now...
 
   play_file();
@@ -10601,7 +10612,9 @@ void on_capture2_activate(void) {
     lives_write(capture_fd,buf,strlen (buf),TRUE);
     lives_write(capture_fd,"|",1,TRUE);
   }
+
   close(capture_fd);
+  g_free(capfilename);
   g_free(capfile);
   exit(0);
 

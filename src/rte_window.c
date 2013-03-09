@@ -1679,17 +1679,20 @@ on_rte_info_clicked (GtkButton *button, gpointer user_data) {
   gtk_widget_show (hbuttonbox);
   gtk_box_pack_start (GTK_BOX (vbox), hbuttonbox, TRUE, TRUE, 0);
 
-#if !GTK_CHECK_VERSION(3,0,0)
-  gtk_button_box_set_child_size (GTK_BUTTON_BOX (hbuttonbox), DEF_BUTTON_WIDTH, -1);
-#endif
-  gtk_button_box_set_layout (GTK_BUTTON_BOX (hbuttonbox), GTK_BUTTONBOX_SPREAD);
-
   ok_button = gtk_button_new_from_stock ("gtk-ok");
   gtk_widget_show (ok_button);
 
   gtk_container_add (GTK_CONTAINER (hbuttonbox), ok_button);
   lives_widget_set_can_focus_and_default (ok_button);
   gtk_widget_grab_default (ok_button);
+
+#if !GTK_CHECK_VERSION(3,0,0)
+  gtk_button_box_set_child_size (GTK_BUTTON_BOX (hbuttonbox), DEF_BUTTON_WIDTH, -1);
+#else
+  gtk_widget_set_size_request(ok_button,DEF_BUTTON_WIDTH*4,-1);
+#endif
+  gtk_button_box_set_layout (GTK_BUTTON_BOX (hbuttonbox), GTK_BUTTONBOX_SPREAD);
+
 
   g_signal_connect (GTK_OBJECT (ok_button), "clicked",
 		    G_CALLBACK (on_rtei_ok_clicked),
@@ -2288,10 +2291,6 @@ GtkWidget * create_rte_window (void) {
 
   hbuttonbox = lives_hbutton_box_new ();
   gtk_box_pack_start (GTK_BOX (top_vbox), hbuttonbox, FALSE, TRUE, 20);
-#if !GTK_CHECK_VERSION(3,0,0)
-  gtk_button_box_set_child_size (GTK_BUTTON_BOX (hbuttonbox), DEF_BUTTON_WIDTH, -1);
-#endif
-  gtk_button_box_set_layout (GTK_BUTTON_BOX (hbuttonbox), GTK_BUTTONBOX_SPREAD);
 
   gtk_container_add (GTK_CONTAINER (hbuttonbox), clear_all_button);
   lives_widget_set_can_focus_and_default (clear_all_button);
@@ -2310,6 +2309,10 @@ GtkWidget * create_rte_window (void) {
 
   gtk_container_add (GTK_CONTAINER (hbuttonbox), ok_button);
   lives_widget_set_can_focus_and_default (ok_button);
+
+#if !GTK_CHECK_VERSION(3,0,0)
+  gtk_button_box_set_child_size (GTK_BUTTON_BOX (hbuttonbox), DEF_BUTTON_WIDTH, -1);
+#endif
 
 
   rtew_accel_group = GTK_ACCEL_GROUP(gtk_accel_group_new ());

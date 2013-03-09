@@ -1555,7 +1555,7 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, boolean add_
     lives_box_set_homogeneous(LIVES_BOX(hbox),FALSE);
 
 #if GTK_CHECK_VERSION(3,0,0)
-    widget_opts.packing_width=0;
+    widget_opts.packing_width=2;
 #endif
 
     // colsel button

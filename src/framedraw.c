@@ -218,7 +218,7 @@ void widget_add_framedraw (GtkVBox *box, int start, int end, boolean add_preview
   gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 0);
   add_fill_to_box(GTK_BOX(hbox));
   frame = gtk_frame_new (NULL);
-  gtk_widget_set_size_request (frame, width, height);
+
   add_fill_to_box(GTK_BOX(hbox));
   gtk_box_pack_start (GTK_BOX (hbox), frame, FALSE, FALSE, 0);
   if (palette->style&STYLE_1) {
@@ -234,7 +234,7 @@ void widget_add_framedraw (GtkVBox *box, int start, int end, boolean add_preview
   gtk_frame_set_shadow_type (GTK_FRAME(frame), GTK_SHADOW_IN);
   mainw->framedraw=gtk_event_box_new();
   gtk_widget_set_size_request (mainw->framedraw, width, height);
-  lives_widget_set_bg_color (mainw->framedraw, GTK_STATE_NORMAL, &palette->normal_back);
+
   gtk_widget_set_events (mainw->framedraw, GDK_BUTTON1_MOTION_MASK | GDK_BUTTON_RELEASE_MASK | 
 			 GDK_BUTTON_PRESS_MASK| GDK_ENTER_NOTIFY_MASK | GDK_LEAVE_NOTIFY_MASK);
 

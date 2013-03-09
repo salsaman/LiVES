@@ -38,7 +38,6 @@ void add_suffix_check(GtkBox *box, const gchar *ext) {
   else ltext=g_strdup_printf(_ ("Let LiVES set the _file extension (.%s)"),ext);
   checkbutton=lives_standard_check_button_new(ltext,TRUE,box,NULL);
   g_free(ltext);
-  lives_widget_set_can_focus_and_default (checkbutton);
   lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (checkbutton), mainw->fx1_bool);
   g_signal_connect_after (GTK_OBJECT (checkbutton), "toggled",
 			  G_CALLBACK (on_boolean_toggled),
@@ -789,6 +788,8 @@ GtkWidget* create_info_error_dialog (const gchar *text, boolean is_blocking, int
   gchar *form_text;
   gchar *textx;
 
+  GtkAccelGroup *accel_group=GTK_ACCEL_GROUP(gtk_accel_group_new ());
+
   //dialog = lives_standard_dialog_new (_("LiVES"),FALSE);
   dialog = gtk_message_dialog_new (NULL,(GtkDialogFlags)0,
 				   mask==0?GTK_MESSAGE_ERROR:GTK_MESSAGE_WARNING,GTK_BUTTONS_NONE,"%s","");
@@ -798,6 +799,13 @@ GtkWidget* create_info_error_dialog (const gchar *text, boolean is_blocking, int
   gtk_window_set_resizable (GTK_WINDOW (dialog), FALSE);
 
   gtk_container_set_border_width (GTK_CONTAINER (dialog), widget_opts.border_width*2);
+
+  gtk_window_add_accel_group (GTK_WINDOW (dialog), accel_group);
+
+  if (mainw!=NULL&&mainw->is_ready&&palette->style&STYLE_1) {
+    lives_dialog_set_has_separator(GTK_DIALOG(dialog),FALSE);
+    lives_widget_set_bg_color(dialog, GTK_STATE_NORMAL, &palette->normal_back);
+  }
 
   dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(dialog));
 
@@ -854,6 +862,11 @@ GtkWidget* create_info_error_dialog (const gchar *text, boolean is_blocking, int
   g_signal_connect (GTK_OBJECT (info_ok_button), "clicked",
 		    G_CALLBACK (lives_general_button_clicked),
 		    NULL);
+
+  gtk_widget_add_accelerator (info_ok_button, "activate", accel_group,
+			      LIVES_KEY_Return, (GdkModifierType)0, (GtkAccelFlags)0);
+
+
 
   gtk_widget_show_all(dialog);
   if (is_blocking) gtk_window_set_modal (GTK_WINDOW (dialog), TRUE);
@@ -1002,303 +1015,175 @@ void remove_from_winmenu(void) {
 
 
 _insertw* create_insert_dialog (void) {
-  GtkWidget *dialog_vbox3;
-  GtkWidget *hbox15;
+  GtkWidget *dialog_vbox;
+  GtkWidget *hbox1;
   GtkWidget *hbox;
-  GtkWidget *eventbox;
-  GtkWidget *label;
-  GObject *spinbutton_times_adj;
-  GtkWidget *table2;
-  GtkWidget *radiobutton1;
+  GtkWidget *table;
+  GtkWidget *radiobutton;
+  GtkWidget *vseparator;
+  GtkWidget *dialog_action_area;
+  GtkWidget *cancelbutton;
+  GtkWidget *okbutton;
+
   GSList *radiobutton1_group = NULL;
   GSList *radiobutton2_group = NULL;
-  GtkWidget *radiobutton4;
-  GtkWidget *vseparator1;
-  GtkWidget *vseparator2;
-  GtkWidget *hseparator1;
-  GtkWidget *dialog_action_area;
-  GtkWidget *cancelbutton1;
-  GtkWidget *okbutton1;
+
   GtkAccelGroup *accel_group=GTK_ACCEL_GROUP(gtk_accel_group_new ());
+
+  gchar *tmp,*tmp2;
 
   _insertw *insertw=(_insertw*)(g_malloc(sizeof(_insertw)));
 
-  insertw->insert_dialog = gtk_dialog_new ();
+  insertw->insert_dialog = lives_standard_dialog_new (_("LiVES: - Insert"),FALSE);
 
   gtk_window_add_accel_group (GTK_WINDOW (insertw->insert_dialog), accel_group);
-  gtk_window_set_title (GTK_WINDOW (insertw->insert_dialog), _("LiVES: - Insert"));
-  gtk_window_set_position (GTK_WINDOW (insertw->insert_dialog), GTK_WIN_POS_CENTER_ALWAYS);
-  gtk_window_set_modal (GTK_WINDOW (insertw->insert_dialog), TRUE);
   gtk_window_set_default_size (GTK_WINDOW (insertw->insert_dialog), 300, 200);
-  if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color (insertw->insert_dialog, GTK_STATE_NORMAL, &palette->normal_back);
-  }
 
   if (prefs->show_gui) {
     gtk_window_set_transient_for(GTK_WINDOW(insertw->insert_dialog),GTK_WINDOW(mainw->LiVES));
   }
 
-  dialog_vbox3 = lives_dialog_get_content_area(GTK_DIALOG(insertw->insert_dialog));
-  gtk_widget_show (dialog_vbox3);
+  dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(insertw->insert_dialog));
 
-  hbox15 = lives_hbox_new (FALSE, 0);
-  gtk_widget_show (hbox15);
-  gtk_box_pack_start (GTK_BOX (dialog_vbox3), hbox15, TRUE, TRUE, 0);
+  hbox1 = lives_hbox_new (FALSE, 0);
 
+  gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox1, TRUE, TRUE, widget_opts.packing_height);
 
   hbox = lives_hbox_new (FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (hbox15), hbox, FALSE, FALSE, widget_opts.packing_width);
-  label=gtk_label_new_with_mnemonic(_("_Number of times to insert"));
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(label, GTK_STATE_NORMAL, &palette->normal_fore);
-  }
-  gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, widget_opts.packing_width);
+  gtk_box_pack_start (GTK_BOX (hbox1), hbox, FALSE, FALSE, widget_opts.packing_width);
 
-  spinbutton_times_adj = (GObject *)gtk_adjustment_new (1, 1, 10000, 1, 10, 0);
-  insertw->spinbutton_times = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_times_adj), 1, 0);
-  gtk_spin_button_set_update_policy (GTK_SPIN_BUTTON (insertw->spinbutton_times),GTK_UPDATE_IF_VALID);
-  gtk_widget_show (insertw->spinbutton_times);
-  gtk_label_set_mnemonic_widget (GTK_LABEL (label),insertw->spinbutton_times);
-  gtk_box_pack_start (GTK_BOX (hbox), insertw->spinbutton_times, TRUE, FALSE, 0);
-  gtk_entry_set_activates_default (GTK_ENTRY (insertw->spinbutton_times), TRUE);
+  insertw->spinbutton_times = lives_standard_spin_button_new(_("_Number of times to insert"),
+							     TRUE,1.,1.,10000.,1.,10.,0.,LIVES_BOX(hbox),NULL);
 
-  gtk_widget_show_all(hbox);
-
-
-  add_fill_to_box(GTK_BOX(hbox15));
-
-  insertw->fit_checkbutton = gtk_check_button_new ();
-  eventbox=gtk_event_box_new();
-  label=gtk_label_new_with_mnemonic (_("_Insert to fit audio"));
-  gtk_label_set_mnemonic_widget (GTK_LABEL (label),insertw->fit_checkbutton);
-
-  gtk_container_add(GTK_CONTAINER(eventbox),label);
-  g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
-		    G_CALLBACK (label_act_toggle),
-		    insertw->fit_checkbutton);
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(label, GTK_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_fg_color(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_bg_color (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
-  }
+  add_fill_to_box(GTK_BOX(hbox1));
 
   hbox = lives_hbox_new (FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (hbox15), hbox, FALSE, FALSE, widget_opts.packing_width);
 
-  gtk_box_pack_start (GTK_BOX (hbox), insertw->fit_checkbutton, FALSE, FALSE, 5);
-  gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, 5);
-  lives_widget_set_can_focus_and_default (insertw->fit_checkbutton);
+  gtk_box_pack_start (GTK_BOX (hbox1), hbox, FALSE, FALSE, widget_opts.packing_width);
+
+  insertw->fit_checkbutton = lives_standard_check_button_new (_("_Insert to fit audio"),TRUE,LIVES_BOX(hbox),NULL);
 
   gtk_widget_set_sensitive(GTK_WIDGET(insertw->fit_checkbutton),cfile->achans>0&&clipboard->achans==0);
 
-  gtk_widget_show_all(hbox);
+  add_hsep_to_box (LIVES_BOX (dialog_vbox),TRUE);
 
-
-  hseparator1 = lives_hseparator_new ();
-  gtk_widget_show (hseparator1);
-  gtk_box_pack_start (GTK_BOX (dialog_vbox3), hseparator1, TRUE, TRUE, 0);
-
-  table2 = gtk_table_new (2, 3, FALSE);
-  gtk_widget_show (table2);
-  gtk_box_pack_start (GTK_BOX (dialog_vbox3), table2, TRUE, TRUE, 0);
-  gtk_table_set_col_spacings (GTK_TABLE (table2), 42);
-  gtk_table_set_row_spacings (GTK_TABLE (table2), widget_opts.packing_width);
+  table = gtk_table_new (2, 3, FALSE);
+  gtk_box_pack_start (GTK_BOX (dialog_vbox), table, TRUE, TRUE, widget_opts.packing_height);
+  gtk_table_set_col_spacings (GTK_TABLE (table), widget_opts.packing_height*4+2);
+  gtk_table_set_row_spacings (GTK_TABLE (table), widget_opts.packing_width);
 
 
   hbox = lives_hbox_new (FALSE, 0);
 
-  radiobutton1=gtk_radio_button_new(NULL);
-  gtk_radio_button_set_group (GTK_RADIO_BUTTON (radiobutton1), radiobutton1_group);
-  radiobutton1_group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (radiobutton1));
+  radiobutton=lives_standard_radio_button_new((tmp=g_strdup(_ ("Insert _before selection"))),
+					      TRUE,radiobutton1_group,LIVES_BOX(hbox),
+					      (tmp2=g_strdup(_("Insert clipboard before selected frames"))));
 
-  gtk_box_pack_start (GTK_BOX (hbox), radiobutton1, FALSE, FALSE, widget_opts.packing_width);
+  g_free(tmp); g_free(tmp2);
 
-  label=gtk_label_new_with_mnemonic (_ ("Insert _before selection"));
-  gtk_label_set_mnemonic_widget (GTK_LABEL (label),radiobutton1);
+  radiobutton1_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (radiobutton));
 
-  eventbox=gtk_event_box_new();
-  gtk_container_add(GTK_CONTAINER(eventbox),label);
-  gtk_widget_set_tooltip_text( eventbox, _("Insert clipboard before selected frames"));
-  lives_tooltips_copy(radiobutton1,eventbox);
-  g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
-		    G_CALLBACK (label_act_toggle),
-		    radiobutton1);
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(label, GTK_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_fg_color(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_bg_color (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
-  }
-  gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, widget_opts.packing_width);
-
-  gtk_widget_show_all (hbox);
-
-  gtk_table_attach (GTK_TABLE (table2), hbox, 0, 1, 0, 1,
+  gtk_table_attach (GTK_TABLE (table), hbox, 0, 1, 0, 1,
                     (GtkAttachOptions) (GTK_FILL),
                     (GtkAttachOptions) (0), 0, 0);
 
   if (cfile->frames==0) {
-    gtk_widget_set_sensitive (radiobutton1, FALSE);
+    gtk_widget_set_sensitive (radiobutton, FALSE);
   }
 
+  hbox = lives_hbox_new (FALSE, 0);
+
+  radiobutton=lives_standard_radio_button_new((tmp=g_strdup(_("Insert _after selection"))),
+					      TRUE,radiobutton1_group,LIVES_BOX(hbox),
+					      (tmp2=g_strdup(_("Insert clipboard after selected frames"))));
+
+  gtk_table_attach (GTK_TABLE (table), hbox, 0, 1, 1, 2,
+                    (GtkAttachOptions) (GTK_FILL),
+                    (GtkAttachOptions) (0), 0, 0);
+
+  gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(radiobutton),mainw->insert_after);
 
 
   hbox = lives_hbox_new (FALSE, 0);
 
-  radiobutton4=gtk_radio_button_new(NULL);
-  gtk_radio_button_set_group (GTK_RADIO_BUTTON (radiobutton4), radiobutton1_group);
-  radiobutton1_group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (radiobutton4));
+  insertw->with_sound=lives_standard_radio_button_new(_("Insert _with sound"),
+						      TRUE,radiobutton2_group,LIVES_BOX(hbox),NULL);
+  radiobutton2_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (insertw->with_sound));
 
-  gtk_box_pack_start (GTK_BOX (hbox), radiobutton4, FALSE, FALSE, widget_opts.packing_width);
 
-  label=gtk_label_new_with_mnemonic (_ ("Insert _after selection"));
-  gtk_label_set_mnemonic_widget (GTK_LABEL (label),radiobutton4);
-
-  eventbox=gtk_event_box_new();
-  gtk_container_add(GTK_CONTAINER(eventbox),label);
-  gtk_widget_set_tooltip_text( eventbox, _("Insert clipboard after selected frames"));
-  lives_tooltips_copy(radiobutton4,eventbox);
-  g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
-		    G_CALLBACK (label_act_toggle),
-		    radiobutton4);
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(label, GTK_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_fg_color(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_bg_color (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
-  }
-  gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, widget_opts.packing_width);
-
-  gtk_widget_show_all (hbox);
-
-  gtk_table_attach (GTK_TABLE (table2), hbox, 0, 1, 1, 2,
+  gtk_table_attach (GTK_TABLE (table), hbox, 2, 3, 0, 1,
                     (GtkAttachOptions) (GTK_FILL),
                     (GtkAttachOptions) (0), 0, 0);
-
-  gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(radiobutton4),mainw->insert_after);
-
-
-
-
-  hbox = lives_hbox_new (FALSE, 0);
-
-  insertw->with_sound=gtk_radio_button_new(NULL);
-  gtk_radio_button_set_group (GTK_RADIO_BUTTON (insertw->with_sound), radiobutton2_group);
-  radiobutton2_group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (insertw->with_sound));
-
-  gtk_box_pack_start (GTK_BOX (hbox), insertw->with_sound, FALSE, FALSE, widget_opts.packing_width);
-
-  label=gtk_label_new_with_mnemonic (_ ("Insert _with sound"));
-  gtk_label_set_mnemonic_widget (GTK_LABEL (label),insertw->with_sound);
-
-  eventbox=gtk_event_box_new();
-  gtk_container_add(GTK_CONTAINER(eventbox),label);
-  g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
-		    G_CALLBACK (label_act_toggle),
-		    radiobutton1);
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(label, GTK_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_fg_color(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_bg_color (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
-  }
-  gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, widget_opts.packing_width);
-
-  gtk_widget_show_all (hbox);
-
-  gtk_table_attach (GTK_TABLE (table2), hbox, 2, 3, 0, 1,
-                    (GtkAttachOptions) (GTK_FILL),
-                    (GtkAttachOptions) (0), 0, 0);
-
-
 
   if (cfile->achans==0&&clipboard->achans==0) gtk_widget_set_sensitive(insertw->with_sound,FALSE);
 
   hbox = lives_hbox_new (FALSE, 0);
 
-  insertw->without_sound=gtk_radio_button_new(NULL);
+  insertw->without_sound=lives_standard_radio_button_new(_("Insert with_out sound"),
+							 TRUE,radiobutton2_group,LIVES_BOX(hbox),NULL);
 
-  gtk_radio_button_set_group (GTK_RADIO_BUTTON (insertw->without_sound), radiobutton2_group);
-  radiobutton2_group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (insertw->without_sound));
-  gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(insertw->without_sound),!((cfile->achans>0||clipboard->achans>0)&&mainw->ccpd_with_sound));
+  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(insertw->without_sound),
+				 !((cfile->achans>0||clipboard->achans>0)&&mainw->ccpd_with_sound));
 
-
-  gtk_box_pack_start (GTK_BOX (hbox), insertw->without_sound, FALSE, FALSE, widget_opts.packing_width);
-
-  label=gtk_label_new_with_mnemonic (_ ("Insert with_out sound"));
-  gtk_label_set_mnemonic_widget (GTK_LABEL (label),insertw->without_sound);
-
-  eventbox=gtk_event_box_new();
-  gtk_container_add(GTK_CONTAINER(eventbox),label);
-  g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
-		    G_CALLBACK (label_act_toggle),
-		    insertw->without_sound);
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(label, GTK_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_fg_color(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_bg_color (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
-  }
-  gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, widget_opts.packing_width);
-
-  gtk_widget_show_all (hbox);
-
-  gtk_table_attach (GTK_TABLE (table2), hbox, 2, 3, 1, 2,
+  gtk_table_attach (GTK_TABLE (table), hbox, 2, 3, 1, 2,
                     (GtkAttachOptions) (GTK_FILL),
                     (GtkAttachOptions) (0), 0, 0);
 
   gtk_widget_set_sensitive (insertw->with_sound, clipboard->achans>0||cfile->achans>0);
   gtk_widget_set_sensitive (insertw->without_sound, clipboard->achans>0||cfile->achans>0);
 
-  vseparator1 = lives_vseparator_new ();
-  gtk_widget_show (vseparator1);
-  gtk_table_attach (GTK_TABLE (table2), vseparator1, 1, 2, 0, 1,
+  vseparator = lives_vseparator_new ();
+  gtk_table_attach (GTK_TABLE (table), vseparator, 1, 2, 0, 1,
                     (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
                     (GtkAttachOptions) (GTK_FILL), 0, 0);
 
-  vseparator2 = lives_vseparator_new ();
-  gtk_widget_show (vseparator2);
-  gtk_table_attach (GTK_TABLE (table2), vseparator2, 1, 2, 1, 2,
+  vseparator = lives_vseparator_new ();
+  gtk_table_attach (GTK_TABLE (table), vseparator, 1, 2, 1, 2,
                     (GtkAttachOptions) (GTK_FILL),
                     (GtkAttachOptions) (GTK_FILL), 0, 0);
 
   dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (insertw->insert_dialog));
-  gtk_widget_show (dialog_action_area);
+
   gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area), GTK_BUTTONBOX_END);
 
-  cancelbutton1 = gtk_button_new_from_stock ("gtk-cancel");
-  gtk_widget_show (cancelbutton1);
-  gtk_dialog_add_action_widget (GTK_DIALOG (insertw->insert_dialog), cancelbutton1, GTK_RESPONSE_CANCEL);
-  lives_widget_set_can_focus_and_default (cancelbutton1);
+  cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
+  gtk_dialog_add_action_widget (GTK_DIALOG (insertw->insert_dialog), cancelbutton, GTK_RESPONSE_CANCEL);
 
-  okbutton1 = gtk_button_new_from_stock ("gtk-ok");
-  gtk_widget_show (okbutton1);
-  gtk_dialog_add_action_widget (GTK_DIALOG (insertw->insert_dialog), okbutton1, GTK_RESPONSE_OK);
-  lives_widget_set_can_focus_and_default (okbutton1);
-  gtk_widget_grab_default(okbutton1);
-  gtk_widget_grab_focus(okbutton1);
+  okbutton = gtk_button_new_from_stock ("gtk-ok");
+  gtk_dialog_add_action_widget (GTK_DIALOG (insertw->insert_dialog), okbutton, GTK_RESPONSE_OK);
+  lives_widget_set_can_focus_and_default (okbutton);
+  gtk_widget_grab_default(okbutton);
+  gtk_widget_grab_focus(okbutton);
 
   g_signal_connect (GTK_OBJECT (insertw->with_sound), "toggled",
-                      G_CALLBACK (on_insertwsound_toggled),
-                      NULL);
-  g_signal_connect (GTK_OBJECT (radiobutton4), "toggled",
-                      G_CALLBACK (on_boolean_toggled),
-                      &mainw->insert_after);
-  g_signal_connect (GTK_OBJECT (cancelbutton1), "clicked",
-                      G_CALLBACK (lives_general_button_clicked),
-                      insertw);
-  g_signal_connect (GTK_OBJECT (okbutton1), "clicked",
-                      G_CALLBACK (on_insert_activate),
-                      NULL);
+		    G_CALLBACK (on_insertwsound_toggled),
+		    NULL);
+  g_signal_connect (GTK_OBJECT (radiobutton), "toggled",
+		    G_CALLBACK (on_boolean_toggled),
+		    &mainw->insert_after);
+  g_signal_connect (GTK_OBJECT (cancelbutton), "clicked",
+		    G_CALLBACK (lives_general_button_clicked),
+		    insertw);
+  g_signal_connect (GTK_OBJECT (okbutton), "clicked",
+		    G_CALLBACK (on_insert_activate),
+		    NULL);
   g_signal_connect (GTK_OBJECT (insertw->fit_checkbutton), "toggled",
 		    G_CALLBACK (on_insfitaudio_toggled),
 		    NULL);
   g_signal_connect_after (GTK_OBJECT (insertw->spinbutton_times), "value_changed",
-                      G_CALLBACK (on_spin_value_changed),
-                      GINT_TO_POINTER (1));
+			  G_CALLBACK (on_spin_value_changed),
+			  GINT_TO_POINTER (1));
   g_signal_connect (GTK_OBJECT (insertw->insert_dialog), "delete_event",
                       G_CALLBACK (return_true),
                       NULL);
 
-  gtk_widget_add_accelerator (cancelbutton1, "activate", accel_group,
+  gtk_widget_add_accelerator (cancelbutton, "activate", accel_group,
                               LIVES_KEY_Escape,  (GdkModifierType)0, (GtkAccelFlags)0);
 
+  gtk_widget_add_accelerator (okbutton, "activate", accel_group,
+                              LIVES_KEY_Return,  (GdkModifierType)0, (GtkAccelFlags)0);
+
+  gtk_widget_show_all(insertw->insert_dialog);
 
   return insertw;
 }
@@ -1309,117 +1194,90 @@ _insertw* create_insert_dialog (void) {
 
 GtkWidget *create_opensel_dialog (void) {
   GtkWidget *opensel_dialog;
-  GtkWidget *dialog_vbox9;
-  GtkWidget *vbox15;
-  GtkWidget *table5;
-  GtkWidget *label46;
-  GtkWidget *label47;
-  GObject *spinbutton23_adj;
-  GtkWidget *spinbutton23;
-  GObject *spinbutton24_adj;
-  GtkWidget *spinbutton24;
+  GtkWidget *dialog_vbox;
+  GtkWidget *vbox;
+  GtkWidget *table;
+  GtkWidget *label;
+  GtkWidget *spinbutton;
   GtkWidget *dialog_action_area;
-  GtkWidget *cancelbutton7;
-  GtkWidget *okbutton6;
+  GtkWidget *cancelbutton;
+  GtkWidget *okbutton;
 
-  opensel_dialog = gtk_dialog_new ();
-  gtk_window_set_title (GTK_WINDOW (opensel_dialog), _("LiVES: - Open Selection"));
-  gtk_window_set_position (GTK_WINDOW (opensel_dialog), GTK_WIN_POS_CENTER_ALWAYS);
-  gtk_window_set_modal (GTK_WINDOW (opensel_dialog), TRUE);
+  opensel_dialog = lives_standard_dialog_new (_("LiVES: - Open Selection"),FALSE);
 
   if (prefs->show_gui) {
     if (mainw->multitrack==NULL) gtk_window_set_transient_for(GTK_WINDOW(opensel_dialog),GTK_WINDOW(mainw->LiVES));
     else gtk_window_set_transient_for(GTK_WINDOW(opensel_dialog),GTK_WINDOW(mainw->multitrack->window));
   }
 
-  if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color(opensel_dialog, GTK_STATE_NORMAL, &palette->normal_back);
-    lives_dialog_set_has_separator(LIVES_DIALOG(opensel_dialog),FALSE);
-  }
-
-  gtk_container_set_border_width (GTK_CONTAINER (opensel_dialog), widget_opts.border_width);
   gtk_window_set_default_size (GTK_WINDOW (opensel_dialog), 300, 200);
 
-  dialog_vbox9 = lives_dialog_get_content_area(GTK_DIALOG(opensel_dialog));
-  gtk_widget_show (dialog_vbox9);
+  dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(opensel_dialog));
+ 
+  vbox = lives_vbox_new (FALSE, 0);
+  gtk_box_pack_start (GTK_BOX (dialog_vbox), vbox, TRUE, TRUE, 0);
 
-  vbox15 = lives_vbox_new (FALSE, 0);
-  gtk_widget_show (vbox15);
-  gtk_box_pack_start (GTK_BOX (dialog_vbox9), vbox15, TRUE, TRUE, 0);
+  table = gtk_table_new (2, 2, FALSE);
+  gtk_box_pack_start (GTK_BOX (vbox), table, TRUE, TRUE, 12);
 
-  table5 = gtk_table_new (2, 2, FALSE);
-  gtk_widget_show (table5);
-  gtk_box_pack_start (GTK_BOX (vbox15), table5, TRUE, TRUE, 12);
+  gtk_table_set_row_spacings (GTK_TABLE (table), 20);
 
-  gtk_table_set_row_spacings (GTK_TABLE (table5), 20);
-  label46 = gtk_label_new (_("    Selection start time (sec)"));
-  gtk_widget_show (label46);
-  gtk_table_attach (GTK_TABLE (table5), label46, 0, 1, 0, 1,
+  label = lives_standard_label_new (_("    Selection start time (sec)"));
+  gtk_table_attach (GTK_TABLE (table), label, 0, 1, 0, 1,
                     (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
                     (GtkAttachOptions) (0), 0, 0);
-  gtk_misc_set_alignment (GTK_MISC (label46), 0, 0.5);
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(label46, GTK_STATE_NORMAL, &palette->normal_fore);
-  }
+  gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
 
-  label47 = gtk_label_new (_("    Number of frames to open"));
-  gtk_widget_show (label47);
-  gtk_table_attach (GTK_TABLE (table5), label47, 0, 1, 1, 2,
+  label = lives_standard_label_new (_("    Number of frames to open"));
+  gtk_table_attach (GTK_TABLE (table), label, 0, 1, 1, 2,
                     (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
                     (GtkAttachOptions) (0), 0, 0);
-  gtk_misc_set_alignment (GTK_MISC (label47), 0, 0.5);
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(label47, GTK_STATE_NORMAL, &palette->normal_fore);
-  }
+  gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
 
-  spinbutton23_adj = (GObject *)gtk_adjustment_new (0, 0, G_MAXINT, 1, 10, 0);
-  spinbutton23 = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton23_adj), 1, 2);
-  gtk_widget_show (spinbutton23);
-  gtk_table_attach (GTK_TABLE (table5), spinbutton23, 1, 2, 0, 1,
-                    (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
-                    (GtkAttachOptions) (GTK_EXPAND), 42, 0);
-  gtk_spin_button_set_numeric (GTK_SPIN_BUTTON (spinbutton23), TRUE);
+  spinbutton = lives_standard_spin_button_new (NULL, FALSE, 0., 0., 1000000000., 1., 10., 2, NULL, NULL);
 
-  spinbutton24_adj = (GObject *)gtk_adjustment_new (1000, 1, G_MAXINT, 1, 10, 0);
-  spinbutton24 = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton24_adj), 1, 0);
-  gtk_widget_show (spinbutton24);
-  gtk_table_attach (GTK_TABLE (table5), spinbutton24, 1, 2, 1, 2,
-                    (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
-                    (GtkAttachOptions) (GTK_EXPAND), 42, 0);
-  gtk_spin_button_set_numeric (GTK_SPIN_BUTTON (spinbutton24), TRUE);
-
-
-  dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (opensel_dialog));
-  gtk_widget_show (dialog_action_area);
-  gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area), GTK_BUTTONBOX_END);
-
-  cancelbutton7 = gtk_button_new_from_stock ("gtk-cancel");
-  gtk_widget_show (cancelbutton7);
-  gtk_dialog_add_action_widget (GTK_DIALOG (opensel_dialog), cancelbutton7, GTK_RESPONSE_CANCEL);
-  lives_widget_set_can_focus_and_default (cancelbutton7);
-
-  okbutton6 = gtk_button_new_from_stock ("gtk-ok");
-  gtk_widget_show (okbutton6);
-  gtk_dialog_add_action_widget (GTK_DIALOG (opensel_dialog), okbutton6, GTK_RESPONSE_OK);
-  lives_widget_set_can_focus_and_default (okbutton6);
-  gtk_widget_grab_default(okbutton6);
-
-  widget_add_preview (opensel_dialog,GTK_BOX (dialog_vbox9), GTK_BOX (dialog_vbox9), GTK_BOX(dialog_vbox9), 3);
-
-  g_signal_connect_after (GTK_OBJECT (spinbutton23), "value_changed",
+  g_signal_connect_after (GTK_OBJECT (spinbutton), "value_changed",
                             G_CALLBACK (on_spin_value_changed),
                             GINT_TO_POINTER (1));
-  g_signal_connect_after (GTK_OBJECT (spinbutton24), "value_changed",
-                            G_CALLBACK (on_spin_value_changed),
-                            GINT_TO_POINTER (2));
-  g_signal_connect (GTK_OBJECT (cancelbutton7), "clicked",
-                      G_CALLBACK (on_cancel_opensel_clicked),
-                      NULL);
-  g_signal_connect (GTK_OBJECT (okbutton6), "clicked",
-                      G_CALLBACK (on_opensel_range_ok_clicked),
-                      NULL);
 
-   return opensel_dialog;
+  gtk_table_attach (GTK_TABLE (table), spinbutton, 1, 2, 0, 1,
+                    (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
+                    (GtkAttachOptions) (GTK_EXPAND), widget_opts.packing_height*4+2, 0);
+
+
+  spinbutton = lives_standard_spin_button_new (NULL,FALSE,1000.,1.,(double)G_MAXINT, 1., 10., 0, NULL, NULL);
+
+  g_signal_connect_after (GTK_OBJECT (spinbutton), "value_changed",
+			  G_CALLBACK (on_spin_value_changed),
+			  GINT_TO_POINTER (2));
+
+  gtk_table_attach (GTK_TABLE (table), spinbutton, 1, 2, 1, 2,
+                    (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
+                    (GtkAttachOptions) (GTK_EXPAND), widget_opts.packing_height*4+2, 0);
+
+  dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (opensel_dialog));
+  gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area), GTK_BUTTONBOX_END);
+
+  cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
+  gtk_dialog_add_action_widget (GTK_DIALOG (opensel_dialog), cancelbutton, GTK_RESPONSE_CANCEL);
+
+  okbutton = gtk_button_new_from_stock ("gtk-ok");
+  gtk_dialog_add_action_widget (GTK_DIALOG (opensel_dialog), okbutton, GTK_RESPONSE_OK);
+  lives_widget_set_can_focus_and_default (okbutton);
+  gtk_widget_grab_default(okbutton);
+
+  widget_add_preview (opensel_dialog, GTK_BOX (dialog_vbox), GTK_BOX (dialog_vbox), GTK_BOX(dialog_vbox), 3);
+
+  g_signal_connect (GTK_OBJECT (cancelbutton), "clicked",
+		    G_CALLBACK (on_cancel_opensel_clicked),
+		    NULL);
+  g_signal_connect (GTK_OBJECT (okbutton), "clicked",
+		    G_CALLBACK (on_opensel_range_ok_clicked),
+		    NULL);
+
+  gtk_widget_show_all(opensel_dialog);
+
+  return opensel_dialog;
 }
 
 
@@ -1436,7 +1294,6 @@ _entryw* create_location_dialog (int type) {
   GtkWidget *okbutton;
   GtkWidget *label;
   GtkWidget *checkbutton;
-  GtkWidget *eventbox;
   GtkWidget *hbox;
   GtkWidget *buttond;
 
@@ -1444,11 +1301,16 @@ _entryw* create_location_dialog (int type) {
 
   GtkAccelGroup *accel_group=GTK_ACCEL_GROUP(gtk_accel_group_new ());
 
-  locw->dialog = gtk_dialog_new ();
-  if (palette->style&STYLE_1) {
-    lives_dialog_set_has_separator(GTK_DIALOG(locw->dialog),FALSE);
-    lives_widget_set_bg_color (locw->dialog, GTK_STATE_NORMAL, &palette->normal_back);
-  }
+  gchar *title,*tmp,*tmp2;
+
+  if (type==1) 
+    title=g_strdup(_("LiVES: - Open Location"));
+  else 
+    title=g_strdup(_("LiVES: - Open Youtube Clip"));
+
+  locw->dialog = lives_standard_dialog_new (title,FALSE);
+
+  g_free(title);
 
   gtk_window_add_accel_group (GTK_WINDOW (locw->dialog), accel_group);
 
@@ -1457,87 +1319,52 @@ _entryw* create_location_dialog (int type) {
     else gtk_window_set_transient_for(GTK_WINDOW(locw->dialog),GTK_WINDOW(mainw->multitrack->window));
   }
 
-  gtk_window_set_position (GTK_WINDOW (locw->dialog), GTK_WIN_POS_CENTER_ALWAYS);
-  gtk_window_set_modal (GTK_WINDOW (locw->dialog), TRUE);
-
   if (type==1)
     gtk_window_set_default_size (GTK_WINDOW (locw->dialog), 300, 200);
   else
     gtk_window_set_default_size (GTK_WINDOW (locw->dialog), 650, 450);
 
-  
-  gtk_container_set_border_width (GTK_CONTAINER (locw->dialog), widget_opts.border_width);
-
-
-  if (type==1) 
-    gtk_window_set_title (GTK_WINDOW (locw->dialog), _("LiVES: - Open Location"));
-  else 
-    gtk_window_set_title (GTK_WINDOW (locw->dialog), _("LiVES: - Open Youtube Clip"));
 
   dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(locw->dialog));
-  gtk_widget_show (dialog_vbox);
+
+  widget_opts.justify=LIVES_JUSTIFY_CENTER;
 
   if (type==1) {
-    label = gtk_label_new (_("\n\nTo open a stream, you must make sure that you have the correct libraries compiled in mplayer.\nAlso make sure you have set your bandwidth in Preferences|Streaming\n\n"));
+    label = lives_standard_label_new (_("\n\nTo open a stream, you must make sure that you have the correct libraries compiled in mplayer.\nAlso make sure you have set your bandwidth in Preferences|Streaming\n\n"));
   }
   else { 
-    label = gtk_label_new (_("\n\nTo open a clip from Youtube, LiVES will first download it with youtube-dl.\nPlease make sure you have the latest version of that tool installed.\n\n"));
+    label = lives_standard_label_new (_("\n\nTo open a clip from Youtube, LiVES will first download it with youtube-dl.\nPlease make sure you have the latest version of that tool installed.\n\n"));
 
-    gtk_widget_show (label);
     gtk_box_pack_start (GTK_BOX (dialog_vbox), label, FALSE, FALSE, 0);
-    gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_CENTER);
-    if (palette->style&STYLE_1) {
-      lives_widget_set_fg_color (label, GTK_STATE_NORMAL, &palette->normal_fore);
-    }
     
-    label=gtk_label_new(_("Enter the URL of the clip below.\nE.g: http://www.youtube.com/watch?v=WCR6f6WzjP8\n\n"));
+    label=lives_standard_label_new(_("Enter the URL of the clip below.\nE.g: http://www.youtube.com/watch?v=WCR6f6WzjP8\n\n"));
 
   }
-  gtk_widget_show (label);
+
+  widget_opts.justify=LIVES_JUSTIFY_DEFAULT;
+
   gtk_box_pack_start (GTK_BOX (dialog_vbox), label, FALSE, FALSE, 0);
-  gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_CENTER);
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color (label, GTK_STATE_NORMAL, &palette->normal_fore);
-  }
 
   hbox = lives_hbox_new (FALSE, 0);
-  gtk_widget_show (hbox);
-  gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, TRUE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, TRUE, TRUE, widget_opts.packing_height*2);
 
-  locw->entry = lives_standard_entry_new (type==1?_ ("URL : "):_ ("Youtube URL : "),FALSE,"",-1,32768,LIVES_BOX(hbox),NULL);
-
-  gtk_widget_show_all (hbox);
+  locw->entry = lives_standard_entry_new (type==1?_ ("URL : "):_ ("Youtube URL : "),FALSE,"",79,32768,LIVES_BOX(hbox),NULL);
 
   if (type==1) {
     hbox=lives_hbox_new (FALSE, 0);
-    checkbutton = gtk_check_button_new ();
-    eventbox=gtk_event_box_new();
-    label=gtk_label_new_with_mnemonic (_("Do not send bandwidth information"));
-    gtk_widget_set_tooltip_text( checkbutton,_("Try this setting if you are having problems getting a stream"));
+    checkbutton = lives_standard_check_button_new ((tmp=g_strdup(_("Do not send bandwidth information"))),
+						   TRUE,LIVES_BOX(hbox),
+						   (tmp2=g_strdup(_("Try this setting if you are having problems getting a stream"))));
+
+    g_free(tmp); g_free(tmp2);
+
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(checkbutton),prefs->no_bandwidth);
     
-    gtk_label_set_mnemonic_widget (GTK_LABEL (label),checkbutton);
-    gtk_container_add(GTK_CONTAINER(eventbox),label);
-    g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
-		      G_CALLBACK (label_act_toggle),
-		      checkbutton);
-    
-    if (palette->style&STYLE_1) {
-      lives_widget_set_fg_color(label, GTK_STATE_NORMAL, &palette->normal_fore);
-      lives_widget_set_fg_color(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-      lives_widget_set_bg_color (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
-    }
-    
-    gtk_box_pack_start (GTK_BOX(dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
-    gtk_box_pack_start (GTK_BOX (hbox), checkbutton, FALSE, FALSE, widget_opts.packing_width);
-    gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, widget_opts.packing_width);
-    lives_widget_set_can_focus_and_default (checkbutton);
+    gtk_box_pack_start (GTK_BOX(dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height*2);
     
     g_signal_connect (GTK_OBJECT (checkbutton), "toggled",
 		      G_CALLBACK (on_boolean_toggled),
 		      &prefs->no_bandwidth);
-    
-    gtk_widget_show_all(hbox);
     
     add_deinterlace_checkbox(GTK_BOX(dialog_vbox));
 
@@ -1546,42 +1373,32 @@ _entryw* create_location_dialog (int type) {
   if (type==2) {
     hbox=lives_hbox_new (FALSE, 0);
     
-    gtk_box_pack_start(GTK_BOX(dialog_vbox),hbox,TRUE,FALSE,0);
+    gtk_box_pack_start(GTK_BOX(dialog_vbox),hbox,TRUE,FALSE,widget_opts.packing_height);
 
-    locw->dir_entry = lives_standard_entry_new (_("Download to _Directory : "),TRUE,"",-1,32768,LIVES_BOX(hbox),NULL);
-    gtk_widget_show_all (hbox);
-
+    locw->dir_entry = lives_standard_entry_new (_("Download to _Directory : "),TRUE,"",72,PATH_MAX,LIVES_BOX(hbox),NULL);
 
     // add dir, with filechooser button
     buttond = gtk_file_chooser_button_new(_("Download Directory..."),GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER);
     gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(buttond),mainw->vid_save_dir);
     gtk_box_pack_start(GTK_BOX(hbox),buttond,TRUE,FALSE,0);
-    gtk_widget_show (buttond);
 
     add_fill_to_box (GTK_BOX (hbox));
-    gtk_file_chooser_button_set_width_chars(GTK_FILE_CHOOSER_BUTTON(buttond),16);
+    //gtk_file_chooser_button_set_width_chars(GTK_FILE_CHOOSER_BUTTON(buttond),16);
     
     g_signal_connect (GTK_FILE_CHOOSER(buttond), "selection-changed",G_CALLBACK (on_fileread_clicked),
     		      (gpointer)locw->dir_entry);
 
 
-    gtk_widget_show_all (hbox);
-
-
-
     hbox=lives_hbox_new (FALSE, 0);
     
-    gtk_box_pack_start(GTK_BOX(dialog_vbox),hbox,TRUE,FALSE,0);
+    gtk_box_pack_start(GTK_BOX(dialog_vbox),hbox,TRUE,FALSE,widget_opts.packing_height);
 
-    locw->name_entry = lives_standard_entry_new (_("Download _File Name : "),TRUE,"",-1,32768,LIVES_BOX(hbox),NULL);
+    locw->name_entry = lives_standard_entry_new (_("Download _File Name : "),TRUE,"",74,32768,LIVES_BOX(hbox),NULL);
 
     label=lives_standard_label_new (_(".webm"));
-    gtk_label_set_mnemonic_widget (GTK_LABEL (label),locw->name_entry);
 
     gtk_box_pack_start(GTK_BOX(hbox),label,FALSE,FALSE,widget_opts.packing_width);
-    
-    gtk_widget_show_all (hbox);
-  }
+   }
 
 
 
@@ -1621,6 +1438,8 @@ _entryw* create_location_dialog (int type) {
 
   gtk_widget_add_accelerator (cancelbutton, "activate", accel_group,
                               LIVES_KEY_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
+
+  gtk_widget_show_all(locw->dialog);
 
   return locw;
 }
@@ -2649,6 +2468,8 @@ _commentsw* create_comments_dialog (file *sfile, gchar *filename) {
       lives_widget_set_fg_color(label, GTK_STATE_PRELIGHT, &palette->normal_fore);
       lives_widget_set_fg_color(expander, GTK_STATE_PRELIGHT, &palette->normal_fore);
       lives_widget_set_bg_color(expander, GTK_STATE_PRELIGHT, &palette->normal_back);
+      lives_widget_set_fg_color(expander, GTK_STATE_NORMAL, &palette->normal_fore);
+      lives_widget_set_bg_color(expander, GTK_STATE_NORMAL, &palette->normal_back);
     }
 
     gtk_box_pack_start (GTK_BOX (dialog_vbox), expander, TRUE, TRUE, 0);
@@ -3296,6 +3117,12 @@ GtkWidget *create_cleardisk_advanced_dialog(void) {
 GtkTextView *create_output_textview(void) {
   GtkWidget *textview=gtk_text_view_new();
   gtk_text_view_set_editable (GTK_TEXT_VIEW (textview), FALSE);
+
+  if (palette->style&STYLE_1) {
+    lives_widget_set_base_color(textview, GTK_STATE_NORMAL, &palette->info_base);
+    lives_widget_set_text_color(textview, GTK_STATE_NORMAL, &palette->info_text);
+  }
+
   g_object_ref(textview);
   gtk_widget_show(textview);
   return GTK_TEXT_VIEW(textview);

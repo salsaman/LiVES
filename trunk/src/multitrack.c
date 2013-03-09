@@ -21525,9 +21525,7 @@ void amixer_show (GtkButton *button, gpointer user_data) {
 
   hbuttonbox = lives_hbutton_box_new ();
   gtk_box_pack_start (GTK_BOX (top_vbox), hbuttonbox, FALSE, TRUE, 20);
-#if !GTK_CHECK_VERSION(3,0,0)
-  gtk_button_box_set_child_size (GTK_BUTTON_BOX (hbuttonbox), DEF_BUTTON_WIDTH, -1);
-#endif
+
   gtk_button_box_set_layout (GTK_BUTTON_BOX (hbuttonbox), GTK_BUTTONBOX_SPREAD);
 
   reset_button = gtk_button_new_with_mnemonic (_("_Reset values"));
@@ -21537,6 +21535,13 @@ void amixer_show (GtkButton *button, gpointer user_data) {
   close_button = gtk_button_new_with_mnemonic (_("_Close mixer"));
   gtk_container_add (GTK_CONTAINER (hbuttonbox), close_button);
   lives_widget_set_can_focus_and_default (close_button);
+
+#if !GTK_CHECK_VERSION(3,0,0)
+  gtk_button_box_set_child_size (GTK_BUTTON_BOX (hbuttonbox), DEF_BUTTON_WIDTH, -1);
+#else
+  gtk_widget_set_size_request(reset_button,DEF_BUTTON_WIDTH*4,-1);
+  gtk_widget_set_size_request(close_button,DEF_BUTTON_WIDTH*4,-1);
+#endif
 
 
   gtk_widget_add_accelerator (close_button, "clicked", accel_group,

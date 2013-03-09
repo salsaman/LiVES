@@ -3194,20 +3194,27 @@ switch_aud_to_mplayer(gboolean set_in_prefs) {
 
 
 
-void prepare_to_play_foreign(void) {
+boolean prepare_to_play_foreign(void) {
   // here we are going to 'play' a captured external window
-  gint new_file=mainw->first_free_file;
+
 #ifdef GUI_GTK
+
+  register int i;
+
 #if !GTK_CHECK_VERSION(3,0,0)
 #ifdef GDK_WINDOWING_X11
-  GdkVisual *vissi;
+  GdkVisual *vissi=NULL;
 #endif
 #endif
 #endif
 
+  gint new_file=mainw->first_free_file;
+
+  mainw->foreign_window=NULL;
+
   // create a new 'file' to play into
   if (!get_new_handle(new_file,NULL)) {
-    return;
+    return FALSE;
   }
 
   mainw->current_file=new_file;
@@ -3248,8 +3255,6 @@ void prepare_to_play_foreign(void) {
   cfile->hsize=mainw->pwidth;
   cfile->vsize=mainw->pheight;
 
-  mainw->foreign_window=NULL;
-
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3,0,0)
 
@@ -3257,7 +3262,6 @@ void prepare_to_play_foreign(void) {
   mainw->foreign_window=gdk_x11_window_foreign_new_for_display
     (mainw->mgeom[prefs->gui_monitor>0?prefs->gui_monitor-1:0].disp,
      mainw->foreign_id);
-  gdk_window_set_keep_above(mainw->foreign_window,TRUE);
 #else
 #ifdef GDK_WINDOWING_WIN32
   if (mainw->foreign_window==NULL)
@@ -3266,36 +3270,40 @@ void prepare_to_play_foreign(void) {
        mainw->foreign_id);
 #endif
 
-#endif // W
+#endif // GDK_WINDOWING
 
   if (mainw->foreign_window!=NULL) gdk_window_set_keep_above(mainw->foreign_window,TRUE);
 
 #else // 3,0,0
   mainw->foreign_window=gdk_window_foreign_new(mainw->foreign_id);
 #endif
-#endif
-
-  // seems not to work
-  //gdk_window_reparent(mainw->foreign_window, mainw->playarea->window, 0, 0);
-  //while (g_main_context_iteration(NULL,FALSE));
-  ////////////////////////
-  
-  //vissi=gdk_x11_screen_lookup_visual(gdk_screen_get_default(),hextodec(mainw->foreign_visual));
-
+#endif // GUI_GTK
 
 #ifdef GUI_GTK
 #ifdef GDK_WINDOWING_X11
 #if !GTK_CHECK_VERSION(3,0,0)
-  vissi=gdk_visual_get_best_with_depth (mainw->foreign_bpp);
 
-  // TODO : try
-  //mainw->foreign_cmap=gdk_colormap_get_system_for_screen (gdk_window_get_screen(mainw->foreign_window));
+  if (mainw->foreign_visual!=NULL) {
+    for (i=0;i<capable->nmonitors;i++) {
+      vissi=gdk_x11_screen_lookup_visual(mainw->mgeom[i].screen,hextodec(mainw->foreign_visual));
+      if (vissi!=NULL) break;
+    }
+  }
+
+  if (vissi==NULL) vissi=gdk_visual_get_best_with_depth (mainw->foreign_bpp);
+
+  if (vissi==NULL) return FALSE;
+
   mainw->foreign_cmap=gdk_x11_colormap_foreign_new(vissi, 
 						   gdk_x11_colormap_get_xcolormap(gdk_colormap_new(vissi,TRUE)));
 
+  if (mainw->foreign_cmap==NULL) return FALSE;
+
 #endif
 #endif
 #endif
+
+  if (mainw->foreign_window==NULL) return FALSE;
 
   mainw->play_start=1;
   if (mainw->rec_vid_frames==-1) mainw->play_end=INT_MAX;
@@ -3319,11 +3327,12 @@ void prepare_to_play_foreign(void) {
   gtk_widget_hide(mainw->t_bckground);
   gtk_widget_hide(mainw->t_sepwin);
   gtk_widget_hide(mainw->t_infobutton);
+
+  return TRUE;
 }
 
 
-gboolean
-after_foreign_play(void) {
+boolean after_foreign_play(void) {
   // read details from capture file
   int capture_fd;
   gchar *capfile=g_strdup_printf("%s/.capture.%d",prefs->tmpdir,getpid());

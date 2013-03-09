@@ -1149,8 +1149,8 @@ void switch_aud_to_sox(gboolean set_pref);
 gboolean switch_aud_to_jack(void);
 gboolean switch_aud_to_pulse(void);
 void switch_aud_to_mplayer(gboolean set_pref);
-void prepare_to_play_foreign(void);
-gboolean after_foreign_play(void);
+boolean prepare_to_play_foreign(void);
+boolean after_foreign_play(void);
 gboolean check_file(const gchar *file_name, gboolean check_exists);  ///< check if file exists
 gboolean check_dir_access (const gchar *dir);
 uint64_t get_file_size(int fd);

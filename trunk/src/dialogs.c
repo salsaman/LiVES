@@ -260,6 +260,9 @@ static GtkWidget* create_warn_dialog (int warn_mask_number, GtkWindow *transient
   gtk_widget_add_accelerator (warning_cancelbutton, "activate", accel_group,
 			      LIVES_KEY_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
 
+  gtk_widget_add_accelerator (warning_okbutton, "activate", accel_group,
+			      LIVES_KEY_Return, (GdkModifierType)0, (GtkAccelFlags)0);
+
   lives_widget_set_can_focus_and_default (warning_okbutton);
   gtk_widget_grab_default (warning_okbutton);
 

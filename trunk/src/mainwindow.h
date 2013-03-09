@@ -966,10 +966,6 @@ typedef struct {
 
   gint img_concat_clip;  ///< when opening multiple, image files can get concatenated here (prefs->concat_images)
 
-#if !GTK_CHECK_VERSION(3,0,0)
-  GdkGC *general_gc;  ///< used for colour drawing
-#endif
-
   /// rendered generators
   boolean gen_to_clipboard;
   boolean is_generating;

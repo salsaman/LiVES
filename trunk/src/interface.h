@@ -128,7 +128,7 @@ _insertw *insertw;
 text_window *textwindow;
 
 
-#define MAX_FADE_SECS 30. ///< max time to offer fade audio in/out for
+#define DEF_AUD_FADE_SECS 10. ///< default time to offer fade audio in/out for
 
 
 

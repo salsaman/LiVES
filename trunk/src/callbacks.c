@@ -628,10 +628,7 @@ void on_ok_filesel_open_clicked (GtkFileChooser *chooser, gpointer user_data) {
 
 
 
-void
-on_open_vcd_activate                      (GtkMenuItem     *menuitem,
-					   gpointer         user_data)
-{
+void on_open_vcd_activate (GtkMenuItem *menuitem, gpointer user_data) {
   GtkWidget *vcdtrack_dialog;
   
   if (mainw->multitrack!=NULL) {
@@ -8586,9 +8583,7 @@ on_load_cdtrack_ok_clicked                (GtkButton     *button,
 
 }
 
-void 
-on_load_vcd_ok_clicked                (GtkButton     *button,
-				       gpointer         user_data)
+void on_load_vcd_ok_clicked (GtkButton *button, gpointer         user_data)
 {
   gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
   if (GPOINTER_TO_INT (user_data)==1) {
@@ -10790,8 +10785,6 @@ void on_export_audio_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
 
 void on_append_audio_activate (GtkMenuItem *menuitem, gpointer user_data) {
-
-  
   if (!(prefs->warning_mask&WARN_MASK_LAYOUT_ALTER_AUDIO)&&
       (mainw->xlays=layout_audio_is_affected(mainw->current_file,0.))!=NULL) {
     if (!do_layout_alter_audio_warning()) {
@@ -10818,8 +10811,9 @@ void on_ok_append_audio_clicked (GtkFileChooser *chooser, gpointer user_data) {
 
   gchar *com,*tmp,*tmp2;
   gchar *a_type;
-  gint asigned=!(cfile->signed_endian&AFORM_UNSIGNED);
-  gint aendian=!(cfile->signed_endian&AFORM_BIG_ENDIAN);
+
+  int asigned=!(cfile->signed_endian&AFORM_UNSIGNED);
+  int aendian=!(cfile->signed_endian&AFORM_BIG_ENDIAN);
 
   g_snprintf(file_name,PATH_MAX,"%s",(tmp=g_filename_to_utf8((tmp2=gtk_file_chooser_get_filename(chooser)),
 							     -1,NULL,NULL,NULL)));
@@ -10921,18 +10915,16 @@ void on_ok_append_audio_clicked (GtkFileChooser *chooser, gpointer user_data) {
 
 
 
-void
-on_trim_audio_activate (GtkMenuItem     *menuitem,
-			gpointer         user_data)
-{
+void on_trim_audio_activate (GtkMenuItem *menuitem, gpointer user_data) {
   // type 0 == trim selected
   // type 1 == trim to play pointer
 
   gchar *com,*msg;
+
   gint type=GPOINTER_TO_INT (user_data);
 
-  gdouble start,end;
-  gboolean has_lmap_error=FALSE;
+  double start,end;
+  boolean has_lmap_error=FALSE;
 
   if (type==0) {
     start=calc_time_from_frame (mainw->current_file,cfile->start);
@@ -11026,17 +11018,16 @@ on_trim_audio_activate (GtkMenuItem     *menuitem,
 
 
 
-void
-on_fade_audio_activate (GtkMenuItem     *menuitem,
-			gpointer         user_data) {
-
+void on_fade_audio_activate (GtkMenuItem *menuitem, gpointer user_data) {
   // type == 0 fade in
   // type == 1 fade out
-  gint type;
-  gdouble startt,endt,startv,endv,time=0.;
+
+  double startt,endt,startv,endv,time=0.;
   gchar *msg,*msg2,*utxt,*com;
-  gboolean has_lmap_error=FALSE;
+
+  boolean has_lmap_error=FALSE;
   int alarm_handle;
+  int type;
 
   aud_dialog_t *aud_d=NULL;
 
@@ -11074,8 +11065,8 @@ on_fade_audio_activate (GtkMenuItem     *menuitem,
     }
   }
   else {
-    cfile->undo2_dbl=startt=((gdouble)cfile->start-1.)/cfile->fps;
-    cfile->undo1_dbl=endt=(gdouble)cfile->end/cfile->fps;
+    cfile->undo2_dbl=startt=((double)cfile->start-1.)/cfile->fps;
+    cfile->undo1_dbl=endt=(double)cfile->end/cfile->fps;
   }
   
  

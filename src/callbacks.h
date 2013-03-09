@@ -432,12 +432,9 @@ void
 on_forward_pressed (GtkButton *button,
 		   gpointer user_data);
 
-void
-on_capture_activate                (GtkMenuItem     *menuitem,
-				    gpointer         user_data);
+void on_capture_activate (GtkMenuItem *, gpointer user_data);
 
-void 
-on_capture2_activate(void);
+void on_capture2_activate(void);
 
 
 void
@@ -517,9 +514,7 @@ void
 on_ok_export_audio_clicked                      (GtkButton *button,
 						 gpointer user_data);
 
-void
-on_append_audio_activate (GtkMenuItem     *menuitem,
-			  gpointer         user_data);
+void on_append_audio_activate (GtkMenuItem *, gpointer user_data);
 
 void
 on_menubar_activate_menuitem                    (GtkMenuItem     *menuitem,
@@ -547,9 +542,7 @@ void on_volume_slider_value_changed (GtkScaleButton *, gpointer);
 void on_volume_slider_value_changed (GtkRange *, gpointer);
 #endif
 
-void
-on_fade_audio_activate (GtkMenuItem     *menuitem,
-			  gpointer         user_data);
+void on_fade_audio_activate (GtkMenuItem *, gpointer user_data);
 
 void on_ok_append_audio_clicked (GtkFileChooser *, gpointer);
 
@@ -561,9 +554,7 @@ void
 on_resample_vid_ok                  (GtkButton       *button,
 				  GtkEntry         *entry);
 
-void
-on_trim_audio_activate (GtkMenuItem     *menuitem,
-			gpointer         user_data);
+void on_trim_audio_activate (GtkMenuItem *, gpointer user_data);
 
 void
 on_resample_audio_activate (GtkMenuItem     *menuitem,
@@ -664,7 +655,7 @@ gboolean storeclip_callback (GtkAccelGroup *, GObject *, guint, GdkModifierType,
 
 gboolean nervous_callback (GtkAccelGroup *, GObject *, guint, GdkModifierType, gpointer );
 
-gboolean show_sync_callback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer clip_number);
+gboolean show_sync_callback (GtkAccelGroup *, GObject *, guint keyval, GdkModifierType mod, gpointer clip_number);
 
 void on_save_set_activate (GtkMenuItem *, gpointer );
 
@@ -674,15 +665,9 @@ void on_load_set_activate (GtkMenuItem *, gpointer );
 
 gboolean on_load_set_ok (GtkButton *, gpointer skip_threaded_dialog);
 
+void on_open_vcd_activate (GtkMenuItem *, gpointer int_type);
 
-void
-on_open_vcd_activate                      (GtkMenuItem     *menuitem,
-					   gpointer         user_data);
-
-
-void 
-on_load_vcd_ok_clicked                (GtkButton     *button,
-				       gpointer         user_data);
+void on_load_vcd_ok_clicked (GtkButton *, gpointer user_data);
 
 
 

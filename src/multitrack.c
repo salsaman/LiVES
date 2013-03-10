@@ -1264,7 +1264,9 @@ boolean add_mt_param_box(lives_mt *mt) {
   boolean res=FALSE;
 
   int error;
+
   int dph=widget_opts.packing_height;
+  int dbw=widget_opts.border_width;
 
 
   tc=get_event_timecode((weed_plant_t *)mt->init_event);
@@ -1287,9 +1289,11 @@ boolean add_mt_param_box(lives_mt *mt) {
 			fx_end_time-fx_start_time, 1./mt->fps, 10./mt->fps, 0.);
   g_signal_handler_unblock(mt->node_spinbutton,mt->node_adj_func);
 
-  widget_opts.packing_height=0;
+  widget_opts.packing_height=2;
+  widget_opts.border_width=2;
   res=make_param_box(GTK_VBOX (mt->fx_box), mt->current_rfx);
   widget_opts.packing_height=dph;
+  widget_opts.border_width=dbw;
 
   gtk_label_set_text(GTK_LABEL(mt->fx_params_label),ltext);
 
@@ -7843,7 +7847,7 @@ static boolean draw_cool_toggle (GtkWidget *widget, lives_painter_t *cr, gpointe
     lives_widget_set_bg_color(mt->fx_base_box, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
   }
 
-  mt->fx_contents_box=lives_vbox_new(FALSE,10);
+  mt->fx_contents_box=lives_vbox_new(FALSE,2);
   add_hsep_to_box(LIVES_BOX(mt->fx_contents_box),FALSE);
 
   gtk_box_pack_end (GTK_BOX (mt->fx_base_box), mt->fx_contents_box, FALSE, FALSE, 0);

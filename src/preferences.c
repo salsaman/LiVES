@@ -2094,18 +2094,7 @@ _prefsw *create_prefs_dialog (void) {
   // -------------------'
   prefsw->vbox_right_gui = lives_vbox_new (FALSE, 10);
 
-  prefsw->scrollw_right_gui = gtk_scrolled_window_new (NULL, NULL);
-   
-  gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (prefsw->scrollw_right_gui), GTK_POLICY_AUTOMATIC, 
-				  GTK_POLICY_AUTOMATIC);
-  
-  gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (prefsw->scrollw_right_gui), prefsw->vbox_right_gui);
-  
-  // Apply theme background to scrolled window
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(lives_bin_get_child(LIVES_BIN(prefsw->scrollw_right_gui)), GTK_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_bg_color(lives_bin_get_child(LIVES_BIN(prefsw->scrollw_right_gui)), GTK_STATE_NORMAL, &palette->normal_back);
-  }
+  prefsw->scrollw_right_gui = lives_standard_scrolled_window_new (0,0,prefsw->vbox_right_gui,TRUE);
 
   gtk_widget_show (prefsw->vbox_right_gui);
   prefsw->right_shown = prefsw->vbox_right_gui;
@@ -2332,19 +2321,7 @@ _prefsw *create_prefs_dialog (void) {
   prefsw->vbox_right_multitrack = lives_vbox_new (FALSE, 0);
   gtk_container_set_border_width (GTK_CONTAINER (prefsw->vbox_right_multitrack), 10);
 
-  prefsw->scrollw_right_multitrack = gtk_scrolled_window_new (NULL, NULL);
-  
-  gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (prefsw->scrollw_right_multitrack), GTK_POLICY_AUTOMATIC, 
-				  GTK_POLICY_AUTOMATIC);
-  
-  gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (prefsw->scrollw_right_multitrack), 
-					 prefsw->vbox_right_multitrack);
-  
-  // Apply theme background to scrolled window
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(lives_bin_get_child(LIVES_BIN(prefsw->scrollw_right_multitrack)), GTK_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_bg_color(lives_bin_get_child(LIVES_BIN(prefsw->scrollw_right_multitrack)), GTK_STATE_NORMAL, &palette->normal_back);
-  }
+  prefsw->scrollw_right_multitrack = lives_standard_scrolled_window_new (0,0,prefsw->vbox_right_multitrack,TRUE);
 
   hbox1 = lives_hbox_new (FALSE, 0);
   gtk_widget_show (hbox1);

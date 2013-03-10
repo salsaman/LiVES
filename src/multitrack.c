@@ -7844,9 +7844,9 @@ static boolean draw_cool_toggle (GtkWidget *widget, lives_painter_t *cr, gpointe
   }
 
   mt->fx_contents_box=lives_vbox_new(FALSE,10);
+  add_hsep_to_box(LIVES_BOX(mt->fx_contents_box),FALSE);
 
   gtk_box_pack_end (GTK_BOX (mt->fx_base_box), mt->fx_contents_box, FALSE, FALSE, 0);
-
 
   hbox=lives_hbox_new(FALSE,10);
   gtk_box_pack_end (GTK_BOX (mt->fx_contents_box), hbox, FALSE, FALSE, 0);

@@ -282,7 +282,7 @@ int lives_system(const char *com, boolean allow_error) {
 
   // TODO - use g_spawn ?
 
-  if (mainw->is_ready&&widget_opts.cursor_style==LIVES_CURSOR_NORMAL) {
+  if (mainw->is_ready&&!mainw->is_exiting&&widget_opts.cursor_style==LIVES_CURSOR_NORMAL) {
     cnorm=TRUE;
     lives_set_cursor_style(LIVES_CURSOR_BUSY,NULL);
 
@@ -3199,11 +3199,12 @@ boolean prepare_to_play_foreign(void) {
 
 #ifdef GUI_GTK
 
-  register int i;
+
 
 #if !GTK_CHECK_VERSION(3,0,0)
 #ifdef GDK_WINDOWING_X11
   GdkVisual *vissi=NULL;
+  register int i;
 #endif
 #endif
 #endif

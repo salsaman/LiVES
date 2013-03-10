@@ -2107,6 +2107,11 @@ if (defined($ARGV[0])) {
 		$fields="$fps \"$nfile\" $start $end $img_ext $otype $atype $hsize $vsize";
 		$fields.=" $DEBUG_ENCODERS";
 		$fields.=" $arate $achans $asamps $ssigned";
+
+		if ($plugin =~ /multi_encoder$/) {
+		    $extra_opts="-v";
+		}
+
 		if ($^O eq "MSWin32") {
 		    # adjust depending on file ext
 		    my $ext=&get_ext("$plugin");
@@ -2118,7 +2123,7 @@ if (defined($ARGV[0])) {
 		    }
 		    if ($get_rfx==0) {
 			$fields.=@ARGV[13..$#ARGV];
-			$com="$cmd \"$plugin\" encode $fields";
+			$com="$cmd \"$plugin\" $extra_opts encode $fields";
 
 		    }
 		    else {
@@ -2128,7 +2133,7 @@ if (defined($ARGV[0])) {
 		else {
 		    if ($get_rfx==0) {
 			$fields.=@ARGV[13..$#ARGV];
-			$com="\"$plugin\" encode $fields";
+			$com="\"$plugin\" $extra_opts encode $fields";
 		    }
 		    else {
 			$com="\"$plugin\" get_rfx $fields";

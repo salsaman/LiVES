@@ -308,12 +308,8 @@ void framedraw_redraw (lives_special_framedraw_rect_t * framedraw, boolean reloa
 
   if (mainw->current_file<1||cfile==NULL) return;
   
-  g_print("val is %d\n",framedraw->rfx->source_type);
-
   if (framedraw->rfx->source_type==LIVES_RFX_SOURCE_RFX) 
     if (noupdate) return;
-
-  g_print("OK\n");
 
   fd_width=lives_widget_get_allocation_width(mainw->framedraw);
   fd_height=lives_widget_get_allocation_height(mainw->framedraw);

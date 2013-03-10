@@ -2065,6 +2065,11 @@ _prefsw *create_prefs_dialog (void) {
   dialog_table = gtk_table_new(1, 1, FALSE);
   gtk_widget_show(dialog_table);
 
+  if (palette->style&STYLE_1) {
+    lives_widget_set_bg_color(dialog_hpaned, GTK_STATE_NORMAL, &palette->normal_back);
+  }
+
+
   // Create preferences list with invisible headers
   prefsw->prefs_list = gtk_tree_view_new();
   gtk_widget_show(prefsw->prefs_list);
@@ -2626,21 +2631,8 @@ _prefsw *create_prefs_dialog (void) {
   prefsw->vbox_right_decoding = lives_vbox_new (FALSE, 20);
   gtk_container_set_border_width (GTK_CONTAINER (prefsw->vbox_right_decoding), 20);
 
-  prefsw->scrollw_right_decoding = gtk_scrolled_window_new (NULL, NULL);
-   
-  gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (prefsw->scrollw_right_decoding), GTK_POLICY_AUTOMATIC, 
-				  GTK_POLICY_AUTOMATIC);
-  
-  gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (prefsw->scrollw_right_decoding), prefsw->vbox_right_decoding);
-  
-  // Apply theme background to scrolled window
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(lives_bin_get_child(LIVES_BIN(prefsw->scrollw_right_decoding)), GTK_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_bg_color(lives_bin_get_child(LIVES_BIN(prefsw->scrollw_right_decoding)), GTK_STATE_NORMAL, &palette->normal_back);
-  }
+  prefsw->scrollw_right_decoding = lives_standard_scrolled_window_new (0,0,prefsw->vbox_right_decoding,TRUE);
 
-
-  // ---
   hbox = lives_hbox_new (FALSE, 0);
   gtk_widget_show (hbox);
   gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_decoding), hbox, TRUE, TRUE, 0);
@@ -2878,19 +2870,7 @@ _prefsw *create_prefs_dialog (void) {
   prefsw->vbox_right_playback = lives_vbox_new (FALSE, 10);
   gtk_container_set_border_width (GTK_CONTAINER (prefsw->vbox_right_playback), 20);
 
-  prefsw->scrollw_right_playback = gtk_scrolled_window_new (NULL, NULL);
-   
-  gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (prefsw->scrollw_right_playback), GTK_POLICY_AUTOMATIC, 
-				  GTK_POLICY_AUTOMATIC);
-  
-  gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (prefsw->scrollw_right_playback), prefsw->vbox_right_playback);
-  
-  // Apply theme background to scrolled window
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(lives_bin_get_child(LIVES_BIN(prefsw->scrollw_right_playback)), GTK_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_bg_color(lives_bin_get_child(LIVES_BIN(prefsw->scrollw_right_playback)), GTK_STATE_NORMAL, &palette->normal_back);
-  }
-
+  prefsw->scrollw_right_playback = lives_standard_scrolled_window_new (0,0,prefsw->vbox_right_playback,TRUE);
 
   frame4 = gtk_frame_new (NULL);
   gtk_widget_show (frame4);
@@ -3183,19 +3163,7 @@ _prefsw *create_prefs_dialog (void) {
   prefsw->vbox_right_recording = lives_vbox_new (FALSE, 0);
   gtk_container_set_border_width (GTK_CONTAINER (prefsw->vbox_right_recording), 20);
 
-  prefsw->scrollw_right_recording = gtk_scrolled_window_new (NULL, NULL);
-   
-  gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (prefsw->scrollw_right_recording), GTK_POLICY_AUTOMATIC, 
-				  GTK_POLICY_AUTOMATIC);
-  
-  gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (prefsw->scrollw_right_recording), 
-					 prefsw->vbox_right_recording);
-  
-  // Apply theme background to scrolled window
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(lives_bin_get_child(LIVES_BIN(prefsw->scrollw_right_recording)), GTK_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_bg_color(lives_bin_get_child(LIVES_BIN(prefsw->scrollw_right_recording)), GTK_STATE_NORMAL, &palette->normal_back);
-  }
+  prefsw->scrollw_right_recording = lives_standard_scrolled_window_new (0,0,prefsw->vbox_right_recording,TRUE);
 
   hbox = lives_hbox_new(FALSE, 0);
   prefsw->rdesk_audio = lives_standard_check_button_new(_("Record audio when capturing an e_xternal window\n (requires jack or pulse audio)"),TRUE,(LiVESBox *)hbox,NULL);
@@ -3360,19 +3328,7 @@ _prefsw *create_prefs_dialog (void) {
   prefsw->vbox_right_encoding = lives_vbox_new (FALSE, 30);
   gtk_container_set_border_width (GTK_CONTAINER (prefsw->vbox_right_encoding), 20);
 
-  prefsw->scrollw_right_encoding = gtk_scrolled_window_new (NULL, NULL);
-   
-  gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (prefsw->scrollw_right_encoding), GTK_POLICY_AUTOMATIC, 
-				  GTK_POLICY_AUTOMATIC);
-  
-  gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (prefsw->scrollw_right_encoding), 
-					 prefsw->vbox_right_encoding);
-  
-  // Apply theme background to scrolled window
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(lives_bin_get_child(LIVES_BIN(prefsw->scrollw_right_encoding)), GTK_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_bg_color(lives_bin_get_child(LIVES_BIN(prefsw->scrollw_right_encoding)), GTK_STATE_NORMAL, &palette->normal_back);
-  }
+  prefsw->scrollw_right_encoding = lives_standard_scrolled_window_new (0,0,prefsw->vbox_right_encoding,TRUE);
 
   hbox11 = lives_hbox_new (FALSE, 0);
   gtk_widget_show (hbox11);
@@ -3488,19 +3444,7 @@ _prefsw *create_prefs_dialog (void) {
   prefsw->vbox_right_effects = lives_vbox_new (FALSE, 20);
   gtk_container_set_border_width (GTK_CONTAINER (prefsw->vbox_right_effects), 20);
   
-  prefsw->scrollw_right_effects = gtk_scrolled_window_new (NULL, NULL);
-   
-  gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (prefsw->scrollw_right_effects), GTK_POLICY_AUTOMATIC, 
-				  GTK_POLICY_AUTOMATIC);
-  
-  gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (prefsw->scrollw_right_effects), 
-					 prefsw->vbox_right_effects);
-  
-  // Apply theme background to scrolled window
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(lives_bin_get_child(LIVES_BIN(prefsw->scrollw_right_effects)), GTK_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_bg_color(lives_bin_get_child(LIVES_BIN(prefsw->scrollw_right_effects)), GTK_STATE_NORMAL, &palette->normal_back);
-  }
+  prefsw->scrollw_right_effects = lives_standard_scrolled_window_new (0,0,prefsw->vbox_right_effects,TRUE);
 
   hbox = lives_hbox_new(FALSE, 0);
   gtk_container_set_border_width(GTK_CONTAINER (hbox), 20);
@@ -3592,20 +3536,7 @@ _prefsw *create_prefs_dialog (void) {
   prefsw->table_right_directories = gtk_table_new (10, 3, FALSE);
   gtk_container_set_border_width (GTK_CONTAINER (prefsw->table_right_directories), 20);
   
-  prefsw->scrollw_right_directories = gtk_scrolled_window_new (NULL, NULL);
-  
-  gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (prefsw->scrollw_right_directories), GTK_POLICY_AUTOMATIC, 
-				  GTK_POLICY_AUTOMATIC);
-  
-  gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (prefsw->scrollw_right_directories), 
-					 prefsw->table_right_directories);
-  
-  // Apply theme background to scrolled window
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(lives_bin_get_child(LIVES_BIN(prefsw->scrollw_right_directories)), GTK_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_bg_color(lives_bin_get_child(LIVES_BIN(prefsw->scrollw_right_directories)), GTK_STATE_NORMAL, &palette->normal_back);
-  }
-
+  prefsw->scrollw_right_directories = lives_standard_scrolled_window_new (0,0,prefsw->table_right_directories,TRUE);
 
   label39 = gtk_label_new (_("      Video load directory (default)      "));
   if (palette->style&STYLE_1) {
@@ -3863,22 +3794,7 @@ _prefsw *create_prefs_dialog (void) {
   prefsw->vbox_right_warnings = lives_vbox_new (FALSE, 10);
   gtk_widget_show (prefsw->vbox_right_warnings);
 
-  prefsw->scrollw_right_warnings = gtk_scrolled_window_new (NULL, NULL);
-   
-  gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (prefsw->scrollw_right_warnings), GTK_POLICY_AUTOMATIC, 
-				  GTK_POLICY_AUTOMATIC);
-
-  gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (prefsw->scrollw_right_warnings), 
-					 prefsw->vbox_right_warnings);
-
-  // Apply theme background to scrolled window
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(lives_bin_get_child(LIVES_BIN(prefsw->scrollw_right_warnings)), GTK_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_bg_color(lives_bin_get_child(LIVES_BIN(prefsw->scrollw_right_warnings)), GTK_STATE_NORMAL, &palette->normal_back);
-  }
-
-  gtk_container_set_border_width (GTK_CONTAINER (prefsw->vbox_right_warnings), 20);
-   
+  prefsw->scrollw_right_warnings = lives_standard_scrolled_window_new (0,0,prefsw->vbox_right_warnings,TRUE);
 
   hbox = lives_hbox_new(FALSE, 0);
   gtk_widget_show(hbox);
@@ -4450,18 +4366,7 @@ _prefsw *create_prefs_dialog (void) {
   prefsw->vbox_right_misc = lives_vbox_new (FALSE, 10);
   gtk_container_set_border_width (GTK_CONTAINER (prefsw->vbox_right_misc), 20);
    
-  prefsw->scrollw_right_misc = gtk_scrolled_window_new (NULL, NULL);
-   
-  gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (prefsw->scrollw_right_misc), GTK_POLICY_AUTOMATIC, 
-				  GTK_POLICY_AUTOMATIC);
-  
-  gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (prefsw->scrollw_right_misc), prefsw->vbox_right_misc);
-  
-  // Apply theme background to scrolled window
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(lives_bin_get_child(LIVES_BIN(prefsw->scrollw_right_misc)), GTK_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_bg_color(lives_bin_get_child(LIVES_BIN(prefsw->scrollw_right_misc)), GTK_STATE_NORMAL, &palette->normal_back);
-  }
+  prefsw->scrollw_right_misc = lives_standard_scrolled_window_new (0,0,prefsw->vbox_right_misc,TRUE);
 
   prefsw->check_midi = gtk_check_button_new();
   eventbox = gtk_event_box_new();
@@ -4609,18 +4514,7 @@ _prefsw *create_prefs_dialog (void) {
   prefsw->vbox_right_themes = lives_vbox_new (FALSE, 10);
   gtk_container_set_border_width (GTK_CONTAINER (prefsw->vbox_right_themes), 20);
    
-  prefsw->scrollw_right_themes = gtk_scrolled_window_new (NULL, NULL);
-   
-  gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (prefsw->scrollw_right_themes), GTK_POLICY_AUTOMATIC, 
-				  GTK_POLICY_AUTOMATIC);
-   
-  gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (prefsw->scrollw_right_themes), prefsw->vbox_right_themes);
-  
-  // Apply theme background to scrolled window
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(lives_bin_get_child(LIVES_BIN(prefsw->scrollw_right_themes)), GTK_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_bg_color(lives_bin_get_child(LIVES_BIN(prefsw->scrollw_right_themes)), GTK_STATE_NORMAL, &palette->normal_back);
-  }
+  prefsw->scrollw_right_themes = lives_standard_scrolled_window_new (0,0,prefsw->vbox_right_themes,TRUE);
 
   hbox93 = lives_hbox_new (FALSE, 0);
   gtk_widget_show (hbox93);
@@ -4671,18 +4565,7 @@ _prefsw *create_prefs_dialog (void) {
   prefsw->vbox_right_net = lives_vbox_new (FALSE, 10);
   gtk_container_set_border_width (GTK_CONTAINER (prefsw->vbox_right_net), 20);
 
-  prefsw->scrollw_right_net = gtk_scrolled_window_new (NULL, NULL);
-   
-  gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (prefsw->scrollw_right_net), GTK_POLICY_AUTOMATIC, 
-				  GTK_POLICY_AUTOMATIC);
-   
-  gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (prefsw->scrollw_right_net), prefsw->vbox_right_net);
-  
-  // Apply theme background to scrolled window
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(lives_bin_get_child(LIVES_BIN(prefsw->scrollw_right_net)), GTK_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_bg_color(lives_bin_get_child(LIVES_BIN(prefsw->scrollw_right_net)), GTK_STATE_NORMAL, &palette->normal_back);
-  }
+  prefsw->scrollw_right_net = lives_standard_scrolled_window_new (0,0,prefsw->vbox_right_net,TRUE);
 
   hbox94 = lives_hbox_new (FALSE, 0);
   gtk_widget_show (hbox94);
@@ -4805,19 +4688,7 @@ _prefsw *create_prefs_dialog (void) {
   prefsw->vbox_right_jack = lives_vbox_new (FALSE, 20);
   gtk_container_set_border_width (GTK_CONTAINER (prefsw->vbox_right_jack), 20);
 
-  prefsw->scrollw_right_jack = gtk_scrolled_window_new (NULL, NULL);
-   
-  gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (prefsw->scrollw_right_jack), GTK_POLICY_AUTOMATIC, 
-				  GTK_POLICY_AUTOMATIC);
-   
-  gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (prefsw->scrollw_right_jack), prefsw->vbox_right_jack);
-   
-  // Apply theme background to scrolled window
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(lives_bin_get_child(LIVES_BIN(prefsw->scrollw_right_jack)), GTK_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_bg_color(lives_bin_get_child(LIVES_BIN(prefsw->scrollw_right_jack)), GTK_STATE_NORMAL, &palette->normal_back);
-  }
-
+  prefsw->scrollw_right_jack = lives_standard_scrolled_window_new (0,0,prefsw->vbox_right_jack,TRUE);
 
   label = gtk_label_new (_("Jack transport"));
   if (palette->style&STYLE_1) {
@@ -5118,18 +4989,7 @@ _prefsw *create_prefs_dialog (void) {
   // TODO - copy pattern to all
   prefsw->vbox_right_midi = lives_vbox_new (FALSE, 10);
 
-  prefsw->scrollw_right_midi = gtk_scrolled_window_new (NULL, NULL);
-   
-  gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (prefsw->scrollw_right_midi), GTK_POLICY_AUTOMATIC, 
-				  GTK_POLICY_AUTOMATIC);
-
-  gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (prefsw->scrollw_right_midi), prefsw->vbox_right_midi);
-
-  // Apply theme background to scrolled window
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(lives_bin_get_child(LIVES_BIN(prefsw->scrollw_right_midi)), GTK_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_bg_color(lives_bin_get_child(LIVES_BIN(prefsw->scrollw_right_midi)), GTK_STATE_NORMAL, &palette->normal_back);
-  }
+  prefsw->scrollw_right_midi = lives_standard_scrolled_window_new (0,0,prefsw->vbox_right_midi,TRUE);
 
   gtk_container_set_border_width (GTK_CONTAINER (prefsw->vbox_right_midi), 20);
 

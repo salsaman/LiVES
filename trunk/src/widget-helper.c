@@ -1614,7 +1614,7 @@ LiVESWidget *lives_standard_check_button_new(const char *labeltext, boolean use_
     if (GTK_IS_HBOX(box)) hbox=GTK_WIDGET(box);
     else {
       hbox = lives_hbox_new (FALSE, 0);
-      gtk_box_pack_start (GTK_BOX (box), hbox, FALSE, FALSE, widget_opts.packing_width);
+      gtk_box_pack_start (GTK_BOX (box), hbox, FALSE, FALSE, widget_opts.packing_height);
     }
     
     lives_box_set_homogeneous(LIVES_BOX(hbox),FALSE);
@@ -1680,7 +1680,7 @@ LiVESWidget *lives_standard_radio_button_new(const char *labeltext, boolean use_
     if (GTK_IS_HBOX(box)) hbox=GTK_WIDGET(box);
     else {
       hbox = lives_hbox_new (FALSE, 0);
-      gtk_box_pack_start (GTK_BOX (box), hbox, FALSE, FALSE, widget_opts.packing_width);
+      gtk_box_pack_start (GTK_BOX (box), hbox, FALSE, FALSE, widget_opts.packing_height);
     }
     
     lives_box_set_homogeneous(LIVES_BOX(hbox),FALSE);
@@ -1759,9 +1759,14 @@ LiVESWidget *lives_standard_spin_button_new(const char *labeltext, boolean use_m
   if (box!=NULL) {
     if (GTK_IS_HBOX(box)) hbox=GTK_WIDGET(box);
     else {
-      hbox = lives_hbox_new (TRUE, 0);
-      gtk_box_pack_start (GTK_BOX (box), hbox, FALSE, FALSE, widget_opts.packing_width);
+      hbox = lives_hbox_new (FALSE, 0);
+      gtk_box_pack_start (GTK_BOX (box), hbox, FALSE, FALSE, widget_opts.packing_height);
     }
+
+    lives_box_set_homogeneous(LIVES_BOX(hbox),FALSE);
+
+    hbox = lives_hbox_new (FALSE, 0);
+    gtk_box_pack_start (GTK_BOX (box), hbox, FALSE, FALSE, 0);
     
     if (!widget_opts.swap_label&&eventbox!=NULL)
       gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, widget_opts.packing_width);
@@ -1819,9 +1824,11 @@ LiVESWidget *lives_standard_combo_new (const char *labeltext, boolean use_mnemon
   if (box!=NULL) {
     if (GTK_IS_HBOX(box)) hbox=GTK_WIDGET(box);
     else {
-      hbox = lives_hbox_new (TRUE, 0);
-      gtk_box_pack_start (GTK_BOX (box), hbox, FALSE, FALSE, widget_opts.packing_width);
+      hbox = lives_hbox_new (FALSE, 0);
+      gtk_box_pack_start (GTK_BOX (box), hbox, FALSE, FALSE, widget_opts.packing_height);
     }
+
+    lives_box_set_homogeneous(LIVES_BOX(hbox),FALSE);
     
     if (!widget_opts.swap_label&&eventbox!=NULL)
       gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, widget_opts.packing_width);
@@ -1877,10 +1884,9 @@ LiVESWidget *lives_standard_entry_new(const char *labeltext, boolean use_mnemoni
 
   if (box!=NULL) {
     if (GTK_IS_HBOX(box)) hbox=GTK_WIDGET(box);
-    
     else {
-      hbox = lives_hbox_new (TRUE, 0);
-      gtk_box_pack_start (GTK_BOX (box), hbox, FALSE, FALSE, widget_opts.packing_width);
+      hbox = lives_hbox_new (FALSE, 0);
+      gtk_box_pack_start (GTK_BOX (box), hbox, FALSE, FALSE, widget_opts.packing_height);
     }
     
     lives_box_set_homogeneous(LIVES_BOX(hbox),FALSE);
@@ -1996,12 +2002,15 @@ LiVESWidget *lives_standard_scrolled_window_new(int width, int height, LiVESWidg
   LiVESWidget *scrolledwindow=NULL;
 
 #ifdef GUI_GTK
+  LiVESWidget *swchild;
+
   scrolledwindow = gtk_scrolled_window_new (NULL, NULL);
   gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrolledwindow), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
 
   if (apply_theme) {
     lives_widget_set_hexpand(scrolledwindow,TRUE);
     lives_widget_set_vexpand(scrolledwindow,TRUE);
+    gtk_container_set_border_width (GTK_CONTAINER (scrolledwindow), widget_opts.border_width);
   }
 
   if (child!=NULL) {
@@ -2018,6 +2027,8 @@ LiVESWidget *lives_standard_scrolled_window_new(int width, int height, LiVESWidg
       gtk_container_add (GTK_CONTAINER (scrolledwindow), child);
   }
 
+  swchild=lives_bin_get_child(LIVES_BIN(scrolledwindow));
+
   if (width!=0&&height!=0) {
 #if !GTK_CHECK_VERSION(3,0,0)
     gtk_widget_set_size_request (scrolledwindow, width, height);
@@ -2029,13 +2040,14 @@ LiVESWidget *lives_standard_scrolled_window_new(int width, int height, LiVESWidg
 
   if (apply_theme) {
     if (palette->style&STYLE_1) {
-      lives_widget_set_bg_color(gtk_bin_get_child (GTK_BIN (scrolledwindow)), GTK_STATE_NORMAL, &palette->normal_back);
+      lives_widget_set_bg_color(swchild, GTK_STATE_NORMAL, &palette->normal_back);
     }
   }
 
   if (apply_theme) {
-    lives_widget_set_hexpand(lives_bin_get_child(LIVES_BIN(scrolledwindow)),TRUE);
-    lives_widget_set_vexpand(lives_bin_get_child(LIVES_BIN(scrolledwindow)),TRUE);
+    lives_widget_set_hexpand(swchild,TRUE);
+    lives_widget_set_vexpand(swchild,TRUE);
+    if (GTK_IS_CONTAINER(child)) gtk_container_set_border_width (GTK_CONTAINER (child), widget_opts.border_width>>1);
   }
 #endif
   return scrolledwindow;

@@ -519,8 +519,6 @@ static boolean add_sizes(GtkBox *vbox, boolean add_fps, lives_rfx_t *rfx) {
   int def_width=0,max_width,width_step;
   int def_height=0,max_height,height_step;
 
-  int opw=widget_opts.packing_width;
-
   register int i;
 
   // add fps
@@ -548,10 +546,6 @@ static boolean add_sizes(GtkBox *vbox, boolean add_fps, lives_rfx_t *rfx) {
     
     add_fill_to_box(GTK_BOX(hbox));
   }
-
-#if GTK_CHECK_VERSION(3,0,0)
-  widget_opts.packing_width>>=2;
-#endif
   
   for (i=0;i<num_chans;i++) {
     tmpl=ctmpls[i];
@@ -620,8 +614,6 @@ static boolean add_sizes(GtkBox *vbox, boolean add_fps, lives_rfx_t *rfx) {
     gen_height_changed(GTK_SPIN_BUTTON(spinbuttonh),tmpl);
 
   }
-
-  widget_opts.packing_width=opw;
 
 
   if (!chk_params) {
@@ -1364,9 +1356,7 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, boolean add_
   boolean use_mnemonic;
   boolean was_num=FALSE;
 
-#if GTK_CHECK_VERSION(3,0,0)
   int def_packing_width=widget_opts.packing_width;
-#endif
 
   if (pnum>=rfx->num_params) {
     add_param_label_to_box (box,FALSE,(_("Invalid parameter")));
@@ -1384,9 +1374,6 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, boolean add_
 
   if (LIVES_IS_HBOX(LIVES_WIDGET(box))) {
     hbox=GTK_WIDGET(box);
-#if GTK_CHECK_VERSION(3,0,0)
-    def_packing_width=(widget_opts.packing_width>>1);
-#endif
   }
   else {
     hbox = lives_hbox_new (FALSE, 0);
@@ -1547,10 +1534,6 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, boolean add_
 
     lives_box_set_homogeneous(LIVES_BOX(hbox),FALSE);
 
-#if GTK_CHECK_VERSION(3,0,0)
-    widget_opts.packing_width=2;
-#endif
-
     // colsel button
 
     colr.red=rgb.red<<8;
@@ -1571,7 +1554,9 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, boolean add_
     else labelcname=lives_standard_label_new (_(name));
     if (param->desc!=NULL) gtk_widget_set_tooltip_text(labelcname, param->desc);
 
-    gtk_box_pack_start (GTK_BOX (hbox), labelcname, FALSE, FALSE, 0);
+    gtk_box_pack_start (GTK_BOX (hbox), labelcname, FALSE, FALSE, widget_opts.packing_width);
+
+    widget_opts.packing_width=4;
 
     spinbutton_red = lives_standard_spin_button_new((tmp=g_strdup(_("_Red"))), TRUE, rgb.red, 0., 255., 1., 1., 0, 
 						    (LiVESBox *)hbox, (tmp2=g_strdup(_("The red value (0 - 255)"))));
@@ -1586,9 +1571,7 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, boolean add_
     g_free(tmp);
     g_free(tmp2);
 
-#if GTK_CHECK_VERSION(3,0,0)
-    widget_opts.packing_width=def_packing_width;;
-#endif
+    widget_opts.packing_width=def_packing_width;
 
     gtk_box_pack_start (GTK_BOX (hbox), cbutton, TRUE, TRUE, widget_opts.packing_width);
 
@@ -1640,8 +1623,27 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, boolean add_
       else txt=g_strndup ((gchar *)param->value,(gint)param->max);
     }
 
+
+
+    if (use_mnemonic) label = lives_standard_label_new_with_mnemonic (_(name),NULL);
+    else label = lives_standard_label_new (_(name));
+
     if (((gint)param->max>RFX_TEXT_MAGIC||param->max==0.)&&
 	param->special_type!=LIVES_PARAM_SPECIAL_TYPE_FILEREAD) {
+      GtkWidget *vbox;
+
+
+      widget_opts.justify=LIVES_JUSTIFY_CENTER;
+      if (use_mnemonic) label = lives_standard_label_new_with_mnemonic (_(name),NULL);
+      else label = lives_standard_label_new (_(name));
+      widget_opts.justify=LIVES_JUSTIFY_DEFAULT;
+
+      vbox=lives_vbox_new(FALSE,0);
+      gtk_box_pack_start (GTK_BOX (hbox), vbox, TRUE, TRUE, widget_opts.packing_width);
+      gtk_box_pack_start (GTK_BOX (vbox), label, FALSE, FALSE, widget_opts.packing_height>>1);
+
+      hbox=lives_hbox_new(FALSE,0);
+      gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height>>1);
 
       param->widgets[0] = textview = gtk_text_view_new ();
       if (param->desc!=NULL) gtk_widget_set_tooltip_text( textview, param->desc);
@@ -1658,12 +1660,16 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, boolean add_
 
       scrolledwindow = lives_standard_scrolled_window_new (-1, RFX_TEXT_SCROLL_HEIGHT, textview, FALSE);
 
-      gtk_box_pack_start (GTK_BOX (hbox), scrolledwindow, TRUE, TRUE, widget_opts.packing_width);
+      gtk_box_pack_start (GTK_BOX (hbox), scrolledwindow, TRUE, TRUE, 0);
 
       g_object_set_data(G_OBJECT(textbuffer),"textview",textview);
 
     }
     else {
+      if (use_mnemonic) label = lives_standard_label_new_with_mnemonic (_(name),NULL);
+      else label = lives_standard_label_new (_(name));
+
+      gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, widget_opts.packing_width);
       param->widgets[0]=entry=lives_standard_entry_new(NULL,FALSE,txt,(int)param->max,(int)param->max,LIVES_BOX(hbox),param->desc);
 
       if (rfx->status==RFX_STATUS_WEED&&param->special_type!=LIVES_PARAM_SPECIAL_TYPE_FILEREAD) {
@@ -1673,11 +1679,7 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, boolean add_
 
     }
 
-    if (use_mnemonic) label = lives_standard_label_new_with_mnemonic (_(name),NULL);
-    else label = lives_standard_label_new (_(name));
     if (param->desc!=NULL) gtk_widget_set_tooltip_text(label, param->desc);
-
-    gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, widget_opts.packing_width);
 
     g_signal_connect_after (G_OBJECT (hbox), "set-focus-child", G_CALLBACK (after_param_text_focus_changed), 
 			    (gpointer) rfx);

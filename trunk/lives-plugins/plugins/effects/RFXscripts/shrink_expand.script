@@ -30,7 +30,7 @@ fframe|_First frame|num2|100.00|0.00|1000.00|
 ffinal|Fina_l frame|num2|100.00|0.00|1000.00|
 xcen|_X Center|num0|-100000|0|100000|
 ycen|_Y Center|num0|-100000|0|100000|
-top|_Top|bool|0|1|
+top| _Top  |bool|0|1|
 left|L_eft|bool|0|1|
 middle|_Middle|bool|1|1|
 right|_Right|bool|0|1|

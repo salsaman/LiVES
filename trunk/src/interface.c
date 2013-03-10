@@ -225,8 +225,10 @@ xprocess * create_processing (const gchar *text) {
 
   gtk_window_add_accel_group (GTK_WINDOW (procw->processing), accel_group);
 
-  if (mainw->multitrack==NULL) gtk_window_set_transient_for(GTK_WINDOW(procw->processing),GTK_WINDOW(mainw->LiVES));
-  else gtk_window_set_transient_for(GTK_WINDOW(procw->processing),GTK_WINDOW(mainw->multitrack->window));
+  if (prefs->show_gui) {
+    if (mainw->multitrack==NULL) gtk_window_set_transient_for(GTK_WINDOW(procw->processing),GTK_WINDOW(mainw->LiVES));
+    else gtk_window_set_transient_for(GTK_WINDOW(procw->processing),GTK_WINDOW(mainw->multitrack->window));
+  }
 
   dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(procw->processing));
   gtk_widget_show (dialog_vbox);
@@ -303,10 +305,10 @@ xprocess * create_processing (const gchar *text) {
 
     gtk_widget_show_all(ahbox);
 
-    procw->scrolledwindow = gtk_scrolled_window_new (NULL, NULL);
-    gtk_widget_set_size_request (procw->scrolledwindow, ENC_DETAILS_WIN_H, ENC_DETAILS_WIN_V);
+    procw->scrolledwindow = lives_standard_scrolled_window_new (ENC_DETAILS_WIN_H, ENC_DETAILS_WIN_V,
+								LIVES_WIDGET(mainw->optextview), FALSE);
+
     gtk_box_pack_start (GTK_BOX (vbox3), procw->scrolledwindow, TRUE, TRUE, 0);
-    gtk_container_add (GTK_CONTAINER (procw->scrolledwindow), (GtkWidget *)mainw->optextview);
   }
 
 
@@ -1316,12 +1318,6 @@ _entryw* create_location_dialog (int type) {
     if (mainw->multitrack==NULL) gtk_window_set_transient_for(GTK_WINDOW(locw->dialog),GTK_WINDOW(mainw->LiVES));
     else gtk_window_set_transient_for(GTK_WINDOW(locw->dialog),GTK_WINDOW(mainw->multitrack->window));
   }
-
-  /*  if (type==1)
-    gtk_window_set_default_size (GTK_WINDOW (locw->dialog), 300, 200);
-  else
-    gtk_window_set_default_size (GTK_WINDOW (locw->dialog), 650, 450);
-  */
 
   dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(locw->dialog));
 
@@ -2584,18 +2580,10 @@ _entryw* create_cds_dialog (gint type) {
 
   cdsw->warn_checkbutton=NULL;
 
-  cdsw->dialog = gtk_dialog_new ();
+  cdsw->dialog = lives_standard_dialog_new (_("LiVES: - Cancel/Discard/Save"),FALSE);
+
   accel_group = GTK_ACCEL_GROUP(gtk_accel_group_new ());
   gtk_window_add_accel_group (GTK_WINDOW (cdsw->dialog), accel_group);
-  gtk_window_set_title (GTK_WINDOW (cdsw->dialog), _("LiVES: - Cancel/Discard/Save"));
-  if (palette->style&STYLE_1) {
-    lives_dialog_set_has_separator(GTK_DIALOG(cdsw->dialog),FALSE);
-    lives_widget_set_bg_color(cdsw->dialog, GTK_STATE_NORMAL, &palette->normal_back);
-  }
-
-  gtk_window_set_modal (GTK_WINDOW (cdsw->dialog), TRUE);
-  gtk_window_set_position (GTK_WINDOW (cdsw->dialog), GTK_WIN_POS_CENTER_ALWAYS);
-  gtk_window_set_default_size (GTK_WINDOW (cdsw->dialog), 350, 200);
 
   if (prefs->show_gui) {
     if (mainw->multitrack==NULL) gtk_window_set_transient_for(GTK_WINDOW(cdsw->dialog),GTK_WINDOW(mainw->LiVES));
@@ -2603,82 +2591,60 @@ _entryw* create_cds_dialog (gint type) {
   }
 
   dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(cdsw->dialog));
-  gtk_widget_show (dialog_vbox);
 
+  widget_opts.justify=LIVES_JUSTIFY_CENTER;
   if (type==0) {
     if (strlen(mainw->multitrack->layout_name)==0) {
-      label = gtk_label_new (_("You are about to leave multitrack mode.\nThe current layout has not been saved.\nWhat would you like to do ?\n"));
+      label = lives_standard_label_new (_("You are about to leave multitrack mode.\nThe current layout has not been saved.\nWhat would you like to do ?\n"));
     }
     else {
-      label = gtk_label_new (_("You are about to leave multitrack mode.\nThe current layout has been changed since the last save.\nWhat would you like to do ?\n"));
+      label = lives_standard_label_new (_("You are about to leave multitrack mode.\nThe current layout has been changed since the last save.\nWhat would you like to do ?\n"));
     }
   }
   else if (type==1) {
-    if (!mainw->only_close) label = gtk_label_new (_("You are about to exit LiVES.\nThe current clip set can be saved.\nWhat would you like to do ?\n"));
-    else label = gtk_label_new (_("The current clip set has not been saved.\nWhat would you like to do ?\n"));
+    if (!mainw->only_close) label = lives_standard_label_new (_("You are about to exit LiVES.\nThe current clip set can be saved.\nWhat would you like to do ?\n"));
+    else label = lives_standard_label_new (_("The current clip set has not been saved.\nWhat would you like to do ?\n"));
   }
   else if (type==2||type==3) {
     if ((mainw->multitrack!=NULL&&mainw->multitrack->changed)||(mainw->stored_event_list!=NULL&&mainw->stored_event_list_changed)) {
-      label = gtk_label_new (_("The current layout has not been saved.\nWhat would you like to do ?\n"));
+      label = lives_standard_label_new (_("The current layout has not been saved.\nWhat would you like to do ?\n"));
     }
     else {
-      label = gtk_label_new (_("The current layout has not been changed since it was last saved.\nWhat would you like to do ?\n"));
+      label = lives_standard_label_new (_("The current layout has not been changed since it was last saved.\nWhat would you like to do ?\n"));
     }
   }
   else if (type==4) {
     if (mainw->multitrack!=NULL&&mainw->multitrack->changed) {
-      label = gtk_label_new (_("The current layout contains generated frames and cannot be retained.\nYou may wish to render it before exiting multitrack mode.\n"));
+      label = lives_standard_label_new (_("The current layout contains generated frames and cannot be retained.\nYou may wish to render it before exiting multitrack mode.\n"));
     }
     else {
-      label = gtk_label_new (_("You are about to leave multitrack mode.\nThe current layout contains generated frames and cannot be retained.\nWhat do you wish to do ?"));
+      label = lives_standard_label_new (_("You are about to leave multitrack mode.\nThe current layout contains generated frames and cannot be retained.\nWhat do you wish to do ?"));
     }
   }
+  widget_opts.justify=LIVES_JUSTIFY_DEFAULT;
 
-  gtk_widget_show (label);
   gtk_box_pack_start (GTK_BOX (dialog_vbox), label, TRUE, TRUE, 0);
-  gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_CENTER);
-
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(label, GTK_STATE_NORMAL, &palette->normal_fore);
-  }
 
   if (type==1) {
-    GtkWidget *eventbox,*checkbutton;
+    GtkWidget *checkbutton;
 
     hbox = lives_hbox_new (FALSE, 0);
     gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
     
     cdsw->entry = lives_standard_entry_new (_("Clip set _name"),TRUE,strlen (mainw->set_name)?mainw->set_name:"",32,128,LIVES_BOX(hbox),NULL);
 
-    gtk_widget_show_all (hbox);
-
-    checkbutton = gtk_check_button_new ();
-    label=gtk_label_new_with_mnemonic (_("_Auto reload next time"));
-
-    eventbox=gtk_event_box_new();
-    gtk_container_add (GTK_CONTAINER (eventbox), label);
-    g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
-		      G_CALLBACK (label_act_toggle),
-		      checkbutton);
-    gtk_label_set_mnemonic_widget (GTK_LABEL (label),checkbutton);
-    if (palette->style&STYLE_1&&mainw!=NULL) {
-      lives_widget_set_fg_color(label, GTK_STATE_NORMAL, &palette->normal_fore);
-      lives_widget_set_bg_color (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
-    }
     hbox = lives_hbox_new (FALSE, 0);
     gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
-    gtk_box_pack_start (GTK_BOX (hbox), checkbutton, FALSE, FALSE, 0);
-    gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, widget_opts.packing_width);
-    gtk_widget_show_all (hbox);
-    lives_widget_set_can_focus_and_default (checkbutton);
-    
+
+    checkbutton = lives_standard_check_button_new (_("_Auto reload next time"),TRUE,LIVES_BOX(hbox),NULL);
+
     if ((type==0&&prefs->ar_layout)||(type==1&&!mainw->only_close)) {
-      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(checkbutton),TRUE);
+      lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(checkbutton),TRUE);
       if (type==1) prefs->ar_clipset=TRUE;
       else prefs->ar_layout=TRUE;
     }
     else {
-      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(checkbutton),FALSE);
+      lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(checkbutton),FALSE);
       if (type==1) prefs->ar_clipset=FALSE;
       else prefs->ar_layout=FALSE;
     }
@@ -2695,17 +2661,14 @@ _entryw* create_cds_dialog (gint type) {
   }
 
   dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (cdsw->dialog));
-  gtk_widget_show (dialog_action_area);
   gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area), GTK_BUTTONBOX_END);
 
   cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
-  gtk_widget_show (cancelbutton);
   gtk_dialog_add_action_widget (GTK_DIALOG (cdsw->dialog), cancelbutton, 0);
   gtk_widget_add_accelerator (cancelbutton, "activate", accel_group,
                               LIVES_KEY_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
 
   discardbutton = gtk_button_new_from_stock ("gtk-delete");
-  gtk_widget_show (discardbutton);
   gtk_dialog_add_action_widget (GTK_DIALOG (cdsw->dialog), discardbutton, 1+(type==2));
   gtk_button_set_use_stock(GTK_BUTTON(discardbutton),FALSE);
   gtk_button_set_use_underline(GTK_BUTTON(discardbutton),TRUE);
@@ -2715,7 +2678,6 @@ _entryw* create_cds_dialog (gint type) {
   else if (type==2) gtk_button_set_label(GTK_BUTTON(discardbutton),_("_Delete layout"));
 
   savebutton = gtk_button_new_from_stock ("gtk-save");
-  gtk_widget_show (savebutton);
   gtk_button_set_use_stock(GTK_BUTTON(savebutton),FALSE);
   gtk_button_set_use_underline(GTK_BUTTON(savebutton),TRUE);
   if (type==0||type==3) gtk_button_set_label(GTK_BUTTON(savebutton),_("_Save layout"));
@@ -2724,6 +2686,8 @@ _entryw* create_cds_dialog (gint type) {
   if (type!=4) gtk_dialog_add_action_widget (GTK_DIALOG (cdsw->dialog), savebutton, 2-(type==2));
   lives_widget_set_can_focus_and_default (savebutton);
   if (type==1||type==2)gtk_widget_grab_default(savebutton);
+
+  gtk_widget_show_all(cdsw->dialog);
 
   return cdsw;
 }
@@ -2790,28 +2754,18 @@ GtkWidget *create_cleardisk_advanced_dialog(void) {
   GtkWidget *scrollw;
   GtkWidget *vbox;
   GtkWidget *hbox;
-  GtkWidget *label;
   GtkWidget *checkbutton;
   GtkWidget *okbutton;
   GtkWidget *resetbutton;
-  GtkWidget *eventbox;
 
+  gchar *tmp,*tmp2;
 
-    dialog = gtk_dialog_new ();
-    gtk_window_set_title (GTK_WINDOW (dialog), _("LiVES: - Disk Recovery Options"));
-    if (palette->style&STYLE_1) {
-      lives_dialog_set_has_separator(GTK_DIALOG(dialog),FALSE);
-      lives_widget_set_bg_color(dialog, GTK_STATE_NORMAL, &palette->normal_back);
-    }
-    
-    /*if (prefs->show_gui) {
-      gtk_window_set_transient_for(GTK_WINDOW(dialog),GTK_WINDOW(mainw->LiVES));
-      }*/
-    
-    gtk_window_set_modal (GTK_WINDOW (dialog), TRUE);
-    gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_CENTER_ALWAYS);
-    gtk_window_set_default_size (GTK_WINDOW (dialog), 450, 300);
+  dialog = lives_standard_dialog_new (_("LiVES: - Disk Recovery Options"),FALSE);
 
+  if (prefs->show_gui) {
+    if (mainw->multitrack==NULL) gtk_window_set_transient_for(GTK_WINDOW(dialog),GTK_WINDOW(mainw->LiVES));
+    else gtk_window_set_transient_for(GTK_WINDOW(dialog),GTK_WINDOW(mainw->multitrack->window));
+  }
 
   dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(dialog));
 
@@ -2836,87 +2790,38 @@ GtkWidget *create_cleardisk_advanced_dialog(void) {
     lives_widget_set_bg_color(lives_bin_get_child(LIVES_BIN(scrollw)), GTK_STATE_NORMAL, &palette->normal_back);
   }
 
-
-  // ---
   hbox = lives_hbox_new (FALSE, 0);
-  gtk_widget_show (hbox);
-  gtk_box_pack_start (GTK_BOX (vbox), hbox, TRUE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, TRUE, widget_opts.packing_height);
 
-  checkbutton = gtk_check_button_new();
-  eventbox = gtk_event_box_new();
-  label = gtk_label_new_with_mnemonic(_("Delete _Orphaned Clips"));
-  gtk_label_set_mnemonic_widget(GTK_LABEL(label), checkbutton);
-  gtk_container_add(GTK_CONTAINER(eventbox), label);
-  g_signal_connect(GTK_OBJECT(eventbox), "button_press_event", G_CALLBACK(label_act_toggle), checkbutton);
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(label, GTK_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_fg_color(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_bg_color(eventbox, GTK_STATE_NORMAL, &palette->normal_back);
-  }
+  checkbutton = lives_standard_check_button_new((tmp=g_strdup(_("Delete _Orphaned Clips"))),TRUE,LIVES_BOX(hbox),
+						(tmp2=g_strdup(_("Delete any clips which are not currently loaded or part of a set"))));
 
-  gtk_box_pack_start (GTK_BOX (hbox), eventbox, TRUE, TRUE, 0);
-  gtk_box_pack_start (GTK_BOX (hbox), checkbutton, TRUE, TRUE, 0);
+  g_free(tmp); g_free(tmp2);
 
-  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(checkbutton), !(prefs->clear_disk_opts & LIVES_CDISK_LEAVE_ORPHAN_SETS));
+  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(checkbutton), !(prefs->clear_disk_opts & LIVES_CDISK_LEAVE_ORPHAN_SETS));
 
-  //----
   g_signal_connect_after (GTK_OBJECT (checkbutton), "toggled",
 			  G_CALLBACK (flip_cdisk_bit),
 			  GINT_TO_POINTER(LIVES_CDISK_LEAVE_ORPHAN_SETS));
 
-  // ---
   hbox = lives_hbox_new (FALSE, 0);
-  gtk_widget_show (hbox);
-  gtk_box_pack_start (GTK_BOX (vbox), hbox, TRUE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, TRUE, widget_opts.packing_height);
 
-  checkbutton = gtk_check_button_new();
-  eventbox = gtk_event_box_new();
-  label = gtk_label_new_with_mnemonic(_("Clear _Backup Files from Closed Clips"));
-  gtk_label_set_mnemonic_widget(GTK_LABEL(label), checkbutton);
-  gtk_container_add(GTK_CONTAINER(eventbox), label);
-  g_signal_connect(GTK_OBJECT(eventbox), "button_press_event", G_CALLBACK(label_act_toggle), checkbutton);
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(label, GTK_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_fg_color(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_bg_color(eventbox, GTK_STATE_NORMAL, &palette->normal_back);
-  }
+  checkbutton = lives_standard_check_button_new(_("Clear _Backup Files from Closed Clips"),TRUE,LIVES_BOX(hbox),NULL);
 
-
-  gtk_box_pack_start (GTK_BOX (hbox), eventbox, TRUE, TRUE, 0);
-  gtk_box_pack_start (GTK_BOX (hbox), checkbutton, TRUE, TRUE, 0);
-
-
-  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(checkbutton), !(prefs->clear_disk_opts & LIVES_CDISK_LEAVE_BFILES));
+  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(checkbutton), !(prefs->clear_disk_opts & LIVES_CDISK_LEAVE_BFILES));
 
   g_signal_connect_after (GTK_OBJECT (checkbutton), "toggled",
 			  G_CALLBACK (flip_cdisk_bit),
 			  GINT_TO_POINTER(LIVES_CDISK_LEAVE_BFILES));
-  //----
 
-
-  // ---
   hbox = lives_hbox_new (FALSE, 0);
-  gtk_widget_show (hbox);
-  gtk_box_pack_start (GTK_BOX (vbox), hbox, TRUE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, TRUE, widget_opts.packing_height);
 
-  checkbutton = gtk_check_button_new();
-  eventbox = gtk_event_box_new();
-  label = gtk_label_new_with_mnemonic(_("Remove Sets which have _Layouts but no Clips"));
-  gtk_label_set_mnemonic_widget(GTK_LABEL(label), checkbutton);
-  gtk_container_add(GTK_CONTAINER(eventbox), label);
-  g_signal_connect(GTK_OBJECT(eventbox), "button_press_event", G_CALLBACK(label_act_toggle), checkbutton);
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(label, GTK_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_fg_color(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_bg_color(eventbox, GTK_STATE_NORMAL, &palette->normal_back);
-  }
+  checkbutton = lives_standard_check_button_new(_("Remove Sets which have _Layouts but no Clips"),TRUE,LIVES_BOX(hbox),NULL);
 
-  gtk_box_pack_start (GTK_BOX (hbox), eventbox, TRUE, TRUE, 0);
-  gtk_box_pack_start (GTK_BOX (hbox), checkbutton, TRUE, TRUE, 0);
-  //----
-
-  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(checkbutton), 
-			       (prefs->clear_disk_opts & LIVES_CDISK_REMOVE_ORPHAN_LAYOUTS));
+  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(checkbutton), 
+				 (prefs->clear_disk_opts & LIVES_CDISK_REMOVE_ORPHAN_LAYOUTS));
   
   g_signal_connect_after (GTK_OBJECT (checkbutton), "toggled",
 			  G_CALLBACK (flip_cdisk_bit),
@@ -2932,7 +2837,6 @@ GtkWidget *create_cleardisk_advanced_dialog(void) {
   lives_widget_set_can_focus_and_default (okbutton);
   gtk_widget_grab_default (okbutton);
   gtk_button_set_label(GTK_BUTTON(okbutton),_("_Accept"));
-
 
   return dialog;
 

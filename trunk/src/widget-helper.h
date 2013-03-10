@@ -682,6 +682,8 @@ LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_button
 
 LiVESWidget *lives_standard_hruler_new(void);
 
+LiVESWidget *lives_standard_scrolled_window_new(int width, int height, LiVESWidget *child, boolean apply_theme);
+
 LiVESWidget *lives_volume_button_new(LiVESOrientation orientation, LiVESAdjustment *, double volume);
 
 

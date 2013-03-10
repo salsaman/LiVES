@@ -1046,34 +1046,39 @@ boolean make_param_box(GtkVBox *top_vbox, lives_rfx_t *rfx) {
   // make a dynamic parameter window
 
   // returns TRUE if we added any parameters
+  lives_param_t *param=NULL;
 
   GtkWidget *param_vbox=NULL;
   GtkWidget *top_hbox=NULL;
   GtkWidget *hbox=NULL;
 
-  gchar **array;
-  boolean used[rfx->num_params];
-  boolean has_box=FALSE;
-  gchar *line;
-  gchar *type=NULL;
-  GList *hints=NULL;
-  GList *onchange=NULL;
-  GList *layout=NULL;
-  int i,j,k,pnum;
-  int length;
-  int poffset=0,inum=0;
-  lives_param_t *param=NULL;
-
-  gint num_tok;
-  gchar label_text[256]; // max length of a label in layout hints
-
   // put whole thing in scrolled window
   GtkWidget *scrolledwindow;
 
+  GList *hints=NULL;
+  GList *onchange=NULL;
+  GList *layout=NULL;
+
+  gchar **array;
+  gchar label_text[256]; // max length of a label in layout hints
+
+  gchar *line;
+  gchar *type=NULL;
+
+  boolean used[rfx->num_params];
+  boolean has_box=FALSE;
   boolean internal=FALSE;
   boolean noslid;
   boolean has_param=FALSE;
   boolean chk_params=FALSE;
+
+  int pnum;
+  int length;
+  int poffset=0,inum=0;
+
+  int num_tok;
+
+  register int i,j,k;
 
   if (top_vbox==NULL) {
     // just check how many non-hidden params without displaying
@@ -1286,25 +1291,13 @@ boolean make_param_box(GtkVBox *top_vbox, lives_rfx_t *rfx) {
       add_fill_to_box(GTK_BOX(hbox));
     }
     
-    scrolledwindow = gtk_scrolled_window_new (NULL, NULL);
-    gtk_widget_show (scrolledwindow);
-    gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrolledwindow), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
-
-    lives_widget_set_hexpand(scrolledwindow,TRUE);
-    lives_widget_set_vexpand(scrolledwindow,TRUE);
-
-    gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (scrolledwindow), top_hbox);
-    gtk_box_pack_start (GTK_BOX (top_vbox), scrolledwindow, TRUE, TRUE, 0);
-    if (mainw->multitrack==NULL||rfx->status!=RFX_STATUS_WEED) 
-      gtk_widget_set_size_request (scrolledwindow, RFX_WINSIZE_H, RFX_WINSIZE_V);
-    
-    if (palette->style&STYLE_1) {
-      lives_widget_set_bg_color(gtk_bin_get_child (GTK_BIN (scrolledwindow)), GTK_STATE_NORMAL, &palette->normal_back);
+    if (mainw->multitrack==NULL||rfx->status!=RFX_STATUS_WEED) {
+      scrolledwindow=lives_standard_scrolled_window_new(RFX_WINSIZE_H,RFX_WINSIZE_V,top_hbox,TRUE);
     }
-    gtk_viewport_set_shadow_type (GTK_VIEWPORT (lives_bin_get_child (LIVES_BIN (scrolledwindow))),GTK_SHADOW_IN);
+    else 
+      scrolledwindow=lives_standard_scrolled_window_new(-1,-1,top_hbox,TRUE);
 
-    lives_widget_set_hexpand(lives_bin_get_child(LIVES_BIN(scrolledwindow)),TRUE);
-    lives_widget_set_vexpand(lives_bin_get_child(LIVES_BIN(scrolledwindow)),TRUE);
+    gtk_box_pack_start (GTK_BOX (top_vbox), scrolledwindow, TRUE, TRUE, 0);
 
   }
 
@@ -1663,13 +1656,12 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, boolean add_
 
       gtk_text_buffer_set_text (textbuffer, txt, -1);
 
-      scrolledwindow = gtk_scrolled_window_new (NULL, NULL);
-      gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrolledwindow), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
-      gtk_container_add (GTK_CONTAINER (scrolledwindow), textview);
+      scrolledwindow = lives_standard_scrolled_window_new (-1, RFX_TEXT_SCROLL_HEIGHT, textview, FALSE);
+
       gtk_box_pack_start (GTK_BOX (hbox), scrolledwindow, TRUE, TRUE, widget_opts.packing_width);
-      gtk_widget_set_size_request(scrolledwindow,-1,RFX_TEXT_SCROLL_HEIGHT);
 
       g_object_set_data(G_OBJECT(textbuffer),"textview",textview);
+
     }
     else {
       param->widgets[0]=entry=lives_standard_entry_new(NULL,FALSE,txt,(int)param->max,(int)param->max,LIVES_BOX(hbox),param->desc);

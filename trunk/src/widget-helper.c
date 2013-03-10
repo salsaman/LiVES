@@ -1992,6 +1992,61 @@ LiVESWidget *lives_standard_hruler_new(void) {
 
 
 
+LiVESWidget *lives_standard_scrolled_window_new(int width, int height, LiVESWidget *child, boolean apply_theme) {
+  LiVESWidget *scrolledwindow=NULL;
+
+#ifdef GUI_GTK
+  scrolledwindow = gtk_scrolled_window_new (NULL, NULL);
+  gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrolledwindow), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+
+  if (apply_theme) {
+    lives_widget_set_hexpand(scrolledwindow,TRUE);
+    lives_widget_set_vexpand(scrolledwindow,TRUE);
+  }
+
+  if (child!=NULL) {
+#if GTK_CHECK_VERSION(3,0,0)
+    if (!GTK_IS_SCROLLABLE(child))
+#else
+    if (!GTK_IS_TEXT_VIEW(child))
+#endif 
+      {
+	gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (scrolledwindow), child);
+	gtk_viewport_set_shadow_type (GTK_VIEWPORT (lives_bin_get_child (LIVES_BIN (scrolledwindow))),GTK_SHADOW_IN);
+      }
+    else 
+      gtk_container_add (GTK_CONTAINER (scrolledwindow), child);
+  }
+
+  if (width!=0&&height!=0) {
+#if !GTK_CHECK_VERSION(3,0,0)
+    gtk_widget_set_size_request (scrolledwindow, width, height);
+#else
+    gtk_scrolled_window_set_min_content_height(GTK_SCROLLED_WINDOW(scrolledwindow),height);
+    gtk_scrolled_window_set_min_content_width(GTK_SCROLLED_WINDOW(scrolledwindow),width);
+#endif
+  }
+
+  if (apply_theme) {
+    if (palette->style&STYLE_1) {
+      lives_widget_set_bg_color(gtk_bin_get_child (GTK_BIN (scrolledwindow)), GTK_STATE_NORMAL, &palette->normal_back);
+    }
+  }
+
+  if (apply_theme) {
+    lives_widget_set_hexpand(lives_bin_get_child(LIVES_BIN(scrolledwindow)),TRUE);
+    lives_widget_set_vexpand(lives_bin_get_child(LIVES_BIN(scrolledwindow)),TRUE);
+  }
+#endif
+  return scrolledwindow;
+}
+
+
+
+
+
+
+
 // utils
 LIVES_INLINE void lives_cursor_unref(LiVESXCursor *cursor) {
 #ifdef GUI_GTK
@@ -2238,6 +2293,9 @@ LiVESWidget *add_hsep_to_box (LiVESBox *box, boolean expand) {
   gtk_box_pack_start (box, hseparator, expand, TRUE, 0);
   if (!widget_opts.no_gui) 
     gtk_widget_show(hseparator);
+  if (mainw!=NULL&&mainw->is_ready&&(palette->style&STYLE_1)) {
+    lives_widget_set_fg_color(hseparator, GTK_STATE_NORMAL, &palette->normal_fore);
+  }
   widget=hseparator;
 #endif
   return widget;

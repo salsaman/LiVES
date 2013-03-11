@@ -7356,18 +7356,27 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
   switch (palette) {
   case WEED_PALETTE_RGB24:
   case WEED_PALETTE_BGR24:
+#ifdef USE_SWSCALE
+    rowstride=CEIL(width*3,16);
+#else
     rowstride=width*3;
+#endif
     framesize=CEIL(rowstride*height,32);
-    pixel_data=(uint8_t *)lives_calloc(framesize>>2,4);
+    pixel_data=(uint8_t *)lives_calloc(framesize>>4,16);
     if (pixel_data==NULL) return;
     weed_set_voidptr_value(layer,"pixel_data",pixel_data);
     weed_set_int_value(layer,"rowstrides",rowstride);
     break;
 
   case WEED_PALETTE_YUV888:
-    framesize=CEIL(width*height*3,32);
+#ifdef USE_SWSCALE
+    rowstride=CEIL(width*3,16);
+#else
+    rowstride=width*3;
+#endif
+    framesize=CEIL(rowstride*height,32);
     if (!black_fill) {
-      pixel_data=(uint8_t *)lives_calloc(framesize>>2,4);
+      pixel_data=(uint8_t *)lives_calloc(framesize>>4,16);
       if (pixel_data==NULL) return;
     }
     else {
@@ -7383,7 +7392,6 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
 	}
       }
     }
-    rowstride=width*3;
     weed_set_int_value(layer,"rowstrides",rowstride);
     weed_set_voidptr_value(layer,"pixel_data",pixel_data);
     break;
@@ -7391,7 +7399,7 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
   case WEED_PALETTE_UYVY8888:
     framesize=CEIL(width*height*4,32);
     if (!black_fill) {
-      pixel_data=(uint8_t *)lives_calloc(framesize>>2,4);
+      pixel_data=(uint8_t *)lives_calloc(framesize>>4,16);
       if (pixel_data==NULL) return;
     }
     else {
@@ -7415,7 +7423,7 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
   case WEED_PALETTE_YUYV8888:
     framesize=CEIL(width*height*4,32);
     if (!black_fill) {
-      pixel_data=(uint8_t *)lives_calloc(framesize>>2,4);
+      pixel_data=(uint8_t *)lives_calloc(framesize>>4,16);
       if (pixel_data==NULL) return;
     }
     else {
@@ -7437,9 +7445,14 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
     break;
 
   case WEED_PALETTE_RGBA32:
-    framesize=CEIL(width*height*4,32);
+#ifdef USE_SWSCALE
+    rowstride=CEIL(width*4,16);
+#else
+    rowstride=width*4;
+#endif
+    framesize=CEIL(rowstride*height,32);
     if (!black_fill) {
-      pixel_data=(uint8_t *)lives_calloc(framesize>>2,4);
+      pixel_data=(uint8_t *)lives_calloc(framesize>>4,16);
       if (pixel_data==NULL) return;
     }
     else {
@@ -7453,15 +7466,19 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
 	}
       }
     }
-    rowstride=width*4;
     weed_set_int_value(layer,"rowstrides",rowstride);
     weed_set_voidptr_value(layer,"pixel_data",pixel_data);
     break;
 
   case WEED_PALETTE_BGRA32:
-    framesize=CEIL(width*height*4,32);
+#ifdef USE_SWSCALE
+    rowstride=CEIL(width*4,16);
+#else
+    rowstride=width*4;
+#endif
+    framesize=CEIL(rowstride*height,32);
     if (!black_fill) {
-      pixel_data=(uint8_t *)lives_calloc(framesize>>2,4);
+      pixel_data=(uint8_t *)lives_calloc(framesize>>4,16);
       if (pixel_data==NULL) return;
     }
     else {
@@ -7475,15 +7492,19 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
 	}
       }
     }
-    rowstride=width*4;
     weed_set_int_value(layer,"rowstrides",rowstride);
     weed_set_voidptr_value(layer,"pixel_data",pixel_data);
     break;
 
   case WEED_PALETTE_ARGB32:
-    framesize=CEIL(width*height*4,32);
+#ifdef USE_SWSCALE
+    rowstride=CEIL(width*4,16);
+#else
+    rowstride=width*4;
+#endif
+    framesize=CEIL(rowstride*height,32);
     if (!black_fill) {
-      pixel_data=(uint8_t *)lives_calloc(framesize>>2,4);
+      pixel_data=(uint8_t *)lives_calloc(framesize>>4,16);
       if (pixel_data==NULL) return;
     }
     else {
@@ -7499,15 +7520,19 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
 	}
       }
     }
-    rowstride=width*4;
     weed_set_int_value(layer,"rowstrides",rowstride);
     weed_set_voidptr_value(layer,"pixel_data",pixel_data);
     break;
 
   case WEED_PALETTE_YUVA8888:
-    framesize=CEIL(width*height*4,32);
+#ifdef USE_SWSCALE
+    rowstride=CEIL(width*4,16);
+#else
+    rowstride=width*4;
+#endif
+    framesize=CEIL(rowstride*height,32);
     if (!black_fill) {
-      pixel_data=(uint8_t *)lives_calloc(framesize>>2,4);
+      pixel_data=(uint8_t *)lives_calloc(framesize>>4,16);
       if (pixel_data==NULL) return;
     }
     else {
@@ -7523,7 +7548,6 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
 	}
       }
     }
-    rowstride=width*4;
     weed_set_int_value(layer,"rowstrides",rowstride);
     weed_set_voidptr_value(layer,"pixel_data",pixel_data);
     break;
@@ -7547,7 +7571,7 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
     if (!may_contig) {
       weed_leaf_delete(layer,"host_pixel_data_contiguous");
       if (!black_fill) {
-	pd_array[0]=(uint8_t *)lives_calloc(framesize>>2,4);
+	pd_array[0]=(uint8_t *)lives_calloc(framesize>>4,16);
 	if (pd_array[0]==NULL) {
 	  g_free(pd_array);
 	  return;
@@ -7631,7 +7655,7 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
       weed_leaf_delete(layer,"host_pixel_data_contiguous");
 
       if (!black_fill) {
-	pd_array[0]=(uint8_t *)lives_calloc(framesize>>2,4);
+	pd_array[0]=(uint8_t *)lives_calloc(framesize>>4,16);
 	if (pd_array[0]==NULL) {
 	  g_free(pd_array);
 	  return;
@@ -7714,18 +7738,18 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
       weed_leaf_delete(layer,"host_pixel_data_contiguous");
 
       if (!black_fill) {
-	pd_array[0]=(uint8_t *)lives_calloc(framesize>>2,4);
+	pd_array[0]=(uint8_t *)lives_calloc(framesize>>4,16);
 	if (pd_array[0]==NULL) {
 	  g_free(pd_array);
 	  return;
 	}
-	pd_array[1]=(uint8_t *)lives_calloc(framesize>>2,4);
+	pd_array[1]=(uint8_t *)lives_calloc(framesize>>4,16);
 	if (pd_array[1]==NULL) {
 	  g_free(pd_array[0]);
 	  g_free(pd_array);
 	  return;
 	}
-	pd_array[2]=(uint8_t *)lives_calloc(framesize>>2,4);
+	pd_array[2]=(uint8_t *)lives_calloc(framesize>>4,16);
 	if (pd_array[2]==NULL) {
 	  g_free(pd_array[1]);
 	  g_free(pd_array[0]);
@@ -7761,7 +7785,7 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
     } else {
       weed_set_boolean_value(layer,"host_pixel_data_contiguous",WEED_TRUE);
       if (!black_fill) {
-	memblock=(uint8_t *)lives_calloc((framesize*3)>>2,4);
+	memblock=(uint8_t *)lives_calloc((framesize*3)>>4,16);
 	if (memblock==NULL) return;
 	pd_array[0]=memblock;
 	pd_array[1]=memblock+framesize;
@@ -7796,25 +7820,25 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
 
 
       if (!black_fill) {
-	pd_array[0]=(uint8_t *)lives_calloc(framesize>>2,4);
+	pd_array[0]=(uint8_t *)lives_calloc(framesize>>4,16);
 	if (pd_array[0]==NULL) {
 	  g_free(pd_array);
 	  return;
 	}
-	pd_array[1]=(uint8_t *)lives_calloc(framesize>>2,4);
+	pd_array[1]=(uint8_t *)lives_calloc(framesize>>4,16);
 	if (pd_array[1]==NULL) {
 	  g_free(pd_array[0]);
 	  g_free(pd_array);
 	  return;
 	}
-	pd_array[2]=(uint8_t *)lives_calloc(framesize>>2,4);
+	pd_array[2]=(uint8_t *)lives_calloc(framesize>>4,16);
 	if (pd_array[2]==NULL) {
 	  g_free(pd_array[1]);
 	  g_free(pd_array[0]);
 	  g_free(pd_array);
 	  return;
 	}
-	pd_array[3]=(uint8_t *)lives_calloc(framesize>>2,4);
+	pd_array[3]=(uint8_t *)lives_calloc(framesize>>4,16);
 	if (pd_array[3]==NULL) {
 	  g_free(pd_array[2]);
 	  g_free(pd_array[1]);
@@ -10796,7 +10820,7 @@ boolean pixbuf_to_layer(weed_plant_t *layer, LiVESPixbuf *pixbuf) {
 
   framesize=CEIL(rowstride*height,32);
 
-  pixel_data=lives_calloc(framesize>>2,4);
+  pixel_data=lives_calloc(framesize>>4,16);
 
   if (pixel_data!=NULL) {
     in_pixel_data=(void *)lives_pixbuf_get_pixels_readonly(pixbuf);

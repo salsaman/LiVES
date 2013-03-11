@@ -737,7 +737,7 @@ on_resaudio_ok_clicked                      (GtkButton *button,
 
     gtk_widget_destroy (resaudw->dialog);
     mainw->noswitch=TRUE;
-    while (g_main_context_iteration(NULL,FALSE));
+    lives_widget_context_update();
     mainw->noswitch=noswitch;
     g_free (resaudw);
     

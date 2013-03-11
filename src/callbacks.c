@@ -170,7 +170,7 @@ void lives_exit (void) {
       unlink(mainw->recovery_file);
       // hide the main window
       threaded_dialog_spin();
-      while (g_main_context_iteration (NULL,FALSE));
+      lives_widget_context_update();
       threaded_dialog_spin();
     }
 
@@ -180,7 +180,7 @@ void lives_exit (void) {
       end_threaded_dialog();
       if (do_move_tmpdir_dialog()) {
 	do_do_not_close_d();
-	while (g_main_context_iteration(NULL,FALSE));
+	lives_widget_context_update();
 
 	// TODO *** - check for namespace collisions between sets in old dir and sets in new dir
 
@@ -564,7 +564,7 @@ void on_filesel_simple_clicked (GtkButton *button, GtkEntry *entry) {
   // callback for directory browsing buttons
   gchar *dirname;
   gchar *fname=g_strdup(gtk_entry_get_text(entry));
-  while (g_main_context_iteration(NULL,FALSE));
+  lives_widget_context_update();
   dirname=choose_file(fname,NULL,NULL,GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER,NULL,NULL);
   if (dirname!=NULL) {
     g_snprintf(file_name,PATH_MAX,"%s",dirname);
@@ -612,7 +612,7 @@ void on_ok_filesel_open_clicked (GtkFileChooser *chooser, gpointer user_data) {
 
   if (mainw->multitrack==NULL) gtk_widget_queue_draw(mainw->LiVES);
   else gtk_widget_queue_draw(mainw->multitrack->window);
-  while (g_main_context_iteration(NULL,FALSE));
+  lives_widget_context_update();
   
   mainw->fs_playarea=NULL;
   
@@ -733,7 +733,7 @@ on_recent_activate                      (GtkMenuItem     *menuitem,
   }
 
 
-  while (g_main_context_iteration (NULL,FALSE)); // hide menu popdown
+  lives_widget_context_update(); // hide menu popdown
 
   pref=g_strdup_printf("recent%d",pno);
 
@@ -775,7 +775,7 @@ on_location_select                   (GtkButton       *button,
 {
   g_snprintf(file_name,PATH_MAX,"%s",gtk_entry_get_text(GTK_ENTRY(locw->entry)));
   gtk_widget_destroy(locw->dialog);
-  while (g_main_context_iteration (NULL,FALSE));
+  lives_widget_context_update();
   g_free(locw);
 
   mainw->opening_loc=TRUE;
@@ -826,7 +826,7 @@ void on_utube_select (GtkButton *button, gpointer user_data) {
   dirname=g_strdup(gtk_entry_get_text(GTK_ENTRY(locw->dir_entry)));
 
   gtk_widget_destroy(locw->dialog);
-  while (g_main_context_iteration (NULL,FALSE));
+  lives_widget_context_update();
   g_free(locw);
 
   dfile=g_build_filename(dirname,fname,NULL);
@@ -1221,7 +1221,7 @@ on_close_activate                      (GtkMenuItem     *menuitem,
       mainw->com_failed=FALSE;
       lives_system(com,TRUE);
       if (g_file_test(cdir,G_FILE_TEST_IS_DIR)) {
-	while (g_main_context_iteration(NULL,FALSE));
+	lives_widget_context_update();
 	g_usleep(prefs->sleep_time);
       }
     } while (g_file_test(cdir,G_FILE_TEST_IS_DIR));
@@ -1417,7 +1417,7 @@ on_export_proj_activate                      (GtkMenuItem     *menuitem,
       g_snprintf(new_set_name,128,"%s",gtk_entry_get_text (GTK_ENTRY (renamew->entry)));
       gtk_widget_destroy(renamew->dialog);
       g_free(renamew);
-      while (g_main_context_iteration(NULL,FALSE));
+      lives_widget_context_update();
     } while (!is_legal_set_name(new_set_name,FALSE));
     g_snprintf(mainw->set_name,128,"%s",new_set_name);
   }
@@ -2888,7 +2888,7 @@ on_insert_activate                    (GtkButton     *button,
 
   if (button!=NULL) {
     gtk_widget_destroy(insertw->insert_dialog);
-    while (g_main_context_iteration (NULL,FALSE));
+    lives_widget_context_update();
     g_free(insertw);
     if ((cfile->fps!=clipboard->fps&&orig_frames>0)||(cfile->arps!=clipboard->arps&&clipboard->achans>0&&with_sound)) {
       if (!do_clipboard_fps_warning()) {
@@ -4586,13 +4586,13 @@ on_save_set_activate            (GtkMenuItem     *menuitem,
       g_snprintf(new_set_name,128,"%s",gtk_entry_get_text (GTK_ENTRY (renamew->entry)));
       gtk_widget_destroy(renamew->dialog);
       g_free(renamew);
-      while (g_main_context_iteration(NULL,FALSE));
+      lives_widget_context_update();
     } while (!is_legal_set_name(new_set_name,TRUE));
   }
   else g_snprintf(new_set_name,128,"%s",(gchar *)user_data);
 
   gtk_widget_queue_draw (mainw->LiVES);
-  while (g_main_context_iteration (NULL,FALSE));
+  lives_widget_context_update();
 
   g_snprintf(mainw->set_name,128,"%s",new_set_name);
 
@@ -4713,7 +4713,7 @@ on_save_set_activate            (GtkMenuItem     *menuitem,
       while (cliplist!=NULL) {
 	if (mainw->write_failed) break;
 	threaded_dialog_spin();
-	while (g_main_context_iteration(NULL,FALSE));
+	lives_widget_context_update();
 
 	// TODO - dirsep
 
@@ -5099,7 +5099,7 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
 	    load_start_image (cfile->start);
 	    load_end_image (cfile->end);
 	  }
-	  while (g_main_context_iteration(NULL,FALSE));
+	  lives_widget_context_update();
 	}
       }
       else {
@@ -5304,7 +5304,7 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
     if (mainw->multitrack!=NULL&&mainw->multitrack->is_ready) {
       mainw->current_file=mainw->multitrack->render_file;
       mt_init_clips(mainw->multitrack,new_file,TRUE);
-      while (g_main_context_iteration(NULL,FALSE));
+      lives_widget_context_update();
       mt_clip_select(mainw->multitrack,TRUE);
     }
 
@@ -5896,7 +5896,7 @@ void on_fs_preview_clicked (GtkWidget *widget, gpointer user_data) {
 #endif
     g_free (com);
 
-    while (g_main_context_iteration (NULL, FALSE));
+    lives_widget_context_update();
   }
 
   if (preview_type==3) {
@@ -5945,7 +5945,7 @@ void on_fs_preview_clicked (GtkWidget *widget, gpointer user_data) {
 	alarm_handle=lives_alarm_set(LIVES_FILE_READ_TIMEOUT);
 	
 	while (!((ifile=fopen (info_file,"r")) || (timeout=lives_alarm_get(alarm_handle)))) {
-	  while (g_main_context_iteration(NULL,FALSE));
+	  lives_widget_context_update();
 	  g_usleep (prefs->sleep_time);
 	}
 	
@@ -6009,7 +6009,7 @@ void on_fs_preview_clicked (GtkWidget *widget, gpointer user_data) {
 	gtk_alignment_set(GTK_ALIGNMENT(mainw->fs_playalign),0.5,
 			  0.5,1.,1.);
 
-	while (g_main_context_iteration(NULL,FALSE));
+	lives_widget_context_update();
 
 	blank=lives_pixbuf_new_blank(fwidth+20,fheight+20,WEED_PALETTE_RGB24);
 
@@ -6019,7 +6019,7 @@ void on_fs_preview_clicked (GtkWidget *widget, gpointer user_data) {
 	lives_painter_destroy (cr);
 	lives_object_unref(blank);
 
-	while (g_main_context_iteration(NULL,FALSE));
+	lives_widget_context_update();
 	
 
 	offs_x=(fwidth-width)/2;
@@ -6121,7 +6121,7 @@ void on_fs_preview_clicked (GtkWidget *widget, gpointer user_data) {
     
       while (!((ifile=fopen(info_file,"r")) || (timeout=lives_alarm_get(alarm_handle)))
 	     &&mainw->in_fs_preview) {
-	while (g_main_context_iteration (NULL,FALSE));
+	lives_widget_context_update();
 	threaded_dialog_spin();
 	g_usleep(prefs->sleep_time);
       }
@@ -6184,7 +6184,7 @@ void on_fs_preview_clicked (GtkWidget *widget, gpointer user_data) {
 			(float)height/(float)fheight);
       
       
-      while (g_main_context_iteration(NULL,FALSE));
+      lives_widget_context_update();
       
       blank=lives_pixbuf_new_blank(fwidth+20,fheight+20,WEED_PALETTE_RGB24);
       
@@ -6194,7 +6194,7 @@ void on_fs_preview_clicked (GtkWidget *widget, gpointer user_data) {
       lives_painter_destroy (cr);
       lives_object_unref(blank);
       
-      while (g_main_context_iteration(NULL,FALSE));
+      lives_widget_context_update();
     }
 
     if (prefs->audio_player==AUD_PLAYER_JACK) {
@@ -6252,7 +6252,7 @@ void on_fs_preview_clicked (GtkWidget *widget, gpointer user_data) {
     // loop here until preview has finished, or the user cancels
 
     while ((!(ifile=fopen (info_file,"r")))&&mainw->in_fs_preview) {
-      while (g_main_context_iteration (NULL,FALSE));
+      lives_widget_context_update();
       g_usleep (prefs->sleep_time);
     }
 
@@ -6311,7 +6311,7 @@ void on_ok_file_open_clicked(GtkFileChooser *chooser, GSList *fnames) {
 
     if (mainw->multitrack==NULL) gtk_widget_queue_draw(mainw->LiVES);
     else gtk_widget_queue_draw(mainw->multitrack->window);
-    while (g_main_context_iteration(NULL,FALSE));
+    lives_widget_context_update();
     
     mainw->fs_playarea=NULL;
     
@@ -6406,7 +6406,7 @@ on_opensel_range_ok_clicked                  (GtkButton       *button,
   // open file selection
   end_fs_preview();
   gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
-  while (g_main_context_iteration(NULL,FALSE));
+  lives_widget_context_update();
 
   mainw->fs_playarea=NULL;
   mainw->img_concat_clip=-1;
@@ -6504,7 +6504,7 @@ void on_open_new_audio_clicked (GtkFileChooser *chooser, gpointer user_data) {
   get_dirname(mainw->audio_dir);
   end_fs_preview();
   gtk_widget_destroy(GTK_WIDGET(chooser));
-  while (g_main_context_iteration(NULL,FALSE));
+  lives_widget_context_update();
   mainw->fs_playarea=NULL;
 
   a_type=file_name+strlen(file_name)-3;
@@ -6582,7 +6582,7 @@ void on_open_new_audio_clicked (GtkFileChooser *chooser, gpointer user_data) {
 
   if (!(do_progress_dialog(TRUE,TRUE,_ ("Opening audio")))) {
     gtk_widget_queue_draw(mainw->LiVES);
-    while (g_main_context_iteration(NULL,FALSE));
+    lives_widget_context_update();
     mainw->cancelled=CANCEL_NONE;
     mainw->error=FALSE;
     mainw->com_failed=FALSE;
@@ -6610,7 +6610,7 @@ void on_open_new_audio_clicked (GtkFileChooser *chooser, gpointer user_data) {
   cfile->opening_audio=cfile->opening=cfile->opening_only_audio=FALSE;
 
   gtk_widget_queue_draw(mainw->LiVES);
-  while (g_main_context_iteration(NULL,FALSE));
+  lives_widget_context_update();
 
   array=g_strsplit(mainw->msg,"|",7);
   cfile->afilesize=strtol(array[6],NULL,10);
@@ -6762,7 +6762,7 @@ void on_save_textview_clicked (GtkButton *button, gpointer user_data) {
   gchar *save_file;
 
   gtk_widget_hide(gtk_widget_get_toplevel(GTK_WIDGET(button)));
-  while (g_main_context_iteration (NULL,FALSE));
+  lives_widget_context_update();
 
   save_file=choose_file(NULL,NULL,filt,GTK_FILE_CHOOSER_ACTION_SAVE,NULL,NULL);
 
@@ -6785,7 +6785,7 @@ void on_save_textview_clicked (GtkButton *button, gpointer user_data) {
   btext=text_view_get_text(textview);
   
   gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
-  while (g_main_context_iteration (NULL,FALSE));
+  lives_widget_context_update();
 
   mainw->write_failed=FALSE;
   lives_write(fd,btext,strlen(btext),FALSE);
@@ -6815,7 +6815,7 @@ void on_cancel_button1_clicked (GtkWidget *widget, gpointer user_data) {
   end_fs_preview();
 
   if (widget!=NULL) gtk_widget_destroy(gtk_widget_get_toplevel(widget));
-  while (g_main_context_iteration (NULL,FALSE));
+  lives_widget_context_update();
 
   if (user_data!=NULL) {
     g_free(user_data);
@@ -6845,7 +6845,7 @@ on_cancel_opensel_clicked              (GtkButton       *button,
 {
   end_fs_preview();
   gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
-  while (g_main_context_iteration(NULL,FALSE));
+  lives_widget_context_update();
   mainw->fs_playarea=NULL;
 
   if (mainw->multitrack!=NULL) {
@@ -6876,7 +6876,7 @@ void on_cancel_keep_button_clicked (GtkButton *button, gpointer user_data) {
     gtk_widget_set_sensitive(cfile->proc_ptr->stop_button,FALSE);
     gtk_widget_set_sensitive(cfile->proc_ptr->preview_button,FALSE);
   }
-  while (g_main_context_iteration(NULL,FALSE));
+  lives_widget_context_update();
 
   if ((!mainw->effects_paused||cfile->nokeep)&&(!mainw->is_rendering||
 						(mainw->multitrack!=NULL&&(!mainw->multitrack->is_rendering||
@@ -7148,7 +7148,7 @@ void on_full_screen_activate (GtkMenuItem *menuitem, gpointer user_data) {
 	  }
 	}
 	if (cfile->frames==1||cfile->play_paused) {
-	  while (g_main_context_iteration (NULL,FALSE));
+	  lives_widget_context_update();
 	}
       }
 
@@ -7241,7 +7241,7 @@ void on_full_screen_activate (GtkMenuItem *menuitem, gpointer user_data) {
 	  }
 	}
 	if (mainw->multitrack==NULL&&(cfile->frames==1||cfile->play_paused)) {
-	  while (g_main_context_iteration (NULL,FALSE));
+	  lives_widget_context_update();
 	  if (mainw->play_window!=NULL&&!mainw->noswitch&&(cfile->clip_type==CLIP_TYPE_DISK||
 							   cfile->clip_type==CLIP_TYPE_FILE)) {
 	    weed_plant_t *frame_layer=mainw->frame_layer;
@@ -7254,7 +7254,7 @@ void on_full_screen_activate (GtkMenuItem *menuitem, gpointer user_data) {
       else {
 	if (mainw->multitrack==NULL) {
 	  // in-frame window
-	  while (g_main_context_iteration(NULL,FALSE));
+	  lives_widget_context_update();
 	  
 	  mainw->pwidth=lives_widget_get_allocation_width(mainw->playframe)-H_RESIZE_ADJUST;
 	  mainw->pheight=lives_widget_get_allocation_height(mainw->playframe)-V_RESIZE_ADJUST;
@@ -7354,7 +7354,7 @@ on_double_size_activate               (GtkMenuItem     *menuitem,
     // needed
     block_expose();
     do {
-      while (g_main_context_iteration (NULL, FALSE));
+      lives_widget_context_update();
       mainw->pwidth=lives_widget_get_allocation_width(mainw->playframe)-H_RESIZE_ADJUST;
       mainw->pheight=lives_widget_get_allocation_height(mainw->playframe)-V_RESIZE_ADJUST;
     } while (!(mainw->pwidth*mainw->pheight));
@@ -7384,7 +7384,7 @@ on_double_size_activate               (GtkMenuItem     *menuitem,
 	}
       }
       if (cfile->frames==1||cfile->play_paused) {
-	while (g_main_context_iteration (NULL,FALSE));
+	lives_widget_context_update();
 	if (!(mainw->play_window==NULL)&&!mainw->noswitch&&(cfile->clip_type==CLIP_TYPE_DISK||
 							    cfile->clip_type==CLIP_TYPE_FILE)) {
 	  weed_plant_t *frame_layer=mainw->frame_layer;
@@ -7432,8 +7432,7 @@ on_double_size_activate               (GtkMenuItem     *menuitem,
 
 
 
-void on_sepwin_pressed (GtkButton *button,
-			gpointer user_data) {
+void on_sepwin_pressed (GtkButton *button, gpointer user_data) {
 
   // toolbar button (separate window)
   if (mainw->multitrack!=NULL) {
@@ -7445,13 +7444,11 @@ void on_sepwin_pressed (GtkButton *button,
 
 
 
-void
-on_sepwin_activate               (GtkMenuItem     *menuitem,
-				  gpointer         user_data)
-{
-  gchar buff[PATH_MAX];
+void on_sepwin_activate (GtkMenuItem *menuitem, gpointer user_data) {
   GtkWidget *sep_img;
   GtkWidget *sep_img2;
+
+  gchar buff[PATH_MAX];
   gchar *fnamex;
 
   mainw->sep_win=!mainw->sep_win;
@@ -7505,6 +7502,7 @@ on_sepwin_activate               (GtkMenuItem     *menuitem,
       if (mainw->sep_win) {
 	// switch to separate window during pb
 	if (mainw->multitrack==NULL) {
+
 	  if (prefs->show_framecount&&((!mainw->preview&&(cfile->frames>0||mainw->foreign))||cfile->opening)) {
 	    gtk_widget_show(mainw->framebar);
 	  }
@@ -7547,6 +7545,11 @@ on_sepwin_activate               (GtkMenuItem     *menuitem,
 
 	make_play_window();
 
+	mainw->pw_scroll_func=g_signal_connect (GTK_OBJECT (mainw->play_window), "scroll_event",
+						G_CALLBACK (on_mouse_scroll),
+						NULL);
+
+
 	if (mainw->ext_playback&&mainw->vpp->fheight>-1&&mainw->vpp->fwidth>-1) {	  
 	  // fixed o/p size for stream
 	  if (!(mainw->vpp->fwidth*mainw->vpp->fheight)) {
@@ -7570,7 +7573,7 @@ on_sepwin_activate               (GtkMenuItem     *menuitem,
 	  gtk_widget_set_app_paintable(mainw->play_window,TRUE);
 	}
 	if (cfile->frames==1||cfile->play_paused) {
-	  while (g_main_context_iteration (NULL,FALSE));
+	  lives_widget_context_update();
 	  if (mainw->play_window!=NULL&&GDK_IS_WINDOW(lives_widget_get_xwindow(mainw->play_window))&&
 	      !mainw->noswitch&&mainw->multitrack==NULL&&(cfile->clip_type==CLIP_TYPE_DISK||
 							  cfile->clip_type==CLIP_TYPE_FILE)) {
@@ -7600,7 +7603,7 @@ on_sepwin_activate               (GtkMenuItem     *menuitem,
 	  }
 	  
 	  gtk_widget_queue_draw (mainw->playframe);
-	  while (g_main_context_iteration (NULL, FALSE));
+	  lives_widget_context_update();
 	  mainw->pwidth=lives_widget_get_allocation_width(mainw->playframe)-H_RESIZE_ADJUST;
 	  mainw->pheight=lives_widget_get_allocation_height(mainw->playframe)-V_RESIZE_ADJUST;
 	}
@@ -7613,7 +7616,7 @@ on_sepwin_activate               (GtkMenuItem     *menuitem,
 	    gtk_widget_hide(mainw->framebar);
 	    if (!mainw->faded) fade_background();
 	    fullscreen_internal();
-	    while (g_main_context_iteration (NULL, FALSE));
+	    lives_widget_context_update();
 	  }
 	}
 	if (mainw->multitrack!=NULL) {
@@ -8106,7 +8109,7 @@ void on_load_subs_activate (GtkMenuItem *menuitem, gpointer user_data) {
   if (cfile->subt!=NULL) if (!do_existing_subs_warning()) return;
 
   // try to repaint the screen, as it may take a few seconds to get a directory listing
-  while (g_main_context_iteration(NULL,FALSE));
+  lives_widget_context_update();
 
   ttl=g_strdup (_("LiVES: Load subtitles from..."));
 
@@ -8194,7 +8197,7 @@ void on_save_subs_activate (GtkMenuItem *menuitem, gpointer user_data) {
   GtkEntry *entry=(GtkEntry *)user_data;
 
   // try to repaint the screen, as it may take a few seconds to get a directory listing
-  while (g_main_context_iteration(NULL,FALSE));
+  lives_widget_context_update();
 
   g_snprintf(xfname,512,"%s",mainw->subt_save_file);
   get_dirname(xfname);
@@ -8290,7 +8293,7 @@ on_eject_cd_activate                (GtkMenuItem     *menuitem,
 				     gpointer         user_data)
 {
   gchar *com=g_strdup_printf("eject \"%s\"",prefs->cdplay_device);
-  while(g_main_context_iteration(NULL,FALSE));
+  lives_widget_context_update();
   lives_system(com,TRUE);
   g_free(com);
 }
@@ -8309,7 +8312,7 @@ on_load_cdtrack_ok_clicked                (GtkButton     *button,
   gboolean bad_header=FALSE;
 
   gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
-  while(g_main_context_iteration(NULL,FALSE));
+  lives_widget_context_update();
 
   if (mainw->current_file>-1) {
     if (!(prefs->warning_mask&WARN_MASK_LAYOUT_DELETE_AUDIO)) {
@@ -8400,7 +8403,7 @@ on_load_cdtrack_ok_clicked                (GtkButton     *button,
 
   if (!(do_progress_dialog(TRUE,TRUE,_ ("Opening CD track...")))) {
     gtk_widget_queue_draw(mainw->LiVES);
-    while (g_main_context_iteration(NULL,FALSE));
+    lives_widget_context_update();
 
     if (!was_new) {
       mainw->com_failed=FALSE;
@@ -8437,13 +8440,13 @@ on_load_cdtrack_ok_clicked                (GtkButton     *button,
   }
 
   gtk_widget_queue_draw(mainw->LiVES);
-  while (g_main_context_iteration(NULL,FALSE));
+  lives_widget_context_update();
 
   if (mainw->error) {
     d_print(_ ("Error loading CD track\n"));
 
     gtk_widget_queue_draw(mainw->LiVES);
-    while (g_main_context_iteration(NULL,FALSE));
+    lives_widget_context_update();
 
     if (!was_new) {
       com=g_strdup_printf("%s cancel_audio \"%s\"",prefs->backend,cfile->handle);
@@ -9282,14 +9285,27 @@ boolean expose_raud_event (GtkWidget *widget, GdkEventExpose *event) {
 }
 
 
+
 boolean config_event (GtkWidget *widget, GdkEventConfigure *event, gpointer user_data) {
+  int scr_width=mainw->mgeom[prefs->gui_monitor>0?prefs->gui_monitor-1:0].width;
+  int scr_height=mainw->mgeom[prefs->gui_monitor>0?prefs->gui_monitor-1:0].height;
+
   if (mainw->is_ready) {
+    if (scr_width!=mainw->scr_width||scr_height!=mainw->scr_height) {
+      mainw->scr_width=scr_width;
+      mainw->scr_height=scr_height;
+      resize_widgets_for_monitor(FALSE);
+    }
+
     if (mainw->current_file>-1&&!mainw->recoverable_layout) {
       get_play_times();
     }
   }
 
   if (!mainw->is_ready) {
+    mainw->scr_width=scr_width;
+    mainw->scr_height=scr_height;
+
     if (prefs->startup_interface==STARTUP_CE) {
 
 #ifdef ENABLE_JACK
@@ -9649,7 +9665,7 @@ on_preview_clicked                     (GtkButton       *button,
     // this prevents a hang when the separate window is visible
     // it may be the first time we have shown it
     block_expose();
-    while (g_main_context_iteration(NULL,FALSE));
+    lives_widget_context_update();
     unblock_expose();
     gtk_widget_queue_draw (mainw->LiVES);
   }
@@ -10435,7 +10451,7 @@ on_capture_activate                (GtkMenuItem     *menuitem,
   else mainw->rec_vid_frames=-1;
 
   gtk_widget_destroy (resaudw->dialog);
-  while (g_main_context_iteration(NULL,FALSE));
+  lives_widget_context_update();
   if (resaudw!=NULL) g_free(resaudw);
   resaudw=NULL;
   
@@ -10473,7 +10489,7 @@ on_capture_activate                (GtkMenuItem     *menuitem,
   // an example of using 'get_temp_handle()' ////////
   if (!get_temp_handle(mainw->first_free_file,TRUE)) {
     if (prefs->show_gui) gtk_widget_show(mainw->LiVES);
-    while (g_main_context_iteration(NULL,FALSE));
+    lives_widget_context_update();
     if (mainw->multitrack!=NULL) {
       mt_sensitise(mainw->multitrack);
       mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
@@ -10488,7 +10504,7 @@ on_capture_activate                (GtkMenuItem     *menuitem,
 
   if (mainw->com_failed) {
     if (prefs->show_gui) gtk_widget_show(mainw->LiVES);
-    while (g_main_context_iteration(NULL,FALSE));
+    lives_widget_context_update();
     if (mainw->multitrack!=NULL) {
       mt_sensitise(mainw->multitrack);
       mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
@@ -10500,7 +10516,7 @@ on_capture_activate                (GtkMenuItem     *menuitem,
 
   if (get_token_count(mainw->msg,'|')<6) {
     if (prefs->show_gui) gtk_widget_show(mainw->LiVES);
-    while (g_main_context_iteration(NULL,FALSE));
+    lives_widget_context_update();
     if (mainw->multitrack!=NULL) {
       mt_sensitise(mainw->multitrack);
       mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
@@ -10542,7 +10558,7 @@ on_capture_activate                (GtkMenuItem     *menuitem,
 		      mainw->rec_asamps,mainw->rec_achans,mainw->rec_signed_endian,mainw->foreign_visual);
 
   // force the dialog to disappear
-  while (g_main_context_iteration(NULL,FALSE));
+  lives_widget_context_update();
 
   lives_system(com,FALSE);
 
@@ -10552,7 +10568,7 @@ on_capture_activate                (GtkMenuItem     *menuitem,
   }
 
   mainw->noswitch=TRUE;
-  while (g_main_context_iteration(NULL,FALSE));
+  lives_widget_context_update();
   mainw->noswitch=FALSE;
 
   if (!after_foreign_play()&&mainw->cancelled==CANCEL_NONE) {
@@ -10823,7 +10839,7 @@ void on_ok_append_audio_clicked (GtkFileChooser *chooser, gpointer user_data) {
   gtk_widget_destroy(GTK_WIDGET(chooser));
 
   gtk_widget_queue_draw(mainw->LiVES);
-  while (g_main_context_iteration(NULL,FALSE));
+  lives_widget_context_update();
   
   a_type=file_name+strlen(file_name)-3;
 
@@ -10856,7 +10872,7 @@ void on_ok_append_audio_clicked (GtkFileChooser *chooser, gpointer user_data) {
 
   if (!do_progress_dialog (TRUE, TRUE,_ ("Appending audio"))) {
     gtk_widget_queue_draw(mainw->LiVES);
-    while (g_main_context_iteration(NULL,FALSE));
+    lives_widget_context_update();
     mainw->cancelled=CANCEL_NONE;
     mainw->error=FALSE;
     mainw->com_failed=FALSE;
@@ -10880,7 +10896,7 @@ void on_ok_append_audio_clicked (GtkFileChooser *chooser, gpointer user_data) {
   }
   else {
     gtk_widget_queue_draw(mainw->LiVES);
-    while (g_main_context_iteration(NULL,FALSE));
+    lives_widget_context_update();
     com=g_strdup_printf ("%s commit_audio \"%s\"",prefs->backend,cfile->handle);
     mainw->com_failed=FALSE;
     mainw->cancelled=CANCEL_NONE;
@@ -11116,7 +11132,7 @@ void on_fade_audio_activate (GtkMenuItem *menuitem, gpointer user_data) {
   alarm_handle=lives_alarm_set(1);
 
   threaded_dialog_spin();
-  while (g_main_context_iteration(NULL,FALSE));
+  lives_widget_context_update();
   threaded_dialog_spin();
 
   if (!prefs->conserve_space) {
@@ -11491,7 +11507,7 @@ on_recaudclip_ok_clicked                      (GtkButton *button,
 
   cfile->signed_endian=get_signed_endian(asigned,aendian);
   gtk_widget_destroy (resaudw->dialog);
-  while (g_main_context_iteration(NULL,FALSE));
+  lives_widget_context_update();
   if (resaudw!=NULL) g_free(resaudw);
   resaudw=NULL;
 
@@ -11576,7 +11592,7 @@ on_recaudclip_ok_clicked                      (GtkButton *button,
   }
 
   mainw->cancelled=CANCEL_NONE;
-  while (g_main_context_iteration(NULL,FALSE));
+  lives_widget_context_update();
   
   if (type==1) {
     // set these again in case reget_afilesize() reset them
@@ -11828,7 +11844,7 @@ void on_ins_silence_details_clicked (GtkButton *button, gpointer user_data) {
   }
   cfile->signed_endian=get_signed_endian(asigned,aendian);
   gtk_widget_destroy (resaudw->dialog);
-  while (g_main_context_iteration(NULL,FALSE));
+  lives_widget_context_update();
   if (resaudw!=NULL) g_free(resaudw);
   resaudw=NULL;
   if (cfile->arate<=0) {

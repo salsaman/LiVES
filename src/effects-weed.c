@@ -7424,10 +7424,15 @@ boolean is_hidden_param(weed_plant_t *plant, int i) {
 
   if (weed_plant_has_leaf(wtmpl,"flags")) flags=weed_get_int_value(wtmpl,"flags",&error);
   if (weed_plant_has_leaf(wtmpl,"gui")) gui=weed_get_plantptr_value(wtmpl,"gui",&error);
+
+  if (gui!=NULL&&weed_plant_has_leaf(gui,"hidden")&&
+      weed_get_boolean_value(gui,"hidden",&error)==WEED_TRUE) return TRUE;
+
   if (!(flags&WEED_PARAMETER_REINIT_ON_VALUE_CHANGE)
       &&(gui==NULL||(!weed_plant_has_leaf(gui,"hidden")
 		     ||weed_get_boolean_value(gui,"hidden",&error)==WEED_FALSE))) {
     if (gui!=NULL) {
+      if (plant==weed_filters[294]) g_print("pt b\n");
       if (weed_plant_has_leaf(gui,"copy_value_to")) {
 	int copyto=weed_get_int_value(gui,"copy_value_to",&error);
 	int flags2=0,param_hint,param_hint2;

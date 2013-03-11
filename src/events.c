@@ -2999,7 +2999,7 @@ weed_plant_t *process_events (weed_plant_t *next_event, boolean process_audio, w
 	mainw->pchains=pchains;
 	load_frame_image (cfile->frameno);
 	mainw->pchains=NULL;
-	if (mainw->playing_file>-1) while (g_main_context_iteration (NULL,FALSE));
+	if (mainw->playing_file>-1) lives_widget_context_update();
 	mainw->current_file=current_file;
       }
       //weed_free(mainw->clip_index);
@@ -3021,7 +3021,7 @@ weed_plant_t *process_events (weed_plant_t *next_event, boolean process_audio, w
   //weed_free(mainw->clip_index);
   //weed_free(mainw->frame_index);
   //mainw->clip_index=mainw->frame_index=NULL;
-  if (mainw->playing_file>-1) while (g_main_context_iteration(NULL,FALSE));
+  if (mainw->playing_file>-1) lives_widget_context_update();
   cfile->next_event=get_next_event(next_event);
   break;
   case WEED_EVENT_HINT_FILTER_INIT:
@@ -3379,7 +3379,7 @@ lives_render_error_t render_events (gboolean reset) {
 	    blabel=g_strdup(gtk_label_get_text(GTK_LABEL(cfile->proc_ptr->label)));
 	    gtk_label_set_text(GTK_LABEL(cfile->proc_ptr->label),nlabel);
 	    gtk_widget_queue_draw(cfile->proc_ptr->processing);
-	    while (g_main_context_iteration(NULL,FALSE));
+	    lives_widget_context_update();
 	  }
 
 	  mainw->read_failed=mainw->write_failed=FALSE;
@@ -3406,7 +3406,7 @@ lives_render_error_t render_events (gboolean reset) {
 	    gtk_label_set_text(GTK_LABEL(cfile->proc_ptr->label),blabel);
 	    g_free(blabel);
 	    gtk_widget_queue_draw(cfile->proc_ptr->processing);
-	    while (g_main_context_iteration(NULL,FALSE));
+	    lives_widget_context_update();
 	  }
 	}
       }
@@ -3454,7 +3454,7 @@ lives_render_error_t render_events (gboolean reset) {
 		  blabel=g_strdup(gtk_label_get_text(GTK_LABEL(cfile->proc_ptr->label)));
 		  gtk_label_set_text(GTK_LABEL(cfile->proc_ptr->label),nlabel);
 		  gtk_widget_queue_draw(cfile->proc_ptr->processing);
-		  while (g_main_context_iteration(NULL,FALSE));
+		  lives_widget_context_update();
 		}
 
 		mainw->read_failed=mainw->write_failed=FALSE;
@@ -3482,7 +3482,7 @@ lives_render_error_t render_events (gboolean reset) {
 		  gtk_label_set_text(GTK_LABEL(cfile->proc_ptr->label),blabel);
 		  g_free(blabel);
 		  gtk_widget_queue_draw(cfile->proc_ptr->processing);
-		  while (g_main_context_iteration(NULL,FALSE));
+		  lives_widget_context_update();
 		}
 
 		for (i=0;i<natracks;i++) {
@@ -4197,7 +4197,7 @@ gboolean deal_with_render_choice (gboolean add_deinit) {
     gtk_widget_show (e_rec_dialog);
     gtk_dialog_run (GTK_DIALOG (e_rec_dialog));
     gtk_widget_destroy (e_rec_dialog);
-    while (g_main_context_iteration (NULL,FALSE));
+    lives_widget_context_update();
     switch (render_choice) {
     case RENDER_CHOICE_DISCARD:
       if (mainw->current_file>-1) cfile->redoable=FALSE;
@@ -5280,7 +5280,7 @@ render_details *create_render_details (gint type) {
   
   if (needs_new_encoder) {
     gtk_widget_set_sensitive(rdet->okbutton,FALSE);
-    while (g_main_context_iteration(NULL,FALSE)); // force showing of transient window
+    lives_widget_context_update(); // force showing of transient window
     do_encoder_img_ftm_error(rdet);
   }
 

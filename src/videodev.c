@@ -65,7 +65,7 @@ static gboolean lives_wait_user_buffer(lives_vdev_t *ldev, unicap_data_buffer_t 
     if (dtime-stime>timer) return FALSE;
 
     g_usleep(prefs->sleep_time);
-    while (g_main_context_iteration(NULL,FALSE));
+    lives_widget_context_update();
   }
 
   return FALSE;
@@ -90,7 +90,7 @@ static gboolean lives_wait_system_buffer(lives_vdev_t *ldev, gdouble timeout) {
     if (dtime-stime>timer) return FALSE;
 
     g_usleep(prefs->sleep_time);
-    while (g_main_context_iteration(NULL,FALSE));
+    lives_widget_context_update();
   }
 
   return TRUE;

@@ -1,6 +1,6 @@
 // preferences.h
 // LiVES (lives-exe)
-// (c) G. Finch (salsaman@gmail.com) 2004 - 2012
+// (c) G. Finch (salsaman@gmail.com) 2004 - 2013
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -13,18 +13,18 @@
 
 typedef struct {
   gchar bgcolour[256];
-  gboolean stop_screensaver;
-  gboolean open_maximised;
+  boolean stop_screensaver;
+  boolean open_maximised;
   gchar theme[64];  ///< the theme name
 
-  gshort pb_quality;
+  short pb_quality;
 #define PB_QUALITY_LOW 1
 #define PB_QUALITY_MED 2  ///< default
 #define PB_QUALITY_HIGH 3
 
   _encoder encoder; ///< from main.h
 
-  gshort audio_player;
+  short audio_player;
 #define AUD_PLAYER_SOX 1
 #define AUD_PLAYER_MPLAYER 2
 #define AUD_PLAYER_JACK 3
@@ -33,7 +33,7 @@ typedef struct {
   gchar aplayer[512]; // name, eg. "jack","pulse","sox","mplayer"
 
   /// frame quantisation type
-  gshort q_type;
+  short q_type;
 #define Q_FILL 1
 #define Q_SMOOTH 1
 
@@ -54,7 +54,7 @@ typedef struct {
 
   gchar image_ext[16];
 
-  guint warning_mask;
+  uint32_t warning_mask;
   // if these bits are set, we do not show the warning
 #define WARN_MASK_FPS (1<<0)
 #define WARN_MASK_FSIZE (1<<1)
@@ -104,29 +104,29 @@ typedef struct {
   gchar video_open_command[256];
   gchar audio_play_command[256];
   gchar cdplay_device[PATH_MAX];  ///< locale encoding
-  gdouble default_fps;
-  gint bar_height;
-  gboolean pause_effect_during_preview;
-  gboolean open_decorated;
+  double default_fps;
+  int bar_height;
+  boolean pause_effect_during_preview;
+  boolean open_decorated;
   int sleep_time;
-  gboolean pause_during_pb;
-  gboolean fileselmax;
-  gboolean show_recent;
-  gint warn_file_size;
-  gboolean midisynch;
-  gint dl_bandwidth;
-  gboolean conserve_space;
-  gboolean ins_resample;
-  gboolean show_tool;
-  gshort sepwin_type;   ///< 0 == non-sticky (show only when playing), 1 == sticky (show always)
-  gboolean show_player_stats;
-  gboolean show_framecount;
-  gboolean show_subtitles;
-  gboolean loop_recording;
-  gboolean discard_tv;
-  gboolean save_directories;
-  gboolean safer_preview;
-  gint rec_opts;
+  boolean pause_during_pb;
+  boolean fileselmax;
+  boolean show_recent;
+  int warn_file_size;
+  boolean midisynch;
+  int dl_bandwidth;
+  boolean conserve_space;
+  boolean ins_resample;
+  boolean show_tool;
+  short sepwin_type;   ///< 0 == non-sticky (show only when playing), 1 == sticky (show always)
+  boolean show_player_stats;
+  boolean show_framecount;
+  boolean show_subtitles;
+  boolean loop_recording;
+  boolean discard_tv;
+  boolean save_directories;
+  boolean safer_preview;
+  int rec_opts;
 #define REC_FRAMES (1<<0)
 #define REC_FPS (1<<1)
 #define REC_EFFECTS (1<<2)
@@ -135,28 +135,28 @@ typedef struct {
 #define REC_AFTER_PB (1<<5)
   
 
-  gint audio_src;
+  int audio_src;
 #define AUDIO_SRC_INT 0
 #define AUDIO_SRC_EXT 1
 
-  gboolean no_bandwidth;
-  gboolean osc_udp_started;
-  guint osc_udp_port;
+  boolean no_bandwidth;
+  boolean osc_udp_started;
+  uint32_t osc_udp_port;
 
-  gboolean omc_noisy; ///< send success/fail
-  gboolean omc_events; ///< send other events
+  boolean omc_noisy; ///< send success/fail
+  boolean omc_events; ///< send other events
 
-  gshort startup_phase; ///< -1 = fresh install, 1 = tmpdir set, 2, pre-audio start, 3, pre-tests, 100 = all tests passed
+  short startup_phase; ///< -1 = fresh install, 1 = tmpdir set, 2, pre-audio start, 3, pre-tests, 100 = all tests passed
   gchar *wm; ///<window manager name
-  gint ocp; ///< open_compression_percent : get/set in prefs
+  int ocp; ///< open_compression_percent : get/set in prefs
 
-  gboolean antialias;
+  boolean antialias;
 
-  gboolean ignore_tiny_fps_diffs;
+  boolean ignore_tiny_fps_diffs;
 
-  gshort rte_keys_virtual;
+  short rte_keys_virtual;
 
-  guint jack_opts;
+  uint32_t jack_opts;
 #define JACK_OPTS_TRANSPORT_CLIENT (1<<0)   ///< jack can start/stop
 #define JACK_OPTS_TRANSPORT_MASTER (1<<1)  ///< transport master
 #define JACK_OPTS_START_TSERVER (1<<2)     ///< start transport server
@@ -174,128 +174,128 @@ typedef struct {
   gchar *vppdefaultsfile;
 
   GList *acodec_list;
-  gint acodec_list_to_format[AUDIO_CODEC_NONE];
+  int acodec_list_to_format[AUDIO_CODEC_NONE];
 
-  guint audio_opts;
+  uint32_t audio_opts;
 #define AUDIO_OPTS_FOLLOW_CLIPS (1<<0)
 #define AUDIO_OPTS_FOLLOW_FPS (1<<1)
 
-  gboolean event_window_show_frame_events;
-  gboolean crash_recovery; ///< TRUE==maintain mainw->recovery file
+  boolean event_window_show_frame_events;
+  boolean crash_recovery; ///< TRUE==maintain mainw->recovery file
 
-  gboolean show_rdet; ///< show render details (frame size, encoder type) before saving to file
+  boolean show_rdet; ///< show render details (frame size, encoder type) before saving to file
 
-  gboolean move_effects;
+  boolean move_effects;
 
-  gint mt_undo_buf;
-  gboolean mt_enter_prompt;
+  int mt_undo_buf;
+  boolean mt_enter_prompt;
 
-  gint mt_def_width;
-  gint mt_def_height;
-  gdouble mt_def_fps;
+  int mt_def_width;
+  int mt_def_height;
+  double mt_def_fps;
 
-  gint mt_def_arate;
-  gint mt_def_achans;
-  gint mt_def_asamps;
-  gint mt_def_signed_endian;
+  int mt_def_arate;
+  int mt_def_achans;
+  int mt_def_asamps;
+  int mt_def_signed_endian;
 
-  gboolean mt_exit_render;
-  gboolean render_prompt;
+  boolean mt_exit_render;
+  boolean render_prompt;
 
-  gboolean mt_pertrack_audio;
-  gint mt_backaudio;
+  boolean mt_pertrack_audio;
+  int mt_backaudio;
 
-  gint mt_auto_back;
+  int mt_auto_back;
 
-  gboolean ar_clipset;
-  gboolean ar_layout;
+  boolean ar_clipset;
+  boolean ar_layout;
 
   gchar ar_clipset_name[128]; ///< utf8 (not converted (to locale?))
   gchar ar_layout_name[PATH_MAX];  ///< utf8 (not converted) 
 
-  gboolean rec_desktop_audio;
+  boolean rec_desktop_audio;
 
-  gboolean show_gui;
-  gboolean show_splash;
-  gboolean show_playwin;
+  boolean show_gui;
+  boolean show_splash;
+  boolean show_playwin;
 
-  gboolean osc_start;
+  boolean osc_start;
 
-  gboolean collate_images;
+  boolean collate_images;
 
-  gint virt_height; ///< n screens vert.
+  int virt_height; ///< n screens vert.
 
-  gboolean concat_images;
+  boolean concat_images;
 
-  gboolean render_audio;
-  gboolean normalise_audio;
+  boolean render_audio;
+  boolean normalise_audio;
 
-  gboolean instant_open;
-  gboolean auto_deint;
-  gboolean auto_nobord;
+  boolean instant_open;
+  boolean auto_deint;
+  boolean auto_nobord;
 
-  gint gui_monitor;
-  gint play_monitor;
+  int gui_monitor;
+  int play_monitor;
 
-  gboolean force_single_monitor;
+  boolean force_single_monitor;
 
-  gint midi_check_rate;
-  gint midi_rpt;
+  int midi_check_rate;
+  int midi_rpt;
 
 #define OMC_DEV_MIDI 1<<0
 #define OMC_DEV_JS 1<<1
 #define OMC_DEV_FORCE_RAW_MIDI 1<<2
-  guint omc_dev_opts;
+  uint32_t omc_dev_opts;
 
   gchar omc_js_fname[PATH_MAX];  ///< utf8
   gchar omc_midi_fname[PATH_MAX]; ///< utf8
   
-  gboolean mouse_scroll_clips;
+  boolean mouse_scroll_clips;
 
-  gint num_rtaudiobufs;
+  int num_rtaudiobufs;
 
-  gboolean safe_symlinks;
+  boolean safe_symlinks;
 
 #ifdef ALSA_MIDI
-  gboolean use_alsa_midi;
+  boolean use_alsa_midi;
 #endif
 
-  gint startup_interface;
+  int startup_interface;
 
 #define STARTUP_CE 0
 #define STARTUP_MT 1
 
-  gboolean ce_maxspect;
+  boolean ce_maxspect;
 
-  gboolean lamp_buttons;
+  boolean lamp_buttons;
 
-  gboolean autoload_subs;
+  boolean autoload_subs;
 
   glong rec_stop_gb;
 
-  gint max_modes_per_key; ///< maximum effect modes per key
+  int max_modes_per_key; ///< maximum effect modes per key
 
   // autotransitioning in mt
-  gint atrans_fx;
+  int atrans_fx;
   gchar def_autotrans[256];
 
-  gint nfx_threads;
+  int nfx_threads;
 
-  gboolean alpha_post; ///< set to TRUE to force use of post alpha internally
+  boolean alpha_post; ///< set to TRUE to force use of post alpha internally
 
-  gboolean stream_audio_out;
-  gboolean unstable_fx;
-  gboolean letterbox; ///< playback with letterbox
-  gboolean enc_letterbox; ///< encode with letterbox
+  boolean stream_audio_out;
+  boolean unstable_fx;
+  boolean letterbox; ///< playback with letterbox
+  boolean enc_letterbox; ///< encode with letterbox
 
-  gboolean force_system_clock; /// < force system clock (rather than soundcard) for timing ( better for high framerates )
+  boolean force_system_clock; /// < force system clock (rather than soundcard) for timing ( better for high framerates )
 
-  gboolean force64bit;
+  boolean force64bit;
 
-  gboolean auto_trim_audio;
+  boolean auto_trim_audio;
 
   /** default 0; 1==use old (bad) behaviour on bigendian machines (r/w bigend ints/doubles); 2==bad reads, good writes */
-  gint bigendbug;
+  int bigendbug;
 
 
   // these are defualt values; actual values can be adjusted in Preferences
@@ -315,7 +315,7 @@ typedef struct {
 #define LIVES_CDISK_REBUILD_ORDER_FILES (1<<6) ///< not yet implemented - TODO
 
 
-  guint clear_disk_opts;
+  uint32_t clear_disk_opts;
 
 #ifdef HAVE_YUV4MPEG
   gchar yuvin[PATH_MAX];
@@ -330,7 +330,7 @@ typedef struct {
   char frei0r_path[PATH_MAX];
   char ladspa_path[PATH_MAX];
 
-  gboolean present;
+  boolean present;
 
 } _prefs;
 
@@ -529,40 +529,40 @@ typedef struct {
   GtkWidget *frei0r_entry;
   GtkWidget *ladspa_entry;
   GtkTreeSelection *selection;
-  gboolean needs_restart;
+  boolean needs_restart;
 } _prefsw;
 
 /// startup overrides from commandline
 typedef struct {
-  gboolean ign_clipset;
-  gboolean ign_osc;
-  gboolean ign_aplayer;
-  gboolean ign_stmode;
-  gboolean ign_vppdefs;
+  boolean ign_clipset;
+  boolean ign_osc;
+  boolean ign_aplayer;
+  boolean ign_stmode;
+  boolean ign_vppdefs;
 } _ign_opts;
 
 typedef struct {
   gchar tmpdir[PATH_MAX];
   gchar theme[64];
   gchar vpp_name[64]; ///< new video playback plugin
-  gint vpp_fixed_fps_numer;
-  gint vpp_fixed_fps_denom;
-  gdouble vpp_fixed_fpsd;
+  int vpp_fixed_fps_numer;
+  int vpp_fixed_fps_denom;
+  double vpp_fixed_fpsd;
   int vpp_palette;
   int vpp_YUV_clamping;
-  gint vpp_fwidth;
-  gint vpp_fheight;
-  gint vpp_argc;
+  int vpp_fwidth;
+  int vpp_fheight;
+  int vpp_argc;
   gchar **vpp_argv;
 
   _encoder encoder;
-  gboolean show_recent;
-  gboolean show_tool;
-  gboolean osc_start;
-  gint startup_interface;
-  guint jack_opts;
+  boolean show_recent;
+  boolean show_tool;
+  boolean osc_start;
+  int startup_interface;
+  uint32_t jack_opts;
 
-  gint nfx_threads;
+  int nfx_threads;
 
 
   GList *disabled_decoders;
@@ -579,7 +579,7 @@ void  rdet_acodec_changed (GtkComboBox *acodec_combo, gpointer user_data);
 
 _prefsw* create_prefs_dialog (void);
 
-gboolean on_prefs_delete_event (GtkWidget *, GdkEvent *, gpointer prefsw);
+boolean on_prefs_delete_event (GtkWidget *, GdkEvent *, gpointer prefsw);
 
 void on_preferences_activate (GtkMenuItem *, gpointer);
 
@@ -587,7 +587,7 @@ void on_prefs_close_clicked (GtkButton *, gpointer);
 
 void on_prefs_revert_clicked (GtkButton *, gpointer);
 
-void set_vpp(gboolean set_in_prefs);
+void set_vpp(boolean set_in_prefs);
 
 void on_prefDomainChanged(GtkTreeSelection *, gpointer);
 
@@ -607,7 +607,7 @@ void apply_button_set_enabled(GtkWidget *widget, gpointer func_data);
 
 #define LIVES_PERM_OSC_PORTS 1
 
-gboolean lives_ask_permission(int what);
+boolean lives_ask_permission(int what);
 
 
 #endif

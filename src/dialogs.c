@@ -315,7 +315,7 @@ boolean do_warning_dialog_with_check_transient(const gchar *text, int warn_mask_
     gtk_widget_destroy (warning);
   } while (response==LIVES_RETRY);
 
-  while (g_main_context_iteration(NULL,FALSE));
+  lives_widget_context_update();
   if (mytext!=NULL) g_free(mytext);
 
   return (response==GTK_RESPONSE_OK);
@@ -341,7 +341,7 @@ boolean do_yesno_dialog(const gchar *text) {
   response=gtk_dialog_run (GTK_DIALOG (warning));
   gtk_widget_destroy (warning);
 
-  while (g_main_context_iteration(NULL,FALSE));
+  lives_widget_context_update();
   return (response==LIVES_YES);
 }
 
@@ -370,7 +370,7 @@ int do_abort_cancel_retry_dialog(const gchar *text, GtkWindow *transient) {
     response=gtk_dialog_run (GTK_DIALOG (warning));
     gtk_widget_destroy (warning);
 
-    while (g_main_context_iteration(NULL,FALSE));
+    lives_widget_context_update();
 
     if (response==LIVES_ABORT) {
       if (do_abort_check()) {
@@ -1057,7 +1057,7 @@ boolean process_one (boolean visible) {
 #endif
 	}
       }
-      while (g_main_context_iteration(NULL,FALSE)); // allow kb timer to run
+      lives_widget_context_update(); // allow kb timer to run
       if (cfile->next_event==NULL&&mainw->preview) mainw->cancelled=CANCEL_EVENT_LIST_END;
       if (mainw->cancelled==CANCEL_NONE) return TRUE;
       cancel_process(visible);
@@ -1224,7 +1224,7 @@ boolean process_one (boolean visible) {
       update_visual_params(xrfx,FALSE);
     }
 
-    while (g_main_context_iteration(NULL,FALSE));
+    lives_widget_context_update();
     if (G_UNLIKELY(mainw->cancelled!=CANCEL_NONE)) {
       cancel_process(visible);
       return FALSE;
@@ -1343,7 +1343,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const gchar *te
 	    if (mainw->current_file>-1&&cfile!=NULL) lives_freep((void**)&cfile->op_dir);
 	    return FALSE;
 	  }
-	  while (g_main_context_iteration(NULL,FALSE));
+	  lives_widget_context_update();
 	}
 	cfile->fx_frame_pump+=FX_FRAME_PUMP_VAL>>1;
       }
@@ -1745,7 +1745,7 @@ gboolean do_auto_dialog (const gchar *text, gint type) {
   gtk_widget_show(proc_ptr->processing);
   
   lives_set_cursor_style(LIVES_CURSOR_BUSY,NULL);
-  while (g_main_context_iteration(NULL,FALSE));
+  lives_widget_context_update();
 
   widget_opts.cursor_style=LIVES_CURSOR_NORMAL;
   lives_set_cursor_style(LIVES_CURSOR_BUSY,proc_ptr->processing);
@@ -1761,14 +1761,14 @@ gboolean do_auto_dialog (const gchar *text, gint type) {
     if (mainw->pulsed_read!=NULL) pulse_driver_uncork(mainw->pulsed_read);
 #endif
     if (mainw->rec_samples!=0) {
-      while (g_main_context_iteration(NULL,FALSE));
+      lives_widget_context_update();
       g_usleep(prefs->sleep_time);
     }
   }
 
   while ((type==1&&mainw->cancelled==CANCEL_NONE)||(type==0&&!(infofile=fopen(cfile->info_file,"r")))) {
     gtk_progress_bar_pulse(GTK_PROGRESS_BAR(proc_ptr->progressbar));
-    while (g_main_context_iteration(NULL,FALSE));
+    lives_widget_context_update();
     g_usleep(prefs->sleep_time);
     if (type==1&&mainw->rec_end_time!=-1.) {
       gettimeofday(&tv, NULL);
@@ -1792,7 +1792,7 @@ gboolean do_auto_dialog (const gchar *text, gint type) {
 
     while (count>0) {
       gtk_progress_bar_pulse(GTK_PROGRESS_BAR(proc_ptr->progressbar));
-      while (g_main_context_iteration(NULL,FALSE));
+      lives_widget_context_update();
       g_usleep(prefs->sleep_time);
       count--;
     }
@@ -1801,7 +1801,7 @@ gboolean do_auto_dialog (const gchar *text, gint type) {
   if (type==2) {
     while (!mainw->cancelled) {
       gtk_progress_bar_pulse(GTK_PROGRESS_BAR(proc_ptr->progressbar));
-      while (g_main_context_iteration(NULL,FALSE));
+      lives_widget_context_update();
       g_usleep(prefs->sleep_time);
     }
   }
@@ -2488,7 +2488,7 @@ void threaded_dialog_spin (void) {
   }
 
   gtk_widget_queue_draw(procw->processing);
-  while (g_main_context_iteration(NULL,FALSE));
+  lives_widget_context_update();
 
 }
 
@@ -2520,7 +2520,7 @@ void do_threaded_dialog(gchar *trans_text, gboolean has_cancel) {
   create_threaded_dialog(copy_text, has_cancel);
   g_free(copy_text);
 
-  while (g_main_context_iteration(NULL,FALSE));
+  lives_widget_context_update();
 }
 
 
@@ -2543,7 +2543,7 @@ void end_threaded_dialog(void) {
   }
   mainw->cancel_type=CANCEL_KILL;
   mainw->threaded_dialog=FALSE;
-  while (g_main_context_iteration(NULL,FALSE));
+  lives_widget_context_update();
 }
 
 

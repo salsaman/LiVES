@@ -1514,6 +1514,7 @@ void lives_combo_populate(LiVESCombo *combo, LiVESList *list) {
 #endif
 }
 
+///// lives compounds
 
 
 LiVESWidget *lives_volume_button_new(LiVESOrientation orientation, LiVESAdjustment *adj, double volume) {
@@ -2071,6 +2072,9 @@ LIVES_INLINE void lives_cursor_unref(LiVESXCursor *cursor) {
 }
 
 
+
+
+
 void lives_widget_get_bg_color(LiVESWidget *widget, LiVESWidgetColor *color) {
 #ifdef GUI_GTK
   lives_widget_get_bg_state_color(widget,GTK_STATE_NORMAL,color);
@@ -2158,6 +2162,27 @@ void adjustment_configure(LiVESAdjustment *adjustment,
 #endif
 
   g_object_thaw_notify (G_OBJECT(adjustment));
+}
+
+
+
+
+///// lives specific functions
+
+void lives_widget_context_update(void) {
+#ifdef GUI_GTK
+  boolean mt_needs_idlefunc=FALSE;
+
+  if (mainw->multitrack!=NULL&&mainw->multitrack->idlefunc>0) {
+    g_source_remove(mainw->multitrack->idlefunc);
+    mainw->multitrack->idlefunc=0;
+    mt_needs_idlefunc=TRUE;
+  }
+
+  while (!mainw->is_exiting&&g_main_context_iteration(NULL,FALSE));
+
+  if (!mainw->is_exiting&&mt_needs_idlefunc) mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
+#endif
 }
 
 
@@ -2298,11 +2323,11 @@ boolean lives_general_delete_event(LiVESWidget *widget, LiVESXEvent *event, LiVE
   return TRUE;
 }
 
-LiVESWidget *add_hsep_to_box (LiVESBox *box, boolean expand) {
+LiVESWidget *add_hsep_to_box (LiVESBox *box) {
   LiVESWidget *widget=NULL;
 #ifdef GUI_GTK
   GtkWidget *hseparator = lives_hseparator_new ();
-  gtk_box_pack_start (box, hseparator, expand, TRUE, 0);
+  gtk_box_pack_start (box, hseparator, FALSE, FALSE, widget_opts.packing_height>>1);
   if (!widget_opts.no_gui) 
     gtk_widget_show(hseparator);
   if (mainw!=NULL&&mainw->is_ready&&(palette->style&STYLE_1)) {

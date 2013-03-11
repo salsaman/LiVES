@@ -326,7 +326,8 @@ create_LiVES (void)
 
   mainw->LiVES = gtk_window_new (GTK_WINDOW_TOPLEVEL);
 
-  //gtk_window_present(GTK_WINDOW(mainw->LiVES));
+  if (prefs->present) 
+    gtk_window_present(GTK_WINDOW(mainw->LiVES));
 
   // TODO - can we use just DEFAULT_DROP ?
   gtk_drag_dest_set(mainw->LiVES,GTK_DEST_DEFAULT_ALL,mainw->target_table,2,
@@ -3365,7 +3366,7 @@ fullscreen_internal(void) {
       gtk_image_set_from_pixbuf(GTK_IMAGE(mainw->image274),NULL);
     }
 
-    while (g_main_context_iteration(NULL,FALSE));
+    lives_widget_context_update();
 
     get_border_size(mainw->LiVES, &bx, &by);
 
@@ -3789,6 +3790,54 @@ void play_window_set_title(void) {
 }
 
 
+void resize_widgets_for_monitor(boolean get_play_times) {
+  // resize widgets if we are aware that monitor resolution has changed
+
+  mainw->scr_width=mainw->mgeom[prefs->gui_monitor>0?prefs->gui_monitor-1:0].width;
+  mainw->scr_height=mainw->mgeom[prefs->gui_monitor>0?prefs->gui_monitor-1:0].height;
+  
+  if (mainw->multitrack==NULL) {
+    if (prefs->gui_monitor!=0) {
+      gint xcen=mainw->mgeom[prefs->gui_monitor-1].x+(mainw->mgeom[prefs->gui_monitor-1].width-
+						      lives_widget_get_allocation_width(mainw->LiVES))/2;
+      gint ycen=mainw->mgeom[prefs->gui_monitor-1].y+(mainw->mgeom[prefs->gui_monitor-1].height-
+						      lives_widget_get_allocation_height(mainw->LiVES))/2;
+      gtk_window_move(GTK_WINDOW(mainw->LiVES),xcen,ycen);
+      
+    }
+    if (prefs->open_maximised&&prefs->show_gui) {
+      gtk_window_maximize (GTK_WINDOW(mainw->LiVES));
+    }
+  }
+  else {
+    if (prefs->gui_monitor!=0) {
+      gint xcen=mainw->mgeom[prefs->gui_monitor-1].x+(mainw->mgeom[prefs->gui_monitor-1].width-
+						      lives_widget_get_allocation_width(mainw->multitrack->window))/2;
+      gint ycen=mainw->mgeom[prefs->gui_monitor-1].y+(mainw->mgeom[prefs->gui_monitor-1].height-
+						      lives_widget_get_allocation_height(mainw->multitrack->window))/2;
+      gtk_window_move(GTK_WINDOW(mainw->multitrack->window),xcen,ycen);
+    }
+	
+	
+    if ((prefs->gui_monitor!=0||capable->nmonitors<=1)&&prefs->open_maximised) {
+      gtk_window_maximize (GTK_WINDOW(mainw->multitrack->window));
+    }
+  }
+
+  if (mainw->play_window!=NULL) {
+    resize_play_window();
+  }
+
+  /*  if (mainw->multitrack==NULL&&get_play_times) {
+    if (mainw->current_file>-1&&!mainw->recoverable_layout) {
+      get_play_times();
+    }
+    }*/
+
+
+}
+
+
 void make_play_window(void) {
   //  separate window
 
@@ -3804,6 +3853,8 @@ void make_play_window(void) {
   } 
   
   mainw->play_window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
+
+  gtk_widget_set_events (mainw->play_window, GDK_SCROLL_MASK);
 
   gtk_window_set_position(GTK_WINDOW(mainw->play_window),GTK_WIN_POS_CENTER_ALWAYS);
 
@@ -3860,7 +3911,7 @@ void make_play_window(void) {
       // be careful, the user could switch out of sepwin here !
       mainw->noswitch=TRUE;
       
-      while (g_main_context_iteration(NULL,FALSE));
+      lives_widget_context_update();
       mainw->noswitch=FALSE;
       if (mainw->play_window==NULL) return;
     }
@@ -3886,14 +3937,10 @@ void make_play_window(void) {
 
   if (!mainw->ext_playback) {
     // be careful, the user could switch out of sepwin here !
-    if (mainw->multitrack!=NULL&&mainw->multitrack->idlefunc>0) g_source_remove(mainw->multitrack->idlefunc);
     mainw->noswitch=TRUE;
 
-    while (g_main_context_iteration(NULL,FALSE));
-    if (mainw->multitrack!=NULL&&mainw->multitrack->idlefunc>0) {
-      mainw->multitrack->idlefunc=0;
-      mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
-    }
+    lives_widget_context_update();
+
     mainw->noswitch=FALSE;
     if (mainw->play_window==NULL) return;
   }
@@ -3996,7 +4043,7 @@ void resize_play_window (void) {
 	gtk_widget_show (mainw->play_window);
 	// be careful, the user could switch out of sepwin here !
 	mainw->noswitch=TRUE;
-	while (g_main_context_iteration (NULL,FALSE));
+	lives_widget_context_update();
 	mainw->noswitch=FALSE;
 	if (mainw->play_window==NULL) return;
 	if (!mainw->fs||mainw->playing_file<0) goto point1;
@@ -4036,7 +4083,7 @@ void resize_play_window (void) {
 	  gtk_window_move (GTK_WINDOW (mainw->play_window), (mainw->scr_width-mainw->vpp->fwidth)/2,
 			   (mainw->scr_height-mainw->vpp->fheight)/2);
 	}
-	else gtk_window_move (GTK_WINDOW (mainw->play_window), (GdkModifierType)0, 0);
+	else gtk_window_move (GTK_WINDOW (mainw->play_window), 0, 0);
       }
       else {
 	gtk_window_set_screen(GTK_WINDOW(mainw->play_window),mainw->mgeom[pmonitor-1].screen);
@@ -4342,7 +4389,7 @@ void splash_init(void) {
   gtk_window_present(GTK_WINDOW(mainw->splash_window));
 
 
-  while (g_main_context_iteration(NULL,FALSE));
+  lives_widget_context_update();
 
   lives_set_cursor_style(LIVES_CURSOR_BUSY,mainw->splash_window);
 
@@ -4365,7 +4412,7 @@ void splash_msg(const gchar *msg, gdouble pct) {
 
   gtk_widget_queue_draw(mainw->splash_window);
 
-  while (g_main_context_iteration(NULL,FALSE));
+  lives_widget_context_update();
 
 }
 

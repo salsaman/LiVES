@@ -1308,7 +1308,7 @@ void on_table_add_row (GtkButton *button, gpointer user_data) {
     gtk_table_attach (GTK_TABLE (rfxbuilder->table), entry, 0, 1, rfxbuilder->table_rows-1+rfxbuilder->ptable_rows, rfxbuilder->table_rows+rfxbuilder->ptable_rows,
 		      (GtkAttachOptions) (GTK_FILL|GTK_EXPAND),
 		      (GtkAttachOptions) (0), 0, 0);
-    while (g_main_context_iteration (NULL,FALSE));
+    lives_widget_context_update();
     gtk_widget_grab_focus (entry);
     if (button!=NULL) {
       rfxbuilder->num_reqs++;
@@ -1631,7 +1631,7 @@ void on_table_edit_row (GtkButton *button, gpointer user_data) {
     for (i=0;i<rfxbuilder->table_rows;i++) {
       if (found==i) { 
 	gtk_editable_set_editable (GTK_EDITABLE (rfxbuilder->entry[i]), TRUE);
-	while (g_main_context_iteration (NULL,FALSE));
+	lives_widget_context_update();
 	gtk_widget_grab_focus (rfxbuilder->entry[i]);
       }
       else {
@@ -3184,7 +3184,7 @@ void on_rfxbuilder_ok (GtkButton *button, gpointer user_data) {
   if (!rfxbuilder_to_script (rfxbuilder)) return;
 
   gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
-  while (g_main_context_iteration (NULL,FALSE));
+  lives_widget_context_update();
   rfxbuilder_destroy (rfxbuilder);
 }
 
@@ -3192,7 +3192,7 @@ void on_rfxbuilder_cancel (GtkButton *button, gpointer user_data) {
   rfx_build_window_t *rfxbuilder=(rfx_build_window_t *)user_data;
 
   gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
-  while (g_main_context_iteration (NULL,FALSE));
+  lives_widget_context_update();
   rfxbuilder_destroy (rfxbuilder);
 }
 
@@ -4059,7 +4059,7 @@ on_rebuild_rfx_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
 
   d_print(_("rebuilding dynamic menu entries..."));
-  while (g_main_context_iteration(NULL,FALSE));
+  lives_widget_context_update();
   threaded_dialog_spin();
   add_rfx_effects();
   threaded_dialog_spin();
@@ -4068,7 +4068,7 @@ on_rebuild_rfx_activate (GtkMenuItem *menuitem, gpointer user_data) {
   end_threaded_dialog();
 
   gtk_widget_queue_draw(mainw->LiVES);
-  while (g_main_context_iteration(NULL,FALSE));
+  lives_widget_context_update();
 }
 
 
@@ -4748,7 +4748,7 @@ void add_rfx_effects(void) {
     }
 
     gtk_widget_queue_draw(mainw->effects_menu);
-    while (g_main_context_iteration(NULL,FALSE));
+    lives_widget_context_update();
     threaded_dialog_spin();
 
     if (mainw->rendered_fx!=NULL) rfx_free_all();
@@ -4847,7 +4847,7 @@ void add_rfx_effects(void) {
     for (plugin_idx=0;plugin_idx<rfx_list_length;plugin_idx++) {
       threaded_dialog_spin();
       if (mainw->splash_window==NULL) {
-	while (g_main_context_iteration(NULL,FALSE));
+	lives_widget_context_update();
       }
       if (plugin_idx==rfx_builtin_list_length) {
 	g_free(type);
@@ -5006,7 +5006,7 @@ void add_rfx_effects(void) {
   for (rfx=&mainw->rendered_fx[(plugin_idx=1)];plugin_idx<=rfx_slot_count;rfx=&mainw->rendered_fx[++plugin_idx]) {
     threaded_dialog_spin();
     if (mainw->splash_window==NULL) {
-      while (g_main_context_iteration(NULL,FALSE));
+      lives_widget_context_update();
     }
     render_fx_get_params (rfx,rfx->name,rfx->status);
     threaded_dialog_spin();
@@ -5130,7 +5130,7 @@ void add_rfx_effects(void) {
     for (rfx=&mainw->rendered_fx[(plugin_idx=1)];plugin_idx<=rfx_slot_count;rfx=&mainw->rendered_fx[++plugin_idx]) {
       threaded_dialog_spin();
       if (mainw->splash_window==NULL) {
-	while (g_main_context_iteration(NULL,FALSE));
+	lives_widget_context_update();
       }
       if ((rfx->props&RFX_PROPS_MAY_RESIZE&&rfx->num_in_channels==1)||rfx->min_frames<0) {
 	// add resizing effects to tools menu

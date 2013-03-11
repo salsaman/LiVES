@@ -960,47 +960,47 @@ void d_print_file_error_failed(void);
 void do_text_window (const gchar *title, const gchar *text);
 
 // saveplay.c
-gboolean add_file_info(const gchar *check_handle, gboolean aud_only);
-gboolean save_file_comments (int fileno);
+boolean add_file_info(const gchar *check_handle, boolean aud_only);
+boolean save_file_comments (int fileno);
 void reget_afilesize (int fileno);
-void deduce_file(const gchar *filename, gdouble start_time, gint end);
+void deduce_file(const gchar *filename, double start_time, int end);
 void open_file (const gchar *filename);
-void open_file_sel(const gchar *file_name,gdouble start_time, gint frames);
+void open_file_sel(const gchar *file_name, double start_time, int frames);
 void open_fw_device (void);
-gboolean get_new_handle(gint index, const gchar *name);
-gboolean get_temp_handle(gint index, gboolean create);
-gboolean get_handle_from_info_file(gint index);
+boolean get_new_handle(int index, const gchar *name);
+boolean get_temp_handle(int index, boolean create);
+boolean get_handle_from_info_file(int index);
 void create_cfile(void);
 void save_file (int clip, int start, int end, const char *filename);
 void play_file (void);
 void save_frame (GtkMenuItem *menuitem, gpointer user_data);
 boolean save_frame_inner(int clip, int frame, const gchar *file_name, int width, int height, boolean from_osc);
 void wait_for_stop (const gchar *stop_command);
-gboolean save_clip_values(gint which_file);
+boolean save_clip_values(int which_file);
 void add_to_recovery_file (const gchar *handle);
 void rewrite_recovery_file(void);
-gboolean check_for_recovery_files (gboolean auto_recover);
-void recover_layout_map(gint numclips);
+boolean check_for_recovery_files (boolean auto_recover);
+void recover_layout_map(int numclips);
 const gchar *get_deinterlace_string(void);
 
 // saveplay.c backup
 void backup_file(int clip, int start, int end, const gchar *filename);
 gint save_event_frames(void);
-gboolean write_headers (file *file);
+boolean write_headers (file *file);
 
 // saveplay.c restore
 void restore_file(const gchar *filename);
-gboolean read_headers(const gchar *file_name);
+boolean read_headers(const gchar *file_name);
 
 // saveplay.c sets
 void open_set_file (const gchar *set_name, gint clipnum);
 
 
 // saveplay.c scrap file
-gboolean open_scrap_file (void);
-gboolean open_ascrap_file (void);
-gint save_to_scrap_file (weed_plant_t *layer);
-gboolean load_from_scrap_file(weed_plant_t *layer, int frame);
+boolean open_scrap_file (void);
+boolean open_ascrap_file (void);
+int save_to_scrap_file (weed_plant_t *layer);
+boolean load_from_scrap_file(weed_plant_t *layer, int frame);
 void close_ascrap_file (void);
 void close_scrap_file (void);
 
@@ -1058,7 +1058,7 @@ void splash_init(void);
 void splash_end(void);
 void splash_msg(const gchar *msg, gdouble pct);
 void add_message_scroller(GtkWidget *conter);
-
+void resize_widgets_for_monitor(boolean get_play_times);
 
 // system calls in utils.c
 int lives_system(const char *com, boolean allow_error);

@@ -2067,7 +2067,7 @@ static void apbutton_clicked(GtkButton *button, gpointer user_data) {
       model=gtk_combo_box_get_model(GTK_COMBO_BOX(conxwp->pfxcombo[k]));
       gtk_tree_model_get_iter(model,&iter,tpath);
       gtk_combo_box_set_active_iter(LIVES_COMBO(conxwp->pfxcombo[k]),&iter);
-      while (g_main_context_iteration(NULL,FALSE));
+      lives_widget_context_update();
     }
     gtk_combo_box_set_active(LIVES_COMBO(conxwp->pcombo[k++]),i);
 
@@ -2137,7 +2137,7 @@ static void acbutton_clicked(GtkButton *button, gpointer user_data) {
       model=gtk_combo_box_get_model(GTK_COMBO_BOX(conxwp->cfxcombo[k]));
       gtk_tree_model_get_iter(model,&iter,tpath);
       gtk_combo_box_set_active_iter(LIVES_COMBO(conxwp->cfxcombo[k]),&iter);
-      while (g_main_context_iteration(NULL,FALSE));
+      lives_widget_context_update();
     }
     gtk_combo_box_set_active(LIVES_COMBO(conxwp->ccombo[k++]),i);
     if (k>=conxwp->num_alpha) break;

@@ -322,7 +322,7 @@ boolean virtual_to_images(int sfileno, int sframe, int eframe, boolean update_pr
       oname=NULL;
       threaded_dialog_spin();
 
-      while (g_main_context_iteration(NULL,FALSE));
+      lives_widget_context_update();
 
       pixbuf=pull_lives_pixbuf_at_size(sfileno,i,get_image_ext_for_type(sfile->img_type),
 				       q_gint64((i-1.)/sfile->fps,sfile->fps),sfile->hsize,sfile->vsize,LIVES_INTERP_BEST);
@@ -353,7 +353,7 @@ boolean virtual_to_images(int sfileno, int sframe, int eframe, boolean update_pr
       if (update_progress) {
 	// sig_progress...
 	g_snprintf (mainw->msg,256,"%d",progress++);
-	while (g_main_context_iteration(NULL,FALSE));
+	lives_widget_context_update();
       }
 
       threaded_dialog_spin();
@@ -494,7 +494,7 @@ void clean_images_from_virtual (file *sfile, int oldframes) {
 
   for (i=0;i<oldframes;i++) {
     threaded_dialog_spin();
-    while (g_main_context_iteration(NULL,FALSE));
+    lives_widget_context_update();
     threaded_dialog_spin();
 
     if ((i<sfile->frames&&sfile->frame_index[i]!=-1)||i>=sfile->frames) {

@@ -104,7 +104,7 @@ static size_t l2l_rcv_packet(lives_vstream_t *lstream, size_t buflen, void *buf)
     else {
       weed_plant_t *frame_layer=mainw->frame_layer;
       mainw->frame_layer=NULL;
-      while (g_main_context_iteration(NULL,FALSE));
+      lives_widget_context_update();
       mainw->frame_layer=frame_layer;
       threaded_dialog_spin();
       if (mainw->cancelled) return buflen+btoread;
@@ -140,7 +140,7 @@ static size_t l2l_rcv_packet(lives_vstream_t *lstream, size_t buflen, void *buf)
     if (ret==-1) {
       weed_plant_t *frame_layer=mainw->frame_layer;
       mainw->frame_layer=NULL;
-      while (g_main_context_iteration(NULL,FALSE));
+      lives_widget_context_update();
       mainw->frame_layer=frame_layer;
       threaded_dialog_spin();
       if (mainw->cancelled) {
@@ -177,7 +177,7 @@ static boolean lives_stream_in_chunks(lives_vstream_t *lstream, size_t buflen, g
       if (copied==-1) {
 	weed_plant_t *frame_layer=mainw->frame_layer;
 	mainw->frame_layer=NULL;
-	while (g_main_context_iteration(NULL,FALSE));
+	lives_widget_context_update();
 	mainw->frame_layer=frame_layer;
 	threaded_dialog_spin();
 	if (mainw->cancelled) return TRUE;
@@ -1057,7 +1057,7 @@ void on_open_lives2lives_activate (GtkMenuItem *menuitem, gpointer user_data) {
   gtk_widget_destroy (pandh->dialog);
   g_free(pandh);
   
-  while (g_main_context_iteration(NULL,FALSE));
+  lives_widget_context_update();
 
   if (host!=NULL) {
     // start receiving

@@ -278,7 +278,7 @@ LIVES_INLINE boolean lives_setenv(const char *name, const char *value) {
 
 int lives_system(const char *com, boolean allow_error) {
   int retval;
-  boolean cnorm=FALSE,mt_needs_idlefunc=FALSE;
+  boolean cnorm=FALSE;
 
   // TODO - use g_spawn ?
 
@@ -286,16 +286,7 @@ int lives_system(const char *com, boolean allow_error) {
     cnorm=TRUE;
     lives_set_cursor_style(LIVES_CURSOR_BUSY,NULL);
 
-    if (mainw->multitrack!=NULL&&mainw->multitrack->idlefunc>0) {
-      g_source_remove(mainw->multitrack->idlefunc);
-      mainw->multitrack->idlefunc=0;
-      mt_needs_idlefunc=TRUE;
-    }
-
-    while (g_main_context_iteration(NULL,FALSE));
-
-    if (mt_needs_idlefunc) mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
-
+    lives_widget_context_update();
   }
 
   retval=system(com);
@@ -3247,7 +3238,7 @@ boolean prepare_to_play_foreign(void) {
 
   gtk_widget_show (mainw->playframe);
   gtk_widget_show (mainw->playarea);
-  while (g_main_context_iteration(NULL,FALSE));
+  lives_widget_context_update();
 
   // size must be exact, must not be larger than play window or we end up with nothing
   mainw->pwidth=lives_widget_get_allocation_width(mainw->playframe)-H_RESIZE_ADJUST+2;
@@ -4251,7 +4242,7 @@ gboolean get_clip_value(int which, lives_clip_details_t what, void *retval, size
 	    if (!(mainw==NULL)) {
 	      weed_plant_t *frame_layer=mainw->frame_layer;
 	      mainw->frame_layer=NULL;
-	      while (g_main_context_iteration(NULL,FALSE));
+	      lives_widget_context_update();
 	      mainw->frame_layer=frame_layer;
 	    }
 	    g_usleep(prefs->sleep_time);
@@ -4483,7 +4474,7 @@ GList *get_set_list(const gchar *dir) {
   if (tldir==NULL) return NULL;
 
   lives_set_cursor_style(LIVES_CURSOR_BUSY,NULL);
-  while (g_main_context_iteration(NULL,FALSE));
+  lives_widget_context_update();
 
 
   while (1) {

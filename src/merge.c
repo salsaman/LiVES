@@ -165,10 +165,10 @@ void create_merge_dialog (void) {
 		      NULL);
   }
 
-  add_hsep_to_box(LIVES_BOX(vbox),FALSE);
+  add_hsep_to_box(LIVES_BOX(vbox));
   
   hbox = lives_hbox_new (TRUE, 0);
-  gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 10);
+  gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
   transition_combo = lives_standard_combo_new (_("_Transition Method:"),TRUE,merge_opts->trans_list,LIVES_BOX(hbox),NULL);
 
@@ -176,17 +176,19 @@ void create_merge_dialog (void) {
 
   mainw->last_transition_idx=merge_opts->list_to_rfx_index[defstart];
 
-  add_hsep_to_box(LIVES_BOX(vbox),FALSE);
+  add_hsep_to_box(LIVES_BOX(vbox));
 
 
   // now the dynamic part...
   merge_opts->param_vbox = lives_vbox_new (FALSE, 0);
-  gtk_container_set_border_width (GTK_CONTAINER(merge_opts->param_vbox), 10);
+  gtk_container_set_border_width (GTK_CONTAINER(merge_opts->param_vbox), widget_opts.border_width>>1);
 
   gtk_box_pack_start (GTK_BOX (vbox), merge_opts->param_vbox, TRUE, TRUE, 0);
 
   rfx=&mainw->rendered_fx[mainw->last_transition_idx];
+  mainw->overflow_height=900;
   make_param_box(GTK_VBOX (merge_opts->param_vbox), rfx);
+  mainw->overflow_height=0;
   gtk_widget_show_all (merge_opts->param_vbox);
 
   retvals=do_onchange_init(rfx);
@@ -313,7 +315,7 @@ on_merge_cancel_clicked                   (GtkButton       *button,
   if (merge_opts->spinbutton_loops!=NULL) 
     mainw->last_transition_loops=gtk_spin_button_get_value_as_int (GTK_SPIN_BUTTON (merge_opts->spinbutton_loops));
   gtk_widget_destroy(merge_opts->merge_dialog);
-  while (g_main_context_iteration (NULL,FALSE));
+  lives_widget_context_update();
   mainw->last_transition_loop_to_fit=merge_opts->loop_to_fit;
   mainw->last_transition_ins_frames=merge_opts->ins_frames;
   mainw->last_transition_align_start=merge_opts->align_start;
@@ -360,7 +362,7 @@ on_merge_ok_clicked                   (GtkButton       *button,
     if (!do_clipboard_fps_warning()) {
       on_paramwindow_cancel_clicked (NULL,rfx);
       gtk_widget_destroy(merge_opts->merge_dialog);
-      while (g_main_context_iteration(NULL,FALSE));
+      lives_widget_context_update();
       g_list_free (merge_opts->trans_list);
       g_free (merge_opts->list_to_rfx_index);
       g_free(merge_opts);
@@ -375,7 +377,7 @@ on_merge_ok_clicked                   (GtkButton       *button,
 
   on_paramwindow_cancel_clicked (NULL,rfx);
   gtk_widget_destroy(merge_opts->merge_dialog);
-  while (g_main_context_iteration(NULL,FALSE));
+  lives_widget_context_update();
   g_list_free (merge_opts->trans_list);
   g_free (merge_opts->list_to_rfx_index);
   g_free(merge_opts);

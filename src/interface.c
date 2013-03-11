@@ -1066,7 +1066,7 @@ _insertw* create_insert_dialog (void) {
 
   gtk_widget_set_sensitive(GTK_WIDGET(insertw->fit_checkbutton),cfile->achans>0&&clipboard->achans==0);
 
-  add_hsep_to_box (LIVES_BOX (dialog_vbox),TRUE);
+  add_hsep_to_box (LIVES_BOX (dialog_vbox));
 
   table = gtk_table_new (2, 3, FALSE);
   gtk_box_pack_start (GTK_BOX (dialog_vbox), table, TRUE, TRUE, widget_opts.packing_height);
@@ -2554,7 +2554,7 @@ void choose_file_with_preview (gchar *dir, const gchar *title, int preview_type)
     gtk_window_set_resizable (GTK_WINDOW(chooser),TRUE);
     gtk_window_maximize (GTK_WINDOW(chooser));
     gtk_widget_queue_draw(chooser);
-    while (g_main_context_iteration(NULL,FALSE));
+    lives_widget_context_update();
   }
 
   g_signal_connect (chooser, "response", G_CALLBACK (chooser_response), GINT_TO_POINTER(preview_type));

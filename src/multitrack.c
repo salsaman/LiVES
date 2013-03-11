@@ -525,7 +525,7 @@ static void save_mt_autoback(lives_mt *mt, int64_t stime) {
   mt_desensitise(mt);
 
   // flush any pending events
-  while (g_main_context_iteration(NULL,FALSE));
+  lives_widget_context_update();
 
   do {
     retval2=0;
@@ -694,7 +694,7 @@ static void mt_load_recovery_layout(lives_mt *mt) {
 
 void recover_layout(GtkButton *button, gpointer user_data) {
   gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
-  while (g_main_context_iteration (NULL,FALSE));
+  lives_widget_context_update();
   if (prefs->startup_interface==STARTUP_CE) {
     if (!on_multitrack_activate(NULL,NULL)) {
       multitrack_delete(mainw->multitrack,FALSE);
@@ -2622,7 +2622,7 @@ void mt_show_current_frame(lives_mt *mt, boolean return_layer) {
       //gtk_widget_set_app_paintable(mainw->playarea,TRUE);
 
       if (mt->is_ready)
-	while (g_main_context_iteration(NULL,FALSE));
+	lives_widget_context_update();
   
       mainw->sep_win=FALSE;
       add_to_playframe();
@@ -5069,11 +5069,10 @@ static boolean timecode_string_validate(GtkEntry *entry, lives_mt *mt) {
   const gchar *etext=gtk_entry_get_text(entry);
   gchar **array;
 
-  gdouble secs;
-  gdouble tl_range,pos;
+  double secs;
+  double tl_range,pos;
 
-  boolean needs_idlefunc=FALSE;
-  gint hrs,mins;
+  int hrs,mins;
 
   if (get_token_count((gchar *)etext,':')!=3) return FALSE;
 
@@ -5114,15 +5113,7 @@ static boolean timecode_string_validate(GtkEntry *entry, lives_mt *mt) {
 
   mt_tl_move(mt,secs-pos);
 
-  if (mt->idlefunc>0) {
-    needs_idlefunc=TRUE;
-    g_source_remove(mt->idlefunc);
-    mt->idlefunc=0;
-  }
-  while (g_main_context_iteration(NULL,FALSE));
-  if (needs_idlefunc) {
-    mt->idlefunc=mt_idle_add(mt);
-  }
+  lives_widget_context_update();
 
   pos=lives_ruler_get_value(LIVES_RULER(mt->timeline));
 
@@ -5304,7 +5295,7 @@ static boolean draw_cool_toggle (GtkWidget *widget, lives_painter_t *cr, gpointe
 
 #endif
 
- lives_mt *multitrack (weed_plant_t *event_list, gint orig_file, gdouble fps) {
+lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   GtkWidget *hseparator;
   GtkWidget *menubar;
   GtkWidget *btoolbar;
@@ -5371,16 +5362,18 @@ static boolean draw_cool_toggle (GtkWidget *widget, lives_painter_t *cr, gpointe
   GtkWidget *suggest_feature;
   GtkWidget *help_translate;
 
-
   GObject *vadjustment;
   GObject *spinbutton_adj;
-  gint num_filters;
-  int i,error;
+
   gchar *cname,*tname,*msg;
 
   gchar buff[32768];
 
-  gint scr_width;
+  int scr_width,dph;
+  int num_filters;
+  int error;
+
+  register int i;
 
   lives_mt *mt=(lives_mt *)g_malloc(sizeof(lives_mt));
 
@@ -7848,7 +7841,11 @@ static boolean draw_cool_toggle (GtkWidget *widget, lives_painter_t *cr, gpointe
   }
 
   mt->fx_contents_box=lives_vbox_new(FALSE,2);
-  add_hsep_to_box(LIVES_BOX(mt->fx_contents_box),FALSE);
+
+  dph=widget_opts.packing_height;
+  widget_opts.packing_height=0;
+  add_hsep_to_box(LIVES_BOX(mt->fx_contents_box));
+  widget_opts.packing_height=dph;
 
   gtk_box_pack_end (GTK_BOX (mt->fx_base_box), mt->fx_contents_box, FALSE, FALSE, 0);
 
@@ -8891,14 +8888,14 @@ boolean multitrack_delete (lives_mt *mt, boolean save_layout) {
   reset_clip_menu();
   mainw->last_dprint_file=-1;
   
-  while (g_main_context_iteration(NULL,FALSE));
+  lives_widget_context_update();
 
   if (prefs->show_gui&&prefs->open_maximised) {
     gtk_window_maximize (GTK_WINDOW(mainw->LiVES));
   }
 
 
-  while (g_main_context_iteration(NULL,FALSE));
+  lives_widget_context_update();
   d_print (_ ("\n==============================\nSwitched to Clip Edit mode\n"));
 
   if (mt->file_selected!=-1) {
@@ -10126,17 +10123,16 @@ void mt_clear_timeline(lives_mt *mt) {
 
 
 
-void mt_delete_clips(lives_mt *mt, gint file) {
+void mt_delete_clips(lives_mt *mt, int file) {
   // close eventbox(es) for a given file
   GList *list=gtk_container_get_children(GTK_CONTAINER (mt->clip_inner_box)),*list_next;
 
   GtkWidget *child;
   GtkWidget *label1,*label2;
 
-  gint neg=0,i=0;
+  int neg=0,i=0;
 
   boolean removed=FALSE;
-  boolean needs_idlefunc=FALSE;
 
   while (list!=NULL) {
     list_next=list->next;
@@ -10155,15 +10151,7 @@ void mt_delete_clips(lives_mt *mt, gint file) {
       mt->clip_labels=g_list_remove(mt->clip_labels,label1);
       mt->clip_labels=g_list_remove(mt->clip_labels,label2);
 
-      if (mt->idlefunc>0) {
-	needs_idlefunc=TRUE;
-	g_source_remove(mt->idlefunc);
-	mt->idlefunc=0;
-      }
-      while (g_main_context_iteration(NULL,FALSE));
-      if (needs_idlefunc) {
-	mt->idlefunc=mt_idle_add(mt);
-      }
+      lives_widget_context_update();
 
       neg++;
     }
@@ -10173,7 +10161,7 @@ void mt_delete_clips(lives_mt *mt, gint file) {
   }
 
   if (mt->event_list!=NULL&&used_in_current_layout(mt,file)&&removed) {
-    gint current_file=mainw->current_file;
+    int current_file=mainw->current_file;
 
     if (!event_list_rectify(mt,mt->event_list)||get_first_event(mt->event_list)==NULL) {
       // delete the current layout
@@ -10201,7 +10189,7 @@ void mt_delete_clips(lives_mt *mt, gint file) {
 
 
 
-void mt_init_clips (lives_mt *mt, gint orig_file, boolean add) {
+void mt_init_clips (lives_mt *mt, int orig_file, boolean add) {
   // setup clip boxes in the poly window. if add is TRUE then we are just adding a new clip
   // orig_file is the file we want to select
 
@@ -10211,14 +10199,18 @@ void mt_init_clips (lives_mt *mt, gint orig_file, boolean add) {
   GtkWidget *thumb_image=NULL;
   GtkWidget *vbox, *label;
   GtkWidget *eventbox;
-  gchar clip_name[CLIP_LABEL_LENGTH];
+
   GdkPixbuf *thumbnail;
-  int i=1;
-  gint width=CLIP_THUMB_WIDTH,height=CLIP_THUMB_HEIGHT;
-  gchar filename[PATH_MAX];
-  gchar *tmp;
-  int count=g_list_length(mt->clip_labels)/2;
+
   GList *cliplist=mainw->cliplist;
+
+  gchar filename[PATH_MAX];
+  gchar clip_name[CLIP_LABEL_LENGTH];
+  gchar *tmp;
+
+  int i=1;
+  int width=CLIP_THUMB_WIDTH,height=CLIP_THUMB_HEIGHT;
+  int count=g_list_length(mt->clip_labels)/2;
 
   mt->clip_selected=-1;
 
@@ -10473,7 +10465,7 @@ boolean on_multitrack_activate (GtkMenuItem *menuitem, weed_plant_t *event_list)
   }
 
   if (prefs->show_gui) {
-    while (g_main_context_iteration(NULL,FALSE));
+    lives_widget_context_update();
   }
 
   // create new file for rendering to
@@ -10672,7 +10664,7 @@ boolean on_multitrack_activate (GtkMenuItem *menuitem, weed_plant_t *event_list)
   if (prefs->show_gui)
     gtk_widget_hide (mainw->LiVES);
   
-  while (g_main_context_iteration(NULL,FALSE));
+  lives_widget_context_update();
 
   redraw_all_event_boxes(multi);
 
@@ -11992,20 +11984,12 @@ void polymorph (lives_mt *mt, lives_mt_poly_state_t poly) {
 
     gtk_widget_set_sensitive(mt->fx_edit,FALSE);
     gtk_widget_set_sensitive(mt->fx_delete,FALSE);
-    if (mt->idlefunc>0) {
-      g_source_remove(mt->idlefunc);
-      mt->idlefunc=0;
-      needs_idlefunc=TRUE;
-    }
     if (poly==POLY_PARAMS) { 
-      while (g_main_context_iteration(NULL,FALSE));
+      lives_widget_context_update();
     }
     else {
       mt->init_event=NULL;
       mt_show_current_frame(mt, FALSE);
-    }
-    if (needs_idlefunc) {
-      mt->idlefunc=mt_idle_add(mt);
     }
 
     break;
@@ -13731,12 +13715,12 @@ mt_view_ctx_toggled                (GtkMenuItem     *menuitem,
   }
   if (poly_state!=POLY_PARAMS) {
     polymorph(mt,POLY_NONE);
-    if (poly_state==POLY_IN_OUT) while (g_main_context_iteration(NULL,FALSE));
+    if (poly_state==POLY_IN_OUT) lives_widget_context_update();
     polymorph(mt,poly_state);
   }
   else polymorph(mt,POLY_PARAMS);
 
-  if (poly_state!=POLY_IN_OUT) while (g_main_context_iteration(NULL,FALSE));
+  if (poly_state!=POLY_IN_OUT) lives_widget_context_update();
 
   //re-enable auto backup
   if (needs_idlefunc) {
@@ -15502,7 +15486,7 @@ void on_render_activate (GtkMenuItem *menuitem, gpointer user_data) {
     mt_init_clips(mt,orig_file,TRUE);
     if (mt->idlefunc>0) g_source_remove(mt->idlefunc);
     mt->idlefunc=0;
-    while (g_main_context_iteration(NULL,FALSE));
+    lives_widget_context_update();
     mt_clip_select(mt,TRUE);
   }
   else {
@@ -18732,7 +18716,7 @@ void on_save_event_list_activate (GtkMenuItem *menuitem, gpointer user_data) {
       g_snprintf(new_set_name,128,"%s",gtk_entry_get_text (GTK_ENTRY (renamew->entry)));
       gtk_widget_destroy(renamew->dialog);
       g_free(renamew);
-      while (g_main_context_iteration(NULL,FALSE));
+      lives_widget_context_update();
     } while (!is_legal_set_name(new_set_name,FALSE));
     g_snprintf(mainw->set_name,128,"%s",new_set_name);
   }
@@ -20454,7 +20438,7 @@ weed_plant_t *load_event_list(lives_mt *mt, gchar *eload_file) {
 
   mt->auto_changed=mt->changed=mainw->recoverable_layout;
 
-  while (g_main_context_iteration(NULL,FALSE));
+  lives_widget_context_update();
 
   cfile->progress_start=1;
   cfile->progress_end=num_events;

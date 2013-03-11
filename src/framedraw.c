@@ -50,7 +50,7 @@ static void start_preview (GtkButton *button, lives_rfx_t *rfx) {
   gchar *com;
 
   gtk_widget_set_sensitive(mainw->framedraw_preview,FALSE);
-  while (g_main_context_iteration(NULL,FALSE));
+  lives_widget_context_update();
 
   if (mainw->did_rfx_preview) {
 #ifndef IS_MINGW
@@ -232,7 +232,6 @@ void widget_add_framedraw (GtkVBox *box, int start, int end, boolean add_preview
     lives_widget_set_bg_color (frame, GTK_STATE_NORMAL, &palette->normal_back);
     lives_widget_set_fg_color (frame, GTK_STATE_NORMAL, &palette->normal_fore);
   }
-  gtk_frame_set_shadow_type (GTK_FRAME(frame), GTK_SHADOW_IN);
 
   mainw->fd_frame=frame;
 
@@ -522,7 +521,7 @@ void load_rfx_preview(lives_rfx_t *rfx) {
     // pull some frames for 10 seconds
     alarm_handle=lives_alarm_set(LIVES_RFX_TIMER);
     do {
-      while (g_main_context_iteration(NULL,FALSE));
+      lives_widget_context_update();
       if (is_virtual_frame(mainw->current_file,vend)) {
 	retb=virtual_to_images(mainw->current_file,vend,vend,FALSE);
 	if (!retb) return;
@@ -541,7 +540,7 @@ void load_rfx_preview(lives_rfx_t *rfx) {
   // get message from back end processor
   while (!(infofile=fopen(cfile->info_file,"r"))&&!mainw->cancelled) {
     // wait until we get at least 1 frame
-    while (g_main_context_iteration(NULL,FALSE));
+    lives_widget_context_update();
     if (cfile->clip_type==CLIP_TYPE_FILE&&vend<=cfile->end) {
       // if we have a virtual clip (frames inside a video file)
       // pull some more frames to images to get us started
@@ -646,7 +645,7 @@ void after_framedraw_frame_spinbutton_changed (GtkSpinButton *spinbutton, lives_
   mainw->framedraw_frame=gtk_spin_button_get_value_as_int(spinbutton);
   if (lives_widget_is_visible(mainw->framedraw_preview)) {
     if (mainw->framedraw_preview!=NULL) gtk_widget_set_sensitive(mainw->framedraw_preview,FALSE);
-    while (g_main_context_iteration(NULL,FALSE));
+    lives_widget_context_update();
     load_rfx_preview(framedraw->rfx);
   }
   else framedraw_redraw(framedraw, TRUE, NULL);
@@ -1146,7 +1145,7 @@ void on_framedraw_reset_clicked (GtkButton *button, lives_special_framedraw_rect
   }
 
   // update widgets now
-  while (g_main_context_iteration(NULL,FALSE));
+  lives_widget_context_update();
 
   noupdate=FALSE;
 

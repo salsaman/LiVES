@@ -581,7 +581,7 @@ void on_vppa_cancel_clicked (GtkButton *button, gpointer user_data) {
   _vid_playback_plugin *vpp=vppw->plugin;
 
   gtk_widget_destroy(vppw->dialog);
-  while (g_main_context_iteration (NULL,FALSE));
+  lives_widget_context_update();
   if (vpp!=NULL&&vpp!=mainw->vpp) {
     // close the temp current vpp
     close_vid_playback_plugin(vpp);

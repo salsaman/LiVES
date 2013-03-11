@@ -84,7 +84,7 @@ void get_pref(const gchar *key, gchar *val, gint maxlen) {
 	  if (!(mainw==NULL)) {
 	    weed_plant_t *frame_layer=mainw->frame_layer;
 	    mainw->frame_layer=NULL;
-	    while (g_main_context_iteration(NULL,FALSE));
+	    lives_widget_context_update();
 	    mainw->frame_layer=frame_layer;
 	  }
 	  g_usleep(prefs->sleep_time);
@@ -189,7 +189,7 @@ void get_pref_default(const gchar *key, gchar *val, gint maxlen) {
 	  if (!(mainw==NULL)) {
 	    weed_plant_t *frame_layer=mainw->frame_layer;
 	    mainw->frame_layer=NULL;
-	    while (g_main_context_iteration(NULL,FALSE));
+	    lives_widget_context_update();
 	    mainw->frame_layer=frame_layer;
 	  }
 	  g_usleep(prefs->sleep_time);
@@ -744,7 +744,7 @@ gboolean apply_prefs(gboolean skip_warn) {
 	g_snprintf(future_prefs->tmpdir,PATH_MAX,"%s",tmpdir);
 	set_temp_label_text(GTK_LABEL(prefsw->temp_label));
 	gtk_widget_queue_draw(prefsw->temp_label);
-	while (g_main_context_iteration(NULL,FALSE)); // update prefs window before showing confirmation box
+	lives_widget_context_update(); // update prefs window before showing confirmation box
 
 	msg=g_strdup (_ ("You have chosen to change the temporary directory.\nPlease make sure you have no other copies of LiVES open.\n\nIf you do have other copies of LiVES open, please close them now, *before* pressing OK.\n\nAlternatively, press Cancel to restore the temporary directory to its original setting."));	
         if (do_warning_dialog(msg)) {
@@ -819,36 +819,7 @@ gboolean apply_prefs(gboolean skip_warn) {
       prefs->gui_monitor=gui_monitor;
       prefs->play_monitor=play_monitor;
 
-      if (mainw->multitrack==NULL) {
-	if (prefs->gui_monitor!=0) {
-	  gint xcen=mainw->mgeom[prefs->gui_monitor-1].x+(mainw->mgeom[prefs->gui_monitor-1].width-
-							  lives_widget_get_allocation_width(mainw->LiVES))/2;
-	  gint ycen=mainw->mgeom[prefs->gui_monitor-1].y+(mainw->mgeom[prefs->gui_monitor-1].height-
-							  lives_widget_get_allocation_height(mainw->LiVES))/2;
-	  gtk_window_move(GTK_WINDOW(mainw->LiVES),xcen,ycen);
-	  
-	}
-	if (prefs->open_maximised&&prefs->show_gui) {
-	  gtk_window_maximize (GTK_WINDOW(mainw->LiVES));
-	}
-      }
-      else {
-	if (prefs->gui_monitor!=0) {
-	  gint xcen=mainw->mgeom[prefs->gui_monitor-1].x+(mainw->mgeom[prefs->gui_monitor-1].width-
-							  lives_widget_get_allocation_width(mainw->multitrack->window))/2;
-	  gint ycen=mainw->mgeom[prefs->gui_monitor-1].y+(mainw->mgeom[prefs->gui_monitor-1].height-
-							  lives_widget_get_allocation_height(mainw->multitrack->window))/2;
-	  gtk_window_move(GTK_WINDOW(mainw->multitrack->window),xcen,ycen);
-	}
-	
-	
-	if ((prefs->gui_monitor!=0||capable->nmonitors<=1)&&prefs->open_maximised) {
-	  gtk_window_maximize (GTK_WINDOW(mainw->multitrack->window));
-	}
-      }
-      if (mainw->play_window!=NULL) {
-	resize_play_window();
-      }
+      resize_widgets_for_monitor(TRUE);
     }
   }
 
@@ -5673,7 +5644,6 @@ select_pref_list_row(guint selected_idx)
 }
 
 void on_prefs_revert_clicked(GtkButton *button, gpointer user_data) {
-  boolean needs_idlefunc=FALSE;
   register int i;
 
   if (future_prefs->vpp_argv != NULL) {
@@ -5708,15 +5678,7 @@ void on_prefs_revert_clicked(GtkButton *button, gpointer user_data) {
 
   lives_set_cursor_style(LIVES_CURSOR_BUSY,NULL);
 
-  if (mainw->multitrack!=NULL&&mainw->multitrack->idlefunc>0) {
-    needs_idlefunc=TRUE;
-    g_source_remove(mainw->multitrack->idlefunc);
-    mainw->multitrack->idlefunc=0;
-  }
-  while (g_main_context_iteration(NULL,FALSE));
-  if (needs_idlefunc) {
-    mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
-  }
+  lives_widget_context_update();
 
   prefsw = NULL;
 

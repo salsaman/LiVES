@@ -503,6 +503,8 @@ static boolean pre_init(void) {
     if (prefs->play_monitor>capable->nmonitors) prefs->play_monitor=capable->nmonitors;
   }
 
+  mainw->scr_width=mainw->mgeom[prefs->gui_monitor>0?prefs->gui_monitor-1:0].width;
+  mainw->scr_height=mainw->mgeom[prefs->gui_monitor>0?prefs->gui_monitor-1:0].height;
 
   for (i=0;i<MAX_FX_CANDIDATE_TYPES;i++) {
     mainw->fx_candidates[i].delegate=-1;
@@ -660,10 +662,6 @@ static void lives_init(_ign_opts *ign_opts) {
   gchar *frei0r_path;
   gchar *ladspa_path;
 
-
-  // initialise the mainwindow data
-  mainw->scr_width=gdk_screen_width();
-  mainw->scr_height=gdk_screen_height();
 
   for (i=0;i<=MAX_FILES;mainw->files[i++]=NULL);
   mainw->fs=FALSE;
@@ -1007,6 +1005,8 @@ static void lives_init(_ign_opts *ign_opts) {
   mainw->draw_blocked=FALSE;
 
   mainw->ce_frame_height=mainw->ce_frame_width=-1;
+
+  mainw->overflow_height=0;
 
   /////////////////////////////////////////////////// add new stuff just above here ^^
 
@@ -2272,7 +2272,7 @@ static boolean lives_startup(gpointer data) {
   if (gerr!=NULL) g_error_free(gerr);
 
   gtk_widget_queue_draw(mainw->LiVES);
-  while (g_main_context_iteration(NULL,FALSE));
+  lives_widget_context_update();
 
   mainw->startup_error=FALSE;
 
@@ -3446,7 +3446,7 @@ void load_start_image(gint frame) {
 #if !GTK_CHECK_VERSION(3,0,0)
     gtk_widget_queue_resize(mainw->image272);
 
-    while (g_main_context_iteration(NULL,FALSE));
+    lives_widget_context_update();
     if (mainw->current_file==-1) {
       // user may close file
       load_start_image(0);
@@ -3577,7 +3577,7 @@ void load_end_image(gint frame) {
 #if !GTK_CHECK_VERSION(3,0,0)
     gtk_widget_queue_resize(mainw->image273);
 
-    while (g_main_context_iteration(NULL,FALSE));
+    lives_widget_context_update();
     if (mainw->current_file==-1) {
       // user may close file
       load_end_image(0);
@@ -4377,7 +4377,7 @@ static void get_max_opsize(int *opwidth, int *opheight) {
 	  *opwidth=lives_widget_get_allocation_width(mainw->playframe);
 	  *opheight=lives_widget_get_allocation_height(mainw->playframe);
 	  if (*opwidth * *opheight==0) {
-	    while (g_main_context_iteration(NULL,FALSE));
+	    lives_widget_context_update();
 	  }
 	} while (*opwidth * *opheight == 0);
       }
@@ -4412,7 +4412,7 @@ static void get_max_opsize(int *opwidth, int *opheight) {
 	    *opwidth=lives_widget_get_allocation_width(mainw->playframe);
 	    *opheight=lives_widget_get_allocation_height(mainw->playframe);
 	    if (*opwidth * *opheight==0) {
-	      while (g_main_context_iteration(NULL,FALSE));
+	      lives_widget_context_update();
 	    }
 	  } while (*opwidth * *opheight == 0);
 #endif
@@ -4911,7 +4911,7 @@ void load_frame_image(gint frame) {
 	    if (framecount!=NULL) g_free(framecount);
 	    return;
 	  }
-	  else if (mainw->preview||cfile->opening) while (g_main_context_iteration (NULL, FALSE));
+	  else if (mainw->preview||cfile->opening) lives_widget_context_update();
 	}
       }
     } while (mainw->frame_layer==NULL&&mainw->cancelled==CANCEL_NONE&&cfile->clip_type==CLIP_TYPE_DISK);
@@ -5409,7 +5409,7 @@ void load_frame_image(gint frame) {
 	  mainw->pwidth=lives_widget_get_allocation_width(mainw->playframe);
 	  mainw->pheight=lives_widget_get_allocation_height(mainw->playframe);
 	  if (mainw->pwidth * mainw->pheight==0) {
-	    while (g_main_context_iteration(NULL,FALSE));
+	    lives_widget_context_update();
 	  }
 	} while (mainw->pwidth * mainw->pheight == 0);
       }
@@ -5909,7 +5909,7 @@ void close_current_file(gint file_to_switch_to) {
       load_preview_image(FALSE);
       gtk_widget_queue_resize(mainw->preview_box);
 
-      //while (g_main_context_iteration (NULL,FALSE));
+      //lives_widget_context_update();
     }
       
     if (mainw->multitrack==NULL) {
@@ -6058,7 +6058,7 @@ void switch_to_file(gint old_file, gint new_file) {
     load_preview_image(FALSE);
     gtk_widget_queue_resize(mainw->preview_box);
 
-    //while (g_main_context_iteration (NULL,FALSE));
+    //lives_widget_context_update();
   }
   
   if (new_file>0) {

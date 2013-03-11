@@ -691,6 +691,8 @@ LiVESWidget *lives_volume_button_new(LiVESOrientation orientation, LiVESAdjustme
 // util functions
 void lives_cursor_unref(LiVESXCursor *cursor);
 
+void lives_widget_context_update(void);
+
 void lives_widget_get_fg_color(LiVESWidget *, LiVESWidgetColor *);
 void lives_widget_get_bg_color(LiVESWidget *, LiVESWidgetColor *);
 
@@ -731,9 +733,9 @@ void lives_general_button_clicked (LiVESButton *, LiVESObjectPtr data_to_free);
 
 boolean lives_general_delete_event(LiVESWidget *, LiVESXEvent *delevent, LiVESObjectPtr data_to_free);
 
-LiVESWidget *add_hsep_to_box (LiVESBox *, boolean expand);
+LiVESWidget *add_hsep_to_box (LiVESBox *);
 
-LiVESWidget *add_fill_to_box (LiVESBox *box);
+LiVESWidget *add_fill_to_box (LiVESBox *);
 
 
 #define LIVES_JUSTIFY_DEFAULT LIVES_JUSTIFY_LEFT

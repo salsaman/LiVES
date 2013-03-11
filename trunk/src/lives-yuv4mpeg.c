@@ -132,7 +132,7 @@ static gboolean lives_yuv_stream_start_read (file *sfile) {
     while (ntime<YUV4_O_TIME&&!pthread_kill(y4thread,0)) {
       // wait for thread to complete or timeout
       g_usleep(prefs->sleep_time);
-      while (g_main_context_iteration(NULL,FALSE));
+      lives_widget_context_update();
       
       gettimeofday(&otv, NULL);
       ntime=(otv.tv_sec*1000000+otv.tv_usec-stime);
@@ -170,7 +170,7 @@ static gboolean lives_yuv_stream_start_read (file *sfile) {
   while (ntime<YUV4_H_TIME&&!pthread_kill(y4thread,0)) {
     // wait for thread to complete or timeout
     g_usleep(prefs->sleep_time);
-    while (g_main_context_iteration(NULL,FALSE));
+    lives_widget_context_update();
 
     gettimeofday(&otv, NULL);
     ntime=(otv.tv_sec*1000000+otv.tv_usec-stime);

@@ -33,10 +33,11 @@
 #include "cvirtual.h"
 
 
-gboolean save_clip_values(gint which) {
-  gint asigned;
-  gint endian;
+boolean save_clip_values(int which) {
   gchar *lives_header;
+
+  int asigned;
+  int endian;
   int retval;
 #ifndef IS_MINGW
   mode_t xumask;
@@ -138,7 +139,7 @@ gboolean save_clip_values(gint which) {
 }
 
 
-gboolean read_file_details(const gchar *file_name, gboolean is_audio) {
+boolean read_file_details(const gchar *file_name, boolean is_audio) {
   // get preliminary details
 
   // is_audio set to TRUE prevents us from checking for images, and deleting the (existing) first frame
@@ -147,7 +148,7 @@ gboolean read_file_details(const gchar *file_name, gboolean is_audio) {
   FILE *infofile;
   int alarm_handle;
   int retval;
-  gboolean timeout;
+  boolean timeout;
   gchar *tmp,*com=g_strdup_printf("%s get_details \"%s\" \"%s\" \"%s\" %d %d",prefs->backend_sync,cfile->handle,
 				  (tmp=g_filename_from_utf8(file_name,-1,NULL,NULL,NULL)),
 				  get_image_ext_for_type(cfile->img_type),mainw->opening_loc,is_audio);
@@ -178,7 +179,7 @@ gboolean read_file_details(const gchar *file_name, gboolean is_audio) {
     alarm_handle=lives_alarm_set(LIVES_LONGER_TIMEOUT);
     
     while (!((infofile=fopen(cfile->info_file,"r")) || (timeout=lives_alarm_get(alarm_handle)))) {
-      while (g_main_context_iteration (NULL,FALSE));
+      lives_widget_context_update();
       threaded_dialog_spin();
       g_usleep(prefs->sleep_time);
     }
@@ -206,8 +207,7 @@ const gchar *get_deinterlace_string(void) {
 }
 
 
-void 
-deduce_file(const gchar *file_name, gdouble start, gint end) {
+void deduce_file(const gchar *file_name, double start, int end) {
   // this is a utility function to deduce whether we are dealing with a file, 
   // a selection, a backup, or a location
   gchar short_file_name[PATH_MAX];
@@ -237,8 +237,8 @@ void open_file (const gchar *file_name) {
 
 
 
-static gboolean rip_audio_cancelled(gint old_file, weed_plant_t *mt_pb_start_event, 
-				    gboolean mt_has_audio_file) {
+static boolean rip_audio_cancelled(int old_file, weed_plant_t *mt_pb_start_event, 
+				   boolean mt_has_audio_file) {
 
   if (mainw->cancelled==CANCEL_KEEP) {
     // user clicked "enough"
@@ -268,18 +268,22 @@ static gboolean rip_audio_cancelled(gint old_file, weed_plant_t *mt_pb_start_eve
 
 #define AUDIO_FRAMES_TO_READ 100
 
-void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
-  gchar *com;
-  gint withsound=1;
-  gint old_file=mainw->current_file;
-  gint new_file=old_file;
-  gchar *fname=g_strdup(file_name),*msgstr;
-  gint achans,arate,arps,asampsize;
-  gint current_file;
-  gboolean mt_has_audio_file=TRUE;
+void open_file_sel(const gchar *file_name, double start, int frames) {
   gchar msg[256],loc[256];
   gchar *tmp=NULL;
   gchar *isubfname=NULL;
+  gchar *fname=g_strdup(file_name),*msgstr;
+  gchar *com;
+
+  int withsound=1;
+  int old_file=mainw->current_file;
+  int new_file=old_file;
+
+  int achans,arate,arps,asampsize;
+  int current_file;
+
+  boolean mt_has_audio_file=TRUE;
+
   const lives_clip_data_t *cdata;
 
   weed_plant_t *mt_pb_start_event=NULL;
@@ -294,7 +298,7 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
     g_free(fname);
     
     lives_set_cursor_style(LIVES_CURSOR_BUSY,NULL);
-    while (g_main_context_iteration(NULL,FALSE));
+    lives_widget_context_update();
 
     if (frames==0) {
       com=g_strdup_printf(_ ("Opening %s"),file_name);
@@ -971,7 +975,7 @@ void open_file_sel(const gchar *file_name, gdouble start, gint frames) {
     get_total_time(cfile);
     if (!mainw->is_generating) mainw->current_file=mainw->multitrack->render_file;
     mt_init_clips(mainw->multitrack,current_file,TRUE);
-    while (g_main_context_iteration(NULL,FALSE));
+    lives_widget_context_update();
     mt_clip_select(mainw->multitrack,TRUE);
   }
   lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
@@ -1021,7 +1025,7 @@ static void save_subs_to_file(file *sfile, gchar *fname) {
 
 
 
-gboolean get_handle_from_info_file(gint index) {
+boolean get_handle_from_info_file(gint index) {
   // called from get_new_handle to get the 'real' file handle
   // because until we know the handle we can't use the normal info file yet
 
@@ -1030,7 +1034,7 @@ gboolean get_handle_from_info_file(gint index) {
   FILE *infofile;
   int alarm_handle;
   int retval;
-  gboolean timeout;
+  boolean timeout;
 
   do {
     retval=0;
@@ -1165,11 +1169,11 @@ void save_file (int clip, int start, int end, const char *filename) {
 
   GtkWidget *hbox;
 
-  gboolean safe_symlinks=prefs->safe_symlinks;
-  gboolean not_cancelled;
-  gboolean output_exists=FALSE;
-  gboolean save_all=FALSE;
-  gboolean resb;
+  boolean safe_symlinks=prefs->safe_symlinks;
+  boolean not_cancelled;
+  boolean output_exists=FALSE;
+  boolean save_all=FALSE;
+  boolean resb;
 
   if (start==1&&end==sfile->frames) save_all=TRUE;
 
@@ -1936,7 +1940,7 @@ void save_file (int clip, int start, int end, const char *filename) {
 	// replace letterboxed frames with maxspect frames
 	int iwidth=sfile->ohsize;
 	int iheight=sfile->ovsize;
-	gboolean bad_header=FALSE;
+	boolean bad_header=FALSE;
 
 	com=g_strdup_printf("%s mv_mgk \"%s\" %d %d \"%s\" 1",prefs->backend,sfile->handle,1,sfile->frames,
 			    get_image_ext_for_type(sfile->img_type));
@@ -2098,16 +2102,16 @@ void play_file (void) {
   gint audio_end=0;
 
   gint loop=0;
-  gboolean mute;
+  boolean mute;
 
   GClosure *freeze_closure;
   gshort audio_player=prefs->audio_player;
 
   weed_plant_t *pb_start_event=NULL;
 #ifdef RT_AUDIO
-  gboolean exact_preview=FALSE;
+  boolean exact_preview=FALSE;
 #endif
-  gboolean has_audio_buffers=FALSE;
+  boolean has_audio_buffers=FALSE;
 
 #ifdef GDK_WINDOWING_X11
   uint64_t awinid=-1;
@@ -2216,7 +2220,7 @@ void play_file (void) {
     if ((!mainw->sep_win||(!mainw->faded&&(prefs->sepwin_type!=1)))&&(cfile->frames>0||mainw->foreign)) {
       // show the frame in the main window
       gtk_widget_show(mainw->playframe);
-      while(g_main_context_iteration(NULL,FALSE));
+      lives_widget_context_update();
     }
   }
 
@@ -2298,6 +2302,11 @@ void play_file (void) {
   if (cfile->frames==0&&mainw->multitrack==NULL) {
     if (mainw->preview_box!=NULL&&lives_widget_get_parent(mainw->preview_box)!=NULL) {
       gtk_container_remove (GTK_CONTAINER (mainw->play_window), mainw->preview_box);
+
+      mainw->pw_scroll_func=g_signal_connect (GTK_OBJECT (mainw->play_window), "scroll_event",
+					      G_CALLBACK (on_mouse_scroll),
+					      NULL);
+
     }
   }
   else {
@@ -2313,6 +2322,10 @@ void play_file (void) {
 	if (mainw->multitrack==NULL) {
 	  if (mainw->preview_box!=NULL&&lives_widget_get_parent(mainw->preview_box)!=NULL) {
 	    gtk_container_remove (GTK_CONTAINER (mainw->play_window), mainw->preview_box);
+
+	    mainw->pw_scroll_func=g_signal_connect (GTK_OBJECT (mainw->play_window), "scroll_event",
+						    G_CALLBACK (on_mouse_scroll),
+						    NULL);
 	  }
 	}
 
@@ -2332,7 +2345,7 @@ void play_file (void) {
 	if (mainw->multitrack==NULL) {
 	  block_expose();
 	  mainw->noswitch=TRUE;
-	  while (g_main_context_iteration (NULL,FALSE));
+	  lives_widget_context_update();
 	  mainw->noswitch=FALSE;
 	  unblock_expose();
 	}
@@ -2374,7 +2387,7 @@ void play_file (void) {
 	if (mainw->pwidth*mainw->pheight==0) {
 	  gtk_widget_queue_draw (mainw->playframe);
 	  mainw->noswitch=TRUE;
-	  while (g_main_context_iteration (NULL, FALSE));
+	  lives_widget_context_update();
 	  mainw->noswitch=FALSE;
 	}
       } while (mainw->pwidth*mainw->pheight==0);
@@ -2783,7 +2796,7 @@ void play_file (void) {
 
     // tell jack client to close audio file
     if (mainw->jackd!=NULL&&mainw->jackd->playing_file>0) {
-      gboolean timeout;
+      boolean timeout;
       int alarm_handle=lives_alarm_set(LIVES_ACONNECT_TIMEOUT);
       while (!(timeout=lives_alarm_get(alarm_handle))&&jack_get_msgq(mainw->jackd)!=NULL) {
 	sched_yield(); // wait for seek
@@ -2812,7 +2825,7 @@ void play_file (void) {
 
     // tell pulse client to close audio file
     if (mainw->pulsed!=NULL&&(mainw->pulsed->playing_file>0||mainw->pulsed->fd>0)) {
-      gboolean timeout;
+      boolean timeout;
       int alarm_handle=lives_alarm_set(LIVES_ACONNECT_TIMEOUT);
       while (!(timeout=lives_alarm_get(alarm_handle))&&pulse_get_msgq(mainw->pulsed)!=NULL) {
 	sched_yield(); // wait for seek
@@ -2929,7 +2942,7 @@ void play_file (void) {
 
     gdk_window_set_keep_above(mainw->foreign_window,FALSE);
 
-    while (g_main_context_iteration(NULL,FALSE));
+    lives_widget_context_update();
 
     return;
   }
@@ -2985,7 +2998,7 @@ void play_file (void) {
     // the screen grew too much...remaximise it
     gtk_window_unmaximize (GTK_WINDOW(mainw->LiVES));
     mainw->noswitch=TRUE;
-    while (g_main_context_iteration(NULL,FALSE));
+    lives_widget_context_update();
     mainw->noswitch=FALSE;
     gtk_window_maximize (GTK_WINDOW(mainw->LiVES));
   }
@@ -3036,6 +3049,7 @@ void play_file (void) {
 	  (cfile->clip_type!=CLIP_TYPE_GENERATOR)) {
 	if (mainw->preview_box==NULL) {
 	  // create the preview in the sepwin
+	  g_signal_handler_disconnect (mainw->play_window, mainw->pw_scroll_func);
 	  make_preview_box();
 	}
 	if (mainw->current_file!=current_file) {
@@ -3063,7 +3077,7 @@ void play_file (void) {
 	  gtk_widget_queue_draw (mainw->LiVES);
 	  mainw->noswitch=TRUE;
 
-	  while (g_main_context_iteration (NULL,FALSE));
+	  lives_widget_context_update();
 	  if (mainw->play_window!=NULL) {
 	    gchar *title,*xtrabit;
 	    
@@ -3148,7 +3162,7 @@ void play_file (void) {
 
 #ifdef ENABLE_JACK
   if (audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL) {
-    gboolean timeout;
+    boolean timeout;
     int alarm_handle=lives_alarm_set(LIVES_ACONNECT_TIMEOUT);
     while (!(timeout=lives_alarm_get(alarm_handle))&&jack_get_msgq(mainw->jackd)!=NULL) {
       sched_yield(); // wait for seek
@@ -3169,7 +3183,7 @@ void play_file (void) {
 #endif
 #ifdef HAVE_PULSE_AUDIO
   if (audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL) {
-    gboolean timeout;
+    boolean timeout;
     int alarm_handle=lives_alarm_set(LIVES_ACONNECT_TIMEOUT);
     while (!(timeout=lives_alarm_get(alarm_handle))&&pulse_get_msgq(mainw->pulsed)!=NULL) {
       sched_yield(); // wait for seek
@@ -3223,7 +3237,7 @@ void play_file (void) {
 }
   
 
-gboolean get_temp_handle(gint index, gboolean create) {
+boolean get_temp_handle(gint index, boolean create) {
   // we can call this to get a temp handle for returning info from the backend
   // this function is also called from get_new_handle to create a permanent handle
   // for an opened file
@@ -3237,7 +3251,7 @@ gboolean get_temp_handle(gint index, gboolean create) {
 
 
   gchar *com;
-  gboolean is_unique;
+  boolean is_unique;
   gint current_file=mainw->current_file;
 
   if (index==-1) {
@@ -3376,7 +3390,7 @@ void create_cfile(void) {
 }
 
 
-gboolean
+boolean
 get_new_handle (gint index, const gchar *name) {
   // here is where we first initialize for the clipboard
   // and for paste_as_new, and restore
@@ -3410,7 +3424,7 @@ get_new_handle (gint index, const gchar *name) {
 
 
 
-gboolean add_file_info(const gchar *check_handle, gboolean aud_only) {
+boolean add_file_info(const gchar *check_handle, boolean aud_only) {
   // file information has been retrieved, set struct cfile with details
   // contained in mainw->msg. We do this twice, once before opening the file, once again after.
   // The first time, frames and afilesize may not be correct.
@@ -3588,7 +3602,7 @@ gboolean add_file_info(const gchar *check_handle, gboolean aud_only) {
 }
 
 
-gboolean save_file_comments (int fileno) {
+boolean save_file_comments (int fileno) {
   // save the comments etc for smogrify
   int retval;
   int comment_fd;
@@ -3641,12 +3655,12 @@ wait_for_stop (const gchar *stop_command) {
 # define STOP_GIVE_UP_TIME 1.0
 
   gdouble time_waited=0.;
-  gboolean sent_second_stop=FALSE;
+  boolean sent_second_stop=FALSE;
   
   // send another stop if necessary
   mainw->noswitch=TRUE;
   while (!(infofile=fopen(cfile->info_file,"r"))) {
-    while (g_main_context_iteration(NULL,FALSE));
+    lives_widget_context_update();
     g_usleep(prefs->sleep_time);
     time_waited+=1000000./prefs->sleep_time;
     if (time_waited>SECOND_STOP_TIME&&!sent_second_stop) {
@@ -3697,7 +3711,7 @@ boolean save_frame_inner(int clip, int frame, const gchar *file_name, int width,
     g_free(com);
     
     if (sfile->clip_type==CLIP_TYPE_FILE) {
-      gboolean resb=virtual_to_images(clip,frame,frame,FALSE);
+      boolean resb=virtual_to_images(clip,frame,frame,FALSE);
       if (!resb) {
 	d_print_file_error_failed();
 	return FALSE;
@@ -3805,7 +3819,7 @@ void backup_file(int clip, int start, int end, const gchar *file_name) {
   cfile->progress_end=sfile->frames;
 
   if (sfile->clip_type==CLIP_TYPE_FILE) {
-    gboolean resb;
+    boolean resb;
     mainw->cancelled=CANCEL_NONE;
     cfile->progress_start=1;
     cfile->progress_end=count_virtual_frames(sfile->frame_index,1,sfile->frames);
@@ -3900,7 +3914,7 @@ void backup_file(int clip, int start, int end, const gchar *file_name) {
 }
 
 
-gboolean write_headers (file *file) {
+boolean write_headers (file *file) {
   // this function is included only for backwards compatibility with ancient builds of LiVES
   //
 
@@ -3977,7 +3991,7 @@ gboolean write_headers (file *file) {
 }
 
 
-gboolean read_headers(const gchar *file_name) {
+boolean read_headers(const gchar *file_name) {
   // file_name is only used to get the file size on the disk
   FILE *infofile;
   gchar **array;
@@ -3996,8 +4010,8 @@ gboolean read_headers(const gchar *file_name) {
 
   lives_clip_details_t detail;
 
-  gboolean timeout;
-  gboolean retval,retvala;
+  boolean timeout;
+  boolean retval,retvala;
 
   ssize_t sizhead=8*4+8+8;
 
@@ -4355,14 +4369,14 @@ gboolean read_headers(const gchar *file_name) {
 
 void open_set_file (const gchar *set_name, gint clipnum) {
   gchar name[256];
-  gboolean needs_update=FALSE;
+  boolean needs_update=FALSE;
 
   if (mainw->current_file<1) return;
 
   memset (name,0,256);
 
   if (mainw->cached_list!=NULL) {
-    gboolean retval;
+    boolean retval;
     // LiVES 0.9.6+
 
     retval=get_clip_value(mainw->current_file,CLIP_DETAILS_PB_FPS,&cfile->pb_fps,0);
@@ -4437,12 +4451,12 @@ void open_set_file (const gchar *set_name, gint clipnum) {
 void restore_file(const gchar *file_name) {
   gchar *com=g_strdup("dummy");
   gchar *mesg,*mesg1,*tmp;
-  gboolean is_OK=TRUE;
+  boolean is_OK=TRUE;
   gchar *fname=g_strdup(file_name);
 
   gint old_file=mainw->current_file,current_file;
   gint new_file=mainw->first_free_file;
-  gboolean not_cancelled;
+  boolean not_cancelled;
 
   gchar *subfname;
 
@@ -4686,7 +4700,7 @@ static gdouble scrap_mb;  // MB written to frame file
 static gdouble ascrap_mb;  // MB written to audio file
 static uint64_t free_mb; // MB free to write
 
-gboolean open_scrap_file (void) {
+boolean open_scrap_file (void) {
   // create a scrap file for recording generated video frames
   gint current_file=mainw->current_file;
   gint new_file=mainw->first_free_file;
@@ -4724,7 +4738,7 @@ gboolean open_scrap_file (void) {
 
 
 
-gboolean open_ascrap_file (void) {
+boolean open_ascrap_file (void) {
   // create a scrap file for recording audio
   gint current_file=mainw->current_file;
   gint new_file=mainw->first_free_file;
@@ -4767,7 +4781,7 @@ gboolean open_ascrap_file (void) {
 
 
 
-gboolean load_from_scrap_file(weed_plant_t *layer, int frame) {
+boolean load_from_scrap_file(weed_plant_t *layer, int frame) {
   // load raw frame data from scrap file
 
   // this will also set cfile width and height - for letterboxing etc.
@@ -4879,7 +4893,7 @@ gboolean load_from_scrap_file(weed_plant_t *layer, int frame) {
 
 
 
-gint save_to_scrap_file (weed_plant_t *layer) {
+int save_to_scrap_file (weed_plant_t *layer) {
   // returns frame number
 
   // dump the raw frame data to a file (in machine endian format)
@@ -4902,7 +4916,7 @@ gint save_to_scrap_file (weed_plant_t *layer) {
 
   int i;
 
-  gboolean wrtable=TRUE;
+  boolean wrtable=TRUE;
 
   void **pdata;
 
@@ -4984,12 +4998,12 @@ gint save_to_scrap_file (weed_plant_t *layer) {
   
   fstat(fd,&filestat);
 
-  scrap_mb+=(gdouble)(filestat.st_size)/1000000.;
+  scrap_mb+=(double)(filestat.st_size)/1000000.;
 
   // check free space every 1000 frames or every 10 MB of audio (TODO ****)
   if (mainw->files[mainw->scrap_file]->frames%1000==0) {
     gchar *dir=g_build_filename(prefs->tmpdir,mainw->files[mainw->scrap_file]->handle,NULL);
-    free_mb=(gdouble)get_fs_free(dir)/1000000.;
+    free_mb=(double)get_fs_free(dir)/1000000.;
     if (free_mb==0) wrtable=is_writeable_dir(dir);
     g_free(dir);
   }
@@ -5021,15 +5035,15 @@ gint save_to_scrap_file (weed_plant_t *layer) {
   g_free(oname);
 
   // check if we have enough free space left on the volume
-  if ((int64_t)(((gdouble)free_mb-(scrap_mb+ascrap_mb))/1000.)<prefs->rec_stop_gb) {
+  if ((int64_t)(((double)free_mb-(scrap_mb+ascrap_mb))/1000.)<prefs->rec_stop_gb) {
     // check free space again
     gchar *dir=g_build_filename(prefs->tmpdir,mainw->files[mainw->scrap_file]->handle,NULL);
-    free_mb=(gdouble)get_fs_free(dir)/1000000.;
+    free_mb=(double)get_fs_free(dir)/1000000.;
     if (free_mb==0) wrtable=is_writeable_dir(dir);
     else wrtable=TRUE;
 
     if (wrtable) {
-      if ((int64_t)(((gdouble)free_mb-(scrap_mb+ascrap_mb))/1000.)<prefs->rec_stop_gb) {
+      if ((int64_t)(((double)free_mb-(scrap_mb+ascrap_mb))/1000.)<prefs->rec_stop_gb) {
 	if (mainw->record&&!mainw->record_paused) {
 	  gchar *msg=g_strdup_printf(_("\nRECORDING WAS PAUSED BECAUSE FREE DISK SPACE in %s IS BELOW %ld GB !\nRecord stop level can be set in Preferences.\n"),dir,prefs->rec_stop_gb);
 	  d_print(msg);
@@ -5047,7 +5061,7 @@ gint save_to_scrap_file (weed_plant_t *layer) {
 
 
 void close_scrap_file (void) {
-  gint current_file=mainw->current_file;
+  int current_file=mainw->current_file;
 
   if (mainw->scrap_file==-1) return;
 
@@ -5064,7 +5078,7 @@ void close_scrap_file (void) {
 
 
 void close_ascrap_file (void) {
-  gint current_file=mainw->current_file;
+  int current_file=mainw->current_file;
 
   if (mainw->ascrap_file==-1) return;
 
@@ -5083,7 +5097,9 @@ void close_ascrap_file (void) {
 void recover_layout_map(gint numclips) {
   // load global layout map for a set and assign entries to clips [mainw->files[i]->layout_map]
   GList *mlist,*lmap_node,*lmap_node_next,*lmap_entry_list,*lmap_entry_list_next;
+
   layout_map *lmap_entry;
+
   gchar **array;
   gchar *check_handle;
   
@@ -5235,7 +5251,7 @@ static boolean recover_files(gchar *recovery_file, boolean auto_recover) {
 	switch_to_file((mainw->current_file=0),current_file);
       }
       reset_clip_menu();
-      while (g_main_context_iteration(NULL,FALSE));
+      lives_widget_context_update();
       threaded_dialog_spin();
 
       if (mainw->read_failed) {
@@ -5346,7 +5362,7 @@ static boolean recover_files(gchar *recovery_file, boolean auto_recover) {
 	}
 	else {
 	  lives_clip_details_t detail;
-	  gint asigned,aendian;
+	  int asigned,aendian;
 	  detail=CLIP_DETAILS_ACHANS;
 	  retval=get_clip_value(mainw->current_file,detail,&cfile->achans,0);
 	  if (!retval) cfile->achans=0;
@@ -5396,7 +5412,7 @@ static boolean recover_files(gchar *recovery_file, boolean auto_recover) {
       if (load_frame_index(mainw->current_file)) {
 	// cd to clip directory - so decoder plugins can write temp files
 	gchar *ppath=g_build_filename(prefs->tmpdir,cfile->handle,NULL);
-	gboolean next=FALSE;
+	boolean next=FALSE;
 
 	lives_chdir(ppath,FALSE);
 	g_free(ppath);
@@ -5489,9 +5505,9 @@ static boolean recover_files(gchar *recovery_file, boolean auto_recover) {
 	  get_total_time(cfile);
 	  mainw->current_file=mainw->multitrack->render_file;
 	  mt_init_clips(mainw->multitrack,current_file,TRUE);
-	  while (g_main_context_iteration(NULL,FALSE));
+	  lives_widget_context_update();
 	  mt_clip_select(mainw->multitrack,TRUE);
-	  while (g_main_context_iteration(NULL,FALSE));
+	  lives_widget_context_update();
 	  mainw->current_file=current_file;
 	}
 	
@@ -5525,7 +5541,7 @@ static boolean recover_files(gchar *recovery_file, boolean auto_recover) {
     mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
   }
   else {
-    gint start_file=mainw->current_file;
+    int start_file=mainw->current_file;
     if (mainw->current_file>1&&mainw->current_file==mainw->ascrap_file&&mainw->files[mainw->current_file-1]!=NULL) {
       start_file--;
     }
@@ -5572,12 +5588,15 @@ void add_to_recovery_file (const gchar *handle) {
 
 void rewrite_recovery_file(void) {
   // part of the crash recovery system
-  int i;
+  GList *clist=mainw->cliplist;
   gchar *recovery_entry;
+
+  boolean opened=FALSE;
+
   int recovery_fd=-1;
   int retval;
-  GList *clist=mainw->cliplist;
-  gboolean opened=FALSE;
+
+  register int i;
 
   if (clist==NULL) {
     unlink(mainw->recovery_file);
@@ -5620,15 +5639,18 @@ void rewrite_recovery_file(void) {
 }
 
 
-gboolean check_for_recovery_files (gboolean auto_recover) {
-  gboolean retval=FALSE;
-  gchar *recovery_file,*recovery_numbering_file;
-  guint recpid=0;
+boolean check_for_recovery_files (boolean auto_recover) {
+  uint32_t recpid=0;
 
   ssize_t bytes;
-  int info_fd;
+
+  gchar *recovery_file,*recovery_numbering_file;
   gchar *info_file=g_strdup_printf("%s/.recovery.%d",prefs->tmpdir,getpid());
   gchar *com;
+
+  boolean retval=FALSE;
+
+  int info_fd;
   int lgid=lives_getgid();
   int luid=lives_getuid();
 

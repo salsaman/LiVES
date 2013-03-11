@@ -366,8 +366,8 @@ typedef struct {
   gint pre_src_file; ///< video file we were playing before any ext input started
   gint pre_src_audio_file; ///< audio file we were playing before any ext input started
 
-  gint scr_width;
-  gint scr_height;
+  int scr_width;
+  int scr_height;
   lives_toy_t toy_type;
   lives_pid_t toy_alives_pid; // 0, or thread for autolives toy
   boolean autolives_reset_fx;
@@ -865,7 +865,9 @@ typedef struct {
   GtkWidget *resize_menuitem;
 
   boolean only_close; ///< only close clips - do not exit
-  boolean is_exiting; ///< set during shutdown (inverse of only_close then)
+  volatile boolean is_exiting; ///< set during shutdown (inverse of only_close then)
+
+  gulong pw_scroll_func;
 
 #ifdef ENABLE_JACK
   jack_driver_t *jackd; ///< jack audio playback device
@@ -1064,8 +1066,8 @@ typedef struct {
 
   boolean draw_blocked; // block drawing of timeline bars : prevents an infinite loop
 
-  gint ce_frame_height;
-  gint ce_frame_width;
+  int ce_frame_height;
+  int ce_frame_width;
 
   gchar *read_failed_file;
   gchar *write_failed_file;
@@ -1080,6 +1082,7 @@ typedef struct {
   lives_pconnect_t *pconx; ///< list of out -> in param connections
   lives_cconnect_t *cconx; ///< list of out -> in alpha channel connections
 
+  int overflow_height;
 
 } mainwindow;
 

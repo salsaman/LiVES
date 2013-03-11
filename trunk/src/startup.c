@@ -404,7 +404,7 @@ boolean do_audio_choice_dialog(short startup_phase) {
     gtk_widget_hide (mainw->recaudio_submenu);
   }
 
-  while (g_main_context_iteration(NULL,FALSE));
+  lives_widget_context_update();
 
   return (response==GTK_RESPONSE_OK);
 }
@@ -428,7 +428,7 @@ static void add_test(GtkWidget *table, gint row, gchar *ttext, boolean noskip) {
     gtk_widget_show(image);
   }
 
-  while (g_main_context_iteration(NULL,FALSE));
+  lives_widget_context_update();
 }
 
 
@@ -443,7 +443,7 @@ static boolean pass_test(GtkWidget *table, gint row) {
   gtk_table_attach (GTK_TABLE (table), image, 2, 3, row, row+1, (GtkAttachOptions)0, (GtkAttachOptions)0, 0, 10);
   gtk_widget_show(image);
 
-  while (g_main_context_iteration(NULL,FALSE));
+  lives_widget_context_update();
   return TRUE;
 }
 
@@ -466,7 +466,7 @@ static boolean fail_test(GtkWidget *table, gint row, gchar *ftext) {
   gtk_table_attach (GTK_TABLE (table), image, 2, 3, row, row+1, (GtkAttachOptions)0, (GtkAttachOptions)0, 0, 10);
   gtk_widget_show(image);
 
-  while (g_main_context_iteration(NULL,FALSE));
+  lives_widget_context_update();
   
   return FALSE;
 }
@@ -562,7 +562,7 @@ boolean do_startup_tests(boolean tshoot) {
 
   gtk_widget_show_all(dialog);
 
-  while (g_main_context_iteration(NULL,FALSE));
+  lives_widget_context_update();
 
 
   // check for sox presence
@@ -640,7 +640,7 @@ boolean do_startup_tests(boolean tshoot) {
 
       while (mainw->cancelled==CANCEL_NONE&&(info_fd=open(cfile->info_file,O_RDONLY))==-1) {
 	g_usleep(prefs->sleep_time);
-	while (g_main_context_iteration(NULL,FALSE));
+	lives_widget_context_update();
       }
       
       if (info_fd!=-1) {
@@ -689,7 +689,7 @@ boolean do_startup_tests(boolean tshoot) {
 
     if (!success) {
       gtk_widget_destroy(dialog);
-      while (g_main_context_iteration(NULL,FALSE));
+      lives_widget_context_update();
       do_no_mplayer_sox_error();
       close_current_file(current_file);
       mainw->suppress_dprint=FALSE;
@@ -960,7 +960,7 @@ void do_startup_interface_query(void) {
 
   gtk_widget_destroy(dialog);
 
-  while (g_main_context_iteration(NULL,FALSE));
+  lives_widget_context_update();
 
 }
 

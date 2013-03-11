@@ -1,6 +1,6 @@
 // paramwindow.h
 // LiVES
-// (c) G. Finch 2004 - 2011 <salsaman@gmail.com>
+// (c) G. Finch 2004 - 2013 <salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for licensing details
 
@@ -18,15 +18,10 @@ typedef struct {
 #define RFX_DEF_NUM_MAX 1000000. ///< default param max when not defined
 
 /// size of the fx dialog windows scrollwindow
-#if GTK_CHECK_VERSION(3,0,0)
-#define RFX_WINSIZE_H 820
+#define RFX_WINSIZE_H (mainw->scr_width>1024?820:600)
 #define RFX_WINSIZE_V 480
-#else
-#define RFX_WINSIZE_H 600
-#define RFX_WINSIZE_V 400
-#endif
 
-#define RFX_TEXT_SCROLL_HEIGHT 100 ///< height of textview scrolled window
+#define RFX_TEXT_SCROLL_HEIGHT 80 ///< height of textview scrolled window
 
 #define DEF_BUTTON_WIDTH 80
 

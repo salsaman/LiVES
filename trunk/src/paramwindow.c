@@ -526,7 +526,7 @@ static boolean add_sizes(GtkBox *vbox, boolean add_fps, lives_rfx_t *rfx) {
 
   if (add_fps) {
 
-    add_hsep_to_box(vbox,FALSE);
+    add_hsep_to_box(vbox);
 
     hbox = lives_hbox_new (FALSE, 0);
     gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 20);
@@ -1219,9 +1219,7 @@ boolean make_param_box(GtkVBox *top_vbox, lives_rfx_t *rfx) {
 	has_param=TRUE;
       }
       else if (!j&&!strcmp (array[j],"hseparator")&&has_param) {
-	hbox = lives_hbox_new (FALSE, 0);
-	gtk_box_pack_start (GTK_BOX (param_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
-	add_hsep_to_box (LIVES_BOX (hbox),TRUE);
+	add_hsep_to_box (LIVES_BOX (param_vbox));
 	j=num_tok;  // ignore anything after hseparator
       }
       else if (!strncmp (array[j],"fill",4)) {
@@ -1284,7 +1282,10 @@ boolean make_param_box(GtkVBox *top_vbox, lives_rfx_t *rfx) {
     }
     
     if (mainw->multitrack==NULL||rfx->status!=RFX_STATUS_WEED) {
-      scrolledwindow=lives_standard_scrolled_window_new(RFX_WINSIZE_H,RFX_WINSIZE_V,top_hbox,TRUE);
+      if (mainw->scr_height>=mainw->overflow_height)
+	scrolledwindow=lives_standard_scrolled_window_new(RFX_WINSIZE_H,RFX_WINSIZE_V,top_hbox,TRUE);
+      else 
+	scrolledwindow=lives_standard_scrolled_window_new(RFX_WINSIZE_H,RFX_WINSIZE_V>>1,top_hbox,TRUE);
     }
     else 
       scrolledwindow=lives_standard_scrolled_window_new(-1,-1,top_hbox,TRUE);
@@ -1858,7 +1859,7 @@ after_boolean_param_toggled        (GtkToggleButton *togglebutton,
       g_list_free_strings (retvals);
       g_list_free (retvals);
     }
-    while (g_main_context_iteration(NULL,FALSE));
+    lives_widget_context_update();
     param->change_blocked=FALSE;
   }
   if (!was_reinited&&copyto!=-1) update_visual_params(rfx,FALSE);
@@ -1978,7 +1979,7 @@ after_param_value_changed           (GtkSpinButton   *spinbutton,
       g_list_free_strings (retvals);
       g_list_free (retvals);
     }
-    while (g_main_context_iteration(NULL,FALSE));
+    lives_widget_context_update();
     param->change_blocked=FALSE;
   }
   if (!was_reinited&&copyto!=-1) update_visual_params(rfx,FALSE);
@@ -2177,7 +2178,7 @@ after_param_red_changed           (GtkSpinButton   *spinbutton,
       g_list_free_strings (retvals);
       g_list_free (retvals);
     }
-    while (g_main_context_iteration(NULL,FALSE));
+    lives_widget_context_update();
     param->change_blocked=FALSE;
   }
   if (!was_reinited&&copyto!=-1) update_visual_params(rfx,FALSE);
@@ -2253,7 +2254,7 @@ after_param_green_changed           (GtkSpinButton   *spinbutton,
       g_list_free_strings (retvals);
       g_list_free (retvals);
     }
-    while (g_main_context_iteration(NULL,FALSE));
+    lives_widget_context_update();
     param->change_blocked=FALSE;
   }
   if (!was_reinited&&copyto!=-1) update_visual_params(rfx,FALSE);
@@ -2328,7 +2329,7 @@ after_param_blue_changed           (GtkSpinButton   *spinbutton,
       g_list_free_strings (retvals);
       g_list_free (retvals);
     }
-    while (g_main_context_iteration(NULL,FALSE));
+    lives_widget_context_update();
     param->change_blocked=FALSE;
   }
   if (!was_reinited&&copyto!=-1) update_visual_params(rfx,FALSE);
@@ -2383,7 +2384,7 @@ after_param_alpha_changed           (GtkSpinButton   *spinbutton,
       g_list_free_strings (retvals);
       g_list_free (retvals);
     }
-    while (g_main_context_iteration(NULL,FALSE));
+    lives_widget_context_update();
     param->change_blocked=FALSE;
   }
   if (mainw->multitrack!=NULL&&rfx->status==RFX_STATUS_WEED) {
@@ -2515,7 +2516,7 @@ void after_param_text_changed (GtkWidget *textwidget, lives_rfx_t *rfx) {
       g_list_free_strings (retvals);
       g_list_free (retvals);
     }
-    while (g_main_context_iteration(NULL,FALSE));
+    lives_widget_context_update();
     param->change_blocked=FALSE;
   }
   g_free (old_text);
@@ -2609,7 +2610,7 @@ after_string_list_changed (GtkComboBox *combo, lives_rfx_t *rfx) {
       g_list_free_strings (retvals);
       g_list_free (retvals);
     }
-    while (g_main_context_iteration(NULL,FALSE));
+    lives_widget_context_update();
     param->change_blocked=FALSE;
   }
   if (!was_reinited&&copyto!=-1) update_visual_params(rfx,FALSE);
@@ -3188,6 +3189,7 @@ void update_visual_params(lives_rfx_t *rfx, boolean update_hidden) {
   in_params=weed_get_plantptr_array(inst,"in_parameters",&error);
   for (i=0;i<num_params;i++) {
     if (!is_hidden_param(inst,i)||update_hidden) {
+      // by default we dont update hidden or reinit params
 
       in_param=in_params[i];
       paramtmpl=weed_get_plantptr_value(in_param,"template",&error);

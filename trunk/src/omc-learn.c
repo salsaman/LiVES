@@ -2161,7 +2161,7 @@ void on_midi_learn_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
     g_usleep(prefs->sleep_time);
 
-    while (g_main_context_iteration(NULL,FALSE));
+    lives_widget_context_update();
   }
 
   remove_all_nodes(FALSE,omclw);

@@ -480,7 +480,7 @@ void transition_add_in_out(GtkBox *vbox, lives_rfx_t *rfx, boolean add_audio_che
 			  (gpointer)rfx);
   
   if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(hbox, GTK_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_fg_color(hbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
   }
 
   hseparator = lives_hseparator_new ();
@@ -1520,9 +1520,9 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, boolean add_
       }
 #endif
       if (palette->style&STYLE_1) {
-	lives_widget_set_bg_color (scale, GTK_STATE_NORMAL, &palette->normal_back);
-	lives_widget_set_text_color(scale, GTK_STATE_NORMAL, &palette->normal_back);
-	lives_widget_set_fg_color(scale, GTK_STATE_NORMAL, &palette->normal_fore);
+	lives_widget_set_bg_color (scale, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+	lives_widget_set_text_color(scale, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+	lives_widget_set_fg_color(scale, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
       }
       if (param->desc!=NULL) gtk_widget_set_tooltip_text(scale, param->desc);
     }
@@ -2589,9 +2589,9 @@ after_string_list_changed (GtkComboBox *combo, lives_rfx_t *rfx) {
       }
     
       if (disp_string!=NULL) {
-	g_signal_handlers_block_by_func(combo,after_string_list_changed,(gpointer)rfx);
+	g_signal_handlers_block_by_func(combo,(gpointer)after_string_list_changed,(gpointer)rfx);
 	lives_combo_set_active_string (LIVES_COMBO(combo),disp_string);
-	g_signal_handlers_unblock_by_func(combo,after_string_list_changed,(gpointer)rfx);
+	g_signal_handlers_unblock_by_func(combo,(gpointer)after_string_list_changed,(gpointer)rfx);
 	weed_free(disp_string);
       } 
       
@@ -2947,10 +2947,10 @@ int set_param_from_list(GList *plist, lives_param_t *param, gint pnum, boolean w
       if (upd) {
 	if (param->widgets[0]&&GTK_IS_SPIN_BUTTON (param->widgets[0])) {
 	  lives_rfx_t *rfx=(lives_rfx_t *)g_object_get_data(G_OBJECT(param->widgets[0]),"rfx");
-	  g_signal_handlers_block_by_func(param->widgets[0],after_param_value_changed,(gpointer)rfx);
+	  g_signal_handlers_block_by_func(param->widgets[0],(gpointer)after_param_value_changed,(gpointer)rfx);
 	  gtk_spin_button_set_range (GTK_SPIN_BUTTON (param->widgets[0]),(gdouble)param->min,(gdouble)param->max);
 	  gtk_spin_button_update(GTK_SPIN_BUTTON(param->widgets[0]));
-	  g_signal_handlers_unblock_by_func(param->widgets[0],after_param_value_changed,(gpointer)rfx);
+	  g_signal_handlers_unblock_by_func(param->widgets[0],(gpointer)after_param_value_changed,(gpointer)rfx);
 	  gtk_spin_button_set_value (GTK_SPIN_BUTTON (param->widgets[0]),get_double_param(param->value));
 	  gtk_spin_button_update(GTK_SPIN_BUTTON(param->widgets[0]));
 	}
@@ -2982,10 +2982,10 @@ int set_param_from_list(GList *plist, lives_param_t *param, gint pnum, boolean w
       if (upd) {
 	if (param->widgets[0]&&GTK_IS_SPIN_BUTTON (param->widgets[0])) {
 	  lives_rfx_t *rfx=(lives_rfx_t *)g_object_get_data(G_OBJECT(param->widgets[0]),"rfx");
-	  g_signal_handlers_block_by_func(param->widgets[0],after_param_value_changed,(gpointer)rfx);
+	  g_signal_handlers_block_by_func(param->widgets[0],(gpointer)after_param_value_changed,(gpointer)rfx);
 	  gtk_spin_button_set_range (GTK_SPIN_BUTTON (param->widgets[0]),(gdouble)param->min,(gdouble)param->max);
 	  gtk_spin_button_update(GTK_SPIN_BUTTON(param->widgets[0]));
-	  g_signal_handlers_unblock_by_func(param->widgets[0],after_param_value_changed,(gpointer)rfx);
+	  g_signal_handlers_unblock_by_func(param->widgets[0],(gpointer)after_param_value_changed,(gpointer)rfx);
 	  gtk_spin_button_set_value (GTK_SPIN_BUTTON (param->widgets[0]),(gdouble)get_int_param(param->value));
 	  gtk_spin_button_update(GTK_SPIN_BUTTON(param->widgets[0]));
 	}
@@ -3037,7 +3037,7 @@ int set_param_from_list(GList *plist, lives_param_t *param, gint pnum, boolean w
 	}
       }
     }
-    else param->def=g_strdup(param->value);
+    else param->def=(void *)g_strdup((gchar *)param->value);
     pnum+=offs;
     break;
   case LIVES_PARAM_STRING_LIST:

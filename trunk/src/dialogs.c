@@ -79,10 +79,10 @@ static void add_xlays_widget(GtkBox *box) {
 
   if (palette->style&STYLE_1) {
     label=gtk_expander_get_label_widget(GTK_EXPANDER(expander));
-    lives_widget_set_fg_color(label, GTK_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_fg_color(label, GTK_STATE_PRELIGHT, &palette->normal_fore);
-    lives_widget_set_fg_color(expander, GTK_STATE_PRELIGHT, &palette->normal_fore);
-    lives_widget_set_bg_color(expander, GTK_STATE_PRELIGHT, &palette->normal_back);
+    lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_PRELIGHT, &palette->normal_fore);
+    lives_widget_set_fg_color(expander, LIVES_WIDGET_STATE_PRELIGHT, &palette->normal_fore);
+    lives_widget_set_bg_color(expander, LIVES_WIDGET_STATE_PRELIGHT, &palette->normal_back);
   }
 
   gtk_text_buffer_insert_at_cursor(textbuffer,"\n",strlen("\n"));
@@ -220,7 +220,7 @@ static GtkWidget* create_warn_dialog (int warn_mask_number, GtkWindow *transient
 
   if (mainw!=NULL&&mainw->is_ready&&palette->style&STYLE_1) {
     lives_dialog_set_has_separator(GTK_DIALOG(dialog),FALSE);
-    lives_widget_set_bg_color(dialog, GTK_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_bg_color(dialog, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
   }
 
   gtk_window_set_deletable(GTK_WINDOW(dialog), FALSE);
@@ -2443,7 +2443,7 @@ static void create_threaded_dialog(gchar *text, gboolean has_cancel) {
   gtk_box_pack_start (GTK_BOX (vbox), procw->progressbar, FALSE, FALSE, 0);
 
   if (mainw!=NULL&&mainw->is_ready&&(palette->style&STYLE_1)) {
-    lives_widget_set_fg_color(procw->progressbar, GTK_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_fg_color(procw->progressbar, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
   }
 
   widget_opts.justify=LIVES_JUSTIFY_CENTER;

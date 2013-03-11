@@ -2565,8 +2565,8 @@ void on_decplug_advanced_clicked (GtkButton *button, gpointer user_data) {
   gtk_widget_set_size_request (scrolledwindow, RFX_WINSIZE_H, RFX_WINSIZE_V);
 
   if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(lives_bin_get_child(LIVES_BIN(scrolledwindow)), GTK_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_bg_color(lives_bin_get_child(LIVES_BIN(scrolledwindow)), GTK_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_fg_color(lives_bin_get_child(LIVES_BIN(scrolledwindow)), LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_bg_color(lives_bin_get_child(LIVES_BIN(scrolledwindow)), LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
   }
   
   label=lives_standard_label_new(_("Enabled Video Decoders (uncheck to disable)"));

@@ -123,8 +123,8 @@ void add_message_scroller(GtkWidget *conter) {
   gtk_text_view_set_cursor_visible (GTK_TEXT_VIEW (mainw->textview1), FALSE);
 
   if (palette->style&STYLE_1) {
-    lives_widget_set_base_color(mainw->textview1, GTK_STATE_NORMAL, &palette->info_base);
-    lives_widget_set_text_color(mainw->textview1, GTK_STATE_NORMAL, &palette->info_text);
+    lives_widget_set_base_color(mainw->textview1, LIVES_WIDGET_STATE_NORMAL, &palette->info_base);
+    lives_widget_set_text_color(mainw->textview1, LIVES_WIDGET_STATE_NORMAL, &palette->info_text);
   }
 }
 
@@ -370,7 +370,7 @@ create_LiVES (void)
   gtk_box_pack_start (GTK_BOX (mainw->menu_hbox), mainw->menubar, FALSE, FALSE, 0);
 
   if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color(mainw->menubar, GTK_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_bg_color(mainw->menubar, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
   }
 
   menuitem11 = gtk_menu_item_new_with_mnemonic (_("_File"));
@@ -381,7 +381,7 @@ create_LiVES (void)
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (menuitem11), menuitem11_menu);
 
   if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color(menuitem11_menu, GTK_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_bg_color(menuitem11_menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
   }
 
   mainw->open = gtk_menu_item_new_with_mnemonic (_("_Open File/Directory"));
@@ -406,7 +406,7 @@ create_LiVES (void)
   mainw->open_loc_submenu=gtk_menu_new();
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (mainw->open_loc_menu), mainw->open_loc_submenu);
   if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color(mainw->open_loc_submenu, GTK_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_bg_color(mainw->open_loc_submenu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
   }
 
   mainw->open_utube = gtk_menu_item_new_with_mnemonic (_("Open _Youtube Clip..."));
@@ -425,7 +425,7 @@ create_LiVES (void)
   mainw->open_vcd_submenu=gtk_menu_new();
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (mainw->open_vcd_menu), mainw->open_vcd_submenu);
   if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color(mainw->open_vcd_submenu, GTK_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_bg_color(mainw->open_vcd_submenu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
   }
 
   mainw->open_dvd = gtk_menu_item_new_with_mnemonic (_("Import from _dvd"));
@@ -439,7 +439,7 @@ create_LiVES (void)
   mainw->open_device_submenu=gtk_menu_new();
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (mainw->open_device_menu), mainw->open_device_submenu);
   if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color(mainw->open_device_submenu, GTK_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_bg_color(mainw->open_device_submenu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
   }
 
   mainw->open_firewire = gtk_menu_item_new_with_mnemonic (_("Import from _Firewire Device (dv)"));
@@ -484,7 +484,7 @@ create_LiVES (void)
     submenu=gtk_menu_new();
     gtk_menu_item_set_submenu (GTK_MENU_ITEM (mainw->add_live_menu), submenu);
     if (palette->style&STYLE_1) {
-      lives_widget_set_bg_color(submenu, GTK_STATE_NORMAL, &palette->menu_and_bars);
+      lives_widget_set_bg_color(submenu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
     }
     gtk_widget_show (submenu);
 
@@ -560,7 +560,7 @@ create_LiVES (void)
   gtk_container_add (GTK_CONTAINER (mainw->recent_submenu), mainw->recent4);
 
   if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color(mainw->recent_submenu, GTK_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_bg_color(mainw->recent_submenu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
   }
   
   gtk_widget_show (mainw->recent_submenu);
@@ -666,7 +666,7 @@ create_LiVES (void)
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (menuitem12), menuitem12_menu);
 
   if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color(menuitem12_menu, GTK_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_bg_color(menuitem12_menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
   }
 
   mainw->undo = gtk_image_menu_item_new_with_mnemonic (_("_Undo"));
@@ -798,7 +798,7 @@ create_LiVES (void)
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (mainw->select_submenu), select_submenu_menu);
 
   if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color(select_submenu_menu, GTK_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_bg_color(select_submenu_menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
   }
 
   mainw->select_all = gtk_menu_item_new_with_mnemonic (_("Select _All Frames"));
@@ -867,7 +867,7 @@ create_LiVES (void)
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (menuitem13), menuitem13_menu);
 
   if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color(menuitem13_menu, GTK_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_bg_color(menuitem13_menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
   }
 
   mainw->playall = gtk_image_menu_item_new_with_mnemonic (_("_Play All"));
@@ -1068,7 +1068,7 @@ create_LiVES (void)
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (effects), mainw->effects_menu);
 
   if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color(mainw->effects_menu, GTK_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_bg_color(mainw->effects_menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
   }
 
   mainw->custom_effects_menu=NULL;
@@ -1087,7 +1087,7 @@ create_LiVES (void)
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (tools), mainw->tools_menu);
 
   if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color(mainw->tools_menu, GTK_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_bg_color(mainw->tools_menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
   }
 
   mainw->rev_clipboard = gtk_menu_item_new_with_mnemonic (_("_Reverse Clipboard"));
@@ -1189,7 +1189,7 @@ create_LiVES (void)
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (audio), audio_menu);
 
   if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color(audio_menu, GTK_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_bg_color(audio_menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
   }
 
   mainw->load_audio = gtk_menu_item_new_with_mnemonic (_("Load _New Audio for Clip..."));
@@ -1220,7 +1220,7 @@ create_LiVES (void)
   submenu_menu=gtk_menu_new();
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (mainw->recaudio_submenu), submenu_menu);
   if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color(submenu_menu, GTK_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_bg_color(submenu_menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
   }
   gtk_widget_show (mainw->recaudio_submenu);
 
@@ -1262,7 +1262,7 @@ create_LiVES (void)
   export_submenu_menu=gtk_menu_new();
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (mainw->export_submenu), export_submenu_menu);
   if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color(export_submenu_menu, GTK_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_bg_color(export_submenu_menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
   }
   gtk_widget_show (mainw->export_submenu);
 
@@ -1287,7 +1287,7 @@ create_LiVES (void)
   trimaudio_submenu_menu=gtk_menu_new();
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (mainw->trim_submenu), trimaudio_submenu_menu);
   if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color(trimaudio_submenu_menu, GTK_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_bg_color(trimaudio_submenu_menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
   }
 
   gtk_widget_show (mainw->trim_submenu);
@@ -1309,7 +1309,7 @@ create_LiVES (void)
   delaudio_submenu_menu=gtk_menu_new();
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (mainw->delaudio_submenu), delaudio_submenu_menu);
   if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color(delaudio_submenu_menu, GTK_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_bg_color(delaudio_submenu_menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
   }
   gtk_widget_show (mainw->delaudio_submenu);
 
@@ -1344,7 +1344,7 @@ create_LiVES (void)
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (info), info_menu);
 
   if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color(info_menu, GTK_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_bg_color(info_menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
   }
 
   mainw->show_file_info = gtk_image_menu_item_new_with_mnemonic (_("Show Clip _Info"));
@@ -1386,7 +1386,7 @@ create_LiVES (void)
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (win), mainw->winmenu);
 
   if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color(mainw->winmenu, GTK_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_bg_color(mainw->winmenu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
   }
 
   mainw->rename = gtk_image_menu_item_new_with_mnemonic (_("_Rename Current Clip in Menu..."));
@@ -1412,7 +1412,7 @@ create_LiVES (void)
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (advanced), advanced_menu);
 
   if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color(advanced_menu, GTK_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_bg_color(advanced_menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
   }
   gtk_widget_show(advanced_menu);
 
@@ -1423,7 +1423,7 @@ create_LiVES (void)
   rfx_menu=gtk_menu_new();
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (rfx_submenu), rfx_menu);
   if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color(rfx_menu, GTK_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_bg_color(rfx_menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
   }
   gtk_widget_show(rfx_menu);
 
@@ -1566,7 +1566,7 @@ create_LiVES (void)
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (mainw->vj_menu), vj_menu);
 
   if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color(vj_menu, GTK_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_bg_color(vj_menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
   }
 
   assign_rte_keys = gtk_menu_item_new_with_mnemonic (_("Real Time _Effect Mapping"));
@@ -1585,7 +1585,7 @@ create_LiVES (void)
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (mainw->rte_defs_menu), mainw->rte_defs);
 
   if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color(mainw->rte_defs, GTK_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_bg_color(mainw->rte_defs, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
   }
 
   gtk_widget_show (mainw->rte_defs_menu);
@@ -1616,7 +1616,7 @@ create_LiVES (void)
   midi_menu=gtk_menu_new();
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (midi_submenu), midi_menu);
   if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color(midi_menu, GTK_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_bg_color(midi_menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
   }
   gtk_widget_show(midi_menu);
 
@@ -1654,7 +1654,7 @@ create_LiVES (void)
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (mainw->toys), toys_menu);
 
   if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color(toys_menu, GTK_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_bg_color(toys_menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
   }
 
   mainw->toy_none = gtk_check_menu_item_new_with_mnemonic (_("_None"));
@@ -1695,7 +1695,7 @@ create_LiVES (void)
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (menuitem14), menuitem14_menu);
 
   if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color(menuitem14_menu, GTK_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_bg_color(menuitem14_menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
   }
 
   show_manual = gtk_menu_item_new_with_mnemonic (_("_Manual (opens in browser)"));
@@ -1745,7 +1745,7 @@ create_LiVES (void)
   gtk_box_pack_start (GTK_BOX (mainw->menu_hbox), mainw->btoolbar, TRUE, TRUE, 0);
 
   if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color(mainw->btoolbar, GTK_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_bg_color(mainw->btoolbar, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
   }
 
   gtk_toolbar_set_style (GTK_TOOLBAR (mainw->btoolbar), GTK_TOOLBAR_ICONS);
@@ -1778,7 +1778,7 @@ create_LiVES (void)
     mainw->m_playbutton=GTK_WIDGET(gtk_tool_button_new(GTK_WIDGET(tmp_toolbar_icon),""));
     gtk_toolbar_insert(GTK_TOOLBAR(mainw->btoolbar),GTK_TOOL_ITEM(mainw->m_playbutton),-1);
     gtk_tool_item_set_tooltip_text(GTK_TOOL_ITEM(mainw->m_playbutton),_("Play all (p)"));
-    lives_widget_set_base_color (mainw->m_playbutton, GTK_STATE_PRELIGHT, &palette->menu_and_bars);
+    lives_widget_set_base_color (mainw->m_playbutton, LIVES_WIDGET_STATE_PRELIGHT, &palette->menu_and_bars);
     
     gtk_widget_set_sensitive(mainw->m_playbutton,FALSE);
 
@@ -1883,8 +1883,8 @@ create_LiVES (void)
 
   mainw->tb_hbox=lives_hbox_new (FALSE, 0);
   mainw->toolbar = gtk_toolbar_new ();
-  lives_widget_set_bg_color (mainw->tb_hbox, GTK_STATE_NORMAL, &palette->fade_colour);
-  lives_widget_set_bg_color (mainw->toolbar, GTK_STATE_NORMAL, &palette->fade_colour);
+  lives_widget_set_bg_color (mainw->tb_hbox, LIVES_WIDGET_STATE_NORMAL, &palette->fade_colour);
+  lives_widget_set_bg_color (mainw->toolbar, LIVES_WIDGET_STATE_NORMAL, &palette->fade_colour);
   gtk_toolbar_set_show_arrow(GTK_TOOLBAR(mainw->toolbar),FALSE);
 
   gtk_box_pack_start (GTK_BOX (mainw->vbox1), mainw->tb_hbox, FALSE, FALSE, 0);
@@ -1982,7 +1982,7 @@ create_LiVES (void)
   gtk_tool_item_set_tooltip_text(GTK_TOOL_ITEM(mainw->t_hide),_("Hide this toolbar"));
 
   t_label=gtk_label_new(_ ("Press \"s\" to toggle separate play window for improved performance, \"q\" to stop."));
-  lives_widget_set_fg_color(t_label, GTK_STATE_NORMAL, &palette->white);
+  lives_widget_set_fg_color(t_label, LIVES_WIDGET_STATE_NORMAL, &palette->white);
   gtk_box_pack_start (GTK_BOX (mainw->tb_hbox), t_label, FALSE, FALSE, 0);
 
   gtk_widget_show_all (mainw->tb_hbox);
@@ -1997,9 +1997,9 @@ create_LiVES (void)
   gtk_container_add (GTK_CONTAINER (mainw->eventbox), vbox4);
 
   if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color (mainw->eventbox, GTK_STATE_NORMAL, &palette->normal_back);
-    lives_widget_set_bg_color (vbox4, GTK_STATE_NORMAL, &palette->normal_back);
-    lives_widget_set_bg_color (mainw->vbox1, GTK_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_bg_color (mainw->eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_bg_color (vbox4, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_bg_color (mainw->vbox1, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
   }
 
   gtk_widget_set_events (mainw->eventbox, GDK_SCROLL_MASK);
@@ -2026,7 +2026,7 @@ create_LiVES (void)
   gtk_label_set_justify (GTK_LABEL (mainw->vps_label), GTK_JUSTIFY_LEFT);
 
   if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(mainw->vps_label, GTK_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_fg_color(mainw->vps_label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
   }
 
   spinbutton_pb_fps_adj = (GObject *)gtk_adjustment_new (1, -FPS_MAX, FPS_MAX, 0.1, 0.01, 0.);
@@ -2063,7 +2063,7 @@ create_LiVES (void)
   gtk_box_pack_start (GTK_BOX (mainw->framebar), mainw->curf_label, FALSE, FALSE, 0);
   gtk_label_set_justify (GTK_LABEL (mainw->curf_label), GTK_JUSTIFY_LEFT);
   if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(mainw->curf_label, GTK_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_fg_color(mainw->curf_label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
   }
 
   gtk_widget_hide(mainw->framebar);
@@ -2072,14 +2072,14 @@ create_LiVES (void)
   gtk_widget_show(hbox1);
   gtk_box_pack_start (GTK_BOX (vbox4), hbox1, FALSE, FALSE, 0);
   if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color (hbox1, GTK_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_bg_color (hbox1, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
   }
   lives_widget_set_vexpand(hbox1,FALSE);
 
   mainw->eventbox3 = gtk_event_box_new ();
   gtk_widget_show (mainw->eventbox3);
   gtk_box_pack_start (GTK_BOX (hbox1), mainw->eventbox3, TRUE, FALSE, 0);
-  lives_widget_set_bg_color (mainw->eventbox3, GTK_STATE_NORMAL, &palette->normal_back);
+  lives_widget_set_bg_color (mainw->eventbox3, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
 
   mainw->frame1 = gtk_frame_new (NULL);
   gtk_widget_show (mainw->frame1);
@@ -2087,8 +2087,8 @@ create_LiVES (void)
   gtk_container_add (GTK_CONTAINER (mainw->eventbox3), mainw->frame1);
 
   if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color (mainw->frame1, GTK_STATE_NORMAL, &palette->normal_back);
-    lives_widget_set_fg_color (mainw->frame1, GTK_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_bg_color (mainw->frame1, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_fg_color (mainw->frame1, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
   }
   lives_widget_set_vexpand(mainw->frame1,FALSE);
   lives_widget_set_hexpand(mainw->frame1,FALSE);
@@ -2098,7 +2098,7 @@ create_LiVES (void)
   mainw->freventbox0=gtk_event_box_new();
   gtk_widget_show(mainw->freventbox0);
   if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color (mainw->freventbox0, GTK_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_bg_color (mainw->freventbox0, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
   }
   lives_widget_set_vexpand(mainw->freventbox0,FALSE);
   lives_widget_set_hexpand(mainw->freventbox0,FALSE);
@@ -2111,7 +2111,7 @@ create_LiVES (void)
 
   label15 = lives_standard_label_new (_("First Frame"));
   if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(label15, GTK_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_fg_color(label15, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
   }
   gtk_widget_show (label15);
   gtk_frame_set_label_widget (GTK_FRAME (mainw->frame1), label15);
@@ -2124,18 +2124,18 @@ create_LiVES (void)
 
   gtk_frame_set_shadow_type (GTK_FRAME(mainw->playframe), GTK_SHADOW_NONE);
   if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color (mainw->playframe, GTK_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_bg_color (mainw->playframe, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
   }
 
   pf_label = lives_standard_label_new (_("Play"));
   if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(pf_label, GTK_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_fg_color(pf_label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
   }
   gtk_widget_show (pf_label);
   gtk_frame_set_label_widget (GTK_FRAME (mainw->playframe), pf_label);
 
   mainw->pl_eventbox = gtk_event_box_new ();
-  lives_widget_set_bg_color (mainw->pl_eventbox, GTK_STATE_NORMAL, &palette->normal_back);
+  lives_widget_set_bg_color (mainw->pl_eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
   gtk_container_add (GTK_CONTAINER (mainw->playframe), mainw->pl_eventbox);
   gtk_widget_show(mainw->pl_eventbox);
 
@@ -2147,7 +2147,7 @@ create_LiVES (void)
 
   mainw->eventbox4 = gtk_event_box_new ();
   gtk_box_pack_start (GTK_BOX (hbox1), mainw->eventbox4, TRUE, FALSE, 0);
-  lives_widget_set_bg_color (mainw->eventbox4, GTK_STATE_NORMAL, &palette->normal_back);
+  lives_widget_set_bg_color (mainw->eventbox4, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
   lives_widget_set_vexpand(mainw->eventbox4,FALSE);
   lives_widget_set_hexpand(mainw->eventbox4,FALSE);
   gtk_widget_show (mainw->eventbox4);
@@ -2157,7 +2157,7 @@ create_LiVES (void)
   gtk_container_set_border_width (GTK_CONTAINER (mainw->frame2), 10);
   gtk_container_add (GTK_CONTAINER (mainw->eventbox4), mainw->frame2);
   if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color (mainw->frame2, GTK_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_bg_color (mainw->frame2, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
   }
   lives_widget_set_vexpand(mainw->frame2,FALSE);
   lives_widget_set_hexpand(mainw->frame2,FALSE);
@@ -2167,7 +2167,7 @@ create_LiVES (void)
   mainw->freventbox1=gtk_event_box_new();
   gtk_widget_show(mainw->freventbox1);
   if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color (mainw->freventbox1, GTK_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_bg_color (mainw->freventbox1, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
   }
   lives_widget_set_vexpand(mainw->freventbox1,FALSE);
   lives_widget_set_hexpand(mainw->freventbox1,FALSE);
@@ -2210,7 +2210,7 @@ create_LiVES (void)
   gtk_widget_show (label16);
   gtk_frame_set_label_widget (GTK_FRAME (mainw->frame2), label16);
   if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(label16, GTK_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_fg_color(label16, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
   }
   hbox3 = lives_hbox_new (FALSE, 0);
   gtk_widget_show (hbox3);
@@ -2232,7 +2232,7 @@ create_LiVES (void)
   gtk_box_pack_start (GTK_BOX (hbox3), mainw->arrow1, FALSE, FALSE, 0);
 
   if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(mainw->arrow1, GTK_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_fg_color(mainw->arrow1, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
   }
 
   gtk_entry_set_width_chars (GTK_ENTRY (mainw->spinbutton_start),10);
@@ -2244,7 +2244,7 @@ create_LiVES (void)
   gtk_label_set_justify (GTK_LABEL (mainw->sel_label), GTK_JUSTIFY_LEFT);
 
   if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(mainw->sel_label, GTK_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_fg_color(mainw->sel_label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
   }
 
   mainw->arrow2 = gtk_arrow_new (GTK_ARROW_RIGHT, GTK_SHADOW_OUT);
@@ -2252,7 +2252,7 @@ create_LiVES (void)
   gtk_box_pack_start (GTK_BOX (hbox3), mainw->arrow2, FALSE, FALSE, 0);
 
   if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(mainw->arrow2, GTK_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_fg_color(mainw->arrow2, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
   }
 
   spinbutton_end_adj = (GObject *)gtk_adjustment_new (0., 0., 0., 1., 100., 0.);
@@ -2269,16 +2269,16 @@ create_LiVES (void)
   if (palette->style&STYLE_1&&palette->style&STYLE_2) {
 #if !GTK_CHECK_VERSION(3,0,0)
     // background colour seems to be broken in gtk+3 !!!
-    lives_widget_set_base_color(mainw->spinbutton_start, GTK_STATE_NORMAL, &palette->normal_back);
-    lives_widget_set_base_color(mainw->spinbutton_start, GTK_STATE_INSENSITIVE, &palette->normal_back);
-    lives_widget_set_base_color(mainw->spinbutton_end, GTK_STATE_NORMAL, &palette->normal_back);
-    lives_widget_set_base_color(mainw->spinbutton_end, GTK_STATE_INSENSITIVE, &palette->normal_back);
-    lives_widget_set_text_color(mainw->spinbutton_start, GTK_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_text_color(mainw->spinbutton_start, GTK_STATE_INSENSITIVE, &palette->normal_fore);
-    lives_widget_set_text_color(mainw->spinbutton_end, GTK_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_text_color(mainw->spinbutton_end, GTK_STATE_INSENSITIVE, &palette->normal_fore);
+    lives_widget_set_base_color(mainw->spinbutton_start, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_base_color(mainw->spinbutton_start, LIVES_WIDGET_STATE_INSENSITIVE, &palette->normal_back);
+    lives_widget_set_base_color(mainw->spinbutton_end, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_base_color(mainw->spinbutton_end, LIVES_WIDGET_STATE_INSENSITIVE, &palette->normal_back);
+    lives_widget_set_text_color(mainw->spinbutton_start, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_text_color(mainw->spinbutton_start, LIVES_WIDGET_STATE_INSENSITIVE, &palette->normal_fore);
+    lives_widget_set_text_color(mainw->spinbutton_end, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_text_color(mainw->spinbutton_end, LIVES_WIDGET_STATE_INSENSITIVE, &palette->normal_fore);
 #endif
-    lives_widget_set_fg_color(mainw->sel_label, GTK_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_fg_color(mainw->sel_label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
   }
 
   gtk_widget_set_sensitive(mainw->spinbutton_start,FALSE);
@@ -2300,7 +2300,7 @@ create_LiVES (void)
   gtk_box_pack_start (GTK_BOX (vbox4), mainw->eventbox5, FALSE, FALSE, 0);
 
   if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color (mainw->eventbox5, GTK_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_bg_color (mainw->eventbox5, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
   }
 
 #ifdef ENABLE_GIW_3
@@ -2322,9 +2322,9 @@ create_LiVES (void)
   gtk_widget_add_events (mainw->eventbox2, GDK_BUTTON1_MOTION_MASK | GDK_BUTTON_RELEASE_MASK | GDK_BUTTON_PRESS_MASK);
 
   if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color (mainw->eventbox2, GTK_STATE_NORMAL, &palette->normal_back);
-    lives_widget_set_bg_color (mainw->hruler, GTK_STATE_NORMAL, &palette->normal_back);
-    lives_widget_set_fg_color (mainw->hruler, GTK_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_bg_color (mainw->eventbox2, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_bg_color (mainw->hruler, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_fg_color (mainw->hruler, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
   }
 
   vbox2 = lives_vbox_new (FALSE, 0);
@@ -2337,8 +2337,8 @@ create_LiVES (void)
     gtk_widget_show (mainw->vidbar);
   }
   else {
-    lives_widget_set_fg_color (mainw->vidbar, GTK_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_bg_color (vbox2, GTK_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_fg_color (mainw->vidbar, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_bg_color (vbox2, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
     gtk_widget_hide (mainw->vidbar);
   }
 
@@ -2350,7 +2350,7 @@ create_LiVES (void)
   gtk_widget_show (mainw->video_draw);
   gtk_box_pack_start (GTK_BOX (vbox2), mainw->video_draw, TRUE, TRUE, 0);
   if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color (mainw->video_draw, GTK_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_bg_color (mainw->video_draw, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
   }
   mainw->laudbar = gtk_label_new (_("Left Audio"));
   gtk_box_pack_start (GTK_BOX (vbox2), mainw->laudbar, TRUE, TRUE, 0);
@@ -2360,7 +2360,7 @@ create_LiVES (void)
     gtk_widget_show (mainw->laudbar);
   }
   else {
-    lives_widget_set_fg_color (mainw->laudbar, GTK_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_fg_color (mainw->laudbar, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
     gtk_widget_hide (mainw->laudbar);
   }
 
@@ -2369,7 +2369,7 @@ create_LiVES (void)
   gtk_widget_show (mainw->laudio_draw);
   gtk_box_pack_start (GTK_BOX (vbox2), mainw->laudio_draw, TRUE, TRUE, 0);
   if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color (mainw->laudio_draw, GTK_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_bg_color (mainw->laudio_draw, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
   }
 
   mainw->raudbar = gtk_label_new (_("Right Audio"));
@@ -2380,7 +2380,7 @@ create_LiVES (void)
     gtk_widget_show (mainw->raudbar);
   }
   else {
-    lives_widget_set_fg_color (mainw->raudbar, GTK_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_fg_color (mainw->raudbar, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
     gtk_widget_hide (mainw->raudbar);
   }
 
@@ -2389,7 +2389,7 @@ create_LiVES (void)
   gtk_widget_show (mainw->raudio_draw);
   gtk_box_pack_start (GTK_BOX (vbox2), mainw->raudio_draw, TRUE, TRUE, 0);
   if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color (mainw->raudio_draw, GTK_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_bg_color (mainw->raudio_draw, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
   }
 
   mainw->message_box=lives_vbox_new(FALSE, 0);
@@ -3060,11 +3060,11 @@ fade_background(void) {
   }
   if (mainw->foreign) {
     gtk_label_set_text(GTK_LABEL(mainw->banner),_("    Press 'q' to stop recording.  DO NOT COVER THE PLAY WINDOW !   "));
-    lives_widget_set_fg_color(mainw->banner, GTK_STATE_NORMAL, &palette->banner_fade_text);
+    lives_widget_set_fg_color(mainw->banner, LIVES_WIDGET_STATE_NORMAL, &palette->banner_fade_text);
     gtk_label_set_text(GTK_LABEL(mainw->vps_label),("                      "));
   }
   else {
-    lives_widget_set_bg_color (mainw->playframe, GTK_STATE_NORMAL, &palette->fade_colour);
+    lives_widget_set_bg_color (mainw->playframe, LIVES_WIDGET_STATE_NORMAL, &palette->fade_colour);
     if (mainw->sep_win) {
       gtk_widget_hide (mainw->playframe);
     }
@@ -3073,20 +3073,20 @@ fade_background(void) {
 
   gtk_frame_set_label(GTK_FRAME(mainw->playframe), "");
 
-  lives_widget_set_fg_color (mainw->curf_label, GTK_STATE_NORMAL, &palette->fade_colour);
-  lives_widget_set_fg_color (mainw->vps_label, GTK_STATE_NORMAL, &palette->fade_colour);
-  lives_widget_set_bg_color (mainw->vbox1, GTK_STATE_NORMAL, &palette->fade_colour);
-  lives_widget_set_bg_color (mainw->LiVES, GTK_STATE_NORMAL, &palette->fade_colour);
+  lives_widget_set_fg_color (mainw->curf_label, LIVES_WIDGET_STATE_NORMAL, &palette->fade_colour);
+  lives_widget_set_fg_color (mainw->vps_label, LIVES_WIDGET_STATE_NORMAL, &palette->fade_colour);
+  lives_widget_set_bg_color (mainw->vbox1, LIVES_WIDGET_STATE_NORMAL, &palette->fade_colour);
+  lives_widget_set_bg_color (mainw->LiVES, LIVES_WIDGET_STATE_NORMAL, &palette->fade_colour);
 
-  lives_widget_set_bg_color (mainw->eventbox3, GTK_STATE_NORMAL, &palette->fade_colour);
-  lives_widget_set_bg_color (mainw->eventbox4, GTK_STATE_NORMAL, &palette->fade_colour);
-  lives_widget_set_bg_color (mainw->eventbox, GTK_STATE_NORMAL, &palette->fade_colour);
-  lives_widget_set_bg_color (mainw->pl_eventbox, GTK_STATE_NORMAL, &palette->fade_colour);
+  lives_widget_set_bg_color (mainw->eventbox3, LIVES_WIDGET_STATE_NORMAL, &palette->fade_colour);
+  lives_widget_set_bg_color (mainw->eventbox4, LIVES_WIDGET_STATE_NORMAL, &palette->fade_colour);
+  lives_widget_set_bg_color (mainw->eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->fade_colour);
+  lives_widget_set_bg_color (mainw->pl_eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->fade_colour);
 
-  lives_widget_set_bg_color (mainw->frame1, GTK_STATE_NORMAL, &palette->fade_colour);
-  lives_widget_set_bg_color (mainw->frame2, GTK_STATE_NORMAL, &palette->fade_colour);
-  lives_widget_set_bg_color (mainw->freventbox0, GTK_STATE_NORMAL, &palette->fade_colour);
-  lives_widget_set_bg_color (mainw->freventbox1, GTK_STATE_NORMAL, &palette->fade_colour);
+  lives_widget_set_bg_color (mainw->frame1, LIVES_WIDGET_STATE_NORMAL, &palette->fade_colour);
+  lives_widget_set_bg_color (mainw->frame2, LIVES_WIDGET_STATE_NORMAL, &palette->fade_colour);
+  lives_widget_set_bg_color (mainw->freventbox0, LIVES_WIDGET_STATE_NORMAL, &palette->fade_colour);
+  lives_widget_set_bg_color (mainw->freventbox1, LIVES_WIDGET_STATE_NORMAL, &palette->fade_colour);
   gtk_frame_set_shadow_type (GTK_FRAME(mainw->frame1), GTK_SHADOW_NONE);
   gtk_frame_set_label (GTK_FRAME(mainw->frame1), "");
   gtk_frame_set_shadow_type (GTK_FRAME(mainw->frame2), GTK_SHADOW_NONE);
@@ -3198,10 +3198,10 @@ unfade_background(void) {
   else {
     gtk_label_set_text(GTK_LABEL(mainw->banner),"                                                ");
   }
-  lives_widget_set_fg_color(mainw->banner, GTK_STATE_NORMAL, &palette->normal_fore);
-  lives_widget_set_bg_color (mainw->eventbox, GTK_STATE_NORMAL, &palette->normal_back);
-  lives_widget_set_bg_color (mainw->vbox1, GTK_STATE_NORMAL, &palette->normal_back);
-  lives_widget_set_bg_color (mainw->eventbox3, GTK_STATE_NORMAL, &palette->normal_back);
+  lives_widget_set_fg_color(mainw->banner, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+  lives_widget_set_bg_color (mainw->eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+  lives_widget_set_bg_color (mainw->vbox1, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+  lives_widget_set_bg_color (mainw->eventbox3, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
   gtk_frame_set_label (GTK_FRAME(mainw->frame1), _("First Frame"));
   if (!mainw->preview) {
     gtk_frame_set_label(GTK_FRAME(mainw->playframe),_("Play"));
@@ -3212,26 +3212,26 @@ unfade_background(void) {
 
   gtk_frame_set_shadow_type (GTK_FRAME(mainw->frame1), GTK_SHADOW_IN);
   gtk_frame_set_label (GTK_FRAME(mainw->frame2), _("Last Frame"));
-  lives_widget_set_fg_color (mainw->curf_label, GTK_STATE_NORMAL, &palette->normal_fore);
-  lives_widget_set_fg_color (mainw->vps_label, GTK_STATE_NORMAL, &palette->normal_fore);
-  lives_widget_set_bg_color (mainw->LiVES, GTK_STATE_NORMAL, &palette->normal_back);
+  lives_widget_set_fg_color (mainw->curf_label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+  lives_widget_set_fg_color (mainw->vps_label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+  lives_widget_set_bg_color (mainw->LiVES, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
 
-  lives_widget_set_bg_color (mainw->pl_eventbox, GTK_STATE_NORMAL, &palette->normal_back);
+  lives_widget_set_bg_color (mainw->pl_eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
 
   if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(gtk_frame_get_label_widget(GTK_FRAME(mainw->playframe)), GTK_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_fg_color(gtk_frame_get_label_widget(GTK_FRAME(mainw->frame1)), GTK_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_fg_color(gtk_frame_get_label_widget(GTK_FRAME(mainw->frame2)), GTK_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_fg_color(gtk_frame_get_label_widget(GTK_FRAME(mainw->playframe)), LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_fg_color(gtk_frame_get_label_widget(GTK_FRAME(mainw->frame1)), LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_fg_color(gtk_frame_get_label_widget(GTK_FRAME(mainw->frame2)), LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
   }
 
-  lives_widget_set_bg_color (mainw->eventbox4, GTK_STATE_NORMAL, &palette->normal_back);
-  lives_widget_set_bg_color (mainw->frame1, GTK_STATE_NORMAL, &palette->normal_back);
-  lives_widget_set_bg_color (mainw->frame2, GTK_STATE_NORMAL, &palette->normal_back);
-  lives_widget_set_bg_color (mainw->freventbox0, GTK_STATE_NORMAL, &palette->normal_back);
-  lives_widget_set_bg_color (mainw->freventbox1, GTK_STATE_NORMAL, &palette->normal_back);
+  lives_widget_set_bg_color (mainw->eventbox4, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+  lives_widget_set_bg_color (mainw->frame1, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+  lives_widget_set_bg_color (mainw->frame2, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+  lives_widget_set_bg_color (mainw->freventbox0, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+  lives_widget_set_bg_color (mainw->freventbox1, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
 
   gtk_frame_set_shadow_type (GTK_FRAME(mainw->frame2), GTK_SHADOW_IN);
-  lives_widget_set_bg_color (mainw->playframe, GTK_STATE_NORMAL, &palette->normal_back);
+  lives_widget_set_bg_color (mainw->playframe, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
   gtk_frame_set_shadow_type (GTK_FRAME(mainw->playframe), GTK_SHADOW_IN);
   gtk_widget_show(mainw->menu_hbox);
   gtk_widget_hide(mainw->tb_hbox);
@@ -3258,8 +3258,8 @@ unfade_background(void) {
   gtk_widget_show(mainw->arrow1);
   gtk_widget_show(mainw->arrow2);
   gtk_widget_show(mainw->spinbutton_pb_fps);
-  lives_widget_set_fg_color (mainw->vps_label, GTK_STATE_NORMAL, &palette->normal_fore);
-  lives_widget_set_fg_color (mainw->curf_label, GTK_STATE_NORMAL, &palette->normal_fore);
+  lives_widget_set_fg_color (mainw->vps_label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+  lives_widget_set_fg_color (mainw->curf_label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
 
   if (stop_closure!=NULL) {
     gtk_accel_group_disconnect (GTK_ACCEL_GROUP (mainw->accel_group), stop_closure);
@@ -3494,7 +3494,7 @@ make_preview_box (void) {
   gtk_widget_show (mainw->preview_spinbutton);
   gtk_box_pack_start (GTK_BOX (hbox), mainw->preview_spinbutton, FALSE, FALSE, 0);
 
-  lives_widget_set_text_color(mainw->preview_spinbutton, GTK_STATE_INSENSITIVE, &palette->black);
+  lives_widget_set_text_color(mainw->preview_spinbutton, LIVES_WIDGET_STATE_INSENSITIVE, &palette->black);
 
   // damn thing crashes if max<min
   mainw->preview_scale=lives_hscale_new_with_range(0,(mainw->current_file>-1&&cfile->frames)?cfile->frames>0:1,1);
@@ -3533,9 +3533,9 @@ make_preview_box (void) {
 		    G_CALLBACK (label_act_toggle),
 		    radiobutton_free);
   if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(label, GTK_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_fg_color(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_bg_color (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_fg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_bg_color (eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
   }
   gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, 4);
 
@@ -3562,9 +3562,9 @@ make_preview_box (void) {
 		    G_CALLBACK (label_act_toggle),
 		    radiobutton_start);
   if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(label, GTK_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_fg_color(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_bg_color (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_fg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_bg_color (eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
   }
   gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, 4);
 
@@ -3593,9 +3593,9 @@ make_preview_box (void) {
 		    G_CALLBACK (label_act_toggle),
 		    radiobutton_end);
   if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(label, GTK_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_fg_color(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_bg_color (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_fg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_bg_color (eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
   }
   gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, 4);
 
@@ -3623,9 +3623,9 @@ make_preview_box (void) {
 		    G_CALLBACK (label_act_toggle),
 		    radiobutton_ptr);
   if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(label, GTK_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_fg_color(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_bg_color (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_fg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_bg_color (eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
   }
   gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, 4);
 
@@ -3644,7 +3644,7 @@ make_preview_box (void) {
 
   rewind_img=gtk_image_new_from_stock ("gtk-media-rewind", gtk_toolbar_get_icon_size (GTK_TOOLBAR (mainw->btoolbar)));
   mainw->p_rewindbutton=gtk_button_new();
-  lives_widget_set_bg_color (mainw->p_rewindbutton, GTK_STATE_ACTIVE, &palette->menu_and_bars);
+  lives_widget_set_bg_color (mainw->p_rewindbutton, LIVES_WIDGET_STATE_ACTIVE, &palette->menu_and_bars);
   gtk_button_set_relief (GTK_BUTTON (mainw->p_rewindbutton), GTK_RELIEF_NONE);
   gtk_container_add (GTK_CONTAINER(mainw->p_rewindbutton), rewind_img);
   gtk_box_pack_start (GTK_BOX (hbox_buttons), mainw->p_rewindbutton, TRUE, TRUE, 0);
@@ -3655,7 +3655,7 @@ make_preview_box (void) {
 
   play_img=gtk_image_new_from_stock ("gtk-media-play", gtk_toolbar_get_icon_size (GTK_TOOLBAR (mainw->btoolbar)));
   mainw->p_playbutton=gtk_button_new();
-  lives_widget_set_bg_color (mainw->p_playbutton, GTK_STATE_ACTIVE, &palette->menu_and_bars);
+  lives_widget_set_bg_color (mainw->p_playbutton, LIVES_WIDGET_STATE_ACTIVE, &palette->menu_and_bars);
   gtk_button_set_relief (GTK_BUTTON (mainw->p_playbutton), GTK_RELIEF_NONE);
   gtk_container_add (GTK_CONTAINER(mainw->p_playbutton), play_img);
   gtk_box_pack_start (GTK_BOX (hbox_buttons), mainw->p_playbutton, TRUE, TRUE, 0);
@@ -3668,7 +3668,7 @@ make_preview_box (void) {
   g_free(fnamex);
   playsel_img=gtk_image_new_from_file (buff);
   mainw->p_playselbutton=gtk_button_new();
-  lives_widget_set_bg_color (mainw->p_playselbutton, GTK_STATE_ACTIVE, &palette->menu_and_bars);
+  lives_widget_set_bg_color (mainw->p_playselbutton, LIVES_WIDGET_STATE_ACTIVE, &palette->menu_and_bars);
   gtk_button_set_relief (GTK_BUTTON (mainw->p_playselbutton), GTK_RELIEF_NONE);
   gtk_container_add (GTK_CONTAINER(mainw->p_playselbutton), playsel_img);
   gtk_box_pack_start (GTK_BOX (hbox_buttons), mainw->p_playselbutton, TRUE, TRUE, 0);
@@ -3682,7 +3682,7 @@ make_preview_box (void) {
   g_free(fnamex);
   loop_img=gtk_image_new_from_file (buff);
   mainw->p_loopbutton=gtk_button_new();
-  lives_widget_set_bg_color (mainw->p_loopbutton, GTK_STATE_ACTIVE, &palette->menu_and_bars);
+  lives_widget_set_bg_color (mainw->p_loopbutton, LIVES_WIDGET_STATE_ACTIVE, &palette->menu_and_bars);
   gtk_button_set_relief (GTK_BUTTON (mainw->p_loopbutton), GTK_RELIEF_NONE);
   gtk_container_add (GTK_CONTAINER(mainw->p_loopbutton), loop_img);
   gtk_box_pack_start (GTK_BOX (hbox_buttons), mainw->p_loopbutton, TRUE, TRUE, 0);
@@ -3701,7 +3701,7 @@ make_preview_box (void) {
   }
 
   mainw->p_mutebutton=gtk_button_new();
-  lives_widget_set_bg_color (mainw->p_mutebutton, GTK_STATE_ACTIVE, &palette->menu_and_bars);
+  lives_widget_set_bg_color (mainw->p_mutebutton, LIVES_WIDGET_STATE_ACTIVE, &palette->menu_and_bars);
   gtk_button_set_relief (GTK_BUTTON (mainw->p_mutebutton), GTK_RELIEF_NONE);
   gtk_container_add (GTK_CONTAINER(mainw->p_mutebutton), mainw->p_mute_img);
   gtk_box_pack_start (GTK_BOX (hbox_buttons), mainw->p_mutebutton, TRUE, TRUE, 0);
@@ -3861,7 +3861,7 @@ void make_play_window(void) {
   if (mainw->multitrack==NULL) gtk_window_add_accel_group (GTK_WINDOW (mainw->play_window), mainw->accel_group);
   else gtk_window_add_accel_group (GTK_WINDOW (mainw->play_window), mainw->multitrack->accel_group);
 
-  lives_widget_set_bg_color (mainw->play_window, GTK_STATE_NORMAL, &palette->normal_back);
+  lives_widget_set_bg_color (mainw->play_window, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
 
   // show the window (so we can hide its cursor !), and get its xwin
   if (!(mainw->fs&&mainw->playing_file>-1&&mainw->vpp!=NULL)) {
@@ -4299,7 +4299,7 @@ add_to_playframe (void) {
     if (!mainw->foreign&&(!mainw->sep_win||prefs->sepwin_type==0)) {
       mainw->plug = lives_hbox_new (FALSE,0);
       gtk_container_add(GTK_CONTAINER(mainw->playarea),mainw->plug);
-      lives_widget_set_bg_color (mainw->plug, GTK_STATE_NORMAL, &palette->normal_back);
+      lives_widget_set_bg_color (mainw->plug, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
       gtk_widget_show (mainw->plug);
       gtk_container_add (GTK_CONTAINER (mainw->plug), mainw->image274);
     }
@@ -4344,7 +4344,7 @@ void splash_init(void) {
   gtk_window_set_type_hint(GTK_WINDOW(mainw->splash_window),GDK_WINDOW_TYPE_HINT_SPLASHSCREEN);
   
   if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color(mainw->splash_window, GTK_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_bg_color(mainw->splash_window, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
   }
 
   
@@ -4364,7 +4364,7 @@ void splash_init(void) {
   mainw->splash_label=gtk_label_new("");
 
   if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(mainw->splash_label, GTK_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_fg_color(mainw->splash_label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
   }
 
   gtk_box_pack_start (GTK_BOX (vbox), mainw->splash_label, TRUE, TRUE, 0);
@@ -4373,7 +4373,7 @@ void splash_init(void) {
   gtk_progress_bar_set_pulse_step(GTK_PROGRESS_BAR(mainw->splash_progress),.01);
 
   if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(mainw->splash_progress, GTK_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_fg_color(mainw->splash_progress, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
   }
 
   hbox = lives_hbox_new (FALSE, 10);

@@ -2824,7 +2824,7 @@ static GtkWidget *conx_scroll_new(weed_plant_t *filter, lives_conx_w *conxwp) {
   gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (scrolledwindow), top_vbox);
 
    if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color(lives_bin_get_child (LIVES_BIN (scrolledwindow)), GTK_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_bg_color(lives_bin_get_child (LIVES_BIN (scrolledwindow)), LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
   }
 
   //gtk_viewport_set_shadow_type (GTK_VIEWPORT (gtk_bin_get_child (GTK_BIN (scrolledwindow))),GTK_SHADOW_IN);

@@ -1593,7 +1593,7 @@ on_rte_info_clicked (GtkButton *button, gpointer user_data) {
 
   rte_info_window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
   gtk_window_set_title (GTK_WINDOW (rte_info_window), g_strdup_printf(_("LiVES: Information for %s"),filter_name));
-  lives_widget_set_bg_color(rte_info_window, GTK_STATE_NORMAL, &palette->normal_back);
+  lives_widget_set_bg_color(rte_info_window, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
 
   gtk_container_set_border_width (GTK_CONTAINER (rte_info_window), 40);
   gtk_window_set_transient_for(GTK_WINDOW(rte_info_window),GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(button))));
@@ -1608,7 +1608,7 @@ on_rte_info_clicked (GtkButton *button, gpointer user_data) {
 
   label = gtk_label_new (g_strdup_printf(_("Effect name: %s"),filter_name));
   if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(label, GTK_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
   }
     
   gtk_widget_show (label);
@@ -1616,7 +1616,7 @@ on_rte_info_clicked (GtkButton *button, gpointer user_data) {
 
   label = gtk_label_new (g_strdup_printf(_("Type: %s"),type));
   if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(label, GTK_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
   }
   
   gtk_widget_show (label);
@@ -1624,7 +1624,7 @@ on_rte_info_clicked (GtkButton *button, gpointer user_data) {
 
   label = gtk_label_new (g_strdup_printf(_("Plugin name: %s"),plugin_name));
   if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(label, GTK_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
   }
   
   gtk_widget_show (label);
@@ -1632,7 +1632,7 @@ on_rte_info_clicked (GtkButton *button, gpointer user_data) {
 
   label = gtk_label_new (g_strdup_printf(_("Author: %s"),filter_author));
   if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(label, GTK_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
   }
   
   gtk_widget_show (label);
@@ -1640,7 +1640,7 @@ on_rte_info_clicked (GtkButton *button, gpointer user_data) {
 
   label = gtk_label_new (g_strdup_printf(_("Version: %d"),filter_version));
   if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(label, GTK_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
   }
 
   gtk_widget_show (label);
@@ -1652,7 +1652,7 @@ on_rte_info_clicked (GtkButton *button, gpointer user_data) {
 
   label = gtk_label_new (_("Description: "));
   if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(label, GTK_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
   }
   gtk_widget_show (label);
   gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 0);
@@ -1661,8 +1661,8 @@ on_rte_info_clicked (GtkButton *button, gpointer user_data) {
   gtk_widget_show (textview);
 
   if (palette->style&STYLE_1) {
-    lives_widget_set_text_color(textview, GTK_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_base_color(textview, GTK_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_text_color(textview, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_base_color(textview, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
   }
 
 
@@ -2113,7 +2113,7 @@ GtkWidget * create_rte_window (void) {
   mode_ra_fns=(gulong *)g_malloc((prefs->rte_keys_virtual)*modes*sizeof(gulong));
 
   rte_window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
-  lives_widget_set_bg_color(rte_window, GTK_STATE_NORMAL, &palette->menu_and_bars);
+  lives_widget_set_bg_color(rte_window, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
   gtk_window_set_title (GTK_WINDOW (rte_window), _("LiVES: Real time effect mapping"));
   gtk_window_add_accel_group (GTK_WINDOW (rte_window), mainw->accel_group);
 
@@ -2277,7 +2277,7 @@ GtkWidget * create_rte_window (void) {
   gtk_widget_set_size_request (scrolledwindow, winsize_h, winsize_v);
 
   if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color(gtk_bin_get_child (GTK_BIN (scrolledwindow)), GTK_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_bg_color(gtk_bin_get_child (GTK_BIN (scrolledwindow)), LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
   }
   
   gtk_viewport_set_shadow_type (GTK_VIEWPORT (gtk_bin_get_child (GTK_BIN (scrolledwindow))),GTK_SHADOW_IN);

@@ -142,8 +142,8 @@ void framedraw_connect(lives_special_framedraw_rect_t *framedraw, int width, int
 
   framedraw_connect_spinbutton(framedraw,rfx);
 
-  lives_widget_set_bg_color (mainw->fd_frame, GTK_STATE_NORMAL, &palette->light_red);
-  lives_widget_set_bg_color (fbord_eventbox, GTK_STATE_NORMAL, &palette->light_red);
+  lives_widget_set_bg_color (mainw->fd_frame, LIVES_WIDGET_STATE_NORMAL, &palette->light_red);
+  lives_widget_set_bg_color (fbord_eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->light_red);
 
   framedraw_redraw(framedraw, TRUE, NULL);
 }
@@ -228,9 +228,9 @@ void widget_add_framedraw (GtkVBox *box, int start, int end, boolean add_preview
   gtk_box_pack_start (GTK_BOX (hbox), frame, FALSE, FALSE, 0);
 
   if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color (fbord_eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_bg_color (frame, GTK_STATE_NORMAL, &palette->normal_back);
-    lives_widget_set_fg_color (frame, GTK_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_bg_color (fbord_eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_bg_color (frame, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_fg_color (frame, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
   }
 
   mainw->fd_frame=frame;
@@ -253,8 +253,8 @@ void widget_add_framedraw (GtkVBox *box, int start, int end, boolean add_preview
   gtk_container_add (GTK_CONTAINER (fbord_eventbox), mainw->framedraw);
 
   if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color (mainw->framedraw, GTK_STATE_NORMAL, &palette->normal_back);
-    lives_widget_set_fg_color (mainw->framedraw, GTK_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_bg_color (mainw->framedraw, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_fg_color (mainw->framedraw, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
   }
 
   g_signal_connect_after (GTK_OBJECT (mainw->framedraw), LIVES_WIDGET_EVENT_EXPOSE_EVENT,

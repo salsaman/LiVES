@@ -195,7 +195,7 @@ giw_vslider_new (GtkAdjustment *adjustment)
   g_return_val_if_fail (adjustment != NULL, NULL);
   
 #if GTK_CHECK_VERSION(3,0,0)
-  vslider = g_object_new (GIW_TYPE_VSLIDER, NULL);
+  vslider = (GiwVSlider *)g_object_new (GIW_TYPE_VSLIDER, NULL);
 #else
   vslider = (GiwVSlider *)gtk_type_new (giw_vslider_get_type ());
 #endif
@@ -213,7 +213,7 @@ giw_vslider_new_with_adjustment (gdouble value,
   GiwVSlider *vslider;
   
 #if GTK_CHECK_VERSION(3,0,0)
-  vslider = g_object_new (GIW_TYPE_VSLIDER, NULL);
+  vslider = (GiwVSlider *)g_object_new (GIW_TYPE_VSLIDER, NULL);
 #else
   vslider = (GiwVSlider *)gtk_type_new (giw_vslider_get_type ());
 #endif
@@ -442,7 +442,7 @@ giw_vslider_expose (GtkWidget      *widget,
 			 vslider->y+(gint)(vslider->major_dy*(gdouble)loop)-(vslider->legend_height/2),
 			 vslider->legends[loop]);
 
-    gtk_style_context_get_color (gtk_widget_get_style_context (widget), gtk_widget_get_state(widget), &color);
+    gtk_style_context_get_color (gtk_widget_get_style_context (widget), gtk_widget_get_state_flags(widget), &color);
     cairo_set_source_rgba (cairo, color.red, color.green, color.blue, color.alpha);
 
     // Major ticks
@@ -482,7 +482,7 @@ giw_vslider_expose (GtkWidget      *widget,
 
   cairo_fill(cairo);
 
-  gtk_style_context_get_background_color (gtk_widget_get_style_context (widget), gtk_widget_get_state(widget), &color);
+  gtk_style_context_get_background_color (gtk_widget_get_style_context (widget), gtk_widget_get_state_flags(widget), &color);
   cairo_set_source_rgba (cairo, color.red, color.green, color.blue, color.alpha);
 
   cairo_rectangle (cairo,
@@ -493,7 +493,7 @@ giw_vslider_expose (GtkWidget      *widget,
 
   cairo_stroke(cairo);
 
-  gtk_style_context_get_color (gtk_widget_get_style_context (widget), gtk_widget_get_state(widget), &color);
+  gtk_style_context_get_color (gtk_widget_get_style_context (widget), gtk_widget_get_state_flags(widget), &color);
   cairo_set_source_rgba (cairo, color.red, color.green, color.blue, color.alpha);
 
   cairo_rectangle (cairo,
@@ -1026,7 +1026,8 @@ vslider_build_legends(GiwVSlider *vslider)
 
 #if GTK_CHECK_VERSION(3,0,0)
       pango_layout_set_font_description (vslider->legends[loop], 
-					 gtk_style_context_get_font(gtk_widget_get_style_context(widget),gtk_widget_get_state(widget)));
+					 gtk_style_context_get_font(gtk_widget_get_style_context(widget),
+								    gtk_widget_get_state_flags(widget)));
 #else
       pango_layout_set_font_description(vslider->legends[loop], widget->style->font_desc); // Setting te correct font  
 #endif
@@ -1071,7 +1072,8 @@ vslider_calculate_legends_sizes(GiwVSlider *vslider)
   if (vslider->legends!=NULL){
 #if GTK_CHECK_VERSION(3,0,0)
     pango_layout_set_font_description (vslider->legends[0], 
-				       gtk_style_context_get_font(gtk_widget_get_style_context(widget),gtk_widget_get_state(widget)));
+				       gtk_style_context_get_font(gtk_widget_get_style_context(widget),
+								  gtk_widget_get_state_flags(widget)));
 #else
     pango_layout_set_font_description (vslider->legends[0], widget->style->font_desc);  
 #endif

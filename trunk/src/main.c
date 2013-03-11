@@ -1646,18 +1646,18 @@ static void lives_init(_ign_opts *ign_opts) {
     if (mainw->vpp!=NULL&&mainw->vpp->get_audio_fmts!=NULL) mainw->vpp->audio_codec=get_best_audio(mainw->vpp);
 
     // toolbar buttons
-    lives_widget_set_bg_color (mainw->tb_hbox, GTK_STATE_NORMAL, &palette->fade_colour);
-    lives_widget_set_bg_color (mainw->toolbar, GTK_STATE_NORMAL, &palette->fade_colour);
-    lives_widget_set_bg_color (mainw->t_stopbutton, GTK_STATE_PRELIGHT, &palette->fade_colour);
-    lives_widget_set_bg_color (mainw->t_bckground, GTK_STATE_PRELIGHT, &palette->fade_colour);
-    lives_widget_set_bg_color (mainw->t_sepwin, GTK_STATE_PRELIGHT, &palette->fade_colour);
-    lives_widget_set_bg_color (mainw->t_double, GTK_STATE_PRELIGHT, &palette->fade_colour);
-    lives_widget_set_bg_color (mainw->t_fullscreen, GTK_STATE_PRELIGHT, &palette->fade_colour);
-    lives_widget_set_bg_color (mainw->t_faster, GTK_STATE_PRELIGHT, &palette->fade_colour);
-    lives_widget_set_bg_color (mainw->t_slower, GTK_STATE_PRELIGHT, &palette->fade_colour);
-    lives_widget_set_bg_color (mainw->t_forward, GTK_STATE_PRELIGHT, &palette->fade_colour);
-    lives_widget_set_bg_color (mainw->t_back, GTK_STATE_PRELIGHT, &palette->fade_colour);
-    lives_widget_set_bg_color (mainw->t_infobutton, GTK_STATE_PRELIGHT, &palette->fade_colour);
+    lives_widget_set_bg_color (mainw->tb_hbox, LIVES_WIDGET_STATE_NORMAL, &palette->fade_colour);
+    lives_widget_set_bg_color (mainw->toolbar, LIVES_WIDGET_STATE_NORMAL, &palette->fade_colour);
+    lives_widget_set_bg_color (mainw->t_stopbutton, LIVES_WIDGET_STATE_PRELIGHT, &palette->fade_colour);
+    lives_widget_set_bg_color (mainw->t_bckground, LIVES_WIDGET_STATE_PRELIGHT, &palette->fade_colour);
+    lives_widget_set_bg_color (mainw->t_sepwin, LIVES_WIDGET_STATE_PRELIGHT, &palette->fade_colour);
+    lives_widget_set_bg_color (mainw->t_double, LIVES_WIDGET_STATE_PRELIGHT, &palette->fade_colour);
+    lives_widget_set_bg_color (mainw->t_fullscreen, LIVES_WIDGET_STATE_PRELIGHT, &palette->fade_colour);
+    lives_widget_set_bg_color (mainw->t_faster, LIVES_WIDGET_STATE_PRELIGHT, &palette->fade_colour);
+    lives_widget_set_bg_color (mainw->t_slower, LIVES_WIDGET_STATE_PRELIGHT, &palette->fade_colour);
+    lives_widget_set_bg_color (mainw->t_forward, LIVES_WIDGET_STATE_PRELIGHT, &palette->fade_colour);
+    lives_widget_set_bg_color (mainw->t_back, LIVES_WIDGET_STATE_PRELIGHT, &palette->fade_colour);
+    lives_widget_set_bg_color (mainw->t_infobutton, LIVES_WIDGET_STATE_PRELIGHT, &palette->fade_colour);
     
 
   }

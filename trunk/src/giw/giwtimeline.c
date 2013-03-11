@@ -153,9 +153,9 @@ giw_timeline_class_init (GiwTimelineClass *klass)
   g_type_class_add_private (object_class, sizeof (GiwTimelinePrivate));
 
 #ifndef GTK_PARAM_READABLE
-#define GTK_PARAM_READABLE G_PARAM_READABLE|G_PARAM_STATIC_NAME|G_PARAM_STATIC_NICK|G_PARAM_STATIC_BLURB
-#define GTK_PARAM_WRITABLE G_PARAM_WRITABLE|G_PARAM_STATIC_NAME|G_PARAM_STATIC_NICK|G_PARAM_STATIC_BLURB
-#define GTK_PARAM_READWRITE G_PARAM_READWRITE|G_PARAM_STATIC_NAME|G_PARAM_STATIC_NICK|G_PARAM_STATIC_BLURB
+#define GTK_PARAM_READABLE (GParamFlags)(G_PARAM_READABLE|G_PARAM_STATIC_NAME|G_PARAM_STATIC_NICK|G_PARAM_STATIC_BLURB)
+#define GTK_PARAM_WRITABLE (GParamFlags)(G_PARAM_WRITABLE|G_PARAM_STATIC_NAME|G_PARAM_STATIC_NICK|G_PARAM_STATIC_BLURB)
+#define GTK_PARAM_READWRITE (GParamFlags)(G_PARAM_READWRITE|G_PARAM_STATIC_NAME|G_PARAM_STATIC_NICK|G_PARAM_STATIC_BLURB)
 #endif
 
 
@@ -208,7 +208,7 @@ giw_timeline_dispose (GObject *object)
   GiwTimelinePrivate *priv  = GIW_TIMELINE_GET_PRIVATE (timeline);
 
   while (priv->track_widgets)
-    giw_timeline_remove_track_widget (timeline, priv->track_widgets->data);
+    giw_timeline_remove_track_widget (timeline, (GtkWidget *)priv->track_widgets->data);
 
   G_OBJECT_CLASS (parent_class)->dispose (object);
 }
@@ -225,12 +225,12 @@ giw_timeline_set_property (GObject      *object,
   switch (prop_id)
     {
     case PROP_ORIENTATION:
-      priv->orientation = g_value_get_enum (value);
+      priv->orientation = (GtkOrientation)g_value_get_enum (value);
       gtk_widget_queue_resize (GTK_WIDGET (timeline));
       break;
 
     case PROP_UNIT:
-      giw_timeline_set_unit (timeline, g_value_get_int (value));
+      giw_timeline_set_unit (timeline, (GiwTimeUnit)g_value_get_int (value));
       break;
 
     case PROP_MAX_SIZE:
@@ -285,9 +285,12 @@ giw_timeline_get_property (GObject    *object,
 GtkWidget *
 giw_timeline_new (GtkOrientation orientation)
 {
-  return g_object_new (GIW_TYPE_TIMELINE,
-                       "orientation", orientation,
-                       NULL);
+  GiwTimeline *timeline;
+
+  timeline = (GiwTimeline *)g_object_new (GIW_TYPE_TIMELINE,
+					  "orientation", orientation,
+					  NULL);
+  return GTK_WIDGET (timeline);
 }
 
 
@@ -348,7 +351,7 @@ giw_timeline_remove_track_widget (GiwTimeline *timeline,
   priv->track_widgets = g_list_remove (priv->track_widgets, widget);
 
   g_signal_handlers_disconnect_by_func (widget,
-                                        giw_timeline_remove_track_widget,
+                                        (gpointer)giw_timeline_remove_track_widget,
                                         timeline);
 }
 
@@ -392,9 +395,9 @@ giw_timeline_set_unit (GiwTimeline *timeline,
 GiwTimeUnit
 giw_timeline_get_unit (GiwTimeline *timeline)
 {
-  g_return_val_if_fail (GIW_IS_TIMELINE (timeline), 0);
+  g_return_val_if_fail (GIW_IS_TIMELINE (timeline), (GiwTimeUnit)0);
 
-  return GIW_TIMELINE_GET_PRIVATE (timeline)->unit;
+  return GIW_TIMELINE_GET_PRIVATE(timeline)->unit;
 }
 
 
@@ -635,7 +638,7 @@ giw_timeline_size_request (GtkWidget      *widget,
 
   size = 2 + ink_rect.height * 1.7;
 
-  gtk_style_context_get_border (context, 0, &border);
+  gtk_style_context_get_border (context, gtk_widget_get_state_flags(widget), &border);
 
   requisition->width  = border.left + border.right;
   requisition->height = border.top + border.bottom;
@@ -747,7 +750,7 @@ giw_timeline_draw_ticks (GiwTimeline *timeline)
     return;
 
   gtk_widget_get_allocation (widget, &allocation);
-  gtk_style_context_get_border (context, 0, &border);
+  gtk_style_context_get_border (context, gtk_widget_get_state_flags(widget), &border);
 
   layout = giw_timeline_get_layout (widget, "0123456789");
   pango_layout_get_extents (layout, &ink_rect, &logical_rect);
@@ -970,7 +973,7 @@ giw_timeline_draw_pos (GiwTimeline *timeline)
     return;
 
   gtk_widget_get_allocation (widget, &allocation);
-  gtk_style_context_get_border (context, 0, &border);
+  gtk_style_context_get_border (context, gtk_widget_get_state_flags(widget), &border);
 
   if (priv->orientation == GTK_ORIENTATION_HORIZONTAL)
     {

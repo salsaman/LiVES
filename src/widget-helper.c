@@ -2365,7 +2365,7 @@ LiVESWidget *add_fill_to_box (LiVESBox *box) {
     old_spaces=widget_opts.filler_len;
   }
 
-  blank_label = gtk_label_new (xspaces);
+  blank_label = lives_standard_label_new (xspaces);
 
   gtk_box_pack_start (box, blank_label, TRUE, TRUE, 0);
   lives_widget_set_hexpand(blank_label,FALSE);

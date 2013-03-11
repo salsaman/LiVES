@@ -365,9 +365,9 @@ LIVES_INLINE void lives_widget_get_bg_state_color(LiVESWidget *widget, LiVESWidg
 LIVES_INLINE void lives_widget_get_fg_state_color(LiVESWidget *widget, LiVESWidgetState state, LiVESWidgetColor *color) {
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3,0,0)
-  gtk_style_context_get_color (gtk_widget_get_style_context (widget), GTK_STATE_NORMAL, color);
+  gtk_style_context_get_color (gtk_widget_get_style_context (widget), LIVES_WIDGET_STATE_NORMAL, color);
 #else
-  lives_widget_color_copy(color,&gtk_widget_get_style(widget)->fg[GTK_STATE_NORMAL]);
+  lives_widget_color_copy(color,&gtk_widget_get_style(widget)->fg[LIVES_WIDGET_STATE_NORMAL]);
 #endif
 #endif
 }
@@ -1162,6 +1162,18 @@ LIVES_INLINE int lives_widget_get_allocation_height(LiVESWidget *widget) {
 }
 
 
+LIVES_INLINE void lives_widget_set_state(LiVESWidget *widget, LiVESWidgetState state) {
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3,0,0)
+  gtk_widget_set_state_flags(widget,state,TRUE);
+#else
+  gtk_widget_set_state(widget,state);
+#endif
+#endif
+}
+
+
+
 LIVES_INLINE LiVESWidget *lives_bin_get_child(LiVESBin *bin) {
   LiVESWidget *child=NULL;
 #ifdef GUI_GTK
@@ -1545,7 +1557,7 @@ LiVESWidget *lives_standard_label_new(const char *text) {
   label=gtk_label_new(text);
 
   if (mainw!=NULL&&mainw->is_ready&&(palette->style&STYLE_1)) {
-    lives_widget_set_fg_color(label, GTK_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
   }
   gtk_label_set_justify (GTK_LABEL (label), widget_opts.justify);
 
@@ -1563,7 +1575,7 @@ LiVESWidget *lives_standard_label_new_with_mnemonic(const char *text, LiVESWidge
   label=gtk_label_new_with_mnemonic(text);
 
   if (mainw!=NULL&&mainw->is_ready&&(palette->style&STYLE_1)) {
-    lives_widget_set_fg_color(label, GTK_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
   }
   gtk_label_set_justify (GTK_LABEL (label), widget_opts.justify);
   gtk_label_set_line_wrap (GTK_LABEL (label), widget_opts.line_wrap);
@@ -1606,8 +1618,8 @@ LiVESWidget *lives_standard_check_button_new(const char *labeltext, boolean use_
 		      checkbutton);
   
     if (mainw!=NULL&&mainw->is_ready&&(palette->style&STYLE_1)) {
-      lives_widget_set_fg_color(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-      lives_widget_set_bg_color (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
+      lives_widget_set_fg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+      lives_widget_set_bg_color (eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
     }
   }
   
@@ -1671,8 +1683,8 @@ LiVESWidget *lives_standard_radio_button_new(const char *labeltext, boolean use_
 		      radiobutton);
     
     if (mainw!=NULL&&mainw->is_ready&&(palette->style&STYLE_1)) {
-      lives_widget_set_fg_color(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-      lives_widget_set_bg_color (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
+      lives_widget_set_fg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+      lives_widget_set_bg_color (eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
     }
   }
 
@@ -1701,9 +1713,9 @@ LiVESWidget *lives_standard_radio_button_new(const char *labeltext, boolean use_
 }
 
 
-int calc_spin_button_width(double min, double max, int dp) {
+size_t calc_spin_button_width(double min, double max, int dp) {
   char *txt=g_strdup_printf ("%d",(int)max);
-  int maxlen=strlen (txt);
+  size_t maxlen=strlen (txt);
   g_free (txt);
   txt=g_strdup_printf ("%d",(int)min);
   if (strlen (txt)>maxlen) maxlen=strlen (txt);
@@ -1752,8 +1764,8 @@ LiVESWidget *lives_standard_spin_button_new(const char *labeltext, boolean use_m
     gtk_container_add(GTK_CONTAINER(eventbox),label);
     
     if (mainw!=NULL&&mainw->is_ready&&(palette->style&STYLE_1)) {
-      lives_widget_set_fg_color(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-      lives_widget_set_bg_color (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
+      lives_widget_set_fg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+      lives_widget_set_bg_color (eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
     }
   }
 
@@ -1817,8 +1829,8 @@ LiVESWidget *lives_standard_combo_new (const char *labeltext, boolean use_mnemon
     gtk_container_add(GTK_CONTAINER(eventbox),label);
     
     if (mainw!=NULL&&mainw->is_ready&&(palette->style&STYLE_1)) {
-      lives_widget_set_fg_color(eventbox, GTK_STATE_NORMAL, &palette->normal_fore);
-      lives_widget_set_bg_color (eventbox, GTK_STATE_NORMAL, &palette->normal_back);
+      lives_widget_set_fg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+      lives_widget_set_bg_color (eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
     }
   }
 
@@ -1932,7 +1944,7 @@ LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_button
   gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_CENTER_ALWAYS);
 
   if (mainw!=NULL&&mainw->is_ready&&(palette->style&STYLE_1)) {
-    lives_widget_set_bg_color(dialog, GTK_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_bg_color(dialog, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
 
 #if !GTK_CHECK_VERSION(3,0,0)
     lives_dialog_set_has_separator(GTK_DIALOG(dialog),FALSE);
@@ -2041,7 +2053,7 @@ LiVESWidget *lives_standard_scrolled_window_new(int width, int height, LiVESWidg
 
   if (apply_theme) {
     if (palette->style&STYLE_1) {
-      lives_widget_set_bg_color(swchild, GTK_STATE_NORMAL, &palette->normal_back);
+      lives_widget_set_bg_color(swchild, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
     }
   }
 
@@ -2077,13 +2089,13 @@ LIVES_INLINE void lives_cursor_unref(LiVESXCursor *cursor) {
 
 void lives_widget_get_bg_color(LiVESWidget *widget, LiVESWidgetColor *color) {
 #ifdef GUI_GTK
-  lives_widget_get_bg_state_color(widget,GTK_STATE_NORMAL,color);
+  lives_widget_get_bg_state_color(widget,LIVES_WIDGET_STATE_NORMAL,color);
 #endif
 }
 
 void lives_widget_get_fg_color(LiVESWidget *widget, LiVESWidgetColor *color) {
 #ifdef GUI_GTK
-  lives_widget_get_fg_state_color(widget,GTK_STATE_NORMAL,color);
+  lives_widget_get_fg_state_color(widget,LIVES_WIDGET_STATE_NORMAL,color);
 #endif
 }
 
@@ -2331,7 +2343,7 @@ LiVESWidget *add_hsep_to_box (LiVESBox *box) {
   if (!widget_opts.no_gui) 
     gtk_widget_show(hseparator);
   if (mainw!=NULL&&mainw->is_ready&&(palette->style&STYLE_1)) {
-    lives_widget_set_fg_color(hseparator, GTK_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_fg_color(hseparator, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
   }
   widget=hseparator;
 #endif

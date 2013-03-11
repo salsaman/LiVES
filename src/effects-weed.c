@@ -4579,7 +4579,7 @@ static void make_fx_defs_menu(void) {
 	    gtk_menu_item_set_submenu (GTK_MENU_ITEM (pkg_menu), pkg_submenu);
 	      
 	    if (palette->style&STYLE_1) {
-	      lives_widget_set_bg_color(pkg_submenu, GTK_STATE_NORMAL, &palette->menu_and_bars);
+	      lives_widget_set_bg_color(pkg_submenu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
 	    }
 	      
 	    gtk_widget_show (pkg_menu);

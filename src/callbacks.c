@@ -6087,9 +6087,9 @@ void on_fs_preview_clicked (GtkWidget *widget, gpointer user_data) {
     g_free(dfile);
 
 
-    lives_widget_set_bg_color (mainw->fs_playarea, GTK_STATE_NORMAL, &palette->black);
-    lives_widget_set_bg_color (mainw->fs_playframe, GTK_STATE_NORMAL, &palette->black);
-    lives_widget_set_bg_color (mainw->fs_playalign, GTK_STATE_NORMAL, &palette->black);
+    lives_widget_set_bg_color (mainw->fs_playarea, LIVES_WIDGET_STATE_NORMAL, &palette->black);
+    lives_widget_set_bg_color (mainw->fs_playframe, LIVES_WIDGET_STATE_NORMAL, &palette->black);
+    lives_widget_set_bg_color (mainw->fs_playalign, LIVES_WIDGET_STATE_NORMAL, &palette->black);
 
     mainw->in_fs_preview=TRUE;
 
@@ -10055,7 +10055,7 @@ gboolean frame_context (GtkWidget *widget, GdkEventButton *event, gpointer which
   gtk_menu_set_title (GTK_MENU(menu),_("LiVES: Selected frame"));
 
   if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color(menu, GTK_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_bg_color(menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
   }
 
   if (cfile->frames>0||mainw->multitrack!=NULL) {

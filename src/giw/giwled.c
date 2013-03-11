@@ -176,7 +176,7 @@ giw_led_new (void)
   GiwLed *led;
 
 #if GTK_CHECK_VERSION(3,0,0)
-  led = g_object_new (GIW_TYPE_LED, NULL);
+  led = (GiwLed *)g_object_new (GIW_TYPE_LED, NULL);
 #else
   led = (GiwLed *)gtk_type_new (giw_led_get_type ());
 #endif

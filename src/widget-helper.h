@@ -617,6 +617,8 @@ int lives_widget_get_allocation_y(LiVESWidget *);
 int lives_widget_get_allocation_width(LiVESWidget *);
 int lives_widget_get_allocation_height(LiVESWidget *);
 
+void lives_widget_set_state(LiVESWidget *, LiVESWidgetState state);
+
 LiVESWidget *lives_bin_get_child(LiVESBin *);
 
 boolean lives_widget_is_sensitive(LiVESWidget *);
@@ -702,7 +704,7 @@ void lives_widget_unparent(LiVESWidget *);
 
 void lives_tooltips_copy(LiVESWidget *dest, LiVESWidget *source);
 
-int calc_spin_button_width(double min, double max, int dp);
+size_t calc_spin_button_width(double min, double max, int dp);
 
 int get_box_child_index (LiVESBox *, LiVESWidget *child);
 

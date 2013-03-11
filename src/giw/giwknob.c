@@ -213,7 +213,7 @@ giw_knob_new (GtkAdjustment *adjustment)
   g_return_val_if_fail (adjustment != NULL, NULL);
 
 #if GTK_CHECK_VERSION(3,0,0)
-  knob = g_object_new (GIW_TYPE_KNOB, NULL);
+  knob = (GiwKnob *)g_object_new (GIW_TYPE_KNOB, NULL);
 #else
   knob = (GiwKnob *)gtk_type_new (giw_knob_get_type ());
 #endif
@@ -233,7 +233,7 @@ giw_knob_new_with_adjustment (gdouble value,
   GiwKnob *knob;
 
 #if GTK_CHECK_VERSION(3,0,0)
-  knob = g_object_new (GIW_TYPE_KNOB, NULL);
+  knob = (GiwKnob *)g_object_new (GIW_TYPE_KNOB, NULL);
 #else
   knob = (GiwKnob *)gtk_type_new (giw_knob_get_type ());
 #endif
@@ -1293,7 +1293,7 @@ knob_calculate_legends_sizes(GiwKnob *knob)
 
 #if GTK_CHECK_VERSION(3,0,0)
     pango_layout_set_font_description (knob->legends[0], 
-				       gtk_style_context_get_font(gtk_widget_get_style_context(widget),gtk_widget_get_state(widget)));
+				       gtk_style_context_get_font(gtk_widget_get_style_context(widget),gtk_widget_get_state_flags(widget)));
 #else
     pango_layout_set_font_description (knob->legends[0], widget->style->font_desc);  
 #endif
@@ -1316,7 +1316,7 @@ knob_calculate_title_sizes(GiwKnob *knob)
 
 #if GTK_CHECK_VERSION(3,0,0)
   pango_layout_set_font_description (knob->legends[0], 
-				     gtk_style_context_get_font(gtk_widget_get_style_context(widget),gtk_widget_get_state(widget)));
+				     gtk_style_context_get_font(gtk_widget_get_style_context(widget),gtk_widget_get_state_flags(widget)));
 #else
   pango_layout_set_font_description (knob->legends[0], widget->style->font_desc);  
 #endif

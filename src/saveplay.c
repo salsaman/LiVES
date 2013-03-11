@@ -2209,7 +2209,7 @@ void play_file (void) {
     
     if (palette->style&STYLE_1) {
       lives_widget_set_fg_color(gtk_frame_get_label_widget(GTK_FRAME(mainw->playframe)), 
-			   GTK_STATE_NORMAL, &palette->normal_fore);
+			   LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
     }
     
     // blank the background if asked to

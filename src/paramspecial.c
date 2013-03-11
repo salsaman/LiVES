@@ -135,7 +135,7 @@ void add_to_special (const gchar *sp_string, lives_rfx_t *rfx) {
 
     if (mainw->multitrack!=NULL) {
       mainw->multitrack->framedraw=&framedraw;
-      lives_widget_set_bg_color (mainw->multitrack->fd_frame, GTK_STATE_NORMAL, &palette->light_red);
+      lives_widget_set_bg_color (mainw->multitrack->fd_frame, LIVES_WIDGET_STATE_NORMAL, &palette->light_red);
     }
   }
 

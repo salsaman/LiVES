@@ -30,7 +30,7 @@ static int disp_frames_done;
 
 static uint64_t last_open_check_ticks;
 
-static uint64_t prev_ticks,elapse_start_ticks;
+static uint64_t prev_ticks,last_sc_ticks,consume_ticks;
 
 static boolean shown_paused_frames;
 static boolean force_show;
@@ -864,6 +864,7 @@ static void progbar_pulse_or_fraction(file *sfile, int frames_done) {
 boolean process_one (boolean visible) {
   uint64_t new_ticks;
   uint64_t current_ticks;
+  uint64_t sc_ticks=0;
 
   lives_time_source_t time_source;
   boolean show_frame;
@@ -917,9 +918,10 @@ boolean process_one (boolean visible) {
 	  (!mainw->is_rendering||(mainw->multitrack!=NULL&&!cfile->opening&&!mainw->multitrack->is_rendering))&&
 	  mainw->jackd!=NULL&&mainw->jackd->in_use) {
 	if (!(mainw->fixed_fpsd>0.||(mainw->vpp!=NULL&&mainw->vpp->fixed_fpsd>0.&&mainw->ext_playback))) {
+	  last_sc_ticks=sc_ticks;
 	  if (mainw->jackd_read!=NULL&&mainw->aud_rec_fd!=-1&&mainw->agen_key==0) 
-	    mainw->currticks=lives_jack_get_time(mainw->jackd_read,TRUE);
-	  else mainw->currticks=lives_jack_get_time(mainw->jackd,TRUE);
+	    sc_ticks=lives_jack_get_time(mainw->jackd_read,TRUE);
+	  else sc_ticks=lives_jack_get_time(mainw->jackd,TRUE);
 	  time_source=LIVES_TIME_SOURCE_SOUNDCARD;
 	}
       }
@@ -932,9 +934,10 @@ boolean process_one (boolean visible) {
 						   !cfile->opening&&!mainw->multitrack->is_rendering))&&
 	  ((mainw->pulsed!=NULL&&mainw->pulsed->in_use)||mainw->pulsed_read!=NULL)) {
 	if (!(mainw->fixed_fpsd>0.||(mainw->vpp!=NULL&&mainw->vpp->fixed_fpsd>0.&&mainw->ext_playback))) {
+	  last_sc_ticks=sc_ticks;
 	  if (mainw->pulsed_read!=NULL&&mainw->aud_rec_fd!=-1&&mainw->agen_key==0&&!mainw->agen_needs_reinit) 
-	    mainw->currticks=lives_pulse_get_time(mainw->pulsed_read,TRUE);
-	  else mainw->currticks=lives_pulse_get_time(mainw->pulsed,TRUE);
+	    sc_ticks=lives_pulse_get_time(mainw->pulsed_read,TRUE);
+	  else sc_ticks=lives_pulse_get_time(mainw->pulsed,TRUE);
 
 	  time_source=LIVES_TIME_SOURCE_SOUNDCARD;
 	}
@@ -942,18 +945,43 @@ boolean process_one (boolean visible) {
 #endif
     }
 
-    if (time_source!=LIVES_TIME_SOURCE_NONE) {
+    if (time_source==LIVES_TIME_SOURCE_SOUNDCARD) {
       // soundcard time is only updated after sending audio
       // so if we get the same value back we interpolate using the system clock
 
-      if (G_UNLIKELY(mainw->currticks<prev_ticks)) mainw->currticks=prev_ticks;
-      else {
-	gettimeofday(&tv, NULL);
-	current_ticks=U_SECL*(tv.tv_sec-mainw->origsecs)+tv.tv_usec*U_SEC_RATIO-mainw->origusecs*U_SEC_RATIO;
-	if (mainw->currticks==prev_ticks) mainw->currticks+=(current_ticks-elapse_start_ticks);
-	else prev_ticks=mainw->currticks;
-	elapse_start_ticks=current_ticks;
+      gettimeofday(&tv, NULL);
+      current_ticks=U_SECL*(tv.tv_sec-mainw->origsecs)+tv.tv_usec*U_SEC_RATIO-mainw->origusecs*U_SEC_RATIO;
+
+      if (sc_ticks!=last_sc_ticks) {
+	// we got updated time from the soundcard
+	if (sc_ticks>=mainw->currticks) {
+	  // timecard ahead of clock, so we resync with soundcard
+	  mainw->currticks=sc_ticks;
+	}
+	else {
+	  // soundcard time was before our interpolated time, so we will not update the clock
+	  // but we will consume the extra ticks first
+	  consume_ticks=mainw->currticks-sc_ticks;
+	}
       }
+      else {
+	// no update from soundcard
+	if (consume_ticks>0) {
+	  // we were ahead of the soundcard at the last update, so wait for it to catch up
+	  // (estimated)
+	  consume_ticks-=current_ticks-prev_ticks;
+	  if (consume_ticks<=0) {
+	    // card should have caught up, so we start advancing the clock again
+	    mainw->currticks+=consume_ticks;
+	    consume_ticks=0;
+	  }
+	}
+	else {
+	  // should be caught up now, so we keep advancing the system clock
+	  mainw->currticks+=current_ticks-prev_ticks;
+	}
+      }
+      prev_ticks=current_ticks;
     }
 
     if (time_source==LIVES_TIME_SOURCE_NONE) {
@@ -1379,7 +1407,8 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const gchar *te
   /***************************************************/
 
   prev_ticks=0;
-  elapse_start_ticks=0;
+  last_sc_ticks=0;
+  consume_ticks=0;
 
   // [IMPORTANT] we subtract these from every calculation to make the numbers smaller
   mainw->origsecs=tv.tv_sec;

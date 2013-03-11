@@ -221,4 +221,9 @@ endif
 endif
 endif
 
+if ENABLE_PROFILING
+AM_CFLAGS += -pg
+AM_CXXFLAGS += -pg
+endif
+
 

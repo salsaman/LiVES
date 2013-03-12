@@ -4533,7 +4533,7 @@ GtkWidget *create_event_list_dialog (weed_plant_t *event_list, weed_timecode_t s
   }
 
   winsize_h=scr_width-100;
-  winsize_v=scr_height-100;
+  winsize_v=scr_height-180;
  
   event_dialog = lives_standard_dialog_new (_("LiVES: Event list"),FALSE);
 
@@ -4792,18 +4792,8 @@ GtkWidget *create_event_list_dialog (weed_plant_t *event_list, weed_timecode_t s
     event=get_next_event(event);
   }
 
-  scrolledwindow = gtk_scrolled_window_new (NULL, NULL);
+  scrolledwindow = lives_standard_scrolled_window_new (winsize_h, winsize_v, table, TRUE);
   gtk_box_pack_start (GTK_BOX (top_vbox), scrolledwindow, TRUE, TRUE, 0);
-
-  gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrolledwindow), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
-  gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (scrolledwindow), table);
-  gtk_widget_set_size_request (scrolledwindow, winsize_h, winsize_v);
- 
-  if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color(gtk_bin_get_child (GTK_BIN (scrolledwindow)), LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  }
- 
-  gtk_viewport_set_shadow_type (GTK_VIEWPORT (gtk_bin_get_child (GTK_BIN (scrolledwindow))),GTK_SHADOW_IN);
 
   hbuttonbox = lives_hbutton_box_new ();
   gtk_widget_show (hbuttonbox);
@@ -4871,7 +4861,7 @@ void rdetw_spinf_changed (GtkSpinButton *spinbutton, gpointer user_data) {
 
 
 
-render_details *create_render_details (gint type) {
+render_details *create_render_details (int type) {
 
   // type == 1 :: pre-save (specified)
   // type == 2 :: render to new clip (!specified)
@@ -4889,7 +4879,6 @@ render_details *create_render_details (gint type) {
   GtkWidget *frame;
   GtkWidget *cancelbutton;
   GtkWidget *alabel;
-  GtkWidget *hsep;
   GtkWidget *daa;
 
   GtkAccelGroup *rdet_accel_group;
@@ -4898,11 +4887,13 @@ render_details *create_render_details (gint type) {
   GList *ofmt=NULL;
   GList *encoders=NULL;
 
-  gboolean specified=FALSE;
-  gboolean needs_new_encoder=FALSE;
+  boolean specified=FALSE;
+  boolean needs_new_encoder=FALSE;
 
-  int i;
+  register int i;
+
   int scrw,scrh;
+  int dbw;
 
   gchar **array;
 
@@ -4956,9 +4947,6 @@ render_details *create_render_details (gint type) {
 
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(rdet->dialog));
 
-
-  scrollw = gtk_scrolled_window_new (NULL, NULL);
-   
   if (prefs->gui_monitor!=0) {
     scrw=mainw->mgeom[prefs->gui_monitor-1].width;
     scrh=mainw->mgeom[prefs->gui_monitor-1].height;
@@ -4968,29 +4956,23 @@ render_details *create_render_details (gint type) {
     scrh=mainw->scr_height;
   }
 
-  if (!specified) gtk_widget_set_size_request (scrollw, scrw*.8, scrh*.75);
-  else gtk_widget_set_size_request (scrollw, scrw*.35, scrh*.4);
-
-  gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrollw), GTK_POLICY_AUTOMATIC, 
-				  GTK_POLICY_AUTOMATIC);
-  
   top_vbox = lives_vbox_new (FALSE, 0);
 
-  gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (scrollw), top_vbox);
-  gtk_box_pack_start (GTK_BOX (dialog_vbox), scrollw, TRUE, TRUE, 0);
-  
-  // Apply theme background to scrolled window
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(lives_bin_get_child(LIVES_BIN(scrollw)), LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_bg_color(lives_bin_get_child(LIVES_BIN(scrollw)), LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  }
 
-  gtk_widget_show (top_vbox);
-  gtk_widget_show (scrollw);
+  if (!specified) {
+    dbw=widget_opts.border_width;
+    widget_opts.border_width=0;
+    scrollw = lives_standard_scrolled_window_new (scrw*.8, scrh*.75, top_vbox, TRUE);
+    widget_opts.border_width=dbw;
+  }
+  else 
+    scrollw = lives_standard_scrolled_window_new (scrw*.35, scrh*.4, top_vbox, TRUE);
+
+  gtk_box_pack_start (GTK_BOX (dialog_vbox), scrollw, TRUE, TRUE, 0);
+
   gtk_container_set_border_width (GTK_CONTAINER (top_vbox), 0);
 
   frame = gtk_frame_new (NULL);
-  gtk_widget_show (frame);
 
   if (type!=1) gtk_box_pack_start (GTK_BOX (top_vbox), frame, TRUE, TRUE, 0);
   vbox = lives_vbox_new (FALSE, 0);
@@ -5004,7 +4986,7 @@ render_details *create_render_details (gint type) {
   gtk_frame_set_label_widget (GTK_FRAME (frame), label);
   
   hbox = lives_hbox_new (FALSE, 50);
-  gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 10);
+  gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
   
   rdet->spinbutton_width = lives_standard_spin_button_new 
     (_("_Width"),TRUE,rdet->width,2.,MAX_FRAME_WIDTH,1.,16.,0,LIVES_BOX(hbox),NULL);
@@ -5036,7 +5018,7 @@ render_details *create_render_details (gint type) {
 
 
   hbox = lives_hbox_new (FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 10);
+  gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
   rdet->spinbutton_fps = lives_standard_spin_button_new 
     (_("_Frames per second"),TRUE,rdet->fps,1.,FPS_MAX,1.,10.,0,LIVES_BOX(hbox),NULL);
@@ -5059,10 +5041,10 @@ render_details *create_render_details (gint type) {
     
     label= lives_standard_label_new (_("Options"));
     
-    gtk_box_pack_start (GTK_BOX (top_vbox), label, FALSE, FALSE, 10);
+    gtk_box_pack_start (GTK_BOX (top_vbox), label, FALSE, FALSE, widget_opts.packing_height);
     
     hbox = lives_hbox_new (FALSE, 0);
-    gtk_box_pack_start (GTK_BOX (top_vbox), hbox, FALSE, FALSE, 10);
+    gtk_box_pack_start (GTK_BOX (top_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
     rdet->backaudio_checkbutton=lives_standard_check_button_new
       (_("Enable _backing audio track"),TRUE,LIVES_BOX(hbox),NULL);
@@ -5105,17 +5087,15 @@ render_details *create_render_details (gint type) {
 
   }
 
-  hsep = lives_hseparator_new ();
-  label= lives_standard_label_new ("");
   if (!specified) {
-    gtk_box_pack_start (GTK_BOX (top_vbox), hsep, TRUE, TRUE, 0);
-    if (type!=3) gtk_label_set_text(GTK_LABEL(label),_ ("Options"));
+    add_hsep_to_box (LIVES_BOX (top_vbox));
+    if (type!=3) {
+      label=lives_standard_label_new(_("Options"));
+      gtk_box_pack_start (GTK_BOX (top_vbox), label, FALSE, FALSE, widget_opts.packing_height);
+    }
   }
 
-  gtk_box_pack_start (GTK_BOX (top_vbox), label, FALSE, FALSE, 10);
-
-  label = lives_standard_label_new (_("      Target Encoder           "));
-
+  label = lives_standard_label_new (_("Target Encoder"));
   gtk_box_pack_start (GTK_BOX (top_vbox), label, FALSE, FALSE, 0);
 
   if (!specified) {
@@ -5128,9 +5108,11 @@ render_details *create_render_details (gint type) {
 
   rdet->encoder_combo = lives_combo_new();
   lives_combo_populate(LIVES_COMBO(rdet->encoder_combo),encoders);
-  gtk_widget_show(rdet->encoder_combo);
 
-  gtk_box_pack_start (GTK_BOX (top_vbox), rdet->encoder_combo, FALSE, FALSE, 10);
+  hbox=lives_hbox_new(FALSE,0);
+
+  gtk_box_pack_start (GTK_BOX (top_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+  gtk_box_pack_start (GTK_BOX (hbox), rdet->encoder_combo, TRUE, TRUE, widget_opts.packing_width);
 
 
   rdet->encoder_name_fn = g_signal_connect_after(GTK_COMBO_BOX(rdet->encoder_combo), "changed",
@@ -5139,7 +5121,6 @@ render_details *create_render_details (gint type) {
   g_signal_handler_block(rdet->encoder_combo, rdet->encoder_name_fn);
   lives_combo_set_active_string(LIVES_COMBO(rdet->encoder_combo), rdet->encoder_name);
   g_signal_handler_unblock(rdet->encoder_combo, rdet->encoder_name_fn);
-
 
   if (encoders!=NULL) {
     g_list_free_strings (encoders);
@@ -5152,6 +5133,7 @@ render_details *create_render_details (gint type) {
     ofmt=g_list_append(ofmt,g_strdup(mainw->string_constants[LIVES_STRING_CONSTANT_ANY]));
   }
   else {
+    add_fill_to_box(LIVES_BOX(top_vbox));
     if (capable->has_encoder_plugins) {
       // reqest formats from the encoder plugin
       if ((ofmt_all=plugin_request_by_line(PLUGIN_ENCODERS,prefs->encoder.name,"get_formats"))!=NULL) {
@@ -5174,7 +5156,7 @@ render_details *create_render_details (gint type) {
     }
   }
 
-  label = lives_standard_label_new (_("    Output format           "));
+  label = lives_standard_label_new (_("Output format"));
   rdet->ofmt_combo = lives_combo_new();
 
   lives_combo_populate(LIVES_COMBO(rdet->ofmt_combo), ofmt);
@@ -5187,14 +5169,15 @@ render_details *create_render_details (gint type) {
   rdet->encoder_ofmt_fn=g_signal_connect_after (GTK_COMBO_BOX(rdet->ofmt_combo), "changed", 
 						G_CALLBACK (on_encoder_ofmt_changed), rdet);
   gtk_box_pack_start (GTK_BOX (top_vbox), label, FALSE, FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (top_vbox), rdet->ofmt_combo, FALSE, FALSE, 10);
+
+
+  hbox=lives_hbox_new(FALSE,0);
+
+  gtk_box_pack_start (GTK_BOX (top_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+  gtk_box_pack_start (GTK_BOX (hbox), rdet->ofmt_combo, TRUE, TRUE, widget_opts.packing_width);
+
   
   rdet->acodec_combo = lives_combo_new ();
-  alabel = lives_standard_label_new (_("    Audio format           "));
-
-  gtk_box_pack_start (GTK_BOX (top_vbox), alabel, FALSE, FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (top_vbox), rdet->acodec_combo, FALSE, FALSE, 10);
-  
   if (!specified) {
     // add "Any" string
     if (prefs->acodec_list!=NULL) {
@@ -5207,6 +5190,7 @@ render_details *create_render_details (gint type) {
     gtk_combo_box_set_active(GTK_COMBO_BOX(rdet->acodec_combo), 0);
   }
   else {
+    add_fill_to_box(LIVES_BOX(top_vbox));
     g_signal_handler_block(rdet->ofmt_combo, rdet->encoder_ofmt_fn);
     lives_combo_set_active_string(LIVES_COMBO(rdet->ofmt_combo), prefs->encoder.of_desc);
     g_signal_handler_unblock(rdet->ofmt_combo, rdet->encoder_ofmt_fn);
@@ -5214,13 +5198,19 @@ render_details *create_render_details (gint type) {
     check_encoder_restrictions(TRUE,FALSE,TRUE);
     future_prefs->encoder.of_allowed_acodecs=prefs->encoder.of_allowed_acodecs;
     set_acodec_list_from_allowed(NULL,rdet);
-    
-    //gtk_window_set_default_size (GTK_WINDOW (rdet->dialog), 300, 400);
-    
   }
 
+  alabel = lives_standard_label_new (_("Audio format"));
 
-  rdet->always_hbox = lives_hbox_new (TRUE, 20);
+  gtk_box_pack_start (GTK_BOX (top_vbox), alabel, FALSE, FALSE, 0);
+
+  hbox=lives_hbox_new(FALSE,0);
+
+  gtk_box_pack_start (GTK_BOX (top_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+  gtk_box_pack_start (GTK_BOX (hbox), rdet->acodec_combo, TRUE, TRUE, widget_opts.packing_width);
+
+
+  rdet->always_hbox = lives_hbox_new (TRUE, widget_opts.packing_width*2);
 
   rdet->always_checkbutton=lives_standard_check_button_new ((tmp=g_strdup(_("_Always use these values"))),TRUE,
 							    LIVES_BOX(rdet->always_hbox),
@@ -5256,9 +5246,6 @@ render_details *create_render_details (gint type) {
 #if !GTK_CHECK_VERSION(3,0,0)
     gtk_button_box_set_child_size (GTK_BUTTON_BOX (daa), DEF_BUTTON_WIDTH, -1);
 #endif
-
-    gtk_button_box_set_layout (GTK_BUTTON_BOX (daa), GTK_BUTTONBOX_SPREAD);
-
   }
   else  {
     rdet->okbutton = gtk_button_new_from_stock ("gtk-go-forward");

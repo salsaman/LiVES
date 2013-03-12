@@ -2054,6 +2054,7 @@ LiVESWidget *lives_standard_scrolled_window_new(int width, int height, LiVESWidg
   if (apply_theme) {
     if (palette->style&STYLE_1) {
       lives_widget_set_bg_color(swchild, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+      lives_widget_set_fg_color(swchild, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
     }
   }
 

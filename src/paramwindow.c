@@ -1063,6 +1063,7 @@ boolean make_param_box(GtkVBox *top_vbox, lives_rfx_t *rfx) {
   boolean noslid;
   boolean has_param=FALSE;
   boolean chk_params=FALSE;
+  boolean needs_sizes=FALSE;
 
   int pnum;
   int length;
@@ -1272,6 +1273,21 @@ boolean make_param_box(GtkVBox *top_vbox, lives_rfx_t *rfx) {
     }
   }
 
+
+
+  if (mainw->multitrack==NULL&&rfx->status==RFX_STATUS_WEED&&rfx->is_template) {
+    weed_plant_t *filter=weed_instance_get_filter((weed_plant_t *)rfx->source,TRUE);
+    if (enabled_in_channels(filter,FALSE)==0&&enabled_out_channels(filter,FALSE)>0&&has_video_chans_out(filter,TRUE)) {
+      // out channel size(s) and target_fps for generators
+      if (!chk_params) {
+	needs_sizes=TRUE;
+	if (mainw->overflow_height<900) mainw->overflow_height=900;
+      }
+      has_param=TRUE;
+    }
+  }
+
+
   if (!chk_params) {
     if (!has_param) {
       hbox = lives_hbox_new (FALSE, 0);
@@ -1294,16 +1310,10 @@ boolean make_param_box(GtkVBox *top_vbox, lives_rfx_t *rfx) {
 
   }
 
-  if (mainw->multitrack==NULL&&rfx->status==RFX_STATUS_WEED&&rfx->is_template) {
-    weed_plant_t *filter=weed_instance_get_filter((weed_plant_t *)rfx->source,TRUE);
-    if (enabled_in_channels(filter,FALSE)==0&&enabled_out_channels(filter,FALSE)>0&&has_video_chans_out(filter,TRUE)) {
-      // out channel size(s) and target_fps for generators
-      if (!chk_params) add_sizes(GTK_BOX(top_vbox),TRUE,rfx);
-      has_param=TRUE;
-    }
-  }
+  if (needs_sizes) add_sizes(GTK_BOX(top_vbox),TRUE,rfx);
 
   mainw->block_param_updates=FALSE;
+  mainw->overflow_height=0;
 
   return has_param;
 }

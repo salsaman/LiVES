@@ -5578,9 +5578,6 @@ void on_show_file_info_activate (GtkMenuItem *menuitem, gpointer user_data) {
   if (mainw->current_file==-1) return;
 
   filew = create_clip_info_window (cfile->achans,FALSE);
-
-  g_snprintf(buff,512,"LiVES - %s",cfile->name);
-  gtk_window_set_title (GTK_WINDOW (filew->info_window), buff);
   
   if (cfile->frames>0) {
     // type
@@ -5677,7 +5674,7 @@ void on_show_file_info_activate (GtkMenuItem *menuitem, gpointer user_data) {
     }
     gtk_text_buffer_set_text (gtk_text_view_get_buffer (GTK_TEXT_VIEW (filew->textview_rtime)),buff, -1);
   }
-  gtk_widget_show (filew->info_window);
+
 }
 
 void
@@ -8613,7 +8610,7 @@ void popup_lmap_errors(GtkMenuItem *menuitem, gpointer user_data) {
   textwindow=create_text_window(_("layout errors"),NULL,mainw->layout_textbuffer);
 
   dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (textwindow->dialog));
-  gtk_widget_show (dialog_action_area);
+
   gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area), GTK_BUTTONBOX_SPREAD);
 
   vbox = lives_dialog_get_content_area(GTK_DIALOG(textwindow->dialog));
@@ -8621,7 +8618,7 @@ void popup_lmap_errors(GtkMenuItem *menuitem, gpointer user_data) {
   add_warn_check(GTK_BOX(vbox),WARN_MASK_LAYOUT_POPUP);
 
   button = gtk_button_new_with_mnemonic (_("Close _Window"));
-  gtk_widget_show (button);
+
   gtk_dialog_add_action_widget (GTK_DIALOG (textwindow->dialog), button, GTK_RESPONSE_OK);
 
   g_signal_connect (GTK_OBJECT (button), "clicked",
@@ -8632,7 +8629,7 @@ void popup_lmap_errors(GtkMenuItem *menuitem, gpointer user_data) {
   lives_widget_set_can_focus_and_default (button);
 
   textwindow->clear_button = gtk_button_new_with_mnemonic (_("Clear _Errors"));
-  gtk_widget_show (textwindow->clear_button);
+
   gtk_dialog_add_action_widget (GTK_DIALOG (textwindow->dialog), textwindow->clear_button, GTK_RESPONSE_CANCEL);
 
   g_signal_connect (GTK_OBJECT (textwindow->clear_button), "clicked",
@@ -8643,7 +8640,7 @@ void popup_lmap_errors(GtkMenuItem *menuitem, gpointer user_data) {
   lives_widget_set_can_focus_and_default (textwindow->clear_button);
 
   textwindow->delete_button = gtk_button_new_with_mnemonic (_("_Delete affected layouts"));
-  gtk_widget_show (textwindow->delete_button);
+
   gtk_dialog_add_action_widget (GTK_DIALOG (textwindow->dialog), textwindow->delete_button, GTK_RESPONSE_CANCEL);
 
   gtk_container_set_border_width (GTK_CONTAINER (textwindow->delete_button), 12);
@@ -8653,7 +8650,7 @@ void popup_lmap_errors(GtkMenuItem *menuitem, gpointer user_data) {
 		    G_CALLBACK (on_lerrors_delete_clicked),
 		    NULL);
 
-  gtk_widget_show(textwindow->dialog);
+  gtk_widget_show_all(textwindow->dialog);
   
 }
 

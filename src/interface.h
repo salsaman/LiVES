@@ -33,7 +33,7 @@ void do_layout_recover_dialog(void);
 GtkWidget *create_cleardisk_advanced_dialog(void);
 
 typedef struct {
-  GtkWidget *info_window;
+  GtkWidget *dialog;
   GtkWidget *textview24;
   GtkWidget *textview25;
   GtkWidget *textview26;

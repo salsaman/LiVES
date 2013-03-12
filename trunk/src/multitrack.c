@@ -14754,9 +14754,6 @@ void multitrack_view_details (GtkMenuItem *menuitem, gpointer user_data) {
 
   filew = create_clip_info_window (cfile->achans,TRUE);
 
-  g_snprintf(buff,512,"LiVES - %s",_("Multitrack details"));
-  gtk_window_set_title (GTK_WINDOW (filew->info_window), buff);
-  
   // type
   g_snprintf(buff,512,"\n  Event List");
   gtk_text_buffer_set_text (gtk_text_view_get_buffer (GTK_TEXT_VIEW (filew->textview24)),buff, -1);
@@ -14801,7 +14798,7 @@ void multitrack_view_details (GtkMenuItem *menuitem, gpointer user_data) {
     g_snprintf(buff,512,"\n  %d Hz %d bit",cfile->arate,cfile->asampsize);
     gtk_text_buffer_set_text (gtk_text_view_get_buffer (GTK_TEXT_VIEW (filew->textview_rrate)),buff, -1);
   }
-  gtk_widget_show (filew->info_window);
+
 }
 
 

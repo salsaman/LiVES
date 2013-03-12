@@ -2781,7 +2781,6 @@ static GtkWidget *conx_scroll_new(weed_plant_t *filter, lives_conx_w *conxwp) {
   LiVESTreeModel *model;
 
   GtkWidget *label;
-  GtkWidget *hseparator;
   GtkWidget *top_vbox;
   GtkWidget *hbox,*hbox2;
   GtkWidget *scrolledwindow;
@@ -2814,20 +2813,9 @@ static GtkWidget *conx_scroll_new(weed_plant_t *filter, lives_conx_w *conxwp) {
 
   lctext=g_strdup(_("Connected to -->"));
 
-  scrolledwindow = gtk_scrolled_window_new (NULL, NULL);
-  gtk_widget_show (scrolledwindow);
-  gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrolledwindow), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
-
   top_vbox=lives_vbox_new (FALSE, 0);
 
-    
-  gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (scrolledwindow), top_vbox);
-
-   if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color(lives_bin_get_child (LIVES_BIN (scrolledwindow)), LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  }
-
-  //gtk_viewport_set_shadow_type (GTK_VIEWPORT (gtk_bin_get_child (GTK_BIN (scrolledwindow))),GTK_SHADOW_IN);
+  scrolledwindow = lives_standard_scrolled_window_new (-1,-1,top_vbox,TRUE);
 
   if (conxwp->num_alpha>0) {
     weed_plant_t **ochans=weed_get_plantptr_array(filter,"out_channel_templates",&error);
@@ -2890,9 +2878,7 @@ static GtkWidget *conx_scroll_new(weed_plant_t *filter, lives_conx_w *conxwp) {
   }
 
   if (conxwp->num_alpha>0&&conxwp->num_params>0) {
-    hseparator = lives_hseparator_new ();
-    gtk_widget_show (hseparator);
-    gtk_box_pack_start (GTK_BOX (top_vbox), hseparator, FALSE, FALSE, 10);
+    add_hsep_to_box (LIVES_BOX (top_vbox));
   }
 
 

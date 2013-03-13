@@ -1,4 +1,4 @@
-// LiVES - mpegts decoder plugin (does not work)
+// LiVES - mpegts decoder plugin
 // (c) G. Finch 2012 <salsaman@gmail.com>
 
 /*

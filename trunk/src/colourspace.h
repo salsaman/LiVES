@@ -119,7 +119,7 @@ boolean convert_layer_palette(weed_plant_t *layer, int outpl, int op_clamping);
 boolean convert_layer_palette_with_sampling(weed_plant_t *layer, int outpl, int out_sampling);
 boolean convert_layer_palette_full(weed_plant_t *layer, int outpl, int osamtype, boolean oclamping, int osubspace);
 //boolean apply_gamma (weed_plant_t *ilayer, weed_plant_t *olayer, double gamma); ///< not used
-boolean resize_layer (weed_plant_t *layer, int width, int height, LiVESInterpType interp);
+boolean resize_layer (weed_plant_t *layer, int width, int height, LiVESInterpType interp, int opal_hint, int oclamp_hint);
 void letterbox_layer (weed_plant_t *layer, int width, int height, int nwidth, int nheight);
 void compact_rowstrides(weed_plant_t *layer);
 void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean may_contig);
@@ -151,7 +151,7 @@ int weed_palette_get_numplanes(int pal);
 double weed_palette_get_plane_ratio_horizontal(int pal, int plane);
 double weed_palette_get_plane_ratio_vertical(int pal, int plane);
 boolean weed_palette_is_lower_quality(int p1, int p2);  ///< return TRUE if p1 is lower quality than p2
-boolean weed_palette_is_resizable(int pal);
+boolean weed_palette_is_resizable(int pal, int clamped, boolean in_out);
 double weed_palette_get_compression_ratio (int pal);
 
 int get_weed_palette_for_lives_painter(void);

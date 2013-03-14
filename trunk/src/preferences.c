@@ -2045,8 +2045,6 @@ _prefsw *create_prefs_dialog (void) {
   prefsw->prefs_list = gtk_tree_view_new();
   gtk_widget_show(prefsw->prefs_list);
 
-  //gtk_widget_set_size_request (prefsw->prefs_list, 200, 600);
-
   gtk_tree_view_set_headers_visible(GTK_TREE_VIEW(prefsw->prefs_list), FALSE);
 
   // Place panels into main vbox
@@ -2060,7 +2058,7 @@ _prefsw *create_prefs_dialog (void) {
   gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (list_scroll), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
   gtk_container_add (GTK_CONTAINER (list_scroll), prefsw->prefs_list);
 
-  gtk_paned_pack1(GTK_PANED(dialog_hpaned), list_scroll, FALSE, FALSE);
+  gtk_paned_pack1(GTK_PANED(dialog_hpaned), list_scroll, TRUE, FALSE);
   // Place table on the right panel
   //gtk_paned_pack2(GTK_PANED(dialog_hpaned), dummy_scroll, TRUE, FALSE);
   gtk_paned_pack2(GTK_PANED(dialog_hpaned), dialog_table, TRUE, FALSE);
@@ -2651,18 +2649,16 @@ _prefsw *create_prefs_dialog (void) {
   gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_decoding), hbox109, TRUE, FALSE, 0);
   gtk_container_set_border_width(GTK_CONTAINER (hbox109), 20);
   // ---
-  label133 = gtk_label_new (_("Video open command             "));
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(label133, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-  }
+  label133 = lives_standard_label_new (_("Video open command (fallback)"));
+
   gtk_widget_show (label133);
-  gtk_box_pack_start (GTK_BOX (hbox109), label133, FALSE, FALSE, 0);
-  gtk_label_set_justify (GTK_LABEL(label133), GTK_JUSTIFY_LEFT);
+  gtk_box_pack_start (GTK_BOX (hbox109), label133, FALSE, FALSE, widget_opts.packing_width);
+
   // ---
   prefsw->video_open_entry = gtk_entry_new ();
   gtk_entry_set_max_length(GTK_ENTRY(prefsw->video_open_entry),255);
   gtk_widget_show (prefsw->video_open_entry);
-  gtk_box_pack_start (GTK_BOX (hbox109), prefsw->video_open_entry, FALSE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (hbox109), prefsw->video_open_entry, TRUE, TRUE, widget_opts.packing_width);
   gtk_entry_set_text(GTK_ENTRY(prefsw->video_open_entry),prefs->video_open_command);
 
   if (prefs->ocp==-1) prefs->ocp=get_int_pref ("open_compression_percent");
@@ -2671,13 +2667,12 @@ _prefsw *create_prefs_dialog (void) {
   gtk_widget_show (hbox116);
   gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_decoding), hbox116, TRUE, FALSE, 0);
   // ---
-  label158 = gtk_label_new (_("Open/render compression                  "));
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(label158, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-  }
+
+  label158 = lives_standard_label_new (_("Open/render compression"));
+
   gtk_widget_show (label158);
-  gtk_label_set_justify (GTK_LABEL (label158), GTK_JUSTIFY_LEFT);
-  gtk_box_pack_start (GTK_BOX (hbox116), label158, FALSE, TRUE, 0);
+
+  gtk_box_pack_start (GTK_BOX (hbox116), label158, FALSE, TRUE, widget_opts.packing_width);
   // ---
   spinbutton_ocp_adj = (GObject *)gtk_adjustment_new (prefs->ocp, 0, 100, 1, 5, 0);
   prefsw->spinbutton_ocp = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_ocp_adj), 1, 0);
@@ -2696,12 +2691,10 @@ _prefsw *create_prefs_dialog (void) {
   gtk_widget_show (hbox115);
   gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_decoding), hbox115, TRUE, FALSE, 5);
   // ---
-  label157 = gtk_label_new (_("Default image format          "));
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(label157, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-  }
-  gtk_label_set_justify (GTK_LABEL (label157), GTK_JUSTIFY_LEFT);
-  gtk_box_pack_start (GTK_BOX (hbox115), label157, FALSE, TRUE, 5);
+
+  label157 = lives_standard_label_new (_("Default image format"));
+
+  gtk_box_pack_start (GTK_BOX (hbox115), label157, FALSE, TRUE, widget_opts.packing_width);
   // ---
   prefsw->jpeg = gtk_radio_button_new(jpeg_png);
   jpeg_png = gtk_radio_button_get_group (GTK_RADIO_BUTTON (prefsw->jpeg));
@@ -2860,7 +2853,8 @@ _prefsw *create_prefs_dialog (void) {
   // TRANSLATORS: video quality, max len 50
   prefsw->pbq_list=g_list_append(prefsw->pbq_list,g_strdup((_("High - can improve quality on very fast machines"))));
 
-  prefsw->pbq_combo = lives_standard_combo_new((tmp=g_strdup(_("Preview _quality"))),TRUE,prefsw->pbq_list,LIVES_BOX(vbox69),(tmp2=g_strdup(_("The preview quality for video playback - affects resizing"))));
+  prefsw->pbq_combo = lives_standard_combo_new((tmp=g_strdup(_("Preview _quality"))),TRUE,prefsw->pbq_list,LIVES_BOX(vbox69),
+					       (tmp2=g_strdup(_("The preview quality for video playback - affects resizing"))));
 
   g_free(tmp);
   g_free(tmp2);
@@ -4701,8 +4695,7 @@ _prefsw *create_prefs_dialog (void) {
   gtk_label_set_mnemonic_widget (GTK_LABEL (label),prefsw->jack_tserver_entry);
 
   gtk_widget_show (prefsw->jack_tserver_entry);
-  gtk_box_pack_start (GTK_BOX (hbox1), prefsw->jack_tserver_entry, FALSE, FALSE, 0);
-  gtk_widget_set_tooltip_text( prefsw->jack_tserver_entry, _("The name of the jack server which can control LiVES transport"));
+  gtk_box_pack_start (GTK_BOX (hbox1), prefsw->jack_tserver_entry, TRUE, TRUE, widget_opts.packing_width);
 
   eventbox = gtk_event_box_new();
   label = gtk_label_new_with_mnemonic(_("Start _server on LiVES startup"));
@@ -4891,8 +4884,8 @@ _prefsw *create_prefs_dialog (void) {
   gtk_label_set_mnemonic_widget (GTK_LABEL (label),prefsw->jack_aserver_entry);
 
   gtk_widget_show (prefsw->jack_aserver_entry);
-  gtk_box_pack_start (GTK_BOX (hbox4), prefsw->jack_aserver_entry, FALSE, FALSE, 0);
-  gtk_widget_set_tooltip_text( prefsw->jack_aserver_entry, _("The name of the jack server for audio"));
+  gtk_box_pack_start (GTK_BOX (hbox4), prefsw->jack_aserver_entry, TRUE, TRUE, 0);
+
   // ---
   hbox5 = lives_hbox_new (FALSE,0);
   gtk_widget_show (hbox5);

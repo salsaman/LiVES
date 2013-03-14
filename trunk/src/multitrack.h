@@ -9,38 +9,40 @@
 #ifndef HAS_LIVES_MULTITRACK_H
 #define HAS_LIVES_MULTITRACK_H
 
-#define CLIP_THUMB_WIDTH 72
-#define CLIP_THUMB_HEIGHT 72
 
-#define CLIP_LABEL_LENGTH 20
+////////////////////// GUI constants ///////////////////////
 
-#define BLOCK_THUMB_WIDTH 40
+
+#define CLIP_THUMB_WIDTH ((int)(72.*widget_opts.scale))
+#define CLIP_THUMB_HEIGHT ((int)(72.*widget_opts.scale))
+
+#define CLIP_LABEL_LENGTH ((int)(20.*widget_opts.scale))
+
+#define BLOCK_THUMB_WIDTH ((int)(40.*widget_opts.scale))
+
+#define MT_PLAY_WIDTH_SMALL ((int)(320.*widget_opts.scale))
+#define MT_PLAY_HEIGHT_SMALL ((int)(216.*widget_opts.scale))
+
+#define MT_PLAY_WIDTH_EXP ((int)(432.*widget_opts.scale))
+#define MT_PLAY_HEIGHT_EXP ((int)(324.*widget_opts.scale))
+
+#define MT_CTX_WIDTH ((int)(320.*widget_opts.scale))
+#define MT_CTX_HEIGHT ((int)(220.*widget_opts.scale))
+
+#define FX_BLOCK_WIDTH ((int)(80.*widget_opts.scale))
+#define FX_BLOCK_HEIGHT ((int)(20.*widget_opts.scale))
+
+#define MT_TRACK_HEIGHT ((int)(25.*widget_opts.scale))
+
+#define TIMECODE_LENGTH 14 ///< length of timecode text entry, must be >12
+
+////////////////////////////////////////////////////////////////////////////////
 
 #define BLOCK_DRAW_SIMPLE 1
 #define BLOCK_DRAW_THUMB 2
 #define BLOCK_DRAW_TYPE BLOCK_DRAW_THUMB
 
-#define MT_PLAY_WIDTH_SMALL 320
-#define MT_PLAY_HEIGHT_SMALL 216
-
-#define MT_PLAY_WIDTH_EXP 432
-#define MT_PLAY_HEIGHT_EXP 324
-
-#define MT_CTX_WIDTH 320
-#define MT_CTX_HEIGHT 220
-
-#define FX_BLOCK_WIDTH 80
-#define FX_BLOCK_HEIGHT 20
-
-#define MT_TRACK_HEIGHT 25
-
-#define TIMECODE_LENGTH 14 ///< length of timecode text entry, must be >12
-
 #define DEF_TIME 120 ///< default seconds when there is no event_list
-
-#define MT_BORDER_WIDTH 20 ///< width border for window
-
-#define IN_OUT_SEP 10 ///< min pixel separation for in/out images in poly_box (per image) 
 
 typedef struct _mt lives_mt;
 

@@ -26,8 +26,6 @@
 extern void multitrack_preview_clicked  (GtkButton *, gpointer user_data);
 extern void mt_change_disp_tracks_ok (GtkButton *, gpointer user_data);
 
-static gulong arrow_id; // works around a known bug in gobject
-
 
 void add_suffix_check(GtkBox *box, const gchar *ext) {
   gchar *ltext;
@@ -168,49 +166,12 @@ void widget_add_preview(GtkWidget *widget, LiVESBox *for_preview, LiVESBox *for_
 }
 
 
-static boolean procdets_pressed (GtkWidget *ahbox, GdkEventButton *event, gpointer user_data) {
-  GtkWidget *arrow=(GtkWidget *)user_data;
-  boolean expanded=!(g_object_get_data(G_OBJECT(arrow),"expanded"));
-  GtkWidget *hbox=lives_widget_get_parent(arrow);
-
-  gtk_widget_destroy(arrow);
-
-  // remove this signal because its user_data is invalid
-  if (g_signal_handler_is_connected (ahbox, arrow_id)) {
-    g_signal_handler_disconnect (ahbox, arrow_id);
-  }
-
-  arrow = gtk_arrow_new (expanded?GTK_ARROW_DOWN:GTK_ARROW_RIGHT, GTK_SHADOW_OUT);
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(arrow, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-  }
-
-  arrow_id=g_signal_connect (GTK_OBJECT (ahbox), "button_press_event",
-			     G_CALLBACK (procdets_pressed),
-			     arrow);
-
-  gtk_box_pack_end (GTK_BOX (hbox), arrow, FALSE, FALSE, widget_opts.packing_width);
-  gtk_widget_show(arrow);
-
-  g_object_set_data(G_OBJECT(arrow),"expanded",GINT_TO_POINTER(expanded));
-
-  if (expanded) gtk_widget_show(cfile->proc_ptr->scrolledwindow);
-  else gtk_widget_hide(cfile->proc_ptr->scrolledwindow);
-
-  return FALSE;
-}
-
-
-
 xprocess * create_processing (const gchar *text) {
 
   GtkWidget *dialog_vbox;
   GtkWidget *vbox2;
   GtkWidget *vbox3;
   GtkWidget *dialog_action_area;
-  GtkWidget *hbox;
-  GtkWidget *ahbox;
-  GtkWidget *label;
   GtkWidget *details_arrow;
 
   GtkAccelGroup *accel_group=GTK_ACCEL_GROUP(gtk_accel_group_new ());
@@ -277,43 +238,20 @@ xprocess * create_processing (const gchar *text) {
   if (mainw->iochan!=NULL) {
     // add "show details" arrow
 
-    ahbox=gtk_event_box_new();
-    gtk_box_pack_start (GTK_BOX (vbox3), ahbox, FALSE, FALSE, widget_opts.packing_height);
+    procw->scrolledwindow = gtk_scrolled_window_new (NULL, NULL);
+    gtk_widget_set_size_request (procw->scrolledwindow, ENC_DETAILS_WIN_H, ENC_DETAILS_WIN_V);
+    gtk_container_add (GTK_CONTAINER (procw->scrolledwindow), (GtkWidget *)mainw->optextview);
 
-    hbox = lives_hbox_new (FALSE, 0);
-    gtk_container_add (GTK_CONTAINER (ahbox), hbox);
+    details_arrow=lives_standard_expander_new(_("Show Details"),FALSE,LIVES_BOX(vbox3),procw->scrolledwindow);
 
-    label=gtk_label_new("");
-    gtk_box_pack_end (GTK_BOX (hbox), label, TRUE, TRUE, widget_opts.packing_width);
+    gtk_widget_show_all(details_arrow);
 
-    details_arrow = gtk_arrow_new (GTK_ARROW_RIGHT, GTK_SHADOW_OUT);
-
-    arrow_id=g_signal_connect (GTK_OBJECT (ahbox), "button_press_event",
-			       G_CALLBACK (procdets_pressed),
-			       details_arrow);
-
-    g_object_set_data(G_OBJECT(details_arrow),"expanded",GINT_TO_POINTER(FALSE));
-
-    label=lives_standard_label_new (_ ("Show details"));
-    gtk_box_pack_end (GTK_BOX (hbox), label, TRUE, FALSE, widget_opts.packing_width);
-    gtk_box_pack_end (GTK_BOX (hbox), details_arrow, TRUE, FALSE, widget_opts.packing_width);
-
-    if (palette->style&STYLE_1) {
-      lives_widget_set_fg_color(details_arrow, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-      lives_widget_set_bg_color(ahbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-    }
-
-    gtk_widget_show_all(ahbox);
-
-    procw->scrolledwindow = lives_standard_scrolled_window_new (ENC_DETAILS_WIN_H, ENC_DETAILS_WIN_V,
-								LIVES_WIDGET(mainw->optextview), FALSE);
-
-    gtk_box_pack_start (GTK_BOX (vbox3), procw->scrolledwindow, TRUE, TRUE, 0);
   }
 
 
+  gtk_widget_show_all(vbox3);
+
   dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (procw->processing));
-  gtk_widget_show (dialog_action_area);
   gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area), GTK_BUTTONBOX_END);
 
   procw->stop_button = gtk_button_new_with_mnemonic (_ ("_Enough"));
@@ -2219,7 +2157,6 @@ _commentsw* create_comments_dialog (file *sfile, gchar *filename) {
   GtkWidget *dialog_vbox;
   GtkWidget *table;
   GtkWidget *label;
-  GtkWidget *expander;
   GtkWidget *vbox;
   GtkWidget *hbox;
   GtkWidget *buttond;
@@ -2237,7 +2174,7 @@ _commentsw* create_comments_dialog (file *sfile, gchar *filename) {
   table = gtk_table_new (4, 2, FALSE);
   gtk_container_set_border_width(GTK_CONTAINER(table), widget_opts.border_width);
 
-  gtk_table_set_row_spacings(GTK_TABLE(table), 20);
+  gtk_table_set_row_spacings(GTK_TABLE(table), widget_opts.packing_height*2);
 
   gtk_box_pack_start (GTK_BOX (dialog_vbox), table, TRUE, TRUE, widget_opts.packing_height);
 
@@ -2282,29 +2219,12 @@ _commentsw* create_comments_dialog (file *sfile, gchar *filename) {
                     (GtkAttachOptions) (GTK_EXPAND), 0, 0);
 
   if (sfile!=NULL) {
-
-    expander=gtk_expander_new_with_mnemonic(_("_Options"));
-  
-    if (palette->style&STYLE_1) {
-      label=gtk_expander_get_label_widget(GTK_EXPANDER(expander));
-      lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-      lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_PRELIGHT, &palette->normal_fore);
-      lives_widget_set_fg_color(expander, LIVES_WIDGET_STATE_PRELIGHT, &palette->normal_fore);
-      lives_widget_set_bg_color(expander, LIVES_WIDGET_STATE_PRELIGHT, &palette->normal_back);
-      lives_widget_set_fg_color(expander, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-      lives_widget_set_bg_color(expander, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-    }
-
-    gtk_box_pack_start (GTK_BOX (dialog_vbox), expander, TRUE, TRUE, 0);
-
+    // options
     vbox = lives_vbox_new (FALSE, 0);
-    gtk_widget_show (vbox);
+
+    lives_standard_expander_new(_("_Options"),TRUE,LIVES_BOX(dialog_vbox),vbox);
 
     add_fill_to_box(LIVES_BOX(vbox));
-
-    gtk_container_add (GTK_CONTAINER (expander), vbox);
-
-    // options
 
     hbox = lives_hbox_new (FALSE, 0);
     gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
@@ -2329,7 +2249,6 @@ _commentsw* create_comments_dialog (file *sfile, gchar *filename) {
     		      (gpointer)commentsw->subt_entry);
 
     gtk_box_pack_start (GTK_BOX (hbox), buttond, FALSE, FALSE, widget_opts.packing_width);
-    gtk_widget_show_all (hbox);
 
     add_fill_to_box(LIVES_BOX(vbox));
 
@@ -2365,20 +2284,6 @@ _commentsw* create_comments_dialog (file *sfile, gchar *filename) {
 
   return commentsw;
 }
-
-
-static void set_child_colour(GtkWidget *widget, gpointer data) {
-  if (GTK_IS_BUTTON(widget)) return;
-  if (GTK_IS_CONTAINER(widget)) {
-    gtk_container_forall(GTK_CONTAINER(widget),set_child_colour,NULL);
-    return;
-  }
-
-  if (GTK_IS_LABEL(widget)) {
-    lives_widget_set_fg_color(widget, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-  }
-}
-
 
 
 gchar *choose_file(gchar *dir, gchar *fname, gchar **filt, GtkFileChooserAction act, const char *title, GtkWidget *extra_widget) {
@@ -2435,7 +2340,7 @@ gchar *choose_file(gchar *dir, gchar *fname, gchar **filt, GtkFileChooserAction 
 
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(chooser, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-    gtk_container_forall(GTK_CONTAINER(chooser),set_child_colour,NULL);
+    gtk_container_forall(GTK_CONTAINER(chooser),set_child_colour,GINT_TO_POINTER(FALSE));
   }
 
   if (dir!=NULL) gtk_file_chooser_set_current_folder_uri (GTK_FILE_CHOOSER(chooser), dir);

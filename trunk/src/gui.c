@@ -3998,8 +3998,8 @@ void resize_play_window (void) {
 
     do {
       if (pmonitor==0) {
-	if (mainw->pwidth>mainw->scr_width-DSIZE_SAFETY_H||
-	    mainw->pheight>mainw->scr_height-DSIZE_SAFETY_V) { 
+	if (mainw->pwidth>mainw->scr_width-SCR_WIDTH_SAFETY||
+	    mainw->pheight>mainw->scr_height-SCR_HEIGHT_SAFETY) { 
 	  mainw->pheight=(mainw->pheight>>2)<<1;
 	  mainw->pwidth=(mainw->pwidth>>2)<<1;
 	  mainw->sepwin_scale/=2.;
@@ -4007,8 +4007,8 @@ void resize_play_window (void) {
 	else size_ok=TRUE;
       }
       else {
-	if (mainw->pwidth>mainw->mgeom[pmonitor-1].width-DSIZE_SAFETY_H||
-	    mainw->pheight>mainw->mgeom[pmonitor-1].height-DSIZE_SAFETY_V) {
+	if (mainw->pwidth>mainw->mgeom[pmonitor-1].width-SCR_WIDTH_SAFETY||
+	    mainw->pheight>mainw->mgeom[pmonitor-1].height-SCR_HEIGHT_SAFETY) {
 	  mainw->pheight=(mainw->pheight>>2)<<1;
 	  mainw->pwidth=(mainw->pwidth>>2)<<1;
 	  mainw->sepwin_scale/=2.;
@@ -4023,15 +4023,15 @@ void resize_play_window (void) {
       mainw->pheight*=2;
       mainw->pwidth*=2;
       if (pmonitor==0) {
-	if (mainw->pwidth>mainw->scr_width-DSIZE_SAFETY_H||mainw->pheight>mainw->scr_height-DSIZE_SAFETY_V) {
-	  calc_maxspect(mainw->scr_width-DSIZE_SAFETY_H,mainw->scr_height-DSIZE_SAFETY_V,&mainw->pwidth,&mainw->pheight);
+	if (mainw->pwidth>mainw->scr_width-SCR_WIDTH_SAFETY||mainw->pheight>mainw->scr_height-SCR_HEIGHT_SAFETY) {
+	  calc_maxspect(mainw->scr_width-SCR_WIDTH_SAFETY,mainw->scr_height-SCR_HEIGHT_SAFETY,&mainw->pwidth,&mainw->pheight);
 	  mainw->sepwin_scale=(float)mainw->pwidth/(float)cfile->hsize*100.;
 	}
       }
       else {
-	if (mainw->pwidth>mainw->mgeom[pmonitor-1].width-DSIZE_SAFETY_H||
-	    mainw->pheight>mainw->mgeom[pmonitor-1].height-DSIZE_SAFETY_V) { 
-	  calc_maxspect(mainw->mgeom[pmonitor-1].width-DSIZE_SAFETY_H,mainw->mgeom[pmonitor-1].height-DSIZE_SAFETY_V,
+	if (mainw->pwidth>mainw->mgeom[pmonitor-1].width-SCR_WIDTH_SAFETY||
+	    mainw->pheight>mainw->mgeom[pmonitor-1].height-SCR_HEIGHT_SAFETY) { 
+	  calc_maxspect(mainw->mgeom[pmonitor-1].width-SCR_WIDTH_SAFETY,mainw->mgeom[pmonitor-1].height-SCR_HEIGHT_SAFETY,
 			&mainw->pwidth,&mainw->pheight);
 	  mainw->sepwin_scale=(float)mainw->pwidth/(float)cfile->hsize*100.;
 	}
@@ -4200,16 +4200,16 @@ void resize_play_window (void) {
 	
 	do {
 	  if (pmonitor==0) {
-	    if (mainw->pwidth>mainw->scr_width-DSIZE_SAFETY_H||
-		mainw->pheight>mainw->scr_height-DSIZE_SAFETY_V) { 
+	    if (mainw->pwidth>mainw->scr_width-SCR_WIDTH_SAFETY||
+		mainw->pheight>mainw->scr_height-SCR_HEIGHT_SAFETY) { 
 	      mainw->pheight=(mainw->pheight>>2)<<1;
 	      mainw->pwidth=(mainw->pwidth>>2)<<1;
 	    }
 	    else size_ok=TRUE;
 	  }
 	  else {
-	    if (mainw->pwidth>mainw->mgeom[pmonitor-1].width-DSIZE_SAFETY_H||
-		mainw->pheight>mainw->mgeom[pmonitor-1].height-DSIZE_SAFETY_V) {
+	    if (mainw->pwidth>mainw->mgeom[pmonitor-1].width-SCR_WIDTH_SAFETY||
+		mainw->pheight>mainw->mgeom[pmonitor-1].height-SCR_HEIGHT_SAFETY) {
 	      mainw->pheight=(mainw->pheight>>2)<<1;
 	      mainw->pwidth=(mainw->pwidth>>2)<<1;
 	    }

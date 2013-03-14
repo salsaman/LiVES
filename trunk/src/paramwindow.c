@@ -1320,8 +1320,8 @@ boolean make_param_box(GtkVBox *top_vbox, lives_rfx_t *rfx) {
 
 
 
-#define GIW_KNOB_WIDTH 40
-#define GIW_KNOB_HEIGHT 40
+#define GIW_KNOB_WIDTH (40.*widget_opts.scale)
+#define GIW_KNOB_HEIGHT (40.*widget_opts.scale)
 
 
 
@@ -1709,7 +1709,7 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, boolean add_
 
   case LIVES_PARAM_STRING_LIST:
 
-    combo=lives_standard_combo_new(name, use_mnemonic, param->list, (LiVESBox *)box, param->desc);
+    combo=lives_standard_combo_new(name, use_mnemonic, param->list, (LiVESBox *)hbox, param->desc);
 
     if (rfx->status==RFX_STATUS_WEED&&(disp_string=get_weed_display_string((weed_plant_t *)rfx->source,pnum))!=NULL) {
       lives_combo_set_active_string (LIVES_COMBO(combo),disp_string);

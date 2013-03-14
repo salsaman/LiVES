@@ -4,6 +4,10 @@
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
+#ifndef HAS_LIVES_RFX_BUILDER_H
+#define HAS_LIVES_RFX_BUILDER_H
+
+
 #define RFX_BUILDER "build-lives-rfx-plugin"
 
 /// must match whatever is in RFX_BUILDER
@@ -48,8 +52,8 @@ void on_export_rfx_activate (GtkMenuItem *, gpointer status);
 #define RFXBUILD_MAX_TROWS 512
 
 
-#define PREF_RFXDIALOG_W 800
-#define PREF_RFXDIALOG_H 650
+#define PREF_RFXDIALOG_W ((int)(800.*widget_opts.scale))
+#define PREF_RFXDIALOG_H ((int)(650.*widget_opts.scale))
 
 
 /// maximum decimal places allowed (should correspond to precision of a "float")
@@ -286,3 +290,4 @@ gboolean script_to_rfxbuilder (rfx_build_window_t *, const gchar *script_file);
 
 GList *get_script_section (const gchar *section, const gchar *script_file, gboolean strip);
 
+#endif // HAS_LIVES_RFX_BUILDER_H

@@ -17,15 +17,6 @@ typedef struct {
 #define RFX_TEXT_MAGIC 80 ///< length at which entry turns into textview
 #define RFX_DEF_NUM_MAX 1000000. ///< default param max when not defined
 
-/// size of the fx dialog windows scrollwindow
-#define RFX_WINSIZE_H (mainw->scr_width>1024?820:600)
-#define RFX_WINSIZE_V 480
-
-#define RFX_TEXT_SCROLL_HEIGHT 80 ///< height of textview scrolled window
-
-#define DEF_BUTTON_WIDTH 80
-
-
 
 void on_paramwindow_ok_clicked (GtkButton *, lives_rfx_t *);
 void on_paramwindow_cancel_clicked (GtkButton *, lives_rfx_t *);

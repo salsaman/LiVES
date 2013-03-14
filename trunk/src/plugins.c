@@ -1045,13 +1045,8 @@ _vppaw *on_vpp_advanced_clicked (GtkButton *button, gpointer user_data) {
 
   if (tmpvpp->get_init_rfx!=NULL) {
     GtkWidget *vbox=lives_vbox_new (FALSE, 0);
-    GtkWidget *scrolledwindow = gtk_scrolled_window_new (NULL, NULL);
-    gtk_widget_set_size_request (scrolledwindow, RFX_WINSIZE_H, RFX_WINSIZE_V/2);
-    gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrolledwindow), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
-    
+    GtkWidget *scrolledwindow = lives_standard_scrolled_window_new (RFX_WINSIZE_H, RFX_WINSIZE_V/2, vbox, TRUE);
     gtk_box_pack_start (GTK_BOX (dialog_vbox), scrolledwindow, TRUE, TRUE, 0);
-
-    gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (scrolledwindow), vbox);
 
 #ifndef IS_MINGW
     com=g_strdup_printf("/bin/echo -e \"%s\"",(*tmpvpp->get_init_rfx)());
@@ -2554,21 +2549,12 @@ void on_decplug_advanced_clicked (GtkButton *button, gpointer user_data) {
 
   dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(dialog));
 
-  scrolledwindow = gtk_scrolled_window_new (NULL, NULL);
-  gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolledwindow),GTK_POLICY_AUTOMATIC,GTK_POLICY_AUTOMATIC);
-  gtk_widget_show (scrolledwindow);
+  vbox = lives_vbox_new (FALSE, 0);
+
+  scrolledwindow = lives_standard_scrolled_window_new (RFX_WINSIZE_H, RFX_WINSIZE_V, vbox, TRUE);
 
   gtk_container_add (GTK_CONTAINER(dialog_vbox), scrolledwindow);
 
-  vbox = lives_vbox_new (FALSE, 0);
-  gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (scrolledwindow), vbox);
-  gtk_widget_set_size_request (scrolledwindow, RFX_WINSIZE_H, RFX_WINSIZE_V);
-
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(lives_bin_get_child(LIVES_BIN(scrolledwindow)), LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_bg_color(lives_bin_get_child(LIVES_BIN(scrolledwindow)), LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  }
-  
   label=lives_standard_label_new(_("Enabled Video Decoders (uncheck to disable)"));
   gtk_box_pack_start (GTK_BOX (vbox), label, FALSE, FALSE, 10);
 
@@ -2594,11 +2580,9 @@ void on_decplug_advanced_clicked (GtkButton *button, gpointer user_data) {
 
 
   cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
-  gtk_widget_show (cancelbutton);
   gtk_dialog_add_action_widget (GTK_DIALOG (dialog), cancelbutton, GTK_RESPONSE_CANCEL);
 
   okbutton = gtk_button_new_from_stock ("gtk-ok");
-  gtk_widget_show (okbutton);
   gtk_dialog_add_action_widget (GTK_DIALOG (dialog), okbutton, GTK_RESPONSE_OK);
   lives_widget_set_can_focus_and_default (okbutton);
 

@@ -49,7 +49,7 @@ gboolean on_LiVES_delete_event (GtkWidget *widget, GdkEvent *event, gpointer use
 void lives_exit (void) {
   register int i;
 
-  if (!mainw->only_close) mainw->exiting=TRUE;
+  if (!mainw->only_close) mainw->is_exiting=TRUE;
 
   if (mainw->is_ready) {
     gchar *com;

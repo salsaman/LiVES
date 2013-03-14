@@ -212,7 +212,7 @@ void cameject (s_cam *cam) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-gchar *find_free_camfile(gint format) {
+gchar *find_free_camfile(int format) {
   gchar *filename=g_strdup(gtk_entry_get_text(GTK_ENTRY(dvgrabw->filent)));
   int i;
   gchar *fname,*tmp=NULL,*tmp2,*tmp3;
@@ -248,7 +248,7 @@ gchar *find_free_camfile(gint format) {
 }
 
 
-gboolean rec(s_cam *cam) {
+boolean rec(s_cam *cam) {
   // returns filename of file being written
 
   gchar *tmp2,*tmp3,*com;
@@ -300,7 +300,7 @@ gboolean rec(s_cam *cam) {
 
 
 void on_open_fw_activate (GtkMenuItem *menuitem, gpointer user_data) {
-  gint type=GPOINTER_TO_INT(user_data); // type 0==dv, type 1==hdv
+  int type=GPOINTER_TO_INT(user_data); // type 0==dv, type 1==hdv
   s_cam *cam;
 
   if (type==CAM_FORMAT_DV&&!capable->has_dvgrab) {

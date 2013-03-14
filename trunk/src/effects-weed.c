@@ -1928,7 +1928,9 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
 
     cpalette=weed_get_int_value(channel,"current_palette",&error);
     width/=weed_palette_get_pixels_per_macropixel(cpalette); // convert width to (channel) macropixels
-    
+
+    if (weed_plant_has_leaf(channel,"YUV_clamping")) iclamping=(weed_get_int_value(channel,"YUV_clamping",&error));
+    else iclamping=0;
 
     // try to set our target width height - the channel may have restrictions
     set_channel_size(channel,width,height,0,NULL);
@@ -1948,10 +1950,10 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
     if ((inwidth!=width)||(inheight!=height)) {
       // layer needs resizing
       if (prefs->pb_quality==PB_QUALITY_HIGH||opwidth==0||opheight==0) {
-	if (!resize_layer(layer,width,height,GDK_INTERP_HYPER)) return FILTER_ERROR_UNABLE_TO_RESIZE;
+	if (!resize_layer(layer,width,height,GDK_INTERP_HYPER,cpalette,iclamping)) return FILTER_ERROR_UNABLE_TO_RESIZE;
       }
       else {
-	if (!resize_layer(layer,width,height,get_interp_value(prefs->pb_quality))) return FILTER_ERROR_UNABLE_TO_RESIZE;
+	if (!resize_layer(layer,width,height,get_interp_value(prefs->pb_quality),cpalette,iclamping)) return FILTER_ERROR_UNABLE_TO_RESIZE;
       }
 
       inwidth=weed_get_int_value(layer,"width",&error);
@@ -2071,7 +2073,7 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
 	  width=weed_get_int_value(channel,"width",&error);
 	  height=weed_get_int_value(channel,"height",&error);
 	  if (width != opwidth || height != opheight) {
-	    if (!resize_layer(channel,opwidth,opheight,GDK_INTERP_HYPER)) return FILTER_ERROR_UNABLE_TO_RESIZE;
+	    if (!resize_layer(channel,opwidth,opheight,GDK_INTERP_HYPER,WEED_PALETTE_END,0)) return FILTER_ERROR_UNABLE_TO_RESIZE;
 
 	  }
 	}
@@ -7426,8 +7428,10 @@ boolean is_hidden_param(weed_plant_t *plant, int i) {
   if (weed_plant_has_leaf(wtmpl,"gui")) gui=weed_get_plantptr_value(wtmpl,"gui",&error);
 
   if (gui!=NULL&&weed_plant_has_leaf(gui,"hidden")&&
-      weed_get_boolean_value(gui,"hidden",&error)==WEED_TRUE) return TRUE;
-
+      weed_get_boolean_value(gui,"hidden",&error)==WEED_TRUE) {
+    weed_free(wtmpls);
+    return TRUE;
+  }
   if (!(flags&WEED_PARAMETER_REINIT_ON_VALUE_CHANGE)
       &&(gui==NULL||(!weed_plant_has_leaf(gui,"hidden")
 		     ||weed_get_boolean_value(gui,"hidden",&error)==WEED_FALSE))) {

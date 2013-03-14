@@ -745,7 +745,7 @@ LiVESWidget *add_hsep_to_box (LiVESBox *);
 LiVESWidget *add_fill_to_box (LiVESBox *);
 
 
-#define LIVES_JUSTIFY_DEFAULT LIVES_JUSTIFY_LEFT
+#define LIVES_JUSTIFY_DEFAULT (widget_opts.default_justify)
 
 #define W_MAX_FILLER_LEN 65535
 
@@ -762,6 +762,7 @@ typedef struct {
   int filler_len; // length of extra "fill" between widgets
   lives_cursor_t cursor_style; // style of cursor
   LiVESJustification justify; // justify for labels
+  LiVESJustification default_justify;
 } widget_opts_t;
 
 
@@ -781,7 +782,8 @@ const widget_opts_t def_widget_opts = {
     W_BORDER_WIDTH, // def border width
     8, // def fill width (in chars)
     LIVES_CURSOR_NORMAL,
-    LIVES_JUSTIFY_DEFAULT // justify
+    LIVES_JUSTIFY_LEFT, // justify
+    LIVES_JUSTIFY_LEFT // default justify
 };
 
 #else

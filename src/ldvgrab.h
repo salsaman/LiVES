@@ -15,14 +15,14 @@ typedef struct {
   raw1394handle_t handle;
   raw1394handle_t rec_handle;
   int device;
-  gint format;
-  gboolean grabbed_clips;
+  int format;
+  boolean grabbed_clips;
   pid_t pgid;
 } s_cam;
 
 /////////////////////////
 
-gboolean rec(s_cam *cam);
+boolean rec(s_cam *cam);
 void camplay(s_cam *cam);
 void camstop (s_cam *cam);
 void camrew (s_cam *cam);
@@ -45,7 +45,7 @@ struct _dvgrabw {
   GtkWidget *status_entry;
   GtkWidget *split;
   GdkCursor *cursor;
-  gboolean playing;
+  boolean playing;
   gchar *dirname;
   gchar *filename;
   s_cam *cam;

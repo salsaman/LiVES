@@ -669,12 +669,17 @@ lives_render_error_t realfx_progress (boolean reset) {
     if (!has_video_filters(TRUE)||resize_instance!=NULL) {
       layer_palette=weed_get_int_value(layer,"current_palette",&weed_error);
 
-      if (cfile->img_type==IMG_TYPE_JPEG&&layer_palette!=WEED_PALETTE_RGB24&&layer_palette!=WEED_PALETTE_RGBA32) 
+      if (resize_instance==NULL) resize_layer(layer,cfile->hsize,cfile->vsize,LIVES_INTERP_BEST,layer_palette,0);
+
+      if (cfile->img_type==IMG_TYPE_JPEG&&layer_palette!=WEED_PALETTE_RGB24&&layer_palette!=WEED_PALETTE_RGBA32) {
 	convert_layer_palette(layer,WEED_PALETTE_RGB24,0);
-      else if (cfile->img_type==IMG_TYPE_PNG&&layer_palette!=WEED_PALETTE_RGBA32) 
+	layer_palette=WEED_PALETTE_RGB24;
+      }
+      else if (cfile->img_type==IMG_TYPE_PNG&&layer_palette!=WEED_PALETTE_RGBA32) {
 	convert_layer_palette(layer,WEED_PALETTE_RGBA32,0);
+	layer_palette=WEED_PALETTE_RGBA32;
+      }
       
-      if (resize_instance==NULL) resize_layer(layer,cfile->hsize,cfile->vsize,LIVES_INTERP_BEST);
       pixbuf=layer_to_pixbuf(layer);
       weed_plant_free(layer);
       

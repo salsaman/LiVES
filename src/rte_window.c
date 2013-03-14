@@ -25,9 +25,6 @@
 #include "effects.h"
 #include "paramwindow.h"
 
-#define RTE_INFO_WIDTH 350
-#define RTE_INFO_HEIGHT 200
-
 static GtkWidget **key_checks;
 static GtkWidget **key_grabs;
 static GtkWidget **mode_radios;
@@ -1210,12 +1207,6 @@ boolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
 
   register int i;
 
-
-  badkeymap=(uint8_t **)g_malloc(prefs->rte_keys_virtual*sizeof(uint8_t *));
-  for (i=0;i<prefs->rte_keys_virtual;i++) {
-    badkeymap[i]=(uint8_t *)lives_calloc(modes,1);
-  }
-
   def_modes=(int *)g_malloc(prefs->rte_keys_virtual*sizint);
   for (i=0;i<prefs->rte_keys_virtual;i++) def_modes[i]=-1;
 
@@ -1547,15 +1538,10 @@ boolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
 
 
 
-void 
-on_rte_info_clicked (GtkButton *button, gpointer user_data) {
-  gint key_mode=GPOINTER_TO_INT(user_data);
-  int modes=rte_getmodespk();
-  int key=(int)(key_mode/modes);
-  int mode=key_mode-key*modes;
+void on_rte_info_clicked (GtkButton *button, gpointer user_data) {
+  weed_plant_t *filter;
 
   gchar *type;
-  weed_plant_t *filter;
   gchar *plugin_name;
 
   GtkWidget *rte_info_window;
@@ -1564,17 +1550,22 @@ on_rte_info_clicked (GtkButton *button, gpointer user_data) {
   GtkWidget *label;
   GtkWidget *textview;
 
-  GtkTextBuffer *textbuffer;
-
   GtkWidget *hbuttonbox;
   GtkWidget *ok_button;
 
   gchar *filter_name;
   gchar *filter_author;
   gchar *filter_description;
+  gchar *tmp;
 
   int filter_version;
   int weed_error;
+
+  int key_mode=GPOINTER_TO_INT(user_data);
+  int modes=rte_getmodespk();
+  int key=(int)(key_mode/modes);
+  int mode=key_mode-key*modes;
+
 
   ////////////////////////
 
@@ -1595,88 +1586,55 @@ on_rte_info_clicked (GtkButton *button, gpointer user_data) {
   gtk_window_set_title (GTK_WINDOW (rte_info_window), g_strdup_printf(_("LiVES: Information for %s"),filter_name));
   lives_widget_set_bg_color(rte_info_window, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
 
-  gtk_container_set_border_width (GTK_CONTAINER (rte_info_window), 40);
+  gtk_container_set_border_width (GTK_CONTAINER (rte_info_window), widget_opts.border_width);
   gtk_window_set_transient_for(GTK_WINDOW(rte_info_window),GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(button))));
   gtk_window_set_position (GTK_WINDOW (rte_info_window), GTK_WIN_POS_CENTER_ALWAYS);
   gtk_window_set_default_size (GTK_WINDOW (rte_info_window), RTE_INFO_WIDTH, RTE_INFO_HEIGHT);
 
-  gtk_widget_show(rte_info_window);
-
-  vbox = lives_vbox_new (FALSE, 20);
-  gtk_widget_show (vbox);
+  vbox = lives_vbox_new (FALSE, widget_opts.packing_height*2);
   gtk_container_add (GTK_CONTAINER (rte_info_window), vbox);
 
-  label = gtk_label_new (g_strdup_printf(_("Effect name: %s"),filter_name));
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-  }
-    
-  gtk_widget_show (label);
+  label = lives_standard_label_new ((tmp=g_strdup_printf(_("Effect name: %s"),filter_name)));
+  g_free(tmp);
   gtk_box_pack_start (GTK_BOX (vbox), label, TRUE, FALSE, 0);
 
-  label = gtk_label_new (g_strdup_printf(_("Type: %s"),type));
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-  }
-  
-  gtk_widget_show (label);
+  label = lives_standard_label_new ((tmp=g_strdup_printf(_("Type: %s"),type)));
+  g_free(tmp);
   gtk_box_pack_start (GTK_BOX (vbox), label, TRUE, FALSE, 0);
 
-  label = gtk_label_new (g_strdup_printf(_("Plugin name: %s"),plugin_name));
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-  }
-  
-  gtk_widget_show (label);
+  label = lives_standard_label_new ((tmp=g_strdup_printf(_("Plugin name: %s"),plugin_name)));
+  g_free(tmp);
   gtk_box_pack_start (GTK_BOX (vbox), label, TRUE, FALSE, 0);
 
-  label = gtk_label_new (g_strdup_printf(_("Author: %s"),filter_author));
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-  }
-  
-  gtk_widget_show (label);
+  label = lives_standard_label_new ((tmp=g_strdup_printf(_("Author: %s"),filter_author)));
+  g_free(tmp);
   gtk_box_pack_start (GTK_BOX (vbox), label, TRUE, FALSE, 0);
 
-  label = gtk_label_new (g_strdup_printf(_("Version: %d"),filter_version));
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-  }
-
-  gtk_widget_show (label);
+  label = lives_standard_label_new ((tmp=g_strdup_printf(_("Version: %d"),filter_version)));
+  g_free(tmp);
   gtk_box_pack_start (GTK_BOX (vbox), label, TRUE, FALSE, 0);
 
-  hbox = lives_hbox_new (FALSE, 10);
-  gtk_widget_show (hbox);
+  hbox = lives_hbox_new (FALSE, widget_opts.packing_width);
   gtk_box_pack_start (GTK_BOX (vbox), hbox, TRUE, FALSE, 0);
 
-  label = gtk_label_new (_("Description: "));
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-  }
-  gtk_widget_show (label);
+  label = lives_standard_label_new (_("Description: "));
   gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 0);
 
   textview = gtk_text_view_new ();
-  gtk_widget_show (textview);
 
   if (palette->style&STYLE_1) {
     lives_widget_set_text_color(textview, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
     lives_widget_set_base_color(textview, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
   }
-
-
-  textbuffer=gtk_text_view_get_buffer (GTK_TEXT_VIEW (textview));
   
   gtk_text_view_set_editable (GTK_TEXT_VIEW (textview), FALSE);
   gtk_text_view_set_wrap_mode (GTK_TEXT_VIEW (textview), GTK_WRAP_WORD);
   gtk_text_view_set_cursor_visible (GTK_TEXT_VIEW (textview), FALSE);
   
-  gtk_text_buffer_set_text (textbuffer, filter_description, -1);
+  text_view_set_text (LIVES_TEXT_VIEW(textview), filter_description);
   gtk_box_pack_start (GTK_BOX (hbox), textview, TRUE, TRUE, 0);
   
   hbuttonbox = lives_hbutton_box_new ();
-  gtk_widget_show (hbuttonbox);
   gtk_box_pack_start (GTK_BOX (vbox), hbuttonbox, TRUE, TRUE, 0);
 
   ok_button = gtk_button_new_from_stock ("gtk-ok");
@@ -1704,6 +1662,9 @@ on_rte_info_clicked (GtkButton *button, gpointer user_data) {
   else weed_free(filter_description);
   g_free(plugin_name);
   g_free(type);
+
+  gtk_widget_show_all(rte_info_window);
+
 }
 
 

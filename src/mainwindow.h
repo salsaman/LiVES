@@ -30,32 +30,57 @@
 #define U_SECL (gint64)100000000
 #define U_SEC_RATIO (U_SECL/1000000) ///< how many U_SECs (ticks) in a microsecond [default 100]
 
+
+
+/////// GUI related constants /////////////////////////////////////////////////////////
+
 // parameters for resizing the image frames, and for capture
-// TODO - make prefs
 #define V_RESIZE_ADJUST 36
 #define H_RESIZE_ADJUST 24
 
-#define CE_FRAME_HSPACE 320
+#define CE_FRAME_HSPACE ((int)(320.*widget_opts.scale))
 
 /// sepwin/screen size safety margins in pixels
-#define DSIZE_SAFETY_H 100
-#define DSIZE_SAFETY_V 100
+#define SCR_HEIGHT_SAFETY ((int)(100.*widget_opts.scale))
+#define SCR_WIDTH_SAFETY ((int)(100.*widget_opts.scale))
 
 /// default size for generators
 #define DEF_GEN_WIDTH 640
 #define DEF_GEN_HEIGHT 480
 
 /// height of preview widgets in sepwin
-#define PREVIEW_BOX_HT 100
+#define PREVIEW_BOX_HT ((int)(100.*widget_opts.scale))
 
 /// height of msg area
-#define MSG_AREA_HEIGHT 50
+#define MSG_AREA_HEIGHT ((int)(50.*widget_opts.scale))
 
 /// clip editor hrule height
-#define CE_HRULE_HEIGHT 20
+#define CE_HRULE_HEIGHT ((int)(20.*widget_opts.scale))
 
 /// clip edit vid/aud bar height
-#define CE_VIDBAR_HEIGHT 10
+#define CE_VIDBAR_HEIGHT ((int)(10.*widget_opts.scale))
+
+// a few GUI specific settings
+#define DEFAULT_FRAME_HSIZE 320
+#define DEFAULT_FRAME_VSIZE 200
+
+/// blank label to show so our message dialogs are not too small
+#define PROCW_STRETCHER "                                                                                                                            "
+
+#define ENC_DETAILS_WIN_H ((int)(600.*widget_opts.scale)) ///< horizontal size in pixels of the encoder output window
+#define ENC_DETAILS_WIN_V ((int)(200.*widget_opts.scale)) ///< vertical size in pixels of the encoder output window
+
+#define MAX_MSG_WIDTH_CHARS ((int)(100.*widget_opts.scale)) ///< max width of text on warning/error labels
+
+/// size of the fx dialog windows scrollwindow
+#define RFX_WINSIZE_H ((int)(mainw->scr_width>1024?(820.*widget_opts.scale):600))
+#define RFX_WINSIZE_V ((int)(480.*widget_opts.scale))
+
+#define RFX_TEXT_SCROLL_HEIGHT ((int)(80.*widget_opts.scale)) ///< height of textview scrolled window
+
+#define DEF_BUTTON_WIDTH ((int)(80.*widget_opts.scale))
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /// number of function keys
 #define FN_KEYS 12
@@ -1043,8 +1068,6 @@ typedef struct {
   volatile int agen_key; ///< which fx key is generating audio [1 based] (or 0 for none)
   volatile boolean agen_needs_reinit;
   gint64 agen_samps_count; ///< count of samples since init
-
-  boolean exiting; ///< flag set during lives_exit()
 
   boolean aplayer_broken;
 

@@ -876,6 +876,8 @@ boolean process_one (boolean visible) {
   uint64_t audio_ticks=0;
 #endif
 
+  double sc_ratio=1.;
+
   if (!visible) {
     // INTERNAL PLAYER
     if (G_UNLIKELY(mainw->new_clip!=-1)) {
@@ -953,10 +955,18 @@ boolean process_one (boolean visible) {
       current_ticks=U_SECL*(tv.tv_sec-mainw->origsecs)+tv.tv_usec*U_SEC_RATIO-mainw->origusecs*U_SEC_RATIO;
 
       if (sc_ticks!=last_sc_ticks) {
+
+	// calculate ratio soundcard rate:sys clock rate
+	sc_ratio=(double)sc_ticks/(double)current_ticks;
+	if (sc_ratio==0.) sc_ratio=1.;
+
+	mainw->currticks+=(current_ticks-prev_ticks)*sc_ratio;
+
 	// we got updated time from the soundcard
 	if (sc_ticks>=mainw->currticks) {
 	  // timecard ahead of clock, so we resync with soundcard
 	  mainw->currticks=sc_ticks;
+	  consume_ticks=0;
 	}
 	else {
 	  // soundcard time was before our interpolated time, so we will not update the clock
@@ -969,8 +979,8 @@ boolean process_one (boolean visible) {
 	if (consume_ticks>0) {
 	  // we were ahead of the soundcard at the last update, so wait for it to catch up
 	  // (estimated)
-	  consume_ticks-=current_ticks-prev_ticks;
-	  if (consume_ticks<=0) {
+	  consume_ticks-=(current_ticks-prev_ticks)*sc_ratio;
+	  if (consume_ticks<0) {
 	    // card should have caught up, so we start advancing the clock again
 	    mainw->currticks+=consume_ticks;
 	    consume_ticks=0;
@@ -978,7 +988,7 @@ boolean process_one (boolean visible) {
 	}
 	else {
 	  // should be caught up now, so we keep advancing the system clock
-	  mainw->currticks+=current_ticks-prev_ticks;
+	  mainw->currticks+=(current_ticks-prev_ticks)*sc_ratio;
 	}
       }
       prev_ticks=current_ticks;

@@ -3352,11 +3352,13 @@ lives_render_error_t render_events (gboolean reset) {
 	if (layer!=NULL) {
 	  layer_palette=weed_layer_get_palette(layer);
 	  if (cfile->img_type==IMG_TYPE_JPEG&&layer_palette!=WEED_PALETTE_RGB24&&layer_palette!=WEED_PALETTE_RGBA32) 
-	    convert_layer_palette(layer,WEED_PALETTE_RGB24,0);
-	  else if (cfile->img_type==IMG_TYPE_PNG&&layer_palette!=WEED_PALETTE_RGBA32) 
-	    convert_layer_palette(layer,WEED_PALETTE_RGBA32,0);
+	    layer_palette=WEED_PALETTE_RGB24;
 
-	  resize_layer(layer,cfile->hsize,cfile->vsize,GDK_INTERP_HYPER);
+	  else if (cfile->img_type==IMG_TYPE_PNG&&layer_palette!=WEED_PALETTE_RGBA32) 
+	    layer_palette=WEED_PALETTE_RGBA32;
+
+	  resize_layer(layer,cfile->hsize,cfile->vsize,GDK_INTERP_HYPER,layer_palette,0);
+	  convert_layer_palette(layer,layer_palette,0);
 	  pixbuf=layer_to_pixbuf(layer);
 	  weed_plant_free(layer);
 	}
@@ -5106,14 +5108,7 @@ render_details *create_render_details (int type) {
     rdet->encoder_name=g_strdup(prefs->encoder.name);
   }
 
-  rdet->encoder_combo = lives_combo_new();
-  lives_combo_populate(LIVES_COMBO(rdet->encoder_combo),encoders);
-
-  hbox=lives_hbox_new(FALSE,0);
-
-  gtk_box_pack_start (GTK_BOX (top_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
-  gtk_box_pack_start (GTK_BOX (hbox), rdet->encoder_combo, TRUE, TRUE, widget_opts.packing_width);
-
+  rdet->encoder_combo = lives_standard_combo_new(NULL,FALSE,encoders,LIVES_BOX(top_vbox),NULL);
 
   rdet->encoder_name_fn = g_signal_connect_after(GTK_COMBO_BOX(rdet->encoder_combo), "changed",
 						 G_CALLBACK(on_encoder_entry_changed), rdet);
@@ -5157,27 +5152,22 @@ render_details *create_render_details (int type) {
   }
 
   label = lives_standard_label_new (_("Output format"));
-  rdet->ofmt_combo = lives_combo_new();
+  gtk_box_pack_start (GTK_BOX (top_vbox), label, FALSE, FALSE, 0);
+
+  rdet->ofmt_combo = lives_standard_combo_new(NULL,FALSE,ofmt,LIVES_BOX(top_vbox),NULL);
 
   lives_combo_populate(LIVES_COMBO(rdet->ofmt_combo), ofmt);
-
-  gtk_combo_box_set_active(GTK_COMBO_BOX(rdet->ofmt_combo), 0);
 
   g_list_free_strings(ofmt);
   g_list_free(ofmt);
   
   rdet->encoder_ofmt_fn=g_signal_connect_after (GTK_COMBO_BOX(rdet->ofmt_combo), "changed", 
 						G_CALLBACK (on_encoder_ofmt_changed), rdet);
-  gtk_box_pack_start (GTK_BOX (top_vbox), label, FALSE, FALSE, 0);
 
 
-  hbox=lives_hbox_new(FALSE,0);
+  alabel = lives_standard_label_new (_("Audio format"));
 
-  gtk_box_pack_start (GTK_BOX (top_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
-  gtk_box_pack_start (GTK_BOX (hbox), rdet->ofmt_combo, TRUE, TRUE, widget_opts.packing_width);
 
-  
-  rdet->acodec_combo = lives_combo_new ();
   if (!specified) {
     // add "Any" string
     if (prefs->acodec_list!=NULL) {
@@ -5186,29 +5176,22 @@ render_details *create_render_details (int type) {
       prefs->acodec_list=NULL;
     }
     prefs->acodec_list=g_list_append(prefs->acodec_list,g_strdup(mainw->string_constants[LIVES_STRING_CONSTANT_ANY]));
-    lives_combo_populate(LIVES_COMBO(rdet->acodec_combo), prefs->acodec_list);
-    gtk_combo_box_set_active(GTK_COMBO_BOX(rdet->acodec_combo), 0);
+    gtk_box_pack_start (GTK_BOX (top_vbox), alabel, FALSE, FALSE, 0);
+    rdet->acodec_combo = lives_standard_combo_new (NULL,FALSE,prefs->acodec_list,LIVES_BOX(top_vbox),NULL);
   }
   else {
+    gtk_box_pack_start (GTK_BOX (top_vbox), alabel, FALSE, FALSE, 0);
     add_fill_to_box(LIVES_BOX(top_vbox));
     g_signal_handler_block(rdet->ofmt_combo, rdet->encoder_ofmt_fn);
     lives_combo_set_active_string(LIVES_COMBO(rdet->ofmt_combo), prefs->encoder.of_desc);
     g_signal_handler_unblock(rdet->ofmt_combo, rdet->encoder_ofmt_fn);
 
+    rdet->acodec_combo = lives_standard_combo_new (NULL,FALSE,NULL,LIVES_BOX(top_vbox),NULL);
+
     check_encoder_restrictions(TRUE,FALSE,TRUE);
     future_prefs->encoder.of_allowed_acodecs=prefs->encoder.of_allowed_acodecs;
     set_acodec_list_from_allowed(NULL,rdet);
   }
-
-  alabel = lives_standard_label_new (_("Audio format"));
-
-  gtk_box_pack_start (GTK_BOX (top_vbox), alabel, FALSE, FALSE, 0);
-
-  hbox=lives_hbox_new(FALSE,0);
-
-  gtk_box_pack_start (GTK_BOX (top_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
-  gtk_box_pack_start (GTK_BOX (hbox), rdet->acodec_combo, TRUE, TRUE, widget_opts.packing_width);
-
 
   rdet->always_hbox = lives_hbox_new (TRUE, widget_opts.packing_width*2);
 

@@ -9,7 +9,7 @@
 
 #define LIVES_PREFS_TIMEOUT  (10 * U_SEC) // 10 sec timeout
 
-#define PREFS_PANED_POS 200
+#define PREFS_PANED_POS ((int)(200.*widget_opts.scale))
 
 typedef struct {
   gchar bgcolour[256];

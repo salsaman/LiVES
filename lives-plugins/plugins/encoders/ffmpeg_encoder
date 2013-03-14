@@ -16,6 +16,7 @@
 # v 2.6 made threading support optional because of instability problems; versioning string changed in ffmpeg
 # v 2.7 fixed webm encoding support, removed asf format
 # v 2.8 always prompt for threads
+# v 2.9 check for avconv, change -quality to -qscale
 #######################################################################
 
 if (!defined($standalone)) {
@@ -37,7 +38,7 @@ else {
 
 
 if ($command eq "version") {
-    print "ffmpeg encoder plugin v2.8\n";
+    print "ffmpeg encoder plugin v2.9\n";
     exit 0;
 }
 
@@ -118,11 +119,14 @@ if ($command eq "get_rfx") {
 	    
 	    # optional section
 	    print "<params>\n";
-	    print "threads|Number of threads (>1 may cause instability)|num0|1|1|16|\n";
+	    print "threads|Number of threads|num0|1|1|16|\n";
 	    print "mp3|Use _mp3 audio codec|bool|1|1\n";
 	    print "mp3lame|Use mp3_lame audio codec|bool|0|1\n";
 	    print "</params>\n";
 
+	    print "<param_window>\n";
+	    print "layout|\$p0|\n";
+	    print "</param_window>\n";
 	}
 	else {
 	    # mandatory section
@@ -137,8 +141,12 @@ if ($command eq "get_rfx") {
 	    
 	    # optional section
 	    print "<params>\n";
-	    print "threads|Number of threads (>1 may cause instability)|num0|1|1|16|\n";
+	    print "threads|Number of threads|num0|1|1|16|\n";
 	    print "</params>\n";
+
+	    print "<param_window>\n";
+	    print "layout|\$p0|\n";
+	    print "</param_window>\n";
 	}
     }
     else {
@@ -154,9 +162,12 @@ if ($command eq "get_rfx") {
 	
 	# optional section
 	print "<params>\n";
-	print "threads|Number of threads (>1 may cause instability)|num0|1|1|16|\n";
+	print "threads|Number of threads|num0|1|1|16|\n";
 	print "</params>\n";
-	
+
+	print "<param_window>\n";
+	print "layout|\$p0|\n";
+	print "</param_window>\n";
 	
     }
 }
@@ -169,9 +180,23 @@ if ($command eq "get_rfx") {
 
 if ($command eq "encode") {
     # encode
-    $encoder_command="ffmpeg";
 
-    `ffmpeg -version >testfile`;
+    if ($^O eq "MSWin32") {
+	$nulfile="NUL";
+	$exe=".exe";
+    } else {
+	$nulfile="/dev/null";
+	$exe="";
+    }
+
+    # test first for avconv; otherwise Ubuntu complains
+    $encoder_command="avconv$exe";
+    system("$encoder_command -version >testfile 2>$nulfile");
+
+    if (-z "testfile") {
+	$encoder_command="ffmpeg$exe";
+	system("$encoder_command -version >testfile 2>$nulfile");
+    }
 
     $ffver=`grep libavformat testfile | grep -v configuration`;
 
@@ -216,13 +241,13 @@ if ($command eq "encode") {
 	$vcodec="-f flv";
     }
     elsif ($otype eq "webmh") {
-	$vcodec="-f webm -vcodec libvpx -g 60 -quality best -b 1G";
+	$vcodec="-f webm -vcodec libvpx -g 60 -qscale 1 -b 1G";
     }
     elsif ($otype eq "webmm") {
-	$vcodec="-f webm -vcodec libvpx -g 60 -quality good";
+	$vcodec="-f webm -vcodec libvpx -g 60 -qscale 1 -b 500M";
     }
     elsif ($otype eq "webml") {
-	$vcodec="-f webm -vcodec libvpx -g 60 -quality realtime";
+	$vcodec="-f webm -vcodec libvpx -g 60 -qscale 31";
     }
 
     if ($otype eq "flv-youtube"||$otype eq "flv-youtubex") {
@@ -388,4 +413,19 @@ sub get_num_procs {
     $result=(split (/\n/,$result))[-1];
     $result=(split (/: /,$result))[1];
     return ++$result;
+}
+
+
+sub location {
+    # return the location of an executable
+    my ($command)=shift;
+
+    if ($^O eq "MSWin32") {
+	return "$command.exe";
+    }
+
+    my ($location)=smog_system_direct("which \"$command\" 2>$nulfile");
+    chomp($location);
+
+    $location;
 }

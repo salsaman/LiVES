@@ -220,6 +220,7 @@ typedef gpointer                          LiVESObjectPtr;
 
 #define LIVES_TOGGLE_BUTTON(widget) GTK_TOGGLE_BUTTON(widget)
 #define LIVES_TREE_VIEW(widget) GTK_TREE_VIEW(widget)
+#define LIVES_TEXT_VIEW(widget) GTK_TEXT_VIEW(widget)
 
 #if GTK_CHECK_VERSION(3,0,0)
 #define LIVES_RULER(widget) GTK_SCALE(widget)
@@ -686,6 +687,8 @@ LiVESWidget *lives_standard_hruler_new(void);
 
 LiVESWidget *lives_standard_scrolled_window_new(int width, int height, LiVESWidget *child, boolean apply_theme);
 
+LiVESWidget *lives_standard_expander_new(const char *label, boolean use_mnemonic, LiVESBox *parent, LiVESWidget *child);
+
 LiVESWidget *lives_volume_button_new(LiVESOrientation orientation, LiVESAdjustment *, double volume);
 
 
@@ -723,6 +726,8 @@ void lives_set_cursor_style(lives_cursor_t cstyle, LiVESWidget *);
 
 void toggle_button_toggle (LiVESToggleButton *);
 
+void set_child_colour(GtkWidget *widget, gpointer set_all);
+
 void unhide_cursor(LiVESXWindow *);
 void hide_cursor(LiVESXWindow *);
 
@@ -750,6 +755,7 @@ typedef struct {
   boolean pack_end;
   boolean line_wrap; // line wrapping for labels
   boolean non_modal; // non-modal for dialogs
+  double scale; // scale factor for all sizes
   int packing_width; // default should be W_PACKING_WIDTH
   int packing_height; // default should be W_PACKING_HEIGHT
   int border_width; // default should be W_BORDER_WIDTH
@@ -769,6 +775,7 @@ const widget_opts_t def_widget_opts = {
     FALSE, //pack_end
     FALSE, // line_wrap
     FALSE, // non_modal
+    1.0, // default scale
     W_PACKING_WIDTH, // def packing width
     W_PACKING_HEIGHT, // def packing height
     W_BORDER_WIDTH, // def border width

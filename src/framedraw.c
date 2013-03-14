@@ -329,7 +329,7 @@ void framedraw_redraw (lives_special_framedraw_rect_t * framedraw, boolean reloa
   
   mainw->fd_layer=weed_layer_copy(NULL,mainw->fd_layer_orig);
   // resize to correct size
-  resize_layer(mainw->fd_layer, width, height, LIVES_INTERP_BEST);
+  resize_layer(mainw->fd_layer, width, height, LIVES_INTERP_BEST, WEED_PALETTE_END, 0);
   
   cr=layer_to_lives_painter(mainw->fd_layer);
 
@@ -722,11 +722,11 @@ void redraw_framedraw_image(void) {
   // copy orig layer to layer
   if (mainw->fd_layer==NULL) mainw->fd_layer=weed_layer_copy(NULL,mainw->fd_layer_orig);
 
-  // force to RGB24
-  convert_layer_palette(mainw->fd_layer,WEED_PALETTE_RGBA32,0);
-
   // resize to correct size
-  resize_layer(mainw->fd_layer, width, height, LIVES_INTERP_BEST);
+  resize_layer(mainw->fd_layer, width, height, LIVES_INTERP_BEST, WEED_PALETTE_RGBA32, 0);
+
+  // force to RGBA32
+  convert_layer_palette(mainw->fd_layer,WEED_PALETTE_RGBA32,0);
 
   // layer to pixbuf
   pixbuf=layer_to_pixbuf(mainw->fd_layer);

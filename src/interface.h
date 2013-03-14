@@ -7,18 +7,6 @@
 #ifndef HAS_LIVES_INTERFACE_H
 #define HAS_LIVES_INTERFACE_H
 
-// a few GUI specific settings
-#define DEFAULT_FRAME_HSIZE 320
-#define DEFAULT_FRAME_VSIZE 200
-
-/// blank label to show so our message dialogs are not too small
-#define PROCW_STRETCHER "                                                                                                                            "
-
-#define ENC_DETAILS_WIN_H 600 ///< horizontal size in pixels of the encoder output window
-#define ENC_DETAILS_WIN_V 200 ///< vertical size in pixels of the encoder output window
-
-#define MAX_MSG_WIDTH_CHARS 100 ///< max width of text on warning/error labels
-
 GtkWidget* create_info_error_dialog (const gchar *text, boolean is_blocking, int warning_mask);
 GtkWidget* create_opensel_dialog (void);
 GtkWidget* create_encoder_prep_dialog (const gchar *text1, const gchar *text2, boolean opt_resize);

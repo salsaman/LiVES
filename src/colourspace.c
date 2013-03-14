@@ -77,7 +77,8 @@ struct _swscale_ctx {
   int iheight;
   int width;
   int height;
-  int pixfmt;
+  enum PixelFormat ipixfmt;
+  enum PixelFormat opixfmt;
   int flags;
   struct SwsContext *ctx;
 };
@@ -10085,21 +10086,22 @@ LiVESPixbuf *layer_to_pixbuf (weed_plant_t *layer) {
 }
 
 
-LIVES_INLINE boolean weed_palette_is_resizable(int pal, int clamped) {
+LIVES_INLINE boolean weed_palette_is_resizable(int pal, int clamped, boolean in_out) {
+  // in_out is TRUE for input, FALSE for output
+
   // in future we may also have resize candidates/delegates for other palettes
   // we will need to check for these
+
   if (pal==WEED_PALETTE_YUV888&&clamped==WEED_YUV_CLAMPING_UNCLAMPED) pal=WEED_PALETTE_RGB24;
   if (pal==WEED_PALETTE_YUVA8888&&clamped==WEED_YUV_CLAMPING_UNCLAMPED) pal=WEED_PALETTE_RGBA32;
 
 #ifdef USE_SWSCALE
-  if (sws_isSupportedInput(weed_palette_to_avi_pix_fmt(pal,&clamped))&&
-      (sws_isSupportedOutput(weed_palette_to_avi_pix_fmt(pal,&clamped)))) return TRUE;
-  return FALSE;
-#else
+  if (in_out&&sws_isSupportedInput(weed_palette_to_avi_pix_fmt(pal,&clamped))) return TRUE;
+  else if (sws_isSupportedOutput(weed_palette_to_avi_pix_fmt(pal,&clamped))) return TRUE;
+#endif
   if (pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_RGBA32||pal==WEED_PALETTE_ARGB32||pal==WEED_PALETTE_BGR24||
       pal==WEED_PALETTE_BGRA32) return TRUE;
   return FALSE;
-#endif
 }
 
 
@@ -10215,7 +10217,7 @@ void compact_rowstrides(weed_plant_t *layer) {
 
 static struct SwsContext *swscale_find_context(int iwidth, int iheight,
 					       int width, int height,
-					       int pixfmt, int flags) {
+					       int ipixfmt, int opixfmt, int flags) {
   register int i;
   struct _swscale_ctx tmpctx;
 
@@ -10233,14 +10235,15 @@ static struct SwsContext *swscale_find_context(int iwidth, int iheight,
 	swscale_ctx[i].iheight==iheight &&
 	swscale_ctx[i].width==width &&
 	swscale_ctx[i].height==height &&
-	swscale_ctx[i].pixfmt==pixfmt &&
+	swscale_ctx[i].ipixfmt==ipixfmt &&
+	swscale_ctx[i].opixfmt==opixfmt &&
 	swscale_ctx[i].flags==flags) {
       // move to front
       if (i>0) {
 	lives_memcpy(&tmpctx,&swscale_ctx[i],sizeof(struct _swscale_ctx));
 	for (;i>0;i--) {
 	  lives_memcpy(&swscale_ctx[i],&swscale_ctx[i-1],sizeof(struct _swscale_ctx));
-	}
+	} 
 	lives_memcpy(&swscale_ctx[0],&tmpctx,sizeof(struct _swscale_ctx));
       }
       return swscale_ctx[0].ctx;
@@ -10252,8 +10255,8 @@ static struct SwsContext *swscale_find_context(int iwidth, int iheight,
 }
 
 
-static void swscale_add_context(int iwidth, int iheight, int width, int height, int pixfmt, int flags, 
-				struct SwsContext *ctx) {
+static void swscale_add_context(int iwidth, int iheight, int width, int height, int ipixfmt, int opixfmt, 
+				int flags, struct SwsContext *ctx) {
   // add at head of list
   register int i;
 
@@ -10274,7 +10277,8 @@ static void swscale_add_context(int iwidth, int iheight, int width, int height, 
   swscale_ctx[0].iheight=iheight;
   swscale_ctx[0].width=width;
   swscale_ctx[0].height=height;
-  swscale_ctx[0].pixfmt=pixfmt;
+  swscale_ctx[0].ipixfmt=ipixfmt;
+  swscale_ctx[0].opixfmt=opixfmt;
   swscale_ctx[0].flags=flags;
   swscale_ctx[0].ctx=ctx;
 }
@@ -10291,20 +10295,17 @@ void sws_free_context(void) {
 
 #endif
 
-boolean resize_layer (weed_plant_t *layer, int width, int height, LiVESInterpType interp) {
+boolean resize_layer (weed_plant_t *layer, int width, int height, LiVESInterpType interp, int opal_hint, int oclamp_hint) {
   // resize a layer; width is in macropixels
 
   // TODO ** - see if there is a resize plugin candidate/delegate which supports this palette : 
   // this allows e.g libabl or a hardware rescaler
 
-  // NOTE: a) a good single plane resizer is needed for YUV compressed and alpha palettes
-  //       b) there is as yet no float palette resizer
+  // opal_hint and oclamp_hint may be set to hint the desired output palette and clamping
+  // this is simply to ensure more efficient resizing
+  // - setting opal_hint to WEED_PALETTE_END will attempt to minimise palette changes
 
-  // IMPORTANT: for yuv palettes except YUV888 and YUVA8888 the palette will be converted to YUV(A)888(8) 
-  // depending on whether it has alpha or not
-
-  // "current_palette" should therefore be checked on return
-
+  // "current_palette" should be checked on return
 
   // don't forget also - layer "width" is in *macro-pixels* so it may not come back exactly as expected
 
@@ -10332,40 +10333,73 @@ boolean resize_layer (weed_plant_t *layer, int width, int height, LiVESInterpTyp
     return FALSE;
   }
 
+
+  // if in palette is a YUV palette which we cannot scale, convert to YUV888 (unclamped) or YUVA8888 (unclamped)
+  // we can always scale these
   if (weed_palette_is_yuv_palette(palette)) {
     iclamped=weed_get_int_value(layer,"YUV_clamping",&error);
-    if (!weed_palette_is_resizable(palette, iclamped)) {
-      // we should always convert to unclamped values before resizing
-      int oclamping=WEED_YUV_CLAMPING_UNCLAMPED;
+    if (!weed_palette_is_resizable(palette, iclamped, TRUE)) {
       iwidth*=weed_palette_get_pixels_per_macropixel(palette); // orig width is in macropixels
       width*=weed_palette_get_pixels_per_macropixel(palette); // desired width is in macropixels
-
-      if (weed_palette_has_alpha_channel(palette)) {
-	convert_layer_palette(layer,WEED_PALETTE_YUVA8888,oclamping);
+      if (opal_hint==WEED_PALETTE_END||weed_palette_is_yuv_palette(opal_hint)) {
+	// we should always convert to unclamped values before resizing
+	int oclamping=WEED_YUV_CLAMPING_UNCLAMPED;
+	
+	if (weed_palette_has_alpha_channel(palette)) {
+	  convert_layer_palette(layer,WEED_PALETTE_YUVA8888,oclamping);
+	}
+	else {
+	  convert_layer_palette(layer,WEED_PALETTE_YUV888,oclamping);
+	}
+	iclamped=oclamping;
       }
       else {
-	convert_layer_palette(layer,WEED_PALETTE_YUV888,oclamping);
+	if (weed_palette_has_alpha_channel(palette)) {
+	  convert_layer_palette(layer,WEED_PALETTE_RGBA32,0);
+	}
+	else {
+	  convert_layer_palette(layer,WEED_PALETTE_RGB24,0);
+	}
       }
       palette=weed_get_int_value(layer,"current_palette",&error);
-      iclamped=oclamping;
     }
   }
+
+  // check if we can also convert to the output palette
+#ifdef USE_SWSCALE
+  // only swscale can convert and resize together
+  if (opal_hint==WEED_PALETTE_END||!weed_palette_is_resizable(opal_hint,oclamp_hint,FALSE)) {
+#endif
+    opal_hint=palette;
+    oclamp_hint=iclamped;
+#ifdef USE_SWSCALE
+  }
+#endif
 
   if (weed_plant_has_leaf(layer,"host_orig_pdata")&&weed_get_boolean_value(layer,"host_orig_pdata",&error)==WEED_TRUE) {
     keep_in_pixel_data=TRUE;
     weed_leaf_delete(layer,"host_orig_pdata");
   }
 
+  // if we cannot scale YUV888 (unclamped) or YUVA8888 (unclamped) directly, pretend they are RGB24 and RGBA32
   if (palette==WEED_PALETTE_YUV888&&iclamped==WEED_YUV_CLAMPING_UNCLAMPED
-      &&!weed_palette_is_resizable(palette, iclamped)) palette=WEED_PALETTE_RGB24;
+      &&!weed_palette_is_resizable(palette, iclamped, TRUE)) opal_hint=palette=WEED_PALETTE_RGB24;
   if (palette==WEED_PALETTE_YUVA8888&&iclamped==WEED_YUV_CLAMPING_UNCLAMPED
-      &&!weed_palette_is_resizable(palette, iclamped)) palette=WEED_PALETTE_RGBA32;
+      &&!weed_palette_is_resizable(palette, iclamped, TRUE)) opal_hint=palette=WEED_PALETTE_RGBA32;
+
+  // check if we can convert to the target palette/clamping
+  if (!weed_palette_is_resizable(opal_hint, oclamp_hint, FALSE)) {
+    opal_hint=palette;
+    oclamp_hint=iclamped;
+  }
+
 
 #ifdef USE_SWSCALE
-    if (iwidth>1&&iheight>1&&weed_palette_is_resizable(palette, iclamped)) {
+  if (iwidth>1&&iheight>1&&weed_palette_is_resizable(palette, iclamped, TRUE)&&
+      weed_palette_is_resizable(opal_hint, oclamp_hint, FALSE)) {
       struct SwsContext *swscale;
 
-      enum PixelFormat pixfmt;
+      enum PixelFormat ipixfmt,opixfmt;
 
       void **pd_array;
       void **in_pixel_data,**out_pixel_data;
@@ -10383,7 +10417,8 @@ boolean resize_layer (weed_plant_t *layer, int width, int height, LiVESInterpTyp
       if (interp==LIVES_INTERP_NORMAL) flags=SWS_BILINEAR;
       if (interp==LIVES_INTERP_FAST) flags=SWS_FAST_BILINEAR;
 
-      pixfmt=weed_palette_to_avi_pix_fmt(palette,NULL);
+      ipixfmt=weed_palette_to_avi_pix_fmt(palette,&iclamped);
+      opixfmt=weed_palette_to_avi_pix_fmt(opal_hint,&oclamp_hint);
 
       in_pixel_data=(void **)g_malloc0(4*sizeof(void *));
       irowstrides=(int *)g_malloc0(4*sizint);
@@ -10398,6 +10433,15 @@ boolean resize_layer (weed_plant_t *layer, int width, int height, LiVESInterpTyp
 
       weed_free(pd_array); weed_free(ir_array);
 
+      if (palette!=opal_hint) {
+	width*=weed_palette_get_pixels_per_macropixel(palette); // desired width is in macropixels
+	width/=weed_palette_get_pixels_per_macropixel(opal_hint); // desired width is in macropixels
+	weed_set_int_value(layer,"current_palette",opal_hint);
+      }
+
+      if (weed_palette_is_yuv_palette(opal_hint)) 
+	weed_set_int_value(layer,"YUV_clamping",oclamp_hint);
+
       weed_set_int_value(layer,"width",width);
       weed_set_int_value(layer,"height",height);
  
@@ -10409,15 +10453,15 @@ boolean resize_layer (weed_plant_t *layer, int width, int height, LiVESInterpTyp
       pd_array=weed_get_voidptr_array(layer,"pixel_data",&error);
       or_array=weed_get_int_array(layer,"rowstrides",&error);
 
-      for (i=0;i<weed_palette_get_numplanes(palette);i++) {
+      for (i=0;i<weed_palette_get_numplanes(opal_hint);i++) {
 	out_pixel_data[i]=pd_array[i];
 	orowstrides[i]=or_array[i];
       }
 
       weed_free(pd_array); weed_free(or_array);
 
-      if ((swscale=swscale_find_context(iwidth,iheight,width,height,pixfmt,flags))==NULL) {
-	swscale = sws_getContext(iwidth, iheight, pixfmt, width, height, pixfmt, flags, NULL, NULL, NULL );
+      if ((swscale=swscale_find_context(iwidth,iheight,width,height,ipixfmt,opixfmt,flags))==NULL) {
+	swscale = sws_getContext(iwidth, iheight, ipixfmt, width, height, opixfmt, flags, NULL, NULL, NULL );
 	store_ctx=TRUE;
       }
 
@@ -10427,7 +10471,7 @@ boolean resize_layer (weed_plant_t *layer, int width, int height, LiVESInterpTyp
       else {
 	sws_scale(swscale, (const uint8_t * const*)in_pixel_data, irowstrides, 0, iheight, 
 		  (uint8_t * const *)out_pixel_data, orowstrides);
-	if (store_ctx) swscale_add_context(iwidth,iheight,width,height,pixfmt,flags,swscale);
+	if (store_ctx) swscale_add_context(iwidth,iheight,width,height,ipixfmt,opixfmt,flags,swscale);
       }
 
       if (!keep_in_pixel_data) g_free(*in_pixel_data);
@@ -10529,7 +10573,7 @@ void letterbox_layer (weed_plant_t *layer, int width, int height, int nwidth, in
   pal=weed_get_int_value(layer,"current_palette",&error);
   nwidth*=weed_palette_get_pixels_per_macropixel(pal); // convert from macropixels to pixels
 
-  resize_layer(layer,width,height,interp); // resize can change current_palette
+  resize_layer(layer,width,height,interp,WEED_PALETTE_END,0); // resize can change current_palette
 
   // get current pixel_data
   pixel_data=weed_get_voidptr_array(layer,"pixel_data",&error);

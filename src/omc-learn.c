@@ -1307,8 +1307,8 @@ static omclearn_w *create_omclearn_dialog(void) {
     scr_height=mainw->mgeom[prefs->gui_monitor-1].height;
   }
   
-  winsize_h=scr_width-100;
-  winsize_v=scr_height-100;
+  winsize_h=scr_width-SCR_WIDTH_SAFETY;
+  winsize_v=scr_height-SCR_HEIGHT_SAFETY*2;
   
   omclw->dialog = lives_standard_dialog_new (_("LiVES: OMC learner"),FALSE);
   
@@ -1316,25 +1316,15 @@ static omclearn_w *create_omclearn_dialog(void) {
 
   omclw->table = gtk_table_new (omclw->tbl_rows, 4, FALSE);
 
-  gtk_table_set_col_spacings(GTK_TABLE(omclw->table),20);
+  gtk_table_set_col_spacings(GTK_TABLE(omclw->table),widget_opts.packing_width*2);
 
-  scrolledwindow = gtk_scrolled_window_new (NULL, NULL);
+  scrolledwindow = lives_standard_scrolled_window_new (winsize_h, winsize_v, omclw->table, TRUE);
 
   gtk_box_pack_start (GTK_BOX (omclw->top_vbox), scrolledwindow, TRUE, TRUE, 0);
-  
-  gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrolledwindow), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
-  gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (scrolledwindow), omclw->table);
-  gtk_widget_set_size_request (scrolledwindow, winsize_h, winsize_v);
-  
-  if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color(gtk_bin_get_child (GTK_BIN (scrolledwindow)), LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  }
-  
-  gtk_viewport_set_shadow_type (GTK_VIEWPORT (gtk_bin_get_child (GTK_BIN (scrolledwindow))),GTK_SHADOW_IN);
-  
-  hbuttonbox = lives_hbutton_box_new ();
-  
-  gtk_box_pack_start (GTK_BOX (omclw->top_vbox), hbuttonbox, TRUE, TRUE, 0);
+
+
+
+  hbuttonbox = lives_dialog_get_action_area(LIVES_DIALOG(omclw->dialog));
   
   omclw->clear_button = gtk_button_new_with_mnemonic (_("Clear _unmatched"));
 

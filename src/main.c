@@ -348,6 +348,11 @@ static boolean pre_init(void) {
   palette=(_palette*)(g_malloc(sizeof(_palette)));
 
   widget_opts = def_widget_opts;
+  widget_opts.border_width*=widget_opts.scale;
+  widget_opts.packing_width*=widget_opts.scale;
+  widget_opts.packing_height*=widget_opts.scale;
+  widget_opts.filler_len*=widget_opts.scale;
+
 
   prefs->show_gui=TRUE;
   prefs->show_splash=TRUE;
@@ -2515,8 +2520,6 @@ static boolean lives_startup(gpointer data) {
 
   mainw->go_away=FALSE;
 
-  mainw->exiting=FALSE;
-
 #if GTK_CHECK_VERSION(3,0,0)
   mainw->kb_timer_end=FALSE;
   mainw->kb_timer=g_timeout_add(KEY_RPT_INTERVAL,&ext_triggers_poll,NULL);
@@ -3380,9 +3383,9 @@ void load_start_image(gint frame) {
     weed_set_int_value(layer,"frame",frame);
     if (pull_frame_at_size(layer,get_image_ext_for_type(cfile->img_type),tc,cfile->hsize,cfile->vsize,
 			   WEED_PALETTE_RGB24)) {
-      convert_layer_palette(layer,WEED_PALETTE_RGB24,0);
       interp=get_interp_value(prefs->pb_quality);
-      resize_layer(layer,cfile->hsize,cfile->vsize,interp);
+      resize_layer(layer,cfile->hsize,cfile->vsize,interp,WEED_PALETTE_RGB24,0);
+      convert_layer_palette(layer,WEED_PALETTE_RGB24,0);
       start_pixbuf=layer_to_pixbuf(layer);
     }
     weed_plant_free(layer);
@@ -3425,9 +3428,9 @@ void load_start_image(gint frame) {
     weed_set_int_value(layer,"frame",frame);
 
     if (pull_frame_at_size(layer,get_image_ext_for_type(cfile->img_type),tc,width,height,WEED_PALETTE_RGB24)) {
-      convert_layer_palette(layer,WEED_PALETTE_RGB24,0);
       interp=get_interp_value(prefs->pb_quality);
-      resize_layer(layer,width,height,interp);
+      resize_layer(layer,width,height,interp,WEED_PALETTE_RGB24,0);
+      convert_layer_palette(layer,WEED_PALETTE_RGB24,0);
       start_pixbuf=layer_to_pixbuf(layer);
     }
     weed_plant_free(layer);
@@ -3514,9 +3517,9 @@ void load_end_image(gint frame) {
 
     if (pull_frame_at_size(layer,get_image_ext_for_type(cfile->img_type),tc,cfile->hsize,cfile->vsize,
 			   WEED_PALETTE_RGB24)) {
-      convert_layer_palette(layer,WEED_PALETTE_RGB24,0);
       interp=get_interp_value(prefs->pb_quality);
-      resize_layer(layer,cfile->hsize,cfile->vsize,interp);
+      resize_layer(layer,cfile->hsize,cfile->vsize,interp,WEED_PALETTE_RGB24,0);
+      convert_layer_palette(layer,WEED_PALETTE_RGB24,0);
       end_pixbuf=layer_to_pixbuf(layer);
     }
     weed_plant_free(layer);
@@ -3555,9 +3558,9 @@ void load_end_image(gint frame) {
     weed_set_int_value(layer,"frame",frame);
 
     if (pull_frame_at_size(layer,get_image_ext_for_type(cfile->img_type),tc,width,height,WEED_PALETTE_RGB24)) {
-      convert_layer_palette(layer,WEED_PALETTE_RGB24,0);  
       interp=get_interp_value(prefs->pb_quality);
-      resize_layer(layer,width,height,interp);
+      resize_layer(layer,width,height,interp,WEED_PALETTE_RGB24,0);
+      convert_layer_palette(layer,WEED_PALETTE_RGB24,0);  
       end_pixbuf=layer_to_pixbuf(layer);
     }
 
@@ -3680,9 +3683,9 @@ void load_preview_image(boolean update_always) {
     weed_set_int_value(layer,"frame",mainw->preview_frame);
     if (pull_frame_at_size(layer,get_image_ext_for_type(cfile->img_type),tc,mainw->pwidth,mainw->pheight,
 			   WEED_PALETTE_RGB24)) {
-        LiVESInterpType interp=get_interp_value(prefs->pb_quality);
+      LiVESInterpType interp=get_interp_value(prefs->pb_quality);
+      resize_layer(layer,mainw->pwidth,mainw->pheight,interp,WEED_PALETTE_RGB24,0);
       convert_layer_palette(layer,WEED_PALETTE_RGB24,0);
-      resize_layer(layer,mainw->pwidth,mainw->pheight,interp);
       pixbuf=layer_to_pixbuf(layer);
     }
     weed_plant_free(layer);
@@ -5110,7 +5113,7 @@ void load_frame_image(gint frame) {
 		      weed_get_int_value(return_layer,"width",&weed_error));
 	int height=MIN(weed_get_int_value(mainw->frame_layer,"height",&weed_error),
 		       weed_get_int_value(return_layer,"height",&weed_error));
-	resize_layer(return_layer,width,height,LIVES_INTERP_FAST); 
+	resize_layer(return_layer,width,height,LIVES_INTERP_FAST,WEED_PALETTE_END,0); 
 
 	save_to_scrap_file (return_layer);
 	weed_layer_free(return_layer);
@@ -5184,8 +5187,8 @@ void load_frame_image(gint frame) {
       if (!mainw->is_rendering) {
 	do {
 	  if (pmonitor==0) {
-	    if (mainw->pwidth>mainw->scr_width-DSIZE_SAFETY_H||
-		mainw->pheight>mainw->scr_height-DSIZE_SAFETY_V) { 
+	    if (mainw->pwidth>mainw->scr_width-SCR_WIDTH_SAFETY||
+		mainw->pheight>mainw->scr_height-SCR_HEIGHT_SAFETY) { 
 	      mainw->pheight=(mainw->pheight>>2)<<1;
 	      mainw->pwidth=(mainw->pwidth>>2)<<1;
 	      mainw->sepwin_scale/=2.;
@@ -5193,8 +5196,8 @@ void load_frame_image(gint frame) {
 	    else size_ok=TRUE;
 	  }
 	  else {
-	    if (mainw->pwidth>mainw->mgeom[pmonitor-1].width-DSIZE_SAFETY_H||
-		mainw->pheight>mainw->mgeom[pmonitor-1].height-DSIZE_SAFETY_V) {
+	    if (mainw->pwidth>mainw->mgeom[pmonitor-1].width-SCR_WIDTH_SAFETY||
+		mainw->pheight>mainw->mgeom[pmonitor-1].height-SCR_HEIGHT_SAFETY) {
 	      mainw->pheight=(mainw->pheight>>2)<<1;
 	      mainw->pwidth=(mainw->pwidth>>2)<<1;
 	      mainw->sepwin_scale/=2.;
@@ -5256,9 +5259,18 @@ void load_frame_image(gint frame) {
       }
       else frame_layer=mainw->frame_layer;
 
+      if (frame_layer==mainw->frame_layer && !(mainw->vpp->capabilities&VPP_LOCAL_DISPLAY) && 
+	  ((weed_palette_is_rgb_palette(layer_palette) && 
+	  !(weed_palette_is_rgb_palette(mainw->vpp->palette))) || 
+	(weed_palette_is_lower_quality(mainw->vpp->palette,layer_palette)))) {
+	// mainw->frame_layer is RGB and so is our screen, but plugin is YUV
+	// so copy layer and convert, retaining original
+	frame_layer=weed_layer_copy(NULL,mainw->frame_layer);
+      }
+
       if ((mainw->vpp->fwidth>0&&mainw->vpp->fheight>0)&&lb_width==0) {
 	resize_layer(frame_layer,mainw->vpp->fwidth/weed_palette_get_pixels_per_macropixel(layer_palette),
-		     mainw->vpp->fheight,interp);
+		     mainw->vpp->fheight,interp,mainw->vpp->palette,mainw->vpp->YUV_clamping);
       }
 
       // resize_layer can change palette
@@ -5282,6 +5294,8 @@ void load_frame_image(gint frame) {
 	mainw->vpp->fheight=mainw->scr_height;
       }
 
+      convert_layer_palette(frame_layer,mainw->vpp->palette,mainw->vpp->YUV_clamping);
+
       if (mainw->vpp->fwidth!=pwidth||mainw->vpp->fheight!=pheight||lb_width!=0) {
 
 	if (lb_width==0) {
@@ -5298,8 +5312,6 @@ void load_frame_image(gint frame) {
 			mainw->vpp->fheight);
 
       }
-
-      convert_layer_palette(frame_layer,mainw->vpp->palette,mainw->vpp->YUV_clamping);
 
       if (mainw->stream_ticks==-1) mainw->stream_ticks=(mainw->currticks);
 
@@ -5361,7 +5373,7 @@ void load_frame_image(gint frame) {
 		      weed_get_int_value(return_layer,"width",&weed_error));
 	int height=MIN(weed_get_int_value(mainw->frame_layer,"height",&weed_error),
 		       weed_get_int_value(return_layer,"height",&weed_error));
-	resize_layer(return_layer,width,height,LIVES_INTERP_FAST); 
+	resize_layer(return_layer,width,height,LIVES_INTERP_FAST,WEED_PALETTE_END,0); 
 
 	save_to_scrap_file (return_layer);
 	weed_layer_free(return_layer);
@@ -5400,8 +5412,6 @@ void load_frame_image(gint frame) {
     if (cfile->img_type==IMG_TYPE_JPEG||!weed_palette_has_alpha_channel(layer_palette)) cpal=WEED_PALETTE_RGB24;
     else cpal=WEED_PALETTE_RGBA32;
 
-    convert_layer_palette(mainw->frame_layer,cpal,0);
-
     if (mainw->fs&&!mainw->ext_playback&&(mainw->multitrack==NULL||mainw->sep_win)) {
       // set again, in case vpp was turned off because of preview conditions
       if (!mainw->sep_win) {
@@ -5432,9 +5442,6 @@ void load_frame_image(gint frame) {
       mainw->pheight=lives_widget_get_allocation_height(mainw->play_window);
     }
 
-
-    layer_palette=weed_layer_get_palette(mainw->frame_layer);
-
     pwidth=weed_get_int_value(mainw->frame_layer,"width",&weed_error)*
       weed_palette_get_pixels_per_macropixel(layer_palette);
     pheight=weed_get_int_value(mainw->frame_layer,"height",&weed_error)*
@@ -5442,6 +5449,8 @@ void load_frame_image(gint frame) {
 
     if (pwidth!=mainw->pwidth||pheight!=mainw->pheight||lb_width!=0) {
       if (lb_width!=0) {
+	convert_layer_palette(mainw->frame_layer,cpal,0);
+
 	letterbox_layer(mainw->frame_layer,lb_width/
 			weed_palette_get_pixels_per_macropixel(layer_palette),
 			lb_height,mainw->pwidth/
@@ -5451,14 +5460,16 @@ void load_frame_image(gint frame) {
       else {
 	interp=get_interp_value(prefs->pb_quality);
 	resize_layer(mainw->frame_layer,mainw->pwidth/weed_palette_get_pixels_per_macropixel(layer_palette),
-		     mainw->pheight,interp);
+		     mainw->pheight,interp,cpal,0);
+	convert_layer_palette(mainw->frame_layer,cpal,0);
       }
     }
     else {
       if (mainw->play_window!=NULL&&GDK_IS_WINDOW (lives_widget_get_xwindow(mainw->play_window))) {
 	interp=get_interp_value(prefs->pb_quality);
 	resize_layer(mainw->frame_layer,mainw->pwidth/weed_palette_get_pixels_per_macropixel(layer_palette),
-		     mainw->pheight,interp);
+		     mainw->pheight,interp,cpal,0);
+	convert_layer_palette(mainw->frame_layer,cpal,0);
       }
     }
 

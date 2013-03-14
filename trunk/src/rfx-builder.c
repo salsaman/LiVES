@@ -84,7 +84,6 @@ rfx_build_window_t *make_rfx_build_window (const gchar *script_name, lives_rfx_s
   GtkWidget *dialog_action_area;
   GtkWidget *hbox;
   GtkWidget *label;
-  GtkWidget *hseparator;
   GtkWidget *okbutton;
   GtkWidget *cancelbutton;
   GtkWidget *scrollw;
@@ -98,7 +97,7 @@ rfx_build_window_t *make_rfx_build_window (const gchar *script_name, lives_rfx_s
 
   GtkAccelGroup *accel_group=GTK_ACCEL_GROUP(gtk_accel_group_new ());
 
-  gchar *tmp,*tmp2;
+  gchar *tmp,*tmp2,*title;
 
   rfxbuilder->rfx_version=g_strdup(RFX_VERSION);
 
@@ -131,169 +130,63 @@ rfx_build_window_t *make_rfx_build_window (const gchar *script_name, lives_rfx_s
   /////////////////////////////////////////////////////////
 
 
-  rfxbuilder->dialog = gtk_dialog_new ();
   if (script_name==NULL) {
-    gtk_window_set_title (GTK_WINDOW (rfxbuilder->dialog), _("LiVES: - New Test RFX"));
+    title=g_strdup(_("LiVES: - New Test RFX"));
   }
   else {
-    gtk_window_set_title (GTK_WINDOW (rfxbuilder->dialog), _("LiVES: - Edit Test RFX"));
+    title=g_strdup(_("LiVES: - Edit Test RFX"));
   }
-  gtk_window_set_position (GTK_WINDOW (rfxbuilder->dialog), GTK_WIN_POS_CENTER_ALWAYS);
-  gtk_window_set_modal (GTK_WINDOW (rfxbuilder->dialog), TRUE);
+
+  rfxbuilder->dialog = lives_standard_dialog_new (title,FALSE);
+  g_free(title);
+
   if (prefs->show_gui) {
     gtk_window_set_transient_for(GTK_WINDOW(rfxbuilder->dialog),GTK_WINDOW(mainw->LiVES));
-  }
-  if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color(rfxbuilder->dialog, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-    lives_dialog_set_has_separator(GTK_DIALOG(rfxbuilder->dialog),FALSE);
   }
 
   gtk_window_add_accel_group (GTK_WINDOW (rfxbuilder->dialog), accel_group);
 
-  gtk_container_set_border_width (GTK_CONTAINER (rfxbuilder->dialog), 8);
-  gtk_window_set_default_size (GTK_WINDOW (rfxbuilder->dialog), (PREF_RFXDIALOG_W<mainw->scr_width-20)?
-			       PREF_RFXDIALOG_W:mainw->scr_width-20, (PREF_RFXDIALOG_H<mainw->scr_height-60)?
-			       PREF_RFXDIALOG_H:mainw->scr_height-60);
+  gtk_container_set_border_width (GTK_CONTAINER (rfxbuilder->dialog), widget_opts.border_width>>1);
 
   dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(rfxbuilder->dialog));
-  lives_box_set_spacing (GTK_BOX (dialog_vbox), 8);
-  gtk_widget_show (dialog_vbox);
 
-  top_vbox = lives_vbox_new (FALSE, 10);
-  gtk_widget_show (top_vbox);
+  top_vbox = lives_vbox_new (FALSE, 0);
 
-
-  scrollw = gtk_scrolled_window_new (NULL, NULL);
-  gtk_widget_show (scrollw);
+  scrollw = lives_standard_scrolled_window_new ((PREF_RFXDIALOG_W<mainw->scr_width-20)?
+						PREF_RFXDIALOG_W:mainw->scr_width-20, (PREF_RFXDIALOG_H<mainw->scr_height-60)?
+						PREF_RFXDIALOG_H:mainw->scr_height-60,top_vbox,TRUE);
   gtk_box_pack_start (GTK_BOX (dialog_vbox), scrollw, TRUE, TRUE, 0);
 
-   
-  gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrollw), GTK_POLICY_AUTOMATIC, 
-				  GTK_POLICY_AUTOMATIC);
-  
-  gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (scrollw), 
-					 top_vbox);
-  
-  // Apply theme background to scrolled window
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(lives_bin_get_child(LIVES_BIN(scrollw)), LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_bg_color(lives_bin_get_child(LIVES_BIN(scrollw)), LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  }
-
-
-
-
-
-
-
   // types
-  hbox = lives_hbox_new (FALSE, 20);
-  gtk_widget_show (hbox);
+  hbox = lives_hbox_new (FALSE, 0);
   gtk_box_pack_start (GTK_BOX (top_vbox), hbox, TRUE, TRUE, 0);
 
 
-  label = gtk_label_new (_("Type:"));
-  gtk_widget_show (label);
-  gtk_box_pack_start (GTK_BOX (hbox), label, TRUE, FALSE, 0);
+  label = lives_standard_label_new (_("Type:"));
+  gtk_box_pack_start (GTK_BOX (hbox), label, TRUE, FALSE, widget_opts.packing_width);
 
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color (label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-  }
+  widget_opts.swap_label=TRUE;
+  rfxbuilder->type_effect1_radiobutton = lives_standard_radio_button_new (_("Effect -"),FALSE,radiobutton_type_group,LIVES_BOX(hbox),NULL);
+  radiobutton_type_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (rfxbuilder->type_effect1_radiobutton));
 
-  rfxbuilder->type_effect1_radiobutton = gtk_radio_button_new (NULL);
-  rfxbuilder->type_effect2_radiobutton = gtk_radio_button_new (NULL);
-  rfxbuilder->type_effect0_radiobutton = gtk_radio_button_new (NULL);
-  rfxbuilder->type_tool_radiobutton = gtk_radio_button_new (NULL);
-  rfxbuilder->type_utility_radiobutton = gtk_radio_button_new (NULL);
+  rfxbuilder->type_effect2_radiobutton = lives_standard_radio_button_new (_("Transition -"),FALSE,radiobutton_type_group,LIVES_BOX(hbox),NULL);
+  radiobutton_type_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (rfxbuilder->type_effect2_radiobutton));
 
-  label = gtk_label_new (_("Effect -"));
-  gtk_widget_show (label);
-  gtk_box_pack_start (GTK_BOX (hbox), label, TRUE, FALSE, 0);
+  rfxbuilder->type_effect0_radiobutton = lives_standard_radio_button_new (_("Generator -"),FALSE,radiobutton_type_group,LIVES_BOX(hbox),NULL);
+  radiobutton_type_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (rfxbuilder->type_effect0_radiobutton));
 
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color (label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-  }
+  rfxbuilder->type_tool_radiobutton = lives_standard_radio_button_new (_("Tool -"),FALSE,radiobutton_type_group,LIVES_BOX(hbox),NULL);
+  radiobutton_type_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (rfxbuilder->type_tool_radiobutton));
 
-  gtk_widget_show (rfxbuilder->type_effect1_radiobutton);
-  gtk_box_pack_start (GTK_BOX (hbox), rfxbuilder->type_effect1_radiobutton, TRUE, FALSE, 0);
-  gtk_radio_button_set_group (GTK_RADIO_BUTTON (rfxbuilder->type_effect1_radiobutton), radiobutton_type_group);
-  radiobutton_type_group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (rfxbuilder->type_effect1_radiobutton));
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (rfxbuilder->type_effect1_radiobutton), TRUE);
+  rfxbuilder->type_utility_radiobutton = lives_standard_radio_button_new (_("Utility -"),FALSE,radiobutton_type_group,LIVES_BOX(hbox),NULL);
+  widget_opts.swap_label=FALSE;
 
-
-  label = gtk_label_new (_("Transition -"));
-  gtk_widget_show (label);
-  gtk_box_pack_start (GTK_BOX (hbox), label, TRUE, FALSE, 0);
-
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color (label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-  }
-
-  gtk_widget_show (rfxbuilder->type_effect2_radiobutton);
-  gtk_box_pack_start (GTK_BOX (hbox), rfxbuilder->type_effect2_radiobutton, TRUE, FALSE, 0);
-  gtk_radio_button_set_group (GTK_RADIO_BUTTON (rfxbuilder->type_effect2_radiobutton), radiobutton_type_group);
-  radiobutton_type_group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (rfxbuilder->type_effect2_radiobutton));
-
-
-  label = gtk_label_new (_("Generator -"));
-  gtk_widget_show (label);
-  gtk_box_pack_start (GTK_BOX (hbox), label, TRUE, FALSE, 0);
-
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color (label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-  }
-
-  gtk_widget_show (rfxbuilder->type_effect0_radiobutton);
-  gtk_box_pack_start (GTK_BOX (hbox), rfxbuilder->type_effect0_radiobutton, TRUE, FALSE, 0);
-  gtk_radio_button_set_group (GTK_RADIO_BUTTON (rfxbuilder->type_effect0_radiobutton), radiobutton_type_group);
-  radiobutton_type_group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (rfxbuilder->type_effect0_radiobutton));
-
-  label = gtk_label_new (_("Tool -"));
-  gtk_widget_show (label);
-  gtk_box_pack_start (GTK_BOX (hbox), label, TRUE, FALSE, 0);
-
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color (label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-  }
-
-  gtk_widget_show (rfxbuilder->type_tool_radiobutton);
-  gtk_box_pack_start (GTK_BOX (hbox), rfxbuilder->type_tool_radiobutton, TRUE, FALSE, 0);
-  gtk_radio_button_set_group (GTK_RADIO_BUTTON (rfxbuilder->type_tool_radiobutton), radiobutton_type_group);
-  radiobutton_type_group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (rfxbuilder->type_tool_radiobutton));
-
-
-  label = gtk_label_new (_("Utility -"));
-  gtk_widget_show (label);
-  gtk_box_pack_start (GTK_BOX (hbox), label, TRUE, FALSE, 0);
-
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color (label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-  }
-
-  gtk_widget_show (rfxbuilder->type_utility_radiobutton);
-  gtk_box_pack_start (GTK_BOX (hbox), rfxbuilder->type_utility_radiobutton, TRUE, FALSE, 0);
-  gtk_radio_button_set_group (GTK_RADIO_BUTTON (rfxbuilder->type_utility_radiobutton), radiobutton_type_group);
-  radiobutton_type_group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (rfxbuilder->type_utility_radiobutton));
 
   // name
 
-  hbox = lives_hbox_new (FALSE, 0);
-  gtk_widget_show (hbox);
-  gtk_box_pack_start (GTK_BOX (top_vbox), hbox, TRUE, TRUE, 0);
-
-  label = gtk_label_new (_("Name:          "));
-  gtk_widget_show (label);
-  gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 0);
-
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color (label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-  }
-
-  rfxbuilder->name_entry = gtk_entry_new ();
-  gtk_widget_show (rfxbuilder->name_entry);
-  gtk_box_pack_start (GTK_BOX (hbox), rfxbuilder->name_entry, TRUE, TRUE, 0);
-  gtk_widget_set_tooltip_text( rfxbuilder->name_entry,(_ ("The name of the plugin. No spaces allowed.")));
-
+  rfxbuilder->name_entry = lives_standard_entry_new ((tmp=g_strdup(_("Name:          "))),FALSE,NULL,-1,-1,
+						     LIVES_BOX(top_vbox),(tmp2=g_strdup(_("The name of the plugin. No spaces allowed.")))
+						     );
   // version
 
   hbox = lives_hbox_new (FALSE, 0);
@@ -410,7 +303,6 @@ rfx_build_window_t *make_rfx_build_window (const gchar *script_name, lives_rfx_s
 
   spinbutton_adj = (GObject *)gtk_adjustment_new (1., 1., 1000., 1., 1., 0);
   rfxbuilder->spinbutton_min_frames = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 1, 0);
-  gtk_widget_show (rfxbuilder->spinbutton_min_frames);
   gtk_box_pack_start (GTK_BOX (hbox), rfxbuilder->spinbutton_min_frames, TRUE, FALSE, 0);
   gtk_widget_set_tooltip_text( rfxbuilder->spinbutton_min_frames,
 			(_ ("Minimum number of frames this effect/tool can be applied to. Normally 1.")));
@@ -418,49 +310,35 @@ rfx_build_window_t *make_rfx_build_window (const gchar *script_name, lives_rfx_s
   // requirements
 
 
-  hseparator = lives_hseparator_new ();
-  gtk_widget_show (hseparator);
-  gtk_box_pack_start (GTK_BOX (top_vbox), hseparator, FALSE, TRUE, 0);
+  add_hsep_to_box(LIVES_BOX(top_vbox));
 
   rfxbuilder->requirements_button=gtk_button_new_with_mnemonic (_ ("_Requirements..."));
-  gtk_widget_show (rfxbuilder->requirements_button);
   gtk_box_pack_start (GTK_BOX (top_vbox), rfxbuilder->requirements_button, TRUE, TRUE, 0);
   gtk_widget_set_tooltip_text( rfxbuilder->requirements_button,
 			(_ ("Enter any binaries required by the plugin.")));
 
-  hseparator = lives_hseparator_new ();
-  gtk_widget_show (hseparator);
-  gtk_box_pack_start (GTK_BOX (top_vbox), hseparator, FALSE, TRUE, 0);
+  add_hsep_to_box(LIVES_BOX(top_vbox));
 
   rfxbuilder->properties_button=gtk_button_new_with_mnemonic (_ ("_Properties..."));
-  gtk_widget_show (rfxbuilder->properties_button);
   gtk_box_pack_start (GTK_BOX (top_vbox), rfxbuilder->properties_button, TRUE, TRUE, 0);
   gtk_widget_set_tooltip_text( rfxbuilder->properties_button,
 			(_ ("Set properties for the plugin. Optional.")));
 
-  hseparator = lives_hseparator_new ();
-  gtk_widget_show (hseparator);
-  gtk_box_pack_start (GTK_BOX (top_vbox), hseparator, FALSE, TRUE, 0);
+  add_hsep_to_box(LIVES_BOX(top_vbox));
 
   rfxbuilder->params_button=gtk_button_new_with_mnemonic (_ ("_Parameters..."));
-  gtk_widget_show (rfxbuilder->params_button);
   gtk_box_pack_start (GTK_BOX (top_vbox), rfxbuilder->params_button, TRUE, TRUE, 0);
   gtk_widget_set_tooltip_text( rfxbuilder->params_button,
 			(_ ("Set up parameters used in pre/loop/post/trigger code. Optional.")));
 
-  hseparator = lives_hseparator_new ();
-  gtk_widget_show (hseparator);
-  gtk_box_pack_start (GTK_BOX (top_vbox), hseparator, FALSE, TRUE, 0);
+  add_hsep_to_box(LIVES_BOX(top_vbox));
 
   rfxbuilder->param_window_button=gtk_button_new_with_mnemonic (_ ("Parameter _Window Hints..."));
-  gtk_widget_show (rfxbuilder->param_window_button);
   gtk_box_pack_start (GTK_BOX (top_vbox), rfxbuilder->param_window_button, TRUE, TRUE, 0);
   gtk_widget_set_tooltip_text( rfxbuilder->param_window_button,
 			(_ ("Set hints about how to lay out the parameter window. Optional.")));
 
-  hseparator = lives_hseparator_new ();
-  gtk_widget_show (hseparator);
-  gtk_box_pack_start (GTK_BOX (top_vbox), hseparator, FALSE, TRUE, 0);
+  add_hsep_to_box(LIVES_BOX(top_vbox));
 
   langc = g_list_append (langc, (gpointer)"0xF0 - LiVES-Perl");
 
@@ -470,66 +348,54 @@ rfx_build_window_t *make_rfx_build_window (const gchar *script_name, lives_rfx_s
   g_free(tmp);
   g_free(tmp2);
   g_list_free(langc);
-  gtk_widget_show_all(gtk_widget_get_parent(rfxbuilder->langc_combo));
 
-  hseparator = lives_hseparator_new ();
-  gtk_widget_show (hseparator);
-  gtk_box_pack_start (GTK_BOX (top_vbox), hseparator, FALSE, TRUE, 0);
+
+  add_hsep_to_box(LIVES_BOX(top_vbox));
 
   rfxbuilder->pre_button=gtk_button_new_with_mnemonic (_ ("_Pre loop code..."));
-  gtk_widget_show (rfxbuilder->pre_button);
   gtk_box_pack_start (GTK_BOX (top_vbox), rfxbuilder->pre_button, TRUE, TRUE, 0);
   gtk_widget_set_tooltip_text( rfxbuilder->pre_button,
 			(_ ("Code to be executed before the loop. Optional.")));
 
-  hseparator = lives_hseparator_new ();
-  gtk_widget_show (hseparator);
-  gtk_box_pack_start (GTK_BOX (top_vbox), hseparator, FALSE, TRUE, 0);
+  add_hsep_to_box(LIVES_BOX(top_vbox));
 
   rfxbuilder->loop_button=gtk_button_new_with_mnemonic (_ ("_Loop code..."));
-  gtk_widget_show (rfxbuilder->loop_button);
   gtk_box_pack_start (GTK_BOX (top_vbox), rfxbuilder->loop_button, TRUE, TRUE, 0);
   gtk_widget_set_tooltip_text( rfxbuilder->loop_button,
 			(_ ("Loop code to be applied to each frame.")));
 
-  hseparator = lives_hseparator_new ();
-  gtk_widget_show (hseparator);
-  gtk_box_pack_start (GTK_BOX (top_vbox), hseparator, FALSE, TRUE, 0);
+  add_hsep_to_box(LIVES_BOX(top_vbox));
 
   rfxbuilder->post_button=gtk_button_new_with_mnemonic (_ ("_Post loop code..."));
-  gtk_widget_show (rfxbuilder->post_button);
   gtk_box_pack_start (GTK_BOX (top_vbox), rfxbuilder->post_button, TRUE, TRUE, 0);
   gtk_widget_set_tooltip_text( rfxbuilder->post_button,
 			(_ ("Code to be executed after the loop. Optional.")));
 
-  hseparator = lives_hseparator_new ();
-  gtk_widget_show (hseparator);
-  gtk_box_pack_start (GTK_BOX (top_vbox), hseparator, FALSE, TRUE, 0);
+  add_hsep_to_box(LIVES_BOX(top_vbox));
 
   rfxbuilder->trigger_button=gtk_button_new_with_mnemonic (_ ("_Trigger code..."));
-  gtk_widget_show (rfxbuilder->trigger_button);
   gtk_box_pack_start (GTK_BOX (top_vbox), rfxbuilder->trigger_button, TRUE, TRUE, 0);
   gtk_widget_set_tooltip_text( rfxbuilder->trigger_button,
 			(_ ("Set trigger code for when the parameter window is shown, or when a parameter is changed. Optional (except for Utilities).")));
 
 
   dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (rfxbuilder->dialog));
-  gtk_widget_show (dialog_action_area);
   gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area), GTK_BUTTONBOX_END);
 
   cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
-  gtk_widget_show (cancelbutton);
   gtk_dialog_add_action_widget (GTK_DIALOG (rfxbuilder->dialog), cancelbutton, GTK_RESPONSE_CANCEL);
-  lives_widget_set_can_focus_and_default (cancelbutton);
 
   gtk_widget_add_accelerator (cancelbutton, "activate", accel_group,
                               LIVES_KEY_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
 
 
   okbutton = gtk_button_new_from_stock ("gtk-ok");
-  gtk_widget_show (okbutton);
   gtk_dialog_add_action_widget (GTK_DIALOG (rfxbuilder->dialog), okbutton, GTK_RESPONSE_OK);
   lives_widget_set_can_focus_and_default (okbutton);
+
+  gtk_widget_add_accelerator (okbutton, "activate", accel_group,
+                              LIVES_KEY_Return, (GdkModifierType)0, (GtkAccelFlags)0);
+
 
   g_signal_connect (GTK_OBJECT (okbutton), "clicked",
 		    G_CALLBACK (on_rfxbuilder_ok),
@@ -623,16 +489,16 @@ rfx_build_window_t *make_rfx_build_window (const gchar *script_name, lives_rfx_s
     g_free (script_file);
     switch (rfxbuilder->type) {
     case RFX_BUILD_TYPE_TOOL:
-      gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (rfxbuilder->type_tool_radiobutton),TRUE);
+      lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (rfxbuilder->type_tool_radiobutton),TRUE);
       break;
     case RFX_BUILD_TYPE_EFFECT0:
-      gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (rfxbuilder->type_effect0_radiobutton),TRUE);
+      lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (rfxbuilder->type_effect0_radiobutton),TRUE);
       break;
     case RFX_BUILD_TYPE_UTILITY:
-      gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (rfxbuilder->type_utility_radiobutton),TRUE);
+      lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (rfxbuilder->type_utility_radiobutton),TRUE);
       break;
     case RFX_BUILD_TYPE_EFFECT2:
-      gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (rfxbuilder->type_effect2_radiobutton),TRUE);
+      lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (rfxbuilder->type_effect2_radiobutton),TRUE);
       break;
     default:
       break;
@@ -641,6 +507,9 @@ rfx_build_window_t *make_rfx_build_window (const gchar *script_name, lives_rfx_s
   else {
     gtk_widget_grab_focus (rfxbuilder->name_entry);
   }
+
+  gtk_widget_show_all(rfxbuilder->dialog);
+
   return rfxbuilder;
 }
 

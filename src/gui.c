@@ -2014,20 +2014,18 @@ create_LiVES (void)
   gtk_container_set_border_width (GTK_CONTAINER (mainw->framebar), 2);
 
   /* TRANSLATORS: please keep the translated string the same length */
-  mainw->vps_label = gtk_label_new (_("     Video playback speed (frames per second)        "));
+  mainw->vps_label = lives_standard_label_new (_("     Video playback speed (frames per second)        "));
   tmp=g_strdup(gtk_label_get_text(GTK_LABEL(mainw->vps_label)));
   if (strlen(tmp)>55) memset(tmp+55,0,1);
   gtk_label_set_text(GTK_LABEL(mainw->vps_label),tmp);
   g_free(tmp);
 
-
-  gtk_widget_show (mainw->vps_label);
-  gtk_box_pack_start (GTK_BOX (mainw->framebar), mainw->vps_label, FALSE, FALSE, 0);
-  gtk_label_set_justify (GTK_LABEL (mainw->vps_label), GTK_JUSTIFY_LEFT);
-
   if (palette->style&STYLE_1) {
     lives_widget_set_fg_color(mainw->vps_label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
   }
+
+  gtk_widget_show (mainw->vps_label);
+  gtk_box_pack_start (GTK_BOX (mainw->framebar), mainw->vps_label, FALSE, FALSE, 0);
 
   spinbutton_pb_fps_adj = (GObject *)gtk_adjustment_new (1, -FPS_MAX, FPS_MAX, 0.1, 0.01, 0.);
   mainw->spinbutton_pb_fps = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_pb_fps_adj), (GdkModifierType)0, 3);
@@ -2058,10 +2056,10 @@ create_LiVES (void)
 
   lives_widget_set_can_focus (mainw->framecounter, FALSE);
 
-  mainw->curf_label = gtk_label_new (_("                                                            "));
+  mainw->curf_label = lives_standard_label_new (_("                                                            "));
   gtk_widget_show (mainw->curf_label);
   gtk_box_pack_start (GTK_BOX (mainw->framebar), mainw->curf_label, FALSE, FALSE, 0);
-  gtk_label_set_justify (GTK_LABEL (mainw->curf_label), GTK_JUSTIFY_LEFT);
+
   if (palette->style&STYLE_1) {
     lives_widget_set_fg_color(mainw->curf_label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
   }
@@ -2236,16 +2234,15 @@ create_LiVES (void)
   }
 
   gtk_entry_set_width_chars (GTK_ENTRY (mainw->spinbutton_start),10);
-  mainw->sel_label = gtk_label_new(NULL);
-
-  set_sel_label(mainw->sel_label);
-  gtk_widget_show (mainw->sel_label);
-  gtk_box_pack_start (GTK_BOX (hbox3), mainw->sel_label, FALSE, FALSE, 0);
-  gtk_label_set_justify (GTK_LABEL (mainw->sel_label), GTK_JUSTIFY_LEFT);
+  mainw->sel_label = lives_standard_label_new(NULL);
 
   if (palette->style&STYLE_1) {
     lives_widget_set_fg_color(mainw->sel_label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
   }
+
+  set_sel_label(mainw->sel_label);
+  gtk_widget_show (mainw->sel_label);
+  gtk_box_pack_start (GTK_BOX (hbox3), mainw->sel_label, FALSE, FALSE, 0);
 
   mainw->arrow2 = gtk_arrow_new (GTK_ARROW_RIGHT, GTK_SHADOW_OUT);
   gtk_widget_show (mainw->arrow2);
@@ -2331,18 +2328,20 @@ create_LiVES (void)
   gtk_widget_show (vbox2);
   gtk_container_add (GTK_CONTAINER (mainw->eventbox2), vbox2);
 
-  mainw->vidbar = gtk_label_new (_("Video"));
+  mainw->vidbar = lives_standard_label_new (_("Video"));
+
+  if (palette->style&STYLE_1) {
+    lives_widget_set_fg_color(mainw->vidbar, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+  }
 
   if (palette->style==STYLE_PLAIN) {
     gtk_widget_show (mainw->vidbar);
   }
   else {
-    lives_widget_set_fg_color (mainw->vidbar, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
     lives_widget_set_bg_color (vbox2, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
     gtk_widget_hide (mainw->vidbar);
   }
 
-  gtk_label_set_justify (GTK_LABEL (mainw->vidbar), GTK_JUSTIFY_LEFT);
   gtk_box_pack_start (GTK_BOX (vbox2), mainw->vidbar, TRUE, TRUE, 0);
 
   mainw->video_draw = gtk_drawing_area_new ();
@@ -2352,15 +2351,19 @@ create_LiVES (void)
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color (mainw->video_draw, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
   }
-  mainw->laudbar = gtk_label_new (_("Left Audio"));
+
+  mainw->laudbar = lives_standard_label_new (_("Left Audio"));
+
+  if (palette->style&STYLE_1) {
+    lives_widget_set_fg_color(mainw->laudbar, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+  }
+
   gtk_box_pack_start (GTK_BOX (vbox2), mainw->laudbar, TRUE, TRUE, 0);
-  gtk_label_set_justify (GTK_LABEL (mainw->laudbar), GTK_JUSTIFY_LEFT);
 
   if (palette->style==STYLE_PLAIN) {
     gtk_widget_show (mainw->laudbar);
   }
   else {
-    lives_widget_set_fg_color (mainw->laudbar, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
     gtk_widget_hide (mainw->laudbar);
   }
 
@@ -2372,15 +2375,18 @@ create_LiVES (void)
     lives_widget_set_bg_color (mainw->laudio_draw, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
   }
 
-  mainw->raudbar = gtk_label_new (_("Right Audio"));
+  mainw->raudbar = lives_standard_label_new (_("Right Audio"));
+
+  if (palette->style&STYLE_1) {
+    lives_widget_set_fg_color(mainw->raudbar, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+  }
+
   gtk_box_pack_start (GTK_BOX (vbox2), mainw->raudbar, TRUE, TRUE, 0);
-  gtk_label_set_justify (GTK_LABEL (mainw->raudbar), GTK_JUSTIFY_LEFT);
 
   if (palette->style==STYLE_PLAIN) {
     gtk_widget_show (mainw->raudbar);
   }
   else {
-    lives_widget_set_fg_color (mainw->raudbar, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
     gtk_widget_hide (mainw->raudbar);
   }
 
@@ -3052,8 +3058,7 @@ create_LiVES (void)
 
 
 
-void
-fade_background(void) {
+void fade_background(void) {
 
   if (palette->style==STYLE_PLAIN) {
     gtk_label_set_text(GTK_LABEL(mainw->banner),"            = <  L i V E S > =              ");
@@ -3186,8 +3191,7 @@ fade_background(void) {
 
 
 
-void
-unfade_background(void) {
+void unfade_background(void) {
   if (prefs->open_maximised&&prefs->show_gui) {
     gtk_window_maximize (GTK_WINDOW(mainw->LiVES));
   }
@@ -3339,8 +3343,7 @@ unfade_background(void) {
 }
 
 
-void
-fullscreen_internal(void) {
+void fullscreen_internal(void) {
   int bx,by;
 
   // resize for full screen, internal player, no separate window
@@ -4335,67 +4338,69 @@ void splash_init(void) {
 
   mainw->splash_window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
 
-  if (prefs->gui_monitor!=0) {
-    gtk_window_set_screen(GTK_WINDOW(mainw->splash_window),mainw->mgeom[prefs->gui_monitor-1].screen);
-  }
+  if (gtk_widget_get_direction(GTK_WIDGET(mainw->splash_window))==GTK_TEXT_DIR_LTR) 
+    widget_opts.default_justify=LIVES_JUSTIFY_LEFT;
+  else 
+    widget_opts.default_justify=LIVES_JUSTIFY_RIGHT;
 
-  gtk_window_set_position(GTK_WINDOW(mainw->splash_window),GTK_WIN_POS_CENTER_ALWAYS);
+  if (prefs->show_splash) {
 
-  gtk_window_set_type_hint(GTK_WINDOW(mainw->splash_window),GDK_WINDOW_TYPE_HINT_SPLASHSCREEN);
+    if (prefs->gui_monitor!=0) {
+      gtk_window_set_screen(GTK_WINDOW(mainw->splash_window),mainw->mgeom[prefs->gui_monitor-1].screen);
+    }
+
+    gtk_window_set_position(GTK_WINDOW(mainw->splash_window),GTK_WIN_POS_CENTER_ALWAYS);
+
+    gtk_window_set_type_hint(GTK_WINDOW(mainw->splash_window),GDK_WINDOW_TYPE_HINT_SPLASHSCREEN);
   
-  if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color(mainw->splash_window, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  }
+    if (palette->style&STYLE_1) {
+      lives_widget_set_bg_color(mainw->splash_window, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+    }
 
   
-  vbox = lives_vbox_new (FALSE, 10);
-  gtk_container_add (GTK_CONTAINER (mainw->splash_window), vbox);
+    vbox = lives_vbox_new (FALSE, widget_opts.packing_height);
+    gtk_container_add (GTK_CONTAINER (mainw->splash_window), vbox);
 
-  splash_pix=gdk_pixbuf_new_from_file(tmp,&error);
-  g_free(tmp);
+    splash_pix=gdk_pixbuf_new_from_file(tmp,&error);
+    g_free(tmp);
 
-  splash_img = gtk_image_new_from_pixbuf (splash_pix);
+    splash_img = gtk_image_new_from_pixbuf (splash_pix);
 
-  gtk_box_pack_start (GTK_BOX (vbox), splash_img, TRUE, TRUE, 0);
+    gtk_box_pack_start (GTK_BOX (vbox), splash_img, TRUE, TRUE, 0);
 
-  if (splash_pix!=NULL) lives_object_unref(splash_pix);
+    if (splash_pix!=NULL) lives_object_unref(splash_pix);
 
 
-  mainw->splash_label=gtk_label_new("");
+    mainw->splash_label=lives_standard_label_new("");
 
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(mainw->splash_label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+    gtk_box_pack_start (GTK_BOX (vbox), mainw->splash_label, TRUE, TRUE, 0);
+
+    mainw->splash_progress = gtk_progress_bar_new ();
+    gtk_progress_bar_set_pulse_step(GTK_PROGRESS_BAR(mainw->splash_progress),.01);
+    
+    if (palette->style&STYLE_1) {
+      lives_widget_set_fg_color(mainw->splash_label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+      lives_widget_set_fg_color(mainw->splash_progress, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+    }
+
+    hbox = lives_hbox_new (FALSE, widget_opts.packing_width);
+
+    gtk_box_pack_start (GTK_BOX (hbox), mainw->splash_progress, TRUE, TRUE, widget_opts.packing_width*2);
+
+    gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height*2);
+
+    gtk_widget_show_all(mainw->splash_window);
+    gtk_window_present(GTK_WINDOW(mainw->splash_window));
+
+    lives_widget_context_update();
+    lives_set_cursor_style(LIVES_CURSOR_BUSY,mainw->splash_window);
   }
-
-  gtk_box_pack_start (GTK_BOX (vbox), mainw->splash_label, TRUE, TRUE, 0);
-
-  mainw->splash_progress = gtk_progress_bar_new ();
-  gtk_progress_bar_set_pulse_step(GTK_PROGRESS_BAR(mainw->splash_progress),.01);
-
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(mainw->splash_progress, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+  else {
+    gtk_widget_destroy(mainw->splash_window);
+    mainw->splash_window=NULL;
   }
-
-  hbox = lives_hbox_new (FALSE, 10);
-
-  gtk_box_pack_start (GTK_BOX (hbox), mainw->splash_progress, TRUE, TRUE, 20);
-
-  gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 20);
-
-
-
-  gtk_widget_show_all(mainw->splash_window);
-
-  gtk_window_present(GTK_WINDOW(mainw->splash_window));
-
-
-  lives_widget_context_update();
-
-  lives_set_cursor_style(LIVES_CURSOR_BUSY,mainw->splash_window);
 
   gtk_window_set_auto_startup_notification(TRUE);
-
-
 
 }
 

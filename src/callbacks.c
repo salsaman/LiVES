@@ -5748,6 +5748,8 @@ on_about_activate                     (GtkMenuItem     *menuitem,
   gchar *comments= g_strdup(_("A video editor and VJ program."));
   gchar *title= g_strdup(_("About LiVES"));
 
+  gchar *translator_credits = g_strdup(_("translator_credits"));
+
 #if GTK_CHECK_VERSION(3,0,0)
   gchar *authors[2]={"salsaman@gmail.com",NULL};
 #else
@@ -5764,13 +5766,14 @@ on_about_activate                     (GtkMenuItem     *menuitem,
 			 "website", "http://lives.sourceforge.net",
 			 "license", license,
 			 "title", title,
+			 "translator_credits", translator_credits,
 #if GTK_CHECK_VERSION(3,0,0)
 			 "authors", authors,
 			 "license-type", GTK_LICENSE_GPL_3_0,
 #endif
 			 NULL);
 
-
+  g_free(translator_credits);
   g_free(comments);
   g_free(title);
   g_free(license);

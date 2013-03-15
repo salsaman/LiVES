@@ -149,7 +149,7 @@ static boolean save_keymap2_file(gchar *kfname) {
 	  if (rte_keymode_valid(i,j,TRUE)) {
 	    lives_write_le(kfd,&i,4,TRUE);
 	    if (mainw->write_failed) break;
-	    hashname=g_strdup_printf("Weed%s",(tmp=make_weed_hashname(rte_keymode_get_filter_idx(i,j),TRUE)));
+	    hashname=g_strdup_printf("Weed%s",(tmp=make_weed_hashname(rte_keymode_get_filter_idx(i,j),TRUE,FALSE)));
 	    g_free(tmp);
 	    slen=strlen(hashname);
 	    lives_write_le(kfd,&slen,4,TRUE);
@@ -221,7 +221,7 @@ static boolean save_keymap3_file(gchar *kfname) {
 	  lives_write_le(kfd,&cconx->omode,4,TRUE);
 	  if (mainw->write_failed) goto write_failed1;
 
-	  hashname=make_weed_hashname(rte_keymode_get_filter_idx(cconx->okey+1,cconx->omode),TRUE);
+	  hashname=make_weed_hashname(rte_keymode_get_filter_idx(cconx->okey+1,cconx->omode),TRUE,FALSE);
 	  slen=strlen(hashname);
 	  lives_write_le(kfd,&slen,4,TRUE);
 	  lives_write(kfd,hashname,slen,TRUE);
@@ -248,7 +248,7 @@ static boolean save_keymap3_file(gchar *kfname) {
 	      lives_write_le(kfd,&cconx->imode[j],4,TRUE);
 	      if (mainw->write_failed) goto write_failed1;
 	      
-	      hashname=make_weed_hashname(rte_keymode_get_filter_idx(cconx->ikey[j]+1,cconx->imode[j]),TRUE);
+	      hashname=make_weed_hashname(rte_keymode_get_filter_idx(cconx->ikey[j]+1,cconx->imode[j]),TRUE,FALSE);
 	      slen=strlen(hashname);
 	      lives_write_le(kfd,&slen,4,TRUE);
 	      lives_write(kfd,hashname,slen,TRUE);
@@ -296,7 +296,7 @@ static boolean save_keymap3_file(gchar *kfname) {
 	  lives_write_le(kfd,&pconx->omode,4,TRUE);
 	  if (mainw->write_failed) goto write_failed1;
 
-	  hashname=make_weed_hashname(rte_keymode_get_filter_idx(pconx->okey+1,pconx->omode),TRUE);
+	  hashname=make_weed_hashname(rte_keymode_get_filter_idx(pconx->okey+1,pconx->omode),TRUE,FALSE);
 	  slen=strlen(hashname);
 	  lives_write_le(kfd,&slen,4,TRUE);
 	  lives_write(kfd,hashname,slen,TRUE);
@@ -323,7 +323,7 @@ static boolean save_keymap3_file(gchar *kfname) {
 	      lives_write_le(kfd,&pconx->imode[j],4,TRUE);
 	      if (mainw->write_failed) goto write_failed1;
 
-	      hashname=make_weed_hashname(rte_keymode_get_filter_idx(pconx->ikey[j]+1,pconx->imode[j]),TRUE);
+	      hashname=make_weed_hashname(rte_keymode_get_filter_idx(pconx->ikey[j]+1,pconx->imode[j]),TRUE,FALSE);
 	      slen=strlen(hashname);
 	      lives_write_le(kfd,&slen,4,TRUE);
 	      lives_write(kfd,hashname,slen,TRUE);
@@ -433,7 +433,7 @@ static boolean on_save_keymap_clicked (GtkButton *button, gpointer user_data) {
 	for (i=1;i<=prefs->rte_keys_virtual;i++) {
 	  for (j=0;j<modes;j++) {
 	    if (rte_keymode_valid(i,j,TRUE)) {
-	      lives_fputs(g_strdup_printf("%d|Weed%s\n",i,(tmp=make_weed_hashname(rte_keymode_get_filter_idx(i,j),TRUE))),kfile);
+	      lives_fputs(g_strdup_printf("%d|Weed%s\n",i,(tmp=make_weed_hashname(rte_keymode_get_filter_idx(i,j),TRUE,FALSE))),kfile);
 	      g_free(tmp);
 	    }
 	  }
@@ -835,9 +835,14 @@ static boolean load_datacons(const gchar *fname, uint8_t **badkeymap) {
 	  int fidx=rte_keymode_get_filter_idx(okey+1,omode);
 	  if (fidx==-1) is_valid=FALSE;
 	  else {
-	    gchar *hashname2=make_weed_hashname(fidx,TRUE);
+	    gchar *hashname2=make_weed_hashname(fidx,TRUE,FALSE);
 	    if (strcmp(hashname,hashname2)) is_valid=FALSE;
 	    g_free(hashname2);
+	    if (!is_valid) {
+	      hashname2=make_weed_hashname(fidx,TRUE,TRUE);
+	      if (!strcmp(hashname,hashname2)) is_valid=TRUE;
+	      g_free(hashname2);
+	    }
 	  }
 	}
 
@@ -920,9 +925,14 @@ static boolean load_datacons(const gchar *fname, uint8_t **badkeymap) {
 	      int fidx=rte_keymode_get_filter_idx(ikey+1,imode);
 	      if (fidx==-1) is_valid2=FALSE;
 	      else {
-		gchar *hashname2=make_weed_hashname(fidx,TRUE);
+		gchar *hashname2=make_weed_hashname(fidx,TRUE,FALSE);
 		if (strcmp(hashname,hashname2)) is_valid2=FALSE;
 		g_free(hashname2);
+		if (!is_valid2) {
+		  hashname2=make_weed_hashname(fidx,TRUE,TRUE);
+		  if (!strcmp(hashname,hashname2)) is_valid2=TRUE;
+		  g_free(hashname2);
+		}
 	      }
 	    }
 
@@ -1025,9 +1035,14 @@ static boolean load_datacons(const gchar *fname, uint8_t **badkeymap) {
 	  int fidx=rte_keymode_get_filter_idx(okey+1,omode);
 	  if (fidx==-1) is_valid=FALSE;
 	  else {
-	    gchar *hashname2=make_weed_hashname(fidx,TRUE);
+	    gchar *hashname2=make_weed_hashname(fidx,TRUE,FALSE);
 	    if (strcmp(hashname,hashname2)) is_valid=FALSE;
 	    g_free(hashname2);
+	    if (!is_valid) {
+	      hashname2=make_weed_hashname(fidx,TRUE,TRUE);
+	      if (!strcmp(hashname,hashname2)) is_valid=TRUE;
+	      g_free(hashname2);
+	    }
 	  }
 	}
 
@@ -1103,9 +1118,14 @@ static boolean load_datacons(const gchar *fname, uint8_t **badkeymap) {
 	      int fidx=rte_keymode_get_filter_idx(ikey+1,imode);
 	      if (fidx==-1) is_valid2=FALSE;
 	      else {
-		gchar *hashname2=make_weed_hashname(fidx,TRUE);
+		gchar *hashname2=make_weed_hashname(fidx,TRUE,FALSE);
 		if (strcmp(hashname,hashname2)) is_valid2=FALSE;
 		g_free(hashname2);
+		if (!is_valid2) {
+		  hashname2=make_weed_hashname(fidx,TRUE,TRUE);
+		  if (!strcmp(hashname,hashname2)) is_valid2=TRUE;
+		  g_free(hashname2);
+		}
 	      }
 	    }
 

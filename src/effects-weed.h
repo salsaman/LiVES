@@ -37,12 +37,12 @@ typedef enum {
 } lives_filter_error_t;
 
 
-// bootstrap function for weed plugins
+/// bootstrap function for weed plugins
 weed_plant_t *weed_bootstrap_func (weed_default_getter_f *value, int num_versions, int *plugin_versions);
 
 weed_plant_t *get_weed_filter(int filter_idx);
 gchar *weed_filter_get_name(int filter_idx) WARN_UNUSED;
-gchar *make_weed_hashname(int filter_idx, boolean fullname) WARN_UNUSED;  ///< fullname includes author and version
+gchar *make_weed_hashname(int filter_idx, boolean fullname, boolean use_extra_authors) WARN_UNUSED;  ///< fullname includes author and version
 int weed_get_idx_for_hashname (const gchar *hashname, boolean fullname); ///< fullname includes author and version
 int enabled_in_channels (weed_plant_t *plant, boolean count_repeats);
 int enabled_out_channels (weed_plant_t *plant, boolean count_repeats);
@@ -55,7 +55,7 @@ weed_plant_t *weed_instance_get_filter(weed_plant_t *inst, boolean get_compound_
 #define PLUGIN_COMPOUND_EFFECTS_BUILTIN "effects/compound/"
 #define PLUGIN_COMPOUND_EFFECTS_CUSTOM "plugins/effects/compound/"
 
-int num_compound_fx(weed_plant_t *plant); // return number of filters in a compund fx (1 if it is not compound) - works for filter or inst
+int num_compound_fx(weed_plant_t *plant); ///< return number of filters in a compound fx (1 if it is not compound) - works for filter or inst
 void load_compound_fx(void);
 
 boolean has_non_alpha_palette(weed_plant_t *ctmpl);

@@ -4407,11 +4407,11 @@ static void load_weed_plugin (gchar *plugin_name, gchar *plugin_path, gchar *dir
 
 	  hashnames=(gchar **)g_realloc(hashnames,num_weed_filters*sizeof(gchar *));
 	  hashnames[idx]=NULL;
-	  hashnames[idx]=make_weed_hashname(idx,TRUE);
+	  hashnames[idx]=make_weed_hashname(idx,TRUE,FALSE);
 
 	  phashes++;
 	  phashnames=(gchar **)g_realloc(phashnames,phashes*sizeof(gchar *));
-	  phashnames[phashes-1]=make_weed_hashname(idx,FALSE);
+	  phashnames[phashes-1]=make_weed_hashname(idx,FALSE,FALSE);
 
 	  for (i=0;i<idx;i++) {
 	    if (i>oidx) {
@@ -4451,9 +4451,9 @@ static void load_weed_plugin (gchar *plugin_name, gchar *plugin_path, gchar *dir
 	      LIVES_INFO(msg);
 	      g_free(msg);
 	      g_free(hashnames[idx]);
-	      g_free(phashnames[idx]);
-	      num_weed_filters--;
 	      phashes--;
+	      g_free(phashnames[phashes]);
+	      num_weed_filters--;
 	      weed_filters=(weed_plant_t **)g_realloc(weed_filters,num_weed_filters*sizeof(weed_plant_t *));
 	      hashnames=(gchar **)g_realloc(hashnames,num_weed_filters*sizeof(gchar *));
 	      phashnames=(gchar **)g_realloc(phashnames,phashes*sizeof(gchar *));
@@ -5459,7 +5459,7 @@ static void load_compound_plugin(gchar *plugin_name, gchar *plugin_path) {
 
     hashnames=(gchar **)g_realloc(hashnames,num_weed_filters*sizeof(gchar *));
     hashnames[idx]=NULL;
-    hashnames[idx]=make_weed_hashname(idx,TRUE);
+    hashnames[idx]=make_weed_hashname(idx,TRUE,FALSE);
 
     if (num_in_params(filter,TRUE,TRUE)>0) {
       filter_type=weed_filter_get_type(filter,TRUE,FALSE);
@@ -8158,7 +8158,7 @@ boolean weed_delete_effectkey (int key, int mode) {
     }
     else if (key<FX_KEYS_MAX_VIRTUAL) {
       rte_switch_keymode(key+1,mode,(tmp=make_weed_hashname
-				     (key_to_fx[key+1][mode+1],TRUE)));
+				     (key_to_fx[key+1][mode+1],TRUE,FALSE)));
       g_free(tmp);
 
       key_defaults[key][mode]=key_defaults[key][mode+1];
@@ -8588,7 +8588,7 @@ GList *weed_get_all_names (gshort list_type) {
       break;
     case 3:
       // hashnames
-      hashname=make_weed_hashname(i,TRUE);
+      hashname=make_weed_hashname(i,TRUE,FALSE);
       list=g_list_append(list,(gpointer)hashname);
       break;
     }
@@ -9417,8 +9417,11 @@ boolean interpolate_params(weed_plant_t *inst, void **pchains, weed_timecode_t t
 ///////////////////////////////////////////////////////////
 ////// hashnames
 
-gchar *make_weed_hashname(int filter_idx, boolean fullname) {
+gchar *make_weed_hashname(int filter_idx, boolean fullname, boolean use_extra_authors) {
   // return value should be freed after use
+
+  // make hashname from filter_idx: if use_extra_authors is set we use "extra_authors" instead of "authors"
+  // (for reverse compatibility)
 
   weed_plant_t *filter,*plugin_info;
   gchar *plugin_name,*filter_name,*filter_author,*filter_version,*hashname;
@@ -9427,9 +9430,10 @@ gchar *make_weed_hashname(int filter_idx, boolean fullname) {
 
   if (filter_idx<0||filter_idx>=num_weed_filters) return g_strdup("");
 
-  if (hashnames[filter_idx]!=NULL&&fullname) return g_strdup(hashnames[filter_idx]);
-
   filter=weed_filters[filter_idx];
+
+  if (hashnames[filter_idx]!=NULL&&fullname&&(!use_extra_authors||!weed_plant_has_leaf(filter,"extra_authors"))) 
+    return g_strdup(hashnames[filter_idx]);
 
   if (weed_plant_has_leaf(filter,"plugin_info")) {
     plugin_info=weed_get_plantptr_value(filter,"plugin_info",&error);
@@ -9444,7 +9448,11 @@ gchar *make_weed_hashname(int filter_idx, boolean fullname) {
   filter_name=weed_get_string_value(filter,"name",&error);
 
   if (fullname) {
-    filter_author=weed_get_string_value(filter,"author",&error);
+    if (!use_extra_authors||!weed_plant_has_leaf(filter,"extra_authors"))
+      filter_author=weed_get_string_value(filter,"author",&error);
+    else 
+      filter_author=weed_get_string_value(filter,"extra_authors",&error);
+ 
     version=weed_get_int_value(filter,"version",&error);
     filter_version=g_strdup_printf("%d",version);
 
@@ -9467,7 +9475,13 @@ int weed_get_idx_for_hashname (const gchar *hashname, boolean fullname) {
   gchar *chashname;
 
   for (i=0;i<num_weed_filters;i++) {
-    chashname=make_weed_hashname(i,fullname);
+    chashname=make_weed_hashname(i,fullname,FALSE);
+    if (!strcmp(hashname,chashname)) {
+      g_free(chashname);
+      return i;
+    }
+    g_free(chashname);
+    chashname=make_weed_hashname(i,fullname,TRUE);
     if (!strcmp(hashname,chashname)) {
       g_free(chashname);
       return i;
@@ -9891,7 +9905,7 @@ boolean write_filter_defaults (int fd, int idx) {
   for (i=0;i<num_params;i++) {
     if (weed_plant_has_leaf(ptmpls[i],"host_default")) {
       if (!wrote_hashname) {
-	hashname=make_weed_hashname(idx,TRUE);
+	hashname=make_weed_hashname(idx,TRUE,FALSE);
 	vlen=strlen(hashname);
 	
 	lives_write_le(fd,&vlen,4,TRUE);
@@ -9926,6 +9940,8 @@ boolean read_filter_defaults(int fd) {
   int i,error,pnum;
   int num_params=0;
   int ntoread;
+
+  boolean found=FALSE;
 
   gchar *tmp;
 
@@ -9963,11 +9979,21 @@ boolean read_filter_defaults(int fd) {
 
     memset((char *)buf+vlen,0,1);
     for (i=0;i<num_weed_filters;i++) {
-      if (!strcmp((gchar *)buf,(tmp=make_weed_hashname(i,TRUE)))) {
+      if (!strcmp((gchar *)buf,(tmp=make_weed_hashname(i,TRUE,FALSE)))) {
 	g_free(tmp);
+	found=TRUE;
 	break;
       }
       g_free(tmp);
+    }
+    if (!found) {
+      for (i=0;i<num_weed_filters;i++) {
+	if (!strcmp((gchar *)buf,(tmp=make_weed_hashname(i,TRUE,TRUE)))) {
+	  g_free(tmp);
+	  break;
+	}
+	g_free(tmp);
+      }
     }
 
     g_free(buf);
@@ -10052,7 +10078,7 @@ boolean write_generator_sizes (int fd, int idx) {
     if (weed_plant_has_leaf(ctmpls[i],"host_width")||weed_plant_has_leaf(ctmpls[i],"host_height")||
 	(!wrote_hashname&&weed_plant_has_leaf(filter,"host_fps"))) {
       if (!wrote_hashname) {
-	hashname=make_weed_hashname(idx,TRUE);
+	hashname=make_weed_hashname(idx,TRUE,FALSE);
 	vlen=strlen(hashname);
 	lives_write_le(fd,&vlen,4,TRUE);
 	lives_write(fd,hashname,vlen,TRUE);
@@ -10090,6 +10116,8 @@ boolean read_generator_sizes(int fd) {
 
   gchar *buf;
   gchar *tmp;
+
+  boolean found=FALSE;
 
   int vleni,vlenz;
   int i,error;
@@ -10138,12 +10166,23 @@ boolean read_generator_sizes(int fd) {
     memset((char *)buf+vlen,0,1);
 
     for (i=0;i<num_weed_filters;i++) {
-      if (!strcmp(buf,(tmp=make_weed_hashname(i,TRUE)))) {
+      if (!strcmp(buf,(tmp=make_weed_hashname(i,TRUE,FALSE)))) {
 	g_free(tmp);
+	found=TRUE;
 	break;
       }
       g_free(tmp);
     }
+    if (!found) {
+      for (i=0;i<num_weed_filters;i++) {
+	if (!strcmp(buf,(tmp=make_weed_hashname(i,TRUE,TRUE)))) {
+	  g_free(tmp);
+	  break;
+	}
+	g_free(tmp);
+      }
+    }
+
 
     g_free(buf);
     ctmpls=NULL;

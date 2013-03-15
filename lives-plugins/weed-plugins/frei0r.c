@@ -816,7 +816,9 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 	  snprintf(weed_name,PATH_MAX,"Frei0r: %s",f0rinfo.name);
 	  pversion=f0rinfo.major_version*1000+f0rinfo.minor_version;
 
-	  filter_class=weed_filter_class_init(weed_name,(char *)f0rinfo.author,pversion,0,&frei0r_init,&frei0r_process,&frei0r_deinit,in_chantmpls,out_chantmpls,in_params,NULL);
+	  filter_class=weed_filter_class_init(weed_name,"Frei0r developers",pversion,0,&frei0r_init,&frei0r_process,&frei0r_deinit,in_chantmpls,out_chantmpls,in_params,NULL);
+
+	  weed_set_string_value(filter_class,"extra_authors",(char *)f0rinfo.author);
 
 	  if (is_unstable) {
 	    weed_set_boolean_value(filter_class,"plugin_unstable",WEED_TRUE);

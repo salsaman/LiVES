@@ -2174,7 +2174,6 @@ void create_LiVES (void) {
   gtk_widget_show (hbox3);
   gtk_box_pack_start (GTK_BOX (vbox4), hbox3, FALSE, TRUE, 0);
 
-  //add_fill_to_box(LIVES_BOX(hbox3));
 
   widget_opts.expand=TRUE;
   mainw->spinbutton_start = lives_standard_spin_button_new (NULL,FALSE,0., 0., 0., 1., 100.,0,
@@ -2217,7 +2216,6 @@ void create_LiVES (void) {
   widget_opts.expand=FALSE;
   gtk_widget_show (mainw->spinbutton_end);
 
-  // add_fill_to_box(LIVES_BOX(hbox3));
 
   gtk_entry_set_width_chars (GTK_ENTRY (mainw->spinbutton_end),10);
   lives_widget_set_can_focus(mainw->spinbutton_end,TRUE);

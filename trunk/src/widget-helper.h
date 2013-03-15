@@ -755,6 +755,7 @@ typedef struct {
   boolean pack_end;
   boolean line_wrap; // line wrapping for labels
   boolean non_modal; // non-modal for dialogs
+  boolean expand; // whether spin,check,radio buttons should expand
   double scale; // scale factor for all sizes
   int packing_width; // default should be W_PACKING_WIDTH
   int packing_height; // default should be W_PACKING_HEIGHT
@@ -776,6 +777,7 @@ const widget_opts_t def_widget_opts = {
     FALSE, //pack_end
     FALSE, // line_wrap
     FALSE, // non_modal
+    FALSE, // no expand
     1.0, // default scale
     W_PACKING_WIDTH, // def packing width
     W_PACKING_HEIGHT, // def packing height

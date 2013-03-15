@@ -952,13 +952,13 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 	    }
 
 	  }
-	fprintf(stderr,"3checking %s\n",plug1);
 
 	  snprintf(weed_name,PATH_MAX,"LADSPA: %s",laddes->Name);
 
-	  filter_class=weed_filter_class_init(weed_name,laddes->Maker,0,0,&ladspa_init,&ladspa_process,&ladspa_deinit,
+	  filter_class=weed_filter_class_init(weed_name,"LADSPA developers",0,0,&ladspa_init,&ladspa_process,&ladspa_deinit,
 					      in_chantmpls,out_chantmpls,in_params,out_params);
 	
+	  weed_set_string_value(filter_class,"extra_authors",laddes->Maker);
 
 	  weed_set_voidptr_value(filter_class,"plugin_lad_descriptor",laddes);
 

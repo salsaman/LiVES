@@ -2566,7 +2566,7 @@ weed_plant_t *append_filter_init_event (weed_plant_t *event_list, weed_timecode_
 
   weed_set_int64_value (event,"timecode",tc);
   weed_set_int_value (event,"hint",WEED_EVENT_HINT_FILTER_INIT);
-  weed_set_string_value (event,"filter",(tmp=make_weed_hashname (filter_idx,TRUE)));
+  weed_set_string_value (event,"filter",(tmp=make_weed_hashname (filter_idx,TRUE,FALSE)));
   g_free(tmp);
 
   filter=get_weed_filter(filter_idx);

@@ -2565,7 +2565,7 @@ void lives_osc_cb_fx_getname(void *context, int arglen, const void *vargs, OSCTi
   }
   else return lives_osc_notify_failure();
 
-  retval=make_weed_hashname(fidx, FALSE);
+  retval=make_weed_hashname(fidx, FALSE, FALSE);
 
   lives_status_send(retval);
 

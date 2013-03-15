@@ -5143,7 +5143,7 @@ static void mt_set_atrans_effect (GtkMenuItem *menuitem, gpointer user_data) {
   prefs->atrans_fx=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(menuitem),"idx"));
 
   // set pref
-  atrans_hash=make_weed_hashname(prefs->atrans_fx,FALSE);
+  atrans_hash=make_weed_hashname(prefs->atrans_fx,FALSE,FALSE);
   set_pref("current_autotrans",atrans_hash);
   g_free(atrans_hash);
 }

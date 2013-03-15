@@ -1624,9 +1624,10 @@ LiVESWidget *lives_standard_check_button_new(const char *labeltext, boolean use_
   }
   
   if (box!=NULL) {
-    if (GTK_IS_HBOX(box)) hbox=GTK_WIDGET(box);
+    if (LIVES_IS_HBOX(box)) hbox=GTK_WIDGET(box);
     else {
       hbox = lives_hbox_new (FALSE, 0);
+      gtk_widget_show(hbox);
       gtk_box_pack_start (GTK_BOX (box), hbox, FALSE, FALSE, widget_opts.packing_height);
     }
     
@@ -1636,7 +1637,7 @@ LiVESWidget *lives_standard_check_button_new(const char *labeltext, boolean use_
     if (widget_opts.swap_label&&eventbox!=NULL)
       gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, widget_opts.packing_width);
     
-    gtk_box_pack_start (GTK_BOX (hbox), checkbutton, FALSE, FALSE, widget_opts.packing_width);
+    gtk_box_pack_start (GTK_BOX (hbox), checkbutton, widget_opts.expand, FALSE, eventbox==NULL?0:widget_opts.packing_width);
 
     if (!widget_opts.swap_label&&eventbox!=NULL)
       gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, widget_opts.packing_width);
@@ -1690,9 +1691,10 @@ LiVESWidget *lives_standard_radio_button_new(const char *labeltext, boolean use_
 
 
   if (box!=NULL) {
-    if (GTK_IS_HBOX(box)) hbox=GTK_WIDGET(box);
+    if (LIVES_IS_HBOX(box)) hbox=GTK_WIDGET(box);
     else {
       hbox = lives_hbox_new (FALSE, 0);
+      gtk_widget_show(hbox);
       gtk_box_pack_start (GTK_BOX (box), hbox, FALSE, FALSE, widget_opts.packing_height);
     }
     
@@ -1701,7 +1703,7 @@ LiVESWidget *lives_standard_radio_button_new(const char *labeltext, boolean use_
     if (widget_opts.swap_label&&eventbox!=NULL)
       gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, widget_opts.packing_width);
 
-    gtk_box_pack_start (GTK_BOX (hbox), radiobutton, FALSE, FALSE, widget_opts.packing_width);
+    gtk_box_pack_start (GTK_BOX (hbox), radiobutton, widget_opts.expand, FALSE, eventbox==NULL?0:widget_opts.packing_width);
 
     if (!widget_opts.swap_label&&eventbox!=NULL)
       gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, widget_opts.packing_width);
@@ -1770,21 +1772,19 @@ LiVESWidget *lives_standard_spin_button_new(const char *labeltext, boolean use_m
   }
 
   if (box!=NULL) {
-    if (GTK_IS_HBOX(box)) hbox=GTK_WIDGET(box);
+    if (LIVES_IS_HBOX(box)) hbox=GTK_WIDGET(box);
     else {
       hbox = lives_hbox_new (FALSE, 0);
+      gtk_widget_show(hbox);
       gtk_box_pack_start (GTK_BOX (box), hbox, FALSE, FALSE, widget_opts.packing_height);
     }
 
     lives_box_set_homogeneous(LIVES_BOX(hbox),FALSE);
 
-    hbox = lives_hbox_new (FALSE, 0);
-    gtk_box_pack_start (GTK_BOX (box), hbox, FALSE, FALSE, 0);
-    
     if (!widget_opts.swap_label&&eventbox!=NULL)
       gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, widget_opts.packing_width);
     
-    gtk_box_pack_start (GTK_BOX (hbox), spinbutton, FALSE, FALSE, widget_opts.packing_width);
+    gtk_box_pack_start (GTK_BOX (hbox), spinbutton, widget_opts.expand, FALSE, eventbox==NULL?0:widget_opts.packing_width);
     
     if (widget_opts.swap_label&&eventbox!=NULL)
       gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, widget_opts.packing_width);
@@ -1835,7 +1835,7 @@ LiVESWidget *lives_standard_combo_new (const char *labeltext, boolean use_mnemon
   }
 
   if (box!=NULL) {
-    if (GTK_IS_HBOX(box)) hbox=GTK_WIDGET(box);
+    if (LIVES_IS_HBOX(box)) hbox=GTK_WIDGET(box);
     else {
       hbox = lives_hbox_new (FALSE, 0);
       gtk_box_pack_start (GTK_BOX (box), hbox, FALSE, FALSE, widget_opts.packing_height);
@@ -1845,7 +1845,7 @@ LiVESWidget *lives_standard_combo_new (const char *labeltext, boolean use_mnemon
     
     if (!widget_opts.swap_label&&eventbox!=NULL)
       gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, widget_opts.packing_width);
-    gtk_box_pack_start (GTK_BOX (hbox), combo, TRUE, TRUE, widget_opts.packing_width);
+    gtk_box_pack_start (GTK_BOX (hbox), combo, TRUE, TRUE, eventbox==NULL?0:widget_opts.packing_width);
     if (widget_opts.swap_label&&eventbox!=NULL)
       gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, widget_opts.packing_width);
   }
@@ -1897,9 +1897,10 @@ LiVESWidget *lives_standard_entry_new(const char *labeltext, boolean use_mnemoni
 
 
   if (box!=NULL) {
-    if (GTK_IS_HBOX(box)) hbox=GTK_WIDGET(box);
+    if (LIVES_IS_HBOX(box)) hbox=GTK_WIDGET(box);
     else {
       hbox = lives_hbox_new (FALSE, 0);
+      gtk_widget_show(hbox);
       gtk_box_pack_start (GTK_BOX (box), hbox, FALSE, FALSE, widget_opts.packing_height);
     }
     
@@ -1908,7 +1909,7 @@ LiVESWidget *lives_standard_entry_new(const char *labeltext, boolean use_mnemoni
     if (!widget_opts.swap_label&&label!=NULL)
       gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, widget_opts.packing_width);
     
-    gtk_box_pack_start (GTK_BOX (hbox), entry, TRUE, TRUE, widget_opts.packing_width);
+    gtk_box_pack_start (GTK_BOX (hbox), entry, TRUE, TRUE, label==NULL?0:widget_opts.packing_width);
     
     if (widget_opts.swap_label&&label!=NULL)
       gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, widget_opts.packing_width);

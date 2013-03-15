@@ -7180,7 +7180,7 @@ void on_full_screen_activate (GtkMenuItem *menuitem, gpointer user_data) {
 	  gtk_widget_show(mainw->framebar);
 	}
 	
-	gtk_container_set_border_width (GTK_CONTAINER (mainw->playframe), 10);
+	gtk_container_set_border_width (GTK_CONTAINER (mainw->playframe), widget_opts.border_width);
 	
 	gtk_widget_set_sensitive(mainw->fade,TRUE);
 	gtk_widget_set_sensitive(mainw->dsize,TRUE);
@@ -7509,7 +7509,7 @@ void on_sepwin_activate (GtkMenuItem *menuitem, gpointer user_data) {
 	  if ((!mainw->faded&&mainw->fs&&((prefs->play_monitor!=prefs->gui_monitor&&prefs->play_monitor>0)))||
 					 (mainw->fs&&mainw->vpp!=NULL&&
 					  !(mainw->vpp->capabilities&VPP_LOCAL_DISPLAY))) {
-	    gtk_container_set_border_width (GTK_CONTAINER (mainw->playframe), 10);
+	    gtk_container_set_border_width (GTK_CONTAINER (mainw->playframe), widget_opts.border_width);
 	    unfade_background();
 	    gtk_widget_show(mainw->frame1);
 	    gtk_widget_show(mainw->frame2);
@@ -8628,7 +8628,7 @@ void popup_lmap_errors(GtkMenuItem *menuitem, gpointer user_data) {
 		    G_CALLBACK (lives_general_button_clicked),
 		    textwindow);
 
-  gtk_container_set_border_width (GTK_CONTAINER (button), 12);
+  gtk_container_set_border_width (GTK_CONTAINER (button), widget_opts.border_width);
   lives_widget_set_can_focus_and_default (button);
 
   textwindow->clear_button = gtk_button_new_with_mnemonic (_("Clear _Errors"));
@@ -8639,14 +8639,14 @@ void popup_lmap_errors(GtkMenuItem *menuitem, gpointer user_data) {
 		    G_CALLBACK (on_lerrors_clear_clicked),
 		    GINT_TO_POINTER(FALSE));
 
-  gtk_container_set_border_width (GTK_CONTAINER (textwindow->clear_button), 12);
+  gtk_container_set_border_width (GTK_CONTAINER (textwindow->clear_button), widget_opts.border_width);
   lives_widget_set_can_focus_and_default (textwindow->clear_button);
 
   textwindow->delete_button = gtk_button_new_with_mnemonic (_("_Delete affected layouts"));
 
   gtk_dialog_add_action_widget (GTK_DIALOG (textwindow->dialog), textwindow->delete_button, GTK_RESPONSE_CANCEL);
 
-  gtk_container_set_border_width (GTK_CONTAINER (textwindow->delete_button), 12);
+  gtk_container_set_border_width (GTK_CONTAINER (textwindow->delete_button), widget_opts.border_width);
   lives_widget_set_can_focus_and_default (textwindow->delete_button);
 
   g_signal_connect (GTK_OBJECT (textwindow->delete_button), "clicked",
@@ -9414,7 +9414,8 @@ void on_effects_paused (GtkButton *button, gpointer user_data) {
 	if (!cfile->nokeep) {
 	  if (!cfile->opening) gtk_button_set_label(GTK_BUTTON(cfile->proc_ptr->cancel_button),_ ("Keep"));
 	  else gtk_button_set_label(GTK_BUTTON(cfile->proc_ptr->cancel_button),_ ("Enough"));
-	  gtk_label_set_text(GTK_LABEL(cfile->proc_ptr->label2),_ ("\nPaused\n(click Keep to keep what you have and stop)\n(click Resume to continue processing)"));
+	  gtk_label_set_text(GTK_LABEL(cfile->proc_ptr->label2),
+			     _ ("\nPaused\n(click Keep to keep what you have and stop)\n(click Resume to continue processing)"));
 	}
 	d_print(_ ("paused..."));
       }

@@ -18715,8 +18715,8 @@ void on_save_event_list_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
   gtk_widget_show_all(hbox);
 
-  if (!strlen(layout_name)) esave_file=choose_file(esave_dir,NULL,filt,GTK_FILE_CHOOSER_ACTION_SAVE,NULL,hbox);
-  else esave_file=choose_file(esave_dir,layout_name,filt,GTK_FILE_CHOOSER_ACTION_SAVE,NULL,hbox);
+  if (!strlen(layout_name)) esave_file=choose_file(esave_dir,NULL,filt,LIVES_FILE_CHOOSER_ACTION_SAVE,NULL,hbox);
+  else esave_file=choose_file(esave_dir,layout_name,filt,LIVES_FILE_CHOOSER_ACTION_SAVE,NULL,hbox);
 
   ar_layout=prefs->ar_layout;
   prefs->ar_layout=orig_ar_layout;
@@ -20315,7 +20315,7 @@ weed_plant_t *load_event_list(lives_mt *mt, gchar *eload_file) {
     g_signal_connect (GTK_OBJECT (ar_checkbutton), "toggled",
 		      G_CALLBACK (on_autoreload_toggled),
 		      GINT_TO_POINTER(2));
-    eload_file=choose_file(startdir,NULL,filt,GTK_FILE_CHOOSER_ACTION_OPEN,NULL,hbox);
+    eload_file=choose_file(startdir,NULL,filt,LIVES_FILE_CHOOSER_ACTION_OPEN,NULL,hbox);
 
     g_free(startdir);
   }

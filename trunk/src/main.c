@@ -1381,6 +1381,7 @@ static void lives_init(_ign_opts *ign_opts) {
       g_snprintf(mainw->vid_save_dir,PATH_MAX,"%s",prefs->def_vid_save_dir);
       ensure_isdir(mainw->vid_save_dir);
 
+      g_snprintf(mainw->vid_dl_dir,PATH_MAX,"%s",mainw->vid_save_dir);
       
       get_pref_utf8("audio_dir",prefs->def_audio_dir,PATH_MAX);
       if (!strlen(prefs->def_audio_dir)) {

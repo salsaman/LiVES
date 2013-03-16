@@ -1105,7 +1105,7 @@ void save_frame (GtkMenuItem *menuitem, gpointer user_data) {
     ttl=g_strdup (_("LiVES: Save Frame as..."));
 
 
-  filename=choose_file(strlen(mainw->image_dir)?mainw->image_dir:NULL,NULL,filt,GTK_FILE_CHOOSER_ACTION_SAVE,ttl,NULL);
+  filename=choose_file(strlen(mainw->image_dir)?mainw->image_dir:NULL,NULL,filt,LIVES_FILE_CHOOSER_ACTION_SAVE,ttl,NULL);
 
   g_free (filt[0]);
   g_free (ttl);
@@ -1213,7 +1213,7 @@ void save_file (int clip, int start, int end, const char *filename) {
   if (filename==NULL) {
     gchar *ttl=g_strdup (_("LiVES: Save Clip as..."));
     do {
-      n_file_name=choose_file(mainw->vid_save_dir,NULL,NULL,GTK_FILE_CHOOSER_ACTION_SAVE,ttl,hbox);
+      n_file_name=choose_file(mainw->vid_save_dir,NULL,NULL,LIVES_FILE_CHOOSER_ACTION_SAVE,ttl,hbox);
       if (n_file_name==NULL) return;
     } while (!strlen(n_file_name));
     g_snprintf(mainw->vid_save_dir,PATH_MAX,"%s",n_file_name);

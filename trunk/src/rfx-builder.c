@@ -3994,7 +3994,7 @@ void on_export_rfx_activate (GtkMenuItem *menuitem, gpointer user_data) {
   
   if (script_name==NULL||!strlen(script_name)) return;  // user cancelled
 
-  filename = choose_file (NULL,script_name,NULL,GTK_FILE_CHOOSER_ACTION_SAVE,_ ("LiVES: - Export Script to..."),NULL);
+  filename = choose_file (NULL,script_name,NULL,LIVES_FILE_CHOOSER_ACTION_SAVE,_ ("LiVES: - Export Script to..."),NULL);
 
   if (filename==NULL) return;
   
@@ -4029,7 +4029,7 @@ void on_import_rfx_activate (GtkMenuItem *menuitem, gpointer user_data) {
   gchar *com,*msg,*tmp,*tmp2,*tmpx;
   gchar basename[PATH_MAX];
 
-  gchar *filename=choose_file(NULL,NULL,NULL,GTK_FILE_CHOOSER_ACTION_OPEN,_ ("LiVES: Import Script from..."),NULL);
+  gchar *filename=choose_file(NULL,NULL,NULL,LIVES_FILE_CHOOSER_ACTION_OPEN,_ ("LiVES: Import Script from..."),NULL);
 
   if (filename==NULL) return;
 

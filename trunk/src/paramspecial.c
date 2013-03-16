@@ -296,14 +296,12 @@ static void passwd_toggle_vis(GtkToggleButton *b, gpointer entry) {
       epos=g_list_index(clist,param->widgets[0]);
       g_list_free(clist);
 
-      buttond = gtk_file_chooser_button_new(_("LiVES: Select file"),GTK_FILE_CHOOSER_ACTION_OPEN);
-      gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(buttond),g_get_current_dir());
+      buttond = lives_standard_file_button_new (FALSE,g_get_current_dir());
       gtk_box_pack_start(GTK_BOX(box),buttond,FALSE,FALSE,widget_opts.packing_width);
       gtk_box_reorder_child(GTK_BOX(box),buttond,epos); // insert after label, before textbox
+      g_signal_connect(buttond, "clicked", G_CALLBACK (on_filesel_button_clicked), (gpointer)param->widgets[0]);
 
       if (!lives_widget_is_sensitive(param->widgets[0])) gtk_widget_set_sensitive(buttond,FALSE);
-
-      g_signal_connect (GTK_FILE_CHOOSER(buttond), "selection-changed",G_CALLBACK (on_fileread_clicked),(gpointer)param->widgets[0]);
 
       if (GTK_IS_ENTRY(param->widgets[0])) gtk_entry_set_max_length(GTK_ENTRY (param->widgets[0]),PATH_MAX);
 

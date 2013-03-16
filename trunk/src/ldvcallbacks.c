@@ -18,7 +18,7 @@ void on_camgrab_clicked (GtkButton *button, gpointer user_data) {
   dvgrabw->filename=find_free_camfile(cam->format);
   if (dvgrabw->filename==NULL) return;
   gtk_widget_set_sensitive(dvgrabw->grab,FALSE);
-  lives_set_cursor_style(LIVES_CURSOR_BUSY,dvgrabw->window);
+  lives_set_cursor_style(LIVES_CURSOR_BUSY,dvgrabw->dialog);
   if (!dvgrabw->playing) on_camplay_clicked(NULL,user_data);
   msg=g_strdup_printf(_("Recording to %s/%s"),dvgrabw->dirname,dvgrabw->filename);
   gtk_entry_set_text(GTK_ENTRY(dvgrabw->status_entry),msg);
@@ -40,7 +40,7 @@ void on_camstop_clicked (GtkButton *button, gpointer user_data) {
     cam->pgid=0;
   }
 
-  lives_set_cursor_style(LIVES_CURSOR_NORMAL,dvgrabw->window);
+  lives_set_cursor_style(LIVES_CURSOR_NORMAL,dvgrabw->dialog);
   camstop(cam);
   gtk_button_set_label(GTK_BUTTON(dvgrabw->play),"gtk-media-play");
   gtk_widget_set_sensitive(dvgrabw->grab,TRUE);
@@ -105,7 +105,7 @@ void on_camquit_clicked (GtkButton *button, gpointer user_data) {
   s_cam *cam=(s_cam *)user_data;
   on_camstop_clicked(button,user_data);
   //if (cam->format==CAM_FORMAT_HDV) close_raw1394(cam->rec_handle);
-  gtk_widget_destroy(dvgrabw->window);
+  gtk_widget_destroy(dvgrabw->dialog);
   if (dvgrabw->cursor!=NULL) lives_cursor_unref(dvgrabw->cursor);
   if (dvgrabw->filename!=NULL) g_free(dvgrabw->filename);
   if (dvgrabw->dirname!=NULL) g_free(dvgrabw->dirname);

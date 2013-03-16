@@ -29,24 +29,24 @@ struct _dvgrabw *create_camwindow (s_cam *cam, gint type)
 
   dvgrabw->filename=NULL;
 
-  dvgrabw->window = lives_standard_dialog_new (_("LiVES: DVGrab"),FALSE);
+  dvgrabw->dialog = lives_standard_dialog_new (_("LiVES: DVGrab"),FALSE);
   dvgrabw->playing=FALSE;
 
-  gtk_container_set_border_width (GTK_CONTAINER (dvgrabw->window), widget_opts.border_width*2);
+  gtk_container_set_border_width (GTK_CONTAINER (dvgrabw->dialog), widget_opts.border_width*2);
 
   if (prefs->show_gui) {
-    if (mainw->multitrack==NULL) gtk_window_set_transient_for(GTK_WINDOW(dvgrabw->window),GTK_WINDOW(mainw->LiVES));
-    else gtk_window_set_transient_for(GTK_WINDOW(dvgrabw->window),GTK_WINDOW(mainw->multitrack->window));
+    if (mainw->multitrack==NULL) gtk_window_set_transient_for(GTK_WINDOW(dvgrabw->dialog),GTK_WINDOW(mainw->LiVES));
+    else gtk_window_set_transient_for(GTK_WINDOW(dvgrabw->dialog),GTK_WINDOW(mainw->multitrack->window));
   }
 
-  vbox=lives_dialog_get_content_area(dvgrabw->window);
+  vbox=lives_dialog_get_content_area(LIVES_DIALOG(dvgrabw->dialog));
 
   hbox = lives_hbox_new (FALSE,0);
   gtk_box_pack_start(GTK_BOX(vbox),hbox,FALSE,FALSE,widget_opts.packing_height);
 
 
   // TODO - lives_standard_dir_entry_new
-  buttond = gtk_file_chooser_button_new(_("Save directory"),GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER);
+  buttond = gtk_file_chooser_button_new(_("Save directory"),LIVES_FILE_CHOOSER_ACTION_SELECT_FOLDER);
   gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(buttond),g_get_current_dir());
 
   label=lives_standard_label_new_with_mnemonic(_("Save _directory :"),buttond);
@@ -145,11 +145,11 @@ struct _dvgrabw *create_camwindow (s_cam *cam, gint type)
   g_signal_connect (dvgrabw->quit, "clicked",G_CALLBACK (on_camquit_clicked),(gpointer)cam);
   g_signal_connect (buttond, "current_folder_changed",G_CALLBACK (on_camfile_clicked),(gpointer)direntry);
 
-  g_signal_connect (GTK_OBJECT (dvgrabw->window), "delete_event",
+  g_signal_connect (GTK_OBJECT (dvgrabw->dialog), "delete_event",
 		    G_CALLBACK (on_camdelete_event),
 		    (gpointer)cam);
 
-  gtk_widget_show_all(dvgrabw->window);
+  gtk_widget_show_all(dvgrabw->dialog);
   
   dvgrabw->dirname=NULL;
 

@@ -864,12 +864,12 @@ void on_render_fx_pre_activate (GtkMenuItem *menuitem, lives_rfx_t *rfx) {
 
 
 
-  dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (fx_dialog[n]));
-
   cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
     
   fxw_accel_group = GTK_ACCEL_GROUP(gtk_accel_group_new ());
   gtk_window_add_accel_group (GTK_WINDOW (fx_dialog[n]), fxw_accel_group);
+
+  dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (fx_dialog[n]));
 
   if (!no_process||is_defaults||rfx->status==RFX_STATUS_SCRAP) {
     gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area), GTK_BUTTONBOX_END);
@@ -891,6 +891,9 @@ void on_render_fx_pre_activate (GtkMenuItem *menuitem, lives_rfx_t *rfx) {
     okbutton = gtk_button_new_with_mnemonic (_("Set as default"));
     if (!has_param) gtk_widget_set_sensitive(okbutton,FALSE);
     cancelbutton = gtk_button_new_with_mnemonic (_("Close _window"));
+    if (no_process) {
+      set_button_width(dialog_action_area,okbutton,DEF_BUTTON_WIDTH);
+    }
     if (rfx->status==RFX_STATUS_WEED) {
       resetbutton = gtk_button_new_with_mnemonic (_("Reset"));
       gtk_dialog_add_action_widget (GTK_DIALOG (fx_dialog[n]), resetbutton, LIVES_RESET);
@@ -1706,7 +1709,9 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, boolean add_
 
   case LIVES_PARAM_STRING_LIST:
 
+    widget_opts.expand=TRUE;
     combo=lives_standard_combo_new(name, use_mnemonic, param->list, (LiVESBox *)hbox, param->desc);
+    widget_opts.expand=FALSE;
 
     if (rfx->status==RFX_STATUS_WEED&&(disp_string=get_weed_display_string((weed_plant_t *)rfx->source,pnum))!=NULL) {
       lives_combo_set_active_string (LIVES_COMBO(combo),disp_string);

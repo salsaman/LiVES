@@ -511,34 +511,57 @@ void lives_exit (void) {
 
 
 
-void on_fileread_clicked (GtkFileChooser *fch, gpointer user_data) {
+void on_filesel_button_clicked (GtkButton *button, gpointer user_data) {
   GtkWidget *tentry=GTK_WIDGET(user_data);
-  gchar *text=gtk_file_chooser_get_filename(fch);
+  gchar *dirname;
+  gchar *fname;
   gchar *tmp;
 
-  if (text==NULL) return;
+  gchar *def_dir=(gchar *)g_object_get_data(G_OBJECT(button),"def_dir");
 
-  if (GTK_IS_TEXT_VIEW(tentry)) tentry=(GtkWidget *)gtk_text_view_get_buffer(GTK_TEXT_VIEW(tentry));
+  boolean is_dir=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(button),"is_dir"));
 
-  if (GTK_IS_ENTRY(tentry)) gtk_entry_set_text(GTK_ENTRY(tentry),(tmp=g_filename_to_utf8(text,-1,NULL,NULL,NULL)));
-  else gtk_text_buffer_set_text (GTK_TEXT_BUFFER(tentry), (tmp=g_filename_to_utf8(text,-1,NULL,NULL,NULL)), -1);
+  if (GTK_IS_TEXT_VIEW(tentry)) fname=text_view_get_text(LIVES_TEXT_VIEW(tentry));
+  else fname=g_strdup(gtk_entry_get_text(GTK_ENTRY(tentry)));
+
+  if (!strlen(fname)) {
+    g_free(fname);
+    fname=def_dir;
+  }
+
+  lives_widget_context_update();
+
+  dirname=choose_file(fname,NULL,NULL,
+		      is_dir?LIVES_FILE_CHOOSER_ACTION_SELECT_FOLDER:
+		      (fname==def_dir&&!strcmp(def_dir,LIVES_DEVICE_DIR))?LIVES_FILE_CHOOSER_ACTION_SELECT_DEVICE:
+		      LIVES_FILE_CHOOSER_ACTION_OPEN,
+		      NULL,NULL);
+
+  if (fname!=NULL&&fname!=def_dir) g_free(fname);
+
+  if (dirname==NULL) return;
+
+  g_snprintf(file_name,PATH_MAX,"%s",dirname);
+  g_free(dirname);
+
+  if (button!=NULL) {
+    if (GTK_IS_ENTRY(tentry)) gtk_entry_set_text(GTK_ENTRY(tentry),(tmp=g_filename_to_utf8(file_name,-1,NULL,NULL,NULL)));
+    else text_view_set_text (LIVES_TEXT_VIEW(tentry), (tmp=g_filename_to_utf8(file_name,-1,NULL,NULL,NULL)), -1);
+    g_free(tmp);
+  }
 
   // force update to be recognized
   if (g_object_get_data(G_OBJECT(tentry),"rfx")!=NULL) 
     after_param_text_changed(tentry,(lives_rfx_t *)g_object_get_data(G_OBJECT(tentry),"rfx"));
-
-  g_free(tmp);
-  g_free(text);
-
 }
 
 
 
 void on_filesel_complex_clicked (GtkButton *button, GtkEntry *entry) {
+  // append /livestmp
   size_t chklen=strlen(LIVES_TMP_NAME);
 
-  // append /livestmp
-  on_filesel_simple_clicked (NULL,entry);
+  on_filesel_button_clicked (NULL,entry);
 
   // TODO - dirsep
 #ifndef IS_MINGW
@@ -557,22 +580,6 @@ void on_filesel_complex_clicked (GtkButton *button, GtkEntry *entry) {
 
   gtk_entry_set_text(entry,file_name);
 
-}
-
-
-void on_filesel_simple_clicked (GtkButton *button, GtkEntry *entry) {
-  // callback for directory browsing buttons
-  gchar *dirname;
-  gchar *fname=g_strdup(gtk_entry_get_text(entry));
-  lives_widget_context_update();
-  dirname=choose_file(fname,NULL,NULL,GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER,NULL,NULL);
-  if (dirname!=NULL) {
-    g_snprintf(file_name,PATH_MAX,"%s",dirname);
-    g_free(dirname);
-  }
-  else g_snprintf(file_name,PATH_MAX,"%s",fname);
-  g_free(fname);
-  if (button!=NULL) gtk_entry_set_text(entry,file_name);
 }
 
 
@@ -824,6 +831,8 @@ void on_utube_select (GtkButton *button, gpointer user_data) {
   }
 
   dirname=g_strdup(gtk_entry_get_text(GTK_ENTRY(locw->dir_entry)));
+  ensure_isdir(dirname);
+  g_snprintf(mainw->vid_dl_dir,PATH_MAX,"%s",dirname);
 
   gtk_widget_destroy(locw->dialog);
   lives_widget_context_update();
@@ -1288,7 +1297,7 @@ on_import_proj_activate                      (GtkMenuItem     *menuitem,
 {
   gchar *com;
   gchar *filt[]={"*.lv2",NULL};
-  gchar *proj_file=choose_file(NULL,NULL,filt,GTK_FILE_CHOOSER_ACTION_OPEN,NULL,NULL);
+  gchar *proj_file=choose_file(NULL,NULL,filt,LIVES_FILE_CHOOSER_ACTION_OPEN,NULL,NULL);
   gchar *info_file;
   gchar *new_set;
   int info_fd;
@@ -1436,7 +1445,7 @@ on_export_proj_activate                      (GtkMenuItem     *menuitem,
   }
 
   def_file=g_strdup_printf("%s.lv2",mainw->set_name);
-  proj_file=choose_file(NULL,def_file,filt,GTK_FILE_CHOOSER_ACTION_SAVE,NULL,NULL);
+  proj_file=choose_file(NULL,def_file,filt,LIVES_FILE_CHOOSER_ACTION_SAVE,NULL,NULL);
   g_free(def_file);
 
   if (proj_file==NULL) return;
@@ -1483,7 +1492,7 @@ on_export_proj_activate                      (GtkMenuItem     *menuitem,
 void on_backup_activate (GtkMenuItem *menuitem, gpointer user_data) {
   gchar *filt[]={"*.lv1",NULL};
   gchar *file_name = choose_file (strlen(mainw->proj_save_dir)?mainw->proj_save_dir:NULL,NULL,filt,
-				  GTK_FILE_CHOOSER_ACTION_SAVE,_ ("Backup as .lv1 file"),NULL);
+				  LIVES_FILE_CHOOSER_ACTION_SAVE,_ ("Backup as .lv1 file"),NULL);
 
   if (file_name==NULL) return;
 
@@ -1499,7 +1508,7 @@ void on_backup_activate (GtkMenuItem *menuitem, gpointer user_data) {
 void on_restore_activate (GtkMenuItem *menuitem, gpointer user_data) {
   gchar *filt[]={"*.lv1",NULL};
   gchar *file_name = choose_file (strlen(mainw->proj_load_dir)?mainw->proj_load_dir:NULL,NULL,filt,
-				  GTK_FILE_CHOOSER_ACTION_OPEN,_ ("Restore .lv1 file"),NULL);
+				  LIVES_FILE_CHOOSER_ACTION_OPEN,_ ("Restore .lv1 file"),NULL);
 
   if (file_name==NULL) return;
 
@@ -5199,7 +5208,7 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
 	if ((cdata=get_decoder_cdata(cfile,NULL))==NULL) {
 	  if (mainw->error) {
 	    if (do_original_lost_warning(orig_file_name)) {
-	      gchar *new_file_name=choose_file(vid_open_dir,NULL,NULL,GTK_FILE_CHOOSER_ACTION_OPEN,NULL,NULL);
+	      gchar *new_file_name=choose_file(vid_open_dir,NULL,NULL,LIVES_FILE_CHOOSER_ACTION_OPEN,NULL,NULL);
 	      if (new_file_name!=NULL) {
 		g_snprintf(cfile->file_name,PATH_MAX,"%s",new_file_name);
 		g_snprintf(vid_open_dir,PATH_MAX,"%s",cfile->file_name);
@@ -6759,7 +6768,7 @@ void on_save_textview_clicked (GtkButton *button, gpointer user_data) {
   gtk_widget_hide(gtk_widget_get_toplevel(GTK_WIDGET(button)));
   lives_widget_context_update();
 
-  save_file=choose_file(NULL,NULL,filt,GTK_FILE_CHOOSER_ACTION_SAVE,NULL,NULL);
+  save_file=choose_file(NULL,NULL,filt,LIVES_FILE_CHOOSER_ACTION_SAVE,NULL,NULL);
 
   if (save_file==NULL) {
     gtk_widget_show(gtk_widget_get_toplevel(GTK_WIDGET(button)));
@@ -8104,9 +8113,9 @@ void on_load_subs_activate (GtkMenuItem *menuitem, gpointer user_data) {
   ttl=g_strdup (_("LiVES: Load subtitles from..."));
 
   if (strlen(mainw->vid_load_dir)) {
-    subfile=choose_file(mainw->vid_load_dir,NULL,filt,GTK_FILE_CHOOSER_ACTION_OPEN,ttl,NULL);
+    subfile=choose_file(mainw->vid_load_dir,NULL,filt,LIVES_FILE_CHOOSER_ACTION_OPEN,ttl,NULL);
   }
-  else subfile=choose_file(NULL,NULL,filt,GTK_FILE_CHOOSER_ACTION_OPEN,ttl,NULL);
+  else subfile=choose_file(NULL,NULL,filt,LIVES_FILE_CHOOSER_ACTION_OPEN,ttl,NULL);
   g_free(ttl);
 
   if (subfile==NULL) return; // cancelled
@@ -8195,7 +8204,7 @@ void on_save_subs_activate (GtkMenuItem *menuitem, gpointer user_data) {
   g_snprintf(xfname2,512,"%s",mainw->subt_save_file);
   get_basename(xfname2);
 
-  subfile=choose_file(xfname,xfname2,NULL,GTK_FILE_CHOOSER_ACTION_SAVE,NULL,NULL);
+  subfile=choose_file(xfname,xfname2,NULL,LIVES_FILE_CHOOSER_ACTION_SAVE,NULL,NULL);
 
   if (subfile==NULL) return; // cancelled
 
@@ -10718,11 +10727,11 @@ void on_export_audio_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
   if (cfile->end>0&&!GPOINTER_TO_INT (user_data)) {
     filename = choose_file (strlen(mainw->audio_dir)?mainw->audio_dir:NULL,NULL,
-			    filt,GTK_FILE_CHOOSER_ACTION_SAVE,_ ("Export Selected Audio as..."),NULL);
+			    filt,LIVES_FILE_CHOOSER_ACTION_SAVE,_ ("Export Selected Audio as..."),NULL);
   }
   else {
     filename = choose_file (strlen(mainw->audio_dir)?mainw->audio_dir:NULL,NULL,
-			    filt,GTK_FILE_CHOOSER_ACTION_SAVE,_ ("Export Audio as..."),NULL);
+			    filt,LIVES_FILE_CHOOSER_ACTION_SAVE,_ ("Export Audio as..."),NULL);
   }
 
   if (filename==NULL) return;

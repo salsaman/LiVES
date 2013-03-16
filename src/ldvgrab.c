@@ -331,7 +331,7 @@ void on_open_fw_activate (GtkMenuItem *menuitem, gpointer user_data) {
   cam->format=type;
   cam->grabbed_clips=FALSE;
   cam->pgid=0;
-  gtk_widget_show (dvgrabw->window);
+  gtk_widget_show (dvgrabw->dialog);
   dvgrabw->cam=cam;
 }
 

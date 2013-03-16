@@ -335,7 +335,7 @@ lives_pid_t lives_fork(const char *com) {
   if (!(ret=fork())) {
     setsid(); // create new session id
     setpgid(getpid(),0); // create new pgid
-    lives_system(com,TRUE);
+    system(com);
     _exit(0);
   }
 

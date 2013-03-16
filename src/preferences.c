@@ -1932,12 +1932,6 @@ _prefsw *create_prefs_dialog (void) {
   GtkWidget *dirbutton4;
   GtkWidget *dirbutton5;
   GtkWidget *dirbutton6;
-  GtkWidget *dirimage1;
-  GtkWidget *dirimage2;
-  GtkWidget *dirimage3;
-  GtkWidget *dirimage4;
-  GtkWidget *dirimage5;
-  GtkWidget *dirimage6;
   GtkWidget *hbox31;
   GtkWidget *pp_combo;
   GtkWidget *png;
@@ -1958,7 +1952,6 @@ _prefsw *create_prefs_dialog (void) {
 
   GtkWidget *label;
   GtkWidget *eventbox;
-  GtkWidget *vbox2;
   GtkWidget *buttond;
 
   // radio button groups
@@ -2595,13 +2588,13 @@ _prefsw *create_prefs_dialog (void) {
   // ---------------'
 
   prefsw->vbox_right_decoding = lives_vbox_new (FALSE, 20);
-  gtk_container_set_border_width (GTK_CONTAINER (prefsw->vbox_right_decoding), 20);
+  gtk_container_set_border_width (GTK_CONTAINER (prefsw->vbox_right_decoding), widget_opts.border_width*2);
 
   prefsw->scrollw_right_decoding = lives_standard_scrolled_window_new (0,0,prefsw->vbox_right_decoding,TRUE);
 
   hbox = lives_hbox_new (FALSE, 0);
   gtk_widget_show (hbox);
-  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_decoding), hbox, TRUE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_decoding), hbox, FALSE, FALSE, 0);
   // ---
 
 
@@ -2840,7 +2833,7 @@ _prefsw *create_prefs_dialog (void) {
   vbox69=lives_vbox_new (FALSE, 10);
   gtk_widget_show (vbox69);
   gtk_container_add (GTK_CONTAINER (frame4), vbox69);
-  gtk_container_set_border_width (GTK_CONTAINER (vbox69), 10);
+  gtk_container_set_border_width (GTK_CONTAINER (vbox69), widget_opts.border_width);
 
   prefsw->pbq_list=NULL;
   // TRANSLATORS: video quality, max len 50
@@ -2879,7 +2872,7 @@ _prefsw *create_prefs_dialog (void) {
 
   // ---
   hbox31 = lives_hbox_new (FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (vbox69), hbox31, TRUE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (vbox69), hbox31, FALSE, FALSE, 0);
 
   // ---
 #ifndef IS_MINGW
@@ -2889,7 +2882,9 @@ _prefsw *create_prefs_dialog (void) {
 #endif
   vid_playback_plugins = g_list_prepend (vid_playback_plugins, g_strdup(mainw->string_constants[LIVES_STRING_CONSTANT_NONE]));
 
+  widget_opts.expand=TRUE;
   pp_combo = lives_standard_combo_new(_("_Plugin"),TRUE,vid_playback_plugins,LIVES_BOX(hbox31),NULL);
+  widget_opts.expand=FALSE;
 
   advbutton = gtk_button_new_with_mnemonic (_("_Advanced"));
   gtk_widget_show (advbutton);
@@ -2984,7 +2979,10 @@ _prefsw *create_prefs_dialog (void) {
     audp = g_list_append (audp, g_strdup("mplayer"));
   }
 
+  widget_opts.expand=TRUE;
   prefsw->audp_combo = lives_standard_combo_new(_("_Player"),TRUE,audp,LIVES_BOX(vbox),NULL);
+  widget_opts.expand=FALSE;
+
   gtk_widget_show_all(gtk_widget_get_parent(prefsw->audp_combo));
 
   has_ap_rec=FALSE;
@@ -3031,7 +3029,7 @@ _prefsw *create_prefs_dialog (void) {
 
   //---
 
-  prefsw->audio_command_entry = lives_standard_entry_new (_("Audio play _command"),TRUE,"",40,255,LIVES_BOX(vbox),NULL);
+  prefsw->audio_command_entry = lives_standard_entry_new (_("Audio play _command"),TRUE,"",-1,255,LIVES_BOX(vbox),NULL);
 
 
   // get from prefs
@@ -3297,8 +3295,10 @@ _prefsw *create_prefs_dialog (void) {
     encoders=get_plugin_list (PLUGIN_ENCODERS,TRUE,NULL,NULL);
   }
 
+  widget_opts.expand=TRUE;
   prefsw->encoder_combo = lives_standard_combo_new(_("Encoder"),FALSE,encoders,
 						   LIVES_BOX (prefsw->vbox_right_encoding),NULL);
+  widget_opts.expand=FALSE;
 
 
   if (encoders!=NULL) {
@@ -3332,7 +3332,9 @@ _prefsw *create_prefs_dialog (void) {
     }
     
 
+    widget_opts.expand=TRUE;
     prefsw->ofmt_combo = lives_standard_combo_new(_("Output format"),FALSE,ofmt,LIVES_BOX(prefsw->vbox_right_encoding),NULL);
+    widget_opts.expand=FALSE;
 
     if (ofmt!=NULL) {
       lives_combo_set_active_string(LIVES_COMBO(prefsw->ofmt_combo), prefs->encoder.of_desc);
@@ -3346,7 +3348,9 @@ _prefsw *create_prefs_dialog (void) {
     }
 
 
+    widget_opts.expand=TRUE;
     prefsw->acodec_combo = lives_standard_combo_new(_("Audio codec"),FALSE,NULL,LIVES_BOX(prefsw->vbox_right_encoding),NULL);
+    widget_opts.expand=FALSE;
     prefs->acodec_list=NULL;
 
     set_acodec_list_from_allowed(prefsw, rdet);
@@ -3435,13 +3439,13 @@ _prefsw *create_prefs_dialog (void) {
 
 
 
-  prefsw->wpp_entry=lives_standard_entry_new(_("Weed plugin path"),TRUE,prefs->weed_plugin_path,40,PATH_MAX,LIVES_BOX(prefsw->vbox_right_effects),NULL);
+  prefsw->wpp_entry=lives_standard_entry_new(_("Weed plugin path"),TRUE,prefs->weed_plugin_path,-1,PATH_MAX,LIVES_BOX(prefsw->vbox_right_effects),NULL);
   gtk_widget_show_all(gtk_widget_get_parent(prefsw->wpp_entry));
 
-  prefsw->frei0r_entry=lives_standard_entry_new(_("Frei0r plugin path"),TRUE,prefs->frei0r_path,40,PATH_MAX,LIVES_BOX(prefsw->vbox_right_effects),NULL);
+  prefsw->frei0r_entry=lives_standard_entry_new(_("Frei0r plugin path"),TRUE,prefs->frei0r_path,-1,PATH_MAX,LIVES_BOX(prefsw->vbox_right_effects),NULL);
   gtk_widget_show_all(gtk_widget_get_parent(prefsw->frei0r_entry));
 
-  prefsw->ladspa_entry=lives_standard_entry_new(_("LADSPA plugin path"),TRUE,prefs->ladspa_path,40,PATH_MAX,LIVES_BOX(prefsw->vbox_right_effects),NULL);
+  prefsw->ladspa_entry=lives_standard_entry_new(_("LADSPA plugin path"),TRUE,prefs->ladspa_path,-1,PATH_MAX,LIVES_BOX(prefsw->vbox_right_effects),NULL);
   gtk_widget_show_all(gtk_widget_get_parent(prefsw->ladspa_entry));
 
 
@@ -3457,8 +3461,9 @@ _prefsw *create_prefs_dialog (void) {
   // -------------------'
 
   prefsw->table_right_directories = gtk_table_new (10, 3, FALSE);
-  gtk_container_set_border_width (GTK_CONTAINER (prefsw->table_right_directories), 20);
-  
+  gtk_container_set_border_width (GTK_CONTAINER (prefsw->table_right_directories), widget_opts.border_width*2);
+  gtk_table_set_col_spacings (GTK_TABLE (prefsw->table_right_directories), widget_opts.packing_width);
+
   prefsw->scrollw_right_directories = lives_standard_scrolled_window_new (0,0,prefsw->table_right_directories,TRUE);
 
   label39 = gtk_label_new (_("      Video load directory (default)      "));
@@ -3529,7 +3534,7 @@ _prefsw *create_prefs_dialog (void) {
   gtk_misc_set_alignment (GTK_MISC (label43), 0, 0.5);
 
   prefsw->vid_load_dir_entry = gtk_entry_new ();
-  gtk_entry_set_max_length(GTK_ENTRY(prefsw->vid_load_dir_entry),255);
+  gtk_entry_set_max_length(GTK_ENTRY(prefsw->vid_load_dir_entry),PATH_MAX);
   gtk_widget_show (prefsw->vid_load_dir_entry);
   gtk_table_attach (GTK_TABLE (prefsw->table_right_directories), prefsw->vid_load_dir_entry, 1, 2, 4, 5,
 		    (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
@@ -3635,68 +3640,37 @@ _prefsw *create_prefs_dialog (void) {
   gtk_entry_set_text(GTK_ENTRY(prefsw->tmpdir_entry),(tmp=g_filename_to_utf8(future_prefs->tmpdir,-1,NULL,NULL,NULL)));
   g_free(tmp);
    
-  dirbutton1 = gtk_button_new ();
-  gtk_widget_show (dirbutton1);
-   
-   
-  dirimage1 = gtk_image_new_from_stock ("gtk-open", GTK_ICON_SIZE_BUTTON);
-  gtk_widget_show (dirimage1);
-  gtk_container_add (GTK_CONTAINER (dirbutton1), dirimage1);
+  dirbutton1 = lives_standard_file_button_new (TRUE,NULL);
    
   gtk_table_attach (GTK_TABLE (prefsw->table_right_directories), dirbutton1, 2, 3, 4, 5,
 		    (GtkAttachOptions) (0),
 		    (GtkAttachOptions) (0), 0, 0);
    
-  dirbutton2 = gtk_button_new ();
-  gtk_widget_show (dirbutton2);
-   
-  dirimage2 = gtk_image_new_from_stock ("gtk-open", GTK_ICON_SIZE_BUTTON);
-  gtk_widget_show (dirimage2);
-  gtk_container_add (GTK_CONTAINER (dirbutton2), dirimage2);
+  dirbutton2 = lives_standard_file_button_new (TRUE,NULL);
    
   gtk_table_attach (GTK_TABLE (prefsw->table_right_directories), dirbutton2, 2, 3, 5, 6,
 		    (GtkAttachOptions) (0),
 		    (GtkAttachOptions) (0), 0, 0);
    
-  dirbutton3 = gtk_button_new ();
-  gtk_widget_show (dirbutton3);
-   
-  dirimage3 = gtk_image_new_from_stock ("gtk-open", GTK_ICON_SIZE_BUTTON);
-  gtk_widget_show (dirimage3);
-  gtk_container_add (GTK_CONTAINER (dirbutton3), dirimage3);
+  dirbutton3 = lives_standard_file_button_new (TRUE,NULL);
    
   gtk_table_attach (GTK_TABLE (prefsw->table_right_directories), dirbutton3, 2, 3, 6, 7,
 		    (GtkAttachOptions) (0),
 		    (GtkAttachOptions) (0), 0, 0);
    
-  dirbutton4 = gtk_button_new ();
-  gtk_widget_show (dirbutton4);
-   
-  dirimage4 = gtk_image_new_from_stock ("gtk-open", GTK_ICON_SIZE_BUTTON);
-  gtk_widget_show (dirimage4);
-  gtk_container_add (GTK_CONTAINER (dirbutton4), dirimage4);
+  dirbutton4 = lives_standard_file_button_new (TRUE,NULL);
    
   gtk_table_attach (GTK_TABLE (prefsw->table_right_directories), dirbutton4, 2, 3, 7, 8,
 		    (GtkAttachOptions) (0),
 		    (GtkAttachOptions) (0), 0, 0);
 
-  dirbutton5 = gtk_button_new ();
-  gtk_widget_show (dirbutton5);
-   
-  dirimage5 = gtk_image_new_from_stock ("gtk-open", GTK_ICON_SIZE_BUTTON);
-  gtk_widget_show (dirimage5);
-  gtk_container_add (GTK_CONTAINER (dirbutton5), dirimage5);
+  dirbutton5 = lives_standard_file_button_new (TRUE,NULL);
   
   gtk_table_attach (GTK_TABLE (prefsw->table_right_directories), dirbutton5, 2, 3, 8, 9,
 		    (GtkAttachOptions) (0),
 		    (GtkAttachOptions) (0), 0, 0);
-  
-  dirbutton6 = gtk_button_new ();
-  gtk_widget_show (dirbutton6);
-   
-  dirimage6 = gtk_image_new_from_stock ("gtk-open", GTK_ICON_SIZE_BUTTON);
-  gtk_widget_show (dirimage6);
-  gtk_container_add (GTK_CONTAINER (dirbutton6), dirimage6);
+
+  dirbutton6 = lives_standard_file_button_new (TRUE,NULL);
    
   gtk_table_attach (GTK_TABLE (prefsw->table_right_directories), dirbutton6, 2, 3, 3, 4,
 		    (GtkAttachOptions) (0),
@@ -3706,9 +3680,10 @@ _prefsw *create_prefs_dialog (void) {
   pixbuf_directories = gdk_pixbuf_new_from_file(icon, NULL);
   g_free(icon);
 
-  /* TRANSLATORS: please keep this string short */
   prefs_add_to_list(prefsw->prefs_list, pixbuf_directories, _("Directories"), LIST_ENTRY_DIRECTORIES);
   gtk_container_add (GTK_CONTAINER (dialog_table), prefsw->scrollw_right_directories);
+
+  gtk_widget_show_all(prefsw->table_right_directories);
 
   // ---------------,
   // Warnings       |
@@ -3724,7 +3699,7 @@ _prefsw *create_prefs_dialog (void) {
   gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_warnings), hbox, FALSE, TRUE, 20);
   // ---
   label = gtk_label_new_with_mnemonic(_("Warn if diskspace falls below: "));
-  gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 0);
+  gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, widget_opts.packing_width);
 
   if (palette->style&STYLE_1) {
     lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
@@ -3756,7 +3731,7 @@ _prefsw *create_prefs_dialog (void) {
   gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_warnings), hbox, FALSE, TRUE, 20);
   // ---
   label = gtk_label_new_with_mnemonic(_("Diskspace critical level: "));
-  gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 0);
+  gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, widget_opts.packing_width);
 
 
   if (palette->style&STYLE_1) {
@@ -4331,8 +4306,8 @@ _prefsw *create_prefs_dialog (void) {
   eventbox = gtk_event_box_new();
   gtk_container_add(GTK_CONTAINER(eventbox), label);
   g_signal_connect(GTK_OBJECT(eventbox), "button_press_event", G_CALLBACK(label_act_toggle), prefsw->ins_speed);
-  gtk_box_pack_start (GTK_BOX (hbox99), prefsw->ins_speed, FALSE, FALSE, 5);
-  gtk_box_pack_start (GTK_BOX (hbox99), eventbox, FALSE, FALSE, 5);
+  gtk_box_pack_start (GTK_BOX (hbox99), prefsw->ins_speed, FALSE, FALSE, widget_opts.packing_width);
+  gtk_box_pack_start (GTK_BOX (hbox99), eventbox, FALSE, FALSE, widget_opts.packing_width);
   if (palette->style&STYLE_1) {
     lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
     lives_widget_set_fg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
@@ -4347,8 +4322,8 @@ _prefsw *create_prefs_dialog (void) {
   eventbox = gtk_event_box_new();
   gtk_container_add(GTK_CONTAINER(eventbox), label);
   g_signal_connect(GTK_OBJECT(eventbox), "button_press_event", G_CALLBACK(label_act_toggle), ins_resample);
-  gtk_box_pack_start (GTK_BOX (hbox99), ins_resample, FALSE, FALSE, 5);
-  gtk_box_pack_start (GTK_BOX (hbox99), eventbox, FALSE, FALSE, 5);
+  gtk_box_pack_start (GTK_BOX (hbox99), ins_resample, FALSE, FALSE, widget_opts.packing_width);
+  gtk_box_pack_start (GTK_BOX (hbox99), eventbox, FALSE, FALSE, widget_opts.packing_width);
   if (palette->style&STYLE_1) {
     lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
     lives_widget_set_fg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
@@ -4358,7 +4333,7 @@ _prefsw *create_prefs_dialog (void) {
   gtk_widget_show_all(hbox99);
   // ---
   hbox19 = lives_hbox_new (FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_misc), hbox19, TRUE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_misc), hbox19, FALSE, FALSE, widget_opts.packing_height);
    
   label134 = gtk_label_new (_("CD device           "));
   if (palette->style&STYLE_1) {
@@ -4369,23 +4344,15 @@ _prefsw *create_prefs_dialog (void) {
   gtk_label_set_justify (GTK_LABEL (label134), GTK_JUSTIFY_LEFT);
    
   prefsw->cdplay_entry = gtk_entry_new ();
-  gtk_entry_set_max_length(GTK_ENTRY(prefsw->cdplay_entry),255);
+  gtk_entry_set_max_length(GTK_ENTRY(prefsw->cdplay_entry),PATH_MAX);
   gtk_box_pack_start (GTK_BOX (hbox19), prefsw->cdplay_entry, TRUE, TRUE, 20);
 
-  vbox2 = lives_vbox_new (FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (hbox19), vbox2, FALSE, TRUE, 0);
-  add_fill_to_box (GTK_BOX (vbox2));
-  gtk_widget_show (vbox2);
-
-  buttond = gtk_file_chooser_button_new(_("LiVES: Choose CD device"),GTK_FILE_CHOOSER_ACTION_OPEN);
-  gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(buttond),LIVES_DEVICE_DIR);
-  gtk_box_pack_start(GTK_BOX(vbox2),buttond,TRUE,FALSE,0);
+  buttond = lives_standard_file_button_new (FALSE,LIVES_DEVICE_DIR);
+  gtk_box_pack_start(GTK_BOX(hbox19),buttond,FALSE,FALSE,widget_opts.packing_width);
   gtk_widget_show (buttond);
-  add_fill_to_box (GTK_BOX (vbox2));
-  gtk_file_chooser_button_set_width_chars(GTK_FILE_CHOOSER_BUTTON(buttond),16);
+  
+  g_signal_connect(buttond, "clicked", G_CALLBACK (on_filesel_button_clicked), (gpointer)prefsw->cdplay_entry);
 
-  g_signal_connect (GTK_FILE_CHOOSER(buttond), "selection-changed",
-		    G_CALLBACK (on_fileread_clicked),(gpointer)prefsw->cdplay_entry);
 
   if (capable->has_cdda2wav) {
     gtk_widget_show (prefsw->cdplay_entry);
@@ -4940,7 +4907,7 @@ _prefsw *create_prefs_dialog (void) {
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_omc_js), prefs->omc_dev_opts&OMC_DEV_JS);
   // ---
   hbox = lives_hbox_new (FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_midi), hbox, TRUE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_midi), hbox, FALSE, FALSE, widget_opts.packing_height);
   gtk_widget_show (hbox);
    
   label = gtk_label_new_with_mnemonic (_("_Joystick device"));
@@ -4960,20 +4927,11 @@ _prefsw *create_prefs_dialog (void) {
    
   gtk_widget_set_tooltip_text( prefsw->omc_js_entry, _("The joystick device, e.g. /dev/input/js0"));
 
-  vbox2 = lives_vbox_new (FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (hbox), vbox2, FALSE, TRUE, 0);
-  gtk_widget_show (vbox2);
-  add_fill_to_box (GTK_BOX (vbox2));
-
-  buttond = gtk_file_chooser_button_new(_("LiVES: Choose joystick device"),GTK_FILE_CHOOSER_ACTION_OPEN);
-  gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(buttond),LIVES_DEVICE_DIR);
-  gtk_box_pack_start(GTK_BOX(vbox2),buttond,TRUE,FALSE,0);
+  buttond = lives_standard_file_button_new (FALSE,LIVES_DEVICE_DIR);
+  gtk_box_pack_start(GTK_BOX(hbox),buttond,FALSE,FALSE,widget_opts.packing_width);
   gtk_widget_show (buttond);
-  add_fill_to_box (GTK_BOX (vbox2));
-  gtk_file_chooser_button_set_width_chars(GTK_FILE_CHOOSER_BUTTON(buttond),16);
-   
-  g_signal_connect (GTK_FILE_CHOOSER(buttond), "selection-changed",G_CALLBACK (on_fileread_clicked),
-		    (gpointer)prefsw->omc_js_entry);
+
+  g_signal_connect(buttond, "clicked", G_CALLBACK (on_filesel_button_clicked), (gpointer)prefsw->omc_js_entry);
 
 #endif
 
@@ -5051,7 +5009,7 @@ _prefsw *create_prefs_dialog (void) {
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (raw_midi_button),!prefs->use_alsa_midi);
 #endif
   hbox = lives_hbox_new (FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_midi), hbox, TRUE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_midi), hbox, FALSE, FALSE, widget_opts.packing_height);
   gtk_widget_show (hbox);
    
   label = gtk_label_new_with_mnemonic (_("_MIDI device"));
@@ -5064,27 +5022,17 @@ _prefsw *create_prefs_dialog (void) {
    
   prefsw->omc_midi_entry = gtk_entry_new ();
   gtk_label_set_mnemonic_widget (GTK_LABEL (label),prefsw->omc_midi_entry);
-  gtk_entry_set_max_length(GTK_ENTRY(prefsw->omc_midi_entry),255);
+  gtk_entry_set_max_length(GTK_ENTRY(prefsw->omc_midi_entry),PATH_MAX);
   gtk_box_pack_start (GTK_BOX (hbox), prefsw->omc_midi_entry, TRUE, TRUE, 20);
   gtk_widget_show (prefsw->omc_midi_entry);
   if (strlen(prefs->omc_midi_fname)!=0) gtk_entry_set_text (GTK_ENTRY (prefsw->omc_midi_entry),prefs->omc_midi_fname);
 
   gtk_widget_set_tooltip_text( prefsw->omc_midi_entry, _("The MIDI device, e.g. /dev/input/midi0"));
 
-  vbox2 = lives_vbox_new (FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (hbox), vbox2, FALSE, TRUE, 0);
-  gtk_widget_show (vbox2);
-  add_fill_to_box (GTK_BOX (vbox2));
-
-  prefsw->button_midid = gtk_file_chooser_button_new(_("LiVES: Choose MIDI device"),GTK_FILE_CHOOSER_ACTION_OPEN);
-  gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(prefsw->button_midid),LIVES_DEVICE_DIR);
-  gtk_box_pack_start(GTK_BOX(vbox2),prefsw->button_midid,TRUE,FALSE,0);
+  prefsw->button_midid = lives_standard_file_button_new (FALSE,LIVES_DEVICE_DIR);
+  gtk_box_pack_start(GTK_BOX(hbox),prefsw->button_midid,FALSE,FALSE,widget_opts.packing_width);
   gtk_widget_show (prefsw->button_midid);
-  add_fill_to_box (GTK_BOX (vbox2));
-  gtk_file_chooser_button_set_width_chars(GTK_FILE_CHOOSER_BUTTON(prefsw->button_midid),16);
-
-  g_signal_connect (GTK_FILE_CHOOSER(buttond), "selection-changed",
-		    G_CALLBACK (on_fileread_clicked),(gpointer)prefsw->omc_midi_entry);
+  g_signal_connect(prefsw->button_midid, "clicked", G_CALLBACK (on_filesel_button_clicked), (gpointer)prefsw->omc_midi_entry);
 
   hseparator = lives_hseparator_new ();
   gtk_widget_show (hseparator);
@@ -5209,11 +5157,11 @@ _prefsw *create_prefs_dialog (void) {
 			      LIVES_KEY_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
 
    
-  g_signal_connect(dirbutton1, "clicked", G_CALLBACK (on_filesel_simple_clicked),prefsw->vid_load_dir_entry);
-  g_signal_connect(dirbutton2, "clicked", G_CALLBACK (on_filesel_simple_clicked),prefsw->vid_save_dir_entry);
-  g_signal_connect(dirbutton3, "clicked", G_CALLBACK (on_filesel_simple_clicked),prefsw->audio_dir_entry);
-  g_signal_connect(dirbutton4, "clicked", G_CALLBACK (on_filesel_simple_clicked),prefsw->image_dir_entry);
-  g_signal_connect(dirbutton5, "clicked", G_CALLBACK (on_filesel_simple_clicked),prefsw->proj_dir_entry);
+  g_signal_connect(dirbutton1, "clicked", G_CALLBACK (on_filesel_button_clicked),prefsw->vid_load_dir_entry);
+  g_signal_connect(dirbutton2, "clicked", G_CALLBACK (on_filesel_button_clicked),prefsw->vid_save_dir_entry);
+  g_signal_connect(dirbutton3, "clicked", G_CALLBACK (on_filesel_button_clicked),prefsw->audio_dir_entry);
+  g_signal_connect(dirbutton4, "clicked", G_CALLBACK (on_filesel_button_clicked),prefsw->image_dir_entry);
+  g_signal_connect(dirbutton5, "clicked", G_CALLBACK (on_filesel_button_clicked),prefsw->proj_dir_entry);
   g_signal_connect(dirbutton6, "clicked", G_CALLBACK (on_filesel_complex_clicked),prefsw->tmpdir_entry);
 
   // Connect signals for 'Apply' button activity handling

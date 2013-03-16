@@ -2134,6 +2134,18 @@ LiVESWidget *lives_standard_expander_new(const char *ltext, boolean use_mnemonic
 }
 
 
+LiVESWidget *lives_standard_file_button_new(boolean is_dir, const char *def_dir) {
+  LiVESWidget *fbutton=NULL;
+#ifdef GUI_GTK
+  GtkWidget *image = gtk_image_new_from_stock ("gtk-open", GTK_ICON_SIZE_BUTTON);
+  fbutton = gtk_button_new ();
+  g_object_set_data(G_OBJECT(fbutton),"is_dir",GINT_TO_POINTER(is_dir));
+  if (def_dir!=NULL) g_object_set_data(G_OBJECT(fbutton),"def_dir",(gpointer)def_dir);
+  gtk_container_add (GTK_CONTAINER (fbutton), image);
+#endif
+  return fbutton;
+}
+
 
 // utils
 LIVES_INLINE void lives_cursor_unref(LiVESXCursor *cursor) {
@@ -2198,6 +2210,15 @@ void set_child_colour(GtkWidget *widget, gpointer set_allx) {
   }
 }
 
+
+void set_button_width(LiVESWidget *buttonbox, LiVESWidget *button, int width) {
+#if !GTK_CHECK_VERSION(3,0,0)
+  gtk_button_box_set_child_size (GTK_BUTTON_BOX(buttonbox), width, -1);
+#else
+  gtk_widget_set_size_request(button,width*4,-1);
+#endif
+  gtk_button_box_set_layout (GTK_BUTTON_BOX(buttonbox), GTK_BUTTONBOX_SPREAD);
+}
 
 
 char *text_view_get_text(LiVESTextView *textview) {

@@ -1005,8 +1005,8 @@ _insertw* create_insert_dialog (void) {
 
   table = gtk_table_new (2, 3, FALSE);
   gtk_box_pack_start (GTK_BOX (dialog_vbox), table, TRUE, TRUE, widget_opts.packing_height);
-  gtk_table_set_col_spacings (GTK_TABLE (table), widget_opts.packing_height*4+2);
-  gtk_table_set_row_spacings (GTK_TABLE (table), widget_opts.packing_width);
+  gtk_table_set_col_spacings (GTK_TABLE (table), widget_opts.packing_width*4+2);
+  gtk_table_set_row_spacings (GTK_TABLE (table), widget_opts.packing_height);
 
 
   hbox = lives_hbox_new (FALSE, 0);
@@ -1301,25 +1301,25 @@ _entryw* create_location_dialog (int type) {
     
     gtk_box_pack_start(GTK_BOX(dialog_vbox),hbox,TRUE,FALSE,widget_opts.packing_height);
 
-    locw->dir_entry = lives_standard_entry_new (_("Download to _Directory : "),TRUE,"",72,PATH_MAX,LIVES_BOX(hbox),NULL);
+    locw->dir_entry = lives_standard_entry_new (_("Download to _Directory : "),TRUE,mainw->vid_dl_dir,
+						72.*widget_opts.scale,PATH_MAX,LIVES_BOX(hbox),NULL);
 
     // add dir, with filechooser button
-    buttond = gtk_file_chooser_button_new(_("Download Directory..."),GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER);
-    gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(buttond),mainw->vid_save_dir);
-    gtk_box_pack_start(GTK_BOX(hbox),buttond,TRUE,FALSE,0);
+    buttond = lives_standard_file_button_new (TRUE,NULL);
+    gtk_box_pack_start(GTK_BOX(hbox),buttond,FALSE,FALSE,widget_opts.packing_width);
 
     add_fill_to_box (GTK_BOX (hbox));
-    //gtk_file_chooser_button_set_width_chars(GTK_FILE_CHOOSER_BUTTON(buttond),16);
-    
-    g_signal_connect (GTK_FILE_CHOOSER(buttond), "selection-changed",G_CALLBACK (on_fileread_clicked),
-    		      (gpointer)locw->dir_entry);
-
 
     hbox=lives_hbox_new (FALSE, 0);
     
     gtk_box_pack_start(GTK_BOX(dialog_vbox),hbox,TRUE,FALSE,widget_opts.packing_height);
 
-    locw->name_entry = lives_standard_entry_new (_("Download _File Name : "),TRUE,"",74,32768,LIVES_BOX(hbox),NULL);
+    locw->name_entry = lives_standard_entry_new (_("Download _File Name : "),TRUE,"",
+						 74.*widget_opts.scale,PATH_MAX,LIVES_BOX(hbox),NULL);
+
+    gtk_entry_set_max_length(GTK_ENTRY (locw->name_entry),PATH_MAX);
+
+    g_signal_connect(buttond, "clicked", G_CALLBACK (on_filesel_button_clicked), (gpointer)locw->dir_entry);
 
     label=lives_standard_label_new (_(".webm"));
 
@@ -2277,7 +2277,7 @@ _commentsw* create_comments_dialog (file *sfile, gchar *filename) {
 }
 
 
-gchar *choose_file(gchar *dir, gchar *fname, gchar **filt, GtkFileChooserAction act, const char *title, GtkWidget *extra_widget) {
+gchar *choose_file(gchar *dir, gchar *fname, gchar **filt, lives_file_chooser_action_t act, const char *title, GtkWidget *extra_widget) {
   // new style file chooser
 
   // in/out values are in utf8 encoding
@@ -2291,12 +2291,16 @@ gchar *choose_file(gchar *dir, gchar *fname, gchar **filt, GtkFileChooserAction 
 
   boolean did_check;
 
-  gint response;
+  int response;
 
   register int i;
 
   if (title==NULL) {
-    if (act==GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER) {
+    if (act==LIVES_FILE_CHOOSER_ACTION_SELECT_DEVICE) {
+      mytitle=g_strdup(_("LiVES: choose a device"));
+      act=LIVES_FILE_CHOOSER_ACTION_OPEN;
+    }
+    else if (act==LIVES_FILE_CHOOSER_ACTION_SELECT_FOLDER) {
       mytitle=g_strdup(_("LiVES: choose a directory"));
     }
     else {
@@ -2305,7 +2309,7 @@ gchar *choose_file(gchar *dir, gchar *fname, gchar **filt, GtkFileChooserAction 
   }
   else mytitle=g_strdup(title);
 
-  if (act!=GTK_FILE_CHOOSER_ACTION_SAVE) 
+  if (act!=LIVES_FILE_CHOOSER_ACTION_SAVE) 
     chooser=gtk_file_chooser_dialog_new(mytitle,GTK_WINDOW(mainw->LiVES),act,GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
 					GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
 					NULL);
@@ -2342,7 +2346,7 @@ gchar *choose_file(gchar *dir, gchar *fname, gchar **filt, GtkFileChooserAction 
     gtk_file_filter_add_pattern(filter,filt[0]);
     for (i=1;filt[i]!=NULL;i++) gtk_file_filter_add_pattern(filter,filt[i]);
     gtk_file_chooser_set_filter(GTK_FILE_CHOOSER(chooser),filter);
-    if (fname==NULL&&i==1&&act==GTK_FILE_CHOOSER_ACTION_SAVE) gtk_file_chooser_set_current_name(GTK_FILE_CHOOSER(chooser),filt[0]);
+    if (fname==NULL&&i==1&&act==LIVES_FILE_CHOOSER_ACTION_SAVE) gtk_file_chooser_set_current_name(GTK_FILE_CHOOSER(chooser),filt[0]);
   }
   else {
     if (fname!=NULL&&dir!=NULL) {
@@ -2354,7 +2358,6 @@ gchar *choose_file(gchar *dir, gchar *fname, gchar **filt, GtkFileChooserAction 
 
   gtk_container_set_border_width (GTK_CONTAINER (chooser), widget_opts.border_width);
   gtk_window_set_position (GTK_WINDOW (chooser), GTK_WIN_POS_CENTER_ALWAYS);
-  gtk_window_set_modal (GTK_WINDOW (chooser), TRUE);
 
   if (prefs->show_gui) {
     if (mainw->multitrack==NULL) gtk_window_set_transient_for(GTK_WINDOW(chooser),GTK_WINDOW(mainw->LiVES));
@@ -2370,6 +2373,7 @@ gchar *choose_file(gchar *dir, gchar *fname, gchar **filt, GtkFileChooserAction 
   }
 
   gtk_widget_show(chooser);
+  gtk_window_set_modal (GTK_WINDOW (chooser), TRUE);
 
   gtk_widget_grab_focus (chooser);
 
@@ -2382,7 +2386,7 @@ gchar *choose_file(gchar *dir, gchar *fname, gchar **filt, GtkFileChooserAction 
     g_free(tmp);
   }
 
-  if (!did_check && act==GTK_FILE_CHOOSER_ACTION_SAVE) {
+  if (!did_check && act==LIVES_FILE_CHOOSER_ACTION_SAVE) {
     if (!check_file(filename,TRUE)) {
       g_free(filename);
       filename=NULL;
@@ -2439,7 +2443,7 @@ void choose_file_with_preview (gchar *dir, const gchar *title, int preview_type)
 
   g_snprintf(titles,256,_("LiVES: - %s"),title);
 
-  chooser=(GtkWidget *)choose_file(dir,NULL,NULL,GTK_FILE_CHOOSER_ACTION_OPEN,titles,mainw->LiVES);
+  chooser=(GtkWidget *)choose_file(dir,NULL,NULL,LIVES_FILE_CHOOSER_ACTION_OPEN,titles,mainw->LiVES);
   
   if (preview_type==3) gtk_file_chooser_set_select_multiple(GTK_FILE_CHOOSER(chooser),TRUE);
 

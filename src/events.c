@@ -5097,6 +5097,8 @@ render_details *create_render_details (int type) {
     }
   }
 
+  widget_opts.expand=TRUE;
+
   label = lives_standard_label_new (_("Target Encoder"));
   gtk_box_pack_start (GTK_BOX (top_vbox), label, FALSE, FALSE, 0);
 
@@ -5180,8 +5182,8 @@ render_details *create_render_details (int type) {
     rdet->acodec_combo = lives_standard_combo_new (NULL,FALSE,prefs->acodec_list,LIVES_BOX(top_vbox),NULL);
   }
   else {
-    gtk_box_pack_start (GTK_BOX (top_vbox), alabel, FALSE, FALSE, 0);
     add_fill_to_box(LIVES_BOX(top_vbox));
+    gtk_box_pack_start (GTK_BOX (top_vbox), alabel, FALSE, FALSE, 0);
     g_signal_handler_block(rdet->ofmt_combo, rdet->encoder_ofmt_fn);
     lives_combo_set_active_string(LIVES_COMBO(rdet->ofmt_combo), prefs->encoder.of_desc);
     g_signal_handler_unblock(rdet->ofmt_combo, rdet->encoder_ofmt_fn);
@@ -5192,6 +5194,8 @@ render_details *create_render_details (int type) {
     future_prefs->encoder.of_allowed_acodecs=prefs->encoder.of_allowed_acodecs;
     set_acodec_list_from_allowed(NULL,rdet);
   }
+
+  widget_opts.expand=FALSE;
 
   rdet->always_hbox = lives_hbox_new (TRUE, widget_opts.packing_width*2);
 

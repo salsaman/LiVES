@@ -1667,13 +1667,7 @@ void on_rte_info_clicked (GtkButton *button, gpointer user_data) {
   lives_widget_set_can_focus_and_default (ok_button);
   gtk_widget_grab_default (ok_button);
 
-#if !GTK_CHECK_VERSION(3,0,0)
-  gtk_button_box_set_child_size (GTK_BUTTON_BOX (hbuttonbox), DEF_BUTTON_WIDTH, -1);
-#else
-  gtk_widget_set_size_request(ok_button,DEF_BUTTON_WIDTH*4,-1);
-#endif
-  gtk_button_box_set_layout (GTK_BUTTON_BOX (hbuttonbox), GTK_BUTTONBOX_SPREAD);
-
+  set_button_width(hbuttonbox,ok_button,DEF_BUTTON_WIDTH);
 
   g_signal_connect (GTK_OBJECT (ok_button), "clicked",
 		    G_CALLBACK (lives_general_button_clicked),

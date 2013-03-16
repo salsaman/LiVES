@@ -2417,7 +2417,7 @@ OSCbuf *omc_learner_decode(gint type, gint idx, const gchar *string) {
 
 
 void on_midi_save_activate (GtkMenuItem *menuitem, gpointer user_data) {
-  gchar *save_file=choose_file(NULL,NULL,NULL,GTK_FILE_CHOOSER_ACTION_SAVE,NULL,NULL);
+  gchar *save_file=choose_file(NULL,NULL,NULL,LIVES_FILE_CHOOSER_ACTION_SAVE,NULL,NULL);
   int fd;
   GSList *slist=omc_node_list;
   size_t srchlen;
@@ -2545,7 +2545,7 @@ void on_midi_load_activate (GtkMenuItem *menuitem, gpointer user_data) {
   gchar *tmp;
 #endif 
 
-  if (user_data==NULL) load_file=choose_file(NULL,NULL,NULL,GTK_FILE_CHOOSER_ACTION_OPEN,NULL,NULL);
+  if (user_data==NULL) load_file=choose_file(NULL,NULL,NULL,LIVES_FILE_CHOOSER_ACTION_OPEN,NULL,NULL);
   else load_file=g_strdup((gchar *)user_data);
 
   if (load_file==NULL) return;

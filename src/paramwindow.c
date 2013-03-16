@@ -149,7 +149,7 @@ void on_paramwindow_ok_clicked (GtkButton *button, lives_rfx_t *rfx) {
   }
 
   if (button!=NULL) {
-    gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
+    lives_general_button_clicked(button,NULL);
   }
 
   if (usrgrp_to_livesgrp[0]!=NULL) g_slist_free (usrgrp_to_livesgrp[0]);
@@ -235,7 +235,7 @@ void on_paramwindow_cancel_clicked (GtkButton *button, lives_rfx_t *rfx) {
   }
 
   if (button!=NULL) {
-    gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
+    lives_general_button_clicked(button,NULL);
   }
   if (rfx==NULL) {
     if (usrgrp_to_livesgrp[1]!=NULL) g_slist_free (usrgrp_to_livesgrp[1]);
@@ -979,9 +979,6 @@ void on_render_fx_pre_activate (GtkMenuItem *menuitem, lives_rfx_t *rfx) {
 			rfx);
     }
   }
-  g_signal_connect (GTK_OBJECT (fx_dialog[n]), "delete_event",
-                      G_CALLBACK (return_true),
-                      NULL);
 
   // tweak some things to do with framedraw preview
   if (mainw->framedraw!=NULL) fd_tweak(rfx);
@@ -2453,13 +2450,7 @@ void after_param_text_changed (GtkWidget *textwidget, lives_rfx_t *rfx) {
   if (mainw->block_param_updates) return; // updates are blocked when we update visually
 
   if (GTK_IS_TEXT_VIEW(textwidget)) {
-    GtkTextIter start_iter,end_iter;
-    textbuffer=gtk_text_view_get_buffer(GTK_TEXT_VIEW(textwidget));
- 
-    gtk_text_buffer_get_start_iter(textbuffer,&start_iter);
-    gtk_text_buffer_get_end_iter(textbuffer,&end_iter);
-    
-    param->value=g_strdup(gtk_text_buffer_get_text (textbuffer,&start_iter,&end_iter,FALSE));
+    param->value=g_strdup(text_view_get_text (LIVES_TEXT_VIEW(textwidget)));
   }
   else {
     param->value=g_strdup (gtk_entry_get_text (GTK_ENTRY (textwidget)));
@@ -3037,9 +3028,8 @@ int set_param_from_list(GList *plist, lives_param_t *param, gint pnum, boolean w
     if (upd) {
       if (param->widgets[0]!=NULL) {
 	if (GTK_IS_TEXT_VIEW(param->widgets[0])) {
-	  GtkTextBuffer *textbuffer=gtk_text_view_get_buffer(GTK_TEXT_VIEW(param->widgets[0]));
 	  gchar *string=g_strdup((gchar *)param->value); // work around bug in glib ???
-	  gtk_text_buffer_set_text (textbuffer, string, -1);
+	  text_view_set_text (LIVES_TEXT_VIEW(param->widgets[0]), string, -1);
 	  g_free(string);
 	}
 	else {

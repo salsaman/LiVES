@@ -238,7 +238,7 @@ layout|\\\"In the other copy of LiVES, you must select Advanced/Receive LiVES st
 layout|\\\"You are advised to start with a small frame size and low framerate,\\\"| \\n\
 layout|\\\"and increase this if your network bandwidth allows it.\\\"| \\n\
 layout|p0|\\\".\\\"|p1|\\\".\\\"|p2|\\\".\\\"|p3|fill|fill|fill|fill| \\n\
-layout|fill|p4| \\n\
+layout|p4|fill\\n\
 </param_window> \\n\
 <onchange> \\n\
 </onchange> \\n\

@@ -326,7 +326,6 @@ void on_open_fw_activate (GtkMenuItem *menuitem, gpointer user_data) {
     mt_desensitise(mainw->multitrack);
   }
 
-
   dvgrabw = create_camwindow (cam,type);
   dvgrabw->cursor=NULL;
   cam->format=type;

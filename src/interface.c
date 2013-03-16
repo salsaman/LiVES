@@ -20,7 +20,6 @@
 #include "interface.h"
 #include "merge.h"
 #include "support.h"
-#include "paramwindow.h" // TODO - remove when we have lives_standard_scrolledwindow_new()
 
 // functions called in multitrack.c
 extern void multitrack_preview_clicked  (GtkButton *, gpointer user_data);
@@ -313,10 +312,6 @@ xprocess * create_processing (const gchar *text) {
 
   g_signal_connect (GTK_OBJECT (procw->cancel_button), "clicked",
                       G_CALLBACK (on_cancel_keep_button_clicked),
-                      NULL);
-
-  g_signal_connect (GTK_OBJECT (procw->processing), "delete_event",
-                      G_CALLBACK (return_true),
                       NULL);
 
 
@@ -871,7 +866,7 @@ text_window *create_text_window (const gchar *title, const gchar *text, GtkTextB
   }
 
   if (mytext!=NULL) {
-    gtk_text_buffer_set_text (gtk_text_view_get_buffer (GTK_TEXT_VIEW (textwindow->textview)), mytext, -1);
+    text_view_set_text (LIVES_TEXT_VIEW (textwindow->textview), mytext, -1);
   }
 
   if (mytext!=NULL||mainw->iochan!=NULL) {
@@ -1114,9 +1109,6 @@ _insertw* create_insert_dialog (void) {
   g_signal_connect_after (GTK_OBJECT (insertw->spinbutton_times), "value_changed",
 			  G_CALLBACK (on_spin_value_changed),
 			  GINT_TO_POINTER (1));
-  g_signal_connect (GTK_OBJECT (insertw->insert_dialog), "delete_event",
-                      G_CALLBACK (return_true),
-                      NULL);
 
   gtk_widget_add_accelerator (cancelbutton, "activate", accel_group,
                               LIVES_KEY_Escape,  (GdkModifierType)0, (GtkAccelFlags)0);
@@ -1162,13 +1154,13 @@ GtkWidget *create_opensel_dialog (void) {
 
   gtk_table_set_row_spacings (GTK_TABLE (table), 20);
 
-  label = lives_standard_label_new (_("    Selection start time (sec)"));
+  label = lives_standard_label_new (_("Selection start time (sec)"));
   gtk_table_attach (GTK_TABLE (table), label, 0, 1, 0, 1,
                     (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
                     (GtkAttachOptions) (0), 0, 0);
   gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
 
-  label = lives_standard_label_new (_("    Number of frames to open"));
+  label = lives_standard_label_new (_("Number of frames to open"));
   gtk_table_attach (GTK_TABLE (table), label, 0, 1, 1, 2,
                     (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
                     (GtkAttachOptions) (0), 0, 0);
@@ -1366,9 +1358,6 @@ _entryw* create_location_dialog (int type) {
 		      G_CALLBACK (on_utube_select),
 		      NULL);
 
-  g_signal_connect (GTK_OBJECT (locw->dialog), "delete_event",
-                      G_CALLBACK (return_true),
-                      NULL);
 
   gtk_widget_add_accelerator (cancelbutton, "activate", accel_group,
                               LIVES_KEY_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
@@ -1997,13 +1986,15 @@ GtkWidget* create_cdtrack_dialog (int type, gpointer user_data) {
   cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
   gtk_dialog_add_action_widget (GTK_DIALOG (cd_dialog), cancelbutton, GTK_RESPONSE_CANCEL);
 
-  gtk_widget_add_accelerator (cancelbutton, "activate", accel_group,
-                              LIVES_KEY_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
-
   okbutton = gtk_button_new_from_stock ("gtk-ok");
   gtk_dialog_add_action_widget (GTK_DIALOG (cd_dialog), okbutton, GTK_RESPONSE_OK);
   lives_widget_set_can_focus_and_default (okbutton);
+
   gtk_widget_grab_default (okbutton);
+
+  gtk_widget_add_accelerator (cancelbutton, "activate", accel_group,
+                              LIVES_KEY_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
+
   
   gtk_widget_add_accelerator (okbutton, "activate", accel_group,
                               LIVES_KEY_Return, (GdkModifierType)0, (GtkAccelFlags)0);

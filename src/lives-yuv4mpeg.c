@@ -400,7 +400,7 @@ void on_open_yuv4m_activate (GtkMenuItem *menuitem, gpointer user_data) {
     d_print (_ ("none\n"));
   }
   else {
-    d_print ((tmp=g_strdup_printf(_ ("%d Hz %d channel(s) %d bps\n"),cfile->arate,cfile->achans,cfile->asampsize)));
+    d_print ((tmp=g_strdup_printf(P_("%d Hz %d channel %d bps\n","%d Hz %d channels %d bps\n",cfile->achans),cfile->arate,cfile->achans,cfile->asampsize)));
     g_free(tmp);
   }
 

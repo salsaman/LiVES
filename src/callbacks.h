@@ -143,8 +143,7 @@ on_rev_clipboard_activate              (GtkMenuItem     *menuitem,
 void 
 on_encoder_entry_changed(GtkComboBox *, gpointer ptr);
 
-void 
-on_vid_playback_plugin_changed (GtkEntry *vpp_entry, gpointer user_data);
+void on_vid_playback_plugin_changed (GtkEntry *vpp_entry, gpointer user_data);
 
 
 void
@@ -196,10 +195,7 @@ void on_ok_file_open_clicked(GtkFileChooser *, GSList *fnames);
 
 void on_ok_filesel_open_clicked (GtkFileChooser *, gpointer);
 
-
-
-void
-open_sel_range_activate                 (void);
+void open_sel_range_activate (void);
 
 
 
@@ -220,18 +216,11 @@ on_opensel_range_ok_clicked                  (GtkButton       *button,
 					      gpointer         user_data);
 
 
-void
-on_open_sel_ok_button_clicked                  (GtkButton       *button,
-                                        gpointer         user_data);
-
+void on_open_sel_ok_button_clicked (GtkButton *, gpointer user_data);
 
 void on_save_textview_clicked (GtkButton *, gpointer);
 
-void
-on_cancel_button1_clicked              (GtkWidget       *widget,
-                                        gpointer         user_data);
-
-gboolean on_cancel_button1_clicked_del(GtkWidget *, GdkEvent *, gpointer);
+void on_cancel_button1_clicked (GtkWidget *, gpointer data_to_free);
 
 
 void

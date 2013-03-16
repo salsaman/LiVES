@@ -88,7 +88,6 @@ rfx_build_window_t *make_rfx_build_window (const gchar *script_name, lives_rfx_s
   GtkWidget *cancelbutton;
   GtkWidget *scrollw;
   GtkWidget *top_vbox;
-  GObject *spinbutton_adj;
 
   GSList *radiobutton_type_group = NULL;
   GList *langc=NULL;
@@ -97,7 +96,7 @@ rfx_build_window_t *make_rfx_build_window (const gchar *script_name, lives_rfx_s
 
   GtkAccelGroup *accel_group=GTK_ACCEL_GROUP(gtk_accel_group_new ());
 
-  gchar *tmp,*tmp2,*title;
+  gchar *tmp,*tmp2,*title,*string;
 
   rfxbuilder->rfx_version=g_strdup(RFX_VERSION);
 
@@ -165,21 +164,25 @@ rfx_build_window_t *make_rfx_build_window (const gchar *script_name, lives_rfx_s
   label = lives_standard_label_new (_("Type:"));
   gtk_box_pack_start (GTK_BOX (hbox), label, TRUE, FALSE, widget_opts.packing_width);
 
-  widget_opts.swap_label=TRUE;
-  rfxbuilder->type_effect1_radiobutton = lives_standard_radio_button_new (_("Effect -"),FALSE,radiobutton_type_group,LIVES_BOX(hbox),NULL);
+  string=lives_fx_cat_to_text(LIVES_FX_CAT_EFFECT,FALSE);
+  rfxbuilder->type_effect1_radiobutton = lives_standard_radio_button_new (string,FALSE,radiobutton_type_group,LIVES_BOX(hbox),NULL);
   radiobutton_type_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (rfxbuilder->type_effect1_radiobutton));
+  g_free(string);
 
-  rfxbuilder->type_effect2_radiobutton = lives_standard_radio_button_new (_("Transition -"),FALSE,radiobutton_type_group,LIVES_BOX(hbox),NULL);
+  string=lives_fx_cat_to_text(LIVES_FX_CAT_TRANSITION,FALSE);
+  rfxbuilder->type_effect2_radiobutton = lives_standard_radio_button_new (string,FALSE,radiobutton_type_group,LIVES_BOX(hbox),NULL);
   radiobutton_type_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (rfxbuilder->type_effect2_radiobutton));
+  g_free(string);
 
-  rfxbuilder->type_effect0_radiobutton = lives_standard_radio_button_new (_("Generator -"),FALSE,radiobutton_type_group,LIVES_BOX(hbox),NULL);
+  string=lives_fx_cat_to_text(LIVES_FX_CAT_VIDEO_GENERATOR,FALSE);
+  rfxbuilder->type_effect0_radiobutton = lives_standard_radio_button_new (string,FALSE,radiobutton_type_group,LIVES_BOX(hbox),NULL);
   radiobutton_type_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (rfxbuilder->type_effect0_radiobutton));
+  g_free(string);
 
-  rfxbuilder->type_tool_radiobutton = lives_standard_radio_button_new (_("Tool -"),FALSE,radiobutton_type_group,LIVES_BOX(hbox),NULL);
-  radiobutton_type_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (rfxbuilder->type_tool_radiobutton));
+  rfxbuilder->type_tool_radiobutton = lives_standard_radio_button_new (_("tool"),FALSE,radiobutton_type_group,LIVES_BOX(hbox),NULL);
+  radiobutton_type_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (rfxbuilder->type_tool_radiobutton));  gtk_widget_show (label);
 
-  rfxbuilder->type_utility_radiobutton = lives_standard_radio_button_new (_("Utility -"),FALSE,radiobutton_type_group,LIVES_BOX(hbox),NULL);
-  widget_opts.swap_label=FALSE;
+  rfxbuilder->type_utility_radiobutton = lives_standard_radio_button_new (_("utility"),FALSE,radiobutton_type_group,LIVES_BOX(hbox),NULL);
 
 
   // name
@@ -187,125 +190,65 @@ rfx_build_window_t *make_rfx_build_window (const gchar *script_name, lives_rfx_s
   rfxbuilder->name_entry = lives_standard_entry_new ((tmp=g_strdup(_("Name:          "))),FALSE,NULL,-1,-1,
 						     LIVES_BOX(top_vbox),(tmp2=g_strdup(_("The name of the plugin. No spaces allowed.")))
 						     );
+  g_free(tmp); g_free(tmp2);
+
   // version
-
   hbox = lives_hbox_new (FALSE, 0);
-  gtk_widget_show (hbox);
-  gtk_box_pack_start (GTK_BOX (top_vbox), hbox, TRUE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (top_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-  label = gtk_label_new (_("Version:       "));
-  gtk_widget_show (label);
-  gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 0);
+  rfxbuilder->spinbutton_version = lives_standard_spin_button_new ((tmp=g_strdup(_("Version:       "))),FALSE,
+								   rfxbuilder->plugin_version, rfxbuilder->plugin_version, 1000000., 1., 1., 0,
+								   LIVES_BOX(hbox),(tmp2=g_strdup(_ ("The script version.")))
+								   );
+  g_free(tmp); g_free(tmp2);
 
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color (label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-  }
-
-  spinbutton_adj = (GObject *)gtk_adjustment_new (rfxbuilder->plugin_version, rfxbuilder->plugin_version, 1000000., 1., 1., 0.);
-  rfxbuilder->spinbutton_version = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 1, 0);
-
-  gtk_widget_show (rfxbuilder->spinbutton_version);
-  gtk_box_pack_start (GTK_BOX (hbox), rfxbuilder->spinbutton_version, TRUE, TRUE, 0);
-  gtk_widget_set_tooltip_text( rfxbuilder->spinbutton_version,(_ ("The script version.")));
 
   // author
 
-  label = gtk_label_new (_("    Author:       "));
-  gtk_widget_show (label);
-  gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 0);
-
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color (label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-  }
-
-  rfxbuilder->author_entry = gtk_entry_new ();
-  gtk_widget_show (rfxbuilder->author_entry);
-  gtk_box_pack_start (GTK_BOX (hbox), rfxbuilder->author_entry, TRUE, TRUE, 0);
-  gtk_widget_set_tooltip_text( rfxbuilder->author_entry,(_ ("The script author.")));
-
+  rfxbuilder->author_entry = lives_standard_entry_new ((tmp=g_strdup(_("    Author:       "))),FALSE,NULL,-1,-1,
+						       LIVES_BOX(hbox),(tmp2=g_strdup(_("The script author.")))
+						       );
+  g_free(tmp); g_free(tmp2);
 
   // URL
 
-  hbox = lives_hbox_new (FALSE, 0);
-  gtk_widget_show (hbox);
-  gtk_box_pack_start (GTK_BOX (top_vbox), hbox, TRUE, TRUE, 0);
-
-  label = gtk_label_new (_("    URL (optional):       "));
-  gtk_widget_show (label);
-  gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 0);
-
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color (label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-  }
-
-  rfxbuilder->url_entry = gtk_entry_new ();
-  gtk_widget_show (rfxbuilder->url_entry);
-  gtk_box_pack_start (GTK_BOX (hbox), rfxbuilder->url_entry, TRUE, TRUE, 0);
-  gtk_widget_set_tooltip_text( rfxbuilder->url_entry,(_ ("URL for the plugin maintainer.")));
+  rfxbuilder->url_entry = lives_standard_entry_new ((tmp=g_strdup(_("    URL (optional):       "))),FALSE,NULL,-1,-1,
+						    LIVES_BOX(top_vbox),(tmp2=g_strdup(_("URL for the plugin maintainer.")))
+						    );
+  g_free(tmp); g_free(tmp2);
 
 
   // menu entry
 
-  hbox = lives_hbox_new (FALSE, 0);
-  gtk_widget_show (hbox);
-  gtk_box_pack_start (GTK_BOX (top_vbox), hbox, TRUE, TRUE, 0);
 
-  label = gtk_label_new (_("Menu text:    "));
-  gtk_widget_show (label);
-  gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 0);
-
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color (label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-  }
-
-  rfxbuilder->menu_text_entry = gtk_entry_new ();
-  gtk_widget_show (rfxbuilder->menu_text_entry);
-  gtk_box_pack_start (GTK_BOX (hbox), rfxbuilder->menu_text_entry, TRUE, TRUE, 0);
-  gtk_widget_set_tooltip_text( rfxbuilder->menu_text_entry,(_ ("The text to show in the menu.")));
+  rfxbuilder->menu_text_entry = lives_standard_entry_new ((tmp=g_strdup(_("Menu text:    "))),FALSE,NULL,-1,-1,
+							  LIVES_BOX(top_vbox),(tmp2=g_strdup(_("The text to show in the menu.")))
+							  );
+  g_free(tmp); g_free(tmp2);
 
 
-  rfxbuilder->action_desc_hsep = lives_hseparator_new ();
-  gtk_widget_show (rfxbuilder->action_desc_hsep);
-  gtk_box_pack_start (GTK_BOX (top_vbox), rfxbuilder->action_desc_hsep, FALSE, TRUE, 0);
-
+  rfxbuilder->action_desc_hsep = add_hsep_to_box(LIVES_BOX(top_vbox));
 
   // action description
 
-  hbox = lives_hbox_new (FALSE, 0);
-  gtk_widget_show (hbox);
-  gtk_box_pack_start (GTK_BOX (top_vbox), hbox, TRUE, TRUE, 0);
+  rfxbuilder->action_desc_hbox = lives_hbox_new (FALSE, 0);
+  gtk_box_pack_start (GTK_BOX (top_vbox), rfxbuilder->action_desc_hbox, FALSE, FALSE, widget_opts.packing_height);
 
-  rfxbuilder->action_desc_label = gtk_label_new (_("Action description:        "));
-  gtk_widget_show (rfxbuilder->action_desc_label);
-  gtk_box_pack_start (GTK_BOX (hbox), rfxbuilder->action_desc_label, FALSE, FALSE, 0);
+  rfxbuilder->action_desc_entry = lives_standard_entry_new ((tmp=g_strdup(_("Action description:        "))),FALSE,NULL,-1,-1,
+							    LIVES_BOX(rfxbuilder->action_desc_hbox),
+							    (tmp2=g_strdup(_("Describe what the plugin is doing. E.g. \"Edge detecting\"")))
+							    );
 
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color (rfxbuilder->action_desc_label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-  }
 
-  rfxbuilder->action_desc_entry = gtk_entry_new ();
-  gtk_widget_show (rfxbuilder->action_desc_entry);
-  gtk_box_pack_start (GTK_BOX (hbox), rfxbuilder->action_desc_entry, TRUE, TRUE, 0);
-  gtk_widget_set_tooltip_text( rfxbuilder->action_desc_entry,
-			(_ ("Describe what the plugin is doing. E.g. \"Edge detecting\"")));
 
-  hbox = lives_hbox_new (FALSE, 0);
-  gtk_widget_show (hbox);
-  gtk_box_pack_start (GTK_BOX (top_vbox), hbox, TRUE, TRUE, 0);
+  rfxbuilder->spinbutton_min_frames = lives_standard_spin_button_new ((tmp=g_strdup(_("Minimum frames:"))),FALSE,
+								      1., 1., 1000., 1., 1., 0,
+								      LIVES_BOX(top_vbox),
+								      (tmp2=g_strdup(_("Minimum number of frames this effect/tool can be applied to. Normally 1.")))
+								      );
 
-  rfxbuilder->min_frames_label = gtk_label_new (_("Minimum frames:"));
-  gtk_widget_show (rfxbuilder->min_frames_label);
-  gtk_box_pack_start (GTK_BOX (hbox), rfxbuilder->min_frames_label, FALSE, FALSE, 0);
 
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color (rfxbuilder->min_frames_label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-  }
-
-  spinbutton_adj = (GObject *)gtk_adjustment_new (1., 1., 1000., 1., 1., 0);
-  rfxbuilder->spinbutton_min_frames = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 1, 0);
-  gtk_box_pack_start (GTK_BOX (hbox), rfxbuilder->spinbutton_min_frames, TRUE, FALSE, 0);
-  gtk_widget_set_tooltip_text( rfxbuilder->spinbutton_min_frames,
-			(_ ("Minimum number of frames this effect/tool can be applied to. Normally 1.")));
+  rfxbuilder->min_frames_label=widget_opts.last_label;
 
   // requirements
 
@@ -454,10 +397,6 @@ rfx_build_window_t *make_rfx_build_window (const gchar *script_name, lives_rfx_s
 			  (gpointer)rfxbuilder);
 
 
-  g_signal_connect (GTK_OBJECT (rfxbuilder->dialog), "delete_event",
-		    G_CALLBACK (gtk_true),
-		    NULL);
-
   // edit mode
   if (script_name!=NULL) {
     // we assume the name is valid
@@ -514,8 +453,7 @@ rfx_build_window_t *make_rfx_build_window (const gchar *script_name, lives_rfx_s
 }
 
 
-void
-after_rfxbuilder_type_toggled (GtkToggleButton *togglebutton, gpointer user_data) {
+void after_rfxbuilder_type_toggled (GtkToggleButton *togglebutton, gpointer user_data) {
   rfx_build_window_t *rfxbuilder=(rfx_build_window_t *)user_data;
 
   gtk_widget_set_sensitive (rfxbuilder->pre_button,TRUE);
@@ -525,8 +463,7 @@ after_rfxbuilder_type_toggled (GtkToggleButton *togglebutton, gpointer user_data
   gtk_widget_set_sensitive (rfxbuilder->properties_button,TRUE);
   gtk_widget_show (rfxbuilder->spinbutton_min_frames);
   gtk_widget_show (rfxbuilder->min_frames_label);
-  gtk_widget_show (rfxbuilder->action_desc_label);
-  gtk_widget_show (rfxbuilder->action_desc_entry);
+  gtk_widget_show (rfxbuilder->action_desc_hbox);
   gtk_widget_show (rfxbuilder->action_desc_hsep);
 
   if (togglebutton==GTK_TOGGLE_BUTTON (rfxbuilder->type_effect1_radiobutton)) {
@@ -556,8 +493,7 @@ after_rfxbuilder_type_toggled (GtkToggleButton *togglebutton, gpointer user_data
     gtk_widget_set_sensitive (rfxbuilder->loop_button,FALSE);
     gtk_widget_set_sensitive (rfxbuilder->post_button,FALSE);
     gtk_widget_hide (rfxbuilder->min_frames_label);
-    gtk_widget_hide (rfxbuilder->action_desc_label);
-    gtk_widget_hide (rfxbuilder->action_desc_entry);
+    gtk_widget_hide (rfxbuilder->action_desc_hbox);
     gtk_widget_hide (rfxbuilder->action_desc_hsep);
   }
 
@@ -584,7 +520,11 @@ void on_list_table_clicked (GtkButton *button, gpointer user_data) {
   GtkWidget *scrolledwindow;
   GtkWidget *cancelbutton;
 
-  int i;
+  GtkAccelGroup *accel_group=GTK_ACCEL_GROUP(gtk_accel_group_new ());
+
+  register int i;
+
+  char *title=NULL;
 
   rfx_build_window_t *rfxbuilder=(rfx_build_window_t *)user_data;
 
@@ -601,51 +541,35 @@ void on_list_table_clicked (GtkButton *button, gpointer user_data) {
     rfxbuilder->table_type=RFX_TABLE_TYPE_TRIGGERS;
   }
 
-  dialog = gtk_dialog_new ();
 
   if (rfxbuilder->table_type==RFX_TABLE_TYPE_REQUIREMENTS) {
-    gtk_window_set_title (GTK_WINDOW (dialog), _("LiVES: - RFX Requirements"));
+    title=g_strdup(_("LiVES: - RFX Requirements"));
     rfxbuilder->onum_reqs=rfxbuilder->num_reqs;
   }
   else if (rfxbuilder->table_type==RFX_TABLE_TYPE_PARAMS) {
-    gtk_window_set_title (GTK_WINDOW (dialog), _("LiVES: - RFX Parameters"));
+    title=g_strdup(_("LiVES: - RFX Parameters"));
     rfxbuilder->onum_params=rfxbuilder->num_params;
   }
   else if (rfxbuilder->table_type==RFX_TABLE_TYPE_PARAM_WINDOW) {
-    gtk_window_set_title (GTK_WINDOW (dialog), _("LiVES: - RFX Parameter Window Hints"));
+    title=g_strdup(_("LiVES: - RFX Parameter Window Hints"));
     rfxbuilder->onum_paramw_hints=rfxbuilder->num_paramw_hints;
   }
   else if (rfxbuilder->table_type==RFX_TABLE_TYPE_TRIGGERS) {
-    gtk_window_set_title (GTK_WINDOW (dialog), _("LiVES: - RFX Triggers"));
+    title=g_strdup(_("LiVES: - RFX Triggers"));
     rfxbuilder->onum_triggers=rfxbuilder->num_triggers;
   }
 
-  gtk_widget_show (dialog);
+  dialog = lives_standard_dialog_new (title,FALSE);
+  if (title!=NULL) g_free(title);
 
-  gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_CENTER_ALWAYS);
-  gtk_window_set_modal (GTK_WINDOW (dialog), TRUE);
+  gtk_window_add_accel_group (GTK_WINDOW (dialog), accel_group);
+
   if (prefs->show_gui) {
     gtk_window_set_transient_for(GTK_WINDOW(dialog),GTK_WINDOW(mainw->LiVES));
   }
-  if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color(dialog, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-    lives_dialog_set_has_separator(GTK_DIALOG(dialog),FALSE);
-  }
-
-  gtk_container_set_border_width (GTK_CONTAINER (dialog), 10);
 
   dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(dialog));
-  lives_box_set_spacing (GTK_BOX (dialog_vbox), 10);
-  gtk_widget_show (dialog_vbox);
 
-  hbox = lives_hbox_new (FALSE, 0);
-  gtk_widget_show (hbox);
-  gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, TRUE, TRUE, 0);
-
-  scrolledwindow = gtk_scrolled_window_new (NULL, NULL);
-  gtk_widget_show (scrolledwindow);
-  gtk_box_pack_start (GTK_BOX (hbox), scrolledwindow, TRUE, TRUE, 0);
-  gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrolledwindow), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
 
   // create table and add rows
   rfxbuilder->ptable_rows=rfxbuilder->table_rows=0;
@@ -680,55 +604,48 @@ void on_list_table_clicked (GtkButton *button, gpointer user_data) {
       on_table_add_row (NULL,(gpointer)rfxbuilder);
     }
   }
-  gtk_widget_set_size_request (scrolledwindow,RFX_WINSIZE_H*5/6,RFX_WINSIZE_V/4);
-  gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrolledwindow), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
 
-  gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (scrolledwindow), rfxbuilder->table);
-  gtk_widget_show (rfxbuilder->table);
+  hbox = lives_hbox_new (FALSE, 0);
+  gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
+  scrolledwindow = lives_standard_scrolled_window_new (RFX_WINSIZE_H*5/6,RFX_WINSIZE_V/4,rfxbuilder->table,TRUE);
+  gtk_box_pack_start (GTK_BOX (hbox), scrolledwindow, TRUE, TRUE, 0);
 
   // button box on right
   vseparator = lives_vseparator_new ();
-  gtk_widget_show (vseparator);
   gtk_box_pack_start (GTK_BOX (hbox), vseparator, TRUE, TRUE, 10);
 
   button_box=lives_vbutton_box_new();
   gtk_box_pack_start (GTK_BOX (hbox), button_box, FALSE, FALSE, 0);
-  gtk_widget_show (button_box);
 
   new_entry_button=gtk_button_new_with_mnemonic (_ ("_New Entry"));
-  gtk_widget_show (new_entry_button);
   gtk_box_pack_start (GTK_BOX (button_box), new_entry_button, FALSE, FALSE, 0);
 
   edit_entry_button=gtk_button_new_with_mnemonic (_ ("_Edit Entry"));
-  gtk_widget_show (edit_entry_button);
   gtk_box_pack_start (GTK_BOX (button_box), edit_entry_button, FALSE, FALSE, 0);
 
   remove_entry_button=gtk_button_new_with_mnemonic (_ ("_Remove Entry"));
-  gtk_widget_show (remove_entry_button);
   gtk_box_pack_start (GTK_BOX (button_box), remove_entry_button, FALSE, FALSE, 0);
 
   if (rfxbuilder->table_type==RFX_TABLE_TYPE_PARAM_WINDOW) {
     rfxbuilder->move_up_button=gtk_button_new_with_mnemonic (_ ("Move _Up"));
-    gtk_widget_show (rfxbuilder->move_up_button);
     gtk_box_pack_start (GTK_BOX (button_box), rfxbuilder->move_up_button, FALSE, FALSE, 0);
     
     rfxbuilder->move_down_button=gtk_button_new_with_mnemonic (_ ("Move _Down"));
-    gtk_widget_show (rfxbuilder->move_down_button);
     gtk_box_pack_start (GTK_BOX (button_box), rfxbuilder->move_down_button, FALSE, FALSE, 0);
   }
 
   dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (dialog));
-  gtk_widget_show (dialog_action_area);
   gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area), GTK_BUTTONBOX_END);
 
   cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
-  gtk_widget_show (cancelbutton);
   gtk_dialog_add_action_widget (GTK_DIALOG (dialog), cancelbutton, GTK_RESPONSE_CANCEL);
-  lives_widget_set_can_focus_and_default (cancelbutton);
+
+  gtk_widget_add_accelerator (cancelbutton, "activate", accel_group,
+                              LIVES_KEY_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
+
 
   okbutton = gtk_button_new_from_stock ("gtk-ok");
-  gtk_widget_show (okbutton);
   gtk_dialog_add_action_widget (GTK_DIALOG (dialog), okbutton, GTK_RESPONSE_OK);
   lives_widget_set_can_focus_and_default (okbutton);
 
@@ -740,9 +657,6 @@ void on_list_table_clicked (GtkButton *button, gpointer user_data) {
     g_signal_connect (GTK_OBJECT (cancelbutton), "clicked",
 		      G_CALLBACK (on_requirements_cancel),
 		      user_data);
-    g_signal_connect (GTK_OBJECT (dialog), "delete_event",
-		      G_CALLBACK (gtk_true),
-		      NULL);
   }
   else if (rfxbuilder->table_type==RFX_TABLE_TYPE_PARAMS) {
     g_signal_connect (GTK_OBJECT (okbutton), "clicked",
@@ -752,9 +666,6 @@ void on_list_table_clicked (GtkButton *button, gpointer user_data) {
     g_signal_connect (GTK_OBJECT (cancelbutton), "clicked",
 		      G_CALLBACK (on_params_cancel),
 		      user_data);
-    g_signal_connect (GTK_OBJECT (dialog), "delete_event",
-		      G_CALLBACK (gtk_true),
-		      NULL);
   }
   else if (rfxbuilder->table_type==RFX_TABLE_TYPE_PARAM_WINDOW) {
     g_signal_connect (GTK_OBJECT (okbutton), "clicked",
@@ -764,9 +675,6 @@ void on_list_table_clicked (GtkButton *button, gpointer user_data) {
     g_signal_connect (GTK_OBJECT (cancelbutton), "clicked",
 		      G_CALLBACK (on_param_window_cancel),
 		      user_data);
-    g_signal_connect (GTK_OBJECT (dialog), "delete_event",
-		      G_CALLBACK (gtk_true),
-		      NULL);
   }
   else if (rfxbuilder->table_type==RFX_TABLE_TYPE_TRIGGERS) {
     g_signal_connect (GTK_OBJECT (okbutton), "clicked",
@@ -776,9 +684,6 @@ void on_list_table_clicked (GtkButton *button, gpointer user_data) {
     g_signal_connect (GTK_OBJECT (cancelbutton), "clicked",
 		      G_CALLBACK (on_triggers_cancel),
 		      user_data);
-    g_signal_connect (GTK_OBJECT (dialog), "delete_event",
-		      G_CALLBACK (gtk_true),
-		      NULL);
   }
 
 
@@ -804,6 +709,9 @@ void on_list_table_clicked (GtkButton *button, gpointer user_data) {
 		      G_CALLBACK (on_table_swap_row),
 		      user_data);
   }
+
+  gtk_widget_show_all (dialog);
+
 }
 
 void on_requirements_ok (GtkButton *button, gpointer user_data) {
@@ -816,14 +724,14 @@ void on_requirements_ok (GtkButton *button, gpointer user_data) {
   for (i=0;i<rfxbuilder->num_reqs;i++) {
     rfxbuilder->reqs[i]=g_strdup (gtk_entry_get_text (GTK_ENTRY (rfxbuilder->entry[i])));
   }
-  gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
+  lives_general_button_clicked(button,NULL);
 }
 
 void on_requirements_cancel (GtkButton *button, gpointer user_data) {
   rfx_build_window_t *rfxbuilder=(rfx_build_window_t *)user_data;
 
   rfxbuilder->num_reqs=rfxbuilder->onum_reqs;
-  gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
+  lives_general_button_clicked(button,NULL);
 }
 
 void on_properties_ok (GtkButton *button, gpointer user_data) {
@@ -845,12 +753,9 @@ void on_properties_ok (GtkButton *button, gpointer user_data) {
       rfxbuilder->props^=RFX_PROPS_BATCHG;
     }
   }
-  gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
+  lives_general_button_clicked(button,NULL);
 }
 
-void on_properties_cancel (GtkButton *button, gpointer user_data) {
-  gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
-}
 
 void on_params_ok (GtkButton *button, gpointer user_data) { 
   rfx_build_window_t *rfxbuilder=(rfx_build_window_t *)user_data;
@@ -882,7 +787,7 @@ void on_params_ok (GtkButton *button, gpointer user_data) {
   if (rfxbuilder->num_params) {
     g_free (rfxbuilder->copy_params);
   }
-  gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
+  lives_general_button_clicked(button,NULL);
 }
 
 
@@ -903,7 +808,7 @@ void on_params_cancel (GtkButton *button, gpointer user_data) {
     g_free (rfxbuilder->copy_params);
   }
   rfxbuilder->num_params=rfxbuilder->onum_params;
-  gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
+  lives_general_button_clicked(button,NULL);
 }
 
 void on_param_window_ok (GtkButton *button, gpointer user_data) {
@@ -918,39 +823,33 @@ void on_param_window_ok (GtkButton *button, gpointer user_data) {
     rfxbuilder->paramw_hints[i]=g_strdup_printf ("%s%s%s",gtk_entry_get_text (GTK_ENTRY (rfxbuilder->entry[i])),rfxbuilder->field_delim,
 						 gtk_entry_get_text (GTK_ENTRY (rfxbuilder->entry2[i])));
   }
-  gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
+  lives_general_button_clicked(button,NULL);
 }
 
 void on_param_window_cancel (GtkButton *button, gpointer user_data) {
   rfx_build_window_t *rfxbuilder=(rfx_build_window_t *)user_data;
 
   rfxbuilder->num_paramw_hints=rfxbuilder->onum_paramw_hints;
-  gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
+  lives_general_button_clicked(button,NULL);
 }
 
 void on_code_ok (GtkButton *button, gpointer user_data) {
   rfx_build_window_t *rfxbuilder=(rfx_build_window_t *)user_data;
 
-  GtkTextIter startiter,enditer;
-
-  gtk_text_buffer_get_start_iter (gtk_text_view_get_buffer (GTK_TEXT_VIEW (rfxbuilder->code_textview)),&startiter);
-  gtk_text_buffer_get_end_iter (gtk_text_view_get_buffer (GTK_TEXT_VIEW (rfxbuilder->code_textview)),&enditer);
-
-
   switch (rfxbuilder->codetype) {
   case RFX_CODE_TYPE_PRE:
     g_free (rfxbuilder->pre_code);
-    rfxbuilder->pre_code=gtk_text_buffer_get_text (gtk_text_view_get_buffer (GTK_TEXT_VIEW (rfxbuilder->code_textview)),&startiter,&enditer,FALSE);
+    rfxbuilder->pre_code=text_view_get_text (LIVES_TEXT_VIEW (rfxbuilder->code_textview));
     break;
 
   case RFX_CODE_TYPE_LOOP:
     g_free (rfxbuilder->loop_code);
-    rfxbuilder->loop_code=gtk_text_buffer_get_text (gtk_text_view_get_buffer (GTK_TEXT_VIEW (rfxbuilder->code_textview)),&startiter,&enditer,FALSE);
+    rfxbuilder->loop_code=text_view_get_text (LIVES_TEXT_VIEW (rfxbuilder->code_textview));
     break;
 
   case RFX_CODE_TYPE_POST:
     g_free (rfxbuilder->post_code);
-    rfxbuilder->post_code=gtk_text_buffer_get_text (gtk_text_view_get_buffer (GTK_TEXT_VIEW (rfxbuilder->code_textview)),&startiter,&enditer,FALSE);
+    rfxbuilder->post_code=text_view_get_text (LIVES_TEXT_VIEW (rfxbuilder->code_textview));
     break;
 
   case RFX_CODE_TYPE_STRDEF:
@@ -959,14 +858,14 @@ void on_code_ok (GtkButton *button, gpointer user_data) {
       gchar buf[++maxlen];
       
       if (rfxbuilder->copy_params[rfxbuilder->edit_param].def!=NULL) g_free (rfxbuilder->copy_params[rfxbuilder->edit_param].def);
-      g_snprintf (buf,maxlen,"%s",gtk_text_buffer_get_text (gtk_text_view_get_buffer (GTK_TEXT_VIEW (rfxbuilder->code_textview)),&startiter,&enditer,FALSE));
+      g_snprintf (buf,maxlen,"%s",text_view_get_text (LIVES_TEXT_VIEW (rfxbuilder->code_textview)));
 
       rfxbuilder->copy_params[rfxbuilder->edit_param].def=subst (buf,rfxbuilder->field_delim,"");
       break;
     }
   case RFX_CODE_TYPE_STRING_LIST:
     {
-      gchar *values=gtk_text_buffer_get_text (gtk_text_view_get_buffer (GTK_TEXT_VIEW (rfxbuilder->code_textview)),&startiter,&enditer,FALSE);
+      gchar *values=text_view_get_text (LIVES_TEXT_VIEW (rfxbuilder->code_textview));
       gchar **lines=g_strsplit (values,"\n",-1);
       gint numlines=get_token_count (values,'\n');
       int i;
@@ -998,12 +897,10 @@ void on_code_ok (GtkButton *button, gpointer user_data) {
 
     }
   }
-  gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
+  lives_general_button_clicked(button,NULL);
 }
 
-void on_code_cancel (GtkButton *button, gpointer user_data) {
-  gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
-}
+
 void on_triggers_ok (GtkButton *button, gpointer user_data) {
   rfx_build_window_t *rfxbuilder=(rfx_build_window_t *)user_data;
 
@@ -1023,7 +920,7 @@ void on_triggers_ok (GtkButton *button, gpointer user_data) {
   if (rfxbuilder->num_triggers) {
     g_free (rfxbuilder->copy_triggers);
   }
-  gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
+  lives_general_button_clicked(button,NULL);
 }
 
 void on_triggers_cancel (GtkButton *button, gpointer user_data) {
@@ -1037,7 +934,7 @@ void on_triggers_cancel (GtkButton *button, gpointer user_data) {
     g_free (rfxbuilder->copy_triggers);
   }
   rfxbuilder->num_triggers=rfxbuilder->onum_triggers;
-  gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
+  lives_general_button_clicked(button,NULL);
 }
 
 
@@ -1045,99 +942,70 @@ void on_properties_clicked (GtkButton *button, gpointer user_data) {
   GtkWidget *dialog;
   GtkWidget *dialog_vbox;
   GtkWidget *dialog_action_area;
-  GtkWidget *hbox;
   GtkWidget *cancelbutton;
   GtkWidget *okbutton;
-  GtkWidget *label;
+
+  GtkAccelGroup *accel_group=GTK_ACCEL_GROUP(gtk_accel_group_new ());
 
   rfx_build_window_t *rfxbuilder=(rfx_build_window_t *)user_data;
 
-  dialog = gtk_dialog_new ();
-  gtk_window_set_title (GTK_WINDOW (dialog), _("LiVES: - RFX Properties"));
-  gtk_widget_show (dialog);
+  dialog = lives_standard_dialog_new (_("LiVES: - RFX Properties"),FALSE);
+  gtk_window_add_accel_group (GTK_WINDOW (dialog), accel_group);
 
-  gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_CENTER_ALWAYS);
-  gtk_window_set_modal (GTK_WINDOW (dialog), TRUE);
   if (prefs->show_gui) {
     gtk_window_set_transient_for(GTK_WINDOW(dialog),GTK_WINDOW(rfxbuilder->dialog));
   }
-  if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color(dialog, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-    lives_dialog_set_has_separator(GTK_DIALOG(dialog),FALSE);
-  }
 
-  gtk_container_set_border_width (GTK_CONTAINER (dialog), 10);
-  gtk_window_set_default_size (GTK_WINDOW (rfxbuilder->dialog), 300, 200);
+  //gtk_window_set_default_size (GTK_WINDOW (rfxbuilder->dialog), 300, 200);
 
   dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(dialog));
-  lives_box_set_spacing (GTK_BOX (dialog_vbox), 10);
-  gtk_widget_show (dialog_vbox);
 
-  hbox = lives_hbox_new (FALSE, 0);
+  rfxbuilder->prop_slow= lives_standard_check_button_new (_("_Slow (hint to GUI)"),TRUE,LIVES_BOX(dialog_vbox),NULL);
+
   if (rfxbuilder->type!=RFX_BUILD_TYPE_EFFECT0) {
-    gtk_widget_show (hbox);
+    gtk_widget_show (rfxbuilder->prop_slow);
   }
-  gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, TRUE, TRUE, 0);
 
-  rfxbuilder->prop_slow= gtk_check_button_new ();
-  label=gtk_label_new_with_mnemonic (_ ("_Slow (hint to GUI)"));
-  gtk_label_set_mnemonic_widget (GTK_LABEL (label),rfxbuilder->prop_slow);
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-  }
-  gtk_box_pack_start (GTK_BOX (hbox), rfxbuilder->prop_slow, FALSE, FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 10);
-  gtk_widget_show (label);
-  gtk_widget_show (rfxbuilder->prop_slow);
   if (rfxbuilder->props&RFX_PROPS_SLOW) {
-    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (rfxbuilder->prop_slow),TRUE);
+    lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (rfxbuilder->prop_slow),TRUE);
   }
 
   if (rfxbuilder->type==RFX_BUILD_TYPE_EFFECT0) {
-    hbox = lives_hbox_new (FALSE, 0);
-    gtk_widget_show (hbox);
-    gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, TRUE, TRUE, 0);
-    
-    rfxbuilder->prop_batchg= gtk_check_button_new ();
-    label=gtk_label_new_with_mnemonic (_ ("_Batch mode generator"));
-    gtk_label_set_mnemonic_widget (GTK_LABEL (label),rfxbuilder->prop_batchg);
-    if (palette->style&STYLE_1) {
-      lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-    }
-    gtk_box_pack_start (GTK_BOX (hbox), rfxbuilder->prop_batchg, FALSE, FALSE, 0);
-    gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 10);
-    gtk_widget_show (label);
-    gtk_widget_show (rfxbuilder->prop_batchg);
+    rfxbuilder->prop_batchg=lives_standard_check_button_new (_("_Batch mode generator"),TRUE,LIVES_BOX(dialog_vbox),NULL);
     if (rfxbuilder->props&RFX_PROPS_BATCHG) {
-      gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (rfxbuilder->prop_batchg),TRUE);
+      lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (rfxbuilder->prop_batchg),TRUE);
     }
   }
 
   dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (dialog));
-  gtk_widget_show (dialog_action_area);
   gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area), GTK_BUTTONBOX_END);
 
   cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
-  gtk_widget_show (cancelbutton);
   gtk_dialog_add_action_widget (GTK_DIALOG (dialog), cancelbutton, GTK_RESPONSE_CANCEL);
-  lives_widget_set_can_focus_and_default (cancelbutton);
 
   okbutton = gtk_button_new_from_stock ("gtk-ok");
-  gtk_widget_show (okbutton);
   gtk_dialog_add_action_widget (GTK_DIALOG (dialog), okbutton, GTK_RESPONSE_OK);
   lives_widget_set_can_focus_and_default (okbutton);
+
+  gtk_widget_grab_default (okbutton);
+
+  gtk_widget_add_accelerator (cancelbutton, "activate", accel_group,
+                              LIVES_KEY_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
+
+  
+  gtk_widget_add_accelerator (okbutton, "activate", accel_group,
+                              LIVES_KEY_Return, (GdkModifierType)0, (GtkAccelFlags)0);
+
 
   g_signal_connect (GTK_OBJECT (okbutton), "clicked",
 		    G_CALLBACK (on_properties_ok),
 		    user_data);
 
   g_signal_connect (GTK_OBJECT (cancelbutton), "clicked",
-		    G_CALLBACK (on_properties_cancel),
-		    user_data);
-  g_signal_connect (GTK_OBJECT (dialog), "delete_event",
-		    G_CALLBACK (gtk_true),
+		    G_CALLBACK (lives_general_button_clicked),
 		    NULL);
   
+  gtk_widget_show_all (dialog);
 
 }
 
@@ -1145,13 +1013,10 @@ void on_properties_clicked (GtkButton *button, gpointer user_data) {
 
 
 void on_table_add_row (GtkButton *button, gpointer user_data) {
-  // horrible, horrible code...
   GtkWidget *entry,*entry2,*entry3;
   GtkWidget *param_dialog=NULL;
   GtkWidget *param_window_dialog=NULL;
   GtkWidget *trigger_dialog=NULL;
-
-  GtkTextIter startiter,enditer;
 
   rfx_build_window_t *rfxbuilder=(rfx_build_window_t *)user_data;
   lives_param_t *param=NULL;
@@ -1174,7 +1039,8 @@ void on_table_add_row (GtkButton *button, gpointer user_data) {
     gtk_editable_set_editable (GTK_EDITABLE (entry), TRUE);
 
     gtk_table_resize (GTK_TABLE (rfxbuilder->table),++rfxbuilder->table_rows,1);
-    gtk_table_attach (GTK_TABLE (rfxbuilder->table), entry, 0, 1, rfxbuilder->table_rows-1+rfxbuilder->ptable_rows, rfxbuilder->table_rows+rfxbuilder->ptable_rows,
+    gtk_table_attach (GTK_TABLE (rfxbuilder->table), entry, 0, 1, rfxbuilder->table_rows-1+rfxbuilder->ptable_rows, 
+		      rfxbuilder->table_rows+rfxbuilder->ptable_rows,
 		      (GtkAttachOptions) (GTK_FILL|GTK_EXPAND),
 		      (GtkAttachOptions) (0), 0, 0);
     lives_widget_context_update();
@@ -1220,7 +1086,8 @@ void on_table_add_row (GtkButton *button, gpointer user_data) {
     g_free(tmpx);
     gtk_widget_show (entry);
      
-    gtk_table_attach (GTK_TABLE (rfxbuilder->table), entry, 0, 1, rfxbuilder->table_rows+rfxbuilder->ptable_rows, rfxbuilder->table_rows+1+rfxbuilder->ptable_rows,
+    gtk_table_attach (GTK_TABLE (rfxbuilder->table), entry, 0, 1, rfxbuilder->table_rows+rfxbuilder->ptable_rows, 
+		      rfxbuilder->table_rows+1+rfxbuilder->ptable_rows,
 		      (GtkAttachOptions) (0),
 		      (GtkAttachOptions) (0), 0, 0);
 
@@ -1232,7 +1099,8 @@ void on_table_add_row (GtkButton *button, gpointer user_data) {
 
 
 
-    gtk_table_attach (GTK_TABLE (rfxbuilder->table), entry2, 1, 2, rfxbuilder->table_rows-1+rfxbuilder->ptable_rows, rfxbuilder->table_rows+rfxbuilder->ptable_rows,
+    gtk_table_attach (GTK_TABLE (rfxbuilder->table), entry2, 1, 2, rfxbuilder->table_rows-1+rfxbuilder->ptable_rows, 
+		      rfxbuilder->table_rows+rfxbuilder->ptable_rows,
 		      (GtkAttachOptions) (GTK_FILL|GTK_EXPAND),
 		      (GtkAttachOptions) (0), 0, 0);
 
@@ -1269,7 +1137,8 @@ void on_table_add_row (GtkButton *button, gpointer user_data) {
     gtk_widget_show (entry3);
     gtk_editable_set_editable (GTK_EDITABLE (entry3), FALSE);
 
-    gtk_table_attach (GTK_TABLE (rfxbuilder->table), entry3, 2, 3, rfxbuilder->table_rows-1+rfxbuilder->ptable_rows, rfxbuilder->table_rows+rfxbuilder->ptable_rows,
+    gtk_table_attach (GTK_TABLE (rfxbuilder->table), entry3, 2, 3, rfxbuilder->table_rows-1+rfxbuilder->ptable_rows, 
+		      rfxbuilder->table_rows+rfxbuilder->ptable_rows,
 		      (GtkAttachOptions) (GTK_FILL),
 		      (GtkAttachOptions) (0), 0, 0);
 
@@ -1304,7 +1173,8 @@ void on_table_add_row (GtkButton *button, gpointer user_data) {
     gtk_editable_set_editable (GTK_EDITABLE (entry), FALSE);
 
     gtk_table_resize (GTK_TABLE (rfxbuilder->table),++rfxbuilder->table_rows,2);
-    gtk_table_attach (GTK_TABLE (rfxbuilder->table), entry, 0, 1, rfxbuilder->table_rows-1+rfxbuilder->ptable_rows, rfxbuilder->table_rows+rfxbuilder->ptable_rows,
+    gtk_table_attach (GTK_TABLE (rfxbuilder->table), entry, 0, 1, rfxbuilder->table_rows-1+rfxbuilder->ptable_rows, 
+		      rfxbuilder->table_rows+rfxbuilder->ptable_rows,
 		      (GtkAttachOptions) (GTK_FILL),
 		      (GtkAttachOptions) (0), 0, 0);
 
@@ -1318,11 +1188,14 @@ void on_table_add_row (GtkButton *button, gpointer user_data) {
 	ctext=lives_combo_get_active_text(LIVES_COMBO(rfxbuilder->paramw_sp_combo));
 	if (!strcmp (ctext,"framedraw")) {
 	  gchar *ctext2=lives_combo_get_active_text(LIVES_COMBO(rfxbuilder->paramw_spsub_combo));
-	  gtk_entry_set_text (GTK_ENTRY (entry2),(tmpx=g_strdup_printf ("%s%s%s%s%s",ctext,rfxbuilder->field_delim,ctext2,rfxbuilder->field_delim,gtk_entry_get_text (GTK_ENTRY (rfxbuilder->paramw_rest_entry)))));
+	  gtk_entry_set_text (GTK_ENTRY (entry2),(tmpx=g_strdup_printf ("%s%s%s%s%s",ctext,rfxbuilder->field_delim,ctext2,
+									rfxbuilder->field_delim, 
+									gtk_entry_get_text (GTK_ENTRY (rfxbuilder->paramw_rest_entry)))));
 	  g_free(ctext2);
 	}
 	else {
-	  gtk_entry_set_text (GTK_ENTRY (entry2),(tmpx=g_strdup_printf ("%s%s%s",ctext,rfxbuilder->field_delim,gtk_entry_get_text (GTK_ENTRY (rfxbuilder->paramw_rest_entry)))));
+	  gtk_entry_set_text (GTK_ENTRY (entry2),(tmpx=g_strdup_printf ("%s%s%s",ctext,rfxbuilder->field_delim,
+									gtk_entry_get_text (GTK_ENTRY (rfxbuilder->paramw_rest_entry)))));
 	}
 	g_free(tmpx);
 	g_free(ctext);
@@ -1336,7 +1209,8 @@ void on_table_add_row (GtkButton *button, gpointer user_data) {
     gtk_widget_show (entry2);
     gtk_editable_set_editable (GTK_EDITABLE (entry2), FALSE);
 
-    gtk_table_attach (GTK_TABLE (rfxbuilder->table), entry2, 1, 2, rfxbuilder->table_rows-1+rfxbuilder->ptable_rows, rfxbuilder->table_rows+rfxbuilder->ptable_rows,
+    gtk_table_attach (GTK_TABLE (rfxbuilder->table), entry2, 1, 2, rfxbuilder->table_rows-1+rfxbuilder->ptable_rows, 
+		      rfxbuilder->table_rows+rfxbuilder->ptable_rows,
 		      (GtkAttachOptions) (GTK_FILL|GTK_EXPAND),
 		      (GtkAttachOptions) (0), 0, 0);
 
@@ -1347,7 +1221,7 @@ void on_table_add_row (GtkButton *button, gpointer user_data) {
     break;
 
 
- case RFX_TABLE_TYPE_TRIGGERS:
+  case RFX_TABLE_TYPE_TRIGGERS:
     entry = rfxbuilder->entry[rfxbuilder->table_rows] = gtk_entry_new ();
     
     if (button!=NULL) {
@@ -1361,7 +1235,8 @@ void on_table_add_row (GtkButton *button, gpointer user_data) {
     }
     else {
       gchar *tmpx2=NULL;
-      gtk_entry_set_text (GTK_ENTRY (entry),rfxbuilder->triggers[rfxbuilder->table_rows].when?(tmpx2=g_strdup_printf ("%d",rfxbuilder->triggers[rfxbuilder->table_rows].when-1)):"init");
+      gtk_entry_set_text (GTK_ENTRY (entry),rfxbuilder->triggers[rfxbuilder->table_rows].when?
+			  (tmpx2=g_strdup_printf ("%d",rfxbuilder->triggers[rfxbuilder->table_rows].when-1)):"init");
       if (tmpx2!=NULL) g_free(tmpx2);
     }
     
@@ -1369,16 +1244,14 @@ void on_table_add_row (GtkButton *button, gpointer user_data) {
     gtk_editable_set_editable (GTK_EDITABLE (entry), FALSE);
 
     gtk_table_resize (GTK_TABLE (rfxbuilder->table),++rfxbuilder->table_rows,1);
-    gtk_table_attach (GTK_TABLE (rfxbuilder->table), entry, 0, 1, rfxbuilder->table_rows-1+rfxbuilder->ptable_rows, rfxbuilder->table_rows+rfxbuilder->ptable_rows,
+    gtk_table_attach (GTK_TABLE (rfxbuilder->table), entry, 0, 1, rfxbuilder->table_rows-1+rfxbuilder->ptable_rows, 
+		      rfxbuilder->table_rows+rfxbuilder->ptable_rows,
 		      (GtkAttachOptions) (GTK_FILL),
 		      (GtkAttachOptions) (0), 0, 0);
 
     if (button==NULL) return;
 
-    gtk_text_buffer_get_start_iter (gtk_text_view_get_buffer (GTK_TEXT_VIEW (rfxbuilder->code_textview)),&startiter);
-    gtk_text_buffer_get_end_iter (gtk_text_view_get_buffer (GTK_TEXT_VIEW (rfxbuilder->code_textview)),&enditer);
-
-    rfxbuilder->copy_triggers[rfxbuilder->table_rows-1].code=gtk_text_buffer_get_text (gtk_text_view_get_buffer (GTK_TEXT_VIEW (rfxbuilder->code_textview)),&startiter,&enditer,FALSE);
+    rfxbuilder->copy_triggers[rfxbuilder->table_rows-1].code=text_view_get_text(LIVES_TEXT_VIEW (rfxbuilder->code_textview));
     
     rfxbuilder->copy_triggers[rfxbuilder->table_rows-1].when=atoi (gtk_entry_get_text (GTK_ENTRY (rfxbuilder->trigger_when_entry)))+1;
     if (!strcmp(gtk_entry_get_text (GTK_ENTRY (rfxbuilder->trigger_when_entry)),"init")) rfxbuilder->copy_triggers[rfxbuilder->table_rows-1].when=0;
@@ -1393,7 +1266,7 @@ void on_table_add_row (GtkButton *button, gpointer user_data) {
     gtk_widget_destroy (trigger_dialog);
     gtk_widget_queue_resize (gtk_widget_get_parent(GTK_WIDGET(rfxbuilder->table)));
     break;
-}
+  }
 }
 
 
@@ -1480,13 +1353,12 @@ void on_table_edit_row (GtkButton *button, gpointer user_data) {
   GtkWidget *paramw_dialog;
   GtkWidget *trigger_dialog;
 
-  GtkTextIter startiter,enditer;
-
   rfx_build_window_t *rfxbuilder=(rfx_build_window_t *)user_data;
   lives_param_t *param;
+
   int i;
-  gint found=-1;
-  gboolean param_ok=FALSE;
+  int found=-1;
+  boolean param_ok=FALSE;
 
   gchar *tmpx;
   gchar *ctext;
@@ -1511,7 +1383,9 @@ void on_table_edit_row (GtkButton *button, gpointer user_data) {
 
   case RFX_TABLE_TYPE_PARAMS:
     for (i=0;i<rfxbuilder->table_rows&&found==-1;i++) {
-      if (gtk_editable_get_selection_bounds(GTK_EDITABLE(rfxbuilder->entry[i]),NULL,NULL)||gtk_editable_get_selection_bounds(GTK_EDITABLE(rfxbuilder->entry2[i]),NULL,NULL)||gtk_editable_get_selection_bounds(GTK_EDITABLE(rfxbuilder->entry3[i]),NULL,NULL)) found=i;
+      if (gtk_editable_get_selection_bounds(GTK_EDITABLE(rfxbuilder->entry[i]),NULL,NULL)||
+	  gtk_editable_get_selection_bounds(GTK_EDITABLE(rfxbuilder->entry2[i]),NULL,NULL)||
+	  gtk_editable_get_selection_bounds(GTK_EDITABLE(rfxbuilder->entry3[i]),NULL,NULL)) found=i;
     }
     if (found==-1) return;
 
@@ -1551,7 +1425,8 @@ void on_table_edit_row (GtkButton *button, gpointer user_data) {
 
   case RFX_TABLE_TYPE_PARAM_WINDOW:
     for (i=0;i<rfxbuilder->table_rows&&found==-1;i++) {
-      if (gtk_editable_get_selection_bounds(GTK_EDITABLE(rfxbuilder->entry[i]),NULL,NULL)||gtk_editable_get_selection_bounds(GTK_EDITABLE(rfxbuilder->entry2[i]),NULL,NULL)) found=i;
+      if (gtk_editable_get_selection_bounds(GTK_EDITABLE(rfxbuilder->entry[i]),NULL,NULL)||
+	  gtk_editable_get_selection_bounds(GTK_EDITABLE(rfxbuilder->entry2[i]),NULL,NULL)) found=i;
     }
     if (found==-1) return;
     paramw_dialog=make_param_window_dialog(found,rfxbuilder);
@@ -1596,11 +1471,8 @@ void on_table_edit_row (GtkButton *button, gpointer user_data) {
       return;
     }
 
-    gtk_text_buffer_get_start_iter (gtk_text_view_get_buffer (GTK_TEXT_VIEW (rfxbuilder->code_textview)),&startiter);
-    gtk_text_buffer_get_end_iter (gtk_text_view_get_buffer (GTK_TEXT_VIEW (rfxbuilder->code_textview)),&enditer);
-
     g_free (rfxbuilder->copy_triggers[found].code);
-    rfxbuilder->copy_triggers[found].code=gtk_text_buffer_get_text (gtk_text_view_get_buffer (GTK_TEXT_VIEW (rfxbuilder->code_textview)),&startiter,&enditer,FALSE);
+    rfxbuilder->copy_triggers[found].code=text_view_get_text (LIVES_TEXT_VIEW (rfxbuilder->code_textview));
 
     gtk_widget_destroy (trigger_dialog);
     break;
@@ -1618,7 +1490,8 @@ void on_table_swap_row (GtkButton *button, gpointer user_data) {
   switch (rfxbuilder->table_type) {
   case RFX_TABLE_TYPE_PARAM_WINDOW:
     for (i=0;i<rfxbuilder->table_rows&&found==-1;i++) {
-      if (gtk_editable_get_selection_bounds(GTK_EDITABLE(rfxbuilder->entry[i]),NULL,NULL)||gtk_editable_get_selection_bounds(GTK_EDITABLE(rfxbuilder->entry2[i]),NULL,NULL)) found=i;
+      if (gtk_editable_get_selection_bounds(GTK_EDITABLE(rfxbuilder->entry[i]),NULL,NULL)||
+	  gtk_editable_get_selection_bounds(GTK_EDITABLE(rfxbuilder->entry2[i]),NULL,NULL)) found=i;
     }
   default:
     break;
@@ -1698,7 +1571,9 @@ void on_table_delete_row (GtkButton *button, gpointer user_data) {
 	g_free (rfxbuilder->copy_params[i].label);
 	g_free (rfxbuilder->copy_params[i].def);
       }
-      else if (gtk_editable_get_selection_bounds(GTK_EDITABLE(rfxbuilder->entry[i]),NULL,NULL)||gtk_editable_get_selection_bounds (GTK_EDITABLE (rfxbuilder->entry2[i]),NULL,NULL)||gtk_editable_get_selection_bounds (GTK_EDITABLE (rfxbuilder->entry2[i]),NULL,NULL)) {
+      else if (gtk_editable_get_selection_bounds(GTK_EDITABLE(rfxbuilder->entry[i]),NULL,NULL)||
+	       gtk_editable_get_selection_bounds (GTK_EDITABLE (rfxbuilder->entry2[i]),NULL,NULL)||
+	       gtk_editable_get_selection_bounds (GTK_EDITABLE (rfxbuilder->entry2[i]),NULL,NULL)) {
 	if (rfxbuilder->copy_params[i].onchange) {
 	  do_blocking_error_dialog(_ ("\n\nCannot remove this parameter as it has a trigger.\nPlease remove the trigger first.\n\n"));
 	  return;
@@ -1738,7 +1613,8 @@ void on_table_delete_row (GtkButton *button, gpointer user_data) {
 	rfxbuilder->entry[i-1]=rfxbuilder->entry[i];
 	rfxbuilder->entry2[i-1]=rfxbuilder->entry2[i];
       }
-      else if (gtk_editable_get_selection_bounds(GTK_EDITABLE(rfxbuilder->entry[i]),NULL,NULL)||gtk_editable_get_selection_bounds (GTK_EDITABLE (rfxbuilder->entry2[i]),NULL,NULL)) {
+      else if (gtk_editable_get_selection_bounds(GTK_EDITABLE(rfxbuilder->entry[i]),NULL,NULL)||
+	       gtk_editable_get_selection_bounds (GTK_EDITABLE (rfxbuilder->entry2[i]),NULL,NULL)) {
 	gtk_widget_destroy (rfxbuilder->entry[i]);
 	gtk_widget_destroy (rfxbuilder->entry2[i]);
 	if (rfxbuilder->table_rows>1) {
@@ -2125,7 +2001,7 @@ GtkWidget * make_param_dialog (gint pnum, rfx_build_window_t *rfxbuilder) {
   lives_widget_set_can_focus_and_default (okbutton);
 
   g_signal_connect (GTK_OBJECT (dialog), "delete_event",
-		    G_CALLBACK (gtk_true),
+		    G_CALLBACK (return_true),
 		    NULL);
 
   g_signal_connect (GTK_OBJECT (rfxbuilder->param_strdef_button), "clicked",
@@ -2688,7 +2564,7 @@ GtkWidget * make_param_window_dialog (gint pnum, rfx_build_window_t *rfxbuilder)
   lives_widget_set_can_focus_and_default (okbutton);
 
   g_signal_connect (GTK_OBJECT (dialog), "delete_event",
-		    G_CALLBACK (gtk_true),
+		    G_CALLBACK (return_true),
 		    NULL);
 
   g_signal_connect (GTK_OBJECT(rfxbuilder->paramw_kw_combo),"changed",
@@ -2864,8 +2740,8 @@ GtkWidget * make_trigger_dialog (gint tnum, rfx_build_window_t *rfxbuilder) {
   gtk_text_view_set_cursor_visible (GTK_TEXT_VIEW (rfxbuilder->code_textview), TRUE);
 
   if (tnum>=0) {
-    gtk_text_buffer_set_text (gtk_text_view_get_buffer (GTK_TEXT_VIEW (rfxbuilder->code_textview)), 
-			      rfxbuilder->copy_triggers[tnum].code, -1);
+    text_view_set_text (LIVES_TEXT_VIEW (rfxbuilder->code_textview), 
+			rfxbuilder->copy_triggers[tnum].code,-1);
     gtk_widget_grab_focus(rfxbuilder->code_textview);
   }
     
@@ -2886,7 +2762,7 @@ GtkWidget * make_trigger_dialog (gint tnum, rfx_build_window_t *rfxbuilder) {
   lives_widget_set_can_focus_and_default (okbutton);
 
   g_signal_connect (GTK_OBJECT (dialog), "delete_event",
-		    G_CALLBACK (gtk_true),
+		    G_CALLBACK (return_true),
 		    NULL);
 
   return dialog;
@@ -2957,22 +2833,22 @@ void on_code_clicked (GtkButton *button, gpointer user_data) {
   if (button==GTK_BUTTON (rfxbuilder->pre_button)) {
     rfxbuilder->codetype=RFX_CODE_TYPE_PRE;
     gtk_window_set_title (GTK_WINDOW (dialog), _("LiVES: - Pre Loop Code"));
-    gtk_text_buffer_set_text (gtk_text_view_get_buffer (GTK_TEXT_VIEW (rfxbuilder->code_textview)), 
-			      rfxbuilder->pre_code, -1);
+    text_view_set_text (LIVES_TEXT_VIEW (rfxbuilder->code_textview), 
+			rfxbuilder->pre_code,-1);
   }
 
   else if (button==GTK_BUTTON (rfxbuilder->loop_button)) {
     rfxbuilder->codetype=RFX_CODE_TYPE_LOOP;
     gtk_window_set_title (GTK_WINDOW (dialog), _("LiVES: - Loop Code"));
-    gtk_text_buffer_set_text (gtk_text_view_get_buffer (GTK_TEXT_VIEW (rfxbuilder->code_textview)), 
-			      rfxbuilder->loop_code, -1);
+    text_view_set_text (LIVES_TEXT_VIEW (rfxbuilder->code_textview), 
+			rfxbuilder->loop_code,-1);
   }
 
   else if (button==GTK_BUTTON (rfxbuilder->post_button)) {
     rfxbuilder->codetype=RFX_CODE_TYPE_POST;
     gtk_window_set_title (GTK_WINDOW (dialog), _("LiVES: - Post Loop Code"));
-    gtk_text_buffer_set_text (gtk_text_view_get_buffer (GTK_TEXT_VIEW (rfxbuilder->code_textview)), 
-			      rfxbuilder->post_code, -1);
+    text_view_set_text (LIVES_TEXT_VIEW (rfxbuilder->code_textview), 
+			rfxbuilder->post_code,-1);
   }
 
   else if (button==GTK_BUTTON (rfxbuilder->param_strdef_button)) {
@@ -2987,8 +2863,8 @@ void on_code_clicked (GtkButton *button, gpointer user_data) {
       g_free(tmpx);
       gtk_text_view_set_wrap_mode (GTK_TEXT_VIEW (rfxbuilder->code_textview),GTK_WRAP_WORD);
 
-      gtk_text_buffer_set_text (gtk_text_view_get_buffer (GTK_TEXT_VIEW (rfxbuilder->code_textview)), 
-				(gchar *)rfxbuilder->copy_params[rfxbuilder->edit_param].def, len);
+      text_view_set_text (LIVES_TEXT_VIEW (rfxbuilder->code_textview), 
+			  (gchar *)rfxbuilder->copy_params[rfxbuilder->edit_param].def,len);
     }
     else {
       int i;
@@ -3005,8 +2881,7 @@ void on_code_clicked (GtkButton *button, gpointer user_data) {
 	  if (string!=string_new) g_free (string);
 	  string=string_new;
 	}
-	gtk_text_buffer_set_text (gtk_text_view_get_buffer (GTK_TEXT_VIEW (rfxbuilder->code_textview)), string, 
-				  strlen (string)-1);
+	text_view_set_text (LIVES_TEXT_VIEW (rfxbuilder->code_textview), string, strlen(string)-1);
 	g_free (string);
 	gtk_text_buffer_get_start_iter (gtk_text_view_get_buffer(GTK_TEXT_VIEW(rfxbuilder->code_textview)),&start_iter);
 	gtk_text_buffer_place_cursor (gtk_text_view_get_buffer (GTK_TEXT_VIEW (rfxbuilder->code_textview)), &start_iter);
@@ -3035,11 +2910,11 @@ void on_code_clicked (GtkButton *button, gpointer user_data) {
 		    user_data);
   
   g_signal_connect (GTK_OBJECT (cancelbutton), "clicked",
-		    G_CALLBACK (on_code_cancel),
-		    user_data);
+		    G_CALLBACK (lives_general_button_clicked),
+		    NULL);
 
   g_signal_connect (GTK_OBJECT (dialog), "delete_event",
-		    G_CALLBACK (gtk_true),
+		    G_CALLBACK (return_true),
 		    NULL);
 
 
@@ -3052,16 +2927,14 @@ void on_rfxbuilder_ok (GtkButton *button, gpointer user_data) {
   if (!perform_rfxbuilder_checks (rfxbuilder)) return;
   if (!rfxbuilder_to_script (rfxbuilder)) return;
 
-  gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
-  lives_widget_context_update();
+  lives_general_button_clicked(button,NULL);
   rfxbuilder_destroy (rfxbuilder);
 }
 
 void on_rfxbuilder_cancel (GtkButton *button, gpointer user_data) {
   rfx_build_window_t *rfxbuilder=(rfx_build_window_t *)user_data;
 
-  gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
-  lives_widget_context_update();
+  lives_general_button_clicked(button,NULL);
   rfxbuilder_destroy (rfxbuilder);
 }
 
@@ -4405,7 +4278,7 @@ gchar *prompt_for_script_name(const gchar *sname, lives_rfx_status_t status) {
   gtk_widget_grab_default (copy_script_okbutton);
 
   g_signal_connect (GTK_OBJECT (dialog), "delete_event",
-		    G_CALLBACK (gtk_true),
+		    G_CALLBACK (return_true),
 		    NULL);
 
   if (status_combo!=NULL) on_script_status_changed(LIVES_COMBO(status_combo),(gpointer)script_combo);

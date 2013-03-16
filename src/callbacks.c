@@ -5586,14 +5586,14 @@ void on_show_file_info_activate (GtkMenuItem *menuitem, gpointer user_data) {
 			      cfile->clip_type==CLIP_TYPE_VIDEODEV)?(_("buffered")):
 			     (cfile->img_type==IMG_TYPE_JPEG?"jpeg":"png"))),cfile->bpp,"pcm");
     g_free(tmp);
-    gtk_text_buffer_set_text (gtk_text_view_get_buffer (GTK_TEXT_VIEW (filew->textview24)),buff, -1);
+    text_view_set_text (LIVES_TEXT_VIEW (filew->textview24),buff, -1);
     // fps
     g_snprintf(buff,512,"\n  %.3f%s",cfile->fps,cfile->ratio_fps?"...":"");
 
-    gtk_text_buffer_set_text (gtk_text_view_get_buffer (GTK_TEXT_VIEW (filew->textview25)),buff, -1);
+    text_view_set_text (LIVES_TEXT_VIEW (filew->textview25),buff, -1);
     // image size
     g_snprintf(buff,512,"\n  %dx%d",cfile->hsize,cfile->vsize);
-    gtk_text_buffer_set_text (gtk_text_view_get_buffer (GTK_TEXT_VIEW (filew->textview26)),buff, -1);
+    text_view_set_text (LIVES_TEXT_VIEW (filew->textview26),buff, -1);
     // frames
     if ((cfile->opening&&!cfile->opening_audio&&cfile->frames==0)||cfile->frames==123456789) {
       g_snprintf(buff,512,"%s",_ ("\n  Opening..."));
@@ -5612,7 +5612,7 @@ void on_show_file_info_activate (GtkMenuItem *menuitem, gpointer user_data) {
       }
 
     }
-    gtk_text_buffer_set_text (gtk_text_view_get_buffer (GTK_TEXT_VIEW (filew->textview27)),buff, -1);
+    text_view_set_text (LIVES_TEXT_VIEW (filew->textview27),buff, -1);
     // video time
     if ((cfile->opening&&!cfile->opening_audio&&cfile->frames==0)||cfile->frames==123456789) {
       g_snprintf(buff,512,"%s",_ ("\n  Opening..."));
@@ -5620,7 +5620,7 @@ void on_show_file_info_activate (GtkMenuItem *menuitem, gpointer user_data) {
     else {
       g_snprintf(buff,512,_("\n  %.2f sec."),cfile->video_time);
     }
-    gtk_text_buffer_set_text (gtk_text_view_get_buffer (GTK_TEXT_VIEW (filew->textview28)),buff, -1);
+    text_view_set_text (LIVES_TEXT_VIEW (filew->textview28),buff, -1);
     // file size
     if (cfile->f_size>=0l) {
       gchar *file_ds=lives_format_storage_space_string((guint64)cfile->f_size);
@@ -5628,7 +5628,7 @@ void on_show_file_info_activate (GtkMenuItem *menuitem, gpointer user_data) {
       g_free(file_ds);
     }
     else g_snprintf(buff,512,"%s",_ ("\n  Unknown"));
-    gtk_text_buffer_set_text (gtk_text_view_get_buffer (GTK_TEXT_VIEW (filew->textview29)),buff, -1);
+    text_view_set_text (LIVES_TEXT_VIEW (filew->textview29),buff, -1);
   }
 
   if (cfile->achans>0) {
@@ -5638,7 +5638,7 @@ void on_show_file_info_activate (GtkMenuItem *menuitem, gpointer user_data) {
     else {
       g_snprintf(buff,512,_("\n  %.2f sec."),cfile->laudio_time);
     }
-    gtk_text_buffer_set_text (gtk_text_view_get_buffer (GTK_TEXT_VIEW (filew->textview_ltime)),buff, -1);
+    text_view_set_text (LIVES_TEXT_VIEW (filew->textview_ltime),buff, -1);
 
     if (cfile->signed_endian&AFORM_UNSIGNED) sigs=g_strdup(_("unsigned"));
     else sigs=g_strdup(_("signed"));
@@ -5647,7 +5647,7 @@ void on_show_file_info_activate (GtkMenuItem *menuitem, gpointer user_data) {
     else ends=g_strdup(_("little-endian"));
 
     g_snprintf(buff,512,_("  %d Hz %d bit\n%s %s"),cfile->arate,cfile->asampsize,sigs,ends);
-    gtk_text_buffer_set_text (gtk_text_view_get_buffer (GTK_TEXT_VIEW (filew->textview_lrate)),buff, -1);
+    text_view_set_text (LIVES_TEXT_VIEW (filew->textview_lrate),buff, -1);
 
     g_free(sigs);
     g_free(ends);
@@ -5661,7 +5661,7 @@ void on_show_file_info_activate (GtkMenuItem *menuitem, gpointer user_data) {
     else ends=g_strdup(_("little-endian"));
 
     g_snprintf(buff,512,_("  %d Hz %d bit\n%s %s"),cfile->arate,cfile->asampsize,sigs,ends);
-    gtk_text_buffer_set_text (gtk_text_view_get_buffer (GTK_TEXT_VIEW (filew->textview_rrate)),buff, -1);
+    text_view_set_text (LIVES_TEXT_VIEW (filew->textview_rrate),buff, -1);
 
     g_free(sigs);
     g_free(ends);
@@ -5672,7 +5672,7 @@ void on_show_file_info_activate (GtkMenuItem *menuitem, gpointer user_data) {
     else {
       g_snprintf(buff,512,_("\n  %.2f sec."),cfile->raudio_time);
     }
-    gtk_text_buffer_set_text (gtk_text_view_get_buffer (GTK_TEXT_VIEW (filew->textview_rtime)),buff, -1);
+    text_view_set_text (LIVES_TEXT_VIEW (filew->textview_rtime),buff, -1);
   }
 
 }
@@ -6399,14 +6399,10 @@ void drag_from_outside(GtkWidget *widget, GdkDragContext *dcon, gint x, gint y,
 
 
 
-void
-on_opensel_range_ok_clicked                  (GtkButton       *button,
-					      gpointer         user_data)
-{
+void on_opensel_range_ok_clicked (GtkButton *button, gpointer user_data) {
   // open file selection
   end_fs_preview();
-  gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
-  lives_widget_context_update();
+  lives_general_button_clicked(button,NULL);
 
   mainw->fs_playarea=NULL;
   mainw->img_concat_clip=-1;
@@ -6418,14 +6414,10 @@ on_opensel_range_ok_clicked                  (GtkButton       *button,
     mt_sensitise(mainw->multitrack);
     mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
   }
-
-
 }
 
 
-void
-open_sel_range_activate(void)
-{
+void open_sel_range_activate(void) {
   // open selection range dialog
 
   GtkWidget *opensel_dialog = create_opensel_dialog ();
@@ -6441,12 +6433,14 @@ void on_open_new_audio_clicked (GtkFileChooser *chooser, gpointer user_data) {
   gchar *a_type;
   gchar *com,*mesg,*tmp;
   gchar **array;
-  gint oundo_start;
-  gint oundo_end;
-  gint israw=1;
-  gint asigned,aendian;
-  gboolean has_lmap_error=FALSE;
-  gboolean bad_header=FALSE;
+
+  int oundo_start;
+  int oundo_end;
+  int israw=1;
+  int asigned,aendian;
+
+  boolean has_lmap_error=FALSE;
+  boolean bad_header=FALSE;
 
   if (!(prefs->warning_mask&WARN_MASK_LAYOUT_DELETE_AUDIO)) {
     if ((mainw->xlays=layout_audio_is_affected(mainw->current_file,0.))!=NULL) {
@@ -6648,7 +6642,8 @@ void on_open_new_audio_clicked (GtkFileChooser *chooser, gpointer user_data) {
   cfile->changed=TRUE;
   d_print_done();
 
-  mesg=g_strdup_printf(_ ("New audio: %d Hz %d channel(s) %d bps\n"),cfile->arate,cfile->achans,cfile->asampsize);
+  mesg=g_strdup_printf(P_("New audio: %d Hz %d channel %d bps\n","New audio: %d Hz %d channels %d bps\n",cfile->achans),
+		       cfile->arate,cfile->achans,cfile->asampsize);
   d_print(mesg);
   g_free(mesg);
 
@@ -6784,8 +6779,7 @@ void on_save_textview_clicked (GtkButton *button, gpointer user_data) {
 
   btext=text_view_get_text(textview);
   
-  gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
-  lives_widget_context_update();
+  lives_general_button_clicked(button,NULL);
 
   mainw->write_failed=FALSE;
   lives_write(fd,btext,strlen(btext),FALSE);
@@ -6814,11 +6808,11 @@ void on_cancel_button1_clicked (GtkWidget *widget, gpointer user_data) {
 
   end_fs_preview();
 
-  if (widget!=NULL) gtk_widget_destroy(gtk_widget_get_toplevel(widget));
-  lives_widget_context_update();
-
-  if (user_data!=NULL) {
-    g_free(user_data);
+  if (LIVES_IS_BUTTON(widget)) 
+    lives_general_button_clicked(LIVES_BUTTON(widget),user_data);
+  else {
+    gtk_widget_destroy(widget);
+    if (user_data!=NULL) g_free(user_data);
   }
 
   mainw->fs_playarea=NULL;
@@ -6839,13 +6833,9 @@ void on_cancel_button1_clicked (GtkWidget *widget, gpointer user_data) {
 
 
 
-void
-on_cancel_opensel_clicked              (GtkButton       *button,
-                                        gpointer         user_data)
-{
+void on_cancel_opensel_clicked (GtkButton  *button, gpointer user_data) {
   end_fs_preview();
-  gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
-  lives_widget_context_update();
+  lives_general_button_clicked(button,NULL);
   mainw->fs_playarea=NULL;
 
   if (mainw->multitrack!=NULL) {
@@ -7076,7 +7066,7 @@ on_details_button_clicked            (GtkButton       *button,
 {
   text_window *textwindow;
 
-  gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
+  lives_general_button_clicked(button,NULL);
 
   g_object_ref(mainw->optextview);
   textwindow=create_text_window(_("LiVES: - Encoder debug output"),NULL,NULL);
@@ -8311,8 +8301,7 @@ on_load_cdtrack_ok_clicked                (GtkButton     *button,
   gboolean has_lmap_error=FALSE;
   gboolean bad_header=FALSE;
 
-  gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
-  lives_widget_context_update();
+  lives_general_button_clicked(button,NULL);
 
   if (mainw->current_file>-1) {
     if (!(prefs->warning_mask&WARN_MASK_LAYOUT_DELETE_AUDIO)) {
@@ -8566,7 +8555,8 @@ on_load_cdtrack_ok_clicked                (GtkButton     *button,
   get_play_times();
   cfile->changed=TRUE;
   d_print_done();
-  mesg=g_strdup_printf(_ ("New audio: %d Hz %d channel(s) %d bps\n"),cfile->arate,cfile->achans,cfile->asampsize);
+  mesg=g_strdup_printf(P_("New audio: %d Hz %d channel %d bps\n","New audio: %d Hz %d channels %d bps\n",cfile->achans),
+		       cfile->arate,cfile->achans,cfile->asampsize);
   d_print(mesg);
   g_free(mesg);
   
@@ -8588,7 +8578,7 @@ on_load_cdtrack_ok_clicked                (GtkButton     *button,
 
 void on_load_vcd_ok_clicked (GtkButton *button, gpointer         user_data)
 {
-  gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
+  lives_general_button_clicked(button,NULL);
   if (GPOINTER_TO_INT (user_data)==1) {
     g_snprintf (file_name,PATH_MAX,"dvd://%d",(int)mainw->fx1_val);
     if (mainw->file_open_params!=NULL) g_free(mainw->file_open_params);
@@ -9912,15 +9902,13 @@ on_mouse_sel_start           (GtkWidget       *widget,
   return FALSE;
 }
 
-gboolean
-on_hrule_enter (GtkWidget *widget, GdkEventCrossing *event, gpointer user_data) {
-  GdkCursor *cursor;
-  cursor=gdk_cursor_new_for_display 
-    (mainw->mgeom[prefs->gui_monitor>0?prefs->gui_monitor-1:0].disp,
-     GDK_CENTER_PTR);
-  gdk_window_set_cursor (lives_widget_get_xwindow(widget), cursor);
+
+boolean on_hrule_enter (GtkWidget *widget, GdkEventCrossing *event, gpointer user_data) {
+  if (mainw->cursor_style!=LIVES_CURSOR_NORMAL) return FALSE;
+  lives_set_cursor_style(LIVES_CURSOR_CENTER_PTR,widget);
   return FALSE;
 }
+
 
 gboolean
 on_hrule_update           (GtkWidget       *widget,
@@ -11897,7 +11885,7 @@ void on_lerrors_clear_clicked (GtkButton *button, gpointer user_data) {
 
 void on_lerrors_delete_clicked (GtkButton *button, gpointer user_data) {
   gint num_maps=g_list_length(mainw->affected_layouts_map);
-  gchar *msg=g_strdup_printf(_("\nDelete %d layout(s)...are you sure ?\n"),num_maps);
+  gchar *msg=g_strdup_printf(P_("\nDelete %d layout...are you sure ?\n","\nDelete %d layouts...are you sure ?\n",num_maps),num_maps);
 
   if (mainw->multitrack!=NULL) {
     if (mainw->multitrack->idlefunc>0) {

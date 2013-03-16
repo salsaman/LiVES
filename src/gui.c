@@ -2479,8 +2479,8 @@ void create_LiVES (void) {
 
 
 
-  gtk_text_buffer_set_text (gtk_text_view_get_buffer (GTK_TEXT_VIEW (mainw->textview1)),
-	_("Starting...\n"), -1);
+  text_view_set_text (LIVES_TEXT_VIEW (mainw->textview1),
+		      _("Starting...\n"), -1);
   
   g_signal_connect (GTK_OBJECT (mainw->LiVES), "delete_event",
 		    G_CALLBACK (on_LiVES_delete_event),
@@ -2986,6 +2986,7 @@ void create_LiVES (void) {
 					NULL);
     g_signal_handler_block (mainw->eventbox5,mainw->hrule_func);
     g_signal_connect (GTK_OBJECT(mainw->eventbox5), "enter-notify-event",G_CALLBACK (on_hrule_enter),NULL);
+
   }
 
   mainw->hrule_blocked=TRUE;

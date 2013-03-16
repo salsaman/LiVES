@@ -282,7 +282,9 @@ int lives_system(const char *com, boolean allow_error) {
 
   // TODO - use g_spawn ?
 
-  if (mainw->is_ready&&!mainw->is_exiting&&widget_opts.cursor_style==LIVES_CURSOR_NORMAL) {
+  if (mainw->is_ready&&!mainw->is_exiting&&
+      ((mainw->multitrack==NULL&&mainw->cursor_style==LIVES_CURSOR_NORMAL)||
+       (mainw->multitrack!=NULL&&mainw->multitrack->cursor_style==LIVES_CURSOR_NORMAL))) {
     cnorm=TRUE;
     lives_set_cursor_style(LIVES_CURSOR_BUSY,NULL);
 
@@ -903,6 +905,10 @@ boolean lives_win32_kill_subprocesses(DWORD pid, boolean kill_parent) {
 
 LIVES_INLINE int lives_kill(lives_pid_t pid, int sig) {
 #ifndef IS_MINGW
+  if (pid==0) {
+    LIVES_ERROR("Tried to kill pid 0");
+    return -1;
+  }
   return kill(pid,sig);
 #else
   CloseHandle( pid->hProcess );

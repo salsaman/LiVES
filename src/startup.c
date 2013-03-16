@@ -289,7 +289,7 @@ boolean do_audio_choice_dialog(short startup_phase) {
 
 #ifdef HAVE_PULSE_AUDIO
   hbox = lives_hbox_new (FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, FALSE, FALSE, 10);
+  gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
   radiobutton0 = lives_standard_radio_button_new ( _("Use _pulse audio player"),TRUE,radiobutton_group,LIVES_BOX(hbox),NULL);
   radiobutton_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (radiobutton0));
@@ -311,7 +311,7 @@ boolean do_audio_choice_dialog(short startup_phase) {
 
 #ifdef ENABLE_JACK
   hbox = lives_hbox_new (FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, FALSE, FALSE, 10);
+  gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
   radiobutton1 = lives_standard_radio_button_new(_("Use _jack audio player"),TRUE,radiobutton_group,LIVES_BOX(hbox),NULL);
   radiobutton_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (radiobutton1));
@@ -331,7 +331,7 @@ boolean do_audio_choice_dialog(short startup_phase) {
 
   if (capable->has_sox_play) {
     hbox = lives_hbox_new (FALSE, 0);
-    gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, FALSE, FALSE, 10);
+    gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
     radiobutton2 = lives_standard_radio_button_new (_("Use _sox audio player"),TRUE,radiobutton_group,LIVES_BOX(hbox),NULL);
     radiobutton_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (radiobutton2));
@@ -352,7 +352,7 @@ boolean do_audio_choice_dialog(short startup_phase) {
 
   if (capable->has_mplayer) {
     hbox = lives_hbox_new (FALSE, 0);
-    gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, FALSE, FALSE, 10);
+    gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
     radiobutton3 = lives_standard_radio_button_new (_("Use _mplayer audio player"),TRUE,radiobutton_group,LIVES_BOX(hbox),NULL);
 
@@ -918,21 +918,21 @@ void do_startup_interface_query(void) {
 
 
   hbox = lives_hbox_new (FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, FALSE, FALSE, 10);
+  gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
   radiobutton0 = lives_standard_radio_button_new (_("Start in _Clip Edit mode"),TRUE,radiobutton_group,LIVES_BOX(hbox),NULL);
   radiobutton_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (radiobutton0));
 
   label=lives_standard_label_new(_("This is the best choice for simple editing tasks and for VJs\n"));
 
-  gtk_box_pack_start (GTK_BOX (dialog_vbox), label, FALSE, FALSE, 10);
+  gtk_box_pack_start (GTK_BOX (dialog_vbox), label, FALSE, FALSE, widget_opts.packing_height);
 
   hbox = lives_hbox_new (FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, FALSE, FALSE, 10);
+  gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
   radiobutton1 = lives_standard_radio_button_new (_("Start in _Multitrack mode"),TRUE,radiobutton_group,LIVES_BOX(hbox),NULL);
 
   label=lives_standard_label_new(_("This is a better choice for complex editing tasks involving multiple clips.\n"));
 
-  gtk_box_pack_start (GTK_BOX (dialog_vbox), label, FALSE, FALSE, 10);
+  gtk_box_pack_start (GTK_BOX (dialog_vbox), label, FALSE, FALSE, widget_opts.packing_height);
 
   if (prefs->startup_interface==STARTUP_MT) {
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(radiobutton1),TRUE);

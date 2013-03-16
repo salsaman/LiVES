@@ -750,7 +750,7 @@ typedef struct {
   GtkWidget *arrow1;
   GtkWidget *arrow2;
 
-  GdkCursor *cursor;
+  lives_cursor_t cursor_style;
 
   weed_plant_t *filter_map; // the video filter map for rendering
   weed_plant_t *afilter_map; // the audio filter map for renering
@@ -1108,8 +1108,6 @@ typedef struct {
   int overflow_height;
 
 } mainwindow;
-
-GdkCursor *hidden_cursor;
 
 extern _palette *palette;
 

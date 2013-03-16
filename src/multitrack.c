@@ -282,35 +282,30 @@ static LiVESPixbuf *make_thumb (lives_mt *mt, int file, int width, int height, i
 }
 
 
-static void set_cursor_style(lives_mt *mt, gint cstyle, gint width, gint height, gint clip, gint hsx, gint hsy) {
+static void mt_set_cursor_style(lives_mt *mt, gint cstyle, gint width, gint height, gint clip, gint hsx, gint hsy) {
+  GdkCursor *cursor;
+  GdkDisplay *disp;
+
   GdkPixbuf *pixbuf=NULL;
-  guchar *cpixels,*tpixels;
-  int i,j,k;
   GdkPixbuf *thumbnail=NULL;
-  gint twidth=0,twidth3,twidth4,trow;
+
+  guchar *cpixels,*tpixels;
+
   file *sfile=mainw->files[clip];
 
-  int frame_start;
-  gdouble frames_width;
+  double frames_width;
 
   unsigned int cwidth,cheight;
 
-  if (mt->cursor!=NULL) lives_cursor_unref(mt->cursor);
-
-  mt->cursor=NULL;
+  int twidth=0,twidth3,twidth4,trow;
+  int frame_start;
+  register int i,j,k;
 
   gdk_display_get_maximal_cursor_size(gdk_screen_get_display(gtk_widget_get_screen(mt->window)),&cwidth,&cheight);
   if (width>cwidth) width=cwidth;
 
   mt->cursor_style=cstyle;
   switch(cstyle) {
-  case LIVES_CURSOR_NORMAL:
-    gdk_window_set_cursor (lives_widget_get_xwindow(mt->window), NULL);
-    return;
-  case LIVES_CURSOR_BUSY:
-    mt->cursor=gdk_cursor_new(GDK_WATCH);
-    gdk_window_set_cursor (lives_widget_get_xwindow(mt->window), mt->cursor);
-    return;
   case LIVES_CURSOR_BLOCK:
     if (sfile!=NULL&&sfile->frames>0) {
       frame_start=mt->opts.ign_ins_sel?1:sfile->start;
@@ -388,12 +383,15 @@ static void set_cursor_style(lives_mt *mt, gint cstyle, gint width, gint height,
       cpixels+=(trow-width*4);
     }
     break;
+  default:
+    return;
   }
 
-  mt->cursor = gdk_cursor_new_from_pixbuf (gdk_display_get_default(), pixbuf, hsx, hsy);
-  gdk_window_set_cursor (lives_widget_get_xwindow(mt->window), mt->cursor);
-  lives_object_unref (pixbuf);
-
+  disp=mainw->mgeom[prefs->gui_monitor>0?prefs->gui_monitor-1:0].disp;
+  cursor = gdk_cursor_new_from_pixbuf (disp, pixbuf, hsx, hsy);
+  gdk_window_set_cursor (lives_widget_get_xwindow(mt->window), cursor);
+  if (pixbuf!=NULL) lives_object_unref (pixbuf);
+  if (cursor!=NULL) lives_cursor_unref(cursor);
 }
 
 
@@ -624,7 +622,7 @@ void recover_layout_cancelled(GtkButton *button, gpointer user_data) {
   gchar *eload_file=g_strdup_printf("%s/layout.%d.%d.%d",prefs->tmpdir,lives_getuid(),lives_getgid(),lives_getpid());
 
   if (button!=NULL) {
-    gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
+    lives_general_button_clicked(button,NULL);
     mainw->recoverable_layout=FALSE;
   }
 
@@ -691,8 +689,7 @@ static void mt_load_recovery_layout(lives_mt *mt) {
 
 
 void recover_layout(GtkButton *button, gpointer user_data) {
-  gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
-  lives_widget_context_update();
+  lives_general_button_clicked(button,NULL);
   if (prefs->startup_interface==STARTUP_CE) {
     if (!on_multitrack_activate(NULL,NULL)) {
       multitrack_delete(mainw->multitrack,FALSE);
@@ -1176,7 +1173,7 @@ static gint expose_track_event (GtkWidget *eventbox, GdkEventExpose *event, gpoi
 
 
   if (bgimage!=NULL&&lives_painter_image_surface_get_width(bgimage)>0) {
-    set_cursor_style(mt,LIVES_CURSOR_BUSY,0,0,0,0,0);
+    lives_set_cursor_style(LIVES_CURSOR_BUSY,NULL);
 
     if (mt->block_selected!=NULL) {
       sblock=mt->block_selected;
@@ -1198,7 +1195,7 @@ static gint expose_track_event (GtkWidget *eventbox, GdkEventExpose *event, gpoi
       sblock->state=BLOCK_SELECTED;
     }
 
-    set_cursor_style(mt,LIVES_CURSOR_NORMAL,0,0,0,0,0);
+    lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
   }
   else if (bgimage!=NULL) {
     lives_painter_surface_destroy(bgimage);
@@ -3245,7 +3242,7 @@ on_drag_filter_end           (GtkWidget       *widget,
     return FALSE;
   }
 
-  set_cursor_style(mt,LIVES_CURSOR_NORMAL,0,0,0,0,0);
+  lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
 
   if (mt->is_rendering||mainw->playing_file>-1||mt->selected_filter==-1) {
     mt->selected_filter=-1;
@@ -3370,7 +3367,7 @@ filter_ebox_pressed (GtkWidget *eventbox, GdkEventButton *event, gpointer user_d
       return FALSE;
     }
     else {
-      set_cursor_style(mt,LIVES_CURSOR_FX_BLOCK,FX_BLOCK_WIDTH,FX_BLOCK_HEIGHT,0,0,FX_BLOCK_HEIGHT/2);
+      mt_set_cursor_style(mt,LIVES_CURSOR_FX_BLOCK,FX_BLOCK_WIDTH,FX_BLOCK_HEIGHT,0,0,FX_BLOCK_HEIGHT/2);
       mt->hotspot_x=mt->hotspot_y=0;
     }
   }
@@ -3653,8 +3650,10 @@ static boolean in_out_ebox_pressed (GtkWidget *eventbox, GdkEventButton *event, 
     if (width>ebwidth) width=ebwidth;
     if (width<2) width=2;
     height=get_track_height(mt);
-    gdk_window_set_cursor (lives_widget_get_xwindow(eventbox), NULL);
-    set_cursor_style(mt,LIVES_CURSOR_BLOCK,width,height,file,0,height/2);
+
+    lives_set_cursor_style (LIVES_CURSOR_NORMAL,eventbox);
+    mt_set_cursor_style(mt,LIVES_CURSOR_BLOCK,width,height,file,0,height/2);
+
     mt->hotspot_x=mt->hotspot_y=0;
   }
 
@@ -3731,7 +3730,7 @@ static boolean clip_ebox_pressed (GtkWidget *eventbox, GdkEventButton *event, gp
   if (!mt->is_ready) return FALSE;
 
   if (event->type!=GDK_BUTTON_PRESS&&!mt->is_rendering) {
-    set_cursor_style(mt,LIVES_CURSOR_NORMAL,0,0,0,0,0);
+    lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
     // double click, open up in clip editor
     if (mainw->playing_file==-1) multitrack_delete(mt,!(prefs->warning_mask&WARN_MASK_EXIT_MT));
     return FALSE;
@@ -3768,8 +3767,8 @@ static boolean clip_ebox_pressed (GtkWidget *eventbox, GdkEventButton *event, gp
     if (width>ebwidth) width=ebwidth;
     if (width<2) width=2;
     height=get_track_height(mt);
-    gdk_window_set_cursor (lives_widget_get_xwindow(eventbox), NULL);
-    set_cursor_style(mt,LIVES_CURSOR_BLOCK,width,height,file,0,height/2);
+    lives_set_cursor_style (LIVES_CURSOR_NORMAL,eventbox);
+    mt_set_cursor_style(mt,LIVES_CURSOR_BLOCK,width,height,file,0,height/2);
     mt->hotspot_x=mt->hotspot_y=0;
   }
   
@@ -3797,7 +3796,7 @@ on_drag_clip_end           (GtkWidget       *widget,
 
   osecs=lives_ruler_get_value(LIVES_RULER(mt->timeline));
 
-  set_cursor_style(mt,LIVES_CURSOR_BUSY,0,0,0,0,0);
+  lives_set_cursor_style(LIVES_CURSOR_BUSY,NULL);
 
   window=lives_display_get_window_at_pointer 
     ((LiVESXDevice *)mainw->mgeom[prefs->gui_monitor>0?prefs->gui_monitor-1:0].mouse_device,
@@ -3839,7 +3838,7 @@ on_drag_clip_end           (GtkWidget       *widget,
 				    ((mainw->files[mt->file_selected]->start-1.)/mainw->files[mt->file_selected]->fps)||
 				    (mainw->files[mt->file_selected]->laudio_time>0.&&mt->opts.ign_ins_sel))) 
 	insert_audio_here_cb(NULL,(gpointer)mt);
-      set_cursor_style(mt,LIVES_CURSOR_NORMAL,0,0,0,0,0);
+      lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
       if (mt->is_paused) lives_ruler_set_value(LIVES_RULER (mt->timeline),osecs);
       return FALSE;
     }
@@ -3878,19 +3877,16 @@ on_drag_clip_end           (GtkWidget       *widget,
   }
 
   if (mt->is_paused) lives_ruler_set_value(LIVES_RULER (mt->timeline),osecs);
-  set_cursor_style(mt,LIVES_CURSOR_NORMAL,0,0,0,0,0);
+  lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
 
   return FALSE;
 }
 
 
-static boolean
-on_clipbox_enter (GtkWidget *widget, GdkEventCrossing *event, gpointer user_data) {
-  GdkCursor *cursor;
+static boolean on_clipbox_enter (GtkWidget *widget, GdkEventCrossing *event, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
-  if (mt->cursor_style!=0) return FALSE;
-  cursor=gdk_cursor_new_for_display (mt->display, GDK_HAND2);
-  gdk_window_set_cursor (lives_widget_get_xwindow(widget), cursor);
+  if (mt->cursor_style!=LIVES_CURSOR_NORMAL) return FALSE;
+  lives_set_cursor_style(LIVES_CURSOR_HAND2,widget);
   return FALSE;
 }
 
@@ -5414,7 +5410,6 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   mt->apply_fx_button=NULL;
 
   mt->cursor_style=LIVES_CURSOR_NORMAL;
-  mt->cursor=NULL;
 
   mt->file_selected=orig_file;
 
@@ -8730,8 +8725,6 @@ boolean multitrack_delete (lives_mt *mt, boolean save_layout) {
   if (mt->clip_selected>=0&&mainw->files[mt_file_from_clip(mt,mt->clip_selected)]!=NULL) 
     mt_file_from_clip(mt,mt->clip_selected);
 
-  if (mt->cursor!=NULL) lives_cursor_unref(mt->cursor);
-
   if (mt->clip_labels!=NULL) g_list_free(mt->clip_labels);
 
   add_message_scroller(mainw->message_box);
@@ -9004,23 +8997,17 @@ static track_rect *add_block_end_point (GtkWidget *eventbox, weed_plant_t *event
   return block;
 }
 
-static boolean
-on_tlreg_enter (GtkWidget *widget, GdkEventCrossing *event, gpointer user_data) {
-  GdkCursor *cursor;
+static boolean on_tlreg_enter (GtkWidget *widget, GdkEventCrossing *event, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
-  if (mt->cursor_style!=0) return FALSE;
-  cursor=gdk_cursor_new_for_display (mt->display, GDK_SB_H_DOUBLE_ARROW);
-  gdk_window_set_cursor (lives_widget_get_xwindow(widget), cursor);
+  if (mt->cursor_style!=LIVES_CURSOR_NORMAL) return FALSE;
+  lives_set_cursor_style(LIVES_CURSOR_SB_H_DOUBLE_ARROW,widget);
   return FALSE;
 }
 
-static boolean
-on_tleb_enter (GtkWidget *widget, GdkEventCrossing *event, gpointer user_data) {
-  GdkCursor *cursor;
+static boolean on_tleb_enter (GtkWidget *widget, GdkEventCrossing *event, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
-  if (mt->cursor_style!=0) return FALSE;
-  cursor=gdk_cursor_new_for_display (mt->display, GDK_CENTER_PTR);
-  gdk_window_set_cursor (lives_widget_get_xwindow(widget), cursor);
+  if (mt->cursor_style!=LIVES_CURSOR_NORMAL) return FALSE;
+  lives_set_cursor_style(LIVES_CURSOR_CENTER_PTR,widget);
   return FALSE;
 }
 
@@ -12873,7 +12860,7 @@ boolean on_track_release (GtkWidget *eventbox, GdkEventButton *event, gpointer u
     needs_idlefunc=TRUE;
   }
 
-  set_cursor_style(mt,LIVES_CURSOR_BUSY,0,0,0,0,0);
+  lives_set_cursor_style(LIVES_CURSOR_BUSY,NULL);
 
   lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[prefs->gui_monitor>0?prefs->gui_monitor-1:0].mouse_device, 
 			   eventbox, &x, &y);
@@ -12964,7 +12951,7 @@ boolean on_track_release (GtkWidget *eventbox, GdkEventButton *event, gpointer u
   mt->hotspot_x=mt->hotspot_y=0;
   mt->putative_block=NULL;
 
-  set_cursor_style(mt,LIVES_CURSOR_NORMAL,0,0,0,0,0);
+  lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
   gtk_widget_set_sensitive(mt->mm_menuitem,TRUE);
 
   if (needs_idlefunc) {
@@ -13108,8 +13095,8 @@ boolean on_track_click (GtkWidget *eventbox, GdkEventButton *event, gpointer use
 				      mt->display,&screen,&abs_x,&abs_y,NULL);
 	    lives_display_warp_pointer((LiVESXDevice *)mainw->mgeom[prefs->gui_monitor>0?prefs->gui_monitor-1:0].mouse_device, 
 	      mt->display,screen,abs_x-mt->hotspot_x,abs_y-y+height/2);
-	    if (track>=0&&!mt->aud_track_selected) set_cursor_style(mt,LIVES_CURSOR_BLOCK,width,height,filenum,0,height/2);
-  	    else set_cursor_style(mt,LIVES_CURSOR_AUDIO_BLOCK,width,height,filenum,0,height/2);
+	    if (track>=0&&!mt->aud_track_selected) mt_set_cursor_style(mt,LIVES_CURSOR_BLOCK,width,height,filenum,0,height/2);
+  	    else mt_set_cursor_style(mt,LIVES_CURSOR_AUDIO_BLOCK,width,height,filenum,0,height/2);
 	  }
 	}
       }
@@ -14752,7 +14739,7 @@ void multitrack_view_details (GtkMenuItem *menuitem, gpointer user_data) {
 
   // type
   g_snprintf(buff,512,"\n  Event List");
-  gtk_text_buffer_set_text (gtk_text_view_get_buffer (GTK_TEXT_VIEW (filew->textview24)),buff, -1);
+  text_view_set_text (LIVES_TEXT_VIEW (filew->textview24),buff, -1);
 
   // fps
   if (mt->fps>0) {
@@ -14762,11 +14749,11 @@ void multitrack_view_details (GtkMenuItem *menuitem, gpointer user_data) {
     g_snprintf(buff,512,"%s",_ ("\n (variable)"));
   }
 
-  gtk_text_buffer_set_text (gtk_text_view_get_buffer (GTK_TEXT_VIEW (filew->textview25)),buff, -1);
+  text_view_set_text (LIVES_TEXT_VIEW (filew->textview25),buff, -1);
 
   // image size
   g_snprintf(buff,512,"\n  %dx%d",rfile->hsize,rfile->vsize);
-  gtk_text_buffer_set_text (gtk_text_view_get_buffer (GTK_TEXT_VIEW (filew->textview26)),buff, -1);
+  text_view_set_text (LIVES_TEXT_VIEW (filew->textview26),buff, -1);
 
   // elist time
   if (mt->event_list!=NULL) {
@@ -14776,23 +14763,23 @@ void multitrack_view_details (GtkMenuItem *menuitem, gpointer user_data) {
 
   // events
   g_snprintf(buff,512,"\n  %d",num_events);
-  gtk_text_buffer_set_text (gtk_text_view_get_buffer (GTK_TEXT_VIEW (filew->textview27)),buff, -1);
+  text_view_set_text (LIVES_TEXT_VIEW (filew->textview27),buff, -1);
 
   g_snprintf(buff,512,"\n  %.3f sec",time);
-  gtk_text_buffer_set_text (gtk_text_view_get_buffer (GTK_TEXT_VIEW (filew->textview28)),buff, -1);
+  text_view_set_text (LIVES_TEXT_VIEW (filew->textview28),buff, -1);
 
   // byte size
   g_snprintf(buff,512,"\n  %d bytes",bsize);
-  gtk_text_buffer_set_text (gtk_text_view_get_buffer (GTK_TEXT_VIEW (filew->textview29)),buff, -1);
+  text_view_set_text (LIVES_TEXT_VIEW (filew->textview29),buff, -1);
 
   if (cfile->achans>0) {
     g_snprintf(buff,512,"\n  %d Hz %d bit",cfile->arate,cfile->asampsize);
-    gtk_text_buffer_set_text (gtk_text_view_get_buffer (GTK_TEXT_VIEW (filew->textview_lrate)),buff, -1);
+    text_view_set_text (LIVES_TEXT_VIEW (filew->textview_lrate),buff, -1);
   }
   
   if (cfile->achans>1) {
     g_snprintf(buff,512,"\n  %d Hz %d bit",cfile->arate,cfile->asampsize);
-    gtk_text_buffer_set_text (gtk_text_view_get_buffer (GTK_TEXT_VIEW (filew->textview_rrate)),buff, -1);
+    text_view_set_text (LIVES_TEXT_VIEW (filew->textview_rrate),buff, -1);
   }
 
 }
@@ -20960,7 +20947,7 @@ GList *layout_audio_is_affected(gint clipno, gdouble time) {
 
 void mt_change_disp_tracks_ok (GtkButton *button, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
-  gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
+  lives_general_button_clicked(button,NULL);
   mt->max_disp_vtracks=mainw->fx1_val;
   scroll_tracks(mt,mt->top_track,FALSE);
 }
@@ -21196,7 +21183,7 @@ void on_amixer_close_clicked (GtkButton *button, lives_mt *mt) {
     set_mixer_track_vol(mt,i,val);
   }
 
-  gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
+  lives_general_button_clicked(button,NULL);
   g_free(amixer->ch_sliders);
   g_free(amixer->ch_slider_fns);
   g_free(amixer);

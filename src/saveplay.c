@@ -3586,7 +3586,8 @@ boolean add_file_info(const gchar *check_handle, boolean aud_only) {
     mesg=g_strdup_printf (_ ("%s none\n"),mesg1);
   }
   else {
-    mesg=g_strdup_printf(_ ("%s %d Hz %d channel(s) %d bps\n"),mesg1,cfile->arate,cfile->achans,cfile->asampsize);
+    mesg=g_strdup_printf(P_ ("%s %d Hz %d channel %d bps\n","%s %d Hz %d channels %d bps\n",cfile->achans),
+			 mesg1,cfile->arate,cfile->achans,cfile->asampsize);
   }
   d_print(mesg);
   g_free(mesg1);
@@ -4574,7 +4575,8 @@ void restore_file(const gchar *file_name) {
     mesg=g_strdup_printf (_ ("%s none\n"),mesg1);
   }
   else {
-    mesg=g_strdup_printf(_ ("%s %d Hz %d channel(s) %d bps\n"),mesg1,cfile->arate,cfile->achans,cfile->asampsize);
+    mesg=g_strdup_printf(P_ ("%s %d Hz %d channel %d bps\n","%s %d Hz %d channels %d bps\n",cfile->achans),
+			 mesg1,cfile->arate,cfile->achans,cfile->asampsize);
   }
   d_print(mesg);
   g_free(mesg);

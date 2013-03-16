@@ -264,7 +264,7 @@ void widget_add_framedraw (GtkVBox *box, int start, int end, boolean add_preview
   hbox = lives_hbox_new (FALSE, 2);
   gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 0);
 
-  mainw->framedraw_spinbutton = lives_standard_spin_button_new (_("    _Frame"),
+  mainw->framedraw_spinbutton = lives_standard_spin_button_new (_("_Frame"),
 								TRUE,start,start,end,1.,10.,0,LIVES_BOX(hbox),NULL);
 
   spinbutton_adj=gtk_spin_button_get_adjustment(GTK_SPIN_BUTTON(mainw->framedraw_spinbutton));
@@ -758,44 +758,33 @@ void redraw_framedraw_image(void) {
 // change cursor maybe when we enter or leave the framedraw window
 
 boolean on_framedraw_enter (GtkWidget *widget, GdkEventCrossing *event, lives_special_framedraw_rect_t *framedraw) {
-  GdkCursor *cursor;
 
   if (framedraw==NULL&&mainw->multitrack!=NULL) {
     framedraw=mainw->multitrack->framedraw;
-    if (framedraw==NULL&&mainw->multitrack->cursor_style==0) gdk_window_set_cursor 
-							       (lives_widget_get_xwindow(mainw->multitrack->play_box), NULL);
+    if (framedraw==NULL&&mainw->multitrack->cursor_style==LIVES_CURSOR_NORMAL) 
+      lives_set_cursor_style (LIVES_CURSOR_NORMAL,mainw->multitrack->play_box);
   }
 
   if (framedraw==NULL) return FALSE;
-  if (mainw->multitrack!=NULL&&(mainw->multitrack->track_index==-1||mainw->multitrack->cursor_style!=0)) return FALSE;
+  if (mainw->multitrack!=NULL&&(mainw->multitrack->track_index==-1||mainw->multitrack->cursor_style!=LIVES_CURSOR_NORMAL)) return FALSE;
 
   switch (framedraw->type) {
   case LIVES_PARAM_SPECIAL_TYPE_RECT_DEMASK:
   case LIVES_PARAM_SPECIAL_TYPE_RECT_MULTRECT:
   case LIVES_PARAM_SPECIAL_TYPE_RECT_MULTIRECT:
     if (mainw->multitrack==NULL) {
-      cursor=gdk_cursor_new_for_display 
-	(mainw->mgeom[prefs->gui_monitor>0?prefs->gui_monitor-1:0].disp,
-	 GDK_TOP_LEFT_CORNER);
-      gdk_window_set_cursor (lives_widget_get_xwindow(mainw->framedraw), cursor);
+      lives_set_cursor_style(LIVES_CURSOR_TOP_LEFT_CORNER,mainw->framedraw);
     }
     else {
-      cursor=gdk_cursor_new_for_display 
-	(mainw->mgeom[prefs->gui_monitor>0?prefs->gui_monitor-1:0].disp,
-	 GDK_TOP_LEFT_CORNER);
-      gdk_window_set_cursor (lives_widget_get_xwindow(mainw->multitrack->play_box), cursor);
+      lives_set_cursor_style(LIVES_CURSOR_TOP_LEFT_CORNER,mainw->multitrack->play_box);
     }
     break;
   case LIVES_PARAM_SPECIAL_TYPE_SINGLEPOINT:
     if (mainw->multitrack==NULL) {
-      cursor=gdk_cursor_new_for_display 
-	(mainw->mgeom[prefs->gui_monitor>0?prefs->gui_monitor-1:0].disp,
-	 GDK_CROSSHAIR);
-      gdk_window_set_cursor (lives_widget_get_xwindow(mainw->framedraw), cursor);
+      lives_set_cursor_style(LIVES_CURSOR_CROSSHAIR,mainw->framedraw);
     }
     else {
-      cursor=gdk_cursor_new_for_display (mainw->multitrack->display, GDK_CROSSHAIR);
-      gdk_window_set_cursor (lives_widget_get_xwindow(mainw->multitrack->play_box), cursor);
+      lives_set_cursor_style(LIVES_CURSOR_CROSSHAIR,mainw->multitrack->play_box);
     }
     break;
 
@@ -806,9 +795,10 @@ boolean on_framedraw_enter (GtkWidget *widget, GdkEventCrossing *event, lives_sp
   return FALSE;
 }
 
+
 boolean on_framedraw_leave (GtkWidget *widget, GdkEventCrossing *event, lives_special_framedraw_rect_t *framedraw) {
   if (framedraw==NULL) return FALSE;
-  gdk_window_set_cursor (lives_widget_get_xwindow(mainw->framedraw), NULL);
+  lives_set_cursor_style (LIVES_CURSOR_NORMAL,mainw->framedraw);
   return FALSE;
 }
 
@@ -847,16 +837,11 @@ boolean on_framedraw_mouse_start (GtkWidget *widget, GdkEventButton *event, live
        framedraw->type==LIVES_PARAM_SPECIAL_TYPE_RECT_MULTIRECT||
        framedraw->type==LIVES_PARAM_SPECIAL_TYPE_RECT_DEMASK)&&
       (mainw->multitrack==NULL||mainw->multitrack->cursor_style==0)) {
-    GdkCursor *cursor;
     if (mainw->multitrack==NULL) {
-      cursor=gdk_cursor_new_for_display 
-	(mainw->mgeom[prefs->gui_monitor>0?prefs->gui_monitor-1:0].disp, 
-	 GDK_BOTTOM_RIGHT_CORNER);
-      gdk_window_set_cursor (lives_widget_get_xwindow(widget), cursor);
+      lives_set_cursor_style(LIVES_CURSOR_BOTTOM_RIGHT_CORNER,widget);
     }
     else {
-      cursor=gdk_cursor_new_for_display (mainw->multitrack->display, GDK_BOTTOM_RIGHT_CORNER);
-      gdk_window_set_cursor (lives_widget_get_xwindow(mainw->multitrack->play_box), cursor);
+      lives_set_cursor_style(LIVES_CURSOR_BOTTOM_RIGHT_CORNER,mainw->multitrack->play_box);
     }
   }
 
@@ -1087,6 +1072,18 @@ boolean on_framedraw_mouse_reset (GtkWidget *widget, GdkEventButton *event, live
   if (framedraw==NULL&&mainw->multitrack!=NULL) framedraw=mainw->multitrack->framedraw;
   if (framedraw==NULL) return FALSE;
   if (mainw->multitrack!=NULL&&mainw->multitrack->track_index==-1) return FALSE;
+
+  if ((framedraw->type==LIVES_PARAM_SPECIAL_TYPE_RECT_MULTRECT||
+       framedraw->type==LIVES_PARAM_SPECIAL_TYPE_RECT_MULTIRECT||
+       framedraw->type==LIVES_PARAM_SPECIAL_TYPE_RECT_DEMASK)&&
+      (mainw->multitrack==NULL||mainw->multitrack->cursor_style==0)) {
+    if (mainw->multitrack==NULL) {
+      lives_set_cursor_style(LIVES_CURSOR_TOP_LEFT_CORNER,widget);
+    }
+    else {
+      lives_set_cursor_style(LIVES_CURSOR_TOP_LEFT_CORNER,mainw->multitrack->play_box);
+    }
+  }
 
   framedraw_redraw(framedraw, FALSE, NULL);
   return FALSE;

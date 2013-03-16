@@ -413,7 +413,7 @@ on_merge_ok_clicked                   (GtkButton       *button,
   // insert pre-frames
   if (!mainw->last_transition_align_start&&excess_frames>0&&mainw->last_transition_ins_frames) {
     mainw->insert_after=FALSE;
-    msg=g_strdup_printf(_ ("inserting %d extra frame(s) before merge\n"),excess_frames);
+    msg=g_strdup_printf(P_ ("inserting %d extra frame before merge\n","inserting %d extra frames before merge\n",excess_frames),excess_frames);
     d_print(msg);
     g_free(msg);
   
@@ -532,7 +532,7 @@ on_merge_ok_clicked                   (GtkButton       *button,
   // insert any post frames
   if (mainw->last_transition_align_start&&excess_frames>0&&mainw->last_transition_ins_frames) {
     mainw->insert_after=TRUE;
-    msg=g_strdup_printf(_ ("now inserting %d extra frame(s)\n"),excess_frames);
+    msg=g_strdup_printf(P_ ("now inserting %d extra frame\n","now inserting %d extra frames\n",excess_frames),excess_frames);
     d_print(msg);
     g_free(msg);
     

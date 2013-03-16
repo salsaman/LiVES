@@ -17,10 +17,12 @@
 
 gchar *trString;
 gchar *translate(const char *String);
+gchar *translate_with_plural(const char *String, const char *StringPlural, unsigned long int n);
 
 #  include <libintl.h>
 #  undef _
 #  define _(String) (translate(String))
+#  define P_(String,StringPlural,n) (translate_with_plural(String,StringPlural,n))
 #  ifdef gettext_noop
 #    define N_(String) gettext_noop (String)
 #  else

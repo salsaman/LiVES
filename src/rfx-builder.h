@@ -108,7 +108,7 @@ typedef struct {
   GtkWidget *author_entry;
   GtkWidget *url_entry;
   GtkWidget *menu_text_entry;
-  GtkWidget *action_desc_label;
+  GtkWidget *action_desc_hbox;
   GtkWidget *action_desc_entry;
   GtkWidget *action_desc_hsep;
   GtkWidget *spinbutton_min_frames;
@@ -231,7 +231,6 @@ void on_requirements_ok (GtkButton *, gpointer rfxbuilder);
 void on_requirements_cancel (GtkButton *, gpointer);
 void on_properties_clicked (GtkButton *, gpointer rfxbuilder);
 void on_properties_ok (GtkButton *, gpointer rfxbuilder);
-void on_properties_cancel (GtkButton *, gpointer);
 void on_params_ok (GtkButton *, gpointer rfxbuilder);
 void on_params_cancel (GtkButton *, gpointer);
 void on_param_window_ok (GtkButton *, gpointer rfxbuilder);

@@ -286,7 +286,7 @@ static void passwd_toggle_vis(GtkToggleButton *b, gpointer entry) {
 
       box=lives_widget_get_parent(param->widgets[0]);
 
-      while (box !=NULL&&!GTK_IS_BOX(box)) {
+      while (box!=NULL&&!LIVES_IS_HBOX(box)) {
 	box=lives_widget_get_parent(box);
       }
 
@@ -298,7 +298,7 @@ static void passwd_toggle_vis(GtkToggleButton *b, gpointer entry) {
 
       buttond = gtk_file_chooser_button_new(_("LiVES: Select file"),GTK_FILE_CHOOSER_ACTION_OPEN);
       gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(buttond),g_get_current_dir());
-      gtk_box_pack_start(GTK_BOX(box),buttond,FALSE,FALSE,10);
+      gtk_box_pack_start(GTK_BOX(box),buttond,FALSE,FALSE,widget_opts.packing_width);
       gtk_box_reorder_child(GTK_BOX(box),buttond,epos); // insert after label, before textbox
 
       if (!lives_widget_is_sensitive(param->widgets[0])) gtk_widget_set_sensitive(buttond,FALSE);

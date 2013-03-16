@@ -18,7 +18,6 @@ void on_camgrab_clicked (GtkButton *button, gpointer user_data) {
   dvgrabw->filename=find_free_camfile(cam->format);
   if (dvgrabw->filename==NULL) return;
   gtk_widget_set_sensitive(dvgrabw->grab,FALSE);
-  widget_opts.cursor_style=LIVES_CURSOR_NORMAL;
   lives_set_cursor_style(LIVES_CURSOR_BUSY,dvgrabw->window);
   if (!dvgrabw->playing) on_camplay_clicked(NULL,user_data);
   msg=g_strdup_printf(_("Recording to %s/%s"),dvgrabw->dirname,dvgrabw->filename);
@@ -37,8 +36,8 @@ void on_camstop_clicked (GtkButton *button, gpointer user_data) {
   dvgrabw->playing=FALSE;
 
   if (cam->format==CAM_FORMAT_DV) {
-    lives_kill(cam->pgid, LIVES_SIGTERM);
-    cam->pgid=-0;
+    if (cam->pgid!=0) lives_kill(cam->pgid, LIVES_SIGTERM);
+    cam->pgid=0;
   }
 
   lives_set_cursor_style(LIVES_CURSOR_NORMAL,dvgrabw->window);

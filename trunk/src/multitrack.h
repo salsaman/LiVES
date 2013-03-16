@@ -361,8 +361,6 @@ struct _mt {
   GObject *spinbutton_in_adj;
   GObject *spinbutton_out_adj;
 
-  GdkCursor *cursor;
-
   GObject *hadjustment;
   GObject *node_adj;
 
@@ -551,7 +549,7 @@ struct _mt {
   gdouble context_time; ///< this is set when the user right clicks on a track, otherwise -1.
   boolean use_context;
 
-  gint cursor_style;
+  lives_cursor_t cursor_style;
 
   boolean is_paused;
 

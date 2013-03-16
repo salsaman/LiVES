@@ -21,7 +21,6 @@ struct _dvgrabw *create_camwindow (s_cam *cam, gint type)
   GtkWidget *vbox;
   GtkWidget *hbox;
   GtkWidget *label;
-  GtkWidget *hseparator;
   GtkWidget *direntry;
 
   gchar *tmp;
@@ -30,54 +29,42 @@ struct _dvgrabw *create_camwindow (s_cam *cam, gint type)
 
   dvgrabw->filename=NULL;
 
-  dvgrabw->window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
+  dvgrabw->window = lives_standard_dialog_new (_("LiVES: DVGrab"),FALSE);
   dvgrabw->playing=FALSE;
-  gtk_window_set_title (GTK_WINDOW (dvgrabw->window), (_("LiVES: DVGrab")));
-  gtk_container_set_border_width (GTK_CONTAINER (dvgrabw->window), 20);
 
-  gtk_window_set_modal (GTK_WINDOW (dvgrabw->window), TRUE);
-  gtk_window_set_position (GTK_WINDOW (dvgrabw->window), GTK_WIN_POS_CENTER_ALWAYS);
-  if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color(dvgrabw->window, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  }
+  gtk_container_set_border_width (GTK_CONTAINER (dvgrabw->window), widget_opts.border_width*2);
 
   if (prefs->show_gui) {
     if (mainw->multitrack==NULL) gtk_window_set_transient_for(GTK_WINDOW(dvgrabw->window),GTK_WINDOW(mainw->LiVES));
     else gtk_window_set_transient_for(GTK_WINDOW(dvgrabw->window),GTK_WINDOW(mainw->multitrack->window));
   }
 
-  vbox=lives_vbox_new(FALSE,10);
-  gtk_container_add (GTK_CONTAINER (dvgrabw->window), vbox);
+  vbox=lives_dialog_get_content_area(dvgrabw->window);
 
-  hbox = lives_hbox_new (FALSE,10);
-  gtk_box_pack_start(GTK_BOX(vbox),hbox,FALSE,FALSE,10);
+  hbox = lives_hbox_new (FALSE,0);
+  gtk_box_pack_start(GTK_BOX(vbox),hbox,FALSE,FALSE,widget_opts.packing_height);
 
 
   // TODO - lives_standard_dir_entry_new
-  label=gtk_label_new_with_mnemonic(_("Save _directory :"));
-  gtk_box_pack_start(GTK_BOX(hbox),label,FALSE,FALSE,10);
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-  }
-
-  direntry=gtk_entry_new();
-  gtk_box_pack_start(GTK_BOX(hbox),direntry,TRUE,TRUE,0);
-  gtk_entry_set_text(GTK_ENTRY(direntry),(tmp=g_filename_to_utf8(g_get_current_dir(),-1,NULL,NULL,NULL)));
-  g_free(tmp);
-  lives_entry_set_editable(LIVES_ENTRY(direntry),FALSE);
-
   buttond = gtk_file_chooser_button_new(_("Save directory"),GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER);
   gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(buttond),g_get_current_dir());
-  gtk_label_set_mnemonic_widget(GTK_LABEL(label),buttond);
 
-  gtk_box_pack_start(GTK_BOX(hbox),buttond,FALSE,FALSE,10);
+  label=lives_standard_label_new_with_mnemonic(_("Save _directory :"),buttond);
+  gtk_box_pack_start(GTK_BOX(hbox),label,FALSE,FALSE,widget_opts.packing_width);
+
+  gtk_box_pack_start(GTK_BOX(hbox),buttond,FALSE,FALSE,widget_opts.packing_width);
   lives_widget_set_can_focus_and_default (buttond);
+
+  direntry=lives_standard_entry_new(NULL,FALSE,(tmp=g_filename_to_utf8(g_get_current_dir(),-1,NULL,NULL,NULL)),60,PATH_MAX,
+				    LIVES_BOX(hbox),NULL);
+
+  g_free(tmp);
 
 
   //////////////////
 
-  hbox = lives_hbox_new (FALSE,10);
-  gtk_box_pack_start(GTK_BOX(vbox),hbox,FALSE,FALSE,10);
+  hbox = lives_hbox_new (FALSE,0);
+  gtk_box_pack_start(GTK_BOX(vbox),hbox,FALSE,FALSE,widget_opts.packing_height);
 
   dvgrabw->filent=lives_standard_entry_new(_("File_name:"),TRUE,type==CAM_FORMAT_DV?"dvgrab-":"hdvgrab-",-1,-1,LIVES_BOX(hbox),NULL);
 
@@ -86,28 +73,26 @@ struct _dvgrabw *create_camwindow (s_cam *cam, gint type)
   gtk_box_pack_start(GTK_BOX(hbox),label,FALSE,FALSE,0);
 
   label=lives_standard_label_new(_("(files will not be overwritten)"));
-  gtk_box_pack_end(GTK_BOX(hbox),label,FALSE,FALSE,0);
+  gtk_box_pack_end(GTK_BOX(hbox),label,FALSE,FALSE,widget_opts.packing_width);
 
   hbox = lives_hbox_new (FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 10);
+  gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-  dvgrabw->split=lives_standard_check_button_new(_("_Split into scenes"),FALSE,LIVES_BOX(hbox),NULL);
+  dvgrabw->split=lives_standard_check_button_new(_("_Split into scenes"),TRUE,LIVES_BOX(hbox),NULL);
 
 
   // TODO - widget_opts.editable
   dvgrabw->status_entry=gtk_entry_new();
 
-  gtk_box_pack_start(GTK_BOX(vbox),dvgrabw->status_entry,FALSE,FALSE,0);
+  gtk_box_pack_start(GTK_BOX(vbox),dvgrabw->status_entry,FALSE,FALSE,widget_opts.packing_height);
   gtk_entry_set_text(GTK_ENTRY(dvgrabw->status_entry),_("Status: Ready"));
   gtk_editable_set_editable (GTK_EDITABLE(dvgrabw->status_entry),FALSE);
 
-
-  hseparator = lives_hseparator_new ();
-  gtk_box_pack_start (GTK_BOX (vbox), hseparator, FALSE, TRUE, 10);
+  add_hsep_to_box(LIVES_BOX(vbox));
 
   hbuttonbox1 = lives_hbutton_box_new ();
 
-  gtk_box_pack_start(GTK_BOX(vbox),hbuttonbox1,FALSE,FALSE,0);
+  gtk_box_pack_start(GTK_BOX(vbox),hbuttonbox1,FALSE,FALSE,widget_opts.packing_height);
 
   button3 = gtk_button_new_from_stock(GTK_STOCK_MEDIA_REWIND);
   gtk_container_add (GTK_CONTAINER (hbuttonbox1), button3);
@@ -136,11 +121,11 @@ struct _dvgrabw *create_camwindow (s_cam *cam, gint type)
   gtk_button_set_image(GTK_BUTTON(dvgrabw->grab),image);
 
   label=lives_standard_label_new(_("\nUse this tool to control your camera and grab clips.\nAfter grabbing your clips, you can close this window \nand then load them into LiVES.\n"));
-  gtk_box_pack_start(GTK_BOX(vbox),label,FALSE,FALSE,40);
+  gtk_box_pack_start(GTK_BOX(vbox),label,FALSE,FALSE,widget_opts.packing_height*4);
 
 
   hbuttonbox2 = lives_hbutton_box_new ();
-  gtk_box_pack_start(GTK_BOX(vbox),hbuttonbox2,FALSE,FALSE,0);
+  gtk_box_pack_start(GTK_BOX(vbox),hbuttonbox2,FALSE,FALSE,widget_opts.packing_height);
 
   dvgrabw->quit = gtk_button_new_from_stock (GTK_STOCK_CLOSE);
   gtk_container_add (GTK_CONTAINER (hbuttonbox2), dvgrabw->quit);

@@ -292,12 +292,6 @@ lives_painter_format_t lives_painter_image_surface_get_format(lives_painter_surf
 ////////////////////////////////////////////////////////
 
 
-boolean return_true (LiVESWidget *widget, LiVESXEvent *event, LiVESObjectPtr user_data) {
-  // event callback that just returns TRUE
-  return TRUE;
-}
-
-
 
 LIVES_INLINE void lives_object_unref(LiVESObjectPtr object) {
 #ifdef GUI_GTK
@@ -1602,6 +1596,8 @@ LiVESWidget *lives_standard_check_button_new(const char *labeltext, boolean use_
   checkbutton = gtk_check_button_new ();
   if (tooltip!=NULL) lives_tooltips_set(checkbutton, tooltip);
 
+  widget_opts.last_label=NULL;
+
   if (labeltext!=NULL) {
     eventbox=gtk_event_box_new();
     if (tooltip!=NULL) lives_tooltips_copy(eventbox,checkbutton);
@@ -1617,6 +1613,8 @@ LiVESWidget *lives_standard_check_button_new(const char *labeltext, boolean use_
 		      G_CALLBACK (label_act_toggle),
 		      checkbutton);
   
+    widget_opts.last_label=label;
+
     if (mainw!=NULL&&mainw->is_ready&&(palette->style&STYLE_1)) {
       lives_widget_set_fg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
       lives_widget_set_bg_color (eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
@@ -1669,11 +1667,15 @@ LiVESWidget *lives_standard_radio_button_new(const char *labeltext, boolean use_
 
   if (tooltip!=NULL) lives_tooltips_set(radiobutton, tooltip);
 
+  widget_opts.last_label=NULL;
+
   if (labeltext!=NULL) {
     if (use_mnemonic) {
       label=lives_standard_label_new_with_mnemonic (labeltext,radiobutton);
     }
     else label=lives_standard_label_new (labeltext);
+
+    widget_opts.last_label=label;
     
     eventbox=gtk_event_box_new();
     if (tooltip!=NULL) lives_tooltips_copy(eventbox,radiobutton);
@@ -1741,6 +1743,8 @@ LiVESWidget *lives_standard_spin_button_new(const char *labeltext, boolean use_m
   LiVESWidget *hbox;
   LiVESAdjustment *adj;
 
+  boolean expand=FALSE;
+
   int maxlen;
 
   adj = lives_adjustment_new (val, min, max, step, page, 0.);
@@ -1755,12 +1759,16 @@ LiVESWidget *lives_standard_spin_button_new(const char *labeltext, boolean use_m
   gtk_spin_button_set_update_policy (GTK_SPIN_BUTTON (spinbutton),GTK_UPDATE_ALWAYS);
   gtk_spin_button_set_numeric (GTK_SPIN_BUTTON (spinbutton),TRUE);
 
+  widget_opts.last_label=NULL;
+
   if (labeltext!=NULL) {
     if (use_mnemonic) {
       label=lives_standard_label_new_with_mnemonic (labeltext,spinbutton);
     }
     else label=lives_standard_label_new (labeltext);
     
+    widget_opts.last_label=label;
+
     eventbox=gtk_event_box_new();
     if (tooltip!=NULL) lives_tooltips_copy(eventbox,spinbutton);
     gtk_container_add(GTK_CONTAINER(eventbox),label);
@@ -1777,6 +1785,7 @@ LiVESWidget *lives_standard_spin_button_new(const char *labeltext, boolean use_m
       hbox = lives_hbox_new (FALSE, 0);
       gtk_widget_show(hbox);
       gtk_box_pack_start (GTK_BOX (box), hbox, FALSE, FALSE, widget_opts.packing_height);
+      expand=TRUE;
     }
 
     lives_box_set_homogeneous(LIVES_BOX(hbox),FALSE);
@@ -1784,8 +1793,12 @@ LiVESWidget *lives_standard_spin_button_new(const char *labeltext, boolean use_m
     if (!widget_opts.swap_label&&eventbox!=NULL)
       gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, widget_opts.packing_width);
     
-    gtk_box_pack_start (GTK_BOX (hbox), spinbutton, widget_opts.expand, FALSE, eventbox==NULL?0:widget_opts.packing_width);
+    if (expand) add_fill_to_box(LIVES_BOX(hbox));
+
+    gtk_box_pack_start (GTK_BOX (hbox), spinbutton, widget_opts.expand, FALSE, widget_opts.packing_width);
     
+    if (expand) add_fill_to_box(LIVES_BOX(hbox));
+
     if (widget_opts.swap_label&&eventbox!=NULL)
       gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, widget_opts.packing_width);
   }
@@ -1818,11 +1831,15 @@ LiVESWidget *lives_standard_combo_new (const char *labeltext, boolean use_mnemon
 
   entry=(LiVESEntry *)lives_combo_get_entry(LIVES_COMBO(combo));
 
+  widget_opts.last_label=NULL;
+
   if (labeltext!=NULL) {
     if (use_mnemonic) {
       label = lives_standard_label_new_with_mnemonic (labeltext,LIVES_WIDGET(entry));
     }
     else label = lives_standard_label_new (labeltext);
+
+    widget_opts.last_label=label;
     
     eventbox=gtk_event_box_new();
     if (tooltip!=NULL) lives_tooltips_copy(eventbox,combo);
@@ -1842,12 +1859,25 @@ LiVESWidget *lives_standard_combo_new (const char *labeltext, boolean use_mnemon
     }
 
     lives_box_set_homogeneous(LIVES_BOX(hbox),FALSE);
+
+    if (!widget_opts.expand) {
+      GtkWidget *label=lives_standard_label_new("");
+      gtk_box_pack_start (GTK_BOX (hbox), label, TRUE, FALSE, 0);
+    }
     
     if (!widget_opts.swap_label&&eventbox!=NULL)
       gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, widget_opts.packing_width);
-    gtk_box_pack_start (GTK_BOX (hbox), combo, TRUE, TRUE, eventbox==NULL?0:widget_opts.packing_width);
+    gtk_box_pack_start (GTK_BOX (hbox), combo, TRUE, widget_opts.expand, eventbox==NULL?0:widget_opts.packing_width);
     if (widget_opts.swap_label&&eventbox!=NULL)
       gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, widget_opts.packing_width);
+
+
+    if (!widget_opts.expand) {
+      GtkWidget *label=lives_standard_label_new("");
+      gtk_box_pack_start (GTK_BOX (hbox), label, TRUE, FALSE, 0);
+    }
+
+
   }
 
   gtk_editable_set_editable (GTK_EDITABLE(entry),FALSE);
@@ -1886,11 +1916,15 @@ LiVESWidget *lives_standard_entry_new(const char *labeltext, boolean use_mnemoni
 
   gtk_entry_set_activates_default (GTK_ENTRY (entry), TRUE);
 
+  widget_opts.last_label=NULL;
+
   if (labeltext!=NULL) {
     if (use_mnemonic) {
       label = lives_standard_label_new_with_mnemonic (labeltext,entry);
     }
     else label = lives_standard_label_new (labeltext);
+
+    widget_opts.last_label=label;
 
     if (tooltip!=NULL) lives_tooltips_copy(label,entry);
   }
@@ -1909,7 +1943,7 @@ LiVESWidget *lives_standard_entry_new(const char *labeltext, boolean use_mnemoni
     if (!widget_opts.swap_label&&label!=NULL)
       gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, widget_opts.packing_width);
     
-    gtk_box_pack_start (GTK_BOX (hbox), entry, TRUE, TRUE, label==NULL?0:widget_opts.packing_width);
+    gtk_box_pack_start (GTK_BOX (hbox), entry, TRUE, dispwidth==-1, label==NULL?0:widget_opts.packing_width);
     
     if (widget_opts.swap_label&&label!=NULL)
       gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, widget_opts.packing_width);
@@ -2172,13 +2206,13 @@ char *text_view_get_text(LiVESTextView *textview) {
   gtk_text_buffer_get_start_iter(textbuf,&siter);
   gtk_text_buffer_get_end_iter(textbuf,&eiter);
 
-  return gtk_text_buffer_get_text(textbuf,&siter,&eiter,TRUE);
+  return gtk_text_buffer_get_text(textbuf,&siter,&eiter,FALSE);
 }
 
 
-void text_view_set_text(LiVESTextView *textview, const gchar *text) {
+void text_view_set_text(LiVESTextView *textview, const gchar *text, int len) {
   GtkTextBuffer *textbuf=gtk_text_view_get_buffer (textview);
-  gtk_text_buffer_set_text(textbuf,text,-1);
+  gtk_text_buffer_set_text(textbuf,text,len);
 }
 
 
@@ -2246,34 +2280,68 @@ void lives_widget_context_update(void) {
 
 void lives_set_cursor_style(lives_cursor_t cstyle, LiVESWidget *widget) {
   LiVESXWindow *window;
-
-  if (widget_opts.cursor_style==cstyle) return;
-
-  if (mainw->cursor!=NULL) lives_cursor_unref(mainw->cursor);
-  mainw->cursor=NULL;
+  GdkCursor *cursor=NULL;
+  GdkDisplay *disp;
+  GdkCursorType ctype=GDK_X_CURSOR;
 
   if (widget==NULL) {
-    if (mainw->multitrack==NULL&&mainw->is_ready) window=lives_widget_get_xwindow(mainw->LiVES);
-    else if (mainw->multitrack!=NULL&&mainw->multitrack->is_ready) window=lives_widget_get_xwindow(mainw->multitrack->window);
+    if (mainw->multitrack==NULL&&mainw->is_ready) {
+      if (cstyle!=LIVES_CURSOR_NORMAL&&mainw->cursor_style==cstyle) return;
+      window=lives_widget_get_xwindow(mainw->LiVES);
+    }
+    else if (mainw->multitrack!=NULL&&mainw->multitrack->is_ready) {
+      if (cstyle!=LIVES_CURSOR_NORMAL&&mainw->multitrack->cursor_style==cstyle) return;
+      window=lives_widget_get_xwindow(mainw->multitrack->window);
+    }
     else return;
   }
   else window=lives_widget_get_xwindow(widget);
 
+  if (!GDK_IS_WINDOW(window)) return;
+
   switch(cstyle) {
   case LIVES_CURSOR_NORMAL:
-    if (GDK_IS_WINDOW(window))
-      gdk_window_set_cursor (window, NULL);
-    widget_opts.cursor_style=LIVES_CURSOR_NORMAL;
-    return;
+    break;
   case LIVES_CURSOR_BUSY:
-    mainw->cursor=gdk_cursor_new(GDK_WATCH);
-    if (GDK_IS_WINDOW(window))
-      gdk_window_set_cursor (window, mainw->cursor);
-    widget_opts.cursor_style=LIVES_CURSOR_BUSY;
-    return;
+    ctype=GDK_WATCH;
+    break;
+  case LIVES_CURSOR_CENTER_PTR:
+    ctype=GDK_CENTER_PTR;
+    break;
+  case LIVES_CURSOR_HAND2:
+    ctype=GDK_HAND2;
+    break;
+  case LIVES_CURSOR_SB_H_DOUBLE_ARROW:
+    ctype=GDK_SB_H_DOUBLE_ARROW;
+    break;
+  case LIVES_CURSOR_CROSSHAIR:
+    ctype=GDK_CROSSHAIR;
+    break;
+  case LIVES_CURSOR_TOP_LEFT_CORNER:
+    ctype=GDK_TOP_LEFT_CORNER;
+    break;
+  case LIVES_CURSOR_BOTTOM_RIGHT_CORNER:
+    ctype=GDK_BOTTOM_RIGHT_CORNER;
+    break;
   default:
     return;
   }
+  if (widget==NULL) {
+    if (mainw->multitrack!=NULL) mainw->multitrack->cursor_style=cstyle;
+    else mainw->cursor_style=cstyle;
+  }
+#if GTK_CHECK_VERSION(2,22,0)
+  cursor=gdk_window_get_cursor(window);
+  if (cursor!=NULL&&gdk_cursor_get_cursor_type(cursor)==ctype) return;
+  cursor=NULL;
+#endif
+  disp=mainw->mgeom[prefs->gui_monitor>0?prefs->gui_monitor-1:0].disp;
+  if (cstyle!=LIVES_CURSOR_NORMAL) {
+    cursor=gdk_cursor_new_for_display(disp,ctype);
+    gdk_window_set_cursor (window, cursor);
+  }
+  else gdk_window_set_cursor(window,NULL);
+  if (cursor!=NULL) lives_cursor_unref(cursor);
 }
 
 
@@ -2282,23 +2350,15 @@ void lives_set_cursor_style(lives_cursor_t cstyle, LiVESWidget *widget) {
 void hide_cursor(LiVESXWindow *window) {
   //make the cursor invisible in playback windows
 
-#if GTK_CHECK_VERSION(3,0,0)
-lives_painter_surface_t *s;
-GdkPixbuf *pixbuf;
-
- if (hidden_cursor==NULL) {
-   s = lives_painter_image_surface_create (LIVES_PAINTER_FORMAT_A1, 1, 1);
-   pixbuf = gdk_pixbuf_get_from_surface (s,
-					 0, 0,
-					 1, 1);
-   
-   lives_painter_surface_destroy (s);
-   
-   hidden_cursor = gdk_cursor_new_from_pixbuf (gdk_display_get_default(), pixbuf, 0, 0);
-   
-   g_object_unref (pixbuf);
- }
+#if GTK_CHECK_VERSION(2,16,0)
+  if (GDK_IS_WINDOW(window)) {
+    GdkCursor *cursor=gdk_cursor_new(GDK_BLANK_CURSOR);
+    gdk_window_set_cursor(window,cursor);
+    lives_cursor_unref(cursor);
+  }
 #else
+  static GdkCursor *hidden_cursor=NULL;
+
   char cursor_bits[] = {0x00};
   char cursormask_bits[] = {0x00};
   GdkPixmap *source, *mask;
@@ -2314,8 +2374,8 @@ GdkPixbuf *pixbuf;
     g_object_unref (source);
     g_object_unref (mask);
   }
-#endif 
   if (GDK_IS_WINDOW(window)) gdk_window_set_cursor (window, hidden_cursor);
+#endif 
 }
 
 
@@ -2364,21 +2424,12 @@ void lives_general_button_clicked (LiVESButton *button, LiVESObjectPtr data_to_f
 
 #ifdef GUI_GTK
   gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
+  lives_widget_context_update();
 
   if (data_to_free!=NULL) g_free(data_to_free);
 #endif
 }
 
-
-boolean lives_general_delete_event(LiVESWidget *widget, LiVESXEvent *event, LiVESObjectPtr data_to_free) {
-#ifdef GUI_GTK
-  gtk_widget_destroy(widget);
-
-  if (data_to_free!=NULL) g_free(data_to_free);
-#endif
-
-  return TRUE;
-}
 
 LiVESWidget *add_hsep_to_box (LiVESBox *box) {
   LiVESWidget *widget=NULL;
@@ -2425,8 +2476,7 @@ LiVESWidget *add_fill_to_box (LiVESBox *box) {
   blank_label = lives_standard_label_new (xspaces);
 
   gtk_box_pack_start (box, blank_label, TRUE, TRUE, 0);
-  lives_widget_set_hexpand(blank_label,FALSE);
-  lives_widget_set_vexpand(blank_label,FALSE);
+  lives_widget_set_hexpand(blank_label,TRUE);
   if (!widget_opts.no_gui) 
     gtk_widget_show(blank_label);
   widget=blank_label;

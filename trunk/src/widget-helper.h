@@ -12,25 +12,15 @@
 #endif
 
 typedef enum {
-  LIVES_CURSOR_NORMAL=0,  ///< must be zero
-  LIVES_CURSOR_BLOCK,
-  LIVES_CURSOR_AUDIO_BLOCK,
-  LIVES_CURSOR_BUSY,
-  LIVES_CURSOR_FX_BLOCK
-} lives_cursor_t;
-
-
-typedef enum {
   LIVES_DISPLAY_TYPE_UNKNOWN=0,
   LIVES_DISPLAY_TYPE_X11,
   LIVES_DISPLAY_TYPE_WIN32
 } lives_display_t;
 
 
-#define W_PACKING_WIDTH 10 // packing width for widgets with labels
+#define W_PACKING_WIDTH  10 // packing width for widgets with labels
 #define W_PACKING_HEIGHT 10 // packing height for widgets
-
-#define W_BORDER_WIDTH 10 // default border width
+#define W_BORDER_WIDTH   10 // default border width
 
 
 #ifdef PAINTER_CAIRO
@@ -71,6 +61,8 @@ typedef cairo_fill_rule_t lives_painter_fill_rule_t;
 
 
 #ifdef GUI_GTK
+
+#define return_true gtk_true
 
 typedef GtkJustification LiVESJustification;
 
@@ -242,6 +234,7 @@ typedef gpointer                          LiVESObjectPtr;
 #define LIVES_IS_VBOX(widget) GTK_IS_VBOX(widget)
 #endif
 #define LIVES_IS_COMBO(widget) GTK_IS_COMBO_BOX(widget)
+#define LIVES_IS_BUTTON(widget) GTK_IS_BUTTON(widget)
 
 #define LIVES_INTERP_BEST   GDK_INTERP_HYPER
 #define LIVES_INTERP_NORMAL GDK_INTERP_BILINEAR
@@ -502,8 +495,6 @@ lives_painter_format_t lives_painter_image_surface_get_format(lives_painter_surf
 
 // utils
 
-boolean return_true (LiVESWidget *, LiVESXEvent *, LiVESObjectPtr);
-
 
 // object funcs.
 
@@ -720,9 +711,7 @@ void adjustment_configure(LiVESAdjustment *, double value, double lower, double 
 			  double step_increment, double page_increment, double page_size);
 
 char *text_view_get_text(LiVESTextView *);
-void text_view_set_text(LiVESTextView *, const char *text);
-
-void lives_set_cursor_style(lives_cursor_t cstyle, LiVESWidget *);
+void text_view_set_text(LiVESTextView *, const char *text, int len);
 
 void toggle_button_toggle (LiVESToggleButton *);
 
@@ -738,8 +727,6 @@ void lives_widget_set_can_focus_and_default(LiVESWidget *);
 
 void lives_general_button_clicked (LiVESButton *, LiVESObjectPtr data_to_free);
 
-boolean lives_general_delete_event(LiVESWidget *, LiVESXEvent *delevent, LiVESObjectPtr data_to_free);
-
 LiVESWidget *add_hsep_to_box (LiVESBox *);
 
 LiVESWidget *add_fill_to_box (LiVESBox *);
@@ -748,6 +735,26 @@ LiVESWidget *add_fill_to_box (LiVESBox *);
 #define LIVES_JUSTIFY_DEFAULT (widget_opts.default_justify)
 
 #define W_MAX_FILLER_LEN 65535
+
+
+typedef enum {
+  LIVES_CURSOR_NORMAL=0,  ///< must be zero
+  LIVES_CURSOR_BUSY,
+  LIVES_CURSOR_CENTER_PTR,
+  LIVES_CURSOR_HAND2,
+  LIVES_CURSOR_SB_H_DOUBLE_ARROW,
+  LIVES_CURSOR_CROSSHAIR,
+  LIVES_CURSOR_TOP_LEFT_CORNER,
+  LIVES_CURSOR_BOTTOM_RIGHT_CORNER,
+
+  /// non-standard cursors
+  LIVES_CURSOR_BLOCK,
+  LIVES_CURSOR_AUDIO_BLOCK,
+  LIVES_CURSOR_FX_BLOCK
+} lives_cursor_t;
+
+void lives_set_cursor_style(lives_cursor_t cstyle, LiVESWidget *);
+
 
 typedef struct {
   boolean no_gui; // show nothing !
@@ -761,7 +768,7 @@ typedef struct {
   int packing_height; // default should be W_PACKING_HEIGHT
   int border_width; // default should be W_BORDER_WIDTH
   int filler_len; // length of extra "fill" between widgets
-  lives_cursor_t cursor_style; // style of cursor
+  LiVESWidget *last_label; // label widget of last standard widget (spin,radio,check,entry,combo) [readonly]
   LiVESJustification justify; // justify for labels
   LiVESJustification default_justify;
 } widget_opts_t;
@@ -783,7 +790,7 @@ const widget_opts_t def_widget_opts = {
     W_PACKING_HEIGHT, // def packing height
     W_BORDER_WIDTH, // def border width
     8, // def fill width (in chars)
-    LIVES_CURSOR_NORMAL,
+    NULL, // last_label
     LIVES_JUSTIFY_LEFT, // justify
     LIVES_JUSTIFY_LEFT // default justify
 };

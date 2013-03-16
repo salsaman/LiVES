@@ -518,8 +518,6 @@ static boolean pre_init(void) {
     mainw->fx_candidates[i].rfx=NULL;
   }
 
-  mainw->cursor=NULL;
-
   for (i=0;i<MAX_EXT_CNTL;i++) mainw->ext_cntl[i]=FALSE;
 
   prefs->omc_dev_opts=get_int_pref("omc_dev_opts");
@@ -906,8 +904,6 @@ static void lives_init(_ign_opts *ign_opts) {
 
   mainw->stream_ticks=-1;
 
-  hidden_cursor=NULL;
-
   mainw->keep_pre=FALSE;
 
   mainw->reverse_pb=FALSE;
@@ -1012,6 +1008,8 @@ static void lives_init(_ign_opts *ign_opts) {
   mainw->ce_frame_height=mainw->ce_frame_width=-1;
 
   mainw->overflow_height=0;
+
+  mainw->cursor_style=LIVES_CURSOR_NORMAL;
 
   /////////////////////////////////////////////////// add new stuff just above here ^^
 
@@ -2623,7 +2621,7 @@ int main (int argc, char *argv[]) {
 
 #ifdef LIVES_NO_DEBUG
   // don't crash on GTK+ fatals
-  //g_log_set_always_fatal ((GLogLevelFlags)0);
+  g_log_set_always_fatal ((GLogLevelFlags)0);
 #endif
 
   g_log_set_default_handler(lives_log_handler,NULL);

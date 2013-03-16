@@ -1710,7 +1710,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const gchar *te
       g_free(cfile->proc_ptr);
       cfile->proc_ptr=NULL;
       if (btext!=NULL) {
-	text_view_set_text(mainw->optextview,btext);
+	text_view_set_text(mainw->optextview,btext,-1);
 	g_free((gchar *)btext);
       }
     }
@@ -1784,10 +1784,8 @@ gboolean do_auto_dialog (const gchar *text, gint type) {
   gtk_widget_show(proc_ptr->processing);
   
   lives_set_cursor_style(LIVES_CURSOR_BUSY,NULL);
-  lives_widget_context_update();
-
-  widget_opts.cursor_style=LIVES_CURSOR_NORMAL;
   lives_set_cursor_style(LIVES_CURSOR_BUSY,proc_ptr->processing);
+  lives_widget_context_update();
 
   if (type==0) {
     clear_mainw_msg();
@@ -2495,7 +2493,6 @@ static void create_threaded_dialog(gchar *text, gboolean has_cancel) {
 
   gtk_widget_show_all(procw->processing);
 
-  widget_opts.cursor_style=LIVES_CURSOR_NORMAL;
   lives_set_cursor_style(LIVES_CURSOR_BUSY,procw->processing);
 }
 

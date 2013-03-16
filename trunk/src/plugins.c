@@ -955,11 +955,15 @@ _vppaw *on_vpp_advanced_clicked (GtkButton *button, gpointer user_data) {
     }
 
     // fps
+    widget_opts.expand=FALSE;
     combo = lives_standard_combo_new ((tmp=g_strdup(_("_FPS"))),TRUE,fps_list_strings,
 				      LIVES_BOX(dialog_vbox),(tmp2=g_strdup(_("Fixed framerate for plugin.\n"))));
+    widget_opts.expand=TRUE;
     g_free(tmp);
     g_free(tmp2);
     vppa->fps_entry=lives_combo_get_entry(LIVES_COMBO(combo));
+    gtk_entry_set_width_chars (GTK_ENTRY (lives_combo_get_entry(LIVES_COMBO(combo))), 14);
+
 
     g_list_free_strings(fps_list_strings);
     g_list_free(fps_list_strings);
@@ -2469,8 +2473,8 @@ void get_mime_type(gchar *text, int maxlen, const lives_clip_data_t *cdata) {
 
 
 
-static void dpa_ok_clicked (GtkWidget *button, gpointer user_data) {
-  gtk_widget_destroy(gtk_widget_get_toplevel(button));
+static void dpa_ok_clicked (GtkButton *button, gpointer user_data) {
+  lives_general_button_clicked(button,NULL);
 
   if (prefsw!=NULL) {
     gtk_window_present(GTK_WINDOW(prefsw->prefs_dialog));
@@ -2489,8 +2493,8 @@ static void dpa_ok_clicked (GtkWidget *button, gpointer user_data) {
 }
 
 
-static void dpa_cancel_clicked (GtkWidget *button, gpointer user_data) {
-  gtk_widget_destroy(gtk_widget_get_toplevel(button));
+static void dpa_cancel_clicked (GtkButton *button, gpointer user_data) {
+  lives_general_button_clicked(button,NULL);
 
   if (prefsw!=NULL) {
     gtk_window_present(GTK_WINDOW(prefsw->prefs_dialog));

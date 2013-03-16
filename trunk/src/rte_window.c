@@ -82,10 +82,6 @@ void type_label_set_text (int key, int mode) {
 }
 
 
-void on_rtei_ok_clicked (GtkButton *button, gpointer user_data) {
-  gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
-}
-
 
 boolean on_clear_all_clicked (GtkButton *button, gpointer user_data) {
   int modes=rte_getmodespk();
@@ -1561,9 +1557,6 @@ boolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
 void on_rte_info_clicked (GtkButton *button, gpointer user_data) {
   weed_plant_t *filter;
 
-  gchar *type;
-  gchar *plugin_name;
-
   GtkWidget *rte_info_window;
   GtkWidget *vbox;
   GtkWidget *hbox;
@@ -1575,8 +1568,11 @@ void on_rte_info_clicked (GtkButton *button, gpointer user_data) {
 
   gchar *filter_name;
   gchar *filter_author;
+  gchar *filter_extra_authors=NULL;
   gchar *filter_description;
   gchar *tmp;
+  gchar *type;
+  gchar *plugin_name;
 
   int filter_version;
   int weed_error;
@@ -1597,6 +1593,7 @@ void on_rte_info_clicked (GtkButton *button, gpointer user_data) {
   filter=rte_keymode_get_filter(key+1,mode);
   filter_name=weed_get_string_value(filter,"name",&weed_error);
   filter_author=weed_get_string_value(filter,"author",&weed_error);
+  if (weed_plant_has_leaf(filter,"extra_authors")) filter_extra_authors=weed_get_string_value(filter,"extra_authors",&weed_error);
   if (weed_plant_has_leaf(filter,"description")) filter_description=weed_get_string_value(filter,"description",&weed_error);
   else filter_description=g_strdup(_("No Description"));
 
@@ -1630,6 +1627,12 @@ void on_rte_info_clicked (GtkButton *button, gpointer user_data) {
   g_free(tmp);
   gtk_box_pack_start (GTK_BOX (vbox), label, TRUE, FALSE, 0);
 
+  if (filter_extra_authors!=NULL) {
+    label = lives_standard_label_new ((tmp=g_strdup_printf(_("and: %s"),filter_extra_authors)));
+    g_free(tmp);
+    gtk_box_pack_start (GTK_BOX (vbox), label, TRUE, FALSE, 0);
+  }
+
   label = lives_standard_label_new ((tmp=g_strdup_printf(_("Version: %d"),filter_version)));
   g_free(tmp);
   gtk_box_pack_start (GTK_BOX (vbox), label, TRUE, FALSE, 0);
@@ -1651,7 +1654,7 @@ void on_rte_info_clicked (GtkButton *button, gpointer user_data) {
   gtk_text_view_set_wrap_mode (GTK_TEXT_VIEW (textview), GTK_WRAP_WORD);
   gtk_text_view_set_cursor_visible (GTK_TEXT_VIEW (textview), FALSE);
   
-  text_view_set_text (LIVES_TEXT_VIEW(textview), filter_description);
+  text_view_set_text (LIVES_TEXT_VIEW(textview), filter_description,-1);
   gtk_box_pack_start (GTK_BOX (hbox), textview, TRUE, TRUE, 0);
   
   hbuttonbox = lives_hbutton_box_new ();
@@ -1673,11 +1676,12 @@ void on_rte_info_clicked (GtkButton *button, gpointer user_data) {
 
 
   g_signal_connect (GTK_OBJECT (ok_button), "clicked",
-		    G_CALLBACK (on_rtei_ok_clicked),
+		    G_CALLBACK (lives_general_button_clicked),
 		    NULL);
 
   g_free(filter_name);
   g_free(filter_author);
+  if (filter_extra_authors!=NULL) g_free(filter_extra_authors);
   if (weed_plant_has_leaf(filter,"description")) g_free(filter_description);
   else weed_free(filter_description);
   g_free(plugin_name);
@@ -1829,7 +1833,7 @@ static boolean on_rtew_delete_event (GtkWidget *widget, GdkEvent *event, gpointe
 
 
 static void on_rtew_ok_clicked (GtkButton *button, gpointer user_data) {
-  gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
+  lives_general_button_clicked(button,NULL);
   on_rtew_delete_event (NULL,NULL,NULL);
 }
 
@@ -2104,7 +2108,7 @@ GtkWidget * create_rte_window (void) {
   gtk_table_set_col_spacings (GTK_TABLE (table), 4);
 
   // dummy button for "no grab", we dont show this...there is a button instead
-  dummy_radio = gtk_radio_button_new_with_label (grab_group, _("Key grab"));
+  dummy_radio = gtk_radio_button_new (grab_group);
   grab_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (dummy_radio));
 
   name_list=weed_get_all_names(1);

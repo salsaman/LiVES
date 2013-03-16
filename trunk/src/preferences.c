@@ -1910,11 +1910,9 @@ _prefsw *create_prefs_dialog (void) {
   GtkWidget *label97;
   GtkWidget *label88;
   GtkWidget *vbox;
-  GtkWidget *hbox11;
   GtkWidget *hbox94;
   GtkWidget *label37;
   GtkWidget *hbox115;
-  GtkWidget *label56;
   GtkWidget *label94;
   GtkWidget *hbox93;
   GtkWidget *label39;
@@ -2060,7 +2058,7 @@ _prefsw *create_prefs_dialog (void) {
 
   gtk_paned_pack1(GTK_PANED(dialog_hpaned), list_scroll, TRUE, FALSE);
   // Place table on the right panel
-  //gtk_paned_pack2(GTK_PANED(dialog_hpaned), dummy_scroll, TRUE, FALSE);
+
   gtk_paned_pack2(GTK_PANED(dialog_hpaned), dialog_table, TRUE, FALSE);
 
   // -------------------,
@@ -2256,7 +2254,8 @@ _prefsw *create_prefs_dialog (void) {
 
   add_fill_to_box(LIVES_BOX(hbox));
 
-  prefsw->forcesmon = lives_standard_check_button_new((tmp=g_strdup(_("Force single monitor"))),FALSE,LIVES_BOX(hbox),(tmp2=g_strdup(_("Ignore all except the first monitor."))));
+  prefsw->forcesmon = lives_standard_check_button_new((tmp=g_strdup(_("Force single monitor"))),FALSE,LIVES_BOX(hbox),
+						      (tmp2=g_strdup(_("Ignore all except the first monitor."))));
   g_free(tmp);
   g_free(tmp2);
 
@@ -2284,7 +2283,6 @@ _prefsw *create_prefs_dialog (void) {
   pixbuf_gui = gdk_pixbuf_new_from_file(icon, NULL);
   g_free(icon);
 
-  /* TRANSLATORS: please keep this string short */
   prefs_add_to_list(prefsw->prefs_list, pixbuf_gui, _("GUI"), LIST_ENTRY_GUI);
   gtk_container_add (GTK_CONTAINER (dialog_table), prefsw->scrollw_right_gui);
 
@@ -2588,7 +2586,6 @@ _prefsw *create_prefs_dialog (void) {
   pixbuf_multitrack = gdk_pixbuf_new_from_file(icon, NULL);
   g_free(icon);
 
-  /* TRANSLATORS: please keep this string short */
   prefs_add_to_list(prefsw->prefs_list, pixbuf_multitrack, _("Multitrack/Render"), LIST_ENTRY_MULTITRACK);
   gtk_container_add (GTK_CONTAINER (dialog_table), prefsw->scrollw_right_multitrack);
 
@@ -2822,9 +2819,9 @@ _prefsw *create_prefs_dialog (void) {
   pixbuf_decoding = gdk_pixbuf_new_from_file(icon, NULL);
   g_free(icon);
 
-  /* TRANSLATORS: please keep this string short */
+
   prefs_add_to_list(prefsw->prefs_list, pixbuf_decoding, _("Decoding"), LIST_ENTRY_DECODING);
-  //gtk_table_attach(GTK_TABLE(dialog_table), prefsw->vbox_right_decoding, 0, 1, 0, 1, GTK_EXPAND, GTK_SHRINK, 0, 0);
+
   gtk_container_add (GTK_CONTAINER (dialog_table), prefsw->scrollw_right_decoding);
 
   // ---------------,
@@ -3038,7 +3035,8 @@ _prefsw *create_prefs_dialog (void) {
 
 
   // get from prefs
-  if (prefs->audio_player!=AUD_PLAYER_JACK&&prefs->audio_player!=AUD_PLAYER_PULSE) gtk_entry_set_text(GTK_ENTRY(prefsw->audio_command_entry),prefs->audio_play_command);
+  if (prefs->audio_player!=AUD_PLAYER_JACK&&prefs->audio_player!=AUD_PLAYER_PULSE) 
+    gtk_entry_set_text(GTK_ENTRY(prefsw->audio_command_entry),prefs->audio_play_command);
   else {
     gtk_entry_set_text(GTK_ENTRY(prefsw->audio_command_entry),(_("- internal -")));
     gtk_widget_set_sensitive(prefsw->audio_command_entry,FALSE);
@@ -3117,7 +3115,6 @@ _prefsw *create_prefs_dialog (void) {
   pixbuf_playback = gdk_pixbuf_new_from_file(icon, NULL);
   g_free(icon);
 
-  /* TRANSLATORS: please keep this string short */
   prefs_add_to_list(prefsw->prefs_list, pixbuf_playback, _("Playback"), LIST_ENTRY_PLAYBACK);
   gtk_container_add (GTK_CONTAINER (dialog_table), prefsw->scrollw_right_playback);
 
@@ -3131,7 +3128,8 @@ _prefsw *create_prefs_dialog (void) {
   prefsw->scrollw_right_recording = lives_standard_scrolled_window_new (0,0,prefsw->vbox_right_recording,TRUE);
 
   hbox = lives_hbox_new(FALSE, 0);
-  prefsw->rdesk_audio = lives_standard_check_button_new(_("Record audio when capturing an e_xternal window\n (requires jack or pulse audio)"),TRUE,(LiVESBox *)hbox,NULL);
+  prefsw->rdesk_audio = lives_standard_check_button_new(_("Record audio when capturing an e_xternal window\n (requires jack or pulse audio)"),
+							TRUE,(LiVESBox *)hbox,NULL);
 
   gtk_container_set_border_width(GTK_CONTAINER (hbox), 20);
   gtk_widget_show_all(hbox);
@@ -3282,7 +3280,6 @@ _prefsw *create_prefs_dialog (void) {
   pixbuf_recording = gdk_pixbuf_new_from_file(icon, NULL);
   g_free(icon);
 
-  /* TRANSLATORS: please keep this string short */
   prefs_add_to_list(prefsw->prefs_list, pixbuf_recording, _("Recording"), LIST_ENTRY_RECORDING);
   gtk_container_add (GTK_CONTAINER (dialog_table), prefsw->scrollw_right_recording);
 
@@ -3290,58 +3287,29 @@ _prefsw *create_prefs_dialog (void) {
   // encoding       |
   // ---------------'
 
-  prefsw->vbox_right_encoding = lives_vbox_new (FALSE, 30);
-  gtk_container_set_border_width (GTK_CONTAINER (prefsw->vbox_right_encoding), 20);
+  prefsw->vbox_right_encoding = lives_vbox_new (FALSE, widget_opts.packing_height*4);
+  gtk_container_set_border_width (GTK_CONTAINER (prefsw->vbox_right_encoding), widget_opts.border_width);
 
   prefsw->scrollw_right_encoding = lives_standard_scrolled_window_new (0,0,prefsw->vbox_right_encoding,TRUE);
 
-  hbox11 = lives_hbox_new (FALSE, 0);
-  gtk_widget_show (hbox11);
-  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_encoding), hbox11, FALSE, FALSE, 20);
-
-  label37 = gtk_label_new (_("      Encoder                  "));
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(label37, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-  }
-  gtk_widget_show (label37);
-  gtk_box_pack_start (GTK_BOX (hbox11), label37, FALSE, FALSE, 0);
-  gtk_label_set_justify (GTK_LABEL (label37), GTK_JUSTIFY_LEFT);
-
-  prefsw->encoder_combo = lives_combo_new();
-  gtk_box_pack_start(GTK_BOX(hbox11), prefsw->encoder_combo, FALSE, FALSE, 0);
-
   if (capable->has_encoder_plugins) {
     // scan for encoder plugins
-    if ((encoders=get_plugin_list (PLUGIN_ENCODERS,TRUE,NULL,NULL))!=NULL) {
-      encoders=filter_encoders_by_img_ext(encoders,prefs->image_ext);
-      lives_combo_populate(LIVES_COMBO(prefsw->encoder_combo), encoders);
-      // ---
-      lives_combo_set_active_string(LIVES_COMBO(prefsw->encoder_combo), prefs->encoder.name);
-      // ---
-      g_list_free_strings (encoders);
-      g_list_free (encoders);
-    }
+    encoders=get_plugin_list (PLUGIN_ENCODERS,TRUE,NULL,NULL);
+  }
+
+  prefsw->encoder_combo = lives_standard_combo_new(_("Encoder"),FALSE,encoders,
+						   LIVES_BOX (prefsw->vbox_right_encoding),NULL);
+
+
+  if (encoders!=NULL) {
+    lives_combo_set_active_string(LIVES_COMBO(prefsw->encoder_combo), prefs->encoder.name);
+    g_list_free_strings (encoders);
+    g_list_free (encoders);
   }
 
   gtk_widget_show(prefsw->encoder_combo);
 
-  hseparator = lives_hseparator_new ();
-  gtk_widget_show (hseparator);
-  if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color(hseparator, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  }
-  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_encoding), hseparator, FALSE, FALSE, 20);
-
-  hbox = lives_hbox_new (FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_encoding), hbox, FALSE, FALSE, 20);
-
-  label56 = gtk_label_new (_("Output format"));
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(label56, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-  }
-  gtk_box_pack_start (GTK_BOX (hbox), label56, TRUE, FALSE, 0);
-  
-  prefsw->ofmt_combo = lives_combo_new();
+  add_hsep_to_box (LIVES_BOX (prefsw->vbox_right_encoding));
 
   if (capable->has_encoder_plugins) {
     // reqest formats from the encoder plugin
@@ -3357,40 +3325,32 @@ _prefsw *create_prefs_dialog (void) {
 	}
       }
       lives_memcpy (&future_prefs->encoder,&prefs->encoder,sizeof(_encoder));
-      lives_combo_populate(LIVES_COMBO(prefsw->ofmt_combo), ofmt);
-      g_list_free_strings(ofmt);
-      g_list_free(ofmt);
-      g_list_free_strings(ofmt_all);
-      g_list_free(ofmt_all);
     }
     else {
       do_plugin_encoder_error(prefs->encoder.name);
       future_prefs->encoder.of_allowed_acodecs=0;
     }
     
-    gtk_box_pack_start (GTK_BOX (hbox), prefsw->ofmt_combo, TRUE, TRUE, 10);
-    add_fill_to_box (GTK_BOX (hbox));
-    gtk_widget_show_all(hbox);
 
-    lives_combo_set_active_string(LIVES_COMBO(prefsw->ofmt_combo), prefs->encoder.of_desc);
+    prefsw->ofmt_combo = lives_standard_combo_new(_("Output format"),FALSE,ofmt,LIVES_BOX(prefsw->vbox_right_encoding),NULL);
 
-    prefsw->acodec_combo = lives_combo_new();
+    if (ofmt!=NULL) {
+      lives_combo_set_active_string(LIVES_COMBO(prefsw->ofmt_combo), prefs->encoder.of_desc);
+      g_list_free_strings(ofmt);
+      g_list_free(ofmt);
+    }
+
+    if (ofmt_all!=NULL) {
+      g_list_free_strings(ofmt_all);
+      g_list_free(ofmt_all);
+    }
+
+
+    prefsw->acodec_combo = lives_standard_combo_new(_("Audio codec"),FALSE,NULL,LIVES_BOX(prefsw->vbox_right_encoding),NULL);
     prefs->acodec_list=NULL;
 
     set_acodec_list_from_allowed(prefsw, rdet);
 
-    hbox = lives_hbox_new (FALSE, 0);
-    gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_encoding), hbox, FALSE, FALSE, 20);
-
-    label = gtk_label_new (_("Audio codec"));
-    if (palette->style&STYLE_1) {
-      lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-    }
-    gtk_box_pack_start (GTK_BOX (hbox), label, TRUE, FALSE, 10);
-    
-    gtk_box_pack_start (GTK_BOX (hbox), prefsw->acodec_combo, TRUE, TRUE, 10);
-    add_fill_to_box (GTK_BOX (hbox));
-    gtk_widget_show_all (hbox);
   }
   else prefsw->acodec_combo=NULL;
 
@@ -3398,7 +3358,6 @@ _prefsw *create_prefs_dialog (void) {
   pixbuf_encoding = gdk_pixbuf_new_from_file(icon, NULL);
   g_free(icon);
 
-  /* TRANSLATORS: please keep this string short */
   prefs_add_to_list(prefsw->prefs_list, pixbuf_encoding, _("Encoding"), LIST_ENTRY_ENCODING);
   gtk_container_add (GTK_CONTAINER (dialog_table), prefsw->scrollw_right_encoding);
 
@@ -3407,7 +3366,7 @@ _prefsw *create_prefs_dialog (void) {
   // ---------------'
 
   prefsw->vbox_right_effects = lives_vbox_new (FALSE, 20);
-  gtk_container_set_border_width (GTK_CONTAINER (prefsw->vbox_right_effects), 20);
+  gtk_container_set_border_width (GTK_CONTAINER (prefsw->vbox_right_effects), widget_opts.border_width);
   
   prefsw->scrollw_right_effects = lives_standard_scrolled_window_new (0,0,prefsw->vbox_right_effects,TRUE);
 
@@ -3490,7 +3449,6 @@ _prefsw *create_prefs_dialog (void) {
   pixbuf_effects = gdk_pixbuf_new_from_file(icon, NULL);
   g_free(icon);
 
-  /* TRANSLATORS: please keep this string short */
   prefs_add_to_list(prefsw->prefs_list, pixbuf_effects, _("Effects"), LIST_ENTRY_EFFECTS);
   gtk_container_add (GTK_CONTAINER (dialog_table), prefsw->scrollw_right_effects);
 
@@ -4320,7 +4278,6 @@ _prefsw *create_prefs_dialog (void) {
   pixbuf_warnings = gdk_pixbuf_new_from_file(icon, NULL);
   g_free(icon);
 
-  /* TRANSLATORS: please keep this string short */
   prefs_add_to_list(prefsw->prefs_list, pixbuf_warnings, _("Warnings"), LIST_ENTRY_WARNINGS);
   gtk_container_add (GTK_CONTAINER (dialog_table), prefsw->scrollw_right_warnings);
 
@@ -4468,7 +4425,6 @@ _prefsw *create_prefs_dialog (void) {
   pixbuf_misc = gdk_pixbuf_new_from_file(icon, NULL);
   g_free(icon);
 
-  /* TRANSLATORS: please keep this string short */
   prefs_add_to_list(prefsw->prefs_list, pixbuf_misc, _("Misc"), LIST_ENTRY_MISC);
   gtk_container_add (GTK_CONTAINER (dialog_table), prefsw->scrollw_right_misc);
 
@@ -4519,7 +4475,6 @@ _prefsw *create_prefs_dialog (void) {
   pixbuf_themes = gdk_pixbuf_new_from_file(icon, NULL);
   g_free(icon);
 
-  /* TRANSLATORS: please keep this string short */
   prefs_add_to_list(prefsw->prefs_list, pixbuf_themes, _("Themes"), LIST_ENTRY_THEMES);
   gtk_container_add (GTK_CONTAINER (dialog_table), prefsw->scrollw_right_themes);
 
@@ -4641,7 +4596,7 @@ _prefsw *create_prefs_dialog (void) {
   pixbuf_net = gdk_pixbuf_new_from_file(icon, NULL);
   g_free(icon);
 
-  /* TRANSLATORS: please keep this string short */
+
   prefs_add_to_list(prefsw->prefs_list, pixbuf_net, _("Streaming/Networking"), LIST_ENTRY_NET);
   gtk_container_add (GTK_CONTAINER (dialog_table), prefsw->scrollw_right_net);
 
@@ -4941,7 +4896,6 @@ _prefsw *create_prefs_dialog (void) {
   pixbuf_jack = gdk_pixbuf_new_from_file(icon, NULL);
   g_free(icon);
 
-  /* TRANSLATORS: please keep this string short */
   prefs_add_to_list(prefsw->prefs_list, pixbuf_jack, _("Jack Integration"), LIST_ENTRY_JACK);
   gtk_container_add (GTK_CONTAINER (dialog_table), prefsw->scrollw_right_jack);
 
@@ -5206,7 +5160,6 @@ _prefsw *create_prefs_dialog (void) {
   pixbuf_midi = gdk_pixbuf_new_from_file(icon, NULL);
   g_free(icon);
 
-  /* TRANSLATORS: please keep this string short */
   prefs_add_to_list(prefsw->prefs_list, pixbuf_midi, _("MIDI/Joystick learner"), LIST_ENTRY_MIDI);
   gtk_container_add (GTK_CONTAINER (dialog_table), prefsw->scrollw_right_midi);
 
@@ -5505,9 +5458,7 @@ _prefsw *create_prefs_dialog (void) {
 }
 
 
-void
-on_preferences_activate(GtkMenuItem *menuitem, gpointer user_data)
-{
+void on_preferences_activate(GtkMenuItem *menuitem, gpointer user_data) {
   if (prefsw != NULL && prefsw->prefs_dialog != NULL) {
     gtk_window_present(GTK_WINDOW(prefsw->prefs_dialog));
     gdk_window_raise(lives_widget_get_xwindow(prefsw->prefs_dialog));
@@ -5554,10 +5505,8 @@ void on_prefs_close_clicked(GtkButton *button, gpointer user_data) {
 /*!
  *
  */
-void
-on_prefs_apply_clicked(GtkButton *button, gpointer user_data)
-{
-  gboolean needs_restart;
+void on_prefs_apply_clicked(GtkButton *button, gpointer user_data) {
+  boolean needs_restart;
 
   GtkTreeIter iter;
   GtkTreeModel *model;
@@ -5614,12 +5563,10 @@ on_prefs_apply_clicked(GtkButton *button, gpointer user_data)
  * Function is used to select particular row in preferences selection list
  * selection is performed according to provided index which is one of LIST_ENTRY_* constants
  */
-void
-select_pref_list_row(guint selected_idx)
-{
+void select_pref_list_row(guint selected_idx) {
   GtkTreeIter iter;
   GtkTreeModel *model;
-  gboolean valid;
+  boolean valid;
   guint idx;
 
   model = gtk_tree_view_get_model(GTK_TREE_VIEW(prefsw->prefs_list));
@@ -5667,11 +5614,8 @@ void on_prefs_revert_clicked(GtkButton *button, gpointer user_data) {
     g_list_free (future_prefs->disabled_decoders);
   }
 
-  lives_general_button_clicked(button, prefsw);
-
   lives_set_cursor_style(LIVES_CURSOR_BUSY,NULL);
-
-  lives_widget_context_update();
+  lives_general_button_clicked(button, prefsw);
 
   prefsw = NULL;
 
@@ -5679,16 +5623,14 @@ void on_prefs_revert_clicked(GtkButton *button, gpointer user_data) {
   lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
 }
 
-gboolean
-on_prefs_delete_event(GtkWidget *widget, GdkEvent *event, gpointer user_data)
-{
-  on_prefs_close_clicked(GTK_BUTTON (((_prefsw *)user_data)->closebutton), user_data);
 
+boolean on_prefs_delete_event(GtkWidget *widget, GdkEvent *event, gpointer user_data) {
+  on_prefs_close_clicked(GTK_BUTTON (((_prefsw *)user_data)->closebutton), user_data);
   return FALSE;
 }
 
 
-gboolean lives_ask_permission(int what) {
+boolean lives_ask_permission(int what) {
   switch (what) {
   case LIVES_PERM_OSC_PORTS:
     return ask_permission_dialog(what);

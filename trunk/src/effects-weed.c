@@ -4447,7 +4447,7 @@ static void load_weed_plugin (gchar *plugin_name, gchar *plugin_path, gchar *dir
 	    }
 	    if (!strcmp(hashnames[idx],hashnames[i])) {
 	      // skip dups
-	      char *msg=g_strdup_printf(_("Found duplicate plugin %s\n"),hashnames[idx]);
+	      char *msg=g_strdup_printf(_("Found duplicate plugin %s"),hashnames[idx]);
 	      LIVES_INFO(msg);
 	      g_free(msg);
 	      g_free(hashnames[idx]);

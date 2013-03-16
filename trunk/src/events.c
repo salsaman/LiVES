@@ -2068,12 +2068,12 @@ GtkWidget *events_rec_dialog (gboolean allow_mt) {
   vbox = lives_vbox_new (FALSE, 0);
   gtk_box_pack_start (GTK_BOX (dialog_vbox), vbox, TRUE, TRUE, 0);
 
-  label = lives_standard_label_new (_("   Events were recorded. What would you like to do with them ?    "));
+  label = lives_standard_label_new (_("Events were recorded. What would you like to do with them ?"));
 
-  gtk_box_pack_start (GTK_BOX (vbox), label, TRUE, TRUE, 20);
+  gtk_box_pack_start (GTK_BOX (vbox), label, TRUE, TRUE, widget_opts.packing_height*2);
 
   hbox = lives_hbox_new (FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 20);
+  gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height*2);
 
   radiobutton = lives_standard_radio_button_new (_ ("_Preview events"),TRUE,radiobutton_group,LIVES_BOX(hbox),NULL);
   radiobutton_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (radiobutton));
@@ -2087,7 +2087,7 @@ GtkWidget *events_rec_dialog (gboolean allow_mt) {
   if (!mainw->clip_switched&&(cfile->clip_type==CLIP_TYPE_DISK||cfile->clip_type==CLIP_TYPE_FILE)) {
 
     hbox = lives_hbox_new (FALSE, 0);
-    gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 20);
+    gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height*2);
 
     radiobutton = lives_standard_radio_button_new (_ ("Render events to _same clip"),TRUE,radiobutton_group,LIVES_BOX(hbox),NULL);
     radiobutton_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (radiobutton));
@@ -2099,7 +2099,7 @@ GtkWidget *events_rec_dialog (gboolean allow_mt) {
 
 
   hbox = lives_hbox_new (FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 20);
+  gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height*2);
 
   radiobutton = lives_standard_radio_button_new (_ ("Render events to _new clip"),TRUE,radiobutton_group,LIVES_BOX(hbox),NULL);
   radiobutton_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (radiobutton));
@@ -2111,7 +2111,7 @@ GtkWidget *events_rec_dialog (gboolean allow_mt) {
 
 
   hbox = lives_hbox_new (FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 20);
+  gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height*2);
 
   radiobutton = lives_standard_radio_button_new (_ ("View/edit events in _multitrack window (test)"),TRUE,radiobutton_group,LIVES_BOX(hbox),NULL);
   radiobutton_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (radiobutton));
@@ -2125,7 +2125,7 @@ GtkWidget *events_rec_dialog (gboolean allow_mt) {
 
 
   hbox = lives_hbox_new (FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 20);
+  gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height*2);
 
   radiobutton = lives_standard_radio_button_new (_ ("View/edit events in _event window"),TRUE,radiobutton_group,LIVES_BOX(hbox),NULL);
   radiobutton_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (radiobutton));
@@ -5206,7 +5206,7 @@ render_details *create_render_details (int type) {
 
   daa=lives_dialog_get_action_area(LIVES_DIALOG(rdet->dialog));
 
-  gtk_box_pack_start (GTK_BOX (daa), rdet->always_hbox, FALSE, FALSE, 20);
+  gtk_box_pack_start (GTK_BOX (daa), rdet->always_hbox, FALSE, FALSE, widget_opts.packing_width*2);
 
   add_fill_to_box(GTK_BOX (daa));
 

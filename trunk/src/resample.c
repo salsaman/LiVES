@@ -976,7 +976,7 @@ void on_resample_vid_ok (GtkButton *button, GtkEntry *entry) {
   mainw->error=FALSE;
 
   if (button!=NULL) {
-    gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
+    lives_general_button_clicked(button,NULL);
     if (mainw->fx1_val==0.) mainw->fx1_val=1.;
   }
   else {
@@ -1231,25 +1231,25 @@ _resaudw *create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox
     hbox2 = lives_hbox_new (FALSE, 0);
     gtk_widget_show (hbox2);
     gtk_container_add (GTK_CONTAINER (frame), hbox2);
-    gtk_container_set_border_width (GTK_CONTAINER (hbox2), 10);
+    gtk_container_set_border_width (GTK_CONTAINER (hbox2), widget_opts.packing_width);
     
     tmp=g_strdup_printf ("%d",(gint)mainw->fx1_val);
     
-    combo_entry2 = lives_standard_entry_new(_("Rate (Hz) "),FALSE,tmp,6,6,LIVES_BOX(hbox2),NULL);
+    combo_entry2 = lives_standard_entry_new(_("Rate (Hz) "),FALSE,tmp,10,6,LIVES_BOX(hbox2),NULL);
     g_free (tmp);
 
     gtk_editable_set_editable (GTK_EDITABLE (combo_entry2), FALSE);
     lives_widget_set_can_focus (combo_entry2, FALSE);
     
     tmp=g_strdup_printf ("%d",(gint)mainw->fx2_val);
-    combo_entry3 = lives_standard_entry_new(_("         Channels "),FALSE,tmp,2,2,LIVES_BOX(hbox2),NULL);
+    combo_entry3 = lives_standard_entry_new(_("Channels"),FALSE,tmp,6,2,LIVES_BOX(hbox2),NULL);
     g_free (tmp);
 
     gtk_editable_set_editable (GTK_EDITABLE (combo_entry3), FALSE);
     lives_widget_set_can_focus (combo_entry3, FALSE);
     
     tmp=g_strdup_printf ("%d",(gint)mainw->fx3_val);
-    combo_entry1 = lives_standard_entry_new(_("        Sample Size "),FALSE,tmp,2,2,LIVES_BOX(hbox2),NULL);
+    combo_entry1 = lives_standard_entry_new(_("Sample Size "),FALSE,tmp,6,2,LIVES_BOX(hbox2),NULL);
     g_free (tmp);
 
     gtk_editable_set_editable (GTK_EDITABLE (combo_entry1), FALSE);
@@ -1257,19 +1257,19 @@ _resaudw *create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox
 
     vseparator = lives_vseparator_new ();
     gtk_widget_show (vseparator);
-    gtk_box_pack_start (GTK_BOX (hbox2), vseparator, FALSE, FALSE, 12);
+    gtk_box_pack_start (GTK_BOX (hbox2), vseparator, FALSE, FALSE, widget_opts.packing_width);
 
     vbox = lives_vbox_new (FALSE, 0);
     gtk_box_pack_start (GTK_BOX (hbox2), vbox, FALSE, FALSE, 0);
 
     hbox = lives_hbox_new (FALSE, 0);
-    gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 10);
+    gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
     radiobutton_s1 = lives_standard_radio_button_new (_("Signed"),FALSE,s1_group,LIVES_BOX(hbox),NULL);
     s1_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (radiobutton_s1));
 
     hbox = lives_hbox_new (FALSE, 0);
-    gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 10);
+    gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
     radiobutton_u1 = lives_standard_radio_button_new (_("Unsigned"),FALSE,s1_group,LIVES_BOX(hbox),NULL);
 
@@ -1286,19 +1286,19 @@ _resaudw *create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox
     gtk_widget_set_sensitive (radiobutton_s1, FALSE);
 
     vseparator = lives_vseparator_new ();
-    gtk_box_pack_start (GTK_BOX (hbox2), vseparator, FALSE, FALSE, 12);
+    gtk_box_pack_start (GTK_BOX (hbox2), vseparator, FALSE, FALSE, widget_opts.packing_width);
     
     vbox = lives_vbox_new (FALSE, 0);
     gtk_box_pack_start (GTK_BOX (hbox2), vbox, FALSE, FALSE, 0);
 
     hbox = lives_hbox_new (FALSE, 0);
-    gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 10);
+    gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
     radiobutton_l1 = lives_standard_radio_button_new (_("Little Endian"),FALSE,e1_group,LIVES_BOX(hbox),NULL);
     e1_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (radiobutton_l1));
 
     hbox = lives_hbox_new (FALSE, 0);
-    gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 10);
+    gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
     radiobutton_b1 = lives_standard_radio_button_new (_("Big Endian"),FALSE,e1_group,LIVES_BOX(hbox),NULL);
 
@@ -1343,15 +1343,15 @@ _resaudw *create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox
     else resaudw->aud_checkbutton = gtk_check_button_new ();
 
     hbox2 = lives_hbox_new (FALSE, 0);
-    gtk_box_pack_start (GTK_BOX (vbox2), hbox2, FALSE, FALSE, 10);
-    gtk_container_set_border_width (GTK_CONTAINER (hbox2), 10);
+    gtk_box_pack_start (GTK_BOX (vbox2), hbox2, FALSE, FALSE, widget_opts.packing_height);
+    gtk_container_set_border_width (GTK_CONTAINER (hbox2), widget_opts.border_width);
 
     vbox = lives_vbox_new (FALSE, 0);
-    gtk_box_pack_start (GTK_BOX (hbox2), vbox, FALSE, FALSE, 10);
+    gtk_box_pack_start (GTK_BOX (hbox2), vbox, FALSE, FALSE, widget_opts.packing_width);
 
     hbox = lives_hbox_new (FALSE, 0);
-    gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 10);
-    gtk_container_set_border_width (GTK_CONTAINER (hbox), 10);
+    gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+    gtk_container_set_border_width (GTK_CONTAINER (hbox), widget_opts.border_width);
 
     combo4 = lives_standard_combo_new (_("Rate (Hz) "),type>=3&&type!=11,rate,LIVES_BOX(hbox),NULL);
     
@@ -1367,7 +1367,7 @@ _resaudw *create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox
     gtk_entry_set_text (GTK_ENTRY (resaudw->entry_arate),tmp);
     g_free (tmp);
 
-    combo5 = lives_standard_combo_new ((type>=3&&type!=11?(_("    _Channels ")):(_("    Channels "))),type>=3&&type!=11,
+    combo5 = lives_standard_combo_new ((type>=3&&type!=11?(_("_Channels")):(_("Channels"))),type>=3&&type!=11,
 				       channels,LIVES_BOX(hbox),NULL);
     
 
@@ -1389,7 +1389,7 @@ _resaudw *create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox
     }
 
  
-    combo6 = lives_standard_combo_new ((type>=3&&type!=11?(_("    _Sample Size ")):(_("    Sample Size "))),type>=3&&type!=11,
+    combo6 = lives_standard_combo_new ((type>=3&&type!=11?(_("_Sample Size")):(_("Sample Size"))),type>=3&&type!=11,
 				       sampsize,LIVES_BOX(hbox),NULL);
 
     if (type==7) gtk_widget_set_sensitive(combo6,FALSE);
@@ -1412,13 +1412,13 @@ _resaudw *create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox
 
     vseparator = lives_vseparator_new ();
     gtk_widget_show (vseparator);
-    if (type!=4) gtk_box_pack_start (GTK_BOX (hbox2), vseparator, FALSE, FALSE, 12);
+    if (type!=4) gtk_box_pack_start (GTK_BOX (hbox2), vseparator, FALSE, FALSE, widget_opts.packing_width);
 
     vbox = lives_vbox_new (FALSE, 0);
     if (type!=4) gtk_box_pack_start (GTK_BOX (hbox2), vbox, FALSE, FALSE, 0);
 
     hbox = lives_hbox_new (FALSE, 0);
-    gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 10);
+    gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
     resaudw->rb_signed = lives_standard_radio_button_new (_("Signed"),FALSE,s2_group,LIVES_BOX(hbox),NULL);
     s2_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (resaudw->rb_signed));
@@ -1428,7 +1428,7 @@ _resaudw *create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox
     
 
     hbox = lives_hbox_new (FALSE, 0);
-    gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 10);
+    gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
     resaudw->rb_unsigned = lives_standard_radio_button_new (_("Unsigned"),FALSE,s2_group,LIVES_BOX(hbox),NULL);
 
@@ -1447,13 +1447,13 @@ _resaudw *create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox
     }
 
     vseparator = lives_vseparator_new ();
-    gtk_box_pack_start (GTK_BOX (hbox2), vseparator, FALSE, FALSE, 12);
+    gtk_box_pack_start (GTK_BOX (hbox2), vseparator, FALSE, FALSE, widget_opts.packing_width);
 
     vbox = lives_vbox_new (FALSE, 0);
     gtk_box_pack_start (GTK_BOX (hbox2), vbox, FALSE, FALSE, 0);
 
     hbox = lives_hbox_new (FALSE, 0);
-    gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 10);
+    gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
     resaudw->rb_littleend = lives_standard_radio_button_new (_("Little Endian"),FALSE,e2_group,LIVES_BOX(hbox),NULL);
     e2_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (resaudw->rb_littleend));
@@ -1461,7 +1461,7 @@ _resaudw *create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox
     if (type==7) gtk_widget_set_sensitive(resaudw->rb_littleend,FALSE);
 
     hbox = lives_hbox_new (FALSE, 0);
-    gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 10);
+    gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
     resaudw->rb_bigend = lives_standard_radio_button_new (_("Big Endian"),FALSE,e2_group,LIVES_BOX(hbox),NULL);
 
@@ -1504,7 +1504,7 @@ _resaudw *create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox
     hbox = lives_hbox_new (FALSE, 0);
     gtk_widget_show (hbox);
     gtk_container_add (GTK_CONTAINER (frame), hbox);
-    gtk_container_set_border_width (GTK_CONTAINER (hbox), 10);
+    gtk_container_set_border_width (GTK_CONTAINER (hbox), widget_opts.border_width);
     
 
     resaudw->fps_spinbutton = lives_standard_spin_button_new (_("_Frames Per Second "),TRUE,
@@ -1517,11 +1517,11 @@ _resaudw *create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox
   }
 
   if (type>4&&type!=11) {
-    lives_box_set_spacing(GTK_BOX(dialog_vbox),30);
+    lives_box_set_spacing(GTK_BOX(dialog_vbox),widget_opts.packing_height*3);
     
     hbox = lives_hbox_new (FALSE, 0);
     gtk_widget_show (hbox);
-    gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, TRUE, TRUE, 10);
+    gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, TRUE, TRUE, widget_opts.packing_height);
     
     if (type!=6&&type!=7) {
 
@@ -1538,7 +1538,7 @@ _resaudw *create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox
 
       hbox = lives_hbox_new (FALSE, 0);
       gtk_widget_show (hbox);
-      gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, TRUE, TRUE, 10);
+      gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, TRUE, TRUE, widget_opts.packing_height);
 
       resaudw->unlim_radiobutton=lives_standard_radio_button_new(_("Unlimited"),FALSE,rbgroup,LIVES_BOX(hbox),NULL);
       rbgroup = lives_radio_button_get_group (LIVES_RADIO_BUTTON (resaudw->unlim_radiobutton));
@@ -1609,9 +1609,6 @@ _resaudw *create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox
 			  GINT_TO_POINTER(1));
       }
       
-      g_signal_connect (GTK_OBJECT (resaudw->dialog), "delete_event",
-			G_CALLBACK (return_true),
-			NULL);
     }
 
     gtk_widget_show_all(resaudw->dialog);
@@ -1639,9 +1636,7 @@ _resaudw *create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox
 
 
 
-void
-create_new_pb_speed (gshort type)
-{
+void create_new_pb_speed (short type) {
   // type 1 = change speed
   // type 2 = resample
 
@@ -1679,6 +1674,8 @@ create_new_pb_speed (gshort type)
   new_pb_speed = lives_standard_dialog_new (title,FALSE);
   g_free(title);
 
+  gtk_container_set_border_width (GTK_CONTAINER (new_pb_speed), widget_opts.border_width*2);
+
   accel_group = GTK_ACCEL_GROUP(gtk_accel_group_new ());
   gtk_window_add_accel_group (GTK_WINDOW (new_pb_speed), accel_group);
 
@@ -1688,23 +1685,26 @@ create_new_pb_speed (gshort type)
 
   dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(new_pb_speed));
 
-  vbox = lives_vbox_new (FALSE, 10);
-  gtk_box_pack_start (GTK_BOX (dialog_vbox), vbox, TRUE, TRUE, 20);
+  vbox = lives_vbox_new (FALSE, 0);
+  
+  gtk_box_pack_start (GTK_BOX (dialog_vbox), vbox, TRUE, TRUE, widget_opts.packing_height*2);
 
   if (type==1) {
     g_snprintf(label_text,256,
-	       _("\n\nCurrent playback speed is %.3f frames per second.\n\nPlease enter the desired playback speed\nin _frames per second"),cfile->fps);
+	       _("\n\nCurrent playback speed is %.3f frames per second.\n\nPlease enter the desired playback speed\nin _frames per second"),
+	       cfile->fps);
   }
   else if (type==2) {
     g_snprintf(label_text,256,
-	       _("\n\nCurrent playback speed is %.3f frames per second.\n\nPlease enter the _resampled rate\nin frames per second"),cfile->fps);
+	       _("\n\nCurrent playback speed is %.3f frames per second.\n\nPlease enter the _resampled rate\nin frames per second"),
+	       cfile->fps);
   }
 
   label=lives_standard_label_new_with_mnemonic(label_text,NULL);
 
   hbox = lives_hbox_new (FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (vbox), label, TRUE, TRUE, 0);
-  gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 0);
+  gtk_box_pack_start (GTK_BOX (vbox), label, FALSE, FALSE, widget_opts.packing_height);
+  gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
   if (type==2) {
     add_fill_to_box(LIVES_BOX(hbox));
@@ -1719,10 +1719,11 @@ create_new_pb_speed (gshort type)
     spinbutton_pb_speed = lives_standard_spin_button_new (NULL,FALSE,cfile->fps,1.,FPS_MAX,.01,.1,3,LIVES_BOX(hbox),NULL);
 
     label2=lives_standard_label_new_with_mnemonic(_("OR enter the desired clip length in _seconds"),NULL);
-    gtk_box_pack_start (GTK_BOX (vbox), label2, TRUE, TRUE, 0);
+    gtk_box_pack_start (GTK_BOX (vbox), label2, TRUE, TRUE, widget_opts.packing_height);
 
     hbox = lives_hbox_new (FALSE, 0);
-    gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 0);
+    gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+
     radiobutton2 = lives_standard_radio_button_new (NULL,FALSE,rbgroup,LIVES_BOX(hbox),NULL);
 
 
@@ -1741,7 +1742,7 @@ create_new_pb_speed (gshort type)
   change_audio_speed = lives_standard_check_button_new
     (_("Change the _audio speed as well"),TRUE,LIVES_BOX(ca_hbox),NULL);
 
-  gtk_box_pack_start (GTK_BOX (dialog_vbox), ca_hbox, TRUE, TRUE, 20);
+  gtk_box_pack_start (GTK_BOX (vbox), ca_hbox, TRUE, TRUE, widget_opts.packing_height);
 
 
   dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (new_pb_speed));
@@ -1820,22 +1821,19 @@ on_change_speed_activate                (GtkMenuItem     *menuitem,
 
 
 
-void
-on_change_speed_ok_clicked                (GtkButton *button,
-					   gpointer         user_data)
-{
-  gdouble arate=cfile->arate/cfile->fps;
+void on_change_speed_ok_clicked (GtkButton *button, gpointer user_data) {
+  double arate=cfile->arate/cfile->fps;
   gchar *msg;
-  gboolean has_lmap_error=FALSE;
-  gboolean bad_header=FALSE;
+  boolean has_lmap_error=FALSE;
+  boolean bad_header=FALSE;
 
   // change playback rate
   if (button!=NULL) {
-    gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(button)));
+    lives_general_button_clicked(button,NULL);
   }
 
   if (mainw->fx2_bool) {
-    mainw->fx1_val=(gdouble)((gint)((gdouble)cfile->frames/mainw->fx2_val*1000.+.5))/1000.;
+    mainw->fx1_val=(double)((int)((double)cfile->frames/mainw->fx2_val*1000.+.5))/1000.;
     if (mainw->fx1_val<1.) mainw->fx1_val=1.;
     if (mainw->fx1_val>FPS_MAX) mainw->fx1_val=FPS_MAX;
   }
@@ -1978,7 +1976,7 @@ on_change_speed_ok_clicked                (GtkButton *button,
 
 
 
-gint reorder_frames(int rwidth, int rheight) {
+int reorder_frames(int rwidth, int rheight) {
   int new_frames=cfile->old_frames;
   int cur_frames=cfile->frames;
   gchar **array;
@@ -2073,11 +2071,10 @@ gint reorder_frames(int rwidth, int rheight) {
 
 
 
-gint
-deorder_frames(gint old_frames, gboolean leave_bak) {
+int deorder_frames(int old_frames, boolean leave_bak) {
   gchar *com;
   weed_timecode_t time_start;
-  gint perf_start,perf_end;
+  int perf_start,perf_end;
   
   if (cfile->event_list!=NULL) return cfile->frames;
 
@@ -2116,17 +2113,17 @@ deorder_frames(gint old_frames, gboolean leave_bak) {
 }
 
 
-gboolean resample_clipboard(gdouble new_fps) {
+boolean resample_clipboard(double new_fps) {
   // resample the clipboard video - if we already did it once, it is
   // quicker the second time
   gchar *msg,*com;
-  gint current_file=mainw->current_file;
+  int current_file=mainw->current_file;
 
   mainw->no_switch_dprint=TRUE;
 
   if (clipboard->undo1_dbl==new_fps&&!prefs->conserve_space) {
-    gint new_frames;
-    gdouble old_fps=clipboard->fps;
+    int new_frames;
+    double old_fps=clipboard->fps;
 
     if (new_fps==clipboard->fps) {
       mainw->no_switch_dprint=FALSE;
@@ -2168,7 +2165,7 @@ gboolean resample_clipboard(gdouble new_fps) {
   }
   else {
     if (clipboard->undo1_dbl<clipboard->fps) {
-      gint old_frames=count_resampled_frames(clipboard->frames,clipboard->fps,clipboard->undo1_dbl);
+      int old_frames=count_resampled_frames(clipboard->frames,clipboard->fps,clipboard->undo1_dbl);
       mainw->current_file=0;
       com=g_strdup_printf("%s undo \"%s\" %d %d \"%s\"",prefs->backend,cfile->handle,old_frames+1,cfile->frames,
 			  get_image_ext_for_type(cfile->img_type));

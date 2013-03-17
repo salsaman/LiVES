@@ -139,9 +139,6 @@ void widget_add_preview(GtkWidget *widget, LiVESBox *for_preview, LiVESBox *for_
 
   gtk_widget_show (preview_button);
 
-  if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color(preview_button, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
-  }
 
   gtk_box_pack_start (for_button, preview_button, FALSE, FALSE, widget_opts.packing_width);
 
@@ -2277,6 +2274,7 @@ _commentsw* create_comments_dialog (file *sfile, gchar *filename) {
 }
 
 
+
 gchar *choose_file(gchar *dir, gchar *fname, gchar **filt, lives_file_chooser_action_t act, const char *title, GtkWidget *extra_widget) {
   // new style file chooser
 
@@ -2287,9 +2285,6 @@ gchar *choose_file(gchar *dir, gchar *fname, gchar **filt, lives_file_chooser_ac
 
   gchar *filename=NULL;
   gchar *mytitle;
-  gchar *tmp;
-
-  boolean did_check;
 
   int response;
 
@@ -2297,14 +2292,14 @@ gchar *choose_file(gchar *dir, gchar *fname, gchar **filt, lives_file_chooser_ac
 
   if (title==NULL) {
     if (act==LIVES_FILE_CHOOSER_ACTION_SELECT_DEVICE) {
-      mytitle=g_strdup(_("LiVES: choose a device"));
+      mytitle=g_strdup(_("LiVES: - choose a device"));
       act=LIVES_FILE_CHOOSER_ACTION_OPEN;
     }
     else if (act==LIVES_FILE_CHOOSER_ACTION_SELECT_FOLDER) {
-      mytitle=g_strdup(_("LiVES: choose a directory"));
+      mytitle=g_strdup(_("LiVES: - choose a directory"));
     }
     else {
-      mytitle=g_strdup(_("LiVES: choose a file"));
+      mytitle=g_strdup(_("LiVES: - choose a file"));
     }
   }
   else mytitle=g_strdup(title);
@@ -2325,33 +2320,31 @@ gchar *choose_file(gchar *dir, gchar *fname, gchar **filt, lives_file_chooser_ac
 
   gtk_file_chooser_set_local_only(GTK_FILE_CHOOSER(chooser),TRUE);
 
-  if (dir!=NULL) {
-    gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(chooser),(tmp=g_filename_from_utf8(dir,-1,NULL,NULL,NULL)));
-    gtk_file_chooser_add_shortcut_folder(GTK_FILE_CHOOSER(chooser),tmp,NULL);
-    g_free(tmp);
-  }
-
-  did_check=lives_file_chooser_set_do_overwrite_confirmation(LIVES_FILE_CHOOSER(chooser),TRUE);
 
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(chooser, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
     gtk_container_forall(GTK_CONTAINER(chooser),set_child_colour,GINT_TO_POINTER(FALSE));
   }
 
-  if (dir!=NULL) gtk_file_chooser_set_current_folder_uri (GTK_FILE_CHOOSER(chooser), dir);
-  if (fname!=NULL) gtk_file_chooser_set_current_name(GTK_FILE_CHOOSER(chooser),fname);
+  if (dir!=NULL) {
+    gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(chooser),dir);
+    gtk_file_chooser_add_shortcut_folder(GTK_FILE_CHOOSER(chooser),dir,NULL);
+  }
 
   if (filt!=NULL) {
     filter=gtk_file_filter_new();
     gtk_file_filter_add_pattern(filter,filt[0]);
     for (i=1;filt[i]!=NULL;i++) gtk_file_filter_add_pattern(filter,filt[i]);
     gtk_file_chooser_set_filter(GTK_FILE_CHOOSER(chooser),filter);
-    if (fname==NULL&&i==1&&act==LIVES_FILE_CHOOSER_ACTION_SAVE) gtk_file_chooser_set_current_name(GTK_FILE_CHOOSER(chooser),filt[0]);
+    if (fname==NULL&&i==1&&act==LIVES_FILE_CHOOSER_ACTION_SAVE) 
+      gtk_file_chooser_set_current_name(GTK_FILE_CHOOSER(chooser),filt[0]); //utf-8
   }
-  else {
+
+  if (fname!=NULL) {
+    gtk_file_chooser_set_current_name(GTK_FILE_CHOOSER(chooser),fname); // utf-8
     if (fname!=NULL&&dir!=NULL) {
       gchar *ffname=g_build_filename(dir,fname,NULL);
-      gtk_file_chooser_select_filename(GTK_FILE_CHOOSER(chooser),ffname);
+      gtk_file_chooser_select_filename(GTK_FILE_CHOOSER(chooser),ffname); // must be dir and file
       g_free(ffname);
     }
   }
@@ -2372,24 +2365,31 @@ gchar *choose_file(gchar *dir, gchar *fname, gchar **filt, lives_file_chooser_ac
    gtk_window_move(GTK_WINDOW(chooser),xcen,ycen);
   }
 
+
   gtk_widget_show(chooser);
+
   gtk_window_set_modal (GTK_WINDOW (chooser), TRUE);
 
   gtk_widget_grab_focus (chooser);
 
-  if (extra_widget==mainw->LiVES) return (gchar *)chooser; // kludge to allow custom adding of extra widgets
+  if (extra_widget==mainw->LiVES) {
+    return (gchar *)chooser; // kludge to allow custom adding of extra widgets
+  }
 
   if (extra_widget!=NULL) gtk_file_chooser_set_extra_widget(GTK_FILE_CHOOSER(chooser),extra_widget);
+
+ rundlg:
   
   if ((response=gtk_dialog_run(GTK_DIALOG(chooser)))!=GTK_RESPONSE_CANCEL) {
     filename=g_filename_to_utf8((tmp=gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(chooser))),-1,NULL,NULL,NULL);
     g_free(tmp);
   }
 
-  if (!did_check && act==LIVES_FILE_CHOOSER_ACTION_SAVE) {
+  if (filename!=NULL&&act==LIVES_FILE_CHOOSER_ACTION_SAVE) {
     if (!check_file(filename,TRUE)) {
       g_free(filename);
       filename=NULL;
+      goto rundlg;
     }
   }
 
@@ -2439,11 +2439,7 @@ void choose_file_with_preview (gchar *dir, const gchar *title, int preview_type)
 
   GtkWidget *chooser;
 
-  gchar titles[256];
-
-  g_snprintf(titles,256,_("LiVES: - %s"),title);
-
-  chooser=(GtkWidget *)choose_file(dir,NULL,NULL,LIVES_FILE_CHOOSER_ACTION_OPEN,titles,mainw->LiVES);
+  chooser=(GtkWidget *)choose_file(dir,NULL,NULL,LIVES_FILE_CHOOSER_ACTION_OPEN,title,mainw->LiVES);
   
   if (preview_type==3) gtk_file_chooser_set_select_multiple(GTK_FILE_CHOOSER(chooser),TRUE);
 
@@ -2533,7 +2529,8 @@ _entryw* create_cds_dialog (gint type) {
     hbox = lives_hbox_new (FALSE, 0);
     gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
     
-    cdsw->entry = lives_standard_entry_new (_("Clip set _name"),TRUE,strlen (mainw->set_name)?mainw->set_name:"",32,128,LIVES_BOX(hbox),NULL);
+    cdsw->entry = lives_standard_entry_new (_("Clip set _name"),TRUE,strlen (mainw->set_name)?mainw->set_name:"",
+					    32.*widget_opts.scale,128.*widget_opts.scale,LIVES_BOX(hbox),NULL);
 
     hbox = lives_hbox_new (FALSE, 0);
     gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);

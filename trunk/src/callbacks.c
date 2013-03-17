@@ -597,7 +597,7 @@ void on_open_sel_activate (GtkMenuItem *menuitem, gpointer user_data) {
     gtk_widget_set_sensitive (mainw->m_playbutton, TRUE);
   }
 
-  choose_file_with_preview(strlen(mainw->vid_load_dir)?mainw->vid_load_dir:NULL,_ ("Select File"),1);
+  choose_file_with_preview(strlen(mainw->vid_load_dir)?mainw->vid_load_dir:NULL,NULL,1);
 }
 
 
@@ -6291,7 +6291,7 @@ void on_open_activate (GtkMenuItem *menuitem, gpointer user_data) {
     gtk_widget_set_sensitive (mainw->m_playbutton, TRUE);
   }
 
-  choose_file_with_preview(strlen(mainw->vid_load_dir)?mainw->vid_load_dir:NULL,_ ("Select File"),3);
+  choose_file_with_preview(strlen(mainw->vid_load_dir)?mainw->vid_load_dir:NULL,NULL,3);
 }
 
 
@@ -8265,7 +8265,7 @@ void on_load_audio_activate (GtkMenuItem *menuitem, gpointer user_data) {
     gtk_widget_set_sensitive (mainw->m_playbutton, TRUE);
   }
 
-  choose_file_with_preview(strlen(mainw->audio_dir)?mainw->audio_dir:NULL,_ ("Select Audio File"),2);
+  choose_file_with_preview(strlen(mainw->audio_dir)?mainw->audio_dir:NULL,_ ("LiVES: - Select Audio File"),2);
 }
 
 
@@ -8828,6 +8828,7 @@ void on_toy_activate  (GtkMenuItem *menuitem, gpointer user_data) {
 #endif
 
     mainw->toy_alives_pid=lives_fork(com);
+
     g_free(com);
 
     break;
@@ -10814,7 +10815,7 @@ void on_append_audio_activate (GtkMenuItem *menuitem, gpointer user_data) {
     mainw->xlays=NULL;
   }
 
-  choose_file_with_preview(strlen(mainw->audio_dir)?mainw->audio_dir:NULL,_ ("Append Audio File"),5);
+  choose_file_with_preview(strlen(mainw->audio_dir)?mainw->audio_dir:NULL,_ ("LiVES: - Append Audio File"),5);
 
 }
 

@@ -482,15 +482,8 @@ on_select_end_only_activate                (GtkMenuItem     *menuitem,
 					    gpointer         user_data);
 
 void
-on_filesel_simple_clicked                      (GtkButton *button,
-						GtkEntry *entry);
-void
 on_filesel_complex_clicked                      (GtkButton *button,
 						GtkEntry *entry);
-
-void
-on_filesel_simple_ok_clicked                      (GtkButton *button,
-						   GtkEntry *entry);
 
 void
 on_filesel_complex_ok_clicked                      (GtkButton *button,

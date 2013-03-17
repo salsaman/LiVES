@@ -1330,17 +1330,6 @@ LIVES_INLINE boolean lives_image_menu_item_set_always_show_image(LiVESImageMenuI
 }
 
 
-LIVES_INLINE boolean lives_file_chooser_set_do_overwrite_confirmation(LiVESFileChooser *chooser, boolean set) {
-  // return TRUE if implemented
-#ifdef GUI_GTK
-#if GTK_CHECK_VERSION(2,8,0)
-  gtk_file_chooser_set_do_overwrite_confirmation(chooser,set);
-  return TRUE;
-#endif
-#endif
-  return FALSE;
-}
-
 
 LIVES_INLINE boolean lives_scale_button_set_orientation(LiVESScaleButton *scale, LiVESOrientation orientation) {
   // return TRUE if implemented

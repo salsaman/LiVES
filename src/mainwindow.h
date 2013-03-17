@@ -249,6 +249,7 @@ typedef struct {
   file *files[MAX_FILES+1]; ///< +1 for the clipboard
   gchar vid_load_dir[PATH_MAX];
   gchar vid_save_dir[PATH_MAX];
+  gchar vid_dl_dir[PATH_MAX];
   gchar audio_dir[PATH_MAX];
   gchar image_dir[PATH_MAX];
   gchar proj_load_dir[PATH_MAX];

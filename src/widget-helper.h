@@ -150,6 +150,15 @@ typedef GtkStateType LiVESWidgetState;
 #define LIVES_WIDGET_STATE_BACKDROP       GTK_STATE_INSENSITIVE+3
 #endif
 
+typedef enum {
+  LIVES_FILE_CHOOSER_ACTION_OPEN=GTK_FILE_CHOOSER_ACTION_OPEN,
+  LIVES_FILE_CHOOSER_ACTION_SAVE=GTK_FILE_CHOOSER_ACTION_SAVE,
+  LIVES_FILE_CHOOSER_ACTION_SELECT_FOLDER=GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER,
+  LIVES_FILE_CHOOSER_ACTION_CREATE_FOLDER=GTK_FILE_CHOOSER_ACTION_CREATE_FOLDER,
+  LIVES_FILE_CHOOSER_ACTION_SELECT_DEVICE
+} lives_file_chooser_action_t;
+
+
 #if GTK_CHECK_VERSION(3,0,0)
 typedef GtkScale                          LiVESRuler;
 #else
@@ -650,7 +659,6 @@ boolean lives_dialog_set_has_separator(LiVESDialog *, boolean has);
 boolean lives_widget_set_hexpand(LiVESWidget *, boolean state);
 boolean lives_widget_set_vexpand(LiVESWidget *, boolean state);
 boolean lives_image_menu_item_set_always_show_image(LiVESImageMenuItem *, boolean show);
-boolean lives_file_chooser_set_do_overwrite_confirmation(LiVESFileChooser *, boolean set);
 boolean lives_scale_button_set_orientation(LiVESScaleButton *, LiVESOrientation orientation);
 
 // compound functions (composed of basic functions)
@@ -682,6 +690,7 @@ LiVESWidget *lives_standard_expander_new(const char *label, boolean use_mnemonic
 
 LiVESWidget *lives_volume_button_new(LiVESOrientation orientation, LiVESAdjustment *, double volume);
 
+LiVESWidget *lives_standard_file_button_new(boolean is_dir, const char *def_dir);
 
 
 // util functions
@@ -709,6 +718,8 @@ void gtk_tooltips_copy(LiVESWidget *dest, LiVESWidget *source);
 
 void adjustment_configure(LiVESAdjustment *, double value, double lower, double upper, 
 			  double step_increment, double page_increment, double page_size);
+
+void set_button_width(LiVESWidget *buttonbox, LiVESWidget *button, int width);
 
 char *text_view_get_text(LiVESTextView *);
 void text_view_set_text(LiVESTextView *, const char *text, int len);

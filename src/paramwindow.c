@@ -1636,9 +1636,6 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, boolean add_
 
 
 
-    if (use_mnemonic) label = lives_standard_label_new_with_mnemonic (_(name),NULL);
-    else label = lives_standard_label_new (_(name));
-
     if (((gint)param->max>RFX_TEXT_MAGIC||param->max==0.)&&
 	param->special_type!=LIVES_PARAM_SPECIAL_TYPE_FILEREAD) {
       GtkWidget *vbox;
@@ -1704,6 +1701,7 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, boolean add_
     g_object_set_data (G_OBJECT (param->widgets[0]),"param_number",GINT_TO_POINTER (pnum));
     g_object_set_data (G_OBJECT (param->widgets[0]),"rfx",rfx);
 
+    param->widgets[1]=label;
 
     break;
 

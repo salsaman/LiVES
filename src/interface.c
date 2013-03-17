@@ -1301,9 +1301,14 @@ _entryw* create_location_dialog (int type) {
     locw->dir_entry = lives_standard_entry_new (_("Download to _Directory : "),TRUE,mainw->vid_dl_dir,
 						72.*widget_opts.scale,PATH_MAX,LIVES_BOX(hbox),NULL);
 
+    lives_entry_set_editable(LIVES_ENTRY(locw->dir_entry),FALSE);
+    gtk_entry_set_max_length(GTK_ENTRY (locw->dir_entry),PATH_MAX);
+
     // add dir, with filechooser button
     buttond = lives_standard_file_button_new (TRUE,NULL);
+    gtk_label_set_mnemonic_widget (GTK_LABEL(widget_opts.last_label),buttond);
     gtk_box_pack_start(GTK_BOX(hbox),buttond,FALSE,FALSE,widget_opts.packing_width);
+
 
     add_fill_to_box (GTK_BOX (hbox));
 
@@ -1313,8 +1318,6 @@ _entryw* create_location_dialog (int type) {
 
     locw->name_entry = lives_standard_entry_new (_("Download _File Name : "),TRUE,"",
 						 74.*widget_opts.scale,PATH_MAX,LIVES_BOX(hbox),NULL);
-
-    gtk_entry_set_max_length(GTK_ENTRY (locw->name_entry),PATH_MAX);
 
     g_signal_connect(buttond, "clicked", G_CALLBACK (on_filesel_button_clicked), (gpointer)locw->dir_entry);
 
@@ -2327,12 +2330,12 @@ gchar *choose_file(gchar *dir, gchar *fname, gchar **filt, lives_file_chooser_ac
   else mytitle=g_strdup(title);
 
   if (act!=LIVES_FILE_CHOOSER_ACTION_SAVE) 
-    chooser=gtk_file_chooser_dialog_new(mytitle,GTK_WINDOW(mainw->LiVES),act,GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+    chooser=gtk_file_chooser_dialog_new(mytitle,GTK_WINDOW(mainw->LiVES),(GtkFileChooserAction)act,GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
 					GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
 					NULL);
 
   else {
-    chooser=gtk_file_chooser_dialog_new(mytitle,GTK_WINDOW(mainw->LiVES),act,GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+    chooser=gtk_file_chooser_dialog_new(mytitle,GTK_WINDOW(mainw->LiVES),(GtkFileChooserAction)act,GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
 					GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT,
 					NULL);
   }

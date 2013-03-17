@@ -10217,7 +10217,7 @@ void compact_rowstrides(weed_plant_t *layer) {
 
 static struct SwsContext *swscale_find_context(int iwidth, int iheight,
 					       int width, int height,
-					       int ipixfmt, int opixfmt, int flags) {
+					       enum PixelFormat ipixfmt, enum PixelFormat opixfmt, int flags) {
   register int i;
   struct _swscale_ctx tmpctx;
 
@@ -10255,7 +10255,7 @@ static struct SwsContext *swscale_find_context(int iwidth, int iheight,
 }
 
 
-static void swscale_add_context(int iwidth, int iheight, int width, int height, int ipixfmt, int opixfmt, 
+static void swscale_add_context(int iwidth, int iheight, int width, int height, enum PixelFormat ipixfmt, enum PixelFormat opixfmt, 
 				int flags, struct SwsContext *ctx) {
   // add at head of list
   register int i;

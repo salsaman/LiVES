@@ -282,7 +282,7 @@ static LiVESPixbuf *make_thumb (lives_mt *mt, int file, int width, int height, i
 }
 
 
-static void mt_set_cursor_style(lives_mt *mt, gint cstyle, gint width, gint height, gint clip, gint hsx, gint hsy) {
+static void mt_set_cursor_style(lives_mt *mt, lives_cursor_t cstyle, int width, int height, int clip, int hsx, int hsy) {
   GdkCursor *cursor;
   GdkDisplay *disp;
 

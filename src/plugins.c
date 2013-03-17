@@ -935,7 +935,7 @@ _vppaw *on_vpp_advanced_clicked (GtkButton *button, gpointer user_data) {
     desc=(tmpvpp->get_description)();
     if (desc!=NULL) {
       label = lives_standard_label_new (desc);
-      gtk_box_pack_start (GTK_BOX (dialog_vbox), label, FALSE, FALSE, 10);
+      gtk_box_pack_start (GTK_BOX (dialog_vbox), label, FALSE, FALSE, widget_opts.packing_height);
     }
   }
 
@@ -987,7 +987,7 @@ _vppaw *on_vpp_advanced_clicked (GtkButton *button, gpointer user_data) {
 
   if (!(tmpvpp->capabilities&VPP_LOCAL_DISPLAY)) {
     hbox = lives_hbox_new (FALSE, 0);
-    gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, FALSE, FALSE, 10);
+    gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
     
     add_fill_to_box(GTK_BOX(hbox));
 
@@ -2560,12 +2560,12 @@ void on_decplug_advanced_clicked (GtkButton *button, gpointer user_data) {
   gtk_container_add (GTK_CONTAINER(dialog_vbox), scrolledwindow);
 
   label=lives_standard_label_new(_("Enabled Video Decoders (uncheck to disable)"));
-  gtk_box_pack_start (GTK_BOX (vbox), label, FALSE, FALSE, 10);
+  gtk_box_pack_start (GTK_BOX (vbox), label, FALSE, FALSE, widget_opts.packing_height);
 
   while (decoder_plugin!=NULL) {
     lives_decoder_sys_t *dpsys=(lives_decoder_sys_t *)decoder_plugin->data;
     hbox = lives_hbox_new (FALSE, 0);
-    gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 10);
+    gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
     ltext=g_strdup_printf("%s   (%s)",dpsys->name,(*dpsys->version)());
 
     checkbutton=lives_standard_check_button_new(ltext,FALSE,LIVES_BOX(hbox),NULL);

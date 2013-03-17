@@ -2987,7 +2987,7 @@ void play_file (void) {
     gtk_widget_show(mainw->eventbox4);
     gtk_widget_show(mainw->sep_image);
     gtk_frame_set_label(GTK_FRAME(mainw->playframe),_ ("Preview"));
-    gtk_container_set_border_width (GTK_CONTAINER (mainw->playframe), 10);
+    gtk_container_set_border_width (GTK_CONTAINER (mainw->playframe), widget_opts.border_width);
     resize(1);
     gtk_widget_show(mainw->t_bckground);
     gtk_widget_show(mainw->t_double);
@@ -3011,7 +3011,7 @@ void play_file (void) {
     gtk_widget_show(mainw->eventbox4);
     disable_record();
     
-    gtk_container_set_border_width (GTK_CONTAINER (mainw->playframe), 10);
+    gtk_container_set_border_width (GTK_CONTAINER (mainw->playframe), widget_opts.border_width);
   }
 
   if (audio_player!=AUD_PLAYER_JACK&&audio_player!=AUD_PLAYER_PULSE) mainw->mute=mute;

@@ -1799,7 +1799,7 @@ on_undo_activate                      (GtkMenuItem     *menuitem,
 	com=g_strdup_printf("%s undo_audio \"%s\"",prefs->backend_sync,cfile->handle);
       }
       // undo delete selected audio
-      // (set with with_audio==2 [audio only],therfore start,end,where are is secs.; times==-1)
+      // (set with with_audio==2 [audio only],therfore start,end,where are in secs.; times==-1)
       else com=g_strdup_printf("%s insert \"%s\" \"%s\" %.8f 0. %.8f \"%s\" 2 0 0 0 0 %d %d %d %d %d -1",
 			       prefs->backend,
 			       cfile->handle,get_image_ext_for_type(cfile->img_type),cfile->undo1_dbl,
@@ -1809,6 +1809,7 @@ on_undo_activate                      (GtkMenuItem     *menuitem,
     }
     else {
       // undo cut or delete (times to insert is -1)
+      // start,end, where are in frames
       cfile->undo1_boolean&=mainw->ccpd_with_sound;
       com=g_strdup_printf("%s insert \"%s\" \"%s\" %d %d %d \"%s\" %d %d 0 0 %.3f %d %d %d %d %d -1",
 			  prefs->backend,cfile->handle,
@@ -2710,41 +2711,38 @@ on_insert_pre_activate                    (GtkMenuItem     *menuitem,
 
 
 
-void
-on_insert_activate                    (GtkButton     *button,
-				       gpointer         user_data)
-{
-  gint where=cfile->start-1;
-  gint start=cfile->start;
-  gint end=cfile->end;
+void on_insert_activate (GtkButton *button, gpointer user_data) {
+  int where=cfile->start-1;
+  int start=cfile->start;
+  int end=cfile->end;
 
-  gint hsize=cfile->hsize;
-  gint vsize=cfile->vsize;
+  int hsize=cfile->hsize;
+  int vsize=cfile->vsize;
 
-  gint cfile_signed=0,cfile_endian=0,clipboard_signed=0,clipboard_endian=0;
-  gint current_file=mainw->current_file;
+  int cfile_signed=0,cfile_endian=0,clipboard_signed=0,clipboard_endian=0;
+  int current_file=mainw->current_file;
 
-  gdouble times_to_insert=mainw->fx1_val;
-  gdouble audio_stretch;
+  double times_to_insert=mainw->fx1_val;
+  double audio_stretch;
 
   // have we resampled ?
-  gboolean cb_audio_change=FALSE;
-  gboolean cb_video_change=FALSE;
+  boolean cb_audio_change=FALSE;
+  boolean cb_video_change=FALSE;
 
-  gint remainder_frames;
-  gint cb_start=1,cb_end=clipboard->frames;
+  int remainder_frames;
+  int cb_start=1,cb_end=clipboard->frames;
   
   gchar *msg,*com;
-  gboolean with_sound=mainw->fx2_bool;
-  gint ocarps=clipboard->arps;
-  gint leave_backup=1;
-  gboolean has_lmap_error=FALSE;
+  boolean with_sound=mainw->fx2_bool;
+  int ocarps=clipboard->arps;
+  int leave_backup=1;
+  boolean has_lmap_error=FALSE;
 
-  gboolean insert_silence=FALSE;
+  boolean insert_silence=FALSE;
 
-  gint orig_frames=cfile->frames;
+  int orig_frames=cfile->frames;
 
-  gboolean bad_header=FALSE;
+  boolean bad_header=FALSE;
 
   // don't ask smogrify to resize if frames are the same size and type
   if (((cfile->hsize==clipboard->hsize && cfile->vsize==clipboard->vsize)||orig_frames==0)&&
@@ -2802,7 +2800,7 @@ on_insert_activate                    (GtkButton     *button,
 
 
   if ((!(prefs->warning_mask&WARN_MASK_LAYOUT_SHIFT_FRAMES)||(!prefs->warning_mask&&WARN_MASK_LAYOUT_ALTER_FRAMES))) {
-    gint insert_start;
+    int insert_start;
     if (mainw->insert_after) {
       insert_start=cfile->end+1;
     }
@@ -2852,7 +2850,7 @@ on_insert_activate                    (GtkButton     *button,
 
   if (with_sound&&(!(prefs->warning_mask&WARN_MASK_LAYOUT_SHIFT_AUDIO)||
 		   (!prefs->warning_mask&&WARN_MASK_LAYOUT_ALTER_AUDIO))) {
-    gint insert_start;
+    int insert_start;
     if (mainw->insert_after) {
       insert_start=cfile->end+1;
     }
@@ -2951,8 +2949,8 @@ on_insert_activate                    (GtkButton     *button,
 
 	if (clipboard->arps!=clipboard->arps||cfile->arate!=clipboard->arate) {
 	  // pb rate != real rate - stretch to pb rate and resample
-	  if ((audio_stretch=(gdouble)clipboard->arps/(gdouble)clipboard->arate*
-	       (gdouble)cfile->arate/(gdouble)cfile->arps)!=1.) {
+	  if ((audio_stretch=(double)clipboard->arps/(double)clipboard->arate*
+	       (double)cfile->arate/(double)cfile->arps)!=1.) {
 	    unlink (clipboard->info_file);
 	    com=g_strdup_printf ("%s resample_audio \"%s\" %d %d %d %d %d %d %d %d %d %d %.4f",
 				 prefs->backend,
@@ -3052,8 +3050,8 @@ on_insert_activate                    (GtkButton     *button,
   }
 
   if (with_sound&&cfile->achans==0) {
-    gint asigned=!(clipboard->signed_endian&AFORM_UNSIGNED);
-    gint endian=clipboard->signed_endian&AFORM_BIG_ENDIAN;
+    int asigned=!(clipboard->signed_endian&AFORM_UNSIGNED);
+    int endian=clipboard->signed_endian&AFORM_BIG_ENDIAN;
 
     cfile->achans=clipboard->achans;
     cfile->asampsize=clipboard->asampsize;
@@ -3077,7 +3075,7 @@ on_insert_activate                    (GtkButton     *button,
   }
 
   // first remainder frames
-  remainder_frames=(gint)(times_to_insert-(gdouble)(gint)times_to_insert)*clipboard->frames;
+  remainder_frames=(int)(times_to_insert-(double)(int)times_to_insert)*clipboard->frames;
 
   if (!mainw->insert_after&&remainder_frames>0) {
     msg=g_strdup_printf(_ ("Inserting %d%s frames from the clipboard..."),remainder_frames,
@@ -3411,8 +3409,8 @@ on_delete_activate                    (GtkMenuItem     *menuitem,
   gint start=cfile->start;
   gint end=cfile->end;
   gchar *com;
-  gboolean has_lmap_error=FALSE;
-  gboolean bad_header=FALSE;
+  boolean has_lmap_error=FALSE;
+  boolean bad_header=FALSE;
 
   // occasionally we get a keyboard misread, so this should prevent that
   if (mainw->playing_file>-1) return;
@@ -3889,8 +3887,8 @@ on_playclip_activate                      (GtkMenuItem     *menuitem,
 {
   // play the clipboard
   gint current_file=mainw->current_file;
-  gboolean oloop=mainw->loop;
-  gboolean oloop_cont=mainw->loop_cont;
+  boolean oloop=mainw->loop;
+  boolean oloop_cont=mainw->loop_cont;
 
   // switch to the clipboard
   switch_to_file (current_file,0);
@@ -11690,14 +11688,11 @@ on_recaudclip_ok_clicked                      (GtkButton *button,
 #endif
 }
 
-void
-on_ins_silence_activate (GtkMenuItem     *menuitem,
-			 gpointer         user_data)
-{
-  gdouble start=0,end=0;
+void on_ins_silence_activate (GtkMenuItem *menuitem, gpointer user_data) {
+  double start=0,end=0;
   gchar *com,*msg;
-  gboolean has_lmap_error=FALSE;
-  gboolean has_new_audio=FALSE;
+  boolean has_lmap_error=FALSE;
+  boolean has_new_audio=FALSE;
 
   if (menuitem==NULL) {
     // redo

@@ -4987,7 +4987,7 @@ render_details *create_render_details (int type) {
   label = lives_standard_label_new (_("Video"));
   gtk_frame_set_label_widget (GTK_FRAME (frame), label);
   
-  hbox = lives_hbox_new (FALSE, 50);
+  hbox = lives_hbox_new (FALSE, widget_opts.packing_width*5);
   gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
   
   rdet->spinbutton_width = lives_standard_spin_button_new 

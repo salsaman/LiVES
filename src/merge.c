@@ -97,7 +97,7 @@ void create_merge_dialog (void) {
   gtk_box_pack_start (GTK_BOX (dialog_vbox), vbox, TRUE, TRUE, 0);
 
   hbox = lives_hbox_new (FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 19);
+  gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height*2);
 
   txt=g_strdup_printf(_ ("Merge Clipboard [ %d Frames ]       With Selection [ %d Frames ]"),clipboard->frames,cfile->end-cfile->start+1);
   if (prefs->ins_resample&&clipboard->fps!=cfile->fps) {
@@ -127,7 +127,7 @@ void create_merge_dialog (void) {
 
 
   hbox = lives_hbox_new (FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, TRUE, 22);
+  gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, TRUE, widget_opts.packing_height*2);
 
   if ((cfile->end-cfile->start+1)<cb_frames) {
     // hide loop controls if selection is smaller than clipboard

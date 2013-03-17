@@ -758,7 +758,7 @@ GtkWidget* create_info_error_dialog (const gchar *text, boolean is_blocking, int
   hbox = lives_hbox_new (FALSE, 0);
   gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-  gtk_box_pack_start (GTK_BOX (hbox), info_text, FALSE, FALSE, 20);
+  gtk_box_pack_start (GTK_BOX (hbox), info_text, FALSE, FALSE, widget_opts.packing_width*2);
   
   if (mask>0) {
     hbox = lives_hbox_new (FALSE, 0);
@@ -1002,7 +1002,7 @@ _insertw* create_insert_dialog (void) {
 
   table = gtk_table_new (2, 3, FALSE);
   gtk_box_pack_start (GTK_BOX (dialog_vbox), table, TRUE, TRUE, widget_opts.packing_height);
-  gtk_table_set_col_spacings (GTK_TABLE (table), widget_opts.packing_width*4+2);
+  gtk_table_set_col_spacings (GTK_TABLE (table), widget_opts.packing_width*4);
   gtk_table_set_row_spacings (GTK_TABLE (table), widget_opts.packing_height);
 
 
@@ -1147,9 +1147,9 @@ GtkWidget *create_opensel_dialog (void) {
   gtk_box_pack_start (GTK_BOX (dialog_vbox), vbox, TRUE, TRUE, 0);
 
   table = gtk_table_new (2, 2, FALSE);
-  gtk_box_pack_start (GTK_BOX (vbox), table, TRUE, TRUE, 12);
+  gtk_box_pack_start (GTK_BOX (vbox), table, TRUE, TRUE, widget_opts.packing_height);
 
-  gtk_table_set_row_spacings (GTK_TABLE (table), 20);
+  gtk_table_set_row_spacings (GTK_TABLE (table), widget_opts.packing_height*2);
 
   label = lives_standard_label_new (_("Selection start time (sec)"));
   gtk_table_attach (GTK_TABLE (table), label, 0, 1, 0, 1,
@@ -1699,7 +1699,7 @@ GtkWidget *create_combo_dialog (int type, gpointer user_data) {
 
   g_signal_connect_after (G_OBJECT (combo), "changed", G_CALLBACK (after_dialog_combo_changed), list);
 
-  gtk_box_pack_start (GTK_BOX (dialog_vbox), combo, TRUE, TRUE, 20);
+  gtk_box_pack_start (GTK_BOX (dialog_vbox), combo, TRUE, TRUE, widget_opts.packing_height*2);
 
   if (type==1) {
     add_deinterlace_checkbox(GTK_BOX(dialog_vbox));
@@ -2695,7 +2695,7 @@ GtkWidget *create_cleardisk_advanced_dialog(void) {
   dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(dialog));
 
   vbox = lives_vbox_new (FALSE, 0);
-  gtk_container_set_border_width (GTK_CONTAINER (vbox), 20);
+  gtk_container_set_border_width (GTK_CONTAINER (vbox), widget_opts.border_width*2);
 
   scrollw = lives_standard_scrolled_window_new (450,300,vbox,TRUE);
 

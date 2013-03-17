@@ -613,7 +613,7 @@ void on_list_table_clicked (GtkButton *button, gpointer user_data) {
 
   // button box on right
   vseparator = lives_vseparator_new ();
-  gtk_box_pack_start (GTK_BOX (hbox), vseparator, TRUE, TRUE, 10);
+  gtk_box_pack_start (GTK_BOX (hbox), vseparator, TRUE, TRUE, widget_opts.packing_width);
 
   button_box=lives_vbutton_box_new();
   gtk_box_pack_start (GTK_BOX (hbox), button_box, FALSE, FALSE, 0);
@@ -1694,18 +1694,17 @@ GtkWidget * make_param_dialog (gint pnum, rfx_build_window_t *rfxbuilder) {
     lives_dialog_set_has_separator(GTK_DIALOG(dialog),FALSE);
   }
 
-  gtk_container_set_border_width (GTK_CONTAINER (dialog), 10);
+  gtk_container_set_border_width (GTK_CONTAINER (dialog), widget_opts.border_width);
   //gtk_window_set_default_size (GTK_WINDOW (rfxbuilder->dialog), 300, 200);
 
   dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(dialog));
-  lives_box_set_spacing (GTK_BOX (dialog_vbox), 10);
   gtk_widget_show (dialog_vbox);
 
   // name
 
   hbox = lives_hbox_new (FALSE, 0);
   gtk_widget_show (hbox);
-  gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, TRUE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, TRUE, TRUE, widget_opts.packing_height);
 
   label = gtk_label_new_with_mnemonic (_("_Name:    "));
   gtk_widget_show (label);
@@ -1730,7 +1729,7 @@ GtkWidget * make_param_dialog (gint pnum, rfx_build_window_t *rfxbuilder) {
 
   hbox = lives_hbox_new (FALSE, 0);
   gtk_widget_show (hbox);
-  gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, TRUE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, TRUE, TRUE, widget_opts.packing_height);
 
   label = gtk_label_new_with_mnemonic (_("_Label:    "));
   gtk_widget_show (label);
@@ -1754,7 +1753,7 @@ GtkWidget * make_param_dialog (gint pnum, rfx_build_window_t *rfxbuilder) {
 
   hbox = lives_hbox_new (FALSE, 0);
   gtk_widget_show (hbox);
-  gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, TRUE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, TRUE, TRUE, widget_opts.packing_height);
 
   rfxbuilder->bg_label = gtk_label_new_with_mnemonic (_("Button _Group: "));
   gtk_box_pack_start (GTK_BOX (hbox), rfxbuilder->bg_label, FALSE, FALSE, 0);
@@ -1817,7 +1816,7 @@ GtkWidget * make_param_dialog (gint pnum, rfx_build_window_t *rfxbuilder) {
 
   hbox = lives_hbox_new (FALSE, 0);
   gtk_widget_show (hbox);
-  gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, TRUE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, TRUE, TRUE, widget_opts.packing_height);
 
   rfxbuilder->param_dp_label = gtk_label_new_with_mnemonic (_("Decimal _places: "));
   gtk_widget_show (rfxbuilder->param_dp_label);
@@ -1845,7 +1844,7 @@ GtkWidget * make_param_dialog (gint pnum, rfx_build_window_t *rfxbuilder) {
 
   hbox = lives_hbox_new (FALSE, 0);
   gtk_widget_show (hbox);
-  gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, TRUE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, TRUE, TRUE, widget_opts.packing_height);
 
   rfxbuilder->param_def_label = gtk_label_new_with_mnemonic (_("_Default value:    "));
   gtk_widget_show (rfxbuilder->param_def_label);
@@ -1868,7 +1867,7 @@ GtkWidget * make_param_dialog (gint pnum, rfx_build_window_t *rfxbuilder) {
   gtk_box_pack_start (GTK_BOX (hbox), rfxbuilder->param_strdef_button, TRUE, FALSE, 0);
 
   rfxbuilder->param_strlist_hbox = lives_hbox_new (FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (dialog_vbox), rfxbuilder->param_strlist_hbox, TRUE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (dialog_vbox), rfxbuilder->param_strlist_hbox, TRUE, TRUE, widget_opts.packing_height);
 
   label = gtk_label_new_with_mnemonic (_("_Default: "));
   if (palette->style&STYLE_1) {
@@ -1912,7 +1911,7 @@ GtkWidget * make_param_dialog (gint pnum, rfx_build_window_t *rfxbuilder) {
 
   hbox = lives_hbox_new (FALSE, 0);
   gtk_widget_show (hbox);
-  gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, TRUE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, TRUE, TRUE, widget_opts.packing_height);
 
   rfxbuilder->param_min_label = gtk_label_new_with_mnemonic (_("_Minimum value: "));
   gtk_widget_show (rfxbuilder->param_min_label);
@@ -1933,7 +1932,7 @@ GtkWidget * make_param_dialog (gint pnum, rfx_build_window_t *rfxbuilder) {
 
   hbox = lives_hbox_new (FALSE, 0);
   gtk_widget_show (hbox);
-  gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, TRUE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, TRUE, TRUE, widget_opts.packing_height);
 
   rfxbuilder->param_max_label = gtk_label_new_with_mnemonic (_("Ma_ximum value: "));
   gtk_widget_show (rfxbuilder->param_max_label);
@@ -1955,7 +1954,7 @@ GtkWidget * make_param_dialog (gint pnum, rfx_build_window_t *rfxbuilder) {
 
   hbox = lives_hbox_new (FALSE, 0);
   gtk_widget_show (hbox);
-  gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, TRUE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, TRUE, TRUE, widget_opts.packing_height);
 
   rfxbuilder->param_step_label = gtk_label_new_with_mnemonic (_("     _Step size:   "));
   gtk_widget_show (rfxbuilder->param_step_label);
@@ -1977,7 +1976,7 @@ GtkWidget * make_param_dialog (gint pnum, rfx_build_window_t *rfxbuilder) {
   // wrap
 
   rfxbuilder->param_wrap_hbox = lives_hbox_new (FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (dialog_vbox), rfxbuilder->param_wrap_hbox, TRUE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (dialog_vbox), rfxbuilder->param_wrap_hbox, TRUE, TRUE, widget_opts.packing_height);
 
   rfxbuilder->param_wrap_checkbutton = lives_standard_check_button_new ((tmp=g_strdup(_("_Wrap value"))),TRUE,LIVES_BOX(rfxbuilder->param_wrap_hbox),
 									(tmp2=g_strdup(_ ("Whether the value wraps max->min and min->max."))));
@@ -4162,8 +4161,7 @@ gchar *prompt_for_script_name(const gchar *sname, lives_rfx_status_t status) {
     lives_dialog_set_has_separator(GTK_DIALOG(dialog),FALSE);
   }
   lives_widget_set_bg_color (dialog, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  //gtk_window_set_default_size (GTK_WINDOW (dialog), 300, 200);
-  gtk_container_set_border_width (GTK_CONTAINER (dialog), 10);
+  gtk_container_set_border_width (GTK_CONTAINER (dialog), widget_opts.border_width);
 
   vbox = lives_dialog_get_content_area(GTK_DIALOG(dialog));
   gtk_widget_show (vbox);

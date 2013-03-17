@@ -2432,6 +2432,10 @@ void get_play_times(void) {
       }
     }
     
+    if (offset_right>cfile->laudio_time/cfile->total_time*allocwidth)
+      offset_right=cfile->laudio_time/cfile->total_time*allocwidth;
+
+    
     
     if (mainw->laudio_drawable!=NULL) {
       lives_painter_t *cr=lives_painter_create(mainw->laudio_drawable);
@@ -2443,21 +2447,19 @@ void get_play_times(void) {
 		      prefs->bar_height);
       
       lives_painter_fill(cr);
-      
-      lives_painter_set_source_rgb(cr, 1., 1., 1.); ///< opaque white
-      
-      lives_painter_rectangle(cr,offset_left, 0,
-		      offset_right-offset_left,
-		      prefs->bar_height);
-      
-      lives_painter_fill(cr);
-      
-      lives_painter_set_source_to_bg(cr,mainw->laudio_draw);
 
-      lives_painter_rectangle(cr,cfile->laudio_time/cfile->total_time*allocwidth, 0,
-		      allocwidth-(cfile->laudio_time/cfile->total_time*allocwidth),
-		      prefs->bar_height);
+      if (offset_left<cfile->laudio_time/cfile->total_time*allocwidth) {
       
+	lives_painter_set_source_rgb(cr, 1., 1., 1.); ///< opaque white
+      
+	lives_painter_rectangle(cr,offset_left, 0,
+				offset_right-offset_left,
+				prefs->bar_height);
+	
+	lives_painter_fill(cr);
+      
+      }
+
       lives_painter_destroy (cr);
 
     }
@@ -2472,21 +2474,19 @@ void get_play_times(void) {
 			prefs->bar_height);
 	
 	lives_painter_fill(cr);
-	
-	lives_painter_set_source_rgb(cr, 1., 1., 1.); ///< opaque white
-	
-	lives_painter_rectangle(cr,offset_left, 0,
-			offset_right-offset_left,
-			prefs->bar_height);
-      
-	lives_painter_fill(cr);
 
-	lives_painter_set_source_to_bg(cr,mainw->raudio_draw);
+	if (offset_left<cfile->laudio_time/cfile->total_time*allocwidth) {
+	
+	  lives_painter_set_source_rgb(cr, 1., 1., 1.); ///< opaque white
+	
+	  lives_painter_rectangle(cr,offset_left, 0,
+				  offset_right-offset_left,
+				  prefs->bar_height);
       
-	lives_painter_rectangle(cr,cfile->raudio_time/cfile->total_time*allocwidth, 0,
-		      allocwidth-(cfile->raudio_time/cfile->total_time*allocwidth),
-			prefs->bar_height);
-      
+	  lives_painter_fill(cr);
+
+	}
+
 	lives_painter_destroy (cr);
 
       }

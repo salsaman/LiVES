@@ -255,8 +255,8 @@ static void passwd_toggle_vis(GtkToggleButton *b, gpointer entry) {
 						 G_CALLBACK (after_aspect_height_changed),
 						 NULL);
       
-      box = lives_hbox_new (FALSE, 10);
-      gtk_box_pack_start (GTK_BOX (GTK_WIDGET (pbox)), box, FALSE, FALSE, 20);
+      box = lives_hbox_new (FALSE, 0);
+      gtk_box_pack_start (GTK_BOX (GTK_WIDGET (pbox)), box, FALSE, FALSE, widget_opts.packing_height*2);
       
       
       add_fill_to_box(GTK_BOX(box));
@@ -327,8 +327,8 @@ static void passwd_toggle_vis(GtkToggleButton *b, gpointer entry) {
 	if (box==NULL) continue;
       }
 
-      hbox = lives_hbox_new (FALSE, 10);
-      gtk_box_pack_start (GTK_BOX (GTK_WIDGET (box)), hbox, FALSE, FALSE, 10);
+      hbox = lives_hbox_new (FALSE, 0);
+      gtk_box_pack_start (GTK_BOX (GTK_WIDGET (box)), hbox, FALSE, FALSE, widget_opts.packing_height);
       
       checkbutton = lives_standard_check_button_new (_("Display Password"),FALSE,LIVES_BOX(hbox),NULL);
 

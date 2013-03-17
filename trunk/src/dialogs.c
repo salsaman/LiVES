@@ -93,7 +93,7 @@ static void add_xlays_widget(GtkBox *box) {
     xlist=xlist->next;
   }
 
-  gtk_box_pack_start (box, expander, FALSE, FALSE, 10);
+  gtk_box_pack_start (box, expander, FALSE, FALSE, widget_opts.packing_height);
   gtk_widget_show_all(expander);
 }
 
@@ -139,8 +139,8 @@ static void add_clear_ds_adv(GtkBox *box) {
   GtkWidget *button = gtk_button_new_with_mnemonic(_(" _Advanced Settings >>"));
   GtkWidget *hbox = lives_hbox_new (FALSE, 0);
 
-  gtk_box_pack_start (GTK_BOX(hbox), button, FALSE, FALSE, 20);
-  gtk_box_pack_start (box, hbox, FALSE, FALSE, 10);
+  gtk_box_pack_start (GTK_BOX(hbox), button, FALSE, FALSE, widget_opts.packing_width*2);
+  gtk_box_pack_start (box, hbox, FALSE, FALSE, widget_opts.packing_height);
 
   gtk_widget_show_all(hbox);
 

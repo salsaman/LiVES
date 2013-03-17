@@ -2225,7 +2225,7 @@ if (defined($ARGV[0])) {
 		else {
 		    smog_system ("/bin/chmod -R 777 \"$linksdir\"");
 		}
-}
+	    }
 	    else {
 		$linksdir=$curtmpdir;
 		$handle=$from_handle;
@@ -3407,10 +3407,7 @@ if (defined($ARGV[0])) {
 	my $f_size=-s $audio_in;
 	if ($f_size>0) {
 	    # wav format
-	    if (&rc_get("conserve_space") eq "true") {
-		unlink "$audio_out";
-	    }
-	    else {
+	    unless (&rc_get("conserve_space") eq "true") {
 		if (-f $audio_out) {
 		    $smres=smog_rename( "$audio_out","$audio_bak");
 		}
@@ -3450,10 +3447,7 @@ if (defined($ARGV[0])) {
 	    }
 	    if ($gotit || -f $audio_in) {
 		# raw format
-		if (&rc_get("conserve_space") eq "true") {
-		    unlink "$audio_out";
-		}
-		else {
+		unless (&rc_get("conserve_space") eq "true") {
 		    if (-f $audio_out) {
 			$smres=smog_rename( "$audio_out","$audio_bak"); #aborts on failure
 		    }
@@ -3690,7 +3684,7 @@ if (defined($ARGV[0])) {
 			unlink "audio.bak";
 		    }
 		    else {
-			smog_copy("audio", "audio.bak");
+			smog_copy("audio","audio.bak");
 		    }
 		    if ($panic) {
 			unlink "$pidfile"; 
@@ -3707,6 +3701,9 @@ if (defined($ARGV[0])) {
 		    }
 		}
 		&insert_audio($asamps,$achans,$asigned,$aendian,$undo_cut);
+		if (&rc_get("conserve_space") eq "true") {
+		    unlink "audio.bak";
+		}
 		if ($panic) {
 		    unlink "$pidfile"; 
 		    exit 1;
@@ -5519,16 +5516,19 @@ sub get_ext {
 
 sub insert_audio {
 #what we are going to do:
-# 1) copy the end of the audio (after insertion) to a new file
-# 2) then insert the new section
-# 3) then put the end back
+# 1) copy the end of the audio (after insertion) to a new file [$where to $to_end]
+# 2) insert silence up to $where (if necessary)
+# 3) insert the new section [$start to $end at $where]
+# 4) insert silence up to $where+$end (if necessary)
+# 5) then put the end back
 
 #input params:
 # $where - insertion pt -in seconds
 # $start, $end - new section - in seconds
 # $from_handle - handle of from file
+# $to_end - size of to file
 
-    #if $arate<0, we will insert silence
+    #if $arate<0, we will insert silence from $where to $where+$start-$end
 
     my ($xxsamps,$xxchans,$xxsigned,$xxendian,$needstemp)=@_;
 
@@ -5581,17 +5581,15 @@ sub insert_audio {
 
     $align=$achans*$asamps/8;
 
-    $ospos=$spos=&align($arate*$align*$start);
-    $oepos=$epos=&align($arate*$align*$end);
-    $owpos=$wpos=&align($arate*$align*$where);
+    my $ospos=$spos=&align($arate*$align*$start);
+    my $oepos=$epos=&align($arate*$align*$end);
+    my $owpos=$wpos=&align($arate*$align*$where);
 
 
-    # step 1 - move end to temp
-    # we can omit this if not undo_cut as we have audio.bak
+    # step 1 - copy end to temp
     if ($needstemp) {
-	$fsize=-s $audio_to;
-	
-	my ($size)=$fsize-$wpos;
+	my $to_end=-s $audio_to;
+	my $size=$to_end-$wpos;
 	if ($size>0) {
 	    $fdd_in=$audio_to;
 	    $fdd_out=$audio_temp;
@@ -5601,15 +5599,17 @@ sub insert_audio {
 	}
     }
 
-    # step 2 - insert new section (possibly multiple times)
     $audio_file=$audio_to;
 
 
-    # pad with silence to insertion point
+    # step 2 - pad with silence to insertion point (if necessary)
     &append_silence(0,$wpos,$xxsamps,$xxchans,$xxsigned,$xxendian);
     return if $panic;
 
+
 ####################################################
+    # step 3 - insert new section (possibly multiple times)
+
     my ($nepos)=$epos;
     my ($nspos)=$spos;
     my ($nwpos)=$wpos;
@@ -5639,8 +5639,8 @@ sub insert_audio {
 	}
 
 	$times_inserted+=$factor;
-	# pad with silence if necessary
-	if (-s $audio_temp||$times_inserted<$times) {
+	# step 4, pad with silence if necessary
+	if (! $silence && (-s $audio_temp||$times_inserted<$times)) {
 	    $inserted=$oepos-$nspos;
 	    &append_silence(0,$nwpos+$inserted,$xxsamps,$xxchans,$xxsigned,$xxendian);
 	    return if ($panic);
@@ -5669,6 +5669,7 @@ sub insert_audio {
 	    $nspos+=($oepos-$nspos)/2;
 	    $factor/=2;
 	}
+
 	if ($factor+$times_inserted==$times) {
 	    # this will be our last insertion...
 	    if (-s $audio_temp==0) {
@@ -5681,7 +5682,7 @@ sub insert_audio {
 
 ####################################################
 
-    #step 3 - copy end back after insertion
+    #step 5 - copy end back after insertion
     if ($needstemp) {
 	$size=&align(-s $audio_temp);
 	if ($size>0) {
@@ -5709,6 +5710,7 @@ sub insert_audio {
     }
 
     smog_system_sync();
+
 }
 
 
@@ -5830,7 +5832,7 @@ sub align {
 
 
 sub append_silence {
-    #pad from end of $audio_file to byte $end-1 with zeros
+    #pad from end - $offset of $audio_file to byte $end-1 with zeros
     my ($offset,$end,$asamps,$achans,$asigned,$aendian,$audio_file)=@_;
     if ($audio_file eq "") {
 	$audio_file="$curtmpdir/audio";
@@ -5856,8 +5858,8 @@ sub append_silence {
     }
 
     my $fsize= -s $audio_file;
-    $fsize=&align($fsize-$offset);
-    my $size=&align($end-$fsize);
+    $fsize=&align($fsize-$offset); #insert at $fsize-$offset
+    my $size=&align($end-$fsize); #insert to $end
 
     if ($size>0) {
 	if ($asigned==1) {
@@ -5868,7 +5870,7 @@ sub append_silence {
 		    $panic=sig_write_error("$audio_file"); 
 		    return;
 		}
-		open AUD,">>","$audio_file" or $panic=sig_write_error("$audio_file");
+		open AUD,"+<","$audio_file" or $panic=sig_write_error("$audio_file");
 		return if $panic;
 		seek AUD,-$offset,SEEK_END or $panic=sig_write_error("$audio_file");
 		return if $panic;
@@ -5894,7 +5896,7 @@ sub append_silence {
 		$panic=sig_write_error("$audio_file"); 
 		return;
 	    }
-	    open AUD,">>","$audio_file" or $panic=sig_write_error("$audio_file");
+	    open AUD,"+<","$audio_file" or $panic=sig_write_error("$audio_file");
 	    return if $panic;
 	    seek AUD,-$offset,SEEK_END or $panic=sig_write_error("$audio_file");
 	    return if $panic;
@@ -6961,7 +6963,7 @@ sub fast_dd {
 	return;
     }
     
-    open FFOUT,">>","$fdd_out" or $panic=sig_write_error("$fdd_out");
+    open FFOUT,"+<","$fdd_out" or $panic=sig_write_error("$fdd_out");
     return if $panic;
     seek FFOUT,$seek,SEEK_START or $panic=sig_write_error("$fdd_out");
     return if $panic;

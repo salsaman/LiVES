@@ -209,7 +209,7 @@ void widget_add_framedraw (GtkVBox *box, int start, int end, boolean add_preview
 
   vbox = lives_vbox_new (FALSE, 0);
   gtk_box_pack_start (GTK_BOX (lives_widget_get_parent(LIVES_WIDGET (box))), vbox, FALSE, FALSE, 0);
-  gtk_container_set_border_width (GTK_CONTAINER (vbox), 10);
+  gtk_container_set_border_width (GTK_CONTAINER (vbox), widget_opts.border_width);
 
   fd_scale=calc_fd_scale(width,height);
   width/=fd_scale;

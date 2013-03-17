@@ -529,7 +529,7 @@ static boolean add_sizes(GtkBox *vbox, boolean add_fps, lives_rfx_t *rfx) {
     add_hsep_to_box(vbox);
 
     hbox = lives_hbox_new (FALSE, 0);
-    gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 20);
+    gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height*2);
     
     add_fill_to_box(GTK_BOX(hbox));
     

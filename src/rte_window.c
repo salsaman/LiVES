@@ -1827,8 +1827,12 @@ static boolean on_rtew_delete_event (GtkWidget *widget, GdkEvent *event, gpointe
 
 
 static void on_rtew_ok_clicked (GtkButton *button, gpointer user_data) {
+  lives_set_cursor_style(LIVES_CURSOR_BUSY,NULL);
+  lives_set_cursor_style(LIVES_CURSOR_BUSY,rte_window);
+  lives_widget_context_update();
   lives_general_button_clicked(button,NULL);
   on_rtew_delete_event (NULL,NULL,NULL);
+  lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
 }
 
 
@@ -2062,7 +2066,8 @@ GtkWidget * create_rte_window (void) {
   register int i,j;
 
   ///////////////////////////////////////////////////////////////////////////
-
+  lives_set_cursor_style(LIVES_CURSOR_BUSY,NULL);
+  lives_widget_context_update();
 
   if (prefs->gui_monitor==0) {
     scr_width=mainw->scr_width;
@@ -2335,11 +2340,16 @@ GtkWidget * create_rte_window (void) {
   if (prefs->open_maximised) {
     gtk_window_maximize (GTK_WINDOW(rte_window));
   }
+  lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
+  lives_set_cursor_style(LIVES_CURSOR_NORMAL,rte_window);
   return rte_window;
 }
 
 void refresh_rte_window (void) {
   if (rte_window!=NULL) {
+    lives_set_cursor_style(LIVES_CURSOR_BUSY,NULL);
+    lives_set_cursor_style(LIVES_CURSOR_BUSY,rte_window);
+    lives_widget_context_update();
     on_rtew_delete_event(NULL,NULL,NULL);
     rte_window=create_rte_window();
     gtk_widget_show (rte_window);

@@ -25,6 +25,9 @@
 #include "omc-learn.h"
 #endif
 
+static guint prefs_current_page;
+
+
 #ifdef ENABLE_OSC
 static void on_osc_enable_toggled (GtkToggleButton *t1, gpointer t2) {
   if (prefs->osc_udp_started) return;
@@ -1761,6 +1764,9 @@ void on_prefDomainChanged(GtkTreeSelection *widget, gpointer dummy)
       gtk_widget_hide(prefsw->right_shown);
     }
     //
+
+    prefs_current_page=idx;
+
     switch (idx){
     case LIST_ENTRY_MULTITRACK:
       gtk_widget_show_all(prefsw->scrollw_right_multitrack);
@@ -1821,6 +1827,7 @@ void on_prefDomainChanged(GtkTreeSelection *widget, gpointer dummy)
     default:
       gtk_widget_show_all(prefsw->scrollw_right_gui);
       prefsw->right_shown = prefsw->scrollw_right_gui;
+      prefs_current_page=LIST_ENTRY_GUI;
     }
   }
 
@@ -5532,6 +5539,7 @@ void select_pref_list_row(guint selected_idx) {
 }
 
 void on_prefs_revert_clicked(GtkButton *button, gpointer user_data) {
+  guint cpage=prefs_current_page;
   register int i;
 
   if (future_prefs->vpp_argv != NULL) {
@@ -5568,6 +5576,7 @@ void on_prefs_revert_clicked(GtkButton *button, gpointer user_data) {
   prefsw = NULL;
 
   on_preferences_activate(NULL, NULL);
+  select_pref_list_row(cpage);
   lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
 }
 

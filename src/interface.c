@@ -2274,6 +2274,28 @@ _commentsw* create_comments_dialog (file *sfile, gchar *filename) {
 }
 
 
+gchar last_good_folder[PATH_MAX];
+
+static void chooser_check_dir(GtkFileChooser *chooser, gpointer user_data) {
+  gchar *cwd=g_get_current_dir();
+  gchar *new_dir=gtk_file_chooser_get_current_folder(chooser);
+
+  if (!strcmp(new_dir,last_good_folder)) return;
+
+  if (lives_chdir(new_dir,TRUE)) {
+    g_free(cwd);
+    gtk_file_chooser_set_current_folder(chooser,last_good_folder);
+    do_dir_perm_access_error(new_dir);
+    return;
+  }
+  g_snprintf(last_good_folder,PATH_MAX,"%s",new_dir);
+  lives_chdir(cwd,FALSE);
+  g_free(cwd);
+
+}
+
+
+
 
 gchar *choose_file(gchar *dir, gchar *fname, gchar **filt, lives_file_chooser_action_t act, const char *title, GtkWidget *extra_widget) {
   // new style file chooser
@@ -2364,13 +2386,16 @@ gchar *choose_file(gchar *dir, gchar *fname, gchar **filt, lives_file_chooser_ac
 						  lives_widget_get_allocation_height(chooser))/2;
    gtk_window_move(GTK_WINDOW(chooser),xcen,ycen);
   }
+  
+  g_signal_connect (chooser, "current-folder-changed", G_CALLBACK (chooser_check_dir), NULL);
 
+  gtk_widget_grab_focus (chooser);
 
   gtk_widget_show(chooser);
 
   gtk_window_set_modal (GTK_WINDOW (chooser), TRUE);
 
-  gtk_widget_grab_focus (chooser);
+  memset(last_good_folder,0,1);
 
   if (extra_widget==mainw->LiVES) {
     return (gchar *)chooser; // kludge to allow custom adding of extra widgets
@@ -2381,6 +2406,7 @@ gchar *choose_file(gchar *dir, gchar *fname, gchar **filt, lives_file_chooser_ac
  rundlg:
   
   if ((response=gtk_dialog_run(GTK_DIALOG(chooser)))!=GTK_RESPONSE_CANCEL) {
+    gchar *tmp;
     filename=g_filename_to_utf8((tmp=gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(chooser))),-1,NULL,NULL,NULL);
     g_free(tmp);
   }

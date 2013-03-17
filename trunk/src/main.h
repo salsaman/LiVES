@@ -920,6 +920,7 @@ void do_jack_noopen_warn3(void);
 void do_jack_noopen_warn4(void);
 void do_file_perm_error(const gchar *file_name);
 void do_dir_perm_error(const gchar *dir_name);
+void do_dir_perm_access_error(const gchar *dir_name);
 void do_encoder_img_ftm_error(render_details *rdet);
 void do_after_crash_warning (void);
 void do_bad_layout_error(void);

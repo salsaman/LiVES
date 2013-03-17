@@ -2918,6 +2918,13 @@ void do_dir_perm_error(const gchar *dir_name) {
 }
 
 
+void do_dir_perm_access_error(const gchar *dir_name) {
+  gchar *msg=g_strdup_printf(_("\nLiVES was unable to read from the directory:\n%s\n"),dir_name);
+  do_blocking_error_dialog(msg);
+  g_free(msg);
+}
+
+
 gboolean do_abort_check(void) {
   return do_yesno_dialog(_("\nAbort and exit immediately from LiVES\nAre you sure ?\n"));
 }

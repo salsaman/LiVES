@@ -11,7 +11,6 @@ void on_camstop_clicked (GtkButton *, gpointer s_cam);
 void on_camrew_clicked (GtkButton *, gpointer s_cam);
 void on_camff_clicked (GtkButton *, gpointer s_cam);
 void on_cameject_clicked (GtkButton *, gpointer s_cam);
-void on_camfile_clicked (GtkFileChooser *, gpointer entry);
 void on_campause_clicked (GtkButton *, gpointer s_cam);
 void on_camquit_clicked (GtkButton *, gpointer s_cam);
 

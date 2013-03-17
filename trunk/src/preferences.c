@@ -3594,6 +3594,7 @@ _prefsw *create_prefs_dialog (void) {
 
   // get from prefs
   gtk_entry_set_text(GTK_ENTRY(prefsw->vid_save_dir_entry),prefs->def_vid_save_dir);
+  lives_entry_set_editable(LIVES_ENTRY(prefsw->vid_save_dir_entry),FALSE);
   
   prefsw->audio_dir_entry = gtk_entry_new ();
   gtk_entry_set_max_length(GTK_ENTRY(prefsw->audio_dir_entry),PATH_MAX);
@@ -3607,6 +3608,7 @@ _prefsw *create_prefs_dialog (void) {
 
   // get from prefs
   gtk_entry_set_text(GTK_ENTRY(prefsw->audio_dir_entry),prefs->def_audio_dir);
+  lives_entry_set_editable(LIVES_ENTRY(prefsw->audio_dir_entry),FALSE);
    
   prefsw->image_dir_entry = gtk_entry_new ();
   gtk_entry_set_max_length(GTK_ENTRY(prefsw->image_dir_entry),PATH_MAX);
@@ -3620,6 +3622,7 @@ _prefsw *create_prefs_dialog (void) {
 
   // get from prefs
   gtk_entry_set_text(GTK_ENTRY(prefsw->image_dir_entry),prefs->def_image_dir);
+  lives_entry_set_editable(LIVES_ENTRY(prefsw->image_dir_entry),FALSE);
    
   prefsw->proj_dir_entry = gtk_entry_new ();
   gtk_entry_set_max_length(GTK_ENTRY(prefsw->proj_dir_entry),PATH_MAX);
@@ -3633,6 +3636,7 @@ _prefsw *create_prefs_dialog (void) {
 
   // get from prefs
   gtk_entry_set_text(GTK_ENTRY(prefsw->proj_dir_entry),prefs->def_proj_dir);
+  lives_entry_set_editable(LIVES_ENTRY(prefsw->proj_dir_entry),FALSE);
    
   prefsw->tmpdir_entry = gtk_entry_new ();
   gtk_entry_set_max_length(GTK_ENTRY(prefsw->tmpdir_entry),PATH_MAX);
@@ -3646,6 +3650,7 @@ _prefsw *create_prefs_dialog (void) {
   // get from prefs
   gtk_entry_set_text(GTK_ENTRY(prefsw->tmpdir_entry),(tmp=g_filename_to_utf8(future_prefs->tmpdir,-1,NULL,NULL,NULL)));
   g_free(tmp);
+  lives_entry_set_editable(LIVES_ENTRY(prefsw->tmpdir_entry),FALSE);
    
   dirbutton1 = lives_standard_file_button_new (TRUE,NULL);
    
@@ -4927,7 +4932,7 @@ _prefsw *create_prefs_dialog (void) {
 
   prefsw->omc_js_entry = gtk_entry_new ();
   gtk_label_set_mnemonic_widget (GTK_LABEL (label),prefsw->omc_js_entry);
-  gtk_entry_set_max_length(GTK_ENTRY(prefsw->omc_js_entry),255);
+  gtk_entry_set_max_length(GTK_ENTRY(prefsw->omc_js_entry),PATH_MAX);
   gtk_box_pack_start (GTK_BOX (hbox), prefsw->omc_js_entry, TRUE, TRUE, 20);
   gtk_widget_show (prefsw->omc_js_entry);
   if (strlen(prefs->omc_js_fname)!=0) gtk_entry_set_text (GTK_ENTRY (prefsw->omc_js_entry),prefs->omc_js_fname);
@@ -5039,6 +5044,7 @@ _prefsw *create_prefs_dialog (void) {
   prefsw->button_midid = lives_standard_file_button_new (FALSE,LIVES_DEVICE_DIR);
   gtk_box_pack_start(GTK_BOX(hbox),prefsw->button_midid,FALSE,FALSE,widget_opts.packing_width);
   gtk_widget_show (prefsw->button_midid);
+
   g_signal_connect(prefsw->button_midid, "clicked", G_CALLBACK (on_filesel_button_clicked), (gpointer)prefsw->omc_midi_entry);
 
   hseparator = lives_hseparator_new ();

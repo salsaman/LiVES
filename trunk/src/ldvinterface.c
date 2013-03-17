@@ -45,20 +45,20 @@ struct _dvgrabw *create_camwindow (s_cam *cam, gint type)
   gtk_box_pack_start(GTK_BOX(vbox),hbox,FALSE,FALSE,widget_opts.packing_height);
 
 
-  // TODO - lives_standard_dir_entry_new
-  buttond = gtk_file_chooser_button_new(_("Save directory"),LIVES_FILE_CHOOSER_ACTION_SELECT_FOLDER);
-  gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(buttond),g_get_current_dir());
+  buttond = lives_standard_file_button_new(TRUE,NULL);
 
   label=lives_standard_label_new_with_mnemonic(_("Save _directory :"),buttond);
   gtk_box_pack_start(GTK_BOX(hbox),label,FALSE,FALSE,widget_opts.packing_width);
 
   gtk_box_pack_start(GTK_BOX(hbox),buttond,FALSE,FALSE,widget_opts.packing_width);
-  lives_widget_set_can_focus_and_default (buttond);
 
-  direntry=lives_standard_entry_new(NULL,FALSE,(tmp=g_filename_to_utf8(g_get_current_dir(),-1,NULL,NULL,NULL)),60,PATH_MAX,
+  direntry=lives_standard_entry_new(NULL,FALSE,(tmp=g_filename_to_utf8(g_get_current_dir(),-1,NULL,NULL,NULL)),-1,PATH_MAX,
 				    LIVES_BOX(hbox),NULL);
 
   g_free(tmp);
+
+
+  g_signal_connect(buttond, "clicked", G_CALLBACK (on_filesel_button_clicked), (gpointer)direntry);
 
 
   //////////////////
@@ -143,11 +143,7 @@ struct _dvgrabw *create_camwindow (s_cam *cam, gint type)
   g_signal_connect (dvgrabw->play, "clicked",G_CALLBACK (on_camplay_clicked),(gpointer)cam);
   g_signal_connect (dvgrabw->grab, "clicked",G_CALLBACK (on_camgrab_clicked),(gpointer)cam);
   g_signal_connect (dvgrabw->quit, "clicked",G_CALLBACK (on_camquit_clicked),(gpointer)cam);
-  g_signal_connect (buttond, "current_folder_changed",G_CALLBACK (on_camfile_clicked),(gpointer)direntry);
 
-  g_signal_connect (GTK_OBJECT (dvgrabw->dialog), "delete_event",
-		    G_CALLBACK (on_camdelete_event),
-		    (gpointer)cam);
 
   gtk_widget_show_all(dvgrabw->dialog);
   

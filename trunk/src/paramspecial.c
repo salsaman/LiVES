@@ -182,7 +182,7 @@ static void passwd_toggle_vis(GtkToggleButton *b, gpointer entry) {
 }
 
 
- void check_for_special (lives_rfx_t *rfx, lives_param_t *param, LiVESBox *pbox) {
+void check_for_special (lives_rfx_t *rfx, lives_param_t *param, LiVESBox *pbox) {
   GtkWidget *checkbutton;
   GtkWidget *hbox;
   GtkWidget *box;
@@ -303,8 +303,14 @@ static void passwd_toggle_vis(GtkToggleButton *b, gpointer entry) {
 
       if (!lives_widget_is_sensitive(param->widgets[0])) gtk_widget_set_sensitive(buttond,FALSE);
 
-      if (GTK_IS_ENTRY(param->widgets[0])) gtk_entry_set_max_length(GTK_ENTRY (param->widgets[0]),PATH_MAX);
-
+      if (GTK_IS_ENTRY(param->widgets[0])) {
+	lives_entry_set_editable(LIVES_ENTRY(param->widgets[0]),FALSE);
+	if (param->widgets[1]!=NULL&&
+	    GTK_IS_LABEL(param->widgets[1])&&
+	    gtk_label_get_mnemonic_widget(GTK_LABEL(param->widgets[1]))!=NULL) 
+	  gtk_label_set_mnemonic_widget (GTK_LABEL(param->widgets[1]),buttond);
+	gtk_entry_set_max_length(GTK_ENTRY (param->widgets[0]),PATH_MAX);
+      }
     }
 
     slist=slist->next;

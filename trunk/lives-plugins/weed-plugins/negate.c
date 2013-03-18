@@ -42,11 +42,16 @@ int negate_process (weed_plant_t *inst, weed_timecode_t timestamp) {
   weed_plant_t **in_params=weed_get_plantptr_array(inst,"in_parameters",&error);
   unsigned char *src=weed_get_voidptr_value(in_channel,"pixel_data",&error);
   unsigned char *dst=weed_get_voidptr_value(out_channel,"pixel_data",&error);
-  int width=weed_get_int_value(in_channel,"width",&error)*3;
+
+  int width=weed_get_int_value(in_channel,"width",&error);
   int height=weed_get_int_value(in_channel,"height",&error);
+  int pal=weed_get_int_value(in_channel,"current_palette",&error);
   int irowstride=weed_get_int_value(in_channel,"rowstrides",&error);
   int orowstride=weed_get_int_value(out_channel,"rowstrides",&error);
+  int psize=4,start=0;
+
   unsigned char *end=src+height*irowstride;
+
   register int i;
 
   int enabled=weed_get_boolean_value(in_params[0],"value",&error);
@@ -56,6 +61,10 @@ int negate_process (weed_plant_t *inst, weed_timecode_t timestamp) {
     return WEED_NO_ERROR;
   }
 
+  if (pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_BGR24) psize=3;
+  if (pal==WEED_PALETTE_ARGB32) start=1;
+
+  width*=psize;
 
 
   // new threading arch
@@ -69,8 +78,10 @@ int negate_process (weed_plant_t *inst, weed_timecode_t timestamp) {
   }
 
   for (;src<end;src+=irowstride) {
-    for (i=0;i<width;i++) {
+    for (i=start;i<width;i+=psize) {
       dst[i]=src[i]^0xFF;
+      dst[i+1]=src[i+1]^0xFF;
+      dst[i+2]=src[i+2]^0xFF;
     }
     dst+=orowstride;
   } 
@@ -83,7 +94,7 @@ int negate_process (weed_plant_t *inst, weed_timecode_t timestamp) {
 weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
   weed_plant_t *plugin_info=weed_plugin_info_init(weed_boot,num_versions,api_versions);
   if (plugin_info!=NULL) {
-    int palette_list[]={WEED_PALETTE_BGR24,WEED_PALETTE_RGB24,WEED_PALETTE_END};
+    int palette_list[]={WEED_PALETTE_BGR24,WEED_PALETTE_RGB24,WEED_PALETTE_RGBA32,WEED_PALETTE_BGRA32,WEED_PALETTE_ARGB32,WEED_PALETTE_END};
 
     weed_plant_t *in_chantmpls[]={weed_channel_template_init("in channel 0",0,palette_list),NULL};
     weed_plant_t *out_chantmpls[]={weed_channel_template_init("out channel 0",WEED_CHANNEL_CAN_DO_INPLACE,palette_list),NULL};

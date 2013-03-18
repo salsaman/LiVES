@@ -647,10 +647,12 @@ lives_render_error_t realfx_progress (boolean reset) {
       mainw->internal_messaging=FALSE;
       g_snprintf(mainw->msg,9,"completed");
     }
+    mainw->rowstride_alignment_hint=1;
     return LIVES_RENDER_COMPLETE;
   }
 
   if (has_video_filters(FALSE)||resize_instance!=NULL) {
+    mainw->rowstride_alignment=mainw->rowstride_alignment_hint;
 
     layer=weed_plant_new(WEED_PLANT_CHANNEL);
     weed_set_int_value(layer,"clip",mainw->current_file);
@@ -730,11 +732,13 @@ lives_render_error_t realfx_progress (boolean reset) {
 	if (cfile->clip_type==CLIP_TYPE_FILE) {
 	  if (!check_if_non_virtual(mainw->current_file,1,cfile->frames)) save_frame_index(mainw->current_file);
 	}
+	mainw->rowstride_alignment_hint=1;
 	return LIVES_RENDER_COMPLETE;
       }
     }
     else {
       sprintf(mainw->msg,"%s","completed");
+      mainw->rowstride_alignment_hint=1;
       return LIVES_RENDER_COMPLETE;
     }
   }
@@ -778,7 +782,9 @@ boolean on_realfx_activate_inner(int type, lives_rfx_t *rfx) {
 
   mainw->internal_messaging=TRUE;
   framecount=0;
- 
+
+  mainw->rowstride_alignment_hint=1;
+
   mainw->progress_fn=&realfx_progress;
   mainw->progress_fn (TRUE);
 

@@ -1108,6 +1108,9 @@ typedef struct {
 
   int overflow_height;
 
+  int rowstride_alignment;
+  int rowstride_alignment_hint;
+
 } mainwindow;
 
 extern _palette *palette;

@@ -1011,6 +1011,9 @@ static void lives_init(_ign_opts *ign_opts) {
 
   mainw->cursor_style=LIVES_CURSOR_NORMAL;
 
+  mainw->rowstride_alignment=mainw->rowstride_alignment_hint=1;
+
+
   /////////////////////////////////////////////////// add new stuff just above here ^^
 
 
@@ -4491,6 +4494,10 @@ void load_frame_image(gint frame) {
     get_play_times();
     return;
   }
+
+
+  mainw->rowstride_alignment=mainw->rowstride_alignment_hint;
+  mainw->rowstride_alignment_hint=1;
 
   if (!mainw->foreign) {
     mainw->actual_frame=cfile->last_frameno=frame;

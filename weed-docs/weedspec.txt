@@ -122,6 +122,10 @@ added clarifying remarks for number of values in parameter defaults.
 01/03/13 salsaman
 corrected description about static function versions
 
+17/03/13
+added "extra_authors" leaf for plugin_info. Corrected description about static functions for plugins.
+added "rowstride_alignment_hint" for channel templates.
+
 
 (C) Gabriel "Salsaman" Finch 2005 - 2013
 
@@ -316,19 +320,6 @@ the leaf flags and the function caller.
 weed_leaf_set() will return an error WEED_ERROR_WRONG_SEED_TYPE if you try to change the seed_type of a leaf.
 
 
-Function pointers
------------------
-Function pointers should not passed directly via
-weed_leaf_set()/weed_leaf_get(), since for some architectures it is
-not possible to convert between a function pointer and a void
-pointer. Instead, create a function pointer as a variable, allocating memory 
-for it, set it equal to the function pointer in question, and then pass the 
-address of the variable. Similarly, when retrieving the value of a function, 
-the void * returned should be cast to a pointer-to-function-pointer, and then 
-dereferenced to get the actual function pointer. Do not try to pass the address 
-of a function-pointer directly, since functions may be assigned on the heap.
-Generally this can be ignored if the utility functions are used.
-
 
 
 For weed_leaf_set(), num_elems can be 0 and value can then be
@@ -499,30 +490,35 @@ included here, as an example of how Weed can be used.
 There is also a Weed Audio Extension, and a Weed Events Extension,
 which are documented separately.
 
+
+
 == COMPILING A PLUGIN WITH WEED ==
 
 An effects plugin wishing to use the reference build of Weed 
 should #include <weed/weed.h>, <weed/weed-palettes.h>,
-<weed/weed-effects.h> and <weed/weed-plugin.h>
-
-If the plugin makes use of the Weed Utility Library, it should be 
-linked (shared or static) with libweed-utils, and #include <weed/weed-utils.h>
-
-If the plugin wishes to use the Weed Plugin Utility Library, it should
-be linked (shared or static) with libweed-plugin-utils and #include
-<weed/weed-plugin-utils.h>.
+<weed/weed-effects.h> and (optionally) <weed/weed-plugin.h>
 
 <weed/weed-compat.h> is provided for compatibility with some external libraries.
 
-Plugins should NOT be linked directly with libweed, since the core
-functions are passed from the host, depending on the API version
-agreed by host and plugin. In this way, the plugin is guaranteed to be 
-compatible with any future version of the Weed library.
 
-IMPORTANT: plugins MUST declare their versions of the weed core functions as 
-static. This is due to the function passing method used. Failure to do this would cause 
-the plugin setting the functions globally (and thus for the host too...leading to potential 
-problems). In the reference implementation this is done automatically in weed-plugin.h.
+Plugins MUST declare their versions of the Weed functions as static. This is because they are set through the API
+from the host. If the functions were not declared static in the plugin then setting them would also set the host's 
+version, which could very well cause problems and crashes in the host.
+
+As a consequence of this, if the plugin wishes to use any of the weed functions (or indirectly, weed-utils or weed-plugin-utils functions), this 
+MUST be done from within the plugin itself. In the Weed SDK this is done by #including the source code for two files:
+weed-utils-code.c and weed-plugin-utils.c. Including these files directly ensures that the static versions of the Weed functions are used.
+
+Plugins should NOT be linked directly with libweed, libweed-utils or any other Weed library which uses the Weed API directly.
+
+Obviously this solution is far from ideal, but it appears to be the only way to override functions in standard C code.
+
+Better solutions may be developed in future.
+
+
+
+
+
 
 
 == PLANT TYPES ==
@@ -584,24 +580,28 @@ the plugin after weed_setup(), and should not be altered by the host.
 
 '''Mandatory leaves''':[[BR]]
 
- * "name"         : WEED_SEED_STRING : the filter name; must be unique in the plugin, 
- * "author"       : WEED_SEED_STRING : the filter author(s)
- * "version"      : WEED_SEED_INT : filter version
- * "process_func" : WEED_SEED_VOIDPTR : pointer to a process_func() pointer
+ * "name"         : WEED_SEED_STRING : the filter name; MUST be unique in the plugin, 
+ * "author"       : WEED_SEED_STRING : the filter author(s) - DO NOT change this unless a new "version" of the plugin is made - instead add to the 
+                      "extra_authors" leaf (see below)
+ * "version"      : WEED_SEED_INT : filter version. Adding more parameters does not require a version update. However, removing parameters, changing 
+   		    their order or type, adding or removing channel templates does require an update. Prior versions of the filter MUST be left in 
+		    plugin, as hosts may be using them.
+ * "process_func" : WEED_SEED_VOIDPTR : pointer to the process_func()
  * "plugin_info"  : WEED_SEED_PLANTPTR : pointer to the PLUGIN_INFO plant containing this FILTER_CLASS
 
 '''Optional leaves''': [[BR]]
 
  * "flags"        : WEED_SEED_INT : bitmap of filter flags
- * "init_func"    : WEED_SEED_VOIDPTR : pointer to an init_func() pointer
+ * "init_func"    : WEED_SEED_VOIDPTR : pointer to the init_func()
                     (can also be NULL)
- * "deinit_func"  : WEED_SEED_VOIDPTR : pointer to a deinit_func() pointer
+ * "deinit_func"  : WEED_SEED_VOIDPTR : pointer to a the deinit_func()
                     (can also be NULL)
  * "in_channel_templates"    : WEED_SEED_PLANTPTR, list of 0 or more elements: array of inp channel templates, '''type''' of the referenced plant MUST be  WEED_PLANT_CHANNEL_TEMPLATE
  * "out_channel_templates"   : WEED_SEED_PLANTPTR, list of 0 or more elements : array of out channel templates, '''type''' of the referenced plant MUST be  WEED_PLANT_CHANNEL_TEMPLATE
  * "in_parameter_templates"  : WEED_SEED_PLANTPTR, list of 0 or more elements : array of in parameter templates, '''type''' of the referenced plant MUST be  WEED_PLANT_PARAMETER_TEMPLATE
  * "out_parameter_templates" : WEED_SEED_PLANTPTR, list of 0 or more elements : array of out parameter templates, '''type''' of the referenced plant MUST be  WEED_PLANT_PARAMETER_TEMPLATE.
 
+ * "extra_authors": WEED_SEED_STRING : list of extra authors which can be altered without changing the plugin "version"
  * "description"  : WEED_SEED_STRING : filter description
  * "url"          : WEED_SEED_STRING : filter URL
  * "license"      : WEED_SEED_STRING : license of filter
@@ -669,6 +669,10 @@ Other optional leaves:
                                        set this READONLY_PLUGIN after
                                        the plugin has set it, or may
                                        ignore it.
+
+ * "rowstride_alignment_hint" : WEED_SEED_INT : this is a *hint* to the host that the plugin prefers rowstrides aligned to a certain byte size. It 
+  			       		     may be ignored by the host.		      
+
 
  * Every plugin can store internal data in leaves
  inside this plant, and host MUST NOT change their values or make them

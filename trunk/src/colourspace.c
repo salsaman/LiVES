@@ -768,6 +768,12 @@ static void get_YUV_to_YUV_conversion_arrays(int iclamping, int isubspace, int o
 //////////////////////////
 // pixel conversions
 
+static LIVES_INLINE uint8_t avg_chroma (size_t x, size_t y) {
+  // cavg == cavgc for clamped, cavgu for unclamped
+  return *(cavg+(x<<8)+y);
+}
+
+
 static LIVES_INLINE void rgb2yuv (uint8_t r0, uint8_t g0, uint8_t b0, uint8_t *y, uint8_t *u, uint8_t *v) {
   register short a;
   if ((a=((Y_R[r0]+Y_G[g0]+Y_B[b0])>>FP_BITS))>max_Y) a=max_Y;
@@ -779,39 +785,34 @@ static LIVES_INLINE void rgb2yuv (uint8_t r0, uint8_t g0, uint8_t b0, uint8_t *y
 }
 
 static LIVES_INLINE void rgb2uyvy (uint8_t r0, uint8_t g0, uint8_t b0, uint8_t r1, uint8_t g1, uint8_t b1, uyvy_macropixel *uyvy) {
-  register short a,b,c;
+  register short a;
   if ((a=((Y_R[r0]+Y_G[g0]+Y_B[b0])>>FP_BITS))>max_Y) a=max_Y;
   uyvy->y0=a<min_Y?min_Y:a;
   if ((a=((Y_R[r1]+Y_G[g1]+Y_B[b1])>>FP_BITS))>max_Y) a=max_Y;
   uyvy->y1=a<min_Y?min_Y:a;
 
-  a=((Cb_R[r0]+Cb_G[g0]+Cb_B[b0])>>FP_BITS)-128;
-  b=((Cb_R[r1]+Cb_G[g1]+Cb_B[b1])>>FP_BITS)-128;
-  if ((c=a+b-((a*b)>>8)+128)>max_UV) c=max_UV;
-  uyvy->v0=c<min_UV?min_UV:c;
+  uyvy->u0=avg_chroma((Cr_R[r0]+Cr_G[g0]+Cr_B[b0])>>FP_BITS,
+		      (Cr_R[r1]+Cr_G[g1]+Cr_B[b1])>>FP_BITS);
 
-  a=((Cr_R[r0]+Cr_G[g0]+Cr_B[b0])>>FP_BITS)-128;
-  b=((Cr_R[r1]+Cr_G[g1]+Cr_B[b1])>>FP_BITS)-128;
-  if ((c=a+b-((a*b)>>8)+128)>max_UV) c=max_UV;
-  uyvy->u0=c<min_UV?min_UV:c;
+  uyvy->v0=avg_chroma((Cb_R[r0]+Cb_G[g0]+Cb_B[b0])>>FP_BITS,
+		      (Cb_R[r1]+Cb_G[g1]+Cb_B[b1])>>FP_BITS);
+
 }
 
 static LIVES_INLINE void rgb2yuyv (uint8_t r0, uint8_t g0, uint8_t b0, uint8_t r1, uint8_t g1, uint8_t b1, yuyv_macropixel *yuyv) {
-  register short a,b,c;
+  register short a;
   if ((a=((Y_R[r0]+Y_G[g0]+Y_B[b0])>>FP_BITS))>max_Y) a=max_Y;
   yuyv->y0=a<min_Y?min_Y:a;
   if ((a=((Y_R[r1]+Y_G[g1]+Y_B[b1])>>FP_BITS))>max_Y) a=max_Y;
   yuyv->y1=a<min_Y?min_Y:a;
 
-  a=((Cb_R[r0]+Cb_G[g0]+Cb_B[b0])>>FP_BITS)-128;
-  b=((Cb_R[r1]+Cb_G[g1]+Cb_B[b1])>>FP_BITS)-128;
-  if ((c=a+b-((a*b)>>8)+128)>max_UV) c=max_UV;
-  yuyv->v0=c<min_UV?min_UV:c;
+  yuyv->u0=avg_chroma((Cr_R[r0]+Cr_G[g0]+Cr_B[b0])>>FP_BITS,
+		      (Cr_R[r1]+Cr_G[g1]+Cr_B[b1])>>FP_BITS);
 
-  a=((Cr_R[r0]+Cr_G[g0]+Cr_B[b0])>>FP_BITS)-128;
-  b=((Cr_R[r1]+Cr_G[g1]+Cr_B[b1])>>FP_BITS)-128;
-  if ((c=a+b-((a*b)>>8)+128)>max_UV) c=max_UV;
-  yuyv->u0=c<min_UV?min_UV:c;
+  yuyv->v0=avg_chroma((Cb_R[r0]+Cb_G[g0]+Cb_B[b0])>>FP_BITS,
+		      (Cb_R[r1]+Cb_G[g1]+Cb_B[b1])>>FP_BITS);
+
+
 }
 
 static LIVES_INLINE void rgb2_411 (uint8_t r0, uint8_t g0, uint8_t b0, uint8_t r1, uint8_t g1, uint8_t b1, 
@@ -902,11 +903,6 @@ static LIVES_INLINE void yuyv_2_yuv422 (yuyv_macropixel *yuyv, uint8_t *y0, uint
   *v0=yuyv->v0;
 }
 
-
-static LIVES_INLINE uint8_t avg_chroma (size_t x, size_t y) {
-  // cavg == cavgc for clamped, cavgu for unclamped
-  return *(cavg+(x<<8)+y);
-}
 
 
 /////////////////////////////////////////////////
@@ -7358,7 +7354,7 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
   case WEED_PALETTE_RGB24:
   case WEED_PALETTE_BGR24:
 #ifdef USE_SWSCALE
-    rowstride=CEIL(width*3,16);
+    rowstride=CEIL(width*3,mainw->rowstride_alignment);
 #else
     rowstride=width*3;
 #endif
@@ -7371,7 +7367,7 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
 
   case WEED_PALETTE_YUV888:
 #ifdef USE_SWSCALE
-    rowstride=CEIL(width*3,16);
+    rowstride=CEIL(width*3,mainw->rowstride_alignment);
 #else
     rowstride=width*3;
 #endif
@@ -7447,7 +7443,7 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
 
   case WEED_PALETTE_RGBA32:
 #ifdef USE_SWSCALE
-    rowstride=CEIL(width*4,16);
+    rowstride=CEIL(width*4,mainw->rowstride_alignment);
 #else
     rowstride=width*4;
 #endif
@@ -7473,7 +7469,7 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
 
   case WEED_PALETTE_BGRA32:
 #ifdef USE_SWSCALE
-    rowstride=CEIL(width*4,16);
+    rowstride=CEIL(width*4,mainw->rowstride_alignment);
 #else
     rowstride=width*4;
 #endif
@@ -7499,7 +7495,7 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
 
   case WEED_PALETTE_ARGB32:
 #ifdef USE_SWSCALE
-    rowstride=CEIL(width*4,16);
+    rowstride=CEIL(width*4,mainw->rowstride_alignment);
 #else
     rowstride=width*4;
 #endif
@@ -7527,7 +7523,7 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
 
   case WEED_PALETTE_YUVA8888:
 #ifdef USE_SWSCALE
-    rowstride=CEIL(width*4,16);
+    rowstride=CEIL(width*4,mainw->rowstride_alignment);
 #else
     rowstride=width*4;
 #endif
@@ -10412,6 +10408,10 @@ boolean resize_layer (weed_plant_t *layer, int width, int height, LiVESInterpTyp
       int flags;
 
       register int i;
+
+      av_log_set_level(AV_LOG_ERROR);
+
+      mainw->rowstride_alignment_hint=16;
 
       if (interp==LIVES_INTERP_BEST) flags=SWS_BICUBIC;
       if (interp==LIVES_INTERP_NORMAL) flags=SWS_BILINEAR;

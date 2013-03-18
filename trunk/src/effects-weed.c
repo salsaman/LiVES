@@ -1669,6 +1669,16 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
     return FILTER_ERROR_NO_IN_CHANNELS;
   }
 
+  if (weed_plant_has_leaf(filter,"rowstride_alignment_hint")) {
+    int rowstride_alignment_hint=weed_get_int_value(filter,"rowstride_alignment_hint",&error);
+    if ((rowstride_alignment_hint==16||
+	 rowstride_alignment_hint==8||
+	 rowstride_alignment_hint==4||
+	 rowstride_alignment_hint==2)
+	 &&rowstride_alignment_hint>mainw->rowstride_alignment_hint) 
+      mainw->rowstride_alignment_hint=rowstride_alignment_hint;
+  }
+
   if (get_enabled_channel(inst,0,TRUE)==NULL) {
     // we process generators elsewhere
     weed_free(in_channels);

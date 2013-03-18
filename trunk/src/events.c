@@ -3293,6 +3293,9 @@ lives_render_error_t render_events (gboolean reset) {
 
   nlabel=g_strdup(_("Rendering audio..."));
 
+  mainw->rowstride_alignment=mainw->rowstride_alignment_hint;
+  mainw->rowstride_alignment_hint=1;
+
   if (event!=NULL) {
     eventnext=get_next_event(event);
 

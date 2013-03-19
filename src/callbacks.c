@@ -7430,6 +7430,7 @@ on_double_size_activate               (GtkMenuItem     *menuitem,
 
 
 void on_sepwin_pressed (GtkButton *button, gpointer user_data) {
+  if (mainw->go_away) return;
 
   // toolbar button (separate window)
   if (mainw->multitrack!=NULL) {
@@ -7447,6 +7448,8 @@ void on_sepwin_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
   gchar buff[PATH_MAX];
   gchar *fnamex;
+
+  if (mainw->go_away) return;
 
   mainw->sep_win=!mainw->sep_win;
 

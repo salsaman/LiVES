@@ -1013,6 +1013,8 @@ static void lives_init(_ign_opts *ign_opts) {
 
   mainw->rowstride_alignment=mainw->rowstride_alignment_hint=1;
 
+  mainw->sepwin_minwidth=MIN_SEPWIN_WIDTH;
+  mainw->sepwin_minheight=PREVIEW_BOX_HT;
 
   /////////////////////////////////////////////////// add new stuff just above here ^^
 
@@ -2535,6 +2537,13 @@ static boolean lives_startup(gpointer data) {
 
   gdk_window_add_filter(NULL, filter_func, NULL);
 
+
+#if GTK_CHECK_VERSION(3,0,0)
+  if (!mainw->foreign&&prefs->show_gui) {
+    calibrate_sepwin_size();
+  }
+#endif
+
   return FALSE;
 }
 
@@ -2625,7 +2634,7 @@ int main (int argc, char *argv[]) {
 
 #ifdef LIVES_NO_DEBUG
   // don't crash on GTK+ fatals
-  g_log_set_always_fatal ((GLogLevelFlags)0);
+  //g_log_set_always_fatal ((GLogLevelFlags)0);
 #endif
 
   g_log_set_default_handler(lives_log_handler,NULL);
@@ -3301,15 +3310,13 @@ void set_ce_frame_from_pixbuf(GtkImage *image, GdkPixbuf *pixbuf, lives_painter_
 
   lives_painter_t *cr;
 
-  LiVESWidgetColor color;
-
   if (cairo==NULL) cr=lives_painter_create_from_widget (LIVES_WIDGET(image));
   else cr=cairo;
 
   if (cr==NULL) return;
 
-  lives_widget_get_bg_color(LIVES_WIDGET(image),&color);
-  lives_painter_set_source_rgba (cr, color.red, color.green, color.blue, color.alpha);
+  lives_painter_set_source_to_bg(cr,LIVES_WIDGET(image));
+
   lives_painter_rectangle(cr,0,0,
 			  rwidth,
 			  rheight);
@@ -3452,6 +3459,7 @@ void load_start_image(gint frame) {
     gtk_widget_queue_resize(mainw->image272);
 
     lives_widget_context_update();
+
     if (mainw->current_file==-1) {
       // user may close file
       load_start_image(0);
@@ -3694,7 +3702,7 @@ void load_preview_image(boolean update_always) {
   }
 
   set_ce_frame_from_pixbuf(GTK_IMAGE(mainw->preview_image), pixbuf, NULL);
-  gtk_widget_set_size_request(mainw->preview_image,mainw->pwidth,mainw->pheight);
+  gtk_widget_set_size_request(mainw->preview_image,MAX(mainw->pwidth,mainw->sepwin_minwidth),mainw->pheight);
 
   if (update_always) {
     // set spins from current frame
@@ -5924,7 +5932,7 @@ void close_current_file(gint file_to_switch_to) {
       play_window_set_title();
 
       load_preview_image(FALSE);
-      gtk_widget_queue_resize(mainw->preview_box);
+      //gtk_widget_queue_draw(mainw->preview_box);
 
       //lives_widget_context_update();
     }
@@ -6073,7 +6081,7 @@ void switch_to_file(gint old_file, gint new_file) {
     play_window_set_title();
 
     load_preview_image(FALSE);
-    gtk_widget_queue_resize(mainw->preview_box);
+    //gtk_widget_queue_draw(mainw->preview_box);
 
     //lives_widget_context_update();
   }
@@ -6478,6 +6486,7 @@ void do_quick_switch (gint new_file) {
   if (mainw->fs||(mainw->faded&&mainw->double_size)||mainw->multitrack!=NULL) {
     mainw->current_file=new_file;
     if (!mainw->sep_win) {
+      if (mainw->faded&&mainw->double_size) resize(2);
       if (cfile->menuentry!=NULL) {
 	gchar title[256];
 	get_menu_text(cfile->menuentry,title);
@@ -6597,8 +6606,6 @@ void resize (gdouble scale) {
   mainw->ce_frame_height=vsize;
 
   if (!mainw->is_ready) return;
-
-
 
   gtk_widget_set_size_request (mainw->playframe, (gint)hsize*scale+H_RESIZE_ADJUST, (gint)vsize*scale+V_RESIZE_ADJUST);
 

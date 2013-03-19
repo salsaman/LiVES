@@ -40,6 +40,9 @@
 
 #define CE_FRAME_HSPACE ((int)(320.*widget_opts.scale))
 
+#define MIN_SEPWIN_WIDTH 600
+#define MIN_SEPWIN_HEIGHT 36
+
 /// sepwin/screen size safety margins in pixels
 #define SCR_HEIGHT_SAFETY ((int)(100.*widget_opts.scale))
 #define SCR_WIDTH_SAFETY ((int)(100.*widget_opts.scale))
@@ -1110,6 +1113,9 @@ typedef struct {
 
   int rowstride_alignment;
   int rowstride_alignment_hint;
+
+  int sepwin_minwidth;
+  int sepwin_minheight;
 
 } mainwindow;
 

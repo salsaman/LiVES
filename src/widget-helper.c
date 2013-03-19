@@ -762,20 +762,6 @@ LIVES_INLINE LiVESWidget *lives_hscale_new(LiVESAdjustment *adj) {
 }
 
 
-LIVES_INLINE LiVESWidget *lives_hscale_new_with_range(double min, double max, double step) {
-  LiVESWidget *hscale=NULL;
-#ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3,0,0)
-  hscale=gtk_scale_new_with_range(LIVES_ORIENTATION_HORIZONTAL,min,max,step);
-#else
-  hscale=gtk_hscale_new_with_range(min,max,step);
-#endif
-#endif
-  return hscale;
-}
-
-
-
 LIVES_INLINE LiVESWidget *lives_vscale_new(LiVESAdjustment *adj) {
   LiVESWidget *vscale=NULL;
 #ifdef GUI_GTK

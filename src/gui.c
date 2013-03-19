@@ -3172,7 +3172,6 @@ void unfade_background(void) {
     gtk_frame_set_label(GTK_FRAME(mainw->playframe),_("Preview"));
   }
 
-  gtk_frame_set_shadow_type (GTK_FRAME(mainw->frame1), GTK_SHADOW_IN);
   gtk_frame_set_label (GTK_FRAME(mainw->frame2), _("Last Frame"));
   lives_widget_set_fg_color (mainw->curf_label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
   lives_widget_set_fg_color (mainw->vps_label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
@@ -3192,9 +3191,7 @@ void unfade_background(void) {
   lives_widget_set_bg_color (mainw->freventbox0, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
   lives_widget_set_bg_color (mainw->freventbox1, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
 
-  gtk_frame_set_shadow_type (GTK_FRAME(mainw->frame2), GTK_SHADOW_IN);
   lives_widget_set_bg_color (mainw->playframe, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  gtk_frame_set_shadow_type (GTK_FRAME(mainw->playframe), GTK_SHADOW_IN);
   gtk_widget_show(mainw->menu_hbox);
   gtk_widget_hide(mainw->tb_hbox);
   gtk_widget_show(mainw->hseparator);
@@ -3376,7 +3373,6 @@ void unblock_expose (void) {
 void make_preview_box (void) {
   // create a box to show frames in, this will go in the sepwin when we are not playing
   GtkWidget *hbox;
-  GtkWidget *hbox_rb;
   GtkWidget *hbox_buttons;
   GtkWidget *radiobutton_free;
   GtkWidget *radiobutton_start;
@@ -3394,15 +3390,11 @@ void make_preview_box (void) {
   gchar *fnamex;
   gchar *tmp,*tmp2;
 
-  int dpw;
-
   mainw->preview_box = lives_vbox_new (FALSE, 0);
-  gtk_widget_show (mainw->preview_box);
   g_object_ref(mainw->preview_box);
 
   eventbox=gtk_event_box_new();
   gtk_widget_set_events (eventbox, GDK_SCROLL_MASK);
-  gtk_widget_show (eventbox);
 
   g_signal_connect (GTK_OBJECT (eventbox), "scroll_event",
 		    G_CALLBACK (on_mouse_scroll),
@@ -3425,15 +3417,16 @@ void make_preview_box (void) {
   gtk_widget_show (mainw->preview_image);
   gtk_container_add (GTK_CONTAINER (eventbox), mainw->preview_image);
 
-  if (mainw->current_file<0||cfile->frames==0) {
-    if (mainw->imframe!=NULL) {
-      gtk_widget_set_size_request(mainw->preview_image,
-				  lives_pixbuf_get_width(mainw->imframe),lives_pixbuf_get_height(mainw->imframe));
-
+  if (mainw->play_window!=NULL) {
+    if (mainw->current_file<0||cfile->frames==0) {
+      if (mainw->imframe!=NULL) {
+	gtk_widget_set_size_request(mainw->preview_image,lives_pixbuf_get_width(mainw->imframe),lives_pixbuf_get_height(mainw->imframe));
+	
+      }
     }
+    else
+      gtk_widget_set_size_request(mainw->preview_image,MAX(mainw->pwidth,mainw->sepwin_minwidth),mainw->pheight);
   }
-  else
-    gtk_widget_set_size_request(mainw->preview_image,mainw->pwidth,mainw->pheight);
 
   lives_widget_set_hexpand(mainw->preview_box,TRUE);
   lives_widget_set_vexpand(mainw->preview_box,TRUE);
@@ -3444,28 +3437,29 @@ void make_preview_box (void) {
 
   hbox = lives_hbox_new (FALSE, 0);
   lives_widget_set_vexpand(hbox,FALSE);
-  gtk_box_pack_start (GTK_BOX (mainw->preview_controls), hbox, FALSE, FALSE, 0);
-  gtk_container_set_border_width (GTK_CONTAINER (hbox), widget_opts.border_width);
+  gtk_container_set_border_width (GTK_CONTAINER (hbox), 0);
 
-  mainw->preview_spinbutton = lives_standard_spin_button_new (NULL,FALSE,1., 1., mainw->current_file>-1?cfile->frames:1., 1., 10., 0,
+
+  mainw->preview_spinbutton = lives_standard_spin_button_new (NULL,FALSE,(mainw->current_file>-1&&cfile->frames>0.)?1.:0.,
+							      (mainw->current_file>-1&&cfile->frames>0.)?1.:0.,
+							      (mainw->current_file>-1&&cfile->frames>0.)?cfile->frames:0.,
+							      1., 10., 0,
 							      LIVES_BOX(hbox),_("Frame number to preview"));
 
-  gtk_entry_set_width_chars (GTK_ENTRY (mainw->preview_spinbutton),8);
-  lives_widget_set_text_color(mainw->preview_spinbutton, LIVES_WIDGET_STATE_INSENSITIVE, &palette->black);
-
-  mainw->preview_scale=lives_hscale_new_with_range(0,(mainw->current_file>-1&&cfile->frames)?cfile->frames>0:1,1);
-
-  gtk_box_pack_start (GTK_BOX (hbox), mainw->preview_scale, TRUE, TRUE, 0);
-  gtk_range_set_adjustment(GTK_RANGE(mainw->preview_scale),gtk_spin_button_get_adjustment(GTK_SPIN_BUTTON(mainw->preview_spinbutton)));
+  mainw->preview_scale=lives_hscale_new(gtk_spin_button_get_adjustment(GTK_SPIN_BUTTON(mainw->preview_spinbutton)));
   gtk_scale_set_draw_value(GTK_SCALE(mainw->preview_scale),FALSE);
 
-  hbox_rb = lives_hbox_new (FALSE, 10);
-  lives_widget_set_vexpand(hbox_rb,FALSE);
-  gtk_box_pack_start (GTK_BOX (mainw->preview_controls), hbox_rb, FALSE, FALSE, 0);
-  gtk_widget_show (hbox_rb);
+  if (palette->style&STYLE_1) {
+    lives_widget_set_bg_color(mainw->preview_image, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_bg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_bg_color(mainw->preview_scale, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_fg_color(mainw->preview_scale, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+  }
 
-  dpw=widget_opts.packing_width;
-  widget_opts.packing_width=4.*widget_opts.scale;
+  gtk_box_pack_start (GTK_BOX (mainw->preview_controls), mainw->preview_scale,FALSE, FALSE, 0);
+  gtk_box_pack_start (GTK_BOX (mainw->preview_controls), hbox, FALSE, FALSE, 0);
+
+  gtk_entry_set_width_chars (GTK_ENTRY (mainw->preview_spinbutton),8);
 
   radiobutton_free=lives_standard_radio_button_new((tmp=g_strdup(_ ("_Free"))),TRUE,radiobutton_group,LIVES_BOX(hbox),
 						   (tmp2=g_strdup(_("Free choice of frame number"))));
@@ -3495,7 +3489,6 @@ void make_preview_box (void) {
 
   lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (radiobutton_end), mainw->prv_link==PRV_PTR);
 
-  widget_opts.packing_width=dpw;
 
   add_hsep_to_box (LIVES_BOX (mainw->preview_controls));
 
@@ -3609,6 +3602,18 @@ void make_preview_box (void) {
 
 }
 
+#if GTK_CHECK_VERSION(3,0,0)
+
+void calibrate_sepwin_size(void) {
+  // get size of preview box in sepwin
+  GtkRequisition req;
+  make_preview_box();
+  gtk_widget_get_preferred_size(mainw->preview_controls,NULL,&req);
+  mainw->sepwin_minwidth=req.width;
+  mainw->sepwin_minheight=req.height;
+}
+
+#endif
 
 void enable_record (void) {
   set_menu_text (mainw->record_perf, _("Start _recording"),TRUE);
@@ -3719,7 +3724,9 @@ void make_play_window(void) {
   if (mainw->multitrack==NULL) gtk_window_add_accel_group (GTK_WINDOW (mainw->play_window), mainw->accel_group);
   else gtk_window_add_accel_group (GTK_WINDOW (mainw->play_window), mainw->multitrack->accel_group);
 
-  lives_widget_set_bg_color (mainw->play_window, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+  if (palette->style&STYLE_1) {
+    lives_widget_set_bg_color (mainw->play_window, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+  }
 
   // show the window (so we can hide its cursor !), and get its xwin
   if (!(mainw->fs&&mainw->playing_file>-1&&mainw->vpp!=NULL)) {
@@ -3740,13 +3747,12 @@ void make_play_window(void) {
     //if (cfile->is_loaded) {
     //and add it the play window
     gtk_container_add (GTK_CONTAINER (mainw->play_window), mainw->preview_box);
-    //gtk_widget_set_size_request(mainw->preview_box,-1,PREVIEW_BOX_HT);
 
     if (mainw->is_processing&&mainw->current_file>-1&&!cfile->nopreview) 
       gtk_widget_set_tooltip_text( mainw->p_playbutton,_ ("Preview")); 
 
     if (mainw->current_file>-1&&cfile->is_loaded) {
-      gtk_widget_grab_focus (mainw->preview_scale);
+      gtk_widget_grab_focus (mainw->preview_spinbutton);
     }
     else {
       gtk_widget_hide(mainw->preview_controls);
@@ -3763,13 +3769,14 @@ void make_play_window(void) {
 
       // load whatever frame and show it
       if (mainw->prv_link!=PRV_FREE) mainw->preview_frame=0;
-      load_preview_image(FALSE);
       // force a redraw
       gtk_widget_queue_resize(mainw->preview_box);
       // be careful, the user could switch out of sepwin here !
       mainw->noswitch=TRUE;
       
       lives_widget_context_update();
+      load_preview_image(FALSE);
+
       mainw->noswitch=FALSE;
       if (mainw->play_window==NULL) return;
     }
@@ -4096,41 +4103,46 @@ void resize_play_window (void) {
       }
       else {
 	if (pmonitor==0) gtk_window_move (GTK_WINDOW (mainw->play_window), (mainw->scr_width-mainw->pwidth)/2, 
-					  (mainw->scr_height-mainw->pheight-PREVIEW_BOX_HT*2)/2);
+					  (mainw->scr_height-mainw->pheight-mainw->sepwin_minheight*2)/2);
 	else {
 	  gint xcen=mainw->mgeom[pmonitor-1].x+(mainw->mgeom[pmonitor-1].width-mainw->pwidth)/2;
 	  gtk_window_set_screen(GTK_WINDOW(mainw->play_window),mainw->mgeom[pmonitor-1].screen);
-	  gtk_window_move (GTK_WINDOW (mainw->play_window), xcen, (mainw->scr_height-mainw->pheight-PREVIEW_BOX_HT*2)/2);
+	  gtk_window_move (GTK_WINDOW (mainw->play_window), xcen, (mainw->scr_height-mainw->pheight-mainw->sepwin_minheight*2)/2);
 	}
       }
     }
     else {
       if (pmonitor==0) gtk_window_move (GTK_WINDOW (mainw->play_window), (mainw->scr_width-mainw->pwidth)/2, 
-					(mainw->scr_height-mainw->pheight-PREVIEW_BOX_HT*2)/2);
+					(mainw->scr_height-mainw->pheight-mainw->sepwin_minheight*2)/2);
       else {
 	gint xcen=mainw->mgeom[pmonitor-1].x+(mainw->mgeom[pmonitor-1].width-mainw->pwidth)/2;
 	gtk_window_set_screen(GTK_WINDOW(mainw->play_window),mainw->mgeom[pmonitor-1].screen);
-	gtk_window_move (GTK_WINDOW (mainw->play_window), xcen, (mainw->scr_height-mainw->pheight-PREVIEW_BOX_HT*2)/2);
+	gtk_window_move (GTK_WINDOW (mainw->play_window), xcen, (mainw->scr_height-mainw->pheight-mainw->sepwin_minheight*2)/2);
       }
     }
     mainw->opwx=mainw->opwy=-1;
   }
-
-  gtk_window_resize (GTK_WINDOW (mainw->play_window), mainw->pwidth, mainw->pheight);
-
-  // workaround for gtk+ lameness
-  if (mainw->playing_file<0&&(mainw->current_file>-1&&!cfile->opening)) xht=PREVIEW_BOX_HT;
+  if (mainw->playing_file<0&&(mainw->current_file>-1&&!cfile->opening)) xht=mainw->sepwin_minheight;
   else xht=0;
-  
-  gtk_widget_set_size_request (mainw->play_window, mainw->pwidth, mainw->pheight+xht);
-  
 
+  if (mainw->pheight<MIN_SEPWIN_HEIGHT) xht+=MIN_SEPWIN_HEIGHT-mainw->pheight;
+
+  gtk_window_resize (GTK_WINDOW (mainw->play_window), 
+		     mainw->playing_file==-1&&mainw->current_file>-1&&cfile->frames>0&&
+		     (cfile->clip_type==CLIP_TYPE_DISK||cfile->clip_type==CLIP_TYPE_FILE)?
+		     MAX(mainw->pwidth,mainw->sepwin_minwidth):mainw->pwidth, mainw->pheight+xht);
+
+  
+  gtk_widget_set_size_request (mainw->play_window, 
+			       mainw->playing_file==-1&&mainw->current_file>-1&&cfile->frames>0&&
+			       (cfile->clip_type==CLIP_TYPE_DISK||cfile->clip_type==CLIP_TYPE_FILE)?
+			       MAX(mainw->pwidth,mainw->sepwin_minwidth):mainw->pwidth, mainw->pheight+xht);
+  
 }
 
 
 
-void
-kill_play_window (void) {
+void kill_play_window (void) {
   // plug our player back into internal window
 
   if (mainw->play_window!=NULL) {

@@ -10409,7 +10409,7 @@ boolean resize_layer (weed_plant_t *layer, int width, int height, LiVESInterpTyp
 
       register int i;
 
-      av_log_set_level(AV_LOG_ERROR);
+      av_log_set_level(AV_LOG_FATAL);
 
       mainw->rowstride_alignment_hint=16;
 

@@ -566,7 +566,6 @@ LiVESWidget *lives_hbutton_box_new(void);
 LiVESWidget *lives_vbutton_box_new(void);
 
 LiVESWidget *lives_hscale_new(LiVESAdjustment *);
-LiVESWidget *lives_hscale_new_with_range(double min, double max, double step);
 LiVESWidget *lives_vscale_new(LiVESAdjustment *);
 
 LiVESWidget *lives_hpaned_new(void);

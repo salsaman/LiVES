@@ -1060,7 +1060,9 @@ void splash_end(void);
 void splash_msg(const gchar *msg, gdouble pct);
 void add_message_scroller(GtkWidget *conter);
 void resize_widgets_for_monitor(boolean get_play_times);
-
+#if GTK_CHECK_VERSION(3,0,0)
+void calibrate_sepwin_size(void);
+#endif
 // system calls in utils.c
 int lives_system(const char *com, boolean allow_error);
 lives_pid_t lives_fork(const char *com);

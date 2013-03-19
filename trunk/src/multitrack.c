@@ -7853,7 +7853,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 
   mt->node_adj = (GObject *)lives_adjustment_new (0., 0., 0., 1./mt->fps, 10./mt->fps, 0.);
 
-  mt->node_scale=lives_hscale_new(GTK_ADJUSTMENT(mt->node_adj));
+  mt->node_scale=lives_hscale_new(LIVES_ADJUSTMENT(mt->node_adj));
   gtk_scale_set_draw_value(GTK_SCALE(mt->node_scale),FALSE);
   mt->node_spinbutton = gtk_spin_button_new (GTK_ADJUSTMENT (mt->node_adj), 0, 3);
 
@@ -7974,7 +7974,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 					     G_CALLBACK (avel_spin_changed),
 					     mt);
 
-  mt->avel_scale=lives_hscale_new(GTK_ADJUSTMENT(spinbutton_adj));
+  mt->avel_scale=lives_hscale_new(LIVES_ADJUSTMENT(spinbutton_adj));
   gtk_box_pack_start (GTK_BOX (hbox), mt->avel_scale, TRUE, TRUE, widget_opts.packing_width);
   gtk_scale_set_draw_value(GTK_SCALE(mt->avel_scale),FALSE);
 
@@ -21364,7 +21364,7 @@ GtkWidget * amixer_add_channel_slider (lives_mt *mt, gint i) {
   }
   else {
 #endif
-    amixer->ch_sliders[i]=lives_vscale_new(GTK_ADJUSTMENT(adj));
+    amixer->ch_sliders[i]=lives_vscale_new(LIVES_ADJUSTMENT(adj));
     gtk_range_set_inverted(GTK_RANGE(amixer->ch_sliders[i]),TRUE);
     gtk_scale_set_digits(GTK_SCALE(amixer->ch_sliders[i]),2);
     gtk_scale_set_value_pos(GTK_SCALE(amixer->ch_sliders[i]),GTK_POS_BOTTOM);

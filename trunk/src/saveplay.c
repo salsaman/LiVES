@@ -3081,7 +3081,7 @@ void play_file (void) {
 	  if (mainw->play_window!=NULL) {
 	    gchar *title,*xtrabit;
 	    
-	    load_preview_image(FALSE);
+	    //load_preview_image(FALSE);
 	    
 	    mainw->noswitch=FALSE;
 	    if (mainw->sepwin_scale!=100.) xtrabit=g_strdup_printf(_(" (%d %% scale)"),(int)mainw->sepwin_scale);
@@ -3234,8 +3234,12 @@ void play_file (void) {
   if (mainw->multitrack==NULL&&mainw->current_file>-1)
     set_main_title(cfile->name,0);
 
+  if (mainw->play_window!=NULL) {
+    resize_play_window();
+    //load_preview_image(FALSE);
+  }
 }
-  
+
 
 boolean get_temp_handle(gint index, boolean create) {
   // we can call this to get a temp handle for returning info from the backend

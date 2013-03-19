@@ -269,9 +269,8 @@ void widget_add_framedraw (GtkVBox *box, int start, int end, boolean add_preview
 
   spinbutton_adj=gtk_spin_button_get_adjustment(GTK_SPIN_BUTTON(mainw->framedraw_spinbutton));
 
-  mainw->framedraw_scale=lives_hscale_new_with_range(0,1,1);
+  mainw->framedraw_scale=lives_hscale_new(LIVES_ADJUSTMENT(spinbutton_adj));
   gtk_box_pack_start (GTK_BOX (hbox), mainw->framedraw_scale, TRUE, TRUE, 0);
-  gtk_range_set_adjustment(GTK_RANGE(mainw->framedraw_scale),spinbutton_adj);
   gtk_scale_set_draw_value(GTK_SCALE(mainw->framedraw_scale),FALSE);
 
   rfx=(lives_rfx_t *)g_object_get_data(G_OBJECT(gtk_widget_get_toplevel(GTK_WIDGET(box))),"rfx");

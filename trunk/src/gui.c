@@ -154,7 +154,9 @@ static boolean expose_eim (GtkWidget *widget, lives_painter_t *cr, gpointer user
 }
 
 static boolean expose_pim (GtkWidget *widget, lives_painter_t *cr, gpointer user_data) {
-  load_preview_image(TRUE);
+  if (!mainw->draw_blocked) {
+    load_preview_image(TRUE);
+  }
   return TRUE;
 }
 #endif
@@ -3452,7 +3454,7 @@ void make_preview_box (void) {
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(mainw->preview_image, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
     lives_widget_set_bg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-    lives_widget_set_bg_color(mainw->preview_scale, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+    //lives_widget_set_bg_color(mainw->preview_scale, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
     lives_widget_set_fg_color(mainw->preview_scale, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
   }
 
@@ -3817,12 +3819,12 @@ void make_play_window(void) {
 
 
 void resize_play_window (void) {
-  gint opwx,opwy,pmonitor=prefs->play_monitor;
+  int opwx,opwy,pmonitor=prefs->play_monitor;
 
-  gboolean fullscreen=TRUE;
-  gboolean size_ok;
+  boolean fullscreen=TRUE;
+  boolean size_ok;
 
-  int xht;
+  int width=-1,height=-1,nwidth,nheight=0;
 
   uint64_t xwinid=0;
 
@@ -3833,6 +3835,11 @@ void resize_play_window (void) {
 #endif
 
   if (mainw->play_window==NULL) return;
+
+  if (lives_widget_is_visible(mainw->play_window)) {
+    width=lives_widget_get_allocation_width(mainw->play_window);
+    height=lives_widget_get_allocation_height(mainw->play_window);
+  }
 
   if ((mainw->current_file==-1||(cfile->frames==0&&mainw->multitrack==NULL)||
        (!cfile->is_loaded&&!mainw->preview&&cfile->clip_type!=CLIP_TYPE_GENERATOR))||
@@ -4122,21 +4129,23 @@ void resize_play_window (void) {
     }
     mainw->opwx=mainw->opwy=-1;
   }
-  if (mainw->playing_file<0&&(mainw->current_file>-1&&!cfile->opening)) xht=mainw->sepwin_minheight;
-  else xht=0;
+  if (mainw->playing_file<0&&(mainw->current_file>-1&&!cfile->opening)) nheight=mainw->sepwin_minheight;
 
-  if (mainw->pheight<MIN_SEPWIN_HEIGHT) xht+=MIN_SEPWIN_HEIGHT-mainw->pheight;
+  if (mainw->pheight<MIN_SEPWIN_HEIGHT) nheight+=MIN_SEPWIN_HEIGHT-mainw->pheight;
 
-  gtk_window_resize (GTK_WINDOW (mainw->play_window), 
-		     mainw->playing_file==-1&&mainw->current_file>-1&&cfile->frames>0&&
-		     (cfile->clip_type==CLIP_TYPE_DISK||cfile->clip_type==CLIP_TYPE_FILE)?
-		     MAX(mainw->pwidth,mainw->sepwin_minwidth):mainw->pwidth, mainw->pheight+xht);
+  nheight+=mainw->pheight;
 
-  
-  gtk_widget_set_size_request (mainw->play_window, 
-			       mainw->playing_file==-1&&mainw->current_file>-1&&cfile->frames>0&&
-			       (cfile->clip_type==CLIP_TYPE_DISK||cfile->clip_type==CLIP_TYPE_FILE)?
-			       MAX(mainw->pwidth,mainw->sepwin_minwidth):mainw->pwidth, mainw->pheight+xht);
+  if (mainw->playing_file==-1&&mainw->current_file>-1&&cfile->frames>0&&
+      (cfile->clip_type==CLIP_TYPE_DISK||cfile->clip_type==CLIP_TYPE_FILE)) 
+    nwidth=MAX(mainw->pwidth,mainw->sepwin_minwidth);
+  else nwidth=mainw->pwidth;
+
+  gtk_window_resize (GTK_WINDOW (mainw->play_window), nwidth, nheight);
+  gtk_widget_set_size_request (mainw->play_window, nwidth, nheight);
+
+  if (width!=-1&&(width!=nwidth||height!=nheight)) {
+    load_preview_image(FALSE);
+  }
   
 }
 
@@ -4305,7 +4314,8 @@ void splash_end(void) {
     mainw->splash_window=NULL;
   }
 
-  if (prefs->startup_interface==STARTUP_MT&&mainw->multitrack==NULL) on_multitrack_activate(NULL,NULL);
+  if (prefs->startup_interface==STARTUP_MT&&prefs->startup_phase==0&&mainw->multitrack==NULL) 
+    on_multitrack_activate(NULL,NULL);
 
 }
 

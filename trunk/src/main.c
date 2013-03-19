@@ -2415,7 +2415,7 @@ static boolean lives_startup(gpointer data) {
 		      gtk_widget_show (mainw->LiVES);
 		    }
 #ifdef ENABLE_OSC
-		    lives_osc_notify(LIVES_OSC_NOTIFY_MODE_CHANGED,(tmp=g_strdup_printf("%d",STARTUP_MT)));
+		    lives_osc_notify(LIVES_OSC_NOTIFY_MODE_CHANGED,(tmp=g_strdup_printf("%d",STARTUP_CE)));
 		    g_free(tmp);
 #endif
 		  }
@@ -2489,15 +2489,15 @@ static boolean lives_startup(gpointer data) {
     prefs->startup_phase=0;
   }
 
+  // splash_end() will start up mulitrack if in STARTUP_MT mode
   if (strlen (start_file)&&strcmp(start_file,"-")) {
     splash_end();
     deduce_file(start_file,start,end);
     got_files=TRUE;
   } else {
     set_main_title(NULL,0);
+    splash_end();
   }
-
-  splash_end();
 
   if (prefs->crash_recovery&&!no_recover) got_files=check_for_recovery_files(auto_recover);
 
@@ -2522,8 +2522,6 @@ static boolean lives_startup(gpointer data) {
 
   if (!prefs->show_gui&&prefs->startup_interface==STARTUP_CE) mainw->is_ready=TRUE;
 
-  mainw->go_away=FALSE;
-
 #if GTK_CHECK_VERSION(3,0,0)
   mainw->kb_timer_end=FALSE;
   mainw->kb_timer=g_timeout_add(KEY_RPT_INTERVAL,&ext_triggers_poll,NULL);
@@ -2544,8 +2542,10 @@ static boolean lives_startup(gpointer data) {
   }
 #endif
 
+  mainw->go_away=FALSE;
+
   return FALSE;
-}
+} // end lives_startup()
 
 
 
@@ -3615,10 +3615,14 @@ void load_preview_image(boolean update_always) {
   // this is for the sepwin preview
   // update_always==TRUE = update widgets from mainw->preview_frame
   GdkPixbuf *pixbuf=NULL;
-  gint preview_frame;
+
+  boolean mdb;
+
+  int preview_frame;
 
   if (!prefs->show_gui) return;
 
+  if (mainw->playing_file>-1) return;
 
   if (mainw->current_file>-1&&cfile!=NULL&&(cfile->clip_type==CLIP_TYPE_YUV4MPEG||cfile->clip_type==CLIP_TYPE_VIDEODEV)) {
     if (mainw->camframe==NULL) {
@@ -3637,6 +3641,10 @@ void load_preview_image(boolean update_always) {
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(mainw->preview_spinbutton),1);
     g_signal_handler_unblock(mainw->preview_spinbutton,mainw->preview_spin_func);
     gtk_widget_set_size_request(mainw->preview_image,mainw->pwidth,mainw->pheight);
+    mdb=mainw->draw_blocked;
+    mainw->draw_blocked=TRUE;
+    lives_widget_context_update();
+    if (mainw->draw_blocked) mainw->draw_blocked=mdb;
     return;
   }
 
@@ -3653,6 +3661,10 @@ void load_preview_image(boolean update_always) {
       set_ce_frame_from_pixbuf(GTK_IMAGE(mainw->preview_image), mainw->imframe, NULL);
     }
     else set_ce_frame_from_pixbuf(GTK_IMAGE(mainw->preview_image), NULL, NULL);
+    mdb=mainw->draw_blocked;
+    mainw->draw_blocked=TRUE;
+    lives_widget_context_update();
+    if (mainw->draw_blocked) mainw->draw_blocked=mdb;
     return;
   }
 
@@ -3748,6 +3760,12 @@ void load_preview_image(boolean update_always) {
     }
   }
   if (pixbuf!=NULL) lives_object_unref(pixbuf);
+
+  mdb=mainw->draw_blocked;
+  mainw->draw_blocked=TRUE;
+  lives_widget_context_update();
+  if (mainw->draw_blocked) mainw->draw_blocked=mdb;
+
 }
 
 #ifndef NO_PROG_LOAD
@@ -5922,6 +5940,7 @@ void close_current_file(gint file_to_switch_to) {
       if (lives_widget_get_parent(mainw->preview_box)==NULL) {
 	gtk_widget_queue_draw(mainw->play_window);
 	gtk_container_add (GTK_CONTAINER (mainw->play_window), mainw->preview_box);
+	gtk_widget_grab_focus (mainw->preview_spinbutton);
       }
 
       gtk_widget_hide(mainw->preview_controls);
@@ -6071,9 +6090,11 @@ void switch_to_file(gint old_file, gint new_file) {
     if (lives_widget_get_parent(mainw->preview_box)==NULL) {
       gtk_widget_queue_draw(mainw->play_window);
       gtk_container_add (GTK_CONTAINER (mainw->play_window), mainw->preview_box);
+      gtk_widget_grab_focus (mainw->preview_spinbutton);
     }
 
     gtk_widget_show(mainw->preview_controls);
+    gtk_widget_grab_focus (mainw->preview_spinbutton);
 
     // and resize it
     resize_play_window();
@@ -6081,9 +6102,6 @@ void switch_to_file(gint old_file, gint new_file) {
     play_window_set_title();
 
     load_preview_image(FALSE);
-    //gtk_widget_queue_draw(mainw->preview_box);
-
-    //lives_widget_context_update();
   }
   
   if (new_file>0) {

@@ -1062,6 +1062,9 @@ void add_message_scroller(GtkWidget *conter);
 void resize_widgets_for_monitor(boolean get_play_times);
 #if GTK_CHECK_VERSION(3,0,0)
 void calibrate_sepwin_size(void);
+boolean expose_pim (GtkWidget *widget, lives_painter_t *cr, gpointer user_data);
+boolean expose_sim (GtkWidget *widget, lives_painter_t *cr, gpointer user_data);
+boolean expose_eim (GtkWidget *widget, lives_painter_t *cr, gpointer user_data);
 #endif
 // system calls in utils.c
 int lives_system(const char *com, boolean allow_error);

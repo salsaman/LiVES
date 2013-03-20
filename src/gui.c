@@ -137,7 +137,7 @@ void make_custom_submenus(void) {
 }
 
 #if GTK_CHECK_VERSION(3,0,0)
-static boolean expose_sim (GtkWidget *widget, lives_painter_t *cr, gpointer user_data) {
+boolean expose_sim (GtkWidget *widget, lives_painter_t *cr, gpointer user_data) {
   if (mainw->current_file>0) {
     load_start_image(cfile->start);
   }
@@ -145,7 +145,7 @@ static boolean expose_sim (GtkWidget *widget, lives_painter_t *cr, gpointer user
   return TRUE;
 }
 
-static boolean expose_eim (GtkWidget *widget, lives_painter_t *cr, gpointer user_data) {
+boolean expose_eim (GtkWidget *widget, lives_painter_t *cr, gpointer user_data) {
   if (mainw->current_file>0) {
     load_end_image(cfile->end);
   }
@@ -153,7 +153,7 @@ static boolean expose_eim (GtkWidget *widget, lives_painter_t *cr, gpointer user
   return TRUE;
 }
 
-static boolean expose_pim (GtkWidget *widget, lives_painter_t *cr, gpointer user_data) {
+boolean expose_pim (GtkWidget *widget, lives_painter_t *cr, gpointer user_data) {
   if (!mainw->draw_blocked) {
     load_preview_image(TRUE);
   }
@@ -4143,7 +4143,7 @@ void resize_play_window (void) {
   gtk_window_resize (GTK_WINDOW (mainw->play_window), nwidth, nheight);
   gtk_widget_set_size_request (mainw->play_window, nwidth, nheight);
 
-  if (width!=-1&&(width!=nwidth||height!=nheight)) {
+  if (width!=-1&&(width!=nwidth||height!=nheight)&&mainw->preview_spinbutton!=NULL) {
     load_preview_image(FALSE);
   }
   

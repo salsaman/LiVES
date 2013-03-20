@@ -1855,7 +1855,7 @@ LiVESWidget *lives_standard_combo_new (const char *labeltext, boolean use_mnemon
 
   }
 
-  gtk_editable_set_editable (GTK_EDITABLE(entry),FALSE);
+  lives_entry_set_editable (LIVES_ENTRY(entry),FALSE);
   gtk_entry_set_activates_default(entry,TRUE);
 
   if (list!=NULL) {

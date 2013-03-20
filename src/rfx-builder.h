@@ -59,7 +59,7 @@ void on_export_rfx_activate (GtkMenuItem *, gpointer status);
 /// maximum decimal places allowed (should correspond to precision of a "float")
 #define RFXBUILD_MAX_DP 16
 typedef struct {
-  gint when;
+  int when;
   gchar *code;
 } rfx_trigger_t;
 
@@ -134,8 +134,8 @@ typedef struct {
 
   lives_rfx_table_type_t table_type;
 
-  gint table_rows;
-  gint ptable_rows;
+  int table_rows;
+  int ptable_rows;
 
   lives_rfx_code_type_t codetype;
 
@@ -160,8 +160,9 @@ typedef struct {
   GtkWidget *paramw_sp_combo;
   GtkWidget *paramw_spsub_combo;
   GtkWidget *paramw_rest_label;
-  GtkWidget *bg_label;
+  GtkWidget *hbox_bg;
   GtkWidget *param_strdef_button;
+  GtkWidget *param_strdef_hbox;
   GtkWidget *trigger_when_entry;
   GtkWidget *spinbutton_param_dp;
   GtkWidget *spinbutton_param_group;
@@ -179,34 +180,34 @@ typedef struct {
   gchar *loop_code;
   gchar *post_code;
 
-  gint edit_param;
+  int edit_param;
 
   gchar *reqs[RFXBUILD_MAX_REQ];
-  gint num_reqs;
-  gint onum_reqs;
+  int num_reqs;
+  int onum_reqs;
 
   lives_param_t *params;   ///< store our parameters
   lives_param_t *copy_params;   ///< store our parameters while editing
-  gint num_params; ///< upper limit is RFXBUILD_MAX_PARAMS-1
-  gint onum_params;
+  int num_params; ///< upper limit is RFXBUILD_MAX_PARAMS-1
+  int onum_params;
 
   gchar *paramw_hints[RFXBUILD_MAX_PARAMS];
-  gint num_paramw_hints;  ///< upper limit is RFXBUILD_MAX_PARAMW_HINTS-1
-  gint onum_paramw_hints;
+  int num_paramw_hints;  ///< upper limit is RFXBUILD_MAX_PARAMW_HINTS-1
+  int onum_paramw_hints;
 
   rfx_trigger_t *triggers;
   rfx_trigger_t *copy_triggers; ///< store triggers while editing
-  gint num_triggers;   ///< upper limit is RFXBUILD_MAX_PARAMS, 0 == init
-  gint onum_triggers;
+  int num_triggers;   ///< upper limit is RFXBUILD_MAX_PARAMS, 0 == init
+  int onum_triggers;
 
-  gboolean has_init_trigger;
+  boolean has_init_trigger;
 
   gchar *field_delim;
 
   lives_rfx_builder_mode_t mode;
 
-  gint table_swap_row1;
-  gint table_swap_row2;
+  int table_swap_row1;
+  int table_swap_row2;
 
   gchar *script_name;
   gchar *oname;
@@ -217,7 +218,7 @@ typedef struct {
   gulong step_spin_f;
 
   gchar *rfx_version;
-  gint plugin_version;
+  int plugin_version;
 
 } rfx_build_window_t;
 
@@ -244,9 +245,9 @@ void on_triggers_cancel (GtkButton *, gpointer);
 
 
 
-GtkWidget * make_param_dialog (gint pnum, rfx_build_window_t *rfxbuilder);
-GtkWidget * make_param_window_dialog (gint hnum, rfx_build_window_t *rfxbuilder);
-GtkWidget * make_trigger_dialog (gint tnum, rfx_build_window_t *rfxbuilder);
+GtkWidget * make_param_dialog (int pnum, rfx_build_window_t *rfxbuilder);
+GtkWidget * make_param_window_dialog (int hnum, rfx_build_window_t *rfxbuilder);
+GtkWidget * make_trigger_dialog (int tnum, rfx_build_window_t *rfxbuilder);
 
 void on_table_add_row (GtkButton *, gpointer rfxbuilder);
 void on_table_edit_row (GtkButton *, gpointer rfxbuilder);
@@ -276,17 +277,17 @@ void add_rfx_effects(void);
 
 // utility functions
 gchar *prompt_for_script_name (const gchar *sname, lives_rfx_status_t status);
-gboolean check_builder_programs (void);
+boolean check_builder_programs (void);
 GList *get_script_list (gshort status);
 
-gboolean perform_rfxbuilder_checks (rfx_build_window_t *);
-gboolean perform_param_checks (rfx_build_window_t *, gint index, gint rows);
+boolean perform_rfxbuilder_checks (rfx_build_window_t *);
+boolean perform_param_checks (rfx_build_window_t *, int index, int rows);
 
 
 // read/write script files
-gboolean rfxbuilder_to_script (rfx_build_window_t *);
-gboolean script_to_rfxbuilder (rfx_build_window_t *, const gchar *script_file);
+boolean rfxbuilder_to_script (rfx_build_window_t *);
+boolean script_to_rfxbuilder (rfx_build_window_t *, const gchar *script_file);
 
-GList *get_script_section (const gchar *section, const gchar *script_file, gboolean strip);
+GList *get_script_section (const gchar *section, const gchar *script_file, boolean strip);
 
 #endif // HAS_LIVES_RFX_BUILDER_H

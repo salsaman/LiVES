@@ -3358,6 +3358,10 @@ void load_start_image(gint frame) {
 
   if (mainw->multitrack!=NULL) return;
 
+#if GTK_CHECK_VERSION(3,0,0)
+  g_signal_handlers_block_by_func(mainw->image272,(gpointer)expose_sim,NULL);
+#endif
+
   if (mainw->current_file>-1&&(cfile->clip_type==CLIP_TYPE_YUV4MPEG||cfile->clip_type==CLIP_TYPE_VIDEODEV)) {
     if (mainw->camframe==NULL) {
       GError *error=NULL;
@@ -3367,6 +3371,9 @@ void load_start_image(gint frame) {
       g_free(tmp);
     }
     set_ce_frame_from_pixbuf(GTK_IMAGE(mainw->image272),mainw->camframe,NULL);
+#if GTK_CHECK_VERSION(3,0,0)
+    g_signal_handlers_unblock_by_func(mainw->image272,(gpointer)expose_sim,NULL);
+#endif
     return;
   }
 
@@ -3380,6 +3387,9 @@ void load_start_image(gint frame) {
       set_ce_frame_from_pixbuf(GTK_IMAGE(mainw->image272),NULL,NULL);
     }
     threaded_dialog_spin();
+#if GTK_CHECK_VERSION(3,0,0)
+  g_signal_handlers_unblock_by_func(mainw->image272,(gpointer)expose_sim,NULL);
+#endif
     return;
   }
 
@@ -3408,6 +3418,9 @@ void load_start_image(gint frame) {
       }
     }
     threaded_dialog_spin();
+#if GTK_CHECK_VERSION(3,0,0)
+    g_signal_handlers_unblock_by_func(mainw->image272,(gpointer)expose_sim,NULL);
+#endif
     return;
   }
 
@@ -3470,10 +3483,11 @@ void load_start_image(gint frame) {
   } while (FALSE);
 #endif
   threaded_dialog_spin();
-
-
   mainw->noswitch=noswitch;
 
+#if GTK_CHECK_VERSION(3,0,0)
+  g_signal_handlers_unblock_by_func(mainw->image272,(gpointer)expose_sim,NULL);
+#endif
 
 }
 
@@ -3490,6 +3504,10 @@ void load_end_image(gint frame) {
   if (!prefs->show_gui) return;
 
   if (mainw->multitrack!=NULL) return;
+
+#if GTK_CHECK_VERSION(3,0,0)
+  g_signal_handlers_block_by_func(mainw->image273,(gpointer)expose_sim,NULL);
+#endif
 
   if (mainw->current_file>-1&&(cfile->clip_type==CLIP_TYPE_YUV4MPEG||cfile->clip_type==CLIP_TYPE_VIDEODEV)) {
     if (mainw->camframe==NULL) {
@@ -3513,6 +3531,9 @@ void load_end_image(gint frame) {
       set_ce_frame_from_pixbuf(GTK_IMAGE(mainw->image273),NULL,NULL);
     }
     threaded_dialog_spin();
+#if GTK_CHECK_VERSION(3,0,0)
+    g_signal_handlers_unblock_by_func(mainw->image273,(gpointer)expose_sim,NULL);
+#endif
     return;
   }
 
@@ -3543,6 +3564,9 @@ void load_end_image(gint frame) {
       }
     }
     threaded_dialog_spin();
+#if GTK_CHECK_VERSION(3,0,0)
+    g_signal_handlers_unblock_by_func(mainw->image273,(gpointer)expose_sim,NULL);
+#endif
     return;
   }
 
@@ -3594,6 +3618,9 @@ void load_end_image(gint frame) {
     if (mainw->current_file==-1) {
       // user may close file
       load_end_image(0);
+#if GTK_CHECK_VERSION(3,0,0)
+      g_signal_handlers_unblock_by_func(mainw->image273,(gpointer)expose_sim,NULL);
+#endif
       return;
     }
   } while (rwidth!=lives_widget_get_allocation_width(mainw->image273)||rheight!=lives_widget_get_allocation_height(mainw->image273));
@@ -3603,6 +3630,9 @@ void load_end_image(gint frame) {
   threaded_dialog_spin();
   mainw->noswitch=noswitch;
 
+#if GTK_CHECK_VERSION(3,0,0)
+  g_signal_handlers_unblock_by_func(mainw->image273,(gpointer)expose_sim,NULL);
+#endif
 
 }
 
@@ -3616,13 +3646,15 @@ void load_preview_image(boolean update_always) {
   // update_always==TRUE = update widgets from mainw->preview_frame
   GdkPixbuf *pixbuf=NULL;
 
-  boolean mdb;
-
   int preview_frame;
 
   if (!prefs->show_gui) return;
 
   if (mainw->playing_file>-1) return;
+
+#if GTK_CHECK_VERSION(3,0,0)
+  g_signal_handlers_block_by_func(mainw->preview_image,(gpointer)expose_pim,NULL);
+#endif
 
   if (mainw->current_file>-1&&cfile!=NULL&&(cfile->clip_type==CLIP_TYPE_YUV4MPEG||cfile->clip_type==CLIP_TYPE_VIDEODEV)) {
     if (mainw->camframe==NULL) {
@@ -3641,10 +3673,9 @@ void load_preview_image(boolean update_always) {
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(mainw->preview_spinbutton),1);
     g_signal_handler_unblock(mainw->preview_spinbutton,mainw->preview_spin_func);
     gtk_widget_set_size_request(mainw->preview_image,mainw->pwidth,mainw->pheight);
-    mdb=mainw->draw_blocked;
-    mainw->draw_blocked=TRUE;
-    lives_widget_context_update();
-    if (mainw->draw_blocked) mainw->draw_blocked=mdb;
+#if GTK_CHECK_VERSION(3,0,0)
+    g_signal_handlers_unblock_by_func(mainw->preview_image,(gpointer)expose_pim,NULL);
+#endif
     return;
   }
 
@@ -3661,10 +3692,9 @@ void load_preview_image(boolean update_always) {
       set_ce_frame_from_pixbuf(GTK_IMAGE(mainw->preview_image), mainw->imframe, NULL);
     }
     else set_ce_frame_from_pixbuf(GTK_IMAGE(mainw->preview_image), NULL, NULL);
-    mdb=mainw->draw_blocked;
-    mainw->draw_blocked=TRUE;
-    lives_widget_context_update();
-    if (mainw->draw_blocked) mainw->draw_blocked=mdb;
+#if GTK_CHECK_VERSION(3,0,0)
+    g_signal_handlers_unblock_by_func(mainw->preview_image,(gpointer)expose_pim,NULL);
+#endif
     return;
   }
 
@@ -3760,11 +3790,9 @@ void load_preview_image(boolean update_always) {
     }
   }
   if (pixbuf!=NULL) lives_object_unref(pixbuf);
-
-  mdb=mainw->draw_blocked;
-  mainw->draw_blocked=TRUE;
-  lives_widget_context_update();
-  if (mainw->draw_blocked) mainw->draw_blocked=mdb;
+#if GTK_CHECK_VERSION(3,0,0)
+  g_signal_handlers_unblock_by_func(mainw->preview_image,(gpointer)expose_pim,NULL);
+#endif
 
 }
 

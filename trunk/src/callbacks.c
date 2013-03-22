@@ -131,11 +131,6 @@ void lives_exit (void) {
     mainw->current_file=-1;
 
     if (!mainw->only_close) {
-#if GTK_CHECK_VERSION(3,0,0)
-    mainw->kb_timer_end=TRUE;
-#else
-    if (mainw->kb_timer!=-1) gtk_timeout_remove (mainw->kb_timer);
-#endif
 #ifdef HAVE_PULSE_AUDIO
     pthread_mutex_lock(&mainw->abuf_mutex);
     if (mainw->pulsed!=NULL) pulse_close_client(mainw->pulsed);
@@ -8876,7 +8871,7 @@ on_preview_spinbutton_changed          (GtkSpinButton   *spinbutton,
 					gpointer         user_data)
 {
   // update the play window preview
-  gint preview_frame=gtk_spin_button_get_value_as_int(spinbutton);
+  int preview_frame=gtk_spin_button_get_value_as_int(spinbutton);
   if ((preview_frame)==mainw->preview_frame) return;
   mainw->preview_frame=preview_frame;
   load_preview_image(TRUE);
@@ -8939,6 +8934,11 @@ on_spinbutton_start_value_changed          (GtkSpinButton   *spinbutton,
   }
   set_sel_label(mainw->sel_label);
   get_play_times();
+
+  if (mainw->playing_file==-1&&mainw->play_window!=NULL&&cfile->is_loaded) {
+    if (mainw->prv_link==PRV_START&&mainw->preview_frame!=cfile->start)
+      load_preview_image(FALSE);
+  }
 }
 
 
@@ -8986,6 +8986,11 @@ on_spinbutton_end_value_changed          (GtkSpinButton   *spinbutton,
 
   set_sel_label(mainw->sel_label);
   get_play_times();
+
+  if (mainw->playing_file==-1&&mainw->play_window!=NULL&&cfile->is_loaded) {
+    if (mainw->prv_link==PRV_END&&mainw->preview_frame!=cfile->end)
+      load_preview_image(FALSE);
+  }
 
 }
 
@@ -9321,6 +9326,7 @@ boolean config_event (GtkWidget *widget, GdkEventConfigure *event, gpointer user
 #endif
     }
     mainw->is_ready=TRUE;
+    if (palette->style&STYLE_1) widget_opts.apply_theme=TRUE;
     resize(1);
   }
   return FALSE;
@@ -9996,15 +10002,19 @@ on_hrule_set           (GtkWidget       *widget,
 			gpointer         user_data)
 {
   // button press
-  gint x;
+  int x;
+  int frame;
+
   if (mainw->current_file<=0) return FALSE;
+
   lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[prefs->gui_monitor>0?prefs->gui_monitor-1:0].mouse_device, 
 			   mainw->LiVES, &x, NULL);
   if (x<0) x=0;
+
+  frame=calc_frame_from_time(mainw->current_file,(double)x/lives_widget_get_allocation_width(mainw->vidbar)*cfile->total_time);
+
   if ((lives_ruler_set_value(LIVES_RULER (mainw->hruler),(cfile->pointer_time=
-       calc_time_from_frame(mainw->current_file,calc_frame_from_time(mainw->current_file,
-								     (gdouble)x/lives_widget_get_allocation_width(mainw->vidbar)*
-								     cfile->total_time)))))<=0.) 
+							  calc_time_from_frame(mainw->current_file,frame))))<=0.)
     lives_ruler_set_value(LIVES_RULER (mainw->hruler),(cfile->pointer_time=(gdouble)x/
 						       lives_widget_get_allocation_width(mainw->vidbar)*cfile->total_time));
   gtk_widget_queue_draw (mainw->hruler);
@@ -10013,6 +10023,12 @@ on_hrule_set           (GtkWidget       *widget,
     g_signal_handler_unblock (mainw->eventbox5,mainw->hrule_func);
     mainw->hrule_blocked=FALSE;
   }
+
+  if (mainw->playing_file==-1&&mainw->play_window!=NULL&&cfile->is_loaded) {
+    if (mainw->prv_link==PRV_PTR&&mainw->preview_frame!=frame)
+      load_preview_image(FALSE);
+  }
+
   return FALSE;
 }
 

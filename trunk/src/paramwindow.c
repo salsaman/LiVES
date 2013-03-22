@@ -1299,12 +1299,12 @@ boolean make_param_box(GtkVBox *top_vbox, lives_rfx_t *rfx) {
     
     if (mainw->multitrack==NULL||rfx->status!=RFX_STATUS_WEED) {
       if (mainw->scr_height>=mainw->overflow_height)
-	scrolledwindow=lives_standard_scrolled_window_new(RFX_WINSIZE_H,RFX_WINSIZE_V,top_hbox,TRUE);
+	scrolledwindow=lives_standard_scrolled_window_new(RFX_WINSIZE_H,RFX_WINSIZE_V,top_hbox);
       else 
-	scrolledwindow=lives_standard_scrolled_window_new(RFX_WINSIZE_H,RFX_WINSIZE_V>>1,top_hbox,TRUE);
+	scrolledwindow=lives_standard_scrolled_window_new(RFX_WINSIZE_H,RFX_WINSIZE_V>>1,top_hbox);
     }
     else 
-      scrolledwindow=lives_standard_scrolled_window_new(-1,-1,top_hbox,TRUE);
+      scrolledwindow=lives_standard_scrolled_window_new(-1,-1,top_hbox);
 
     gtk_box_pack_start (GTK_BOX (top_vbox), scrolledwindow, TRUE, TRUE, 0);
 
@@ -1640,6 +1640,7 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, boolean add_
 	param->special_type!=LIVES_PARAM_SPECIAL_TYPE_FILEREAD) {
       GtkWidget *vbox;
 
+      boolean woat;
 
       widget_opts.justify=LIVES_JUSTIFY_CENTER;
       if (use_mnemonic) label = lives_standard_label_new_with_mnemonic (_(name),NULL);
@@ -1666,7 +1667,10 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, boolean add_
 
       gtk_text_buffer_set_text (textbuffer, txt, -1);
 
-      scrolledwindow = lives_standard_scrolled_window_new (-1, RFX_TEXT_SCROLL_HEIGHT, textview, FALSE);
+      woat=widget_opts.apply_theme;
+      widget_opts.apply_theme=FALSE;
+      scrolledwindow = lives_standard_scrolled_window_new (-1, RFX_TEXT_SCROLL_HEIGHT, textview);
+      widget_opts.apply_theme=woat;
 
       gtk_box_pack_start (GTK_BOX (hbox), scrolledwindow, TRUE, TRUE, 0);
 

@@ -1049,7 +1049,7 @@ _vppaw *on_vpp_advanced_clicked (GtkButton *button, gpointer user_data) {
 
   if (tmpvpp->get_init_rfx!=NULL) {
     GtkWidget *vbox=lives_vbox_new (FALSE, 0);
-    GtkWidget *scrolledwindow = lives_standard_scrolled_window_new (RFX_WINSIZE_H, RFX_WINSIZE_V/2, vbox, TRUE);
+    GtkWidget *scrolledwindow = lives_standard_scrolled_window_new (RFX_WINSIZE_H, RFX_WINSIZE_V/2, vbox);
     gtk_box_pack_start (GTK_BOX (dialog_vbox), scrolledwindow, TRUE, TRUE, 0);
 
 #ifndef IS_MINGW
@@ -2555,7 +2555,7 @@ void on_decplug_advanced_clicked (GtkButton *button, gpointer user_data) {
 
   vbox = lives_vbox_new (FALSE, 0);
 
-  scrolledwindow = lives_standard_scrolled_window_new (RFX_WINSIZE_H, RFX_WINSIZE_V, vbox, TRUE);
+  scrolledwindow = lives_standard_scrolled_window_new (RFX_WINSIZE_H, RFX_WINSIZE_V, vbox);
 
   gtk_container_add (GTK_CONTAINER(dialog_vbox), scrolledwindow);
 

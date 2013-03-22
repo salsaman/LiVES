@@ -67,6 +67,8 @@
 #define DEFAULT_FRAME_HSIZE 320
 #define DEFAULT_FRAME_VSIZE 200
 
+#define MAIN_SPIN_SPACER ((int)52.*widget_opts.scale) ///< pixel spacing for start/end spins for clip and multitrack editors
+
 /// blank label to show so our message dialogs are not too small
 #define PROCW_STRETCHER "                                                                                                                            "
 
@@ -747,7 +749,6 @@ typedef struct {
   GtkWidget *laudbar;
   GtkWidget *raudbar;
 
-#define MAIN_SPIN_SPACER 52 ///< pixel spacing for start/end spins for clip and multitrack editors
   GtkWidget *spinbutton_end;
   GtkWidget *spinbutton_start;
 

@@ -326,7 +326,6 @@ struct _mt {
   GtkWidget *amixer_button;
   GtkWidget *view_sel_events;
   GtkWidget *adjust_start_end;
-  GtkWidget *in_eventbox;
   GtkWidget *out_eventbox;
   GtkWidget *start_in_label;
   GtkWidget *end_out_label;
@@ -758,7 +757,7 @@ void remove_first_gaps (GtkMenuItem *, gpointer mt);
 void on_insgap_sel_activate (GtkMenuItem *, gpointer mt);
 void on_insgap_cur_activate (GtkMenuItem *, gpointer mt);
 void on_split_activate (GtkMenuItem *, gpointer mt);
-void scroll_tracks (lives_mt *, gint top_track, boolean set_value);
+void scroll_tracks (lives_mt *, int top_track, boolean set_value);
 boolean track_arrow_pressed (GtkWidget *ahbox, GdkEventButton *, gpointer mt);
 void track_select (lives_mt *); ///< must call after setting mt->current_track
 boolean mt_track_is_audio(lives_mt *, int ntrack); ///< return TRUE if ntrack is a valid backing audio track

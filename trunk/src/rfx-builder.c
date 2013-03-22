@@ -151,9 +151,10 @@ rfx_build_window_t *make_rfx_build_window (const gchar *script_name, lives_rfx_s
 
   top_vbox = lives_vbox_new (FALSE, 0);
 
-  scrollw = lives_standard_scrolled_window_new ((PREF_RFXDIALOG_W<mainw->scr_width-20)?
-						PREF_RFXDIALOG_W:mainw->scr_width-20, (PREF_RFXDIALOG_H<mainw->scr_height-60)?
-						PREF_RFXDIALOG_H:mainw->scr_height-60,top_vbox,TRUE);
+  scrollw = lives_standard_scrolled_window_new ((PREF_RFXDIALOG_W<mainw->scr_width-20.*widget_opts.scale)?
+						PREF_RFXDIALOG_W:mainw->scr_width-20.*widget_opts.scale, 
+						(PREF_RFXDIALOG_H<mainw->scr_height-60.*widget_opts.scale)?
+						PREF_RFXDIALOG_H:mainw->scr_height-60.*widget_opts.scale,top_vbox);
   gtk_box_pack_start (GTK_BOX (dialog_vbox), scrollw, TRUE, TRUE, 0);
 
   // types
@@ -607,7 +608,7 @@ void on_list_table_clicked (GtkButton *button, gpointer user_data) {
   hbox = lives_hbox_new (FALSE, 0);
   gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-  scrolledwindow = lives_standard_scrolled_window_new (RFX_WINSIZE_H*5/6,RFX_WINSIZE_V/4,rfxbuilder->table,TRUE);
+  scrolledwindow = lives_standard_scrolled_window_new (RFX_WINSIZE_H*5/6,RFX_WINSIZE_V/4,rfxbuilder->table);
   gtk_box_pack_start (GTK_BOX (hbox), scrolledwindow, TRUE, TRUE, 0);
 
   // button box on right
@@ -2480,6 +2481,8 @@ GtkWidget * make_trigger_dialog (int tnum, rfx_build_window_t *rfxbuilder) {
 
   gchar *title;
 
+  boolean woat;
+
   register int i;
 
   if (tnum<0) {
@@ -2526,7 +2529,11 @@ GtkWidget * make_trigger_dialog (int tnum, rfx_build_window_t *rfxbuilder) {
   gtk_text_view_set_wrap_mode (GTK_TEXT_VIEW (rfxbuilder->code_textview), GTK_WRAP_WORD);
   gtk_text_view_set_cursor_visible (GTK_TEXT_VIEW (rfxbuilder->code_textview), TRUE);
 
-  scrolledwindow = lives_standard_scrolled_window_new (RFX_WINSIZE_H*2./3.,RFX_WINSIZE_V/4.,rfxbuilder->code_textview,FALSE);
+  woat=widget_opts.apply_theme;
+  widget_opts.apply_theme=FALSE;
+  scrolledwindow = lives_standard_scrolled_window_new (RFX_WINSIZE_H*2./3.,RFX_WINSIZE_V/4.,rfxbuilder->code_textview);
+  widget_opts.apply_theme=woat;
+
   gtk_box_pack_start (GTK_BOX (dialog_vbox), scrolledwindow, TRUE, TRUE, 0);
 
   if (tnum>=0) {
@@ -2554,6 +2561,8 @@ void on_code_clicked (GtkButton *button, gpointer user_data) {
 
   rfx_build_window_t *rfxbuilder=(rfx_build_window_t *)user_data;
 
+  boolean woat;
+
   gchar *tmpx;
 
   dialog = lives_standard_dialog_new (NULL,FALSE);
@@ -2567,7 +2576,10 @@ void on_code_clicked (GtkButton *button, gpointer user_data) {
   // code area
   rfxbuilder->code_textview = gtk_text_view_new ();
 
-  scrolledwindow = lives_standard_scrolled_window_new (RFX_WINSIZE_H,RFX_WINSIZE_V,rfxbuilder->code_textview,FALSE);
+  woat=widget_opts.apply_theme;
+  widget_opts.apply_theme=FALSE;
+  scrolledwindow = lives_standard_scrolled_window_new (RFX_WINSIZE_H,RFX_WINSIZE_V,rfxbuilder->code_textview);
+  widget_opts.apply_theme=woat;
 
   gtk_box_pack_start (GTK_BOX (dialog_vbox), scrolledwindow, TRUE, TRUE, 0);
 

@@ -2935,16 +2935,16 @@ boolean startup_message_fatal(const gchar *msg) {
 }
 
 boolean startup_message_nonfatal(const gchar *msg) {
-  mainw->is_ready=TRUE;
+  if (palette->style&STYLE_1) widget_opts.apply_theme=TRUE;
   do_error_dialog (msg);
-  mainw->is_ready=FALSE;
+  widget_opts.apply_theme=FALSE;
   return TRUE;
 }
 
 boolean startup_message_nonfatal_dismissable(const gchar *msg, gint warning_mask) {
-  mainw->is_ready=TRUE;
+  if (palette->style&STYLE_1) widget_opts.apply_theme=TRUE;
   do_error_dialog_with_check (msg, warning_mask);
-  mainw->is_ready=FALSE;
+  widget_opts.apply_theme=FALSE;
   return TRUE;
 }
 

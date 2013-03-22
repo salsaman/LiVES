@@ -4797,7 +4797,7 @@ GtkWidget *create_event_list_dialog (weed_plant_t *event_list, weed_timecode_t s
     event=get_next_event(event);
   }
 
-  scrolledwindow = lives_standard_scrolled_window_new (winsize_h, winsize_v, table, TRUE);
+  scrolledwindow = lives_standard_scrolled_window_new (winsize_h, winsize_v, table);
   gtk_box_pack_start (GTK_BOX (top_vbox), scrolledwindow, TRUE, TRUE, 0);
 
   hbuttonbox = lives_hbutton_box_new ();
@@ -4967,11 +4967,11 @@ render_details *create_render_details (int type) {
   if (!specified) {
     dbw=widget_opts.border_width;
     widget_opts.border_width=0;
-    scrollw = lives_standard_scrolled_window_new (scrw*.8, scrh*.75, top_vbox, TRUE);
+    scrollw = lives_standard_scrolled_window_new (scrw*.8, scrh*.75, top_vbox);
     widget_opts.border_width=dbw;
   }
   else 
-    scrollw = lives_standard_scrolled_window_new (scrw*.35, scrh*.4, top_vbox, TRUE);
+    scrollw = lives_standard_scrolled_window_new (scrw*.35, scrh*.4, top_vbox);
 
   gtk_box_pack_start (GTK_BOX (dialog_vbox), scrollw, TRUE, TRUE, 0);
 

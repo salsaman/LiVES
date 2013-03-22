@@ -77,7 +77,9 @@ static void handle_omc_events(void) {
 #endif
 
 
-gboolean ext_triggers_poll(gpointer data) {
+boolean ext_triggers_poll(gpointer data) {
+
+  if (mainw->is_exiting) return FALSE;
 
 #if GTK_CHECK_VERSION(3,0,0)
   if (mainw->kb_timer_end) {

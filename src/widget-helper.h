@@ -546,6 +546,7 @@ boolean lives_color_parse(const char *spec, LiVESWidgetColor *);
 
 LiVESWidgetColor *lives_widget_color_copy(LiVESWidgetColor *c1orNULL, const LiVESWidgetColor *c2);
 
+void lives_widget_apply_theme(LiVESWidget *, LiVESWidgetState state);
 
 LiVESWidget *lives_dialog_get_content_area(LiVESDialog *);
 LiVESWidget *lives_dialog_get_action_area(LiVESDialog *);
@@ -647,6 +648,7 @@ LiVESXWindow *lives_display_get_window_at_pointer (LiVESXDevice *, LiVESXDisplay
 void lives_display_get_pointer (LiVESXDevice *, LiVESXDisplay *, LiVESXScreen **, int *x, int *y, LiVESModifierType *mask);
 void lives_display_warp_pointer (LiVESXDevice *, LiVESXDisplay *, LiVESXScreen *, int x, int y);
 
+LiVESXDisplay *lives_widget_get_display(LiVESWidget *);
 lives_display_t lives_widget_get_display_type(LiVESWidget *widget);
 
 uint64_t lives_widget_get_xwinid(LiVESWidget *, const gchar *failure_msg);
@@ -683,7 +685,7 @@ LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_button
 
 LiVESWidget *lives_standard_hruler_new(void);
 
-LiVESWidget *lives_standard_scrolled_window_new(int width, int height, LiVESWidget *child, boolean apply_theme);
+LiVESWidget *lives_standard_scrolled_window_new(int width, int height, LiVESWidget *child);
 
 LiVESWidget *lives_standard_expander_new(const char *label, boolean use_mnemonic, LiVESBox *parent, LiVESWidget *child);
 
@@ -693,6 +695,7 @@ LiVESWidget *lives_standard_file_button_new(boolean is_dir, const char *def_dir)
 
 
 // util functions
+
 void lives_cursor_unref(LiVESXCursor *cursor);
 
 void lives_widget_context_update(void);
@@ -773,6 +776,7 @@ typedef struct {
   boolean line_wrap; // line wrapping for labels
   boolean non_modal; // non-modal for dialogs
   boolean expand; // whether spin,check,radio buttons should expand
+  boolean apply_theme; // whether to apply theming to widget
   double scale; // scale factor for all sizes
   int packing_width; // default should be W_PACKING_WIDTH
   int packing_height; // default should be W_PACKING_HEIGHT
@@ -795,6 +799,7 @@ const widget_opts_t def_widget_opts = {
     FALSE, // line_wrap
     FALSE, // non_modal
     FALSE, // no expand
+    FALSE, // no themeing
     1.0, // default scale
     W_PACKING_WIDTH, // def packing width
     W_PACKING_HEIGHT, // def packing height

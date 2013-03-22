@@ -233,10 +233,10 @@ xprocess * create_processing (const gchar *text) {
 
   if (mainw->iochan!=NULL) {
     // add "show details" arrow
-
-    procw->scrolledwindow = gtk_scrolled_window_new (NULL, NULL);
-    gtk_widget_set_size_request (procw->scrolledwindow, ENC_DETAILS_WIN_H, ENC_DETAILS_WIN_V);
-    gtk_container_add (GTK_CONTAINER (procw->scrolledwindow), (GtkWidget *)mainw->optextview);
+    boolean woat=widget_opts.apply_theme;
+    widget_opts.apply_theme=FALSE;
+    procw->scrolledwindow = lives_standard_scrolled_window_new (ENC_DETAILS_WIN_H, ENC_DETAILS_WIN_V, LIVES_WIDGET(mainw->optextview));
+    widget_opts.apply_theme=woat;
 
     details_arrow=lives_standard_expander_new(_("Show Details"),FALSE,LIVES_BOX(vbox3),procw->scrolledwindow);
 
@@ -821,9 +821,12 @@ text_window *create_text_window (const gchar *title, const gchar *text, GtkTextB
   GtkWidget *scrolledwindow;
   GtkWidget *dialog_action_area;
   GtkWidget *okbutton;
+
   gchar *mytitle=g_strdup(title);
   gchar *mytext=NULL;
   gchar *tmp;
+
+  boolean woat;
 
   if (text!=NULL) mytext=g_strdup(text);
 
@@ -839,10 +842,7 @@ text_window *create_text_window (const gchar *title, const gchar *text, GtkTextB
 
   dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(textwindow->dialog));
 
-  scrolledwindow = gtk_scrolled_window_new (NULL, NULL);
-  gtk_box_pack_start (GTK_BOX (dialog_vbox), scrolledwindow, TRUE, TRUE, 0);
-  gtk_widget_set_size_request (scrolledwindow, RFX_WINSIZE_H, RFX_WINSIZE_V);
-  
+
   if (mainw->iochan!=NULL) {
     textwindow->textview=GTK_WIDGET(mainw->optextview);
   }
@@ -852,7 +852,12 @@ text_window *create_text_window (const gchar *title, const gchar *text, GtkTextB
     gtk_text_view_set_wrap_mode (GTK_TEXT_VIEW (textwindow->textview), GTK_WRAP_WORD);
   }
 
-  gtk_container_add (GTK_CONTAINER (scrolledwindow), textwindow->textview);
+  woat=widget_opts.apply_theme;
+  widget_opts.apply_theme=FALSE;
+  scrolledwindow = lives_standard_scrolled_window_new (RFX_WINSIZE_H, RFX_WINSIZE_V, textwindow->textview);
+  widget_opts.apply_theme=woat;
+
+  gtk_box_pack_start (GTK_BOX (dialog_vbox), scrolledwindow, TRUE, TRUE, 0);
 
   gtk_text_view_set_editable (GTK_TEXT_VIEW (textwindow->textview), FALSE);
   gtk_text_view_set_cursor_visible (GTK_TEXT_VIEW (textwindow->textview), FALSE);
@@ -2700,7 +2705,7 @@ GtkWidget *create_cleardisk_advanced_dialog(void) {
   vbox = lives_vbox_new (FALSE, 0);
   gtk_container_set_border_width (GTK_CONTAINER (vbox), widget_opts.border_width*2);
 
-  scrollw = lives_standard_scrolled_window_new (450,300,vbox,TRUE);
+  scrollw = lives_standard_scrolled_window_new (450.*widget_opts.scale,300.*widget_opts.scale,vbox);
 
   gtk_container_add (GTK_CONTAINER (dialog_vbox), scrollw);
    

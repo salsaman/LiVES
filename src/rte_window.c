@@ -2253,7 +2253,7 @@ GtkWidget * create_rte_window (void) {
   }
 
 
-  scrolledwindow = lives_standard_scrolled_window_new (winsize_h, winsize_v, table, TRUE);
+  scrolledwindow = lives_standard_scrolled_window_new (winsize_h, winsize_v, table);
 
   top_vbox = lives_vbox_new (FALSE, 0);
 

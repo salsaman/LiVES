@@ -2066,7 +2066,7 @@ _prefsw *create_prefs_dialog (void) {
   // -------------------'
   prefsw->vbox_right_gui = lives_vbox_new (FALSE, 10);
 
-  prefsw->scrollw_right_gui = lives_standard_scrolled_window_new (0,0,prefsw->vbox_right_gui,TRUE);
+  prefsw->scrollw_right_gui = lives_standard_scrolled_window_new (0,0,prefsw->vbox_right_gui);
 
   gtk_widget_show (prefsw->vbox_right_gui);
   prefsw->right_shown = prefsw->vbox_right_gui;
@@ -2293,7 +2293,7 @@ _prefsw *create_prefs_dialog (void) {
   prefsw->vbox_right_multitrack = lives_vbox_new (FALSE, 0);
   gtk_container_set_border_width (GTK_CONTAINER (prefsw->vbox_right_multitrack), 10);
 
-  prefsw->scrollw_right_multitrack = lives_standard_scrolled_window_new (0,0,prefsw->vbox_right_multitrack,TRUE);
+  prefsw->scrollw_right_multitrack = lives_standard_scrolled_window_new (0,0,prefsw->vbox_right_multitrack);
 
   hbox1 = lives_hbox_new (FALSE, 0);
   gtk_widget_show (hbox1);
@@ -2597,7 +2597,7 @@ _prefsw *create_prefs_dialog (void) {
   prefsw->vbox_right_decoding = lives_vbox_new (FALSE, 20);
   gtk_container_set_border_width (GTK_CONTAINER (prefsw->vbox_right_decoding), widget_opts.border_width*2);
 
-  prefsw->scrollw_right_decoding = lives_standard_scrolled_window_new (0,0,prefsw->vbox_right_decoding,TRUE);
+  prefsw->scrollw_right_decoding = lives_standard_scrolled_window_new (0,0,prefsw->vbox_right_decoding);
 
   hbox = lives_hbox_new (FALSE, 0);
   gtk_widget_show (hbox);
@@ -2831,7 +2831,7 @@ _prefsw *create_prefs_dialog (void) {
   prefsw->vbox_right_playback = lives_vbox_new (FALSE, 10);
   gtk_container_set_border_width (GTK_CONTAINER (prefsw->vbox_right_playback), 20);
 
-  prefsw->scrollw_right_playback = lives_standard_scrolled_window_new (0,0,prefsw->vbox_right_playback,TRUE);
+  prefsw->scrollw_right_playback = lives_standard_scrolled_window_new (0,0,prefsw->vbox_right_playback);
 
   frame4 = gtk_frame_new (NULL);
   gtk_widget_show (frame4);
@@ -3130,7 +3130,7 @@ _prefsw *create_prefs_dialog (void) {
   prefsw->vbox_right_recording = lives_vbox_new (FALSE, 0);
   gtk_container_set_border_width (GTK_CONTAINER (prefsw->vbox_right_recording), 20);
 
-  prefsw->scrollw_right_recording = lives_standard_scrolled_window_new (0,0,prefsw->vbox_right_recording,TRUE);
+  prefsw->scrollw_right_recording = lives_standard_scrolled_window_new (0,0,prefsw->vbox_right_recording);
 
   hbox = lives_hbox_new(FALSE, 0);
   prefsw->rdesk_audio = lives_standard_check_button_new(_("Record audio when capturing an e_xternal window\n (requires jack or pulse audio)"),
@@ -3295,7 +3295,7 @@ _prefsw *create_prefs_dialog (void) {
   prefsw->vbox_right_encoding = lives_vbox_new (FALSE, widget_opts.packing_height*4);
   gtk_container_set_border_width (GTK_CONTAINER (prefsw->vbox_right_encoding), widget_opts.border_width);
 
-  prefsw->scrollw_right_encoding = lives_standard_scrolled_window_new (0,0,prefsw->vbox_right_encoding,TRUE);
+  prefsw->scrollw_right_encoding = lives_standard_scrolled_window_new (0,0,prefsw->vbox_right_encoding);
 
   if (capable->has_encoder_plugins) {
     // scan for encoder plugins
@@ -3379,7 +3379,7 @@ _prefsw *create_prefs_dialog (void) {
   prefsw->vbox_right_effects = lives_vbox_new (FALSE, 20);
   gtk_container_set_border_width (GTK_CONTAINER (prefsw->vbox_right_effects), widget_opts.border_width);
   
-  prefsw->scrollw_right_effects = lives_standard_scrolled_window_new (0,0,prefsw->vbox_right_effects,TRUE);
+  prefsw->scrollw_right_effects = lives_standard_scrolled_window_new (0,0,prefsw->vbox_right_effects);
 
   hbox = lives_hbox_new(FALSE, 0);
   gtk_container_set_border_width(GTK_CONTAINER (hbox), 20);
@@ -3471,7 +3471,7 @@ _prefsw *create_prefs_dialog (void) {
   gtk_container_set_border_width (GTK_CONTAINER (prefsw->table_right_directories), widget_opts.border_width*2);
   gtk_table_set_col_spacings (GTK_TABLE (prefsw->table_right_directories), widget_opts.packing_width);
 
-  prefsw->scrollw_right_directories = lives_standard_scrolled_window_new (0,0,prefsw->table_right_directories,TRUE);
+  prefsw->scrollw_right_directories = lives_standard_scrolled_window_new (0,0,prefsw->table_right_directories);
 
   label39 = gtk_label_new (_("      Video load directory (default)      "));
   if (palette->style&STYLE_1) {
@@ -3704,7 +3704,7 @@ _prefsw *create_prefs_dialog (void) {
   prefsw->vbox_right_warnings = lives_vbox_new (FALSE, 10);
   gtk_widget_show (prefsw->vbox_right_warnings);
 
-  prefsw->scrollw_right_warnings = lives_standard_scrolled_window_new (0,0,prefsw->vbox_right_warnings,TRUE);
+  prefsw->scrollw_right_warnings = lives_standard_scrolled_window_new (0,0,prefsw->vbox_right_warnings);
 
   hbox = lives_hbox_new(FALSE, 0);
   gtk_widget_show(hbox);
@@ -4275,7 +4275,7 @@ _prefsw *create_prefs_dialog (void) {
   prefsw->vbox_right_misc = lives_vbox_new (FALSE, 10);
   gtk_container_set_border_width (GTK_CONTAINER (prefsw->vbox_right_misc), 20);
    
-  prefsw->scrollw_right_misc = lives_standard_scrolled_window_new (0,0,prefsw->vbox_right_misc,TRUE);
+  prefsw->scrollw_right_misc = lives_standard_scrolled_window_new (0,0,prefsw->vbox_right_misc);
 
   prefsw->check_midi = gtk_check_button_new();
   eventbox = gtk_event_box_new();
@@ -4414,7 +4414,7 @@ _prefsw *create_prefs_dialog (void) {
   prefsw->vbox_right_themes = lives_vbox_new (FALSE, 10);
   gtk_container_set_border_width (GTK_CONTAINER (prefsw->vbox_right_themes), 20);
    
-  prefsw->scrollw_right_themes = lives_standard_scrolled_window_new (0,0,prefsw->vbox_right_themes,TRUE);
+  prefsw->scrollw_right_themes = lives_standard_scrolled_window_new (0,0,prefsw->vbox_right_themes);
 
   hbox93 = lives_hbox_new (FALSE, 0);
   gtk_widget_show (hbox93);
@@ -4464,7 +4464,7 @@ _prefsw *create_prefs_dialog (void) {
   prefsw->vbox_right_net = lives_vbox_new (FALSE, 10);
   gtk_container_set_border_width (GTK_CONTAINER (prefsw->vbox_right_net), 20);
 
-  prefsw->scrollw_right_net = lives_standard_scrolled_window_new (0,0,prefsw->vbox_right_net,TRUE);
+  prefsw->scrollw_right_net = lives_standard_scrolled_window_new (0,0,prefsw->vbox_right_net);
 
   hbox94 = lives_hbox_new (FALSE, 0);
   gtk_widget_show (hbox94);
@@ -4587,7 +4587,7 @@ _prefsw *create_prefs_dialog (void) {
   prefsw->vbox_right_jack = lives_vbox_new (FALSE, 20);
   gtk_container_set_border_width (GTK_CONTAINER (prefsw->vbox_right_jack), 20);
 
-  prefsw->scrollw_right_jack = lives_standard_scrolled_window_new (0,0,prefsw->vbox_right_jack,TRUE);
+  prefsw->scrollw_right_jack = lives_standard_scrolled_window_new (0,0,prefsw->vbox_right_jack);
 
   label = gtk_label_new (_("Jack transport"));
   if (palette->style&STYLE_1) {
@@ -4886,7 +4886,7 @@ _prefsw *create_prefs_dialog (void) {
   // TODO - copy pattern to all
   prefsw->vbox_right_midi = lives_vbox_new (FALSE, 10);
 
-  prefsw->scrollw_right_midi = lives_standard_scrolled_window_new (0,0,prefsw->vbox_right_midi,TRUE);
+  prefsw->scrollw_right_midi = lives_standard_scrolled_window_new (0,0,prefsw->vbox_right_midi);
 
   gtk_container_set_border_width (GTK_CONTAINER (prefsw->vbox_right_midi), 20);
 

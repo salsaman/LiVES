@@ -870,8 +870,8 @@ static void lives_combo_remove_all_text(LiVESCombo *combo) {
 #if GTK_CHECK_VERSION(3,0,0)
   gtk_combo_box_text_remove_all(GTK_COMBO_BOX_TEXT(combo));
 #else
-  int count = gtk_tree_model_iter_n_children(gtk_combo_box_get_model(combo),
-					     NULL);
+  register int count = gtk_tree_model_iter_n_children(gtk_combo_box_get_model(combo),
+						      NULL);
   while (count-- > 0) gtk_combo_box_remove_text(combo,0);
 #endif
 }
@@ -1367,6 +1367,15 @@ LIVES_INLINE void lives_widget_get_pointer(LiVESXDevice *device, LiVESWidget *wi
 }
 
 
+LIVES_INLINE LiVESXDisplay *lives_widget_get_display(LiVESWidget *widget) {
+  LiVESXDisplay *disp=NULL;
+#ifdef GUI_GTK
+  disp=gtk_widget_get_display(widget);
+#endif
+  return disp;
+}
+
+
 LIVES_INLINE LiVESXWindow *lives_display_get_window_at_pointer 
 (LiVESXDevice *device, LiVESXDisplay *display, int *win_x, int *win_y) {
   LiVESXWindow *xwindow=NULL;
@@ -1525,8 +1534,8 @@ LiVESWidget *lives_standard_label_new(const char *text) {
 
   label=gtk_label_new(text);
 
-  if (mainw!=NULL&&mainw->is_ready&&(palette->style&STYLE_1)) {
-    lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+  if (widget_opts.apply_theme) {
+    lives_widget_apply_theme(label, LIVES_WIDGET_STATE_NORMAL);
   }
   gtk_label_set_justify (GTK_LABEL (label), widget_opts.justify);
 
@@ -1543,8 +1552,8 @@ LiVESWidget *lives_standard_label_new_with_mnemonic(const char *text, LiVESWidge
 
   label=gtk_label_new_with_mnemonic(text);
 
-  if (mainw!=NULL&&mainw->is_ready&&(palette->style&STYLE_1)) {
-    lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+  if (widget_opts.apply_theme) {
+    lives_widget_apply_theme(label, LIVES_WIDGET_STATE_NORMAL);
   }
   gtk_label_set_justify (GTK_LABEL (label), widget_opts.justify);
   gtk_label_set_line_wrap (GTK_LABEL (label), widget_opts.line_wrap);
@@ -1590,9 +1599,8 @@ LiVESWidget *lives_standard_check_button_new(const char *labeltext, boolean use_
   
     widget_opts.last_label=label;
 
-    if (mainw!=NULL&&mainw->is_ready&&(palette->style&STYLE_1)) {
-      lives_widget_set_fg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-      lives_widget_set_bg_color (eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+    if (widget_opts.apply_theme) {
+      lives_widget_apply_theme(eventbox,LIVES_WIDGET_STATE_NORMAL);
     }
   }
   
@@ -1660,9 +1668,8 @@ LiVESWidget *lives_standard_radio_button_new(const char *labeltext, boolean use_
 		      G_CALLBACK (label_act_toggle),
 		      radiobutton);
     
-    if (mainw!=NULL&&mainw->is_ready&&(palette->style&STYLE_1)) {
-      lives_widget_set_fg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-      lives_widget_set_bg_color (eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+    if (widget_opts.apply_theme) {
+      lives_widget_apply_theme(eventbox, LIVES_WIDGET_STATE_NORMAL);
     }
   }
 
@@ -1748,9 +1755,8 @@ LiVESWidget *lives_standard_spin_button_new(const char *labeltext, boolean use_m
     if (tooltip!=NULL) lives_tooltips_copy(eventbox,spinbutton);
     gtk_container_add(GTK_CONTAINER(eventbox),label);
     
-    if (mainw!=NULL&&mainw->is_ready&&(palette->style&STYLE_1)) {
-      lives_widget_set_fg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-      lives_widget_set_bg_color (eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+    if (widget_opts.apply_theme) {
+      lives_widget_apply_theme(eventbox, LIVES_WIDGET_STATE_NORMAL);
     }
   }
 
@@ -1820,9 +1826,8 @@ LiVESWidget *lives_standard_combo_new (const char *labeltext, boolean use_mnemon
     if (tooltip!=NULL) lives_tooltips_copy(eventbox,combo);
     gtk_container_add(GTK_CONTAINER(eventbox),label);
     
-    if (mainw!=NULL&&mainw->is_ready&&(palette->style&STYLE_1)) {
-      lives_widget_set_fg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-      lives_widget_set_bg_color (eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+    if (widget_opts.apply_theme) {
+      lives_widget_apply_theme(eventbox, LIVES_WIDGET_STATE_NORMAL);
     }
   }
 
@@ -1954,8 +1959,8 @@ LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_button
   gtk_container_set_border_width (GTK_CONTAINER (dialog), widget_opts.border_width*2);
   gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_CENTER_ALWAYS);
 
-  if (mainw!=NULL&&mainw->is_ready&&(palette->style&STYLE_1)) {
-    lives_widget_set_bg_color(dialog, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+  if (widget_opts.apply_theme) {
+    lives_widget_apply_theme(dialog, LIVES_WIDGET_STATE_NORMAL);
 
 #if !GTK_CHECK_VERSION(3,0,0)
     lives_dialog_set_has_separator(GTK_DIALOG(dialog),FALSE);
@@ -2022,7 +2027,7 @@ LiVESWidget *lives_standard_hruler_new(void) {
 
 
 
-LiVESWidget *lives_standard_scrolled_window_new(int width, int height, LiVESWidget *child, boolean apply_theme) {
+LiVESWidget *lives_standard_scrolled_window_new(int width, int height, LiVESWidget *child) {
   LiVESWidget *scrolledwindow=NULL;
 
 #ifdef GUI_GTK
@@ -2031,7 +2036,7 @@ LiVESWidget *lives_standard_scrolled_window_new(int width, int height, LiVESWidg
   scrolledwindow = gtk_scrolled_window_new (NULL, NULL);
   gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrolledwindow), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
 
-  if (mainw->is_ready&&apply_theme) {
+  if (widget_opts.apply_theme) {
     lives_widget_set_hexpand(scrolledwindow,TRUE);
     lives_widget_set_vexpand(scrolledwindow,TRUE);
     gtk_container_set_border_width (GTK_CONTAINER (scrolledwindow), widget_opts.border_width);
@@ -2062,12 +2067,8 @@ LiVESWidget *lives_standard_scrolled_window_new(int width, int height, LiVESWidg
 #endif
   }
 
-  if (mainw->is_ready&&apply_theme) {
-    if (palette->style&STYLE_1) {
-      lives_widget_set_bg_color(swchild, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-      lives_widget_set_fg_color(swchild, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-    }
-
+  if (widget_opts.apply_theme) {
+    lives_widget_apply_theme(swchild, LIVES_WIDGET_STATE_NORMAL);
     lives_widget_set_hexpand(swchild,TRUE);
     lives_widget_set_vexpand(swchild,TRUE);
     if (GTK_IS_CONTAINER(child)) gtk_container_set_border_width (GTK_CONTAINER (child), widget_opts.border_width>>1);
@@ -2088,14 +2089,12 @@ LiVESWidget *lives_standard_expander_new(const char *ltext, boolean use_mnemonic
   else 
     expander=gtk_expander_new(ltext);
 
-  if (mainw->is_ready&&palette->style&STYLE_1) {
+  if (widget_opts.apply_theme) {
     GtkWidget *label=gtk_expander_get_label_widget(GTK_EXPANDER(expander));
-    lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_PRELIGHT, &palette->normal_fore);
-    lives_widget_set_fg_color(expander, LIVES_WIDGET_STATE_PRELIGHT, &palette->normal_fore);
-    lives_widget_set_bg_color(expander, LIVES_WIDGET_STATE_PRELIGHT, &palette->normal_back);
-    lives_widget_set_fg_color(expander, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_bg_color(expander, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+    lives_widget_apply_theme(label, LIVES_WIDGET_STATE_NORMAL);
+    lives_widget_apply_theme(label, LIVES_WIDGET_STATE_PRELIGHT);
+    lives_widget_apply_theme(expander, LIVES_WIDGET_STATE_PRELIGHT);
+    lives_widget_apply_theme(expander, LIVES_WIDGET_STATE_NORMAL);
   }
   
   gtk_container_forall(GTK_CONTAINER(expander),set_child_colour,GINT_TO_POINTER(TRUE));
@@ -2123,6 +2122,8 @@ LiVESWidget *lives_standard_file_button_new(boolean is_dir, const char *def_dir)
 
 
 // utils
+
+
 LIVES_INLINE void lives_cursor_unref(LiVESXCursor *cursor) {
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3,0,0)
@@ -2134,7 +2135,10 @@ LIVES_INLINE void lives_cursor_unref(LiVESXCursor *cursor) {
 }
 
 
-
+LIVES_INLINE void lives_widget_apply_theme(LiVESWidget *widget, LiVESWidgetState state) {
+  lives_widget_set_fg_color(widget, state, &palette->normal_fore);
+  lives_widget_set_bg_color(widget, state, &palette->normal_back);
+}
 
 
 void lives_widget_get_bg_color(LiVESWidget *widget, LiVESWidgetColor *color) {
@@ -2171,17 +2175,17 @@ LIVES_INLINE void toggle_button_toggle (LiVESToggleButton *tbutton) {
 }
 
 
-void set_child_colour(GtkWidget *widget, gpointer set_allx) {
+void set_child_colour(LiVESWidget *widget, gpointer set_allx) {
   boolean set_all=GPOINTER_TO_INT(set_allx);
 
   if (!set_all&&GTK_IS_BUTTON(widget)) return;
   if (GTK_IS_CONTAINER(widget)) {
-    gtk_container_forall(GTK_CONTAINER(widget),set_child_colour,set_allx);
+    gtk_container_forall(LIVES_CONTAINER(widget),set_child_colour,set_allx);
     return;
   }
 
   if (set_all||GTK_IS_LABEL(widget)) {
-    lives_widget_set_fg_color(widget, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_apply_theme(widget, LIVES_WIDGET_STATE_NORMAL);
   }
 }
 
@@ -2215,7 +2219,7 @@ void text_view_set_text(LiVESTextView *textview, const gchar *text, int len) {
 int get_box_child_index (LiVESBox *box, LiVESWidget *tchild) {
   GList *list=gtk_container_get_children(GTK_CONTAINER(box));
   GtkWidget *child;
-  int i=0;
+  register int i=0;
 
   while (list!=NULL) {
     child=(GtkWidget *)list->data;
@@ -2434,8 +2438,8 @@ LiVESWidget *add_hsep_to_box (LiVESBox *box) {
   gtk_box_pack_start (box, hseparator, FALSE, FALSE, widget_opts.packing_height>>1);
   if (!widget_opts.no_gui) 
     gtk_widget_show(hseparator);
-  if (mainw!=NULL&&mainw->is_ready&&(palette->style&STYLE_1)) {
-    lives_widget_set_fg_color(hseparator, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+  if (widget_opts.apply_theme) {
+    lives_widget_apply_theme(hseparator, LIVES_WIDGET_STATE_NORMAL);
   }
   widget=hseparator;
 #endif

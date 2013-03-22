@@ -2815,7 +2815,7 @@ static GtkWidget *conx_scroll_new(weed_plant_t *filter, lives_conx_w *conxwp) {
 
   top_vbox=lives_vbox_new (FALSE, 0);
 
-  scrolledwindow = lives_standard_scrolled_window_new (-1,-1,top_vbox,TRUE);
+  scrolledwindow = lives_standard_scrolled_window_new (-1,-1,top_vbox);
 
   if (conxwp->num_alpha>0) {
     weed_plant_t **ochans=weed_get_plantptr_array(filter,"out_channel_templates",&error);

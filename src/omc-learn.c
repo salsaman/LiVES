@@ -1318,7 +1318,7 @@ static omclearn_w *create_omclearn_dialog(void) {
 
   gtk_table_set_col_spacings(GTK_TABLE(omclw->table),widget_opts.packing_width*2);
 
-  scrolledwindow = lives_standard_scrolled_window_new (winsize_h, winsize_v, omclw->table, TRUE);
+  scrolledwindow = lives_standard_scrolled_window_new (winsize_h, winsize_v, omclw->table);
 
   gtk_box_pack_start (GTK_BOX (omclw->top_vbox), scrolledwindow, TRUE, TRUE, 0);
 

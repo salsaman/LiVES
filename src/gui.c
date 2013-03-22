@@ -155,7 +155,7 @@ boolean expose_eim (GtkWidget *widget, lives_painter_t *cr, gpointer user_data) 
 
 boolean expose_pim (GtkWidget *widget, lives_painter_t *cr, gpointer user_data) {
   if (!mainw->draw_blocked) {
-    load_preview_image(TRUE);
+    load_preview_image(FALSE);
   }
   return TRUE;
 }
@@ -228,6 +228,8 @@ void create_LiVES (void) {
   gchar *tmp;
   gchar *fnamex;
 
+  int dpw;
+  boolean woat;
 
   stop_closure=NULL;
   fullscreen_closure=NULL;
@@ -265,10 +267,12 @@ void create_LiVES (void) {
 
 
 #if GTK_CHECK_VERSION(3,0,0)
+  gtk_widget_set_app_paintable(mainw->image272,TRUE);
   g_signal_connect (GTK_OBJECT (mainw->image272), LIVES_WIDGET_EVENT_EXPOSE_EVENT,
 		    G_CALLBACK (expose_sim),
 		    NULL);
 
+  gtk_widget_set_app_paintable(mainw->image273,TRUE);
   g_signal_connect (GTK_OBJECT (mainw->image273), LIVES_WIDGET_EVENT_EXPOSE_EVENT,
 		    G_CALLBACK (expose_eim),
 		    NULL);
@@ -2153,6 +2157,7 @@ void create_LiVES (void) {
 
   // the actual playback image for the internal player
   mainw->image274 = gtk_image_new_from_pixbuf (NULL);
+  gtk_widget_set_app_paintable(mainw->image274,TRUE);
   gtk_widget_show (mainw->image274);
   g_object_ref(mainw->image274);
 
@@ -2176,14 +2181,18 @@ void create_LiVES (void) {
   gtk_widget_show (hbox3);
   gtk_box_pack_start (GTK_BOX (vbox4), hbox3, FALSE, TRUE, 0);
 
-
+  dpw=widget_opts.packing_width;
+  woat=widget_opts.apply_theme;
   widget_opts.expand=TRUE;
+  widget_opts.apply_theme=FALSE;
+  widget_opts.packing_width=MAIN_SPIN_SPACER;
   mainw->spinbutton_start = lives_standard_spin_button_new (NULL,FALSE,0., 0., 0., 1., 100.,0,
 							    LIVES_BOX(hbox3),_("The first selected frame in this clip"));
   widget_opts.expand=FALSE;
+  widget_opts.packing_width=dpw;
+  widget_opts.apply_theme=woat;
 
   gtk_widget_show (mainw->spinbutton_start);
-  lives_widget_set_can_focus(mainw->spinbutton_start,TRUE);
 
   mainw->arrow1 = gtk_arrow_new (GTK_ARROW_LEFT, GTK_SHADOW_OUT);
   gtk_widget_show (mainw->arrow1);
@@ -2193,7 +2202,7 @@ void create_LiVES (void) {
     lives_widget_set_fg_color(mainw->arrow1, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
   }
 
-  gtk_entry_set_width_chars (GTK_ENTRY (mainw->spinbutton_start),10);
+  gtk_entry_set_width_chars (GTK_ENTRY (mainw->spinbutton_start),12);
   mainw->sel_label = lives_standard_label_new(NULL);
 
   if (palette->style&STYLE_1) {
@@ -2213,14 +2222,18 @@ void create_LiVES (void) {
   }
 
   widget_opts.expand=TRUE;
+  widget_opts.packing_width=MAIN_SPIN_SPACER;
+  widget_opts.apply_theme=FALSE;
   mainw->spinbutton_end = lives_standard_spin_button_new (NULL,FALSE,0., 0., 0., 1., 100.,0,
 							  LIVES_BOX(hbox3),_("The last selected frame in this clip"));
   widget_opts.expand=FALSE;
+  widget_opts.packing_width=dpw;
+  widget_opts.apply_theme=woat;
+
   gtk_widget_show (mainw->spinbutton_end);
 
 
-  gtk_entry_set_width_chars (GTK_ENTRY (mainw->spinbutton_end),10);
-  lives_widget_set_can_focus(mainw->spinbutton_end,TRUE);
+  gtk_entry_set_width_chars (GTK_ENTRY (mainw->spinbutton_end),12);
 
   if (palette->style&STYLE_1&&palette->style&STYLE_2) {
 #if !GTK_CHECK_VERSION(3,0,0)
@@ -2304,6 +2317,7 @@ void create_LiVES (void) {
   gtk_box_pack_start (GTK_BOX (vbox2), mainw->vidbar, TRUE, TRUE, 0);
 
   mainw->video_draw = gtk_drawing_area_new ();
+  gtk_widget_set_app_paintable(mainw->video_draw,TRUE);
   gtk_widget_set_size_request(mainw->video_draw,lives_widget_get_allocation_width(mainw->LiVES),CE_VIDBAR_HEIGHT);
   gtk_widget_show (mainw->video_draw);
   gtk_box_pack_start (GTK_BOX (vbox2), mainw->video_draw, TRUE, TRUE, 0);
@@ -2327,6 +2341,7 @@ void create_LiVES (void) {
   }
 
   mainw->laudio_draw = gtk_drawing_area_new ();
+  gtk_widget_set_app_paintable(mainw->laudio_draw,TRUE);
   gtk_widget_set_size_request(mainw->laudio_draw,lives_widget_get_allocation_width(mainw->LiVES),CE_VIDBAR_HEIGHT);
   gtk_widget_show (mainw->laudio_draw);
   gtk_box_pack_start (GTK_BOX (vbox2), mainw->laudio_draw, TRUE, TRUE, 0);
@@ -2350,6 +2365,7 @@ void create_LiVES (void) {
   }
 
   mainw->raudio_draw = gtk_drawing_area_new ();
+  gtk_widget_set_app_paintable(mainw->raudio_draw,TRUE);
   gtk_widget_set_size_request(mainw->raudio_draw,lives_widget_get_allocation_width(mainw->LiVES),CE_VIDBAR_HEIGHT);
   gtk_widget_show (mainw->raudio_draw);
   gtk_box_pack_start (GTK_BOX (vbox2), mainw->raudio_draw, TRUE, TRUE, 0);
@@ -3416,6 +3432,7 @@ void make_preview_box (void) {
 
 
   mainw->preview_image = gtk_image_new_from_pixbuf (NULL);
+  gtk_widget_set_app_paintable(mainw->preview_image,TRUE);
   gtk_widget_show (mainw->preview_image);
   gtk_container_add (GTK_CONTAINER (eventbox), mainw->preview_image);
 
@@ -3744,6 +3761,7 @@ void make_play_window(void) {
     if (mainw->preview_box==NULL) {
       // create the preview box that shows frames
       make_preview_box();
+      load_preview_image(FALSE);
     }
 
     //if (cfile->is_loaded) {
@@ -3768,19 +3786,6 @@ void make_play_window(void) {
 	// block spinbutton in play window
 	gtk_widget_set_sensitive(mainw->preview_spinbutton,FALSE);
       }
-
-      // load whatever frame and show it
-      if (mainw->prv_link!=PRV_FREE) mainw->preview_frame=0;
-      // force a redraw
-      gtk_widget_queue_resize(mainw->preview_box);
-      // be careful, the user could switch out of sepwin here !
-      mainw->noswitch=TRUE;
-      
-      lives_widget_context_update();
-      load_preview_image(FALSE);
-
-      mainw->noswitch=FALSE;
-      if (mainw->play_window==NULL) return;
     }
   }
 
@@ -3800,19 +3805,6 @@ void make_play_window(void) {
 		    G_CALLBACK (on_stop_activate_by_del),
 		    NULL);
   
-  
-
-  if (!mainw->ext_playback) {
-    // be careful, the user could switch out of sepwin here !
-    mainw->noswitch=TRUE;
-
-    lives_widget_context_update();
-
-    mainw->noswitch=FALSE;
-    if (mainw->play_window==NULL) return;
-  }
-
-
 
 }
 
@@ -4143,10 +4135,10 @@ void resize_play_window (void) {
   gtk_window_resize (GTK_WINDOW (mainw->play_window), nwidth, nheight);
   gtk_widget_set_size_request (mainw->play_window, nwidth, nheight);
 
-  if (width!=-1&&(width!=nwidth||height!=nheight)&&mainw->preview_spinbutton!=NULL) {
-    load_preview_image(FALSE);
-  }
-  
+  if (width!=-1&&(width!=nwidth||height!=nheight)&&mainw->preview_spinbutton!=NULL)
+    if (mainw->playing_file==-1) {
+      load_preview_image(FALSE);
+    }
 }
 
 

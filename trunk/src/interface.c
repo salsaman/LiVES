@@ -2634,8 +2634,11 @@ void do_layout_recover_dialog(void) {
   GtkWidget *okbutton;
   GtkWidget *cancelbutton;
 
+  GtkAccelGroup *accel_group=GTK_ACCEL_GROUP(gtk_accel_group_new ());
+
   GtkWidget *mdialog=lives_standard_dialog_new (_("LiVES: recover layout ?"),FALSE);
 
+  gtk_window_add_accel_group (GTK_WINDOW (mdialog), accel_group);
 
   if (prefs->show_gui) {
     gtk_window_set_transient_for(GTK_WINDOW(mdialog),GTK_WINDOW(mainw->LiVES));
@@ -2668,7 +2671,7 @@ void do_layout_recover_dialog(void) {
 
   g_signal_connect (okbutton, "clicked",G_CALLBACK (recover_layout),NULL);
 
-  gtk_widget_add_accelerator (cancelbutton, "activate", mainw->accel_group,
+  gtk_widget_add_accelerator (cancelbutton, "activate", accel_group,
                               LIVES_KEY_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
 
   gtk_widget_show_all(mdialog);

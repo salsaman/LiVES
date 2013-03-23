@@ -1153,6 +1153,21 @@ LIVES_INLINE void lives_widget_set_state(LiVESWidget *widget, LiVESWidgetState s
 }
 
 
+LIVES_INLINE LiVESWidgetState lives_widget_get_state(LiVESWidget *widget) {
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3,0,0)
+  return gtk_widget_get_state_flags(widget);
+#else
+#if GTK_CHECK_VERSION(2,18,0)
+  return gtk_widget_get_state(widget);
+#else
+  return GTK_WIDGET_STATE(widget);
+#endif
+#endif
+#endif
+}
+
+
 
 LIVES_INLINE LiVESWidget *lives_bin_get_child(LiVESBin *bin) {
   LiVESWidget *child=NULL;

@@ -619,6 +619,7 @@ int lives_widget_get_allocation_width(LiVESWidget *);
 int lives_widget_get_allocation_height(LiVESWidget *);
 
 void lives_widget_set_state(LiVESWidget *, LiVESWidgetState state);
+LiVESWidgetState lives_widget_get_state(LiVESWidget *widget);
 
 LiVESWidget *lives_bin_get_child(LiVESBin *);
 

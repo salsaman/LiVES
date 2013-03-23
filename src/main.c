@@ -3373,6 +3373,7 @@ void load_start_image(gint frame) {
     set_ce_frame_from_pixbuf(GTK_IMAGE(mainw->image272),mainw->camframe,NULL);
 #if GTK_CHECK_VERSION(3,0,0)
     g_signal_handlers_unblock_by_func(mainw->image272,(gpointer)expose_sim,NULL);
+    g_signal_stop_emission_by_name(mainw->image272,LIVES_WIDGET_EVENT_EXPOSE_EVENT);
 #endif
     return;
   }
@@ -3389,6 +3390,7 @@ void load_start_image(gint frame) {
     threaded_dialog_spin();
 #if GTK_CHECK_VERSION(3,0,0)
   g_signal_handlers_unblock_by_func(mainw->image272,(gpointer)expose_sim,NULL);
+    g_signal_stop_emission_by_name(mainw->image272,LIVES_WIDGET_EVENT_EXPOSE_EVENT);
 #endif
     return;
   }
@@ -3420,6 +3422,7 @@ void load_start_image(gint frame) {
     threaded_dialog_spin();
 #if GTK_CHECK_VERSION(3,0,0)
     g_signal_handlers_unblock_by_func(mainw->image272,(gpointer)expose_sim,NULL);
+    g_signal_stop_emission_by_name(mainw->image272,LIVES_WIDGET_EVENT_EXPOSE_EVENT);
 #endif
     return;
   }
@@ -3487,6 +3490,7 @@ void load_start_image(gint frame) {
 
 #if GTK_CHECK_VERSION(3,0,0)
   g_signal_handlers_unblock_by_func(mainw->image272,(gpointer)expose_sim,NULL);
+  g_signal_stop_emission_by_name(mainw->image272,LIVES_WIDGET_EVENT_EXPOSE_EVENT);
 #endif
 
 }
@@ -3533,6 +3537,7 @@ void load_end_image(gint frame) {
     threaded_dialog_spin();
 #if GTK_CHECK_VERSION(3,0,0)
     g_signal_handlers_unblock_by_func(mainw->image273,(gpointer)expose_sim,NULL);
+    g_signal_stop_emission_by_name(mainw->image273,LIVES_WIDGET_EVENT_EXPOSE_EVENT);
 #endif
     return;
   }
@@ -3566,6 +3571,7 @@ void load_end_image(gint frame) {
     threaded_dialog_spin();
 #if GTK_CHECK_VERSION(3,0,0)
     g_signal_handlers_unblock_by_func(mainw->image273,(gpointer)expose_sim,NULL);
+    g_signal_stop_emission_by_name(mainw->image273,LIVES_WIDGET_EVENT_EXPOSE_EVENT);
 #endif
     return;
   }
@@ -3620,6 +3626,7 @@ void load_end_image(gint frame) {
       load_end_image(0);
 #if GTK_CHECK_VERSION(3,0,0)
       g_signal_handlers_unblock_by_func(mainw->image273,(gpointer)expose_sim,NULL);
+      g_signal_stop_emission_by_name(mainw->image273,LIVES_WIDGET_EVENT_EXPOSE_EVENT);
 #endif
       return;
     }
@@ -3632,6 +3639,7 @@ void load_end_image(gint frame) {
 
 #if GTK_CHECK_VERSION(3,0,0)
   g_signal_handlers_unblock_by_func(mainw->image273,(gpointer)expose_sim,NULL);
+  g_signal_stop_emission_by_name(mainw->image273,LIVES_WIDGET_EVENT_EXPOSE_EVENT);
 #endif
 
 }
@@ -3675,6 +3683,7 @@ void load_preview_image(boolean update_always) {
     gtk_widget_set_size_request(mainw->preview_image,mainw->pwidth,mainw->pheight);
 #if GTK_CHECK_VERSION(3,0,0)
     g_signal_handlers_unblock_by_func(mainw->preview_image,(gpointer)expose_pim,NULL);
+    g_signal_stop_emission_by_name(mainw->preview_image,LIVES_WIDGET_EVENT_EXPOSE_EVENT);
 #endif
     return;
   }
@@ -3694,6 +3703,7 @@ void load_preview_image(boolean update_always) {
     else set_ce_frame_from_pixbuf(GTK_IMAGE(mainw->preview_image), NULL, NULL);
 #if GTK_CHECK_VERSION(3,0,0)
     g_signal_handlers_unblock_by_func(mainw->preview_image,(gpointer)expose_pim,NULL);
+    g_signal_stop_emission_by_name(mainw->preview_image,LIVES_WIDGET_EVENT_EXPOSE_EVENT);
 #endif
     return;
   }
@@ -3792,6 +3802,7 @@ void load_preview_image(boolean update_always) {
   if (pixbuf!=NULL) lives_object_unref(pixbuf);
 #if GTK_CHECK_VERSION(3,0,0)
   g_signal_handlers_unblock_by_func(mainw->preview_image,(gpointer)expose_pim,NULL);
+  g_signal_stop_emission_by_name(mainw->preview_image,LIVES_WIDGET_EVENT_EXPOSE_EVENT);
 #endif
 
 }

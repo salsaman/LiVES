@@ -171,6 +171,8 @@ typedef struct {
   GtkWidget *spinbutton_param_max;
   GtkWidget *spinbutton_param_step;
   GtkWidget *code_textview;
+  GtkWidget *edit_entry_button;
+  GtkWidget *remove_entry_button;
   GtkWidget *move_up_button;
   GtkWidget *move_down_button;
 

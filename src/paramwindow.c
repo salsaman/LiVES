@@ -3166,29 +3166,40 @@ void on_pwcolsel (GtkButton *button, lives_rfx_t *rfx) {
 
 void update_visual_params(lives_rfx_t *rfx, boolean update_hidden) {
   // update parameters visually from an rfx object
-  int i,j,error;
-  weed_plant_t *inst=(weed_plant_t *)rfx->source;
-  weed_plant_t **in_params,*in_param;
-  int num_params=0;
-  weed_plant_t *paramtmpl;
-  int param_hint;
-  int *valis,vali,mini,maxi;
-  gchar *vals,**valss;
-  double *valds,vald,mind,maxd;
-  int cspace;
   GList *list;
-  int *colsi,*colsis;
-  double *colsd,*colsds;
-  int red_max,green_max,blue_max;
-  int red_min,green_min,blue_min;
+
+  weed_plant_t **in_params,*in_param;
+  weed_plant_t *inst=(weed_plant_t *)rfx->source;
+  weed_plant_t *paramtmpl;
+
+
+  int *colsi,*colsis,*valis;
   int *maxis=NULL,*minis=NULL;
+
+  double *colsd,*colsds,*valds;
   double *maxds=NULL,*minds=NULL;
+
   double red_maxd,green_maxd,blue_maxd;
   double red_mind,green_mind,blue_mind;
-  int index,numvals;
-  gchar *pattern;
+  double vald,mind,maxd;
+
+  gchar **valss;
+
+  gchar *vals,*pattern;
   gchar *tmp,*tmp2;
 
+  int cspace;
+  int error;
+  int num_params=0;
+  int param_hint;
+  int vali,mini,maxi;
+
+  int red_max,green_max,blue_max;
+  int red_min,green_min,blue_min;
+
+  int index,numvals;
+
+  register int i,j;
     
   if (weed_plant_has_leaf(inst,"in_parameters")) num_params=weed_leaf_num_elements(inst,"in_parameters");
   if (num_params==0) return;

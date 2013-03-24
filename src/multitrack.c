@@ -70,6 +70,7 @@ static void on_rename_track_activate (GtkMenuItem *, gpointer mt);
 
 static boolean mt_add_block_effect_idle (gpointer mt);
 static boolean mt_add_region_effect_idle (gpointer mt);
+static boolean mt_fx_edit_idle (gpointer mt);
 
 /// used to match clips from the event recorder with renumbered clips (without gaps)
 static int renumbered_clips[MAX_FILES+1];
@@ -102,10 +103,15 @@ static boolean nb_ignore=FALSE;
 
 static GtkWidget *dummy_menuitem;
 
+static boolean doubleclick=FALSE;
+
+static guint32 last_press_time=0;
+
+
+
 ///////////////////////////////////////////////////////////////////
 
 #define LIVES_AVOL_SCALE ((double)1000000.)
-
 
 static LIVES_INLINE gint mt_file_from_clip(lives_mt *mt, gint clip) {
   return clips_to_files[clip];
@@ -1418,7 +1424,8 @@ static boolean get_track_index(lives_mt *mt, weed_timecode_t tc) {
     for (i=0;i<num_in_tracks;i++) {
       if (in_tracks[i]==mt->current_track) {
 	mt->track_index=i;
-	if (mt->current_track>=0&&mt->current_track<numtracks&&clips[mt->current_track]>-1) {
+	if (mt->current_track>=0&&mt->current_track<numtracks&&
+	    (clips[mt->current_track]>-1)) {
 	  mt->inwidth=mainw->files[clips[mt->current_track]]->hsize*opwidth/cfile->hsize;
 	  mt->inheight=mainw->files[clips[mt->current_track]]->vsize*opheight/cfile->vsize;
 	}
@@ -1577,6 +1584,7 @@ void track_select (lives_mt *mt) {
 
     // must be done in this order: interpolate, update, preview
     xx=get_track_index(mt,tc);
+    g_print("ti is %d\n",mt->track_index);
     if (mt->track_index!=-1) {
       if (mt->current_track>=0) {
 	interpolate_params((weed_plant_t *)mt->current_rfx->source,pchain,tc);
@@ -5360,7 +5368,7 @@ static gchar *get_tab_name(guint tab) {
   case POLY_COMP:
     return lives_fx_cat_to_text(LIVES_FX_CAT_COMPOSITOR,TRUE); // compositors
   case POLY_PARAMS:
-    return lives_fx_cat_to_text(LIVES_FX_CAT_COMPOSITOR,TRUE); // compositors
+    return g_strdup(_("Params."));
   default:
     break;
   }
@@ -9894,6 +9902,11 @@ void on_mt_fx_edit_activate (GtkMenuItem *menuitem, gpointer user_data) {
   gtk_widget_set_sensitive(mt->apply_fx_button,FALSE);
 }
 
+static boolean mt_fx_edit_idle (gpointer user_data) {
+  on_mt_fx_edit_activate(NULL,user_data);
+  return FALSE;
+}
+
 static void mt_avol_quick(GtkMenuItem *menuitem, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   mt->selected_init_event=mt->avol_init_event;
@@ -9969,7 +9982,9 @@ fx_ebox_pressed (GtkWidget *eventbox, GdkEventButton *event, gpointer user_data)
   if (event->type==GDK_2BUTTON_PRESS) {
     // double click
     mt->moving_fx=NULL;
-    if (mainw->playing_file==-1) on_mt_fx_edit_activate(NULL,mt);
+    if (mainw->playing_file==-1) {
+      g_idle_add_full(G_PRIORITY_HIGH,mt_fx_edit_idle,mt,NULL); // work around bug in gtk+
+    }
     return FALSE;
   }
 
@@ -12859,20 +12874,26 @@ void do_track_context (lives_mt *mt, GdkEventButton *event, gdouble timesecs, gi
 
 boolean on_track_release (GtkWidget *eventbox, GdkEventButton *event, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
-  gint x,y;
-  gdouble timesecs;
-  gint track=0;
+  weed_timecode_t tc,tcpp;
+
   GtkWidget *xeventbox;
   GtkWidget *oeventbox;
   GtkWidget *xlabelbox;
   GtkWidget *xahbox;
   GdkWindow *window;
-  gint win_x,win_y;
-  int i;
-  gint old_track=mt->current_track;
+
+  double timesecs;
+
   boolean got_track=FALSE;
   boolean needs_idlefunc=FALSE;
-  weed_timecode_t tc,tcpp;
+
+  int x,y;
+  int track=0;
+
+  int win_x,win_y;
+  int old_track=mt->current_track;
+
+  register int i;
 
   if (mt->idlefunc>0) {
     g_source_remove(mt->idlefunc);
@@ -12886,6 +12907,7 @@ boolean on_track_release (GtkWidget *eventbox, GdkEventButton *event, gpointer u
 			   eventbox, &x, &y);
   timesecs=get_time_from_x(mt,x);
   tc=timesecs*U_SECL;
+
 
   window=lives_display_get_window_at_pointer 
     ((LiVESXDevice *)mainw->mgeom[prefs->gui_monitor>0?prefs->gui_monitor-1:0].mouse_device,
@@ -12936,13 +12958,22 @@ boolean on_track_release (GtkWidget *eventbox, GdkEventButton *event, gpointer u
       lives_display_warp_pointer((LiVESXDevice *)mainw->mgeom[prefs->gui_monitor>0?prefs->gui_monitor-1:0].mouse_device, 
 				 mt->display,screen,abs_x+mt->hotspot_x,abs_y+mt->hotspot_y-height/2);
       // we need to call this to warp the pointer
-      g_main_context_iteration(NULL,FALSE);
-      threaded_dialog_spin();
+      lives_widget_context_update();
+    }
+
+    if (doubleclick) {
+      // this is a double-click
+      mt->putative_block=get_block_from_time(eventbox,timesecs,mt);
+      select_block(mt);
+      mt->putative_block=NULL;
+      doubleclick=FALSE;
+      goto track_rel_done;
     }
 
     if (got_track&&!mt->is_rendering&&mt->putative_block!=NULL&&mainw->playing_file==-1&&
-	event->button==1&&event->time!=dclick_time) {
+	event->button==1) {
       weed_timecode_t start_tc;
+
       mt_desensitise(mt);
 
       start_tc=get_event_timecode(mt->putative_block->start_event);
@@ -12966,6 +12997,8 @@ boolean on_track_release (GtkWidget *eventbox, GdkEventButton *event, gpointer u
     }
 
   }
+
+ track_rel_done:
   
   if (mainw->playing_file==-1) mt_sensitise(mt);
   mt->hotspot_x=mt->hotspot_y=0;
@@ -13023,12 +13056,16 @@ boolean on_track_between_release (GtkWidget *widget, GdkEventButton *event, gpoi
 
 
 boolean on_track_click (GtkWidget *eventbox, GdkEventButton *event, gpointer user_data) {
-  gint x,y;
-  track_rect *block;
   lives_mt *mt=(lives_mt *)user_data;
-  gdouble timesecs;
-  gint track;
+  track_rect *block;
+
+  double timesecs;
+
+  int x,y;
+  int track;
   int filenum=-1;
+
+  //doubleclick=FALSE;
 
   mt->aud_track_selected=is_audio_eventbox(mt,eventbox);
 
@@ -13051,11 +13088,9 @@ boolean on_track_click (GtkWidget *eventbox, GdkEventButton *event, gpointer use
     g_signal_handler_unblock (mt->tl_eventbox,mt->mouse_mot2);
   }
   else {
-    if (event->type!=GDK_BUTTON_PRESS) {
-      // this is a double-click
-      dclick_time=gdk_event_get_time((GdkEvent *)event);
-      select_block(mt);
-      mt->putative_block=NULL;
+    if (gdk_event_get_time((GdkEvent *)event)-last_press_time<LIVES_DCLICK_TIME) {
+      doubleclick=TRUE;
+      return TRUE;
     }
     else {
       // single click, TODO - locate the frame for the track in event_list
@@ -13143,6 +13178,8 @@ boolean on_track_click (GtkWidget *eventbox, GdkEventButton *event, gpointer use
       return TRUE;
     }
   }
+
+  last_press_time=gdk_event_get_time((GdkEvent *)event);
 
   return TRUE;
 }
@@ -17630,11 +17667,10 @@ on_timeline_release (GtkWidget *eventbox, GdkEventButton *event, gpointer user_d
 }
 
 
-boolean
-on_timeline_press (GtkWidget *widget, GdkEventButton *event, gpointer user_data) {
+boolean on_timeline_press (GtkWidget *widget, GdkEventButton *event, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
-  gint x;
-  gdouble pos;
+  int x;
+  double pos;
 
   if (mainw->playing_file>-1) return FALSE;
 
@@ -17908,14 +17944,12 @@ static boolean is_node_tc(lives_mt *mt, weed_timecode_t tc) {
 
 
 // apply the param changes and update widgets
-void
-on_node_spin_value_changed           (GtkSpinButton   *spinbutton,
-				      gpointer         user_data) {
+void on_node_spin_value_changed (GtkSpinButton *spinbutton, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
   weed_timecode_t init_tc=get_event_timecode(mt->init_event);
   weed_timecode_t otc=gtk_spin_button_get_value(spinbutton)*U_SEC+init_tc;
   weed_timecode_t tc=q_gint64(otc,mt->fps);
-  gdouble timesecs;
+  double timesecs;
   boolean auto_prev=mt->opts.fx_auto_preview;
 
   g_object_freeze_notify(G_OBJECT(spinbutton));

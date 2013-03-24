@@ -105,6 +105,7 @@
 
 #define MAX_FX_THREADS 65536
 
+#define LIVES_DCLICK_TIME 400 ///< double click time (milliseconds)
 
 /// max ext_cntl + 1
 #define MAX_EXT_CNTL 2

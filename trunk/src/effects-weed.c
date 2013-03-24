@@ -1779,8 +1779,9 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
 	channel=in_channels[k];
 	chantmpl=weed_get_plantptr_value(channel,"template",&error);
 	if (weed_plant_has_leaf(chantmpl,"max_repeats")||(weed_plant_has_leaf(chantmpl,"option")&&
-							  weed_get_boolean_value(chantmpl,"optional",&error)==WEED_TRUE))
+							  weed_get_boolean_value(chantmpl,"optional",&error)==WEED_TRUE)) {
 	  weed_set_boolean_value(channel,"host_temp_disabled",WEED_TRUE);
+	}
 	else {
 	  weed_free(in_tracks);
 	  weed_free(out_tracks);
@@ -1862,8 +1863,10 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
     while (weed_palette_is_alpha_palette(weed_get_int_value(in_channels[j],"current_palette",&error))) j++;
 
     if (weed_plant_has_leaf(in_channels[j],"host_temp_disabled")&&
-	weed_get_boolean_value(in_channels[j],"host_temp_disabled",&error)==WEED_TRUE) continue;
-
+	weed_get_boolean_value(in_channels[j],"host_temp_disabled",&error)==WEED_TRUE) {
+      j++;
+      continue;
+    }
     layer=layers[in_tracks[i]];
     clip=weed_get_int_value(layer,"clip",&error);
 

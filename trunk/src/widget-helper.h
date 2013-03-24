@@ -104,6 +104,7 @@ typedef GtkToggleButton                   LiVESToggleButton;
 typedef GtkTextView                       LiVESTextView;
 typedef GtkEntry                          LiVESEntry;
 typedef GtkRadioButton                    LiVESRadioButton;
+typedef GtkSpinButton                     LiVESSpinButton;
 typedef GtkLabel                          LiVESLabel;
 typedef GtkFileChooser                    LiVESFileChooser;
 typedef GtkImageMenuItem                  LiVESImageMenuItem;
@@ -210,6 +211,7 @@ typedef gpointer                          LiVESObjectPtr;
 #define LIVES_LABEL(widget) GTK_LABEL(widget)
 #define LIVES_FILES_CHOOSER(widget) GTK_FILE_CHOOSER(widget)
 #define LIVES_RADIO_BUTTON(widget) GTK_RADIO_BUTTON(widget)
+#define LIVES_SPIN_BUTTON(widget) GTK_SPIN_BUTTON(widget)
 #define LIVES_IMAGE_MENU_ITEM(widget) GTK_IMAGE_MENU_ITEM(widget)
 #define LIVES_FILE_CHOOSER(widget) GTK_FILE_CHOOSER(widget)
 
@@ -719,8 +721,8 @@ boolean widget_act_toggle (LiVESWidget *, LiVESToggleButton *);
 
 void gtk_tooltips_copy(LiVESWidget *dest, LiVESWidget *source);
 
-void adjustment_configure(LiVESAdjustment *, double value, double lower, double upper, 
-			  double step_increment, double page_increment, double page_size);
+void lives_spin_button_configure(LiVESSpinButton *, double value, double lower, double upper, 
+				 double step_increment, double page_increment);
 
 void set_button_width(LiVESWidget *buttonbox, LiVESWidget *button, int width);
 
@@ -769,6 +771,12 @@ typedef enum {
 
 void lives_set_cursor_style(lives_cursor_t cstyle, LiVESWidget *);
 
+typedef enum {
+  LIVES_EXPAND_DEFAULT,
+  LIVES_EXPAND_NONE,
+  LIVES_EXPAND_EXTRA
+} lives_expand_t;
+
 
 typedef struct {
   boolean no_gui; // show nothing !
@@ -799,7 +807,7 @@ const widget_opts_t def_widget_opts = {
     FALSE, //pack_end
     FALSE, // line_wrap
     FALSE, // non_modal
-    FALSE, // no expand
+    LIVES_EXPAND_DEFAULT, // default expand
     FALSE, // no themeing
     1.0, // default scale
     W_PACKING_WIDTH, // def packing width

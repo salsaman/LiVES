@@ -4353,6 +4353,8 @@ void save_clip_value(int which, lives_clip_details_t what, void *val) {
   gchar *myval;
   gchar *key;
 
+  boolean needs_sigs=FALSE;
+
   mainw->write_failed=mainw->com_failed=FALSE;
 
   if (which==0||which==mainw->scrap_file) return;
@@ -4454,8 +4456,14 @@ void save_clip_value(int which, lives_clip_details_t what, void *val) {
 
   }
   else {
+    if (!mainw->signals_deferred) {
+      set_signal_handlers((SignalHandlerPointer)defer_sigint);
+      needs_sigs=TRUE;
+    }
     com=g_strdup_printf("%s set_clip_value \"%s\" \"%s\" \"%s\"",prefs->backend_sync,lives_header,key,myval);
     lives_system(com,FALSE);
+    if (mainw->signal_caught) catch_sigint(mainw->signal_caught);
+    if (needs_sigs) set_signal_handlers((SignalHandlerPointer)catch_sigint);
     g_free(com);
   }
 

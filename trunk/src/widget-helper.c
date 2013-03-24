@@ -1623,7 +1623,9 @@ LiVESWidget *lives_standard_check_button_new(const char *labeltext, boolean use_
     if (LIVES_IS_HBOX(box)) hbox=GTK_WIDGET(box);
     else {
       hbox = lives_hbox_new (FALSE, 0);
-      gtk_widget_show(hbox);
+      if (!widget_opts.no_gui) {
+	gtk_widget_show(hbox);
+      }
       gtk_box_pack_start (GTK_BOX (box), hbox, FALSE, FALSE, widget_opts.packing_height);
     }
     
@@ -1633,7 +1635,7 @@ LiVESWidget *lives_standard_check_button_new(const char *labeltext, boolean use_
     if (widget_opts.swap_label&&eventbox!=NULL)
       gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, widget_opts.packing_width);
     
-    gtk_box_pack_start (GTK_BOX (hbox), checkbutton, widget_opts.expand, FALSE, eventbox==NULL?0:widget_opts.packing_width);
+    gtk_box_pack_start (GTK_BOX (hbox), checkbutton, widget_opts.expand==LIVES_EXPAND_EXTRA, FALSE, eventbox==NULL?0:widget_opts.packing_width);
 
     if (!widget_opts.swap_label&&eventbox!=NULL)
       gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, widget_opts.packing_width);
@@ -1693,7 +1695,9 @@ LiVESWidget *lives_standard_radio_button_new(const char *labeltext, boolean use_
     if (LIVES_IS_HBOX(box)) hbox=GTK_WIDGET(box);
     else {
       hbox = lives_hbox_new (FALSE, 0);
-      gtk_widget_show(hbox);
+      if (!widget_opts.no_gui) {
+	gtk_widget_show(hbox);
+      }
       gtk_box_pack_start (GTK_BOX (box), hbox, FALSE, FALSE, widget_opts.packing_height);
     }
     
@@ -1702,7 +1706,7 @@ LiVESWidget *lives_standard_radio_button_new(const char *labeltext, boolean use_
     if (widget_opts.swap_label&&eventbox!=NULL)
       gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, widget_opts.packing_width);
 
-    gtk_box_pack_start (GTK_BOX (hbox), radiobutton, widget_opts.expand, FALSE, eventbox==NULL?0:widget_opts.packing_width);
+    gtk_box_pack_start (GTK_BOX (hbox), radiobutton, widget_opts.expand==LIVES_EXPAND_EXTRA, FALSE, eventbox==NULL?0:widget_opts.packing_width);
 
     if (!widget_opts.swap_label&&eventbox!=NULL)
       gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, widget_opts.packing_width);
@@ -1779,9 +1783,11 @@ LiVESWidget *lives_standard_spin_button_new(const char *labeltext, boolean use_m
     if (LIVES_IS_HBOX(box)) hbox=GTK_WIDGET(box);
     else {
       hbox = lives_hbox_new (FALSE, 0);
-      gtk_widget_show(hbox);
+      if (!widget_opts.no_gui) {
+	gtk_widget_show(hbox);
+      }
       gtk_box_pack_start (GTK_BOX (box), hbox, FALSE, FALSE, widget_opts.packing_height);
-      expand=TRUE;
+      expand=widget_opts.expand!=LIVES_EXPAND_NONE;
     }
 
     lives_box_set_homogeneous(LIVES_BOX(hbox),FALSE);
@@ -1791,7 +1797,7 @@ LiVESWidget *lives_standard_spin_button_new(const char *labeltext, boolean use_m
     
     if (expand) add_fill_to_box(LIVES_BOX(hbox));
 
-    gtk_box_pack_start (GTK_BOX (hbox), spinbutton, widget_opts.expand, FALSE, widget_opts.packing_width);
+    gtk_box_pack_start (GTK_BOX (hbox), spinbutton, widget_opts.expand==LIVES_EXPAND_EXTRA, FALSE, widget_opts.packing_width);
     
     if (expand) add_fill_to_box(LIVES_BOX(hbox));
 
@@ -1855,19 +1861,20 @@ LiVESWidget *lives_standard_combo_new (const char *labeltext, boolean use_mnemon
 
     lives_box_set_homogeneous(LIVES_BOX(hbox),FALSE);
 
-    if (!widget_opts.expand) {
+    if (widget_opts.expand==LIVES_EXPAND_DEFAULT) {
       GtkWidget *label=lives_standard_label_new("");
       gtk_box_pack_start (GTK_BOX (hbox), label, TRUE, FALSE, 0);
     }
     
     if (!widget_opts.swap_label&&eventbox!=NULL)
       gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, widget_opts.packing_width);
-    gtk_box_pack_start (GTK_BOX (hbox), combo, TRUE, widget_opts.expand, eventbox==NULL?0:widget_opts.packing_width);
+    gtk_box_pack_start (GTK_BOX (hbox), combo, widget_opts.expand!=LIVES_EXPAND_NONE, 
+			widget_opts.expand==LIVES_EXPAND_EXTRA, eventbox==NULL?0:widget_opts.packing_width);
     if (widget_opts.swap_label&&eventbox!=NULL)
       gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, widget_opts.packing_width);
 
 
-    if (!widget_opts.expand) {
+    if (widget_opts.expand==LIVES_EXPAND_DEFAULT) {
       GtkWidget *label=lives_standard_label_new("");
       gtk_box_pack_start (GTK_BOX (hbox), label, TRUE, FALSE, 0);
     }
@@ -1929,7 +1936,9 @@ LiVESWidget *lives_standard_entry_new(const char *labeltext, boolean use_mnemoni
     if (LIVES_IS_HBOX(box)) hbox=GTK_WIDGET(box);
     else {
       hbox = lives_hbox_new (FALSE, 0);
-      gtk_widget_show(hbox);
+      if (!widget_opts.no_gui) {
+	gtk_widget_show(hbox);
+      }
       gtk_box_pack_start (GTK_BOX (box), hbox, FALSE, FALSE, widget_opts.packing_height);
     }
     
@@ -1938,7 +1947,7 @@ LiVESWidget *lives_standard_entry_new(const char *labeltext, boolean use_mnemoni
     if (!widget_opts.swap_label&&label!=NULL)
       gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, widget_opts.packing_width);
     
-    gtk_box_pack_start (GTK_BOX (hbox), entry, TRUE, dispwidth==-1, label==NULL?0:widget_opts.packing_width);
+    gtk_box_pack_start (GTK_BOX (hbox), entry, widget_opts.expand!=LIVES_EXPAND_NONE, dispwidth==-1, widget_opts.packing_width);
     
     if (widget_opts.swap_label&&label!=NULL)
       gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, widget_opts.packing_width);
@@ -2246,28 +2255,27 @@ int get_box_child_index (LiVESBox *box, LiVESWidget *tchild) {
 }
 
 
-void adjustment_configure(LiVESAdjustment *adjustment,
-		     double value,
-		     double lower,
-		     double upper,
-		     double step_increment,
-		     double page_increment,
-		     double page_size) {
-  g_object_freeze_notify (G_OBJECT(adjustment));
+void lives_spin_button_configure(LiVESSpinButton *spinbutton,
+				 double value,
+				 double lower,
+				 double upper,
+				 double step_increment,
+				 double page_increment) {
 #ifdef GUI_GTK
+  GtkAdjustment *adjustment=gtk_spin_button_get_adjustment(spinbutton);
+  g_object_freeze_notify (G_OBJECT(adjustment));
 #if GTK_CHECK_VERSION(2,14,0)
-  gtk_adjustment_configure(adjustment,value,lower,upper,step_increment,page_increment,page_size);
+  gtk_adjustment_configure(adjustment,value,lower,upper,step_increment,page_increment,0.);
 #else
   adjustment->upper=upper;
   adjustment->lower=lower;
   adjustment->value=value;
   adjustment->step_increment=step_increment;
   adjustment->page_increment=page_increment;
-  adjustment->page_size=page_size;
 #endif
+  g_object_thaw_notify (G_OBJECT(adjustment));
 #endif
 
-  g_object_thaw_notify (G_OBJECT(adjustment));
 }
 
 

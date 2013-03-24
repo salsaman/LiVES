@@ -2850,8 +2850,10 @@ _prefsw *create_prefs_dialog (void) {
   // TRANSLATORS: video quality, max len 50
   prefsw->pbq_list=g_list_append(prefsw->pbq_list,g_strdup((_("High - can improve quality on very fast machines"))));
 
+  widget_opts.expand=LIVES_EXPAND_EXTRA;
   prefsw->pbq_combo = lives_standard_combo_new((tmp=g_strdup(_("Preview _quality"))),TRUE,prefsw->pbq_list,LIVES_BOX(vbox69),
 					       (tmp2=g_strdup(_("The preview quality for video playback - affects resizing"))));
+  widget_opts.expand=LIVES_EXPAND_DEFAULT;
 
   g_free(tmp);
   g_free(tmp2);
@@ -2889,9 +2891,9 @@ _prefsw *create_prefs_dialog (void) {
 #endif
   vid_playback_plugins = g_list_prepend (vid_playback_plugins, g_strdup(mainw->string_constants[LIVES_STRING_CONSTANT_NONE]));
 
-  widget_opts.expand=TRUE;
+  widget_opts.expand=LIVES_EXPAND_EXTRA;
   pp_combo = lives_standard_combo_new(_("_Plugin"),TRUE,vid_playback_plugins,LIVES_BOX(hbox31),NULL);
-  widget_opts.expand=FALSE;
+  widget_opts.expand=LIVES_EXPAND_DEFAULT;
 
   advbutton = gtk_button_new_with_mnemonic (_("_Advanced"));
   gtk_widget_show (advbutton);
@@ -2986,9 +2988,9 @@ _prefsw *create_prefs_dialog (void) {
     audp = g_list_append (audp, g_strdup("mplayer"));
   }
 
-  widget_opts.expand=TRUE;
+  widget_opts.expand=LIVES_EXPAND_EXTRA;
   prefsw->audp_combo = lives_standard_combo_new(_("_Player"),TRUE,audp,LIVES_BOX(vbox),NULL);
-  widget_opts.expand=FALSE;
+  widget_opts.expand=LIVES_EXPAND_DEFAULT;
 
   gtk_widget_show_all(gtk_widget_get_parent(prefsw->audp_combo));
 
@@ -3302,10 +3304,10 @@ _prefsw *create_prefs_dialog (void) {
     encoders=get_plugin_list (PLUGIN_ENCODERS,TRUE,NULL,NULL);
   }
 
-  widget_opts.expand=TRUE;
+  widget_opts.expand=LIVES_EXPAND_EXTRA;
   prefsw->encoder_combo = lives_standard_combo_new(_("Encoder"),FALSE,encoders,
 						   LIVES_BOX (prefsw->vbox_right_encoding),NULL);
-  widget_opts.expand=FALSE;
+  widget_opts.expand=LIVES_EXPAND_DEFAULT;
 
 
   if (encoders!=NULL) {
@@ -3339,9 +3341,9 @@ _prefsw *create_prefs_dialog (void) {
     }
     
 
-    widget_opts.expand=TRUE;
+    widget_opts.expand=LIVES_EXPAND_EXTRA;
     prefsw->ofmt_combo = lives_standard_combo_new(_("Output format"),FALSE,ofmt,LIVES_BOX(prefsw->vbox_right_encoding),NULL);
-    widget_opts.expand=FALSE;
+    widget_opts.expand=LIVES_EXPAND_DEFAULT;
 
     if (ofmt!=NULL) {
       lives_combo_set_active_string(LIVES_COMBO(prefsw->ofmt_combo), prefs->encoder.of_desc);
@@ -3355,9 +3357,9 @@ _prefsw *create_prefs_dialog (void) {
     }
 
 
-    widget_opts.expand=TRUE;
+    widget_opts.expand=LIVES_EXPAND_EXTRA;
     prefsw->acodec_combo = lives_standard_combo_new(_("Audio codec"),FALSE,NULL,LIVES_BOX(prefsw->vbox_right_encoding),NULL);
-    widget_opts.expand=FALSE;
+    widget_opts.expand=LIVES_EXPAND_DEFAULT;
     prefs->acodec_list=NULL;
 
     set_acodec_list_from_allowed(prefsw, rdet);

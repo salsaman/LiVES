@@ -72,6 +72,7 @@ boolean save_clip_values(int which) {
 
       do {
 	retval=0;
+	set_signal_handlers((SignalHandlerPointer)defer_sigint);
 	save_clip_value(which,CLIP_DETAILS_HEADER_VERSION,&mainw->files[which]->header_version);
 	if (mainw->com_failed||mainw->write_failed) break;
 	save_clip_value(which,CLIP_DETAILS_BPP,&mainw->files[which]->bpp);
@@ -116,6 +117,9 @@ boolean save_clip_values(int which) {
 	if (mainw->com_failed||mainw->write_failed) break;
 	save_clip_value(which,CLIP_DETAILS_KEYWORDS,mainw->files[which]->keywords);
       } while (FALSE);
+
+      if (mainw->signal_caught) catch_sigint(mainw->signal_caught);
+      set_signal_handlers((SignalHandlerPointer)catch_sigint);
       
       if (mainw->com_failed||mainw->write_failed) {
 	fclose(mainw->clip_header);

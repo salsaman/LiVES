@@ -955,10 +955,9 @@ _vppaw *on_vpp_advanced_clicked (GtkButton *button, gpointer user_data) {
     }
 
     // fps
-    widget_opts.expand=FALSE;
     combo = lives_standard_combo_new ((tmp=g_strdup(_("_FPS"))),TRUE,fps_list_strings,
 				      LIVES_BOX(dialog_vbox),(tmp2=g_strdup(_("Fixed framerate for plugin.\n"))));
-    widget_opts.expand=TRUE;
+
     g_free(tmp);
     g_free(tmp2);
     vppa->fps_entry=lives_combo_get_entry(LIVES_COMBO(combo));

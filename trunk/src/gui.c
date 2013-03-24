@@ -2183,12 +2183,12 @@ void create_LiVES (void) {
 
   dpw=widget_opts.packing_width;
   woat=widget_opts.apply_theme;
-  widget_opts.expand=TRUE;
+  widget_opts.expand=LIVES_EXPAND_EXTRA;
   widget_opts.apply_theme=FALSE;
   widget_opts.packing_width=MAIN_SPIN_SPACER;
   mainw->spinbutton_start = lives_standard_spin_button_new (NULL,FALSE,0., 0., 0., 1., 100.,0,
 							    LIVES_BOX(hbox3),_("The first selected frame in this clip"));
-  widget_opts.expand=FALSE;
+  widget_opts.expand=LIVES_EXPAND_DEFAULT;
   widget_opts.packing_width=dpw;
   widget_opts.apply_theme=woat;
 
@@ -2221,12 +2221,12 @@ void create_LiVES (void) {
     lives_widget_set_fg_color(mainw->arrow2, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
   }
 
-  widget_opts.expand=TRUE;
+  widget_opts.expand=LIVES_EXPAND_EXTRA;
   widget_opts.packing_width=MAIN_SPIN_SPACER;
   widget_opts.apply_theme=FALSE;
   mainw->spinbutton_end = lives_standard_spin_button_new (NULL,FALSE,0., 0., 0., 1., 100.,0,
 							  LIVES_BOX(hbox3),_("The last selected frame in this clip"));
-  widget_opts.expand=FALSE;
+  widget_opts.expand=LIVES_EXPAND_DEFAULT;
   widget_opts.packing_width=dpw;
   widget_opts.apply_theme=woat;
 

@@ -1118,6 +1118,9 @@ typedef struct {
   int sepwin_minwidth;
   int sepwin_minheight;
 
+  guint signal_caught;
+  boolean signals_deferred;
+
 } mainwindow;
 
 extern _palette *palette;

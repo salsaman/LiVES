@@ -326,7 +326,6 @@ struct _mt {
   GtkWidget *amixer_button;
   GtkWidget *view_sel_events;
   GtkWidget *adjust_start_end;
-  GtkWidget *out_eventbox;
   GtkWidget *start_in_label;
   GtkWidget *end_out_label;
   GtkWidget *context_frame;
@@ -353,7 +352,6 @@ struct _mt {
   GtkWidget *gens_submenu;
   GtkWidget *capture;
 
-  GtkWidget *insa_eventbox;
   GtkWidget *insa_checkbutton;
   GtkWidget *snapo_checkbutton;
 
@@ -401,8 +399,6 @@ struct _mt {
   gulong seltrack_func;
 
   gulong tc_func;
-
-  gulong node_adj_func;
 
   weed_plant_t *event_list;
 

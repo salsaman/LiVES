@@ -7449,7 +7449,6 @@ boolean is_hidden_param(weed_plant_t *plant, int i) {
       &&(gui==NULL||(!weed_plant_has_leaf(gui,"hidden")
 		     ||weed_get_boolean_value(gui,"hidden",&error)==WEED_FALSE))) {
     if (gui!=NULL) {
-      if (plant==weed_filters[294]) g_print("pt b\n");
       if (weed_plant_has_leaf(gui,"copy_value_to")) {
 	int copyto=weed_get_int_value(gui,"copy_value_to",&error);
 	int flags2=0,param_hint,param_hint2;

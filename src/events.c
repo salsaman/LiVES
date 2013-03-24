@@ -5100,7 +5100,7 @@ render_details *create_render_details (int type) {
     }
   }
 
-  widget_opts.expand=TRUE;
+  widget_opts.expand=LIVES_EXPAND_EXTRA;
 
   label = lives_standard_label_new (_("Target Encoder"));
   gtk_box_pack_start (GTK_BOX (top_vbox), label, FALSE, FALSE, 0);
@@ -5198,7 +5198,7 @@ render_details *create_render_details (int type) {
     set_acodec_list_from_allowed(NULL,rdet);
   }
 
-  widget_opts.expand=FALSE;
+  widget_opts.expand=LIVES_EXPAND_DEFAULT;
 
   rdet->always_hbox = lives_hbox_new (TRUE, widget_opts.packing_width*2);
 

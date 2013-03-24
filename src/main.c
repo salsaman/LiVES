@@ -148,6 +148,12 @@ static void lives_log_handler (const char *domain, LiVESLogLevelFlags level, con
 typedef void (*SignalHandlerPointer)(int);
 #endif
 
+
+void defer_sigint(int signum) {
+  mainw->signal_caught=signum;
+  return;
+}
+
 void catch_sigint(int signum) {
   // trap for ctrl-C and others 
   if (mainw!=NULL) {
@@ -1016,6 +1022,8 @@ static void lives_init(_ign_opts *ign_opts) {
   mainw->sepwin_minwidth=MIN_SEPWIN_WIDTH;
   mainw->sepwin_minheight=PREVIEW_BOX_HT;
 
+  mainw->signal_caught=0;
+  mainw->signals_deferred=FALSE;
   /////////////////////////////////////////////////// add new stuff just above here ^^
 
 
@@ -2548,17 +2556,7 @@ static boolean lives_startup(gpointer data) {
 } // end lives_startup()
 
 
-
-int main (int argc, char *argv[]) {
-#ifdef ENABLE_OSC
-#ifdef IS_MINGW
-  WSADATA wsaData;
-  int iResult;
-#endif
-#endif
-  ssize_t mynsize;
-  gchar fbuff[PATH_MAX];
-
+void set_signal_handlers(SignalHandlerPointer sigfunc) {
 #ifndef IS_MINGW
   sigset_t smask;
 
@@ -2571,7 +2569,7 @@ int main (int argc, char *argv[]) {
   sigaddset(&smask,LIVES_SIGSEGV);
   sigaddset(&smask,LIVES_SIGABRT);
 
-  sact.sa_handler=catch_sigint;
+  sact.sa_handler=sigfunc;
   sact.sa_flags=0;
   sact.sa_mask=smask;
 
@@ -2582,17 +2580,35 @@ int main (int argc, char *argv[]) {
   sigaction (LIVES_SIGABRT, &sact, NULL);
 
 #else
-  typedef void (*SignalHandlerPointer)(int);
-
   SignalHandlerPointer previousHandler;
-
-  previousHandler = signal(LIVES_SIGINT, catch_sigint);
-  previousHandler = signal(LIVES_SIGTERM, catch_sigint);
-  previousHandler = signal(LIVES_SIGSEGV, catch_sigint);
-  previousHandler = signal(LIVES_SIGABRT, catch_sigint);
+  
+  previousHandler = signal(LIVES_SIGINT, (SignalHandlerPointer)catch_sigint);
+  previousHandler = signal(LIVES_SIGTERM, (SignalHandlerPointer)catch_sigint);
+  previousHandler = signal(LIVES_SIGSEGV, (SignalHandlerPointer)catch_sigint);
+  previousHandler = signal(LIVES_SIGABRT, (SignalHandlerPointer)catch_sigint);
 
   previousHandler = previousHandler; // shut gcc up
 #endif
+
+  if (mainw!=NULL) {
+    if (sigfunc==defer_sigint) mainw->signals_deferred=TRUE;
+    else mainw->signals_deferred=FALSE;
+  }
+}
+
+
+int main (int argc, char *argv[]) {
+#ifdef ENABLE_OSC
+#ifdef IS_MINGW
+  WSADATA wsaData;
+  int iResult;
+#endif
+#endif
+  ssize_t mynsize;
+  gchar fbuff[PATH_MAX];
+
+  mainw=NULL;
+  set_signal_handlers((SignalHandlerPointer)catch_sigint);
 
   ign_opts.ign_clipset=ign_opts.ign_osc=ign_opts.ign_aplayer=ign_opts.ign_stmode=ign_opts.ign_vppdefs=FALSE;
 

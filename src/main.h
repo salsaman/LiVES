@@ -1007,7 +1007,11 @@ void close_scrap_file (void);
 
 
 // main.c
+typedef void (*SignalHandlerPointer)(int);
+
+void set_signal_handlers(SignalHandlerPointer sigfunc);
 void catch_sigint(int signum);
+void defer_sigint(int signum);
 boolean startup_message_fatal(const gchar *msg);
 boolean startup_message_nonfatal(const gchar *msg);
 boolean startup_message_nonfatal_dismissable(const gchar *msg, gint warning_mask);

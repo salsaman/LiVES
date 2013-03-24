@@ -1711,9 +1711,9 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, boolean add_
 
   case LIVES_PARAM_STRING_LIST:
 
-    widget_opts.expand=TRUE;
+    widget_opts.expand=LIVES_EXPAND_EXTRA;
     combo=lives_standard_combo_new(name, use_mnemonic, param->list, (LiVESBox *)hbox, param->desc);
-    widget_opts.expand=FALSE;
+    widget_opts.expand=LIVES_EXPAND_DEFAULT;
 
     if (rfx->status==RFX_STATUS_WEED&&(disp_string=get_weed_display_string((weed_plant_t *)rfx->source,pnum))!=NULL) {
       lives_combo_set_active_string (LIVES_COMBO(combo),disp_string);

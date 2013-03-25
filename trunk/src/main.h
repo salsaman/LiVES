@@ -1199,7 +1199,7 @@ gboolean check_frame_count(gint idx);
 void get_frame_count(gint idx);
 void get_frames_sizes(int fileno, int frame_to_test);
 gint count_resampled_frames (gint in_frames, gdouble orig_fps, gdouble resampled_fps);
-gboolean int_array_contains_value(int *array, int num_elems, int value);
+boolean int_array_contains_value(int *array, int num_elems, int value);
 gboolean check_for_lock_file(const gchar *set_name, gint type);
 void g_list_free_strings(GList *list);
 

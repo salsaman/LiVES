@@ -3134,64 +3134,60 @@ static boolean notebook_page(GtkWidget *nb, GtkWidget *nbp, guint tab, gpointer 
   switch (tab) {
   case POLY_CLIPS:
     if (mt->clip_labels==NULL) {
-      notebook_error(GTK_NOTEBOOK(nb),tab,NB_ERROR_NOCLIP,mt);
+      notebook_error(GTK_NOTEBOOK(mt->nb),tab,NB_ERROR_NOCLIP,mt);
       return FALSE;
     }
-    if (mt->poly_state!=POLY_CLIPS) polymorph(mt,POLY_CLIPS);
-    else gtk_widget_reparent(mt->poly_box,gtk_notebook_get_nth_page(GTK_NOTEBOOK(nb),page));
+    if (mt->poly_state!=POLY_CLIPS&&nb!=NULL) polymorph(mt,POLY_CLIPS);
+    else gtk_widget_reparent(mt->poly_box,gtk_notebook_get_nth_page(GTK_NOTEBOOK(mt->nb),page));
     break;
   case POLY_IN_OUT:
     if (mt->block_selected==NULL&&mt->poly_state!=POLY_IN_OUT) {
-      notebook_error(GTK_NOTEBOOK(nb),tab,NB_ERROR_SEL,mt);
+      notebook_error(GTK_NOTEBOOK(mt->nb),tab,NB_ERROR_SEL,mt);
       return FALSE;
     }
     if (mt->poly_state!=POLY_IN_OUT) polymorph(mt,POLY_IN_OUT);
-    else gtk_widget_reparent(mt->poly_box,gtk_notebook_get_nth_page(GTK_NOTEBOOK(nb),page));
+    else gtk_widget_reparent(mt->poly_box,gtk_notebook_get_nth_page(GTK_NOTEBOOK(mt->nb),page));
     break;
   case POLY_FX_STACK:
     if (mt->poly_state!=POLY_FX_STACK) polymorph(mt,POLY_FX_STACK);
-    else gtk_widget_reparent(mt->poly_box,gtk_notebook_get_nth_page(GTK_NOTEBOOK(nb),page));
+    else gtk_widget_reparent(mt->poly_box,gtk_notebook_get_nth_page(GTK_NOTEBOOK(mt->nb),page));
     break;
   case POLY_EFFECTS:
     if (mt->block_selected==NULL&&mt->poly_state!=POLY_EFFECTS) {
-      notebook_error(GTK_NOTEBOOK(nb),tab,NB_ERROR_SEL,mt);
+      notebook_error(GTK_NOTEBOOK(mt->nb),tab,NB_ERROR_SEL,mt);
       return FALSE;
     }
     if (mt->poly_state!=POLY_EFFECTS) polymorph(mt,POLY_EFFECTS);
-    else gtk_widget_reparent(mt->poly_box,gtk_notebook_get_nth_page(GTK_NOTEBOOK(nb),page));
+    else gtk_widget_reparent(mt->poly_box,gtk_notebook_get_nth_page(GTK_NOTEBOOK(mt->nb),page));
     break;
   case POLY_TRANS:
     if (g_list_length(mt->selected_tracks)!=2||mt->region_start==mt->region_end) {
-      notebook_error(GTK_NOTEBOOK(nb),tab,NB_ERROR_NOTRANS,mt);
+      notebook_error(GTK_NOTEBOOK(mt->nb),tab,NB_ERROR_NOTRANS,mt);
       return FALSE;
     }
     if (mt->poly_state!=POLY_TRANS) polymorph(mt,POLY_TRANS);
-    else gtk_widget_reparent(mt->poly_box,gtk_notebook_get_nth_page(GTK_NOTEBOOK(nb),page));
+    else gtk_widget_reparent(mt->poly_box,gtk_notebook_get_nth_page(GTK_NOTEBOOK(mt->nb),page));
     break;
   case POLY_COMP:
     if (mt->selected_tracks==NULL||mt->region_start==mt->region_end) {
-      notebook_error(GTK_NOTEBOOK(nb),tab,NB_ERROR_NOCOMP,mt);
+      notebook_error(GTK_NOTEBOOK(mt->nb),tab,NB_ERROR_NOCOMP,mt);
       return FALSE;
     }
     if (mt->poly_state!=POLY_COMP) polymorph(mt,POLY_COMP);
-    else gtk_widget_reparent(mt->poly_box,gtk_notebook_get_nth_page(GTK_NOTEBOOK(nb),page));
+    else gtk_widget_reparent(mt->poly_box,gtk_notebook_get_nth_page(GTK_NOTEBOOK(mt->nb),page));
     break;
   case POLY_PARAMS:
     if (mt->poly_state!=POLY_PARAMS&&mt->selected_init_event==NULL) {
-      notebook_error(GTK_NOTEBOOK(nb),tab,NB_ERROR_NOEFFECT,mt);
+      notebook_error(GTK_NOTEBOOK(mt->nb),tab,NB_ERROR_NOEFFECT,mt);
       return FALSE;
     }
-    gtk_widget_reparent(mt->poly_box,gtk_notebook_get_nth_page(GTK_NOTEBOOK(nb),page));
+    gtk_widget_reparent(mt->poly_box,gtk_notebook_get_nth_page(GTK_NOTEBOOK(mt->nb),page));
     if (mt->selected_init_event!=NULL&&mt->poly_state!=POLY_PARAMS) {
       fubar(mt);
       polymorph(mt,POLY_PARAMS);
     }
     break;
   }
-
-  g_signal_handlers_block_by_func(mt->nb,(gpointer)notebook_page,(gpointer)mt);
-  gtk_notebook_set_current_page(GTK_NOTEBOOK(mt->nb),page);
-  g_signal_handlers_unblock_by_func(mt->nb,(gpointer)notebook_page,(gpointer)mt);
 
   return TRUE;
 } 
@@ -11933,7 +11929,6 @@ void polymorph (lives_mt *mt, lives_mt_poly_state_t poly) {
   gint olayer;
   boolean has_effect=FALSE;
   boolean has_params;
-  boolean needs_idlefunc=FALSE;
   boolean tab_set=FALSE;
   GtkWidget *bbox;
   weed_plant_t *prev_fm_event,*next_fm_event,*shortcut;
@@ -12242,29 +12237,16 @@ void polymorph (lives_mt *mt, lives_mt_poly_state_t poly) {
       on_paramwindow_cancel_clicked2(NULL,rfx);
     }
 
-    if (mt->fx_box!=NULL) gtk_widget_destroy(mt->fx_box);
-
-    mt->fx_box=NULL;
     get_track_index(mt,tc);
 
     mt->prev_fx_time=0; // force redraw in node_spin_val_changed
     has_params=add_mt_param_box(mt);
 
-    if (mainw->playing_file<0) {
-      if (mt->current_track>=0) {
-	if (mt->idlefunc>0) {
-	  g_source_remove(mt->idlefunc);
-	  mt->idlefunc=0;
-	  needs_idlefunc=TRUE;
-	}
-	gdk_window_process_updates(lives_widget_get_xwindow(mt->window),TRUE);
-	mt->block_tl_move=TRUE;
-	on_node_spin_value_changed(GTK_SPIN_BUTTON(mt->node_spinbutton),mt); // force parameter interpolation
-	mt->block_tl_move=FALSE;
-	if (needs_idlefunc) {
-	  mt->idlefunc=mt_idle_add(mt);
-	}
-      }
+    if (has_params&&mainw->playing_file<0) {
+      lives_widget_context_update();
+      mt->block_tl_move=TRUE;
+      on_node_spin_value_changed(GTK_SPIN_BUTTON(mt->node_spinbutton),mt); // force parameter interpolation
+      mt->block_tl_move=FALSE;
     }
     clear_context(mt);
     if (has_params) {
@@ -12276,6 +12258,7 @@ void polymorph (lives_mt *mt, lives_mt_poly_state_t poly) {
     else {
       add_context_label(mt,_("Effect has no parameters.\n"));
     }
+    gtk_widget_show_all(mt->fx_box);
     break;
   case POLY_FX_STACK:
     mt->init_event=NULL;
@@ -12351,6 +12334,8 @@ void polymorph (lives_mt *mt, lives_mt_poly_state_t poly) {
 		weed_free(out_tracks);
 	      }
 	    }
+
+	    if (!is_input&&!is_output) continue;
 
 	    has_effect=TRUE;
 

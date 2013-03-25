@@ -3469,7 +3469,7 @@ get_menu_text_long(GtkWidget *menuitem, gchar *text) {
 }
 
 
-LIVES_INLINE gboolean int_array_contains_value(int *array, int num_elems, int value) {
+LIVES_INLINE boolean int_array_contains_value(int *array, int num_elems, int value) {
   int i;
   for (i=0;i<num_elems;i++) {
     if (array[i]==value) return TRUE;

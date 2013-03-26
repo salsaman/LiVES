@@ -1039,7 +1039,7 @@ _insertw* create_insert_dialog (void) {
                     (GtkAttachOptions) (GTK_FILL),
                     (GtkAttachOptions) (0), 0, 0);
 
-  gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(radiobutton),mainw->insert_after);
+  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(radiobutton),mainw->insert_after);
 
 
   hbox = lives_hbox_new (FALSE, 0);
@@ -1286,7 +1286,7 @@ _entryw* create_location_dialog (int type) {
 
     g_free(tmp); g_free(tmp2);
 
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(checkbutton),prefs->no_bandwidth);
+    lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(checkbutton),prefs->no_bandwidth);
     
     gtk_box_pack_start (GTK_BOX(dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height*2);
     

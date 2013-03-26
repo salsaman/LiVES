@@ -1,6 +1,6 @@
 // multitrack.h
 // LiVES
-// (c) G. Finch 2005 - 2010 <salsaman@gmail.com>
+// (c) G. Finch 2005 - 2013 <salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -405,44 +405,44 @@ struct _mt {
   weed_plant_t *init_event;   ///< current editable values
   weed_plant_t *selected_init_event;  ///< currently selected in list
   ///////////////////////
-  gint num_video_tracks;
-  gdouble end_secs;  ///< max display time of timeline in seconds
+  int num_video_tracks;
+  double end_secs;  ///< max display time of timeline in seconds
 
   // timeline min and max display values
-  gdouble tl_min;
-  gdouble tl_max;
+  double tl_min;
+  double tl_max;
 
-  gint clip_selected; ///< clip in clip window
-  gint file_selected; ///< actual LiVES file struct number which clip_selected matches
-  gint current_track; ///< starts at 0
+  int clip_selected; ///< clip in clip window
+  int file_selected; ///< actual LiVES file struct number which clip_selected matches
+  int current_track; ///< starts at 0
 
   GList *selected_tracks;
 
   lives_mt_poly_state_t poly_state;  ///< state of polymorph window
 
-  gint render_file;
+  int render_file;
 
   lives_direction_t last_direction; ///< last direction timeline cursor was moved in
 
   track_rect *block_selected; ///< pointer to current selected block, or NULL
   track_rect *putative_block; ///< putative block to move or copy, or NULL
 
-  gdouble ptr_time; ///< stored timeline cursor position before playback
+  double ptr_time; ///< stored timeline cursor position before playback
 
-  gdouble tl_fixed_length; ///< length of timeline can be fixed (secs) : TODO
+  double tl_fixed_length; ///< length of timeline can be fixed (secs) : TODO
 
-  gdouble fps; ///< fps of this timeline
+  double fps; ///< fps of this timeline
 
-  gdouble region_start; ///< start of time region in seconds (or 0.)
-  gdouble region_end; ///< end of time region in seconds (or 0.)
-  gdouble region_init; ///< point where user pressed the mouse
+  double region_start; ///< start of time region in seconds (or 0.)
+  double region_end; ///< end of time region in seconds (or 0.)
+  double region_init; ///< point where user pressed the mouse
   boolean region_updating;
 
   boolean is_rendering; ///< TRUE if we are in the process of rendering/pre-rendering to a clip, cf. mainw->is_rendering
   boolean pr_audio; ///< TRUE if we are in the process of prerendering audio to a clip
 
-  gint max_disp_vtracks;
-  gint current_fx;
+  int max_disp_vtracks;
+  int current_fx;
 
   boolean mt_frame_preview;
 
@@ -451,15 +451,15 @@ struct _mt {
   gchar layout_name[PATH_MAX];
 
   // cursor warping for mouse move mode
-  gdouble hotspot_x;
-  gint hotspot_y;
+  double hotspot_x;
+  int hotspot_y;
 
   boolean moving_block; ///< moving block flag
 
   //////////////////////////////
 
-  gint sel_x;
-  gint sel_y;
+  int sel_x;
+  int sel_y;
 
   gulong mouse_mot1;
   gulong mouse_mot2;
@@ -471,12 +471,12 @@ struct _mt {
   weed_timecode_t insert_end;
 
   /// override for avel used during audio insert
-  gdouble insert_avel;
+  double insert_avel;
 
   GList *undos;
   size_t undo_buffer_used;
   unsigned char *undo_mem;
-  gint undo_offset;
+  int undo_offset;
   boolean did_backup;
 
   gchar undo_text[32];
@@ -491,12 +491,12 @@ struct _mt {
   int64_t auto_back_time;
 
   // stuff to do with framedraw "special" widgets
-  gint inwidth;
-  gint inheight;
-  gint outwidth;
-  gint outheight;
+  int inwidth;
+  int inheight;
+  int outwidth;
+  int outheight;
   lives_special_framedraw_rect_t *framedraw;
-  gint track_index;
+  int track_index;
 
   lives_mt_last_fx_type_t last_fx_type;
 
@@ -519,19 +519,19 @@ struct _mt {
   boolean layout_set_properties;
   boolean ignore_load_vals;
 
-  gdouble user_fps;
-  gint user_width;
-  gint user_height;
-  gint user_arate;
-  gint user_achans;
-  gint user_asamps;
-  gint user_signed_endian;
+  double user_fps;
+  int user_width;
+  int user_height;
+  int user_arate;
+  int user_achans;
+  int user_asamps;
+  int user_signed_endian;
 
   boolean render_vidp;
   boolean render_audp;
   boolean normalise_audp;
 
-  gint exact_preview;
+  int exact_preview;
 
 
   GList *tl_marks;
@@ -541,7 +541,7 @@ struct _mt {
 
   weed_plant_t *specific_event; ///< a pointer to some generally interesting event
 
-  gdouble context_time; ///< this is set when the user right clicks on a track, otherwise -1.
+  double context_time; ///< this is set when the user right clicks on a track, otherwise -1.
   boolean use_context;
 
   lives_cursor_t cursor_style;
@@ -549,16 +549,16 @@ struct _mt {
   boolean is_paused;
 
   /* current size of frame inside playback/preview area */
-  gint play_width;
-  gint play_height;
+  int play_width;
+  int play_height;
 
   /* current size of playback/preview area */
-  gint play_window_width;
-  gint play_window_height;
+  int play_window_width;
+  int play_window_height;
 
-  gint selected_filter; ///< filter selected in poly window tab
+  int selected_filter; ///< filter selected in poly window tab
 
-  gint top_track; ///< top (video) track in scrolled window
+  int top_track; ///< top (video) track in scrolled window
 
   boolean redraw_block; ///< block drawing of playback cursor during track redraws
 
@@ -582,7 +582,7 @@ struct _mt {
 
   lives_amixer_t *amixer;
 
-  gdouble prev_fx_time;
+  double prev_fx_time;
 
   boolean block_tl_move; ///< set to TRUE to block moving timeline (prevents loops with the node spinbutton)
   boolean block_node_spin; ///< set to TRUE to block moving node spinner (prevents loops with the timeline)
@@ -608,7 +608,7 @@ struct _lives_amixer_t {
   GtkWidget *gang_checkbutton;
   GtkWidget *inv_checkbutton;
   gulong *ch_slider_fns;
-  gint nchans;
+  int nchans;
   lives_mt *mt;
 };
 
@@ -649,7 +649,7 @@ typedef struct {
 /* clip->layout use mapping, from layout.map file */
 typedef struct {
   gchar *handle;
-  gint64 unique_id;
+  int64_t unique_id;
   gchar *name;
   GList *list;
 } layout_map;
@@ -662,7 +662,7 @@ typedef struct {
 
 // setup functions
 
-lives_mt *multitrack (weed_plant_t *, gint orig_file, gdouble fps); ///< create and return lives_mt struct
+lives_mt *multitrack (weed_plant_t *, int orig_file, double fps); ///< create and return lives_mt struct
 void mt_init_tracks (lives_mt *, boolean set_min_max);  ///< add basic tracks, or set tracks from mt->event_list
 boolean on_multitrack_activate (GtkMenuItem *menuitem, weed_plant_t *event_list); ///< menuitem callback
 
@@ -738,14 +738,14 @@ void mt_ign_ins_sel_toggled (GtkMenuItem *, gpointer mt);
 void mt_change_max_disp_tracks (GtkMenuItem *, gpointer mt);
 
 // event_list functions
-weed_plant_t *add_blank_frames_up_to (weed_plant_t *event_list, weed_plant_t *start_event, weed_timecode_t end_tc, gdouble fps);
+weed_plant_t *add_blank_frames_up_to (weed_plant_t *event_list, weed_plant_t *start_event, weed_timecode_t end_tc, double fps);
 
 // track functions
 void on_cback_audio_activate (GtkMenuItem *, gpointer mt);
-GtkWidget *add_audio_track (lives_mt *, gint trackno, boolean behind);
+GtkWidget *add_audio_track (lives_mt *, int trackno, boolean behind);
 void add_video_track_behind (GtkMenuItem *, gpointer mt);
 void add_video_track_front (GtkMenuItem *, gpointer mt);
-void delete_video_track(lives_mt *, gint layer, boolean full);
+void delete_video_track(lives_mt *, int layer, boolean full);
 void delete_audio_track(lives_mt *, GtkWidget *eventbox, boolean full);
 void delete_audio_tracks(lives_mt *, GList *list, boolean full);
 void remove_gaps (GtkMenuItem *, gpointer mt);
@@ -775,8 +775,8 @@ boolean on_track_move (GtkWidget *widget, GdkEventMotion *event, gpointer mt);
 boolean on_track_header_move (GtkWidget *widget, GdkEventMotion *event, gpointer mt);
 
 void unselect_all (lives_mt *); ///< unselect all blocks
-void insert_frames (gint filenum, weed_timecode_t offset_start, weed_timecode_t offset_end, weed_timecode_t tc, lives_direction_t direction, GtkWidget *eventbox, lives_mt *, track_rect *in_block);
-void insert_audio (gint filenum, weed_timecode_t offset_start, weed_timecode_t offset_end, weed_timecode_t tc, gdouble avel, lives_direction_t direction, GtkWidget *eventbox, lives_mt *, track_rect *in_block);
+void insert_frames (int filenum, weed_timecode_t offset_start, weed_timecode_t offset_end, weed_timecode_t tc, lives_direction_t direction, GtkWidget *eventbox, lives_mt *, track_rect *in_block);
+void insert_audio (int filenum, weed_timecode_t offset_start, weed_timecode_t offset_end, weed_timecode_t tc, double avel, lives_direction_t direction, GtkWidget *eventbox, lives_mt *, track_rect *in_block);
 void on_seltrack_toggled (GtkWidget *, gpointer mt);
 void scroll_track_by_scrollbar (GtkScrollbar *sbar, gpointer mt);
 
@@ -789,15 +789,15 @@ void avel_reverse_toggled (GtkToggleButton *, gpointer mt);
 void avel_spin_changed (GtkSpinButton *, gpointer mt);
 
 // block API functions
-gint mt_get_last_block_number(lives_mt *, int ntrack); ///< get index of last inserted (wallclock time) block for track
-gint mt_get_block_count(lives_mt *, int ntrack); ///< count blocks in track
-gdouble mt_get_block_sttime(lives_mt *, int ntrack, int iblock); /// get timeline start time of block
-gdouble mt_get_block_entime(lives_mt *, int ntrack, int iblock); /// get timeline end time of block
+int mt_get_last_block_number(lives_mt *, int ntrack); ///< get index of last inserted (wallclock time) block for track
+int mt_get_block_count(lives_mt *, int ntrack); ///< count blocks in track
+double mt_get_block_sttime(lives_mt *, int ntrack, int iblock); /// get timeline start time of block
+double mt_get_block_entime(lives_mt *, int ntrack, int iblock); /// get timeline end time of block
 
 
 // timeline functions
-void mt_tl_move(lives_mt *, gdouble pos_rel);
-void set_timeline_end_secs (lives_mt *, gdouble secs);
+void mt_tl_move(lives_mt *, double pos_rel);
+void set_timeline_end_secs (lives_mt *, double secs);
 boolean on_timeline_press (GtkWidget *, GdkEventButton *, gpointer mt);
 boolean on_timeline_release (GtkWidget *, GdkEventButton *, gpointer mt);
 boolean on_timeline_update (GtkWidget *, GdkEventMotion *, gpointer mt);
@@ -817,7 +817,7 @@ void clear_context (lives_mt *);
 void add_context_label (lives_mt *, const gchar *text);
 void mouse_mode_context(lives_mt *);
 void do_sel_context (lives_mt *);
-void do_fx_list_context (lives_mt *, gint fxcount);
+void do_fx_list_context (lives_mt *, int fxcount);
 void do_fx_move_context(lives_mt *mt);
 
 // playback / animation
@@ -836,7 +836,7 @@ void on_next_node_clicked  (GtkWidget *, gpointer mt);
 void on_prev_node_clicked  (GtkWidget *, gpointer mt);
 void on_del_node_clicked  (GtkWidget *, gpointer mt);
 void on_node_spin_value_changed (GtkSpinButton *, gpointer mt);
-gdouble mt_get_effect_time(lives_mt *);
+double mt_get_effect_time(lives_mt *);
 
 void on_frame_preview_clicked (GtkButton *, gpointer mt);
 void show_preview (lives_mt *, weed_timecode_t tc);
@@ -844,8 +844,8 @@ void show_preview (lives_mt *, weed_timecode_t tc);
 boolean add_mt_param_box(lives_mt *);
 
 // filter list controls
-weed_plant_t *get_prev_fm (lives_mt *, gint current_track, weed_plant_t *frame);
-weed_plant_t *get_next_fm (lives_mt *, gint current_track, weed_plant_t *frame);
+weed_plant_t *get_prev_fm (lives_mt *, int current_track, weed_plant_t *frame);
+weed_plant_t *get_next_fm (lives_mt *, int current_track, weed_plant_t *frame);
 
 void on_prev_fm_clicked  (GtkWidget *button, gpointer mt);
 void on_next_fm_clicked  (GtkWidget *button, gpointer mt);
@@ -853,17 +853,17 @@ void on_fx_insb_clicked  (GtkWidget *button, gpointer mt);
 void on_fx_insa_clicked  (GtkWidget *button, gpointer mt);
 
 // utils
-guint event_list_get_byte_size(lives_mt *mt, weed_plant_t *event_list, int *num_events);  ///< returns bytes and sets num_events
+guint event_list_get_byte_size(lives_mt *, weed_plant_t *event_list, int *num_events);  ///< returns bytes and sets num_events
 boolean event_list_rectify(lives_mt *, weed_plant_t *event_listy);
 boolean make_backup_space (lives_mt *, size_t space_needed);
 void activate_mt_preview(lives_mt *); ///< sensitize Show Preview and Apply buttons
 void **mt_get_pchain(void);
 void event_list_free_undos(lives_mt *);
-boolean used_in_current_layout(lives_mt *, gint file);
+boolean used_in_current_layout(lives_mt *, int file);
 
 // event_list utilities
-boolean compare_filter_maps(weed_plant_t *fm1, weed_plant_t *fm2, gint ctrack); ///< ctrack can be -1 to compare all events, else we cf for ctrack
-void move_init_in_filter_map(lives_mt *mt, weed_plant_t *event_list, weed_plant_t *fmap, weed_plant_t *ifrom, weed_plant_t *ito, gint track, boolean after);
+boolean compare_filter_maps(weed_plant_t *fm1, weed_plant_t *fm2, int ctrack); ///< ctrack can be -1 to compare all events, else we cf for ctrack
+void move_init_in_filter_map(lives_mt *, weed_plant_t *event_list, weed_plant_t *fmap, weed_plant_t *ifrom, weed_plant_t *ito, int track, boolean after);
 void update_filter_events(lives_mt *, weed_plant_t *first_event, weed_timecode_t start_tc, weed_timecode_t end_tc, int track, weed_timecode_t new_start_tc, int new_track);
 void mt_fixup_events(lives_mt *, weed_plant_t *old_event, weed_plant_t *new_event);
 
@@ -881,8 +881,8 @@ void wipe_layout(lives_mt *);
 
 void migrate_layouts (const gchar *old_set_name, const gchar *new_set_name);
 
-GList *layout_frame_is_affected(gint clipno, gint frame);
-GList *layout_audio_is_affected(gint clipno, gdouble time);
+GList *layout_frame_is_affected(int clipno, int frame);
+GList *layout_audio_is_affected(int clipno, double time);
 
 boolean check_for_layout_del (lives_mt *, boolean exiting);
 
@@ -901,7 +901,7 @@ boolean write_backup_layout_numbering(lives_mt *);
 // amixer funcs
 void amixer_show (GtkButton *, gpointer mt);
 void on_amixer_close_clicked (GtkButton *, lives_mt *mt);
-GtkWidget * amixer_add_channel_slider (lives_mt *, gint i);
+GtkWidget * amixer_add_channel_slider (lives_mt *, int i);
 
 
 // misc
@@ -912,8 +912,8 @@ gchar *set_values_from_defs(lives_mt *, boolean from_prefs);
 
 // clip boxes
 void mt_clip_select (lives_mt *, boolean scroll);
-void mt_delete_clips(lives_mt *, gint file);
-void mt_init_clips (lives_mt *, gint orig_file, boolean add);
+void mt_delete_clips(lives_mt *, int file);
+void mt_init_clips (lives_mt *, int orig_file, boolean add);
 
 // key shortcuts
 boolean mt_prevclip (GtkAccelGroup *, GObject *, guint keyval, GdkModifierType mod, gpointer);

@@ -92,6 +92,7 @@ weed_plant_t *weed_instance_from_filter(weed_plant_t *filter);
 void weed_instance_ref(weed_plant_t *inst);
 void weed_instance_unref(weed_plant_t *inst);
 void weed_in_parameters_free (weed_plant_t *inst);
+void weed_in_params_free(weed_plant_t **parameters, int num_parameters);
 void add_param_connections(weed_plant_t *inst);
 lives_filter_error_t weed_reinit_effect (weed_plant_t *inst, boolean reinit_compound);
 void weed_reinit_all(void);

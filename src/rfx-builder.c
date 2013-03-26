@@ -2047,8 +2047,8 @@ GtkWidget * make_param_dialog (int pnum, rfx_build_window_t *rfxbuilder) {
       gtk_spin_button_set_value (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_max),rfxbuilder->copy_params[pnum].max);
       gtk_spin_button_set_value (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_step),
 				 rfxbuilder->copy_params[pnum].step_size);
-      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(rfxbuilder->param_wrap_checkbutton),
-				   rfxbuilder->copy_params[pnum].wrap);
+      lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(rfxbuilder->param_wrap_checkbutton),
+				     rfxbuilder->copy_params[pnum].wrap);
       break;
     case LIVES_PARAM_COLRGB24:
       gtk_spin_button_set_value (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_min),(gdouble)rgb.green);

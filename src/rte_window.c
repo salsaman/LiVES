@@ -101,7 +101,7 @@ boolean on_clear_all_clicked (GtkButton *button, gpointer user_data) {
   cconx_delete_all();
 
   for (i=0;i<prefs->rte_keys_virtual;i++) {
-    if (rte_window!=NULL) gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(key_checks[i]),FALSE);
+    if (rte_window!=NULL) lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON(key_checks[i]),FALSE);
     for (j=modes-1;j>=0;j--) {
       weed_delete_effectkey (i+1,j);
       if (rte_window!=NULL) {
@@ -2359,7 +2359,7 @@ void on_assign_rte_keys_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
 void rtew_set_keych (int key, boolean on) {
   g_signal_handler_block(key_checks[key],ch_fns[key]);
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(key_checks[key]),on);
+  lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON(key_checks[key]),on);
   g_signal_handler_unblock(key_checks[key],ch_fns[key]);
 }
 
@@ -2367,11 +2367,11 @@ void rtew_set_keych (int key, boolean on) {
 void rtew_set_keygr (int key) {
   if (key>=0) {
     g_signal_handler_block(key_grabs[key],gr_fns[key]);
-    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(key_grabs[key]),TRUE);
+    lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON(key_grabs[key]),TRUE);
     g_signal_handler_unblock(key_grabs[key],gr_fns[key]);
   }
   else {
-    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(dummy_radio),TRUE);
+    lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON(dummy_radio),TRUE);
   }
 }
 

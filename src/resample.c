@@ -23,50 +23,50 @@
 #include "audio.h"
 #include "cvirtual.h"
 
-static gint reorder_width=0;
-static gint reorder_height=0;
-static gboolean reorder_leave_back=FALSE;
+static int reorder_width=0;
+static int reorder_height=0;
+static boolean reorder_leave_back=FALSE;
 
 /////////////////////////////////////////////////////
 
-LIVES_INLINE weed_timecode_t q_gint64 (weed_timecode_t in, gdouble fps) {
+LIVES_INLINE weed_timecode_t q_gint64 (weed_timecode_t in, double fps) {
   if (in>(weed_timecode_t)0) return ((weed_timecode_t)((long double)in/(long double)U_SEC*(long double)fps+(long double).5)/(long double)fps)*(weed_timecode_t)U_SECL; // quantise to frame timing
   if (in<(weed_timecode_t)0) return ((weed_timecode_t)((long double)in/(long double)U_SEC*(long double)fps-(long double).5)/(long double)fps)*(weed_timecode_t)U_SECL; // quantise to frame timing
   return (weed_timecode_t)0;
 }
 
-LIVES_INLINE weed_timecode_t q_gint64_floor (weed_timecode_t in, gdouble fps) {
+LIVES_INLINE weed_timecode_t q_gint64_floor (weed_timecode_t in, double fps) {
   if (in!=(weed_timecode_t)0) return ((weed_timecode_t)((long double)in/(long double)U_SEC*(long double)fps)/(long double)fps)*(weed_timecode_t)U_SECL; // quantise to frame timing
   return (weed_timecode_t)0;
 }
 
-LIVES_INLINE weed_timecode_t q_dbl (gdouble in, gdouble fps) {
+LIVES_INLINE weed_timecode_t q_dbl (double in, double fps) {
   if (in>0.) return ((weed_timecode_t)((long double)in*(long double)fps+(long double).5)/(long double)fps)*(weed_timecode_t)U_SECL; // quantise to frame timing
   if (in<0.) return ((weed_timecode_t)((long double)in*(long double)fps-(long double).5)/(long double)fps)*(weed_timecode_t)U_SECL; // quantise to frame timing
   return (weed_timecode_t)0;
 }
 
 
-LIVES_INLINE gint count_resampled_frames (gint in_frames, gdouble orig_fps, gdouble resampled_fps) {
-  gint res_frames;
-  if (resampled_fps<orig_fps) return ((res_frames=(gint)((gdouble)in_frames/orig_fps*resampled_fps))<1)?1:res_frames;
-  else return ((res_frames=(gint)((gdouble)in_frames/orig_fps*resampled_fps+.49999))<1)?1:res_frames;
+LIVES_INLINE int count_resampled_frames (int in_frames, double orig_fps, double resampled_fps) {
+  int res_frames;
+  if (resampled_fps<orig_fps) return ((res_frames=(int)((double)in_frames/orig_fps*resampled_fps))<1)?1:res_frames;
+  else return ((res_frames=(int)((double)in_frames/orig_fps*resampled_fps+.49999))<1)?1:res_frames;
 }
 
 /////////////////////////////////////////////////////
 
-gboolean auto_resample_resize (gint width,gint height,gdouble fps,gint fps_num,gint fps_denom, gint arate, 
-			       gint asigned, gboolean swap_endian) {
+boolean auto_resample_resize (int width,int height,double fps,int fps_num,int fps_denom, int arate, 
+			       int asigned, boolean swap_endian) {
   // do a block atomic: resample audio, then resample video/resize or joint resample/resize
 
   gchar *com,*msg=NULL;
-  gint current_file=mainw->current_file;
-  gboolean audio_resampled=FALSE;
-  gboolean video_resampled=FALSE;
-  gboolean video_resized=FALSE;
-  gboolean bad_header=FALSE;
+  int current_file=mainw->current_file;
+  boolean audio_resampled=FALSE;
+  boolean video_resampled=FALSE;
+  boolean video_resized=FALSE;
+  boolean bad_header=FALSE;
 	  
-  gint frames=cfile->frames;
+  int frames=cfile->frames;
 
   reorder_leave_back=FALSE;
 
@@ -105,7 +105,7 @@ gboolean auto_resample_resize (gint width,gint height,gdouble fps,gint fps_num,g
     if ((width!=cfile->hsize||height!=cfile->vsize)&&width*height>0) {
       // CHANGING SIZE..
       if (fps>cfile->fps) {
-	gboolean rs_builtin;
+	boolean rs_builtin;
 	lives_rfx_t *resize_rfx;
 
 	// we will have more frames...
@@ -282,7 +282,7 @@ gboolean auto_resample_resize (gint width,gint height,gdouble fps,gint fps_num,g
     }
   }
   else {
-    gboolean rs_builtin=TRUE;
+    boolean rs_builtin=TRUE;
     lives_rfx_t *resize_rfx;
     // NO FPS CHANGE
     if ((width!=cfile->hsize||height!=cfile->vsize)&&width*height>0) {
@@ -410,7 +410,7 @@ gboolean auto_resample_resize (gint width,gint height,gdouble fps,gint fps_num,g
 //////////////////////////////////////////////////////////////////
 
 WARN_UNUSED weed_plant_t *
-quantise_events (weed_plant_t *in_list, gdouble qfps, gboolean allow_gap) { 
+quantise_events (weed_plant_t *in_list, double qfps, boolean allow_gap) { 
   // new style event system, now we quantise from event_list_t *in_list to *out_list with period tl/U_SEC
 
   // the timecode of the midpoint of our last frame events will match as near as possible the old length
@@ -424,13 +424,13 @@ quantise_events (weed_plant_t *in_list, gdouble qfps, gboolean allow_gap) {
   weed_plant_t *last_audio_event=NULL;
   weed_plant_t *event,*last_frame_event,*penultimate_frame_event,*next_frame_event,*shortcut=NULL;
   weed_timecode_t out_tc=0,in_tc=-1,nearest_tc=LONG_MAX;
-  gboolean is_first=TRUE;
+  boolean is_first=TRUE;
   weed_timecode_t tc_end,tp;
   int *out_clips=NULL,*out_frames=NULL;
   int numframes=0;
   weed_timecode_t tl=q_dbl(1./qfps,qfps);
   int error;
-  gboolean needs_audio=FALSE,add_audio=FALSE;
+  boolean needs_audio=FALSE,add_audio=FALSE;
   int *aclips=NULL;
   double *aseeks=NULL;
   int num_aclips=0;
@@ -628,7 +628,7 @@ quantise_events (weed_plant_t *in_list, gdouble qfps, gboolean allow_gap) {
 
 static void on_reorder_activate (int rwidth, int rheight) {
   gchar *msg;
-  gboolean has_lmap_error=FALSE;
+  boolean has_lmap_error=FALSE;
 
   if (!(prefs->warning_mask&WARN_MASK_LAYOUT_ALTER_FRAMES)&&(mainw->xlays=layout_frame_is_affected(mainw->current_file,1))!=NULL) {
     if (!do_layout_alter_frames_warning()) {
@@ -718,20 +718,20 @@ on_resaudio_ok_clicked                      (GtkButton *button,
 					     GtkEntry *entry)
 {
   gchar *com,*msg;  
-  gint arate,achans,asampsize,arps;
+  int arate,achans,asampsize,arps;
   int asigned=1,aendian=1;
-  gint cur_signed,cur_endian;
-  gboolean noswitch=mainw->noswitch;
-  gboolean has_lmap_error=FALSE;
+  int cur_signed,cur_endian;
+  boolean noswitch=mainw->noswitch;
+  boolean has_lmap_error=FALSE;
 
   if (button!=NULL) {
-    arps=arate=(gint)atoi (gtk_entry_get_text(GTK_ENTRY(resaudw->entry_arate)));
-    achans=(gint)atoi (gtk_entry_get_text(GTK_ENTRY(resaudw->entry_achans)));
-    asampsize=(gint)atoi (gtk_entry_get_text(GTK_ENTRY(resaudw->entry_asamps)));
-    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(resaudw->rb_unsigned))) {
+    arps=arate=(int)atoi (gtk_entry_get_text(GTK_ENTRY(resaudw->entry_arate)));
+    achans=(int)atoi (gtk_entry_get_text(GTK_ENTRY(resaudw->entry_achans)));
+    asampsize=(int)atoi (gtk_entry_get_text(GTK_ENTRY(resaudw->entry_asamps)));
+    if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(resaudw->rb_unsigned))) {
       asigned=0;
     }
-    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(resaudw->rb_bigend))) {
+    if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(resaudw->rb_bigend))) {
       aendian=0;
     }
 
@@ -784,7 +784,7 @@ on_resaudio_ok_clicked                      (GtkButton *button,
   if (!(arate==cfile->arate&&arps==cfile->arps&&achans==cfile->achans&&asampsize==cfile->asampsize&&
 	asigned==cur_signed&&aendian==cur_endian)) {
     if (cfile->arps!=cfile->arate) {
-      gdouble audio_stretch=(gdouble)cfile->arps/(gdouble)cfile->arate;
+      double audio_stretch=(double)cfile->arps/(double)cfile->arate;
      // pb rate != real rate - stretch to pb rate and resample 
       unlink (cfile->info_file);
       com=g_strdup_printf ("%s resample_audio \"%s\" %d %d %d %d %d %d %d %d %d %d %.4f",prefs->backend,
@@ -878,7 +878,7 @@ static void on_resaudw_achans_changed (GtkWidget *widg, gpointer user_data) {
   _resaudw *resaudw=(_resaudw *)user_data;
   gchar *tmp;
 
-  if (!gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widg))) {
+  if (!lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(widg))) {
     gtk_widget_set_sensitive (resaudw->rb_signed,FALSE);
     gtk_widget_set_sensitive (resaudw->rb_unsigned,FALSE);
     gtk_widget_set_sensitive (resaudw->rb_bigend,FALSE);
@@ -889,12 +889,12 @@ static void on_resaudw_achans_changed (GtkWidget *widg, gpointer user_data) {
     if (prefsw!=NULL) {
       gtk_widget_set_sensitive (prefsw->pertrack_checkbutton,FALSE);
       gtk_widget_set_sensitive (prefsw->backaudio_checkbutton,FALSE);
-      gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(prefsw->pertrack_checkbutton),FALSE);
-      gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(prefsw->backaudio_checkbutton),FALSE);
+      lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON(prefsw->pertrack_checkbutton),FALSE);
+      lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON(prefsw->backaudio_checkbutton),FALSE);
     }
     else if (rdet!=NULL) {
-      gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(rdet->pertrack_checkbutton),FALSE);
-      gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(rdet->backaudio_checkbutton),FALSE);
+      lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON(rdet->pertrack_checkbutton),FALSE);
+      lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON(rdet->backaudio_checkbutton),FALSE);
       gtk_widget_set_sensitive(rdet->pertrack_checkbutton,FALSE);
       gtk_widget_set_sensitive(rdet->backaudio_checkbutton,FALSE);
     }
@@ -933,7 +933,7 @@ on_resaudw_asamps_changed (GtkWidget *irrelevant, gpointer rubbish) {
     gtk_widget_set_sensitive (resaudw->rb_littleend,FALSE);
     gtk_widget_set_sensitive (resaudw->rb_signed,FALSE);
     gtk_widget_set_sensitive (resaudw->rb_unsigned,TRUE);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(resaudw->rb_unsigned),TRUE);
+    lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(resaudw->rb_unsigned),TRUE);
   }
   else {
     gtk_widget_set_sensitive (resaudw->rb_bigend,TRUE);
@@ -941,7 +941,7 @@ on_resaudw_asamps_changed (GtkWidget *irrelevant, gpointer rubbish) {
     if (atoi (gtk_entry_get_text (GTK_ENTRY (resaudw->entry_asamps)))==16) {
       gtk_widget_set_sensitive (resaudw->rb_signed,TRUE);
       gtk_widget_set_sensitive (resaudw->rb_unsigned,FALSE);
-      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(resaudw->rb_signed),TRUE);
+      lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(resaudw->rb_signed),TRUE);
     }
   }
 }
@@ -961,15 +961,15 @@ on_resample_video_activate (GtkMenuItem     *menuitem,
 
 void on_resample_vid_ok (GtkButton *button, GtkEntry *entry) {
   int i;
-  gint old_frames;
-  gint ostart=cfile->start;
-  gint oend=cfile->end;
-  gdouble oundo1_dbl=cfile->undo1_dbl;
+  int old_frames;
+  int ostart=cfile->start;
+  int oend=cfile->end;
+  double oundo1_dbl=cfile->undo1_dbl;
   gchar *msg;
   weed_timecode_t in_time=0;
-  gdouble old_fps=cfile->fps;
-  gboolean ratio_fps;
-  gboolean bad_header=FALSE;
+  double old_fps=cfile->fps;
+  boolean ratio_fps;
+  boolean bad_header=FALSE;
   weed_plant_t *real_back_list=NULL;
   weed_plant_t *new_event_list=NULL;
 
@@ -1044,8 +1044,8 @@ void on_resample_vid_ok (GtkButton *button, GtkEntry *entry) {
   old_frames=cfile->frames;
 
   // must set these before calling reorder
-  cfile->start=(gint)((cfile->start-1.)/old_fps*mainw->fx1_val+1.);
-  if ((cfile->end=(gint)((cfile->end*mainw->fx1_val)/old_fps+.49999))<cfile->start) cfile->end=cfile->start;
+  cfile->start=(int)((cfile->start-1.)/old_fps*mainw->fx1_val+1.);
+  if ((cfile->end=(int)((cfile->end*mainw->fx1_val)/old_fps+.49999))<cfile->start) cfile->end=cfile->start;
 
   cfile->undo_action=UNDO_RESAMPLE;
   // REORDER
@@ -1145,15 +1145,15 @@ _resaudw *create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox
   GList *sampsize = NULL;
   GList *rate = NULL;
 
-  gdouble secs=0.;
+  double secs=0.;
 
   gchar *tmp;
 
-  gint hours=0,mins=0;
-  gint aendian;
+  int hours=0,mins=0;
+  int aendian;
 
-  gboolean chans_fixed=FALSE;
-  gboolean is_8bit;
+  boolean chans_fixed=FALSE;
+  boolean is_8bit;
 
   _resaudw *resaudw=(_resaudw*)(g_malloc(sizeof(_resaudw)));
 
@@ -1163,8 +1163,8 @@ _resaudw *create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox
   }
 
   if (type>5&&type!=11&&mainw->rec_end_time!=-1.) {
-    hours=(gint)(mainw->rec_end_time/3600.);
-    mins=(gint)((mainw->rec_end_time-(hours*3600.))/60.);
+    hours=(int)(mainw->rec_end_time/3600.);
+    mins=(int)((mainw->rec_end_time-(hours*3600.))/60.);
     secs=mainw->rec_end_time-hours*3600.-mins*60.;
   }
 
@@ -1233,7 +1233,7 @@ _resaudw *create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox
     gtk_container_add (GTK_CONTAINER (frame), hbox2);
     gtk_container_set_border_width (GTK_CONTAINER (hbox2), widget_opts.packing_width);
     
-    tmp=g_strdup_printf ("%d",(gint)mainw->fx1_val);
+    tmp=g_strdup_printf ("%d",(int)mainw->fx1_val);
     
     combo_entry2 = lives_standard_entry_new(_("Rate (Hz) "),FALSE,tmp,10,6,LIVES_BOX(hbox2),NULL);
     g_free (tmp);
@@ -1241,14 +1241,14 @@ _resaudw *create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox
     gtk_editable_set_editable (GTK_EDITABLE (combo_entry2), FALSE);
     lives_widget_set_can_focus (combo_entry2, FALSE);
     
-    tmp=g_strdup_printf ("%d",(gint)mainw->fx2_val);
+    tmp=g_strdup_printf ("%d",(int)mainw->fx2_val);
     combo_entry3 = lives_standard_entry_new(_("Channels"),FALSE,tmp,6,2,LIVES_BOX(hbox2),NULL);
     g_free (tmp);
 
     gtk_editable_set_editable (GTK_EDITABLE (combo_entry3), FALSE);
     lives_widget_set_can_focus (combo_entry3, FALSE);
     
-    tmp=g_strdup_printf ("%d",(gint)mainw->fx3_val);
+    tmp=g_strdup_printf ("%d",(int)mainw->fx3_val);
     combo_entry1 = lives_standard_entry_new(_("Sample Size "),FALSE,tmp,6,2,LIVES_BOX(hbox2),NULL);
     g_free (tmp);
 
@@ -1360,7 +1360,7 @@ _resaudw *create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox
     gtk_entry_set_width_chars (GTK_ENTRY (resaudw->entry_arate), 6);
     if (type==7) gtk_widget_set_sensitive(combo4,FALSE);
   
-    if (type<3||(type>4&&type<8)||type==11) tmp=g_strdup_printf ("%d",(gint)mainw->fx1_val);
+    if (type<3||(type>4&&type<8)||type==11) tmp=g_strdup_printf ("%d",(int)mainw->fx1_val);
     else if (type==8) tmp=g_strdup_printf ("%d",DEFAULT_AUDIO_RATE);
     else if (type==3) tmp=g_strdup_printf ("%d",rdet->arate);
     else tmp=g_strdup_printf ("%d",prefs->mt_def_arate);
@@ -1376,7 +1376,7 @@ _resaudw *create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox
     resaudw->entry_achans = lives_combo_get_entry(LIVES_COMBO(combo5));
     gtk_entry_set_width_chars (GTK_ENTRY (resaudw->entry_achans), 2);
     
-    if (type<3||(type>4&&type<8)||type==11) tmp=g_strdup_printf ("%d",(gint)mainw->fx2_val);
+    if (type<3||(type>4&&type<8)||type==11) tmp=g_strdup_printf ("%d",(int)mainw->fx2_val);
     else if (type==8) tmp=g_strdup_printf ("%d",DEFAULT_AUDIO_CHANS);
     else if (type==3) tmp=g_strdup_printf ("%d",rdet->achans);
     else tmp=g_strdup_printf ("%d",prefs->mt_def_achans==0?DEFAULT_AUDIO_CHANS:prefs->mt_def_achans);
@@ -1399,7 +1399,7 @@ _resaudw *create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox
     gtk_editable_set_editable (GTK_EDITABLE (resaudw->entry_asamps), FALSE);
     gtk_entry_set_width_chars (GTK_ENTRY (resaudw->entry_asamps), 2);
     
-    if (type<3||(type>4&&type<8)||type==11) tmp=g_strdup_printf ("%d",(gint)mainw->fx3_val);
+    if (type<3||(type>4&&type<8)||type==11) tmp=g_strdup_printf ("%d",(int)mainw->fx3_val);
     else if (type==8) tmp=g_strdup_printf ("%d",DEFAULT_AUDIO_SAMPS);
     else if (type==3) tmp=g_strdup_printf ("%d",rdet->asamps);
     else tmp=g_strdup_printf ("%d",prefs->mt_def_asamps);
@@ -1728,7 +1728,7 @@ void create_new_pb_speed (short type) {
 
 
     spinbutton_pb_time = lives_standard_spin_button_new (NULL,FALSE,
-							 (gdouble)((gint)(cfile->frames/cfile->fps*100.))/100., 
+							 (double)((int)(cfile->frames/cfile->fps*100.))/100., 
 							 1./FPS_MAX, cfile->frames, 1., 10., 2, LIVES_BOX(hbox),NULL);
 
     gtk_label_set_mnemonic_widget (GTK_LABEL (label2), spinbutton_pb_time);
@@ -1839,7 +1839,7 @@ void on_change_speed_ok_clicked (GtkButton *button, gpointer user_data) {
   }
 
   if (!(prefs->warning_mask&WARN_MASK_LAYOUT_DELETE_FRAMES)&&mainw->fx1_val>cfile->fps) {
-    gint new_frames=count_resampled_frames(cfile->frames,mainw->fx1_val,cfile->fps);
+    int new_frames=count_resampled_frames(cfile->frames,mainw->fx1_val,cfile->fps);
     if ((mainw->xlays=layout_frame_is_affected(mainw->current_file,new_frames))!=NULL) {
       if (!do_warning_dialog(_("\nSpeeding up the clip will cause missing frames in some multitrack layouts.\nAre you sure you wish to change the speed ?\n"))) {
 	g_list_free_strings(mainw->xlays);
@@ -1856,7 +1856,7 @@ void on_change_speed_ok_clicked (GtkButton *button, gpointer user_data) {
   }
 
   if (mainw->fx1_bool&&!(prefs->warning_mask&WARN_MASK_LAYOUT_DELETE_AUDIO)&&mainw->fx1_val>cfile->fps) {
-    gint new_frames=count_resampled_frames(cfile->frames,mainw->fx1_val,cfile->fps);
+    int new_frames=count_resampled_frames(cfile->frames,mainw->fx1_val,cfile->fps);
     if ((mainw->xlays=layout_audio_is_affected(mainw->current_file,(new_frames-1.)/cfile->fps))!=NULL) {
       if (!do_warning_dialog(_("\nSpeeding up the clip will cause missing audio in some multitrack layouts.\nAre you sure you wish to change the speed ?\n"))) {
 	g_list_free_strings(mainw->xlays);
@@ -1941,7 +1941,7 @@ void on_change_speed_ok_clicked (GtkButton *button, gpointer user_data) {
   if (mainw->fx1_val==0.) mainw->fx1_val=1.;
   cfile->pb_fps=cfile->fps=mainw->fx1_val;
   if (mainw->fx1_bool) {
-    cfile->arate=(gint)(arate*cfile->fps+.5);
+    cfile->arate=(int)(arate*cfile->fps+.5);
     msg=g_strdup_printf (_ ("Changed playback speed to %.3f frames per second and audio to %d Hz.\n"),cfile->fps,cfile->arate);
   }
   else {
@@ -2087,7 +2087,7 @@ int deorder_frames(int old_frames, boolean leave_bak) {
   }
   else {
     time_start=get_event_timecode (get_first_event(cfile->event_list));
-    perf_start=(gint)(cfile->fps*(gdouble)time_start/U_SEC)+1;
+    perf_start=(int)(cfile->fps*(double)time_start/U_SEC)+1;
     perf_end=perf_start+count_events (cfile->event_list,FALSE,0,0)-1;
   }
   com=g_strdup_printf("%s deorder \"%s\" %d %d %d \"%s\" %d",prefs->backend,cfile->handle,

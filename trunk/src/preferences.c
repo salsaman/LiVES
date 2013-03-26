@@ -31,23 +31,23 @@ static guint prefs_current_page;
 #ifdef ENABLE_OSC
 static void on_osc_enable_toggled (GtkToggleButton *t1, gpointer t2) {
   if (prefs->osc_udp_started) return;
-  gtk_widget_set_sensitive (prefsw->spinbutton_osc_udp,gtk_toggle_button_get_active (t1)||
-			    gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (t2)));
+  gtk_widget_set_sensitive (prefsw->spinbutton_osc_udp,lives_toggle_button_get_active (t1)||
+			    lives_toggle_button_get_active (GTK_TOGGLE_BUTTON (t2)));
 }
 #endif
 
 static void instopen_toggled (GtkToggleButton *t1, GtkWidget *button) {
-  gtk_widget_set_sensitive (button,gtk_toggle_button_get_active (t1));
+  gtk_widget_set_sensitive (button,lives_toggle_button_get_active (t1));
 }
 
 
-void get_pref(const gchar *key, gchar *val, gint maxlen) {
+void get_pref(const gchar *key, gchar *val, int maxlen) {
   FILE *valfile;
   gchar *vfile;
   gchar *com;
   int retval;
   int alarm_handle;
-  gboolean timeout;
+  boolean timeout;
 
   memset(val,0,maxlen);
 
@@ -119,7 +119,7 @@ void get_pref(const gchar *key, gchar *val, gint maxlen) {
 
 
 
-void get_pref_utf8(const gchar *key, gchar *val, gint maxlen) {
+void get_pref_utf8(const gchar *key, gchar *val, int maxlen) {
   // get a pref in locale encoding, then convert it to utf8
   gchar *tmp;
   get_pref(key,val,maxlen);
@@ -156,14 +156,14 @@ GList *get_list_pref(const gchar *key) {
 
 
 
-void get_pref_default(const gchar *key, gchar *val, gint maxlen) {
+void get_pref_default(const gchar *key, gchar *val, int maxlen) {
   FILE *valfile;
   gchar *vfile;
   gchar *com=g_strdup_printf("%s get_pref_default \"%s\"",prefs->backend_sync,key);
 
   int retval;
   int alarm_handle;
-  gboolean timeout;
+  boolean timeout;
 
   memset(val,0,1);
 
@@ -225,32 +225,28 @@ void get_pref_default(const gchar *key, gchar *val, gint maxlen) {
 }
 
 
-gboolean
-get_boolean_pref(const gchar *key) {
+boolean get_boolean_pref(const gchar *key) {
   gchar buffer[16];
   get_pref(key,buffer,16);
   if (!strcmp(buffer,"true")) return TRUE;
   return FALSE;
 }
 
-gint
-get_int_pref(const gchar *key) {
+int get_int_pref(const gchar *key) {
   gchar buffer[64];
   get_pref(key,buffer,64);
   if (strlen(buffer)==0) return 0;
   return atoi(buffer);
 }
 
-gdouble
-get_double_pref(const gchar *key) {
+double get_double_pref(const gchar *key) {
   gchar buffer[64];
   get_pref(key,buffer,64);
   if (strlen(buffer)==0) return 0.;
   return strtod(buffer,NULL);
 }
 
-void
-delete_pref(const gchar *key) {
+void delete_pref(const gchar *key) {
   gchar *com=g_strdup_printf("%s delete_pref \"%s\"",prefs->backend_sync,key);
   if (system(com)) {
     tempdir_warning();
@@ -267,8 +263,7 @@ void set_pref(const gchar *key, const gchar *value) {
 }
 
 
-void
-set_int_pref(const gchar *key, gint value) {
+void set_int_pref(const gchar *key, int value) {
   gchar *com=g_strdup_printf("%s set_pref \"%s\" %d",prefs->backend_sync,key,value);
   if (system(com)) {
     tempdir_warning();
@@ -277,8 +272,7 @@ set_int_pref(const gchar *key, gint value) {
 }
 
 
-void
-set_int64_pref(const gchar *key, gint64 value) {
+void set_int64_pref(const gchar *key, int64_t value) {
   gchar *com=g_strdup_printf("%s set_pref \"%s\" %"PRId64,prefs->backend_sync,key,value);
   if (system(com)) {
     tempdir_warning();
@@ -287,8 +281,7 @@ set_int64_pref(const gchar *key, gint64 value) {
 }
 
 
-void
-set_double_pref(const gchar *key, gdouble value) {
+void set_double_pref(const gchar *key, double value) {
   gchar *com=g_strdup_printf("%s set_pref \"%s\" %.3f",prefs->backend_sync,key,value);
   if (system(com)) {
     tempdir_warning();
@@ -297,8 +290,7 @@ set_double_pref(const gchar *key, gdouble value) {
 }
 
 
-void
-set_boolean_pref(const gchar *key, gboolean value) {
+void set_boolean_pref(const gchar *key, boolean value) {
   gchar *com;
 
   if (value) {
@@ -341,7 +333,7 @@ void set_list_pref(const char *key, GList *values) {
 
 
 
-void set_vpp(gboolean set_in_prefs) {
+void set_vpp(boolean set_in_prefs) {
   // Video Playback Plugin
 
   if (strlen (future_prefs->vpp_name)) {
@@ -430,11 +422,8 @@ static void set_temp_label_text(GtkLabel *label) {
 
 
 
-gboolean apply_prefs(gboolean skip_warn) {
+boolean apply_prefs(boolean skip_warn) {
   // set current prefs from prefs dialog
-  int idx;
-
-  gboolean needs_restart=FALSE;
   const gchar *video_open_command=gtk_entry_get_text(GTK_ENTRY(prefsw->video_open_entry));
   const gchar *audio_play_command=gtk_entry_get_text(GTK_ENTRY(prefsw->audio_command_entry));
   const gchar *def_vid_load_dir=gtk_entry_get_text(GTK_ENTRY(prefsw->vid_load_dir_entry));
@@ -445,111 +434,123 @@ gboolean apply_prefs(gboolean skip_warn) {
   const gchar *wp_path=gtk_entry_get_text(GTK_ENTRY(prefsw->wpp_entry));
   const gchar *frei0r_path=gtk_entry_get_text(GTK_ENTRY(prefsw->frei0r_entry));
   const gchar *ladspa_path=gtk_entry_get_text(GTK_ENTRY(prefsw->ladspa_entry));
+
   gchar tmpdir[PATH_MAX];
-  char *theme = lives_combo_get_active_text( LIVES_COMBO(prefsw->theme_combo) );
-  char *audp = lives_combo_get_active_text( LIVES_COMBO(prefsw->audp_combo) );
+  gchar *theme = lives_combo_get_active_text( LIVES_COMBO(prefsw->theme_combo) );
+  gchar *audp = lives_combo_get_active_text( LIVES_COMBO(prefsw->audp_combo) );
   gchar *audio_codec=NULL;
-  char *pb_quality = lives_combo_get_active_text( LIVES_COMBO(prefsw->pbq_combo) );
+  gchar *pb_quality = lives_combo_get_active_text( LIVES_COMBO(prefsw->pbq_combo) );
 
-  gint pbq=PB_QUALITY_MED;
+  int pbq=PB_QUALITY_MED;
+  int idx;
 
-  gdouble default_fps=gtk_spin_button_get_value(GTK_SPIN_BUTTON(prefsw->spinbutton_def_fps));
-  gboolean antialias=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_antialias));
-  gboolean fx_threads=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_threads));
-  gint nfx_threads=gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(prefsw->spinbutton_nfx_threads));
-  gboolean stop_screensaver=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->stop_screensaver_check));
-  gboolean open_maximised=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->open_maximised_check));
-  gboolean fs_maximised=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->fs_max_check));
-  gboolean show_recent=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->recent_check));
-  gboolean stream_audio_out=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_stream_audio));
-  gboolean rec_after_pb=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_rec_after_pb));
+  boolean needs_restart=FALSE;
+
+  double default_fps=gtk_spin_button_get_value(GTK_SPIN_BUTTON(prefsw->spinbutton_def_fps));
+
+  boolean antialias=lives_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_antialias));
+  boolean fx_threads=lives_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_threads));
+
+  int nfx_threads=gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(prefsw->spinbutton_nfx_threads));
+
+  boolean stop_screensaver=lives_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->stop_screensaver_check));
+  boolean open_maximised=lives_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->open_maximised_check));
+  boolean fs_maximised=lives_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->fs_max_check));
+  boolean show_recent=lives_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->recent_check));
+  boolean stream_audio_out=lives_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_stream_audio));
+  boolean rec_after_pb=lives_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_rec_after_pb));
 
   guint64 ds_warn_level=gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(prefsw->spinbutton_warn_ds))*1000000;
   guint64 ds_crit_level=gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(prefsw->spinbutton_crit_ds))*1000000;
 
-  gboolean warn_fps=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_warn_fps));
-  gboolean warn_save_set=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_warn_save_set));
-  gboolean warn_fsize=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_warn_fsize));
-  gboolean warn_mplayer=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_warn_mplayer));
-  gboolean warn_rendered_fx=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_warn_rendered_fx));
-  gboolean warn_encoders=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_warn_encoders));
-  gboolean warn_duplicate_set=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_warn_dup_set));
-  gboolean warn_layout_missing_clips=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_warn_layout_clips));
-  gboolean warn_layout_close=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_warn_layout_close));
-  gboolean warn_layout_delete=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_warn_layout_delete));
-  gboolean warn_layout_shift=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_warn_layout_shift));
-  gboolean warn_layout_alter=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_warn_layout_alter));
-  gboolean warn_discard_layout=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_warn_discard_layout));
-  gboolean warn_after_dvgrab=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_warn_after_dvgrab));
-  gboolean warn_mt_achans=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_warn_mt_achans));
-  gboolean warn_mt_no_jack=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_warn_mt_no_jack));
-  gboolean warn_yuv4m_open=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_warn_yuv4m_open));
+  boolean warn_fps=lives_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_warn_fps));
+  boolean warn_save_set=lives_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_warn_save_set));
+  boolean warn_fsize=lives_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_warn_fsize));
+  boolean warn_mplayer=lives_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_warn_mplayer));
+  boolean warn_rendered_fx=lives_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_warn_rendered_fx));
+  boolean warn_encoders=lives_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_warn_encoders));
+  boolean warn_duplicate_set=lives_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_warn_dup_set));
+  boolean warn_layout_missing_clips=lives_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_warn_layout_clips));
+  boolean warn_layout_close=lives_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_warn_layout_close));
+  boolean warn_layout_delete=lives_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_warn_layout_delete));
+  boolean warn_layout_shift=lives_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_warn_layout_shift));
+  boolean warn_layout_alter=lives_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_warn_layout_alter));
+  boolean warn_discard_layout=lives_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_warn_discard_layout));
+  boolean warn_after_dvgrab=lives_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_warn_after_dvgrab));
+  boolean warn_mt_achans=lives_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_warn_mt_achans));
+  boolean warn_mt_no_jack=lives_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_warn_mt_no_jack));
+  boolean warn_yuv4m_open=lives_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_warn_yuv4m_open));
 
-  gboolean warn_layout_adel=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_warn_layout_adel));
-  gboolean warn_layout_ashift=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_warn_layout_ashift));
-  gboolean warn_layout_aalt=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_warn_layout_aalt));
-  gboolean warn_layout_popup=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_warn_layout_popup));
-  gboolean warn_mt_backup_space=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_warn_mt_backup_space));
-  gboolean warn_after_crash=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_warn_after_crash));
-  gboolean warn_no_pulse=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_warn_no_pulse));
+  boolean warn_layout_adel=lives_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_warn_layout_adel));
+  boolean warn_layout_ashift=lives_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_warn_layout_ashift));
+  boolean warn_layout_aalt=lives_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_warn_layout_aalt));
+  boolean warn_layout_popup=lives_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_warn_layout_popup));
+  boolean warn_mt_backup_space=lives_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_warn_mt_backup_space));
+  boolean warn_after_crash=lives_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_warn_after_crash));
+  boolean warn_no_pulse=lives_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_warn_no_pulse));
 
-  gboolean midisynch=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->check_midi));
-  gboolean instant_open=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_instant_open));
-  gboolean auto_deint=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_auto_deint));
-  gboolean auto_nobord=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_nobord));
-  gboolean concat_images=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_concat_images));
-  gboolean ins_speed=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->ins_speed));
-  gboolean show_player_stats=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_show_stats));
-  gboolean ext_jpeg=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->jpeg));
-  gboolean show_tool=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->show_tool));
-  gboolean mouse_scroll=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->mouse_scroll));
-  gboolean ce_maxspect=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_ce_maxspect));
-  gint fsize_to_warn=gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(prefsw->spinbutton_warn_fsize));
-  gint dl_bwidth=gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(prefsw->spinbutton_bwidth));
-  gint ocp=gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(prefsw->spinbutton_ocp));
-  gboolean rec_frames=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->rframes));
-  gboolean rec_fps=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->rfps));
-  gboolean rec_effects=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->reffects));
-  gboolean rec_clips=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->rclips));
-  gboolean rec_audio=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->raudio));
-  gboolean rec_ext_audio=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->rextaudio));
+  boolean midisynch=lives_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->check_midi));
+  boolean instant_open=lives_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_instant_open));
+  boolean auto_deint=lives_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_auto_deint));
+  boolean auto_nobord=lives_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_nobord));
+  boolean concat_images=lives_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_concat_images));
+  boolean ins_speed=lives_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->ins_speed));
+  boolean show_player_stats=lives_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_show_stats));
+  boolean ext_jpeg=lives_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->jpeg));
+  boolean show_tool=lives_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->show_tool));
+  boolean mouse_scroll=lives_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->mouse_scroll));
+  boolean ce_maxspect=lives_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_ce_maxspect));
+
+  int fsize_to_warn=gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(prefsw->spinbutton_warn_fsize));
+  int dl_bwidth=gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(prefsw->spinbutton_bwidth));
+  int ocp=gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(prefsw->spinbutton_ocp));
+
+  boolean rec_frames=lives_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->rframes));
+  boolean rec_fps=lives_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->rfps));
+  boolean rec_effects=lives_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->reffects));
+  boolean rec_clips=lives_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->rclips));
+  boolean rec_audio=lives_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->raudio));
+  boolean rec_ext_audio=lives_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->rextaudio));
 #ifdef RT_AUDIO
-  gboolean rec_desk_audio=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->rdesk_audio));
+  boolean rec_desk_audio=lives_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->rdesk_audio));
 #endif
 
-  gboolean mt_enter_prompt=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->mt_enter_prompt));
-  gboolean render_prompt=!gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_render_prompt));
-  gint mt_def_width=gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(prefsw->spinbutton_mt_def_width));
-  gint mt_def_height=gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(prefsw->spinbutton_mt_def_height));
-  gint mt_def_fps=gtk_spin_button_get_value(GTK_SPIN_BUTTON(prefsw->spinbutton_mt_def_fps));
-  gint mt_def_arate=atoi(gtk_entry_get_text(GTK_ENTRY(resaudw->entry_arate)));
-  gint mt_def_achans=atoi(gtk_entry_get_text(GTK_ENTRY(resaudw->entry_achans)));
-  gint mt_def_asamps=atoi(gtk_entry_get_text(GTK_ENTRY(resaudw->entry_asamps)));
-  gint mt_def_signed_endian=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(resaudw->rb_unsigned))*
-    AFORM_UNSIGNED+gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(resaudw->rb_bigend))*AFORM_BIG_ENDIAN;
-  gint mt_undo_buf=gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(prefsw->spinbutton_mt_undo_buf));
-  gboolean mt_exit_render=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_mt_exit_render));
-  gboolean mt_enable_audio=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(resaudw->aud_checkbutton));
-  gboolean mt_pertrack_audio=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->pertrack_checkbutton));
-  gboolean mt_backaudio=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->backaudio_checkbutton));
+  boolean mt_enter_prompt=lives_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->mt_enter_prompt));
+  boolean render_prompt=!lives_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_render_prompt));
 
-  gboolean mt_autoback_always=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->mt_autoback_always));
-  gboolean mt_autoback_never=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->mt_autoback_never));
-  gint mt_autoback_time=gtk_spin_button_get_value(GTK_SPIN_BUTTON(prefsw->spinbutton_mt_ab_time));
+  int mt_def_width=gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(prefsw->spinbutton_mt_def_width));
+  int mt_def_height=gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(prefsw->spinbutton_mt_def_height));
+  int mt_def_fps=gtk_spin_button_get_value(GTK_SPIN_BUTTON(prefsw->spinbutton_mt_def_fps));
+  int mt_def_arate=atoi(gtk_entry_get_text(GTK_ENTRY(resaudw->entry_arate)));
+  int mt_def_achans=atoi(gtk_entry_get_text(GTK_ENTRY(resaudw->entry_achans)));
+  int mt_def_asamps=atoi(gtk_entry_get_text(GTK_ENTRY(resaudw->entry_asamps)));
+  int mt_def_signed_endian=lives_toggle_button_get_active(GTK_TOGGLE_BUTTON(resaudw->rb_unsigned))*
+    AFORM_UNSIGNED+lives_toggle_button_get_active(GTK_TOGGLE_BUTTON(resaudw->rb_bigend))*AFORM_BIG_ENDIAN;
+  int mt_undo_buf=gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(prefsw->spinbutton_mt_undo_buf));
 
-  gint gui_monitor=gtk_spin_button_get_value(GTK_SPIN_BUTTON(prefsw->spinbutton_gmoni));
-  gint play_monitor=gtk_spin_button_get_value(GTK_SPIN_BUTTON(prefsw->spinbutton_pmoni));
-  gboolean forcesmon=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->forcesmon));
-  gboolean startup_ce=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->rb_startup_ce));
+  boolean mt_exit_render=lives_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_mt_exit_render));
+  boolean mt_enable_audio=lives_toggle_button_get_active(GTK_TOGGLE_BUTTON(resaudw->aud_checkbutton));
+  boolean mt_pertrack_audio=lives_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->pertrack_checkbutton));
+  boolean mt_backaudio=lives_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->backaudio_checkbutton));
+
+  boolean mt_autoback_always=lives_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->mt_autoback_always));
+  boolean mt_autoback_never=lives_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->mt_autoback_never));
+
+  int mt_autoback_time=gtk_spin_button_get_value(GTK_SPIN_BUTTON(prefsw->spinbutton_mt_ab_time));
+  int gui_monitor=gtk_spin_button_get_value(GTK_SPIN_BUTTON(prefsw->spinbutton_gmoni));
+  int play_monitor=gtk_spin_button_get_value(GTK_SPIN_BUTTON(prefsw->spinbutton_pmoni));
+
+  boolean forcesmon=lives_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->forcesmon));
+  boolean startup_ce=lives_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->rb_startup_ce));
 
 #ifdef ENABLE_JACK
-  gboolean jack_tstart=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_start_tjack));
-  gboolean jack_astart=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_start_ajack));
-  gboolean jack_master=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_jack_master));
-  gboolean jack_client=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_jack_client));
-  gboolean jack_tb_start=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_jack_tb_start));
-  gboolean jack_tb_client=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_jack_tb_client));
-  gboolean jack_pwp=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_jack_pwp));
+  boolean jack_tstart=lives_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_start_tjack));
+  boolean jack_astart=lives_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_start_ajack));
+  boolean jack_master=lives_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_jack_master));
+  boolean jack_client=lives_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_jack_client));
+  boolean jack_tb_start=lives_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_jack_tb_start));
+  boolean jack_tb_client=lives_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_jack_tb_client));
+  boolean jack_pwp=lives_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_jack_pwp));
   guint jack_opts=(JACK_OPTS_TRANSPORT_CLIENT*jack_client+JACK_OPTS_TRANSPORT_MASTER*jack_master+
 		   JACK_OPTS_START_TSERVER*jack_tstart+JACK_OPTS_START_ASERVER*jack_astart+
 		   JACK_OPTS_NOPLAY_WHEN_PAUSED*!jack_pwp+JACK_OPTS_TIMEBASE_START*jack_tb_start+
@@ -557,44 +558,44 @@ gboolean apply_prefs(gboolean skip_warn) {
 #endif
 
 #ifdef RT_AUDIO
-  gboolean audio_follow_fps=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_afollow));
-  gboolean audio_follow_clips=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_aclips));
+  boolean audio_follow_fps=lives_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_afollow));
+  boolean audio_follow_clips=lives_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_aclips));
   guint audio_opts=(AUDIO_OPTS_FOLLOW_FPS*audio_follow_fps+AUDIO_OPTS_FOLLOW_CLIPS*audio_follow_clips);
 #endif
 
 #ifdef ENABLE_OSC
   guint osc_udp_port=gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(prefsw->spinbutton_osc_udp));
-  gboolean osc_start=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->enable_OSC_start));
-  gboolean osc_enable=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->enable_OSC));
+  boolean osc_start=lives_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->enable_OSC_start));
+  boolean osc_enable=lives_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->enable_OSC));
 #endif
 
-  gint rte_keys_virtual=gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(prefsw->spinbutton_rte_keys));
+  int rte_keys_virtual=gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(prefsw->spinbutton_rte_keys));
 
 #ifdef ENABLE_OSC
 #ifdef OMC_JS_IMPL
-  gboolean omc_js_enable=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_omc_js));
+  boolean omc_js_enable=lives_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_omc_js));
   const gchar *omc_js_fname=gtk_entry_get_text(GTK_ENTRY(prefsw->omc_js_entry));
 #endif
 
 
 #ifdef OMC_MIDI_IMPL
-  gboolean omc_midi_enable=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_omc_midi));
+  boolean omc_midi_enable=lives_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_omc_midi));
   const gchar *omc_midi_fname=gtk_entry_get_text(GTK_ENTRY(prefsw->omc_midi_entry));
-  gint midicr=gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(prefsw->spinbutton_midicr));
-  gint midirpt=gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(prefsw->spinbutton_midirpt));
+  int midicr=gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(prefsw->spinbutton_midicr));
+  int midirpt=gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(prefsw->spinbutton_midirpt));
 
 #ifdef ALSA_MIDI
-  gboolean use_alsa_midi=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->alsa_midi));
+  boolean use_alsa_midi=lives_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->alsa_midi));
 #endif
 
 #endif
 #endif
 
-  gint rec_gb=gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(prefsw->spinbutton_rec_gb));
+  int rec_gb=gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(prefsw->spinbutton_rec_gb));
 
   gchar audio_player[256];
-  gint listlen=g_list_length (prefs->acodec_list);
-  gint rec_opts=rec_frames*REC_FRAMES+rec_fps*REC_FPS+rec_effects*REC_EFFECTS+rec_clips*REC_CLIPS+rec_audio*REC_AUDIO+rec_after_pb*REC_AFTER_PB;
+  int listlen=g_list_length (prefs->acodec_list);
+  int rec_opts=rec_frames*REC_FRAMES+rec_fps*REC_FPS+rec_effects*REC_EFFECTS+rec_clips*REC_CLIPS+rec_audio*REC_AUDIO+rec_after_pb*REC_AFTER_PB;
   guint warn_mask;
 
   unsigned char *new_undo_buf;
@@ -602,9 +603,9 @@ gboolean apply_prefs(gboolean skip_warn) {
 
  
 #ifdef ENABLE_OSC
-  gboolean set_omc_dev_opts=FALSE;
+  boolean set_omc_dev_opts=FALSE;
 #ifdef OMC_MIDI_IMPL
-  gboolean needs_midi_restart=FALSE;
+  boolean needs_midi_restart=FALSE;
 #endif
 #endif
 
@@ -700,7 +701,7 @@ gboolean apply_prefs(gboolean skip_warn) {
     prefs->ce_maxspect=ce_maxspect;
     set_boolean_pref("ce_maxspect",ce_maxspect);
     if (mainw->current_file>-1) {
-      gint current_file=mainw->current_file;
+      int current_file=mainw->current_file;
       switch_to_file((mainw->current_file=0),current_file);
     }
   }
@@ -1354,8 +1355,7 @@ gboolean apply_prefs(gboolean skip_warn) {
 
 
 
-void
-save_future_prefs(void) {
+void save_future_prefs(void) {
   // save future prefs on exit, if they have changed
 
   // show_recent is a special case, future prefs has our original value
@@ -1377,9 +1377,8 @@ save_future_prefs(void) {
 }
 
 
-void 
-rdet_acodec_changed (GtkComboBox *acodec_combo, gpointer user_data) {
-  gint listlen=g_list_length (prefs->acodec_list);
+void rdet_acodec_changed (GtkComboBox *acodec_combo, gpointer user_data) {
+  int listlen=g_list_length (prefs->acodec_list);
   int idx;
   char *audio_codec = lives_combo_get_active_text(acodec_combo);
   if (!strcmp(audio_codec,mainw->string_constants[LIVES_STRING_CONSTANT_ANY])) {
@@ -1411,7 +1410,7 @@ void set_acodec_list_from_allowed (_prefsw *prefsw, render_details *rdet) {
 
 
   int count=0,idx;
-  gboolean is_allowed=FALSE;
+  boolean is_allowed=FALSE;
   
   if (prefs->acodec_list!=NULL) {
     g_list_free (prefs->acodec_list);
@@ -1467,7 +1466,7 @@ void set_acodec_list_from_allowed (_prefsw *prefsw, render_details *rdet) {
 
 
 void after_vpp_changed (GtkWidget *vpp_combo, gpointer advbutton) {
-  char *newvpp=lives_combo_get_active_text(LIVES_COMBO(vpp_combo));
+  gchar *newvpp=lives_combo_get_active_text(LIVES_COMBO(vpp_combo));
   _vid_playback_plugin *tmpvpp;
 
   if (!g_ascii_strcasecmp(newvpp,mainw->string_constants[LIVES_STRING_CONSTANT_NONE])) {
@@ -1487,23 +1486,23 @@ void after_vpp_changed (GtkWidget *vpp_combo, gpointer advbutton) {
   g_free(newvpp);
 
   if (future_prefs->vpp_argv!=NULL) {
-    int i;
+    register int i;
     for (i=0;future_prefs->vpp_argv[i]!=NULL;g_free(future_prefs->vpp_argv[i++]));
     g_free(future_prefs->vpp_argv);
     future_prefs->vpp_argv=NULL;
   }
   future_prefs->vpp_argc=0;
 
-  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_stream_audio),FALSE);
-  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_rec_after_pb),FALSE);
+  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_stream_audio),FALSE);
+  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_rec_after_pb),FALSE);
 
 }
 
 
 
 static void on_forcesmon_toggled (GtkToggleButton *tbutton, gpointer user_data) {
-  gtk_widget_set_sensitive(prefsw->spinbutton_gmoni,!gtk_toggle_button_get_active(tbutton));
-  gtk_widget_set_sensitive(prefsw->spinbutton_pmoni,!gtk_toggle_button_get_active(tbutton));
+  gtk_widget_set_sensitive(prefsw->spinbutton_gmoni,!lives_toggle_button_get_active(tbutton));
+  gtk_widget_set_sensitive(prefsw->spinbutton_pmoni,!lives_toggle_button_get_active(tbutton));
 }
 
 
@@ -1513,34 +1512,34 @@ static void on_mtbackevery_toggled (GtkToggleButton *tbutton, gpointer user_data
   if (user_data!=NULL) xprefsw=(_prefsw *)user_data;
   else xprefsw=prefsw;
 
-  gtk_widget_set_sensitive(xprefsw->spinbutton_mt_ab_time,gtk_toggle_button_get_active(tbutton));
+  gtk_widget_set_sensitive(xprefsw->spinbutton_mt_ab_time,lives_toggle_button_get_active(tbutton));
 
 }
 
 #ifdef ENABLE_JACK_TRANSPORT
 static void after_jack_client_toggled(GtkToggleButton *tbutton, gpointer user_data) {
 
-  if (!gtk_toggle_button_get_active(tbutton)) {
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_jack_tb_start),FALSE);
+  if (!lives_toggle_button_get_active(tbutton)) {
+    lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_jack_tb_start),FALSE);
     gtk_widget_set_sensitive(prefsw->checkbutton_jack_tb_start,FALSE);
   }
   else {
     gtk_widget_set_sensitive(prefsw->checkbutton_jack_tb_start,TRUE);
-    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_jack_tb_start),
-				  (future_prefs->jack_opts&JACK_OPTS_TIMEBASE_START)?TRUE:FALSE);
+    lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (prefsw->checkbutton_jack_tb_start),
+				    (future_prefs->jack_opts&JACK_OPTS_TIMEBASE_START)?TRUE:FALSE);
   }
 }
 
 static void after_jack_tb_start_toggled(GtkToggleButton *tbutton, gpointer user_data) {
 
-  if (!gtk_toggle_button_get_active(tbutton)) {
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_jack_tb_client),FALSE);
+  if (!lives_toggle_button_get_active(tbutton)) {
+    lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_jack_tb_client),FALSE);
     gtk_widget_set_sensitive(prefsw->checkbutton_jack_tb_client,FALSE);
   }
   else {
     gtk_widget_set_sensitive(prefsw->checkbutton_jack_tb_client,TRUE);
-    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_jack_tb_client),
-				  (future_prefs->jack_opts&JACK_OPTS_TIMEBASE_CLIENT)?TRUE:FALSE);
+    lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (prefsw->checkbutton_jack_tb_client),
+				    (future_prefs->jack_opts&JACK_OPTS_TIMEBASE_CLIENT)?TRUE:FALSE);
   }
 }
 #endif
@@ -1555,10 +1554,10 @@ static void on_alsa_midi_toggled (GtkToggleButton *tbutton, gpointer user_data) 
   if (user_data!=NULL) xprefsw=(_prefsw *)user_data;
   else xprefsw=prefsw;
 
-  gtk_widget_set_sensitive(xprefsw->button_midid,!gtk_toggle_button_get_active(tbutton));
-  gtk_widget_set_sensitive(xprefsw->omc_midi_entry,!gtk_toggle_button_get_active(tbutton));
-  gtk_widget_set_sensitive(xprefsw->spinbutton_midicr,!gtk_toggle_button_get_active(tbutton));
-  gtk_widget_set_sensitive(xprefsw->spinbutton_midirpt,!gtk_toggle_button_get_active(tbutton));
+  gtk_widget_set_sensitive(xprefsw->button_midid,!lives_toggle_button_get_active(tbutton));
+  gtk_widget_set_sensitive(xprefsw->omc_midi_entry,!lives_toggle_button_get_active(tbutton));
+  gtk_widget_set_sensitive(xprefsw->spinbutton_midicr,!lives_toggle_button_get_active(tbutton));
+  gtk_widget_set_sensitive(xprefsw->spinbutton_midirpt,!lives_toggle_button_get_active(tbutton));
 }
 #endif
 #endif
@@ -1566,7 +1565,7 @@ static void on_alsa_midi_toggled (GtkToggleButton *tbutton, gpointer user_data) 
 
 
 static void on_audp_entry_changed (GtkWidget *audp_combo, gpointer ptr) {
-  char *audp = lives_combo_get_active_text(LIVES_COMBO(audp_combo));
+  gchar *audp = lives_combo_get_active_text(LIVES_COMBO(audp_combo));
 
   if (!strlen(audp)||!strcmp(audp,prefsw->audp_name)) {
     g_free(audp);
@@ -1595,34 +1594,32 @@ static void on_audp_entry_changed (GtkWidget *audp_combo, gpointer ptr) {
     gtk_widget_set_sensitive(prefsw->checkbutton_afollow,FALSE);
     gtk_widget_set_sensitive(prefsw->raudio,FALSE);
     gtk_widget_set_sensitive(prefsw->rextaudio,FALSE);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(prefsw->rextaudio),FALSE);
+    lives_toggle_button_set_active(GTK_TOGGLE_BUTTON(prefsw->rextaudio),FALSE);
   }
   if (!strncmp(audp,"jack",4)) {
     gtk_widget_set_sensitive(prefsw->checkbutton_jack_pwp,TRUE);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_start_ajack),TRUE);
+    lives_toggle_button_set_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_start_ajack),TRUE);
     gtk_widget_show(prefsw->jack_int_label);
   }
   else {
     gtk_widget_set_sensitive(prefsw->checkbutton_jack_pwp,FALSE);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_start_ajack),FALSE);
+    lives_toggle_button_set_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_start_ajack),FALSE);
     gtk_widget_hide(prefsw->jack_int_label);
   }
 #endif
   g_free(prefsw->audp_name);
   prefsw->audp_name=lives_combo_get_active_text(LIVES_COMBO(audp_combo));
-  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_stream_audio),FALSE);
-  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_rec_after_pb),FALSE);
+  lives_toggle_button_set_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_stream_audio),FALSE);
+  lives_toggle_button_set_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_rec_after_pb),FALSE);
   g_free(audp);
 
 }
 
 
-static void stream_audio_toggled(GtkToggleButton *togglebutton,
-				 gpointer  user_data) {
+static void stream_audio_toggled(GtkToggleButton *togglebutton, gpointer user_data) {
   // if audio streaming is enabled, check requisites
 
-
-  if (gtk_toggle_button_get_active(togglebutton)) {
+  if (lives_toggle_button_get_active(togglebutton)) {
     // init vpp, get audio codec, check requisites
     _vid_playback_plugin *tmpvpp;
     guint32 orig_acodec=AUDIO_CODEC_NONE;
@@ -1638,10 +1635,11 @@ static void stream_audio_toggled(GtkToggleButton *togglebutton,
 
     if (tmpvpp->audio_codec!=AUDIO_CODEC_NONE) {
       // make audiostream plugin name
-      char buf[1024];
-      gchar *com;
       FILE *rfile;
       size_t rlen;
+
+      gchar buf[1024];
+      gchar *com;
 
       gchar *astreamer=g_build_filename(prefs->lib_dir,PLUGIN_EXEC_DIR,PLUGIN_AUDIO_STREAM,"audiostreamer.pl",NULL);
       
@@ -1662,7 +1660,7 @@ static void stream_audio_toggled(GtkToggleButton *togglebutton,
       g_free(com);
 
       if (rlen>0) {
-	gtk_toggle_button_set_active(togglebutton, FALSE);
+	lives_toggle_button_set_active(togglebutton, FALSE);
       }
     }
 
@@ -1686,10 +1684,10 @@ void prefsw_set_astream_settings(_vid_playback_plugin *vpp) {
 
   if (vpp!=NULL&&vpp->audio_codec!=AUDIO_CODEC_NONE) {
     gtk_widget_set_sensitive(prefsw->checkbutton_stream_audio,TRUE);
-    //gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_stream_audio),future_prefs->stream_audio_out);
+    //lives_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_stream_audio),future_prefs->stream_audio_out);
   }
   else {
-    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_stream_audio),FALSE);
+    lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (prefsw->checkbutton_stream_audio),FALSE);
     gtk_widget_set_sensitive(prefsw->checkbutton_stream_audio,FALSE);
   }
 }
@@ -1698,10 +1696,10 @@ void prefsw_set_astream_settings(_vid_playback_plugin *vpp) {
 void prefsw_set_rec_after_settings(_vid_playback_plugin *vpp) {
   if (vpp!=NULL&&(vpp->capabilities&VPP_CAN_RETURN)) {
     gtk_widget_set_sensitive(prefsw->checkbutton_rec_after_pb,TRUE);
-    //gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_stream_audio),future_prefs->stream_audio_out);
+    //lives_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_stream_audio),future_prefs->stream_audio_out);
   }
   else {
-    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_rec_after_pb),FALSE);
+    lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (prefsw->checkbutton_rec_after_pb),FALSE);
     gtk_widget_set_sensitive(prefsw->checkbutton_rec_after_pb,FALSE);
   }
 }
@@ -1710,8 +1708,7 @@ void prefsw_set_rec_after_settings(_vid_playback_plugin *vpp) {
 /*
  * Initialize preferences dialog list
  */
-static void pref_init_list(GtkWidget *list)
-{
+static void pref_init_list(GtkWidget *list) {
   GtkCellRenderer *renderer, *pixbufRenderer;
   GtkTreeViewColumn *column1, *column2;
   GtkListStore *store;
@@ -1736,8 +1733,7 @@ static void pref_init_list(GtkWidget *list)
 /*
  * Adds entry to preferences dialog list 
  */
-static void prefs_add_to_list(GtkWidget *list, GdkPixbuf *pix, const gchar *str, guint idx)
-{
+static void prefs_add_to_list(GtkWidget *list, GdkPixbuf *pix, const gchar *str, guint idx) {
   GtkListStore *store;
   GtkTreeIter iter;
 
@@ -1750,8 +1746,7 @@ static void prefs_add_to_list(GtkWidget *list, GdkPixbuf *pix, const gchar *str,
 /*
  * Callback function called when preferences list row changed
  */
-void on_prefDomainChanged(GtkTreeSelection *widget, gpointer dummy) 
-{
+void on_prefDomainChanged(GtkTreeSelection *widget, gpointer dummy) {
   GtkTreeIter iter;
   GtkTreeModel *model;
   guint idx;
@@ -1838,29 +1833,26 @@ void on_prefDomainChanged(GtkTreeSelection *widget, gpointer dummy)
 /*
  * Function makes apply button sensitive
  */
-void apply_button_set_enabled(GtkWidget *widget, gpointer func_data)
-{
+void apply_button_set_enabled(GtkWidget *widget, gpointer func_data) {
   gtk_widget_set_sensitive(GTK_WIDGET(prefsw->applybutton), TRUE);
   gtk_widget_set_sensitive(GTK_WIDGET(prefsw->cancelbutton), TRUE);
   gtk_widget_set_sensitive(GTK_WIDGET(prefsw->closebutton), FALSE);
 }
 
 // toggle sets other widget sensitive/insensitive
-static void toggle_set_sensitive(GtkWidget *widget, gpointer func_data)
-{
-  gtk_widget_set_sensitive(GTK_WIDGET(func_data), gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget)));
+static void toggle_set_sensitive(GtkWidget *widget, gpointer func_data) {
+  gtk_widget_set_sensitive(GTK_WIDGET(func_data), lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(widget)));
 }
 
 // toggle sets other widget insensitive/sensitive
-static void toggle_set_insensitive(GtkWidget *widget, gpointer func_data)
-{
-  gtk_widget_set_sensitive(GTK_WIDGET(func_data), !gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget)));
+static void toggle_set_insensitive(GtkWidget *widget, gpointer func_data) {
+  gtk_widget_set_sensitive(GTK_WIDGET(func_data), !lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(widget)));
 }
 
 
 
 static void spinbutton_crit_ds_value_changed (GtkSpinButton *crit_ds, gpointer user_data) {
-  gdouble myval=gtk_spin_button_get_value(crit_ds);
+  double myval=gtk_spin_button_get_value(crit_ds);
   gtk_spin_button_set_range (GTK_SPIN_BUTTON (prefsw->spinbutton_warn_ds),myval,DS_WARN_CRIT_MAX);
   apply_button_set_enabled(NULL,NULL);
 }
@@ -1894,32 +1886,24 @@ _prefsw *create_prefs_dialog (void) {
   GtkWidget *ins_resample;
   GtkWidget *hbox100;
   GtkWidget *hbox;
+
   GObject *spinbutton_adj;
   GObject *spinbutton_warn_fsize_adj;
   GObject *spinbutton_bwidth_adj;
-  GtkWidget *label157;
+
   GtkWidget *hseparator;
   GtkWidget *hbox1;
   GtkWidget *hbox2;
   GtkWidget *hbox3;
   GtkWidget *hbox4;
   GtkWidget *hbox5;
-  GtkWidget *vbox69;
-  GtkWidget *frame4;
-  GtkWidget *hbox109;
   GtkWidget *hbox99;
   GtkWidget *hbox19;
-  GtkWidget *label133;
   GtkWidget *label134;
-  GtkWidget *label31;
-  GtkWidget *frame5;
-  GtkWidget *label32;
   GtkWidget *label97;
   GtkWidget *label88;
   GtkWidget *vbox;
   GtkWidget *hbox94;
-  GtkWidget *label37;
-  GtkWidget *hbox115;
   GtkWidget *label94;
   GtkWidget *hbox93;
   GtkWidget *label39;
@@ -1931,7 +1915,9 @@ _prefsw *create_prefs_dialog (void) {
   GtkWidget *label43;
   GtkWidget *hbox13;
   GtkWidget *label44;
+
   GObject *spinbutton_def_fps_adj;
+
   GtkWidget *dialog_action_area;
   GtkWidget *dirbutton1;
   GtkWidget *dirbutton2;
@@ -1939,15 +1925,11 @@ _prefsw *create_prefs_dialog (void) {
   GtkWidget *dirbutton4;
   GtkWidget *dirbutton5;
   GtkWidget *dirbutton6;
-  GtkWidget *hbox31;
   GtkWidget *pp_combo;
   GtkWidget *png;
   GtkWidget *frame;
-  GtkWidget *label158;
-  GtkWidget *label159;
-  GtkWidget *hbox116;
   GtkWidget *mt_enter_defs;
-  GObject *spinbutton_ocp_adj;
+
   GtkWidget *advbutton;
   GtkWidget *rbutton;
 
@@ -1988,14 +1970,14 @@ _prefsw *create_prefs_dialog (void) {
   
   gchar **array,*tmp,*tmp2;
 
-  int i;
+  register int i;
 
-  gint nmonitors = capable->nmonitors; ///< number of screen monitors
-  gboolean pfsm;
+  int nmonitors = capable->nmonitors; ///< number of screen monitors
+  boolean pfsm;
 
   gchar *theme;
 
-  gboolean has_ap_rec = FALSE;
+  boolean has_ap_rec = FALSE;
 
   GtkTreeIter iter;
   GtkTreeModel *model;
@@ -2056,6 +2038,11 @@ _prefsw *create_prefs_dialog (void) {
   gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (list_scroll), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
   gtk_container_add (GTK_CONTAINER (list_scroll), prefsw->prefs_list);
 
+  if (palette->style&STYLE_1) {
+    lives_widget_set_bg_color(prefsw->prefs_list, LIVES_WIDGET_STATE_NORMAL, &palette->info_base);
+    lives_widget_set_fg_color(prefsw->prefs_list, LIVES_WIDGET_STATE_NORMAL, &palette->info_text);
+  }
+
   gtk_paned_pack1(GTK_PANED(dialog_hpaned), list_scroll, TRUE, FALSE);
   // Place table on the right panel
 
@@ -2064,95 +2051,90 @@ _prefsw *create_prefs_dialog (void) {
   // -------------------,
   // gui controls       |
   // -------------------'
-  prefsw->vbox_right_gui = lives_vbox_new (FALSE, 10);
+  prefsw->vbox_right_gui = lives_vbox_new (FALSE, widget_opts.packing_height);
 
   prefsw->scrollw_right_gui = lives_standard_scrolled_window_new (0,0,prefsw->vbox_right_gui);
 
   gtk_widget_show (prefsw->vbox_right_gui);
   prefsw->right_shown = prefsw->vbox_right_gui;
-  gtk_container_set_border_width (GTK_CONTAINER (prefsw->vbox_right_gui), 20);
+  gtk_container_set_border_width (GTK_CONTAINER (prefsw->vbox_right_gui), widget_opts.packing_width*2);
+
   // ---
   hbox1 = lives_hbox_new (FALSE, 0);
-  gtk_widget_show (hbox1);
-  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_gui), hbox1, TRUE, TRUE, 10);
+  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_gui), hbox1, TRUE, TRUE, widget_opts.packing_height);
   // ---
 
 
-  // TODO - copy pattern to all other checkboxes
   hbox = lives_hbox_new(FALSE, 0);
+  gtk_box_pack_start (GTK_BOX (hbox1), hbox, TRUE, FALSE, 0);
   prefsw->fs_max_check = 
-    lives_standard_check_button_new(_("Open file selection maximised"),TRUE,(LiVESBox *)hbox,NULL);
-  gtk_widget_show_all(hbox);
-  gtk_box_pack_start (GTK_BOX (hbox1), hbox, TRUE, TRUE, 0);
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->fs_max_check), prefs->fileselmax);
+    lives_standard_check_button_new(_("Open file selection maximised"),TRUE,LIVES_BOX(hbox),NULL);
+   lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (prefsw->fs_max_check), prefs->fileselmax);
   // ---
 
 
-
   hbox = lives_hbox_new(FALSE, 0);
+  gtk_box_pack_start (GTK_BOX (hbox1), hbox, TRUE, FALSE, 0);
   prefsw->recent_check = 
-    lives_standard_check_button_new(_("Show recent files in the File menu"),TRUE,(LiVESBox *)hbox,NULL);
-  gtk_widget_show_all(hbox);
-  gtk_box_pack_start (GTK_BOX (hbox1), hbox, FALSE, FALSE, 0);
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->recent_check), prefs->show_recent);
+    lives_standard_check_button_new(_("Show recent files in the File menu"),TRUE,LIVES_BOX(hbox),NULL);
+  lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (prefsw->recent_check), prefs->show_recent);
 
+  gtk_widget_show_all(hbox1);
 
 
   // ---
   hbox2 = lives_hbox_new (FALSE, 0);
-  gtk_widget_show (hbox2);
-  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_gui), hbox2, TRUE, TRUE, 10);
+  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_gui), hbox2, TRUE, TRUE, widget_opts.packing_height);
 
   hbox = lives_hbox_new(FALSE, 0);
+  gtk_box_pack_start (GTK_BOX(hbox2), hbox, TRUE, FALSE, 0);
   prefsw->stop_screensaver_check = 
-    lives_standard_check_button_new(_("Stop screensaver on playback    "),TRUE,(LiVESBox *)hbox,NULL);
-  gtk_widget_show_all(hbox);
-  gtk_box_pack_start (GTK_BOX(hbox2), hbox, FALSE, FALSE, 0);
-  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(prefsw->stop_screensaver_check), prefs->stop_screensaver);
+    lives_standard_check_button_new(_("Stop screensaver on playback    "),TRUE,LIVES_BOX(hbox),NULL);
+  lives_toggle_button_set_active(GTK_TOGGLE_BUTTON(prefsw->stop_screensaver_check), prefs->stop_screensaver);
 
 
   // ---
   hbox = lives_hbox_new(FALSE, 0);
   prefsw->open_maximised_check = 
-    lives_standard_check_button_new(_("Open main window maximised"),TRUE,(LiVESBox *)hbox,NULL);
-  gtk_widget_show_all(hbox);
-  gtk_box_pack_start (GTK_BOX (hbox2), hbox, FALSE, FALSE, 0);
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->open_maximised_check), prefs->open_maximised);
+    lives_standard_check_button_new(_("Open main window maximised"),TRUE,LIVES_BOX(hbox),NULL);
+  gtk_box_pack_start (GTK_BOX (hbox2), hbox, TRUE, FALSE, 0);
+  lives_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->open_maximised_check), prefs->open_maximised);
+
+  gtk_widget_show_all(hbox2);
 
   // --
-  hbox3 = lives_hbox_new(FALSE, 0);
-  gtk_widget_show (hbox3);
-  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_gui), hbox3, TRUE, TRUE, 10);
+  hbox2 = lives_hbox_new(FALSE, 0);
+  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_gui), hbox2, TRUE, TRUE, widget_opts.packing_height);
 
 
   hbox = lives_hbox_new(FALSE, 0);
+  gtk_box_pack_start (GTK_BOX (hbox2), hbox, TRUE, FALSE, 0);
   prefsw->show_tool = 
-    lives_standard_check_button_new(_("Show toolbar when background is blanked"),TRUE,(LiVESBox *)hbox,NULL);
-  gtk_widget_show_all(hbox);
-  gtk_box_pack_start (GTK_BOX (hbox3), hbox, TRUE, TRUE, 0);
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->show_tool), future_prefs->show_tool);
+    lives_standard_check_button_new(_("Show toolbar when background is blanked"),TRUE,LIVES_BOX(hbox),NULL);
+  lives_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->show_tool), future_prefs->show_tool);
+
   // ---
-
-
   hbox = lives_hbox_new(FALSE, 0);
   prefsw->mouse_scroll = 
-    lives_standard_check_button_new(_("Allow mouse wheel to switch clips"),TRUE,(LiVESBox *)hbox,NULL);
-  gtk_widget_show_all(hbox);
-  gtk_box_pack_start (GTK_BOX (hbox3), hbox, TRUE, TRUE, 0);
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->mouse_scroll), prefs->mouse_scroll_clips);
+    lives_standard_check_button_new(_("Allow mouse wheel to switch clips"),TRUE,LIVES_BOX(hbox),NULL);
+  gtk_box_pack_start (GTK_BOX (hbox2), hbox, TRUE, FALSE, 0);
+  lives_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->mouse_scroll), prefs->mouse_scroll_clips);
+
+  gtk_widget_show_all(hbox2);
 
   // ---
-  hbox4 = lives_hbox_new(FALSE, 0);
-  gtk_widget_show (hbox4);
-  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_gui), hbox4, TRUE, FALSE, 10);
+  hbox2 = lives_hbox_new(FALSE, 0);
+  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_gui), hbox2, TRUE, TRUE, widget_opts.packing_height);
   // ---
+
 
   hbox = lives_hbox_new(FALSE, 0);
+  gtk_box_pack_start (GTK_BOX (hbox2), hbox, TRUE, TRUE, 0);
   prefsw->checkbutton_ce_maxspect = 
-    lives_standard_check_button_new(_("Shrink previews to fit in interface"),TRUE,(LiVESBox *)hbox,NULL);
-  gtk_widget_show_all(hbox);
-  gtk_box_pack_start (GTK_BOX (hbox4), hbox, TRUE, TRUE, 0);
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_ce_maxspect), prefs->ce_maxspect);
+    lives_standard_check_button_new(_("Shrink previews to fit in interface"),TRUE,LIVES_BOX(hbox),NULL);
+  lives_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_ce_maxspect), prefs->ce_maxspect);
+
+  gtk_widget_show_all(hbox2);
 
   // ---
   hbox = lives_hbox_new (FALSE, 0);
@@ -2214,20 +2196,15 @@ _prefsw *create_prefs_dialog (void) {
     }
   }
   // ---
-  hseparator = lives_hseparator_new ();
-  gtk_widget_show (hseparator);
-  if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color(hseparator, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  }
-  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_gui), hseparator, FALSE, TRUE, 20);
+  add_hsep_to_box (LIVES_BOX (prefsw->vbox_right_gui));
   // ---
   label = lives_standard_label_new (_("Multi-head support"));
   gtk_widget_show (label);
-  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_gui), label, FALSE, TRUE, 10);
+  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_gui), label, FALSE, TRUE, widget_opts.packing_height);
   // ---
   hbox = lives_hbox_new (FALSE, 0);
   gtk_widget_show (hbox);
-  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_gui), hbox, TRUE, TRUE, 20);
+  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_gui), hbox, TRUE, TRUE, widget_opts.packing_height*2);
   // ---
 
 
@@ -2249,7 +2226,7 @@ _prefsw *create_prefs_dialog (void) {
   // ---
   hbox = lives_hbox_new (FALSE, 0);
 
-  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_gui), hbox, TRUE, TRUE, 20);
+  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_gui), hbox, TRUE, TRUE, widget_opts.packing_height*2);
   // ---
 
   add_fill_to_box(LIVES_BOX(hbox));
@@ -2263,7 +2240,7 @@ _prefsw *create_prefs_dialog (void) {
 
   gtk_widget_show_all (hbox);
 
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->forcesmon), prefs->force_single_monitor);
+  lives_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->forcesmon), prefs->force_single_monitor);
   // ---
   if (capable->nmonitors<=1) {
     gtk_widget_set_sensitive(prefsw->spinbutton_gmoni,FALSE);
@@ -2291,179 +2268,97 @@ _prefsw *create_prefs_dialog (void) {
   // -----------------------'
 
   prefsw->vbox_right_multitrack = lives_vbox_new (FALSE, 0);
-  gtk_container_set_border_width (GTK_CONTAINER (prefsw->vbox_right_multitrack), 10);
+  gtk_container_set_border_width (GTK_CONTAINER (prefsw->vbox_right_multitrack), widget_opts.border_width);
 
   prefsw->scrollw_right_multitrack = lives_standard_scrolled_window_new (0,0,prefsw->vbox_right_multitrack);
 
-  hbox1 = lives_hbox_new (FALSE, 0);
-  gtk_widget_show (hbox1);
-  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_multitrack), hbox1, FALSE, FALSE, 0);
+  hbox = lives_hbox_new (FALSE, 0);
+  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_multitrack), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-  label = gtk_label_new (_("When entering Multitrack mode:"));
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-  }
-  gtk_widget_show (label);
-  gtk_box_pack_start (GTK_BOX (hbox1), label, FALSE, FALSE, 16);
-  gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_LEFT);
+  label = lives_standard_label_new (_("When entering Multitrack mode:"));
+  gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, widget_opts.packing_width);
   // ---
-  add_fill_to_box(LIVES_BOX(hbox1));
-  // ---
-  hbox2 = lives_hbox_new (FALSE, 0);
-  gtk_widget_show (hbox2);
-  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_multitrack), hbox2, TRUE, FALSE, 0);
-  // ---
-  prefsw->mt_enter_prompt = gtk_radio_button_new (mt_enter_prompt);
-  mt_enter_prompt = gtk_radio_button_get_group (GTK_RADIO_BUTTON (prefsw->mt_enter_prompt));
-  label = gtk_label_new_with_mnemonic(_("_Prompt me for width, height, fps and audio settings"));
-  gtk_label_set_mnemonic_widget(GTK_LABEL(label), prefsw->mt_enter_prompt);
-  eventbox = gtk_event_box_new();
-  gtk_container_add(GTK_CONTAINER(eventbox), label);
-  g_signal_connect(GTK_OBJECT(eventbox), "button_press_event", G_CALLBACK(label_act_toggle), prefsw->mt_enter_prompt);
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_fg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_bg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  }
-  hbox = lives_hbox_new(FALSE, 0);
-  gtk_box_pack_start(GTK_BOX(hbox), prefsw->mt_enter_prompt, FALSE, FALSE, 10);
-  gtk_box_pack_start(GTK_BOX(hbox), eventbox, FALSE, FALSE, 10);
-  gtk_container_set_border_width(GTK_CONTAINER (hbox), 20);
+  add_fill_to_box(LIVES_BOX(hbox));
   gtk_widget_show_all(hbox);
-  gtk_box_pack_start(GTK_BOX(hbox2), hbox, TRUE, TRUE, 0);
   // ---
-  mt_enter_defs = gtk_radio_button_new(mt_enter_prompt);
-  mt_enter_prompt = gtk_radio_button_get_group (GTK_RADIO_BUTTON (mt_enter_defs));
-  label = gtk_label_new_with_mnemonic(_("_Always use the following values:"));
-  gtk_label_set_mnemonic_widget(GTK_LABEL(label), mt_enter_defs);
-  eventbox = gtk_event_box_new();
-  gtk_container_add(GTK_CONTAINER(eventbox), label);
-  g_signal_connect(GTK_OBJECT(eventbox), "button_press_event", G_CALLBACK(label_act_toggle), mt_enter_defs);
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_fg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_bg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  }
-  hbox = lives_hbox_new(FALSE, 0);
-  gtk_box_pack_start(GTK_BOX(hbox), mt_enter_defs, FALSE, FALSE, 10);
-  gtk_box_pack_start(GTK_BOX(hbox), eventbox, FALSE, FALSE, 10);
-  gtk_container_set_border_width(GTK_CONTAINER (hbox), 20);
-  gtk_widget_show_all(hbox);
-  gtk_box_pack_start(GTK_BOX(hbox2), hbox, TRUE, TRUE, 0);
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (mt_enter_defs), !prefs->mt_enter_prompt);
+  hbox = lives_hbox_new (FALSE, 0);
+  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_multitrack), hbox, FALSE, FALSE, widget_opts.packing_height);
+  // ---
 
-  prefsw->checkbutton_render_prompt = gtk_check_button_new();
-  eventbox = gtk_event_box_new();
-  label = gtk_label_new_with_mnemonic(_("Use these same _values for rendering a new clip"));
-  gtk_label_set_mnemonic_widget(GTK_LABEL(label), prefsw->checkbutton_render_prompt);
-  gtk_container_add(GTK_CONTAINER(eventbox), label);
-  g_signal_connect(GTK_OBJECT(eventbox), "button_press_event", G_CALLBACK(label_act_toggle), 
-		   prefsw->checkbutton_render_prompt);
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_fg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_bg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  }
-  hbox = lives_hbox_new(FALSE, 0);
-  gtk_box_pack_start(GTK_BOX(hbox), prefsw->checkbutton_render_prompt, FALSE, FALSE, 5);
-  gtk_box_pack_start(GTK_BOX(hbox), eventbox, FALSE, FALSE, 5);
+  prefsw->mt_enter_prompt = lives_standard_radio_button_new (_("_Prompt me for width, height, fps and audio settings"),TRUE,
+							     mt_enter_prompt,LIVES_BOX(hbox),NULL);
+  mt_enter_prompt = lives_radio_button_get_group (LIVES_RADIO_BUTTON (prefsw->mt_enter_prompt));
+
+
+  // ---
+  mt_enter_defs = lives_standard_radio_button_new(_("_Always use the following values:"),TRUE,
+						  mt_enter_prompt,LIVES_BOX(hbox),NULL);
+
+  lives_toggle_button_set_active (GTK_TOGGLE_BUTTON (mt_enter_defs), !prefs->mt_enter_prompt);
+
   gtk_widget_show_all(hbox);
-  gtk_container_set_border_width(GTK_CONTAINER (hbox), 20);
+
+  hbox = lives_hbox_new(FALSE, 0);
   gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_multitrack), hbox, FALSE, FALSE, 0);
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_render_prompt), !prefs->render_prompt);
+
+  prefsw->checkbutton_render_prompt = lives_standard_check_button_new(_("Use these same _values for rendering a new clip"),TRUE,
+								      LIVES_BOX(hbox),NULL);
+
+  lives_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_render_prompt), !prefs->render_prompt);
+
+  gtk_widget_show_all(hbox);
+
   // ---
   frame = gtk_frame_new (NULL);
-  gtk_widget_show (frame);
-  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_multitrack), frame, TRUE, TRUE, 0);
-  vbox = lives_vbox_new (FALSE, 10);
-  gtk_container_set_border_width (GTK_CONTAINER (vbox), 10);
-  gtk_widget_show (vbox);
+  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_multitrack), frame, FALSE, FALSE, widget_opts.packing_height);
+  vbox = lives_vbox_new (FALSE, 0);
   gtk_container_add (GTK_CONTAINER (frame), vbox);
   
-  label = gtk_label_new (_("Video"));
+  label = lives_standard_label_new (_("Video"));
   if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_bg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
     lives_widget_set_bg_color(frame, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
   }
-  gtk_widget_show (label);
   gtk_frame_set_label_widget (GTK_FRAME (frame), label);
-  // ---
-  hbox3 = lives_hbox_new (FALSE, 0);
-  gtk_widget_show (hbox3);
-  gtk_box_pack_start (GTK_BOX (vbox), hbox3, TRUE, FALSE, 0);
-  // ---
-  label = gtk_label_new_with_mnemonic (_("_Width           "));
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-  }
-  gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_LEFT);
-  // ---
-  spinbutton_adj = (GObject *)gtk_adjustment_new (prefs->mt_def_width, 0, 8192, 1, 10, 0);
-  prefsw->spinbutton_mt_def_width = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 1, 0);
-  gtk_label_set_mnemonic_widget (GTK_LABEL (label), prefsw->spinbutton_mt_def_width);
-  hbox = lives_hbox_new (FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 10);
-  gtk_box_pack_start (GTK_BOX (hbox), prefsw->spinbutton_mt_def_width, TRUE, FALSE, 0);
-  gtk_widget_show_all(hbox);
-  gtk_container_set_border_width(GTK_CONTAINER (hbox), 20);
-  gtk_box_pack_start (GTK_BOX (hbox3), hbox, FALSE, TRUE, 0);
-  // ---
-  label = gtk_label_new_with_mnemonic (_("          _Height      "));
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-  }
-  gtk_widget_show (label);
-  gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_LEFT);
-  // ---
-  spinbutton_adj = (GObject *)gtk_adjustment_new (prefs->mt_def_height, 0, 8192, 1, 10, 0);
-  prefsw->spinbutton_mt_def_height = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 1, 0);
-  gtk_label_set_mnemonic_widget (GTK_LABEL (label), prefsw->spinbutton_mt_def_height);
-  hbox = lives_hbox_new (FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (hbox), prefsw->spinbutton_mt_def_height, TRUE, FALSE, 0);
-  gtk_widget_show_all(hbox);
-  gtk_container_set_border_width(GTK_CONTAINER (hbox), 20);
-  gtk_box_pack_start (GTK_BOX (hbox3), hbox, FALSE, TRUE, 0);
-  // ---
-  label = gtk_label_new_with_mnemonic (_("          _FPS"));
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-  }
-  gtk_widget_show (label);
-  gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_LEFT);
-  // ---
-  spinbutton_adj = (GObject *)gtk_adjustment_new (prefs->mt_def_fps, 1, FPS_MAX, .1, 1, 0);
-  prefsw->spinbutton_mt_def_fps = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 1, 3);
-  gtk_label_set_mnemonic_widget (GTK_LABEL (label),prefsw->spinbutton_mt_def_fps);
-  hbox = lives_hbox_new (FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (hbox), prefsw->spinbutton_mt_def_fps, TRUE, FALSE, 20);
-  gtk_widget_show_all(hbox);
-  gtk_container_set_border_width(GTK_CONTAINER (hbox), 20);
-  gtk_box_pack_start (GTK_BOX (hbox3), hbox, FALSE, TRUE, 0);
-  // --- 
 
-  hbox4 = lives_hbox_new (FALSE, 0);
+  gtk_widget_show_all (frame);
+
+  // ---
+  hbox = lives_hbox_new (FALSE, 0);
+  gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+
+  // ---
+  prefsw->spinbutton_mt_def_width = lives_standard_spin_button_new (_("_Width           "),
+								    TRUE, prefs->mt_def_width, 0., 8192., 4., 16., 0,
+								    LIVES_BOX(hbox),NULL);
+
+
+  prefsw->spinbutton_mt_def_height = lives_standard_spin_button_new (_("          _Height      "),
+								     TRUE, prefs->mt_def_height, 0., 8192., 4., 16., 0,
+								     LIVES_BOX(hbox),NULL);
+
+  prefsw->spinbutton_mt_def_fps = lives_standard_spin_button_new (_("          _FPS"),
+								  TRUE, prefs->mt_def_fps, 1., FPS_MAX, .1, 1., 3,
+								  LIVES_BOX(hbox),NULL);
+
+  gtk_widget_show_all(hbox);
+
+
+
 
   hbox = lives_hbox_new (FALSE, 0);
-  gtk_container_set_border_width(GTK_CONTAINER (hbox), 20);
-  gtk_box_pack_start (GTK_BOX (hbox4), hbox, FALSE, FALSE, 0);
 
   prefsw->backaudio_checkbutton = lives_standard_check_button_new (_("Enable backing audio track"),FALSE,LIVES_BOX(hbox),NULL);
 
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->backaudio_checkbutton), prefs->mt_backaudio>0);
+  lives_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->backaudio_checkbutton), prefs->mt_backaudio>0);
 
-
+  add_fill_to_box(LIVES_BOX(hbox));
 // ---
-
-  hbox = lives_hbox_new (FALSE, 0);
-  gtk_container_set_border_width(GTK_CONTAINER (hbox), 20);
-  gtk_box_pack_start (GTK_BOX (hbox4), hbox, FALSE, FALSE, 0);
 
   prefsw->pertrack_checkbutton = lives_standard_check_button_new(_("Audio track per video track"),FALSE,LIVES_BOX(hbox),NULL);
 
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->pertrack_checkbutton), prefs->mt_pertrack_audio);
+  lives_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->pertrack_checkbutton), prefs->mt_pertrack_audio);
+
+
 
 
   // must be done after creating check buttons
@@ -2473,75 +2368,53 @@ _prefsw *create_prefs_dialog (void) {
 
   // must be done after resaudw
   gtk_widget_set_sensitive(prefsw->backaudio_checkbutton, 
-			   gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(resaudw->aud_checkbutton)));
+			   lives_toggle_button_get_active(GTK_TOGGLE_BUTTON(resaudw->aud_checkbutton)));
 
   gtk_widget_set_sensitive(prefsw->pertrack_checkbutton, 
-			   gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(resaudw->aud_checkbutton)));
+			   lives_toggle_button_get_active(GTK_TOGGLE_BUTTON(resaudw->aud_checkbutton)));
   
-  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_multitrack), hbox4, TRUE, TRUE, 0);
-  gtk_widget_show_all (hbox4);
+  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_multitrack), hbox, TRUE, TRUE, 0);
+  gtk_widget_show_all (hbox);
 
 
 
 
   // ---
-  hseparator = lives_hseparator_new ();
-  gtk_widget_show (hseparator);
-  if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color(hseparator, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  }
-  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_multitrack), hseparator, FALSE, TRUE, 10);
+  add_hsep_to_box (LIVES_BOX (prefsw->vbox_right_multitrack));
   // ---
   hbox = lives_hbox_new (FALSE, 0);
-  gtk_widget_show (hbox);
-  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_multitrack), hbox, TRUE, FALSE, 0);
-  // ---
-  label = gtk_label_new_with_mnemonic (_("    _Undo buffer size (MB)    "));
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-  }
-  gtk_widget_show (label);
-  gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_LEFT);
-  gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, TRUE, 0);
-  // ---
-  spinbutton_adj = (GObject *)gtk_adjustment_new (prefs->mt_undo_buf, 0, G_MAXSIZE/(1024*1024), 1, 1, 0);
-  prefsw->spinbutton_mt_undo_buf = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 1, 0);
-  gtk_widget_show (prefsw->spinbutton_mt_undo_buf);
-  gtk_box_pack_start (GTK_BOX (hbox), prefsw->spinbutton_mt_undo_buf, FALSE, TRUE, 0);
-  gtk_label_set_mnemonic_widget (GTK_LABEL (label),prefsw->spinbutton_mt_undo_buf);
-  // ---
-  prefsw->checkbutton_mt_exit_render = gtk_check_button_new();
-  eventbox = gtk_event_box_new();
-  label = gtk_label_new_with_mnemonic(_("_Exit multitrack mode after rendering"));
-  gtk_label_set_mnemonic_widget(GTK_LABEL(label), prefsw->checkbutton_mt_exit_render);
-  gtk_container_add(GTK_CONTAINER(eventbox), label);
-  g_signal_connect(GTK_OBJECT(eventbox), "button_press_event", G_CALLBACK(label_act_toggle), 
-		   prefsw->checkbutton_mt_exit_render);
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_fg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_bg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  }
-  hbox = lives_hbox_new(FALSE, 0);
-  gtk_box_pack_start(GTK_BOX(hbox), prefsw->checkbutton_mt_exit_render, FALSE, FALSE, 5);
-  gtk_box_pack_start(GTK_BOX(hbox), eventbox, FALSE, FALSE, 5);
-  gtk_widget_show_all(hbox);
-  gtk_container_set_border_width(GTK_CONTAINER (hbox), 20);
   gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_multitrack), hbox, FALSE, FALSE, 0);
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_mt_exit_render), prefs->mt_exit_render);
+
   // ---
-  hbox5 = lives_hbox_new (FALSE, 0);
-  gtk_widget_show (hbox5);
-  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_multitrack), hbox5, TRUE, FALSE, 0);
+  prefsw->spinbutton_mt_undo_buf = lives_standard_spin_button_new (_("    _Undo buffer size (MB)    "),TRUE,
+								   prefs->mt_undo_buf, 0., G_MAXSIZE/(1024.*1024.), 1., 1., 0,
+								   LIVES_BOX(hbox),NULL);
+
+
+  gtk_widget_show_all(hbox);
+
+  hbox = lives_hbox_new(FALSE, 0);
+  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_multitrack), hbox, FALSE, FALSE, widget_opts.packing_height);
+
+  // ---
+  prefsw->checkbutton_mt_exit_render = lives_standard_check_button_new(_("_Exit multitrack mode after rendering"),TRUE,LIVES_BOX(hbox),NULL);
+  lives_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_mt_exit_render), prefs->mt_exit_render);
+  // ---
+
+  gtk_widget_show_all(hbox);
+
+  hbox2 = lives_hbox_new (FALSE, 0);
+
+  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_multitrack), hbox2, FALSE, FALSE, widget_opts.packing_height);
   // ---
   label = lives_standard_label_new (_("Auto backup layouts"));
-  gtk_box_pack_start (GTK_BOX (hbox5), label, FALSE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (hbox2), label, FALSE, TRUE, 0);
   // ---
 
   hbox = lives_hbox_new(FALSE, 0);
   prefsw->mt_autoback_every = lives_standard_radio_button_new(_("_Every"),TRUE,autoback_group,LIVES_BOX(hbox),NULL);
   autoback_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (prefsw->mt_autoback_every));
-  gtk_box_pack_start (GTK_BOX (hbox5), hbox, TRUE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (hbox2), hbox, TRUE, TRUE, 0);
 
   // ---
 
@@ -2549,23 +2422,23 @@ _prefsw *create_prefs_dialog (void) {
   widget_opts.swap_label=TRUE;
   prefsw->spinbutton_mt_ab_time = lives_standard_spin_button_new (_("seconds"),FALSE,120.,10.,1800.,1.,10.,0,LIVES_BOX(hbox),NULL);
   widget_opts.swap_label=FALSE;
-  gtk_box_pack_start (GTK_BOX (hbox5), hbox, TRUE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (hbox2), hbox, TRUE, TRUE, 0);
 
-  add_fill_to_box(GTK_BOX(hbox5));
+  add_fill_to_box(GTK_BOX(hbox2));
   // ---
 
   hbox = lives_hbox_new(FALSE, 0);
   prefsw->mt_autoback_always = lives_standard_radio_button_new(_("After every _change"),TRUE,autoback_group,LIVES_BOX(hbox),NULL);
   autoback_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (prefsw->mt_autoback_always));
-  gtk_box_pack_start (GTK_BOX (hbox5), hbox, TRUE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (hbox2), hbox, TRUE, TRUE, 0);
   // ---
 
   hbox = lives_hbox_new(FALSE, 0);
   prefsw->mt_autoback_never = lives_standard_radio_button_new(_("_Never"),TRUE,autoback_group,LIVES_BOX(hbox),NULL);
   autoback_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (prefsw->mt_autoback_never));
-  gtk_box_pack_start (GTK_BOX (hbox5), hbox, TRUE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (hbox2), hbox, TRUE, TRUE, 0);
 
-  gtk_widget_show_all(hbox5);
+  gtk_widget_show_all(hbox2);
 
 
   // ---
@@ -2594,41 +2467,26 @@ _prefsw *create_prefs_dialog (void) {
   // decoding       |
   // ---------------'
 
-  prefsw->vbox_right_decoding = lives_vbox_new (FALSE, 20);
+  prefsw->vbox_right_decoding = lives_vbox_new (FALSE, 0);
   gtk_container_set_border_width (GTK_CONTAINER (prefsw->vbox_right_decoding), widget_opts.border_width*2);
 
   prefsw->scrollw_right_decoding = lives_standard_scrolled_window_new (0,0,prefsw->vbox_right_decoding);
 
   hbox = lives_hbox_new (FALSE, 0);
-  gtk_widget_show (hbox);
-  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_decoding), hbox, FALSE, FALSE, 0);
+  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_decoding), hbox, FALSE, FALSE, widget_opts.packing_height);
   // ---
 
 
-  prefsw->checkbutton_instant_open = gtk_check_button_new();
-  eventbox = gtk_event_box_new();
-  label = gtk_label_new_with_mnemonic(_("Use instant opening when possible"));
-  gtk_label_set_mnemonic_widget(GTK_LABEL(label), prefsw->checkbutton_instant_open);
-  gtk_container_add(GTK_CONTAINER(eventbox), label);
-  g_signal_connect(GTK_OBJECT(eventbox), "button_press_event", G_CALLBACK(label_act_toggle), 
-		   prefsw->checkbutton_instant_open);
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_fg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_bg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  }
-  gtk_box_pack_start (GTK_BOX (hbox), prefsw->checkbutton_instant_open, FALSE, FALSE, 5);
-  gtk_box_pack_start(GTK_BOX(hbox), eventbox, FALSE, FALSE, 5);
-  gtk_widget_set_tooltip_text( prefsw->checkbutton_instant_open, 
-			       (_("Enable instant opening of some file types using decoder plugins")));
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_instant_open),prefs->instant_open);
-  gtk_container_set_border_width(GTK_CONTAINER (hbox), 10);
+  prefsw->checkbutton_instant_open = lives_standard_check_button_new((tmp=g_strdup(_("Use instant opening when possible"))),FALSE,LIVES_BOX(hbox),
+								      (tmp2=g_strdup(_("Enable instant opening of some file types using decoder plugins"))));
+  lives_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_instant_open),prefs->instant_open);
 
+  g_free(tmp); g_free(tmp2);
 
   // advanced instant opening
   advbutton = gtk_button_new_with_mnemonic (_("_Advanced"));
   gtk_widget_show (advbutton);
-  gtk_box_pack_start (GTK_BOX (hbox), advbutton, FALSE, FALSE, 40);
+  gtk_box_pack_start (GTK_BOX (hbox), advbutton, FALSE, FALSE, widget_opts.packing_width*4);
 
   g_signal_connect (GTK_OBJECT (advbutton), "clicked",
 		    G_CALLBACK (on_decplug_advanced_clicked),
@@ -2638,182 +2496,102 @@ _prefsw *create_prefs_dialog (void) {
 
   g_signal_connect(GTK_OBJECT(prefsw->checkbutton_instant_open), "toggled", G_CALLBACK(instopen_toggled), advbutton);
 
+  gtk_widget_show_all (hbox);
 
 
-
-  hbox109 = lives_hbox_new (FALSE, 0);
-  gtk_widget_show (hbox109);
-  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_decoding), hbox109, TRUE, FALSE, 0);
-  gtk_container_set_border_width(GTK_CONTAINER (hbox109), 20);
-  // ---
-  label133 = lives_standard_label_new (_("Video open command (fallback)"));
-
-  gtk_widget_show (label133);
-  gtk_box_pack_start (GTK_BOX (hbox109), label133, FALSE, FALSE, widget_opts.packing_width);
+  hbox = lives_hbox_new (FALSE, 0);
+  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_decoding), hbox, FALSE, FALSE, widget_opts.packing_height);
 
   // ---
-  prefsw->video_open_entry = gtk_entry_new ();
-  gtk_entry_set_max_length(GTK_ENTRY(prefsw->video_open_entry),255);
-  gtk_widget_show (prefsw->video_open_entry);
-  gtk_box_pack_start (GTK_BOX (hbox109), prefsw->video_open_entry, TRUE, TRUE, widget_opts.packing_width);
-  gtk_entry_set_text(GTK_ENTRY(prefsw->video_open_entry),prefs->video_open_command);
+  prefsw->video_open_entry = lives_standard_entry_new (_("Video open command (fallback)"),FALSE,
+						       prefs->video_open_command,-1,255,
+						       LIVES_BOX(hbox),NULL);
+
+  gtk_widget_show_all (hbox);
+
 
   if (prefs->ocp==-1) prefs->ocp=get_int_pref ("open_compression_percent");
+
   // ---
-  hbox116 = lives_hbox_new (FALSE, 0);
-  gtk_widget_show (hbox116);
-  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_decoding), hbox116, TRUE, FALSE, 0);
+  hbox = lives_hbox_new (FALSE, 0);
+  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_decoding), hbox, FALSE, FALSE, widget_opts.packing_height);
   // ---
 
-  label158 = lives_standard_label_new (_("Open/render compression"));
+  prefsw->spinbutton_ocp = lives_standard_spin_button_new (_("Open/render compression"), FALSE, prefs->ocp, 0., 100., 1., 5., 0,
+							   LIVES_BOX(hbox),NULL);
 
-  gtk_widget_show (label158);
+  label = lives_standard_label_new (_ (" %     ( lower = slower, larger files; for jpeg, higher quality )"));
+  gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, widget_opts.packing_width>>1);
 
-  gtk_box_pack_start (GTK_BOX (hbox116), label158, FALSE, TRUE, widget_opts.packing_width);
+  gtk_widget_show_all(hbox);
+
+
   // ---
-  spinbutton_ocp_adj = (GObject *)gtk_adjustment_new (prefs->ocp, 0, 100, 1, 5, 0);
-  prefsw->spinbutton_ocp = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_ocp_adj), 1, 0);
-  gtk_box_pack_start (GTK_BOX (hbox116), prefsw->spinbutton_ocp, FALSE, TRUE, 0);
-
-  label159 = gtk_label_new (_ (" %     ( lower = slower, larger files; for jpeg, higher quality )"));
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(label159, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-  }
-  gtk_box_pack_start (GTK_BOX (hbox116), label159, FALSE, FALSE, 5);
-  gtk_label_set_justify (GTK_LABEL (label159), GTK_JUSTIFY_LEFT);
-  gtk_container_set_border_width(GTK_CONTAINER (hbox116), 20);
-  gtk_widget_show_all(hbox116);
-  // ---
-  hbox115 = lives_hbox_new (FALSE, 0);
-  gtk_widget_show (hbox115);
-  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_decoding), hbox115, TRUE, FALSE, 5);
+  hbox = lives_hbox_new (FALSE, 0);
+  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_decoding), hbox, FALSE, FALSE, widget_opts.packing_height);
   // ---
 
-  label157 = lives_standard_label_new (_("Default image format"));
+  label = lives_standard_label_new (_("Default image format"));
 
-  gtk_box_pack_start (GTK_BOX (hbox115), label157, FALSE, TRUE, widget_opts.packing_width);
+  gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, widget_opts.packing_width);
   // ---
-  prefsw->jpeg = gtk_radio_button_new(jpeg_png);
-  jpeg_png = gtk_radio_button_get_group (GTK_RADIO_BUTTON (prefsw->jpeg));
-  label = gtk_label_new_with_mnemonic(_("_jpeg"));
-  gtk_label_set_mnemonic_widget(GTK_LABEL(label), prefsw->jpeg);
-  eventbox = gtk_event_box_new();
-  gtk_container_add(GTK_CONTAINER(eventbox), label);
-  gtk_box_pack_start(GTK_BOX(hbox115), eventbox, FALSE, FALSE, 5);
-  g_signal_connect(GTK_OBJECT(eventbox), "button_press_event", G_CALLBACK(label_act_toggle), prefsw->jpeg);
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_fg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_bg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  }
-  gtk_box_pack_start (GTK_BOX (hbox115), prefsw->jpeg, FALSE, FALSE, 5);
+  prefsw->jpeg = lives_standard_radio_button_new(_("_jpeg"),TRUE,jpeg_png,LIVES_BOX(hbox),NULL);
+  jpeg_png = lives_radio_button_get_group (LIVES_RADIO_BUTTON (prefsw->jpeg));
+
+  png = lives_standard_radio_button_new(_("_png"),TRUE,jpeg_png,LIVES_BOX(hbox),NULL);
+  lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (png),!strcmp (prefs->image_ext,"png"));
+
+  gtk_widget_show_all(hbox);
+
   // ---
-  png = gtk_radio_button_new(jpeg_png);
-  jpeg_png = gtk_radio_button_get_group (GTK_RADIO_BUTTON (png));
-  label = gtk_label_new_with_mnemonic(_("_png"));
-  gtk_label_set_mnemonic_widget(GTK_LABEL(label), png);
-  eventbox = gtk_event_box_new();
-  gtk_container_add(GTK_CONTAINER(eventbox), label);
-  gtk_box_pack_start(GTK_BOX(hbox115), eventbox, FALSE, FALSE, 5);
-  g_signal_connect(GTK_OBJECT(eventbox), "button_press_event", G_CALLBACK(label_act_toggle), png);
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_fg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_bg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  }
-  gtk_box_pack_start (GTK_BOX (hbox115), png, FALSE, FALSE, 5);
-  gtk_container_set_border_width(GTK_CONTAINER (hbox115), 20);
-  gtk_widget_show_all(hbox115);
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (png),!strcmp (prefs->image_ext,"png"));
+  hbox = lives_hbox_new (FALSE, 0);
+  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_decoding), hbox, FALSE, FALSE, widget_opts.packing_height*2);
   // ---
-  hbox115 = lives_hbox_new (FALSE, 0);
-  gtk_widget_show (hbox115);
-  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_decoding), hbox115, TRUE, FALSE, 0);
-  // ---
-  label157 = gtk_label_new (_("(Check Help/Troubleshoot to see which image formats are supported)"));
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(label157, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-  }
-  gtk_widget_show (label157);
-  gtk_label_set_justify (GTK_LABEL (label157), GTK_JUSTIFY_LEFT);
-  gtk_box_pack_start (GTK_BOX (hbox115), label157, FALSE, TRUE, 20);
+  label = lives_standard_label_new (_("(Check Help/Troubleshoot to see which image formats are supported)"));
+  gtk_box_pack_start (GTK_BOX (hbox), label, TRUE, TRUE, 0);
+
+  gtk_widget_show_all(hbox);
+
   // ---
   hbox = lives_hbox_new (FALSE, 0);
   gtk_widget_show (hbox);
-  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_decoding), hbox, TRUE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_decoding), hbox, FALSE, FALSE, widget_opts.packing_height);
   // ---
 
-  prefsw->checkbutton_auto_deint = gtk_check_button_new();
-  eventbox = gtk_event_box_new();
+  prefsw->checkbutton_auto_deint = lives_standard_check_button_new((tmp=g_strdup(_("Enable automatic deinterlacing when possible"))),FALSE,
+								   LIVES_BOX(hbox),
+								    (tmp2=g_strdup(_("Automatically deinterlace frames when a plugin suggests it"))));
+  g_free(tmp); g_free(tmp2);
 
-  label = gtk_label_new_with_mnemonic(_("Enable automatic deinterlacing when possible"));
-  gtk_label_set_mnemonic_widget(GTK_LABEL(label), prefsw->checkbutton_auto_deint);
-  gtk_container_add(GTK_CONTAINER(eventbox), label);
-  g_signal_connect(GTK_OBJECT(eventbox), "button_press_event", G_CALLBACK(label_act_toggle), prefsw->checkbutton_auto_deint);
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_fg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_bg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  }
-  gtk_box_pack_start (GTK_BOX (hbox), prefsw->checkbutton_auto_deint, FALSE, FALSE, 5);
-  gtk_box_pack_start(GTK_BOX(hbox), eventbox, FALSE, FALSE, 5);
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_auto_deint),prefs->auto_deint);
-  gtk_widget_set_tooltip_text( prefsw->checkbutton_auto_deint, (_("Automatically deinterlace frames when a plugin suggests it")));
+  lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (prefsw->checkbutton_auto_deint),prefs->auto_deint);
   gtk_widget_show_all(hbox);
-  gtk_container_set_border_width(GTK_CONTAINER (hbox), 10);
 
 
   // ---
   hbox = lives_hbox_new (FALSE, 0);
   gtk_widget_show (hbox);
-  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_decoding), hbox, TRUE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_decoding), hbox, FALSE, FALSE, widget_opts.packing_height);
   // ---
 
-  prefsw->checkbutton_nobord = gtk_check_button_new();
-  eventbox = gtk_event_box_new();
+  prefsw->checkbutton_nobord = lives_standard_check_button_new((tmp=g_strdup(_("Ignore blank borders when possible"))),FALSE,
+							       LIVES_BOX(hbox),
+							       (tmp2=g_strdup(_("Clip any blank borders from frames where possible"))));
+  g_free(tmp); g_free(tmp2);
 
-  label = gtk_label_new_with_mnemonic(_("Ignore blank borders when possible"));
-  gtk_label_set_mnemonic_widget(GTK_LABEL(label), prefsw->checkbutton_nobord);
-  gtk_container_add(GTK_CONTAINER(eventbox), label);
-  g_signal_connect(GTK_OBJECT(eventbox), "button_press_event", G_CALLBACK(label_act_toggle), prefsw->checkbutton_nobord);
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_fg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_bg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  }
-  gtk_box_pack_start (GTK_BOX (hbox), prefsw->checkbutton_nobord, FALSE, FALSE, 5);
-  gtk_box_pack_start(GTK_BOX(hbox), eventbox, FALSE, FALSE, 5);
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_nobord),prefs->auto_nobord);
-  gtk_widget_set_tooltip_text( prefsw->checkbutton_nobord, (_("Clip any blank borders from frames where possible")));
+  lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (prefsw->checkbutton_nobord),prefs->auto_nobord);
   gtk_widget_show_all(hbox);
-  gtk_container_set_border_width(GTK_CONTAINER (hbox), 10);
 
   // ---
-  hseparator = lives_hseparator_new ();
-  gtk_widget_show (hseparator);
-  if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color(hseparator, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  }
-  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_decoding), hseparator, TRUE, TRUE, 0);
+  add_hsep_to_box(LIVES_BOX(prefsw->vbox_right_decoding));
   // ---
-  prefsw->checkbutton_concat_images = gtk_check_button_new();
-  eventbox = gtk_event_box_new();
-  label = gtk_label_new_with_mnemonic(_("When opening multiple files, concatenate images into one clip"));
-  gtk_label_set_mnemonic_widget(GTK_LABEL(label), prefsw->checkbutton_concat_images);
-  gtk_container_add(GTK_CONTAINER(eventbox), label);
-  g_signal_connect(GTK_OBJECT(eventbox), "button_press_event", G_CALLBACK(label_act_toggle), prefsw->checkbutton_concat_images);
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_fg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_bg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  }
   hbox = lives_hbox_new(FALSE, 0);
-  gtk_box_pack_start(GTK_BOX(hbox), prefsw->checkbutton_concat_images, FALSE, FALSE, 5);
-  gtk_box_pack_start(GTK_BOX(hbox), eventbox, FALSE, FALSE, 5);
-  gtk_container_set_border_width(GTK_CONTAINER (hbox), 10);
+  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_decoding), hbox, FALSE, FALSE, widget_opts.packing_height);
+
+  prefsw->checkbutton_concat_images = lives_standard_check_button_new(_("When opening multiple files, concatenate images into one clip"),
+								      FALSE,LIVES_BOX(hbox),NULL);
   gtk_widget_show_all(hbox);
-  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_decoding), hbox, FALSE, FALSE, 0);
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_concat_images),prefs->concat_images);
+  lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (prefsw->checkbutton_concat_images),prefs->concat_images);
+
   // ---
   icon = g_build_filename(prefs->prefix_dir, ICON_DIR, "pref_decoding.png", NULL);
   pixbuf_decoding = gdk_pixbuf_new_from_file(icon, NULL);
@@ -2833,14 +2611,14 @@ _prefsw *create_prefs_dialog (void) {
 
   prefsw->scrollw_right_playback = lives_standard_scrolled_window_new (0,0,prefsw->vbox_right_playback);
 
-  frame4 = gtk_frame_new (NULL);
-  gtk_widget_show (frame4);
-  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_playback), frame4, TRUE, TRUE, 0);
+  frame = gtk_frame_new (NULL);
+ 
+  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_playback), frame, TRUE, TRUE, 0);
 
-  vbox69=lives_vbox_new (FALSE, 10);
-  gtk_widget_show (vbox69);
-  gtk_container_add (GTK_CONTAINER (frame4), vbox69);
-  gtk_container_set_border_width (GTK_CONTAINER (vbox69), widget_opts.border_width);
+  vbox=lives_vbox_new (FALSE, 0);
+  gtk_widget_show (vbox);
+  gtk_container_add (GTK_CONTAINER (frame), vbox);
+  gtk_container_set_border_width (GTK_CONTAINER (vbox), widget_opts.border_width);
 
   prefsw->pbq_list=NULL;
   // TRANSLATORS: video quality, max len 50
@@ -2851,12 +2629,11 @@ _prefsw *create_prefs_dialog (void) {
   prefsw->pbq_list=g_list_append(prefsw->pbq_list,g_strdup((_("High - can improve quality on very fast machines"))));
 
   widget_opts.expand=LIVES_EXPAND_EXTRA;
-  prefsw->pbq_combo = lives_standard_combo_new((tmp=g_strdup(_("Preview _quality"))),TRUE,prefsw->pbq_list,LIVES_BOX(vbox69),
+  prefsw->pbq_combo = lives_standard_combo_new((tmp=g_strdup(_("Preview _quality"))),TRUE,prefsw->pbq_list,LIVES_BOX(vbox),
 					       (tmp2=g_strdup(_("The preview quality for video playback - affects resizing"))));
   widget_opts.expand=LIVES_EXPAND_DEFAULT;
 
-  g_free(tmp);
-  g_free(tmp2);
+  g_free(tmp); g_free(tmp2);
 
   switch (prefs->pb_quality) {
   case PB_QUALITY_HIGH:
@@ -2868,20 +2645,15 @@ _prefsw *create_prefs_dialog (void) {
 
   // ---
 
-  prefsw->checkbutton_show_stats = lives_standard_check_button_new(_("_Show FPS statistics"),TRUE,LIVES_BOX(vbox69),NULL);
-  gtk_widget_show_all(gtk_widget_get_parent(prefsw->checkbutton_show_stats));
+  prefsw->checkbutton_show_stats = lives_standard_check_button_new(_("_Show FPS statistics"),TRUE,LIVES_BOX(vbox),NULL);
+  lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (prefsw->checkbutton_show_stats),prefs->show_player_stats);
 
   // ---
-  hseparator = lives_hseparator_new ();
-  gtk_widget_show (hseparator);
-  if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color(hseparator, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  }
-  gtk_box_pack_start (GTK_BOX (vbox69), hseparator, TRUE, TRUE, 0);
+  add_hsep_to_box(LIVES_BOX(vbox));
 
   // ---
-  hbox31 = lives_hbox_new (FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (vbox69), hbox31, FALSE, FALSE, 0);
+  hbox = lives_hbox_new (FALSE, 0);
+  gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
   // ---
 #ifndef IS_MINGW
@@ -2892,18 +2664,18 @@ _prefsw *create_prefs_dialog (void) {
   vid_playback_plugins = g_list_prepend (vid_playback_plugins, g_strdup(mainw->string_constants[LIVES_STRING_CONSTANT_NONE]));
 
   widget_opts.expand=LIVES_EXPAND_EXTRA;
-  pp_combo = lives_standard_combo_new(_("_Plugin"),TRUE,vid_playback_plugins,LIVES_BOX(hbox31),NULL);
+  pp_combo = lives_standard_combo_new(_("_Plugin"),TRUE,vid_playback_plugins,LIVES_BOX(hbox),NULL);
   widget_opts.expand=LIVES_EXPAND_DEFAULT;
 
   advbutton = gtk_button_new_with_mnemonic (_("_Advanced"));
   gtk_widget_show (advbutton);
-  gtk_box_pack_start (GTK_BOX (hbox31), advbutton, FALSE, FALSE, 40);
+  gtk_box_pack_start (GTK_BOX (hbox), advbutton, FALSE, FALSE, 40);
 
   g_signal_connect (GTK_OBJECT (advbutton), "clicked",
 		    G_CALLBACK (on_vpp_advanced_clicked),
 		    NULL);
 
-  gtk_widget_show_all(hbox31);
+  gtk_widget_show_all(hbox);
 
 
   if (mainw->vpp != NULL) {
@@ -2920,16 +2692,13 @@ _prefsw *create_prefs_dialog (void) {
 
   prefsw->checkbutton_stream_audio = 
     lives_standard_check_button_new((tmp=g_strdup(_("Stream audio"))),
-				    TRUE,(LiVESBox *)vbox69,
+				    TRUE,LIVES_BOX(vbox),
 				    (tmp2=g_strdup
 				     (_("Stream audio to playback plugin"))));
-  g_free(tmp);
-  g_free(tmp2);
+  g_free(tmp); g_free(tmp2);
 
 
-  gtk_widget_show_all(gtk_widget_get_parent(prefsw->checkbutton_stream_audio));
-
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_stream_audio),prefs->stream_audio_out);
+  lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (prefsw->checkbutton_stream_audio),prefs->stream_audio_out);
 
   prefsw_set_astream_settings(mainw->vpp);
 
@@ -2939,34 +2708,33 @@ _prefsw *create_prefs_dialog (void) {
 
   prefsw->checkbutton_rec_after_pb = 
     lives_standard_check_button_new((tmp=g_strdup(_("Record player output"))),
-				    TRUE,(LiVESBox *)vbox69,
+				    TRUE,LIVES_BOX(vbox),
 				    (tmp2=g_strdup
 				     (_("Record output from player instead of input to player"))));
-  g_free(tmp);
-  g_free(tmp2);
-								     
-  gtk_widget_show_all(gtk_widget_get_parent(prefsw->checkbutton_rec_after_pb));
+  g_free(tmp); g_free(tmp2);
 
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_rec_after_pb),(prefs->rec_opts&REC_AFTER_PB));
+  lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (prefsw->checkbutton_rec_after_pb),(prefs->rec_opts&REC_AFTER_PB));
 
   prefsw_set_rec_after_settings(mainw->vpp);
 
-  label31 = lives_standard_label_new (_("VIDEO"));
+  label = lives_standard_label_new (_("VIDEO"));
+
   if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color(frame4, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_bg_color(frame, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_fg_color(frame, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
   }
-  gtk_widget_show (label31);
-  gtk_frame_set_label_widget (GTK_FRAME (frame4), label31);
-  gtk_label_set_justify (GTK_LABEL(label31), GTK_JUSTIFY_LEFT);
 
-  frame5 = gtk_frame_new (NULL);
-  gtk_widget_show (frame5);
-  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_playback), frame5, TRUE, TRUE, 0);
+  gtk_frame_set_label_widget (GTK_FRAME (frame), label);
 
-  vbox = lives_vbox_new (FALSE, 10);
-  gtk_widget_show (vbox);
-  gtk_container_add (GTK_CONTAINER (frame5), vbox);
+  gtk_widget_show_all (frame);
 
+  //-
+
+  frame = gtk_frame_new (NULL);
+  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_playback), frame, TRUE, TRUE, 0);
+
+  vbox = lives_vbox_new (FALSE, 0);
+  gtk_container_add (GTK_CONTAINER (frame), vbox);
 
 #ifdef HAVE_PULSE_AUDIO
   audp = g_list_append (audp, g_strdup_printf("pulse audio (%s)",mainw->string_constants[LIVES_STRING_CONSTANT_RECOMMENDED]));
@@ -2992,15 +2760,11 @@ _prefsw *create_prefs_dialog (void) {
   prefsw->audp_combo = lives_standard_combo_new(_("_Player"),TRUE,audp,LIVES_BOX(vbox),NULL);
   widget_opts.expand=LIVES_EXPAND_DEFAULT;
 
-  gtk_widget_show_all(gtk_widget_get_parent(prefsw->audp_combo));
-
   has_ap_rec=FALSE;
 
   prefsw->jack_int_label=lives_standard_label_new(_("(See also the Jack Integration tab for jack startup options)"));
 
-  gtk_box_pack_start (GTK_BOX (vbox), prefsw->jack_int_label, FALSE, FALSE, 0);
-
-  gtk_widget_hide(prefsw->jack_int_label);
+  gtk_box_pack_start (GTK_BOX (vbox), prefsw->jack_int_label, FALSE, FALSE, widget_opts.packing_height);
 
 
   prefsw->audp_name=NULL;
@@ -3017,7 +2781,6 @@ _prefsw *create_prefs_dialog (void) {
     if (!has_ap_rec)
       prefsw->audp_name=g_strdup_printf("jack (%s)",mainw->string_constants[LIVES_STRING_CONSTANT_RECOMMENDED]);
     else prefsw->audp_name=g_strdup_printf("jack");
-    gtk_widget_show(prefsw->jack_int_label);
   }
   has_ap_rec=TRUE;
 #endif
@@ -3049,38 +2812,30 @@ _prefsw *create_prefs_dialog (void) {
     gtk_widget_set_sensitive(prefsw->audio_command_entry,FALSE);
   }
 
-  gtk_widget_show_all(gtk_widget_get_parent(prefsw->audio_command_entry));
-
-
 
   hbox = lives_hbox_new (FALSE, 0);
-  gtk_widget_show (hbox);
-
-  gtk_box_pack_start (GTK_BOX (vbox), hbox, TRUE, TRUE, 6);
+  gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
   // ---
 
   prefsw->checkbutton_afollow = lives_standard_check_button_new(_("Audio follows video _rate/direction"),TRUE,LIVES_BOX(hbox),NULL);
 
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_afollow),(prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS)?TRUE:FALSE);
+  lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (prefsw->checkbutton_afollow),(prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS)?TRUE:FALSE);
   gtk_widget_set_sensitive(prefsw->checkbutton_afollow,prefs->audio_player==AUD_PLAYER_JACK||prefs->audio_player==AUD_PLAYER_PULSE);
 
   // ---
   prefsw->checkbutton_aclips = lives_standard_check_button_new(_("Audio follows _clip switches"),TRUE,LIVES_BOX(hbox),NULL);
 
-  gtk_widget_show_all(hbox);
-
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_aclips),(prefs->audio_opts&AUDIO_OPTS_FOLLOW_CLIPS)?TRUE:FALSE);
+  lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (prefsw->checkbutton_aclips),(prefs->audio_opts&AUDIO_OPTS_FOLLOW_CLIPS)?TRUE:FALSE);
   gtk_widget_set_sensitive(prefsw->checkbutton_aclips,prefs->audio_player==AUD_PLAYER_JACK||prefs->audio_player==AUD_PLAYER_PULSE);
 
   hbox = lives_hbox_new(FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (vbox), hbox, TRUE, TRUE, 6);
+  gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
   label=lives_standard_label_new(_("Source:"));
-  gtk_box_pack_start(GTK_BOX(hbox),label,FALSE,FALSE,10);
+  gtk_box_pack_start(GTK_BOX(hbox),label,FALSE,FALSE,widget_opts.packing_width);
   add_fill_to_box(LIVES_BOX(hbox));
-  gtk_widget_show_all(hbox);
 
   hbox = lives_hbox_new(FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (vbox), hbox, TRUE, TRUE, 6);
+  gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
   rbutton=lives_standard_radio_button_new(_("_Internal"),TRUE,asrc_group,LIVES_BOX(hbox),NULL);
 
@@ -3089,9 +2844,7 @@ _prefsw *create_prefs_dialog (void) {
   prefsw->rextaudio = lives_standard_radio_button_new(_("_External (requires jack or pulse audio player)"),
 						      TRUE,asrc_group,LIVES_BOX(hbox),NULL);
 
-  gtk_container_set_border_width(GTK_CONTAINER (hbox), 10);
-  gtk_widget_show_all(hbox);
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->rextaudio),prefs->audio_src==AUDIO_SRC_EXT);
+  lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (prefsw->rextaudio),prefs->audio_src==AUDIO_SRC_EXT);
 
   if (mainw->playing_file>0&&mainw->record){
     gtk_widget_set_sensitive (prefsw->rextaudio,FALSE);
@@ -3101,22 +2854,16 @@ _prefsw *create_prefs_dialog (void) {
     gtk_widget_set_sensitive (prefsw->rextaudio,FALSE);
   }
 
-  gtk_widget_show_all(hbox);
-
   g_signal_connect(GTK_OBJECT(prefsw->rextaudio), "toggled", G_CALLBACK(toggle_set_insensitive), prefsw->checkbutton_aclips);
   g_signal_connect(GTK_OBJECT(prefsw->rextaudio), "toggled", G_CALLBACK(toggle_set_insensitive), prefsw->checkbutton_afollow);
 
 
 
-  label32 = gtk_label_new (_("AUDIO"));
+  label = lives_standard_label_new (_("AUDIO"));
   if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(label32, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_bg_color(label31, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-    lives_widget_set_bg_color(frame5, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_bg_color(frame, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
   }
-  gtk_widget_show (label32);
-  gtk_frame_set_label_widget (GTK_FRAME (frame5), label32);
-  gtk_label_set_justify (GTK_LABEL (label32), GTK_JUSTIFY_LEFT);
+  gtk_frame_set_label_widget (GTK_FRAME (frame), label);
 
   icon = g_build_filename(prefs->prefix_dir, ICON_DIR, "pref_playback.png", NULL);
   pixbuf_playback = gdk_pixbuf_new_from_file(icon, NULL);
@@ -3125,57 +2872,57 @@ _prefsw *create_prefs_dialog (void) {
   prefs_add_to_list(prefsw->prefs_list, pixbuf_playback, _("Playback"), LIST_ENTRY_PLAYBACK);
   gtk_container_add (GTK_CONTAINER (dialog_table), prefsw->scrollw_right_playback);
 
+  gtk_widget_show_all(frame);
+
+  gtk_widget_hide(prefsw->jack_int_label);
+
+#ifdef ENABLE_JACK
+  if (prefs->audio_player==AUD_PLAYER_JACK) {
+    gtk_widget_show(prefsw->jack_int_label);
+  }
+#endif
+
+
   // ---------------,
   // recording      |
   // ---------------'
 
   prefsw->vbox_right_recording = lives_vbox_new (FALSE, 0);
-  gtk_container_set_border_width (GTK_CONTAINER (prefsw->vbox_right_recording), 20);
+  gtk_container_set_border_width (GTK_CONTAINER (prefsw->vbox_right_recording), widget_opts.border_width*2);
 
   prefsw->scrollw_right_recording = lives_standard_scrolled_window_new (0,0,prefsw->vbox_right_recording);
 
   hbox = lives_hbox_new(FALSE, 0);
   prefsw->rdesk_audio = lives_standard_check_button_new(_("Record audio when capturing an e_xternal window\n (requires jack or pulse audio)"),
-							TRUE,(LiVESBox *)hbox,NULL);
+							TRUE,LIVES_BOX(hbox),NULL);
 
-  gtk_container_set_border_width(GTK_CONTAINER (hbox), 20);
   gtk_widget_show_all(hbox);
 
 #ifndef RT_AUDIO
   gtk_widget_set_sensitive (prefsw->rdesk_audio,FALSE);
 #endif
 
-  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_recording), hbox, TRUE, FALSE, 0);
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->rdesk_audio),prefs->rec_desktop_audio);
+  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_recording), hbox, FALSE, FALSE, widget_opts.packing_height);
+  lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (prefsw->rdesk_audio),prefs->rec_desktop_audio);
 
   // ---
-  hseparator = lives_hseparator_new ();
-  gtk_widget_show (hseparator);
-  if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color(hseparator, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  }
-  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_recording), hseparator, TRUE, TRUE, 0);
+  add_hsep_to_box(LIVES_BOX(prefsw->vbox_right_recording));
+
   // ---
-  label37 = gtk_label_new (_("      What to record when 'r' is pressed   "));
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(label37, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-  }
-  gtk_widget_show (label37);
-  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_recording), label37, FALSE, FALSE, 0);
-  gtk_label_set_justify (GTK_LABEL (label37), GTK_JUSTIFY_LEFT);
+  label = lives_standard_label_new (_("      What to record when 'r' is pressed   "));
+  gtk_widget_show (label);
+
+  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_recording), label, FALSE, FALSE, widget_opts.packing_height);
+
   // ---
-  hbox2 = lives_hbox_new (FALSE, 0);
-  gtk_widget_show (hbox2);
-  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_recording), hbox2, TRUE, TRUE, 6);
+  hbox = lives_hbox_new (FALSE, 0);
+  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_recording), hbox, FALSE, FALSE, widget_opts.packing_height);
   // ---
 
-  hbox = lives_hbox_new(FALSE, 0);
+  prefsw->rframes = lives_standard_check_button_new(_("_Frame changes"),TRUE,LIVES_BOX(hbox),NULL);
 
-  prefsw->rframes = lives_standard_check_button_new(_("_Frame changes"),TRUE,(LiVESBox *)hbox,NULL);
-  gtk_container_set_border_width(GTK_CONTAINER (hbox), 0);
+  lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (prefsw->rframes),prefs->rec_opts&REC_FRAMES);
   gtk_widget_show_all(hbox);
-  gtk_box_pack_start (GTK_BOX (hbox2), hbox, TRUE, FALSE, 0);
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->rframes),prefs->rec_opts&REC_FRAMES);
 
   // ---
   if (prefs->rec_opts&REC_FPS||prefs->rec_opts&REC_CLIPS){
@@ -3186,10 +2933,8 @@ _prefsw *create_prefs_dialog (void) {
   }
 
   // ---
-  hbox = lives_hbox_new(FALSE, 0);
-  prefsw->rfps = lives_standard_check_button_new(_("F_PS changes"),TRUE,(LiVESBox *)hbox,NULL);
-  gtk_container_set_border_width(GTK_CONTAINER (hbox), 20);
-  gtk_widget_show_all(hbox);
+  prefsw->rfps = lives_standard_check_button_new(_("F_PS changes"),TRUE,LIVES_BOX(hbox),NULL);
+
   // ---
   if (prefs->rec_opts&REC_CLIPS) {
     gtk_widget_set_sensitive (prefsw->rfps,FALSE); // we must record these if recording clip switches
@@ -3199,47 +2944,44 @@ _prefsw *create_prefs_dialog (void) {
     gtk_widget_set_sensitive (prefsw->rfps,FALSE);
   }
   // ---
-  gtk_box_pack_start (GTK_BOX (hbox2), hbox, TRUE, FALSE, 0);
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->rfps),prefs->rec_opts&REC_FPS);
+  lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (prefsw->rfps),prefs->rec_opts&REC_FPS);
 
-  // ---
-  hbox3 = lives_hbox_new (FALSE, 0);
-  gtk_widget_show (hbox3);
-  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_recording), hbox3, TRUE, TRUE, 6);
-  // ---
-
-  hbox = lives_hbox_new(FALSE, 0);
-  prefsw->reffects = lives_standard_check_button_new(_("_Real time effects"),TRUE,(LiVESBox *)hbox,NULL);
-  gtk_container_set_border_width(GTK_CONTAINER (hbox), 10);
   gtk_widget_show_all(hbox);
+
+  // ---
+  hbox = lives_hbox_new (FALSE, 0);
+  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_recording), hbox, FALSE, FALSE, widget_opts.packing_height);
+  // ---
+
+  prefsw->reffects = lives_standard_check_button_new(_("_Real time effects"),TRUE,LIVES_BOX(hbox),NULL);
 
   if (mainw->playing_file>0&&mainw->record){
     gtk_widget_set_sensitive (prefsw->reffects,FALSE);
   }
-  gtk_box_pack_start (GTK_BOX (hbox3), hbox, TRUE, FALSE, 0);
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->reffects),prefs->rec_opts&REC_EFFECTS);
+
+  lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (prefsw->reffects),prefs->rec_opts&REC_EFFECTS);
   // ---
 
-  hbox = lives_hbox_new(FALSE, 0);
-  prefsw->rclips = lives_standard_check_button_new(_("_Clip switches"),TRUE,(LiVESBox *)hbox,NULL);
-  gtk_container_set_border_width(GTK_CONTAINER (hbox), 10);
-  gtk_widget_show_all(hbox);
-  gtk_box_pack_start (GTK_BOX (hbox3), hbox, TRUE, FALSE, 0);
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->rclips),prefs->rec_opts&REC_CLIPS);
+							prefsw->rclips = lives_standard_check_button_new(_("_Clip switches"),TRUE,LIVES_BOX(hbox),NULL);
+
+  lives_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->rclips),prefs->rec_opts&REC_CLIPS);
 
   if (mainw->playing_file>0&&mainw->record){
     gtk_widget_set_sensitive (prefsw->rclips,FALSE);
   }
 
+
+  gtk_widget_show_all(hbox);
+
   // ---
 
   hbox = lives_hbox_new(FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_recording), hbox, TRUE, TRUE, 6);
+  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_recording), hbox, FALSE, FALSE, widget_opts.packing_height);
   prefsw->raudio = lives_standard_check_button_new(_("_Audio (requires jack or pulse audio player)"),
-						   TRUE,(LiVESBox *)hbox,NULL);
-  gtk_container_set_border_width(GTK_CONTAINER (hbox), 10);
+						   TRUE,LIVES_BOX(hbox),NULL);
+
+  lives_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->raudio),prefs->rec_opts&REC_AUDIO);
   gtk_widget_show_all(hbox);
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->raudio),prefs->rec_opts&REC_AUDIO);
 
   if (mainw->playing_file>0&&mainw->record){
     gtk_widget_set_sensitive (prefsw->raudio,FALSE);
@@ -3251,29 +2993,25 @@ _prefsw *create_prefs_dialog (void) {
 
 
   // ---
-  hseparator = lives_hseparator_new ();
-  gtk_widget_show (hseparator);
-  if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color(hseparator, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  }
-  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_recording), hseparator, TRUE, TRUE, 0);
+  add_hsep_to_box(LIVES_BOX(prefsw->vbox_right_recording));
   // ---
-  hbox5 = lives_hbox_new (FALSE,0);
-  gtk_widget_show (hbox5);
-  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_recording), hbox5, TRUE, TRUE, 0);
+
+  hbox = lives_hbox_new (FALSE,0);
+  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_recording), hbox, FALSE, FALSE, widget_opts.packing_height);
 
   label = gtk_label_new_with_mnemonic (_("Pause recording if free disk space falls below"));
   if (palette->style&STYLE_1) {
     lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
   }
   gtk_widget_show (label);
-  gtk_box_pack_start (GTK_BOX (hbox5), label, FALSE, FALSE, 10);
+  gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 10);
 
   spinbutton_adj = (GObject *)gtk_adjustment_new (prefs->rec_stop_gb, 0, 1024., 1., 10., 0.);
   
   prefsw->spinbutton_rec_gb = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 1, 0);
+
   gtk_widget_show (prefsw->spinbutton_rec_gb);
-  gtk_box_pack_start (GTK_BOX (hbox5), prefsw->spinbutton_rec_gb, FALSE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (hbox), prefsw->spinbutton_rec_gb, FALSE, TRUE, 0);
   gtk_label_set_mnemonic_widget (GTK_LABEL (label), prefsw->spinbutton_rec_gb);
 
   label = gtk_label_new_with_mnemonic (_("GB")); // translators - gigabytes
@@ -3281,7 +3019,7 @@ _prefsw *create_prefs_dialog (void) {
     lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
   }
   gtk_widget_show (label);
-  gtk_box_pack_start (GTK_BOX (hbox5), label, FALSE, FALSE, 10);
+  gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 10);
 
   icon = g_build_filename(prefs->prefix_dir, ICON_DIR, "pref_record.png", NULL);
   pixbuf_recording = gdk_pixbuf_new_from_file(icon, NULL);
@@ -3390,7 +3128,7 @@ _prefsw *create_prefs_dialog (void) {
   prefsw->checkbutton_antialias = lives_standard_check_button_new(_("Use _antialiasing when resizing"),TRUE,LIVES_BOX(hbox),NULL);
   gtk_widget_show_all(hbox);
 
-  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_antialias), prefs->antialias);
+  lives_toggle_button_set_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_antialias), prefs->antialias);
   //
 
   hbox = lives_hbox_new (FALSE,0);
@@ -3411,7 +3149,7 @@ _prefsw *create_prefs_dialog (void) {
   gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_effects), hbox, FALSE, FALSE, 10);
 
   prefsw->checkbutton_threads = lives_standard_check_button_new(_("Use _threads where possible when applying effects"),TRUE,LIVES_BOX(hbox),NULL);
-  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_threads), future_prefs->nfx_threads>1);
+  lives_toggle_button_set_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_threads), future_prefs->nfx_threads>1);
   gtk_widget_show_all (hbox);
 
   //
@@ -3719,8 +3457,8 @@ _prefsw *create_prefs_dialog (void) {
     lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
   }
 
-  spinbutton_adj = (GObject *)gtk_adjustment_new ((gdouble)prefs->ds_warn_level/1000000., 
-				       (gdouble)prefs->ds_crit_level/1000000.,
+  spinbutton_adj = (GObject *)gtk_adjustment_new ((double)prefs->ds_warn_level/1000000., 
+				       (double)prefs->ds_crit_level/1000000.,
 				       DS_WARN_CRIT_MAX, 1., 10., 0.);
    
   prefsw->spinbutton_warn_ds = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 1, 0);
@@ -3752,7 +3490,7 @@ _prefsw *create_prefs_dialog (void) {
     lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
   }
 
-  spinbutton_adj = (GObject *)gtk_adjustment_new ((gdouble)prefs->ds_crit_level/1000000., 0.,
+  spinbutton_adj = (GObject *)gtk_adjustment_new ((double)prefs->ds_crit_level/1000000., 0.,
 				       DS_WARN_CRIT_MAX, 1., 10., 0.);
    
   prefsw->spinbutton_crit_ds = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 1, 0);
@@ -3798,7 +3536,7 @@ _prefsw *create_prefs_dialog (void) {
   gtk_container_set_border_width(GTK_CONTAINER (hbox), 0);
   gtk_widget_show_all(hbox);
   gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_warnings), hbox, FALSE, FALSE, 0);
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_warn_fps), !(prefs->warning_mask&WARN_MASK_FPS));
+  lives_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_warn_fps), !(prefs->warning_mask&WARN_MASK_FPS));
   // ---
   hbox100 = lives_hbox_new(FALSE, 0);
   gtk_widget_show(hbox100);
@@ -3822,7 +3560,7 @@ _prefsw *create_prefs_dialog (void) {
   gtk_widget_show_all(hbox);
   gtk_box_pack_start (GTK_BOX (hbox100), hbox, FALSE, TRUE, 0);
    
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_warn_fsize), !(prefs->warning_mask&WARN_MASK_FSIZE));
+  lives_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_warn_fsize), !(prefs->warning_mask&WARN_MASK_FSIZE));
   spinbutton_warn_fsize_adj = (GObject *)gtk_adjustment_new (prefs->warn_file_size, 1, 2048, 1, 10, 0);
    
   prefsw->spinbutton_warn_fsize = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_warn_fsize_adj), 1, 0);
@@ -3854,7 +3592,7 @@ _prefsw *create_prefs_dialog (void) {
   gtk_container_set_border_width(GTK_CONTAINER (hbox), 0);
   gtk_widget_show_all(hbox);
   gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_warnings), hbox, FALSE, TRUE, 0);
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_warn_save_set), !(prefs->warning_mask&WARN_MASK_SAVE_SET));
+  lives_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_warn_save_set), !(prefs->warning_mask&WARN_MASK_SAVE_SET));
   // ---
   prefsw->checkbutton_warn_mplayer = gtk_check_button_new();
   eventbox = gtk_event_box_new();
@@ -3873,7 +3611,7 @@ _prefsw *create_prefs_dialog (void) {
   gtk_container_set_border_width(GTK_CONTAINER (hbox), 0);
   gtk_widget_show_all(hbox);
   gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_warnings), hbox, FALSE, TRUE, 0);
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_warn_mplayer), !(prefs->warning_mask&WARN_MASK_NO_MPLAYER));
+  lives_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_warn_mplayer), !(prefs->warning_mask&WARN_MASK_NO_MPLAYER));
   // ---
   prefsw->checkbutton_warn_rendered_fx = gtk_check_button_new();
   eventbox = gtk_event_box_new();
@@ -3892,7 +3630,7 @@ _prefsw *create_prefs_dialog (void) {
   gtk_container_set_border_width(GTK_CONTAINER (hbox), 0);
   gtk_widget_show_all(hbox);
   gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_warnings), hbox, FALSE, TRUE, 0);
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_warn_rendered_fx), !(prefs->warning_mask&WARN_MASK_RENDERED_FX));
+  lives_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_warn_rendered_fx), !(prefs->warning_mask&WARN_MASK_RENDERED_FX));
   // ---
   prefsw->checkbutton_warn_encoders = gtk_check_button_new();
   eventbox = gtk_event_box_new();
@@ -3911,7 +3649,7 @@ _prefsw *create_prefs_dialog (void) {
   gtk_container_set_border_width(GTK_CONTAINER (hbox), 0);
   gtk_widget_show_all(hbox);
   gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_warnings), hbox, FALSE, TRUE, 0);
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_warn_rendered_fx), !(prefs->warning_mask&WARN_MASK_NO_ENCODERS));
+  lives_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_warn_rendered_fx), !(prefs->warning_mask&WARN_MASK_NO_ENCODERS));
   // ---
   prefsw->checkbutton_warn_dup_set = gtk_check_button_new();
   eventbox = gtk_event_box_new();
@@ -3930,7 +3668,7 @@ _prefsw *create_prefs_dialog (void) {
   gtk_container_set_border_width(GTK_CONTAINER (hbox), 0);
   gtk_widget_show_all(hbox);
   gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_warnings), hbox, FALSE, TRUE, 0);
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_warn_dup_set), !(prefs->warning_mask&WARN_MASK_DUPLICATE_SET));
+  lives_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_warn_dup_set), !(prefs->warning_mask&WARN_MASK_DUPLICATE_SET));
   // ---
   prefsw->checkbutton_warn_layout_clips = gtk_check_button_new();
   eventbox = gtk_event_box_new();
@@ -3950,7 +3688,7 @@ _prefsw *create_prefs_dialog (void) {
   gtk_widget_show_all(hbox);
   gtk_widget_show (prefsw->checkbutton_warn_layout_clips);
   gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_warnings), hbox, FALSE, TRUE, 0);
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_warn_layout_clips), !(prefs->warning_mask&WARN_MASK_LAYOUT_MISSING_CLIPS));
+  lives_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_warn_layout_clips), !(prefs->warning_mask&WARN_MASK_LAYOUT_MISSING_CLIPS));
   // ---
   prefsw->checkbutton_warn_layout_close = gtk_check_button_new();
   eventbox = gtk_event_box_new();
@@ -3969,7 +3707,7 @@ _prefsw *create_prefs_dialog (void) {
   gtk_container_set_border_width(GTK_CONTAINER (hbox), 0);
   gtk_widget_show_all(hbox);
   gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_warnings), hbox, FALSE, TRUE, 0);
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_warn_layout_close), !(prefs->warning_mask&WARN_MASK_LAYOUT_CLOSE_FILE));
+  lives_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_warn_layout_close), !(prefs->warning_mask&WARN_MASK_LAYOUT_CLOSE_FILE));
   // ---
   prefsw->checkbutton_warn_layout_delete = gtk_check_button_new();
   eventbox = gtk_event_box_new();
@@ -3988,7 +3726,7 @@ _prefsw *create_prefs_dialog (void) {
   gtk_container_set_border_width(GTK_CONTAINER (hbox), 0);
   gtk_widget_show_all(hbox);
   gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_warnings), hbox, FALSE, TRUE, 0);
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_warn_layout_delete), !(prefs->warning_mask&WARN_MASK_LAYOUT_DELETE_FRAMES));
+  lives_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_warn_layout_delete), !(prefs->warning_mask&WARN_MASK_LAYOUT_DELETE_FRAMES));
   // ---
   prefsw->checkbutton_warn_layout_shift = gtk_check_button_new();
   eventbox = gtk_event_box_new();
@@ -4007,7 +3745,7 @@ _prefsw *create_prefs_dialog (void) {
   gtk_container_set_border_width(GTK_CONTAINER (hbox), 0);
   gtk_widget_show_all(hbox);
   gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_warnings), hbox, FALSE, TRUE, 0);
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_warn_layout_shift), !(prefs->warning_mask&WARN_MASK_LAYOUT_SHIFT_FRAMES));
+  lives_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_warn_layout_shift), !(prefs->warning_mask&WARN_MASK_LAYOUT_SHIFT_FRAMES));
   // ---
   prefsw->checkbutton_warn_layout_alter = gtk_check_button_new();
   eventbox = gtk_event_box_new();
@@ -4026,7 +3764,7 @@ _prefsw *create_prefs_dialog (void) {
   gtk_container_set_border_width(GTK_CONTAINER (hbox), 0);
   gtk_widget_show_all(hbox);
   gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_warnings), hbox, FALSE, TRUE, 0);
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_warn_layout_alter), !(prefs->warning_mask&WARN_MASK_LAYOUT_ALTER_FRAMES));
+  lives_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_warn_layout_alter), !(prefs->warning_mask&WARN_MASK_LAYOUT_ALTER_FRAMES));
   // ---
   prefsw->checkbutton_warn_layout_adel = gtk_check_button_new();
   eventbox = gtk_event_box_new();
@@ -4045,7 +3783,7 @@ _prefsw *create_prefs_dialog (void) {
   gtk_container_set_border_width(GTK_CONTAINER (hbox), 0);
   gtk_widget_show_all(hbox);
   gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_warnings), hbox, FALSE, TRUE, 0);
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_warn_layout_adel), !(prefs->warning_mask&WARN_MASK_LAYOUT_DELETE_AUDIO));
+  lives_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_warn_layout_adel), !(prefs->warning_mask&WARN_MASK_LAYOUT_DELETE_AUDIO));
   // ---
   prefsw->checkbutton_warn_layout_ashift = gtk_check_button_new();
   eventbox = gtk_event_box_new();
@@ -4064,7 +3802,7 @@ _prefsw *create_prefs_dialog (void) {
   gtk_container_set_border_width(GTK_CONTAINER (hbox), 0);
   gtk_widget_show_all(hbox);
   gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_warnings), hbox, FALSE, TRUE, 0);
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_warn_layout_ashift), !(prefs->warning_mask&WARN_MASK_LAYOUT_SHIFT_AUDIO));
+  lives_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_warn_layout_ashift), !(prefs->warning_mask&WARN_MASK_LAYOUT_SHIFT_AUDIO));
   // ---
   prefsw->checkbutton_warn_layout_aalt = gtk_check_button_new();
   eventbox = gtk_event_box_new();
@@ -4083,7 +3821,7 @@ _prefsw *create_prefs_dialog (void) {
   gtk_container_set_border_width(GTK_CONTAINER (hbox), 0);
   gtk_widget_show_all(hbox);
   gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_warnings), hbox, FALSE, TRUE, 0);
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_warn_layout_aalt), !(prefs->warning_mask&WARN_MASK_LAYOUT_ALTER_AUDIO));
+  lives_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_warn_layout_aalt), !(prefs->warning_mask&WARN_MASK_LAYOUT_ALTER_AUDIO));
   // ---
   prefsw->checkbutton_warn_layout_popup = gtk_check_button_new();
   eventbox = gtk_event_box_new();
@@ -4102,7 +3840,7 @@ _prefsw *create_prefs_dialog (void) {
   gtk_container_set_border_width(GTK_CONTAINER (hbox), 0);
   gtk_widget_show_all(hbox);
   gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_warnings), hbox, FALSE, TRUE, 0);
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_warn_layout_popup), !(prefs->warning_mask&WARN_MASK_LAYOUT_POPUP));
+  lives_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_warn_layout_popup), !(prefs->warning_mask&WARN_MASK_LAYOUT_POPUP));
   // ---
   prefsw->checkbutton_warn_discard_layout = gtk_check_button_new();
   eventbox = gtk_event_box_new();
@@ -4121,7 +3859,7 @@ _prefsw *create_prefs_dialog (void) {
   gtk_container_set_border_width(GTK_CONTAINER (hbox), 0);
   gtk_widget_show_all(hbox);
   gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_warnings), hbox, FALSE, TRUE, 0);
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_warn_discard_layout), !(prefs->warning_mask&WARN_MASK_EXIT_MT));
+  lives_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_warn_discard_layout), !(prefs->warning_mask&WARN_MASK_EXIT_MT));
   // ---
   prefsw->checkbutton_warn_mt_achans = gtk_check_button_new();
   eventbox = gtk_event_box_new();
@@ -4140,7 +3878,7 @@ _prefsw *create_prefs_dialog (void) {
   gtk_container_set_border_width(GTK_CONTAINER (hbox), 0);
   gtk_widget_show_all(hbox);
   gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_warnings), hbox, FALSE, TRUE, 0);
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_warn_mt_achans), !(prefs->warning_mask&WARN_MASK_MT_ACHANS));
+  lives_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_warn_mt_achans), !(prefs->warning_mask&WARN_MASK_MT_ACHANS));
   // ---
   prefsw->checkbutton_warn_mt_no_jack = gtk_check_button_new();
   eventbox = gtk_event_box_new();
@@ -4159,7 +3897,7 @@ _prefsw *create_prefs_dialog (void) {
   gtk_container_set_border_width(GTK_CONTAINER (hbox), 0);
   gtk_widget_show_all(hbox);
   gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_warnings), hbox, FALSE, TRUE, 0);
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_warn_mt_no_jack), !(prefs->warning_mask&WARN_MASK_MT_NO_JACK));
+  lives_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_warn_mt_no_jack), !(prefs->warning_mask&WARN_MASK_MT_NO_JACK));
   // ---
   prefsw->checkbutton_warn_after_dvgrab = gtk_check_button_new();
   eventbox = gtk_event_box_new();
@@ -4180,7 +3918,7 @@ _prefsw *create_prefs_dialog (void) {
 #ifdef HAVE_LDVGRAB
   gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_warnings), hbox, FALSE, TRUE, 0);
 #endif   
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_warn_after_dvgrab), !(prefs->warning_mask&WARN_MASK_AFTER_DVGRAB));
+  lives_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_warn_after_dvgrab), !(prefs->warning_mask&WARN_MASK_AFTER_DVGRAB));
   // ---
   prefsw->checkbutton_warn_yuv4m_open = gtk_check_button_new();
   eventbox = gtk_event_box_new();
@@ -4201,7 +3939,7 @@ _prefsw *create_prefs_dialog (void) {
 #ifdef HAVE_YUV4MPEG
   gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_warnings), hbox, FALSE, TRUE, 0);
 #endif   
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_warn_yuv4m_open), !(prefs->warning_mask&WARN_MASK_OPEN_YUV4M));
+  lives_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_warn_yuv4m_open), !(prefs->warning_mask&WARN_MASK_OPEN_YUV4M));
   // ---
   prefsw->checkbutton_warn_mt_backup_space = gtk_check_button_new();
   eventbox = gtk_event_box_new();
@@ -4220,7 +3958,7 @@ _prefsw *create_prefs_dialog (void) {
   gtk_container_set_border_width(GTK_CONTAINER (hbox), 0);
   gtk_widget_show_all(hbox);
   gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_warnings), hbox, FALSE, TRUE, 0);
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_warn_mt_backup_space), !(prefs->warning_mask&WARN_MASK_MT_BACKUP_SPACE));
+  lives_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_warn_mt_backup_space), !(prefs->warning_mask&WARN_MASK_MT_BACKUP_SPACE));
   // ---
   prefsw->checkbutton_warn_after_crash = gtk_check_button_new();
   eventbox = gtk_event_box_new();
@@ -4239,7 +3977,7 @@ _prefsw *create_prefs_dialog (void) {
   gtk_container_set_border_width(GTK_CONTAINER (hbox), 0);
   gtk_widget_show_all(hbox);
   gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_warnings), hbox, FALSE, TRUE, 0);
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_warn_after_crash), !(prefs->warning_mask&WARN_MASK_CLEAN_AFTER_CRASH));
+  lives_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_warn_after_crash), !(prefs->warning_mask&WARN_MASK_CLEAN_AFTER_CRASH));
 
   // ---
   prefsw->checkbutton_warn_no_pulse = gtk_check_button_new();
@@ -4259,7 +3997,7 @@ _prefsw *create_prefs_dialog (void) {
   gtk_container_set_border_width(GTK_CONTAINER (hbox), 0);
   gtk_widget_show_all(hbox);
   gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_warnings), hbox, FALSE, TRUE, 0);
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_warn_no_pulse), !(prefs->warning_mask&WARN_MASK_NO_PULSE_CONNECT));
+  lives_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_warn_no_pulse), !(prefs->warning_mask&WARN_MASK_NO_PULSE_CONNECT));
   // ---
 
 
@@ -4296,7 +4034,7 @@ _prefsw *create_prefs_dialog (void) {
   gtk_container_set_border_width(GTK_CONTAINER (hbox), 20);
   gtk_widget_show_all(hbox);
   gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_misc), hbox, FALSE, FALSE, 16);
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->check_midi), prefs->midisynch);
+  lives_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->check_midi), prefs->midisynch);
 
   gtk_widget_set_sensitive(prefsw->check_midi,capable->has_midistartstop);
   gtk_widget_set_sensitive(label,capable->has_midistartstop);
@@ -4330,7 +4068,7 @@ _prefsw *create_prefs_dialog (void) {
   // ---
   ins_resample = gtk_radio_button_new(rb_group2);
   rb_group2 = gtk_radio_button_get_group (GTK_RADIO_BUTTON (ins_resample));
-  gtk_toggle_button_set_active( GTK_TOGGLE_BUTTON(ins_resample),prefs->ins_resample);
+  lives_toggle_button_set_active( GTK_TOGGLE_BUTTON(ins_resample),prefs->ins_resample);
   label = gtk_label_new_with_mnemonic(_("_Resample Insertion"));
   gtk_label_set_mnemonic_widget(GTK_LABEL(label), prefsw->ins_speed);
   eventbox = gtk_event_box_new();
@@ -4559,7 +4297,7 @@ _prefsw *create_prefs_dialog (void) {
   gtk_container_set_border_width(GTK_CONTAINER (hbox), 20);
   gtk_widget_show_all(hbox);
   gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_net), hbox, FALSE, FALSE, 20);
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->enable_OSC_start), future_prefs->osc_start);
+  lives_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->enable_OSC_start), future_prefs->osc_start);
    
 #ifndef ENABLE_OSC
   gtk_widget_set_sensitive (prefsw->spinbutton_osc_udp,FALSE);
@@ -4567,7 +4305,7 @@ _prefsw *create_prefs_dialog (void) {
   gtk_widget_set_sensitive (label,FALSE);
 #else
   if (prefs->osc_udp_started) {
-    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->enable_OSC), TRUE);
+    lives_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->enable_OSC), TRUE);
     gtk_widget_set_sensitive (prefsw->spinbutton_osc_udp,FALSE);
     gtk_widget_set_sensitive (prefsw->enable_OSC,FALSE);
   }
@@ -4650,7 +4388,7 @@ _prefsw *create_prefs_dialog (void) {
   gtk_container_set_border_width(GTK_CONTAINER (hbox), 10);
   gtk_widget_show_all(hbox);
   gtk_box_pack_start (GTK_BOX (hbox1), hbox, TRUE, FALSE, 0);
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_start_tjack), 
+  lives_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_start_tjack), 
 				(future_prefs->jack_opts&JACK_OPTS_START_TSERVER)?TRUE:FALSE);
   // ---
   hbox2 = lives_hbox_new (FALSE,0);
@@ -4674,7 +4412,7 @@ _prefsw *create_prefs_dialog (void) {
   gtk_container_set_border_width(GTK_CONTAINER (hbox), 10);
   gtk_widget_show_all(hbox);
   gtk_box_pack_start (GTK_BOX (hbox2), hbox, TRUE, FALSE, 0);
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_jack_master), 
+  lives_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_jack_master), 
 				(future_prefs->jack_opts&JACK_OPTS_TRANSPORT_MASTER)?TRUE:FALSE);
   // ---
   eventbox = gtk_event_box_new();
@@ -4694,7 +4432,7 @@ _prefsw *create_prefs_dialog (void) {
   gtk_container_set_border_width(GTK_CONTAINER (hbox), 10);
   gtk_widget_show_all(hbox);
   gtk_box_pack_start (GTK_BOX (hbox2), hbox, TRUE, FALSE, 0);
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_jack_client), 
+  lives_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_jack_client), 
 				(future_prefs->jack_opts&JACK_OPTS_TRANSPORT_CLIENT)?TRUE:FALSE);
   // ---
   hbox3 = lives_hbox_new (FALSE,0);
@@ -4718,13 +4456,13 @@ _prefsw *create_prefs_dialog (void) {
   gtk_container_set_border_width(GTK_CONTAINER (hbox), 10);
   gtk_widget_show_all(hbox);
   gtk_box_pack_start (GTK_BOX (hbox3), hbox, TRUE, FALSE, 0);
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_jack_tb_start),
+  lives_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_jack_tb_start),
 				(future_prefs->jack_opts&JACK_OPTS_TIMEBASE_START)?
-				(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_jack_client))):FALSE);
+				(lives_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_jack_client))):FALSE);
 
   gtk_widget_set_sensitive(prefsw->checkbutton_jack_tb_start, 
-			   gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_jack_client)));
-  gtk_widget_set_sensitive(label, gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_jack_client)));
+			   lives_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_jack_client)));
+  gtk_widget_set_sensitive(label, lives_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_jack_client)));
 
   g_signal_connect_after (GTK_OBJECT (prefsw->checkbutton_jack_client), "toggled",
 			  G_CALLBACK (after_jack_client_toggled),
@@ -4748,13 +4486,13 @@ _prefsw *create_prefs_dialog (void) {
   gtk_widget_show_all(hbox);
   gtk_box_pack_start (GTK_BOX (hbox3), hbox, TRUE, FALSE, 0);
    
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_jack_tb_client), 
+  lives_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_jack_tb_client), 
 				(future_prefs->jack_opts&JACK_OPTS_TIMEBASE_CLIENT)?
-				(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_jack_tb_start))):FALSE);
+				(lives_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_jack_tb_start))):FALSE);
 
   gtk_widget_set_sensitive(prefsw->checkbutton_jack_tb_client, 
-			   gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_jack_tb_start)));
-  gtk_widget_set_sensitive(label, gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_jack_tb_start)));
+			   lives_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_jack_tb_start)));
+  gtk_widget_set_sensitive(label, lives_toggle_button_get_active(GTK_TOGGLE_BUTTON(prefsw->checkbutton_jack_tb_start)));
   // ---
   label = gtk_label_new (_("(See also Playback -> Audio follows video rate/direction)"));
   if (palette->style&STYLE_1) {
@@ -4845,7 +4583,7 @@ _prefsw *create_prefs_dialog (void) {
   gtk_container_set_border_width(GTK_CONTAINER (hbox), 10);
   gtk_widget_show_all(hbox);
   gtk_box_pack_start (GTK_BOX (hbox5), hbox, TRUE, FALSE, 0);
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_start_ajack), 
+  lives_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_start_ajack), 
 				(future_prefs->jack_opts&JACK_OPTS_START_ASERVER)?TRUE:FALSE);
   // ---
   prefsw->checkbutton_jack_pwp = gtk_check_button_new();
@@ -4866,7 +4604,7 @@ _prefsw *create_prefs_dialog (void) {
   gtk_widget_show_all(hbox);
   gtk_box_pack_start (GTK_BOX (hbox5), hbox, TRUE, FALSE, 0);
    
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_jack_pwp), 
+  lives_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_jack_pwp), 
 				(future_prefs->jack_opts&JACK_OPTS_NOPLAY_WHEN_PAUSED)?FALSE:TRUE);
 
   gtk_widget_set_sensitive (prefsw->checkbutton_jack_pwp, prefs->audio_player==AUD_PLAYER_JACK);
@@ -4918,7 +4656,7 @@ _prefsw *create_prefs_dialog (void) {
   gtk_widget_show_all(hbox);
   gtk_container_set_border_width(GTK_CONTAINER (hbox), 20);
   gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_midi), hbox, FALSE, FALSE, 0);
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_omc_js), prefs->omc_dev_opts&OMC_DEV_JS);
+  lives_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_omc_js), prefs->omc_dev_opts&OMC_DEV_JS);
   // ---
   hbox = lives_hbox_new (FALSE, 0);
   gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_midi), hbox, FALSE, FALSE, widget_opts.packing_height);
@@ -4969,7 +4707,7 @@ _prefsw *create_prefs_dialog (void) {
   gtk_widget_show_all(hbox);
   gtk_container_set_border_width(GTK_CONTAINER (hbox), 20);
   gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_midi), hbox, FALSE, FALSE, 0);
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_omc_midi), prefs->omc_dev_opts&OMC_DEV_MIDI);
+  lives_toggle_button_set_active (GTK_TOGGLE_BUTTON (prefsw->checkbutton_omc_midi), prefs->omc_dev_opts&OMC_DEV_MIDI);
   // ---
   hbox1 = lives_hbox_new (FALSE, 0);
   gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_midi), hbox1, TRUE, TRUE, 20);
@@ -5020,7 +4758,7 @@ _prefsw *create_prefs_dialog (void) {
   gtk_box_pack_start (GTK_BOX (hbox1), hbox, TRUE, TRUE, 0);
 
 #ifdef ALSA_MIDI
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (raw_midi_button),!prefs->use_alsa_midi);
+  lives_toggle_button_set_active (GTK_TOGGLE_BUTTON (raw_midi_button),!prefs->use_alsa_midi);
 #endif
   hbox = lives_hbox_new (FALSE, 0);
   gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_midi), hbox, FALSE, FALSE, widget_opts.packing_height);

@@ -1126,23 +1126,9 @@ void d_print(const gchar *text);
 void init_clipboard(void);
 gboolean cache_file_contents(const gchar *filename);
 gchar *get_val_from_cached_list(const gchar *key, size_t maxlen);
-void get_pref(const gchar *key, gchar *val, gint maxlen);
-void get_pref_utf8(const gchar *key, gchar *val, gint maxlen);
-void get_pref_default(const gchar *key, gchar *val, gint maxlen);
-gboolean get_boolean_pref(const gchar *key);
-gdouble get_double_pref(const gchar *key);
-gint get_int_pref(const gchar *key);
-GList *get_list_pref(const gchar *key);
-void get_location(const gchar *exe, gchar *val, gint maxlen);
-void set_pref (const gchar *key, const gchar *value);
-void delete_pref (const gchar *key);
-void set_boolean_pref(const gchar *key, gboolean value);
-void set_double_pref(const gchar *key, gdouble value);
-void set_int_pref(const gchar *key, gint value);
-void set_int64_pref(const gchar *key, gint64 value);
-void set_list_pref(const char *key, GList *values);
-gboolean apply_prefs(gboolean skip_warnings);
-void save_future_prefs(void);
+
+void get_location(const gchar *exe, gchar *val, int maxlen);
+
 void set_menu_text(GtkWidget *menu, const gchar *text, gboolean use_mnemonic);
 void get_menu_text(GtkWidget *menu, gchar *text);
 void get_menu_text_long(GtkWidget *menuitem, gchar *text);
@@ -1260,6 +1246,25 @@ void on_cleardisk_activate (GtkWidget *, gpointer user_data);
 void on_cleardisk_advanced_clicked (GtkWidget *, gpointer user_data);
 void popup_lmap_errors(GtkMenuItem *, gpointer);
 void on_filesel_button_clicked (GtkButton *button, gpointer user_data);
+
+
+//preferences.c
+void get_pref(const gchar *key, gchar *val, int maxlen);
+void get_pref_utf8(const gchar *key, gchar *val, int maxlen);
+void get_pref_default(const gchar *key, gchar *val, int maxlen);
+boolean get_boolean_pref(const gchar *key);
+double get_double_pref(const gchar *key);
+int get_int_pref(const gchar *key);
+GList *get_list_pref(const gchar *key);
+void set_pref (const gchar *key, const gchar *value);
+void delete_pref (const gchar *key);
+void set_boolean_pref(const gchar *key, boolean value);
+void set_double_pref(const gchar *key, double value);
+void set_int_pref(const gchar *key, int value);
+void set_int64_pref(const gchar *key, int64_t value);
+void set_list_pref(const char *key, GList *values);
+boolean apply_prefs(boolean skip_warnings);
+void save_future_prefs(void);
 
 
 // paramspecial.c

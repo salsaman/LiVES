@@ -923,7 +923,7 @@ weed_plant_t *add_filter_init_events (weed_plant_t *event_list, weed_timecode_t 
       event_list=append_filter_init_event (event_list,tc,(fx_idx=key_to_fx[i][key_modes[i]]),-1,i,inst);
       init_events[i]=get_last_event(event_list);
       ntracks=weed_leaf_num_elements(init_events[i],"in_tracks");
-      pchains[i]=filter_init_add_pchanges(event_list,inst,init_events[i],ntracks);
+      pchains[i]=filter_init_add_pchanges(event_list,inst,init_events[i],ntracks,0);
     }
   }
   // add an empty filter_map event (in case more frames are added)
@@ -5708,16 +5708,8 @@ static void weed_gui_free (weed_plant_t *plant) {
 }
 
 
-void weed_in_parameters_free (weed_plant_t *inst) {
-  weed_plant_t **parameters;
-  int error;
-  int num_parameters;
+void weed_in_params_free(weed_plant_t **parameters, int num_parameters) {
   register int i;
-
-  if (!weed_plant_has_leaf(inst,"in_parameters")) return;
-
-  num_parameters=weed_leaf_num_elements(inst,"in_parameters");
-  parameters=weed_get_plantptr_array(inst,"in_parameters",&error);
   for (i=0;i<num_parameters;i++) {
     if (parameters[i]!=NULL) {
       if (parameters[i]==mainw->rte_textparm) mainw->rte_textparm=NULL;
@@ -5726,6 +5718,19 @@ void weed_in_parameters_free (weed_plant_t *inst) {
     }
   }
   weed_free(parameters);
+}
+
+
+void weed_in_parameters_free (weed_plant_t *inst) {
+  weed_plant_t **parameters;
+  int error;
+  int num_parameters;
+
+  if (!weed_plant_has_leaf(inst,"in_parameters")) return;
+
+  num_parameters=weed_leaf_num_elements(inst,"in_parameters");
+  parameters=weed_get_plantptr_array(inst,"in_parameters",&error);
+  weed_in_params_free(parameters,num_parameters);
 }
 
 static void weed_out_parameters_free (weed_plant_t *inst) {
@@ -6598,7 +6603,7 @@ boolean weed_init_effect(int hotkey) {
     if (mainw->event_list==NULL) mainw->event_list=event_list;
     init_events[hotkey]=get_last_event(mainw->event_list);
     ntracks=weed_leaf_num_elements(init_events[hotkey],"in_tracks");
-    pchains[hotkey]=filter_init_add_pchanges(mainw->event_list,new_instance,init_events[hotkey],ntracks);
+    pchains[hotkey]=filter_init_add_pchanges(mainw->event_list,new_instance,init_events[hotkey],ntracks,0);
     create_filter_map(); // we create filter_map event_t * array with ordered effects
     mainw->event_list=append_filter_map_event (mainw->event_list,mainw->currticks,filter_map);
   }

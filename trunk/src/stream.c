@@ -1073,7 +1073,7 @@ void on_open_lives2lives_activate (GtkMenuItem *menuitem, gpointer user_data) {
 static void pandhw_anyhost_toggled(GtkToggleButton *tbut, gpointer user_data) {
   lives_pandh_w *pandhw=(lives_pandh_w *)user_data;
 
-  if (gtk_toggle_button_get_active(tbut)) {
+  if (lives_toggle_button_get_active(tbut)) {
     gtk_widget_set_sensitive(pandhw->entry1,FALSE);
     gtk_widget_set_sensitive(pandhw->entry2,FALSE);
     gtk_widget_set_sensitive(pandhw->entry3,FALSE);

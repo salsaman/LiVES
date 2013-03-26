@@ -2263,17 +2263,17 @@ void lives_spin_button_configure(LiVESSpinButton *spinbutton,
 				 double page_increment) {
 #ifdef GUI_GTK
   GtkAdjustment *adjustment=gtk_spin_button_get_adjustment(spinbutton);
-  g_object_freeze_notify (G_OBJECT(adjustment));
 #if GTK_CHECK_VERSION(2,14,0)
   gtk_adjustment_configure(adjustment,value,lower,upper,step_increment,page_increment,0.);
 #else
+  g_object_freeze_notify (G_OBJECT(adjustment));
   adjustment->upper=upper;
   adjustment->lower=lower;
   adjustment->value=value;
   adjustment->step_increment=step_increment;
   adjustment->page_increment=page_increment;
-#endif
   g_object_thaw_notify (G_OBJECT(adjustment));
+#endif
 #endif
 
 }

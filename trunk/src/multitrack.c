@@ -12470,10 +12470,10 @@ void polymorph (lives_mt *mt, lives_mt_poly_state_t poly) {
       do_fx_list_context(mt,fxcount);
     }
     else {
-      label=gtk_label_new(_("\n\nNo effects at current track,\ncurrent time.\n"));
+      widget_opts.justify=LIVES_JUSTIFY_CENTER;
+      label=lives_standard_label_new(_("\n\nNo effects at current track,\ncurrent time.\n"));
+      widget_opts.justify=LIVES_JUSTIFY_DEFAULT;
       gtk_box_pack_start (GTK_BOX (mt->fx_list_box), label, TRUE, TRUE, 0);
-      gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_CENTER);
-      lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
     }
 
     gtk_widget_show_all(mt->fx_list_box);

@@ -1755,7 +1755,6 @@ LiVESWidget *lives_standard_spin_button_new(const char *labeltext, boolean use_m
   maxlen=calc_spin_button_width(min,max,dp);
   gtk_entry_set_width_chars (GTK_ENTRY (spinbutton),maxlen);
 
-  lives_widget_set_can_focus_and_default(spinbutton);
   gtk_entry_set_activates_default (GTK_ENTRY (spinbutton), TRUE);
   gtk_spin_button_set_update_policy (GTK_SPIN_BUTTON (spinbutton),GTK_UPDATE_ALWAYS);
   gtk_spin_button_set_numeric (GTK_SPIN_BUTTON (spinbutton),TRUE);

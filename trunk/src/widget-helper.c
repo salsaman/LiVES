@@ -291,7 +291,17 @@ lives_painter_format_t lives_painter_image_surface_get_format(lives_painter_surf
 
 ////////////////////////////////////////////////////////
 
-
+#ifdef GUI_GTK
+static void set_label_state(GtkWidget *widget, LiVESWidgetState state, gpointer labelp) {
+  GtkWidget *label=(GtkWidget *)labelp;
+  if (gtk_widget_get_sensitive(widget)&&!gtk_widget_get_sensitive(label)) {
+    gtk_widget_set_sensitive(label,TRUE);
+  }
+  if (!gtk_widget_get_sensitive(widget)&&gtk_widget_get_sensitive(label)) {
+    gtk_widget_set_sensitive(label,FALSE);
+  }
+}
+#endif
 
 LIVES_INLINE void lives_object_unref(LiVESObjectPtr object) {
 #ifdef GUI_GTK
@@ -1589,7 +1599,7 @@ LiVESWidget *lives_standard_check_button_new(const char *labeltext, boolean use_
 
 #ifdef GUI_GTK
   LiVESWidget *eventbox=NULL;
-  LiVESWidget *label;
+  LiVESWidget *label=NULL;
   LiVESWidget *hbox;
 
   checkbutton = gtk_check_button_new ();
@@ -1642,6 +1652,18 @@ LiVESWidget *lives_standard_check_button_new(const char *labeltext, boolean use_
 
   }
 
+  if (label!=NULL) {
+#if GTK_CHECK_VERSION(3,0,0)
+    g_signal_connect_after (GTK_OBJECT (checkbutton), "state_flags_changed",
+			    G_CALLBACK (set_label_state),
+			    label);
+#else
+    g_signal_connect_after (GTK_OBJECT (checkbutton), "state_changed",
+			    G_CALLBACK (set_label_state),
+			    label);
+#endif
+  }
+
 #endif
 
   return checkbutton;
@@ -1660,7 +1682,7 @@ LiVESWidget *lives_standard_radio_button_new(const char *labeltext, boolean use_
 
 #ifdef GUI_GTK
   LiVESWidget *eventbox=NULL;
-  LiVESWidget *label;
+  LiVESWidget *label=NULL;
   LiVESWidget *hbox;
 
   radiobutton = gtk_radio_button_new (rbgroup);
@@ -1712,6 +1734,18 @@ LiVESWidget *lives_standard_radio_button_new(const char *labeltext, boolean use_
       gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, widget_opts.packing_width);
   }
 
+  if (label!=NULL) {
+#if GTK_CHECK_VERSION(3,0,0)
+    g_signal_connect_after (GTK_OBJECT (radiobutton), "state_flags_changed",
+			    G_CALLBACK (set_label_state),
+			    label);
+#else
+    g_signal_connect_after (GTK_OBJECT (radiobutton), "state_changed",
+			    G_CALLBACK (set_label_state),
+			    label);
+#endif
+  }
+
 #endif
 
   return radiobutton;
@@ -1740,7 +1774,7 @@ LiVESWidget *lives_standard_spin_button_new(const char *labeltext, boolean use_m
 
 #ifdef GUI_GTK
   LiVESWidget *eventbox=NULL;
-  LiVESWidget *label;
+  LiVESWidget *label=NULL;
   LiVESWidget *hbox;
   LiVESAdjustment *adj;
 
@@ -1804,6 +1838,18 @@ LiVESWidget *lives_standard_spin_button_new(const char *labeltext, boolean use_m
       gtk_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, widget_opts.packing_width);
   }
 
+  if (label!=NULL) {
+#if GTK_CHECK_VERSION(3,0,0)
+    g_signal_connect_after (GTK_OBJECT (spinbutton), "state_flags_changed",
+			    G_CALLBACK (set_label_state),
+			    label);
+#else
+    g_signal_connect_after (GTK_OBJECT (spinbutton), "state_changed",
+			    G_CALLBACK (set_label_state),
+			    label);
+#endif
+  }
+
 #endif
 
   return spinbutton;
@@ -1823,7 +1869,7 @@ LiVESWidget *lives_standard_combo_new (const char *labeltext, boolean use_mnemon
 
 #ifdef GUI_GTK
   LiVESWidget *eventbox=NULL;
-  LiVESWidget *label;
+  LiVESWidget *label=NULL;
   LiVESWidget *hbox;
   LiVESEntry *entry;
 
@@ -1889,6 +1935,18 @@ LiVESWidget *lives_standard_combo_new (const char *labeltext, boolean use_mnemon
     if (list!=NULL) gtk_combo_box_set_active(LIVES_COMBO(combo),0);
   }
 
+  if (label!=NULL) {
+#if GTK_CHECK_VERSION(3,0,0)
+    g_signal_connect_after (GTK_OBJECT (combo), "state_flags_changed",
+			    G_CALLBACK (set_label_state),
+			    label);
+#else
+    g_signal_connect_after (GTK_OBJECT (combo), "state_changed",
+			    G_CALLBACK (set_label_state),
+			    label);
+#endif
+  }
+
 #endif
 
   return combo;
@@ -1950,6 +2008,18 @@ LiVESWidget *lives_standard_entry_new(const char *labeltext, boolean use_mnemoni
     
     if (widget_opts.swap_label&&label!=NULL)
       gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, widget_opts.packing_width);
+  }
+
+  if (label!=NULL) {
+#if GTK_CHECK_VERSION(3,0,0)
+    g_signal_connect_after (GTK_OBJECT (entry), "state_flags_changed",
+			    G_CALLBACK (set_label_state),
+			    label);
+#else
+    g_signal_connect_after (GTK_OBJECT (entry), "state_changed",
+			    G_CALLBACK (set_label_state),
+			    label);
+#endif
   }
 
 #endif

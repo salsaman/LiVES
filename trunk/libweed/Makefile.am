@@ -69,7 +69,7 @@ libweed_slice_la_LDFLAGS = @GLIB_LIBS@ -version-info $(WEED_SO_VERSION) $(shared
 
 libweed_utils_la_CFLAGS = $(extra_cflags)
 
-libweed_utils_la_LDFLAGS = $(extra_ldflags) -version-info $(WEED_SO_VERSION)
+libweed_utils_la_LDFLAGS = $(extra_ldflags) -version-info $(WEED_SO_VERSION) $(shared_LDFLAGS)
 
 
 uninstall-local:

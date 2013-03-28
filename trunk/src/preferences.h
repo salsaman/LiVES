@@ -506,6 +506,7 @@ typedef struct {
   GtkWidget *checkbutton_nobord;
   GtkWidget *checkbutton_concat_images;
   GtkWidget *forcesmon;
+  GtkWidget *forcesmon_hbox;
   GList *pbq_list;
   gchar *audp_name;
   gchar *orig_audp_name;
@@ -528,6 +529,8 @@ typedef struct {
   GtkWidget *wpp_entry;
   GtkWidget *frei0r_entry;
   GtkWidget *ladspa_entry;
+  GtkWidget *cdda_hbox;
+  GtkWidget *midi_hbox;
   GtkTreeSelection *selection;
   boolean needs_restart;
 } _prefsw;
@@ -590,8 +593,6 @@ void on_prefs_revert_clicked (GtkButton *, gpointer);
 void set_vpp(boolean set_in_prefs);
 
 void on_prefDomainChanged(GtkTreeSelection *, gpointer);
-
-void select_pref_list_row(guint);
 
 void populate_combo_box(GtkComboBox *combo, GList *data);
 

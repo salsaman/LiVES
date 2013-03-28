@@ -1,6 +1,6 @@
 // preferences.c
 // LiVES (lives-exe)
-// (c) G. Finch 2004 - 2012
+// (c) G. Finch 2004 - 2013
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -27,6 +27,7 @@
 
 static guint prefs_current_page;
 
+static void select_pref_list_row(guint selected_idx);
 
 #ifdef ENABLE_OSC
 static void on_osc_enable_toggled (GtkToggleButton *t1, gpointer t2) {
@@ -553,13 +554,23 @@ lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_yuv4
   boolean forcesmon=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->forcesmon));
   boolean startup_ce=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->rb_startup_ce));
 
-#ifdef ENABLE_JACK
+
+#ifdef ENABLE_JACK_TRANSPORT
   boolean jack_tstart=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_start_tjack));
-  boolean jack_astart=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_start_ajack));
   boolean jack_master=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_jack_master));
   boolean jack_client=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_jack_client));
   boolean jack_tb_start=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_jack_tb_start));
   boolean jack_tb_client=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_jack_tb_client));
+#else
+  boolean jack_tstart=FALSE;
+  boolean jack_master=FALSE;
+  boolean jack_client=FALSE;
+  boolean jack_tb_start=FALSE;
+  boolean jack_tb_client=FALSE;
+#endif
+
+#ifdef ENABLE_JACK
+  boolean jack_astart=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_start_ajack));
   boolean jack_pwp=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_jack_pwp));
   guint jack_opts=(JACK_OPTS_TRANSPORT_CLIENT*jack_client+JACK_OPTS_TRANSPORT_MASTER*jack_master+
 		   JACK_OPTS_START_TSERVER*jack_tstart+JACK_OPTS_START_ASERVER*jack_astart+
@@ -951,9 +962,11 @@ lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_yuv4
   }
 
   // cd play device
-  if (strcmp(prefs->cdplay_device,cdplay_device)) {
-    g_snprintf(prefs->cdplay_device,256,"%s",cdplay_device);
-    set_pref("cdplay_device",prefs->cdplay_device);
+  if (!capable->has_cdda2wav) {
+    if (strcmp(prefs->cdplay_device,cdplay_device)) {
+      g_snprintf(prefs->cdplay_device,256,"%s",cdplay_device);
+      set_pref("cdplay_device",prefs->cdplay_device);
+    }
   }
 
   g_free(cdplay_device);
@@ -1732,7 +1745,7 @@ static void pref_init_list(GtkWidget *list) {
   gtk_tree_view_append_column(GTK_TREE_VIEW(list), column1);
   gtk_tree_view_append_column(GTK_TREE_VIEW(list), column2);
   gtk_tree_view_column_set_sizing(column2, GTK_TREE_VIEW_COLUMN_FIXED);
-  gtk_tree_view_column_set_fixed_width(column2, 150);
+  gtk_tree_view_column_set_fixed_width(column2, 150.*widget_opts.scale);
 
   store = gtk_list_store_new(N_COLUMNS, GDK_TYPE_PIXBUF, G_TYPE_STRING, G_TYPE_UINT);
 
@@ -1760,83 +1773,101 @@ static void prefs_add_to_list(GtkWidget *list, GdkPixbuf *pix, const gchar *str,
 void on_prefDomainChanged(GtkTreeSelection *widget, gpointer dummy) {
   GtkTreeIter iter;
   GtkTreeModel *model;
-  guint idx;
 
-  if (gtk_tree_selection_get_selected( widget, &model, &iter)) {
-    gtk_tree_model_get(model, &iter, LIST_NUM, &idx, -1);
-    //
-    // Hide currently shown widget
-    if (prefsw->right_shown){
-      gtk_widget_hide(prefsw->right_shown);
-    }
-    //
+  register int i;
 
-    prefs_current_page=idx;
+  for (i=0;i<2;i++) {
+    // for some reason gtk+ needs us to do this twice..
+    if (gtk_tree_selection_get_selected( widget, &model, &iter)) {
+      gtk_tree_model_get(model, &iter, LIST_NUM, &prefs_current_page, -1);
+      //
+      // Hide currently shown widget
+      if (prefsw->right_shown){
+	gtk_widget_hide(prefsw->right_shown);
+      }
+      //
+      
+      switch (prefs_current_page){
+      case LIST_ENTRY_MULTITRACK:
+	gtk_widget_show_all(prefsw->scrollw_right_multitrack);
+	prefsw->right_shown = prefsw->scrollw_right_multitrack;
+	break;
+      case LIST_ENTRY_DECODING:
+	gtk_widget_show_all(prefsw->scrollw_right_decoding);
+	prefsw->right_shown = prefsw->scrollw_right_decoding;
+	break;
+      case LIST_ENTRY_PLAYBACK:
+	gtk_widget_show_all(prefsw->scrollw_right_playback);
+	prefsw->right_shown = prefsw->scrollw_right_playback;
+	break;
+      case LIST_ENTRY_RECORDING:
+	gtk_widget_show_all(prefsw->scrollw_right_recording);
+	prefsw->right_shown = prefsw->scrollw_right_recording;
+	break;
+      case LIST_ENTRY_ENCODING:
+	gtk_widget_show_all(prefsw->scrollw_right_encoding);
+	prefsw->right_shown = prefsw->scrollw_right_encoding;
+	break;
+      case LIST_ENTRY_EFFECTS:
+	gtk_widget_show_all(prefsw->scrollw_right_effects);
+	prefsw->right_shown = prefsw->scrollw_right_effects;
+	break;
+      case LIST_ENTRY_DIRECTORIES:
+	gtk_widget_show_all(prefsw->scrollw_right_directories);
+	prefsw->right_shown = prefsw->scrollw_right_directories;
+	break;
+      case LIST_ENTRY_WARNINGS:
+	gtk_widget_show_all(prefsw->scrollw_right_warnings);
+	prefsw->right_shown = prefsw->scrollw_right_warnings;
+	break;
+      case LIST_ENTRY_MISC:
+	gtk_widget_show_all(prefsw->scrollw_right_misc);
+	prefsw->right_shown = prefsw->scrollw_right_misc;
+	if (!capable->has_cdda2wav) {
+	  gtk_widget_hide (prefsw->cdda_hbox);
+	}
+	break;
+      case LIST_ENTRY_THEMES:
+	gtk_widget_show_all(prefsw->scrollw_right_themes);
+	prefsw->right_shown = prefsw->scrollw_right_themes;
+	break;
+      case LIST_ENTRY_NET:
+	gtk_widget_show_all(prefsw->scrollw_right_net);
+	prefsw->right_shown = prefsw->scrollw_right_net;
+	break;
+      case LIST_ENTRY_JACK:
+	gtk_widget_show_all(prefsw->scrollw_right_jack);
+	gtk_widget_hide(prefsw->jack_int_label);
 
-    switch (idx){
-    case LIST_ENTRY_MULTITRACK:
-      gtk_widget_show_all(prefsw->scrollw_right_multitrack);
-      prefsw->right_shown = prefsw->scrollw_right_multitrack;
-      break;
-    case LIST_ENTRY_GUI:
-      gtk_widget_show_all(prefsw->scrollw_right_gui);
-      prefsw->right_shown = prefsw->scrollw_right_gui;
-      break;
-    case LIST_ENTRY_DECODING:
-      gtk_widget_show_all(prefsw->scrollw_right_decoding);
-      prefsw->right_shown = prefsw->scrollw_right_decoding;
-      break;
-    case LIST_ENTRY_PLAYBACK:
-      gtk_widget_show_all(prefsw->scrollw_right_playback);
-      prefsw->right_shown = prefsw->scrollw_right_playback;
-      break;
-    case LIST_ENTRY_RECORDING:
-      gtk_widget_show_all(prefsw->scrollw_right_recording);
-      prefsw->right_shown = prefsw->scrollw_right_recording;
-      break;
-    case LIST_ENTRY_ENCODING:
-      gtk_widget_show_all(prefsw->scrollw_right_encoding);
-      prefsw->right_shown = prefsw->scrollw_right_encoding;
-      break;
-    case LIST_ENTRY_EFFECTS:
-      gtk_widget_show_all(prefsw->scrollw_right_effects);
-      prefsw->right_shown = prefsw->scrollw_right_effects;
-      break;
-    case LIST_ENTRY_DIRECTORIES:
-      gtk_widget_show_all(prefsw->scrollw_right_directories);
-      prefsw->right_shown = prefsw->scrollw_right_directories;
-      break;
-    case LIST_ENTRY_WARNINGS:
-      gtk_widget_show_all(prefsw->scrollw_right_warnings);
-      prefsw->right_shown = prefsw->scrollw_right_warnings;
-      break;
-    case LIST_ENTRY_MISC:
-      gtk_widget_show_all(prefsw->scrollw_right_misc);
-      prefsw->right_shown = prefsw->scrollw_right_misc;
-      break;
-    case LIST_ENTRY_THEMES:
-      gtk_widget_show_all(prefsw->scrollw_right_themes);
-      prefsw->right_shown = prefsw->scrollw_right_themes;
-      break;
-    case LIST_ENTRY_NET:
-      gtk_widget_show_all(prefsw->scrollw_right_net);
-      prefsw->right_shown = prefsw->scrollw_right_net;
-      break;
-    case LIST_ENTRY_JACK:
-      gtk_widget_show_all(prefsw->scrollw_right_jack);
-      prefsw->right_shown = prefsw->scrollw_right_jack;
-      break;
-    case LIST_ENTRY_MIDI:
-      gtk_widget_show_all(prefsw->scrollw_right_midi);
-      prefsw->right_shown = prefsw->scrollw_right_midi;
-      break;
-    default:
-      gtk_widget_show_all(prefsw->scrollw_right_gui);
-      prefsw->right_shown = prefsw->scrollw_right_gui;
-      prefs_current_page=LIST_ENTRY_GUI;
+#ifdef ENABLE_JACK
+	if (prefs->audio_player==AUD_PLAYER_JACK) {
+	  gtk_widget_show(prefsw->jack_int_label);
+	}
+#endif
+
+	prefsw->right_shown = prefsw->scrollw_right_jack;
+	break;
+      case LIST_ENTRY_MIDI:
+	gtk_widget_show_all(prefsw->scrollw_right_midi);
+	prefsw->right_shown = prefsw->scrollw_right_midi;
+#ifdef OMC_MIDI_IMPL
+#ifndef ALSA_MIDI
+	gtk_widget_hide (prefsw->midi_hbox);
+#endif
+#endif
+	break;
+      case LIST_ENTRY_GUI:
+      default:
+	gtk_widget_show_all(prefsw->scrollw_right_gui);
+	prefsw->right_shown = prefsw->scrollw_right_gui;
+	gtk_widget_show_all(prefsw->scrollw_right_gui);
+	if (capable->nmonitors<=1) {
+	  gtk_widget_hide (prefsw->forcesmon_hbox);
+	}
+	prefs_current_page=LIST_ENTRY_GUI;
+      }
     }
   }
-
   gtk_widget_queue_draw(prefsw->prefs_dialog);
 
 }
@@ -1897,20 +1928,9 @@ _prefsw *create_prefs_dialog (void) {
   GtkWidget *ins_resample;
   GtkWidget *hbox;
 
-  GObject *spinbutton_adj;
-  GObject *spinbutton_bwidth_adj;
-
-  GtkWidget *hseparator;
   GtkWidget *hbox1;
   GtkWidget *hbox2;
-  GtkWidget *hbox3;
-  GtkWidget *hbox4;
-  GtkWidget *hbox5;
-  GtkWidget *label88;
   GtkWidget *vbox;
-  GtkWidget *hbox94;
-  GtkWidget *label94;
-  GtkWidget *hbox93;
 
   GtkWidget *dialog_action_area;
   GtkWidget *dirbutton1;
@@ -1919,6 +1939,7 @@ _prefsw *create_prefs_dialog (void) {
   GtkWidget *dirbutton4;
   GtkWidget *dirbutton5;
   GtkWidget *dirbutton6;
+
   GtkWidget *pp_combo;
   GtkWidget *png;
   GtkWidget *frame;
@@ -1934,7 +1955,6 @@ _prefsw *create_prefs_dialog (void) {
 #endif
 
   GtkWidget *label;
-  GtkWidget *eventbox;
   GtkWidget *buttond;
 
   // radio button groups
@@ -1954,8 +1974,6 @@ _prefsw *create_prefs_dialog (void) {
 
   LiVESSList *asrc_group=NULL;
 
-  GtkTreeIter iter;
-  GtkTreeModel *model;
   GtkAccelGroup *accel_group=GTK_ACCEL_GROUP(gtk_accel_group_new ());
 
   // drop down lists
@@ -1969,8 +1987,6 @@ _prefsw *create_prefs_dialog (void) {
   gchar **array;
   gchar *tmp,*tmp2,*tmp3;
   gchar *theme;
-
-  guint selected_idx;
 
   boolean pfsm;
   boolean has_ap_rec = FALSE;
@@ -2056,97 +2072,78 @@ _prefsw *create_prefs_dialog (void) {
   gtk_container_set_border_width (GTK_CONTAINER (prefsw->vbox_right_gui), widget_opts.packing_width*2);
 
   // ---
-  hbox1 = lives_hbox_new (FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_gui), hbox1, TRUE, TRUE, widget_opts.packing_height);
+  hbox = lives_hbox_new (FALSE, 0);
+  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_gui), hbox, FALSE, FALSE, widget_opts.packing_height);
   // ---
 
-
-  hbox = lives_hbox_new(FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (hbox1), hbox, TRUE, FALSE, 0);
   prefsw->fs_max_check = 
     lives_standard_check_button_new(_("Open file selection maximised"),TRUE,LIVES_BOX(hbox),NULL);
-   lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (prefsw->fs_max_check), prefs->fileselmax);
+  lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (prefsw->fs_max_check), prefs->fileselmax);
   // ---
 
+  add_fill_to_box(LIVES_BOX(hbox));
 
-  hbox = lives_hbox_new(FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (hbox1), hbox, TRUE, FALSE, 0);
   prefsw->recent_check = 
     lives_standard_check_button_new(_("Show recent files in the File menu"),TRUE,LIVES_BOX(hbox),NULL);
   lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (prefsw->recent_check), prefs->show_recent);
 
-  gtk_widget_show_all(hbox1);
-
 
   // ---
-  hbox2 = lives_hbox_new (FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_gui), hbox2, TRUE, TRUE, widget_opts.packing_height);
+  hbox = lives_hbox_new (FALSE, 0);
+  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_gui), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-  hbox = lives_hbox_new(FALSE, 0);
-  gtk_box_pack_start (GTK_BOX(hbox2), hbox, TRUE, FALSE, 0);
   prefsw->stop_screensaver_check = 
     lives_standard_check_button_new(_("Stop screensaver on playback    "),TRUE,LIVES_BOX(hbox),NULL);
   lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->stop_screensaver_check), prefs->stop_screensaver);
 
+  add_fill_to_box(LIVES_BOX(hbox));
 
   // ---
-  hbox = lives_hbox_new(FALSE, 0);
-  prefsw->open_maximised_check = 
-    lives_standard_check_button_new(_("Open main window maximised"),TRUE,LIVES_BOX(hbox),NULL);
-  gtk_box_pack_start (GTK_BOX (hbox2), hbox, TRUE, FALSE, 0);
+
+  prefsw->open_maximised_check=lives_standard_check_button_new(_("Open main window maximised"),TRUE,LIVES_BOX(hbox),NULL);
   lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (prefsw->open_maximised_check), prefs->open_maximised);
 
-  gtk_widget_show_all(hbox2);
-
   // --
-  hbox2 = lives_hbox_new(FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_gui), hbox2, TRUE, TRUE, widget_opts.packing_height);
-
-
   hbox = lives_hbox_new(FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (hbox2), hbox, TRUE, FALSE, 0);
+  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_gui), hbox, FALSE, FALSE, widget_opts.packing_height);
+
   prefsw->show_tool = 
     lives_standard_check_button_new(_("Show toolbar when background is blanked"),TRUE,LIVES_BOX(hbox),NULL);
   lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (prefsw->show_tool), future_prefs->show_tool);
 
+  add_fill_to_box(LIVES_BOX(hbox));
+
   // ---
-  hbox = lives_hbox_new(FALSE, 0);
+
   prefsw->mouse_scroll = 
     lives_standard_check_button_new(_("Allow mouse wheel to switch clips"),TRUE,LIVES_BOX(hbox),NULL);
-  gtk_box_pack_start (GTK_BOX (hbox2), hbox, TRUE, FALSE, 0);
   lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (prefsw->mouse_scroll), prefs->mouse_scroll_clips);
 
-  gtk_widget_show_all(hbox2);
 
   // ---
-  hbox2 = lives_hbox_new(FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_gui), hbox2, TRUE, TRUE, widget_opts.packing_height);
-  // ---
-
-
   hbox = lives_hbox_new(FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (hbox2), hbox, TRUE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_gui), hbox, FALSE, FALSE, widget_opts.packing_height);
+  // ---
+
+
   prefsw->checkbutton_ce_maxspect = 
     lives_standard_check_button_new(_("Shrink previews to fit in interface"),TRUE,LIVES_BOX(hbox),NULL);
   lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (prefsw->checkbutton_ce_maxspect), prefs->ce_maxspect);
 
-  gtk_widget_show_all(hbox2);
+  add_fill_to_box(LIVES_BOX(hbox));
 
   // ---
   hbox = lives_hbox_new (FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_gui), hbox, TRUE, FALSE, 10);
+  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_gui), hbox, FALSE, FALSE, widget_opts.packing_height);
 
   // ---
   label = lives_standard_label_new (_("Startup mode:"));
   gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, TRUE, 0);
-  add_fill_to_box(GTK_BOX(hbox));
-  gtk_widget_show_all (hbox);
 
   // --- 
   prefsw->rb_startup_ce = lives_standard_radio_button_new(_("_Clip editor"),TRUE,st_interface_group,LIVES_BOX(hbox),NULL);
   st_interface_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (prefsw->rb_startup_ce));
 
-  add_fill_to_box(GTK_BOX(hbox));
   // ---
   prefsw->rb_startup_mt = lives_standard_radio_button_new(_("_Multitrack mode"),TRUE,st_interface_group,LIVES_BOX(hbox),NULL);
 
@@ -2157,12 +2154,17 @@ _prefsw *create_prefs_dialog (void) {
   else {
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->rb_startup_ce),TRUE);
   }
+
+  add_fill_to_box(GTK_BOX(hbox));
+
   // 
   // multihead support (inside Gui part)
   //
   pfsm=prefs->force_single_monitor;
   prefs->force_single_monitor=FALSE;
+
   get_monitors();
+
   prefs->force_single_monitor=pfsm;
 
   if (capable->nmonitors!=nmonitors) {
@@ -2195,58 +2197,49 @@ _prefsw *create_prefs_dialog (void) {
   add_hsep_to_box (LIVES_BOX (prefsw->vbox_right_gui));
   // ---
   label = lives_standard_label_new (_("Multi-head support"));
-  gtk_widget_show (label);
-  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_gui), label, FALSE, TRUE, widget_opts.packing_height);
+  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_gui), label, FALSE, FALSE, widget_opts.packing_height);
   // ---
   hbox = lives_hbox_new (FALSE, 0);
-  gtk_widget_show (hbox);
-  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_gui), hbox, TRUE, TRUE, widget_opts.packing_height*2);
+  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_gui), hbox, FALSE, FALSE, widget_opts.packing_height*2);
   // ---
 
 
   prefsw->spinbutton_gmoni = lives_standard_spin_button_new (_(" monitor number for LiVES interface"), TRUE, prefs->gui_monitor, 1, capable->nmonitors, 
 							     1., 1., 0, LIVES_BOX(hbox),NULL);
-  add_fill_to_box(LIVES_BOX(hbox));
+
+  hbox = lives_hbox_new (FALSE, 0);
+  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_gui), hbox, FALSE, FALSE, widget_opts.packing_height);
 
   prefsw->spinbutton_pmoni = lives_standard_spin_button_new (_(" monitor number for playback"), TRUE, prefs->play_monitor, 0, 
 							     capable->nmonitors==1?0:capable->nmonitors,
 							     1., 1., 0, LIVES_BOX(hbox),NULL);
 
   // ---
-  gtk_widget_show_all(hbox);
 
-  // ---
   label = lives_standard_label_new (_("A setting of 0 means use all available monitors (only works with some playback plugins)."));
 
-  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_gui), label, TRUE, TRUE, 0);
-  // ---
-  hbox = lives_hbox_new (FALSE, 0);
-
-  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_gui), hbox, TRUE, TRUE, widget_opts.packing_height*2);
+  gtk_box_pack_start (GTK_BOX (hbox), label, TRUE, TRUE, 0);
   // ---
 
-  add_fill_to_box(LIVES_BOX(hbox));
+  // ---
 
-  prefsw->forcesmon = lives_standard_check_button_new((tmp=g_strdup(_("Force single monitor"))),FALSE,LIVES_BOX(hbox),
+  prefsw->forcesmon_hbox = lives_hbox_new (FALSE, 0);
+  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_gui), prefsw->forcesmon_hbox, FALSE, FALSE, widget_opts.packing_height*2);
+
+  prefsw->forcesmon = lives_standard_check_button_new((tmp=g_strdup(_("Force single monitor"))),FALSE,LIVES_BOX(prefsw->forcesmon_hbox),
 						      (tmp2=g_strdup(_("Ignore all except the first monitor."))));
   g_free(tmp);
   g_free(tmp2);
 
   add_fill_to_box(LIVES_BOX(hbox));
 
-  gtk_widget_show_all (hbox);
-
   lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (prefsw->forcesmon), prefs->force_single_monitor);
+
   // ---
   if (capable->nmonitors<=1) {
     gtk_widget_set_sensitive(prefsw->spinbutton_gmoni,FALSE);
     gtk_widget_set_sensitive(prefsw->spinbutton_pmoni,FALSE);
   }
-  else {
-    gtk_widget_show (prefsw->forcesmon);
-  }
-
-  if (prefs->force_single_monitor) get_monitors();
 
   g_signal_connect (GTK_OBJECT (prefsw->forcesmon), "toggled",
 		    G_CALLBACK (on_forcesmon_toggled),
@@ -2275,7 +2268,6 @@ _prefsw *create_prefs_dialog (void) {
   gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, widget_opts.packing_width);
   // ---
   add_fill_to_box(LIVES_BOX(hbox));
-  gtk_widget_show_all(hbox);
   // ---
   hbox = lives_hbox_new (FALSE, 0);
   gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_multitrack), hbox, FALSE, FALSE, widget_opts.packing_height);
@@ -2292,7 +2284,6 @@ _prefsw *create_prefs_dialog (void) {
 
   lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (mt_enter_defs), !prefs->mt_enter_prompt);
 
-  gtk_widget_show_all(hbox);
 
   hbox = lives_hbox_new(FALSE, 0);
   gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_multitrack), hbox, FALSE, FALSE, 0);
@@ -2302,7 +2293,6 @@ _prefsw *create_prefs_dialog (void) {
 
   lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (prefsw->checkbutton_render_prompt), !prefs->render_prompt);
 
-  gtk_widget_show_all(hbox);
 
   // ---
   frame = gtk_frame_new (NULL);
@@ -2311,12 +2301,12 @@ _prefsw *create_prefs_dialog (void) {
   gtk_container_add (GTK_CONTAINER (frame), vbox);
   
   label = lives_standard_label_new (_("Video"));
+
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(frame, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
   }
   gtk_frame_set_label_widget (GTK_FRAME (frame), label);
 
-  gtk_widget_show_all (frame);
 
   // ---
   hbox = lives_hbox_new (FALSE, 0);
@@ -2335,9 +2325,6 @@ _prefsw *create_prefs_dialog (void) {
   prefsw->spinbutton_mt_def_fps = lives_standard_spin_button_new (_("          _FPS"),
 								  TRUE, prefs->mt_def_fps, 1., FPS_MAX, .1, 1., 3,
 								  LIVES_BOX(hbox),NULL);
-
-  gtk_widget_show_all(hbox);
-
 
 
 
@@ -2363,19 +2350,16 @@ _prefsw *create_prefs_dialog (void) {
 
 
   // must be done after resaudw
+  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_multitrack), hbox, FALSE, FALSE, widget_opts.packing_height);
+
+
   gtk_widget_set_sensitive(prefsw->backaudio_checkbutton, 
 			   lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(resaudw->aud_checkbutton)));
 
   gtk_widget_set_sensitive(prefsw->pertrack_checkbutton, 
 			   lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(resaudw->aud_checkbutton)));
   
-  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_multitrack), hbox, TRUE, TRUE, 0);
-  gtk_widget_show_all (hbox);
-
-
-
-
-  // ---
+   // ---
   add_hsep_to_box (LIVES_BOX (prefsw->vbox_right_multitrack));
   // ---
   hbox = lives_hbox_new (FALSE, 0);
@@ -2387,8 +2371,6 @@ _prefsw *create_prefs_dialog (void) {
 								   LIVES_BOX(hbox),NULL);
 
 
-  gtk_widget_show_all(hbox);
-
   hbox = lives_hbox_new(FALSE, 0);
   gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_multitrack), hbox, FALSE, FALSE, widget_opts.packing_height);
 
@@ -2396,8 +2378,6 @@ _prefsw *create_prefs_dialog (void) {
   prefsw->checkbutton_mt_exit_render = lives_standard_check_button_new(_("_Exit multitrack mode after rendering"),TRUE,LIVES_BOX(hbox),NULL);
   lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (prefsw->checkbutton_mt_exit_render), prefs->mt_exit_render);
   // ---
-
-  gtk_widget_show_all(hbox);
 
   hbox2 = lives_hbox_new (FALSE, 0);
 
@@ -2433,8 +2413,6 @@ _prefsw *create_prefs_dialog (void) {
   prefsw->mt_autoback_never = lives_standard_radio_button_new(_("_Never"),TRUE,autoback_group,LIVES_BOX(hbox),NULL);
   autoback_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (prefsw->mt_autoback_never));
   gtk_box_pack_start (GTK_BOX (hbox2), hbox, TRUE, TRUE, 0);
-
-  gtk_widget_show_all(hbox2);
 
 
   // ---
@@ -2481,7 +2459,6 @@ _prefsw *create_prefs_dialog (void) {
 
   // advanced instant opening
   advbutton = gtk_button_new_with_mnemonic (_("_Advanced"));
-  gtk_widget_show (advbutton);
   gtk_box_pack_start (GTK_BOX (hbox), advbutton, FALSE, FALSE, widget_opts.packing_width*4);
 
   g_signal_connect (GTK_OBJECT (advbutton), "clicked",
@@ -2492,8 +2469,6 @@ _prefsw *create_prefs_dialog (void) {
 
   g_signal_connect(GTK_OBJECT(prefsw->checkbutton_instant_open), "toggled", G_CALLBACK(instopen_toggled), advbutton);
 
-  gtk_widget_show_all (hbox);
-
 
   hbox = lives_hbox_new (FALSE, 0);
   gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_decoding), hbox, FALSE, FALSE, widget_opts.packing_height);
@@ -2502,8 +2477,6 @@ _prefsw *create_prefs_dialog (void) {
   prefsw->video_open_entry = lives_standard_entry_new (_("Video open command (fallback)"),FALSE,
 						       prefs->video_open_command,-1,255,
 						       LIVES_BOX(hbox),NULL);
-
-  gtk_widget_show_all (hbox);
 
 
   if (prefs->ocp==-1) prefs->ocp=get_int_pref ("open_compression_percent");
@@ -2519,7 +2492,8 @@ _prefsw *create_prefs_dialog (void) {
   label = lives_standard_label_new (_ (" %     ( lower = slower, larger files; for jpeg, higher quality )"));
   gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, widget_opts.packing_width>>1);
 
-  gtk_widget_show_all(hbox);
+  add_hsep_to_box(LIVES_BOX(prefsw->vbox_right_decoding));
+
 
 
   // ---
@@ -2537,8 +2511,6 @@ _prefsw *create_prefs_dialog (void) {
   png = lives_standard_radio_button_new(_("_png"),TRUE,jpeg_png,LIVES_BOX(hbox),NULL);
   lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (png),!strcmp (prefs->image_ext,"png"));
 
-  gtk_widget_show_all(hbox);
-
   // ---
   hbox = lives_hbox_new (FALSE, 0);
   gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_decoding), hbox, FALSE, FALSE, widget_opts.packing_height*2);
@@ -2546,11 +2518,8 @@ _prefsw *create_prefs_dialog (void) {
   label = lives_standard_label_new (_("(Check Help/Troubleshoot to see which image formats are supported)"));
   gtk_box_pack_start (GTK_BOX (hbox), label, TRUE, TRUE, 0);
 
-  gtk_widget_show_all(hbox);
-
   // ---
   hbox = lives_hbox_new (FALSE, 0);
-  gtk_widget_show (hbox);
   gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_decoding), hbox, FALSE, FALSE, widget_opts.packing_height);
   // ---
 
@@ -2560,12 +2529,10 @@ _prefsw *create_prefs_dialog (void) {
   g_free(tmp); g_free(tmp2);
 
   lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (prefsw->checkbutton_auto_deint),prefs->auto_deint);
-  gtk_widget_show_all(hbox);
 
 
   // ---
   hbox = lives_hbox_new (FALSE, 0);
-  gtk_widget_show (hbox);
   gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_decoding), hbox, FALSE, FALSE, widget_opts.packing_height);
   // ---
 
@@ -2575,8 +2542,7 @@ _prefsw *create_prefs_dialog (void) {
   g_free(tmp); g_free(tmp2);
 
   lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (prefsw->checkbutton_nobord),prefs->auto_nobord);
-  gtk_widget_show_all(hbox);
-
+ 
   // ---
   add_hsep_to_box(LIVES_BOX(prefsw->vbox_right_decoding));
   // ---
@@ -2585,7 +2551,6 @@ _prefsw *create_prefs_dialog (void) {
 
   prefsw->checkbutton_concat_images = lives_standard_check_button_new(_("When opening multiple files, concatenate images into one clip"),
 								      FALSE,LIVES_BOX(hbox),NULL);
-  gtk_widget_show_all(hbox);
   lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (prefsw->checkbutton_concat_images),prefs->concat_images);
 
   // ---
@@ -2602,8 +2567,8 @@ _prefsw *create_prefs_dialog (void) {
   // playback       |
   // ---------------'
 
-  prefsw->vbox_right_playback = lives_vbox_new (FALSE, 10);
-  gtk_container_set_border_width (GTK_CONTAINER (prefsw->vbox_right_playback), 20);
+  prefsw->vbox_right_playback = lives_vbox_new (FALSE, widget_opts.packing_height);
+  gtk_container_set_border_width (GTK_CONTAINER (prefsw->vbox_right_playback), widget_opts.border_width*2);
 
   prefsw->scrollw_right_playback = lives_standard_scrolled_window_new (0,0,prefsw->vbox_right_playback);
 
@@ -2612,7 +2577,6 @@ _prefsw *create_prefs_dialog (void) {
   gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_playback), frame, TRUE, TRUE, 0);
 
   vbox=lives_vbox_new (FALSE, 0);
-  gtk_widget_show (vbox);
   gtk_container_add (GTK_CONTAINER (frame), vbox);
   gtk_container_set_border_width (GTK_CONTAINER (vbox), widget_opts.border_width);
 
@@ -2664,14 +2628,11 @@ _prefsw *create_prefs_dialog (void) {
   widget_opts.expand=LIVES_EXPAND_DEFAULT;
 
   advbutton = gtk_button_new_with_mnemonic (_("_Advanced"));
-  gtk_widget_show (advbutton);
   gtk_box_pack_start (GTK_BOX (hbox), advbutton, FALSE, FALSE, 40);
 
   g_signal_connect (GTK_OBJECT (advbutton), "clicked",
 		    G_CALLBACK (on_vpp_advanced_clicked),
 		    NULL);
-
-  gtk_widget_show_all(hbox);
 
 
   if (mainw->vpp != NULL) {
@@ -2722,7 +2683,6 @@ _prefsw *create_prefs_dialog (void) {
 
   gtk_frame_set_label_widget (GTK_FRAME (frame), label);
 
-  gtk_widget_show_all (frame);
 
   //-
 
@@ -2759,9 +2719,7 @@ _prefsw *create_prefs_dialog (void) {
   has_ap_rec=FALSE;
 
   prefsw->jack_int_label=lives_standard_label_new(_("(See also the Jack Integration tab for jack startup options)"));
-
   gtk_box_pack_start (GTK_BOX (vbox), prefsw->jack_int_label, FALSE, FALSE, widget_opts.packing_height);
-
 
   prefsw->audp_name=NULL;
 
@@ -2818,6 +2776,8 @@ _prefsw *create_prefs_dialog (void) {
   lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (prefsw->checkbutton_afollow),(prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS)?TRUE:FALSE);
   gtk_widget_set_sensitive(prefsw->checkbutton_afollow,prefs->audio_player==AUD_PLAYER_JACK||prefs->audio_player==AUD_PLAYER_PULSE);
 
+  add_fill_to_box(LIVES_BOX(hbox));
+
   // ---
   prefsw->checkbutton_aclips = lives_standard_check_button_new(_("Audio follows _clip switches"),TRUE,LIVES_BOX(hbox),NULL);
 
@@ -2830,17 +2790,16 @@ _prefsw *create_prefs_dialog (void) {
   gtk_box_pack_start(GTK_BOX(hbox),label,FALSE,FALSE,widget_opts.packing_width);
   add_fill_to_box(LIVES_BOX(hbox));
 
-  hbox = lives_hbox_new(FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
-
   rbutton=lives_standard_radio_button_new(_("_Internal"),TRUE,asrc_group,LIVES_BOX(hbox),NULL);
 
   asrc_group=lives_radio_button_get_group (LIVES_RADIO_BUTTON (rbutton));
+  add_fill_to_box(LIVES_BOX(hbox));
 
   prefsw->rextaudio = lives_standard_radio_button_new(_("_External (requires jack or pulse audio player)"),
 						      TRUE,asrc_group,LIVES_BOX(hbox),NULL);
 
   lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (prefsw->rextaudio),prefs->audio_src==AUDIO_SRC_EXT);
+  add_fill_to_box(LIVES_BOX(hbox));
 
   if (mainw->playing_file>0&&mainw->record){
     gtk_widget_set_sensitive (prefsw->rextaudio,FALSE);
@@ -2868,7 +2827,6 @@ _prefsw *create_prefs_dialog (void) {
   prefs_add_to_list(prefsw->prefs_list, pixbuf_playback, _("Playback"), LIST_ENTRY_PLAYBACK);
   gtk_container_add (GTK_CONTAINER (dialog_table), prefsw->scrollw_right_playback);
 
-  gtk_widget_show_all(frame);
 
   gtk_widget_hide(prefsw->jack_int_label);
 
@@ -2892,7 +2850,6 @@ _prefsw *create_prefs_dialog (void) {
   prefsw->rdesk_audio = lives_standard_check_button_new(_("Record audio when capturing an e_xternal window\n (requires jack or pulse audio)"),
 							TRUE,LIVES_BOX(hbox),NULL);
 
-  gtk_widget_show_all(hbox);
 
 #ifndef RT_AUDIO
   gtk_widget_set_sensitive (prefsw->rdesk_audio,FALSE);
@@ -2906,8 +2863,7 @@ _prefsw *create_prefs_dialog (void) {
 
   // ---
   label = lives_standard_label_new (_("      What to record when 'r' is pressed   "));
-  gtk_widget_show (label);
-
+ 
   gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_recording), label, FALSE, FALSE, widget_opts.packing_height);
 
   // ---
@@ -2918,7 +2874,6 @@ _prefsw *create_prefs_dialog (void) {
   prefsw->rframes = lives_standard_check_button_new(_("_Frame changes"),TRUE,LIVES_BOX(hbox),NULL);
 
   lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (prefsw->rframes),prefs->rec_opts&REC_FRAMES);
-  gtk_widget_show_all(hbox);
 
   // ---
   if (prefs->rec_opts&REC_FPS||prefs->rec_opts&REC_CLIPS){
@@ -2927,6 +2882,8 @@ _prefsw *create_prefs_dialog (void) {
   if (mainw->playing_file>0&&mainw->record){
     gtk_widget_set_sensitive (prefsw->rframes,FALSE);
   }
+
+  add_fill_to_box(LIVES_BOX(hbox));
 
   // ---
   prefsw->rfps = lives_standard_check_button_new(_("F_PS changes"),TRUE,LIVES_BOX(hbox),NULL);
@@ -2942,8 +2899,6 @@ _prefsw *create_prefs_dialog (void) {
   // ---
   lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (prefsw->rfps),prefs->rec_opts&REC_FPS);
 
-  gtk_widget_show_all(hbox);
-
   // ---
   hbox = lives_hbox_new (FALSE, 0);
   gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_recording), hbox, FALSE, FALSE, widget_opts.packing_height);
@@ -2955,10 +2910,12 @@ _prefsw *create_prefs_dialog (void) {
     gtk_widget_set_sensitive (prefsw->reffects,FALSE);
   }
 
+  add_fill_to_box(LIVES_BOX(hbox));
+
   lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (prefsw->reffects),prefs->rec_opts&REC_EFFECTS);
   // ---
 
-							prefsw->rclips = lives_standard_check_button_new(_("_Clip switches"),TRUE,LIVES_BOX(hbox),NULL);
+  prefsw->rclips = lives_standard_check_button_new(_("_Clip switches"),TRUE,LIVES_BOX(hbox),NULL);
 
   lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (prefsw->rclips),prefs->rec_opts&REC_CLIPS);
 
@@ -2967,17 +2924,12 @@ _prefsw *create_prefs_dialog (void) {
   }
 
 
-  gtk_widget_show_all(hbox);
-
   // ---
 
-  hbox = lives_hbox_new(FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_recording), hbox, FALSE, FALSE, widget_opts.packing_height);
   prefsw->raudio = lives_standard_check_button_new(_("_Audio (requires jack or pulse audio player)"),
-						   TRUE,LIVES_BOX(hbox),NULL);
+						   TRUE,LIVES_BOX(prefsw->vbox_right_recording),NULL);
 
   lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (prefsw->raudio),prefs->rec_opts&REC_AUDIO);
-  gtk_widget_show_all(hbox);
 
   if (mainw->playing_file>0&&mainw->record){
     gtk_widget_set_sensitive (prefsw->raudio,FALSE);
@@ -2986,8 +2938,6 @@ _prefsw *create_prefs_dialog (void) {
   if (prefs->audio_player!=AUD_PLAYER_JACK&&prefs->audio_player!=AUD_PLAYER_PULSE){
     gtk_widget_set_sensitive (prefsw->raudio,FALSE);
   }
-
-  gtk_widget_show_all(hbox);
 
   // ---
   add_hsep_to_box(LIVES_BOX(prefsw->vbox_right_recording));
@@ -3001,10 +2951,9 @@ _prefsw *create_prefs_dialog (void) {
 							      LIVES_BOX(hbox),NULL);
 
 
-  label = lives_standard_label_new (_("GB")); // translators - gigabytes
+  // TRANSLATORS: gigabytes
+  label = lives_standard_label_new (_("GB"));
   gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, widget_opts.packing_width);
-
-  gtk_widget_show_all(hbox);
 
   icon = g_build_filename(prefs->prefix_dir, ICON_DIR, "pref_record.png", NULL);
   pixbuf_recording = gdk_pixbuf_new_from_file(icon, NULL);
@@ -3038,8 +2987,6 @@ _prefsw *create_prefs_dialog (void) {
     g_list_free_strings (encoders);
     g_list_free (encoders);
   }
-
-  gtk_widget_show(prefsw->encoder_combo);
 
   add_hsep_to_box (LIVES_BOX (prefsw->vbox_right_encoding));
 
@@ -3110,7 +3057,6 @@ _prefsw *create_prefs_dialog (void) {
   gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_effects), hbox, FALSE, FALSE, widget_opts.packing_height);
 
   prefsw->checkbutton_antialias = lives_standard_check_button_new(_("Use _antialiasing when resizing"),TRUE,LIVES_BOX(hbox),NULL);
-  gtk_widget_show_all(hbox);
 
   lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_antialias), prefs->antialias);
   //
@@ -3125,24 +3071,19 @@ _prefsw *create_prefs_dialog (void) {
   g_free(tmp);
   g_free(tmp2);
 
-  gtk_widget_show_all(hbox);
-
   hbox = lives_hbox_new(FALSE, 0);
   gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_effects), hbox, FALSE, FALSE, widget_opts.packing_height);
 
   prefsw->checkbutton_threads = lives_standard_check_button_new(_("Use _threads where possible when applying effects"),TRUE,LIVES_BOX(hbox),NULL);
   lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_threads), future_prefs->nfx_threads>1);
-  gtk_widget_show_all (hbox);
 
   //
 
-  hbox = lives_hbox_new (FALSE,0);
-  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_effects), hbox, FALSE, FALSE, widget_opts.packing_height);
+  add_fill_to_box(LIVES_BOX(hbox));
 
   prefsw->spinbutton_nfx_threads = lives_standard_spin_button_new (_("Number of _threads"),TRUE,future_prefs->nfx_threads, 2., 65536., 1., 1., 0, 
 								   LIVES_BOX(hbox),NULL);
 
-  gtk_widget_show_all (hbox);
 
   if (future_prefs->nfx_threads==1) gtk_widget_set_sensitive(prefsw->spinbutton_nfx_threads,FALSE);
 
@@ -3158,21 +3099,16 @@ _prefsw *create_prefs_dialog (void) {
   // ---
   add_fill_to_box(LIVES_BOX(hbox));
 
-  gtk_widget_show_all(hbox);
-
 
   dph=widget_opts.packing_height;
-  widget_opts.packing_height*=2;
+  widget_opts.packing_height*=4;
 
   prefsw->wpp_entry=lives_standard_entry_new(_("Weed plugin path"),TRUE,prefs->weed_plugin_path,-1,PATH_MAX,LIVES_BOX(prefsw->vbox_right_effects),NULL);
-  gtk_widget_show_all(gtk_widget_get_parent(prefsw->wpp_entry));
-
+ 
   prefsw->frei0r_entry=lives_standard_entry_new(_("Frei0r plugin path"),TRUE,prefs->frei0r_path,-1,PATH_MAX,LIVES_BOX(prefsw->vbox_right_effects),NULL);
-  gtk_widget_show_all(gtk_widget_get_parent(prefsw->frei0r_entry));
-
+ 
   prefsw->ladspa_entry=lives_standard_entry_new(_("LADSPA plugin path"),TRUE,prefs->ladspa_path,-1,PATH_MAX,LIVES_BOX(prefsw->vbox_right_effects),NULL);
-  gtk_widget_show_all(gtk_widget_get_parent(prefsw->ladspa_entry));
-
+ 
   widget_opts.packing_height=dph;
 
 
@@ -3190,6 +3126,7 @@ _prefsw *create_prefs_dialog (void) {
   prefsw->table_right_directories = gtk_table_new (10, 3, FALSE);
   gtk_container_set_border_width (GTK_CONTAINER (prefsw->table_right_directories), widget_opts.border_width*2);
   gtk_table_set_col_spacings (GTK_TABLE (prefsw->table_right_directories), widget_opts.packing_width);
+  gtk_table_set_row_spacings (GTK_TABLE (prefsw->table_right_directories), widget_opts.packing_height);
 
   prefsw->scrollw_right_directories = lives_standard_scrolled_window_new (0,0,prefsw->table_right_directories);
 
@@ -3232,7 +3169,6 @@ _prefsw *create_prefs_dialog (void) {
 
   prefsw->vid_load_dir_entry = gtk_entry_new ();
   gtk_entry_set_max_length(GTK_ENTRY(prefsw->vid_load_dir_entry),PATH_MAX);
-  gtk_widget_show (prefsw->vid_load_dir_entry);
   gtk_table_attach (GTK_TABLE (prefsw->table_right_directories), prefsw->vid_load_dir_entry, 1, 2, 4, 5,
 		    (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
 		    (GtkAttachOptions) (0), 0, 0);
@@ -3250,7 +3186,7 @@ _prefsw *create_prefs_dialog (void) {
   set_temp_label_text(GTK_LABEL(label));
   gtk_table_attach (GTK_TABLE (prefsw->table_right_directories), label, 0, 3, 0, 2,
 		    (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
-		    (GtkAttachOptions) (GTK_EXPAND), 0, 0);
+		    (GtkAttachOptions) (0), 0, 0);
   gtk_misc_set_alignment (GTK_MISC (label), 0, 0.65);
  
   prefsw->temp_label=label;
@@ -3347,13 +3283,11 @@ _prefsw *create_prefs_dialog (void) {
   prefs_add_to_list(prefsw->prefs_list, pixbuf_directories, _("Directories"), LIST_ENTRY_DIRECTORIES);
   gtk_container_add (GTK_CONTAINER (dialog_table), prefsw->scrollw_right_directories);
 
-  gtk_widget_show_all(prefsw->table_right_directories);
-
   // ---------------,
   // Warnings       |
   // ---------------'
    
-  prefsw->vbox_right_warnings = lives_vbox_new (FALSE, 10);
+  prefsw->vbox_right_warnings = lives_vbox_new (FALSE, 0);
 
   prefsw->scrollw_right_warnings = lives_standard_scrolled_window_new (0,0,prefsw->vbox_right_warnings);
 
@@ -3663,13 +3597,12 @@ _prefsw *create_prefs_dialog (void) {
   prefs_add_to_list(prefsw->prefs_list, pixbuf_warnings, _("Warnings"), LIST_ENTRY_WARNINGS);
   gtk_container_add (GTK_CONTAINER (dialog_table), prefsw->scrollw_right_warnings);
 
-  gtk_widget_show_all (prefsw->scrollw_right_warnings);
 
   // -----------,
   // Misc       |
   // -----------'
    
-  prefsw->vbox_right_misc = lives_vbox_new (FALSE, widget_opts.packing_height);
+  prefsw->vbox_right_misc = lives_vbox_new (FALSE, widget_opts.packing_height*4);
   gtk_container_set_border_width (GTK_CONTAINER (prefsw->vbox_right_misc), widget_opts.border_width*2);
    
   prefsw->scrollw_right_misc = lives_standard_scrolled_window_new (0,0,prefsw->vbox_right_misc);
@@ -3703,17 +3636,17 @@ _prefsw *create_prefs_dialog (void) {
 
   // ---
 
-  hbox2 = lives_hbox_new (FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_misc), hbox2, FALSE, FALSE, widget_opts.packing_height);
+  prefsw->cdda_hbox = lives_hbox_new (FALSE, 0);
+  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_misc), prefsw->cdda_hbox, FALSE, FALSE, widget_opts.packing_height);
    
   prefsw->cdplay_entry = lives_standard_entry_new ((tmp=g_strdup(_("CD device           "))),FALSE,
 						   (tmp2=g_filename_to_utf8(prefs->cdplay_device,-1,NULL,NULL,NULL)),
-						   -1,PATH_MAX,LIVES_BOX(hbox2),
+						   -1,PATH_MAX,LIVES_BOX(prefsw->cdda_hbox),
 						   (tmp3=g_strdup(_("LiVES can load audio tracks from this CD"))));
   g_free(tmp); g_free(tmp2); g_free(tmp3);
 
   buttond = lives_standard_file_button_new (FALSE,LIVES_DEVICE_DIR);
-  gtk_box_pack_start(GTK_BOX(hbox2),buttond,FALSE,FALSE,widget_opts.packing_width);
+  gtk_box_pack_start(GTK_BOX(prefsw->cdda_hbox),buttond,FALSE,FALSE,widget_opts.packing_width);
   
   g_signal_connect(buttond, "clicked", G_CALLBACK (on_filesel_button_clicked), (gpointer)prefsw->cdplay_entry);
 
@@ -3735,10 +3668,9 @@ _prefsw *create_prefs_dialog (void) {
   prefs_add_to_list(prefsw->prefs_list, pixbuf_misc, _("Misc"), LIST_ENTRY_MISC);
   gtk_container_add (GTK_CONTAINER (dialog_table), prefsw->scrollw_right_misc);
 
-  gtk_widget_show_all (prefsw->scrollw_right_misc);
 
   if (!capable->has_cdda2wav) {
-    gtk_widget_hide (hbox2);
+    gtk_widget_hide (prefsw->cdda_hbox);
   }
    
 
@@ -3752,7 +3684,7 @@ _prefsw *create_prefs_dialog (void) {
   prefsw->scrollw_right_themes = lives_standard_scrolled_window_new (0,0,prefsw->vbox_right_themes);
 
   hbox = lives_hbox_new (FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_themes), hbox, FALSE, FALSE, widget_opts.packing_height);
+  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_themes), hbox, TRUE, FALSE, widget_opts.packing_height);
    
   // scan for themes
   themes = get_plugin_list(PLUGIN_THEMES, TRUE, NULL, NULL);
@@ -3778,13 +3710,12 @@ _prefsw *create_prefs_dialog (void) {
 
   prefs_add_to_list(prefsw->prefs_list, pixbuf_themes, _("Themes"), LIST_ENTRY_THEMES);
   gtk_container_add (GTK_CONTAINER (dialog_table), prefsw->scrollw_right_themes);
-  gtk_widget_show_all(prefsw->scrollw_right_themes);
 
   // --------------------------,
   // streaming/networking      |
   // --------------------------'
 
-  prefsw->vbox_right_net = lives_vbox_new (FALSE, widget_opts.packing_height);
+  prefsw->vbox_right_net = lives_vbox_new (FALSE, widget_opts.packing_height*4);
   gtk_container_set_border_width (GTK_CONTAINER (prefsw->vbox_right_net), widget_opts.border_width);
 
   prefsw->scrollw_right_net = lives_standard_scrolled_window_new (0,0,prefsw->vbox_right_net);
@@ -3849,297 +3780,137 @@ _prefsw *create_prefs_dialog (void) {
 
   prefs_add_to_list(prefsw->prefs_list, pixbuf_net, _("Streaming/Networking"), LIST_ENTRY_NET);
   gtk_container_add (GTK_CONTAINER (dialog_table), prefsw->scrollw_right_net);
-  gtk_widget_show_all(prefsw->scrollw_right_net);
    
   // ----------,
   // jack      |
   // ----------'
 
-  prefsw->vbox_right_jack = lives_vbox_new (FALSE, 20);
-  gtk_container_set_border_width (GTK_CONTAINER (prefsw->vbox_right_jack), 20);
+  prefsw->vbox_right_jack = lives_vbox_new (FALSE, 0);
+  gtk_container_set_border_width (GTK_CONTAINER (prefsw->vbox_right_jack), widget_opts.packing_width*2);
 
   prefsw->scrollw_right_jack = lives_standard_scrolled_window_new (0,0,prefsw->vbox_right_jack);
 
-  label = gtk_label_new (_("Jack transport"));
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-  }
-  gtk_widget_show (label);
-  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_jack), label, FALSE, FALSE, 10);
+  label = lives_standard_label_new (_("Jack transport"));
+  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_jack), label, FALSE, FALSE, widget_opts.packing_height);
 
-  prefsw->jack_tserver_entry = gtk_entry_new ();
-  prefsw->checkbutton_start_tjack = gtk_check_button_new();
-  prefsw->checkbutton_jack_master = gtk_check_button_new();
-  prefsw->checkbutton_jack_client = gtk_check_button_new();
-  prefsw->checkbutton_jack_tb_start = gtk_check_button_new();
-  prefsw->checkbutton_jack_tb_client = gtk_check_button_new();
-   
 #ifndef ENABLE_JACK_TRANSPORT
-  label = gtk_label_new (_("LiVES must be compiled with jack/transport.h and jack/jack.h present to use jack transport"));
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-  }
-  gtk_widget_show (label);
-  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_jack), label, FALSE, FALSE, 10);
+  label = lives_standard_label_new (_("LiVES must be compiled with jack/transport.h and jack/jack.h present to use jack transport"));
+  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_jack), label, FALSE, FALSE, widget_opts.packing_height);
 #else
-  hbox1 = lives_hbox_new (FALSE,0);
-  gtk_widget_show (hbox1);
-  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_jack), hbox1, TRUE, TRUE, 0);
+  hbox = lives_hbox_new (FALSE,0);
+  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_jack), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-  label = gtk_label_new_with_mnemonic (_("Jack _transport config file"));
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-  }
-  gtk_widget_show (label);
-  gtk_box_pack_start (GTK_BOX (hbox1), label, FALSE, FALSE, 10);
+  prefsw->jack_tserver_entry = lives_standard_entry_new (_("Jack _transport config file"),TRUE,prefs->jack_tserver,-1,255,LIVES_BOX(hbox),NULL);
 
-  gtk_entry_set_max_length(GTK_ENTRY(prefsw->jack_tserver_entry),255);
+  gtk_widget_set_sensitive(prefsw->jack_tserver_entry,FALSE); // unused for now
 
-  gtk_entry_set_text(GTK_ENTRY(prefsw->jack_tserver_entry),prefs->jack_tserver);
-  gtk_widget_set_sensitive(prefsw->jack_tserver_entry,FALSE);
-  gtk_label_set_mnemonic_widget (GTK_LABEL (label),prefsw->jack_tserver_entry);
 
-  gtk_widget_show (prefsw->jack_tserver_entry);
-  gtk_box_pack_start (GTK_BOX (hbox1), prefsw->jack_tserver_entry, TRUE, TRUE, widget_opts.packing_width);
+  // -
 
-  eventbox = gtk_event_box_new();
-  label = gtk_label_new_with_mnemonic(_("Start _server on LiVES startup"));
-  gtk_label_set_mnemonic_widget(GTK_LABEL(label), prefsw->checkbutton_start_tjack);
-  gtk_container_add(GTK_CONTAINER(eventbox), label);
-  g_signal_connect(GTK_OBJECT(eventbox), "button_press_event", G_CALLBACK(label_act_toggle), 
-		   prefsw->checkbutton_start_tjack);
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_fg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_bg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  }
-  hbox = lives_hbox_new(FALSE, 0);
-  gtk_box_pack_start(GTK_BOX(hbox), prefsw->checkbutton_start_tjack, FALSE, FALSE, 5);
-  gtk_box_pack_start(GTK_BOX(hbox), eventbox, FALSE, FALSE, 5);
-  gtk_container_set_border_width(GTK_CONTAINER (hbox), 10);
-  gtk_widget_show_all(hbox);
-  gtk_box_pack_start (GTK_BOX (hbox1), hbox, TRUE, FALSE, 0);
+  prefsw->checkbutton_start_tjack=lives_standard_check_button_new(_("Start _server on LiVES startup"),TRUE,LIVES_BOX(hbox),NULL);
+
   lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (prefsw->checkbutton_start_tjack), 
 				(future_prefs->jack_opts&JACK_OPTS_START_TSERVER)?TRUE:FALSE);
+
+
+
   // ---
-  hbox2 = lives_hbox_new (FALSE,0);
-  gtk_widget_show (hbox2);
-  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_jack), hbox2, TRUE, TRUE, 0);
+  hbox = lives_hbox_new (FALSE,0);
+  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_jack), hbox, FALSE, FALSE, widget_opts.packing_height);
   // ---
-  eventbox = gtk_event_box_new();
-  label = gtk_label_new_with_mnemonic(_("Jack transport _master (start and stop)"));
-  gtk_label_set_mnemonic_widget(GTK_LABEL(label), prefsw->checkbutton_jack_master);
-  gtk_container_add(GTK_CONTAINER(eventbox), label);
-  g_signal_connect(GTK_OBJECT(eventbox), "button_press_event", G_CALLBACK(label_act_toggle), 
-		   prefsw->checkbutton_jack_master);
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_fg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_bg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  }
-  hbox = lives_hbox_new(FALSE, 0);
-  gtk_box_pack_start(GTK_BOX(hbox), prefsw->checkbutton_jack_master, FALSE, FALSE, 5);
-  gtk_box_pack_start(GTK_BOX(hbox), eventbox, FALSE, FALSE, 5);
-  gtk_container_set_border_width(GTK_CONTAINER (hbox), 10);
-  gtk_widget_show_all(hbox);
-  gtk_box_pack_start (GTK_BOX (hbox2), hbox, TRUE, FALSE, 0);
+
+  prefsw->checkbutton_jack_master=lives_standard_check_button_new(_("Jack transport _master (start and stop)"),TRUE,LIVES_BOX(hbox),NULL);
+
   lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (prefsw->checkbutton_jack_master), 
 				(future_prefs->jack_opts&JACK_OPTS_TRANSPORT_MASTER)?TRUE:FALSE);
+
+
   // ---
-  eventbox = gtk_event_box_new();
-  label = gtk_label_new_with_mnemonic(_("Jack transport _client (start and stop)"));
-  gtk_label_set_mnemonic_widget(GTK_LABEL(label), prefsw->checkbutton_jack_client);
-  gtk_container_add(GTK_CONTAINER(eventbox), label);
-  g_signal_connect(GTK_OBJECT(eventbox), "button_press_event", G_CALLBACK(label_act_toggle), 
-		   prefsw->checkbutton_jack_client);
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_fg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_bg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  }
-  hbox = lives_hbox_new(FALSE, 0);
-  gtk_box_pack_start(GTK_BOX(hbox), prefsw->checkbutton_jack_client, FALSE, FALSE, 5);
-  gtk_box_pack_start(GTK_BOX(hbox), eventbox, FALSE, FALSE, 5);
-  gtk_container_set_border_width(GTK_CONTAINER (hbox), 10);
-  gtk_widget_show_all(hbox);
-  gtk_box_pack_start (GTK_BOX (hbox2), hbox, TRUE, FALSE, 0);
+  hbox = lives_hbox_new (FALSE,0);
+  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_jack), hbox, FALSE, FALSE, widget_opts.packing_height);
+
+  prefsw->checkbutton_jack_client=lives_standard_check_button_new(_("Jack transport _client (start and stop)"),TRUE,LIVES_BOX(hbox),NULL);
+
   lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (prefsw->checkbutton_jack_client), 
 				(future_prefs->jack_opts&JACK_OPTS_TRANSPORT_CLIENT)?TRUE:FALSE);
+
+
+  g_signal_connect_after (GTK_OBJECT (prefsw->checkbutton_jack_client), "toggled",
+			  G_CALLBACK (after_jack_client_toggled),
+			  NULL);
   // ---
-  hbox3 = lives_hbox_new (FALSE,0);
-  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_jack), hbox3, TRUE, TRUE, 0);
-  add_fill_to_box(GTK_BOX(hbox3));
-  // ---
-  eventbox = gtk_event_box_new();
-  label = gtk_label_new_with_mnemonic(_("Jack transport sets start position"));
-  gtk_label_set_mnemonic_widget(GTK_LABEL(label), prefsw->checkbutton_jack_tb_start);
-  gtk_container_add(GTK_CONTAINER(eventbox), label);
-  g_signal_connect(GTK_OBJECT(eventbox), "button_press_event", G_CALLBACK(label_act_toggle), 
-		   prefsw->checkbutton_jack_tb_start);
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_fg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_bg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  }
-  hbox = lives_hbox_new(FALSE, 0);
-  gtk_box_pack_start(GTK_BOX(hbox), prefsw->checkbutton_jack_tb_start, FALSE, FALSE, 5);
-  gtk_box_pack_start(GTK_BOX(hbox), eventbox, FALSE, FALSE, 5);
-  gtk_container_set_border_width(GTK_CONTAINER (hbox), 10);
-  gtk_widget_show_all(hbox);
-  gtk_box_pack_start (GTK_BOX (hbox3), hbox, TRUE, FALSE, 0);
+
+  hbox = lives_hbox_new (FALSE,0);
+  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_jack), hbox, FALSE, FALSE, widget_opts.packing_height);
+
+  prefsw->checkbutton_jack_tb_start=lives_standard_check_button_new(_("Jack transport sets start position"),TRUE,LIVES_BOX(hbox),NULL);
+
   lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (prefsw->checkbutton_jack_tb_start),
 				(future_prefs->jack_opts&JACK_OPTS_TIMEBASE_START)?
 				(lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_jack_client))):FALSE);
 
   gtk_widget_set_sensitive(prefsw->checkbutton_jack_tb_start, 
 			   lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_jack_client)));
-  gtk_widget_set_sensitive(label, lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_jack_client)));
 
-  g_signal_connect_after (GTK_OBJECT (prefsw->checkbutton_jack_client), "toggled",
-			  G_CALLBACK (after_jack_client_toggled),
+  g_signal_connect_after (GTK_OBJECT (prefsw->checkbutton_jack_tb_start), "toggled",
+			  G_CALLBACK (after_jack_tb_start_toggled),
 			  NULL);
+
   // ---
-  eventbox = gtk_event_box_new();
-  label = gtk_label_new_with_mnemonic(_("Jack transport timebase slave"));
-  gtk_label_set_mnemonic_widget(GTK_LABEL(label), prefsw->checkbutton_jack_tb_client);
-  gtk_container_add(GTK_CONTAINER(eventbox), label);
-  g_signal_connect(GTK_OBJECT(eventbox), "button_press_event", G_CALLBACK(label_act_toggle), 
-		   prefsw->checkbutton_jack_tb_client);
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_fg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_bg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  }
-  hbox = lives_hbox_new(FALSE, 0);
-  gtk_box_pack_start(GTK_BOX(hbox), prefsw->checkbutton_jack_tb_client, FALSE, FALSE, 5);
-  gtk_box_pack_start(GTK_BOX(hbox), eventbox, FALSE, FALSE, 5);
-  gtk_container_set_border_width(GTK_CONTAINER (hbox), 10);
-  gtk_widget_show_all(hbox);
-  gtk_box_pack_start (GTK_BOX (hbox3), hbox, TRUE, FALSE, 0);
-   
+
+  add_fill_to_box(LIVES_BOX(hbox));
+
+  prefsw->checkbutton_jack_tb_client=lives_standard_check_button_new(_("Jack transport timebase slave"),TRUE,LIVES_BOX(hbox),NULL);
+
   lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (prefsw->checkbutton_jack_tb_client), 
 				(future_prefs->jack_opts&JACK_OPTS_TIMEBASE_CLIENT)?
 				(lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_jack_tb_start))):FALSE);
 
   gtk_widget_set_sensitive(prefsw->checkbutton_jack_tb_client, 
 			   lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_jack_tb_start)));
-  gtk_widget_set_sensitive(label, lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_jack_tb_start)));
+
+
   // ---
-  label = gtk_label_new (_("(See also Playback -> Audio follows video rate/direction)"));
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-  }
-  gtk_widget_show (label);
-  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_jack), label, FALSE, FALSE, 10);
-
-  g_signal_connect_after (GTK_OBJECT (prefsw->checkbutton_jack_tb_start), "toggled",
-			  G_CALLBACK (after_jack_tb_start_toggled),
-			  NULL);
-
-  //add_fill_to_box(GTK_BOX(hbox));
-  //gtk_widget_show_all (hbox);
+  label = lives_standard_label_new (_("(See also Playback -> Audio follows video rate/direction)"));
+  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_jack), label, FALSE, FALSE, widget_opts.packing_height);
 
 #endif
 
-  hseparator = lives_hseparator_new ();
-  gtk_widget_show (hseparator);
-  if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color(hseparator, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  }
-  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_jack), hseparator, FALSE, TRUE, 0);
+  add_hsep_to_box(LIVES_BOX(prefsw->vbox_right_jack));
 
-  label = gtk_label_new (_("Jack audio"));
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-  }
-  gtk_widget_show (label);
-  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_jack), label, FALSE, FALSE, 10);
+
+  label = lives_standard_label_new (_("Jack audio"));
+  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_jack), label, FALSE, FALSE, widget_opts.packing_height);
 
 #ifndef ENABLE_JACK
-  label = gtk_label_new (_("LiVES must be compiled with jack/jack.h present to use jack audio"));
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-  }
-  gtk_widget_show (label);
-  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_jack), label, FALSE, FALSE, 10);
+  label = lives_standard_label_new (_("LiVES must be compiled with jack/jack.h present to use jack audio"));
+  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_jack), label, FALSE, FALSE, widget_opts.packing_height);
 #else
-  label = gtk_label_new (_("You MUST set the audio player to \"jack\" in the Playback tab to use jack audio"));
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-  }
-  gtk_widget_show (label);
-  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_jack), label, FALSE, FALSE, 10);
+  label = lives_standard_label_new (_("You MUST set the audio player to \"jack\" in the Playback tab to use jack audio"));
+  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_jack), label, FALSE, FALSE, widget_opts.packing_height);
 
-  hbox4 = lives_hbox_new (FALSE,0);
-  gtk_widget_show (hbox4);
-  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_jack), hbox4, TRUE, TRUE, 0);
+  hbox = lives_hbox_new (FALSE,0);
+  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_jack), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-  label = gtk_label_new_with_mnemonic (_("Jack _audio server config file"));
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-  }
-  gtk_widget_show (label);
-  gtk_box_pack_start (GTK_BOX (hbox4), label, FALSE, FALSE, 10);
+  prefsw->jack_aserver_entry = lives_standard_entry_new (_("Jack _audio server config file"),TRUE,prefs->jack_aserver,-1,255,LIVES_BOX(hbox),NULL);
 
-  prefsw->jack_aserver_entry = gtk_entry_new ();
-  gtk_entry_set_max_length(GTK_ENTRY(prefsw->jack_aserver_entry),255);
-
-  gtk_entry_set_text(GTK_ENTRY(prefsw->jack_aserver_entry),prefs->jack_aserver);
   gtk_widget_set_sensitive(prefsw->jack_aserver_entry,FALSE);
-  gtk_label_set_mnemonic_widget (GTK_LABEL (label),prefsw->jack_aserver_entry);
-
-  gtk_widget_show (prefsw->jack_aserver_entry);
-  gtk_box_pack_start (GTK_BOX (hbox4), prefsw->jack_aserver_entry, TRUE, TRUE, 0);
 
   // ---
-  hbox5 = lives_hbox_new (FALSE,0);
-  gtk_widget_show (hbox5);
-  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_jack), hbox5, TRUE, TRUE, 0);
-  // ---
-  prefsw->checkbutton_start_ajack = gtk_check_button_new();
-  eventbox = gtk_event_box_new();
-  label = gtk_label_new_with_mnemonic(_("Start _server on LiVES startup"));
-  gtk_label_set_mnemonic_widget(GTK_LABEL(label), prefsw->checkbutton_start_ajack);
-  gtk_container_add(GTK_CONTAINER(eventbox), label);
-  g_signal_connect(GTK_OBJECT(eventbox), "button_press_event", G_CALLBACK(label_act_toggle), 
-		   prefsw->checkbutton_start_ajack);
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_fg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_bg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  }
-  hbox = lives_hbox_new(FALSE, 0);
-  gtk_box_pack_start(GTK_BOX(hbox), prefsw->checkbutton_start_ajack, FALSE, FALSE, 5);
-  gtk_box_pack_start(GTK_BOX(hbox), eventbox, FALSE, FALSE, 5);
-  gtk_container_set_border_width(GTK_CONTAINER (hbox), 10);
-  gtk_widget_show_all(hbox);
-  gtk_box_pack_start (GTK_BOX (hbox5), hbox, TRUE, FALSE, 0);
+  prefsw->checkbutton_start_ajack = lives_standard_check_button_new(_("Start _server on LiVES startup"),TRUE,LIVES_BOX(hbox),NULL);
   lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (prefsw->checkbutton_start_ajack), 
 				(future_prefs->jack_opts&JACK_OPTS_START_ASERVER)?TRUE:FALSE);
   // ---
-  prefsw->checkbutton_jack_pwp = gtk_check_button_new();
-  eventbox = gtk_event_box_new();
-  label = gtk_label_new_with_mnemonic(_("Play audio even when transport is _paused"));
-  gtk_label_set_mnemonic_widget(GTK_LABEL(label), prefsw->checkbutton_jack_pwp);
-  gtk_container_add(GTK_CONTAINER(eventbox), label);
-  g_signal_connect(GTK_OBJECT(eventbox), "button_press_event", G_CALLBACK(label_act_toggle), prefsw->checkbutton_jack_pwp);
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_fg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_bg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  }
-  hbox = lives_hbox_new(FALSE, 0);
-  gtk_box_pack_start(GTK_BOX(hbox), prefsw->checkbutton_jack_pwp, FALSE, FALSE, 5);
-  gtk_box_pack_start(GTK_BOX(hbox), eventbox, FALSE, FALSE, 5);
-  gtk_container_set_border_width(GTK_CONTAINER (hbox), 10);
-  gtk_widget_show_all(hbox);
-  gtk_box_pack_start (GTK_BOX (hbox5), hbox, TRUE, FALSE, 0);
+  hbox = lives_hbox_new (FALSE,0);
+  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_jack), hbox, FALSE, FALSE, widget_opts.packing_height);
+
+  prefsw->checkbutton_jack_pwp = lives_standard_check_button_new(_("Play audio even when transport is _paused"),TRUE,LIVES_BOX(hbox),NULL);
    
   lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (prefsw->checkbutton_jack_pwp), 
 				(future_prefs->jack_opts&JACK_OPTS_NOPLAY_WHEN_PAUSED)?FALSE:TRUE);
 
   gtk_widget_set_sensitive (prefsw->checkbutton_jack_pwp, prefs->audio_player==AUD_PLAYER_JACK);
-  gtk_widget_set_sensitive (label, prefs->audio_player==AUD_PLAYER_JACK);
+
 #endif
 
   icon = g_build_filename(prefs->prefix_dir, ICON_DIR, "pref_jack.png", NULL);
@@ -4154,163 +3925,86 @@ _prefsw *create_prefs_dialog (void) {
   // ----------------------'
 
 
-  // TODO - copy pattern to all
-  prefsw->vbox_right_midi = lives_vbox_new (FALSE, 10);
+  prefsw->vbox_right_midi = lives_vbox_new (FALSE, 0);
 
   prefsw->scrollw_right_midi = lives_standard_scrolled_window_new (0,0,prefsw->vbox_right_midi);
 
-  gtk_container_set_border_width (GTK_CONTAINER (prefsw->vbox_right_midi), 20);
+  gtk_container_set_border_width (GTK_CONTAINER (prefsw->vbox_right_midi), widget_opts.border_width*2);
 
-  label = gtk_label_new (_("Events to respond to:"));
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-  }
-  gtk_widget_show (label);
-  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_midi), label, FALSE, FALSE, 10);
+  label = lives_standard_label_new (_("Events to respond to:"));
+  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_midi), label, FALSE, FALSE, widget_opts.packing_height);
 
 #ifdef ENABLE_OSC
 #ifdef OMC_JS_IMPL
-  prefsw->checkbutton_omc_js = gtk_check_button_new();
-  eventbox = gtk_event_box_new();
-  label = gtk_label_new_with_mnemonic(_("_Joystick events"));
-  gtk_label_set_mnemonic_widget(GTK_LABEL(label), prefsw->checkbutton_omc_js);
-  gtk_container_add(GTK_CONTAINER(eventbox), label);
-  g_signal_connect(GTK_OBJECT(eventbox), "button_press_event", G_CALLBACK(label_act_toggle), prefsw->checkbutton_omc_js);
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_fg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_bg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  }
+
   hbox = lives_hbox_new(FALSE, 0);
-  gtk_box_pack_start(GTK_BOX(hbox), prefsw->checkbutton_omc_js, FALSE, FALSE, 5);
-  gtk_box_pack_start(GTK_BOX(hbox), eventbox, FALSE, FALSE, 5);
-  gtk_widget_show_all(hbox);
-  gtk_container_set_border_width(GTK_CONTAINER (hbox), 20);
-  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_midi), hbox, FALSE, FALSE, 0);
+  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_midi), hbox, FALSE, FALSE, widget_opts.packing_height);
+
+  prefsw->checkbutton_omc_js = lives_standard_check_button_new(_("_Joystick events"),TRUE,LIVES_BOX(hbox),NULL);
+
   lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (prefsw->checkbutton_omc_js), prefs->omc_dev_opts&OMC_DEV_JS);
-  // ---
+
   hbox = lives_hbox_new (FALSE, 0);
   gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_midi), hbox, FALSE, FALSE, widget_opts.packing_height);
-  gtk_widget_show (hbox);
-   
-  label = gtk_label_new_with_mnemonic (_("_Joystick device"));
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-  }
-  gtk_widget_show (label);
-  gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 18);
-  gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_LEFT);
 
-  prefsw->omc_js_entry = gtk_entry_new ();
-  gtk_label_set_mnemonic_widget (GTK_LABEL (label),prefsw->omc_js_entry);
-  gtk_entry_set_max_length(GTK_ENTRY(prefsw->omc_js_entry),PATH_MAX);
-  gtk_box_pack_start (GTK_BOX (hbox), prefsw->omc_js_entry, TRUE, TRUE, 20);
-  gtk_widget_show (prefsw->omc_js_entry);
-  if (strlen(prefs->omc_js_fname)!=0) gtk_entry_set_text (GTK_ENTRY (prefsw->omc_js_entry),prefs->omc_js_fname);
-   
-  gtk_widget_set_tooltip_text( prefsw->omc_js_entry, _("The joystick device, e.g. /dev/input/js0"));
+  prefsw->omc_js_entry = lives_standard_entry_new ((tmp=g_strdup(_("_Joystick device")))
+						    ,TRUE,prefs->omc_js_fname,-1,PATH_MAX,LIVES_BOX(hbox),
+						    (tmp2=g_strdup(_("The joystick device, e.g. /dev/input/js0"))));
+  g_free(tmp); g_free(tmp2);
 
   buttond = lives_standard_file_button_new (FALSE,LIVES_DEVICE_DIR);
   gtk_box_pack_start(GTK_BOX(hbox),buttond,FALSE,FALSE,widget_opts.packing_width);
-  gtk_widget_show (buttond);
 
   g_signal_connect(buttond, "clicked", G_CALLBACK (on_filesel_button_clicked), (gpointer)prefsw->omc_js_entry);
+
+#ifdef OMC_MIDI_IMPL
+  add_hsep_to_box(LIVES_BOX(prefsw->vbox_right_midi));
+#endif
 
 #endif
 
 #ifdef OMC_MIDI_IMPL
+  hbox = lives_hbox_new (FALSE, 0);
+  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_midi), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-  prefsw->checkbutton_omc_midi = gtk_check_button_new();
-  eventbox = gtk_event_box_new();
-  label = gtk_label_new_with_mnemonic(_("_MIDI events"));
-  gtk_label_set_mnemonic_widget(GTK_LABEL(label), prefsw->checkbutton_omc_midi);
-  gtk_container_add(GTK_CONTAINER(eventbox), label);
-  g_signal_connect(GTK_OBJECT(eventbox), "button_press_event", G_CALLBACK(label_act_toggle), 
-		   prefsw->checkbutton_omc_midi);
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_fg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_bg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  }
-  hbox = lives_hbox_new(FALSE, 0);
-  gtk_box_pack_start(GTK_BOX(hbox), prefsw->checkbutton_omc_midi, FALSE, FALSE, 5);
-  gtk_box_pack_start(GTK_BOX(hbox), eventbox, FALSE, FALSE, 5);
-  gtk_widget_show_all(hbox);
-  gtk_container_set_border_width(GTK_CONTAINER (hbox), 20);
-  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_midi), hbox, FALSE, FALSE, 0);
+  prefsw->checkbutton_omc_midi = lives_standard_check_button_new(_("_MIDI events"),TRUE,LIVES_BOX(hbox),NULL);
+
   lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (prefsw->checkbutton_omc_midi), prefs->omc_dev_opts&OMC_DEV_MIDI);
-  // ---
-  hbox1 = lives_hbox_new (FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_midi), hbox1, TRUE, TRUE, 20);
 
-#ifdef ALSA_MIDI
-  gtk_widget_show (hbox1);
-#endif
-
-  prefsw->alsa_midi = gtk_radio_button_new(alsa_midi_group);
-  alsa_midi_group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (prefsw->alsa_midi));
-  gtk_widget_set_tooltip_text( prefsw->alsa_midi, 
-			       (_("Create an ALSA MIDI port which other MIDI devices can be connected to")));
-  label = gtk_label_new_with_mnemonic(_("Use _ALSA MIDI (recommended)"));
-  gtk_label_set_mnemonic_widget(GTK_LABEL(label), prefsw->alsa_midi);
-  eventbox = gtk_event_box_new();
-  gtk_container_add(GTK_CONTAINER(eventbox), label);
-  g_signal_connect(GTK_OBJECT(eventbox), "button_press_event", G_CALLBACK(label_act_toggle), prefsw->alsa_midi);
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_fg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_bg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  }
-  hbox = lives_hbox_new(FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (hbox), prefsw->alsa_midi, FALSE, FALSE, 10);
-  gtk_box_pack_start(GTK_BOX(hbox), eventbox, FALSE, FALSE, 10);
-  gtk_container_set_border_width(GTK_CONTAINER (hbox), 20);
-  gtk_widget_show_all(hbox);
-  gtk_box_pack_start(GTK_BOX(hbox1), hbox, TRUE, TRUE, 0);
   // ---
-  raw_midi_button = gtk_radio_button_new(alsa_midi_group);
-  alsa_midi_group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (raw_midi_button));
-  label = gtk_label_new_with_mnemonic(_("Use _raw MIDI"));
-  gtk_label_set_mnemonic_widget(GTK_LABEL(label), raw_midi_button);
-  eventbox = gtk_event_box_new();
-  gtk_container_add(GTK_CONTAINER(eventbox), label);
-  g_signal_connect(GTK_OBJECT(eventbox), "button_press_event", G_CALLBACK(label_act_toggle), raw_midi_button);
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_fg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_bg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  }
-  hbox = lives_hbox_new(FALSE, 0);
-  gtk_box_pack_start(GTK_BOX(hbox), raw_midi_button, TRUE, TRUE, 10);
-  gtk_box_pack_start(GTK_BOX(hbox), eventbox, FALSE, FALSE, 10);
-  gtk_widget_set_tooltip_text( raw_midi_button, (_("Read directly from the MIDI device")));
-  gtk_widget_show_all(hbox);
-  gtk_container_set_border_width(GTK_CONTAINER (hbox), 20);
-  gtk_box_pack_start (GTK_BOX (hbox1), hbox, TRUE, TRUE, 0);
+
+  prefsw->midi_hbox = lives_hbox_new (FALSE, 0);
+  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_midi), prefsw->midi_hbox, FALSE, FALSE, widget_opts.packing_height);
+
+  prefsw->alsa_midi = lives_standard_radio_button_new((tmp=g_strdup(_("Use _ALSA MIDI (recommended)"))),TRUE,alsa_midi_group,
+						      LIVES_BOX(prefsw->midi_hbox),
+						      (tmp2=g_strdup(_("Create an ALSA MIDI port which other MIDI devices can be connected to"))));
+
+  g_free(tmp); g_free(tmp2);
+
+  alsa_midi_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (prefsw->alsa_midi));
+
+  // ---
+
+  raw_midi_button = lives_standard_radio_button_new((tmp=g_strdup(_("Use _raw MIDI"))),TRUE,alsa_midi_group,
+						    LIVES_BOX(prefsw->midi_hbox),
+						    (tmp2=g_strdup(_("Read directly from the MIDI device"))));
+
+  g_free(tmp); g_free(tmp2);
 
 #ifdef ALSA_MIDI
   lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (raw_midi_button),!prefs->use_alsa_midi);
 #endif
+
+
   hbox = lives_hbox_new (FALSE, 0);
   gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_midi), hbox, FALSE, FALSE, widget_opts.packing_height);
-  gtk_widget_show (hbox);
    
-  label = gtk_label_new_with_mnemonic (_("_MIDI device"));
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-  }
-  gtk_widget_show (label);
-  gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 18);
-  gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_LEFT);
-   
-  prefsw->omc_midi_entry = gtk_entry_new ();
-  gtk_label_set_mnemonic_widget (GTK_LABEL (label),prefsw->omc_midi_entry);
-  gtk_entry_set_max_length(GTK_ENTRY(prefsw->omc_midi_entry),PATH_MAX);
-  gtk_box_pack_start (GTK_BOX (hbox), prefsw->omc_midi_entry, TRUE, TRUE, 20);
-  gtk_widget_show (prefsw->omc_midi_entry);
-  if (strlen(prefs->omc_midi_fname)!=0) gtk_entry_set_text (GTK_ENTRY (prefsw->omc_midi_entry),prefs->omc_midi_fname);
+  prefsw->omc_midi_entry = lives_standard_entry_new ((tmp=g_strdup(_("_MIDI device"))),TRUE,prefs->omc_midi_fname,
+						     -1,PATH_MAX,LIVES_BOX(hbox),
+						     (tmp2=g_strdup(_("The MIDI device, e.g. /dev/input/midi0"))));
 
-  gtk_widget_set_tooltip_text( prefsw->omc_midi_entry, _("The MIDI device, e.g. /dev/input/midi0"));
+  g_free(tmp); g_free(tmp2);
 
   prefsw->button_midid = lives_standard_file_button_new (FALSE,LIVES_DEVICE_DIR);
   gtk_box_pack_start(GTK_BOX(hbox),prefsw->button_midid,FALSE,FALSE,widget_opts.packing_width);
@@ -4318,64 +4012,33 @@ _prefsw *create_prefs_dialog (void) {
 
   g_signal_connect(prefsw->button_midid, "clicked", G_CALLBACK (on_filesel_button_clicked), (gpointer)prefsw->omc_midi_entry);
 
-  hseparator = lives_hseparator_new ();
-  gtk_widget_show (hseparator);
-  if (palette->style&STYLE_1) {
-    lives_widget_set_bg_color(hseparator, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  }
-  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_midi), hseparator, FALSE, TRUE, 10);
+  add_hsep_to_box(LIVES_BOX(prefsw->vbox_right_midi));
    
-  label = gtk_label_new (_("Advanced"));
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-  }
-  gtk_widget_show (label);
-  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_midi), label, FALSE, FALSE, 10);
+  label = lives_standard_label_new (_("Advanced"));
+  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_midi), label, FALSE, FALSE, widget_opts.packing_height);
 
   hbox = lives_hbox_new (FALSE,0);
-  gtk_widget_show (hbox);
-  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_midi), hbox, TRUE, TRUE, 0);
-   
-  label = gtk_label_new_with_mnemonic (_("MIDI check _rate"));
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-  }
-  gtk_widget_show (label);
-  gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 10);
-   
-  spinbutton_adj = (GObject *)gtk_adjustment_new (prefs->midi_check_rate, 1, 2000, 10, 100, 0);
-   
-  prefsw->spinbutton_midicr = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 10, 0);
-  gtk_widget_show (prefsw->spinbutton_midicr);
-  gtk_box_pack_start (GTK_BOX (hbox), prefsw->spinbutton_midicr, FALSE, TRUE, 0);
-  gtk_label_set_mnemonic_widget (GTK_LABEL (label),prefsw->spinbutton_midicr);
-  gtk_widget_set_tooltip_text( prefsw->spinbutton_midicr, _("Number of MIDI checks per keyboard tick. Increasing this may improve MIDI responsiveness, but may slow down playback."));
+  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_midi), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-  label = gtk_label_new_with_mnemonic (_("MIDI repeat"));
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-  }
-  gtk_widget_show (label);
-   
-  spinbutton_adj = (GObject *)gtk_adjustment_new (prefs->midi_rpt, 1, 10000, 100, 1000, 0);
-   
-  prefsw->spinbutton_midirpt = gtk_spin_button_new (GTK_ADJUSTMENT (spinbutton_adj), 100, 0);
-  gtk_widget_show (prefsw->spinbutton_midirpt);
-  gtk_box_pack_end (GTK_BOX (hbox), prefsw->spinbutton_midirpt, FALSE, TRUE, 0);
-  gtk_box_pack_end (GTK_BOX (hbox), label, FALSE, FALSE, 10);
-  gtk_label_set_mnemonic_widget (GTK_LABEL (label),prefsw->spinbutton_midirpt);
-  gtk_widget_set_tooltip_text( prefsw->spinbutton_midirpt, _("Number of non-reads allowed between succesive reads."));
-  //
-  hbox = lives_hbox_new (FALSE,0);
-  gtk_widget_show (hbox);
-  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_midi), hbox, TRUE, TRUE, 0);
+  prefsw->spinbutton_midicr = lives_standard_spin_button_new ((tmp=g_strdup(_("MIDI check _rate"))),TRUE,
+							      prefs->midi_check_rate, 1., 2000., 10., 100., 0,
+							      LIVES_BOX(hbox),
+							      (tmp2=g_strdup(_("Number of MIDI checks per keyboard tick. Increasing this may improve MIDI responsiveness, but may slow down playback."))));
 
-  label = gtk_label_new (_("(Warning: setting this value too high can slow down playback.)"));
-  if (palette->style&STYLE_1) {
-    lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-  }
-  gtk_widget_show (label);
-  gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 0);
+  g_free(tmp); g_free(tmp2);
+
+
+  add_fill_to_box(LIVES_BOX(hbox));
+   
+  prefsw->spinbutton_midirpt = lives_standard_spin_button_new ((tmp=g_strdup(_("MIDI repeat"))),FALSE,
+							       prefs->midi_rpt, 1., 10000., 100., 1000., 0,
+							       LIVES_BOX(hbox),
+							       (tmp2=g_strdup(_("Number of non-reads allowed between succesive reads."))));
+  g_free(tmp); g_free(tmp2);
+
+  label = lives_standard_label_new (_("(Warning: setting this value too high can slow down playback.)"));
+
+  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_midi), label, FALSE, FALSE, widget_opts.packing_height);
 
 #ifdef ALSA_MIDI
   g_signal_connect (GTK_OBJECT (prefsw->alsa_midi), "toggled",
@@ -4395,17 +4058,11 @@ _prefsw *create_prefs_dialog (void) {
   prefs_add_to_list(prefsw->prefs_list, pixbuf_midi, _("MIDI/Joystick learner"), LIST_ENTRY_MIDI);
   gtk_container_add (GTK_CONTAINER (dialog_table), prefsw->scrollw_right_midi);
 
+
+
+
   prefsw->selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(prefsw->prefs_list));
   gtk_tree_selection_set_mode(prefsw->selection, GTK_SELECTION_SINGLE);
-
-  // In multitrack mode multitrack/render settings should be selected by default!
-  if (mainw->multitrack != NULL){
-    select_pref_list_row(LIST_ENTRY_MULTITRACK);
-  }
-
-  // 
-  // end
-  //
 
   g_signal_connect(prefsw->selection, "changed", G_CALLBACK(on_prefDomainChanged), NULL);
   //
@@ -4418,6 +4075,7 @@ _prefsw *create_prefs_dialog (void) {
   prefsw->cancelbutton = gtk_button_new_from_stock ("gtk-revert-to-saved");
   gtk_widget_show (prefsw->cancelbutton);
   gtk_dialog_add_action_widget (GTK_DIALOG (prefsw->prefs_dialog), prefsw->cancelbutton, GTK_RESPONSE_CANCEL);
+
   lives_widget_set_can_focus (prefsw->cancelbutton,TRUE);
 
   // Set 'Close' button as inactive since there are no changes yet
@@ -4427,6 +4085,7 @@ _prefsw *create_prefs_dialog (void) {
   prefsw->applybutton = gtk_button_new_from_stock ("gtk-apply");
   gtk_widget_show (prefsw->applybutton);
   gtk_dialog_add_action_widget (GTK_DIALOG (prefsw->prefs_dialog), prefsw->applybutton, 0);
+
   lives_widget_set_can_focus_and_default (prefsw->applybutton);
   // Set 'Apply' button as inactive since there is no changes yet
   gtk_widget_set_sensitive(prefsw->applybutton, FALSE);
@@ -4435,6 +4094,7 @@ _prefsw *create_prefs_dialog (void) {
   prefsw->closebutton = gtk_button_new_from_stock ("gtk-close");
   gtk_widget_show(prefsw->closebutton);
   gtk_dialog_add_action_widget(GTK_DIALOG(prefsw->prefs_dialog), prefsw->closebutton, GTK_RESPONSE_OK);
+
   lives_widget_set_can_focus_and_default (prefsw->closebutton);
 
   gtk_widget_add_accelerator (prefsw->closebutton, "activate", accel_group,
@@ -4463,38 +4123,40 @@ _prefsw *create_prefs_dialog (void) {
   g_signal_connect(GTK_OBJECT(prefsw->rb_startup_mt), "toggled", G_CALLBACK(apply_button_set_enabled), NULL);
   g_signal_connect(GTK_OBJECT(prefsw->spinbutton_crit_ds), "value_changed", 
 		   G_CALLBACK(spinbutton_crit_ds_value_changed), NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->spinbutton_gmoni), "value_changed", G_CALLBACK(apply_button_set_enabled), NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->spinbutton_pmoni), "value_changed", G_CALLBACK(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->spinbutton_crit_ds), "changed", G_CALLBACK(apply_button_set_enabled), NULL);
+
+  g_signal_connect(GTK_OBJECT(prefsw->spinbutton_gmoni), "changed", G_CALLBACK(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->spinbutton_pmoni), "changed", G_CALLBACK(apply_button_set_enabled), NULL);
   g_signal_connect(GTK_OBJECT(prefsw->forcesmon), "toggled", G_CALLBACK(apply_button_set_enabled), NULL);
   g_signal_connect(GTK_OBJECT(prefsw->checkbutton_stream_audio), "toggled", G_CALLBACK(apply_button_set_enabled), 
 		   NULL);
   g_signal_connect(GTK_OBJECT(prefsw->checkbutton_rec_after_pb), "toggled", G_CALLBACK(apply_button_set_enabled), 
 		   NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->spinbutton_warn_ds), "value_changed", G_CALLBACK(apply_button_set_enabled), 
+  g_signal_connect(GTK_OBJECT(prefsw->spinbutton_warn_ds), "changed", G_CALLBACK(apply_button_set_enabled), 
 		   NULL);
   g_signal_connect(GTK_OBJECT(prefsw->mt_enter_prompt), "toggled", G_CALLBACK(apply_button_set_enabled), NULL);
   g_signal_connect(GTK_OBJECT(mt_enter_defs), "toggled", G_CALLBACK(apply_button_set_enabled), NULL);
   g_signal_connect(GTK_OBJECT(prefsw->checkbutton_render_prompt), "toggled", G_CALLBACK(apply_button_set_enabled), 
 		   NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->spinbutton_mt_def_width), "value_changed", G_CALLBACK(apply_button_set_enabled),
+  g_signal_connect(GTK_OBJECT(prefsw->spinbutton_mt_def_width), "changed", G_CALLBACK(apply_button_set_enabled),
 		   NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->spinbutton_mt_def_height), "value_changed", G_CALLBACK(apply_button_set_enabled),
+  g_signal_connect(GTK_OBJECT(prefsw->spinbutton_mt_def_height), "changed", G_CALLBACK(apply_button_set_enabled),
 		   NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->spinbutton_mt_def_fps), "value_changed", G_CALLBACK(apply_button_set_enabled), 
+  g_signal_connect(GTK_OBJECT(prefsw->spinbutton_mt_def_fps), "changed", G_CALLBACK(apply_button_set_enabled), 
 		   NULL);
   g_signal_connect(GTK_OBJECT(prefsw->backaudio_checkbutton), "toggled", G_CALLBACK(apply_button_set_enabled), NULL);
   g_signal_connect(GTK_OBJECT(prefsw->pertrack_checkbutton), "toggled", G_CALLBACK(apply_button_set_enabled), NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->spinbutton_mt_undo_buf), "value_changed", G_CALLBACK(apply_button_set_enabled), 
+  g_signal_connect(GTK_OBJECT(prefsw->spinbutton_mt_undo_buf), "changed", G_CALLBACK(apply_button_set_enabled), 
 		   NULL);
   g_signal_connect(GTK_OBJECT(prefsw->checkbutton_mt_exit_render), "toggled", G_CALLBACK(apply_button_set_enabled), 
 		   NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->spinbutton_mt_ab_time), "value_changed", G_CALLBACK(apply_button_set_enabled), 
+  g_signal_connect(GTK_OBJECT(prefsw->spinbutton_mt_ab_time), "changed", G_CALLBACK(apply_button_set_enabled), 
 		   NULL);
   g_signal_connect(GTK_OBJECT(prefsw->mt_autoback_always), "toggled", G_CALLBACK(apply_button_set_enabled), NULL);
   g_signal_connect(GTK_OBJECT(prefsw->mt_autoback_never), "toggled", G_CALLBACK(apply_button_set_enabled), NULL);
   g_signal_connect(GTK_OBJECT(prefsw->mt_autoback_every), "toggled", G_CALLBACK(apply_button_set_enabled), NULL);
   g_signal_connect(GTK_EDITABLE(prefsw->video_open_entry), "changed", G_CALLBACK(apply_button_set_enabled), NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->spinbutton_ocp), "value_changed", G_CALLBACK(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->spinbutton_ocp), "changed", G_CALLBACK(apply_button_set_enabled), NULL);
   g_signal_connect(GTK_OBJECT(prefsw->jpeg), "toggled", G_CALLBACK(apply_button_set_enabled), NULL);
   g_signal_connect(GTK_OBJECT(png), "toggled", G_CALLBACK(apply_button_set_enabled), NULL);
   g_signal_connect(GTK_OBJECT(prefsw->checkbutton_instant_open), "toggled", G_CALLBACK(apply_button_set_enabled), 
@@ -4517,19 +4179,19 @@ _prefsw *create_prefs_dialog (void) {
   g_signal_connect(GTK_OBJECT(prefsw->rclips), "toggled", G_CALLBACK(apply_button_set_enabled), NULL);
   g_signal_connect(GTK_OBJECT(prefsw->raudio), "toggled", G_CALLBACK(apply_button_set_enabled), NULL);
   g_signal_connect(GTK_OBJECT(prefsw->rextaudio), "toggled", G_CALLBACK(apply_button_set_enabled), NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->spinbutton_rec_gb), "value_changed", G_CALLBACK(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->spinbutton_rec_gb), "changed", G_CALLBACK(apply_button_set_enabled), NULL);
   g_signal_connect(GTK_OBJECT(prefsw->encoder_combo), "changed", G_CALLBACK(apply_button_set_enabled), NULL);
   g_signal_connect(GTK_OBJECT(prefsw->ofmt_combo), "changed", G_CALLBACK(apply_button_set_enabled), NULL);
 
   if (prefsw->acodec_combo!=NULL) 
     g_signal_connect(GTK_OBJECT(prefsw->acodec_combo), "changed", G_CALLBACK(apply_button_set_enabled), NULL);
   g_signal_connect(GTK_OBJECT(prefsw->checkbutton_antialias), "toggled", G_CALLBACK(apply_button_set_enabled), NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->spinbutton_rte_keys), "value_changed", G_CALLBACK(apply_button_set_enabled), 
+  g_signal_connect(GTK_OBJECT(prefsw->spinbutton_rte_keys), "changed", G_CALLBACK(apply_button_set_enabled), 
 		   NULL);
   g_signal_connect(GTK_OBJECT(prefsw->checkbutton_threads), "toggled", G_CALLBACK(apply_button_set_enabled), NULL);
   g_signal_connect(GTK_OBJECT(prefsw->checkbutton_threads), "toggled", G_CALLBACK(toggle_set_sensitive), 
 		   (gpointer)prefsw->spinbutton_nfx_threads);
-  g_signal_connect(GTK_OBJECT(prefsw->spinbutton_nfx_threads), "value_changed", G_CALLBACK(apply_button_set_enabled), 
+  g_signal_connect(GTK_OBJECT(prefsw->spinbutton_nfx_threads), "changed", G_CALLBACK(apply_button_set_enabled), 
 		   NULL);
   g_signal_connect(GTK_EDITABLE(prefsw->vid_load_dir_entry), "changed", G_CALLBACK(apply_button_set_enabled), NULL);
   g_signal_connect(GTK_EDITABLE(prefsw->vid_save_dir_entry), "changed", G_CALLBACK(apply_button_set_enabled), NULL);
@@ -4539,7 +4201,7 @@ _prefsw *create_prefs_dialog (void) {
   g_signal_connect(GTK_EDITABLE(prefsw->tmpdir_entry), "changed", G_CALLBACK(apply_button_set_enabled), NULL);
   g_signal_connect(GTK_OBJECT(prefsw->checkbutton_warn_fps), "toggled", G_CALLBACK(apply_button_set_enabled), NULL);
   g_signal_connect(GTK_OBJECT(prefsw->checkbutton_warn_fsize), "toggled", G_CALLBACK(apply_button_set_enabled), NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->spinbutton_warn_fsize), "value_changed", G_CALLBACK(apply_button_set_enabled), 
+  g_signal_connect(GTK_OBJECT(prefsw->spinbutton_warn_fsize), "changed", G_CALLBACK(apply_button_set_enabled), 
 		   NULL);
   g_signal_connect(GTK_OBJECT(prefsw->checkbutton_warn_save_set), "toggled", G_CALLBACK(apply_button_set_enabled), 
 		   NULL);
@@ -4593,18 +4255,18 @@ _prefsw *create_prefs_dialog (void) {
   g_signal_connect(GTK_OBJECT(prefsw->ins_speed), "toggled", G_CALLBACK(apply_button_set_enabled), NULL);
   g_signal_connect(GTK_OBJECT(ins_resample), "toggled", G_CALLBACK(apply_button_set_enabled), NULL);
   g_signal_connect(GTK_EDITABLE(prefsw->cdplay_entry), "changed", G_CALLBACK(apply_button_set_enabled), NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->spinbutton_def_fps), "value_changed", G_CALLBACK(apply_button_set_enabled), 
+  g_signal_connect(GTK_OBJECT(prefsw->spinbutton_def_fps), "changed", G_CALLBACK(apply_button_set_enabled), 
 		   NULL);
   g_signal_connect(GTK_OBJECT(prefsw->theme_combo), "changed", G_CALLBACK(apply_button_set_enabled), NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->spinbutton_bwidth), "value_changed", G_CALLBACK(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->spinbutton_bwidth), "changed", G_CALLBACK(apply_button_set_enabled), NULL);
 #ifdef ENABLE_OSC
-  g_signal_connect(GTK_OBJECT(prefsw->spinbutton_osc_udp), "value_changed", G_CALLBACK(apply_button_set_enabled), 
+  g_signal_connect(GTK_OBJECT(prefsw->spinbutton_osc_udp), "changed", G_CALLBACK(apply_button_set_enabled), 
 		   NULL);
   g_signal_connect(GTK_OBJECT(prefsw->enable_OSC_start), "toggled", G_CALLBACK(apply_button_set_enabled), NULL);
   g_signal_connect(GTK_OBJECT(prefsw->enable_OSC), "toggled", G_CALLBACK(apply_button_set_enabled), NULL);
 #endif
 
-#ifndef ENABLE_JACK_TRANSPORT
+#ifdef ENABLE_JACK_TRANSPORT
   g_signal_connect(GTK_EDITABLE(prefsw->jack_tserver_entry), "changed", G_CALLBACK(apply_button_set_enabled), NULL);
   g_signal_connect(GTK_OBJECT(prefsw->checkbutton_start_tjack), "toggled", G_CALLBACK(apply_button_set_enabled), NULL);
   g_signal_connect(GTK_OBJECT(prefsw->checkbutton_jack_master), "toggled", G_CALLBACK(apply_button_set_enabled), NULL);
@@ -4631,8 +4293,8 @@ _prefsw *create_prefs_dialog (void) {
   g_signal_connect(GTK_OBJECT(prefsw->alsa_midi), "toggled", G_CALLBACK(apply_button_set_enabled), NULL);
   g_signal_connect(GTK_OBJECT(raw_midi_button), "toggled", G_CALLBACK(apply_button_set_enabled), NULL);
   g_signal_connect(GTK_EDITABLE(prefsw->omc_midi_entry), "changed", G_CALLBACK(apply_button_set_enabled), NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->spinbutton_midicr), "value_changed", G_CALLBACK(apply_button_set_enabled), NULL);
-  g_signal_connect(GTK_OBJECT(prefsw->spinbutton_midirpt), "value_changed", G_CALLBACK(apply_button_set_enabled), 
+  g_signal_connect(GTK_OBJECT(prefsw->spinbutton_midicr), "changed", G_CALLBACK(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->spinbutton_midirpt), "changed", G_CALLBACK(apply_button_set_enabled), 
 		   NULL);
 #endif
 #endif
@@ -4671,19 +4333,14 @@ _prefsw *create_prefs_dialog (void) {
   g_list_free (audp);
 
 
-  // Get currently selected row number
-  model = gtk_tree_view_get_model(GTK_TREE_VIEW(prefsw->prefs_list));
-  if (gtk_tree_selection_get_selected(prefsw->selection, &model, &iter)) {
-    gtk_tree_model_get(model, &iter, LIST_NUM, &selected_idx, -1);
-  }
-  else{
-    if (mainw->multitrack == NULL)
-      selected_idx = LIST_ENTRY_GUI;
-    else
-      selected_idx = LIST_ENTRY_MULTITRACK;
-  }
 
-  select_pref_list_row(selected_idx);
+  if (prefs_current_page==-1) {
+    if (mainw->multitrack == NULL)
+      select_pref_list_row(LIST_ENTRY_GUI);
+    else
+      select_pref_list_row(LIST_ENTRY_MULTITRACK);
+  }
+  else select_pref_list_row(prefs_current_page);
 
   on_prefDomainChanged(prefsw->selection,NULL);
 
@@ -4692,6 +4349,8 @@ _prefsw *create_prefs_dialog (void) {
 
 
 void on_preferences_activate(GtkMenuItem *menuitem, gpointer user_data) {
+  if (menuitem!=NULL) prefs_current_page=-1;
+
   if (prefsw != NULL && prefsw->prefs_dialog != NULL) {
     gtk_window_present(GTK_WINDOW(prefsw->prefs_dialog));
     gdk_window_raise(lives_widget_get_xwindow(prefsw->prefs_dialog));
@@ -4741,30 +4400,10 @@ void on_prefs_close_clicked(GtkButton *button, gpointer user_data) {
 void on_prefs_apply_clicked(GtkButton *button, gpointer user_data) {
   boolean needs_restart;
 
-  GtkTreeIter iter;
-  GtkTreeModel *model;
-  guint selected_idx;
- 
-  // Applying preferences, so 'Apply' and 'Revert' buttons are getting disabled
-  gtk_widget_set_sensitive(GTK_WIDGET(prefsw->applybutton), FALSE);
-  gtk_widget_set_sensitive(GTK_WIDGET(prefsw->cancelbutton), FALSE);
-  gtk_widget_set_sensitive(GTK_WIDGET(prefsw->closebutton), TRUE);
-
-  // Get currently selected row number
-  model = gtk_tree_view_get_model(GTK_TREE_VIEW(prefsw->prefs_list));
-  if (gtk_tree_selection_get_selected(prefsw->selection, &model, &iter)) {
-    gtk_tree_model_get(model, &iter, LIST_NUM, &selected_idx, -1);
-  }
-  else{
-    if (mainw->multitrack == NULL)
-      selected_idx = LIST_ENTRY_GUI;
-    else
-      selected_idx = LIST_ENTRY_MULTITRACK;
-  }
   // Apply preferences
   needs_restart = apply_prefs(FALSE);
 
-  // do this again in case anything was changed or reverted
+  // do this now in case anything was changed or reverted
   gtk_widget_set_sensitive(GTK_WIDGET(prefsw->applybutton), FALSE);
   gtk_widget_set_sensitive(GTK_WIDGET(prefsw->cancelbutton), FALSE);
   gtk_widget_set_sensitive(GTK_WIDGET(prefsw->closebutton), TRUE);
@@ -4786,9 +4425,6 @@ void on_prefs_apply_clicked(GtkButton *button, gpointer user_data) {
   }
 
   mainw->prefs_changed = 0;
-  // Select row, that was previously selected
-
-  select_pref_list_row(selected_idx);
 
 }
 
@@ -4796,7 +4432,7 @@ void on_prefs_apply_clicked(GtkButton *button, gpointer user_data) {
  * Function is used to select particular row in preferences selection list
  * selection is performed according to provided index which is one of LIST_ENTRY_* constants
  */
-void select_pref_list_row(guint selected_idx) {
+static void select_pref_list_row(guint selected_idx) {
   GtkTreeIter iter;
   GtkTreeModel *model;
   boolean valid;
@@ -4816,8 +4452,8 @@ void select_pref_list_row(guint selected_idx) {
   }
 }
 
+
 void on_prefs_revert_clicked(GtkButton *button, gpointer user_data) {
-  guint cpage=prefs_current_page;
   register int i;
 
   if (future_prefs->vpp_argv != NULL) {
@@ -4849,14 +4485,11 @@ void on_prefs_revert_clicked(GtkButton *button, gpointer user_data) {
   }
 
   lives_set_cursor_style(LIVES_CURSOR_BUSY,NULL);
-  gtk_widget_queue_draw(prefsw->prefs_dialog);
-  lives_widget_context_update();
   lives_general_button_clicked(button, prefsw);
 
   prefsw = NULL;
 
   on_preferences_activate(NULL, NULL);
-  select_pref_list_row(cpage);
   lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
 }
 

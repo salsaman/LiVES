@@ -2363,7 +2363,7 @@ _prefsw *create_prefs_dialog (void) {
   add_hsep_to_box (LIVES_BOX (prefsw->vbox_right_multitrack));
   // ---
   hbox = lives_hbox_new (FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_multitrack), hbox, FALSE, FALSE, 0);
+  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_multitrack), hbox, FALSE, FALSE, widget_opts.packing_height);
 
   // ---
   prefsw->spinbutton_mt_undo_buf = lives_standard_spin_button_new (_("    _Undo buffer size (MB)    "),TRUE,
@@ -2574,7 +2574,7 @@ _prefsw *create_prefs_dialog (void) {
 
   frame = gtk_frame_new (NULL);
  
-  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_playback), frame, TRUE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_playback), frame, FALSE, FALSE, widget_opts.packing_height);
 
   vbox=lives_vbox_new (FALSE, 0);
   gtk_container_add (GTK_CONTAINER (frame), vbox);
@@ -2944,7 +2944,7 @@ _prefsw *create_prefs_dialog (void) {
   // ---
 
   hbox = lives_hbox_new (FALSE,0);
-  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_recording), hbox, FALSE, FALSE, widget_opts.packing_height);
+  gtk_box_pack_start (GTK_BOX (prefsw->vbox_right_recording), hbox, FALSE, FALSE, widget_opts.packing_height*4);
   
   prefsw->spinbutton_rec_gb = lives_standard_spin_button_new (_("Pause recording if free disk space falls below"),FALSE,
 							      prefs->rec_stop_gb, 0., 1024., 1., 10., 0,
@@ -3084,6 +3084,7 @@ _prefsw *create_prefs_dialog (void) {
   prefsw->spinbutton_nfx_threads = lives_standard_spin_button_new (_("Number of _threads"),TRUE,future_prefs->nfx_threads, 2., 65536., 1., 1., 0, 
 								   LIVES_BOX(hbox),NULL);
 
+  add_fill_to_box(LIVES_BOX(hbox));
 
   if (future_prefs->nfx_threads==1) gtk_widget_set_sensitive(prefsw->spinbutton_nfx_threads,FALSE);
 

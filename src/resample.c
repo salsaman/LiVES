@@ -1222,7 +1222,7 @@ _resaudw *create_resaudw (gshort type, render_details *rdet, GtkWidget *top_vbox
   if (type==1) {
     frame = gtk_frame_new (NULL);
  
-    gtk_box_pack_start (GTK_BOX (vboxx), frame, TRUE, TRUE, 0);
+    gtk_box_pack_start (GTK_BOX (vboxx), frame, FALSE, FALSE, widget_opts.packing_height);
     
     if (palette->style&STYLE_1) {
       lives_widget_set_bg_color (frame, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);

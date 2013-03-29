@@ -924,10 +924,10 @@ void add_to_winmenu(void) {
                       NULL);
 
   if (!cfile->opening&&(cfile->clip_type==CLIP_TYPE_DISK||cfile->clip_type==CLIP_TYPE_FILE)) {
-    active_image = gtk_image_new_from_stock ("gtk-cancel", GTK_ICON_SIZE_MENU);
+    active_image = lives_image_new_from_stock ("gtk-cancel", LIVES_ICON_SIZE_MENU);
   }
   else {
-    active_image = gtk_image_new_from_stock ("gtk-yes", GTK_ICON_SIZE_MENU);
+    active_image = lives_image_new_from_stock ("gtk-yes", LIVES_ICON_SIZE_MENU);
   }
   gtk_widget_show (active_image);
   gtk_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (cfile->menuentry), active_image);
@@ -1545,7 +1545,7 @@ _entryw* create_rename_dialog (int type) {
   if (type==6) {
     dirbutton1 = gtk_button_new ();
     
-    dirimage1 = gtk_image_new_from_stock ("gtk-open", GTK_ICON_SIZE_BUTTON);
+    dirimage1 = lives_image_new_from_stock ("gtk-open", LIVES_ICON_SIZE_BUTTON);
 
     gtk_container_add (GTK_CONTAINER (dirbutton1), dirimage1);
 

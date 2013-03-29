@@ -3489,11 +3489,11 @@ reset_clip_menu (void) {
 	active_image=NULL;
       }
       if (mainw->files[i]->opening) {
-	active_image = gtk_image_new_from_stock ("gtk-no", GTK_ICON_SIZE_MENU);
+	active_image = lives_image_new_from_stock ("gtk-no", LIVES_ICON_SIZE_MENU);
       }
       else {
 	if (i==mainw->current_file) {
-	  active_image = gtk_image_new_from_stock ("gtk-close", GTK_ICON_SIZE_MENU);
+	  active_image = lives_image_new_from_stock ("gtk-close", LIVES_ICON_SIZE_MENU);
 	}
       }
       if (!(active_image==NULL)) {

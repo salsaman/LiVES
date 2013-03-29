@@ -405,6 +405,25 @@ return c0;
 
 
 
+LIVES_INLINE LiVESWidget *lives_image_new_from_stock(const char *stock_id, lives_icon_size_t size) {
+  LiVESWidget *image=NULL;
+#ifdef GUI_GTK
+  GtkIconSet *iset=gtk_icon_factory_lookup_default(stock_id);
+  if (iset!=NULL) {
+    image=gtk_image_new_from_stock(stock_id,size);
+  }
+  else {
+    image=gtk_image_new_from_stock(GTK_STOCK_MISSING_IMAGE,size);
+    if (image==NULL) image=gtk_image_new_from_stock(GTK_STOCK_NO,size);
+    if (image==NULL) image=gtk_image_new_from_stock(GTK_STOCK_CLOSE,size);
+  }
+#endif
+  return image;
+}
+
+
+
+
 LIVES_INLINE boolean lives_color_parse(const char *spec, LiVESWidgetColor *color) {
   boolean retval=FALSE;
 #ifdef GUI_GTK
@@ -2204,7 +2223,7 @@ LiVESWidget *lives_standard_expander_new(const char *ltext, boolean use_mnemonic
 LiVESWidget *lives_standard_file_button_new(boolean is_dir, const char *def_dir) {
   LiVESWidget *fbutton=NULL;
 #ifdef GUI_GTK
-  GtkWidget *image = gtk_image_new_from_stock ("gtk-open", GTK_ICON_SIZE_BUTTON);
+  GtkWidget *image = lives_image_new_from_stock ("gtk-open", LIVES_ICON_SIZE_BUTTON);
   fbutton = gtk_button_new ();
   g_object_set_data(G_OBJECT(fbutton),"is_dir",GINT_TO_POINTER(is_dir));
   if (def_dir!=NULL) g_object_set_data(G_OBJECT(fbutton),"def_dir",(gpointer)def_dir);

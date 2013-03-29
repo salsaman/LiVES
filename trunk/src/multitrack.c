@@ -5997,7 +5997,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
                               LIVES_KEY_u, LIVES_CONTROL_MASK,
                               GTK_ACCEL_VISIBLE);
   
-  image = gtk_image_new_from_stock ("gtk-undo", GTK_ICON_SIZE_MENU);
+  image = lives_image_new_from_stock ("gtk-undo", LIVES_ICON_SIZE_MENU);
   gtk_widget_show (image);
   gtk_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (mt->undo), image);
 
@@ -6019,7 +6019,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
                               LIVES_KEY_z, LIVES_CONTROL_MASK,
                               GTK_ACCEL_VISIBLE);
 
-  image = gtk_image_new_from_stock ("gtk-redo", GTK_ICON_SIZE_MENU);
+  image = lives_image_new_from_stock ("gtk-redo", LIVES_ICON_SIZE_MENU);
   gtk_widget_show (image);
   gtk_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (mt->redo), image);
 
@@ -6144,7 +6144,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 
   gtk_container_add (GTK_CONTAINER (menuitem_menu), mt->playall);
 
-  image = gtk_image_new_from_stock ("gtk-refresh", GTK_ICON_SIZE_MENU);
+  image = lives_image_new_from_stock ("gtk-refresh", LIVES_ICON_SIZE_MENU);
   gtk_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (mt->playall), image);
 
   mt->playsel = gtk_image_menu_item_new_with_mnemonic (_("Pla_y selected time only"));
@@ -6161,13 +6161,13 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
                               LIVES_KEY_q, (GdkModifierType)0,
                               GTK_ACCEL_VISIBLE);
 
-  image = gtk_image_new_from_stock ("gtk-stop", GTK_ICON_SIZE_MENU);
+  image = lives_image_new_from_stock ("gtk-stop", LIVES_ICON_SIZE_MENU);
   gtk_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (mt->stop), image);
 
   mt->rewind = gtk_image_menu_item_new_with_mnemonic (_("Re_wind"));
   gtk_container_add (GTK_CONTAINER (menuitem_menu), mt->rewind);
 
-  image = gtk_image_new_from_stock ("gtk-back", GTK_ICON_SIZE_MENU);
+  image = lives_image_new_from_stock ("gtk-back", LIVES_ICON_SIZE_MENU);
   gtk_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (mt->rewind), image);
   gtk_widget_set_sensitive (mt->rewind, FALSE);
 
@@ -6884,7 +6884,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
                               LIVES_KEY_p, LIVES_CONTROL_MASK,
                               GTK_ACCEL_VISIBLE);
 
-  image = gtk_image_new_from_stock ("gtk-preferences", GTK_ICON_SIZE_MENU);
+  image = lives_image_new_from_stock ("gtk-preferences", LIVES_ICON_SIZE_MENU);
   gtk_widget_show (image);
   gtk_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (menuitem), image);
 
@@ -7450,7 +7450,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   }
 
   gtk_toolbar_set_style (GTK_TOOLBAR (btoolbar), GTK_TOOLBAR_ICONS);
-  gtk_toolbar_set_icon_size (GTK_TOOLBAR(btoolbar),GTK_ICON_SIZE_SMALL_TOOLBAR);
+  gtk_toolbar_set_icon_size (GTK_TOOLBAR(btoolbar),LIVES_ICON_SIZE_SMALL_TOOLBAR);
 
   g_object_ref(mainw->m_sepwinbutton);
   lives_widget_unparent(mainw->m_sepwinbutton);
@@ -7660,7 +7660,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   }
 
   gtk_toolbar_set_style (GTK_TOOLBAR (btoolbar), GTK_TOOLBAR_ICONS);
-  gtk_toolbar_set_icon_size (GTK_TOOLBAR(btoolbar),GTK_ICON_SIZE_SMALL_TOOLBAR);
+  gtk_toolbar_set_icon_size (GTK_TOOLBAR(btoolbar),LIVES_ICON_SIZE_SMALL_TOOLBAR);
 
 
 
@@ -16237,14 +16237,14 @@ void mt_swap_play_pause (lives_mt *mt, boolean put_pause) {
   GtkWidget *tmp_img;
 
   if (put_pause) {
-    tmp_img = gtk_image_new_from_stock ("gtk-media-pause", gtk_toolbar_get_icon_size (GTK_TOOLBAR (mainw->btoolbar)));
+    tmp_img = lives_image_new_from_stock ("gtk-media-pause", gtk_toolbar_get_icon_size (GTK_TOOLBAR (mainw->btoolbar)));
     set_menu_text(mt->playall,_("_Pause"),TRUE);
     gtk_tool_item_set_tooltip_text(GTK_TOOL_ITEM(mainw->m_playbutton),_("Pause (p)"));
     gtk_widget_set_sensitive(mt->playall,TRUE);
     gtk_widget_set_sensitive(mainw->m_playbutton,TRUE);
   }
   else {
-    tmp_img = gtk_image_new_from_stock ("gtk-media-play", gtk_toolbar_get_icon_size (GTK_TOOLBAR (mainw->btoolbar)));
+    tmp_img = lives_image_new_from_stock ("gtk-media-play", gtk_toolbar_get_icon_size (GTK_TOOLBAR (mainw->btoolbar)));
     set_menu_text(mt->playall,_("_Play from Timeline Position"),TRUE);
     gtk_tool_item_set_tooltip_text(GTK_TOOL_ITEM(mainw->m_playbutton),_("Play all (p)"));
   }

@@ -645,7 +645,7 @@ void create_LiVES (void) {
                               LIVES_KEY_u, LIVES_CONTROL_MASK,
                               GTK_ACCEL_VISIBLE);
 
-  image = gtk_image_new_from_stock ("gtk-undo", GTK_ICON_SIZE_MENU);
+  image = lives_image_new_from_stock ("gtk-undo", LIVES_ICON_SIZE_MENU);
   gtk_widget_show (image);
   gtk_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (mainw->undo), image);
 
@@ -658,7 +658,7 @@ void create_LiVES (void) {
                               LIVES_KEY_z, LIVES_CONTROL_MASK,
                               GTK_ACCEL_VISIBLE);
 
-  image = gtk_image_new_from_stock ("gtk-redo", GTK_ICON_SIZE_MENU);
+  image = lives_image_new_from_stock ("gtk-redo", LIVES_ICON_SIZE_MENU);
   gtk_widget_show (image);
   gtk_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (mainw->redo), image);
 
@@ -707,7 +707,7 @@ void create_LiVES (void) {
                               LIVES_KEY_i, LIVES_CONTROL_MASK,
                               GTK_ACCEL_VISIBLE);
 
-  image = gtk_image_new_from_stock ("gtk-add", GTK_ICON_SIZE_MENU);
+  image = lives_image_new_from_stock ("gtk-add", LIVES_ICON_SIZE_MENU);
   gtk_widget_show (image);
   gtk_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (mainw->insert), image);
 
@@ -732,7 +732,7 @@ void create_LiVES (void) {
   gtk_container_add (GTK_CONTAINER (menuitem_menu), mainw->xdelete);
   gtk_widget_set_sensitive (mainw->xdelete, FALSE);
 
-  image = gtk_image_new_from_stock ("gtk-delete", GTK_ICON_SIZE_MENU);
+  image = lives_image_new_from_stock ("gtk-delete", LIVES_ICON_SIZE_MENU);
   gtk_widget_show (image);
   gtk_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (mainw->xdelete), image);
 
@@ -845,7 +845,7 @@ void create_LiVES (void) {
   gtk_container_add (GTK_CONTAINER (menuitem_menu), mainw->playall);
   gtk_widget_set_sensitive (mainw->playall, FALSE);
 
-  image = gtk_image_new_from_stock ("gtk-refresh", GTK_ICON_SIZE_MENU);
+  image = lives_image_new_from_stock ("gtk-refresh", LIVES_ICON_SIZE_MENU);
   gtk_widget_show (image);
   gtk_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (mainw->playall), image);
 
@@ -866,12 +866,19 @@ void create_LiVES (void) {
                               LIVES_KEY_c, (GdkModifierType)0,
                               GTK_ACCEL_VISIBLE);
 
-
-  image = gtk_image_new_from_stock ("gtk-go-forward", GTK_ICON_SIZE_MENU);
+#if GTK_CHECK_VERSION(2,6,0)
+  image = lives_image_new_from_stock (GTK_STOCK_MEDIA_PLAY, LIVES_ICON_SIZE_MENU);
+#else
+  image = lives_image_new_from_stock (GTK_STOCK_GO_FORWARD, LIVES_ICON_SIZE_MENU);
+#endif
   gtk_widget_show (image);
   gtk_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (mainw->playsel), image);
 
-  image = gtk_image_new_from_stock ("gtk-go-forward", GTK_ICON_SIZE_MENU);
+#if GTK_CHECK_VERSION(2,6,0)
+  image = lives_image_new_from_stock (GTK_STOCK_MEDIA_PLAY, LIVES_ICON_SIZE_MENU);
+#else
+  image = lives_image_new_from_stock (GTK_STOCK_GO_FORWARD, LIVES_ICON_SIZE_MENU);
+#endif
   gtk_widget_show (image);
   gtk_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (mainw->playclip), image);
 
@@ -884,7 +891,12 @@ void create_LiVES (void) {
                               GTK_ACCEL_VISIBLE);
 
 
-  image = gtk_image_new_from_stock ("gtk-stop", GTK_ICON_SIZE_MENU);
+#if GTK_CHECK_VERSION(2,6,0)
+  image = lives_image_new_from_stock (GTK_STOCK_MEDIA_STOP, LIVES_ICON_SIZE_MENU);
+#else
+  image = lives_image_new_from_stock (GTK_STOCK_STOP, LIVES_ICON_SIZE_MENU);
+#endif
+
   gtk_widget_show (image);
   gtk_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (mainw->stop), image);
 
@@ -893,7 +905,12 @@ void create_LiVES (void) {
   gtk_container_add (GTK_CONTAINER (menuitem_menu), mainw->rewind);
   gtk_widget_set_sensitive (mainw->rewind, FALSE);
 
-  image = gtk_image_new_from_stock ("gtk-back", GTK_ICON_SIZE_MENU);
+#if GTK_CHECK_VERSION(2,6,0)
+  image = lives_image_new_from_stock (GTK_STOCK_MEDIA_REWIND, LIVES_ICON_SIZE_MENU);
+#else
+  image = lives_image_new_from_stock (GTK_STOCK_GO_BACK, LIVES_ICON_SIZE_MENU);
+#endif
+
   gtk_widget_show (image);
   gtk_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (mainw->rewind), image);
 
@@ -904,6 +921,12 @@ void create_LiVES (void) {
   mainw->record_perf = gtk_check_menu_item_new_with_mnemonic("");
 
   disable_record();
+
+#if GTK_CHECK_VERSION(2,6,0)
+  image = lives_image_new_from_stock (GTK_STOCK_MEDIA_RECORD, LIVES_ICON_SIZE_MENU);
+#else
+  image = lives_image_new_from_stock (GTK_STOCK_NO, LIVES_ICON_SIZE_MENU);
+#endif
 
   gtk_widget_add_accelerator (mainw->record_perf, "activate", mainw->accel_group,
 			      LIVES_KEY_r, (GdkModifierType)0,
@@ -1145,7 +1168,7 @@ void create_LiVES (void) {
                               LIVES_KEY_p, LIVES_CONTROL_MASK,
                               GTK_ACCEL_VISIBLE);
 
-  image = gtk_image_new_from_stock ("gtk-preferences", GTK_ICON_SIZE_MENU);
+  image = lives_image_new_from_stock ("gtk-preferences", LIVES_ICON_SIZE_MENU);
   gtk_widget_show (image);
   gtk_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (mainw->preferences), image);
 
@@ -1334,7 +1357,7 @@ void create_LiVES (void) {
   gtk_container_add (GTK_CONTAINER (info_menu), mainw->show_clipboard_info);
   gtk_widget_set_sensitive (mainw->show_clipboard_info, FALSE);
 
-  image = gtk_image_new_from_stock ("gtk-dialog-info", GTK_ICON_SIZE_MENU);
+  image = lives_image_new_from_stock ("gtk-dialog-info", LIVES_ICON_SIZE_MENU);
   gtk_widget_show (image);
   gtk_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (mainw->show_file_info), image);
 
@@ -1718,7 +1741,7 @@ void create_LiVES (void) {
   }
 
   gtk_toolbar_set_style (GTK_TOOLBAR (mainw->btoolbar), GTK_TOOLBAR_ICONS);
-  gtk_toolbar_set_icon_size (GTK_TOOLBAR(mainw->btoolbar),GTK_ICON_SIZE_MENU);
+  gtk_toolbar_set_icon_size (GTK_TOOLBAR(mainw->btoolbar),LIVES_ICON_SIZE_MENU);
   
   if (capable->smog_version_correct) {
     fnamex=g_build_filename(prefs->prefix_dir,ICON_DIR,"sepwin.png",NULL);
@@ -1734,7 +1757,7 @@ void create_LiVES (void) {
     gtk_toolbar_insert(GTK_TOOLBAR(mainw->btoolbar),GTK_TOOL_ITEM(mainw->m_sepwinbutton),0);
     gtk_tool_item_set_tooltip_text(GTK_TOOL_ITEM(mainw->m_sepwinbutton),_("Show the play window (s)"));
     
-    tmp_toolbar_icon = gtk_image_new_from_stock ("gtk-media-rewind", gtk_toolbar_get_icon_size (GTK_TOOLBAR (mainw->btoolbar)));
+    tmp_toolbar_icon = lives_image_new_from_stock ("gtk-media-rewind", gtk_toolbar_get_icon_size (GTK_TOOLBAR (mainw->btoolbar)));
     
     mainw->m_rewindbutton=GTK_WIDGET(gtk_tool_button_new(GTK_WIDGET(tmp_toolbar_icon),""));
     gtk_toolbar_insert(GTK_TOOLBAR(mainw->btoolbar),GTK_TOOL_ITEM(mainw->m_rewindbutton),-1);
@@ -1742,7 +1765,7 @@ void create_LiVES (void) {
     
     gtk_widget_set_sensitive(mainw->m_rewindbutton,FALSE);
     
-    tmp_toolbar_icon = gtk_image_new_from_stock ("gtk-media-play", gtk_toolbar_get_icon_size (GTK_TOOLBAR (mainw->btoolbar)));
+    tmp_toolbar_icon = lives_image_new_from_stock ("gtk-media-play", gtk_toolbar_get_icon_size (GTK_TOOLBAR (mainw->btoolbar)));
     
     mainw->m_playbutton=GTK_WIDGET(gtk_tool_button_new(GTK_WIDGET(tmp_toolbar_icon),""));
     gtk_toolbar_insert(GTK_TOOLBAR(mainw->btoolbar),GTK_TOOL_ITEM(mainw->m_playbutton),-1);
@@ -1752,7 +1775,7 @@ void create_LiVES (void) {
     gtk_widget_set_sensitive(mainw->m_playbutton,FALSE);
 
 
-    tmp_toolbar_icon = gtk_image_new_from_stock ("gtk-media-stop", gtk_toolbar_get_icon_size (GTK_TOOLBAR (mainw->btoolbar)));
+    tmp_toolbar_icon = lives_image_new_from_stock ("gtk-media-stop", gtk_toolbar_get_icon_size (GTK_TOOLBAR (mainw->btoolbar)));
     
     mainw->m_stopbutton=GTK_WIDGET(gtk_tool_button_new(GTK_WIDGET(tmp_toolbar_icon),""));
     gtk_toolbar_insert(GTK_TOOLBAR(mainw->btoolbar),GTK_TOOL_ITEM(mainw->m_stopbutton),-1);
@@ -1860,14 +1883,14 @@ void create_LiVES (void) {
   gtk_box_pack_start (GTK_BOX (mainw->tb_hbox), mainw->toolbar, TRUE, TRUE, 0);
 
   gtk_toolbar_set_style (GTK_TOOLBAR (mainw->toolbar), GTK_TOOLBAR_ICONS);
-  gtk_toolbar_set_icon_size (GTK_TOOLBAR(mainw->toolbar),GTK_ICON_SIZE_SMALL_TOOLBAR);
-  tmp_toolbar_icon = gtk_image_new_from_stock ("gtk-stop", gtk_toolbar_get_icon_size (GTK_TOOLBAR (mainw->toolbar)));
+  gtk_toolbar_set_icon_size (GTK_TOOLBAR(mainw->toolbar),LIVES_ICON_SIZE_SMALL_TOOLBAR);
+  tmp_toolbar_icon = lives_image_new_from_stock ("gtk-stop", gtk_toolbar_get_icon_size (GTK_TOOLBAR (mainw->toolbar)));
   
   mainw->t_stopbutton=GTK_WIDGET(gtk_tool_button_new(GTK_WIDGET(tmp_toolbar_icon),""));
   gtk_toolbar_insert(GTK_TOOLBAR(mainw->toolbar),GTK_TOOL_ITEM(mainw->t_stopbutton),0);
   gtk_tool_item_set_tooltip_text(GTK_TOOL_ITEM(mainw->t_stopbutton),_("Stop playback (q)"));
 
-  tmp_toolbar_icon = gtk_image_new_from_stock ("gtk-undo", gtk_toolbar_get_icon_size (GTK_TOOLBAR (mainw->toolbar)));
+  tmp_toolbar_icon = lives_image_new_from_stock ("gtk-undo", gtk_toolbar_get_icon_size (GTK_TOOLBAR (mainw->toolbar)));
 
   mainw->t_bckground=GTK_WIDGET(gtk_tool_button_new(GTK_WIDGET(tmp_toolbar_icon),""));
   gtk_toolbar_insert(GTK_TOOLBAR(mainw->toolbar),GTK_TOOL_ITEM(mainw->t_bckground),1);
@@ -1912,39 +1935,39 @@ void create_LiVES (void) {
   gtk_toolbar_insert(GTK_TOOLBAR(mainw->toolbar),GTK_TOOL_ITEM(mainw->t_fullscreen),4);
   gtk_tool_item_set_tooltip_text(GTK_TOOL_ITEM(mainw->t_fullscreen),_("Fullscreen playback (f)"));
 
-  tmp_toolbar_icon = gtk_image_new_from_stock ("gtk-remove", gtk_toolbar_get_icon_size (GTK_TOOLBAR (mainw->toolbar)));
+  tmp_toolbar_icon = lives_image_new_from_stock ("gtk-remove", gtk_toolbar_get_icon_size (GTK_TOOLBAR (mainw->toolbar)));
 
 
   mainw->t_slower=GTK_WIDGET(gtk_tool_button_new(GTK_WIDGET(tmp_toolbar_icon),""));
   gtk_toolbar_insert(GTK_TOOLBAR(mainw->toolbar),GTK_TOOL_ITEM(mainw->t_slower),5);
   gtk_tool_item_set_tooltip_text(GTK_TOOL_ITEM(mainw->t_slower),_("Play slower (ctrl-down)"));
 
-  tmp_toolbar_icon = gtk_image_new_from_stock ("gtk-add", gtk_toolbar_get_icon_size (GTK_TOOLBAR (mainw->toolbar)));
+  tmp_toolbar_icon = lives_image_new_from_stock ("gtk-add", gtk_toolbar_get_icon_size (GTK_TOOLBAR (mainw->toolbar)));
 
   mainw->t_faster=GTK_WIDGET(gtk_tool_button_new(GTK_WIDGET(tmp_toolbar_icon),""));
   gtk_toolbar_insert(GTK_TOOLBAR(mainw->toolbar),GTK_TOOL_ITEM(mainw->t_faster),6);
   gtk_tool_item_set_tooltip_text(GTK_TOOL_ITEM(mainw->t_faster),_("Play faster (ctrl-up)"));
 
 
-  tmp_toolbar_icon = gtk_image_new_from_stock ("gtk-go-back", gtk_toolbar_get_icon_size (GTK_TOOLBAR (mainw->toolbar)));
+  tmp_toolbar_icon = lives_image_new_from_stock ("gtk-go-back", gtk_toolbar_get_icon_size (GTK_TOOLBAR (mainw->toolbar)));
 
   mainw->t_back=GTK_WIDGET(gtk_tool_button_new(GTK_WIDGET(tmp_toolbar_icon),""));
   gtk_toolbar_insert(GTK_TOOLBAR(mainw->toolbar),GTK_TOOL_ITEM(mainw->t_back),7);
   gtk_tool_item_set_tooltip_text(GTK_TOOL_ITEM(mainw->t_back),_("Skip back (ctrl-left)"));
 
-  tmp_toolbar_icon = gtk_image_new_from_stock ("gtk-go-forward", gtk_toolbar_get_icon_size (GTK_TOOLBAR (mainw->toolbar)));
+  tmp_toolbar_icon = lives_image_new_from_stock ("gtk-go-forward", gtk_toolbar_get_icon_size (GTK_TOOLBAR (mainw->toolbar)));
 
   mainw->t_forward=GTK_WIDGET(gtk_tool_button_new(GTK_WIDGET(tmp_toolbar_icon),""));
   gtk_toolbar_insert(GTK_TOOLBAR(mainw->toolbar),GTK_TOOL_ITEM(mainw->t_forward),8);
   gtk_tool_item_set_tooltip_text(GTK_TOOL_ITEM(mainw->t_forward),_("Skip forward (ctrl-right)"));
 
-  tmp_toolbar_icon = gtk_image_new_from_stock ("gtk-dialog-info", gtk_toolbar_get_icon_size (GTK_TOOLBAR (mainw->toolbar)));
+  tmp_toolbar_icon = lives_image_new_from_stock ("gtk-dialog-info", gtk_toolbar_get_icon_size (GTK_TOOLBAR (mainw->toolbar)));
 
   mainw->t_infobutton=GTK_WIDGET(gtk_tool_button_new(GTK_WIDGET(tmp_toolbar_icon),""));
   gtk_toolbar_insert(GTK_TOOLBAR(mainw->toolbar),GTK_TOOL_ITEM(mainw->t_infobutton),9);
   gtk_tool_item_set_tooltip_text(GTK_TOOL_ITEM(mainw->t_infobutton),_("Show clip info (i)"));
 
-  tmp_toolbar_icon = gtk_image_new_from_stock ("gtk-cancel", gtk_toolbar_get_icon_size (GTK_TOOLBAR (mainw->toolbar)));
+  tmp_toolbar_icon = lives_image_new_from_stock ("gtk-cancel", gtk_toolbar_get_icon_size (GTK_TOOLBAR (mainw->toolbar)));
 
   mainw->t_hide=GTK_WIDGET(gtk_tool_button_new(GTK_WIDGET(tmp_toolbar_icon),""));
   gtk_toolbar_insert(GTK_TOOLBAR(mainw->toolbar),GTK_TOOL_ITEM(mainw->t_hide),10);
@@ -3515,7 +3538,7 @@ void make_preview_box (void) {
   hbox_buttons = lives_hbox_new (FALSE, 0);
   gtk_box_pack_start (GTK_BOX (mainw->preview_controls), hbox_buttons, TRUE, TRUE, 0);
 
-  rewind_img=gtk_image_new_from_stock ("gtk-media-rewind", gtk_toolbar_get_icon_size (GTK_TOOLBAR (mainw->btoolbar)));
+  rewind_img=lives_image_new_from_stock ("gtk-media-rewind", gtk_toolbar_get_icon_size (GTK_TOOLBAR (mainw->btoolbar)));
   mainw->p_rewindbutton=gtk_button_new();
   lives_widget_set_bg_color (mainw->p_rewindbutton, LIVES_WIDGET_STATE_ACTIVE, &palette->menu_and_bars);
   gtk_button_set_relief (GTK_BUTTON (mainw->p_rewindbutton), GTK_RELIEF_NONE);
@@ -3526,7 +3549,7 @@ void make_preview_box (void) {
   gtk_widget_set_tooltip_text( mainw->p_rewindbutton,_ ("Rewind"));
   gtk_widget_set_sensitive (mainw->p_rewindbutton, mainw->current_file>-1&&cfile->pointer_time>0.);
 
-  play_img=gtk_image_new_from_stock ("gtk-media-play", gtk_toolbar_get_icon_size (GTK_TOOLBAR (mainw->btoolbar)));
+  play_img=lives_image_new_from_stock ("gtk-media-play", gtk_toolbar_get_icon_size (GTK_TOOLBAR (mainw->btoolbar)));
   mainw->p_playbutton=gtk_button_new();
   lives_widget_set_bg_color (mainw->p_playbutton, LIVES_WIDGET_STATE_ACTIVE, &palette->menu_and_bars);
   gtk_button_set_relief (GTK_BUTTON (mainw->p_playbutton), GTK_RELIEF_NONE);

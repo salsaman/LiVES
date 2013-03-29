@@ -4275,7 +4275,7 @@ void splash_init(void) {
 
 
 
-void splash_msg(const gchar *msg, gdouble pct) {
+void splash_msg(const gchar *msg, double pct) {
 
   if (mainw->foreign||mainw->splash_window==NULL) return;
 

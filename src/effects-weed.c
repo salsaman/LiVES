@@ -4474,7 +4474,10 @@ static void load_weed_plugin (gchar *plugin_name, gchar *plugin_path, gchar *dir
 	      break;
 	    }
 	  }
-	  if (dup) continue;
+	  if (dup) {
+	    weed_free(filter_name);
+	    continue;
+	  }
 
 	  // we start with all optional channels disabled (unless forced to use them)
 	  set_in_channel_palettes (filter,enabled_in_channels(filters[mode],FALSE));

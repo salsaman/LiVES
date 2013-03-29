@@ -2037,6 +2037,11 @@ _prefsw *create_prefs_dialog (void) {
   prefsw->prefs_list = gtk_tree_view_new();
   gtk_widget_show(prefsw->prefs_list);
 
+  if (palette->style&STYLE_1) {
+    lives_widget_set_bg_color(prefsw->prefs_list, LIVES_WIDGET_STATE_SELECTED, &palette->normal_back);
+    lives_widget_set_fg_color(prefsw->prefs_list, LIVES_WIDGET_STATE_SELECTED, &palette->normal_fore);
+  }
+
   gtk_tree_view_set_headers_visible(GTK_TREE_VIEW(prefsw->prefs_list), FALSE);
 
   // Place panels into main vbox
@@ -4344,6 +4349,7 @@ _prefsw *create_prefs_dialog (void) {
   else select_pref_list_row(prefs_current_page);
 
   on_prefDomainChanged(prefsw->selection,NULL);
+  gtk_widget_queue_draw(prefsw->prefs_list);
 
   return prefsw;
 }

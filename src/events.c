@@ -1078,8 +1078,7 @@ void insert_audio_event_at(weed_plant_t *event_list, weed_plant_t *event, int tr
   double *new_aseeks;
   double arv; // vel needs rounding to four dp (i don't know why, but otherwise we get some weird rounding errors)
 
-  if (vel>=0.) arv=(double)(int)(vel*10000.+.5)/10000.;
-  else arv=(double)(int)(vel*10000.-.5)/10000.;
+  arv=(double)(myround(vel*10000.+.5))/10000.;
 
   if (weed_plant_has_leaf(event,"audio_clips")) {
     int num_aclips=weed_leaf_num_elements(event,"audio_clips");

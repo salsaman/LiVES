@@ -933,8 +933,8 @@ LIVES_INLINE int lives_killpg(lives_pgid_t pgrp, int sig) {
 };
 
 
-LIVES_INLINE gint myround(gdouble n) {
-  return (n>=0.)?(gint)(n + 0.5):(gint)(n - 0.5);
+LIVES_INLINE int myround(double n) {
+  return (n>=0.)?(int)(n + 0.5):(int)(n - 0.5);
 }
 
 LIVES_INLINE void clear_mainw_msg (void) {
@@ -1017,7 +1017,7 @@ int lives_alarm_set(int64_t ticks) {
 /*** check if alarm time passed yet, if so clear that alarm and return TRUE
  * else return FALSE
  */
-gboolean lives_alarm_get(int alarm_handle) {
+boolean lives_alarm_get(int alarm_handle) {
   int64_t cticks;
 
   // invalid alarm number
@@ -1112,11 +1112,11 @@ LIVES_INLINE float LEFloat_to_BEFloat(float f) {
 }
 
 
-LIVES_INLINE gdouble calc_time_from_frame (gint clip, gint frame) {
+LIVES_INLINE double calc_time_from_frame (int clip, int frame) {
   return (frame-1.)/mainw->files[clip]->fps;
 }
 
-LIVES_INLINE gint calc_frame_from_time (gint filenum, gdouble time) {
+LIVES_INLINE int calc_frame_from_time (int filenum, double time) {
   // return the nearest frame (rounded) for a given time, max is cfile->frames
   int frame=0;
   if (time<0.) return mainw->files[filenum]->frames?1:0;
@@ -1124,7 +1124,7 @@ LIVES_INLINE gint calc_frame_from_time (gint filenum, gdouble time) {
   return (frame<mainw->files[filenum]->frames)?frame:mainw->files[filenum]->frames;
 }
 
-LIVES_INLINE gint calc_frame_from_time2 (gint filenum, gdouble time) {
+LIVES_INLINE int calc_frame_from_time2 (int filenum, double time) {
   // return the nearest frame (rounded) for a given time
   // allow max (frames+1)
   int frame=0;
@@ -1133,7 +1133,7 @@ LIVES_INLINE gint calc_frame_from_time2 (gint filenum, gdouble time) {
   return (frame<mainw->files[filenum]->frames+1)?frame:mainw->files[filenum]->frames+1;
 }
 
-LIVES_INLINE gint calc_frame_from_time3 (gint filenum, gdouble time) {
+LIVES_INLINE int calc_frame_from_time3 (int filenum, double time) {
   // return the nearest frame (floor) for a given time
   // allow max (frames+1)
   int frame=0;
@@ -1274,7 +1274,7 @@ int calc_new_playback_position(int fileno, uint64_t otc, uint64_t *ntc) {
   *ntc=otc+dtc;
 
   // nframe is our new frame
-  nframe=cframe+(gint)((gdouble)dtc/U_SEC*fps+(fps>0?.5:-.5));
+  nframe=cframe+myround((double)dtc/U_SEC*fps);
 
   if (nframe==cframe||mainw->foreign) return nframe;
 
@@ -2075,7 +2075,7 @@ gchar *ensure_extension(const gchar *fname, const gchar *ext) {
 }
 
 
-gboolean ensure_isdir(gchar *fname) {
+boolean ensure_isdir(gchar *fname) {
   // ensure dirname ends in a single dir separator
   // fname should be gchar[PATH_MAX]
 
@@ -2720,7 +2720,7 @@ void get_play_times(void) {
     }
   }
   else {
-    gdouble ptrtime=(mainw->actual_frame-.5)/cfile->fps;
+    double ptrtime=(mainw->actual_frame-.5)/cfile->fps;
     if (ptrtime<0.) ptrtime=0.;
     draw_little_bars(ptrtime);
   }
@@ -2977,8 +2977,7 @@ minimise_aspect_delta (gdouble aspect,gint hblock,gint vblock,gint hsize,gint vs
   }
 }
 
-void 
-zero_spinbuttons (void) {
+void zero_spinbuttons (void) {
   g_signal_handler_block(mainw->spinbutton_start,mainw->spin_start_func);
   gtk_spin_button_set_range(GTK_SPIN_BUTTON(mainw->spinbutton_start),0.,0.);
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_start),0.);
@@ -2992,7 +2991,7 @@ zero_spinbuttons (void) {
 
 
 
-gboolean switch_aud_to_jack(void) {
+boolean switch_aud_to_jack(void) {
 #ifdef ENABLE_JACK
   if (mainw->is_ready) {
     lives_jack_init();
@@ -3045,9 +3044,9 @@ gboolean switch_aud_to_jack(void) {
 
 
 
-gboolean switch_aud_to_pulse(void) {
+boolean switch_aud_to_pulse(void) {
 #ifdef HAVE_PULSE_AUDIO
-  gboolean retval;
+  boolean retval;
 
   if (mainw->is_ready) {
     if ((retval=lives_pulse_init(-1))) {
@@ -3094,7 +3093,7 @@ gboolean switch_aud_to_pulse(void) {
 
 
 
-void switch_aud_to_sox(gboolean set_in_prefs) {
+void switch_aud_to_sox(boolean set_in_prefs) {
   prefs->audio_player=AUD_PLAYER_SOX;
   get_pref_default("sox_command",prefs->audio_play_command,256);
   if (set_in_prefs) set_pref("audio_player","sox");
@@ -3138,8 +3137,7 @@ void switch_aud_to_sox(gboolean set_in_prefs) {
 
 
 
-void
-switch_aud_to_mplayer(gboolean set_in_prefs) {
+void switch_aud_to_mplayer(boolean set_in_prefs) {
   int i;
   for (i=1;i<MAX_FILES;i++) {
     if (mainw->files[i]!=NULL) {
@@ -3441,8 +3439,7 @@ boolean after_foreign_play(void) {
 }
 
 
-void
-set_menu_text(GtkWidget *menuitem, const gchar *text, gboolean use_mnemonic) {
+void set_menu_text(GtkWidget *menuitem, const gchar *text, boolean use_mnemonic) {
   GtkWidget *label;
   if (GTK_IS_MENU_ITEM (menuitem)) {
     label=gtk_bin_get_child(GTK_BIN(menuitem));
@@ -3456,8 +3453,7 @@ set_menu_text(GtkWidget *menuitem, const gchar *text, gboolean use_mnemonic) {
 }
 
 
-void
-get_menu_text(GtkWidget *menuitem, gchar *text) {
+void get_menu_text(GtkWidget *menuitem, gchar *text) {
   GtkWidget *label=gtk_bin_get_child(GTK_BIN(menuitem));
   g_snprintf(text,255,"%s",gtk_label_get_text(GTK_LABEL(label)));
 }
@@ -3515,9 +3511,9 @@ reset_clip_menu (void) {
 
 
 
-gboolean check_file(const gchar *file_name, gboolean check_existing) {
+boolean check_file(const gchar *file_name, boolean check_existing) {
   int check;
-  gboolean exists=FALSE;
+  boolean exists=FALSE;
   gchar *msg;
   // file_name should be in utf8
   gchar *lfile_name=g_filename_from_utf8(file_name,-1,NULL,NULL,NULL);
@@ -3562,7 +3558,7 @@ gboolean check_file(const gchar *file_name, gboolean check_existing) {
 
 
 
-gboolean check_dir_access (const gchar *dir) {
+boolean check_dir_access (const gchar *dir) {
   // if a directory exists, make sure it is readable and writable
   // otherwise create it and then check
 
@@ -3570,10 +3566,11 @@ gboolean check_dir_access (const gchar *dir) {
 
   // see also is_writeable_dir() which uses statvfs
 
-  gboolean exists=g_file_test (dir, G_FILE_TEST_EXISTS);
+  boolean exists=g_file_test (dir, G_FILE_TEST_EXISTS);
+  boolean is_OK=FALSE;
+
   gchar *com;
   gchar *testfile;
-  gboolean is_OK=FALSE;
 
   if (!exists) {
     g_mkdir_with_parents(dir,S_IRWXU);
@@ -3600,7 +3597,7 @@ gboolean check_dir_access (const gchar *dir) {
 }
 
 
-gboolean check_dev_busy(gchar *devstr) {
+boolean check_dev_busy(gchar *devstr) {
 #ifndef IS_MINGW
   int ret;
 #ifdef IS_SOLARIS
@@ -4009,7 +4006,7 @@ LIVES_INLINE void g_list_free_strings(GList *slist) {
 }
 
 
-gboolean cache_file_contents(const gchar *filename) {
+boolean cache_file_contents(const gchar *filename) {
   FILE *hfile;
   gchar buff[65536];
 
@@ -4534,8 +4531,8 @@ GList *get_set_list(const gchar *dir) {
 
 
 
-gboolean check_for_ratio_fps (gdouble fps) {
-  gboolean ratio_fps;
+boolean check_for_ratio_fps (double fps) {
+  boolean ratio_fps;
   gchar *test_fps_string1=g_strdup_printf ("%.3f00000",fps);
   gchar *test_fps_string2=g_strdup_printf ("%.8f",fps);
   
@@ -4583,7 +4580,7 @@ gchar *remove_trailing_zeroes(gdouble val) {
 }
 
 
-guint get_signed_endian (gboolean is_signed, gboolean little_endian) {
+guint get_signed_endian (boolean is_signed, boolean little_endian) {
   // asigned TRUE == signed, FALSE == unsigned
 
 
@@ -4775,7 +4772,7 @@ void fastsrand(guint32 seed)
 }
 
 
-gboolean is_writeable_dir(const gchar *dir) {
+boolean is_writeable_dir(const gchar *dir) {
   // return 0 if we cannot create/write to dir
 
   // dir should be in locale encoding

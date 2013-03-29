@@ -16620,11 +16620,6 @@ void multitrack_audio_insert (GtkMenuItem *menuitem, gpointer user_data) {
     ins_start=0;
     ins_end=q_gint64(sfile->laudio_time*U_SEC,mt->fps);
   }
-  else {
-    if (ins_end>q_gint64((double)(sfile->frames-.5)/sfile->fps*U_SEC,mt->fps)) {
-      q_gint64(((double)sfile->end-.5)/sfile->fps*U_SEC,mt->fps);
-    }
-  }
 
   if (ins_start>q_gint64(sfile->laudio_time*U_SEC,mt->fps)) {
     return;

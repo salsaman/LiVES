@@ -1754,16 +1754,16 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const gchar *te
 
 
 
-gboolean do_auto_dialog (const gchar *text, gint type) {
+boolean do_auto_dialog (const gchar *text, int type) {
   // type 0 = normal auto_dialog
   // type 1 = countdown dialog for audio recording
   // type 2 = normal with cancel
 
   FILE *infofile=NULL;
-  gint count=0;
+  int count=0;
   guint64 time=0,end_time=1;
   gchar *label_text;
-  gint time_rem,last_time_rem=10000000;
+  int time_rem,last_time_rem=10000000;
   xprocess *proc_ptr;
   gchar *mytext=g_strdup(text);
 
@@ -1867,15 +1867,13 @@ gboolean do_auto_dialog (const gchar *text, gint type) {
 
 
 
-void
-too_many_files(void) {
+void too_many_files(void) {
   gchar *warn=g_strdup_printf(_ ("\nSorry, LiVES can only open %d files at once.\nPlease close a file and then try again."),MAX_FILES);
   do_error_dialog(warn);
   g_free(warn);
 }
 
-void
-tempdir_warning (void) {
+void tempdir_warning (void) {
   gchar *tmp,*com=g_strdup_printf(_ ("LiVES was unable to write to its temporary directory.\n\nThe current temporary directory is:\n\n%s\n\nPlease make sure you can write to this directory."),
 				  (tmp=g_filename_to_utf8(prefs->tmpdir,-1,NULL,NULL,NULL)));
   g_free(tmp);
@@ -1891,8 +1889,7 @@ void do_no_mplayer_sox_error(void) {
 }
 
 
-void
-do_encoder_sox_error(void) {
+void do_encoder_sox_error(void) {
   do_error_dialog (_ ("Audio resampling is required for this format.\nPlease install 'sox'\nOr switch to another encoder format in Tools | Preferences | Encoding\n"));
 }
 
@@ -1914,7 +1911,10 @@ void do_layout_ascrap_file_error(void) {
 
 
 
-gboolean rdet_suggest_values (gint width, gint height, gdouble fps, gint fps_num, gint fps_denom, gint arate, gint asigned, gboolean swap_endian, gboolean anr, gboolean ignore_fps) {
+boolean rdet_suggest_values (int width, int height, double fps, int fps_num, int fps_denom, int arate, int asigned, 
+			     boolean swap_endian, boolean anr, boolean ignore_fps) {
+  GtkWidget *prep_dialog;
+
   gchar *msg1=g_strdup_printf (_ ("\n\nDue to restrictions in the %s format\n"),prefs->encoder.of_desc);
   gchar *msg2=g_strdup ("");
   gchar *msg3=g_strdup ("");
@@ -1924,11 +1924,9 @@ gboolean rdet_suggest_values (gint width, gint height, gdouble fps, gint fps_num
   gchar *msg7=g_strdup ("");
   gchar *msg8=g_strdup ("");
   gchar *msg_a;
-  gboolean ochange=FALSE;
 
-  gboolean ret;
-
-  GtkWidget *prep_dialog;
+  boolean ochange=FALSE;
+  boolean ret;
 
   mainw->fx1_bool=FALSE;
 
@@ -2011,8 +2009,10 @@ gboolean rdet_suggest_values (gint width, gint height, gdouble fps, gint fps_num
 
 
 
-gboolean 
-do_encoder_restrict_dialog (gint width, gint height, gdouble fps, gint fps_num, gint fps_denom, gint arate, gint asigned, gboolean swap_endian, gboolean anr, gboolean save_all) {
+boolean do_encoder_restrict_dialog (int width, int height, double fps, int fps_num, int fps_denom, int arate, int asigned, 
+				    boolean swap_endian, boolean anr, boolean save_all) {
+  GtkWidget *prep_dialog;
+
   gchar *msg1=g_strdup_printf (_ ("\n\nDue to restrictions in the %s format\n"),prefs->encoder.of_desc);
   gchar *msg2=g_strdup ("");
   gchar *msg3=g_strdup ("");
@@ -2022,12 +2022,11 @@ do_encoder_restrict_dialog (gint width, gint height, gdouble fps, gint fps_num, 
   gchar *msg7=g_strdup ("");
   gchar *msg_a,*msg_b=NULL;
 
-  gboolean ret;
+  double cfps;
 
-  GtkWidget *prep_dialog;
+  boolean ret;
 
-  gint carate,chsize,cvsize;
-  gdouble cfps;
+  int carate,chsize,cvsize;
 
   if (rdet!=NULL) {
     carate=rdet->arate;
@@ -2113,21 +2112,18 @@ do_encoder_restrict_dialog (gint width, gint height, gdouble fps, gint fps_num, 
 }
 
 
-void
-perf_mem_warning(void) {
+void perf_mem_warning(void) {
   do_error_dialog(_ ("\n\nLiVES was unable to record a performance. There is currently insufficient memory available.\nTry recording for just a selection of the file."));
 }
 
-gboolean
-do_clipboard_fps_warning(void) {
+boolean do_clipboard_fps_warning(void) {
   if (prefs->warning_mask&WARN_MASK_FPS) {
     return TRUE;
   }
   return do_warning_dialog_with_check(_ ("The playback speed (fps), or the audio rate\n of the clipboard does not match\nthe playback speed or audio rate of the clip you are inserting into.\n\nThe insertion will be adjusted to fit into the clip.\n\nPlease press Cancel to abort the insert, or OK to continue."),WARN_MASK_FPS);
 }
 
-gboolean
-do_yuv4m_open_warning(void) {
+boolean do_yuv4m_open_warning(void) {
   if (prefs->warning_mask&WARN_MASK_OPEN_YUV4M) {
     return TRUE;
   }
@@ -2136,10 +2132,10 @@ do_yuv4m_open_warning(void) {
 
 
 
-gboolean do_comments_dialog (file *sfile, gchar *filename) {
-  gboolean response;
-  gboolean ok=FALSE;
-  gboolean encoding=FALSE;
+boolean do_comments_dialog (file *sfile, gchar *filename) {
+  boolean response;
+  boolean ok=FALSE;
+  boolean encoding=FALSE;
 
   commentsw=create_comments_dialog(sfile,filename);
 
@@ -2247,24 +2243,24 @@ gboolean prompt_remove_layout_files(void) {
 }
 
 
-gboolean do_set_duplicate_warning (const gchar *new_set) {
+boolean do_set_duplicate_warning (const gchar *new_set) {
   gchar *msg=g_strdup_printf(_("\nA set entitled %s already exists.\nClick OK to add the current clips and layouts to the existing set.\nClick Cancel to pick a new name.\n"),new_set);
-  gboolean retcode=do_warning_dialog_with_check(msg,WARN_MASK_DUPLICATE_SET);
+  boolean retcode=do_warning_dialog_with_check(msg,WARN_MASK_DUPLICATE_SET);
   g_free(msg);
   return retcode;
 }
 
-gboolean do_layout_alter_frames_warning(void) {
+boolean do_layout_alter_frames_warning(void) {
   return do_warning_dialog(_("\nFrames from this clip are used in some multitrack layouts.\nAre you sure you wish to continue ?\n."));
 }
 
-gboolean do_layout_alter_audio_warning(void) {
+boolean do_layout_alter_audio_warning(void) {
   return do_warning_dialog(_("\nAudio from this clip is used in some multitrack layouts.\nAre you sure you wish to continue ?\n."));
 }
 
-gboolean do_original_lost_warning(const gchar *fname) {
+boolean do_original_lost_warning(const gchar *fname) {
   gchar *msg=g_strdup_printf(_("\nThe original file\n%s\ncould not be found.\nIf this file has been moved, click 'OK' to browse to the new location.\nOtherwise click Cancel to skip loading this file.\n"),fname);
-  gboolean retcode=do_warning_dialog(msg);
+  boolean retcode=do_warning_dialog(msg);
   g_free(msg);
   return retcode;
 }
@@ -2313,9 +2309,9 @@ void do_mt_backup_space_error(lives_mt *mt, gint memreq_mb) {
     g_free(msg);
 }
 
-gboolean do_set_rename_old_layouts_warning(const gchar *new_set) {
+boolean do_set_rename_old_layouts_warning(const gchar *new_set) {
   gchar *msg=g_strdup_printf(_("\nSome old layouts for the set %s already exist.\nIt is recommended that you delete them.\nDo you wish to delete them ?\n"),new_set);
-  gboolean retcode=do_yesno_dialog(msg);
+  boolean retcode=do_yesno_dialog(msg);
   g_free(msg);
   return retcode;
 }
@@ -2328,7 +2324,7 @@ void do_mt_undo_buf_error(void) {
   do_error_dialog(_("\nOut of memory for undo.\nYou may need to increase the undo memory\nusing Preferences/Multitrack/Undo Memory\n"));
 }
 
-void do_mt_set_mem_error(gboolean has_mt, gboolean trans) {
+void do_mt_set_mem_error(boolean has_mt, boolean trans) {
   gchar *msg1=(_("\nLiVES was unable to reserve enough memory for the multitrack undo buffer.\n"));
   gchar *msg2;
   gchar *msg3=(_("or enter a smaller value.\n"));
@@ -2344,7 +2340,7 @@ void do_mt_set_mem_error(gboolean has_mt, gboolean trans) {
 }
 
 
-void do_mt_audchan_error(gint warn_mask) {
+void do_mt_audchan_error(int warn_mask) {
   do_error_dialog_with_check_transient(_("Multitrack is set to 0 audio channels, but this layout has audio.\nYou should adjust the audio settings from the Tools menu.\n"),warn_mask,FALSE,NULL);
 }
 
@@ -2352,11 +2348,11 @@ void do_mt_no_audchan_error(void) {
   do_error_dialog(_("The current layout has audio, so audio channels may not be set to zero.\n"));
 }
 
-void do_mt_no_jack_error(gint warn_mask) {
+void do_mt_no_jack_error(int warn_mask) {
   do_error_dialog_with_check(_("Multitrack audio preview is only available with the\n\"jack\" or \"pulse audio\" audio player.\nYou can set this in Tools|Preferences|Playback."),warn_mask);
 }
 
-gboolean do_mt_rect_prompt(void) {
+boolean do_mt_rect_prompt(void) {
   return do_yesno_dialog(_("Errors were detected in the layout (which may be due to transferring from another system, or from an older version of LiVES).\nShould I try to repair the disk copy of the layout ?\n"));
 }
 
@@ -2370,7 +2366,7 @@ void do_audrate_error_dialog(void) {
   do_error_dialog(_ ("\n\nAudio rate must be greater than 0.\n"));
 }
 
-gboolean do_event_list_warning(void) {
+boolean do_event_list_warning(void) {
   return do_yesno_dialog(_("\nEvent list will be very large\nand may take a long time to display.\nAre you sure you wish to view it ?\n"));
 }
 
@@ -2410,7 +2406,7 @@ static void on_dth_cancel_clicked (GtkButton *button, gpointer user_data) {
 }
 
 
-void do_rmem_max_error (gint size) {
+void do_rmem_max_error (int size) {
   gchar *msg=g_strdup_printf((_("Stream frame size is too large for your network buffers.\nYou should do the following as root:\n\necho %d > /proc/sys/net/core/rmem_max\n")),size);
   do_error_dialog(msg);
   g_free(msg);
@@ -2537,7 +2533,7 @@ void *splash_prog (void) {
 
 
  
-void do_threaded_dialog(gchar *trans_text, gboolean has_cancel) {
+void do_threaded_dialog(gchar *trans_text, boolean has_cancel) {
   // calling this causes a threaded progress dialog to appear
   // until end_threaded_dialog() is called
   //
@@ -2843,7 +2839,7 @@ int do_header_read_error_with_retry(int clip) {
 
 
 
-gboolean do_header_write_error(int clip) {
+boolean do_header_write_error(int clip) {
   // returns TRUE if we manage to clear the error
 
   gchar *hname;
@@ -2925,7 +2921,7 @@ void do_dir_perm_access_error(const gchar *dir_name) {
 }
 
 
-gboolean do_abort_check(void) {
+boolean do_abort_check(void) {
   return do_yesno_dialog(_("\nAbort and exit immediately from LiVES\nAre you sure ?\n"));
 }
 
@@ -2952,7 +2948,7 @@ void do_dev_busy_error(const gchar *devstr) {
 }
 
 
-gboolean do_existing_subs_warning(void) {
+boolean do_existing_subs_warning(void) {
   return do_warning_dialog(_("\nThis file already has subtitles loaded.\nDo you wish to overwrite the existing subtitles ?\n"));
 }
 
@@ -2960,20 +2956,20 @@ void do_invalid_subs_error(void) {
   do_error_dialog(_("\nLiVES currently only supports subtitles of type .srt and .sub.\n"));
 }
 
-gboolean do_erase_subs_warning(void) {
+boolean do_erase_subs_warning(void) {
   return do_warning_dialog(_("\nErase all subtitles from this clip.\nAre you sure ?\n"));
 }
 
 
-gboolean do_sub_type_warning(const gchar *ext, const gchar *type_ext) {
-  gboolean ret;
+boolean do_sub_type_warning(const gchar *ext, const gchar *type_ext) {
+  boolean ret;
   gchar *msg=g_strdup_printf(_("\nLiVES does not recognise the subtitle file type \"%s\".\nClick Cancel to set another file name\nor OK to continue and save as type \"%s\"\n"),ext,type_ext);
   ret=do_warning_dialog(msg);
   g_free(msg);
   return ret;
 }
 
-gboolean do_move_tmpdir_dialog(void) {
+boolean do_move_tmpdir_dialog(void) {
   return do_yesno_dialog(_("\nDo you wish to move the current clip sets to the new directory ?\n(If unsure, click Yes)\n"));
 }
 
@@ -3052,9 +3048,9 @@ void do_pulse_lost_conn_error(void) {
 
 
 
-gboolean ask_permission_dialog(int what) {
+boolean ask_permission_dialog(int what) {
   gchar *msg;
-  gboolean ret;
+  boolean ret;
 
   if (!prefs->show_gui) return FALSE;
 

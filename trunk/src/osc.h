@@ -36,7 +36,7 @@ The OSC webpage is http://cnmat.cnmat.berkeley.edu/OpenSoundControl
 #define HAS_LIVES_OSC_H
 
 #ifndef Boolean
-#define Boolean gboolean
+#define Boolean boolean
 #endif
 
 #ifdef __cplusplus

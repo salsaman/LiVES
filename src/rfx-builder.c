@@ -4662,10 +4662,10 @@ void add_rfx_effects(void) {
       }
 
       if (rfx->props&RFX_PROPS_SLOW) {
-	rfx_image = gtk_image_new_from_stock ("gtk-no", GTK_ICON_SIZE_MENU);
+	rfx_image = lives_image_new_from_stock ("gtk-no", LIVES_ICON_SIZE_MENU);
       }
       else {
-	rfx_image = gtk_image_new_from_stock ("gtk-yes", GTK_ICON_SIZE_MENU);
+	rfx_image = lives_image_new_from_stock ("gtk-yes", LIVES_ICON_SIZE_MENU);
       }
       gtk_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (menuitem), rfx_image);
       

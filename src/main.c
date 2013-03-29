@@ -6105,7 +6105,7 @@ void switch_to_file(gint old_file, gint new_file) {
 	  gtk_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (mainw->files[old_file]->menuentry), NULL);
 	}
 	else {
-	  active_image = gtk_image_new_from_stock ("gtk-no", GTK_ICON_SIZE_MENU);
+	  active_image = lives_image_new_from_stock ("gtk-no", LIVES_ICON_SIZE_MENU);
 	  gtk_widget_show (active_image);
 	  gtk_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (mainw->files[old_file]->menuentry), active_image);
 	}
@@ -6162,10 +6162,10 @@ void switch_to_file(gint old_file, gint new_file) {
   if (new_file>0) {
     lives_ruler_set_value (LIVES_RULER(mainw->hruler),cfile->pointer_time);
     if (!cfile->opening&&(cfile->clip_type==CLIP_TYPE_DISK||cfile->clip_type==CLIP_TYPE_FILE)) {
-      active_image = gtk_image_new_from_stock ("gtk-close", GTK_ICON_SIZE_MENU);
+      active_image = lives_image_new_from_stock ("gtk-close", LIVES_ICON_SIZE_MENU);
     }
     else {
-      active_image = gtk_image_new_from_stock ("gtk-yes", GTK_ICON_SIZE_MENU);
+      active_image = lives_image_new_from_stock ("gtk-yes", LIVES_ICON_SIZE_MENU);
       load_start_image(0);
       load_end_image(0);
       gtk_widget_set_sensitive (mainw->rename, FALSE);

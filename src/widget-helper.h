@@ -160,6 +160,18 @@ typedef enum {
 } lives_file_chooser_action_t;
 
 
+typedef enum {
+  LIVES_ICON_SIZE_INVALID=GTK_ICON_SIZE_INVALID,
+  LIVES_ICON_SIZE_MENU=GTK_ICON_SIZE_MENU,
+  LIVES_ICON_SIZE_SMALL_TOOLBAR=GTK_ICON_SIZE_SMALL_TOOLBAR,
+  LIVES_ICON_SIZE_LARGE_TOOLBAR=GTK_ICON_SIZE_LARGE_TOOLBAR,
+  LIVES_ICON_SIZE_BUTTON=GTK_ICON_SIZE_BUTTON,
+  LIVES_ICON_SIZE_DND=GTK_ICON_SIZE_DND,
+  LIVES_ICON_SIZE_DIALOG=GTK_ICON_SIZE_DIALOG
+} lives_icon_size_t;
+
+
+
 #if GTK_CHECK_VERSION(3,0,0)
 typedef GtkScale                          LiVESRuler;
 #else
@@ -548,7 +560,7 @@ boolean lives_color_parse(const char *spec, LiVESWidgetColor *);
 
 LiVESWidgetColor *lives_widget_color_copy(LiVESWidgetColor *c1orNULL, const LiVESWidgetColor *c2);
 
-void lives_widget_apply_theme(LiVESWidget *, LiVESWidgetState state);
+LiVESWidget *lives_image_new_from_stock(const char *stock_id, lives_icon_size_t size);
 
 LiVESWidget *lives_dialog_get_content_area(LiVESDialog *);
 LiVESWidget *lives_dialog_get_action_area(LiVESDialog *);
@@ -698,6 +710,8 @@ LiVESWidget *lives_standard_file_button_new(boolean is_dir, const char *def_dir)
 
 
 // util functions
+
+void lives_widget_apply_theme(LiVESWidget *, LiVESWidgetState state);
 
 void lives_cursor_unref(LiVESXCursor *cursor);
 

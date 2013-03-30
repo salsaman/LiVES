@@ -452,7 +452,7 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
 
     if (mainw->error) {
       if (!mainw->cancelled) {
-	do_error_dialog(_("\nNo frames were generated.\n"));
+	do_info_dialog(_("\nNo frames were generated.\n"));
 	d_print_failed();
       }
       else if (mainw->cancelled!=CANCEL_ERROR) d_print_cancelled();
@@ -519,7 +519,7 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
     if (got_no_frames||cfile->frames==0) {
       mainw->is_generating=FALSE;
       if (!mainw->cancelled) {
-	do_error_dialog(_("\nNo frames were generated.\n"));
+	do_info_dialog(_("\nNo frames were generated.\n"));
 	d_print_failed();
       }
       else d_print_cancelled();

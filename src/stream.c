@@ -1027,7 +1027,7 @@ void on_send_lives2lives_activate (GtkMenuItem *menuitem, gpointer user_data) {
   set_vpp(FALSE);
   
   if (strcmp(orig_name,"lives2lives_stream")) {
-    do_error_dialog((tmp=g_strdup_printf(_("\nLiVES will stream whenever it is in full screen/separate window mode.\nTo reset this behaviour, go to Tools/Preferences/Playback,\nand set the playback plugin back to %s\n"),orig_name)));
+    do_info_dialog((tmp=g_strdup_printf(_("\nLiVES will stream whenever it is in full screen/separate window mode.\nTo reset this behaviour, go to Tools/Preferences/Playback,\nand set the playback plugin back to %s\n"),orig_name)));
     g_free(tmp);
   }
   g_free(orig_name);

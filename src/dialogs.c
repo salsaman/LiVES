@@ -2265,7 +2265,7 @@ do_text_window (const gchar *title, const gchar *text) {
 void do_upgrade_error_dialog (void) {
   gchar *tmp;
   gchar *msg=g_strdup_printf (_("After upgrading/installing, you may need to adjust the <prefix_dir> setting in your %s file"),(tmp=g_filename_to_utf8(capable->rcfile,-1,NULL,NULL,NULL)));
-  startup_message_nonfatal (msg);
+  startup_message_info (msg);
   g_free(msg);
   g_free(tmp);
 }
@@ -2341,13 +2341,13 @@ void do_jack_noopen_warn4(void) {
   const gchar *otherbit="\"lives -aplayer sox\"";
 #endif
   gchar *msg=g_strdup_printf(_("\nAlternatively, try to start lives with either:\n\n\"lives -jackopts 16\", or\n\n%s\n"),otherbit);
-  do_blocking_error_dialog(msg);
+  do_blocking_info_dialog(msg);
   g_free(msg);
 }
 
 
 void do_jack_noopen_warn2(void) {
-  do_blocking_error_dialog(_("\nAlternately, you can restart LiVES and select another audio player.\n"));
+  do_blocking_info_dialog(_("\nAlternately, you can restart LiVES and select another audio player.\n"));
 }
 
 
@@ -2997,7 +2997,7 @@ void do_dev_busy_error(const gchar *devstr) {
 
 
 boolean do_existing_subs_warning(void) {
-  return do_warning_dialog(_("\nThis file already has subtitles loaded.\nDo you wish to overwrite the existing subtitles ?\n"));
+  return do_yesno_dialog(_("\nThis file already has subtitles loaded.\nDo you wish to overwrite the existing subtitles ?\n"));
 }
 
 void do_invalid_subs_error(void) {
@@ -3005,7 +3005,7 @@ void do_invalid_subs_error(void) {
 }
 
 boolean do_erase_subs_warning(void) {
-  return do_warning_dialog(_("\nErase all subtitles from this clip.\nAre you sure ?\n"));
+  return do_yesno_dialog(_("\nErase all subtitles from this clip.\nAre you sure ?\n"));
 }
 
 
@@ -3023,7 +3023,7 @@ boolean do_move_tmpdir_dialog(void) {
 
 void do_set_locked_warning (const gchar *setname) {
   gchar *msg=g_strdup_printf(_("\nWarning - the set %s\nis in use by another copy of LiVES.\nYou are strongly advised to close the other copy before clicking OK to continue\n."),setname);
-  do_error_dialog(msg);
+  do_warning_dialog(msg);
   g_free(msg);
 }
 

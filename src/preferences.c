@@ -4396,7 +4396,7 @@ void on_prefs_close_clicked(GtkButton *button, gpointer user_data) {
   prefsw=NULL;
 
   if (mainw->prefs_need_restart) {
-    do_blocking_error_dialog(_("\nLiVES will now shut down. You need to restart it for the directory change to take effect.\nClick OK to continue.\n"));
+    do_blocking_info_dialog(_("\nLiVES will now shut down. You need to restart it for the directory change to take effect.\nClick OK to continue.\n"));
     on_quit_activate (NULL,NULL);
   }
 }
@@ -4420,15 +4420,15 @@ void on_prefs_apply_clicked(GtkButton *button, gpointer user_data) {
   }
 
   if (needs_restart) {
-    do_blocking_error_dialog(_("For the directory change to take effect LiVES will restart when preferences dialog closes."));
+    do_blocking_info_dialog(_("For the directory change to take effect LiVES will restart when preferences dialog closes."));
   }
 
   if (mainw->prefs_changed & PREFS_THEME_CHANGED) {
-    do_blocking_error_dialog(_("Theme changes will not take effect until the next time you start LiVES."));
+    do_blocking_info_dialog(_("Theme changes will not take effect until the next time you start LiVES."));
   }
 
   if (mainw->prefs_changed & PREFS_JACK_CHANGED) {
-    do_blocking_error_dialog(_("Jack options will not take effect until the next time you start LiVES."));
+    do_blocking_info_dialog(_("Jack options will not take effect until the next time you start LiVES."));
   }
 
   mainw->prefs_changed = 0;

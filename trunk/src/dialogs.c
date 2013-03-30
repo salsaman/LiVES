@@ -218,7 +218,7 @@ static GtkWidget* create_warn_dialog (int warn_mask_number, GtkWindow *transient
 
   gtk_window_add_accel_group (GTK_WINDOW (dialog), accel_group);
 
-  if (mainw!=NULL&&mainw->is_ready&&palette->style&STYLE_1) {
+  if (widget_opts.apply_theme&&(palette->style&STYLE_1)) {
     lives_dialog_set_has_separator(GTK_DIALOG(dialog),FALSE);
     lives_widget_set_bg_color(dialog, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
   }
@@ -414,7 +414,7 @@ int do_abort_cancel_retry_dialog(const gchar *text, GtkWindow *transient) {
 
 
 void do_error_dialog(const gchar *text) {
-  // show error/info box
+  // show error box
   if (!prefs->show_gui) {
     do_error_dialog_with_check_transient(text,FALSE,0,NULL);
   } else {
@@ -428,8 +428,23 @@ void do_error_dialog(const gchar *text) {
 }
 
 
+void do_info_dialog(const gchar *text) {
+  // show info box
+  if (!prefs->show_gui) {
+    do_info_dialog_with_transient(text,FALSE,NULL);
+  } else {
+    if (prefsw!=NULL&&prefsw->prefs_dialog!=NULL) do_info_dialog_with_transient(text,FALSE,
+										GTK_WINDOW(prefsw->prefs_dialog));
+    else {
+      if (mainw->multitrack==NULL) do_info_dialog_with_transient(text,FALSE,GTK_WINDOW(mainw->LiVES));
+      else do_info_dialog_with_transient(text,FALSE,GTK_WINDOW(mainw->multitrack->window));
+    }
+  }
+}
+
+
 void do_error_dialog_with_check(const gchar *text, int warn_mask_number) {
-  // show error/info box
+  // show warning box
   if (!prefs->show_gui) {
     do_error_dialog_with_check_transient(text,FALSE,warn_mask_number,NULL);
   } else {
@@ -440,7 +455,7 @@ void do_error_dialog_with_check(const gchar *text, int warn_mask_number) {
 
 
 void do_blocking_error_dialog(const gchar *text) {
-  // show error/info box - blocks until OK is pressed
+  // show error box - blocks until OK is pressed
   if (!prefs->show_gui) {
     do_error_dialog_with_check_transient(text,TRUE,0,NULL);
   } else {
@@ -450,14 +465,26 @@ void do_blocking_error_dialog(const gchar *text) {
 }
 
 
+void do_blocking_info_dialog(const gchar *text) {
+  // show info box - blocks until OK is pressed
+  if (!prefs->show_gui) {
+    do_info_dialog_with_transient(text,TRUE,NULL);
+  } else {
+    if (mainw->multitrack==NULL) do_info_dialog_with_transient(text,TRUE,GTK_WINDOW(mainw->LiVES));
+    else do_info_dialog_with_transient(text,TRUE,GTK_WINDOW(mainw->multitrack->window));
+  }
+}
+
+
+
 void do_error_dialog_with_check_transient(const gchar *text, boolean is_blocking, int warn_mask_number, GtkWindow *transient) {
-  // show error/info box
+  // show error box
 
   GtkWidget *err_box;
   gchar *mytext;
   if (prefs->warning_mask&warn_mask_number) return;
   mytext=g_strdup(text);
-  err_box=create_info_error_dialog(mytext,is_blocking,warn_mask_number);
+  err_box=create_info_error_dialog(mytext,is_blocking,warn_mask_number,warn_mask_number==0?LIVES_INFO_TYPE_ERROR:LIVES_INFO_TYPE_WARNING);
   if (mytext!=NULL) g_free(mytext);
   if (transient!=NULL) gtk_window_set_transient_for(GTK_WINDOW(err_box),transient);
 
@@ -468,6 +495,27 @@ void do_error_dialog_with_check_transient(const gchar *text, boolean is_blocking
     }
   }
 }
+
+
+
+void do_info_dialog_with_transient(const gchar *text, boolean is_blocking, GtkWindow *transient) {
+  // info box
+
+  GtkWidget *info_box;
+  gchar *mytext;
+  mytext=g_strdup(text);
+  info_box=create_info_error_dialog(mytext,is_blocking,0,LIVES_INFO_TYPE_INFO);
+  if (mytext!=NULL) g_free(mytext);
+  if (transient!=NULL) gtk_window_set_transient_for(GTK_WINDOW(info_box),transient);
+
+  if (is_blocking) {
+    gtk_dialog_run(GTK_DIALOG (info_box));
+    if (mainw!=NULL&&mainw->is_ready&&transient!=NULL) {
+      gtk_widget_queue_draw(GTK_WIDGET(transient));
+    }
+  }
+}
+
 
 
 gchar *ds_critical_msg(const gchar *dir, guint64 dsval) {
@@ -2446,7 +2494,7 @@ static void create_threaded_dialog(gchar *text, gboolean has_cancel) {
   gtk_progress_bar_set_pulse_step(GTK_PROGRESS_BAR(procw->progressbar),.01);
   gtk_box_pack_start (GTK_BOX (vbox), procw->progressbar, FALSE, FALSE, 0);
 
-  if (mainw!=NULL&&mainw->is_ready&&(palette->style&STYLE_1)) {
+  if (widget_opts.apply_theme&&(palette->style&STYLE_1)) {
     lives_widget_set_fg_color(procw->progressbar, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
   }
 
@@ -2989,7 +3037,7 @@ void do_locked_in_vdevs_error(void) {
 
 void do_do_not_close_d (void) {
   gchar *msg=g_strdup(_("\n\nCLEANING AND COPYING FILES. THIS MAY TAKE SOME TIME.\nDO NOT SHUT DOWN OR CLOSE LIVES !\n"));
-  GtkWidget *err_box=create_info_error_dialog(msg,FALSE,0);
+  GtkWidget *err_box=create_info_error_dialog(msg,FALSE,0,LIVES_INFO_TYPE_WARNING);
   GtkWindow *transient=NULL;
 
   g_free(msg);

@@ -7,7 +7,7 @@
 #ifndef HAS_LIVES_INTERFACE_H
 #define HAS_LIVES_INTERFACE_H
 
-GtkWidget* create_info_error_dialog (const gchar *text, boolean is_blocking, int warning_mask);
+GtkWidget* create_info_error_dialog (const gchar *text, boolean is_blocking, int mask, lives_info_t infotype);
 GtkWidget* create_opensel_dialog (void);
 GtkWidget* create_encoder_prep_dialog (const gchar *text1, const gchar *text2, boolean opt_resize);
 

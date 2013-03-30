@@ -1653,7 +1653,7 @@ static void lives_init(_ign_opts *ign_opts) {
       prefs->startup_phase=5;
       do_startup_interface_query();
       txt=get_new_install_msg();
-      startup_message_nonfatal(txt);
+      startup_message_info(txt);
       g_free(txt);
 
       set_int_pref("startup_phase",100); // tell backend to delete this
@@ -1678,7 +1678,7 @@ static void lives_init(_ign_opts *ign_opts) {
     
 
   }
-}
+  }
 
 
 
@@ -2953,6 +2953,13 @@ boolean startup_message_fatal(const gchar *msg) {
 boolean startup_message_nonfatal(const gchar *msg) {
   if (palette->style&STYLE_1) widget_opts.apply_theme=TRUE;
   do_error_dialog (msg);
+  widget_opts.apply_theme=FALSE;
+  return TRUE;
+}
+
+boolean startup_message_info(const gchar *msg) {
+  if (palette->style&STYLE_1) widget_opts.apply_theme=TRUE;
+  do_info_dialog (msg);
   widget_opts.apply_theme=FALSE;
   return TRUE;
 }
@@ -5984,6 +5991,8 @@ void close_current_file(gint file_to_switch_to) {
     gtk_widget_show(mainw->undo);
     gtk_widget_set_sensitive(mainw->undo,FALSE);
 
+
+    if (!mainw->is_ready) return;
 
     if (mainw->playing_file==-1&&mainw->play_window!=NULL) {
       // if the clip is loaded

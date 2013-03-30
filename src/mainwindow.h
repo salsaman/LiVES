@@ -142,6 +142,13 @@ typedef enum {
   LIVES_DIALOG_ABORT_CANCEL_RETRY
 } lives_dialog_t;
 
+typedef enum {
+  LIVES_INFO_TYPE_INFO,
+  LIVES_INFO_TYPE_WARNING,
+  LIVES_INFO_TYPE_QUESTION,
+  LIVES_INFO_TYPE_ERROR
+} lives_info_t;
+
 
 /// return values from abort/cancel/retry dialog and yes/no dialog
 enum {

@@ -836,10 +836,13 @@ boolean do_warning_dialog_with_check_transient(const gchar *text, int warn_mask_
 boolean do_yesno_dialog(const gchar *text) WARN_UNUSED;
 int do_abort_cancel_retry_dialog(const gchar *text, GtkWindow *transient) WARN_UNUSED;
 void do_error_dialog(const gchar *text);
+void do_info_dialog(const gchar *text);
 void do_error_dialog_with_check(const gchar *text, int warn_mask_number);
 void do_blocking_error_dialog(const gchar *text);
+void do_blocking_info_dialog(const gchar *text);
 void do_error_dialog_with_check_transient(const gchar *text, boolean is_blocking, int warn_mask_number, 
 					  GtkWindow *transient);
+void do_info_dialog_with_transient(const gchar *text, boolean is_blocking, GtkWindow *transient);
 
 
 void do_system_failed_error(const char *com, int retval, const char *addinfo);
@@ -1015,6 +1018,7 @@ void catch_sigint(int signum);
 void defer_sigint(int signum);
 boolean startup_message_fatal(const gchar *msg);
 boolean startup_message_nonfatal(const gchar *msg);
+boolean startup_message_info(const gchar *msg);
 boolean startup_message_nonfatal_dismissable(const gchar *msg, gint warning_mask);
 capability *get_capabilities(void);
 void get_monitors(void);

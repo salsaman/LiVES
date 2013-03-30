@@ -710,7 +710,7 @@ GtkWidget* create_encoder_prep_dialog (const gchar *text1, const gchar *text2, b
 
 
 // Information/error dialog
-GtkWidget* create_info_error_dialog (const gchar *text, boolean is_blocking, int mask) {
+GtkWidget* create_info_error_dialog (const gchar *text, boolean is_blocking, int mask, lives_info_t info_type) {
   GtkWidget *dialog;
   GtkWidget *dialog_vbox;
   GtkWidget *info_text;
@@ -724,9 +724,16 @@ GtkWidget* create_info_error_dialog (const gchar *text, boolean is_blocking, int
 
   GtkAccelGroup *accel_group=GTK_ACCEL_GROUP(gtk_accel_group_new ());
 
-  //dialog = lives_standard_dialog_new (_("LiVES"),FALSE);
-  dialog = gtk_message_dialog_new (NULL,(GtkDialogFlags)0,
-				   mask==0?GTK_MESSAGE_ERROR:GTK_MESSAGE_WARNING,GTK_BUTTONS_NONE,"%s","");
+  if (info_type==LIVES_INFO_TYPE_WARNING)
+    dialog = gtk_message_dialog_new (NULL,(GtkDialogFlags)0,
+				     GTK_MESSAGE_WARNING,GTK_BUTTONS_NONE,"%s","");
+  else if (info_type==LIVES_INFO_TYPE_ERROR)
+    dialog = gtk_message_dialog_new (NULL,(GtkDialogFlags)0,
+				     GTK_MESSAGE_ERROR,GTK_BUTTONS_NONE,"%s","");
+  else // INFO
+    dialog = gtk_message_dialog_new (NULL,(GtkDialogFlags)0,
+				     GTK_MESSAGE_INFO,GTK_BUTTONS_NONE,"%s","");
+
   gtk_window_set_title (GTK_WINDOW (dialog), _("LiVES"));
   
   gtk_window_set_deletable(GTK_WINDOW(dialog), FALSE);
@@ -736,7 +743,7 @@ GtkWidget* create_info_error_dialog (const gchar *text, boolean is_blocking, int
 
   gtk_window_add_accel_group (GTK_WINDOW (dialog), accel_group);
 
-  if (mainw!=NULL&&mainw->is_ready&&palette->style&STYLE_1) {
+  if (mainw!=NULL&&widget_opts.apply_theme&&palette->style&STYLE_1) {
     lives_dialog_set_has_separator(GTK_DIALOG(dialog),FALSE);
     lives_widget_set_bg_color(dialog, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
   }

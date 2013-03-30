@@ -5484,8 +5484,8 @@ void on_cleardisk_activate (GtkWidget *widget, gpointer user_data) {
 
   if (retval!=LIVES_CANCEL&&!mainw->com_failed) {
     d_print_done();
-    do_error_dialog(g_strdup_printf(_("%s of disk space was recovered.\n"), 
-				    lives_format_storage_space_string((uint64_t)bytes)));
+    do_info_dialog(g_strdup_printf(_("%s of disk space was recovered.\n"), 
+				   lives_format_storage_space_string((uint64_t)bytes)));
     if (user_data!=NULL) gtk_widget_set_sensitive(gtk_widget_get_toplevel(GTK_WIDGET(user_data)),FALSE);
   }
   else d_print_failed();

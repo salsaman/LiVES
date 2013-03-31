@@ -66,6 +66,8 @@ float freq[NSLICES]={25.,50.,75.,100.,150.,200.,250.,300.,
 
 #define MAXPLANS 18
 
+#define TWO_PI 2.*M_PI
+
 static float *ins[MAXPLANS];
 static fftwf_complex *outs[MAXPLANS];
 static fftwf_plan plans[MAXPLANS];
@@ -176,6 +178,7 @@ int beat_process (weed_plant_t *inst, weed_timecode_t timestamp) {
   int reset=weed_get_boolean_value(in_params[0],"value",&error);
   double avlim=weed_get_double_value(in_params[1],"value",&error);
   double varlim=weed_get_double_value(in_params[2],"value",&error);
+  int hamming=weed_get_boolean_value(in_params[3],"value",&error);
 
   int beat_pulse=WEED_FALSE,beat_hold=weed_get_boolean_value(out_params[0],"value",&error);
 
@@ -185,7 +188,9 @@ int beat_process (weed_plant_t *inst, weed_timecode_t timestamp) {
 
   _sdata *sdata=(_sdata *)weed_get_voidptr_value(inst,"plugin_data",&error);
 
-  float tot,var,varx,av;
+  double var,av;
+
+  float tot,totx;
 
   register int i,j,s;
 
@@ -199,6 +204,7 @@ int beat_process (weed_plant_t *inst, weed_timecode_t timestamp) {
     beat_pulse=beat_hold=WEED_FALSE;
     goto done;
   }
+
 
   rate=weed_get_int_value(in_channel,"audio_rate",&error);
     
@@ -215,7 +221,7 @@ int beat_process (weed_plant_t *inst, weed_timecode_t timestamp) {
 
       for (j=0;j<sdata->bufidx;j++) {
 	sdata->buf[i][j]=sdata->buf[i][j+1];
-	if (sdata->buf[i][j]!=-1.) sdata->av[i]+=sdata->buf[i][j];
+	if (sdata->buf[i][j]!=-1.) sdata->av[i]+=(double)sdata->buf[i][j];
       }
     }
 
@@ -245,16 +251,31 @@ int beat_process (weed_plant_t *inst, weed_timecode_t timestamp) {
     // copy in data to sdata->in
     if (inter==WEED_FALSE) {
       // non-interleaved
-      weed_memcpy(ins[base],src,nsamps*sizf);
+      if (hamming) {
+	for (j=0;j<nsamps;j++) {
+	  ins[base][j]=src[j]*(0.54f - 0.46f * cosf(TWO_PI*(float)j/(float)nsamps));
+	}
+      }
+      else {
+	weed_memcpy(ins[base],src,nsamps*sizf);
+      }
       src+=onsamps;
     }
     else {
       // interleaved
       for (j=0;j<nsamps;j++) {
-	ins[base][j]=src[j*chans];
+	if (hamming) {
+	  ins[base][j]=src[j*chans]*(0.54f - 0.46f * cosf(TWO_PI*(float)j/(float)nsamps));
+	}
+	else {
+	  ins[base][j]=src[j*chans];
+	}
       }
       src++;
     }
+
+
+
       
     //fprintf(stderr,"executing plan of size %d\n",sdata->size);
     fftwf_execute(plans[base]);
@@ -278,13 +299,15 @@ int beat_process (weed_plant_t *inst, weed_timecode_t timestamp) {
       }
       else {
 	tot=0.;
+	totx=0.;
 
 	for (k=kmin;k<=kmax;k++) {
 	  // sum values over range
-	  tot+=outs[base][k][0]*outs[base][k][0]+outs[base][k][1]*outs[base][k][1];
+	  // average over range
+	  totx+=sqrtf(outs[base][k][0]*outs[base][k][0]+outs[base][k][1]*outs[base][k][1]);
 	}
-	// average over range
-	tot/=(float)kmax-(float)kmin+1.;
+
+	tot+=totx/((float)kmax-(float)kmin+1.);
 
 	// average over channels
 	tot/=(float)chans;
@@ -310,25 +333,38 @@ int beat_process (weed_plant_t *inst, weed_timecode_t timestamp) {
   // we can calculate the variance, and then use a formula:
   // if curr > C * av && curr > V * var : trigger a beat
 
+#define ONSET_WINDOW 5
+
+  var=0.;
 
   for (i=0;i<NSLICES;i++) {
     // for the variance:
-    var=0.;
-    av=sdata->av[i]/(double)sdata->bufidx;
+    //av=sdata->av[i]/(double)sdata->bufidx;
 
-    for (j=0;j<sdata->bufidx;j++) {
-      if (sdata->buf[i][j]!=-1.) {
-	varx=(sdata->buf[i][j]-av);
-	var+=varx*varx;
+    if (sdata->bufidx>ONSET_WINDOW) {
+      float val1,val2,varx;
+      for (j=sdata->bufidx-ONSET_WINDOW;j<=sdata->bufidx;j++) {
+	if (
+	    (val1=sdata->buf[i][j])!=-1.&&
+	    (val2=sdata->buf[i][j-1])!=-1.
+	    ) {
+	  varx=(val1-val2);
+	  if (varx<0.) varx=0.;
+	  var+=(double)varx/(double)ONSET_WINDOW;
+	}
       }
     }
-    var/=(float)sdata->bufidx*(float)sdata->bufidx;
+  }
 
-    //if (i==0) fprintf(stderr,"%f %f %f  ",var,av,sdata->buf[i][sdata->bufidx]);
 
-    varlim*=varlim;
+  //if (i==0) fprintf(stderr,"%f %f %f  ",var,av,sdata->buf[i][sdata->bufidx]);
 
-    if (var>varlim && sdata->buf[i][sdata->bufidx] > (avlim*av)) {
+  var/=(double)NSLICES;
+
+
+  for (i=0;i<NSLICES;i++) {
+    av=sdata->av[i]/(double)sdata->bufidx;
+    if (var>=varlim && sdata->buf[i][sdata->bufidx] >= (avlim*av)) {
       // got a beat !
       beat_pulse=beat_hold=WEED_TRUE;
       //fprintf(stderr,"PULSE !\n");
@@ -359,8 +395,8 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
   plugin_info=weed_plugin_info_init(weed_boot,num_versions,api_versions);
   if (plugin_info!=NULL) {
     weed_plant_t *in_chantmpls[]={weed_audio_channel_template_init("in channel 0",0),NULL};
-    weed_plant_t *in_params[]={weed_switch_init("reset","_Reset hold",WEED_FALSE),weed_float_init("avlim","_Average threshold",10.,1.,100.),
-			       weed_float_init("varlim","_Variance threshold",.99,0.,100.),NULL};
+    weed_plant_t *in_params[]={weed_switch_init("reset","_Reset hold",WEED_FALSE),weed_float_init("avlim","_Average threshold",2.,0.,40.),
+			       weed_float_init("varlim","_Variance threshold",2.0,0.,20.),weed_switch_init("hamming","Use _Hamming",WEED_FALSE),NULL};
     weed_plant_t *out_params[]={weed_out_param_switch_init("beat hold",WEED_FALSE),weed_out_param_switch_init("beat pulse",WEED_FALSE),NULL};
     weed_plant_t *filter_class=weed_filter_class_init("beat detector","salsaman",1,0,&beat_init,&beat_process,
 						      &beat_deinit,in_chantmpls,NULL,in_params,out_params);

@@ -1040,7 +1040,7 @@ void set_process_callback_pulse(pulse_driver_t *pdriver, boolean activate) {
 
 int pulse_driver_activate(pulse_driver_t *pdriver) {
 // create a new client and connect it to pulse server
-  gchar *pa_clientname="LiVES_audio_out";
+  gchar *pa_clientname;
   gchar *mypid;
 
   pa_sample_spec pa_spec;
@@ -1054,6 +1054,14 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
   if (pdriver->pstream!=NULL) return 0;
 
   if (mainw->aplayer_broken) return 2;
+
+
+  if (pdriver->is_output) {
+    pa_clientname="LiVES_audio_out";
+  }
+  else {
+    pa_clientname="LiVES_audio_in";
+  }
 
   mypid=g_strdup_printf("%d",getpid());
 

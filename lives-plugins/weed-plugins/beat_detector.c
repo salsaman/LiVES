@@ -184,13 +184,13 @@ int beat_process (weed_plant_t *inst, weed_timecode_t timestamp) {
 
   int has_data=WEED_FALSE;
 
-  int kmin,kmax;
+  int kmin,kmax,okmin,rkmin,rkmax;
 
   _sdata *sdata=(_sdata *)weed_get_voidptr_value(inst,"plugin_data",&error);
 
   double var,av;
 
-  float tot,totx;
+  float tot=0.,totx;
 
   register int i,j,s;
 
@@ -251,9 +251,9 @@ int beat_process (weed_plant_t *inst, weed_timecode_t timestamp) {
     // copy in data to sdata->in
     if (inter==WEED_FALSE) {
       // non-interleaved
-      if (hamming) {
+      if (hamming==WEED_TRUE) {
 	for (j=0;j<nsamps;j++) {
-	  ins[base][j]=src[j]*(0.54f - 0.46f * cosf(TWO_PI*(float)j/(float)nsamps));
+	  ins[base][j]=src[j]*(0.54f - 0.46f * cosf(TWO_PI*(float)j/(float)(nsamps-1.)));
 	}
       }
       else {
@@ -264,8 +264,8 @@ int beat_process (weed_plant_t *inst, weed_timecode_t timestamp) {
     else {
       // interleaved
       for (j=0;j<nsamps;j++) {
-	if (hamming) {
-	  ins[base][j]=src[j*chans]*(0.54f - 0.46f * cosf(TWO_PI*(float)j/(float)nsamps));
+	if (hamming==WEED_TRUE) {
+	  ins[base][j]=src[j*chans]*(0.54f - 0.46f * cosf(TWO_PI*(float)j/(float)(nsamps-1.)));
 	}
 	else {
 	  ins[base][j]=src[j*chans];
@@ -280,7 +280,7 @@ int beat_process (weed_plant_t *inst, weed_timecode_t timestamp) {
     //fprintf(stderr,"executing plan of size %d\n",sdata->size);
     fftwf_execute(plans[base]);
 
-    kmin=0;
+    okmin=kmin=0;
 
     for (s=0;s<NSLICES;s++) {
       // which element do we want for output ?
@@ -289,32 +289,45 @@ int beat_process (weed_plant_t *inst, weed_timecode_t timestamp) {
       // nyquist freq is rate / 2
       // so the freq. of the kth element is: f  =  k/nsamps * rate
       // therefore k = f/rate * nsamps
-	
+      tot=0.;
+
       kmax = freq[s]/(double)rate*(double)nsamps;
-	
+
       if (kmax>=(nsamps>>1)) {
 	// frequency invalid - too high for this sample packet
 	tot=-1.;
 	sdata->buf[s][sdata->bufidx]=tot;
       }
       else {
-	tot=0.;
+
+	// use an overlap
+	rkmin=kmin-((kmin-okmin)>>1);
+	if (s<NSLICES-1) {
+	  rkmax=kmax+(freq[s+1]-freq[s])/2./(double)rate*(double)nsamps;
+	  if (rkmax>=(nsamps>>1)) {
+	    rkmax=kmax;
+	  }
+	}
+	else rkmax=kmax;
+
 	totx=0.;
 
-	for (k=kmin;k<=kmax;k++) {
+	for (k=rkmin;k<=rkmax;k++) {
 	  // sum values over range
 	  // average over range
 	  totx+=sqrtf(outs[base][k][0]*outs[base][k][0]+outs[base][k][1]*outs[base][k][1]);
 	}
 
-	tot+=totx/((float)kmax-(float)kmin+1.);
+	// average over bandwidth
+	totx/=((float)rkmax-(float)rkmin+1.);
 
-	// average over channels
-	tot/=(float)chans;
+	// boost lower freq
+	totx/=((float)rkmax-(float)rkmin+1.);
 
 	// store this value in the buffer
-	sdata->buf[s][sdata->bufidx]+=tot;
+	sdata->buf[s][sdata->bufidx]+=totx/(float)chans;
 
+	okmin=kmin;
 	kmin=kmax;
       }
     } // done for all slices
@@ -395,8 +408,8 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
   plugin_info=weed_plugin_info_init(weed_boot,num_versions,api_versions);
   if (plugin_info!=NULL) {
     weed_plant_t *in_chantmpls[]={weed_audio_channel_template_init("in channel 0",0),NULL};
-    weed_plant_t *in_params[]={weed_switch_init("reset","_Reset hold",WEED_FALSE),weed_float_init("avlim","_Average threshold",2.,0.,40.),
-			       weed_float_init("varlim","_Variance threshold",2.0,0.,20.),weed_switch_init("hamming","Use _Hamming",WEED_FALSE),NULL};
+    weed_plant_t *in_params[]={weed_switch_init("reset","_Reset hold",WEED_FALSE),weed_float_init("avlim","_Average threshold",4.,0.,40.),
+			       weed_float_init("varlim","_Variance threshold",0.5,0.,10.),weed_switch_init("hamming","Use _Hamming",WEED_TRUE),NULL};
     weed_plant_t *out_params[]={weed_out_param_switch_init("beat hold",WEED_FALSE),weed_out_param_switch_init("beat pulse",WEED_FALSE),NULL};
     weed_plant_t *filter_class=weed_filter_class_init("beat detector","salsaman",1,0,&beat_init,&beat_process,
 						      &beat_deinit,in_chantmpls,NULL,in_params,out_params);

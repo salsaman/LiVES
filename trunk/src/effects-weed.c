@@ -3161,7 +3161,7 @@ lives_filter_error_t weed_apply_audio_instance (weed_plant_t *init_event, float 
     }
   }
 
-  if (layers==NULL&&numinchans>0&&numoutchans>0) {
+  if (layers==NULL&&numinchans>0) {
     layers=(weed_plant_t **)g_malloc((ntracks+1)*sizeof(weed_plant_t *));
 
     for (i=0;i<ntracks;i++) {

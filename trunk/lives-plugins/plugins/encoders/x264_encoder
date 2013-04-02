@@ -191,7 +191,7 @@ if ($command eq "encode") {
 	system("$syscom $err");
 
 	if ($otype ne "divx+" && $otype ne "divxh+") {
-	    $syscom="MP4Box -fps $fps -add $ofile -add temp.aac \"$nfile\"";
+	    $syscom="MP4Box -fps $fps -tmp $curtmpdir -add $ofile -add temp.aac \"$nfile\"";
 	}
 	else {
 	    $syscom="mkvmerge --default-duration 0:$fps"."fps --title \"$title\" $ofile temp.aac -o \"$nfile\"";
@@ -204,7 +204,7 @@ if ($command eq "encode") {
     }
     else {
 	if ($otype ne "divx+" && $otype ne "divxh+") {
-	    $syscom="MP4Box -fps $fps -add $ofile -add temp.aac \"$nfile\"";
+	    $syscom="MP4Box -fps $fps -tmp $curtmpdir -add $ofile \"$nfile\"";
 	}
 	else {
 	    $syscom="mkvmerge --default-duration 0:$fps"."fps --title \"$title\" $ofile -o \"$nfile\"";

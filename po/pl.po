@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2013-03-30 13:00-0300\n"
+"POT-Creation-Date: 2013-04-06 16:27-0300\n"
 "PO-Revision-Date: 2011-09-18 02:25+0000\n"
 "Last-Translator: pp/bs <Unknown>\n"
 "Language-Team: Polish <pl@li.org>\n"
@@ -9734,7 +9734,7 @@ msgstr "Uruchamianie serwera pulse audio"
 msgid "LiVES will exit and you can choose another audio player.\n"
 msgstr "LiVES: - Wybierz odtwarzacz audio"
 
-#: src/pulse.c:1309
+#: src/pulse.c:1317
 #, fuzzy
 msgid ""
 "\n"

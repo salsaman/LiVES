@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2013-04-07 10:15-0300\n"
+"POT-Creation-Date: 2013-04-07 12:38-0300\n"
 "PO-Revision-Date: 2013-03-14 12:31+0000\n"
 "Last-Translator: Launchpad Translations Administrators <Unknown>\n"
 "Language-Team: Finnish <fi@li.org>\n"
@@ -10349,8 +10349,9 @@ msgid "Fade"
 msgstr "Häivytä alusta  "
 
 #: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
+#, fuzzy
 msgid "Fading video"
-msgstr ""
+msgstr "Pysäytä nauhoitus"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 #, fuzzy
@@ -10474,8 +10475,9 @@ msgid "Hue change"
 msgstr "_Hylkää muutokset"
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
+#, fuzzy
 msgid "Hue end"
-msgstr ""
+msgstr "_Häivytystaso"
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
 #, fuzzy
@@ -10526,8 +10528,9 @@ msgid "Making monochrome"
 msgstr "harmaasävy"
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
+#, fuzzy
 msgid "Modulate (BSH)"
-msgstr ""
+msgstr "Pikselöidään"
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
 #, fuzzy
@@ -11305,8 +11308,9 @@ msgid "monochrome"
 msgstr "harmaasävy"
 
 #: /usr/share/lives/plugins/effects/rendered/negate.script:0
+#, fuzzy
 msgid "negate"
-msgstr ""
+msgstr "Liitetään"
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
 #, fuzzy

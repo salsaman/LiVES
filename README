@@ -64,16 +64,16 @@ INSTALLING FROM SOURCE
 If you got LiVES as a tar.gz or tar.bz2, at a terminal prompt, enter the following:
 
 
-          bzip2 -d LiVES-2.0.0.tar.bz2
+          bzip2 -d LiVES-2.0.1.tar.bz2
 or,
-          gzip -d LiVES-2.0.0.tar.gz
+          gzip -d LiVES-2.0.1.tar.gz
 
 depending on which version you have. Then:
 
 
-          tar xvf LIVES-2.0.0.tar
+          tar xvf LIVES-2.0.1.tar
 
-          cd lives-2.0.0
+          cd lives-2.0.1
 
 
 
@@ -84,7 +84,7 @@ check the output of configure very carefully, following any advice it provides,
 and making any adjustments you may wish - such as installing optional libraries.
 
 If you are happy with the output from configure, then compile the source with:
-
+y
 	make
 
 

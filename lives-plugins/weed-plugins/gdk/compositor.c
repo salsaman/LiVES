@@ -30,12 +30,6 @@ static int package_version=1; // version of this package
 
 //////////////////////////////////////////////////////////////////
 
-#ifdef HAVE_SYSTEM_WEED
-#include <weed/weed-plugin-utils.h> // optional
-#else
-#include "../../../libweed/weed-plugin-utils.h" // optional
-#endif
-
 #include "../weed-utils-code.c" // optional
 #include "../weed-plugin-utils.c" // optional
 

@@ -1,3 +1,10 @@
+Version 2.0.1 (07 April 2013)
+-----------------------------
+Fix compilation error.
+
+
+
+
 Version 2.0.0 (07 April 2013)
 -----------------------------
 Fix crash in recording external audio with pulse player (regression).

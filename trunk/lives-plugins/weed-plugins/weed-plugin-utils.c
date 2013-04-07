@@ -57,7 +57,7 @@
 #else
 #include "../../libweed/weed.h"
 #include "../../libweed/weed-palettes.h"
-#include "../../weed-effects.h"
+#include "../../libweed/weed-effects.h"
 #endif
 
 

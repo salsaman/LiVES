@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2013-04-06 16:27-0300\n"
+"POT-Creation-Date: 2013-04-07 10:15-0300\n"
 "PO-Revision-Date: 2013-03-14 12:31+0000\n"
 "Last-Translator: Launchpad Translations Administrators <Unknown>\n"
 "Language-Team: Italian <it@li.org>\n"
@@ -10895,8 +10895,9 @@ msgid "Envelope length"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
+#, fuzzy
 msgid "Fade _colour"
-msgstr ""
+msgstr "Lampeggia _colore"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
@@ -10904,12 +10905,14 @@ msgid "Fade _end"
 msgstr "_Fine dissolvenza"
 
 #: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
+#, fuzzy
 msgid "Fade _in"
-msgstr ""
+msgstr "_Fine dissolvenza"
 
 #: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
+#, fuzzy
 msgid "Fade _out"
-msgstr ""
+msgstr "Diminuisci dissolvenza audio"
 
 #: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
 msgid "Fade video to or from color"
@@ -10920,8 +10923,9 @@ msgid "Fade"
 msgstr "Dissolvi"
 
 #: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
+#, fuzzy
 msgid "Fading video"
-msgstr ""
+msgstr "Ricampionando il video"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 msgid "Fading"
@@ -11044,8 +11048,9 @@ msgid "Hue start"
 msgstr "Inizio tinta"
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+#, fuzzy
 msgid "Image overlay"
-msgstr ""
+msgstr "Sovrapposizione Testo"
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
 msgid "Init _Alpha:"
@@ -11124,8 +11129,9 @@ msgid "Number of _frames"
 msgstr "Numero di _fotogrammi"
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+#, fuzzy
 msgid "Overlaying an image onto video"
-msgstr ""
+msgstr "Sovrapponendo il testo su"
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
 msgid "Overlaying text on"
@@ -11315,8 +11321,9 @@ msgid "Tunneling"
 msgstr "Creazione di un tunnel in corso"
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+#, fuzzy
 msgid "Use _Natural Size"
-msgstr ""
+msgstr "Usa la dimensione _Naturale dell'immagine"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
 msgid "Use _Natural image size"
@@ -11448,8 +11455,9 @@ msgid "_Image File"
 msgstr "File _Immagine"
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+#, fuzzy
 msgid "_Image"
-msgstr ""
+msgstr "File _Immagine"
 
 #: /usr/share/lives/plugins/effects/rendered/contrast.script:0
 msgid "_Increase Contrast"
@@ -11737,8 +11745,9 @@ msgid "every"
 msgstr "ogni"
 
 #: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
+#, fuzzy
 msgid "fade_in_out"
-msgstr ""
+msgstr "Diminuisci dissolvenza audio"
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
 msgid "fc"
@@ -11781,8 +11790,9 @@ msgid "hue_change"
 msgstr "cambiamento_tinta"
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+#, fuzzy
 msgid "image_overlay"
-msgstr ""
+msgstr "Sovrapposizione Testo"
 
 #: /usr/share/lives/plugins/effects/rendered/jumble.script:0
 msgid "jumble"

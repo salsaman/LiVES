@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2013-04-06 16:27-0300\n"
+"POT-Creation-Date: 2013-04-07 10:15-0300\n"
 "PO-Revision-Date: 2013-03-14 12:31+0000\n"
 "Last-Translator: Launchpad Translations Administrators <Unknown>\n"
 "Language-Team: Slovak <sk@li.org>\n"
@@ -10743,8 +10743,9 @@ msgid "Envelope length"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
+#, fuzzy
 msgid "Fade _colour"
-msgstr ""
+msgstr "Žiarivá farba"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
@@ -10752,12 +10753,14 @@ msgid "Fade _end"
 msgstr "Slabnutie _koniec"
 
 #: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
+#, fuzzy
 msgid "Fade _in"
-msgstr ""
+msgstr "Slabnutie _koniec"
 
 #: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
+#, fuzzy
 msgid "Fade _out"
-msgstr ""
+msgstr "Stíšiť zvuk"
 
 #: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
 msgid "Fade video to or from color"
@@ -10768,8 +10771,9 @@ msgid "Fade"
 msgstr "Slabnúť"
 
 #: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
+#, fuzzy
 msgid "Fading video"
-msgstr ""
+msgstr "Prevzorkovanie videa"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 msgid "Fading"
@@ -10892,8 +10896,9 @@ msgid "Hue start"
 msgstr "Začiatok odtieňa"
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+#, fuzzy
 msgid "Image overlay"
-msgstr ""
+msgstr "Prekryť textom"
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
 msgid "Init _Alpha:"
@@ -10972,8 +10977,9 @@ msgid "Number of _frames"
 msgstr "Počet _snímkov"
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+#, fuzzy
 msgid "Overlaying an image onto video"
-msgstr ""
+msgstr "Prekrývam textom"
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
 msgid "Overlaying text on"
@@ -10984,12 +10990,14 @@ msgid "Photo/still"
 msgstr "Fotka/nehybný"
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
+#, fuzzy
 msgid "Pixilate"
-msgstr ""
+msgstr "Vložiť"
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
+#, fuzzy
 msgid "Pixilating"
-msgstr ""
+msgstr "Vložiť"
 
 #: /usr/share/lives/plugins/effects/rendered/posterize.script:0
 msgid "Posterize"
@@ -11143,8 +11151,9 @@ msgid "Text Overlay"
 msgstr "Prekryť textom"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
+#, fuzzy
 msgid "Thres_hold"
-msgstr ""
+msgstr "Č/B Začiatok"
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
 msgid "Trim frames/Add border"
@@ -11163,8 +11172,9 @@ msgid "Tunneling"
 msgstr "Aplikujem tunel"
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+#, fuzzy
 msgid "Use _Natural Size"
-msgstr ""
+msgstr "Použiť _prirodzenú veľkosť obrázku"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
 msgid "Use _Natural image size"
@@ -11292,12 +11302,14 @@ msgid "_Horizontal segments"
 msgstr "_Horizontálne prvky"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
+#, fuzzy
 msgid "_Image File"
-msgstr ""
+msgstr "_Súbor"
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+#, fuzzy
 msgid "_Image"
-msgstr ""
+msgstr "_Súbor"
 
 #: /usr/share/lives/plugins/effects/rendered/contrast.script:0
 msgid "_Increase Contrast"
@@ -11317,8 +11329,9 @@ msgstr "_Levely"
 
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#, fuzzy
 msgid "_Link start and end colours"
-msgstr ""
+msgstr "_Nastavenie počiatočných a koncových bodov"
 
 #: /usr/share/lives/plugins/effects/rendered/randomzoom.script:0
 msgid "_Max zoom x 10"
@@ -11329,8 +11342,9 @@ msgid "_Middle"
 msgstr "_Uprostred"
 
 #: /usr/share/lives/plugins/effects/rendered/sepia.script:0
+#, fuzzy
 msgid "_Midtone"
-msgstr ""
+msgstr "_Uprostred"
 
 #: /usr/share/lives/plugins/effects/rendered/negate.script:0
 msgid "_Negate"
@@ -11420,8 +11434,9 @@ msgid "_Source Colour"
 msgstr "_Zdroj farby"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
+#, fuzzy
 msgid "_Splice"
-msgstr ""
+msgstr "Spojiť"
 
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
@@ -11440,8 +11455,9 @@ msgstr "_Počiatočné množstvo"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
+#, fuzzy
 msgid "_Stroke colour"
-msgstr ""
+msgstr "_Počiatočná farba"
 
 #: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
 msgid "_Target Colour"
@@ -11457,8 +11473,9 @@ msgid "_Time (seconds)"
 msgstr "_Čas (sekundy)"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
+#, fuzzy
 msgid "_Top left is clipboard"
-msgstr ""
+msgstr "Kopírovanie do schránky"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
 msgid "_Vertical segments"
@@ -11584,8 +11601,9 @@ msgid "every"
 msgstr "každý"
 
 #: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
+#, fuzzy
 msgid "fade_in_out"
-msgstr ""
+msgstr "Stíšiť zvuk"
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
 msgid "fc"
@@ -11628,8 +11646,9 @@ msgid "hue_change"
 msgstr "zmena_odtieňa"
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+#, fuzzy
 msgid "image_overlay"
-msgstr ""
+msgstr "Prekryť textom"
 
 #: /usr/share/lives/plugins/effects/rendered/jumble.script:0
 msgid "jumble"
@@ -11656,16 +11675,19 @@ msgid "normalize"
 msgstr "normalizovať"
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
+#, fuzzy
 msgid "photo_still"
-msgstr ""
+msgstr "Fotka/nehybný"
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
+#, fuzzy
 msgid "pixilate"
-msgstr ""
+msgstr "Vložiť"
 
 #: /usr/share/lives/plugins/effects/rendered/posterize.script:0
+#, fuzzy
 msgid "posterize"
-msgstr ""
+msgstr "Posterizovať"
 
 #: /usr/share/lives/plugins/effects/rendered/randomzoom.script:0
 msgid "randomzoom"
@@ -11724,12 +11746,14 @@ msgid "textover"
 msgstr "textcez"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
+#, fuzzy
 msgid "transition_bwthresh"
-msgstr ""
+msgstr "prechod"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
+#, fuzzy
 msgid "transition_checkerboard"
-msgstr ""
+msgstr "prechod_stmievanie2"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 msgid "transition_fade2"

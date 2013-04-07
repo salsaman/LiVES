@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: LiVEScz\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2013-04-06 16:27-0300\n"
+"POT-Creation-Date: 2013-04-07 10:15-0300\n"
 "PO-Revision-Date: 2013-03-14 12:31+0000\n"
 "Last-Translator: Launchpad Translations Administrators <Unknown>\n"
 "Language-Team: <martin@svobodicz.com, ales@mur.at>\n"
@@ -10321,8 +10321,9 @@ msgid "Applying charcoal to"
 msgstr "Aplikuji uhel na"
 
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
+#, fuzzy
 msgid "Applying forward skip to"
-msgstr ""
+msgstr "Použití sépie pro"
 
 #: /usr/share/lives/plugins/effects/rendered/sepia.script:0
 msgid "Applying sepia to"
@@ -10337,8 +10338,9 @@ msgid "B/W thresholding"
 msgstr "Č/B práh"
 
 #: /usr/share/lives/plugins/effects/rendered/blank_frames.script:0
+#, fuzzy
 msgid "Blank _Colour"
-msgstr ""
+msgstr "Zářivá  _barva"
 
 #: /usr/share/lives/plugins/effects/rendered/blank_frames.script:0
 msgid "Blank frames"
@@ -10365,8 +10367,9 @@ msgid "Bluring"
 msgstr "Rozostřuji"
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
+#, fuzzy
 msgid "Border _Colour"
-msgstr ""
+msgstr "_Zdrojová barva"
 
 #: /usr/share/lives/plugins/effects/rendered/brightness_change.script:0
 msgid "Brightness _end"
@@ -10540,8 +10543,9 @@ msgid "Envelope length"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
+#, fuzzy
 msgid "Fade _colour"
-msgstr ""
+msgstr "Zářivá  _barva"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
@@ -10549,12 +10553,14 @@ msgid "Fade _end"
 msgstr "Stmívání _konec"
 
 #: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
+#, fuzzy
 msgid "Fade _in"
-msgstr ""
+msgstr "Stmívání _konec"
 
 #: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
+#, fuzzy
 msgid "Fade _out"
-msgstr ""
+msgstr "Ztlumit zvuk"
 
 #: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
 msgid "Fade video to or from color"
@@ -10565,8 +10571,9 @@ msgid "Fade"
 msgstr "Stmívat"
 
 #: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
+#, fuzzy
 msgid "Fading video"
-msgstr ""
+msgstr "Převzorkování videa"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 msgid "Fading"
@@ -10593,8 +10600,9 @@ msgid "Frame Calculator"
 msgstr "Kalkulátor snímků"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
+#, fuzzy
 msgid "Frame _Colour"
-msgstr ""
+msgstr "Zářivá  _barva"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 msgid "Frame _height"
@@ -10633,20 +10641,24 @@ msgid "Generate blank frames"
 msgstr "Generovat prázdné rámce"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
+#, fuzzy
 msgid "Generate clip from image"
-msgstr ""
+msgstr "Vytvářím klip z obrázku"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
+#, fuzzy
 msgid "Generate coloured frames"
-msgstr ""
+msgstr "Vytvářím barevná políčka"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#, fuzzy
 msgid "Generate title frames"
-msgstr ""
+msgstr "Generovat prázdné rámce"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
+#, fuzzy
 msgid "Generating blank frames"
-msgstr ""
+msgstr "Generovat prázdné rámce"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
 msgid "Generating clip from image"
@@ -10657,8 +10669,9 @@ msgid "Generating coloured frames"
 msgstr "Vytvářím barevná políčka"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#, fuzzy
 msgid "Generating title frames"
-msgstr ""
+msgstr "Vytvářím barevná políčka"
 
 #: /usr/share/lives/plugins/effects/rendered/flop.script:0
 msgid "Horizontal flopping"
@@ -10689,8 +10702,9 @@ msgid "Hue start"
 msgstr "Počátek odstínu"
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+#, fuzzy
 msgid "Image overlay"
-msgstr ""
+msgstr "Překrýt textem"
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
 msgid "Init _Alpha:"
@@ -10769,8 +10783,9 @@ msgid "Number of _frames"
 msgstr "Počet _rámců"
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+#, fuzzy
 msgid "Overlaying an image onto video"
-msgstr ""
+msgstr "Překrývám textem"
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
 msgid "Overlaying text on"
@@ -10960,12 +10975,14 @@ msgid "Tunneling"
 msgstr "Tunneling"
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+#, fuzzy
 msgid "Use _Natural Size"
-msgstr ""
+msgstr "Použít _antialiasing při změně velikosti"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
+#, fuzzy
 msgid "Use _Natural image size"
-msgstr ""
+msgstr "Použít _antialiasing při změně velikosti"
 
 #: /usr/share/lives/plugins/effects/rendered/flip.script:0
 msgid "Vertical flipping"
@@ -11093,8 +11110,9 @@ msgid "_Image File"
 msgstr "Soubor _obrázku"
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+#, fuzzy
 msgid "_Image"
-msgstr ""
+msgstr "Soubor _obrázku"
 
 #: /usr/share/lives/plugins/effects/rendered/contrast.script:0
 msgid "_Increase Contrast"
@@ -11126,8 +11144,9 @@ msgid "_Middle"
 msgstr "_Uprostřed"
 
 #: /usr/share/lives/plugins/effects/rendered/sepia.script:0
+#, fuzzy
 msgid "_Midtone"
-msgstr ""
+msgstr "_Uprostřed"
 
 #: /usr/share/lives/plugins/effects/rendered/negate.script:0
 msgid "_Negate"
@@ -11205,8 +11224,9 @@ msgid "_Sigma start"
 msgstr "_Sigma start"
 
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
+#, fuzzy
 msgid "_Skip ahead"
-msgstr ""
+msgstr "_Přeskočit"
 
 #: /usr/share/lives/plugins/effects/rendered/negate.script:0
 msgid "_Skip"
@@ -11381,8 +11401,9 @@ msgid "every"
 msgstr "každý"
 
 #: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
+#, fuzzy
 msgid "fade_in_out"
-msgstr ""
+msgstr "Ztlumit zvuk"
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
 msgid "fc"
@@ -11425,8 +11446,9 @@ msgid "hue_change"
 msgstr "změna_odstínu"
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+#, fuzzy
 msgid "image_overlay"
-msgstr ""
+msgstr "Překrýt textem"
 
 #: /usr/share/lives/plugins/effects/rendered/jumble.script:0
 msgid "jumble"

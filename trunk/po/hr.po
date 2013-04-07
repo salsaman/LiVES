@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2013-04-06 16:27-0300\n"
+"POT-Creation-Date: 2013-04-07 10:15-0300\n"
 "PO-Revision-Date: 2013-03-14 12:31+0000\n"
 "Last-Translator: Launchpad Translations Administrators <Unknown>\n"
 "Language-Team: Croatian <hr@li.org>\n"
@@ -9799,24 +9799,29 @@ msgid "Border _Colour"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/brightness_change.script:0
+#, fuzzy
 msgid "Brightness _end"
-msgstr ""
+msgstr "_Zanemari promjene"
 
 #: /usr/share/lives/plugins/effects/rendered/brightness_change.script:0
+#, fuzzy
 msgid "Brightness _start"
-msgstr ""
+msgstr "_Zanemari promjene"
 
 #: /usr/share/lives/plugins/effects/rendered/brightness_change.script:0
+#, fuzzy
 msgid "Brightness change"
-msgstr ""
+msgstr "_Zanemari promjene"
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
+#, fuzzy
 msgid "Brightness end"
-msgstr ""
+msgstr "_Zanemari promjene"
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
+#, fuzzy
 msgid "Brightness start"
-msgstr ""
+msgstr "_Zanemari promjene"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
@@ -9869,8 +9874,9 @@ msgid "Colorize"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#, fuzzy
 msgid "Colorizing"
-msgstr ""
+msgstr "Promjena veličine"
 
 #: /usr/share/lives/plugins/effects/rendered/cycle.script:0
 msgid "Colour cycle"
@@ -9958,12 +9964,14 @@ msgid "End pos_Y:"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/enhance.script:0
+#, fuzzy
 msgid "Enhance"
-msgstr ""
+msgstr "Odustani"
 
 #: /usr/share/lives/plugins/effects/rendered/enhance.script:0
+#, fuzzy
 msgid "Enhancing"
-msgstr ""
+msgstr "Odustani"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 msgid "Envelope length"
@@ -10055,8 +10063,9 @@ msgid "Gamma _start"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
+#, fuzzy
 msgid "Gamma change"
-msgstr ""
+msgstr "_Zanemari promjene"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
 msgid "Generate blank frames"
@@ -10107,8 +10116,9 @@ msgid "Hue _start"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
+#, fuzzy
 msgid "Hue change"
-msgstr ""
+msgstr "_Zanemari promjene"
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
 msgid "Hue end"
@@ -10163,20 +10173,23 @@ msgid "Modulate (BSH)"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
+#, fuzzy
 msgid "Modulating"
-msgstr ""
+msgstr "Lijepljenje"
 
 #: /usr/share/lives/plugins/effects/rendered/monochrome.script:0
 msgid "Monochrome"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/negate.script:0
+#, fuzzy
 msgid "Negate"
-msgstr ""
+msgstr "Lijepljenje"
 
 #: /usr/share/lives/plugins/effects/rendered/negate.script:0
+#, fuzzy
 msgid "Negating"
-msgstr ""
+msgstr "Lijepljenje"
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
 msgid "Noise type"
@@ -10191,12 +10204,14 @@ msgid "Normalize"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/normalize.script:0
+#, fuzzy
 msgid "Normalizing"
-msgstr ""
+msgstr "Promjena veličine"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#, fuzzy
 msgid "Number of _frames"
-msgstr ""
+msgstr "_Broj puta za umetanje"
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
 msgid "Overlaying an image onto video"
@@ -10211,20 +10226,24 @@ msgid "Photo/still"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
+#, fuzzy
 msgid "Pixilate"
-msgstr ""
+msgstr "Lijepljenje"
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
+#, fuzzy
 msgid "Pixilating"
-msgstr ""
+msgstr "Lijepljenje"
 
 #: /usr/share/lives/plugins/effects/rendered/posterize.script:0
+#, fuzzy
 msgid "Posterize"
-msgstr ""
+msgstr "Promjena veličine"
 
 #: /usr/share/lives/plugins/effects/rendered/posterize.script:0
+#, fuzzy
 msgid "Posterizing"
-msgstr ""
+msgstr "Promjena veličine"
 
 #: /usr/share/lives/plugins/effects/rendered/randomzoom.script:0
 msgid "Random zoom"
@@ -10251,12 +10270,14 @@ msgid "Resize All Frames"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/rotate.script:0
+#, fuzzy
 msgid "Rotate Clip"
-msgstr ""
+msgstr "Lijepljenje"
 
 #: /usr/share/lives/plugins/effects/rendered/rotate.script:0
+#, fuzzy
 msgid "Rotating"
-msgstr ""
+msgstr "Lijepljenje"
 
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
@@ -10304,16 +10325,18 @@ msgid "Shrinking/Expanding"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
+#, fuzzy
 msgid "Skip forward"
-msgstr ""
+msgstr "Preskočen"
 
 #: /usr/share/lives/plugins/effects/rendered/solarize.script:0
 msgid "Solarize"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/solarize.script:0
+#, fuzzy
 msgid "Solarizing"
-msgstr ""
+msgstr "Promjena veličine"
 
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
 msgid "Spin"
@@ -10382,12 +10405,14 @@ msgid "Trimming"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
+#, fuzzy
 msgid "Tunnel"
-msgstr ""
+msgstr "Otkazivanje"
 
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
+#, fuzzy
 msgid "Tunneling"
-msgstr ""
+msgstr "Otkazivanje"
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
 msgid "Use _Natural Size"
@@ -10488,8 +10513,9 @@ msgid "_Fill colour"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
+#, fuzzy
 msgid "_First frame"
-msgstr ""
+msgstr "Okvira"
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
 msgid "_Flash for"
@@ -10503,12 +10529,14 @@ msgstr ""
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
+#, fuzzy
 msgid "_Frames per second"
-msgstr ""
+msgstr "sekundi."
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
+#, fuzzy
 msgid "_Frames"
-msgstr ""
+msgstr "Okvira"
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
 msgid "_Hold for"
@@ -10560,14 +10588,16 @@ msgid "_Midtone"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/negate.script:0
+#, fuzzy
 msgid "_Negate"
-msgstr ""
+msgstr "Lijepljenje"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
+#, fuzzy
 msgid "_Number of frames"
-msgstr ""
+msgstr "_Broj puta za umetanje"
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
 msgid "_Offset X"
@@ -10587,8 +10617,9 @@ msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
+#, fuzzy
 msgid "_Point size"
-msgstr ""
+msgstr "Veličina datoteke"
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
 msgid "_Radius end"
@@ -10615,8 +10646,9 @@ msgid "_Randomness"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
+#, fuzzy
 msgid "_Right"
-msgstr ""
+msgstr "Visina"
 
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
 msgid "_Rotate Selection by"
@@ -10635,12 +10667,14 @@ msgid "_Sigma start"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
+#, fuzzy
 msgid "_Skip ahead"
-msgstr ""
+msgstr "Preskočen"
 
 #: /usr/share/lives/plugins/effects/rendered/negate.script:0
+#, fuzzy
 msgid "_Skip"
-msgstr ""
+msgstr "Preskočen"
 
 #: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
 msgid "_Source Colour"
@@ -10680,8 +10714,9 @@ msgid "_Text"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
+#, fuzzy
 msgid "_Time (seconds)"
-msgstr ""
+msgstr "sekundi."
 
 #: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
 msgid "_Top left is clipboard"
@@ -10747,16 +10782,18 @@ msgid "_then"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/blank_frames.script:0
+#, fuzzy
 msgid "blank_frames"
-msgstr ""
+msgstr "Okvira"
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
 msgid "blur"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/brightness_change.script:0
+#, fuzzy
 msgid "brightness_change"
-msgstr ""
+msgstr "_Zanemari promjene"
 
 #: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
 msgid "charcoal"
@@ -10803,8 +10840,9 @@ msgid "emboss"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/enhance.script:0
+#, fuzzy
 msgid "enhance"
-msgstr ""
+msgstr "Odustani"
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
 msgid "every"
@@ -10851,8 +10889,9 @@ msgid "gen_text"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
+#, fuzzy
 msgid "hue_change"
-msgstr ""
+msgstr "_Zanemari promjene"
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
 msgid "image_overlay"
@@ -10887,20 +10926,23 @@ msgid "photo_still"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
+#, fuzzy
 msgid "pixilate"
-msgstr ""
+msgstr "Lijepljenje"
 
 #: /usr/share/lives/plugins/effects/rendered/posterize.script:0
+#, fuzzy
 msgid "posterize"
-msgstr ""
+msgstr "Promjena veličine"
 
 #: /usr/share/lives/plugins/effects/rendered/randomzoom.script:0
 msgid "randomzoom"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/resize.script:0
+#, fuzzy
 msgid "resize"
-msgstr ""
+msgstr "Veličina datoteke"
 
 #: /usr/share/lives/plugins/effects/rendered/rotate.script:0
 msgid "rotate"
@@ -10967,24 +11009,32 @@ msgid "transition_splice"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
+#, fuzzy
 msgid "trim_frames"
-msgstr ""
+msgstr "Okvira"
 
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
+#, fuzzy
 msgid "tunnel"
-msgstr ""
+msgstr "Otkazivanje"
 
 #: /usr/share/lives/plugins/effects/rendered/wave.script:0
 msgid "wave"
 msgstr ""
 
 #: /usr/bin/smogrify:0
+#, fuzzy
 msgid "Unable to open output file !"
 msgstr ""
+"LiVES nije bio u mogućnosti to hvatanje ovu sliku\n"
+"\n"
 
 #: /usr/bin/smogrify:0
+#, fuzzy
 msgid "LiVES could not write to $nfile."
 msgstr ""
+"LiVES nije bio u mogućnosti to hvatanje ovu sliku\n"
+"\n"
 
 #: /usr/bin/smogrify:0
 msgid "Unable to locate the program $rfx_builder_multi"
@@ -11012,8 +11062,11 @@ msgid "This does not appear to be a valid video or image file"
 msgstr ""
 
 #: /usr/bin/smogrify:0
+#, fuzzy
 msgid "LiVES was unable to open it."
 msgstr ""
+"LiVES nije bio u mogućnosti to hvatanje ovu sliku\n"
+"\n"
 
 #: /usr/bin/smogrify:0
 msgid "Check the terminal window for more details."
@@ -11028,8 +11081,11 @@ msgid "This does not appear to be a valid backup file"
 msgstr ""
 
 #: /usr/bin/smogrify:0
+#, fuzzy
 msgid "LiVES was not able to open the file"
 msgstr ""
+"LiVES nije bio u mogućnosti to hvatanje ovu sliku\n"
+"\n"
 
 #: /usr/bin/smogrify:0
 msgid "$file"

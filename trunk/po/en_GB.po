@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2013-04-06 16:27-0300\n"
+"POT-Creation-Date: 2013-04-07 10:15-0300\n"
 "PO-Revision-Date: 2013-03-15 09:42+0000\n"
 "Last-Translator: salsaman <salsaman@gmail.com>\n"
 "Language-Team: English (United Kingdom) <en_GB@li.org>\n"
@@ -12189,9 +12189,14 @@ msgid " "
 msgstr ""
 
 #: /usr/bin/smogrify:0
+#, fuzzy
 msgid ""
 "You can work around this by switching to jpeg output in Preferences/Decoding."
 msgstr ""
+"\n"
+"\n"
+"    Image decoding type has been switched to jpeg. You can revert this in "
+"Preferences/Decoding.    \n"
 
 #: /usr/bin/smogrify:0
 msgid "This does not appear to be a valid video or image file"

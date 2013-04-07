@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2013-04-06 16:27-0300\n"
+"POT-Creation-Date: 2013-04-07 10:15-0300\n"
 "PO-Revision-Date: 2013-03-14 12:31+0000\n"
 "Last-Translator: Launchpad Translations Administrators <Unknown>\n"
 "Language-Team: Telugu <indlinux-telugu@lists.sourceforge.net>\n"
@@ -9665,16 +9665,19 @@ msgid "Add _Border"
 msgstr "సరిహద్దుని జతచేయి (_B)"
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
+#, fuzzy
 msgid "Add noise"
-msgstr ""
+msgstr "సరిహద్దుని జతచేయి (_B)"
 
 #: /usr/share/lives/plugins/effects/rendered/contrast.script:0
+#, fuzzy
 msgid "Adjust contrast"
-msgstr ""
+msgstr "%sను సవరించు (_A)"
 
 #: /usr/share/lives/plugins/effects/rendered/contrast.script:0
+#, fuzzy
 msgid "Adjusting contrast of"
-msgstr ""
+msgstr "%sను సవరించు (_A)"
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
 msgid "Adjusting noise on"
@@ -9701,8 +9704,9 @@ msgid "B/W thresholding"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/blank_frames.script:0
+#, fuzzy
 msgid "Blank _Colour"
-msgstr ""
+msgstr "_ప్రారంభం"
 
 #: /usr/share/lives/plugins/effects/rendered/blank_frames.script:0
 msgid "Blank frames"
@@ -9713,20 +9717,23 @@ msgid "Blanking"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
+#, fuzzy
 msgid "Block _height"
-msgstr ""
+msgstr "ఎత్తు (_H)"
 
 #: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
+#, fuzzy
 msgid "Block _width"
-msgstr ""
+msgstr "ఎత్తు (_H)"
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
 msgid "Blur"
 msgstr "మసక"
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
+#, fuzzy
 msgid "Bluring"
-msgstr ""
+msgstr "మసక"
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
 msgid "Border _Colour"
@@ -9783,28 +9790,33 @@ msgid "Charcoal"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
+#, fuzzy
 msgid "Checkerboard"
-msgstr ""
+msgstr "రికార్డింగ్"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
+#, fuzzy
 msgid "Checkerboarding"
-msgstr ""
+msgstr "రికార్డింగ్"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
+#, fuzzy
 msgid "Clipboard _over selection"
-msgstr ""
+msgstr "_తిరగబడ్డ ఎంపిక"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
+#, fuzzy
 msgid "Clipboard _under selection"
-msgstr ""
+msgstr "_తిరగబడ్డ ఎంపిక"
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 msgid "Colorize"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#, fuzzy
 msgid "Colorizing"
-msgstr ""
+msgstr "పరిమాణం మార్చుట"
 
 #: /usr/share/lives/plugins/effects/rendered/cycle.script:0
 msgid "Colour cycle"
@@ -9831,8 +9843,9 @@ msgid "Constant noise level"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/cycle.script:0
+#, fuzzy
 msgid "Cycle _Step"
-msgstr ""
+msgstr "_ప్రారంభం"
 
 #: /usr/share/lives/plugins/effects/rendered/deinterlace.script:0
 msgid "Deinterlace"
@@ -9892,12 +9905,14 @@ msgid "End pos_Y:"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/enhance.script:0
+#, fuzzy
 msgid "Enhance"
-msgstr ""
+msgstr "మెరుగుపరుచు"
 
 #: /usr/share/lives/plugins/effects/rendered/enhance.script:0
+#, fuzzy
 msgid "Enhancing"
-msgstr ""
+msgstr "మెరుగుపరుచు"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 msgid "Envelope length"
@@ -9933,12 +9948,14 @@ msgid "Fading video"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+#, fuzzy
 msgid "Fading"
-msgstr ""
+msgstr "రికార్డింగు ఆపివేయి"
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
+#, fuzzy
 msgid "Fina_l frame"
-msgstr ""
+msgstr "ముగింపు చట్రం"
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
 msgid "Flash _colour"
@@ -9957,12 +9974,14 @@ msgid "Frame Calculator"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
+#, fuzzy
 msgid "Frame _Colour"
-msgstr ""
+msgstr "_ప్రారంభం"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#, fuzzy
 msgid "Frame _height"
-msgstr ""
+msgstr "ఎత్తు (_H)"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 msgid "Frame _in frame position of clipboard..."
@@ -9973,8 +9992,9 @@ msgid "Frame _in frame position of top frame..."
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#, fuzzy
 msgid "Frame _width"
-msgstr ""
+msgstr "ఎత్తు (_H)"
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
 msgid "Frames _per second (FPS)"
@@ -9985,44 +10005,53 @@ msgid "Gamma _end"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
+#, fuzzy
 msgid "Gamma _start"
-msgstr ""
+msgstr "_ప్రారంభం"
 
 #: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
 msgid "Gamma change"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
+#, fuzzy
 msgid "Generate blank frames"
-msgstr ""
+msgstr "ఖాళీ చట్రాలు"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
+#, fuzzy
 msgid "Generate clip from image"
-msgstr ""
+msgstr "ఖాళీ చట్రాలు"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
+#, fuzzy
 msgid "Generate coloured frames"
-msgstr ""
+msgstr "ఖాళీ చట్రాలు"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#, fuzzy
 msgid "Generate title frames"
-msgstr ""
+msgstr "ఖాళీ చట్రాలు"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
+#, fuzzy
 msgid "Generating blank frames"
-msgstr ""
+msgstr "ఖాళీ చట్రాలు"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
+#, fuzzy
 msgid "Generating clip from image"
-msgstr ""
+msgstr "ఖాళీ చట్రాలు"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
+#, fuzzy
 msgid "Generating coloured frames"
-msgstr ""
+msgstr "ఖాళీ చట్రాలు"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#, fuzzy
 msgid "Generating title frames"
-msgstr ""
+msgstr "ఖాళీ చట్రాలు"
 
 #: /usr/share/lives/plugins/effects/rendered/flop.script:0
 msgid "Horizontal flopping"
@@ -10037,8 +10066,9 @@ msgid "Hue _end"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
+#, fuzzy
 msgid "Hue _start"
-msgstr ""
+msgstr "_ప్రారంభం"
 
 #: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
 msgid "Hue change"
@@ -10049,8 +10079,9 @@ msgid "Hue end"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
+#, fuzzy
 msgid "Hue start"
-msgstr ""
+msgstr "_ప్రారంభం"
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
 msgid "Image overlay"
@@ -10105,12 +10136,14 @@ msgid "Monochrome"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/negate.script:0
+#, fuzzy
 msgid "Negate"
-msgstr ""
+msgstr "తొలగిస్తున్నది"
 
 #: /usr/share/lives/plugins/effects/rendered/negate.script:0
+#, fuzzy
 msgid "Negating"
-msgstr ""
+msgstr "తొలగిస్తున్నది"
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
 msgid "Noise type"
@@ -10125,8 +10158,9 @@ msgid "Normalize"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/normalize.script:0
+#, fuzzy
 msgid "Normalizing"
-msgstr ""
+msgstr "పరిమాణం మార్చుట"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 msgid "Number of _frames"
@@ -10153,12 +10187,14 @@ msgid "Pixilating"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/posterize.script:0
+#, fuzzy
 msgid "Posterize"
-msgstr ""
+msgstr "పరిమాణం మార్చుట"
 
 #: /usr/share/lives/plugins/effects/rendered/posterize.script:0
+#, fuzzy
 msgid "Posterizing"
-msgstr ""
+msgstr "పరిమాణం మార్చుట"
 
 #: /usr/share/lives/plugins/effects/rendered/randomzoom.script:0
 msgid "Random zoom"
@@ -10169,8 +10205,9 @@ msgid "Random zooming"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
+#, fuzzy
 msgid "Reduce noise"
-msgstr ""
+msgstr "సరిహద్దుని జతచేయి (_B)"
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
 msgid "Reduction radius"
@@ -10181,21 +10218,24 @@ msgid "Replacing colours in"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/resize.script:0
+#, fuzzy
 msgid "Resize All Frames"
-msgstr ""
+msgstr "అన్ని చట్రాల పరిమాణం మార్చు (_R)"
 
 #: /usr/share/lives/plugins/effects/rendered/rotate.script:0
 msgid "Rotate Clip"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/rotate.script:0
+#, fuzzy
 msgid "Rotating"
-msgstr ""
+msgstr "తొలగిస్తున్నది"
 
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#, fuzzy
 msgid "S_tart %"
-msgstr ""
+msgstr "_ప్రారంభం"
 
 #: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
 msgid "Saturation _end"
@@ -10238,16 +10278,18 @@ msgid "Shrinking/Expanding"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
+#, fuzzy
 msgid "Skip forward"
-msgstr ""
+msgstr "దాటవేయి (_S)"
 
 #: /usr/share/lives/plugins/effects/rendered/solarize.script:0
 msgid "Solarize"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/solarize.script:0
+#, fuzzy
 msgid "Solarizing"
-msgstr ""
+msgstr "పరిమాణం మార్చుట"
 
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
 msgid "Spin"
@@ -10266,26 +10308,31 @@ msgid "Splicing"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/spread.script:0
+#, fuzzy
 msgid "Spread"
-msgstr ""
+msgstr "రికార్డింగు ఆపివేయి"
 
 #: /usr/share/lives/plugins/effects/rendered/spread.script:0
+#, fuzzy
 msgid "Spreading"
-msgstr ""
+msgstr "రికార్డింగు ఆపివేయి"
 
 #: /usr/share/lives/plugins/effects/rendered/solarize.script:0
+#, fuzzy
 msgid "Step _Value"
-msgstr ""
+msgstr "ప్రారంభ చట్రం"
 
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
+#, fuzzy
 msgid "Step per _Frame"
-msgstr ""
+msgstr "ప్రారంభ చట్రం"
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
+#, fuzzy
 msgid "Swirl _start"
-msgstr ""
+msgstr "_ప్రారంభం"
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
 msgid "Swirl s_tep"
@@ -10353,8 +10400,9 @@ msgstr ""
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
+#, fuzzy
 msgid "_Background Colour"
-msgstr ""
+msgstr "_ప్రారంభం"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 msgid "_Background colour"
@@ -10377,8 +10425,9 @@ msgid "_Calculate"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/cycle.script:0
+#, fuzzy
 msgid "_Cycle Start"
-msgstr ""
+msgstr "_ప్రారంభం"
 
 #: /usr/share/lives/plugins/effects/rendered/contrast.script:0
 msgid "_Decrease Contrast"
@@ -10391,8 +10440,9 @@ msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#, fuzzy
 msgid "_End Colour"
-msgstr ""
+msgstr "_ప్రారంభం"
 
 #: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
 msgid "_End Size X:"
@@ -10403,8 +10453,9 @@ msgid "_End Size Y:"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/spread.script:0
+#, fuzzy
 msgid "_End amount"
-msgstr ""
+msgstr "ముగింపు చట్రం"
 
 #: /usr/share/lives/plugins/effects/rendered/dream.script:0
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
@@ -10413,8 +10464,9 @@ msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
+#, fuzzy
 msgid "_Fade start"
-msgstr ""
+msgstr "వ్యాసార్ధం (_R)"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
@@ -10422,8 +10474,9 @@ msgid "_Fill colour"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
+#, fuzzy
 msgid "_First frame"
-msgstr ""
+msgstr "ప్రారంభ చట్రం"
 
 #: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
 msgid "_Flash for"
@@ -10437,8 +10490,9 @@ msgstr "ఫాంటు (_F)"
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
+#, fuzzy
 msgid "_Frames per second"
-msgstr ""
+msgstr "సెకనులు"
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
 msgid "_Frames"
@@ -10494,8 +10548,9 @@ msgid "_Midtone"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/negate.script:0
+#, fuzzy
 msgid "_Negate"
-msgstr ""
+msgstr "తొలగిస్తున్నది"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
@@ -10512,8 +10567,9 @@ msgid "_Offset Y"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
+#, fuzzy
 msgid "_Other Center"
-msgstr ""
+msgstr "ఇతర (_O)"
 
 #: /usr/share/lives/plugins/effects/rendered/rotate.script:0
 msgid "_Other"
@@ -10521,16 +10577,19 @@ msgstr "ఇతర (_O)"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
+#, fuzzy
 msgid "_Point size"
-msgstr ""
+msgstr "ఫైల్ పరిమాణం"
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
+#, fuzzy
 msgid "_Radius end"
-msgstr ""
+msgstr "వ్యాసార్ధం (_R)"
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
+#, fuzzy
 msgid "_Radius start"
-msgstr ""
+msgstr "వ్యాసార్ధం (_R)"
 
 #: /usr/share/lives/plugins/effects/rendered/emboss.script:0
 #: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
@@ -10553,32 +10612,37 @@ msgid "_Right"
 msgstr "కుడి (_R)"
 
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
+#, fuzzy
 msgid "_Rotate Selection by"
-msgstr ""
+msgstr "_తిరగబడ్డ ఎంపిక"
 
 #: /usr/share/lives/plugins/effects/rendered/spin.script:0
 msgid "_Shrink rotated window to fit frame size"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
+#, fuzzy
 msgid "_Sigma end"
-msgstr ""
+msgstr "_ప్రారంభం"
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
+#, fuzzy
 msgid "_Sigma start"
-msgstr ""
+msgstr "_ప్రారంభం"
 
 #: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
+#, fuzzy
 msgid "_Skip ahead"
-msgstr ""
+msgstr "దాటవేయి (_S)"
 
 #: /usr/share/lives/plugins/effects/rendered/negate.script:0
 msgid "_Skip"
 msgstr "దాటవేయి (_S)"
 
 #: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
+#, fuzzy
 msgid "_Source Colour"
-msgstr ""
+msgstr "_ప్రారంభం"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
 msgid "_Splice"
@@ -10586,27 +10650,32 @@ msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+#, fuzzy
 msgid "_Start Colour"
-msgstr ""
+msgstr "_ప్రారంభం"
 
 #: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
 #: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
 #: /usr/share/lives/plugins/effects/rendered/solarize.script:0
+#, fuzzy
 msgid "_Start Value"
-msgstr ""
+msgstr "ప్రారంభ చట్రం"
 
 #: /usr/share/lives/plugins/effects/rendered/spread.script:0
+#, fuzzy
 msgid "_Start amount"
-msgstr ""
+msgstr "ప్రారంభ చట్రం"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
+#, fuzzy
 msgid "_Stroke colour"
-msgstr ""
+msgstr "_ప్రారంభం"
 
 #: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
+#, fuzzy
 msgid "_Target Colour"
-msgstr ""
+msgstr "_ప్రారంభం"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
@@ -10614,8 +10683,9 @@ msgid "_Text"
 msgstr "పాఠ్యం(_T)"
 
 #: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
+#, fuzzy
 msgid "_Time (seconds)"
-msgstr ""
+msgstr "సెకనులు"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
 msgid "_Top left is clipboard"
@@ -10626,8 +10696,9 @@ msgid "_Vertical segments"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/wave.script:0
+#, fuzzy
 msgid "_Wavemax"
-msgstr ""
+msgstr "అల"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 msgid "_White is transparent"
@@ -10639,16 +10710,18 @@ msgid "_Wrap Around"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
+#, fuzzy
 msgid "_X Center"
-msgstr ""
+msgstr "ఇతర (_O)"
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
 msgid "_X End"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
+#, fuzzy
 msgid "_X Start"
-msgstr ""
+msgstr "_ప్రారంభం"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
@@ -10656,16 +10729,18 @@ msgid "_X offset"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
+#, fuzzy
 msgid "_Y Center"
-msgstr ""
+msgstr "ఇతర (_O)"
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
 msgid "_Y End"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
+#, fuzzy
 msgid "_Y Start"
-msgstr ""
+msgstr "_ప్రారంభం"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
@@ -10681,8 +10756,9 @@ msgid "_then"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/blank_frames.script:0
+#, fuzzy
 msgid "blank_frames"
-msgstr ""
+msgstr "ఖాళీ చట్రాలు"
 
 #: /usr/share/lives/plugins/effects/rendered/blur.script:0
 msgid "blur"
@@ -10709,8 +10785,9 @@ msgid "colour_replace"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/contrast.script:0
+#, fuzzy
 msgid "contrast"
-msgstr ""
+msgstr "%sను సవరించు (_A)"
 
 #: /usr/share/lives/plugins/effects/rendered/cycle.script:0
 msgid "cycle"
@@ -10741,8 +10818,9 @@ msgid "enhance"
 msgstr "మెరుగుపరుచు"
 
 #: /usr/share/lives/plugins/effects/rendered/noisify.script:0
+#, fuzzy
 msgid "every"
-msgstr ""
+msgstr "_ఎప్పుడు కాదు"
 
 #: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
 msgid "fade_in_out"
@@ -10769,16 +10847,18 @@ msgid "gamma_change"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
+#, fuzzy
 msgid "gen_blank_frames"
-msgstr ""
+msgstr "ఖాళీ చట్రాలు"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
 msgid "gen_clip_from_image"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
+#, fuzzy
 msgid "gen_coloured_frames"
-msgstr ""
+msgstr "ఖాళీ చట్రాలు"
 
 #: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 msgid "gen_text"
@@ -10825,8 +10905,9 @@ msgid "pixilate"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/posterize.script:0
+#, fuzzy
 msgid "posterize"
-msgstr ""
+msgstr "పరిమాణం మార్చుట"
 
 #: /usr/share/lives/plugins/effects/rendered/randomzoom.script:0
 msgid "randomzoom"
@@ -10841,8 +10922,9 @@ msgid "rotate"
 msgstr "తిప్పు"
 
 #: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
+#, fuzzy
 msgid "saturation_change"
-msgstr ""
+msgstr "అవస్థాంతరములు, మార్పులు"
 
 #: /usr/share/lives/plugins/effects/rendered/sepia.script:0
 msgid "sepia"
@@ -10873,8 +10955,9 @@ msgid "spin"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/spread.script:0
+#, fuzzy
 msgid "spread"
-msgstr ""
+msgstr "రికార్డింగు ఆపివేయి"
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
 msgid "swirl"
@@ -10885,24 +10968,29 @@ msgid "textover"
 msgstr ""
 
 #: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
+#, fuzzy
 msgid "transition_bwthresh"
-msgstr ""
+msgstr "అవస్థాంతరములు, మార్పులు"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
+#, fuzzy
 msgid "transition_checkerboard"
-msgstr ""
+msgstr "అవస్థాంతరములు, మార్పులు"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+#, fuzzy
 msgid "transition_fade2"
-msgstr ""
+msgstr "అవస్థాంతరములు, మార్పులు"
 
 #: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
+#, fuzzy
 msgid "transition_splice"
-msgstr ""
+msgstr "అవస్థాంతరములు, మార్పులు"
 
 #: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
+#, fuzzy
 msgid "trim_frames"
-msgstr ""
+msgstr "చట్రాలు"
 
 #: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
 msgid "tunnel"

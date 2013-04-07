@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: http://www.sourceforge.net/tracker/?"
 "group_id=64341&atid=507139\n"
-"POT-Creation-Date: 2013-04-07 12:38-0300\n"
+"POT-Creation-Date: 2013-04-07 17:16-0300\n"
 "PO-Revision-Date: 2013-03-14 12:31+0000\n"
 "Last-Translator: Launchpad Translations Administrators <Unknown>\n"
 "Language-Team: Danish <da@li.org>\n"
@@ -10102,8 +10102,9 @@ msgid "Hue change"
 msgstr "Hastighedsændring"
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
+#, fuzzy
 msgid "Hue end"
-msgstr ""
+msgstr "_X Start"
 
 #: /usr/share/lives/plugins/effects/rendered/modulate.script:0
 #, fuzzy
@@ -10385,8 +10386,9 @@ msgid "Swirl"
 msgstr "_X Start"
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
+#, fuzzy
 msgid "Swirling"
-msgstr ""
+msgstr "_X Start"
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
 msgid "Text Overlay"
@@ -11022,8 +11024,9 @@ msgid "spread"
 msgstr "Stop optagelse"
 
 #: /usr/share/lives/plugins/effects/rendered/swirl.script:0
+#, fuzzy
 msgid "swirl"
-msgstr ""
+msgstr "_X Start"
 
 #: /usr/share/lives/plugins/effects/rendered/textover.script:0
 msgid "textover"

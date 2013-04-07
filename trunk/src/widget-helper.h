@@ -62,6 +62,10 @@ typedef cairo_fill_rule_t lives_painter_fill_rule_t;
 
 #ifdef GUI_GTK
 
+#ifndef G_ENCODE_VERSION
+#define G_ENCODE_VERSION(major,minor) ((major) << 16 | (minor) << 8)
+#endif
+
 #define return_true gtk_true
 
 typedef GtkJustification LiVESJustification;
@@ -96,7 +100,6 @@ typedef GtkContainer                      LiVESContainer;
 typedef GtkBin                            LiVESBin;
 typedef GtkDialog                         LiVESDialog;
 typedef GtkBox                            LiVESBox;
-typedef GtkEntry                          LiVESEntry;
 typedef GtkComboBox                       LiVESCombo;
 typedef GtkComboBox                       LiVESComboBox;
 typedef GtkButton                         LiVESButton;

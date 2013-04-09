@@ -1989,7 +1989,7 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
       detach_stream(cdata);
       free(cdata->URI);
     }
-    //    cdata->URI=strdup(URI);
+    cdata->URI=strdup(URI);
     if (!attach_stream(cdata)) {
       free(cdata->URI);
       cdata->URI=NULL;

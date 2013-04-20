@@ -1737,8 +1737,8 @@ gboolean add_lmap_error(lives_lmap_error_t lerror, const gchar *name, gpointer u
     break;
   }
 
-  gtk_widget_set_sensitive (mainw->show_layout_errors, TRUE);
-  if (mainw->multitrack!=NULL) gtk_widget_set_sensitive (mainw->multitrack->show_layout_errors, TRUE);
+  lives_widget_set_sensitive (mainw->show_layout_errors, TRUE);
+  if (mainw->multitrack!=NULL) lives_widget_set_sensitive (mainw->multitrack->show_layout_errors, TRUE);
   return TRUE;
 }
 
@@ -1760,8 +1760,8 @@ void clear_lmap_errors(void) {
   g_list_free(lmap);
 
   mainw->affected_layouts_map=NULL;
-  gtk_widget_set_sensitive (mainw->show_layout_errors, FALSE);
-  if (mainw->multitrack!=NULL) gtk_widget_set_sensitive (mainw->multitrack->show_layout_errors, FALSE);
+  lives_widget_set_sensitive (mainw->show_layout_errors, FALSE);
+  if (mainw->multitrack!=NULL) lives_widget_set_sensitive (mainw->multitrack->show_layout_errors, FALSE);
 
   if (mainw->affected_layout_marks!=NULL) {
     remove_current_from_affected_layouts(mainw->multitrack);
@@ -2534,7 +2534,7 @@ void get_play_times(void) {
 
       }
       lives_ruler_set_value(LIVES_RULER (mainw->hruler),offset*cfile->total_time/allocwidth);
-      gtk_widget_queue_draw (mainw->hruler);
+      lives_widget_queue_draw (mainw->hruler);
     }
     if (cfile->achans>0&&cfile->is_loaded&&prefs->audio_src!=AUDIO_SRC_EXT) {
       if ((prefs->audio_player==AUD_PLAYER_JACK||prefs->audio_player==AUD_PLAYER_PULSE)&&
@@ -2622,7 +2622,7 @@ void get_play_times(void) {
     }
     if (cfile->frames==0) {
       lives_ruler_set_value(LIVES_RULER (mainw->hruler),offset*cfile->total_time/allocwidth);
-      gtk_widget_queue_draw (mainw->hruler);
+      lives_widget_queue_draw (mainw->hruler);
     }
   }
   
@@ -2630,15 +2630,15 @@ void get_play_times(void) {
     if (cfile->total_time>0.) {
       // set the range of the timeline
       if (!cfile->opening_loc) {
-	gtk_widget_show (mainw->hruler);
+	lives_widget_show (mainw->hruler);
       }
-      gtk_widget_show (mainw->eventbox5);
-      gtk_widget_show (mainw->video_draw);
-      gtk_widget_show (mainw->laudio_draw);
-      gtk_widget_show (mainw->raudio_draw);
+      lives_widget_show (mainw->eventbox5);
+      lives_widget_show (mainw->video_draw);
+      lives_widget_show (mainw->laudio_draw);
+      lives_widget_show (mainw->raudio_draw);
 
       lives_ruler_set_upper(LIVES_RULER (mainw->hruler),cfile->total_time);
-      gtk_widget_queue_draw(mainw->hruler);
+      lives_widget_queue_draw(mainw->hruler);
 
       draw_little_bars(cfile->pointer_time);
 
@@ -2650,17 +2650,17 @@ void get_play_times(void) {
 	// and add it the play window
 	if (lives_widget_get_parent(mainw->preview_box)==NULL&&(cfile->clip_type==CLIP_TYPE_DISK||
 					       cfile->clip_type==CLIP_TYPE_FILE)&&!mainw->is_rendering) {
-	  gtk_widget_queue_draw(mainw->play_window);
-	  gtk_container_add (GTK_CONTAINER (mainw->play_window), mainw->preview_box);
-	  gtk_widget_grab_focus (mainw->preview_spinbutton);
+	  lives_widget_queue_draw(mainw->play_window);
+	  lives_container_add (GTK_CONTAINER (mainw->play_window), mainw->preview_box);
+	  lives_widget_grab_focus (mainw->preview_spinbutton);
 	  play_window_set_title();
 	  load_preview_image(FALSE);
 	}
       }
     }
     else {
-      gtk_widget_hide (mainw->hruler);
-      gtk_widget_hide (mainw->eventbox5);
+      lives_widget_hide (mainw->hruler);
+      lives_widget_hide (mainw->eventbox5);
     }
 
     if (cfile->opening_loc||(cfile->frames==123456789&&cfile->opening)) {
@@ -2679,7 +2679,7 @@ void get_play_times(void) {
 	}
       }
     }
-    gtk_label_set_text(GTK_LABEL(mainw->vidbar),tmpstr);
+    lives_label_set_text(GTK_LABEL(mainw->vidbar),tmpstr);
     g_free(tmpstr);
     if (cfile->achans==0) {
       tmpstr=g_strdup (_ ("(No audio)"));
@@ -2702,7 +2702,7 @@ void get_play_times(void) {
 	}
       }
     }
-    gtk_label_set_text(GTK_LABEL(mainw->laudbar),tmpstr);
+    lives_label_set_text(GTK_LABEL(mainw->laudbar),tmpstr);
     g_free(tmpstr);
     if (cfile->achans>1) {
       if (cfile->opening_audio) {
@@ -2711,12 +2711,12 @@ void get_play_times(void) {
       else {
 	tmpstr=g_strdup_printf(_ ("Right Audio [%.2f sec]"),cfile->raudio_time);
       }
-      gtk_label_set_text(GTK_LABEL(mainw->raudbar),tmpstr);
-      gtk_widget_show (mainw->raudbar);
+      lives_label_set_text(GTK_LABEL(mainw->raudbar),tmpstr);
+      lives_widget_show (mainw->raudbar);
       g_free(tmpstr);
     }
     else {
-      gtk_widget_hide (mainw->raudbar);
+      lives_widget_hide (mainw->raudbar);
     }
   }
   else {
@@ -2726,12 +2726,12 @@ void get_play_times(void) {
   }
 
   if (!mainw->draw_blocked) {
-    gtk_widget_queue_draw(mainw->video_draw);
-    gtk_widget_queue_draw(mainw->laudio_draw);
-    gtk_widget_queue_draw(mainw->raudio_draw);
+    lives_widget_queue_draw(mainw->video_draw);
+    lives_widget_queue_draw(mainw->laudio_draw);
+    lives_widget_queue_draw(mainw->raudio_draw);
   }
-  gtk_widget_queue_draw(mainw->vidbar);
-  gtk_widget_queue_draw(mainw->hruler);
+  lives_widget_queue_draw(mainw->vidbar);
+  lives_widget_queue_draw(mainw->hruler);
 }
     
 
@@ -2979,12 +2979,12 @@ minimise_aspect_delta (gdouble aspect,gint hblock,gint vblock,gint hsize,gint vs
 
 void zero_spinbuttons (void) {
   g_signal_handler_block(mainw->spinbutton_start,mainw->spin_start_func);
-  gtk_spin_button_set_range(GTK_SPIN_BUTTON(mainw->spinbutton_start),0.,0.);
-  gtk_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_start),0.);
+  lives_spin_button_set_range(GTK_SPIN_BUTTON(mainw->spinbutton_start),0.,0.);
+  lives_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_start),0.);
   g_signal_handler_unblock(mainw->spinbutton_start,mainw->spin_start_func);
   g_signal_handler_block(mainw->spinbutton_end,mainw->spin_end_func);
-  gtk_spin_button_set_range(GTK_SPIN_BUTTON(mainw->spinbutton_end),0.,0.);
-  gtk_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_end),0.);
+  lives_spin_button_set_range(GTK_SPIN_BUTTON(mainw->spinbutton_end),0.,0.);
+  lives_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_end),0.);
   g_signal_handler_unblock(mainw->spinbutton_end,mainw->spin_end_func);
 }
 
@@ -3010,9 +3010,9 @@ boolean switch_aud_to_jack(void) {
       jack_driver_activate(mainw->jackd);
     }
     mainw->aplayer_broken=FALSE;
-    gtk_widget_show(mainw->vol_toolitem);
-    if (mainw->vol_label!=NULL) gtk_widget_show(mainw->vol_label);
-    gtk_widget_show (mainw->recaudio_submenu);
+    lives_widget_show(mainw->vol_toolitem);
+    if (mainw->vol_label!=NULL) lives_widget_show(mainw->vol_label);
+    lives_widget_show (mainw->recaudio_submenu);
 
     if (mainw->vpp!=NULL&&mainw->vpp->get_audio_fmts!=NULL) 
       mainw->vpp->audio_codec=get_best_audio(mainw->vpp);
@@ -3060,9 +3060,9 @@ boolean switch_aud_to_pulse(void) {
 	pulse_driver_activate(mainw->pulsed);
       }
       mainw->aplayer_broken=FALSE;
-      gtk_widget_show(mainw->vol_toolitem);
-      if (mainw->vol_label!=NULL) gtk_widget_show(mainw->vol_label);
-      gtk_widget_show (mainw->recaudio_submenu);
+      lives_widget_show(mainw->vol_toolitem);
+      if (mainw->vol_label!=NULL) lives_widget_show(mainw->vol_label);
+      lives_widget_show (mainw->recaudio_submenu);
 
       prefs->audio_player=AUD_PLAYER_PULSE;
       set_pref("audio_player","pulse");
@@ -3100,9 +3100,9 @@ void switch_aud_to_sox(boolean set_in_prefs) {
   g_snprintf(prefs->aplayer,512,"%s","sox");
   set_pref("audio_play_command",prefs->audio_play_command);
   if (mainw->is_ready) {
-    gtk_widget_hide(mainw->vol_toolitem);
-    if (mainw->vol_label!=NULL) gtk_widget_hide(mainw->vol_label);
-    gtk_widget_hide (mainw->recaudio_submenu);
+    lives_widget_hide(mainw->vol_toolitem);
+    if (mainw->vol_label!=NULL) lives_widget_hide(mainw->vol_label);
+    lives_widget_hide (mainw->recaudio_submenu);
     
     if (mainw->vpp!=NULL&&mainw->vpp->get_audio_fmts!=NULL) 
       mainw->vpp->audio_codec=get_best_audio(mainw->vpp);
@@ -3154,9 +3154,9 @@ void switch_aud_to_mplayer(boolean set_in_prefs) {
   g_snprintf(prefs->aplayer,512,"%s","mplayer");
   set_pref("audio_play_command",prefs->audio_play_command);
   if (mainw->is_ready) {
-    gtk_widget_hide(mainw->vol_toolitem);
-    if (mainw->vol_label!=NULL) gtk_widget_hide(mainw->vol_label);
-    gtk_widget_hide (mainw->recaudio_submenu);
+    lives_widget_hide(mainw->vol_toolitem);
+    if (mainw->vol_label!=NULL) lives_widget_hide(mainw->vol_label);
+    lives_widget_hide (mainw->recaudio_submenu);
 
     if (mainw->vpp!=NULL&&mainw->vpp->get_audio_fmts!=NULL) 
       mainw->vpp->audio_codec=get_best_audio(mainw->vpp);
@@ -3242,8 +3242,8 @@ boolean prepare_to_play_foreign(void) {
 
   resize(-2);
 
-  gtk_widget_show (mainw->playframe);
-  gtk_widget_show (mainw->playarea);
+  lives_widget_show (mainw->playframe);
+  lives_widget_show (mainw->playarea);
   lives_widget_context_update();
 
   // size must be exact, must not be larger than play window or we end up with nothing
@@ -3321,10 +3321,10 @@ boolean prepare_to_play_foreign(void) {
   mainw->faded=TRUE;
   mainw->double_size=FALSE;
 
-  gtk_widget_hide(mainw->t_double);
-  gtk_widget_hide(mainw->t_bckground);
-  gtk_widget_hide(mainw->t_sepwin);
-  gtk_widget_hide(mainw->t_infobutton);
+  lives_widget_hide(mainw->t_double);
+  lives_widget_hide(mainw->t_bckground);
+  lives_widget_hide(mainw->t_sepwin);
+  lives_widget_hide(mainw->t_infobutton);
 
   return TRUE;
 }
@@ -3442,25 +3442,25 @@ boolean after_foreign_play(void) {
 void set_menu_text(GtkWidget *menuitem, const gchar *text, boolean use_mnemonic) {
   GtkWidget *label;
   if (GTK_IS_MENU_ITEM (menuitem)) {
-    label=gtk_bin_get_child(GTK_BIN(menuitem));
+    label=lives_bin_get_child(GTK_BIN(menuitem));
     if (use_mnemonic) {
-      gtk_label_set_text_with_mnemonic(GTK_LABEL(label),text);
+      lives_label_set_text_with_mnemonic(GTK_LABEL(label),text);
     }
     else {
-      gtk_label_set_text(GTK_LABEL(label),text);
+      lives_label_set_text(GTK_LABEL(label),text);
     }
   }
 }
 
 
 void get_menu_text(GtkWidget *menuitem, gchar *text) {
-  GtkWidget *label=gtk_bin_get_child(GTK_BIN(menuitem));
+  GtkWidget *label=lives_bin_get_child(GTK_BIN(menuitem));
   g_snprintf(text,255,"%s",gtk_label_get_text(GTK_LABEL(label)));
 }
 
 void
 get_menu_text_long(GtkWidget *menuitem, gchar *text) {
-  GtkWidget *label=gtk_bin_get_child(GTK_BIN(menuitem));
+  GtkWidget *label=lives_bin_get_child(GTK_BIN(menuitem));
   g_snprintf(text,32768,"%s",gtk_label_get_text(GTK_LABEL(label)));
 }
 
@@ -3497,13 +3497,13 @@ reset_clip_menu (void) {
 	}
       }
       if (!(active_image==NULL)) {
-	gtk_widget_show (active_image);
+	lives_widget_show (active_image);
       }
       if (mainw->files[i]->menuentry!=NULL) {
 	get_menu_text_long(mainw->files[i]->menuentry,menutext);
-	gtk_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (mainw->files[i]->menuentry), active_image);
+	lives_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (mainw->files[i]->menuentry), active_image);
 	set_menu_text(mainw->files[i]->menuentry,menutext,FALSE);
-	gtk_widget_queue_draw(mainw->files[i]->menuentry);
+	lives_widget_queue_draw(mainw->files[i]->menuentry);
       }
     }
   }
@@ -3841,19 +3841,19 @@ add_to_recent(const gchar *filename, gdouble start, gint frames, const gchar *ex
 
   get_menu_text(mainw->recent1,buff);
   if (strlen(buff)) {
-    gtk_widget_show (mainw->recent1);
+    lives_widget_show (mainw->recent1);
   }
   get_menu_text(mainw->recent2,buff);
   if (strlen(buff)) {
-    gtk_widget_show (mainw->recent2);
+    lives_widget_show (mainw->recent2);
   }
   get_menu_text(mainw->recent3,buff);
   if (strlen(buff)) {
-    gtk_widget_show (mainw->recent3);
+    lives_widget_show (mainw->recent3);
   }
   get_menu_text(mainw->recent4,buff);
   if (strlen(buff)) {
-    gtk_widget_show (mainw->recent4);
+    lives_widget_show (mainw->recent4);
   }
 
   g_free(file);
@@ -3927,9 +3927,9 @@ set_undoable (const gchar *what, gboolean sensitive) {
     set_menu_text(mainw->redo,cfile->redo_text,TRUE);
   }
 
-  gtk_widget_hide(mainw->redo);
-  gtk_widget_show(mainw->undo);
-  gtk_widget_set_sensitive (mainw->undo,sensitive);
+  lives_widget_hide(mainw->redo);
+  lives_widget_show(mainw->undo);
+  lives_widget_set_sensitive (mainw->undo,sensitive);
 
 #ifdef PRODUCE_LOG
   lives_log(what);
@@ -3959,9 +3959,9 @@ set_redoable (const gchar *what, gboolean sensitive) {
     set_menu_text(mainw->redo,cfile->redo_text,TRUE);
   }
 
-  gtk_widget_hide(mainw->undo);
-  gtk_widget_show(mainw->redo);
-  gtk_widget_set_sensitive (mainw->redo,sensitive);
+  lives_widget_hide(mainw->undo);
+  lives_widget_show(mainw->redo);
+  lives_widget_set_sensitive (mainw->redo,sensitive);
 }
 
 
@@ -3971,7 +3971,7 @@ set_sel_label (GtkWidget *sel_label) {
   gchar *sy,*sz;
 
   if (mainw->current_file==-1||!cfile->frames||mainw->multitrack!=NULL) {
-    gtk_label_set_text(GTK_LABEL(sel_label),_ ("-------------Selection------------"));
+    lives_label_set_text(GTK_LABEL(sel_label),_ ("-------------Selection------------"));
   }
   else {
     tstr=g_strdup_printf ("%.2f",calc_time_from_frame (mainw->current_file,cfile->end+1)-
@@ -3979,7 +3979,7 @@ set_sel_label (GtkWidget *sel_label) {
     frstr=g_strdup_printf ("%d",cfile->end-cfile->start+1);
 
     // TRANSLATORS: - try to keep the text of the middle part the same length, by deleting "-" if necessary
-    gtk_label_set_text(GTK_LABEL(sel_label),(tmp=g_strconcat ("---------- [ ",tstr,(sy=(g_strdup(_(" sec ] ----------Selection---------- [ ")))),frstr,(sz=g_strdup(_(" frames ] ----------"))),NULL)));
+    lives_label_set_text(GTK_LABEL(sel_label),(tmp=g_strconcat ("---------- [ ",tstr,(sy=(g_strdup(_(" sec ] ----------Selection---------- [ ")))),frstr,(sz=g_strdup(_(" frames ] ----------"))),NULL)));
     g_free(sy);
     g_free(sz);
 
@@ -3987,7 +3987,7 @@ set_sel_label (GtkWidget *sel_label) {
     g_free (frstr);
     g_free (tstr);
   }
-  gtk_widget_queue_draw (sel_label);
+  lives_widget_queue_draw (sel_label);
 }
 
 

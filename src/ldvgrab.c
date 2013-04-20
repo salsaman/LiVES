@@ -213,7 +213,7 @@ void cameject (s_cam *cam) {
 
 
 gchar *find_free_camfile(int format) {
-  gchar *filename=g_strdup(gtk_entry_get_text(GTK_ENTRY(dvgrabw->filent)));
+  gchar *filename=g_strdup(lives_entry_get_text(GTK_ENTRY(dvgrabw->filent)));
   int i;
   gchar *fname,*tmp=NULL,*tmp2,*tmp3;
 
@@ -331,7 +331,7 @@ void on_open_fw_activate (GtkMenuItem *menuitem, gpointer user_data) {
   cam->format=type;
   cam->grabbed_clips=FALSE;
   cam->pgid=0;
-  gtk_widget_show (dvgrabw->dialog);
+  lives_widget_show (dvgrabw->dialog);
   dvgrabw->cam=cam;
 }
 

@@ -49,7 +49,7 @@ static void start_preview (GtkButton *button, lives_rfx_t *rfx) {
   int i;
   gchar *com;
 
-  gtk_widget_set_sensitive(mainw->framedraw_preview,FALSE);
+  lives_widget_set_sensitive(mainw->framedraw_preview,FALSE);
   lives_widget_context_update();
 
   if (mainw->did_rfx_preview) {
@@ -98,11 +98,11 @@ static void start_preview (GtkButton *button, lives_rfx_t *rfx) {
   // within do_effect() we check and if  
   do_effect(rfx,TRUE); // actually start effect processing in the background
 
-  gtk_widget_set_sensitive(mainw->framedraw_spinbutton,TRUE);
-  gtk_widget_set_sensitive(mainw->framedraw_scale,TRUE);
+  lives_widget_set_sensitive(mainw->framedraw_spinbutton,TRUE);
+  lives_widget_set_sensitive(mainw->framedraw_scale,TRUE);
 
   if (mainw->framedraw_frame>cfile->start&&!(cfile->start==0&&mainw->framedraw_frame==1)) 
-    gtk_spin_button_set_value(GTK_SPIN_BUTTON(mainw->framedraw_spinbutton),cfile->start);
+    lives_spin_button_set_value(GTK_SPIN_BUTTON(mainw->framedraw_spinbutton),cfile->start);
   else {
     load_rfx_preview(rfx);
   }
@@ -154,7 +154,7 @@ void framedraw_add_label(GtkVBox *box) {
 
   // TRANSLATORS - Preview refers to preview window; keep this phrase short
   label=lives_standard_label_new(_("You can click in Preview to change these values"));
-  gtk_box_pack_start (GTK_BOX (box), label, FALSE, FALSE, 0);
+  lives_box_pack_start (GTK_BOX (box), label, FALSE, FALSE, 0);
 }
 
 
@@ -165,12 +165,12 @@ void framedraw_add_reset(GtkVBox *box, lives_special_framedraw_rect_t *framedraw
 
   mainw->framedraw_reset = gtk_button_new_from_stock ("gtk-refresh");
   hbox_rst = lives_hbox_new (FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (box), hbox_rst, FALSE, FALSE, 0);
+  lives_box_pack_start (GTK_BOX (box), hbox_rst, FALSE, FALSE, 0);
   
-  gtk_button_set_label (GTK_BUTTON (mainw->framedraw_reset),_ ("_Reset Values"));
+  lives_button_set_label (GTK_BUTTON (mainw->framedraw_reset),_ ("_Reset Values"));
   gtk_button_set_use_underline (GTK_BUTTON (mainw->framedraw_reset), TRUE);
-  gtk_box_pack_start (GTK_BOX (hbox_rst), mainw->framedraw_reset, TRUE, FALSE, 0);
-  gtk_widget_set_sensitive (mainw->framedraw_reset,FALSE);
+  lives_box_pack_start (GTK_BOX (hbox_rst), mainw->framedraw_reset, TRUE, FALSE, 0);
+  lives_widget_set_sensitive (mainw->framedraw_reset,FALSE);
   
   g_signal_connect (mainw->framedraw_reset, "clicked",G_CALLBACK (on_framedraw_reset_clicked),framedraw);
 }
@@ -204,28 +204,28 @@ void widget_add_framedraw (GtkVBox *box, int start, int end, boolean add_preview
   mainw->framedraw_reset=NULL;
 
   vseparator = lives_vseparator_new ();
-  gtk_box_pack_start (GTK_BOX (lives_widget_get_parent(LIVES_WIDGET (box))), vseparator, FALSE, FALSE, 0);
-  gtk_widget_show (vseparator);
+  lives_box_pack_start (GTK_BOX (lives_widget_get_parent(LIVES_WIDGET (box))), vseparator, FALSE, FALSE, 0);
+  lives_widget_show (vseparator);
 
   vbox = lives_vbox_new (FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (lives_widget_get_parent(LIVES_WIDGET (box))), vbox, FALSE, FALSE, 0);
-  gtk_container_set_border_width (GTK_CONTAINER (vbox), widget_opts.border_width);
+  lives_box_pack_start (GTK_BOX (lives_widget_get_parent(LIVES_WIDGET (box))), vbox, FALSE, FALSE, 0);
+  lives_container_set_border_width (GTK_CONTAINER (vbox), widget_opts.border_width);
 
   fd_scale=calc_fd_scale(width,height);
   width/=fd_scale;
   height/=fd_scale;
  
   hbox = lives_hbox_new (FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 0);
+  lives_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 0);
   add_fill_to_box(GTK_BOX(hbox));
 
   fbord_eventbox=gtk_event_box_new();
-  gtk_container_set_border_width(GTK_CONTAINER(fbord_eventbox),widget_opts.border_width);
+  lives_container_set_border_width(GTK_CONTAINER(fbord_eventbox),widget_opts.border_width);
 
   frame = gtk_frame_new (NULL);
 
   add_fill_to_box(GTK_BOX(hbox));
-  gtk_box_pack_start (GTK_BOX (hbox), frame, FALSE, FALSE, 0);
+  lives_box_pack_start (GTK_BOX (hbox), frame, FALSE, FALSE, 0);
 
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color (fbord_eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
@@ -241,16 +241,16 @@ void widget_add_framedraw (GtkVBox *box, int start, int end, boolean add_preview
   gtk_frame_set_shadow_type (GTK_FRAME(frame), GTK_SHADOW_NONE);
 
   mainw->framedraw=gtk_event_box_new();
-  gtk_widget_set_size_request (mainw->framedraw, width, height);
-  gtk_container_set_border_width(GTK_CONTAINER(mainw->framedraw),1);
+  lives_widget_set_size_request (mainw->framedraw, width, height);
+  lives_container_set_border_width(GTK_CONTAINER(mainw->framedraw),1);
 
   gtk_widget_set_events (mainw->framedraw, GDK_BUTTON1_MOTION_MASK | GDK_BUTTON_RELEASE_MASK | 
 			 GDK_BUTTON_PRESS_MASK| GDK_ENTER_NOTIFY_MASK | GDK_LEAVE_NOTIFY_MASK);
 
   mainw->framedraw_frame=start;
 
-  gtk_container_add (GTK_CONTAINER (frame), fbord_eventbox);
-  gtk_container_add (GTK_CONTAINER (fbord_eventbox), mainw->framedraw);
+  lives_container_add (GTK_CONTAINER (frame), fbord_eventbox);
+  lives_container_add (GTK_CONTAINER (fbord_eventbox), mainw->framedraw);
 
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color (mainw->framedraw, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
@@ -262,7 +262,7 @@ void widget_add_framedraw (GtkVBox *box, int start, int end, boolean add_preview
 
 
   hbox = lives_hbox_new (FALSE, 2);
-  gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 0);
+  lives_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 0);
 
   mainw->framedraw_spinbutton = lives_standard_spin_button_new (_("_Frame"),
 								TRUE,start,start,end,1.,10.,0,LIVES_BOX(hbox),NULL);
@@ -270,22 +270,22 @@ void widget_add_framedraw (GtkVBox *box, int start, int end, boolean add_preview
   spinbutton_adj=gtk_spin_button_get_adjustment(GTK_SPIN_BUTTON(mainw->framedraw_spinbutton));
 
   mainw->framedraw_scale=lives_hscale_new(LIVES_ADJUSTMENT(spinbutton_adj));
-  gtk_box_pack_start (GTK_BOX (hbox), mainw->framedraw_scale, TRUE, TRUE, 0);
+  lives_box_pack_start (GTK_BOX (hbox), mainw->framedraw_scale, TRUE, TRUE, 0);
   gtk_scale_set_draw_value(GTK_SCALE(mainw->framedraw_scale),FALSE);
 
-  rfx=(lives_rfx_t *)g_object_get_data(G_OBJECT(gtk_widget_get_toplevel(GTK_WIDGET(box))),"rfx");
+  rfx=(lives_rfx_t *)g_object_get_data(G_OBJECT(lives_widget_get_toplevel(GTK_WIDGET(box))),"rfx");
   mainw->framedraw_preview = gtk_button_new_from_stock ("gtk-refresh");
-  gtk_button_set_label (GTK_BUTTON (mainw->framedraw_preview),_ ("_Preview"));
+  lives_button_set_label (GTK_BUTTON (mainw->framedraw_preview),_ ("_Preview"));
   gtk_button_set_use_underline (GTK_BUTTON (mainw->framedraw_preview), TRUE);
-  gtk_box_pack_start (GTK_BOX (hbox), mainw->framedraw_preview, TRUE, FALSE, 0);
-  gtk_widget_set_sensitive(mainw->framedraw_spinbutton,FALSE);
-  gtk_widget_set_sensitive(mainw->framedraw_scale,FALSE);
+  lives_box_pack_start (GTK_BOX (hbox), mainw->framedraw_preview, TRUE, FALSE, 0);
+  lives_widget_set_sensitive(mainw->framedraw_spinbutton,FALSE);
+  lives_widget_set_sensitive(mainw->framedraw_scale,FALSE);
   g_signal_connect (mainw->framedraw_preview, "clicked",G_CALLBACK (start_preview),rfx);
   
-  gtk_widget_show_all (vbox);
+  lives_widget_show_all (vbox);
 
   if (!add_preview_button) {
-    gtk_widget_hide(mainw->framedraw_preview);
+    lives_widget_hide(mainw->framedraw_preview);
   }
 
 }
@@ -341,38 +341,38 @@ void framedraw_redraw (lives_special_framedraw_rect_t * framedraw, boolean reloa
   case LIVES_PARAM_SPECIAL_TYPE_RECT_MULTRECT: // deprecated
     // scale values
     if (framedraw->xstart_param->dp==0) {
-      xstartf=(double)gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON (framedraw->xstart_param->widgets[0]));
+      xstartf=(double)lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON (framedraw->xstart_param->widgets[0]));
       xstartf=xstartf/(double)cfile->hsize*(double)width;
     }
     else {
-      xstartf=gtk_spin_button_get_value (GTK_SPIN_BUTTON (framedraw->xstart_param->widgets[0]));
+      xstartf=lives_spin_button_get_value (GTK_SPIN_BUTTON (framedraw->xstart_param->widgets[0]));
       xstartf=xstartf*(double)width;
     }
 
     if (framedraw->xend_param->dp==0) {
-      xendf=(double)gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON (framedraw->xend_param->widgets[0]));
+      xendf=(double)lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON (framedraw->xend_param->widgets[0]));
       xendf=xendf/(double)cfile->hsize*(double)width;
     }
     else {
-      xendf=gtk_spin_button_get_value (GTK_SPIN_BUTTON (framedraw->xend_param->widgets[0]));
+      xendf=lives_spin_button_get_value (GTK_SPIN_BUTTON (framedraw->xend_param->widgets[0]));
       xendf=xendf*(double)width;
     }
 
     if (framedraw->ystart_param->dp==0) {
-      ystartf=(double)gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON (framedraw->ystart_param->widgets[0]));
+      ystartf=(double)lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON (framedraw->ystart_param->widgets[0]));
       ystartf=ystartf/(double)cfile->vsize*(double)height;
     }
     else {
-      ystartf=gtk_spin_button_get_value (GTK_SPIN_BUTTON (framedraw->ystart_param->widgets[0]));
+      ystartf=lives_spin_button_get_value (GTK_SPIN_BUTTON (framedraw->ystart_param->widgets[0]));
       ystartf=ystartf*(double)height;
     }
 
     if (framedraw->yend_param->dp==0) {
-      yendf=gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON (framedraw->yend_param->widgets[0]));
+      yendf=lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON (framedraw->yend_param->widgets[0]));
       yendf=yendf/(double)cfile->vsize*(double)height;
     }
     else {
-      yendf=gtk_spin_button_get_value (GTK_SPIN_BUTTON (framedraw->yend_param->widgets[0]));
+      yendf=lives_spin_button_get_value (GTK_SPIN_BUTTON (framedraw->yend_param->widgets[0]));
       yendf=yendf*(double)height;
     }
 
@@ -385,38 +385,38 @@ void framedraw_redraw (lives_special_framedraw_rect_t * framedraw, boolean reloa
   case LIVES_PARAM_SPECIAL_TYPE_RECT_DEMASK:
 
     if (framedraw->xstart_param->dp==0) {
-      xstartf=(double)gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON (framedraw->xstart_param->widgets[0]));
+      xstartf=(double)lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON (framedraw->xstart_param->widgets[0]));
       xstartf=xstartf/(double)cfile->hsize*(double)width;
     }
     else {
-      xstartf=gtk_spin_button_get_value (GTK_SPIN_BUTTON (framedraw->xstart_param->widgets[0]));
+      xstartf=lives_spin_button_get_value (GTK_SPIN_BUTTON (framedraw->xstart_param->widgets[0]));
       xstartf=xstartf*(double)width;
     }
 
     if (framedraw->xend_param->dp==0) {
-      xendf=(double)gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON (framedraw->xend_param->widgets[0]));
+      xendf=(double)lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON (framedraw->xend_param->widgets[0]));
       xendf=xendf/(double)cfile->hsize*(double)width;
     }
     else {
-      xendf=gtk_spin_button_get_value (GTK_SPIN_BUTTON (framedraw->xend_param->widgets[0]));
+      xendf=lives_spin_button_get_value (GTK_SPIN_BUTTON (framedraw->xend_param->widgets[0]));
       xendf=xendf*(double)width;
     }
 
     if (framedraw->ystart_param->dp==0) {
-      ystartf=(double)gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON (framedraw->ystart_param->widgets[0]));
+      ystartf=(double)lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON (framedraw->ystart_param->widgets[0]));
       ystartf=ystartf/(double)cfile->vsize*(double)height;
     }
     else {
-      ystartf=gtk_spin_button_get_value (GTK_SPIN_BUTTON (framedraw->ystart_param->widgets[0]));
+      ystartf=lives_spin_button_get_value (GTK_SPIN_BUTTON (framedraw->ystart_param->widgets[0]));
       ystartf=ystartf*(double)height;
     }
 
     if (framedraw->yend_param->dp==0) {
-      yendf=(double)gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON (framedraw->yend_param->widgets[0]));
+      yendf=(double)lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON (framedraw->yend_param->widgets[0]));
       yendf=yendf/(double)cfile->vsize*(double)height;
     }
     else {
-      yendf=gtk_spin_button_get_value (GTK_SPIN_BUTTON (framedraw->yend_param->widgets[0]));
+      yendf=lives_spin_button_get_value (GTK_SPIN_BUTTON (framedraw->yend_param->widgets[0]));
       yendf=yendf*(double)height;
     }
 
@@ -442,20 +442,20 @@ void framedraw_redraw (lives_special_framedraw_rect_t * framedraw, boolean reloa
   case LIVES_PARAM_SPECIAL_TYPE_SINGLEPOINT:
 
     if (framedraw->xstart_param->dp==0) {
-      xstartf=(double)gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON (framedraw->xstart_param->widgets[0]));
+      xstartf=(double)lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON (framedraw->xstart_param->widgets[0]));
       xstartf=xstartf/(double)cfile->hsize*(double)width;
     }
     else {
-      xstartf=gtk_spin_button_get_value (GTK_SPIN_BUTTON (framedraw->xstart_param->widgets[0]));
+      xstartf=lives_spin_button_get_value (GTK_SPIN_BUTTON (framedraw->xstart_param->widgets[0]));
       xstartf=xstartf*(double)width;
     }
 
     if (framedraw->ystart_param->dp==0) {
-      ystartf=(double)gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON (framedraw->ystart_param->widgets[0]));
+      ystartf=(double)lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON (framedraw->ystart_param->widgets[0]));
       ystartf=ystartf/(double)cfile->vsize*(double)height;
     }
     else {
-      ystartf=gtk_spin_button_get_value (GTK_SPIN_BUTTON (framedraw->ystart_param->widgets[0]));
+      ystartf=lives_spin_button_get_value (GTK_SPIN_BUTTON (framedraw->ystart_param->widgets[0]));
       ystartf=ystartf*(double)height;
     }
 
@@ -604,14 +604,14 @@ void load_rfx_preview(lives_rfx_t *rfx) {
   if (max_frame>0) {
     if (rfx->num_in_channels==0) {
       int maxlen=calc_spin_button_width(1.,(double)tot_frames,0);
-      gtk_spin_button_set_range (GTK_SPIN_BUTTON (mainw->framedraw_spinbutton),1,tot_frames);
+      lives_spin_button_set_range (GTK_SPIN_BUTTON (mainw->framedraw_spinbutton),1,tot_frames);
       gtk_entry_set_width_chars (GTK_ENTRY (mainw->framedraw_spinbutton),maxlen);
-      gtk_widget_queue_draw(mainw->framedraw_spinbutton);
-      gtk_widget_queue_draw(mainw->framedraw_scale);
+      lives_widget_queue_draw(mainw->framedraw_spinbutton);
+      lives_widget_queue_draw(mainw->framedraw_scale);
     }
     
     if (mainw->framedraw_frame>max_frame) {
-      gtk_spin_button_set_value(GTK_SPIN_BUTTON(mainw->framedraw_spinbutton),max_frame);
+      lives_spin_button_set_value(GTK_SPIN_BUTTON(mainw->framedraw_spinbutton),max_frame);
       mainw->current_file=current_file;
       return;
     }
@@ -641,9 +641,9 @@ void load_rfx_preview(lives_rfx_t *rfx) {
 void after_framedraw_frame_spinbutton_changed (GtkSpinButton *spinbutton, lives_special_framedraw_rect_t *framedraw) {
   // update the single frame/framedraw preview
   // after the "frame number" spinbutton has changed
-  mainw->framedraw_frame=gtk_spin_button_get_value_as_int(spinbutton);
+  mainw->framedraw_frame=lives_spin_button_get_value_as_int(spinbutton);
   if (lives_widget_is_visible(mainw->framedraw_preview)) {
-    if (mainw->framedraw_preview!=NULL) gtk_widget_set_sensitive(mainw->framedraw_preview,FALSE);
+    if (mainw->framedraw_preview!=NULL) lives_widget_set_sensitive(mainw->framedraw_preview,FALSE);
     lives_widget_context_update();
     load_rfx_preview(framedraw->rfx);
   }
@@ -865,13 +865,13 @@ boolean on_framedraw_mouse_start (GtkWidget *widget, GdkEventButton *event, live
   case LIVES_PARAM_SPECIAL_TYPE_SINGLEPOINT: 
 
     if (framedraw->xstart_param->dp>0)
-      gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xstart_param->widgets[0]),xstart);
+      lives_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xstart_param->widgets[0]),xstart);
     else
-      gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xstart_param->widgets[0]),(int)(xstart*(double)cfile->hsize+.5));
+      lives_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xstart_param->widgets[0]),(int)(xstart*(double)cfile->hsize+.5));
     if (framedraw->xstart_param->dp>0)
-      gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->ystart_param->widgets[0]),ystart);
+      lives_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->ystart_param->widgets[0]),ystart);
     else
-      gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->ystart_param->widgets[0]),(int)(ystart*(double)cfile->vsize+.5));
+      lives_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->ystart_param->widgets[0]),(int)(ystart*(double)cfile->vsize+.5));
 
     break;
 
@@ -880,27 +880,27 @@ boolean on_framedraw_mouse_start (GtkWidget *widget, GdkEventButton *event, live
   case LIVES_PARAM_SPECIAL_TYPE_RECT_DEMASK: 
 
     if (framedraw->xstart_param->dp>0)
-      gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xstart_param->widgets[0]),xstart);
+      lives_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xstart_param->widgets[0]),xstart);
     else
-      gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xstart_param->widgets[0]),(int)(xstart*(double)cfile->hsize+.5));
+      lives_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xstart_param->widgets[0]),(int)(xstart*(double)cfile->hsize+.5));
     if (framedraw->xstart_param->dp>0)
-      gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->ystart_param->widgets[0]),ystart);
+      lives_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->ystart_param->widgets[0]),ystart);
     else
-      gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->ystart_param->widgets[0]),(int)(ystart*(double)cfile->vsize+.5));
+      lives_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->ystart_param->widgets[0]),(int)(ystart*(double)cfile->vsize+.5));
 
     if (framedraw->type==LIVES_PARAM_SPECIAL_TYPE_RECT_MULTRECT) {
-      gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xend_param->widgets[0]),0.);
-      gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->yend_param->widgets[0]),0.);
+      lives_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xend_param->widgets[0]),0.);
+      lives_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->yend_param->widgets[0]),0.);
     }
     else {
       if (framedraw->xend_param->dp>0)
-	gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xend_param->widgets[0]),xstart);
+	lives_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xend_param->widgets[0]),xstart);
       else
-	gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xend_param->widgets[0]),(int)(xstart*(double)cfile->hsize+.5));
+	lives_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xend_param->widgets[0]),(int)(xstart*(double)cfile->hsize+.5));
       if (framedraw->xend_param->dp>0)
-	gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->yend_param->widgets[0]),ystart);
+	lives_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->yend_param->widgets[0]),ystart);
       else
-	gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->yend_param->widgets[0]),(int)(ystart*(double)cfile->vsize+.5));
+	lives_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->yend_param->widgets[0]),(int)(ystart*(double)cfile->vsize+.5));
     }
 
 
@@ -911,10 +911,10 @@ boolean on_framedraw_mouse_start (GtkWidget *widget, GdkEventButton *event, live
 
 
   if (mainw->framedraw_reset!=NULL) {
-    gtk_widget_set_sensitive (mainw->framedraw_reset,TRUE);
+    lives_widget_set_sensitive (mainw->framedraw_reset,TRUE);
   }
   if (mainw->framedraw_preview!=NULL) {
-    gtk_widget_set_sensitive (mainw->framedraw_preview,TRUE);
+    lives_widget_set_sensitive (mainw->framedraw_preview,TRUE);
   }
 
   noupdate=FALSE;
@@ -969,35 +969,35 @@ boolean on_framedraw_mouse_update (GtkWidget *widget, GdkEventMotion *event, liv
       
       if (xscale>0.) {
 	if (framedraw->xend_param->dp>0)
-	  gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xend_param->widgets[0]),xscale);
+	  lives_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xend_param->widgets[0]),xscale);
 	else
-	  gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xend_param->widgets[0]),(int)(xscale*(double)cfile->hsize+.5));
+	  lives_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xend_param->widgets[0]),(int)(xscale*(double)cfile->hsize+.5));
       }
       else {
 	if (framedraw->xstart_param->dp>0) {
-	  gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xend_param->widgets[0]),-xscale);
-	  gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xstart_param->widgets[0]),xcurrent);
+	  lives_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xend_param->widgets[0]),-xscale);
+	  lives_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xstart_param->widgets[0]),xcurrent);
 	}
 	else {
-	  gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xend_param->widgets[0]),(int)(-xscale*(double)cfile->hsize-.5));
-	  gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xstart_param->widgets[0]),(int)(xcurrent*(double)cfile->hsize+.5));
+	  lives_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xend_param->widgets[0]),(int)(-xscale*(double)cfile->hsize-.5));
+	  lives_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xstart_param->widgets[0]),(int)(xcurrent*(double)cfile->hsize+.5));
 	}
       }
 
       if (yscale>0.) {
 	if (framedraw->yend_param->dp>0)
-	  gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->yend_param->widgets[0]),yscale);
+	  lives_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->yend_param->widgets[0]),yscale);
 	else 
-	  gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->yend_param->widgets[0]),(int)(yscale*(double)cfile->vsize+.5));
+	  lives_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->yend_param->widgets[0]),(int)(yscale*(double)cfile->vsize+.5));
       }
       else {
 	if (framedraw->xstart_param->dp>0) {
-	  gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->yend_param->widgets[0]),-yscale);
-	  gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->ystart_param->widgets[0]),ycurrent);
+	  lives_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->yend_param->widgets[0]),-yscale);
+	  lives_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->ystart_param->widgets[0]),ycurrent);
 	}
 	else {
-	  gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->yend_param->widgets[0]),(int)(-yscale*(double)cfile->vsize-.5));
-	  gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->ystart_param->widgets[0]),(int)(ycurrent*(double)cfile->vsize+.5));
+	  lives_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->yend_param->widgets[0]),(int)(-yscale*(double)cfile->vsize-.5));
+	  lives_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->ystart_param->widgets[0]),(int)(ycurrent*(double)cfile->vsize+.5));
 	}
       }
 
@@ -1008,35 +1008,35 @@ boolean on_framedraw_mouse_update (GtkWidget *widget, GdkEventMotion *event, liv
 
     if (xcurrent>xstart) {
       if (framedraw->xend_param->dp>0)
-	gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xend_param->widgets[0]),xcurrent);
+	lives_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xend_param->widgets[0]),xcurrent);
       else
-	gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xend_param->widgets[0]),(int)(xcurrent*(double)cfile->hsize+.5));
+	lives_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xend_param->widgets[0]),(int)(xcurrent*(double)cfile->hsize+.5));
     }
     else {
       if (framedraw->xstart_param->dp>0) {
-	gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xend_param->widgets[0]),xstart);
-	gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xstart_param->widgets[0]),xcurrent);
+	lives_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xend_param->widgets[0]),xstart);
+	lives_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xstart_param->widgets[0]),xcurrent);
       }
       else {
-	gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xend_param->widgets[0]),(int)(xstart*(double)cfile->hsize+.5));
-	gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xstart_param->widgets[0]),(int)(xcurrent*(double)cfile->hsize+.5));
+	lives_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xend_param->widgets[0]),(int)(xstart*(double)cfile->hsize+.5));
+	lives_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xstart_param->widgets[0]),(int)(xcurrent*(double)cfile->hsize+.5));
       }
     }
 
     if (ycurrent>ystart) {
       if (framedraw->yend_param->dp>0)
-	gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->yend_param->widgets[0]),ycurrent);
+	lives_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->yend_param->widgets[0]),ycurrent);
       else 
-	gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->yend_param->widgets[0]),(int)(ycurrent*(double)cfile->vsize+.5));
+	lives_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->yend_param->widgets[0]),(int)(ycurrent*(double)cfile->vsize+.5));
     }
     else {
       if (framedraw->xstart_param->dp>0) {
-	gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->yend_param->widgets[0]),ystart);
-	gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->ystart_param->widgets[0]),ycurrent);
+	lives_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->yend_param->widgets[0]),ystart);
+	lives_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->ystart_param->widgets[0]),ycurrent);
       }
       else {
-	gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->yend_param->widgets[0]),(int)(ystart*(double)cfile->vsize+.5));
-	gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->ystart_param->widgets[0]),(int)(ycurrent*(double)cfile->vsize+.5));
+	lives_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->yend_param->widgets[0]),(int)(ystart*(double)cfile->vsize+.5));
+	lives_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->ystart_param->widgets[0]),(int)(ycurrent*(double)cfile->vsize+.5));
       }
     }
 
@@ -1049,10 +1049,10 @@ boolean on_framedraw_mouse_update (GtkWidget *widget, GdkEventMotion *event, liv
   }
 
   if (mainw->framedraw_reset!=NULL) {
-    gtk_widget_set_sensitive (mainw->framedraw_reset,TRUE);
+    lives_widget_set_sensitive (mainw->framedraw_reset,TRUE);
   }
   if (mainw->framedraw_preview!=NULL) {
-    gtk_widget_set_sensitive (mainw->framedraw_preview,TRUE);
+    lives_widget_set_sensitive (mainw->framedraw_preview,TRUE);
   }
 
   noupdate=FALSE;
@@ -1095,10 +1095,10 @@ void after_framedraw_widget_changed (GtkWidget *widget, lives_special_framedraw_
   // redraw mask when spin values change
   framedraw_redraw (framedraw, FALSE, NULL);
   if (mainw->framedraw_reset!=NULL) {
-    gtk_widget_set_sensitive (mainw->framedraw_reset,TRUE);
+    lives_widget_set_sensitive (mainw->framedraw_reset,TRUE);
   }
   if (mainw->framedraw_preview!=NULL) {
-    gtk_widget_set_sensitive (mainw->framedraw_preview,TRUE);
+    lives_widget_set_sensitive (mainw->framedraw_preview,TRUE);
   }
 }
 
@@ -1110,34 +1110,34 @@ void on_framedraw_reset_clicked (GtkButton *button, lives_special_framedraw_rect
   noupdate=TRUE;
   if (framedraw->xend_param!=NULL) {
     if (framedraw->xend_param->dp==0)
-      gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xend_param->widgets[0]),(double)get_int_param(framedraw->xend_param->def));
+      lives_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xend_param->widgets[0]),(double)get_int_param(framedraw->xend_param->def));
     else 
-      gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xend_param->widgets[0]),get_double_param(framedraw->xend_param->def));
+      lives_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xend_param->widgets[0]),get_double_param(framedraw->xend_param->def));
   }
   if (framedraw->yend_param!=NULL) {
     if (framedraw->yend_param->dp==0)
-      gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->yend_param->widgets[0]),(double)get_int_param(framedraw->yend_param->def));
+      lives_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->yend_param->widgets[0]),(double)get_int_param(framedraw->yend_param->def));
     else 
-      gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->yend_param->widgets[0]),get_double_param(framedraw->yend_param->def));
+      lives_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->yend_param->widgets[0]),get_double_param(framedraw->yend_param->def));
   }
   if (framedraw->xstart_param!=NULL) {
     if (framedraw->xstart_param->dp==0)
-      gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xstart_param->widgets[0]),(double)get_int_param(framedraw->xstart_param->def));
+      lives_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xstart_param->widgets[0]),(double)get_int_param(framedraw->xstart_param->def));
     else 
-      gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xstart_param->widgets[0]),get_double_param(framedraw->xstart_param->def));
+      lives_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->xstart_param->widgets[0]),get_double_param(framedraw->xstart_param->def));
   }
   if (framedraw->ystart_param!=NULL) {
     if (framedraw->ystart_param->dp==0)
-      gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->ystart_param->widgets[0]),(double)get_int_param(framedraw->ystart_param->def));
+      lives_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->ystart_param->widgets[0]),(double)get_int_param(framedraw->ystart_param->def));
     else 
-      gtk_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->ystart_param->widgets[0]),get_double_param(framedraw->ystart_param->def));
+      lives_spin_button_set_value(GTK_SPIN_BUTTON(framedraw->ystart_param->widgets[0]),get_double_param(framedraw->ystart_param->def));
   }
 
   if (mainw->framedraw_reset!=NULL) {
-    gtk_widget_set_sensitive (mainw->framedraw_reset,TRUE);
+    lives_widget_set_sensitive (mainw->framedraw_reset,TRUE);
   }
   if (mainw->framedraw_preview!=NULL) {
-    gtk_widget_set_sensitive (mainw->framedraw_preview,TRUE);
+    lives_widget_set_sensitive (mainw->framedraw_preview,TRUE);
   }
 
   // update widgets now

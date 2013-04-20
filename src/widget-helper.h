@@ -68,6 +68,8 @@ typedef cairo_fill_rule_t lives_painter_fill_rule_t;
 
 #define return_true gtk_true
 
+typedef GObject LiVESObject;
+
 typedef GtkJustification LiVESJustification;
 
 #define LIVES_JUSTIFY_LEFT   GTK_JUSTIFY_LEFT
@@ -80,6 +82,7 @@ typedef GtkOrientation LiVESOrientation;
 #define LIVES_ORIENTATION_VERTICAL   GTK_ORIENTATION_VERTICAL
 
 typedef GdkEvent                          LiVESXEvent;
+typedef GdkEventButton                    LiVESXEventButton;
 typedef GdkDisplay                        LiVESXDisplay;
 typedef GdkScreen                         LiVESXScreen;
 typedef GdkDevice                         LiVESXDevice;
@@ -92,10 +95,10 @@ typedef GdkDeviceManager                  LiVESXDeviceManager;
 #define LIVES_WIDGET_EVENT_EXPOSE_EVENT "draw"
 #define GTK_OBJECT(a)                     a
 #else
-typedef GtkObject                         LiVESObject;
 #define LIVES_WIDGET_EVENT_EXPOSE_EVENT "expose_event"
 #endif
 typedef GtkWidget                         LiVESWidget;
+typedef GtkWindow                         LiVESWindow;
 typedef GtkContainer                      LiVESContainer;
 typedef GtkBin                            LiVESBin;
 typedef GtkDialog                         LiVESDialog;
@@ -109,16 +112,24 @@ typedef GtkEntry                          LiVESEntry;
 typedef GtkRadioButton                    LiVESRadioButton;
 typedef GtkSpinButton                     LiVESSpinButton;
 typedef GtkLabel                          LiVESLabel;
+typedef GtkImage                          LiVESImage;
 typedef GtkFileChooser                    LiVESFileChooser;
+typedef GtkMenu                           LiVESMenu;
+typedef GtkMenuItem                       LiVESMenuItem;
+typedef GtkCheckMenuItem                  LiVESCheckMenuItem;
 typedef GtkImageMenuItem                  LiVESImageMenuItem;
 typedef GtkTreeView                       LiVESTreeView;
 typedef GtkTreeModel                      LiVESTreeModel;
+typedef GtkTreeIter                       LiVESTreeIter;
+typedef GtkTable                          LiVESTable;
 
 #if GTK_CHECK_VERSION(2,14,0)
 typedef GtkScaleButton                    LiVESScaleButton;
 #else
 typedef GtkRange                          LiVESScaleButton;
 #endif
+
+typedef GClosure                          LiVESWidgetClosure;
 
 
 #if GTK_CHECK_VERSION(3,0,0)
@@ -155,6 +166,13 @@ typedef GtkStateType LiVESWidgetState;
 #endif
 
 typedef enum {
+  LIVES_EXPAND=GTK_EXPAND,
+  LIVES_SHRINK=GTK_SHRINK,
+  LIVES_FILL=GTK_FILL,
+} lives_attach_options_t;
+
+
+typedef enum {
   LIVES_FILE_CHOOSER_ACTION_OPEN=GTK_FILE_CHOOSER_ACTION_OPEN,
   LIVES_FILE_CHOOSER_ACTION_SAVE=GTK_FILE_CHOOSER_ACTION_SAVE,
   LIVES_FILE_CHOOSER_ACTION_SELECT_FOLDER=GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER,
@@ -173,6 +191,9 @@ typedef enum {
   LIVES_ICON_SIZE_DIALOG=GTK_ICON_SIZE_DIALOG
 } lives_icon_size_t;
 
+
+#define LIVES_ACCEL_VISIBLE GTK_ACCEL_VISIBLE
+  
 
 
 #if GTK_CHECK_VERSION(3,0,0)
@@ -203,6 +224,7 @@ typedef GList                             LiVESList;
 typedef GSList                            LiVESSList;
 
 typedef GtkAccelGroup                     LiVESAccelGroup;
+typedef GtkAccelFlags                     LiVESAccelFlags;
 
 typedef GdkPixbufDestroyNotify            LiVESPixbufDestroyNotify;
 
@@ -227,6 +249,7 @@ typedef gpointer                          LiVESObjectPtr;
 #define LIVES_FILES_CHOOSER(widget) GTK_FILE_CHOOSER(widget)
 #define LIVES_RADIO_BUTTON(widget) GTK_RADIO_BUTTON(widget)
 #define LIVES_SPIN_BUTTON(widget) GTK_SPIN_BUTTON(widget)
+#define LIVES_MENU(widget) GTK_MENU(widget)
 #define LIVES_IMAGE_MENU_ITEM(widget) GTK_IMAGE_MENU_ITEM(widget)
 #define LIVES_FILE_CHOOSER(widget) GTK_FILE_CHOOSER(widget)
 
@@ -542,6 +565,7 @@ LiVESPixbuf *lives_pixbuf_new_from_data (const unsigned char *buf, boolean has_a
 					 gpointer destroy_fn_data);
 
 LiVESPixbuf *lives_pixbuf_new_from_file(const char *filename, LiVESError **error);
+LiVESWidget *lives_image_new_from_pixbuf(LiVESPixbuf *);
 LiVESPixbuf *lives_pixbuf_new_from_file_at_scale(const char *filename, int width, int height, boolean preserve_aspect_ratio,
 						 LiVESError **error);
 
@@ -550,6 +574,21 @@ LiVESPixbuf *lives_pixbuf_scale_simple(const LiVESPixbuf *src, int dest_width, i
 				       LiVESInterpType interp_type);
 
 // basic widget fns
+
+void lives_widget_set_sensitive(LiVESWidget *, boolean state);
+boolean lives_widget_get_sensitive(LiVESWidget *);
+
+void lives_widget_show(LiVESWidget *);
+void lives_widget_show_all(LiVESWidget *);
+void lives_widget_hide(LiVESWidget *);
+void lives_widget_destroy(LiVESWidget *);
+
+void lives_widget_queue_draw(LiVESWidget *);
+void lives_widget_queue_draw_area(LiVESWidget *, int x, int y, int width, int height);
+void lives_widget_queue_resize(LiVESWidget *);
+void lives_widget_set_size_request(LiVESWidget *, int width, int height);
+
+int lives_dialog_run(LiVESDialog *);
 
 void lives_widget_set_bg_color(LiVESWidget *, LiVESWidgetState state, const LiVESWidgetColor *);
 void lives_widget_set_fg_color(LiVESWidget *, LiVESWidgetState state, const LiVESWidgetColor *);
@@ -563,16 +602,34 @@ boolean lives_color_parse(const char *spec, LiVESWidgetColor *);
 
 LiVESWidgetColor *lives_widget_color_copy(LiVESWidgetColor *c1orNULL, const LiVESWidgetColor *c2);
 
+LiVESWidget *lives_image_new_from_file(const char *filename);
 LiVESWidget *lives_image_new_from_stock(const char *stock_id, lives_icon_size_t size);
+
+void lives_image_set_from_pixbuf(LiVESImage *, LiVESPixbuf *);
+LiVESPixbuf *lives_image_get_pixbuf(LiVESImage *);
 
 LiVESWidget *lives_dialog_get_content_area(LiVESDialog *);
 LiVESWidget *lives_dialog_get_action_area(LiVESDialog *);
+
+void lives_dialog_add_action_widget(LiVESDialog *, LiVESWidget *, int response_id);
+
+void lives_window_set_title(LiVESWindow *, const char *title);
+void lives_window_move(LiVESWindow *, int x, int y);
+void lives_window_resize(LiVESWindow *, int width, int height);
+void lives_window_present(LiVESWindow *);
+void lives_window_fullscreen(LiVESWindow *);
+void lives_window_unfullscreen(LiVESWindow *);
+void lives_window_maximize(LiVESWindow *);
+void lives_window_unmaximize(LiVESWindow *);
 
 LiVESAdjustment *lives_adjustment_new(double value, double lower, double upper, 
 						   double step_increment, double page_increment, double page_size);
 
 void lives_box_set_homogeneous(LiVESBox *, boolean homogeneous);
 void lives_box_set_spacing(LiVESBox *, int spacing);
+
+void lives_box_pack_start(LiVESBox *, LiVESWidget *child, boolean expand, boolean fill, uint32_t padding);
+void lives_box_pack_end(LiVESBox *, LiVESWidget *child, boolean expand, boolean fill, uint32_t padding);
 
 LiVESWidget *lives_hbox_new(boolean homogeneous, int spacing);
 LiVESWidget *lives_vbox_new(boolean homogeneous, int spacing);
@@ -593,14 +650,17 @@ LiVESWidget *lives_hscrollbar_new(LiVESAdjustment *);
 LiVESWidget *lives_vscrollbar_new(LiVESAdjustment *);
 
 LiVESWidget *lives_combo_new(void);
-LiVESWidget *lives_combo_new_with_model (LiVESTreeModel *model);
+LiVESWidget *lives_combo_new_with_model (LiVESTreeModel *);
+LiVESTreeModel *lives_combo_get_model(LiVESCombo *);
 
 void lives_combo_append_text(LiVESCombo *, const char *text);
 void lives_combo_set_entry_text_column(LiVESCombo *, int column);
 
 char *lives_combo_get_active_text(LiVESCombo *) WARN_UNUSED;
 void lives_combo_set_active_text(LiVESCombo *, const char *text);
-
+void lives_combo_set_active_index(LiVESCombo *, int index);
+boolean lives_combo_get_active_iter(LiVESCombo *, LiVESTreeIter *);
+void lives_combo_set_active_iter(LiVESCombo *, LiVESTreeIter *);
 void lives_combo_set_active_string(LiVESCombo *, const char *active_str);
 
 LiVESWidget *lives_combo_get_entry(LiVESCombo *);
@@ -610,11 +670,18 @@ void lives_combo_populate(LiVESCombo *, LiVESList *list);
 boolean lives_toggle_button_get_active(LiVESToggleButton *);
 void lives_toggle_button_set_active(LiVESToggleButton *, boolean active);
 
+
+LiVESWidget *lives_button_new_with_mnemonic(const char *label);
+
+void lives_button_set_label(LiVESButton *, const char *label);
+
+
 void lives_tooltips_set (LiVESWidget *, const char *tip_text);
 
 LiVESSList *lives_radio_button_get_group(LiVESRadioButton *);
 
 LiVESWidget *lives_widget_get_parent(LiVESWidget *);
+LiVESWidget *lives_widget_get_toplevel(LiVESWidget *);
 
 LiVESXWindow *lives_widget_get_xwindow(LiVESWidget *);
 
@@ -622,6 +689,14 @@ void lives_widget_set_can_focus(LiVESWidget *, boolean state);
 void lives_widget_set_can_default(LiVESWidget *, boolean state);
 
 void lives_container_remove(LiVESContainer *, LiVESWidget *);
+void lives_container_add(LiVESContainer *, LiVESWidget *);
+void lives_container_set_border_width(LiVESContainer *container, uint32_t width);
+
+double lives_spin_button_get_value(LiVESSpinButton *);
+int lives_spin_button_get_value_as_int(LiVESSpinButton *);
+
+void lives_spin_button_set_value(LiVESSpinButton *, double value);
+void lives_spin_button_set_range(LiVESSpinButton *button, double min, double max);
 
 double lives_ruler_get_value(LiVESRuler *);
 double lives_ruler_set_value(LiVESRuler *, double value);
@@ -656,10 +731,55 @@ void lives_adjustment_set_page_size(LiVESAdjustment *, double page_size);
 LiVESAdjustment *lives_tree_view_get_hadjustment(LiVESTreeView *);
 
 const char *lives_label_get_text(LiVESLabel *);
+void lives_label_set_text(LiVESLabel *, const char *text);
+void lives_label_set_text_with_mnemonic(LiVESLabel *, const char *text);
 
 void lives_entry_set_editable(LiVESEntry *, boolean editable);
+const char *lives_entry_get_text(LiVESEntry *);
+void lives_entry_set_text(LiVESEntry *, const char *text);
 
 double lives_scale_button_get_value(LiVESScaleButton *);
+
+LiVESWidget *lives_menu_new(void);
+
+void lives_menu_popup(LiVESMenu *, LiVESXEventButton *);
+
+LiVESWidget *lives_menu_item_new(void);
+LiVESWidget *lives_menu_item_new_with_mnemonic(const char *label);
+LiVESWidget *lives_menu_item_new_with_label(const char *label);
+LiVESWidget *lives_check_menu_item_new_with_mnemonic(const char *label);
+LiVESWidget *lives_check_menu_item_new_with_label(const char *label);
+LiVESWidget *lives_image_menu_item_new_with_label(const char *label);
+LiVESWidget *lives_image_menu_item_new_with_mnemonic(const char *label);
+LiVESWidget *lives_image_menu_item_new_from_stock(const char *stock_id, LiVESAccelGroup *accel_group);
+
+void lives_image_menu_item_set_image(LiVESImageMenuItem *, LiVESWidget *image);
+
+void lives_menu_item_set_submenu(LiVESMenuItem *, LiVESWidget *);
+
+void lives_check_menu_item_set_active(LiVESCheckMenuItem *, boolean state);
+
+void lives_menu_set_title(LiVESMenu *, const char *title);
+
+char *lives_file_chooser_get_filename(LiVESFileChooser *);
+LiVESSList *lives_file_chooser_get_filenames(LiVESFileChooser *);
+
+void lives_widget_grab_focus(LiVESWidget *);
+
+void lives_widget_set_tooltip_text(LiVESWidget *, const char *text);
+
+void lives_table_attach(LiVESTable *, LiVESWidget *child, uint32_t left, uint32_t right, 
+			uint32_t top, uint32_t bottom, lives_attach_options_t xoptions, lives_attach_options_t yoptions,
+			uint32_t xpad, uint32_t ypad);
+
+
+LiVESAccelGroup *lives_accel_group_new(void);
+void lives_accel_group_connect(LiVESAccelGroup *, uint32_t key, LiVESModifierType mod, LiVESAccelFlags flags, LiVESWidgetClosure *closure);
+void lives_accel_group_disconnect(LiVESAccelGroup *, LiVESWidgetClosure *closure);
+void lives_accel_groups_activate(LiVESObject *object, uint32_t key, LiVESModifierType mod);
+
+void lives_widget_add_accelerator(LiVESWidget *, const char *accel_signal, LiVESAccelGroup *accel_group,
+				  uint32_t accel_key, LiVESModifierType accel_mods, LiVESAccelFlags accel_flags);
 
 void lives_widget_get_pointer(LiVESXDevice *, LiVESWidget *, int *x, int *y);
 LiVESXWindow *lives_display_get_window_at_pointer (LiVESXDevice *, LiVESXDisplay *, int *win_x, int *win_y);
@@ -667,9 +787,9 @@ void lives_display_get_pointer (LiVESXDevice *, LiVESXDisplay *, LiVESXScreen **
 void lives_display_warp_pointer (LiVESXDevice *, LiVESXDisplay *, LiVESXScreen *, int x, int y);
 
 LiVESXDisplay *lives_widget_get_display(LiVESWidget *);
-lives_display_t lives_widget_get_display_type(LiVESWidget *widget);
+lives_display_t lives_widget_get_display_type(LiVESWidget *);
 
-uint64_t lives_widget_get_xwinid(LiVESWidget *, const gchar *failure_msg);
+uint64_t lives_widget_get_xwinid(LiVESWidget *, const char *failure_msg);
 
 
 // optional (return TRUE if implemented)
@@ -735,8 +855,6 @@ int get_box_child_index (LiVESBox *, LiVESWidget *child);
 
 boolean label_act_toggle (LiVESWidget *, LiVESXEventButton *, LiVESToggleButton *);
 boolean widget_act_toggle (LiVESWidget *, LiVESToggleButton *);
-
-void gtk_tooltips_copy(LiVESWidget *dest, LiVESWidget *source);
 
 void lives_spin_button_configure(LiVESSpinButton *, double value, double lower, double upper, 
 				 double step_increment, double page_increment);

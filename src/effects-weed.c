@@ -4589,19 +4589,19 @@ static void make_fx_defs_menu(void) {
 	    pkgstring=g_strdup_printf(_(" - %s plugins -"),pkg);
 	    // create new submenu
 	      
-	    pkg_menu=gtk_menu_item_new_with_label (pkgstring);
-	    gtk_container_add (GTK_CONTAINER (mainw->rte_defs), pkg_menu);
+	    pkg_menu=lives_menu_item_new_with_label (pkgstring);
+	    lives_container_add (GTK_CONTAINER (mainw->rte_defs), pkg_menu);
 	    gtk_menu_reorder_child(GTK_MENU(mainw->rte_defs),pkg_menu,pkg_posn++);
 	      
-	    pkg_submenu=gtk_menu_new();
-	    gtk_menu_item_set_submenu (GTK_MENU_ITEM (pkg_menu), pkg_submenu);
+	    pkg_submenu=lives_menu_new();
+	    lives_menu_item_set_submenu (GTK_MENU_ITEM (pkg_menu), pkg_submenu);
 	      
 	    if (palette->style&STYLE_1) {
 	      lives_widget_set_bg_color(pkg_submenu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
 	    }
 	      
-	    gtk_widget_show (pkg_menu);
-	    gtk_widget_show (pkg_submenu);
+	    lives_widget_show (pkg_menu);
+	    lives_widget_show (pkg_submenu);
 	    g_free(pkgstring);
 	  }
 	  // add to submenu
@@ -4616,12 +4616,12 @@ static void make_fx_defs_menu(void) {
 	filter_type=weed_filter_get_type(filter,TRUE,FALSE);
 	string=g_strdup_printf("%s (%s)",filter_name,filter_type);
 	  
-	menuitem=gtk_menu_item_new_with_label (string);
-	gtk_widget_show(menuitem);
+	menuitem=lives_menu_item_new_with_label (string);
+	lives_widget_show(menuitem);
 	g_free(string);
 	g_free(filter_type);
 	  
-	gtk_container_add (GTK_CONTAINER (menu), menuitem);
+	lives_container_add (GTK_CONTAINER (menu), menuitem);
 	  
 	g_signal_connect (GTK_OBJECT (menuitem), "activate",
 			  G_CALLBACK (rte_set_defs_activate),
@@ -5481,12 +5481,12 @@ static void load_compound_plugin(gchar *plugin_name, gchar *plugin_path) {
       filter_type=weed_filter_get_type(filter,TRUE,FALSE);
       string=g_strdup_printf("%s (%s)",filter_name,filter_type);
       
-      menuitem=gtk_menu_item_new_with_label (string);
-      gtk_widget_show(menuitem);
+      menuitem=lives_menu_item_new_with_label (string);
+      lives_widget_show(menuitem);
       g_free(string);
       g_free(filter_type);
       
-      gtk_container_add (GTK_CONTAINER (mainw->rte_defs), menuitem);
+      lives_container_add (GTK_CONTAINER (mainw->rte_defs), menuitem);
       
       g_signal_connect (GTK_OBJECT (menuitem), "activate",
 			G_CALLBACK (rte_set_defs_activate),
@@ -7169,7 +7169,7 @@ boolean weed_generator_start (weed_plant_t *inst) {
     play_file();
 
     if (mainw->play_window!=NULL) {
-      gtk_widget_queue_draw(mainw->play_window);
+      lives_widget_queue_draw(mainw->play_window);
     }
   }
   else {
@@ -7191,7 +7191,7 @@ boolean weed_generator_start (weed_plant_t *inst) {
 	mainw->new_blend_file=-1;
       }    
       else {
-	gtk_widget_show(mainw->playframe);
+	lives_widget_show(mainw->playframe);
 	resize(1);
       }
       //if (old_file==-1) mainw->whentostop=STOP_ON_VID_END;
@@ -7317,7 +7317,7 @@ boolean weed_playback_gen_start (void) {
 	  mainw->current_file=fg_generator_clip;
 	  cfile->fps=weed_get_double_value(inst,"target_fps",&error);
 	  set_main_title(cfile->file_name,0);
-	  gtk_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_pb_fps),cfile->fps);
+	  lives_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_pb_fps),cfile->fps);
 	  mainw->current_file=current_file;
 	}
 

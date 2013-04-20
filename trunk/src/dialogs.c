@@ -54,10 +54,10 @@ void on_warn_mask_toggled (GtkToggleButton *togglebutton, gpointer user_data) {
     // this is for the cds window - disable autoreload if we are not gonna show this window
     if (lives_toggle_button_get_active(togglebutton)) {
       lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(tbutton),FALSE);
-      gtk_widget_set_sensitive(tbutton,FALSE);
+      lives_widget_set_sensitive(tbutton,FALSE);
     }
     else {
-      gtk_widget_set_sensitive(tbutton,TRUE);
+      lives_widget_set_sensitive(tbutton,TRUE);
     }
   }
 
@@ -75,7 +75,7 @@ static void add_xlays_widget(GtkBox *box) {
   GtkTextBuffer *textbuffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (textview));
   
   gtk_text_view_set_editable (GTK_TEXT_VIEW (textview), FALSE);
-  gtk_container_add (GTK_CONTAINER (expander), textview);
+  lives_container_add (GTK_CONTAINER (expander), textview);
 
   if (palette->style&STYLE_1) {
     label=gtk_expander_get_label_widget(GTK_EXPANDER(expander));
@@ -93,8 +93,8 @@ static void add_xlays_widget(GtkBox *box) {
     xlist=xlist->next;
   }
 
-  gtk_box_pack_start (box, expander, FALSE, FALSE, widget_opts.packing_height);
-  gtk_widget_show_all(expander);
+  lives_box_pack_start (box, expander, FALSE, FALSE, widget_opts.packing_height);
+  lives_widget_show_all(expander);
 }
 
 
@@ -110,7 +110,7 @@ void add_warn_check (GtkBox *box, int warn_mask_number) {
 					       _("Do _not show this warning any more\n(can be turned back on from Preferences/Warnings)"),
 					       TRUE,LIVES_BOX(box),NULL);
 
-  gtk_widget_show_all(hbox);
+  lives_widget_show_all(hbox);
  
   g_signal_connect (GTK_OBJECT (checkbutton), "toggled",
 		    G_CALLBACK (on_warn_mask_toggled),
@@ -121,28 +121,28 @@ void add_warn_check (GtkBox *box, int warn_mask_number) {
 static void add_clear_ds_button(GtkDialog* dialog) {
   GtkWidget *button = gtk_button_new_from_stock ("gtk-clear");
 
-  gtk_button_set_label(GTK_BUTTON(button),_("_Recover disk space"));
-  if (mainw->tried_ds_recover) gtk_widget_set_sensitive(button,FALSE);
+  lives_button_set_label(GTK_BUTTON(button),_("_Recover disk space"));
+  if (mainw->tried_ds_recover) lives_widget_set_sensitive(button,FALSE);
 
   g_signal_connect (GTK_OBJECT (button), "clicked",
 		    G_CALLBACK (on_cleardisk_activate),
 		    (gpointer)button);
 
-  gtk_widget_show(button);
-  gtk_dialog_add_action_widget (dialog, button, LIVES_RETRY);
+  lives_widget_show(button);
+  lives_dialog_add_action_widget (dialog, button, LIVES_RETRY);
 
 }
 
 
 static void add_clear_ds_adv(GtkBox *box) {
   // add a button which opens up  Recover/Repair widget
-  GtkWidget *button = gtk_button_new_with_mnemonic(_(" _Advanced Settings >>"));
+  GtkWidget *button = lives_button_new_with_mnemonic(_(" _Advanced Settings >>"));
   GtkWidget *hbox = lives_hbox_new (FALSE, 0);
 
-  gtk_box_pack_start (GTK_BOX(hbox), button, FALSE, FALSE, widget_opts.packing_width*2);
-  gtk_box_pack_start (box, hbox, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start (GTK_BOX(hbox), button, FALSE, FALSE, widget_opts.packing_width*2);
+  lives_box_pack_start (box, hbox, FALSE, FALSE, widget_opts.packing_height);
 
-  gtk_widget_show_all(hbox);
+  lives_widget_show_all(hbox);
 
   g_signal_connect (GTK_OBJECT (button), "clicked",
 		    G_CALLBACK (on_cleardisk_advanced_clicked),
@@ -163,7 +163,7 @@ static GtkWidget* create_warn_dialog (int warn_mask_number, GtkWindow *transient
   GtkWidget *warning_okbutton=NULL;
   GtkWidget *abortbutton=NULL;
 
-  GtkAccelGroup *accel_group=GTK_ACCEL_GROUP(gtk_accel_group_new ());
+  GtkAccelGroup *accel_group=GTK_ACCEL_GROUP(lives_accel_group_new ());
 
   gchar *textx;
 
@@ -176,40 +176,40 @@ static GtkWidget* create_warn_dialog (int warn_mask_number, GtkWindow *transient
       add_clear_ds_button(GTK_DIALOG(dialog));
     }
 
-    gtk_window_set_title (GTK_WINDOW (dialog), _("LiVES: - Warning !"));
+    lives_window_set_title (GTK_WINDOW (dialog), _("LiVES: - Warning !"));
     widget_opts.justify=LIVES_JUSTIFY_CENTER;
     mainw->warning_label = lives_standard_label_new (_("warning"));
     widget_opts.justify=LIVES_JUSTIFY_DEFAULT;
     warning_cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
-    gtk_dialog_add_action_widget (GTK_DIALOG (dialog), warning_cancelbutton, GTK_RESPONSE_CANCEL);
+    lives_dialog_add_action_widget (GTK_DIALOG (dialog), warning_cancelbutton, GTK_RESPONSE_CANCEL);
     warning_okbutton = gtk_button_new_from_stock ("gtk-ok");
-    gtk_dialog_add_action_widget (GTK_DIALOG (dialog), warning_okbutton, GTK_RESPONSE_OK);
+    lives_dialog_add_action_widget (GTK_DIALOG (dialog), warning_okbutton, GTK_RESPONSE_OK);
     break;
   case LIVES_DIALOG_YESNO:
     dialog = gtk_message_dialog_new (transient,(GtkDialogFlags)0,GTK_MESSAGE_QUESTION,GTK_BUTTONS_NONE,"%s","");
-    gtk_window_set_title (GTK_WINDOW (dialog), _("LiVES: - Question"));
+    lives_window_set_title (GTK_WINDOW (dialog), _("LiVES: - Question"));
     widget_opts.justify=LIVES_JUSTIFY_CENTER;
     mainw->warning_label = lives_standard_label_new (_("question"));
     widget_opts.justify=LIVES_JUSTIFY_DEFAULT;
     warning_cancelbutton = gtk_button_new_from_stock ("gtk-no");
-    gtk_dialog_add_action_widget (GTK_DIALOG (dialog), warning_cancelbutton, LIVES_NO);
+    lives_dialog_add_action_widget (GTK_DIALOG (dialog), warning_cancelbutton, LIVES_NO);
     warning_okbutton = gtk_button_new_from_stock ("gtk-yes");
-    gtk_dialog_add_action_widget (GTK_DIALOG (dialog), warning_okbutton, LIVES_YES);
+    lives_dialog_add_action_widget (GTK_DIALOG (dialog), warning_okbutton, LIVES_YES);
     break;
   case LIVES_DIALOG_ABORT_CANCEL_RETRY:
     dialog = gtk_message_dialog_new (transient,(GtkDialogFlags)0,GTK_MESSAGE_ERROR,GTK_BUTTONS_NONE,"%s","");
-    gtk_window_set_title (GTK_WINDOW (dialog), _("LiVES: - File Error"));
+    lives_window_set_title (GTK_WINDOW (dialog), _("LiVES: - File Error"));
     widget_opts.justify=LIVES_JUSTIFY_CENTER;
     mainw->warning_label = lives_standard_label_new (_("File Error"));
     widget_opts.justify=LIVES_JUSTIFY_DEFAULT;
     abortbutton = gtk_button_new_from_stock ("gtk-quit");
-    gtk_button_set_label(GTK_BUTTON(abortbutton),_("_Abort"));
-    gtk_dialog_add_action_widget (GTK_DIALOG (dialog), abortbutton, LIVES_ABORT);
+    lives_button_set_label(GTK_BUTTON(abortbutton),_("_Abort"));
+    lives_dialog_add_action_widget (GTK_DIALOG (dialog), abortbutton, LIVES_ABORT);
     warning_cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
-    gtk_dialog_add_action_widget (GTK_DIALOG (dialog), warning_cancelbutton, LIVES_CANCEL);
+    lives_dialog_add_action_widget (GTK_DIALOG (dialog), warning_cancelbutton, LIVES_CANCEL);
     warning_okbutton = gtk_button_new_from_stock ("gtk-refresh");
-    gtk_button_set_label(GTK_BUTTON(warning_okbutton),_("_Retry"));
-    gtk_dialog_add_action_widget (GTK_DIALOG (dialog), warning_okbutton, LIVES_RETRY);
+    lives_button_set_label(GTK_BUTTON(warning_okbutton),_("_Retry"));
+    lives_dialog_add_action_widget (GTK_DIALOG (dialog), warning_okbutton, LIVES_RETRY);
     break;
   default:
     return NULL;
@@ -226,16 +226,16 @@ static GtkWidget* create_warn_dialog (int warn_mask_number, GtkWindow *transient
   gtk_window_set_deletable(GTK_WINDOW(dialog), FALSE);
   gtk_window_set_resizable (GTK_WINDOW (dialog), FALSE);
 
-  gtk_container_set_border_width (GTK_CONTAINER (dialog), widget_opts.border_width*2);
+  lives_container_set_border_width (GTK_CONTAINER (dialog), widget_opts.border_width*2);
 
   textx=insert_newlines(text,MAX_MSG_WIDTH_CHARS);
-  gtk_label_set_text(GTK_LABEL(mainw->warning_label),textx);
+  lives_label_set_text(GTK_LABEL(mainw->warning_label),textx);
 
   g_free(textx);
 
   dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(dialog));
 
-  gtk_box_pack_start (GTK_BOX (dialog_vbox), mainw->warning_label, TRUE, TRUE, 0);
+  lives_box_pack_start (GTK_BOX (dialog_vbox), mainw->warning_label, TRUE, TRUE, 0);
   gtk_label_set_selectable (GTK_LABEL (mainw->warning_label), TRUE);
 
   if (mainw->add_clear_ds_adv) {
@@ -257,20 +257,20 @@ static GtkWidget* create_warn_dialog (int warn_mask_number, GtkWindow *transient
 
   lives_widget_set_can_focus_and_default (warning_cancelbutton);
 
-  gtk_widget_add_accelerator (warning_cancelbutton, "activate", accel_group,
+  lives_widget_add_accelerator (warning_cancelbutton, "activate", accel_group,
 			      LIVES_KEY_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
 
-  gtk_widget_add_accelerator (warning_okbutton, "activate", accel_group,
+  lives_widget_add_accelerator (warning_okbutton, "activate", accel_group,
 			      LIVES_KEY_Return, (GdkModifierType)0, (GtkAccelFlags)0);
 
   lives_widget_set_can_focus_and_default (warning_okbutton);
   gtk_widget_grab_default (warning_okbutton);
 
-  gtk_widget_show_all(dialog);
+  lives_widget_show_all(dialog);
   gtk_window_set_modal (GTK_WINDOW (dialog), TRUE);
 
   if (prefs->present) {
-    gtk_window_present (GTK_WINDOW (dialog));
+    lives_window_present (GTK_WINDOW (dialog));
     gdk_window_raise (lives_widget_get_xwindow(dialog));
   }
 
@@ -310,9 +310,9 @@ boolean do_warning_dialog_with_check_transient(const gchar *text, int warn_mask_
 
   do {
     warning=create_warn_dialog(warn_mask_number,transient,mytext,LIVES_DIALOG_WARN);
-    gtk_widget_show(warning);
-    response=gtk_dialog_run (GTK_DIALOG (warning));
-    gtk_widget_destroy (warning);
+    lives_widget_show(warning);
+    response=lives_dialog_run (GTK_DIALOG (warning));
+    lives_widget_destroy (warning);
   } while (response==LIVES_RETRY);
 
   lives_widget_context_update();
@@ -338,8 +338,8 @@ boolean do_yesno_dialog(const gchar *text) {
   warning=create_warn_dialog(0,transient,mytext,LIVES_DIALOG_YESNO);
   if (mytext!=NULL) g_free(mytext);
 
-  response=gtk_dialog_run (GTK_DIALOG (warning));
-  gtk_widget_destroy (warning);
+  response=lives_dialog_run (GTK_DIALOG (warning));
+  lives_widget_destroy (warning);
 
   lives_widget_context_update();
   return (response==LIVES_YES);
@@ -367,8 +367,8 @@ int do_abort_cancel_retry_dialog(const gchar *text, GtkWindow *transient) {
   do {
     warning=create_warn_dialog(0,transient,mytext,LIVES_DIALOG_ABORT_CANCEL_RETRY);
 
-    response=gtk_dialog_run (GTK_DIALOG (warning));
-    gtk_widget_destroy (warning);
+    response=lives_dialog_run (GTK_DIALOG (warning));
+    lives_widget_destroy (warning);
 
     lives_widget_context_update();
 
@@ -489,9 +489,9 @@ void do_error_dialog_with_check_transient(const gchar *text, boolean is_blocking
   if (transient!=NULL) gtk_window_set_transient_for(GTK_WINDOW(err_box),transient);
 
   if (is_blocking) {
-    gtk_dialog_run(GTK_DIALOG (err_box));
+    lives_dialog_run(GTK_DIALOG (err_box));
     if (mainw!=NULL&&mainw->is_ready&&transient!=NULL) {
-      gtk_widget_queue_draw(GTK_WIDGET(transient));
+      lives_widget_queue_draw(GTK_WIDGET(transient));
     }
   }
 }
@@ -509,9 +509,9 @@ void do_info_dialog_with_transient(const gchar *text, boolean is_blocking, GtkWi
   if (transient!=NULL) gtk_window_set_transient_for(GTK_WINDOW(info_box),transient);
 
   if (is_blocking) {
-    gtk_dialog_run(GTK_DIALOG (info_box));
+    lives_dialog_run(GTK_DIALOG (info_box));
     if (mainw!=NULL&&mainw->is_ready&&transient!=NULL) {
-      gtk_widget_queue_draw(GTK_WIDGET(transient));
+      lives_widget_queue_draw(GTK_WIDGET(transient));
     }
   }
 }
@@ -826,15 +826,15 @@ static void cancel_process(boolean visible) {
 				  U_SEC_RATIO-mainw->offsetticks)/U_SEC;
   }
   if (visible) {
-    if (mainw->preview_box!=NULL&&!mainw->preview) gtk_widget_set_tooltip_text( mainw->p_playbutton,_ ("Play all"));
+    if (mainw->preview_box!=NULL&&!mainw->preview) lives_widget_set_tooltip_text( mainw->p_playbutton,_ ("Play all"));
     if (accelerators_swapped) {
-      if (!mainw->preview) gtk_widget_set_tooltip_text( mainw->m_playbutton,_ ("Play all"));
+      if (!mainw->preview) lives_widget_set_tooltip_text( mainw->m_playbutton,_ ("Play all"));
       gtk_widget_remove_accelerator (cfile->proc_ptr->preview_button, mainw->accel_group, LIVES_KEY_p, (GdkModifierType)0);
-      gtk_widget_add_accelerator (mainw->playall, "activate", mainw->accel_group, LIVES_KEY_p, (GdkModifierType)0, 
-				  GTK_ACCEL_VISIBLE);
+      lives_widget_add_accelerator (mainw->playall, "activate", mainw->accel_group, LIVES_KEY_p, (GdkModifierType)0, 
+				  LIVES_ACCEL_VISIBLE);
     }
     if (cfile->proc_ptr!=NULL) {
-      gtk_widget_destroy(GTK_WIDGET(cfile->proc_ptr->processing));
+      lives_widget_destroy(GTK_WIDGET(cfile->proc_ptr->processing));
       g_free(cfile->proc_ptr);
       cfile->proc_ptr=NULL;
     }
@@ -870,7 +870,7 @@ static void disp_fraction(int done, int start, int end, double timesofar, xproce
 
   est_time=timesofar/fraction_done-timesofar;
   prog_label=g_strdup_printf(_("\n%s%d%% done. Time remaining: %u sec%s\n"),stretch,(gint)(fraction_done*100.),(guint)(est_time+.5),stretch);
-  if (GTK_IS_LABEL(proc->label3)) gtk_label_set_text(GTK_LABEL(proc->label3),prog_label);
+  if (GTK_IS_LABEL(proc->label3)) lives_label_set_text(GTK_LABEL(proc->label3),prog_label);
   g_free(prog_label);
 
   disp_frames_done=done;
@@ -1243,7 +1243,7 @@ boolean process_one (boolean visible) {
       gchar *prog_label;
 
       if (GTK_IS_SPIN_BUTTON(mainw->framedraw_spinbutton)) 
-	gtk_spin_button_set_range(GTK_SPIN_BUTTON(mainw->framedraw_spinbutton),1,cfile->proc_ptr->frames_done);
+	lives_spin_button_set_range(GTK_SPIN_BUTTON(mainw->framedraw_spinbutton),1,cfile->proc_ptr->frames_done);
       // set the progress bar %
 
       if (cfile->opening&&cfile->clip_type==CLIP_TYPE_DISK&&!cfile->opening_only_audio&&
@@ -1273,7 +1273,7 @@ boolean process_one (boolean visible) {
 	      gtk_progress_bar_pulse(GTK_PROGRESS_BAR(cfile->proc_ptr->progressbar));
 	      prog_label=g_strdup_printf(_("\n%d frames opened.\n"),mainw->opening_frames-1);
 	    }
-	    gtk_label_set_text(GTK_LABEL(cfile->proc_ptr->label3),prog_label);
+	    lives_label_set_text(GTK_LABEL(cfile->proc_ptr->label3),prog_label);
 	    g_free(prog_label);
 	  }
 	}
@@ -1395,12 +1395,12 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const gchar *te
     if (mytext!=NULL) g_free(mytext);
 
     gtk_progress_bar_set_pulse_step(GTK_PROGRESS_BAR(cfile->proc_ptr->progressbar),.01);
-    if (mainw->show_procd) gtk_widget_show(cfile->proc_ptr->processing);
+    if (mainw->show_procd) lives_widget_show(cfile->proc_ptr->processing);
     
     cfile->proc_ptr->frames_done=0;
     
     if (cancellable) {
-      gtk_widget_show (cfile->proc_ptr->cancel_button);
+      lives_widget_show (cfile->proc_ptr->cancel_button);
     }
 
 
@@ -1438,10 +1438,10 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const gchar *te
 
     if (cfile->opening&&(capable->has_sox_play||(prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL)||
 			 (prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL))&&mainw->playing_file==-1) {
-      if (mainw->preview_box!=NULL) gtk_widget_set_tooltip_text( mainw->p_playbutton,_ ("Preview"));
-      gtk_widget_set_tooltip_text( mainw->m_playbutton,_ ("Preview"));
+      if (mainw->preview_box!=NULL) lives_widget_set_tooltip_text( mainw->p_playbutton,_ ("Preview"));
+      lives_widget_set_tooltip_text( mainw->m_playbutton,_ ("Preview"));
       gtk_widget_remove_accelerator (mainw->playall, mainw->accel_group, LIVES_KEY_p, (GdkModifierType)0);
-      gtk_widget_add_accelerator (cfile->proc_ptr->preview_button, "clicked", mainw->accel_group, LIVES_KEY_p,
+      lives_widget_add_accelerator (cfile->proc_ptr->preview_button, "clicked", mainw->accel_group, LIVES_KEY_p,
 				  (GdkModifierType)0, (GtkAccelFlags)0);
       accelerators_swapped=TRUE;
     }
@@ -1581,7 +1581,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const gchar *te
   }
 #endif
 
-  if (mainw->iochan!=NULL) gtk_widget_show (cfile->proc_ptr->pause_button);
+  if (mainw->iochan!=NULL) lives_widget_show (cfile->proc_ptr->pause_button);
 
   
   // tell jack transport we are ready to play
@@ -1664,17 +1664,17 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const gchar *te
     // we got a message from the backend...
 
     if (visible&&(!accelerators_swapped||cfile->opening)&&cancellable&&(!cfile->nopreview||cfile->keep_without_preview)) {
-      if (!cfile->nopreview) 
-	gtk_widget_show (cfile->proc_ptr->preview_button);
-      if (cfile->opening_loc) gtk_widget_show (cfile->proc_ptr->stop_button);
-      else gtk_widget_show (cfile->proc_ptr->pause_button);
+      if (!cfile->nopreview&&!(cfile->opening&&mainw->multitrack!=NULL)) 
+	lives_widget_show (cfile->proc_ptr->preview_button);
+      if (cfile->opening_loc) lives_widget_show (cfile->proc_ptr->stop_button);
+      else lives_widget_show (cfile->proc_ptr->pause_button);
 
       if (!cfile->opening&&!cfile->nopreview) {
 	gtk_widget_grab_default (cfile->proc_ptr->preview_button);
-	if (mainw->preview_box!=NULL) gtk_widget_set_tooltip_text( mainw->p_playbutton,_ ("Preview"));
-	gtk_widget_set_tooltip_text( mainw->m_playbutton,_ ("Preview"));
+	if (mainw->preview_box!=NULL) lives_widget_set_tooltip_text( mainw->p_playbutton,_ ("Preview"));
+	lives_widget_set_tooltip_text( mainw->m_playbutton,_ ("Preview"));
 	gtk_widget_remove_accelerator (mainw->playall, mainw->accel_group, LIVES_KEY_p, (GdkModifierType)0);
-	gtk_widget_add_accelerator (cfile->proc_ptr->preview_button, "clicked", mainw->accel_group, LIVES_KEY_p,
+	lives_widget_add_accelerator (cfile->proc_ptr->preview_button, "clicked", mainw->accel_group, LIVES_KEY_p,
 				    (GdkModifierType)0, (GtkAccelFlags)0);
 	accelerators_swapped=TRUE;
       }
@@ -1742,19 +1742,19 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const gchar *te
     if (cfile->clip_type==CLIP_TYPE_DISK&&(mainw->cancelled!=CANCEL_NO_MORE_PREVIEW||!cfile->opening)) {
       unlink(cfile->info_file);
     }
-    if (mainw->preview_box!=NULL&&!mainw->preview) gtk_widget_set_tooltip_text( mainw->p_playbutton,
+    if (mainw->preview_box!=NULL&&!mainw->preview) lives_widget_set_tooltip_text( mainw->p_playbutton,
 									 _("Play all"));
     if (accelerators_swapped) {
-      if (!mainw->preview) gtk_widget_set_tooltip_text( mainw->m_playbutton,_ ("Play all"));
+      if (!mainw->preview) lives_widget_set_tooltip_text( mainw->m_playbutton,_ ("Play all"));
       gtk_widget_remove_accelerator (cfile->proc_ptr->preview_button, mainw->accel_group, LIVES_KEY_p, (GdkModifierType)0);
-      gtk_widget_add_accelerator (mainw->playall, "activate", mainw->accel_group, LIVES_KEY_p, (GdkModifierType)0,
-				  GTK_ACCEL_VISIBLE);
+      lives_widget_add_accelerator (mainw->playall, "activate", mainw->accel_group, LIVES_KEY_p, (GdkModifierType)0,
+				  LIVES_ACCEL_VISIBLE);
       accelerators_swapped=FALSE;
     }
     if (cfile->proc_ptr!=NULL) {
       const gchar *btext=NULL;
       if (mainw->iochan!=NULL) btext=text_view_get_text(mainw->optextview); 
-      if (cfile->proc_ptr->processing!=NULL) gtk_widget_destroy(cfile->proc_ptr->processing);
+      if (cfile->proc_ptr->processing!=NULL) lives_widget_destroy(cfile->proc_ptr->processing);
       g_free(cfile->proc_ptr);
       cfile->proc_ptr=NULL;
       if (btext!=NULL) {
@@ -1819,17 +1819,17 @@ boolean do_auto_dialog (const gchar *text, int type) {
 
   proc_ptr=create_processing (mytext);
   if (mytext!=NULL) g_free(mytext);
-  gtk_widget_hide (proc_ptr->stop_button);
+  lives_widget_hide (proc_ptr->stop_button);
   gtk_window_set_modal (GTK_WINDOW (proc_ptr->processing), TRUE);
      
   if (type==2) {
-    gtk_widget_show (proc_ptr->cancel_button);
-    gtk_widget_hide (proc_ptr->pause_button);
+    lives_widget_show (proc_ptr->cancel_button);
+    lives_widget_hide (proc_ptr->pause_button);
     mainw->cancel_type=CANCEL_SOFT;
   }
 
   gtk_progress_bar_set_pulse_step(GTK_PROGRESS_BAR(proc_ptr->progressbar),.01);
-  gtk_widget_show(proc_ptr->processing);
+  lives_widget_show(proc_ptr->processing);
   
   lives_set_cursor_style(LIVES_CURSOR_BUSY,NULL);
   lives_set_cursor_style(LIVES_CURSOR_BUSY,proc_ptr->processing);
@@ -1840,8 +1840,8 @@ boolean do_auto_dialog (const gchar *text, int type) {
     count=100000./prefs->sleep_time;  // don't want to flash too fast...
   }
   else if (type==1) {
-    gtk_widget_show(proc_ptr->stop_button);
-    gtk_widget_show(proc_ptr->cancel_button);
+    lives_widget_show(proc_ptr->stop_button);
+    lives_widget_show(proc_ptr->cancel_button);
 #ifdef HAVE_PULSE_AUDIO
     if (mainw->pulsed_read!=NULL) pulse_driver_uncork(mainw->pulsed_read);
 #endif
@@ -1861,7 +1861,7 @@ boolean do_auto_dialog (const gchar *text, int type) {
       time_rem=(gint)((gdouble)(end_time-time)/1000000.+.5);
       if (time_rem>=0&&time_rem<last_time_rem) {
 	label_text=g_strdup_printf(_("\nTime remaining: %d sec"),time_rem);
-	gtk_label_set_text(GTK_LABEL(proc_ptr->label2),label_text);
+	lives_label_set_text(GTK_LABEL(proc_ptr->label2),label_text);
 	g_free(label_text);
 	last_time_rem=time_rem;
       }
@@ -1892,7 +1892,7 @@ boolean do_auto_dialog (const gchar *text, int type) {
   }
 
   if (proc_ptr!=NULL) {
-    gtk_widget_destroy(proc_ptr->processing);
+    lives_widget_destroy(proc_ptr->processing);
     g_free(proc_ptr);
   }
 
@@ -2050,8 +2050,8 @@ boolean rdet_suggest_values (int width, int height, double fps, int fps_num, int
   g_free (msg8);
   prep_dialog=create_encoder_prep_dialog(msg_a,NULL,anr);
   g_free (msg_a);
-  ret=(gtk_dialog_run(GTK_DIALOG (prep_dialog))==GTK_RESPONSE_OK);
-  gtk_widget_destroy (prep_dialog);
+  ret=(lives_dialog_run(GTK_DIALOG (prep_dialog))==GTK_RESPONSE_OK);
+  lives_widget_destroy (prep_dialog);
   return ret;
 }
 
@@ -2154,8 +2154,8 @@ boolean do_encoder_restrict_dialog (int width, int height, double fps, int fps_n
   prep_dialog=create_encoder_prep_dialog(msg_a,msg_b,anr);
   g_free (msg_a);
   if (msg_b!=NULL) g_free (msg_b);
-  ret=(gtk_dialog_run(GTK_DIALOG (prep_dialog))==GTK_RESPONSE_OK);
-  gtk_widget_destroy (prep_dialog);
+  ret=(lives_dialog_run(GTK_DIALOG (prep_dialog))==GTK_RESPONSE_OK);
+  lives_widget_destroy (prep_dialog);
   return ret;
 }
 
@@ -2192,22 +2192,22 @@ boolean do_comments_dialog (file *sfile, gchar *filename) {
 
   while (!ok) {
     ok=TRUE;
-    if ((response=(gtk_dialog_run(GTK_DIALOG (commentsw->comments_dialog))==GTK_RESPONSE_OK))) {
-      g_snprintf (sfile->title,256,"%s",gtk_entry_get_text (GTK_ENTRY (commentsw->title_entry)));
-      g_snprintf (sfile->author,256,"%s",gtk_entry_get_text (GTK_ENTRY (commentsw->author_entry)));
-      g_snprintf (sfile->comment,256,"%s",gtk_entry_get_text (GTK_ENTRY (commentsw->comment_entry)));
+    if ((response=(lives_dialog_run(GTK_DIALOG (commentsw->comments_dialog))==GTK_RESPONSE_OK))) {
+      g_snprintf (sfile->title,256,"%s",lives_entry_get_text (GTK_ENTRY (commentsw->title_entry)));
+      g_snprintf (sfile->author,256,"%s",lives_entry_get_text (GTK_ENTRY (commentsw->author_entry)));
+      g_snprintf (sfile->comment,256,"%s",lives_entry_get_text (GTK_ENTRY (commentsw->comment_entry)));
       
       if (encoding&&sfile->subt!=NULL&&lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(commentsw->subt_checkbutton))) {
-	gchar *ext=get_extension(gtk_entry_get_text(GTK_ENTRY(commentsw->subt_entry)));
+	gchar *ext=get_extension(lives_entry_get_text(GTK_ENTRY(commentsw->subt_entry)));
 	if (strcmp(ext,"sub")&&strcmp(ext,"srt")) {
 	  if (!do_sub_type_warning(ext,sfile->subt->type==SUBTITLE_TYPE_SRT?"srt":"sub")) {
-	    gtk_entry_set_text(GTK_ENTRY(commentsw->subt_entry),mainw->subt_save_file);
+	    lives_entry_set_text(GTK_ENTRY(commentsw->subt_entry),mainw->subt_save_file);
 	    ok=FALSE;
 	    continue;
 	  }
 	}
 	if (mainw->subt_save_file!=NULL) g_free(mainw->subt_save_file);
-	mainw->subt_save_file=g_strdup(gtk_entry_get_text(GTK_ENTRY(commentsw->subt_entry)));
+	mainw->subt_save_file=g_strdup(lives_entry_get_text(GTK_ENTRY(commentsw->subt_entry)));
       }
       else {
 	if (mainw->subt_save_file!=NULL) g_free(mainw->subt_save_file);
@@ -2216,7 +2216,7 @@ boolean do_comments_dialog (file *sfile, gchar *filename) {
     }
   }
 
-  gtk_widget_destroy (commentsw->comments_dialog);
+  lives_widget_destroy (commentsw->comments_dialog);
   g_free (commentsw);
   
   return response;
@@ -2480,19 +2480,19 @@ static void create_threaded_dialog(gchar *text, gboolean has_cancel) {
 
   dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(procw->processing));
 
-  gtk_widget_show (dialog_vbox);
+  lives_widget_show (dialog_vbox);
 
   vbox = lives_vbox_new (FALSE, 0);
-  gtk_widget_show (vbox);
-  gtk_box_pack_start (GTK_BOX (dialog_vbox), vbox, TRUE, TRUE, 0);
+  lives_widget_show (vbox);
+  lives_box_pack_start (GTK_BOX (dialog_vbox), vbox, TRUE, TRUE, 0);
 
   g_snprintf(tmp_label,256,"%s...\n",text);
   procw->label = lives_standard_label_new (tmp_label);
-  gtk_box_pack_start (GTK_BOX (vbox), procw->label, FALSE, FALSE, 0);
+  lives_box_pack_start (GTK_BOX (vbox), procw->label, FALSE, FALSE, 0);
 
   procw->progressbar = gtk_progress_bar_new ();
   gtk_progress_bar_set_pulse_step(GTK_PROGRESS_BAR(procw->progressbar),.01);
-  gtk_box_pack_start (GTK_BOX (vbox), procw->progressbar, FALSE, FALSE, 0);
+  lives_box_pack_start (GTK_BOX (vbox), procw->progressbar, FALSE, FALSE, 0);
 
   if (widget_opts.apply_theme&&(palette->style&STYLE_1)) {
     lives_widget_set_fg_color(procw->progressbar, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
@@ -2501,21 +2501,21 @@ static void create_threaded_dialog(gchar *text, gboolean has_cancel) {
   widget_opts.justify=LIVES_JUSTIFY_CENTER;
   procw->label2 = lives_standard_label_new (_("\nPlease Wait"));
   widget_opts.justify=LIVES_JUSTIFY_DEFAULT;
-  gtk_box_pack_start (GTK_BOX (vbox), procw->label2, FALSE, FALSE, 0);
+  lives_box_pack_start (GTK_BOX (vbox), procw->label2, FALSE, FALSE, 0);
 
   widget_opts.justify=LIVES_JUSTIFY_CENTER;
   procw->label3 = lives_standard_label_new (PROCW_STRETCHER);
   widget_opts.justify=LIVES_JUSTIFY_DEFAULT;
-  gtk_box_pack_start (GTK_BOX (vbox), procw->label3, FALSE, FALSE, 0);
+  lives_box_pack_start (GTK_BOX (vbox), procw->label3, FALSE, FALSE, 0);
 
   if (has_cancel) {
     GtkWidget *cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
-    gtk_widget_show (cancelbutton);
+    lives_widget_show (cancelbutton);
 
     if (mainw->current_file>-1&&cfile!=NULL&&cfile->opening_only_audio) {
-      GtkWidget *enoughbutton = gtk_button_new_with_mnemonic (_ ("_Enough"));
-      gtk_widget_show (enoughbutton);
-      gtk_dialog_add_action_widget (GTK_DIALOG (procw->processing), enoughbutton, GTK_RESPONSE_CANCEL);
+      GtkWidget *enoughbutton = lives_button_new_with_mnemonic (_ ("_Enough"));
+      lives_widget_show (enoughbutton);
+      lives_dialog_add_action_widget (GTK_DIALOG (procw->processing), enoughbutton, GTK_RESPONSE_CANCEL);
       lives_widget_set_can_focus_and_default (enoughbutton);
 
       g_signal_connect (GTK_OBJECT (enoughbutton), "clicked",
@@ -2525,7 +2525,7 @@ static void create_threaded_dialog(gchar *text, gboolean has_cancel) {
       mainw->cancel_type=CANCEL_SOFT;
     }
 
-    gtk_dialog_add_action_widget (GTK_DIALOG (procw->processing), cancelbutton, GTK_RESPONSE_CANCEL);
+    lives_dialog_add_action_widget (GTK_DIALOG (procw->processing), cancelbutton, GTK_RESPONSE_CANCEL);
     lives_widget_set_can_focus_and_default (cancelbutton);
 
     g_signal_connect (GTK_OBJECT (cancelbutton), "clicked",
@@ -2535,7 +2535,7 @@ static void create_threaded_dialog(gchar *text, gboolean has_cancel) {
     mainw->cancel_type=CANCEL_SOFT;
   }
 
-  gtk_widget_show_all(procw->processing);
+  lives_widget_show_all(procw->processing);
 
   lives_set_cursor_style(LIVES_CURSOR_BUSY,procw->processing);
 }
@@ -2567,7 +2567,7 @@ void threaded_dialog_spin (void) {
     disp_fraction(progress,cfile->progress_start,cfile->progress_end,timesofar,procw);
   }
 
-  gtk_widget_queue_draw(procw->processing);
+  lives_widget_queue_draw(procw->processing);
   lives_widget_context_update();
 
 }
@@ -2607,14 +2607,14 @@ void do_threaded_dialog(gchar *trans_text, boolean has_cancel) {
 
 void end_threaded_dialog(void) {
   if (procw!=NULL) {
-    if (procw->processing!=NULL) gtk_widget_destroy(procw->processing);
+    if (procw->processing!=NULL) lives_widget_destroy(procw->processing);
   }
   if (mainw->splash_window==NULL) {
     lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
     if (mainw->multitrack==NULL) { 
-      if (mainw->is_ready) gtk_widget_queue_draw(mainw->LiVES);
+      if (mainw->is_ready) lives_widget_queue_draw(mainw->LiVES);
     }
-    else gtk_widget_queue_draw(mainw->multitrack->window);
+    else lives_widget_queue_draw(mainw->multitrack->window);
   }
   else lives_set_cursor_style(LIVES_CURSOR_NORMAL,mainw->splash_window);
   if (procw!=NULL) {
@@ -2638,7 +2638,7 @@ void do_splash_progress(void) {
 
 void 
 response_ok (GtkButton *button, gpointer user_data) {
-  gtk_dialog_response (GTK_DIALOG (gtk_widget_get_toplevel(GTK_WIDGET(button))), GTK_RESPONSE_OK);
+  gtk_dialog_response (GTK_DIALOG (lives_widget_get_toplevel(GTK_WIDGET(button))), GTK_RESPONSE_OK);
 }
 
 
@@ -3048,9 +3048,9 @@ void do_do_not_close_d (void) {
   }
 
   if (transient!=NULL) gtk_window_set_transient_for(GTK_WINDOW(err_box),transient);
-  gtk_widget_show(err_box);
+  lives_widget_show(err_box);
 
-  gtk_window_present (GTK_WINDOW (err_box));
+  lives_window_present (GTK_WINDOW (err_box));
   gdk_window_raise (lives_widget_get_xwindow(err_box));
 }
 

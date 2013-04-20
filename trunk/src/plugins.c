@@ -580,7 +580,7 @@ void on_vppa_cancel_clicked (GtkButton *button, gpointer user_data) {
   _vppaw *vppw=(_vppaw *)user_data;
   _vid_playback_plugin *vpp=vppw->plugin;
 
-  gtk_widget_destroy(vppw->dialog);
+  lives_widget_destroy(vppw->dialog);
   lives_widget_context_update();
   if (vpp!=NULL&&vpp!=mainw->vpp) {
     // close the temp current vpp
@@ -595,7 +595,7 @@ void on_vppa_cancel_clicked (GtkButton *button, gpointer user_data) {
   g_free(vppw);
 
   if (prefsw!=NULL) {
-    gtk_window_present(GTK_WINDOW(prefsw->prefs_dialog));
+    lives_window_present(GTK_WINDOW(prefsw->prefs_dialog));
     gdk_window_raise(lives_widget_get_xwindow(prefsw->prefs_dialog));
   }
 }
@@ -613,11 +613,11 @@ void on_vppa_ok_clicked (GtkButton *button, gpointer user_data) {
   _vid_playback_plugin *vpp=vppw->plugin;
 
   if (vpp==mainw->vpp) {
-    if (vppw->spinbuttonw!=NULL) mainw->vpp->fwidth=gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(vppw->spinbuttonw));
-    if (vppw->spinbuttonh!=NULL) mainw->vpp->fheight=gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(vppw->spinbuttonh));
-    if (vppw->fps_entry!=NULL) fixed_fps=gtk_entry_get_text(GTK_ENTRY(vppw->fps_entry));
+    if (vppw->spinbuttonw!=NULL) mainw->vpp->fwidth=lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON(vppw->spinbuttonw));
+    if (vppw->spinbuttonh!=NULL) mainw->vpp->fheight=lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON(vppw->spinbuttonh));
+    if (vppw->fps_entry!=NULL) fixed_fps=lives_entry_get_text(GTK_ENTRY(vppw->fps_entry));
     if (vppw->pal_entry!=NULL) {
-      cur_pal=g_strdup(gtk_entry_get_text(GTK_ENTRY(vppw->pal_entry)));
+      cur_pal=g_strdup(lives_entry_get_text(GTK_ENTRY(vppw->pal_entry)));
 
       if (get_token_count(cur_pal,' ')>1) {
 	gchar **array=g_strsplit(cur_pal," ",2);
@@ -747,14 +747,14 @@ void on_vppa_ok_clicked (GtkButton *button, gpointer user_data) {
   }
   else {
     if (vppw->spinbuttonw!=NULL) 
-      future_prefs->vpp_fwidth=gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(vppw->spinbuttonw));
+      future_prefs->vpp_fwidth=lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON(vppw->spinbuttonw));
     else future_prefs->vpp_fwidth=-1;
     if (vppw->spinbuttonh!=NULL) 
-      future_prefs->vpp_fheight=gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(vppw->spinbuttonh));
+      future_prefs->vpp_fheight=lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON(vppw->spinbuttonh));
     else future_prefs->vpp_fheight=-1;
-    if (vppw->fps_entry!=NULL) fixed_fps=gtk_entry_get_text(GTK_ENTRY(vppw->fps_entry));
+    if (vppw->fps_entry!=NULL) fixed_fps=lives_entry_get_text(GTK_ENTRY(vppw->fps_entry));
     if (vppw->pal_entry!=NULL) {
-      cur_pal=g_strdup(gtk_entry_get_text(GTK_ENTRY(vppw->pal_entry)));
+      cur_pal=g_strdup(lives_entry_get_text(GTK_ENTRY(vppw->pal_entry)));
 
       if (get_token_count(cur_pal,' ')>1) {
 	gchar **array=g_strsplit(cur_pal," ",2);
@@ -917,7 +917,7 @@ _vppaw *on_vpp_advanced_clicked (GtkButton *button, gpointer user_data) {
   vppa->dialog = lives_standard_dialog_new (title,FALSE);
   g_free(title);
 
-  accel_group = GTK_ACCEL_GROUP(gtk_accel_group_new ());
+  accel_group = GTK_ACCEL_GROUP(lives_accel_group_new ());
   gtk_window_add_accel_group (GTK_WINDOW (vppa->dialog), accel_group);
 
   if (prefs->show_gui) {
@@ -935,7 +935,7 @@ _vppaw *on_vpp_advanced_clicked (GtkButton *button, gpointer user_data) {
     desc=(tmpvpp->get_description)();
     if (desc!=NULL) {
       label = lives_standard_label_new (desc);
-      gtk_box_pack_start (GTK_BOX (dialog_vbox), label, FALSE, FALSE, widget_opts.packing_height);
+      lives_box_pack_start (GTK_BOX (dialog_vbox), label, FALSE, FALSE, widget_opts.packing_height);
     }
   }
 
@@ -971,12 +971,12 @@ _vppaw *on_vpp_advanced_clicked (GtkButton *button, gpointer user_data) {
 
     if (tmpvpp->fixed_fps_numer>0) {
       gchar *tmp=g_strdup_printf("%d:%d",tmpvpp->fixed_fps_numer,tmpvpp->fixed_fps_denom);
-      gtk_entry_set_text(GTK_ENTRY(vppa->fps_entry),tmp);
+      lives_entry_set_text(GTK_ENTRY(vppa->fps_entry),tmp);
       g_free(tmp);
     }
     else {
       gchar *tmp=remove_trailing_zeroes(tmpvpp->fixed_fpsd);
-      gtk_entry_set_text(GTK_ENTRY(vppa->fps_entry),tmp);
+      lives_entry_set_text(GTK_ENTRY(vppa->fps_entry),tmp);
       g_free(tmp);
     }
   }
@@ -986,7 +986,7 @@ _vppaw *on_vpp_advanced_clicked (GtkButton *button, gpointer user_data) {
 
   if (!(tmpvpp->capabilities&VPP_LOCAL_DISPLAY)) {
     hbox = lives_hbox_new (FALSE, 0);
-    gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+    lives_box_pack_start (GTK_BOX (dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
     
     add_fill_to_box(GTK_BOX(hbox));
 
@@ -1038,7 +1038,7 @@ _vppaw *on_vpp_advanced_clicked (GtkButton *button, gpointer user_data) {
 			      weed_yuv_clamping_get_name(tmpvpp->YUV_clamping));
     }
     if (ctext==NULL) ctext=g_strdup(weed_palette_get_name(tmpvpp->palette));
-    gtk_entry_set_text(GTK_ENTRY(vppa->pal_entry),ctext);
+    lives_entry_set_text(GTK_ENTRY(vppa->pal_entry),ctext);
     g_free(ctext);
     g_list_free_strings(pal_list_strings);
     g_list_free(pal_list_strings);
@@ -1049,7 +1049,7 @@ _vppaw *on_vpp_advanced_clicked (GtkButton *button, gpointer user_data) {
   if (tmpvpp->get_init_rfx!=NULL) {
     GtkWidget *vbox=lives_vbox_new (FALSE, 0);
     GtkWidget *scrolledwindow = lives_standard_scrolled_window_new (RFX_WINSIZE_H, RFX_WINSIZE_V/2, vbox);
-    gtk_box_pack_start (GTK_BOX (dialog_vbox), scrolledwindow, TRUE, TRUE, 0);
+    lives_box_pack_start (GTK_BOX (dialog_vbox), scrolledwindow, TRUE, TRUE, 0);
 
 #ifndef IS_MINGW
     com=g_strdup_printf("/bin/echo -e \"%s\"",(*tmpvpp->get_init_rfx)());
@@ -1072,20 +1072,20 @@ _vppaw *on_vpp_advanced_clicked (GtkButton *button, gpointer user_data) {
 
 
   cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
-  gtk_dialog_add_action_widget (GTK_DIALOG (vppa->dialog), cancelbutton, GTK_RESPONSE_CANCEL);
+  lives_dialog_add_action_widget (GTK_DIALOG (vppa->dialog), cancelbutton, GTK_RESPONSE_CANCEL);
   lives_widget_set_can_focus (cancelbutton,TRUE);
 
-  gtk_widget_add_accelerator (cancelbutton, "activate", accel_group,
+  lives_widget_add_accelerator (cancelbutton, "activate", accel_group,
                               LIVES_KEY_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
 
 
   savebutton = gtk_button_new_from_stock ("gtk-save-as");
-  gtk_dialog_add_action_widget (GTK_DIALOG (vppa->dialog), savebutton, 1);
+  lives_dialog_add_action_widget (GTK_DIALOG (vppa->dialog), savebutton, 1);
   lives_widget_set_can_focus (savebutton,TRUE);
-  gtk_widget_set_tooltip_text( savebutton, _("Save settings to an alternate file.\n"));
+  lives_widget_set_tooltip_text( savebutton, _("Save settings to an alternate file.\n"));
 
   okbutton = gtk_button_new_from_stock ("gtk-ok");
-  gtk_dialog_add_action_widget (GTK_DIALOG (vppa->dialog), okbutton, GTK_RESPONSE_OK);
+  lives_dialog_add_action_widget (GTK_DIALOG (vppa->dialog), okbutton, GTK_RESPONSE_OK);
   lives_widget_set_can_focus_and_default (okbutton);
 
   g_signal_connect (GTK_OBJECT (cancelbutton), "clicked",
@@ -1102,8 +1102,8 @@ _vppaw *on_vpp_advanced_clicked (GtkButton *button, gpointer user_data) {
 
 
 
-  gtk_widget_show_all(vppa->dialog);
-  gtk_window_present (GTK_WINDOW (vppa->dialog));
+  lives_widget_show_all(vppa->dialog);
+  lives_window_present (GTK_WINDOW (vppa->dialog));
   gdk_window_raise(lives_widget_get_xwindow(vppa->dialog));
 
   return vppa;
@@ -1493,9 +1493,9 @@ void vid_playback_plugin_exit (void) {
   }
   mainw->stream_ticks=-1;
 
-  if (mainw->playing_file>-1&&mainw->fs&&mainw->sep_win) gtk_window_fullscreen(GTK_WINDOW(mainw->play_window));
+  if (mainw->playing_file>-1&&mainw->fs&&mainw->sep_win) lives_window_fullscreen(GTK_WINDOW(mainw->play_window));
   if (mainw->play_window!=NULL) 
-    gtk_window_set_title (GTK_WINDOW (mainw->play_window),_("LiVES: - Play Window"));
+    lives_window_set_title (GTK_WINDOW (mainw->play_window),_("LiVES: - Play Window"));
 }
 
 
@@ -2031,9 +2031,9 @@ boolean check_encoder_restrictions (boolean get_extension, boolean user_audio, b
       }
     }
     if (rdet!=NULL&&!rdet->is_encoding) {
-      rdet->arate=(gint)atoi (gtk_entry_get_text(GTK_ENTRY(resaudw->entry_arate)));
-      rdet->achans=(gint)atoi (gtk_entry_get_text(GTK_ENTRY(resaudw->entry_achans)));
-      rdet->asamps=(gint)atoi (gtk_entry_get_text(GTK_ENTRY(resaudw->entry_asamps)));
+      rdet->arate=(gint)atoi (lives_entry_get_text(GTK_ENTRY(resaudw->entry_arate)));
+      rdet->achans=(gint)atoi (lives_entry_get_text(GTK_ENTRY(resaudw->entry_achans)));
+      rdet->asamps=(gint)atoi (lives_entry_get_text(GTK_ENTRY(resaudw->entry_asamps)));
       rdet->aendian=get_signed_endian(lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(resaudw->rb_unsigned)),
 				      lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(resaudw->rb_littleend)));
 
@@ -2062,13 +2062,13 @@ boolean check_encoder_restrictions (boolean get_extension, boolean user_audio, b
 	      rdet->fps=(best_fps_num*1.)/(best_fps_denom*1.);
 	    }
 	    else rdet->fps=best_fps;
-	    gtk_spin_button_set_value(GTK_SPIN_BUTTON(rdet->spinbutton_fps),rdet->fps);
+	    lives_spin_button_set_value(GTK_SPIN_BUTTON(rdet->spinbutton_fps),rdet->fps);
 	  }
-	  gtk_spin_button_set_value(GTK_SPIN_BUTTON(rdet->spinbutton_width),rdet->width);
-	  gtk_spin_button_set_value(GTK_SPIN_BUTTON(rdet->spinbutton_height),rdet->height);
+	  lives_spin_button_set_value(GTK_SPIN_BUTTON(rdet->spinbutton_width),rdet->width);
+	  lives_spin_button_set_value(GTK_SPIN_BUTTON(rdet->spinbutton_height),rdet->height);
 	  if (best_arate!=-1) {
 	    arate_string=g_strdup_printf("%d",best_arate);
-	    gtk_entry_set_text (GTK_ENTRY (resaudw->entry_arate),arate_string);
+	    lives_entry_set_text (GTK_ENTRY (resaudw->entry_arate),arate_string);
 	    g_free(arate_string);
 	  }
 	  rdet->suggestion_followed=TRUE;
@@ -2476,7 +2476,7 @@ static void dpa_ok_clicked (GtkButton *button, gpointer user_data) {
   lives_general_button_clicked(button,NULL);
 
   if (prefsw!=NULL) {
-    gtk_window_present(GTK_WINDOW(prefsw->prefs_dialog));
+    lives_window_present(GTK_WINDOW(prefsw->prefs_dialog));
     gdk_window_raise(lives_widget_get_xwindow(prefsw->prefs_dialog));
     if (string_lists_differ(future_prefs->disabled_decoders,future_prefs->disabled_decoders_new))
       apply_button_set_enabled(NULL,NULL);
@@ -2496,7 +2496,7 @@ static void dpa_cancel_clicked (GtkButton *button, gpointer user_data) {
   lives_general_button_clicked(button,NULL);
 
   if (prefsw!=NULL) {
-    gtk_window_present(GTK_WINDOW(prefsw->prefs_dialog));
+    lives_window_present(GTK_WINDOW(prefsw->prefs_dialog));
     gdk_window_raise(lives_widget_get_xwindow(prefsw->prefs_dialog));
   }
 
@@ -2556,15 +2556,15 @@ void on_decplug_advanced_clicked (GtkButton *button, gpointer user_data) {
 
   scrolledwindow = lives_standard_scrolled_window_new (RFX_WINSIZE_H, RFX_WINSIZE_V, vbox);
 
-  gtk_container_add (GTK_CONTAINER(dialog_vbox), scrolledwindow);
+  lives_container_add (GTK_CONTAINER(dialog_vbox), scrolledwindow);
 
   label=lives_standard_label_new(_("Enabled Video Decoders (uncheck to disable)"));
-  gtk_box_pack_start (GTK_BOX (vbox), label, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start (GTK_BOX (vbox), label, FALSE, FALSE, widget_opts.packing_height);
 
   while (decoder_plugin!=NULL) {
     lives_decoder_sys_t *dpsys=(lives_decoder_sys_t *)decoder_plugin->data;
     hbox = lives_hbox_new (FALSE, 0);
-    gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+    lives_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
     ltext=g_strdup_printf("%s   (%s)",dpsys->name,(*dpsys->version)());
 
     checkbutton=lives_standard_check_button_new(ltext,FALSE,LIVES_BOX(hbox),NULL);
@@ -2583,10 +2583,10 @@ void on_decplug_advanced_clicked (GtkButton *button, gpointer user_data) {
 
 
   cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
-  gtk_dialog_add_action_widget (GTK_DIALOG (dialog), cancelbutton, GTK_RESPONSE_CANCEL);
+  lives_dialog_add_action_widget (GTK_DIALOG (dialog), cancelbutton, GTK_RESPONSE_CANCEL);
 
   okbutton = gtk_button_new_from_stock ("gtk-ok");
-  gtk_dialog_add_action_widget (GTK_DIALOG (dialog), okbutton, GTK_RESPONSE_OK);
+  lives_dialog_add_action_widget (GTK_DIALOG (dialog), okbutton, GTK_RESPONSE_OK);
   lives_widget_set_can_focus_and_default (okbutton);
 
   g_signal_connect (GTK_OBJECT (cancelbutton), "clicked",
@@ -2597,8 +2597,8 @@ void on_decplug_advanced_clicked (GtkButton *button, gpointer user_data) {
 		    G_CALLBACK (dpa_ok_clicked),
 		    NULL);
 
-  gtk_widget_show_all(dialog);
-  gtk_window_present (GTK_WINDOW (dialog));
+  lives_widget_show_all(dialog);
+  lives_window_present (GTK_WINDOW (dialog));
   gdk_window_raise(lives_widget_get_xwindow(dialog));
 
   future_prefs->disabled_decoders_new=g_list_copy_strings(future_prefs->disabled_decoders);
@@ -3755,7 +3755,7 @@ gchar *plugin_run_param_window(const gchar *get_com, GtkVBox *vbox, lives_rfx_t 
       }
       gtk_window_set_modal (GTK_WINDOW (fx_dialog[1]), TRUE);
       
-      if (gtk_dialog_run(GTK_DIALOG(fx_dialog[1]))==GTK_RESPONSE_OK) {
+      if (lives_dialog_run(GTK_DIALOG(fx_dialog[1]))==GTK_RESPONSE_OK) {
 	// marshall our params for passing to the plugin
 	res_string=param_marshall(rfx,FALSE);
       }

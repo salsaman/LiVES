@@ -270,8 +270,8 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
   mainw->last_dprint_file=ldfile;
 
   cfile->redoable=cfile->undoable=FALSE;
-  gtk_widget_set_sensitive (mainw->redo, FALSE);
-  gtk_widget_set_sensitive (mainw->undo, FALSE);
+  lives_widget_set_sensitive (mainw->redo, FALSE);
+  lives_widget_set_sensitive (mainw->undo, FALSE);
 
   cfile->undo_action=UNDO_EFFECT;
 
@@ -379,11 +379,11 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
   cfile->fx_frame_pump=0;
 
   if (!mainw->gen_to_clipboard) {
-    gtk_widget_set_sensitive (mainw->undo, TRUE);
+    lives_widget_set_sensitive (mainw->undo, TRUE);
     if (rfx->num_in_channels>0) cfile->undoable=TRUE;
     cfile->pb_fps=old_pb_fps;
     mainw->internal_messaging=FALSE;
-    if (rfx->num_in_channels>0) gtk_widget_set_sensitive (mainw->select_last, TRUE);
+    if (rfx->num_in_channels>0) lives_widget_set_sensitive (mainw->select_last, TRUE);
     if (rfx->num_in_channels>0) set_undoable (rfx->menu_text,TRUE);
   }
 
@@ -765,7 +765,7 @@ boolean on_realfx_activate_inner(int type, lives_rfx_t *rfx) {
       lives_widget_context_update();
       gdk_window_raise(lives_widget_get_xwindow(resaudw->dialog));
 
-      if (gtk_dialog_run(GTK_DIALOG(resaudw->dialog))!=GTK_RESPONSE_OK) return FALSE;
+      if (lives_dialog_run(GTK_DIALOG(resaudw->dialog))!=GTK_RESPONSE_OK) return FALSE;
       if (mainw->error) {
 	mainw->error=FALSE;
 	return FALSE;
@@ -1076,9 +1076,9 @@ boolean rte_on_off_callback (GtkAccelGroup *group, GObject *obj, guint keyval, G
 						       (cfile->achans>0&&prefs->audio_src==AUDIO_SRC_INT&&has_audio_filters(FALSE))||
 						       mainw->agen_key!=0)) {
 
-    gtk_widget_set_sensitive(mainw->rendered_fx[0].menuitem,TRUE);
+    lives_widget_set_sensitive(mainw->rendered_fx[0].menuitem,TRUE);
   }
-  else gtk_widget_set_sensitive(mainw->rendered_fx[0].menuitem,FALSE);
+  else lives_widget_set_sensitive(mainw->rendered_fx[0].menuitem,FALSE);
 
 
   return TRUE;

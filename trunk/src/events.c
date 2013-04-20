@@ -2065,14 +2065,14 @@ GtkWidget *events_rec_dialog (boolean allow_mt) {
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(e_rec_dialog));
 
   vbox = lives_vbox_new (FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (dialog_vbox), vbox, TRUE, TRUE, 0);
+  lives_box_pack_start (GTK_BOX (dialog_vbox), vbox, TRUE, TRUE, 0);
 
   label = lives_standard_label_new (_("Events were recorded. What would you like to do with them ?"));
 
-  gtk_box_pack_start (GTK_BOX (vbox), label, TRUE, TRUE, widget_opts.packing_height*2);
+  lives_box_pack_start (GTK_BOX (vbox), label, TRUE, TRUE, widget_opts.packing_height*2);
 
   hbox = lives_hbox_new (FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height*2);
+  lives_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height*2);
 
   radiobutton = lives_standard_radio_button_new (_ ("_Preview events"),TRUE,radiobutton_group,LIVES_BOX(hbox),NULL);
   radiobutton_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (radiobutton));
@@ -2086,7 +2086,7 @@ GtkWidget *events_rec_dialog (boolean allow_mt) {
   if (!mainw->clip_switched&&(cfile->clip_type==CLIP_TYPE_DISK||cfile->clip_type==CLIP_TYPE_FILE)) {
 
     hbox = lives_hbox_new (FALSE, 0);
-    gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height*2);
+    lives_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height*2);
 
     radiobutton = lives_standard_radio_button_new (_ ("Render events to _same clip"),TRUE,radiobutton_group,LIVES_BOX(hbox),NULL);
     radiobutton_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (radiobutton));
@@ -2098,7 +2098,7 @@ GtkWidget *events_rec_dialog (boolean allow_mt) {
 
 
   hbox = lives_hbox_new (FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height*2);
+  lives_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height*2);
 
   radiobutton = lives_standard_radio_button_new (_ ("Render events to _new clip"),TRUE,radiobutton_group,LIVES_BOX(hbox),NULL);
   radiobutton_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (radiobutton));
@@ -2110,7 +2110,7 @@ GtkWidget *events_rec_dialog (boolean allow_mt) {
 
 
   hbox = lives_hbox_new (FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height*2);
+  lives_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height*2);
 
   radiobutton = lives_standard_radio_button_new (_ ("View/edit events in _multitrack window (test)"),TRUE,radiobutton_group,LIVES_BOX(hbox),NULL);
   radiobutton_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (radiobutton));
@@ -2119,17 +2119,17 @@ GtkWidget *events_rec_dialog (boolean allow_mt) {
 		    G_CALLBACK (set_render_choice),
 		    GINT_TO_POINTER (RENDER_CHOICE_MULTITRACK));
 
-  if (!allow_mt) gtk_widget_set_sensitive(radiobutton,FALSE);
+  if (!allow_mt) lives_widget_set_sensitive(radiobutton,FALSE);
 
 
 
   hbox = lives_hbox_new (FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height*2);
+  lives_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height*2);
 
   radiobutton = lives_standard_radio_button_new (_ ("View/edit events in _event window"),TRUE,radiobutton_group,LIVES_BOX(hbox),NULL);
   radiobutton_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (radiobutton));
 
-  if (mainw->stored_event_list!=NULL) gtk_widget_set_sensitive(radiobutton,FALSE);
+  if (mainw->stored_event_list!=NULL) lives_widget_set_sensitive(radiobutton,FALSE);
     
   g_signal_connect (GTK_OBJECT (radiobutton), "toggled",
 		    G_CALLBACK (set_render_choice),
@@ -2138,24 +2138,24 @@ GtkWidget *events_rec_dialog (boolean allow_mt) {
   cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
   lives_widget_set_can_focus (cancelbutton,TRUE);
 
-  gtk_dialog_add_action_widget (GTK_DIALOG (e_rec_dialog), cancelbutton, GTK_RESPONSE_CANCEL);
+  lives_dialog_add_action_widget (GTK_DIALOG (e_rec_dialog), cancelbutton, GTK_RESPONSE_CANCEL);
 
   g_signal_connect (GTK_OBJECT (cancelbutton), "clicked",
 		    G_CALLBACK (set_render_choice_button),
 		    GINT_TO_POINTER (RENDER_CHOICE_DISCARD));
 
-  accel_group = GTK_ACCEL_GROUP(gtk_accel_group_new ());
-  gtk_widget_add_accelerator (cancelbutton, "activate", accel_group,
+  accel_group = GTK_ACCEL_GROUP(lives_accel_group_new ());
+  lives_widget_add_accelerator (cancelbutton, "activate", accel_group,
                               LIVES_KEY_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
 
   gtk_window_add_accel_group (GTK_WINDOW (e_rec_dialog), accel_group);
 
   okbutton = gtk_button_new_from_stock ("gtk-ok");
-  gtk_widget_show (okbutton);
-  gtk_dialog_add_action_widget (GTK_DIALOG (e_rec_dialog), okbutton, GTK_RESPONSE_OK);
+  lives_widget_show (okbutton);
+  lives_dialog_add_action_widget (GTK_DIALOG (e_rec_dialog), okbutton, GTK_RESPONSE_OK);
   lives_widget_set_can_focus_and_default (okbutton);
   gtk_widget_grab_default (okbutton);
-  gtk_widget_show_all (e_rec_dialog);
+  lives_widget_show_all (e_rec_dialog);
 
   return e_rec_dialog;
 
@@ -2944,7 +2944,7 @@ weed_plant_t *process_events (weed_plant_t *next_event, boolean process_audio, w
     if (mainw->playing_file>-1&&!mainw->noframedrop&&next_tc<=curr_tc) break;
     if (!mainw->fs&&prefs->show_framecount) {
       g_signal_handler_block(mainw->spinbutton_pb_fps,mainw->pb_fps_func);
-      gtk_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_pb_fps),cfile->pb_fps);
+      lives_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_pb_fps),cfile->pb_fps);
       g_signal_handler_unblock(mainw->spinbutton_pb_fps,mainw->pb_fps_func);
     }
   }
@@ -3397,8 +3397,8 @@ lives_render_error_t render_events (boolean reset) {
 	  cfile->asampsize=cfile->undo_asampsize;
 	  if (cfile->proc_ptr!=NULL) {
 	    blabel=g_strdup(gtk_label_get_text(GTK_LABEL(cfile->proc_ptr->label)));
-	    gtk_label_set_text(GTK_LABEL(cfile->proc_ptr->label),nlabel);
-	    gtk_widget_queue_draw(cfile->proc_ptr->processing);
+	    lives_label_set_text(GTK_LABEL(cfile->proc_ptr->label),nlabel);
+	    lives_widget_queue_draw(cfile->proc_ptr->processing);
 	    lives_widget_context_update();
 	  }
 
@@ -3423,9 +3423,9 @@ lives_render_error_t render_events (boolean reset) {
 	  }
 
 	  if (cfile->proc_ptr!=NULL) {
-	    gtk_label_set_text(GTK_LABEL(cfile->proc_ptr->label),blabel);
+	    lives_label_set_text(GTK_LABEL(cfile->proc_ptr->label),blabel);
 	    g_free(blabel);
-	    gtk_widget_queue_draw(cfile->proc_ptr->processing);
+	    lives_widget_queue_draw(cfile->proc_ptr->processing);
 	    lives_widget_context_update();
 	  }
 	}
@@ -3472,8 +3472,8 @@ lives_render_error_t render_events (boolean reset) {
 
 		if (cfile->proc_ptr!=NULL) {
 		  blabel=g_strdup(gtk_label_get_text(GTK_LABEL(cfile->proc_ptr->label)));
-		  gtk_label_set_text(GTK_LABEL(cfile->proc_ptr->label),nlabel);
-		  gtk_widget_queue_draw(cfile->proc_ptr->processing);
+		  lives_label_set_text(GTK_LABEL(cfile->proc_ptr->label),nlabel);
+		  lives_widget_queue_draw(cfile->proc_ptr->processing);
 		  lives_widget_context_update();
 		}
 
@@ -3499,9 +3499,9 @@ lives_render_error_t render_events (boolean reset) {
 		}
 
 		if (cfile->proc_ptr!=NULL) {
-		  gtk_label_set_text(GTK_LABEL(cfile->proc_ptr->label),blabel);
+		  lives_label_set_text(GTK_LABEL(cfile->proc_ptr->label),blabel);
 		  g_free(blabel);
-		  gtk_widget_queue_draw(cfile->proc_ptr->processing);
+		  lives_widget_queue_draw(cfile->proc_ptr->processing);
 		  lives_widget_context_update();
 		}
 
@@ -3794,8 +3794,8 @@ boolean start_render_effect_events (weed_plant_t *event_list) {
   cfile->pb_fps=1000000.;
 
   cfile->redoable=cfile->undoable=FALSE;
-  gtk_widget_set_sensitive (mainw->redo, FALSE);
-  gtk_widget_set_sensitive (mainw->undo, FALSE);
+  lives_widget_set_sensitive (mainw->redo, FALSE);
+  lives_widget_set_sensitive (mainw->undo, FALSE);
 
   cfile->undo_action=UNDO_RENDER;
   // play back the file as fast as possible, each time calling render_events()
@@ -3832,10 +3832,10 @@ boolean start_render_effect_events (weed_plant_t *event_list) {
     return FALSE;
   }
 
-  gtk_widget_set_sensitive (mainw->undo, TRUE);
+  lives_widget_set_sensitive (mainw->undo, TRUE);
   cfile->undoable=TRUE;
   cfile->pb_fps=old_pb_fps;
-  gtk_widget_set_sensitive (mainw->select_last, TRUE);
+  lives_widget_set_sensitive (mainw->select_last, TRUE);
   set_undoable (_ ("rendering"),TRUE);
   cfile->next_event=NULL;
   return TRUE;
@@ -3959,19 +3959,19 @@ boolean render_to_clip (boolean new_clip) {
 
       if (!has_audio_frame(mainw->event_list)) {
 	lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (resaudw->aud_checkbutton), FALSE);
-	gtk_widget_set_sensitive(resaudw->aud_checkbutton,FALSE);
+	lives_widget_set_sensitive(resaudw->aud_checkbutton,FALSE);
       }
       rdet->enc_changed=FALSE;
       do {
 	rdet->suggestion_followed=FALSE;
-	if ((response=gtk_dialog_run(GTK_DIALOG(rdet->dialog)))==GTK_RESPONSE_OK) if (rdet->enc_changed) {
+	if ((response=lives_dialog_run(GTK_DIALOG(rdet->dialog)))==GTK_RESPONSE_OK) if (rdet->enc_changed) {
 	    check_encoder_restrictions(FALSE,TRUE,TRUE);
 	}
       } while (rdet->suggestion_followed);
 
-      xarate=(int)atoi (gtk_entry_get_text(GTK_ENTRY(resaudw->entry_arate)));
-      xachans=(int)atoi (gtk_entry_get_text(GTK_ENTRY(resaudw->entry_achans)));
-      xasamps=(int)atoi (gtk_entry_get_text(GTK_ENTRY(resaudw->entry_asamps)));
+      xarate=(int)atoi (lives_entry_get_text(GTK_ENTRY(resaudw->entry_arate)));
+      xachans=(int)atoi (lives_entry_get_text(GTK_ENTRY(resaudw->entry_achans)));
+      xasamps=(int)atoi (lives_entry_get_text(GTK_ENTRY(resaudw->entry_asamps)));
 
       rendaud=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(resaudw->aud_checkbutton));
 
@@ -3984,7 +3984,7 @@ boolean render_to_clip (boolean new_clip) {
       }
       else xse|=AFORM_LITTLE_ENDIAN;
 
-      gtk_widget_destroy (rdet->dialog);
+      lives_widget_destroy (rdet->dialog);
       
       if (response==GTK_RESPONSE_CANCEL) {
 	g_free(rdet->encoder_name);
@@ -4190,7 +4190,7 @@ boolean deal_with_render_choice (boolean add_deinit) {
   mainw->record_paused=FALSE;
 
   g_signal_handler_block(mainw->record_perf,mainw->record_perf_func);
-  gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mainw->record_perf),FALSE);
+  lives_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mainw->record_perf),FALSE);
   g_signal_handler_unblock(mainw->record_perf,mainw->record_perf_func);
 
   if (count_events(mainw->event_list,FALSE,0,0)==0) {
@@ -4214,9 +4214,9 @@ boolean deal_with_render_choice (boolean add_deinit) {
   do {
     //e_rec_dialog=events_rec_dialog(!was_paused);
     e_rec_dialog=events_rec_dialog(TRUE);
-    gtk_widget_show (e_rec_dialog);
-    gtk_dialog_run (GTK_DIALOG (e_rec_dialog));
-    gtk_widget_destroy (e_rec_dialog);
+    lives_widget_show (e_rec_dialog);
+    lives_dialog_run (GTK_DIALOG (e_rec_dialog));
+    lives_widget_destroy (e_rec_dialog);
     lives_widget_context_update();
     switch (render_choice) {
     case RENDER_CHOICE_DISCARD:
@@ -4303,8 +4303,8 @@ boolean deal_with_render_choice (boolean add_deinit) {
 	break;
       }
       elist_dialog=create_event_list_dialog(mainw->event_list,0,0);
-      gtk_dialog_run(GTK_DIALOG(elist_dialog));
-      gtk_widget_destroy(elist_dialog);
+      lives_dialog_run(GTK_DIALOG(elist_dialog));
+      lives_widget_destroy(elist_dialog);
       render_choice=RENDER_CHOICE_PREVIEW;
       break;
     }
@@ -4559,13 +4559,13 @@ GtkWidget *create_event_list_dialog (weed_plant_t *event_list, weed_timecode_t s
  
   event_dialog = lives_standard_dialog_new (_("LiVES: Event list"),FALSE);
 
-  accel_group = GTK_ACCEL_GROUP(gtk_accel_group_new ());
+  accel_group = GTK_ACCEL_GROUP(lives_accel_group_new ());
   gtk_window_add_accel_group (GTK_WINDOW (event_dialog), accel_group);
 
   top_vbox=lives_dialog_get_content_area(LIVES_DIALOG(event_dialog));
 
   table = gtk_table_new (rows, 6, TRUE);
-  gtk_widget_show (table);
+  lives_widget_show (table);
 
   while (event!=NULL) {
     tc=get_event_timecode (event);
@@ -4734,7 +4734,7 @@ GtkWidget *create_event_list_dialog (weed_plant_t *event_list, weed_timecode_t s
       label = lives_standard_label_new (text);
       g_free(text);
      
-      gtk_table_attach (GTK_TABLE (table), label, 0, 1, currow, currow+1,
+      lives_table_attach (GTK_TABLE (table), label, 0, 1, currow, currow+1,
 			(GtkAttachOptions) (GTK_EXPAND),
 			(GtkAttachOptions) (0), 0, 0);
      
@@ -4765,7 +4765,7 @@ GtkWidget *create_event_list_dialog (weed_plant_t *event_list, weed_timecode_t s
 	g_free(text);
       }
 
-      gtk_table_attach (GTK_TABLE (table), label, 1, 2, currow, currow+1,
+      lives_table_attach (GTK_TABLE (table), label, 1, 2, currow, currow+1,
 			(GtkAttachOptions) (GTK_EXPAND),
 			(GtkAttachOptions) (0), 0, 0);
      
@@ -4774,7 +4774,7 @@ GtkWidget *create_event_list_dialog (weed_plant_t *event_list, weed_timecode_t s
       label = lives_standard_label_new (text);
       g_free(text);
 
-      gtk_table_attach (GTK_TABLE (table), label, 2, 3, currow, currow+1,
+      lives_table_attach (GTK_TABLE (table), label, 2, 3, currow, currow+1,
 			(GtkAttachOptions) (GTK_EXPAND),
 			(GtkAttachOptions) (0), 0, 0);
      
@@ -4805,7 +4805,7 @@ GtkWidget *create_event_list_dialog (weed_plant_t *event_list, weed_timecode_t s
 							 NULL);
       gtk_tree_view_append_column (GTK_TREE_VIEW (tree), column);
      
-      gtk_table_attach (GTK_TABLE (table), tree, 3, 6, currow, currow+1,
+      lives_table_attach (GTK_TABLE (table), tree, 3, 6, currow, currow+1,
 			(GtkAttachOptions) (GTK_FILL|GTK_EXPAND),
 			(GtkAttachOptions) (0), 0, 0);
      
@@ -4815,23 +4815,23 @@ GtkWidget *create_event_list_dialog (weed_plant_t *event_list, weed_timecode_t s
   }
 
   scrolledwindow = lives_standard_scrolled_window_new (winsize_h, winsize_v, table);
-  gtk_box_pack_start (GTK_BOX (top_vbox), scrolledwindow, TRUE, TRUE, 0);
+  lives_box_pack_start (GTK_BOX (top_vbox), scrolledwindow, TRUE, TRUE, 0);
 
   hbuttonbox = lives_hbutton_box_new ();
-  gtk_widget_show (hbuttonbox);
+  lives_widget_show (hbuttonbox);
 
-  gtk_box_pack_start (GTK_BOX (top_vbox), hbuttonbox, TRUE, TRUE, 0);
+  lives_box_pack_start (GTK_BOX (top_vbox), hbuttonbox, TRUE, TRUE, 0);
 
   gtk_button_box_set_layout (GTK_BUTTON_BOX (hbuttonbox), GTK_BUTTONBOX_SPREAD);
 
-  ok_button = gtk_button_new_with_mnemonic (_("Close _window"));
-  gtk_widget_show (ok_button);
-  gtk_container_add (GTK_CONTAINER (hbuttonbox), ok_button);
+  ok_button = lives_button_new_with_mnemonic (_("Close _window"));
+  lives_widget_show (ok_button);
+  lives_container_add (GTK_CONTAINER (hbuttonbox), ok_button);
 
 #if !GTK_CHECK_VERSION(3,0,0)
   gtk_button_box_set_child_size (GTK_BUTTON_BOX (hbuttonbox), DEF_BUTTON_WIDTH, -1);
 #else
-  gtk_widget_set_size_request(ok_button,DEF_BUTTON_WIDTH*4,-1);
+  lives_widget_set_size_request(ok_button,DEF_BUTTON_WIDTH*4,-1);
 #endif
 
   lives_widget_set_can_focus_and_default (ok_button);
@@ -4841,7 +4841,7 @@ GtkWidget *create_event_list_dialog (weed_plant_t *event_list, weed_timecode_t s
 		    G_CALLBACK (response_ok),
 		    NULL);
 
-  gtk_widget_add_accelerator (ok_button, "activate", accel_group,
+  lives_widget_add_accelerator (ok_button, "activate", accel_group,
 			      LIVES_KEY_Escape,  (GdkModifierType)0, (GtkAccelFlags)0);
 
   if (prefs->gui_monitor!=0) {
@@ -4850,14 +4850,14 @@ GtkWidget *create_event_list_dialog (weed_plant_t *event_list, weed_timecode_t s
     int ycen=mainw->mgeom[prefs->gui_monitor-1].y+
       (mainw->mgeom[prefs->gui_monitor-1].height-lives_widget_get_allocation_height(event_dialog))/2;
     gtk_window_set_screen(GTK_WINDOW(event_dialog),mainw->mgeom[prefs->gui_monitor-1].screen);
-    gtk_window_move(GTK_WINDOW(event_dialog),xcen,ycen);
+    lives_window_move(GTK_WINDOW(event_dialog),xcen,ycen);
   }
 
   if (prefs->open_maximised) {
-    gtk_window_maximize (GTK_WINDOW(event_dialog));
+    lives_window_maximize (GTK_WINDOW(event_dialog));
   }
 
-  gtk_widget_show_all(event_dialog);
+  lives_widget_show_all(event_dialog);
 
   return event_dialog;
 }
@@ -4866,19 +4866,19 @@ GtkWidget *create_event_list_dialog (weed_plant_t *event_list, weed_timecode_t s
 
 void rdetw_spinh_changed (GtkSpinButton *spinbutton, gpointer user_data) {
   render_details *rdet=(render_details *)user_data;
-  rdet->height=gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(spinbutton));
+  rdet->height=lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON(spinbutton));
 }
 
 
 void rdetw_spinw_changed (GtkSpinButton *spinbutton, gpointer user_data) {
   render_details *rdet=(render_details *)user_data;
-  rdet->width=gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(spinbutton));
+  rdet->width=lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON(spinbutton));
 }
 
 
 void rdetw_spinf_changed (GtkSpinButton *spinbutton, gpointer user_data) {
   render_details *rdet=(render_details *)user_data;
-  rdet->fps=gtk_spin_button_get_value(GTK_SPIN_BUTTON(spinbutton));
+  rdet->fps=lives_spin_button_get_value(GTK_SPIN_BUTTON(spinbutton));
 }
 
 
@@ -4964,7 +4964,7 @@ render_details *create_render_details (int type) {
 
   if (prefs->show_gui&&mainw->is_ready) gtk_window_set_transient_for(GTK_WINDOW(rdet->dialog),GTK_WINDOW(mainw->LiVES));
 
-  rdet_accel_group = GTK_ACCEL_GROUP(gtk_accel_group_new ());
+  rdet_accel_group = GTK_ACCEL_GROUP(lives_accel_group_new ());
   gtk_window_add_accel_group (GTK_WINDOW (rdet->dialog), rdet_accel_group);
 
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(rdet->dialog));
@@ -4990,15 +4990,15 @@ render_details *create_render_details (int type) {
   else 
     scrollw = lives_standard_scrolled_window_new (scrw*.35, scrh*.4, top_vbox);
 
-  gtk_box_pack_start (GTK_BOX (dialog_vbox), scrollw, TRUE, TRUE, 0);
+  lives_box_pack_start (GTK_BOX (dialog_vbox), scrollw, TRUE, TRUE, 0);
 
-  gtk_container_set_border_width (GTK_CONTAINER (top_vbox), 0);
+  lives_container_set_border_width (GTK_CONTAINER (top_vbox), 0);
 
   frame = gtk_frame_new (NULL);
 
-  if (type!=1) gtk_box_pack_start (GTK_BOX (top_vbox), frame, TRUE, TRUE, 0);
+  if (type!=1) lives_box_pack_start (GTK_BOX (top_vbox), frame, TRUE, TRUE, 0);
   vbox = lives_vbox_new (FALSE, 0);
-  gtk_container_add (GTK_CONTAINER (frame), vbox);
+  lives_container_add (GTK_CONTAINER (frame), vbox);
   
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color (frame, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
@@ -5008,7 +5008,7 @@ render_details *create_render_details (int type) {
   gtk_frame_set_label_widget (GTK_FRAME (frame), label);
   
   hbox = lives_hbox_new (FALSE, widget_opts.packing_width*5);
-  gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
   
   rdet->spinbutton_width = lives_standard_spin_button_new 
     (_("_Width"),TRUE,rdet->width,2.,MAX_FRAME_WIDTH,1.,16.,0,LIVES_BOX(hbox),NULL);
@@ -5040,12 +5040,12 @@ render_details *create_render_details (int type) {
 
 
   hbox = lives_hbox_new (FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
   rdet->spinbutton_fps = lives_standard_spin_button_new 
     (_("_Frames per second"),TRUE,rdet->fps,1.,FPS_MAX,1.,10.,0,LIVES_BOX(hbox),NULL);
   
-  if (type==4&&mainw->multitrack->event_list!=NULL) gtk_widget_set_sensitive(rdet->spinbutton_fps,FALSE);
+  if (type==4&&mainw->multitrack->event_list!=NULL) lives_widget_set_sensitive(rdet->spinbutton_fps,FALSE);
   
   g_signal_connect_after (GTK_OBJECT (rdet->spinbutton_fps), "value_changed",
 			  G_CALLBACK (rdetw_spinf_changed),
@@ -5063,10 +5063,10 @@ render_details *create_render_details (int type) {
     
     label= lives_standard_label_new (_("Options"));
     
-    gtk_box_pack_start (GTK_BOX (top_vbox), label, FALSE, FALSE, widget_opts.packing_height);
+    lives_box_pack_start (GTK_BOX (top_vbox), label, FALSE, FALSE, widget_opts.packing_height);
     
     hbox = lives_hbox_new (FALSE, 0);
-    gtk_box_pack_start (GTK_BOX (top_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+    lives_box_pack_start (GTK_BOX (top_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
     rdet->backaudio_checkbutton=lives_standard_check_button_new
       (_("Enable _backing audio track"),TRUE,LIVES_BOX(hbox),NULL);
@@ -5075,7 +5075,7 @@ render_details *create_render_details (int type) {
 
     lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (rdet->backaudio_checkbutton), prefs->mt_backaudio>0);
     
-    gtk_widget_set_sensitive(rdet->backaudio_checkbutton, 
+    lives_widget_set_sensitive(rdet->backaudio_checkbutton, 
 			     lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(resaudw->aud_checkbutton)));
 
     rdet->pertrack_checkbutton=lives_standard_check_button_new 
@@ -5083,7 +5083,7 @@ render_details *create_render_details (int type) {
 
     lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (rdet->pertrack_checkbutton), prefs->mt_pertrack_audio);
 
-    gtk_widget_set_sensitive(rdet->pertrack_checkbutton, 
+    lives_widget_set_sensitive(rdet->pertrack_checkbutton, 
 			     lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(resaudw->aud_checkbutton)));
 
   }
@@ -5113,14 +5113,14 @@ render_details *create_render_details (int type) {
     add_hsep_to_box (LIVES_BOX (top_vbox));
     if (type!=3) {
       label=lives_standard_label_new(_("Options"));
-      gtk_box_pack_start (GTK_BOX (top_vbox), label, FALSE, FALSE, widget_opts.packing_height);
+      lives_box_pack_start (GTK_BOX (top_vbox), label, FALSE, FALSE, widget_opts.packing_height);
     }
   }
 
   widget_opts.expand=LIVES_EXPAND_EXTRA;
 
   label = lives_standard_label_new (_("Target Encoder"));
-  gtk_box_pack_start (GTK_BOX (top_vbox), label, FALSE, FALSE, 0);
+  lives_box_pack_start (GTK_BOX (top_vbox), label, FALSE, FALSE, 0);
 
   if (!specified) {
     rdet->encoder_name=g_strdup(mainw->string_constants[LIVES_STRING_CONSTANT_ANY]);
@@ -5174,7 +5174,7 @@ render_details *create_render_details (int type) {
   }
 
   label = lives_standard_label_new (_("Output format"));
-  gtk_box_pack_start (GTK_BOX (top_vbox), label, FALSE, FALSE, 0);
+  lives_box_pack_start (GTK_BOX (top_vbox), label, FALSE, FALSE, 0);
 
   rdet->ofmt_combo = lives_standard_combo_new(NULL,FALSE,ofmt,LIVES_BOX(top_vbox),NULL);
 
@@ -5198,12 +5198,12 @@ render_details *create_render_details (int type) {
       prefs->acodec_list=NULL;
     }
     prefs->acodec_list=g_list_append(prefs->acodec_list,g_strdup(mainw->string_constants[LIVES_STRING_CONSTANT_ANY]));
-    gtk_box_pack_start (GTK_BOX (top_vbox), alabel, FALSE, FALSE, 0);
+    lives_box_pack_start (GTK_BOX (top_vbox), alabel, FALSE, FALSE, 0);
     rdet->acodec_combo = lives_standard_combo_new (NULL,FALSE,prefs->acodec_list,LIVES_BOX(top_vbox),NULL);
   }
   else {
     add_fill_to_box(LIVES_BOX(top_vbox));
-    gtk_box_pack_start (GTK_BOX (top_vbox), alabel, FALSE, FALSE, 0);
+    lives_box_pack_start (GTK_BOX (top_vbox), alabel, FALSE, FALSE, 0);
     g_signal_handler_block(rdet->ofmt_combo, rdet->encoder_ofmt_fn);
     lives_combo_set_active_string(LIVES_COMBO(rdet->ofmt_combo), prefs->encoder.of_desc);
     g_signal_handler_unblock(rdet->ofmt_combo, rdet->encoder_ofmt_fn);
@@ -5230,7 +5230,7 @@ render_details *create_render_details (int type) {
 
   daa=lives_dialog_get_action_area(LIVES_DIALOG(rdet->dialog));
 
-  gtk_box_pack_start (GTK_BOX (daa), rdet->always_hbox, FALSE, FALSE, widget_opts.packing_width*2);
+  lives_box_pack_start (GTK_BOX (daa), rdet->always_hbox, FALSE, FALSE, widget_opts.packing_width*2);
 
   add_fill_to_box(GTK_BOX (daa));
 
@@ -5239,7 +5239,7 @@ render_details *create_render_details (int type) {
 
   cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
   if (!(prefs->startup_interface==STARTUP_MT&&!mainw->is_ready)) {
-    gtk_dialog_add_action_widget (GTK_DIALOG (rdet->dialog), cancelbutton, GTK_RESPONSE_CANCEL);
+    lives_dialog_add_action_widget (GTK_DIALOG (rdet->dialog), cancelbutton, GTK_RESPONSE_CANCEL);
 
   }
   else add_fill_to_box(GTK_BOX (daa));
@@ -5256,24 +5256,24 @@ render_details *create_render_details (int type) {
   }
   else  {
     rdet->okbutton = gtk_button_new_from_stock ("gtk-go-forward");
-    gtk_button_set_label(GTK_BUTTON(rdet->okbutton),_("_Next"));
+    lives_button_set_label(GTK_BUTTON(rdet->okbutton),_("_Next"));
   }
 
-  gtk_dialog_add_action_widget (GTK_DIALOG (rdet->dialog), rdet->okbutton, GTK_RESPONSE_OK);
+  lives_dialog_add_action_widget (GTK_DIALOG (rdet->dialog), rdet->okbutton, GTK_RESPONSE_OK);
   lives_widget_set_can_focus_and_default (rdet->okbutton);
   gtk_widget_grab_default (rdet->okbutton);
 
-  gtk_widget_add_accelerator (cancelbutton, "activate", rdet_accel_group,
+  lives_widget_add_accelerator (cancelbutton, "activate", rdet_accel_group,
                               LIVES_KEY_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
 
 
-  gtk_widget_show_all (rdet->dialog);
-  gtk_widget_hide(rdet->always_hbox);
+  lives_widget_show_all (rdet->dialog);
+  lives_widget_hide(rdet->always_hbox);
 
-  if (type==4) gtk_widget_hide(resaudw->aud_hbox);
+  if (type==4) lives_widget_hide(resaudw->aud_hbox);
   
   if (needs_new_encoder) {
-    gtk_widget_set_sensitive(rdet->okbutton,FALSE);
+    lives_widget_set_sensitive(rdet->okbutton,FALSE);
     lives_widget_context_update(); // force showing of transient window
     do_encoder_img_ftm_error(rdet);
   }

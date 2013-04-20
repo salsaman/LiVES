@@ -432,12 +432,12 @@ void lives2lives_read_stream(const gchar *host, int port) {
   pthread_attr_t pattr;
 #endif
 
-  gtk_widget_set_sensitive (mainw->open_lives2lives, FALSE);
+  lives_widget_set_sensitive (mainw->open_lives2lives, FALSE);
 
   lstream->handle=OpenHTMSocket(host,port,FALSE);
   if (lstream->handle==NULL) {
     do_error_dialog(_("LiVES to LiVES stream error: Could not open port !\n"));
-    gtk_widget_set_sensitive (mainw->open_lives2lives, TRUE);
+    lives_widget_set_sensitive (mainw->open_lives2lives, TRUE);
     return;
   }
 
@@ -456,7 +456,7 @@ void lives2lives_read_stream(const gchar *host, int port) {
   if (pthread_attr_setstacksize(&pattr,STREAM_BUF_SIZE*4)) {
     do_error_dialog(_("LiVES to LiVES stream error: Could not set buffer size !\n"));
     g_free(lstream);
-    gtk_widget_set_sensitive (mainw->open_lives2lives, TRUE);
+    lives_widget_set_sensitive (mainw->open_lives2lives, TRUE);
     return;
   }
   lstream->buffer=g_malloc(STREAM_BUF_SIZE);
@@ -478,7 +478,7 @@ void lives2lives_read_stream(const gchar *host, int port) {
 #endif
     g_free(lstream);
     d_print_cancelled();
-    gtk_widget_set_sensitive (mainw->open_lives2lives, TRUE);
+    lives_widget_set_sensitive (mainw->open_lives2lives, TRUE);
     return;
   }
 
@@ -498,7 +498,7 @@ void lives2lives_read_stream(const gchar *host, int port) {
 #endif
 	g_free(lstream);
 	d_print_cancelled();
-	gtk_widget_set_sensitive (mainw->open_lives2lives, TRUE);
+	lives_widget_set_sensitive (mainw->open_lives2lives, TRUE);
 	return;
       }
       // get packet header
@@ -515,7 +515,7 @@ void lives2lives_read_stream(const gchar *host, int port) {
 #endif
 	g_free(lstream);
 	d_print_cancelled();
-	gtk_widget_set_sensitive (mainw->open_lives2lives, TRUE);
+	lives_widget_set_sensitive (mainw->open_lives2lives, TRUE);
 	return;
       }
     } while (hdr==NULL);
@@ -541,7 +541,7 @@ void lives2lives_read_stream(const gchar *host, int port) {
 #endif
 	g_free(lstream);
 	d_print_cancelled();
-	gtk_widget_set_sensitive (mainw->open_lives2lives, TRUE);
+	lives_widget_set_sensitive (mainw->open_lives2lives, TRUE);
 	return;
       }
     }
@@ -565,7 +565,7 @@ void lives2lives_read_stream(const gchar *host, int port) {
 #endif
     g_free(lstream);
     d_print_failed();
-    gtk_widget_set_sensitive (mainw->open_lives2lives, TRUE);
+    lives_widget_set_sensitive (mainw->open_lives2lives, TRUE);
     return;
   }
 
@@ -585,7 +585,7 @@ void lives2lives_read_stream(const gchar *host, int port) {
 #endif
     g_free(lstream);
     d_print_failed();
-    gtk_widget_set_sensitive (mainw->open_lives2lives, TRUE);
+    lives_widget_set_sensitive (mainw->open_lives2lives, TRUE);
     return;
   }
 
@@ -671,7 +671,7 @@ void lives2lives_read_stream(const gchar *host, int port) {
   cfile->ext_src=NULL;
 
   close_current_file(old_file);
-  gtk_widget_set_sensitive (mainw->open_lives2lives, TRUE);
+  lives_widget_set_sensitive (mainw->open_lives2lives, TRUE);
 }
 
 
@@ -1017,7 +1017,7 @@ void on_send_lives2lives_activate (GtkMenuItem *menuitem, gpointer user_data) {
     g_snprintf(future_prefs->vpp_name,64,"lives2lives_stream");
   }
   vppa=on_vpp_advanced_clicked(NULL,NULL);
-  resp=gtk_dialog_run(GTK_DIALOG(vppa->dialog));
+  resp=lives_dialog_run(GTK_DIALOG(vppa->dialog));
 
   if (resp==GTK_RESPONSE_CANCEL) {
     g_free(orig_name);
@@ -1042,19 +1042,19 @@ void on_open_lives2lives_activate (GtkMenuItem *menuitem, gpointer user_data) {
   gint port=0;
 
   lives_pandh_w *pandh=create_pandh_dialog(0);
-  gint response=gtk_dialog_run (GTK_DIALOG (pandh->dialog));
+  gint response=lives_dialog_run (GTK_DIALOG (pandh->dialog));
 
   if (response==GTK_RESPONSE_OK) {
     if (!lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(pandh->rb_anyhost))) {
-      host=g_strdup_printf("%s.%s.%s.%s",gtk_entry_get_text(GTK_ENTRY(pandh->entry1)),
-			   gtk_entry_get_text(GTK_ENTRY(pandh->entry2)),
-			   gtk_entry_get_text(GTK_ENTRY(pandh->entry3)),gtk_entry_get_text(GTK_ENTRY(pandh->entry4)));
+      host=g_strdup_printf("%s.%s.%s.%s",lives_entry_get_text(GTK_ENTRY(pandh->entry1)),
+			   lives_entry_get_text(GTK_ENTRY(pandh->entry2)),
+			   lives_entry_get_text(GTK_ENTRY(pandh->entry3)),gtk_entry_get_text(GTK_ENTRY(pandh->entry4)));
     }
     else host=g_strdup("INADDR_ANY");
-    port=gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(pandh->port_spin));
+    port=lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON(pandh->port_spin));
   }
 
-  gtk_widget_destroy (pandh->dialog);
+  lives_widget_destroy (pandh->dialog);
   g_free(pandh);
   
   lives_widget_context_update();
@@ -1074,16 +1074,16 @@ static void pandhw_anyhost_toggled(GtkToggleButton *tbut, gpointer user_data) {
   lives_pandh_w *pandhw=(lives_pandh_w *)user_data;
 
   if (lives_toggle_button_get_active(tbut)) {
-    gtk_widget_set_sensitive(pandhw->entry1,FALSE);
-    gtk_widget_set_sensitive(pandhw->entry2,FALSE);
-    gtk_widget_set_sensitive(pandhw->entry3,FALSE);
-    gtk_widget_set_sensitive(pandhw->entry4,FALSE);
+    lives_widget_set_sensitive(pandhw->entry1,FALSE);
+    lives_widget_set_sensitive(pandhw->entry2,FALSE);
+    lives_widget_set_sensitive(pandhw->entry3,FALSE);
+    lives_widget_set_sensitive(pandhw->entry4,FALSE);
   }
   else {
-    gtk_widget_set_sensitive(pandhw->entry1,TRUE);
-    gtk_widget_set_sensitive(pandhw->entry2,TRUE);
-    gtk_widget_set_sensitive(pandhw->entry3,TRUE);
-    gtk_widget_set_sensitive(pandhw->entry4,TRUE);
+    lives_widget_set_sensitive(pandhw->entry1,TRUE);
+    lives_widget_set_sensitive(pandhw->entry2,TRUE);
+    lives_widget_set_sensitive(pandhw->entry3,TRUE);
+    lives_widget_set_sensitive(pandhw->entry4,TRUE);
   }
 }
 
@@ -1111,18 +1111,18 @@ lives_pandh_w* create_pandh_dialog (gint type) {
   dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(pandhw->dialog));
 
   label=lives_standard_label_new(_("You can receive streams from another copy of LiVES."));
-  gtk_box_pack_start (GTK_BOX (dialog_vbox), label, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start (GTK_BOX (dialog_vbox), label, FALSE, FALSE, widget_opts.packing_height);
 
   label=lives_standard_label_new(_("In the source copy of LiVES, you must select Advanced/Send stream to LiVES\nor select the lives2lives_stream playback plugin in Preferences."));
-  gtk_box_pack_start (GTK_BOX (dialog_vbox), label, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start (GTK_BOX (dialog_vbox), label, FALSE, FALSE, widget_opts.packing_height);
 
   add_hsep_to_box(LIVES_BOX(dialog_vbox));
 
   label=lives_standard_label_new(_("Select the host to receive the stream from (or allow any host to stream)."));
-  gtk_box_pack_start (GTK_BOX (dialog_vbox), label, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start (GTK_BOX (dialog_vbox), label, FALSE, FALSE, widget_opts.packing_height);
 
   hbox = lives_hbox_new (FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start (GTK_BOX (dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
   pandhw->rb_anyhost = lives_standard_radio_button_new ((tmp=g_strdup(_("Accept LiVES streams from _any host")))
 							,TRUE,radiobutton_group,LIVES_BOX(hbox),
@@ -1136,7 +1136,7 @@ lives_pandh_w* create_pandh_dialog (gint type) {
 			  (gpointer)pandhw);
 
   hbox = lives_hbox_new (FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start (GTK_BOX (dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
 
   lives_standard_radio_button_new ((tmp=g_strdup(_("Accept LiVES streams only from the _specified host:")))
@@ -1149,27 +1149,27 @@ lives_pandh_w* create_pandh_dialog (gint type) {
 
 
   hbox = lives_hbox_new (FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start (GTK_BOX (dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
   pandhw->entry1 = lives_standard_entry_new ("",FALSE,"127",3,3,LIVES_BOX(hbox),NULL);
   pandhw->entry2 = lives_standard_entry_new (".",FALSE,"0",3,3,LIVES_BOX(hbox),NULL);
   pandhw->entry3 = lives_standard_entry_new (".",FALSE,"0",3,3,LIVES_BOX(hbox),NULL);
   pandhw->entry4 = lives_standard_entry_new (".",FALSE,"0",3,3,LIVES_BOX(hbox),NULL);
 
-  gtk_widget_set_sensitive(pandhw->entry1,FALSE);
-  gtk_widget_set_sensitive(pandhw->entry2,FALSE);
-  gtk_widget_set_sensitive(pandhw->entry3,FALSE);
-  gtk_widget_set_sensitive(pandhw->entry4,FALSE);
+  lives_widget_set_sensitive(pandhw->entry1,FALSE);
+  lives_widget_set_sensitive(pandhw->entry2,FALSE);
+  lives_widget_set_sensitive(pandhw->entry3,FALSE);
+  lives_widget_set_sensitive(pandhw->entry4,FALSE);
 
   label=lives_standard_label_new(_("Enter the port number to listen for LiVES streams on:"));
-  gtk_box_pack_start (GTK_BOX (dialog_vbox), label, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start (GTK_BOX (dialog_vbox), label, FALSE, FALSE, widget_opts.packing_height);
 
   hbox = lives_hbox_new (FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start (GTK_BOX (dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
   pandhw->port_spin = lives_standard_spin_button_new (_("Port"),FALSE,48888.,1.,65535,1.,1.,0,LIVES_BOX(hbox),NULL);
 
-  gtk_widget_show_all (pandhw->dialog);
+  lives_widget_show_all (pandhw->dialog);
 
   return pandhw;
 }

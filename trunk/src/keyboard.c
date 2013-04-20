@@ -189,7 +189,7 @@ gboolean plugin_poll_keyboard (void) {
   // we also auto-repeat our cached keys
   if (cached_key&&current_kb_time-last_kb_time>KEY_RPT_INTERVAL*10) {
     last_kb_time=current_kb_time;
-    gtk_accel_groups_activate (G_OBJECT (mainw->LiVES),(guint)cached_key, (GdkModifierType)cached_mod);
+    lives_accel_groups_activate (G_OBJECT (mainw->LiVES),(guint)cached_key, (GdkModifierType)cached_mod);
   }
 
   return TRUE;
@@ -313,8 +313,8 @@ gboolean pl_key_function (gboolean down, guint16 unicode, guint16 keymod) {
 
   if (mainw->ext_keyboard) {
     if (cached_key) return FALSE;
-    if (mainw->multitrack==NULL) gtk_accel_groups_activate (G_OBJECT (mainw->LiVES),(guint)unicode,state);
-    else gtk_accel_groups_activate (G_OBJECT (mainw->multitrack->window),(guint)unicode,state);
+    if (mainw->multitrack==NULL) lives_accel_groups_activate (G_OBJECT (mainw->LiVES),(guint)unicode,state);
+    else lives_accel_groups_activate (G_OBJECT (mainw->multitrack->window),(guint)unicode,state);
     if (!mainw->ext_keyboard) return TRUE; // if user switched out of ext_keyboard, do no further processing *
   }
 
@@ -382,17 +382,17 @@ gboolean fade_callback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkMod
 }
 
 gboolean showfct_callback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer user_data) {
-  gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mainw->showfct),!prefs->show_framecount);
+  lives_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mainw->showfct),!prefs->show_framecount);
   return TRUE;
 }
 
 gboolean showsubs_callback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer user_data) {
-  gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mainw->showsubs),!prefs->show_subtitles);
+  lives_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mainw->showsubs),!prefs->show_subtitles);
   return TRUE;
 }
 
 gboolean loop_callback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer user_data) {
-  gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mainw->loop_video),!mainw->loop);
+  lives_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mainw->loop_video),!mainw->loop);
   return TRUE;
 }
 
@@ -402,7 +402,7 @@ gboolean dblsize_callback (GtkAccelGroup *group, GObject *obj, guint keyval, Gdk
 }
 
 gboolean rec_callback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer user_data) {
-  gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mainw->record_perf),!gtk_check_menu_item_get_active (GTK_CHECK_MENU_ITEM (mainw->record_perf)));
+  lives_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mainw->record_perf),!gtk_check_menu_item_get_active (GTK_CHECK_MENU_ITEM (mainw->record_perf)));
   return TRUE;
 }
 

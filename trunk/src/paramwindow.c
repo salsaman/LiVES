@@ -82,7 +82,7 @@ GList *do_onchange_init(lives_rfx_t *rfx) {
 	GtkWidget *dummy_widget=gtk_label_new(NULL);
 	g_object_set_data (G_OBJECT (dummy_widget),"param_number",GINT_TO_POINTER (-1));
 	retvals=do_onchange (G_OBJECT (dummy_widget),rfx);
-	gtk_widget_destroy (dummy_widget);
+	lives_widget_destroy (dummy_widget);
 	g_strfreev (array);
 	break;
       }
@@ -156,7 +156,7 @@ void on_paramwindow_ok_clicked (GtkButton *button, lives_rfx_t *rfx) {
   usrgrp_to_livesgrp[0]=NULL;
   if (fx_dialog[1]==NULL) special_cleanup();
   if (mainw->invis!=NULL) {
-    gtk_widget_destroy(mainw->invis);
+    lives_widget_destroy(mainw->invis);
     mainw->invis=NULL;
   }
 
@@ -185,7 +185,7 @@ void on_paramwindow_cancel_clicked2 (GtkButton *button, lives_rfx_t *rfx) {
   on_paramwindow_cancel_clicked(button,rfx);
   fx_dialog[1]=NULL;
   if (mainw->invis!=NULL) {
-    gtk_widget_destroy(mainw->invis);
+    lives_widget_destroy(mainw->invis);
     mainw->invis=NULL;
   }
 }
@@ -313,7 +313,7 @@ void on_render_fx_activate (GtkMenuItem *menuitem, lives_rfx_t *rfx) {
 
 static void gen_width_changed (GtkSpinButton *spin, gpointer user_data) {
   weed_plant_t *ctmpl=(weed_plant_t *)user_data;
-  gint val=gtk_spin_button_get_value_as_int(spin);
+  gint val=lives_spin_button_get_value_as_int(spin);
   int error,old_val=0;
   gint step;
 
@@ -325,13 +325,13 @@ static void gen_width_changed (GtkSpinButton *spin, gpointer user_data) {
 
   val=step_val(val,step);
   weed_set_int_value(ctmpl,"host_width",val);
-  gtk_spin_button_set_value(spin,(gdouble)val);
+  lives_spin_button_set_value(spin,(gdouble)val);
 }
 
 
 static void gen_height_changed (GtkSpinButton *spin, gpointer user_data) {
   weed_plant_t *ctmpl=(weed_plant_t *)user_data;
-  gint val=gtk_spin_button_get_value_as_int(spin);
+  gint val=lives_spin_button_get_value_as_int(spin);
   int error,old_val=0;
   gint step;
 
@@ -343,13 +343,13 @@ static void gen_height_changed (GtkSpinButton *spin, gpointer user_data) {
 
   val=step_val(val,step);
   weed_set_int_value(ctmpl,"host_height",val);
-  gtk_spin_button_set_value(spin,(gdouble)val);
+  lives_spin_button_set_value(spin,(gdouble)val);
 }
 
 
 static void gen_fps_changed (GtkSpinButton *spin, gpointer user_data) {
   weed_plant_t *filter=(weed_plant_t *)user_data;
-  gdouble val=gtk_spin_button_get_value(spin);
+  gdouble val=lives_spin_button_get_value(spin);
   weed_set_double_value(filter,"host_fps",val);
 }
 
@@ -431,7 +431,7 @@ void transition_add_in_out(GtkBox *vbox, lives_rfx_t *rfx, boolean add_audio_che
   gchar *tmp,*tmp2;
 
   hbox = lives_hbox_new (FALSE, 0);
-  gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_width);
+  lives_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_width);
 
   radiobutton_in=lives_standard_radio_button_new(_ ("Transition _In"),TRUE,radiobutton_group,LIVES_BOX(hbox),NULL);
   radiobutton_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (radiobutton_in));
@@ -451,7 +451,7 @@ void transition_add_in_out(GtkBox *vbox, lives_rfx_t *rfx, boolean add_audio_che
     hbox2 = lives_hbox_new (FALSE, 0);
 
     if (has_video_chans_in(filter,FALSE)) 
-      gtk_box_pack_start (GTK_BOX (hbox), hbox2, FALSE, FALSE, widget_opts.packing_width);
+      lives_box_pack_start (GTK_BOX (hbox), hbox2, FALSE, FALSE, widget_opts.packing_width);
 
     checkbutton = lives_standard_check_button_new ((tmp=g_strdup(_("Crossfade audio"))),FALSE,LIVES_BOX(hbox2),
 						   (tmp2=g_strdup(_("Check the box to make audio transition with the video"))));
@@ -484,7 +484,7 @@ void transition_add_in_out(GtkBox *vbox, lives_rfx_t *rfx, boolean add_audio_che
   }
 
   hseparator = lives_hseparator_new ();
-  gtk_box_pack_start (vbox, hseparator, FALSE, FALSE, 0);
+  lives_box_pack_start (vbox, hseparator, FALSE, FALSE, 0);
 
 }
 
@@ -529,7 +529,7 @@ static boolean add_sizes(GtkBox *vbox, boolean add_fps, lives_rfx_t *rfx) {
     add_hsep_to_box(vbox);
 
     hbox = lives_hbox_new (FALSE, 0);
-    gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height*2);
+    lives_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height*2);
     
     add_fill_to_box(GTK_BOX(hbox));
     
@@ -572,8 +572,8 @@ static boolean add_sizes(GtkBox *vbox, boolean add_fps, lives_rfx_t *rfx) {
     g_free(ltxt);
 
     hbox = lives_hbox_new (FALSE, 0);
-    gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
-    gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, widget_opts.packing_width);
+    lives_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+    lives_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, widget_opts.packing_width);
 
 
     if (weed_plant_has_leaf(tmpl,"host_width")) def_width=weed_get_int_value(tmpl,"host_width",&error);
@@ -649,7 +649,7 @@ static void add_gen_to(GtkBox *vbox, lives_rfx_t *rfx) {
 
   gchar *tmp,*tmp2;
 
-  gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
   
   radiobutton = lives_standard_radio_button_new ((tmp=g_strdup(_ ("Generate to _Clipboard"))),
 						 TRUE,radiobutton_group,LIVES_BOX(hbox),
@@ -668,7 +668,7 @@ static void add_gen_to(GtkBox *vbox, lives_rfx_t *rfx) {
   g_free(tmp); g_free(tmp2);
 
   hseparator = lives_hseparator_new ();
-  gtk_box_pack_start (vbox, hseparator, FALSE, FALSE, 0);
+  lives_box_pack_start (vbox, hseparator, FALSE, FALSE, 0);
 
   lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (radiobutton), !mainw->gen_to_clipboard);
 
@@ -827,14 +827,14 @@ void on_render_fx_pre_activate (GtkMenuItem *menuitem, lives_rfx_t *rfx) {
     // rendered fx preview
 
     GtkWidget *hbox = lives_hbox_new (FALSE, 0);
-    gtk_box_pack_start (GTK_BOX (top_dialog_vbox), hbox, FALSE, FALSE, 0);
+    lives_box_pack_start (GTK_BOX (top_dialog_vbox), hbox, FALSE, FALSE, 0);
 
     lives_widget_set_hexpand(hbox,TRUE);
     lives_widget_set_vexpand(hbox,TRUE);
 
 
     pbox = lives_vbox_new (FALSE, 0);
-    gtk_box_pack_start (GTK_BOX (hbox), pbox, FALSE, FALSE, 0);
+    lives_box_pack_start (GTK_BOX (hbox), pbox, FALSE, FALSE, 0);
 
     lives_widget_set_hexpand(pbox,TRUE);
     lives_widget_set_vexpand(pbox,TRUE);
@@ -866,41 +866,41 @@ void on_render_fx_pre_activate (GtkMenuItem *menuitem, lives_rfx_t *rfx) {
 
   cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
     
-  fxw_accel_group = GTK_ACCEL_GROUP(gtk_accel_group_new ());
+  fxw_accel_group = GTK_ACCEL_GROUP(lives_accel_group_new ());
   gtk_window_add_accel_group (GTK_WINDOW (fx_dialog[n]), fxw_accel_group);
 
   dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (fx_dialog[n]));
 
   if (!no_process||is_defaults||rfx->status==RFX_STATUS_SCRAP) {
     gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area), GTK_BUTTONBOX_END);
-    gtk_dialog_add_action_widget (GTK_DIALOG (fx_dialog[n]), cancelbutton, GTK_RESPONSE_CANCEL);
-    gtk_widget_add_accelerator (cancelbutton, "activate", fxw_accel_group,
+    lives_dialog_add_action_widget (GTK_DIALOG (fx_dialog[n]), cancelbutton, GTK_RESPONSE_CANCEL);
+    lives_widget_add_accelerator (cancelbutton, "activate", fxw_accel_group,
 				LIVES_KEY_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
 
     if (is_defaults) {
-      okbutton = gtk_button_new_with_mnemonic (_("Set as default"));
-      if (!has_param) gtk_widget_set_sensitive(okbutton,FALSE);
-      resetbutton = gtk_button_new_with_mnemonic (_("Reset"));
-      if (!has_param) gtk_widget_set_sensitive(resetbutton,FALSE);
-      gtk_dialog_add_action_widget (GTK_DIALOG (fx_dialog[n]), resetbutton, LIVES_RESET);
+      okbutton = lives_button_new_with_mnemonic (_("Set as default"));
+      if (!has_param) lives_widget_set_sensitive(okbutton,FALSE);
+      resetbutton = lives_button_new_with_mnemonic (_("Reset"));
+      if (!has_param) lives_widget_set_sensitive(resetbutton,FALSE);
+      lives_dialog_add_action_widget (GTK_DIALOG (fx_dialog[n]), resetbutton, LIVES_RESET);
     }
     else okbutton = gtk_button_new_from_stock ("gtk-ok");
-    gtk_dialog_add_action_widget (GTK_DIALOG (fx_dialog[n]), okbutton, GTK_RESPONSE_OK);
+    lives_dialog_add_action_widget (GTK_DIALOG (fx_dialog[n]), okbutton, GTK_RESPONSE_OK);
   }
   else {
-    okbutton = gtk_button_new_with_mnemonic (_("Set as default"));
-    if (!has_param) gtk_widget_set_sensitive(okbutton,FALSE);
-    cancelbutton = gtk_button_new_with_mnemonic (_("Close _window"));
+    okbutton = lives_button_new_with_mnemonic (_("Set as default"));
+    if (!has_param) lives_widget_set_sensitive(okbutton,FALSE);
+    cancelbutton = lives_button_new_with_mnemonic (_("Close _window"));
     if (no_process) {
       set_button_width(dialog_action_area,okbutton,DEF_BUTTON_WIDTH);
     }
     if (rfx->status==RFX_STATUS_WEED) {
-      resetbutton = gtk_button_new_with_mnemonic (_("Reset"));
-      gtk_dialog_add_action_widget (GTK_DIALOG (fx_dialog[n]), resetbutton, LIVES_RESET);
-      gtk_dialog_add_action_widget (GTK_DIALOG (fx_dialog[n]), okbutton, GTK_RESPONSE_OK);
+      resetbutton = lives_button_new_with_mnemonic (_("Reset"));
+      lives_dialog_add_action_widget (GTK_DIALOG (fx_dialog[n]), resetbutton, LIVES_RESET);
+      lives_dialog_add_action_widget (GTK_DIALOG (fx_dialog[n]), okbutton, GTK_RESPONSE_OK);
     }
-    gtk_dialog_add_action_widget (GTK_DIALOG (fx_dialog[n]), cancelbutton, GTK_RESPONSE_CANCEL);
-    gtk_widget_add_accelerator (cancelbutton, "activate", fxw_accel_group,
+    lives_dialog_add_action_widget (GTK_DIALOG (fx_dialog[n]), cancelbutton, GTK_RESPONSE_CANCEL);
+    lives_widget_add_accelerator (cancelbutton, "activate", fxw_accel_group,
 				LIVES_KEY_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
 
   }
@@ -912,7 +912,7 @@ void on_render_fx_pre_activate (GtkMenuItem *menuitem, lives_rfx_t *rfx) {
     gtk_widget_grab_default (okbutton);
   }
 
-  gtk_widget_show_all (fx_dialog[n]);
+  lives_widget_show_all (fx_dialog[n]);
 
   if (no_process&&!is_defaults) {
     if (!is_realtime) {
@@ -1093,7 +1093,7 @@ boolean make_param_box(GtkVBox *top_vbox, lives_rfx_t *rfx) {
     // param_vbox holds the dynamic parameters
     param_vbox = lives_vbox_new (FALSE, widget_opts.packing_height);
 
-    gtk_box_pack_start (GTK_BOX (top_hbox), param_vbox, TRUE, TRUE, widget_opts.packing_width);
+    lives_box_pack_start (GTK_BOX (top_hbox), param_vbox, TRUE, TRUE, widget_opts.packing_width);
     lives_box_set_spacing (GTK_BOX (param_vbox), widget_opts.packing_height/2);
   }
 
@@ -1211,7 +1211,7 @@ boolean make_param_box(GtkVBox *top_vbox, lives_rfx_t *rfx) {
 	// parameter, eg. p1
 	if (!has_box) {
 	  hbox = lives_hbox_new (FALSE, 0);
-	  gtk_box_pack_start (GTK_BOX (param_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+	  lives_box_pack_start (GTK_BOX (param_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 	  has_box=TRUE;
 	  has_param=TRUE;
 	}
@@ -1228,7 +1228,7 @@ boolean make_param_box(GtkVBox *top_vbox, lives_rfx_t *rfx) {
 	if (strlen (array[j])==4||!(length=atoi (array[j]+4))) length=1;
 	if (!has_box) {
 	  hbox = lives_hbox_new (FALSE, 0);
-	  gtk_box_pack_start (GTK_BOX (param_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+	  lives_box_pack_start (GTK_BOX (param_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 	  has_box=TRUE;
 	}
 	for (k=0;k<length;k++) {
@@ -1239,7 +1239,7 @@ boolean make_param_box(GtkVBox *top_vbox, lives_rfx_t *rfx) {
 	// label
 	if (!has_box) {
 	  hbox = lives_hbox_new (FALSE, 0);
-	  gtk_box_pack_start (GTK_BOX (param_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+	  lives_box_pack_start (GTK_BOX (param_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 	  has_box=TRUE;
 	}
 	g_snprintf (label_text,256,"%s",array[j]+1);
@@ -1291,7 +1291,7 @@ boolean make_param_box(GtkVBox *top_vbox, lives_rfx_t *rfx) {
   if (!chk_params) {
     if (!has_param) {
       hbox = lives_hbox_new (FALSE, 0);
-      gtk_box_pack_start (GTK_BOX (param_vbox), hbox, FALSE, FALSE, widget_opts.packing_height*2);
+      lives_box_pack_start (GTK_BOX (param_vbox), hbox, FALSE, FALSE, widget_opts.packing_height*2);
       add_fill_to_box(GTK_BOX(hbox));
       add_param_label_to_box(GTK_BOX(hbox),FALSE,_("No parameters"));
       add_fill_to_box(GTK_BOX(hbox));
@@ -1306,7 +1306,7 @@ boolean make_param_box(GtkVBox *top_vbox, lives_rfx_t *rfx) {
     else 
       scrolledwindow=lives_standard_scrolled_window_new(-1,-1,top_hbox);
 
-    gtk_box_pack_start (GTK_BOX (top_vbox), scrolledwindow, TRUE, TRUE, 0);
+    lives_box_pack_start (GTK_BOX (top_vbox), scrolledwindow, TRUE, TRUE, 0);
 
   }
 
@@ -1388,7 +1388,7 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, boolean add_
   }
   else {
     hbox = lives_hbox_new (FALSE, 0);
-    gtk_box_pack_start (GTK_BOX (box), hbox, FALSE, FALSE, widget_opts.packing_height);
+    lives_box_pack_start (GTK_BOX (box), hbox, FALSE, FALSE, widget_opts.packing_height);
   }
 
   switch (param->type) {
@@ -1399,7 +1399,7 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, boolean add_
 	dlabel=lives_standard_label_new ((tmp=g_strdup_printf("(%s)",_ (disp_string))));
 	g_free(tmp);
 	weed_free(disp_string);
-	gtk_box_pack_start (GTK_BOX (hbox), dlabel, FALSE, FALSE, widget_opts.packing_width);
+	lives_box_pack_start (GTK_BOX (hbox), dlabel, FALSE, FALSE, widget_opts.packing_width);
 	param->widgets[1]=dlabel;
       }
 
@@ -1413,7 +1413,7 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, boolean add_
       // store parameter so we know whose trigger to use
       g_object_set_data (G_OBJECT (checkbutton),"param_number",GINT_TO_POINTER (pnum));
       param->widgets[0]=checkbutton;
-      if (param->hidden) gtk_widget_set_sensitive(checkbutton,FALSE);
+      if (param->hidden) lives_widget_set_sensitive(checkbutton,FALSE);
     }
     else {
       group=get_group(rfx,param);
@@ -1421,14 +1421,14 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, boolean add_
       if (LIVES_IS_HBOX(LIVES_WIDGET(box))) hbox=GTK_WIDGET(box);
       else {
 	hbox = lives_hbox_new (FALSE, 0);
-	gtk_box_pack_start (GTK_BOX (box), hbox, FALSE, FALSE, widget_opts.packing_height);
+	lives_box_pack_start (GTK_BOX (box), hbox, FALSE, FALSE, widget_opts.packing_height);
       }
       
       if (rfx->status==RFX_STATUS_WEED&&(disp_string=get_weed_display_string((weed_plant_t *)rfx->source,pnum))!=NULL) {
 	dlabel=lives_standard_label_new ((tmp=g_strdup_printf("(%s)",_ (disp_string))));
 	g_free(tmp);
 	weed_free(disp_string);
-	gtk_box_pack_start (GTK_BOX (hbox), dlabel, FALSE, FALSE, widget_opts.packing_width);
+	lives_box_pack_start (GTK_BOX (hbox), dlabel, FALSE, FALSE, widget_opts.packing_width);
 	param->widgets[1]=dlabel;
       }
 
@@ -1469,7 +1469,7 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, boolean add_
       // store parameter so we know whose trigger to use
       g_object_set_data (G_OBJECT (radiobutton),"param_number",GINT_TO_POINTER (pnum));
       param->widgets[0]=radiobutton;
-      if (param->hidden) gtk_widget_set_sensitive(radiobutton,FALSE);
+      if (param->hidden) lives_widget_set_sensitive(radiobutton,FALSE);
     }
     break;
   case LIVES_PARAM_NUM :
@@ -1479,7 +1479,7 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, boolean add_
       dlabel=lives_standard_label_new ((tmp=g_strdup_printf("%s",_ (disp_string))));
       g_free(tmp);
       weed_free(disp_string);
-      gtk_box_pack_start (GTK_BOX (hbox), dlabel, FALSE, FALSE, widget_opts.packing_width);
+      lives_box_pack_start (GTK_BOX (hbox), dlabel, FALSE, FALSE, widget_opts.packing_width);
       param->widgets[1]=dlabel;
     }
 
@@ -1505,7 +1505,7 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, boolean add_
     g_object_set_data (G_OBJECT (spinbutton),"param_number",GINT_TO_POINTER (pnum));
     param->widgets[0]=spinbutton;
     g_object_set_data (G_OBJECT (param->widgets[0]),"rfx",rfx);
-    if (param->hidden) gtk_widget_set_sensitive(spinbutton,FALSE);
+    if (param->hidden) lives_widget_set_sensitive(spinbutton,FALSE);
 
 
     if (add_slider) {
@@ -1515,14 +1515,14 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, boolean add_
 #endif
 	scale=lives_hscale_new(LIVES_ADJUSTMENT(spinbutton_adj));
 	gtk_scale_set_draw_value(GTK_SCALE(scale),FALSE);
-	gtk_box_pack_start (GTK_BOX (hbox), scale, TRUE, TRUE, 0);
+	lives_box_pack_start (GTK_BOX (hbox), scale, TRUE, TRUE, 0);
 #ifdef ENABLE_GIW
       }
       else {
 	scale=giw_knob_new(GTK_ADJUSTMENT(spinbutton_adj));
-	gtk_widget_set_size_request(scale,GIW_KNOB_WIDTH,GIW_KNOB_HEIGHT);
+	lives_widget_set_size_request(scale,GIW_KNOB_WIDTH,GIW_KNOB_HEIGHT);
 	giw_knob_set_legends_digits(GIW_KNOB(scale),0);
-	gtk_box_pack_start (GTK_BOX (hbox), scale, FALSE, FALSE, 0);
+	lives_box_pack_start (GTK_BOX (hbox), scale, FALSE, FALSE, 0);
 	add_fill_to_box(LIVES_BOX(hbox));
 	lives_widget_set_fg_color(scale,LIVES_WIDGET_STATE_NORMAL,&palette->black);
 	lives_widget_set_fg_color(scale,LIVES_WIDGET_STATE_PRELIGHT,&palette->dark_orange);
@@ -1534,7 +1534,7 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, boolean add_
 	lives_widget_set_text_color(scale, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
 	lives_widget_set_fg_color(scale, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
       }
-      if (param->desc!=NULL) gtk_widget_set_tooltip_text(scale, param->desc);
+      if (param->desc!=NULL) lives_widget_set_tooltip_text(scale, param->desc);
     }
     break;
     
@@ -1556,16 +1556,16 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, boolean add_
     gtk_color_button_set_color(GTK_COLOR_BUTTON(cbutton),&colr);
 
     g_object_set_data (G_OBJECT (cbutton),"param_number",GINT_TO_POINTER (pnum));
-    if (param->desc!=NULL) gtk_widget_set_tooltip_text( cbutton, param->desc);
-    else gtk_widget_set_tooltip_text( cbutton, (_("Click to set the colour")));
+    if (param->desc!=NULL) lives_widget_set_tooltip_text( cbutton, param->desc);
+    else lives_widget_set_tooltip_text( cbutton, (_("Click to set the colour")));
 
     if (use_mnemonic) {
       labelcname=lives_standard_label_new_with_mnemonic (_(name),cbutton);
     }
     else labelcname=lives_standard_label_new (_(name));
-    if (param->desc!=NULL) gtk_widget_set_tooltip_text(labelcname, param->desc);
+    if (param->desc!=NULL) lives_widget_set_tooltip_text(labelcname, param->desc);
 
-    gtk_box_pack_start (GTK_BOX (hbox), labelcname, FALSE, FALSE, widget_opts.packing_width);
+    lives_box_pack_start (GTK_BOX (hbox), labelcname, FALSE, FALSE, widget_opts.packing_width);
 
     widget_opts.packing_width=4;
 
@@ -1584,7 +1584,7 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, boolean add_
 
     widget_opts.packing_width=def_packing_width;
 
-    gtk_box_pack_start (GTK_BOX (hbox), cbutton, TRUE, TRUE, widget_opts.packing_width);
+    lives_box_pack_start (GTK_BOX (hbox), cbutton, TRUE, TRUE, widget_opts.packing_width);
 
     g_signal_connect (GTK_OBJECT (cbutton), "color-set",
 		      G_CALLBACK (on_pwcolsel),
@@ -1612,11 +1612,11 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, boolean add_
     param->widgets[4]=cbutton;
 
     if (param->hidden) {
-      gtk_widget_set_sensitive(spinbutton_red,FALSE);
-      gtk_widget_set_sensitive(spinbutton_green,FALSE);
-      gtk_widget_set_sensitive(spinbutton_blue,FALSE);
-      //gtk_widget_set_sensitive(spinbutton_alpha,FALSE);
-      gtk_widget_set_sensitive(cbutton,FALSE);
+      lives_widget_set_sensitive(spinbutton_red,FALSE);
+      lives_widget_set_sensitive(spinbutton_green,FALSE);
+      lives_widget_set_sensitive(spinbutton_blue,FALSE);
+      //lives_widget_set_sensitive(spinbutton_alpha,FALSE);
+      lives_widget_set_sensitive(cbutton,FALSE);
     }
 
 
@@ -1648,14 +1648,14 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, boolean add_
       widget_opts.justify=LIVES_JUSTIFY_DEFAULT;
 
       vbox=lives_vbox_new(FALSE,0);
-      gtk_box_pack_start (GTK_BOX (hbox), vbox, TRUE, TRUE, widget_opts.packing_width);
-      gtk_box_pack_start (GTK_BOX (vbox), label, FALSE, FALSE, widget_opts.packing_height>>1);
+      lives_box_pack_start (GTK_BOX (hbox), vbox, TRUE, TRUE, widget_opts.packing_width);
+      lives_box_pack_start (GTK_BOX (vbox), label, FALSE, FALSE, widget_opts.packing_height>>1);
 
       hbox=lives_hbox_new(FALSE,0);
-      gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height>>1);
+      lives_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height>>1);
 
       param->widgets[0] = textview = gtk_text_view_new ();
-      if (param->desc!=NULL) gtk_widget_set_tooltip_text( textview, param->desc);
+      if (param->desc!=NULL) lives_widget_set_tooltip_text( textview, param->desc);
       textbuffer=gtk_text_view_get_buffer (GTK_TEXT_VIEW (textview));
 
       g_signal_connect_after (G_OBJECT (textbuffer), "changed", G_CALLBACK (after_param_text_buffer_changed), 
@@ -1672,7 +1672,7 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, boolean add_
       scrolledwindow = lives_standard_scrolled_window_new (-1, RFX_TEXT_SCROLL_HEIGHT, textview);
       widget_opts.apply_theme=woat;
 
-      gtk_box_pack_start (GTK_BOX (hbox), scrolledwindow, TRUE, TRUE, 0);
+      lives_box_pack_start (GTK_BOX (hbox), scrolledwindow, TRUE, TRUE, 0);
 
       g_object_set_data(G_OBJECT(textbuffer),"textview",textview);
 
@@ -1681,7 +1681,7 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, boolean add_
       if (use_mnemonic) label = lives_standard_label_new_with_mnemonic (_(name),NULL);
       else label = lives_standard_label_new (_(name));
 
-      gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, widget_opts.packing_width);
+      lives_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, widget_opts.packing_width);
       param->widgets[0]=entry=lives_standard_entry_new(NULL,FALSE,txt,(int)param->max,(int)param->max,LIVES_BOX(hbox),param->desc);
 
       if (rfx->status==RFX_STATUS_WEED&&param->special_type!=LIVES_PARAM_SPECIAL_TYPE_FILEREAD) {
@@ -1691,12 +1691,12 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, boolean add_
 
     }
 
-    if (param->desc!=NULL) gtk_widget_set_tooltip_text(label, param->desc);
+    if (param->desc!=NULL) lives_widget_set_tooltip_text(label, param->desc);
 
     g_signal_connect_after (G_OBJECT (hbox), "set-focus-child", G_CALLBACK (after_param_text_focus_changed), 
 			    (gpointer) rfx);
 
-    if (param->hidden) gtk_widget_set_sensitive(param->widgets[0],FALSE);
+    if (param->hidden) lives_widget_set_sensitive(param->widgets[0],FALSE);
     if (use_mnemonic) gtk_label_set_mnemonic_widget (GTK_LABEL (label),param->widgets[0]);
 
     g_free (txt);
@@ -1730,7 +1730,7 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, gint pnum, boolean add_
     // store parameter so we know whose trigger to use
     g_object_set_data (G_OBJECT (combo),"param_number",GINT_TO_POINTER (pnum));
     param->widgets[0]=combo;
-    if (param->hidden) gtk_widget_set_sensitive(combo,FALSE);
+    if (param->hidden) lives_widget_set_sensitive(combo,FALSE);
     break;
 
   default:
@@ -1764,10 +1764,10 @@ void add_param_label_to_box (GtkBox *box, boolean do_trans, const gchar *text) {
   else label = lives_standard_label_new_with_mnemonic (text,NULL);
 
   if (LIVES_IS_HBOX(LIVES_WIDGET(box)))
-    gtk_box_pack_start (box, label, FALSE, FALSE, widget_opts.packing_width);
+    lives_box_pack_start (box, label, FALSE, FALSE, widget_opts.packing_width);
   else
-    gtk_box_pack_start (box, label, FALSE, FALSE, widget_opts.packing_height);
-  gtk_widget_show(label);
+    lives_box_pack_start (box, label, FALSE, FALSE, widget_opts.packing_height);
+  lives_widget_show(label);
 }
 
 GSList *add_usrgrp_to_livesgrp (GSList *u2l, GSList *rbgroup, gint usr_number) {
@@ -1815,7 +1815,7 @@ after_boolean_param_toggled        (GtkToggleButton *togglebutton,
 
   set_bool_param(param->value,(new_bool=lives_toggle_button_get_active (togglebutton)));
 
-  if (mainw->framedraw_preview!=NULL) gtk_widget_set_sensitive(mainw->framedraw_preview,TRUE);
+  if (mainw->framedraw_preview!=NULL) lives_widget_set_sensitive(mainw->framedraw_preview,TRUE);
 
   if (rfx->status==RFX_STATUS_WEED) {
     int error;
@@ -1854,7 +1854,7 @@ after_boolean_param_toggled        (GtkToggleButton *togglebutton,
 
       disp_string=get_weed_display_string(inst,param_number);
       if (disp_string!=NULL) {
-	gtk_label_set_text(GTK_LABEL(param->widgets[1]),disp_string);
+	lives_label_set_text(GTK_LABEL(param->widgets[1]),disp_string);
 	weed_free(disp_string);
       }
       if (param->reinit||(copyto!=-1&&rfx->params[copyto].reinit)) {
@@ -1898,7 +1898,7 @@ after_param_value_changed           (GtkSpinButton   *spinbutton,
 
   if (mainw->block_param_updates) return; // updates are blocked when we update visually
 
-  if (mainw->framedraw_preview!=NULL) gtk_widget_set_sensitive(mainw->framedraw_preview,TRUE);
+  if (mainw->framedraw_preview!=NULL) lives_widget_set_sensitive(mainw->framedraw_preview,TRUE);
 
   if (rfx->status==RFX_STATUS_WEED&&mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&
       (prefs->rec_opts&REC_EFFECTS)) {
@@ -1917,10 +1917,10 @@ after_param_value_changed           (GtkSpinButton   *spinbutton,
   }
 
   if (param->dp>0) {
-    set_double_param(param->value,(new_double=gtk_spin_button_get_value(GTK_SPIN_BUTTON(spinbutton))));
+    set_double_param(param->value,(new_double=lives_spin_button_get_value(GTK_SPIN_BUTTON(spinbutton))));
   }
   else {
-    set_int_param(param->value,(new_int=gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(spinbutton))));
+    set_int_param(param->value,(new_int=lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON(spinbutton))));
   }
 
 
@@ -1973,7 +1973,7 @@ after_param_value_changed           (GtkSpinButton   *spinbutton,
 
       disp_string=get_weed_display_string(inst,param_number);
       if (disp_string!=NULL) {
-	gtk_label_set_text(GTK_LABEL(param->widgets[1]),disp_string);
+	lives_label_set_text(GTK_LABEL(param->widgets[1]),disp_string);
 	weed_free(disp_string);
       }
       if (param->reinit||(copyto!=-1&&rfx->params[copyto].reinit)) {
@@ -2151,7 +2151,7 @@ after_param_red_changed           (GtkSpinButton   *spinbutton,
   }
 
   get_colRGB24_param(param->value,&old_value);
-  new_red=gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(spinbutton));
+  new_red=lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON(spinbutton));
   set_colRGB24_param(param->value,new_red,old_value.green,old_value.blue);
 
   colr.red=new_red<<8;
@@ -2161,7 +2161,7 @@ after_param_red_changed           (GtkSpinButton   *spinbutton,
   gtk_color_button_set_color(GTK_COLOR_BUTTON(cbutton),&colr);
 
 
-  if (mainw->framedraw_preview!=NULL) gtk_widget_set_sensitive(mainw->framedraw_preview,TRUE);
+  if (mainw->framedraw_preview!=NULL) lives_widget_set_sensitive(mainw->framedraw_preview,TRUE);
 
   if (rfx->status==RFX_STATUS_WEED) {
     int error;
@@ -2227,7 +2227,7 @@ after_param_green_changed           (GtkSpinButton   *spinbutton,
   }
 
   get_colRGB24_param(param->value,&old_value);
-  new_green=gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(spinbutton));
+  new_green=lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON(spinbutton));
   set_colRGB24_param(param->value,old_value.red,new_green,old_value.blue);
 
   colr.red=old_value.red<<8;
@@ -2236,7 +2236,7 @@ after_param_green_changed           (GtkSpinButton   *spinbutton,
   cbutton=param->widgets[4];
   gtk_color_button_set_color(GTK_COLOR_BUTTON(cbutton),&colr);
 
-  if (mainw->framedraw_preview!=NULL) gtk_widget_set_sensitive(mainw->framedraw_preview,TRUE);
+  if (mainw->framedraw_preview!=NULL) lives_widget_set_sensitive(mainw->framedraw_preview,TRUE);
 
   if (rfx->status==RFX_STATUS_WEED) {
     int error;
@@ -2302,7 +2302,7 @@ after_param_blue_changed           (GtkSpinButton   *spinbutton,
   }
 
   get_colRGB24_param(param->value,&old_value);
-  new_blue=gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(spinbutton));
+  new_blue=lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON(spinbutton));
   set_colRGB24_param(param->value,old_value.red,old_value.green,new_blue);
 
   colr.red=old_value.red<<8;
@@ -2312,7 +2312,7 @@ after_param_blue_changed           (GtkSpinButton   *spinbutton,
   gtk_color_button_set_color(GTK_COLOR_BUTTON(cbutton),&colr);
 
 
-  if (mainw->framedraw_preview!=NULL) gtk_widget_set_sensitive(mainw->framedraw_preview,TRUE);
+  if (mainw->framedraw_preview!=NULL) lives_widget_set_sensitive(mainw->framedraw_preview,TRUE);
 
   if (rfx->status==RFX_STATUS_WEED) {
     int error;
@@ -2362,7 +2362,7 @@ after_param_alpha_changed           (GtkSpinButton   *spinbutton,
   GList *retvals=NULL;
   lives_param_t *param=&rfx->params[param_number];
   lives_colRGBA32_t old_value;
-  gint new_alpha=gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(spinbutton));
+  gint new_alpha=lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON(spinbutton));
   //boolean was_reinited=FALSE;
   int copyto=-1;
 
@@ -2378,7 +2378,7 @@ after_param_alpha_changed           (GtkSpinButton   *spinbutton,
 
   get_colRGBA32_param(param->value,&old_value);
   
-  if (mainw->framedraw_preview!=NULL) gtk_widget_set_sensitive(mainw->framedraw_preview,TRUE);
+  if (mainw->framedraw_preview!=NULL) lives_widget_set_sensitive(mainw->framedraw_preview,TRUE);
 
 
   set_colRGBA32_param(param->value,old_value.red,old_value.green,old_value.blue,new_alpha);
@@ -2460,10 +2460,10 @@ void after_param_text_changed (GtkWidget *textwidget, lives_rfx_t *rfx) {
     param->value=g_strdup(text_view_get_text (LIVES_TEXT_VIEW(textwidget)));
   }
   else {
-    param->value=g_strdup (gtk_entry_get_text (GTK_ENTRY (textwidget)));
+    param->value=g_strdup (lives_entry_get_text (GTK_ENTRY (textwidget)));
   }
 
-  if (mainw->framedraw_preview!=NULL) gtk_widget_set_sensitive(mainw->framedraw_preview,TRUE);
+  if (mainw->framedraw_preview!=NULL) lives_widget_set_sensitive(mainw->framedraw_preview,TRUE);
 
   if (rfx->status==RFX_STATUS_WEED) {
     int error,i;
@@ -2504,7 +2504,7 @@ void after_param_text_changed (GtkWidget *textwidget, lives_rfx_t *rfx) {
 	  gtk_text_buffer_set_text (GTK_TEXT_BUFFER (textbuffer), (gchar *)param->value, -1);
 	}
 	else {
-	  gtk_entry_set_text(GTK_ENTRY(textwidget),disp_string);
+	  lives_entry_set_text(GTK_ENTRY(textwidget),disp_string);
 	}
 	weed_free(disp_string);
       }
@@ -2561,7 +2561,7 @@ after_string_list_changed (GtkComboBox *combo, lives_rfx_t *rfx) {
 
   set_int_param(param->value,new_index);
 
-  if (mainw->framedraw_preview!=NULL) gtk_widget_set_sensitive(mainw->framedraw_preview,TRUE);
+  if (mainw->framedraw_preview!=NULL) lives_widget_set_sensitive(mainw->framedraw_preview,TRUE);
 
   if (rfx->status==RFX_STATUS_WEED) {
     int error;
@@ -2776,7 +2776,7 @@ gchar *param_marshall (lives_rfx_t *rfx, boolean with_min_max) {
       }
 
       if (merge_opts->spinbutton_loops!=NULL&&
-	  cfile->end-cfile->start+1>(cb_frames*(ttl=gtk_spin_button_get_value_as_int
+	  cfile->end-cfile->start+1>(cb_frames*(ttl=lives_spin_button_get_value_as_int
 						(GTK_SPIN_BUTTON (merge_opts->spinbutton_loops))))&&
 	  !merge_opts->loop_to_fit) {
 	end=cb_frames*ttl;
@@ -2956,10 +2956,10 @@ int set_param_from_list(GList *plist, lives_param_t *param, gint pnum, boolean w
 	if (param->widgets[0]&&GTK_IS_SPIN_BUTTON (param->widgets[0])) {
 	  lives_rfx_t *rfx=(lives_rfx_t *)g_object_get_data(G_OBJECT(param->widgets[0]),"rfx");
 	  g_signal_handlers_block_by_func(param->widgets[0],(gpointer)after_param_value_changed,(gpointer)rfx);
-	  gtk_spin_button_set_range (GTK_SPIN_BUTTON (param->widgets[0]),(gdouble)param->min,(gdouble)param->max);
+	  lives_spin_button_set_range (GTK_SPIN_BUTTON (param->widgets[0]),(gdouble)param->min,(gdouble)param->max);
 	  gtk_spin_button_update(GTK_SPIN_BUTTON(param->widgets[0]));
 	  g_signal_handlers_unblock_by_func(param->widgets[0],(gpointer)after_param_value_changed,(gpointer)rfx);
-	  gtk_spin_button_set_value (GTK_SPIN_BUTTON (param->widgets[0]),get_double_param(param->value));
+	  lives_spin_button_set_value (GTK_SPIN_BUTTON (param->widgets[0]),get_double_param(param->value));
 	  gtk_spin_button_update(GTK_SPIN_BUTTON(param->widgets[0]));
 	}
       }
@@ -2991,10 +2991,10 @@ int set_param_from_list(GList *plist, lives_param_t *param, gint pnum, boolean w
 	if (param->widgets[0]&&GTK_IS_SPIN_BUTTON (param->widgets[0])) {
 	  lives_rfx_t *rfx=(lives_rfx_t *)g_object_get_data(G_OBJECT(param->widgets[0]),"rfx");
 	  g_signal_handlers_block_by_func(param->widgets[0],(gpointer)after_param_value_changed,(gpointer)rfx);
-	  gtk_spin_button_set_range (GTK_SPIN_BUTTON (param->widgets[0]),(gdouble)param->min,(gdouble)param->max);
+	  lives_spin_button_set_range (GTK_SPIN_BUTTON (param->widgets[0]),(gdouble)param->min,(gdouble)param->max);
 	  gtk_spin_button_update(GTK_SPIN_BUTTON(param->widgets[0]));
 	  g_signal_handlers_unblock_by_func(param->widgets[0],(gpointer)after_param_value_changed,(gpointer)rfx);
-	  gtk_spin_button_set_value (GTK_SPIN_BUTTON (param->widgets[0]),(gdouble)get_int_param(param->value));
+	  lives_spin_button_set_value (GTK_SPIN_BUTTON (param->widgets[0]),(gdouble)get_int_param(param->value));
 	  gtk_spin_button_update(GTK_SPIN_BUTTON(param->widgets[0]));
 	}
       }
@@ -3018,13 +3018,13 @@ int set_param_from_list(GList *plist, lives_param_t *param, gint pnum, boolean w
 
     if (upd) {
       if (param->widgets[0]&&GTK_IS_SPIN_BUTTON (param->widgets[0])) {
-	gtk_spin_button_set_value (GTK_SPIN_BUTTON (param->widgets[0]),(gdouble)red);
+	lives_spin_button_set_value (GTK_SPIN_BUTTON (param->widgets[0]),(gdouble)red);
       }
       if (param->widgets[1]&&GTK_IS_SPIN_BUTTON (param->widgets[1])) {
-	gtk_spin_button_set_value (GTK_SPIN_BUTTON (param->widgets[1]),(gdouble)green);
+	lives_spin_button_set_value (GTK_SPIN_BUTTON (param->widgets[1]),(gdouble)green);
       }
       if (param->widgets[2]&&GTK_IS_SPIN_BUTTON (param->widgets[2])) {
-	gtk_spin_button_set_value (GTK_SPIN_BUTTON (param->widgets[2]),(gdouble)blue);
+	lives_spin_button_set_value (GTK_SPIN_BUTTON (param->widgets[2]),(gdouble)blue);
       }
     }
     else set_colRGB24_param(param->def,red,green,blue);
@@ -3040,7 +3040,7 @@ int set_param_from_list(GList *plist, lives_param_t *param, gint pnum, boolean w
 	  g_free(string);
 	}
 	else {
-	  gtk_entry_set_text (GTK_ENTRY (param->widgets[0]),(gchar *)param->value);
+	  lives_entry_set_text (GTK_ENTRY (param->widgets[0]),(gchar *)param->value);
 	}
       }
     }
@@ -3155,9 +3155,9 @@ void on_pwcolsel (GtkButton *button, lives_rfx_t *rfx) {
 		     (gint)((selected.green+128)/257),
 		     (gint)((selected.blue+128)/257));
 
-  gtk_spin_button_set_value(GTK_SPIN_BUTTON(param->widgets[0]),(gdouble)(gint)((selected.red+128)/257));
-  gtk_spin_button_set_value(GTK_SPIN_BUTTON(param->widgets[1]),(gdouble)(gint)((selected.green+128)/257));
-  gtk_spin_button_set_value(GTK_SPIN_BUTTON(param->widgets[2]),(gdouble)(gint)((selected.blue+128)/257));
+  lives_spin_button_set_value(GTK_SPIN_BUTTON(param->widgets[0]),(gdouble)(gint)((selected.red+128)/257));
+  lives_spin_button_set_value(GTK_SPIN_BUTTON(param->widgets[1]),(gdouble)(gint)((selected.green+128)/257));
+  lives_spin_button_set_value(GTK_SPIN_BUTTON(param->widgets[2]),(gdouble)(gint)((selected.blue+128)/257));
   gtk_color_button_set_color(GTK_COLOR_BUTTON(param->widgets[4]),&selected);
 }
 

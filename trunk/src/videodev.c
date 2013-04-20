@@ -502,15 +502,15 @@ void on_open_vdev_activate (GtkMenuItem *menuitem, gpointer user_data) {
   mainw->fx1_val=0;
   mainw->open_deint=FALSE;
   card_dialog=create_combo_dialog(1,(gpointer)devlist);
-  response=gtk_dialog_run(GTK_DIALOG(card_dialog));
+  response=lives_dialog_run(GTK_DIALOG(card_dialog));
   g_list_free(devlist);
 
   if (response==GTK_RESPONSE_CANCEL) {
-    gtk_widget_destroy(card_dialog);
+    lives_widget_destroy(card_dialog);
     return;
   }
 
-  gtk_widget_destroy(card_dialog);
+  lives_widget_destroy(card_dialog);
 
   for (i=dev_count-1;i>=0;i--) {
     if (!unicap_is_stream_locked(&devices[i])) {

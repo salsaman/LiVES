@@ -766,7 +766,7 @@ void lives_osc_cb_set_fps(void *context, int arglen, const void *vargs, OSCTimeT
     lives_osc_parse_float_argument(vargs,&fps);
   }
 
-  if (mainw->playing_file>-1) gtk_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_pb_fps),(gdouble)(fps));
+  if (mainw->playing_file>-1) lives_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_pb_fps),(gdouble)(fps));
   lives_osc_notify_success(NULL);
 
 }
@@ -809,7 +809,7 @@ void lives_osc_cb_set_fps_ratio(void *context, int arglen, const void *vargs, OS
     lives_osc_parse_float_argument(vargs,&fps);
   }
 
-  if (mainw->playing_file>-1) gtk_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_pb_fps),(gdouble)(fps)*mainw->files[mainw->playing_file]->fps);
+  if (mainw->playing_file>-1) lives_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_pb_fps),(gdouble)(fps)*mainw->files[mainw->playing_file]->fps);
   lives_osc_notify_success(NULL);
 
 }
@@ -2157,7 +2157,7 @@ void lives_osc_cb_clip_set_start(void *context, int arglen, const void *vargs, O
 
   if (frame>sfile->frames) frame=sfile->frames;
 
-  if (clip==mainw->current_file) gtk_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_start),frame);
+  if (clip==mainw->current_file) lives_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_start),frame);
   else sfile->start=frame;
 
   if (prefs->omc_noisy) {
@@ -2221,7 +2221,7 @@ void lives_osc_cb_clip_set_end(void *context, int arglen, const void *vargs, OSC
 
   if (frame>sfile->frames) frame=sfile->frames;
 
-  if (clip==mainw->current_file) gtk_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_end),frame);
+  if (clip==mainw->current_file) lives_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_end),frame);
   else sfile->end=frame;
 
   if (prefs->omc_noisy) {

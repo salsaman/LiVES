@@ -49,6 +49,13 @@ static int package_version=1; // version of this package
 
 typedef unsigned int RGB32;
 
+static int is_big_endian() {
+  int32_t testint = 0x12345678;
+  char *pMem;
+  pMem = (char *) &testint;
+  if (pMem[0] == 0x78) return 0;
+  return 1;
+}
 
 struct _sdata {
   int line;
@@ -80,6 +87,8 @@ int oned_init(weed_plant_t *inst) {
   }
 
   weed_memset(sdata->linebuf, 0, map_w*map_h*sizeof(RGB32));
+
+
   sdata->line = 0;
 
   weed_set_voidptr_value(inst,"plugin_internal",sdata);
@@ -103,41 +112,52 @@ int oned_deinit(weed_plant_t *inst) {
 
 
 
-static void blitline(RGB32 *src,RGB32 *dest, int video_width, struct _sdata *sdata)
-{
-  src += video_width * sdata->line;
+static void blitline(RGB32 *src, RGB32 *dest, int video_width, int irow, struct _sdata *sdata) {
+  src += irow  * sdata->line;
   dest += video_width * sdata->line;
   weed_memcpy(dest, src, sizeof(RGB32) * video_width);
 }
 
 
 int oned_process (weed_plant_t *inst, weed_timecode_t timestamp) {
-  RGB32 *src,*dest;
+  weed_plant_t *in_channel,*out_channel;
   struct _sdata *sdata;
-  int width,height;
+  RGB32 *src,*odest,*dest;
+
+  size_t offs=0;
+
+  int width,height,irow,orow;
+  int error;
+
   register int i;
 
-  int error;
-  weed_plant_t *in_channel,*out_channel;
 
   sdata=weed_get_voidptr_value(inst,"plugin_internal",&error);
   in_channel=weed_get_plantptr_value(inst,"in_channels",&error);
   out_channel=weed_get_plantptr_value(inst,"out_channels",&error);
 
   src=weed_get_voidptr_value(in_channel,"pixel_data",&error);
-  dest=weed_get_voidptr_value(out_channel,"pixel_data",&error);
+  odest=dest=weed_get_voidptr_value(out_channel,"pixel_data",&error);
 
   width = weed_get_int_value(in_channel,"width",&error);
   height = weed_get_int_value(in_channel,"height",&error);
 
-  blitline(src,sdata->linebuf,width,sdata);
+  irow = weed_get_int_value(in_channel,"rowstrides",&error)/4;
+  orow = weed_get_int_value(out_channel,"rowstrides",&error)/4;
+
+  blitline(src,sdata->linebuf,width,irow,sdata);
+
   sdata->line++;
   if(sdata->line >= height)
     sdata->line = 0;
 
-  weed_memcpy(dest,sdata->linebuf,width*height*sizeof(RGB32));
+  for (i=0;i<height;i++) {
+    weed_memcpy(dest,sdata->linebuf+offs,width*4);
+    dest+=orow;
+    offs+=width;
+  }
 
-  dest += width * sdata->line;
+  dest = odest + orow * sdata->line;
   for(i=0; i<width; i++) {
     dest[i] = 0xff00ff00;
   }

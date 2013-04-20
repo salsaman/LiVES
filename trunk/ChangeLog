@@ -1,5 +1,10 @@
-Version 2.0.3 (10 April 2013)
+Version 2.0.4
+-------------
 
+
+
+
+Version 2.0.3 (10 April 2013)
 -----------------------------
 Fix rounding error in multitrack audio insert.
 Uncomment URL line in ogg_decoder.c

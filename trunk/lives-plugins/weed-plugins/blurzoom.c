@@ -82,24 +82,33 @@ static RGB32 palettes[256];
 
 
 
-/* Background image is refreshed every frame */
-static void image_bgsubtract_update_y(RGB32 *src, int width, int height, struct _sdata *sdata)
-{
-  register int R, G, B;
-  RGB32 *p,*end;
-  register short *q;
-  register unsigned char *r;
-  register int v;
-  int video_area=width*height;
+static void image_bgsubtract_update_y(RGB32 *src, int width, int height, int rowstride, struct _sdata *sdata) {
+  register int i,j;
+  int R, G, B;
+  RGB32 *p;
+  short *q;
+  unsigned char *r;
+  int v;
   
+  rowstride-=width;
+
   p = src;
   q = sdata->background;
   r = sdata->diff;
-  end=src+video_area;
-  for(p=src; p<end; p++) {
-    v= (R = ((*p)&0xff0000)>>(16-1)) + (G = ((*p)&0xff00)>>(8-2)) + (B = (*p)&0xff) - (int)(*q);
-    *(q++) = (short)(R + G + B);
-    *(r++) = ((v + sdata->threshold)>>24) | ((sdata->threshold - v)>>24);
+  for(i=0; i<height; i++) {
+    for (j=0;j<width;j++) {
+      R = ((*p)&0xff0000)>>(16-1);
+      G = ((*p)&0xff00)>>(8-2);
+      B = (*p)&0xff;
+      v = (R + G + B) - (int)(*q);
+      *q = (short)(R + G + B);
+      *r = ((v + sdata->threshold)>>24) | ((sdata->threshold - v)>>24);
+      
+      p++;
+      q++;
+      r++;
+    }
+    p+=rowstride;
   }
 }
 
@@ -368,16 +377,23 @@ int blurzoom_deinit(weed_plant_t *inst) {
 
 
 int blurzoom_process (weed_plant_t *inst, weed_timecode_t timecode) {
+  weed_plant_t *in_channel,*out_channel,*in_param;
+
   register int x, y;
   register RGB32 a, b;
+
   register unsigned char *diff, *p;
   
   RGB32 *src,*dest;
+
   struct _sdata *sdata;
-  int video_width,video_height,video_area;
+
+  size_t snap_offs=0,src_offs=0;
+
+  int video_width,video_height,video_area,irow,orow;
   int mode=0;
   int error;
-  weed_plant_t *in_channel,*out_channel,*in_param;
+
 
   sdata=weed_get_voidptr_value(inst,"plugin_internal",&error);
   in_channel=weed_get_plantptr_value(inst,"in_channels",&error);
@@ -389,6 +405,9 @@ int blurzoom_process (weed_plant_t *inst, weed_timecode_t timecode) {
   video_width = weed_get_int_value(in_channel,"width",&error);
   video_height = weed_get_int_value(in_channel,"height",&error);
 
+  irow = weed_get_int_value(in_channel,"rowstrides",&error)/4;
+  orow = weed_get_int_value(out_channel,"rowstrides",&error)/4;
+
   video_area=video_width*video_height;
 
   diff=sdata->diff;
@@ -397,7 +416,7 @@ int blurzoom_process (weed_plant_t *inst, weed_timecode_t timecode) {
   mode=weed_get_int_value(in_param,"value",&error);
 
   if(mode != 2 || sdata->snapTime <= 0) {
-    image_bgsubtract_update_y(src,video_width,video_height,sdata);
+    image_bgsubtract_update_y(src,video_width,video_height,irow,sdata);
     if(mode == 0 || sdata->snapTime <= 0) {
       diff += sdata->buf_margin_left;
       p = sdata->blurzoombuf;
@@ -409,13 +428,20 @@ int blurzoom_process (weed_plant_t *inst, weed_timecode_t timecode) {
 	p += sdata->buf_width;
       }
       if(mode == 1 || mode == 2) {
-	weed_memcpy(sdata->snapframe, src, video_area * PIXEL_SIZE);
+	for (x=0;x<video_height;x++) {
+	  weed_memcpy(sdata->snapframe+snap_offs, src+src_offs, video_width * PIXEL_SIZE);
+	  snap_offs+=video_width;
+	  src_offs+=irow;
+	}
       }
     }
   }
 
   blurzoomcore(sdata);
   
+  irow-=video_width;
+  orow-=video_width;
+
   if(mode == 1 || mode == 2) {
     src = sdata->snapframe;
   }
@@ -434,6 +460,10 @@ int blurzoom_process (weed_plant_t *inst, weed_timecode_t timecode) {
     for(x=0; x<sdata->buf_margin_right; x++) {
       *dest++ = *src++;
     }
+
+    src+=irow;
+    dest+=orow;
+
   }
   
   if(mode == 1 || mode == 2) {

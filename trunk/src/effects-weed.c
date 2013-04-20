@@ -1948,7 +1948,7 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
     // try to set our target width height - the channel may have restrictions
     set_channel_size(channel,width,height,0,NULL);
 
-    if (weed_palette_is_alpha_palette(weed_get_int_value(channel,"current_palette",&error))) continue;
+    if (weed_palette_is_alpha_palette(cpalette)) continue;
 
     width=weed_get_int_value(channel,"width",&error)*weed_palette_get_pixels_per_macropixel(cpalette)/
       weed_palette_get_pixels_per_macropixel(palette);
@@ -1958,10 +1958,13 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
 
     set_channel_size(channel,incwidth,incheight,0,NULL);
 
+    palette=weed_get_int_value(layer,"current_palette",&error);
+    inpalette=cpalette;
 
     // check if we need to resize
     if ((inwidth!=width)||(inheight!=height)) {
       // layer needs resizing
+
       if (prefs->pb_quality==PB_QUALITY_HIGH||opwidth==0||opheight==0) {
 	if (!resize_layer(layer,width,height,GDK_INTERP_HYPER,cpalette,iclamping)) return FILTER_ERROR_UNABLE_TO_RESIZE;
       }
@@ -1969,7 +1972,12 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
 	if (!resize_layer(layer,width,height,get_interp_value(prefs->pb_quality),cpalette,iclamping)) return FILTER_ERROR_UNABLE_TO_RESIZE;
       }
 
-      inwidth=weed_get_int_value(layer,"width",&error);
+      // check palette again in case it changed during resize
+      inpalette=weed_get_int_value(channel,"current_palette",&error);
+
+      inwidth=weed_get_int_value(layer,"width",&error)*weed_palette_get_pixels_per_macropixel(inpalette)/
+      weed_palette_get_pixels_per_macropixel(palette);
+
       inheight=weed_get_int_value(layer,"height",&error);
 
       if ((inwidth!=width)||(inheight!=height)) {
@@ -1981,12 +1989,8 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
       }
     }
     
-
     i++;
 
-    // check palette again in case it changed during resize
-    palette=weed_get_int_value(layer,"current_palette",&error);
-    inpalette=weed_get_int_value(channel,"current_palette",&error);
     
     // try to match palettes with first enabled in channel: 
     // TODO ** - we should see which palette causes the least palette conversions

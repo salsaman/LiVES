@@ -156,19 +156,24 @@ int vertigo_deinit(weed_plant_t *inst) {
 
 
 int vertigo_process (weed_plant_t *inst, weed_timecode_t timecode) {
-  RGB32 *src,*dest;
   struct _sdata *sdata;
-  int video_width,video_height,video_area;
-  int error;
   weed_plant_t *in_channel,*out_channel,**in_params;
 
   double pinc,zoomrate;
 
+  size_t offs=0;
+
   RGB32 *p;
   RGB32 v;
-  int x, y;
+  RGB32 *src,*dest;
+
+  int video_width,video_height,video_area,irow,orow;
+  int error;
+
   int ox, oy;
   int i;
+
+  register int x, y;
   
   sdata=weed_get_voidptr_value(inst,"plugin_internal",&error);
   in_channel=weed_get_plantptr_value(inst,"in_channels",&error);
@@ -180,6 +185,9 @@ int vertigo_process (weed_plant_t *inst, weed_timecode_t timecode) {
   video_width = weed_get_int_value(in_channel,"width",&error);
   video_height = weed_get_int_value(in_channel,"height",&error);
 
+  irow = weed_get_int_value(in_channel,"rowstrides",&error)/4-video_width;
+  orow = weed_get_int_value(out_channel,"rowstrides",&error)/4;
+
   video_area=video_width*video_height;
   
   in_params=weed_get_plantptr_array(inst,"in_parameters",&error);
@@ -188,6 +196,7 @@ int vertigo_process (weed_plant_t *inst, weed_timecode_t timecode) {
   weed_free(in_params);
 
   setParams(video_width,video_height,sdata,pinc,zoomrate);
+
   p = sdata->alt_buffer;
   for(y=video_height; y>0; y--) {
     ox = sdata->sx;
@@ -200,12 +209,18 @@ int vertigo_process (weed_plant_t *inst, weed_timecode_t timecode) {
       ox += sdata->dx;
       oy += sdata->dy;
     }
+
+    src+=irow;
     sdata->sx -= sdata->dy;
     sdata->sy += sdata->dx;
   }
   
-  weed_memcpy(dest, sdata->alt_buffer, video_area*PIXEL_SIZE);
-  
+  for(y=0; y<video_height; y++) {
+    weed_memcpy(dest, sdata->alt_buffer+offs, video_width*PIXEL_SIZE);
+    dest+=orow;
+    offs+=video_width;
+  }
+
   p = sdata->current_buffer;
   sdata->current_buffer = sdata->alt_buffer;
   sdata->alt_buffer = p;

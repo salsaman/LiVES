@@ -63,7 +63,6 @@ typedef uint32_t Uint32;
 /////////////////////////////////
 
 struct _sdata {
-  int *offstable;
   Sint32 *disttable;
   Sint32 ctable[1024];
   Sint32 sintable[1024+256];
@@ -85,13 +84,6 @@ static void initSinTable (struct _sdata *sdata) {
 }
 
 
-static void initOffsTable (struct _sdata *sdata, int width, int height) {
-  int y;
-	
-  for (y = 0; y < height; y++) {
-    sdata->offstable[y] = y * width;
-  }
-}
 
 
 static void initDistTable (struct _sdata *sdata, int width, int height) {
@@ -102,8 +94,8 @@ static void initDistTable (struct _sdata *sdata, int width, int height) {
 double x,y,m;
 #endif
 
-  halfw = width>> 1;
-  halfh = height >> 1;
+  halfw = width/2.+.5;
+  halfh = height/2.+.5;
   
   distptr = sdata->disttable;
   
@@ -121,7 +113,7 @@ for (y = -halfh; y < halfh; y++)
 }
 
 
-static void doWarp (int xw, int yw, int cw,RGB32 *src,RGB32 *dst, int width, int height, struct _sdata *sdata) {
+static void doWarp (int xw, int yw, int cw,RGB32 *src,RGB32 *dst, int width, int height, int irow, int orow, struct _sdata *sdata) {
   Sint32 c,i, x,y, dx,dy, maxx, maxy;
   Sint32 skip, *ctptr, *distptr;
   Uint32 *destptr;
@@ -130,7 +122,7 @@ static void doWarp (int xw, int yw, int cw,RGB32 *src,RGB32 *dst, int width, int
   ctptr = sdata->ctable;
   distptr = sdata->disttable;
   destptr = dst;
-  skip = 0 ; /* video_width*sizeof(RGB32)/4 - video_width;; */
+  skip = orow-width;
   c = 0;
   for (x = 0; x < 512; x++) {
     i = (c >> 3) & 0x3FE;
@@ -142,7 +134,8 @@ static void doWarp (int xw, int yw, int cw,RGB32 *src,RGB32 *dst, int width, int
   /*	printf("Forring\n"); */
   for (y = 0; y < height-1; y++) {
     for (x = 0; x < width; x++) {
-      i = *distptr++; 
+      i = *distptr;
+      distptr++;
       dx = sdata->ctable [i+1] + x; 
       dy = sdata->ctable [i] + y;	 
       
@@ -154,7 +147,7 @@ static void doWarp (int xw, int yw, int cw,RGB32 *src,RGB32 *dst, int width, int
       else if (dy > maxy) dy = maxy; 
       /* 	   printf("f:%d\n",dy); */
       /*	   printf("%d\t%d\n",dx,dy); */
-      *destptr++ = src[sdata->offstable[dy]+dx]; 
+      *destptr++ = src[dy*irow+dx]; 
     }
     destptr += skip;
   }
@@ -179,20 +172,19 @@ int warp_init (weed_plant_t *inst) {
   video_height=weed_get_int_value(in_channel,"height",&error);
   video_width=weed_get_int_value(in_channel,"width",&error);
 
-  sdata->offstable = (int *)weed_malloc (video_height * sizeof (int));      
-  if(sdata->offstable == NULL ) {
-    weed_free(sdata);
-    return WEED_ERROR_MEMORY_ALLOCATION;
-  }
+  video_width=video_width/2.+.5;
+  video_width*=2;
+
+  video_height=video_height/2.+.5;
+  video_height*=2;
+
   sdata->disttable = weed_malloc (video_width * video_height * sizeof (int));
   if(sdata->disttable == NULL ) {
-    weed_free(sdata->offstable);
     weed_free(sdata);
     return WEED_ERROR_MEMORY_ALLOCATION;
   }
 
   initSinTable (sdata);
-  initOffsTable (sdata,video_width,video_height);
   initDistTable (sdata,video_width,video_height);
 
   sdata->tval=0;
@@ -208,7 +200,6 @@ int warp_deinit (weed_plant_t *inst) {
   struct _sdata *sdata;
   sdata=weed_get_voidptr_value(inst,"plugin_internal",&error);
   if (sdata != NULL) {
-    weed_free(sdata->offstable);
     weed_free(sdata->disttable);
     weed_free(sdata);
     weed_set_voidptr_value(inst,"plugin_internal",NULL);
@@ -218,12 +209,13 @@ int warp_deinit (weed_plant_t *inst) {
 
 
 int warp_process (weed_plant_t *inst, weed_timecode_t timestamp) {
+  RGB32 *src,*dest;
+  struct _sdata *sdata;
+
   int error;
   int xw,yw,cw;
 
-  RGB32 *src,*dest;
-  struct _sdata *sdata;
-  int width,height;
+  int width,height,irow,orow;
 
   weed_plant_t *in_channel,*out_channel;
 
@@ -237,13 +229,17 @@ int warp_process (weed_plant_t *inst, weed_timecode_t timestamp) {
   width = weed_get_int_value(in_channel,"width",&error);
   height = weed_get_int_value(in_channel,"height",&error);
 
+  irow = weed_get_int_value(in_channel,"rowstrides",&error)/4;
+  orow = weed_get_int_value(out_channel,"rowstrides",&error)/4;
+
+
   xw  = (int) (sin((sdata->tval+100)*M_PI/128) * 30);
   yw  = (int) (sin((sdata->tval)*M_PI/256) * -35);
   cw  = (int) (sin((sdata->tval-70)*M_PI/64) * 50);
   xw += (int) (sin((sdata->tval-10)*M_PI/512) * 40);
   yw += (int) (sin((sdata->tval+30)*M_PI/512) * 40);	  
 
-  doWarp(xw,yw,cw,src,dest,width,height,sdata);
+  doWarp(xw,yw,cw,src,dest,width,height,irow,orow,sdata);
   sdata->tval = (sdata->tval+1) &511;
 
   return WEED_NO_ERROR;

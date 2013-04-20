@@ -64,29 +64,33 @@ struct _sdata {
 
 
 /* Background image is refreshed every frame */
-static void image_bgsubtract_update_y(RGB32 *src, int width, int height, struct _sdata *sdata) {
-  register int i;
+static void image_bgsubtract_update_y(RGB32 *src, int width, int height, int rowstride, struct _sdata *sdata) {
+  register int i,j;
   int R, G, B;
   RGB32 *p;
   short *q;
   unsigned char *r;
   int v;
-  int video_area=width*height;
   
+  rowstride-=width;
+
   p = src;
   q = sdata->background;
   r = sdata->diff;
-  for(i=0; i<video_area; i++) {
-    R = ((*p)&0xff0000)>>(16-1);
-    G = ((*p)&0xff00)>>(8-2);
-    B = (*p)&0xff;
-    v = (R + G + B) - (int)(*q);
-    *q = (short)(R + G + B);
-    *r = ((v + sdata->threshold)>>24) | ((sdata->threshold - v)>>24);
-    
-    p++;
-    q++;
-    r++;
+  for(i=0; i<height; i++) {
+    for (j=0;j<width;j++) {
+      R = ((*p)&0xff0000)>>(16-1);
+      G = ((*p)&0xff00)>>(8-2);
+      B = (*p)&0xff;
+      v = (R + G + B) - (int)(*q);
+      *q = (short)(R + G + B);
+      *r = ((v + sdata->threshold)>>24) | ((sdata->threshold - v)>>24);
+      
+      p++;
+      q++;
+      r++;
+    }
+    p+=rowstride;
   }
 }
 
@@ -210,16 +214,21 @@ int lifetv_deinit (weed_plant_t *inst) {
 
 
 int lifetv_process (weed_plant_t *inst, weed_timecode_t timestamp) {
-  int x, y;
+  struct _sdata *sdata;
+
+  weed_plant_t *in_channel,*out_channel;
+
   unsigned char *p, *q, v;
   unsigned char sum, sum1, sum2, sum3;
+
+  RGB32 *src,*dest;
+
   RGB32 pix;
   
-  RGB32 *src,*dest;
-  struct _sdata *sdata;
-  int width,height,video_area;
+  int width,height,video_area,irow,orow;
   int error;
-  weed_plant_t *in_channel,*out_channel;
+  register int x, y;
+
 
   sdata=weed_get_voidptr_value(inst,"plugin_internal",&error);
   in_channel=weed_get_plantptr_value(inst,"in_channels",&error);
@@ -231,11 +240,16 @@ int lifetv_process (weed_plant_t *inst, weed_timecode_t timestamp) {
   width = weed_get_int_value(in_channel,"width",&error);
   height = weed_get_int_value(in_channel,"height",&error);
 
+  irow = weed_get_int_value(in_channel,"rowstrides",&error)/4;
+  orow = weed_get_int_value(out_channel,"rowstrides",&error)/4-width;
+
   video_area=width*height;
 
-  image_bgsubtract_update_y(src,width,height,sdata);
+  image_bgsubtract_update_y(src,width,height,irow,sdata);
   image_diff_filter(sdata,width,height);
   p=sdata->diff2;
+
+  irow-=width;
 
   for(x=0; x<video_area; x++) {
     sdata->field1[x] |= p[x];
@@ -264,8 +278,8 @@ int lifetv_process (weed_plant_t *inst, weed_timecode_t timestamp) {
     }
     p += 2;
     q += 2;
-    src += 2;
-    dest += 2;
+    src += 2+irow;
+    dest += 2+orow;
   }
   p = sdata->field1;
   sdata->field1 = sdata->field2;

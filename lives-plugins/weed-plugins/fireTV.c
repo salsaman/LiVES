@@ -112,30 +112,35 @@ static void makePalette()
 }
 
 
-static void image_bgsubtract_y(RGB32 *src, int width, int height, struct _sdata *sdata)
-{
-  register int i;
+static void image_bgsubtract_y(RGB32 *src, int width, int height, int rowstride, struct _sdata *sdata) {
+  register int i,j;
   int R, G, B;
   RGB32 *p;
   short *q;
   unsigned char *r;
   int v;
-  int video_area=width*height;
   
+  rowstride-=width;
+
   p = src;
   q = sdata->background;
   r = sdata->diff;
-  for(i=0; i<video_area; i++) {
-    R = ((*p)&0xff0000)>>(16-1);
-    G = ((*p)&0xff00)>>(8-2);
-    B = (*p)&0xff;
-    v = (R + G + B) - (int)(*q);
-    *r = ((v + sdata->threshold)>>24) | ((sdata->threshold - v)>>24);
-    
-    p++;
-    q++;
-    r++;
+  for(i=0; i<height; i++) {
+    for (j=0;j<width;j++) {
+      R = ((*p)&0xff0000)>>(16-1);
+      G = ((*p)&0xff00)>>(8-2);
+      B = (*p)&0xff;
+      v = (R + G + B) - (int)(*q);
+      *q = (short)(R + G + B);
+      *r = ((v + sdata->threshold)>>24) | ((sdata->threshold - v)>>24);
+      
+      p++;
+      q++;
+      r++;
+    }
+    p+=rowstride;
   }
+
   
   /* The origin of subtraction function is;
    * diff(src, dest) = (abs(src - dest) > threshold) ? 0xff : 0;
@@ -213,15 +218,19 @@ int fire_deinit (weed_plant_t *inst) {
 
 
 int fire_process (weed_plant_t *inst, weed_timecode_t timestamp) {
-  RGB32 *src,*dest;
   struct _sdata *sdata;
-  int video_width,video_height;
-  register int i, x, y;
-  unsigned char v;
-  int video_area;
 
+  unsigned char v;
   weed_plant_t *in_channel,*out_channel;
+
+  RGB32 *src,*dest;
+
+  int video_width,video_height,irow,orow;
+  int video_area;
   int error;
+
+  register int i, x, y;
+
 
   sdata=weed_get_voidptr_value(inst,"plugin_internal",&error);
   in_channel=weed_get_plantptr_value(inst,"in_channels",&error);
@@ -233,10 +242,14 @@ int fire_process (weed_plant_t *inst, weed_timecode_t timestamp) {
   video_width = weed_get_int_value(in_channel,"width",&error);
   video_height = weed_get_int_value(in_channel,"height",&error);
 
+  irow = weed_get_int_value(in_channel,"rowstrides",&error)/4;
+  orow = weed_get_int_value(out_channel,"rowstrides",&error)/4;
+
   video_area=video_width*video_height;
   sdata->fastrand_val=timestamp&0x0000FFFF;
 
-  image_bgsubtract_y(src,video_width,video_height,sdata);
+  image_bgsubtract_y(src,video_width,video_height,irow,sdata);
+
   for(i=0; i<video_area-video_width; i++) {
     sdata->buffer[i] |= sdata->diff[i];
   }
@@ -251,9 +264,9 @@ int fire_process (weed_plant_t *inst, weed_timecode_t timestamp) {
       i += video_width;
     }
   }
-  for(y=0; y<video_area; y+=video_width) {
+  for(y=0; y<video_height; y++) {
     for(x=1; x<video_width-1; x++) {
-      dest[y+x] = (src[y+x]&0xff000000)|palette[sdata->buffer[y+x]];
+      dest[y*orow+x] = (src[y*irow+x]&0xff000000)|palette[sdata->buffer[y*video_width+x]];
     }
   }
 

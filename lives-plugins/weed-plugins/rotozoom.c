@@ -53,8 +53,8 @@ static void draw_tile(int stepx, int stepy, int zoom, unsigned char *src, unsign
 
   register int i,j;
 
-  orowstride/=psize;
-  irowstride-=video_width*psize;
+  irowstride/=psize;
+  orowstride-=video_width*psize;
 
   xd = (stepx * zoom) >> 12;
   yd = (stepy * zoom) >> 12;
@@ -82,13 +82,13 @@ static void draw_tile(int stepx, int stepy, int zoom, unsigned char *src, unsign
 
       //       a*=video_width/64;
       //      b*=video_height/64;
-      origin=(b*orowstride+a)*psize;
+      origin=(b*irowstride+a)*psize;
 
       weed_memcpy(dst,&src[origin],psize);
       dst+=psize;
       x += xd; y += yd;
     }
-    dst+=irowstride;
+    dst+=orowstride;
     sx -= yd; sy += xd;
   }
 }
@@ -159,6 +159,8 @@ int rotozoom_process (weed_plant_t *inst, weed_timecode_t timestamp) {
 
   if (palette==WEED_PALETTE_ARGB32||palette==WEED_PALETTE_RGBA32||palette==WEED_PALETTE_BGRA32||
       palette==WEED_PALETTE_YUVA8888||palette==WEED_PALETTE_UYVY||palette==WEED_PALETTE_YUYV) psize=4;
+
+  if (palette==WEED_PALETTE_UYVY||palette==WEED_PALETTE_YUYV) width>>=1; // 2 pixels per macropixel
 
   draw_tile(roto[path], roto[(path + 128) & 0xFF],zoom,src,dst,width,irowstride,orowstride,height,dheight,offset,psize);
 

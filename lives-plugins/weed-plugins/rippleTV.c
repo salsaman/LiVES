@@ -89,52 +89,59 @@ struct _sdata {
 
 
 
-static void image_bgset_y(RGB32 *src, int width, int height, struct _sdata *sdata)
+static void image_bgset_y(RGB32 *src, int width, int height, int rowstride, struct _sdata *sdata)
 {
-  register int i;
+  register int i,j;
   int R, G, B;
   RGB32 *p;
   short *q;
-  int video_area=width*height;
+
+  rowstride-=width;
 
   p = src;
   q = sdata->background;
-  for(i=0; i<video_area; i++) {
-    R = ((*p)&0xff0000)>>(16-1);
-    G = ((*p)&0xff00)>>(8-2);
-    B = (*p)&0xff;
-    *q = (short)(R + G + B);
-    p++;
-    q++;
+  for(i=0; i<height; i++) {
+    for (j=0;j<width;j++) {
+      R = ((*p)&0xff0000)>>(16-1);
+      G = ((*p)&0xff00)>>(8-2);
+      B = (*p)&0xff;
+      *q = (short)(R + G + B);
+      p++;
+      q++;
+    }
+    p+=rowstride;
   }
 }
 
 
 /* Background image is refreshed every frame */
-static void image_bgsubtract_update_y(RGB32 *src, int width, int height, struct _sdata *sdata)
-{
-  register int i;
+static void image_bgsubtract_update_y(RGB32 *src, int width, int height, int rowstride, struct _sdata *sdata) {
+  register int i,j;
   int R, G, B;
   RGB32 *p;
   short *q;
   unsigned char *r;
   int v;
-  int video_area=width*height;
   
+  rowstride-=width;
+
   p = src;
   q = sdata->background;
   r = sdata->diff;
-  for(i=0; i<video_area; i++) {
-    R = ((*p)&0xff0000)>>(16-1);
-    G = ((*p)&0xff00)>>(8-2);
-    B = (*p)&0xff;
-    v = (R + G + B) - (int)(*q);
-    *q = (short)(R + G + B);
-    *r = ((v + sdata->threshold)>>24) | ((sdata->threshold - v)>>24);
-    
-    p++;
-    q++;
-    r++;
+  for(i=0; i<height; i++) {
+    for (j=0;j<width;j++) {
+      R = ((*p)&0xff0000)>>(16-1);
+      G = ((*p)&0xff00)>>(8-2);
+      B = (*p)&0xff;
+      v = (R + G + B) - (int)(*q);
+      *q = (short)(R + G + B);
+      *r = ((v + sdata->threshold)>>24) | ((sdata->threshold - v)>>24);
+      
+      p++;
+      q++;
+      r++;
+    }
+    p+=rowstride;
   }
 }
 
@@ -162,9 +169,9 @@ static void setTable(void)
   }
 }
 
-static int setBackground(RGB32 *src, int width, int height, struct _sdata *sdata)
+static int setBackground(RGB32 *src, int width, int height, int rowstride, struct _sdata *sdata)
 {
-  image_bgset_y(src, width, height, sdata);
+  image_bgset_y(src, width, height, rowstride, sdata);
   sdata->bgIsSet = 1;
   
   return 0;
@@ -249,7 +256,7 @@ int ripple_deinit (weed_plant_t *inst) {
 }
 
 
-static void motiondetect(RGB32 *src, int width, int height, struct _sdata *sdata)
+static void motiondetect(RGB32 *src, int width, int height, int rowstride, struct _sdata *sdata)
 {
   unsigned char *diff;
   int *p, *q;
@@ -257,9 +264,9 @@ static void motiondetect(RGB32 *src, int width, int height, struct _sdata *sdata
   int h;
   
   if(!sdata->bgIsSet) {
-    setBackground(src,width,height,sdata);
+    setBackground(src,width,height,rowstride,sdata);
   }
-  image_bgsubtract_update_y(src,width,height,sdata);
+  image_bgsubtract_update_y(src,width,height,rowstride,sdata);
 
   diff = sdata->diff;
   p = sdata->map1+width+1;
@@ -401,7 +408,7 @@ int ripple_process (weed_plant_t *inst, weed_timecode_t timestamp) {
   irowstride=weed_get_int_value(in_channel,"rowstrides",&error)/4;
   orowstridex=orowstride=weed_get_int_value(out_channel,"rowstrides",&error)/4;
 
-  if (width%2!=0) orowstridex--;
+  //if (width%2!=0) orowstridex--;
 
   sdata->fastrand_val=timestamp&0x0000FFFF;
   in_param=weed_get_plantptr_value(inst,"in_parameters",&error);
@@ -411,7 +418,7 @@ int ripple_process (weed_plant_t *inst, weed_timecode_t timestamp) {
   if(mode) {
     raindrop(width,height,sdata);
   } else {
-    motiondetect(src,width,height,sdata);
+    motiondetect(src,width,height,irowstride,sdata);
   }
   
   /* simulate surface wave */
@@ -494,7 +501,7 @@ int ripple_process (weed_plant_t *inst, weed_timecode_t timestamp) {
       dx = x + 1 + (h+(int)vp[2])/2;
       if(dx<0) dx=0;
       if(dx>=width) dx=width-1;
-      dest[1] = src[dy*width+dx];
+      dest[1] = src[dy*irowstride+dx];
       
       dy = y + 1 + (v+(int)vp[width*2+1])/2;
       if(dy<0) dy=0;

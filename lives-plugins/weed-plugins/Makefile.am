@@ -116,6 +116,7 @@ fxpluginslib_LTLIBRARIES = RGBdelay.la \
 	palette_test.la\
 	plasma.la \
 	posterise.la \
+	revTV.la \
 	rippleTV.la \
 	rotozoom.la \
 	shift.la \

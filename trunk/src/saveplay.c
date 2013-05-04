@@ -3268,16 +3268,17 @@ boolean get_temp_handle(gint index, boolean create) {
   }
 
   do {
-    mainw->current_file=current_file;
+    mainw->current_file=-1; // stop update of start/end frames
 
     is_unique=TRUE;
 
     com=g_strdup_printf("%s new %d",prefs->backend_sync,getpid());
-    mainw->no_expose=TRUE;
+
     lives_system(com,TRUE);
-    mainw->no_expose=FALSE;
+
     g_free(com);
     // ignore return value here, as it will be dealt with in get_handle_from_info_file()
+    mainw->current_file=current_file;
 
     //get handle from info file, we will also malloc a new "file" struct here
     if (!get_handle_from_info_file(index)) {

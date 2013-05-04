@@ -6159,7 +6159,7 @@ sub get_image_size {
 	    $hsize=int($hsize);
 	    $vsize=int($vsize);
 	}
-	else {
+	elsif ($imresact eq "default") {
 	    $hsize=$vsize="";
 	}
     }

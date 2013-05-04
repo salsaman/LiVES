@@ -1,5 +1,11 @@
-Version 2.0.4
--------------
+Version 2.0.4 (4 May 2013)
+-----------------------------
+Fix regressions in Paste as New, Fade Audio In/Out, load images
+Fix occasional crash in load new audio.
+Fix bug affecting resizing some webcam frames.
+Fix rowstride errors in effecTV plugins.
+Add revTV effect.
+
 
 
 

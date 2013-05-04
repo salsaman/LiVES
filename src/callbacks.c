@@ -6443,6 +6443,7 @@ void on_open_new_audio_clicked (GtkFileChooser *chooser, gpointer user_data) {
 
   boolean has_lmap_error=FALSE;
   boolean bad_header=FALSE;
+  boolean preparse=FALSE;
 
   if (!(prefs->warning_mask&WARN_MASK_LAYOUT_DELETE_AUDIO)) {
     if ((mainw->xlays=layout_audio_is_affected(mainw->current_file,0.))!=NULL) {
@@ -6524,15 +6525,18 @@ void on_open_new_audio_clicked (GtkFileChooser *chooser, gpointer user_data) {
   if (!g_ascii_strncasecmp(a_type,"wav",3)) israw=0;
 
   if (capable->has_mplayer) {
-    read_file_details (file_name,TRUE);
-    array=g_strsplit(mainw->msg,"|",15);
-    cfile->arate=atoi(array[9]);
-    cfile->achans=atoi(array[10]);
-    cfile->asampsize=atoi(array[11]);
-    cfile->signed_endian=get_signed_endian(atoi (array[12]), atoi (array[13]));
-    g_strfreev(array);
+    if (read_file_details (file_name,TRUE)) {
+      array=g_strsplit(mainw->msg,"|",15);
+      cfile->arate=atoi(array[9]);
+      cfile->achans=atoi(array[10]);
+      cfile->asampsize=atoi(array[11]);
+      cfile->signed_endian=get_signed_endian(atoi (array[12]), atoi (array[13]));
+      g_strfreev(array);
+      preparse=TRUE;
+    }
   }
-  else {
+
+  if (!preparse) {
     // TODO !!! - need some way to identify audio without invoking mplayer
     cfile->arate=cfile->arps=DEFAULT_AUDIO_RATE;
     cfile->achans=DEFAULT_AUDIO_CHANS;
@@ -6608,9 +6612,16 @@ void on_open_new_audio_clicked (GtkFileChooser *chooser, gpointer user_data) {
   lives_widget_queue_draw(mainw->LiVES);
   lives_widget_context_update();
 
-  array=g_strsplit(mainw->msg,"|",7);
-  cfile->afilesize=strtol(array[6],NULL,10);
-  g_strfreev(array);
+  cfile->afilesize=0;
+  if (get_token_count(mainw->msg,'|')>7) {
+    array=g_strsplit(mainw->msg,"|",7);
+    cfile->arate=atoi(array[1]);
+    cfile->achans=atoi(array[2]);
+    cfile->asampsize=atoi(array[3]);
+    cfile->signed_endian=get_signed_endian(atoi (array[4]), atoi (array[5]));
+    cfile->afilesize=strtol(array[6],NULL,10);
+    g_strfreev(array);
+  }
 
   if (cfile->afilesize==0) {
     d_print_failed();

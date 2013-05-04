@@ -138,6 +138,7 @@ void make_custom_submenus(void) {
 
 #if GTK_CHECK_VERSION(3,0,0)
 boolean expose_sim (GtkWidget *widget, lives_painter_t *cr, gpointer user_data) {
+  if (mainw->no_expose) return FALSE;
   if (mainw->current_file>0) {
     load_start_image(cfile->start);
   }
@@ -146,6 +147,7 @@ boolean expose_sim (GtkWidget *widget, lives_painter_t *cr, gpointer user_data) 
 }
 
 boolean expose_eim (GtkWidget *widget, lives_painter_t *cr, gpointer user_data) {
+  if (mainw->no_expose) return FALSE;
   if (mainw->current_file>0) {
     load_end_image(cfile->end);
   }
@@ -154,6 +156,7 @@ boolean expose_eim (GtkWidget *widget, lives_painter_t *cr, gpointer user_data) 
 }
 
 boolean expose_pim (GtkWidget *widget, lives_painter_t *cr, gpointer user_data) {
+  if (mainw->no_expose) return FALSE;
   if (!mainw->draw_blocked) {
     load_preview_image(FALSE);
   }

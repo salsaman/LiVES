@@ -1024,6 +1024,8 @@ static void lives_init(_ign_opts *ign_opts) {
 
   mainw->signal_caught=0;
   mainw->signals_deferred=FALSE;
+
+  mainw->no_expose=TRUE;
   /////////////////////////////////////////////////// add new stuff just above here ^^
 
 

@@ -1129,6 +1129,8 @@ typedef struct {
   guint signal_caught;
   boolean signals_deferred;
 
+  boolean no_expose;
+
 } mainwindow;
 
 extern _palette *palette;

@@ -1201,7 +1201,7 @@ int64_t render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdoubl
       tc+=(gdouble)blocksize/(gdouble)out_arate*U_SEC;
     }
 
-    if (to_file>-1&&(mainw->multitrack!=NULL||opvol_end==opvol_start)) {
+    if (to_file>-1) {
       // output to file
       // convert back to int; use out_scale of 1., since we did our resampling in sample_move_*_d16
       frames_out=sample_move_float_int((void *)finish_buff,float_buffer,xsamples,1.,out_achans,

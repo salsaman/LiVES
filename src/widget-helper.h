@@ -210,8 +210,6 @@ typedef GdkPixbuf                         LiVESPixbuf;
 
 typedef GdkWindow                         LiVESXWindow;
 
-typedef GdkEventButton                    LiVESXEventButton;
-
 typedef GdkCursor                         LiVESXCursor;
 
 typedef GError                            LiVESError;

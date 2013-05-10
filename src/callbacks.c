@@ -6613,7 +6613,7 @@ void on_open_new_audio_clicked (GtkFileChooser *chooser, gpointer user_data) {
   lives_widget_context_update();
 
   cfile->afilesize=0;
-  if (get_token_count(mainw->msg,'|')>7) {
+  if (get_token_count(mainw->msg,'|')>6) {
     array=g_strsplit(mainw->msg,"|",7);
     cfile->arate=atoi(array[1]);
     cfile->achans=atoi(array[2]);

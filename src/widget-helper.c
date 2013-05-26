@@ -2658,7 +2658,9 @@ LiVESWidget *lives_standard_hruler_new(void) {
 #if GTK_CHECK_VERSION(3,0,0)
   hruler=gtk_scale_new(GTK_ORIENTATION_HORIZONTAL,NULL);
   gtk_scale_set_draw_value(GTK_SCALE(hruler),FALSE);
+#if GTK_CHECK_VERSION(3,4,0)
   gtk_scale_set_has_origin(GTK_SCALE(hruler),FALSE);
+#endif
   gtk_scale_set_digits(GTK_SCALE(hruler),8);
 #else
   hruler=gtk_hruler_new();

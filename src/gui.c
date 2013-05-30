@@ -3761,7 +3761,8 @@ void make_play_window(void) {
 
   gtk_widget_set_events (mainw->play_window, GDK_SCROLL_MASK);
 
-  gtk_window_set_position(GTK_WINDOW(mainw->play_window),GTK_WIN_POS_CENTER_ALWAYS);
+  // cannot do this or it forces showing on the GUI monitor
+  //gtk_window_set_position(GTK_WINDOW(mainw->play_window),GTK_WIN_POS_CENTER_ALWAYS);
 
   if (mainw->multitrack==NULL) gtk_window_add_accel_group (GTK_WINDOW (mainw->play_window), mainw->accel_group);
   else gtk_window_add_accel_group (GTK_WINDOW (mainw->play_window), mainw->multitrack->accel_group);
@@ -3834,7 +3835,7 @@ void make_play_window(void) {
 
 
 void resize_play_window (void) {
-  int opwx,opwy,pmonitor=prefs->play_monitor;
+  int opwx,opwy,pmonitor=prefs->play_monitor,gmonitor=prefs->gui_monitor;
 
   boolean fullscreen=TRUE;
   boolean size_ok;
@@ -4108,8 +4109,9 @@ void resize_play_window (void) {
 					(mainw->scr_height-mainw->pheight)/2);
       else {
 	gint xcen=mainw->mgeom[pmonitor-1].x+(mainw->mgeom[pmonitor-1].width-mainw->pwidth)/2;
+	gint ycen=mainw->mgeom[pmonitor-1].y+(mainw->mgeom[pmonitor-1].height-mainw->pheight)/2;
 	gtk_window_set_screen(GTK_WINDOW(mainw->play_window),mainw->mgeom[pmonitor-1].screen);
-	lives_window_move (GTK_WINDOW (mainw->play_window), xcen, (mainw->scr_height-mainw->pheight)/2);
+	lives_window_move (GTK_WINDOW (mainw->play_window), xcen, ycen);
       }
     }
     lives_window_present (GTK_WINDOW (mainw->play_window));
@@ -4129,17 +4131,17 @@ void resize_play_window (void) {
 	else {
 	  gint xcen=mainw->mgeom[pmonitor-1].x+(mainw->mgeom[pmonitor-1].width-mainw->pwidth)/2;
 	  gtk_window_set_screen(GTK_WINDOW(mainw->play_window),mainw->mgeom[pmonitor-1].screen);
-	  lives_window_move (GTK_WINDOW (mainw->play_window), xcen, (mainw->scr_height-mainw->pheight-mainw->sepwin_minheight*2)/2);
+	  lives_window_move (GTK_WINDOW (mainw->play_window), xcen, (mainw->mgeom[pmonitor-1].height-mainw->pheight-mainw->sepwin_minheight*2)/2);
 	}
       }
     }
     else {
-      if (pmonitor==0) lives_window_move (GTK_WINDOW (mainw->play_window), (mainw->scr_width-mainw->pwidth)/2, 
+      if (gmonitor==0) lives_window_move (GTK_WINDOW (mainw->play_window), (mainw->scr_width-mainw->pwidth)/2, 
 					(mainw->scr_height-mainw->pheight-mainw->sepwin_minheight*2)/2);
       else {
-	gint xcen=mainw->mgeom[pmonitor-1].x+(mainw->mgeom[pmonitor-1].width-mainw->pwidth)/2;
-	gtk_window_set_screen(GTK_WINDOW(mainw->play_window),mainw->mgeom[pmonitor-1].screen);
-	lives_window_move (GTK_WINDOW (mainw->play_window), xcen, (mainw->scr_height-mainw->pheight-mainw->sepwin_minheight*2)/2);
+	gint xcen=mainw->mgeom[gmonitor-1].x+(mainw->mgeom[gmonitor-1].width-mainw->pwidth)/2;
+	gtk_window_set_screen(GTK_WINDOW(mainw->play_window),mainw->mgeom[gmonitor-1].screen);
+	lives_window_move (GTK_WINDOW (mainw->play_window), xcen, (mainw->mgeom[gmonitor-1].height-mainw->pheight-mainw->sepwin_minheight*2)/2);
       }
     }
     mainw->opwx=mainw->opwy=-1;

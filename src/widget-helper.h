@@ -168,8 +168,14 @@ typedef GtkStateType LiVESWidgetState;
 typedef enum {
   LIVES_EXPAND=GTK_EXPAND,
   LIVES_SHRINK=GTK_SHRINK,
-  LIVES_FILL=GTK_FILL,
+  LIVES_FILL=GTK_FILL
 } lives_attach_options_t;
+
+
+typedef enum {
+  LIVES_WINDOW_TOPLEVEL=GTK_WINDOW_TOPLEVEL,
+  LIVES_WINDOW_POPUP=GTK_WINDOW_POPUP
+} lives_window_type_t;
 
 
 typedef enum {
@@ -586,6 +592,22 @@ void lives_widget_queue_draw_area(LiVESWidget *, int x, int y, int width, int he
 void lives_widget_queue_resize(LiVESWidget *);
 void lives_widget_set_size_request(LiVESWidget *, int width, int height);
 
+void lives_widget_reparent(LiVESWidget *, LiVESWidget *new_parent);
+
+void lives_widget_grab_default(LiVESWidget *);
+
+LiVESWidget *lives_event_box_new(void);
+LiVESWidget *lives_label_new(const char *text);
+LiVESWidget *lives_label_new_with_mnemonic(const char *text);
+LiVESWidget *lives_button_new(void);
+LiVESWidget *lives_button_new_from_stock(const char *stock_id);
+LiVESWidget *lives_button_new_with_label(const char *label);
+LiVESWidget *lives_check_button_new(void);
+LiVESWidget *lives_check_button_new_with_label(const char *label);
+LiVESWidget *lives_spin_button_new(LiVESAdjustment *, double climb_rate, uint32_t digits);
+
+LiVESWidget *lives_window_new(lives_window_type_t wintype);
+
 int lives_dialog_run(LiVESDialog *);
 
 void lives_widget_set_bg_color(LiVESWidget *, LiVESWidgetState state, const LiVESWidgetColor *);
@@ -688,13 +710,21 @@ void lives_widget_set_can_default(LiVESWidget *, boolean state);
 
 void lives_container_remove(LiVESContainer *, LiVESWidget *);
 void lives_container_add(LiVESContainer *, LiVESWidget *);
-void lives_container_set_border_width(LiVESContainer *container, uint32_t width);
+void lives_container_set_border_width(LiVESContainer *, uint32_t width);
 
 double lives_spin_button_get_value(LiVESSpinButton *);
 int lives_spin_button_get_value_as_int(LiVESSpinButton *);
 
+LiVESAdjustment *lives_spin_button_get_adjustment(LiVESSpinButton *);
+
 void lives_spin_button_set_value(LiVESSpinButton *, double value);
-void lives_spin_button_set_range(LiVESSpinButton *button, double min, double max);
+void lives_spin_button_set_range(LiVESSpinButton *, double min, double max);
+
+void lives_spin_button_set_wrap(LiVESSpinButton *, boolean wrap);
+
+void lives_spin_button_set_digits(LiVESSpinButton *, uint32_t digits);
+
+void lives_spin_button_update(LiVESSpinButton *);
 
 double lives_ruler_get_value(LiVESRuler *);
 double lives_ruler_set_value(LiVESRuler *, double value);

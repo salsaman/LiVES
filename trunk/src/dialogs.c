@@ -267,12 +267,25 @@ static GtkWidget* create_warn_dialog (int warn_mask_number, GtkWindow *transient
   gtk_widget_grab_default (warning_okbutton);
 
   lives_widget_show_all(dialog);
+
+  if (prefs->gui_monitor>0) {
+    int xcen,ycen;
+    gtk_window_set_screen(GTK_WINDOW(dialog),mainw->mgeom[prefs->gui_monitor-1].screen);
+
+    xcen=mainw->mgeom[prefs->gui_monitor-1].x+(mainw->mgeom[prefs->gui_monitor-1].width-
+					       lives_widget_get_allocation_width(dialog))/2;
+    ycen=mainw->mgeom[prefs->gui_monitor-1].y+(mainw->mgeom[prefs->gui_monitor-1].height-
+					       lives_widget_get_allocation_height(dialog))/2;
+    lives_window_move(GTK_WINDOW(dialog),xcen,ycen);
+  }
+
   gtk_window_set_modal (GTK_WINDOW (dialog), TRUE);
 
   if (prefs->present) {
     lives_window_present (GTK_WINDOW (dialog));
     gdk_window_raise (lives_widget_get_xwindow(dialog));
   }
+
 
   return dialog;
 }
@@ -288,8 +301,9 @@ boolean do_warning_dialog_with_check (const gchar *text, int warn_mask_number) {
   if (!prefs->show_gui) {
     return do_warning_dialog_with_check_transient(text,warn_mask_number,NULL);
   } else {
-    if (mainw->multitrack==NULL) 
+    if (mainw->multitrack==NULL) {
       return do_warning_dialog_with_check_transient(text,warn_mask_number,GTK_WINDOW(mainw->LiVES));
+    }
     return do_warning_dialog_with_check_transient(text,warn_mask_number,GTK_WINDOW(mainw->multitrack->window));
   }
 }

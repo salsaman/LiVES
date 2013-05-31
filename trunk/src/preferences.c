@@ -25,6 +25,8 @@
 #include "omc-learn.h"
 #endif
 
+static int nmons;
+
 static guint prefs_current_page;
 
 static void select_pref_list_row(guint selected_idx);
@@ -835,6 +837,7 @@ lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_yuv4
     prefs->force_single_monitor=forcesmon;
     set_boolean_pref("force_single_monitor",forcesmon);
     get_monitors();
+    if (capable->nmonitors==0) resize_widgets_for_monitor(TRUE);
   }
 
   if (capable->nmonitors>1) {
@@ -847,6 +850,7 @@ lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_yuv4
       resize_widgets_for_monitor(TRUE);
     }
   }
+
 
   // fps stats
   if (prefs->show_player_stats!=show_player_stats) {
@@ -1861,7 +1865,7 @@ void on_prefDomainChanged(GtkTreeSelection *widget, gpointer dummy) {
 	lives_widget_show_all(prefsw->scrollw_right_gui);
 	prefsw->right_shown = prefsw->scrollw_right_gui;
 	lives_widget_show_all(prefsw->scrollw_right_gui);
-	if (capable->nmonitors<=1) {
+	if (nmons<=1) {
 	  lives_widget_hide (prefsw->forcesmon_hbox);
 	}
 	prefs_current_page=LIST_ENTRY_GUI;
@@ -1991,7 +1995,6 @@ _prefsw *create_prefs_dialog (void) {
   boolean pfsm;
   boolean has_ap_rec = FALSE;
 
-  int nmonitors = capable->nmonitors; ///< number of screen monitors
   int dph;
 
   register int i;
@@ -2165,39 +2168,12 @@ _prefsw *create_prefs_dialog (void) {
   // 
   // multihead support (inside Gui part)
   //
+
   pfsm=prefs->force_single_monitor;
   prefs->force_single_monitor=FALSE;
-
   get_monitors();
+  nmons=capable->nmonitors;
 
-  prefs->force_single_monitor=pfsm;
-
-  if (capable->nmonitors!=nmonitors) {
-
-    prefs->gui_monitor=0;
-    prefs->play_monitor=0;
-
-    if (capable->nmonitors>1) {
-      gchar buff[256];
-      get_pref("monitors",buff,256);
-      
-      if (strlen(buff)==0||get_token_count(buff,',')==1) {
-	prefs->gui_monitor=1;
-	prefs->play_monitor=2;
-      }
-      else {
-	gchar **array=g_strsplit(buff,",",2);
-	prefs->gui_monitor=atoi(array[0]);
-	prefs->play_monitor=atoi(array[1]);
-	g_strfreev(array);
-      }
-      
-      if (prefs->gui_monitor<1) prefs->gui_monitor=1;
-      if (prefs->play_monitor<0) prefs->play_monitor=0;
-      if (prefs->gui_monitor>capable->nmonitors) prefs->gui_monitor=capable->nmonitors;
-      if (prefs->play_monitor>capable->nmonitors) prefs->play_monitor=capable->nmonitors;
-    }
-  }
   // ---
   add_hsep_to_box (LIVES_BOX (prefsw->vbox_right_gui));
   // ---
@@ -2209,15 +2185,21 @@ _prefsw *create_prefs_dialog (void) {
   // ---
 
 
-  prefsw->spinbutton_gmoni = lives_standard_spin_button_new (_(" monitor number for LiVES interface"), TRUE, prefs->gui_monitor, 1, capable->nmonitors, 
+  prefsw->spinbutton_gmoni = lives_standard_spin_button_new (_(" monitor number for LiVES interface"), TRUE, prefs->gui_monitor, 1, nmons, 
 							     1., 1., 0, LIVES_BOX(hbox),NULL);
 
   hbox = lives_hbox_new (FALSE, 0);
   lives_box_pack_start (GTK_BOX (prefsw->vbox_right_gui), hbox, FALSE, FALSE, widget_opts.packing_height);
 
   prefsw->spinbutton_pmoni = lives_standard_spin_button_new (_(" monitor number for playback"), TRUE, prefs->play_monitor, 0, 
-							     capable->nmonitors==1?0:capable->nmonitors,
+							     nmons==1?0:nmons,
 							     1., 1., 0, LIVES_BOX(hbox),NULL);
+
+
+
+  prefs->force_single_monitor=pfsm;
+  get_monitors();
+
 
   // ---
 
@@ -2241,7 +2223,7 @@ _prefsw *create_prefs_dialog (void) {
   lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (prefsw->forcesmon), prefs->force_single_monitor);
 
   // ---
-  if (capable->nmonitors<=1) {
+  if (nmons<=1) {
     lives_widget_set_sensitive(prefsw->spinbutton_gmoni,FALSE);
     lives_widget_set_sensitive(prefsw->spinbutton_pmoni,FALSE);
   }

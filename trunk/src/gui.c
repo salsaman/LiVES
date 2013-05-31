@@ -3340,9 +3340,20 @@ void unfade_background(void) {
 
 
 void fullscreen_internal(void) {
+  // resize for full screen, internal player, no separate window
+
   int bx,by;
 
-  // resize for full screen, internal player, no separate window
+  int w,h,scr_width,scr_height;
+
+  if (prefs->gui_monitor==0) {
+    scr_width=mainw->scr_width;
+    scr_height=mainw->scr_height;
+  }
+  else {
+    scr_width=mainw->mgeom[prefs->gui_monitor-1].width;
+    scr_height=mainw->mgeom[prefs->gui_monitor-1].height;
+  }
   
   if (mainw->multitrack==NULL) {
 
@@ -3369,9 +3380,18 @@ void fullscreen_internal(void) {
 
     get_border_size(mainw->LiVES, &bx, &by);
 
+    if (future_prefs->show_tool) by+=lives_widget_get_allocation_height(mainw->tb_hbox);
 
     lives_widget_set_size_request (mainw->playframe, lives_widget_get_allocation_width(mainw->LiVES)-bx, 
-				 lives_widget_get_allocation_height(mainw->LiVES));
+    				   lives_widget_get_allocation_height(mainw->LiVES)-by);
+
+  w=lives_widget_get_allocation_width(mainw->LiVES);
+  h=lives_widget_get_allocation_height(mainw->LiVES);
+
+  if (w>scr_width) w=scr_width;
+  if (h>scr_height) h=scr_height;
+
+  lives_widget_set_size_request(mainw->LiVES,w,h);
 
   }
   else {
@@ -3703,11 +3723,7 @@ void resize_widgets_for_monitor(boolean get_play_times) {
   
   if (mainw->multitrack==NULL) {
     if (prefs->gui_monitor!=0) {
-      int xcen=mainw->mgeom[prefs->gui_monitor-1].x+(mainw->mgeom[prefs->gui_monitor-1].width-
-						      lives_widget_get_allocation_width(mainw->LiVES))/2;
-      int ycen=mainw->mgeom[prefs->gui_monitor-1].y+(mainw->mgeom[prefs->gui_monitor-1].height-
-						      lives_widget_get_allocation_height(mainw->LiVES))/2;
-      lives_window_move(GTK_WINDOW(mainw->LiVES),xcen,ycen);
+      lives_window_center(LIVES_WINDOW(mainw->LiVES));
       
     }
     if (prefs->open_maximised&&prefs->show_gui) {
@@ -3716,11 +3732,7 @@ void resize_widgets_for_monitor(boolean get_play_times) {
   }
   else {
     if (prefs->gui_monitor!=0) {
-      int xcen=mainw->mgeom[prefs->gui_monitor-1].x+(mainw->mgeom[prefs->gui_monitor-1].width-
-						      lives_widget_get_allocation_width(mainw->multitrack->window))/2;
-      int ycen=mainw->mgeom[prefs->gui_monitor-1].y+(mainw->mgeom[prefs->gui_monitor-1].height-
-						      lives_widget_get_allocation_height(mainw->multitrack->window))/2;
-      lives_window_move(GTK_WINDOW(mainw->multitrack->window),xcen,ycen);
+      lives_window_center(GTK_WINDOW(mainw->multitrack->window));
     }
 	
 	
@@ -3951,6 +3963,11 @@ void resize_play_window (void) {
       if (pmonitor==0) {
 	mainw->pwidth=mainw->scr_width;
 	mainw->pheight=mainw->scr_height;
+	if (capable->nmonitors>1) {
+	  // spread over all monitors
+	  mainw->pwidth=gdk_screen_get_width(mainw->mgeom[0].screen);
+	  mainw->pheight=gdk_screen_get_height(mainw->mgeom[0].screen);
+	}
       }
       else {
 	mainw->pwidth=mainw->mgeom[pmonitor-1].width;
@@ -4238,12 +4255,6 @@ void splash_init(void) {
 
   if (prefs->show_splash) {
 
-    if (prefs->gui_monitor!=0) {
-      gtk_window_set_screen(GTK_WINDOW(mainw->splash_window),mainw->mgeom[prefs->gui_monitor-1].screen);
-    }
-
-    gtk_window_set_position(GTK_WINDOW(mainw->splash_window),GTK_WIN_POS_CENTER_ALWAYS);
-
     gtk_window_set_type_hint(GTK_WINDOW(mainw->splash_window),GDK_WINDOW_TYPE_HINT_SPLASHSCREEN);
   
     if (palette->style&STYLE_1) {
@@ -4283,6 +4294,14 @@ void splash_init(void) {
     lives_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height*2);
 
     lives_widget_show_all(mainw->splash_window);
+
+
+    if (prefs->gui_monitor!=0) {
+      gtk_window_set_screen(GTK_WINDOW(mainw->splash_window),mainw->mgeom[prefs->gui_monitor-1].screen);
+    }
+
+    lives_window_center(LIVES_WINDOW(mainw->splash_window));
+
     lives_window_present(GTK_WINDOW(mainw->splash_window));
 
     lives_widget_context_update();

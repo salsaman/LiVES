@@ -208,7 +208,9 @@ void get_monitors(void) {
   register int k;
 #endif
 
-  gint nscreens,nmonitors;
+  gchar buff[256];
+
+  int nscreens,nmonitors;
   register int i,j,idx=0;
 
   if (mainw->mgeom!=NULL) g_free(mainw->mgeom);
@@ -271,6 +273,7 @@ void get_monitors(void) {
 	mainw->mgeom[idx].disp=disp;
 	mainw->mgeom[idx].screen=screen;
 	idx++;
+	if (idx>=capable->nmonitors) break;
       }
     }
 #if GTK_CHECK_VERSION(3,0,0)
@@ -280,6 +283,34 @@ void get_monitors(void) {
   }
 
   g_slist_free(dislist);
+
+  prefs->gui_monitor=0;
+  prefs->play_monitor=1;
+
+  if (capable->nmonitors>1) {
+
+    get_pref("monitors",buff,256);
+
+    if (strlen(buff)==0||get_token_count(buff,',')==1) {
+      prefs->gui_monitor=1;
+      prefs->play_monitor=2;
+    }
+    else {
+      gchar **array=g_strsplit(buff,",",2);
+      prefs->gui_monitor=atoi(array[0]);
+      prefs->play_monitor=atoi(array[1]);
+      g_strfreev(array);
+    }
+
+    if (prefs->gui_monitor<1) prefs->gui_monitor=1;
+    if (prefs->play_monitor<0) prefs->play_monitor=0;
+    if (prefs->gui_monitor>capable->nmonitors) prefs->gui_monitor=capable->nmonitors;
+    if (prefs->play_monitor>capable->nmonitors) prefs->play_monitor=capable->nmonitors;
+  }
+
+  mainw->scr_width=mainw->mgeom[prefs->gui_monitor>0?prefs->gui_monitor-1:0].width;
+  mainw->scr_height=mainw->mgeom[prefs->gui_monitor>0?prefs->gui_monitor-1:0].height;
+
 }
 
 
@@ -294,8 +325,11 @@ static boolean pre_init(void) {
   pthread_mutexattr_t mattr;
 
   gchar buff[256];
-  int i;
+
   boolean needs_update=FALSE;
+
+  register int i;
+
 
   sizint=sizeof(gint);
   sizdbl=sizeof(gdouble);
@@ -485,39 +519,12 @@ static boolean pre_init(void) {
   future_prefs->jack_opts=get_int_pref("jack_opts");
   prefs->jack_opts=future_prefs->jack_opts;
 
-  prefs->gui_monitor=0;
-  prefs->play_monitor=0;
-
   mainw->mgeom=NULL;
   prefs->virt_height=1;
 
   prefs->force_single_monitor=get_boolean_pref("force_single_monitor");
 
   get_monitors();
-
-  if (capable->nmonitors>1) {
-
-    get_pref("monitors",buff,256);
-
-    if (strlen(buff)==0||get_token_count(buff,',')==1) {
-      prefs->gui_monitor=1;
-      prefs->play_monitor=2;
-    }
-    else {
-      gchar **array=g_strsplit(buff,",",2);
-      prefs->gui_monitor=atoi(array[0]);
-      prefs->play_monitor=atoi(array[1]);
-      g_strfreev(array);
-    }
-
-    if (prefs->gui_monitor<1) prefs->gui_monitor=1;
-    if (prefs->play_monitor<0) prefs->play_monitor=0;
-    if (prefs->gui_monitor>capable->nmonitors) prefs->gui_monitor=capable->nmonitors;
-    if (prefs->play_monitor>capable->nmonitors) prefs->play_monitor=capable->nmonitors;
-  }
-
-  mainw->scr_width=mainw->mgeom[prefs->gui_monitor>0?prefs->gui_monitor-1:0].width;
-  mainw->scr_height=mainw->mgeom[prefs->gui_monitor>0?prefs->gui_monitor-1:0].height;
 
   for (i=0;i<MAX_FX_CANDIDATE_TYPES;i++) {
     mainw->fx_candidates[i].delegate=-1;
@@ -4428,6 +4435,11 @@ static void get_max_opsize(int *opwidth, int *opheight) {
 	if (prefs->play_monitor==0) {
 	  *opwidth=mainw->scr_width;
 	  *opheight=mainw->scr_height;
+	  if (capable->nmonitors>1) {
+	    // spread over all monitors
+	    *opwidth=gdk_screen_get_width(mainw->mgeom[0].screen);
+	    *opheight=gdk_screen_get_height(mainw->mgeom[0].screen);
+	  }
 	}
 	else {
 	  if (mainw->play_window!=NULL) pmonitor=prefs->play_monitor;
@@ -4445,6 +4457,11 @@ static void get_max_opsize(int *opwidth, int *opheight) {
 	  if (prefs->play_monitor==0) {
 	    *opwidth=mainw->scr_width;
 	    *opheight=mainw->scr_height;
+	    if (capable->nmonitors>1) {
+	      // spread over all monitors
+	      *opwidth=gdk_screen_get_width(mainw->mgeom[0].screen);
+	      *opheight=gdk_screen_get_height(mainw->mgeom[0].screen);
+	    }
 	  }
 	  else {
 	    *opwidth=mainw->mgeom[prefs->play_monitor-1].width;
@@ -4479,8 +4496,15 @@ static void get_max_opsize(int *opwidth, int *opheight) {
       }
       else {
 	if (prefs->play_monitor==0) {
-	  if (mainw->scr_width>*opwidth) *opwidth=mainw->scr_width;
-	  if (mainw->scr_height>*opheight) *opheight=mainw->scr_height;
+	  if (capable->nmonitors==1) {
+	    if (mainw->scr_width>*opwidth) *opwidth=mainw->scr_width;
+	    if (mainw->scr_height>*opheight) *opheight=mainw->scr_height;
+	  }
+	  else {
+	    // spread over all monitors
+	    if (gdk_screen_get_width(mainw->mgeom[0].screen)>*opwidth) *opwidth=gdk_screen_get_width(mainw->mgeom[0].screen);
+	    if (gdk_screen_get_height(mainw->mgeom[0].screen)>*opheight) *opheight=gdk_screen_get_height(mainw->mgeom[0].screen);
+	  }
 	}
 	else {
 	  if (mainw->play_window!=NULL) pmonitor=prefs->play_monitor;
@@ -5262,6 +5286,11 @@ void load_frame_image(gint frame) {
 	    if (prefs->play_monitor==0) {
 	      mainw->pwidth=mainw->scr_width;
 	      mainw->pheight=mainw->scr_height;
+	      if (capable->nmonitors>1) {
+		// spread over all monitors
+		mainw->pwidth=gdk_screen_get_width(mainw->mgeom[0].screen);
+		mainw->pheight=gdk_screen_get_height(mainw->mgeom[0].screen);
+	      }
 	    }
 	    else {
 	      if (mainw->play_window!=NULL) pmonitor=prefs->play_monitor;
@@ -5524,6 +5553,11 @@ void load_frame_image(gint frame) {
 	if (prefs->play_monitor==0) {
 	  mainw->pwidth=mainw->scr_width;
 	  mainw->pheight=mainw->scr_height;
+	  if (capable->nmonitors>1) {
+	    // spread over all monitors
+	    mainw->pwidth=gdk_screen_get_width(mainw->mgeom[0].screen);
+	    mainw->pheight=gdk_screen_get_height(mainw->mgeom[0].screen);
+	  }
 	}
 	else {
 	  if (mainw->play_window!=NULL) pmonitor=prefs->play_monitor;
@@ -6635,17 +6669,22 @@ void do_quick_switch (gint new_file) {
 
 
 
-void resize (gdouble scale) {
+void resize (double scale) {
   // resize the frame widgets
   // set scale<0. to _force_ the playback frame to expand (for external capture)
-  gdouble oscale=scale;
-  gint xsize;
-  gint bx,by;
+
   GdkPixbuf *sepbuf;
-  gint hspace=((sepbuf=lives_image_get_pixbuf (GTK_IMAGE (mainw->sep_image)))!=NULL)?lives_pixbuf_get_height (sepbuf):0;
+
+  double oscale=scale;
+
+  int xsize;
+  int bx,by;
+
+  int hspace=((sepbuf=lives_image_get_pixbuf (GTK_IMAGE (mainw->sep_image)))!=NULL)?lives_pixbuf_get_height (sepbuf):0;
+
   // maximum values
-  gint hsize,vsize;
-  gint scr_width,scr_height;
+  int hsize,vsize;
+  int w,h,scr_width,scr_height;
 
   if (!prefs->show_gui||mainw->multitrack!=NULL) return;
   get_border_size (mainw->LiVES,&bx,&by);
@@ -6728,6 +6767,14 @@ void resize (gdouble scale) {
       lives_container_set_border_width (GTK_CONTAINER (mainw->playframe), 0);
     }
   }
+
+  w=lives_widget_get_allocation_width(mainw->LiVES);
+  h=lives_widget_get_allocation_height(mainw->LiVES);
+
+  if (w>scr_width) w=scr_width;
+  if (h>scr_height) h=scr_height;
+
+  lives_widget_set_size_request(mainw->LiVES,w,h);
 
   if (!mainw->foreign&&mainw->playing_file==-1&&mainw->current_file>0&&(!cfile->opening||cfile->clip_type==CLIP_TYPE_FILE)) {
       lives_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_start),cfile->start);

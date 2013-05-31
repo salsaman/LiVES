@@ -2387,27 +2387,20 @@ gchar *choose_file(gchar *dir, gchar *fname, gchar **filt, lives_file_chooser_ac
   }
 
   lives_container_set_border_width (GTK_CONTAINER (chooser), widget_opts.border_width);
-  gtk_window_set_position (GTK_WINDOW (chooser), GTK_WIN_POS_CENTER_ALWAYS);
 
   if (prefs->show_gui) {
     if (mainw->multitrack==NULL) gtk_window_set_transient_for(GTK_WINDOW(chooser),GTK_WINDOW(mainw->LiVES));
     else gtk_window_set_transient_for(GTK_WINDOW(chooser),GTK_WINDOW(mainw->multitrack->window));
   }
 
-  if (prefs->gui_monitor!=0) {
-    int xcen=mainw->mgeom[prefs->gui_monitor-1].x+(mainw->mgeom[prefs->gui_monitor-1].width
-						   -lives_widget_get_allocation_width(chooser))/2;
-   int ycen=mainw->mgeom[prefs->gui_monitor-1].y+(mainw->mgeom[prefs->gui_monitor-1].height-
-						  lives_widget_get_allocation_height(chooser))/2;
-   lives_window_move(GTK_WINDOW(chooser),xcen,ycen);
-  }
-  
   g_signal_connect (chooser, "current-folder-changed", G_CALLBACK (chooser_check_dir), NULL);
 
   lives_widget_grab_focus (chooser);
 
   lives_widget_show(chooser);
 
+  lives_window_center(LIVES_WINDOW(chooser));
+  
   gtk_window_set_modal (GTK_WINDOW (chooser), TRUE);
 
   memset(last_good_folder,0,1);

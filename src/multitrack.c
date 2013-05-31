@@ -8905,7 +8905,11 @@ boolean multitrack_delete (lives_mt *mt, boolean save_layout) {
 
   reset_clip_menu();
   mainw->last_dprint_file=-1;
-  
+
+  if (prefs->gui_monitor>0) {
+    lives_window_center(LIVES_WINDOW(mainw->LiVES));
+  }
+
   lives_widget_context_update();
 
   if (prefs->show_gui&&prefs->open_maximised) {

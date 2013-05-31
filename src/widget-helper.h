@@ -871,6 +871,8 @@ void lives_widget_context_update(void);
 void lives_widget_get_fg_color(LiVESWidget *, LiVESWidgetColor *);
 void lives_widget_get_bg_color(LiVESWidget *, LiVESWidgetColor *);
 
+void lives_window_center(LiVESWindow *);
+
 LiVESWidget *lives_entry_new_with_max_length(int max);
 
 void lives_widget_unparent(LiVESWidget *);

@@ -2596,12 +2596,7 @@ LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_button
   lives_widget_set_hexpand(dialog,TRUE);
   lives_widget_set_vexpand(dialog,TRUE);
 
-  if (prefs->gui_monitor>0) {
-    gtk_window_set_screen(GTK_WINDOW(dialog),mainw->mgeom[prefs->gui_monitor-1].screen);
-  }
-
   lives_container_set_border_width (GTK_CONTAINER (dialog), widget_opts.border_width*2);
-  gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_CENTER_ALWAYS);
 
   if (widget_opts.apply_theme) {
     lives_widget_apply_theme(dialog, LIVES_WIDGET_STATE_NORMAL);
@@ -2610,6 +2605,9 @@ LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_button
     lives_dialog_set_has_separator(GTK_DIALOG(dialog),FALSE);
 #endif
   }
+
+  // do this before widget_show(), then call lives_window_center() afterwards
+  gtk_window_set_position(GTK_WINDOW(dialog),GTK_WIN_POS_CENTER_ALWAYS);
 
   if (add_std_buttons) {
     GtkAccelGroup *accel_group=GTK_ACCEL_GROUP(lives_accel_group_new ());
@@ -2636,12 +2634,13 @@ LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_button
                       NULL);
 
   // must do this before setting modal !
-  if (!widget_opts.no_gui) 
+  if (!widget_opts.no_gui) {
     lives_widget_show(dialog);
+    lives_window_center(LIVES_WINDOW(dialog));
+  }
 
   if (!widget_opts.non_modal)
     gtk_window_set_modal (GTK_WINDOW (dialog), TRUE);
-
 
 #endif
 
@@ -2785,6 +2784,24 @@ LIVES_INLINE void lives_widget_apply_theme(LiVESWidget *widget, LiVESWidgetState
   lives_widget_set_fg_color(widget, state, &palette->normal_fore);
   lives_widget_set_bg_color(widget, state, &palette->normal_back);
 }
+
+
+void lives_window_center(LiVESWindow *window) {
+  if (prefs->show_gui) {
+    if (prefs->gui_monitor>0) {
+      int xcen,ycen;
+      gtk_window_set_screen(GTK_WINDOW(window),mainw->mgeom[prefs->gui_monitor-1].screen);
+
+      xcen=mainw->mgeom[prefs->gui_monitor-1].x+(mainw->mgeom[prefs->gui_monitor-1].width-
+						 lives_widget_get_allocation_width(LIVES_WIDGET(window)))/2;
+      ycen=mainw->mgeom[prefs->gui_monitor-1].y+(mainw->mgeom[prefs->gui_monitor-1].height-
+						 lives_widget_get_allocation_height(LIVES_WIDGET(window)))/2;
+      lives_window_move(LIVES_WINDOW(window),xcen,ycen);
+    }
+    else gtk_window_set_position(GTK_WINDOW(window),GTK_WIN_POS_CENTER_ALWAYS);
+  }
+}
+
 
 
 void lives_widget_get_bg_color(LiVESWidget *widget, LiVESWidgetColor *color) {

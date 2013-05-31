@@ -1605,7 +1605,7 @@ void on_rte_info_clicked (GtkButton *button, gpointer user_data) {
 
   lives_container_set_border_width (GTK_CONTAINER (rte_info_window), widget_opts.border_width);
   gtk_window_set_transient_for(GTK_WINDOW(rte_info_window),GTK_WINDOW(lives_widget_get_toplevel(GTK_WIDGET(button))));
-  gtk_window_set_position (GTK_WINDOW (rte_info_window), GTK_WIN_POS_CENTER_ALWAYS);
+
   gtk_window_set_default_size (GTK_WINDOW (rte_info_window), RTE_INFO_WIDTH, RTE_INFO_HEIGHT);
 
   vbox = lives_vbox_new (FALSE, widget_opts.packing_height*2);
@@ -1682,7 +1682,7 @@ void on_rte_info_clicked (GtkButton *button, gpointer user_data) {
   g_free(type);
 
   lives_widget_show_all(rte_info_window);
-
+  lives_window_center (LIVES_WINDOW (rte_info_window));
 }
 
 

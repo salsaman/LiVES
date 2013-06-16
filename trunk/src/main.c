@@ -397,7 +397,7 @@ static boolean pre_init(void) {
 
 
   prefs->show_gui=TRUE;
-  prefs->show_splash=TRUE;
+  prefs->show_splash=FALSE;
   prefs->show_playwin=TRUE;
   prefs->sepwin_type=1;
   prefs->show_framecount=TRUE;
@@ -421,17 +421,20 @@ static boolean pre_init(void) {
   memset(prefs->yuvin,0,1);
 #endif
 
-  if (!capable->smog_version_correct||!capable->can_write_to_tempdir) {
-    g_snprintf(prefs->theme,64,"none");
-    return FALSE;
-  }
-
-  // from here onwards we can use get_pref() and friends  //////
 #ifndef IS_MINGW
   capable->rcfile=g_strdup_printf("%s/.lives",capable->home_dir);
 #else
   capable->rcfile=g_strdup_printf("%s/LiVES.ini",capable->home_dir);
 #endif
+
+  if (!capable->smog_version_correct||!capable->can_write_to_tempdir) {
+    g_snprintf(prefs->theme,64,"none");
+    return FALSE;
+  }
+
+  prefs->show_splash=TRUE;
+
+  // from here onwards we can use get_pref() and friends  //////
   cache_file_contents(capable->rcfile);
 
   get_pref("gui_theme",prefs->theme,64);

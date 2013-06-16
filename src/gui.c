@@ -4296,7 +4296,7 @@ void splash_init(void) {
     lives_widget_show_all(mainw->splash_window);
 
 
-    if (prefs->gui_monitor!=0) {
+    if (prefs->gui_monitor>0) {
       gtk_window_set_screen(GTK_WINDOW(mainw->splash_window),mainw->mgeom[prefs->gui_monitor-1].screen);
     }
 

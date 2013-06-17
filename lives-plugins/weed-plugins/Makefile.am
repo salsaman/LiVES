@@ -14,7 +14,7 @@ shared_cflags = -fno-common
 else
 shared_ldflags = -shared -fPIC -DPIC -module -no-undefined -avoid-version --tag=disable-static
 
-shared_cflags = -fPIC -DPIC
+shared_cflags = -fPIC -DPIC -Wno-unused-function
 endif
 
 AM_LDFLAGS = $(shared_ldflags)

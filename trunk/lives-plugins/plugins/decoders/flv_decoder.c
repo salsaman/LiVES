@@ -1020,6 +1020,7 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
 #else 
     len=avcodec_decode_video(ctx, priv->picture, &got_picture, priv->avpkt.data, priv->avpkt.size );
 #endif
+    len=len;
 
     if (!got_picture) {
       break;  // code below should pull more packets for h264, but still does not work !!!!!!

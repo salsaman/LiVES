@@ -2466,9 +2466,9 @@ static index_entry * matroska_read_seek(const lives_clip_data_t *cdata,
 
   lives_mkv_priv_t *priv=cdata->priv;
   MatroskaDemuxContext *matroska=&priv->matroska;
-  AVFormatContext *s=priv->s;
+  //AVFormatContext *s=priv->s;
 
-  AVStream *st = priv->vidst;
+  //AVStream *st = priv->vidst;
 
   index_entry *idx;
 

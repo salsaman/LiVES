@@ -14615,7 +14615,7 @@ multitrack_redo            (GtkMenuItem     *menuitem,
   gchar *txt;
   GList *seltracks=NULL;
   int clip_sel;
-  boolean block_is_selected;
+  //boolean block_is_selected;
   gchar *msg,*utxt,*tmp;
   GList *aparam_view_list;
   int avol_fx;
@@ -14629,7 +14629,7 @@ multitrack_redo            (GtkMenuItem     *menuitem,
 
   mt_desensitise(mt);
 
-  if (mt->block_selected!=NULL) block_is_selected=TRUE; // TODO *** - need to set track and time 
+  //if (mt->block_selected!=NULL) block_is_selected=TRUE; // TODO *** - need to set track and time 
 
   mt->was_undo_redo=TRUE;
   mt->ptr_time=lives_ruler_get_value(LIVES_RULER(mt->timeline));

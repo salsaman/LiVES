@@ -916,6 +916,7 @@ weed_plant_t *on_rte_apply (weed_plant_t *layer, int opwidth, int opheight, weed
     weed_set_int_value(init_event,"out_tracks",0);
 
     filter_error=weed_apply_instance(resize_instance,init_event,layers,0,0,tc);
+    filter_error=filter_error; // stop compiler complaining
     retlayer=layers[0];
     weed_plant_free(init_event);
   }

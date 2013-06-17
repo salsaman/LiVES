@@ -1629,7 +1629,7 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
   int num_in_alpha=0,num_out_alpha=0;
 
   boolean def_disabled=FALSE;
-  boolean all_outs_alpha=TRUE,all_ins_alpha=FALSE;
+  boolean all_outs_alpha=TRUE;//,all_ins_alpha=FALSE;
 
   int lcount=0;
 
@@ -1719,7 +1719,7 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
       num_in_alpha++;
   }
 
-  if (num_inc==num_in_alpha) all_ins_alpha=TRUE;
+  //  if (num_inc==num_in_alpha) all_ins_alpha=TRUE;
 
   num_inc-=num_in_alpha;
 
@@ -3567,6 +3567,7 @@ void weed_apply_audio_effects (weed_plant_t *filter_map, float **abuf, int nbtra
       weed_free(fhash);
       if (has_audio_chans_in(filter,FALSE)) {
 	filter_error=weed_apply_audio_instance(init_event,abuf,nbtracks,nchans,nsamps,arate,tc,vis);
+	filter_error=filter_error; // stop compiler complaining
       }
     }
     weed_free(init_events);

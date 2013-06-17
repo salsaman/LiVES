@@ -702,7 +702,7 @@ void on_render_fx_pre_activate (GtkMenuItem *menuitem, lives_rfx_t *rfx) {
 
   int n=0;
 
-  boolean has_lmap_error=FALSE;
+  //boolean has_lmap_error=FALSE;
 
   boolean has_param;
 

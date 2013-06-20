@@ -211,9 +211,9 @@ typedef int lives_pgid_t;
 #define LIVES_MANUAL_URL "http://lives.sourceforge.net/manual/"
 #define LIVES_MANUAL_FILENAME "LiVES_manual.html"
 #define LIVES_AUTHOR_EMAIL "mailto:salsaman@gmail.com"
-#define LIVES_DONATE_URL "https://sourceforge.net/donate/index.php?group_id=64341"
-#define LIVES_BUG_URL "http://sourceforge.net/tracker/?group_id=64341&atid=507139"
-#define LIVES_FEATURE_URL "http://sourceforge.net/tracker/?group_id=64341&atid=507142"
+#define LIVES_DONATE_URL "https://sourceforge.net/p/lives/donate/"
+#define LIVES_BUG_URL "https://sourceforge.net/p/lives/bugs/"
+#define LIVES_FEATURE_URL "https://sourceforge.net/p/lives/feature-requests/"
 #define LIVES_TRANSLATE_URL "https://translations.launchpad.net/lives/trunk"
 
 #ifdef IS_DARWIN

@@ -482,6 +482,15 @@ return c0;
 }
 
 
+LIVES_INLINE LiVESWidget *lives_image_new(void) {
+  LiVESWidget *image=NULL;
+#ifdef GUI_GTK
+  image=gtk_image_new();
+#endif
+  return image;
+}
+
+
 
 LIVES_INLINE LiVESWidget *lives_image_new_from_stock(const char *stock_id, lives_icon_size_t size) {
   LiVESWidget *image=NULL;
@@ -1643,6 +1652,12 @@ LIVES_INLINE void lives_entry_set_text(LiVESEntry *entry, const char *text) {
 }
 
 
+LIVES_INLINE void lives_scrolled_window_set_policy(LiVESScrolledWindow *scrolledwindow, LiVESPolicyType hpolicy, LiVESPolicyType vpolicy) {
+#ifdef GUI_GTK
+  gtk_scrolled_window_set_policy (scrolledwindow, hpolicy, vpolicy);
+#endif
+
+}
 
 LIVES_INLINE boolean lives_dialog_set_has_separator(LiVESDialog *dialog, boolean has) {
   // return TRUE if implemented
@@ -1679,6 +1694,17 @@ LIVES_INLINE boolean lives_widget_set_vexpand(LiVESWidget *widget, boolean state
 #endif
 #endif
   return FALSE;
+}
+
+
+LIVES_INLINE LiVESWidget *lives_grid_new(void) {
+  LiVESWidget *grid=NULL;
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3,2,0)  // required for grid widget
+  grid=gtk_grid_new();
+#endif
+#endif
+  return grid;
 }
 
 
@@ -2679,7 +2705,7 @@ LiVESWidget *lives_standard_scrolled_window_new(int width, int height, LiVESWidg
   LiVESWidget *swchild;
 
   scrolledwindow = gtk_scrolled_window_new (NULL, NULL);
-  gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrolledwindow), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+  lives_scrolled_window_set_policy (LIVES_SCROLLED_WINDOW (scrolledwindow), LIVES_POLICY_AUTOMATIC, LIVES_POLICY_AUTOMATIC);
 
   if (widget_opts.apply_theme) {
     lives_widget_set_hexpand(scrolledwindow,TRUE);

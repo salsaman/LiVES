@@ -122,6 +122,7 @@ typedef GtkTreeView                       LiVESTreeView;
 typedef GtkTreeModel                      LiVESTreeModel;
 typedef GtkTreeIter                       LiVESTreeIter;
 typedef GtkTable                          LiVESTable;
+typedef GtkScrolledWindow                 LiVESScrolledWindow;
 
 #if GTK_CHECK_VERSION(2,14,0)
 typedef GtkScaleButton                    LiVESScaleButton;
@@ -256,6 +257,7 @@ typedef gpointer                          LiVESObjectPtr;
 #define LIVES_MENU(widget) GTK_MENU(widget)
 #define LIVES_IMAGE_MENU_ITEM(widget) GTK_IMAGE_MENU_ITEM(widget)
 #define LIVES_FILE_CHOOSER(widget) GTK_FILE_CHOOSER(widget)
+#define LIVES_SCROLLED_WINDOW(widget) GTK_SCROLLED_WINDOW(widget)
 
 #if GTK_CHECK_VERSION(2,14,0)
 #define LIVES_SCALE_BUTTON(widget) GTK_SCALE_BUTTON(widget)
@@ -289,6 +291,15 @@ typedef gpointer                          LiVESObjectPtr;
 #define LIVES_IS_COMBO(widget) GTK_IS_COMBO_BOX(widget)
 #define LIVES_IS_BUTTON(widget) GTK_IS_BUTTON(widget)
 
+// scrolledwindow policies
+
+typedef GtkPolicyType LiVESPolicyType;
+
+#define LIVES_POLICY_ALWAYS    GTK_POLICY_ALWAYS
+#define LIVES_POLICY_AUTOMATIC GTK_POLICY_AUTOMATIC
+#define LIVES_POLICY_NEVER     GTK_POLICY_NEVER
+
+// (image resize) interpolation types
 #define LIVES_INTERP_BEST   GDK_INTERP_HYPER
 #define LIVES_INTERP_NORMAL GDK_INTERP_BILINEAR
 #define LIVES_INTERP_FAST   GDK_INTERP_NEAREST
@@ -622,6 +633,7 @@ boolean lives_color_parse(const char *spec, LiVESWidgetColor *);
 
 LiVESWidgetColor *lives_widget_color_copy(LiVESWidgetColor *c1orNULL, const LiVESWidgetColor *c2);
 
+LiVESWidget *lives_image_new(void);
 LiVESWidget *lives_image_new_from_file(const char *filename);
 LiVESWidget *lives_image_new_from_stock(const char *stock_id, lives_icon_size_t size);
 
@@ -768,6 +780,8 @@ void lives_entry_set_text(LiVESEntry *, const char *text);
 
 double lives_scale_button_get_value(LiVESScaleButton *);
 
+LiVESWidget *lives_grid_new(void);
+
 LiVESWidget *lives_menu_new(void);
 
 void lives_menu_popup(LiVESMenu *, LiVESXEventButton *);
@@ -819,6 +833,7 @@ lives_display_t lives_widget_get_display_type(LiVESWidget *);
 
 uint64_t lives_widget_get_xwinid(LiVESWidget *, const char *failure_msg);
 
+void lives_scrolled_window_set_policy(LiVESScrolledWindow *, LiVESPolicyType hpolicy, LiVESPolicyType vpolicy);
 
 // optional (return TRUE if implemented)
 

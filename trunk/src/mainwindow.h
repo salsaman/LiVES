@@ -1129,6 +1129,8 @@ typedef struct {
   guint signal_caught;
   boolean signals_deferred;
 
+  boolean ce_thumbs;
+
 } mainwindow;
 
 extern _palette *palette;
@@ -1145,6 +1147,7 @@ typedef struct {
   boolean loop_to_fit;
   boolean align_start;
   boolean ins_frames;
+
   int *list_to_rfx_index;
   GList *trans_list;
 

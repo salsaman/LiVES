@@ -50,8 +50,11 @@ static GClosure *mute_audio_closure;
 static GClosure *ping_pong_closure;
 
 
-void 
-load_theme (void) {
+static void start_ce_thumb_mode(void);
+static void end_ce_thumb_mode(void);
+
+
+void load_theme (void) {
   // load the theme images
   // TODO - set palette in here ?
   GError *error=NULL;
@@ -95,7 +98,7 @@ void add_message_scroller(GtkWidget *conter) {
   }
 
   mainw->scrolledwindow = gtk_scrolled_window_new (NULL, NULL);
-  gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(mainw->scrolledwindow),GTK_POLICY_AUTOMATIC,GTK_POLICY_ALWAYS);
+  lives_scrolled_window_set_policy(LIVES_SCROLLED_WINDOW(mainw->scrolledwindow),LIVES_POLICY_AUTOMATIC,LIVES_POLICY_ALWAYS);
   lives_widget_show (mainw->scrolledwindow);
   lives_widget_set_vexpand(mainw->scrolledwindow,TRUE);
 
@@ -4093,8 +4096,18 @@ void resize_play_window (void) {
 	  }
 	}
       }
+
+      if (prefs->ce_thumb_mode&&prefs->play_monitor!=prefs->gui_monitor&&
+	  prefs->play_monitor!=0&&!prefs->force_single_monitor&&
+	  capable->nmonitors>0&&mainw->multitrack==NULL) {
+	start_ce_thumb_mode();
+      }
     }
     else {
+
+      if (mainw->ce_thumbs) {
+	end_ce_thumb_mode();
+      }
 
     point1:
       if (mainw->playing_file==0) {
@@ -4137,6 +4150,11 @@ void resize_play_window (void) {
   else {
     // not playing
     if (mainw->fs&&mainw->playing_file==-2&&mainw->sep_win&&prefs->sepwin_type==1) {
+
+      if (mainw->ce_thumbs) {
+	end_ce_thumb_mode();
+      }
+
       if (mainw->opwx>=0&&mainw->opwy>=0) {
 	// move window back to its old position after play
 	if (pmonitor>0) gtk_window_set_screen(GTK_WINDOW(mainw->play_window),mainw->mgeom[pmonitor-1].screen);
@@ -4187,6 +4205,10 @@ void resize_play_window (void) {
 
 void kill_play_window (void) {
   // plug our player back into internal window
+
+  if (mainw->ce_thumbs) {
+    end_ce_thumb_mode();
+  }
 
   if (mainw->play_window!=NULL) {
     if (mainw->preview_box!=NULL&&lives_widget_get_parent(mainw->preview_box)!=NULL) {
@@ -4355,3 +4377,160 @@ void splash_end(void) {
 
 }
 
+
+static boolean switch_clip_cb (GtkWidget *eventbox, GdkEventButton *event, gpointer user_data) {
+  int i=GPOINTER_TO_INT(user_data);
+  if (mainw->playing_file==-1) return FALSE;
+  switch_clip (0,i);
+  return FALSE;
+}
+
+
+#if GTK_CHECK_VERSION(3,2,0)  // required for grid widget
+static GtkWidget *tscroll;
+#endif
+
+void start_ce_thumb_mode(void) {
+#if GTK_CHECK_VERSION(3,2,0)  // required for grid widget
+
+  GtkWidget *thumb_image=NULL;
+  GtkWidget *vbox, *label;
+  GtkWidget *eventbox;
+  GtkWidget *usibl=NULL,*sibl=NULL;
+
+  LiVESPixbuf *thumbnail;
+
+  GList *cliplist=mainw->cliplist;
+
+  gchar filename[PATH_MAX];
+  gchar clip_name[CLIP_LABEL_LENGTH];
+  gchar *tmp;
+
+  int i=1;
+  int width=CLIP_THUMB_WIDTH,height=CLIP_THUMB_HEIGHT;
+
+  int cpw,scr_width;
+
+  int count=0;
+
+  LiVESWidget *tgrid=lives_grid_new();
+
+  tscroll=lives_standard_scrolled_window_new(width,height,tgrid);
+  lives_scrolled_window_set_policy (LIVES_SCROLLED_WINDOW (tscroll), LIVES_POLICY_NEVER, LIVES_POLICY_AUTOMATIC);
+
+  // dual monitor mode, the gui monitor can show clip thumbnails
+  lives_widget_hide(mainw->eventbox);
+
+  // insert a scrolled window
+
+  lives_box_pack_start (GTK_BOX (mainw->vbox1), tscroll, TRUE, TRUE, 0);
+
+  // add thumbs to grid
+
+  if (prefs->gui_monitor==0) {
+    scr_width=mainw->scr_width;
+  }
+  else {
+    scr_width=mainw->mgeom[prefs->gui_monitor-1].width;
+  }
+
+  cpw=scr_width/width;
+
+  while (cliplist!=NULL) {
+    i=GPOINTER_TO_INT(cliplist->data);
+    if (i==mainw->scrap_file||i==mainw->ascrap_file||
+	(mainw->files[i]->clip_type!=CLIP_TYPE_DISK&&mainw->files[i]->clip_type!=CLIP_TYPE_FILE&&
+	 mainw->files[i]->clip_type!=CLIP_TYPE_YUV4MPEG&&mainw->files[i]->clip_type!=CLIP_TYPE_VIDEODEV)||
+	mainw->files[i]->frames==0) {
+      cliplist=cliplist->next;
+      continue;
+    }
+
+    // make a small thumbnail, add it to the clips box
+    thumbnail=make_thumb(NULL,i,width,height,mainw->files[i]->start,TRUE);
+
+    eventbox=gtk_event_box_new();
+
+    if (palette->style&STYLE_4) {
+      lives_widget_set_bg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+    }
+
+    gtk_widget_add_events (eventbox, GDK_BUTTON_RELEASE_MASK | GDK_BUTTON_PRESS_MASK | GDK_ENTER_NOTIFY);
+    //g_signal_connect (GTK_OBJECT(eventbox), "enter-notify-event",G_CALLBACK (on_clipbox_enter),(gpointer)mt);
+
+    vbox = lives_vbox_new (FALSE, 6.*widget_opts.scale);
+
+    thumb_image=lives_image_new();
+    lives_image_set_from_pixbuf(GTK_IMAGE(thumb_image),thumbnail);
+    if (thumbnail!=NULL) lives_object_unref(thumbnail);
+    lives_container_add (GTK_CONTAINER (eventbox), vbox);
+
+    if (count>0) {
+      if (count==cpw-1) count=0;
+      else {
+	gtk_grid_attach_next_to(GTK_GRID(tgrid),eventbox,sibl,GTK_POS_RIGHT,1,1);
+	sibl=eventbox;
+      }
+    }
+
+    if (count==0) {
+      gtk_grid_attach_next_to(GTK_GRID(tgrid),eventbox,usibl,GTK_POS_BOTTOM,1,1);
+      sibl=usibl=eventbox;
+    }
+
+    g_snprintf (filename,PATH_MAX,"%s",(tmp=g_path_get_basename(mainw->files[i]->name)));
+    g_free(tmp);
+    get_basename(filename);
+    g_snprintf (clip_name,CLIP_LABEL_LENGTH,"  %s  ",filename);
+    label=gtk_label_new (clip_name);
+
+    //if (palette->style&STYLE_3) lives_widget_set_fg_color (label, LIVES_WIDGET_STATE_PRELIGHT, &palette->info_text);
+    //if (palette->style&STYLE_4) lives_widget_set_fg_color (label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+
+    lives_box_pack_start (GTK_BOX (vbox), label, FALSE, FALSE, 0);
+    lives_box_pack_start (GTK_BOX (vbox), thumb_image, FALSE, FALSE, 0);
+      
+    if (mainw->files[i]->frames>0) {
+      gchar *tmp;
+      label=gtk_label_new ((tmp=g_strdup_printf (_("%d frames"),mainw->files[i]->frames)));
+      g_free(tmp);
+      //if (palette->style&STYLE_3) lives_widget_set_fg_color (label, LIVES_WIDGET_STATE_PRELIGHT, &palette->info_text);
+      //if (palette->style&STYLE_4) lives_widget_set_fg_color (label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+      lives_box_pack_start (GTK_BOX (vbox), label, FALSE, FALSE, 0);
+
+      label=gtk_label_new ("");
+
+      //if (palette->style&STYLE_3) lives_widget_set_fg_color (label, LIVES_WIDGET_STATE_PRELIGHT, &palette->info_text);
+      //if (palette->style&STYLE_4) lives_widget_set_fg_color (label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+      lives_box_pack_start (GTK_BOX (vbox), label, FALSE, FALSE, 0);
+
+      label=gtk_label_new ("");
+
+      //if (palette->style&STYLE_3) lives_widget_set_fg_color (label, LIVES_WIDGET_STATE_PRELIGHT, &palette->info_text);
+      //if (palette->style&STYLE_4) lives_widget_set_fg_color (label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+      lives_box_pack_start (GTK_BOX (vbox), label, FALSE, FALSE, 0);
+
+    }
+
+    count++;
+      
+    g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
+		      G_CALLBACK (switch_clip_cb),
+		      GINT_TO_POINTER(i));
+      
+    cliplist=cliplist->next;
+  }
+
+  lives_widget_show_all(tscroll);
+
+  mainw->ce_thumbs=TRUE;
+
+#endif
+}
+
+
+void end_ce_thumb_mode(void) {
+  lives_widget_destroy(tscroll);
+  lives_widget_show(mainw->eventbox);
+  mainw->ce_thumbs=FALSE;
+}

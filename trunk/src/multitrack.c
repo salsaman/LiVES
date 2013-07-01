@@ -218,7 +218,7 @@ static boolean save_event_list_inner(lives_mt *mt, int fd, weed_plant_t *event_l
 }
 
 
-static LiVESPixbuf *make_thumb (lives_mt *mt, int file, int width, int height, int frame, boolean noblanks) {
+LiVESPixbuf *make_thumb (lives_mt *mt, int file, int width, int height, int frame, boolean noblanks) {
   LiVESPixbuf *thumbnail=NULL,*pixbuf;
   GError *error=NULL;
   char *buf;
@@ -235,7 +235,7 @@ static LiVESPixbuf *make_thumb (lives_mt *mt, int file, int width, int height, i
 
   if (width<2||height<2) return NULL;
 
-  if (mt->idlefunc>0) {
+  if (mt!=NULL&&mt->idlefunc>0) {
     needs_idlefunc=TRUE;
     g_source_remove(mt->idlefunc);
     mt->idlefunc=0;
@@ -7791,7 +7791,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
                       G_CALLBACK (on_mouse_scroll),
                       mt);
 
-  gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (mt->clip_scroll), GTK_POLICY_AUTOMATIC, GTK_POLICY_NEVER);
+  lives_scrolled_window_set_policy (LIVES_SCROLLED_WINDOW (mt->clip_scroll), LIVES_POLICY_AUTOMATIC, LIVES_POLICY_NEVER);
 
   lives_widget_set_hexpand(mt->clip_scroll,TRUE);
 
@@ -8051,7 +8051,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   vbox = lives_vbox_new (FALSE, 0);
   lives_box_pack_start(GTK_BOX(mt->in_out_box),vbox,FALSE,TRUE,0);
 
-  mt->in_image=gtk_image_new();
+  mt->in_image=lives_image_new();
   lives_widget_set_hexpand(mt->in_image,TRUE);
   lives_widget_set_vexpand(mt->in_image,TRUE);
 
@@ -8115,7 +8115,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 
   lives_box_pack_end(GTK_BOX(mt->in_out_box),vbox,FALSE,TRUE,0);
 
-  mt->out_image=gtk_image_new();
+  mt->out_image=lives_image_new();
   lives_widget_set_hexpand(mt->out_image,TRUE);
   lives_widget_set_vexpand(mt->out_image,TRUE);
 
@@ -10223,7 +10223,7 @@ void mt_init_clips (lives_mt *mt, int orig_file, boolean add) {
   GtkWidget *vbox, *label;
   GtkWidget *eventbox;
 
-  GdkPixbuf *thumbnail;
+  LiVESPixbuf *thumbnail;
 
   GList *cliplist=mainw->cliplist;
 
@@ -10273,7 +10273,7 @@ void mt_init_clips (lives_mt *mt, int orig_file, boolean add) {
 
       vbox = lives_vbox_new (FALSE, 6.*widget_opts.scale);
 
-      thumb_image=gtk_image_new();
+      thumb_image=lives_image_new();
       lives_image_set_from_pixbuf(GTK_IMAGE(thumb_image),thumbnail);
       if (thumbnail!=NULL) lives_object_unref(thumbnail);
       lives_container_add (GTK_CONTAINER (eventbox), vbox);
@@ -10941,8 +10941,8 @@ void clear_context (lives_mt *mt) {
 
   lives_container_add (GTK_CONTAINER (mt->context_frame), mt->context_scroll);
 
-  gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (mt->context_scroll), GTK_POLICY_AUTOMATIC, 
-				  GTK_POLICY_AUTOMATIC);
+  lives_scrolled_window_set_policy (LIVES_SCROLLED_WINDOW (mt->context_scroll), LIVES_POLICY_AUTOMATIC, 
+				    LIVES_POLICY_AUTOMATIC);
   
   mt->context_box = lives_vbox_new (FALSE, 4);
   if (palette->style&STYLE_1) {
@@ -12303,7 +12303,7 @@ void polymorph (lives_mt *mt, lives_mt_poly_state_t poly) {
     mt->fx_list_scroll = gtk_scrolled_window_new (NULL, NULL);
     lives_widget_set_hexpand(mt->fx_list_scroll,TRUE);
 
-    gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (mt->fx_list_scroll), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+    lives_scrolled_window_set_policy (LIVES_SCROLLED_WINDOW (mt->fx_list_scroll), LIVES_POLICY_AUTOMATIC, LIVES_POLICY_AUTOMATIC);
     lives_box_pack_start (GTK_BOX (mt->fx_list_box), mt->fx_list_scroll, TRUE, TRUE, 0);
     lives_box_pack_start(GTK_BOX(mt->poly_box),mt->fx_list_box,TRUE,TRUE,0);
 
@@ -12507,7 +12507,7 @@ void polymorph (lives_mt *mt, lives_mt_poly_state_t poly) {
     mt->fx_list_box=lives_vbox_new(FALSE,0);
     mt->fx_list_scroll = gtk_scrolled_window_new (NULL, NULL);
     lives_widget_set_hexpand(mt->fx_list_scroll,TRUE);
-    gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (mt->fx_list_scroll), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+    lives_scrolled_window_set_policy (LIVES_SCROLLED_WINDOW (mt->fx_list_scroll), LIVES_POLICY_AUTOMATIC, LIVES_POLICY_AUTOMATIC);
     lives_box_pack_start (GTK_BOX (mt->fx_list_box), mt->fx_list_scroll, TRUE, TRUE, 0);
     lives_box_pack_start(GTK_BOX(mt->poly_box),mt->fx_list_box,TRUE,TRUE,0);
 

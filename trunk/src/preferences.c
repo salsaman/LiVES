@@ -553,6 +553,8 @@ lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_yuv4
   int gui_monitor=lives_spin_button_get_value(GTK_SPIN_BUTTON(prefsw->spinbutton_gmoni));
   int play_monitor=lives_spin_button_get_value(GTK_SPIN_BUTTON(prefsw->spinbutton_pmoni));
 
+  boolean ce_thumbs=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->ce_thumbs));
+
   boolean forcesmon=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->forcesmon));
   boolean startup_ce=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->rb_startup_ce));
 
@@ -849,6 +851,11 @@ lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_yuv4
 
       resize_widgets_for_monitor(TRUE);
     }
+  }
+
+  if (ce_thumbs!=prefs->ce_thumb_mode) {
+    prefs->ce_thumb_mode=ce_thumbs;
+    set_boolean_pref("ce_thumb_mode",ce_thumbs);
   }
 
 
@@ -1529,10 +1536,22 @@ void after_vpp_changed (GtkWidget *vpp_combo, gpointer advbutton) {
 
 
 static void on_forcesmon_toggled (GtkToggleButton *tbutton, gpointer user_data) {
+  int gui_monitor=lives_spin_button_get_value(GTK_SPIN_BUTTON(prefsw->spinbutton_gmoni));
+  int play_monitor=lives_spin_button_get_value(GTK_SPIN_BUTTON(prefsw->spinbutton_pmoni));
   lives_widget_set_sensitive(prefsw->spinbutton_gmoni,!lives_toggle_button_get_active(tbutton));
   lives_widget_set_sensitive(prefsw->spinbutton_pmoni,!lives_toggle_button_get_active(tbutton));
+  lives_widget_set_sensitive(prefsw->ce_thumbs,!lives_toggle_button_get_active(tbutton)&&
+			     play_monitor!=gui_monitor&&
+			     play_monitor!=0&&capable->nmonitors>0);
 }
 
+static void pmoni_gmoni_changed (GtkWidget *sbut, gpointer advbutton) {
+  int gui_monitor=lives_spin_button_get_value(GTK_SPIN_BUTTON(prefsw->spinbutton_gmoni));
+  int play_monitor=lives_spin_button_get_value(GTK_SPIN_BUTTON(prefsw->spinbutton_pmoni));
+  lives_widget_set_sensitive(prefsw->ce_thumbs,play_monitor!=gui_monitor&&
+			     play_monitor!=0&&!lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->forcesmon))&&
+			     capable->nmonitors>0);
+}
 
 static void on_mtbackevery_toggled (GtkToggleButton *tbutton, gpointer user_data) {
   _prefsw *xprefsw;
@@ -2055,7 +2074,7 @@ _prefsw *create_prefs_dialog (void) {
   
   list_scroll = gtk_scrolled_window_new(lives_tree_view_get_hadjustment(LIVES_TREE_VIEW(prefsw->prefs_list)), NULL);
   lives_widget_show(list_scroll);
-  gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (list_scroll), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+  lives_scrolled_window_set_policy (LIVES_SCROLLED_WINDOW (list_scroll), LIVES_POLICY_AUTOMATIC, LIVES_POLICY_AUTOMATIC);
   lives_container_add (GTK_CONTAINER (list_scroll), prefsw->prefs_list);
 
   if (palette->style&STYLE_1) {
@@ -2231,6 +2250,19 @@ _prefsw *create_prefs_dialog (void) {
   g_signal_connect (GTK_OBJECT (prefsw->forcesmon), "toggled",
 		    G_CALLBACK (on_forcesmon_toggled),
 		    NULL);
+
+
+  hbox = lives_hbox_new (FALSE, 0);
+  lives_box_pack_start (GTK_BOX (prefsw->vbox_right_gui), hbox, FALSE, FALSE, widget_opts.packing_height);
+
+  prefsw->ce_thumbs = lives_standard_check_button_new(_("Show clip thumbnails during playback"),TRUE,
+						      LIVES_BOX(hbox),NULL);
+
+  lives_widget_set_sensitive (prefsw->ce_thumbs, prefs->play_monitor!=prefs->gui_monitor&&
+			      prefs->play_monitor!=0&&!prefs->force_single_monitor&&
+			      capable->nmonitors>0);
+
+  lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (prefsw->ce_thumbs), prefs->ce_thumb_mode);
 
   icon = g_build_filename(prefs->prefix_dir, ICON_DIR, "pref_gui.png", NULL);
   pixbuf_gui = gdk_pixbuf_new_from_file(icon, NULL);
@@ -4115,6 +4147,10 @@ _prefsw *create_prefs_dialog (void) {
 
   g_signal_connect(GTK_OBJECT(prefsw->spinbutton_gmoni), "changed", G_CALLBACK(apply_button_set_enabled), NULL);
   g_signal_connect(GTK_OBJECT(prefsw->spinbutton_pmoni), "changed", G_CALLBACK(apply_button_set_enabled), NULL);
+
+  g_signal_connect(GTK_OBJECT(prefsw->spinbutton_gmoni), "changed", G_CALLBACK(pmoni_gmoni_changed), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->spinbutton_pmoni), "changed", G_CALLBACK(pmoni_gmoni_changed), NULL);
+
   g_signal_connect(GTK_OBJECT(prefsw->forcesmon), "toggled", G_CALLBACK(apply_button_set_enabled), NULL);
   g_signal_connect(GTK_OBJECT(prefsw->checkbutton_stream_audio), "toggled", G_CALLBACK(apply_button_set_enabled), 
 		   NULL);

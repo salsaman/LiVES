@@ -332,6 +332,8 @@ typedef struct {
 
   boolean present;
 
+  boolean ce_thumb_mode;
+
 } _prefs;
 
 enum {
@@ -497,6 +499,7 @@ typedef struct {
   GtkWidget *mt_autoback_never;
   GtkWidget *spinbutton_gmoni;
   GtkWidget *spinbutton_pmoni;
+  GtkWidget *ce_thumbs;
   GtkWidget *checkbutton_mt_exit_render;
   GtkWidget *pertrack_checkbutton;
   GtkWidget *backaudio_checkbutton;

@@ -1037,6 +1037,8 @@ static void lives_init(_ign_opts *ign_opts) {
   mainw->signal_caught=0;
   mainw->signals_deferred=FALSE;
 
+  mainw->ce_thumbs=FALSE;
+
   /////////////////////////////////////////////////// add new stuff just above here ^^
 
 
@@ -1152,6 +1154,8 @@ static void lives_init(_ign_opts *ign_opts) {
     prefs->force64bit=FALSE;
 
     prefs->present=FALSE;
+
+    prefs->ce_thumb_mode=get_boolean_pref("ce_thumb_mode");
 
     //////////////////////////////////////////////////////////////////
 

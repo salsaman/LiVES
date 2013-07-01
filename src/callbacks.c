@@ -4424,31 +4424,8 @@ gboolean prevclip_callback (GtkAccelGroup *group, GObject *obj, guint keyval, Gd
 	   i!=((type==2||(mainw->playing_file>0&&mainw->num_tr_applied>0&&type!=1))?
 	       mainw->blend_file:mainw->current_file));
 
-  if (type==2||(mainw->num_tr_applied>0&&mainw->playing_file>0&&type!=1)) {
-    if (i!=mainw->blend_file) {
-      if (mainw->blend_file!=-1&&mainw->files[mainw->blend_file]->clip_type==CLIP_TYPE_GENERATOR&&
-	  mainw->blend_file!=mainw->current_file) {
-	mainw->osc_block=TRUE;
-	if (rte_window!=NULL) rtew_set_keych(rte_bg_gen_key(),FALSE);
-	mainw->new_blend_file=i;
-	weed_generator_end ((weed_plant_t *)mainw->files[mainw->blend_file]->ext_src);
-	mainw->osc_block=FALSE;
-      }
-      mainw->blend_file=i;
-      mainw->whentostop=NEVER_STOP;
-    }
-    return TRUE;
-  }
-  
-  if (i==mainw->current_file) return TRUE;
-  if (!cfile->is_loaded) mainw->cancelled=CANCEL_NO_PROPOGATE;
+  switch_clip(type,i);
 
-  if (mainw->playing_file>-1) {
-    do_quick_switch (i);
-  }
-  else {
-    switch_to_file (mainw->current_file,i);
-  }
   return TRUE;
 }
 
@@ -4484,32 +4461,8 @@ gboolean nextclip_callback (GtkAccelGroup *group, GObject *obj, guint keyval, Gd
 	   i!=((type==2||(mainw->playing_file>0&&mainw->num_tr_applied>0&&type!=1))?
 	       mainw->blend_file:mainw->current_file));
   
+  switch_clip(type,i);
 
-  if (type==2||(mainw->num_tr_applied>0&&mainw->playing_file>0&&type!=1)) {
-    if (i!=mainw->blend_file) {
-      if (mainw->blend_file!=-1&&mainw->files[mainw->blend_file]->clip_type==CLIP_TYPE_GENERATOR&&
-	  mainw->blend_file!=mainw->current_file) {
-	mainw->osc_block=TRUE;
-	if (rte_window!=NULL) rtew_set_keych(rte_bg_gen_key(),FALSE);
-	mainw->new_blend_file=i;
-	weed_generator_end ((weed_plant_t *)mainw->files[mainw->blend_file]->ext_src);
-	mainw->osc_block=FALSE;
-      }
-      mainw->blend_file=i;
-      mainw->whentostop=NEVER_STOP;
-    }
-    return TRUE;
-  }
-
-  if (i==mainw->current_file) return TRUE;
-  if (!cfile->is_loaded) mainw->cancelled=CANCEL_NO_PROPOGATE;
-
-  if (mainw->playing_file>-1) {
-    do_quick_switch (i);
-  }
-  else {
-    switch_to_file (mainw->current_file,i);
-  }
   return TRUE;
 }
 
@@ -5698,24 +5651,58 @@ on_show_clipboard_info_activate            (GtkMenuItem     *menuitem,
   mainw->current_file=current_file;
 }
 
-void
-switch_clip_activate                    (GtkMenuItem     *menuitem,
-                                        gpointer         user_data)
-{
-  int i;
+
+void switch_clip(int type, int newclip) {
+  // generic switch clip callback
+
+  // prev clip
+  // type = 0 : if the effect is a transition, this will change the background clip
+  // type = 1 fg only
+  // type = 2 bg only 
+
+  if (mainw->current_file<1||mainw->multitrack!=NULL||mainw->preview||mainw->internal_messaging||
+      (mainw->is_processing&&cfile->is_loaded)||mainw->cliplist==NULL) return;
+
+  if (type==2||(mainw->num_tr_applied>0&&mainw->playing_file>0&&type!=1)) {
+    if (newclip!=mainw->blend_file) {
+      if (mainw->blend_file!=-1&&mainw->files[mainw->blend_file]->clip_type==CLIP_TYPE_GENERATOR&&
+	  mainw->blend_file!=mainw->current_file) {
+	mainw->osc_block=TRUE;
+	if (rte_window!=NULL) rtew_set_keych(rte_bg_gen_key(),FALSE);
+	mainw->new_blend_file=newclip;
+	weed_generator_end ((weed_plant_t *)mainw->files[mainw->blend_file]->ext_src);
+	mainw->osc_block=FALSE;
+      }
+      mainw->blend_file=newclip;
+      mainw->whentostop=NEVER_STOP;
+    }
+    return;
+  }
+  
+  if (newclip==mainw->current_file) return;
+  if (!cfile->is_loaded) mainw->cancelled=CANCEL_NO_PROPOGATE;
+
+  if (mainw->playing_file>-1) {
+    mainw->pre_src_file=newclip;
+    mainw->new_clip=newclip;
+  }
+  else {
+    switch_to_file (mainw->current_file,newclip);
+  }
+}
+
+
+void switch_clip_activate (GtkMenuItem *menuitem, gpointer user_data) {
+  // switch clips from the clips menu
+
+  register int i;
   if (mainw->current_file<1||mainw->preview||(mainw->is_processing&&cfile->is_loaded)||mainw->cliplist==NULL) return;
 
   for (i=1;i<MAX_FILES;i++) {
     if (!(mainw->files[i]==NULL)) {
       if (GTK_MENU_ITEM(menuitem)==GTK_MENU_ITEM(mainw->files[i]->menuentry)) {
 	if (!(i==mainw->current_file)) {
-	  if (!cfile->is_loaded) mainw->cancelled=CANCEL_NO_PROPOGATE;
-	  if (mainw->playing_file>-1) {
-	    do_quick_switch (i);
-	  }
-	  else {
-	    switch_to_file(mainw->current_file,i);
-	  }
+	  switch_clip(0,i);
 	}
 	return;
       }
@@ -10343,11 +10330,10 @@ gboolean show_sync_callback (GtkAccelGroup *group, GObject *obj, guint keyval, G
 
 
 
-gboolean storeclip_callback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer clip_number)
-{
+gboolean storeclip_callback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer clip_number) {
   // ctrl-fn key will store a clip for higher switching
-  gint clip=GPOINTER_TO_INT (clip_number)-1;
-  int i;
+  int clip=GPOINTER_TO_INT (clip_number)-1;
+  register int i;
 
   if (clip>=FN_KEYS-1) {
     // last fn key will clear all
@@ -10361,30 +10347,14 @@ gboolean storeclip_callback (GtkAccelGroup *group, GObject *obj, guint keyval, G
     mainw->clipstore[clip]=mainw->current_file;
   }
   else {
-  if (mainw->current_file<1||mainw->preview||mainw->internal_messaging||(mainw->is_processing&&cfile->is_loaded)||
-      mainw->cliplist==NULL) return TRUE;
-    if (mainw->playing_file==-1) {
-      if (!cfile->is_loaded) mainw->cancelled=CANCEL_NO_PROPOGATE;
-      switch_to_file (mainw->current_file,mainw->clipstore[clip]);
-    }
-    else {
-      if (mainw->playing_file>0) {
-	if (mainw->num_tr_applied>0) {
-	  mainw->blend_file=mainw->clipstore[clip];
-	}
-	else do_quick_switch (mainw->clipstore[clip]);
-      }
-    }
+    switch_clip(0,mainw->clipstore[clip]);
   }
   return TRUE;
 }
 
 
 
-void
-on_toolbar_hide (GtkButton *button,
-		 gpointer user_data)
-{
+void on_toolbar_hide (GtkButton *button, gpointer user_data) {
   lives_widget_hide (mainw->tb_hbox);
   fullscreen_internal();
   future_prefs->show_tool=FALSE;

@@ -1248,7 +1248,8 @@ void on_cancel_keep_button_clicked (GtkButton *, gpointer user_data);
 void on_cleardisk_activate (GtkWidget *, gpointer user_data);
 void on_cleardisk_advanced_clicked (GtkWidget *, gpointer user_data);
 void popup_lmap_errors(GtkMenuItem *, gpointer);
-void on_filesel_button_clicked (GtkButton *button, gpointer user_data);
+void on_filesel_button_clicked (GtkButton *, gpointer user_data);
+void switch_clip(int type, int newclip);
 
 
 //preferences.c
@@ -1269,6 +1270,8 @@ void set_list_pref(const char *key, GList *values);
 boolean apply_prefs(boolean skip_warnings);
 void save_future_prefs(void);
 
+// multitrack.c
+LiVESPixbuf *make_thumb (lives_mt *, int file, int width, int height, int frame, boolean noblanks);
 
 // paramspecial.c
 LiVESPixbuf *mt_framedraw(lives_mt *, LiVESPixbuf *);

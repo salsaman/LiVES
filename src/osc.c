@@ -971,12 +971,8 @@ void lives_osc_cb_fgclip_set(void *context, int arglen, const void *vargs, OSCTi
 
   if (clip>0&&clip<MAX_FILES-1) {
     if (mainw->files[clip]!=NULL&&(mainw->files[clip]->clip_type==CLIP_TYPE_DISK||mainw->files[clip]->clip_type==CLIP_TYPE_FILE)) {
-      if (mainw->playing_file>0) {
-	mainw->pre_src_file=clip;
-	mainw->new_clip=clip;
-      }
-      else if (mainw->playing_file==-1) {
-	switch_to_file(mainw->current_file,clip);
+      if (mainw->playing_file!=0) {
+	switch_clip(1,clip);
 	if (prefs->omc_noisy) {
 	  gchar *msg=g_strdup_printf("%d",clip);
 	  lives_osc_notify_success(msg);
@@ -1001,7 +997,7 @@ void lives_osc_cb_bgclip_set(void *context, int arglen, const void *vargs, OSCTi
 
   if (clip>0&&clip<MAX_FILES-1) {
     if (mainw->files[clip]!=NULL&&(mainw->files[clip]->clip_type==CLIP_TYPE_DISK||mainw->files[clip]->clip_type==CLIP_TYPE_FILE)) {
-      mainw->blend_file=clip;
+      switch_clip(2,clip);
       if (prefs->omc_noisy) {
 	gchar *msg=g_strdup_printf("%d",clip);
 	lives_osc_notify_success(msg);
@@ -1032,12 +1028,8 @@ void lives_osc_cb_fgclip_select(void *context, int arglen, const void *vargs, OS
   i=GPOINTER_TO_INT(g_list_nth_data(mainw->cliplist,clip-1));
     
   if (i==mainw->current_file) return lives_osc_notify_failure();
-  if (mainw->playing_file>0) {
-    mainw->pre_src_file=i;
-    mainw->new_clip=i;
-  }
-  else if (mainw->playing_file==-1) {
-    switch_to_file(mainw->current_file,i);
+  if (mainw->playing_file!=0) {
+    switch_clip(1,i);
     if (prefs->omc_noisy) {
       gchar *msg=g_strdup_printf("%d",i);
       lives_osc_notify_success(msg);
@@ -1072,7 +1064,7 @@ void lives_osc_cb_bgclip_select(void *context, int arglen, const void *vargs, OS
     
   if (i==mainw->blend_file) return lives_osc_notify_failure();
 
-  mainw->blend_file=i;
+  switch_clip(2,i);
 
   if (prefs->omc_noisy) {
     gchar *msg=g_strdup_printf("%d",i);

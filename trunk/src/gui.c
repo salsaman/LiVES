@@ -4097,7 +4097,7 @@ void resize_play_window (void) {
 	}
       }
 
-      if (prefs->ce_thumb_mode&&prefs->play_monitor!=prefs->gui_monitor&&
+      if (1||prefs->ce_thumb_mode&&prefs->play_monitor!=prefs->gui_monitor&&
 	  prefs->play_monitor!=0&&!prefs->force_single_monitor&&
 	  capable->nmonitors>0&&mainw->multitrack==NULL) {
 	start_ce_thumb_mode();

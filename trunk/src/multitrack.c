@@ -73,6 +73,8 @@ static boolean mt_add_block_effect_idle (gpointer mt);
 static boolean mt_add_region_effect_idle (gpointer mt);
 static boolean mt_fx_edit_idle (gpointer mt);
 
+static void paint_lines(lives_mt *mt, double currtime, boolean unpaint);
+
 /// used to match clips from the event recorder with renumbered clips (without gaps)
 static int renumbered_clips[MAX_FILES+1];
 static double lfps[MAX_FILES+1]; ///< table of layout fps
@@ -2820,8 +2822,14 @@ void mt_show_current_frame(lives_mt *mt, boolean return_layer) {
 
 
 void mt_tl_move(lives_mt *mt, double pos_rel) {
+  int ebwidth,offset,offset_old;
   double pos;
+
   if (mainw->playing_file>-1) return;
+
+  ebwidth=lives_widget_get_allocation_width(mt->timeline);
+
+  offset_old=(lives_ruler_get_value(LIVES_RULER(mt->timeline))-mt->tl_min)/(mt->tl_max-mt->tl_min)*(double)ebwidth;
 
   pos=lives_ruler_get_value(LIVES_RULER (mt->timeline))+pos_rel;
 
@@ -2871,6 +2879,12 @@ void mt_tl_move(lives_mt *mt, double pos_rel) {
 
   if (mt->poly_state==POLY_FX_STACK) polymorph(mt,POLY_FX_STACK);
   if (mt->is_ready) mt_show_current_frame(mt, FALSE);
+
+  offset=(pos-mt->tl_min)/(mt->tl_max-mt->tl_min)*(double)ebwidth;
+
+  if (offset==offset_old) return;
+
+  paint_lines(mt,pos,TRUE);
 
 }
 
@@ -13260,46 +13274,21 @@ void unpaint_lines(lives_mt *mt) {
 }
 
 
-void animate_multitrack (lives_mt *mt) {
-  // update timeline pointer(s)
+static void paint_lines(lives_mt *mt, double currtime, boolean unpaint) {
   lives_painter_t *cr;
 
   GtkWidget *eventbox=NULL,*aeventbox=NULL;
 
-  double currtime=mainw->currticks/U_SEC;
-  double tl_page;
-
   boolean expanded=FALSE;
   boolean is_video=FALSE;
 
-  int offset,offset_old;
-
   int len=g_list_length (mt->video_draws);
-
   int ebwidth=lives_widget_get_allocation_width(mt->timeline);
+  int offset;
 
   register int i;
 
-  time_to_string(mt,currtime,TIMECODE_LENGTH);
-
   offset=(currtime-mt->tl_min)/(mt->tl_max-mt->tl_min)*(double)ebwidth;
-  offset_old=(lives_ruler_get_value(LIVES_RULER(mt->timeline))-mt->tl_min)/(mt->tl_max-mt->tl_min)*(double)ebwidth;
-
-  if (offset==offset_old) return;
-
-  if (mt->opts.follow_playback) {
-    if (currtime>(mt->tl_min+((tl_page=mt->tl_max-mt->tl_min))*.85)&&event_list_get_end_secs(mt->event_list)>mt->tl_max) {
-      // scroll right one page
-      mt->tl_min+=tl_page*.85;
-      mt->tl_max+=tl_page*.85;
-      mt_zoom(mt,-1.);
-    }
-  }
-
-  lives_ruler_set_value(LIVES_RULER (mt->timeline),currtime);
-  lives_widget_queue_draw (mt->timeline);
-
-  if (mt->redraw_block) return; // don't update during expose event, otherwise we might leave lines
 
   for (i=-mt->opts.back_audio_tracks;i<len;i++) {
     if (i==-1) {
@@ -13311,7 +13300,7 @@ void animate_multitrack (lives_mt *mt) {
     }
     expanded=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(eventbox),"expanded"));
     if (lives_widget_is_visible(eventbox)) {
-      unpaint_line(mt,eventbox);
+      if (unpaint) unpaint_line(mt,eventbox);
 
       if (offset>0&&offset<ebwidth) {
 
@@ -13342,7 +13331,7 @@ void animate_multitrack (lives_mt *mt) {
 	aeventbox=GTK_WIDGET(g_object_get_data(G_OBJECT(eventbox),"atrack"));
 	expanded=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(aeventbox),"expanded"));
 	if (lives_widget_is_visible(aeventbox)) {
-	  unpaint_line(mt,aeventbox);
+	  if (unpaint) unpaint_line(mt,aeventbox);
 
 	  if (offset>0&&offset<ebwidth) {
 	    g_object_set_data(G_OBJECT(aeventbox),"backup_timepos_h",
@@ -13368,7 +13357,7 @@ void animate_multitrack (lives_mt *mt) {
       if (expanded) eventbox=(GtkWidget *)g_object_get_data(G_OBJECT(aeventbox),"achan0");
       else continue;
       if (lives_widget_is_visible(eventbox)) {
-	unpaint_line(mt,eventbox);
+	if (unpaint) unpaint_line(mt,eventbox);
 
 	if (offset>0&&offset<ebwidth) {
 	  g_object_set_data(G_OBJECT(eventbox),"backup_timepos_h",
@@ -13395,7 +13384,7 @@ void animate_multitrack (lives_mt *mt) {
       if (cfile->achans>1) eventbox=(GtkWidget *)g_object_get_data(G_OBJECT(aeventbox),"achan1");
       else continue;
       if (lives_widget_is_visible(eventbox)) {
-	unpaint_line(mt,eventbox);
+	if (unpaint) unpaint_line(mt,eventbox);
 
 	if (offset>0&&offset<ebwidth) {
 	  g_object_set_data(G_OBJECT(eventbox),"backup_timepos_h",
@@ -13419,6 +13408,43 @@ void animate_multitrack (lives_mt *mt) {
       }
     }
   }
+}
+
+
+
+
+
+void animate_multitrack (lives_mt *mt) {
+  // update timeline pointer(s)
+  double currtime=mainw->currticks/U_SEC;
+  double tl_page;
+
+  int offset,offset_old;
+
+  int ebwidth=lives_widget_get_allocation_width(mt->timeline);
+
+  time_to_string(mt,currtime,TIMECODE_LENGTH);
+
+  offset=(currtime-mt->tl_min)/(mt->tl_max-mt->tl_min)*(double)ebwidth;
+  offset_old=(lives_ruler_get_value(LIVES_RULER(mt->timeline))-mt->tl_min)/(mt->tl_max-mt->tl_min)*(double)ebwidth;
+
+  if (offset==offset_old) return;
+
+  if (mt->opts.follow_playback) {
+    if (currtime>(mt->tl_min+((tl_page=mt->tl_max-mt->tl_min))*.85)&&event_list_get_end_secs(mt->event_list)>mt->tl_max) {
+      // scroll right one page
+      mt->tl_min+=tl_page*.85;
+      mt->tl_max+=tl_page*.85;
+      mt_zoom(mt,-1.);
+    }
+  }
+
+  lives_ruler_set_value(LIVES_RULER (mt->timeline),currtime);
+  lives_widget_queue_draw (mt->timeline);
+
+  if (mt->redraw_block) return; // don't update during expose event, otherwise we might leave lines
+
+  paint_lines(mt,currtime,TRUE);
 } 
 
 
@@ -16322,16 +16348,17 @@ void mt_post_playback(lives_mt *mt) {
     mt_tl_move(mt,mt->ptr_time-lives_ruler_get_value(LIVES_RULER(mt->timeline)));
   }
   else {
+    double curtime;
     mt->is_paused=TRUE;
-    if (lives_ruler_get_value(LIVES_RULER(mt->timeline))>0.) {
+    if ((curtime=lives_ruler_get_value(LIVES_RULER(mt->timeline)))>0.) {
       lives_widget_set_sensitive (mt->rewind,TRUE);
       lives_widget_set_sensitive (mainw->m_rewindbutton, TRUE);
+      //lives_ruler_set_value(LIVES_RULER (mt->timeline),curtime+2./cfile->fps);
     }
   }
 
   mainw->cancelled=CANCEL_NONE;
   lives_widget_show(mainw->playarea);
-  unpaint_lines(mt);
 
   if (!mt->is_rendering) {
     if (mt->poly_state==POLY_PARAMS) {

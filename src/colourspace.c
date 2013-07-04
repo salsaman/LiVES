@@ -10460,6 +10460,8 @@ boolean resize_layer (weed_plant_t *layer, int width, int height, LiVESInterpTyp
 
       weed_free(pd_array); weed_free(or_array);
 
+      width*=weed_palette_get_pixels_per_macropixel(opal_hint);
+
       if ((swscale=swscale_find_context(iwidth,iheight,width,height,ipixfmt,opixfmt,flags))==NULL) {
 	swscale = sws_getContext(iwidth, iheight, ipixfmt, width, height, opixfmt, flags, NULL, NULL, NULL );
 	store_ctx=TRUE;

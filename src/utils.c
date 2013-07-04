@@ -2651,7 +2651,7 @@ void get_play_times(void) {
 	if (lives_widget_get_parent(mainw->preview_box)==NULL&&(cfile->clip_type==CLIP_TYPE_DISK||
 					       cfile->clip_type==CLIP_TYPE_FILE)&&!mainw->is_rendering) {
 	  lives_widget_queue_draw(mainw->play_window);
-	  lives_container_add (GTK_CONTAINER (mainw->play_window), mainw->preview_box);
+	  lives_container_add (LIVES_CONTAINER (mainw->play_window), mainw->preview_box);
 	  lives_widget_grab_focus (mainw->preview_spinbutton);
 	  play_window_set_title();
 	  load_preview_image(FALSE);

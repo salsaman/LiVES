@@ -130,6 +130,12 @@ typedef GtkScaleButton                    LiVESScaleButton;
 typedef GtkRange                          LiVESScaleButton;
 #endif
 
+#if GTK_CHECK_VERSION(3,2,0)
+typedef GtkGrid                           LiVESGrid;
+#else
+typedef GtkWidget                         LiVESGrid;
+#endif
+
 typedef GClosure                          LiVESWidgetClosure;
 
 
@@ -199,6 +205,23 @@ typedef enum {
 } lives_icon_size_t;
 
 
+// scrolledwindow policies
+typedef enum {
+  LIVES_POLICY_ALWAYS=GTK_POLICY_ALWAYS,
+  LIVES_POLICY_AUTOMATIC=GTK_POLICY_AUTOMATIC,
+  LIVES_POLICY_NEVER=GTK_POLICY_NEVER
+} lives_policy_t;
+
+
+typedef enum {
+  LIVES_POS_LEFT=GTK_POS_LEFT,
+  LIVES_POS_RIGHT=GTK_POS_RIGHT,
+  LIVES_POS_TOP=GTK_POS_TOP,
+  LIVES_POS_BOTTOM=GTK_POS_BOTTOM
+} lives_position_t;
+
+
+
 #define LIVES_ACCEL_VISIBLE GTK_ACCEL_VISIBLE
   
 
@@ -255,6 +278,7 @@ typedef gpointer                          LiVESObjectPtr;
 #define LIVES_RADIO_BUTTON(widget) GTK_RADIO_BUTTON(widget)
 #define LIVES_SPIN_BUTTON(widget) GTK_SPIN_BUTTON(widget)
 #define LIVES_MENU(widget) GTK_MENU(widget)
+#define LIVES_IMAGE(widget) GTK_IMAGE(widget)
 #define LIVES_IMAGE_MENU_ITEM(widget) GTK_IMAGE_MENU_ITEM(widget)
 #define LIVES_FILE_CHOOSER(widget) GTK_FILE_CHOOSER(widget)
 #define LIVES_SCROLLED_WINDOW(widget) GTK_SCROLLED_WINDOW(widget)
@@ -276,6 +300,12 @@ typedef gpointer                          LiVESObjectPtr;
 #define LIVES_RULER(widget) GTK_RULER(widget)
 #endif
 
+#if GTK_CHECK_VERSION(3,2,0)
+#define LIVES_GRID(widget) GTK_GRID(widget)
+#else
+#define LIVES_GRID(widget) GTK_WIDGET(widget)
+#endif
+
 #define LIVES_RANGE(widget) GTK_RANGE(widget)
 
 #define LIVES_XEVENT(event) GDK_EVENT(event)
@@ -290,14 +320,6 @@ typedef gpointer                          LiVESObjectPtr;
 #endif
 #define LIVES_IS_COMBO(widget) GTK_IS_COMBO_BOX(widget)
 #define LIVES_IS_BUTTON(widget) GTK_IS_BUTTON(widget)
-
-// scrolledwindow policies
-
-typedef GtkPolicyType LiVESPolicyType;
-
-#define LIVES_POLICY_ALWAYS    GTK_POLICY_ALWAYS
-#define LIVES_POLICY_AUTOMATIC GTK_POLICY_AUTOMATIC
-#define LIVES_POLICY_NEVER     GTK_POLICY_NEVER
 
 // (image resize) interpolation types
 #define LIVES_INTERP_BEST   GDK_INTERP_HYPER
@@ -633,6 +655,8 @@ boolean lives_color_parse(const char *spec, LiVESWidgetColor *);
 
 LiVESWidgetColor *lives_widget_color_copy(LiVESWidgetColor *c1orNULL, const LiVESWidgetColor *c2);
 
+LiVESWidget *lives_event_box_new(void);
+
 LiVESWidget *lives_image_new(void);
 LiVESWidget *lives_image_new_from_file(const char *filename);
 LiVESWidget *lives_image_new_from_stock(const char *stock_id, lives_icon_size_t size);
@@ -657,6 +681,7 @@ void lives_window_unmaximize(LiVESWindow *);
 LiVESAdjustment *lives_adjustment_new(double value, double lower, double upper, 
 						   double step_increment, double page_increment, double page_size);
 
+void lives_box_reorder_child(LiVESBox *, LiVESWidget *child, int pos);
 void lives_box_set_homogeneous(LiVESBox *, boolean homogeneous);
 void lives_box_set_spacing(LiVESBox *, int spacing);
 
@@ -781,6 +806,10 @@ void lives_entry_set_text(LiVESEntry *, const char *text);
 double lives_scale_button_get_value(LiVESScaleButton *);
 
 LiVESWidget *lives_grid_new(void);
+boolean lives_grid_set_row_spacing(LiVESGrid *, uint32_t spacing);
+boolean lives_grid_set_column_spacing(LiVESGrid *, uint32_t spacing);
+boolean lives_grid_attach_next_to(LiVESGrid *, LiVESWidget *child, LiVESWidget *sibling, 
+				  lives_position_t side, int width, int height);
 
 LiVESWidget *lives_menu_new(void);
 
@@ -833,7 +862,7 @@ lives_display_t lives_widget_get_display_type(LiVESWidget *);
 
 uint64_t lives_widget_get_xwinid(LiVESWidget *, const char *failure_msg);
 
-void lives_scrolled_window_set_policy(LiVESScrolledWindow *, LiVESPolicyType hpolicy, LiVESPolicyType vpolicy);
+void lives_scrolled_window_set_policy(LiVESScrolledWindow *, lives_policy_t hpolicy, lives_policy_t vpolicy);
 
 // optional (return TRUE if implemented)
 

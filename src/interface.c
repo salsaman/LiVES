@@ -51,9 +51,9 @@ static GtkWidget *add_deinterlace_checkbox(GtkBox *for_deint) {
   if (LIVES_IS_HBOX(for_deint)) {
     GtkWidget *filler;
     lives_box_pack_start (for_deint, hbox, FALSE, FALSE, widget_opts.packing_width);
-    gtk_box_reorder_child(for_deint, hbox, 0);
+    lives_box_reorder_child(for_deint, hbox, 0);
     filler=add_fill_to_box(LIVES_BOX(for_deint));
-    if (filler!=NULL) gtk_box_reorder_child(for_deint, filler, 1);
+    if (filler!=NULL) lives_box_reorder_child(for_deint, filler, 1);
   }
   else lives_box_pack_start (for_deint, hbox, FALSE, FALSE, widget_opts.packing_height);
 
@@ -99,14 +99,14 @@ void widget_add_preview(GtkWidget *widget, LiVESBox *for_preview, LiVESBox *for_
 
   mainw->fs_playframe = gtk_frame_new (NULL);
   mainw->fs_playalign = gtk_alignment_new (0.,0.,1.,1.);
-  mainw->fs_playarea = gtk_event_box_new ();
+  mainw->fs_playarea = lives_event_box_new ();
 
   if (preview_type==1||preview_type==3) {
 
     lives_widget_show (mainw->fs_playframe);
     lives_widget_show (mainw->fs_playalign);
 
-    lives_container_set_border_width (GTK_CONTAINER(mainw->fs_playframe), widget_opts.border_width);
+    lives_container_set_border_width (LIVES_CONTAINER(mainw->fs_playframe), widget_opts.border_width);
 
     widget_opts.justify=LIVES_JUSTIFY_RIGHT;
     fs_label = lives_standard_label_new (_ ("Preview"));
@@ -117,8 +117,8 @@ void widget_add_preview(GtkWidget *widget, LiVESBox *for_preview, LiVESBox *for_
     lives_box_pack_start (for_preview, mainw->fs_playframe, FALSE, FALSE, 0);
     lives_widget_set_size_request (mainw->fs_playarea, DEFAULT_FRAME_HSIZE, DEFAULT_FRAME_VSIZE);
 
-    lives_container_add (GTK_CONTAINER (mainw->fs_playframe), mainw->fs_playalign);
-    lives_container_add (GTK_CONTAINER (mainw->fs_playalign), mainw->fs_playarea);
+    lives_container_add (LIVES_CONTAINER (mainw->fs_playframe), mainw->fs_playalign);
+    lives_container_add (LIVES_CONTAINER (mainw->fs_playalign), mainw->fs_playarea);
 
     lives_widget_set_bg_color (mainw->fs_playarea, LIVES_WIDGET_STATE_NORMAL, &palette->black);
     lives_widget_set_bg_color (mainw->fs_playframe, LIVES_WIDGET_STATE_NORMAL, &palette->black);
@@ -192,21 +192,21 @@ xprocess * create_processing (const gchar *text) {
 
   vbox2 = lives_vbox_new (FALSE, 0);
   lives_widget_show (vbox2);
-  lives_box_pack_start (GTK_BOX (dialog_vbox), vbox2, TRUE, TRUE, 0);
+  lives_box_pack_start (LIVES_BOX (dialog_vbox), vbox2, TRUE, TRUE, 0);
 
   vbox3 = lives_vbox_new (FALSE, 0);
   lives_widget_show (vbox3);
-  lives_box_pack_start (GTK_BOX (vbox2), vbox3, TRUE, TRUE, 0);
+  lives_box_pack_start (LIVES_BOX (vbox2), vbox3, TRUE, TRUE, 0);
 
   g_snprintf(tmp_label,256,"%s...\n",text);
   procw->label = lives_standard_label_new (tmp_label);
   lives_widget_show (procw->label);
 
-  lives_box_pack_start (GTK_BOX (vbox3), procw->label, TRUE, TRUE, 0);
+  lives_box_pack_start (LIVES_BOX (vbox3), procw->label, TRUE, TRUE, 0);
 
   procw->progressbar = gtk_progress_bar_new ();
   lives_widget_show (procw->progressbar);
-  lives_box_pack_start (GTK_BOX (vbox3), procw->progressbar, FALSE, FALSE, 0);
+  lives_box_pack_start (LIVES_BOX (vbox3), procw->progressbar, FALSE, FALSE, 0);
   if (palette->style&STYLE_1) {
     lives_widget_set_fg_color(procw->progressbar, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
   }
@@ -223,12 +223,12 @@ xprocess * create_processing (const gchar *text) {
 
   lives_widget_show (procw->label2);
 
-  lives_box_pack_start (GTK_BOX (vbox3), procw->label2, FALSE, FALSE, 0);
+  lives_box_pack_start (LIVES_BOX (vbox3), procw->label2, FALSE, FALSE, 0);
 
   widget_opts.justify=LIVES_JUSTIFY_CENTER;
   procw->label3 = lives_standard_label_new (PROCW_STRETCHER);
   lives_widget_show (procw->label3);
-  lives_box_pack_start (GTK_BOX (vbox3), procw->label3, FALSE, FALSE, 0);
+  lives_box_pack_start (LIVES_BOX (vbox3), procw->label3, FALSE, FALSE, 0);
   widget_opts.justify=LIVES_JUSTIFY_DEFAULT;
 
   if (mainw->iochan!=NULL) {
@@ -374,13 +374,13 @@ lives_clipinfo_t *create_clip_info_window (int audio_channels, boolean is_mt) {
     frame4 = gtk_frame_new (NULL);
     lives_widget_set_size_request (frame4, 800, 340);
 
-    lives_box_pack_start (GTK_BOX (dialog_vbox), frame4, TRUE, TRUE, 0);
+    lives_box_pack_start (LIVES_BOX (dialog_vbox), frame4, TRUE, TRUE, 0);
     if (palette->style&STYLE_1) {
       lives_widget_set_bg_color(frame4, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
     }
 
     fixed3 = gtk_fixed_new ();
-    lives_container_add (GTK_CONTAINER (frame4), fixed3);
+    lives_container_add (LIVES_CONTAINER (frame4), fixed3);
     
     filew->textview24 = gtk_text_view_new ();
 
@@ -471,7 +471,7 @@ lives_clipinfo_t *create_clip_info_window (int audio_channels, boolean is_mt) {
     frame5 = gtk_frame_new (NULL);
     lives_widget_set_size_request (frame5, 700, 140);
 
-    lives_box_pack_start (GTK_BOX (dialog_vbox), frame5, TRUE, TRUE, 0);
+    lives_box_pack_start (LIVES_BOX (dialog_vbox), frame5, TRUE, TRUE, 0);
     if (palette->style&STYLE_1) {
       lives_widget_set_bg_color(frame5, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
     }
@@ -487,7 +487,7 @@ lives_clipinfo_t *create_clip_info_window (int audio_channels, boolean is_mt) {
 
     fixed5 = gtk_fixed_new ();
 
-    lives_container_add (GTK_CONTAINER (frame5), fixed5);
+    lives_container_add (LIVES_CONTAINER (frame5), fixed5);
 
     if (!is_mt) {
       filew->textview_ltime = gtk_text_view_new ();
@@ -521,14 +521,14 @@ lives_clipinfo_t *create_clip_info_window (int audio_channels, boolean is_mt) {
       frame6 = gtk_frame_new (NULL);
       lives_widget_set_size_request (frame6, 600, 100);
 
-      lives_box_pack_start (GTK_BOX (dialog_vbox), frame6, TRUE, TRUE, 0);
+      lives_box_pack_start (LIVES_BOX (dialog_vbox), frame6, TRUE, TRUE, 0);
       if (palette->style&STYLE_1) {
 	lives_widget_set_bg_color(frame6, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
       }
 
       fixed6 = gtk_fixed_new ();
 
-      lives_container_add (GTK_CONTAINER (frame6), fixed6);
+      lives_container_add (LIVES_CONTAINER (frame6), fixed6);
       
       if (!is_mt) {
 	filew->textview_rtime = gtk_text_view_new ();
@@ -631,14 +631,14 @@ GtkWidget* create_encoder_prep_dialog (const gchar *text1, const gchar *text2, b
   widget_opts.justify=LIVES_JUSTIFY_CENTER;
   label = lives_standard_label_new (text1);
   widget_opts.justify=LIVES_JUSTIFY_DEFAULT;
-  lives_box_pack_start (GTK_BOX (dialog_vbox), label, TRUE, TRUE, 0);
+  lives_box_pack_start (LIVES_BOX (dialog_vbox), label, TRUE, TRUE, 0);
 
   if (opt_resize) {      
     if (text2!=NULL) labeltext=g_strdup (_("<------------- (Check the box to re_size as suggested)"));
     else labeltext=g_strdup (_("<------------- (Check the box to use the _size recommendation)"));
 
     hbox = lives_hbox_new (FALSE, 0);
-    lives_box_pack_start (GTK_BOX (dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_width);
+    lives_box_pack_start (LIVES_BOX (dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_width);
 
     checkbutton = lives_standard_check_button_new (labeltext,TRUE,LIVES_BOX(hbox),NULL);
 
@@ -656,7 +656,7 @@ GtkWidget* create_encoder_prep_dialog (const gchar *text1, const gchar *text2, b
     hbox = lives_hbox_new (FALSE, 0);
     if (capable->has_composite&&capable->has_convert) {
       // only offer this if we have "composite" and "convert" - for now... TODO ****
-      lives_box_pack_start (GTK_BOX (dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+      lives_box_pack_start (LIVES_BOX (dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
     }
 
     checkbutton2 = lives_standard_check_button_new 
@@ -687,7 +687,7 @@ GtkWidget* create_encoder_prep_dialog (const gchar *text1, const gchar *text2, b
 
   if (text2!=NULL) {
     label = lives_standard_label_new (text2);
-    lives_box_pack_start (GTK_BOX (dialog_vbox), label, TRUE, TRUE, 0);
+    lives_box_pack_start (LIVES_BOX (dialog_vbox), label, TRUE, TRUE, 0);
     cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
     okbutton = gtk_button_new_from_stock ("gtk-ok");
   }
@@ -739,7 +739,7 @@ GtkWidget* create_info_error_dialog (const gchar *text, boolean is_blocking, int
   gtk_window_set_deletable(GTK_WINDOW(dialog), FALSE);
   gtk_window_set_resizable (GTK_WINDOW (dialog), FALSE);
 
-  lives_container_set_border_width (GTK_CONTAINER (dialog), widget_opts.border_width*2);
+  lives_container_set_border_width (LIVES_CONTAINER (dialog), widget_opts.border_width*2);
 
   gtk_window_add_accel_group (GTK_WINDOW (dialog), accel_group);
 
@@ -763,13 +763,13 @@ GtkWidget* create_info_error_dialog (const gchar *text, boolean is_blocking, int
   gtk_label_set_selectable (GTK_LABEL (info_text), TRUE);
 
   hbox = lives_hbox_new (FALSE, 0);
-  lives_box_pack_start (GTK_BOX (dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start (LIVES_BOX (dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-  lives_box_pack_start (GTK_BOX (hbox), info_text, FALSE, FALSE, widget_opts.packing_width*2);
+  lives_box_pack_start (LIVES_BOX (hbox), info_text, FALSE, FALSE, widget_opts.packing_width*2);
   
   if (mask>0) {
     hbox = lives_hbox_new (FALSE, 0);
-    lives_box_pack_start (GTK_BOX (dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+    lives_box_pack_start (LIVES_BOX (dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
     checkbutton = lives_standard_check_button_new (
 						   _("Do _not show this warning any more\n(can be turned back on from Preferences/Warnings)"),
 						   TRUE,LIVES_BOX(hbox),NULL);
@@ -864,7 +864,7 @@ text_window *create_text_window (const gchar *title, const gchar *text, GtkTextB
   scrolledwindow = lives_standard_scrolled_window_new (RFX_WINSIZE_H, RFX_WINSIZE_V, textwindow->textview);
   widget_opts.apply_theme=woat;
 
-  lives_box_pack_start (GTK_BOX (dialog_vbox), scrolledwindow, TRUE, TRUE, 0);
+  lives_box_pack_start (LIVES_BOX (dialog_vbox), scrolledwindow, TRUE, TRUE, 0);
 
   gtk_text_view_set_editable (GTK_TEXT_VIEW (textwindow->textview), FALSE);
   gtk_text_view_set_cursor_visible (GTK_TEXT_VIEW (textwindow->textview), FALSE);
@@ -923,7 +923,7 @@ void add_to_winmenu(void) {
   lives_image_menu_item_set_always_show_image(LIVES_IMAGE_MENU_ITEM(cfile->menuentry),TRUE);
 
   lives_widget_show (cfile->menuentry);
-  lives_container_add (GTK_CONTAINER (mainw->winmenu), cfile->menuentry);
+  lives_container_add (LIVES_CONTAINER (mainw->winmenu), cfile->menuentry);
 
   lives_widget_set_sensitive (cfile->menuentry, TRUE);
   g_signal_connect (GTK_OBJECT (cfile->menuentry), "activate",
@@ -948,7 +948,7 @@ void add_to_winmenu(void) {
 
 
 void remove_from_winmenu(void) {
-  gtk_container_remove(GTK_CONTAINER(mainw->winmenu), cfile->menuentry);
+  gtk_container_remove(LIVES_CONTAINER(mainw->winmenu), cfile->menuentry);
   if (LIVES_IS_WIDGET(cfile->menuentry))
     lives_widget_destroy(cfile->menuentry);
   mainw->cliplist=g_list_remove (mainw->cliplist, GINT_TO_POINTER (mainw->current_file));
@@ -992,19 +992,19 @@ _insertw* create_insert_dialog (void) {
 
   hbox1 = lives_hbox_new (FALSE, 0);
 
-  lives_box_pack_start (GTK_BOX (dialog_vbox), hbox1, TRUE, TRUE, widget_opts.packing_height);
+  lives_box_pack_start (LIVES_BOX (dialog_vbox), hbox1, TRUE, TRUE, widget_opts.packing_height);
 
   hbox = lives_hbox_new (FALSE, 0);
-  lives_box_pack_start (GTK_BOX (hbox1), hbox, FALSE, FALSE, widget_opts.packing_width);
+  lives_box_pack_start (LIVES_BOX (hbox1), hbox, FALSE, FALSE, widget_opts.packing_width);
 
   insertw->spinbutton_times = lives_standard_spin_button_new(_("_Number of times to insert"),
 							     TRUE,1.,1.,10000.,1.,10.,0.,LIVES_BOX(hbox),NULL);
 
-  add_fill_to_box(GTK_BOX(hbox1));
+  add_fill_to_box(LIVES_BOX(hbox1));
 
   hbox = lives_hbox_new (FALSE, 0);
 
-  lives_box_pack_start (GTK_BOX (hbox1), hbox, FALSE, FALSE, widget_opts.packing_width);
+  lives_box_pack_start (LIVES_BOX (hbox1), hbox, FALSE, FALSE, widget_opts.packing_width);
 
   insertw->fit_checkbutton = lives_standard_check_button_new (_("_Insert to fit audio"),TRUE,LIVES_BOX(hbox),NULL);
 
@@ -1013,7 +1013,7 @@ _insertw* create_insert_dialog (void) {
   add_hsep_to_box (LIVES_BOX (dialog_vbox));
 
   table = gtk_table_new (2, 3, FALSE);
-  lives_box_pack_start (GTK_BOX (dialog_vbox), table, TRUE, TRUE, widget_opts.packing_height);
+  lives_box_pack_start (LIVES_BOX (dialog_vbox), table, TRUE, TRUE, widget_opts.packing_height);
   gtk_table_set_col_spacings (GTK_TABLE (table), widget_opts.packing_width*4);
   gtk_table_set_row_spacings (GTK_TABLE (table), widget_opts.packing_height);
 
@@ -1156,10 +1156,10 @@ GtkWidget *create_opensel_dialog (void) {
   dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(opensel_dialog));
  
   vbox = lives_vbox_new (FALSE, 0);
-  lives_box_pack_start (GTK_BOX (dialog_vbox), vbox, TRUE, TRUE, 0);
+  lives_box_pack_start (LIVES_BOX (dialog_vbox), vbox, TRUE, TRUE, 0);
 
   table = gtk_table_new (2, 2, FALSE);
-  lives_box_pack_start (GTK_BOX (vbox), table, TRUE, TRUE, widget_opts.packing_height);
+  lives_box_pack_start (LIVES_BOX (vbox), table, TRUE, TRUE, widget_opts.packing_height);
 
   gtk_table_set_row_spacings (GTK_TABLE (table), widget_opts.packing_height*2);
 
@@ -1207,7 +1207,7 @@ GtkWidget *create_opensel_dialog (void) {
   lives_widget_set_can_focus_and_default (okbutton);
   gtk_widget_grab_default(okbutton);
 
-  widget_add_preview (opensel_dialog, GTK_BOX (dialog_vbox), GTK_BOX (dialog_vbox), GTK_BOX(dialog_vbox), 3);
+  widget_add_preview (opensel_dialog, LIVES_BOX (dialog_vbox), GTK_BOX (dialog_vbox), GTK_BOX(dialog_vbox), 3);
 
   g_signal_connect (GTK_OBJECT (cancelbutton), "clicked",
 		    G_CALLBACK (on_cancel_opensel_clicked),
@@ -1270,7 +1270,7 @@ _entryw* create_location_dialog (int type) {
   else { 
     label = lives_standard_label_new (_("\n\nTo open a clip from Youtube, LiVES will first download it with youtube-dl.\nPlease make sure you have the latest version of that tool installed.\n\n"));
 
-    lives_box_pack_start (GTK_BOX (dialog_vbox), label, FALSE, FALSE, 0);
+    lives_box_pack_start (LIVES_BOX (dialog_vbox), label, FALSE, FALSE, 0);
     
     label=lives_standard_label_new(_("Enter the URL of the clip below.\nE.g: http://www.youtube.com/watch?v=WCR6f6WzjP8\n\n"));
 
@@ -1278,10 +1278,10 @@ _entryw* create_location_dialog (int type) {
 
   widget_opts.justify=LIVES_JUSTIFY_DEFAULT;
 
-  lives_box_pack_start (GTK_BOX (dialog_vbox), label, FALSE, FALSE, 0);
+  lives_box_pack_start (LIVES_BOX (dialog_vbox), label, FALSE, FALSE, 0);
 
   hbox = lives_hbox_new (FALSE, 0);
-  lives_box_pack_start (GTK_BOX (dialog_vbox), hbox, TRUE, TRUE, widget_opts.packing_height*2);
+  lives_box_pack_start (LIVES_BOX (dialog_vbox), hbox, TRUE, TRUE, widget_opts.packing_height*2);
 
   locw->entry = lives_standard_entry_new (type==1?_ ("URL : "):_ ("Youtube URL : "),FALSE,"",79,32768,LIVES_BOX(hbox),NULL);
 
@@ -1295,20 +1295,20 @@ _entryw* create_location_dialog (int type) {
 
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(checkbutton),prefs->no_bandwidth);
     
-    lives_box_pack_start (GTK_BOX(dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height*2);
+    lives_box_pack_start (LIVES_BOX(dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height*2);
     
     g_signal_connect (GTK_OBJECT (checkbutton), "toggled",
 		      G_CALLBACK (on_boolean_toggled),
 		      &prefs->no_bandwidth);
     
-    add_deinterlace_checkbox(GTK_BOX(dialog_vbox));
+    add_deinterlace_checkbox(LIVES_BOX(dialog_vbox));
 
   }
 
   if (type==2) {
     hbox=lives_hbox_new (FALSE, 0);
     
-    lives_box_pack_start(GTK_BOX(dialog_vbox),hbox,TRUE,FALSE,widget_opts.packing_height);
+    lives_box_pack_start(LIVES_BOX(dialog_vbox),hbox,TRUE,FALSE,widget_opts.packing_height);
 
     locw->dir_entry = lives_standard_entry_new (_("Download to _Directory : "),TRUE,mainw->vid_dl_dir,
 						72.*widget_opts.scale,PATH_MAX,LIVES_BOX(hbox),NULL);
@@ -1319,14 +1319,14 @@ _entryw* create_location_dialog (int type) {
     // add dir, with filechooser button
     buttond = lives_standard_file_button_new (TRUE,NULL);
     gtk_label_set_mnemonic_widget (GTK_LABEL(widget_opts.last_label),buttond);
-    lives_box_pack_start(GTK_BOX(hbox),buttond,FALSE,FALSE,widget_opts.packing_width);
+    lives_box_pack_start(LIVES_BOX(hbox),buttond,FALSE,FALSE,widget_opts.packing_width);
 
 
-    add_fill_to_box (GTK_BOX (hbox));
+    add_fill_to_box (LIVES_BOX (hbox));
 
     hbox=lives_hbox_new (FALSE, 0);
     
-    lives_box_pack_start(GTK_BOX(dialog_vbox),hbox,TRUE,FALSE,widget_opts.packing_height);
+    lives_box_pack_start(LIVES_BOX(dialog_vbox),hbox,TRUE,FALSE,widget_opts.packing_height);
 
     locw->name_entry = lives_standard_entry_new (_("Download _File Name : "),TRUE,"",
 						 74.*widget_opts.scale,PATH_MAX,LIVES_BOX(hbox),NULL);
@@ -1335,7 +1335,7 @@ _entryw* create_location_dialog (int type) {
 
     label=lives_standard_label_new (_(".webm"));
 
-    lives_box_pack_start(GTK_BOX(hbox),label,FALSE,FALSE,widget_opts.packing_width);
+    lives_box_pack_start(LIVES_BOX(hbox),label,FALSE,FALSE,widget_opts.packing_width);
    }
 
 
@@ -1444,37 +1444,37 @@ _entryw* create_rename_dialog (int type) {
   if (type==4) {
     label = lives_standard_label_new 
       (_("You need to enter a name for the current clip set.\nThis will allow you reload the layout with the same clips later.\nPlease enter the set name you wish to use.\nLiVES will remind you to save the clip set later when you try to exit.\n"));
-    lives_box_pack_start (GTK_BOX (dialog_vbox), label, FALSE, FALSE, 0);
+    lives_box_pack_start (LIVES_BOX (dialog_vbox), label, FALSE, FALSE, 0);
   }
 
   if (type==5) {
     label = lives_standard_label_new 
       (_("In order to export this project, you must enter a name for this clip set.\nThis will also be used for the project name.\n"));
-    lives_box_pack_start (GTK_BOX (dialog_vbox), label, FALSE, FALSE, 0);
+    lives_box_pack_start (LIVES_BOX (dialog_vbox), label, FALSE, FALSE, 0);
   }
 
 
   if (type==6) {
     label = lives_standard_label_new 
       (_("Welcome to LiVES !\nThis startup wizard will guide you through the\ninitial install so that you can get the most from this application.\n"));
-    lives_box_pack_start (GTK_BOX (dialog_vbox), label, FALSE, FALSE, 0);
+    lives_box_pack_start (LIVES_BOX (dialog_vbox), label, FALSE, FALSE, 0);
 
     label = lives_standard_label_new 
       (_("\nFirst of all you need to choose a working directory for LiVES.\nThis should be a directory with plenty of disk space available.\n"));
-    lives_box_pack_start (GTK_BOX (dialog_vbox), label, FALSE, FALSE, 0);
+    lives_box_pack_start (LIVES_BOX (dialog_vbox), label, FALSE, FALSE, 0);
   }
 
 
   hbox = lives_hbox_new (FALSE, 0);
 
   if (type==3) {
-    lives_box_pack_start (GTK_BOX (dialog_vbox), hbox, TRUE, FALSE, widget_opts.packing_height*4);
+    lives_box_pack_start (LIVES_BOX (dialog_vbox), hbox, TRUE, FALSE, widget_opts.packing_height*4);
   }
   else if (type!=6&&type!=7&&type!=1) {
-    lives_box_pack_start (GTK_BOX (dialog_vbox), hbox, TRUE, TRUE, widget_opts.packing_height*2);
+    lives_box_pack_start (LIVES_BOX (dialog_vbox), hbox, TRUE, TRUE, widget_opts.packing_height*2);
   }
   else {
-    lives_box_pack_start (GTK_BOX (dialog_vbox), hbox, TRUE, TRUE, widget_opts.packing_height*4);
+    lives_box_pack_start (LIVES_BOX (dialog_vbox), hbox, TRUE, TRUE, widget_opts.packing_height*4);
   }
 
 
@@ -1488,7 +1488,7 @@ _entryw* create_rename_dialog (int type) {
     label = lives_standard_label_new ("");
   }
 
-  lives_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, widget_opts.packing_width*4);
+  lives_box_pack_start (LIVES_BOX (hbox), label, FALSE, FALSE, widget_opts.packing_width*4);
 
 
   if (type==3) {
@@ -1509,7 +1509,7 @@ _entryw* create_rename_dialog (int type) {
       lives_entry_set_text(GTK_ENTRY(renamew->entry),prefs->ar_clipset_name);
     }
 
-    lives_box_pack_start (GTK_BOX (hbox), set_combo, TRUE, TRUE, 0);
+    lives_box_pack_start (LIVES_BOX (hbox), set_combo, TRUE, TRUE, 0);
 
     xlist=renamew->setlist;
     store = gtk_list_store_new (1, G_TYPE_STRING);
@@ -1545,7 +1545,7 @@ _entryw* create_rename_dialog (int type) {
       lives_entry_set_text (GTK_ENTRY (renamew->entry),tmpdir);
       g_free(tmpdir);
     }
-    lives_box_pack_start (GTK_BOX (hbox), renamew->entry, TRUE, TRUE, 0);
+    lives_box_pack_start (LIVES_BOX (hbox), renamew->entry, TRUE, TRUE, 0);
   }
 
 
@@ -1554,9 +1554,9 @@ _entryw* create_rename_dialog (int type) {
     
     dirimage1 = lives_image_new_from_stock ("gtk-open", LIVES_ICON_SIZE_BUTTON);
 
-    lives_container_add (GTK_CONTAINER (dirbutton1), dirimage1);
+    lives_container_add (LIVES_CONTAINER (dirbutton1), dirimage1);
 
-    lives_box_pack_start (GTK_BOX (hbox), dirbutton1, FALSE, TRUE, widget_opts.packing_width);
+    lives_box_pack_start (LIVES_BOX (hbox), dirbutton1, FALSE, TRUE, widget_opts.packing_width);
     g_signal_connect(dirbutton1, "clicked", G_CALLBACK (on_filesel_complex_clicked),renamew->entry);
 
   }
@@ -1702,7 +1702,7 @@ GtkWidget *create_combo_dialog (int type, gpointer user_data) {
   label = lives_standard_label_new (label_text);
   if (label_text!=NULL) g_free(label_text);
 
-  lives_box_pack_start (GTK_BOX (dialog_vbox), label, TRUE, TRUE, 0);
+  lives_box_pack_start (LIVES_BOX (dialog_vbox), label, TRUE, TRUE, 0);
 
   combo = lives_combo_new();
 
@@ -1714,10 +1714,10 @@ GtkWidget *create_combo_dialog (int type, gpointer user_data) {
 
   g_signal_connect_after (G_OBJECT (combo), "changed", G_CALLBACK (after_dialog_combo_changed), list);
 
-  lives_box_pack_start (GTK_BOX (dialog_vbox), combo, TRUE, TRUE, widget_opts.packing_height*2);
+  lives_box_pack_start (LIVES_BOX (dialog_vbox), combo, TRUE, TRUE, widget_opts.packing_height*2);
 
   if (type==1) {
-    add_deinterlace_checkbox(GTK_BOX(dialog_vbox));
+    add_deinterlace_checkbox(LIVES_BOX(dialog_vbox));
   }
 
   if (prefs->show_gui)
@@ -1792,7 +1792,7 @@ GtkWidget* create_cdtrack_dialog (int type, gpointer user_data) {
   dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(cd_dialog));
 
   hbox = lives_hbox_new (FALSE, widget_opts.packing_width*5);
-  lives_box_pack_start (GTK_BOX (dialog_vbox), hbox, TRUE, TRUE, widget_opts.packing_height);
+  lives_box_pack_start (LIVES_BOX (dialog_vbox), hbox, TRUE, TRUE, widget_opts.packing_height);
 
   if (type==0) {
     label_text=g_strdup_printf(_("Track to load (from %s)"),prefs->cdplay_device);
@@ -1837,12 +1837,12 @@ GtkWidget* create_cdtrack_dialog (int type, gpointer user_data) {
 			  GINT_TO_POINTER (1));
 
 
-  add_fill_to_box(GTK_BOX(hbox));
+  add_fill_to_box(LIVES_BOX(hbox));
 
   if (type==1||type==4) {
 
     hbox = lives_hbox_new (FALSE, widget_opts.packing_width*5);
-    lives_box_pack_start (GTK_BOX (dialog_vbox), hbox, TRUE, TRUE, widget_opts.packing_height);
+    lives_box_pack_start (LIVES_BOX (dialog_vbox), hbox, TRUE, TRUE, widget_opts.packing_height);
 
     if (type==1) {
       spinbutton = lives_standard_spin_button_new (_("Chapter  "), FALSE, mainw->fx2_val,
@@ -1863,7 +1863,7 @@ GtkWidget* create_cdtrack_dialog (int type, gpointer user_data) {
 
     if (type==1) {
       hbox = lives_hbox_new (FALSE, widget_opts.packing_width*5);
-      lives_box_pack_start (GTK_BOX (dialog_vbox), hbox, TRUE, TRUE, widget_opts.packing_height);
+      lives_box_pack_start (LIVES_BOX (dialog_vbox), hbox, TRUE, TRUE, widget_opts.packing_height);
       
       spinbutton = lives_standard_spin_button_new (_("Audio ID  "), FALSE, mainw->fx3_val,
 						   128., 159., 1., 1., 0, 
@@ -1877,8 +1877,8 @@ GtkWidget* create_cdtrack_dialog (int type, gpointer user_data) {
   }
 
   if (type==4||type==5) {
-    hbox=add_deinterlace_checkbox(GTK_BOX(dialog_vbox));
-    add_fill_to_box(GTK_BOX(hbox));
+    hbox=add_deinterlace_checkbox(LIVES_BOX(dialog_vbox));
+    add_fill_to_box(LIVES_BOX(hbox));
   }
 
 
@@ -1906,30 +1906,30 @@ GtkWidget* create_cdtrack_dialog (int type, gpointer user_data) {
     olist=g_list_append(olist,(gpointer)"i420");
 
 
-    lives_box_set_spacing(GTK_BOX(dialog_vbox),widget_opts.packing_height*2);
+    lives_box_set_spacing(LIVES_BOX(dialog_vbox),widget_opts.packing_height*2);
 
     hbox = lives_hbox_new (FALSE, widget_opts.packing_width*5);
 
-    lives_box_pack_start (GTK_BOX (dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height*2);
+    lives_box_pack_start (LIVES_BOX (dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height*2);
     
-    add_fill_to_box(GTK_BOX(hbox));
+    add_fill_to_box(LIVES_BOX(hbox));
 
     tvcardw->advbutton = lives_button_new_with_mnemonic (_("_Advanced"));
 
-    lives_box_pack_start (GTK_BOX (hbox), tvcardw->advbutton, TRUE, TRUE, widget_opts.packing_width*4);
+    lives_box_pack_start (LIVES_BOX (hbox), tvcardw->advbutton, TRUE, TRUE, widget_opts.packing_width*4);
     
-    add_fill_to_box(GTK_BOX(hbox));
+    add_fill_to_box(LIVES_BOX(hbox));
 
 
     tvcardw->adv_vbox = lives_vbox_new (FALSE, widget_opts.packing_width*5);
-    lives_box_pack_start (GTK_BOX (dialog_vbox), tvcardw->adv_vbox, TRUE, TRUE, widget_opts.packing_height*2);
+    lives_box_pack_start (LIVES_BOX (dialog_vbox), tvcardw->adv_vbox, TRUE, TRUE, widget_opts.packing_height*2);
     
 
     // add input, width, height, fps, driver and outfmt
 
 
     hbox = lives_hbox_new (FALSE, 0);
-    lives_box_pack_start (GTK_BOX (tvcardw->adv_vbox), hbox, TRUE, FALSE, 0);
+    lives_box_pack_start (LIVES_BOX (tvcardw->adv_vbox), hbox, TRUE, FALSE, 0);
 
     tvcardw->spinbuttoni = lives_standard_spin_button_new (_("Input number"),FALSE,
 							   0.,0.,16.,1.,1.,0,
@@ -1937,7 +1937,7 @@ GtkWidget* create_cdtrack_dialog (int type, gpointer user_data) {
 							   
 
     hbox = lives_hbox_new (FALSE, 0);
-    lives_box_pack_start (GTK_BOX (tvcardw->adv_vbox), hbox, TRUE, FALSE, 0);
+    lives_box_pack_start (LIVES_BOX (tvcardw->adv_vbox), hbox, TRUE, FALSE, 0);
 
     tvcardw->radiobuttond = lives_standard_radio_button_new (_("Use default width, height and FPS"),FALSE,
 							     radiobutton_group,LIVES_BOX(hbox),NULL);
@@ -1948,7 +1948,7 @@ GtkWidget* create_cdtrack_dialog (int type, gpointer user_data) {
 			    (gpointer)tvcardw);
 
     hbox = lives_hbox_new (FALSE, 0);
-    lives_box_pack_start (GTK_BOX (tvcardw->adv_vbox), hbox, TRUE, FALSE, 0);
+    lives_box_pack_start (LIVES_BOX (tvcardw->adv_vbox), hbox, TRUE, FALSE, 0);
 
     lives_standard_radio_button_new (NULL,FALSE,
 				     radiobutton_group,LIVES_BOX(hbox),NULL);
@@ -1980,7 +1980,7 @@ GtkWidget* create_cdtrack_dialog (int type, gpointer user_data) {
 
 
     lives_widget_show_all (hbox);
-    lives_box_pack_start (GTK_BOX (tvcardw->adv_vbox), hbox, TRUE, FALSE, 0);
+    lives_box_pack_start (LIVES_BOX (tvcardw->adv_vbox), hbox, TRUE, FALSE, 0);
 
     g_signal_connect (GTK_OBJECT (tvcardw->advbutton), "clicked",
 		      G_CALLBACK (on_liveinp_advanced_clicked),
@@ -2088,7 +2088,7 @@ aud_dialog_t *create_audfade_dialog (gint type) {
   dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(audd->dialog));
 
   hbox = lives_hbox_new (FALSE, TB_HEIGHT_A);
-  lives_box_pack_start (GTK_BOX (dialog_vbox), hbox, TRUE, TRUE, widget_opts.packing_height);
+  lives_box_pack_start (LIVES_BOX (dialog_vbox), hbox, TRUE, TRUE, widget_opts.packing_height);
 
   if (type==0) {
     label_text=g_strdup(_("Fade in over  "));
@@ -2103,10 +2103,10 @@ aud_dialog_t *create_audfade_dialog (gint type) {
   label = lives_standard_label_new (label_text);
   if (label_text!=NULL) g_free(label_text);
 
-  lives_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 0);
+  lives_box_pack_start (LIVES_BOX (hbox), label, FALSE, FALSE, 0);
 
   hbox = lives_hbox_new (FALSE, widget_opts.packing_width*5);
-  lives_box_pack_start (GTK_BOX (dialog_vbox), hbox, TRUE, TRUE, widget_opts.packing_height);
+  lives_box_pack_start (LIVES_BOX (dialog_vbox), hbox, TRUE, TRUE, widget_opts.packing_height);
 
   rb_time=lives_standard_radio_button_new(label_text2,FALSE,radiobutton_group,
 					  LIVES_BOX(hbox),NULL);
@@ -2124,7 +2124,7 @@ aud_dialog_t *create_audfade_dialog (gint type) {
   widget_opts.swap_label=FALSE;
 
   hbox = lives_hbox_new (FALSE, widget_opts.packing_width*5);
-  lives_box_pack_start (GTK_BOX (dialog_vbox), hbox, TRUE, TRUE, widget_opts.packing_height);
+  lives_box_pack_start (LIVES_BOX (dialog_vbox), hbox, TRUE, TRUE, widget_opts.packing_height);
 
   rb_sel=lives_standard_radio_button_new(_("selection"),FALSE,radiobutton_group,LIVES_BOX(hbox),NULL);
 
@@ -2144,7 +2144,7 @@ aud_dialog_t *create_audfade_dialog (gint type) {
 			  (gpointer)audd);
 
 
-  add_fill_to_box(GTK_BOX(hbox));
+  add_fill_to_box(LIVES_BOX(hbox));
 
 
   lives_widget_show_all(audd->dialog);
@@ -2175,11 +2175,11 @@ _commentsw* create_comments_dialog (file *sfile, gchar *filename) {
   dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(commentsw->comments_dialog));
 
   table = gtk_table_new (4, 2, FALSE);
-  lives_container_set_border_width(GTK_CONTAINER(table), widget_opts.border_width);
+  lives_container_set_border_width(LIVES_CONTAINER(table), widget_opts.border_width);
 
   gtk_table_set_row_spacings(GTK_TABLE(table), widget_opts.packing_height*2);
 
-  lives_box_pack_start (GTK_BOX (dialog_vbox), table, TRUE, TRUE, widget_opts.packing_height);
+  lives_box_pack_start (LIVES_BOX (dialog_vbox), table, TRUE, TRUE, widget_opts.packing_height);
 
   label = lives_standard_label_new (_("Title/Name : "));
 
@@ -2230,7 +2230,7 @@ _commentsw* create_comments_dialog (file *sfile, gchar *filename) {
     add_fill_to_box(LIVES_BOX(vbox));
 
     hbox = lives_hbox_new (FALSE, 0);
-    lives_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+    lives_box_pack_start (LIVES_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
     commentsw->subt_checkbutton = lives_standard_check_button_new (_("Save _subtitles to file"),TRUE,LIVES_BOX(hbox),NULL);
 
@@ -2242,7 +2242,7 @@ _commentsw* create_comments_dialog (file *sfile, gchar *filename) {
 
 
     hbox = lives_hbox_new (FALSE, 0);
-    lives_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+    lives_box_pack_start (LIVES_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
     commentsw->subt_entry=lives_standard_entry_new(_("Subtitle file"),FALSE,NULL,32,-1,LIVES_BOX(hbox),NULL);
 
@@ -2251,7 +2251,7 @@ _commentsw* create_comments_dialog (file *sfile, gchar *filename) {
     g_signal_connect (buttond, "clicked",G_CALLBACK (on_save_subs_activate),
     		      (gpointer)commentsw->subt_entry);
 
-    lives_box_pack_start (GTK_BOX (hbox), buttond, FALSE, FALSE, widget_opts.packing_width);
+    lives_box_pack_start (LIVES_BOX (hbox), buttond, FALSE, FALSE, widget_opts.packing_width);
 
     add_fill_to_box(LIVES_BOX(vbox));
 
@@ -2360,7 +2360,7 @@ gchar *choose_file(gchar *dir, gchar *fname, gchar **filt, lives_file_chooser_ac
 
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(chooser, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-    gtk_container_forall(GTK_CONTAINER(chooser),set_child_colour,GINT_TO_POINTER(FALSE));
+    gtk_container_forall(LIVES_CONTAINER(chooser),set_child_colour,GINT_TO_POINTER(FALSE));
   }
 
   if (dir!=NULL) {
@@ -2386,7 +2386,7 @@ gchar *choose_file(gchar *dir, gchar *fname, gchar **filt, lives_file_chooser_ac
     }
   }
 
-  lives_container_set_border_width (GTK_CONTAINER (chooser), widget_opts.border_width);
+  lives_container_set_border_width (LIVES_CONTAINER (chooser), widget_opts.border_width);
 
   if (prefs->show_gui) {
     if (mainw->multitrack==NULL) gtk_window_set_transient_for(GTK_WINDOW(chooser),GTK_WINDOW(mainw->LiVES));
@@ -2555,19 +2555,19 @@ _entryw* create_cds_dialog (gint type) {
   }
   widget_opts.justify=LIVES_JUSTIFY_DEFAULT;
 
-  lives_box_pack_start (GTK_BOX (dialog_vbox), label, TRUE, TRUE, 0);
+  lives_box_pack_start (LIVES_BOX (dialog_vbox), label, TRUE, TRUE, 0);
 
   if (type==1) {
     GtkWidget *checkbutton;
 
     hbox = lives_hbox_new (FALSE, 0);
-    lives_box_pack_start (GTK_BOX (dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+    lives_box_pack_start (LIVES_BOX (dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
     
     cdsw->entry = lives_standard_entry_new (_("Clip set _name"),TRUE,strlen (mainw->set_name)?mainw->set_name:"",
 					    32.*widget_opts.scale,128.*widget_opts.scale,LIVES_BOX(hbox),NULL);
 
     hbox = lives_hbox_new (FALSE, 0);
-    lives_box_pack_start (GTK_BOX (dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+    lives_box_pack_start (LIVES_BOX (dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
     checkbutton = lives_standard_check_button_new (_("_Auto reload next time"),TRUE,LIVES_BOX(hbox),NULL);
 
@@ -2590,7 +2590,7 @@ _entryw* create_cds_dialog (gint type) {
   }
 
   if (type==0&&!(prefs->warning_mask&WARN_MASK_EXIT_MT)) {
-    add_warn_check(GTK_BOX(dialog_vbox),WARN_MASK_EXIT_MT);
+    add_warn_check(LIVES_BOX(dialog_vbox),WARN_MASK_EXIT_MT);
   }
 
   dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (cdsw->dialog));
@@ -2652,7 +2652,7 @@ void do_layout_recover_dialog(void) {
   widget_opts.justify=LIVES_JUSTIFY_DEFAULT;
 
 
-  lives_container_add (GTK_CONTAINER (dialog_vbox), label);
+  lives_container_add (LIVES_CONTAINER (dialog_vbox), label);
 
 
   cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
@@ -2706,14 +2706,14 @@ GtkWidget *create_cleardisk_advanced_dialog(void) {
   dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(dialog));
 
   vbox = lives_vbox_new (FALSE, 0);
-  lives_container_set_border_width (GTK_CONTAINER (vbox), widget_opts.border_width*2);
+  lives_container_set_border_width (LIVES_CONTAINER (vbox), widget_opts.border_width*2);
 
   scrollw = lives_standard_scrolled_window_new (450.*widget_opts.scale,300.*widget_opts.scale,vbox);
 
-  lives_container_add (GTK_CONTAINER (dialog_vbox), scrollw);
+  lives_container_add (LIVES_CONTAINER (dialog_vbox), scrollw);
    
   hbox = lives_hbox_new (FALSE, 0);
-  lives_box_pack_start (GTK_BOX (vbox), hbox, FALSE, TRUE, widget_opts.packing_height);
+  lives_box_pack_start (LIVES_BOX (vbox), hbox, FALSE, TRUE, widget_opts.packing_height);
 
   checkbutton = lives_standard_check_button_new((tmp=g_strdup(_("Delete _Orphaned Clips"))),TRUE,LIVES_BOX(hbox),
 						(tmp2=g_strdup(_("Delete any clips which are not currently loaded or part of a set"))));
@@ -2727,7 +2727,7 @@ GtkWidget *create_cleardisk_advanced_dialog(void) {
 			  GINT_TO_POINTER(LIVES_CDISK_LEAVE_ORPHAN_SETS));
 
   hbox = lives_hbox_new (FALSE, 0);
-  lives_box_pack_start (GTK_BOX (vbox), hbox, FALSE, TRUE, widget_opts.packing_height);
+  lives_box_pack_start (LIVES_BOX (vbox), hbox, FALSE, TRUE, widget_opts.packing_height);
 
   checkbutton = lives_standard_check_button_new(_("Clear _Backup Files from Closed Clips"),TRUE,LIVES_BOX(hbox),NULL);
 
@@ -2738,7 +2738,7 @@ GtkWidget *create_cleardisk_advanced_dialog(void) {
 			  GINT_TO_POINTER(LIVES_CDISK_LEAVE_BFILES));
 
   hbox = lives_hbox_new (FALSE, 0);
-  lives_box_pack_start (GTK_BOX (vbox), hbox, FALSE, TRUE, widget_opts.packing_height);
+  lives_box_pack_start (LIVES_BOX (vbox), hbox, FALSE, TRUE, widget_opts.packing_height);
 
   checkbutton = lives_standard_check_button_new(_("Remove Sets which have _Layouts but no Clips"),TRUE,LIVES_BOX(hbox),NULL);
 

@@ -1260,7 +1260,7 @@ static void clear_unmatched (GtkButton *button, gpointer user_data) {
 
   // destroy everything in table
   
-  gtk_container_foreach(GTK_CONTAINER(omclw->table),killit,NULL);
+  gtk_container_foreach(LIVES_CONTAINER(omclw->table),killit,NULL);
 
   remove_all_nodes(FALSE,omclw);
 
@@ -1276,7 +1276,7 @@ static void del_all (GtkButton *button, gpointer user_data) {
 
   // destroy everything in table
   
-  gtk_container_foreach(GTK_CONTAINER(omclw->table),killit,NULL);
+  gtk_container_foreach(LIVES_CONTAINER(omclw->table),killit,NULL);
 
   remove_all_nodes(TRUE,omclw);
 
@@ -1320,7 +1320,7 @@ static omclearn_w *create_omclearn_dialog(void) {
 
   scrolledwindow = lives_standard_scrolled_window_new (winsize_h, winsize_v, omclw->table);
 
-  lives_box_pack_start (GTK_BOX (omclw->top_vbox), scrolledwindow, TRUE, TRUE, 0);
+  lives_box_pack_start (LIVES_BOX (omclw->top_vbox), scrolledwindow, TRUE, TRUE, 0);
 
 
 
@@ -1328,7 +1328,7 @@ static omclearn_w *create_omclearn_dialog(void) {
   
   omclw->clear_button = lives_button_new_with_mnemonic (_("Clear _unmatched"));
 
-  lives_container_add (GTK_CONTAINER (hbuttonbox), omclw->clear_button);
+  lives_container_add (LIVES_CONTAINER (hbuttonbox), omclw->clear_button);
   
 
   g_signal_connect (GTK_OBJECT (omclw->clear_button), "clicked",
@@ -1339,7 +1339,7 @@ static omclearn_w *create_omclearn_dialog(void) {
 
   omclw->del_all_button = lives_button_new_with_mnemonic (_("_Delete all"));
 
-  lives_container_add (GTK_CONTAINER (hbuttonbox), omclw->del_all_button);
+  lives_container_add (LIVES_CONTAINER (hbuttonbox), omclw->del_all_button);
   
 
   g_signal_connect (GTK_OBJECT (omclw->del_all_button), "clicked",
@@ -1351,7 +1351,7 @@ static omclearn_w *create_omclearn_dialog(void) {
 
   ok_button = lives_button_new_with_mnemonic (_("Close _window"));
 
-  lives_container_add (GTK_CONTAINER (hbuttonbox), ok_button);
+  lives_container_add (LIVES_CONTAINER (hbuttonbox), ok_button);
   
   lives_widget_set_can_focus_and_default (ok_button);
 

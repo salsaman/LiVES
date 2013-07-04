@@ -282,14 +282,14 @@ boolean do_audio_choice_dialog(short startup_phase) {
   dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(dialog));
   
   label=lives_standard_label_new(msg);
-  lives_container_add (GTK_CONTAINER (dialog_vbox), label);
+  lives_container_add (LIVES_CONTAINER (dialog_vbox), label);
   g_free(msg);
 
 
 
 #ifdef HAVE_PULSE_AUDIO
   hbox = lives_hbox_new (FALSE, 0);
-  lives_box_pack_start (GTK_BOX (dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start (LIVES_BOX (dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
   radiobutton0 = lives_standard_radio_button_new ( _("Use _pulse audio player"),TRUE,radiobutton_group,LIVES_BOX(hbox),NULL);
   radiobutton_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (radiobutton0));
@@ -311,7 +311,7 @@ boolean do_audio_choice_dialog(short startup_phase) {
 
 #ifdef ENABLE_JACK
   hbox = lives_hbox_new (FALSE, 0);
-  lives_box_pack_start (GTK_BOX (dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start (LIVES_BOX (dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
   radiobutton1 = lives_standard_radio_button_new(_("Use _jack audio player"),TRUE,radiobutton_group,LIVES_BOX(hbox),NULL);
   radiobutton_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (radiobutton1));
@@ -331,7 +331,7 @@ boolean do_audio_choice_dialog(short startup_phase) {
 
   if (capable->has_sox_play) {
     hbox = lives_hbox_new (FALSE, 0);
-    lives_box_pack_start (GTK_BOX (dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+    lives_box_pack_start (LIVES_BOX (dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
     radiobutton2 = lives_standard_radio_button_new (_("Use _sox audio player"),TRUE,radiobutton_group,LIVES_BOX(hbox),NULL);
     radiobutton_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (radiobutton2));
@@ -352,7 +352,7 @@ boolean do_audio_choice_dialog(short startup_phase) {
 
   if (capable->has_mplayer) {
     hbox = lives_hbox_new (FALSE, 0);
-    lives_box_pack_start (GTK_BOX (dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+    lives_box_pack_start (LIVES_BOX (dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
     radiobutton3 = lives_standard_radio_button_new (_("Use _mplayer audio player"),TRUE,radiobutton_group,LIVES_BOX(hbox),NULL);
 
@@ -533,7 +533,7 @@ boolean do_startup_tests(boolean tshoot) {
   dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(dialog));
 
   label=lives_standard_label_new(_("LiVES will now run some basic configuration tests\n"));
-  lives_container_add (GTK_CONTAINER (dialog_vbox), label);
+  lives_container_add (LIVES_CONTAINER (dialog_vbox), label);
 
   cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
   lives_widget_show (cancelbutton);
@@ -558,7 +558,7 @@ boolean do_startup_tests(boolean tshoot) {
 
 
   table = gtk_table_new (10, 4, FALSE);
-  lives_container_add (GTK_CONTAINER (dialog_vbox), table);
+  lives_container_add (LIVES_CONTAINER (dialog_vbox), table);
 
   lives_widget_show_all(dialog);
 
@@ -857,13 +857,13 @@ boolean do_startup_tests(boolean tshoot) {
     lives_widget_hide(cancelbutton); 
     if (imgext_switched) {
       label=lives_standard_label_new(_("\n\n    Image decoding type has been switched to jpeg. You can revert this in Preferences/Decoding.    \n"));
-      lives_container_add (GTK_CONTAINER (dialog_vbox), label);
+      lives_container_add (LIVES_CONTAINER (dialog_vbox), label);
     }
     lives_widget_show(label);
   }
   else {
     label=lives_standard_label_new(_("\n\n    Click Cancel to exit and install any missing components, or Next to continue    \n"));
-    lives_container_add (GTK_CONTAINER (dialog_vbox), label);
+    lives_container_add (LIVES_CONTAINER (dialog_vbox), label);
     lives_widget_show(label);
   }
 
@@ -913,26 +913,26 @@ void do_startup_interface_query(void) {
   dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(dialog));
   
   label=lives_standard_label_new(msg);
-  lives_container_add (GTK_CONTAINER (dialog_vbox), label);
+  lives_container_add (LIVES_CONTAINER (dialog_vbox), label);
   g_free(msg);
 
 
   hbox = lives_hbox_new (FALSE, 0);
-  lives_box_pack_start (GTK_BOX (dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start (LIVES_BOX (dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
   radiobutton0 = lives_standard_radio_button_new (_("Start in _Clip Edit mode"),TRUE,radiobutton_group,LIVES_BOX(hbox),NULL);
   radiobutton_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (radiobutton0));
 
   label=lives_standard_label_new(_("This is the best choice for simple editing tasks and for VJs\n"));
 
-  lives_box_pack_start (GTK_BOX (dialog_vbox), label, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start (LIVES_BOX (dialog_vbox), label, FALSE, FALSE, widget_opts.packing_height);
 
   hbox = lives_hbox_new (FALSE, 0);
-  lives_box_pack_start (GTK_BOX (dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start (LIVES_BOX (dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
   radiobutton1 = lives_standard_radio_button_new (_("Start in _Multitrack mode"),TRUE,radiobutton_group,LIVES_BOX(hbox),NULL);
 
   label=lives_standard_label_new(_("This is a better choice for complex editing tasks involving multiple clips.\n"));
 
-  lives_box_pack_start (GTK_BOX (dialog_vbox), label, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start (LIVES_BOX (dialog_vbox), label, FALSE, FALSE, widget_opts.packing_height);
 
   if (prefs->startup_interface==STARTUP_MT) {
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(radiobutton1),TRUE);

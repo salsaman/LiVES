@@ -1211,7 +1211,7 @@ void save_file (int clip, int start, int end, const char *filename) {
 
   hbox = lives_hbox_new (FALSE, 0);
   mainw->fx1_bool=TRUE;
-  add_suffix_check(GTK_BOX(hbox),prefs->encoder.of_def_ext);
+  add_suffix_check(LIVES_BOX(hbox),prefs->encoder.of_def_ext);
   lives_widget_show_all(hbox);
 
   if (filename==NULL) {
@@ -2305,7 +2305,7 @@ void play_file (void) {
 
   if (cfile->frames==0&&mainw->multitrack==NULL) {
     if (mainw->preview_box!=NULL&&lives_widget_get_parent(mainw->preview_box)!=NULL) {
-      gtk_container_remove (GTK_CONTAINER (mainw->play_window), mainw->preview_box);
+      gtk_container_remove (LIVES_CONTAINER (mainw->play_window), mainw->preview_box);
 
       mainw->pw_scroll_func=g_signal_connect (GTK_OBJECT (mainw->play_window), "scroll_event",
 					      G_CALLBACK (on_mouse_scroll),
@@ -2325,7 +2325,7 @@ void play_file (void) {
       else {
 	if (mainw->multitrack==NULL) {
 	  if (mainw->preview_box!=NULL&&lives_widget_get_parent(mainw->preview_box)!=NULL) {
-	    gtk_container_remove (GTK_CONTAINER (mainw->play_window), mainw->preview_box);
+	    gtk_container_remove (LIVES_CONTAINER (mainw->play_window), mainw->preview_box);
 
 	    mainw->pw_scroll_func=g_signal_connect (GTK_OBJECT (mainw->play_window), "scroll_event",
 						    G_CALLBACK (on_mouse_scroll),
@@ -2991,7 +2991,7 @@ void play_file (void) {
     lives_widget_show(mainw->eventbox4);
     lives_widget_show(mainw->sep_image);
     gtk_frame_set_label(GTK_FRAME(mainw->playframe),_ ("Preview"));
-    lives_container_set_border_width (GTK_CONTAINER (mainw->playframe), widget_opts.border_width);
+    lives_container_set_border_width (LIVES_CONTAINER (mainw->playframe), widget_opts.border_width);
     resize(1);
     lives_widget_show(mainw->t_bckground);
     lives_widget_show(mainw->t_double);
@@ -3015,7 +3015,7 @@ void play_file (void) {
     lives_widget_show(mainw->eventbox4);
     disable_record();
     
-    lives_container_set_border_width (GTK_CONTAINER (mainw->playframe), widget_opts.border_width);
+    lives_container_set_border_width (LIVES_CONTAINER (mainw->playframe), widget_opts.border_width);
   }
 
   if (audio_player!=AUD_PLAYER_JACK&&audio_player!=AUD_PLAYER_PULSE) mainw->mute=mute;

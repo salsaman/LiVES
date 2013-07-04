@@ -491,7 +491,6 @@ void lives_exit (void) {
   }
 
   if (mainw->fonts_array!=NULL) g_strfreev(mainw->fonts_array);
-
 #ifdef USE_SWSCALE
   sws_free_context();
 #endif
@@ -7170,7 +7169,7 @@ void on_full_screen_activate (GtkMenuItem *menuitem, gpointer user_data) {
 	  lives_widget_show(mainw->framebar);
 	}
 	
-	lives_container_set_border_width (GTK_CONTAINER (mainw->playframe), widget_opts.border_width);
+	lives_container_set_border_width (LIVES_CONTAINER (mainw->playframe), widget_opts.border_width);
 	
 	lives_widget_set_sensitive(mainw->fade,TRUE);
 	lives_widget_set_sensitive(mainw->dsize,TRUE);
@@ -7502,7 +7501,7 @@ void on_sepwin_activate (GtkMenuItem *menuitem, gpointer user_data) {
 	  if ((!mainw->faded&&mainw->fs&&((prefs->play_monitor!=prefs->gui_monitor&&prefs->play_monitor>0)))||
 					 (mainw->fs&&mainw->vpp!=NULL&&
 					  !(mainw->vpp->capabilities&VPP_LOCAL_DISPLAY))) {
-	    lives_container_set_border_width (GTK_CONTAINER (mainw->playframe), widget_opts.border_width);
+	    lives_container_set_border_width (LIVES_CONTAINER (mainw->playframe), widget_opts.border_width);
 	    unfade_background();
 	    lives_widget_show(mainw->frame1);
 	    lives_widget_show(mainw->frame2);
@@ -8611,7 +8610,7 @@ void popup_lmap_errors(GtkMenuItem *menuitem, gpointer user_data) {
 
   vbox = lives_dialog_get_content_area(GTK_DIALOG(textwindow->dialog));
 
-  add_warn_check(GTK_BOX(vbox),WARN_MASK_LAYOUT_POPUP);
+  add_warn_check(LIVES_BOX(vbox),WARN_MASK_LAYOUT_POPUP);
 
   button = lives_button_new_with_mnemonic (_("Close _Window"));
 
@@ -8621,7 +8620,7 @@ void popup_lmap_errors(GtkMenuItem *menuitem, gpointer user_data) {
 		    G_CALLBACK (lives_general_button_clicked),
 		    textwindow);
 
-  lives_container_set_border_width (GTK_CONTAINER (button), widget_opts.border_width);
+  lives_container_set_border_width (LIVES_CONTAINER (button), widget_opts.border_width);
   lives_widget_set_can_focus_and_default (button);
 
   textwindow->clear_button = lives_button_new_with_mnemonic (_("Clear _Errors"));
@@ -8632,14 +8631,14 @@ void popup_lmap_errors(GtkMenuItem *menuitem, gpointer user_data) {
 		    G_CALLBACK (on_lerrors_clear_clicked),
 		    GINT_TO_POINTER(FALSE));
 
-  lives_container_set_border_width (GTK_CONTAINER (textwindow->clear_button), widget_opts.border_width);
+  lives_container_set_border_width (LIVES_CONTAINER (textwindow->clear_button), widget_opts.border_width);
   lives_widget_set_can_focus_and_default (textwindow->clear_button);
 
   textwindow->delete_button = lives_button_new_with_mnemonic (_("_Delete affected layouts"));
 
   lives_dialog_add_action_widget (GTK_DIALOG (textwindow->dialog), textwindow->delete_button, GTK_RESPONSE_CANCEL);
 
-  lives_container_set_border_width (GTK_CONTAINER (textwindow->delete_button), widget_opts.border_width);
+  lives_container_set_border_width (LIVES_CONTAINER (textwindow->delete_button), widget_opts.border_width);
   lives_widget_set_can_focus_and_default (textwindow->delete_button);
 
   g_signal_connect (GTK_OBJECT (textwindow->delete_button), "clicked",
@@ -10080,7 +10079,7 @@ boolean frame_context (GtkWidget *widget, GdkEventButton *event, gpointer which)
     
 
     if (capable->has_convert&&capable->has_composite)
-      lives_container_add (GTK_CONTAINER (menu), save_frame_as);
+      lives_container_add (LIVES_CONTAINER (menu), save_frame_as);
 
   }
 

@@ -94,10 +94,10 @@ void create_merge_dialog (void) {
   dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(merge_opts->merge_dialog));
 
   vbox = lives_vbox_new (FALSE, 0);
-  lives_box_pack_start (GTK_BOX (dialog_vbox), vbox, TRUE, TRUE, 0);
+  lives_box_pack_start (LIVES_BOX (dialog_vbox), vbox, TRUE, TRUE, 0);
 
   hbox = lives_hbox_new (FALSE, 0);
-  lives_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height*2);
+  lives_box_pack_start (LIVES_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height*2);
 
   txt=g_strdup_printf(_ ("Merge Clipboard [ %d Frames ]       With Selection [ %d Frames ]"),clipboard->frames,cfile->end-cfile->start+1);
   if (prefs->ins_resample&&clipboard->fps!=cfile->fps) {
@@ -111,7 +111,7 @@ void create_merge_dialog (void) {
   label = lives_standard_label_new (txt);
   g_free(txt);
 
-  lives_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 0);
+  lives_box_pack_start (LIVES_BOX (hbox), label, FALSE, FALSE, 0);
 
   add_fill_to_box(LIVES_BOX(hbox));
 
@@ -127,12 +127,12 @@ void create_merge_dialog (void) {
 
 
   hbox = lives_hbox_new (FALSE, 0);
-  lives_box_pack_start (GTK_BOX (vbox), hbox, FALSE, TRUE, widget_opts.packing_height*2);
+  lives_box_pack_start (LIVES_BOX (vbox), hbox, FALSE, TRUE, widget_opts.packing_height*2);
 
   if ((cfile->end-cfile->start+1)<cb_frames) {
     // hide loop controls if selection is smaller than clipboard
     label = lives_standard_label_new (_("What to do with extra clipboard frames -"));
-    lives_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 0);
+    lives_box_pack_start (LIVES_BOX (hbox), label, FALSE, FALSE, 0);
 
     merge_opts->ins_frame_button=lives_standard_radio_button_new(_("_Insert Frames"),TRUE,radiobutton_insdrop_group,LIVES_BOX(hbox),NULL);
     radiobutton_insdrop_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (merge_opts->ins_frame_button));
@@ -168,7 +168,7 @@ void create_merge_dialog (void) {
   add_hsep_to_box(LIVES_BOX(vbox));
   
   hbox = lives_hbox_new (TRUE, 0);
-  lives_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start (LIVES_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
   transition_combo = lives_standard_combo_new (_("_Transition Method:"),TRUE,merge_opts->trans_list,LIVES_BOX(hbox),NULL);
 
@@ -181,9 +181,9 @@ void create_merge_dialog (void) {
 
   // now the dynamic part...
   merge_opts->param_vbox = lives_vbox_new (FALSE, 0);
-  lives_container_set_border_width (GTK_CONTAINER(merge_opts->param_vbox), widget_opts.border_width>>1);
+  lives_container_set_border_width (LIVES_CONTAINER(merge_opts->param_vbox), widget_opts.border_width>>1);
 
-  lives_box_pack_start (GTK_BOX (vbox), merge_opts->param_vbox, TRUE, TRUE, 0);
+  lives_box_pack_start (LIVES_BOX (vbox), merge_opts->param_vbox, TRUE, TRUE, 0);
 
   rfx=&mainw->rendered_fx[mainw->last_transition_idx];
   mainw->overflow_height=900;
@@ -262,7 +262,7 @@ void on_trans_method_changed (GtkComboBox *combo, gpointer user_data) {
 
   rfx=&mainw->rendered_fx[mainw->last_transition_idx];
 
-  gtk_container_foreach (GTK_CONTAINER(merge_opts->param_vbox),bang,NULL);
+  gtk_container_foreach (LIVES_CONTAINER(merge_opts->param_vbox),bang,NULL);
   on_paramwindow_cancel_clicked (NULL,rfx);
 
   idx=lives_list_index(merge_opts->trans_list,txt);

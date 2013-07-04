@@ -75,7 +75,7 @@ static void add_xlays_widget(GtkBox *box) {
   GtkTextBuffer *textbuffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (textview));
   
   gtk_text_view_set_editable (GTK_TEXT_VIEW (textview), FALSE);
-  lives_container_add (GTK_CONTAINER (expander), textview);
+  lives_container_add (LIVES_CONTAINER (expander), textview);
 
   if (palette->style&STYLE_1) {
     label=gtk_expander_get_label_widget(GTK_EXPANDER(expander));
@@ -139,7 +139,7 @@ static void add_clear_ds_adv(GtkBox *box) {
   GtkWidget *button = lives_button_new_with_mnemonic(_(" _Advanced Settings >>"));
   GtkWidget *hbox = lives_hbox_new (FALSE, 0);
 
-  lives_box_pack_start (GTK_BOX(hbox), button, FALSE, FALSE, widget_opts.packing_width*2);
+  lives_box_pack_start (LIVES_BOX(hbox), button, FALSE, FALSE, widget_opts.packing_width*2);
   lives_box_pack_start (box, hbox, FALSE, FALSE, widget_opts.packing_height);
 
   lives_widget_show_all(hbox);
@@ -226,7 +226,7 @@ static GtkWidget* create_warn_dialog (int warn_mask_number, GtkWindow *transient
   gtk_window_set_deletable(GTK_WINDOW(dialog), FALSE);
   gtk_window_set_resizable (GTK_WINDOW (dialog), FALSE);
 
-  lives_container_set_border_width (GTK_CONTAINER (dialog), widget_opts.border_width*2);
+  lives_container_set_border_width (LIVES_CONTAINER (dialog), widget_opts.border_width*2);
 
   textx=insert_newlines(text,MAX_MSG_WIDTH_CHARS);
   lives_label_set_text(GTK_LABEL(mainw->warning_label),textx);
@@ -235,20 +235,20 @@ static GtkWidget* create_warn_dialog (int warn_mask_number, GtkWindow *transient
 
   dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(dialog));
 
-  lives_box_pack_start (GTK_BOX (dialog_vbox), mainw->warning_label, TRUE, TRUE, 0);
+  lives_box_pack_start (LIVES_BOX (dialog_vbox), mainw->warning_label, TRUE, TRUE, 0);
   gtk_label_set_selectable (GTK_LABEL (mainw->warning_label), TRUE);
 
   if (mainw->add_clear_ds_adv) {
     mainw->add_clear_ds_adv=FALSE;
-    add_clear_ds_adv(GTK_BOX(dialog_vbox));
+    add_clear_ds_adv(LIVES_BOX(dialog_vbox));
   }
 
   if (warn_mask_number>0) {
-    add_warn_check(GTK_BOX(dialog_vbox),warn_mask_number);
+    add_warn_check(LIVES_BOX(dialog_vbox),warn_mask_number);
   }
 
   if (mainw->xlays!=NULL) {
-    add_xlays_widget(GTK_BOX(dialog_vbox));
+    add_xlays_widget(LIVES_BOX(dialog_vbox));
   }
 
   dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (dialog));
@@ -2489,15 +2489,15 @@ static void create_threaded_dialog(gchar *text, gboolean has_cancel) {
 
   vbox = lives_vbox_new (FALSE, 0);
   lives_widget_show (vbox);
-  lives_box_pack_start (GTK_BOX (dialog_vbox), vbox, TRUE, TRUE, 0);
+  lives_box_pack_start (LIVES_BOX (dialog_vbox), vbox, TRUE, TRUE, 0);
 
   g_snprintf(tmp_label,256,"%s...\n",text);
   procw->label = lives_standard_label_new (tmp_label);
-  lives_box_pack_start (GTK_BOX (vbox), procw->label, FALSE, FALSE, 0);
+  lives_box_pack_start (LIVES_BOX (vbox), procw->label, FALSE, FALSE, 0);
 
   procw->progressbar = gtk_progress_bar_new ();
   gtk_progress_bar_set_pulse_step(GTK_PROGRESS_BAR(procw->progressbar),.01);
-  lives_box_pack_start (GTK_BOX (vbox), procw->progressbar, FALSE, FALSE, 0);
+  lives_box_pack_start (LIVES_BOX (vbox), procw->progressbar, FALSE, FALSE, 0);
 
   if (widget_opts.apply_theme&&(palette->style&STYLE_1)) {
     lives_widget_set_fg_color(procw->progressbar, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
@@ -2506,12 +2506,12 @@ static void create_threaded_dialog(gchar *text, gboolean has_cancel) {
   widget_opts.justify=LIVES_JUSTIFY_CENTER;
   procw->label2 = lives_standard_label_new (_("\nPlease Wait"));
   widget_opts.justify=LIVES_JUSTIFY_DEFAULT;
-  lives_box_pack_start (GTK_BOX (vbox), procw->label2, FALSE, FALSE, 0);
+  lives_box_pack_start (LIVES_BOX (vbox), procw->label2, FALSE, FALSE, 0);
 
   widget_opts.justify=LIVES_JUSTIFY_CENTER;
   procw->label3 = lives_standard_label_new (PROCW_STRETCHER);
   widget_opts.justify=LIVES_JUSTIFY_DEFAULT;
-  lives_box_pack_start (GTK_BOX (vbox), procw->label3, FALSE, FALSE, 0);
+  lives_box_pack_start (LIVES_BOX (vbox), procw->label3, FALSE, FALSE, 0);
 
   if (has_cancel) {
     GtkWidget *cancelbutton = gtk_button_new_from_stock ("gtk-cancel");

@@ -1111,18 +1111,18 @@ lives_pandh_w* create_pandh_dialog (gint type) {
   dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(pandhw->dialog));
 
   label=lives_standard_label_new(_("You can receive streams from another copy of LiVES."));
-  lives_box_pack_start (GTK_BOX (dialog_vbox), label, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start (LIVES_BOX (dialog_vbox), label, FALSE, FALSE, widget_opts.packing_height);
 
   label=lives_standard_label_new(_("In the source copy of LiVES, you must select Advanced/Send stream to LiVES\nor select the lives2lives_stream playback plugin in Preferences."));
-  lives_box_pack_start (GTK_BOX (dialog_vbox), label, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start (LIVES_BOX (dialog_vbox), label, FALSE, FALSE, widget_opts.packing_height);
 
   add_hsep_to_box(LIVES_BOX(dialog_vbox));
 
   label=lives_standard_label_new(_("Select the host to receive the stream from (or allow any host to stream)."));
-  lives_box_pack_start (GTK_BOX (dialog_vbox), label, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start (LIVES_BOX (dialog_vbox), label, FALSE, FALSE, widget_opts.packing_height);
 
   hbox = lives_hbox_new (FALSE, 0);
-  lives_box_pack_start (GTK_BOX (dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start (LIVES_BOX (dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
   pandhw->rb_anyhost = lives_standard_radio_button_new ((tmp=g_strdup(_("Accept LiVES streams from _any host")))
 							,TRUE,radiobutton_group,LIVES_BOX(hbox),
@@ -1136,7 +1136,7 @@ lives_pandh_w* create_pandh_dialog (gint type) {
 			  (gpointer)pandhw);
 
   hbox = lives_hbox_new (FALSE, 0);
-  lives_box_pack_start (GTK_BOX (dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start (LIVES_BOX (dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
 
   lives_standard_radio_button_new ((tmp=g_strdup(_("Accept LiVES streams only from the _specified host:")))
@@ -1149,7 +1149,7 @@ lives_pandh_w* create_pandh_dialog (gint type) {
 
 
   hbox = lives_hbox_new (FALSE, 0);
-  lives_box_pack_start (GTK_BOX (dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start (LIVES_BOX (dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
   pandhw->entry1 = lives_standard_entry_new ("",FALSE,"127",3,3,LIVES_BOX(hbox),NULL);
   pandhw->entry2 = lives_standard_entry_new (".",FALSE,"0",3,3,LIVES_BOX(hbox),NULL);
@@ -1162,10 +1162,10 @@ lives_pandh_w* create_pandh_dialog (gint type) {
   lives_widget_set_sensitive(pandhw->entry4,FALSE);
 
   label=lives_standard_label_new(_("Enter the port number to listen for LiVES streams on:"));
-  lives_box_pack_start (GTK_BOX (dialog_vbox), label, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start (LIVES_BOX (dialog_vbox), label, FALSE, FALSE, widget_opts.packing_height);
 
   hbox = lives_hbox_new (FALSE, 0);
-  lives_box_pack_start (GTK_BOX (dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start (LIVES_BOX (dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
   pandhw->port_spin = lives_standard_spin_button_new (_("Port"),FALSE,48888.,1.,65535,1.,1.,0,LIVES_BOX(hbox),NULL);
 

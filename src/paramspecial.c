@@ -256,17 +256,17 @@ void check_for_special (lives_rfx_t *rfx, lives_param_t *param, LiVESBox *pbox) 
 						 NULL);
       
       box = lives_hbox_new (FALSE, 0);
-      lives_box_pack_start (GTK_BOX (GTK_WIDGET (pbox)), box, FALSE, FALSE, widget_opts.packing_height*2);
+      lives_box_pack_start (LIVES_BOX (GTK_WIDGET (pbox)), box, FALSE, FALSE, widget_opts.packing_height*2);
       
       
-      add_fill_to_box(GTK_BOX(box));
+      add_fill_to_box(LIVES_BOX(box));
       
       checkbutton = lives_standard_check_button_new ((tmp=g_strdup(_("Maintain _Aspect Ratio"))),TRUE,
 						     LIVES_BOX(box),(tmp2=g_strdup(_("Maintain aspect ratio of original frame"))));
 
       g_free(tmp); g_free(tmp2);
 
-      add_fill_to_box(GTK_BOX(box));
+      add_fill_to_box(LIVES_BOX(box));
 
       lives_widget_show_all(box);
 
@@ -292,13 +292,13 @@ void check_for_special (lives_rfx_t *rfx, lives_param_t *param, LiVESBox *pbox) 
 
       if (box==NULL) return;
 
-      clist=gtk_container_get_children(GTK_CONTAINER(box));
+      clist=gtk_container_get_children(LIVES_CONTAINER(box));
       epos=g_list_index(clist,param->widgets[0]);
       g_list_free(clist);
 
       buttond = lives_standard_file_button_new (FALSE,g_get_current_dir());
-      lives_box_pack_start(GTK_BOX(box),buttond,FALSE,FALSE,widget_opts.packing_width);
-      gtk_box_reorder_child(GTK_BOX(box),buttond,epos); // insert after label, before textbox
+      lives_box_pack_start(LIVES_BOX(box),buttond,FALSE,FALSE,widget_opts.packing_width);
+      lives_box_reorder_child(LIVES_BOX(box),buttond,epos); // insert after label, before textbox
       g_signal_connect(buttond, "clicked", G_CALLBACK (on_filesel_button_clicked), (gpointer)param->widgets[0]);
 
       if (!lives_widget_is_sensitive(param->widgets[0])) lives_widget_set_sensitive(buttond,FALSE);
@@ -334,7 +334,7 @@ void check_for_special (lives_rfx_t *rfx, lives_param_t *param, LiVESBox *pbox) 
       }
 
       hbox = lives_hbox_new (FALSE, 0);
-      lives_box_pack_start (GTK_BOX (GTK_WIDGET (box)), hbox, FALSE, FALSE, widget_opts.packing_height);
+      lives_box_pack_start (LIVES_BOX (GTK_WIDGET (box)), hbox, FALSE, FALSE, widget_opts.packing_height);
       
       checkbutton = lives_standard_check_button_new (_("Display Password"),FALSE,LIVES_BOX(hbox),NULL);
 

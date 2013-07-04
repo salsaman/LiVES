@@ -4595,7 +4595,7 @@ static void make_fx_defs_menu(void) {
 	    // create new submenu
 	      
 	    pkg_menu=lives_menu_item_new_with_label (pkgstring);
-	    lives_container_add (GTK_CONTAINER (mainw->rte_defs), pkg_menu);
+	    lives_container_add (LIVES_CONTAINER (mainw->rte_defs), pkg_menu);
 	    gtk_menu_reorder_child(GTK_MENU(mainw->rte_defs),pkg_menu,pkg_posn++);
 	      
 	    pkg_submenu=lives_menu_new();
@@ -4626,7 +4626,7 @@ static void make_fx_defs_menu(void) {
 	g_free(string);
 	g_free(filter_type);
 	  
-	lives_container_add (GTK_CONTAINER (menu), menuitem);
+	lives_container_add (LIVES_CONTAINER (menu), menuitem);
 	  
 	g_signal_connect (GTK_OBJECT (menuitem), "activate",
 			  G_CALLBACK (rte_set_defs_activate),
@@ -5491,7 +5491,7 @@ static void load_compound_plugin(gchar *plugin_name, gchar *plugin_path) {
       g_free(string);
       g_free(filter_type);
       
-      lives_container_add (GTK_CONTAINER (mainw->rte_defs), menuitem);
+      lives_container_add (LIVES_CONTAINER (mainw->rte_defs), menuitem);
       
       g_signal_connect (GTK_OBJECT (menuitem), "activate",
 			G_CALLBACK (rte_set_defs_activate),

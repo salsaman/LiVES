@@ -900,6 +900,7 @@ _vppaw *on_vpp_advanced_clicked (GtkButton *button, gpointer user_data) {
     if ((tmpvpp=open_vid_playback_plugin (future_prefs->vpp_name, FALSE))==NULL) return NULL;
   }
   else {
+    if (mainw->vpp==NULL) return NULL;
     tmpvpp=mainw->vpp;
   }
 
@@ -935,7 +936,7 @@ _vppaw *on_vpp_advanced_clicked (GtkButton *button, gpointer user_data) {
     desc=(tmpvpp->get_description)();
     if (desc!=NULL) {
       label = lives_standard_label_new (desc);
-      lives_box_pack_start (GTK_BOX (dialog_vbox), label, FALSE, FALSE, widget_opts.packing_height);
+      lives_box_pack_start (LIVES_BOX (dialog_vbox), label, FALSE, FALSE, widget_opts.packing_height);
     }
   }
 
@@ -986,21 +987,21 @@ _vppaw *on_vpp_advanced_clicked (GtkButton *button, gpointer user_data) {
 
   if (!(tmpvpp->capabilities&VPP_LOCAL_DISPLAY)) {
     hbox = lives_hbox_new (FALSE, 0);
-    lives_box_pack_start (GTK_BOX (dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+    lives_box_pack_start (LIVES_BOX (dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
     
-    add_fill_to_box(GTK_BOX(hbox));
+    add_fill_to_box(LIVES_BOX(hbox));
 
     vppa->spinbuttonw = lives_standard_spin_button_new (_("_Width"),TRUE,
 							tmpvpp->fwidth>0?tmpvpp->fwidth:DEF_VPP_HSIZE, 
 							4., MAX_FRAME_WIDTH, 4., 4., 0, LIVES_BOX(hbox),NULL);
 
-    add_fill_to_box(GTK_BOX(hbox));
+    add_fill_to_box(LIVES_BOX(hbox));
     
     vppa->spinbuttonh = lives_standard_spin_button_new (_("_Height"),TRUE,
 							tmpvpp->fheight>0?tmpvpp->fheight:DEF_VPP_VSIZE, 
 							4., MAX_FRAME_HEIGHT, 4., 4., 0, LIVES_BOX(hbox),NULL);
 
-    add_fill_to_box(GTK_BOX(hbox));
+    add_fill_to_box(LIVES_BOX(hbox));
   }
 
   
@@ -1049,7 +1050,7 @@ _vppaw *on_vpp_advanced_clicked (GtkButton *button, gpointer user_data) {
   if (tmpvpp->get_init_rfx!=NULL) {
     GtkWidget *vbox=lives_vbox_new (FALSE, 0);
     GtkWidget *scrolledwindow = lives_standard_scrolled_window_new (RFX_WINSIZE_H, RFX_WINSIZE_V/2, vbox);
-    lives_box_pack_start (GTK_BOX (dialog_vbox), scrolledwindow, TRUE, TRUE, 0);
+    lives_box_pack_start (LIVES_BOX (dialog_vbox), scrolledwindow, TRUE, TRUE, 0);
 
 #ifndef IS_MINGW
     com=g_strdup_printf("/bin/echo -e \"%s\"",(*tmpvpp->get_init_rfx)());
@@ -2556,15 +2557,15 @@ void on_decplug_advanced_clicked (GtkButton *button, gpointer user_data) {
 
   scrolledwindow = lives_standard_scrolled_window_new (RFX_WINSIZE_H, RFX_WINSIZE_V, vbox);
 
-  lives_container_add (GTK_CONTAINER(dialog_vbox), scrolledwindow);
+  lives_container_add (LIVES_CONTAINER(dialog_vbox), scrolledwindow);
 
   label=lives_standard_label_new(_("Enabled Video Decoders (uncheck to disable)"));
-  lives_box_pack_start (GTK_BOX (vbox), label, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start (LIVES_BOX (vbox), label, FALSE, FALSE, widget_opts.packing_height);
 
   while (decoder_plugin!=NULL) {
     lives_decoder_sys_t *dpsys=(lives_decoder_sys_t *)decoder_plugin->data;
     hbox = lives_hbox_new (FALSE, 0);
-    lives_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+    lives_box_pack_start (LIVES_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
     ltext=g_strdup_printf("%s   (%s)",dpsys->name,(*dpsys->version)());
 
     checkbutton=lives_standard_check_button_new(ltext,FALSE,LIVES_BOX(hbox),NULL);

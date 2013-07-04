@@ -2828,7 +2828,7 @@ static GtkWidget *conx_scroll_new(weed_plant_t *filter, lives_conx_w *conxwp) {
     conxwp->ccombo=(GtkWidget **)g_malloc(conxwp->num_alpha*sizeof(GtkWidget *));
 
     label=lives_standard_label_new(_("Alpha Channel Connections"));
-    lives_box_pack_start (GTK_BOX (top_vbox), label, FALSE, FALSE, widget_opts.packing_height);
+    lives_box_pack_start (LIVES_BOX (top_vbox), label, FALSE, FALSE, widget_opts.packing_height);
 
     for (i=0;i<conxwp->num_alpha;i++) {
       chan=ochans[j++];
@@ -2836,15 +2836,15 @@ static GtkWidget *conx_scroll_new(weed_plant_t *filter, lives_conx_w *conxwp) {
       if (!has_alpha_palette(chan)) continue;
 
       hbox=lives_hbox_new (FALSE, 0);
-      lives_box_pack_start (GTK_BOX (top_vbox), hbox, FALSE, FALSE, widget_opts.packing_width);
+      lives_box_pack_start (LIVES_BOX (top_vbox), hbox, FALSE, FALSE, widget_opts.packing_width);
 
       channame=weed_get_string_value(chan,"name",&error);
       label=lives_standard_label_new(channame);
-      lives_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, widget_opts.packing_width);
+      lives_box_pack_start (LIVES_BOX (hbox), label, FALSE, FALSE, widget_opts.packing_width);
       weed_free(channame);
 
       label=lives_standard_label_new(lctext);
-      lives_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, widget_opts.packing_width);
+      lives_box_pack_start (LIVES_BOX (hbox), label, FALSE, FALSE, widget_opts.packing_width);
 
 
       // create combo entry model
@@ -2854,7 +2854,7 @@ static GtkWidget *conx_scroll_new(weed_plant_t *filter, lives_conx_w *conxwp) {
 
       lives_combo_set_entry_text_column(LIVES_COMBO(conxwp->cfxcombo[x]),NAME_COLUMN);
 
-      lives_box_pack_start (GTK_BOX (hbox), conxwp->cfxcombo[x], FALSE, FALSE, widget_opts.packing_width);
+      lives_box_pack_start (LIVES_BOX (hbox), conxwp->cfxcombo[x], FALSE, FALSE, widget_opts.packing_width);
 
       fx_entry = lives_combo_get_entry(LIVES_COMBO(conxwp->cfxcombo[x]));
       lives_entry_set_text (GTK_ENTRY (fx_entry),mainw->string_constants[LIVES_STRING_CONSTANT_NONE]);
@@ -2896,12 +2896,12 @@ static GtkWidget *conx_scroll_new(weed_plant_t *filter, lives_conx_w *conxwp) {
     x=0;
 
     label=lives_standard_label_new(_("Parameter Data Connections"));
-    lives_box_pack_start (GTK_BOX (top_vbox), label, FALSE, FALSE, widget_opts.packing_height);
+    lives_box_pack_start (LIVES_BOX (top_vbox), label, FALSE, FALSE, widget_opts.packing_height);
 
     hbox=lives_hbox_new (FALSE, 0);
-    lives_box_pack_start (GTK_BOX (top_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+    lives_box_pack_start (LIVES_BOX (top_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
     hbox2=lives_hbox_new (FALSE, 0);
-    lives_box_pack_end (GTK_BOX (hbox), hbox2, FALSE, FALSE, widget_opts.packing_width);
+    lives_box_pack_end (LIVES_BOX (hbox), hbox2, FALSE, FALSE, widget_opts.packing_width);
     conxwp->allcheckc=lives_standard_check_button_new(_("Autoscale All"),FALSE,LIVES_BOX(hbox2),NULL);
 
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(conxwp->allcheckc),TRUE);
@@ -2912,7 +2912,7 @@ static GtkWidget *conx_scroll_new(weed_plant_t *filter, lives_conx_w *conxwp) {
 
     for (i=0;i<conxwp->num_params;i++) {
       hbox=lives_hbox_new (FALSE, 0);
-      lives_box_pack_start (GTK_BOX (top_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+      lives_box_pack_start (LIVES_BOX (top_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
       param=oparams[i];
 
@@ -2944,11 +2944,11 @@ static GtkWidget *conx_scroll_new(weed_plant_t *filter, lives_conx_w *conxwp) {
       text=g_strdup_printf("%s (%s%s) %s",pname,ptype,array_type,range);
 
       label=lives_standard_label_new(text);
-      lives_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, widget_opts.packing_width);
+      lives_box_pack_start (LIVES_BOX (hbox), label, FALSE, FALSE, widget_opts.packing_width);
       weed_free(pname); g_free(ptype); g_free(array_type); g_free(range); g_free(text);
 
       label=lives_standard_label_new(lctext);
-      lives_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, widget_opts.packing_width);
+      lives_box_pack_start (LIVES_BOX (hbox), label, FALSE, FALSE, widget_opts.packing_width);
 
       // create combo entry model
       model=inparam_fx_model(FALSE);
@@ -2957,7 +2957,7 @@ static GtkWidget *conx_scroll_new(weed_plant_t *filter, lives_conx_w *conxwp) {
 
       lives_combo_set_entry_text_column(LIVES_COMBO(conxwp->pfxcombo[x]),NAME_COLUMN);
 
-      lives_box_pack_start (GTK_BOX (hbox), conxwp->pfxcombo[x], FALSE, FALSE, widget_opts.packing_width);
+      lives_box_pack_start (LIVES_BOX (hbox), conxwp->pfxcombo[x], FALSE, FALSE, widget_opts.packing_width);
 
       fx_entry = lives_combo_get_entry(LIVES_COMBO(conxwp->pfxcombo[x]));
       lives_entry_set_text (GTK_ENTRY (fx_entry),mainw->string_constants[LIVES_STRING_CONSTANT_NONE]);
@@ -2967,7 +2967,7 @@ static GtkWidget *conx_scroll_new(weed_plant_t *filter, lives_conx_w *conxwp) {
       conxwp->pcombo[x]=lives_standard_combo_new("",FALSE,NULL,LIVES_BOX(hbox),NULL);
       g_object_set_data(G_OBJECT(conxwp->pcombo[x]),"idx",GINT_TO_POINTER(-1));
 
-      add_fill_to_box(GTK_BOX(hbox));
+      add_fill_to_box(LIVES_BOX(hbox));
 
       conxwp->acheck[x]=lives_standard_check_button_new(_("Autoscale"),FALSE,LIVES_BOX(hbox),NULL);
 
@@ -3350,7 +3350,7 @@ GtkWidget *make_datacon_window(int key, int mode) {
 
   if (conxw.num_alpha>0) {
     acbutton = lives_button_new_with_mnemonic (_("Auto Connect Channels"));
-    lives_box_pack_start (GTK_BOX (abox), acbutton, FALSE, FALSE, widget_opts.packing_width);
+    lives_box_pack_start (LIVES_BOX (abox), acbutton, FALSE, FALSE, widget_opts.packing_width);
     lives_widget_set_sensitive(acbutton,FALSE);
 
     g_signal_connect (GTK_OBJECT (acbutton), "clicked",
@@ -3362,7 +3362,7 @@ GtkWidget *make_datacon_window(int key, int mode) {
 
   if (conxw.num_params>0) {
     apbutton = lives_button_new_with_mnemonic (_("Auto Connect Parameters"));
-    lives_box_pack_start (GTK_BOX (abox), apbutton, FALSE, FALSE, widget_opts.packing_width);
+    lives_box_pack_start (LIVES_BOX (abox), apbutton, FALSE, FALSE, widget_opts.packing_width);
     lives_widget_set_sensitive(apbutton,FALSE);
 
     g_signal_connect (GTK_OBJECT (apbutton), "clicked",
@@ -3372,14 +3372,14 @@ GtkWidget *make_datacon_window(int key, int mode) {
   }
 
   disconbutton = lives_button_new_with_mnemonic (_("Disconnect All"));
-  lives_box_pack_start (GTK_BOX (abox), disconbutton, FALSE, FALSE, widget_opts.packing_width);
+  lives_box_pack_start (LIVES_BOX (abox), disconbutton, FALSE, FALSE, widget_opts.packing_width);
   lives_widget_set_sensitive(disconbutton,FALSE);
 
   g_signal_connect (GTK_OBJECT (disconbutton), "clicked",
 		    G_CALLBACK (disconbutton_clicked),
 		    (gpointer)&conxw);
 
-  if (conxw.num_alpha>0||conxw.num_params>0) add_fill_to_box(GTK_BOX(abox));
+  if (conxw.num_alpha>0||conxw.num_params>0) add_fill_to_box(LIVES_BOX(abox));
 
   cbox = lives_dialog_get_content_area(LIVES_DIALOG(conxw.conx_dialog));
 
@@ -3390,7 +3390,7 @@ GtkWidget *make_datacon_window(int key, int mode) {
     needsanother=show_existing(&conxw);
   }
 
-  lives_box_pack_start (GTK_BOX (cbox), scrolledwindow, TRUE, TRUE, 0);
+  lives_box_pack_start (LIVES_BOX (cbox), scrolledwindow, TRUE, TRUE, 0);
 
 
   cancelbutton = gtk_button_new_from_stock ("gtk-cancel");

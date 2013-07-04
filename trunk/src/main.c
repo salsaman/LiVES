@@ -1155,7 +1155,11 @@ static void lives_init(_ign_opts *ign_opts) {
 
     prefs->present=FALSE;
 
+#if GTK_CHECK_VERSION(3,2,0)  // required for grid widget
     prefs->ce_thumb_mode=get_boolean_pref("ce_thumb_mode");
+#else
+    prefs->ce_thumb_mode=FALSE;
+#endif
 
     //////////////////////////////////////////////////////////////////
 
@@ -3402,7 +3406,7 @@ void load_start_image(gint frame) {
   g_signal_handlers_block_by_func(mainw->image272,(gpointer)expose_sim,NULL);
 #endif
 
-  if (mainw->current_file>-1&&(cfile->clip_type==CLIP_TYPE_YUV4MPEG||cfile->clip_type==CLIP_TYPE_VIDEODEV)) {
+  if (mainw->current_file>-1&&cfile!=NULL&&(cfile->clip_type==CLIP_TYPE_YUV4MPEG||cfile->clip_type==CLIP_TYPE_VIDEODEV)) {
     if (mainw->camframe==NULL) {
       GError *error=NULL;
       gchar *tmp=g_build_filename(prefs->prefix_dir,THEME_DIR,"camera","frame.jpg",NULL);
@@ -3553,7 +3557,7 @@ void load_end_image(gint frame) {
   g_signal_handlers_block_by_func(mainw->image273,(gpointer)expose_sim,NULL);
 #endif
 
-  if (mainw->current_file>-1&&(cfile->clip_type==CLIP_TYPE_YUV4MPEG||cfile->clip_type==CLIP_TYPE_VIDEODEV)) {
+  if (mainw->current_file>-1&&cfile!=NULL&&(cfile->clip_type==CLIP_TYPE_YUV4MPEG||cfile->clip_type==CLIP_TYPE_VIDEODEV)) {
     if (mainw->camframe==NULL) {
       GError *error=NULL;
       gchar *tmp=g_build_filename(prefs->prefix_dir,THEME_DIR,"camera","frame.jpg",NULL);
@@ -5363,7 +5367,6 @@ void load_frame_image(gint frame) {
 
     }
 
-
     if (mainw->ext_playback&&(!(mainw->vpp->capabilities&VPP_CAN_RESIZE)||lb_width!=0)) {
       // here we are playing through an external video playback plugin which cannot resize
       // we must resize to whatever width and height we set when we called init_screen() in the plugin
@@ -6047,7 +6050,7 @@ void close_current_file(gint file_to_switch_to) {
       // add it the play window...
       if (lives_widget_get_parent(mainw->preview_box)==NULL) {
 	lives_widget_queue_draw(mainw->play_window);
-	lives_container_add (GTK_CONTAINER (mainw->play_window), mainw->preview_box);
+	lives_container_add (LIVES_CONTAINER (mainw->play_window), mainw->preview_box);
 	lives_widget_grab_focus (mainw->preview_spinbutton);
       }
 
@@ -6197,7 +6200,7 @@ void switch_to_file(gint old_file, gint new_file) {
     // add it the play window...
     if (lives_widget_get_parent(mainw->preview_box)==NULL) {
       lives_widget_queue_draw(mainw->play_window);
-      lives_container_add (GTK_CONTAINER (mainw->play_window), mainw->preview_box);
+      lives_container_add (LIVES_CONTAINER (mainw->play_window), mainw->preview_box);
       lives_widget_grab_focus (mainw->preview_spinbutton);
     }
 
@@ -6771,7 +6774,7 @@ void resize (double scale) {
       lives_widget_hide(mainw->frame2);
       lives_widget_hide(mainw->eventbox3);
       lives_widget_hide(mainw->eventbox4);
-      lives_container_set_border_width (GTK_CONTAINER (mainw->playframe), 0);
+      lives_container_set_border_width (LIVES_CONTAINER (mainw->playframe), 0);
     }
   }
 

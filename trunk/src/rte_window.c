@@ -1603,45 +1603,45 @@ void on_rte_info_clicked (GtkButton *button, gpointer user_data) {
   lives_window_set_title (GTK_WINDOW (rte_info_window), g_strdup_printf(_("LiVES: Information for %s"),filter_name));
   lives_widget_set_bg_color(rte_info_window, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
 
-  lives_container_set_border_width (GTK_CONTAINER (rte_info_window), widget_opts.border_width);
+  lives_container_set_border_width (LIVES_CONTAINER (rte_info_window), widget_opts.border_width);
   gtk_window_set_transient_for(GTK_WINDOW(rte_info_window),GTK_WINDOW(lives_widget_get_toplevel(GTK_WIDGET(button))));
 
   gtk_window_set_default_size (GTK_WINDOW (rte_info_window), RTE_INFO_WIDTH, RTE_INFO_HEIGHT);
 
   vbox = lives_vbox_new (FALSE, widget_opts.packing_height*2);
-  lives_container_add (GTK_CONTAINER (rte_info_window), vbox);
+  lives_container_add (LIVES_CONTAINER (rte_info_window), vbox);
 
   label = lives_standard_label_new ((tmp=g_strdup_printf(_("Effect name: %s"),filter_name)));
   g_free(tmp);
-  lives_box_pack_start (GTK_BOX (vbox), label, TRUE, FALSE, 0);
+  lives_box_pack_start (LIVES_BOX (vbox), label, TRUE, FALSE, 0);
 
   label = lives_standard_label_new ((tmp=g_strdup_printf(_("Type: %s"),type)));
   g_free(tmp);
-  lives_box_pack_start (GTK_BOX (vbox), label, TRUE, FALSE, 0);
+  lives_box_pack_start (LIVES_BOX (vbox), label, TRUE, FALSE, 0);
 
   label = lives_standard_label_new ((tmp=g_strdup_printf(_("Plugin name: %s"),plugin_name)));
   g_free(tmp);
-  lives_box_pack_start (GTK_BOX (vbox), label, TRUE, FALSE, 0);
+  lives_box_pack_start (LIVES_BOX (vbox), label, TRUE, FALSE, 0);
 
   label = lives_standard_label_new ((tmp=g_strdup_printf(_("Author: %s"),filter_author)));
   g_free(tmp);
-  lives_box_pack_start (GTK_BOX (vbox), label, TRUE, FALSE, 0);
+  lives_box_pack_start (LIVES_BOX (vbox), label, TRUE, FALSE, 0);
 
   if (filter_extra_authors!=NULL) {
     label = lives_standard_label_new ((tmp=g_strdup_printf(_("and: %s"),filter_extra_authors)));
     g_free(tmp);
-    lives_box_pack_start (GTK_BOX (vbox), label, TRUE, FALSE, 0);
+    lives_box_pack_start (LIVES_BOX (vbox), label, TRUE, FALSE, 0);
   }
 
   label = lives_standard_label_new ((tmp=g_strdup_printf(_("Version: %d"),filter_version)));
   g_free(tmp);
-  lives_box_pack_start (GTK_BOX (vbox), label, TRUE, FALSE, 0);
+  lives_box_pack_start (LIVES_BOX (vbox), label, TRUE, FALSE, 0);
 
   hbox = lives_hbox_new (FALSE, widget_opts.packing_width);
-  lives_box_pack_start (GTK_BOX (vbox), hbox, TRUE, FALSE, 0);
+  lives_box_pack_start (LIVES_BOX (vbox), hbox, TRUE, FALSE, 0);
 
   label = lives_standard_label_new (_("Description: "));
-  lives_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, 0);
+  lives_box_pack_start (LIVES_BOX (hbox), label, FALSE, FALSE, 0);
 
   textview = gtk_text_view_new ();
 
@@ -1655,15 +1655,15 @@ void on_rte_info_clicked (GtkButton *button, gpointer user_data) {
   gtk_text_view_set_cursor_visible (GTK_TEXT_VIEW (textview), FALSE);
   
   text_view_set_text (LIVES_TEXT_VIEW(textview), filter_description,-1);
-  lives_box_pack_start (GTK_BOX (hbox), textview, TRUE, TRUE, 0);
+  lives_box_pack_start (LIVES_BOX (hbox), textview, TRUE, TRUE, 0);
   
   hbuttonbox = lives_hbutton_box_new ();
-  lives_box_pack_start (GTK_BOX (vbox), hbuttonbox, TRUE, TRUE, 0);
+  lives_box_pack_start (LIVES_BOX (vbox), hbuttonbox, TRUE, TRUE, 0);
 
   ok_button = gtk_button_new_from_stock ("gtk-ok");
   lives_widget_show (ok_button);
 
-  lives_container_add (GTK_CONTAINER (hbuttonbox), ok_button);
+  lives_container_add (LIVES_CONTAINER (hbuttonbox), ok_button);
   lives_widget_set_can_focus_and_default (ok_button);
   gtk_widget_grab_default (ok_button);
 
@@ -2120,18 +2120,18 @@ GtkWidget * create_rte_window (void) {
     lives_table_attach (GTK_TABLE (table), hbox, i, i+1, 0, 1,
 		      (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
 		      (GtkAttachOptions) (GTK_EXPAND | GTK_FILL), 0, 0);
-    lives_container_set_border_width (GTK_CONTAINER (hbox), widget_opts.border_width);
+    lives_container_set_border_width (LIVES_CONTAINER (hbox), widget_opts.border_width);
     
     label = lives_standard_label_new ((tmp=g_strdup_printf(_("Ctrl-%d"),i+1)));
     g_free(tmp);
 
-    lives_box_pack_start (GTK_BOX (hbox), label, TRUE, FALSE, widget_opts.packing_width);
+    lives_box_pack_start (LIVES_BOX (hbox), label, TRUE, FALSE, widget_opts.packing_width);
 
     hbox2 = lives_hbox_new (FALSE, 0);
 
     key_checks[i] = lives_standard_check_button_new (_("Key active"),FALSE,LIVES_BOX(hbox2),NULL);
     
-    lives_box_pack_start (GTK_BOX (hbox), hbox2, FALSE, FALSE, widget_opts.packing_width);
+    lives_box_pack_start (LIVES_BOX (hbox), hbox2, FALSE, FALSE, widget_opts.packing_width);
 
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(key_checks[i]),mainw->rte&(GU641<<i));
 
@@ -2141,7 +2141,7 @@ GtkWidget * create_rte_window (void) {
 
 
     hbox2 = lives_hbox_new (FALSE, 0);
-    lives_box_pack_start (GTK_BOX (hbox), hbox2, FALSE, FALSE, widget_opts.packing_width);
+    lives_box_pack_start (LIVES_BOX (hbox), hbox2, FALSE, FALSE, widget_opts.packing_width);
 
     key_grabs[i]=lives_standard_radio_button_new((tmp=g_strdup(_ ("Key grab"))),FALSE,grab_group,LIVES_BOX(hbox2),
 						 (tmp2=g_strdup(_("Grab keyboard for this effect key"))));
@@ -2162,11 +2162,11 @@ GtkWidget * create_rte_window (void) {
       lives_table_attach (GTK_TABLE (table), hbox, i, i+1, j+1, j+2,
 			(GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
 			(GtkAttachOptions) (GTK_EXPAND | GTK_FILL), 0, 0);
-      lives_container_set_border_width (GTK_CONTAINER (hbox), widget_opts.border_width);
+      lives_container_set_border_width (LIVES_CONTAINER (hbox), widget_opts.border_width);
 
 
       hbox2 = lives_hbox_new (FALSE, 0);
-      lives_box_pack_start (GTK_BOX (hbox), hbox2, FALSE, FALSE, widget_opts.packing_width);
+      lives_box_pack_start (LIVES_BOX (hbox), hbox2, FALSE, FALSE, widget_opts.packing_width);
       
       mode_radios[idx]=lives_standard_radio_button_new(_ ("Mode active"),FALSE,mode_group,LIVES_BOX(hbox2),NULL);
       mode_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (mode_radios[idx]));
@@ -2184,15 +2184,15 @@ GtkWidget * create_rte_window (void) {
       clear_buttons[idx] = gtk_button_new_with_label (_("Clear"));
 
       vbox = lives_vbox_new (FALSE, 0);
-      lives_box_pack_start (GTK_BOX (hbox), vbox, FALSE, FALSE, widget_opts.packing_width);
-      lives_container_set_border_width (GTK_CONTAINER (vbox), widget_opts.border_width);
+      lives_box_pack_start (LIVES_BOX (hbox), vbox, FALSE, FALSE, widget_opts.packing_width);
+      lives_container_set_border_width (LIVES_CONTAINER (vbox), widget_opts.border_width);
 
       hbox = lives_hbox_new (FALSE, 0);
-      lives_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+      lives_box_pack_start (LIVES_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
       nlabels[idx] = lives_standard_label_new (_("Effect name:"));
 
-      lives_box_pack_start (GTK_BOX (hbox), nlabels[idx], FALSE, FALSE, widget_opts.packing_width);
+      lives_box_pack_start (LIVES_BOX (hbox), nlabels[idx], FALSE, FALSE, widget_opts.packing_width);
 
       // create combo entry model
       model=rte_window_fx_model();
@@ -2203,7 +2203,7 @@ GtkWidget * create_rte_window (void) {
 
       g_object_set_data (G_OBJECT(combo), "hashname", (gpointer)g_strdup(""));
       g_object_set_data (G_OBJECT(combo), "idx", GINT_TO_POINTER(idx));
-      lives_box_pack_start (GTK_BOX (hbox), combo, TRUE, TRUE, widget_opts.packing_width);
+      lives_box_pack_start (LIVES_BOX (hbox), combo, TRUE, TRUE, widget_opts.packing_width);
 
 
       combo_entries[idx] = lives_combo_get_entry(LIVES_COMBO(combo));
@@ -2214,7 +2214,7 @@ GtkWidget * create_rte_window (void) {
       lives_entry_set_editable (LIVES_ENTRY (combo_entries[idx]), FALSE);
       
       hbox = lives_hbox_new (FALSE, 0);
-      lives_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+      lives_box_pack_start (LIVES_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
       g_signal_connect(GTK_OBJECT (combo), "changed",
 		       G_CALLBACK (fx_changed),GINT_TO_POINTER(i*rte_getmodespk()+j));
@@ -2233,11 +2233,11 @@ GtkWidget * create_rte_window (void) {
       
       type_label_set_text(i,j);
 
-      lives_box_pack_start (GTK_BOX (hbox), type_labels[idx], FALSE, FALSE, widget_opts.packing_width);
-      lives_box_pack_end (GTK_BOX (hbox), info_buttons[idx], FALSE, FALSE, widget_opts.packing_width);
-      lives_box_pack_end (GTK_BOX (hbox), conx_buttons[idx], FALSE, FALSE, widget_opts.packing_width);
-      lives_box_pack_end (GTK_BOX (hbox), param_buttons[idx], FALSE, FALSE, widget_opts.packing_width);
-      lives_box_pack_end (GTK_BOX (hbox), clear_buttons[idx], FALSE, FALSE, widget_opts.packing_width);
+      lives_box_pack_start (LIVES_BOX (hbox), type_labels[idx], FALSE, FALSE, widget_opts.packing_width);
+      lives_box_pack_end (LIVES_BOX (hbox), info_buttons[idx], FALSE, FALSE, widget_opts.packing_width);
+      lives_box_pack_end (LIVES_BOX (hbox), conx_buttons[idx], FALSE, FALSE, widget_opts.packing_width);
+      lives_box_pack_end (LIVES_BOX (hbox), param_buttons[idx], FALSE, FALSE, widget_opts.packing_width);
+      lives_box_pack_end (LIVES_BOX (hbox), clear_buttons[idx], FALSE, FALSE, widget_opts.packing_width);
 
       filter=rte_keymode_get_filter(i+1,j);
 
@@ -2257,30 +2257,30 @@ GtkWidget * create_rte_window (void) {
 
   top_vbox = lives_vbox_new (FALSE, 0);
 
-  lives_box_pack_start (GTK_BOX (top_vbox), dummy_radio, FALSE, FALSE, 0);
-  lives_box_pack_start (GTK_BOX (top_vbox), scrolledwindow, TRUE, TRUE, widget_opts.packing_height);
+  lives_box_pack_start (LIVES_BOX (top_vbox), dummy_radio, FALSE, FALSE, 0);
+  lives_box_pack_start (LIVES_BOX (top_vbox), scrolledwindow, TRUE, TRUE, widget_opts.packing_height);
 
-  lives_container_add (GTK_CONTAINER (rte_window), top_vbox);
+  lives_container_add (LIVES_CONTAINER (rte_window), top_vbox);
 
   hbuttonbox = lives_hbutton_box_new ();
-  lives_box_pack_start (GTK_BOX (top_vbox), hbuttonbox, FALSE, TRUE, widget_opts.packing_height*2);
+  lives_box_pack_start (LIVES_BOX (top_vbox), hbuttonbox, FALSE, TRUE, widget_opts.packing_height*2);
 
-  lives_container_add (GTK_CONTAINER (hbuttonbox), clear_all_button);
+  lives_container_add (LIVES_CONTAINER (hbuttonbox), clear_all_button);
   lives_widget_set_can_focus_and_default (clear_all_button);
 
   save_keymap_button = lives_button_new_with_mnemonic (_("_Save as default keymap"));
 
-  lives_container_add (GTK_CONTAINER (hbuttonbox), save_keymap_button);
+  lives_container_add (LIVES_CONTAINER (hbuttonbox), save_keymap_button);
   lives_widget_set_can_focus_and_default (save_keymap_button);
 
   load_keymap_button = lives_button_new_with_mnemonic (_("_Load default keymap"));
 
-  lives_container_add (GTK_CONTAINER (hbuttonbox), load_keymap_button);
+  lives_container_add (LIVES_CONTAINER (hbuttonbox), load_keymap_button);
   lives_widget_set_can_focus_and_default (load_keymap_button);
 
   ok_button = lives_button_new_with_mnemonic (_("Close _window"));
 
-  lives_container_add (GTK_CONTAINER (hbuttonbox), ok_button);
+  lives_container_add (LIVES_CONTAINER (hbuttonbox), ok_button);
   lives_widget_set_can_focus_and_default (ok_button);
 
 #if !GTK_CHECK_VERSION(3,0,0)
@@ -2400,9 +2400,9 @@ void redraw_pwindow (int key, int mode) {
     if (rfx->is_template||(key==keyw&&mode==modew)) {
       // rip out the contents
       if (mainw->invis==NULL) mainw->invis=lives_vbox_new(FALSE,0);
-      child_list=gtk_container_get_children(GTK_CONTAINER(lives_dialog_get_content_area(GTK_DIALOG(fx_dialog[1]))));
+      child_list=gtk_container_get_children(LIVES_CONTAINER(lives_dialog_get_content_area(GTK_DIALOG(fx_dialog[1]))));
       action_area=lives_dialog_get_action_area(LIVES_DIALOG(fx_dialog[1]));
-      gtk_container_set_focus_child(GTK_CONTAINER(action_area),NULL);
+      gtk_container_set_focus_child(LIVES_CONTAINER(action_area),NULL);
       for (i=0;i<g_list_length(child_list);i++) {
 	GtkWidget *widget=(GtkWidget *)g_list_nth_data(child_list,i);
 	if (widget!=action_area) {
@@ -2644,7 +2644,7 @@ void rte_reset_defs_clicked (GtkButton *button, lives_rfx_t *rfx) {
   // redraw the window
 
   if (mainw->invis==NULL) mainw->invis=lives_vbox_new(FALSE,0);
-  child_list=gtk_container_get_children(GTK_CONTAINER(lives_dialog_get_content_area(GTK_DIALOG(fxdialog))));
+  child_list=gtk_container_get_children(LIVES_CONTAINER(lives_dialog_get_content_area(GTK_DIALOG(fxdialog))));
 
   action_area=lives_dialog_get_action_area(LIVES_DIALOG (fxdialog));
 

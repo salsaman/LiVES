@@ -481,6 +481,14 @@ LIVES_INLINE LiVESWidgetColor *lives_widget_color_copy(LiVESWidgetColor *c1, con
 return c0;
 }
 
+LIVES_INLINE LiVESWidget *lives_event_box_new(void) {
+  LiVESWidget *eventbox=NULL;
+#ifdef GUI_GTK
+  eventbox=gtk_event_box_new();
+#endif
+  return eventbox;
+}
+
 
 LIVES_INLINE LiVESWidget *lives_image_new(void) {
   LiVESWidget *image=NULL;
@@ -873,6 +881,13 @@ LIVES_INLINE LiVESAdjustment *lives_adjustment_new(double value, double lower, d
 LIVES_INLINE void lives_box_set_homogeneous(LiVESBox *box, boolean homogenous) {
 #ifdef GUI_GTK
   gtk_box_set_homogeneous(box,homogenous);
+#endif
+}
+
+
+LIVES_INLINE void lives_box_reorder_child(LiVESBox *box, LiVESWidget *child, int pos) {
+#ifdef GUI_GTK
+  gtk_box_reorder_child(box,child,pos);
 #endif
 }
 
@@ -1652,7 +1667,8 @@ LIVES_INLINE void lives_entry_set_text(LiVESEntry *entry, const char *text) {
 }
 
 
-LIVES_INLINE void lives_scrolled_window_set_policy(LiVESScrolledWindow *scrolledwindow, LiVESPolicyType hpolicy, LiVESPolicyType vpolicy) {
+LIVES_INLINE void lives_scrolled_window_set_policy(LiVESScrolledWindow *scrolledwindow, lives_policy_t hpolicy, 
+						   lives_policy_t vpolicy) {
 #ifdef GUI_GTK
   gtk_scrolled_window_set_policy (scrolledwindow, hpolicy, vpolicy);
 #endif
@@ -1705,6 +1721,40 @@ LIVES_INLINE LiVESWidget *lives_grid_new(void) {
 #endif
 #endif
   return grid;
+}
+
+
+LIVES_INLINE boolean lives_grid_set_row_spacing(LiVESGrid *grid, uint32_t spacing) {
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3,2,0)  // required for grid widget
+  gtk_grid_set_row_spacing(grid,spacing);
+  return TRUE;
+#endif
+#endif
+  return FALSE;
+}
+
+
+LIVES_INLINE boolean lives_grid_set_column_spacing(LiVESGrid *grid, uint32_t spacing) {
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3,2,0)  // required for grid widget
+  gtk_grid_set_column_spacing(grid,spacing);
+  return TRUE;
+#endif
+#endif
+  return FALSE;
+}
+
+
+LIVES_INLINE boolean lives_grid_attach_next_to(LiVESGrid *grid, LiVESWidget *child, LiVESWidget *sibling, 
+					       lives_position_t side, int width, int height) {
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3,2,0)  // required for grid widget
+  gtk_grid_attach_next_to(grid,child,sibling,side,width,height);
+  return TRUE;
+#endif
+#endif
+  return FALSE;
 }
 
 
@@ -2185,7 +2235,7 @@ LiVESWidget *lives_standard_check_button_new(const char *labeltext, boolean use_
   widget_opts.last_label=NULL;
 
   if (labeltext!=NULL) {
-    eventbox=gtk_event_box_new();
+    eventbox=lives_event_box_new();
     if (tooltip!=NULL) lives_tooltips_copy(eventbox,checkbutton);
 
     if (use_mnemonic) {
@@ -2193,7 +2243,7 @@ LiVESWidget *lives_standard_check_button_new(const char *labeltext, boolean use_
     }
     else label=lives_standard_label_new (labeltext);
 
-    lives_container_add(GTK_CONTAINER(eventbox),label);
+    lives_container_add(LIVES_CONTAINER(eventbox),label);
 
     g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
 		      G_CALLBACK (label_act_toggle),
@@ -2213,19 +2263,19 @@ LiVESWidget *lives_standard_check_button_new(const char *labeltext, boolean use_
       if (!widget_opts.no_gui) {
 	lives_widget_show(hbox);
       }
-      lives_box_pack_start (GTK_BOX (box), hbox, FALSE, FALSE, widget_opts.packing_height);
+      lives_box_pack_start (LIVES_BOX (box), hbox, FALSE, FALSE, widget_opts.packing_height);
     }
     
     lives_box_set_homogeneous(LIVES_BOX(hbox),FALSE);
     
     
     if (widget_opts.swap_label&&eventbox!=NULL)
-      lives_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, widget_opts.packing_width);
+      lives_box_pack_start (LIVES_BOX (hbox), eventbox, FALSE, FALSE, widget_opts.packing_width);
     
-    lives_box_pack_start (GTK_BOX (hbox), checkbutton, widget_opts.expand==LIVES_EXPAND_EXTRA, FALSE, eventbox==NULL?0:widget_opts.packing_width);
+    lives_box_pack_start (LIVES_BOX (hbox), checkbutton, widget_opts.expand==LIVES_EXPAND_EXTRA, FALSE, eventbox==NULL?0:widget_opts.packing_width);
 
     if (!widget_opts.swap_label&&eventbox!=NULL)
-      lives_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, widget_opts.packing_width);
+      lives_box_pack_start (LIVES_BOX (hbox), eventbox, FALSE, FALSE, widget_opts.packing_width);
 
   }
 
@@ -2276,9 +2326,9 @@ LiVESWidget *lives_standard_radio_button_new(const char *labeltext, boolean use_
 
     widget_opts.last_label=label;
     
-    eventbox=gtk_event_box_new();
+    eventbox=lives_event_box_new();
     if (tooltip!=NULL) lives_tooltips_copy(eventbox,radiobutton);
-    lives_container_add(GTK_CONTAINER(eventbox),label);
+    lives_container_add(LIVES_CONTAINER(eventbox),label);
 
     g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
 		      G_CALLBACK (label_act_toggle),
@@ -2297,18 +2347,18 @@ LiVESWidget *lives_standard_radio_button_new(const char *labeltext, boolean use_
       if (!widget_opts.no_gui) {
 	lives_widget_show(hbox);
       }
-      lives_box_pack_start (GTK_BOX (box), hbox, FALSE, FALSE, widget_opts.packing_height);
+      lives_box_pack_start (LIVES_BOX (box), hbox, FALSE, FALSE, widget_opts.packing_height);
     }
     
     lives_box_set_homogeneous(LIVES_BOX(hbox),FALSE);
     
     if (widget_opts.swap_label&&eventbox!=NULL)
-      lives_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, widget_opts.packing_width);
+      lives_box_pack_start (LIVES_BOX (hbox), eventbox, FALSE, FALSE, widget_opts.packing_width);
 
-    lives_box_pack_start (GTK_BOX (hbox), radiobutton, widget_opts.expand==LIVES_EXPAND_EXTRA, FALSE, eventbox==NULL?0:widget_opts.packing_width);
+    lives_box_pack_start (LIVES_BOX (hbox), radiobutton, widget_opts.expand==LIVES_EXPAND_EXTRA, FALSE, eventbox==NULL?0:widget_opts.packing_width);
 
     if (!widget_opts.swap_label&&eventbox!=NULL)
-      lives_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, widget_opts.packing_width);
+      lives_box_pack_start (LIVES_BOX (hbox), eventbox, FALSE, FALSE, widget_opts.packing_width);
   }
 
   if (label!=NULL) {
@@ -2380,9 +2430,9 @@ LiVESWidget *lives_standard_spin_button_new(const char *labeltext, boolean use_m
     
     widget_opts.last_label=label;
 
-    eventbox=gtk_event_box_new();
+    eventbox=lives_event_box_new();
     if (tooltip!=NULL) lives_tooltips_copy(eventbox,spinbutton);
-    lives_container_add(GTK_CONTAINER(eventbox),label);
+    lives_container_add(LIVES_CONTAINER(eventbox),label);
     
     if (widget_opts.apply_theme) {
       lives_widget_apply_theme(eventbox, LIVES_WIDGET_STATE_NORMAL);
@@ -2396,23 +2446,23 @@ LiVESWidget *lives_standard_spin_button_new(const char *labeltext, boolean use_m
       if (!widget_opts.no_gui) {
 	lives_widget_show(hbox);
       }
-      lives_box_pack_start (GTK_BOX (box), hbox, FALSE, FALSE, widget_opts.packing_height);
+      lives_box_pack_start (LIVES_BOX (box), hbox, FALSE, FALSE, widget_opts.packing_height);
       expand=widget_opts.expand!=LIVES_EXPAND_NONE;
     }
 
     lives_box_set_homogeneous(LIVES_BOX(hbox),FALSE);
 
     if (!widget_opts.swap_label&&eventbox!=NULL)
-      lives_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, widget_opts.packing_width);
+      lives_box_pack_start (LIVES_BOX (hbox), eventbox, FALSE, FALSE, widget_opts.packing_width);
     
     if (expand) add_fill_to_box(LIVES_BOX(hbox));
 
-    lives_box_pack_start (GTK_BOX (hbox), spinbutton, widget_opts.expand==LIVES_EXPAND_EXTRA, FALSE, widget_opts.packing_width);
+    lives_box_pack_start (LIVES_BOX (hbox), spinbutton, widget_opts.expand==LIVES_EXPAND_EXTRA, FALSE, widget_opts.packing_width);
     
     if (expand) add_fill_to_box(LIVES_BOX(hbox));
 
     if (widget_opts.swap_label&&eventbox!=NULL)
-      lives_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, widget_opts.packing_width);
+      lives_box_pack_start (LIVES_BOX (hbox), eventbox, FALSE, FALSE, widget_opts.packing_width);
   }
 
   if (label!=NULL) {
@@ -2465,9 +2515,9 @@ LiVESWidget *lives_standard_combo_new (const char *labeltext, boolean use_mnemon
 
     widget_opts.last_label=label;
     
-    eventbox=gtk_event_box_new();
+    eventbox=lives_event_box_new();
     if (tooltip!=NULL) lives_tooltips_copy(eventbox,combo);
-    lives_container_add(GTK_CONTAINER(eventbox),label);
+    lives_container_add(LIVES_CONTAINER(eventbox),label);
     
     if (widget_opts.apply_theme) {
       lives_widget_apply_theme(eventbox, LIVES_WIDGET_STATE_NORMAL);
@@ -2478,27 +2528,27 @@ LiVESWidget *lives_standard_combo_new (const char *labeltext, boolean use_mnemon
     if (LIVES_IS_HBOX(box)) hbox=GTK_WIDGET(box);
     else {
       hbox = lives_hbox_new (FALSE, 0);
-      lives_box_pack_start (GTK_BOX (box), hbox, FALSE, FALSE, widget_opts.packing_height);
+      lives_box_pack_start (LIVES_BOX (box), hbox, FALSE, FALSE, widget_opts.packing_height);
     }
 
     lives_box_set_homogeneous(LIVES_BOX(hbox),FALSE);
 
     if (widget_opts.expand==LIVES_EXPAND_DEFAULT) {
       GtkWidget *label=lives_standard_label_new("");
-      lives_box_pack_start (GTK_BOX (hbox), label, TRUE, FALSE, 0);
+      lives_box_pack_start (LIVES_BOX (hbox), label, TRUE, FALSE, 0);
     }
     
     if (!widget_opts.swap_label&&eventbox!=NULL)
-      lives_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, widget_opts.packing_width);
-    lives_box_pack_start (GTK_BOX (hbox), combo, widget_opts.expand!=LIVES_EXPAND_NONE, 
+      lives_box_pack_start (LIVES_BOX (hbox), eventbox, FALSE, FALSE, widget_opts.packing_width);
+    lives_box_pack_start (LIVES_BOX (hbox), combo, widget_opts.expand!=LIVES_EXPAND_NONE, 
 			widget_opts.expand==LIVES_EXPAND_EXTRA, eventbox==NULL?0:widget_opts.packing_width);
     if (widget_opts.swap_label&&eventbox!=NULL)
-      lives_box_pack_start (GTK_BOX (hbox), eventbox, FALSE, FALSE, widget_opts.packing_width);
+      lives_box_pack_start (LIVES_BOX (hbox), eventbox, FALSE, FALSE, widget_opts.packing_width);
 
 
     if (widget_opts.expand==LIVES_EXPAND_DEFAULT) {
       GtkWidget *label=lives_standard_label_new("");
-      lives_box_pack_start (GTK_BOX (hbox), label, TRUE, FALSE, 0);
+      lives_box_pack_start (LIVES_BOX (hbox), label, TRUE, FALSE, 0);
     }
 
 
@@ -2573,18 +2623,18 @@ LiVESWidget *lives_standard_entry_new(const char *labeltext, boolean use_mnemoni
       if (!widget_opts.no_gui) {
 	lives_widget_show(hbox);
       }
-      lives_box_pack_start (GTK_BOX (box), hbox, FALSE, FALSE, widget_opts.packing_height);
+      lives_box_pack_start (LIVES_BOX (box), hbox, FALSE, FALSE, widget_opts.packing_height);
     }
     
     lives_box_set_homogeneous(LIVES_BOX(hbox),FALSE);
 
     if (!widget_opts.swap_label&&label!=NULL)
-      lives_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, widget_opts.packing_width);
+      lives_box_pack_start (LIVES_BOX (hbox), label, FALSE, FALSE, widget_opts.packing_width);
     
-    lives_box_pack_start (GTK_BOX (hbox), entry, widget_opts.expand!=LIVES_EXPAND_NONE, dispwidth==-1, widget_opts.packing_width);
+    lives_box_pack_start (LIVES_BOX (hbox), entry, widget_opts.expand!=LIVES_EXPAND_NONE, dispwidth==-1, widget_opts.packing_width);
     
     if (widget_opts.swap_label&&label!=NULL)
-      lives_box_pack_start (GTK_BOX (hbox), label, FALSE, FALSE, widget_opts.packing_width);
+      lives_box_pack_start (LIVES_BOX (hbox), label, FALSE, FALSE, widget_opts.packing_width);
   }
 
   if (label!=NULL) {
@@ -2622,7 +2672,7 @@ LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_button
   lives_widget_set_hexpand(dialog,TRUE);
   lives_widget_set_vexpand(dialog,TRUE);
 
-  lives_container_set_border_width (GTK_CONTAINER (dialog), widget_opts.border_width*2);
+  lives_container_set_border_width (LIVES_CONTAINER (dialog), widget_opts.border_width*2);
 
   if (widget_opts.apply_theme) {
     lives_widget_apply_theme(dialog, LIVES_WIDGET_STATE_NORMAL);
@@ -2710,7 +2760,7 @@ LiVESWidget *lives_standard_scrolled_window_new(int width, int height, LiVESWidg
   if (widget_opts.apply_theme) {
     lives_widget_set_hexpand(scrolledwindow,TRUE);
     lives_widget_set_vexpand(scrolledwindow,TRUE);
-    lives_container_set_border_width (GTK_CONTAINER (scrolledwindow), widget_opts.border_width);
+    lives_container_set_border_width (LIVES_CONTAINER (scrolledwindow), widget_opts.border_width);
   }
 
   if (child!=NULL) {
@@ -2724,7 +2774,7 @@ LiVESWidget *lives_standard_scrolled_window_new(int width, int height, LiVESWidg
 	gtk_viewport_set_shadow_type (GTK_VIEWPORT (lives_bin_get_child (LIVES_BIN (scrolledwindow))),GTK_SHADOW_IN);
       }
     else 
-      lives_container_add (GTK_CONTAINER (scrolledwindow), child);
+      lives_container_add (LIVES_CONTAINER (scrolledwindow), child);
   }
 
   swchild=lives_bin_get_child(LIVES_BIN(scrolledwindow));
@@ -2742,7 +2792,7 @@ LiVESWidget *lives_standard_scrolled_window_new(int width, int height, LiVESWidg
     lives_widget_apply_theme(swchild, LIVES_WIDGET_STATE_NORMAL);
     lives_widget_set_hexpand(swchild,TRUE);
     lives_widget_set_vexpand(swchild,TRUE);
-    if (GTK_IS_CONTAINER(child)) lives_container_set_border_width (GTK_CONTAINER (child), widget_opts.border_width>>1);
+    if (GTK_IS_CONTAINER(child)) lives_container_set_border_width (LIVES_CONTAINER (child), widget_opts.border_width>>1);
   }
 #endif
   return scrolledwindow;
@@ -2768,11 +2818,11 @@ LiVESWidget *lives_standard_expander_new(const char *ltext, boolean use_mnemonic
     lives_widget_apply_theme(expander, LIVES_WIDGET_STATE_NORMAL);
   }
   
-  gtk_container_forall(GTK_CONTAINER(expander),set_child_colour,GINT_TO_POINTER(TRUE));
+  gtk_container_forall(LIVES_CONTAINER(expander),set_child_colour,GINT_TO_POINTER(TRUE));
 
   lives_box_pack_start (parent, expander, FALSE, FALSE, widget_opts.packing_height);
 
-  lives_container_add (GTK_CONTAINER (expander), child);
+  lives_container_add (LIVES_CONTAINER (expander), child);
 #endif
 
   return expander;
@@ -2786,7 +2836,7 @@ LiVESWidget *lives_standard_file_button_new(boolean is_dir, const char *def_dir)
   fbutton = gtk_button_new ();
   g_object_set_data(G_OBJECT(fbutton),"is_dir",GINT_TO_POINTER(is_dir));
   if (def_dir!=NULL) g_object_set_data(G_OBJECT(fbutton),"def_dir",(gpointer)def_dir);
-  lives_container_add (GTK_CONTAINER (fbutton), image);
+  lives_container_add (LIVES_CONTAINER (fbutton), image);
 #endif
   return fbutton;
 }
@@ -2902,7 +2952,7 @@ void text_view_set_text(LiVESTextView *textview, const gchar *text, int len) {
 
 
 int get_box_child_index (LiVESBox *box, LiVESWidget *tchild) {
-  GList *list=gtk_container_get_children(GTK_CONTAINER(box));
+  GList *list=gtk_container_get_children(LIVES_CONTAINER(box));
   GtkWidget *child;
   register int i=0;
 

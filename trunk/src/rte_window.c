@@ -85,7 +85,7 @@ void type_label_set_text (int key, int mode) {
 
 boolean on_clear_all_clicked (GtkButton *button, gpointer user_data) {
   int modes=rte_getmodespk();
-  int i,j;
+  register int i,j;
 
   ca_canc=FALSE;
 
@@ -1918,7 +1918,8 @@ void fx_changed (GtkComboBox *combo, gpointer user_data) {
   if (num_in_params(filter,TRUE,TRUE)>0) lives_widget_set_sensitive(param_buttons[idx],TRUE);
   else lives_widget_set_sensitive(param_buttons[idx],FALSE);
 
-  if ((weed_plant_has_leaf(filter,"out_parameter_templates")&&weed_get_plantptr_value(filter,"out_parameter_templates",&error)!=NULL)||num_alpha_channels(filter,TRUE)>1) lives_widget_set_sensitive(conx_buttons[idx],TRUE);
+  if ((weed_plant_has_leaf(filter,"out_parameter_templates")&&weed_get_plantptr_value(filter,"out_parameter_templates",&error)!=NULL)||
+      num_alpha_channels(filter,TRUE)>1) lives_widget_set_sensitive(conx_buttons[idx],TRUE);
   else lives_widget_set_sensitive(conx_buttons[idx],FALSE);
 
   // prevents a segfault

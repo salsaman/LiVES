@@ -303,7 +303,7 @@ static void set_label_state(GtkWidget *widget, LiVESWidgetState state, gpointer 
 }
 #endif
 
-LIVES_INLINE void lives_object_unref(LiVESObjectPtr object) {
+LIVES_INLINE void lives_object_unref(livespointer object) {
 #ifdef GUI_GTK
   g_object_unref(object);
 #endif
@@ -3149,7 +3149,7 @@ void lives_widget_set_can_focus_and_default(LiVESWidget *widget) {
 
 
 
-void lives_general_button_clicked (LiVESButton *button, LiVESObjectPtr data_to_free) {
+void lives_general_button_clicked (LiVESButton *button, livespointer data_to_free) {
   // destroy the button top-level and free data
   lives_widget_destroy(lives_widget_get_toplevel(LIVES_WIDGET(button)));
   lives_widget_context_update();

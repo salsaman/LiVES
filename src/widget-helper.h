@@ -258,7 +258,7 @@ typedef GdkPixbufDestroyNotify            LiVESPixbufDestroyNotify;
 
 typedef GdkInterpType                     LiVESInterpType;
 
-typedef gpointer                          LiVESObjectPtr;
+typedef gpointer                          livespointer;
 
 #define LIVES_WIDGET(widget) GTK_WIDGET(widget)
 #define LIVES_PIXBUF(widget) GDK_PIXBUF(widget)
@@ -584,7 +584,7 @@ lives_painter_format_t lives_painter_image_surface_get_format(lives_painter_surf
 
 // object funcs.
 
-void lives_object_unref(LiVESObjectPtr);
+void lives_object_unref(livespointer);
 
 
 // lives_pixbuf functions
@@ -950,7 +950,7 @@ void get_border_size (LiVESWidget *win, int *bx, int *by);
 void lives_widget_set_can_focus(LiVESWidget *, boolean state);
 void lives_widget_set_can_focus_and_default(LiVESWidget *);
 
-void lives_general_button_clicked (LiVESButton *, LiVESObjectPtr data_to_free);
+void lives_general_button_clicked (LiVESButton *, livespointer data_to_free);
 
 LiVESWidget *add_hsep_to_box (LiVESBox *);
 

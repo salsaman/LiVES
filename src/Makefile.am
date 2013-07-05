@@ -169,6 +169,7 @@ lives_exe_SOURCES = \
 	preferences.c preferences.h\
 	rte_window.c rte_window.h\
 	gui.c \
+	ce_thumbs.c ce_thumbs.h \
 	htmsocket.c htmsocket.h \
 	merge.c merge.h \
 	dialogs.c saveplay.c \

@@ -1088,8 +1088,8 @@ pid_t lives_getpid(void);
 int lives_getgid(void);
 int lives_getuid(void);
 void lives_freep(void **ptr);
-void lives_free(gpointer ptr);
-void lives_free_with_check(gpointer ptr);
+void lives_free(livespointer ptr);
+void lives_free_with_check(livespointer ptr);
 #ifdef IS_MINGW
 boolean lives_win32_suspend_resume_process(DWORD pid, boolean suspend);
 boolean lives_win32_kill_subprocesses(DWORD pid, boolean kill_parent);
@@ -1108,38 +1108,38 @@ char *filename_from_fd(char *val, int fd);
 
 float LEFloat_to_BEFloat(float f);
 uint64_t lives_10pow(int pow);
-int get_approx_ln(guint val);
+int get_approx_ln(uint32_t val);
 
 int64_t lives_get_current_ticks(void);
 boolean lives_alarm_get(int alarm_handle);
 int lives_alarm_set(int64_t ticks);
 void lives_alarm_clear(int alarm_handle);
-lives_storage_status_t get_storage_status(const char *dir, guint64 warn_level, guint64 *dsval);
-gchar *lives_format_storage_space_string(guint64 space);
+lives_storage_status_t get_storage_status(const char *dir, uint64_t warn_level, uint64_t *dsval);
+char *lives_format_storage_space_string(uint64_t space);
 
 
 int myround(double n);
-void get_dirname(gchar *filename);
-gchar *get_dir(const gchar *filename);
-void get_basename(gchar *filename);
-void get_filename(gchar *filename, boolean strip_dir);
-gchar *get_extension(const gchar *filename);
-uint64_t get_version_hash(const gchar *exe, const gchar *sep, int piece);
+void get_dirname(char *filename);
+char *get_dir(const char *filename);
+void get_basename(char *filename);
+void get_filename(char *filename, boolean strip_dir);
+char *get_extension(const char *filename);
+uint64_t get_version_hash(const char *exe, const char *sep, int piece);
 uint64_t make_version_hash(const char *ver);
-void d_print(const gchar *text);
+void d_print(const char *text);
 void init_clipboard(void);
-boolean cache_file_contents(const gchar *filename);
-gchar *get_val_from_cached_list(const gchar *key, size_t maxlen);
+boolean cache_file_contents(const char *filename);
+char *get_val_from_cached_list(const char *key, size_t maxlen);
 
-void get_location(const gchar *exe, gchar *val, int maxlen);
+void get_location(const char *exe, char *val, int maxlen);
 
-void set_menu_text(GtkWidget *menu, const gchar *text, boolean use_mnemonic);
-void get_menu_text(GtkWidget *menu, gchar *text);
-void get_menu_text_long(GtkWidget *menuitem, gchar *text);
+void set_menu_text(GtkWidget *menu, const char *text, boolean use_mnemonic);
+void get_menu_text(GtkWidget *menu, char *text);
+void get_menu_text_long(GtkWidget *menuitem, char *text);
 void reset_clip_menu (void);
 void get_play_times(void);
 void get_total_time (file *file);
-guint get_signed_endian (boolean is_signed, boolean little_endian);
+uint32_t get_signed_endian (boolean is_signed, boolean little_endian);
 void fullscreen_internal(void);
 void colour_equal(GdkColor *c1, const GdkColor *c2);
 void switch_to_int_player(void);
@@ -1150,65 +1150,65 @@ boolean switch_aud_to_pulse(void);
 void switch_aud_to_mplayer(boolean set_pref);
 boolean prepare_to_play_foreign(void);
 boolean after_foreign_play(void);
-boolean check_file(const gchar *file_name, boolean check_exists);  ///< check if file exists
-boolean check_dir_access (const gchar *dir);
+boolean check_file(const char *file_name, boolean check_exists);  ///< check if file exists
+boolean check_dir_access (const char *dir);
 uint64_t get_file_size(int fd);
-uint64_t sget_file_size(const gchar *name);
+uint64_t sget_file_size(const char *name);
 uint64_t get_fs_free(const char *dir);
 boolean is_writeable_dir(const char *dir);
-boolean ensure_isdir(gchar *fname);
-gchar *ensure_extension(const gchar *fname, const gchar *ext) WARN_UNUSED;
-boolean check_dev_busy(gchar *devstr);
-void activate_url_inner(const gchar *link);
-void activate_url (GtkAboutDialog *about, const gchar *link, gpointer data);
-void show_manual_section (const gchar *lang, const gchar *section);
+boolean ensure_isdir(char *fname);
+char *ensure_extension(const char *fname, const char *ext) WARN_UNUSED;
+boolean check_dev_busy(char *devstr);
+void activate_url_inner(const char *link);
+void activate_url (GtkAboutDialog *about, const char *link, gpointer data);
+void show_manual_section (const char *lang, const char *section);
 
 double calc_time_from_frame (int clip, int frame);
-gint calc_frame_from_time (int filenum, double time);  ///< nearest frame start
-gint calc_frame_from_time2 (int filenum, double time); ///< nearest frame end
-gint calc_frame_from_time3 (int filenum, double time); ///< nearest frame mid
+int calc_frame_from_time (int filenum, double time);  ///< nearest frame start
+int calc_frame_from_time2 (int filenum, double time); ///< nearest frame end
+int calc_frame_from_time3 (int filenum, double time); ///< nearest frame mid
 
 boolean check_for_ratio_fps (double fps);
-double get_ratio_fps(const gchar *string);
-void calc_maxspect(gint rwidth, gint rheight, gint *cwidth, gint *cheight);
+double get_ratio_fps(const char *string);
+void calc_maxspect(int rwidth, int rheight, int *cwidth, int *cheight);
 
-gchar *remove_trailing_zeroes(gdouble val);
+char *remove_trailing_zeroes(double val);
 
 void remove_layout_files(GList *lmap);
-gboolean add_lmap_error(lives_lmap_error_t lerror, const gchar *name, gpointer user_data, 
-			gint clipno, gint frameno, gdouble atime, gboolean affects_current);
+gboolean add_lmap_error(lives_lmap_error_t lerror, const char *name, gpointer user_data, 
+			int clipno, int frameno, double atime, gboolean affects_current);
 void clear_lmap_errors(void);
 gboolean prompt_remove_layout_files(void);
-gboolean is_legal_set_name(const gchar *set_name, gboolean allow_dupes);
-gchar *repl_tmpdir(const gchar *entry, gboolean fwd);
-gchar *clip_detail_to_string(lives_clip_details_t what, size_t *maxlenp);
+gboolean is_legal_set_name(const char *set_name, gboolean allow_dupes);
+char *repl_tmpdir(const char *entry, gboolean fwd);
+char *clip_detail_to_string(lives_clip_details_t what, size_t *maxlenp);
 gboolean get_clip_value(int which, lives_clip_details_t, void *retval, size_t maxlen);
 void save_clip_value(int which, lives_clip_details_t, void *val);
-gboolean check_frame_count(gint idx);
-void get_frame_count(gint idx);
+gboolean check_frame_count(int idx);
+void get_frame_count(int idx);
 void get_frames_sizes(int fileno, int frame_to_test);
-gint count_resampled_frames (gint in_frames, gdouble orig_fps, gdouble resampled_fps);
+int count_resampled_frames (int in_frames, double orig_fps, double resampled_fps);
 boolean int_array_contains_value(int *array, int num_elems, int value);
-gboolean check_for_lock_file(const gchar *set_name, gint type);
+gboolean check_for_lock_file(const char *set_name, int type);
 void g_list_free_strings(GList *list);
 
-gboolean create_event_space(gint length_in_eventsb);
-void add_to_recent(const gchar *filename, gdouble start, gint frames, const gchar *file_open_params);
-gint verhash (gchar *version);
-void set_undoable (const gchar *what, gboolean sensitive);
-void set_redoable (const gchar *what, gboolean sensitive);
+gboolean create_event_space(int length_in_eventsb);
+void add_to_recent(const char *filename, double start, int frames, const char *file_open_params);
+int verhash (char *version);
+void set_undoable (const char *what, gboolean sensitive);
+void set_redoable (const char *what, gboolean sensitive);
 void zero_spinbuttons (void);
-void draw_little_bars (gdouble ptrtime);
+void draw_little_bars (double ptrtime);
 void set_sel_label (GtkWidget *label);
 void clear_mainw_msg (void);
-int get_token_count (const gchar *string, int delim);
+int get_token_count (const char *string, int delim);
 LiVESPixbuf *lives_pixbuf_new_blank(int width, int height, int palette);
-gchar *g_strappend (gchar *string, gint len, const gchar *newbit);
-GList *g_list_append_unique(GList *xlist, const gchar *add);
+char *g_strappend (char *string, int len, const char *newbit);
+GList *g_list_append_unique(GList *xlist, const char *add);
 void find_when_to_stop (void);
 int calc_new_playback_position(int fileno, uint64_t otc, uint64_t *ntc);
-void calc_aframeno(gint fileno);
-void minimise_aspect_delta (gdouble allowed_aspect,gint hblock,gint vblock,gint hsize,gint vsize,gint *width,gint *height);
+void calc_aframeno(int fileno);
+void minimise_aspect_delta (double allowed_aspect,int hblock,int vblock,int hsize,int vsize,int *width,int *height);
 LiVESInterpType get_interp_value(gshort quality);
 
 GList *g_list_move_to_first(GList *list, GList *item) WARN_UNUSED;
@@ -1217,20 +1217,20 @@ GList *g_list_copy_strings(GList *list);
 gboolean string_lists_differ(GList *, GList *);
 
 
-GList *get_set_list(const gchar *dir);
+GList *get_set_list(const char *dir);
 
-gchar *subst (const gchar *string, const gchar *from, const gchar *to);
-gchar *insert_newlines(const gchar *text, int maxwidth);
+char *subst (const char *string, const char *from, const char *to);
+char *insert_newlines(const char *text, int maxwidth);
 
-gint hextodec (const gchar *string);
-gint get_hex_digit (const gchar *c);
+int hextodec (const char *string);
+int get_hex_digit (const char *c);
 
 const char *get_image_ext_for_type(lives_image_type_t imgtype);
 
-guint32 fastrand(void);
-void fastsrand(guint32 seed);
+uint64_t fastrand(void);
+void fastsrand(uint64_t seed);
 
-gint lives_list_index (GList *list, const gchar *data);
+int lives_list_index (GList *list, const char *data);
 
 lives_cancel_t check_for_bad_ffmpeg(void);
 
@@ -1242,7 +1242,7 @@ gboolean check_encoder_restrictions (boolean get_extension, boolean user_audio, 
 void lives_exit (void);
 void count_opening_frames(void);
 void on_fileread_clicked (GtkFileChooser *, gpointer widget);
-gboolean dirchange_callback (GtkAccelGroup *, GObject *, guint, GdkModifierType, gpointer user_data);
+gboolean dirchange_callback (GtkAccelGroup *, GObject *, uint32_t, GdkModifierType, gpointer user_data);
 void on_effects_paused (GtkButton *, gpointer user_data);
 void on_cancel_keep_button_clicked (GtkButton *, gpointer user_data);
 void on_cleardisk_activate (GtkWidget *, gpointer user_data);

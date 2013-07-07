@@ -27,6 +27,7 @@
 #include "support.h"
 #include "cvirtual.h"
 #include "resample.h"
+#include "ce_thumbs.h"
 
 //////////// Effects ////////////////
 
@@ -1046,24 +1047,30 @@ boolean rte_on_off_callback (GtkAccelGroup *group, GObject *obj, guint keyval, G
     mainw->rte^=new_rte;
     if (mainw->rte&new_rte) {
       // switch is ON
-      mainw->last_grabable_effect=key-1;
-
-      if (rte_window!=NULL) rtew_set_keych(key-1,TRUE);
 
       // WARNING - if we start playing because a generator was started, we block here
       if (!(weed_init_effect(key-1))) {
 	// ran out of instance slots, no effect assigned, or some other error
 	mainw->rte^=new_rte;
-	if (rte_window!=NULL&&group!=NULL) rtew_set_keych(key-1,FALSE);
+	if (rte_window!=NULL) rtew_set_keych(key-1,FALSE);
+	if (mainw->ce_thumbs) ce_thumbs_set_keych(key-1,FALSE);
 	mainw->osc_block=FALSE;
 	return TRUE;
+      }
+
+      mainw->last_grabable_effect=key-1;
+      if (rte_window!=NULL) rtew_set_keych(key-1,TRUE);
+      if (mainw->ce_thumbs) {
+	ce_thumbs_set_keych(key-1,TRUE);
+	ce_thumbs_add_param_box(key-1);
       }
     }
     else {
       // effect is OFF
       weed_deinit_effect(key-1);
       if (mainw->rte&(GU641<<(key-1))) mainw->rte^=(GU641<<(key-1));
-      if (rte_window!=NULL&&group!=NULL) rtew_set_keych(key-1,FALSE);
+      if (rte_window!=NULL) rtew_set_keych(key-1,FALSE);
+      if (mainw->ce_thumbs) ce_thumbs_set_keych(key-1,FALSE);
     }
   }
 

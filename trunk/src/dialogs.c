@@ -17,6 +17,7 @@
 #include "audio.h" // for fill_abuffer_from
 #include "resample.h"
 #include "paramwindow.h"
+#include "ce_thumbs.h"
 
 extern void reset_frame_and_clip_index (void);
 
@@ -1311,9 +1312,12 @@ boolean process_one (boolean visible) {
 
     if ((xrfx=(lives_rfx_t *)mainw->vrfx_update)!=NULL&&fx_dialog[1]!=NULL) {
       // the audio thread wants to update the parameter window
-      mainw->vrfx_update=FALSE;
+      mainw->vrfx_update=NULL;
       update_visual_params(xrfx,FALSE);
     }
+
+    // the audio thread wants to update the parameter scroll(s)
+    if (mainw->ce_thumbs) ce_thumbs_apply_rfx_changes();
 
     lives_widget_context_update();
     if (G_UNLIKELY(mainw->cancelled!=CANCEL_NONE)) {

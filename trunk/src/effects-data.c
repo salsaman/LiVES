@@ -23,7 +23,7 @@
 #include "main.h"
 #include "effects.h"
 #include "support.h"
-
+#include "ce_thumbs.h"
 
 
 
@@ -1261,7 +1261,7 @@ boolean pconx_chain_data(int key, int mode) {
       if ((oparam=pconx_get_out_param(FALSE,key,mode,i,&autoscale))!=NULL) {
 	//	#define DEBUG_PCONX
 #ifdef DEBUG_PCONX
-	g_print("got pconx from %d %d %d\n",key,mode,i);
+	g_print("got pconx to %d %d %d\n",key,mode,i);
 #endif
 	changed=pconx_convert_value_data(inst,i,key==-2?(weed_plant_t *)pp_get_param(mainw->vpp->play_params,i):inparams[i],oparam,autoscale);
 
@@ -1292,7 +1292,7 @@ boolean pconx_chain_data(int key, int mode) {
 		mainw->vrfx_update=rfx;
 	    }
 	  }
-
+	  if (mainw->ce_thumbs) ce_thumbs_register_rfx_change(key,mode);
 	}
 
       }
@@ -2370,7 +2370,7 @@ static void dpp_changed(GtkWidget *combo, gpointer user_data) {
   int niparams;
 
   int fidx,key,mode,ours=-1,error;
-  gint idx=gtk_combo_box_get_active(GTK_COMBO_BOX(combo));
+  int idx=lives_combo_get_active(LIVES_COMBO(combo));
 
   boolean hasone=FALSE;
 
@@ -2385,7 +2385,7 @@ static void dpp_changed(GtkWidget *combo, gpointer user_data) {
 
 
   if (idx==-1) {
-    for (i=0;i<conxwp->num_alpha;i++) if (gtk_combo_box_get_active(GTK_COMBO_BOX(conxwp->ccombo[i]))>-1) {
+    for (i=0;i<conxwp->num_alpha;i++) if (lives_combo_get_active(LIVES_COMBO(conxwp->ccombo[i]))>-1) {
 	hasone=TRUE;
 	break;
       }
@@ -2523,7 +2523,7 @@ static void dpc_changed(GtkWidget *combo, gpointer user_data) {
 
   int key,mode,fidx,ours=-1,error;
 
-  gint idx=gtk_combo_box_get_active(GTK_COMBO_BOX(combo));
+  int idx=lives_combo_get_active(LIVES_COMBO(combo));
 
   register int i,j=0;
 
@@ -2536,7 +2536,7 @@ static void dpc_changed(GtkWidget *combo, gpointer user_data) {
 
   if (idx==-1) {
 
-    for (i=0;i<conxwp->num_alpha;i++) if (gtk_combo_box_get_active(GTK_COMBO_BOX(conxwp->ccombo[i]))>-1) {
+    for (i=0;i<conxwp->num_alpha;i++) if (lives_combo_get_active(LIVES_COMBO(conxwp->ccombo[i]))>-1) {
 	hasone=TRUE;
 	break;
       }

@@ -29,6 +29,7 @@
 #include "audio.h"
 #include "cvirtual.h"
 #include "paramwindow.h"
+#include "ce_thumbs.h"
 
 #ifdef HAVE_YUV4MPEG
 #include "lives-yuv4mpeg.h"
@@ -5668,6 +5669,7 @@ void switch_clip(int type, int newclip) {
 	  mainw->blend_file!=mainw->current_file) {
 	mainw->osc_block=TRUE;
 	if (rte_window!=NULL) rtew_set_keych(rte_bg_gen_key(),FALSE);
+	if (mainw->ce_thumbs) ce_thumbs_set_keych(rte_bg_gen_key(),FALSE);
 	mainw->new_blend_file=newclip;
 	weed_generator_end ((weed_plant_t *)mainw->files[mainw->blend_file]->ext_src);
 	mainw->osc_block=FALSE;

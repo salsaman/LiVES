@@ -7,10 +7,39 @@
 // clip thumbnails window for dual head mode
 
 
+// TODO - keep combo box text in sync with rte mapper
+
+// TODO - drag fx order :  check for data conx
+
+// TODO - pin param boxes
+
+// TODO - indicate fg and bg clips
+
+// TODO - buttons for some keys
+
+// TODO - exp text for fx
+
+// TODO - display screen mapping areas
+
+
 #include "main.h"
 #include "effects-weed.h"
+#include "effects.h"
+#include "paramwindow.h"
+#include "ce_thumbs.h"
 
+static LiVESWidget **fxcombos;
+static LiVESWidget **pscrolls;
 static LiVESWidget **combo_entries;
+static LiVESWidget **key_checks;
+static LiVESWidget *param_hbox;
+static gulong *ch_fns;
+static gulong *combo_fns;
+
+static int rte_keys_virtual;
+
+static void ce_thumbs_remove_param_boxes(void);
+static void ce_thumbs_remove_param_box(int key);
 
 static boolean switch_clip_cb (LiVESWidget *eventbox, LiVESXEventButton *event, gpointer user_data) {
   int i=GPOINTER_TO_INT(user_data);
@@ -20,21 +49,56 @@ static boolean switch_clip_cb (LiVESWidget *eventbox, LiVESXEventButton *event, 
 }
 
 
+static void ce_thumbs_fx_changed (GtkComboBox *combo, gpointer user_data) {
+  // callback after user switches fx via combo 
+  int key=LIVES_POINTER_TO_INT(user_data);
+  int mode,cmode;
+
+  if ((mode=lives_combo_get_active(combo))==-1) return; // -1 is returned after we set our own text (without the type)
+  cmode=rte_key_getmode(key+1);
+
+  if (cmode==mode) return;
+
+  lives_widget_grab_focus (combo_entries[key]);
+
+  rte_key_setmode(key+1,mode);
+}
+
+
+void ce_thumbs_set_keych (int key, boolean on) {
+  // set key check from other source
+  if (key>=rte_keys_virtual) return;
+  g_signal_handler_block(key_checks[key],ch_fns[key]);
+  lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON(key_checks[key]),on);
+  if (!on&&pscrolls[key]!=NULL) ce_thumbs_remove_param_box(key);
+  g_signal_handler_unblock(key_checks[key],ch_fns[key]);
+}
+
+
+void ce_thumbs_set_mode_combo (int key, int mode) {
+  // set combo from other source : need to add params after
+  if (key>=rte_keys_virtual) return;
+  if (mode<0) return;
+  g_signal_handler_block(fxcombos[key],combo_fns[key]);
+  lives_combo_set_active_index (LIVES_COMBO (fxcombos[key]),mode);
+  ce_thumbs_remove_param_box(key);
+  g_signal_handler_unblock(fxcombos[key],combo_fns[key]);
+}
+
 
 
 #if GTK_CHECK_VERSION(3,2,0)  // required for grid widget
-static LiVESWidget *hbox;
+static LiVESWidget *top_hbox;
 #endif
 
 void start_ce_thumb_mode(void) {
 #if GTK_CHECK_VERSION(3,2,0)  // required for grid widget
 
   LiVESWidget *thumb_image=NULL;
-  LiVESWidget *vbox;
+  LiVESWidget *vbox,*vbox2;
   LiVESWidget *eventbox;
   LiVESWidget *usibl=NULL,*sibl=NULL;
-  LiVESWidget *hbox2;
-  LiVESWidget *combo;
+  LiVESWidget *hbox;
   LiVESWidget *tscroll;
 
   LiVESWidget *tgrid=lives_grid_new();
@@ -45,8 +109,8 @@ void start_ce_thumb_mode(void) {
 
   GList *fxlist=NULL;
 
-  gchar filename[PATH_MAX];
-  gchar *tmp;
+  char filename[PATH_MAX];
+  char *tmp;
 
   int width=CLIP_THUMB_WIDTH,height=CLIP_THUMB_HEIGHT;
   int modes=rte_getmodespk();
@@ -56,25 +120,37 @@ void start_ce_thumb_mode(void) {
 
   register int i,j;
 
+  rte_keys_virtual=prefs->rte_keys_virtual;
+
   lives_grid_set_row_spacing (LIVES_GRID(tgrid),width>>1);
   lives_grid_set_column_spacing (LIVES_GRID(tgrid),height>>1);
+
+  lives_container_set_border_width (LIVES_CONTAINER (tgrid), width);
 
   // dual monitor mode, the gui monitor can show clip thumbnails
   lives_widget_hide(mainw->eventbox);
 
-  hbox=lives_hbox_new (FALSE, widget_opts.packing_width);
-  lives_box_pack_start (LIVES_BOX (mainw->vbox1), hbox, TRUE, TRUE, 0);
+  top_hbox=lives_hbox_new (FALSE, widget_opts.packing_width);
+  lives_box_pack_start (LIVES_BOX (mainw->vbox1), top_hbox, TRUE, TRUE, 0);
 
 
   // fx area
   vbox=lives_vbox_new (FALSE, widget_opts.packing_height);
-  tscroll=lives_standard_scrolled_window_new(width,height,vbox);
-  lives_box_pack_start (LIVES_BOX (hbox), tscroll, TRUE, TRUE, 0);
-
-  combo_entries=(LiVESWidget **)g_malloc((prefs->rte_keys_virtual)*modes*sizeof(LiVESWidget *));
   
-  for (i=0;i<prefs->rte_keys_virtual;i++) {
-    //lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON(key_checks[i]),FALSE);
+  tscroll=lives_standard_scrolled_window_new(width*2,height,vbox);
+  lives_box_pack_start (LIVES_BOX (top_hbox), tscroll, TRUE, TRUE, 0);
+  lives_scrolled_window_set_policy (LIVES_SCROLLED_WINDOW (tscroll), LIVES_POLICY_NEVER, LIVES_POLICY_AUTOMATIC);
+
+  fxcombos=(LiVESWidget **)g_malloc((rte_keys_virtual)*modes*sizeof(LiVESWidget *));
+  pscrolls=(LiVESWidget **)g_malloc((rte_keys_virtual)*modes*sizeof(LiVESWidget *));
+  combo_entries=(LiVESWidget **)g_malloc((rte_keys_virtual)*modes*sizeof(LiVESWidget *));
+  key_checks=(LiVESWidget **)g_malloc((rte_keys_virtual)*modes*sizeof(LiVESWidget *));
+  ch_fns=(gulong *)g_malloc((rte_keys_virtual)*sizeof(gulong));
+  combo_fns=(gulong *)g_malloc((rte_keys_virtual)*sizeof(gulong));
+
+  for (i=0;i<rte_keys_virtual;i++) {
+
+    pscrolls[i]=NULL;
 
     fxlist=NULL;
 
@@ -82,35 +158,45 @@ void start_ce_thumb_mode(void) {
       fxlist=g_list_append(fxlist,rte_keymode_get_filter_name(i+1,j));
     }
 
-    if (fxlist==NULL) continue;
+    hbox = lives_hbox_new (FALSE, 0);
+    lives_box_pack_start (LIVES_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-    hbox2 = lives_hbox_new (FALSE, 0);
-    lives_box_pack_start (LIVES_BOX (vbox), hbox2, FALSE, FALSE, widget_opts.packing_height);
+    key_checks[i]=lives_standard_check_button_new(NULL,FALSE,LIVES_BOX(hbox),NULL);
+    lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(key_checks[i]),mainw->rte&(GU641<<i));
 
-    combo=lives_standard_combo_new(NULL,FALSE,fxlist,LIVES_BOX(hbox2),NULL);
+    ch_fns[i]=g_signal_connect_after (GTK_OBJECT (key_checks[i]), "toggled",
+				      G_CALLBACK (rte_on_off_callback_hook),GINT_TO_POINTER (i+1));
 
-    g_list_free_strings(fxlist);
-    g_list_free(fxlist);
 
-    combo_entries[i] = lives_combo_get_entry(LIVES_COMBO(combo));
+    fxcombos[i]=lives_standard_combo_new(NULL,FALSE,fxlist,LIVES_BOX(hbox),NULL);
 
-    lives_entry_set_text (LIVES_ENTRY (combo_entries[i]),(tmp=rte_keymode_get_filter_name(i+1,rte_key_getmode(i+1))));
-    g_free(tmp);
+    if (fxlist!=NULL) {
+      g_list_free_strings(fxlist);
+      g_list_free(fxlist);
+      lives_combo_set_active_index (LIVES_COMBO (fxcombos[i]),rte_key_getmode(i+1));
+    }
+    else {
+      lives_widget_set_sensitive(key_checks[i],FALSE);
+    }
+
+    combo_entries[i] = lives_combo_get_entry(LIVES_COMBO(fxcombos[i]));
  
     lives_entry_set_editable (LIVES_ENTRY (combo_entries[i]), FALSE);
       
-
-    /*    g_signal_connect(GTK_OBJECT (combo), "changed",
-	  G_CALLBACK (fx_changed),GINT_TO_POINTER(i*rte_getmodespk()+j));*/
+    combo_fns[i]=g_signal_connect(GTK_OBJECT (fxcombos[i]), "changed",
+				  G_CALLBACK (ce_thumbs_fx_changed),GINT_TO_POINTER(i));
 
   }
 
+  vbox2=lives_vbox_new (FALSE, widget_opts.packing_height);
+  lives_box_pack_start (LIVES_BOX (top_hbox), vbox2, TRUE, TRUE, 0);
 
-  // insert a scrolled window
+  // insert a scrolled window for thumbs
+
   tscroll=lives_standard_scrolled_window_new(width,height,tgrid);
   lives_scrolled_window_set_policy (LIVES_SCROLLED_WINDOW (tscroll), LIVES_POLICY_NEVER, LIVES_POLICY_AUTOMATIC);
 
-  lives_box_pack_start (LIVES_BOX (hbox), tscroll, TRUE, TRUE, 0);
+  lives_box_pack_start (LIVES_BOX (vbox2), tscroll, TRUE, TRUE, 0);
 
   // add thumbs to grid
 
@@ -121,7 +207,7 @@ void start_ce_thumb_mode(void) {
     scr_width=mainw->mgeom[prefs->gui_monitor-1].width;
   }
 
-  cpw=scr_width*2/width/3;
+  cpw=scr_width*2/width/3-2;
 
   while (cliplist!=NULL) {
     i=GPOINTER_TO_INT(cliplist->data);
@@ -183,7 +269,17 @@ void start_ce_thumb_mode(void) {
     cliplist=cliplist->next;
   }
 
-  lives_widget_show_all(hbox);
+
+  // insert a scrolled window for param boxes
+  param_hbox = lives_hbox_new (FALSE, 0);
+
+  tscroll=lives_standard_scrolled_window_new(width,height,param_hbox);
+  lives_scrolled_window_set_policy (LIVES_SCROLLED_WINDOW (tscroll), LIVES_POLICY_AUTOMATIC, LIVES_POLICY_NEVER);
+
+  lives_box_pack_start (LIVES_BOX (vbox2), tscroll, TRUE, TRUE, 0);
+
+
+  lives_widget_show_all(top_hbox);
 
   mainw->ce_thumbs=TRUE;
 
@@ -192,8 +288,184 @@ void start_ce_thumb_mode(void) {
 
 
 void end_ce_thumb_mode(void) {
-  lives_widget_destroy(hbox);
+  ce_thumbs_remove_param_boxes();
+  lives_widget_destroy(top_hbox);
   lives_widget_show(mainw->eventbox);
+  g_free(fxcombos);
+  g_free(pscrolls);
   g_free(combo_entries);
+  g_free(key_checks);
+  g_free(ch_fns);
+  g_free(combo_fns);
   mainw->ce_thumbs=FALSE;
+}
+
+
+
+
+void ce_thumbs_add_param_box(int key) {
+  // when an effect with params is applied, show the parms in a box
+  weed_plant_t *inst,*ninst;
+  lives_rfx_t *rfx;
+
+  LiVESWidget *vbox;
+
+  int mode=rte_key_getmode(key+1);
+  int error;
+
+  if (key>=rte_keys_virtual) return;
+
+  // remove old boxes unless pinned
+  ce_thumbs_remove_param_boxes();
+
+  ninst=inst=rte_keymode_get_instance(key+1,mode);
+
+  do {
+    weed_instance_ref(ninst);
+  } while (weed_plant_has_leaf(ninst,"host_next_instance")&&(ninst=weed_get_plantptr_value(ninst,"host_next_instance",&error))!=NULL);
+
+
+  rfx=weed_to_rfx(inst,FALSE);
+  rfx->min_frames=-1;
+
+  vbox = lives_vbox_new (FALSE, 0);
+
+  pscrolls[key]=lives_standard_scrolled_window_new(-1,-1,vbox);
+  lives_scrolled_window_set_policy (LIVES_SCROLLED_WINDOW (pscrolls[key]), LIVES_POLICY_NEVER, LIVES_POLICY_AUTOMATIC);
+
+  lives_box_pack_start (LIVES_BOX (param_hbox), pscrolls[key], TRUE, TRUE, 0);
+
+  on_fx_pre_activate(rfx,1,vbox);
+
+  // record the key so we know whose parameters to record later
+  weed_set_int_value((weed_plant_t *)rfx->source,"host_hotkey",key);
+
+  g_object_set_data (G_OBJECT (pscrolls[key]),"pinned",LIVES_INT_TO_POINTER (FALSE));
+  g_object_set_data (G_OBJECT (pscrolls[key]),"update",LIVES_INT_TO_POINTER (FALSE));
+  g_object_set_data (G_OBJECT (pscrolls[key]),"rfx",rfx);
+  lives_widget_show_all(param_hbox);
+}
+
+
+static void ce_thumbs_remove_param_box(int key) {
+  // remove a single param box from the param_hbox
+  lives_rfx_t *rfx;
+  if (key>=rte_keys_virtual) return;
+  if (pscrolls[key]==NULL) return;
+  rfx=(lives_rfx_t *)g_object_get_data(G_OBJECT(pscrolls[key]),"rfx");
+  on_paramwindow_cancel_clicked(NULL,rfx); // free rfx and unref the inst
+  lives_widget_destroy(pscrolls[key]);
+  pscrolls[key]=NULL;
+  lives_widget_queue_draw(param_hbox);
+}
+
+
+static void ce_thumbs_remove_param_boxes(void) {
+  // remove all param boxes, except any which are "pinned"
+  register int i;
+  for (i=0;i<rte_keys_virtual;i++) {
+    if (pscrolls[i]!=NULL) {
+      if (!LIVES_POINTER_TO_INT(g_object_get_data(G_OBJECT(pscrolls[i]),"pinned"))) 
+	ce_thumbs_remove_param_box(i);
+    }
+  }
+}
+
+
+
+void ce_thumbs_register_rfx_change(int key, int mode) {
+  // register a param box to be updated visually, from an asynchronous source - either from a A->V data connection or from osc
+  if (key>=rte_keys_virtual) return;
+  g_object_set_data (G_OBJECT (pscrolls[key]),"update",LIVES_INT_TO_POINTER (TRUE));
+}
+
+
+void ce_thumbs_apply_rfx_changes(void) {
+  // apply asynch updates
+  lives_rfx_t *rfx;
+  register int i;
+
+  for (i=0;i<rte_keys_virtual;i++) {
+    if (pscrolls[i]!=NULL) {
+      if (!LIVES_POINTER_TO_INT(g_object_get_data(G_OBJECT(pscrolls[i]),"update"))) 
+	g_object_set_data (G_OBJECT (pscrolls[i]),"update",LIVES_INT_TO_POINTER (FALSE));
+	rfx=(lives_rfx_t *)g_object_get_data(G_OBJECT(pscrolls[i]),"rfx");
+	update_visual_params(rfx,FALSE);
+    }
+  }
+}
+
+
+void ce_thumbs_update_params (int key, int i, GList *list) {
+  // called only from weed_set_blend_factor() and from setting param in rte_window
+  lives_rfx_t *rfx;
+  if (key>=rte_keys_virtual) return;
+
+  if (pscrolls[key]!=NULL) {
+    rfx=(lives_rfx_t *)g_object_get_data(G_OBJECT(pscrolls[key]),"rfx");
+    mainw->block_param_updates=TRUE;
+    set_param_from_list(list,&rfx->params[key],0,TRUE,TRUE);
+    mainw->block_param_updates=FALSE;
+  }
+}
+
+
+void ce_thumbs_update_visual_params (int key) {
+  // param change in rte_window - set params box here
+  lives_rfx_t *rfx;
+  if (key>=rte_keys_virtual) return;
+
+  if (pscrolls[key]!=NULL) {
+    rfx=(lives_rfx_t *)g_object_get_data(G_OBJECT(pscrolls[key]),"rfx");
+    update_visual_params(rfx,FALSE);
+  }
+}
+
+
+void ce_thumbs_check_for_rte(lives_rfx_t *rfx, lives_rfx_t *rte_rfx, int key) {
+  // param change in ce_thumbs, update rte_window
+  register int i;
+  for (i=0;i<rte_keys_virtual;i++) {
+    if (pscrolls[i]!=NULL&&i==key&&rfx==(lives_rfx_t *)g_object_get_data(G_OBJECT(pscrolls[key]),"rfx")) {
+      update_visual_params(rte_rfx,FALSE);
+      break;
+    }
+  }
+}
+
+
+void ce_thumbs_reset_combo(int key) {
+  // called from rte_window when the mapping is changed
+
+  GList *fxlist=NULL;
+  int mode;
+  register int j;
+
+  if (key>=rte_keys_virtual) return;
+  for (j=0;j<=rte_key_getmaxmode(key+1);j++) {
+    fxlist=g_list_append(fxlist,rte_keymode_get_filter_name(key+1,j));
+  }
+  lives_combo_populate(LIVES_COMBO(fxcombos[key]),fxlist);
+  if (fxlist!=NULL) {
+    lives_widget_set_sensitive(key_checks[key],TRUE);
+    g_list_free_strings(fxlist);
+    g_list_free(fxlist);
+    mode=rte_key_getmode(key+1);
+    ce_thumbs_set_mode_combo(key,mode);
+    if (rte_keymode_get_instance(key+1,mode)!=NULL) ce_thumbs_add_param_box(key);
+  }
+  else {
+    lives_widget_set_sensitive(key_checks[key],FALSE);
+    lives_combo_set_active_string(LIVES_COMBO(fxcombos[key]),"");
+  }
+
+}
+
+
+void ce_thumbs_reset_combos(void) {
+  // called from rte_window when the mapping is cleared
+  register int i;
+  for (i=0;i<rte_keys_virtual;i++) {
+    ce_thumbs_reset_combo(i);
+  }
 }

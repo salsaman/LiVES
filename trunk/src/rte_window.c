@@ -24,6 +24,7 @@
 #include "rte_window.h"
 #include "effects.h"
 #include "paramwindow.h"
+#include "ce_thumbs.h"
 
 static GtkWidget **key_checks;
 static GtkWidget **key_grabs;
@@ -109,6 +110,7 @@ boolean on_clear_all_clicked (GtkButton *button, gpointer user_data) {
 	type_label_set_text(i,j);
       }
     }
+    if (mainw->ce_thumbs) ce_thumbs_reset_combo(i);
   }
 
   if (button!=NULL) lives_widget_set_sensitive (GTK_WIDGET(button), FALSE);
@@ -1548,6 +1550,8 @@ boolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
 
   g_free(def_modes);
 
+  if (mainw->ce_thumbs) ce_thumbs_reset_combos();
+
   return FALSE;
 }
 
@@ -1692,7 +1696,7 @@ void on_rte_info_clicked (GtkButton *button, gpointer user_data) {
 void on_clear_clicked (GtkButton *button, gpointer user_data) {
   // this is for the "delete" buttons, c.f. clear_all
 
-  gint idx=GPOINTER_TO_INT(user_data);
+  int idx=GPOINTER_TO_INT(user_data);
   int modes=rte_getmodespk();
   int key=(int)(idx/modes);
   int mode=idx-key*modes;
@@ -1701,6 +1705,7 @@ void on_clear_clicked (GtkButton *button, gpointer user_data) {
 
   register int i;
 
+  g_print("del fx %d mode %d\n",key,mode);
   weed_delete_effectkey (key+1,mode);
 
   pconx_delete(-1,0,0,key,mode,-1);
@@ -1711,9 +1716,9 @@ void on_clear_clicked (GtkButton *button, gpointer user_data) {
 
 
   newmode=rte_key_getmode(key+1);
-  g_signal_handler_block(mode_radios[key*modes+newmode],mode_ra_fns[key*modes+newmode]);
+
   rtew_set_mode_radio(key,newmode);
-  g_signal_handler_unblock(mode_radios[key*modes+newmode],mode_ra_fns[key*modes+newmode]);
+  if (mainw->ce_thumbs) ce_thumbs_set_mode_combo(key,newmode);
     
   for (i=mode;i<rte_getmodespk()-1;i++) {
     idx=key*modes+i;
@@ -1726,15 +1731,18 @@ void on_clear_clicked (GtkButton *button, gpointer user_data) {
   lives_entry_set_text (GTK_ENTRY(combo_entries[idx]),"");
   type_label_set_text(key,i);
 
-  if (!rte_keymode_valid(key+1,0,TRUE)) rtew_set_keych(key,FALSE);
-
+  if (!rte_keymode_valid(key+1,0,TRUE)) {
+    rtew_set_keych(key,FALSE);
+    if (mainw->ce_thumbs) ce_thumbs_set_keych(key,FALSE);
+  }
   check_clear_all_button();
 
+  if (mainw->ce_thumbs) ce_thumbs_reset_combo(key);
 }
 
 
 static void on_datacon_clicked (GtkButton *button, gpointer user_data) {
-  gint idx=GPOINTER_TO_INT(user_data);
+  int idx=GPOINTER_TO_INT(user_data);
   int modes=rte_getmodespk();
   int key=(int)(idx/modes);
   int mode=idx-key*modes;
@@ -1747,7 +1755,7 @@ static void on_datacon_clicked (GtkButton *button, gpointer user_data) {
 
 
 static void on_params_clicked (GtkButton *button, gpointer user_data) {
-  gint idx=GPOINTER_TO_INT(user_data);
+  int idx=GPOINTER_TO_INT(user_data);
   int modes=rte_getmodespk();
   int key=(int)(idx/modes);
   int mode=idx-key*modes;
@@ -1780,7 +1788,7 @@ static void on_params_clicked (GtkButton *button, gpointer user_data) {
   rfx->min_frames=-1;
   keyw=key;
   modew=mode;
-  on_render_fx_pre_activate(NULL,rfx);
+  on_fx_pre_activate(rfx,1,NULL);
 
   // record the key so we know whose parameters to record later
   weed_set_int_value((weed_plant_t *)rfx->source,"host_hotkey",key);
@@ -1867,17 +1875,17 @@ void fx_changed (GtkComboBox *combo, gpointer user_data) {
   gchar *hashname1;
   gchar *hashname2=(gchar *)g_object_get_data(G_OBJECT(combo),"hashname");
 
-  gint key_mode=GPOINTER_TO_INT(user_data);
+  int key_mode=GPOINTER_TO_INT(user_data);
   int modes=rte_getmodespk();
   int key=(int)(key_mode/modes);
   int mode=key_mode-key*modes;
-  gint idx=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(combo),"idx"));
+  int idx=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(combo),"idx"));
 
   int error;
 
   register int i;
 
-  if (gtk_combo_box_get_active(combo)==-1) return; // -1 is returned after we set our own text (without the type)
+  if (lives_combo_get_active(combo)==-1) return; // -1 is returned after we set our own text (without the type)
 
   lives_combo_get_active_iter(combo,&iter1);
   model=lives_combo_get_model(combo);
@@ -1943,6 +1951,8 @@ void fx_changed (GtkComboBox *combo, gpointer user_data) {
 
   cconx_delete(-1,0,0,key,mode,-1);
   cconx_delete(key,mode,-1,-1,0,0);
+
+  if (mainw->ce_thumbs) ce_thumbs_reset_combos();
 
 }
 
@@ -2319,9 +2329,9 @@ GtkWidget * create_rte_window (void) {
   lives_widget_hide(dummy_radio);
 
   if (prefs->gui_monitor!=0) {
-    gint xcen=mainw->mgeom[prefs->gui_monitor-1].x+(mainw->mgeom[prefs->gui_monitor-1].width-
+    int xcen=mainw->mgeom[prefs->gui_monitor-1].x+(mainw->mgeom[prefs->gui_monitor-1].width-
 						    lives_widget_get_allocation_width(rte_window))/2;
-    gint ycen=mainw->mgeom[prefs->gui_monitor-1].y+(mainw->mgeom[prefs->gui_monitor-1].height-
+    int ycen=mainw->mgeom[prefs->gui_monitor-1].y+(mainw->mgeom[prefs->gui_monitor-1].height-
 						    lives_widget_get_allocation_height(rte_window))/2;
     gtk_window_set_screen(GTK_WINDOW(rte_window),mainw->mgeom[prefs->gui_monitor-1].screen);
     lives_window_move(GTK_WINDOW(rte_window),xcen,ycen);
@@ -2378,7 +2388,9 @@ void rtew_set_keygr (int key) {
 
 void rtew_set_mode_radio (int key, int mode) {
   int modes=rte_getmodespk();
+  g_signal_handler_block(mode_radios[key*modes+mode],mode_ra_fns[key*modes+mode]);
   lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON(mode_radios[key*modes+mode]),TRUE);
+  g_signal_handler_unblock(mode_radios[key*modes+mode],mode_ra_fns[key*modes+mode]);
 }
 
 
@@ -2432,6 +2444,8 @@ void restore_pwindow (lives_rfx_t *rfx) {
 
 
 void update_pwindow (int key, int i, GList *list) {
+  // called only from weed_set_blend_factor() and from setting param in ce_thumbs
+
   const weed_plant_t *inst;
   lives_rfx_t *rfx;
   int keyw,modew;
@@ -2442,13 +2456,15 @@ void update_pwindow (int key, int i, GList *list) {
     if (key==keyw) {
       if ((inst=rte_keymode_get_instance(key+1,modew))==NULL) return;
       rfx=(lives_rfx_t *)g_object_get_data(G_OBJECT(fx_dialog[1]),"rfx");
+      mainw->block_param_updates=TRUE;
       set_param_from_list(list,&rfx->params[i],0,TRUE,TRUE);
+      mainw->block_param_updates=FALSE;
     }
   }
 }
 
 void rte_set_defs_activate (GtkMenuItem *menuitem, gpointer user_data) {
-  gint idx=GPOINTER_TO_INT(user_data);
+  int idx=GPOINTER_TO_INT(user_data);
   weed_plant_t *filter=get_weed_filter(idx);
   lives_rfx_t *rfx;
 
@@ -2460,7 +2476,7 @@ void rte_set_defs_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
   rfx=weed_to_rfx(filter,TRUE);
   rfx->min_frames=-1;
-  on_render_fx_pre_activate(NULL,rfx);
+  on_fx_pre_activate(rfx,1,NULL);
 
 }
 
@@ -2633,8 +2649,8 @@ void rte_reset_defs_clicked (GtkButton *button, lives_rfx_t *rfx) {
     }
   }
   else {
-    gint key=GPOINTER_TO_INT (g_object_get_data (G_OBJECT (fx_dialog[1]),"key"));
-    gint mode=GPOINTER_TO_INT (g_object_get_data (G_OBJECT (fx_dialog[1]),"mode"));
+    int key=GPOINTER_TO_INT (g_object_get_data (G_OBJECT (fx_dialog[1]),"key"));
+    int mode=GPOINTER_TO_INT (g_object_get_data (G_OBJECT (fx_dialog[1]),"mode"));
     set_key_defaults(inst,key,mode);
   }
 

@@ -24,7 +24,7 @@
 #include "audio.h"
 #include "resample.h"
 
-static gboolean  omute,  osepwin,  ofs,  ofaded,  odouble;
+static boolean  omute,  osepwin,  ofs,  ofaded,  odouble;
 
 
 
@@ -37,8 +37,8 @@ char *filename_from_fd(char *val, int fd) {
   // call like: foo=filename_from_fd(foo,fd);
 
 #ifndef IS_MINGW
-  gchar *fdpath;
-  gchar *fidi;
+  char *fdpath;
+  char *fidi;
   char rfdpath[PATH_MAX];
   struct stat stb0,stb1;
 
@@ -298,7 +298,7 @@ int lives_system(const char *com, boolean allow_error) {
       &&retval!=9009
 #endif
       ) {
-    gchar *msg=NULL;
+    char *msg=NULL;
     mainw->com_failed=TRUE;
     if (!allow_error) {
       msg=g_strdup_printf("lives_system failed with code %d: %s",retval,com);
@@ -360,7 +360,7 @@ ssize_t lives_write(int fd, const void *buf, size_t count, boolean allow_fail) {
   retval=write(fd, buf, count);
 
   if (retval<count) {
-    gchar *msg=NULL;
+    char *msg=NULL;
     mainw->write_failed=TRUE;
     mainw->write_failed_file=filename_from_fd(mainw->write_failed_file,fd);
     msg=g_strdup_printf("Write failed %"PRIu64" of %"PRIu64" in: %s",(uint64_t)retval,
@@ -371,7 +371,7 @@ ssize_t lives_write(int fd, const void *buf, size_t count, boolean allow_fail) {
     }
 #ifndef LIVES_NO_DEBUG
     else {
-      gchar *ffile=filename_from_fd(NULL,fd);
+      char *ffile=filename_from_fd(NULL,fd);
       msg=g_strdup_printf("Write failed %"PRIu64" of %"PRIu64" in: %s (not an error)",(uint64_t)retval,
 			  (uint64_t)count,ffile);
       LIVES_DEBUG(msg);
@@ -431,7 +431,7 @@ ssize_t lives_read(int fd, void *buf, size_t count, boolean allow_less) {
   ssize_t retval=read(fd, buf, count);
 
   if (retval<count) {
-    gchar *msg=NULL;
+    char *msg=NULL;
     if (!allow_less||retval<0) {
       mainw->read_failed=TRUE;
       mainw->read_failed_file=filename_from_fd(mainw->read_failed_file,fd);
@@ -442,7 +442,7 @@ ssize_t lives_read(int fd, void *buf, size_t count, boolean allow_less) {
     }
 #ifndef LIVES_NO_DEBUG
     else {
-      gchar *ffile=filename_from_fd(NULL,fd);
+      char *ffile=filename_from_fd(NULL,fd);
       msg=g_strdup_printf("Read got %"PRIu64" of %"PRIu64" in: %s (not an error)",(uint64_t)retval,
 			  (uint64_t)count,ffile);
       LIVES_DEBUG(msg);
@@ -472,32 +472,32 @@ ssize_t lives_read_le(int fd, void *buf, size_t count, boolean allow_less) {
 
 
 
-gchar *lives_format_storage_space_string(guint64 space) {
-  gchar *fmt;
+char *lives_format_storage_space_string(uint64_t space) {
+  char *fmt;
 
   if (space>lives_10pow(18)) {
     // TRANSLATORS: Exabytes
-    fmt=g_strdup_printf(_("%.2f EB"),(gdouble)space/(gdouble)lives_10pow(18));
+    fmt=g_strdup_printf(_("%.2f EB"),(double)space/(double)lives_10pow(18));
   }
   else if (space>lives_10pow(15)) {
     // TRANSLATORS: Petabytes
-    fmt=g_strdup_printf(_("%.2f PB"),(gdouble)space/(gdouble)lives_10pow(15));
+    fmt=g_strdup_printf(_("%.2f PB"),(double)space/(double)lives_10pow(15));
   }
   else if (space>lives_10pow(12)) {
     // TRANSLATORS: Terabytes
-    fmt=g_strdup_printf(_("%.2f TB"),(gdouble)space/(gdouble)lives_10pow(12));
+    fmt=g_strdup_printf(_("%.2f TB"),(double)space/(double)lives_10pow(12));
   }
   else if (space>lives_10pow(9)) {
     // TRANSLATORS: Gigabytes
-    fmt=g_strdup_printf(_("%.2f GB"),(gdouble)space/(gdouble)lives_10pow(9));
+    fmt=g_strdup_printf(_("%.2f GB"),(double)space/(double)lives_10pow(9));
   }
   else if (space>lives_10pow(6)) {
     // TRANSLATORS: Megabytes
-    fmt=g_strdup_printf(_("%.2f MB"),(gdouble)space/(gdouble)lives_10pow(6));
+    fmt=g_strdup_printf(_("%.2f MB"),(double)space/(double)lives_10pow(6));
   }
   else if (space>1024) {
     // TRANSLATORS: Kilobytes (1024 bytes)
-    fmt=g_strdup_printf(_("%.2f KiB"),(gdouble)space/1024.);
+    fmt=g_strdup_printf(_("%.2f KiB"),(double)space/1024.);
   }
   else {
     fmt=g_strdup_printf(_("%d bytes"),space);
@@ -509,8 +509,8 @@ gchar *lives_format_storage_space_string(guint64 space) {
 
 
 
-lives_storage_status_t get_storage_status(const char *dir, guint64 warn_level, guint64 *dsval) {
-  guint64 ds;
+lives_storage_status_t get_storage_status(const char *dir, uint64_t warn_level, uint64_t *dsval) {
+  uint64_t ds;
   if (!is_writeable_dir(dir)) return LIVES_STORAGE_STATUS_UNKNOWN;
   ds=get_fs_free(dir);
   if (dsval!=NULL) *dsval=ds;
@@ -522,13 +522,13 @@ lives_storage_status_t get_storage_status(const char *dir, guint64 warn_level, g
 
 
 
-int lives_chdir(const char *path, gboolean allow_fail) {
+int lives_chdir(const char *path, boolean allow_fail) {
   int retval;
 
   retval=chdir(path);
 
   if (retval) {
-    gchar *msg=g_strdup_printf("Chdir failed to: %s",path);
+    char *msg=g_strdup_printf("Chdir failed to: %s",path);
     mainw->chdir_failed=TRUE;
     if (!allow_fail) {
       LIVES_ERROR(msg);
@@ -949,7 +949,7 @@ LIVES_INLINE uint64_t lives_10pow(int pow) {
   return res;
 }
 
-LIVES_INLINE int get_approx_ln(guint x) {
+LIVES_INLINE int get_approx_ln(uint32_t x) {
   x |= (x >> 1);
   x |= (x >> 2);
   x |= (x >> 4);
@@ -1072,15 +1072,15 @@ void lives_alarm_clear(int alarm_handle) {
 
 
 
-LIVES_INLINE gchar *g_strappend (gchar *string, gint len, const gchar *xnew) {
-  gchar *tmp=g_strconcat (string,xnew,NULL);
+LIVES_INLINE char *g_strappend (char *string, int len, const char *xnew) {
+  char *tmp=g_strconcat (string,xnew,NULL);
   g_snprintf(string,len,"%s",tmp);
   g_free(tmp);
   return string;
 }
 
 
-LIVES_INLINE GList *g_list_append_unique(GList *xlist, const gchar *add) {
+LIVES_INLINE GList *g_list_append_unique(GList *xlist, const char *add) {
   if (g_list_find_custom(xlist,add,(GCompareFunc)strcmp)==NULL) return g_list_append(xlist,g_strdup(add));
   return xlist;
 }
@@ -1120,7 +1120,7 @@ LIVES_INLINE int calc_frame_from_time (int filenum, double time) {
   // return the nearest frame (rounded) for a given time, max is cfile->frames
   int frame=0;
   if (time<0.) return mainw->files[filenum]->frames?1:0;
-  frame=(gint)(time*mainw->files[filenum]->fps+1.49999);
+  frame=(int)(time*mainw->files[filenum]->fps+1.49999);
   return (frame<mainw->files[filenum]->frames)?frame:mainw->files[filenum]->frames;
 }
 
@@ -1129,7 +1129,7 @@ LIVES_INLINE int calc_frame_from_time2 (int filenum, double time) {
   // allow max (frames+1)
   int frame=0;
   if (time<0.) return mainw->files[filenum]->frames?1:0;
-  frame=(gint)(time*mainw->files[filenum]->fps+1.49999);
+  frame=(int)(time*mainw->files[filenum]->fps+1.49999);
   return (frame<mainw->files[filenum]->frames+1)?frame:mainw->files[filenum]->frames+1;
 }
 
@@ -1138,7 +1138,7 @@ LIVES_INLINE int calc_frame_from_time3 (int filenum, double time) {
   // allow max (frames+1)
   int frame=0;
   if (time<0.) return mainw->files[filenum]->frames?1:0;
-  frame=(gint)(time*mainw->files[filenum]->fps+1.);
+  frame=(int)(time*mainw->files[filenum]->fps+1.);
   return (frame<mainw->files[filenum]->frames+1)?frame:mainw->files[filenum]->frames+1;
 }
 
@@ -1146,7 +1146,7 @@ LIVES_INLINE int calc_frame_from_time3 (int filenum, double time) {
 
 
 
-static gboolean check_for_audio_stop (gint fileno, gint first_frame, gint last_frame) {
+static boolean check_for_audio_stop (int fileno, int first_frame, int last_frame) {
   // return FALSE if audio stops playback
 
 #ifdef ENABLE_JACK
@@ -1191,7 +1191,7 @@ static gboolean check_for_audio_stop (gint fileno, gint first_frame, gint last_f
 }
 
 
-void calc_aframeno(gint fileno) {
+void calc_aframeno(int fileno) {
 #ifdef ENABLE_JACK
   if (prefs->audio_player==AUD_PLAYER_JACK&&((mainw->jackd!=NULL&&mainw->jackd->playing_file==fileno)||
 					     (mainw->jackd_read!=NULL&&mainw->jackd_read->playing_file==fileno))) {
@@ -1241,17 +1241,17 @@ int calc_new_playback_position(int fileno, uint64_t otc, uint64_t *ntc) {
   // this is done so we can check here if audio limits stopped playback
 
 
-  gint64 dtc=*ntc-otc;
+  int64_t dtc=*ntc-otc;
   file *sfile=mainw->files[fileno];
 
-  gint dir=0;
-  gint cframe,nframe;
+  int dir=0;
+  int cframe,nframe;
 
-  gint first_frame,last_frame;
+  int first_frame,last_frame;
 
-  gboolean do_resync=FALSE;
+  boolean do_resync=FALSE;
 
-  gdouble fps;
+  double fps;
 
   if (sfile==NULL) return 0;
 
@@ -1331,7 +1331,7 @@ int calc_new_playback_position(int fileno, uint64_t otc, uint64_t *ntc) {
   if (fps>0) {
     dir=0;
     if (mainw->ping_pong) {
-      dir=(gint)((gdouble)nframe/(gdouble)(last_frame-first_frame+1));
+      dir=(int)((double)nframe/(double)(last_frame-first_frame+1));
       dir%=2;
     }
   }
@@ -1339,7 +1339,7 @@ int calc_new_playback_position(int fileno, uint64_t otc, uint64_t *ntc) {
     dir=1;
     if (mainw->ping_pong) {
       nframe-=(last_frame-first_frame);
-      dir=(gint)((gdouble)nframe/(gdouble)(last_frame-first_frame+1));
+      dir=(int)((double)nframe/(double)(last_frame-first_frame+1));
       dir%=2;
       dir++;
     }
@@ -1364,7 +1364,7 @@ int calc_new_playback_position(int fileno, uint64_t otc, uint64_t *ntc) {
 	nframe+=last_frame; // normal
 	if (nframe>last_frame) {
 	  nframe=last_frame-(nframe-last_frame);
-	  if (mainw->playing_file==fileno) dirchange_callback (NULL,NULL,0,(GdkModifierType)0,GINT_TO_POINTER(FALSE));
+	  if (mainw->playing_file==fileno) dirchange_callback (NULL,NULL,0,(GdkModifierType)0,LIVES_INT_TO_POINTER(FALSE));
 	  else sfile->pb_fps=-sfile->pb_fps;
 	}
       }
@@ -1374,7 +1374,7 @@ int calc_new_playback_position(int fileno, uint64_t otc, uint64_t *ntc) {
       nframe=ABS(nframe)+first_frame;
       if (mainw->ping_pong) {
 	// bounce
-	if (mainw->playing_file==fileno) dirchange_callback (NULL,NULL,0,(GdkModifierType)0,GINT_TO_POINTER(FALSE));
+	if (mainw->playing_file==fileno) dirchange_callback (NULL,NULL,0,(GdkModifierType)0,LIVES_INT_TO_POINTER(FALSE));
 	else sfile->pb_fps=-sfile->pb_fps;
       }
     }
@@ -1387,7 +1387,7 @@ int calc_new_playback_position(int fileno, uint64_t otc, uint64_t *ntc) {
       if (mainw->ping_pong) {
 	// bounce
 	nframe=last_frame-(nframe-(first_frame-1));
-	if (mainw->playing_file==fileno) dirchange_callback (NULL,NULL,0,(GdkModifierType)0,GINT_TO_POINTER(FALSE));
+	if (mainw->playing_file==fileno) dirchange_callback (NULL,NULL,0,(GdkModifierType)0,LIVES_INT_TO_POINTER(FALSE));
 	else sfile->pb_fps=-sfile->pb_fps;
       }
     }
@@ -1402,7 +1402,7 @@ int calc_new_playback_position(int fileno, uint64_t otc, uint64_t *ntc) {
       // scratch or transport backwards
       if (mainw->ping_pong) {
 	nframe=first_frame;
-	if (mainw->playing_file==fileno) dirchange_callback (NULL,NULL,0,(GdkModifierType)0,GINT_TO_POINTER(FALSE));
+	if (mainw->playing_file==fileno) dirchange_callback (NULL,NULL,0,(GdkModifierType)0,LIVES_INT_TO_POINTER(FALSE));
 	else sfile->pb_fps=-sfile->pb_fps;
 
       }
@@ -1415,7 +1415,7 @@ int calc_new_playback_position(int fileno, uint64_t otc, uint64_t *ntc) {
 
   if (prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS) {
     if (do_resync||(mainw->scratch!=SCRATCH_NONE&&mainw->playing_file==fileno)) {
-      gboolean is_jump=FALSE;
+      boolean is_jump=FALSE;
       if (mainw->scratch==SCRATCH_JUMP) is_jump=TRUE;
       mainw->scratch=SCRATCH_NONE;
       if (sfile->achans>0) {
@@ -1439,39 +1439,39 @@ int calc_new_playback_position(int fileno, uint64_t otc, uint64_t *ntc) {
 
 
 
-void calc_maxspect(gint rwidth, gint rheight, gint *cwidth, gint *cheight) {
+void calc_maxspect(int rwidth, int rheight, int *cwidth, int *cheight) {
   // calculate maxspect (maximum size which maintains aspect ratio)
   // of cwidth, cheight - given restrictions rwidth * rheight
 
-  gdouble aspect;
+  double aspect;
 
   if (*cwidth<=0||*cheight<=0||rwidth<=0||rheight<=0) return;
 
   if (*cwidth>rwidth) {
     // image too wide shrink it
-    aspect=(gdouble)rwidth/(gdouble)(*cwidth);
+    aspect=(double)rwidth/(double)(*cwidth);
     *cwidth=rwidth;
-    *cheight=(gdouble)(*cheight)*aspect;
+    *cheight=(double)(*cheight)*aspect;
   }
   if (*cheight>rheight) {
     // image too tall shrink it
-    aspect=(gdouble)rheight/(gdouble)(*cheight);
+    aspect=(double)rheight/(double)(*cheight);
     *cheight=rheight;
-    *cwidth=(gdouble)(*cwidth)*aspect;
+    *cwidth=(double)(*cwidth)*aspect;
   }
 
-  aspect=(gdouble)*cwidth/(gdouble)*cheight;
+  aspect=(double)*cwidth/(double)*cheight;
 
-  if ((gdouble)rheight*aspect<=rwidth) {
+  if ((double)rheight*aspect<=rwidth) {
     // bound by rheight
     *cheight=rheight;
-    *cwidth=((gdouble)rheight*aspect+.5);
+    *cwidth=((double)rheight*aspect+.5);
     if (*cwidth>rwidth) *cwidth=rwidth;
   }
   else {
     // bound by rwidth
     *cwidth=rwidth;
-    *cheight=((gdouble)rwidth/aspect+.5);
+    *cheight=((double)rwidth/aspect+.5);
     if (*cheight>rheight) *cheight=rheight;
   }
 }
@@ -1483,8 +1483,8 @@ void calc_maxspect(gint rwidth, gint rheight, gint *cwidth, gint *cheight) {
 
 
 void init_clipboard(void) {
-  gint current_file=mainw->current_file;
-  gchar *com;
+  int current_file=mainw->current_file;
+  char *com;
 
   if (clipboard==NULL) {
     // here is where we create the clipboard
@@ -1520,7 +1520,7 @@ void init_clipboard(void) {
 
 
 
-void d_print(const gchar *text) {
+void d_print(const char *text) {
   // print out output in the main message area (and info log)
 
   
@@ -1531,7 +1531,7 @@ void d_print(const gchar *text) {
   // mainw->no_switch_dprint :: TRUE - disable printing of switch message when maine->current_file changes
 
   // mainw->last_dprint_file :: clip number of last mainw->current_file;
-  gchar *switchtext,*tmp;
+  char *switchtext,*tmp;
 
   GtkTextIter end_iter;
   GtkTextMark *mark;
@@ -1571,16 +1571,16 @@ void d_print(const gchar *text) {
 
 
 
-gboolean add_lmap_error(lives_lmap_error_t lerror, const gchar *name, gpointer user_data, gint clipno, 
-			gint frameno, gdouble atime, gboolean affects_current) {
+boolean add_lmap_error(lives_lmap_error_t lerror, const char *name, livespointer user_data, int clipno, 
+			int frameno, double atime, boolean affects_current) {
   // potentially add a layout map error to the layout textbuffer
   GtkTextIter end_iter;
-  gchar *text,*name2;
-  gchar **array;
+  char *text,*name2;
+  char **array;
   GList *lmap;
-  gdouble orig_fps;
-  gint resampled_frame;
-  gdouble max_time;
+  double orig_fps;
+  int resampled_frame;
+  double max_time;
 
   gtk_text_buffer_get_end_iter(GTK_TEXT_BUFFER(mainw->layout_textbuffer),&end_iter);
 
@@ -1596,7 +1596,7 @@ gboolean add_lmap_error(lives_lmap_error_t lerror, const gchar *name, gpointer u
     else name2=g_strdup(name);
     text=g_strdup_printf
       (_("The set name has been changed from %s to %s. Affected layouts have been updated accordingly\n"),
-       name2,(gchar *)user_data);
+       name2,(char *)user_data);
     gtk_text_buffer_insert(GTK_TEXT_BUFFER(mainw->layout_textbuffer),&end_iter,text,-1);
     g_free(name2);
     g_free(text);
@@ -1653,7 +1653,7 @@ gboolean add_lmap_error(lives_lmap_error_t lerror, const gchar *name, gpointer u
   case LMAP_INFO_SETNAME_CHANGED:
     lmap=mainw->current_layouts_map;
     while (lmap!=NULL) {
-      array=g_strsplit((gchar *)lmap->data,"|",-1);
+      array=g_strsplit((char *)lmap->data,"|",-1);
       text=g_strdup_printf("%s\n",array[0]);
       gtk_text_buffer_insert(GTK_TEXT_BUFFER(mainw->layout_textbuffer),&end_iter,text,-1);
       g_free(text);
@@ -1675,7 +1675,7 @@ gboolean add_lmap_error(lives_lmap_error_t lerror, const gchar *name, gpointer u
     }
     lmap=(GList *)user_data;
     while (lmap!=NULL) {
-      array=g_strsplit((gchar *)lmap->data,"|",-1);
+      array=g_strsplit((char *)lmap->data,"|",-1);
       text=g_strdup_printf("%s\n",array[0]);
       gtk_text_buffer_insert(GTK_TEXT_BUFFER(mainw->layout_textbuffer),&end_iter,text,-1);
       g_free(text);
@@ -1697,7 +1697,7 @@ gboolean add_lmap_error(lives_lmap_error_t lerror, const gchar *name, gpointer u
     }
     lmap=(GList *)user_data;
     while (lmap!=NULL) {
-      array=g_strsplit((gchar *)lmap->data,"|",-1);
+      array=g_strsplit((char *)lmap->data,"|",-1);
       orig_fps=strtod(array[3],NULL);
       resampled_frame=count_resampled_frames(frameno,orig_fps,mainw->files[clipno]->fps);
       if (resampled_frame<=atoi(array[2])) {
@@ -1723,7 +1723,7 @@ gboolean add_lmap_error(lives_lmap_error_t lerror, const gchar *name, gpointer u
     }
     lmap=(GList *)user_data;
     while (lmap!=NULL) {
-      array=g_strsplit((gchar *)lmap->data,"|",-1);
+      array=g_strsplit((char *)lmap->data,"|",-1);
       max_time=strtod(array[4],NULL);
       if (max_time>0.&&atime<=max_time) {
 	text=g_strdup_printf("%s\n",array[0]);
@@ -1770,7 +1770,7 @@ void clear_lmap_errors(void) {
 }
 
 
-gboolean check_for_lock_file(const gchar *set_name, gint type) {
+boolean check_for_lock_file(const char *set_name, int type) {
   // check for lock file
   // do this via the back-end (smogrify)
   // this allows for the locking scheme to be more flexible
@@ -1779,11 +1779,11 @@ gboolean check_for_lock_file(const gchar *set_name, gint type) {
   // we redirect the output to info_file and read it
 
   int info_fd;
-  gchar *msg=NULL;
+  char *msg=NULL;
   ssize_t bytes;
 
-  gchar *info_file=g_strdup_printf("%s/.locks.%d",prefs->tmpdir,getpid());
-  gchar *com=g_strdup_printf("%s check_for_lock \"%s\" \"%s\" %d >\"%s\"",prefs->backend_sync,set_name,capable->myname,
+  char *info_file=g_strdup_printf("%s/.locks.%d",prefs->tmpdir,getpid());
+  char *com=g_strdup_printf("%s check_for_lock \"%s\" \"%s\" %d >\"%s\"",prefs->backend_sync,set_name,capable->myname,
 			     getpid(),info_file);
 
   unlink(info_file);
@@ -1830,7 +1830,7 @@ gboolean check_for_lock_file(const gchar *set_name, gint type) {
 }
 
 
-gboolean is_legal_set_name(const gchar *set_name, gboolean allow_dupes) {
+boolean is_legal_set_name(const char *set_name, boolean allow_dupes) {
   // check (clip) set names for validity
   // - may not be of zero length
   // - may not contain spaces or characters / \ * "
@@ -1846,8 +1846,8 @@ gboolean is_legal_set_name(const gchar *set_name, gboolean allow_dupes) {
 
   int i;
 
-  gchar *msg;
-  gchar *reject=" /\\*\"";
+  char *msg;
+  char *reject=" /\\*\"";
   size_t slen=strlen(set_name);
 
   if (slen==0) {
@@ -1881,7 +1881,7 @@ gboolean is_legal_set_name(const gchar *set_name, gboolean allow_dupes) {
   
   if (!allow_dupes) {
     // check for duplicate set names
-    gchar *set_dir=g_build_filename(prefs->tmpdir,set_name,NULL);
+    char *set_dir=g_build_filename(prefs->tmpdir,set_name,NULL);
     if (g_file_test(set_dir,G_FILE_TEST_IS_DIR)) {
       g_free(set_dir);
       msg=g_strdup_printf(_("\nThe set %s already exists.\nPlease choose another set name.\n"),set_name);
@@ -1898,7 +1898,7 @@ gboolean is_legal_set_name(const gchar *set_name, gboolean allow_dupes) {
 
 
 
-gboolean check_frame_count(gint idx) {
+boolean check_frame_count(int idx) {
   // check number of frames is correct
   // for files of type CLIP_TYPE_DISK
   // - check the image files (e.g. jpeg or png)
@@ -1908,7 +1908,7 @@ gboolean check_frame_count(gint idx) {
   // ingores gaps
 
   // make sure nth frame is there...
-  gchar *frame=g_strdup_printf("%s/%s/%08d.%s",prefs->tmpdir,mainw->files[idx]->handle,mainw->files[idx]->frames,
+  char *frame=g_strdup_printf("%s/%s/%08d.%s",prefs->tmpdir,mainw->files[idx]->handle,mainw->files[idx]->frames,
 			       get_image_ext_for_type(mainw->files[idx]->img_type));
 
   if (!g_file_test(frame,G_FILE_TEST_EXISTS)) {
@@ -1934,7 +1934,7 @@ gboolean check_frame_count(gint idx) {
 
 
 
-void get_frame_count(gint idx) {
+void get_frame_count(int idx) {
   // sets mainw->files[idx]->frames with current framecount
 
   // calls smogrify which physically finds the last frame using a (fast) O(log n) binary search method
@@ -1943,11 +1943,11 @@ void get_frame_count(gint idx) {
 
   // (CLIP_TYPE_FILE should use the decoder plugin frame count)
 
-  gint info_fd;
+  int info_fd;
   int retval;
   ssize_t bytes;
-  gchar *info_file=g_strdup_printf("%s/.check.%d",prefs->tmpdir,getpid());
-  gchar *com=g_strdup_printf("%s count_frames \"%s\" \"%s\" > \"%s\"",prefs->backend_sync,mainw->files[idx]->handle,
+  char *info_file=g_strdup_printf("%s/.check.%d",prefs->tmpdir,getpid());
+  char *com=g_strdup_printf("%s count_frames \"%s\" \"%s\" > \"%s\"",prefs->backend_sync,mainw->files[idx]->handle,
 			     get_image_ext_for_type(mainw->files[idx]->img_type),info_file);
 
   mainw->com_failed=FALSE;
@@ -2008,10 +2008,10 @@ void get_next_free_file(void) {
 }
 
 
-void get_dirname(gchar *filename) {
-  gchar *tmp;
+void get_dirname(char *filename) {
+  char *tmp;
   // get directory name from a file
-  //filename should point to gchar[PATH_MAX]
+  //filename should point to char[PATH_MAX]
 
   g_snprintf (filename,PATH_MAX,"%s%s",(tmp=g_path_get_dirname (filename)),G_DIR_SEPARATOR_S);
   g_free(tmp);
@@ -2022,7 +2022,7 @@ void get_dirname(gchar *filename) {
   }
 
   if (!strncmp(filename,"./",2)) {
-    gchar *tmp1=g_get_current_dir(),*tmp=g_build_filename(tmp1,filename+2,NULL);
+    char *tmp1=g_get_current_dir(),*tmp=g_build_filename(tmp1,filename+2,NULL);
     g_free(tmp1);
     g_snprintf(filename,PATH_MAX,"%s",tmp);
     g_free(tmp);
@@ -2030,27 +2030,27 @@ void get_dirname(gchar *filename) {
 }
 
 
-gchar *get_dir(const gchar *filename) {
-  gchar tmp[PATH_MAX];
+char *get_dir(const char *filename) {
+  char tmp[PATH_MAX];
   g_snprintf(tmp,PATH_MAX,"%s",filename);
   get_dirname(tmp);
   return g_strdup(tmp);
 }
 
 
-void get_basename(gchar *filename) {
+void get_basename(char *filename) {
   // get basename from a file
   // (filename without directory)
-  //filename should point to gchar[PATH_MAX]
-  gchar *tmp=g_path_get_basename(filename);
+  //filename should point to char[PATH_MAX]
+  char *tmp=g_path_get_basename(filename);
   g_snprintf (filename,PATH_MAX,"%s",tmp);
   g_free(tmp);
 }
 
-void get_filename(gchar *filename, gboolean strip_dir) {
+void get_filename(char *filename, boolean strip_dir) {
   // get filename (part without extension) of a file
-  //filename should point to gchar[PATH_MAX]
-  gchar **array;
+  //filename should point to char[PATH_MAX]
+  char **array;
   if (strip_dir) get_basename(filename);
   array=g_strsplit(filename,".",-1);
   g_snprintf(filename,PATH_MAX,"%s",array[0]);
@@ -2058,32 +2058,32 @@ void get_filename(gchar *filename, gboolean strip_dir) {
 }
 
 
-gchar *get_extension(const gchar *filename) {
-  gchar *tmp=g_path_get_basename(filename);
-  gint ntok=get_token_count((gchar *)filename,'.');
-  gchar **array=g_strsplit(tmp,".",-1);
-  gchar *ret=g_strdup(array[ntok-1]);
+char *get_extension(const char *filename) {
+  char *tmp=g_path_get_basename(filename);
+  int ntok=get_token_count((char *)filename,'.');
+  char **array=g_strsplit(tmp,".",-1);
+  char *ret=g_strdup(array[ntok-1]);
   g_strfreev(array);
   g_free(tmp);
   return ret;
 }
 
 
-gchar *ensure_extension(const gchar *fname, const gchar *ext) {
+char *ensure_extension(const char *fname, const char *ext) {
   if (!strcmp(fname+strlen(fname)-strlen(ext),ext)) return g_strdup(fname);
   return g_strconcat(fname,ext,NULL);
 }
 
 
-boolean ensure_isdir(gchar *fname) {
+boolean ensure_isdir(char *fname) {
   // ensure dirname ends in a single dir separator
-  // fname should be gchar[PATH_MAX]
+  // fname should be char[PATH_MAX]
 
   // returns TRUE if fname was altered
 
   size_t slen=strlen(fname);
   size_t offs=slen-1;
-  gchar *tmp;
+  char *tmp;
 
   while (offs>=0&&!strcmp(fname+offs,G_DIR_SEPARATOR_S)) offs--;
   if (offs==slen-2) return FALSE;
@@ -2095,11 +2095,11 @@ boolean ensure_isdir(gchar *fname) {
 }
 
 
-void get_location(const gchar *exe, gchar *val, gint maxlen) {
+void get_location(const char *exe, char *val, int maxlen) {
   // find location of "exe" in path
   // sets it in val which is a char array of maxlen bytes
 
-  gchar *loc;
+  char *loc;
   if ((loc=g_find_program_in_path (exe))!=NULL) {
     g_snprintf (val,maxlen,"%s",loc);
     g_free (loc);
@@ -2110,12 +2110,12 @@ void get_location(const gchar *exe, gchar *val, gint maxlen) {
 }
 
 
-uint64_t get_version_hash(const gchar *exe, const gchar *sep, int piece) {
+uint64_t get_version_hash(const char *exe, const char *sep, int piece) {
   /// get version hash output for an executable from the backend
   FILE *rfile;
   ssize_t rlen;
   char val[16];
-  gchar *com=g_strdup_printf("%s get_version_hash \"%s\" \"%s\" %d",prefs->backend_sync,exe,sep,piece);
+  char *com=g_strdup_printf("%s get_version_hash \"%s\" \"%s\" %d",prefs->backend_sync,exe,sep,piece);
   rfile=popen(com,"r");
   rlen=fread(val,1,16,rfile);
   pclose(rfile);
@@ -2133,11 +2133,11 @@ uint64_t make_version_hash(const char *ver) {
 
   uint64_t hash;
   int ntok;
-  gchar **array;
+  char **array;
 
   if (ver==NULL) return 0;
 
-  ntok=get_token_count((gchar *)ver,'.');
+  ntok=get_token_count((char *)ver,'.');
   array=g_strsplit(ver,".",-1);
 
   hash=atoi(array[0])*VER_MAJOR_MULT;
@@ -2157,7 +2157,7 @@ uint64_t make_version_hash(const char *ver) {
 
 
 
-gchar *repl_tmpdir(const gchar *entry, gboolean fwd) {
+char *repl_tmpdir(const char *entry, boolean fwd) {
   // replace prefs->tmpdir with string tmpdir or vice-versa. This allows us to relocate tmpdir if necessary.
   // used for layout.map file
   // return value should be g_free()'d
@@ -2166,7 +2166,7 @@ gchar *repl_tmpdir(const gchar *entry, gboolean fwd) {
   // fwd FALSE replaces "tmpdir" with "/tmp/foo"
 
 
-  gchar *string=g_strdup(entry);;
+  char *string=g_strdup(entry);;
 
   if (fwd) {
     if (!strncmp(entry,prefs->tmpdir,strlen(prefs->tmpdir))) {
@@ -2193,37 +2193,37 @@ void remove_layout_files(GList *map) {
 
   // called after, for example: a clip is removed or altered and the user opts to remove all associated layouts
 
-  gchar *com,*msg;
-  gchar *fname,*fdir;
-  gchar **array;
+  char *com,*msg;
+  char *fname,*fdir;
+  char **array;
   GList *lmap,*lmap_next,*cmap,*cmap_next,*map_next;
   size_t maplen;
   int i;
-  gboolean is_current;
+  boolean is_current;
 
   while (map!=NULL) {
     map_next=map->next;
     if (map->data!=NULL) {
-      if (!strcmp((gchar *)map->data,mainw->string_constants[LIVES_STRING_CONSTANT_CL])) {
+      if (!strcmp((char *)map->data,mainw->string_constants[LIVES_STRING_CONSTANT_CL])) {
 	is_current=TRUE;
 	fname=g_strdup(mainw->string_constants[LIVES_STRING_CONSTANT_CL]);
       }
       else {
 	is_current=FALSE;
-	maplen=strlen((gchar *)map->data);
+	maplen=strlen((char *)map->data);
 	
 	// remove from mainw->current_layouts_map
 	cmap=mainw->current_layouts_map;
 	while (cmap!=NULL) {
 	  cmap_next=cmap->next;
-	  if (!strcmp((gchar *)cmap->data,(gchar *)map->data)) {
+	  if (!strcmp((char *)cmap->data,(char *)map->data)) {
 	    mainw->current_layouts_map=g_list_remove_link(mainw->current_layouts_map,cmap);
 	    break;
 	  }
 	  cmap=cmap_next;
 	}
 
-	array=g_strsplit((gchar *)map->data,"|",-1);
+	array=g_strsplit((char *)map->data,"|",-1);
 	fname=repl_tmpdir(array[0],FALSE);
 	g_strfreev(array);
       }
@@ -2250,7 +2250,7 @@ void remove_layout_files(GList *map) {
 	if (!strncmp(fname,prefs->tmpdir,strlen(prefs->tmpdir))) {
 	  // is in tmpdir, safe to remove parents
 
-	  gchar *protect_file=g_build_filename(prefs->tmpdir,"noremove",NULL);
+	  char *protect_file=g_build_filename(prefs->tmpdir,"noremove",NULL);
 
 	  mainw->com_failed=FALSE;
 	  // touch a file in tpmdir, so we cannot remove tmpdir itself
@@ -2289,7 +2289,7 @@ void remove_layout_files(GList *map) {
 	      lmap=mainw->files[i]->layout_map;
 	      while (lmap!=NULL) {
 		lmap_next=lmap->next;
-		if (!strncmp((gchar *)lmap->data,(gchar *)map->data,maplen)) {
+		if (!strncmp((char *)lmap->data,(char *)map->data,maplen)) {
 		  // remove matching entry
 		  if (lmap->prev!=NULL) lmap->prev->next=lmap_next;
 		  else mainw->files[i]->layout_map=lmap_next;
@@ -2335,7 +2335,7 @@ void get_play_times(void) {
   // update the on-screen timer bars,
   // and if we are not playing,
   // get play times for video, audio channels, and total (longest) time
-  gchar *tmpstr;
+  char *tmpstr;
   double offset=0;
   double offset_left=0;
   double offset_right=0;
@@ -2541,13 +2541,13 @@ void get_play_times(void) {
 	  (mainw->event_list==NULL||!mainw->preview)) {
 #ifdef ENABLE_JACK
 	if (mainw->jackd!=NULL&&prefs->audio_player==AUD_PLAYER_JACK) {
-	  offset=allocwidth*((gdouble)mainw->jackd->seek_pos/cfile->arate/cfile->achans/
+	  offset=allocwidth*((double)mainw->jackd->seek_pos/cfile->arate/cfile->achans/
 			     cfile->asampsize*8)/cfile->total_time;
 	}
 #endif
 #ifdef HAVE_PULSE_AUDIO
 	if (mainw->pulsed!=NULL&&prefs->audio_player==AUD_PLAYER_PULSE) {
-	  offset=allocwidth*((gdouble)mainw->pulsed->seek_pos/cfile->arate/cfile->achans/
+	  offset=allocwidth*((double)mainw->pulsed->seek_pos/cfile->arate/cfile->achans/
 			     cfile->asampsize*8)/cfile->total_time;
 	}
 #endif
@@ -2735,11 +2735,11 @@ void get_play_times(void) {
 }
     
 
-void draw_little_bars (gdouble ptrtime) {
+void draw_little_bars (double ptrtime) {
   //draw the vertical player bars
-  gdouble allocheight=lives_widget_get_allocation_height(mainw->video_draw)-prefs->bar_height;
-  gdouble offset=ptrtime/cfile->total_time*lives_widget_get_allocation_width(mainw->vidbar);
-  gint frame;
+  double allocheight=lives_widget_get_allocation_height(mainw->video_draw)-prefs->bar_height;
+  double offset=ptrtime/cfile->total_time*lives_widget_get_allocation_width(mainw->vidbar);
+  int frame;
 
   if (!prefs->show_gui) return;
 
@@ -2878,7 +2878,7 @@ void get_total_time (file *file) {
   }
 
   if (file->asampsize*file->arate*file->achans) {
-    file->laudio_time=(gdouble)(file->afilesize/(file->asampsize>>3)/file->achans)/(gdouble)file->arate;
+    file->laudio_time=(double)(file->afilesize/(file->asampsize>>3)/file->achans)/(double)file->arate;
     if (file->achans>1) {
       file->raudio_time=file->laudio_time;
     }
@@ -2920,43 +2920,43 @@ find_when_to_stop (void) {
 
 
 void 
-minimise_aspect_delta (gdouble aspect,gint hblock,gint vblock,gint hsize,gint vsize,gint *width,gint *height) {
+minimise_aspect_delta (double aspect,int hblock,int vblock,int hsize,int vsize,int *width,int *height) {
   // we will use trigonometry to calculate the smallest difference between a given
   // aspect ratio and the actual frame size. If the delta is smaller than current 
   // we set the height and width
-  gint cw=width[0];
-  gint ch=height[0];
+  int cw=width[0];
+  int ch=height[0];
 
-  gint real_width,real_height;
+  int real_width,real_height;
   uint64_t delta,current_delta;
 
   // minimise d[(x-x1)^2 + (y-y1)^2]/d[x1], to get approximate values
-  gint calc_width=(gint)((vsize+aspect*hsize)*aspect/(aspect*aspect+1.));
+  int calc_width=(int)((vsize+aspect*hsize)*aspect/(aspect*aspect+1.));
 
   int i;
 
   current_delta=(hsize-cw)*(hsize-cw)+(vsize-ch)*(vsize-ch);
 
 #ifdef DEBUG_ASPECT
-  g_printerr ("aspect %.8f : width %d height %d is best fit\n",aspect,calc_width,(gint)(calc_width/aspect));
+  g_printerr ("aspect %.8f : width %d height %d is best fit\n",aspect,calc_width,(int)(calc_width/aspect));
 #endif
   // use the block size to find the nearest allowed size
   for (i=-1;i<2;i++) {
-    real_width=(gint)(calc_width/hblock+i)*hblock;
-    real_height=(gint)(real_width/aspect/vblock+.5)*vblock;
+    real_width=(int)(calc_width/hblock+i)*hblock;
+    real_height=(int)(real_width/aspect/vblock+.5)*vblock;
     delta=(hsize-real_width)*(hsize-real_width)+(vsize-real_height)*(vsize-real_height);
 
 
-    if (real_width%hblock!=0||real_height%vblock!=0||ABS((gdouble)real_width/(gdouble)real_height-aspect)>ASPECT_ALLOWANCE) {
+    if (real_width%hblock!=0||real_height%vblock!=0||ABS((double)real_width/(double)real_height-aspect)>ASPECT_ALLOWANCE) {
       // encoders can be fussy, so we need to fit both aspect ratio and blocksize      
       while (1) {
 	real_width=((int)(real_width/hblock)+1)*hblock;
-	real_height=(int)((gdouble)real_width/aspect+.5);
+	real_height=(int)((double)real_width/aspect+.5);
 	
 	if (real_height%vblock==0) break;
 	
 	real_height=((int)(real_height/vblock)+1)*vblock;
-	real_width=(int)((gdouble)real_height*aspect+.5);
+	real_width=(int)((double)real_height*aspect+.5);
 	
 	if (real_width%hblock==0) break;
 	
@@ -3206,7 +3206,7 @@ boolean prepare_to_play_foreign(void) {
 #endif
 #endif
 
-  gint new_file=mainw->first_free_file;
+  int new_file=mainw->first_free_file;
 
   mainw->foreign_window=NULL;
 
@@ -3333,16 +3333,16 @@ boolean prepare_to_play_foreign(void) {
 boolean after_foreign_play(void) {
   // read details from capture file
   int capture_fd;
-  gchar *capfile=g_strdup_printf("%s/.capture.%d",prefs->tmpdir,getpid());
-  gchar capbuf[256];
+  char *capfile=g_strdup_printf("%s/.capture.%d",prefs->tmpdir,getpid());
+  char capbuf[256];
   ssize_t length;
-  gint new_file=-1;
-  gint new_frames=0;
-  gint old_file=mainw->current_file;
+  int new_file=-1;
+  int new_frames=0;
+  int old_file=mainw->current_file;
 
-  gchar *com;
-  gchar **array;
-  gchar file_name[PATH_MAX];
+  char *com;
+  char **array;
+  char file_name[PATH_MAX];
 
   // assume for now we only get one clip passed back
   if ((capture_fd=open(capfile,O_RDONLY))>-1) {
@@ -3439,7 +3439,7 @@ boolean after_foreign_play(void) {
 }
 
 
-void set_menu_text(GtkWidget *menuitem, const gchar *text, boolean use_mnemonic) {
+void set_menu_text(GtkWidget *menuitem, const char *text, boolean use_mnemonic) {
   GtkWidget *label;
   if (GTK_IS_MENU_ITEM (menuitem)) {
     label=lives_bin_get_child(GTK_BIN(menuitem));
@@ -3453,13 +3453,13 @@ void set_menu_text(GtkWidget *menuitem, const gchar *text, boolean use_mnemonic)
 }
 
 
-void get_menu_text(GtkWidget *menuitem, gchar *text) {
+void get_menu_text(GtkWidget *menuitem, char *text) {
   GtkWidget *label=lives_bin_get_child(GTK_BIN(menuitem));
   g_snprintf(text,255,"%s",gtk_label_get_text(GTK_LABEL(label)));
 }
 
 void
-get_menu_text_long(GtkWidget *menuitem, gchar *text) {
+get_menu_text_long(GtkWidget *menuitem, char *text) {
   GtkWidget *label=lives_bin_get_child(GTK_BIN(menuitem));
   g_snprintf(text,32768,"%s",gtk_label_get_text(GTK_LABEL(label)));
 }
@@ -3481,7 +3481,7 @@ reset_clip_menu (void) {
 
   int i;
   GtkWidget *active_image=NULL;
-  gchar menutext[32768];
+  char menutext[32768];
 
   for (i=1;i<=MAX_FILES;i++) {
     if (!(mainw->files[i]==NULL)) {
@@ -3511,12 +3511,12 @@ reset_clip_menu (void) {
 
 
 
-boolean check_file(const gchar *file_name, boolean check_existing) {
+boolean check_file(const char *file_name, boolean check_existing) {
   int check;
   boolean exists=FALSE;
-  gchar *msg;
+  char *msg;
   // file_name should be in utf8
-  gchar *lfile_name=g_filename_from_utf8(file_name,-1,NULL,NULL,NULL);
+  char *lfile_name=g_filename_from_utf8(file_name,-1,NULL,NULL,NULL);
 
   // check if file exists
   if (g_file_test (lfile_name, G_FILE_TEST_EXISTS)) {
@@ -3558,7 +3558,7 @@ boolean check_file(const gchar *file_name, boolean check_existing) {
 
 
 
-boolean check_dir_access (const gchar *dir) {
+boolean check_dir_access (const char *dir) {
   // if a directory exists, make sure it is readable and writable
   // otherwise create it and then check
 
@@ -3569,8 +3569,8 @@ boolean check_dir_access (const gchar *dir) {
   boolean exists=g_file_test (dir, G_FILE_TEST_EXISTS);
   boolean is_OK=FALSE;
 
-  gchar *com;
-  gchar *testfile;
+  char *com;
+  char *testfile;
 
   if (!exists) {
     g_mkdir_with_parents(dir,S_IRWXU);
@@ -3597,7 +3597,7 @@ boolean check_dir_access (const gchar *dir) {
 }
 
 
-boolean check_dev_busy(gchar *devstr) {
+boolean check_dev_busy(char *devstr) {
 #ifndef IS_MINGW
   int ret;
 #ifdef IS_SOLARIS
@@ -3623,12 +3623,12 @@ boolean check_dev_busy(gchar *devstr) {
 
 
 
-void activate_url_inner(const gchar *link) {
+void activate_url_inner(const char *link) {
 #if GTK_CHECK_VERSION(2,14,0)
   GError *err=NULL;
   gtk_show_uri(NULL,link,GDK_CURRENT_TIME,&err);
 #else
-  gchar *com = getenv("BROWSER");
+  char *com = getenv("BROWSER");
   com = g_strdup_printf("\"%s\" '%s' &", com ? com : "gnome-open", link);
   lives_system(com,FALSE);
   g_free(com);
@@ -3636,14 +3636,14 @@ void activate_url_inner(const gchar *link) {
 }
 
 
-void activate_url (GtkAboutDialog *about, const gchar *link, gpointer data) {
+void activate_url (GtkAboutDialog *about, const char *link, gpointer data) {
   activate_url_inner(link);
 }
 
 
-void show_manual_section (const gchar *lang, const gchar *section) {
-  gchar *tmp=NULL,*tmp2=NULL;
-  const gchar *link;
+void show_manual_section (const char *lang, const char *section) {
+  char *tmp=NULL,*tmp2=NULL;
+  const char *link;
 
   link=g_strdup_printf("%s%s%s%s",LIVES_MANUAL_URL,(lang==NULL?"":(tmp2=g_strdup_printf("//%s//",lang))),
 		       LIVES_MANUAL_FILENAME,(section==NULL?"":(tmp=g_strdup_printf("#%s",section))));
@@ -3665,13 +3665,13 @@ get_file_size(int fd) {
 }
 
 uint64_t
-sget_file_size(const gchar *name) {
+sget_file_size(const char *name) {
   // get the size of file fd
   struct stat filestat;
   int fd;
 
   if ((fd=open(name,O_RDONLY))==-1) {
-    return (guint)0;
+    return (uint32_t)0;
   }
 
   fstat(fd,&filestat);
@@ -3683,9 +3683,9 @@ sget_file_size(const gchar *name) {
 
 void reget_afilesize (int fileno) {
   // re-get the audio file size
-  gchar *afile;
+  char *afile;
   file *sfile=mainw->files[fileno];
-  gboolean bad_header=FALSE;
+  boolean bad_header=FALSE;
 
   if (mainw->multitrack!=NULL) return; // otherwise achans gets set to 0...
 
@@ -3715,8 +3715,8 @@ void reget_afilesize (int fileno) {
 
 
 
-gboolean
-create_event_space(gint length) {
+boolean
+create_event_space(int length) {
   // try to create desired events
   // if we run out of memory, all events requested are freed, and we return FALSE
   // otherwise we return TRUE
@@ -3736,18 +3736,18 @@ create_event_space(gint length) {
 
 
 
-gint lives_list_index (GList *list, const gchar *data) {
+int lives_list_index (GList *list, const char *data) {
   // find data in list, GTK's version is broken
   // well, actually not broken - but we need to use strcmp
 
   int i;
-  gint len;
+  int len;
   if (list==NULL) return -1;
 
   len=g_list_length (list);
 
   for (i=0;i<len;i++) {
-    if (!strcmp ((gchar *)g_list_nth_data (list,i),data)) return i;
+    if (!strcmp ((char *)g_list_nth_data (list,i),data)) return i;
   }
   return -1;
 }
@@ -3758,9 +3758,9 @@ gint lives_list_index (GList *list, const gchar *data) {
 
 
 void 
-add_to_recent(const gchar *filename, gdouble start, gint frames, const gchar *extra_params) {
-  gchar buff[PATH_MAX];
-  gchar *file,*tmp;
+add_to_recent(const char *filename, double start, int frames, const char *extra_params) {
+  char buff[PATH_MAX];
+  char *file,*tmp;
 
   if (frames>0) {
     if (extra_params==NULL||(strlen(extra_params)==0)) file=g_strdup_printf ("%s|%.2f|%d",filename,start,frames);
@@ -3862,12 +3862,12 @@ add_to_recent(const gchar *filename, gdouble start, gint frames, const gchar *ex
 
 
 
-gint 
-verhash (gchar *version) {
-  gchar *s;
-  gint major=0;
-  gint minor=0;
-  gint micro=0;
+int 
+verhash (char *version) {
+  char *s;
+  int major=0;
+  int minor=0;
+  int micro=0;
 
   if (!(strlen(version))) return 0;
 
@@ -3907,12 +3907,12 @@ void lives_log(const char *what) {
 
 // TODO - move into undo.c
 void 
-set_undoable (const gchar *what, gboolean sensitive) {
+set_undoable (const char *what, boolean sensitive) {
   if (mainw->current_file>-1) {
     cfile->redoable=FALSE;
     cfile->undoable=sensitive;
     if (!(what==NULL)) {
-      gchar *what_safe=g_strdelimit (g_strdup (what),"_",' ');
+      char *what_safe=g_strdelimit (g_strdup (what),"_",' ');
       g_snprintf(cfile->undo_text,32,_ ("_Undo %s"),what_safe);
       g_snprintf(cfile->redo_text,32,_ ("_Redo %s"),what_safe);
       g_free (what_safe);
@@ -3939,12 +3939,12 @@ set_undoable (const gchar *what, gboolean sensitive) {
 }
 
 void 
-set_redoable (const gchar *what, gboolean sensitive) {
+set_redoable (const char *what, boolean sensitive) {
   if (mainw->current_file>-1) {
     cfile->undoable=FALSE;
     cfile->redoable=sensitive;
     if (!(what==NULL)) {
-      gchar *what_safe=g_strdelimit (g_strdup (what),"_",' ');
+      char *what_safe=g_strdelimit (g_strdup (what),"_",' ');
       g_snprintf(cfile->undo_text,32,_ ("_Undo %s"),what_safe);
       g_snprintf(cfile->redo_text,32,_ ("_Redo %s"),what_safe);
       g_free (what_safe);
@@ -3967,8 +3967,8 @@ set_redoable (const gchar *what, gboolean sensitive) {
 
 void 
 set_sel_label (GtkWidget *sel_label) {
-  gchar *tstr,*frstr,*tmp;
-  gchar *sy,*sz;
+  char *tstr,*frstr,*tmp;
+  char *sy,*sz;
 
   if (mainw->current_file==-1||!cfile->frames||mainw->multitrack!=NULL) {
     lives_label_set_text(GTK_LABEL(sel_label),_ ("-------------Selection------------"));
@@ -4006,9 +4006,9 @@ LIVES_INLINE void g_list_free_strings(GList *slist) {
 }
 
 
-boolean cache_file_contents(const gchar *filename) {
+boolean cache_file_contents(const char *filename) {
   FILE *hfile;
-  gchar buff[65536];
+  char buff[65536];
 
   if (mainw->cached_list!=NULL) {
     g_list_free_strings(mainw->cached_list);
@@ -4026,29 +4026,29 @@ boolean cache_file_contents(const gchar *filename) {
 }
 
 
-gchar *get_val_from_cached_list(const gchar *key, size_t maxlen) {
+char *get_val_from_cached_list(const char *key, size_t maxlen) {
   GList *clist=mainw->cached_list;
-  gchar *keystr_start=g_strdup_printf("<%s>",key);
-  gchar *keystr_end=g_strdup_printf("</%s>",key);
+  char *keystr_start=g_strdup_printf("<%s>",key);
+  char *keystr_end=g_strdup_printf("</%s>",key);
   size_t kslen=strlen(keystr_start);
   size_t kelen=strlen(keystr_end);
 
-  gboolean gotit=FALSE;
-  gchar buff[maxlen];
+  boolean gotit=FALSE;
+  char buff[maxlen];
 
   memset(buff,0,1);
 
   while (clist!=NULL) {
     if (gotit) {
-      if (!strncmp(keystr_end,(gchar *)clist->data,kelen)) {
+      if (!strncmp(keystr_end,(char *)clist->data,kelen)) {
 	break;
       }
-      if (strncmp((gchar *)clist->data,"|",1)) g_strappend(buff,maxlen,(gchar *)clist->data);
+      if (strncmp((char *)clist->data,"|",1)) g_strappend(buff,maxlen,(char *)clist->data);
       else {
 	if (clist->prev!=NULL) clist->prev->next=clist->next;
       }
     }
-    else if (!strncmp(keystr_start,(gchar *)clist->data,kslen)) {
+    else if (!strncmp(keystr_start,(char *)clist->data,kslen)) {
       gotit=TRUE;
     }
     clist=clist->next;
@@ -4066,8 +4066,8 @@ gchar *get_val_from_cached_list(const gchar *key, size_t maxlen) {
 
 
 
-gchar *clip_detail_to_string(lives_clip_details_t what, size_t *maxlenp) {
-  gchar *key=NULL;
+char *clip_detail_to_string(lives_clip_details_t what, size_t *maxlenp) {
+  char *key=NULL;
 
   switch (what) {
   case CLIP_DETAILS_HEADER_VERSION:
@@ -4159,23 +4159,23 @@ gchar *clip_detail_to_string(lives_clip_details_t what, size_t *maxlenp) {
 
 
 
-gboolean get_clip_value(int which, lives_clip_details_t what, void *retval, size_t maxlen) {
+boolean get_clip_value(int which, lives_clip_details_t what, void *retval, size_t maxlen) {
   FILE *valfile;
   time_t old_time=0,new_time=0;
   struct stat mystat;
 
-  gchar *vfile;
-  gchar *lives_header=NULL;
-  gchar *old_header;
-  gchar *com;
-  gchar *val;
-  gchar *key;
-  gchar *tmp;
+  char *vfile;
+  char *lives_header=NULL;
+  char *old_header;
+  char *com;
+  char *val;
+  char *key;
+  char *tmp;
 
   int alarm_handle;
   int retval2=0;
 
-  gboolean timeout;
+  boolean timeout;
 
   if (mainw->cached_list==NULL) {
     
@@ -4216,7 +4216,7 @@ gboolean get_clip_value(int which, lives_clip_details_t what, void *retval, size
     g_free(lives_header);
     g_free(key);
     
-    val=(gchar *)g_malloc(maxlen);
+    val=(char *)g_malloc(maxlen);
     memset(val,0,maxlen);
     
     threaded_dialog_spin();
@@ -4289,52 +4289,52 @@ gboolean get_clip_value(int which, lives_clip_details_t what, void *retval, size
   case CLIP_DETAILS_ASAMPS:
   case CLIP_DETAILS_FRAMES:
   case CLIP_DETAILS_HEADER_VERSION:
-    *(gint *)retval=atoi(val);
+    *(int *)retval=atoi(val);
     break;
   case CLIP_DETAILS_ASIGNED:
-    *(gint *)retval=0;
-    if (mainw->files[which]->header_version==0) *(gint *)retval=atoi(val);
-    if (*(gint *)retval==0&&(!strcasecmp(val,"false"))) *(gint *)retval=1; // unsigned
+    *(int *)retval=0;
+    if (mainw->files[which]->header_version==0) *(int *)retval=atoi(val);
+    if (*(int *)retval==0&&(!strcasecmp(val,"false"))) *(int *)retval=1; // unsigned
     break;
   case CLIP_DETAILS_PB_FRAMENO:
-    *(gint *)retval=atoi(val);
-    if (retval==0) *(gint *)retval=1;
+    *(int *)retval=atoi(val);
+    if (retval==0) *(int *)retval=1;
     break;
   case CLIP_DETAILS_PB_ARATE:
-    *(gint *)retval=atoi(val);
-    if (retval==0) *(gint *)retval=mainw->files[which]->arps;
+    *(int *)retval=atoi(val);
+    if (retval==0) *(int *)retval=mainw->files[which]->arps;
     break;
   case CLIP_DETAILS_INTERLACE:
-    *(gint *)retval=atoi(val);
+    *(int *)retval=atoi(val);
     break;
   case CLIP_DETAILS_FPS:
-    *(gdouble *)retval=strtod(val,NULL);
-    if (*(gdouble *)retval==0.) *(gdouble *)retval=prefs->default_fps;
+    *(double *)retval=strtod(val,NULL);
+    if (*(double *)retval==0.) *(double *)retval=prefs->default_fps;
     break;
   case CLIP_DETAILS_PB_FPS:
-    *(gdouble *)retval=strtod(val,NULL);
-    if (*(gdouble *)retval==0.) *(gdouble *)retval=mainw->files[which]->fps;
+    *(double *)retval=strtod(val,NULL);
+    if (*(double *)retval==0.) *(double *)retval=mainw->files[which]->fps;
     break;
   case CLIP_DETAILS_UNIQUE_ID:
     if (capable->cpu_bits==32) {
-      *(gint64 *)retval=strtoll(val,NULL,10);
+      *(int64_t *)retval=strtoll(val,NULL,10);
     }
     else {
-      *(gint64 *)retval=strtol(val,NULL,10);
+      *(int64_t *)retval=strtol(val,NULL,10);
     }
     break;
   case CLIP_DETAILS_AENDIAN:
-    *(gint *)retval=atoi(val)*2;
+    *(int *)retval=atoi(val)*2;
     break;
   case CLIP_DETAILS_TITLE:
   case CLIP_DETAILS_AUTHOR:
   case CLIP_DETAILS_COMMENT:
   case CLIP_DETAILS_CLIPNAME:
   case CLIP_DETAILS_KEYWORDS:
-    g_snprintf((gchar *)retval,maxlen,"%s",val);
+    g_snprintf((char *)retval,maxlen,"%s",val);
     break;
   case CLIP_DETAILS_FILENAME:
-    g_snprintf((gchar *)retval,maxlen,"%s",(tmp=g_filename_to_utf8(val,-1,NULL,NULL,NULL)));
+    g_snprintf((char *)retval,maxlen,"%s",(tmp=g_filename_to_utf8(val,-1,NULL,NULL,NULL)));
     g_free(tmp);
     break;
   }
@@ -4345,10 +4345,10 @@ gboolean get_clip_value(int which, lives_clip_details_t what, void *retval, size
 
 
 void save_clip_value(int which, lives_clip_details_t what, void *val) {
-  gchar *lives_header;
-  gchar *com,*tmp;
-  gchar *myval;
-  gchar *key;
+  char *lives_header;
+  char *com,*tmp;
+  char *myval;
+  char *key;
 
   boolean needs_sigs=FALSE;
 
@@ -4369,82 +4369,82 @@ void save_clip_value(int which, lives_clip_details_t what, void *val) {
 
   switch (what) {
   case CLIP_DETAILS_BPP:
-    myval=g_strdup_printf("%d",*(gint *)val);
+    myval=g_strdup_printf("%d",*(int *)val);
     break;
   case CLIP_DETAILS_FPS:
-    if (!mainw->files[which]->ratio_fps) myval=g_strdup_printf("%.3f",*(gdouble *)val);
-    else myval=g_strdup_printf("%.8f",*(gdouble *)val);
+    if (!mainw->files[which]->ratio_fps) myval=g_strdup_printf("%.3f",*(double *)val);
+    else myval=g_strdup_printf("%.8f",*(double *)val);
     break;
   case CLIP_DETAILS_PB_FPS:
     if (mainw->files[which]->ratio_fps&&(mainw->files[which]->pb_fps==mainw->files[which]->fps)) 
-      myval=g_strdup_printf("%.8f",*(gdouble *)val);
-    else myval=g_strdup_printf("%.3f",*(gdouble *)val);
+      myval=g_strdup_printf("%.8f",*(double *)val);
+    else myval=g_strdup_printf("%.3f",*(double *)val);
     break;
   case CLIP_DETAILS_WIDTH:
-    myval=g_strdup_printf("%d",*(gint *)val);
+    myval=g_strdup_printf("%d",*(int *)val);
     break;
   case CLIP_DETAILS_HEIGHT:
-    myval=g_strdup_printf("%d",*(gint *)val);
+    myval=g_strdup_printf("%d",*(int *)val);
     break;
   case CLIP_DETAILS_UNIQUE_ID:
-    myval=g_strdup_printf("%"PRId64,*(gint64 *)val);
+    myval=g_strdup_printf("%"PRId64,*(int64_t *)val);
     break;
   case CLIP_DETAILS_ARATE:
-    myval=g_strdup_printf("%d",*(gint *)val);
+    myval=g_strdup_printf("%d",*(int *)val);
     break;
   case CLIP_DETAILS_PB_ARATE:
-    myval=g_strdup_printf("%d",*(gint *)val);
+    myval=g_strdup_printf("%d",*(int *)val);
     break;
   case CLIP_DETAILS_ACHANS:
-    myval=g_strdup_printf("%d",*(gint *)val);
+    myval=g_strdup_printf("%d",*(int *)val);
     break;
   case CLIP_DETAILS_ASIGNED:
-    if (*(gint *)val==1) myval=g_strdup("true");
+    if (*(int *)val==1) myval=g_strdup("true");
     else myval=g_strdup("false");
     break;
   case CLIP_DETAILS_AENDIAN:
-    myval=g_strdup_printf("%d",*(gint *)val/2);
+    myval=g_strdup_printf("%d",*(int *)val/2);
     break;
   case CLIP_DETAILS_ASAMPS:
-    myval=g_strdup_printf("%d",*(gint *)val);
+    myval=g_strdup_printf("%d",*(int *)val);
     break;
   case CLIP_DETAILS_FRAMES:
-    myval=g_strdup_printf("%d",*(gint *)val);
+    myval=g_strdup_printf("%d",*(int *)val);
     break;
   case CLIP_DETAILS_INTERLACE:
-    myval=g_strdup_printf("%d",*(gint *)val);
+    myval=g_strdup_printf("%d",*(int *)val);
     break;
   case CLIP_DETAILS_TITLE:
-    myval=g_strdup((gchar *)val);
+    myval=g_strdup((char *)val);
     break;
   case CLIP_DETAILS_AUTHOR:
-    myval=g_strdup((gchar *)val);
+    myval=g_strdup((char *)val);
     break;
   case CLIP_DETAILS_COMMENT:
-    myval=g_strdup((gchar *)val);
+    myval=g_strdup((char *)val);
     break;
   case CLIP_DETAILS_KEYWORDS:
-    myval=g_strdup((gchar *)val);
+    myval=g_strdup((char *)val);
     break;
   case CLIP_DETAILS_PB_FRAMENO:
-    myval=g_strdup_printf("%d",*(gint *)val);
+    myval=g_strdup_printf("%d",*(int *)val);
     break;
   case CLIP_DETAILS_CLIPNAME:
-    myval=g_strdup((gchar *)val);
+    myval=g_strdup((char *)val);
     break;
   case CLIP_DETAILS_FILENAME:
-    myval=g_filename_from_utf8((gchar *)val,-1,NULL,NULL,NULL);
+    myval=g_filename_from_utf8((char *)val,-1,NULL,NULL,NULL);
     break;
   case CLIP_DETAILS_HEADER_VERSION:
-    myval=g_strdup_printf("%d",*(gint *)val);
+    myval=g_strdup_printf("%d",*(int *)val);
     break;
   default:
     return;
   }
 
   if (mainw->clip_header!=NULL) {
-    gchar *keystr_start=g_strdup_printf("<%s>\n",key);
-    gchar *keystr_end=g_strdup_printf("\n</%s>\n",key);
+    char *keystr_start=g_strdup_printf("<%s>\n",key);
+    char *keystr_end=g_strdup_printf("\n</%s>\n",key);
     lives_fputs(keystr_start,mainw->clip_header);
     lives_fputs(myval,mainw->clip_header);
     lives_fputs(keystr_end,mainw->clip_header);
@@ -4473,12 +4473,12 @@ void save_clip_value(int which, lives_clip_details_t what, void *val) {
 
 
 
-GList *get_set_list(const gchar *dir) {
+GList *get_set_list(const char *dir) {
   // get list of sets in top level dir
   GList *setlist=NULL;
   DIR *tldir,*subdir;
   struct dirent *tdirent,*subdirent;
-  gchar *subdirname;
+  char *subdirname;
 
   if (dir==NULL) return NULL;
 
@@ -4533,8 +4533,8 @@ GList *get_set_list(const gchar *dir) {
 
 boolean check_for_ratio_fps (double fps) {
   boolean ratio_fps;
-  gchar *test_fps_string1=g_strdup_printf ("%.3f00000",fps);
-  gchar *test_fps_string2=g_strdup_printf ("%.8f",fps);
+  char *test_fps_string1=g_strdup_printf ("%.3f00000",fps);
+  char *test_fps_string2=g_strdup_printf ("%.8f",fps);
   
   if (strcmp (test_fps_string1,test_fps_string2)) {
     // got a ratio
@@ -4550,15 +4550,15 @@ boolean check_for_ratio_fps (double fps) {
 }
 
 
-gdouble get_ratio_fps(const gchar *string) {
+double get_ratio_fps(const char *string) {
   // return a ratio (8dp) fps from a string with format num:denom
-  gdouble fps;
-  gchar *fps_string;
-  gchar **array=g_strsplit(string,":",2);
-  gint num=atoi (array[0]);
-  gint denom=atoi (array[1]);
+  double fps;
+  char *fps_string;
+  char **array=g_strsplit(string,":",2);
+  int num=atoi (array[0]);
+  int denom=atoi (array[1]);
   g_strfreev (array);
-  fps=(gdouble)num/(gdouble)denom;
+  fps=(double)num/(double)denom;
   fps_string=g_strdup_printf("%.8f",fps);
   fps=g_strtod(fps_string,NULL);
   g_free(fps_string);
@@ -4567,9 +4567,9 @@ gdouble get_ratio_fps(const gchar *string) {
 
 
 
-gchar *remove_trailing_zeroes(gdouble val) {
+char *remove_trailing_zeroes(double val) {
   int i;
-  gdouble xval=val;
+  double xval=val;
 
   if (val==(int)val) return g_strdup_printf("%d",(int)val);
   for (i=0;i<=16;i++) {
@@ -4580,7 +4580,7 @@ gchar *remove_trailing_zeroes(gdouble val) {
 }
 
 
-guint get_signed_endian (boolean is_signed, boolean little_endian) {
+uint32_t get_signed_endian (boolean is_signed, boolean little_endian) {
   // asigned TRUE == signed, FALSE == unsigned
 
 
@@ -4608,7 +4608,7 @@ guint get_signed_endian (boolean is_signed, boolean little_endian) {
 
 
 
-int get_token_count (const gchar *string, int delim) {
+int get_token_count (const char *string, int delim) {
   int pieces=1;
   if (string==NULL) return 0;
   if (delim<=0||delim>255) return 1;
@@ -4622,11 +4622,11 @@ int get_token_count (const gchar *string, int delim) {
 
 
 
-gchar *subst (const gchar *string, const gchar *from, const gchar *to) {
+char *subst (const char *string, const char *from, const char *to) {
   // return a string with all occurrences of from replaced with to
   // return value should be freed after use
-  gchar *ret=g_strdup(string),*first;
-  gchar *search=ret;
+  char *ret=g_strdup(string),*first;
+  char *search=ret;
 
   while ((search=g_strstr_len (search,-1,from))!=NULL) {
     first=g_strndup(ret,search-ret);
@@ -4640,15 +4640,15 @@ gchar *subst (const gchar *string, const gchar *from, const gchar *to) {
   return ret;
 }
 
-gchar *insert_newlines(const gchar *text, int maxwidth) {
+char *insert_newlines(const char *text, int maxwidth) {
   // crude formating of strings, ensure a newline after every run of maxwidth chars
   // does not take into account for example utf8 multi byte chars
 
   char newline[]="\n";
-  gchar *retstr;
+  char *retstr;
   register int i;
   int xtoffs;
-  gboolean needsnl=FALSE;
+  boolean needsnl=FALSE;
   size_t req_size=1;  // for the terminating \0
   size_t tlen;
   size_t nlen=strlen(newline);
@@ -4690,7 +4690,7 @@ gchar *insert_newlines(const gchar *text, int maxwidth) {
   }
 
 
-  retstr=(gchar *)g_malloc(req_size);
+  retstr=(char *)g_malloc(req_size);
   req_size=0; // reuse as a ptr to offset in retstr
   runlen=0;
   needsnl=FALSE;
@@ -4729,10 +4729,10 @@ gchar *insert_newlines(const gchar *text, int maxwidth) {
 
 
 
-gint hextodec (const gchar *string) {
+int hextodec (const char *string) {
   int i;
-  gint tot=0;
-  gchar test[2];
+  int tot=0;
+  char test[2];
 
   memset (test+1,0,1);
 
@@ -4744,7 +4744,7 @@ gint hextodec (const gchar *string) {
   return tot;
 }
 
-gint get_hex_digit (const gchar *c) {
+int get_hex_digit (const char *c) {
   if (!strcmp (c,"a")||!strcmp (c,"A")) return 10;
   if (!strcmp (c,"b")||!strcmp (c,"B")) return 11;
   if (!strcmp (c,"c")||!strcmp (c,"C")) return 12;
@@ -4756,9 +4756,9 @@ gint get_hex_digit (const gchar *c) {
 
 
 
-static guint32 fastrand_val;
+static uint64_t fastrand_val;
 
-LIVES_INLINE guint32 fastrand(void)
+LIVES_INLINE uint64_t fastrand(void)
 {
 #define rand_a 1073741789L
 #define rand_c 32749L
@@ -4766,20 +4766,20 @@ LIVES_INLINE guint32 fastrand(void)
   return (fastrand_val= rand_a * fastrand_val + rand_c);
 }
 
-void fastsrand(guint32 seed)
+void fastsrand(uint64_t seed)
 {
   fastrand_val = seed;
 }
 
 
-boolean is_writeable_dir(const gchar *dir) {
+boolean is_writeable_dir(const char *dir) {
   // return 0 if we cannot create/write to dir
 
   // dir should be in locale encoding
 #ifndef IS_MINGW
   struct statvfs sbuf;
 #else
-  gchar *com;
+  char *com;
 #endif
 
   if (!g_file_test(dir,G_FILE_TEST_IS_DIR)) {
@@ -4823,7 +4823,7 @@ uint64_t get_fs_free(const char *dir) {
 #endif
 
   uint64_t bytes=0;
-  gboolean must_delete=FALSE;
+  boolean must_delete=FALSE;
 
   if (!g_file_test(dir,G_FILE_TEST_IS_DIR)) must_delete=TRUE;
   if (!is_writeable_dir(dir)) goto getfserr;
@@ -4901,7 +4901,7 @@ GList *g_list_copy_strings(GList *list) {
 
 
 
-gboolean string_lists_differ(GList *alist, GList *blist) {
+boolean string_lists_differ(GList *alist, GList *blist) {
   // compare 2 lists of strings and see if they are different (ignoring ordering)
   // for long lists this would be quicker if we sorted the lists first; however this function 
   // is designed to deal with short lists only
@@ -4916,7 +4916,7 @@ gboolean string_lists_differ(GList *alist, GList *blist) {
   plist=alist;
   while (plist!=NULL) {
     GList *qlist=blist;
-    gboolean matched=FALSE;
+    boolean matched=FALSE;
     while (qlist!=NULL) {
       if (!(strcmp((char *)plist->data,(char *)qlist->data))) {
 	matched=TRUE;

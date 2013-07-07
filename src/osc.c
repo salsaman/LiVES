@@ -33,6 +33,7 @@
 #include "rte_window.h"
 #include "resample.h"
 #include "paramwindow.h"
+#include "ce_thumbs.h"
 
 void *status_socket;
 void *notify_socket;
@@ -4048,6 +4049,8 @@ void lives_osc_cb_rte_setparam(void *context, int arglen, const void *vargs, OSC
 	mainw->vrfx_update=rfx;
     }
   }
+
+  if (mainw->ce_thumbs) ce_thumbs_register_rfx_change(effect_key,rte_key_getmode(effect_key));
 
   lives_osc_notify_success(NULL);
 

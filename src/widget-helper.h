@@ -490,6 +490,9 @@ typedef GdkModifierType LiVESModifierType;
 
 #endif
 
+#define LIVES_INT_TO_POINTER GINT_TO_POINTER
+#define LIVES_POINTER_TO_INT GPOINTER_TO_INT
+
 #endif
 
 
@@ -716,6 +719,7 @@ void lives_combo_set_entry_text_column(LiVESCombo *, int column);
 char *lives_combo_get_active_text(LiVESCombo *) WARN_UNUSED;
 void lives_combo_set_active_text(LiVESCombo *, const char *text);
 void lives_combo_set_active_index(LiVESCombo *, int index);
+int lives_combo_get_active(LiVESCombo *);
 boolean lives_combo_get_active_iter(LiVESCombo *, LiVESTreeIter *);
 void lives_combo_set_active_iter(LiVESCombo *, LiVESTreeIter *);
 void lives_combo_set_active_string(LiVESCombo *, const char *active_str);

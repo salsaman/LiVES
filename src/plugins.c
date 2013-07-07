@@ -2960,6 +2960,7 @@ void rfx_params_free(lives_rfx_t *rfx) {
 
 
 void rfx_free(lives_rfx_t *rfx) {
+  if (mainw->vrfx_update==rfx) mainw->vrfx_update=NULL;
 
   if (rfx->name!=NULL) g_free(rfx->name);
   if (rfx->menu_text!=NULL) g_free(rfx->menu_text);
@@ -3748,7 +3749,7 @@ gchar *plugin_run_param_window(const gchar *get_com, GtkVBox *vbox, lives_rfx_t 
 
     // now we build our window and get param values
     if (vbox==NULL) {
-      on_render_fx_pre_activate(NULL,rfx);
+      on_fx_pre_activate(rfx,1,NULL);
 
       if (prefs->show_gui) {
 	if (mainw->multitrack==NULL) gtk_window_set_transient_for(GTK_WINDOW(fx_dialog[1]),GTK_WINDOW(mainw->LiVES));

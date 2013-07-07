@@ -39,6 +39,7 @@ using namespace cv;
 #include "rte_window.h"
 #include "resample.h"
 #include "audio.h"
+#include "ce_thumbs.h"
 
 ////////////////////////////////////////////////////////////////////////
 
@@ -5820,6 +5821,17 @@ void weed_generator_end (weed_plant_t *inst) {
     }
   }
 
+  if (mainw->ce_thumbs) {
+    // update ce_thumbs window if we are showing it
+    if (!is_bg) {
+      ce_thumbs_set_keych(fg_generator_key,FALSE);
+    }
+    else {
+      ce_thumbs_set_keych(bg_generator_key,FALSE);
+    }
+  }
+
+
   if (is_bg) {
     pthread_mutex_lock(&mainw->afilter_mutex);
     key_to_instance[bg_generator_key][bg_generator_mode]=NULL;
@@ -6372,6 +6384,7 @@ boolean weed_init_effect(int hotkey) {
 	  // need to do this in case starting another audio gen caused us to come here
 	  mainw->rte^=(GU641<<agen_key);
 	  if (rte_window!=NULL) rtew_set_keych(agen_key,FALSE);
+	  if (mainw->ce_thumbs) ce_thumbs_set_keych(agen_key,FALSE);
 	}
 
       }
@@ -6591,7 +6604,10 @@ boolean weed_init_effect(int hotkey) {
     }
     if (bg_generator_key!=-1&&!fg_modeswitch) {
       mainw->rte|=(GU641<<bg_generator_key);
-      if (rte_window!=NULL&&hotkey<prefs->rte_keys_virtual) rtew_set_keych(bg_generator_key,TRUE);
+      if (hotkey<prefs->rte_keys_virtual) {
+	if (rte_window!=NULL) rtew_set_keych(bg_generator_key,TRUE);
+	if (mainw->ce_thumbs) ce_thumbs_set_keych(bg_generator_key,TRUE);
+      }
     }
   }
 
@@ -6912,6 +6928,7 @@ void weed_deinit_all(boolean shutdown) {
   for (i=0;i<FX_KEYS_MAX_VIRTUAL;i++) {
     if (rte_key_valid(i+1,TRUE)) {
       if (rte_window!=NULL) rtew_set_keych(i,FALSE);
+      if (mainw->ce_thumbs) ce_thumbs_set_keych(i,FALSE);
     }
     if ((mainw->rte&(GU641<<i))) {
       if ((instance=key_to_instance[i][key_modes[i]])!=NULL) {
@@ -7928,6 +7945,7 @@ void weed_set_blend_factor(int hotkey) {
     list=g_list_append(list,g_strdup_printf("%d",mini));
     list=g_list_append(list,g_strdup_printf("%d",maxi));
     update_pwindow(hotkey,pnum,list);
+    if (mainw->ce_thumbs) ce_thumbs_update_params(hotkey,pnum,list);
     g_list_free_strings(list);
     g_list_free(list);
 
@@ -7946,6 +7964,7 @@ void weed_set_blend_factor(int hotkey) {
     list=g_list_append(list,g_strdup_printf("%.4f",mind));
     list=g_list_append(list,g_strdup_printf("%.4f",maxd));
     update_pwindow(hotkey,pnum,list);
+    if (mainw->ce_thumbs) ce_thumbs_update_params(hotkey,pnum,list);
     g_list_free_strings(list);
     g_list_free(list);
 
@@ -7960,6 +7979,7 @@ void weed_set_blend_factor(int hotkey) {
 
     list=g_list_append(list,g_strdup_printf("%d",vali));
     update_pwindow(hotkey,pnum,list);
+    if (mainw->ce_thumbs) ce_thumbs_update_params(hotkey,pnum,list);
     g_list_free_strings(list);
     g_list_free(list);
 
@@ -8183,7 +8203,7 @@ boolean weed_delete_effectkey (int key, int mode) {
     }
     else if (key<FX_KEYS_MAX_VIRTUAL) {
       rte_switch_keymode(key+1,mode,(tmp=make_weed_hashname
-				     (key_to_fx[key+1][mode+1],TRUE,FALSE)));
+				     (key_to_fx[key][mode+1],TRUE,FALSE)));
       g_free(tmp);
 
       key_defaults[key][mode]=key_defaults[key][mode+1];
@@ -8432,6 +8452,7 @@ boolean rte_key_setmode (int key, int newmode) {
   if (key_to_fx[key][newmode]==-1) return FALSE;
 
   if (rte_window!=NULL) rtew_set_mode_radio(key,newmode);
+  if (mainw->ce_thumbs) ce_thumbs_set_mode_combo(key,newmode);
 
   mainw->osc_block=TRUE;
 
@@ -8473,6 +8494,7 @@ boolean rte_key_setmode (int key, int newmode) {
 	mainw->osc_block=FALSE;
 	return FALSE;
       }
+      if (mainw->ce_thumbs) ce_thumbs_add_param_box(key);
     }
     // TODO - unblock template channel changes
     mainw->whentostop=whentostop;

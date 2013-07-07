@@ -291,9 +291,8 @@ lives_painter_format_t lives_painter_image_surface_get_format(lives_painter_surf
 
 ////////////////////////////////////////////////////////
 
-#ifdef GUI_GTK
-static void set_label_state(GtkWidget *widget, LiVESWidgetState state, gpointer labelp) {
-  GtkWidget *label=(GtkWidget *)labelp;
+static void set_label_state(LiVESWidget *widget, LiVESWidgetState state, livespointer labelp) {
+  LiVESWidget *label=(LiVESWidget *)labelp;
   if (lives_widget_get_sensitive(widget)&&!lives_widget_get_sensitive(label)) {
     lives_widget_set_sensitive(label,TRUE);
   }
@@ -301,7 +300,6 @@ static void set_label_state(GtkWidget *widget, LiVESWidgetState state, gpointer 
     lives_widget_set_sensitive(label,FALSE);
   }
 }
-#endif
 
 LIVES_INLINE void lives_object_unref(livespointer object) {
 #ifdef GUI_GTK
@@ -682,7 +680,7 @@ LIVES_INLINE LiVESPixbuf *lives_pixbuf_new(boolean has_alpha, int width, int hei
 
 LIVES_INLINE LiVESPixbuf *lives_pixbuf_new_from_data (const unsigned char *buf, boolean has_alpha, int width, int height, 
 						      int rowstride, LiVESPixbufDestroyNotify lives_free_buffer_fn, 
-						      gpointer destroy_fn_data) {
+						      livespointer destroy_fn_data) {
 
 #ifdef GUI_GTK
   return gdk_pixbuf_new_from_data ((const guchar *)buf, GDK_COLORSPACE_RGB, has_alpha, 8, width, height, rowstride, 
@@ -1180,6 +1178,14 @@ LIVES_INLINE void lives_combo_set_active_iter(LiVESCombo *combo, LiVESTreeIter *
 LIVES_INLINE boolean lives_combo_get_active_iter(LiVESCombo *combo, LiVESTreeIter *iter) {
 #ifdef GUI_GTK
   return gtk_combo_box_get_active_iter(combo,iter);
+#endif
+  return FALSE;
+}
+
+
+LIVES_INLINE int lives_combo_get_active(LiVESCombo *combo) {
+#ifdef GUI_GTK
+  return gtk_combo_box_get_active(combo);
 #endif
   return FALSE;
 }
@@ -2835,7 +2841,7 @@ LiVESWidget *lives_standard_file_button_new(boolean is_dir, const char *def_dir)
   GtkWidget *image = lives_image_new_from_stock ("gtk-open", LIVES_ICON_SIZE_BUTTON);
   fbutton = gtk_button_new ();
   g_object_set_data(G_OBJECT(fbutton),"is_dir",GINT_TO_POINTER(is_dir));
-  if (def_dir!=NULL) g_object_set_data(G_OBJECT(fbutton),"def_dir",(gpointer)def_dir);
+  if (def_dir!=NULL) g_object_set_data(G_OBJECT(fbutton),"def_dir",(livespointer)def_dir);
   lives_container_add (LIVES_CONTAINER (fbutton), image);
 #endif
   return fbutton;
@@ -2910,7 +2916,7 @@ LIVES_INLINE void toggle_button_toggle (LiVESToggleButton *tbutton) {
 }
 
 
-void set_child_colour(LiVESWidget *widget, gpointer set_allx) {
+void set_child_colour(LiVESWidget *widget, livespointer set_allx) {
   boolean set_all=GPOINTER_TO_INT(set_allx);
 
   if (!set_all&&GTK_IS_BUTTON(widget)) return;

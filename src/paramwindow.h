@@ -8,9 +8,9 @@
 #define HAS_LIVES_PARAMWINDOW_H
 
 typedef struct {
-  gint usr_number;
+  int usr_number;
   GSList *rbgroup;
-  gint active_param;
+  int active_param;
 } lives_widget_group_t;
 
 
@@ -25,10 +25,12 @@ void on_paramwindow_cancel_clicked2 (GtkButton *, lives_rfx_t *);
 void on_render_fx_pre_activate (GtkMenuItem *, lives_rfx_t *);
 void on_render_fx_activate (GtkMenuItem *, lives_rfx_t *);
 
+void on_fx_pre_activate (lives_rfx_t *, int didx, LiVESWidget *pbox);
+
 boolean make_param_box(GtkVBox *, lives_rfx_t *);
 
 boolean add_param_to_box (GtkBox *, lives_rfx_t *, gint param_number, boolean add_slider);
-void add_param_label_to_box (GtkBox *box, boolean do_trans, const gchar *text);
+void add_param_label_to_box (GtkBox *, boolean do_trans, const gchar *text);
 
 GSList *add_usrgrp_to_livesgrp (GSList *u2l, GSList *rbgroup, gint usr_number);
 lives_widget_group_t *livesgrp_from_usrgrp (GSList *u2l, gint usrgrp);
@@ -43,13 +45,13 @@ boolean after_param_text_focus_changed (GtkWidget *, GtkWidget *, lives_rfx_t *r
 void after_param_text_changed (GtkWidget *, lives_rfx_t *rfx);
 void after_string_list_changed (GtkComboBox *, lives_rfx_t *rfx);
 
-void on_pwcolsel (GtkButton *button, lives_rfx_t *);
+void on_pwcolsel (GtkButton *, lives_rfx_t *);
 
-gchar *param_marshall (lives_rfx_t *rfx, boolean with_min_max);
-gchar **param_marshall_to_argv (lives_rfx_t *rfx);
-void param_demarshall (lives_rfx_t *rfx, GList *plist, boolean with_min_max, boolean update_widgets);
-int set_param_from_list(GList *plist, lives_param_t *param, gint pnum, boolean with_min_max, boolean upd);
-GList *argv_to_marshalled_list (lives_rfx_t *rfx, gint argc, gchar **argv);
+char *param_marshall (lives_rfx_t *, boolean with_min_max);
+char **param_marshall_to_argv (lives_rfx_t *);
+void param_demarshall (lives_rfx_t *, GList *plist, boolean with_min_max, boolean update_widgets);
+int set_param_from_list(GList *plist, lives_param_t *param, int pnum, boolean with_min_max, boolean upd);
+GList *argv_to_marshalled_list (lives_rfx_t *, int argc, char **argv);
 
 /// object should have g_set_object_data "param_number" set to parameter number
 ///

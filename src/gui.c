@@ -17,6 +17,7 @@
 #include "rte_window.h"
 #include "stream.h"
 #include "startup.h"
+#include "ce_thumbs.h"
 
 #ifdef ENABLE_GIW_3
 #include "giw/giwtimeline.h"
@@ -4093,10 +4094,10 @@ void resize_play_window (void) {
 	}
       }
 
-#define TEST_CE_THUMBS 1
-      if (TEST_CE_THUMBS||prefs->ce_thumb_mode&&prefs->play_monitor!=prefs->gui_monitor&&
-	  prefs->play_monitor!=0&&!prefs->force_single_monitor&&
-	  capable->nmonitors>0&&mainw->multitrack==NULL) {
+#define TEST_CE_THUMBS 0
+      if (TEST_CE_THUMBS||(prefs->ce_thumb_mode&&prefs->play_monitor!=prefs->gui_monitor&&
+			   prefs->play_monitor!=0&&!prefs->force_single_monitor&&
+			   capable->nmonitors>0&&mainw->multitrack==NULL)) {
 	start_ce_thumb_mode();
       }
     }

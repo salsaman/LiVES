@@ -47,6 +47,7 @@
 #include "stream.h"
 #include "startup.h"
 #include "cvirtual.h"
+#include "ce_thumbs.h"
 
 #ifdef ENABLE_OSC
 #include "omc-learn.h"
@@ -6601,6 +6602,7 @@ void do_quick_switch (gint new_file) {
       mainw->pre_src_file=new_file;
 
     if (rte_window!=NULL) rtew_set_keych(rte_fg_gen_key(),FALSE);
+    if (mainw->ce_thumbs) ce_thumbs_set_keych(rte_fg_gen_key(),FALSE);
     if (mainw->current_file==mainw->blend_file) mainw->new_blend_file=new_file;
     weed_generator_end ((weed_plant_t *)cfile->ext_src);
     if (mainw->current_file==-1) {

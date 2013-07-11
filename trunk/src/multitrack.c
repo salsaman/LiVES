@@ -1254,13 +1254,13 @@ static boolean expose_track_event (GtkWidget *eventbox, GdkEventExpose *event, g
 
 
 static gchar *mt_params_label(lives_mt *mt) {
-  gchar *fname=weed_filter_get_name(mt->current_fx);
+  gchar *fname=weed_filter_idx_get_name(mt->current_fx);
   gchar *layer_name;
   gchar *ltext;
 
   if (has_perchannel_multiw(get_weed_filter(mt->current_fx))) {
     layer_name=get_track_name(mt,mt->current_track,mt->aud_track_selected);
-    ltext=g_strdup_printf("%s : parameters for %s",fname,layer_name);
+    ltext=g_strdup_printf(_("%s : parameters for %s"),fname,layer_name);
     g_free(layer_name);
   }
   else ltext=g_strdup(fname);
@@ -3466,11 +3466,11 @@ static void populate_filter_box(GtkWidget *box, int ninchans, lives_mt *mt) {
 	if (weed_plant_has_leaf(filter,"plugin_unstable")&&
 	    weed_get_boolean_value(filter,"plugin_unstable",&error)==WEED_TRUE) {
 	  if (!prefs->unstable_fx) continue;
-	  tmp=weed_filter_get_name(i);
+	  tmp=weed_filter_idx_get_name(i);
 	  txt=g_strdup_printf(_("%s [unstable]"),tmp);
 	  g_free(tmp);
 	}
-	else txt=weed_filter_get_name(i);
+	else txt=weed_filter_idx_get_name(i);
 
 	cat=weed_filter_categorise(filter,enabled_in_channels(filter,TRUE),enabled_out_channels(filter,FALSE));
 	if ((subcat=weed_filter_subcategorise(filter,cat,(cat==LIVES_FX_CAT_COMPOSITOR)))!=0) {
@@ -6504,7 +6504,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
     weed_plant_t *filter=get_weed_filter(i);
     if (filter!=NULL&&!weed_plant_has_leaf(filter,"host_menu_hide")) {
       GtkWidget *menuitem;
-      gchar *fname=weed_filter_get_name(i),*fxname;
+      gchar *fname=weed_filter_idx_get_name(i),*fxname;
       if (weed_plant_has_leaf(filter,"plugin_unstable")&&
 	  weed_get_boolean_value(filter,"plugin_unstable",&error)==WEED_TRUE) {
 	if (!prefs->unstable_fx) {
@@ -12374,7 +12374,7 @@ void polymorph (lives_mt *mt, lives_mt_poly_state_t poly) {
 	    fhash=weed_get_string_value(init_event,"filter",&error);
 	    fidx=weed_get_idx_for_hashname(fhash,TRUE);
 	    weed_free(fhash);
-	    fname=weed_filter_get_name(fidx);
+	    fname=weed_filter_idx_get_name(fidx);
 
 	    if (!is_input) {
 	      txt=g_strdup_printf(_("%s output"),fname);
@@ -15051,7 +15051,7 @@ void mt_add_region_effect (GtkMenuItem *menuitem, gpointer user_data) {
   mt->last_fx_type=MT_LAST_FX_REGION;
 
   // create user message
-  filter_name=weed_filter_get_name(mt->current_fx);
+  filter_name=weed_filter_idx_get_name(mt->current_fx);
   numtracks=enabled_in_channels(get_weed_filter(mt->current_fx),TRUE);  // count repeated channels
   switch (numtracks) {
   case 1:
@@ -15103,7 +15103,7 @@ void mt_add_block_effect (GtkMenuItem *menuitem, gpointer user_data) {
   mt->last_fx_type=MT_LAST_FX_BLOCK;
   add_effect_inner(mt,1,&selected_track,1,&selected_track,start_event,end_event);
 
-  filter_name=weed_filter_get_name(mt->current_fx);
+  filter_name=weed_filter_idx_get_name(mt->current_fx);
   text=g_strdup_printf(_("Added effect %s to track %s from %.4f to %.4f\n"),filter_name,
 		       (tmp=get_track_name(mt,selected_track,mt->aud_track_selected)),
 		       start_tc/U_SEC,q_gint64(end_tc+U_SEC/mt->fps,mt->fps)/U_SEC);
@@ -15157,7 +15157,7 @@ void on_mt_delfx_activate (GtkMenuItem *menuitem, gpointer user_data) {
   weed_free(fhash);
 
   deinit_event=(weed_plant_t *)weed_get_voidptr_value(init_event,"deinit_event",&error);
-  filter_name=weed_filter_get_name(mt->current_fx);
+  filter_name=weed_filter_idx_get_name(mt->current_fx);
   start_tc=get_event_timecode(init_event);
   end_tc=get_event_timecode(deinit_event)+U_SEC/mt->fps;
 
@@ -18093,7 +18093,7 @@ void on_del_node_clicked  (GtkWidget *button, gpointer user_data) {
     }
   }
 
-  filter_name=weed_filter_get_name(mt->current_fx);
+  filter_name=weed_filter_idx_get_name(mt->current_fx);
 
   text=g_strdup_printf(_("Removed parameter values for effect %s at time %.4f\n"),filter_name,tc);
   d_print(text);
@@ -18273,7 +18273,7 @@ void on_set_pvals_clicked  (GtkWidget *button, gpointer user_data) {
     return;
   }
 
-  filter_name=weed_filter_get_name(mt->current_fx);
+  filter_name=weed_filter_idx_get_name(mt->current_fx);
   tracks=weed_get_int_array(mt->init_event,"in_tracks",&error);
   numtracks=enabled_in_channels(get_weed_filter(mt->current_fx),TRUE); // count repeated channels
 

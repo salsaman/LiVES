@@ -6367,7 +6367,7 @@ boolean weed_init_effect(int hotkey) {
 
     if (prefs->audio_player!=AUD_PLAYER_JACK&&prefs->audio_player!=AUD_PLAYER_PULSE) {
       // audio fx only with realtime players
-      gchar *fxname=weed_filter_get_name(idx);
+      gchar *fxname=weed_filter_idx_get_name(idx);
       gchar *msg=g_strdup_printf(_("Effect %s cannot be used with this audio player.\n"),fxname);
       d_print(msg);
       return FALSE;
@@ -8289,11 +8289,11 @@ weed_plant_t *rte_keymode_get_filter(int key, int mode) {
 }
 
 
-gchar *weed_filter_get_name(int idx) {
+char *weed_filter_idx_get_name(int idx) {
   // return value should be g_free'd after use
   weed_plant_t *filter;
   int error;
-  gchar *filter_name,*retval;
+  char *filter_name,*retval;
 
   if (idx==-1) return g_strdup("");
   if ((filter=weed_filters[idx])==NULL) return g_strdup("");
@@ -8304,20 +8304,35 @@ gchar *weed_filter_get_name(int idx) {
 }
 
 
-gchar *rte_keymode_get_filter_name (int key, int mode) {
+char *weed_instance_get_filter_name(weed_plant_t *inst, boolean get_compound_parent) {
+  // return value should be g_free'd after use
+  weed_plant_t *filter;
+  int error;
+  char *filter_name,*retval;
+
+  if (inst==NULL) return g_strdup("");
+  filter=weed_instance_get_filter(inst,get_compound_parent);
+  filter_name=weed_get_string_value(filter,"name",&error);
+  retval=g_strdup(filter_name); // copy so we can use g_free() instead of weed_free()
+  weed_free(filter_name);
+  return retval;
+}
+
+
+char *rte_keymode_get_filter_name (int key, int mode) {
   // return value should be g_free'd after use
   key--;
   if (!rte_keymode_valid(key+1,mode,TRUE)) return g_strdup("");
-  return (weed_filter_get_name(key_to_fx[key][mode]));
+  return (weed_filter_idx_get_name(key_to_fx[key][mode]));
 }
 
 
 gchar *rte_keymode_get_plugin_name(int key, int mode) {
   // return value should be g_free'd after use
   weed_plant_t *filter,*plugin_info;
-  gchar *name;
+  char *name;
   int error;
-  gchar *retval;
+  char *retval;
 
   key--;
   if (!rte_keymode_valid(key+1,mode,TRUE)) return g_strdup("");
@@ -8494,7 +8509,7 @@ boolean rte_key_setmode (int key, int newmode) {
 	mainw->osc_block=FALSE;
 	return FALSE;
       }
-      if (mainw->ce_thumbs) ce_thumbs_add_param_box(key);
+      if (mainw->ce_thumbs) ce_thumbs_add_param_box(real_key);
     }
     // TODO - unblock template channel changes
     mainw->whentostop=whentostop;
@@ -8607,21 +8622,21 @@ void rte_swap_fg_bg (void) {
 
 
 
-GList *weed_get_all_names (gshort list_type) {
+GList *weed_get_all_names (lives_fx_list_t list_type) {
   // remember to free list after use, if non-NULL
   GList *list=NULL;
   int i,error;
-  gchar *filter_name,*filter_type,*hashname,*string;
+  char *filter_name,*filter_type,*hashname,*string;
 
   for (i=0;i<num_weed_filters-num_weed_dupes;i++) {
     filter_name=weed_get_string_value(weed_filters[i],"name",&error);
     switch (list_type) {
-    case 1:
+    case FX_LIST_NAME:
       // just name
       string=g_strdup(filter_name);
       list=g_list_append(list,(gpointer)string);
       break;
-    case 2:
+    case FX_LIST_NAME_AND_TYPE:
       // name and type
       filter_type=weed_filter_get_type(weed_filters[i],TRUE,FALSE);
 
@@ -8633,7 +8648,7 @@ GList *weed_get_all_names (gshort list_type) {
       list=g_list_append(list,(gpointer)string);
       g_free(filter_type);
       break;
-    case 3:
+    case FX_LIST_HASHNAME:
       // hashnames
       hashname=make_weed_hashname(i,TRUE,FALSE);
       list=g_list_append(list,(gpointer)hashname);

@@ -4663,7 +4663,7 @@ GtkWidget *create_event_list_dialog (weed_plant_t *event_list, weed_timecode_t s
 	      if (ievent!=NULL) {
 		gchar *iname=weed_get_string_value(ievent,"filter",&error);
 		if (iname!=NULL) {
-		  gchar *fname=weed_filter_get_name(weed_get_idx_for_hashname(iname,TRUE));
+		  gchar *fname=weed_filter_idx_get_name(weed_get_idx_for_hashname(iname,TRUE));
 		  strval=g_strdup_printf("%p (%s)",voidval[j],fname);
 		  weed_free(fname);
 		}

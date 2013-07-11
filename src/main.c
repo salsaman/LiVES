@@ -1088,6 +1088,8 @@ static void lives_init(_ign_opts *ign_opts) {
       lives_window_move(GTK_WINDOW(mainw->LiVES),xcen,ycen);
 
     }
+
+
     if (prefs->open_maximised&&prefs->show_gui) {
       lives_window_maximize (GTK_WINDOW(mainw->LiVES));
     }

@@ -3165,16 +3165,26 @@ void lives_general_button_clicked (LiVESButton *button, livespointer data_to_fre
 
 
 LiVESWidget *add_hsep_to_box (LiVESBox *box) {
-  LiVESWidget *widget=NULL;
   LiVESWidget *hseparator = lives_hseparator_new ();
-  lives_box_pack_start (box, hseparator, FALSE, FALSE, widget_opts.packing_height>>1);
+  lives_box_pack_start (box, hseparator, FALSE, FALSE, widget_opts.packing_width>>1);
   if (!widget_opts.no_gui) 
     lives_widget_show(hseparator);
   if (widget_opts.apply_theme) {
     lives_widget_apply_theme(hseparator, LIVES_WIDGET_STATE_NORMAL);
   }
-  widget=hseparator;
-  return widget;
+  return hseparator;
+}
+
+
+LiVESWidget *add_vsep_to_box (LiVESBox *box) {
+  LiVESWidget *vseparator = lives_vseparator_new ();
+  lives_box_pack_start (box, vseparator, FALSE, FALSE, widget_opts.packing_height>>1);
+  if (!widget_opts.no_gui) 
+    lives_widget_show(vseparator);
+  if (widget_opts.apply_theme) {
+    lives_widget_apply_theme(vseparator, LIVES_WIDGET_STATE_NORMAL);
+  }
+  return vseparator;
 }
 
 #ifdef GUI_GTK

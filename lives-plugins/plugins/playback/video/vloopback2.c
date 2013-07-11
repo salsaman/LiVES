@@ -285,6 +285,8 @@ static void make_path(const char *fname, int pid, const char *ext) {
 
 
 boolean init_screen (int width, int height, boolean fullscreen, uint64_t window_id, int argc, char **argv) {
+  // width in pixels
+
   int i=0,idx=0,ret_code;
   int afd,audio=0;
 

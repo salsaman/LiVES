@@ -957,6 +957,7 @@ void lives_widget_set_can_focus_and_default(LiVESWidget *);
 void lives_general_button_clicked (LiVESButton *, livespointer data_to_free);
 
 LiVESWidget *add_hsep_to_box (LiVESBox *);
+LiVESWidget *add_vsep_to_box (LiVESBox *);
 
 LiVESWidget *add_fill_to_box (LiVESBox *);
 

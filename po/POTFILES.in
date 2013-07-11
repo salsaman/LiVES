@@ -7,6 +7,7 @@ src/callbacks.c
 src/support.c
 src/merge.c
 src/gui.c
+src/ce_thumbs.c
 src/utils.c
 src/saveplay.c
 src/dialogs.c

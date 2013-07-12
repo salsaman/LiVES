@@ -1040,6 +1040,13 @@ static void lives_init(_ign_opts *ign_opts) {
 
   mainw->ce_thumbs=FALSE;
 
+  mainw->n_screen_areas=SCREEN_AREA_USER_DEFINED1;
+  mainw->screen_areas=(lives_screen_area_t *)g_malloc(mainw->n_screen_areas*sizeof(lives_screen_area_t));
+  mainw->screen_areas[SCREEN_AREA_FOREGROUND].name=g_strdup(_("Foreground"));
+  mainw->screen_areas[SCREEN_AREA_BACKGROUND].name=g_strdup(_("Background"));
+
+  mainw->active_sa_clips=mainw->active_sa_fx=SCREEN_AREA_FOREGROUND;
+
   /////////////////////////////////////////////////// add new stuff just above here ^^
 
 
@@ -6543,11 +6550,11 @@ void switch_audio_clip(gint new_file, boolean activate) {
 
 
 
-void do_quick_switch (gint new_file) {
+void do_quick_switch (int new_file) {
   // handle clip switching during playback
 
-  gint ovsize=mainw->pheight;
-  gint ohsize=mainw->pwidth;
+  int ovsize=mainw->pheight;
+  int ohsize=mainw->pwidth;
   boolean osc_block;
 
   if (mainw->current_file<1||mainw->files[new_file]==NULL) return;
@@ -6632,6 +6639,8 @@ void do_quick_switch (gint new_file) {
     // force update of labels, prevent widgets becoming sensitized
     switch_to_file (mainw->current_file, new_file);
   }
+
+  if (mainw->ce_thumbs&&mainw->active_sa_clips==SCREEN_AREA_FOREGROUND) ce_thumbs_highlight_current_clip();
 
   mainw->play_start=1;
   mainw->play_end=cfile->frames;

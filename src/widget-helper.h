@@ -221,6 +221,23 @@ typedef enum {
 } lives_position_t;
 
 
+typedef enum {
+  LIVES_SHADOW_NONE=GTK_SHADOW_NONE,
+  LIVES_SHADOW_IN=GTK_SHADOW_IN,
+  LIVES_SHADOW_OUT=GTK_SHADOW_OUT,
+  LIVES_SHADOW_ETCHED_IN=GTK_SHADOW_ETCHED_IN,
+  LIVES_SHADOW_ETCHED_OUT=GTK_SHADOW_ETCHED_OUT
+} lives_shadow_t;
+
+
+typedef enum {
+  LIVES_ARROW_UP=GTK_ARROW_UP,
+  LIVES_ARROW_DOWN=GTK_ARROW_DOWN,
+  LIVES_ARROW_LEFT=GTK_ARROW_LEFT,
+  LIVES_ARROW_RIGHT=GTK_ARROW_RIGHT,
+  LIVES_ARROW_NONE=GTK_ARROW_NONE
+} lives_arrow_t;
+
 
 #define LIVES_ACCEL_VISIBLE GTK_ACCEL_VISIBLE
   
@@ -708,6 +725,10 @@ LiVESWidget *lives_vpaned_new(void);
 
 LiVESWidget *lives_hscrollbar_new(LiVESAdjustment *);
 LiVESWidget *lives_vscrollbar_new(LiVESAdjustment *);
+
+LiVESWidget *lives_arrow_new(lives_arrow_t arrow_type, lives_shadow_t shadow_type);
+
+LiVESWidget *lives_alignment_new(float xalign, float yalign, float xscale, float yscale);
 
 LiVESWidget *lives_combo_new(void);
 LiVESWidget *lives_combo_new_with_model (LiVESTreeModel *);

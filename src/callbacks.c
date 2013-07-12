@@ -459,6 +459,8 @@ void lives_exit (void) {
 
   for (i=0;i<NUM_LIVES_STRING_CONSTANTS;i++) if (mainw->string_constants[i]!=NULL) g_free(mainw->string_constants[i]);
 
+  for (i=0;i<mainw->n_screen_areas;i++) g_free(mainw->screen_areas[i].name);
+
   if (mainw->video_drawable!=NULL) {
     lives_painter_surface_destroy(mainw->video_drawable);
   }
@@ -4392,11 +4394,11 @@ gboolean fps_reset_callback (GtkAccelGroup *group, GObject *obj, guint keyval, G
   return TRUE;
 }
 
-gboolean prevclip_callback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer user_data) {
+boolean prevclip_callback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer user_data) {
   GList *list_index;
-  gint i=0;
-  gint num_tried=0,num_clips;
-  gint type=0;
+  int i=0;
+  int num_tried=0,num_clips;
+  int type=0;
 
   // prev clip
   // type = 0 : if the effect is a transition, this will change the background clip
@@ -4409,7 +4411,7 @@ gboolean prevclip_callback (GtkAccelGroup *group, GObject *obj, guint keyval, Gd
 
   num_clips=g_list_length(mainw->cliplist);
 
-  if (type==2||(mainw->num_tr_applied>0&&mainw->playing_file>0&&type!=1)) {
+  if (type==2||(mainw->active_sa_clips==SCREEN_AREA_BACKGROUND&&mainw->playing_file>0&&type!=1)) {
     list_index=g_list_find (mainw->cliplist, GINT_TO_POINTER (mainw->blend_file));
   }
   else {
@@ -4418,10 +4420,10 @@ gboolean prevclip_callback (GtkAccelGroup *group, GObject *obj, guint keyval, Gd
   do {
     if (num_tried++==num_clips) return TRUE; // we might have only audio clips, and then we will block here
     if ((list_index=g_list_previous(list_index))==NULL) list_index=g_list_last (mainw->cliplist);
-    i=GPOINTER_TO_INT (list_index->data);
+    i=LIVES_POINTER_TO_INT (list_index->data);
   } while ((mainw->files[i]==NULL||mainw->files[i]->opening||mainw->files[i]->restoring||i==mainw->scrap_file||
 	    i==mainw->ascrap_file||(!mainw->files[i]->frames&&mainw->playing_file>-1))&&
-	   i!=((type==2||(mainw->playing_file>0&&mainw->num_tr_applied>0&&type!=1))?
+	   i!=((type==2||(mainw->playing_file>0&&mainw->active_sa_clips==SCREEN_AREA_BACKGROUND&&type!=1))?
 	       mainw->blend_file:mainw->current_file));
 
   switch_clip(type,i);
@@ -4430,12 +4432,12 @@ gboolean prevclip_callback (GtkAccelGroup *group, GObject *obj, guint keyval, Gd
 }
 
 
-gboolean nextclip_callback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer user_data) {
+boolean nextclip_callback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer user_data) {
   GList *list_index;
-  gint i;
-  gint num_tried=0,num_clips;
+  int i;
+  int num_tried=0,num_clips;
 
-  gint type=0;
+  int type=0;
 
   // next clip
   // if the effect is a transition, this will change the background clip
@@ -4443,7 +4445,7 @@ gboolean nextclip_callback (GtkAccelGroup *group, GObject *obj, guint keyval, Gd
 
   if (user_data!=NULL) type=GPOINTER_TO_INT(user_data);
 
-  if (type==2||(mainw->num_tr_applied>0&&mainw->playing_file>0&&type!=1)) {
+  if (type==2||(mainw->active_sa_clips==SCREEN_AREA_BACKGROUND&&mainw->playing_file>0&&type!=1)) {
     list_index=g_list_find (mainw->cliplist, GINT_TO_POINTER (mainw->blend_file));
   }
   else {
@@ -4455,10 +4457,10 @@ gboolean nextclip_callback (GtkAccelGroup *group, GObject *obj, guint keyval, Gd
   do {
     if (num_tried++==num_clips) return TRUE; // we might have only audio clips, and then we will block here
     if ((list_index=g_list_next(list_index))==NULL) list_index=g_list_first (mainw->cliplist);
-    i=GPOINTER_TO_INT (list_index->data);
+    i=LIVES_POINTER_TO_INT (list_index->data);
   } while ((mainw->files[i]==NULL||mainw->files[i]->opening||mainw->files[i]->restoring||i==mainw->scrap_file||
 	    i==mainw->ascrap_file||(!mainw->files[i]->frames&&mainw->playing_file>-1))&&
-	   i!=((type==2||(mainw->playing_file>0&&mainw->num_tr_applied>0&&type!=1))?
+	   i!=((type==2||(mainw->playing_file>0&&mainw->active_sa_clips==SCREEN_AREA_BACKGROUND&&type!=1))?
 	       mainw->blend_file:mainw->current_file));
   
   switch_clip(type,i);
@@ -5663,7 +5665,7 @@ void switch_clip(int type, int newclip) {
   if (mainw->current_file<1||mainw->multitrack!=NULL||mainw->preview||mainw->internal_messaging||
       (mainw->is_processing&&cfile->is_loaded)||mainw->cliplist==NULL) return;
 
-  if (type==2||(mainw->num_tr_applied>0&&mainw->playing_file>0&&type!=1)) {
+  if (type==2||(mainw->active_sa_clips==SCREEN_AREA_BACKGROUND&&mainw->playing_file>0&&type!=1)) {
     if (newclip!=mainw->blend_file) {
       if (mainw->blend_file!=-1&&mainw->files[mainw->blend_file]->clip_type==CLIP_TYPE_GENERATOR&&
 	  mainw->blend_file!=mainw->current_file) {
@@ -5676,6 +5678,7 @@ void switch_clip(int type, int newclip) {
       }
       mainw->blend_file=newclip;
       mainw->whentostop=NEVER_STOP;
+      if (mainw->ce_thumbs&&mainw->active_sa_clips==SCREEN_AREA_BACKGROUND) ce_thumbs_highlight_current_clip();
     }
     return;
   }

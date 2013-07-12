@@ -1227,8 +1227,8 @@ int get_hex_digit (const char *c);
 
 const char *get_image_ext_for_type(lives_image_type_t imgtype);
 
-uint64_t fastrand(void);
-void fastsrand(uint64_t seed);
+uint32_t fastrand(void);
+void fastsrand(uint32_t seed);
 
 int lives_list_index (GList *list, const char *data);
 

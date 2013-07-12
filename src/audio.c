@@ -774,7 +774,7 @@ static void audio_process_events_to(weed_timecode_t tc) {
 
 
 
-int64_t render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdouble *avels, gdouble *fromtime, weed_timecode_t tc_start, weed_timecode_t tc_end, gdouble *chvol, gdouble opvol_start, gdouble opvol_end, lives_audio_buf_t *obuf) {
+int64_t render_audio_segment(gint nfiles, gint *from_files, gint to_file, double *avels, double *fromtime, weed_timecode_t tc_start, weed_timecode_t tc_end, double *chvol, double opvol_start, double opvol_end, lives_audio_buf_t *obuf) {
   // called during multitrack rendering to create the actual audio file
   // (or in-memory buffer for preview playback in multitrack)
 
@@ -836,10 +836,10 @@ int64_t render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdoubl
 
   weed_timecode_t tc=tc_start;
 
-  gdouble ins_pt=tc/U_SEC;
-  gdouble time=0.;
-  gdouble opvol=opvol_start;
-  gdouble *vis=NULL;
+  double ins_pt=tc/U_SEC;
+  double time=0.;
+  double opvol=opvol_start;
+  double *vis=NULL;
 
   int64_t frames_out=0;
   int64_t ins_size=0l,cur_size;
@@ -865,7 +865,7 @@ int64_t render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdoubl
 
   size_t max_aud_mem,bytes_to_read,aud_buffer;
   gint max_segments;
-  gdouble zavel,zavel_max=0.;
+  double zavel,zavel_max=0.;
 
   int64_t tot_frames=0l;
 
@@ -959,7 +959,7 @@ int64_t render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdoubl
       seekstart[track]=(off64_t)(fromtime[track]*in_arate[track])*in_achans[track]*in_asamps[track];
       seekstart[track]=((off64_t)(seekstart[track]/in_achans[track]/(in_asamps[track])))*in_achans[track]*in_asamps[track];
       
-      zavel=avels[track]*(gdouble)in_arate[track]/(gdouble)out_arate*in_asamps[track]*in_achans[track]/sizeof(float);
+      zavel=avels[track]*(double)in_arate[track]/(double)out_arate*in_asamps[track]*in_achans[track]/sizeof(float);
       if (ABS(zavel)>zavel_max) zavel_max=ABS(zavel);
       
       infilename=g_build_filename(prefs->tmpdir,infile->handle,"audio",NULL);
@@ -1048,7 +1048,7 @@ int64_t render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdoubl
   bytes_to_read=tsamples*(sizeof(float)); // eg. 120 (30 samples)
 
   // how many segments do we need to read all bytes ?
-  max_segments=(int)((gdouble)bytes_to_read/(gdouble)max_aud_mem+1.); // max segments (rounded up) [e.g ceil(120/45)==3]
+  max_segments=(int)((double)bytes_to_read/(double)max_aud_mem+1.); // max segments (rounded up) [e.g ceil(120/45)==3]
 
   // then, how many bytes per segment
   aud_buffer=bytes_to_read/max_segments;  // estimate of buffer size (e.g. 120/3 = 40)
@@ -1085,9 +1085,9 @@ int64_t render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdoubl
 
       // calculate tbytes for xsamples
 
-      zavel=avels[track]*(gdouble)in_arate[track]/(gdouble)out_arate;
+      zavel=avels[track]*(double)in_arate[track]/(double)out_arate;
 
-      tbytes=(gint)((gdouble)xsamples*ABS(zavel)+((gdouble)fastrand()/(gdouble)G_MAXUINT32))*
+      tbytes=(gint)((double)xsamples*ABS(zavel)+((double)fastrand()/(double)G_MAXUINT32))*
 	in_asamps[track]*in_achans[track];
 
       in_buff=(uint8_t *)g_malloc(tbytes);
@@ -1182,8 +1182,8 @@ int64_t render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdoubl
       }
 
       if (mainw->multitrack==NULL&&opvol_end!=opvol_start) {
-	time+=(gdouble)frames_out/(gdouble)out_arate;
-	opvol=opvol_start+(opvol_end-opvol_start)*(time/(gdouble)((tc_end-tc_start)/U_SEC));
+	time+=(double)frames_out/(double)out_arate;
+	opvol=opvol_start+(opvol_end-opvol_start)*(time/(double)((tc_end-tc_start)/U_SEC));
       }
 
       if (to_file>-1&&mainw->multitrack==NULL&&opvol_start!=opvol_end) {
@@ -1198,7 +1198,7 @@ int64_t render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdoubl
 	g_print(".");
 #endif
       }
-      tc+=(gdouble)blocksize/(gdouble)out_arate*U_SEC;
+      tc+=(double)blocksize/(double)out_arate*U_SEC;
     }
 
     if (to_file>-1) {
@@ -1256,8 +1256,8 @@ int64_t render_audio_segment(gint nfiles, gint *from_files, gint to_file, gdoubl
 }
 
 
-LIVES_INLINE void aud_fade(gint fileno, gdouble startt, gdouble endt, gdouble startv, gdouble endv) {
-  gdouble vel=1.,vol=1.;
+LIVES_INLINE void aud_fade(gint fileno, double startt, double endt, double startv, double endv) {
+  double vel=1.,vol=1.;
 
   mainw->read_failed=mainw->write_failed=FALSE;
   render_audio_segment(1,&fileno,fileno,&vel,&startt,startt*U_SECL,endt*U_SECL,&vol,startv,endv,NULL);
@@ -1761,7 +1761,7 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
 
   lives_audio_track_state_t *atstate=NULL;
   int nnfiles,i;
-  gdouble chvols[MAX_AUDIO_TRACKS]; // TODO - use list
+  double chvols[MAX_AUDIO_TRACKS]; // TODO - use list
 
   static weed_timecode_t last_tc;
   static weed_timecode_t fill_tc;
@@ -1840,13 +1840,13 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
     // get channel volumes from the mixer
     for (i=0;i<nfiles;i++) {
       if (mainw->multitrack!=NULL&&mainw->multitrack->audio_vols!=NULL) {
-	chvols[i]=(gdouble)GPOINTER_TO_INT(g_list_nth_data(mainw->multitrack->audio_vols,i))/1000000.;
+	chvols[i]=(double)GPOINTER_TO_INT(g_list_nth_data(mainw->multitrack->audio_vols,i))/1000000.;
       }
     }
   }
   else chvols[0]=1.;
 
-  fill_tc=last_tc+(gdouble)(abuf->samp_space)/(gdouble)abuf->arate*U_SEC;
+  fill_tc=last_tc+(double)(abuf->samp_space)/(double)abuf->arate*U_SEC;
 
   // continue until either we have a full buffer, or we reach next audio frame
   while (event!=NULL&&get_event_timecode(event)<=fill_tc) {
@@ -2047,7 +2047,7 @@ gboolean resync_audio(gint frameno) {
       if (mainw->agen_key==0&&!mainw->agen_needs_reinit&&!has_audio_filters(FALSE)) {
 	mainw->rec_aclip=mainw->current_file;
 	mainw->rec_avel=cfile->pb_fps/cfile->fps;
-	mainw->rec_aseek=(gdouble)mainw->jackd->seek_pos/(gdouble)(cfile->arate*cfile->achans*cfile->asampsize/8);
+	mainw->rec_aseek=(double)mainw->jackd->seek_pos/(double)(cfile->arate*cfile->achans*cfile->asampsize/8);
       }
     }
 
@@ -2064,7 +2064,7 @@ gboolean resync_audio(gint frameno) {
       if (mainw->agen_key==0&&!mainw->agen_needs_reinit&&!has_audio_filters(FALSE)) {
 	mainw->rec_aclip=mainw->current_file;
 	mainw->rec_avel=cfile->pb_fps/cfile->fps;
-	mainw->rec_aseek=(gdouble)mainw->pulsed->seek_pos/(gdouble)(cfile->arate*cfile->achans*cfile->asampsize/8);
+	mainw->rec_aseek=(double)mainw->pulsed->seek_pos/(double)(cfile->arate*cfile->achans*cfile->asampsize/8);
       }
     }
     return TRUE;

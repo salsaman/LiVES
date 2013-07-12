@@ -7,15 +7,13 @@
 // clip thumbnails window for dual head mode
 
 
-// TODO - drag fx order :  check for data conx
-
-// TODO - indicate fg and bg clips
+// TODO - switch btw fg and bg clips
 
 // TODO - buttons for some keys
 
-// TODO - exp text for fx
+// TODO - drag fx order :  check for data conx
 
-// TODO - display screen mapping areas
+// TODO - active screen mapping areas
 
 
 #include "support.h"
@@ -29,15 +27,23 @@ static LiVESWidget **fxcombos;
 static LiVESWidget **pscrolls;
 static LiVESWidget **combo_entries;
 static LiVESWidget **key_checks;
+static LiVESWidget **rb_fx_areas;
+static LiVESWidget **rb_clip_areas;
+static LiVESWidget **clip_boxes;
 static LiVESWidget *param_hbox;
 static LiVESWidget *top_hbox;
 static gulong *ch_fns;
 static gulong *combo_fns;
+static gulong *rb_clip_fns;
+static gulong *rb_fx_fns;
 
 static int rte_keys_virtual;
+static int n_screen_areas;
+static int n_clip_boxes;
 
 static void ce_thumbs_remove_param_boxes(boolean remove_pinned);
 static void ce_thumbs_remove_param_box(int key);
+
 
 #if GTK_CHECK_VERSION(3,2,0)  // required for grid widget
 static boolean switch_clip_cb (LiVESWidget *eventbox, LiVESXEventButton *event, gpointer user_data) {
@@ -92,46 +98,55 @@ static void pin_toggled (LiVESToggleButton *t, livespointer pkey) {
 }
 
 
+#define SPARE_CLIP_BOXES 100
+
 void start_ce_thumb_mode(void) {
 #if GTK_CHECK_VERSION(3,2,0)  // required for grid widget
 
   LiVESWidget *thumb_image=NULL;
-  LiVESWidget *vbox,*vbox2;
-  LiVESWidget *eventbox;
+  LiVESWidget *vbox,*vbox2,*vbox3;
   LiVESWidget *usibl=NULL,*sibl=NULL;
-  LiVESWidget *hbox;
-  LiVESWidget *tscroll;
+  LiVESWidget *hbox,*hbox2;
+  LiVESWidget *tscroll,*cscroll;
+  LiVESWidget *label;
+  LiVESWidget *arrow;
 
   LiVESWidget *tgrid=lives_grid_new();
+
+  LiVESWidget *align;
 
   LiVESPixbuf *thumbnail;
 
   GList *cliplist=mainw->cliplist;
-
   GList *fxlist=NULL;
+
+  GSList *rb_fx_areas_group=NULL;
+  GSList *rb_clip_areas_group=NULL;
 
   char filename[PATH_MAX];
   char *tmp;
 
   int width=CLIP_THUMB_WIDTH,height=CLIP_THUMB_HEIGHT;
   int modes=rte_getmodespk();
-  int cpw,scr_width;
+  int cpw;
 
-  int count=0;
+  int count=-1,rcount=0;
 
   register int i,j;
 
   rte_keys_virtual=prefs->rte_keys_virtual;
+  n_screen_areas=mainw->n_screen_areas;
+  n_clip_boxes=g_list_length(mainw->cliplist)+SPARE_CLIP_BOXES;
 
-  lives_grid_set_row_spacing (LIVES_GRID(tgrid),width>>1);
-  lives_grid_set_column_spacing (LIVES_GRID(tgrid),height>>1);
+  lives_grid_set_row_spacing (LIVES_GRID(tgrid),0);
+  lives_grid_set_column_spacing (LIVES_GRID(tgrid),0);
 
-  lives_container_set_border_width (LIVES_CONTAINER (tgrid), width);
+  //lives_container_set_border_width (LIVES_CONTAINER (tgrid), width);
 
   // dual monitor mode, the gui monitor can show clip thumbnails
-  lives_widget_hide(mainw->eventbox);
 
   top_hbox=lives_hbox_new (FALSE, 0);
+  lives_widget_show(top_hbox);
   lives_box_pack_start (LIVES_BOX (mainw->vbox1), top_hbox, TRUE, TRUE, 0);
 
   if (palette->style&STYLE_1) lives_widget_set_bg_color (top_hbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
@@ -139,16 +154,29 @@ void start_ce_thumb_mode(void) {
   // fx area
   vbox=lives_vbox_new (FALSE, widget_opts.packing_height);
   
-  tscroll=lives_standard_scrolled_window_new(width*2,height,vbox);
+  tscroll=lives_standard_scrolled_window_new(width,height,vbox);
   lives_box_pack_start (LIVES_BOX (top_hbox), tscroll, FALSE, TRUE, 0);
   lives_scrolled_window_set_policy (LIVES_SCROLLED_WINDOW (tscroll), LIVES_POLICY_NEVER, LIVES_POLICY_AUTOMATIC);
+  lives_widget_set_hexpand(tscroll,FALSE);
 
   fxcombos=(LiVESWidget **)g_malloc((rte_keys_virtual)*modes*sizeof(LiVESWidget *));
   pscrolls=(LiVESWidget **)g_malloc((rte_keys_virtual)*modes*sizeof(LiVESWidget *));
   combo_entries=(LiVESWidget **)g_malloc((rte_keys_virtual)*modes*sizeof(LiVESWidget *));
   key_checks=(LiVESWidget **)g_malloc((rte_keys_virtual)*modes*sizeof(LiVESWidget *));
+
+  rb_fx_areas=(LiVESWidget **)g_malloc((n_screen_areas)*modes*sizeof(LiVESWidget *));
+  rb_clip_areas=(LiVESWidget **)g_malloc((n_screen_areas)*modes*sizeof(LiVESWidget *));
+
+  clip_boxes=(LiVESWidget **)g_malloc((n_clip_boxes)*modes*sizeof(LiVESWidget *));
+
   ch_fns=(gulong *)g_malloc((rte_keys_virtual)*sizeof(gulong));
   combo_fns=(gulong *)g_malloc((rte_keys_virtual)*sizeof(gulong));
+  rb_clip_fns=(gulong *)g_malloc((n_screen_areas)*sizeof(gulong));
+  rb_fx_fns=(gulong *)g_malloc((n_screen_areas)*sizeof(gulong));
+
+  for (i=0;i<n_clip_boxes;i++) {
+    clip_boxes[i]=NULL;
+  }
 
   for (i=0;i<rte_keys_virtual;i++) {
 
@@ -166,6 +194,7 @@ void start_ce_thumb_mode(void) {
     tmp=g_strdup_printf(_("Mapped to ctrl-%d"),i+1);
     key_checks[i]=lives_standard_check_button_new(NULL,FALSE,LIVES_BOX(hbox),tmp);
     g_free(tmp);
+
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(key_checks[i]),mainw->rte&(GU641<<i));
 
     ch_fns[i]=g_signal_connect_after (GTK_OBJECT (key_checks[i]), "toggled",
@@ -194,28 +223,99 @@ void start_ce_thumb_mode(void) {
 
   add_vsep_to_box(LIVES_BOX(top_hbox));
 
+  // rhs vbox
   vbox2=lives_vbox_new (FALSE, 0);
   lives_box_pack_start (LIVES_BOX (top_hbox), vbox2, TRUE, TRUE, 0);
 
-  // insert a scrolled window for thumbs
-  if (prefs->gui_monitor==0) {
-    scr_width=mainw->scr_width;
-  }
-  else {
-    scr_width=mainw->mgeom[prefs->gui_monitor-1].width;
-  }
+  // rhs top hbox
+  hbox2=lives_hbox_new (FALSE, widget_opts.packing_width);
+  lives_box_pack_start (LIVES_BOX (vbox2), hbox2, TRUE, TRUE, 0);
 
-  cpw=scr_width*2/width/3-2;
-  lives_widget_set_size_request(vbox2,width*cpw,-1);
+  // vbox for arrows and areas
+  vbox3=lives_vbox_new (FALSE, 0);
+  lives_box_pack_start (LIVES_BOX (hbox2), vbox3, FALSE, TRUE, 0);
 
-  tscroll=lives_standard_scrolled_window_new(width*cpw,height,tgrid);
+  // add arrows
+  hbox = lives_hbox_new (FALSE, 0);
+  lives_widget_set_hexpand(hbox,FALSE);
+
+
+  lives_box_pack_start (LIVES_BOX (vbox3), hbox, FALSE, TRUE, 0);
+  arrow=lives_arrow_new (LIVES_ARROW_LEFT, LIVES_SHADOW_NONE);
+  lives_box_pack_start(LIVES_BOX (hbox), arrow, FALSE, TRUE, 0);
+  add_fill_to_box(LIVES_BOX(hbox));
+  arrow=lives_arrow_new (LIVES_ARROW_RIGHT, LIVES_SHADOW_NONE);
+  lives_box_pack_start(LIVES_BOX (hbox), arrow, FALSE, TRUE, 0);
+
+
+
+
+  // screen areas
+  vbox=lives_vbox_new (FALSE, widget_opts.packing_height);
+  tscroll=lives_standard_scrolled_window_new(width,height,vbox);
+
+  lives_box_pack_start (LIVES_BOX (vbox3), tscroll, FALSE, TRUE, 0);
   lives_scrolled_window_set_policy (LIVES_SCROLLED_WINDOW (tscroll), LIVES_POLICY_NEVER, LIVES_POLICY_AUTOMATIC);
+  lives_widget_set_hexpand(tscroll,FALSE);
+
+
+  for (i=0;i<n_screen_areas;i++) {
+    hbox = lives_hbox_new (FALSE, 0);
+    lives_box_pack_start (LIVES_BOX (vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+
+    // radiobuttons for fx
+    rb_fx_areas[i]=lives_standard_radio_button_new("",FALSE,rb_fx_areas_group,LIVES_BOX(hbox),
+						   (tmp=g_strdup_printf(_("Show / apply effects to %s\n"),
+								 mainw->screen_areas[i].name)));
+    rb_fx_areas_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (rb_fx_areas[i]));
+    g_free(tmp);
+
+    lives_widget_set_sensitive(rb_fx_areas[i],FALSE);
+
+    label=lives_standard_label_new(mainw->screen_areas[i].name);
+    lives_box_pack_start (LIVES_BOX (hbox), label, FALSE, TRUE, 0);
+
+    // radiobuttons for fx
+    rb_clip_areas[i]=lives_standard_radio_button_new("",FALSE,rb_clip_areas_group,LIVES_BOX(hbox),
+						     (tmp=g_strdup_printf(_("Select clip for %s\n"),
+									  mainw->screen_areas[i].name)));
+    rb_clip_areas_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (rb_clip_areas[i]));
+    g_free(tmp);
+
+    lives_widget_set_sensitive(rb_clip_areas[i],FALSE);
+
+  }
+
+  add_vsep_to_box(LIVES_BOX(hbox2));
+
+  cscroll=lives_standard_scrolled_window_new(width,height,tgrid);
+  lives_scrolled_window_set_policy (LIVES_SCROLLED_WINDOW (cscroll), LIVES_POLICY_NEVER, LIVES_POLICY_AUTOMATIC);
+  lives_box_pack_start (LIVES_BOX (hbox2), cscroll, TRUE, TRUE, 0);
+
+  ////
+  add_hsep_to_box(LIVES_BOX(vbox2));
+
+  // insert a scrolled window for param boxes
+  param_hbox = lives_hbox_new (FALSE, 0);
+
+  tscroll=lives_standard_scrolled_window_new(width,height,param_hbox);
+  lives_scrolled_window_set_policy (LIVES_SCROLLED_WINDOW (tscroll), LIVES_POLICY_AUTOMATIC, LIVES_POLICY_NEVER);
 
   lives_box_pack_start (LIVES_BOX (vbox2), tscroll, TRUE, TRUE, 0);
+
+  lives_widget_hide(mainw->eventbox);
+  lives_widget_show_all(top_hbox);
+
+  lives_widget_context_update(); // need size of cscroll to fit thumbs
+
+
+  cpw=(lives_widget_get_allocation_width(tscroll)-widget_opts.border_width*2)/(width*1.5)-2;
 
   // add thumbs to grid
 
   while (cliplist!=NULL) {
+    count++;
+
     i=GPOINTER_TO_INT(cliplist->data);
     if (i==mainw->scrap_file||i==mainw->ascrap_file||
 	(mainw->files[i]->clip_type!=CLIP_TYPE_DISK&&mainw->files[i]->clip_type!=CLIP_TYPE_FILE&&
@@ -228,64 +328,63 @@ void start_ce_thumb_mode(void) {
     // make a small thumbnail, add it to the clips box
     thumbnail=make_thumb(NULL,i,width,height,mainw->files[i]->start,TRUE);
 
-    eventbox=lives_event_box_new();
+    clip_boxes[count]=lives_event_box_new();
+    g_object_set_data (G_OBJECT (clip_boxes[count]),"clipno",LIVES_INT_TO_POINTER (i));
+    lives_widget_set_size_request (clip_boxes[count], width*1.5, height*1.5);
 
-    if (palette->style&STYLE_4) {
-      lives_widget_set_bg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+    if (palette->style&STYLE_1) {
+      lives_widget_set_bg_color (clip_boxes[count], LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+      lives_widget_set_bg_color (clip_boxes[count], LIVES_WIDGET_STATE_PRELIGHT, &palette->menu_and_bars);
     }
 
-    gtk_widget_add_events (eventbox, GDK_BUTTON_PRESS_MASK);
+    gtk_widget_add_events (clip_boxes[count], GDK_BUTTON_PRESS_MASK);
 
-    vbox = lives_vbox_new (FALSE, 6.*widget_opts.scale);
+    align=lives_alignment_new(.5,.5,0.,0.);
 
     thumb_image=lives_image_new();
     lives_image_set_from_pixbuf(LIVES_IMAGE(thumb_image),thumbnail);
     if (thumbnail!=NULL) lives_object_unref(thumbnail);
-    lives_container_add (LIVES_CONTAINER (eventbox), vbox);
+    lives_container_add (LIVES_CONTAINER (clip_boxes[count]), align);
 
-    if (count>0) {
-      if (count==cpw-1) count=0;
+    if (rcount>0) {
+      if (rcount==cpw-1) rcount=0;
       else {
-	lives_grid_attach_next_to(LIVES_GRID(tgrid),eventbox,sibl,LIVES_POS_RIGHT,1,1);
-	sibl=eventbox;
+	lives_grid_attach_next_to(LIVES_GRID(tgrid),clip_boxes[count],sibl,LIVES_POS_RIGHT,1,1);
+	sibl=clip_boxes[count];
       }
     }
 
-    if (count==0) {
-      lives_grid_attach_next_to(LIVES_GRID(tgrid),eventbox,usibl,LIVES_POS_BOTTOM,1,1);
-      sibl=usibl=eventbox;
+    if (rcount==0) {
+      lives_grid_attach_next_to(LIVES_GRID(tgrid),clip_boxes[count],usibl,LIVES_POS_BOTTOM,1,1);
+      sibl=usibl=clip_boxes[count];
     }
 
     g_snprintf (filename,PATH_MAX,"%s",(tmp=g_path_get_basename(mainw->files[i]->name)));
     g_free(tmp);
     get_basename(filename);
-    lives_widget_set_tooltip_text(eventbox, filename);
+    lives_widget_set_tooltip_text(clip_boxes[count], filename);
 
     //if (palette->style&STYLE_3) lives_widget_set_fg_color (label, LIVES_WIDGET_STATE_PRELIGHT, &palette->info_text);
     //if (palette->style&STYLE_4) lives_widget_set_fg_color (label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
 
-    lives_box_pack_start (LIVES_BOX (vbox), thumb_image, FALSE, FALSE, 0);
+    lives_container_add (LIVES_CONTAINER (align), thumb_image);
       
-    count++;
+    rcount++;
       
-    g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
+    g_signal_connect (GTK_OBJECT (clip_boxes[count]), "button_press_event",
 		      G_CALLBACK (switch_clip_cb),
 		      GINT_TO_POINTER(i));
       
     cliplist=cliplist->next;
   }
 
-  add_hsep_to_box(LIVES_BOX(vbox2));
-
-  // insert a scrolled window for param boxes
-  param_hbox = lives_hbox_new (FALSE, 0);
-
-  tscroll=lives_standard_scrolled_window_new(width,height,param_hbox);
-  lives_scrolled_window_set_policy (LIVES_SCROLLED_WINDOW (tscroll), LIVES_POLICY_AUTOMATIC, LIVES_POLICY_NEVER);
-
-  lives_box_pack_start (LIVES_BOX (vbox2), tscroll, TRUE, TRUE, 0);
+  if (prefs->open_maximised) {
+    lives_window_maximize (GTK_WINDOW(mainw->LiVES));
+  }
 
   lives_widget_show_all(top_hbox);
+
+  ce_thumbs_set_clip_area();
 
   mainw->ce_thumbs=TRUE;
 
@@ -301,8 +400,12 @@ void end_ce_thumb_mode(void) {
   g_free(pscrolls);
   g_free(combo_entries);
   g_free(key_checks);
+  g_free(rb_fx_areas);
+  g_free(rb_clip_areas);
+  g_free(clip_boxes);
   g_free(ch_fns);
-  g_free(combo_fns);
+  g_free(rb_clip_fns);
+  g_free(rb_fx_fns);
   mainw->ce_thumbs=FALSE;
 }
 
@@ -331,18 +434,27 @@ void ce_thumbs_add_param_box(int key) {
 
   ninst=inst=rte_keymode_get_instance(key+1,mode);
 
+  rfx=weed_to_rfx(inst,FALSE);
+  rfx->min_frames=-1;
+
   do {
     weed_instance_ref(ninst);
   } while (weed_plant_has_leaf(ninst,"host_next_instance")&&(ninst=weed_get_plantptr_value(ninst,"host_next_instance",&error))!=NULL);
 
 
-  rfx=weed_to_rfx(inst,FALSE);
-  rfx->min_frames=-1;
+  // here we just check if we have any params to display
+  if (!make_param_box(NULL,rfx)) {
+    rfx_free(rfx);
+    g_free(rfx);
+    return;
+  }
+
 
   vbox = lives_vbox_new (FALSE, 0);
 
   pscrolls[key]=lives_standard_scrolled_window_new(-1,-1,vbox);
   lives_scrolled_window_set_policy (LIVES_SCROLLED_WINDOW (pscrolls[key]), LIVES_POLICY_NEVER, LIVES_POLICY_AUTOMATIC);
+  lives_widget_set_hexpand(pscrolls[key],FALSE);
 
   lives_box_pack_start (LIVES_BOX (param_hbox), pscrolls[key], TRUE, TRUE, 0);
 
@@ -498,4 +610,54 @@ void ce_thumbs_reset_combos(void) {
   for (i=0;i<rte_keys_virtual;i++) {
     ce_thumbs_reset_combo(i);
   }
+}
+
+
+void ce_thumbs_set_clip_area(void) {
+  //register int i;
+  //for (i=0;i<n_screen_areas;i++) g_signal_handler_block(rb_clip_areas[i],rb_clip_fns[i]);
+  lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (rb_clip_areas[mainw->active_sa_clips]), TRUE);
+  //for (i=0;i<n_screen_areas;i++) g_signal_handler_unblock(rb_clip_areas[i],rb_clip_fns[i]);
+  ce_thumbs_highlight_current_clip();
+}
+
+
+void ce_thumbs_set_fx_area(int area) {
+  //register int i;
+  //for (i=0;i<n_screen_areas;i++) g_signal_handler_block(rb_fx_areas[i],rb_fx_fns[i]);
+  lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (rb_fx_areas[area]), TRUE);
+  //for (i=0;i<n_screen_areas;i++) g_signal_handler_unblock(rb_fx_areas[i],rb_fx_fns[i]);
+  mainw->active_sa_fx=area;
+}
+
+
+void ce_thumbs_highlight_current_clip(void) {
+  // unprelight all clip boxes, prelight current clip (fg or bg)
+  boolean match=FALSE;
+  int clipno;
+  register int i;
+
+  for (i=0;i<n_clip_boxes;i++) {
+    if (clip_boxes[i]==NULL) break;
+    if (!match) {
+      clipno=LIVES_POINTER_TO_INT(g_object_get_data(G_OBJECT(clip_boxes[i]),"clipno"));
+      switch (mainw->active_sa_clips) {
+      case SCREEN_AREA_FOREGROUND:
+	if (clipno==mainw->current_file) match=TRUE;
+	break;
+      case SCREEN_AREA_BACKGROUND:
+	if (clipno==mainw->blend_file) match=TRUE;
+	if (mainw->blend_file==-1&&clipno==mainw->current_file) match=TRUE;
+	break;
+      default:
+	break;
+      }
+      if (match) {
+	lives_widget_set_state(clip_boxes[i],LIVES_WIDGET_STATE_PRELIGHT);
+	continue;
+      }
+    }
+    lives_widget_set_state(clip_boxes[i],LIVES_WIDGET_STATE_NORMAL);
+  }
+
 }

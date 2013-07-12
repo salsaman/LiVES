@@ -1165,6 +1165,8 @@ boolean swap_fg_bg_callback (GtkAccelGroup *group, GObject *obj, guint keyval, G
   mainw->blend_file=old_file;
 
   rte_swap_fg_bg();
+  if (mainw->ce_thumbs&&(mainw->active_sa_clips==SCREEN_AREA_BACKGROUND||mainw->active_sa_clips==SCREEN_AREA_FOREGROUND)) 
+    ce_thumbs_highlight_current_clip();
   return TRUE;
 
   // **TODO - for weed, invert all transition parameters for any active effects

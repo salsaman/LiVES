@@ -872,6 +872,7 @@ text_window *create_text_window (const gchar *title, const gchar *text, GtkTextB
   if (palette->style&STYLE_1) {
     lives_widget_set_base_color(textwindow->textview, LIVES_WIDGET_STATE_NORMAL, &palette->info_base);
     lives_widget_set_text_color(textwindow->textview, LIVES_WIDGET_STATE_NORMAL, &palette->info_text);
+    lives_widget_set_bg_color(lives_bin_get_child(LIVES_BIN(scrolledwindow)), LIVES_WIDGET_STATE_NORMAL, &palette->info_base);
   }
 
   if (mytext!=NULL) {

@@ -2245,10 +2245,10 @@ boolean track_arrow_pressed (GtkWidget *ebox, GdkEventButton *event, gpointer us
   g_object_set_data(G_OBJECT(eventbox),"expanded",GINT_TO_POINTER(expanded));
 
   if (!expanded) {
-    new_arrow = gtk_arrow_new (GTK_ARROW_RIGHT, GTK_SHADOW_OUT);
+    new_arrow = lives_arrow_new (LIVES_ARROW_RIGHT, LIVES_SHADOW_OUT);
   }
   else {
-    new_arrow = gtk_arrow_new (GTK_ARROW_DOWN, GTK_SHADOW_OUT);
+    new_arrow = lives_arrow_new (LIVES_ARROW_DOWN, LIVES_SHADOW_OUT);
   }
 
 
@@ -4027,7 +4027,7 @@ void mt_init_start_end_spins(lives_mt *mt) {
 
   lives_box_pack_start (LIVES_BOX (hbox), mt->spinbutton_start, TRUE, FALSE, MAIN_SPIN_SPACER);
 
-  mt->l_sel_arrow = gtk_arrow_new (GTK_ARROW_LEFT, GTK_SHADOW_OUT);
+  mt->l_sel_arrow = lives_arrow_new (LIVES_ARROW_LEFT, LIVES_SHADOW_OUT);
   lives_box_pack_start (LIVES_BOX (hbox), mt->l_sel_arrow, FALSE, FALSE, 0);
   lives_widget_set_fg_color(mt->l_sel_arrow, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
 
@@ -4037,7 +4037,7 @@ void mt_init_start_end_spins(lives_mt *mt) {
   set_sel_label(mt->sel_label);
   lives_box_pack_start (LIVES_BOX (hbox), mt->sel_label, FALSE, FALSE, 0);
 
-  mt->r_sel_arrow = gtk_arrow_new (GTK_ARROW_RIGHT, GTK_SHADOW_OUT);
+  mt->r_sel_arrow = lives_arrow_new (LIVES_ARROW_RIGHT, LIVES_SHADOW_OUT);
   lives_box_pack_start (LIVES_BOX (hbox), mt->r_sel_arrow, FALSE, FALSE, 3);
   lives_widget_set_fg_color(mt->r_sel_arrow, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
 
@@ -9593,7 +9593,7 @@ GtkWidget *add_audio_track (lives_mt *mt, int track, boolean behind) {
   }
   g_object_ref(label);
 
-  arrow = gtk_arrow_new (GTK_ARROW_RIGHT, GTK_SHADOW_OUT);
+  arrow = lives_arrow_new (LIVES_ARROW_RIGHT, LIVES_SHADOW_OUT);
   lives_widget_set_tooltip_text( arrow, _("Show/hide audio details"));
   g_object_ref(arrow);
 
@@ -9788,7 +9788,7 @@ void add_video_track (lives_mt *mt, boolean behind) {
     lives_widget_set_tooltip_text( checkbutton, _("Select track"));
   }
 
-  arrow = gtk_arrow_new (GTK_ARROW_RIGHT, GTK_SHADOW_OUT);
+  arrow = lives_arrow_new (LIVES_ARROW_RIGHT, LIVES_SHADOW_OUT);
   lives_widget_set_tooltip_text( arrow, _("Show/hide audio"));
   g_object_ref(arrow);
 
@@ -14973,7 +14973,6 @@ static void add_effect_inner(lives_mt *mt, int num_in_tracks, int *in_tracks, in
 
   if (!did_backup) mt->idlefunc=mt_idle_add(mt);
   
-  //mt_show_current_frame(mt, FALSE);
 }
 
 

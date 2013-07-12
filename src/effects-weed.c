@@ -5886,6 +5886,7 @@ void weed_generator_end (weed_plant_t *inst) {
     mainw->new_blend_file=-1;
     // close generator file and switch to original file if possible
     close_current_file(mainw->pre_src_file);
+    if (mainw->ce_thumbs&&mainw->active_sa_clips==SCREEN_AREA_BACKGROUND) ce_thumbs_highlight_current_clip();
   }
   else {
     // close generator file and switch to original file if possible
@@ -6427,6 +6428,10 @@ boolean weed_init_effect(int hotkey) {
     mainw->num_tr_applied++; // increase trans count
     if (mainw->num_tr_applied==1&&!is_modeswitch) {
       mainw->blend_file=mainw->current_file;
+      if (mainw->active_sa_clips==SCREEN_AREA_FOREGROUND) {
+	mainw->active_sa_clips=SCREEN_AREA_BACKGROUND;
+	if (mainw->ce_thumbs) ce_thumbs_set_clip_area();
+      }
     }
   }
   else if (inc_count==0&&outc_count>0&&!is_audio_gen) {
@@ -6532,7 +6537,13 @@ boolean weed_init_effect(int hotkey) {
 	  goto deinit2;
 	}
 
-	if (is_trans) mainw->num_tr_applied--;
+	if (is_trans) {
+	  mainw->num_tr_applied--;
+	  if (mainw->num_tr_applied==0&&mainw->active_sa_clips==SCREEN_AREA_BACKGROUND) {
+	    mainw->active_sa_clips=SCREEN_AREA_FOREGROUND;
+	    if (mainw->ce_thumbs) ce_thumbs_set_clip_area();
+	  }
+	}
 	lives_chdir(cwd,FALSE);
 	g_free(cwd);
 	if (is_audio_gen) mainw->agen_needs_reinit=FALSE;
@@ -6845,6 +6856,10 @@ void weed_deinit_effect(int hotkey) {
   if (num_in_chans==2) {
     was_transition=TRUE;
     mainw->num_tr_applied--;
+    if (mainw->num_tr_applied==0&&mainw->active_sa_clips==SCREEN_AREA_BACKGROUND) {
+      mainw->active_sa_clips=SCREEN_AREA_FOREGROUND;
+      if (mainw->ce_thumbs) ce_thumbs_set_clip_area();
+    }
   }
 
   inst=instance;
@@ -7123,7 +7138,10 @@ boolean weed_generator_start (weed_plant_t *inst) {
 
   cfile->ext_src=inst;
 
-  if (is_bg) mainw->blend_file=mainw->current_file;
+  if (is_bg) {
+    mainw->blend_file=mainw->current_file;
+    if (mainw->ce_thumbs&&mainw->active_sa_clips==SCREEN_AREA_BACKGROUND) ce_thumbs_highlight_current_clip();
+  }
 
   if (!is_bg||old_file==-1||old_file==new_file) fg_generator_clip=new_file;
 
@@ -7221,6 +7239,8 @@ boolean weed_generator_start (weed_plant_t *inst) {
     else {
       if (mainw->current_file==-1) mainw->current_file=new_file;
       else mainw->blend_file=new_file;
+      if (mainw->ce_thumbs&&(mainw->active_sa_clips==SCREEN_AREA_BACKGROUND||mainw->active_sa_clips==SCREEN_AREA_FOREGROUND)) 
+	ce_thumbs_highlight_current_clip();
     }
 
     if (mainw->cancelled==CANCEL_GENERATOR_END) mainw->cancelled=CANCEL_NONE;

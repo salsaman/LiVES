@@ -806,7 +806,7 @@ void on_fx_pre_activate (lives_rfx_t *rfx, int didx, LiVESWidget *pbox) {
   }
 
 
-  if (didx>0&&pbox==NULL) {
+  if (pbox==NULL) {
     txt=g_strdup_printf ("LiVES: - %s",_(rfx->menu_text));
     widget_opts.non_modal=TRUE;
     fx_dialog[didx] = lives_standard_dialog_new (txt,FALSE);

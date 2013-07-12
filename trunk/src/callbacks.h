@@ -627,9 +627,9 @@ void
 on_preview_spinbutton_changed          (GtkSpinButton   *spinbutton,
 					  gpointer         user_data);
 
-gboolean prevclip_callback (GtkAccelGroup *, GObject *, guint, GdkModifierType, gpointer );
+boolean prevclip_callback (GtkAccelGroup *, GObject *, guint, GdkModifierType, gpointer );
 
-gboolean nextclip_callback (GtkAccelGroup *, GObject *, guint, GdkModifierType, gpointer );
+boolean nextclip_callback (GtkAccelGroup *, GObject *, guint, GdkModifierType, gpointer );
 
 gboolean freeze_callback (GtkAccelGroup *, GObject *, guint, GdkModifierType, gpointer );
 

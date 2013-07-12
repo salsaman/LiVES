@@ -321,6 +321,10 @@ void create_LiVES (void) {
     lives_widget_color_copy((LiVESWidgetColor *)(&palette->normal_fore),&normal);
   }
 
+  if (palette->style&STYLE_1) {
+    lives_widget_set_bg_color(mainw->LiVES, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_fg_color(mainw->LiVES, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+  }
  
   lives_window_set_title (GTK_WINDOW (mainw->LiVES), "LiVES");
 
@@ -2079,7 +2083,7 @@ void create_LiVES (void) {
   lives_widget_set_vexpand(mainw->frame1,FALSE);
   lives_widget_set_hexpand(mainw->frame1,FALSE);
 
-  gtk_frame_set_shadow_type (GTK_FRAME(mainw->frame1), GTK_SHADOW_NONE);
+  gtk_frame_set_shadow_type (GTK_FRAME(mainw->frame1), LIVES_SHADOW_NONE);
 
   mainw->freventbox0=lives_event_box_new();
   lives_widget_show(mainw->freventbox0);
@@ -2108,7 +2112,7 @@ void create_LiVES (void) {
   lives_widget_set_size_request (mainw->playframe, DEFAULT_FRAME_HSIZE, DEFAULT_FRAME_VSIZE);
   lives_container_set_border_width (LIVES_CONTAINER (mainw->playframe), widget_opts.border_width);
 
-  gtk_frame_set_shadow_type (GTK_FRAME(mainw->playframe), GTK_SHADOW_NONE);
+  gtk_frame_set_shadow_type (GTK_FRAME(mainw->playframe), LIVES_SHADOW_NONE);
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color (mainw->playframe, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
   }
@@ -2148,7 +2152,7 @@ void create_LiVES (void) {
   lives_widget_set_vexpand(mainw->frame2,FALSE);
   lives_widget_set_hexpand(mainw->frame2,FALSE);
 
-  gtk_frame_set_shadow_type (GTK_FRAME(mainw->frame2), GTK_SHADOW_NONE);
+  gtk_frame_set_shadow_type (GTK_FRAME(mainw->frame2), LIVES_SHADOW_NONE);
 
   mainw->freventbox1=lives_event_box_new();
   lives_widget_show(mainw->freventbox1);
@@ -2217,7 +2221,7 @@ void create_LiVES (void) {
 
   lives_widget_show (mainw->spinbutton_start);
 
-  mainw->arrow1 = gtk_arrow_new (GTK_ARROW_LEFT, GTK_SHADOW_OUT);
+  mainw->arrow1 = lives_arrow_new (LIVES_ARROW_LEFT, LIVES_SHADOW_OUT);
   lives_widget_show (mainw->arrow1);
   lives_box_pack_start (LIVES_BOX (hbox3), mainw->arrow1, FALSE, FALSE, 0);
 
@@ -2236,7 +2240,7 @@ void create_LiVES (void) {
   lives_widget_show (mainw->sel_label);
   lives_box_pack_start (LIVES_BOX (hbox3), mainw->sel_label, FALSE, FALSE, 0);
 
-  mainw->arrow2 = gtk_arrow_new (GTK_ARROW_RIGHT, GTK_SHADOW_OUT);
+  mainw->arrow2 = lives_arrow_new (LIVES_ARROW_RIGHT, LIVES_SHADOW_OUT);
   lives_widget_show (mainw->arrow2);
   lives_box_pack_start (LIVES_BOX (hbox3), mainw->arrow2, FALSE, FALSE, 0);
 
@@ -3072,7 +3076,7 @@ void fade_background(void) {
     if (mainw->sep_win) {
       lives_widget_hide (mainw->playframe);
     }
-    gtk_frame_set_shadow_type (GTK_FRAME(mainw->playframe), GTK_SHADOW_NONE);
+    gtk_frame_set_shadow_type (GTK_FRAME(mainw->playframe), LIVES_SHADOW_NONE);
   }
 
   gtk_frame_set_label(GTK_FRAME(mainw->playframe), "");
@@ -3091,9 +3095,9 @@ void fade_background(void) {
   lives_widget_set_bg_color (mainw->frame2, LIVES_WIDGET_STATE_NORMAL, &palette->fade_colour);
   lives_widget_set_bg_color (mainw->freventbox0, LIVES_WIDGET_STATE_NORMAL, &palette->fade_colour);
   lives_widget_set_bg_color (mainw->freventbox1, LIVES_WIDGET_STATE_NORMAL, &palette->fade_colour);
-  gtk_frame_set_shadow_type (GTK_FRAME(mainw->frame1), GTK_SHADOW_NONE);
+  gtk_frame_set_shadow_type (GTK_FRAME(mainw->frame1), LIVES_SHADOW_NONE);
   gtk_frame_set_label (GTK_FRAME(mainw->frame1), "");
-  gtk_frame_set_shadow_type (GTK_FRAME(mainw->frame2), GTK_SHADOW_NONE);
+  gtk_frame_set_shadow_type (GTK_FRAME(mainw->frame2), LIVES_SHADOW_NONE);
   gtk_frame_set_label (GTK_FRAME(mainw->frame2), "");
 
   if (mainw->toy_type!=LIVES_TOY_MAD_FRAMES||mainw->foreign) {
@@ -4095,7 +4099,7 @@ void resize_play_window (void) {
       }
 
 #define TEST_CE_THUMBS 0
-      if (TEST_CE_THUMBS||(prefs->ce_thumb_mode&&prefs->play_monitor!=prefs->gui_monitor&&
+      if (TEST_CE_THUMBS||(prefs->show_gui&&prefs->ce_thumb_mode&&prefs->play_monitor!=prefs->gui_monitor&&
 			   prefs->play_monitor!=0&&!prefs->force_single_monitor&&
 			   capable->nmonitors>0&&mainw->multitrack==NULL)) {
 	start_ce_thumb_mode();

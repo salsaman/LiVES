@@ -1073,6 +1073,24 @@ LIVES_INLINE LiVESWidget *lives_vscrollbar_new(LiVESAdjustment *adj) {
 }
 
 
+LIVES_INLINE LiVESWidget *lives_arrow_new(lives_arrow_t arrow_type, lives_shadow_t shadow_type) {
+  LiVESWidget *arrow=NULL;
+#ifdef GUI_GTK
+  arrow=gtk_arrow_new(arrow_type,shadow_type);
+#endif
+  return arrow;
+}
+
+
+LIVES_INLINE LiVESWidget *lives_alignment_new(float xalign, float yalign, float xscale, float yscale) {
+  LiVESWidget *alignment=NULL;
+#ifdef GUI_GTK
+  alignment=gtk_alignment_new(xalign,yalign,xscale,yscale);
+#endif
+  return alignment;
+}
+
+
 LIVES_INLINE LiVESWidget *lives_combo_new(void) {
   LiVESWidget *combo=NULL;
 #ifdef GUI_GTK
@@ -2777,10 +2795,15 @@ LiVESWidget *lives_standard_scrolled_window_new(int width, int height, LiVESWidg
 #endif 
       {
 	gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (scrolledwindow), child);
-	gtk_viewport_set_shadow_type (GTK_VIEWPORT (lives_bin_get_child (LIVES_BIN (scrolledwindow))),GTK_SHADOW_IN);
+	gtk_viewport_set_shadow_type (GTK_VIEWPORT (lives_bin_get_child (LIVES_BIN (scrolledwindow))),LIVES_SHADOW_IN);
       }
-    else 
-      lives_container_add (LIVES_CONTAINER (scrolledwindow), child);
+    else {
+      LiVESWidget *align;
+      align=lives_alignment_new(.5,0.,0.,0.);
+      lives_container_add (LIVES_CONTAINER (align), child);
+      gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (scrolledwindow), align);
+      gtk_viewport_set_shadow_type (GTK_VIEWPORT (lives_bin_get_child (LIVES_BIN (scrolledwindow))),LIVES_SHADOW_IN);
+    }
   }
 
   swchild=lives_bin_get_child(LIVES_BIN(scrolledwindow));

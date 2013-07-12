@@ -248,6 +248,20 @@ enum {
 };
 
 
+typedef struct {
+  double top;
+  double left;
+  double width;
+  double height;
+} lives_rect_t;
+
+
+typedef struct {
+  char *name;
+  lives_rect_t *rects; // for future use
+  int z_index; // for future use
+} lives_screen_area_t;
+
 
 /// where do we add the builtin tools in the tools menu
 #define RFX_TOOL_MENU_POSN 2
@@ -1130,6 +1144,15 @@ typedef struct {
   boolean signals_deferred;
 
   boolean ce_thumbs;
+
+#define SCREEN_AREA_FOREGROUND 0
+#define SCREEN_AREA_BACKGROUND 1
+#define SCREEN_AREA_USER_DEFINED1 2
+
+  int n_screen_areas; // number of screen areas
+  int active_sa_fx; // active screen area for effects
+  int active_sa_clips; // active screen area for clips
+  lives_screen_area_t *screen_areas; // array of screen areas
 
 } mainwindow;
 

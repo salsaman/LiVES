@@ -27,4 +27,9 @@ void ce_thumbs_check_for_rte(lives_rfx_t *ce_rfx, lives_rfx_t *rte_rfx, int key)
 void ce_thumbs_reset_combos(void);
 void ce_thumbs_reset_combo(int key);
 
+void ce_thumbs_set_clip_area(void);
+void ce_thumbs_set_fx_area(int area);
+
+void ce_thumbs_highlight_current_clip(void);
+
 #endif // HAS_LIVES_CE_THUMBS_H

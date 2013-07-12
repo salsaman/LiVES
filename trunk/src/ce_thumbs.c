@@ -6,14 +6,11 @@
 
 // clip thumbnails window for dual head mode
 
-
-// TODO - switch btw fg and bg clips
-
-// TODO - buttons for some keys
+// TODO - buttons for some keys ?
 
 // TODO - drag fx order :  check for data conx
 
-// TODO - active screen mapping areas
+// TODO - user defined screen mapping areas
 
 
 #include "support.h"
@@ -95,6 +92,14 @@ static void pin_toggled (LiVESToggleButton *t, livespointer pkey) {
   int key=LIVES_POINTER_TO_INT(pkey);
   boolean state=LIVES_POINTER_TO_INT(g_object_get_data(G_OBJECT(pscrolls[key]),"pinned"));
   g_object_set_data (G_OBJECT (pscrolls[key]),"pinned",LIVES_INT_TO_POINTER (!state));
+}
+
+static void clip_area_toggled (LiVESToggleButton *t, livespointer parea) {
+  int area=LIVES_POINTER_TO_INT(parea);
+  if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(rb_clip_areas[area]))) {
+    mainw->active_sa_clips=area;
+    ce_thumbs_highlight_current_clip();
+  }
 }
 
 
@@ -243,7 +248,13 @@ void start_ce_thumb_mode(void) {
   lives_box_pack_start (LIVES_BOX (vbox3), hbox, FALSE, TRUE, 0);
   arrow=lives_arrow_new (LIVES_ARROW_LEFT, LIVES_SHADOW_NONE);
   lives_box_pack_start(LIVES_BOX (hbox), arrow, FALSE, TRUE, 0);
+
+  label=lives_standard_label_new(_("Effects"));
+  lives_box_pack_start(LIVES_BOX (hbox), label, FALSE, TRUE, 0);
   add_fill_to_box(LIVES_BOX(hbox));
+  label=lives_standard_label_new(_("Clips"));
+  lives_box_pack_start(LIVES_BOX (hbox), label, FALSE, TRUE, 0);
+
   arrow=lives_arrow_new (LIVES_ARROW_RIGHT, LIVES_SHADOW_NONE);
   lives_box_pack_start(LIVES_BOX (hbox), arrow, FALSE, TRUE, 0);
 
@@ -270,7 +281,7 @@ void start_ce_thumb_mode(void) {
     rb_fx_areas_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (rb_fx_areas[i]));
     g_free(tmp);
 
-    lives_widget_set_sensitive(rb_fx_areas[i],FALSE);
+    if (i!=SCREEN_AREA_FOREGROUND) lives_widget_set_sensitive(rb_fx_areas[i],FALSE);
 
     label=lives_standard_label_new(mainw->screen_areas[i].name);
     lives_box_pack_start (LIVES_BOX (hbox), label, FALSE, TRUE, 0);
@@ -282,7 +293,7 @@ void start_ce_thumb_mode(void) {
     rb_clip_areas_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (rb_clip_areas[i]));
     g_free(tmp);
 
-    lives_widget_set_sensitive(rb_clip_areas[i],FALSE);
+    rb_clip_fns[i]=g_signal_connect (GTK_OBJECT (rb_clip_areas[i]), "toggled", G_CALLBACK (clip_area_toggled), LIVES_INT_TO_POINTER(i));
 
   }
 
@@ -304,6 +315,7 @@ void start_ce_thumb_mode(void) {
   lives_box_pack_start (LIVES_BOX (vbox2), tscroll, TRUE, TRUE, 0);
 
   lives_widget_hide(mainw->eventbox);
+  lives_widget_hide(mainw->message_box);
   lives_widget_show_all(top_hbox);
 
   lives_widget_context_update(); // need size of cscroll to fit thumbs
@@ -384,6 +396,7 @@ void start_ce_thumb_mode(void) {
 
   lives_widget_show_all(top_hbox);
 
+  ce_thumbs_liberate_bg_clip_area(mainw->num_tr_applied>0);
   ce_thumbs_set_clip_area();
 
   mainw->ce_thumbs=TRUE;
@@ -396,6 +409,7 @@ void end_ce_thumb_mode(void) {
   ce_thumbs_remove_param_boxes(TRUE);
   lives_widget_destroy(top_hbox);
   lives_widget_show(mainw->eventbox);
+  lives_widget_show(mainw->message_box);
   g_free(fxcombos);
   g_free(pscrolls);
   g_free(combo_entries);
@@ -614,10 +628,10 @@ void ce_thumbs_reset_combos(void) {
 
 
 void ce_thumbs_set_clip_area(void) {
-  //register int i;
-  //for (i=0;i<n_screen_areas;i++) g_signal_handler_block(rb_clip_areas[i],rb_clip_fns[i]);
+  register int i;
+  for (i=0;i<n_screen_areas;i++) g_signal_handler_block(rb_clip_areas[i],rb_clip_fns[i]);
   lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (rb_clip_areas[mainw->active_sa_clips]), TRUE);
-  //for (i=0;i<n_screen_areas;i++) g_signal_handler_unblock(rb_clip_areas[i],rb_clip_fns[i]);
+  for (i=0;i<n_screen_areas;i++) g_signal_handler_unblock(rb_clip_areas[i],rb_clip_fns[i]);
   ce_thumbs_highlight_current_clip();
 }
 
@@ -660,4 +674,9 @@ void ce_thumbs_highlight_current_clip(void) {
     lives_widget_set_state(clip_boxes[i],LIVES_WIDGET_STATE_NORMAL);
   }
 
+}
+
+
+void ce_thumbs_liberate_bg_clip_area(boolean liberate) {
+  lives_widget_set_sensitive(rb_clip_areas[SCREEN_AREA_BACKGROUND],liberate);
 }

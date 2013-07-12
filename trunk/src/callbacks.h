@@ -7,7 +7,7 @@
 #ifndef HAS_LIVES_CALLBACKS_H
 #define HAS_LIVES_CALLBACKS_H
 
-gboolean
+boolean
 on_LiVES_delete_event                  (GtkWidget       *widget,
                                         GdkEvent        *event,
                                         gpointer         user_data);
@@ -373,22 +373,22 @@ void
 changed_fps_during_pb           (GtkSpinButton   *spinbutton,
 				 gpointer         user_data);
 
-gboolean
+boolean
 on_mouse_scroll           (GtkWidget       *widget,
 			   GdkEventScroll  *event,
 			   gpointer         user_data);
 
-gboolean
+boolean
 on_mouse_sel_update           (GtkWidget       *widget,
 			       GdkEventMotion  *event,
 			       gpointer         user_data);
 
-gboolean
+boolean
 on_mouse_sel_reset           (GtkWidget       *widget,
 			      GdkEventButton  *event,
 			      gpointer         user_data);
 
-gboolean
+boolean
 on_mouse_sel_start           (GtkWidget       *widget,
 			      GdkEventButton  *event,
 			      gpointer         user_data);
@@ -434,7 +434,7 @@ void
 on_warn_mask_toggled        (GtkToggleButton *togglebutton,
 			     gpointer         user_data);
 
-gboolean
+boolean
 frame_context           (GtkWidget       *widget,
 			  GdkEventButton  *event,
 			  gpointer         which);
@@ -455,17 +455,17 @@ void
 on_record_perf_activate                      (GtkMenuItem     *menuitem,
 					      gpointer         user_data);
 
-gboolean record_toggle_callback (GtkAccelGroup *, GObject *, guint keyval, GdkModifierType mod, gpointer);
+boolean record_toggle_callback (GtkAccelGroup *, GObject *, guint keyval, GdkModifierType mod, gpointer);
 
 
-gboolean fps_reset_callback (GtkAccelGroup *, GObject *, guint keyval, GdkModifierType mod, gpointer);
+boolean fps_reset_callback (GtkAccelGroup *, GObject *, guint keyval, GdkModifierType mod, gpointer);
 
 
-gboolean mute_audio_callback (GtkAccelGroup *, GObject *, guint keyval, GdkModifierType mod, gpointer);
+boolean mute_audio_callback (GtkAccelGroup *, GObject *, guint keyval, GdkModifierType mod, gpointer);
 
 
 
-gboolean
+boolean
 on_stop_activate_by_del                  (GtkWidget       *widget,
 					  GdkEvent        *event,
 					  gpointer         user_data);
@@ -584,18 +584,18 @@ void
 on_show_messages_activate            (GtkMenuItem     *menuitem,
 				      gpointer         user_data);
 
-gboolean on_hrule_enter (GtkWidget *, GdkEventCrossing *, gpointer);
+boolean on_hrule_enter (GtkWidget *, GdkEventCrossing *, gpointer);
 
-gboolean
+boolean
 on_hrule_update           (GtkWidget       *widget,
 			   GdkEventMotion  *event,
 			   gpointer         user_data);
-gboolean
+boolean
 on_hrule_reset           (GtkWidget       *widget,
 			  GdkEventButton  *event,
 			  gpointer         user_data);
 
-gboolean
+boolean
 on_hrule_set           (GtkWidget       *widget,
 			  GdkEventButton  *event,
 			  gpointer         user_data);
@@ -631,13 +631,13 @@ boolean prevclip_callback (GtkAccelGroup *, GObject *, guint, GdkModifierType, g
 
 boolean nextclip_callback (GtkAccelGroup *, GObject *, guint, GdkModifierType, gpointer );
 
-gboolean freeze_callback (GtkAccelGroup *, GObject *, guint, GdkModifierType, gpointer );
+boolean freeze_callback (GtkAccelGroup *, GObject *, guint, GdkModifierType, gpointer );
 
-gboolean storeclip_callback (GtkAccelGroup *, GObject *, guint, GdkModifierType, gpointer );
+boolean storeclip_callback (GtkAccelGroup *, GObject *, guint, GdkModifierType, gpointer );
 
-gboolean nervous_callback (GtkAccelGroup *, GObject *, guint, GdkModifierType, gpointer );
+boolean nervous_callback (GtkAccelGroup *, GObject *, guint, GdkModifierType, gpointer );
 
-gboolean show_sync_callback (GtkAccelGroup *, GObject *, guint keyval, GdkModifierType mod, gpointer clip_number);
+boolean show_sync_callback (GtkAccelGroup *, GObject *, guint keyval, GdkModifierType mod, gpointer clip_number);
 
 void on_save_set_activate (GtkMenuItem *, gpointer );
 
@@ -645,7 +645,7 @@ void on_save_set_ok (void);
 
 void on_load_set_activate (GtkMenuItem *, gpointer );
 
-gboolean on_load_set_ok (GtkButton *, gpointer skip_threaded_dialog);
+boolean on_load_set_ok (GtkButton *, gpointer skip_threaded_dialog);
 
 void on_open_vcd_activate (GtkMenuItem *, gpointer int_type);
 
@@ -683,7 +683,7 @@ void on_lerrors_close_clicked (GtkButton *, gpointer);
 void on_lerrors_clear_clicked (GtkButton *, gpointer);
 void on_lerrors_delete_clicked (GtkButton *, gpointer);
 
-void drag_from_outside(GtkWidget *, GdkDragContext *, gint x, gint y, 
+void drag_from_outside(GtkWidget *, GdkDragContext *, int x, int y, 
 		       GtkSelectionData *, guint info, guint time, gpointer user_data);
 
 

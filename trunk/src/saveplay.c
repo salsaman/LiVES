@@ -2305,7 +2305,7 @@ void play_file (void) {
 
   if (cfile->frames==0&&mainw->multitrack==NULL) {
     if (mainw->preview_box!=NULL&&lives_widget_get_parent(mainw->preview_box)!=NULL) {
-      gtk_container_remove (LIVES_CONTAINER (mainw->play_window), mainw->preview_box);
+      lives_container_remove (LIVES_CONTAINER (mainw->play_window), mainw->preview_box);
 
       mainw->pw_scroll_func=g_signal_connect (GTK_OBJECT (mainw->play_window), "scroll_event",
 					      G_CALLBACK (on_mouse_scroll),
@@ -2325,7 +2325,7 @@ void play_file (void) {
       else {
 	if (mainw->multitrack==NULL) {
 	  if (mainw->preview_box!=NULL&&lives_widget_get_parent(mainw->preview_box)!=NULL) {
-	    gtk_container_remove (LIVES_CONTAINER (mainw->play_window), mainw->preview_box);
+	    lives_container_remove (LIVES_CONTAINER (mainw->play_window), mainw->preview_box);
 
 	    mainw->pw_scroll_func=g_signal_connect (GTK_OBJECT (mainw->play_window), "scroll_event",
 						    G_CALLBACK (on_mouse_scroll),
@@ -2365,7 +2365,7 @@ void play_file (void) {
 
     if (mainw->play_window!=NULL) {
       hide_cursor (lives_widget_get_xwindow(mainw->play_window));
-      gtk_widget_set_app_paintable(mainw->play_window,TRUE);
+      lives_widget_set_app_paintable(mainw->play_window,TRUE);
       if (mainw->vpp!=NULL&&!(mainw->vpp->capabilities&VPP_LOCAL_DISPLAY)&&mainw->fs) 
 	lives_window_set_title (GTK_WINDOW (mainw->play_window),_("LiVES: - Streaming"));
       else {

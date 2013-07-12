@@ -80,7 +80,7 @@ GList *do_onchange_init(lives_rfx_t *rfx) {
       if (!strcmp (array[0],"init")) {
 	// onchange is init
 	// create dummy object with data
-	GtkWidget *dummy_widget=gtk_label_new(NULL);
+	GtkWidget *dummy_widget=lives_label_new(NULL);
 	g_object_set_data (G_OBJECT (dummy_widget),"param_number",GINT_TO_POINTER (-1));
 	retvals=do_onchange (G_OBJECT (dummy_widget),rfx);
 	lives_widget_destroy (dummy_widget);
@@ -1348,7 +1348,7 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, int pnum, boolean add_s
   GtkWidget *checkbutton;
   GtkWidget *radiobutton;
   GtkWidget *spinbutton;
-  GtkWidget *scale;
+  GtkWidget *scale,*scale2;
   GtkWidget *spinbutton_red;
   GtkWidget *spinbutton_green;
   GtkWidget *spinbutton_blue;
@@ -1537,7 +1537,17 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, int pnum, boolean add_s
 	add_fill_to_box(LIVES_BOX(hbox));
 	lives_widget_set_fg_color(scale,LIVES_WIDGET_STATE_NORMAL,&palette->black);
 	lives_widget_set_fg_color(scale,LIVES_WIDGET_STATE_PRELIGHT,&palette->dark_orange);
+	scale2=lives_hscale_new(LIVES_ADJUSTMENT(spinbutton_adj));
+	gtk_scale_set_draw_value(GTK_SCALE(scale2),FALSE);
+	lives_box_pack_start (LIVES_BOX (hbox), scale2, TRUE, TRUE, 0);
 	if (!LIVES_IS_HBOX(LIVES_WIDGET(box))) add_fill_to_box (LIVES_BOX (hbox));
+
+	if (palette->style&STYLE_1) {
+	  lives_widget_set_bg_color (scale2, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+	  lives_widget_set_text_color(scale2, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+	  lives_widget_set_fg_color(scale2, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+	}
+	if (param->desc!=NULL) lives_widget_set_tooltip_text(scale2, param->desc);
       }
 #endif
       if (palette->style&STYLE_1) {
@@ -1680,8 +1690,15 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, int pnum, boolean add_s
 
       woat=widget_opts.apply_theme;
       widget_opts.apply_theme=FALSE;
+      widget_opts.expand=LIVES_EXPAND_NONE;
       scrolledwindow = lives_standard_scrolled_window_new (-1, RFX_TEXT_SCROLL_HEIGHT, textview);
+      widget_opts.expand=LIVES_EXPAND_DEFAULT;
       widget_opts.apply_theme=woat;
+
+      if (palette->style&STYLE_1) {
+	lives_widget_set_base_color(textview, LIVES_WIDGET_STATE_NORMAL, &palette->white);
+	lives_widget_set_text_color(textview, LIVES_WIDGET_STATE_NORMAL, &palette->black);
+      }
 
       lives_box_pack_start (LIVES_BOX (hbox), scrolledwindow, TRUE, TRUE, 0);
 

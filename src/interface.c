@@ -216,7 +216,7 @@ xprocess * create_processing (const gchar *text) {
     procw->label2 = lives_standard_label_new (_("\n\nPlease Wait\n\nRemember to switch off effects (ctrl-0) afterwards !"));
   }
 #ifdef RT_AUDIO
-  else if (mainw->jackd_read!=NULL||mainw->pulsed_read!=NULL) procw->label2 = gtk_label_new ("");
+  else if (mainw->jackd_read!=NULL||mainw->pulsed_read!=NULL) procw->label2 = lives_label_new ("");
 #endif
   else procw->label2=lives_standard_label_new (_("\nPlease Wait"));
   widget_opts.justify=LIVES_JUSTIFY_DEFAULT;
@@ -949,7 +949,7 @@ void add_to_winmenu(void) {
 
 
 void remove_from_winmenu(void) {
-  gtk_container_remove(LIVES_CONTAINER(mainw->winmenu), cfile->menuentry);
+  lives_container_remove(LIVES_CONTAINER(mainw->winmenu), cfile->menuentry);
   if (LIVES_IS_WIDGET(cfile->menuentry))
     lives_widget_destroy(cfile->menuentry);
   mainw->cliplist=g_list_remove (mainw->cliplist, GINT_TO_POINTER (mainw->current_file));

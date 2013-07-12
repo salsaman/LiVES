@@ -379,6 +379,20 @@ LIVES_INLINE void lives_widget_set_size_request(LiVESWidget *widget, int width, 
 }
 
 
+LIVES_INLINE void lives_widget_reparent(LiVESWidget *widget, LiVESWidget *new_parent) {
+#ifdef GUI_GTK
+  gtk_widget_reparent(widget,new_parent);
+#endif
+}
+
+
+LIVES_INLINE void lives_widget_set_app_paintable(LiVESWidget *widget, boolean paintable) {
+#ifdef GUI_GTK
+  gtk_widget_set_app_paintable(widget,paintable);
+#endif
+}
+
+
 
 LIVES_INLINE int lives_dialog_run(LiVESDialog *dialog) {
 #ifdef GUI_GTK
@@ -1073,6 +1087,21 @@ LIVES_INLINE LiVESWidget *lives_vscrollbar_new(LiVESAdjustment *adj) {
 }
 
 
+LIVES_INLINE LiVESWidget *lives_label_new(const char *text) {
+  LiVESWidget *label=NULL;
+#ifdef GUI_GTK
+
+  label=gtk_label_new(text);
+
+  gtk_label_set_justify (GTK_LABEL (label), widget_opts.justify);
+
+  gtk_label_set_line_wrap (GTK_LABEL (label), widget_opts.line_wrap);
+#endif
+
+  return label;
+}
+
+
 LIVES_INLINE LiVESWidget *lives_arrow_new(lives_arrow_t arrow_type, lives_shadow_t shadow_type) {
   LiVESWidget *arrow=NULL;
 #ifdef GUI_GTK
@@ -1088,6 +1117,13 @@ LIVES_INLINE LiVESWidget *lives_alignment_new(float xalign, float yalign, float 
   alignment=gtk_alignment_new(xalign,yalign,xscale,yscale);
 #endif
   return alignment;
+}
+
+
+LIVES_INLINE void lives_alignment_set(LiVESAlignment *alignment, float xalign, float yalign, float xscale, float yscale) {
+#ifdef GUI_GTK
+  gtk_alignment_set(alignment,xalign,yalign,xscale,yscale);
+#endif
 }
 
 
@@ -2203,20 +2239,14 @@ LiVESWidget *lives_volume_button_new(LiVESOrientation orientation, LiVESAdjustme
 }
 
 
-
 LiVESWidget *lives_standard_label_new(const char *text) {
   LiVESWidget *label=NULL;
-#ifdef GUI_GTK
 
-  label=gtk_label_new(text);
+  label=lives_label_new(text);
 
   if (widget_opts.apply_theme) {
     lives_widget_apply_theme(label, LIVES_WIDGET_STATE_NORMAL);
   }
-  gtk_label_set_justify (GTK_LABEL (label), widget_opts.justify);
-
-  gtk_label_set_line_wrap (GTK_LABEL (label), widget_opts.line_wrap);
-#endif
 
   return label;
 }
@@ -2795,15 +2825,19 @@ LiVESWidget *lives_standard_scrolled_window_new(int width, int height, LiVESWidg
 #endif 
       {
 	gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (scrolledwindow), child);
-	gtk_viewport_set_shadow_type (GTK_VIEWPORT (lives_bin_get_child (LIVES_BIN (scrolledwindow))),LIVES_SHADOW_IN);
       }
     else {
-      LiVESWidget *align;
-      align=lives_alignment_new(.5,0.,0.,0.);
-      lives_container_add (LIVES_CONTAINER (align), child);
-      gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (scrolledwindow), align);
-      gtk_viewport_set_shadow_type (GTK_VIEWPORT (lives_bin_get_child (LIVES_BIN (scrolledwindow))),LIVES_SHADOW_IN);
+      if (widget_opts.expand!=LIVES_EXPAND_NONE) {
+	LiVESWidget *align;
+	align=lives_alignment_new(.5,0.,0.,0.);
+	lives_container_add (LIVES_CONTAINER (align), child);
+	gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (scrolledwindow), align);
+      }
+      else {
+	gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (scrolledwindow), child);
+      }
     }
+    gtk_viewport_set_shadow_type (GTK_VIEWPORT (lives_bin_get_child (LIVES_BIN (scrolledwindow))),LIVES_SHADOW_IN);
   }
 
   swchild=lives_bin_get_child(LIVES_BIN(scrolledwindow));

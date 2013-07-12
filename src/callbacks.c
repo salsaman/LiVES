@@ -41,7 +41,7 @@
 
 static gchar file_name[PATH_MAX];
 
-gboolean on_LiVES_delete_event (GtkWidget *widget, GdkEvent *event, gpointer user_data) {
+boolean on_LiVES_delete_event (GtkWidget *widget, GdkEvent *event, gpointer user_data) {
   on_quit_activate(NULL,NULL);
   return TRUE;
 }
@@ -396,11 +396,11 @@ void lives_exit (void) {
 
     // stop valgrind from complaining
 #ifdef VALG_COMPLAIN
-    if (mainw->preview_image!=NULL && GTK_IS_IMAGE(mainw->preview_image)) 
-      lives_image_set_from_pixbuf(GTK_IMAGE(mainw->preview_image), NULL);
+    if (mainw->preview_image!=NULL && LIVES_IS_IMAGE(mainw->preview_image)) 
+      lives_image_set_from_pixbuf(LIVES_IMAGE(mainw->preview_image), NULL);
 
-    if (mainw->image272!=NULL) lives_image_set_from_pixbuf(GTK_IMAGE(mainw->image272), NULL);
-    if (mainw->image273!=NULL) lives_image_set_from_pixbuf(GTK_IMAGE(mainw->image273), NULL);
+    if (mainw->image272!=NULL) lives_image_set_from_pixbuf(LIVES_IMAGE(mainw->image272), NULL);
+    if (mainw->image273!=NULL) lives_image_set_from_pixbuf(LIVES_IMAGE(mainw->image273), NULL);
 #endif
 
     if (mainw->frame_layer!=NULL) weed_layer_free(mainw->frame_layer);
@@ -516,10 +516,10 @@ void on_filesel_button_clicked (GtkButton *button, gpointer user_data) {
 
   gchar *def_dir=(gchar *)g_object_get_data(G_OBJECT(button),"def_dir");
 
-  boolean is_dir=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(button),"is_dir"));
+  boolean is_dir=LIVES_POINTER_TO_INT(g_object_get_data(G_OBJECT(button),"is_dir"));
 
-  if (GTK_IS_TEXT_VIEW(tentry)) fname=text_view_get_text(LIVES_TEXT_VIEW(tentry));
-  else fname=g_strdup(lives_entry_get_text(GTK_ENTRY(tentry)));
+  if (LIVES_IS_TEXT_VIEW(tentry)) fname=text_view_get_text(LIVES_TEXT_VIEW(tentry));
+  else fname=g_strdup(lives_entry_get_text(LIVES_ENTRY(tentry)));
 
   if (!strlen(fname)) {
     g_free(fname);
@@ -542,7 +542,7 @@ void on_filesel_button_clicked (GtkButton *button, gpointer user_data) {
   g_free(dirname);
 
   if (button!=NULL) {
-    if (GTK_IS_ENTRY(tentry)) lives_entry_set_text(GTK_ENTRY(tentry),(tmp=g_filename_to_utf8(file_name,-1,NULL,NULL,NULL)));
+    if (LIVES_IS_ENTRY(tentry)) lives_entry_set_text(LIVES_ENTRY(tentry),(tmp=g_filename_to_utf8(file_name,-1,NULL,NULL,NULL)));
     else text_view_set_text (LIVES_TEXT_VIEW(tentry), (tmp=g_filename_to_utf8(file_name,-1,NULL,NULL,NULL)), -1);
     g_free(tmp);
   }
@@ -609,7 +609,7 @@ void on_ok_filesel_open_clicked (GtkFileChooser *chooser, gpointer user_data) {
   g_free(tmp); g_free(fname);
 
   end_fs_preview();
-  lives_widget_destroy(GTK_WIDGET(chooser));
+  lives_widget_destroy(LIVES_WIDGET(chooser));
 
   g_snprintf(mainw->vid_load_dir,PATH_MAX,"%s",file_name);
   get_dirname(mainw->vid_load_dir);
@@ -653,10 +653,7 @@ void on_open_vcd_activate (GtkMenuItem *menuitem, gpointer user_data) {
 }
 
 
-void
-on_open_loc_activate                      (GtkMenuItem     *menuitem,
-					   gpointer         user_data)
-{
+void on_open_loc_activate (GtkMenuItem *menuitem, gpointer user_data) {
   if (mainw->multitrack!=NULL) {
     if (mainw->multitrack->idlefunc>0) {
       g_source_remove(mainw->multitrack->idlefunc);
@@ -673,10 +670,7 @@ on_open_loc_activate                      (GtkMenuItem     *menuitem,
 }
 
 
-void
-on_open_utube_activate                      (GtkMenuItem     *menuitem,
-					     gpointer         user_data) {
-
+void on_open_utube_activate (GtkMenuItem *menuitem, gpointer user_data) {
   if (mainw->multitrack!=NULL) {
     if (mainw->multitrack->idlefunc>0) {
       g_source_remove(mainw->multitrack->idlefunc);
@@ -694,11 +688,11 @@ on_open_utube_activate                      (GtkMenuItem     *menuitem,
 
 
 
-void
-on_autoreload_toggled                (GtkToggleButton *togglebutton,
-				      gpointer         user_data)
-{
-  gint type=GPOINTER_TO_INT(user_data);
+void on_autoreload_toggled (GtkToggleButton *togglebutton, gpointer user_data) {
+  // type==1, autoreload clipset
+  // type==2, autoreload layout
+
+  int type=LIVES_POINTER_TO_INT(user_data);
   if (type==0) {
     _entryw *cdsw=(_entryw *)g_object_get_data(G_OBJECT(togglebutton),"cdsw");
     prefs->ar_layout=!prefs->ar_layout;
@@ -717,16 +711,13 @@ on_autoreload_toggled                (GtkToggleButton *togglebutton,
 }
 
 
-void
-on_recent_activate                      (GtkMenuItem     *menuitem,
-					 gpointer         user_data) {
+void on_recent_activate (GtkMenuItem *menuitem, gpointer user_data) {
+  char file[PATH_MAX];
+  double start=0.;
+  int end=0,pno;
+  char *pref;
 
-  gchar file[PATH_MAX];
-  gdouble start=0.;
-  gint end=0,pno;
-  gchar *pref;
-
-  pno=GPOINTER_TO_INT(user_data);
+  pno=LIVES_POINTER_TO_INT(user_data);
 
   if (mainw->multitrack!=NULL) {
     if (mainw->multitrack->idlefunc>0) {
@@ -773,11 +764,8 @@ on_recent_activate                      (GtkMenuItem     *menuitem,
 
 
 
-void
-on_location_select                   (GtkButton       *button,
-				      gpointer         user_data)
-{
-  g_snprintf(file_name,PATH_MAX,"%s",lives_entry_get_text(GTK_ENTRY(locw->entry)));
+void on_location_select (GtkButton *button, gpointer user_data) {
+  g_snprintf(file_name,PATH_MAX,"%s",lives_entry_get_text(LIVES_ENTRY(locw->entry)));
   lives_widget_destroy(locw->dialog);
   lives_widget_context_update();
   g_free(locw);
@@ -804,13 +792,13 @@ on_location_select                   (GtkButton       *button,
 
 
 void on_utube_select (GtkButton *button, gpointer user_data) {
-  gchar *fname=ensure_extension(lives_entry_get_text(GTK_ENTRY(locw->name_entry)),".webm");
+  gchar *fname=ensure_extension(lives_entry_get_text(LIVES_ENTRY(locw->name_entry)),".webm");
   gchar *url;
   gchar *dirname;
   gchar *dfile;
   gchar *com;
   gchar *msg;
-  gint current_file=mainw->current_file;
+  int current_file=mainw->current_file;
 
   if (!strlen(fname)) {
     do_blocking_error_dialog(_("Please enter the name of the file to save the clip as.\n"));
@@ -818,7 +806,7 @@ void on_utube_select (GtkButton *button, gpointer user_data) {
     return;
   }
 
-  url=g_strdup(lives_entry_get_text(GTK_ENTRY(locw->entry)));
+  url=g_strdup(lives_entry_get_text(LIVES_ENTRY(locw->entry)));
 
   if (!strlen(url)) {
     do_blocking_error_dialog(_("Please enter a valid URL for the download.\n"));
@@ -827,7 +815,7 @@ void on_utube_select (GtkButton *button, gpointer user_data) {
     return;
   }
 
-  dirname=g_strdup(lives_entry_get_text(GTK_ENTRY(locw->dir_entry)));
+  dirname=g_strdup(lives_entry_get_text(LIVES_ENTRY(locw->dir_entry)));
   ensure_isdir(dirname);
   g_snprintf(mainw->vid_dl_dir,PATH_MAX,"%s",dirname);
 
@@ -971,10 +959,7 @@ void count_opening_frames(void) {
 
 
 
-void
-on_stop_clicked (GtkMenuItem     *menuitem,
-		 gpointer         user_data)
-{
+void on_stop_clicked (GtkMenuItem *menuitem, gpointer user_data) {
 // 'enough' button for open, open location, and record audio
   gchar *com;
 
@@ -1070,13 +1055,10 @@ on_save_selection_activate (GtkMenuItem *menuitem, gpointer user_data) {
 }
 
 
-void
-on_close_activate                      (GtkMenuItem     *menuitem,
-                                        gpointer         user_data)
-{
+void on_close_activate (GtkMenuItem *menuitem, gpointer user_data) {
   gchar *warn,*extra;
   gchar title[256];
-  gboolean lmap_errors=FALSE,acurrent=FALSE,only_current=FALSE;
+  boolean lmap_errors=FALSE,acurrent=FALSE,only_current=FALSE;
 
   if (mainw->multitrack!=NULL) {
     if (mainw->multitrack->idlefunc>0) {
@@ -1179,7 +1161,7 @@ on_close_activate                      (GtkMenuItem     *menuitem,
     gchar *laydir;
     gchar *com;
 
-    gboolean has_layout_map=FALSE;
+    boolean has_layout_map=FALSE;
     int i;
 
 
@@ -1407,20 +1389,20 @@ on_export_proj_activate                      (GtkMenuItem     *menuitem,
   gchar *com,*tmp;
 
   if (strlen(mainw->set_name)==0) {
-    gint response;
+    int response;
     gchar new_set_name[128];
     do {
       // prompt for a set name, advise user to save set
       renamew=create_rename_dialog(5);
       lives_widget_show(renamew->dialog);
-      response=lives_dialog_run(GTK_DIALOG(renamew->dialog));
+      response=lives_dialog_run(LIVES_DIALOG(renamew->dialog));
       if (response==GTK_RESPONSE_CANCEL) {
 	lives_widget_destroy(renamew->dialog);
 	g_free(renamew);
 	mainw->cancelled=CANCEL_USER;
 	return;
       }
-      g_snprintf(new_set_name,128,"%s",lives_entry_get_text (GTK_ENTRY (renamew->entry)));
+      g_snprintf(new_set_name,128,"%s",lives_entry_get_text (LIVES_ENTRY (renamew->entry)));
       lives_widget_destroy(renamew->dialog);
       g_free(renamew);
       lives_widget_context_update();
@@ -1560,9 +1542,9 @@ on_quit_activate                      (GtkMenuItem     *menuitem,
 				       gpointer         user_data)
 {
   int i;
-  gboolean has_layout_map=FALSE;
+  boolean has_layout_map=FALSE;
   gchar *com,*esave_dir,*msg;
-  gboolean had_clips=FALSE,legal_set_name;
+  boolean had_clips=FALSE,legal_set_name;
 
   if (user_data!=NULL&&GPOINTER_TO_INT(user_data)==1) mainw->only_close=TRUE;
   else mainw->only_close=FALSE;
@@ -1609,12 +1591,12 @@ on_quit_activate                      (GtkMenuItem     *menuitem,
   if (mainw->clips_available>0) {
     gchar *set_name;
     _entryw *cdsw=create_cds_dialog(1);
-    gint resp;
+    int resp;
     had_clips=TRUE;
     do {
       legal_set_name=TRUE;
       lives_widget_show(cdsw->dialog);
-      resp=lives_dialog_run(GTK_DIALOG(cdsw->dialog));
+      resp=lives_dialog_run(LIVES_DIALOG(cdsw->dialog));
       if (resp==0) {
 	lives_widget_destroy(cdsw->dialog);
 	g_free(cdsw);
@@ -1626,7 +1608,7 @@ on_quit_activate                      (GtkMenuItem     *menuitem,
       }
       if (resp==2) {
 	// save set
-	if ((legal_set_name=is_legal_set_name((set_name=g_strdup(lives_entry_get_text(GTK_ENTRY(cdsw->entry)))),TRUE))) {
+	if ((legal_set_name=is_legal_set_name((set_name=g_strdup(lives_entry_get_text(LIVES_ENTRY(cdsw->entry)))),TRUE))) {
 	  lives_widget_destroy(cdsw->dialog);
 	  g_free(cdsw);
 
@@ -1738,15 +1720,15 @@ on_undo_activate                      (GtkMenuItem     *menuitem,
 				       gpointer         user_data)
 {
   gchar *com;
-  gint ostart=cfile->start;
-  gint oend=cfile->end;
+  int ostart=cfile->start;
+  int oend=cfile->end;
   gchar msg[256];
-  gint current_file=mainw->current_file;
-  gint switch_file=current_file;
-  gint asigned,aendian;
+  int current_file=mainw->current_file;
+  int switch_file=current_file;
+  int asigned,aendian;
 
-  gboolean bad_header=FALSE;
-  gboolean retvalb;
+  boolean bad_header=FALSE;
+  boolean retvalb;
 
   lives_widget_set_sensitive (mainw->undo, FALSE);
   lives_widget_set_sensitive (mainw->redo, TRUE);
@@ -1775,7 +1757,7 @@ on_undo_activate                      (GtkMenuItem     *menuitem,
   }
 
   if (cfile->undo_action==UNDO_CUT||cfile->undo_action==UNDO_DELETE||cfile->undo_action==UNDO_DELETE_AUDIO) {
-    gint reset_achans=0;
+    int reset_achans=0;
     unlink(cfile->info_file);
 
     cfile->arate=cfile->undo_arate;
@@ -2004,7 +1986,7 @@ on_undo_activate                      (GtkMenuItem     *menuitem,
   }
 
   if (cfile->undo_action==UNDO_INSERT||cfile->undo_action==UNDO_MERGE||cfile->undo_action==UNDO_INSERT_WITH_AUDIO) {
-    gboolean ccpd_with_sound=mainw->ccpd_with_sound;
+    boolean ccpd_with_sound=mainw->ccpd_with_sound;
     if (!(cfile->undo_action==UNDO_MERGE&&cfile->insert_start==cfile->undo_start&&cfile->insert_end==cfile->undo_end)) {
       if (cfile->undo_action==UNDO_MERGE) {
 	if (cfile->insert_start==cfile->undo_start) {
@@ -2194,8 +2176,8 @@ on_undo_activate                      (GtkMenuItem     *menuitem,
   }
 
   if (cfile->undo_action==UNDO_RESAMPLE) {
-    cfile->start=(gint)((cfile->start-1)/cfile->fps*cfile->undo1_dbl+1.);
-    if ((cfile->end=(gint) (cfile->end/cfile->fps*cfile->undo1_dbl+.49999))<1) cfile->end=1;
+    cfile->start=(int)((cfile->start-1)/cfile->fps*cfile->undo1_dbl+1.);
+    if ((cfile->end=(int) (cfile->end/cfile->fps*cfile->undo1_dbl+.49999))<1) cfile->end=1;
     cfile->fps+=cfile->undo1_dbl; 
     cfile->undo1_dbl=cfile->fps-cfile->undo1_dbl;
     cfile->fps-=cfile->undo1_dbl;
@@ -2266,9 +2248,9 @@ on_redo_activate                      (GtkMenuItem     *menuitem,
 				       gpointer         user_data)
 {
   gchar *com;
-  gint ostart=cfile->start;
-  gint oend=cfile->end;
-  gint current_file=mainw->current_file;
+  int ostart=cfile->start;
+  int oend=cfile->end;
+  int current_file=mainw->current_file;
   gchar msg[256];
 
   mainw->osc_block=TRUE;
@@ -2451,8 +2433,8 @@ on_copy_activate                      (GtkMenuItem     *menuitem,
                                         gpointer         user_data)
 {
   gchar *com;
-  gint current_file=mainw->current_file;
-  gint start,end;
+  int current_file=mainw->current_file;
+  int start,end;
 
   gchar *text=g_strdup_printf(_ ("Copying frames %d to %d%s to the clipboard..."),cfile->start,cfile->end,
 			      mainw->ccpd_with_sound&&cfile->achans>0?" (with sound)":"");
@@ -2472,7 +2454,7 @@ on_copy_activate                      (GtkMenuItem     *menuitem,
   end=cfile->end;
 
   if (!check_if_non_virtual(mainw->current_file,start,end)) {
-    gboolean retb;
+    boolean retb;
     mainw->cancelled=CANCEL_NONE;
     cfile->progress_start=1;
     cfile->progress_end=count_virtual_frames(cfile->frame_index,start,end);
@@ -2585,7 +2567,7 @@ void
 on_cut_activate                       (GtkMenuItem     *menuitem,
 				       gpointer         user_data)
 {
-  gint current_file=mainw->current_file;
+  int current_file=mainw->current_file;
   on_copy_activate(menuitem, user_data);
   if (mainw->cancelled) {
     return;
@@ -2603,7 +2585,7 @@ void on_paste_as_new_activate                       (GtkMenuItem     *menuitem,
 {
   gchar *com;
   gchar *msg;
-  gint old_file=mainw->current_file,current_file;
+  int old_file=mainw->current_file,current_file;
 
   if (clipboard==NULL) return;
 
@@ -3338,14 +3320,14 @@ void on_insert_activate (GtkButton *button, gpointer user_data) {
   }
 
   g_signal_handler_block(mainw->spinbutton_end,mainw->spin_end_func);
-  lives_spin_button_set_range(GTK_SPIN_BUTTON(mainw->spinbutton_end),cfile->frames==0?0:1,cfile->frames);
-  lives_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_end),cfile->end);
+  lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->spinbutton_end),cfile->frames==0?0:1,cfile->frames);
+  lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end),cfile->end);
   g_signal_handler_unblock(mainw->spinbutton_end,mainw->spin_end_func);
 
 
   g_signal_handler_block(mainw->spinbutton_start,mainw->spin_start_func);
-  lives_spin_button_set_range(GTK_SPIN_BUTTON(mainw->spinbutton_start),cfile->frames==0?0:1,cfile->frames);
-  lives_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_start),cfile->start);
+  lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->spinbutton_start),cfile->frames==0?0:1,cfile->frames);
+  lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start),cfile->start);
   g_signal_handler_unblock(mainw->spinbutton_start,mainw->spin_start_func);
 
   set_undoable (_("Insert"),TRUE);
@@ -3402,9 +3384,9 @@ void
 on_delete_activate                    (GtkMenuItem     *menuitem,
 				       gpointer         user_data)
 {
-  gint frames_cut=cfile->end-cfile->start+1;
-  gint start=cfile->start;
-  gint end=cfile->end;
+  int frames_cut=cfile->end-cfile->start+1;
+  int start=cfile->start;
+  int end=cfile->end;
   gchar *com;
   boolean has_lmap_error=FALSE;
   boolean bad_header=FALSE;
@@ -3413,9 +3395,9 @@ on_delete_activate                    (GtkMenuItem     *menuitem,
   if (mainw->playing_file>-1) return;
 
   if (cfile->start<=1 && cfile->end==cfile->frames) {
-    if (!mainw->osc_auto&&menuitem!=GTK_MENU_ITEM(mainw->cut) && (cfile->achans==0||
-								  ((gdouble)frames_cut/cfile->fps>=cfile->laudio_time && 
-								   mainw->ccpd_with_sound))) {
+    if (!mainw->osc_auto&&menuitem!=LIVES_MENU_ITEM(mainw->cut) && (cfile->achans==0||
+								    ((double)frames_cut/cfile->fps>=cfile->laudio_time && 
+								     mainw->ccpd_with_sound))) {
       if (do_warning_dialog
 	  (_("\nDeleting all frames will close this file.\nAre you sure ?"))) close_current_file(0);
       return;
@@ -3622,13 +3604,13 @@ on_delete_activate                    (GtkMenuItem     *menuitem,
   }
 
   g_signal_handler_block(mainw->spinbutton_end,mainw->spin_end_func);
-  lives_spin_button_set_range(GTK_SPIN_BUTTON(mainw->spinbutton_end),cfile->frames==0?0:1,cfile->frames);
-  lives_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_end),cfile->end);
+  lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->spinbutton_end),cfile->frames==0?0:1,cfile->frames);
+  lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end),cfile->end);
   g_signal_handler_unblock(mainw->spinbutton_end,mainw->spin_end_func);
 
   g_signal_handler_block(mainw->spinbutton_start,mainw->spin_start_func);
-  lives_spin_button_set_range(GTK_SPIN_BUTTON(mainw->spinbutton_start),cfile->frames==0?0:1,cfile->frames);
-  lives_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_start),cfile->start);
+  lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->spinbutton_start),cfile->frames==0?0:1,cfile->frames);
+  lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start),cfile->start);
   g_signal_handler_unblock(mainw->spinbutton_start,mainw->spin_start_func);
 
   // menuitem is NULL if we came here from undo_insert
@@ -3673,8 +3655,8 @@ on_select_all_activate                (GtkMenuItem     *menuitem,
     return;
   }
 
-  lives_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_start),1);
-  lives_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_end),cfile->frames);
+  lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start),1);
+  lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end),cfile->frames);
 
   cfile->start=cfile->frames>0?1:0;
   cfile->end=cfile->frames;
@@ -3691,7 +3673,7 @@ on_select_start_only_activate                (GtkMenuItem     *menuitem,
 					      gpointer         user_data)
 {
   if (mainw->current_file==-1) return;
-  lives_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_end),cfile->start);
+  lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end),cfile->start);
 }
 
 void
@@ -3699,7 +3681,7 @@ on_select_end_only_activate                (GtkMenuItem     *menuitem,
                                         gpointer         user_data)
 {
   if (mainw->current_file==-1) return;
-  lives_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_start),cfile->end);
+  lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start),cfile->end);
 }
 
 
@@ -3709,12 +3691,12 @@ on_select_invert_activate                (GtkMenuItem     *menuitem,
 					  gpointer         user_data)
 {
   if (cfile->start==1) {
-    lives_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_start),cfile->end+1);
-    lives_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_end),cfile->frames);
+    lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start),cfile->end+1);
+    lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end),cfile->frames);
   }
   else {
-    lives_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_end),cfile->start-1);
-    lives_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_start),1);
+    lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end),cfile->start-1);
+    lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start),1);
   }
 
   get_play_times();
@@ -3730,8 +3712,8 @@ on_select_last_activate                (GtkMenuItem     *menuitem,
   if (cfile->undo_start > cfile->frames) cfile->undo_start=cfile->frames;
   if (cfile->undo_end > cfile->frames) cfile->undo_end=cfile->frames;
 
-  lives_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_start),cfile->undo_start);
-  lives_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_end),cfile->undo_end);
+  lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start),cfile->undo_start);
+  lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end),cfile->undo_end);
 
   cfile->start=cfile->undo_start;
   cfile->end=cfile->undo_end;
@@ -3750,8 +3732,8 @@ on_select_new_activate                (GtkMenuItem     *menuitem,
   if (cfile->insert_start > cfile->frames) cfile->insert_start=cfile->frames;
   if (cfile->insert_end > cfile->frames) cfile->insert_end=cfile->frames;
 
-  lives_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_start),cfile->insert_start);
-  lives_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_end),cfile->insert_end);
+  lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start),cfile->insert_start);
+  lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end),cfile->insert_end);
 
   cfile->start=cfile->insert_start;
   cfile->end=cfile->insert_end;
@@ -3766,7 +3748,7 @@ void
 on_select_to_end_activate                (GtkMenuItem     *menuitem,
 					  gpointer         user_data)
 {
-  lives_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_end),cfile->frames);
+  lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end),cfile->frames);
   cfile->end=cfile->frames;
   get_play_times();
   load_end_image(cfile->end);
@@ -3776,7 +3758,7 @@ void
 on_select_from_start_activate                (GtkMenuItem     *menuitem,
 					      gpointer         user_data)
 {
-  lives_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_start),1);
+  lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start),1);
   cfile->start=cfile->frames>0?1:0;
   get_play_times();
   load_start_image(cfile->start);
@@ -3815,7 +3797,7 @@ on_playall_activate                    (GtkMenuItem     *menuitem,
 
   if (mainw->playing_file==-1) {
     if (cfile->proc_ptr!=NULL&&menuitem!=NULL) {
-      on_preview_clicked (GTK_BUTTON (cfile->proc_ptr->preview_button),NULL);
+      on_preview_clicked (LIVES_BUTTON (cfile->proc_ptr->preview_button),NULL);
       return;
     }
 
@@ -3845,7 +3827,7 @@ on_playsel_activate                      (GtkMenuItem     *menuitem,
   if (mainw->current_file<=0) return;
 
   if (cfile->proc_ptr!=NULL&&menuitem!=NULL) {
-    on_preview_clicked (GTK_BUTTON (cfile->proc_ptr->preview_button),NULL);
+    on_preview_clicked (LIVES_BUTTON (cfile->proc_ptr->preview_button),NULL);
     return;
   }
   
@@ -3855,7 +3837,7 @@ on_playsel_activate                      (GtkMenuItem     *menuitem,
   }
 
   if (!mainw->preview) {
-    gint orig_play_frame=calc_frame_from_time(mainw->current_file,cfile->pointer_time);
+    int orig_play_frame=calc_frame_from_time(mainw->current_file,cfile->pointer_time);
     if (orig_play_frame>mainw->play_start&&orig_play_frame<mainw->play_end) {
       mainw->play_start=orig_play_frame;
     }
@@ -3883,7 +3865,7 @@ on_playclip_activate                      (GtkMenuItem     *menuitem,
 					   gpointer         user_data)
 {
   // play the clipboard
-  gint current_file=mainw->current_file;
+  int current_file=mainw->current_file;
   boolean oloop=mainw->loop;
   boolean oloop_cont=mainw->loop_cont;
 
@@ -4038,10 +4020,10 @@ on_record_perf_activate                      (GtkMenuItem     *menuitem,
 
 
 
-gboolean record_toggle_callback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, 
+boolean record_toggle_callback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, 
 				 gpointer user_data) {
   // from osc
-  gboolean start=(gboolean)GPOINTER_TO_INT(user_data);
+  boolean start=(boolean)GPOINTER_TO_INT(user_data);
 
   if ((start&&(!mainw->record||mainw->record_paused))||(!start&&(mainw->record&&!mainw->record_paused))) 
     on_record_perf_activate(NULL,NULL);
@@ -4089,7 +4071,7 @@ on_stop_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
 
 
-gboolean
+boolean
 on_stop_activate_by_del                  (GtkWidget       *widget,
 					  GdkEvent        *event,
 					  gpointer         user_data)
@@ -4184,10 +4166,10 @@ on_encoder_entry_changed (GtkComboBox *combo, gpointer ptr) {
     g_free(new_encoder_name);
 
     if (mainw->is_ready){
-      GtkWindow *twindow=GTK_WINDOW(mainw->LiVES);
-      if (prefsw!=NULL) twindow=GTK_WINDOW(prefsw->prefs_dialog);
-      else if (mainw->multitrack!=NULL) twindow=GTK_WINDOW(mainw->multitrack->window);
-      if (!prefs->show_gui) twindow=(GtkWindow *)NULL;
+      LiVESWindow *twindow=LIVES_WINDOW(mainw->LiVES);
+      if (prefsw!=NULL) twindow=LIVES_WINDOW(prefsw->prefs_dialog);
+      else if (mainw->multitrack!=NULL) twindow=LIVES_WINDOW(mainw->multitrack->window);
+      if (!prefs->show_gui) twindow=(LiVESWindow *)NULL;
       do_error_dialog_with_check_transient(msg,TRUE,0,twindow);
     }
 
@@ -4345,7 +4327,7 @@ on_insfitaudio_toggled                (GtkToggleButton *togglebutton,
 
 
 
-gboolean dirchange_callback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer user_data) {
+boolean dirchange_callback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer user_data) {
   if (mainw->playing_file==-1) return TRUE;
 
   // change play direction
@@ -4355,17 +4337,17 @@ gboolean dirchange_callback (GtkAccelGroup *group, GObject *obj, guint keyval, G
   }
 
   g_signal_handler_block(mainw->spinbutton_pb_fps,mainw->pb_fps_func);
-  lives_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_pb_fps),-cfile->pb_fps);
+  lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps),-cfile->pb_fps);
   g_signal_handler_unblock(mainw->spinbutton_pb_fps,mainw->pb_fps_func);
 
   // make sure this is called, sometimes we switch clips too soon...
-  changed_fps_during_pb (GTK_SPIN_BUTTON(mainw->spinbutton_pb_fps), NULL);
+  changed_fps_during_pb (LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), NULL);
 
   return TRUE;
 }
 
 
-gboolean fps_reset_callback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer user_data) {
+boolean fps_reset_callback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer user_data) {
   // reset playback fps (cfile->pb_fps) to normal fps (cfile->fps)
   // also resync the audio
 
@@ -4380,12 +4362,12 @@ gboolean fps_reset_callback (GtkAccelGroup *group, GObject *obj, guint keyval, G
   }
 
   g_signal_handler_block(mainw->spinbutton_pb_fps,mainw->pb_fps_func);
-  if (cfile->pb_fps>0.) lives_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_pb_fps),cfile->fps);
-  else lives_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_pb_fps),-cfile->fps);
+  if (cfile->pb_fps>0.) lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps),cfile->fps);
+  else lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps),-cfile->fps);
   g_signal_handler_unblock(mainw->spinbutton_pb_fps,mainw->pb_fps_func);
 
   // make sure this is called, sometimes we switch clips too soon...
-  changed_fps_during_pb (GTK_SPIN_BUTTON(mainw->spinbutton_pb_fps), NULL);
+  changed_fps_during_pb (LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), NULL);
 
   if (prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS) {
     resync_audio(cfile->frameno);
@@ -4488,7 +4470,7 @@ on_save_set_activate            (GtkMenuItem     *menuitem,
   gchar *layout_map_file,*layout_map_dir,*new_clips_dir,*current_clips_dir;
   gchar *com,*tmp;
   gchar new_handle[256];
-  gboolean is_append=FALSE; // we will overwrite the target layout.map file
+  boolean is_append=FALSE; // we will overwrite the target layout.map file
   gchar *text;
   gchar *new_dir;
   gchar *cwd;
@@ -4498,11 +4480,11 @@ on_save_set_activate            (GtkMenuItem     *menuitem,
   gchar *ordfile;
   gchar *ord_entry;
   gchar new_set_name[128];
-  gboolean response;
+  boolean response;
   gchar *msg,*extra;
   gchar *dfile,*osetn,*nsetn;
 
-  gboolean got_new_handle=FALSE;
+  boolean got_new_handle=FALSE;
 
   GList *cliplist;
 
@@ -4534,13 +4516,13 @@ on_save_set_activate            (GtkMenuItem     *menuitem,
       // prompt for a set name, advise user to save set
       renamew=create_rename_dialog(2);
       lives_widget_show(renamew->dialog);
-      response=lives_dialog_run(GTK_DIALOG(renamew->dialog));
+      response=lives_dialog_run(LIVES_DIALOG(renamew->dialog));
       if (response==GTK_RESPONSE_CANCEL) {
 	lives_widget_destroy(renamew->dialog);
 	g_free(renamew);
 	return;
       }
-      g_snprintf(new_set_name,128,"%s",lives_entry_get_text (GTK_ENTRY (renamew->entry)));
+      g_snprintf(new_set_name,128,"%s",lives_entry_get_text (LIVES_ENTRY (renamew->entry)));
       lives_widget_destroy(renamew->dialog);
       g_free(renamew);
       lives_widget_context_update();
@@ -4876,7 +4858,7 @@ on_load_set_activate            (GtkMenuItem     *menuitem,
 
 
 
-gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
+boolean on_load_set_ok (GtkButton *button, gpointer user_data) {
   // this is the main clip set loader
 
 
@@ -4903,9 +4885,9 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
   boolean skip_threaded_dialog=(boolean)GPOINTER_TO_INT(user_data);
   boolean needs_update=FALSE;
 
-  gint last_file=-1,new_file=-1;
-  gint current_file=mainw->current_file;
-  gint clipnum=0;
+  int last_file=-1,new_file=-1;
+  int current_file=mainw->current_file;
+  int clipnum=0;
 
 
   threaded_dialog_spin();
@@ -4917,7 +4899,7 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
   if (!strlen(mainw->set_name)) {
     // get new set name from user
 
-    g_snprintf(set_name,128,"%s",lives_entry_get_text(GTK_ENTRY(renamew->entry)));
+    g_snprintf(set_name,128,"%s",lives_entry_get_text(LIVES_ENTRY(renamew->entry)));
 
     // ensure name is valid
     if (!is_legal_set_name(set_name,TRUE)) return !skip_threaded_dialog;
@@ -5139,7 +5121,7 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
     // and we must load the frame_index and locate a suitable decoder plugin
 
     if (load_frame_index(mainw->current_file)) {
-      gboolean next=FALSE;
+      boolean next=FALSE;
       gchar *orig_file_name=g_strdup(cfile->file_name);
 
       // cd to clip directory - so decoder plugins can read temp files
@@ -5244,7 +5226,7 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
     }
 
     get_total_time (cfile);
-    if (cfile->achans) cfile->aseek_pos=(int64_t)((gdouble)(cfile->frameno-1.)/
+    if (cfile->achans) cfile->aseek_pos=(int64_t)((double)(cfile->frameno-1.)/
 					       cfile->fps*cfile->arate*cfile->achans*cfile->asampsize/8);
 
     // add to clip menu
@@ -5294,22 +5276,22 @@ gboolean on_load_set_ok (GtkButton *button, gpointer user_data) {
 void on_cleardisk_activate (GtkWidget *widget, gpointer user_data) {
   // recover disk space
 
-  gint64 bytes=0,fspace;
+  int64_t bytes=0,fspace;
 
   gchar *markerfile;
   gchar **array;
   gchar *com;
 
-  gint current_file=mainw->current_file;
+  int current_file=mainw->current_file;
   int marker_fd;
   int i;
   int retval=0;
 
-  gint64 ds_warn_level=mainw->next_ds_warn_level;
+  int64_t ds_warn_level=mainw->next_ds_warn_level;
 
   mainw->next_ds_warn_level=0; /// < avoid nested warnings
 
-  if (user_data!=NULL) lives_widget_hide(lives_widget_get_toplevel(GTK_WIDGET(user_data)));
+  if (user_data!=NULL) lives_widget_hide(lives_widget_get_toplevel(LIVES_WIDGET(user_data)));
 
   mainw->tried_ds_recover=TRUE; ///< indicates we tried ds recovery already
 
@@ -5441,7 +5423,7 @@ void on_cleardisk_activate (GtkWidget *widget, gpointer user_data) {
     d_print_done();
     do_info_dialog(g_strdup_printf(_("%s of disk space was recovered.\n"), 
 				   lives_format_storage_space_string((uint64_t)bytes)));
-    if (user_data!=NULL) lives_widget_set_sensitive(lives_widget_get_toplevel(GTK_WIDGET(user_data)),FALSE);
+    if (user_data!=NULL) lives_widget_set_sensitive(lives_widget_get_toplevel(LIVES_WIDGET(user_data)),FALSE);
   }
   else d_print_failed();
 
@@ -5464,7 +5446,7 @@ void on_cleardisk_advanced_clicked (GtkWidget *widget, gpointer user_data) {
   do {
     dialog=create_cleardisk_advanced_dialog();
     lives_widget_show_all(dialog);
-    response=lives_dialog_run(GTK_DIALOG(dialog));
+    response=lives_dialog_run(LIVES_DIALOG(dialog));
     lives_widget_destroy(dialog);
     if (response==LIVES_RETRY) prefs->clear_disk_opts=0;
   } while (response==LIVES_RETRY);
@@ -5491,7 +5473,7 @@ on_vj_reset_activate            (GtkMenuItem     *menuitem,
 				 gpointer         user_data)
 {
   int i;
-  gboolean bad_header=FALSE;
+  boolean bad_header=FALSE;
 
   //mainw->soft_debug=TRUE;
 
@@ -5559,7 +5541,7 @@ void on_show_file_info_activate (GtkMenuItem *menuitem, gpointer user_data) {
       g_snprintf(buff,512,"\n  %d",cfile->frames);
 
       if (cfile->frame_index!=NULL) {
-	gint fvirt=count_virtual_frames(cfile->frame_index,1,cfile->frames);
+	int fvirt=count_virtual_frames(cfile->frame_index,1,cfile->frames);
 	gchar *tmp=g_strdup_printf(_("\n(%d virtual)"),fvirt);
 	g_strappend(buff,512,tmp);
 	g_free(tmp);
@@ -5580,7 +5562,7 @@ void on_show_file_info_activate (GtkMenuItem *menuitem, gpointer user_data) {
     text_view_set_text (LIVES_TEXT_VIEW (filew->textview28),buff, -1);
     // file size
     if (cfile->f_size>=0l) {
-      gchar *file_ds=lives_format_storage_space_string((guint64)cfile->f_size);
+      gchar *file_ds=lives_format_storage_space_string((uint64_t)cfile->f_size);
       g_snprintf(buff,512,"\n  %s",file_ds);
       g_free(file_ds);
     }
@@ -5647,7 +5629,7 @@ void
 on_show_clipboard_info_activate            (GtkMenuItem     *menuitem,
 					    gpointer         user_data)
 {
-  gint current_file=mainw->current_file;
+  int current_file=mainw->current_file;
   mainw->current_file=0;
   on_show_file_info_activate(menuitem,user_data);
   mainw->current_file=current_file;
@@ -5704,7 +5686,7 @@ void switch_clip_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
   for (i=1;i<MAX_FILES;i++) {
     if (!(mainw->files[i]==NULL)) {
-      if (GTK_MENU_ITEM(menuitem)==GTK_MENU_ITEM(mainw->files[i]->menuentry)) {
+      if (LIVES_MENU_ITEM(menuitem)==LIVES_MENU_ITEM(mainw->files[i]->menuentry)) {
 	if (!(i==mainw->current_file)) {
 	  switch_clip(0,i);
 	}
@@ -5836,7 +5818,7 @@ donate_activate                     (GtkMenuItem     *menuitem,
 
 void on_fs_preview_clicked (GtkWidget *widget, gpointer user_data) {
   // file selector preview
-  gdouble start_time=0.;
+  double start_time=0.;
 
   uint64_t xwin=0;
 
@@ -5848,17 +5830,17 @@ void on_fs_preview_clicked (GtkWidget *widget, gpointer user_data) {
 
   gchar **array;
 
-  gint preview_frames=1000000000;
-  gint preview_type=GPOINTER_TO_INT (user_data);
+  int preview_frames=1000000000;
+  int preview_type=GPOINTER_TO_INT (user_data);
 
-  gint height=0,width=0;
+  int height=0,width=0;
   int fwidth,fheight,owidth,oheight;
 
   int offs_x,offs_y;
   pid_t pid=lives_getpid();
   int alarm_handle;
   int retval;
-  gboolean timeout;
+  boolean timeout;
 
   gchar *info_file,*thm_dir;
   gchar *file_open_params=NULL;
@@ -5895,12 +5877,12 @@ void on_fs_preview_clicked (GtkWidget *widget, gpointer user_data) {
   if (preview_type==3) {
     // open selection
     start_time=mainw->fx1_val;
-    preview_frames=(gint)mainw->fx2_val;
+    preview_frames=(int)mainw->fx2_val;
   }
   else {
     // open file
     g_snprintf(file_name,PATH_MAX,"%s",
-	       (tmp=g_filename_to_utf8((tmp2=lives_file_chooser_get_filename (GTK_FILE_CHOOSER(lives_widget_get_toplevel(widget)))),
+	       (tmp=g_filename_to_utf8((tmp2=lives_file_chooser_get_filename (LIVES_FILE_CHOOSER(lives_widget_get_toplevel(widget)))),
 				       -1,NULL,NULL,NULL)));
     g_free(tmp); g_free(tmp2);
     
@@ -5999,7 +5981,7 @@ void on_fs_preview_clicked (GtkWidget *widget, gpointer user_data) {
 	  height=oheight;
 	}
 
-	gtk_alignment_set(GTK_ALIGNMENT(mainw->fs_playalign),0.5,
+	lives_alignment_set(LIVES_ALIGNMENT(mainw->fs_playalign),0.5,
 			  0.5,1.,1.);
 
 	lives_widget_context_update();
@@ -6172,7 +6154,7 @@ void on_fs_preview_clicked (GtkWidget *widget, gpointer user_data) {
 	height=oheight;
       }
       
-      gtk_alignment_set(GTK_ALIGNMENT(mainw->fs_playalign),0.5,
+      lives_alignment_set(LIVES_ALIGNMENT(mainw->fs_playalign),0.5,
 			0.5,0.,
 			(float)height/(float)fheight);
       
@@ -6229,7 +6211,7 @@ void on_fs_preview_clicked (GtkWidget *widget, gpointer user_data) {
     
     g_free(tmp);
 
-    if (preview_type!=2) gtk_widget_set_app_paintable(mainw->fs_playarea,TRUE);
+    if (preview_type!=2) lives_widget_set_app_paintable(mainw->fs_playarea,TRUE);
     
     mainw->com_failed=FALSE;
 
@@ -6289,7 +6271,7 @@ void on_ok_file_open_clicked(GtkFileChooser *chooser, GSList *fnames) {
     fnames=lives_file_chooser_get_filenames (chooser);
 
     end_fs_preview();
-    lives_widget_destroy(GTK_WIDGET(chooser));
+    lives_widget_destroy(LIVES_WIDGET(chooser));
 
     if (fnames==NULL) return;
 
@@ -6341,7 +6323,7 @@ void on_ok_file_open_clicked(GtkFileChooser *chooser, GSList *fnames) {
 
 
 // files dragged onto target from outside - try to open them
-void drag_from_outside(GtkWidget *widget, GdkDragContext *dcon, gint x, gint y, 
+void drag_from_outside(GtkWidget *widget, GdkDragContext *dcon, int x, int y, 
 		       GtkSelectionData *data, guint info, guint time, gpointer user_data) {
   GSList *fnames=NULL;
 #if GTK_CHECK_VERSION(3,0,0)
@@ -6399,7 +6381,7 @@ void on_opensel_range_ok_clicked (GtkButton *button, gpointer user_data) {
 
   mainw->fs_playarea=NULL;
   mainw->img_concat_clip=-1;
-  open_file_sel(file_name,mainw->fx1_val,(gint)mainw->fx2_val);
+  open_file_sel(file_name,mainw->fx1_val,(int)mainw->fx2_val);
 
   if (mainw->multitrack!=NULL) {
     polymorph(mainw->multitrack,POLY_NONE);
@@ -6491,7 +6473,7 @@ void on_open_new_audio_clicked (GtkFileChooser *chooser, gpointer user_data) {
   g_snprintf(mainw->audio_dir,PATH_MAX,"%s",file_name);
   get_dirname(mainw->audio_dir);
   end_fs_preview();
-  lives_widget_destroy(GTK_WIDGET(chooser));
+  lives_widget_destroy(LIVES_WIDGET(chooser));
   lives_widget_context_update();
   mainw->fs_playarea=NULL;
 
@@ -6746,8 +6728,8 @@ void end_fs_preview(void) {
 
     mainw->in_fs_preview=FALSE;
 
-    if (mainw->fs_playarea!=NULL&&(GTK_IS_WIDGET(mainw->fs_playarea))) {
-      gtk_widget_set_app_paintable(mainw->fs_playarea,FALSE);
+    if (mainw->fs_playarea!=NULL&&(LIVES_IS_WIDGET(mainw->fs_playarea))) {
+      lives_widget_set_app_paintable(mainw->fs_playarea,FALSE);
     }
   }
 }
@@ -6760,13 +6742,13 @@ void on_save_textview_clicked (GtkButton *button, gpointer user_data) {
   gchar *btext;
   gchar *save_file;
 
-  lives_widget_hide(lives_widget_get_toplevel(GTK_WIDGET(button)));
+  lives_widget_hide(lives_widget_get_toplevel(LIVES_WIDGET(button)));
   lives_widget_context_update();
 
   save_file=choose_file(NULL,NULL,filt,LIVES_FILE_CHOOSER_ACTION_SAVE,NULL,NULL);
 
   if (save_file==NULL) {
-    lives_widget_show(lives_widget_get_toplevel(GTK_WIDGET(button)));
+    lives_widget_show(lives_widget_get_toplevel(LIVES_WIDGET(button)));
     return;
   }
 
@@ -6775,7 +6757,7 @@ void on_save_textview_clicked (GtkButton *button, gpointer user_data) {
 #else
   if ((fd=creat(save_file,S_IRUSR|S_IWUSR))==-1) {
 #endif
-    lives_widget_show(lives_widget_get_toplevel(GTK_WIDGET(button)));
+    lives_widget_show(lives_widget_get_toplevel(LIVES_WIDGET(button)));
     do_write_failed_error_s(save_file,g_strerror(errno));
     g_free(save_file);
     return;
@@ -7081,7 +7063,7 @@ on_details_button_clicked            (GtkButton       *button,
 void on_full_screen_pressed (GtkButton *button,
 			     gpointer user_data) {
   // toolbar button (full screen)
-  lives_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mainw->full_screen),!mainw->fs);
+  lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->full_screen),!mainw->fs);
 }
 
 
@@ -7107,7 +7089,7 @@ void on_full_screen_activate (GtkMenuItem *menuitem, gpointer user_data) {
   lives_widget_show(fs_img);
   if (!mainw->fs) {
     if (g_file_test(buff,G_FILE_TEST_EXISTS)) {
-      GdkPixbuf *pixbuf=lives_image_get_pixbuf(GTK_IMAGE(fs_img));
+      GdkPixbuf *pixbuf=lives_image_get_pixbuf(LIVES_IMAGE(fs_img));
       gdk_pixbuf_saturate_and_pixelate(pixbuf,pixbuf,0.2,FALSE);
     }
     lives_widget_set_tooltip_text(mainw->t_fullscreen,_("Fullscreen playback (f)"));
@@ -7138,7 +7120,7 @@ void on_full_screen_activate (GtkMenuItem *menuitem, gpointer user_data) {
 	  make_play_window();
 	  if (mainw->play_window!=NULL) {
 	    hide_cursor(lives_widget_get_xwindow(mainw->play_window));
-	    gtk_widget_set_app_paintable(mainw->play_window,TRUE);
+	    lives_widget_set_app_paintable(mainw->play_window,TRUE);
 	  }
 	}
 	if (cfile->frames==1||cfile->play_paused) {
@@ -7199,7 +7181,7 @@ void on_full_screen_activate (GtkMenuItem *menuitem, gpointer user_data) {
 	// separate window
 
 	// multi monitors don't like this it seems, breaks the window
-	lives_window_unfullscreen(GTK_WINDOW(mainw->play_window));
+	lives_window_unfullscreen(LIVES_WINDOW(mainw->play_window));
 
 	if (!mainw->faded) {
 	  unfade_background();
@@ -7215,13 +7197,13 @@ void on_full_screen_activate (GtkMenuItem *menuitem, gpointer user_data) {
 	else xtrabit=g_strdup("");
 	title=g_strdup_printf(_("LiVES: - Play Window%s"),xtrabit);
 	if (mainw->play_window!=NULL)
-	  lives_window_set_title (GTK_WINDOW (mainw->play_window), title);
+	  lives_window_set_title (LIVES_WINDOW (mainw->play_window), title);
 	g_free(title);
 	g_free(xtrabit);
 
 	if (mainw->opwx>-1) {
 	  //opwx and opwy were stored when we first switched to full screen
-	  lives_window_move (GTK_WINDOW (mainw->play_window), mainw->opwx, mainw->opwy);
+	  lives_window_move (LIVES_WINDOW (mainw->play_window), mainw->opwx, mainw->opwy);
 	  mainw->opwx=-1;
 	  mainw->opwy=-1;
 	}
@@ -7231,7 +7213,7 @@ void on_full_screen_activate (GtkMenuItem *menuitem, gpointer user_data) {
 	  make_play_window();
 	  if (mainw->play_window!=NULL) {
 	    hide_cursor(lives_widget_get_xwindow(mainw->play_window));
-	    gtk_widget_set_app_paintable(mainw->play_window,TRUE);
+	    lives_widget_set_app_paintable(mainw->play_window,TRUE);
 	  }
 	}
 	if (mainw->multitrack==NULL&&(cfile->frames==1||cfile->play_paused)) {
@@ -7297,7 +7279,7 @@ void on_full_screen_activate (GtkMenuItem *menuitem, gpointer user_data) {
 void on_double_size_pressed (GtkButton *button,
 			     gpointer user_data) {
   // toolbar button (separate window)
-  lives_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mainw->dsize),!mainw->double_size);
+  lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->dsize),!mainw->double_size);
 }
 
 
@@ -7336,7 +7318,7 @@ on_double_size_activate               (GtkMenuItem     *menuitem,
     }
     
     if (g_file_test(buff,G_FILE_TEST_EXISTS)) {
-      GdkPixbuf *pixbuf=lives_image_get_pixbuf(GTK_IMAGE(sngl_img));
+      GdkPixbuf *pixbuf=lives_image_get_pixbuf(LIVES_IMAGE(sngl_img));
       if (pixbuf!=NULL) gdk_pixbuf_saturate_and_pixelate(pixbuf,pixbuf,0.2,FALSE);
     }
     
@@ -7363,7 +7345,7 @@ on_double_size_activate               (GtkMenuItem     *menuitem,
 	else xtrabit=g_strdup("");
 	title=g_strdup_printf(_("LiVES: - Play Window%s"),xtrabit);
 	if (mainw->play_window!=NULL)
-	  lives_window_set_title (GTK_WINDOW (mainw->play_window), title);
+	  lives_window_set_title (LIVES_WINDOW (mainw->play_window), title);
 	g_free(title);
 	g_free(xtrabit);
       }
@@ -7374,7 +7356,7 @@ on_double_size_activate               (GtkMenuItem     *menuitem,
 	make_play_window();
 	if (mainw->play_window!=NULL) {
 	  hide_cursor(lives_widget_get_xwindow(mainw->play_window));
-	  gtk_widget_set_app_paintable(mainw->play_window,TRUE);
+	  lives_widget_set_app_paintable(mainw->play_window,TRUE);
 	}
       }
       if (cfile->frames==1||cfile->play_paused) {
@@ -7431,10 +7413,10 @@ void on_sepwin_pressed (GtkButton *button, gpointer user_data) {
 
   // toolbar button (separate window)
   if (mainw->multitrack!=NULL) {
-    lives_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mainw->multitrack->sepwin),!mainw->sep_win);
-    lives_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mainw->sepwin),mainw->sep_win);
+    lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->multitrack->sepwin),!mainw->sep_win);
+    lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->sepwin),mainw->sep_win);
   }
-  else lives_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mainw->sepwin),!mainw->sep_win);
+  else lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->sepwin),!mainw->sep_win);
 }
 
 
@@ -7469,9 +7451,9 @@ void on_sepwin_activate (GtkMenuItem *menuitem, gpointer user_data) {
   }
   else {
     if (g_file_test(buff,G_FILE_TEST_EXISTS)) {
-      GdkPixbuf *pixbuf=lives_image_get_pixbuf(GTK_IMAGE(sep_img));
+      GdkPixbuf *pixbuf=lives_image_get_pixbuf(LIVES_IMAGE(sep_img));
       if (pixbuf!=NULL) gdk_pixbuf_saturate_and_pixelate(pixbuf,pixbuf,0.2,FALSE);
-      pixbuf=lives_image_get_pixbuf(GTK_IMAGE(sep_img2));
+      pixbuf=lives_image_get_pixbuf(LIVES_IMAGE(sep_img2));
       if (pixbuf!=NULL) gdk_pixbuf_saturate_and_pixelate(pixbuf,pixbuf,0.2,FALSE);
     }
     lives_widget_set_tooltip_text(mainw->m_sepwinbutton,_("Show the play window (s)"));
@@ -7557,7 +7539,7 @@ void on_sepwin_activate (GtkMenuItem *menuitem, gpointer user_data) {
 	  mainw->pheight=mainw->vpp->fheight;
 
 	  if (!(mainw->vpp->capabilities&VPP_LOCAL_DISPLAY)) {
-	    lives_window_set_title (GTK_WINDOW (mainw->play_window),_("LiVES: - Streaming"));
+	    lives_window_set_title (LIVES_WINDOW (mainw->play_window),_("LiVES: - Streaming"));
 	    unfade_background();
 	  }
 
@@ -7567,7 +7549,7 @@ void on_sepwin_activate (GtkMenuItem *menuitem, gpointer user_data) {
 	
 	if (mainw->play_window!=NULL&&GDK_IS_WINDOW(lives_widget_get_xwindow(mainw->play_window))) {
 	  hide_cursor(lives_widget_get_xwindow(mainw->play_window));
-	  gtk_widget_set_app_paintable(mainw->play_window,TRUE);
+	  lives_widget_set_app_paintable(mainw->play_window,TRUE);
 	}
 	if (cfile->frames==1||cfile->play_paused) {
 	  lives_widget_context_update();
@@ -7695,7 +7677,7 @@ on_sticky_activate               (GtkMenuItem     *menuitem,
 	if (mainw->sepwin_scale!=100.) xtrabit=g_strdup_printf(_(" (%d %% scale)"),(int)mainw->sepwin_scale);
 	else xtrabit=g_strdup("");
 	title=g_strdup_printf(_("LiVES: - Play Window%s"),xtrabit);
-	lives_window_set_title (GTK_WINDOW (mainw->play_window), title);
+	lives_window_set_title (LIVES_WINDOW (mainw->play_window), title);
 	g_free(title);
 	g_free(xtrabit);
       }
@@ -7715,7 +7697,7 @@ on_sticky_activate               (GtkMenuItem     *menuitem,
 							    (mainw->multitrack==NULL?mainw->LiVES:
 							     mainw->multitrack->window)),xtrabit);
 	  if (mainw->play_window!=NULL)
-	    lives_window_set_title(GTK_WINDOW(mainw->play_window),title);
+	    lives_window_set_title(LIVES_WINDOW(mainw->play_window),title);
 	  g_free(title);
 	  g_free(xtrabit);
 	}
@@ -7731,7 +7713,7 @@ void on_fade_pressed (GtkButton *button,
 {
   // toolbar button (unblank background)
   if (mainw->fs&&(mainw->play_window==NULL||prefs->play_monitor==prefs->gui_monitor)) return;
-  lives_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mainw->fade),!mainw->faded);
+  lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->fade),!mainw->faded);
 }
 
 
@@ -7764,7 +7746,7 @@ void on_showsubs_toggled(GObject *obj, gpointer user_data) {
 
 
 void on_boolean_toggled(GObject *obj, gpointer user_data) {
-  gboolean *ppref=(gboolean *)user_data;
+  boolean *ppref=(boolean *)user_data;
   *ppref=!*ppref;
 }
 
@@ -7785,10 +7767,10 @@ on_loop_button_activate                (GtkMenuItem     *menuitem,
 {
   if (mainw->multitrack!=NULL) {
     g_signal_handler_block (mainw->multitrack->loop_continue, mainw->multitrack->loop_cont_func);
-    lives_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mainw->multitrack->loop_continue),!mainw->loop_cont);
+    lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->multitrack->loop_continue),!mainw->loop_cont);
     g_signal_handler_unblock (mainw->multitrack->loop_continue, mainw->multitrack->loop_cont_func);
   }
-  lives_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mainw->loop_continue), !mainw->loop_cont);
+  lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->loop_continue), !mainw->loop_cont);
 }
 
 
@@ -7813,7 +7795,7 @@ on_loop_cont_activate                (GtkMenuItem     *menuitem,
   }
   else {
     if (g_file_test(buff,G_FILE_TEST_EXISTS)) {
-      GdkPixbuf *pixbuf=lives_image_get_pixbuf(GTK_IMAGE(loop_img));
+      GdkPixbuf *pixbuf=lives_image_get_pixbuf(LIVES_IMAGE(loop_img));
       if (pixbuf!=NULL) gdk_pixbuf_saturate_and_pixelate(pixbuf,pixbuf,0.2,FALSE);
     }
     lives_widget_set_tooltip_text(mainw->m_loopbutton,_("Switch continuous looping on (o)"));
@@ -7884,15 +7866,15 @@ on_mute_button_activate                (GtkMenuItem     *menuitem,
 {
   if (mainw->multitrack!=NULL) {
     g_signal_handler_block (mainw->multitrack->mute_audio, mainw->multitrack->mute_audio_func);
-    lives_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mainw->multitrack->mute_audio),!mainw->mute);
+    lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->multitrack->mute_audio),!mainw->mute);
     g_signal_handler_unblock (mainw->multitrack->mute_audio, mainw->multitrack->mute_audio_func);
   }
-  lives_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mainw->mute_audio), !mainw->mute);
+  lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->mute_audio), !mainw->mute);
 }
 
-gboolean mute_audio_callback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer user_data)
+boolean mute_audio_callback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer user_data)
 {
-  lives_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mainw->mute_audio), !mainw->mute);
+  lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->mute_audio), !mainw->mute);
   return TRUE;
 }
 
@@ -7921,10 +7903,10 @@ on_mute_activate                (GtkMenuItem     *menuitem,
   }
   else {
     if (g_file_test(buff,G_FILE_TEST_EXISTS)) {
-      GdkPixbuf *pixbuf=lives_image_get_pixbuf(GTK_IMAGE(mute_img));
+      GdkPixbuf *pixbuf=lives_image_get_pixbuf(LIVES_IMAGE(mute_img));
       if (pixbuf!=NULL) gdk_pixbuf_saturate_and_pixelate(pixbuf,pixbuf,0.2,FALSE);
       if (mainw->preview_box!=NULL) {
-	pixbuf=lives_image_get_pixbuf(GTK_IMAGE(mute_img2));
+	pixbuf=lives_image_get_pixbuf(LIVES_IMAGE(mute_img2));
 	if (pixbuf!=NULL) gdk_pixbuf_saturate_and_pixelate(pixbuf,pixbuf,0.2,FALSE);
       }
     }
@@ -7938,7 +7920,7 @@ on_mute_activate                (GtkMenuItem     *menuitem,
 
   if (mainw->preview_box!=NULL) {
     lives_widget_show(mute_img2);
-    //gtk_button_set_image(GTK_BUTTON(mainw->p_mutebutton),mute_img2); // doesn't work - stupid gtk+
+    //gtk_button_set_image(GTK_BUTTON(mainw->p_mutebutton),mute_img2); // doesn't work (gtk+ bug ?)
     lives_widget_queue_draw(mainw->p_mutebutton);
     lives_widget_queue_draw(mute_img2);
   }
@@ -7974,16 +7956,16 @@ on_spin_value_changed           (GtkSpinButton   *spinbutton,
   // TODO - use array
   switch (GPOINTER_TO_INT (user_data)) {
   case 1 :
-    mainw->fx1_val=lives_spin_button_get_value(GTK_SPIN_BUTTON(spinbutton));
+    mainw->fx1_val=lives_spin_button_get_value(LIVES_SPIN_BUTTON(spinbutton));
     break;
   case 2 :
-    mainw->fx2_val=lives_spin_button_get_value(GTK_SPIN_BUTTON(spinbutton));
+    mainw->fx2_val=lives_spin_button_get_value(LIVES_SPIN_BUTTON(spinbutton));
     break;
   case 3 :
-    mainw->fx3_val=lives_spin_button_get_value(GTK_SPIN_BUTTON(spinbutton));
+    mainw->fx3_val=lives_spin_button_get_value(LIVES_SPIN_BUTTON(spinbutton));
     break;
   case 4 :
-    mainw->fx4_val=lives_spin_button_get_value(GTK_SPIN_BUTTON(spinbutton));
+    mainw->fx4_val=lives_spin_button_get_value(LIVES_SPIN_BUTTON(spinbutton));
     break;
   }
 }
@@ -7997,16 +7979,16 @@ on_spin_start_value_changed           (GtkSpinButton   *spinbutton,
   // TODO - use array
   switch (GPOINTER_TO_INT (user_data)) {
   case 1 :
-    mainw->fx1_start=lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON(spinbutton));
+    mainw->fx1_start=lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton));
     break;
   case 2 :
-    mainw->fx2_start=lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON(spinbutton));
+    mainw->fx2_start=lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton));
     break;
   case 3 :
-    mainw->fx3_start=lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON(spinbutton));
+    mainw->fx3_start=lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton));
     break;
   case 4 :
-    mainw->fx4_start=lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON(spinbutton));
+    mainw->fx4_start=lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton));
     break;
   }
 }
@@ -8018,16 +8000,16 @@ on_spin_step_value_changed           (GtkSpinButton   *spinbutton,
   // TODO - use array
   switch (GPOINTER_TO_INT (user_data)) {
   case 1 :
-    mainw->fx1_step=lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON(spinbutton));
+    mainw->fx1_step=lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton));
     break;
   case 2 :
-    mainw->fx2_step=lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON(spinbutton));
+    mainw->fx2_step=lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton));
     break;
   case 3 :
-    mainw->fx3_step=lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON(spinbutton));
+    mainw->fx3_step=lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton));
     break;
   case 4 :
-    mainw->fx4_step=lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON(spinbutton));
+    mainw->fx4_step=lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton));
     break;
   }
 }
@@ -8040,16 +8022,16 @@ on_spin_end_value_changed           (GtkSpinButton   *spinbutton,
   // TODO - use array
   switch (GPOINTER_TO_INT (user_data)) {
   case 1 :
-    mainw->fx1_end=lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON(spinbutton));
+    mainw->fx1_end=lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton));
     break;
   case 2 :
-    mainw->fx2_end=lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON(spinbutton));
+    mainw->fx2_end=lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton));
     break;
   case 3 :
-    mainw->fx3_end=lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON(spinbutton));
+    mainw->fx3_end=lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton));
     break;
   case 4 :
-    mainw->fx4_end=lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON(spinbutton));
+    mainw->fx4_end=lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton));
     break;
   }
 }
@@ -8063,7 +8045,7 @@ on_rev_clipboard_activate                (GtkMenuItem     *menuitem,
   // reverse the clipboard
   gchar *com;
   
-  gint current_file=mainw->current_file;
+  int current_file=mainw->current_file;
   mainw->current_file=0;
 
   d_print(_ ("Reversing clipboard..."));
@@ -8302,11 +8284,11 @@ on_load_cdtrack_ok_clicked                (GtkButton     *button,
 {
   gchar *com,*mesg;
   gchar **array;
-  gboolean was_new=FALSE;
-  gint new_file=mainw->first_free_file;
-  gint asigned,endian;
-  gboolean has_lmap_error=FALSE;
-  gboolean bad_header=FALSE;
+  boolean was_new=FALSE;
+  int new_file=mainw->first_free_file;
+  int asigned,endian;
+  boolean has_lmap_error=FALSE;
+  boolean bad_header=FALSE;
 
   lives_general_button_clicked(button,NULL);
 
@@ -8613,13 +8595,13 @@ void popup_lmap_errors(GtkMenuItem *menuitem, gpointer user_data) {
 
   gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area), GTK_BUTTONBOX_SPREAD);
 
-  vbox = lives_dialog_get_content_area(GTK_DIALOG(textwindow->dialog));
+  vbox = lives_dialog_get_content_area(LIVES_DIALOG(textwindow->dialog));
 
   add_warn_check(LIVES_BOX(vbox),WARN_MASK_LAYOUT_POPUP);
 
   button = lives_button_new_with_mnemonic (_("Close _Window"));
 
-  lives_dialog_add_action_widget (GTK_DIALOG (textwindow->dialog), button, GTK_RESPONSE_OK);
+  lives_dialog_add_action_widget (LIVES_DIALOG (textwindow->dialog), button, GTK_RESPONSE_OK);
 
   g_signal_connect (GTK_OBJECT (button), "clicked",
 		    G_CALLBACK (lives_general_button_clicked),
@@ -8641,7 +8623,7 @@ void popup_lmap_errors(GtkMenuItem *menuitem, gpointer user_data) {
 
   textwindow->delete_button = lives_button_new_with_mnemonic (_("_Delete affected layouts"));
 
-  lives_dialog_add_action_widget (GTK_DIALOG (textwindow->dialog), textwindow->delete_button, GTK_RESPONSE_CANCEL);
+  lives_dialog_add_action_widget (LIVES_DIALOG (textwindow->dialog), textwindow->delete_button, GTK_RESPONSE_CANCEL);
 
   lives_container_set_border_width (LIVES_CONTAINER (textwindow->delete_button), widget_opts.border_width);
   lives_widget_set_can_focus_and_default (textwindow->delete_button);
@@ -8671,10 +8653,10 @@ on_rename_set_name                   (GtkButton       *button,
 				      gpointer         user_data)
 {
   gchar title[256];
-  gboolean bad_header=FALSE;
+  boolean bad_header=FALSE;
 
   if (user_data==NULL) {
-    g_snprintf(title,256,"%s",lives_entry_get_text(GTK_ENTRY(renamew->entry)));
+    g_snprintf(title,256,"%s",lives_entry_get_text(LIVES_ENTRY(renamew->entry)));
     lives_widget_destroy(renamew->dialog);
     g_free(renamew);
   }
@@ -8714,7 +8696,7 @@ void on_toy_activate  (GtkMenuItem *menuitem, gpointer user_data) {
     // old status
   case LIVES_TOY_AUTOLIVES:
     g_signal_handler_block (mainw->toy_autolives, mainw->toy_func_autolives);
-    lives_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mainw->toy_autolives),FALSE);
+    lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->toy_autolives),FALSE);
     g_signal_handler_unblock (mainw->toy_autolives, mainw->toy_func_autolives);
 
 #ifndef IS_MINGW
@@ -8731,7 +8713,7 @@ void on_toy_activate  (GtkMenuItem *menuitem, gpointer user_data) {
 
   case LIVES_TOY_MAD_FRAMES:
     g_signal_handler_block (mainw->toy_random_frames, mainw->toy_func_random_frames);
-    lives_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mainw->toy_random_frames),FALSE);
+    lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->toy_random_frames),FALSE);
     g_signal_handler_unblock (mainw->toy_random_frames, mainw->toy_func_random_frames);
     if (mainw->playing_file>-1) {
       if (mainw->faded) {
@@ -8744,12 +8726,12 @@ void on_toy_activate  (GtkMenuItem *menuitem, gpointer user_data) {
     break;
   case LIVES_TOY_TV:
     g_signal_handler_block (mainw->toy_tv, mainw->toy_func_lives_tv);
-    lives_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mainw->toy_tv),FALSE);
+    lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->toy_tv),FALSE);
     g_signal_handler_unblock (mainw->toy_tv, mainw->toy_func_lives_tv);
     break;
   default:
     g_signal_handler_block (mainw->toy_none, mainw->toy_func_none);
-    lives_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mainw->toy_none),FALSE);
+    lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->toy_none),FALSE);
     g_signal_handler_unblock (mainw->toy_none, mainw->toy_func_none);
     break;
   }
@@ -8759,14 +8741,14 @@ void on_toy_activate  (GtkMenuItem *menuitem, gpointer user_data) {
   switch (mainw->toy_type) {
   case LIVES_TOY_NONE:
     g_signal_handler_block (mainw->toy_none, mainw->toy_func_none);
-    lives_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mainw->toy_none),TRUE);
+    lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->toy_none),TRUE);
     g_signal_handler_unblock (mainw->toy_none, mainw->toy_func_none);
     return;
 #ifdef ENABLE_OSC
   case LIVES_TOY_AUTOLIVES:
     if (mainw->current_file<1) {
       do_autolives_needs_clips_error();
-      lives_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mainw->toy_none),TRUE);
+      lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->toy_none),TRUE);
       return;
     }
 
@@ -8843,7 +8825,7 @@ void on_toy_activate  (GtkMenuItem *menuitem, gpointer user_data) {
     }
     else {
       // keep it
-      gint current_file=mainw->current_file;
+      int current_file=mainw->current_file;
       gchar *com=g_strdup_printf("%s commit_audio \"%s\"",prefs->backend,cfile->handle);
       cfile->start=1;
       get_frame_count(mainw->current_file);
@@ -8900,21 +8882,21 @@ void
 on_spinbutton_start_value_changed          (GtkSpinButton   *spinbutton,
 					    gpointer         user_data)
 {
-  gint start,ostart=cfile->start;
+  int start,ostart=cfile->start;
 
   if (mainw->playing_file==-1&&mainw->current_file==0) return;
 
-  if ((start=lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON(spinbutton)))==cfile->start) return;
+  if ((start=lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton)))==cfile->start) return;
   cfile->start=start;
 
   if (mainw->selwidth_locked) {
     cfile->end+=cfile->start-ostart;
     if (cfile->end>cfile->frames) {
-      lives_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_start),cfile->start-cfile->end+cfile->frames);
+      lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start),cfile->start-cfile->end+cfile->frames);
     }
     else {
       mainw->selwidth_locked=FALSE;
-      lives_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_end),cfile->end);
+      lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end),cfile->end);
       load_end_image (cfile->end);
       mainw->selwidth_locked=TRUE;
     }
@@ -8932,7 +8914,7 @@ on_spinbutton_start_value_changed          (GtkSpinButton   *spinbutton,
   load_start_image(cfile->start);
 
   if (cfile->start>cfile->end) {
-    lives_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_end),cfile->start);
+    lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end),cfile->start);
   }
   set_sel_label(mainw->sel_label);
   get_play_times();
@@ -8949,22 +8931,22 @@ void
 on_spinbutton_end_value_changed          (GtkSpinButton   *spinbutton,
 					  gpointer         user_data)
 {
-  gint end,oend=cfile->end;
+  int end,oend=cfile->end;
 
   if (mainw->playing_file==-1&&mainw->current_file==0) return;
 
 
-  if ((end=lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON(spinbutton)))==cfile->end) return;
+  if ((end=lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton)))==cfile->end) return;
   cfile->end=end;
 
   if (mainw->selwidth_locked) {
     cfile->start+=cfile->end-oend;
     if (cfile->start<1) {
-      lives_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_end),cfile->end-cfile->start+1);
+      lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end),cfile->end-cfile->start+1);
     }
     else {
       mainw->selwidth_locked=FALSE;
-      lives_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_start),cfile->start);
+      lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start),cfile->start);
       load_start_image (cfile->start);
       mainw->selwidth_locked=TRUE;
     }
@@ -8983,7 +8965,7 @@ on_spinbutton_end_value_changed          (GtkSpinButton   *spinbutton,
   load_end_image(cfile->end);
 
   if (cfile->end<cfile->start) {
-    lives_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_start),cfile->end);
+    lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start),cfile->end);
   }
 
   set_sel_label(mainw->sel_label);
@@ -9009,8 +8991,8 @@ boolean expose_vid_event (GtkWidget *widget, GdkEventExpose *event) {
   boolean dest_cr=TRUE;
 #endif
 
-  gint ex,ey,ew,eh;
-  gint width;
+  int ex,ey,ew,eh;
+  int width;
 
   if (mainw->recoverable_layout) return FALSE;
 
@@ -9205,7 +9187,7 @@ boolean expose_laud_event (GtkWidget *widget, GdkEventExpose *event) {
   lives_painter_t *cr;
   boolean need_cr=TRUE;
 #endif
-  gint ex,ey,ew,eh;
+  int ex,ey,ew,eh;
 
   if (mainw->recoverable_layout) return FALSE;
 
@@ -9254,7 +9236,7 @@ boolean expose_raud_event (GtkWidget *widget, GdkEventExpose *event) {
   lives_painter_t *cr;
   boolean need_cr=TRUE;
 #endif
-  gint ex,ey,ew,eh;
+  int ex,ey,ew,eh;
 
   if (mainw->recoverable_layout) return FALSE;
 
@@ -9342,7 +9324,7 @@ boolean config_event (GtkWidget *widget, GdkEventConfigure *event, gpointer user
 
 void on_effects_paused (GtkButton *button, gpointer user_data) {
   gchar *com=NULL;
-  gint64 xticks;
+  int64_t xticks;
 #ifdef IS_MINGW
   int pid;
 #endif
@@ -9374,8 +9356,8 @@ void on_effects_paused (GtkButton *button, gpointer user_data) {
       com=NULL;
 
       if (!cfile->opening) {
-	lives_button_set_label(GTK_BUTTON(button),_ ("Resume"));
-	lives_label_set_text(GTK_LABEL(cfile->proc_ptr->label2),_ ("\nPaused\n(click Resume to continue processing)"));
+	lives_button_set_label(LIVES_BUTTON(button),_ ("Resume"));
+	lives_label_set_text(LIVES_LABEL(cfile->proc_ptr->label2),_ ("\nPaused\n(click Resume to continue processing)"));
 	d_print(_ ("paused..."));
       }
     }
@@ -9403,8 +9385,8 @@ void on_effects_paused (GtkButton *button, gpointer user_data) {
       com=NULL;
 
       if (!cfile->opening) {
-	lives_button_set_label(GTK_BUTTON(button),_ ("Pause"));
-	lives_label_set_text(GTK_LABEL(cfile->proc_ptr->label2),_ ("\nPlease Wait"));
+	lives_button_set_label(LIVES_BUTTON(button),_ ("Pause"));
+	lives_label_set_text(LIVES_LABEL(cfile->proc_ptr->label2),_ ("\nPlease Wait"));
 	d_print(_ ("resumed..."));
       }
     }
@@ -9419,11 +9401,11 @@ void on_effects_paused (GtkButton *button, gpointer user_data) {
       mainw->timeout_ticks-=xticks;
       com=g_strdup_printf("%s pause \"%s\"",prefs->backend_sync,cfile->handle);
       if (!mainw->preview) {
-	lives_button_set_label(GTK_BUTTON(button),_ ("Resume"));
+	lives_button_set_label(LIVES_BUTTON(button),_ ("Resume"));
 	if (!cfile->nokeep) {
-	  if (!cfile->opening) lives_button_set_label(GTK_BUTTON(cfile->proc_ptr->cancel_button),_ ("Keep"));
-	  else lives_button_set_label(GTK_BUTTON(cfile->proc_ptr->cancel_button),_ ("Enough"));
-	  lives_label_set_text(GTK_LABEL(cfile->proc_ptr->label2),
+	  if (!cfile->opening) lives_button_set_label(LIVES_BUTTON(cfile->proc_ptr->cancel_button),_ ("Keep"));
+	  else lives_button_set_label(LIVES_BUTTON(cfile->proc_ptr->cancel_button),_ ("Enough"));
+	  lives_label_set_text(LIVES_LABEL(cfile->proc_ptr->label2),
 			     _ ("\nPaused\n(click Keep to keep what you have and stop)\n(click Resume to continue processing)"));
 	}
 	d_print(_ ("paused..."));
@@ -9436,10 +9418,10 @@ void on_effects_paused (GtkButton *button, gpointer user_data) {
       mainw->timeout_ticks+=xticks;
       com=g_strdup_printf("%s resume \"%s\"",prefs->backend_sync,cfile->handle);
       if (!mainw->preview) {
-	if (cfile->opening) lives_button_set_label(GTK_BUTTON(button),_ ("Pause/_Enough"));
-	else lives_button_set_label(GTK_BUTTON(button),_ ("Pause"));
-	lives_button_set_label(GTK_BUTTON(cfile->proc_ptr->cancel_button), _("Cancel"));
-	lives_label_set_text(GTK_LABEL(cfile->proc_ptr->label2),_ ("\nPlease Wait"));
+	if (cfile->opening) lives_button_set_label(LIVES_BUTTON(button),_ ("Pause/_Enough"));
+	else lives_button_set_label(LIVES_BUTTON(button),_ ("Pause"));
+	lives_button_set_label(LIVES_BUTTON(cfile->proc_ptr->cancel_button), _("Cancel"));
+	lives_label_set_text(LIVES_LABEL(cfile->proc_ptr->label2),_ ("\nPlease Wait"));
 	d_print(_ ("resumed..."));
       }
 #ifdef RT_AUDIO
@@ -9471,18 +9453,18 @@ on_preview_clicked                     (GtkButton       *button,
   // IMPORTANT: cfile->undo_start and cfile->undo_end determine which frames
   // should be played
 
-  static gboolean in_preview_func=FALSE;
+  static boolean in_preview_func=FALSE;
 
-  gboolean resume_after;
-  gint ostart=cfile->start;
-  gint oend=cfile->end;
+  boolean resume_after;
+  int ostart=cfile->start;
+  int oend=cfile->end;
   gshort oaudp=prefs->audio_player;
-  gint toy_type=mainw->toy_type;
-  gboolean ointernal_messaging=mainw->internal_messaging;
+  int toy_type=mainw->toy_type;
+  boolean ointernal_messaging=mainw->internal_messaging;
   //int i;
-  guint64 old_rte; //TODO - block better
-  gint64 xticks;
-  gint current_file=mainw->current_file;
+  uint64_t old_rte; //TODO - block better
+  int64_t xticks;
+  int current_file=mainw->current_file;
   weed_plant_t *filter_map=mainw->filter_map; // back this up in case we are rendering
   weed_plant_t *afilter_map=mainw->afilter_map; // back this up in case we are rendering
   weed_plant_t *audio_event=mainw->audio_event;
@@ -9568,12 +9550,12 @@ on_preview_clicked                     (GtkButton       *button,
     // stop effects processing (if preferred)
     if (prefs->pause_effect_during_preview) {
       if (!(mainw->effects_paused)) {
-	on_effects_paused(GTK_BUTTON(cfile->proc_ptr->pause_button),NULL);
+	on_effects_paused(LIVES_BUTTON(cfile->proc_ptr->pause_button),NULL);
 	resume_after=TRUE;
       }
     }
 
-    if (button!=NULL) lives_button_set_label(GTK_BUTTON(button),_("Stop"));
+    if (button!=NULL) lives_button_set_label(LIVES_BUTTON(button),_("Stop"));
     if (cfile->proc_ptr!=NULL) {
       lives_widget_set_sensitive(cfile->proc_ptr->pause_button,FALSE);
       lives_widget_set_sensitive(cfile->proc_ptr->cancel_button,FALSE);
@@ -9616,7 +9598,7 @@ on_preview_clicked                     (GtkButton       *button,
     }
 
     // restart effects processing (if necessary)
-    if (resume_after) on_effects_paused(GTK_BUTTON(cfile->proc_ptr->pause_button),NULL);
+    if (resume_after) on_effects_paused(LIVES_BUTTON(cfile->proc_ptr->pause_button),NULL);
 
     // user_data is non-NULL if called from multitrack. We want to preserve the value of cancelled.
     if (user_data==NULL) mainw->cancelled=CANCEL_NONE;
@@ -9634,7 +9616,7 @@ on_preview_clicked                     (GtkButton       *button,
     if (cfile->proc_ptr!=NULL) {
       // proc_ptr can be NULL if we finished loading with a bg generator running
       lives_widget_show (cfile->proc_ptr->processing);
-      lives_button_set_label(GTK_BUTTON(button),_ ("Preview"));
+      lives_button_set_label(LIVES_BUTTON(button),_ ("Preview"));
       lives_widget_set_sensitive(cfile->proc_ptr->pause_button,TRUE);
       lives_widget_set_sensitive(cfile->proc_ptr->cancel_button,TRUE);
     }
@@ -9702,7 +9684,7 @@ void
 changed_fps_during_pb           (GtkSpinButton   *spinbutton,
 				 gpointer         user_data)
 {
-  gdouble new_fps=(gdouble)((gint)(lives_spin_button_get_value(GTK_SPIN_BUTTON(spinbutton))*1000)/1000.);
+  double new_fps=(double)((int)(lives_spin_button_get_value(LIVES_SPIN_BUTTON(spinbutton))*1000)/1000.);
 
   if ((!cfile->play_paused&&cfile->pb_fps==new_fps)||(cfile->play_paused&&new_fps==0.)) {
     mainw->period=U_SEC/cfile->pb_fps;
@@ -9722,7 +9704,7 @@ changed_fps_during_pb           (GtkSpinButton   *spinbutton,
       if (mainw->agen_key==0&&!mainw->agen_needs_reinit&&!has_audio_filters(FALSE)) {
 	mainw->rec_aclip=mainw->current_file;
 	mainw->rec_avel=cfile->pb_fps/cfile->fps;
-	mainw->rec_aseek=(gdouble)mainw->jackd->seek_pos/(gdouble)(cfile->arate*cfile->achans*cfile->asampsize/8);
+	mainw->rec_aseek=(double)mainw->jackd->seek_pos/(double)(cfile->arate*cfile->achans*cfile->asampsize/8);
       }
     }
 #endif
@@ -9735,7 +9717,7 @@ changed_fps_during_pb           (GtkSpinButton   *spinbutton,
       if (mainw->agen_key==0&&!mainw->agen_needs_reinit&&!has_audio_filters(FALSE)) {
 	mainw->rec_aclip=mainw->current_file;
 	mainw->rec_avel=cfile->pb_fps/cfile->fps;
-	mainw->rec_aseek=(gdouble)mainw->pulsed->seek_pos/(gdouble)(cfile->arate*cfile->achans*cfile->asampsize/8);
+	mainw->rec_aseek=(double)mainw->pulsed->seek_pos/(double)(cfile->arate*cfile->achans*cfile->asampsize/8);
       }
     }
 #endif
@@ -9755,12 +9737,9 @@ changed_fps_during_pb           (GtkSpinButton   *spinbutton,
 }
 
 
-gboolean
-on_mouse_scroll           (GtkWidget       *widget,
-			   GdkEventScroll  *event,
-			   gpointer         user_data) {
-  guint kstate;
-  guint type=1;
+boolean on_mouse_scroll (GtkWidget *widget, GdkEventScroll  *event, gpointer user_data) {
+  uint32_t kstate;
+  uint32_t type=1;
 
   if (!prefs->mouse_scroll_clips||mainw->noswitch) return FALSE;
 
@@ -9783,48 +9762,48 @@ on_mouse_scroll           (GtkWidget       *widget,
 
 
 // next few functions are for the timer bars
-gboolean
+boolean
 on_mouse_sel_update           (GtkWidget       *widget,
 			       GdkEventMotion  *event,
 			       gpointer         user_data)
 {
   if (mainw->current_file>-1&&mainw->sel_start>0) {
-    gint x,sel_current;
+    int x,sel_current;
 
     lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[prefs->gui_monitor>0?prefs->gui_monitor-1:0].mouse_device, 
 			     mainw->LiVES, &x, NULL);
 
     if (mainw->sel_move==SEL_MOVE_AUTO) 
       sel_current=calc_frame_from_time3(mainw->current_file,
-					(gdouble)x/(gdouble)lives_widget_get_allocation_width(mainw->vidbar)*cfile->total_time);
+					(double)x/(double)lives_widget_get_allocation_width(mainw->vidbar)*cfile->total_time);
     else
       sel_current=calc_frame_from_time(mainw->current_file,
-				       (gdouble)x/(gdouble)lives_widget_get_allocation_width(mainw->vidbar)*cfile->total_time);
+				       (double)x/(double)lives_widget_get_allocation_width(mainw->vidbar)*cfile->total_time);
 
 
     if (mainw->sel_move==SEL_MOVE_SINGLE) {
       sel_current=calc_frame_from_time3(mainw->current_file,
-					(gdouble)x/(gdouble)lives_widget_get_allocation_width(mainw->vidbar)*cfile->total_time);
-      lives_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_start),sel_current);
-      lives_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_end),sel_current);
+					(double)x/(double)lives_widget_get_allocation_width(mainw->vidbar)*cfile->total_time);
+      lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start),sel_current);
+      lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end),sel_current);
     }
 
     if (mainw->sel_move==SEL_MOVE_START||(mainw->sel_move==SEL_MOVE_AUTO&&sel_current<mainw->sel_start)) {
       sel_current=calc_frame_from_time(mainw->current_file,
-				       (gdouble)x/(gdouble)lives_widget_get_allocation_width(mainw->vidbar)*cfile->total_time);
-      lives_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_start),sel_current);
+				       (double)x/(double)lives_widget_get_allocation_width(mainw->vidbar)*cfile->total_time);
+      lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start),sel_current);
     }
     else if (mainw->sel_move==SEL_MOVE_END||(mainw->sel_move==SEL_MOVE_AUTO&&sel_current>mainw->sel_start)) {
       sel_current=calc_frame_from_time2(mainw->current_file,
-					(gdouble)x/(gdouble)lives_widget_get_allocation_width(mainw->vidbar)*cfile->total_time);
-      lives_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_end),sel_current-1);
+					(double)x/(double)lives_widget_get_allocation_width(mainw->vidbar)*cfile->total_time);
+      lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end),sel_current-1);
     }
   }
   return FALSE;
 }
 
 
-gboolean
+boolean
 on_mouse_sel_reset           (GtkWidget       *widget,
 			      GdkEventButton  *event,
 			      gpointer         user_data)
@@ -9839,35 +9818,35 @@ on_mouse_sel_reset           (GtkWidget       *widget,
 }
 
 
-gboolean
+boolean
 on_mouse_sel_start           (GtkWidget       *widget,
 			      GdkEventButton  *event,
 			      gpointer         user_data)
 {
-  gint x;
+  int x;
   if (mainw->current_file<=0) return FALSE;
 
   lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[prefs->gui_monitor>0?prefs->gui_monitor-1:0].mouse_device, 
 			   mainw->LiVES, &x, NULL);
 
   mainw->sel_start=calc_frame_from_time(mainw->current_file,
-					(gdouble)x/(gdouble)lives_widget_get_allocation_width(mainw->vidbar)*cfile->total_time);
+					(double)x/(double)lives_widget_get_allocation_width(mainw->vidbar)*cfile->total_time);
 
   
   if (event->button==3&&!mainw->selwidth_locked) {
     mainw->sel_start=calc_frame_from_time3(mainw->current_file,
-					   (gdouble)x/(gdouble)lives_widget_get_allocation_width(mainw->vidbar)*cfile->total_time);
-    lives_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_start),mainw->sel_start);
-    lives_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_end),mainw->sel_start);
+					   (double)x/(double)lives_widget_get_allocation_width(mainw->vidbar)*cfile->total_time);
+    lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start),mainw->sel_start);
+    lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end),mainw->sel_start);
     mainw->sel_move=SEL_MOVE_AUTO;
   }
   
   else {
     if (event->button==2&&!mainw->selwidth_locked) {
       mainw->sel_start=calc_frame_from_time3(mainw->current_file,
-					     (gdouble)x/(gdouble)lives_widget_get_allocation_width(mainw->vidbar)*cfile->total_time);
-      lives_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_start),mainw->sel_start);
-      lives_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_end),(gint)mainw->sel_start);
+					     (double)x/(double)lives_widget_get_allocation_width(mainw->vidbar)*cfile->total_time);
+      lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start),mainw->sel_start);
+      lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end),(int)mainw->sel_start);
       mainw->sel_move=SEL_MOVE_SINGLE;
     }
     
@@ -9875,13 +9854,13 @@ on_mouse_sel_start           (GtkWidget       *widget,
       if (!mainw->selwidth_locked) {
 	if ((mainw->sel_start<cfile->end&&((mainw->sel_start-cfile->start)<=(cfile->end-mainw->sel_start)))||
 	    mainw->sel_start<cfile->start) {
-	  lives_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_start),mainw->sel_start);
+	  lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start),mainw->sel_start);
 	  mainw->sel_move=SEL_MOVE_START;
 	}
 	else {
 	  mainw->sel_start=calc_frame_from_time2(mainw->current_file,
-						 (gdouble)x/(gdouble)lives_widget_get_allocation_width(mainw->vidbar)*cfile->total_time);
-	  lives_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_end),mainw->sel_start-1);
+						 (double)x/(double)lives_widget_get_allocation_width(mainw->vidbar)*cfile->total_time);
+	  lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end),mainw->sel_start-1);
 	  mainw->sel_move=SEL_MOVE_END;
 	}
       }
@@ -9890,7 +9869,7 @@ on_mouse_sel_start           (GtkWidget       *widget,
 	if (mainw->sel_start>cfile->end) {
 	  // past end
 	  if (cfile->end+cfile->end-cfile->start+1<=cfile->frames) {
-	    lives_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_end),cfile->end+cfile->end-cfile->start+1);
+	    lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end),cfile->end+cfile->end-cfile->start+1);
 	    mainw->sel_move=SEL_MOVE_START;
 	  }
 	}
@@ -9898,19 +9877,19 @@ on_mouse_sel_start           (GtkWidget       *widget,
 	  if (mainw->sel_start>=cfile->start) {
 	    if (mainw->sel_start>cfile->start+(cfile->end-cfile->start+1)/2) {
 	      // nearer to end
-	      lives_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_end),mainw->sel_start);
+	      lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end),mainw->sel_start);
 	      mainw->sel_move=SEL_MOVE_END;
 	    }
 	    else {
 	      // nearer to start
-	      lives_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_start),mainw->sel_start);
+	      lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start),mainw->sel_start);
 	      mainw->sel_move=SEL_MOVE_START;
 	    }
 	  }
 	  else {
 	    // before start
 	    if (cfile->start-cfile->end+cfile->start-1>=1) {
-	      lives_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_end),cfile->start-1);
+	      lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end),cfile->start-1);
 	      mainw->sel_move=SEL_MOVE_END;
 	    }
 	  }}}}}
@@ -9929,11 +9908,11 @@ boolean on_hrule_enter (GtkWidget *widget, GdkEventCrossing *event, gpointer use
 }
 
 
-gboolean
+boolean
 on_hrule_update           (GtkWidget       *widget,
 			   GdkEventMotion  *event,
 			   gpointer         user_data) {
-  gint x;
+  int x;
   if (mainw->current_file<=0) return FALSE;
 
   lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[prefs->gui_monitor>0?prefs->gui_monitor-1:0].mouse_device, 
@@ -9944,8 +9923,8 @@ on_hrule_update           (GtkWidget       *widget,
   
   if ((lives_ruler_set_value(LIVES_RULER (mainw->hruler),(cfile->pointer_time=
        calc_time_from_frame(mainw->current_file,calc_frame_from_time
-			    (mainw->current_file,(gdouble)x/lives_widget_get_allocation_width(mainw->vidbar)*cfile->total_time)))))<=0.) 
-    lives_ruler_set_value(LIVES_RULER (mainw->hruler),(cfile->pointer_time=(gdouble)x/
+			    (mainw->current_file,(double)x/lives_widget_get_allocation_width(mainw->vidbar)*cfile->total_time)))))<=0.) 
+    lives_ruler_set_value(LIVES_RULER (mainw->hruler),(cfile->pointer_time=(double)x/
 						       lives_widget_get_allocation_width(mainw->vidbar)*cfile->total_time));
   lives_widget_queue_draw (mainw->hruler);
   get_play_times();
@@ -9953,13 +9932,13 @@ on_hrule_update           (GtkWidget       *widget,
 }
 
 
-gboolean
+boolean
 on_hrule_reset           (GtkWidget       *widget,
 			  GdkEventButton  *event,
 			  gpointer         user_data)
 {
   //button release
-  gint x;
+  int x;
   if (mainw->current_file<=0) return FALSE;
 
   lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[prefs->gui_monitor>0?prefs->gui_monitor-1:0].mouse_device, 
@@ -9967,9 +9946,9 @@ on_hrule_reset           (GtkWidget       *widget,
   if (x<0) x=0;
   if ((lives_ruler_set_value(LIVES_RULER (mainw->hruler),(cfile->pointer_time=
        calc_time_from_frame(mainw->current_file,
-			    calc_frame_from_time(mainw->current_file,(gdouble)x/
+			    calc_frame_from_time(mainw->current_file,(double)x/
 						 lives_widget_get_allocation_width(mainw->vidbar)*cfile->total_time)))))<=0.) 
-    lives_ruler_set_value(LIVES_RULER (mainw->hruler),(cfile->pointer_time=(gdouble)x/
+    lives_ruler_set_value(LIVES_RULER (mainw->hruler),(cfile->pointer_time=(double)x/
 						       lives_widget_get_allocation_width(mainw->vidbar)*cfile->total_time));
 
   if (!mainw->hrule_blocked) {
@@ -9998,7 +9977,7 @@ on_hrule_reset           (GtkWidget       *widget,
 }
 
 
-gboolean
+boolean
 on_hrule_set           (GtkWidget       *widget,
 			GdkEventButton  *event,
 			gpointer         user_data)
@@ -10017,7 +9996,7 @@ on_hrule_set           (GtkWidget       *widget,
 
   if ((lives_ruler_set_value(LIVES_RULER (mainw->hruler),(cfile->pointer_time=
 							  calc_time_from_frame(mainw->current_file,frame))))<=0.)
-    lives_ruler_set_value(LIVES_RULER (mainw->hruler),(cfile->pointer_time=(gdouble)x/
+    lives_ruler_set_value(LIVES_RULER (mainw->hruler),(cfile->pointer_time=(double)x/
 						       lives_widget_get_allocation_width(mainw->vidbar)*cfile->total_time));
   lives_widget_queue_draw (mainw->hruler);
   get_play_times();
@@ -10070,7 +10049,7 @@ boolean frame_context (GtkWidget *widget, GdkEventButton *event, gpointer which)
   }
   
   menu=lives_menu_new();
-  lives_menu_set_title (GTK_MENU(menu),_("LiVES: Selected frame"));
+  lives_menu_set_title (LIVES_MENU(menu),_("LiVES: Selected frame"));
 
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
@@ -10100,9 +10079,9 @@ void
 on_slower_pressed (GtkButton *button,
 		   gpointer user_data)
 {
-  gdouble change=1.,new_fps;
+  double change=1.,new_fps;
 
-  gint type=0;
+  int type=0;
 
   file *sfile=cfile;
 
@@ -10132,12 +10111,12 @@ on_slower_pressed (GtkButton *button,
   if (sfile->pb_fps>0.) {
     if (sfile->pb_fps<0.1||sfile->pb_fps<change) sfile->pb_fps=change;
     new_fps=sfile->pb_fps-change;
-    if (sfile==cfile) lives_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_pb_fps),new_fps);
+    if (sfile==cfile) lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps),new_fps);
     else sfile->pb_fps=new_fps;
   }
   else {
     if (sfile->pb_fps>change) sfile->pb_fps=change;
-    if (sfile==cfile) lives_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_pb_fps),(sfile->pb_fps-change));
+    if (sfile==cfile) lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps),(sfile->pb_fps-change));
     else sfile->pb_fps-=change;
   }
 
@@ -10149,8 +10128,8 @@ void
 on_faster_pressed (GtkButton *button,
 		   gpointer user_data)
 {
-  gdouble change=1.;
-  gint type=0;
+  double change=1.;
+  int type=0;
 
   file *sfile=cfile;
 
@@ -10182,13 +10161,13 @@ on_faster_pressed (GtkButton *button,
     if (sfile->pb_fps==FPS_MAX) return;
     if (sfile->pb_fps<0.5) sfile->pb_fps=.5;
     if (sfile->pb_fps>FPS_MAX-change) sfile->pb_fps=FPS_MAX-change;
-    if (sfile==cfile) lives_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_pb_fps),(sfile->pb_fps+change));
+    if (sfile==cfile) lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps),(sfile->pb_fps+change));
     else sfile->pb_fps=sfile->pb_fps+change;
   }
   else {
     if (sfile->pb_fps==-FPS_MAX) return;
     if (sfile->pb_fps<-FPS_MAX-change) sfile->pb_fps=-FPS_MAX-change;
-    if (sfile==cfile) lives_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_pb_fps),(sfile->pb_fps+change));
+    if (sfile==cfile) lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps),(sfile->pb_fps+change));
     else sfile->pb_fps=sfile->pb_fps+change;
   }
 
@@ -10197,35 +10176,29 @@ on_faster_pressed (GtkButton *button,
 
 
 //TODO - make pref
-#define CHANGE_SPEED (cfile->pb_fps*(gdouble)KEY_RPT_INTERVAL/100.)
-void
-on_back_pressed (GtkButton *button,
-		   gpointer user_data)
-{
+#define CHANGE_SPEED (cfile->pb_fps*(double)KEY_RPT_INTERVAL/100.)
+void on_back_pressed (GtkButton *button, gpointer user_data) {
   if (mainw->playing_file==-1||mainw->internal_messaging||(mainw->is_processing&&cfile->is_loaded)) return;
   if (mainw->record&&!(prefs->rec_opts&REC_FRAMES)) return;
   if (cfile->next_event!=NULL) return;
 
-  mainw->deltaticks-=(gint64)(CHANGE_SPEED*3*mainw->period);
+  mainw->deltaticks-=(int64_t)(CHANGE_SPEED*3*mainw->period);
   mainw->scratch=SCRATCH_BACK;
 
 }
 
-void
-on_forward_pressed (GtkButton *button,
-		   gpointer user_data)
-{
+void on_forward_pressed (GtkButton *button, gpointer user_data) {
   if (mainw->playing_file==-1||mainw->internal_messaging||(mainw->is_processing&&cfile->is_loaded)) return;
   if (mainw->record&&!(prefs->rec_opts&REC_FRAMES)) return;
   if (cfile->next_event!=NULL) return;
 
-  mainw->deltaticks+=(gint64)(CHANGE_SPEED*mainw->period);
+  mainw->deltaticks+=(int64_t)(CHANGE_SPEED*mainw->period);
   mainw->scratch=SCRATCH_FWD;
 
 }
 
 
-gboolean freeze_callback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer user_data) {
+boolean freeze_callback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer user_data) {
   if (mainw->playing_file==-1||(mainw->is_processing&&cfile->is_loaded)) return TRUE;
   if (mainw->record&&!(prefs->rec_opts&REC_FRAMES)) return TRUE;
 
@@ -10251,7 +10224,7 @@ gboolean freeze_callback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkM
   }
 
   if (group!=NULL) {
-    lives_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_pb_fps),cfile->pb_fps);
+    lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps),cfile->pb_fps);
   }
   
 #ifdef ENABLE_JACK
@@ -10279,20 +10252,18 @@ gboolean freeze_callback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkM
 }
 
 
-gboolean nervous_callback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer clip_number)
-{
+boolean nervous_callback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer clip_number) {
   if (mainw->multitrack!=NULL) return FALSE;
   mainw->nervous=!mainw->nervous;
   return TRUE;
 }
 
 
-gboolean show_sync_callback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer clip_number)
-{
-  gdouble avsync;
+boolean show_sync_callback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer clip_number) {
+  double avsync;
   gchar *msg;
 
-  gint last_dprint_file;
+  int last_dprint_file;
 
   if (mainw->playing_file<0) return FALSE;
 
@@ -10300,7 +10271,7 @@ gboolean show_sync_callback (GtkAccelGroup *group, GObject *obj, guint keyval, G
 
   if (prefs->audio_player==AUD_PLAYER_JACK) {
 #ifdef ENABLE_JACK
-    if (mainw->jackd!=NULL&&mainw->jackd->in_use) avsync=(gdouble)mainw->jackd->seek_pos/
+    if (mainw->jackd!=NULL&&mainw->jackd->in_use) avsync=(double)mainw->jackd->seek_pos/
 						    cfile->arate/cfile->achans/cfile->asampsize*8;
     else return FALSE;
 #else
@@ -10310,7 +10281,7 @@ gboolean show_sync_callback (GtkAccelGroup *group, GObject *obj, guint keyval, G
 
   if (prefs->audio_player==AUD_PLAYER_PULSE) {
 #ifdef HAVE_PULSE_AUDIO
-    if (mainw->pulsed!=NULL&&mainw->pulsed->in_use) avsync=(gdouble)mainw->pulsed->seek_pos/
+    if (mainw->pulsed!=NULL&&mainw->pulsed->in_use) avsync=(double)mainw->pulsed->seek_pos/
 						      cfile->arate/cfile->achans/cfile->asampsize*8;
     else return FALSE;
 #else
@@ -10334,7 +10305,7 @@ gboolean show_sync_callback (GtkAccelGroup *group, GObject *obj, guint keyval, G
 
 
 
-gboolean storeclip_callback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer clip_number) {
+boolean storeclip_callback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer clip_number) {
   // ctrl-fn key will store a clip for higher switching
   int clip=GPOINTER_TO_INT (clip_number)-1;
   register int i;
@@ -10368,16 +10339,13 @@ void on_toolbar_hide (GtkButton *button, gpointer user_data) {
 
 
 
-void
-on_capture_activate                (GtkMenuItem     *menuitem,
-				    gpointer         user_data)
-{
-  gint curr_file=mainw->current_file;
+void on_capture_activate (GtkMenuItem *menuitem, gpointer user_data) {
+  int curr_file=mainw->current_file;
   gchar *msg;
   gchar *com;
   gchar **array;
-  gint response;
-  gdouble rec_end_time=-1.;
+  int response;
+  double rec_end_time=-1.;
 
 #if !GTK_CHECK_VERSION(3,0,0)
 #ifndef GDK_WINDOWING_X11
@@ -10411,7 +10379,7 @@ on_capture_activate                (GtkMenuItem     *menuitem,
   else {
     resaudw=create_resaudw(9,NULL,NULL);
   }
-  response=lives_dialog_run (GTK_DIALOG (resaudw->dialog));
+  response=lives_dialog_run (LIVES_DIALOG (resaudw->dialog));
   
   if (response!=GTK_RESPONSE_OK) {
     lives_widget_destroy (resaudw->dialog);
@@ -10426,9 +10394,9 @@ on_capture_activate                (GtkMenuItem     *menuitem,
   
   if (prefs->rec_desktop_audio&&((prefs->audio_player==AUD_PLAYER_JACK&&capable->has_jackd)||
 				 (prefs->audio_player==AUD_PLAYER_PULSE&&capable->has_pulse_audio))) {
-    mainw->rec_arate=(gint)atoi (lives_entry_get_text(GTK_ENTRY(resaudw->entry_arate)));
-    mainw->rec_achans=(gint)atoi (lives_entry_get_text(GTK_ENTRY(resaudw->entry_achans)));
-    mainw->rec_asamps=(gint)atoi (lives_entry_get_text(GTK_ENTRY(resaudw->entry_asamps)));
+    mainw->rec_arate=(int)atoi (lives_entry_get_text(LIVES_ENTRY(resaudw->entry_arate)));
+    mainw->rec_achans=(int)atoi (lives_entry_get_text(LIVES_ENTRY(resaudw->entry_achans)));
+    mainw->rec_asamps=(int)atoi (lives_entry_get_text(LIVES_ENTRY(resaudw->entry_asamps)));
   
     if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(resaudw->rb_unsigned))) {
       mainw->rec_signed_endian=AFORM_UNSIGNED;
@@ -10441,12 +10409,12 @@ on_capture_activate                (GtkMenuItem     *menuitem,
     mainw->rec_arate=mainw->rec_achans=mainw->rec_asamps=mainw->rec_signed_endian=0;
   }
 
-  mainw->rec_fps=lives_spin_button_get_value(GTK_SPIN_BUTTON(resaudw->fps_spinbutton));
+  mainw->rec_fps=lives_spin_button_get_value(LIVES_SPIN_BUTTON(resaudw->fps_spinbutton));
 
   if (!lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(resaudw->unlim_radiobutton))) {
-    rec_end_time=(lives_spin_button_get_value(GTK_SPIN_BUTTON(resaudw->hour_spinbutton))*60.
-		  +lives_spin_button_get_value(GTK_SPIN_BUTTON(resaudw->minute_spinbutton)))*60.
-      +lives_spin_button_get_value(GTK_SPIN_BUTTON(resaudw->second_spinbutton));
+    rec_end_time=(lives_spin_button_get_value(LIVES_SPIN_BUTTON(resaudw->hour_spinbutton))*60.
+		  +lives_spin_button_get_value(LIVES_SPIN_BUTTON(resaudw->minute_spinbutton)))*60.
+      +lives_spin_button_get_value(LIVES_SPIN_BUTTON(resaudw->second_spinbutton));
     mainw->rec_vid_frames=(rec_end_time*mainw->rec_fps+.5);
   }
   else mainw->rec_vid_frames=-1;
@@ -10636,8 +10604,7 @@ void on_capture2_activate(void) {
 
 
 // TODO - move all encoder related stuff from here and plugins.c into encoders.c
-void 
-on_encoder_ofmt_changed (GtkComboBox *combo, gpointer user_data) {
+void on_encoder_ofmt_changed (GtkComboBox *combo, gpointer user_data) {
   // change encoder format in the encoder plugin
   gchar **array;
   GList *ofmt_all=NULL;
@@ -10667,14 +10634,14 @@ on_encoder_ofmt_changed (GtkComboBox *combo, gpointer user_data) {
 
 	if (!strcmp(array[1],new_fmt)) {
 	  if (prefsw!=NULL) {
-	    g_signal_handler_block(GTK_COMBO_BOX(prefsw->ofmt_combo), prefsw->encoder_ofmt_fn);
-            lives_combo_set_active_index(GTK_COMBO_BOX(prefsw->ofmt_combo), counter);
-	    g_signal_handler_unblock(GTK_COMBO_BOX(prefsw->ofmt_combo), prefsw->encoder_ofmt_fn);
+	    g_signal_handler_block(prefsw->ofmt_combo, prefsw->encoder_ofmt_fn);
+            lives_combo_set_active_index(LIVES_COMBO(prefsw->ofmt_combo), counter);
+	    g_signal_handler_unblock(prefsw->ofmt_combo, prefsw->encoder_ofmt_fn);
 	  }
 	  if (rdet!=NULL) {
-	    g_signal_handler_block(GTK_COMBO_BOX(rdet->ofmt_combo), rdet->encoder_ofmt_fn);
-            lives_combo_set_active_index(GTK_COMBO_BOX(rdet->ofmt_combo), counter);
-	    g_signal_handler_unblock(GTK_COMBO_BOX(rdet->ofmt_combo), rdet->encoder_ofmt_fn);
+	    g_signal_handler_block(rdet->ofmt_combo, rdet->encoder_ofmt_fn);
+            lives_combo_set_active_index(LIVES_COMBO(rdet->ofmt_combo), counter);
+	    g_signal_handler_unblock(rdet->ofmt_combo, rdet->encoder_ofmt_fn);
 	  }
 	  g_snprintf(future_prefs->encoder.of_name,51,"%s",array[0]);
 	  g_snprintf(future_prefs->encoder.of_desc,128,"%s",array[1]);
@@ -10721,9 +10688,9 @@ on_encoder_ofmt_changed (GtkComboBox *combo, gpointer user_data) {
 void on_export_audio_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
   gchar *com,*tmp;
-  gint nrate=cfile->arps;
-  gdouble start,end;
-  gint asigned=!(cfile->signed_endian&AFORM_UNSIGNED);
+  int nrate=cfile->arps;
+  double start,end;
+  int asigned=!(cfile->signed_endian&AFORM_UNSIGNED);
 
   gchar *filt[]={"*.wav",NULL};
   gchar *filename,*file_name;
@@ -10837,7 +10804,7 @@ void on_ok_append_audio_clicked (GtkFileChooser *chooser, gpointer user_data) {
   g_free(tmp); g_free(tmp2);
 
   end_fs_preview();
-  lives_widget_destroy(GTK_WIDGET(chooser));
+  lives_widget_destroy(LIVES_WIDGET(chooser));
 
   lives_widget_queue_draw(mainw->LiVES);
   lives_widget_context_update();
@@ -10938,7 +10905,7 @@ void on_trim_audio_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
   gchar *com,*msg;
 
-  gint type=GPOINTER_TO_INT (user_data);
+  int type=GPOINTER_TO_INT (user_data);
 
   double start,end;
   boolean has_lmap_error=FALSE;
@@ -11051,13 +11018,13 @@ void on_fade_audio_activate (GtkMenuItem *menuitem, gpointer user_data) {
   if (menuitem!=NULL) {
     cfile->undo1_int=type=GPOINTER_TO_INT(user_data);
     aud_d=create_audfade_dialog(type);
-    if (lives_dialog_run(GTK_DIALOG(aud_d->dialog))==GTK_RESPONSE_CANCEL) {
+    if (lives_dialog_run(LIVES_DIALOG(aud_d->dialog))==GTK_RESPONSE_CANCEL) {
       lives_widget_destroy(aud_d->dialog);
       g_free(aud_d);
       return;
     }
     
-    time=lives_spin_button_get_value(GTK_SPIN_BUTTON(aud_d->time_spin));
+    time=lives_spin_button_get_value(LIVES_SPIN_BUTTON(aud_d->time_spin));
     
     lives_widget_destroy(aud_d->dialog);
   }
@@ -11184,10 +11151,10 @@ void
 on_del_audio_activate (GtkMenuItem     *menuitem,
 		       gpointer         user_data)
 {
-  gdouble start,end;
+  double start,end;
   gchar *com,*msg=NULL;
-  gboolean has_lmap_error=FALSE;
-  gboolean bad_header=FALSE;
+  boolean has_lmap_error=FALSE;
+  boolean bad_header=FALSE;
 
   if (menuitem==NULL) {
     // undo/redo
@@ -11242,8 +11209,8 @@ on_del_audio_activate (GtkMenuItem     *menuitem,
       start=calc_time_from_frame (mainw->current_file,cfile->start);
       end=calc_time_from_frame (mainw->current_file,cfile->end+1);
       msg=g_strdup_printf(_ ("Deleting audio from %.2f to %.2f seconds..."),start,end);
-      start*=(gdouble)cfile->arate/(gdouble)cfile->arps;
-      end*=(gdouble)cfile->arate/(gdouble)cfile->arps;
+      start*=(double)cfile->arate/(double)cfile->arps;
+      end*=(double)cfile->arate/(double)cfile->arps;
 
       if (!(prefs->warning_mask&WARN_MASK_LAYOUT_SHIFT_AUDIO)) {
 	if ((mainw->xlays=layout_audio_is_affected(mainw->current_file,end))!=NULL) {
@@ -11402,7 +11369,7 @@ on_recaudclip_activate (GtkMenuItem     *menuitem,
   lives_widget_show (resaudw->dialog);
 }
 
-static gboolean has_lmap_error_recsel;
+static boolean has_lmap_error_recsel;
 
 void
 on_recaudsel_activate (GtkMenuItem     *menuitem,
@@ -11458,13 +11425,13 @@ on_recaudclip_ok_clicked                      (GtkButton *button,
 {
 #ifdef RT_AUDIO
   weed_timecode_t ins_pt;
-  gdouble aud_start,aud_end,vel=1.,vol=1.;
+  double aud_start,aud_end,vel=1.,vol=1.;
 
   int asigned=1,aendian=1;
-  gint old_file=mainw->current_file,new_file;
-  gint type=GPOINTER_TO_INT(user_data);
-  gint oachans=0,oarate=0,oarps=0,ose=0,oasamps=0;
-  gboolean backr=FALSE;
+  int old_file=mainw->current_file,new_file;
+  int type=LIVES_POINTER_TO_INT(user_data);
+  int oachans=0,oarate=0,oarps=0,ose=0,oasamps=0;
+  boolean backr=FALSE;
 
   gchar *com;
 
@@ -11482,18 +11449,18 @@ on_recaudclip_ok_clicked                      (GtkButton *button,
 
   cfile->is_loaded=TRUE;
 
-  cfile->arps=cfile->arate=(gint)atoi (lives_entry_get_text(GTK_ENTRY(resaudw->entry_arate)));
-  cfile->achans=(gint)atoi (lives_entry_get_text(GTK_ENTRY(resaudw->entry_achans)));
-  cfile->asampsize=(gint)atoi (lives_entry_get_text(GTK_ENTRY(resaudw->entry_asamps)));
+  cfile->arps=cfile->arate=(int)atoi (lives_entry_get_text(LIVES_ENTRY(resaudw->entry_arate)));
+  cfile->achans=(int)atoi (lives_entry_get_text(LIVES_ENTRY(resaudw->entry_achans)));
+  cfile->asampsize=(int)atoi (lives_entry_get_text(LIVES_ENTRY(resaudw->entry_asamps)));
 
   if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(resaudw->unlim_radiobutton))) {
     mainw->rec_end_time=-1.;
     mainw->rec_samples=-1;
   }
   else {
-    mainw->rec_end_time=(lives_spin_button_get_value(GTK_SPIN_BUTTON(resaudw->hour_spinbutton))*60.
-			 +lives_spin_button_get_value(GTK_SPIN_BUTTON(resaudw->minute_spinbutton)))*60.
-      +lives_spin_button_get_value(GTK_SPIN_BUTTON(resaudw->second_spinbutton));
+    mainw->rec_end_time=(lives_spin_button_get_value(LIVES_SPIN_BUTTON(resaudw->hour_spinbutton))*60.
+			 +lives_spin_button_get_value(LIVES_SPIN_BUTTON(resaudw->minute_spinbutton)))*60.
+      +lives_spin_button_get_value(LIVES_SPIN_BUTTON(resaudw->second_spinbutton));
     mainw->rec_samples=mainw->rec_end_time*cfile->arate;
   }
 
@@ -11715,7 +11682,7 @@ void on_ins_silence_activate (GtkMenuItem *menuitem, gpointer user_data) {
     mainw->fx3_val=DEFAULT_AUDIO_SAMPS;
     mainw->fx4_val=mainw->endian;
     resaudw=create_resaudw(2,NULL,NULL);
-    if (lives_dialog_run(GTK_DIALOG(resaudw->dialog))!=GTK_RESPONSE_OK) return;
+    if (lives_dialog_run(LIVES_DIALOG(resaudw->dialog))!=GTK_RESPONSE_OK) return;
     if (mainw->error) {
       mainw->error=FALSE;
       return;
@@ -11770,9 +11737,9 @@ void on_ins_silence_activate (GtkMenuItem *menuitem, gpointer user_data) {
   }
 
   cfile->undo1_dbl=start;
-  start*=(gdouble)cfile->arate/(gdouble)cfile->arps;
+  start*=(double)cfile->arate/(double)cfile->arps;
   cfile->undo2_dbl=end;
-  end*=(gdouble)cfile->arate/(gdouble)cfile->arps;
+  end*=(double)cfile->arate/(double)cfile->arps;
 
   // with_sound is 2 (audio only), therfore start, end, where, are in seconds. rate is -ve to indicate silence
   com=g_strdup_printf("%s insert \"%s\" \"%s\" %.8f 0. %.8f \"%s\" 2 0 0 0 0 %d %d %d %d %d", 
@@ -11829,11 +11796,11 @@ void on_ins_silence_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
 void on_ins_silence_details_clicked (GtkButton *button, gpointer user_data) {
   int asigned=1,aendian=1;
-  gboolean bad_header=FALSE;
+  boolean bad_header=FALSE;
   
-  cfile->arps=cfile->arate=(gint)atoi (lives_entry_get_text(GTK_ENTRY(resaudw->entry_arate)));
-  cfile->achans=(gint)atoi (lives_entry_get_text(GTK_ENTRY(resaudw->entry_achans)));
-  cfile->asampsize=(gint)atoi (lives_entry_get_text(GTK_ENTRY(resaudw->entry_asamps)));
+  cfile->arps=cfile->arate=(int)atoi (lives_entry_get_text(LIVES_ENTRY(resaudw->entry_arate)));
+  cfile->achans=(int)atoi (lives_entry_get_text(LIVES_ENTRY(resaudw->entry_achans)));
+  cfile->asampsize=(int)atoi (lives_entry_get_text(LIVES_ENTRY(resaudw->entry_asamps)));
   if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(resaudw->rb_unsigned))) {
     asigned=0;
   }
@@ -11866,7 +11833,7 @@ void on_ins_silence_details_clicked (GtkButton *button, gpointer user_data) {
 
 
 void on_lerrors_clear_clicked (GtkButton *button, gpointer user_data) {
-  gboolean close=GPOINTER_TO_INT(user_data);
+  boolean close=GPOINTER_TO_INT(user_data);
 
   if (mainw->multitrack!=NULL) {
     if (mainw->multitrack->idlefunc>0) {
@@ -11880,7 +11847,7 @@ void on_lerrors_clear_clicked (GtkButton *button, gpointer user_data) {
   save_layout_map(NULL,NULL,NULL,NULL);
   if (close) lives_general_button_clicked(button,textwindow);
   else {
-    lives_widget_queue_draw(lives_widget_get_toplevel(GTK_WIDGET(button)));
+    lives_widget_queue_draw(lives_widget_get_toplevel(LIVES_WIDGET(button)));
     lives_widget_set_sensitive(textwindow->clear_button,FALSE);
     lives_widget_set_sensitive(textwindow->delete_button,FALSE);
 
@@ -11893,7 +11860,7 @@ void on_lerrors_clear_clicked (GtkButton *button, gpointer user_data) {
 
 
 void on_lerrors_delete_clicked (GtkButton *button, gpointer user_data) {
-  gint num_maps=g_list_length(mainw->affected_layouts_map);
+  int num_maps=g_list_length(mainw->affected_layouts_map);
   gchar *msg=g_strdup_printf(P_("\nDelete %d layout...are you sure ?\n","\nDelete %d layouts...are you sure ?\n",num_maps),num_maps);
 
   if (mainw->multitrack!=NULL) {

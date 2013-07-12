@@ -114,6 +114,7 @@ typedef GtkSpinButton                     LiVESSpinButton;
 typedef GtkLabel                          LiVESLabel;
 typedef GtkImage                          LiVESImage;
 typedef GtkFileChooser                    LiVESFileChooser;
+typedef GtkAlignment                      LiVESAlignment;
 typedef GtkMenu                           LiVESMenu;
 typedef GtkMenuItem                       LiVESMenuItem;
 typedef GtkCheckMenuItem                  LiVESCheckMenuItem;
@@ -282,6 +283,7 @@ typedef gpointer                          livespointer;
 #define LIVES_WINDOW(widget) GTK_WINDOW(widget)
 #define LIVES_XWINDOW(widget) GDK_WINDOW(widget)
 #define LIVES_BOX(widget) GTK_BOX(widget)
+#define LIVES_EVENT_BOX(widget) GTK_EVENT_BOX(widget)
 #define LIVES_ENTRY(widget) GTK_ENTRY(widget)
 #define LIVES_CONTAINER(widget) GTK_CONTAINER(widget)
 #define LIVES_BIN(widget) GTK_BIN(widget)
@@ -291,12 +293,16 @@ typedef gpointer                          livespointer;
 #define LIVES_COMBO_BOX(widget) GTK_COMBO_BOX(widget)
 #define LIVES_BUTTON(widget) GTK_BUTTON(widget)
 #define LIVES_LABEL(widget) GTK_LABEL(widget)
+#define LIVES_ALIGNMENT(widget) GTK_ALIGNMENT(widget)
 #define LIVES_FILES_CHOOSER(widget) GTK_FILE_CHOOSER(widget)
 #define LIVES_RADIO_BUTTON(widget) GTK_RADIO_BUTTON(widget)
 #define LIVES_SPIN_BUTTON(widget) GTK_SPIN_BUTTON(widget)
+#define LIVES_TABLE(widget) GTK_TABLE(widget)
 #define LIVES_MENU(widget) GTK_MENU(widget)
+#define LIVES_MENU_ITEM(widget) GTK_MENU_ITEM(widget)
 #define LIVES_IMAGE(widget) GTK_IMAGE(widget)
 #define LIVES_IMAGE_MENU_ITEM(widget) GTK_IMAGE_MENU_ITEM(widget)
+#define LIVES_CHECK_MENU_ITEM(widget) GTK_CHECK_MENU_ITEM(widget)
 #define LIVES_FILE_CHOOSER(widget) GTK_FILE_CHOOSER(widget)
 #define LIVES_SCROLLED_WINDOW(widget) GTK_SCROLLED_WINDOW(widget)
 
@@ -328,6 +334,7 @@ typedef gpointer                          livespointer;
 #define LIVES_XEVENT(event) GDK_EVENT(event)
 
 #define LIVES_IS_WIDGET(widget) GTK_IS_WIDGET(widget)
+#define LIVES_IS_WINDOW(widget) GTK_IS_WINDOW(widget)
 #if GTK_CHECK_VERSION(3,0,0)
 #define LIVES_IS_HBOX(widget) (GTK_IS_BOX(widget)&&gtk_orientable_get_orientation(GTK_ORIENTABLE(widget))==GTK_ORIENTATION_HORIZONTAL)
 #define LIVES_IS_VBOX(widget) (GTK_IS_BOX(widget)&&gtk_orientable_get_orientation(GTK_ORIENTABLE(widget))==GTK_ORIENTATION_HORIZONTAL)
@@ -337,6 +344,10 @@ typedef gpointer                          livespointer;
 #endif
 #define LIVES_IS_COMBO(widget) GTK_IS_COMBO_BOX(widget)
 #define LIVES_IS_BUTTON(widget) GTK_IS_BUTTON(widget)
+#define LIVES_IS_IMAGE(widget) GTK_IS_IMAGE(widget)
+#define LIVES_IS_ENTRY(widget) GTK_IS_ENTRY(widget)
+#define LIVES_IS_RANGE(widget) GTK_IS_RANGE(widget)
+#define LIVES_IS_TEXT_VIEW(widget) GTK_IS_TEXT_VIEW(widget)
 
 // (image resize) interpolation types
 #define LIVES_INTERP_BEST   GDK_INTERP_HYPER
@@ -647,6 +658,8 @@ void lives_widget_set_size_request(LiVESWidget *, int width, int height);
 
 void lives_widget_reparent(LiVESWidget *, LiVESWidget *new_parent);
 
+void lives_widget_set_app_paintable(LiVESWidget *widget, boolean paintable);
+
 void lives_widget_grab_default(LiVESWidget *);
 
 LiVESWidget *lives_event_box_new(void);
@@ -726,9 +739,12 @@ LiVESWidget *lives_vpaned_new(void);
 LiVESWidget *lives_hscrollbar_new(LiVESAdjustment *);
 LiVESWidget *lives_vscrollbar_new(LiVESAdjustment *);
 
+LiVESWidget *lives_label_new(const char *text);
+
 LiVESWidget *lives_arrow_new(lives_arrow_t arrow_type, lives_shadow_t shadow_type);
 
 LiVESWidget *lives_alignment_new(float xalign, float yalign, float xscale, float yscale);
+void lives_alignment_set(LiVESAlignment *, float xalign, float yalign, float xscale, float yscale);
 
 LiVESWidget *lives_combo_new(void);
 LiVESWidget *lives_combo_new_with_model (LiVESTreeModel *);

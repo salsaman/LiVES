@@ -2121,9 +2121,9 @@ GtkWidget * create_rte_window (void) {
   dummy_radio = gtk_radio_button_new (grab_group);
   grab_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (dummy_radio));
 
-  name_list=weed_get_all_names(1);
-  name_type_list=weed_get_all_names(2);
-  hash_list=weed_get_all_names(3);
+  name_list=weed_get_all_names(FX_LIST_NAME);
+  name_type_list=weed_get_all_names(FX_LIST_NAME_AND_TYPE);
+  hash_list=weed_get_all_names(FX_LIST_HASHNAME);
 
   for (i=0;i<prefs->rte_keys_virtual;i++) {
 
@@ -2421,7 +2421,7 @@ void redraw_pwindow (int key, int mode) {
 	if (widget!=action_area) {
 	  // we have to do this, because using lives_widget_destroy() here 
 	  // can causes a crash [bug in gtk+ ???]
-	  gtk_widget_reparent (widget,mainw->invis);
+	  lives_widget_reparent (widget,mainw->invis);
 	}
       }
       if (child_list!=NULL) g_list_free(child_list);
@@ -2670,7 +2670,7 @@ void rte_reset_defs_clicked (GtkButton *button, lives_rfx_t *rfx) {
     if (widget!=action_area) {
       // we have to do this, because using lives_widget_destroy() here 
       // can causes a crash [bug in gtk+ ???]
-      gtk_widget_reparent (widget,mainw->invis);
+      lives_widget_reparent (widget,mainw->invis);
     }
   }
   

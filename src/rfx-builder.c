@@ -2660,8 +2660,15 @@ GtkWidget * make_trigger_dialog (int tnum, rfx_build_window_t *rfxbuilder) {
 
   woat=widget_opts.apply_theme;
   widget_opts.apply_theme=FALSE;
+  widget_opts.expand=LIVES_EXPAND_NONE; // prevent centering
   scrolledwindow = lives_standard_scrolled_window_new (RFX_WINSIZE_H*2./3.,RFX_WINSIZE_V/4.,rfxbuilder->code_textview);
+  widget_opts.expand=LIVES_EXPAND_DEFAULT;
   widget_opts.apply_theme=woat;
+
+  if (palette->style&STYLE_1) {
+    lives_widget_set_base_color(rfxbuilder->code_textview, LIVES_WIDGET_STATE_NORMAL, &palette->white);
+    lives_widget_set_text_color(rfxbuilder->code_textview, LIVES_WIDGET_STATE_NORMAL, &palette->black);
+  }
 
   lives_box_pack_start (LIVES_BOX (dialog_vbox), scrolledwindow, TRUE, TRUE, 0);
 
@@ -2707,8 +2714,15 @@ void on_code_clicked (GtkButton *button, gpointer user_data) {
 
   woat=widget_opts.apply_theme;
   widget_opts.apply_theme=FALSE;
+  widget_opts.expand=LIVES_EXPAND_NONE; // prevent centering
   scrolledwindow = lives_standard_scrolled_window_new (RFX_WINSIZE_H,RFX_WINSIZE_V,rfxbuilder->code_textview);
+  widget_opts.expand=LIVES_EXPAND_DEFAULT;
   widget_opts.apply_theme=woat;
+
+  if (palette->style&STYLE_1) {
+    lives_widget_set_base_color(rfxbuilder->code_textview, LIVES_WIDGET_STATE_NORMAL, &palette->white);
+    lives_widget_set_text_color(rfxbuilder->code_textview, LIVES_WIDGET_STATE_NORMAL, &palette->black);
+  }
 
   lives_box_pack_start (LIVES_BOX (dialog_vbox), scrolledwindow, TRUE, TRUE, 0);
 

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: https://sourceforge.net/p/lives/bugs/\n"
-"POT-Creation-Date: 2013-07-12 01:23-0300\n"
+"POT-Creation-Date: 2013-07-15 08:47-0300\n"
 "PO-Revision-Date: 2013-03-14 12:31+0000\n"
 "Last-Translator: Launchpad Translations Administrators <Unknown>\n"
 "Language-Team: Russian <ru@li.org>\n"
@@ -750,7 +750,7 @@ msgstr ""
 msgid "!rec %9d/%d"
 msgstr ""
 
-#: src/main.c:5026 src/main.c:5027 src/gui.c:2120 src/gui.c:3214
+#: src/main.c:5026 src/main.c:5027 src/gui.c:2122 src/gui.c:3217
 #: src/saveplay.c:2208
 msgid "Play"
 msgstr "Воспроизвести"
@@ -778,16 +778,16 @@ msgstr "_Отменить"
 msgid "_Redo"
 msgstr "_Вернуть"
 
-#: src/main.c:6089 src/interface.c:465 src/gui.c:2330 src/preferences.c:2325
+#: src/main.c:6089 src/interface.c:465 src/gui.c:2332 src/preferences.c:2325
 #: src/resample.c:1516
 msgid "Video"
 msgstr "Видео"
 
-#: src/main.c:6090 src/interface.c:480 src/gui.c:2355
+#: src/main.c:6090 src/interface.c:480 src/gui.c:2357
 msgid "Left Audio"
 msgstr "Левый звуковой канал"
 
-#: src/main.c:6091 src/gui.c:2379
+#: src/main.c:6091 src/gui.c:2381
 msgid "Right Audio"
 msgstr "Правый звуковой канал"
 
@@ -1204,8 +1204,8 @@ msgstr ""
 msgid "If this is set, frames will be deinterlaced as they are imported."
 msgstr "Если включить, чересстрочная развёртка будет устранена при импорте."
 
-#: src/interface.c:112 src/callbacks.c:9637 src/callbacks.c:9660
-#: src/callbacks.c:9661 src/gui.c:3217 src/gui.c:3812 src/saveplay.c:2211
+#: src/interface.c:112 src/callbacks.c:9619 src/callbacks.c:9642
+#: src/callbacks.c:9643 src/gui.c:3220 src/gui.c:3815 src/saveplay.c:2211
 #: src/saveplay.c:2993 src/dialogs.c:1450 src/dialogs.c:1451
 #: src/dialogs.c:1683 src/dialogs.c:1684 src/framedraw.c:238
 #: src/multitrack.c:7708
@@ -1244,7 +1244,7 @@ msgstr ""
 "\n"
 "Не забудьте отключить эффекты (ctrl-0) позже!"
 
-#: src/interface.c:221 src/callbacks.c:9407 src/callbacks.c:9442
+#: src/interface.c:221 src/callbacks.c:9389 src/callbacks.c:9424
 #: src/dialogs.c:2511
 msgid ""
 "\n"
@@ -1269,7 +1269,7 @@ msgstr "_Предпросмотр"
 msgid "Paus_e"
 msgstr "Прио_становить"
 
-#: src/interface.c:257 src/callbacks.c:9439
+#: src/interface.c:257 src/callbacks.c:9421
 msgid "Pause/_Enough"
 msgstr ""
 
@@ -1899,24 +1899,24 @@ msgstr "_Принять"
 msgid "Saving as set %s..."
 msgstr "Сохранить сборку как %s..."
 
-#: src/callbacks.c:816
+#: src/callbacks.c:804
 msgid "Please enter the name of the file to save the clip as.\n"
 msgstr ""
 
-#: src/callbacks.c:824
+#: src/callbacks.c:812
 msgid "Please enter a valid URL for the download.\n"
 msgstr "Пожалуйста, введите правильную ссылку для загрузки.\n"
 
-#: src/callbacks.c:850
+#: src/callbacks.c:838
 #, c-format
 msgid "Downloading %s to %s..."
 msgstr "Загрузка %s в %s..."
 
-#: src/callbacks.c:878
+#: src/callbacks.c:866
 msgid "Downloading clip"
 msgstr "Загрузка фрагмента"
 
-#: src/callbacks.c:916
+#: src/callbacks.c:904
 msgid ""
 "\n"
 "LiVES was unable to download the clip.\n"
@@ -1928,17 +1928,17 @@ msgstr ""
 "Пожалуйста, проверьте правильность ссылки, а также, \n"
 " установлена ли последняя версия youtube-dl.\n"
 
-#: src/callbacks.c:1102 src/callbacks.c:1137
+#: src/callbacks.c:1084 src/callbacks.c:1119
 msgid "This file"
 msgstr "Этот файл"
 
-#: src/callbacks.c:1103
+#: src/callbacks.c:1085
 msgid ""
 ",\n"
 " - including the current layout - "
 msgstr ""
 
-#: src/callbacks.c:1105
+#: src/callbacks.c:1087
 #, c-format
 msgid ""
 "\n"
@@ -1948,7 +1948,7 @@ msgid ""
 "Really close it ?"
 msgstr ""
 
-#: src/callbacks.c:1107
+#: src/callbacks.c:1089
 #, c-format
 msgid ""
 "\n"
@@ -1958,7 +1958,7 @@ msgid ""
 "Really close it ?"
 msgstr ""
 
-#: src/callbacks.c:1138
+#: src/callbacks.c:1120
 msgid ""
 "Changes made to this clip have not been saved or backed up.\n"
 "\n"
@@ -1969,7 +1969,7 @@ msgstr ""
 "\n"
 "Вы действительно хотите закрыть его ?"
 
-#: src/callbacks.c:1330
+#: src/callbacks.c:1312
 msgid ""
 "\n"
 "Invalid project file.\n"
@@ -1977,7 +1977,7 @@ msgstr ""
 "\n"
 "Неправильный файл проекта.\n"
 
-#: src/callbacks.c:1343
+#: src/callbacks.c:1325
 #, c-format
 msgid ""
 "\n"
@@ -1999,33 +1999,33 @@ msgstr ""
 "название или отказаться от этого.\n"
 "После чего вы можете импортировать новый проект.\n"
 
-#: src/callbacks.c:1353
+#: src/callbacks.c:1335
 #, c-format
 msgid "Importing the project %s as set %s..."
 msgstr "Импортировать проект %s как сборку %s..."
 
-#: src/callbacks.c:1373
+#: src/callbacks.c:1355
 msgid "Importing project"
 msgstr "Импорт проекта"
 
-#: src/callbacks.c:1458
+#: src/callbacks.c:1440
 #, c-format
 msgid "Exporting project %s..."
 msgstr "Экспорт проекта %s..."
 
-#: src/callbacks.c:1476
+#: src/callbacks.c:1458
 msgid "Exporting project"
 msgstr "Экспорт проекта"
 
-#: src/callbacks.c:1492
+#: src/callbacks.c:1474
 msgid "Backup as .lv1 file"
 msgstr "Сохранить резервную копию в файл .lv1"
 
-#: src/callbacks.c:1508
+#: src/callbacks.c:1490
 msgid "Restore .lv1 file"
 msgstr "Восстановить файл .lv1"
 
-#: src/callbacks.c:1651
+#: src/callbacks.c:1633
 msgid ""
 "\n"
 "\n"
@@ -2037,90 +2037,90 @@ msgstr ""
 "Сборка будет удалена с диска.\n"
 "Вы уверены ?\n"
 
-#: src/callbacks.c:1710
+#: src/callbacks.c:1692
 #, c-format
 msgid "Deleting set %s..."
 msgstr "Удаление группы %s..."
 
-#: src/callbacks.c:1712
+#: src/callbacks.c:1694
 msgid "Deleting set..."
 msgstr "Удаление сборки..."
 
-#: src/callbacks.c:1716
+#: src/callbacks.c:1698
 msgid "Deleting set"
 msgstr "Удалить сборку"
 
-#: src/callbacks.c:1724
+#: src/callbacks.c:1706
 #, c-format
 msgid "Set %s was permanently deleted from the disk.\n"
 msgstr "Сборка %s была полностью удалена с диска.\n"
 
-#: src/callbacks.c:1774 src/callbacks.c:11805
+#: src/callbacks.c:1756 src/callbacks.c:11772
 msgid "Insert Silence"
 msgstr "Вставить тишину"
 
-#: src/callbacks.c:1830 src/callbacks.c:1910 src/callbacks.c:2073
+#: src/callbacks.c:1812 src/callbacks.c:1892 src/callbacks.c:2055
 msgid "Undoing"
 msgstr "Отмена операции"
 
-#: src/callbacks.c:1923 src/callbacks.c:2134
+#: src/callbacks.c:1905 src/callbacks.c:2116
 msgid "Restoring audio..."
 msgstr "Восстановление аудио..."
 
-#: src/callbacks.c:1939
+#: src/callbacks.c:1921
 msgid "Clearing frame images"
 msgstr "Очищение изображений кадра"
 
-#: src/callbacks.c:1972
+#: src/callbacks.c:1954
 msgid "Deleting excess frames"
 msgstr ""
 
-#: src/callbacks.c:2216
+#: src/callbacks.c:2198
 #, c-format
 msgid "Length of video is now %d frames at %.3f frames per second.\n"
 msgstr "Сейчас длина видео составляет %d кадров при %.3f кадрах в секунду.\n"
 
-#: src/callbacks.c:2220 src/resample.c:683 src/resample.c:2163
+#: src/callbacks.c:2202 src/resample.c:683 src/resample.c:2163
 #, c-format
 msgid "Clipboard was resampled to %d frames.\n"
 msgstr "Буфер обмена был повторно выбран к кадрам %d.\n"
 
-#: src/callbacks.c:2383 src/callbacks.c:2412
+#: src/callbacks.c:2365 src/callbacks.c:2394
 msgid "Redoing"
 msgstr "Возврат операции"
 
-#: src/callbacks.c:2457
+#: src/callbacks.c:2439
 #, c-format
 msgid "Copying frames %d to %d%s to the clipboard..."
 msgstr "Копирование кадров в буфер обмена: с %d по %d%s..."
 
-#: src/callbacks.c:2479 src/saveplay.c:1413 src/saveplay.c:1567
+#: src/callbacks.c:2461 src/saveplay.c:1413 src/saveplay.c:1567
 #: src/saveplay.c:1629 src/saveplay.c:3838
 msgid "Pulling frames from clip"
 msgstr "Извлечение кадров из клипа"
 
-#: src/callbacks.c:2517
+#: src/callbacks.c:2499
 msgid "Copying to the clipboard"
 msgstr "Копировать в буфер обмена"
 
-#: src/callbacks.c:2595
+#: src/callbacks.c:2577
 msgid "Cut"
 msgstr "Вырезать"
 
-#: src/callbacks.c:2632
+#: src/callbacks.c:2614
 #, c-format
 msgid "Pasting %d frames to new clip %s..."
 msgstr "Вставка %d кадров в новый фрагмент %s..."
 
-#: src/callbacks.c:2656
+#: src/callbacks.c:2638
 msgid "Pasting"
 msgstr "Вставить"
 
-#: src/callbacks.c:2672
+#: src/callbacks.c:2654
 msgid "...added audio..."
 msgstr "...добавлен звук..."
 
-#: src/callbacks.c:2749
+#: src/callbacks.c:2731
 msgid ""
 "This operation requires resizing or converting of frames.\n"
 "Please install 'convert' from the Image-magick package, and then restart "
@@ -2130,7 +2130,7 @@ msgstr ""
 "Пожалуйста установите 'convert' из пакета Image-magick, и затем "
 "перезапустите LiVES.\n"
 
-#: src/callbacks.c:2766
+#: src/callbacks.c:2748
 msgid ""
 "\n"
 "\n"
@@ -2144,7 +2144,7 @@ msgstr ""
 "Выберите все кадры и обратитесь к функции \n"
 "'Trim Audio' в меню Аудио."
 
-#: src/callbacks.c:2790
+#: src/callbacks.c:2772
 msgid ""
 "LiVES cannot insert because the audio rates do not match.\n"
 "Please install 'sox', and try again."
@@ -2153,7 +2153,7 @@ msgstr ""
 "соответствуют.\n"
 "Пожалуйста установите 'sox', и попробуйте снова."
 
-#: src/callbacks.c:2809
+#: src/callbacks.c:2791
 msgid ""
 "\n"
 "Insertion will cause frames to shift in some multitrack layouts.\n"
@@ -2163,7 +2163,7 @@ msgstr ""
 "Вставка кадров приведет к сдвигу в размещении мультитрековых дорожек.\n"
 "Вы уверены, что хотите продолжить ?\n"
 
-#: src/callbacks.c:2859 src/callbacks.c:11733
+#: src/callbacks.c:2841 src/callbacks.c:11700
 msgid ""
 "\n"
 "Insertion will cause audio to shift in some multitrack layouts.\n"
@@ -2173,11 +2173,11 @@ msgstr ""
 "Вставка звука приведет к сдвигу в размещении мультитрековых дорожек.\n"
 "Вы уверены, что хотите продолжить ?\n"
 
-#: src/callbacks.c:2967 src/callbacks.c:2996
+#: src/callbacks.c:2949 src/callbacks.c:2978
 msgid "Resampling clipboard audio"
 msgstr "Повторный выбор буфера обмена звука"
 
-#: src/callbacks.c:3012
+#: src/callbacks.c:2994
 msgid ""
 "\n"
 "\n"
@@ -2189,7 +2189,7 @@ msgstr ""
 "LiVES не может повторно выбрать буфер обмена звука. \n"
 "Буфер обмена звука был очищен.\n"
 
-#: src/callbacks.c:3026
+#: src/callbacks.c:3008
 msgid ""
 "\n"
 "\n"
@@ -2198,30 +2198,30 @@ msgid ""
 "using unchanged audio ?\n"
 msgstr ""
 
-#: src/callbacks.c:3078 src/callbacks.c:3248
+#: src/callbacks.c:3060 src/callbacks.c:3230
 #, c-format
 msgid "Inserting %d%s frames from the clipboard..."
 msgstr "Будут вставлены %d%s кадров из буфера обмена..."
 
-#: src/callbacks.c:3103 src/callbacks.c:3173 src/callbacks.c:3272
+#: src/callbacks.c:3085 src/callbacks.c:3155 src/callbacks.c:3254
 msgid "Inserting"
 msgstr "Вставка"
 
-#: src/callbacks.c:3134
+#: src/callbacks.c:3116
 #, c-format
 msgid "Inserting %d times from the clipboard%s..."
 msgstr "Вставка %d отрезка из буфера обмена%s..."
 
-#: src/callbacks.c:3141
+#: src/callbacks.c:3123
 #, c-format
 msgid "Inserting %d frames from the clipboard%s..."
 msgstr "Вставка %d кадров из буфера обмена%s..."
 
-#: src/callbacks.c:3351
+#: src/callbacks.c:3333
 msgid "Insert"
 msgstr "Вставить"
 
-#: src/callbacks.c:3420
+#: src/callbacks.c:3402
 msgid ""
 "\n"
 "Deleting all frames will close this file.\n"
@@ -2231,7 +2231,7 @@ msgstr ""
 "Удаление всех файлов приведет к закрытию файла.\n"
 "Вы уверены ?"
 
-#: src/callbacks.c:3429
+#: src/callbacks.c:3411
 msgid ""
 "\n"
 "Deletion will cause missing frames in some multitrack layouts.\n"
@@ -2242,8 +2242,8 @@ msgstr ""
 "дорожек.\n"
 "Вы уверены, что хотите продолжить ?\n"
 
-#: src/callbacks.c:3449 src/callbacks.c:10958 src/callbacks.c:11203
-#: src/callbacks.c:11269
+#: src/callbacks.c:3431 src/callbacks.c:10925 src/callbacks.c:11170
+#: src/callbacks.c:11236
 msgid ""
 "\n"
 "Deletion will cause missing audio in some multitrack layouts.\n"
@@ -2254,7 +2254,7 @@ msgstr ""
 "дорожек.\n"
 "Вы уверены, что хотите продолжить ?\n"
 
-#: src/callbacks.c:3468
+#: src/callbacks.c:3450
 msgid ""
 "\n"
 "Deletion will cause frames to shift in some multitrack layouts.\n"
@@ -2265,7 +2265,7 @@ msgstr ""
 "дорожек.\n"
 "Вы уверены, что хотите продолжить ?\n"
 
-#: src/callbacks.c:3487 src/callbacks.c:11251
+#: src/callbacks.c:3469 src/callbacks.c:11218
 msgid ""
 "\n"
 "Deletion will cause audio to shift in some multitrack layouts.\n"
@@ -2276,20 +2276,20 @@ msgstr ""
 "дорожек.\n"
 "Вы уверены, что хотите продолжить ?\n"
 
-#: src/callbacks.c:3545
+#: src/callbacks.c:3527
 #, c-format
 msgid "Deleting frames %d to %d%s..."
 msgstr "Удаление кадров с %d по %d%s..."
 
-#: src/callbacks.c:3570
+#: src/callbacks.c:3552
 msgid "Deleting"
 msgstr "Удаление"
 
-#: src/callbacks.c:3651
+#: src/callbacks.c:3633
 msgid "Delete"
 msgstr "Удалить"
 
-#: src/callbacks.c:3672
+#: src/callbacks.c:3654
 msgid ""
 "\n"
 "\n"
@@ -2299,7 +2299,7 @@ msgstr ""
 "\n"
 "Выбранное заблокировано.\n"
 
-#: src/callbacks.c:4027
+#: src/callbacks.c:4009
 msgid ""
 "Ready to record. Use 'control' and cursor keys during playback to record "
 "your performance.\n"
@@ -2307,11 +2307,11 @@ msgid ""
 "play.)\n"
 msgstr ""
 
-#: src/callbacks.c:4033
+#: src/callbacks.c:4015
 msgid "Record cancelled.\n"
 msgstr "Запись отменена.\n"
 
-#: src/callbacks.c:4177
+#: src/callbacks.c:4159
 #, c-format
 msgid ""
 "\n"
@@ -2324,7 +2324,7 @@ msgstr ""
 "Отчеты плагина '%s':\n"
 "%s\n"
 
-#: src/callbacks.c:4181
+#: src/callbacks.c:4163
 #, c-format
 msgid ""
 "\n"
@@ -2337,7 +2337,7 @@ msgstr ""
 "Невозможно найти метод 'init' в плагине %s.\n"
 "Плагин, возможно, поврежден или неправильно установлен."
 
-#: src/callbacks.c:4514
+#: src/callbacks.c:4496
 #, c-format
 msgid ""
 "Saving the set will cause copies of all loaded clips to remain on the disk"
@@ -2350,22 +2350,22 @@ msgstr ""
 "\n"
 "Пожалуйста нажмите \"Отмена\", если вам это не нужно.\n"
 
-#: src/callbacks.c:4597
+#: src/callbacks.c:4579
 #, c-format
 msgid "Saving set %s"
 msgstr "Сохранение сборки %s"
 
-#: src/callbacks.c:4953
+#: src/callbacks.c:4935
 #, c-format
 msgid "Loading clips from set %s"
 msgstr "Загрузка клипов из сборки %s"
 
-#: src/callbacks.c:5041
+#: src/callbacks.c:5023
 #, c-format
 msgid "%d clips and %d layouts were recovered from set (%s).\n"
 msgstr ""
 
-#: src/callbacks.c:5317
+#: src/callbacks.c:5299
 msgid ""
 "LiVES will attempt to recover some disk space.\n"
 "You should ONLY run this if you have no other copies of LiVES running on "
@@ -2377,24 +2377,24 @@ msgstr ""
 "этой машине.\n"
 "Нажмите OK для запуска.\n"
 
-#: src/callbacks.c:5322
+#: src/callbacks.c:5304
 msgid "Cleaning up disk space..."
 msgstr "Очистка места на диске..."
 
-#: src/callbacks.c:5390
+#: src/callbacks.c:5372
 msgid "Recovering disk space"
 msgstr ""
 
-#: src/callbacks.c:5442
+#: src/callbacks.c:5424
 #, c-format
 msgid "%s of disk space was recovered.\n"
 msgstr ""
 
-#: src/callbacks.c:5498
+#: src/callbacks.c:5480
 msgid "Resetting frame rates and frame values..."
 msgstr "Восстановление частоты кадров и значений кадров..."
 
-#: src/callbacks.c:5541
+#: src/callbacks.c:5523
 #, c-format
 msgid ""
 "\n"
@@ -2402,12 +2402,12 @@ msgid ""
 "Internal: %s (%d bpp) / %s\n"
 msgstr ""
 
-#: src/callbacks.c:5543
+#: src/callbacks.c:5525
 msgid "buffered"
 msgstr ""
 
-#: src/callbacks.c:5556 src/callbacks.c:5575 src/callbacks.c:5593
-#: src/callbacks.c:5627
+#: src/callbacks.c:5538 src/callbacks.c:5557 src/callbacks.c:5575
+#: src/callbacks.c:5609
 msgid ""
 "\n"
 "  Opening..."
@@ -2415,7 +2415,7 @@ msgstr ""
 "\n"
 "  Открывание..."
 
-#: src/callbacks.c:5563
+#: src/callbacks.c:5545
 #, c-format
 msgid ""
 "\n"
@@ -2424,7 +2424,7 @@ msgstr ""
 "\n"
 "(%d виртуальный)"
 
-#: src/callbacks.c:5566
+#: src/callbacks.c:5548
 #, c-format
 msgid ""
 "\n"
@@ -2433,7 +2433,7 @@ msgstr ""
 "\n"
 "(%d декодированный)"
 
-#: src/callbacks.c:5578 src/callbacks.c:5596 src/callbacks.c:5630
+#: src/callbacks.c:5560 src/callbacks.c:5578 src/callbacks.c:5612
 #, c-format
 msgid ""
 "\n"
@@ -2442,7 +2442,7 @@ msgstr ""
 "\n"
 "  %.2f сек."
 
-#: src/callbacks.c:5587
+#: src/callbacks.c:5569
 msgid ""
 "\n"
 "  Unknown"
@@ -2450,23 +2450,23 @@ msgstr ""
 "\n"
 "  Неизвестно"
 
-#: src/callbacks.c:5600 src/callbacks.c:5614
+#: src/callbacks.c:5582 src/callbacks.c:5596
 msgid "unsigned"
 msgstr "неподписан"
 
-#: src/callbacks.c:5601 src/callbacks.c:5615
+#: src/callbacks.c:5583 src/callbacks.c:5597
 msgid "signed"
 msgstr "подписан"
 
-#: src/callbacks.c:5603 src/callbacks.c:5617
+#: src/callbacks.c:5585 src/callbacks.c:5599
 msgid "big-endian"
 msgstr "big-endian"
 
-#: src/callbacks.c:5604 src/callbacks.c:5618
+#: src/callbacks.c:5586 src/callbacks.c:5600
 msgid "little-endian"
 msgstr "little-endian"
 
-#: src/callbacks.c:5606 src/callbacks.c:5620
+#: src/callbacks.c:5588 src/callbacks.c:5602
 #, c-format
 msgid ""
 "  %d Hz %d bit\n"
@@ -2475,7 +2475,7 @@ msgstr ""
 "  %d Гц %d бит\n"
 "%s %s"
 
-#: src/callbacks.c:5727
+#: src/callbacks.c:5709
 msgid ""
 "This program is free software; you can redistribute it and/or modify\n"
 "it under the terms of the GNU General Public License as published by\n"
@@ -2492,15 +2492,15 @@ msgid ""
 "Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA.\n"
 msgstr ""
 
-#: src/callbacks.c:5741
+#: src/callbacks.c:5723
 msgid "A video editor and VJ program."
 msgstr "Видеоредактор и VJ-студия."
 
-#: src/callbacks.c:5742
+#: src/callbacks.c:5724
 msgid "About LiVES"
 msgstr ""
 
-#: src/callbacks.c:5744
+#: src/callbacks.c:5726
 msgid "translator_credits"
 msgstr ""
 "Launchpad Contributions:\n"
@@ -2513,7 +2513,7 @@ msgstr ""
 "  Pavel798 https://launchpad.net/~moltograndioso\n"
 "  Sergey Sedov https://launchpad.net/~serg-sedov"
 
-#: src/callbacks.c:5777
+#: src/callbacks.c:5759
 #, c-format
 msgid ""
 "LiVES Version %s\n"
@@ -2527,7 +2527,7 @@ msgid ""
 "Homepage: http://lives.sourceforge.net"
 msgstr ""
 
-#: src/callbacks.c:6056
+#: src/callbacks.c:6038
 msgid ""
 "\n"
 "\n"
@@ -2537,7 +2537,7 @@ msgstr ""
 "\n"
 "Вам нужно установить mplayer для предварительного просмотра этого файла.\n"
 
-#: src/callbacks.c:6059
+#: src/callbacks.c:6041
 msgid ""
 "\n"
 "\n"
@@ -2548,7 +2548,7 @@ msgstr ""
 "Чтобы выполнить предварительный просмотр этого файла, установите mplayer или "
 "imageMagick.\n"
 
-#: src/callbacks.c:6441 src/callbacks.c:8316
+#: src/callbacks.c:6423 src/callbacks.c:8298
 msgid ""
 "\n"
 "Loading new audio may cause missing audio in some multitrack layouts.\n"
@@ -2561,182 +2561,182 @@ msgstr ""
 "Вы уверены, что хотите продолжить ?\n"
 "."
 
-#: src/callbacks.c:6541
+#: src/callbacks.c:6523
 #, c-format
 msgid "Opening audio %s, type %s..."
 msgstr "Открывание звука %s, тип %s..."
 
-#: src/callbacks.c:6574 src/saveplay.c:461
+#: src/callbacks.c:6556 src/saveplay.c:461
 msgid "Opening audio"
 msgstr "Открывание звука"
 
-#: src/callbacks.c:6583 src/callbacks.c:6630 src/callbacks.c:8414
-#: src/callbacks.c:8456 src/callbacks.c:8499 src/callbacks.c:10884
+#: src/callbacks.c:6565 src/callbacks.c:6612 src/callbacks.c:8396
+#: src/callbacks.c:8438 src/callbacks.c:8481 src/callbacks.c:10851
 msgid "Cancelling"
 msgstr "Отмена"
 
-#: src/callbacks.c:6678 src/callbacks.c:8541 src/callbacks.c:10914
-#: src/callbacks.c:11605
+#: src/callbacks.c:6660 src/callbacks.c:8523 src/callbacks.c:10881
+#: src/callbacks.c:11572
 msgid "Committing audio"
 msgstr "Наложение звука"
 
-#: src/callbacks.c:6690 src/callbacks.c:8573
+#: src/callbacks.c:6672 src/callbacks.c:8555
 msgid "New Audio"
 msgstr "Новый звук"
 
-#: src/callbacks.c:6798
+#: src/callbacks.c:6780
 #, c-format
 msgid ""
 "Text was saved as\n"
 "%s\n"
 msgstr ""
 
-#: src/callbacks.c:6970 src/saveplay.c:3453
+#: src/callbacks.c:6952 src/saveplay.c:3453
 #, c-format
 msgid "%d frames are enough !\n"
 msgstr "%d кадров достаточно !\n"
 
-#: src/callbacks.c:7076
+#: src/callbacks.c:7058
 msgid "LiVES: - Encoder debug output"
 msgstr "LiVES: - Вывод отладки кодировщика"
 
-#: src/callbacks.c:7113 src/gui.c:1940
+#: src/callbacks.c:7095 src/gui.c:1940
 msgid "Fullscreen playback (f)"
 msgstr "Полноэкранное воспроизведение"
 
-#: src/callbacks.c:7115
+#: src/callbacks.c:7097
 msgid "Fullscreen playback off (f)"
 msgstr "Выключить полноэкранное воспроизведение"
 
-#: src/callbacks.c:7214 src/callbacks.c:7362 src/callbacks.c:7695
-#: src/callbacks.c:7712 src/gui.c:3704 src/saveplay.c:2339 src/saveplay.c:2373
+#: src/callbacks.c:7196 src/callbacks.c:7344 src/callbacks.c:7677
+#: src/callbacks.c:7694 src/gui.c:3707 src/saveplay.c:2339 src/saveplay.c:2373
 #: src/saveplay.c:2970 src/saveplay.c:3072 src/saveplay.c:3091
-#: src/multitrack.c:8946 src/multitrack.c:10652
+#: src/multitrack.c:8946 src/multitrack.c:10653
 #, c-format
 msgid " (%d %% scale)"
 msgstr ""
 
-#: src/callbacks.c:7216 src/callbacks.c:7364 src/callbacks.c:7697
-#: src/gui.c:3708 src/saveplay.c:2341 src/saveplay.c:2375
+#: src/callbacks.c:7198 src/callbacks.c:7346 src/callbacks.c:7679
+#: src/gui.c:3711 src/saveplay.c:2341 src/saveplay.c:2375
 #, c-format
 msgid "LiVES: - Play Window%s"
 msgstr ""
 
-#: src/callbacks.c:7328 src/gui.c:1925
+#: src/callbacks.c:7310 src/gui.c:1925
 msgid "Double size (d)"
 msgstr "Двойной размер (d)"
 
-#: src/callbacks.c:7335
+#: src/callbacks.c:7317
 msgid "Single size (d)"
 msgstr "Стандартный размер (d)"
 
-#: src/callbacks.c:7467 src/callbacks.c:7468
+#: src/callbacks.c:7449 src/callbacks.c:7450
 msgid "Hide the play window (s)"
 msgstr "Скрыть окно проигрывателя (s)"
 
-#: src/callbacks.c:7477 src/gui.c:1762
+#: src/callbacks.c:7459 src/gui.c:1762
 msgid "Show the play window (s)"
 msgstr "Показать окно проигрывателя (s)"
 
-#: src/callbacks.c:7478 src/gui.c:1914
+#: src/callbacks.c:7460 src/gui.c:1914
 msgid "Play in separate window (s)"
 msgstr "Проигрывать в отдельном окне (s)"
 
-#: src/callbacks.c:7560 src/gui.c:4051 src/saveplay.c:2370
+#: src/callbacks.c:7542 src/gui.c:4054 src/saveplay.c:2370
 msgid "LiVES: - Streaming"
 msgstr ""
 
-#: src/callbacks.c:7812
+#: src/callbacks.c:7794
 msgid "Switch continuous looping off (o)"
 msgstr "Режим непрывного выполнения цикла выключен (o)"
 
-#: src/callbacks.c:7819 src/gui.c:1813
+#: src/callbacks.c:7801 src/gui.c:1813
 msgid "Switch continuous looping on (o)"
 msgstr "Режим непрывного выполнения цикла включен (o)"
 
-#: src/callbacks.c:7874
+#: src/callbacks.c:7856
 #, c-format
 msgid "Audio volume (%.2f)"
 msgstr "Громкость звука (%.2f)"
 
-#: src/callbacks.c:7919 src/callbacks.c:7920 src/gui.c:3632
+#: src/callbacks.c:7901 src/callbacks.c:7902 src/gui.c:3635
 msgid "Unmute the audio (z)"
 msgstr "Включить звук (z)"
 
-#: src/callbacks.c:7931 src/callbacks.c:7932 src/gui.c:1826 src/gui.c:3631
+#: src/callbacks.c:7913 src/callbacks.c:7914 src/gui.c:1826 src/gui.c:3634
 msgid "Mute the audio (z)"
 msgstr "Выключить звук (z)"
 
-#: src/callbacks.c:8069
+#: src/callbacks.c:8051
 msgid "Reversing clipboard..."
 msgstr "Изменение буфера обмена..."
 
-#: src/callbacks.c:8083
+#: src/callbacks.c:8065
 msgid "Reversing clipboard"
 msgstr "Изменение буфера обмена"
 
-#: src/callbacks.c:8111
+#: src/callbacks.c:8093
 msgid "LiVES: Load subtitles from..."
 msgstr "LiVES: Загрузить субтитры из..."
 
-#: src/callbacks.c:8178 src/saveplay.c:890
+#: src/callbacks.c:8160 src/saveplay.c:890
 #, c-format
 msgid "Loaded subtitle file: %s\n"
 msgstr "Загружен файл субтитров: %s\n"
 
-#: src/callbacks.c:8247
+#: src/callbacks.c:8229
 msgid "Subtitles were erased.\n"
 msgstr "Субтитры были стёрты.\n"
 
-#: src/callbacks.c:8266
+#: src/callbacks.c:8248
 msgid "LiVES: - Select Audio File"
 msgstr ""
 
-#: src/callbacks.c:8277
+#: src/callbacks.c:8259
 msgid "Please set your CD play device in Tools | Preferences | Misc\n"
 msgstr ""
 "Пожалуйста, выберите ваше устройство для проигрывания CD в Инструменты | "
 "Предпочтения | Прочее\n"
 
-#: src/callbacks.c:8348
+#: src/callbacks.c:8330
 #, c-format
 msgid "Opening CD track %d from %s..."
 msgstr "Открыть CD трэк %d из %s..."
 
-#: src/callbacks.c:8353
+#: src/callbacks.c:8335
 #, c-format
 msgid "CD track %d"
 msgstr "CD трэк %d"
 
-#: src/callbacks.c:8400
+#: src/callbacks.c:8382
 msgid "Opening CD track..."
 msgstr "Открытие CD трэка..."
 
-#: src/callbacks.c:8442 src/callbacks.c:8488
+#: src/callbacks.c:8424 src/callbacks.c:8470
 msgid "Error loading CD track\n"
 msgstr "Ошибка загрузки CD трэка\n"
 
-#: src/callbacks.c:8610
+#: src/callbacks.c:8592
 msgid "layout errors"
 msgstr "ошибка размещения"
 
-#: src/callbacks.c:8620
+#: src/callbacks.c:8602
 msgid "Close _Window"
 msgstr "Закрыть окно (_W)"
 
-#: src/callbacks.c:8631
+#: src/callbacks.c:8613
 msgid "Clear _Errors"
 msgstr "Убрать ошибки (_E)"
 
-#: src/callbacks.c:8642
+#: src/callbacks.c:8624
 msgid "_Delete affected layouts"
 msgstr "Удалить затронутые слои размещения (_D)"
 
-#: src/callbacks.c:9377 src/callbacks.c:9422
+#: src/callbacks.c:9359 src/callbacks.c:9404
 msgid "Resume"
 msgstr "Продолжить"
 
-#: src/callbacks.c:9378
+#: src/callbacks.c:9360
 msgid ""
 "\n"
 "Paused\n"
@@ -2746,27 +2746,27 @@ msgstr ""
 "Приостановлено\n"
 "(Щёлкните Возобновить, чтобы продолжить процесс)"
 
-#: src/callbacks.c:9379 src/callbacks.c:9429
+#: src/callbacks.c:9361 src/callbacks.c:9411
 msgid "paused..."
 msgstr "приостановлено..."
 
-#: src/callbacks.c:9406 src/callbacks.c:9440
+#: src/callbacks.c:9388 src/callbacks.c:9422
 msgid "Pause"
 msgstr "Приостановить"
 
-#: src/callbacks.c:9408 src/callbacks.c:9443
+#: src/callbacks.c:9390 src/callbacks.c:9425
 msgid "resumed..."
 msgstr "возобновление..."
 
-#: src/callbacks.c:9424
+#: src/callbacks.c:9406
 msgid "Keep"
 msgstr "Оставить"
 
-#: src/callbacks.c:9425
+#: src/callbacks.c:9407
 msgid "Enough"
 msgstr ""
 
-#: src/callbacks.c:9427
+#: src/callbacks.c:9409
 msgid ""
 "\n"
 "Paused\n"
@@ -2778,28 +2778,28 @@ msgstr ""
 "(кликните Оставить для сохранения того, что вам нужно и остановки)\n"
 "(кликните Продолжить для возобновления процесса)"
 
-#: src/callbacks.c:9441
+#: src/callbacks.c:9423
 msgid "Cancel"
 msgstr "Отмена"
 
-#: src/callbacks.c:9576
+#: src/callbacks.c:9558
 msgid "Stop"
 msgstr "Остановить"
 
-#: src/callbacks.c:10073 src/multitrack.c:12821
+#: src/callbacks.c:10052 src/multitrack.c:12822
 msgid "LiVES: Selected frame"
 msgstr "LiVES: Выбранный кадр"
 
-#: src/callbacks.c:10080
+#: src/callbacks.c:10059
 msgid "_Save frame as..."
 msgstr "_Сохранить кадр как..."
 
-#: src/callbacks.c:10324
+#: src/callbacks.c:10295
 #, c-format
 msgid "Audio is ahead of video by %.4f secs. at frame %d, with fps %.4f\n"
 msgstr "Звук опережает видео на %.4f c. с кадра %d с частотой кадров/с. %.4f\n"
 
-#: src/callbacks.c:10384
+#: src/callbacks.c:10352
 msgid ""
 "\n"
 "\n"
@@ -2808,7 +2808,7 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/callbacks.c:10390
+#: src/callbacks.c:10358
 msgid ""
 "\n"
 "\n"
@@ -2820,7 +2820,7 @@ msgstr ""
 "Вы должны установить \"xwininfo\" перед использованием этой опции\n"
 "\n"
 
-#: src/callbacks.c:10466 src/callbacks.c:11523
+#: src/callbacks.c:10434 src/callbacks.c:11490
 msgid ""
 "\n"
 "Record time must be greater than 0.\n"
@@ -2828,7 +2828,7 @@ msgstr ""
 "\n"
 "Время записи должно быть не нулевым.\n"
 
-#: src/callbacks.c:10477
+#: src/callbacks.c:10445
 msgid ""
 "Capture an External Window:\n"
 "\n"
@@ -2842,11 +2842,11 @@ msgstr ""
 "Кликните 'Отмена' чтобы отказаться\n"
 "\n"
 
-#: src/callbacks.c:10482
+#: src/callbacks.c:10450
 msgid "External window was released.\n"
 msgstr "Было выпущено внешнее окно.\n"
 
-#: src/callbacks.c:10516
+#: src/callbacks.c:10484
 msgid ""
 "Click on a Window to Capture it\n"
 "Press 'q' to stop recording"
@@ -2854,7 +2854,7 @@ msgstr ""
 "Кликните на окне для его захвата\n"
 "Нажмите 'q' для остановки записи"
 
-#: src/callbacks.c:10550
+#: src/callbacks.c:10518
 #, c-format
 msgid ""
 "\n"
@@ -2869,19 +2869,19 @@ msgstr ""
 "Остановить или 'q' для выхода.\n"
 "(По-умолчанию используется %.3f кадров в секунду.)\n"
 
-#: src/callbacks.c:10576
+#: src/callbacks.c:10544
 msgid "LiVES was unable to capture this window. Sorry.\n"
 msgstr "LiVES не может захватить это окно. Извините.\n"
 
-#: src/callbacks.c:10733
+#: src/callbacks.c:10700
 msgid "Export Selected Audio as..."
 msgstr "Экспортировать выбранный звук как..."
 
-#: src/callbacks.c:10737
+#: src/callbacks.c:10704
 msgid "Export Audio as..."
 msgstr "Экспортировать звук как..."
 
-#: src/callbacks.c:10752
+#: src/callbacks.c:10719
 msgid ""
 "\n"
 "\n"
@@ -2895,86 +2895,86 @@ msgstr ""
 "Кликните 'OK' для экспорта с новой скоростью, или 'Отмена' для экспорта "
 "оригинала.\n"
 
-#: src/callbacks.c:10758
+#: src/callbacks.c:10725
 #, c-format
 msgid "Exporting audio frames %d to %d as %s..."
 msgstr "Экспорт звука кадров с %d по %d как %s..."
 
-#: src/callbacks.c:10763
+#: src/callbacks.c:10730
 #, c-format
 msgid "Exporting audio as %s..."
 msgstr "Экспорт звука как %s..."
 
-#: src/callbacks.c:10789
+#: src/callbacks.c:10756
 msgid "Exporting audio"
 msgstr "Экспортирование звука"
 
-#: src/callbacks.c:10820
+#: src/callbacks.c:10787
 msgid "LiVES: - Append Audio File"
 msgstr ""
 
-#: src/callbacks.c:10863
+#: src/callbacks.c:10830
 #, c-format
 msgid "Appending audio file %s..."
 msgstr "Добавление звукового файла %s..."
 
-#: src/callbacks.c:10874
+#: src/callbacks.c:10841
 msgid "Appending audio"
 msgstr "Добавление звука"
 
-#: src/callbacks.c:10930
+#: src/callbacks.c:10897
 msgid "Append Audio"
 msgstr "Добавить звук"
 
-#: src/callbacks.c:10990
+#: src/callbacks.c:10957
 #, c-format
 msgid "Padding audio to %.2f seconds..."
 msgstr ""
 
-#: src/callbacks.c:10992
+#: src/callbacks.c:10959
 #, c-format
 msgid "Trimming audio from %.2f to %.2f seconds..."
 msgstr "Удаление звука с %.2f по %.2f секунды..."
 
-#: src/callbacks.c:11011
+#: src/callbacks.c:10978
 msgid "Trimming/Padding audio"
 msgstr ""
 
-#: src/callbacks.c:11019
+#: src/callbacks.c:10986
 msgid "Trim/Pad Audio"
 msgstr "Удаление/Добавление звука"
 
-#: src/callbacks.c:11093
+#: src/callbacks.c:11060
 msgid "Fading audio in"
 msgstr "Изменение входящего звука"
 
-#: src/callbacks.c:11094
+#: src/callbacks.c:11061
 msgid "Fade audio in"
 msgstr "Изменить входящий звук"
 
-#: src/callbacks.c:11099
+#: src/callbacks.c:11066
 msgid "Fading audio out"
 msgstr "Изменение исходящего звука"
 
-#: src/callbacks.c:11100
+#: src/callbacks.c:11067
 msgid "Fade audio out"
 msgstr "Изменить исходящий звук"
 
-#: src/callbacks.c:11123
+#: src/callbacks.c:11090
 #, c-format
 msgid "%s over %.1f seconds..."
 msgstr ""
 
-#: src/callbacks.c:11125
+#: src/callbacks.c:11092
 #, c-format
 msgid "%s from time %.2f seconds to %.2f seconds..."
 msgstr ""
 
-#: src/callbacks.c:11132
+#: src/callbacks.c:11099
 msgid "Fading audio..."
 msgstr "Изменение звука..."
 
-#: src/callbacks.c:11235
+#: src/callbacks.c:11202
 msgid ""
 "\n"
 "Deleting all audio will close this file.\n"
@@ -2984,33 +2984,33 @@ msgstr ""
 "Удаление всего звука приведет к закрытию файла.\n"
 "Вы уверены ?"
 
-#: src/callbacks.c:11238
+#: src/callbacks.c:11205
 msgid "Deleting all audio..."
 msgstr "Удаление всего звука..."
 
-#: src/callbacks.c:11244
+#: src/callbacks.c:11211
 #, c-format
 msgid "Deleting audio from %.2f to %.2f seconds..."
 msgstr "Удаление звука с %.2f по %.2f секунды..."
 
-#: src/callbacks.c:11331
+#: src/callbacks.c:11298
 msgid "Deleting Audio"
 msgstr "Удаление звука"
 
-#: src/callbacks.c:11338
+#: src/callbacks.c:11305
 msgid "Delete Audio"
 msgstr "Удалить звук"
 
-#: src/callbacks.c:11678
+#: src/callbacks.c:11645
 msgid "Record new audio"
 msgstr "Записать новый звук"
 
-#: src/callbacks.c:11766
+#: src/callbacks.c:11733
 #, c-format
 msgid "Inserting silence from %.2f to %.2f seconds..."
 msgstr "Вставка тишины с %.2f по %.2f секунды..."
 
-#: src/callbacks.c:11795
+#: src/callbacks.c:11762
 msgid "Inserting Silence"
 msgstr "Вставка тишины"
 
@@ -3707,7 +3707,7 @@ msgstr "_О Программе"
 msgid "Rewind to start (w)"
 msgstr ""
 
-#: src/gui.c:1776 src/multitrack.c:16274
+#: src/gui.c:1776 src/multitrack.c:16275
 msgid "Play all (p)"
 msgstr "Воспроизвести все (P)"
 
@@ -3770,129 +3770,137 @@ msgstr "     Скорость воспроизведения видео (кад�
 msgid "Vary the video speed"
 msgstr ""
 
-#: src/gui.c:2051
+#: src/gui.c:2053
 msgid "                                                            "
 msgstr "                                                            "
 
-#: src/gui.c:2102 src/gui.c:3212
+#: src/gui.c:2104 src/gui.c:3215
 msgid "First Frame"
 msgstr "Первый кадр"
 
-#: src/gui.c:2200 src/gui.c:3220
+#: src/gui.c:2202 src/gui.c:3223
 msgid "Last Frame"
 msgstr "Последний кадр"
 
-#: src/gui.c:2217
+#: src/gui.c:2219
 msgid "The first selected frame in this clip"
 msgstr ""
 
-#: src/gui.c:2255
+#: src/gui.c:2257
 msgid "The last selected frame in this clip"
 msgstr ""
 
-#: src/gui.c:2528
+#: src/gui.c:2531
 msgid "Starting...\n"
 msgstr ""
 
-#: src/gui.c:3070
+#: src/gui.c:3073
 msgid "    Press 'q' to stop recording.  DO NOT COVER THE PLAY WINDOW !   "
 msgstr ""
 "    Нажмите 'q', чтобы остановить запись. НЕ ПЕРЕКРЫВАЙТЕ ОКНО "
 "ВОСПРОИЗВЕДЕНИЯ !   "
 
-#: src/gui.c:3513
+#: src/gui.c:3516
 msgid "Frame number to preview"
 msgstr ""
 
-#: src/gui.c:3530
+#: src/gui.c:3533
 msgid "_Free"
 msgstr "_Свободная"
 
-#: src/gui.c:3531
+#: src/gui.c:3534
 msgid "Free choice of frame number"
 msgstr ""
 
-#: src/gui.c:3535
+#: src/gui.c:3538
 msgid "_Start"
 msgstr "_Начать"
 
-#: src/gui.c:3536
+#: src/gui.c:3539
 msgid "Frame number is linked to start frame"
 msgstr ""
 
-#: src/gui.c:3543
+#: src/gui.c:3546
 msgid "_End"
 msgstr "_Конец"
 
-#: src/gui.c:3544
+#: src/gui.c:3547
 msgid "Frame number is linked to end frame"
 msgstr ""
 
-#: src/gui.c:3551
+#: src/gui.c:3554
 msgid "_Pointer"
 msgstr "_Указатель"
 
-#: src/gui.c:3552
+#: src/gui.c:3555
 msgid "Frame number is linked to playback pointer"
 msgstr ""
 
-#: src/gui.c:3573
+#: src/gui.c:3576
 msgid "Rewind"
 msgstr "Перемотать назад"
 
-#: src/gui.c:3584 src/dialogs.c:835 src/dialogs.c:837 src/dialogs.c:1755
+#: src/gui.c:3587 src/dialogs.c:835 src/dialogs.c:837 src/dialogs.c:1755
 #: src/dialogs.c:1757
 msgid "Play all"
 msgstr "Слушать все"
 
-#: src/gui.c:3597
+#: src/gui.c:3600
 msgid "Play Selection"
 msgstr "Воспроизвести выделенное"
 
-#: src/gui.c:3611
+#: src/gui.c:3614
 msgid "Loop On/Off"
 msgstr "Включить или выключить цикл"
 
-#: src/gui.c:3685
+#: src/gui.c:3688
 msgid "Start _recording"
 msgstr "Начать _запись"
 
-#: src/gui.c:3690
+#: src/gui.c:3693
 msgid "Stop _recording"
 msgstr "Остановить _запись"
 
-#: src/gui.c:3695
+#: src/gui.c:3698
 msgid "_Record Performance"
 msgstr ""
 
-#: src/gui.c:3842
+#: src/gui.c:3845
 msgid "Hide Play Window"
 msgstr "Скрыть окно воспроизведения"
 
-#: src/gui.c:4223
+#: src/gui.c:4226
 msgid "Show Play Window"
 msgstr "Показать окно воспроизведения"
 
-#: src/ce_thumbs.c:194
+#: src/ce_thumbs.c:199
 #, c-format
 msgid "Mapped to ctrl-%d"
 msgstr ""
 
-#: src/ce_thumbs.c:268
+#: src/ce_thumbs.c:252 src/effects.c:85 src/preferences.c:3142
+msgid "Effects"
+msgstr "Эффекты"
+
+#: src/ce_thumbs.c:255 src/multitrack.c:5371
+msgid "Clips"
+msgstr ""
+
+#: src/ce_thumbs.c:279
 #, c-format
 msgid "Show / apply effects to %s\n"
 msgstr ""
 
-#: src/ce_thumbs.c:280
+#: src/ce_thumbs.c:291
 #, fuzzy, c-format
 msgid "Select clip for %s\n"
 msgstr "_Удалить набор клипов"
 
-#: src/ce_thumbs.c:473
+#: src/ce_thumbs.c:487
 msgid "_Pin"
 msgstr ""
 
-#: src/ce_thumbs.c:473
+#: src/ce_thumbs.c:487
 msgid "Pin the parameter box to the window"
 msgstr ""
 
@@ -5628,10 +5636,6 @@ msgstr "Переходы состояний"
 msgid "effect"
 msgstr "эффект"
 
-#: src/effects.c:85 src/preferences.c:3142
-msgid "Effects"
-msgstr "Эффекты"
-
 #: src/effects.c:87 src/rfx-builder.c:191
 msgid "utility"
 msgstr ""
@@ -5696,7 +5700,7 @@ msgstr "только видео"
 msgid "Video only Transitions"
 msgstr ""
 
-#: src/effects.c:114 src/multitrack.c:10334
+#: src/effects.c:114 src/multitrack.c:10335
 msgid "audio only"
 msgstr "только звук"
 
@@ -5704,7 +5708,7 @@ msgstr "только звук"
 msgid "Audio only Transitions"
 msgstr ""
 
-#: src/effects.c:117 src/effects.c:120 src/multitrack.c:18303
+#: src/effects.c:117 src/effects.c:120 src/multitrack.c:18304
 msgid "audio"
 msgstr "аудио"
 
@@ -5999,27 +6003,27 @@ msgstr ""
 msgid "Effect %s cannot be used with this audio player.\n"
 msgstr ""
 
-#: src/effects-weed.c:6517
+#: src/effects-weed.c:6518
 #, c-format
 msgid "Failed to start instance %s, error code %d\n"
 msgstr ""
 
-#: src/effects-weed.c:6591
+#: src/effects-weed.c:6595
 #, c-format
 msgid "Unable to start generator %s\n"
 msgstr ""
 
-#: src/effects-weed.c:7322
+#: src/effects-weed.c:7329
 #, c-format
 msgid "Failed to start generator %s\n"
 msgstr ""
 
-#: src/effects-weed.c:7419
+#: src/effects-weed.c:7426
 #, c-format
 msgid "Failed to start generator %s, error %d\n"
 msgstr ""
 
-#: src/effects-weed.c:8665
+#: src/effects-weed.c:8672
 #, c-format
 msgid "%s [unstable] (%s)"
 msgstr ""
@@ -6182,35 +6186,35 @@ msgstr "Нет параметры"
 msgid "Invalid parameter"
 msgstr "Неверный параметр"
 
-#: src/paramwindow.c:1566
+#: src/paramwindow.c:1576
 msgid "LiVES: - Select Colour"
 msgstr "LiVES: - Выберите цвет"
 
-#: src/paramwindow.c:1571
+#: src/paramwindow.c:1581
 msgid "Click to set the colour"
 msgstr "Нажмите, чтобы установить цвета"
 
-#: src/paramwindow.c:1583
+#: src/paramwindow.c:1593
 msgid "_Red"
 msgstr ""
 
-#: src/paramwindow.c:1584
+#: src/paramwindow.c:1594
 msgid "The red value (0 - 255)"
 msgstr "Красный значения (0 - 255)"
 
-#: src/paramwindow.c:1587
+#: src/paramwindow.c:1597
 msgid "_Green"
 msgstr ""
 
-#: src/paramwindow.c:1588
+#: src/paramwindow.c:1598
 msgid "The green value (0 - 255)"
 msgstr "Зеленый значения (0 - 255)"
 
-#: src/paramwindow.c:1591
+#: src/paramwindow.c:1601
 msgid "_Blue"
 msgstr ""
 
-#: src/paramwindow.c:1592
+#: src/paramwindow.c:1602
 msgid "The blue value (0 - 255)"
 msgstr ""
 
@@ -6772,35 +6776,35 @@ msgstr ""
 msgid "When:         "
 msgstr "Когда:         "
 
-#: src/rfx-builder.c:2731
+#: src/rfx-builder.c:2745
 msgid "LiVES: - Pre Loop Code"
 msgstr ""
 
-#: src/rfx-builder.c:2738
+#: src/rfx-builder.c:2752
 msgid "LiVES: - Loop Code"
 msgstr ""
 
-#: src/rfx-builder.c:2745
+#: src/rfx-builder.c:2759
 msgid "LiVES: - Post Loop Code"
 msgstr ""
 
-#: src/rfx-builder.c:2758
+#: src/rfx-builder.c:2772
 #, c-format
 msgid "LiVES: - Default text (max length %d)"
 msgstr ""
 
-#: src/rfx-builder.c:2771
+#: src/rfx-builder.c:2785
 msgid "LiVES: - Enter values, one per line"
 msgstr ""
 
-#: src/rfx-builder.c:2882
+#: src/rfx-builder.c:2896
 msgid ""
 "\n"
 "\n"
 "Name must not be blank.\n"
 msgstr ""
 
-#: src/rfx-builder.c:2887
+#: src/rfx-builder.c:2901
 msgid ""
 "\n"
 "\n"
@@ -6810,21 +6814,21 @@ msgstr ""
 "\n"
 "Название не должно содержать пробелов.\n"
 
-#: src/rfx-builder.c:2892
+#: src/rfx-builder.c:2906
 msgid ""
 "\n"
 "\n"
 "Menu text must not be blank.\n"
 msgstr ""
 
-#: src/rfx-builder.c:2898
+#: src/rfx-builder.c:2912
 msgid ""
 "\n"
 "\n"
 "Action description must not be blank.\n"
 msgstr ""
 
-#: src/rfx-builder.c:2903
+#: src/rfx-builder.c:2917
 msgid ""
 "\n"
 "\n"
@@ -6834,7 +6838,7 @@ msgstr ""
 "\n"
 "Автор не должен быть пустым.\n"
 
-#: src/rfx-builder.c:2912 src/rfx-builder.c:4165
+#: src/rfx-builder.c:2926 src/rfx-builder.c:4179
 msgid ""
 "\n"
 "\n"
@@ -6842,21 +6846,21 @@ msgid ""
 "Name must be unique.\n"
 msgstr ""
 
-#: src/rfx-builder.c:2919
+#: src/rfx-builder.c:2933
 msgid ""
 "\n"
 "\n"
 "Loop code should not be blank.\n"
 msgstr ""
 
-#: src/rfx-builder.c:2925
+#: src/rfx-builder.c:2939
 msgid ""
 "\n"
 "\n"
 "Trigger code should not be blank for a utility.\n"
 msgstr ""
 
-#: src/rfx-builder.c:2938
+#: src/rfx-builder.c:2952
 msgid ""
 "\n"
 "\n"
@@ -6866,7 +6870,7 @@ msgstr ""
 "\n"
 "Параметр не должен быть пустым.\n"
 
-#: src/rfx-builder.c:2944
+#: src/rfx-builder.c:2958
 msgid ""
 "\n"
 "\n"
@@ -6875,41 +6879,41 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/rfx-builder.c:2997
+#: src/rfx-builder.c:3011
 #, c-format
 msgid "Writing script file %s..."
 msgstr ""
 
-#: src/rfx-builder.c:3303
+#: src/rfx-builder.c:3317
 msgid "No <define> section found in script.\n"
 msgstr ""
 
-#: src/rfx-builder.c:3310 src/rfx-builder.c:3319
+#: src/rfx-builder.c:3324 src/rfx-builder.c:3333
 msgid "Bad script version.\n"
 msgstr ""
 
-#: src/rfx-builder.c:3331
+#: src/rfx-builder.c:3345
 msgid "No <name> section found in script.\n"
 msgstr ""
 
-#: src/rfx-builder.c:3339
+#: src/rfx-builder.c:3353
 msgid "No <version> section found in script.\n"
 msgstr ""
 
-#: src/rfx-builder.c:3348
+#: src/rfx-builder.c:3362
 msgid "No <author> section found in script.\n"
 msgstr ""
 
-#: src/rfx-builder.c:3362
+#: src/rfx-builder.c:3376
 msgid "No <description> section found in script.\n"
 msgstr ""
 
-#: src/rfx-builder.c:3366
+#: src/rfx-builder.c:3380
 #, c-format
 msgid "Bad description. (%s)\n"
 msgstr ""
 
-#: src/rfx-builder.c:3528
+#: src/rfx-builder.c:3542
 #, c-format
 msgid ""
 "\n"
@@ -6919,27 +6923,27 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/rfx-builder.c:3685
+#: src/rfx-builder.c:3699
 msgid "Rebuilding all RFX scripts...builtin..."
 msgstr ""
 
-#: src/rfx-builder.c:3686
+#: src/rfx-builder.c:3700
 msgid "Rebuilding scripts"
 msgstr ""
 
-#: src/rfx-builder.c:3694
+#: src/rfx-builder.c:3708
 msgid "custom..."
 msgstr ""
 
-#: src/rfx-builder.c:3698
+#: src/rfx-builder.c:3712
 msgid "test..."
 msgstr ""
 
-#: src/rfx-builder.c:3704
+#: src/rfx-builder.c:3718
 msgid "rebuilding dynamic menu entries..."
 msgstr ""
 
-#: src/rfx-builder.c:3731 src/rfx-builder.c:3738
+#: src/rfx-builder.c:3745 src/rfx-builder.c:3752
 #, c-format
 msgid ""
 "\n"
@@ -6948,7 +6952,7 @@ msgid ""
 "Please check this program is in your path and executable.\n"
 msgstr ""
 
-#: src/rfx-builder.c:3777
+#: src/rfx-builder.c:3791
 #, c-format
 msgid ""
 "\n"
@@ -6958,12 +6962,12 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/rfx-builder.c:3786
+#: src/rfx-builder.c:3800
 #, c-format
 msgid "Deleting rfx script %s..."
 msgstr ""
 
-#: src/rfx-builder.c:3806
+#: src/rfx-builder.c:3820
 #, c-format
 msgid ""
 "\n"
@@ -6973,7 +6977,7 @@ msgid ""
 "Error code was %d\n"
 msgstr ""
 
-#: src/rfx-builder.c:3842
+#: src/rfx-builder.c:3856
 #, c-format
 msgid ""
 "\n"
@@ -6983,12 +6987,12 @@ msgid ""
 "Please delete it first, or rename the test script.\n"
 msgstr ""
 
-#: src/rfx-builder.c:3853
+#: src/rfx-builder.c:3867
 #, c-format
 msgid "Promoting rfx test plugin %s to custom..."
 msgstr ""
 
-#: src/rfx-builder.c:3870
+#: src/rfx-builder.c:3884
 #, c-format
 msgid ""
 "\n"
@@ -6999,20 +7003,20 @@ msgid ""
 "Return code was %d (%s)\n"
 msgstr ""
 
-#: src/rfx-builder.c:3896
+#: src/rfx-builder.c:3910
 msgid "LiVES: - Export Script to..."
 msgstr ""
 
-#: src/rfx-builder.c:3903 src/rfx-builder.c:3982
+#: src/rfx-builder.c:3917 src/rfx-builder.c:3996
 #, c-format
 msgid "Copying %s to %s..."
 msgstr ""
 
-#: src/rfx-builder.c:3931
+#: src/rfx-builder.c:3945
 msgid "LiVES: Import Script from..."
 msgstr ""
 
-#: src/rfx-builder.c:3974
+#: src/rfx-builder.c:3988
 #, c-format
 msgid ""
 "\n"
@@ -7022,43 +7026,43 @@ msgid ""
 "Please delete it first, or rename the import script.\n"
 msgstr ""
 
-#: src/rfx-builder.c:4075
+#: src/rfx-builder.c:4089
 msgid "LiVES: - Copy RFX Script"
 msgstr ""
 
-#: src/rfx-builder.c:4077
+#: src/rfx-builder.c:4091
 msgid "_From type:    "
 msgstr ""
 
-#: src/rfx-builder.c:4084
+#: src/rfx-builder.c:4098
 msgid "   Script:    "
 msgstr "   Сценарист:    "
 
-#: src/rfx-builder.c:4093
+#: src/rfx-builder.c:4107
 msgid "LiVES: - Rename test RFX Script"
 msgstr ""
 
-#: src/rfx-builder.c:4094
+#: src/rfx-builder.c:4108
 msgid "From script: "
 msgstr ""
 
-#: src/rfx-builder.c:4099
+#: src/rfx-builder.c:4113
 msgid "LiVES: - RFX Script name"
 msgstr ""
 
-#: src/rfx-builder.c:4100
+#: src/rfx-builder.c:4114
 msgid "Script name: "
 msgstr "Имя сценария: "
 
-#: src/rfx-builder.c:4120
+#: src/rfx-builder.c:4134
 msgid "New name: "
 msgstr "Новое имя: "
 
-#: src/rfx-builder.c:4123
+#: src/rfx-builder.c:4137
 msgid "New script name: "
 msgstr ""
 
-#: src/rfx-builder.c:4198
+#: src/rfx-builder.c:4212
 msgid ""
 "\n"
 "\n"
@@ -7066,12 +7070,12 @@ msgid ""
 "Script name must be unique.\n"
 msgstr ""
 
-#: src/rfx-builder.c:4210
+#: src/rfx-builder.c:4224
 #, c-format
 msgid "Renaming RFX test script %s to %s..."
 msgstr ""
 
-#: src/rfx-builder.c:4216
+#: src/rfx-builder.c:4230
 #, c-format
 msgid ""
 "\n"
@@ -7082,16 +7086,16 @@ msgid ""
 "Return code was %d\n"
 msgstr ""
 
-#: src/rfx-builder.c:4431
+#: src/rfx-builder.c:4445
 msgid "_Apply Real Time Effects to Selection"
 msgstr ""
 
-#: src/rfx-builder.c:4481
+#: src/rfx-builder.c:4495
 #, c-format
 msgid "Loading rendered effect %s..."
 msgstr ""
 
-#: src/rfx-builder.c:4586
+#: src/rfx-builder.c:4600
 msgid ""
 "See: VJ - show VJ keys. Set the realtime effects, and then apply them here."
 msgstr ""
@@ -8921,17 +8925,13 @@ msgid ""
 "It cannot be loaded.\n"
 msgstr ""
 
-#: src/multitrack.c:5082 src/multitrack.c:5091 src/multitrack.c:20668
+#: src/multitrack.c:5082 src/multitrack.c:5091 src/multitrack.c:20669
 msgid "Layout was wiped.\n"
 msgstr ""
 
 #: src/multitrack.c:5131
 #, c-format
 msgid "LiVES-%s: Multitrack %dx%d : %d bpp %.3f fps"
-msgstr ""
-
-#: src/multitrack.c:5371
-msgid "Clips"
 msgstr ""
 
 #: src/multitrack.c:5373
@@ -9030,7 +9030,7 @@ msgstr ""
 msgid "Ignore selection limits when inserting"
 msgstr ""
 
-#: src/multitrack.c:6151 src/multitrack.c:16273
+#: src/multitrack.c:6151 src/multitrack.c:16274
 msgid "_Play from Timeline Position"
 msgstr ""
 
@@ -9277,11 +9277,11 @@ msgid ""
 "or not"
 msgstr ""
 
-#: src/multitrack.c:7594 src/multitrack.c:13760
+#: src/multitrack.c:7594 src/multitrack.c:13761
 msgid "Expanded View (d)"
 msgstr ""
 
-#: src/multitrack.c:7596 src/multitrack.c:13767
+#: src/multitrack.c:7596 src/multitrack.c:13768
 msgid "Compact View (d)"
 msgstr ""
 
@@ -9367,16 +9367,16 @@ msgstr ""
 msgid "Timeline (seconds)"
 msgstr "Сроки (в секундах)"
 
-#: src/multitrack.c:9587
+#: src/multitrack.c:9588
 msgid " Backing audio"
 msgstr ""
 
-#: src/multitrack.c:9590
+#: src/multitrack.c:9591
 #, c-format
 msgid " Layer %d audio"
 msgstr ""
 
-#: src/multitrack.c:9597
+#: src/multitrack.c:9599
 msgid "Show/hide audio details"
 msgstr ""
 
@@ -9385,7 +9385,7 @@ msgstr ""
 msgid "Layer %d audio"
 msgstr ""
 
-#: src/multitrack.c:9748 src/multitrack.c:9864
+#: src/multitrack.c:9748 src/multitrack.c:9865
 #, c-format
 msgid "%s (layer %d)"
 msgstr ""
@@ -9408,111 +9408,111 @@ msgstr ""
 msgid " %s"
 msgstr " %s"
 
-#: src/multitrack.c:9949
+#: src/multitrack.c:9950
 msgid "LiVES: Selected effect"
 msgstr "LiVES: Выбранный эффекта"
 
-#: src/multitrack.c:9960
+#: src/multitrack.c:9961
 msgid "_View/Edit this effect"
 msgstr ""
 
-#: src/multitrack.c:9963
+#: src/multitrack.c:9964
 msgid "_View this effect"
 msgstr "_Открыть этот эффект"
 
-#: src/multitrack.c:9971
+#: src/multitrack.c:9972
 msgid "_Delete this effect"
 msgstr "_Удалить этот эффект"
 
-#: src/multitrack.c:10024
+#: src/multitrack.c:10025
 msgid "Cannot insert after this effect"
 msgstr ""
 
-#: src/multitrack.c:10053
+#: src/multitrack.c:10054
 msgid "This effect cannot be moved"
 msgstr ""
 
-#: src/multitrack.c:10099
+#: src/multitrack.c:10100
 #, c-format
 msgid "  %d to %d selected  "
 msgstr ""
 
-#: src/multitrack.c:10102 src/multitrack.c:10340
+#: src/multitrack.c:10103 src/multitrack.c:10341
 #, c-format
 msgid "%.2f sec."
 msgstr ""
 
-#: src/multitrack.c:10311
+#: src/multitrack.c:10312
 #, c-format
 msgid "%d frames"
 msgstr "%d кадров"
 
-#: src/multitrack.c:10662
+#: src/multitrack.c:10663
 msgid ""
 "\n"
 "==============================\n"
 "Switched to Multitrack mode\n"
 msgstr ""
 
-#: src/multitrack.c:12283
+#: src/multitrack.c:12284
 msgid "Drag the time slider to where you"
 msgstr ""
 
-#: src/multitrack.c:12284
+#: src/multitrack.c:12285
 msgid "want to set effect parameters"
 msgstr ""
 
-#: src/multitrack.c:12285
+#: src/multitrack.c:12286
 msgid "Set parameters, then click \"Apply\"\n"
 msgstr ""
 
-#: src/multitrack.c:12286
+#: src/multitrack.c:12287
 msgid ""
 "NODES are points where parameters\n"
 "have been set.\n"
 "Nodes can be deleted."
 msgstr ""
 
-#: src/multitrack.c:12289
+#: src/multitrack.c:12290
 msgid "Effect has no parameters.\n"
 msgstr ""
 
-#: src/multitrack.c:12380
+#: src/multitrack.c:12381
 #, c-format
 msgid "%s output"
 msgstr ""
 
-#: src/multitrack.c:12386
+#: src/multitrack.c:12387
 #, c-format
 msgid "layer %d"
 msgstr "слой %d"
 
-#: src/multitrack.c:12388
+#: src/multitrack.c:12389
 msgid "audio track"
 msgstr "звуковая дорожка"
 
-#: src/multitrack.c:12389
+#: src/multitrack.c:12390
 #, c-format
 msgid "%s to %s"
 msgstr "%s по %s"
 
-#: src/multitrack.c:12440
+#: src/multitrack.c:12441
 msgid "_Prev filter map"
 msgstr ""
 
-#: src/multitrack.c:12451
+#: src/multitrack.c:12452
 msgid "Insert _before"
 msgstr ""
 
-#: src/multitrack.c:12461
+#: src/multitrack.c:12462
 msgid "Insert _after"
 msgstr ""
 
-#: src/multitrack.c:12476
+#: src/multitrack.c:12477
 msgid "_Next filter map"
 msgstr ""
 
-#: src/multitrack.c:12491
+#: src/multitrack.c:12492
 msgid ""
 "\n"
 "\n"
@@ -9524,161 +9524,161 @@ msgstr ""
 "Не влияет на текущий трек,\n"
 "текущее время.\n"
 
-#: src/multitrack.c:12504
+#: src/multitrack.c:12505
 msgid ""
 "Drag a compositor anywhere\n"
 "on the timeline\n"
 "to apply it to the selected region."
 msgstr ""
 
-#: src/multitrack.c:12511
+#: src/multitrack.c:12512
 msgid ""
 "Drag a transition anywhere\n"
 "on the timeline\n"
 "to apply it to the selected region."
 msgstr ""
 
-#: src/multitrack.c:12519
+#: src/multitrack.c:12520
 msgid ""
 "Effects can be dragged\n"
 "onto blocks on the timeline."
 msgstr ""
 
-#: src/multitrack.c:12741
+#: src/multitrack.c:12742
 msgid "LiVES: Selected block/frame"
 msgstr "LiVES: Выбранный блок / кадр"
 
-#: src/multitrack.c:12747
+#: src/multitrack.c:12748
 msgid "_Select this block"
 msgstr "_Выберите этот блок"
 
-#: src/multitrack.c:12757
+#: src/multitrack.c:12758
 msgid "_Split block here"
 msgstr ""
 
-#: src/multitrack.c:12765
+#: src/multitrack.c:12766
 msgid "List _effects here"
 msgstr ""
 
-#: src/multitrack.c:12774 src/multitrack.c:12850
+#: src/multitrack.c:12775 src/multitrack.c:12851
 #, c-format
 msgid "_Adjust %s"
 msgstr ""
 
-#: src/multitrack.c:12789
+#: src/multitrack.c:12790
 msgid "_Delete this block"
 msgstr "_Удалить этот блок"
 
-#: src/multitrack.c:12831
+#: src/multitrack.c:12832
 msgid "_Insert here"
 msgstr "_Вставьте здесь"
 
-#: src/multitrack.c:12837
+#: src/multitrack.c:12838
 msgid "_Insert audio here"
 msgstr "_Вставьте аудио здесь"
 
-#: src/multitrack.c:14365
+#: src/multitrack.c:14366
 #, c-format
 msgid "Inserted gap in selected tracks from time %.4f to %.4f\n"
 msgstr ""
 
-#: src/multitrack.c:14399
+#: src/multitrack.c:14400
 #, c-format
 msgid "Inserted gap in track %s from time %.4f to %.4f\n"
 msgstr ""
 
-#: src/multitrack.c:14600
+#: src/multitrack.c:14601
 #, c-format
 msgid "Undid %s\n"
 msgstr ""
 
-#: src/multitrack.c:14799
+#: src/multitrack.c:14800
 #, c-format
 msgid "Redid %s\n"
 msgstr ""
 
-#: src/multitrack.c:14832
+#: src/multitrack.c:14833
 msgid ""
 "\n"
 " (variable)"
 msgstr ""
 
-#: src/multitrack.c:15058 src/multitrack.c:15170 src/multitrack.c:18282
-#: src/multitrack.c:18294
+#: src/multitrack.c:15059 src/multitrack.c:15171 src/multitrack.c:18283
+#: src/multitrack.c:18295
 #, c-format
 msgid "track %s"
 msgstr "путь %s"
 
-#: src/multitrack.c:15063 src/multitrack.c:15175 src/multitrack.c:18287
+#: src/multitrack.c:15064 src/multitrack.c:15176 src/multitrack.c:18288
 #, c-format
 msgid "tracks %s and %s"
 msgstr ""
 
-#: src/multitrack.c:15069 src/multitrack.c:15181 src/multitrack.c:18297
+#: src/multitrack.c:15070 src/multitrack.c:15182 src/multitrack.c:18298
 msgid "selected tracks"
 msgstr "выбранных композиций"
 
-#: src/multitrack.c:15072
+#: src/multitrack.c:15073
 #, c-format
 msgid "Added %s %s to %s from %.4f to %.4f\n"
 msgstr ""
 
-#: src/multitrack.c:15106
+#: src/multitrack.c:15107
 #, c-format
 msgid "Added effect %s to track %s from %.4f to %.4f\n"
 msgstr ""
 
-#: src/multitrack.c:15187
+#: src/multitrack.c:15188
 #, c-format
 msgid "Deleted %s %s from %s from %.4f to %.4f\n"
 msgstr ""
 
-#: src/multitrack.c:15491
+#: src/multitrack.c:15492
 #, c-format
 msgid "rendered %d frames to new clip.\n"
 msgstr ""
 
-#: src/multitrack.c:15581
+#: src/multitrack.c:15582
 msgid "Cleaning up..."
 msgstr "Очистка..."
 
-#: src/multitrack.c:16266
+#: src/multitrack.c:16267
 msgid "_Pause"
 msgstr "_Приостановить"
 
-#: src/multitrack.c:16267
+#: src/multitrack.c:16268
 msgid "Pause (p)"
 msgstr "Пауза (p)"
 
-#: src/multitrack.c:16408
+#: src/multitrack.c:16409
 msgid "Press 'm' during playback"
 msgstr ""
 
-#: src/multitrack.c:16409
+#: src/multitrack.c:16410
 msgid "to make a mark on the timeline"
 msgstr ""
 
-#: src/multitrack.c:16706
+#: src/multitrack.c:16707
 #, c-format
 msgid ""
 "Inserted audio %.4f to %.4f from clip %s into backing audio from time %.4f "
 "to %.4f\n"
 msgstr ""
 
-#: src/multitrack.c:16966
+#: src/multitrack.c:16967
 #, c-format
 msgid ""
 "Inserted frames %d to %d from clip %s into track %s from time %.4f to %.4f\n"
 msgstr ""
 
-#: src/multitrack.c:17544
+#: src/multitrack.c:17545
 #, c-format
 msgid ""
 "Time region %.3f to %.3f\n"
 "selected.\n"
 msgstr ""
 
-#: src/multitrack.c:17548
+#: src/multitrack.c:17549
 msgid ""
 "select one or more tracks\n"
 "to create a region.\n"
@@ -9686,107 +9686,107 @@ msgstr ""
 "Выберите одну или несколько композиций\n"
 "создать регионе.\n"
 
-#: src/multitrack.c:17550
+#: src/multitrack.c:17551
 #, c-format
 msgid "%d video tracks selected.\n"
 msgstr "%d видеодорожек выбран.\n"
 
-#: src/multitrack.c:17552
+#: src/multitrack.c:17553
 msgid ""
 "Double click on timeline\n"
 "to deselect time region."
 msgstr ""
 
-#: src/multitrack.c:17559
+#: src/multitrack.c:17560
 msgid ""
 "Single click on an effect\n"
 "to select it."
 msgstr ""
 
-#: src/multitrack.c:17560
+#: src/multitrack.c:17561
 msgid ""
 "Double click on an effect\n"
 "to edit it."
 msgstr ""
 
-#: src/multitrack.c:17561
+#: src/multitrack.c:17562
 msgid ""
 "Right click on an effect\n"
 "for context menu.\n"
 msgstr ""
 
-#: src/multitrack.c:17563
+#: src/multitrack.c:17564
 msgid ""
 "Effect order can be changed at\n"
 "FILTER MAPS"
 msgstr ""
 
-#: src/multitrack.c:17570
+#: src/multitrack.c:17571
 msgid ""
 "You can select an effect,\n"
 "then use the INSERT BEFORE"
 msgstr ""
 
-#: src/multitrack.c:17571
+#: src/multitrack.c:17572
 msgid "or INSERT AFTER buttons to move it."
 msgstr ""
 
-#: src/multitrack.c:17853 src/multitrack.c:17866
+#: src/multitrack.c:17854 src/multitrack.c:17867
 msgid "Click on another effect,"
 msgstr ""
 
-#: src/multitrack.c:17854 src/multitrack.c:17867
+#: src/multitrack.c:17855 src/multitrack.c:17868
 msgid ""
 "and the selected one\n"
 "will be inserted"
 msgstr ""
 
-#: src/multitrack.c:17855
+#: src/multitrack.c:17856
 msgid "after it.\n"
 msgstr "после него.\n"
 
-#: src/multitrack.c:17868
+#: src/multitrack.c:17869
 msgid "before it.\n"
 msgstr "pered nim.\n"
 
-#: src/multitrack.c:18097
+#: src/multitrack.c:18098
 #, c-format
 msgid "Removed parameter values for effect %s at time %.4f\n"
 msgstr ""
 
-#: src/multitrack.c:18305
+#: src/multitrack.c:18306
 #, c-format
 msgid "Set parameter values for %s %s on %s at time %.4f\n"
 msgstr ""
 
-#: src/multitrack.c:18792 src/multitrack.c:20408
+#: src/multitrack.c:18793 src/multitrack.c:20409
 msgid "_Autoreload each time"
 msgstr ""
 
-#: src/multitrack.c:18882
+#: src/multitrack.c:18883
 #, c-format
 msgid "Saved layout to %s\n"
 msgstr ""
 
-#: src/multitrack.c:20318
+#: src/multitrack.c:20319
 msgid "clips and frames"
 msgstr "клипы и кадры"
 
-#: src/multitrack.c:20322
+#: src/multitrack.c:20323
 msgid "clips"
 msgstr "Клипы"
 
-#: src/multitrack.c:20325
+#: src/multitrack.c:20326
 msgid "frames"
 msgstr "кадров"
 
-#: src/multitrack.c:20335
+#: src/multitrack.c:20336
 msgid ""
 "\n"
 "Auto reload layout.\n"
 msgstr ""
 
-#: src/multitrack.c:20338
+#: src/multitrack.c:20339
 #, c-format
 msgid ""
 "%s\n"
@@ -9794,68 +9794,68 @@ msgid ""
 "Therefore it could not be loaded properly.\n"
 msgstr ""
 
-#: src/multitrack.c:20455
+#: src/multitrack.c:20456
 msgid "auto backup"
 msgstr ""
 
-#: src/multitrack.c:20458
+#: src/multitrack.c:20459
 #, c-format
 msgid ""
 "\n"
 "Unable to load layout file %s\n"
 msgstr ""
 
-#: src/multitrack.c:20479
+#: src/multitrack.c:20480
 #, c-format
 msgid "Loading layout from %s..."
 msgstr ""
 
-#: src/multitrack.c:20513
+#: src/multitrack.c:20514
 #, c-format
 msgid "Got %d events...processing..."
 msgstr ""
 
-#: src/multitrack.c:20526
+#: src/multitrack.c:20527
 msgid "Checking and rebuilding event list"
 msgstr ""
 
-#: src/multitrack.c:20552
+#: src/multitrack.c:20553
 #, c-format
 msgid "%d errors detected.\n"
 msgstr ""
 
-#: src/multitrack.c:20603
+#: src/multitrack.c:20604
 #, c-format
 msgid "Multitrack fps set to %.3f\n"
 msgstr ""
 
-#: src/multitrack.c:21558
+#: src/multitrack.c:21559
 msgid "LiVES: Multitrack audio mixer"
 msgstr ""
 
-#: src/multitrack.c:21588
+#: src/multitrack.c:21589
 msgid "_Reset values"
 msgstr "_Сброс значений"
 
-#: src/multitrack.c:21592
+#: src/multitrack.c:21593
 msgid "_Close mixer"
 msgstr "_Закрыть смеситель"
 
-#: src/multitrack.c:21646
+#: src/multitrack.c:21647
 msgid ""
 "_Invert backing audio\n"
 "and layer volumes"
 msgstr ""
 
-#: src/multitrack.c:21648
+#: src/multitrack.c:21649
 msgid "Adjust backing and layer audio values so that they sum to 1.0"
 msgstr ""
 
-#: src/multitrack.c:21691
+#: src/multitrack.c:21692
 msgid "_Gang layer audio"
 msgstr ""
 
-#: src/multitrack.c:21693
+#: src/multitrack.c:21694
 msgid "Adjust all layer audio values to the same value"
 msgstr ""
 
@@ -10268,1523 +10268,707 @@ msgstr ""
 msgid "Opened device %s\n"
 msgstr ""
 
-#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
-msgid " _Top  "
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/rotate.script:0
 #, fuzzy
-msgid "180 _degrees             "
-msgstr "Устройство чтения           "
-
-#: /usr/share/lives/plugins/effects/rendered/rotate.script:0
-msgid "90 degrees _Anticlockwise"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/rotate.script:0
-msgid "90 degrees _Clockwise    "
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
-msgid "Active _animation"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
-msgid "Add _Border"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/noisify.script:0
-msgid "Add noise"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/contrast.script:0
-msgid "Adjust contrast"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/contrast.script:0
-msgid "Adjusting contrast of"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/noisify.script:0
-msgid "Adjusting noise on"
-msgstr ""
+#~ msgid "180 _degrees             "
+#~ msgstr "Устройство чтения           "
 
-#: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
-msgid "Applying charcoal to"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
-msgid "Applying forward skip to"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/sepia.script:0
-msgid "Applying sepia to"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
-msgid "B/W Threshold"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
-msgid "B/W thresholding"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/blank_frames.script:0
 #, fuzzy
-msgid "Blank _Colour"
-msgstr "Изменить исходящий звук"
+#~ msgid "Blank _Colour"
+#~ msgstr "Изменить исходящий звук"
 
-#: /usr/share/lives/plugins/effects/rendered/blank_frames.script:0
 #, fuzzy
-msgid "Blank frames"
-msgstr "клипы и кадры"
+#~ msgid "Blank frames"
+#~ msgstr "клипы и кадры"
 
-#: /usr/share/lives/plugins/effects/rendered/blank_frames.script:0
 #, fuzzy
-msgid "Blanking"
-msgstr "Резервное сохранение"
+#~ msgid "Blanking"
+#~ msgstr "Резервное сохранение"
 
-#: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
 #, fuzzy
-msgid "Block _height"
-msgstr "_Высота"
+#~ msgid "Block _height"
+#~ msgstr "_Высота"
 
-#: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
 #, fuzzy
-msgid "Block _width"
-msgstr "_Высота"
-
-#: /usr/share/lives/plugins/effects/rendered/blur.script:0
-msgid "Blur"
-msgstr ""
+#~ msgid "Block _width"
+#~ msgstr "_Высота"
 
-#: /usr/share/lives/plugins/effects/rendered/blur.script:0
-msgid "Bluring"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
 #, fuzzy
-msgid "Border _Colour"
-msgstr "Изменить исходящий звук"
+#~ msgid "Border _Colour"
+#~ msgstr "Изменить исходящий звук"
 
-#: /usr/share/lives/plugins/effects/rendered/brightness_change.script:0
 #, fuzzy
-msgid "Brightness _end"
-msgstr "Выровнить начало (_S)"
+#~ msgid "Brightness _end"
+#~ msgstr "Выровнить начало (_S)"
 
-#: /usr/share/lives/plugins/effects/rendered/brightness_change.script:0
 #, fuzzy
-msgid "Brightness _start"
-msgstr "Выровнить начало (_S)"
+#~ msgid "Brightness _start"
+#~ msgstr "Выровнить начало (_S)"
 
-#: /usr/share/lives/plugins/effects/rendered/brightness_change.script:0
 #, fuzzy
-msgid "Brightness change"
-msgstr "_Игнорировать изменения"
+#~ msgid "Brightness change"
+#~ msgstr "_Игнорировать изменения"
 
-#: /usr/share/lives/plugins/effects/rendered/modulate.script:0
 #, fuzzy
-msgid "Brightness end"
-msgstr "_Игнорировать изменения"
+#~ msgid "Brightness end"
+#~ msgstr "_Игнорировать изменения"
 
-#: /usr/share/lives/plugins/effects/rendered/modulate.script:0
 #, fuzzy
-msgid "Brightness start"
-msgstr "Выровнить начало (_S)"
-
-#: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
-#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
-msgid "Centre _X"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
-#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
-msgid "Centre _Y"
-msgstr ""
+#~ msgid "Brightness start"
+#~ msgstr "Выровнить начало (_S)"
 
-#: /usr/share/lives/plugins/effects/rendered/brightness_change.script:0
-msgid "Changing brightness of"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
-msgid "Changing gamma of"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
-msgid "Changing hue of"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
-msgid "Changing saturation of"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
-msgid "Charcoal"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
 #, fuzzy
-msgid "Checkerboard"
-msgstr "Записывается"
+#~ msgid "Checkerboard"
+#~ msgstr "Записывается"
 
-#: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
 #, fuzzy
-msgid "Checkerboarding"
-msgstr "Записывается"
+#~ msgid "Checkerboarding"
+#~ msgstr "Записывается"
 
-#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 #, fuzzy
-msgid "Clipboard _over selection"
-msgstr "_ Объединить содержимое буфера обмена с выделенным..."
+#~ msgid "Clipboard _over selection"
+#~ msgstr "_ Объединить содержимое буфера обмена с выделенным..."
 
-#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 #, fuzzy
-msgid "Clipboard _under selection"
-msgstr "_ Объединить содержимое буфера обмена с выделенным..."
+#~ msgid "Clipboard _under selection"
+#~ msgstr "_ Объединить содержимое буфера обмена с выделенным..."
 
-#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #, fuzzy
-msgid "Colorize"
-msgstr "Масштабирование"
+#~ msgid "Colorize"
+#~ msgstr "Масштабирование"
 
-#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #, fuzzy
-msgid "Colorizing"
-msgstr "Масштабирование"
+#~ msgid "Colorizing"
+#~ msgstr "Масштабирование"
 
-#: /usr/share/lives/plugins/effects/rendered/cycle.script:0
 #, fuzzy
-msgid "Colour cycle"
-msgstr "Масштабирование"
+#~ msgid "Colour cycle"
+#~ msgstr "Масштабирование"
 
-#: /usr/share/lives/plugins/effects/rendered/cycle.script:0
 #, fuzzy
-msgid "Colour cycling"
-msgstr "Масштабирование"
+#~ msgid "Colour cycling"
+#~ msgstr "Масштабирование"
 
-#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #, fuzzy
-msgid "Colour filter"
-msgstr "Масштабирование"
+#~ msgid "Colour filter"
+#~ msgstr "Масштабирование"
 
-#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #, fuzzy
-msgid "Colour filtering"
-msgstr "Масштабирование"
+#~ msgid "Colour filtering"
+#~ msgstr "Масштабирование"
 
-#: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
 #, fuzzy
-msgid "Colour replace"
-msgstr "Масштабирование"
-
-#: /usr/share/lives/plugins/effects/rendered/noisify.script:0
-msgid "Constant noise level"
-msgstr ""
+#~ msgid "Colour replace"
+#~ msgstr "Масштабирование"
 
-#: /usr/share/lives/plugins/effects/rendered/cycle.script:0
 #, fuzzy
-msgid "Cycle _Step"
-msgstr "_Начать"
-
-#: /usr/share/lives/plugins/effects/rendered/deinterlace.script:0
-msgid "Deinterlace"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/deinterlace.script:0
-msgid "Deinterlacing"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/despekle.script:0
-msgid "Despeckle"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/despekle.script:0
-msgid "Despeckling"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/dream.script:0
-msgid "Dream"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/dream.script:0
-msgid "Dreamifying"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
-#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
-msgid "E_nd %"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
-msgid "Edge detect"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
-msgid "Edge detecting"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/emboss.script:0
-msgid "Emboss"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/emboss.script:0
-msgid "Embossing"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
-msgid "End _Alpha:"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
-msgid "End pos_X:"
-msgstr ""
+#~ msgid "Cycle _Step"
+#~ msgstr "_Начать"
 
-#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
-msgid "End pos_Y:"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/enhance.script:0
 #, fuzzy
-msgid "Enhance"
-msgstr "Отмена"
+#~ msgid "Enhance"
+#~ msgstr "Отмена"
 
-#: /usr/share/lives/plugins/effects/rendered/enhance.script:0
 #, fuzzy
-msgid "Enhancing"
-msgstr "Отмена"
-
-#: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
-msgid "Envelope length"
-msgstr ""
+#~ msgid "Enhancing"
+#~ msgstr "Отмена"
 
-#: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
 #, fuzzy
-msgid "Fade _colour"
-msgstr "Изменить исходящий звук"
+#~ msgid "Fade _colour"
+#~ msgstr "Изменить исходящий звук"
 
-#: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
-#: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
 #, fuzzy
-msgid "Fade _end"
-msgstr "Изменить входящий звук"
+#~ msgid "Fade _end"
+#~ msgstr "Изменить входящий звук"
 
-#: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
 #, fuzzy
-msgid "Fade _in"
-msgstr "Изменить входящий звук"
+#~ msgid "Fade _in"
+#~ msgstr "Изменить входящий звук"
 
-#: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
 #, fuzzy
-msgid "Fade _out"
-msgstr "Изменить исходящий звук"
+#~ msgid "Fade _out"
+#~ msgstr "Изменить исходящий звук"
 
-#: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
-msgid "Fade video to or from color"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 #, fuzzy
-msgid "Fade"
-msgstr "Изменить входящий звук"
+#~ msgid "Fade"
+#~ msgstr "Изменить входящий звук"
 
-#: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
 #, fuzzy
-msgid "Fading video"
-msgstr "Изменение входящего звука"
+#~ msgid "Fading video"
+#~ msgstr "Изменение входящего звука"
 
-#: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 #, fuzzy
-msgid "Fading"
-msgstr "Изменение входящего звука"
+#~ msgid "Fading"
+#~ msgstr "Изменение входящего звука"
 
-#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 #, fuzzy
-msgid "Fina_l frame"
-msgstr "Конечный кадр"
+#~ msgid "Fina_l frame"
+#~ msgstr "Конечный кадр"
 
-#: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
 #, fuzzy
-msgid "Flash _colour"
-msgstr "Изменить исходящий звук"
-
-#: /usr/share/lives/plugins/effects/rendered/flip.script:0
-msgid "Flip vertically"
-msgstr ""
+#~ msgid "Flash _colour"
+#~ msgstr "Изменить исходящий звук"
 
-#: /usr/share/lives/plugins/effects/rendered/flop.script:0
-msgid "Flop horizontally"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
 #, fuzzy
-msgid "Frame Calculator"
-msgstr "Изменить исходящий звук"
+#~ msgid "Frame Calculator"
+#~ msgstr "Изменить исходящий звук"
 
-#: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
 #, fuzzy
-msgid "Frame _Colour"
-msgstr "Изменить исходящий звук"
+#~ msgid "Frame _Colour"
+#~ msgstr "Изменить исходящий звук"
 
-#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #, fuzzy
-msgid "Frame _height"
-msgstr "Размер кадра"
+#~ msgid "Frame _height"
+#~ msgstr "Размер кадра"
 
-#: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 #, fuzzy
-msgid "Frame _in frame position of clipboard..."
-msgstr "Копирование кадров в буфер обмена: с %d по %d%s..."
+#~ msgid "Frame _in frame position of clipboard..."
+#~ msgstr "Копирование кадров в буфер обмена: с %d по %d%s..."
 
-#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 #, fuzzy
-msgid "Frame _in frame position of top frame..."
-msgstr "Копирование кадров в буфер обмена: с %d по %d%s..."
+#~ msgid "Frame _in frame position of top frame..."
+#~ msgstr "Копирование кадров в буфер обмена: с %d по %d%s..."
 
-#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #, fuzzy
-msgid "Frame _width"
-msgstr "Размер кадра"
+#~ msgid "Frame _width"
+#~ msgstr "Размер кадра"
 
-#: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
 #, fuzzy
-msgid "Frames _per second (FPS)"
-msgstr "Сроки (в секундах)"
+#~ msgid "Frames _per second (FPS)"
+#~ msgstr "Сроки (в секундах)"
 
-#: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
 #, fuzzy
-msgid "Gamma _end"
-msgstr "_Начать"
+#~ msgid "Gamma _end"
+#~ msgstr "_Начать"
 
-#: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
 #, fuzzy
-msgid "Gamma _start"
-msgstr "_Начать"
+#~ msgid "Gamma _start"
+#~ msgstr "_Начать"
 
-#: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
 #, fuzzy
-msgid "Gamma change"
-msgstr "_Игнорировать изменения"
+#~ msgid "Gamma change"
+#~ msgstr "_Игнорировать изменения"
 
-#: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
 #, fuzzy
-msgid "Generate blank frames"
-msgstr "Вставка тишины"
+#~ msgid "Generate blank frames"
+#~ msgstr "Вставка тишины"
 
-#: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
 #, fuzzy
-msgid "Generate clip from image"
-msgstr "Очищение изображений кадра"
+#~ msgid "Generate clip from image"
+#~ msgstr "Очищение изображений кадра"
 
-#: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
 #, fuzzy
-msgid "Generate coloured frames"
-msgstr "Вставка тишины"
+#~ msgid "Generate coloured frames"
+#~ msgstr "Вставка тишины"
 
-#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #, fuzzy
-msgid "Generate title frames"
-msgstr "Вставка тишины"
+#~ msgid "Generate title frames"
+#~ msgstr "Вставка тишины"
 
-#: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
 #, fuzzy
-msgid "Generating blank frames"
-msgstr "Вставка тишины"
+#~ msgid "Generating blank frames"
+#~ msgstr "Вставка тишины"
 
-#: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
 #, fuzzy
-msgid "Generating clip from image"
-msgstr "Очищение изображений кадра"
+#~ msgid "Generating clip from image"
+#~ msgstr "Очищение изображений кадра"
 
-#: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
 #, fuzzy
-msgid "Generating coloured frames"
-msgstr "Вставка тишины"
+#~ msgid "Generating coloured frames"
+#~ msgstr "Вставка тишины"
 
-#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #, fuzzy
-msgid "Generating title frames"
-msgstr "Вставка тишины"
-
-#: /usr/share/lives/plugins/effects/rendered/flop.script:0
-msgid "Horizontal flopping"
-msgstr ""
+#~ msgid "Generating title frames"
+#~ msgstr "Вставка тишины"
 
-#: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
-msgid "Horizontal shifting"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
 #, fuzzy
-msgid "Hue _end"
-msgstr "Изменить входящий звук"
+#~ msgid "Hue _end"
+#~ msgstr "Изменить входящий звук"
 
-#: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
 #, fuzzy
-msgid "Hue _start"
-msgstr "_Начать"
+#~ msgid "Hue _start"
+#~ msgstr "_Начать"
 
-#: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
 #, fuzzy
-msgid "Hue change"
-msgstr "_Игнорировать изменения"
+#~ msgid "Hue change"
+#~ msgstr "_Игнорировать изменения"
 
-#: /usr/share/lives/plugins/effects/rendered/modulate.script:0
 #, fuzzy
-msgid "Hue end"
-msgstr "Изменить входящий звук"
+#~ msgid "Hue end"
+#~ msgstr "Изменить входящий звук"
 
-#: /usr/share/lives/plugins/effects/rendered/modulate.script:0
 #, fuzzy
-msgid "Hue start"
-msgstr "_Начать"
-
-#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
-msgid "Image overlay"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
-msgid "Init _Alpha:"
-msgstr ""
+#~ msgid "Hue start"
+#~ msgstr "_Начать"
 
-#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
-msgid "Init pos_X:"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
-msgid "Init pos_Y:"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/jumble.script:0
-msgid "Jumble"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/jumble.script:0
-msgid "Jumbling"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
-msgid "Keep _Centered"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
-msgid "Keep image aspect _ratio"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
-msgid "L_eft"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/monochrome.script:0
-msgid "Making monochrome"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/modulate.script:0
 #, fuzzy
-msgid "Modulate (BSH)"
-msgstr "Вставить"
+#~ msgid "Modulate (BSH)"
+#~ msgstr "Вставить"
 
-#: /usr/share/lives/plugins/effects/rendered/modulate.script:0
 #, fuzzy
-msgid "Modulating"
-msgstr "Вставить"
+#~ msgid "Modulating"
+#~ msgstr "Вставить"
 
-#: /usr/share/lives/plugins/effects/rendered/monochrome.script:0
-msgid "Monochrome"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/negate.script:0
 #, fuzzy
-msgid "Negate"
-msgstr "Вставить"
+#~ msgid "Negate"
+#~ msgstr "Вставить"
 
-#: /usr/share/lives/plugins/effects/rendered/negate.script:0
 #, fuzzy
-msgid "Negating"
-msgstr "Вставить"
-
-#: /usr/share/lives/plugins/effects/rendered/noisify.script:0
-msgid "Noise type"
-msgstr ""
+#~ msgid "Negating"
+#~ msgstr "Вставить"
 
-#: /usr/share/lives/plugins/effects/rendered/noisify.script:0
-msgid "Noisify"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/normalize.script:0
 #, fuzzy
-msgid "Normalize"
-msgstr "Масштабирование"
+#~ msgid "Normalize"
+#~ msgstr "Масштабирование"
 
-#: /usr/share/lives/plugins/effects/rendered/normalize.script:0
 #, fuzzy
-msgid "Normalizing"
-msgstr "Масштабирование"
+#~ msgid "Normalizing"
+#~ msgstr "Масштабирование"
 
-#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #, fuzzy
-msgid "Number of _frames"
-msgstr "_Количество раз для вставки"
-
-#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
-msgid "Overlaying an image onto video"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/textover.script:0
-msgid "Overlaying text on"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
-msgid "Photo/still"
-msgstr ""
+#~ msgid "Number of _frames"
+#~ msgstr "_Количество раз для вставки"
 
-#: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
 #, fuzzy
-msgid "Pixilate"
-msgstr "Вставить"
+#~ msgid "Pixilate"
+#~ msgstr "Вставить"
 
-#: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
 #, fuzzy
-msgid "Pixilating"
-msgstr "Вставить"
+#~ msgid "Pixilating"
+#~ msgstr "Вставить"
 
-#: /usr/share/lives/plugins/effects/rendered/posterize.script:0
 #, fuzzy
-msgid "Posterize"
-msgstr "Масштабирование"
+#~ msgid "Posterize"
+#~ msgstr "Масштабирование"
 
-#: /usr/share/lives/plugins/effects/rendered/posterize.script:0
 #, fuzzy
-msgid "Posterizing"
-msgstr "Масштабирование"
+#~ msgid "Posterizing"
+#~ msgstr "Масштабирование"
 
-#: /usr/share/lives/plugins/effects/rendered/randomzoom.script:0
-msgid "Random zoom"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/randomzoom.script:0
-msgid "Random zooming"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/noisify.script:0
-msgid "Reduce noise"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/noisify.script:0
-msgid "Reduction radius"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
 #, fuzzy
-msgid "Replacing colours in"
-msgstr "Повторный выбор буфера обмена звука"
+#~ msgid "Replacing colours in"
+#~ msgstr "Повторный выбор буфера обмена звука"
 
-#: /usr/share/lives/plugins/effects/rendered/resize.script:0
 #, fuzzy
-msgid "Resize All Frames"
-msgstr "_Масштабировать все кадры"
+#~ msgid "Resize All Frames"
+#~ msgstr "_Масштабировать все кадры"
 
-#: /usr/share/lives/plugins/effects/rendered/rotate.script:0
 #, fuzzy
-msgid "Rotate Clip"
-msgstr "Вставить"
+#~ msgid "Rotate Clip"
+#~ msgstr "Вставить"
 
-#: /usr/share/lives/plugins/effects/rendered/rotate.script:0
 #, fuzzy
-msgid "Rotating"
-msgstr "Вставить"
+#~ msgid "Rotating"
+#~ msgstr "Вставить"
 
-#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
-#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #, fuzzy
-msgid "S_tart %"
-msgstr "_Начать"
+#~ msgid "S_tart %"
+#~ msgstr "_Начать"
 
-#: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
 #, fuzzy
-msgid "Saturation _end"
-msgstr "Переходы состояний"
+#~ msgid "Saturation _end"
+#~ msgstr "Переходы состояний"
 
-#: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
 #, fuzzy
-msgid "Saturation _start"
-msgstr "Переходы состояний"
+#~ msgid "Saturation _start"
+#~ msgstr "Переходы состояний"
 
-#: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
 #, fuzzy
-msgid "Saturation change"
-msgstr "Переходы состояний"
+#~ msgid "Saturation change"
+#~ msgstr "Переходы состояний"
 
-#: /usr/share/lives/plugins/effects/rendered/modulate.script:0
 #, fuzzy
-msgid "Saturation end"
-msgstr "Переходы состояний"
+#~ msgid "Saturation end"
+#~ msgstr "Переходы состояний"
 
-#: /usr/share/lives/plugins/effects/rendered/modulate.script:0
 #, fuzzy
-msgid "Saturation start"
-msgstr "Переходы состояний"
-
-#: /usr/share/lives/plugins/effects/rendered/sepia.script:0
-msgid "Sepia"
-msgstr ""
+#~ msgid "Saturation start"
+#~ msgstr "Переходы состояний"
 
-#: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
-msgid "Shift horizontally"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
-msgid "Shift vertically"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
-msgid "Shrink/Expand"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
-msgid "Shrinking/Expanding"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
 #, fuzzy
-msgid "Skip forward"
-msgstr "Слушать Вперед"
+#~ msgid "Skip forward"
+#~ msgstr "Слушать Вперед"
 
-#: /usr/share/lives/plugins/effects/rendered/solarize.script:0
 #, fuzzy
-msgid "Solarize"
-msgstr "Масштабирование"
+#~ msgid "Solarize"
+#~ msgstr "Масштабирование"
 
-#: /usr/share/lives/plugins/effects/rendered/solarize.script:0
 #, fuzzy
-msgid "Solarizing"
-msgstr "Масштабирование"
-
-#: /usr/share/lives/plugins/effects/rendered/spin.script:0
-msgid "Spin"
-msgstr ""
+#~ msgid "Solarizing"
+#~ msgstr "Масштабирование"
 
-#: /usr/share/lives/plugins/effects/rendered/spin.script:0
-msgid "Spinning"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
-msgid "Splice"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
-msgid "Splicing"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/spread.script:0
 #, fuzzy
-msgid "Spread"
-msgstr "Остановить запись"
+#~ msgid "Spread"
+#~ msgstr "Остановить запись"
 
-#: /usr/share/lives/plugins/effects/rendered/spread.script:0
 #, fuzzy
-msgid "Spreading"
-msgstr "Остановить запись"
+#~ msgid "Spreading"
+#~ msgstr "Остановить запись"
 
-#: /usr/share/lives/plugins/effects/rendered/solarize.script:0
 #, fuzzy
-msgid "Step _Value"
-msgstr "Стартовый кадр"
+#~ msgid "Step _Value"
+#~ msgstr "Стартовый кадр"
 
-#: /usr/share/lives/plugins/effects/rendered/spin.script:0
-#: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
-#: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
 #, fuzzy
-msgid "Step per _Frame"
-msgstr "Стартовый кадр"
+#~ msgid "Step per _Frame"
+#~ msgstr "Стартовый кадр"
 
-#: /usr/share/lives/plugins/effects/rendered/swirl.script:0
 #, fuzzy
-msgid "Swirl _start"
-msgstr "_Начать"
+#~ msgid "Swirl _start"
+#~ msgstr "_Начать"
 
-#: /usr/share/lives/plugins/effects/rendered/swirl.script:0
 #, fuzzy
-msgid "Swirl s_tep"
-msgstr "_Начать"
+#~ msgid "Swirl s_tep"
+#~ msgstr "_Начать"
 
-#: /usr/share/lives/plugins/effects/rendered/swirl.script:0
 #, fuzzy
-msgid "Swirl"
-msgstr "_Начать"
+#~ msgid "Swirl"
+#~ msgstr "_Начать"
 
-#: /usr/share/lives/plugins/effects/rendered/swirl.script:0
 #, fuzzy
-msgid "Swirling"
-msgstr "_Начать"
-
-#: /usr/share/lives/plugins/effects/rendered/textover.script:0
-msgid "Text Overlay"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
-msgid "Thres_hold"
-msgstr ""
+#~ msgid "Swirling"
+#~ msgstr "_Начать"
 
-#: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
-msgid "Trim frames/Add border"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
-msgid "Trimming"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
 #, fuzzy
-msgid "Tunnel"
-msgstr "Отмена"
+#~ msgid "Tunnel"
+#~ msgstr "Отмена"
 
-#: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
 #, fuzzy
-msgid "Tunneling"
-msgstr "Отмена"
-
-#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
-msgid "Use _Natural Size"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
-msgid "Use _Natural image size"
-msgstr ""
+#~ msgid "Tunneling"
+#~ msgstr "Отмена"
 
-#: /usr/share/lives/plugins/effects/rendered/flip.script:0
-msgid "Vertical flipping"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
-msgid "Vertical shifting"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/wave.script:0
-msgid "Wave"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/wave.script:0
-msgid "Waving"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/rotate.script:0
-#: /usr/share/lives/plugins/effects/rendered/wave.script:0
-#: /usr/share/lives/plugins/effects/rendered/spin.script:0
-#: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
-#: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
-#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 #, fuzzy
-msgid "_Background Colour"
-msgstr "_Начать"
+#~ msgid "_Background Colour"
+#~ msgstr "_Начать"
 
-#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #, fuzzy
-msgid "_Background colour"
-msgstr "Изменить исходящий звук"
-
-#: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
-msgid "_Black and white camera"
-msgstr ""
+#~ msgid "_Background colour"
+#~ msgstr "Изменить исходящий звук"
 
-#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
-msgid "_Black is transparent"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
-msgid "_Bottom"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
 #, fuzzy
-msgid "_Calculate"
-msgstr "Изменить исходящий звук"
+#~ msgid "_Calculate"
+#~ msgstr "Изменить исходящий звук"
 
-#: /usr/share/lives/plugins/effects/rendered/cycle.script:0
 #, fuzzy
-msgid "_Cycle Start"
-msgstr "_Начать"
+#~ msgid "_Cycle Start"
+#~ msgstr "_Начать"
 
-#: /usr/share/lives/plugins/effects/rendered/contrast.script:0
-msgid "_Decrease Contrast"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/dream.script:0
-#: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
-msgid "_Diffmax"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
-#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #, fuzzy
-msgid "_End Colour"
-msgstr "_Начать"
-
-#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
-msgid "_End Size X:"
-msgstr ""
+#~ msgid "_End Colour"
+#~ msgstr "_Начать"
 
-#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
-msgid "_End Size Y:"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/spread.script:0
 #, fuzzy
-msgid "_End amount"
-msgstr "Конечный кадр"
+#~ msgid "_End amount"
+#~ msgstr "Конечный кадр"
 
-#: /usr/share/lives/plugins/effects/rendered/dream.script:0
-#: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
 #, fuzzy
-msgid "_Fade level"
-msgstr "Изменить входящий звук"
+#~ msgid "_Fade level"
+#~ msgstr "Изменить входящий звук"
 
-#: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
-#: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
 #, fuzzy
-msgid "_Fade start"
-msgstr "_Начать"
+#~ msgid "_Fade start"
+#~ msgstr "_Начать"
 
-#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
-#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #, fuzzy
-msgid "_Fill colour"
-msgstr "Изменить исходящий звук"
+#~ msgid "_Fill colour"
+#~ msgstr "Изменить исходящий звук"
 
-#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 #, fuzzy
-msgid "_First frame"
-msgstr "Первый кадр"
+#~ msgid "_First frame"
+#~ msgstr "Первый кадр"
 
-#: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
 #, fuzzy
-msgid "_Flash for"
-msgstr "Изменить исходящий звук"
-
-#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
-msgid "_Font"
-msgstr ""
+#~ msgid "_Flash for"
+#~ msgstr "Изменить исходящий звук"
 
-#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
-#: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
-#: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
-#: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
 #, fuzzy
-msgid "_Frames per second"
-msgstr "Сроки (в секундах)"
+#~ msgid "_Frames per second"
+#~ msgstr "Сроки (в секундах)"
 
-#: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
 #, fuzzy
-msgid "_Frames"
-msgstr "Кадры"
+#~ msgid "_Frames"
+#~ msgstr "Кадры"
 
-#: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
 #, fuzzy
-msgid "_Hold for"
-msgstr "Изменить исходящий звук"
+#~ msgid "_Hold for"
+#~ msgstr "Изменить исходящий звук"
 
-#: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
-msgid "_Horizontal segments"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
 #, fuzzy
-msgid "_Image File"
-msgstr "_Файл"
+#~ msgid "_Image File"
+#~ msgstr "_Файл"
 
-#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
 #, fuzzy
-msgid "_Image"
-msgstr "_Файл"
-
-#: /usr/share/lives/plugins/effects/rendered/contrast.script:0
-msgid "_Increase Contrast"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
-msgid "_Init Size X:"
-msgstr ""
+#~ msgid "_Image"
+#~ msgstr "_Файл"
 
-#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
-msgid "_Init Size Y:"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/posterize.script:0
-msgid "_Levels"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
-#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
-msgid "_Link start and end colours"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/randomzoom.script:0
-msgid "_Max zoom x 10"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
-msgid "_Middle"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/sepia.script:0
-msgid "_Midtone"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/negate.script:0
 #, fuzzy
-msgid "_Negate"
-msgstr "Вставить"
+#~ msgid "_Negate"
+#~ msgstr "Вставить"
 
-#: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
-#: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
-#: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
 #, fuzzy
-msgid "_Number of frames"
-msgstr "_Количество раз для вставки"
-
-#: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
-msgid "_Offset X"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
-msgid "_Offset Y"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
-msgid "_Other Center"
-msgstr ""
+#~ msgid "_Number of frames"
+#~ msgstr "_Количество раз для вставки"
 
-#: /usr/share/lives/plugins/effects/rendered/rotate.script:0
-msgid "_Other"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
-#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #, fuzzy
-msgid "_Point size"
-msgstr "_Указатель"
+#~ msgid "_Point size"
+#~ msgstr "_Указатель"
 
-#: /usr/share/lives/plugins/effects/rendered/blur.script:0
 #, fuzzy
-msgid "_Radius end"
-msgstr "_Начать"
+#~ msgid "_Radius end"
+#~ msgstr "_Начать"
 
-#: /usr/share/lives/plugins/effects/rendered/blur.script:0
 #, fuzzy
-msgid "_Radius start"
-msgstr "_Начать"
+#~ msgid "_Radius start"
+#~ msgstr "_Начать"
 
-#: /usr/share/lives/plugins/effects/rendered/emboss.script:0
-#: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
-#: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
 #, fuzzy
-msgid "_Radius"
-msgstr "_Начать"
+#~ msgid "_Radius"
+#~ msgstr "_Начать"
 
-#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
-#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #, fuzzy
-msgid "_Random colour each frame"
-msgstr "Вставка тишины"
-
-#: /usr/share/lives/plugins/effects/rendered/dream.script:0
-#: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
-msgid "_Randomness"
-msgstr ""
+#~ msgid "_Random colour each frame"
+#~ msgstr "Вставка тишины"
 
-#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 #, fuzzy
-msgid "_Right"
-msgstr "_Высота"
+#~ msgid "_Right"
+#~ msgstr "_Высота"
 
-#: /usr/share/lives/plugins/effects/rendered/spin.script:0
 #, fuzzy
-msgid "_Rotate Selection by"
-msgstr "Вырез_ать выбора"
+#~ msgid "_Rotate Selection by"
+#~ msgstr "Вырез_ать выбора"
 
-#: /usr/share/lives/plugins/effects/rendered/spin.script:0
-msgid "_Shrink rotated window to fit frame size"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/blur.script:0
 #, fuzzy
-msgid "_Sigma end"
-msgstr "_Начать"
+#~ msgid "_Sigma end"
+#~ msgstr "_Начать"
 
-#: /usr/share/lives/plugins/effects/rendered/blur.script:0
 #, fuzzy
-msgid "_Sigma start"
-msgstr "_Начать"
+#~ msgid "_Sigma start"
+#~ msgstr "_Начать"
 
-#: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
 #, fuzzy
-msgid "_Skip ahead"
-msgstr "Пропущено"
+#~ msgid "_Skip ahead"
+#~ msgstr "Пропущено"
 
-#: /usr/share/lives/plugins/effects/rendered/negate.script:0
 #, fuzzy
-msgid "_Skip"
-msgstr "Пропущено"
+#~ msgid "_Skip"
+#~ msgstr "Пропущено"
 
-#: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
 #, fuzzy
-msgid "_Source Colour"
-msgstr "_Начать"
+#~ msgid "_Source Colour"
+#~ msgstr "_Начать"
 
-#: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
-msgid "_Splice"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
-#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #, fuzzy
-msgid "_Start Colour"
-msgstr "_Начать"
+#~ msgid "_Start Colour"
+#~ msgstr "_Начать"
 
-#: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
-#: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
-#: /usr/share/lives/plugins/effects/rendered/solarize.script:0
 #, fuzzy
-msgid "_Start Value"
-msgstr "Стартовый кадр"
+#~ msgid "_Start Value"
+#~ msgstr "Стартовый кадр"
 
-#: /usr/share/lives/plugins/effects/rendered/spread.script:0
 #, fuzzy
-msgid "_Start amount"
-msgstr "Стартовый кадр"
+#~ msgid "_Start amount"
+#~ msgstr "Стартовый кадр"
 
-#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
-#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #, fuzzy
-msgid "_Stroke colour"
-msgstr "_Начать"
+#~ msgid "_Stroke colour"
+#~ msgstr "_Начать"
 
-#: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
 #, fuzzy
-msgid "_Target Colour"
-msgstr "_Начать"
-
-#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
-#: /usr/share/lives/plugins/effects/rendered/textover.script:0
-msgid "_Text"
-msgstr ""
+#~ msgid "_Target Colour"
+#~ msgstr "_Начать"
 
-#: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
 #, fuzzy
-msgid "_Time (seconds)"
-msgstr "Сроки (в секундах)"
+#~ msgid "_Time (seconds)"
+#~ msgstr "Сроки (в секундах)"
 
-#: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
 #, fuzzy
-msgid "_Top left is clipboard"
-msgstr "Копировать в буфер обмена"
-
-#: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
-msgid "_Vertical segments"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/wave.script:0
-msgid "_Wavemax"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
-msgid "_White is transparent"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
-#: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
-msgid "_Wrap Around"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
-msgid "_X Center"
-msgstr ""
+#~ msgid "_Top left is clipboard"
+#~ msgstr "Копировать в буфер обмена"
 
-#: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
-msgid "_X End"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
 #, fuzzy
-msgid "_X Start"
-msgstr "_Начать"
-
-#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
-#: /usr/share/lives/plugins/effects/rendered/textover.script:0
-msgid "_X offset"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
-msgid "_Y Center"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
-msgid "_Y End"
-msgstr ""
+#~ msgid "_X Start"
+#~ msgstr "_Начать"
 
-#: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
 #, fuzzy
-msgid "_Y Start"
-msgstr "_Начать"
+#~ msgid "_Y Start"
+#~ msgstr "_Начать"
 
-#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
-#: /usr/share/lives/plugins/effects/rendered/textover.script:0
-msgid "_Y offset"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/rotate.script:0
-msgid "_degrees"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
-msgid "_then"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/blank_frames.script:0
 #, fuzzy
-msgid "blank_frames"
-msgstr "кадров"
+#~ msgid "blank_frames"
+#~ msgstr "кадров"
 
-#: /usr/share/lives/plugins/effects/rendered/blur.script:0
-msgid "blur"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/brightness_change.script:0
 #, fuzzy
-msgid "brightness_change"
-msgstr "_Игнорировать изменения"
-
-#: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
-msgid "charcoal"
-msgstr ""
+#~ msgid "brightness_change"
+#~ msgstr "_Игнорировать изменения"
 
-#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #, fuzzy
-msgid "colorize"
-msgstr "Масштабирование"
+#~ msgid "colorize"
+#~ msgstr "Масштабирование"
 
-#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #, fuzzy
-msgid "colour_filter"
-msgstr "Масштабирование"
+#~ msgid "colour_filter"
+#~ msgstr "Масштабирование"
 
-#: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
 #, fuzzy
-msgid "colour_replace"
-msgstr "Вставка тишины"
+#~ msgid "colour_replace"
+#~ msgstr "Вставка тишины"
 
-#: /usr/share/lives/plugins/effects/rendered/contrast.script:0
-msgid "contrast"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/cycle.script:0
-msgid "cycle"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/deinterlace.script:0
-msgid "deinterlace"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/despekle.script:0
-msgid "despeckle"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/dream.script:0
-msgid "dream"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
-msgid "edge_detect"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/emboss.script:0
-msgid "emboss"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/enhance.script:0
 #, fuzzy
-msgid "enhance"
-msgstr "Отмена"
+#~ msgid "enhance"
+#~ msgstr "Отмена"
 
-#: /usr/share/lives/plugins/effects/rendered/noisify.script:0
 #, fuzzy
-msgid "every"
-msgstr "_Каждый"
+#~ msgid "every"
+#~ msgstr "_Каждый"
 
-#: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
 #, fuzzy
-msgid "fade_in_out"
-msgstr "Изменить исходящий звук"
-
-#: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
-msgid "fc"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/flip.script:0
-msgid "flip"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/flop.script:0
-msgid "flop"
-msgstr ""
+#~ msgid "fade_in_out"
+#~ msgstr "Изменить исходящий звук"
 
-#: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
 #, fuzzy
-msgid "frame_calculator"
-msgstr "Изменить исходящий звук"
+#~ msgid "frame_calculator"
+#~ msgstr "Изменить исходящий звук"
 
-#: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
 #, fuzzy
-msgid "gamma_change"
-msgstr "_Игнорировать изменения"
+#~ msgid "gamma_change"
+#~ msgstr "_Игнорировать изменения"
 
-#: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
 #, fuzzy
-msgid "gen_blank_frames"
-msgstr "кадров"
+#~ msgid "gen_blank_frames"
+#~ msgstr "кадров"
 
-#: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
 #, fuzzy
-msgid "gen_clip_from_image"
-msgstr "Очищение изображений кадра"
+#~ msgid "gen_clip_from_image"
+#~ msgstr "Очищение изображений кадра"
 
-#: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
 #, fuzzy
-msgid "gen_coloured_frames"
-msgstr "Вставка тишины"
+#~ msgid "gen_coloured_frames"
+#~ msgstr "Вставка тишины"
 
-#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
-msgid "gen_text"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
 #, fuzzy
-msgid "hue_change"
-msgstr "_Игнорировать изменения"
-
-#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
-msgid "image_overlay"
-msgstr ""
+#~ msgid "hue_change"
+#~ msgstr "_Игнорировать изменения"
 
-#: /usr/share/lives/plugins/effects/rendered/jumble.script:0
-msgid "jumble"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/modulate.script:0
 #, fuzzy
-msgid "modulate"
-msgstr "Вставить"
-
-#: /usr/share/lives/plugins/effects/rendered/monochrome.script:0
-msgid "monochrome"
-msgstr ""
+#~ msgid "modulate"
+#~ msgstr "Вставить"
 
-#: /usr/share/lives/plugins/effects/rendered/negate.script:0
 #, fuzzy
-msgid "negate"
-msgstr "Вставить"
+#~ msgid "negate"
+#~ msgstr "Вставить"
 
-#: /usr/share/lives/plugins/effects/rendered/noisify.script:0
-msgid "noisify"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/normalize.script:0
 #, fuzzy
-msgid "normalize"
-msgstr "Масштабирование"
-
-#: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
-msgid "photo_still"
-msgstr ""
+#~ msgid "normalize"
+#~ msgstr "Масштабирование"
 
-#: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
 #, fuzzy
-msgid "pixilate"
-msgstr "Вставить"
+#~ msgid "pixilate"
+#~ msgstr "Вставить"
 
-#: /usr/share/lives/plugins/effects/rendered/posterize.script:0
 #, fuzzy
-msgid "posterize"
-msgstr "Масштабирование"
+#~ msgid "posterize"
+#~ msgstr "Масштабирование"
 
-#: /usr/share/lives/plugins/effects/rendered/randomzoom.script:0
-msgid "randomzoom"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/resize.script:0
 #, fuzzy
-msgid "resize"
-msgstr "Размер"
+#~ msgid "resize"
+#~ msgstr "Размер"
 
-#: /usr/share/lives/plugins/effects/rendered/rotate.script:0
-msgid "rotate"
-msgstr "повернуть"
+#~ msgid "rotate"
+#~ msgstr "повернуть"
 
-#: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
 #, fuzzy
-msgid "saturation_change"
-msgstr "Переходы состояний"
-
-#: /usr/share/lives/plugins/effects/rendered/sepia.script:0
-msgid "sepia"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
-msgid "shift_horizontal"
-msgstr ""
+#~ msgid "saturation_change"
+#~ msgstr "Переходы состояний"
 
-#: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
-msgid "shift_vertical"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
-msgid "shrink_expand"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
 #, fuzzy
-msgid "skip_forwards"
-msgstr "Слушать Вперед"
+#~ msgid "skip_forwards"
+#~ msgstr "Слушать Вперед"
 
-#: /usr/share/lives/plugins/effects/rendered/solarize.script:0
 #, fuzzy
-msgid "solarize"
-msgstr "Масштабирование"
+#~ msgid "solarize"
+#~ msgstr "Масштабирование"
 
-#: /usr/share/lives/plugins/effects/rendered/spin.script:0
-msgid "spin"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/spread.script:0
 #, fuzzy
-msgid "spread"
-msgstr "Остановить запись"
+#~ msgid "spread"
+#~ msgstr "Остановить запись"
 
-#: /usr/share/lives/plugins/effects/rendered/swirl.script:0
 #, fuzzy
-msgid "swirl"
-msgstr "_Начать"
+#~ msgid "swirl"
+#~ msgstr "_Начать"
 
-#: /usr/share/lives/plugins/effects/rendered/textover.script:0
-msgid "textover"
-msgstr ""
-
-#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 #, fuzzy
-msgid "transition_bwthresh"
-msgstr "Переходы состояний"
+#~ msgid "transition_bwthresh"
+#~ msgstr "Переходы состояний"
 
-#: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
 #, fuzzy
-msgid "transition_checkerboard"
-msgstr "Переходы состояний"
+#~ msgid "transition_checkerboard"
+#~ msgstr "Переходы состояний"
 
-#: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 #, fuzzy
-msgid "transition_fade2"
-msgstr "Переходы состояний"
+#~ msgid "transition_fade2"
+#~ msgstr "Переходы состояний"
 
-#: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
 #, fuzzy
-msgid "transition_splice"
-msgstr "Переходы состояний"
+#~ msgid "transition_splice"
+#~ msgstr "Переходы состояний"
 
-#: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
 #, fuzzy
-msgid "trim_frames"
-msgstr "кадров"
+#~ msgid "trim_frames"
+#~ msgstr "кадров"
 
-#: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
 #, fuzzy
-msgid "tunnel"
-msgstr "Отмена"
-
-#: /usr/share/lives/plugins/effects/rendered/wave.script:0
-msgid "wave"
-msgstr ""
+#~ msgid "tunnel"
+#~ msgstr "Отмена"
 
-#: /usr/bin/smogrify:0
-msgid "Unable to open output file !"
-msgstr "Невозможно открыть целевой файл!"
+#~ msgid "Unable to open output file !"
+#~ msgstr "Невозможно открыть целевой файл!"
 
-#: /usr/bin/smogrify:0
-msgid "LiVES could not write to $nfile."
-msgstr "LiVES не может записать в $nfile."
+#~ msgid "LiVES could not write to $nfile."
+#~ msgstr "LiVES не может записать в $nfile."
 
-#: /usr/bin/smogrify:0
-msgid "Unable to locate the program $rfx_builder_multi"
-msgstr "Невозможно обнаружить программу  $rfx_builder_multi"
+#~ msgid "Unable to locate the program $rfx_builder_multi"
+#~ msgstr "Невозможно обнаружить программу  $rfx_builder_multi"
 
-#: /usr/bin/smogrify:0
-msgid "Your version of mplayer/ffmpeg may be broken"
-msgstr ""
-
-#: /usr/bin/smogrify:0
-msgid "See http://bugzilla.mplayerhq.hu/show_bug.cgi?id=2071"
-msgstr ""
-
-#: /usr/bin/smogrify:0
-msgid " "
-msgstr ""
-
-#: /usr/bin/smogrify:0
 #, fuzzy
-msgid ""
-"You can work around this by switching to jpeg output in Preferences/Decoding."
-msgstr ""
-"\n"
-"\n"
-"    Тип преобразования изображения был изменён на jpeg. Вы можете внести "
-"изменение в Параметры/Декодирование.    \n"
-
-#: /usr/bin/smogrify:0
-msgid "This does not appear to be a valid video or image file"
-msgstr "Это не похоже на правильный файл, содержащий видео или изображение."
-
-#: /usr/bin/smogrify:0
-msgid "LiVES was unable to open it."
-msgstr "LiVES не смог открыть это."
+#~ msgid ""
+#~ "You can work around this by switching to jpeg output in Preferences/"
+#~ "Decoding."
+#~ msgstr ""
+#~ "\n"
+#~ "\n"
+#~ "    Тип преобразования изображения был изменён на jpeg. Вы можете внести "
+#~ "изменение в Параметры/Декодирование.    \n"
 
-#: /usr/bin/smogrify:0
-msgid "Check the terminal window for more details."
-msgstr "Проверьте терминальное окно для получения дополнительных подробностей."
+#~ msgid "This does not appear to be a valid video or image file"
+#~ msgstr "Это не похоже на правильный файл, содержащий видео или изображение."
 
-#: /usr/bin/smogrify:0
-msgid "Error creating new backup."
-msgstr "Ошибка создания новой резервной копии."
+#~ msgid "LiVES was unable to open it."
+#~ msgstr "LiVES не смог открыть это."
 
-#: /usr/bin/smogrify:0
-msgid "This does not appear to be a valid backup file"
-msgstr "Это не похоже на правильный файл, содержащий резервную копию."
+#~ msgid "Check the terminal window for more details."
+#~ msgstr ""
+#~ "Проверьте терминальное окно для получения дополнительных подробностей."
 
-#: /usr/bin/smogrify:0
-msgid "LiVES was not able to open the file"
-msgstr "LiVES не смог открыть этот файл"
+#~ msgid "Error creating new backup."
+#~ msgstr "Ошибка создания новой резервной копии."
 
-#: /usr/bin/smogrify:0
-msgid "$file"
-msgstr ""
+#~ msgid "This does not appear to be a valid backup file"
+#~ msgstr "Это не похоже на правильный файл, содержащий резервную копию."
 
-#: /usr/bin/smogrify:0
-msgid "LiVES audio error."
-msgstr "LiVES ошибка звука."
+#~ msgid "LiVES was not able to open the file"
+#~ msgstr "LiVES не смог открыть этот файл"
 
-#: /usr/bin/smogrify:0
-msgid "cdda2wav is required for this function."
-msgstr "для этой функции необходим cdda2wav"
+#~ msgid "LiVES audio error."
+#~ msgstr "LiVES ошибка звука."
 
-#: /usr/bin/smogrify:0
-msgid "Please install it first."
-msgstr ""
+#~ msgid "cdda2wav is required for this function."
+#~ msgstr "для этой функции необходим cdda2wav"
 
-#: /usr/bin/smogrify:0
-msgid "You must set the CD device first in Preferences."
-msgstr "Вы должны вначале указать устройство CD в Параметрах."
+#~ msgid "You must set the CD device first in Preferences."
+#~ msgstr "Вы должны вначале указать устройство CD в Параметрах."
 
-#: /usr/bin/smogrify:0
-msgid "$plugin_name failed:"
-msgstr "сбой $plugin_name:"
+#~ msgid "$plugin_name failed:"
+#~ msgstr "сбой $plugin_name:"
 
-#: /usr/bin/smogrify:0
 #, fuzzy
-msgid "$error"
-msgstr "Ошибка файла"
+#~ msgid "$error"
+#~ msgstr "Ошибка файла"

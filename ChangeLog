@@ -2,8 +2,8 @@ Version 2.0.6
 -------------
 Add new "clip thumbnails window" for dual head mode.
 Fix bug with "clear" button in rte mapping window.
-
-
+Fix minor issue with some OSC queries.
+Implement new "clip thumbnails" window for dual head mode.
 
 
 

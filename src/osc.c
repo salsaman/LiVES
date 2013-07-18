@@ -1,4 +1,4 @@
-// osc.c
+// osc.c
 // LiVES (lives-exe)
 // (c) G. Finch 2004 - 2012 <salsaman@gmail.com>
 // Released under the GPL 3 or later

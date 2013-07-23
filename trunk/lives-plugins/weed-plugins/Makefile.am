@@ -102,6 +102,7 @@ fxpluginslib_LTLIBRARIES = RGBdelay.la \
 	fireTV.la \
 	fourKlives.la \
 	haip.la \
+	kaleidoscope.la \
 	layout_blends.la \
 	lifeTV.la \
 	livetext.la \

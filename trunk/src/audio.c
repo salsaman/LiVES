@@ -2040,7 +2040,7 @@ gboolean resync_audio(gint frameno) {
   if (prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd!=NULL) {
     if (!mainw->is_rendering) {
 
-      if (!jack_audio_seek_frame(mainw->jackd,frameno)) {
+      if (mainw->jackd->playing_file!=-1&&!jack_audio_seek_frame(mainw->jackd,frameno)) {
 	if (jack_try_reconnect()) jack_audio_seek_frame(mainw->jackd,frameno);
       }
 
@@ -2058,7 +2058,7 @@ gboolean resync_audio(gint frameno) {
 #ifdef HAVE_PULSE_AUDIO
   if (prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed!=NULL) {
     if (!mainw->is_rendering) {
-      if (!pulse_audio_seek_frame(mainw->pulsed,frameno)) {
+      if (mainw->pulsed->playing_file!=-1&&!pulse_audio_seek_frame(mainw->pulsed,frameno)) {
 	if (pulse_try_reconnect()) pulse_audio_seek_frame(mainw->pulsed,frameno);
       }
       if (mainw->agen_key==0&&!mainw->agen_needs_reinit&&!has_audio_filters(FALSE)) {

@@ -38,13 +38,8 @@ static int package_version=1; // version of this package
 
 #include <math.h>
 
-#define ABS(a) (a>0?a:-a)
-
-#define SEVEN_PI6 3.66519142919f
 
 #define FIVE_PI3 5.23598775598f
-#define FIVE_PI6 2.61799387799f
-
 #define FOUR_PI3 4.18879020479f
 
 #define THREE_PI2 4.71238898038f
@@ -54,65 +49,71 @@ static int package_version=1; // version of this package
 
 #define ONE_PI2 1.57079632679f
 #define ONE_PI3 1.0471975512f
-#define ONE_PI6 0.52359877559f
 
 #define RT32 0.86602540378f //sqrt(3)/2
 
+#define RT322 0.43301270189f 
 
 static float angle;
 
-static void calc_center(int side, int i, int j, int *x, int *y) {
+static void calc_center(float side, float j, float i, float *x, float *y) {
   // find nearest hex center
-  int gridx,gridy,secx,secy;
+  int gridx,gridy;
 
-  int sidex=side*RT32*2.; // 2 * side * cos(30)
-  int sidey=side*3./2.; // side + sin(30)
+  float secx,secy;
 
-  float m=2./RT32;
+  float sidex=side*RT32*2.; // 2 * side * cos(30)
+  float sidey=side*3./2.; // side + sin(30)
 
-  i-=side/2.;
+  float hsidex=sidex/2.,hsidey=sidey/2.;
+
+  i-=side/5.3;
+
+  if (i>0.) i+=hsidey;
+  else i-=hsidey;
+  if (j>0.) j+=hsidex;
+  else j-=hsidex;
+
 
   // find the square first
-  if (i>0) gridy=(i+sidey/2)/sidey;
-  else gridy=(i-sidey/2)/sidey;
-  if (j>=0) gridx=(j+sidex/2)/sidex;
-  else gridx=(j-sidex/2)/sidex;
+  gridy=i/sidey;
+  gridx=j/sidex;
 
   // center 
   *y=gridy*sidey;
   *x=gridx*sidex;
 
+  secy=i-*y;
+  secx=j-*x;
 
-  secy=i-(i/sidey)*sidey;
-  secx=j-(j/sidex)*sidex;
-
-  if (secy<0) secy+=sidey;
-  if (secx<0) secx+=sidex;
+  if (secy<0.) secy+=sidey;
+  if (secx<0.) secx+=sidex;
 
   if (!(gridy%2)) {
+
     // even row (inverted Y)
-    if (secy>side+secx*m) {
-      // *y+=sidey;
-      //*x-=sidex/2.;
+    if (secy>(sidey-(hsidex-secx)*RT322)) {
+      *y+=sidey;
+      *x-=hsidex;
     }
-    if (secy>sidey-(secx-sidex/2)*m) {
-      //*y+=sidey;
-      //*x+=sidex/2.;
+    if (secy>sidey-(secx-hsidex)*RT322) {
+      *y+=sidey;
+      *x+=hsidex;
     }
   }
   
 
   else {
     // odd row, center is left or right (Y)
-    if (secx<=sidex/2.) {
-      if (secy>sidey/2||secy<side+(secx-sidex/2)*m/2.) {
-	*x-=sidex/2.;
+    if (secx<=hsidex) {
+      if (secy<(sidey-secx*RT322)) {
+	*x-=hsidex;
       }
       else *y+=sidey;
     }
     else {
-      if (secy>sidey/2||secy<((sidex-secx)*m/2.7)) {
-	*x+=sidex/2.;
+      if (secy<sidey-(sidex-secx)*RT322) {
+	*x+=hsidex;
       }
       else *y+=sidey;
     }
@@ -121,28 +122,28 @@ static void calc_center(int side, int i, int j, int *x, int *y) {
 
 
 
-static float calc_angle(int y, int x) {
-  if (x>0) {
-    if (y>=0) return atanf((float)y/(float)x);
-    return TWO_PI+atanf((float)y/(float)x);
+static float calc_angle(float y, float x) {
+  if (x>0.) {
+    if (y>=0.) return atanf(y/x);
+    return TWO_PI+atanf(y/x);
   }
-  if (x<0) {
-    return atanf((float)y/(float)x)+M_PI;
+  if (x<-0.) {
+    return atanf(y/x)+M_PI;
   }
-  if (y>0) return ONE_PI2;
-  return -ONE_PI2;
+  if (y>0.) return ONE_PI2;
+  return THREE_PI2;
 }
 
 
-static float calc_dist(int x, int y) {
-  return sqrtf((float)(x*x+y*y));
+static float calc_dist(float x, float y) {
+  return sqrtf((x*x+y*y));
 }
 
 
-static void rotate(float r, float theta, float angle, int *x, int *y) {
+static void rotate(float r, float theta, float angle, float *x, float *y) {
   theta+=angle;
-  if (theta<0) theta+=TWO_PI;
-  if (theta>TWO_PI) theta-=TWO_PI;
+  if (theta<0.) theta+=TWO_PI;
+  if (theta>=TWO_PI) theta-=TWO_PI;
 
   *x=r*cos(theta);
   *y=r*sin(theta);
@@ -164,7 +165,9 @@ static int put_pixel(void *src, void *dst, int psize, float angle, float theta, 
   else if (adif>=TWO_PI) adif-=TWO_PI;
 
   theta-=angle;
+
   if (theta<0.) theta+=TWO_PI;
+  if (theta>TWO_PI) theta-=TWO_PI;
 
   if (adif < ONE_PI3) {
     stheta=theta;
@@ -196,14 +199,9 @@ static int put_pixel(void *src, void *dst, int psize, float angle, float theta, 
   }
 
   stheta+=angle;
+
   sx=r*cos(stheta)+.5;
   sy=r*sin(stheta)+.5;
-
-  /*  if (sy<-hheight) sy=-hheight+ABS(sy%hheight);
-  if (sy>=hheight) sy=hheight-ABS(sy%hheight);
-  if (sx<-hwidth) sx=-hwidth+ABS(sx%hwidth);
-  if (sx>=hwidth) sx=hwidth-ABS(sx%hwidth);
-  */
 
   if (sy<-hheight||sy>=hheight||sx<-hwidth||sx>=hwidth) {
     return 0;
@@ -224,7 +222,9 @@ int kal_process (weed_plant_t *inst, weed_timecode_t timestamp) {
 
   float theta,r;
 
-  int x,y,a,b;
+  float x,y,a,b;
+
+  float side,fi,fj;
 
   int width=weed_get_int_value(in_channel,"width",&error),hwidth=width>>1;
   int height=weed_get_int_value(in_channel,"height",&error),hheight=height>>1;
@@ -233,20 +233,16 @@ int kal_process (weed_plant_t *inst, weed_timecode_t timestamp) {
   int orowstride=weed_get_int_value(out_channel,"rowstrides",&error);
   int psize=4;
 
-  int minm,side;
+  int start,end;
+
+  int upd=1;
 
   register int i,j;
 
-  if (width<height) minm=width;
-  else minm=height;
+  if (width<height) side=width/2./RT32;
+  else side=height/2.;
 
-  minm>>=1;
-
-  side=minm;
-
-  if (width<height) side=(float)minm/RT32; // hex width should fit screen
-
-  //side>>=2;
+  side/=2.;
 
   //angle=weed_get_double_value(in_params[0],"value",&error);
   //weed_free(in_params);
@@ -255,29 +251,45 @@ int kal_process (weed_plant_t *inst, weed_timecode_t timestamp) {
 
   src+=hheight*irowstride+hwidth*psize;
 
+  start=hheight;
+  end=-hheight;
+
+  // new threading arch
+  if (weed_plant_has_leaf(out_channel,"offset")) {
+    int offset=weed_get_int_value(out_channel,"offset",&error);
+    int dheight=weed_get_int_value(out_channel,"height",&error);
+
+    if (offset>0) upd=0;
+
+    start-=offset;
+    dst+=offset*orowstride;
+    end=start-dheight;
+  }
+
   orowstride-=psize*width;
 
-  for (i=hheight;i>-hheight;i--) {
+  for (i=start;i>end;i--) {
     for (j=-hwidth;j<hwidth;j++) {
+      fi=(float)i;
+      fj=(float)j;
+
       // rotate point to line up with hex grid
-      theta=calc_angle(i,j); // get angle of this point from origin
-      r=calc_dist(i,j); // get dist of point from origin
-      rotate(r,theta,-angle,&a,&b); // since our central hex has rotated by angle, so has the hex grid - so compensate
+      theta=calc_angle(fi,fj); // get angle of this point from origin
+      r=calc_dist(fi,fj); // get dist of point from origin
+      rotate(r,theta,-angle+ONE_PI2,&a,&b); // since our central hex has rotated by angle, so has the hex grid - so compensate
 
       // find hex center and angle to it
       calc_center(side,a,b,&x,&y);
 
       // rotate hex center
-      theta=calc_angle(x,y);
+      theta=calc_angle(y,x);
       r=calc_dist(x,y);
-      rotate(r,theta,angle,&a,&b);
+      rotate(r,theta,angle-ONE_PI2,&a,&b);
 
+      theta=calc_angle(fi-b,fj-a);
+      r=calc_dist(b-fi,a-fj);
 
-      //s      theta=calc_angle(i-y,j-x);
-      //s r=calc_dist(x-j,y-i);
-
-      theta=calc_angle(i-b,j-a);
-      r=calc_dist(b-i,a-j);
+      if (r<10.) r=10.;
 
       if (!put_pixel(src,dst,psize,angle,theta,r,irowstride,hheight,hwidth)) {
 	if (palette==WEED_PALETTE_RGB24||palette==WEED_PALETTE_BGR24) {
@@ -298,8 +310,10 @@ int kal_process (weed_plant_t *inst, weed_timecode_t timestamp) {
     dst+=orowstride;
   }
 
-  angle+=0.01;
-  if (angle>=TWO_PI) angle=0.;
+  if (upd) {
+    angle+=0.01;
+    if (angle>=TWO_PI) angle=0.;
+  }
 
   return WEED_NO_ERROR;
 }
@@ -316,7 +330,8 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
     weed_plant_t *out_chantmpls[]={weed_channel_template_init("out channel 0",0,palette_list),NULL};
     //weed_plant_t *in_params[]={weed_switch_init("enabled","_Enabled",WEED_TRUE),NULL};
 
-    weed_plant_t *filter_class=weed_filter_class_init("kaleidoscope","salsaman",1,0,NULL,&kal_process,NULL,in_chantmpls,out_chantmpls,NULL,NULL);
+    weed_plant_t *filter_class=weed_filter_class_init("kaleidoscope","salsaman",1,WEED_FILTER_HINT_MAY_THREAD,
+						      NULL,&kal_process,NULL,in_chantmpls,out_chantmpls,NULL,NULL);
 
     weed_plugin_info_add_filter_class (plugin_info,filter_class);
 

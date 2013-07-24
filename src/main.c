@@ -4655,7 +4655,7 @@ void load_frame_image(gint frame) {
 	  if (prefs->audio_player==AUD_PLAYER_JACK&&(prefs->audio_opts&AUDIO_OPTS_FOLLOW_FPS)&&
 	      mainw->jackd!=NULL&&cfile->achans>0 &&
 	      !(prefs->audio_src==AUDIO_SRC_EXT||mainw->agen_key!=0)) {
-	    if (!jack_audio_seek_frame(mainw->jackd,frame)) {
+	    if (mainw->jackd->playing_file!=-1&&!jack_audio_seek_frame(mainw->jackd,frame)) {
 	      if (jack_try_reconnect()) jack_audio_seek_frame(mainw->jackd,frame);
 	    }
 
@@ -4671,7 +4671,7 @@ void load_frame_image(gint frame) {
 	      mainw->pulsed!=NULL&&cfile->achans>0 &&
 	      !(prefs->audio_src==AUDIO_SRC_EXT||mainw->agen_key!=0)) {
 
-	    if (!pulse_audio_seek_frame(mainw->pulsed,mainw->play_start)) {
+	    if (mainw->pulsed->playing_file!=-1&&!pulse_audio_seek_frame(mainw->pulsed,mainw->play_start)) {
 	      if (pulse_try_reconnect()) pulse_audio_seek_frame(mainw->pulsed,mainw->play_start);
 	      else mainw->aplayer_broken=TRUE;
 	    }

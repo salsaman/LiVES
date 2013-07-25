@@ -54,7 +54,13 @@ static int package_version=1; // version of this package
 
 #define RT322 0.43301270189f 
 
-static float angle;
+typedef struct {
+  float angle;
+  weed_timecode_t old_tc;
+  int revrot;
+  int owidth;
+  int oheight;
+} sdata;
 
 static void calc_center(float side, float j, float i, float *x, float *y) {
   // find nearest hex center
@@ -216,15 +222,19 @@ static int put_pixel(void *src, void *dst, int psize, float angle, float theta, 
 int kal_process (weed_plant_t *inst, weed_timecode_t timestamp) {
   int error;
   weed_plant_t *in_channel=weed_get_plantptr_value(inst,"in_channels",&error),*out_channel=weed_get_plantptr_value(inst,"out_channels",&error);
-  //weed_plant_t **in_params=weed_get_plantptr_array(inst,"in_parameters",&error);
+  weed_plant_t **in_params=weed_get_plantptr_array(inst,"in_parameters",&error);
   unsigned char *src=weed_get_voidptr_value(in_channel,"pixel_data",&error);
   unsigned char *dst=weed_get_voidptr_value(out_channel,"pixel_data",&error);
 
-  float theta,r;
+  sdata *sdata=weed_get_voidptr_value(inst,"plugin_internal",&error);
+
+  float theta,r,xangle;
 
   float x,y,a,b;
 
   float side,fi,fj;
+
+  double anglerot=0.,dtime,sfac,angleoffs;
 
   int width=weed_get_int_value(in_channel,"width",&error),hwidth=width>>1;
   int height=weed_get_int_value(in_channel,"height",&error),hheight=height>>1;
@@ -232,6 +242,8 @@ int kal_process (weed_plant_t *inst, weed_timecode_t timestamp) {
   int irowstride=weed_get_int_value(in_channel,"rowstrides",&error);
   int orowstride=weed_get_int_value(out_channel,"rowstrides",&error);
   int psize=4;
+
+  int sizerev;
 
   int start,end;
 
@@ -242,10 +254,36 @@ int kal_process (weed_plant_t *inst, weed_timecode_t timestamp) {
   if (width<height) side=width/2./RT32;
   else side=height/2.;
 
-  side/=2.;
+  angleoffs=weed_get_double_value(in_params[0],"value",&error);
 
-  //angle=weed_get_double_value(in_params[0],"value",&error);
-  //weed_free(in_params);
+  if (sdata->old_tc!=0&&timestamp>sdata->old_tc) {
+    anglerot=weed_get_double_value(in_params[1],"value",&error);
+    dtime=(double)(timestamp-sdata->old_tc)/100000000.;
+    anglerot*=dtime;
+    while (anglerot>=TWO_PI) anglerot%=TWO_PI;
+  }
+  
+  if (weed_get_boolean_value(in_params[3],"value",&error)==WEED_TRUE) anglerot=-anglerot;
+
+  sizerev=weed_get_boolean_value(in_params[4],"value",&error);
+
+  sfac=weed_get_double_value(in_params[5],"value",&error);
+
+  weed_free(in_params);
+
+  xangle=sdata->angle+(float)angleoffs/360.*TWO_PI;
+  if (xangle>=TWO_PI) xangle-=TWO_PI;
+  sdata->old_tc=timestamp;
+
+  if (sdata->owidth!=width||sdata->oheight!=height) {
+    if (sizerev&&sdata->owidth!=0&&sdata->oheight!=0) sdata->revrot=1-sdata->revrot;
+    sdata->owidth=width;
+    sdata->oheight=height;
+  }
+
+  if (sdata->revrot) anglerot=-anglerot;
+
+  side*=(float)sfac;
 
   if (palette==WEED_PALETTE_RGB24||palette==WEED_PALETTE_BGR24) psize=3;
 
@@ -276,7 +314,7 @@ int kal_process (weed_plant_t *inst, weed_timecode_t timestamp) {
       // rotate point to line up with hex grid
       theta=calc_angle(fi,fj); // get angle of this point from origin
       r=calc_dist(fi,fj); // get dist of point from origin
-      rotate(r,theta,-angle+ONE_PI2,&a,&b); // since our central hex has rotated by angle, so has the hex grid - so compensate
+      rotate(r,theta,-xangle+ONE_PI2,&a,&b); // since our central hex has rotated by angle, so has the hex grid - so compensate
 
       // find hex center and angle to it
       calc_center(side,a,b,&x,&y);
@@ -284,14 +322,14 @@ int kal_process (weed_plant_t *inst, weed_timecode_t timestamp) {
       // rotate hex center
       theta=calc_angle(y,x);
       r=calc_dist(x,y);
-      rotate(r,theta,angle-ONE_PI2,&a,&b);
+      rotate(r,theta,xangle-ONE_PI2,&a,&b);
 
       theta=calc_angle(fi-b,fj-a);
       r=calc_dist(b-fi,a-fj);
 
       if (r<10.) r=10.;
 
-      if (!put_pixel(src,dst,psize,angle,theta,r,irowstride,hheight,hwidth)) {
+      if (!put_pixel(src,dst,psize,xangle,theta,r,irowstride,hheight,hwidth)) {
 	if (palette==WEED_PALETTE_RGB24||palette==WEED_PALETTE_BGR24) {
 	  weed_memset(dst,0,3);
 	}
@@ -311,12 +349,42 @@ int kal_process (weed_plant_t *inst, weed_timecode_t timestamp) {
   }
 
   if (upd) {
-    angle+=0.01;
-    if (angle>=TWO_PI) angle=0.;
+    sdata->angle+=(float)anglerot*TWO_PI;
+    if (sdata->angle>=TWO_PI) sdata->angle-=TWO_PI;
+    if (sdata->angle<0.) sdata->angle+=TWO_PI;
   }
 
   return WEED_NO_ERROR;
 }
+
+
+
+int kal_init (weed_plant_t *inst) {
+  sdata *sd=(sdata *)weed_malloc(sizeof(sdata));
+  if (sd==NULL) return WEED_ERROR_MEMORY_ALLOCATION;
+
+  sd->angle=0.;
+  sd->old_tc=0;
+  sd->revrot=0;
+  sd->owidth=sd->oheight=0;
+
+  weed_set_voidptr_value(inst,"plugin_internal",sd);
+
+  return WEED_NO_ERROR;
+
+
+}
+
+
+int kal_deinit (weed_plant_t *inst) {
+  int error;
+  sdata *sd=weed_get_voidptr_value(inst,"plugin_internal",&error);
+
+  weed_free(sd);
+
+  return WEED_NO_ERROR;
+}
+
 
 
 
@@ -328,17 +396,24 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 
     weed_plant_t *in_chantmpls[]={weed_channel_template_init("in channel 0",0,palette_list),NULL};
     weed_plant_t *out_chantmpls[]={weed_channel_template_init("out channel 0",0,palette_list),NULL};
-    //weed_plant_t *in_params[]={weed_switch_init("enabled","_Enabled",WEED_TRUE),NULL};
+    weed_plant_t *in_params[]={weed_float_init("offset","_Offset angle",0.,0.,359.),weed_float_init("rotsec","_Rotations per second",0.2,0.,10.),
+			       weed_radio_init("acw","_Anti-clockwise",WEED_TRUE,1),weed_radio_init("cw","_Clockwise",WEED_FALSE,1),
+			       weed_switch_init("szc","_Switch direction on frame size change",WEED_FALSE),
+			       weed_float_init("szlen","_Size",0.5,0.1,2.0),NULL};
 
     weed_plant_t *filter_class=weed_filter_class_init("kaleidoscope","salsaman",1,WEED_FILTER_HINT_MAY_THREAD,
-						      NULL,&kal_process,NULL,in_chantmpls,out_chantmpls,NULL,NULL);
+						      &kal_init,&kal_process,&kal_deinit,in_chantmpls,out_chantmpls,in_params,NULL);
+
+    weed_plant_t *gui=weed_parameter_template_get_gui(in_params[1]);
+    
+    weed_set_boolean_value(in_params[0],"wrap",WEED_TRUE);
+
+    weed_set_double_value(gui,"step_size",.1);
 
     weed_plugin_info_add_filter_class (plugin_info,filter_class);
 
     weed_set_int_value(plugin_info,"version",package_version);
   }
-
-  angle=0.;
 
   return plugin_info;
 }

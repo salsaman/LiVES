@@ -7946,6 +7946,7 @@ void weed_set_blend_factor(int hotkey) {
 
   inc_count=enabled_in_channels(inst,FALSE);
 
+  // record old value
   copyto=set_copy_to(inst,pnum,FALSE);
 
   if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)&&inc_count>0) {
@@ -7955,6 +7956,15 @@ void weed_set_blend_factor(int hotkey) {
       mainw->event_list=append_param_change_event(mainw->event_list,tc,copyto,in_param2,init_events[hotkey],
 						  pchains[hotkey]);
     }
+  }
+
+  if (weed_plant_has_leaf(paramtmpl,"wrap")&&weed_get_boolean_value(paramtmpl,"wrap",&error)==WEED_TRUE) {
+    if (mainw->blend_factor>=256.) mainw->blend_factor-=256.;
+    else if (mainw->blend_factor<=-1.) mainw->blend_factor+=256.;
+  }
+  else {
+    if (mainw->blend_factor<0.) mainw->blend_factor=0.;
+    else if (mainw->blend_factor>255.) mainw->blend_factor=255.;
   }
 
   switch (param_hint) {

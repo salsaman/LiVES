@@ -390,7 +390,7 @@ int blurzoom_process (weed_plant_t *inst, weed_timecode_t timecode) {
 
   size_t snap_offs=0,src_offs=0;
 
-  int video_width,video_height,video_area,irow,orow;
+  int video_width,video_height,irow,orow;
   int mode=0;
   int error;
 
@@ -407,8 +407,6 @@ int blurzoom_process (weed_plant_t *inst, weed_timecode_t timecode) {
 
   irow = weed_get_int_value(in_channel,"rowstrides",&error)/4;
   orow = weed_get_int_value(out_channel,"rowstrides",&error)/4;
-
-  video_area=video_width*video_height;
 
   diff=sdata->diff;
 

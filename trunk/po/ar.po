@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: https://sourceforge.net/p/lives/bugs/\n"
-"POT-Creation-Date: 2013-07-15 08:47-0300\n"
+"POT-Creation-Date: 2013-07-24 22:03-0300\n"
 "PO-Revision-Date: 2013-03-14 12:31+0000\n"
 "Last-Translator: Launchpad Translations Administrators <Unknown>\n"
 "Language-Team: Arabic <ar@li.org>\n"
@@ -1843,7 +1843,7 @@ msgstr ""
 msgid "Set %s was permanently deleted from the disk.\n"
 msgstr ""
 
-#: src/callbacks.c:1756 src/callbacks.c:11772
+#: src/callbacks.c:1756 src/callbacks.c:11770
 msgid "Insert Silence"
 msgstr ""
 
@@ -1937,7 +1937,7 @@ msgid ""
 "Are you sure you wish to continue ?\n"
 msgstr ""
 
-#: src/callbacks.c:2841 src/callbacks.c:11700
+#: src/callbacks.c:2841 src/callbacks.c:11698
 msgid ""
 "\n"
 "Insertion will cause audio to shift in some multitrack layouts.\n"
@@ -2002,8 +2002,8 @@ msgid ""
 "Are you sure you wish to continue ?\n"
 msgstr ""
 
-#: src/callbacks.c:3431 src/callbacks.c:10925 src/callbacks.c:11170
-#: src/callbacks.c:11236
+#: src/callbacks.c:3431 src/callbacks.c:10923 src/callbacks.c:11168
+#: src/callbacks.c:11234
 msgid ""
 "\n"
 "Deletion will cause missing audio in some multitrack layouts.\n"
@@ -2017,7 +2017,7 @@ msgid ""
 "Are you sure you wish to continue ?\n"
 msgstr ""
 
-#: src/callbacks.c:3469 src/callbacks.c:11218
+#: src/callbacks.c:3469 src/callbacks.c:11216
 msgid ""
 "\n"
 "Deletion will cause audio to shift in some multitrack layouts.\n"
@@ -2272,12 +2272,12 @@ msgid "Opening audio"
 msgstr ""
 
 #: src/callbacks.c:6565 src/callbacks.c:6612 src/callbacks.c:8396
-#: src/callbacks.c:8438 src/callbacks.c:8481 src/callbacks.c:10851
+#: src/callbacks.c:8438 src/callbacks.c:8481 src/callbacks.c:10849
 msgid "Cancelling"
 msgstr "إلغاء"
 
-#: src/callbacks.c:6660 src/callbacks.c:8523 src/callbacks.c:10881
-#: src/callbacks.c:11572
+#: src/callbacks.c:6660 src/callbacks.c:8523 src/callbacks.c:10879
+#: src/callbacks.c:11570
 msgid "Committing audio"
 msgstr ""
 
@@ -2490,12 +2490,12 @@ msgstr ""
 msgid "_Save frame as..."
 msgstr ""
 
-#: src/callbacks.c:10295
+#: src/callbacks.c:10293
 #, c-format
 msgid "Audio is ahead of video by %.4f secs. at frame %d, with fps %.4f\n"
 msgstr ""
 
-#: src/callbacks.c:10352
+#: src/callbacks.c:10350
 msgid ""
 "\n"
 "\n"
@@ -2504,7 +2504,7 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/callbacks.c:10358
+#: src/callbacks.c:10356
 msgid ""
 "\n"
 "\n"
@@ -2512,7 +2512,7 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/callbacks.c:10434 src/callbacks.c:11490
+#: src/callbacks.c:10432 src/callbacks.c:11488
 msgid ""
 "\n"
 "Record time must be greater than 0.\n"
@@ -2520,7 +2520,7 @@ msgstr ""
 "\n"
 "سجل الوقت يجب أن يكون أكبر من الصفر.\n"
 
-#: src/callbacks.c:10445
+#: src/callbacks.c:10443
 msgid ""
 "Capture an External Window:\n"
 "\n"
@@ -2529,17 +2529,17 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/callbacks.c:10450
+#: src/callbacks.c:10448
 msgid "External window was released.\n"
 msgstr "الخارجية النافذة قد أفرج عنه.\n"
 
-#: src/callbacks.c:10484
+#: src/callbacks.c:10482
 msgid ""
 "Click on a Window to Capture it\n"
 "Press 'q' to stop recording"
 msgstr ""
 
-#: src/callbacks.c:10518
+#: src/callbacks.c:10516
 #, c-format
 msgid ""
 "\n"
@@ -2549,19 +2549,19 @@ msgid ""
 "(Default of %.3f frames per second will be used.)\n"
 msgstr ""
 
-#: src/callbacks.c:10544
+#: src/callbacks.c:10542
 msgid "LiVES was unable to capture this window. Sorry.\n"
 msgstr ""
 
-#: src/callbacks.c:10700
+#: src/callbacks.c:10698
 msgid "Export Selected Audio as..."
 msgstr "أغاني مختارة والتصدير..."
 
-#: src/callbacks.c:10704
+#: src/callbacks.c:10702
 msgid "Export Audio as..."
 msgstr "التصدير والصوت..."
 
-#: src/callbacks.c:10719
+#: src/callbacks.c:10717
 msgid ""
 "\n"
 "\n"
@@ -2570,86 +2570,86 @@ msgid ""
 "rate.\n"
 msgstr ""
 
-#: src/callbacks.c:10725
+#: src/callbacks.c:10723
 #, c-format
 msgid "Exporting audio frames %d to %d as %s..."
 msgstr ""
 
-#: src/callbacks.c:10730
+#: src/callbacks.c:10728
 #, c-format
 msgid "Exporting audio as %s..."
 msgstr ""
 
-#: src/callbacks.c:10756
+#: src/callbacks.c:10754
 msgid "Exporting audio"
 msgstr "تصدير الصوت"
 
-#: src/callbacks.c:10787
+#: src/callbacks.c:10785
 msgid "LiVES: - Append Audio File"
 msgstr ""
 
-#: src/callbacks.c:10830
+#: src/callbacks.c:10828
 #, c-format
 msgid "Appending audio file %s..."
 msgstr ""
 
-#: src/callbacks.c:10841
+#: src/callbacks.c:10839
 msgid "Appending audio"
 msgstr "إلحاق الصوت"
 
-#: src/callbacks.c:10897
+#: src/callbacks.c:10895
 msgid "Append Audio"
 msgstr "إلحاق أغنية"
 
-#: src/callbacks.c:10957
+#: src/callbacks.c:10955
 #, c-format
 msgid "Padding audio to %.2f seconds..."
 msgstr ""
 
-#: src/callbacks.c:10959
+#: src/callbacks.c:10957
 #, c-format
 msgid "Trimming audio from %.2f to %.2f seconds..."
 msgstr ""
 
-#: src/callbacks.c:10978
+#: src/callbacks.c:10976
 msgid "Trimming/Padding audio"
 msgstr ""
 
-#: src/callbacks.c:10986
+#: src/callbacks.c:10984
 msgid "Trim/Pad Audio"
 msgstr "تقليم / الوسادة أغنية"
 
-#: src/callbacks.c:11060
+#: src/callbacks.c:11058
 msgid "Fading audio in"
 msgstr ""
 
-#: src/callbacks.c:11061
+#: src/callbacks.c:11059
 msgid "Fade audio in"
 msgstr ""
 
-#: src/callbacks.c:11066
+#: src/callbacks.c:11064
 msgid "Fading audio out"
 msgstr ""
 
-#: src/callbacks.c:11067
+#: src/callbacks.c:11065
 msgid "Fade audio out"
 msgstr ""
 
-#: src/callbacks.c:11090
+#: src/callbacks.c:11088
 #, c-format
 msgid "%s over %.1f seconds..."
 msgstr ""
 
-#: src/callbacks.c:11092
+#: src/callbacks.c:11090
 #, c-format
 msgid "%s from time %.2f seconds to %.2f seconds..."
 msgstr ""
 
-#: src/callbacks.c:11099
+#: src/callbacks.c:11097
 msgid "Fading audio..."
 msgstr "يتلاشى الصوت..."
 
-#: src/callbacks.c:11202
+#: src/callbacks.c:11200
 msgid ""
 "\n"
 "Deleting all audio will close this file.\n"
@@ -2659,33 +2659,33 @@ msgstr ""
 "حذف جميع السمعية سيتم إغلاق هذا الملف.\n"
 "هل أنت متأكد ؟"
 
-#: src/callbacks.c:11205
+#: src/callbacks.c:11203
 msgid "Deleting all audio..."
 msgstr "حذف كل صوت..."
 
-#: src/callbacks.c:11211
+#: src/callbacks.c:11209
 #, c-format
 msgid "Deleting audio from %.2f to %.2f seconds..."
 msgstr ""
 
-#: src/callbacks.c:11298
+#: src/callbacks.c:11296
 msgid "Deleting Audio"
 msgstr "حذف أغنية"
 
-#: src/callbacks.c:11305
+#: src/callbacks.c:11303
 msgid "Delete Audio"
 msgstr "حذف أغنية"
 
-#: src/callbacks.c:11645
+#: src/callbacks.c:11643
 msgid "Record new audio"
 msgstr "تسجيل صوتي جديد"
 
-#: src/callbacks.c:11733
+#: src/callbacks.c:11731
 #, c-format
 msgid "Inserting silence from %.2f to %.2f seconds..."
 msgstr ""
 
-#: src/callbacks.c:11762
+#: src/callbacks.c:11760
 msgid "Inserting Silence"
 msgstr ""
 
@@ -5527,7 +5527,7 @@ msgstr ""
 msgid "Failed to start generator %s, error %d\n"
 msgstr ""
 
-#: src/effects-weed.c:8672
+#: src/effects-weed.c:8682
 #, c-format
 msgid "%s [unstable] (%s)"
 msgstr ""
@@ -5686,39 +5686,39 @@ msgstr "غغلق النافذة"
 msgid "No parameters"
 msgstr ""
 
-#: src/paramwindow.c:1384
+#: src/paramwindow.c:1386
 msgid "Invalid parameter"
 msgstr ""
 
-#: src/paramwindow.c:1576
+#: src/paramwindow.c:1577
 msgid "LiVES: - Select Colour"
 msgstr ""
 
-#: src/paramwindow.c:1581
+#: src/paramwindow.c:1582
 msgid "Click to set the colour"
 msgstr ""
 
-#: src/paramwindow.c:1593
+#: src/paramwindow.c:1594
 msgid "_Red"
 msgstr ""
 
-#: src/paramwindow.c:1594
+#: src/paramwindow.c:1595
 msgid "The red value (0 - 255)"
 msgstr ""
 
-#: src/paramwindow.c:1597
+#: src/paramwindow.c:1598
 msgid "_Green"
 msgstr ""
 
-#: src/paramwindow.c:1598
+#: src/paramwindow.c:1599
 msgid "The green value (0 - 255)"
 msgstr ""
 
-#: src/paramwindow.c:1601
+#: src/paramwindow.c:1602
 msgid "_Blue"
 msgstr ""
 
-#: src/paramwindow.c:1602
+#: src/paramwindow.c:1603
 msgid "The blue value (0 - 255)"
 msgstr ""
 
@@ -7490,26 +7490,26 @@ msgstr ""
 msgid "Jack options will not take effect until the next time you start LiVES."
 msgstr ""
 
-#: src/osc.c:2508
+#: src/osc.c:2507
 #, c-format
 msgid "Syncing to external framerate of %.8f frames per second.\n"
 msgstr ""
 
-#: src/osc.c:6525
+#: src/osc.c:6524
 msgid "Cannot initialize OSC receiver\n"
 msgstr ""
 
-#: src/osc.c:6549
+#: src/osc.c:6548
 #, c-format
 msgid "WARNING: Cannot start OSC server at UDP port %d\n"
 msgstr ""
 
-#: src/osc.c:6554
+#: src/osc.c:6553
 #, c-format
 msgid "Started OSC server at UDP port %d\n"
 msgstr ""
 
-#: src/osc.c:6671
+#: src/osc.c:6670
 #, c-format
 msgid "Cannot start OSC/UDP server at port %d \n"
 msgstr ""
@@ -9752,822 +9752,1530 @@ msgstr ""
 msgid "Opened device %s\n"
 msgstr ""
 
-#~ msgid "Adjust contrast"
-#~ msgstr "اضبط التباين"
+#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
+msgid " _Top  "
+msgstr ""
 
+#: /usr/share/lives/plugins/effects/rendered/rotate.script:0
+msgid "180 _degrees             "
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/rotate.script:0
+msgid "90 degrees _Anticlockwise"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/rotate.script:0
+msgid "90 degrees _Clockwise    "
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+msgid "Active _animation"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
+msgid "Add _Border"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/noisify.script:0
+msgid "Add noise"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/contrast.script:0
+msgid "Adjust contrast"
+msgstr "اضبط التباين"
+
+#: /usr/share/lives/plugins/effects/rendered/contrast.script:0
 #, fuzzy
-#~ msgid "Adjusting contrast of"
-#~ msgstr "اضبط التباين"
+msgid "Adjusting contrast of"
+msgstr "اضبط التباين"
 
+#: /usr/share/lives/plugins/effects/rendered/noisify.script:0
 #, fuzzy
-#~ msgid "Adjusting noise on"
-#~ msgstr "اضبط التباين"
+msgid "Adjusting noise on"
+msgstr "اضبط التباين"
 
+#: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
+msgid "Applying charcoal to"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
+msgid "Applying forward skip to"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/sepia.script:0
+msgid "Applying sepia to"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
+msgid "B/W Threshold"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
+msgid "B/W thresholding"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/blank_frames.script:0
 #, fuzzy
-#~ msgid "Blank _Colour"
-#~ msgstr "_خلفية بيضاء"
+msgid "Blank _Colour"
+msgstr "_خلفية بيضاء"
 
+#: /usr/share/lives/plugins/effects/rendered/blank_frames.script:0
 #, fuzzy
-#~ msgid "Blank frames"
-#~ msgstr "إطارات"
+msgid "Blank frames"
+msgstr "إطارات"
 
-#~ msgid "Blanking"
-#~ msgstr "إفراغ"
+#: /usr/share/lives/plugins/effects/rendered/blank_frames.script:0
+msgid "Blanking"
+msgstr "إفراغ"
 
+#: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
 #, fuzzy
-#~ msgid "Block _height"
-#~ msgstr "إر_تفاع"
+msgid "Block _height"
+msgstr "إر_تفاع"
 
+#: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
 #, fuzzy
-#~ msgid "Block _width"
-#~ msgstr "إر_تفاع"
+msgid "Block _width"
+msgstr "إر_تفاع"
 
-#~ msgid "Blur"
-#~ msgstr "ضبابية"
+#: /usr/share/lives/plugins/effects/rendered/blur.script:0
+msgid "Blur"
+msgstr "ضبابية"
 
+#: /usr/share/lives/plugins/effects/rendered/blur.script:0
 #, fuzzy
-#~ msgid "Bluring"
-#~ msgstr "ضبابية"
+msgid "Bluring"
+msgstr "ضبابية"
 
+#: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
 #, fuzzy
-#~ msgid "Border _Colour"
-#~ msgstr "_خلفية بيضاء"
+msgid "Border _Colour"
+msgstr "_خلفية بيضاء"
 
+#: /usr/share/lives/plugins/effects/rendered/brightness_change.script:0
 #, fuzzy
-#~ msgid "Brightness _end"
-#~ msgstr "_تجاهل التغييرات"
+msgid "Brightness _end"
+msgstr "_تجاهل التغييرات"
 
+#: /usr/share/lives/plugins/effects/rendered/brightness_change.script:0
 #, fuzzy
-#~ msgid "Brightness _start"
-#~ msgstr "_تجاهل التغييرات"
+msgid "Brightness _start"
+msgstr "_تجاهل التغييرات"
 
+#: /usr/share/lives/plugins/effects/rendered/brightness_change.script:0
 #, fuzzy
-#~ msgid "Brightness change"
-#~ msgstr "_تجاهل التغييرات"
+msgid "Brightness change"
+msgstr "_تجاهل التغييرات"
 
+#: /usr/share/lives/plugins/effects/rendered/modulate.script:0
 #, fuzzy
-#~ msgid "Brightness end"
-#~ msgstr "_تجاهل التغييرات"
+msgid "Brightness end"
+msgstr "_تجاهل التغييرات"
 
+#: /usr/share/lives/plugins/effects/rendered/modulate.script:0
 #, fuzzy
-#~ msgid "Brightness start"
-#~ msgstr "_تجاهل التغييرات"
+msgid "Brightness start"
+msgstr "_تجاهل التغييرات"
+
+#: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
+msgid "Centre _X"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
+msgid "Centre _Y"
+msgstr ""
 
-#~ msgid "Charcoal"
-#~ msgstr "فحم"
+#: /usr/share/lives/plugins/effects/rendered/brightness_change.script:0
+msgid "Changing brightness of"
+msgstr ""
 
-#~ msgid "Checkerboard"
-#~ msgstr "لوح شطرنج"
+#: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
+msgid "Changing gamma of"
+msgstr ""
 
+#: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
+msgid "Changing hue of"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
+msgid "Changing saturation of"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
+msgid "Charcoal"
+msgstr "فحم"
+
+#: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
+msgid "Checkerboard"
+msgstr "لوح شطرنج"
+
+#: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
 #, fuzzy
-#~ msgid "Checkerboarding"
-#~ msgstr "لوح شطرنج"
+msgid "Checkerboarding"
+msgstr "لوح شطرنج"
 
+#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 #, fuzzy
-#~ msgid "Clipboard _over selection"
-#~ msgstr "اع_كس الاختيار"
+msgid "Clipboard _over selection"
+msgstr "اع_كس الاختيار"
 
+#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 #, fuzzy
-#~ msgid "Clipboard _under selection"
-#~ msgstr "اع_كس الاختيار"
+msgid "Clipboard _under selection"
+msgstr "اع_كس الاختيار"
 
-#~ msgid "Colorize"
-#~ msgstr "تلوين"
+#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+msgid "Colorize"
+msgstr "تلوين"
 
+#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #, fuzzy
-#~ msgid "Colorizing"
-#~ msgstr "تلوين"
+msgid "Colorizing"
+msgstr "تلوين"
 
+#: /usr/share/lives/plugins/effects/rendered/cycle.script:0
 #, fuzzy
-#~ msgid "Colour cycle"
-#~ msgstr "تلوين"
+msgid "Colour cycle"
+msgstr "تلوين"
 
+#: /usr/share/lives/plugins/effects/rendered/cycle.script:0
 #, fuzzy
-#~ msgid "Colour cycling"
-#~ msgstr "تلوين"
+msgid "Colour cycling"
+msgstr "تلوين"
 
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #, fuzzy
-#~ msgid "Colour filter"
-#~ msgstr "تلوين"
+msgid "Colour filter"
+msgstr "تلوين"
 
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #, fuzzy
-#~ msgid "Colour filtering"
-#~ msgstr "تلوين"
+msgid "Colour filtering"
+msgstr "تلوين"
 
+#: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
 #, fuzzy
-#~ msgid "Colour replace"
-#~ msgstr "تلوين"
+msgid "Colour replace"
+msgstr "تلوين"
+
+#: /usr/share/lives/plugins/effects/rendered/noisify.script:0
+msgid "Constant noise level"
+msgstr ""
 
+#: /usr/share/lives/plugins/effects/rendered/cycle.script:0
 #, fuzzy
-#~ msgid "Cycle _Step"
-#~ msgstr "اب_دأ"
+msgid "Cycle _Step"
+msgstr "اب_دأ"
 
-#~ msgid "Deinterlace"
-#~ msgstr "فك الدمج"
+#: /usr/share/lives/plugins/effects/rendered/deinterlace.script:0
+msgid "Deinterlace"
+msgstr "فك الدمج"
 
-#~ msgid "Deinterlacing"
-#~ msgstr "إلغاء المسح التداخلي"
+#: /usr/share/lives/plugins/effects/rendered/deinterlace.script:0
+msgid "Deinterlacing"
+msgstr "إلغاء المسح التداخلي"
 
-#~ msgid "Despeckle"
-#~ msgstr "إزالة الضجيج"
+#: /usr/share/lives/plugins/effects/rendered/despekle.script:0
+msgid "Despeckle"
+msgstr "إزالة الضجيج"
 
+#: /usr/share/lives/plugins/effects/rendered/despekle.script:0
 #, fuzzy
-#~ msgid "Despeckling"
-#~ msgstr "إزالة الضجيج"
+msgid "Despeckling"
+msgstr "إزالة الضجيج"
 
-#~ msgid "Dream"
-#~ msgstr "حلم"
+#: /usr/share/lives/plugins/effects/rendered/dream.script:0
+msgid "Dream"
+msgstr "حلم"
 
+#: /usr/share/lives/plugins/effects/rendered/dream.script:0
 #, fuzzy
-#~ msgid "Dreamifying"
-#~ msgstr "حلم"
+msgid "Dreamifying"
+msgstr "حلم"
 
-#~ msgid "Edge detect"
-#~ msgstr "كشف الحدود"
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+msgid "E_nd %"
+msgstr ""
 
+#: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
+msgid "Edge detect"
+msgstr "كشف الحدود"
+
+#: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
 #, fuzzy
-#~ msgid "Edge detecting"
-#~ msgstr "كشف الحدود"
+msgid "Edge detecting"
+msgstr "كشف الحدود"
 
-#~ msgid "Emboss"
-#~ msgstr "زين بنقوش بارزة"
+#: /usr/share/lives/plugins/effects/rendered/emboss.script:0
+msgid "Emboss"
+msgstr "زين بنقوش بارزة"
 
+#: /usr/share/lives/plugins/effects/rendered/emboss.script:0
 #, fuzzy
-#~ msgid "Embossing"
-#~ msgstr "زين بنقوش بارزة"
+msgid "Embossing"
+msgstr "زين بنقوش بارزة"
+
+#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+msgid "End _Alpha:"
+msgstr ""
 
-#~ msgid "Enhance"
-#~ msgstr "تحسين"
+#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+msgid "End pos_X:"
+msgstr ""
 
+#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+msgid "End pos_Y:"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/enhance.script:0
+msgid "Enhance"
+msgstr "تحسين"
+
+#: /usr/share/lives/plugins/effects/rendered/enhance.script:0
 #, fuzzy
-#~ msgid "Enhancing"
-#~ msgstr "تحسين"
+msgid "Enhancing"
+msgstr "تحسين"
+
+#: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+msgid "Envelope length"
+msgstr ""
 
+#: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
 #, fuzzy
-#~ msgid "Fade _colour"
-#~ msgstr "الخفوت"
+msgid "Fade _colour"
+msgstr "الخفوت"
 
+#: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+#: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
 #, fuzzy
-#~ msgid "Fade _end"
-#~ msgstr "الخفوت"
+msgid "Fade _end"
+msgstr "الخفوت"
 
+#: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
 #, fuzzy
-#~ msgid "Fade _in"
-#~ msgstr "الخفوت"
+msgid "Fade _in"
+msgstr "الخفوت"
 
+#: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
 #, fuzzy
-#~ msgid "Fade _out"
-#~ msgstr "الخفوت"
+msgid "Fade _out"
+msgstr "الخفوت"
 
-#~ msgid "Fade"
-#~ msgstr "الخفوت"
+#: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
+msgid "Fade video to or from color"
+msgstr ""
 
+#: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+msgid "Fade"
+msgstr "الخفوت"
+
+#: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
 #, fuzzy
-#~ msgid "Fading video"
-#~ msgstr "يتلاشى الصوت..."
+msgid "Fading video"
+msgstr "يتلاشى الصوت..."
 
-#~ msgid "Fading"
-#~ msgstr "البهت"
+#: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+msgid "Fading"
+msgstr "البهت"
 
+#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 #, fuzzy
-#~ msgid "Fina_l frame"
-#~ msgstr "الإطار الأول"
+msgid "Fina_l frame"
+msgstr "الإطار الأول"
 
+#: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
 #, fuzzy
-#~ msgid "Flash _colour"
-#~ msgstr "الخفوت"
+msgid "Flash _colour"
+msgstr "الخفوت"
 
-#~ msgid "Flip vertically"
-#~ msgstr "انعكاس عمودي"
+#: /usr/share/lives/plugins/effects/rendered/flip.script:0
+msgid "Flip vertically"
+msgstr "انعكاس عمودي"
 
+#: /usr/share/lives/plugins/effects/rendered/flop.script:0
 #, fuzzy
-#~ msgid "Flop horizontally"
-#~ msgstr "انعكاس عمودي"
+msgid "Flop horizontally"
+msgstr "انعكاس عمودي"
 
+#: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
 #, fuzzy
-#~ msgid "Frame Calculator"
-#~ msgstr "اب_دأ"
+msgid "Frame Calculator"
+msgstr "اب_دأ"
 
+#: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
 #, fuzzy
-#~ msgid "Frame _Colour"
-#~ msgstr "اب_دأ"
+msgid "Frame _Colour"
+msgstr "اب_دأ"
 
+#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #, fuzzy
-#~ msgid "Frame _height"
-#~ msgstr "حجم الإطار"
+msgid "Frame _height"
+msgstr "حجم الإطار"
+
+#: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+msgid "Frame _in frame position of clipboard..."
+msgstr ""
 
+#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
+msgid "Frame _in frame position of top frame..."
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #, fuzzy
-#~ msgid "Frame _width"
-#~ msgstr "حجم الإطار"
+msgid "Frame _width"
+msgstr "حجم الإطار"
 
+#: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
 #, fuzzy
-#~ msgid "Frames _per second (FPS)"
-#~ msgstr "ثوان"
+msgid "Frames _per second (FPS)"
+msgstr "ثوان"
 
+#: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
 #, fuzzy
-#~ msgid "Gamma _end"
-#~ msgstr "الخفوت"
+msgid "Gamma _end"
+msgstr "الخفوت"
 
+#: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
 #, fuzzy
-#~ msgid "Gamma _start"
-#~ msgstr "اب_دأ"
+msgid "Gamma _start"
+msgstr "اب_دأ"
 
+#: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
 #, fuzzy
-#~ msgid "Gamma change"
-#~ msgstr "_تجاهل التغييرات"
+msgid "Gamma change"
+msgstr "_تجاهل التغييرات"
 
+#: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
 #, fuzzy
-#~ msgid "Generate blank frames"
-#~ msgstr "إطارات"
+msgid "Generate blank frames"
+msgstr "إطارات"
 
+#: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
 #, fuzzy
-#~ msgid "Generate clip from image"
-#~ msgstr "إطارات"
+msgid "Generate clip from image"
+msgstr "إطارات"
 
+#: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
 #, fuzzy
-#~ msgid "Generate coloured frames"
-#~ msgstr "إطارات"
+msgid "Generate coloured frames"
+msgstr "إطارات"
 
+#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #, fuzzy
-#~ msgid "Generate title frames"
-#~ msgstr "إطارات"
+msgid "Generate title frames"
+msgstr "إطارات"
 
+#: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
 #, fuzzy
-#~ msgid "Generating blank frames"
-#~ msgstr "إطارات"
+msgid "Generating blank frames"
+msgstr "إطارات"
 
+#: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
 #, fuzzy
-#~ msgid "Generating clip from image"
-#~ msgstr "إطارات"
+msgid "Generating clip from image"
+msgstr "إطارات"
 
+#: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
 #, fuzzy
-#~ msgid "Generating coloured frames"
-#~ msgstr "إطارات"
+msgid "Generating coloured frames"
+msgstr "إطارات"
 
+#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #, fuzzy
-#~ msgid "Generating title frames"
-#~ msgstr "إطارات"
+msgid "Generating title frames"
+msgstr "إطارات"
+
+#: /usr/share/lives/plugins/effects/rendered/flop.script:0
+msgid "Horizontal flopping"
+msgstr ""
 
+#: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
+msgid "Horizontal shifting"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
 #, fuzzy
-#~ msgid "Hue _end"
-#~ msgstr "الخفوت"
+msgid "Hue _end"
+msgstr "الخفوت"
 
+#: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
 #, fuzzy
-#~ msgid "Hue _start"
-#~ msgstr "اب_دأ"
+msgid "Hue _start"
+msgstr "اب_دأ"
 
+#: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
 #, fuzzy
-#~ msgid "Hue change"
-#~ msgstr "_تجاهل التغييرات"
+msgid "Hue change"
+msgstr "_تجاهل التغييرات"
 
+#: /usr/share/lives/plugins/effects/rendered/modulate.script:0
 #, fuzzy
-#~ msgid "Hue end"
-#~ msgstr "الخفوت"
+msgid "Hue end"
+msgstr "الخفوت"
 
+#: /usr/share/lives/plugins/effects/rendered/modulate.script:0
 #, fuzzy
-#~ msgid "Hue start"
-#~ msgstr "اب_دأ"
+msgid "Hue start"
+msgstr "اب_دأ"
+
+#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+msgid "Image overlay"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+msgid "Init _Alpha:"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+msgid "Init pos_X:"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+msgid "Init pos_Y:"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/jumble.script:0
+msgid "Jumble"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/jumble.script:0
+msgid "Jumbling"
+msgstr ""
 
+#: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
 #, fuzzy
-#~ msgid "Keep _Centered"
-#~ msgstr "أخ_رى"
+msgid "Keep _Centered"
+msgstr "أخ_رى"
 
+#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+msgid "Keep image aspect _ratio"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
+msgid "L_eft"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/monochrome.script:0
 #, fuzzy
-#~ msgid "Making monochrome"
-#~ msgstr "أحادي اللون"
+msgid "Making monochrome"
+msgstr "أحادي اللون"
 
+#: /usr/share/lives/plugins/effects/rendered/modulate.script:0
 #, fuzzy
-#~ msgid "Modulate (BSH)"
-#~ msgstr "يدوّر"
+msgid "Modulate (BSH)"
+msgstr "يدوّر"
 
+#: /usr/share/lives/plugins/effects/rendered/modulate.script:0
 #, fuzzy
-#~ msgid "Modulating"
-#~ msgstr "يدوّر"
+msgid "Modulating"
+msgstr "يدوّر"
 
-#~ msgid "Monochrome"
-#~ msgstr "أحادي اللون"
+#: /usr/share/lives/plugins/effects/rendered/monochrome.script:0
+msgid "Monochrome"
+msgstr "أحادي اللون"
 
-#~ msgid "Negate"
-#~ msgstr "عكس"
+#: /usr/share/lives/plugins/effects/rendered/negate.script:0
+msgid "Negate"
+msgstr "عكس"
 
+#: /usr/share/lives/plugins/effects/rendered/negate.script:0
 #, fuzzy
-#~ msgid "Negating"
-#~ msgstr "عكس"
+msgid "Negating"
+msgstr "عكس"
+
+#: /usr/share/lives/plugins/effects/rendered/noisify.script:0
+msgid "Noise type"
+msgstr ""
 
-#~ msgid "Normalize"
-#~ msgstr "تطبيع"
+#: /usr/share/lives/plugins/effects/rendered/noisify.script:0
+msgid "Noisify"
+msgstr ""
 
-#~ msgid "Normalizing"
-#~ msgstr "ضبط"
+#: /usr/share/lives/plugins/effects/rendered/normalize.script:0
+msgid "Normalize"
+msgstr "تطبيع"
 
+#: /usr/share/lives/plugins/effects/rendered/normalize.script:0
+msgid "Normalizing"
+msgstr "ضبط"
+
+#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #, fuzzy
-#~ msgid "Number of _frames"
-#~ msgstr "_انخفاض بأطر"
+msgid "Number of _frames"
+msgstr "_انخفاض بأطر"
+
+#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+msgid "Overlaying an image onto video"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
+msgid "Overlaying text on"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
+msgid "Photo/still"
+msgstr ""
 
+#: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
 #, fuzzy
-#~ msgid "Pixilate"
-#~ msgstr "اللصق"
+msgid "Pixilate"
+msgstr "اللصق"
 
+#: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
 #, fuzzy
-#~ msgid "Pixilating"
-#~ msgstr "اللصق"
+msgid "Pixilating"
+msgstr "اللصق"
 
-#~ msgid "Posterize"
-#~ msgstr "مُلصق"
+#: /usr/share/lives/plugins/effects/rendered/posterize.script:0
+msgid "Posterize"
+msgstr "مُلصق"
 
+#: /usr/share/lives/plugins/effects/rendered/posterize.script:0
 #, fuzzy
-#~ msgid "Posterizing"
-#~ msgstr "مُلصق"
+msgid "Posterizing"
+msgstr "مُلصق"
 
+#: /usr/share/lives/plugins/effects/rendered/randomzoom.script:0
+msgid "Random zoom"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/randomzoom.script:0
+msgid "Random zooming"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/noisify.script:0
+msgid "Reduce noise"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/noisify.script:0
+msgid "Reduction radius"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
+msgid "Replacing colours in"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/resize.script:0
 #, fuzzy
-#~ msgid "Resize All Frames"
-#~ msgstr "غيّر حجم جميع الإطارات"
+msgid "Resize All Frames"
+msgstr "غيّر حجم جميع الإطارات"
 
+#: /usr/share/lives/plugins/effects/rendered/rotate.script:0
 #, fuzzy
-#~ msgid "Rotate Clip"
-#~ msgstr "يدوّر"
+msgid "Rotate Clip"
+msgstr "يدوّر"
 
-#~ msgid "Rotating"
-#~ msgstr "يدوّر"
+#: /usr/share/lives/plugins/effects/rendered/rotate.script:0
+msgid "Rotating"
+msgstr "يدوّر"
 
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #, fuzzy
-#~ msgid "S_tart %"
-#~ msgstr "اب_دأ"
+msgid "S_tart %"
+msgstr "اب_دأ"
 
+#: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
 #, fuzzy
-#~ msgid "Saturation _end"
-#~ msgstr "الانتقالات"
+msgid "Saturation _end"
+msgstr "الانتقالات"
 
+#: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
 #, fuzzy
-#~ msgid "Saturation _start"
-#~ msgstr "الانتقالات"
+msgid "Saturation _start"
+msgstr "الانتقالات"
 
+#: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
 #, fuzzy
-#~ msgid "Saturation change"
-#~ msgstr "الانتقالات"
+msgid "Saturation change"
+msgstr "الانتقالات"
 
+#: /usr/share/lives/plugins/effects/rendered/modulate.script:0
 #, fuzzy
-#~ msgid "Saturation end"
-#~ msgstr "الانتقالات"
+msgid "Saturation end"
+msgstr "الانتقالات"
 
+#: /usr/share/lives/plugins/effects/rendered/modulate.script:0
 #, fuzzy
-#~ msgid "Saturation start"
-#~ msgstr "الانتقالات"
+msgid "Saturation start"
+msgstr "الانتقالات"
 
-#~ msgid "Sepia"
-#~ msgstr "صورة باللون البنّي الداكن"
+#: /usr/share/lives/plugins/effects/rendered/sepia.script:0
+msgid "Sepia"
+msgstr "صورة باللون البنّي الداكن"
 
+#: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
 #, fuzzy
-#~ msgid "Shift horizontally"
-#~ msgstr "انعكاس عمودي"
+msgid "Shift horizontally"
+msgstr "انعكاس عمودي"
 
+#: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
 #, fuzzy
-#~ msgid "Shift vertically"
-#~ msgstr "انعكاس عمودي"
+msgid "Shift vertically"
+msgstr "انعكاس عمودي"
+
+#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
+msgid "Shrink/Expand"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
+msgid "Shrinking/Expanding"
+msgstr ""
 
-#~ msgid "Skip forward"
-#~ msgstr "تخطّى إلى الأمام"
+#: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
+msgid "Skip forward"
+msgstr "تخطّى إلى الأمام"
 
-#~ msgid "Solarize"
-#~ msgstr "تشميس"
+#: /usr/share/lives/plugins/effects/rendered/solarize.script:0
+msgid "Solarize"
+msgstr "تشميس"
 
+#: /usr/share/lives/plugins/effects/rendered/solarize.script:0
 #, fuzzy
-#~ msgid "Solarizing"
-#~ msgstr "تشميس"
+msgid "Solarizing"
+msgstr "تشميس"
 
-#~ msgid "Spin"
-#~ msgstr "لف"
+#: /usr/share/lives/plugins/effects/rendered/spin.script:0
+msgid "Spin"
+msgstr "لف"
 
+#: /usr/share/lives/plugins/effects/rendered/spin.script:0
 #, fuzzy
-#~ msgid "Spinning"
-#~ msgstr "لف"
+msgid "Spinning"
+msgstr "لف"
 
-#~ msgid "Spread"
-#~ msgstr "نشر"
+#: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
+msgid "Splice"
+msgstr ""
 
-#~ msgid "Spreading"
-#~ msgstr "اتنشار"
+#: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
+msgid "Splicing"
+msgstr ""
 
+#: /usr/share/lives/plugins/effects/rendered/spread.script:0
+msgid "Spread"
+msgstr "نشر"
+
+#: /usr/share/lives/plugins/effects/rendered/spread.script:0
+msgid "Spreading"
+msgstr "اتنشار"
+
+#: /usr/share/lives/plugins/effects/rendered/solarize.script:0
 #, fuzzy
-#~ msgid "Step _Value"
-#~ msgstr "اب_دأ"
+msgid "Step _Value"
+msgstr "اب_دأ"
 
+#: /usr/share/lives/plugins/effects/rendered/spin.script:0
+#: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
+#: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
 #, fuzzy
-#~ msgid "Step per _Frame"
-#~ msgstr "حدد كافة _إطارات"
+msgid "Step per _Frame"
+msgstr "حدد كافة _إطارات"
 
+#: /usr/share/lives/plugins/effects/rendered/swirl.script:0
 #, fuzzy
-#~ msgid "Swirl _start"
-#~ msgstr "دوّامة"
+msgid "Swirl _start"
+msgstr "دوّامة"
 
+#: /usr/share/lives/plugins/effects/rendered/swirl.script:0
 #, fuzzy
-#~ msgid "Swirl s_tep"
-#~ msgstr "دوّامة"
+msgid "Swirl s_tep"
+msgstr "دوّامة"
 
-#~ msgid "Swirl"
-#~ msgstr "دوّامة"
+#: /usr/share/lives/plugins/effects/rendered/swirl.script:0
+msgid "Swirl"
+msgstr "دوّامة"
 
+#: /usr/share/lives/plugins/effects/rendered/swirl.script:0
 #, fuzzy
-#~ msgid "Swirling"
-#~ msgstr "دوّامة"
+msgid "Swirling"
+msgstr "دوّامة"
+
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
+msgid "Text Overlay"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
+msgid "Thres_hold"
+msgstr ""
 
+#: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
+msgid "Trim frames/Add border"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
+msgid "Trimming"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
 #, fuzzy
-#~ msgid "Tunnel"
-#~ msgstr "إلغاء"
+msgid "Tunnel"
+msgstr "إلغاء"
 
+#: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
 #, fuzzy
-#~ msgid "Tunneling"
-#~ msgstr "إلغاء"
+msgid "Tunneling"
+msgstr "إلغاء"
+
+#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+msgid "Use _Natural Size"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
+msgid "Use _Natural image size"
+msgstr ""
 
-#~ msgid "Wave"
-#~ msgstr "موجي"
+#: /usr/share/lives/plugins/effects/rendered/flip.script:0
+msgid "Vertical flipping"
+msgstr ""
 
-#~ msgid "Waving"
-#~ msgstr "جاري إضافة الموجات"
+#: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
+msgid "Vertical shifting"
+msgstr ""
 
+#: /usr/share/lives/plugins/effects/rendered/wave.script:0
+msgid "Wave"
+msgstr "موجي"
+
+#: /usr/share/lives/plugins/effects/rendered/wave.script:0
+msgid "Waving"
+msgstr "جاري إضافة الموجات"
+
+#: /usr/share/lives/plugins/effects/rendered/rotate.script:0
+#: /usr/share/lives/plugins/effects/rendered/wave.script:0
+#: /usr/share/lives/plugins/effects/rendered/spin.script:0
+#: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
+#: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
+#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 #, fuzzy
-#~ msgid "_Background Colour"
-#~ msgstr "_خلفية بيضاء"
+msgid "_Background Colour"
+msgstr "_خلفية بيضاء"
 
+#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #, fuzzy
-#~ msgid "_Background colour"
-#~ msgstr "_خلفية بيضاء"
+msgid "_Background colour"
+msgstr "_خلفية بيضاء"
+
+#: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
+msgid "_Black and white camera"
+msgstr ""
 
-#~ msgid "_Bottom"
-#~ msgstr "_قعر"
+#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
+msgid "_Black is transparent"
+msgstr ""
 
+#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
+msgid "_Bottom"
+msgstr "_قعر"
+
+#: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
 #, fuzzy
-#~ msgid "_Calculate"
-#~ msgstr "اب_دأ"
+msgid "_Calculate"
+msgstr "اب_دأ"
 
+#: /usr/share/lives/plugins/effects/rendered/cycle.script:0
 #, fuzzy
-#~ msgid "_Cycle Start"
-#~ msgstr "اب_دأ"
+msgid "_Cycle Start"
+msgstr "اب_دأ"
 
+#: /usr/share/lives/plugins/effects/rendered/contrast.script:0
 #, fuzzy
-#~ msgid "_Decrease Contrast"
-#~ msgstr "اضبط التباين"
+msgid "_Decrease Contrast"
+msgstr "اضبط التباين"
+
+#: /usr/share/lives/plugins/effects/rendered/dream.script:0
+#: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
+msgid "_Diffmax"
+msgstr ""
 
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #, fuzzy
-#~ msgid "_End Colour"
-#~ msgstr "_خلفية بيضاء"
+msgid "_End Colour"
+msgstr "_خلفية بيضاء"
+
+#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+msgid "_End Size X:"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+msgid "_End Size Y:"
+msgstr ""
 
+#: /usr/share/lives/plugins/effects/rendered/spread.script:0
 #, fuzzy
-#~ msgid "_End amount"
-#~ msgstr "اب_دأ"
+msgid "_End amount"
+msgstr "اب_دأ"
 
+#: /usr/share/lives/plugins/effects/rendered/dream.script:0
+#: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
 #, fuzzy
-#~ msgid "_Fade level"
-#~ msgstr "الخفوت"
+msgid "_Fade level"
+msgstr "الخفوت"
 
+#: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+#: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
 #, fuzzy
-#~ msgid "_Fade start"
-#~ msgstr "_نصف القطر"
+msgid "_Fade start"
+msgstr "_نصف القطر"
 
+#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #, fuzzy
-#~ msgid "_Fill colour"
-#~ msgstr "الخفوت"
+msgid "_Fill colour"
+msgstr "الخفوت"
 
+#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 #, fuzzy
-#~ msgid "_First frame"
-#~ msgstr "الإطار الأول"
+msgid "_First frame"
+msgstr "الإطار الأول"
 
+#: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
 #, fuzzy
-#~ msgid "_Flash for"
-#~ msgstr "الخفوت"
+msgid "_Flash for"
+msgstr "الخفوت"
 
-#~ msgid "_Font"
-#~ msgstr "_خط"
+#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+msgid "_Font"
+msgstr "_خط"
 
+#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
+#: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
+#: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
 #, fuzzy
-#~ msgid "_Frames per second"
-#~ msgstr "ثوان"
+msgid "_Frames per second"
+msgstr "ثوان"
 
+#: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
 #, fuzzy
-#~ msgid "_Frames"
-#~ msgstr "الإطارات"
+msgid "_Frames"
+msgstr "الإطارات"
 
+#: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
 #, fuzzy
-#~ msgid "_Hold for"
-#~ msgstr "الخفوت"
+msgid "_Hold for"
+msgstr "الخفوت"
 
+#: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
+msgid "_Horizontal segments"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
 #, fuzzy
-#~ msgid "_Image File"
-#~ msgstr "_ملف"
+msgid "_Image File"
+msgstr "_ملف"
 
+#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
 #, fuzzy
-#~ msgid "_Image"
-#~ msgstr "_ملف"
+msgid "_Image"
+msgstr "_ملف"
 
+#: /usr/share/lives/plugins/effects/rendered/contrast.script:0
 #, fuzzy
-#~ msgid "_Increase Contrast"
-#~ msgstr "اضبط التباين"
+msgid "_Increase Contrast"
+msgstr "اضبط التباين"
+
+#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+msgid "_Init Size X:"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+msgid "_Init Size Y:"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/posterize.script:0
+msgid "_Levels"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+msgid "_Link start and end colours"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/randomzoom.script:0
+msgid "_Max zoom x 10"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
+msgid "_Middle"
+msgstr ""
 
+#: /usr/share/lives/plugins/effects/rendered/sepia.script:0
+msgid "_Midtone"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/negate.script:0
 #, fuzzy
-#~ msgid "_Negate"
-#~ msgstr "عكس"
+msgid "_Negate"
+msgstr "عكس"
 
+#: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
+#: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
+#: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
 #, fuzzy
-#~ msgid "_Number of frames"
-#~ msgstr "_انخفاض بأطر"
+msgid "_Number of frames"
+msgstr "_انخفاض بأطر"
+
+#: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
+msgid "_Offset X"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
+msgid "_Offset Y"
+msgstr ""
 
+#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 #, fuzzy
-#~ msgid "_Other Center"
-#~ msgstr "أخ_رى"
+msgid "_Other Center"
+msgstr "أخ_رى"
 
-#~ msgid "_Other"
-#~ msgstr "أخ_رى"
+#: /usr/share/lives/plugins/effects/rendered/rotate.script:0
+msgid "_Other"
+msgstr "أخ_رى"
 
+#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #, fuzzy
-#~ msgid "_Point size"
-#~ msgstr "حجم الملف"
+msgid "_Point size"
+msgstr "حجم الملف"
 
+#: /usr/share/lives/plugins/effects/rendered/blur.script:0
 #, fuzzy
-#~ msgid "_Radius end"
-#~ msgstr "_نصف القطر"
+msgid "_Radius end"
+msgstr "_نصف القطر"
 
+#: /usr/share/lives/plugins/effects/rendered/blur.script:0
 #, fuzzy
-#~ msgid "_Radius start"
-#~ msgstr "_نصف القطر"
+msgid "_Radius start"
+msgstr "_نصف القطر"
 
-#~ msgid "_Radius"
-#~ msgstr "_نصف القطر"
+#: /usr/share/lives/plugins/effects/rendered/emboss.script:0
+#: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
+#: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
+msgid "_Radius"
+msgstr "_نصف القطر"
 
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #, fuzzy
-#~ msgid "_Random colour each frame"
-#~ msgstr "إطارات"
+msgid "_Random colour each frame"
+msgstr "إطارات"
 
-#~ msgid "_Right"
-#~ msgstr "_يمين"
+#: /usr/share/lives/plugins/effects/rendered/dream.script:0
+#: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
+msgid "_Randomness"
+msgstr ""
 
+#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
+msgid "_Right"
+msgstr "_يمين"
+
+#: /usr/share/lives/plugins/effects/rendered/spin.script:0
 #, fuzzy
-#~ msgid "_Rotate Selection by"
-#~ msgstr "ق_طع التحديد"
+msgid "_Rotate Selection by"
+msgstr "ق_طع التحديد"
+
+#: /usr/share/lives/plugins/effects/rendered/spin.script:0
+msgid "_Shrink rotated window to fit frame size"
+msgstr ""
 
+#: /usr/share/lives/plugins/effects/rendered/blur.script:0
 #, fuzzy
-#~ msgid "_Sigma end"
-#~ msgstr "اب_دأ"
+msgid "_Sigma end"
+msgstr "اب_دأ"
 
+#: /usr/share/lives/plugins/effects/rendered/blur.script:0
 #, fuzzy
-#~ msgid "_Sigma start"
-#~ msgstr "اب_دأ"
+msgid "_Sigma start"
+msgstr "اب_دأ"
 
+#: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
 #, fuzzy
-#~ msgid "_Skip ahead"
-#~ msgstr "_تخطى"
+msgid "_Skip ahead"
+msgstr "_تخطى"
 
-#~ msgid "_Skip"
-#~ msgstr "_تخطى"
+#: /usr/share/lives/plugins/effects/rendered/negate.script:0
+msgid "_Skip"
+msgstr "_تخطى"
 
+#: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
 #, fuzzy
-#~ msgid "_Source Colour"
-#~ msgstr "اب_دأ"
+msgid "_Source Colour"
+msgstr "اب_دأ"
 
+#: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
+msgid "_Splice"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #, fuzzy
-#~ msgid "_Start Colour"
-#~ msgstr "اب_دأ"
+msgid "_Start Colour"
+msgstr "اب_دأ"
 
+#: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
+#: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
+#: /usr/share/lives/plugins/effects/rendered/solarize.script:0
 #, fuzzy
-#~ msgid "_Start Value"
-#~ msgstr "اب_دأ"
+msgid "_Start Value"
+msgstr "اب_دأ"
 
+#: /usr/share/lives/plugins/effects/rendered/spread.script:0
 #, fuzzy
-#~ msgid "_Start amount"
-#~ msgstr "اب_دأ"
+msgid "_Start amount"
+msgstr "اب_دأ"
 
+#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #, fuzzy
-#~ msgid "_Stroke colour"
-#~ msgstr "اب_دأ"
+msgid "_Stroke colour"
+msgstr "اب_دأ"
 
+#: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
 #, fuzzy
-#~ msgid "_Target Colour"
-#~ msgstr "اب_دأ"
+msgid "_Target Colour"
+msgstr "اب_دأ"
 
-#~ msgid "_Text"
-#~ msgstr "_نص"
+#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
+msgid "_Text"
+msgstr "_نص"
 
+#: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
 #, fuzzy
-#~ msgid "_Time (seconds)"
-#~ msgstr "ثوان"
+msgid "_Time (seconds)"
+msgstr "ثوان"
+
+#: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
+msgid "_Top left is clipboard"
+msgstr ""
 
+#: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
+msgid "_Vertical segments"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/wave.script:0
 #, fuzzy
-#~ msgid "_Wavemax"
-#~ msgstr "موجي"
+msgid "_Wavemax"
+msgstr "موجي"
 
-#~ msgid "_Wrap Around"
-#~ msgstr "_لف حول"
+#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
+msgid "_White is transparent"
+msgstr ""
 
+#: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
+#: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
+msgid "_Wrap Around"
+msgstr "_لف حول"
+
+#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 #, fuzzy
-#~ msgid "_X Center"
-#~ msgstr "أخ_رى"
+msgid "_X Center"
+msgstr "أخ_رى"
+
+#: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
+msgid "_X End"
+msgstr ""
 
+#: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
 #, fuzzy
-#~ msgid "_X Start"
-#~ msgstr "اب_دأ"
+msgid "_X Start"
+msgstr "اب_دأ"
 
+#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
+msgid "_X offset"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 #, fuzzy
-#~ msgid "_Y Center"
-#~ msgstr "أخ_رى"
+msgid "_Y Center"
+msgstr "أخ_رى"
+
+#: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
+msgid "_Y End"
+msgstr ""
 
+#: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
 #, fuzzy
-#~ msgid "_Y Start"
-#~ msgstr "اب_دأ"
+msgid "_Y Start"
+msgstr "اب_دأ"
+
+#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
+msgid "_Y offset"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/rotate.script:0
+msgid "_degrees"
+msgstr ""
 
+#: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
+msgid "_then"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/blank_frames.script:0
 #, fuzzy
-#~ msgid "blank_frames"
-#~ msgstr "إطارات"
+msgid "blank_frames"
+msgstr "إطارات"
 
+#: /usr/share/lives/plugins/effects/rendered/blur.script:0
+msgid "blur"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/brightness_change.script:0
 #, fuzzy
-#~ msgid "brightness_change"
-#~ msgstr "_تجاهل التغييرات"
+msgid "brightness_change"
+msgstr "_تجاهل التغييرات"
 
+#: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
 #, fuzzy
-#~ msgid "charcoal"
-#~ msgstr "فحم"
+msgid "charcoal"
+msgstr "فحم"
 
+#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #, fuzzy
-#~ msgid "colorize"
-#~ msgstr "تلوين"
+msgid "colorize"
+msgstr "تلوين"
 
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #, fuzzy
-#~ msgid "colour_filter"
-#~ msgstr "تلوين"
+msgid "colour_filter"
+msgstr "تلوين"
 
+#: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
 #, fuzzy
-#~ msgid "colour_replace"
-#~ msgstr "تلوين"
+msgid "colour_replace"
+msgstr "تلوين"
 
+#: /usr/share/lives/plugins/effects/rendered/contrast.script:0
 #, fuzzy
-#~ msgid "contrast"
-#~ msgstr "اضبط التباين"
+msgid "contrast"
+msgstr "اضبط التباين"
 
-#~ msgid "cycle"
-#~ msgstr "دوّر"
+#: /usr/share/lives/plugins/effects/rendered/cycle.script:0
+msgid "cycle"
+msgstr "دوّر"
 
+#: /usr/share/lives/plugins/effects/rendered/deinterlace.script:0
 #, fuzzy
-#~ msgid "deinterlace"
-#~ msgstr "فك الدمج"
+msgid "deinterlace"
+msgstr "فك الدمج"
 
+#: /usr/share/lives/plugins/effects/rendered/despekle.script:0
 #, fuzzy
-#~ msgid "despeckle"
-#~ msgstr "إزالة الضجيج"
+msgid "despeckle"
+msgstr "إزالة الضجيج"
 
+#: /usr/share/lives/plugins/effects/rendered/dream.script:0
 #, fuzzy
-#~ msgid "dream"
-#~ msgstr "حلم"
+msgid "dream"
+msgstr "حلم"
 
+#: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
 #, fuzzy
-#~ msgid "edge_detect"
-#~ msgstr "كشف الحدود"
+msgid "edge_detect"
+msgstr "كشف الحدود"
 
-#~ msgid "emboss"
-#~ msgstr "منمق"
+#: /usr/share/lives/plugins/effects/rendered/emboss.script:0
+msgid "emboss"
+msgstr "منمق"
 
+#: /usr/share/lives/plugins/effects/rendered/enhance.script:0
 #, fuzzy
-#~ msgid "enhance"
-#~ msgstr "تحسين"
+msgid "enhance"
+msgstr "تحسين"
 
-#~ msgid "every"
-#~ msgstr "كل"
+#: /usr/share/lives/plugins/effects/rendered/noisify.script:0
+msgid "every"
+msgstr "كل"
 
+#: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
 #, fuzzy
-#~ msgid "fade_in_out"
-#~ msgstr "الخفوت"
+msgid "fade_in_out"
+msgstr "الخفوت"
+
+#: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
+msgid "fc"
+msgstr ""
 
+#: /usr/share/lives/plugins/effects/rendered/flip.script:0
+msgid "flip"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/flop.script:0
+msgid "flop"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
 #, fuzzy
-#~ msgid "frame_calculator"
-#~ msgstr "اب_دأ"
+msgid "frame_calculator"
+msgstr "اب_دأ"
 
+#: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
 #, fuzzy
-#~ msgid "gamma_change"
-#~ msgstr "_تجاهل التغييرات"
+msgid "gamma_change"
+msgstr "_تجاهل التغييرات"
 
+#: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
 #, fuzzy
-#~ msgid "gen_blank_frames"
-#~ msgstr "إطارات"
+msgid "gen_blank_frames"
+msgstr "إطارات"
 
+#: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
 #, fuzzy
-#~ msgid "gen_clip_from_image"
-#~ msgstr "إطارات"
+msgid "gen_clip_from_image"
+msgstr "إطارات"
 
+#: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
 #, fuzzy
-#~ msgid "gen_coloured_frames"
-#~ msgstr "إطارات"
+msgid "gen_coloured_frames"
+msgstr "إطارات"
 
+#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+msgid "gen_text"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
 #, fuzzy
-#~ msgid "hue_change"
-#~ msgstr "_تجاهل التغييرات"
+msgid "hue_change"
+msgstr "_تجاهل التغييرات"
+
+#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+msgid "image_overlay"
+msgstr ""
 
+#: /usr/share/lives/plugins/effects/rendered/jumble.script:0
+msgid "jumble"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/modulate.script:0
 #, fuzzy
-#~ msgid "modulate"
-#~ msgstr "يدوّر"
+msgid "modulate"
+msgstr "يدوّر"
 
+#: /usr/share/lives/plugins/effects/rendered/monochrome.script:0
 #, fuzzy
-#~ msgid "monochrome"
-#~ msgstr "أحادي اللون"
+msgid "monochrome"
+msgstr "أحادي اللون"
 
-#~ msgid "negate"
-#~ msgstr "اعكس"
+#: /usr/share/lives/plugins/effects/rendered/negate.script:0
+msgid "negate"
+msgstr "اعكس"
 
+#: /usr/share/lives/plugins/effects/rendered/noisify.script:0
+msgid "noisify"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/normalize.script:0
 #, fuzzy
-#~ msgid "normalize"
-#~ msgstr "تطبيع"
+msgid "normalize"
+msgstr "تطبيع"
+
+#: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
+msgid "photo_still"
+msgstr ""
 
+#: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
 #, fuzzy
-#~ msgid "pixilate"
-#~ msgstr "اللصق"
+msgid "pixilate"
+msgstr "اللصق"
 
+#: /usr/share/lives/plugins/effects/rendered/posterize.script:0
 #, fuzzy
-#~ msgid "posterize"
-#~ msgstr "مُلصق"
+msgid "posterize"
+msgstr "مُلصق"
 
-#~ msgid "resize"
-#~ msgstr "تغيير الحجم"
+#: /usr/share/lives/plugins/effects/rendered/randomzoom.script:0
+msgid "randomzoom"
+msgstr ""
 
-#~ msgid "rotate"
-#~ msgstr "تدوير"
+#: /usr/share/lives/plugins/effects/rendered/resize.script:0
+msgid "resize"
+msgstr "تغيير الحجم"
 
+#: /usr/share/lives/plugins/effects/rendered/rotate.script:0
+msgid "rotate"
+msgstr "تدوير"
+
+#: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
 #, fuzzy
-#~ msgid "saturation_change"
-#~ msgstr "الانتقالات"
+msgid "saturation_change"
+msgstr "الانتقالات"
 
-#~ msgid "sepia"
-#~ msgstr "بني داكن"
+#: /usr/share/lives/plugins/effects/rendered/sepia.script:0
+msgid "sepia"
+msgstr "بني داكن"
 
+#: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
 #, fuzzy
-#~ msgid "shift_horizontal"
-#~ msgstr "انعكاس عمودي"
+msgid "shift_horizontal"
+msgstr "انعكاس عمودي"
 
+#: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
 #, fuzzy
-#~ msgid "shift_vertical"
-#~ msgstr "انعكاس عمودي"
+msgid "shift_vertical"
+msgstr "انعكاس عمودي"
+
+#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
+msgid "shrink_expand"
+msgstr ""
 
+#: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
 #, fuzzy
-#~ msgid "skip_forwards"
-#~ msgstr "تخطّى إلى الأمام"
+msgid "skip_forwards"
+msgstr "تخطّى إلى الأمام"
 
+#: /usr/share/lives/plugins/effects/rendered/solarize.script:0
 #, fuzzy
-#~ msgid "solarize"
-#~ msgstr "تشميس"
+msgid "solarize"
+msgstr "تشميس"
 
-#~ msgid "spin"
-#~ msgstr "تدوير"
+#: /usr/share/lives/plugins/effects/rendered/spin.script:0
+msgid "spin"
+msgstr "تدوير"
 
+#: /usr/share/lives/plugins/effects/rendered/spread.script:0
 #, fuzzy
-#~ msgid "spread"
-#~ msgstr "نشر"
+msgid "spread"
+msgstr "نشر"
 
+#: /usr/share/lives/plugins/effects/rendered/swirl.script:0
 #, fuzzy
-#~ msgid "swirl"
-#~ msgstr "دوّامة"
+msgid "swirl"
+msgstr "دوّامة"
 
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
+msgid "textover"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 #, fuzzy
-#~ msgid "transition_bwthresh"
-#~ msgstr "الانتقالات"
+msgid "transition_bwthresh"
+msgstr "الانتقالات"
 
+#: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
 #, fuzzy
-#~ msgid "transition_checkerboard"
-#~ msgstr "لوح شطرنج"
+msgid "transition_checkerboard"
+msgstr "لوح شطرنج"
 
+#: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 #, fuzzy
-#~ msgid "transition_fade2"
-#~ msgstr "الانتقالات"
+msgid "transition_fade2"
+msgstr "الانتقالات"
 
+#: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
 #, fuzzy
-#~ msgid "transition_splice"
-#~ msgstr "الانتقالات"
+msgid "transition_splice"
+msgstr "الانتقالات"
 
+#: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
 #, fuzzy
-#~ msgid "trim_frames"
-#~ msgstr "إطارات"
+msgid "trim_frames"
+msgstr "إطارات"
 
+#: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
 #, fuzzy
-#~ msgid "tunnel"
-#~ msgstr "إلغاء"
+msgid "tunnel"
+msgstr "إلغاء"
+
+#: /usr/share/lives/plugins/effects/rendered/wave.script:0
+msgid "wave"
+msgstr ""
 
+#: /usr/bin/smogrify:0
 #, fuzzy
-#~ msgid "Unable to open output file !"
-#~ msgstr ""
-#~ "لم يتمكن برنامج لايفز من إلتقاط هذه الصورة\n"
-#~ "\n"
+msgid "Unable to open output file !"
+msgstr ""
+"لم يتمكن برنامج لايفز من إلتقاط هذه الصورة\n"
+"\n"
 
+#: /usr/bin/smogrify:0
 #, fuzzy
-#~ msgid "LiVES could not write to $nfile."
-#~ msgstr ""
-#~ "لم يتمكن برنامج لايفز من إلتقاط هذه الصورة\n"
-#~ "\n"
+msgid "LiVES could not write to $nfile."
+msgstr ""
+"لم يتمكن برنامج لايفز من إلتقاط هذه الصورة\n"
+"\n"
 
+#: /usr/bin/smogrify:0
+msgid "Unable to locate the program $rfx_builder_multi"
+msgstr ""
+
+#: /usr/bin/smogrify:0
+msgid "Your version of mplayer/ffmpeg may be broken"
+msgstr ""
+
+#: /usr/bin/smogrify:0
+msgid "See http://bugzilla.mplayerhq.hu/show_bug.cgi?id=2071"
+msgstr ""
+
+#: /usr/bin/smogrify:0
+msgid " "
+msgstr ""
+
+#: /usr/bin/smogrify:0
+msgid ""
+"You can work around this by switching to jpeg output in Preferences/Decoding."
+msgstr ""
+
+#: /usr/bin/smogrify:0
+msgid "This does not appear to be a valid video or image file"
+msgstr ""
+
+#: /usr/bin/smogrify:0
 #, fuzzy
-#~ msgid "LiVES was unable to open it."
-#~ msgstr ""
-#~ "لم يتمكن برنامج لايفز من إلتقاط هذه الصورة\n"
-#~ "\n"
+msgid "LiVES was unable to open it."
+msgstr ""
+"لم يتمكن برنامج لايفز من إلتقاط هذه الصورة\n"
+"\n"
+
+#: /usr/bin/smogrify:0
+msgid "Check the terminal window for more details."
+msgstr ""
 
+#: /usr/bin/smogrify:0
+msgid "Error creating new backup."
+msgstr ""
+
+#: /usr/bin/smogrify:0
+msgid "This does not appear to be a valid backup file"
+msgstr ""
+
+#: /usr/bin/smogrify:0
 #, fuzzy
-#~ msgid "LiVES was not able to open the file"
-#~ msgstr ""
-#~ "لم يتمكن برنامج لايفز من إلتقاط هذه الصورة\n"
-#~ "\n"
+msgid "LiVES was not able to open the file"
+msgstr ""
+"لم يتمكن برنامج لايفز من إلتقاط هذه الصورة\n"
+"\n"
+
+#: /usr/bin/smogrify:0
+msgid "$file"
+msgstr ""
+
+#: /usr/bin/smogrify:0
+msgid "LiVES audio error."
+msgstr ""
+
+#: /usr/bin/smogrify:0
+msgid "cdda2wav is required for this function."
+msgstr ""
+
+#: /usr/bin/smogrify:0
+msgid "Please install it first."
+msgstr ""
+
+#: /usr/bin/smogrify:0
+msgid "You must set the CD device first in Preferences."
+msgstr ""
+
+#: /usr/bin/smogrify:0
+msgid "$plugin_name failed:"
+msgstr ""
 
-#~ msgid "$error"
-#~ msgstr "$خطأ"
+#: /usr/bin/smogrify:0
+msgid "$error"
+msgstr "$خطأ"

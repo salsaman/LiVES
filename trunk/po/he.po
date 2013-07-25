@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: https://sourceforge.net/p/lives/bugs/\n"
-"POT-Creation-Date: 2013-07-15 08:47-0300\n"
+"POT-Creation-Date: 2013-07-24 22:03-0300\n"
 "PO-Revision-Date: 2013-03-14 12:31+0000\n"
 "Last-Translator: Launchpad Translations Administrators <Unknown>\n"
 "Language-Team: Hebrew <he@li.org>\n"
@@ -1954,7 +1954,7 @@ msgstr "מחיקת אוסף"
 msgid "Set %s was permanently deleted from the disk.\n"
 msgstr "האוסף %s נמחק לצמיתות מהכונן הקשיח.\n"
 
-#: src/callbacks.c:1756 src/callbacks.c:11772
+#: src/callbacks.c:1756 src/callbacks.c:11770
 msgid "Insert Silence"
 msgstr "הוספת שקט"
 
@@ -2061,7 +2061,7 @@ msgstr ""
 "הוספת הקובץ המבוקש תזיז את השקופיות בפריסות רב־רצועתיות מסוימות.\n"
 "האם ברצונך להמשיך ?\n"
 
-#: src/callbacks.c:2841 src/callbacks.c:11700
+#: src/callbacks.c:2841 src/callbacks.c:11698
 msgid ""
 "\n"
 "Insertion will cause audio to shift in some multitrack layouts.\n"
@@ -2144,8 +2144,8 @@ msgstr ""
 "עקב המחיקה תיתכנו שקופיות חסרות בפריסות רב־רצועתיות מסוימות.\n"
 "האם ברצונך להמשיך ?\n"
 
-#: src/callbacks.c:3431 src/callbacks.c:10925 src/callbacks.c:11170
-#: src/callbacks.c:11236
+#: src/callbacks.c:3431 src/callbacks.c:10923 src/callbacks.c:11168
+#: src/callbacks.c:11234
 msgid ""
 "\n"
 "Deletion will cause missing audio in some multitrack layouts.\n"
@@ -2165,7 +2165,7 @@ msgstr ""
 "המחיקה תזיז את השקופיות בפריסות רב־רצועתיות מסוימות.\n"
 "האם ברצונך להמשיך ?\n"
 
-#: src/callbacks.c:3469 src/callbacks.c:11218
+#: src/callbacks.c:3469 src/callbacks.c:11216
 msgid ""
 "\n"
 "Deletion will cause audio to shift in some multitrack layouts.\n"
@@ -2460,12 +2460,12 @@ msgid "Opening audio"
 msgstr "פותח שמע"
 
 #: src/callbacks.c:6565 src/callbacks.c:6612 src/callbacks.c:8396
-#: src/callbacks.c:8438 src/callbacks.c:8481 src/callbacks.c:10851
+#: src/callbacks.c:8438 src/callbacks.c:8481 src/callbacks.c:10849
 msgid "Cancelling"
 msgstr "מבטל"
 
-#: src/callbacks.c:6660 src/callbacks.c:8523 src/callbacks.c:10881
-#: src/callbacks.c:11572
+#: src/callbacks.c:6660 src/callbacks.c:8523 src/callbacks.c:10879
+#: src/callbacks.c:11570
 msgid "Committing audio"
 msgstr "מפקיד שמע"
 
@@ -2681,12 +2681,12 @@ msgstr "LiVES: שקופית נבחרת"
 msgid "_Save frame as..."
 msgstr ""
 
-#: src/callbacks.c:10295
+#: src/callbacks.c:10293
 #, c-format
 msgid "Audio is ahead of video by %.4f secs. at frame %d, with fps %.4f\n"
 msgstr ""
 
-#: src/callbacks.c:10352
+#: src/callbacks.c:10350
 msgid ""
 "\n"
 "\n"
@@ -2695,7 +2695,7 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/callbacks.c:10358
+#: src/callbacks.c:10356
 msgid ""
 "\n"
 "\n"
@@ -2707,7 +2707,7 @@ msgstr ""
 "עליך להתקין את \"xwininfo\" כדי להשתמש בתכונה זו\n"
 "\n"
 
-#: src/callbacks.c:10434 src/callbacks.c:11490
+#: src/callbacks.c:10432 src/callbacks.c:11488
 msgid ""
 "\n"
 "Record time must be greater than 0.\n"
@@ -2715,7 +2715,7 @@ msgstr ""
 "\n"
 "זמן ההקלטה חייב להיות גדול מ־0.\n"
 
-#: src/callbacks.c:10445
+#: src/callbacks.c:10443
 msgid ""
 "Capture an External Window:\n"
 "\n"
@@ -2729,11 +2729,11 @@ msgstr ""
 "לאחר מכן ללחוץ על 'ביטול' לביטול\n"
 "\n"
 
-#: src/callbacks.c:10450
+#: src/callbacks.c:10448
 msgid "External window was released.\n"
 msgstr "החלון הנוסף שוחרר.\n"
 
-#: src/callbacks.c:10484
+#: src/callbacks.c:10482
 msgid ""
 "Click on a Window to Capture it\n"
 "Press 'q' to stop recording"
@@ -2741,7 +2741,7 @@ msgstr ""
 "יש ללחוץ על חלון כדי ללכוד אותו\n"
 "יש ללחוץ על 'q' כדי להפסיק את ההקלטה"
 
-#: src/callbacks.c:10518
+#: src/callbacks.c:10516
 #, c-format
 msgid ""
 "\n"
@@ -2757,19 +2757,19 @@ msgstr ""
 "\n"
 "(LiVES ישתמש בברירת המחדל: %.3f שקופיות לשנייה.)\n"
 
-#: src/callbacks.c:10544
+#: src/callbacks.c:10542
 msgid "LiVES was unable to capture this window. Sorry.\n"
 msgstr "LiVES כשל בלכידת חלון זה. עמכם הסליחה.\n"
 
-#: src/callbacks.c:10700
+#: src/callbacks.c:10698
 msgid "Export Selected Audio as..."
 msgstr "מייצא את השמע הנבחר כ..."
 
-#: src/callbacks.c:10704
+#: src/callbacks.c:10702
 msgid "Export Audio as..."
 msgstr "מייצא שמע כ..."
 
-#: src/callbacks.c:10719
+#: src/callbacks.c:10717
 msgid ""
 "\n"
 "\n"
@@ -2783,86 +2783,86 @@ msgstr ""
 "יש ללחוץ על 'אישור' כדי לייצא במהירות החדשה,או על 'ביטול' לייצוא בקצב "
 "המקורי.\n"
 
-#: src/callbacks.c:10725
+#: src/callbacks.c:10723
 #, c-format
 msgid "Exporting audio frames %d to %d as %s..."
 msgstr "מייצא שקופיות שמע %d ל־%d כ־%s"
 
-#: src/callbacks.c:10730
+#: src/callbacks.c:10728
 #, c-format
 msgid "Exporting audio as %s..."
 msgstr "מייצא שמע כ־%s..."
 
-#: src/callbacks.c:10756
+#: src/callbacks.c:10754
 msgid "Exporting audio"
 msgstr "ייצוא שמע"
 
-#: src/callbacks.c:10787
+#: src/callbacks.c:10785
 msgid "LiVES: - Append Audio File"
 msgstr ""
 
-#: src/callbacks.c:10830
+#: src/callbacks.c:10828
 #, c-format
 msgid "Appending audio file %s..."
 msgstr "מצרף את קובץ השמע %s..."
 
-#: src/callbacks.c:10841
+#: src/callbacks.c:10839
 msgid "Appending audio"
 msgstr "מצרף שמע"
 
-#: src/callbacks.c:10897
+#: src/callbacks.c:10895
 msgid "Append Audio"
 msgstr "צירוף שמע"
 
-#: src/callbacks.c:10957
+#: src/callbacks.c:10955
 #, c-format
 msgid "Padding audio to %.2f seconds..."
 msgstr ""
 
-#: src/callbacks.c:10959
+#: src/callbacks.c:10957
 #, c-format
 msgid "Trimming audio from %.2f to %.2f seconds..."
 msgstr "מתקן שמע מ־%.2f ל־%.2f שניות..."
 
-#: src/callbacks.c:10978
+#: src/callbacks.c:10976
 msgid "Trimming/Padding audio"
 msgstr "מתקן\\מרפד שמע"
 
-#: src/callbacks.c:10986
+#: src/callbacks.c:10984
 msgid "Trim/Pad Audio"
 msgstr "תיקון\\ריפוד שמע"
 
-#: src/callbacks.c:11060
+#: src/callbacks.c:11058
 msgid "Fading audio in"
 msgstr "מחיל אפקט Fade In על השמע"
 
-#: src/callbacks.c:11061
+#: src/callbacks.c:11059
 msgid "Fade audio in"
 msgstr "החלת אפקט Fade In על השמע"
 
-#: src/callbacks.c:11066
+#: src/callbacks.c:11064
 msgid "Fading audio out"
 msgstr "מחיל אפקט Fade Out על השמע"
 
-#: src/callbacks.c:11067
+#: src/callbacks.c:11065
 msgid "Fade audio out"
 msgstr "החלת אפקט Fade Out על השמע"
 
-#: src/callbacks.c:11090
+#: src/callbacks.c:11088
 #, c-format
 msgid "%s over %.1f seconds..."
 msgstr "%s מעל %.1f שניות..."
 
-#: src/callbacks.c:11092
+#: src/callbacks.c:11090
 #, c-format
 msgid "%s from time %.2f seconds to %.2f seconds..."
 msgstr "%s מזמן %.2f שניות ל־%.2f שניות..."
 
-#: src/callbacks.c:11099
+#: src/callbacks.c:11097
 msgid "Fading audio..."
 msgstr "מפעיל אפקט Fade על השמע"
 
-#: src/callbacks.c:11202
+#: src/callbacks.c:11200
 msgid ""
 "\n"
 "Deleting all audio will close this file.\n"
@@ -2872,33 +2872,33 @@ msgstr ""
 "מחיקת כל השמע תסגור את קובץ זה.\n"
 "האם ברצונך להמשיך ?"
 
-#: src/callbacks.c:11205
+#: src/callbacks.c:11203
 msgid "Deleting all audio..."
 msgstr "מוחק את כל השמע"
 
-#: src/callbacks.c:11211
+#: src/callbacks.c:11209
 #, c-format
 msgid "Deleting audio from %.2f to %.2f seconds..."
 msgstr "מוחק שמע מ־%.2f ל־%.2f שניות..."
 
-#: src/callbacks.c:11298
+#: src/callbacks.c:11296
 msgid "Deleting Audio"
 msgstr "מוחק שמע"
 
-#: src/callbacks.c:11305
+#: src/callbacks.c:11303
 msgid "Delete Audio"
 msgstr "מחק שמע"
 
-#: src/callbacks.c:11645
+#: src/callbacks.c:11643
 msgid "Record new audio"
 msgstr "הקלט שמע חדש"
 
-#: src/callbacks.c:11733
+#: src/callbacks.c:11731
 #, c-format
 msgid "Inserting silence from %.2f to %.2f seconds..."
 msgstr "מכניס שקט מ־%.2f ל־%.2f שניות..."
 
-#: src/callbacks.c:11762
+#: src/callbacks.c:11760
 msgid "Inserting Silence"
 msgstr "מכניס שקט"
 
@@ -5998,7 +5998,7 @@ msgstr "נכשל בנסיון להפעיל את המחולל %s\n"
 msgid "Failed to start generator %s, error %d\n"
 msgstr "נכשל בנסיון להפעיל את המחולל %s, שגיאה %d\n"
 
-#: src/effects-weed.c:8672
+#: src/effects-weed.c:8682
 #, c-format
 msgid "%s [unstable] (%s)"
 msgstr ""
@@ -6160,39 +6160,39 @@ msgstr "סגירת _חלון"
 msgid "No parameters"
 msgstr "אין פרמטרים"
 
-#: src/paramwindow.c:1384
+#: src/paramwindow.c:1386
 msgid "Invalid parameter"
 msgstr "פרמטר לא תקין"
 
-#: src/paramwindow.c:1576
+#: src/paramwindow.c:1577
 msgid "LiVES: - Select Colour"
 msgstr "LiVES: - בחירת צבע"
 
-#: src/paramwindow.c:1581
+#: src/paramwindow.c:1582
 msgid "Click to set the colour"
 msgstr "יש ללחוץ כאן כדי לבחור צבע"
 
-#: src/paramwindow.c:1593
+#: src/paramwindow.c:1594
 msgid "_Red"
 msgstr ""
 
-#: src/paramwindow.c:1594
+#: src/paramwindow.c:1595
 msgid "The red value (0 - 255)"
 msgstr "ערך האדום (0 - 255)"
 
-#: src/paramwindow.c:1597
+#: src/paramwindow.c:1598
 msgid "_Green"
 msgstr ""
 
-#: src/paramwindow.c:1598
+#: src/paramwindow.c:1599
 msgid "The green value (0 - 255)"
 msgstr "ערך הירוק(0 - 255)"
 
-#: src/paramwindow.c:1601
+#: src/paramwindow.c:1602
 msgid "_Blue"
 msgstr ""
 
-#: src/paramwindow.c:1602
+#: src/paramwindow.c:1603
 msgid "The blue value (0 - 255)"
 msgstr "ערך הכחול (0 - 255)"
 
@@ -8120,26 +8120,26 @@ msgstr "שינויי ערכת הנושא לא ישפיעו עד הפעלת LiVES
 msgid "Jack options will not take effect until the next time you start LiVES."
 msgstr "אפשרויות הJack לא יישתנו עד ההפעלה הבאה של LiVES."
 
-#: src/osc.c:2508
+#: src/osc.c:2507
 #, c-format
 msgid "Syncing to external framerate of %.8f frames per second.\n"
 msgstr "מסנכרן לקצב שקופיות חיצוני של %.8f שקופיות לשנייה.\n"
 
-#: src/osc.c:6525
+#: src/osc.c:6524
 msgid "Cannot initialize OSC receiver\n"
 msgstr "לא ניתן לאתחל את מקלט ה־OSC\n"
 
-#: src/osc.c:6549
+#: src/osc.c:6548
 #, c-format
 msgid "WARNING: Cannot start OSC server at UDP port %d\n"
 msgstr "אזהרה: לא ניתן להפעיל את שרת הOSC בפותחת הUDP %d\n"
 
-#: src/osc.c:6554
+#: src/osc.c:6553
 #, c-format
 msgid "Started OSC server at UDP port %d\n"
 msgstr "שרת הOSC הופעל בפותחת הUDP %d\n"
 
-#: src/osc.c:6671
+#: src/osc.c:6670
 #, c-format
 msgid "Cannot start OSC/UDP server at port %d \n"
 msgstr "לא ניתן להפעיל את שרת הOSC/UDP בפותחה %d \n"
@@ -10493,982 +10493,1465 @@ msgstr ""
 msgid "Opened device %s\n"
 msgstr ""
 
-#~ msgid "180 _degrees             "
-#~ msgstr "180 _מעלות             "
+#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
+msgid " _Top  "
+msgstr ""
 
-#~ msgid "90 degrees _Anticlockwise"
-#~ msgstr "90 מעלות _נגד כיוון השעון"
+#: /usr/share/lives/plugins/effects/rendered/rotate.script:0
+msgid "180 _degrees             "
+msgstr "180 _מעלות             "
 
-#~ msgid "90 degrees _Clockwise    "
-#~ msgstr "0 מעלות _עם כיוון השעון    "
+#: /usr/share/lives/plugins/effects/rendered/rotate.script:0
+msgid "90 degrees _Anticlockwise"
+msgstr "90 מעלות _נגד כיוון השעון"
 
-#~ msgid "Add _Border"
-#~ msgstr "הוספת _גבול"
+#: /usr/share/lives/plugins/effects/rendered/rotate.script:0
+msgid "90 degrees _Clockwise    "
+msgstr "0 מעלות _עם כיוון השעון    "
 
-#~ msgid "Add noise"
-#~ msgstr "הוספת רעש"
+#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+msgid "Active _animation"
+msgstr ""
 
-#~ msgid "Adjust contrast"
-#~ msgstr "כיוון ניגודיות"
+#: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
+msgid "Add _Border"
+msgstr "הוספת _גבול"
 
-#~ msgid "Adjusting contrast of"
-#~ msgstr "מכוון את הניגודיות של"
+#: /usr/share/lives/plugins/effects/rendered/noisify.script:0
+msgid "Add noise"
+msgstr "הוספת רעש"
 
-#~ msgid "Adjusting noise on"
-#~ msgstr "מכוון את הרעש ב"
+#: /usr/share/lives/plugins/effects/rendered/contrast.script:0
+msgid "Adjust contrast"
+msgstr "כיוון ניגודיות"
 
-#~ msgid "Applying charcoal to"
-#~ msgstr "החלת פחם"
+#: /usr/share/lives/plugins/effects/rendered/contrast.script:0
+msgid "Adjusting contrast of"
+msgstr "מכוון את הניגודיות של"
 
-#~ msgid "Applying forward skip to"
-#~ msgstr "מחיל את \"דילוג קדימה\" על"
+#: /usr/share/lives/plugins/effects/rendered/noisify.script:0
+msgid "Adjusting noise on"
+msgstr "מכוון את הרעש ב"
 
-#~ msgid "Applying sepia to"
-#~ msgstr "מחיל את \"עתיק\" על"
+#: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
+msgid "Applying charcoal to"
+msgstr "החלת פחם"
 
-#~ msgid "Blank _Colour"
-#~ msgstr "_צבע ריק"
+#: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
+msgid "Applying forward skip to"
+msgstr "מחיל את \"דילוג קדימה\" על"
 
-#~ msgid "Blank frames"
-#~ msgstr "שקופיות ריקות"
+#: /usr/share/lives/plugins/effects/rendered/sepia.script:0
+msgid "Applying sepia to"
+msgstr "מחיל את \"עתיק\" על"
 
-#~ msgid "Blanking"
-#~ msgstr "מוחק"
+#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
+msgid "B/W Threshold"
+msgstr ""
 
-#~ msgid "Block _height"
-#~ msgstr "_גובה מקטע"
+#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
+msgid "B/W thresholding"
+msgstr ""
 
-#~ msgid "Block _width"
-#~ msgstr "_רוחב מקטע"
+#: /usr/share/lives/plugins/effects/rendered/blank_frames.script:0
+msgid "Blank _Colour"
+msgstr "_צבע ריק"
 
-#~ msgid "Blur"
-#~ msgstr "טשטוש"
+#: /usr/share/lives/plugins/effects/rendered/blank_frames.script:0
+msgid "Blank frames"
+msgstr "שקופיות ריקות"
 
-#~ msgid "Bluring"
-#~ msgstr "מטשטש"
+#: /usr/share/lives/plugins/effects/rendered/blank_frames.script:0
+msgid "Blanking"
+msgstr "מוחק"
 
-#~ msgid "Border _Colour"
-#~ msgstr "צבע _גבול"
+#: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
+msgid "Block _height"
+msgstr "_גובה מקטע"
 
+#: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
+msgid "Block _width"
+msgstr "_רוחב מקטע"
+
+#: /usr/share/lives/plugins/effects/rendered/blur.script:0
+msgid "Blur"
+msgstr "טשטוש"
+
+#: /usr/share/lives/plugins/effects/rendered/blur.script:0
+msgid "Bluring"
+msgstr "מטשטש"
+
+#: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
+msgid "Border _Colour"
+msgstr "צבע _גבול"
+
+#: /usr/share/lives/plugins/effects/rendered/brightness_change.script:0
 #, fuzzy
-#~ msgid "Brightness _end"
-#~ msgstr "שינוי בהירות"
+msgid "Brightness _end"
+msgstr "שינוי בהירות"
 
+#: /usr/share/lives/plugins/effects/rendered/brightness_change.script:0
 #, fuzzy
-#~ msgid "Brightness _start"
-#~ msgstr "שינוי בהירות"
+msgid "Brightness _start"
+msgstr "שינוי בהירות"
 
-#~ msgid "Brightness change"
-#~ msgstr "שינוי בהירות"
+#: /usr/share/lives/plugins/effects/rendered/brightness_change.script:0
+msgid "Brightness change"
+msgstr "שינוי בהירות"
 
+#: /usr/share/lives/plugins/effects/rendered/modulate.script:0
 #, fuzzy
-#~ msgid "Brightness end"
-#~ msgstr "שינוי בהירות"
+msgid "Brightness end"
+msgstr "שינוי בהירות"
 
+#: /usr/share/lives/plugins/effects/rendered/modulate.script:0
 #, fuzzy
-#~ msgid "Brightness start"
-#~ msgstr "שינוי בהירות"
+msgid "Brightness start"
+msgstr "שינוי בהירות"
 
-#~ msgid "Centre _X"
-#~ msgstr "מרכז _X"
+#: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
+msgid "Centre _X"
+msgstr "מרכז _X"
 
+#: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 #, fuzzy
-#~ msgid "Centre _Y"
-#~ msgstr "מרכז _X"
+msgid "Centre _Y"
+msgstr "מרכז _X"
 
-#~ msgid "Charcoal"
-#~ msgstr "צביעת פחם"
+#: /usr/share/lives/plugins/effects/rendered/brightness_change.script:0
+msgid "Changing brightness of"
+msgstr ""
 
-#~ msgid "Checkerboard"
-#~ msgstr "לוח דמקה"
+#: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
+msgid "Changing gamma of"
+msgstr ""
 
+#: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
+msgid "Changing hue of"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
+msgid "Changing saturation of"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
+msgid "Charcoal"
+msgstr "צביעת פחם"
+
+#: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
+msgid "Checkerboard"
+msgstr "לוח דמקה"
+
+#: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
 #, fuzzy
-#~ msgid "Checkerboarding"
-#~ msgstr "לוח דמקה"
+msgid "Checkerboarding"
+msgstr "לוח דמקה"
 
+#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 #, fuzzy
-#~ msgid "Clipboard _over selection"
-#~ msgstr "%s לוח הגזירים עם בחירה"
+msgid "Clipboard _over selection"
+msgstr "%s לוח הגזירים עם בחירה"
 
+#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 #, fuzzy
-#~ msgid "Clipboard _under selection"
-#~ msgstr "%s לוח הגזירים עם בחירה"
+msgid "Clipboard _under selection"
+msgstr "%s לוח הגזירים עם בחירה"
 
-#~ msgid "Colorize"
-#~ msgstr "צביעה"
+#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+msgid "Colorize"
+msgstr "צביעה"
 
+#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #, fuzzy
-#~ msgid "Colorizing"
-#~ msgstr "צביעה"
+msgid "Colorizing"
+msgstr "צביעה"
 
-#~ msgid "Colour cycle"
-#~ msgstr "מחזור צבע"
+#: /usr/share/lives/plugins/effects/rendered/cycle.script:0
+msgid "Colour cycle"
+msgstr "מחזור צבע"
 
+#: /usr/share/lives/plugins/effects/rendered/cycle.script:0
 #, fuzzy
-#~ msgid "Colour cycling"
-#~ msgstr "מחזור צבע"
+msgid "Colour cycling"
+msgstr "מחזור צבע"
 
-#~ msgid "Colour filter"
-#~ msgstr "פילטר צבע"
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+msgid "Colour filter"
+msgstr "פילטר צבע"
 
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
 #, fuzzy
-#~ msgid "Colour filtering"
-#~ msgstr "פילטר צבע"
+msgid "Colour filtering"
+msgstr "פילטר צבע"
 
-#~ msgid "Colour replace"
-#~ msgstr "להחליף צבע"
+#: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
+msgid "Colour replace"
+msgstr "להחליף צבע"
 
-#~ msgid "Constant noise level"
-#~ msgstr "רמת הרעש קונסטנט"
+#: /usr/share/lives/plugins/effects/rendered/noisify.script:0
+msgid "Constant noise level"
+msgstr "רמת הרעש קונסטנט"
 
-#~ msgid "Cycle _Step"
-#~ msgstr "_שלב מחזור"
+#: /usr/share/lives/plugins/effects/rendered/cycle.script:0
+msgid "Cycle _Step"
+msgstr "_שלב מחזור"
 
-#~ msgid "Deinterlace"
-#~ msgstr "פירוק"
+#: /usr/share/lives/plugins/effects/rendered/deinterlace.script:0
+msgid "Deinterlace"
+msgstr "פירוק"
 
-#~ msgid "Deinterlacing"
-#~ msgstr "שזירה"
+#: /usr/share/lives/plugins/effects/rendered/deinterlace.script:0
+msgid "Deinterlacing"
+msgstr "שזירה"
 
-#~ msgid "Despeckle"
-#~ msgstr "הפחת מוקדי רעש"
+#: /usr/share/lives/plugins/effects/rendered/despekle.script:0
+msgid "Despeckle"
+msgstr "הפחת מוקדי רעש"
 
+#: /usr/share/lives/plugins/effects/rendered/despekle.script:0
 #, fuzzy
-#~ msgid "Despeckling"
-#~ msgstr "הפחת מוקדי רעש"
+msgid "Despeckling"
+msgstr "הפחת מוקדי רעש"
 
-#~ msgid "Dream"
-#~ msgstr "חלום"
+#: /usr/share/lives/plugins/effects/rendered/dream.script:0
+msgid "Dream"
+msgstr "חלום"
 
+#: /usr/share/lives/plugins/effects/rendered/dream.script:0
 #, fuzzy
-#~ msgid "Dreamifying"
-#~ msgstr "חלום"
+msgid "Dreamifying"
+msgstr "חלום"
 
-#~ msgid "E_nd %"
-#~ msgstr "_סוף %"
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+msgid "E_nd %"
+msgstr "_סוף %"
 
-#~ msgid "Edge detect"
-#~ msgstr "זיהוי קצוות"
+#: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
+msgid "Edge detect"
+msgstr "זיהוי קצוות"
 
+#: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
 #, fuzzy
-#~ msgid "Edge detecting"
-#~ msgstr "זיהוי קצוות"
+msgid "Edge detecting"
+msgstr "זיהוי קצוות"
+
+#: /usr/share/lives/plugins/effects/rendered/emboss.script:0
+msgid "Emboss"
+msgstr "תבליט"
 
-#~ msgid "Emboss"
-#~ msgstr "תבליט"
+#: /usr/share/lives/plugins/effects/rendered/emboss.script:0
+msgid "Embossing"
+msgstr "יוצר תבליט"
 
-#~ msgid "Embossing"
-#~ msgstr "יוצר תבליט"
+#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+msgid "End _Alpha:"
+msgstr ""
 
-#~ msgid "Enhance"
-#~ msgstr "שיפור"
+#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+msgid "End pos_X:"
+msgstr ""
 
-#~ msgid "Enhancing"
-#~ msgstr "משפר"
+#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+msgid "End pos_Y:"
+msgstr ""
 
+#: /usr/share/lives/plugins/effects/rendered/enhance.script:0
+msgid "Enhance"
+msgstr "שיפור"
+
+#: /usr/share/lives/plugins/effects/rendered/enhance.script:0
+msgid "Enhancing"
+msgstr "משפר"
+
+#: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+msgid "Envelope length"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
 #, fuzzy
-#~ msgid "Fade _colour"
-#~ msgstr "_צבע מסגרת"
+msgid "Fade _colour"
+msgstr "_צבע מסגרת"
 
+#: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+#: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
 #, fuzzy
-#~ msgid "Fade _end"
-#~ msgstr "עמעום"
+msgid "Fade _end"
+msgstr "עמעום"
 
+#: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
 #, fuzzy
-#~ msgid "Fade _in"
-#~ msgstr "החלת אפקט Fade In על השמע"
+msgid "Fade _in"
+msgstr "החלת אפקט Fade In על השמע"
 
+#: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
 #, fuzzy
-#~ msgid "Fade _out"
-#~ msgstr "החלת אפקט Fade Out על השמע"
+msgid "Fade _out"
+msgstr "החלת אפקט Fade Out על השמע"
 
-#~ msgid "Fade"
-#~ msgstr "עמעום"
+#: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
+msgid "Fade video to or from color"
+msgstr ""
 
+#: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+msgid "Fade"
+msgstr "עמעום"
+
+#: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
 #, fuzzy
-#~ msgid "Fading video"
-#~ msgstr "דוגם מחדש וידאו"
+msgid "Fading video"
+msgstr "דוגם מחדש וידאו"
 
-#~ msgid "Fading"
-#~ msgstr "מתעמעם"
+#: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+msgid "Fading"
+msgstr "מתעמעם"
 
-#~ msgid "Fina_l frame"
-#~ msgstr "מסגרת סו_פי"
+#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
+msgid "Fina_l frame"
+msgstr "מסגרת סו_פי"
 
+#: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
 #, fuzzy
-#~ msgid "Flash _colour"
-#~ msgstr "_צבע ריק"
+msgid "Flash _colour"
+msgstr "_צבע ריק"
 
-#~ msgid "Flip vertically"
-#~ msgstr "הפוך אנכי"
+#: /usr/share/lives/plugins/effects/rendered/flip.script:0
+msgid "Flip vertically"
+msgstr "הפוך אנכי"
 
+#: /usr/share/lives/plugins/effects/rendered/flop.script:0
 #, fuzzy
-#~ msgid "Flop horizontally"
-#~ msgstr "הפוך אנכי"
+msgid "Flop horizontally"
+msgstr "הפוך אנכי"
 
-#~ msgid "Frame Calculator"
-#~ msgstr "מסגרת מחשבון"
+#: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
+msgid "Frame Calculator"
+msgstr "מסגרת מחשבון"
 
-#~ msgid "Frame _Colour"
-#~ msgstr "_צבע מסגרת"
+#: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
+msgid "Frame _Colour"
+msgstr "_צבע מסגרת"
 
-#~ msgid "Frame _height"
-#~ msgstr "_גובה מסגרת"
+#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+msgid "Frame _height"
+msgstr "_גובה מסגרת"
 
+#: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
 #, fuzzy
-#~ msgid "Frame _in frame position of clipboard..."
-#~ msgstr "יצירת שקופיות ללוח הגזירים"
+msgid "Frame _in frame position of clipboard..."
+msgstr "יצירת שקופיות ללוח הגזירים"
 
+#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 #, fuzzy
-#~ msgid "Frame _in frame position of top frame..."
-#~ msgstr "יצירת שקופיות ללוח הגזירים"
+msgid "Frame _in frame position of top frame..."
+msgstr "יצירת שקופיות ללוח הגזירים"
 
-#~ msgid "Frame _width"
-#~ msgstr "_רוחב מסגרת"
+#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+msgid "Frame _width"
+msgstr "_רוחב מסגרת"
 
+#: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
 #, fuzzy
-#~ msgid "Frames _per second (FPS)"
-#~ msgstr "_שקופיות לשנייה "
+msgid "Frames _per second (FPS)"
+msgstr "_שקופיות לשנייה "
 
+#: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
 #, fuzzy
-#~ msgid "Gamma _end"
-#~ msgstr "לשנות גמא"
+msgid "Gamma _end"
+msgstr "לשנות גמא"
 
+#: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
 #, fuzzy
-#~ msgid "Gamma _start"
-#~ msgstr "_התחלה"
+msgid "Gamma _start"
+msgstr "_התחלה"
 
-#~ msgid "Gamma change"
-#~ msgstr "לשנות גמא"
+#: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
+msgid "Gamma change"
+msgstr "לשנות גמא"
 
-#~ msgid "Generate blank frames"
-#~ msgstr "מסגרות ריקות צור"
+#: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
+msgid "Generate blank frames"
+msgstr "מסגרות ריקות צור"
 
-#~ msgid "Generate clip from image"
-#~ msgstr "הפקת קליפ מתוך התמונה"
+#: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
+msgid "Generate clip from image"
+msgstr "הפקת קליפ מתוך התמונה"
 
-#~ msgid "Generate coloured frames"
-#~ msgstr "ליצור מסגרות צבעוניות"
+#: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
+msgid "Generate coloured frames"
+msgstr "ליצור מסגרות צבעוניות"
 
-#~ msgid "Generate title frames"
-#~ msgstr "מסגרות כותרת צור"
+#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+msgid "Generate title frames"
+msgstr "מסגרות כותרת צור"
 
+#: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
 #, fuzzy
-#~ msgid "Generating blank frames"
-#~ msgstr "מסגרות ריקות צור"
+msgid "Generating blank frames"
+msgstr "מסגרות ריקות צור"
 
+#: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
 #, fuzzy
-#~ msgid "Generating clip from image"
-#~ msgstr "הפקת קליפ מתוך התמונה"
+msgid "Generating clip from image"
+msgstr "הפקת קליפ מתוך התמונה"
 
+#: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
 #, fuzzy
-#~ msgid "Generating coloured frames"
-#~ msgstr "ליצור מסגרות צבעוניות"
+msgid "Generating coloured frames"
+msgstr "ליצור מסגרות צבעוניות"
 
+#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
 #, fuzzy
-#~ msgid "Generating title frames"
-#~ msgstr "מסגרות כותרת צור"
+msgid "Generating title frames"
+msgstr "מסגרות כותרת צור"
 
+#: /usr/share/lives/plugins/effects/rendered/flop.script:0
 #, fuzzy
-#~ msgid "Horizontal flopping"
-#~ msgstr "_קטעי אופקי"
+msgid "Horizontal flopping"
+msgstr "_קטעי אופקי"
 
+#: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
 #, fuzzy
-#~ msgid "Horizontal shifting"
-#~ msgstr "_קטעי אופקי"
+msgid "Horizontal shifting"
+msgstr "_קטעי אופקי"
 
+#: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
 #, fuzzy
-#~ msgid "Hue _end"
-#~ msgstr "עמעום"
+msgid "Hue _end"
+msgstr "עמעום"
 
+#: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
 #, fuzzy
-#~ msgid "Hue _start"
-#~ msgstr "_התחלה"
+msgid "Hue _start"
+msgstr "_התחלה"
 
+#: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
 #, fuzzy
-#~ msgid "Hue change"
-#~ msgstr "שינוי_רוויה"
+msgid "Hue change"
+msgstr "שינוי_רוויה"
 
+#: /usr/share/lives/plugins/effects/rendered/modulate.script:0
 #, fuzzy
-#~ msgid "Hue end"
-#~ msgstr "עמעום"
+msgid "Hue end"
+msgstr "עמעום"
 
+#: /usr/share/lives/plugins/effects/rendered/modulate.script:0
 #, fuzzy
-#~ msgid "Hue start"
-#~ msgstr "_תחילת רדיוס"
+msgid "Hue start"
+msgstr "_תחילת רדיוס"
 
+#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
 #, fuzzy
-#~ msgid "Image overlay"
-#~ msgstr "טקסט כיסוי"
+msgid "Image overlay"
+msgstr "טקסט כיסוי"
+
+#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+msgid "Init _Alpha:"
+msgstr ""
 
-#~ msgid "Jumble"
-#~ msgstr "ערבוביה"
+#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+msgid "Init pos_X:"
+msgstr ""
 
+#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+msgid "Init pos_Y:"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/jumble.script:0
+msgid "Jumble"
+msgstr "ערבוביה"
+
+#: /usr/share/lives/plugins/effects/rendered/jumble.script:0
 #, fuzzy
-#~ msgid "Jumbling"
-#~ msgstr "ערבוביה"
+msgid "Jumbling"
+msgstr "ערבוביה"
 
+#: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
 #, fuzzy
-#~ msgid "Keep _Centered"
-#~ msgstr "_מרכז אחר"
+msgid "Keep _Centered"
+msgstr "_מרכז אחר"
 
-#~ msgid "L_eft"
-#~ msgstr "שמ_אל"
+#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+msgid "Keep image aspect _ratio"
+msgstr ""
 
-#~ msgid "Making monochrome"
-#~ msgstr "ממיר את הוידאו לשחור־לבן"
+#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
+msgid "L_eft"
+msgstr "שמ_אל"
 
-#~ msgid "Modulate (BSH)"
-#~ msgstr "להסלים (BSH)"
+#: /usr/share/lives/plugins/effects/rendered/monochrome.script:0
+msgid "Making monochrome"
+msgstr "ממיר את הוידאו לשחור־לבן"
 
+#: /usr/share/lives/plugins/effects/rendered/modulate.script:0
+msgid "Modulate (BSH)"
+msgstr "להסלים (BSH)"
+
+#: /usr/share/lives/plugins/effects/rendered/modulate.script:0
 #, fuzzy
-#~ msgid "Modulating"
-#~ msgstr "מסובבב"
+msgid "Modulating"
+msgstr "מסובבב"
 
-#~ msgid "Monochrome"
-#~ msgstr "שחור לבן"
+#: /usr/share/lives/plugins/effects/rendered/monochrome.script:0
+msgid "Monochrome"
+msgstr "שחור לבן"
 
-#~ msgid "Negate"
-#~ msgstr "הפיכה לתשליל"
+#: /usr/share/lives/plugins/effects/rendered/negate.script:0
+msgid "Negate"
+msgstr "הפיכה לתשליל"
 
-#~ msgid "Negating"
-#~ msgstr "יוצר תשליל"
+#: /usr/share/lives/plugins/effects/rendered/negate.script:0
+msgid "Negating"
+msgstr "יוצר תשליל"
 
-#~ msgid "Noise type"
-#~ msgstr "סוג רעש"
+#: /usr/share/lives/plugins/effects/rendered/noisify.script:0
+msgid "Noise type"
+msgstr "סוג רעש"
 
+#: /usr/share/lives/plugins/effects/rendered/noisify.script:0
 #, fuzzy
-#~ msgid "Noisify"
-#~ msgstr "הוספת רעשים"
+msgid "Noisify"
+msgstr "הוספת רעשים"
+
+#: /usr/share/lives/plugins/effects/rendered/normalize.script:0
+msgid "Normalize"
+msgstr "התאמת עוצמת שמע"
+
+#: /usr/share/lives/plugins/effects/rendered/normalize.script:0
+msgid "Normalizing"
+msgstr "מתאים עוצמת שמע"
 
-#~ msgid "Normalize"
-#~ msgstr "התאמת עוצמת שמע"
+#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+msgid "Number of _frames"
+msgstr "מספר _שקופיות"
 
-#~ msgid "Normalizing"
-#~ msgstr "מתאים עוצמת שמע"
+#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+msgid "Overlaying an image onto video"
+msgstr ""
 
-#~ msgid "Number of _frames"
-#~ msgstr "מספר _שקופיות"
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
+msgid "Overlaying text on"
+msgstr ""
 
-#~ msgid "Photo/still"
-#~ msgstr "צילום / עדיין"
+#: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
+msgid "Photo/still"
+msgstr "צילום / עדיין"
 
+#: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
 #, fuzzy
-#~ msgid "Pixilate"
-#~ msgstr "מדביק"
+msgid "Pixilate"
+msgstr "מדביק"
 
+#: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
 #, fuzzy
-#~ msgid "Pixilating"
-#~ msgstr "מדביק"
+msgid "Pixilating"
+msgstr "מדביק"
 
-#~ msgid "Posterize"
-#~ msgstr "יצירת פוסטר"
+#: /usr/share/lives/plugins/effects/rendered/posterize.script:0
+msgid "Posterize"
+msgstr "יצירת פוסטר"
 
+#: /usr/share/lives/plugins/effects/rendered/posterize.script:0
 #, fuzzy
-#~ msgid "Posterizing"
-#~ msgstr "יצירת פוסטר"
+msgid "Posterizing"
+msgstr "יצירת פוסטר"
 
-#~ msgid "Random zoom"
-#~ msgstr "זום אקראיים"
+#: /usr/share/lives/plugins/effects/rendered/randomzoom.script:0
+msgid "Random zoom"
+msgstr "זום אקראיים"
 
+#: /usr/share/lives/plugins/effects/rendered/randomzoom.script:0
 #, fuzzy
-#~ msgid "Random zooming"
-#~ msgstr "זום אקראיים"
+msgid "Random zooming"
+msgstr "זום אקראיים"
 
-#~ msgid "Reduce noise"
-#~ msgstr "רעש צמצם"
+#: /usr/share/lives/plugins/effects/rendered/noisify.script:0
+msgid "Reduce noise"
+msgstr "רעש צמצם"
 
-#~ msgid "Reduction radius"
-#~ msgstr "רדיוס צמצום"
+#: /usr/share/lives/plugins/effects/rendered/noisify.script:0
+msgid "Reduction radius"
+msgstr "רדיוס צמצום"
 
+#: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
 #, fuzzy
-#~ msgid "Replacing colours in"
-#~ msgstr "דוגם מחדש את השמע בלוח הגזירים"
+msgid "Replacing colours in"
+msgstr "דוגם מחדש את השמע בלוח הגזירים"
 
-#~ msgid "Resize All Frames"
-#~ msgstr "שינוי גודל כל השקופיות"
+#: /usr/share/lives/plugins/effects/rendered/resize.script:0
+msgid "Resize All Frames"
+msgstr "שינוי גודל כל השקופיות"
 
-#~ msgid "Rotate Clip"
-#~ msgstr "סיבוב קטע"
+#: /usr/share/lives/plugins/effects/rendered/rotate.script:0
+msgid "Rotate Clip"
+msgstr "סיבוב קטע"
 
-#~ msgid "Rotating"
-#~ msgstr "מסובבב"
+#: /usr/share/lives/plugins/effects/rendered/rotate.script:0
+msgid "Rotating"
+msgstr "מסובבב"
 
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #, fuzzy
-#~ msgid "S_tart %"
-#~ msgstr "_התחלה"
+msgid "S_tart %"
+msgstr "_התחלה"
 
+#: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
 #, fuzzy
-#~ msgid "Saturation _end"
-#~ msgstr "שינוי_הרוויה"
+msgid "Saturation _end"
+msgstr "שינוי_הרוויה"
 
+#: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
 #, fuzzy
-#~ msgid "Saturation _start"
-#~ msgstr "הפעלת OMC בהפעלת LiVES"
+msgid "Saturation _start"
+msgstr "הפעלת OMC בהפעלת LiVES"
 
+#: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
 #, fuzzy
-#~ msgid "Saturation change"
-#~ msgstr "שינוי_הרוויה"
+msgid "Saturation change"
+msgstr "שינוי_הרוויה"
 
+#: /usr/share/lives/plugins/effects/rendered/modulate.script:0
 #, fuzzy
-#~ msgid "Saturation end"
-#~ msgstr "שינוי_הרוויה"
+msgid "Saturation end"
+msgstr "שינוי_הרוויה"
 
+#: /usr/share/lives/plugins/effects/rendered/modulate.script:0
 #, fuzzy
-#~ msgid "Saturation start"
-#~ msgstr "הפעלת OMC בהפעלת LiVES"
+msgid "Saturation start"
+msgstr "הפעלת OMC בהפעלת LiVES"
 
-#~ msgid "Sepia"
-#~ msgstr "עתיק"
+#: /usr/share/lives/plugins/effects/rendered/sepia.script:0
+msgid "Sepia"
+msgstr "עתיק"
 
+#: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
 #, fuzzy
-#~ msgid "Shift horizontally"
-#~ msgstr "הזחה_אופקית"
+msgid "Shift horizontally"
+msgstr "הזחה_אופקית"
 
+#: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
 #, fuzzy
-#~ msgid "Shift vertically"
-#~ msgstr "הזחה_אנכית"
+msgid "Shift vertically"
+msgstr "הזחה_אנכית"
 
+#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 #, fuzzy
-#~ msgid "Shrink/Expand"
-#~ msgstr "כיווץ_והתרחבות"
+msgid "Shrink/Expand"
+msgstr "כיווץ_והתרחבות"
 
+#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 #, fuzzy
-#~ msgid "Shrinking/Expanding"
-#~ msgstr "כיווץ_והתרחבות"
+msgid "Shrinking/Expanding"
+msgstr "כיווץ_והתרחבות"
 
-#~ msgid "Skip forward"
-#~ msgstr "דלג קדימה"
+#: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
+msgid "Skip forward"
+msgstr "דלג קדימה"
 
-#~ msgid "Solarize"
-#~ msgstr "חשיפה לשמש"
+#: /usr/share/lives/plugins/effects/rendered/solarize.script:0
+msgid "Solarize"
+msgstr "חשיפה לשמש"
 
+#: /usr/share/lives/plugins/effects/rendered/solarize.script:0
 #, fuzzy
-#~ msgid "Solarizing"
-#~ msgstr "חשיפה לשמש"
+msgid "Solarizing"
+msgstr "חשיפה לשמש"
 
-#~ msgid "Spin"
-#~ msgstr "סיבסוב"
+#: /usr/share/lives/plugins/effects/rendered/spin.script:0
+msgid "Spin"
+msgstr "סיבסוב"
 
+#: /usr/share/lives/plugins/effects/rendered/spin.script:0
 #, fuzzy
-#~ msgid "Spinning"
-#~ msgstr "סיבסוב"
+msgid "Spinning"
+msgstr "סיבסוב"
 
-#~ msgid "Splice"
-#~ msgstr "חיבור"
+#: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
+msgid "Splice"
+msgstr "חיבור"
 
-#~ msgid "Splicing"
-#~ msgstr "מחבר"
+#: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
+msgid "Splicing"
+msgstr "מחבר"
 
-#~ msgid "Spread"
-#~ msgstr "פריסה"
+#: /usr/share/lives/plugins/effects/rendered/spread.script:0
+msgid "Spread"
+msgstr "פריסה"
 
-#~ msgid "Spreading"
-#~ msgstr "פורס"
+#: /usr/share/lives/plugins/effects/rendered/spread.script:0
+msgid "Spreading"
+msgstr "פורס"
 
+#: /usr/share/lives/plugins/effects/rendered/solarize.script:0
 #, fuzzy
-#~ msgid "Step _Value"
-#~ msgstr "קביעת _ערכים"
+msgid "Step _Value"
+msgstr "קביעת _ערכים"
 
+#: /usr/share/lives/plugins/effects/rendered/spin.script:0
+#: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
+#: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
 #, fuzzy
-#~ msgid "Step per _Frame"
-#~ msgstr "שקופית התחלה"
+msgid "Step per _Frame"
+msgstr "שקופית התחלה"
 
+#: /usr/share/lives/plugins/effects/rendered/swirl.script:0
 #, fuzzy
-#~ msgid "Swirl _start"
-#~ msgstr "עוגן _התחלה"
+msgid "Swirl _start"
+msgstr "עוגן _התחלה"
 
+#: /usr/share/lives/plugins/effects/rendered/swirl.script:0
 #, fuzzy
-#~ msgid "Swirl s_tep"
-#~ msgstr "מערבולת"
+msgid "Swirl s_tep"
+msgstr "מערבולת"
 
-#~ msgid "Swirl"
-#~ msgstr "מערבולת"
+#: /usr/share/lives/plugins/effects/rendered/swirl.script:0
+msgid "Swirl"
+msgstr "מערבולת"
 
-#~ msgid "Swirling"
-#~ msgstr "מערבל"
+#: /usr/share/lives/plugins/effects/rendered/swirl.script:0
+msgid "Swirling"
+msgstr "מערבל"
 
-#~ msgid "Text Overlay"
-#~ msgstr "טקסט כיסוי"
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
+msgid "Text Overlay"
+msgstr "טקסט כיסוי"
 
-#~ msgid "Trimming"
-#~ msgstr "גיזום"
+#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
+msgid "Thres_hold"
+msgstr ""
 
-#~ msgid "Tunnel"
-#~ msgstr "תעלה"
+#: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
+msgid "Trim frames/Add border"
+msgstr ""
 
-#~ msgid "Tunneling"
-#~ msgstr "תיעול"
+#: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
+msgid "Trimming"
+msgstr "גיזום"
 
+#: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
+msgid "Tunnel"
+msgstr "תעלה"
+
+#: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
+msgid "Tunneling"
+msgstr "תיעול"
+
+#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
 #, fuzzy
-#~ msgid "Use _Natural Size"
-#~ msgstr "שימוש ב_החלקת עקומות בעת שינויי גודל"
+msgid "Use _Natural Size"
+msgstr "שימוש ב_החלקת עקומות בעת שינויי גודל"
 
+#: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
 #, fuzzy
-#~ msgid "Use _Natural image size"
-#~ msgstr "שימוש ב_החלקת עקומות בעת שינויי גודל"
+msgid "Use _Natural image size"
+msgstr "שימוש ב_החלקת עקומות בעת שינויי גודל"
 
+#: /usr/share/lives/plugins/effects/rendered/flip.script:0
 #, fuzzy
-#~ msgid "Vertical flipping"
-#~ msgstr "_קטעי אופקי"
+msgid "Vertical flipping"
+msgstr "_קטעי אופקי"
 
+#: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
 #, fuzzy
-#~ msgid "Vertical shifting"
-#~ msgstr "_קטעי אופקי"
+msgid "Vertical shifting"
+msgstr "_קטעי אופקי"
+
+#: /usr/share/lives/plugins/effects/rendered/wave.script:0
+msgid "Wave"
+msgstr "גל"
+
+#: /usr/share/lives/plugins/effects/rendered/wave.script:0
+msgid "Waving"
+msgstr "יוצר גל"
+
+#: /usr/share/lives/plugins/effects/rendered/rotate.script:0
+#: /usr/share/lives/plugins/effects/rendered/wave.script:0
+#: /usr/share/lives/plugins/effects/rendered/spin.script:0
+#: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
+#: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
+#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
+msgid "_Background Colour"
+msgstr "_צבע רקע"
 
-#~ msgid "Wave"
-#~ msgstr "גל"
+#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+msgid "_Background colour"
+msgstr "_צבע רקע"
 
-#~ msgid "Waving"
-#~ msgstr "יוצר גל"
+#: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
+msgid "_Black and white camera"
+msgstr "_שחור ולבן המצלמה"
 
-#~ msgid "_Background Colour"
-#~ msgstr "_צבע רקע"
+#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
+msgid "_Black is transparent"
+msgstr "_שחור הוא שקןף"
 
-#~ msgid "_Background colour"
-#~ msgstr "_צבע רקע"
+#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
+msgid "_Bottom"
+msgstr "_תחתית"
 
-#~ msgid "_Black and white camera"
-#~ msgstr "_שחור ולבן המצלמה"
+#: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
+msgid "_Calculate"
+msgstr "_חישוב"
 
-#~ msgid "_Black is transparent"
-#~ msgstr "_שחור הוא שקןף"
+#: /usr/share/lives/plugins/effects/rendered/cycle.script:0
+msgid "_Cycle Start"
+msgstr "_תחילת עיגול"
 
-#~ msgid "_Bottom"
-#~ msgstr "_תחתית"
+#: /usr/share/lives/plugins/effects/rendered/contrast.script:0
+msgid "_Decrease Contrast"
+msgstr "_ירידה חדות"
 
-#~ msgid "_Calculate"
-#~ msgstr "_חישוב"
+#: /usr/share/lives/plugins/effects/rendered/dream.script:0
+#: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
+msgid "_Diffmax"
+msgstr ""
 
-#~ msgid "_Cycle Start"
-#~ msgstr "_תחילת עיגול"
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+msgid "_End Colour"
+msgstr "_צבע סיום"
 
-#~ msgid "_Decrease Contrast"
-#~ msgstr "_ירידה חדות"
+#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+msgid "_End Size X:"
+msgstr ""
 
-#~ msgid "_End Colour"
-#~ msgstr "_צבע סיום"
+#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+msgid "_End Size Y:"
+msgstr ""
 
+#: /usr/share/lives/plugins/effects/rendered/spread.script:0
 #, fuzzy
-#~ msgid "_End amount"
-#~ msgstr "_צבע סיום"
+msgid "_End amount"
+msgstr "_צבע סיום"
 
+#: /usr/share/lives/plugins/effects/rendered/dream.script:0
+#: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
 #, fuzzy
-#~ msgid "_Fade level"
-#~ msgstr "עמעום"
+msgid "_Fade level"
+msgstr "עמעום"
 
+#: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+#: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
 #, fuzzy
-#~ msgid "_Fade start"
-#~ msgstr "_תחילת רדיוס"
+msgid "_Fade start"
+msgstr "_תחילת רדיוס"
 
+#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #, fuzzy
-#~ msgid "_Fill colour"
-#~ msgstr "_צבע סיום"
+msgid "_Fill colour"
+msgstr "_צבע סיום"
 
-#~ msgid "_First frame"
-#~ msgstr "_מסגרת ראשונה"
+#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
+msgid "_First frame"
+msgstr "_מסגרת ראשונה"
 
+#: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
 #, fuzzy
-#~ msgid "_Flash for"
-#~ msgstr "_החזקה עבור"
+msgid "_Flash for"
+msgstr "_החזקה עבור"
 
-#~ msgid "_Font"
-#~ msgstr "_גופן"
+#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+msgid "_Font"
+msgstr "_גופן"
 
+#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
+#: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
+#: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
 #, fuzzy
-#~ msgid "_Frames per second"
-#~ msgstr "_שקופיות לשנייה "
+msgid "_Frames per second"
+msgstr "_שקופיות לשנייה "
 
-#~ msgid "_Frames"
-#~ msgstr "_שקופיות"
+#: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
+msgid "_Frames"
+msgstr "_שקופיות"
 
-#~ msgid "_Hold for"
-#~ msgstr "_החזקה עבור"
+#: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
+msgid "_Hold for"
+msgstr "_החזקה עבור"
 
-#~ msgid "_Horizontal segments"
-#~ msgstr "_קטעי אופקי"
+#: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
+msgid "_Horizontal segments"
+msgstr "_קטעי אופקי"
 
-#~ msgid "_Image File"
-#~ msgstr "_קובץ תמונה"
+#: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
+msgid "_Image File"
+msgstr "_קובץ תמונה"
 
+#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
 #, fuzzy
-#~ msgid "_Image"
-#~ msgstr "_קובץ תמונה"
+msgid "_Image"
+msgstr "_קובץ תמונה"
 
-#~ msgid "_Increase Contrast"
-#~ msgstr "_להגביר חדות"
+#: /usr/share/lives/plugins/effects/rendered/contrast.script:0
+msgid "_Increase Contrast"
+msgstr "_להגביר חדות"
 
-#~ msgid "_Levels"
-#~ msgstr "_רמות"
+#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+msgid "_Init Size X:"
+msgstr ""
 
-#~ msgid "_Middle"
-#~ msgstr "_אמצע"
+#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+msgid "_Init Size Y:"
+msgstr ""
 
+#: /usr/share/lives/plugins/effects/rendered/posterize.script:0
+msgid "_Levels"
+msgstr "_רמות"
+
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+msgid "_Link start and end colours"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/randomzoom.script:0
+msgid "_Max zoom x 10"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
+msgid "_Middle"
+msgstr "_אמצע"
+
+#: /usr/share/lives/plugins/effects/rendered/sepia.script:0
 #, fuzzy
-#~ msgid "_Midtone"
-#~ msgstr "_אמצע"
+msgid "_Midtone"
+msgstr "_אמצע"
 
-#~ msgid "_Negate"
-#~ msgstr "_תשליל"
+#: /usr/share/lives/plugins/effects/rendered/negate.script:0
+msgid "_Negate"
+msgstr "_תשליל"
 
-#~ msgid "_Number of frames"
-#~ msgstr "_מספר שקופיות"
+#: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
+#: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
+#: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
+msgid "_Number of frames"
+msgstr "_מספר שקופיות"
 
+#: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
 #, fuzzy
-#~ msgid "_Offset X"
-#~ msgstr "+ היסט 1"
+msgid "_Offset X"
+msgstr "+ היסט 1"
 
+#: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
 #, fuzzy
-#~ msgid "_Offset Y"
-#~ msgstr "+ היסט 1"
+msgid "_Offset Y"
+msgstr "+ היסט 1"
 
-#~ msgid "_Other Center"
-#~ msgstr "_מרכז אחר"
+#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
+msgid "_Other Center"
+msgstr "_מרכז אחר"
 
-#~ msgid "_Other"
-#~ msgstr "_אחר"
+#: /usr/share/lives/plugins/effects/rendered/rotate.script:0
+msgid "_Other"
+msgstr "_אחר"
 
-#~ msgid "_Point size"
-#~ msgstr "_גודל נקודה"
+#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
+msgid "_Point size"
+msgstr "_גודל נקודה"
 
-#~ msgid "_Radius end"
-#~ msgstr "_סוף רדיוס"
+#: /usr/share/lives/plugins/effects/rendered/blur.script:0
+msgid "_Radius end"
+msgstr "_סוף רדיוס"
 
-#~ msgid "_Radius start"
-#~ msgstr "_תחילת רדיוס"
+#: /usr/share/lives/plugins/effects/rendered/blur.script:0
+msgid "_Radius start"
+msgstr "_תחילת רדיוס"
 
-#~ msgid "_Radius"
-#~ msgstr "_רדיוס"
+#: /usr/share/lives/plugins/effects/rendered/emboss.script:0
+#: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
+#: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
+msgid "_Radius"
+msgstr "_רדיוס"
 
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #, fuzzy
-#~ msgid "_Random colour each frame"
-#~ msgstr "ליצור מסגרות צבעוניות"
+msgid "_Random colour each frame"
+msgstr "ליצור מסגרות צבעוניות"
 
-#~ msgid "_Randomness"
-#~ msgstr "_אקראיות"
+#: /usr/share/lives/plugins/effects/rendered/dream.script:0
+#: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
+msgid "_Randomness"
+msgstr "_אקראיות"
 
-#~ msgid "_Right"
-#~ msgstr "_ימין"
+#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
+msgid "_Right"
+msgstr "_ימין"
 
+#: /usr/share/lives/plugins/effects/rendered/spin.script:0
 #, fuzzy
-#~ msgid "_Rotate Selection by"
-#~ msgstr "גזירת בחירה"
+msgid "_Rotate Selection by"
+msgstr "גזירת בחירה"
+
+#: /usr/share/lives/plugins/effects/rendered/spin.script:0
+msgid "_Shrink rotated window to fit frame size"
+msgstr ""
 
+#: /usr/share/lives/plugins/effects/rendered/blur.script:0
 #, fuzzy
-#~ msgid "_Sigma end"
-#~ msgstr "big endian"
+msgid "_Sigma end"
+msgstr "big endian"
 
+#: /usr/share/lives/plugins/effects/rendered/blur.script:0
 #, fuzzy
-#~ msgid "_Sigma start"
-#~ msgstr "_התחלה"
+msgid "_Sigma start"
+msgstr "_התחלה"
 
+#: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
 #, fuzzy
-#~ msgid "_Skip ahead"
-#~ msgstr "דולג"
+msgid "_Skip ahead"
+msgstr "דולג"
 
-#~ msgid "_Skip"
-#~ msgstr "_דילוג"
+#: /usr/share/lives/plugins/effects/rendered/negate.script:0
+msgid "_Skip"
+msgstr "_דילוג"
 
-#~ msgid "_Source Colour"
-#~ msgstr "_צבע מקור"
+#: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
+msgid "_Source Colour"
+msgstr "_צבע מקור"
 
+#: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
 #, fuzzy
-#~ msgid "_Splice"
-#~ msgstr "חיבור"
+msgid "_Splice"
+msgstr "חיבור"
 
-#~ msgid "_Start Colour"
-#~ msgstr "_צבע התחלה"
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+msgid "_Start Colour"
+msgstr "_צבע התחלה"
 
-#~ msgid "_Start Value"
-#~ msgstr "_ערך התחלתי"
+#: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
+#: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
+#: /usr/share/lives/plugins/effects/rendered/solarize.script:0
+msgid "_Start Value"
+msgstr "_ערך התחלתי"
 
+#: /usr/share/lives/plugins/effects/rendered/spread.script:0
 #, fuzzy
-#~ msgid "_Start amount"
-#~ msgstr "_ערך התחלתי"
+msgid "_Start amount"
+msgstr "_ערך התחלתי"
 
+#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #, fuzzy
-#~ msgid "_Stroke colour"
-#~ msgstr "_צבע התחלה"
+msgid "_Stroke colour"
+msgstr "_צבע התחלה"
 
-#~ msgid "_Target Colour"
-#~ msgstr "_צבע מטרה"
+#: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
+msgid "_Target Colour"
+msgstr "_צבע מטרה"
 
-#~ msgid "_Text"
-#~ msgstr "_טקסט"
+#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
+msgid "_Text"
+msgstr "_טקסט"
 
-#~ msgid "_Time (seconds)"
-#~ msgstr "_זמן (שניות)"
+#: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
+msgid "_Time (seconds)"
+msgstr "_זמן (שניות)"
 
+#: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
 #, fuzzy
-#~ msgid "_Top left is clipboard"
-#~ msgstr "מעתיק ללוח הגזירים"
+msgid "_Top left is clipboard"
+msgstr "מעתיק ללוח הגזירים"
 
+#: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
 #, fuzzy
-#~ msgid "_Vertical segments"
-#~ msgstr "_קטעי אופקי"
+msgid "_Vertical segments"
+msgstr "_קטעי אופקי"
 
+#: /usr/share/lives/plugins/effects/rendered/wave.script:0
 #, fuzzy
-#~ msgid "_Wavemax"
-#~ msgstr "גל"
+msgid "_Wavemax"
+msgstr "גל"
 
-#~ msgid "_White is transparent"
-#~ msgstr "_לבן הוא שקוף"
+#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
+msgid "_White is transparent"
+msgstr "_לבן הוא שקוף"
 
-#~ msgid "_Wrap Around"
-#~ msgstr "_גלוש מסביב"
+#: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
+#: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
+msgid "_Wrap Around"
+msgstr "_גלוש מסביב"
 
+#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 #, fuzzy
-#~ msgid "_X Center"
-#~ msgstr "_מרכז אחר"
+msgid "_X Center"
+msgstr "_מרכז אחר"
 
+#: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
+msgid "_X End"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
 #, fuzzy
-#~ msgid "_X Start"
-#~ msgstr "_התחלה"
+msgid "_X Start"
+msgstr "_התחלה"
 
+#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #, fuzzy
-#~ msgid "_X offset"
-#~ msgstr "+ היסט 1"
+msgid "_X offset"
+msgstr "+ היסט 1"
 
+#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
 #, fuzzy
-#~ msgid "_Y Center"
-#~ msgstr "_מרכז אחר"
+msgid "_Y Center"
+msgstr "_מרכז אחר"
+
+#: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
+msgid "_Y End"
+msgstr ""
 
+#: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
 #, fuzzy
-#~ msgid "_Y Start"
-#~ msgstr "_התחלה"
+msgid "_Y Start"
+msgstr "_התחלה"
 
+#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #, fuzzy
-#~ msgid "_Y offset"
-#~ msgstr "+ היסט 1"
+msgid "_Y offset"
+msgstr "+ היסט 1"
 
-#~ msgid "_degrees"
-#~ msgstr "_מעלות"
+#: /usr/share/lives/plugins/effects/rendered/rotate.script:0
+msgid "_degrees"
+msgstr "_מעלות"
 
-#~ msgid "_then"
-#~ msgstr "_אז"
+#: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
+msgid "_then"
+msgstr "_אז"
 
-#~ msgid "blank_frames"
-#~ msgstr "שקופיות_ריקות"
+#: /usr/share/lives/plugins/effects/rendered/blank_frames.script:0
+msgid "blank_frames"
+msgstr "שקופיות_ריקות"
 
-#~ msgid "blur"
-#~ msgstr "טשטוש"
+#: /usr/share/lives/plugins/effects/rendered/blur.script:0
+msgid "blur"
+msgstr "טשטוש"
 
-#~ msgid "brightness_change"
-#~ msgstr "שינוי _בהירות"
+#: /usr/share/lives/plugins/effects/rendered/brightness_change.script:0
+msgid "brightness_change"
+msgstr "שינוי _בהירות"
 
-#~ msgid "charcoal"
-#~ msgstr "פחם"
+#: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
+msgid "charcoal"
+msgstr "פחם"
 
-#~ msgid "colorize"
-#~ msgstr "צביעה"
+#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+msgid "colorize"
+msgstr "צביעה"
 
-#~ msgid "colour_filter"
-#~ msgstr "מסנן_צבע"
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+msgid "colour_filter"
+msgstr "מסנן_צבע"
 
+#: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
 #, fuzzy
-#~ msgid "colour_replace"
-#~ msgstr "להחליף צבע"
+msgid "colour_replace"
+msgstr "להחליף צבע"
 
-#~ msgid "contrast"
-#~ msgstr "ניגודיות"
+#: /usr/share/lives/plugins/effects/rendered/contrast.script:0
+msgid "contrast"
+msgstr "ניגודיות"
 
-#~ msgid "cycle"
-#~ msgstr "מעגל"
+#: /usr/share/lives/plugins/effects/rendered/cycle.script:0
+msgid "cycle"
+msgstr "מעגל"
 
-#~ msgid "deinterlace"
-#~ msgstr "deinterlace"
+#: /usr/share/lives/plugins/effects/rendered/deinterlace.script:0
+msgid "deinterlace"
+msgstr "deinterlace"
 
+#: /usr/share/lives/plugins/effects/rendered/despekle.script:0
 #, fuzzy
-#~ msgid "despeckle"
-#~ msgstr "הפחת מוקדי רעש"
+msgid "despeckle"
+msgstr "הפחת מוקדי רעש"
 
-#~ msgid "dream"
-#~ msgstr "חלום"
+#: /usr/share/lives/plugins/effects/rendered/dream.script:0
+msgid "dream"
+msgstr "חלום"
 
-#~ msgid "edge_detect"
-#~ msgstr "זיהוי _פינות"
+#: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
+msgid "edge_detect"
+msgstr "זיהוי _פינות"
 
-#~ msgid "emboss"
-#~ msgstr "תבליט"
+#: /usr/share/lives/plugins/effects/rendered/emboss.script:0
+msgid "emboss"
+msgstr "תבליט"
 
-#~ msgid "enhance"
-#~ msgstr "שיפור"
+#: /usr/share/lives/plugins/effects/rendered/enhance.script:0
+msgid "enhance"
+msgstr "שיפור"
 
-#~ msgid "every"
-#~ msgstr "כל"
+#: /usr/share/lives/plugins/effects/rendered/noisify.script:0
+msgid "every"
+msgstr "כל"
 
+#: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
 #, fuzzy
-#~ msgid "fade_in_out"
-#~ msgstr "החלת אפקט Fade Out על השמע"
+msgid "fade_in_out"
+msgstr "החלת אפקט Fade Out על השמע"
+
+#: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
+msgid "fc"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/flip.script:0
+msgid "flip"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/flop.script:0
+msgid "flop"
+msgstr ""
 
+#: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
 #, fuzzy
-#~ msgid "frame_calculator"
-#~ msgstr "מסגרת מחשבון"
+msgid "frame_calculator"
+msgstr "מסגרת מחשבון"
 
-#~ msgid "gamma_change"
-#~ msgstr "_שינוי ערך gamma"
+#: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
+msgid "gamma_change"
+msgstr "_שינוי ערך gamma"
 
+#: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
 #, fuzzy
-#~ msgid "gen_blank_frames"
-#~ msgstr "שקופיות_ריקות"
+msgid "gen_blank_frames"
+msgstr "שקופיות_ריקות"
 
+#: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
 #, fuzzy
-#~ msgid "gen_clip_from_image"
-#~ msgstr "הפקת קליפ מתוך התמונה"
+msgid "gen_clip_from_image"
+msgstr "הפקת קליפ מתוך התמונה"
 
+#: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
 #, fuzzy
-#~ msgid "gen_coloured_frames"
-#~ msgstr "ליצור מסגרות צבעוניות"
+msgid "gen_coloured_frames"
+msgstr "ליצור מסגרות צבעוניות"
 
-#~ msgid "hue_change"
-#~ msgstr "שינוי_רוויה"
+#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+msgid "gen_text"
+msgstr ""
 
+#: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
+msgid "hue_change"
+msgstr "שינוי_רוויה"
+
+#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
 #, fuzzy
-#~ msgid "image_overlay"
-#~ msgstr "טקסט כיסוי"
+msgid "image_overlay"
+msgstr "טקסט כיסוי"
 
+#: /usr/share/lives/plugins/effects/rendered/jumble.script:0
 #, fuzzy
-#~ msgid "jumble"
-#~ msgstr "ערבוביה"
+msgid "jumble"
+msgstr "ערבוביה"
 
+#: /usr/share/lives/plugins/effects/rendered/modulate.script:0
 #, fuzzy
-#~ msgid "modulate"
-#~ msgstr "להסלים (BSH)"
+msgid "modulate"
+msgstr "להסלים (BSH)"
 
-#~ msgid "monochrome"
-#~ msgstr "שחור לבן"
+#: /usr/share/lives/plugins/effects/rendered/monochrome.script:0
+msgid "monochrome"
+msgstr "שחור לבן"
 
-#~ msgid "negate"
-#~ msgstr "תשליל"
+#: /usr/share/lives/plugins/effects/rendered/negate.script:0
+msgid "negate"
+msgstr "תשליל"
 
-#~ msgid "noisify"
-#~ msgstr "הוספת רעשים"
+#: /usr/share/lives/plugins/effects/rendered/noisify.script:0
+msgid "noisify"
+msgstr "הוספת רעשים"
 
-#~ msgid "normalize"
-#~ msgstr "התאמת עוצמת השמע"
+#: /usr/share/lives/plugins/effects/rendered/normalize.script:0
+msgid "normalize"
+msgstr "התאמת עוצמת השמע"
 
+#: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
 #, fuzzy
-#~ msgid "photo_still"
-#~ msgstr "צילום / עדיין"
+msgid "photo_still"
+msgstr "צילום / עדיין"
 
+#: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
 #, fuzzy
-#~ msgid "pixilate"
-#~ msgstr "מדביק"
+msgid "pixilate"
+msgstr "מדביק"
 
+#: /usr/share/lives/plugins/effects/rendered/posterize.script:0
 #, fuzzy
-#~ msgid "posterize"
-#~ msgstr "יצירת פוסטר"
+msgid "posterize"
+msgstr "יצירת פוסטר"
+
+#: /usr/share/lives/plugins/effects/rendered/randomzoom.script:0
+msgid "randomzoom"
+msgstr "תקריב_אקראי"
+
+#: /usr/share/lives/plugins/effects/rendered/resize.script:0
+msgid "resize"
+msgstr "שינוי גודל"
+
+#: /usr/share/lives/plugins/effects/rendered/rotate.script:0
+msgid "rotate"
+msgstr "סיבוב"
+
+#: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
+msgid "saturation_change"
+msgstr "שינוי_הרוויה"
 
-#~ msgid "randomzoom"
-#~ msgstr "תקריב_אקראי"
+#: /usr/share/lives/plugins/effects/rendered/sepia.script:0
+msgid "sepia"
+msgstr "עתיק"
 
-#~ msgid "resize"
-#~ msgstr "שינוי גודל"
+#: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
+msgid "shift_horizontal"
+msgstr "הזחה_אופקית"
 
-#~ msgid "rotate"
-#~ msgstr "סיבוב"
+#: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
+msgid "shift_vertical"
+msgstr "הזחה_אנכית"
 
-#~ msgid "saturation_change"
-#~ msgstr "שינוי_הרוויה"
+#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
+msgid "shrink_expand"
+msgstr "כיווץ_והתרחבות"
 
-#~ msgid "sepia"
-#~ msgstr "עתיק"
+#: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
+msgid "skip_forwards"
+msgstr "דילוג_קדימה"
 
-#~ msgid "shift_horizontal"
-#~ msgstr "הזחה_אופקית"
+#: /usr/share/lives/plugins/effects/rendered/solarize.script:0
+msgid "solarize"
+msgstr "בהרת_שמש"
 
-#~ msgid "shift_vertical"
-#~ msgstr "הזחה_אנכית"
+#: /usr/share/lives/plugins/effects/rendered/spin.script:0
+msgid "spin"
+msgstr "היפוך"
 
-#~ msgid "shrink_expand"
-#~ msgstr "כיווץ_והתרחבות"
+#: /usr/share/lives/plugins/effects/rendered/spread.script:0
+msgid "spread"
+msgstr "פריסה"
 
-#~ msgid "skip_forwards"
-#~ msgstr "דילוג_קדימה"
+#: /usr/share/lives/plugins/effects/rendered/swirl.script:0
+msgid "swirl"
+msgstr "מערבולת"
 
-#~ msgid "solarize"
-#~ msgstr "בהרת_שמש"
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
+msgid "textover"
+msgstr "טקסט_מעל"
 
-#~ msgid "spin"
-#~ msgstr "היפוך"
+#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
+msgid "transition_bwthresh"
+msgstr "גבול_שחור/לבן_מעברון"
 
-#~ msgid "spread"
-#~ msgstr "פריסה"
+#: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
+msgid "transition_checkerboard"
+msgstr "מעבר_לוח_שחמט"
 
-#~ msgid "swirl"
-#~ msgstr "מערבולת"
+#: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+msgid "transition_fade2"
+msgstr "מעבר_עמעום2"
 
-#~ msgid "textover"
-#~ msgstr "טקסט_מעל"
+#: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
+msgid "transition_splice"
+msgstr "מעבר_שזירה"
 
-#~ msgid "transition_bwthresh"
-#~ msgstr "גבול_שחור/לבן_מעברון"
+#: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
+msgid "trim_frames"
+msgstr "קיצוץ_השקופיות"
 
-#~ msgid "transition_checkerboard"
-#~ msgstr "מעבר_לוח_שחמט"
+#: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
+msgid "tunnel"
+msgstr "תעלה"
 
-#~ msgid "transition_fade2"
-#~ msgstr "מעבר_עמעום2"
+#: /usr/share/lives/plugins/effects/rendered/wave.script:0
+msgid "wave"
+msgstr "גל"
 
-#~ msgid "transition_splice"
-#~ msgstr "מעבר_שזירה"
+#: /usr/bin/smogrify:0
+msgid "Unable to open output file !"
+msgstr "לא ניתן לפתוח את קובץ הפלט !"
 
-#~ msgid "trim_frames"
-#~ msgstr "קיצוץ_השקופיות"
+#: /usr/bin/smogrify:0
+msgid "LiVES could not write to $nfile."
+msgstr "LiVES לא יכל לכתוב ל$nfile"
 
-#~ msgid "tunnel"
-#~ msgstr "תעלה"
+#: /usr/bin/smogrify:0
+msgid "Unable to locate the program $rfx_builder_multi"
+msgstr "לא ניתן לאתר את התוכנה $rfx_builder_multi"
 
-#~ msgid "wave"
-#~ msgstr "גל"
+#: /usr/bin/smogrify:0
+msgid "Your version of mplayer/ffmpeg may be broken"
+msgstr ""
 
-#~ msgid "Unable to open output file !"
-#~ msgstr "לא ניתן לפתוח את קובץ הפלט !"
+#: /usr/bin/smogrify:0
+msgid "See http://bugzilla.mplayerhq.hu/show_bug.cgi?id=2071"
+msgstr ""
 
-#~ msgid "LiVES could not write to $nfile."
-#~ msgstr "LiVES לא יכל לכתוב ל$nfile"
+#: /usr/bin/smogrify:0
+msgid " "
+msgstr ""
 
-#~ msgid "Unable to locate the program $rfx_builder_multi"
-#~ msgstr "לא ניתן לאתר את התוכנה $rfx_builder_multi"
+#: /usr/bin/smogrify:0
+msgid ""
+"You can work around this by switching to jpeg output in Preferences/Decoding."
+msgstr ""
 
-#~ msgid "This does not appear to be a valid video or image file"
-#~ msgstr "זה לא נראה כמו קובץ וידאו או תמונה תקין"
+#: /usr/bin/smogrify:0
+msgid "This does not appear to be a valid video or image file"
+msgstr "זה לא נראה כמו קובץ וידאו או תמונה תקין"
 
-#~ msgid "LiVES was unable to open it."
-#~ msgstr "ל־LiVES לא הייתה אפשרות לפתוח את קובץ זה."
+#: /usr/bin/smogrify:0
+msgid "LiVES was unable to open it."
+msgstr "ל־LiVES לא הייתה אפשרות לפתוח את קובץ זה."
 
-#~ msgid "Check the terminal window for more details."
-#~ msgstr "ניתן לבדוק את חלון המסוף לפרטים נוספים."
+#: /usr/bin/smogrify:0
+msgid "Check the terminal window for more details."
+msgstr "ניתן לבדוק את חלון המסוף לפרטים נוספים."
 
-#~ msgid "Error creating new backup."
-#~ msgstr "שגיאה ביצירת גיבוי חדש."
+#: /usr/bin/smogrify:0
+msgid "Error creating new backup."
+msgstr "שגיאה ביצירת גיבוי חדש."
 
-#~ msgid "This does not appear to be a valid backup file"
-#~ msgstr "זה לא נראה כמו קובץ גיבוי תקין"
+#: /usr/bin/smogrify:0
+msgid "This does not appear to be a valid backup file"
+msgstr "זה לא נראה כמו קובץ גיבוי תקין"
 
-#~ msgid "LiVES was not able to open the file"
-#~ msgstr "ל־LiVES לא היתה אפשרות לפתוח את הקובץ"
+#: /usr/bin/smogrify:0
+msgid "LiVES was not able to open the file"
+msgstr "ל־LiVES לא היתה אפשרות לפתוח את הקובץ"
 
-#~ msgid "$file"
-#~ msgstr "$file"
+#: /usr/bin/smogrify:0
+msgid "$file"
+msgstr "$file"
 
-#~ msgid "LiVES audio error."
-#~ msgstr "שגיאת שמע של LiVES."
+#: /usr/bin/smogrify:0
+msgid "LiVES audio error."
+msgstr "שגיאת שמע של LiVES."
 
-#~ msgid "cdda2wav is required for this function."
-#~ msgstr "cdda2wav הכרחי לפונקציה זו."
+#: /usr/bin/smogrify:0
+msgid "cdda2wav is required for this function."
+msgstr "cdda2wav הכרחי לפונקציה זו."
 
-#~ msgid "Please install it first."
-#~ msgstr "נא להתקין זאת קודם."
+#: /usr/bin/smogrify:0
+msgid "Please install it first."
+msgstr "נא להתקין זאת קודם."
 
-#~ msgid "You must set the CD device first in Preferences."
-#~ msgstr "יש להגדיר את כונן התקליטורים תחילה בהעדפות."
+#: /usr/bin/smogrify:0
+msgid "You must set the CD device first in Preferences."
+msgstr "יש להגדיר את כונן התקליטורים תחילה בהעדפות."
 
-#~ msgid "$plugin_name failed:"
-#~ msgstr "$plugin_name נכשל:"
+#: /usr/bin/smogrify:0
+msgid "$plugin_name failed:"
+msgstr "$plugin_name נכשל:"
 
-#~ msgid "$error"
-#~ msgstr "$error"
+#: /usr/bin/smogrify:0
+msgid "$error"
+msgstr "$error"
 
 #~ msgid "Default value:    "
 #~ msgstr "ערך ברירת מחדל:    "

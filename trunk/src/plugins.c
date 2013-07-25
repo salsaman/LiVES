@@ -43,11 +43,11 @@ static GList *get_plugin_result (const gchar *command, const gchar *delim, boole
   GList *list=NULL;
   gchar **array;
   ssize_t bytes=0;
-  gint pieces;
+  int pieces;
   int outfile_fd,i;
   int retval;
   int alarm_handle;
-  gint error;
+  int error;
   boolean timeout;
 
   gchar *msg,*buf;
@@ -372,12 +372,12 @@ void save_vpp_defaults(_vid_playback_plugin *vpp, gchar *vpp_file) {
   // n bytes string param value
 
   int fd;
-  gint32 len;
+  int32_t len;
   const gchar *version;
   int i;
   gchar *msg;
   int intzero=0;
-  gdouble dblzero=0.;
+  double dblzero=0.;
 
   if (mainw->vpp==NULL) {
     unlink(vpp_file);
@@ -1224,7 +1224,7 @@ _vid_playback_plugin *open_vid_playback_plugin (const gchar *name, boolean in_us
   if ((vpp->version=(const char* (*)())dlsym (handle,"version"))==NULL) {
     OK=FALSE;
   }
-  if ((vpp->get_palette_list=(gint* (*)())dlsym (handle,"get_palette_list"))==NULL) {
+  if ((vpp->get_palette_list=(int* (*)())dlsym (handle,"get_palette_list"))==NULL) {
     OK=FALSE;
   }
   if ((vpp->set_palette=(boolean (*)(int))dlsym (handle,"set_palette"))==NULL) {
@@ -1238,7 +1238,7 @@ _vid_playback_plugin *open_vid_playback_plugin (const gchar *name, boolean in_us
     OK=FALSE;
   }
   if ((vpp->get_fps_list=(const gchar* (*)(int))dlsym (handle,"get_fps_list"))!=NULL) {
-    if ((vpp->set_fps=(boolean (*)(gdouble))dlsym (handle,"set_fps"))==NULL) {
+    if ((vpp->set_fps=(boolean (*)(double))dlsym (handle,"set_fps"))==NULL) {
       OK=FALSE;
     }
   }
@@ -1398,8 +1398,8 @@ _vid_playback_plugin *open_vid_playback_plugin (const gchar *name, boolean in_us
 
   if (!mainw->is_ready) {
     double fixed_fpsd=vpp->fixed_fpsd;
-    gint fwidth=vpp->fwidth;
-    gint fheight=vpp->fheight;
+    int fwidth=vpp->fwidth;
+    int fheight=vpp->fheight;
 
     mainw->vpp=vpp;
     load_vpp_defaults(vpp, mainw->vpp_defs_file);
@@ -1500,7 +1500,7 @@ void vid_playback_plugin_exit (void) {
 }
 
 
-gint64 get_best_audio(_vid_playback_plugin *vpp) {
+int64_t get_best_audio(_vid_playback_plugin *vpp) {
   // find best audio from video plugin list, matching with audiostream plugins
 
   // i.e. cross-check video list with astreamer list
@@ -1628,27 +1628,27 @@ boolean check_encoder_restrictions (boolean get_extension, boolean user_audio, b
   gchar **checks;
   gchar **array=NULL;
   gchar **array2;
-  gint pieces,numtok;
+  int pieces,numtok;
   boolean calc_aspect=FALSE;
   gchar aspect_buffer[512];
-  gint hblock=2,vblock=2;
+  int hblock=2,vblock=2;
   int i,r,val;
   GList *ofmt_all=NULL;
   boolean sizer=FALSE;
 
   // for auto resizing/resampling
-  gdouble best_fps=0.;
-  gint best_arate=0;
-  gint width,owidth;
-  gint height,oheight;
+  double best_fps=0.;
+  int best_arate=0;
+  int width,owidth;
+  int height,oheight;
 
-  gdouble best_fps_delta=0.;
-  gint best_arate_delta=0;
+  double best_fps_delta=0.;
+  int best_arate_delta=0;
   boolean allow_aspect_override=FALSE;
 
-  gint best_fps_num=0,best_fps_denom=0;
-  gdouble fps;
-  gint arate,achans,asampsize,asigned=0;
+  int best_fps_num=0,best_fps_denom=0;
+  double fps;
+  int arate,achans,asampsize,asigned=0;
 
   boolean swap_endian=FALSE;
 
@@ -1756,9 +1756,9 @@ boolean check_encoder_restrictions (boolean get_extension, boolean user_audio, b
       // check each restriction in turn
       
       if (!strncmp (checks[r],"fps=",4)) {
-	gdouble allowed_fps;
-	gint mbest_num=0,mbest_denom=0;
-	gint numparts;
+	double allowed_fps;
+	int mbest_num=0,mbest_denom=0;
+	int numparts;
 	gchar *fixer;
 	
 	best_fps_delta=1000000000.;
@@ -1908,7 +1908,7 @@ boolean check_encoder_restrictions (boolean get_extension, boolean user_audio, b
 	// we only perform this test if we are encoding with audio
 	// find next highest allowed rate from list,
 	// if none are higher, use the highest
-	gint allowed_arate;
+	int allowed_arate;
 	best_arate_delta=1000000000;
 	
 	array=g_strsplit(checks[r],"=",2);
@@ -1939,7 +1939,7 @@ boolean check_encoder_restrictions (boolean get_extension, boolean user_audio, b
 	// width must be a multiple of this
 	array=g_strsplit(checks[r],"=",2);
 	hblock=atoi (array[1]);
-	width=(gint)(width/hblock+.5)*hblock;
+	width=(int)(width/hblock+.5)*hblock;
 	g_strfreev(array);
 	continue;
       }
@@ -1948,7 +1948,7 @@ boolean check_encoder_restrictions (boolean get_extension, boolean user_audio, b
 	// height must be a multiple of this
 	array=g_strsplit(checks[r],"=",2);
 	vblock=atoi (array[1]);
-	height=(gint)(height/vblock+.5)*vblock;
+	height=(int)(height/vblock+.5)*vblock;
 	g_strfreev(array);
 	continue;
       }
@@ -1970,9 +1970,9 @@ boolean check_encoder_restrictions (boolean get_extension, boolean user_audio, b
     if (!mainw->osc_auto&&calc_aspect&&!sizer) {
       // we calculate this last, after getting hblock and vblock sizes
       gchar **array3;
-      gdouble allowed_aspect;
-      gint xwidth=width;
-      gint xheight=height;
+      double allowed_aspect;
+      int xwidth=width;
+      int xheight=height;
       
       width=height=1000000;
       
@@ -2032,9 +2032,9 @@ boolean check_encoder_restrictions (boolean get_extension, boolean user_audio, b
       }
     }
     if (rdet!=NULL&&!rdet->is_encoding) {
-      rdet->arate=(gint)atoi (lives_entry_get_text(GTK_ENTRY(resaudw->entry_arate)));
-      rdet->achans=(gint)atoi (lives_entry_get_text(GTK_ENTRY(resaudw->entry_achans)));
-      rdet->asamps=(gint)atoi (lives_entry_get_text(GTK_ENTRY(resaudw->entry_asamps)));
+      rdet->arate=(int)atoi (lives_entry_get_text(GTK_ENTRY(resaudw->entry_arate)));
+      rdet->achans=(int)atoi (lives_entry_get_text(GTK_ENTRY(resaudw->entry_achans)));
+      rdet->asamps=(int)atoi (lives_entry_get_text(GTK_ENTRY(resaudw->entry_asamps)));
       rdet->aendian=get_signed_endian(lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(resaudw->rb_unsigned)),
 				      lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(resaudw->rb_littleend)));
 
@@ -2663,14 +2663,14 @@ void do_rfx_cleanup(lives_rfx_t *rfx) {
 
 
 
-void render_fx_get_params (lives_rfx_t *rfx, const gchar *plugin_name, gshort status) {
+void render_fx_get_params (lives_rfx_t *rfx, const gchar *plugin_name, short status) {
   // create lives_param_t array from plugin supplied values
   GList *parameter_list;
   int param_idx,i;
   lives_param_t *cparam;
   gchar **param_array;
   gchar *line;
-  gint len;
+  int len;
 
   switch (status) {
   case RFX_STATUS_BUILTIN:
@@ -2753,7 +2753,7 @@ void render_fx_get_params (lives_rfx_t *rfx, const gchar *plugin_name, gshort st
     else continue;
     
     if (cparam->dp) {
-      gdouble val;
+      double val;
       if (len<6) continue;
       val=g_strtod (param_array[3],NULL);
       cparam->value=g_malloc(sizdbl);
@@ -2772,13 +2772,13 @@ void render_fx_get_params (lives_rfx_t *rfx, const gchar *plugin_name, gshort st
       }
     }
     else if (cparam->type==LIVES_PARAM_COLRGB24) {
-      gshort red;
-      gshort green;
-      gshort blue;
+      short red;
+      short green;
+      short blue;
       if (len<6) continue;
-      red=(gshort)atoi (param_array[3]);
-      green=(gshort)atoi (param_array[4]);
-      blue=(gshort)atoi (param_array[5]);
+      red=(short)atoi (param_array[3]);
+      green=(short)atoi (param_array[4]);
+      blue=(short)atoi (param_array[5]);
       cparam->value=g_malloc(sizeof(lives_colRGB24_t));
       cparam->def=g_malloc(sizeof(lives_colRGB24_t));
       set_colRGB24_param(cparam->def,red,green,blue);
@@ -2788,7 +2788,7 @@ void render_fx_get_params (lives_rfx_t *rfx, const gchar *plugin_name, gshort st
       if (len<4) continue;
       cparam->value=g_strdup(_ (param_array[3]));
       cparam->def=g_strdup(_ (param_array[3]));
-      if (len>4) cparam->max=(gdouble)atoi (param_array[4]);
+      if (len>4) cparam->max=(double)atoi (param_array[4]);
       if (cparam->max==0.||cparam->max>RFX_MAXSTRINGLEN) cparam->max=RFX_MAXSTRINGLEN;
     }
     else if (cparam->type==LIVES_PARAM_STRING_LIST) {
@@ -2806,7 +2806,7 @@ void render_fx_get_params (lives_rfx_t *rfx, const gchar *plugin_name, gshort st
     }
     else {
       // int or bool
-      gint val;
+      int val;
       if (len<4) continue;
       val=atoi (param_array[3]);
       cparam->value=g_malloc(sizint);
@@ -2820,10 +2820,10 @@ void render_fx_get_params (lives_rfx_t *rfx, const gchar *plugin_name, gshort st
       }
       else {
 	if (len<6) continue;
-	cparam->min=(gdouble)atoi (param_array[4]);
-	cparam->max=(gdouble)atoi (param_array[5]);
+	cparam->min=(double)atoi (param_array[4]);
+	cparam->max=(double)atoi (param_array[5]);
 	if (len>6) {
-	  cparam->step_size=(gdouble)atoi(param_array[6]);
+	  cparam->step_size=(double)atoi(param_array[6]);
 	  if (cparam->step_size==0.) cparam->step_size=1.;
 	  else if (cparam->step_size<0.) {
 	    cparam->step_size=-cparam->step_size;
@@ -2845,7 +2845,7 @@ void render_fx_get_params (lives_rfx_t *rfx, const gchar *plugin_name, gshort st
 }
 
 
-GList *array_to_string_list (gchar **array, gint offset, gint len) {
+GList *array_to_string_list (gchar **array, int offset, int len) {
   // build a GList from an array.
   int i;
 
@@ -2868,12 +2868,12 @@ GList *array_to_string_list (gchar **array, gint offset, gint len) {
 
 
 
-void sort_rfx_array (lives_rfx_t *in, gint num) {
+void sort_rfx_array (lives_rfx_t *in, int num) {
   // sort rfx array into UTF-8 order by menu entry
   register int i;
   int start=1,min_val=0;
   boolean used[num];
-  gint sorted=1;
+  int sorted=1;
   gchar *min_string=NULL;
   lives_rfx_t *rfx;
   gchar *tmp;
@@ -3046,14 +3046,14 @@ boolean get_bool_param(void *value) {
   return ret;
 }
 
-gint get_int_param(void *value) {
-  gint ret;
+int get_int_param(void *value) {
+  int ret;
   lives_memcpy(&ret,value,sizint);
   return ret;
 }
 
-gdouble get_double_param(void *value) {
-  gdouble ret;
+double get_double_param(void *value) {
+  double ret;
   lives_memcpy(&ret,value,sizdbl);
   return ret;
 }
@@ -3070,15 +3070,15 @@ void set_bool_param(void *value, boolean _const) {
   set_int_param(value,!!_const);
 }
 
-void set_int_param(void *value, gint _const) {
+void set_int_param(void *value, int _const) {
   lives_memcpy(value,&_const,sizint);
 }
-void set_double_param(void *value, gdouble _const) {
+void set_double_param(void *value, double _const) {
   lives_memcpy(value,&_const,sizdbl);
 
 }
 
-void set_colRGB24_param(void *value, gshort red, gshort green, gshort blue) {
+void set_colRGB24_param(void *value, short red, short green, short blue) {
   lives_colRGB24_t *rgbp=(lives_colRGB24_t *)value;
 
   if (red<0) red=0;
@@ -3094,7 +3094,7 @@ void set_colRGB24_param(void *value, gshort red, gshort green, gshort blue) {
 
 }
 
-void set_colRGBA32_param(void *value, gshort red, gshort green, gshort blue, gshort alpha) {
+void set_colRGBA32_param(void *value, short red, short green, short blue, short alpha) {
   lives_colRGBA32_t *rgbap=(lives_colRGBA32_t *)value;
   rgbap->red=red;
   rgbap->green=green;
@@ -3109,20 +3109,20 @@ void set_colRGBA32_param(void *value, gshort red, gshort green, gshort blue, gsh
 
 
 
-gint find_rfx_plugin_by_name (const gchar *name, gshort status) {
+int find_rfx_plugin_by_name (const gchar *name, short status) {
   int i;
   for (i=1;i<mainw->num_rendered_effects_builtin+mainw->num_rendered_effects_custom+
 	 mainw->num_rendered_effects_test;i++) {
     if (mainw->rendered_fx[i].name!=NULL&&!strcmp (mainw->rendered_fx[i].name,name)
 	&&mainw->rendered_fx[i].status==status) 
-      return (gint)i;
+      return (int)i;
   }
   return -1;
 }
 
 
 
-lives_param_t *weed_params_to_rfx(gint npar, weed_plant_t *inst, boolean show_reinits) {
+lives_param_t *weed_params_to_rfx(int npar, weed_plant_t *inst, boolean show_reinits) {
   int i,j;
   lives_param_t *rpar=(lives_param_t *)g_malloc(npar*sizeof(lives_param_t));
   int param_hint;
@@ -3256,8 +3256,8 @@ lives_param_t *weed_params_to_rfx(gint npar, weed_plant_t *inst, boolean show_re
       set_int_param(rpar[i].def,vali);
       vali=weed_get_int_value(wpar,"value",&error);
       set_int_param(rpar[i].value,vali);
-      rpar[i].min=(gdouble)weed_get_int_value(wtmpl,"min",&error);
-      rpar[i].max=(gdouble)weed_get_int_value(wtmpl,"max",&error);
+      rpar[i].min=(double)weed_get_int_value(wtmpl,"min",&error);
+      rpar[i].max=(double)weed_get_int_value(wtmpl,"max",&error);
       if (weed_plant_has_leaf(wtmpl,"wrap")&&weed_get_boolean_value(wtmpl,"wrap",&error)==WEED_TRUE) rpar[i].wrap=TRUE;
       if (gui!=NULL) {
 	if (weed_plant_has_leaf(gui,"choices")) {
@@ -3274,7 +3274,7 @@ lives_param_t *weed_params_to_rfx(gint npar, weed_plant_t *inst, boolean show_re
 	  rpar[i].type=LIVES_PARAM_STRING_LIST;
 	}
 	else if (weed_plant_has_leaf(gui,"step_size")) 
-	  rpar[i].step_size=(gdouble)weed_get_int_value(gui,"step_size",&error);
+	  rpar[i].step_size=(double)weed_get_int_value(gui,"step_size",&error);
 	if (rpar[i].step_size==0.) rpar[i].step_size=1.;
       }
       break;
@@ -3320,7 +3320,7 @@ lives_param_t *weed_params_to_rfx(gint npar, weed_plant_t *inst, boolean show_re
       weed_free(string);
       rpar[i].max=0.;
       if (gui!=NULL&&weed_plant_has_leaf(gui,"maxchars")) {
-	rpar[i].max=(gdouble)weed_get_int_value(gui,"maxchars",&error);
+	rpar[i].max=(double)weed_get_int_value(gui,"maxchars",&error);
 	if (rpar[i].max<0.) rpar[i].max=0.;
       }
       break;
@@ -3428,7 +3428,7 @@ lives_param_t *weed_params_to_rfx(gint npar, weed_plant_t *inst, boolean show_re
 	  cols[1]=(colsd[1]-green_mind)/(green_maxd-green_mind)*255.+.5;
 	  cols[2]=(colsd[2]-blue_mind)/(blue_maxd-blue_mind)*255.+.5;
 	}
-	set_colRGB24_param(rpar[i].value,(gshort)cols[0],(gshort)cols[1],(gshort)cols[2]);
+	set_colRGB24_param(rpar[i].value,(short)cols[0],(short)cols[1],(short)cols[2]);
 	weed_free(cols);
 	if (maxi!=NULL) weed_free(maxi);
 	if (mini!=NULL) weed_free(mini);

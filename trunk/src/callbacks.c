@@ -10094,8 +10094,7 @@ on_slower_pressed (GtkButton *button,
   if (mainw->playing_file==-1||mainw->internal_messaging||(mainw->is_processing&&cfile->is_loaded)) return;
 
   if (mainw->rte_keys!=-1&&user_data==NULL) {
-    mainw->blend_factor-=(mainw->blend_factor>0.);
-    mainw->blend_factor-=(mainw->blend_factor>0.);
+    mainw->blend_factor--;
     weed_set_blend_factor(mainw->rte_keys);
     return;
   }
@@ -10142,8 +10141,7 @@ on_faster_pressed (GtkButton *button,
   if (mainw->playing_file==-1||mainw->internal_messaging||(mainw->is_processing&&cfile->is_loaded)) return;
 
   if (mainw->rte_keys!=-1&&user_data==NULL) {
-    mainw->blend_factor+=(mainw->blend_factor<255.);
-    mainw->blend_factor+=(mainw->blend_factor<255.);
+    mainw->blend_factor++;
     weed_set_blend_factor(mainw->rte_keys);
     return;
   }

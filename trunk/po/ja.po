@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ja\n"
 "Report-Msgid-Bugs-To: https://sourceforge.net/p/lives/bugs/\n"
-"POT-Creation-Date: 2013-07-15 08:47-0300\n"
+"POT-Creation-Date: 2013-07-24 22:03-0300\n"
 "PO-Revision-Date: 2013-03-14 12:31+0000\n"
 "Last-Translator: Launchpad Translations Administrators <Unknown>\n"
 "Language-Team: Japanese <ja@li.org>\n"
@@ -2012,7 +2012,7 @@ msgstr "セットの削除"
 msgid "Set %s was permanently deleted from the disk.\n"
 msgstr "セット %s はディスクから完全に削除されました。\n"
 
-#: src/callbacks.c:1756 src/callbacks.c:11772
+#: src/callbacks.c:1756 src/callbacks.c:11770
 msgid "Insert Silence"
 msgstr "無音部分の挿入"
 
@@ -2120,7 +2120,7 @@ msgstr ""
 "う。\n"
 "続けても構いませんか?\n"
 
-#: src/callbacks.c:2841 src/callbacks.c:11700
+#: src/callbacks.c:2841 src/callbacks.c:11698
 msgid ""
 "\n"
 "Insertion will cause audio to shift in some multitrack layouts.\n"
@@ -2203,8 +2203,8 @@ msgstr ""
 "削除によってマルチトラックレイアウトからフレームが失われます。\n"
 "続けても構いませんか?\n"
 
-#: src/callbacks.c:3431 src/callbacks.c:10925 src/callbacks.c:11170
-#: src/callbacks.c:11236
+#: src/callbacks.c:3431 src/callbacks.c:10923 src/callbacks.c:11168
+#: src/callbacks.c:11234
 msgid ""
 "\n"
 "Deletion will cause missing audio in some multitrack layouts.\n"
@@ -2224,7 +2224,7 @@ msgstr ""
 "消去することによってフレームはマルチトラックレイアウト中で移動します。\n"
 "続けますか?\n"
 
-#: src/callbacks.c:3469 src/callbacks.c:11218
+#: src/callbacks.c:3469 src/callbacks.c:11216
 msgid ""
 "\n"
 "Deletion will cause audio to shift in some multitrack layouts.\n"
@@ -2547,12 +2547,12 @@ msgid "Opening audio"
 msgstr "音声を開きます"
 
 #: src/callbacks.c:6565 src/callbacks.c:6612 src/callbacks.c:8396
-#: src/callbacks.c:8438 src/callbacks.c:8481 src/callbacks.c:10851
+#: src/callbacks.c:8438 src/callbacks.c:8481 src/callbacks.c:10849
 msgid "Cancelling"
 msgstr "キャンセルします"
 
-#: src/callbacks.c:6660 src/callbacks.c:8523 src/callbacks.c:10881
-#: src/callbacks.c:11572
+#: src/callbacks.c:6660 src/callbacks.c:8523 src/callbacks.c:10879
+#: src/callbacks.c:11570
 msgid "Committing audio"
 msgstr "音声を収容します"
 
@@ -2768,12 +2768,12 @@ msgstr "LiVES: 選択したフレーム"
 msgid "_Save frame as..."
 msgstr "フレームに名前を付けて保存(_S)..."
 
-#: src/callbacks.c:10295
+#: src/callbacks.c:10293
 #, c-format
 msgid "Audio is ahead of video by %.4f secs. at frame %d, with fps %.4f\n"
 msgstr "音声が映像を%.4f秒上回っています。%dフレーム、%.4f fps\n"
 
-#: src/callbacks.c:10352
+#: src/callbacks.c:10350
 msgid ""
 "\n"
 "\n"
@@ -2787,7 +2787,7 @@ msgstr ""
 "他のプラットフォームで動作させるにはパッチを送ってください。\n"
 "\n"
 
-#: src/callbacks.c:10358
+#: src/callbacks.c:10356
 msgid ""
 "\n"
 "\n"
@@ -2799,7 +2799,7 @@ msgstr ""
 "この機能を利用するには xwininfo をインストールしなければなりません。\n"
 "\n"
 
-#: src/callbacks.c:10434 src/callbacks.c:11490
+#: src/callbacks.c:10432 src/callbacks.c:11488
 msgid ""
 "\n"
 "Record time must be greater than 0.\n"
@@ -2807,7 +2807,7 @@ msgstr ""
 "\n"
 "記録時間は0より大きくなければなりません。\n"
 
-#: src/callbacks.c:10445
+#: src/callbacks.c:10443
 msgid ""
 "Capture an External Window:\n"
 "\n"
@@ -2821,11 +2821,11 @@ msgstr ""
 "キャンセルするには'キャンセル'をクリックしてください。\n"
 "\n"
 
-#: src/callbacks.c:10450
+#: src/callbacks.c:10448
 msgid "External window was released.\n"
 msgstr "外部ウィンドウを解放しました。\n"
 
-#: src/callbacks.c:10484
+#: src/callbacks.c:10482
 msgid ""
 "Click on a Window to Capture it\n"
 "Press 'q' to stop recording"
@@ -2833,7 +2833,7 @@ msgstr ""
 "キャプチャーしたいウィンドウをクリックしてください\n"
 "記録を終える場合は 'q' を押してください"
 
-#: src/callbacks.c:10518
+#: src/callbacks.c:10516
 #, c-format
 msgid ""
 "\n"
@@ -2849,19 +2849,19 @@ msgstr ""
 "'q'キーで終了。\n"
 "(標準設定の%.3fフレーム/秒を使います)\n"
 
-#: src/callbacks.c:10544
+#: src/callbacks.c:10542
 msgid "LiVES was unable to capture this window. Sorry.\n"
 msgstr "LiVESはこのウィンドウをキャプチャできませんでした。ごめんなさい。\n"
 
-#: src/callbacks.c:10700
+#: src/callbacks.c:10698
 msgid "Export Selected Audio as..."
 msgstr "選択した音声をエクスポート..."
 
-#: src/callbacks.c:10704
+#: src/callbacks.c:10702
 msgid "Export Audio as..."
 msgstr "音声をエクスポート..."
 
-#: src/callbacks.c:10719
+#: src/callbacks.c:10717
 msgid ""
 "\n"
 "\n"
@@ -2875,86 +2875,86 @@ msgstr ""
 "新しい速度でエクスポートするには'OK'をクリック。元の速度でエクスポートするに"
 "は'キャンセル'をクリックしてください。\n"
 
-#: src/callbacks.c:10725
+#: src/callbacks.c:10723
 #, c-format
 msgid "Exporting audio frames %d to %d as %s..."
 msgstr "%dから%dまでの音声フレームを%sとしてエクスポート..."
 
-#: src/callbacks.c:10730
+#: src/callbacks.c:10728
 #, c-format
 msgid "Exporting audio as %s..."
 msgstr "音声を%sとしてエクスポート..."
 
-#: src/callbacks.c:10756
+#: src/callbacks.c:10754
 msgid "Exporting audio"
 msgstr "音声をエクスポートします"
 
-#: src/callbacks.c:10787
+#: src/callbacks.c:10785
 msgid "LiVES: - Append Audio File"
 msgstr ""
 
-#: src/callbacks.c:10830
+#: src/callbacks.c:10828
 #, c-format
 msgid "Appending audio file %s..."
 msgstr "音声ファイル%sを追加します..."
 
-#: src/callbacks.c:10841
+#: src/callbacks.c:10839
 msgid "Appending audio"
 msgstr "音声を追加します"
 
-#: src/callbacks.c:10897
+#: src/callbacks.c:10895
 msgid "Append Audio"
 msgstr "音声の追加"
 
-#: src/callbacks.c:10957
+#: src/callbacks.c:10955
 #, c-format
 msgid "Padding audio to %.2f seconds..."
 msgstr ""
 
-#: src/callbacks.c:10959
+#: src/callbacks.c:10957
 #, c-format
 msgid "Trimming audio from %.2f to %.2f seconds..."
 msgstr "音声を%.2fから%.2f秒までトリミングします..."
 
-#: src/callbacks.c:10978
+#: src/callbacks.c:10976
 msgid "Trimming/Padding audio"
 msgstr "音声をトリミング/パディングします"
 
-#: src/callbacks.c:10986
+#: src/callbacks.c:10984
 msgid "Trim/Pad Audio"
 msgstr "音声のトリミング"
 
-#: src/callbacks.c:11060
+#: src/callbacks.c:11058
 msgid "Fading audio in"
 msgstr "音声をフェードイン"
 
-#: src/callbacks.c:11061
+#: src/callbacks.c:11059
 msgid "Fade audio in"
 msgstr "音声をフェードイン"
 
-#: src/callbacks.c:11066
+#: src/callbacks.c:11064
 msgid "Fading audio out"
 msgstr "音声をフェードアウト"
 
-#: src/callbacks.c:11067
+#: src/callbacks.c:11065
 msgid "Fade audio out"
 msgstr "音声をフェードアウト"
 
-#: src/callbacks.c:11090
+#: src/callbacks.c:11088
 #, c-format
 msgid "%s over %.1f seconds..."
 msgstr "%s が %.1f 秒オーバー..."
 
-#: src/callbacks.c:11092
+#: src/callbacks.c:11090
 #, c-format
 msgid "%s from time %.2f seconds to %.2f seconds..."
 msgstr "%s は %.2f秒から%.2f秒まで..."
 
-#: src/callbacks.c:11099
+#: src/callbacks.c:11097
 msgid "Fading audio..."
 msgstr "音声のフェード..."
 
-#: src/callbacks.c:11202
+#: src/callbacks.c:11200
 msgid ""
 "\n"
 "Deleting all audio will close this file.\n"
@@ -2964,33 +2964,33 @@ msgstr ""
 "全音声を削除すると、このファイルを閉じます。\n"
 "構いませんか ?"
 
-#: src/callbacks.c:11205
+#: src/callbacks.c:11203
 msgid "Deleting all audio..."
 msgstr "全音声の削除..."
 
-#: src/callbacks.c:11211
+#: src/callbacks.c:11209
 #, c-format
 msgid "Deleting audio from %.2f to %.2f seconds..."
 msgstr "音声を%.2fから%.2f秒まで削除します..."
 
-#: src/callbacks.c:11298
+#: src/callbacks.c:11296
 msgid "Deleting Audio"
 msgstr "音声を削除します"
 
-#: src/callbacks.c:11305
+#: src/callbacks.c:11303
 msgid "Delete Audio"
 msgstr "音声の削除"
 
-#: src/callbacks.c:11645
+#: src/callbacks.c:11643
 msgid "Record new audio"
 msgstr "新しい音声の記録"
 
-#: src/callbacks.c:11733
+#: src/callbacks.c:11731
 #, c-format
 msgid "Inserting silence from %.2f to %.2f seconds..."
 msgstr "%.2fから%.2f秒まで無音部分を挿入します..."
 
-#: src/callbacks.c:11762
+#: src/callbacks.c:11760
 msgid "Inserting Silence"
 msgstr "無音部分を挿入します"
 
@@ -6310,7 +6310,7 @@ msgstr "ジェネレーター %s を開始できません。\n"
 msgid "Failed to start generator %s, error %d\n"
 msgstr "ジェネレーター %s を開始できません。エラーコード %d\n"
 
-#: src/effects-weed.c:8672
+#: src/effects-weed.c:8682
 #, c-format
 msgid "%s [unstable] (%s)"
 msgstr "%s [不安定] (%s)"
@@ -6472,39 +6472,39 @@ msgstr "ウィンドウを閉じる(_W)"
 msgid "No parameters"
 msgstr "パラメータなし"
 
-#: src/paramwindow.c:1384
+#: src/paramwindow.c:1386
 msgid "Invalid parameter"
 msgstr "無効なパラメータ"
 
-#: src/paramwindow.c:1576
+#: src/paramwindow.c:1577
 msgid "LiVES: - Select Colour"
 msgstr "LiVES:- 色の選択"
 
-#: src/paramwindow.c:1581
+#: src/paramwindow.c:1582
 msgid "Click to set the colour"
 msgstr "クリックでカラーを設定"
 
-#: src/paramwindow.c:1593
+#: src/paramwindow.c:1594
 msgid "_Red"
 msgstr "赤(_R)"
 
-#: src/paramwindow.c:1594
+#: src/paramwindow.c:1595
 msgid "The red value (0 - 255)"
 msgstr "赤の値 (0 - 255)"
 
-#: src/paramwindow.c:1597
+#: src/paramwindow.c:1598
 msgid "_Green"
 msgstr "緑(_G)"
 
-#: src/paramwindow.c:1598
+#: src/paramwindow.c:1599
 msgid "The green value (0 - 255)"
 msgstr "緑の値 (0 - 255)"
 
-#: src/paramwindow.c:1601
+#: src/paramwindow.c:1602
 msgid "_Blue"
 msgstr "青(_B)"
 
-#: src/paramwindow.c:1602
+#: src/paramwindow.c:1603
 msgid "The blue value (0 - 255)"
 msgstr "青の値 (0 - 255)"
 
@@ -8493,26 +8493,26 @@ msgstr ""
 "JACKサーバに関するオプションは、次にLiVESを開始するときまで変更が反映されませ"
 "ん"
 
-#: src/osc.c:2508
+#: src/osc.c:2507
 #, c-format
 msgid "Syncing to external framerate of %.8f frames per second.\n"
 msgstr "外部フレームレート(%.8fフレーム/秒)に合わせる\n"
 
-#: src/osc.c:6525
+#: src/osc.c:6524
 msgid "Cannot initialize OSC receiver\n"
 msgstr "OSCレシーバーを初期化できません。\n"
 
-#: src/osc.c:6549
+#: src/osc.c:6548
 #, c-format
 msgid "WARNING: Cannot start OSC server at UDP port %d\n"
 msgstr "警告: OSCサーバーをUDPポート %d で開始できません。\n"
 
-#: src/osc.c:6554
+#: src/osc.c:6553
 #, c-format
 msgid "Started OSC server at UDP port %d\n"
 msgstr "OSCサーバーをUDPポート %d で開始しました。\n"
 
-#: src/osc.c:6671
+#: src/osc.c:6670
 #, c-format
 msgid "Cannot start OSC/UDP server at port %d \n"
 msgstr "ポート%d番のOSC/UDPサーバーを起動できません。 \n"
@@ -10947,971 +10947,1358 @@ msgstr "デバイス %s を開くことができません\n"
 msgid "Opened device %s\n"
 msgstr "デバイス %s を開きました\n"
 
-#~ msgid "180 _degrees             "
-#~ msgstr "180度(_D)             "
-
-#~ msgid "90 degrees _Anticlockwise"
-#~ msgstr "90度反時計回り(_A)"
-
-#~ msgid "90 degrees _Clockwise    "
-#~ msgstr "90度時計回り(_C)    "
-
-#~ msgid "Active _animation"
-#~ msgstr "アニメーションの有効化(_A)"
-
-#~ msgid "Add _Border"
-#~ msgstr "ボーダー追加(_B)"
-
-#~ msgid "Add noise"
-#~ msgstr "ノイズの追加"
-
-#~ msgid "Adjust contrast"
-#~ msgstr "コントラスト調整"
-
-#~ msgid "Adjusting contrast of"
-#~ msgstr "コントラスト調整の適用"
-
-#~ msgid "Adjusting noise on"
-#~ msgstr "ノイズ調整の適用"
-
-#~ msgid "Applying charcoal to"
-#~ msgstr "チャコールの適用"
-
-#~ msgid "Applying forward skip to"
-#~ msgstr "前へスキップの適用"
-
-#~ msgid "Applying sepia to"
-#~ msgstr "セピアの適用"
-
-#~ msgid "B/W Threshold"
-#~ msgstr "白黒二値化"
-
-#~ msgid "B/W thresholding"
-#~ msgstr "白黒二値化の適用"
-
-#~ msgid "Blank _Colour"
-#~ msgstr "空白カラー(_C)"
-
-#~ msgid "Blank frames"
-#~ msgstr "空白フレーム"
-
-#~ msgid "Blanking"
-#~ msgstr "マスク"
-
-#~ msgid "Block _height"
-#~ msgstr "ブロック高さ(_H)"
-
-#~ msgid "Block _width"
-#~ msgstr "ブロック幅(_W)"
-
-#~ msgid "Blur"
-#~ msgstr "ぼかし"
-
-#~ msgid "Bluring"
-#~ msgstr "ぼかしの適用"
-
-#~ msgid "Border _Colour"
-#~ msgstr "ボーダーカラー(_C)"
-
-#~ msgid "Brightness _end"
-#~ msgstr "ブライトネス終了(_E)"
-
-#~ msgid "Brightness _start"
-#~ msgstr "ブライトネス開始(_S)"
-
-#~ msgid "Brightness change"
-#~ msgstr "ブライトネスの変更"
-
-#~ msgid "Brightness end"
-#~ msgstr "ブライトネス終了"
-
-#~ msgid "Brightness start"
-#~ msgstr "ブライトネス開始"
-
-#~ msgid "Centre _X"
-#~ msgstr "中心のX座標(_X)"
-
-#~ msgid "Centre _Y"
-#~ msgstr "中心のY座標(_Y)"
-
-#~ msgid "Changing brightness of"
-#~ msgstr "ブライトネスの変更"
-
-#~ msgid "Changing gamma of"
-#~ msgstr "ガンマの変更"
-
-#~ msgid "Changing hue of"
-#~ msgstr "色相の変更"
-
-#~ msgid "Changing saturation of"
-#~ msgstr "サチュレーションの変更"
-
-#~ msgid "Charcoal"
-#~ msgstr "チャコール"
-
-#~ msgid "Checkerboard"
-#~ msgstr "市松模様"
-
-#~ msgid "Checkerboarding"
-#~ msgstr "市松模様の適用"
-
-#~ msgid "Clipboard _over selection"
-#~ msgstr "選択上のクリップボード(_O)"
-
-#~ msgid "Clipboard _under selection"
-#~ msgstr "選択領域のクリップボード(_U)"
-
-#~ msgid "Colorize"
-#~ msgstr "カラー化"
-
-#~ msgid "Colorizing"
-#~ msgstr "カラー化の適用"
-
-#~ msgid "Colour cycle"
-#~ msgstr "色サイクル"
-
-#~ msgid "Colour cycling"
-#~ msgstr "色サイクルの適用"
-
-#~ msgid "Colour filter"
-#~ msgstr "色フィルタ"
-
-#~ msgid "Colour filtering"
-#~ msgstr "色フィルタの適用"
-
-#~ msgid "Colour replace"
-#~ msgstr "カラー置き換え"
-
-#~ msgid "Constant noise level"
-#~ msgstr "一定ノイズレベル"
-
-#~ msgid "Cycle _Step"
-#~ msgstr "サイクルステップ(_S)"
-
-#~ msgid "Deinterlace"
-#~ msgstr "インターレース解除"
-
-#~ msgid "Deinterlacing"
-#~ msgstr "インターレースの解除"
-
-#~ msgid "Despeckle"
-#~ msgstr "デスパークル"
-
-#~ msgid "Despeckling"
-#~ msgstr "デスパークルの適用"
-
-#~ msgid "Dream"
-#~ msgstr "夢"
-
-#~ msgid "Dreamifying"
-#~ msgstr "夢の適用"
-
-#~ msgid "E_nd %"
-#~ msgstr "終了% (_N)"
-
-#~ msgid "Edge detect"
-#~ msgstr "エッジ検出"
-
-#~ msgid "Edge detecting"
-#~ msgstr "エッジ検出の適用"
-
-#~ msgid "Emboss"
-#~ msgstr "エンボス"
-
-#~ msgid "Embossing"
-#~ msgstr "エンボスの適用"
-
-#~ msgid "End _Alpha:"
-#~ msgstr "透明度の最終値(_A):"
-
-#~ msgid "End pos_X:"
-#~ msgstr "X座標の最終値(_X):"
-
-#~ msgid "End pos_Y:"
-#~ msgstr "Y座標の最終値(_Y):"
-
-#~ msgid "Enhance"
-#~ msgstr "エンハンス"
-
-#~ msgid "Enhancing"
-#~ msgstr "エンハンスの適用"
-
-#~ msgid "Fade _colour"
-#~ msgstr "フェードする色(_C)"
-
-#~ msgid "Fade _end"
-#~ msgstr "フェード終了(_E)"
-
-#~ msgid "Fade _in"
-#~ msgstr "フェードイン(_I)"
-
-#~ msgid "Fade _out"
-#~ msgstr "フェードアウト(_O)"
-
-#~ msgid "Fade"
-#~ msgstr "フェード"
-
-#~ msgid "Fading video"
-#~ msgstr "映像のフェード処理"
-
-#~ msgid "Fading"
-#~ msgstr "フェードの適用"
-
-#~ msgid "Fina_l frame"
-#~ msgstr "最終フレーム(_L)"
-
-#~ msgid "Flash _colour"
-#~ msgstr "色フラッシュ(_C)"
-
-#~ msgid "Flip vertically"
-#~ msgstr "垂直の反転"
-
-#~ msgid "Flop horizontally"
-#~ msgstr "水平フロップ"
-
-#~ msgid "Frame Calculator"
-#~ msgstr "フレーム計算"
-
-#~ msgid "Frame _Colour"
-#~ msgstr "フレームカラー(_C)"
-
-#~ msgid "Frame _height"
-#~ msgstr "フレームの高さ(_H)"
-
-#~ msgid "Frame _in frame position of clipboard..."
-#~ msgstr "クリップボードのフレーム位置(_I)..."
-
-#~ msgid "Frame _in frame position of top frame..."
-#~ msgstr "先頭フレームのフレーム位置(_I)..."
-
-#~ msgid "Frame _width"
-#~ msgstr "フレームの幅(_W)"
-
-#~ msgid "Frames _per second (FPS)"
-#~ msgstr "フレーム/秒(FPS)(_P)"
-
-#~ msgid "Gamma _end"
-#~ msgstr "ガンマ終了(_E)"
-
-#~ msgid "Gamma _start"
-#~ msgstr "ガンマ開始(_S)"
-
-#~ msgid "Gamma change"
-#~ msgstr "ガンマ変更"
-
-#~ msgid "Generate blank frames"
-#~ msgstr "空白フレームの生成"
-
-#~ msgid "Generate clip from image"
-#~ msgstr "イメージからクリップの生成"
-
-#~ msgid "Generate coloured frames"
-#~ msgstr "カラーフレームの生成"
-
-#~ msgid "Generate title frames"
-#~ msgstr "タイトルフレームの生成"
-
-#~ msgid "Generating blank frames"
-#~ msgstr "空白フレームの生成"
-
-#~ msgid "Generating clip from image"
-#~ msgstr "イメージからクリップを生成"
-
-#~ msgid "Generating coloured frames"
-#~ msgstr "カラーフレームの生成"
-
-#~ msgid "Generating title frames"
-#~ msgstr "タイトルフレームの生成"
-
-#~ msgid "Horizontal flopping"
-#~ msgstr "水平フロップ"
-
-#~ msgid "Horizontal shifting"
-#~ msgstr "水平シフト"
-
-#~ msgid "Hue _end"
-#~ msgstr "色相終了(_E)"
-
-#~ msgid "Hue _start"
-#~ msgstr "色相開始(_S)"
-
-#~ msgid "Hue change"
-#~ msgstr "色相変更"
-
-#~ msgid "Hue end"
-#~ msgstr "色相終了"
-
-#~ msgid "Hue start"
-#~ msgstr "色相開始"
-
-#~ msgid "Image overlay"
-#~ msgstr "画像の重ねあわせ"
-
-#~ msgid "Init _Alpha:"
-#~ msgstr "透明度の初期値(_A):"
-
-#~ msgid "Init pos_X:"
-#~ msgstr "X座標の初期値(_X):"
-
-#~ msgid "Init pos_Y:"
-#~ msgstr "Y座標の初期値(_Y):"
-
-#~ msgid "Jumble"
-#~ msgstr "ごちゃ混ぜ"
-
-#~ msgid "Jumbling"
-#~ msgstr "ごちゃ混ぜの適用"
-
-#~ msgid "Keep _Centered"
-#~ msgstr "中心を維持(_C)"
-
-#~ msgid "Keep image aspect _ratio"
-#~ msgstr "画像のアスペクト比を維持(_R)"
-
-#~ msgid "L_eft"
-#~ msgstr "左(_E)"
-
-#~ msgid "Making monochrome"
-#~ msgstr "モノクローム化"
-
-#~ msgid "Modulate (BSH)"
-#~ msgstr "変調(BSH)"
-
-#~ msgid "Modulating"
-#~ msgstr "モデュレート"
-
-#~ msgid "Monochrome"
-#~ msgstr "モノクローム"
-
-#~ msgid "Negate"
-#~ msgstr "ネガポジ反転"
-
-#~ msgid "Negating"
-#~ msgstr "ネガポジ反転の適用"
-
-#~ msgid "Noise type"
-#~ msgstr "ノイズタイプ"
-
-#~ msgid "Noisify"
-#~ msgstr "ノイズ"
-
-#~ msgid "Normalize"
-#~ msgstr "正規化"
-
-#~ msgid "Normalizing"
-#~ msgstr "正規化の適用"
-
-#~ msgid "Number of _frames"
-#~ msgstr "フレーム数(_F)"
-
-#~ msgid "Overlaying an image onto video"
-#~ msgstr "画像を映像へ重ねあわせる"
-
-#~ msgid "Overlaying text on"
-#~ msgstr "テキストを重ねあわせる"
-
-#~ msgid "Photo/still"
-#~ msgstr "写真/静止画"
-
-#~ msgid "Pixilate"
-#~ msgstr "ピクセル化"
-
-#~ msgid "Pixilating"
-#~ msgstr "ピクセル化の適用"
-
-#~ msgid "Posterize"
-#~ msgstr "ポスター化"
-
-#~ msgid "Posterizing"
-#~ msgstr "ポスター化の適用"
-
-#~ msgid "Random zoom"
-#~ msgstr "ランダムズーム"
-
-#~ msgid "Random zooming"
-#~ msgstr "ランダムズームの適用"
-
-#~ msgid "Reduce noise"
-#~ msgstr "ノイズ削減"
-
-#~ msgid "Reduction radius"
-#~ msgstr "半径の減少"
-
-#~ msgid "Replacing colours in"
-#~ msgstr "色の置換"
-
-#~ msgid "Resize All Frames"
-#~ msgstr "全フレームのリサイズ"
-
-#~ msgid "Rotate Clip"
-#~ msgstr "クリップの回転"
-
-#~ msgid "Rotating"
-#~ msgstr "ローテーション"
-
-#~ msgid "S_tart %"
-#~ msgstr "開始% (_T)"
-
-#~ msgid "Saturation _end"
-#~ msgstr "サチュレーション終了(_E)"
-
-#~ msgid "Saturation _start"
-#~ msgstr "サチュレーション開始(_S)"
-
-#~ msgid "Saturation change"
-#~ msgstr "サチュレーション変更"
-
-#~ msgid "Saturation end"
-#~ msgstr "サチュレーション終了"
-
-#~ msgid "Saturation start"
-#~ msgstr "サチュレーション開始"
-
-#~ msgid "Sepia"
-#~ msgstr "セピア"
-
-#~ msgid "Shift horizontally"
-#~ msgstr "水平にシフト"
-
-#~ msgid "Shift vertically"
-#~ msgstr "垂直にシフト"
-
-#~ msgid "Shrink/Expand"
-#~ msgstr "縮小/拡大"
-
-#~ msgid "Shrinking/Expanding"
-#~ msgstr "縮小/拡大の適用"
-
-#~ msgid "Skip forward"
-#~ msgstr "前へスキップ"
-
-#~ msgid "Solarize"
-#~ msgstr "ソラリゼーション"
-
-#~ msgid "Solarizing"
-#~ msgstr "ソラリゼーションの適用"
-
-#~ msgid "Spin"
-#~ msgstr "スピン"
-
-#~ msgid "Spinning"
-#~ msgstr "スピンの適用"
-
-#~ msgid "Splice"
-#~ msgstr "接合"
-
-#~ msgid "Splicing"
-#~ msgstr "接合の適用"
-
-#~ msgid "Spread"
-#~ msgstr "拡散"
-
-#~ msgid "Spreading"
-#~ msgstr "拡散の適用"
-
-#~ msgid "Step _Value"
-#~ msgstr "ステップ値(_V)"
-
-#~ msgid "Step per _Frame"
-#~ msgstr "フレーム毎のステップ(_F)"
-
-#~ msgid "Swirl _start"
-#~ msgstr "うずまき開始(_S)"
-
-#~ msgid "Swirl s_tep"
-#~ msgstr "うずまきステップ(_T)"
-
-#~ msgid "Swirl"
-#~ msgstr "うずまき"
-
-#~ msgid "Swirling"
-#~ msgstr "うずまきの適用"
-
-#~ msgid "Text Overlay"
-#~ msgstr "文字の重ね合わせ"
-
-#~ msgid "Thres_hold"
-#~ msgstr "閾値(_H)"
-
-#~ msgid "Trim frames/Add border"
-#~ msgstr "フレームのトリミング/枠の追加"
-
-#~ msgid "Trimming"
-#~ msgstr "トリミング"
-
-#~ msgid "Tunnel"
-#~ msgstr "トンネル"
-
-#~ msgid "Tunneling"
-#~ msgstr "トンネルの適用"
-
-#~ msgid "Use _Natural Size"
-#~ msgstr "画像の元サイズを適用(_N)"
-
-#~ msgid "Use _Natural image size"
-#~ msgstr "自然な画像サイズを使用(_N)"
-
-#~ msgid "Vertical flipping"
-#~ msgstr "垂直の反転"
-
-#~ msgid "Vertical shifting"
-#~ msgstr "垂直シフト"
-
-#~ msgid "Wave"
-#~ msgstr "波"
-
-#~ msgid "Waving"
-#~ msgstr "波の適用"
-
-#~ msgid "_Background Colour"
-#~ msgstr "背景色(_B)"
-
-#~ msgid "_Background colour"
-#~ msgstr "背景色(_B)"
-
-#~ msgid "_Black and white camera"
-#~ msgstr "白黒カメラ(_B)"
-
-#~ msgid "_Black is transparent"
-#~ msgstr "黒を透過色にする(_B)"
-
-#~ msgid "_Bottom"
-#~ msgstr "下(_B)"
-
-#~ msgid "_Calculate"
-#~ msgstr "計算(_C)"
-
-#~ msgid "_Cycle Start"
-#~ msgstr "サイクルの開始(_C)"
-
-#~ msgid "_Decrease Contrast"
-#~ msgstr "コントラストの減少(_D)"
-
-#~ msgid "_Diffmax"
-#~ msgstr "差の最大値(_D)"
-
-#~ msgid "_End Colour"
-#~ msgstr "終了色(_E)"
-
-#~ msgid "_End Size X:"
-#~ msgstr "X座標の最終値(_E):"
-
-#~ msgid "_End Size Y:"
-#~ msgstr "Y座標の最終値(_E):"
-
-#~ msgid "_End amount"
-#~ msgstr "終了量(_E)"
-
-#~ msgid "_Fade level"
-#~ msgstr "フェードレベル(_F)"
-
-#~ msgid "_Fade start"
-#~ msgstr "フェード開始(_F)"
-
-#~ msgid "_Fill colour"
-#~ msgstr "塗りつぶしの色(_F)"
-
-#~ msgid "_First frame"
-#~ msgstr "先頭フレーム(_F)"
-
-#~ msgid "_Flash for"
-#~ msgstr "フラッシュ(_F)"
-
-#~ msgid "_Font"
-#~ msgstr "フォント(_F)"
-
-#~ msgid "_Frames per second"
-#~ msgstr "フレーム/秒(_F)"
-
-#~ msgid "_Frames"
-#~ msgstr "フレーム(_F)"
-
-#~ msgid "_Hold for"
-#~ msgstr "保持(_H)"
-
-#~ msgid "_Horizontal segments"
-#~ msgstr "水平セグメント(_H)"
-
-#~ msgid "_Image File"
-#~ msgstr "画像ファイル(_I)"
-
-#~ msgid "_Image"
-#~ msgstr "画像ファイル(_I)"
-
-#~ msgid "_Increase Contrast"
-#~ msgstr "コントラストの増加(_I)"
-
-#~ msgid "_Init Size X:"
-#~ msgstr "X座標の初期値(_I):"
-
-#~ msgid "_Init Size Y:"
-#~ msgstr "Y座標の初期値(_I):"
-
-#~ msgid "_Levels"
-#~ msgstr "レベル(_L)"
-
-#~ msgid "_Link start and end colours"
-#~ msgstr "リンク開始と終了の色(_L)"
-
-#~ msgid "_Max zoom x 10"
-#~ msgstr "最大ズーム×10(_M)"
-
-#~ msgid "_Middle"
-#~ msgstr "中央(_M)"
-
-#~ msgid "_Midtone"
-#~ msgstr "中間調(_M)"
-
-#~ msgid "_Negate"
-#~ msgstr "反転(_N)"
-
-#~ msgid "_Number of frames"
-#~ msgstr "フレーム数(_N)"
-
-#~ msgid "_Offset X"
-#~ msgstr "Xオフセット(_O)"
-
-#~ msgid "_Offset Y"
-#~ msgstr "Yオフセット(_O)"
-
-#~ msgid "_Other Center"
-#~ msgstr "その他の中心(_O)"
-
-#~ msgid "_Other"
-#~ msgstr "その他(_O)"
-
-#~ msgid "_Point size"
-#~ msgstr "ポイントサイズ(_P)"
-
-#~ msgid "_Radius end"
-#~ msgstr "終了半径(_R)"
-
-#~ msgid "_Radius start"
-#~ msgstr "開始半径(_R)"
-
-#~ msgid "_Radius"
-#~ msgstr "半径(_R)"
-
-#~ msgid "_Random colour each frame"
-#~ msgstr "各フレーム毎にランダム色(_R)"
-
-#~ msgid "_Randomness"
-#~ msgstr "ランダムさ(_R)"
-
-#~ msgid "_Right"
-#~ msgstr "右(_R)"
-
-#~ msgid "_Rotate Selection by"
-#~ msgstr "選択による回転(_R)"
-
-#~ msgid "_Shrink rotated window to fit frame size"
-#~ msgstr "回転したウィンドウをフレームサイズに縮小(_S)"
-
-#~ msgid "_Sigma end"
-#~ msgstr "シグマ終了(_S)"
-
-#~ msgid "_Sigma start"
-#~ msgstr "シグマ開始(_S)"
-
-#~ msgid "_Skip ahead"
-#~ msgstr "次にスキップ(_S)"
-
-#~ msgid "_Skip"
-#~ msgstr "スキップ(_S)"
-
-#~ msgid "_Source Colour"
-#~ msgstr "ソースカラー(_S)"
-
-#~ msgid "_Splice"
-#~ msgstr "接合(_S)"
-
-#~ msgid "_Start Colour"
-#~ msgstr "開始色(_S)"
-
-#~ msgid "_Start Value"
-#~ msgstr "開始値(_S)"
-
-#~ msgid "_Start amount"
-#~ msgstr "開始量(_S)"
-
-#~ msgid "_Stroke colour"
-#~ msgstr "描画色(_S)"
-
-#~ msgid "_Target Colour"
-#~ msgstr "ターゲット色(_T)"
-
-#~ msgid "_Text"
-#~ msgstr "テキスト(_T)"
-
-#~ msgid "_Time (seconds)"
-#~ msgstr "時間(秒)(_T)"
-
-#~ msgid "_Top left is clipboard"
-#~ msgstr "左上にクリップボード(_T)"
-
-#~ msgid "_Vertical segments"
-#~ msgstr "垂直セグメント(_V)"
-
-#~ msgid "_Wavemax"
-#~ msgstr "波の幅(_W)"
-
-#~ msgid "_White is transparent"
-#~ msgstr "白を透明色にする(_W)"
-
-#~ msgid "_Wrap Around"
-#~ msgstr "送り込み(_W)"
-
-#~ msgid "_X Center"
-#~ msgstr "中心のX座標(_X)"
-
-#~ msgid "_X End"
-#~ msgstr "終了時のX座標(_X)"
-
-#~ msgid "_X Start"
-#~ msgstr "開始時のX座標(_X)"
-
-#~ msgid "_X offset"
-#~ msgstr "X座標のオフセット(_X)"
-
-#~ msgid "_Y Center"
-#~ msgstr "中心のY座標(_Y)"
-
-#~ msgid "_Y End"
-#~ msgstr "終了時のY座標(_Y)"
-
-#~ msgid "_Y Start"
-#~ msgstr "開始時のY座標(_Y)"
-
-#~ msgid "_Y offset"
-#~ msgstr "Y座標のオフセット(_Y)"
-
-#~ msgid "_degrees"
-#~ msgstr "度(_D)"
-
-#~ msgid "_then"
-#~ msgstr "次(_T)"
-
-#~ msgid "blank_frames"
-#~ msgstr "空白フレーム"
-
-#~ msgid "blur"
-#~ msgstr "ぼかし"
-
-#~ msgid "brightness_change"
-#~ msgstr "輝度の変更(_C)"
-
-#~ msgid "charcoal"
-#~ msgstr "チャコール"
-
-#~ msgid "colorize"
-#~ msgstr "カラー化"
-
-#~ msgid "colour_filter"
-#~ msgstr "カラーフィルタ"
-
-#~ msgid "colour_replace"
-#~ msgstr "カラー変換"
-
-#~ msgid "contrast"
-#~ msgstr "コントラスト"
-
-#~ msgid "cycle"
-#~ msgstr "サイクル"
-
-#~ msgid "deinterlace"
-#~ msgstr "インターレース解除"
-
-#~ msgid "despeckle"
-#~ msgstr "デスパークル"
-
-#~ msgid "dream"
-#~ msgstr "夢"
-
-#~ msgid "edge_detect"
-#~ msgstr "エッジの検出"
-
-#~ msgid "emboss"
-#~ msgstr "エンボス"
-
-#~ msgid "enhance"
-#~ msgstr "強調"
-
-#~ msgid "every"
-#~ msgstr "すべて"
-
-#~ msgid "fade_in_out"
-#~ msgstr "フェードイン/フェードアウト"
-
-#~ msgid "fc"
-#~ msgstr "fc"
-
-#~ msgid "flip"
-#~ msgstr "フリップ"
-
-#~ msgid "flop"
-#~ msgstr "フロップ"
-
-#~ msgid "frame_calculator"
-#~ msgstr "フレーム計算"
-
-#~ msgid "gamma_change"
-#~ msgstr "ガンマの変更"
-
-#~ msgid "gen_blank_frames"
-#~ msgstr "空白フレームの生成"
-
-#~ msgid "gen_clip_from_image"
-#~ msgstr "画像からクリップを生成"
-
-#~ msgid "gen_coloured_frames"
-#~ msgstr "カラーフレームの生成"
-
-#~ msgid "gen_text"
-#~ msgstr "テキストの生成"
-
-#~ msgid "hue_change"
-#~ msgstr "色相の変更"
-
-#~ msgid "image_overlay"
-#~ msgstr "画像の重ねあわせ"
-
-#~ msgid "jumble"
-#~ msgstr "ごちゃ混ぜ"
-
-#~ msgid "modulate"
-#~ msgstr "モジュレート"
-
-#~ msgid "monochrome"
-#~ msgstr "モノクローム"
-
-#~ msgid "negate"
-#~ msgstr "反転"
-
-#~ msgid "noisify"
-#~ msgstr "ノイズ"
-
-#~ msgid "normalize"
-#~ msgstr "正規化"
-
-#~ msgid "photo_still"
-#~ msgstr "フォトスチル"
-
-#~ msgid "pixilate"
-#~ msgstr "ピクセル化"
-
-#~ msgid "posterize"
-#~ msgstr "ポスタリゼーション"
-
-#~ msgid "randomzoom"
-#~ msgstr "ランダムズーム"
-
-#~ msgid "resize"
-#~ msgstr "リサイズ"
-
-#~ msgid "rotate"
-#~ msgstr "回転"
-
-#~ msgid "saturation_change"
-#~ msgstr "サチュレーションの変更"
-
-#~ msgid "sepia"
-#~ msgstr "セピア"
-
-#~ msgid "shift_horizontal"
-#~ msgstr "水平にシフト"
-
-#~ msgid "shift_vertical"
-#~ msgstr "垂直にシフト"
-
-#~ msgid "shrink_expand"
-#~ msgstr "拡大縮小"
-
-#~ msgid "skip_forwards"
-#~ msgstr "前へスキップ"
-
-#~ msgid "solarize"
-#~ msgstr "ソラリゼーション"
-
-#~ msgid "spin"
-#~ msgstr "スピン"
-
-#~ msgid "spread"
-#~ msgstr "スプレッド"
-
-#~ msgid "swirl"
-#~ msgstr "歪み"
-
-#~ msgid "textover"
-#~ msgstr "テキストオーバー"
-
-#~ msgid "transition_bwthresh"
-#~ msgstr "トランジション白黒二値化"
-
-#~ msgid "transition_checkerboard"
-#~ msgstr "トランジション市松模様"
-
-#~ msgid "transition_fade2"
-#~ msgstr "トランジションフェード2"
-
-#~ msgid "transition_splice"
-#~ msgstr "トランジション接合"
-
-#~ msgid "trim_frames"
-#~ msgstr "フレームのトリミング"
-
-#~ msgid "tunnel"
-#~ msgstr "トンネル"
-
-#~ msgid "wave"
-#~ msgstr "波"
-
-#~ msgid "Unable to open output file !"
-#~ msgstr "出力ファイルを開けません!"
-
-#~ msgid "LiVES could not write to $nfile."
-#~ msgstr "LiVESは $nfile に書き込めません。"
-
-#~ msgid "Unable to locate the program $rfx_builder_multi"
-#~ msgstr "プログラム $rfx_builder_multi が見つかりません"
-
-#~ msgid "This does not appear to be a valid video or image file"
-#~ msgstr "有効な映像ファイル、画像ファイルではありません"
-
-#~ msgid "LiVES was unable to open it."
-#~ msgstr "LiVESはこれを開くことができません。"
-
-#~ msgid "Check the terminal window for more details."
-#~ msgstr "詳細はターミナルウィンドウをチェックしてください。"
-
-#~ msgid "Error creating new backup."
-#~ msgstr "新しいバックアップ作成でエラーが発生しました。"
-
-#~ msgid "This does not appear to be a valid backup file"
-#~ msgstr "有効なバックアップファイルではないようです"
-
-#~ msgid "LiVES was not able to open the file"
-#~ msgstr "LiVESはファイルを開けませんでした"
-
-#~ msgid "$file"
-#~ msgstr "$file"
-
-#~ msgid "LiVES audio error."
-#~ msgstr "LiVES音声エラー"
-
-#~ msgid "cdda2wav is required for this function."
-#~ msgstr "この機能にはcdda2wavが必要です。"
-
-#~ msgid "Please install it first."
-#~ msgstr "先にインストールしてください。"
-
-#~ msgid "You must set the CD device first in Preferences."
-#~ msgstr "設定でCDデバイスを先に指定してください。"
-
-#~ msgid "$plugin_name failed:"
-#~ msgstr "$plugin_name は失敗しました:"
-
-#~ msgid "$error"
-#~ msgstr "$error"
+#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
+msgid " _Top  "
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/rotate.script:0
+msgid "180 _degrees             "
+msgstr "180度(_D)             "
+
+#: /usr/share/lives/plugins/effects/rendered/rotate.script:0
+msgid "90 degrees _Anticlockwise"
+msgstr "90度反時計回り(_A)"
+
+#: /usr/share/lives/plugins/effects/rendered/rotate.script:0
+msgid "90 degrees _Clockwise    "
+msgstr "90度時計回り(_C)    "
+
+#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+msgid "Active _animation"
+msgstr "アニメーションの有効化(_A)"
+
+#: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
+msgid "Add _Border"
+msgstr "ボーダー追加(_B)"
+
+#: /usr/share/lives/plugins/effects/rendered/noisify.script:0
+msgid "Add noise"
+msgstr "ノイズの追加"
+
+#: /usr/share/lives/plugins/effects/rendered/contrast.script:0
+msgid "Adjust contrast"
+msgstr "コントラスト調整"
+
+#: /usr/share/lives/plugins/effects/rendered/contrast.script:0
+msgid "Adjusting contrast of"
+msgstr "コントラスト調整の適用"
+
+#: /usr/share/lives/plugins/effects/rendered/noisify.script:0
+msgid "Adjusting noise on"
+msgstr "ノイズ調整の適用"
+
+#: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
+msgid "Applying charcoal to"
+msgstr "チャコールの適用"
+
+#: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
+msgid "Applying forward skip to"
+msgstr "前へスキップの適用"
+
+#: /usr/share/lives/plugins/effects/rendered/sepia.script:0
+msgid "Applying sepia to"
+msgstr "セピアの適用"
+
+#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
+msgid "B/W Threshold"
+msgstr "白黒二値化"
+
+#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
+msgid "B/W thresholding"
+msgstr "白黒二値化の適用"
+
+#: /usr/share/lives/plugins/effects/rendered/blank_frames.script:0
+msgid "Blank _Colour"
+msgstr "空白カラー(_C)"
+
+#: /usr/share/lives/plugins/effects/rendered/blank_frames.script:0
+msgid "Blank frames"
+msgstr "空白フレーム"
+
+#: /usr/share/lives/plugins/effects/rendered/blank_frames.script:0
+msgid "Blanking"
+msgstr "マスク"
+
+#: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
+msgid "Block _height"
+msgstr "ブロック高さ(_H)"
+
+#: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
+msgid "Block _width"
+msgstr "ブロック幅(_W)"
+
+#: /usr/share/lives/plugins/effects/rendered/blur.script:0
+msgid "Blur"
+msgstr "ぼかし"
+
+#: /usr/share/lives/plugins/effects/rendered/blur.script:0
+msgid "Bluring"
+msgstr "ぼかしの適用"
+
+#: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
+msgid "Border _Colour"
+msgstr "ボーダーカラー(_C)"
+
+#: /usr/share/lives/plugins/effects/rendered/brightness_change.script:0
+msgid "Brightness _end"
+msgstr "ブライトネス終了(_E)"
+
+#: /usr/share/lives/plugins/effects/rendered/brightness_change.script:0
+msgid "Brightness _start"
+msgstr "ブライトネス開始(_S)"
+
+#: /usr/share/lives/plugins/effects/rendered/brightness_change.script:0
+msgid "Brightness change"
+msgstr "ブライトネスの変更"
+
+#: /usr/share/lives/plugins/effects/rendered/modulate.script:0
+msgid "Brightness end"
+msgstr "ブライトネス終了"
+
+#: /usr/share/lives/plugins/effects/rendered/modulate.script:0
+msgid "Brightness start"
+msgstr "ブライトネス開始"
+
+#: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
+msgid "Centre _X"
+msgstr "中心のX座標(_X)"
+
+#: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
+msgid "Centre _Y"
+msgstr "中心のY座標(_Y)"
+
+#: /usr/share/lives/plugins/effects/rendered/brightness_change.script:0
+msgid "Changing brightness of"
+msgstr "ブライトネスの変更"
+
+#: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
+msgid "Changing gamma of"
+msgstr "ガンマの変更"
+
+#: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
+msgid "Changing hue of"
+msgstr "色相の変更"
+
+#: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
+msgid "Changing saturation of"
+msgstr "サチュレーションの変更"
+
+#: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
+msgid "Charcoal"
+msgstr "チャコール"
+
+#: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
+msgid "Checkerboard"
+msgstr "市松模様"
+
+#: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
+msgid "Checkerboarding"
+msgstr "市松模様の適用"
+
+#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
+msgid "Clipboard _over selection"
+msgstr "選択上のクリップボード(_O)"
+
+#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
+msgid "Clipboard _under selection"
+msgstr "選択領域のクリップボード(_U)"
+
+#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+msgid "Colorize"
+msgstr "カラー化"
+
+#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+msgid "Colorizing"
+msgstr "カラー化の適用"
+
+#: /usr/share/lives/plugins/effects/rendered/cycle.script:0
+msgid "Colour cycle"
+msgstr "色サイクル"
+
+#: /usr/share/lives/plugins/effects/rendered/cycle.script:0
+msgid "Colour cycling"
+msgstr "色サイクルの適用"
+
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+msgid "Colour filter"
+msgstr "色フィルタ"
+
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+msgid "Colour filtering"
+msgstr "色フィルタの適用"
+
+#: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
+msgid "Colour replace"
+msgstr "カラー置き換え"
+
+#: /usr/share/lives/plugins/effects/rendered/noisify.script:0
+msgid "Constant noise level"
+msgstr "一定ノイズレベル"
+
+#: /usr/share/lives/plugins/effects/rendered/cycle.script:0
+msgid "Cycle _Step"
+msgstr "サイクルステップ(_S)"
+
+#: /usr/share/lives/plugins/effects/rendered/deinterlace.script:0
+msgid "Deinterlace"
+msgstr "インターレース解除"
+
+#: /usr/share/lives/plugins/effects/rendered/deinterlace.script:0
+msgid "Deinterlacing"
+msgstr "インターレースの解除"
+
+#: /usr/share/lives/plugins/effects/rendered/despekle.script:0
+msgid "Despeckle"
+msgstr "デスパークル"
+
+#: /usr/share/lives/plugins/effects/rendered/despekle.script:0
+msgid "Despeckling"
+msgstr "デスパークルの適用"
+
+#: /usr/share/lives/plugins/effects/rendered/dream.script:0
+msgid "Dream"
+msgstr "夢"
+
+#: /usr/share/lives/plugins/effects/rendered/dream.script:0
+msgid "Dreamifying"
+msgstr "夢の適用"
+
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+msgid "E_nd %"
+msgstr "終了% (_N)"
+
+#: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
+msgid "Edge detect"
+msgstr "エッジ検出"
+
+#: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
+msgid "Edge detecting"
+msgstr "エッジ検出の適用"
+
+#: /usr/share/lives/plugins/effects/rendered/emboss.script:0
+msgid "Emboss"
+msgstr "エンボス"
+
+#: /usr/share/lives/plugins/effects/rendered/emboss.script:0
+msgid "Embossing"
+msgstr "エンボスの適用"
+
+#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+msgid "End _Alpha:"
+msgstr "透明度の最終値(_A):"
+
+#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+msgid "End pos_X:"
+msgstr "X座標の最終値(_X):"
+
+#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+msgid "End pos_Y:"
+msgstr "Y座標の最終値(_Y):"
+
+#: /usr/share/lives/plugins/effects/rendered/enhance.script:0
+msgid "Enhance"
+msgstr "エンハンス"
+
+#: /usr/share/lives/plugins/effects/rendered/enhance.script:0
+msgid "Enhancing"
+msgstr "エンハンスの適用"
+
+#: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+msgid "Envelope length"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
+msgid "Fade _colour"
+msgstr "フェードする色(_C)"
+
+#: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+#: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
+msgid "Fade _end"
+msgstr "フェード終了(_E)"
+
+#: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
+msgid "Fade _in"
+msgstr "フェードイン(_I)"
+
+#: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
+msgid "Fade _out"
+msgstr "フェードアウト(_O)"
+
+#: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
+msgid "Fade video to or from color"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+msgid "Fade"
+msgstr "フェード"
+
+#: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
+msgid "Fading video"
+msgstr "映像のフェード処理"
+
+#: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+msgid "Fading"
+msgstr "フェードの適用"
+
+#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
+msgid "Fina_l frame"
+msgstr "最終フレーム(_L)"
+
+#: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
+msgid "Flash _colour"
+msgstr "色フラッシュ(_C)"
+
+#: /usr/share/lives/plugins/effects/rendered/flip.script:0
+msgid "Flip vertically"
+msgstr "垂直の反転"
+
+#: /usr/share/lives/plugins/effects/rendered/flop.script:0
+msgid "Flop horizontally"
+msgstr "水平フロップ"
+
+#: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
+msgid "Frame Calculator"
+msgstr "フレーム計算"
+
+#: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
+msgid "Frame _Colour"
+msgstr "フレームカラー(_C)"
+
+#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+msgid "Frame _height"
+msgstr "フレームの高さ(_H)"
+
+#: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+msgid "Frame _in frame position of clipboard..."
+msgstr "クリップボードのフレーム位置(_I)..."
+
+#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
+msgid "Frame _in frame position of top frame..."
+msgstr "先頭フレームのフレーム位置(_I)..."
+
+#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+msgid "Frame _width"
+msgstr "フレームの幅(_W)"
+
+#: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
+msgid "Frames _per second (FPS)"
+msgstr "フレーム/秒(FPS)(_P)"
+
+#: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
+msgid "Gamma _end"
+msgstr "ガンマ終了(_E)"
+
+#: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
+msgid "Gamma _start"
+msgstr "ガンマ開始(_S)"
+
+#: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
+msgid "Gamma change"
+msgstr "ガンマ変更"
+
+#: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
+msgid "Generate blank frames"
+msgstr "空白フレームの生成"
+
+#: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
+msgid "Generate clip from image"
+msgstr "イメージからクリップの生成"
+
+#: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
+msgid "Generate coloured frames"
+msgstr "カラーフレームの生成"
+
+#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+msgid "Generate title frames"
+msgstr "タイトルフレームの生成"
+
+#: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
+msgid "Generating blank frames"
+msgstr "空白フレームの生成"
+
+#: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
+msgid "Generating clip from image"
+msgstr "イメージからクリップを生成"
+
+#: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
+msgid "Generating coloured frames"
+msgstr "カラーフレームの生成"
+
+#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+msgid "Generating title frames"
+msgstr "タイトルフレームの生成"
+
+#: /usr/share/lives/plugins/effects/rendered/flop.script:0
+msgid "Horizontal flopping"
+msgstr "水平フロップ"
+
+#: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
+msgid "Horizontal shifting"
+msgstr "水平シフト"
+
+#: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
+msgid "Hue _end"
+msgstr "色相終了(_E)"
+
+#: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
+msgid "Hue _start"
+msgstr "色相開始(_S)"
+
+#: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
+msgid "Hue change"
+msgstr "色相変更"
+
+#: /usr/share/lives/plugins/effects/rendered/modulate.script:0
+msgid "Hue end"
+msgstr "色相終了"
+
+#: /usr/share/lives/plugins/effects/rendered/modulate.script:0
+msgid "Hue start"
+msgstr "色相開始"
+
+#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+msgid "Image overlay"
+msgstr "画像の重ねあわせ"
+
+#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+msgid "Init _Alpha:"
+msgstr "透明度の初期値(_A):"
+
+#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+msgid "Init pos_X:"
+msgstr "X座標の初期値(_X):"
+
+#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+msgid "Init pos_Y:"
+msgstr "Y座標の初期値(_Y):"
+
+#: /usr/share/lives/plugins/effects/rendered/jumble.script:0
+msgid "Jumble"
+msgstr "ごちゃ混ぜ"
+
+#: /usr/share/lives/plugins/effects/rendered/jumble.script:0
+msgid "Jumbling"
+msgstr "ごちゃ混ぜの適用"
+
+#: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
+msgid "Keep _Centered"
+msgstr "中心を維持(_C)"
+
+#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+msgid "Keep image aspect _ratio"
+msgstr "画像のアスペクト比を維持(_R)"
+
+#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
+msgid "L_eft"
+msgstr "左(_E)"
+
+#: /usr/share/lives/plugins/effects/rendered/monochrome.script:0
+msgid "Making monochrome"
+msgstr "モノクローム化"
+
+#: /usr/share/lives/plugins/effects/rendered/modulate.script:0
+msgid "Modulate (BSH)"
+msgstr "変調(BSH)"
+
+#: /usr/share/lives/plugins/effects/rendered/modulate.script:0
+msgid "Modulating"
+msgstr "モデュレート"
+
+#: /usr/share/lives/plugins/effects/rendered/monochrome.script:0
+msgid "Monochrome"
+msgstr "モノクローム"
+
+#: /usr/share/lives/plugins/effects/rendered/negate.script:0
+msgid "Negate"
+msgstr "ネガポジ反転"
+
+#: /usr/share/lives/plugins/effects/rendered/negate.script:0
+msgid "Negating"
+msgstr "ネガポジ反転の適用"
+
+#: /usr/share/lives/plugins/effects/rendered/noisify.script:0
+msgid "Noise type"
+msgstr "ノイズタイプ"
+
+#: /usr/share/lives/plugins/effects/rendered/noisify.script:0
+msgid "Noisify"
+msgstr "ノイズ"
+
+#: /usr/share/lives/plugins/effects/rendered/normalize.script:0
+msgid "Normalize"
+msgstr "正規化"
+
+#: /usr/share/lives/plugins/effects/rendered/normalize.script:0
+msgid "Normalizing"
+msgstr "正規化の適用"
+
+#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+msgid "Number of _frames"
+msgstr "フレーム数(_F)"
+
+#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+msgid "Overlaying an image onto video"
+msgstr "画像を映像へ重ねあわせる"
+
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
+msgid "Overlaying text on"
+msgstr "テキストを重ねあわせる"
+
+#: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
+msgid "Photo/still"
+msgstr "写真/静止画"
+
+#: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
+msgid "Pixilate"
+msgstr "ピクセル化"
+
+#: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
+msgid "Pixilating"
+msgstr "ピクセル化の適用"
+
+#: /usr/share/lives/plugins/effects/rendered/posterize.script:0
+msgid "Posterize"
+msgstr "ポスター化"
+
+#: /usr/share/lives/plugins/effects/rendered/posterize.script:0
+msgid "Posterizing"
+msgstr "ポスター化の適用"
+
+#: /usr/share/lives/plugins/effects/rendered/randomzoom.script:0
+msgid "Random zoom"
+msgstr "ランダムズーム"
+
+#: /usr/share/lives/plugins/effects/rendered/randomzoom.script:0
+msgid "Random zooming"
+msgstr "ランダムズームの適用"
+
+#: /usr/share/lives/plugins/effects/rendered/noisify.script:0
+msgid "Reduce noise"
+msgstr "ノイズ削減"
+
+#: /usr/share/lives/plugins/effects/rendered/noisify.script:0
+msgid "Reduction radius"
+msgstr "半径の減少"
+
+#: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
+msgid "Replacing colours in"
+msgstr "色の置換"
+
+#: /usr/share/lives/plugins/effects/rendered/resize.script:0
+msgid "Resize All Frames"
+msgstr "全フレームのリサイズ"
+
+#: /usr/share/lives/plugins/effects/rendered/rotate.script:0
+msgid "Rotate Clip"
+msgstr "クリップの回転"
+
+#: /usr/share/lives/plugins/effects/rendered/rotate.script:0
+msgid "Rotating"
+msgstr "ローテーション"
+
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+msgid "S_tart %"
+msgstr "開始% (_T)"
+
+#: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
+msgid "Saturation _end"
+msgstr "サチュレーション終了(_E)"
+
+#: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
+msgid "Saturation _start"
+msgstr "サチュレーション開始(_S)"
+
+#: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
+msgid "Saturation change"
+msgstr "サチュレーション変更"
+
+#: /usr/share/lives/plugins/effects/rendered/modulate.script:0
+msgid "Saturation end"
+msgstr "サチュレーション終了"
+
+#: /usr/share/lives/plugins/effects/rendered/modulate.script:0
+msgid "Saturation start"
+msgstr "サチュレーション開始"
+
+#: /usr/share/lives/plugins/effects/rendered/sepia.script:0
+msgid "Sepia"
+msgstr "セピア"
+
+#: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
+msgid "Shift horizontally"
+msgstr "水平にシフト"
+
+#: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
+msgid "Shift vertically"
+msgstr "垂直にシフト"
+
+#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
+msgid "Shrink/Expand"
+msgstr "縮小/拡大"
+
+#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
+msgid "Shrinking/Expanding"
+msgstr "縮小/拡大の適用"
+
+#: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
+msgid "Skip forward"
+msgstr "前へスキップ"
+
+#: /usr/share/lives/plugins/effects/rendered/solarize.script:0
+msgid "Solarize"
+msgstr "ソラリゼーション"
+
+#: /usr/share/lives/plugins/effects/rendered/solarize.script:0
+msgid "Solarizing"
+msgstr "ソラリゼーションの適用"
+
+#: /usr/share/lives/plugins/effects/rendered/spin.script:0
+msgid "Spin"
+msgstr "スピン"
+
+#: /usr/share/lives/plugins/effects/rendered/spin.script:0
+msgid "Spinning"
+msgstr "スピンの適用"
+
+#: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
+msgid "Splice"
+msgstr "接合"
+
+#: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
+msgid "Splicing"
+msgstr "接合の適用"
+
+#: /usr/share/lives/plugins/effects/rendered/spread.script:0
+msgid "Spread"
+msgstr "拡散"
+
+#: /usr/share/lives/plugins/effects/rendered/spread.script:0
+msgid "Spreading"
+msgstr "拡散の適用"
+
+#: /usr/share/lives/plugins/effects/rendered/solarize.script:0
+msgid "Step _Value"
+msgstr "ステップ値(_V)"
+
+#: /usr/share/lives/plugins/effects/rendered/spin.script:0
+#: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
+#: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
+msgid "Step per _Frame"
+msgstr "フレーム毎のステップ(_F)"
+
+#: /usr/share/lives/plugins/effects/rendered/swirl.script:0
+msgid "Swirl _start"
+msgstr "うずまき開始(_S)"
+
+#: /usr/share/lives/plugins/effects/rendered/swirl.script:0
+msgid "Swirl s_tep"
+msgstr "うずまきステップ(_T)"
+
+#: /usr/share/lives/plugins/effects/rendered/swirl.script:0
+msgid "Swirl"
+msgstr "うずまき"
+
+#: /usr/share/lives/plugins/effects/rendered/swirl.script:0
+msgid "Swirling"
+msgstr "うずまきの適用"
+
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
+msgid "Text Overlay"
+msgstr "文字の重ね合わせ"
+
+#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
+msgid "Thres_hold"
+msgstr "閾値(_H)"
+
+#: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
+msgid "Trim frames/Add border"
+msgstr "フレームのトリミング/枠の追加"
+
+#: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
+msgid "Trimming"
+msgstr "トリミング"
+
+#: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
+msgid "Tunnel"
+msgstr "トンネル"
+
+#: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
+msgid "Tunneling"
+msgstr "トンネルの適用"
+
+#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+msgid "Use _Natural Size"
+msgstr "画像の元サイズを適用(_N)"
+
+#: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
+msgid "Use _Natural image size"
+msgstr "自然な画像サイズを使用(_N)"
+
+#: /usr/share/lives/plugins/effects/rendered/flip.script:0
+msgid "Vertical flipping"
+msgstr "垂直の反転"
+
+#: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
+msgid "Vertical shifting"
+msgstr "垂直シフト"
+
+#: /usr/share/lives/plugins/effects/rendered/wave.script:0
+msgid "Wave"
+msgstr "波"
+
+#: /usr/share/lives/plugins/effects/rendered/wave.script:0
+msgid "Waving"
+msgstr "波の適用"
+
+#: /usr/share/lives/plugins/effects/rendered/rotate.script:0
+#: /usr/share/lives/plugins/effects/rendered/wave.script:0
+#: /usr/share/lives/plugins/effects/rendered/spin.script:0
+#: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
+#: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
+#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
+msgid "_Background Colour"
+msgstr "背景色(_B)"
+
+#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+msgid "_Background colour"
+msgstr "背景色(_B)"
+
+#: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
+msgid "_Black and white camera"
+msgstr "白黒カメラ(_B)"
+
+#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
+msgid "_Black is transparent"
+msgstr "黒を透過色にする(_B)"
+
+#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
+msgid "_Bottom"
+msgstr "下(_B)"
+
+#: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
+msgid "_Calculate"
+msgstr "計算(_C)"
+
+#: /usr/share/lives/plugins/effects/rendered/cycle.script:0
+msgid "_Cycle Start"
+msgstr "サイクルの開始(_C)"
+
+#: /usr/share/lives/plugins/effects/rendered/contrast.script:0
+msgid "_Decrease Contrast"
+msgstr "コントラストの減少(_D)"
+
+#: /usr/share/lives/plugins/effects/rendered/dream.script:0
+#: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
+msgid "_Diffmax"
+msgstr "差の最大値(_D)"
+
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+msgid "_End Colour"
+msgstr "終了色(_E)"
+
+#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+msgid "_End Size X:"
+msgstr "X座標の最終値(_E):"
+
+#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+msgid "_End Size Y:"
+msgstr "Y座標の最終値(_E):"
+
+#: /usr/share/lives/plugins/effects/rendered/spread.script:0
+msgid "_End amount"
+msgstr "終了量(_E)"
+
+#: /usr/share/lives/plugins/effects/rendered/dream.script:0
+#: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
+msgid "_Fade level"
+msgstr "フェードレベル(_F)"
+
+#: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+#: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
+msgid "_Fade start"
+msgstr "フェード開始(_F)"
+
+#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
+msgid "_Fill colour"
+msgstr "塗りつぶしの色(_F)"
+
+#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
+msgid "_First frame"
+msgstr "先頭フレーム(_F)"
+
+#: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
+msgid "_Flash for"
+msgstr "フラッシュ(_F)"
+
+#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+msgid "_Font"
+msgstr "フォント(_F)"
+
+#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
+#: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
+#: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
+msgid "_Frames per second"
+msgstr "フレーム/秒(_F)"
+
+#: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
+msgid "_Frames"
+msgstr "フレーム(_F)"
+
+#: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
+msgid "_Hold for"
+msgstr "保持(_H)"
+
+#: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
+msgid "_Horizontal segments"
+msgstr "水平セグメント(_H)"
+
+#: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
+msgid "_Image File"
+msgstr "画像ファイル(_I)"
+
+#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+msgid "_Image"
+msgstr "画像ファイル(_I)"
+
+#: /usr/share/lives/plugins/effects/rendered/contrast.script:0
+msgid "_Increase Contrast"
+msgstr "コントラストの増加(_I)"
+
+#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+msgid "_Init Size X:"
+msgstr "X座標の初期値(_I):"
+
+#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+msgid "_Init Size Y:"
+msgstr "Y座標の初期値(_I):"
+
+#: /usr/share/lives/plugins/effects/rendered/posterize.script:0
+msgid "_Levels"
+msgstr "レベル(_L)"
+
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+msgid "_Link start and end colours"
+msgstr "リンク開始と終了の色(_L)"
+
+#: /usr/share/lives/plugins/effects/rendered/randomzoom.script:0
+msgid "_Max zoom x 10"
+msgstr "最大ズーム×10(_M)"
+
+#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
+msgid "_Middle"
+msgstr "中央(_M)"
+
+#: /usr/share/lives/plugins/effects/rendered/sepia.script:0
+msgid "_Midtone"
+msgstr "中間調(_M)"
+
+#: /usr/share/lives/plugins/effects/rendered/negate.script:0
+msgid "_Negate"
+msgstr "反転(_N)"
+
+#: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
+#: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
+#: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
+msgid "_Number of frames"
+msgstr "フレーム数(_N)"
+
+#: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
+msgid "_Offset X"
+msgstr "Xオフセット(_O)"
+
+#: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
+msgid "_Offset Y"
+msgstr "Yオフセット(_O)"
+
+#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
+msgid "_Other Center"
+msgstr "その他の中心(_O)"
+
+#: /usr/share/lives/plugins/effects/rendered/rotate.script:0
+msgid "_Other"
+msgstr "その他(_O)"
+
+#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
+msgid "_Point size"
+msgstr "ポイントサイズ(_P)"
+
+#: /usr/share/lives/plugins/effects/rendered/blur.script:0
+msgid "_Radius end"
+msgstr "終了半径(_R)"
+
+#: /usr/share/lives/plugins/effects/rendered/blur.script:0
+msgid "_Radius start"
+msgstr "開始半径(_R)"
+
+#: /usr/share/lives/plugins/effects/rendered/emboss.script:0
+#: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
+#: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
+msgid "_Radius"
+msgstr "半径(_R)"
+
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+msgid "_Random colour each frame"
+msgstr "各フレーム毎にランダム色(_R)"
+
+#: /usr/share/lives/plugins/effects/rendered/dream.script:0
+#: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
+msgid "_Randomness"
+msgstr "ランダムさ(_R)"
+
+#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
+msgid "_Right"
+msgstr "右(_R)"
+
+#: /usr/share/lives/plugins/effects/rendered/spin.script:0
+msgid "_Rotate Selection by"
+msgstr "選択による回転(_R)"
+
+#: /usr/share/lives/plugins/effects/rendered/spin.script:0
+msgid "_Shrink rotated window to fit frame size"
+msgstr "回転したウィンドウをフレームサイズに縮小(_S)"
+
+#: /usr/share/lives/plugins/effects/rendered/blur.script:0
+msgid "_Sigma end"
+msgstr "シグマ終了(_S)"
+
+#: /usr/share/lives/plugins/effects/rendered/blur.script:0
+msgid "_Sigma start"
+msgstr "シグマ開始(_S)"
+
+#: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
+msgid "_Skip ahead"
+msgstr "次にスキップ(_S)"
+
+#: /usr/share/lives/plugins/effects/rendered/negate.script:0
+msgid "_Skip"
+msgstr "スキップ(_S)"
+
+#: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
+msgid "_Source Colour"
+msgstr "ソースカラー(_S)"
+
+#: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
+msgid "_Splice"
+msgstr "接合(_S)"
+
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+msgid "_Start Colour"
+msgstr "開始色(_S)"
+
+#: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
+#: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
+#: /usr/share/lives/plugins/effects/rendered/solarize.script:0
+msgid "_Start Value"
+msgstr "開始値(_S)"
+
+#: /usr/share/lives/plugins/effects/rendered/spread.script:0
+msgid "_Start amount"
+msgstr "開始量(_S)"
+
+#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
+msgid "_Stroke colour"
+msgstr "描画色(_S)"
+
+#: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
+msgid "_Target Colour"
+msgstr "ターゲット色(_T)"
+
+#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
+msgid "_Text"
+msgstr "テキスト(_T)"
+
+#: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
+msgid "_Time (seconds)"
+msgstr "時間(秒)(_T)"
+
+#: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
+msgid "_Top left is clipboard"
+msgstr "左上にクリップボード(_T)"
+
+#: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
+msgid "_Vertical segments"
+msgstr "垂直セグメント(_V)"
+
+#: /usr/share/lives/plugins/effects/rendered/wave.script:0
+msgid "_Wavemax"
+msgstr "波の幅(_W)"
+
+#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
+msgid "_White is transparent"
+msgstr "白を透明色にする(_W)"
+
+#: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
+#: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
+msgid "_Wrap Around"
+msgstr "送り込み(_W)"
+
+#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
+msgid "_X Center"
+msgstr "中心のX座標(_X)"
+
+#: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
+msgid "_X End"
+msgstr "終了時のX座標(_X)"
+
+#: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
+msgid "_X Start"
+msgstr "開始時のX座標(_X)"
+
+#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
+msgid "_X offset"
+msgstr "X座標のオフセット(_X)"
+
+#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
+msgid "_Y Center"
+msgstr "中心のY座標(_Y)"
+
+#: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
+msgid "_Y End"
+msgstr "終了時のY座標(_Y)"
+
+#: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
+msgid "_Y Start"
+msgstr "開始時のY座標(_Y)"
+
+#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
+msgid "_Y offset"
+msgstr "Y座標のオフセット(_Y)"
+
+#: /usr/share/lives/plugins/effects/rendered/rotate.script:0
+msgid "_degrees"
+msgstr "度(_D)"
+
+#: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
+msgid "_then"
+msgstr "次(_T)"
+
+#: /usr/share/lives/plugins/effects/rendered/blank_frames.script:0
+msgid "blank_frames"
+msgstr "空白フレーム"
+
+#: /usr/share/lives/plugins/effects/rendered/blur.script:0
+msgid "blur"
+msgstr "ぼかし"
+
+#: /usr/share/lives/plugins/effects/rendered/brightness_change.script:0
+msgid "brightness_change"
+msgstr "輝度の変更(_C)"
+
+#: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
+msgid "charcoal"
+msgstr "チャコール"
+
+#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+msgid "colorize"
+msgstr "カラー化"
+
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+msgid "colour_filter"
+msgstr "カラーフィルタ"
+
+#: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
+msgid "colour_replace"
+msgstr "カラー変換"
+
+#: /usr/share/lives/plugins/effects/rendered/contrast.script:0
+msgid "contrast"
+msgstr "コントラスト"
+
+#: /usr/share/lives/plugins/effects/rendered/cycle.script:0
+msgid "cycle"
+msgstr "サイクル"
+
+#: /usr/share/lives/plugins/effects/rendered/deinterlace.script:0
+msgid "deinterlace"
+msgstr "インターレース解除"
+
+#: /usr/share/lives/plugins/effects/rendered/despekle.script:0
+msgid "despeckle"
+msgstr "デスパークル"
+
+#: /usr/share/lives/plugins/effects/rendered/dream.script:0
+msgid "dream"
+msgstr "夢"
+
+#: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
+msgid "edge_detect"
+msgstr "エッジの検出"
+
+#: /usr/share/lives/plugins/effects/rendered/emboss.script:0
+msgid "emboss"
+msgstr "エンボス"
+
+#: /usr/share/lives/plugins/effects/rendered/enhance.script:0
+msgid "enhance"
+msgstr "強調"
+
+#: /usr/share/lives/plugins/effects/rendered/noisify.script:0
+msgid "every"
+msgstr "すべて"
+
+#: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
+msgid "fade_in_out"
+msgstr "フェードイン/フェードアウト"
+
+#: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
+msgid "fc"
+msgstr "fc"
+
+#: /usr/share/lives/plugins/effects/rendered/flip.script:0
+msgid "flip"
+msgstr "フリップ"
+
+#: /usr/share/lives/plugins/effects/rendered/flop.script:0
+msgid "flop"
+msgstr "フロップ"
+
+#: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
+msgid "frame_calculator"
+msgstr "フレーム計算"
+
+#: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
+msgid "gamma_change"
+msgstr "ガンマの変更"
+
+#: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
+msgid "gen_blank_frames"
+msgstr "空白フレームの生成"
+
+#: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
+msgid "gen_clip_from_image"
+msgstr "画像からクリップを生成"
+
+#: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
+msgid "gen_coloured_frames"
+msgstr "カラーフレームの生成"
+
+#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+msgid "gen_text"
+msgstr "テキストの生成"
+
+#: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
+msgid "hue_change"
+msgstr "色相の変更"
+
+#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+msgid "image_overlay"
+msgstr "画像の重ねあわせ"
+
+#: /usr/share/lives/plugins/effects/rendered/jumble.script:0
+msgid "jumble"
+msgstr "ごちゃ混ぜ"
+
+#: /usr/share/lives/plugins/effects/rendered/modulate.script:0
+msgid "modulate"
+msgstr "モジュレート"
+
+#: /usr/share/lives/plugins/effects/rendered/monochrome.script:0
+msgid "monochrome"
+msgstr "モノクローム"
+
+#: /usr/share/lives/plugins/effects/rendered/negate.script:0
+msgid "negate"
+msgstr "反転"
+
+#: /usr/share/lives/plugins/effects/rendered/noisify.script:0
+msgid "noisify"
+msgstr "ノイズ"
+
+#: /usr/share/lives/plugins/effects/rendered/normalize.script:0
+msgid "normalize"
+msgstr "正規化"
+
+#: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
+msgid "photo_still"
+msgstr "フォトスチル"
+
+#: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
+msgid "pixilate"
+msgstr "ピクセル化"
+
+#: /usr/share/lives/plugins/effects/rendered/posterize.script:0
+msgid "posterize"
+msgstr "ポスタリゼーション"
+
+#: /usr/share/lives/plugins/effects/rendered/randomzoom.script:0
+msgid "randomzoom"
+msgstr "ランダムズーム"
+
+#: /usr/share/lives/plugins/effects/rendered/resize.script:0
+msgid "resize"
+msgstr "リサイズ"
+
+#: /usr/share/lives/plugins/effects/rendered/rotate.script:0
+msgid "rotate"
+msgstr "回転"
+
+#: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
+msgid "saturation_change"
+msgstr "サチュレーションの変更"
+
+#: /usr/share/lives/plugins/effects/rendered/sepia.script:0
+msgid "sepia"
+msgstr "セピア"
+
+#: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
+msgid "shift_horizontal"
+msgstr "水平にシフト"
+
+#: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
+msgid "shift_vertical"
+msgstr "垂直にシフト"
+
+#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
+msgid "shrink_expand"
+msgstr "拡大縮小"
+
+#: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
+msgid "skip_forwards"
+msgstr "前へスキップ"
+
+#: /usr/share/lives/plugins/effects/rendered/solarize.script:0
+msgid "solarize"
+msgstr "ソラリゼーション"
+
+#: /usr/share/lives/plugins/effects/rendered/spin.script:0
+msgid "spin"
+msgstr "スピン"
+
+#: /usr/share/lives/plugins/effects/rendered/spread.script:0
+msgid "spread"
+msgstr "スプレッド"
+
+#: /usr/share/lives/plugins/effects/rendered/swirl.script:0
+msgid "swirl"
+msgstr "歪み"
+
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
+msgid "textover"
+msgstr "テキストオーバー"
+
+#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
+msgid "transition_bwthresh"
+msgstr "トランジション白黒二値化"
+
+#: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
+msgid "transition_checkerboard"
+msgstr "トランジション市松模様"
+
+#: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+msgid "transition_fade2"
+msgstr "トランジションフェード2"
+
+#: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
+msgid "transition_splice"
+msgstr "トランジション接合"
+
+#: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
+msgid "trim_frames"
+msgstr "フレームのトリミング"
+
+#: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
+msgid "tunnel"
+msgstr "トンネル"
+
+#: /usr/share/lives/plugins/effects/rendered/wave.script:0
+msgid "wave"
+msgstr "波"
+
+#: /usr/bin/smogrify:0
+msgid "Unable to open output file !"
+msgstr "出力ファイルを開けません!"
+
+#: /usr/bin/smogrify:0
+msgid "LiVES could not write to $nfile."
+msgstr "LiVESは $nfile に書き込めません。"
+
+#: /usr/bin/smogrify:0
+msgid "Unable to locate the program $rfx_builder_multi"
+msgstr "プログラム $rfx_builder_multi が見つかりません"
+
+#: /usr/bin/smogrify:0
+msgid "Your version of mplayer/ffmpeg may be broken"
+msgstr ""
+
+#: /usr/bin/smogrify:0
+msgid "See http://bugzilla.mplayerhq.hu/show_bug.cgi?id=2071"
+msgstr ""
+
+#: /usr/bin/smogrify:0
+msgid " "
+msgstr ""
+
+#: /usr/bin/smogrify:0
+msgid ""
+"You can work around this by switching to jpeg output in Preferences/Decoding."
+msgstr ""
+
+#: /usr/bin/smogrify:0
+msgid "This does not appear to be a valid video or image file"
+msgstr "有効な映像ファイル、画像ファイルではありません"
+
+#: /usr/bin/smogrify:0
+msgid "LiVES was unable to open it."
+msgstr "LiVESはこれを開くことができません。"
+
+#: /usr/bin/smogrify:0
+msgid "Check the terminal window for more details."
+msgstr "詳細はターミナルウィンドウをチェックしてください。"
+
+#: /usr/bin/smogrify:0
+msgid "Error creating new backup."
+msgstr "新しいバックアップ作成でエラーが発生しました。"
+
+#: /usr/bin/smogrify:0
+msgid "This does not appear to be a valid backup file"
+msgstr "有効なバックアップファイルではないようです"
+
+#: /usr/bin/smogrify:0
+msgid "LiVES was not able to open the file"
+msgstr "LiVESはファイルを開けませんでした"
+
+#: /usr/bin/smogrify:0
+msgid "$file"
+msgstr "$file"
+
+#: /usr/bin/smogrify:0
+msgid "LiVES audio error."
+msgstr "LiVES音声エラー"
+
+#: /usr/bin/smogrify:0
+msgid "cdda2wav is required for this function."
+msgstr "この機能にはcdda2wavが必要です。"
+
+#: /usr/bin/smogrify:0
+msgid "Please install it first."
+msgstr "先にインストールしてください。"
+
+#: /usr/bin/smogrify:0
+msgid "You must set the CD device first in Preferences."
+msgstr "設定でCDデバイスを先に指定してください。"
+
+#: /usr/bin/smogrify:0
+msgid "$plugin_name failed:"
+msgstr "$plugin_name は失敗しました:"
+
+#: /usr/bin/smogrify:0
+msgid "$error"
+msgstr "$error"
 
 #~ msgid "Default value:    "
 #~ msgstr "デフォルトの値:    "

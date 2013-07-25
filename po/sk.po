@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: https://sourceforge.net/p/lives/bugs/\n"
-"POT-Creation-Date: 2013-07-15 08:47-0300\n"
+"POT-Creation-Date: 2013-07-24 22:03-0300\n"
 "PO-Revision-Date: 2013-03-14 12:31+0000\n"
 "Last-Translator: Launchpad Translations Administrators <Unknown>\n"
 "Language-Team: Slovak <sk@li.org>\n"
@@ -1968,7 +1968,7 @@ msgstr "Odstraňujem zostavu"
 msgid "Set %s was permanently deleted from the disk.\n"
 msgstr "Zostava %s bola navždy odstránená z disku.\n"
 
-#: src/callbacks.c:1756 src/callbacks.c:11772
+#: src/callbacks.c:1756 src/callbacks.c:11770
 msgid "Insert Silence"
 msgstr "Vložiť ticho"
 
@@ -2074,7 +2074,7 @@ msgstr ""
 "Vložením dôjde k posunu snímkov v niektorých viacstopových rozmiestneniach.\n"
 "Skutočne chcete pokračovať ?\n"
 
-#: src/callbacks.c:2841 src/callbacks.c:11700
+#: src/callbacks.c:2841 src/callbacks.c:11698
 msgid ""
 "\n"
 "Insertion will cause audio to shift in some multitrack layouts.\n"
@@ -2158,8 +2158,8 @@ msgstr ""
 "rozdeleniach.\n"
 "Ste si istý, že chcete pokračovať ?\n"
 
-#: src/callbacks.c:3431 src/callbacks.c:10925 src/callbacks.c:11170
-#: src/callbacks.c:11236
+#: src/callbacks.c:3431 src/callbacks.c:10923 src/callbacks.c:11168
+#: src/callbacks.c:11234
 msgid ""
 "\n"
 "Deletion will cause missing audio in some multitrack layouts.\n"
@@ -2180,7 +2180,7 @@ msgstr ""
 "Odstránenie spôsobí posun snímkov v niektorých viacstopových rozdeleniach.\n"
 "Ste si istý, že chcete pokračovať ?\n"
 
-#: src/callbacks.c:3469 src/callbacks.c:11218
+#: src/callbacks.c:3469 src/callbacks.c:11216
 msgid ""
 "\n"
 "Deletion will cause audio to shift in some multitrack layouts.\n"
@@ -2477,12 +2477,12 @@ msgid "Opening audio"
 msgstr "Otváram zvuk"
 
 #: src/callbacks.c:6565 src/callbacks.c:6612 src/callbacks.c:8396
-#: src/callbacks.c:8438 src/callbacks.c:8481 src/callbacks.c:10851
+#: src/callbacks.c:8438 src/callbacks.c:8481 src/callbacks.c:10849
 msgid "Cancelling"
 msgstr "Rušenie"
 
-#: src/callbacks.c:6660 src/callbacks.c:8523 src/callbacks.c:10881
-#: src/callbacks.c:11572
+#: src/callbacks.c:6660 src/callbacks.c:8523 src/callbacks.c:10879
+#: src/callbacks.c:11570
 msgid "Committing audio"
 msgstr "Vytvoriť zvuk"
 
@@ -2695,12 +2695,12 @@ msgstr "LiVES: Vybraný snímok"
 msgid "_Save frame as..."
 msgstr ""
 
-#: src/callbacks.c:10295
+#: src/callbacks.c:10293
 #, c-format
 msgid "Audio is ahead of video by %.4f secs. at frame %d, with fps %.4f\n"
 msgstr ""
 
-#: src/callbacks.c:10352
+#: src/callbacks.c:10350
 msgid ""
 "\n"
 "\n"
@@ -2709,7 +2709,7 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/callbacks.c:10358
+#: src/callbacks.c:10356
 msgid ""
 "\n"
 "\n"
@@ -2722,7 +2722,7 @@ msgstr ""
 "funkciu\n"
 "\n"
 
-#: src/callbacks.c:10434 src/callbacks.c:11490
+#: src/callbacks.c:10432 src/callbacks.c:11488
 msgid ""
 "\n"
 "Record time must be greater than 0.\n"
@@ -2730,7 +2730,7 @@ msgstr ""
 "\n"
 "Nahrávací čas musí byť väčší ako 0.\n"
 
-#: src/callbacks.c:10445
+#: src/callbacks.c:10443
 msgid ""
 "Capture an External Window:\n"
 "\n"
@@ -2744,11 +2744,11 @@ msgstr ""
 "Kliknite na 'Zrušiť' pre zrušenie\n"
 "\n"
 
-#: src/callbacks.c:10450
+#: src/callbacks.c:10448
 msgid "External window was released.\n"
 msgstr "Vonkajšie okno bola uvoľnené.\n"
 
-#: src/callbacks.c:10484
+#: src/callbacks.c:10482
 msgid ""
 "Click on a Window to Capture it\n"
 "Press 'q' to stop recording"
@@ -2756,7 +2756,7 @@ msgstr ""
 "Kliknite na Okno pre nahrávanie\n"
 "Stlačte tlačidlo 'q' pre ukončenie nahrávania"
 
-#: src/callbacks.c:10518
+#: src/callbacks.c:10516
 #, c-format
 msgid ""
 "\n"
@@ -2771,19 +2771,19 @@ msgstr ""
 "Stop nebo 'q' pre ukončenie.\n"
 "(Bude použité predvolené nastavenie %.3f snímkov za sekundu.)\n"
 
-#: src/callbacks.c:10544
+#: src/callbacks.c:10542
 msgid "LiVES was unable to capture this window. Sorry.\n"
 msgstr "LiVES nemôže zaznamenať toto okno. Prepáčte.\n"
 
-#: src/callbacks.c:10700
+#: src/callbacks.c:10698
 msgid "Export Selected Audio as..."
 msgstr "Exportovanie vybraného zvuku ako..."
 
-#: src/callbacks.c:10704
+#: src/callbacks.c:10702
 msgid "Export Audio as..."
 msgstr "Exportovať zvuk ako..."
 
-#: src/callbacks.c:10719
+#: src/callbacks.c:10717
 msgid ""
 "\n"
 "\n"
@@ -2797,86 +2797,86 @@ msgstr ""
 "Kliknite na 'OK' pre export s novou rýchlosťou alebo 'Zrušiť' a exportovat "
 "originálnym pomerom.\n"
 
-#: src/callbacks.c:10725
+#: src/callbacks.c:10723
 #, c-format
 msgid "Exporting audio frames %d to %d as %s..."
 msgstr "Exportovanie zvukových snímkov %d do %d ako %s..."
 
-#: src/callbacks.c:10730
+#: src/callbacks.c:10728
 #, c-format
 msgid "Exporting audio as %s..."
 msgstr "Export zvuku ako %s..."
 
-#: src/callbacks.c:10756
+#: src/callbacks.c:10754
 msgid "Exporting audio"
 msgstr "Exportujem zvuk"
 
-#: src/callbacks.c:10787
+#: src/callbacks.c:10785
 msgid "LiVES: - Append Audio File"
 msgstr ""
 
-#: src/callbacks.c:10830
+#: src/callbacks.c:10828
 #, c-format
 msgid "Appending audio file %s..."
 msgstr "Pridávam zvukový súbor %s..."
 
-#: src/callbacks.c:10841
+#: src/callbacks.c:10839
 msgid "Appending audio"
 msgstr "Pridávam zvuk"
 
-#: src/callbacks.c:10897
+#: src/callbacks.c:10895
 msgid "Append Audio"
 msgstr "Pridať zvuk"
 
-#: src/callbacks.c:10957
+#: src/callbacks.c:10955
 #, c-format
 msgid "Padding audio to %.2f seconds..."
 msgstr ""
 
-#: src/callbacks.c:10959
+#: src/callbacks.c:10957
 #, c-format
 msgid "Trimming audio from %.2f to %.2f seconds..."
 msgstr "Orezanie zvuku z %.2f to %.2f sekundy..."
 
-#: src/callbacks.c:10978
+#: src/callbacks.c:10976
 msgid "Trimming/Padding audio"
 msgstr "Orezanie/vyplnenie zvuku"
 
-#: src/callbacks.c:10986
+#: src/callbacks.c:10984
 msgid "Trim/Pad Audio"
 msgstr "Orezať/Doplniť zvuk"
 
-#: src/callbacks.c:11060
+#: src/callbacks.c:11058
 msgid "Fading audio in"
 msgstr "Zoslabovanie zvuku v"
 
-#: src/callbacks.c:11061
+#: src/callbacks.c:11059
 msgid "Fade audio in"
 msgstr "Zoslabujúci zvuk v"
 
-#: src/callbacks.c:11066
+#: src/callbacks.c:11064
 msgid "Fading audio out"
 msgstr "Stíšenie zvuku"
 
-#: src/callbacks.c:11067
+#: src/callbacks.c:11065
 msgid "Fade audio out"
 msgstr "Stíšiť zvuk"
 
-#: src/callbacks.c:11090
+#: src/callbacks.c:11088
 #, c-format
 msgid "%s over %.1f seconds..."
 msgstr "%s nad %.1f sekundy..."
 
-#: src/callbacks.c:11092
+#: src/callbacks.c:11090
 #, c-format
 msgid "%s from time %.2f seconds to %.2f seconds..."
 msgstr "%s od času %.2f sekúnd do %.2f sekúnd..."
 
-#: src/callbacks.c:11099
+#: src/callbacks.c:11097
 msgid "Fading audio..."
 msgstr "Stišovanie zvuku"
 
-#: src/callbacks.c:11202
+#: src/callbacks.c:11200
 msgid ""
 "\n"
 "Deleting all audio will close this file.\n"
@@ -2885,33 +2885,33 @@ msgstr ""
 "\n"
 "Odstránenie všetkých zvukov zatvorí tento súbor."
 
-#: src/callbacks.c:11205
+#: src/callbacks.c:11203
 msgid "Deleting all audio..."
 msgstr "Odstránenie všetkých zvukov..."
 
-#: src/callbacks.c:11211
+#: src/callbacks.c:11209
 #, c-format
 msgid "Deleting audio from %.2f to %.2f seconds..."
 msgstr "Odstránenie zvuku od %.2f do %.2f sekundy..."
 
-#: src/callbacks.c:11298
+#: src/callbacks.c:11296
 msgid "Deleting Audio"
 msgstr "Odstraňujem zvuk"
 
-#: src/callbacks.c:11305
+#: src/callbacks.c:11303
 msgid "Delete Audio"
 msgstr "Odstrániť zvuk"
 
-#: src/callbacks.c:11645
+#: src/callbacks.c:11643
 msgid "Record new audio"
 msgstr "Nahrať nový zvuk"
 
-#: src/callbacks.c:11733
+#: src/callbacks.c:11731
 #, c-format
 msgid "Inserting silence from %.2f to %.2f seconds..."
 msgstr "Vložiť ticho od %.2f do %.2f sekundy..."
 
-#: src/callbacks.c:11762
+#: src/callbacks.c:11760
 msgid "Inserting Silence"
 msgstr "Vložiť ticho"
 
@@ -5980,7 +5980,7 @@ msgstr "Nepodarilo sa spustiť generátor %s\n"
 msgid "Failed to start generator %s, error %d\n"
 msgstr "Nepodarilo sa spustiť generátor %s, chyba %d\n"
 
-#: src/effects-weed.c:8672
+#: src/effects-weed.c:8682
 #, c-format
 msgid "%s [unstable] (%s)"
 msgstr ""
@@ -6142,39 +6142,39 @@ msgstr "Zavrieť okno"
 msgid "No parameters"
 msgstr "Žiadne parametre"
 
-#: src/paramwindow.c:1384
+#: src/paramwindow.c:1386
 msgid "Invalid parameter"
 msgstr "Neplatný parameter"
 
-#: src/paramwindow.c:1576
+#: src/paramwindow.c:1577
 msgid "LiVES: - Select Colour"
 msgstr "LiVES: - Vybrať farbu"
 
-#: src/paramwindow.c:1581
+#: src/paramwindow.c:1582
 msgid "Click to set the colour"
 msgstr "Kliknite pre nastavenie farby"
 
-#: src/paramwindow.c:1593
+#: src/paramwindow.c:1594
 msgid "_Red"
 msgstr ""
 
-#: src/paramwindow.c:1594
+#: src/paramwindow.c:1595
 msgid "The red value (0 - 255)"
 msgstr "Červená hodnota (0 - 255)"
 
-#: src/paramwindow.c:1597
+#: src/paramwindow.c:1598
 msgid "_Green"
 msgstr ""
 
-#: src/paramwindow.c:1598
+#: src/paramwindow.c:1599
 msgid "The green value (0 - 255)"
 msgstr "Zelená hodnota (0 - 255)"
 
-#: src/paramwindow.c:1601
+#: src/paramwindow.c:1602
 msgid "_Blue"
 msgstr ""
 
-#: src/paramwindow.c:1602
+#: src/paramwindow.c:1603
 msgid "The blue value (0 - 255)"
 msgstr "Modrá hodnota (0 - 255)"
 
@@ -8119,26 +8119,26 @@ msgstr "Zmena témy nebude mať vplyv až do ďalšieho spustenia LiVES."
 msgid "Jack options will not take effect until the next time you start LiVES."
 msgstr "Zmeny nastavenia jack se prejavia po reštarte LiVES."
 
-#: src/osc.c:2508
+#: src/osc.c:2507
 #, c-format
 msgid "Syncing to external framerate of %.8f frames per second.\n"
 msgstr "Synchronizácia s externou frekvenciou %.8f snímkov za sekundu.\n"
 
-#: src/osc.c:6525
+#: src/osc.c:6524
 msgid "Cannot initialize OSC receiver\n"
 msgstr "Nemožno inicializovať OSC prijímač\n"
 
-#: src/osc.c:6549
+#: src/osc.c:6548
 #, c-format
 msgid "WARNING: Cannot start OSC server at UDP port %d\n"
 msgstr "UPOZORNENIE: Nedá sa spustiť OSC server na UDP porte %d\n"
 
-#: src/osc.c:6554
+#: src/osc.c:6553
 #, c-format
 msgid "Started OSC server at UDP port %d\n"
 msgstr "Spustený OSC server na UDP porte %d\n"
 
-#: src/osc.c:6671
+#: src/osc.c:6670
 #, c-format
 msgid "Cannot start OSC/UDP server at port %d \n"
 msgstr "Nedá sa spustiť OSC/UDP server na porte %d \n"
@@ -10519,947 +10519,1382 @@ msgstr ""
 msgid "Opened device %s\n"
 msgstr ""
 
-#~ msgid "180 _degrees             "
-#~ msgstr "180 _stupňov             "
+#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
+msgid " _Top  "
+msgstr ""
 
-#~ msgid "90 degrees _Anticlockwise"
-#~ msgstr "90 stupňov _Proti smeru hodinových ručičiek"
+#: /usr/share/lives/plugins/effects/rendered/rotate.script:0
+msgid "180 _degrees             "
+msgstr "180 _stupňov             "
 
-#~ msgid "90 degrees _Clockwise    "
-#~ msgstr "90 stupňov _V smere hodinových ručičiek    "
+#: /usr/share/lives/plugins/effects/rendered/rotate.script:0
+msgid "90 degrees _Anticlockwise"
+msgstr "90 stupňov _Proti smeru hodinových ručičiek"
 
-#~ msgid "Add _Border"
-#~ msgstr "Pridať _Okraj"
+#: /usr/share/lives/plugins/effects/rendered/rotate.script:0
+msgid "90 degrees _Clockwise    "
+msgstr "90 stupňov _V smere hodinových ručičiek    "
 
-#~ msgid "Add noise"
-#~ msgstr "Pridať šum"
+#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+msgid "Active _animation"
+msgstr ""
 
-#~ msgid "Adjust contrast"
-#~ msgstr "Nastaviť kontrast"
+#: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
+msgid "Add _Border"
+msgstr "Pridať _Okraj"
 
-#~ msgid "Adjusting contrast of"
-#~ msgstr "Nastavujem kontrast"
+#: /usr/share/lives/plugins/effects/rendered/noisify.script:0
+msgid "Add noise"
+msgstr "Pridať šum"
 
-#~ msgid "Adjusting noise on"
-#~ msgstr "Nastavenie šumu na"
+#: /usr/share/lives/plugins/effects/rendered/contrast.script:0
+msgid "Adjust contrast"
+msgstr "Nastaviť kontrast"
 
-#~ msgid "Applying charcoal to"
-#~ msgstr "Aplikujem uhol na"
+#: /usr/share/lives/plugins/effects/rendered/contrast.script:0
+msgid "Adjusting contrast of"
+msgstr "Nastavujem kontrast"
 
-#~ msgid "Applying forward skip to"
-#~ msgstr "Aplikujem preskočenie na"
+#: /usr/share/lives/plugins/effects/rendered/noisify.script:0
+msgid "Adjusting noise on"
+msgstr "Nastavenie šumu na"
 
-#~ msgid "Applying sepia to"
-#~ msgstr "Aplikujem sépiu na"
+#: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
+msgid "Applying charcoal to"
+msgstr "Aplikujem uhol na"
 
-#~ msgid "B/W Threshold"
-#~ msgstr "Č/B Začiatok"
+#: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
+msgid "Applying forward skip to"
+msgstr "Aplikujem preskočenie na"
 
-#~ msgid "B/W thresholding"
-#~ msgstr "Č/B začínanie"
+#: /usr/share/lives/plugins/effects/rendered/sepia.script:0
+msgid "Applying sepia to"
+msgstr "Aplikujem sépiu na"
 
-#~ msgid "Blank _Colour"
-#~ msgstr "Prázdna _Farba"
+#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
+msgid "B/W Threshold"
+msgstr "Č/B Začiatok"
 
-#~ msgid "Blank frames"
-#~ msgstr "Prázdne snímky"
+#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
+msgid "B/W thresholding"
+msgstr "Č/B začínanie"
 
-#~ msgid "Blanking"
-#~ msgstr "Vymazávam"
+#: /usr/share/lives/plugins/effects/rendered/blank_frames.script:0
+msgid "Blank _Colour"
+msgstr "Prázdna _Farba"
 
-#~ msgid "Block _height"
-#~ msgstr "_Výška bloku"
+#: /usr/share/lives/plugins/effects/rendered/blank_frames.script:0
+msgid "Blank frames"
+msgstr "Prázdne snímky"
 
-#~ msgid "Block _width"
-#~ msgstr "_Šírka bloku"
+#: /usr/share/lives/plugins/effects/rendered/blank_frames.script:0
+msgid "Blanking"
+msgstr "Vymazávam"
 
-#~ msgid "Blur"
-#~ msgstr "Rozostrenie"
+#: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
+msgid "Block _height"
+msgstr "_Výška bloku"
 
-#~ msgid "Bluring"
-#~ msgstr "Rozostrujem"
+#: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
+msgid "Block _width"
+msgstr "_Šírka bloku"
 
-#~ msgid "Border _Colour"
-#~ msgstr "_Farba ohraničenia"
+#: /usr/share/lives/plugins/effects/rendered/blur.script:0
+msgid "Blur"
+msgstr "Rozostrenie"
 
-#~ msgid "Brightness _end"
-#~ msgstr "Jas _koniec"
+#: /usr/share/lives/plugins/effects/rendered/blur.script:0
+msgid "Bluring"
+msgstr "Rozostrujem"
 
-#~ msgid "Brightness _start"
-#~ msgstr "Jas _začiatok"
+#: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
+msgid "Border _Colour"
+msgstr "_Farba ohraničenia"
 
-#~ msgid "Brightness change"
-#~ msgstr "Zmena jasu"
+#: /usr/share/lives/plugins/effects/rendered/brightness_change.script:0
+msgid "Brightness _end"
+msgstr "Jas _koniec"
 
-#~ msgid "Brightness end"
-#~ msgstr "Jas koniec"
+#: /usr/share/lives/plugins/effects/rendered/brightness_change.script:0
+msgid "Brightness _start"
+msgstr "Jas _začiatok"
 
-#~ msgid "Brightness start"
-#~ msgstr "Jas začiatok"
+#: /usr/share/lives/plugins/effects/rendered/brightness_change.script:0
+msgid "Brightness change"
+msgstr "Zmena jasu"
 
-#~ msgid "Centre _X"
-#~ msgstr "Vystrediť _X"
+#: /usr/share/lives/plugins/effects/rendered/modulate.script:0
+msgid "Brightness end"
+msgstr "Jas koniec"
 
-#~ msgid "Centre _Y"
-#~ msgstr "Vystrediť _Y"
+#: /usr/share/lives/plugins/effects/rendered/modulate.script:0
+msgid "Brightness start"
+msgstr "Jas začiatok"
 
-#~ msgid "Changing brightness of"
-#~ msgstr "Mením jas"
+#: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
+msgid "Centre _X"
+msgstr "Vystrediť _X"
 
-#~ msgid "Changing gamma of"
-#~ msgstr "Mením gamma"
+#: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
+msgid "Centre _Y"
+msgstr "Vystrediť _Y"
 
-#~ msgid "Changing hue of"
-#~ msgstr "Mením odtieň"
+#: /usr/share/lives/plugins/effects/rendered/brightness_change.script:0
+msgid "Changing brightness of"
+msgstr "Mením jas"
 
-#~ msgid "Changing saturation of"
-#~ msgstr "Mením sýtosť"
+#: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
+msgid "Changing gamma of"
+msgstr "Mením gamma"
 
-#~ msgid "Charcoal"
-#~ msgstr "Kresba uhlíkom"
+#: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
+msgid "Changing hue of"
+msgstr "Mením odtieň"
 
-#~ msgid "Checkerboard"
-#~ msgstr "Šachovnica"
+#: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
+msgid "Changing saturation of"
+msgstr "Mením sýtosť"
 
-#~ msgid "Checkerboarding"
-#~ msgstr "Kontrola plochy"
+#: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
+msgid "Charcoal"
+msgstr "Kresba uhlíkom"
 
-#~ msgid "Clipboard _over selection"
-#~ msgstr "Schránka _nad výberom"
+#: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
+msgid "Checkerboard"
+msgstr "Šachovnica"
 
-#~ msgid "Clipboard _under selection"
-#~ msgstr "Schránka _pod výberom"
+#: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
+msgid "Checkerboarding"
+msgstr "Kontrola plochy"
 
-#~ msgid "Colorize"
-#~ msgstr "Vyfarbiť"
+#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
+msgid "Clipboard _over selection"
+msgstr "Schránka _nad výberom"
 
-#~ msgid "Colorizing"
-#~ msgstr "Vyfarbujem"
+#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
+msgid "Clipboard _under selection"
+msgstr "Schránka _pod výberom"
 
-#~ msgid "Colour cycle"
-#~ msgstr "Farba cyklu"
+#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+msgid "Colorize"
+msgstr "Vyfarbiť"
 
-#~ msgid "Colour cycling"
-#~ msgstr "Farbím cyklus"
+#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+msgid "Colorizing"
+msgstr "Vyfarbujem"
 
-#~ msgid "Colour filter"
-#~ msgstr "Farebný filter"
+#: /usr/share/lives/plugins/effects/rendered/cycle.script:0
+msgid "Colour cycle"
+msgstr "Farba cyklu"
 
-#~ msgid "Colour filtering"
-#~ msgstr "Farebné filtrovanie"
+#: /usr/share/lives/plugins/effects/rendered/cycle.script:0
+msgid "Colour cycling"
+msgstr "Farbím cyklus"
 
-#~ msgid "Colour replace"
-#~ msgstr "Nahradenie farby"
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+msgid "Colour filter"
+msgstr "Farebný filter"
 
-#~ msgid "Constant noise level"
-#~ msgstr "Stála hladina šumu"
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+msgid "Colour filtering"
+msgstr "Farebné filtrovanie"
 
-#~ msgid "Cycle _Step"
-#~ msgstr "Krok _cyklu"
+#: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
+msgid "Colour replace"
+msgstr "Nahradenie farby"
 
-#~ msgid "Deinterlace"
-#~ msgstr "Odstránenie prekladania"
+#: /usr/share/lives/plugins/effects/rendered/noisify.script:0
+msgid "Constant noise level"
+msgstr "Stála hladina šumu"
 
-#~ msgid "Deinterlacing"
-#~ msgstr "Odstraňovanie prekladania"
+#: /usr/share/lives/plugins/effects/rendered/cycle.script:0
+msgid "Cycle _Step"
+msgstr "Krok _cyklu"
 
-#~ msgid "Despeckle"
-#~ msgstr "Vyhladiť"
+#: /usr/share/lives/plugins/effects/rendered/deinterlace.script:0
+msgid "Deinterlace"
+msgstr "Odstránenie prekladania"
 
-#~ msgid "Despeckling"
-#~ msgstr "Vyhladzovanie"
+#: /usr/share/lives/plugins/effects/rendered/deinterlace.script:0
+msgid "Deinterlacing"
+msgstr "Odstraňovanie prekladania"
 
-#~ msgid "Dream"
-#~ msgstr "Sen"
+#: /usr/share/lives/plugins/effects/rendered/despekle.script:0
+msgid "Despeckle"
+msgstr "Vyhladiť"
 
-#~ msgid "Dreamifying"
-#~ msgstr "Zasnenie"
+#: /usr/share/lives/plugins/effects/rendered/despekle.script:0
+msgid "Despeckling"
+msgstr "Vyhladzovanie"
 
-#~ msgid "E_nd %"
-#~ msgstr "K_oniec %"
+#: /usr/share/lives/plugins/effects/rendered/dream.script:0
+msgid "Dream"
+msgstr "Sen"
 
-#~ msgid "Edge detect"
-#~ msgstr "Detekcia hrán"
+#: /usr/share/lives/plugins/effects/rendered/dream.script:0
+msgid "Dreamifying"
+msgstr "Zasnenie"
 
-#~ msgid "Edge detecting"
-#~ msgstr "Odhaľovanie obrysov"
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+msgid "E_nd %"
+msgstr "K_oniec %"
 
-#~ msgid "Emboss"
-#~ msgstr "Reliéf"
+#: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
+msgid "Edge detect"
+msgstr "Detekcia hrán"
 
-#~ msgid "Embossing"
-#~ msgstr "Reliéfovanie"
+#: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
+msgid "Edge detecting"
+msgstr "Odhaľovanie obrysov"
 
-#~ msgid "Enhance"
-#~ msgstr "Zväčšiť"
+#: /usr/share/lives/plugins/effects/rendered/emboss.script:0
+msgid "Emboss"
+msgstr "Reliéf"
 
-#~ msgid "Enhancing"
-#~ msgstr "Zväčšovanie"
+#: /usr/share/lives/plugins/effects/rendered/emboss.script:0
+msgid "Embossing"
+msgstr "Reliéfovanie"
 
+#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+msgid "End _Alpha:"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+msgid "End pos_X:"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+msgid "End pos_Y:"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/enhance.script:0
+msgid "Enhance"
+msgstr "Zväčšiť"
+
+#: /usr/share/lives/plugins/effects/rendered/enhance.script:0
+msgid "Enhancing"
+msgstr "Zväčšovanie"
+
+#: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+msgid "Envelope length"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
 #, fuzzy
-#~ msgid "Fade _colour"
-#~ msgstr "Žiarivá farba"
+msgid "Fade _colour"
+msgstr "Žiarivá farba"
 
-#~ msgid "Fade _end"
-#~ msgstr "Slabnutie _koniec"
+#: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+#: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
+msgid "Fade _end"
+msgstr "Slabnutie _koniec"
 
+#: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
 #, fuzzy
-#~ msgid "Fade _in"
-#~ msgstr "Slabnutie _koniec"
+msgid "Fade _in"
+msgstr "Slabnutie _koniec"
 
+#: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
 #, fuzzy
-#~ msgid "Fade _out"
-#~ msgstr "Stíšiť zvuk"
+msgid "Fade _out"
+msgstr "Stíšiť zvuk"
 
-#~ msgid "Fade"
-#~ msgstr "Slabnúť"
+#: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
+msgid "Fade video to or from color"
+msgstr ""
 
+#: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+msgid "Fade"
+msgstr "Slabnúť"
+
+#: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
 #, fuzzy
-#~ msgid "Fading video"
-#~ msgstr "Prevzorkovanie videa"
+msgid "Fading video"
+msgstr "Prevzorkovanie videa"
 
-#~ msgid "Fading"
-#~ msgstr "Slabnutie"
+#: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+msgid "Fading"
+msgstr "Slabnutie"
 
-#~ msgid "Fina_l frame"
-#~ msgstr "Pos_ledný snímok"
+#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
+msgid "Fina_l frame"
+msgstr "Pos_ledný snímok"
 
-#~ msgid "Flash _colour"
-#~ msgstr "Žiarivá farba"
+#: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
+msgid "Flash _colour"
+msgstr "Žiarivá farba"
 
-#~ msgid "Flip vertically"
-#~ msgstr "Prevrátiť zvisle"
+#: /usr/share/lives/plugins/effects/rendered/flip.script:0
+msgid "Flip vertically"
+msgstr "Prevrátiť zvisle"
 
-#~ msgid "Flop horizontally"
-#~ msgstr "Prevrátiť vodorovne"
+#: /usr/share/lives/plugins/effects/rendered/flop.script:0
+msgid "Flop horizontally"
+msgstr "Prevrátiť vodorovne"
 
-#~ msgid "Frame Calculator"
-#~ msgstr "Počítač snímkov"
+#: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
+msgid "Frame Calculator"
+msgstr "Počítač snímkov"
 
-#~ msgid "Frame _Colour"
-#~ msgstr "_Farba snímky"
+#: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
+msgid "Frame _Colour"
+msgstr "_Farba snímky"
 
-#~ msgid "Frame _height"
-#~ msgstr "_Výška snímku"
+#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+msgid "Frame _height"
+msgstr "_Výška snímku"
 
-#~ msgid "Frame _in frame position of clipboard..."
-#~ msgstr "Snímok _v snímku v pozícii schránky..."
+#: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+msgid "Frame _in frame position of clipboard..."
+msgstr "Snímok _v snímku v pozícii schránky..."
 
-#~ msgid "Frame _in frame position of top frame..."
-#~ msgstr "Snímok _v pozícii snímku horného snímku..."
+#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
+msgid "Frame _in frame position of top frame..."
+msgstr "Snímok _v pozícii snímku horného snímku..."
 
-#~ msgid "Frame _width"
-#~ msgstr "_Šírka snímku"
+#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+msgid "Frame _width"
+msgstr "_Šírka snímku"
 
-#~ msgid "Frames _per second (FPS)"
-#~ msgstr "Snímkov _za sekundu (FPS)"
+#: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
+msgid "Frames _per second (FPS)"
+msgstr "Snímkov _za sekundu (FPS)"
 
-#~ msgid "Gamma _end"
-#~ msgstr "Gamma _koniec"
+#: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
+msgid "Gamma _end"
+msgstr "Gamma _koniec"
 
-#~ msgid "Gamma _start"
-#~ msgstr "Gamma _začiatok"
+#: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
+msgid "Gamma _start"
+msgstr "Gamma _začiatok"
 
-#~ msgid "Gamma change"
-#~ msgstr "Gamma zmena"
+#: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
+msgid "Gamma change"
+msgstr "Gamma zmena"
 
-#~ msgid "Generate blank frames"
-#~ msgstr "Generovať prázdne snímky"
+#: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
+msgid "Generate blank frames"
+msgstr "Generovať prázdne snímky"
 
-#~ msgid "Generate clip from image"
-#~ msgstr "Generovať klip z obrázku"
+#: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
+msgid "Generate clip from image"
+msgstr "Generovať klip z obrázku"
 
-#~ msgid "Generate coloured frames"
-#~ msgstr "Generovať farebné snímky"
+#: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
+msgid "Generate coloured frames"
+msgstr "Generovať farebné snímky"
 
-#~ msgid "Generate title frames"
-#~ msgstr "Generovať názvy snímkov"
+#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+msgid "Generate title frames"
+msgstr "Generovať názvy snímkov"
 
-#~ msgid "Generating blank frames"
-#~ msgstr "Generovať čisté snímky"
+#: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
+msgid "Generating blank frames"
+msgstr "Generovať čisté snímky"
 
-#~ msgid "Generating clip from image"
-#~ msgstr "Generovať klip z obrázku"
+#: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
+msgid "Generating clip from image"
+msgstr "Generovať klip z obrázku"
 
-#~ msgid "Generating coloured frames"
-#~ msgstr "Generovať farebné snímky"
+#: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
+msgid "Generating coloured frames"
+msgstr "Generovať farebné snímky"
 
-#~ msgid "Generating title frames"
-#~ msgstr "Generovať názov snímkov"
+#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+msgid "Generating title frames"
+msgstr "Generovať názov snímkov"
 
-#~ msgid "Horizontal flopping"
-#~ msgstr "Preklopiť horizontálne"
+#: /usr/share/lives/plugins/effects/rendered/flop.script:0
+msgid "Horizontal flopping"
+msgstr "Preklopiť horizontálne"
 
-#~ msgid "Horizontal shifting"
-#~ msgstr "Posúvanie horizontálne"
+#: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
+msgid "Horizontal shifting"
+msgstr "Posúvanie horizontálne"
 
-#~ msgid "Hue _end"
-#~ msgstr "Odtieň _koniec"
+#: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
+msgid "Hue _end"
+msgstr "Odtieň _koniec"
 
-#~ msgid "Hue _start"
-#~ msgstr "Odtieň _začiatok"
+#: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
+msgid "Hue _start"
+msgstr "Odtieň _začiatok"
 
-#~ msgid "Hue change"
-#~ msgstr "Zmena odtieňa"
+#: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
+msgid "Hue change"
+msgstr "Zmena odtieňa"
 
-#~ msgid "Hue end"
-#~ msgstr "Koniec odtieňa"
+#: /usr/share/lives/plugins/effects/rendered/modulate.script:0
+msgid "Hue end"
+msgstr "Koniec odtieňa"
 
-#~ msgid "Hue start"
-#~ msgstr "Začiatok odtieňa"
+#: /usr/share/lives/plugins/effects/rendered/modulate.script:0
+msgid "Hue start"
+msgstr "Začiatok odtieňa"
 
+#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
 #, fuzzy
-#~ msgid "Image overlay"
-#~ msgstr "Prekryť textom"
+msgid "Image overlay"
+msgstr "Prekryť textom"
 
-#~ msgid "Jumble"
-#~ msgstr "Pomiešať"
+#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+msgid "Init _Alpha:"
+msgstr ""
 
-#~ msgid "Jumbling"
-#~ msgstr "Pomiešanie"
+#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+msgid "Init pos_X:"
+msgstr ""
 
-#~ msgid "Keep _Centered"
-#~ msgstr "Ponechať _uprostred"
+#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+msgid "Init pos_Y:"
+msgstr ""
 
-#~ msgid "L_eft"
-#~ msgstr "V_ľavo"
+#: /usr/share/lives/plugins/effects/rendered/jumble.script:0
+msgid "Jumble"
+msgstr "Pomiešať"
 
-#~ msgid "Making monochrome"
-#~ msgstr "Urobenie jednofarebného"
+#: /usr/share/lives/plugins/effects/rendered/jumble.script:0
+msgid "Jumbling"
+msgstr "Pomiešanie"
 
-#~ msgid "Modulate (BSH)"
-#~ msgstr "Modulovať (BSH)"
+#: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
+msgid "Keep _Centered"
+msgstr "Ponechať _uprostred"
 
-#~ msgid "Modulating"
-#~ msgstr "Modulovanie"
+#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+msgid "Keep image aspect _ratio"
+msgstr ""
 
-#~ msgid "Monochrome"
-#~ msgstr "jednofarebné"
+#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
+msgid "L_eft"
+msgstr "V_ľavo"
 
-#~ msgid "Negate"
-#~ msgstr "Negatív"
+#: /usr/share/lives/plugins/effects/rendered/monochrome.script:0
+msgid "Making monochrome"
+msgstr "Urobenie jednofarebného"
 
-#~ msgid "Negating"
-#~ msgstr "Negatív"
+#: /usr/share/lives/plugins/effects/rendered/modulate.script:0
+msgid "Modulate (BSH)"
+msgstr "Modulovať (BSH)"
 
-#~ msgid "Noise type"
-#~ msgstr "Typ šumu"
+#: /usr/share/lives/plugins/effects/rendered/modulate.script:0
+msgid "Modulating"
+msgstr "Modulovanie"
 
-#~ msgid "Normalize"
-#~ msgstr "Normalizovať"
+#: /usr/share/lives/plugins/effects/rendered/monochrome.script:0
+msgid "Monochrome"
+msgstr "jednofarebné"
 
-#~ msgid "Normalizing"
-#~ msgstr "Normalizujem"
+#: /usr/share/lives/plugins/effects/rendered/negate.script:0
+msgid "Negate"
+msgstr "Negatív"
 
-#~ msgid "Number of _frames"
-#~ msgstr "Počet _snímkov"
+#: /usr/share/lives/plugins/effects/rendered/negate.script:0
+msgid "Negating"
+msgstr "Negatív"
 
+#: /usr/share/lives/plugins/effects/rendered/noisify.script:0
+msgid "Noise type"
+msgstr "Typ šumu"
+
+#: /usr/share/lives/plugins/effects/rendered/noisify.script:0
+msgid "Noisify"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/normalize.script:0
+msgid "Normalize"
+msgstr "Normalizovať"
+
+#: /usr/share/lives/plugins/effects/rendered/normalize.script:0
+msgid "Normalizing"
+msgstr "Normalizujem"
+
+#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+msgid "Number of _frames"
+msgstr "Počet _snímkov"
+
+#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
 #, fuzzy
-#~ msgid "Overlaying an image onto video"
-#~ msgstr "Prekrývam textom"
+msgid "Overlaying an image onto video"
+msgstr "Prekrývam textom"
 
-#~ msgid "Overlaying text on"
-#~ msgstr "Prekrývam textom"
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
+msgid "Overlaying text on"
+msgstr "Prekrývam textom"
 
-#~ msgid "Photo/still"
-#~ msgstr "Fotka/nehybný"
+#: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
+msgid "Photo/still"
+msgstr "Fotka/nehybný"
 
+#: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
 #, fuzzy
-#~ msgid "Pixilate"
-#~ msgstr "Vložiť"
+msgid "Pixilate"
+msgstr "Vložiť"
 
+#: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
 #, fuzzy
-#~ msgid "Pixilating"
-#~ msgstr "Vložiť"
+msgid "Pixilating"
+msgstr "Vložiť"
 
-#~ msgid "Posterize"
-#~ msgstr "Posterizovať"
+#: /usr/share/lives/plugins/effects/rendered/posterize.script:0
+msgid "Posterize"
+msgstr "Posterizovať"
 
-#~ msgid "Posterizing"
-#~ msgstr "Posterizácia"
+#: /usr/share/lives/plugins/effects/rendered/posterize.script:0
+msgid "Posterizing"
+msgstr "Posterizácia"
 
-#~ msgid "Random zoom"
-#~ msgstr "Náhodné priblíženie"
+#: /usr/share/lives/plugins/effects/rendered/randomzoom.script:0
+msgid "Random zoom"
+msgstr "Náhodné priblíženie"
 
-#~ msgid "Random zooming"
-#~ msgstr "Náhodné približovanie"
+#: /usr/share/lives/plugins/effects/rendered/randomzoom.script:0
+msgid "Random zooming"
+msgstr "Náhodné približovanie"
 
-#~ msgid "Reduce noise"
-#~ msgstr "Redukovať šum"
+#: /usr/share/lives/plugins/effects/rendered/noisify.script:0
+msgid "Reduce noise"
+msgstr "Redukovať šum"
 
-#~ msgid "Reduction radius"
-#~ msgstr "Redukovať rádius"
+#: /usr/share/lives/plugins/effects/rendered/noisify.script:0
+msgid "Reduction radius"
+msgstr "Redukovať rádius"
 
-#~ msgid "Replacing colours in"
-#~ msgstr "Nahradenie farieb v"
+#: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
+msgid "Replacing colours in"
+msgstr "Nahradenie farieb v"
 
-#~ msgid "Resize All Frames"
-#~ msgstr "Zmeniť veľkosť všetkých snímkov"
+#: /usr/share/lives/plugins/effects/rendered/resize.script:0
+msgid "Resize All Frames"
+msgstr "Zmeniť veľkosť všetkých snímkov"
 
-#~ msgid "Rotate Clip"
-#~ msgstr "Otočiť klip"
+#: /usr/share/lives/plugins/effects/rendered/rotate.script:0
+msgid "Rotate Clip"
+msgstr "Otočiť klip"
 
-#~ msgid "Rotating"
-#~ msgstr "Otočenie"
+#: /usr/share/lives/plugins/effects/rendered/rotate.script:0
+msgid "Rotating"
+msgstr "Otočenie"
 
-#~ msgid "S_tart %"
-#~ msgstr "Š_tart %"
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+msgid "S_tart %"
+msgstr "Š_tart %"
 
-#~ msgid "Saturation _end"
-#~ msgstr "Sýtosť farieb _koniec"
+#: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
+msgid "Saturation _end"
+msgstr "Sýtosť farieb _koniec"
 
-#~ msgid "Saturation _start"
-#~ msgstr "Sýtosť farieb _štart"
+#: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
+msgid "Saturation _start"
+msgstr "Sýtosť farieb _štart"
 
-#~ msgid "Saturation change"
-#~ msgstr "Zmena sýtosti farieb"
+#: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
+msgid "Saturation change"
+msgstr "Zmena sýtosti farieb"
 
-#~ msgid "Saturation end"
-#~ msgstr "Sýtosť farieb koniec"
+#: /usr/share/lives/plugins/effects/rendered/modulate.script:0
+msgid "Saturation end"
+msgstr "Sýtosť farieb koniec"
 
-#~ msgid "Saturation start"
-#~ msgstr "Sýtosť farieb štart"
+#: /usr/share/lives/plugins/effects/rendered/modulate.script:0
+msgid "Saturation start"
+msgstr "Sýtosť farieb štart"
 
-#~ msgid "Sepia"
-#~ msgstr "Sépia"
+#: /usr/share/lives/plugins/effects/rendered/sepia.script:0
+msgid "Sepia"
+msgstr "Sépia"
 
-#~ msgid "Shift horizontally"
-#~ msgstr "Vodorovný posun"
+#: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
+msgid "Shift horizontally"
+msgstr "Vodorovný posun"
 
-#~ msgid "Shift vertically"
-#~ msgstr "Zvislý posun"
+#: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
+msgid "Shift vertically"
+msgstr "Zvislý posun"
 
-#~ msgid "Shrink/Expand"
-#~ msgstr "Zmenšiť/Roztiahnuť"
+#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
+msgid "Shrink/Expand"
+msgstr "Zmenšiť/Roztiahnuť"
 
-#~ msgid "Shrinking/Expanding"
-#~ msgstr "Zmenšovanie/Rozťahovanie"
+#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
+msgid "Shrinking/Expanding"
+msgstr "Zmenšovanie/Rozťahovanie"
 
-#~ msgid "Skip forward"
-#~ msgstr "Preskočiť dopredu"
+#: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
+msgid "Skip forward"
+msgstr "Preskočiť dopredu"
 
-#~ msgid "Solarize"
-#~ msgstr "Solarizovať"
+#: /usr/share/lives/plugins/effects/rendered/solarize.script:0
+msgid "Solarize"
+msgstr "Solarizovať"
 
-#~ msgid "Solarizing"
-#~ msgstr "Solarizovanie"
+#: /usr/share/lives/plugins/effects/rendered/solarize.script:0
+msgid "Solarizing"
+msgstr "Solarizovanie"
 
-#~ msgid "Spin"
-#~ msgstr "Krútiť"
+#: /usr/share/lives/plugins/effects/rendered/spin.script:0
+msgid "Spin"
+msgstr "Krútiť"
 
-#~ msgid "Spinning"
-#~ msgstr "Krútenie"
+#: /usr/share/lives/plugins/effects/rendered/spin.script:0
+msgid "Spinning"
+msgstr "Krútenie"
 
-#~ msgid "Splice"
-#~ msgstr "Spojiť"
+#: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
+msgid "Splice"
+msgstr "Spojiť"
 
-#~ msgid "Splicing"
-#~ msgstr "Spájanie"
+#: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
+msgid "Splicing"
+msgstr "Spájanie"
 
-#~ msgid "Spread"
-#~ msgstr "Rozptýlenie"
+#: /usr/share/lives/plugins/effects/rendered/spread.script:0
+msgid "Spread"
+msgstr "Rozptýlenie"
 
-#~ msgid "Spreading"
-#~ msgstr "Rozptyľovanie"
+#: /usr/share/lives/plugins/effects/rendered/spread.script:0
+msgid "Spreading"
+msgstr "Rozptyľovanie"
 
-#~ msgid "Step _Value"
-#~ msgstr "_Hodnota kroku"
+#: /usr/share/lives/plugins/effects/rendered/solarize.script:0
+msgid "Step _Value"
+msgstr "_Hodnota kroku"
 
-#~ msgid "Step per _Frame"
-#~ msgstr "Krok na _snímok"
+#: /usr/share/lives/plugins/effects/rendered/spin.script:0
+#: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
+#: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
+msgid "Step per _Frame"
+msgstr "Krok na _snímok"
 
-#~ msgid "Swirl _start"
-#~ msgstr "Vírenie _štart"
+#: /usr/share/lives/plugins/effects/rendered/swirl.script:0
+msgid "Swirl _start"
+msgstr "Vírenie _štart"
 
-#~ msgid "Swirl s_tep"
-#~ msgstr "Vírenie k_rok"
+#: /usr/share/lives/plugins/effects/rendered/swirl.script:0
+msgid "Swirl s_tep"
+msgstr "Vírenie k_rok"
 
-#~ msgid "Swirl"
-#~ msgstr "Vírenie"
+#: /usr/share/lives/plugins/effects/rendered/swirl.script:0
+msgid "Swirl"
+msgstr "Vírenie"
 
-#~ msgid "Swirling"
-#~ msgstr "Aplikujem vírenie"
+#: /usr/share/lives/plugins/effects/rendered/swirl.script:0
+msgid "Swirling"
+msgstr "Aplikujem vírenie"
 
-#~ msgid "Text Overlay"
-#~ msgstr "Prekryť textom"
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
+msgid "Text Overlay"
+msgstr "Prekryť textom"
 
+#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 #, fuzzy
-#~ msgid "Thres_hold"
-#~ msgstr "Č/B Začiatok"
+msgid "Thres_hold"
+msgstr "Č/B Začiatok"
 
-#~ msgid "Trim frames/Add border"
-#~ msgstr "Orezať snímky/Pridať okraj"
+#: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
+msgid "Trim frames/Add border"
+msgstr "Orezať snímky/Pridať okraj"
 
-#~ msgid "Trimming"
-#~ msgstr "Orezávanie"
+#: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
+msgid "Trimming"
+msgstr "Orezávanie"
 
-#~ msgid "Tunnel"
-#~ msgstr "Tunel"
+#: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
+msgid "Tunnel"
+msgstr "Tunel"
 
-#~ msgid "Tunneling"
-#~ msgstr "Aplikujem tunel"
+#: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
+msgid "Tunneling"
+msgstr "Aplikujem tunel"
 
+#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
 #, fuzzy
-#~ msgid "Use _Natural Size"
-#~ msgstr "Použiť _prirodzenú veľkosť obrázku"
+msgid "Use _Natural Size"
+msgstr "Použiť _prirodzenú veľkosť obrázku"
 
-#~ msgid "Use _Natural image size"
-#~ msgstr "Použiť _prirodzenú veľkosť obrázku"
+#: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
+msgid "Use _Natural image size"
+msgstr "Použiť _prirodzenú veľkosť obrázku"
 
-#~ msgid "Vertical flipping"
-#~ msgstr "Obrátiť zvisle"
+#: /usr/share/lives/plugins/effects/rendered/flip.script:0
+msgid "Vertical flipping"
+msgstr "Obrátiť zvisle"
 
-#~ msgid "Vertical shifting"
-#~ msgstr "Posunúť zvislo"
+#: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
+msgid "Vertical shifting"
+msgstr "Posunúť zvislo"
 
-#~ msgid "Wave"
-#~ msgstr "Vlna"
+#: /usr/share/lives/plugins/effects/rendered/wave.script:0
+msgid "Wave"
+msgstr "Vlna"
 
-#~ msgid "Waving"
-#~ msgstr "Vlnenie"
+#: /usr/share/lives/plugins/effects/rendered/wave.script:0
+msgid "Waving"
+msgstr "Vlnenie"
 
-#~ msgid "_Background Colour"
-#~ msgstr "Farba _Pozadia"
+#: /usr/share/lives/plugins/effects/rendered/rotate.script:0
+#: /usr/share/lives/plugins/effects/rendered/wave.script:0
+#: /usr/share/lives/plugins/effects/rendered/spin.script:0
+#: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
+#: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
+#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
+msgid "_Background Colour"
+msgstr "Farba _Pozadia"
 
-#~ msgid "_Background colour"
-#~ msgstr "Farba _pozadia"
+#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+msgid "_Background colour"
+msgstr "Farba _pozadia"
 
-#~ msgid "_Black and white camera"
-#~ msgstr "_Čierno-biela kamera"
+#: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
+msgid "_Black and white camera"
+msgstr "_Čierno-biela kamera"
 
-#~ msgid "_Black is transparent"
-#~ msgstr "_Čierna je priehľadná"
+#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
+msgid "_Black is transparent"
+msgstr "_Čierna je priehľadná"
 
-#~ msgid "_Bottom"
-#~ msgstr "_Dole"
+#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
+msgid "_Bottom"
+msgstr "_Dole"
 
-#~ msgid "_Calculate"
-#~ msgstr "_Počítať"
+#: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
+msgid "_Calculate"
+msgstr "_Počítať"
 
-#~ msgid "_Cycle Start"
-#~ msgstr "Štart _periódy"
+#: /usr/share/lives/plugins/effects/rendered/cycle.script:0
+msgid "_Cycle Start"
+msgstr "Štart _periódy"
 
-#~ msgid "_Decrease Contrast"
-#~ msgstr "_Znížiť kontrast"
+#: /usr/share/lives/plugins/effects/rendered/contrast.script:0
+msgid "_Decrease Contrast"
+msgstr "_Znížiť kontrast"
 
-#~ msgid "_End Colour"
-#~ msgstr "_Koniec farby"
+#: /usr/share/lives/plugins/effects/rendered/dream.script:0
+#: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
+msgid "_Diffmax"
+msgstr ""
 
-#~ msgid "_End amount"
-#~ msgstr "_Koncová čiastka"
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+msgid "_End Colour"
+msgstr "_Koniec farby"
 
-#~ msgid "_Fade level"
-#~ msgstr "Ǔroveň _stmievania"
+#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+msgid "_End Size X:"
+msgstr ""
 
-#~ msgid "_Fade start"
-#~ msgstr "Štart _stmievania"
+#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+msgid "_End Size Y:"
+msgstr ""
 
-#~ msgid "_Fill colour"
-#~ msgstr "_Vyplniť farbou"
+#: /usr/share/lives/plugins/effects/rendered/spread.script:0
+msgid "_End amount"
+msgstr "_Koncová čiastka"
 
-#~ msgid "_First frame"
-#~ msgstr "_Prvý snímok"
+#: /usr/share/lives/plugins/effects/rendered/dream.script:0
+#: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
+msgid "_Fade level"
+msgstr "Ǔroveň _stmievania"
 
-#~ msgid "_Flash for"
-#~ msgstr "_Záblesk pre"
+#: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+#: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
+msgid "_Fade start"
+msgstr "Štart _stmievania"
 
-#~ msgid "_Font"
-#~ msgstr "_Písmo"
+#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
+msgid "_Fill colour"
+msgstr "_Vyplniť farbou"
 
-#~ msgid "_Frames per second"
-#~ msgstr "_Snímkov za sekundu"
+#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
+msgid "_First frame"
+msgstr "_Prvý snímok"
 
-#~ msgid "_Frames"
-#~ msgstr "_Snímkov"
+#: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
+msgid "_Flash for"
+msgstr "_Záblesk pre"
 
-#~ msgid "_Hold for"
-#~ msgstr "_Podržať pre"
+#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+msgid "_Font"
+msgstr "_Písmo"
 
-#~ msgid "_Horizontal segments"
-#~ msgstr "_Horizontálne prvky"
+#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
+#: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
+#: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
+msgid "_Frames per second"
+msgstr "_Snímkov za sekundu"
 
+#: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
+msgid "_Frames"
+msgstr "_Snímkov"
+
+#: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
+msgid "_Hold for"
+msgstr "_Podržať pre"
+
+#: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
+msgid "_Horizontal segments"
+msgstr "_Horizontálne prvky"
+
+#: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
 #, fuzzy
-#~ msgid "_Image File"
-#~ msgstr "_Súbor"
+msgid "_Image File"
+msgstr "_Súbor"
 
+#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
 #, fuzzy
-#~ msgid "_Image"
-#~ msgstr "_Súbor"
+msgid "_Image"
+msgstr "_Súbor"
 
-#~ msgid "_Increase Contrast"
-#~ msgstr "Zvýšiť kontrast"
+#: /usr/share/lives/plugins/effects/rendered/contrast.script:0
+msgid "_Increase Contrast"
+msgstr "Zvýšiť kontrast"
 
-#~ msgid "_Levels"
-#~ msgstr "_Levely"
+#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+msgid "_Init Size X:"
+msgstr ""
 
+#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
+msgid "_Init Size Y:"
+msgstr ""
+
+#: /usr/share/lives/plugins/effects/rendered/posterize.script:0
+msgid "_Levels"
+msgstr "_Levely"
+
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
 #, fuzzy
-#~ msgid "_Link start and end colours"
-#~ msgstr "_Nastavenie počiatočných a koncových bodov"
+msgid "_Link start and end colours"
+msgstr "_Nastavenie počiatočných a koncových bodov"
 
-#~ msgid "_Max zoom x 10"
-#~ msgstr "_Maximálne priblíženie x 10"
+#: /usr/share/lives/plugins/effects/rendered/randomzoom.script:0
+msgid "_Max zoom x 10"
+msgstr "_Maximálne priblíženie x 10"
 
-#~ msgid "_Middle"
-#~ msgstr "_Uprostred"
+#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
+msgid "_Middle"
+msgstr "_Uprostred"
 
+#: /usr/share/lives/plugins/effects/rendered/sepia.script:0
 #, fuzzy
-#~ msgid "_Midtone"
-#~ msgstr "_Uprostred"
+msgid "_Midtone"
+msgstr "_Uprostred"
 
-#~ msgid "_Negate"
-#~ msgstr "_Negatív"
+#: /usr/share/lives/plugins/effects/rendered/negate.script:0
+msgid "_Negate"
+msgstr "_Negatív"
 
-#~ msgid "_Number of frames"
-#~ msgstr "_Počet snímkov"
+#: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
+#: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
+#: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
+msgid "_Number of frames"
+msgstr "_Počet snímkov"
 
-#~ msgid "_Offset X"
-#~ msgstr "_Odsadenie X"
+#: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
+msgid "_Offset X"
+msgstr "_Odsadenie X"
 
-#~ msgid "_Offset Y"
-#~ msgstr "_Odsadenie Y"
+#: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
+msgid "_Offset Y"
+msgstr "_Odsadenie Y"
 
-#~ msgid "_Other Center"
-#~ msgstr "_Iný stred"
+#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
+msgid "_Other Center"
+msgstr "_Iný stred"
 
-#~ msgid "_Other"
-#~ msgstr "_Iné"
+#: /usr/share/lives/plugins/effects/rendered/rotate.script:0
+msgid "_Other"
+msgstr "_Iné"
 
-#~ msgid "_Point size"
-#~ msgstr "_Veľkosť bodu"
+#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
+msgid "_Point size"
+msgstr "_Veľkosť bodu"
 
-#~ msgid "_Radius end"
-#~ msgstr "_Koniec polomeru"
+#: /usr/share/lives/plugins/effects/rendered/blur.script:0
+msgid "_Radius end"
+msgstr "_Koniec polomeru"
 
-#~ msgid "_Radius start"
-#~ msgstr "_Štart polomeru"
+#: /usr/share/lives/plugins/effects/rendered/blur.script:0
+msgid "_Radius start"
+msgstr "_Štart polomeru"
 
-#~ msgid "_Radius"
-#~ msgstr "_Polomer"
+#: /usr/share/lives/plugins/effects/rendered/emboss.script:0
+#: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
+#: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
+msgid "_Radius"
+msgstr "_Polomer"
 
-#~ msgid "_Random colour each frame"
-#~ msgstr "_Náhodná farba pre každý snímok"
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+msgid "_Random colour each frame"
+msgstr "_Náhodná farba pre každý snímok"
 
-#~ msgid "_Randomness"
-#~ msgstr "_Nepravideľnosť"
+#: /usr/share/lives/plugins/effects/rendered/dream.script:0
+#: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
+msgid "_Randomness"
+msgstr "_Nepravideľnosť"
 
-#~ msgid "_Right"
-#~ msgstr "V_pravo"
+#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
+msgid "_Right"
+msgstr "V_pravo"
 
-#~ msgid "_Rotate Selection by"
-#~ msgstr "_Otočiť výber podľa"
+#: /usr/share/lives/plugins/effects/rendered/spin.script:0
+msgid "_Rotate Selection by"
+msgstr "_Otočiť výber podľa"
 
-#~ msgid "_Shrink rotated window to fit frame size"
-#~ msgstr "_Prispôsobiť otočené okno veľkosti snímku"
+#: /usr/share/lives/plugins/effects/rendered/spin.script:0
+msgid "_Shrink rotated window to fit frame size"
+msgstr "_Prispôsobiť otočené okno veľkosti snímku"
 
-#~ msgid "_Sigma end"
-#~ msgstr "_Sigma koniec"
+#: /usr/share/lives/plugins/effects/rendered/blur.script:0
+msgid "_Sigma end"
+msgstr "_Sigma koniec"
 
-#~ msgid "_Sigma start"
-#~ msgstr "_Sigma začiatok"
+#: /usr/share/lives/plugins/effects/rendered/blur.script:0
+msgid "_Sigma start"
+msgstr "_Sigma začiatok"
 
-#~ msgid "_Skip ahead"
-#~ msgstr "_Preskočiť vpred"
+#: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
+msgid "_Skip ahead"
+msgstr "_Preskočiť vpred"
 
-#~ msgid "_Skip"
-#~ msgstr "_Preskočiť"
+#: /usr/share/lives/plugins/effects/rendered/negate.script:0
+msgid "_Skip"
+msgstr "_Preskočiť"
 
-#~ msgid "_Source Colour"
-#~ msgstr "_Zdroj farby"
+#: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
+msgid "_Source Colour"
+msgstr "_Zdroj farby"
 
+#: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
 #, fuzzy
-#~ msgid "_Splice"
-#~ msgstr "Spojiť"
+msgid "_Splice"
+msgstr "Spojiť"
 
-#~ msgid "_Start Colour"
-#~ msgstr "_Počiatočná farba"
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+msgid "_Start Colour"
+msgstr "_Počiatočná farba"
 
-#~ msgid "_Start Value"
-#~ msgstr "_Počiatočná hodnota"
+#: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
+#: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
+#: /usr/share/lives/plugins/effects/rendered/solarize.script:0
+msgid "_Start Value"
+msgstr "_Počiatočná hodnota"
 
-#~ msgid "_Start amount"
-#~ msgstr "_Počiatočné množstvo"
+#: /usr/share/lives/plugins/effects/rendered/spread.script:0
+msgid "_Start amount"
+msgstr "_Počiatočné množstvo"
 
+#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
 #, fuzzy
-#~ msgid "_Stroke colour"
-#~ msgstr "_Počiatočná farba"
+msgid "_Stroke colour"
+msgstr "_Počiatočná farba"
 
-#~ msgid "_Target Colour"
-#~ msgstr "_Cieľová farba"
+#: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
+msgid "_Target Colour"
+msgstr "_Cieľová farba"
 
-#~ msgid "_Text"
-#~ msgstr "_Text"
+#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
+msgid "_Text"
+msgstr "_Text"
 
-#~ msgid "_Time (seconds)"
-#~ msgstr "_Čas (sekundy)"
+#: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
+msgid "_Time (seconds)"
+msgstr "_Čas (sekundy)"
 
+#: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
 #, fuzzy
-#~ msgid "_Top left is clipboard"
-#~ msgstr "Kopírovanie do schránky"
+msgid "_Top left is clipboard"
+msgstr "Kopírovanie do schránky"
 
-#~ msgid "_Vertical segments"
-#~ msgstr "_Vertikálne prvky"
+#: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
+msgid "_Vertical segments"
+msgstr "_Vertikálne prvky"
 
-#~ msgid "_Wavemax"
-#~ msgstr "_Maximálne vlny"
+#: /usr/share/lives/plugins/effects/rendered/wave.script:0
+msgid "_Wavemax"
+msgstr "_Maximálne vlny"
 
-#~ msgid "_White is transparent"
-#~ msgstr "_Biela je priehľadná"
+#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
+msgid "_White is transparent"
+msgstr "_Biela je priehľadná"
 
-#~ msgid "_X Center"
-#~ msgstr "_X stred"
+#: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
+#: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
+msgid "_Wrap Around"
+msgstr ""
 
-#~ msgid "_X End"
-#~ msgstr "_X koniec"
+#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
+msgid "_X Center"
+msgstr "_X stred"
 
-#~ msgid "_X Start"
-#~ msgstr "_X štart"
+#: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
+msgid "_X End"
+msgstr "_X koniec"
 
-#~ msgid "_X offset"
-#~ msgstr "_X odsadenie"
+#: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
+msgid "_X Start"
+msgstr "_X štart"
 
-#~ msgid "_Y Center"
-#~ msgstr "_Y stred"
+#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
+msgid "_X offset"
+msgstr "_X odsadenie"
 
-#~ msgid "_Y End"
-#~ msgstr "_Y koniec"
+#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
+msgid "_Y Center"
+msgstr "_Y stred"
 
-#~ msgid "_Y Start"
-#~ msgstr "_Y štart"
+#: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
+msgid "_Y End"
+msgstr "_Y koniec"
 
-#~ msgid "_Y offset"
-#~ msgstr "_Y odsadenie"
+#: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
+msgid "_Y Start"
+msgstr "_Y štart"
 
-#~ msgid "_degrees"
-#~ msgstr "_stupne"
+#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
+msgid "_Y offset"
+msgstr "_Y odsadenie"
 
-#~ msgid "_then"
-#~ msgstr "_potom"
+#: /usr/share/lives/plugins/effects/rendered/rotate.script:0
+msgid "_degrees"
+msgstr "_stupne"
 
-#~ msgid "blank_frames"
-#~ msgstr "prázdne _snímky"
+#: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
+msgid "_then"
+msgstr "_potom"
 
-#~ msgid "blur"
-#~ msgstr "rozmazať"
+#: /usr/share/lives/plugins/effects/rendered/blank_frames.script:0
+msgid "blank_frames"
+msgstr "prázdne _snímky"
 
-#~ msgid "brightness_change"
-#~ msgstr "_zmena jasu"
+#: /usr/share/lives/plugins/effects/rendered/blur.script:0
+msgid "blur"
+msgstr "rozmazať"
 
-#~ msgid "charcoal"
-#~ msgstr "uhol"
+#: /usr/share/lives/plugins/effects/rendered/brightness_change.script:0
+msgid "brightness_change"
+msgstr "_zmena jasu"
 
-#~ msgid "colorize"
-#~ msgstr "vyfarbiť"
+#: /usr/share/lives/plugins/effects/rendered/charcoal.script:0
+msgid "charcoal"
+msgstr "uhol"
 
-#~ msgid "colour_filter"
-#~ msgstr "farebný_filter"
+#: /usr/share/lives/plugins/effects/rendered/colorize.script:0
+msgid "colorize"
+msgstr "vyfarbiť"
 
-#~ msgid "colour_replace"
-#~ msgstr "nahradenie_farby"
+#: /usr/share/lives/plugins/effects/rendered/colour_filter.script:0
+msgid "colour_filter"
+msgstr "farebný_filter"
 
-#~ msgid "contrast"
-#~ msgstr "kontrast"
+#: /usr/share/lives/plugins/effects/rendered/colour_replace.script:0
+msgid "colour_replace"
+msgstr "nahradenie_farby"
 
-#~ msgid "cycle"
-#~ msgstr "cyklus"
+#: /usr/share/lives/plugins/effects/rendered/contrast.script:0
+msgid "contrast"
+msgstr "kontrast"
 
-#~ msgid "deinterlace"
-#~ msgstr "odstrániť prekladanie"
+#: /usr/share/lives/plugins/effects/rendered/cycle.script:0
+msgid "cycle"
+msgstr "cyklus"
 
-#~ msgid "despeckle"
-#~ msgstr "vyhladenie"
+#: /usr/share/lives/plugins/effects/rendered/deinterlace.script:0
+msgid "deinterlace"
+msgstr "odstrániť prekladanie"
 
-#~ msgid "dream"
-#~ msgstr "sen"
+#: /usr/share/lives/plugins/effects/rendered/despekle.script:0
+msgid "despeckle"
+msgstr "vyhladenie"
 
-#~ msgid "edge_detect"
-#~ msgstr "odhaliť_okraj"
+#: /usr/share/lives/plugins/effects/rendered/dream.script:0
+msgid "dream"
+msgstr "sen"
 
-#~ msgid "emboss"
-#~ msgstr "reliéf"
+#: /usr/share/lives/plugins/effects/rendered/edge_detect.script:0
+msgid "edge_detect"
+msgstr "odhaliť_okraj"
 
-#~ msgid "enhance"
-#~ msgstr "vylepšiť"
+#: /usr/share/lives/plugins/effects/rendered/emboss.script:0
+msgid "emboss"
+msgstr "reliéf"
 
-#~ msgid "every"
-#~ msgstr "každý"
+#: /usr/share/lives/plugins/effects/rendered/enhance.script:0
+msgid "enhance"
+msgstr "vylepšiť"
 
+#: /usr/share/lives/plugins/effects/rendered/noisify.script:0
+msgid "every"
+msgstr "každý"
+
+#: /usr/share/lives/plugins/effects/rendered/fade_in_out.script:0
 #, fuzzy
-#~ msgid "fade_in_out"
-#~ msgstr "Stíšiť zvuk"
+msgid "fade_in_out"
+msgstr "Stíšiť zvuk"
 
-#~ msgid "fc"
-#~ msgstr "fc"
+#: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
+msgid "fc"
+msgstr "fc"
 
-#~ msgid "flip"
-#~ msgstr "otočiť"
+#: /usr/share/lives/plugins/effects/rendered/flip.script:0
+msgid "flip"
+msgstr "otočiť"
 
-#~ msgid "flop"
-#~ msgstr "pretočiť"
+#: /usr/share/lives/plugins/effects/rendered/flop.script:0
+msgid "flop"
+msgstr "pretočiť"
 
-#~ msgid "frame_calculator"
-#~ msgstr "počítadlo_snímkov"
+#: /usr/share/lives/plugins/effects/rendered/frame_calculator.script:0
+msgid "frame_calculator"
+msgstr "počítadlo_snímkov"
 
-#~ msgid "gamma_change"
-#~ msgstr "zmena_gamma"
+#: /usr/share/lives/plugins/effects/rendered/gamma_change.script:0
+msgid "gamma_change"
+msgstr "zmena_gamma"
 
-#~ msgid "gen_blank_frames"
-#~ msgstr "gen_čisté_snímky"
+#: /usr/share/lives/plugins/effects/rendered/gen_blank_frames.script:0
+msgid "gen_blank_frames"
+msgstr "gen_čisté_snímky"
 
-#~ msgid "gen_clip_from_image"
-#~ msgstr "gen_klip_z_obrázku"
+#: /usr/share/lives/plugins/effects/rendered/gen_clip_from_image.script:0
+msgid "gen_clip_from_image"
+msgstr "gen_klip_z_obrázku"
 
-#~ msgid "gen_coloured_frames"
-#~ msgstr "gen_farebné_obrázky"
+#: /usr/share/lives/plugins/effects/rendered/gen_coloured_frames.script:0
+msgid "gen_coloured_frames"
+msgstr "gen_farebné_obrázky"
 
-#~ msgid "gen_text"
-#~ msgstr "gen_text"
+#: /usr/share/lives/plugins/effects/rendered/gen_text.script:0
+msgid "gen_text"
+msgstr "gen_text"
 
-#~ msgid "hue_change"
-#~ msgstr "zmena_odtieňa"
+#: /usr/share/lives/plugins/effects/rendered/hue_change.script:0
+msgid "hue_change"
+msgstr "zmena_odtieňa"
 
+#: /usr/share/lives/plugins/effects/rendered/image_overlay.script:0
 #, fuzzy
-#~ msgid "image_overlay"
-#~ msgstr "Prekryť textom"
+msgid "image_overlay"
+msgstr "Prekryť textom"
 
-#~ msgid "jumble"
-#~ msgstr "poprehadzovať"
+#: /usr/share/lives/plugins/effects/rendered/jumble.script:0
+msgid "jumble"
+msgstr "poprehadzovať"
 
-#~ msgid "modulate"
-#~ msgstr "modulovať"
+#: /usr/share/lives/plugins/effects/rendered/modulate.script:0
+msgid "modulate"
+msgstr "modulovať"
 
-#~ msgid "monochrome"
-#~ msgstr "monochromatické"
+#: /usr/share/lives/plugins/effects/rendered/monochrome.script:0
+msgid "monochrome"
+msgstr "monochromatické"
 
-#~ msgid "negate"
-#~ msgstr "negatív"
+#: /usr/share/lives/plugins/effects/rendered/negate.script:0
+msgid "negate"
+msgstr "negatív"
 
-#~ msgid "normalize"
-#~ msgstr "normalizovať"
+#: /usr/share/lives/plugins/effects/rendered/noisify.script:0
+msgid "noisify"
+msgstr ""
 
+#: /usr/share/lives/plugins/effects/rendered/normalize.script:0
+msgid "normalize"
+msgstr "normalizovať"
+
+#: /usr/share/lives/plugins/effects/rendered/photo_still.script:0
 #, fuzzy
-#~ msgid "photo_still"
-#~ msgstr "Fotka/nehybný"
+msgid "photo_still"
+msgstr "Fotka/nehybný"
 
+#: /usr/share/lives/plugins/effects/rendered/pixilate.script:0
 #, fuzzy
-#~ msgid "pixilate"
-#~ msgstr "Vložiť"
+msgid "pixilate"
+msgstr "Vložiť"
 
+#: /usr/share/lives/plugins/effects/rendered/posterize.script:0
 #, fuzzy
-#~ msgid "posterize"
-#~ msgstr "Posterizovať"
+msgid "posterize"
+msgstr "Posterizovať"
 
-#~ msgid "randomzoom"
-#~ msgstr "náhodné priblíženie"
+#: /usr/share/lives/plugins/effects/rendered/randomzoom.script:0
+msgid "randomzoom"
+msgstr "náhodné priblíženie"
 
-#~ msgid "resize"
-#~ msgstr "zmeniť veľkosť"
+#: /usr/share/lives/plugins/effects/rendered/resize.script:0
+msgid "resize"
+msgstr "zmeniť veľkosť"
 
-#~ msgid "rotate"
-#~ msgstr "otáčanie"
+#: /usr/share/lives/plugins/effects/rendered/rotate.script:0
+msgid "rotate"
+msgstr "otáčanie"
 
-#~ msgid "saturation_change"
-#~ msgstr "zmena_sýtosti"
+#: /usr/share/lives/plugins/effects/rendered/saturation_change.script:0
+msgid "saturation_change"
+msgstr "zmena_sýtosti"
 
-#~ msgid "sepia"
-#~ msgstr "sépia"
+#: /usr/share/lives/plugins/effects/rendered/sepia.script:0
+msgid "sepia"
+msgstr "sépia"
 
-#~ msgid "shift_horizontal"
-#~ msgstr "posun_vodorovne"
+#: /usr/share/lives/plugins/effects/rendered/shift_horizontal.script:0
+msgid "shift_horizontal"
+msgstr "posun_vodorovne"
 
-#~ msgid "shift_vertical"
-#~ msgstr "posun_zvisle"
+#: /usr/share/lives/plugins/effects/rendered/shift_vertical.script:0
+msgid "shift_vertical"
+msgstr "posun_zvisle"
 
-#~ msgid "shrink_expand"
-#~ msgstr "zmenšiť_roztiahnuť"
+#: /usr/share/lives/plugins/effects/rendered/shrink_expand.script:0
+msgid "shrink_expand"
+msgstr "zmenšiť_roztiahnuť"
 
-#~ msgid "skip_forwards"
-#~ msgstr "preskočiť_vpred"
+#: /usr/share/lives/plugins/effects/rendered/skip_forwards.script:0
+msgid "skip_forwards"
+msgstr "preskočiť_vpred"
 
-#~ msgid "solarize"
-#~ msgstr "solarizovať"
+#: /usr/share/lives/plugins/effects/rendered/solarize.script:0
+msgid "solarize"
+msgstr "solarizovať"
 
-#~ msgid "spin"
-#~ msgstr "otočenie"
+#: /usr/share/lives/plugins/effects/rendered/spin.script:0
+msgid "spin"
+msgstr "otočenie"
 
-#~ msgid "spread"
-#~ msgstr "rozptýlenie"
+#: /usr/share/lives/plugins/effects/rendered/spread.script:0
+msgid "spread"
+msgstr "rozptýlenie"
 
-#~ msgid "swirl"
-#~ msgstr "vírenie"
+#: /usr/share/lives/plugins/effects/rendered/swirl.script:0
+msgid "swirl"
+msgstr "vírenie"
 
-#~ msgid "textover"
-#~ msgstr "textcez"
+#: /usr/share/lives/plugins/effects/rendered/textover.script:0
+msgid "textover"
+msgstr "textcez"
 
+#: /usr/share/lives/plugins/effects/rendered/transition_bwthresh.script:0
 #, fuzzy
-#~ msgid "transition_bwthresh"
-#~ msgstr "prechod"
+msgid "transition_bwthresh"
+msgstr "prechod"
 
+#: /usr/share/lives/plugins/effects/rendered/transition_checkerboard.script:0
 #, fuzzy
-#~ msgid "transition_checkerboard"
-#~ msgstr "prechod_stmievanie2"
+msgid "transition_checkerboard"
+msgstr "prechod_stmievanie2"
 
-#~ msgid "transition_fade2"
-#~ msgstr "prechod_stmievanie2"
+#: /usr/share/lives/plugins/effects/rendered/transition_fade.script:0
+msgid "transition_fade2"
+msgstr "prechod_stmievanie2"
 
-#~ msgid "transition_splice"
-#~ msgstr "prechod_spojenie"
+#: /usr/share/lives/plugins/effects/rendered/transition_splice.script:0
+msgid "transition_splice"
+msgstr "prechod_spojenie"
 
-#~ msgid "trim_frames"
-#~ msgstr "orezať_snímky"
+#: /usr/share/lives/plugins/effects/rendered/trim_frames.script:0
+msgid "trim_frames"
+msgstr "orezať_snímky"
 
-#~ msgid "tunnel"
-#~ msgstr "tunel"
+#: /usr/share/lives/plugins/effects/rendered/tunnel.script:0
+msgid "tunnel"
+msgstr "tunel"
 
-#~ msgid "wave"
-#~ msgstr "vlna"
+#: /usr/share/lives/plugins/effects/rendered/wave.script:0
+msgid "wave"
+msgstr "vlna"
 
-#~ msgid "Unable to open output file !"
-#~ msgstr "Nedá sa otvoriť výstupný súbor !"
+#: /usr/bin/smogrify:0
+msgid "Unable to open output file !"
+msgstr "Nedá sa otvoriť výstupný súbor !"
 
-#~ msgid "LiVES could not write to $nfile."
-#~ msgstr "LiVES nevie zapisovať do $nfile."
+#: /usr/bin/smogrify:0
+msgid "LiVES could not write to $nfile."
+msgstr "LiVES nevie zapisovať do $nfile."
 
-#~ msgid "Unable to locate the program $rfx_builder_multi"
-#~ msgstr "Nemôžem nájsť program $rfx_builder_multi"
+#: /usr/bin/smogrify:0
+msgid "Unable to locate the program $rfx_builder_multi"
+msgstr "Nemôžem nájsť program $rfx_builder_multi"
 
-#~ msgid "This does not appear to be a valid video or image file"
-#~ msgstr "To sa nezdá byť platný súbor, s videom alebo obrázkami"
+#: /usr/bin/smogrify:0
+msgid "Your version of mplayer/ffmpeg may be broken"
+msgstr ""
 
-#~ msgid "LiVES was unable to open it."
-#~ msgstr "LiVES nebol schopný otvoriť."
+#: /usr/bin/smogrify:0
+msgid "See http://bugzilla.mplayerhq.hu/show_bug.cgi?id=2071"
+msgstr ""
 
-#~ msgid "Check the terminal window for more details."
-#~ msgstr "Pozrite sa na okno terminálu pre viac informácií."
+#: /usr/bin/smogrify:0
+msgid " "
+msgstr ""
 
-#~ msgid "Error creating new backup."
-#~ msgstr "Chyba pri vytvorení novej zálohy."
+#: /usr/bin/smogrify:0
+msgid ""
+"You can work around this by switching to jpeg output in Preferences/Decoding."
+msgstr ""
 
-#~ msgid "This does not appear to be a valid backup file"
-#~ msgstr "To sa nezdá byť platný súbor so zálohou"
+#: /usr/bin/smogrify:0
+msgid "This does not appear to be a valid video or image file"
+msgstr "To sa nezdá byť platný súbor, s videom alebo obrázkami"
 
-#~ msgid "LiVES was not able to open the file"
-#~ msgstr "LiVES nebol schopný otvoriť súbor"
+#: /usr/bin/smogrify:0
+msgid "LiVES was unable to open it."
+msgstr "LiVES nebol schopný otvoriť."
 
-#~ msgid "$file"
-#~ msgstr "$file"
+#: /usr/bin/smogrify:0
+msgid "Check the terminal window for more details."
+msgstr "Pozrite sa na okno terminálu pre viac informácií."
 
-#~ msgid "LiVES audio error."
-#~ msgstr "LiVES chyba zvuku."
+#: /usr/bin/smogrify:0
+msgid "Error creating new backup."
+msgstr "Chyba pri vytvorení novej zálohy."
 
-#~ msgid "cdda2wav is required for this function."
-#~ msgstr "cdda2wav je potrebný pre túto funkciu."
+#: /usr/bin/smogrify:0
+msgid "This does not appear to be a valid backup file"
+msgstr "To sa nezdá byť platný súbor so zálohou"
 
-#~ msgid "Please install it first."
-#~ msgstr "Prosím najskôr ho nainštalujte."
+#: /usr/bin/smogrify:0
+msgid "LiVES was not able to open the file"
+msgstr "LiVES nebol schopný otvoriť súbor"
 
-#~ msgid "You must set the CD device first in Preferences."
-#~ msgstr "Musíte najskôr nastaviť CD jednotku v Nastaveniach."
+#: /usr/bin/smogrify:0
+msgid "$file"
+msgstr "$file"
 
-#~ msgid "$plugin_name failed:"
-#~ msgstr "$plugin_name zlyhal:"
+#: /usr/bin/smogrify:0
+msgid "LiVES audio error."
+msgstr "LiVES chyba zvuku."
 
-#~ msgid "$error"
-#~ msgstr "$chyba"
+#: /usr/bin/smogrify:0
+msgid "cdda2wav is required for this function."
+msgstr "cdda2wav je potrebný pre túto funkciu."
+
+#: /usr/bin/smogrify:0
+msgid "Please install it first."
+msgstr "Prosím najskôr ho nainštalujte."
+
+#: /usr/bin/smogrify:0
+msgid "You must set the CD device first in Preferences."
+msgstr "Musíte najskôr nastaviť CD jednotku v Nastaveniach."
+
+#: /usr/bin/smogrify:0
+msgid "$plugin_name failed:"
+msgstr "$plugin_name zlyhal:"
+
+#: /usr/bin/smogrify:0
+msgid "$error"
+msgstr "$chyba"
 
 #~ msgid "Default value:    "
 #~ msgstr "Predvolená hodnota:    "

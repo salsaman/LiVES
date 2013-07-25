@@ -54,7 +54,7 @@ typedef struct {
   const char *(*version) (void);
   const char *(*get_description) (void);
 
-  gint *(*get_palette_list) (void);
+  int *(*get_palette_list) (void);
   boolean (*set_palette) (int palette);
   guint64 (*get_capabilities) (int palette);
 
@@ -66,7 +66,7 @@ typedef struct {
   void (*exit_screen) (guint16 mouse_x, guint16 mouse_y);
   void (*module_unload) (void);
   const gchar *(*get_fps_list) (int palette);
-  boolean (*set_fps) (gdouble fps);
+  boolean (*set_fps) (double fps);
   
   const char *(*get_init_rfx) (void);
 
@@ -97,16 +97,16 @@ typedef struct {
 #define VPP_CAN_RETURN    1<<1
 #define VPP_LOCAL_DISPLAY 1<<2
 
-  gint fwidth,fheight;
+  int fwidth,fheight;
 
   int palette;
   int YUV_sampling;
   int YUV_clamping;
   int YUV_subspace;
 
-  gint fixed_fps_numer;
-  gint fixed_fps_denom;
-  gdouble fixed_fpsd;
+  int fixed_fps_numer;
+  int fixed_fps_denom;
+  double fixed_fpsd;
 
   int extra_argc;
   gchar **extra_argv;
@@ -126,7 +126,7 @@ typedef struct {
 _vid_playback_plugin *open_vid_playback_plugin (const gchar *name, boolean in_use);
 void vid_playback_plugin_exit (void);
 void close_vid_playback_plugin(_vid_playback_plugin *);
-gint64 get_best_audio(_vid_playback_plugin *);
+int64_t get_best_audio(_vid_playback_plugin *);
 void save_vpp_defaults(_vid_playback_plugin *, gchar *file);
 void load_vpp_defaults(_vid_playback_plugin *, gchar *file);
 
@@ -173,7 +173,7 @@ typedef struct {
   // current output format
   gchar of_name[51];
   gchar of_desc[128];
-  gint of_allowed_acodecs;
+  int of_allowed_acodecs;
   gchar of_restrict[1024];
   gchar of_def_ext[16];
 }
@@ -201,24 +201,24 @@ extern const char *anames[AUDIO_CODEC_MAX];
 typedef struct {
   gchar *URI; ///< the URI of this cdata
 
-  gint nclips; ///< number of clips (titles) in container
+  int nclips; ///< number of clips (titles) in container
   gchar container_name[512]; ///< name of container, e.g. "ogg" or NULL
 
   /// plugin should init this to 0 if URI changes
-  gint current_clip; ///< current clip number in container (starts at 0, MUST be <= nclips) [rw host]
+  int current_clip; ///< current clip number in container (starts at 0, MUST be <= nclips) [rw host]
 
   // video data
-  gint width; // width and height of picture in frame
-  gint height;
-  gint64 nframes;
+  int width; // width and height of picture in frame
+  int height;
+  int64_t nframes;
   lives_interlace_t interlace;
 
   /// x and y offsets of picture within frame
   /// for primary pixel plane
-  gint offs_x;
-  gint offs_y;
-  gint frame_width; // frame width and height are the size of the outer frame
-  gint frame_height;
+  int offs_x;
+  int offs_y;
+  int frame_width; // frame width and height are the size of the outer frame
+  int frame_height;
 
   float par; ///< pixel aspect ratio
 
@@ -235,9 +235,9 @@ typedef struct {
   gchar video_name[512]; ///< name of video codec, e.g. "theora" or NULL
 
   /* audio data */
-  gint arate;
-  gint achans;
-  gint asamps;
+  int arate;
+  int achans;
+  int asamps;
   boolean asigned;
   boolean ainterleaf;
   gchar audio_name[512]; ///< name of audio codec, e.g. "vorbis" or NULL
@@ -384,11 +384,11 @@ typedef struct {
   gchar *desc;
 
   gchar *label;
-  gint flags;
+  int flags;
   boolean use_mnemonic;
   fn_ptr interp_func;
   fn_ptr display_func;
-  gint hidden;
+  int hidden;
 
   // reason(s) for hiding [bitmap]
 #define HIDDEN_GUI (1<<0)
@@ -396,26 +396,26 @@ typedef struct {
 #define HIDDEN_NEEDS_REINIT (1<<2)
 #define HIDDEN_COMPOUND_INTERNAL (1<<3)
 
-  gdouble step_size;
-  //gint copy_to;
+  double step_size;
+  //int copy_to;
   boolean transition;
   boolean reinit;
 
   boolean wrap;
-  gint group;
+  int group;
   lives_param_type_t type;
 
-  gint dp;  ///<decimals, 0 for int and bool
+  int dp;  ///<decimals, 0 for int and bool
   void *value;  ///< current value(s)
 
-  gdouble min;
-  gdouble max; ///< for string this is max characters
+  double min;
+  double max; ///< for string this is max characters
 
   void *def; ///< default values
   GList *list; ///< for string list (choices)
 
   /// multivalue type - single value, multi value, or per channel
-  gshort multi;
+  short multi;
 #define PVAL_MULTI_NONE 0
 #define PVAL_MULTI_ANY 1
 #define PVAL_MULTI_PER_CHANNEL 2
@@ -462,8 +462,8 @@ typedef struct {
   gchar *name;  ///< the name of the executable (so we can run it !)
   gchar *menu_text; ///< for Weed, this is the filter_class "name"
   gchar *action_desc; ///< for Weed "Applying $s"
-  gint min_frames; ///< for Weed, 1
-  gint num_in_channels;
+  int min_frames; ///< for Weed, 1
+  int num_in_channels;
   lives_rfx_status_t status;
 
 
@@ -479,7 +479,7 @@ typedef struct {
 #define RFX_PROPS_AUTO_BUILT  0x8000
 
   GtkWidget *menuitem;  ///< the menu item which activates this effect
-  gint num_params;
+  int num_params;
   lives_param_t *params;
   lives_rfx_source_t source_type;
   void *source;  ///< points to the source (e.g. a weed_plant_t)
@@ -494,11 +494,11 @@ boolean check_rfx_for_lives (lives_rfx_t *);
 
 void do_rfx_cleanup(lives_rfx_t *);
 
-void render_fx_get_params (lives_rfx_t *, const gchar *plugin_name, gshort status);
+void render_fx_get_params (lives_rfx_t *, const gchar *plugin_name, short status);
 
-void sort_rfx_array (lives_rfx_t *in_array, gint num_elements);
+void sort_rfx_array (lives_rfx_t *in_array, int num_elements);
 
-gint find_rfx_plugin_by_name (const gchar *name, gshort status);
+int find_rfx_plugin_by_name (const gchar *name, short status);
 
 void rfx_copy (lives_rfx_t *src, lives_rfx_t *dest, boolean full);
 
@@ -513,7 +513,7 @@ void param_copy (lives_param_t *src, lives_param_t *dest, boolean full);
 
 typedef struct {
   GList *list; ///< list of filter_idx from which user can delegate
-  gint delegate; ///< offset in list of current delegate
+  int delegate; ///< offset in list of current delegate
   gulong func; ///< menuitem activation function for current delegate
   lives_rfx_t *rfx; ///< pointer to rfx for current delegate (or NULL)
 } lives_fx_candidate_t;
@@ -530,26 +530,26 @@ typedef struct {
 
 
 boolean get_bool_param(void *value);
-gint get_int_param(void *value);
-gdouble get_double_param(void *value);
+int get_int_param(void *value);
+double get_double_param(void *value);
 void get_colRGB24_param(void *value, lives_colRGB24_t *rgb);
 void get_colRGBA32_param(void *value, lives_colRGBA32_t *rgba);
 
 void set_bool_param(void *value, boolean );
-void set_int_param(void *value, gint );
-void set_double_param(void *value, gdouble );
-void set_colRGB24_param(void *value, gshort red, gshort green, gshort blue);
-void set_colRGBA32_param(void *value, gshort red, gshort green, gshort blue, gshort alpha);
+void set_int_param(void *value, int );
+void set_double_param(void *value, double );
+void set_colRGB24_param(void *value, short red, short green, short blue);
+void set_colRGBA32_param(void *value, short red, short green, short blue, short alpha);
 
 /// return an array of parameter values
 void **store_rfx_params (lives_rfx_t *);
 void set_rfx_params_from_store (lives_rfx_t *rfx, void **store);
 void rfx_params_store_free (lives_rfx_t *, void **store);
 
-GList *array_to_string_list (gchar **array, gint offset, gint len);
+GList *array_to_string_list (gchar **array, int offset, int len);
 
 lives_rfx_t *weed_to_rfx (weed_plant_t *plant, boolean show_reinits);
-lives_param_t *weed_params_to_rfx(gint npar, weed_plant_t *instance, boolean show_reinits);
+lives_param_t *weed_params_to_rfx(int npar, weed_plant_t *instance, boolean show_reinits);
 
 gchar *plugin_run_param_window(const gchar *get_com, GtkVBox *vbox, lives_rfx_t **ret_rfx);
 

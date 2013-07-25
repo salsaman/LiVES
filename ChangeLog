@@ -2,12 +2,16 @@ Version 2.0.6
 -------------
 Add new "clip thumbnails window" for dual head mode.
 Fix bug (regression) with "clear" button in rte mapping window.
-Fix possible issue with some OSC constant lookups.
+Fix possible issue with OSC constants lookups.
 Implement new "clip thumbnails" window for dual head mode.
 Add "kaleidoscope" realtime effect.
 Fix crash when resetting playback speed and no audio is playing.
+Enable "wrap" for relevant parameters when using keyboard control.
+Fix vertical spacing for radiobuttons in parameter windows.
 
 
+
+	
 
 
 Version 2.0.5

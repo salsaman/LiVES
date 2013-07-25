@@ -1348,7 +1348,7 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, int pnum, boolean add_s
   GtkWidget *checkbutton;
   GtkWidget *radiobutton;
   GtkWidget *spinbutton;
-  GtkWidget *scale,*scale2;
+  GtkWidget *scale=NULL,*scale2;
   GtkWidget *spinbutton_red;
   GtkWidget *spinbutton_green;
   GtkWidget *spinbutton_blue;
@@ -1378,6 +1378,8 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, int pnum, boolean add_s
   boolean use_mnemonic;
   boolean was_num=FALSE;
 
+  boolean add_scalers=TRUE;
+
   int def_packing_width=widget_opts.packing_width;
 
   if (pnum>=rfx->num_params) {
@@ -1392,7 +1394,7 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, int pnum, boolean add_s
 
   // reinit can cause the window to be redrawn, which invalidates the slider adjustment...and bang !
   // so dont add sliders for such params
-  if (param->reinit) add_slider=FALSE;
+  if (param->reinit) add_scalers=FALSE;
 
   if (LIVES_IS_HBOX(LIVES_WIDGET(box))) {
     hbox=GTK_WIDGET(box);
@@ -1428,12 +1430,6 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, int pnum, boolean add_s
     }
     else {
       group=get_group(rfx,param);
-
-      if (LIVES_IS_HBOX(LIVES_WIDGET(box))) hbox=GTK_WIDGET(box);
-      else {
-	hbox = lives_hbox_new (FALSE, 0);
-	lives_box_pack_start (LIVES_BOX (box), hbox, FALSE, FALSE, widget_opts.packing_height);
-      }
       
       if (rfx->status==RFX_STATUS_WEED&&(disp_string=get_weed_display_string((weed_plant_t *)rfx->source,pnum))!=NULL) {
 	dlabel=lives_standard_label_new ((tmp=g_strdup_printf("(%s)",_ (disp_string))));
@@ -1519,14 +1515,16 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, int pnum, boolean add_s
     if (param->hidden) lives_widget_set_sensitive(spinbutton,FALSE);
 
 
-    if (add_slider) {
+    if (add_scalers) {
       spinbutton_adj=gtk_spin_button_get_adjustment(GTK_SPIN_BUTTON(spinbutton));
 #ifdef ENABLE_GIW
       if (!prefs->lamp_buttons) {
 #endif
-	scale=lives_hscale_new(LIVES_ADJUSTMENT(spinbutton_adj));
-	gtk_scale_set_draw_value(GTK_SCALE(scale),FALSE);
-	lives_box_pack_start (LIVES_BOX (hbox), scale, TRUE, TRUE, 0);
+	if (add_slider) {
+	  scale=lives_hscale_new(LIVES_ADJUSTMENT(spinbutton_adj));
+	  gtk_scale_set_draw_value(GTK_SCALE(scale),FALSE);
+	  lives_box_pack_start (LIVES_BOX (hbox), scale, TRUE, TRUE, 0);
+	}
 #ifdef ENABLE_GIW
       }
       else {
@@ -1537,24 +1535,27 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, int pnum, boolean add_s
 	add_fill_to_box(LIVES_BOX(hbox));
 	lives_widget_set_fg_color(scale,LIVES_WIDGET_STATE_NORMAL,&palette->black);
 	lives_widget_set_fg_color(scale,LIVES_WIDGET_STATE_PRELIGHT,&palette->dark_orange);
-	scale2=lives_hscale_new(LIVES_ADJUSTMENT(spinbutton_adj));
-	gtk_scale_set_draw_value(GTK_SCALE(scale2),FALSE);
-	lives_box_pack_start (LIVES_BOX (hbox), scale2, TRUE, TRUE, 0);
-	if (!LIVES_IS_HBOX(LIVES_WIDGET(box))) add_fill_to_box (LIVES_BOX (hbox));
+	if (add_slider) {
+	  scale2=lives_hscale_new(LIVES_ADJUSTMENT(spinbutton_adj));
+	  gtk_scale_set_draw_value(GTK_SCALE(scale2),FALSE);
+	  lives_box_pack_start (LIVES_BOX (hbox), scale2, TRUE, TRUE, 0);
+	  if (!LIVES_IS_HBOX(LIVES_WIDGET(box))) add_fill_to_box (LIVES_BOX (hbox));
 
-	if (palette->style&STYLE_1) {
-	  lives_widget_set_bg_color (scale2, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-	  lives_widget_set_text_color(scale2, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-	  lives_widget_set_fg_color(scale2, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+	  if (palette->style&STYLE_1) {
+	    lives_widget_set_bg_color (scale2, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+	    lives_widget_set_text_color(scale2, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+	    lives_widget_set_fg_color(scale2, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+	  }
+	  if (param->desc!=NULL) lives_widget_set_tooltip_text(scale2, param->desc);
 	}
-	if (param->desc!=NULL) lives_widget_set_tooltip_text(scale2, param->desc);
       }
 #endif
-      if (palette->style&STYLE_1) {
+      if (palette->style&STYLE_1&&scale!=NULL) {
 	lives_widget_set_bg_color (scale, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
 	lives_widget_set_text_color(scale, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
 	lives_widget_set_fg_color(scale, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
       }
+
       if (param->desc!=NULL) lives_widget_set_tooltip_text(scale, param->desc);
     }
     break;

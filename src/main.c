@@ -2574,7 +2574,6 @@ static boolean lives_startup(gpointer data) {
 
   gdk_window_add_filter(NULL, filter_func, NULL);
 
-
 #if GTK_CHECK_VERSION(3,0,0)
   if (!mainw->foreign&&prefs->show_gui) {
     calibrate_sepwin_size();

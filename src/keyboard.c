@@ -1,6 +1,6 @@
 // keyboard.c
 // LiVES
-// (c) G. Finch 2004 - 2012 <salsaman@gmail.com>
+// (c) G. Finch 2004 - 2013 <salsaman@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -32,8 +32,8 @@ static void handle_omc_events(void) {
   // check for external controller events
 
 #ifdef OMC_MIDI_IMPL
-  gint midi_check_rate;
-  gboolean gotone;
+  int midi_check_rate;
+  boolean gotone;
 #endif
 
   int i;
@@ -114,10 +114,15 @@ boolean ext_triggers_poll(gpointer data) {
 
 GdkFilterReturn filter_func(GdkXEvent *xevent, GdkEvent *event, gpointer data) {
   // filter events at X11 level and act on key press/release
-  guint modifiers=0;
+  uint32_t modifiers=0;
 
 #ifndef IS_MINGW
+  // seems to broken in some cases - X does not send keypress/keyrelease events
+
   XEvent *xev=(XEvent *)xevent;
+
+  g_print("t is %d\n",xev->type);
+
   if (xev->type<2||xev->type>3) return GDK_FILTER_CONTINUE;
   modifiers = (gtk_accelerator_get_default_mod_mask() & xev->xkey.state)|NEEDS_TRANSLATION;
 
@@ -129,7 +134,7 @@ GdkFilterReturn filter_func(GdkXEvent *xevent, GdkEvent *event, gpointer data) {
 #else
   // windows uses MSGs
   PMSG msg=(PMSG)xevent;
-  guint16 key;
+  uint16_t key;
 
 #define KEY_DOWN(vk_code) ((GetAsyncKeyState(vk_code) & 0x8000) ? 1 : 0)
 
@@ -144,7 +149,7 @@ GdkFilterReturn filter_func(GdkXEvent *xevent, GdkEvent *event, gpointer data) {
   if (KEY_DOWN(VK_SHIFT))
     modifiers |= LIVES_SHIFT_MASK;
 
-  key = (guint16)msg->wParam;
+  key = (uint16_t)msg->wParam;
   
   switch (key) {
   case VK_LEFT: key=LIVES_KEY_Left; break;
@@ -167,7 +172,7 @@ GdkFilterReturn filter_func(GdkXEvent *xevent, GdkEvent *event, gpointer data) {
 
 
 
-gboolean plugin_poll_keyboard (void) {
+boolean plugin_poll_keyboard (void) {
   static int last_kb_time=0,current_kb_time;
 
   // this is a function which should be called periodically during playback.
@@ -189,7 +194,7 @@ gboolean plugin_poll_keyboard (void) {
   // we also auto-repeat our cached keys
   if (cached_key&&current_kb_time-last_kb_time>KEY_RPT_INTERVAL*10) {
     last_kb_time=current_kb_time;
-    lives_accel_groups_activate (G_OBJECT (mainw->LiVES),(guint)cached_key, (GdkModifierType)cached_mod);
+    lives_accel_groups_activate (G_OBJECT (mainw->LiVES),(uint32_t)cached_key, (GdkModifierType)cached_mod);
   }
 
   return TRUE;
@@ -197,13 +202,15 @@ gboolean plugin_poll_keyboard (void) {
 
 
 
-gboolean pl_key_function (gboolean down, guint16 unicode, guint16 keymod) {
+boolean pl_key_function (boolean down, uint16_t unicode, uint16_t keymod) {
   // translate key events
   // plugins can also call this with a unicode key to pass key events to LiVES
   // (via a polling mechanism)
 
   // mask for ctrl and alt
-  GdkModifierType state=(GdkModifierType)(keymod&(LIVES_CONTROL_MASK|LIVES_ALT_MASK));
+  LiVESModifierType state=(LiVESModifierType)(keymod&(LIVES_CONTROL_MASK|LIVES_ALT_MASK));
+
+  g_print("here !\n");
 
   if (!down) {
     // up...
@@ -275,8 +282,11 @@ gboolean pl_key_function (gboolean down, guint16 unicode, guint16 keymod) {
   }
 
   
+  g_print("unic %d mod %d\n",unicode,keymod);
+
   if ((unicode==LIVES_KEY_Left||unicode==LIVES_KEY_Right||unicode==LIVES_KEY_Up||unicode==LIVES_KEY_Down)&&
       (keymod&LIVES_CONTROL_MASK)) {
+    g_print("caching key !\n");
     cached_key=unicode;
     cached_mod=LIVES_CONTROL_MASK;
   }
@@ -313,8 +323,8 @@ gboolean pl_key_function (gboolean down, guint16 unicode, guint16 keymod) {
 
   if (mainw->ext_keyboard) {
     if (cached_key) return FALSE;
-    if (mainw->multitrack==NULL) lives_accel_groups_activate (G_OBJECT (mainw->LiVES),(guint)unicode,state);
-    else lives_accel_groups_activate (G_OBJECT (mainw->multitrack->window),(guint)unicode,state);
+    if (mainw->multitrack==NULL) lives_accel_groups_activate (G_OBJECT (mainw->LiVES),(uint32_t)unicode,state);
+    else lives_accel_groups_activate (G_OBJECT (mainw->multitrack->window),(uint32_t)unicode,state);
     if (!mainw->ext_keyboard) return TRUE; // if user switched out of ext_keyboard, do no further processing *
   }
 
@@ -327,81 +337,81 @@ gboolean pl_key_function (gboolean down, guint16 unicode, guint16 keymod) {
 // key callback functions - ones which have keys and need wrappers
 
 
-gboolean slower_callback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer user_data) {
+boolean slower_callback (GtkAccelGroup *group, GObject *obj, uint32_t keyval, GdkModifierType mod, gpointer user_data) {
   
   on_slower_pressed (NULL,user_data);
   return TRUE;
 }
 
-gboolean faster_callback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer user_data) {
+boolean faster_callback (GtkAccelGroup *group, GObject *obj, uint32_t keyval, GdkModifierType mod, gpointer user_data) {
   
   on_faster_pressed (NULL,user_data);
   return TRUE;
 }
 
-gboolean skip_back_callback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer user_data) {
+boolean skip_back_callback (GtkAccelGroup *group, GObject *obj, uint32_t keyval, GdkModifierType mod, gpointer user_data) {
   
   on_back_pressed (NULL,user_data);
   return TRUE;
 }
 
-gboolean skip_forward_callback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer user_data) {
+boolean skip_forward_callback (GtkAccelGroup *group, GObject *obj, uint32_t keyval, GdkModifierType mod, gpointer user_data) {
   
   on_forward_pressed (NULL,user_data);
   return TRUE;
 }
 
-gboolean stop_callback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer user_data) {
+boolean stop_callback (GtkAccelGroup *group, GObject *obj, uint32_t keyval, GdkModifierType mod, gpointer user_data) {
   on_stop_activate (NULL,NULL);
   return TRUE;
 }
 
-gboolean fullscreen_callback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer user_data) {
+boolean fullscreen_callback (GtkAccelGroup *group, GObject *obj, uint32_t keyval, GdkModifierType mod, gpointer user_data) {
   on_full_screen_pressed (NULL,NULL);
   return TRUE;
 }
 
-gboolean sepwin_callback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer user_data) {
+boolean sepwin_callback (GtkAccelGroup *group, GObject *obj, uint32_t keyval, GdkModifierType mod, gpointer user_data) {
   on_sepwin_pressed (NULL,NULL);
   return TRUE;
 }
 
-gboolean loop_cont_callback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer user_data) {
+boolean loop_cont_callback (GtkAccelGroup *group, GObject *obj, uint32_t keyval, GdkModifierType mod, gpointer user_data) {
   on_loop_button_activate (NULL,NULL);
   return TRUE;
 }
 
-gboolean ping_pong_callback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer user_data) {
+boolean ping_pong_callback (GtkAccelGroup *group, GObject *obj, uint32_t keyval, GdkModifierType mod, gpointer user_data) {
   on_ping_pong_activate (NULL,NULL);
   return TRUE;
 }
 
-gboolean fade_callback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer user_data) {
+boolean fade_callback (GtkAccelGroup *group, GObject *obj, uint32_t keyval, GdkModifierType mod, gpointer user_data) {
   on_fade_pressed (NULL,NULL);
   return TRUE;
 }
 
-gboolean showfct_callback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer user_data) {
+boolean showfct_callback (GtkAccelGroup *group, GObject *obj, uint32_t keyval, GdkModifierType mod, gpointer user_data) {
   lives_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mainw->showfct),!prefs->show_framecount);
   return TRUE;
 }
 
-gboolean showsubs_callback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer user_data) {
+boolean showsubs_callback (GtkAccelGroup *group, GObject *obj, uint32_t keyval, GdkModifierType mod, gpointer user_data) {
   lives_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mainw->showsubs),!prefs->show_subtitles);
   return TRUE;
 }
 
-gboolean loop_callback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer user_data) {
+boolean loop_callback (GtkAccelGroup *group, GObject *obj, uint32_t keyval, GdkModifierType mod, gpointer user_data) {
   lives_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mainw->loop_video),!mainw->loop);
   return TRUE;
 }
 
-gboolean dblsize_callback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer user_data) {
+boolean dblsize_callback (GtkAccelGroup *group, GObject *obj, uint32_t keyval, GdkModifierType mod, gpointer user_data) {
   on_double_size_pressed (NULL,NULL);
   return TRUE;
 }
 
-gboolean rec_callback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer user_data) {
+boolean rec_callback (GtkAccelGroup *group, GObject *obj, uint32_t keyval, GdkModifierType mod, gpointer user_data) {
   lives_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(mainw->record_perf),!gtk_check_menu_item_get_active (GTK_CHECK_MENU_ITEM (mainw->record_perf)));
   return TRUE;
 }

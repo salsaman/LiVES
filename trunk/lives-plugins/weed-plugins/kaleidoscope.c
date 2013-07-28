@@ -234,7 +234,8 @@ int kal_process (weed_plant_t *inst, weed_timecode_t timestamp) {
 
   float side,fi,fj;
 
-  double anglerot=0.,dtime,sfac,angleoffs;
+  float anglerot=0.;
+  double dtime,sfac,angleoffs;
 
   int width=weed_get_int_value(in_channel,"width",&error),hwidth=width>>1;
   int height=weed_get_int_value(in_channel,"height",&error),hheight=height>>1;
@@ -257,10 +258,10 @@ int kal_process (weed_plant_t *inst, weed_timecode_t timestamp) {
   angleoffs=weed_get_double_value(in_params[0],"value",&error);
 
   if (sdata->old_tc!=0&&timestamp>sdata->old_tc) {
-    anglerot=weed_get_double_value(in_params[1],"value",&error);
+    anglerot=(float)weed_get_double_value(in_params[1],"value",&error);
     dtime=(double)(timestamp-sdata->old_tc)/100000000.;
-    anglerot*=dtime;
-    while (anglerot>=TWO_PI) anglerot%=TWO_PI;
+    anglerot*=(float)dtime;
+    while (anglerot>=TWO_PI) anglerot-=TWO_PI;
   }
   
   if (weed_get_boolean_value(in_params[3],"value",&error)==WEED_TRUE) anglerot=-anglerot;
@@ -349,7 +350,7 @@ int kal_process (weed_plant_t *inst, weed_timecode_t timestamp) {
   }
 
   if (upd) {
-    sdata->angle+=(float)anglerot*TWO_PI;
+    sdata->angle+=anglerot*TWO_PI;
     if (sdata->angle>=TWO_PI) sdata->angle-=TWO_PI;
     if (sdata->angle<0.) sdata->angle+=TWO_PI;
   }

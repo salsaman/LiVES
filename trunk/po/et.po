@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: https://sourceforge.net/p/lives/bugs/\n"
-"POT-Creation-Date: 2013-07-24 22:03-0300\n"
+"POT-Creation-Date: 2013-07-28 15:33-0300\n"
 "PO-Revision-Date: 2013-03-14 12:31+0000\n"
 "Last-Translator: Launchpad Translations Administrators <Unknown>\n"
 "Language-Team: Estonian <et@li.org>\n"
@@ -609,87 +609,87 @@ msgid "Autoloading set %s..."
 msgstr ""
 
 #. TRANSLATORS: localised name may be used here
-#: src/main.c:2719 src/interface.c:737
+#: src/main.c:2718 src/interface.c:737
 msgid "LiVES"
 msgstr ""
 
-#: src/main.c:2882
+#: src/main.c:2881
 #, c-format
 msgid "Invalid audio player %s\n"
 msgstr ""
 
-#: src/main.c:3011
+#: src/main.c:3010
 #, c-format
 msgid "LiVES-%s: <Untitled%d> %dx%d : %d frames %d bpp %.3f fps"
 msgstr ""
 
-#: src/main.c:3016
+#: src/main.c:3015
 #, c-format
 msgid "LiVES-%s: <%s> %dx%d : ??? frames ??? bpp %.3f fps"
 msgstr ""
 
-#: src/main.c:3020
+#: src/main.c:3019
 #, c-format
 msgid "LiVES-%s: <%s> %dx%d : %d frames %d bpp %.3f fps"
 msgstr ""
 
-#: src/main.c:3028
+#: src/main.c:3027
 #, c-format
 msgid "LiVES-%s: <No File>"
 msgstr ""
 
 #. TRANSLATORS: rec(ord)
-#: src/main.c:4781
+#: src/main.c:4780
 #, c-format
 msgid "rec %9d/%d"
 msgstr ""
 
 #. TRANSLATORS: out of memory (rec(ord))
-#: src/main.c:4785
+#: src/main.c:4784
 #, c-format
 msgid "!rec %9d/%d"
 msgstr ""
 
-#: src/main.c:5026 src/main.c:5027 src/gui.c:2122 src/gui.c:3217
+#: src/main.c:5025 src/main.c:5026 src/gui.c:2122 src/gui.c:3217
 #: src/saveplay.c:2208
 msgid "Play"
 msgstr "Esita"
 
-#: src/main.c:5721
+#: src/main.c:5720
 msgid ""
 "LiVES was unable to capture this image\n"
 "\n"
 msgstr ""
 
-#: src/main.c:5843
+#: src/main.c:5842
 #, c-format
 msgid "Closed file %s\n"
 msgstr ""
 
-#: src/main.c:6045 src/gui.c:643 src/utils.c:3923 src/utils.c:3955
+#: src/main.c:6044 src/gui.c:643 src/utils.c:3923 src/utils.c:3955
 #: src/saveplay.c:3385 src/multitrack.c:4259 src/multitrack.c:6004
 msgid "_Undo"
 msgstr "Võta _tagasi"
 
-#: src/main.c:6046 src/gui.c:656 src/utils.c:3924 src/utils.c:3956
+#: src/main.c:6045 src/gui.c:656 src/utils.c:3924 src/utils.c:3956
 #: src/saveplay.c:3386 src/multitrack.c:4280 src/multitrack.c:6027
 msgid "_Redo"
 msgstr "_Taasta"
 
-#: src/main.c:6089 src/interface.c:465 src/gui.c:2332 src/preferences.c:2325
+#: src/main.c:6088 src/interface.c:465 src/gui.c:2332 src/preferences.c:2325
 #: src/resample.c:1516
 msgid "Video"
 msgstr "Video"
 
-#: src/main.c:6090 src/interface.c:480 src/gui.c:2357
+#: src/main.c:6089 src/interface.c:480 src/gui.c:2357
 msgid "Left Audio"
 msgstr ""
 
-#: src/main.c:6091 src/gui.c:2381
+#: src/main.c:6090 src/gui.c:2381
 msgid "Right Audio"
 msgstr ""
 
-#: src/main.c:6137
+#: src/main.c:6136
 msgid ""
 "\n"
 "\n"
@@ -698,7 +698,7 @@ msgid ""
 "Please adjust the playback options in Preferences and try again.\n"
 msgstr ""
 
-#: src/main.c:6649 src/plugins.c:1499
+#: src/main.c:6648 src/plugins.c:1499
 msgid "LiVES: - Play Window"
 msgstr ""
 

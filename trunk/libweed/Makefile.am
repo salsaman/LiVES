@@ -79,6 +79,7 @@ uninstall-local:
 
 
 install-exec-hook:
+	rm -f /usr/lib/libweed*.la
 ## The following is removed as it breaks packaging.
 #	/sbin/ldconfig
 

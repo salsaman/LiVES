@@ -43,7 +43,7 @@ static int package_version=1; // version of this package
 
 int revtv_process (weed_plant_t *inst, weed_timecode_t timecode) {
   weed_plant_t *in_channel,*out_channel,**in_params;
-  unsigned char *osrc,*src,*dest;
+  unsigned char *src,*dest;
 
   short val;
 
@@ -65,7 +65,7 @@ int revtv_process (weed_plant_t *inst, weed_timecode_t timecode) {
   in_channel=weed_get_plantptr_value(inst,"in_channels",&error);
   out_channel=weed_get_plantptr_value(inst,"out_channels",&error);
 
-  osrc=src=(unsigned char *)weed_get_voidptr_value(in_channel,"pixel_data",&error);
+  src=(unsigned char *)weed_get_voidptr_value(in_channel,"pixel_data",&error);
   dest=(unsigned char *)weed_get_voidptr_value(out_channel,"pixel_data",&error);
 
   width = weed_get_int_value(in_channel,"width",&error);

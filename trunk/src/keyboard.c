@@ -121,7 +121,7 @@ GdkFilterReturn filter_func(GdkXEvent *xevent, GdkEvent *event, gpointer data) {
 
   XEvent *xev=(XEvent *)xevent;
 
-  g_print("t is %d\n",xev->type);
+  //g_print("t is %d\n",xev->type);
 
   if (xev->type<2||xev->type>3) return GDK_FILTER_CONTINUE;
   modifiers = (gtk_accelerator_get_default_mod_mask() & xev->xkey.state)|NEEDS_TRANSLATION;

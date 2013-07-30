@@ -2071,7 +2071,9 @@ void create_LiVES (void) {
   mainw->eventbox3 = lives_event_box_new ();
   lives_widget_show (mainw->eventbox3);
   lives_box_pack_start (LIVES_BOX (hbox1), mainw->eventbox3, TRUE, FALSE, 0);
-  lives_widget_set_bg_color (mainw->eventbox3, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+  if (palette->style&STYLE_1) {
+    lives_widget_set_bg_color (mainw->eventbox3, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+  }
 
   mainw->frame1 = gtk_frame_new (NULL);
   lives_widget_show (mainw->frame1);
@@ -2100,6 +2102,9 @@ void create_LiVES (void) {
   lives_container_add (LIVES_CONTAINER (mainw->freventbox0), mainw->image272);
   lives_widget_set_vexpand(mainw->image272,FALSE);
   lives_widget_set_hexpand(mainw->image272,FALSE);
+  if (palette->style&STYLE_1) {
+    lives_widget_set_bg_color(mainw->image272, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+  }
 
   label = lives_standard_label_new (_("First Frame"));
   if (palette->style&STYLE_1) {
@@ -2170,6 +2175,9 @@ void create_LiVES (void) {
   lives_container_add (LIVES_CONTAINER (mainw->freventbox1), mainw->image273);
   lives_widget_set_vexpand(mainw->image273,FALSE);
   lives_widget_set_hexpand(mainw->image273,FALSE);
+  if (palette->style&STYLE_1) {
+    lives_widget_set_bg_color(mainw->image273, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+  }
 
   // default frame sizes
   mainw->def_width=DEFAULT_FRAME_HSIZE;
@@ -2189,6 +2197,9 @@ void create_LiVES (void) {
   lives_widget_set_app_paintable(mainw->image274,TRUE);
   lives_widget_show (mainw->image274);
   g_object_ref(mainw->image274);
+  if (palette->style&STYLE_1) {
+    lives_widget_set_bg_color(mainw->image274, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+  }
 
   lives_widget_set_hexpand(mainw->image274,TRUE);
   lives_widget_set_vexpand(mainw->image274,TRUE);
@@ -4101,7 +4112,7 @@ void resize_play_window (void) {
 	}
       }
 
-#define TEST_CE_THUMBS 0
+#define TEST_CE_THUMBS 1
       if (TEST_CE_THUMBS||(prefs->show_gui&&prefs->ce_thumb_mode&&prefs->play_monitor!=prefs->gui_monitor&&
 			   prefs->play_monitor!=0&&!prefs->force_single_monitor&&
 			   capable->nmonitors>0&&mainw->multitrack==NULL)) {

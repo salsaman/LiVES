@@ -305,7 +305,7 @@ int kal_process (weed_plant_t *inst, weed_timecode_t timestamp) {
     end=start-dheight;
   }
 
-  orowstride-=psize*width;
+  orowstride-=psize*(hwidth<<1);
 
   for (i=start;i>end;i--) {
     for (j=-hwidth;j<hwidth;j++) {

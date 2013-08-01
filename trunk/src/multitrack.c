@@ -5238,6 +5238,7 @@ static void after_timecode_changed(GtkWidget *entry, GtkDirectionType dir, gpoin
 #if GTK_CHECK_VERSION(3,0,0)
 static boolean expose_pb (GtkWidget *widget, lives_painter_t *cr, gpointer user_data) {
   lives_mt *mt=(lives_mt *)user_data;
+  if (mainw->playing_file>-1) return TRUE;
   set_ce_frame_from_pixbuf(LIVES_IMAGE(mainw->image274),mt->frame_pixbuf,cr);
   return TRUE;
 }
@@ -7733,7 +7734,9 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 
   lives_container_add (LIVES_CONTAINER (frame), eventbox);
   lives_container_add (LIVES_CONTAINER (eventbox), mt->play_box);
-  lives_widget_set_bg_color (eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+  if (palette->style&STYLE_1) {
+    lives_widget_set_bg_color (eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+  }
   lives_container_add (LIVES_CONTAINER (mt->play_box), mt->play_blank);
 
 
@@ -16339,7 +16342,6 @@ void mt_post_playback(lives_mt *mt) {
   // called from on_preview_clicked
 
   unhide_cursor(lives_widget_get_xwindow(mainw->playarea));
-    
   mainw->must_resize=FALSE;
 
   if (mainw->cancelled!=CANCEL_USER_PAUSED&&!((mainw->cancelled==CANCEL_NONE||mainw->cancelled==CANCEL_NO_MORE_PREVIEW)&&

@@ -3367,14 +3367,6 @@ void set_ce_frame_from_pixbuf(GtkImage *image, GdkPixbuf *pixbuf, lives_painter_
   else cr=cairo;
 
   if (cr==NULL) return;
-
-  lives_painter_set_source_to_bg(cr,LIVES_WIDGET(image));
-
-  lives_painter_rectangle(cr,0,0,
-			  rwidth,
-			  rheight);
-  lives_painter_fill(cr);
-  
   if (pixbuf!=NULL) {
     int width=lives_pixbuf_get_width(pixbuf);
     int height=lives_pixbuf_get_height(pixbuf);
@@ -3385,6 +3377,14 @@ void set_ce_frame_from_pixbuf(GtkImage *image, GdkPixbuf *pixbuf, lives_painter_
     lives_painter_rectangle(cr,cx,cy,
 			    width,
 			    height);
+    lives_painter_fill(cr);
+  }
+  else {
+    lives_painter_set_source_to_bg(cr,LIVES_WIDGET(image));
+
+    lives_painter_rectangle(cr,0,0,
+			    rwidth,
+			    rheight);
     lives_painter_fill(cr);
   }
   if (cairo==NULL) lives_painter_destroy(cr);

@@ -509,7 +509,7 @@ static void ce_thumbs_remove_param_box(int key) {
   if (key>=rte_keys_virtual) return;
   if (pscrolls[key]==NULL) return;
   rfx=(lives_rfx_t *)g_object_get_data(G_OBJECT(pscrolls[key]),"rfx");
-  on_paramwindow_cancel_clicked(NULL,rfx); // free rfx and unref the inst
+  on_paramwindow_cancel_clicked(NULL,rfx); // free rfx and unref the inst (must be done before destroying the pscrolls[key]
   lives_widget_destroy(pscrolls[key]);
   pscrolls[key]=NULL;
   lives_widget_queue_draw(param_hbox);
@@ -543,10 +543,11 @@ void ce_thumbs_apply_rfx_changes(void) {
 
   for (i=0;i<rte_keys_virtual;i++) {
     if (pscrolls[i]!=NULL) {
-      if (!LIVES_POINTER_TO_INT(g_object_get_data(G_OBJECT(pscrolls[i]),"update"))) 
+      if (LIVES_POINTER_TO_INT(g_object_get_data(G_OBJECT(pscrolls[i]),"update"))) { 
 	g_object_set_data (G_OBJECT (pscrolls[i]),"update",LIVES_INT_TO_POINTER (FALSE));
 	rfx=(lives_rfx_t *)g_object_get_data(G_OBJECT(pscrolls[i]),"rfx");
 	update_visual_params(rfx,FALSE);
+      }
     }
   }
 }

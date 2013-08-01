@@ -50,6 +50,7 @@ static int package_version=1; // version of this package
 #define ONE_PI2 1.57079632679f
 #define ONE_PI3 1.0471975512f
 
+#define RT3  1.73205080757f //sqrt(3)
 #define RT32 0.86602540378f //sqrt(3)/2
 
 #define RT322 0.43301270189f 
@@ -68,8 +69,8 @@ static void calc_center(float side, float j, float i, float *x, float *y) {
 
   float secx,secy;
 
-  float sidex=side*RT32*2.; // 2 * side * cos(30)
-  float sidey=side*3./2.; // side + sin(30)
+  float sidex=side*RT3; // 2 * side * cos(30)
+  float sidey=side*1.5; // side + sin(30)
 
   float hsidex=sidex/2.,hsidey=sidey/2.;
 
@@ -95,14 +96,14 @@ static void calc_center(float side, float j, float i, float *x, float *y) {
   if (secy<0.) secy+=sidey;
   if (secx<0.) secx+=sidex;
 
-  if (!(gridy%2)) {
+  if (!(gridy&1)) {
 
     // even row (inverted Y)
     if (secy>(sidey-(hsidex-secx)*RT322)) {
       *y+=sidey;
       *x-=hsidex;
     }
-    if (secy>sidey-(secx-hsidex)*RT322) {
+    else if (secy>sidey-(secx-hsidex)*RT322) {
       *y+=sidey;
       *x+=hsidex;
     }
@@ -149,7 +150,7 @@ static float calc_dist(float x, float y) {
 static void rotate(float r, float theta, float angle, float *x, float *y) {
   theta+=angle;
   if (theta<0.) theta+=TWO_PI;
-  if (theta>=TWO_PI) theta-=TWO_PI;
+  else if (theta>=TWO_PI) theta-=TWO_PI;
 
   *x=r*cos(theta);
   *y=r*sin(theta);
@@ -173,7 +174,7 @@ static int put_pixel(void *src, void *dst, int psize, float angle, float theta, 
   theta-=angle;
 
   if (theta<0.) theta+=TWO_PI;
-  if (theta>TWO_PI) theta-=TWO_PI;
+  else if (theta>TWO_PI) theta-=TWO_PI;
 
   if (adif < ONE_PI3) {
     stheta=theta;
@@ -255,20 +256,20 @@ int kal_process (weed_plant_t *inst, weed_timecode_t timestamp) {
   if (width<height) side=width/2./RT32;
   else side=height/2.;
 
-  angleoffs=weed_get_double_value(in_params[0],"value",&error);
+  sfac=log(weed_get_double_value(in_params[0],"value",&error))/2.;
+
+  angleoffs=weed_get_double_value(in_params[1],"value",&error);
 
   if (sdata->old_tc!=0&&timestamp>sdata->old_tc) {
-    anglerot=(float)weed_get_double_value(in_params[1],"value",&error);
+    anglerot=(float)weed_get_double_value(in_params[2],"value",&error);
     dtime=(double)(timestamp-sdata->old_tc)/100000000.;
     anglerot*=(float)dtime;
     while (anglerot>=TWO_PI) anglerot-=TWO_PI;
   }
   
-  if (weed_get_boolean_value(in_params[3],"value",&error)==WEED_TRUE) anglerot=-anglerot;
+  if (weed_get_boolean_value(in_params[4],"value",&error)==WEED_TRUE) anglerot=-anglerot;
 
-  sizerev=weed_get_boolean_value(in_params[4],"value",&error);
-
-  sfac=weed_get_double_value(in_params[5],"value",&error);
+  sizerev=weed_get_boolean_value(in_params[5],"value",&error);
 
   weed_free(in_params);
 
@@ -309,11 +310,8 @@ int kal_process (weed_plant_t *inst, weed_timecode_t timestamp) {
 
   for (i=start;i>end;i--) {
     for (j=-hwidth;j<hwidth;j++) {
-      fi=(float)i;
-      fj=(float)j;
-
       // rotate point to line up with hex grid
-      theta=calc_angle(fi,fj); // get angle of this point from origin
+      theta=calc_angle((fi=(float)i),(fj=(float)j)); // get angle of this point from origin
       r=calc_dist(fi,fj); // get dist of point from origin
       rotate(r,theta,-xangle+ONE_PI2,&a,&b); // since our central hex has rotated by angle, so has the hex grid - so compensate
 
@@ -352,7 +350,7 @@ int kal_process (weed_plant_t *inst, weed_timecode_t timestamp) {
   if (upd) {
     sdata->angle+=anglerot*TWO_PI;
     if (sdata->angle>=TWO_PI) sdata->angle-=TWO_PI;
-    if (sdata->angle<0.) sdata->angle+=TWO_PI;
+    else if (sdata->angle<0.) sdata->angle+=TWO_PI;
   }
 
   return WEED_NO_ERROR;
@@ -397,17 +395,24 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 
     weed_plant_t *in_chantmpls[]={weed_channel_template_init("in channel 0",0,palette_list),NULL};
     weed_plant_t *out_chantmpls[]={weed_channel_template_init("out channel 0",0,palette_list),NULL};
-    weed_plant_t *in_params[]={weed_float_init("offset","_Offset angle",0.,0.,359.),weed_float_init("rotsec","_Rotations per second",0.2,0.,10.),
-			       weed_radio_init("acw","_Anti-clockwise",WEED_TRUE,1),weed_radio_init("cw","_Clockwise",WEED_FALSE,1),
-			       weed_switch_init("szc","_Switch direction on frame size change",WEED_FALSE),
-			       weed_float_init("szlen","_Size",0.5,0.1,2.0),NULL};
+    weed_plant_t *in_params[]={			       weed_float_init("szlen","_Size (log)",5.62,1.,10.),
+						       weed_float_init("offset","_Offset angle",0.,0.,359.),
+						       weed_float_init("rotsec","_Rotations per second",0.2,0.,4.),
+						       weed_radio_init("acw","_Anti-clockwise",WEED_TRUE,1),
+						       weed_radio_init("cw","_Clockwise",WEED_FALSE,1),
+						       weed_switch_init("szc","_Switch direction on frame size change",WEED_FALSE),
+						       NULL};
 
     weed_plant_t *filter_class=weed_filter_class_init("kaleidoscope","salsaman",1,WEED_FILTER_HINT_MAY_THREAD,
 						      &kal_init,&kal_process,&kal_deinit,in_chantmpls,out_chantmpls,in_params,NULL);
 
-    weed_plant_t *gui=weed_parameter_template_get_gui(in_params[1]);
+    weed_plant_t *gui=weed_parameter_template_get_gui(in_params[2]);
     
-    weed_set_boolean_value(in_params[0],"wrap",WEED_TRUE);
+    weed_set_boolean_value(in_params[1],"wrap",WEED_TRUE);
+
+    weed_set_double_value(gui,"step_size",.1);
+
+    gui=weed_parameter_template_get_gui(in_params[0]);
 
     weed_set_double_value(gui,"step_size",.1);
 

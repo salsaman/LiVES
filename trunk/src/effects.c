@@ -1034,8 +1034,8 @@ weed_plant_t *get_blend_layer(weed_timecode_t tc) {
 
 boolean rte_on_off_callback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer user_data) {
 // this is the callback which happens when a rte is keyed
-  gint key=GPOINTER_TO_INT(user_data);
-  guint new_rte=GU641<<(key-1);
+  int key=LIVES_POINTER_TO_INT(user_data);
+  uint64_t new_rte=GU641<<(key-1);
 
   mainw->osc_block=TRUE;
 

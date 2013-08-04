@@ -2255,9 +2255,10 @@ GtkWidget * create_rte_window (void) {
       if (num_in_params(filter,TRUE,TRUE)>0) lives_widget_set_sensitive(param_buttons[idx],TRUE);
       else lives_widget_set_sensitive(param_buttons[idx],FALSE);
 
+      /*
       if ((weed_plant_has_leaf(filter,"out_parameter_templates")&&weed_get_plantptr_value(filter,"out_parameter_templates",&error)!=NULL)||num_alpha_channels(filter,TRUE)>1) lives_widget_set_sensitive(conx_buttons[idx],TRUE);
       else lives_widget_set_sensitive(conx_buttons[idx],FALSE);
-
+      */
 
 
       }

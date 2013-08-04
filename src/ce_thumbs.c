@@ -531,7 +531,7 @@ static void ce_thumbs_remove_param_boxes(boolean remove_pinned) {
 
 void ce_thumbs_register_rfx_change(int key, int mode) {
   // register a param box to be updated visually, from an asynchronous source - either from a A->V data connection or from osc
-  if (key>=rte_keys_virtual) return;
+  if (key>=rte_keys_virtual||pscrolls[key]==NULL) return;
   g_object_set_data (G_OBJECT (pscrolls[key]),"update",LIVES_INT_TO_POINTER (TRUE));
 }
 

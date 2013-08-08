@@ -844,7 +844,7 @@ void lives_osc_cb_bgset_fps_ratio(void *context, int arglen, const void *vargs, 
 
 void lives_osc_cb_fx_reset(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
 
-  if (!mainw->osc_block) rte_on_off_callback(NULL,NULL,0,(LiVESModifierType)0,LIVES_INT_TO_POINTER(0));
+  if (!mainw->osc_block) rte_on_off_callback_hook(NULL,LIVES_INT_TO_POINTER(0));
   if (prefs->omc_noisy) lives_osc_notify_success(NULL);
 
 }
@@ -896,7 +896,7 @@ void lives_osc_cb_fx_enable(void *context, int arglen, const void *vargs, OSCTim
       }
       // TODO ***
       //mainw->osc_auto=TRUE; ///< request early notifiction of success
-      rte_on_off_callback(NULL,NULL,0,(LiVESModifierType)0,LIVES_INT_TO_POINTER(effect_key));
+      rte_on_off_callback_hook(NULL,LIVES_INT_TO_POINTER(effect_key));
       mainw->osc_auto=FALSE;
 #if GTK_CHECK_VERSION(3,0,0)
       if (new_timer_added)
@@ -916,7 +916,7 @@ void lives_osc_cb_fx_disable(void *context, int arglen, const void *vargs, OSCTi
   if (!lives_osc_check_arguments (arglen,vargs,"i",TRUE)) return lives_osc_notify_failure();
   lives_osc_parse_int_argument(vargs,&effect_key);
   if (mainw->rte&(GU641<<(effect_key-1))) {
-    if (!mainw->osc_block) rte_on_off_callback(NULL,NULL,0,(LiVESModifierType)0,LIVES_INT_TO_POINTER(effect_key));
+    if (!mainw->osc_block) rte_on_off_callback_hook(NULL,LIVES_INT_TO_POINTER(effect_key));
   }
   if (prefs->omc_noisy) lives_osc_notify_success(NULL);
 }
@@ -949,7 +949,7 @@ void lives_osc_cb_fx_toggle(void *context, int arglen, const void *vargs, OSCTim
     }
     // TODO ***
     //mainw->osc_auto=TRUE; ///< request early notifiction of success
-    rte_on_off_callback(NULL,NULL,0,(LiVESModifierType)0,LIVES_INT_TO_POINTER(effect_key));
+    rte_on_off_callback_hook(NULL,LIVES_INT_TO_POINTER(effect_key));
 #if GTK_CHECK_VERSION(3,0,0)
     mainw->kb_timer_end=TRUE;
 #endif
@@ -5841,7 +5841,7 @@ void lives_osc_cb_rte_delpconnection(void *context, int arglen, const void *varg
   if (key0<0||key0>=FX_KEYS_MAX_VIRTUAL||mode0<1||mode0>rte_getmodespk()) return lives_osc_notify_failure();
   if (key1<-2||key1>=FX_KEYS_MAX_VIRTUAL||mode1<1||mode1>rte_getmodespk()) return lives_osc_notify_failure();
 
-  pconx_delete(--key0,--mode0,pnum0,--key1,--mode1,pnum1);
+  pconx_delete(key0==0?-100000:--key0,--mode0,pnum0,key1==0?-1000000:--key1,--mode1,pnum1);
   lives_osc_notify_success(NULL);
 
 }
@@ -5923,7 +5923,7 @@ void lives_osc_cb_rte_delcconnection(void *context, int arglen, const void *varg
   if (key0<0||key0>=FX_KEYS_MAX_VIRTUAL||mode0<1||mode0>rte_getmodespk()) return lives_osc_notify_failure();
   if (key1<-2||key1>=FX_KEYS_MAX_VIRTUAL||mode1<1||mode1>rte_getmodespk()) return lives_osc_notify_failure();
 
-  cconx_delete(--key0,--mode0,cnum0,--key1,--mode1,cnum1);
+  cconx_delete(key0==0?-100000:--key0,--mode0,cnum0,key1==0?-100000:--key1,--mode1,cnum1);
 
   lives_osc_notify_success(NULL);
 }

@@ -26,6 +26,7 @@
 #include "ce_thumbs.h"
 
 #define TEST_ENCON_OUT
+#define TEST_ENCON_IN
 
 static weed_plant_t *active_dummy=NULL;
 
@@ -33,6 +34,12 @@ static weed_plant_t *active_dummy=NULL;
 #define EXTRA_PARAMS_OUT 1
 #else
 #define EXTRA_PARAMS_OUT 0
+#endif
+
+#ifdef TEST_ENCON_IN
+#define EXTRA_PARAMS_IN 1
+#else
+#define EXTRA_PARAMS_IN 0
 #endif
 
 void pconx_delete_all(void) {
@@ -162,8 +169,8 @@ void pconx_delete(int okey, int omode, int opnum, int ikey, int imode, int ipnum
 
   while (pconx!=NULL) {
     pconx_next=pconx->next;
-    if (okey==-1||(pconx->okey==okey&&pconx->omode==omode)) {
-      if (ikey==-1) {
+    if (okey==-1000000||(pconx->okey==okey&&pconx->omode==omode)) {
+      if (ikey==-1000000) {
 	//g_print("rem all cons from %d %d to any param\n",okey,omode); 
 
 	// delete entire node
@@ -187,13 +194,13 @@ void pconx_delete(int okey, int omode, int opnum, int ikey, int imode, int ipnum
       for (i=0;pconx!=NULL&&i<pconx->nparams;i++) {
 	totcons+=pconx->nconns[i];
 
-	if (okey!=-1&&pconx->params[i]!=opnum) {
+	if (okey!=-1000000&&pconx->params[i]!=opnum) {
 	  j+=totcons;
 	  continue;
 	}
 
 	for (;j<totcons;j++) {
-	  if (pconx->ikey[j]==ikey && pconx->imode[j]==imode && (ipnum==-1||pconx->ipnum[j]==ipnum)) {
+	  if (pconx->ikey[j]==ikey && pconx->imode[j]==imode && (ipnum==-1000000||pconx->ipnum[j]==ipnum)) {
 	    maxcons--;
 	    for (k=j;k<maxcons;k++) {
 	      pconx->ikey[k]=pconx->ikey[k+1];
@@ -321,7 +328,7 @@ void pconx_add_connection(int okey, int omode, int opnum, int ikey, int imode, i
   register int i,j;
 
   // delete any existing connection to the input param
-  pconx_delete(-1,0,0,ikey,imode,ipnum);
+  pconx_delete(-1000000,0,0,ikey,imode,ipnum);
 
   pthread_mutex_lock(&mainw->data_mutex);
 
@@ -511,11 +518,14 @@ weed_plant_t *pconx_get_out_param(boolean use_filt, int ikey, int imode, int ipn
 
 	  // out param is "ACTIVATED"
 	  if (pconx->params[i]==-1) {
-	    if (active_dummy!=NULL) {
+	    if (active_dummy!=NULL&&!WEED_PLANT_IS_PARAMETER(active_dummy)) {
 	      weed_plant_free(active_dummy);
+	      active_dummy=NULL;
 	    }
-	    active_dummy=weed_plant_new(WEED_PLANT_PARAMETER);
-	    weed_set_plantptr_value(active_dummy,"template",NULL);
+	    if (active_dummy==NULL) {
+	      active_dummy=weed_plant_new(WEED_PLANT_PARAMETER);
+	      weed_set_plantptr_value(active_dummy,"template",NULL);
+	    }
 	    if (!use_filt) weed_set_boolean_value(active_dummy,"value",inst!=NULL);
 	    param=active_dummy;
 	  }
@@ -570,7 +580,7 @@ static boolean params_compatible(weed_plant_t *sparam, weed_plant_t *dparam) {
   int nsvals;
 
   int dhint;
-  int dflags;
+  int dflags=0;
 
   if (WEED_PLANT_IS_PARAMETER(dparam)) {
     dptmpl=weed_get_plantptr_value(dparam,"template",&error);
@@ -592,13 +602,15 @@ static boolean params_compatible(weed_plant_t *sparam, weed_plant_t *dparam) {
     nsvals=weed_leaf_num_elements(sparam,"default");
   }
 
-  dhint=weed_get_int_value(dptmpl,"hint",&error);
-  dflags=weed_get_int_value(dptmpl,"flags",&error);
-
-  if (dhint==WEED_HINT_COLOR) {
-    int cspace=weed_get_int_value(dptmpl,"colorspace",&error);
-    if (cspace==WEED_COLORSPACE_RGB&&(nsvals%3!=0)) return FALSE;
-    if (nsvals%4!=0) return FALSE;
+  if (dptmpl!=NULL) {
+    dhint=weed_get_int_value(dptmpl,"hint",&error);
+    dflags=weed_get_int_value(dptmpl,"flags",&error);
+    
+    if (dhint==WEED_HINT_COLOR) {
+      int cspace=weed_get_int_value(dptmpl,"colorspace",&error);
+      if (cspace==WEED_COLORSPACE_RGB&&(nsvals%3!=0)) return FALSE;
+      if (nsvals%4!=0) return FALSE;
+    }
   }
 
   if (ndvals>nsvals) {
@@ -668,12 +680,10 @@ boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, weed_plant_t *dpa
     else autoscale=FALSE;
   }
 
-  if (weed_plant_has_leaf(dptmpl,"max")) {
+  if (dptmpl!=NULL&&weed_plant_has_leaf(dptmpl,"max")) {
     nmax=weed_leaf_num_elements(dptmpl,"max");
     nmin=weed_leaf_num_elements(dptmpl,"min");
   }
-
-  //g_print("got %d and %d\n",stype,dtype);
 
   switch (stype) {
   case WEED_SEED_STRING:
@@ -1034,6 +1044,16 @@ boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, weed_plant_t *dpa
   case WEED_SEED_BOOLEAN:
     {
       int *valsb=weed_get_boolean_array(sparam,"value",&error);
+      if (dparam==active_dummy) {
+	// ACTIVATE
+	int key=weed_get_int_value(dparam,"host_key",&error);
+	if ((valsb[0]==WEED_TRUE&&!(mainw->rte&(GU641<<(key))))||
+	    (valsb[0]==WEED_FALSE&&(mainw->rte&(GU641<<(key))))) {
+	  rte_on_off_callback_hook(NULL,LIVES_INT_TO_POINTER(key+1));
+	}
+	weed_free(valsb);
+	return retval;
+      }
 
       switch (dtype) {
       case WEED_SEED_STRING:
@@ -1203,7 +1223,7 @@ boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, weed_plant_t *dpa
 	    if (inst!=NULL&&mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {
 	      // if we are recording, add this change to our event_list
 	      rec_param_change(inst,pnum);
-	      copyto=set_copy_to(inst,pnum,FALSE);
+	      copyto=set_copy_to(inst,pnum,FALSE);	
 	      if (copyto!=-1) rec_param_change(inst,copyto);
 	    }
 
@@ -1234,7 +1254,7 @@ boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, weed_plant_t *dpa
 boolean pconx_chain_data(int key, int mode) {
 
   weed_plant_t **inparams;
-  weed_plant_t *oparam;
+  weed_plant_t *oparam,*inparam;
   weed_plant_t *inst=NULL;
 
   boolean changed,reinit_inst=FALSE;
@@ -1255,12 +1275,10 @@ boolean pconx_chain_data(int key, int mode) {
       }
     }
     else {
-      if ((inst=rte_keymode_get_instance(key+1,mode))==NULL) {
-	return FALSE; ///< dest effect is not enabled
-      }
+      inst=rte_keymode_get_instance(key+1,mode);
     }
     
-    if (weed_plant_has_leaf(inst,"in_parameters")) nparams=weed_leaf_num_elements(inst,"in_parameters");
+    if (inst!=NULL&&weed_plant_has_leaf(inst,"in_parameters")) nparams=weed_leaf_num_elements(inst,"in_parameters");
   }
   else if (key==-2) {
     // playback plugin
@@ -1268,19 +1286,32 @@ boolean pconx_chain_data(int key, int mode) {
     nparams=mainw->vpp->num_play_params;
   }
 
-  if (nparams>0) {
 
     if (key==-2) inparams=mainw->vpp->play_params;
     else inparams=weed_get_plantptr_array(inst,"in_parameters",&error);
 
-    for (i=0;i<nparams;i++) {
+    for (i=-EXTRA_PARAMS_IN;i<nparams;i++) {
       if ((oparam=pconx_get_out_param(FALSE,key,mode,i,&autoscale))!=NULL) {
 	//	#define DEBUG_PCONX
 #ifdef DEBUG_PCONX
 	g_print("got pconx to %d %d %d\n",key,mode,i);
 #endif
+	if (i==-1) {
+	  if (active_dummy!=NULL&&!WEED_PLANT_IS_PARAMETER(active_dummy)) {
+	    weed_plant_free(active_dummy);
+	    active_dummy=NULL;
+	  }
+	  if (active_dummy==NULL) {
+	    active_dummy=weed_plant_new(WEED_PLANT_PARAMETER);
+	    weed_set_plantptr_value(active_dummy,"template",NULL);
+	    weed_set_boolean_value(active_dummy,"value",WEED_TRUE);
+	  }
+	  weed_set_int_value(active_dummy,"host_key",key);
+	  inparam=active_dummy;
+	}
+	else inparam=inparams[i];
 
-	changed=pconx_convert_value_data(inst,i,key==-2?(weed_plant_t *)pp_get_param(mainw->vpp->play_params,i):inparams[i],oparam,autoscale);
+	changed=pconx_convert_value_data(inst,i,key==-2?(weed_plant_t *)pp_get_param(mainw->vpp->play_params,i):inparam,oparam,autoscale);
 
 	if (changed&&inst!=NULL&&key>-1) {
 	  // only store value if it changed; for int, double or colour, store old value too
@@ -1311,11 +1342,10 @@ boolean pconx_chain_data(int key, int mode) {
 	  }
 	  if (mainw->ce_thumbs) ce_thumbs_register_rfx_change(key,mode);
 	}
-
       }
     }
-    if (key!=-2) weed_free(inparams);
-  }
+    if (key!=-2&&inparams!=NULL) weed_free(inparams);
+
   return reinit_inst;
 }
 
@@ -1478,8 +1508,8 @@ void cconx_delete(int okey, int omode, int ocnum, int ikey, int imode, int icnum
 
   while (cconx!=NULL) {
     cconx_next=cconx->next;
-    if (okey==-1||(cconx->okey==okey&&cconx->omode==omode)) {
-      if (ikey==-1) {
+    if (okey==-1000000||(cconx->okey==okey&&cconx->omode==omode)) {
+      if (ikey==-1000000) {
 	// delete entire node
 	g_free(cconx->chans);
 	g_free(cconx->nconns);
@@ -1499,13 +1529,13 @@ void cconx_delete(int okey, int omode, int ocnum, int ikey, int imode, int icnum
       for (i=0;cconx!=NULL&&i<cconx->nchans;i++) {
 	totcons+=cconx->nconns[i];
 
-	if (okey!=-1&&cconx->chans[i]!=ocnum) {
+	if (okey!=-1000000&&cconx->chans[i]!=ocnum) {
 	  j+=totcons;
 	  continue;
 	}
 
 	for (;j<totcons;j++) {
-	  if (cconx->ikey[j]==ikey && cconx->imode[j]==imode && cconx->icnum[j]==icnum) {
+	  if (cconx->ikey[j]==ikey && cconx->imode[j]==imode && (icnum==-1000000||cconx->icnum[j]==icnum)) {
 	    maxcons--;
 	    for (k=j;k<maxcons;k++) {
 	      cconx->ikey[k]=cconx->ikey[k+1];
@@ -1628,7 +1658,7 @@ void cconx_add_connection(int okey, int omode, int ocnum, int ikey, int imode, i
   register int i,j;
 
   // delete any existing connection to the input channel
-  cconx_delete(-1,0,0,ikey,imode,icnum);
+  cconx_delete(-1000000,0,0,ikey,imode,icnum);
 
   if (cconx==NULL) {
     // add whole new node
@@ -2045,8 +2075,8 @@ static void apbutton_clicked(GtkButton *button, gpointer user_data) {
 
   register int i,j=0,k=0;
 
-  if (!lives_combo_get_active_iter(GTK_COMBO_BOX(combo),&iter)) return;
-  model=lives_combo_get_model(GTK_COMBO_BOX(combo));
+  if (!lives_combo_get_active_iter(LIVES_COMBO(combo),&iter)) return;
+  model=lives_combo_get_model(LIVES_COMBO(combo));
 
   gtk_tree_model_get(model,&iter,KEYVAL_COLUMN,&key,MODEVAL_COLUMN,&mode,-1);
   fidx=rte_keymode_get_filter_idx(key,mode);
@@ -2081,7 +2111,7 @@ static void apbutton_clicked(GtkButton *button, gpointer user_data) {
     if (!params_compatible(oparam,param)) continue;
 
     if (k>0) {
-      model=lives_combo_get_model(GTK_COMBO_BOX(conxwp->pfxcombo[k+EXTRA_PARAMS_OUT]));
+      model=lives_combo_get_model(LIVES_COMBO(conxwp->pfxcombo[k+EXTRA_PARAMS_OUT]));
       gtk_tree_model_get_iter(model,&iter,tpath);
       lives_combo_set_active_iter(LIVES_COMBO(conxwp->pfxcombo[k+EXTRA_PARAMS_OUT]),&iter);
       lives_widget_context_update();
@@ -2122,8 +2152,8 @@ static void acbutton_clicked(GtkButton *button, gpointer user_data) {
 
   register int i,j=0,k=0;
 
-  if (!lives_combo_get_active_iter(GTK_COMBO_BOX(combo),&iter)) return;
-  model=lives_combo_get_model(GTK_COMBO_BOX(combo));
+  if (!lives_combo_get_active_iter(LIVES_COMBO(combo),&iter)) return;
+  model=lives_combo_get_model(LIVES_COMBO(combo));
 
   gtk_tree_model_get(model,&iter,KEYVAL_COLUMN,&key,MODEVAL_COLUMN,&mode,-1);
   fidx=rte_keymode_get_filter_idx(key,mode);
@@ -2152,7 +2182,7 @@ static void acbutton_clicked(GtkButton *button, gpointer user_data) {
     if (cconx_get_out_alpha(TRUE,key,mode,j-1)!=NULL) continue;
 
     if (k>0) {
-      model=lives_combo_get_model(GTK_COMBO_BOX(conxwp->cfxcombo[k]));
+      model=lives_combo_get_model(LIVES_COMBO(conxwp->cfxcombo[k]));
       gtk_tree_model_get_iter(model,&iter,tpath);
       lives_combo_set_active_iter(LIVES_COMBO(conxwp->cfxcombo[k]),&iter);
       lives_widget_context_update();
@@ -2191,8 +2221,8 @@ static void dfxc_changed(GtkWidget *combo, gpointer user_data) {
 
   register int i,j=0;
 
-  if (!lives_combo_get_active_iter(GTK_COMBO_BOX(combo),&iter)) return;
-  model=lives_combo_get_model(GTK_COMBO_BOX(combo));
+  if (!lives_combo_get_active_iter(LIVES_COMBO(combo),&iter)) return;
+  model=lives_combo_get_model(LIVES_COMBO(combo));
 
   gtk_tree_model_get(model,&iter,KEYVAL_COLUMN,&key,MODEVAL_COLUMN,&mode,-1);
   fidx=rte_keymode_get_filter_idx(key,mode);
@@ -2249,7 +2279,7 @@ static void dfxp_changed(GtkWidget *combo, gpointer user_data) {
   GtkTreeIter iter;
   GtkTreeModel *model;
 
-  weed_plant_t **iparams;
+  weed_plant_t **iparams=NULL;
   weed_plant_t *filter,*param;
 
   GList *plist=NULL;
@@ -2262,13 +2292,13 @@ static void dfxp_changed(GtkWidget *combo, gpointer user_data) {
   int defelems,pflags,stype;
 
   int fidx,key,mode;
-  int niparams;
+  int niparams=0;
   int error;
   int ours=-1;
 
   register int i,j=0;
 
-  if (!lives_combo_get_active_iter(GTK_COMBO_BOX(combo),&iter)) {
+  if (!lives_combo_get_active_iter(LIVES_COMBO(combo),&iter)) {
     return;
   }
 
@@ -2279,7 +2309,7 @@ static void dfxp_changed(GtkWidget *combo, gpointer user_data) {
     }
   }
 
-  model=lives_combo_get_model(GTK_COMBO_BOX(combo));
+  model=lives_combo_get_model(LIVES_COMBO(combo));
 
   gtk_tree_model_get(model,&iter,KEYVAL_COLUMN,&key,MODEVAL_COLUMN,&mode,-1);
   fidx=rte_keymode_get_filter_idx(key,mode);
@@ -2306,45 +2336,53 @@ static void dfxp_changed(GtkWidget *combo, gpointer user_data) {
   // find the receiving filter/instance
   filter=get_weed_filter(fidx);
 
-  iparams=weed_get_plantptr_array(filter,"in_parameter_templates",&error);
-  niparams=weed_leaf_num_elements(filter,"in_parameter_templates");
+  if (weed_plant_has_leaf(filter,"in_parameter_templates")) {
+    iparams=weed_get_plantptr_array(filter,"in_parameter_templates",&error);
+    niparams=weed_leaf_num_elements(filter,"in_parameter_templates");
+  }
 
   // populate all pcombo with params
-  for (i=0;i<niparams;i++) {
-    param=iparams[j++];
+  for (i=-EXTRA_PARAMS_IN;i<niparams;i++) {
+    if (i==-1) {
+      ptype=weed_seed_type_to_text(WEED_SEED_BOOLEAN);
+      text=g_strdup_printf(_("ACTIVATE (%s)"),ptype);
+    }
+    else {
+      param=iparams[j++];
 
-    if (weed_plant_has_leaf(param,"host_internal_connection")) continue;
+      if (weed_plant_has_leaf(param,"host_internal_connection")) continue;
 
-    paramname=weed_get_string_value(param,"name",&error);
+      paramname=weed_get_string_value(param,"name",&error);
 
-    ptype=weed_seed_type_to_text((stype=weed_leaf_seed_type(param,"default")));
+      ptype=weed_seed_type_to_text((stype=weed_leaf_seed_type(param,"default")));
 
-    pflags=weed_get_int_value(param,"flags",&error);
+      pflags=weed_get_int_value(param,"flags",&error);
 
-    if (pflags&WEED_PARAMETER_VARIABLE_ELEMENTS) array_type=g_strdup("[]");
-    else if ((defelems=weed_leaf_num_elements(param,"default"))>1) array_type=g_strdup_printf("[%d]",defelems);
-    else array_type=g_strdup("");
+      if (pflags&WEED_PARAMETER_VARIABLE_ELEMENTS) array_type=g_strdup("[]");
+      else if ((defelems=weed_leaf_num_elements(param,"default"))>1) array_type=g_strdup_printf("[%d]",defelems);
+      else array_type=g_strdup("");
     
-    if (weed_plant_has_leaf(param,"max")&&weed_plant_has_leaf(param,"min")) {
-      if (stype==WEED_SEED_INT) {
-	range=g_strdup_printf("Range: %d to %d",weed_get_int_value(param,"min",&error),weed_get_int_value(param,"max",&error));
-      }
-      else if (stype==WEED_SEED_DOUBLE) {
-	range=g_strdup_printf("Range: %f to %f",weed_get_double_value(param,"min",&error),weed_get_double_value(param,"max",&error));
+      if (weed_plant_has_leaf(param,"max")&&weed_plant_has_leaf(param,"min")) {
+	if (stype==WEED_SEED_INT) {
+	  range=g_strdup_printf("Range: %d to %d",weed_get_int_value(param,"min",&error),weed_get_int_value(param,"max",&error));
+	}
+	else if (stype==WEED_SEED_DOUBLE) {
+	  range=g_strdup_printf("Range: %f to %f",weed_get_double_value(param,"min",&error),weed_get_double_value(param,"max",&error));
+	}
+	else range=g_strdup("");
       }
       else range=g_strdup("");
+
+      text=g_strdup_printf("%s (%s%s) %s",paramname,ptype,array_type,range);
+      weed_free(paramname);
+      g_free(array_type); g_free(range);
     }
-    else range=g_strdup("");
-
-    text=g_strdup_printf("%s (%s%s) %s",paramname,ptype,array_type,range);
-    
+    g_free(ptype);
     plist=g_list_append(plist,text);
-
-    weed_free(paramname); g_free(ptype); g_free(array_type); g_free(range);
 
   }
 
-  weed_free(iparams);
+  if (iparams!=NULL) weed_free(iparams);
 
   lives_combo_populate(LIVES_COMBO(conxwp->pcombo[ours]),plist);
   lives_combo_set_active_string (LIVES_COMBO(conxwp->pcombo[ours]),"");
@@ -2403,7 +2441,6 @@ static void dpp_changed(GtkWidget *combo, gpointer user_data) {
     }
   }
 
-
   if (idx==-1) {
     for (i=0;i<conxwp->num_alpha;i++) if (lives_combo_get_active(LIVES_COMBO(conxwp->ccombo[i]))>-1) {
 	hasone=TRUE;
@@ -2417,7 +2454,7 @@ static void dpp_changed(GtkWidget *combo, gpointer user_data) {
     if (!hasone) lives_widget_set_sensitive(disconbutton,FALSE);
 
     if (conxwp->ikeys[conxwp->num_alpha+ours]!=0) {
-      pconx_delete(conxwp->okey,conxwp->omode,ours,
+      pconx_delete(conxwp->okey,conxwp->omode,ours-EXTRA_PARAMS_OUT,
 		   conxwp->ikeys[conxwp->num_alpha+ours]-1,
 		   conxwp->imodes[conxwp->num_alpha+ours],
 		   conxwp->idx[conxwp->num_alpha+ours]);
@@ -2436,9 +2473,9 @@ static void dpp_changed(GtkWidget *combo, gpointer user_data) {
 
   fxcombo=conxwp->pfxcombo[ours];
 
-  if (!lives_combo_get_active_iter(GTK_COMBO_BOX(fxcombo),&iter)) return;
+  if (!lives_combo_get_active_iter(LIVES_COMBO(fxcombo),&iter)) return;
 
-  model=lives_combo_get_model(GTK_COMBO_BOX(fxcombo));
+  model=lives_combo_get_model(LIVES_COMBO(fxcombo));
 
   gtk_tree_model_get(model,&iter,KEYVAL_COLUMN,&key,MODEVAL_COLUMN,&mode,-1);
   fidx=rte_keymode_get_filter_idx(key,mode);
@@ -2449,33 +2486,53 @@ static void dpp_changed(GtkWidget *combo, gpointer user_data) {
     oparam=oparams[ours];
   } else {
     // invent an "ACTIVATED" param
-    if (active_dummy!=NULL) {
+    if (active_dummy!=NULL&&WEED_PLANT_IS_PARAMETER(active_dummy)) {
       weed_plant_free(active_dummy);
+      active_dummy=NULL;
     }
-    active_dummy=weed_plant_new(WEED_PLANT_PARAMETER_TEMPLATE);
-    weed_set_plantptr_value(active_dummy,"template",NULL);
-    weed_set_boolean_value(active_dummy,"default",WEED_FALSE);
+    if (active_dummy==NULL) {
+      active_dummy=weed_plant_new(WEED_PLANT_PARAMETER_TEMPLATE);
+      weed_set_boolean_value(active_dummy,"default",WEED_FALSE);
+    }
     oparam=active_dummy;
   }
 
-  // find the receiving filter/instance
-  filter=get_weed_filter(fidx);
+  idx-=EXTRA_PARAMS_IN;
 
-  iparams=weed_get_plantptr_array(filter,"in_parameter_templates",&error);
-  niparams=weed_leaf_num_elements(filter,"in_parameter_templates");
-
-  for (i=0;i<niparams;i++) {
-    param=iparams[i];
-    if (weed_plant_has_leaf(param,"host_internal_connection")) continue;
-    if (j==idx) break;
-    j++;
+  if (idx==-1) {
+    i=-1;
+    // invent an "ACTIVATE" param
+    if (active_dummy!=NULL&&WEED_PLANT_IS_PARAMETER(active_dummy)) {
+      weed_plant_free(active_dummy);
+      active_dummy=NULL;
+    }
+    if (active_dummy==NULL) {
+      active_dummy=weed_plant_new(WEED_PLANT_PARAMETER_TEMPLATE);
+      weed_set_boolean_value(active_dummy,"default",WEED_FALSE);
+    }
+    param=active_dummy;
   }
+  else {
+    // find the receiving filter/instance
+    filter=get_weed_filter(fidx);
 
-  weed_free(iparams);
+    iparams=weed_get_plantptr_array(filter,"in_parameter_templates",&error);
+    niparams=weed_leaf_num_elements(filter,"in_parameter_templates");
+
+    for (i=0;i<niparams;i++) {
+      param=iparams[i];
+      if (weed_plant_has_leaf(param,"host_internal_connection")) continue;
+      if (j==idx) break;
+      j++;
+    }
+
+    weed_free(iparams);
+
+  }
   if (oparams!=NULL) weed_free(oparams);
 
+  idx+=EXTRA_PARAMS_IN;
   j=i;
-
 
   if (!params_compatible(oparam,param)) {
     do_param_incompatible_error(conxwp);
@@ -2514,7 +2571,8 @@ static void dpp_changed(GtkWidget *combo, gpointer user_data) {
     }
   }
 
-  paramname=weed_get_string_value(param,"name",&error);
+  if (param==active_dummy) paramname=g_strdup(_("ACTIVATE"));
+  else paramname=weed_get_string_value(param,"name",&error);
 
   g_signal_handler_block(combo,conxwp->dpp_func[ours]);
   lives_combo_set_active_string (LIVES_COMBO(combo),paramname);
@@ -2598,9 +2656,9 @@ static void dpc_changed(GtkWidget *combo, gpointer user_data) {
 
   fxcombo=conxwp->cfxcombo[ours];
 
-  if (!lives_combo_get_active_iter(GTK_COMBO_BOX(fxcombo),&iter)) return;
+  if (!lives_combo_get_active_iter(LIVES_COMBO(fxcombo),&iter)) return;
 
-  model=lives_combo_get_model(GTK_COMBO_BOX(fxcombo));
+  model=lives_combo_get_model(LIVES_COMBO(fxcombo));
   gtk_tree_model_get(model,&iter,KEYVAL_COLUMN,&key,MODEVAL_COLUMN,&mode,-1);
   fidx=rte_keymode_get_filter_idx(key,mode);
 
@@ -2704,32 +2762,35 @@ static void on_acheck_toggled(GtkToggleButton *acheck, gpointer user_data) {
 
   fxcombo=conxwp->pfxcombo[ours];
 
-  model=lives_combo_get_model(GTK_COMBO_BOX(fxcombo));
-  lives_combo_get_active_iter(GTK_COMBO_BOX(fxcombo),&iter);
+  model=lives_combo_get_model(LIVES_COMBO(fxcombo));
+  lives_combo_get_active_iter(LIVES_COMBO(fxcombo),&iter);
 
   gtk_tree_model_get(model,&iter,KEYVAL_COLUMN,&key,MODEVAL_COLUMN,&mode,-1);
 
   if (key==0) return;
 
-  fidx=rte_keymode_get_filter_idx(key,mode);
+  if (idx>=EXTRA_PARAMS_IN) {
+    fidx=rte_keymode_get_filter_idx(key,mode);
 
+    // find the receiving filter/instance
+    filter=get_weed_filter(fidx);
 
-  // find the receiving filter/instance
-  filter=get_weed_filter(fidx);
+    iparams=weed_get_plantptr_array(filter,"in_parameter_templates",&error);
+    niparams=weed_leaf_num_elements(filter,"in_parameter_templates");
 
-  iparams=weed_get_plantptr_array(filter,"in_parameter_templates",&error);
-  niparams=weed_leaf_num_elements(filter,"in_parameter_templates");
+    for (i=0;i<niparams;i++) {
+      param=iparams[j];
+      if (weed_plant_has_leaf(param,"host_internal_connection")) continue;
+      if (j==idx) break;
+      j++;
+    }
 
-  for (i=0;i<niparams;i++) {
-    param=iparams[j];
-    if (weed_plant_has_leaf(param,"host_internal_connection")) continue;
-    if (j==idx) break;
-    j++;
+    j=i;
+
+    weed_free(iparams);
+
   }
-
-  j=i;
-
-  weed_free(iparams);
+  else j=idx-EXTRA_PARAMS_IN;
 
   if (conxwp->ikeys[conxwp->num_alpha+ours]!=0) pconx_delete(conxwp->okey,conxwp->omode,ours,key-1,mode,j);
   pconx_add_connection(conxwp->okey,conxwp->omode,ours,key-1,mode,j,on);
@@ -2784,10 +2845,7 @@ static LiVESTreeModel *inparam_fx_model (boolean is_chans, int key) {
 
       filter=get_weed_filter(idx);
 
-      if (!is_chans) {
-	if (num_in_params(filter,FALSE,TRUE)==0) continue;
-      }
-      else 
+      if (is_chans) 
 	if (num_alpha_channels(filter,FALSE)==0) continue;
 	
       fxname=weed_get_string_value(filter,"name",&error);
@@ -2810,7 +2868,7 @@ static LiVESTreeModel *inparam_fx_model (boolean is_chans, int key) {
   }
 
   return (LiVESTreeModel *)tstore;
-}
+ }
 
 
 
@@ -2895,7 +2953,7 @@ static GtkWidget *conx_scroll_new(weed_plant_t *filter, int key, lives_conx_w *c
       lives_box_pack_start (LIVES_BOX (hbox), conxwp->cfxcombo[x], FALSE, FALSE, widget_opts.packing_width);
 
       fx_entry = lives_combo_get_entry(LIVES_COMBO(conxwp->cfxcombo[x]));
-      lives_entry_set_text (GTK_ENTRY (fx_entry),mainw->string_constants[LIVES_STRING_CONSTANT_NONE]);
+      lives_entry_set_text (LIVES_ENTRY (fx_entry),mainw->string_constants[LIVES_STRING_CONSTANT_NONE]);
       lives_entry_set_editable (LIVES_ENTRY (fx_entry), FALSE);
 
 
@@ -2980,7 +3038,7 @@ static GtkWidget *conx_scroll_new(weed_plant_t *filter, int key, lives_conx_w *c
       lives_box_pack_start (LIVES_BOX (hbox), conxwp->pfxcombo[x], FALSE, FALSE, widget_opts.packing_width);
 
       fx_entry = lives_combo_get_entry(LIVES_COMBO(conxwp->pfxcombo[x]));
-      lives_entry_set_text (GTK_ENTRY (fx_entry),mainw->string_constants[LIVES_STRING_CONSTANT_NONE]);
+      lives_entry_set_text (LIVES_ENTRY (fx_entry),mainw->string_constants[LIVES_STRING_CONSTANT_NONE]);
       lives_entry_set_editable (LIVES_ENTRY (fx_entry), FALSE);
 
 
@@ -3052,7 +3110,7 @@ static GtkWidget *conx_scroll_new(weed_plant_t *filter, int key, lives_conx_w *c
       lives_box_pack_start (LIVES_BOX (hbox), conxwp->pfxcombo[x], FALSE, FALSE, widget_opts.packing_width);
 
       fx_entry = lives_combo_get_entry(LIVES_COMBO(conxwp->pfxcombo[x]));
-      lives_entry_set_text (GTK_ENTRY (fx_entry),mainw->string_constants[LIVES_STRING_CONSTANT_NONE]);
+      lives_entry_set_text (LIVES_ENTRY (fx_entry),mainw->string_constants[LIVES_STRING_CONSTANT_NONE]);
       lives_entry_set_editable (LIVES_ENTRY (fx_entry), FALSE);
 
 
@@ -3082,7 +3140,6 @@ static GtkWidget *conx_scroll_new(weed_plant_t *filter, int key, lives_conx_w *c
     }
 
     weed_free(oparams);
-
 
   }
 
@@ -3138,7 +3195,7 @@ static void conxw_ok_clicked(GtkWidget *button, gpointer user_data) {
 }
 
 
-static void set_to_keymode_vals(GtkComboBox *combo, int xkey, int xmode) {
+static void set_to_keymode_vals(LiVESCombo *combo, int xkey, int xmode) {
   GtkTreeIter iter,piter;
   GtkTreeModel *model;
 
@@ -3243,7 +3300,7 @@ static boolean show_existing(lives_conx_w *conxwp) {
 	cfxcombo=conxwp->cfxcombo[l];
 
 	// set it to the value which has ikey/imode
-	set_to_keymode_vals(GTK_COMBO_BOX(cfxcombo),ikey,imode);
+	set_to_keymode_vals(LIVES_COMBO(cfxcombo),ikey,imode);
 
 	// set channel
 	ccombo=conxwp->ccombo[l];
@@ -3268,7 +3325,7 @@ static boolean show_existing(lives_conx_w *conxwp) {
 	weed_free(ichans);
 
 	g_signal_handler_block(ccombo,conxwp->dpc_func[cidx]);
-	lives_combo_set_active_index(GTK_COMBO_BOX(ccombo),l);
+	lives_combo_set_active_index(LIVES_COMBO(ccombo),l);
 	g_signal_handler_unblock(ccombo,conxwp->dpc_func[cidx]);
 	      
 	conxwp->ikeys[cidx]=ikey+1;
@@ -3328,7 +3385,7 @@ static boolean show_existing(lives_conx_w *conxwp) {
 	pfxcombo=conxwp->pfxcombo[l];
 
 	// set it to the value which has ikey/imode
-	set_to_keymode_vals(GTK_COMBO_BOX(pfxcombo),ikey,imode);
+	set_to_keymode_vals(LIVES_COMBO(pfxcombo),ikey,imode);
 
 	// set parameter
 	pcombo=conxwp->pcombo[l];
@@ -3345,26 +3402,31 @@ static boolean show_existing(lives_conx_w *conxwp) {
 
 	ipnum=pconx->ipnum[j];
 
-	filter=rte_keymode_get_filter(ikey+1,imode);
-	iparams=weed_get_plantptr_array(filter,"in_parameter_templates",&error);
-	niparams=weed_leaf_num_elements(filter,"in_parameter_templates");
-	
-	l=0;
-	
-	for (k=0;k<niparams;k++) {
-	  param=iparams[k];
-	  if (weed_plant_has_leaf(param,"host_internal_connection")) continue;
-	  if (k==ipnum) break;
-	  l++;
+	if (ipnum==-1) {
+	  l=-1;
 	}
+	else {
+	  filter=rte_keymode_get_filter(ikey+1,imode);
+	  iparams=weed_get_plantptr_array(filter,"in_parameter_templates",&error);
+	  niparams=weed_leaf_num_elements(filter,"in_parameter_templates");
+	  
+	  l=0;
+	  
+	  for (k=0;k<niparams;k++) {
+	    param=iparams[k];
+	    if (weed_plant_has_leaf(param,"host_internal_connection")) continue;
+	    if (k==ipnum) break;
+	    l++;
+	  }
 	      
-	weed_free(iparams);
+	  weed_free(iparams);
+	}
 
 	g_signal_handler_block(pcombo,conxwp->dpp_func[pidx]);
-	lives_combo_set_active_index(GTK_COMBO_BOX(pcombo),l);
+	lives_combo_set_active_index(LIVES_COMBO(pcombo),l+EXTRA_PARAMS_IN);
 	g_signal_handler_unblock(pcombo,conxwp->dpp_func[pidx]);
 
-	g_object_set_data(G_OBJECT(pcombo),"idx",GINT_TO_POINTER(l));
+	g_object_set_data(G_OBJECT(pcombo),"idx",GINT_TO_POINTER(l+EXTRA_PARAMS_IN));
 	      
 	conxwp->ikeys[conxwp->num_alpha+pidx]=ikey+1;
 	conxwp->imodes[conxwp->num_alpha+pidx]=imode;
@@ -3491,10 +3553,10 @@ GtkWidget *make_datacon_window(int key, int mode) {
 
 
   cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
-  lives_dialog_add_action_widget (GTK_DIALOG (conxw.conx_dialog), cancelbutton, GTK_RESPONSE_CANCEL);
+  lives_dialog_add_action_widget (LIVES_DIALOG (conxw.conx_dialog), cancelbutton, GTK_RESPONSE_CANCEL);
 
   okbutton = gtk_button_new_from_stock ("gtk-ok");
-  lives_dialog_add_action_widget (GTK_DIALOG (conxw.conx_dialog), okbutton, GTK_RESPONSE_OK);
+  lives_dialog_add_action_widget (LIVES_DIALOG (conxw.conx_dialog), okbutton, GTK_RESPONSE_OK);
 
   lives_widget_set_can_focus_and_default (okbutton);
   gtk_widget_grab_default(okbutton);
@@ -3521,20 +3583,20 @@ GtkWidget *make_datacon_window(int key, int mode) {
 
 static void do_chan_connected_error( lives_conx_w *conxwp) {
 
-  do_error_dialog_with_check_transient(_("Input channel is already connected"),TRUE,0,GTK_WINDOW(conxwp->conx_dialog));
+  do_error_dialog_with_check_transient(_("Input channel is already connected"),TRUE,0,LIVES_WINDOW(conxwp->conx_dialog));
 
 }
 
 
 static void do_param_connected_error( lives_conx_w *conxwp) {
 
-  do_error_dialog_with_check_transient(_("Input parameter is already connected"),TRUE,0,GTK_WINDOW(conxwp->conx_dialog));
+  do_error_dialog_with_check_transient(_("Input parameter is already connected"),TRUE,0,LIVES_WINDOW(conxwp->conx_dialog));
 
 }
 
 
 static void do_param_incompatible_error( lives_conx_w *conxwp) {
 
-  do_error_dialog_with_check_transient(_("Input and output parameters are not compatible"),TRUE,0,GTK_WINDOW(conxwp->conx_dialog));
+  do_error_dialog_with_check_transient(_("Input and output parameters are not compatible"),TRUE,0,LIVES_WINDOW(conxwp->conx_dialog));
 
 }

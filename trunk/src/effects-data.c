@@ -8,6 +8,13 @@
 // functions for chaining and data passing between fx plugins
 
 
+// ACTIVATED fn TODO:
+// should be possible to disable chained fx (temp override of ACTIVATE until output fx is deactivated) [abuse "autoscale" for this]
+// params for entire fx chain should be shown in ce_thumbs [ie. "pin" the output effect temporarily]
+
+
+
+
 //#define DEBUG_PCONX
 
 #if HAVE_SYSTEM_WEED
@@ -41,6 +48,17 @@ static weed_plant_t *active_dummy=NULL;
 #else
 #define EXTRA_PARAMS_IN 0
 #endif
+
+static void switch_fx_state(int hotkey) {
+  // switch effect state when a connection to ACTIVATE is present
+  uint32_t last_grabable_effect=mainw->last_grabable_effect;
+  rte_on_off_callback_hook(NULL,LIVES_INT_TO_POINTER(hotkey));
+  mainw->last_grabable_effect=last_grabable_effect;
+
+  // TODO - if fx is deactivated manually, set autoscale to 1
+  // TODO - if output effect is deactivated, reset the autoscale value
+
+}
 
 void pconx_delete_all(void) {
   lives_pconnect_t *pconx=mainw->pconx,*pconx_next;
@@ -658,7 +676,7 @@ boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, weed_plant_t *dpa
 
   register int i;
 
-  if (dparam==sparam) return FALSE;
+  if (dparam==sparam&&(dparam!=active_dummy||active_dummy==NULL)) return FALSE;
 
   nsvals=weed_leaf_num_elements(sparam,"value");
   sptmpl=weed_get_plantptr_value(sparam,"template",&error);
@@ -1049,7 +1067,7 @@ boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, weed_plant_t *dpa
 	int key=weed_get_int_value(dparam,"host_key",&error);
 	if ((valsb[0]==WEED_TRUE&&!(mainw->rte&(GU641<<(key))))||
 	    (valsb[0]==WEED_FALSE&&(mainw->rte&(GU641<<(key))))) {
-	  rte_on_off_callback_hook(NULL,LIVES_INT_TO_POINTER(key+1));
+	  switch_fx_state(key+1);
 	}
 	weed_free(valsb);
 	return retval;
@@ -1278,7 +1296,10 @@ boolean pconx_chain_data(int key, int mode) {
       inst=rte_keymode_get_instance(key+1,mode);
     }
     
-    if (inst!=NULL&&weed_plant_has_leaf(inst,"in_parameters")) nparams=weed_leaf_num_elements(inst,"in_parameters");
+    if (inst!=NULL) {
+      if (weed_plant_has_leaf(inst,"in_parameters")) nparams=weed_leaf_num_elements(inst,"in_parameters");
+    }
+    else if (rte_keymode_get_filter_idx(key+1,mode)==-1) return FALSE;
   }
   else if (key==-2) {
     // playback plugin
@@ -1293,6 +1314,7 @@ boolean pconx_chain_data(int key, int mode) {
     for (i=-EXTRA_PARAMS_IN;i<nparams;i++) {
       if ((oparam=pconx_get_out_param(FALSE,key,mode,i,&autoscale))!=NULL) {
 	//	#define DEBUG_PCONX
+	//#define DEBUG_PCONX
 #ifdef DEBUG_PCONX
 	g_print("got pconx to %d %d %d\n",key,mode,i);
 #endif

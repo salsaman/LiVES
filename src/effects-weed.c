@@ -3421,6 +3421,10 @@ weed_plant_t *weed_apply_effects (weed_plant_t **layers, weed_plant_t *filter_ma
   else {
     for (i=0;i<FX_KEYS_MAX_VIRTUAL;i++) {
       if (rte_key_valid(i+1,TRUE)) {
+	if (!(mainw->rte&(GU641<<i))) {
+	  // if anything is connected to ACTIVATE, the fx may be activated
+	  pconx_chain_data(i,key_modes[i]);
+	}
 	if (mainw->rte&(GU641<<i)) {
 	  mainw->osc_block=TRUE;
 	  if ((instance=key_to_instance[i][key_modes[i]])==NULL) continue;
@@ -3437,6 +3441,8 @@ weed_plant_t *weed_apply_effects (weed_plant_t **layers, weed_plant_t *filter_ma
 	      pthread_mutex_lock(&mainw->data_mutex);
 	      needs_reinit=pconx_chain_data(i,key_modes[i]);
 	      pthread_mutex_unlock(&mainw->data_mutex);
+	      // if anything is connected to ACTIVATE, the fx may be activated
+	      if ((instance=key_to_instance[i][key_modes[i]])==NULL) continue;
 	      
 	      if (needs_reinit) {
 		weed_reinit_effect(instance,FALSE);
@@ -3596,6 +3602,10 @@ void weed_apply_audio_effects_rt(float **abuf, int nchans, int64_t nsamps, gdoub
 
   for (i=0;i<FX_KEYS_MAX_VIRTUAL;i++) {
     if (rte_key_valid(i+1,TRUE)) {
+      if (!(mainw->rte&(GU641<<i))) {
+	// if anything is connected to ACTIVATE, the fx may be activated
+	pconx_chain_data(i,key_modes[i]);
+      }
       if (mainw->rte&(GU641<<i)) {
 	mainw->osc_block=TRUE;
 
@@ -3630,6 +3640,12 @@ void weed_apply_audio_effects_rt(float **abuf, int nchans, int64_t nsamps, gdoub
 	  if (!pthread_mutex_trylock(&mainw->data_mutex)) {
 	    needs_reinit=pconx_chain_data(i,key_modes[i]);
 	    pthread_mutex_unlock(&mainw->data_mutex);
+
+	    // if anything is connected to ACTIVATE, the fx may be deactivated
+	    if ((instance=key_to_instance[i][key_modes[i]])==NULL) {
+	      pthread_mutex_unlock(&mainw->afilter_mutex);
+	      continue;
+	    }
 
 	    if (needs_reinit) {
 	      pthread_mutex_unlock(&mainw->afilter_mutex);

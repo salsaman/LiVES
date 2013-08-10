@@ -1140,9 +1140,11 @@ static boolean load_datacons(const gchar *fname, uint8_t **badkeymap) {
 	    niparams=weed_leaf_num_elements(filter,"in_parameter_templates");
 	    if (ipnum>=niparams) is_valid2=FALSE;
 	    else {
-	      iparams=weed_get_plantptr_array(filter,"in_parameter_templates",&error);
-	      if (weed_plant_has_leaf(iparams[ipnum],"host_internal_connection")) is_valid2=FALSE;
-	      weed_free(iparams);
+	      if (ipnum>=0) {
+		iparams=weed_get_plantptr_array(filter,"in_parameter_templates",&error);
+		if (weed_plant_has_leaf(iparams[ipnum],"host_internal_connection")) is_valid2=FALSE;
+		weed_free(iparams);
+	      }
 	    }
 
 	    bytes=lives_read_le(kfd,&autoscale,4,TRUE);
@@ -2067,7 +2069,7 @@ GtkWidget * create_rte_window (void) {
 
   int modes=rte_getmodespk();
 
-  int idx,error;
+  int idx;
 
   int winsize_h;
   int winsize_v;

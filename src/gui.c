@@ -4112,7 +4112,7 @@ void resize_play_window (void) {
 	}
       }
 
-#define TEST_CE_THUMBS 0
+#define TEST_CE_THUMBS 1
       if (TEST_CE_THUMBS||(prefs->show_gui&&prefs->ce_thumb_mode&&prefs->play_monitor!=prefs->gui_monitor&&
 			   prefs->play_monitor!=0&&
 			   capable->nmonitors>1&&mainw->multitrack==NULL)) {

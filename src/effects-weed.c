@@ -8562,7 +8562,7 @@ boolean rte_key_setmode (int key, int newmode) {
 	mainw->osc_block=FALSE;
 	return FALSE;
       }
-      if (mainw->ce_thumbs) ce_thumbs_add_param_box(real_key);
+      if (mainw->ce_thumbs) ce_thumbs_add_param_box(real_key,TRUE);
     }
     // TODO - unblock template channel changes
     mainw->whentostop=whentostop;

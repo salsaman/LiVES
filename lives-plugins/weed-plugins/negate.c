@@ -39,7 +39,6 @@ static int package_version=1; // version of this package
 int negate_process (weed_plant_t *inst, weed_timecode_t timestamp) {
   int error;
   weed_plant_t *in_channel=weed_get_plantptr_value(inst,"in_channels",&error),*out_channel=weed_get_plantptr_value(inst,"out_channels",&error);
-  weed_plant_t **in_params=weed_get_plantptr_array(inst,"in_parameters",&error);
   unsigned char *src=weed_get_voidptr_value(in_channel,"pixel_data",&error);
   unsigned char *dst=weed_get_voidptr_value(out_channel,"pixel_data",&error);
 
@@ -53,13 +52,6 @@ int negate_process (weed_plant_t *inst, weed_timecode_t timestamp) {
   unsigned char *end=src+height*irowstride;
 
   register int i;
-
-  int enabled=weed_get_boolean_value(in_params[0],"value",&error);
-  weed_free(in_params);
-
-  if (enabled==WEED_FALSE) {
-    return WEED_NO_ERROR;
-  }
 
   if (pal==WEED_PALETTE_RGB24||pal==WEED_PALETTE_BGR24) psize=3;
   if (pal==WEED_PALETTE_ARGB32) start=1;
@@ -98,13 +90,8 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 
     weed_plant_t *in_chantmpls[]={weed_channel_template_init("in channel 0",0,palette_list),NULL};
     weed_plant_t *out_chantmpls[]={weed_channel_template_init("out channel 0",WEED_CHANNEL_CAN_DO_INPLACE,palette_list),NULL};
-    weed_plant_t *in_params[]={weed_switch_init("enabled","_Enabled",WEED_TRUE),NULL};
 
-    weed_plant_t *filter_class=weed_filter_class_init("negate","salsaman",1,WEED_FILTER_HINT_MAY_THREAD,NULL,&negate_process,NULL,in_chantmpls,out_chantmpls,in_params,NULL);
-
-
-    weed_plant_t *gui=weed_parameter_template_get_gui(in_params[0]);
-    weed_set_boolean_value(gui,"hidden",WEED_TRUE);
+    weed_plant_t *filter_class=weed_filter_class_init("negate","salsaman",1,WEED_FILTER_HINT_MAY_THREAD,NULL,&negate_process,NULL,in_chantmpls,out_chantmpls,NULL,NULL);
 
     weed_plugin_info_add_filter_class (plugin_info,filter_class);
 

@@ -32,33 +32,85 @@
 #include "support.h"
 #include "ce_thumbs.h"
 
-#define TEST_ENCON_OUT
-#define TEST_ENCON_IN
-
 static weed_plant_t *active_dummy=NULL;
-
-#ifdef TEST_ENCON_OUT
-#define EXTRA_PARAMS_OUT 1
-#else
-#define EXTRA_PARAMS_OUT 0
-#endif
-
-#ifdef TEST_ENCON_IN
-#define EXTRA_PARAMS_IN 1
-#else
-#define EXTRA_PARAMS_IN 0
-#endif
 
 static void switch_fx_state(int hotkey) {
   // switch effect state when a connection to ACTIVATE is present
   uint32_t last_grabable_effect=mainw->last_grabable_effect;
-  rte_on_off_callback_hook(NULL,LIVES_INT_TO_POINTER(hotkey));
+  // use -hokey to indicate auto
+  rte_on_off_callback_hook(NULL,LIVES_INT_TO_POINTER(-hotkey));
   mainw->last_grabable_effect=last_grabable_effect;
-
-  // TODO - if fx is deactivated manually, set autoscale to 1
-  // TODO - if output effect is deactivated, reset the autoscale value
-
 }
+
+void override_if_active_input(int hotkey) {
+  // if we have a connection from oparam -1 to iparam -1 for key/mode then set autoscale to TRUE
+  // this allows user override of "activate" when connected from another filter's "activated"
+
+  lives_pconnect_t *pconx=mainw->pconx;
+
+  int totcons;
+  int imode=rte_key_getmode(hotkey);
+
+  register int i,j;
+
+  hotkey--;
+
+  while (pconx!=NULL) {
+    totcons=0;
+    j=0;
+    for (i=0;i<pconx->nparams;i++) {
+      totcons+=pconx->nconns[i];
+      for (;j<totcons;j++) {
+	if (pconx->ikey[j]==hotkey && pconx->imode[j]==imode && pconx->ipnum[j]==FX_DATA_PARAM_ACTIVE) {
+	  // out param is "ACTIVATED"
+	  if (pconx->params[i]==FX_DATA_PARAM_ACTIVE) {
+	    // abuse "autoscale" for this
+	    pconx->autoscale[i]=TRUE;
+	  }
+	  return;
+	}
+      }
+    }
+    pconx=pconx->next;
+  }
+}
+
+void end_override_if_activate_output(int hotkey) {
+  // if any iparam -1 has key/mode/-1 as oparam, set autoscale to FALSE
+  // this ends the override when the controlling effect changes state
+
+  lives_pconnect_t *pconx=mainw->pconx;
+
+  int totcons;
+  int omode=rte_key_getmode(hotkey);
+
+  register int i,j;
+
+  hotkey--;
+
+  while (pconx!=NULL) {
+    if (pconx->okey==hotkey&&pconx->omode==omode) {
+      totcons=0;
+      j=0;
+      for (i=0;i<pconx->nparams;i++) {
+	totcons+=pconx->nconns[i];
+
+	if (pconx->params[i]==FX_DATA_PARAM_ACTIVE) {
+	  for (;j<totcons;j++) {
+	    if (pconx->ipnum[j]==FX_DATA_PARAM_ACTIVE) {
+	      // abuse "autoscale" for this
+	      pconx->autoscale[i]=FALSE;
+	    }
+	  }
+	}
+
+	else j+=pconx->nconns[i];
+      }
+    }
+    pconx=pconx->next;
+  }
+}
+
 
 void pconx_delete_all(void) {
   lives_pconnect_t *pconx=mainw->pconx,*pconx_next;
@@ -187,8 +239,8 @@ void pconx_delete(int okey, int omode, int opnum, int ikey, int imode, int ipnum
 
   while (pconx!=NULL) {
     pconx_next=pconx->next;
-    if (okey==-1000000||(pconx->okey==okey&&pconx->omode==omode)) {
-      if (ikey==-1000000) {
+    if (okey==FX_DATA_WILDCARD||(pconx->okey==okey&&pconx->omode==omode)) {
+      if (ikey==FX_DATA_WILDCARD) {
 	//g_print("rem all cons from %d %d to any param\n",okey,omode); 
 
 	// delete entire node
@@ -212,13 +264,13 @@ void pconx_delete(int okey, int omode, int opnum, int ikey, int imode, int ipnum
       for (i=0;pconx!=NULL&&i<pconx->nparams;i++) {
 	totcons+=pconx->nconns[i];
 
-	if (okey!=-1000000&&pconx->params[i]!=opnum) {
+	if (okey!=FX_DATA_WILDCARD&&pconx->params[i]!=opnum) {
 	  j+=totcons;
 	  continue;
 	}
 
 	for (;j<totcons;j++) {
-	  if (pconx->ikey[j]==ikey && pconx->imode[j]==imode && (ipnum==-1000000||pconx->ipnum[j]==ipnum)) {
+	  if (pconx->ikey[j]==ikey && pconx->imode[j]==imode && (ipnum==FX_DATA_WILDCARD||pconx->ipnum[j]==ipnum)) {
 	    maxcons--;
 	    for (k=j;k<maxcons;k++) {
 	      pconx->ikey[k]=pconx->ikey[k+1];
@@ -346,7 +398,7 @@ void pconx_add_connection(int okey, int omode, int opnum, int ikey, int imode, i
   register int i,j;
 
   // delete any existing connection to the input param
-  pconx_delete(-1000000,0,0,ikey,imode,ipnum);
+  pconx_delete(FX_DATA_WILDCARD,0,0,ikey,imode,ipnum);
 
   pthread_mutex_lock(&mainw->data_mutex);
 
@@ -535,7 +587,7 @@ weed_plant_t *pconx_get_out_param(boolean use_filt, int ikey, int imode, int ipn
 	  weed_plant_t *param=NULL;
 
 	  // out param is "ACTIVATED"
-	  if (pconx->params[i]==-1) {
+	  if (pconx->params[i]==FX_DATA_PARAM_ACTIVE) {
 	    if (active_dummy!=NULL&&!WEED_PLANT_IS_PARAMETER(active_dummy)) {
 	      weed_plant_free(active_dummy);
 	      active_dummy=NULL;
@@ -695,7 +747,7 @@ boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, weed_plant_t *dpa
       nsmin=weed_leaf_num_elements(sptmpl,"min");
       nsmax=weed_leaf_num_elements(sptmpl,"max");
     }
-    else autoscale=FALSE;
+    else if (dparam!=active_dummy||sparam!=active_dummy) autoscale=FALSE;
   }
 
   if (dptmpl!=NULL&&weed_plant_has_leaf(dptmpl,"max")) {
@@ -1062,7 +1114,7 @@ boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, weed_plant_t *dpa
   case WEED_SEED_BOOLEAN:
     {
       int *valsb=weed_get_boolean_array(sparam,"value",&error);
-      if (dparam==active_dummy) {
+      if (dparam==active_dummy&&!autoscale) {
 	// ACTIVATE
 	int key=weed_get_int_value(dparam,"host_key",&error);
 	if ((valsb[0]==WEED_TRUE&&!(mainw->rte&(GU641<<(key))))||
@@ -1301,14 +1353,14 @@ boolean pconx_chain_data(int key, int mode) {
     }
     else if (rte_keymode_get_filter_idx(key+1,mode)==-1) return FALSE;
   }
-  else if (key==-2) {
+  else if (key==FX_DATA_KEY_PLAYBACK_PLUGIN) {
     // playback plugin
     if (mainw->vpp==NULL) return FALSE;
     nparams=mainw->vpp->num_play_params;
   }
 
 
-    if (key==-2) inparams=mainw->vpp->play_params;
+    if (key==FX_DATA_KEY_PLAYBACK_PLUGIN) inparams=mainw->vpp->play_params;
     else inparams=weed_get_plantptr_array(inst,"in_parameters",&error);
 
     for (i=-EXTRA_PARAMS_IN;i<nparams;i++) {
@@ -1318,7 +1370,7 @@ boolean pconx_chain_data(int key, int mode) {
 #ifdef DEBUG_PCONX
 	g_print("got pconx to %d %d %d\n",key,mode,i);
 #endif
-	if (i==-1) {
+	if (i==FX_DATA_PARAM_ACTIVE) {
 	  if (active_dummy!=NULL&&!WEED_PLANT_IS_PARAMETER(active_dummy)) {
 	    weed_plant_free(active_dummy);
 	    active_dummy=NULL;
@@ -1333,7 +1385,8 @@ boolean pconx_chain_data(int key, int mode) {
 	}
 	else inparam=inparams[i];
 
-	changed=pconx_convert_value_data(inst,i,key==-2?(weed_plant_t *)pp_get_param(mainw->vpp->play_params,i):inparam,oparam,autoscale);
+	changed=pconx_convert_value_data(inst,i,key==FX_DATA_KEY_PLAYBACK_PLUGIN?(weed_plant_t *)pp_get_param(mainw->vpp->play_params,i)
+					 :inparam,oparam,autoscale);
 
 	if (changed&&inst!=NULL&&key>-1) {
 	  // only store value if it changed; for int, double or colour, store old value too
@@ -1366,7 +1419,7 @@ boolean pconx_chain_data(int key, int mode) {
 	}
       }
     }
-    if (key!=-2&&inparams!=NULL) weed_free(inparams);
+    if (key!=FX_DATA_KEY_PLAYBACK_PLUGIN&&inparams!=NULL) weed_free(inparams);
 
   return reinit_inst;
 }
@@ -1530,8 +1583,8 @@ void cconx_delete(int okey, int omode, int ocnum, int ikey, int imode, int icnum
 
   while (cconx!=NULL) {
     cconx_next=cconx->next;
-    if (okey==-1000000||(cconx->okey==okey&&cconx->omode==omode)) {
-      if (ikey==-1000000) {
+    if (okey==FX_DATA_WILDCARD||(cconx->okey==okey&&cconx->omode==omode)) {
+      if (ikey==FX_DATA_WILDCARD) {
 	// delete entire node
 	g_free(cconx->chans);
 	g_free(cconx->nconns);
@@ -1551,13 +1604,13 @@ void cconx_delete(int okey, int omode, int ocnum, int ikey, int imode, int icnum
       for (i=0;cconx!=NULL&&i<cconx->nchans;i++) {
 	totcons+=cconx->nconns[i];
 
-	if (okey!=-1000000&&cconx->chans[i]!=ocnum) {
+	if (okey!=FX_DATA_WILDCARD&&cconx->chans[i]!=ocnum) {
 	  j+=totcons;
 	  continue;
 	}
 
 	for (;j<totcons;j++) {
-	  if (cconx->ikey[j]==ikey && cconx->imode[j]==imode && (icnum==-1000000||cconx->icnum[j]==icnum)) {
+	  if (cconx->ikey[j]==ikey && cconx->imode[j]==imode && (icnum==FX_DATA_WILDCARD||cconx->icnum[j]==icnum)) {
 	    maxcons--;
 	    for (k=j;k<maxcons;k++) {
 	      cconx->ikey[k]=cconx->ikey[k+1];
@@ -1680,7 +1733,7 @@ void cconx_add_connection(int okey, int omode, int ocnum, int ikey, int imode, i
   register int i,j;
 
   // delete any existing connection to the input channel
-  cconx_delete(-1000000,0,0,ikey,imode,icnum);
+  cconx_delete(FX_DATA_WILDCARD,0,0,ikey,imode,icnum);
 
   if (cconx==NULL) {
     // add whole new node
@@ -1997,11 +2050,11 @@ boolean cconx_chain_data(int key, int mode) {
       }
     }
   }
-  else if (key==-2) {
+  else if (key==FX_DATA_KEY_PLAYBACK_PLUGIN) {
     if (mainw->vpp==NULL||mainw->vpp->num_alpha_chans==0) return FALSE;
   }
 
-  while ((ichan=(key==-2?(weed_plant_t *)pp_get_chan(mainw->vpp->play_params,i):get_enabled_channel(inst,i,TRUE)))!=NULL) {
+  while ((ichan=(key==FX_DATA_KEY_PLAYBACK_PLUGIN?(weed_plant_t *)pp_get_chan(mainw->vpp->play_params,i):get_enabled_channel(inst,i,TRUE)))!=NULL) {
     if ((ochan=cconx_get_out_alpha(FALSE,key,mode,i++))!=NULL) {
       if (cconx_convert_pixel_data(ichan,ochan)) needs_reinit=TRUE;
     }
@@ -2365,7 +2418,7 @@ static void dfxp_changed(GtkWidget *combo, gpointer user_data) {
 
   // populate all pcombo with params
   for (i=-EXTRA_PARAMS_IN;i<niparams;i++) {
-    if (i==-1) {
+    if (i==FX_DATA_PARAM_ACTIVE) {
       ptype=weed_seed_type_to_text(WEED_SEED_BOOLEAN);
       text=g_strdup_printf(_("ACTIVATE (%s)"),ptype);
     }
@@ -2521,8 +2574,8 @@ static void dpp_changed(GtkWidget *combo, gpointer user_data) {
 
   idx-=EXTRA_PARAMS_IN;
 
-  if (idx==-1) {
-    i=-1;
+  if (idx==FX_DATA_PARAM_ACTIVE) {
+    i=FX_DATA_PARAM_ACTIVE;
     // invent an "ACTIVATE" param
     if (active_dummy!=NULL&&WEED_PLANT_IS_PARAMETER(active_dummy)) {
       weed_plant_free(active_dummy);
@@ -2607,7 +2660,7 @@ static void dpp_changed(GtkWidget *combo, gpointer user_data) {
 							     conxwp->imodes[conxwp->num_alpha+ours],
 							     conxwp->idx[conxwp->num_alpha+ours]);
 
-  pconx_add_connection(conxwp->okey,conxwp->omode,ours-1,key-1,mode,j,acheck!=NULL?
+  pconx_add_connection(conxwp->okey,conxwp->omode,ours-EXTRA_PARAMS_OUT,key-1,mode,j,acheck!=NULL?
 		       lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(acheck)):FALSE);
 
   conxwp->ikeys[conxwp->num_alpha+ours]=key;
@@ -3424,8 +3477,8 @@ static boolean show_existing(lives_conx_w *conxwp) {
 
 	ipnum=pconx->ipnum[j];
 
-	if (ipnum==-1) {
-	  l=-1;
+	if (ipnum==FX_DATA_PARAM_ACTIVE) {
+	  l=FX_DATA_PARAM_ACTIVE;
 	}
 	else {
 	  filter=rte_keymode_get_filter(ikey+1,imode);

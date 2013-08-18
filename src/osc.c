@@ -5822,6 +5822,8 @@ void lives_osc_cb_rte_addpconnection(void *context, int arglen, const void *varg
     if (pnum1>=num_in_params(filter,FALSE,TRUE)) return lives_osc_notify_failure();
   }
 
+  if (pnum0<-EXTRA_PARAMS_OUT||pnum1<-EXTRA_PARAMS_IN) return lives_osc_notify_failure();
+
   pconx_add_connection(--key0,mode0,pnum0,--key1,mode1,pnum1,autoscale);
   lives_osc_notify_success(NULL);
 }
@@ -5841,7 +5843,9 @@ void lives_osc_cb_rte_delpconnection(void *context, int arglen, const void *varg
   if (key0<0||key0>=FX_KEYS_MAX_VIRTUAL||mode0<1||mode0>rte_getmodespk()) return lives_osc_notify_failure();
   if (key1<-2||key1>=FX_KEYS_MAX_VIRTUAL||mode1<1||mode1>rte_getmodespk()) return lives_osc_notify_failure();
 
-  pconx_delete(key0==0?-100000:--key0,--mode0,pnum0,key1==0?-1000000:--key1,--mode1,pnum1);
+  if (pnum0<-EXTRA_PARAMS_OUT||pnum1<-EXTRA_PARAMS_IN) return lives_osc_notify_failure();
+
+  pconx_delete(key0==0?FX_DATA_WILDCARD:--key0,--mode0,pnum0,key1==0?FX_DATA_WILDCARD:--key1,--mode1,pnum1);
   lives_osc_notify_success(NULL);
 
 }
@@ -5923,7 +5927,7 @@ void lives_osc_cb_rte_delcconnection(void *context, int arglen, const void *varg
   if (key0<0||key0>=FX_KEYS_MAX_VIRTUAL||mode0<1||mode0>rte_getmodespk()) return lives_osc_notify_failure();
   if (key1<-2||key1>=FX_KEYS_MAX_VIRTUAL||mode1<1||mode1>rte_getmodespk()) return lives_osc_notify_failure();
 
-  cconx_delete(key0==0?-100000:--key0,--mode0,cnum0,key1==0?-100000:--key1,--mode1,cnum1);
+  cconx_delete(key0==0?FX_DATA_WILDCARD:--key0,--mode0,cnum0,key1==0?FX_DATA_WILDCARD:--key1,--mode1,cnum1);
 
   lives_osc_notify_success(NULL);
 }

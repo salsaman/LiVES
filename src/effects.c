@@ -1035,9 +1035,17 @@ weed_plant_t *get_blend_layer(weed_timecode_t tc) {
 boolean rte_on_off_callback (GtkAccelGroup *group, GObject *obj, guint keyval, GdkModifierType mod, gpointer user_data) {
 // this is the callback which happens when a rte is keyed
   int key=LIVES_POINTER_TO_INT(user_data);
-  uint64_t new_rte=GU641<<(key-1);
+  uint64_t new_rte;
+  boolean is_auto=FALSE;
 
   mainw->osc_block=TRUE;
+
+  if (key<0) {
+    is_auto=TRUE;
+    key=-key;
+  }
+
+  new_rte=GU641<<(key-1);
 
   if (key==EFFECT_NONE) {
     // switch up/down keys to default (fps change)
@@ -1047,7 +1055,6 @@ boolean rte_on_off_callback (GtkAccelGroup *group, GObject *obj, guint keyval, G
     mainw->rte^=new_rte;
     if (mainw->rte&new_rte) {
       // switch is ON
-
       // WARNING - if we start playing because a generator was started, we block here
       if (!(weed_init_effect(key-1))) {
 	// ran out of instance slots, no effect assigned, or some other error
@@ -1062,7 +1069,10 @@ boolean rte_on_off_callback (GtkAccelGroup *group, GObject *obj, guint keyval, G
       if (rte_window!=NULL) rtew_set_keych(key-1,TRUE);
       if (mainw->ce_thumbs) {
 	ce_thumbs_set_keych(key-1,TRUE);
-	ce_thumbs_add_param_box(key-1);
+
+	// if effect was auto (from ACTIVATE data connection), leave all param boxes
+	// otherwise, remove any which are not "pinned"
+	ce_thumbs_add_param_box(key-1,!is_auto);
       }
     }
     else {
@@ -1088,6 +1098,13 @@ boolean rte_on_off_callback (GtkAccelGroup *group, GObject *obj, guint keyval, G
   }
   else lives_widget_set_sensitive(mainw->rendered_fx[0].menuitem,FALSE);
 
+  if (key>0&&!is_auto) {
+    // user override any ACTIVATE data connection
+    override_if_active_input(key);
+
+    // if this is an outlet for ACTIVATE, disable the override now
+    end_override_if_activate_output(key);
+  }
 
   return TRUE;
 }

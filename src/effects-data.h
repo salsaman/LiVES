@@ -5,6 +5,15 @@
 // see file ../COPYING for licensing details
 
 
+#define FX_DATA_WILDCARD -1000000
+
+#define FX_DATA_KEY_SUBTITLES -1
+#define FX_DATA_KEY_PLAYBACK_PLUGIN -2
+
+#define EXTRA_PARAMS_OUT 1
+#define EXTRA_PARAMS_IN 1
+
+#define FX_DATA_PARAM_ACTIVE -1
 
 // struct for connecting out params to in params
 
@@ -124,6 +133,10 @@ boolean cconx_chain_data_internal(weed_plant_t *ichan);
 
 //////////////////////////////////////////////////////////
 
+void override_if_active_input(int hotkey);
+void end_override_if_activate_output(int hotkey);
+
+////////////////////////////////////////////////////////////
 
 typedef struct {
   int okey;

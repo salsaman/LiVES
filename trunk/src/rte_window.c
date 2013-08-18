@@ -1710,11 +1710,11 @@ void on_clear_clicked (GtkButton *button, gpointer user_data) {
   g_print("del fx %d mode %d\n",key,mode);
   weed_delete_effectkey (key+1,mode);
 
-  pconx_delete(-1000000,0,0,key,mode,-1000000);
-  pconx_delete(key,mode,-1000000,-1,0,0);
+  pconx_delete(FX_DATA_WILDCARD,0,0,key,mode,FX_DATA_WILDCARD);
+  pconx_delete(key,mode,FX_DATA_WILDCARD,-1,0,0);
 
-  cconx_delete(-1000000,0,0,key,mode,-1000000);
-  cconx_delete(key,mode,-1000000,-1000000,0,0);
+  cconx_delete(FX_DATA_WILDCARD,0,0,key,mode,FX_DATA_WILDCARD);
+  cconx_delete(key,mode,FX_DATA_WILDCARD,FX_DATA_WILDCARD,0,0);
 
 
   newmode=rte_key_getmode(key+1);
@@ -1948,11 +1948,11 @@ void fx_changed (GtkComboBox *combo, gpointer user_data) {
 
   check_clear_all_button();
 
-  pconx_delete(-1000000,0,0,key,mode,-1000000);
-  pconx_delete(key,mode,-1000000,-1000000,0,0);
+  pconx_delete(FX_DATA_WILDCARD,0,0,key,mode,FX_DATA_WILDCARD);
+  pconx_delete(key,mode,FX_DATA_WILDCARD,FX_DATA_WILDCARD,0,0);
 
-  cconx_delete(-1000000,0,0,key,mode,-1000000);
-  cconx_delete(key,mode,-1000000,-1000000,0,0);
+  cconx_delete(FX_DATA_WILDCARD,0,0,key,mode,FX_DATA_WILDCARD);
+  cconx_delete(key,mode,FX_DATA_WILDCARD,FX_DATA_WILDCARD,0,0);
 
   if (mainw->ce_thumbs) ce_thumbs_reset_combos();
 

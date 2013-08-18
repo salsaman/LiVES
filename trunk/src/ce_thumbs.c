@@ -426,7 +426,7 @@ void end_ce_thumb_mode(void) {
 
 
 
-void ce_thumbs_add_param_box(int key) {
+void ce_thumbs_add_param_box(int key, boolean remove) {
   // when an effect with params is applied, show the parms in a box
   weed_plant_t *inst,*ninst;
   lives_rfx_t *rfx;
@@ -443,8 +443,10 @@ void ce_thumbs_add_param_box(int key) {
 
   if (key>=rte_keys_virtual) return;
 
-  // remove old boxes unless pinned
-  ce_thumbs_remove_param_boxes(FALSE);
+  if (remove) {
+    // remove old boxes unless pinned
+    ce_thumbs_remove_param_boxes(FALSE);
+  }
 
   ninst=inst=rte_keymode_get_instance(key+1,mode);
 
@@ -609,7 +611,7 @@ void ce_thumbs_reset_combo(int key) {
     g_list_free(fxlist);
     mode=rte_key_getmode(key+1);
     ce_thumbs_set_mode_combo(key,mode);
-    if (rte_keymode_get_instance(key+1,mode)!=NULL) ce_thumbs_add_param_box(key);
+    if (rte_keymode_get_instance(key+1,mode)!=NULL) ce_thumbs_add_param_box(key,TRUE);
   }
   else {
     lives_widget_set_sensitive(key_checks[key],FALSE);

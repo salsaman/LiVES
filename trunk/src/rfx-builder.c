@@ -1096,7 +1096,7 @@ void on_table_add_row (GtkButton *button, gpointer user_data) {
   gchar *tmpx;
   gchar *ctext;
 
-  GtkWidget *ebox,*ebox2,*ebox3;
+  GtkWidget *ebox,*ebox2=NULL,*ebox3=NULL;
 
   rfxbuilder->entry2[rfxbuilder->table_rows]=rfxbuilder->entry3[rfxbuilder->table_rows]=NULL;
 

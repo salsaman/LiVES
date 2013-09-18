@@ -2506,8 +2506,10 @@ static void dpp_changed(GtkWidget *combo, gpointer user_data) {
   int idx=lives_combo_get_active(LIVES_COMBO(combo));
 
   boolean hasone=FALSE;
+  boolean setup=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(combo),"setup"));
 
   register int i,j=0;
+
 
   for (i=0;i<conxwp->num_params;i++) {
     if (conxwp->pcombo[i]==combo) {
@@ -2517,6 +2519,7 @@ static void dpp_changed(GtkWidget *combo, gpointer user_data) {
   }
 
   if (idx==-1) {
+    if (setup) return;
     for (i=0;i<conxwp->num_alpha;i++) if (lives_combo_get_active(LIVES_COMBO(conxwp->ccombo[i]))>-1) {
 	hasone=TRUE;
 	break;
@@ -2529,6 +2532,7 @@ static void dpp_changed(GtkWidget *combo, gpointer user_data) {
     if (!hasone) lives_widget_set_sensitive(disconbutton,FALSE);
 
     if (conxwp->ikeys[conxwp->num_alpha+ours]!=0) {
+
       pconx_delete(conxwp->okey,conxwp->omode,ours-EXTRA_PARAMS_OUT,
 		   conxwp->ikeys[conxwp->num_alpha+ours]-1,
 		   conxwp->imodes[conxwp->num_alpha+ours],
@@ -2616,11 +2620,13 @@ static void dpp_changed(GtkWidget *combo, gpointer user_data) {
 
   }
 
-  if (pconx_get_out_param(TRUE,key-1,mode,j,NULL)!=NULL) {
-    // dest param already has a connection
-    do_param_connected_error(conxwp);
-    lives_combo_set_active_string (LIVES_COMBO(combo),"");
-    return;
+  if (!setup) {
+    if (pconx_get_out_param(TRUE,key-1,mode,j,NULL)!=NULL) {
+      // dest param already has a connection
+      do_param_connected_error(conxwp);
+      lives_combo_set_active_string (LIVES_COMBO(combo),"");
+      return;
+    }
   }
 
   g_object_set_data(G_OBJECT(combo),"idx",GINT_TO_POINTER(idx));
@@ -2655,10 +2661,13 @@ static void dpp_changed(GtkWidget *combo, gpointer user_data) {
 
   weed_free(paramname);
 
-  if (conxwp->ikeys[conxwp->num_alpha+ours]!=0) pconx_delete(conxwp->okey,conxwp->omode,ours,
+  if (setup) return;
+
+  if (conxwp->ikeys[conxwp->num_alpha+ours]!=0) pconx_delete(conxwp->okey,conxwp->omode,ours-EXTRA_PARAMS_OUT,
 							     conxwp->ikeys[conxwp->num_alpha+ours]-1,
 							     conxwp->imodes[conxwp->num_alpha+ours],
 							     conxwp->idx[conxwp->num_alpha+ours]);
+
 
   pconx_add_connection(conxwp->okey,conxwp->omode,ours-EXTRA_PARAMS_OUT,key-1,mode,j,acheck!=NULL?
 		       lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(acheck)):FALSE);
@@ -3497,15 +3506,18 @@ static boolean show_existing(lives_conx_w *conxwp) {
 	  weed_free(iparams);
 	}
 
-	g_signal_handler_block(pcombo,conxwp->dpp_func[pidx]);
-	lives_combo_set_active_index(LIVES_COMBO(pcombo),l+EXTRA_PARAMS_IN);
-	g_signal_handler_unblock(pcombo,conxwp->dpp_func[pidx]);
-
 	g_object_set_data(G_OBJECT(pcombo),"idx",GINT_TO_POINTER(l+EXTRA_PARAMS_IN));
-	      
+	g_object_set_data(G_OBJECT(pcombo),"setup",GINT_TO_POINTER(TRUE));
+
 	conxwp->ikeys[conxwp->num_alpha+pidx]=ikey+1;
 	conxwp->imodes[conxwp->num_alpha+pidx]=imode;
 	conxwp->idx[conxwp->num_alpha+pidx]=ipnum;
+
+	//g_signal_handler_block(pcombo,conxwp->dpp_func[pidx]);
+	lives_combo_set_active_index(LIVES_COMBO(pcombo),l+EXTRA_PARAMS_IN);
+	//g_signal_handler_unblock(pcombo,conxwp->dpp_func[pidx]);
+
+	g_object_set_data(G_OBJECT(pcombo),"setup",GINT_TO_POINTER(FALSE));
 
 	lives_widget_set_sensitive(disconbutton,TRUE);
 	

@@ -3233,7 +3233,7 @@ static void conxw_cancel_clicked(GtkWidget *button, gpointer user_data) {
   if (conxwp->pcombo!=NULL) g_free(conxwp->pcombo);
   if (conxwp->acheck!=NULL) g_free(conxwp->acheck);
   if (conxwp->dpp_func!=NULL) g_free(conxwp->dpp_func);
-  if (conxwp->dpc_func!=NULL) g_free(conxwp->dpp_func);
+  if (conxwp->dpc_func!=NULL) g_free(conxwp->dpc_func);
   if (conxwp->acheck_func!=NULL) g_free(conxwp->acheck_func);
 
   g_free(conxwp->ikeys);

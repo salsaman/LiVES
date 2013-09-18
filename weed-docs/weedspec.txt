@@ -122,10 +122,12 @@ added clarifying remarks for number of values in parameter defaults.
 01/03/13 salsaman
 corrected description about static function versions
 
-17/03/13
+17/03/13 salsaman
 added "extra_authors" leaf for plugin_info. Corrected description about static functions for plugins.
 added "rowstride_alignment_hint" for channel templates.
 
+17/09/2013 salsaman
+Clarified description of "group" leaf for WEED_HINT_SWITCH parameter templates.
 
 (C) Gabriel "Salsaman" Finch 2005 - 2013
 
@@ -972,9 +974,11 @@ only take values WEED_TRUE and WEED_FALSE.
 
 Additional leaves that hint causes:
  * "group" : WEED_SEED_INT : for all in_parameters with the same
- non-zero group, only one of those parameters may be set to
- WEED_TRUE. For parameters in a group: the default may only have a
+ non-zero group: the template "default" may only have a
  single value, and WEED_PARAMETER_VARIABLE_ELEMENTS may not be set. 
+ Only one parameter per non-zero group may have a "default" of WEED_TRUE. 
+ The host must ensure that only one parameter per non-zero group has a 
+ "value" of WEED_TRUE. 
 
  
  * WEED_HINT_COLOR

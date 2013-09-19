@@ -2373,7 +2373,9 @@ void on_assign_rte_keys_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
 void rtew_set_keych (int key, boolean on) {
   g_signal_handler_block(key_checks[key],ch_fns[key]);
+  pthread_mutex_lock(&mainw->gtk_mutex);
   lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON(key_checks[key]),on);
+  pthread_mutex_unlock(&mainw->gtk_mutex);
   g_signal_handler_unblock(key_checks[key],ch_fns[key]);
 }
 

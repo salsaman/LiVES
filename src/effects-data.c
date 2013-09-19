@@ -37,8 +37,10 @@ static weed_plant_t *active_dummy=NULL;
 static void switch_fx_state(int hotkey) {
   // switch effect state when a connection to ACTIVATE is present
   uint32_t last_grabable_effect=mainw->last_grabable_effect;
-  // use -hokey to indicate auto
+  // use -hotkey to indicate auto
+  pthread_mutex_unlock(&mainw->data_mutex);
   rte_on_off_callback_hook(NULL,LIVES_INT_TO_POINTER(-hotkey));
+  pthread_mutex_lock(&mainw->data_mutex);
   mainw->last_grabable_effect=last_grabable_effect;
 }
 

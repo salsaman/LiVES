@@ -1052,18 +1052,19 @@ boolean rte_on_off_callback (GtkAccelGroup *group, GObject *obj, guint keyval, G
     weed_deinit_all(FALSE);
   }
   else {
-    mainw->rte^=new_rte;
-    if (mainw->rte&new_rte) {
+    if (!(mainw->rte&new_rte)) {
       // switch is ON
       // WARNING - if we start playing because a generator was started, we block here
       if (!(weed_init_effect(key-1))) {
 	// ran out of instance slots, no effect assigned, or some other error
-	mainw->rte^=new_rte;
+	if (mainw->rte&new_rte) mainw->rte^=new_rte;
 	if (rte_window!=NULL) rtew_set_keych(key-1,FALSE);
 	if (mainw->ce_thumbs) ce_thumbs_set_keych(key-1,FALSE);
 	mainw->osc_block=FALSE;
 	return TRUE;
       }
+
+      if (!(mainw->rte&new_rte)) mainw->rte|=new_rte;
 
       mainw->last_grabable_effect=key-1;
       if (rte_window!=NULL) rtew_set_keych(key-1,TRUE);
@@ -1072,13 +1073,13 @@ boolean rte_on_off_callback (GtkAccelGroup *group, GObject *obj, guint keyval, G
 
 	// if effect was auto (from ACTIVATE data connection), leave all param boxes
 	// otherwise, remove any which are not "pinned"
-	ce_thumbs_add_param_box(key-1,!is_auto);
+	if (!is_auto) ce_thumbs_add_param_box(key-1,!is_auto);
       }
     }
     else {
       // effect is OFF
       weed_deinit_effect(key-1);
-      if (mainw->rte&(GU641<<(key-1))) mainw->rte^=(GU641<<(key-1));
+      if (mainw->rte&new_rte) mainw->rte^=new_rte;
       if (rte_window!=NULL) rtew_set_keych(key-1,FALSE);
       if (mainw->ce_thumbs) ce_thumbs_set_keych(key-1,FALSE);
     }

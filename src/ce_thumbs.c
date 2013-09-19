@@ -71,7 +71,9 @@ void ce_thumbs_set_keych (int key, boolean on) {
   // set key check from other source
   if (key>=rte_keys_virtual) return;
   g_signal_handler_block(key_checks[key],ch_fns[key]);
+  pthread_mutex_lock(&mainw->gtk_mutex);
   lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON(key_checks[key]),on);
+  pthread_mutex_unlock(&mainw->gtk_mutex);
   if (!on&&pscrolls[key]!=NULL) ce_thumbs_remove_param_box(key);
   g_signal_handler_unblock(key_checks[key],ch_fns[key]);
 }
@@ -406,6 +408,7 @@ void start_ce_thumb_mode(void) {
 
 
 void end_ce_thumb_mode(void) {
+  mainw->ce_thumbs=FALSE;
   ce_thumbs_remove_param_boxes(TRUE);
   lives_widget_destroy(top_hbox);
   lives_widget_show(mainw->eventbox);
@@ -420,7 +423,6 @@ void end_ce_thumb_mode(void) {
   g_free(ch_fns);
   g_free(rb_clip_fns);
   g_free(rb_fx_fns);
-  mainw->ce_thumbs=FALSE;
 }
 
 
@@ -442,6 +444,8 @@ void ce_thumbs_add_param_box(int key, boolean remove) {
   int error;
 
   if (key>=rte_keys_virtual) return;
+
+  pthread_mutex_lock(&mainw->gtk_mutex);
 
   if (remove) {
     // remove old boxes unless pinned
@@ -502,6 +506,7 @@ void ce_thumbs_add_param_box(int key, boolean remove) {
   g_object_set_data (G_OBJECT (pscrolls[key]),"update",LIVES_INT_TO_POINTER (FALSE));
   g_object_set_data (G_OBJECT (pscrolls[key]),"rfx",rfx);
   lives_widget_show_all(param_hbox);
+  pthread_mutex_unlock(&mainw->gtk_mutex);
 }
 
 

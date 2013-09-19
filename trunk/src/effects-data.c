@@ -2351,6 +2351,8 @@ static void dfxc_changed(GtkWidget *combo, gpointer user_data) {
 
 
 static void dfxp_changed(GtkWidget *combo, gpointer user_data) {
+  // filter was changed
+
   lives_conx_w *conxwp=(lives_conx_w *)user_data;
 
   GtkTreeIter iter;
@@ -2428,6 +2430,8 @@ static void dfxp_changed(GtkWidget *combo, gpointer user_data) {
       param=iparams[j++];
 
       if (weed_plant_has_leaf(param,"host_internal_connection")) continue;
+
+      if (weed_plant_has_leaf(param,"group")&&weed_get_int_value(param,"group",&error)!=0) continue;
 
       paramname=weed_get_string_value(param,"name",&error);
 
@@ -2603,6 +2607,7 @@ static void dpp_changed(GtkWidget *combo, gpointer user_data) {
     for (i=0;i<niparams;i++) {
       param=iparams[i];
       if (weed_plant_has_leaf(param,"host_internal_connection")) continue;
+      if (weed_plant_has_leaf(param,"group")&&weed_get_int_value(param,"group",&error)!=0) continue;
       if (j==idx) break;
       j++;
     }

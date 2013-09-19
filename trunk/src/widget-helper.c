@@ -3067,7 +3067,9 @@ void lives_widget_context_update(void) {
     mt_needs_idlefunc=TRUE;
   }
 
+  if (pthread_mutex_trylock(&mainw->gtk_mutex)) return;
   while (!mainw->is_exiting&&g_main_context_iteration(NULL,FALSE));
+  pthread_mutex_unlock(&mainw->gtk_mutex);
 
   if (!mainw->is_exiting&&mt_needs_idlefunc) mainw->multitrack->idlefunc=mt_idle_add(mainw->multitrack);
 #endif

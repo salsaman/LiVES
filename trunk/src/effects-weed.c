@@ -2836,7 +2836,7 @@ static lives_filter_error_t weed_apply_audio_instance_inner (weed_plant_t *inst,
   pthread_mutex_lock(&mainw->data_mutex);
 
   if ((*process_func)(inst,tc)==WEED_ERROR_PLUGIN_INVALID) {
-    pthread_mutex_unlock(&mainw->data_mutex);
+    pthread_mutex_unlock(&mainw->data_mutex); // deadlock 1
     pthread_mutex_unlock(&mainw->interp_mutex);
     weed_free(in_tracks);
     weed_free(out_tracks);
@@ -3423,7 +3423,9 @@ weed_plant_t *weed_apply_effects (weed_plant_t **layers, weed_plant_t *filter_ma
       if (rte_key_valid(i+1,TRUE)) {
 	if (!(mainw->rte&(GU641<<i))) {
 	  // if anything is connected to ACTIVATE, the fx may be activated
+	  pthread_mutex_lock(&mainw->data_mutex);
 	  pconx_chain_data(i,key_modes[i]);
+	  pthread_mutex_unlock(&mainw->data_mutex);
 	}
 	if (mainw->rte&(GU641<<i)) {
 	  mainw->osc_block=TRUE;
@@ -3604,7 +3606,9 @@ void weed_apply_audio_effects_rt(float **abuf, int nchans, int64_t nsamps, gdoub
     if (rte_key_valid(i+1,TRUE)) {
       if (!(mainw->rte&(GU641<<i))) {
 	// if anything is connected to ACTIVATE, the fx may be activated
+	pthread_mutex_lock(&mainw->data_mutex);
 	pconx_chain_data(i,key_modes[i]);
+	pthread_mutex_unlock(&mainw->data_mutex);
       }
       if (mainw->rte&(GU641<<i)) {
 	mainw->osc_block=TRUE;
@@ -3638,20 +3642,20 @@ void weed_apply_audio_effects_rt(float **abuf, int nchans, int64_t nsamps, gdoub
 	  // chain any data pipelines
 
 	  if (!pthread_mutex_trylock(&mainw->data_mutex)) {
+	    pthread_mutex_unlock(&mainw->afilter_mutex);
 	    needs_reinit=pconx_chain_data(i,key_modes[i]);
 	    pthread_mutex_unlock(&mainw->data_mutex);
 
 	    // if anything is connected to ACTIVATE, the fx may be deactivated
 	    if ((instance=key_to_instance[i][key_modes[i]])==NULL) {
-	      pthread_mutex_unlock(&mainw->afilter_mutex);
 	      continue;
 	    }
 
 	    if (needs_reinit) {
-	      pthread_mutex_unlock(&mainw->afilter_mutex);
 	      weed_reinit_effect(instance,FALSE);
-	      pthread_mutex_lock(&mainw->afilter_mutex);
 	    }
+
+	    pthread_mutex_lock(&mainw->afilter_mutex);
 	  }
 	}
 
@@ -6865,7 +6869,7 @@ void weed_deinit_effect(int hotkey) {
     }
   }
  
-  pthread_mutex_lock(&mainw->afilter_mutex);
+  pthread_mutex_lock(&mainw->afilter_mutex); // deadlock 1
   key_to_instance[hotkey][key_modes[hotkey]]=NULL;
   pthread_mutex_unlock(&mainw->afilter_mutex);
 

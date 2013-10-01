@@ -72,9 +72,10 @@ endif
 # h264 does not work and needs a patch
 
 
-#if HAVE_AVFORMAT
-#if HAVE_AVCODEC
-#if HAVE_AVUTIL
+if HAVE_AVFORMAT
+if HAVE_AVCODEC
+if HAVE_AVUTIL
+
 flv_libs = flv_decoder.la
 FLVDEC_LIBS = @LIBAVCODEC_LIBS@ @LIBAVFORMAT_LIBS@
 FLVDEC_CFLAGS = @LIBAVFORMAT_CFLAGS@ @LIBAVCODEC_CFLAGS@ -Wno-deprecated-declarations
@@ -120,9 +121,9 @@ mpegts_decoder_la_LDFLAGS = $(shared_ldflags) $(MPEGTSDEC_LIBS)
 #avi_decoder_la_LDFLAGS = $(shared_ldflags) $(AVIDEC_LIBS)
 
 
-#endif
-#endif
-#endif
+endif
+endif
+endif
 
 
 

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: https://sourceforge.net/p/lives/bugs/\n"
-"POT-Creation-Date: 2013-08-18 14:08-0300\n"
+"POT-Creation-Date: 2013-10-06 11:24-0300\n"
 "PO-Revision-Date: 2013-03-14 12:31+0000\n"
 "Last-Translator: Launchpad Translations Administrators <Unknown>\n"
 "Language-Team: Polish <pl@li.org>\n"
@@ -3533,34 +3533,34 @@ msgstr ""
 msgid "Show Play Window"
 msgstr ""
 
-#: src/ce_thumbs.c:199
+#: src/ce_thumbs.c:201
 #, c-format
 msgid "Mapped to ctrl-%d"
 msgstr ""
 
-#: src/ce_thumbs.c:252 src/effects.c:85 src/preferences.c:3142
+#: src/ce_thumbs.c:254 src/effects.c:85 src/preferences.c:3142
 msgid "Effects"
 msgstr "Efekty"
 
-#: src/ce_thumbs.c:255 src/multitrack.c:5372
+#: src/ce_thumbs.c:257 src/multitrack.c:5372
 msgid "Clips"
 msgstr ""
 
-#: src/ce_thumbs.c:279
+#: src/ce_thumbs.c:281
 #, c-format
 msgid "Show / apply effects to %s\n"
 msgstr ""
 
-#: src/ce_thumbs.c:291
+#: src/ce_thumbs.c:293
 #, c-format
 msgid "Select clip for %s\n"
 msgstr ""
 
-#: src/ce_thumbs.c:489
+#: src/ce_thumbs.c:493
 msgid "_Pin"
 msgstr ""
 
-#: src/ce_thumbs.c:489
+#: src/ce_thumbs.c:493
 msgid "Pin the parameter box to the window"
 msgstr ""
 
@@ -5324,264 +5324,264 @@ msgstr ""
 msgid "pointer"
 msgstr ""
 
-#: src/effects-weed.c:4396
+#: src/effects-weed.c:4400
 #, c-format
 msgid "Error: plugin %s has no weed_setup() function.\n"
 msgstr ""
 
-#: src/effects-weed.c:4411
+#: src/effects-weed.c:4415
 #, c-format
 msgid "No usable filters found in plugin %s\n"
 msgstr ""
 
-#: src/effects-weed.c:4485
+#: src/effects-weed.c:4489
 #, c-format
 msgid "Found duplicate plugin %s"
 msgstr ""
 
-#: src/effects-weed.c:4539
+#: src/effects-weed.c:4543
 #, c-format
 msgid ""
 "Info: Unable to load plugin %s\n"
 "Error was: %s\n"
 msgstr ""
 
-#: src/effects-weed.c:4542 src/effects-weed.c:5674
+#: src/effects-weed.c:4546 src/effects-weed.c:5678
 msgid "Some plugin directories"
 msgstr ""
 
 #. TRANSLATORS: example " - LADSPA plugins -"
-#: src/effects-weed.c:4611 src/rte_window.c:2004
+#: src/effects-weed.c:4615 src/rte_window.c:2004
 #, c-format
 msgid " - %s plugins -"
 msgstr ""
 
-#: src/effects-weed.c:4810
+#: src/effects-weed.c:4814
 #, c-format
 msgid "Successfully loaded %d Weed filters\n"
 msgstr ""
 
-#: src/effects-weed.c:4975
+#: src/effects-weed.c:4979
 #, c-format
 msgid "Invalid compound effect %s - has conflicting target_fps\n"
 msgstr ""
 
-#: src/effects-weed.c:4995
+#: src/effects-weed.c:4999
 #, c-format
 msgid "Invalid compound effect %s - has multiple transition parameters\n"
 msgstr ""
 
-#: src/effects-weed.c:5009
+#: src/effects-weed.c:5013
 #, c-format
 msgid "Invalid compound effect %s - has multiple master volume parameters\n"
 msgstr ""
 
-#: src/effects-weed.c:5144
+#: src/effects-weed.c:5148
 #, c-format
 msgid "Invalid compound effect %s - must have >1 sub filters\n"
 msgstr ""
 
-#: src/effects-weed.c:5164
+#: src/effects-weed.c:5168
 #, c-format
 msgid "Invalid effect %s found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:5179
+#: src/effects-weed.c:5183
 #, c-format
 msgid "Invalid default found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:5190
+#: src/effects-weed.c:5194
 #, c-format
 msgid "Invalid filter %d for defaults found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:5204
+#: src/effects-weed.c:5208
 #, c-format
 msgid "Invalid param %d for defaults found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:5231
+#: src/effects-weed.c:5235
 #, c-format
 msgid ""
 "Invalid number of values for defaults found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:5265
+#: src/effects-weed.c:5269
 #, c-format
 msgid ""
 "Invalid non-boolean value for defaults found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:5298
+#: src/effects-weed.c:5302
 #, c-format
 msgid "Invalid param link found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:5309
+#: src/effects-weed.c:5313
 #, c-format
 msgid ""
 "Invalid out filter %d for link params found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:5327
+#: src/effects-weed.c:5331
 #, c-format
 msgid ""
 "Invalid out param %d for link params found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:5339
+#: src/effects-weed.c:5343
 #, c-format
 msgid ""
 "Invalid non-boolean value for autoscale found in compound effect %s, line "
 "%d\n"
 msgstr ""
 
-#: src/effects-weed.c:5350
+#: src/effects-weed.c:5354
 #, c-format
 msgid ""
 "Invalid in filter %d for link params found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:5364
+#: src/effects-weed.c:5368
 #, c-format
 msgid ""
 "Invalid in param %d for link params found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:5392
+#: src/effects-weed.c:5396
 #, c-format
 msgid "Invalid channel link found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:5403
+#: src/effects-weed.c:5407
 #, c-format
 msgid ""
 "Invalid out filter %d for link channels found in compound effect %s, line "
 "%d\n"
 msgstr ""
 
-#: src/effects-weed.c:5421
+#: src/effects-weed.c:5425
 #, c-format
 msgid ""
 "Invalid out channel %d for link params found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:5431
+#: src/effects-weed.c:5435
 #, c-format
 msgid ""
 "Invalid in filter %d for link channels found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:5449
+#: src/effects-weed.c:5453
 #, c-format
 msgid ""
 "Invalid in channel %d for link params found in compound effect %s, line %d\n"
 msgstr ""
 
-#: src/effects-weed.c:5487
+#: src/effects-weed.c:5491
 #, c-format
 msgid "Compound:%s"
 msgstr ""
 
-#: src/effects-weed.c:5574
+#: src/effects-weed.c:5578
 #, c-format
 msgid "Successfully loaded %d compound filters\n"
 msgstr ""
 
-#: src/effects-weed.c:6388
+#: src/effects-weed.c:6392
 #, c-format
 msgid "Effect %s cannot be used with this audio player.\n"
 msgstr ""
 
-#: src/effects-weed.c:6534
+#: src/effects-weed.c:6538
 #, c-format
 msgid "Failed to start instance %s, error code %d\n"
 msgstr ""
 
-#: src/effects-weed.c:6611
+#: src/effects-weed.c:6615
 #, c-format
 msgid "Unable to start generator %s\n"
 msgstr ""
 
-#: src/effects-weed.c:7345
+#: src/effects-weed.c:7349
 #, c-format
 msgid "Failed to start generator %s\n"
 msgstr ""
 
-#: src/effects-weed.c:7442
+#: src/effects-weed.c:7446
 #, c-format
 msgid "Failed to start generator %s, error %d\n"
 msgstr ""
 
-#: src/effects-weed.c:8698
+#: src/effects-weed.c:8702
 #, c-format
 msgid "%s [unstable] (%s)"
 msgstr ""
 
-#: src/effects-data.c:2423
+#: src/effects-data.c:2427
 #, c-format
 msgid "ACTIVATE (%s)"
 msgstr ""
 
-#: src/effects-data.c:2649
+#: src/effects-data.c:2662
 msgid "ACTIVATE"
 msgstr ""
 
-#: src/effects-data.c:2915
+#: src/effects-data.c:2931
 #, c-format
 msgid "Key slot %d"
 msgstr ""
 
-#: src/effects-data.c:2986
+#: src/effects-data.c:3002
 msgid "Connected to -->"
 msgstr ""
 
-#: src/effects-data.c:3001
+#: src/effects-data.c:3017
 msgid "Alpha Channel Connections"
 msgstr ""
 
-#: src/effects-data.c:3072
+#: src/effects-data.c:3088
 msgid "Parameter Data Connections"
 msgstr ""
 
-#: src/effects-data.c:3079
+#: src/effects-data.c:3095
 msgid "Autoscale All"
 msgstr ""
 
-#: src/effects-data.c:3092
+#: src/effects-data.c:3108
 msgid "ACTIVATED"
 msgstr ""
 
-#: src/effects-data.c:3197
+#: src/effects-data.c:3213
 msgid "Autoscale"
 msgstr ""
 
-#: src/effects-data.c:3577
+#: src/effects-data.c:3596
 msgid "LiVES: - Parameter and Alpha Channel Connections"
 msgstr ""
 
-#: src/effects-data.c:3586
+#: src/effects-data.c:3605
 msgid "Auto Connect Channels"
 msgstr ""
 
-#: src/effects-data.c:3598
+#: src/effects-data.c:3617
 msgid "Auto Connect Parameters"
 msgstr ""
 
-#: src/effects-data.c:3608
+#: src/effects-data.c:3627
 msgid "Disconnect All"
 msgstr ""
 
-#: src/effects-data.c:3661
+#: src/effects-data.c:3680
 msgid "Input channel is already connected"
 msgstr ""
 
-#: src/effects-data.c:3668
+#: src/effects-data.c:3687
 msgid "Input parameter is already connected"
 msgstr ""
 
-#: src/effects-data.c:3675
+#: src/effects-data.c:3694
 msgid "Input and output parameters are not compatible"
 msgstr ""
 
@@ -7495,21 +7495,21 @@ msgstr ""
 msgid "Syncing to external framerate of %.8f frames per second.\n"
 msgstr ""
 
-#: src/osc.c:6528
+#: src/osc.c:6650
 msgid "Cannot initialize OSC receiver\n"
 msgstr ""
 
-#: src/osc.c:6552
+#: src/osc.c:6674
 #, c-format
 msgid "WARNING: Cannot start OSC server at UDP port %d\n"
 msgstr ""
 
-#: src/osc.c:6557
+#: src/osc.c:6679
 #, c-format
 msgid "Started OSC server at UDP port %d\n"
 msgstr ""
 
-#: src/osc.c:6674
+#: src/osc.c:6796
 #, c-format
 msgid "Cannot start OSC/UDP server at port %d \n"
 msgstr ""
@@ -8025,7 +8025,7 @@ msgstr ""
 msgid "_Load default keymap"
 msgstr ""
 
-#: src/rte_window.c:2721
+#: src/rte_window.c:2723
 #, c-format
 msgid ""
 "Unable to create default keymap file: %s\n"

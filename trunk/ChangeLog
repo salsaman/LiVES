@@ -1,21 +1,21 @@
-Version 2.0.6
--------------
+Version 2.0.6 (6 Oct 2013)
+-------------------------
 Add new "clip thumbnails window" for dual head mode.
-Add "Activated" and "Activate" pseudo-parameters in data connection mapper (in progress).
+Add "Activated" and "Activate" pseudo-parameters in data connection mapper.
 Fix bug (regression) with "clear" button in rte mapping window.
 Fix possible issue with OSC constants lookups.
 Add "kaleidoscope" realtime effect.
 Fix crash when resetting playback speed and no audio is playing.
 Enable "wrap" for relevant parameters when using keyboard control.
 Fix vertical spacing error for radiobuttons in parameter windows.
+Updated translation to Ukranian.
 
 
 
 
 
-
-Version 2.0.5
--------------
+Version 2.0.5 (16 June 2013)
+---------------------------
 Fix regression in "load new audio"
 Clean up some minor compilation issues.
 Improved support for dual monitors.

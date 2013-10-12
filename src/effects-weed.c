@@ -5485,9 +5485,7 @@ static void load_compound_plugin(gchar *plugin_name, gchar *plugin_path) {
   }
 
   if (filter!=NULL) {
-    GtkWidget *menuitem;
     int idx;
-    gchar *filter_type,*string;
     gchar *filter_name=g_strdup_printf(_("Compound:%s"),plugin_name);
     weed_set_string_value(filter,"name",filter_name);
 
@@ -5502,22 +5500,6 @@ static void load_compound_plugin(gchar *plugin_name, gchar *plugin_path) {
     hashnames=(gchar **)g_realloc(hashnames,num_weed_filters*sizeof(gchar *));
     hashnames[idx]=NULL;
     hashnames[idx]=make_weed_hashname(idx,TRUE,FALSE);
-
-    if (num_in_params(filter,TRUE,TRUE)>0) {
-      filter_type=weed_filter_get_type(filter,TRUE,FALSE);
-      string=g_strdup_printf("%s (%s)",filter_name,filter_type);
-      
-      menuitem=lives_menu_item_new_with_label (string);
-      lives_widget_show(menuitem);
-      g_free(string);
-      g_free(filter_type);
-      
-      lives_container_add (LIVES_CONTAINER (mainw->rte_defs), menuitem);
-      
-      g_signal_connect (GTK_OBJECT (menuitem), "activate",
-			G_CALLBACK (rte_set_defs_activate),
-			GINT_TO_POINTER(idx));
-    }
 
     g_free(filter_name);
   }

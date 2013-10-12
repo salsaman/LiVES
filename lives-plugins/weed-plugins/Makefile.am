@@ -85,8 +85,10 @@ endif
 fxpluginslib_LTLIBRARIES = RGBdelay.la \
 	alpha_means.la \
 	alien_overlay.la \
+	audio_fft.la \
 	audio_transition.la \
 	audio_volume.la \
+	beat_detector.la \
 	bump2d.la \
 	blurzoom.la \
 	blank_frame_detector.la \

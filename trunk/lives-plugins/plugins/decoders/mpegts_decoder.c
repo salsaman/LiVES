@@ -52,6 +52,9 @@ const char *plugin_version="LiVES mpegts decoder version 1.0";
 #include "../../../libweed/weed-compat.h"
 #endif
 
+#ifndef AV_OPT_TYPE_INT
+#define AV_OPT_TYPE_INT FF_OPT_TYPE_INT
+#endif
 
 #include "decplugin.h"
 
@@ -66,11 +69,7 @@ const char *plugin_version="LiVES mpegts decoder version 1.0";
 
 
 #ifndef offsetof
-#    define offsetof(T, F) ((unsigned int)((char *)&((T *)0)->F))
-#endif
-
-#ifndef AV_OPT_TYPE_INT
-#define AV_OPT_TYPE_INT FF_OPT_TYPE_INT
+#define offsetof(T, F) ((unsigned int)((char *)&((T *)0)->F))
 #endif
 
 

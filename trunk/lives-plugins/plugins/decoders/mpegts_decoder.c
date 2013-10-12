@@ -52,6 +52,8 @@ const char *plugin_version="LiVES mpegts decoder version 1.0";
 #include "../../../libweed/weed-compat.h"
 #endif
 
+#include <libavutil/opt.h>
+
 #ifndef AV_OPT_TYPE_INT
 #define AV_OPT_TYPE_INT FF_OPT_TYPE_INT
 #endif
@@ -59,7 +61,6 @@ const char *plugin_version="LiVES mpegts decoder version 1.0";
 #include "decplugin.h"
 
 #include <libavformat/avformat.h>
-#include <libavutil/opt.h>
 #include <libavutil/crc.h>
 #include <libavutil/avstring.h>
 #include <libavutil/mem.h>

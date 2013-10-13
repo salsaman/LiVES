@@ -146,7 +146,7 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 
     weed_plant_t *in_params[]={weed_integer_init("x divisions","_X divisions",1,1,256),weed_integer_init("y divisions","_Y divisions",1,1,256),weed_switch_init("xdiv","Divide by _width",WEED_FALSE),weed_switch_init("ydiv","Divide by _height",WEED_FALSE),weed_switch_init("abs","Return _absolute values",WEED_FALSE),weed_float_init("scale","_Scale by",1.0,0.1,1000000.),NULL};
 
-    weed_plant_t *out_params[]={weed_out_param_float_init("mean values",0.,-1000000000.,1000000000.),NULL};
+    weed_plant_t *out_params[]={weed_out_param_float_init_nominmax("mean values",0.),NULL};
 
     weed_plant_t *filter_class=weed_filter_class_init("alpha_means","salsaman",1,0,
 						      NULL,&alpham_process,NULL,

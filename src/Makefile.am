@@ -5,12 +5,12 @@ AUTOMAKE_OPTIONS = subdir-objects
 gtk_def =
 
 if ENABLE_OSC
-osc_INCLUDES=-I "$(top_srcdir)/libOSC"
+osc_CPPFLAGS = -I "$(top_srcdir)/libOSC"
 endif
 
 if IS_DARWIN
-darwin_INCLUDES=-I /sw/include
-darwin_CFLAGS=-DIS_DARWIN=1
+darwin_CPPFLAGS = -I /sw/include
+darwin_CFLAGS = -DIS_DARWIN=1
 endif
 
 if IS_IRIX
@@ -40,12 +40,12 @@ AM_CPPFLAGS = \
 	-DLIVES_DIR=\""$(livesdir)"\" \
 	-DPACKAGE_LOCALE_DIR=\""$(datadir)/locale"\" \
 	-I $(top_srcdir) \
-	$(osc_INCLUDES) \
+	$(osc_CPPFLAGS) \
 	@MJPEGTOOLS_CFLAGS@ \
 	@UNICAP_CFLAGS@ \
 	@GTK_CFLAGS@ \
 	@X11_CFLAGS@ \
-	$(darwin_INCLUDES)
+	$(darwin_CPPFLAGS)
 
 
 bin_PROGRAMS = lives-exe

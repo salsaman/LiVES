@@ -18,9 +18,9 @@ endif
 if IS_MINGW
 mingw_CFLAGS=-DIS_MINGW=1 -I/usr/i686-pc-mingw32/sys-root/mingw/include
 mingw_LIBFLAGS = -lws2_32
-INCLUDES = -I "$(top_srcdir)" -I "$(top_srcdir)/libOSC"
+mingw_CPPFLAGS = -I "$(top_srcdir)" -I "$(top_srcdir)/libOSC"
 else
-INCLUDES = -I "$(top_srcdir)" -I "$(top_srcdir)/libOSC" -I "$(includedir)"
+AM_CPPFLAGS = -I "$(top_srcdir)" -I "$(top_srcdir)/libOSC" -I "$(includedir)"
 endif
 
 libOSC_la_CFLAGS = $(DEBUG_CFLAGS) $(solaris_CFLAGS) $(mingw_CFLAGS) -Wstrict-aliasing=0

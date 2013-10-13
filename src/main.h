@@ -1175,28 +1175,28 @@ void calc_maxspect(int rwidth, int rheight, int *cwidth, int *cheight);
 char *remove_trailing_zeroes(double val);
 
 void remove_layout_files(GList *lmap);
-gboolean add_lmap_error(lives_lmap_error_t lerror, const char *name, gpointer user_data, 
-			int clipno, int frameno, double atime, gboolean affects_current);
+boolean add_lmap_error(lives_lmap_error_t lerror, const char *name, gpointer user_data, 
+			int clipno, int frameno, double atime, boolean affects_current);
 void clear_lmap_errors(void);
-gboolean prompt_remove_layout_files(void);
-gboolean is_legal_set_name(const char *set_name, gboolean allow_dupes);
-char *repl_tmpdir(const char *entry, gboolean fwd);
+boolean prompt_remove_layout_files(void);
+boolean is_legal_set_name(const char *set_name, boolean allow_dupes);
+char *repl_tmpdir(const char *entry, boolean fwd);
 char *clip_detail_to_string(lives_clip_details_t what, size_t *maxlenp);
-gboolean get_clip_value(int which, lives_clip_details_t, void *retval, size_t maxlen);
+boolean get_clip_value(int which, lives_clip_details_t, void *retval, size_t maxlen);
 void save_clip_value(int which, lives_clip_details_t, void *val);
-gboolean check_frame_count(int idx);
+boolean check_frame_count(int idx);
 void get_frame_count(int idx);
 void get_frames_sizes(int fileno, int frame_to_test);
 int count_resampled_frames (int in_frames, double orig_fps, double resampled_fps);
 boolean int_array_contains_value(int *array, int num_elems, int value);
-gboolean check_for_lock_file(const char *set_name, int type);
+boolean check_for_lock_file(const char *set_name, int type);
 void g_list_free_strings(GList *list);
 
-gboolean create_event_space(int length_in_eventsb);
+boolean create_event_space(int length_in_eventsb);
 void add_to_recent(const char *filename, double start, int frames, const char *file_open_params);
 int verhash (char *version);
-void set_undoable (const char *what, gboolean sensitive);
-void set_redoable (const char *what, gboolean sensitive);
+void set_undoable (const char *what, boolean sensitive);
+void set_redoable (const char *what, boolean sensitive);
 void zero_spinbuttons (void);
 void draw_little_bars (double ptrtime);
 void set_sel_label (GtkWidget *label);
@@ -1214,7 +1214,7 @@ LiVESInterpType get_interp_value(gshort quality);
 GList *g_list_move_to_first(GList *list, GList *item) WARN_UNUSED;
 GList *g_list_delete_string(GList *, char *string) WARN_UNUSED;
 GList *g_list_copy_strings(GList *list);
-gboolean string_lists_differ(GList *, GList *);
+boolean string_lists_differ(GList *, GList *);
 
 
 GList *get_set_list(const char *dir);
@@ -1236,13 +1236,13 @@ lives_cancel_t check_for_bad_ffmpeg(void);
 
 // plugins.c
 GList *get_external_window_hints(lives_rfx_t *rfx);
-gboolean check_encoder_restrictions (boolean get_extension, boolean user_audio, boolean save_all);
+boolean check_encoder_restrictions (boolean get_extension, boolean user_audio, boolean save_all);
 
 //callbacks.c
 void lives_exit (void);
 void count_opening_frames(void);
 void on_fileread_clicked (GtkFileChooser *, gpointer widget);
-gboolean dirchange_callback (GtkAccelGroup *, GObject *, uint32_t, GdkModifierType, gpointer user_data);
+boolean dirchange_callback (GtkAccelGroup *, GObject *, uint32_t, GdkModifierType, gpointer user_data);
 void on_effects_paused (GtkButton *, gpointer user_data);
 void on_cancel_keep_button_clicked (GtkButton *, gpointer user_data);
 void on_cleardisk_activate (GtkWidget *, gpointer user_data);
@@ -1291,19 +1291,19 @@ void lives_free_normal(void *ptr);
 void lives_free_with_check(gpointer ptr); ///< checks if ptr is mainw->do_not_free, otherwise calls lives_free_normal()
 
 // pangotext.c
-gboolean subtitles_init(file *sfile, char * fname, lives_subtitle_type_t);
+boolean subtitles_init(file *sfile, char * fname, lives_subtitle_type_t);
 void subtitles_free(file *sfile);
-gboolean get_srt_text(file *sfile, double xtime);
-gboolean get_sub_text(file *sfile, double xtime);
-gboolean save_sub_subtitles(file *sfile, double start_time, double end_time, double offset_time, const char *filename);
-gboolean save_srt_subtitles(file *sfile, double start_time, double end_time, double offset_time, const char *filename);
+boolean get_srt_text(file *sfile, double xtime);
+boolean get_sub_text(file *sfile, double xtime);
+boolean save_sub_subtitles(file *sfile, double start_time, double end_time, double offset_time, const char *filename);
+boolean save_srt_subtitles(file *sfile, double start_time, double end_time, double offset_time, const char *filename);
 
 // osc.c
 #ifdef ENABLE_OSC
-gboolean lives_osc_init(guint osc_udp_port);
+boolean lives_osc_init(guint osc_udp_port);
 gint lives_osc_poll(gpointer data);
 void lives_osc_end(void);
-gboolean lives_osc_notify(int msgtype, const char *msgstring);
+boolean lives_osc_notify(int msgtype, const char *msgstring);
 void lives_osc_notify_success (const gchar *msg);
 void lives_osc_notify_failure (void);
 void lives_osc_notify_cancel (void);

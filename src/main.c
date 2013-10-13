@@ -1047,7 +1047,7 @@ static void lives_init(_ign_opts *ign_opts) {
 
   mainw->active_sa_clips=mainw->active_sa_fx=SCREEN_AREA_FOREGROUND;
 
-  /////////////////////////////////////////////////// add new stuff just above here ^^
+   /////////////////////////////////////////////////// add new stuff just above here ^^
 
 
   memset (mainw->set_name,0,1);
@@ -1617,8 +1617,7 @@ static void lives_init(_ign_opts *ign_opts) {
 	  if (mainw->jackd!=NULL) {
 	    if (jack_open_device(mainw->jackd)) mainw->jackd=NULL;
 
-	    if (((!(prefs->jack_opts&JACK_OPTS_START_TSERVER)&&!(prefs->jack_opts&JACK_OPTS_START_ASERVER))||
-		 mainw->jackd==NULL)&&prefs->startup_phase==0) {
+	    if (mainw->jackd==NULL&&prefs->startup_phase==0) {
 #ifdef HAVE_PULSE_AUDIO
 	      gchar *otherbit="\"lives -aplayer pulse\".";
 #else

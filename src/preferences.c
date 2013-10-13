@@ -27,9 +27,9 @@
 
 static int nmons;
 
-static guint prefs_current_page;
+static uint32_t prefs_current_page;
 
-static void select_pref_list_row(guint selected_idx);
+static void select_pref_list_row(uint32_t selected_idx);
 
 #ifdef ENABLE_OSC
 static void on_osc_enable_toggled (GtkToggleButton *t1, gpointer t2) {
@@ -463,8 +463,8 @@ boolean apply_prefs(boolean skip_warn) {
   boolean stream_audio_out=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_stream_audio));
   boolean rec_after_pb=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_rec_after_pb));
 
-  guint64 ds_warn_level=lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON(prefsw->spinbutton_warn_ds))*1000000;
-  guint64 ds_crit_level=lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON(prefsw->spinbutton_crit_ds))*1000000;
+  uint64_t ds_warn_level=(uint64_t)lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON(prefsw->spinbutton_warn_ds))*1000000;
+  uint64_t ds_crit_level=(uint64_t)lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON(prefsw->spinbutton_crit_ds))*1000000;
 
   boolean warn_fps=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_fps));
   boolean warn_save_set=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_save_set));
@@ -576,20 +576,21 @@ lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_yuv4
 #ifdef ENABLE_JACK
   boolean jack_astart=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_start_ajack));
   boolean jack_pwp=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_jack_pwp));
-  guint jack_opts=(JACK_OPTS_TRANSPORT_CLIENT*jack_client+JACK_OPTS_TRANSPORT_MASTER*jack_master+
+  boolean jack_read_autocon=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_jack_read_autocon));
+  uint32_t jack_opts=(JACK_OPTS_TRANSPORT_CLIENT*jack_client+JACK_OPTS_TRANSPORT_MASTER*jack_master+
 		   JACK_OPTS_START_TSERVER*jack_tstart+JACK_OPTS_START_ASERVER*jack_astart+
 		   JACK_OPTS_NOPLAY_WHEN_PAUSED*!jack_pwp+JACK_OPTS_TIMEBASE_START*jack_tb_start+
-		   JACK_OPTS_TIMEBASE_CLIENT*jack_tb_client);
+		   JACK_OPTS_TIMEBASE_CLIENT*jack_tb_client+JACK_OPTS_NO_READ_AUTOCON*!jack_read_autocon);
 #endif
 
 #ifdef RT_AUDIO
   boolean audio_follow_fps=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_afollow));
   boolean audio_follow_clips=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_aclips));
-  guint audio_opts=(AUDIO_OPTS_FOLLOW_FPS*audio_follow_fps+AUDIO_OPTS_FOLLOW_CLIPS*audio_follow_clips);
+  uint32_t audio_opts=(AUDIO_OPTS_FOLLOW_FPS*audio_follow_fps+AUDIO_OPTS_FOLLOW_CLIPS*audio_follow_clips);
 #endif
 
 #ifdef ENABLE_OSC
-  guint osc_udp_port=lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON(prefsw->spinbutton_osc_udp));
+  uint32_t osc_udp_port=lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON(prefsw->spinbutton_osc_udp));
   boolean osc_start=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->enable_OSC_start));
   boolean osc_enable=lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->enable_OSC));
 #endif
@@ -621,7 +622,7 @@ lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_yuv4
   gchar audio_player[256];
   int listlen=g_list_length (prefs->acodec_list);
   int rec_opts=rec_frames*REC_FRAMES+rec_fps*REC_FPS+rec_effects*REC_EFFECTS+rec_clips*REC_CLIPS+rec_audio*REC_AUDIO+rec_after_pb*REC_AFTER_PB;
-  guint warn_mask;
+  uint32_t warn_mask;
 
   unsigned char *new_undo_buf;
   GList *ulist;
@@ -1645,11 +1646,13 @@ static void on_audp_entry_changed (GtkWidget *audp_combo, gpointer ptr) {
   }
   if (!strncmp(audp,"jack",4)) {
     lives_widget_set_sensitive(prefsw->checkbutton_jack_pwp,TRUE);
+    lives_widget_set_sensitive(prefsw->checkbutton_jack_read_autocon,TRUE);
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_start_ajack),TRUE);
     lives_widget_show(prefsw->jack_int_label);
   }
   else {
     lives_widget_set_sensitive(prefsw->checkbutton_jack_pwp,FALSE);
+    lives_widget_set_sensitive(prefsw->checkbutton_jack_read_autocon,FALSE);
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_start_ajack),FALSE);
     lives_widget_hide(prefsw->jack_int_label);
   }
@@ -1669,7 +1672,7 @@ static void stream_audio_toggled(GtkToggleButton *togglebutton, gpointer user_da
   if (lives_toggle_button_get_active(togglebutton)) {
     // init vpp, get audio codec, check requisites
     _vid_playback_plugin *tmpvpp;
-    guint32 orig_acodec=AUDIO_CODEC_NONE;
+    uint32_t orig_acodec=AUDIO_CODEC_NONE;
 
     if (strlen(future_prefs->vpp_name)) {
       if ((tmpvpp=open_vid_playback_plugin (future_prefs->vpp_name, FALSE))==NULL) return;
@@ -1780,7 +1783,7 @@ static void pref_init_list(GtkWidget *list) {
 /*
  * Adds entry to preferences dialog list 
  */
-static void prefs_add_to_list(GtkWidget *list, GdkPixbuf *pix, const gchar *str, guint idx) {
+static void prefs_add_to_list(GtkWidget *list, GdkPixbuf *pix, const gchar *str, uint32_t idx) {
   GtkListStore *store;
   GtkTreeIter iter;
 
@@ -3934,6 +3937,18 @@ _prefsw *create_prefs_dialog (void) {
 
   lives_widget_set_sensitive (prefsw->checkbutton_jack_pwp, prefs->audio_player==AUD_PLAYER_JACK);
 
+  // ---
+  hbox = lives_hbox_new (FALSE,0);
+  lives_box_pack_start (LIVES_BOX (prefsw->vbox_right_jack), hbox, FALSE, FALSE, widget_opts.packing_height);
+
+  prefsw->checkbutton_jack_read_autocon = lives_standard_check_button_new
+    (_("Automatically connect to System Out ports when 'playing' External Audio"),FALSE,LIVES_BOX(hbox),NULL);
+   
+  lives_toggle_button_set_active (LIVES_TOGGLE_BUTTON (prefsw->checkbutton_jack_read_autocon), 
+				(future_prefs->jack_opts&JACK_OPTS_NO_READ_AUTOCON)?FALSE:TRUE);
+
+  lives_widget_set_sensitive (prefsw->checkbutton_jack_read_autocon, prefs->audio_player==AUD_PLAYER_JACK);
+
 #endif
 
   icon = g_build_filename(prefs->prefix_dir, ICON_DIR, "pref_jack.png", NULL);
@@ -4308,6 +4323,7 @@ _prefsw *create_prefs_dialog (void) {
   g_signal_connect(GTK_EDITABLE(prefsw->jack_aserver_entry), "changed", G_CALLBACK(apply_button_set_enabled), NULL);
   g_signal_connect(GTK_OBJECT(prefsw->checkbutton_start_ajack), "toggled", G_CALLBACK(apply_button_set_enabled), NULL);
   g_signal_connect(GTK_OBJECT(prefsw->checkbutton_jack_pwp), "toggled", G_CALLBACK(apply_button_set_enabled), NULL);
+  g_signal_connect(GTK_OBJECT(prefsw->checkbutton_jack_read_autocon), "toggled", G_CALLBACK(apply_button_set_enabled), NULL);
 #endif
 
 #ifdef ENABLE_OSC
@@ -4460,11 +4476,11 @@ void on_prefs_apply_clicked(GtkButton *button, gpointer user_data) {
  * Function is used to select particular row in preferences selection list
  * selection is performed according to provided index which is one of LIST_ENTRY_* constants
  */
-static void select_pref_list_row(guint selected_idx) {
+static void select_pref_list_row(uint32_t selected_idx) {
   GtkTreeIter iter;
   GtkTreeModel *model;
   boolean valid;
-  guint idx;
+  uint32_t idx;
 
   model = gtk_tree_view_get_model(GTK_TREE_VIEW(prefsw->prefs_list));
   valid = gtk_tree_model_get_iter_first(model, &iter);

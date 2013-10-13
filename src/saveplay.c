@@ -5058,7 +5058,7 @@ int save_to_scrap_file (weed_plant_t *layer) {
     if (wrtable) {
       if ((int64_t)(((double)free_mb-(scrap_mb+ascrap_mb))/1000.)<prefs->rec_stop_gb) {
 	if (mainw->record&&!mainw->record_paused) {
-	  gchar *msg=g_strdup_printf(_("\nRECORDING WAS PAUSED BECAUSE FREE DISK SPACE in %s IS BELOW %ld GB !\nRecord stop level can be set in Preferences.\n"),dir,prefs->rec_stop_gb);
+	  gchar *msg=g_strdup_printf(_("\nRECORDING WAS PAUSED BECAUSE FREE DISK SPACE in %s IS BELOW %d GB !\nRecord stop level can be set in Preferences.\n"),dir,prefs->rec_stop_gb);
 	  d_print(msg);
 	  g_free(msg);
 	  on_record_perf_activate(NULL,NULL);

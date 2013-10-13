@@ -42,7 +42,6 @@ static int package_version=1; // version of this package
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <math.h>
 #include <sys/time.h>
 
 typedef struct {

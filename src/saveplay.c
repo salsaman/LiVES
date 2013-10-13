@@ -5109,7 +5109,7 @@ void close_ascrap_file (void) {
 
 void recover_layout_map(gint numclips) {
   // load global layout map for a set and assign entries to clips [mainw->files[i]->layout_map]
-  GList *mlist,*lmap_node,*lmap_node_next,*lmap_entry_list,*lmap_entry_list_next;
+  GList *omlist,*mlist,*lmap_node,*lmap_node_next,*lmap_entry_list,*lmap_entry_list_next;
 
   layout_map *lmap_entry;
 
@@ -5118,8 +5118,11 @@ void recover_layout_map(gint numclips) {
   
   if (numclips>MAX_FILES) numclips=MAX_FILES;
 
-  if ((mlist=load_layout_map())!=NULL) {
+  if ((omlist=load_layout_map())!=NULL) {
     int i;
+
+    mlist=omlist;
+
     // assign layout map to clips
     for (i=1;i<=numclips;i++) {
       if (mainw->files[i]==NULL) continue;
@@ -5179,7 +5182,7 @@ void recover_layout_map(gint numclips) {
       }
       lmap_node=lmap_node->next;
     }
-    if (mlist!=NULL) g_list_free(mlist);
+    if (omlist!=NULL) g_list_free(omlist);
 
   }
 }

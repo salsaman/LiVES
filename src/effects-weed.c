@@ -8148,16 +8148,17 @@ gchar *rte_keymode_get_type (int key, int mode) {
   int idx;
 
   key--;
-  if (!rte_keymode_valid(key+1,mode,TRUE)) return g_strdup("");
+  if (!rte_keymode_valid(key+1,mode,TRUE)) return type;
 
   if ((idx=key_to_fx[key][mode])==-1) return type;
   if ((filter=weed_filters[idx])==NULL) return type;
+
+  g_free(type);
 
   mainw->osc_block=TRUE;
 
   if ((inst=key_to_instance[key][mode])!=NULL) {
     // return details for instance
-    g_free(type);
     type=weed_instance_get_type(inst,TRUE);
   }
   else type=weed_filter_get_type(filter,TRUE,TRUE);

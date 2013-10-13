@@ -35,7 +35,7 @@ gtk_LIBFLAGS = @GTK_LIBS_NODYNAMIC@ -pthread
 endif
 
 
-INCLUDES = \
+AM_CPPFLAGS = \
 	-DPACKAGE_DATA_DIR=\""$(datadir)"\" \
 	-DLIVES_DIR=\""$(livesdir)"\" \
 	-DPACKAGE_LOCALE_DIR=\""$(datadir)/locale"\" \

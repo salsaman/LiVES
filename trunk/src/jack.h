@@ -49,7 +49,7 @@ typedef jack_nframes_t nframes_t;
 #define JackTStopped 1026
 
 typedef struct {
-  gint      dev_idx;                      /**< id of this device ??? */ 
+  int      dev_idx;                      /**< id of this device ??? */ 
   int64_t     sample_out_rate;                   /**< samples(frames) per second */
   int64_t     sample_in_rate;                   /**< samples(frames) per second */
   uint64_t    num_input_channels;            /**< number of input channels(1 is mono, 2 stereo etc..) */
@@ -62,7 +62,7 @@ typedef struct {
   jack_port_t*     input_port[JACK_MAX_INPUT_PORTS]; /**< input ports */
   jack_client_t*   client;                        /**< pointer to jack client */
 
-  gchar             **jack_port_name;              /**< user given strings for the port names, can be NULL */
+  char             **jack_port_name;              /**< user given strings for the port names, can be NULL */
   unsigned int     jack_port_name_count;          /**< the number of port names given */
   uint64_t    jack_port_flags;               /**< flags to be passed to jack when opening the output ports */
 
@@ -93,8 +93,8 @@ typedef struct {
   uint64_t audio_ticks; ///< ticks when we did the last seek, used to calculate current ticks from audio
   uint64_t frames_written;
 
-  gint out_chans_available;
-  gint in_chans_available;
+  int out_chans_available;
+  int in_chans_available;
 
   boolean is_paused;
 
@@ -104,12 +104,12 @@ typedef struct {
 
   boolean is_active;
 
-  gint playing_file;
+  int playing_file;
 
   volatile float jack_pulse[1024];
 
   lives_audio_buf_t **abufs;
-  volatile gint read_abuf;
+  volatile int read_abuf;
 
   volatile int astream_fd;
 
@@ -122,7 +122,7 @@ typedef struct {
 
 ////////////////////////////////////////////////////////////////////////////
 
-jack_driver_t *jack_get_driver(gint dev_idx, boolean is_output); ///< get driver
+jack_driver_t *jack_get_driver(int dev_idx, boolean is_output); ///< get driver
 
 int jack_audio_init(void); ///< init jack for host output
 int jack_audio_read_init(void); ///< init jack for host input
@@ -131,26 +131,26 @@ int jack_open_device(jack_driver_t *); ///< open device for host output
 int jack_open_device_read(jack_driver_t *); ///< open device for host input
 
 int jack_driver_activate (jack_driver_t *); ///< activate for host playback
-int jack_read_driver_activate (jack_driver_t *); ///< activate for host recording
+int jack_read_driver_activate (jack_driver_t *, boolean autocon); ///< activate for host recording
 
 void jack_close_device(jack_driver_t*);
 
 boolean jack_try_reconnect(void);
 
-void jack_aud_pb_ready(gint fileno);
+void jack_aud_pb_ready(int fileno);
 
 
 // utils
 volatile aserver_message_t *jack_get_msgq(jack_driver_t *); ///< pull last msg from msgq, or return NULL
 uint64_t lives_jack_get_time(jack_driver_t *, boolean absolute); ///< get time from jack, in 10^-8 seconds
-boolean jack_audio_seek_frame (jack_driver_t *, gint frame); ///< seek to (video) frame
+boolean jack_audio_seek_frame (jack_driver_t *, int frame); ///< seek to (video) frame
 int64_t jack_audio_seek_bytes (jack_driver_t *, int64_t bytes); ///< seek to byte position
 
 void jack_get_rec_avals(jack_driver_t *);
 
 uint64_t jack_transport_get_time(void);
 
-gdouble lives_jack_get_pos(jack_driver_t *);
+double lives_jack_get_pos(jack_driver_t *);
 
 
 #endif

@@ -165,6 +165,7 @@ typedef struct {
 #define JACK_OPTS_TIMEBASE_START (1<<5)    ///< jack sets play start position
 #define JACK_OPTS_TIMEBASE_CLIENT (1<<6)    ///< full timebase client
 #define JACK_OPTS_TIMEBASE_MASTER (1<<7)   ///< timebase master (not implemented yet)
+#define JACK_OPTS_NO_READ_AUTOCON (1<<8)   ///< do not auto connect read clients when playing ext audio
 
   gchar jack_tserver[256];
   gchar jack_aserver[256];
@@ -271,7 +272,7 @@ typedef struct {
 
   boolean autoload_subs;
 
-  glong rec_stop_gb;
+  int rec_stop_gb;
 
   int max_modes_per_key; ///< maximum effect modes per key
 
@@ -300,9 +301,9 @@ typedef struct {
 
   // these are defualt values; actual values can be adjusted in Preferences
 #define DEF_DS_WARN_LEVEL 250000000  // 250MB
-  guint64 ds_warn_level; ///< diskspace warn level bytes
+  uint64_t ds_warn_level; ///< diskspace warn level bytes
 #define DEF_DS_CRIT_LEVEL 20000000 // 20MB
-  guint64 ds_crit_level; ///< diskspace critical level bytes
+  uint64_t ds_crit_level; ///< diskspace critical level bytes
 
 
 #define LIVES_CDISK_LEAVE_ORPHAN_SETS (1<<0)
@@ -484,6 +485,7 @@ typedef struct {
   GtkWidget *checkbutton_jack_tb_start;
   GtkWidget *checkbutton_jack_tb_client;
   GtkWidget *checkbutton_jack_pwp;
+  GtkWidget *checkbutton_jack_read_autocon;
   GtkWidget *checkbutton_start_tjack;
   GtkWidget *checkbutton_start_ajack;
   GtkWidget *checkbutton_afollow;

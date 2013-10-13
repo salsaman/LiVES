@@ -48,13 +48,14 @@ boolean on_LiVES_delete_event (GtkWidget *widget, GdkEvent *event, gpointer user
 
 
 void lives_exit (void) {
+  gchar *cwd;
+
   register int i;
 
   if (!mainw->only_close) mainw->is_exiting=TRUE;
 
   if (mainw->is_ready) {
     gchar *com;
-    gchar *cwd;
 
     if (mainw->multitrack!=NULL&&mainw->multitrack->idlefunc>0) {
       //g_source_remove(mainw->multitrack->idlefunc);
@@ -304,6 +305,19 @@ void lives_exit (void) {
 	    save_frame_index(i);
 	  }
 	  lives_freep((void**)&mainw->files[i]->op_dir);
+	  if (!mainw->only_close) {
+	    if (mainw->files[i]->clip_type==CLIP_TYPE_FILE&&mainw->files[i]->ext_src!=NULL) {
+	      gchar *ppath=g_build_filename(prefs->tmpdir,mainw->files[i]->handle,NULL);
+	      cwd=g_get_current_dir();
+	      lives_chdir(ppath,FALSE);
+	      g_free(ppath);
+	      close_decoder_plugin((lives_decoder_t *)mainw->files[i]->ext_src);
+	      mainw->files[i]->ext_src=NULL;
+	      
+	      lives_chdir(cwd,FALSE);
+	      g_free(cwd);
+	    }
+	  }
 	}
       }
     }

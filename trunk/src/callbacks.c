@@ -3794,10 +3794,7 @@ on_menubar_activate_menuitem                    (GtkMenuItem     *menuitem,
   //gtk_menu_shell_set_take_focus(GTK_MENU_SHELL(mainw->menubar),TRUE);
 }
 
-void
-on_playall_activate                    (GtkMenuItem     *menuitem,
-                                        gpointer         user_data)
-{
+void on_playall_activate (GtkMenuItem *menuitem, gpointer user_data) {
   if (mainw->current_file<=0) return;
 
   if (mainw->multitrack!=NULL) {

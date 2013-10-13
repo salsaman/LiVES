@@ -93,7 +93,7 @@ boolean ext_triggers_poll(gpointer data) {
   // check for external controller events
 #ifdef ENABLE_JACK
 #ifdef ENABLE_JACK_TRANSPORT
-  if (mainw->jack_trans_poll) lives_jack_poll(); ///<   check for jack transport start
+  if (mainw->jack_trans_poll) lives_jack_poll(); ///<   check for jack transport start/stop
 #endif
 #endif
 

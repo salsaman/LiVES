@@ -129,6 +129,9 @@ added "rowstride_alignment_hint" for channel templates.
 17/09/2013 salsaman
 Clarified description of "group" leaf for WEED_HINT_SWITCH parameter templates.
 
+12/10/2013 salsaman
+Add "hidden" option to filter_class gui.
+
 (C) Gabriel "Salsaman" Finch 2005 - 2013
 
 With contributions by: Niels Elburg, Dennis "Jaromil" Rojo, Andraz
@@ -1093,6 +1096,9 @@ Plugin may set any of these leaves in weed_setup(). After this they should be se
 
  * "icon"         : WEED_SEED_STRING : name of the associated icon (if
                                        any) in the icons subdirectory [see below - Plugin locations/format]
+
+ * "hidden" : WEED_SEED_BOOLEAN : if set to WEED_TRUE, the filter
+   may be hidden from user menus by the host. Intended for internal type filters.
 
  * other optional leaves depend on the "layout_scheme" used
 

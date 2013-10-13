@@ -2,6 +2,7 @@ Version 2.0.7
 -------------
 Fix debian compilation error in mpegts decoder.
 Add missing effects "beat_detector" and "audio_fft" to Makefiles.
+Improvements to rte window.
 
 
 

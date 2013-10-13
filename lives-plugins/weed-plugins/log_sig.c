@@ -92,6 +92,7 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
     filter_class=weed_filter_class_init("log_sig","salsaman",1,0,NULL,&logsig_process,
 					NULL,NULL,NULL,in_params,out_params);
 
+    weed_set_string_value(filter_class,"description","Scales float values between -1.0 and 1.0 using a log-sig function");
 
     weed_plugin_info_add_filter_class (plugin_info,filter_class);
 

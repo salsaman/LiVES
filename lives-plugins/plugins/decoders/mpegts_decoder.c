@@ -3292,6 +3292,9 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
   fprintf(stderr,"fps is %.4f %ld %ld %ld\n",cdata->fps,cdata->nframes,ldts,priv->start_dts);
 #endif
 
+  av_free(priv->picture);
+  priv->picture=NULL;
+
   return TRUE;
 }
 

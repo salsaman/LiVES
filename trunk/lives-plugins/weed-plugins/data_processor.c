@@ -5,7 +5,7 @@
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
 
-// generically process out[x] from a combination of in[a][b], store[z] and arithmetic expressions
+// generically process out[x] from a combination of in[y], store[z] and arithmetic expressions
 //#define DEBUG
 #include <stdio.h>
 
@@ -890,6 +890,7 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
     char name[256];
     char name2[256];
     char label[256];
+    char desc[512];
 
     for (i=0;i<EQS;i++) {
       snprintf(name,256,"input%03d",i);
@@ -912,6 +913,9 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
     filter_class=weed_filter_class_init("data_processor","salsaman",1,0,&dataproc_init,&dataproc_process,
 					&dataproc_deinit,NULL,NULL,in_params,out_params);
 
+    snprintf(desc,512,"Generically process out[x] from a combination of in[y], store[z] and arithmetic expressions.\nE.g:\no[0]=s[0]\ns[0]=i[0]*4\n\nArray subscripts can be from 0 - %d",EQS-1);
+
+    weed_set_string_value(filter_class,"description",desc);
 
     weed_plugin_info_add_filter_class (plugin_info,filter_class);
 

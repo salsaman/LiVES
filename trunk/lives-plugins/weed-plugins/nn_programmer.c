@@ -232,7 +232,7 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
   weed_plant_t *plugin_info=weed_plugin_info_init(weed_boot,num_versions,api_versions);
 
   if (plugin_info!=NULL) {
-    weed_plant_t *filter_class;
+    weed_plant_t *filter_class,*gui;
 
     weed_plant_t *in_params[]={weed_float_init("fitness","_Fitness",0.,0.,1.),weed_integer_init("innodes","Number of _Input Nodes",1,1,256),weed_integer_init("outnodes","Number of _Output Nodes",1,1,128),weed_integer_init("hnodes","Number of _Hidden Nodes",1,1,128),NULL};
     weed_plant_t *out_params[MAXNODES*2+1];
@@ -251,6 +251,8 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
     filter_class=weed_filter_class_init("nn_programmer","salsaman",1,0,&nnprog_init,&nnprog_process,
 					&nnprog_deinit,NULL,NULL,in_params,out_params);
 
+    gui=weed_filter_class_get_gui(filter_class);
+    weed_set_boolean_value(gui,"hidden",WEED_TRUE);
 
     for (i=1;i<4;i++) 
       weed_set_int_value(in_params[i],"flags",WEED_PARAMETER_REINIT_ON_VALUE_CHANGE);

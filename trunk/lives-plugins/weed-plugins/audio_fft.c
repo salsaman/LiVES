@@ -196,6 +196,8 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 						      NULL,in_chantmpls,NULL,in_params,out_params);
     
     weed_plugin_info_add_filter_class (plugin_info,filter_class);
+
+    weed_set_string_value(filter_class,"description","Fast Fourier Transform for audio");
     
     weed_set_int_value(plugin_info,"version",package_version);
   }

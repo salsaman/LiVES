@@ -153,6 +153,8 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 						      in_chantmpls,NULL,
 						      in_params,out_params);
 
+    weed_set_string_value(filter_class,"description","Calculate n X m mean values for (float) alpha channel\nvalues are output from left to right and top to bottom, eg. for 2 X 2 grid:\n\nval 1 | val 2\n------+------\nval 3 | val 4");
+
 
     weed_plugin_info_add_filter_class (plugin_info,filter_class);
 

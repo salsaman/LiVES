@@ -104,6 +104,7 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
     filter_class=weed_filter_class_init("data_unpacker","salsaman",1,0,NULL,&dunpack_process,
 					NULL,NULL,NULL,in_params,out_params);
 
+    weed_set_string_value(filter_class,"description","Unpacks multivalued (array) data into single valued outputs");
 
     weed_plugin_info_add_filter_class (plugin_info,filter_class);
 

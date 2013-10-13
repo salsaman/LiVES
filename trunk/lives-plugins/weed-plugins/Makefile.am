@@ -2,6 +2,8 @@
 
 LIBS =
 
+AUTOMAKE_OPTIONS = subdir-objects
+
 #NOTE - install-exec-local MUST go in the first subdir ONLY !!
 SUBDIRS = gdk cairo # supercollider experimental
 

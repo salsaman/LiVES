@@ -2194,7 +2194,7 @@ static void apbutton_clicked(GtkButton *button, gpointer user_data) {
       lives_widget_context_update();
     }
 
-    lives_combo_set_active_index(LIVES_COMBO(conxwp->pcombo[k+EXTRA_PARAMS_OUT]),i);
+    lives_combo_set_active_index(LIVES_COMBO(conxwp->pcombo[k+EXTRA_PARAMS_OUT]),i+EXTRA_PARAMS_IN);
 
     if (++k>=conxwp->num_params) break;
   }
@@ -3480,8 +3480,9 @@ static boolean show_existing(lives_conx_w *conxwp) {
 
 	// set parameter
 	pcombo=conxwp->pcombo[l];
+	acheck=conxwp->acheck[l];
+
 	if (l>=EXTRA_PARAMS_OUT) {
-	  acheck=conxwp->acheck[l];
 
 	  lives_widget_set_sensitive(acheck,TRUE);
 	

@@ -993,7 +993,8 @@ static void omc_learner_add_row(gint type, gint detail, lives_omc_match_node_t *
    omclw->tbl_rows++;
    gtk_table_resize(GTK_TABLE(omclw->table),omclw->tbl_rows,6);
 			
-   mnode->gtkstore = gtk_tree_store_new (NUM_COLUMNS, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_BOOLEAN, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING);
+   mnode->gtkstore = gtk_tree_store_new (NUM_COLUMNS, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_BOOLEAN, G_TYPE_STRING, 
+					 G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING);
 
    gtk_tree_store_append (mnode->gtkstore, &iter1, NULL);  /* Acquire an iterator */
    gtk_tree_store_set (mnode->gtkstore, &iter1, TITLE_COLUMN, (_("Vars.")), -1);

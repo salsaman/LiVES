@@ -29,6 +29,7 @@
 static GtkWidget **key_checks;
 static GtkWidget **key_grabs;
 static GtkWidget **mode_radios;
+static GtkWidget **combos;
 static GtkWidget **combo_entries;
 static GtkWidget *dummy_radio;
 static GtkWidget **nlabels;
@@ -49,9 +50,9 @@ static gulong *mode_ra_fns;
 
 static int keyw=-1,modew=-1;
 
-static GList *hash_list;
-static GList *name_list;
-static GList *name_type_list;
+static GList *hash_list=NULL;
+static GList *name_list=NULL;
+static GList *name_type_list=NULL;
 
 
 static boolean ca_canc;
@@ -1187,6 +1188,32 @@ static boolean load_datacons(const gchar *fname, uint8_t **badkeymap) {
 }
 
 
+static void set_param_and_con_buttons(int key, int mode) {
+  weed_plant_t *filter=rte_keymode_get_filter(key+1,mode);
+
+  int modes=rte_getmodespk();
+  int idx=key*modes+mode;
+
+  if (filter!=NULL) {
+    lives_widget_set_sensitive(conx_buttons[idx],TRUE);
+    if (num_in_params(filter,TRUE,TRUE)>0) lives_widget_set_sensitive(param_buttons[idx],TRUE);
+    else lives_widget_set_sensitive(param_buttons[idx],FALSE);
+    lives_widget_set_sensitive(combos[idx],TRUE);
+    if (mode<modes-1) lives_widget_set_sensitive(combos[idx+1],TRUE);
+  }
+  else {
+    lives_widget_set_sensitive(conx_buttons[idx],FALSE);
+    lives_widget_set_sensitive(param_buttons[idx],FALSE);
+    if (mode==0||rte_keymode_get_filter(key+1,mode-1)!=NULL) 
+      lives_widget_set_sensitive(combos[idx],TRUE);
+    else 
+      lives_widget_set_sensitive(combos[idx],FALSE);
+  }
+
+  type_label_set_text(key,mode);
+}
+
+
 
 boolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
   // show file errors at this level
@@ -1491,9 +1518,21 @@ boolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
       continue;
     }
     if (rte_window!=NULL) {
-      lives_entry_set_text (GTK_ENTRY(combo_entries[(key-1)*modes+mode]),(tmp=rte_keymode_get_filter_name(key,mode)));
+      int idx=(key-1)*modes+mode;
+      int fx_idx=rte_keymode_get_filter_idx(key,mode);
+
+      lives_entry_set_text (GTK_ENTRY(combo_entries[idx]),(tmp=rte_keymode_get_filter_name(key,mode)));
       g_free(tmp);
-      type_label_set_text(key-1,mode);
+
+      if (fx_idx!=-1) {
+	hashname=g_list_nth_data(hash_list,fx_idx);
+	g_object_set_data(G_OBJECT(combos[idx]),"hashname",hashname);
+      }
+      else g_object_set_data(G_OBJECT(combos[idx]),"hashname","");
+
+      // set parameters button sensitive/insensitive
+      set_param_and_con_buttons(key-1,mode);
+
     }
 
     if (keymap_file2!=NULL) {
@@ -1554,6 +1593,8 @@ boolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
 
   if (mainw->ce_thumbs) ce_thumbs_reset_combos();
 
+  if (rte_window!=NULL) check_clear_all_button();
+
   return FALSE;
 }
 
@@ -1580,6 +1621,8 @@ void on_rte_info_clicked (GtkButton *button, gpointer user_data) {
   gchar *type;
   gchar *plugin_name;
 
+  boolean has_desc=FALSE;
+
   int filter_version;
   int weed_error;
 
@@ -1600,8 +1643,10 @@ void on_rte_info_clicked (GtkButton *button, gpointer user_data) {
   filter_name=weed_get_string_value(filter,"name",&weed_error);
   filter_author=weed_get_string_value(filter,"author",&weed_error);
   if (weed_plant_has_leaf(filter,"extra_authors")) filter_extra_authors=weed_get_string_value(filter,"extra_authors",&weed_error);
-  if (weed_plant_has_leaf(filter,"description")) filter_description=weed_get_string_value(filter,"description",&weed_error);
-  else filter_description=g_strdup(_("No Description"));
+  if (weed_plant_has_leaf(filter,"description")) {
+    filter_description=weed_get_string_value(filter,"description",&weed_error);
+    has_desc=TRUE;
+  }
 
   filter_version=weed_get_int_value(filter,"version",&weed_error);
 
@@ -1643,26 +1688,28 @@ void on_rte_info_clicked (GtkButton *button, gpointer user_data) {
   g_free(tmp);
   lives_box_pack_start (LIVES_BOX (vbox), label, TRUE, FALSE, 0);
 
-  hbox = lives_hbox_new (FALSE, widget_opts.packing_width);
-  lives_box_pack_start (LIVES_BOX (vbox), hbox, TRUE, FALSE, 0);
+  if (has_desc) {
+    hbox = lives_hbox_new (FALSE, widget_opts.packing_width);
+    lives_box_pack_start (LIVES_BOX (vbox), hbox, TRUE, FALSE, 0);
 
-  label = lives_standard_label_new (_("Description: "));
-  lives_box_pack_start (LIVES_BOX (hbox), label, FALSE, FALSE, 0);
+    label = lives_standard_label_new (_("Description: "));
+    lives_box_pack_start (LIVES_BOX (hbox), label, FALSE, FALSE, 0);
 
-  textview = gtk_text_view_new ();
+    textview = gtk_text_view_new ();
 
-  if (palette->style&STYLE_1) {
-    lives_widget_set_text_color(textview, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_base_color(textview, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+    if (palette->style&STYLE_1) {
+      lives_widget_set_text_color(textview, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+      lives_widget_set_base_color(textview, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+    }
+  
+    gtk_text_view_set_editable (GTK_TEXT_VIEW (textview), FALSE);
+    gtk_text_view_set_wrap_mode (GTK_TEXT_VIEW (textview), GTK_WRAP_WORD);
+    gtk_text_view_set_cursor_visible (GTK_TEXT_VIEW (textview), FALSE);
+  
+    text_view_set_text (LIVES_TEXT_VIEW(textview), filter_description,-1);
+    lives_box_pack_start (LIVES_BOX (hbox), textview, TRUE, TRUE, 0);
   }
-  
-  gtk_text_view_set_editable (GTK_TEXT_VIEW (textview), FALSE);
-  gtk_text_view_set_wrap_mode (GTK_TEXT_VIEW (textview), GTK_WRAP_WORD);
-  gtk_text_view_set_cursor_visible (GTK_TEXT_VIEW (textview), FALSE);
-  
-  text_view_set_text (LIVES_TEXT_VIEW(textview), filter_description,-1);
-  lives_box_pack_start (LIVES_BOX (hbox), textview, TRUE, TRUE, 0);
-  
+
   hbuttonbox = lives_hbutton_box_new ();
   lives_box_pack_start (LIVES_BOX (vbox), hbuttonbox, TRUE, TRUE, 0);
 
@@ -1682,16 +1729,13 @@ void on_rte_info_clicked (GtkButton *button, gpointer user_data) {
   g_free(filter_name);
   g_free(filter_author);
   if (filter_extra_authors!=NULL) g_free(filter_extra_authors);
-  if (weed_plant_has_leaf(filter,"description")) g_free(filter_description);
-  else weed_free(filter_description);
+  if (has_desc) weed_free(filter_description);
   g_free(plugin_name);
   g_free(type);
 
   lives_widget_show_all(rte_info_window);
   lives_window_center (LIVES_WINDOW (rte_info_window));
 }
-
-
 
 
 
@@ -1707,7 +1751,6 @@ void on_clear_clicked (GtkButton *button, gpointer user_data) {
 
   register int i;
 
-  g_print("del fx %d mode %d\n",key,mode);
   weed_delete_effectkey (key+1,mode);
 
   pconx_delete(FX_DATA_WILDCARD,0,0,key,mode,FX_DATA_WILDCARD);
@@ -1723,15 +1766,31 @@ void on_clear_clicked (GtkButton *button, gpointer user_data) {
   if (mainw->ce_thumbs) ce_thumbs_set_mode_combo(key,newmode);
     
   for (i=mode;i<rte_getmodespk()-1;i++) {
+    int fx_idx=rte_keymode_get_filter_idx(key,mode);
+
     idx=key*modes+i;
     lives_entry_set_text (GTK_ENTRY(combo_entries[idx]),lives_entry_get_text(GTK_ENTRY(combo_entries[idx+1])));
     type_label_set_text(key,i);
     pconx_remap_mode(key,i+1,i);
     cconx_remap_mode(key,i+1,i);
+
+    if (fx_idx!=-1) {
+      gchar *hashname=g_list_nth_data(hash_list,fx_idx);
+      g_object_set_data(G_OBJECT(combos[idx]),"hashname",hashname);
+    }
+    else g_object_set_data(G_OBJECT(combos[idx]),"hashname","");
+
+    // set parameters button sensitive/insensitive
+    set_param_and_con_buttons(key,i);
+    
   }
   idx++;
   lives_entry_set_text (GTK_ENTRY(combo_entries[idx]),"");
-  type_label_set_text(key,i);
+
+  g_object_set_data(G_OBJECT(combos[idx]),"hashname","");
+
+  // set parameters button sensitive/insensitive
+  set_param_and_con_buttons(key,i);
 
   if (!rte_keymode_valid(key+1,0,TRUE)) {
     rtew_set_keych(key,FALSE);
@@ -1806,22 +1865,26 @@ static boolean on_rtew_delete_event (GtkWidget *widget, GdkEvent *event, gpointe
   if (hash_list!=NULL) {
     g_list_free_strings(hash_list);
     g_list_free(hash_list);
+    hash_list=NULL;
   }
 
   if (name_list!=NULL) {
     g_list_free_strings(name_list);
     g_list_free(name_list);
+    name_list=NULL;
   }
 
   if (name_type_list!=NULL) {
     g_list_free_strings(name_type_list);
     g_list_free(name_type_list);
+    name_type_list=NULL;
   }
 
   g_free(key_checks);
   g_free(key_grabs);
   g_free(mode_radios);
   g_free(combo_entries);
+  g_free(combos);
   g_free(ch_fns);
   g_free(mode_ra_fns);
   g_free(gr_fns);
@@ -1870,8 +1933,6 @@ void fx_changed (GtkComboBox *combo, gpointer user_data) {
   GtkTreeIter iter1;
   GtkTreeModel *model;
 
-  weed_plant_t *filter;
-
   gchar *txt;
   gchar *tmp;
   gchar *hashname1;
@@ -1881,7 +1942,6 @@ void fx_changed (GtkComboBox *combo, gpointer user_data) {
   int modes=rte_getmodespk();
   int key=(int)(key_mode/modes);
   int mode=key_mode-key*modes;
-  int idx=GPOINTER_TO_INT(g_object_get_data(G_OBJECT(combo),"idx"));
 
   int error;
 
@@ -1923,15 +1983,6 @@ void fx_changed (GtkComboBox *combo, gpointer user_data) {
     return;
   }
 
-  // set parameters button sensitive/insensitive
-  filter=rte_keymode_get_filter(key+1,mode);
-  if (num_in_params(filter,TRUE,TRUE)>0) lives_widget_set_sensitive(param_buttons[idx],TRUE);
-  else lives_widget_set_sensitive(param_buttons[idx],FALSE);
-
-  if ((weed_plant_has_leaf(filter,"out_parameter_templates")&&weed_get_plantptr_value(filter,"out_parameter_templates",&error)!=NULL)||
-      num_alpha_channels(filter,TRUE)>1) lives_widget_set_sensitive(conx_buttons[idx],TRUE);
-  else lives_widget_set_sensitive(conx_buttons[idx],FALSE);
-
   // prevents a segfault
   lives_combo_get_active_iter(combo,&iter1);
   model=lives_combo_get_model(combo);
@@ -1939,12 +1990,11 @@ void fx_changed (GtkComboBox *combo, gpointer user_data) {
   gtk_tree_model_get(model,&iter1,NAME_COLUMN,&txt,-1);
   lives_entry_set_text (GTK_ENTRY (combo_entries[key_mode]),txt);
   g_free(txt);
-  g_free(hashname2);
 
-  // TODO - g_free on delete
   g_object_set_data(G_OBJECT(combo),"hashname",hashname1);
     
-  type_label_set_text(key,mode);
+  // set parameters button sensitive/insensitive
+  set_param_and_con_buttons(key,mode);
 
   check_clear_all_button();
 
@@ -2063,8 +2113,6 @@ GtkWidget * create_rte_window (void) {
 
   LiVESTreeModel *model;
 
-  weed_plant_t *filter;
-
   gchar *tmp,*tmp2;
 
   int modes=rte_getmodespk();
@@ -2098,6 +2146,7 @@ GtkWidget * create_rte_window (void) {
   key_grabs=(GtkWidget **)g_malloc((prefs->rte_keys_virtual)*sizeof(GtkWidget *));
   mode_radios=(GtkWidget **)g_malloc((prefs->rte_keys_virtual)*modes*sizeof(GtkWidget *));
   combo_entries=(GtkWidget **)g_malloc((prefs->rte_keys_virtual)*modes*sizeof(GtkWidget *));
+  combos=(GtkWidget **)g_malloc((prefs->rte_keys_virtual)*modes*sizeof(GtkWidget *));
   info_buttons=(GtkWidget **)g_malloc((prefs->rte_keys_virtual)*modes*sizeof(GtkWidget *));
   param_buttons=(GtkWidget **)g_malloc((prefs->rte_keys_virtual)*modes*sizeof(GtkWidget *));
   conx_buttons=(GtkWidget **)g_malloc((prefs->rte_keys_virtual)*modes*sizeof(GtkWidget *));
@@ -2125,7 +2174,15 @@ GtkWidget * create_rte_window (void) {
 
   name_list=weed_get_all_names(FX_LIST_NAME);
   name_type_list=weed_get_all_names(FX_LIST_NAME_AND_TYPE);
-  hash_list=weed_get_all_names(FX_LIST_HASHNAME);
+  if (hash_list==NULL) hash_list=weed_get_all_names(FX_LIST_HASHNAME);
+
+  model=rte_window_fx_model();
+
+  for (i=0;i<prefs->rte_keys_virtual*modes;i++) {
+      // create combo entry model
+    combos[i] = lives_combo_new_with_model (model);
+  }
+
 
   for (i=0;i<prefs->rte_keys_virtual;i++) {
 
@@ -2207,16 +2264,14 @@ GtkWidget * create_rte_window (void) {
 
       lives_box_pack_start (LIVES_BOX (hbox), nlabels[idx], FALSE, FALSE, widget_opts.packing_width);
 
-      // create combo entry model
-      model=rte_window_fx_model();
-
-      combo = lives_combo_new_with_model (model);
-
+      combo=combos[idx];
+ 
       lives_combo_set_entry_text_column(LIVES_COMBO(combo),NAME_TYPE_COLUMN);
 
-      g_object_set_data (G_OBJECT(combo), "hashname", (gpointer)g_strdup(""));
-      g_object_set_data (G_OBJECT(combo), "idx", GINT_TO_POINTER(idx));
+      g_object_set_data (G_OBJECT(combo), "hashname", "");
       lives_box_pack_start (LIVES_BOX (hbox), combo, TRUE, TRUE, widget_opts.packing_width);
+      lives_box_pack_end (LIVES_BOX (hbox), clear_buttons[idx], FALSE, FALSE, widget_opts.packing_width);
+      lives_box_pack_end (LIVES_BOX (hbox), info_buttons[idx], FALSE, FALSE, widget_opts.packing_width);
 
 
       combo_entries[idx] = lives_combo_get_entry(LIVES_COMBO(combo));
@@ -2244,24 +2299,12 @@ GtkWidget * create_rte_window (void) {
       g_signal_connect (GTK_OBJECT (conx_buttons[idx]), "clicked",
 			G_CALLBACK (on_datacon_clicked),GINT_TO_POINTER (idx));
       
-      type_label_set_text(i,j);
-
       lives_box_pack_start (LIVES_BOX (hbox), type_labels[idx], FALSE, FALSE, widget_opts.packing_width);
-      lives_box_pack_end (LIVES_BOX (hbox), info_buttons[idx], FALSE, FALSE, widget_opts.packing_width);
       lives_box_pack_end (LIVES_BOX (hbox), conx_buttons[idx], FALSE, FALSE, widget_opts.packing_width);
       lives_box_pack_end (LIVES_BOX (hbox), param_buttons[idx], FALSE, FALSE, widget_opts.packing_width);
-      lives_box_pack_end (LIVES_BOX (hbox), clear_buttons[idx], FALSE, FALSE, widget_opts.packing_width);
 
-      filter=rte_keymode_get_filter(i+1,j);
-
-      if (num_in_params(filter,TRUE,TRUE)>0) lives_widget_set_sensitive(param_buttons[idx],TRUE);
-      else lives_widget_set_sensitive(param_buttons[idx],FALSE);
-
-      /*
-      if ((weed_plant_has_leaf(filter,"out_parameter_templates")&&weed_get_plantptr_value(filter,"out_parameter_templates",&error)!=NULL)||num_alpha_channels(filter,TRUE)>1) lives_widget_set_sensitive(conx_buttons[idx],TRUE);
-      else lives_widget_set_sensitive(conx_buttons[idx],FALSE);
-      */
-
+      // set parameters button sensitive/insensitive
+      set_param_and_con_buttons(i,j);
 
       }
   }
@@ -2347,6 +2390,7 @@ GtkWidget * create_rte_window (void) {
   lives_set_cursor_style(LIVES_CURSOR_NORMAL,rte_window);
   return rte_window;
 }
+
 
 void refresh_rte_window (void) {
   if (rte_window!=NULL) {
@@ -2699,6 +2743,8 @@ void load_default_keymap(void) {
   int retval;
 
   threaded_dialog_spin();
+
+  if (hash_list==NULL) hash_list=weed_get_all_names(FX_LIST_HASHNAME);
 
   do {
     retval=0;

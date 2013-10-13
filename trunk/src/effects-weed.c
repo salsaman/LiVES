@@ -3952,6 +3952,7 @@ static int check_for_lives(weed_plant_t *filter, int filter_idx) {
   boolean is_audio=FALSE;
   boolean has_out_params=FALSE;
   boolean all_out_alpha=TRUE;
+  boolean hidden=FALSE;
 
   int error,flags=0;
   int num_elements,i;
@@ -4075,9 +4076,11 @@ static int check_for_lives(weed_plant_t *filter, int filter_idx) {
   if (weed_plant_has_leaf(filter,"gui")) {
     weed_plant_t *gui=weed_get_plantptr_value(filter,"gui",&error);
     weed_add_plant_flags(gui,WEED_LEAF_READONLY_PLUGIN);
+    if (weed_plant_has_leaf(gui,"hidden")&&weed_get_boolean_value(gui,"hidden",&error)==WEED_TRUE) 
+      hidden=TRUE;
   }
 
-  if (flags&WEED_FILTER_IS_CONVERTER) {
+  if (hidden||(flags&WEED_FILTER_IS_CONVERTER)) {
     if (is_audio) {
       weed_set_boolean_value(filter,"host_menu_hide",WEED_TRUE);
       if (enabled_in_channels(filter,TRUE)>=1000000) {

@@ -98,7 +98,7 @@ int randomiser_init(weed_plant_t *inst) {
 }
 
 
-int nnprog_deinit(weed_plant_t *inst) {
+int randomiser_deinit(weed_plant_t *inst) {
   int error;
   _sdata *sdata=(_sdata *)weed_get_voidptr_value(inst,"plugin_internal",&error);
 
@@ -196,8 +196,8 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 
     in_params[i]=NULL;
 
-    filter_class=weed_filter_class_init("randomiser","salsaman",1,0,NULL,&randomiser_process,
-					NULL,NULL,NULL,in_params,out_params);
+    filter_class=weed_filter_class_init("randomiser","salsaman",1,0,&randomiser_init,&randomiser_process,
+					&randomiser_deinit,NULL,NULL,in_params,out_params);
 
 
     weed_set_string_value(filter_class,"description","Generate a random double when input changes state");

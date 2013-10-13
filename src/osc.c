@@ -461,13 +461,6 @@ void lives_osc_cb_play (void *context, int arglen, const void *vargs, OSCTimeTag
 
   }
 
-  // re - add the timer, as we will hang here, and we want to receive messages still during playback
-#if !GTK_CHECK_VERSION(3,0,0)
-  gtk_timeout_remove (mainw->kb_timer);
-  mainw->kb_timer=gtk_timeout_add(KEY_RPT_INTERVAL,&ext_triggers_poll,NULL);
-#else
-  mainw->kb_timer=g_timeout_add(KEY_RPT_INTERVAL,&ext_triggers_poll,NULL);
-#endif  
   on_playall_activate(NULL,NULL);
 #if GTK_CHECK_VERSION(3,0,0)
     mainw->kb_timer_end=TRUE;

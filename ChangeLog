@@ -1,9 +1,12 @@
 Version 2.0.7
 -------------
-Compilation fix for Debian Sid in mpegts_decoder.c (needs testing).
-Improvements to rte window.
+Compilation fixes for Debian Sid.
+Various improvements to rte window.
+Add "randomiser" data processing plugin.
+Fix jack transport during playback (regression).
 
 
+	
 
 
 

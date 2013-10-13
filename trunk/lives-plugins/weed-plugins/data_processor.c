@@ -904,7 +904,7 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
       snprintf(label,256,"Equation %03d",i-EQS);
       snprintf(name2,256,"output%03d",i-EQS);
       in_params[i]=weed_text_init(name,label,"");
-      out_params[i-EQS]=weed_out_param_float_init(name2,0.,-1000000000000.,1000000000000.);
+      out_params[i-EQS]=weed_out_param_float_init_nominmax(name2,0.);
     }
 
     in_params[EQN]=NULL;

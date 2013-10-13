@@ -468,6 +468,17 @@ weed_plant_t *weed_out_param_integer_init (const char *name, int def, int min, i
 }
 
 
+weed_plant_t *weed_out_param_integer_init_nominmax (const char *name, int def) {
+  weed_plant_t *paramt=weed_plant_new(WEED_PLANT_PARAMETER_TEMPLATE);
+  int hint=WEED_HINT_INTEGER;
+
+  weed_leaf_set(paramt,"name",WEED_SEED_STRING,1,&name);
+  weed_leaf_set(paramt,"hint",WEED_SEED_INT,1,&hint);
+  weed_leaf_set(paramt,"default",WEED_SEED_INT,1,&def);
+  return paramt;
+}
+
+
 weed_plant_t *weed_out_param_switch_init (const char *name, int def) {
   weed_plant_t *paramt=weed_plant_new(WEED_PLANT_PARAMETER_TEMPLATE);
   int hint=WEED_HINT_SWITCH;
@@ -488,6 +499,19 @@ weed_plant_t *weed_out_param_float_init (const char *name, double def, double mi
   weed_leaf_set(paramt,"default",WEED_SEED_DOUBLE,1,&def);
   weed_leaf_set(paramt,"min",WEED_SEED_DOUBLE,1,&min);
   weed_leaf_set(paramt,"max",WEED_SEED_DOUBLE,1,&max);
+
+  return paramt;
+}
+
+
+
+weed_plant_t *weed_out_param_float_init_nominmax (const char *name, double def) {
+  weed_plant_t *paramt=weed_plant_new(WEED_PLANT_PARAMETER_TEMPLATE);
+  int hint=WEED_HINT_FLOAT;
+
+  weed_leaf_set(paramt,"name",WEED_SEED_STRING,1,&name);
+  weed_leaf_set(paramt,"hint",WEED_SEED_INT,1,&hint);
+  weed_leaf_set(paramt,"default",WEED_SEED_DOUBLE,1,&def);
 
   return paramt;
 }

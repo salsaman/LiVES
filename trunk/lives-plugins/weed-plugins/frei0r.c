@@ -123,6 +123,7 @@ int frei0r_init (weed_plant_t *inst) {
 
   if ((f0r_inst=(*f0r_construct) (width,height))==NULL) return WEED_ERROR_INIT_ERROR;
   weed_set_voidptr_value(inst,"plugin_f0r_inst",f0r_inst);
+
   return WEED_NO_ERROR;
 }
 
@@ -239,7 +240,8 @@ int frei0r_process (weed_plant_t *inst, weed_timecode_t timestamp) {
     f0r_update2=weed_get_voidptr_value(filter,"plugin_f0r_update2",&error);
     out_channels=weed_get_plantptr_array(inst,"out_channels",&error);
     in_channels=weed_get_plantptr_array(inst,"in_channels",&error);
-    (*f0r_update2)(f0r_inst,time,weed_get_voidptr_value(in_channels[0],"pixel_data",&error),weed_get_voidptr_value(in_channels[1],"pixel_data",&error),NULL,weed_get_voidptr_value(out_channels[0],"pixel_data",&error));
+    (*f0r_update2)(f0r_inst,time,weed_get_voidptr_value(in_channels[0],"pixel_data",&error),
+		   weed_get_voidptr_value(in_channels[1],"pixel_data",&error),NULL,weed_get_voidptr_value(out_channels[0],"pixel_data",&error));
     weed_free(out_channels);
     weed_free(in_channels);
     break;
@@ -247,7 +249,10 @@ int frei0r_process (weed_plant_t *inst, weed_timecode_t timestamp) {
     f0r_update2=weed_get_voidptr_value(filter,"plugin_f0r_update2",&error);
     out_channels=weed_get_plantptr_array(inst,"out_channels",&error);
     in_channels=weed_get_plantptr_array(inst,"in_channels",&error);
-    (*f0r_update2)(f0r_inst,time,weed_get_voidptr_value(in_channels[0],"pixel_data",&error),weed_get_voidptr_value(in_channels[1],"pixel_data",&error),weed_get_voidptr_value(in_channels[2],"pixel_data",&error),weed_get_voidptr_value(out_channels[0],"pixel_data",&error));
+    (*f0r_update2)(f0r_inst,time,weed_get_voidptr_value(in_channels[0],"pixel_data",&error),
+		   weed_get_voidptr_value(in_channels[1],"pixel_data",&error),
+		   weed_get_voidptr_value(in_channels[2],"pixel_data",&error),
+		   weed_get_voidptr_value(out_channels[0],"pixel_data",&error));
     weed_free(out_channels);
     weed_free(in_channels);
     break;
@@ -547,7 +552,7 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 	  }
 
 	  out_chantmpls=weed_malloc(2*sizeof(weed_plant_t *));
-	  out_chantmpls[0]=weed_channel_template_init("out channel 0",WEED_CHANNEL_REINIT_ON_ROWSTRIDES_CHANGE,pal);
+	  out_chantmpls[0]=weed_channel_template_init("out channel 0",WEED_CHANNEL_REINIT_ON_SIZE_CHANGE,pal);
 	  weed_set_int_value(out_chantmpls[0],"hstep",8);
 	  weed_set_int_value(out_chantmpls[0],"vstep",8);
 	  weed_set_int_value(out_chantmpls[0],"maxwidth",2048);
@@ -561,7 +566,7 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 	    break;
 	  case F0R_PLUGIN_TYPE_FILTER:
 	    in_chantmpls=weed_malloc(2*sizeof(weed_plant_t *));
-	    in_chantmpls[0]=weed_channel_template_init("in channel 0",WEED_CHANNEL_REINIT_ON_ROWSTRIDES_CHANGE,pal);
+	    in_chantmpls[0]=weed_channel_template_init("in channel 0",WEED_CHANNEL_REINIT_ON_SIZE_CHANGE,pal);
 	    weed_set_int_value(in_chantmpls[0],"hstep",8);
 	    weed_set_int_value(in_chantmpls[0],"vstep",8);
 	    weed_set_int_value(in_chantmpls[0],"maxwidth",2048);
@@ -571,14 +576,14 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 	    break;
 	  case F0R_PLUGIN_TYPE_MIXER2:
 	    in_chantmpls=weed_malloc(3*sizeof(weed_plant_t *));
-	    in_chantmpls[0]=weed_channel_template_init("in channel 0",WEED_CHANNEL_REINIT_ON_ROWSTRIDES_CHANGE,pal);
+	    in_chantmpls[0]=weed_channel_template_init("in channel 0",WEED_CHANNEL_REINIT_ON_SIZE_CHANGE,pal);
 	    weed_set_int_value(in_chantmpls[0],"hstep",8);
 	    weed_set_int_value(in_chantmpls[0],"vstep",8);
 	    weed_set_int_value(in_chantmpls[0],"maxwidth",2048);
 	    weed_set_int_value(in_chantmpls[0],"maxheight",2048);
 	    weed_set_int_value(in_chantmpls[0],"alignment",16);
 	    
-	    in_chantmpls[1]=weed_channel_template_init("in channel 1",WEED_CHANNEL_REINIT_ON_ROWSTRIDES_CHANGE,pal);
+	    in_chantmpls[1]=weed_channel_template_init("in channel 1",WEED_CHANNEL_REINIT_ON_SIZE_CHANGE,pal);
 	    weed_set_int_value(in_chantmpls[1],"hstep",8);
 	    weed_set_int_value(in_chantmpls[1],"vstep",8);
 	    weed_set_int_value(in_chantmpls[1],"maxwidth",2048);
@@ -588,21 +593,21 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 	    break;
 	  case F0R_PLUGIN_TYPE_MIXER3:
 	    in_chantmpls=weed_malloc(4*sizeof(weed_plant_t *));
-	    in_chantmpls[0]=weed_channel_template_init("in channel 0",WEED_CHANNEL_REINIT_ON_ROWSTRIDES_CHANGE,pal);
+	    in_chantmpls[0]=weed_channel_template_init("in channel 0",WEED_CHANNEL_REINIT_ON_SIZE_CHANGE,pal);
 	    weed_set_int_value(in_chantmpls[0],"hstep",8);
 	    weed_set_int_value(in_chantmpls[0],"vstep",8);
 	    weed_set_int_value(in_chantmpls[0],"maxwidth",2048);
 	    weed_set_int_value(in_chantmpls[0],"maxheight",2048);
 	    weed_set_int_value(in_chantmpls[0],"alignment",16);
 	    
-	    in_chantmpls[1]=weed_channel_template_init("in channel 1",WEED_CHANNEL_REINIT_ON_ROWSTRIDES_CHANGE,pal);
+	    in_chantmpls[1]=weed_channel_template_init("in channel 1",WEED_CHANNEL_REINIT_ON_SIZE_CHANGE,pal);
 	    weed_set_int_value(in_chantmpls[1],"hstep",8);
 	    weed_set_int_value(in_chantmpls[1],"vstep",8);
 	    weed_set_int_value(in_chantmpls[1],"maxwidth",2048);
 	    weed_set_int_value(in_chantmpls[1],"maxheight",2048);
 	    weed_set_int_value(in_chantmpls[1],"alignment",16);
 	    
-	    in_chantmpls[2]=weed_channel_template_init("in channel 2",WEED_CHANNEL_REINIT_ON_ROWSTRIDES_CHANGE,pal);
+	    in_chantmpls[2]=weed_channel_template_init("in channel 2",WEED_CHANNEL_REINIT_ON_SIZE_CHANGE,pal);
 	    weed_set_int_value(in_chantmpls[2],"hstep",8);
 	    weed_set_int_value(in_chantmpls[2],"vstep",8);
 	    weed_set_int_value(in_chantmpls[2],"maxwidth",2048);
@@ -816,7 +821,8 @@ weed_plant_t *weed_setup (weed_bootstrap_f weed_boot) {
 	  snprintf(weed_name,PATH_MAX,"Frei0r: %s",f0rinfo.name);
 	  pversion=f0rinfo.major_version*1000+f0rinfo.minor_version;
 
-	  filter_class=weed_filter_class_init(weed_name,"Frei0r developers",pversion,0,&frei0r_init,&frei0r_process,&frei0r_deinit,in_chantmpls,out_chantmpls,in_params,NULL);
+	  filter_class=weed_filter_class_init(weed_name,"Frei0r developers",pversion,0,&frei0r_init,&frei0r_process,
+					      &frei0r_deinit,in_chantmpls,out_chantmpls,in_params,NULL);
 
 	  weed_set_string_value(filter_class,"extra_authors",(char *)f0rinfo.author);
 

@@ -1345,6 +1345,9 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
   cdata->asigned=TRUE;
   cdata->ainterleaf=TRUE;
 
+  av_free(priv->picture);
+  priv->picture=NULL;
+
   return cdata;
 }
 
@@ -1487,6 +1490,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
     priv->ctx->skip_frame=AVDISCARD_NONREF;
 
     priv->last_frame=tframe;
+    if (priv->picture==NULL) priv->picture = avcodec_alloc_frame();
 
 
     // do this until we reach target frame //////////////
@@ -1556,7 +1560,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
 
   }
 
-  if (pixel_data==NULL) return TRUE;
+  if (priv->picture==NULL||pixel_data==NULL) return TRUE;
   
   for (p=0;p<nplanes;p++) {
     dst=pixel_data[p];

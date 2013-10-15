@@ -64,12 +64,7 @@ const char *plugin_version="LiVES asf/wmv decoder version 1.0";
 #include "decplugin.h"
 #include "asf_decoder.h"
 
-#ifndef FF_API_CODEC_ID
-#define FF_API_CODEC_ID          (LIBAVCODEC_VERSION_MAJOR < 56)
-#endif
-
-#if FF_API_CODEC_ID
-#else
+#if (LIBAVCODEC_VERSION_MAJOR > 54)
 #define CodecID AVCodecID
 #define CODEC_ID_NONE AV_CODEC_ID_NONE
 #define CODEC_ID_WMV1 AV_CODEC_ID_WMV1

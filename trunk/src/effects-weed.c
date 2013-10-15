@@ -2212,6 +2212,7 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
     set_channel_size(channel,width,height,numplanes,rowstrides);
     
     // check layer rowstrides against previous settings
+
     rowstrides_changed=rowstrides_differ(numplanes,rowstrides,nchr,channel_rows);
     weed_free(channel_rows);
 
@@ -2556,7 +2557,7 @@ lives_filter_error_t weed_apply_instance (weed_plant_t *inst, weed_plant_t *init
       if (weed_plant_has_leaf(layer,"host_pixel_data_contiguous") && 
 	  weed_get_boolean_value(layer,"host_pixel_data_contiguous",&error)==WEED_TRUE)
 	numplanes=1;
-      
+
       for (j=0;j<numplanes;j++) if (pixel_data[j]!=NULL) g_free(pixel_data[j]);
       weed_free(pixel_data);
     }

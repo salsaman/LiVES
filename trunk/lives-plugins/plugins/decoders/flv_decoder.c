@@ -65,12 +65,7 @@ const char *plugin_version="LiVES flv decoder version 1.0";
 #include "flv_decoder.h"
 
 
-#ifndef FF_API_CODEC_ID
-#define FF_API_CODEC_ID          (LIBAVCODEC_VERSION_MAJOR < 56)
-#endif
-
-#if FF_API_CODEC_ID
-#else
+#if (LIBAVCODEC_VERSION_MAJOR > 54)
 #define CodecID AVCodecID
 #define CODEC_ID_NONE AV_CODEC_ID_NONE
 #define CODEC_ID_FLV1 AV_CODEC_ID_FLV1

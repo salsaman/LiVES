@@ -74,12 +74,8 @@ const char *plugin_version="LiVES mkv decoder version 1.2";
 #include <libavutil/lzo.h>
 #include <libavutil/dict.h>
 
-#ifndef FF_API_CODEC_ID
-#define FF_API_CODEC_ID          (LIBAVCODEC_VERSION_MAJOR < 56)
-#endif
 
-#if FF_API_CODEC_ID
-#else
+#if (LIBAVCODEC_VERSION_MAJOR > 54)
 #define CodecID AVCodecID
 #define CODEC_ID_NONE AV_CODEC_ID_NONE
 #define CODEC_ID_TEXT AV_CODEC_ID_TEXT

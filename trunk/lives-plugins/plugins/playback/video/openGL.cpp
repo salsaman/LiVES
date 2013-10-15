@@ -312,23 +312,15 @@ boolean init_screen (int width, int height, boolean fullscreen, uint64_t window_
   int dblbuf=1;
   boolean fsover=FALSE;
 
-  char tmp[32];
-
-  uint32_t modeopts=0;
-
   int renderEventBase;
   int renderErrorBase;
   int error;
-
-  int numElements;
 
   Cursor invisibleCursor;
   Pixmap bitmapNoData;
   XColor black;
   static char noData[] = { 0,0,0,0,0,0,0,0 };
 
-  Atom wmDelete;
-  
   int singleBufferAttributess[] = {
     GLX_DRAWABLE_TYPE, GLX_WINDOW_BIT,
     GLX_RENDER_TYPE,   GLX_RGBA_BIT,
@@ -353,7 +345,7 @@ boolean init_screen (int width, int height, boolean fullscreen, uint64_t window_
 
   XVisualInfo          *vInfo;
 
-  GLXFBConfig          *fbConfigs;
+  GLXFBConfig          *fbConfigs=NULL;
 
   XEvent                event;
   XSetWindowAttributes  swa;
@@ -637,29 +629,27 @@ void module_unload(void) {
 
 boolean send_keycodes (keyfunc host_key_fn) {
   // poll for keyboard events, pass them back to the caller
-  // return FALSE if there are no more codes to return
-  uint16_t mod_mask,scancode=0;
+  // return FALSE on error
+  uint16_t mod_mask;
   XEvent xEvent;
   KeySym keySymbol;
 
   if (host_key_fn==NULL || dpy == NULL) return FALSE;
 
-  while ((volatile Display *)dpy!=NULL) {
+  if ((volatile Display *)dpy!=NULL) {
     pthread_mutex_lock(&dpy_mutex);
     if ((volatile Display *)dpy!=NULL) {
-      if (XCheckWindowEvent( dpy, xWin, KeyPressMask | KeyReleaseMask, &xEvent ) ) {
+      while (XCheckWindowEvent( dpy, xWin, KeyPressMask | KeyReleaseMask, &xEvent ) ) {
 	int keysyms_per_keycode_return;
 	keySymbol = (KeySym)XGetKeyboardMapping(dpy,xEvent.xkey.keycode,0,&keysyms_per_keycode_return);
 	mod_mask=xEvent.xkey.state;
-	pthread_mutex_unlock(&dpy_mutex);
-
 	host_key_fn (xEvent.type == KeyPress, keySymbol, mod_mask);
       }
-      else break;
     }
+    pthread_mutex_unlock(&dpy_mutex);
   }
-  pthread_mutex_unlock(&dpy_mutex);
 
+  return TRUE;
 }
 
 

@@ -184,9 +184,9 @@ static boolean save_keymap3_file(gchar *kfname) {
   int slen;
   int kfd;
   int retval;
-  int count=0,totcons=0,nconns;
+  int count=0,totcons,nconns;
 
-  register int i,j=0;
+  register int i,j;
 
   do {
     retval=0;
@@ -214,6 +214,9 @@ static boolean save_keymap3_file(gchar *kfname) {
 
 	cconx=mainw->cconx;
 	while (cconx!=NULL) {
+	  totcons=0;
+	  j=0;
+
 	  lives_write_le(kfd,&cconx->okey,4,TRUE);
 	  if (mainw->write_failed) goto write_failed1;
 
@@ -246,7 +249,7 @@ static boolean save_keymap3_file(gchar *kfname) {
 
 	      lives_write_le(kfd,&cconx->imode[j],4,TRUE);
 	      if (mainw->write_failed) goto write_failed1;
-	      
+
 	      hashname=make_weed_hashname(rte_keymode_get_filter_idx(cconx->ikey[j]+1,cconx->imode[j]),TRUE,FALSE);
 	      slen=strlen(hashname);
 	      lives_write_le(kfd,&slen,4,TRUE);
@@ -275,9 +278,7 @@ static boolean save_keymap3_file(gchar *kfname) {
 
 	int nparams;
 
-	totcons=0;
 	count=0;
-	j=0;
 
 	while (pconx!=NULL) {
 	  count++;
@@ -289,6 +290,9 @@ static boolean save_keymap3_file(gchar *kfname) {
 
 	pconx=mainw->pconx;
 	while (pconx!=NULL) {
+	  totcons=0;
+	  j=0;
+
 	  lives_write_le(kfd,&pconx->okey,4,TRUE);
 	  if (mainw->write_failed) goto write_failed1;
 
@@ -823,9 +827,12 @@ static boolean load_datacons(const gchar *fname, uint8_t **badkeymap) {
 	  
 	memset(hashname+hlen,0,1);
 	  
+	if (omode<0||omode>maxmodes) is_valid=FALSE;
 	  
-	// if we had bad/missing fx, adjust the omode value
-	for (i=0;i<omode;i++) omode-=badkeymap[okey][omode];
+	if (is_valid) {
+	  // if we had bad/missing fx, adjust the omode value
+	  for (i=0;i<omode;i++) omode-=badkeymap[okey][omode];
+	}
 
 	if (omode<0||omode>maxmodes) is_valid=FALSE;
 
@@ -913,12 +920,15 @@ static boolean load_datacons(const gchar *fname, uint8_t **badkeymap) {
 	      
 	    memset(hashname+hlen,0,1);
 	  
-	      
-	    // if we had bad/missing fx, adjust the omode value
-	    for (k=0;k<imode;k++) imode-=badkeymap[ikey][imode];
-
 	    if (imode<0||imode>maxmodes) is_valid2=FALSE;
 
+
+	    if (is_valid2) {
+	      // if we had bad/missing fx, adjust the omode value
+	      for (k=0;k<imode;k++) imode-=badkeymap[ikey][imode];
+	    }
+
+	    if (imode<0||imode>maxmodes) is_valid2=FALSE;
 
 	    if (is_valid2) {
 	      int fidx=rte_keymode_get_filter_idx(ikey+1,imode);
@@ -1023,9 +1033,13 @@ static boolean load_datacons(const gchar *fname, uint8_t **badkeymap) {
 	  
 	memset(hashname+hlen,0,1);
 	  
-	  
-	// if we had bad/missing fx, adjust the omode value
-	for (i=0;i<omode;i++) omode-=badkeymap[okey][omode];
+
+	if (omode<0||omode>maxmodes) is_valid=FALSE;
+
+	if (is_valid) {
+	  // if we had bad/missing fx, adjust the omode value
+	  for (i=0;i<omode;i++) omode-=badkeymap[okey][omode];
+	}
 
 	if (omode<0||omode>maxmodes) is_valid=FALSE;
 
@@ -1107,9 +1121,13 @@ static boolean load_datacons(const gchar *fname, uint8_t **badkeymap) {
 	    }
 	      
 	    memset(hashname+hlen,0,1);
-	  
-	    // if we had bad/missing fx, adjust the omode value
-	    for (k=0;k<imode;k++) imode-=badkeymap[ikey][imode];
+
+	    if (imode<0||imode>maxmodes) is_valid2=FALSE;
+
+	    if (is_valid2) {
+	      // if we had bad/missing fx, adjust the omode value
+	      for (k=0;k<imode;k++) imode-=badkeymap[ikey][imode];
+	    }
 
 	    if (imode<0||imode>maxmodes) is_valid2=FALSE;
 

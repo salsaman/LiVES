@@ -36,6 +36,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <ctype.h>
 #include <sys/stat.h>
 
 const char *plugin_version="LiVES mkv decoder version 1.2";
@@ -63,16 +64,64 @@ const char *plugin_version="LiVES mkv decoder version 1.2";
 
 #include <libavformat/avformat.h>
 #include <libavutil/avstring.h>
+#include <libavcodec/version.h>
 #include <libavutil/mem.h>
 
 #include "decplugin.h"
-
-#include "mkv_decoder.h"
 
 #include <libavutil/intfloat_readwrite.h>
 #include <libavutil/intreadwrite.h>
 #include <libavutil/lzo.h>
 #include <libavutil/dict.h>
+
+#ifndef FF_API_CODEC_ID
+#define FF_API_CODEC_ID          (LIBAVCODEC_VERSION_MAJOR < 56)
+#endif
+
+#if FF_API_CODEC_ID
+#else
+#define CodecID AVCodecID
+#define CODEC_ID_NONE AV_CODEC_ID_NONE
+#define CODEC_ID_TEXT AV_CODEC_ID_TEXT
+#define CODEC_ID_SSA AV_CODEC_ID_SSA
+#define CODEC_ID_VP8 AV_CODEC_ID_VP8
+#define CODEC_ID_THEORA AV_CODEC_ID_THEORA
+#define CODEC_ID_SNOW AV_CODEC_ID_SNOW
+#define CODEC_ID_DIRAC AV_CODEC_ID_DIRAC
+#define CODEC_ID_MJPEG AV_CODEC_ID_MJPEG
+#define CODEC_ID_MPEG1VIDEO AV_CODEC_ID_MPEG1VIDEO
+#define CODEC_ID_MPEG2VIDEO AV_CODEC_ID_MPEG2VIDEO
+#define CODEC_ID_MPEG4 AV_CODEC_ID_MPEG4
+#define CODEC_ID_H264 AV_CODEC_ID_H264
+#define CODEC_ID_MSMPEG4V3 AV_CODEC_ID_MSMPEG4V3
+#define CODEC_ID_RV10 AV_CODEC_ID_RV10
+#define CODEC_ID_RV20 AV_CODEC_ID_RV20
+#define CODEC_ID_RV30 AV_CODEC_ID_RV30
+#define CODEC_ID_RV40 AV_CODEC_ID_RV40
+#define CODEC_ID_RAWVIDEO AV_CODEC_ID_RAWVIDEO
+#endif
+
+#ifndef FF_API_AVCODEC_OPEN
+#define FF_API_AVCODEC_OPEN     (LIBAVCODEC_VERSION_MAJOR < 55)
+#endif
+
+
+#if FF_API_AVCODEC_OPEN
+#define avcodec_open2(a, b, c) avcodec_open(a, b)
+#endif
+
+#ifndef FF_API_ALLOC_CONTEXT
+#define FF_API_ALLOC_CONTEXT    (LIBAVCODEC_VERSION_MAJOR < 55)
+#endif
+
+
+#if FF_API_ALLOC_CONTEXT
+#define avcodec_alloc_context3(a) avcodec_alloc_context()
+#endif
+
+
+#include "mkv_decoder.h"
+
 
 #if CONFIG_ZLIB
 #include <zlib.h>
@@ -94,7 +143,6 @@ const uint8_t ff_log2_tab[256]={
   7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,
   7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7
 };
-
 
 
 static enum CodecID ff_codec_get_id(const AVCodecTag *tags, unsigned int tag)
@@ -1748,9 +1796,9 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
     return FALSE;
   }
 
-  priv->ctx = ctx = avcodec_alloc_context();
+  priv->ctx = ctx = avcodec_alloc_context3(codec);
 
-  if (avcodec_open(ctx, codec) < 0) {
+  if (avcodec_open2(ctx, codec, NULL) < 0) {
     fprintf(stderr, "mkv_decoder: Could not open avcodec context for codec\n");
     detach_stream(cdata);
     return FALSE;

@@ -289,9 +289,9 @@ fsover|Over-ride _fullscreen setting (for debugging)|bool|0|0 \\n\
 const void **get_play_params (func_ptr weed_bootd) {
   weed_bootstrap_f weed_boot=(weed_bootstrap_f)weed_bootd;
 
-  weed_plant_t *gui;
+  //weed_plant_t *gui;
 
-  int api,error;
+  //int api,error;
 
   if (plugin_info==NULL) {
     plugin_info=weed_plugin_info_init(weed_boot,num_versions,api_versions);
@@ -677,23 +677,16 @@ boolean init_screen (int width, int height, boolean fullscreen, uint64_t window_
 static boolean init_screen_inner (int width, int height, boolean fullscreen, uint64_t window_id, int argc, char **argv) {
 
   // screen size is in RGB pixels
-  char tmp[32];
-
-  uint32_t modeopts=0;
 
   int renderEventBase;
   int renderErrorBase;
   int error;
-
-  int numElements;
 
   Cursor invisibleCursor;
   Pixmap bitmapNoData;
   XColor black;
   static char noData[] = { 0,0,0,0,0,0,0,0 };
 
-  Atom wmDelete;
-  
   int singleBufferAttributess[] = {
     GLX_DRAWABLE_TYPE, GLX_WINDOW_BIT,
     GLX_RENDER_TYPE,   GLX_RGBA_BIT,
@@ -716,7 +709,7 @@ static boolean init_screen_inner (int width, int height, boolean fullscreen, uin
   };
 
   XVisualInfo          *vInfo;
-  GLXFBConfig          *fbConfigs;
+  GLXFBConfig          *fbConfigs=NULL;
   XEvent                event;
   XSetWindowAttributes  swa;
   int                   swaMask;
@@ -960,7 +953,7 @@ static void resize_buffer(uint8_t *out, int owidth, int oheight, uint8_t *in, in
     xi=(float)i*scaley;
     ptr=in+xi*iwidth*typesize;
     for (j=0;j<owidth;j++) {
-      xj=(float)j*scaley;
+      xj=(float)j*scalex;
       memcpy(dst,ptr+xj*typesize,typesize);
       dst+=typesize;
     }
@@ -1750,7 +1743,7 @@ static boolean Upload(int width, int height) {
 
       for (int i=0; i<NOF_PARTS; i++) {
 
-	int pos;
+	//int pos;
 	if ((parts[i].start_time==NOT_CREATED) || (ticks>=parts[i].end_time)) {
 	  parts[i].start_time=ticks;
 	  parts[i].x=(rand() % 2000)/1000.0-1.0;
@@ -2061,10 +2054,11 @@ boolean render_frame_unknown (int hsize, int vsize, void **pixel_data, void **re
 
 
 void decode_pparams(weed_plant_t **pparams) {
-  register int i;
   weed_plant_t *ptmpl;
   char *pname;
   int error,type;
+
+  register int i=0;
 
   zmode=0;
   zfft0=0.;
@@ -2162,28 +2156,28 @@ void module_unload(void) {
 
 boolean send_keycodes (keyfunc host_key_fn) {
   // poll for keyboard events, pass them back to the caller
-  // return FALSE if there are no more codes to return
-  uint16_t mod_mask,scancode=0;
+  // return FALSE on error
+  uint16_t mod_mask;
   XEvent xEvent;
   KeySym keySymbol;
 
   if (host_key_fn==NULL || dpy == NULL) return FALSE;
 
-  while ((volatile Display *)dpy!=NULL) {
+  if ((volatile Display *)dpy!=NULL) {
     pthread_mutex_lock(&dpy_mutex);
     if ((volatile Display *)dpy!=NULL) {
-      if (XCheckWindowEvent( dpy, xWin, KeyPressMask | KeyReleaseMask, &xEvent ) ) {
+      while (XCheckWindowEvent( dpy, xWin, KeyPressMask | KeyReleaseMask, &xEvent ) ) {
 	int keysyms_per_keycode_return;
 	keySymbol = (KeySym)XGetKeyboardMapping(dpy,xEvent.xkey.keycode,0,&keysyms_per_keycode_return);
 	mod_mask=xEvent.xkey.state;
-	pthread_mutex_unlock(&dpy_mutex);
-
 	host_key_fn (xEvent.type == KeyPress, keySymbol, mod_mask);
       }
-      else break;
     }
+    pthread_mutex_unlock(&dpy_mutex);
   }
-  pthread_mutex_unlock(&dpy_mutex);
+
+  return TRUE;
+
 }
 
 

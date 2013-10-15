@@ -335,7 +335,7 @@ void module_unload(void) {
 
 boolean send_keycodes (keyfunc host_key_fn) {
   // poll for keyboard events, pass them back to the caller
-  // return FALSE if there are no more codes to return
+  // return FALSE on error
   uint16_t mod_mask,scancode=0;
 
   if (host_key_fn==NULL) return FALSE;

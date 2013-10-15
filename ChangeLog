@@ -4,9 +4,11 @@ Compilation fixes for Debian Sid.
 Various improvements to rte window.
 Add "randomiser" data processing plugin.
 Fix jack transport during playback (regression).
+Fix for saving data connection mappings.
+Decoder plugin fixes for ffmpeg 2.2 (needs testing).
 
 
-	
+
 
 
 

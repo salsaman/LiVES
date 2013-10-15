@@ -30,6 +30,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <ctype.h>
 #ifndef IS_MINGW
 #ifndef IS_SOLARIS
 #include <endian.h>
@@ -57,10 +58,39 @@ const char *plugin_version="LiVES asf/wmv decoder version 1.0";
 #endif
 
 #include <libavformat/avformat.h>
+#include <libavcodec/version.h>
 #include <libavutil/avstring.h>
 
 #include "decplugin.h"
 #include "asf_decoder.h"
+
+#ifndef FF_API_CODEC_ID
+#define FF_API_CODEC_ID          (LIBAVCODEC_VERSION_MAJOR < 56)
+#endif
+
+#if FF_API_CODEC_ID
+#else
+#define CodecID AVCodecID
+#define CODEC_ID_NONE AV_CODEC_ID_NONE
+#define CODEC_ID_WMV1 AV_CODEC_ID_WMV1
+#define CODEC_ID_WMV2 AV_CODEC_ID_WMV2
+#define CODEC_ID_WMV3 AV_CODEC_ID_WMV3
+#define CODEC_ID_DVVIDEO AV_CODEC_ID_DVVIDEO
+#define CODEC_ID_MPEG4 AV_CODEC_ID_MPEG4
+#define CODEC_ID_H264 AV_CODEC_ID_H264
+#define CODEC_ID_MPEG1VIDEO AV_CODEC_ID_MPEG1VIDEO
+#define CODEC_ID_MPEG2VIDEO AV_CODEC_ID_MPEG2VIDEO
+#endif
+
+#ifndef FF_API_AVCODEC_OPEN
+#define FF_API_AVCODEC_OPEN     (LIBAVCODEC_VERSION_MAJOR < 55)
+#endif
+
+
+#if FF_API_AVCODEC_OPEN
+#define avcodec_open2(a, b, c) avcodec_open(a, b)
+#endif
+
 
 
 static enum CodecID ff_codec_get_id(const AVCodecTag *tags, unsigned int tag)
@@ -2003,7 +2033,8 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
     return FALSE;
   }
 
-  if ((retval=avcodec_open(vidst->codec, codec)) < 0) {
+
+  if ((retval=avcodec_open2(vidst->codec, codec, NULL)) < 0) {
     fprintf(stderr, "asf_decoder: Could not open avcodec context (%d) %d\n",retval,vidst->codec->frame_number);
     detach_stream(cdata);
     return FALSE;

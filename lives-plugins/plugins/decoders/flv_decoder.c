@@ -59,9 +59,38 @@ const char *plugin_version="LiVES flv decoder version 1.0";
 #include <libavformat/avformat.h>
 #include <libavutil/avstring.h>
 #include <libavcodec/avcodec.h>
+#include <libavcodec/version.h>
 
 #include "decplugin.h"
 #include "flv_decoder.h"
+
+
+#ifndef FF_API_CODEC_ID
+#define FF_API_CODEC_ID          (LIBAVCODEC_VERSION_MAJOR < 56)
+#endif
+
+#if FF_API_CODEC_ID
+#else
+#define CodecID AVCodecID
+#define CODEC_ID_NONE AV_CODEC_ID_NONE
+#define CODEC_ID_FLV1 AV_CODEC_ID_FLV1
+#define CODEC_ID_FLASHSV AV_CODEC_ID_FLASHSV
+#define CODEC_ID_FLASHSV2 AV_CODEC_ID_FLASHSV2
+#define CODEC_ID_VP6A AV_CODEC_ID_VP6A
+#define CODEC_ID_VP6F AV_CODEC_ID_VP6F
+#define CODEC_ID_H264 AV_CODEC_ID_H264
+#endif
+
+#ifndef FF_API_AVCODEC_OPEN
+#define FF_API_AVCODEC_OPEN     (LIBAVCODEC_VERSION_MAJOR < 55)
+#endif
+
+
+#if FF_API_AVCODEC_OPEN
+#define avcodec_open2(a, b, c) avcodec_open(a, b)
+#endif
+
+
 
 ////////////////////////////////////////////////////////////////////////////
 
@@ -528,7 +557,7 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
   double num_val,fps;
 
   AVCodec *codec=NULL;
-  AVCodecContext *ctx;
+  AVCodecContext *ctx=NULL;
 
   boolean got_picture=FALSE,got_avcextradata=FALSE;
 
@@ -754,7 +783,7 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
 
   if (!hasaudio) got_astream=TRUE;
 
-  priv->ctx=ctx = avcodec_alloc_context();
+  priv->ctx = NULL;
 
   sprintf(cdata->audio_name,"%s","");
 
@@ -883,6 +912,9 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
 	priv->pack_offset=2;
 	break;
       case FLV_CODECID_VP6A  :
+	codec = avcodec_find_decoder(CODEC_ID_VP6A);
+	priv->ctx = ctx = avcodec_alloc_context3(codec);
+
 	sprintf(cdata->video_name,"%s","vp6a");
 	cdata->offs_x=(pack.data[1]&0X0F)>>1; // divide by 2 for offset
 	cdata->offs_y=(pack.data[1]&0XF0)>>5; // divide by 2 for offset
@@ -894,7 +926,6 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
 	}
 	ctx->extradata[0] = pack.data[1];
 
-	codec = avcodec_find_decoder(CODEC_ID_VP6A);
 	priv->pack_offset=2;
 	break;
       case FLV_CODECID_H264:
@@ -915,6 +946,8 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
 
   }
 
+
+
 #ifdef DEBUG
   fprintf(stderr,"video type is %s %d x %d (%d x %d +%d +%d)\n",cdata->video_name,
 	  cdata->width,cdata->height,cdata->frame_width,cdata->frame_height,cdata->offs_x,cdata->offs_y);
@@ -928,7 +961,10 @@ static boolean attach_stream(lives_clip_data_t *cdata) {
     return FALSE;
   }
 
-  if (avcodec_open(ctx, codec) < 0) {
+  if (ctx==NULL) 
+    priv->ctx = ctx = avcodec_alloc_context3(codec);
+
+  if (avcodec_open2(ctx, codec, NULL) < 0) {
     fprintf(stderr, "flv_decoder: Could not open avcodec context\n");
     detach_stream(cdata);
     return FALSE;

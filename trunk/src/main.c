@@ -1853,6 +1853,7 @@ void set_palette_colours (void) {
     lives_widget_color_copy(&palette->info_text,&palette->normal_fore);
     lives_widget_color_copy(&palette->info_base,&palette->normal_back);
     palette->style=STYLE_1|STYLE_2|STYLE_3|STYLE_4|STYLE_5;
+    lives_widget_color_copy(&palette->menu_and_bars_fore,&palette->normal_fore);
   }
   else {
     if (!(strcmp(prefs->theme,"cutting_room"))) {
@@ -1868,6 +1869,7 @@ void set_palette_colours (void) {
       lives_widget_color_copy(&palette->menu_and_bars,&palette->white);
       lives_widget_color_copy(&palette->info_text,&palette->normal_fore);
       lives_widget_color_copy(&palette->info_base,&palette->white);
+      lives_widget_color_copy(&palette->menu_and_bars_fore,&palette->normal_fore);
       palette->style=STYLE_1|STYLE_2|STYLE_3|STYLE_4;
     }
     else {
@@ -1884,6 +1886,7 @@ void set_palette_colours (void) {
 	lives_widget_color_copy(&palette->menu_and_bars,&palette->white);
 	lives_widget_color_copy(&palette->info_base,&palette->normal_back);
 	lives_widget_color_copy(&palette->info_text,&palette->normal_fore);
+	lives_widget_color_copy(&palette->menu_and_bars_fore,&palette->normal_fore);
 	palette->style=STYLE_1|STYLE_2|STYLE_3|STYLE_4;
       }
       else {
@@ -1893,6 +1896,7 @@ void set_palette_colours (void) {
 	  lives_widget_color_copy(&palette->menu_and_bars,&palette->grey60);
 	  lives_widget_color_copy(&palette->info_base,&palette->grey20);
 	  lives_widget_color_copy(&palette->info_text,&palette->white);
+	  lives_widget_color_copy(&palette->menu_and_bars_fore,&palette->normal_fore);
 	  palette->style=STYLE_1|STYLE_2|STYLE_3|STYLE_4|STYLE_5;
 	}
 	else {
@@ -1915,6 +1919,7 @@ void set_palette_colours (void) {
 #endif      
 	      
 	    lives_widget_color_copy(&palette->info_text,&palette->black);
+	    lives_widget_color_copy(&palette->menu_and_bars_fore,&palette->normal_fore);
 
 	    palette->style=STYLE_1|STYLE_2|STYLE_3|STYLE_4;
 	  }
@@ -1925,7 +1930,7 @@ void set_palette_colours (void) {
 	      lives_widget_color_copy(&palette->menu_and_bars,&palette->grey60);
 	      lives_widget_color_copy(&palette->info_base,&palette->grey20);
 	      lives_widget_color_copy(&palette->info_text,&palette->white);
-
+	      lives_widget_color_copy(&palette->menu_and_bars_fore,&palette->normal_fore);
 	      palette->style=STYLE_1|STYLE_2|STYLE_3|STYLE_4|STYLE_5;
 
 	    }

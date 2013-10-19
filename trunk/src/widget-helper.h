@@ -122,7 +122,6 @@ typedef GtkImageMenuItem                  LiVESImageMenuItem;
 typedef GtkTreeView                       LiVESTreeView;
 typedef GtkTreeModel                      LiVESTreeModel;
 typedef GtkTreeIter                       LiVESTreeIter;
-typedef GtkTable                          LiVESTable;
 typedef GtkScrolledWindow                 LiVESScrolledWindow;
 
 #if GTK_CHECK_VERSION(2,14,0)
@@ -135,6 +134,12 @@ typedef GtkRange                          LiVESScaleButton;
 typedef GtkGrid                           LiVESGrid;
 #else
 typedef GtkWidget                         LiVESGrid;
+#endif
+
+#if GTK_CHECK_VERSION(3,10,0)
+typedef GtkGrid                           LiVESTable;
+#else
+typedef GtkTable                          LiVESTable;
 #endif
 
 typedef GClosure                          LiVESWidgetClosure;
@@ -297,7 +302,7 @@ typedef gpointer                          livespointer;
 #define LIVES_FILES_CHOOSER(widget) GTK_FILE_CHOOSER(widget)
 #define LIVES_RADIO_BUTTON(widget) GTK_RADIO_BUTTON(widget)
 #define LIVES_SPIN_BUTTON(widget) GTK_SPIN_BUTTON(widget)
-#define LIVES_TABLE(widget) GTK_TABLE(widget)
+
 #define LIVES_MENU(widget) GTK_MENU(widget)
 #define LIVES_MENU_ITEM(widget) GTK_MENU_ITEM(widget)
 #define LIVES_IMAGE(widget) GTK_IMAGE(widget)
@@ -327,6 +332,13 @@ typedef gpointer                          livespointer;
 #define LIVES_GRID(widget) GTK_GRID(widget)
 #else
 #define LIVES_GRID(widget) GTK_WIDGET(widget)
+#endif
+
+
+#if GTK_CHECK_VERSION(3,10,0)
+#define LIVES_TABLE(widget) GTK_GRID(widget)
+#else
+#define LIVES_TABLE(widget) GTK_TABLE(widget)
 #endif
 
 #define LIVES_RANGE(widget) GTK_RANGE(widget)
@@ -846,6 +858,15 @@ void lives_entry_set_text(LiVESEntry *, const char *text);
 
 double lives_scale_button_get_value(LiVESScaleButton *);
 
+LiVESWidget *lives_table_new(uint32_t rows, uint32_t cols, boolean homogeneous);
+boolean lives_table_set_row_spacings(LiVESTable *, uint32_t spacing);
+boolean lives_table_set_col_spacings(LiVESTable *, uint32_t spacing);
+boolean lives_table_resize(LiVESTable *, uint32_t rows, uint32_t cols);
+void lives_table_attach(LiVESTable *, LiVESWidget *child, uint32_t left, uint32_t right, 
+			uint32_t top, uint32_t bottom, lives_attach_options_t xoptions, lives_attach_options_t yoptions,
+			uint32_t xpad, uint32_t ypad);
+
+
 LiVESWidget *lives_grid_new(void);
 boolean lives_grid_set_row_spacing(LiVESGrid *, uint32_t spacing);
 boolean lives_grid_set_column_spacing(LiVESGrid *, uint32_t spacing);
@@ -879,10 +900,6 @@ LiVESSList *lives_file_chooser_get_filenames(LiVESFileChooser *);
 void lives_widget_grab_focus(LiVESWidget *);
 
 void lives_widget_set_tooltip_text(LiVESWidget *, const char *text);
-
-void lives_table_attach(LiVESTable *, LiVESWidget *child, uint32_t left, uint32_t right, 
-			uint32_t top, uint32_t bottom, lives_attach_options_t xoptions, lives_attach_options_t yoptions,
-			uint32_t xpad, uint32_t ypad);
 
 
 LiVESAccelGroup *lives_accel_group_new(void);

@@ -4564,7 +4564,7 @@ GtkWidget *create_event_list_dialog (weed_plant_t *event_list, weed_timecode_t s
 
   top_vbox=lives_dialog_get_content_area(LIVES_DIALOG(event_dialog));
 
-  table = gtk_table_new (rows, 6, TRUE);
+  table = lives_table_new (rows, 6, TRUE);
   lives_widget_show (table);
 
   while (event!=NULL) {
@@ -4583,7 +4583,7 @@ GtkWidget *create_event_list_dialog (weed_plant_t *event_list, weed_timecode_t s
 	// TODO - opts should be all frames, only audio frames, no frames
 	// or even better, filter for any event types
 	rows++;
-	gtk_table_resize(GTK_TABLE(table),rows,6);
+	lives_table_resize(LIVES_TABLE(table),rows,6);
       }
 			
       gtkstore = gtk_tree_store_new (NUM_COLUMNS, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING);
@@ -4734,7 +4734,7 @@ GtkWidget *create_event_list_dialog (weed_plant_t *event_list, weed_timecode_t s
       label = lives_standard_label_new (text);
       g_free(text);
      
-      lives_table_attach (GTK_TABLE (table), label, 0, 1, currow, currow+1,
+      lives_table_attach (LIVES_TABLE (table), label, 0, 1, currow, currow+1,
 			(GtkAttachOptions) (GTK_EXPAND),
 			(GtkAttachOptions) (0), 0, 0);
      
@@ -4765,7 +4765,7 @@ GtkWidget *create_event_list_dialog (weed_plant_t *event_list, weed_timecode_t s
 	g_free(text);
       }
 
-      lives_table_attach (GTK_TABLE (table), label, 1, 2, currow, currow+1,
+      lives_table_attach (LIVES_TABLE (table), label, 1, 2, currow, currow+1,
 			(GtkAttachOptions) (GTK_EXPAND),
 			(GtkAttachOptions) (0), 0, 0);
      
@@ -4774,14 +4774,17 @@ GtkWidget *create_event_list_dialog (weed_plant_t *event_list, weed_timecode_t s
       label = lives_standard_label_new (text);
       g_free(text);
 
-      lives_table_attach (GTK_TABLE (table), label, 2, 3, currow, currow+1,
+      lives_table_attach (LIVES_TABLE (table), label, 2, 3, currow, currow+1,
 			(GtkAttachOptions) (GTK_EXPAND),
 			(GtkAttachOptions) (0), 0, 0);
      
       // properties
       tree = gtk_tree_view_new_with_model (GTK_TREE_MODEL (gtkstore));
-      lives_widget_set_base_color(tree, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
-     
+      if (palette->style&STYLE_1) {
+	lives_widget_set_base_color(tree, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+	lives_widget_set_text_color(tree, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
+      }
+
       renderer = gtk_cell_renderer_text_new ();
       column = gtk_tree_view_column_new_with_attributes (NULL,
 							 renderer,
@@ -4805,7 +4808,7 @@ GtkWidget *create_event_list_dialog (weed_plant_t *event_list, weed_timecode_t s
 							 NULL);
       gtk_tree_view_append_column (GTK_TREE_VIEW (tree), column);
      
-      lives_table_attach (GTK_TABLE (table), tree, 3, 6, currow, currow+1,
+      lives_table_attach (LIVES_TABLE (table), tree, 3, 6, currow, currow+1,
 			(GtkAttachOptions) (GTK_FILL|GTK_EXPAND),
 			(GtkAttachOptions) (0), 0, 0);
      

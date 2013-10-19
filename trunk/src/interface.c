@@ -1013,10 +1013,10 @@ _insertw* create_insert_dialog (void) {
 
   add_hsep_to_box (LIVES_BOX (dialog_vbox));
 
-  table = gtk_table_new (2, 3, FALSE);
+  table = lives_table_new (2, 3, FALSE);
   lives_box_pack_start (LIVES_BOX (dialog_vbox), table, TRUE, TRUE, widget_opts.packing_height);
-  gtk_table_set_col_spacings (GTK_TABLE (table), widget_opts.packing_width*4);
-  gtk_table_set_row_spacings (GTK_TABLE (table), widget_opts.packing_height);
+  lives_table_set_col_spacings (LIVES_TABLE (table), widget_opts.packing_width*4);
+  lives_table_set_row_spacings (LIVES_TABLE (table), widget_opts.packing_height);
 
 
   hbox = lives_hbox_new (FALSE, 0);
@@ -1029,7 +1029,7 @@ _insertw* create_insert_dialog (void) {
 
   radiobutton1_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (radiobutton));
 
-  lives_table_attach (GTK_TABLE (table), hbox, 0, 1, 0, 1,
+  lives_table_attach (LIVES_TABLE (table), hbox, 0, 1, 0, 1,
                     (GtkAttachOptions) (GTK_FILL),
                     (GtkAttachOptions) (0), 0, 0);
 
@@ -1043,7 +1043,7 @@ _insertw* create_insert_dialog (void) {
 					      TRUE,radiobutton1_group,LIVES_BOX(hbox),
 					      (tmp2=g_strdup(_("Insert clipboard after selected frames"))));
 
-  lives_table_attach (GTK_TABLE (table), hbox, 0, 1, 1, 2,
+  lives_table_attach (LIVES_TABLE (table), hbox, 0, 1, 1, 2,
                     (GtkAttachOptions) (GTK_FILL),
                     (GtkAttachOptions) (0), 0, 0);
 
@@ -1057,7 +1057,7 @@ _insertw* create_insert_dialog (void) {
   radiobutton2_group = lives_radio_button_get_group (LIVES_RADIO_BUTTON (insertw->with_sound));
 
 
-  lives_table_attach (GTK_TABLE (table), hbox, 2, 3, 0, 1,
+  lives_table_attach (LIVES_TABLE (table), hbox, 2, 3, 0, 1,
                     (GtkAttachOptions) (GTK_FILL),
                     (GtkAttachOptions) (0), 0, 0);
 
@@ -1071,7 +1071,7 @@ _insertw* create_insert_dialog (void) {
   lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(insertw->without_sound),
 				 !((cfile->achans>0||clipboard->achans>0)&&mainw->ccpd_with_sound));
 
-  lives_table_attach (GTK_TABLE (table), hbox, 2, 3, 1, 2,
+  lives_table_attach (LIVES_TABLE (table), hbox, 2, 3, 1, 2,
                     (GtkAttachOptions) (GTK_FILL),
                     (GtkAttachOptions) (0), 0, 0);
 
@@ -1079,12 +1079,12 @@ _insertw* create_insert_dialog (void) {
   lives_widget_set_sensitive (insertw->without_sound, clipboard->achans>0||cfile->achans>0);
 
   vseparator = lives_vseparator_new ();
-  lives_table_attach (GTK_TABLE (table), vseparator, 1, 2, 0, 1,
+  lives_table_attach (LIVES_TABLE (table), vseparator, 1, 2, 0, 1,
                     (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
                     (GtkAttachOptions) (GTK_FILL), 0, 0);
 
   vseparator = lives_vseparator_new ();
-  lives_table_attach (GTK_TABLE (table), vseparator, 1, 2, 1, 2,
+  lives_table_attach (LIVES_TABLE (table), vseparator, 1, 2, 1, 2,
                     (GtkAttachOptions) (GTK_FILL),
                     (GtkAttachOptions) (GTK_FILL), 0, 0);
 
@@ -1159,19 +1159,19 @@ GtkWidget *create_opensel_dialog (void) {
   vbox = lives_vbox_new (FALSE, 0);
   lives_box_pack_start (LIVES_BOX (dialog_vbox), vbox, TRUE, TRUE, 0);
 
-  table = gtk_table_new (2, 2, FALSE);
+  table = lives_table_new (2, 2, FALSE);
   lives_box_pack_start (LIVES_BOX (vbox), table, TRUE, TRUE, widget_opts.packing_height);
 
-  gtk_table_set_row_spacings (GTK_TABLE (table), widget_opts.packing_height*2);
+  lives_table_set_row_spacings (LIVES_TABLE (table), widget_opts.packing_height*2);
 
   label = lives_standard_label_new (_("Selection start time (sec)"));
-  lives_table_attach (GTK_TABLE (table), label, 0, 1, 0, 1,
+  lives_table_attach (LIVES_TABLE (table), label, 0, 1, 0, 1,
                     (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
                     (GtkAttachOptions) (0), 0, 0);
   gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
 
   label = lives_standard_label_new (_("Number of frames to open"));
-  lives_table_attach (GTK_TABLE (table), label, 0, 1, 1, 2,
+  lives_table_attach (LIVES_TABLE (table), label, 0, 1, 1, 2,
                     (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
                     (GtkAttachOptions) (0), 0, 0);
   gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
@@ -1182,7 +1182,7 @@ GtkWidget *create_opensel_dialog (void) {
                             G_CALLBACK (on_spin_value_changed),
                             GINT_TO_POINTER (1));
 
-  lives_table_attach (GTK_TABLE (table), spinbutton, 1, 2, 0, 1,
+  lives_table_attach (LIVES_TABLE (table), spinbutton, 1, 2, 0, 1,
                     (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
                     (GtkAttachOptions) (GTK_EXPAND), widget_opts.packing_height*4+2, 0);
 
@@ -1193,7 +1193,7 @@ GtkWidget *create_opensel_dialog (void) {
 			  G_CALLBACK (on_spin_value_changed),
 			  GINT_TO_POINTER (2));
 
-  lives_table_attach (GTK_TABLE (table), spinbutton, 1, 2, 1, 2,
+  lives_table_attach (LIVES_TABLE (table), spinbutton, 1, 2, 1, 2,
                     (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
                     (GtkAttachOptions) (GTK_EXPAND), widget_opts.packing_height*4+2, 0);
 
@@ -2175,30 +2175,30 @@ _commentsw* create_comments_dialog (file *sfile, gchar *filename) {
 
   dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(commentsw->comments_dialog));
 
-  table = gtk_table_new (4, 2, FALSE);
+  table = lives_table_new (4, 2, FALSE);
   lives_container_set_border_width(LIVES_CONTAINER(table), widget_opts.border_width);
 
-  gtk_table_set_row_spacings(GTK_TABLE(table), widget_opts.packing_height*2);
+  lives_table_set_row_spacings(LIVES_TABLE(table), widget_opts.packing_height*2);
 
   lives_box_pack_start (LIVES_BOX (dialog_vbox), table, TRUE, TRUE, widget_opts.packing_height);
 
   label = lives_standard_label_new (_("Title/Name : "));
 
-  lives_table_attach (GTK_TABLE (table), label, 0, 1, 0, 1,
+  lives_table_attach (LIVES_TABLE (table), label, 0, 1, 0, 1,
                     (GtkAttachOptions) (GTK_FILL),
                     (GtkAttachOptions) (0), 0, 0);
   gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
 
   label = lives_standard_label_new (_("Author/Artist : "));
 
-  lives_table_attach (GTK_TABLE (table), label, 0, 1, 1, 2,
+  lives_table_attach (LIVES_TABLE (table), label, 0, 1, 1, 2,
                     (GtkAttachOptions) (GTK_FILL),
                     (GtkAttachOptions) (0), 0, 0);
   gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
 
   label = lives_standard_label_new (_("Comments : "));
 
-  lives_table_attach (GTK_TABLE (table), label, 0, 1, 3, 4,
+  lives_table_attach (LIVES_TABLE (table), label, 0, 1, 3, 4,
                     (GtkAttachOptions) (GTK_FILL),
                     (GtkAttachOptions) (0), 0, 0);
 
@@ -2206,19 +2206,19 @@ _commentsw* create_comments_dialog (file *sfile, gchar *filename) {
 
   commentsw->title_entry = lives_standard_entry_new (NULL,FALSE,cfile->title,80,-1,NULL,NULL);
 
-  lives_table_attach (GTK_TABLE (table), commentsw->title_entry, 1, 2, 0, 1,
+  lives_table_attach (LIVES_TABLE (table), commentsw->title_entry, 1, 2, 0, 1,
                     (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
                     (GtkAttachOptions) (GTK_EXPAND), 0, 0);
 
   commentsw->author_entry = lives_standard_entry_new (NULL,FALSE,cfile->author,80,-1,NULL,NULL);
 
-  lives_table_attach (GTK_TABLE (table), commentsw->author_entry, 1, 2, 1, 2,
+  lives_table_attach (LIVES_TABLE (table), commentsw->author_entry, 1, 2, 1, 2,
                     (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
                     (GtkAttachOptions) (GTK_EXPAND), 0, 0);
 
   commentsw->comment_entry = lives_standard_entry_new (NULL,FALSE,cfile->comment,80,250,NULL,NULL);
 
-  lives_table_attach (GTK_TABLE (table), commentsw->comment_entry, 1, 2, 3, 4,
+  lives_table_attach (LIVES_TABLE (table), commentsw->comment_entry, 1, 2, 3, 4,
                     (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
                     (GtkAttachOptions) (GTK_EXPAND), 0, 0);
 

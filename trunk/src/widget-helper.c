@@ -1773,51 +1773,6 @@ LIVES_INLINE boolean lives_widget_set_vexpand(LiVESWidget *widget, boolean state
 }
 
 
-LIVES_INLINE LiVESWidget *lives_grid_new(void) {
-  LiVESWidget *grid=NULL;
-#ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3,2,0)  // required for grid widget
-  grid=gtk_grid_new();
-#endif
-#endif
-  return grid;
-}
-
-
-LIVES_INLINE boolean lives_grid_set_row_spacing(LiVESGrid *grid, uint32_t spacing) {
-#ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3,2,0)  // required for grid widget
-  gtk_grid_set_row_spacing(grid,spacing);
-  return TRUE;
-#endif
-#endif
-  return FALSE;
-}
-
-
-LIVES_INLINE boolean lives_grid_set_column_spacing(LiVESGrid *grid, uint32_t spacing) {
-#ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3,2,0)  // required for grid widget
-  gtk_grid_set_column_spacing(grid,spacing);
-  return TRUE;
-#endif
-#endif
-  return FALSE;
-}
-
-
-LIVES_INLINE boolean lives_grid_attach_next_to(LiVESGrid *grid, LiVESWidget *child, LiVESWidget *sibling, 
-					       lives_position_t side, int width, int height) {
-#ifdef GUI_GTK
-#if GTK_CHECK_VERSION(3,2,0)  // required for grid widget
-  gtk_grid_attach_next_to(grid,child,sibling,side,width,height);
-  return TRUE;
-#endif
-#endif
-  return FALSE;
-}
-
-
 LIVES_INLINE LiVESWidget *lives_menu_new(void) {
   LiVESWidget *menu;
 #ifdef GUI_GTK
@@ -1998,6 +1953,129 @@ LIVES_INLINE LiVESSList *lives_file_chooser_get_filenames(LiVESFileChooser *choo
   return fnlist;
 }
 
+LIVES_INLINE LiVESWidget *lives_grid_new(void) {
+  LiVESWidget *grid=NULL;
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3,2,0)  // required for grid widget
+  grid=gtk_grid_new();
+#endif
+#endif
+  return grid;
+}
+
+
+LIVES_INLINE boolean lives_grid_set_row_spacing(LiVESGrid *grid, uint32_t spacing) {
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3,2,0)  // required for grid widget
+  gtk_grid_set_row_spacing(grid,spacing);
+  return TRUE;
+#endif
+#endif
+  return FALSE;
+}
+
+
+LIVES_INLINE boolean lives_grid_set_column_spacing(LiVESGrid *grid, uint32_t spacing) {
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3,2,0)  // required for grid widget
+  gtk_grid_set_column_spacing(grid,spacing);
+  return TRUE;
+#endif
+#endif
+  return FALSE;
+}
+
+
+LIVES_INLINE boolean lives_grid_attach_next_to(LiVESGrid *grid, LiVESWidget *child, LiVESWidget *sibling, 
+					       lives_position_t side, int width, int height) {
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3,2,0)  // required for grid widget
+  gtk_grid_attach_next_to(grid,child,sibling,side,width,height);
+  return TRUE;
+#endif
+#endif
+  return FALSE;
+}
+
+
+
+LiVESWidget *lives_table_new(uint32_t rows, uint32_t cols, boolean homogeneous) {
+  LiVESWidget *table=NULL;
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3,10,0)  // required for grid remove row
+  register int i;
+  GtkGrid *grid=(GtkGrid *)lives_grid_new();
+  gtk_grid_set_row_homogeneous(grid,homogeneous);
+  gtk_grid_set_column_homogeneous(grid,homogeneous);
+
+  for (i=0;i<rows;i++) {
+    gtk_grid_insert_row(grid,0);
+  }
+
+  for (i=0;i<cols;i++) {
+    gtk_grid_insert_column(grid,0);
+  }
+
+  g_object_set_data(G_OBJECT(grid),"rows",LIVES_INT_TO_POINTER(rows));
+  g_object_set_data(G_OBJECT(grid),"cols",LIVES_INT_TO_POINTER(cols));
+  table=(LiVESWidget *)grid;
+#else
+  table=gtk_table_new(rows,cols,homogeneous);
+#endif
+#endif
+  return table;
+}
+
+
+boolean lives_table_set_row_spacings(LiVESTable *table, uint32_t spacing) {
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3,10,0)  // required for grid remove row
+  lives_grid_set_row_spacing(table,spacing);
+#else
+  gtk_table_set_row_spacings(table,spacing);
+  return TRUE;
+#endif
+#endif
+  return FALSE;
+}
+
+
+boolean lives_table_set_col_spacings(LiVESTable *table, uint32_t spacing) {
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3,10,0)  // required for grid remove row
+  lives_grid_set_column_spacing(table,spacing);
+#else
+  gtk_table_set_col_spacings(table,spacing);
+  return TRUE;
+#endif
+#endif
+  return FALSE;
+}
+
+
+boolean lives_table_resize(LiVESTable *table, uint32_t rows, uint32_t cols) {
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3,10,0)  // required for grid remove row
+  register int i;
+
+  for (i=LIVES_POINTER_TO_INT(g_object_get_data(G_OBJECT(table),"rows"));i<rows;i++) {
+    gtk_grid_insert_row(table,i);
+  }
+
+  for (i=LIVES_POINTER_TO_INT(g_object_get_data(G_OBJECT(table),"cols"));i<cols;i++) {
+    gtk_grid_insert_column(table,i);
+  }
+
+  g_object_set_data(G_OBJECT(table),"rows",LIVES_INT_TO_POINTER(rows));
+  g_object_set_data(G_OBJECT(table),"cols",LIVES_INT_TO_POINTER(cols));
+
+#else
+  gtk_table_resize(table,rows,cols);
+#endif
+  return TRUE;
+#endif
+  return FALSE;
+}
 
 
 LIVES_INLINE void lives_table_attach(LiVESTable *table, LiVESWidget *child, uint32_t left, uint32_t right, 
@@ -2005,7 +2083,25 @@ LIVES_INLINE void lives_table_attach(LiVESTable *table, LiVESWidget *child, uint
 				     uint32_t xpad, uint32_t ypad) {
 
 #ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3,10,0)  // required for grid remove row
+  gtk_grid_attach(table,child,left,top,right-left,bottom-top);
+  if (xoptions&LIVES_EXPAND) 
+    lives_widget_set_hexpand(child,TRUE);
+  else
+    lives_widget_set_hexpand(child,FALSE);
+  if (yoptions&LIVES_EXPAND) 
+    lives_widget_set_vexpand(child,TRUE);
+  else
+    lives_widget_set_vexpand(child,FALSE);
+
+  gtk_widget_set_margin_left(child,xpad);
+  gtk_widget_set_margin_right(child,xpad);
+
+  gtk_widget_set_margin_top(child,ypad);
+  gtk_widget_set_margin_bottom(child,ypad);
+#else
   gtk_table_attach(table,child,left,right,top,bottom,xoptions,yoptions,xpad,ypad);
+#endif
 #endif
 }
 

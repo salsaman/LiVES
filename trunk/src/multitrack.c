@@ -1842,12 +1842,12 @@ static int get_top_track_for(lives_mt *mt, int track) {
     lives_widget_destroy(mt->timeline_table);
   }
 
-  mt->timeline_table = gtk_table_new (mt->max_disp_vtracks, 40, TRUE);
+  mt->timeline_table = lives_table_new (mt->max_disp_vtracks, 40, TRUE);
 
   lives_container_add (LIVES_CONTAINER (mt->tl_eventbox), mt->timeline_table);
 
-  gtk_table_set_row_spacings (GTK_TABLE(mt->timeline_table),widget_opts.packing_height>>1);
-  gtk_table_set_col_spacings (GTK_TABLE(mt->timeline_table),0);
+  lives_table_set_row_spacings (LIVES_TABLE(mt->timeline_table),widget_opts.packing_height>>1);
+  lives_table_set_col_spacings (LIVES_TABLE(mt->timeline_table),0);
 
   if (mt->opts.back_audio_tracks>0&&mt->audio_draws==NULL) mt->opts.back_audio_tracks=0;
 
@@ -1870,10 +1870,16 @@ static int get_top_track_for(lives_mt *mt, int track) {
 
       if (palette->style&STYLE_1) {
 	if (palette->style&STYLE_3) {
-	  if (labelbox!=NULL) lives_widget_set_bg_color (labelbox, LIVES_WIDGET_STATE_PRELIGHT, &palette->menu_and_bars);
-	  if (ahbox!=NULL) lives_widget_set_bg_color (ahbox, LIVES_WIDGET_STATE_PRELIGHT, &palette->menu_and_bars);
-	  lives_widget_set_fg_color (label, LIVES_WIDGET_STATE_PRELIGHT, &palette->info_text);
-	  lives_widget_set_fg_color (arrow, LIVES_WIDGET_STATE_PRELIGHT, &palette->info_text);
+	  if (labelbox!=NULL) {
+	    lives_widget_set_bg_color (labelbox, LIVES_WIDGET_STATE_PRELIGHT, &palette->menu_and_bars);
+	    lives_widget_set_fg_color (labelbox, LIVES_WIDGET_STATE_PRELIGHT, &palette->menu_and_bars_fore);
+	  }
+	  if (ahbox!=NULL) {
+	    lives_widget_set_bg_color (ahbox, LIVES_WIDGET_STATE_PRELIGHT, &palette->menu_and_bars);
+	    lives_widget_set_fg_color (ahbox, LIVES_WIDGET_STATE_PRELIGHT, &palette->menu_and_bars_fore);
+	  }
+	  lives_widget_set_fg_color (label, LIVES_WIDGET_STATE_PRELIGHT, &palette->menu_and_bars_fore);
+	  lives_widget_set_fg_color (arrow, LIVES_WIDGET_STATE_PRELIGHT, &palette->menu_and_bars_fore);
 	}
 	else {
 	  if (labelbox!=NULL) lives_widget_set_bg_color (labelbox, LIVES_WIDGET_STATE_PRELIGHT, &palette->normal_back);
@@ -1886,8 +1892,8 @@ static int get_top_track_for(lives_mt *mt, int track) {
       lives_box_pack_start (LIVES_BOX (hbox), label, FALSE, FALSE, 0);
       lives_container_add (LIVES_CONTAINER (ahbox), arrow);
       
-      lives_table_attach (GTK_TABLE (mt->timeline_table), labelbox, 1, 6, 0, 1, GTK_FILL, (GtkAttachOptions)0, 0, 0);
-      lives_table_attach (GTK_TABLE (mt->timeline_table), ahbox, 6, 7, 0, 1, GTK_FILL, (GtkAttachOptions)0, 0, 0);
+      lives_table_attach (LIVES_TABLE (mt->timeline_table), labelbox, 1, 6, 0, 1, GTK_FILL, (GtkAttachOptions)0, 0, 0);
+      lives_table_attach (LIVES_TABLE (mt->timeline_table), ahbox, 6, 7, 0, 1, GTK_FILL, (GtkAttachOptions)0, 0, 0);
       
       g_object_set_data (G_OBJECT(mt->audio_draws->data),"labelbox",labelbox);
       g_object_set_data (G_OBJECT(mt->audio_draws->data),"ahbox",ahbox);
@@ -1902,7 +1908,7 @@ static int get_top_track_for(lives_mt *mt, int track) {
 			G_CALLBACK (track_arrow_pressed),
 			(gpointer)mt);
       
-      lives_table_attach (GTK_TABLE (mt->timeline_table), (GtkWidget *)mt->audio_draws->data, 7, 40, 0, 1,
+      lives_table_attach (LIVES_TABLE (mt->timeline_table), (GtkWidget *)mt->audio_draws->data, 7, 40, 0, 1,
 			(GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
 			(GtkAttachOptions) (GTK_FILL), 0, 0);
 
@@ -1922,7 +1928,7 @@ static int get_top_track_for(lives_mt *mt, int track) {
       if (expanded) {
 	xeventbox=(GtkWidget *)g_object_get_data(G_OBJECT(mt->audio_draws->data),"achan0");
 	
-	lives_table_attach (GTK_TABLE (mt->timeline_table), xeventbox, 7, 40, 1, 2,
+	lives_table_attach (LIVES_TABLE (mt->timeline_table), xeventbox, 7, 40, 1, 2,
 			  (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
 			  (GtkAttachOptions) (GTK_FILL), 0, 0);
 	
@@ -1935,7 +1941,7 @@ static int get_top_track_for(lives_mt *mt, int track) {
 	if (cfile->achans>1) {
 	  xeventbox=(GtkWidget *)g_object_get_data(G_OBJECT(mt->audio_draws->data),"achan1");
 	  
-	  lives_table_attach (GTK_TABLE (mt->timeline_table), xeventbox, 7, 40, 2, 3,
+	  lives_table_attach (LIVES_TABLE (mt->timeline_table), xeventbox, 7, 40, 2, 3,
 			    (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
 			    (GtkAttachOptions) (GTK_FILL), 0, 0);
 	  
@@ -1982,14 +1988,20 @@ static int get_top_track_for(lives_mt *mt, int track) {
 	  lives_widget_set_bg_color (labelbox, LIVES_WIDGET_STATE_PRELIGHT, &palette->menu_and_bars);
 	  lives_widget_set_bg_color (ahbox, LIVES_WIDGET_STATE_PRELIGHT, &palette->menu_and_bars);
 	  lives_widget_set_bg_color (checkbutton, LIVES_WIDGET_STATE_PRELIGHT, &palette->menu_and_bars);
-	  lives_widget_set_fg_color (label, LIVES_WIDGET_STATE_PRELIGHT, &palette->info_text);
-	  lives_widget_set_fg_color (arrow, LIVES_WIDGET_STATE_PRELIGHT, &palette->info_text);
-	  lives_widget_set_fg_color (checkbutton, LIVES_WIDGET_STATE_PRELIGHT, &palette->info_text);
+	  lives_widget_set_fg_color (labelbox, LIVES_WIDGET_STATE_PRELIGHT, &palette->menu_and_bars_fore);
+	  lives_widget_set_fg_color (ahbox, LIVES_WIDGET_STATE_PRELIGHT, &palette->menu_and_bars_fore);
+	  lives_widget_set_fg_color (checkbutton, LIVES_WIDGET_STATE_PRELIGHT, &palette->menu_and_bars_fore);
+	  lives_widget_set_fg_color (label, LIVES_WIDGET_STATE_PRELIGHT, &palette->menu_and_bars_fore);
+	  lives_widget_set_fg_color (arrow, LIVES_WIDGET_STATE_PRELIGHT, &palette->menu_and_bars_fore);
+	  lives_widget_set_fg_color (checkbutton, LIVES_WIDGET_STATE_PRELIGHT, &palette->menu_and_bars_fore);
 	}
 	else {
 	  lives_widget_set_bg_color (labelbox, LIVES_WIDGET_STATE_PRELIGHT, &palette->normal_back);
 	  lives_widget_set_bg_color (ahbox, LIVES_WIDGET_STATE_PRELIGHT, &palette->normal_back);
 	  lives_widget_set_bg_color (checkbutton, LIVES_WIDGET_STATE_PRELIGHT, &palette->normal_back);
+	  lives_widget_set_fg_color (labelbox, LIVES_WIDGET_STATE_PRELIGHT, &palette->normal_fore);
+	  lives_widget_set_fg_color (ahbox, LIVES_WIDGET_STATE_PRELIGHT, &palette->normal_fore);
+	  lives_widget_set_fg_color (checkbutton, LIVES_WIDGET_STATE_PRELIGHT, &palette->normal_fore);
 	  lives_widget_set_fg_color (label, LIVES_WIDGET_STATE_PRELIGHT, &palette->normal_fore);
 	  lives_widget_set_fg_color (arrow, LIVES_WIDGET_STATE_PRELIGHT, &palette->normal_fore);
 	  lives_widget_set_fg_color (checkbutton, LIVES_WIDGET_STATE_PRELIGHT, &palette->normal_fore);
@@ -2014,8 +2026,8 @@ static int get_top_track_for(lives_mt *mt, int track) {
       lives_box_pack_start (LIVES_BOX (hbox), label, FALSE, FALSE, 0);
       lives_container_add (LIVES_CONTAINER (ahbox), arrow);
 
-      lives_table_attach (GTK_TABLE (mt->timeline_table), labelbox, 0, 6, rows, rows+1, GTK_FILL, (GtkAttachOptions)0, 0, 0);
-      lives_table_attach (GTK_TABLE (mt->timeline_table), ahbox, 6, 7, rows, rows+1, GTK_FILL, (GtkAttachOptions)0, 0, 0);
+      lives_table_attach (LIVES_TABLE (mt->timeline_table), labelbox, 0, 6, rows, rows+1, GTK_FILL, (GtkAttachOptions)0, 0, 0);
+      lives_table_attach (LIVES_TABLE (mt->timeline_table), ahbox, 6, 7, rows, rows+1, GTK_FILL, (GtkAttachOptions)0, 0, 0);
       
       g_object_set_data (G_OBJECT(eventbox),"labelbox",labelbox);
       g_object_set_data (G_OBJECT(eventbox),"ahbox",ahbox);
@@ -2090,12 +2102,16 @@ static int get_top_track_for(lives_mt *mt, int track) {
 	    if (palette->style&STYLE_3) {
 	      lives_widget_set_bg_color (labelbox, LIVES_WIDGET_STATE_PRELIGHT, &palette->menu_and_bars);
 	      lives_widget_set_bg_color (ahbox, LIVES_WIDGET_STATE_PRELIGHT, &palette->menu_and_bars);
-	      lives_widget_set_fg_color (label, LIVES_WIDGET_STATE_PRELIGHT, &palette->info_text);
-	      lives_widget_set_fg_color (arrow, LIVES_WIDGET_STATE_PRELIGHT, &palette->info_text);
+	      lives_widget_set_fg_color (labelbox, LIVES_WIDGET_STATE_PRELIGHT, &palette->menu_and_bars_fore);
+	      lives_widget_set_fg_color (ahbox, LIVES_WIDGET_STATE_PRELIGHT, &palette->menu_and_bars_fore);
+	      lives_widget_set_fg_color (label, LIVES_WIDGET_STATE_PRELIGHT, &palette->menu_and_bars_fore);
+	      lives_widget_set_fg_color (arrow, LIVES_WIDGET_STATE_PRELIGHT, &palette->menu_and_bars_fore);
 	    }
 	    else {
 	      lives_widget_set_bg_color (labelbox, LIVES_WIDGET_STATE_PRELIGHT, &palette->normal_back);
 	      lives_widget_set_bg_color (ahbox, LIVES_WIDGET_STATE_PRELIGHT, &palette->normal_back);
+	      lives_widget_set_fg_color (labelbox, LIVES_WIDGET_STATE_PRELIGHT, &palette->normal_fore);
+	      lives_widget_set_fg_color (ahbox, LIVES_WIDGET_STATE_PRELIGHT, &palette->normal_fore);
 	      lives_widget_set_fg_color (label, LIVES_WIDGET_STATE_PRELIGHT, &palette->normal_fore);
 	      lives_widget_set_fg_color (arrow, LIVES_WIDGET_STATE_PRELIGHT, &palette->normal_fore);
 	    }
@@ -3744,6 +3760,7 @@ static void do_clip_context (lives_mt *mt, GdkEventButton *event, file *sfile) {
 
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_fg_color(menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
   }
 
   if (sfile->frames>0) {
@@ -3978,6 +3995,7 @@ void mt_init_start_end_spins(lives_mt *mt) {
 
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_fg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
   }
 
   btoolbar=gtk_toolbar_new();
@@ -4003,6 +4021,14 @@ void mt_init_start_end_spins(lives_mt *mt) {
 
     lives_widget_set_bg_color(btoolbar, LIVES_WIDGET_STATE_PRELIGHT, &palette->menu_and_bars);
     lives_widget_set_bg_color(btoolbar, LIVES_WIDGET_STATE_INSENSITIVE, &palette->menu_and_bars);
+
+    lives_widget_set_fg_color(btoolbar, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
+
+    lives_widget_set_fg_color(mt->amixer_button, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
+    lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
+
+    lives_widget_set_fg_color(btoolbar, LIVES_WIDGET_STATE_PRELIGHT, &palette->menu_and_bars_fore);
+    lives_widget_set_fg_color(btoolbar, LIVES_WIDGET_STATE_INSENSITIVE, &palette->menu_and_bars_fore);
   }
 
   lives_widget_add_accelerator (mt->amixer_button, "clicked", mt->accel_group,
@@ -5679,8 +5705,12 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   if (palette->style&STYLE_1) {
     if (palette->style&STYLE_3) {
       lives_widget_set_bg_color(mt->window, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+      lives_widget_set_fg_color(mt->window, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
     }
-    else lives_widget_set_bg_color(mt->window, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    else {
+      lives_widget_set_bg_color(mt->window, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+      lives_widget_set_fg_color(mt->window, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
+    }
   }
 
   gtk_drag_dest_set(mt->window,GTK_DEST_DEFAULT_ALL,mainw->target_table,2,
@@ -5701,6 +5731,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(menubar, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_fg_color(menubar, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
   }
 
 
@@ -5713,6 +5744,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(menuitem_menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_fg_color(menuitem_menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
   }
 
 
@@ -5726,6 +5758,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(menuitem_menu2, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_fg_color(menuitem_menu2, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
   }
 
   menuitem = lives_menu_item_new_with_mnemonic (_("_Open File/Directory"));
@@ -5752,6 +5785,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
     lives_menu_item_set_submenu (LIVES_MENU_ITEM (open_loc_menu), open_loc_submenu);
     if (palette->style&STYLE_1) {
       lives_widget_set_bg_color(open_loc_submenu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+      lives_widget_set_fg_color(open_loc_submenu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
     }
 
     menuitem = lives_menu_item_new_with_mnemonic (_("Open _Youtube Clip..."));
@@ -5784,6 +5818,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
     lives_menu_item_set_submenu (LIVES_MENU_ITEM (vcd_dvd_menu), vcd_dvd_submenu);
     if (palette->style&STYLE_1) {
       lives_widget_set_bg_color(vcd_dvd_submenu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+      lives_widget_set_fg_color(vcd_dvd_submenu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
     }
     
     
@@ -5820,6 +5855,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   lives_menu_item_set_submenu (GTK_MENU_ITEM (device_menu), device_submenu);
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(device_submenu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_fg_color(device_submenu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
   }
 
   menuitem = lives_menu_item_new_with_mnemonic (_("Import from _Firewire Device (dv)"));
@@ -5889,6 +5925,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(recent_submenu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_fg_color(recent_submenu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
   }
   
   lives_widget_show (recent_submenu);
@@ -6000,6 +6037,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(menuitem_menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_fg_color(menuitem_menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
   }
 
   mt->undo = lives_image_menu_item_new_with_mnemonic (_("_Undo"));
@@ -6147,6 +6185,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(menuitem_menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_fg_color(menuitem_menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
   }
 
   mt->playall = lives_image_menu_item_new_with_mnemonic (_("_Play from Timeline Position"));
@@ -6253,6 +6292,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(menuitem_menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_fg_color(menuitem_menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
   }
 
   mt->move_fx = lives_check_menu_item_new_with_mnemonic (_("_Move effects with blocks"));
@@ -6276,6 +6316,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(mt->submenu_atransfx, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_fg_color(mt->submenu_atransfx, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
   }
 
   separator = lives_menu_item_new ();
@@ -6303,6 +6344,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(submenu_menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_fg_color(submenu_menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
   }
 
 
@@ -6324,6 +6366,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(submenu_menuv, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_fg_color(submenu_menuv, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
   }
 
 
@@ -6344,9 +6387,8 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(submenu_menua, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_fg_color(submenu_menua, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
   }
-
-
 
 
 
@@ -6359,6 +6401,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(submenu_menu2, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_fg_color(submenu_menu2, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
   }
 
   tname=lives_fx_cat_to_text(LIVES_FX_CAT_EFFECT,TRUE); // effects
@@ -6376,6 +6419,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(submenu_menu3, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_fg_color(submenu_menu3, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
   }
 
 
@@ -6393,6 +6437,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(submenu_menu4v, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_fg_color(submenu_menu4v, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
   }
 
   
@@ -6411,6 +6456,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(submenu_menu4a, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_fg_color(submenu_menu4a, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
   }
 
   
@@ -6430,6 +6476,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(submenu_menu4, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_fg_color(submenu_menu4, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
   }
 
 
@@ -6446,6 +6493,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(submenu_menu10, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_fg_color(submenu_menu10, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
   }
 
 
@@ -6462,6 +6510,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(submenu_menu11, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_fg_color(submenu_menu11, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
   }
 
 
@@ -6480,6 +6529,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(submenu_menu12, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_fg_color(submenu_menu12, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
   }
 
 
@@ -6498,6 +6548,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(submenu_menu5, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_fg_color(submenu_menu5, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
   }
 
   num_filters=rte_get_numfilters(FALSE);
@@ -6615,6 +6666,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(menuitem_menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_fg_color(menuitem_menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
   }
 
   mt->rename_track = lives_image_menu_item_new_with_mnemonic (_("Rename current track"));
@@ -6736,6 +6788,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(menuitem_menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_fg_color(menuitem_menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
   }
 
   mt->select_track = lives_check_menu_item_new_with_mnemonic (_("_Select Current Track"));
@@ -6792,6 +6845,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(selcopy_menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_fg_color(selcopy_menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
   }
 
   mt->tc_to_rs = lives_menu_item_new_with_mnemonic (_("_Timecode to region start"));
@@ -6850,6 +6904,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(menuitem_menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_fg_color(menuitem_menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
   }
 
 
@@ -6918,6 +6973,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(menuitem_menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_fg_color(menuitem_menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
   }
 
   mt->render = lives_image_menu_item_new_with_mnemonic (_("_Render all to new clip"));
@@ -6974,6 +7030,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(menuitem_menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_fg_color(menuitem_menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
   }
 
 
@@ -7019,6 +7076,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(mt->aparam_submenu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_fg_color(mt->aparam_submenu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
   }
 
   mt->view_audio = lives_check_menu_item_new_with_mnemonic (_("Show backing _audio track"));
@@ -7109,6 +7167,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(menuitem_menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_fg_color(menuitem_menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
   }
 
   show_mt_keys = lives_menu_item_new_with_mnemonic (_("_Show multitrack keys"));
@@ -7175,6 +7234,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   submenu = lives_menu_new ();
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(submenu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_fg_color(submenu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
   }
   lives_menu_item_set_submenu (LIVES_MENU_ITEM (mt->mm_menuitem), submenu);
 
@@ -7211,6 +7271,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   submenu = lives_menu_new ();
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(submenu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_fg_color(submenu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
   }
   lives_menu_item_set_submenu (LIVES_MENU_ITEM (mt->ins_menuitem), submenu);
 
@@ -7424,6 +7485,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   eventbox=lives_event_box_new();
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_fg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
   }
 
   lives_box_pack_start (LIVES_BOX (mt->top_vbox), eventbox, FALSE, FALSE, 0);
@@ -7448,6 +7510,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(lives_widget_get_parent(widget_opts.last_label), LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_fg_color(lives_widget_get_parent(widget_opts.last_label), LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
   }
 
 
@@ -7461,6 +7524,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(btoolbar, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_fg_color(btoolbar, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
   }
 
   gtk_toolbar_set_style (GTK_TOOLBAR (btoolbar), GTK_TOOLBAR_ICONS);
@@ -7542,6 +7606,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(lives_widget_get_parent(widget_opts.last_label), LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_fg_color(lives_widget_get_parent(widget_opts.last_label), LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
   }
 
   lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(mt->snapo_checkbutton),mt->opts.snap_over);
@@ -7588,6 +7653,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(btoolbar, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_fg_color(btoolbar, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
   }
 
   gtk_toolbar_set_style (GTK_TOOLBAR (btoolbar), GTK_TOOLBAR_TEXT);
@@ -7612,6 +7678,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(btoolbar, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_fg_color(btoolbar, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
   }
 
   gtk_toolbar_set_style (GTK_TOOLBAR (btoolbar), GTK_TOOLBAR_TEXT);
@@ -7624,6 +7691,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   submenu = lives_menu_new ();
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(submenu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_fg_color(submenu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
   }
   gtk_menu_tool_button_set_menu (GTK_MENU_TOOL_BUTTON (mt->grav_menuitem), submenu);
 
@@ -7671,6 +7739,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(btoolbar, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_fg_color(btoolbar, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
   }
 
   gtk_toolbar_set_style (GTK_TOOLBAR (btoolbar), GTK_TOOLBAR_ICONS);
@@ -7767,6 +7836,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
     lives_widget_set_bg_color (mt->hpaned, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
     lives_widget_set_bg_color (mt->nb, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
     lives_widget_set_bg_color (mt->nb, LIVES_WIDGET_STATE_ACTIVE, &palette->menu_and_bars);
+    lives_widget_set_fg_color (mt->nb, LIVES_WIDGET_STATE_ACTIVE, &palette->menu_and_bars_fore);
   }
 
 
@@ -7935,6 +8005,7 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(mt->fx_base_box, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_fg_color(mt->fx_base_box, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
   }
 
   mt->fx_contents_box=lives_vbox_new(FALSE,2);
@@ -8028,8 +8099,14 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   mt->checkbutton_avel_reverse = lives_standard_check_button_new (_("_Reverse playback  "),TRUE,LIVES_BOX(hbox),NULL);
 
   if (palette->style&STYLE_1) {
-    if (palette->style&STYLE_3) lives_widget_set_bg_color(hbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-    else lives_widget_set_bg_color(hbox, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    if (palette->style&STYLE_3) {
+      lives_widget_set_bg_color(hbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+      lives_widget_set_fg_color(hbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+    }
+    else {
+      lives_widget_set_bg_color(hbox, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+      lives_widget_set_fg_color(hbox, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
+    }
   }
 
   mt->check_avel_rev_func=g_signal_connect_after (GTK_OBJECT (mt->checkbutton_avel_reverse), "toggled",
@@ -8086,8 +8163,14 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 
   if (palette->style&STYLE_1) {
     lives_widget_set_fg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-    if (palette->style&STYLE_3) lives_widget_set_bg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-    else lives_widget_set_bg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    if (palette->style&STYLE_3) {
+      lives_widget_set_bg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+      lives_widget_set_fg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+    }
+    else {
+      lives_widget_set_bg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+      lives_widget_set_fg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
+    }
   }
 
   hbox=lives_hbox_new(FALSE,0);
@@ -8149,8 +8232,14 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
 
   if (palette->style&STYLE_1) {
     lives_widget_set_fg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-    if (palette->style&STYLE_3) lives_widget_set_bg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-    else lives_widget_set_bg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    if (palette->style&STYLE_3) {
+      lives_widget_set_bg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+      lives_widget_set_fg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+    }
+    else {
+      lives_widget_set_bg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+      lives_widget_set_fg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
+    }
   }
 
   hbox=lives_hbox_new(FALSE,0);
@@ -8245,8 +8334,14 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   lives_box_pack_start (LIVES_BOX (mt->top_vbox), mt->vpaned, TRUE, TRUE, 0);
 
   if (palette->style&STYLE_1) {
-    if (palette->style&STYLE_3) lives_widget_set_bg_color(mt->vpaned, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-    else lives_widget_set_bg_color(mt->vpaned, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    if (palette->style&STYLE_3) {
+      lives_widget_set_bg_color(mt->vpaned, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+      lives_widget_set_fg_color(mt->vpaned, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+    }
+    else {
+      lives_widget_set_bg_color(mt->vpaned, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+      lives_widget_set_fg_color(mt->vpaned, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
+    }
   }
 
   g_signal_connect (GTK_OBJECT (mt->vpaned), "accept_position",
@@ -8259,15 +8354,21 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   lives_container_add (LIVES_CONTAINER (mt->vpaned), tl_vbox);
 
 
-  mt->timeline_table_header = gtk_table_new (2, 40, TRUE);
-  gtk_table_set_row_spacings(GTK_TABLE(mt->timeline_table_header),0);
+  mt->timeline_table_header = lives_table_new (2, 40, TRUE);
+  lives_table_set_row_spacings(LIVES_TABLE(mt->timeline_table_header),0);
 
   eventbox=lives_event_box_new();
   lives_box_pack_start (LIVES_BOX (tl_vbox), eventbox, FALSE, FALSE, 0);
 
   if (palette->style&STYLE_1) {
-    if (palette->style&STYLE_3) lives_widget_set_bg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-    else lives_widget_set_bg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    if (palette->style&STYLE_3) {
+      lives_widget_set_bg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+      lives_widget_set_fg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+    }
+    else {
+      lives_widget_set_bg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+      lives_widget_set_fg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
+    }
   }
 
   g_signal_connect (GTK_OBJECT (eventbox), "button_press_event",
@@ -8310,8 +8411,14 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   lives_box_pack_start (LIVES_BOX (mt->tl_hbox), mt->tl_eventbox, TRUE, TRUE, 0);
 
   if (palette->style&STYLE_1) {
-    if (palette->style&STYLE_3) lives_widget_set_bg_color(mt->tl_eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-    else lives_widget_set_bg_color(mt->tl_eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    if (palette->style&STYLE_3) {
+      lives_widget_set_bg_color(mt->tl_eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+      lives_widget_set_fg_color(mt->tl_eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+    }
+    else {
+      lives_widget_set_bg_color(mt->tl_eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+      lives_widget_set_fg_color(mt->tl_eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
+    }
   }
 
   g_signal_connect (GTK_OBJECT (mt->tl_eventbox), "button_press_event",
@@ -8342,8 +8449,14 @@ lives_mt *multitrack (weed_plant_t *event_list, int orig_file, double fps) {
   hbox=lives_hbox_new(FALSE,0);
 
   if (palette->style&STYLE_1) {
-    if (palette->style&STYLE_3) lives_widget_set_bg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-    else lives_widget_set_bg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    if (palette->style&STYLE_3) {
+      lives_widget_set_bg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+      lives_widget_set_fg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+    }
+    else {
+      lives_widget_set_bg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+      lives_widget_set_fg_color(eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
+    }
   }
 
   lives_box_pack_start (LIVES_BOX (tl_vbox), eventbox, FALSE, FALSE, 4.*widget_opts.scale);
@@ -9153,6 +9266,8 @@ void mt_init_tracks (lives_mt *mt, boolean set_min_max) {
 	lives_widget_set_bg_color (mt->timeline, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
 	lives_widget_set_bg_color (mt->timeline_eb, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
 	lives_widget_set_bg_color (mt->timeline_reg, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+	lives_widget_set_fg_color (mt->timeline_eb, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
+	lives_widget_set_fg_color (mt->timeline_reg, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
       }
     }
 
@@ -9954,6 +10069,7 @@ void do_effect_context (lives_mt *mt, GdkEventButton *event) {
 
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_fg_color(menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
   }
 
   fhash=weed_get_string_value(mt->selected_init_event,"filter",&error);
@@ -10281,8 +10397,12 @@ void mt_init_clips (lives_mt *mt, int orig_file, boolean add) {
       if (palette->style&STYLE_1) {
 	if (palette->style&STYLE_3) {
 	  lives_widget_set_bg_color (eventbox, LIVES_WIDGET_STATE_PRELIGHT, &palette->menu_and_bars);
+	  lives_widget_set_fg_color (eventbox, LIVES_WIDGET_STATE_PRELIGHT, &palette->menu_and_bars_fore);
 	}
-	else lives_widget_set_bg_color (eventbox, LIVES_WIDGET_STATE_PRELIGHT, &palette->normal_back);
+	else {
+	  lives_widget_set_bg_color (eventbox, LIVES_WIDGET_STATE_PRELIGHT, &palette->normal_back);
+	  lives_widget_set_fg_color (eventbox, LIVES_WIDGET_STATE_PRELIGHT, &palette->normal_fore);
+	}
       }
       gtk_widget_add_events (eventbox, GDK_BUTTON_RELEASE_MASK | GDK_BUTTON_PRESS_MASK | GDK_ENTER_NOTIFY);
       g_signal_connect (GTK_OBJECT(eventbox), "enter-notify-event",G_CALLBACK (on_clipbox_enter),(gpointer)mt);
@@ -12404,10 +12524,12 @@ void polymorph (lives_mt *mt, lives_mt_poly_state_t poly) {
 	      if (palette->style&STYLE_3) {
 		lives_widget_set_bg_color(xeventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
 		lives_widget_set_bg_color(xeventbox, LIVES_WIDGET_STATE_PRELIGHT, &palette->menu_and_bars);
+		lives_widget_set_fg_color(xeventbox, LIVES_WIDGET_STATE_PRELIGHT, &palette->menu_and_bars_fore);
 	      }
 	      else {
 		lives_widget_set_bg_color(xeventbox, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
 		lives_widget_set_bg_color(xeventbox, LIVES_WIDGET_STATE_PRELIGHT, &palette->normal_back);
+		lives_widget_set_fg_color(xeventbox, LIVES_WIDGET_STATE_PRELIGHT, &palette->normal_fore);
 	      }
 	    }
 
@@ -12746,6 +12868,7 @@ void do_block_context (lives_mt *mt, GdkEventButton *event, track_rect *block) {
 
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_fg_color(menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
   }
   
   selblock = lives_menu_item_new_with_mnemonic (_("_Select this block"));
@@ -12826,6 +12949,7 @@ void do_track_context (lives_mt *mt, GdkEventButton *event, double timesecs, int
 
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_fg_color(menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
   }
 
   if (mt->file_selected>0&&((track<0&&mainw->files[mt->file_selected]->achans>0&&
@@ -21557,7 +21681,10 @@ void amixer_show (GtkButton *button, gpointer user_data) {
   winsize_v=scr_height*2/3;
 
   amixerw = gtk_window_new (GTK_WINDOW_TOPLEVEL);
-  lives_widget_set_bg_color(amixerw, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+  if (palette->style&STYLE_1) {
+    lives_widget_set_bg_color(amixerw, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_fg_color(amixerw, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
+  }
   lives_window_set_title (LIVES_WINDOW (amixerw), _("LiVES: Multitrack audio mixer"));
 
   top_vbox = lives_vbox_new (FALSE, 0);

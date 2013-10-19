@@ -1670,7 +1670,9 @@ void on_rte_info_clicked (GtkButton *button, gpointer user_data) {
 
   rte_info_window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
   lives_window_set_title (GTK_WINDOW (rte_info_window), g_strdup_printf(_("LiVES: Information for %s"),filter_name));
-  lives_widget_set_bg_color(rte_info_window, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+  if (palette->style&STYLE_1) {
+    lives_widget_set_bg_color(rte_info_window, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+  }
 
   lives_container_set_border_width (LIVES_CONTAINER (rte_info_window), widget_opts.border_width);
   gtk_window_set_transient_for(GTK_WINDOW(rte_info_window),GTK_WINDOW(lives_widget_get_toplevel(GTK_WIDGET(button))));
@@ -2177,14 +2179,17 @@ GtkWidget * create_rte_window (void) {
   mode_ra_fns=(gulong *)g_malloc((prefs->rte_keys_virtual)*modes*sizeof(gulong));
 
   rte_window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
-  lives_widget_set_bg_color(rte_window, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+  if (palette->style&STYLE_1) {
+    lives_widget_set_bg_color(rte_window, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_text_color(rte_window, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
+  }
   lives_window_set_title (GTK_WINDOW (rte_window), _("LiVES: Real time effect mapping"));
   gtk_window_add_accel_group (GTK_WINDOW (rte_window), mainw->accel_group);
 
-  table = gtk_table_new (prefs->rte_keys_virtual, modes+1, FALSE);
+  table = lives_table_new (prefs->rte_keys_virtual, modes+1, FALSE);
 
-  gtk_table_set_row_spacings (GTK_TABLE (table), 16*widget_opts.scale);
-  gtk_table_set_col_spacings (GTK_TABLE (table), 4*widget_opts.scale);
+  lives_table_set_row_spacings (LIVES_TABLE (table), 16*widget_opts.scale);
+  lives_table_set_col_spacings (LIVES_TABLE (table), 4*widget_opts.scale);
 
   // dummy button for "no grab", we dont show this...there is a button instead
   dummy_radio = gtk_radio_button_new (grab_group);
@@ -2205,7 +2210,7 @@ GtkWidget * create_rte_window (void) {
   for (i=0;i<prefs->rte_keys_virtual;i++) {
 
     hbox = lives_hbox_new (FALSE, 0);
-    lives_table_attach (GTK_TABLE (table), hbox, i, i+1, 0, 1,
+    lives_table_attach (LIVES_TABLE (table), hbox, i, i+1, 0, 1,
 		      (GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
 		      (GtkAttachOptions) (GTK_EXPAND | GTK_FILL), 0, 0);
     lives_container_set_border_width (LIVES_CONTAINER (hbox), widget_opts.border_width);
@@ -2247,7 +2252,7 @@ GtkWidget * create_rte_window (void) {
     for (j=0;j<modes;j++) {
       idx=i*modes+j;
       hbox = lives_hbox_new (FALSE, 0);
-      lives_table_attach (GTK_TABLE (table), hbox, i, i+1, j+1, j+2,
+      lives_table_attach (LIVES_TABLE (table), hbox, i, i+1, j+1, j+2,
 			(GtkAttachOptions) (GTK_EXPAND | GTK_FILL),
 			(GtkAttachOptions) (GTK_EXPAND | GTK_FILL), 0, 0);
       lives_container_set_border_width (LIVES_CONTAINER (hbox), widget_opts.border_width);

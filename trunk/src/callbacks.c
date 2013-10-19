@@ -10064,6 +10064,7 @@ boolean frame_context (GtkWidget *widget, GdkEventButton *event, gpointer which)
 
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_fg_color(menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
   }
 
   if (cfile->frames>0||mainw->multitrack!=NULL) {

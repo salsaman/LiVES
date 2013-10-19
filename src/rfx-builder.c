@@ -19,8 +19,7 @@ static GtkWidget *copy_script_okbutton;
 
 static void table_select_row(rfx_build_window_t *rfxbuilder, int row);
 
-void
-on_new_rfx_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void on_new_rfx_activate (GtkMenuItem *menuitem, gpointer user_data) {
   rfx_build_window_t *rfxbuilder;
 
   if (!check_builder_programs()) return;
@@ -28,11 +27,10 @@ on_new_rfx_activate (GtkMenuItem *menuitem, gpointer user_data) {
   lives_widget_show (rfxbuilder->dialog);
 }
 
-void
-on_edit_rfx_activate (GtkMenuItem *menuitem, gpointer user_data) {
+void on_edit_rfx_activate (GtkMenuItem *menuitem, gpointer user_data) {
   rfx_build_window_t *rfxbuilder;
   gchar *script_name;
-  gshort status=GPOINTER_TO_INT (user_data);
+  short status=GPOINTER_TO_INT (user_data);
 
   if (!check_builder_programs()) return;
   if (status!=RFX_STATUS_TEST) return; // we only edit test effects currently
@@ -53,9 +51,8 @@ on_edit_rfx_activate (GtkMenuItem *menuitem, gpointer user_data) {
 }
 
 
-void
-on_copy_rfx_activate (GtkMenuItem *menuitem, gpointer user_data) {
-  gshort status=GPOINTER_TO_INT (user_data);
+void on_copy_rfx_activate (GtkMenuItem *menuitem, gpointer user_data) {
+  short status=GPOINTER_TO_INT (user_data);
 
   if (!check_builder_programs()) return;
   if (status!=RFX_STATUS_TEST) return; // we only copy to test effects currently
@@ -68,9 +65,8 @@ on_copy_rfx_activate (GtkMenuItem *menuitem, gpointer user_data) {
 }
 
 
-void
-on_rename_rfx_activate (GtkMenuItem *menuitem, gpointer user_data) {
-  gshort status=GPOINTER_TO_INT (user_data);
+void on_rename_rfx_activate (GtkMenuItem *menuitem, gpointer user_data) {
+  short status=GPOINTER_TO_INT (user_data);
 
   if (status!=RFX_STATUS_TEST) return; // we only copy to test effects currently
 
@@ -578,7 +574,7 @@ void on_list_table_clicked (GtkButton *button, gpointer user_data) {
   rfxbuilder->ptable_rows=rfxbuilder->table_rows=0;
 
   if (rfxbuilder->table_type==RFX_TABLE_TYPE_REQUIREMENTS) {
-    rfxbuilder->table=gtk_table_new (rfxbuilder->num_reqs,1,FALSE);
+    rfxbuilder->table=lives_table_new (rfxbuilder->num_reqs,1,FALSE);
     for (i=0;i<rfxbuilder->num_reqs;i++) {
       on_table_add_row (NULL,(gpointer)rfxbuilder);
       lives_entry_set_text (GTK_ENTRY (rfxbuilder->entry[i]),rfxbuilder->reqs[i]);
@@ -586,21 +582,21 @@ void on_list_table_clicked (GtkButton *button, gpointer user_data) {
   }
   else if (rfxbuilder->table_type==RFX_TABLE_TYPE_PARAMS) {
     rfxbuilder->copy_params=(lives_param_t *)g_malloc (RFXBUILD_MAX_PARAMS*sizeof(lives_param_t));
-    rfxbuilder->table=gtk_table_new (rfxbuilder->num_params,3,FALSE);
+    rfxbuilder->table=lives_table_new (rfxbuilder->num_params,3,FALSE);
     for (i=0;i<rfxbuilder->num_params;i++) {
       param_copy (&rfxbuilder->params[i],&rfxbuilder->copy_params[i],FALSE);
       on_table_add_row (NULL,(gpointer)rfxbuilder);
     }
   }
   else if (rfxbuilder->table_type==RFX_TABLE_TYPE_PARAM_WINDOW) {
-    rfxbuilder->table=gtk_table_new (rfxbuilder->table_rows,2,FALSE);
+    rfxbuilder->table=lives_table_new (rfxbuilder->table_rows,2,FALSE);
     for (i=0;i<rfxbuilder->num_paramw_hints;i++) {
       on_table_add_row (NULL,(gpointer)rfxbuilder);
     }
   }
   else if (rfxbuilder->table_type==RFX_TABLE_TYPE_TRIGGERS) {
     rfxbuilder->copy_triggers=(rfx_trigger_t *)g_malloc ((RFXBUILD_MAX_PARAMS+1)*sizeof(rfx_trigger_t));
-    rfxbuilder->table=gtk_table_new (rfxbuilder->table_rows,1,FALSE);
+    rfxbuilder->table=lives_table_new (rfxbuilder->table_rows,1,FALSE);
     for (i=0;i<rfxbuilder->num_triggers;i++) {
       rfxbuilder->copy_triggers[i].when=rfxbuilder->triggers[i].when;
       rfxbuilder->copy_triggers[i].code=g_strdup (rfxbuilder->triggers[i].code);
@@ -870,7 +866,7 @@ void on_code_ok (GtkButton *button, gpointer user_data) {
 
   case RFX_CODE_TYPE_STRDEF:
     {
-      gint maxlen=lives_spin_button_get_value_as_int (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_max));
+      int maxlen=lives_spin_button_get_value_as_int (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_max));
       gchar buf[++maxlen];
       
       if (rfxbuilder->copy_params[rfxbuilder->edit_param].def!=NULL) g_free (rfxbuilder->copy_params[rfxbuilder->edit_param].def);
@@ -883,9 +879,9 @@ void on_code_ok (GtkButton *button, gpointer user_data) {
     {
       gchar *values=text_view_get_text (LIVES_TEXT_VIEW (rfxbuilder->code_textview));
       gchar **lines=g_strsplit (values,"\n",-1);
-      gint numlines=get_token_count (values,'\n');
+      int numlines=get_token_count (values,'\n');
       int i;
-      gint defindex=get_int_param (rfxbuilder->copy_params[rfxbuilder->edit_param].def);
+      int defindex=get_int_param (rfxbuilder->copy_params[rfxbuilder->edit_param].def);
 
       if (rfxbuilder->copy_params[rfxbuilder->edit_param].list!=NULL) {
 	g_list_free (rfxbuilder->copy_params[rfxbuilder->edit_param].list);
@@ -1116,10 +1112,12 @@ void on_table_add_row (GtkButton *button, gpointer user_data) {
       lives_entry_set_editable (LIVES_ENTRY (entry), FALSE);
 
     ebox=lives_event_box_new();
+    gtk_widget_set_events (ebox, GDK_BUTTON_PRESS_MASK);
+
     lives_container_add(LIVES_CONTAINER(ebox),entry);
 
-    gtk_table_resize (GTK_TABLE (rfxbuilder->table),++rfxbuilder->table_rows,1);
-    lives_table_attach (GTK_TABLE (rfxbuilder->table), ebox, 0, 1, rfxbuilder->table_rows-1+rfxbuilder->ptable_rows, 
+    lives_table_resize (LIVES_TABLE (rfxbuilder->table),++rfxbuilder->table_rows,1);
+    lives_table_attach (LIVES_TABLE (rfxbuilder->table), ebox, 0, 1, rfxbuilder->table_rows-1+rfxbuilder->ptable_rows, 
 		      rfxbuilder->table_rows+rfxbuilder->ptable_rows,
 		      (GtkAttachOptions) (GTK_FILL|GTK_EXPAND),
 		      (GtkAttachOptions) (0), 0, 0);
@@ -1170,10 +1168,14 @@ void on_table_add_row (GtkButton *button, gpointer user_data) {
     lives_entry_set_editable (LIVES_ENTRY (entry), FALSE);
      
     ebox=lives_event_box_new();
+    gtk_widget_set_events (ebox, GDK_BUTTON_PRESS_MASK);
+
     lives_container_add(LIVES_CONTAINER(ebox),entry);
 
-    lives_table_attach (GTK_TABLE (rfxbuilder->table), ebox, 0, 1, rfxbuilder->table_rows+rfxbuilder->ptable_rows, 
-		      rfxbuilder->table_rows+1+rfxbuilder->ptable_rows,
+    lives_table_resize (LIVES_TABLE (rfxbuilder->table),++rfxbuilder->table_rows,3);
+
+    lives_table_attach (LIVES_TABLE (rfxbuilder->table), ebox, 0, 1, rfxbuilder->table_rows-1+rfxbuilder->ptable_rows, 
+		      rfxbuilder->table_rows+rfxbuilder->ptable_rows,
 		      (GtkAttachOptions) (0),
 		      (GtkAttachOptions) (0), 0, 0);
 
@@ -1181,13 +1183,12 @@ void on_table_add_row (GtkButton *button, gpointer user_data) {
 
     lives_entry_set_editable (LIVES_ENTRY (entry2), FALSE);
 
-    gtk_table_resize (GTK_TABLE (rfxbuilder->table),++rfxbuilder->table_rows,3);
-
 
     ebox2=lives_event_box_new();
+    gtk_widget_set_events (ebox2, GDK_BUTTON_PRESS_MASK);
     lives_container_add(LIVES_CONTAINER(ebox2),entry2);
 
-    lives_table_attach (GTK_TABLE (rfxbuilder->table), ebox2, 1, 2, rfxbuilder->table_rows-1+rfxbuilder->ptable_rows, 
+    lives_table_attach (LIVES_TABLE (rfxbuilder->table), ebox2, 1, 2, rfxbuilder->table_rows-1+rfxbuilder->ptable_rows, 
 		      rfxbuilder->table_rows+rfxbuilder->ptable_rows,
 		      (GtkAttachOptions) (GTK_FILL|GTK_EXPAND),
 		      (GtkAttachOptions) (0), 0, 0);
@@ -1225,9 +1226,10 @@ void on_table_add_row (GtkButton *button, gpointer user_data) {
     lives_entry_set_editable (LIVES_ENTRY (entry3), FALSE);
 
     ebox3=lives_event_box_new();
+    gtk_widget_set_events (ebox3, GDK_BUTTON_PRESS_MASK);
     lives_container_add(LIVES_CONTAINER(ebox3),entry3);
 
-    lives_table_attach (GTK_TABLE (rfxbuilder->table), ebox3, 2, 3, rfxbuilder->table_rows-1+rfxbuilder->ptable_rows, 
+    lives_table_attach (LIVES_TABLE (rfxbuilder->table), ebox3, 2, 3, rfxbuilder->table_rows-1+rfxbuilder->ptable_rows, 
 		      rfxbuilder->table_rows+rfxbuilder->ptable_rows,
 		      (GtkAttachOptions) (GTK_FILL),
 		      (GtkAttachOptions) (0), 0, 0);
@@ -1262,10 +1264,11 @@ void on_table_add_row (GtkButton *button, gpointer user_data) {
     lives_entry_set_editable (LIVES_ENTRY (entry), FALSE);
 
     ebox=lives_event_box_new();
+    gtk_widget_set_events (ebox, GDK_BUTTON_PRESS_MASK);
     lives_container_add(LIVES_CONTAINER(ebox),entry);
 
-    gtk_table_resize (GTK_TABLE (rfxbuilder->table),++rfxbuilder->table_rows,2);
-    lives_table_attach (GTK_TABLE (rfxbuilder->table), ebox, 0, 1, rfxbuilder->table_rows-1+rfxbuilder->ptable_rows, 
+    lives_table_resize (LIVES_TABLE (rfxbuilder->table),++rfxbuilder->table_rows,2);
+    lives_table_attach (LIVES_TABLE (rfxbuilder->table), ebox, 0, 1, rfxbuilder->table_rows-1+rfxbuilder->ptable_rows, 
 		      rfxbuilder->table_rows+rfxbuilder->ptable_rows,
 		      (GtkAttachOptions) (GTK_FILL),
 		      (GtkAttachOptions) (0), 0, 0);
@@ -1303,9 +1306,10 @@ void on_table_add_row (GtkButton *button, gpointer user_data) {
     lives_entry_set_editable (LIVES_ENTRY (entry2), FALSE);
 
     ebox2=lives_event_box_new();
-    lives_container_add(LIVES_CONTAINER(ebox2),entry);
+    gtk_widget_set_events (ebox2, GDK_BUTTON_PRESS_MASK);
+    lives_container_add(LIVES_CONTAINER(ebox2),entry2);
 
-    lives_table_attach (GTK_TABLE (rfxbuilder->table), ebox2, 1, 2, rfxbuilder->table_rows-1+rfxbuilder->ptable_rows, 
+    lives_table_attach (LIVES_TABLE (rfxbuilder->table), ebox2, 1, 2, rfxbuilder->table_rows-1+rfxbuilder->ptable_rows, 
 		      rfxbuilder->table_rows+rfxbuilder->ptable_rows,
 		      (GtkAttachOptions) (GTK_FILL|GTK_EXPAND),
 		      (GtkAttachOptions) (0), 0, 0);
@@ -1340,10 +1344,11 @@ void on_table_add_row (GtkButton *button, gpointer user_data) {
     lives_entry_set_editable (LIVES_ENTRY (entry), FALSE);
 
     ebox=lives_event_box_new();
+    gtk_widget_set_events (ebox, GDK_BUTTON_PRESS_MASK);
     lives_container_add(LIVES_CONTAINER(ebox),entry);
 
-    gtk_table_resize (GTK_TABLE (rfxbuilder->table),++rfxbuilder->table_rows,1);
-    lives_table_attach (GTK_TABLE (rfxbuilder->table), ebox, 0, 1, rfxbuilder->table_rows-1+rfxbuilder->ptable_rows, 
+    lives_table_resize (LIVES_TABLE (rfxbuilder->table),++rfxbuilder->table_rows,1);
+    lives_table_attach (LIVES_TABLE (rfxbuilder->table), ebox, 0, 1, rfxbuilder->table_rows-1+rfxbuilder->ptable_rows, 
 		      rfxbuilder->table_rows+rfxbuilder->ptable_rows,
 		      (GtkAttachOptions) (GTK_FILL|GTK_EXPAND),
 		      (GtkAttachOptions) (0), 0, 0);
@@ -1369,12 +1374,11 @@ void on_table_add_row (GtkButton *button, gpointer user_data) {
     return;
   }
 
-  lives_widget_show_all(rfxbuilder->table);
-
 
  add_row_done:
 
-  gtk_widget_set_events (ebox, GDK_BUTTON_PRESS_MASK);
+  lives_widget_show_all(rfxbuilder->table);
+
   gtk_event_box_set_above_child(GTK_EVENT_BOX(ebox),TRUE);
 
   g_signal_connect (GTK_OBJECT (ebox), "button_press_event",
@@ -1384,7 +1388,7 @@ void on_table_add_row (GtkButton *button, gpointer user_data) {
   if (palette->style&STYLE_1) {
     if (palette->style&STYLE_3) {
       lives_widget_set_bg_color (entry, LIVES_WIDGET_STATE_INSENSITIVE, &palette->menu_and_bars);
-      lives_widget_set_fg_color (entry, LIVES_WIDGET_STATE_INSENSITIVE, &palette->info_text);
+      lives_widget_set_fg_color (entry, LIVES_WIDGET_STATE_INSENSITIVE, &palette->menu_and_bars_fore);
     }
     else {
     lives_widget_set_bg_color (entry, LIVES_WIDGET_STATE_INSENSITIVE, &palette->normal_back);
@@ -1393,7 +1397,6 @@ void on_table_add_row (GtkButton *button, gpointer user_data) {
   }
 
   if (entry2!=NULL) {
-    gtk_widget_set_events (ebox2, GDK_BUTTON_PRESS_MASK);
     gtk_event_box_set_above_child(GTK_EVENT_BOX(ebox2),TRUE);
 
     g_signal_connect (GTK_OBJECT (ebox2), "button_press_event",
@@ -1403,7 +1406,7 @@ void on_table_add_row (GtkButton *button, gpointer user_data) {
     if (palette->style&STYLE_1) {
       if (palette->style&STYLE_3) {
 	lives_widget_set_bg_color (entry2, LIVES_WIDGET_STATE_INSENSITIVE, &palette->menu_and_bars);
-	lives_widget_set_fg_color (entry2, LIVES_WIDGET_STATE_INSENSITIVE, &palette->info_text);
+	lives_widget_set_fg_color (entry2, LIVES_WIDGET_STATE_INSENSITIVE, &palette->menu_and_bars_fore);
     }
       else {
 	lives_widget_set_bg_color (entry2, LIVES_WIDGET_STATE_INSENSITIVE, &palette->normal_back);
@@ -1413,7 +1416,6 @@ void on_table_add_row (GtkButton *button, gpointer user_data) {
   }
 
   if (entry3!=NULL) {
-    gtk_widget_set_events (ebox3, GDK_BUTTON_PRESS_MASK);
     gtk_event_box_set_above_child(GTK_EVENT_BOX(ebox3),TRUE);
 
     g_signal_connect (GTK_OBJECT (ebox3), "button_press_event",
@@ -1423,12 +1425,20 @@ void on_table_add_row (GtkButton *button, gpointer user_data) {
     if (palette->style&STYLE_1) {
       if (palette->style&STYLE_3) {
 	lives_widget_set_bg_color (entry3, LIVES_WIDGET_STATE_INSENSITIVE, &palette->menu_and_bars);
-	lives_widget_set_fg_color (entry3, LIVES_WIDGET_STATE_INSENSITIVE, &palette->info_text);
+	lives_widget_set_fg_color (entry3, LIVES_WIDGET_STATE_INSENSITIVE, &palette->menu_and_bars_fore);
     }
       else {
 	lives_widget_set_bg_color (entry3, LIVES_WIDGET_STATE_INSENSITIVE, &palette->normal_back);
 	lives_widget_set_fg_color (entry3, LIVES_WIDGET_STATE_INSENSITIVE, &palette->normal_fore);
       }
+    }
+  }
+
+  if (button!=NULL) {
+    table_select_row(rfxbuilder, rfxbuilder->table_rows-1+rfxbuilder->ptable_rows);
+    
+    if (rfxbuilder->table_type==RFX_TABLE_TYPE_REQUIREMENTS) {
+      on_table_edit_row(NULL,user_data);
     }
   }
 
@@ -1611,7 +1621,8 @@ void on_table_edit_row (GtkButton *button, gpointer user_data) {
       }
       else {
 	lives_entry_set_text (GTK_ENTRY (rfxbuilder->entry2[found]),
-			    (tmpx=g_strdup_printf ("%s%s%s",ctext,rfxbuilder->field_delim,lives_entry_get_text (GTK_ENTRY (rfxbuilder->paramw_rest_entry)))));
+			    (tmpx=g_strdup_printf ("%s%s%s",ctext,rfxbuilder->field_delim,lives_entry_get_text 
+						   (GTK_ENTRY (rfxbuilder->paramw_rest_entry)))));
       }
       g_free(ctext);
       g_free(tmpx);
@@ -1637,13 +1648,15 @@ void on_table_edit_row (GtkButton *button, gpointer user_data) {
 
 
 void on_table_swap_row (GtkButton *button, gpointer user_data) {
-  gint found=-1;
   gchar *entry_text;
-  int i;
   rfx_build_window_t *rfxbuilder=(rfx_build_window_t *)user_data;
 
+  int found=-1;
+
+  register int i;
+
   for (i=0;i<rfxbuilder->table_rows&&found==-1;i++) {
-    if (lives_widget_get_state(rfxbuilder->entry[i])&LIVES_WIDGET_STATE_INSENSITIVE) {
+    if (!(lives_widget_get_state(rfxbuilder->entry[i])&LIVES_WIDGET_STATE_INSENSITIVE)) {
       found=i;
       break;
     }
@@ -1694,13 +1707,25 @@ void on_table_delete_row (GtkButton *button, gpointer user_data) {
 	rfxbuilder->entry[i-1]=rfxbuilder->entry[i];
       }
       else if (lives_widget_get_state(rfxbuilder->entry[i])&LIVES_WIDGET_STATE_INSENSITIVE) {
+
+	// TODO !!
+#if GTK_CHECK_VERSION(3,10,0)
+	if (rfxbuilder->table_rows>1) {
+	  gtk_grid_remove_row(LIVES_GRID(rfxbuilder->table),i);
+	}
+	else lives_widget_destroy (rfxbuilder->entry[i]);
+#else
 	lives_widget_destroy (rfxbuilder->entry[i]);
 	if (rfxbuilder->table_rows>1) {
-	  gtk_table_resize (GTK_TABLE (rfxbuilder->table),rfxbuilder->table_rows-1,1);
+	  lives_table_resize (LIVES_TABLE (rfxbuilder->table),rfxbuilder->table_rows-1,1);
 	}
+#endif
+
 	move=i+1;
 	rfxbuilder->ptable_rows++;
       }
+
+
     }
     if (move==0) return;
     rfxbuilder->table_rows--;
@@ -1727,16 +1752,29 @@ void on_table_delete_row (GtkButton *button, gpointer user_data) {
 	  do_blocking_error_dialog(_ ("\n\nCannot remove this parameter as it has a trigger.\nPlease remove the trigger first.\n\n"));
 	  return;
 	}
+
+	// TODO !!
+#if GTK_CHECK_VERSION(3,10,0)
+	if (rfxbuilder->table_rows>1) {
+	  gtk_grid_remove_row(LIVES_GRID(rfxbuilder->table),i);
+	}
+	else {
+	  lives_widget_destroy (rfxbuilder->entry[i]);
+	  lives_widget_destroy (rfxbuilder->entry2[i]);
+	  lives_widget_destroy (rfxbuilder->entry3[i]);
+	}
+#else
 	lives_widget_destroy (rfxbuilder->entry[i]);
 	lives_widget_destroy (rfxbuilder->entry2[i]);
 	lives_widget_destroy (rfxbuilder->entry3[i]);
+	if (rfxbuilder->table_rows>1) {
+	lives_table_resize (LIVES_TABLE (rfxbuilder->table),rfxbuilder->table_rows-1,3);
+      }
+#endif
 	g_free (rfxbuilder->copy_params[i].name);
 	g_free (rfxbuilder->copy_params[i].label);
 	g_free (rfxbuilder->copy_params[i].def);
 
-	if (rfxbuilder->table_rows>1) {
-	  gtk_table_resize (GTK_TABLE (rfxbuilder->table),rfxbuilder->table_rows-1,3);
-	}
 	move=i+1;
 	rfxbuilder->ptable_rows++;
       }
@@ -1763,11 +1801,23 @@ void on_table_delete_row (GtkButton *button, gpointer user_data) {
 	rfxbuilder->entry2[i-1]=rfxbuilder->entry2[i];
       }
       else if (lives_widget_get_state(rfxbuilder->entry[i])&LIVES_WIDGET_STATE_INSENSITIVE) {
+
+	// TODO !!
+#if GTK_CHECK_VERSION(3,10,0)
+	if (rfxbuilder->table_rows>1) {
+	  gtk_grid_remove_row(LIVES_GRID(rfxbuilder->table),i);
+	}
+	else {
+	  lives_widget_destroy (rfxbuilder->entry[i]);
+	  lives_widget_destroy (rfxbuilder->entry2[i]);
+	}
+#else
 	lives_widget_destroy (rfxbuilder->entry[i]);
 	lives_widget_destroy (rfxbuilder->entry2[i]);
 	if (rfxbuilder->table_rows>1) {
-	  gtk_table_resize (GTK_TABLE (rfxbuilder->table),rfxbuilder->table_rows-1,1);
+	  lives_table_resize (LIVES_TABLE (rfxbuilder->table),rfxbuilder->table_rows-1,1);
 	}
+#endif
 	move=i+1;
 	rfxbuilder->ptable_rows++;
       }
@@ -1793,9 +1843,19 @@ void on_table_delete_row (GtkButton *button, gpointer user_data) {
 
 	lives_widget_destroy (rfxbuilder->entry[i]);
 	g_free (rfxbuilder->copy_triggers[i].code);
+
+	// TODO !!
+#if GTK_CHECK_VERSION(3,10,0)
 	if (rfxbuilder->table_rows>1) {
-	  gtk_table_resize (GTK_TABLE (rfxbuilder->table),rfxbuilder->table_rows-1,1);
+	  gtk_grid_remove_row(LIVES_GRID(rfxbuilder->table),i);
 	}
+	else lives_widget_destroy (rfxbuilder->entry[i]);
+#else
+	lives_widget_destroy (rfxbuilder->entry[i]);
+	if (rfxbuilder->table_rows>1) {
+	  lives_table_resize (LIVES_TABLE (rfxbuilder->table),rfxbuilder->table_rows-1,1);
+	}
+#endif
 	move=i+1;
 	rfxbuilder->ptable_rows++;
       }
@@ -1858,6 +1918,9 @@ GtkWidget * make_param_dialog (int pnum, rfx_build_window_t *rfxbuilder) {
 							   pnum>=0?rfxbuilder->copy_params[pnum].name:NULL,
 							   60.*widget_opts.scale,-1,LIVES_BOX(dialog_vbox),
 							   (tmp2=g_strdup((_("Name of the parameter, must be unique in the plugin.")))));
+
+  if (pnum<0) lives_widget_grab_focus(rfxbuilder->param_name_entry);
+
 
   g_free(tmp); g_free(tmp2);
 
@@ -1945,7 +2008,7 @@ GtkWidget * make_param_dialog (int pnum, rfx_build_window_t *rfxbuilder) {
     case LIVES_PARAM_NUM:
       if (!rfxbuilder->copy_params[pnum].dp) {
 	lives_spin_button_set_value (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_def),
-				   (gdouble)get_int_param (rfxbuilder->copy_params[pnum].def));
+				   (double)get_int_param (rfxbuilder->copy_params[pnum].def));
       }
       else {
 	lives_spin_button_set_value (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_def),
@@ -1954,11 +2017,11 @@ GtkWidget * make_param_dialog (int pnum, rfx_build_window_t *rfxbuilder) {
       break;
     case LIVES_PARAM_BOOL:
       lives_spin_button_set_value (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_def),
-				 (gdouble)get_bool_param (rfxbuilder->copy_params[pnum].def));
+				 (double)get_bool_param (rfxbuilder->copy_params[pnum].def));
       break;
     case LIVES_PARAM_COLRGB24:
       get_colRGB24_param (rfxbuilder->copy_params[pnum].def,&rgb);
-      lives_spin_button_set_value (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_def),(gdouble)rgb.red);
+      lives_spin_button_set_value (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_def),(double)rgb.red);
       break;
     default:
       break;
@@ -1975,7 +2038,7 @@ GtkWidget * make_param_dialog (int pnum, rfx_build_window_t *rfxbuilder) {
 								       (tmp2=g_strdup(_("A non-zero value can be used to group radio buttons."))));
 
   if (pnum>=0) {
-    lives_spin_button_set_value (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_group),(gdouble)rfxbuilder->copy_params[pnum].group);
+    lives_spin_button_set_value (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_group),(double)rfxbuilder->copy_params[pnum].group);
   }
 
   // min
@@ -2051,8 +2114,8 @@ GtkWidget * make_param_dialog (int pnum, rfx_build_window_t *rfxbuilder) {
 				     rfxbuilder->copy_params[pnum].wrap);
       break;
     case LIVES_PARAM_COLRGB24:
-      lives_spin_button_set_value (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_min),(gdouble)rgb.green);
-      lives_spin_button_set_value (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_max),(gdouble)rgb.blue);
+      lives_spin_button_set_value (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_min),(double)rgb.green);
+      lives_spin_button_set_value (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_max),(double)rgb.blue);
       break;
     case LIVES_PARAM_STRING:
       lives_spin_button_set_value (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_max),rfxbuilder->copy_params[pnum].max);
@@ -2238,12 +2301,12 @@ void after_param_def_changed (GtkSpinButton *spinbutton, gpointer user_data) {
     }
   }
   else {
-    gint int_def=lives_spin_button_get_value_as_int (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_def));
+    int int_def=lives_spin_button_get_value_as_int (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_def));
     if (int_def<lives_spin_button_get_value_as_int (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_min))) {
-      lives_spin_button_set_value (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_min),(gdouble)int_def);
+      lives_spin_button_set_value (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_min),(double)int_def);
     }
     else if (int_def>lives_spin_button_get_value_as_int (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_max))) {
-      lives_spin_button_set_value (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_max),(gdouble)int_def);
+      lives_spin_button_set_value (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_max),(double)int_def);
     }
   }
 }
@@ -2399,7 +2462,7 @@ void on_param_type_changed (GtkComboBox *param_type_combo, gpointer user_data) {
 
 
 
-GtkWidget * make_param_window_dialog (gint pnum, rfx_build_window_t *rfxbuilder) {
+GtkWidget * make_param_window_dialog (int pnum, rfx_build_window_t *rfxbuilder) {
   GtkWidget *dialog;
   GtkWidget *dialog_vbox;
 
@@ -2435,7 +2498,7 @@ GtkWidget * make_param_window_dialog (gint pnum, rfx_build_window_t *rfxbuilder)
       rest=g_strdup (lives_entry_get_text (GTK_ENTRY (rfxbuilder->entry2[pnum])));
     }
     else if (!strcmp (kw,"special")) {
-      gint numtok=get_token_count (lives_entry_get_text (GTK_ENTRY (rfxbuilder->entry2[pnum])),
+      int numtok=get_token_count (lives_entry_get_text (GTK_ENTRY (rfxbuilder->entry2[pnum])),
 				   (int)rfxbuilder->field_delim[0]);
       gchar **array=g_strsplit(lives_entry_get_text (GTK_ENTRY (rfxbuilder->entry2[pnum])),rfxbuilder->field_delim,3);
       sp=g_strdup (array[0]);
@@ -2763,7 +2826,7 @@ void on_code_clicked (GtkButton *button, gpointer user_data) {
 
   else if (button==GTK_BUTTON (rfxbuilder->param_strdef_button)) {
     if (rfxbuilder->copy_params[rfxbuilder->edit_param].type!=LIVES_PARAM_STRING_LIST) {
-      gint len,maxlen=lives_spin_button_get_value_as_int (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_max));
+      int len,maxlen=lives_spin_button_get_value_as_int (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_param_max));
 
       if ((len=strlen ((gchar *)rfxbuilder->copy_params[rfxbuilder->edit_param].def))>maxlen) len=maxlen;
       
@@ -2970,9 +3033,10 @@ boolean rfxbuilder_to_script (rfx_build_window_t *rfxbuilder) {
 
   double stepwrap;
 
-  guint32 props;
+  uint32_t props;
 
   const gchar *name=lives_entry_get_text (GTK_ENTRY (rfxbuilder->name_entry));
+
   gchar *script_file,*script_file_dir;
   gchar *script_name=g_strdup_printf ("%s.%s",name,RFXBUILDER_SCRIPT_SUFFIX);
   gchar *new_name;
@@ -3106,16 +3170,16 @@ boolean rfxbuilder_to_script (rfx_build_window_t *rfxbuilder) {
 	    lives_fputs (buf,sfile);
 	    g_free (buf);
 	    lives_fputs(rfxbuilder->field_delim,sfile);
-	    buf=g_strdup_printf ("%d",(gint)rfxbuilder->params[i].min);
+	    buf=g_strdup_printf ("%d",(int)rfxbuilder->params[i].min);
 	    lives_fputs (buf,sfile);
 	    g_free (buf);
 	    lives_fputs(rfxbuilder->field_delim,sfile);
-	    buf=g_strdup_printf ("%d",(gint)rfxbuilder->params[i].max);
+	    buf=g_strdup_printf ("%d",(int)rfxbuilder->params[i].max);
 	    lives_fputs (buf,sfile);
 	    g_free (buf);
 	    lives_fputs(rfxbuilder->field_delim,sfile);
 	    if (stepwrap!=1.) {
-	      buf=g_strdup_printf ("%d",(gint)stepwrap);
+	      buf=g_strdup_printf ("%d",(int)stepwrap);
 	      lives_fputs (buf,sfile);
 	      g_free (buf);
 	      lives_fputs(rfxbuilder->field_delim,sfile);
@@ -3182,7 +3246,7 @@ boolean rfxbuilder_to_script (rfx_build_window_t *rfxbuilder) {
 	  g_free(tmp);
 	  g_free(tmp2);
 	  lives_fputs(rfxbuilder->field_delim,sfile);
-	  buf=g_strdup_printf ("%d",(gint)rfxbuilder->params[i].max);
+	  buf=g_strdup_printf ("%d",(int)rfxbuilder->params[i].max);
 	  lives_fputs (buf,sfile);
 	  g_free (buf);
 	  lives_fputs(rfxbuilder->field_delim,sfile);
@@ -3254,7 +3318,7 @@ boolean rfxbuilder_to_script (rfx_build_window_t *rfxbuilder) {
       lives_fputs("<onchange>\n",sfile);
       for (i=0;i<rfxbuilder->num_triggers;i++) {
 	int j;
-	gint numtok=get_token_count (rfxbuilder->triggers[i].code,'\n');
+	int numtok=get_token_count (rfxbuilder->triggers[i].code,'\n');
 
 	buf=rfxbuilder->triggers[i].when?g_strdup_printf ("%d",rfxbuilder->triggers[i].when-1):g_strdup ("init");
 	array=g_strsplit(rfxbuilder->triggers[i].code,"\n",-1);
@@ -3354,7 +3418,7 @@ boolean script_to_rfxbuilder (rfx_build_window_t *rfxbuilder, const gchar *scrip
     return FALSE;
   }
   lives_spin_button_set_value (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_version),
-			     (gdouble)atoi ((gchar *)g_list_nth_data (list,0)));
+			     (double)atoi ((gchar *)g_list_nth_data (list,0)));
   g_list_free_strings (list);
   g_list_free (list);
 
@@ -3387,7 +3451,7 @@ boolean script_to_rfxbuilder (rfx_build_window_t *rfxbuilder, const gchar *scrip
   g_list_free (list);
   lives_entry_set_text (GTK_ENTRY (rfxbuilder->menu_text_entry),array[0]);
   lives_entry_set_text (GTK_ENTRY (rfxbuilder->action_desc_entry),array[1]);
-  lives_spin_button_set_value (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_min_frames),(gdouble)atoi (array[2]));
+  lives_spin_button_set_value (GTK_SPIN_BUTTON (rfxbuilder->spinbutton_min_frames),(double)atoi (array[2]));
   num_channels=atoi (array[3]);
 
   if (num_channels==2) {
@@ -3479,14 +3543,14 @@ boolean script_to_rfxbuilder (rfx_build_window_t *rfxbuilder, const gchar *scrip
       else if (!strcmp (type,"colRGB24")) {
 	rfxbuilder->params[i].type=LIVES_PARAM_COLRGB24;
 	rfxbuilder->params[i].def=g_malloc (3*sizint);
-	set_colRGB24_param (rfxbuilder->params[i].def,(gshort)atoi (array[3]),
-			    (gshort)atoi (array[4]),(gshort)atoi (array[5]));
+	set_colRGB24_param (rfxbuilder->params[i].def,(short)atoi (array[3]),
+			    (short)atoi (array[4]),(short)atoi (array[5]));
       }
       else if (!strcmp (type,"string")) {
 	rfxbuilder->params[i].type=LIVES_PARAM_STRING;
 	rfxbuilder->params[i].def=subst ((tmp=L2U8(array[3])),"\\n","\n");
 	g_free(tmp);
-	if (len>4) rfxbuilder->params[i].max=(gdouble)atoi(array[4]);
+	if (len>4) rfxbuilder->params[i].max=(double)atoi(array[4]);
 	else rfxbuilder->params[i].max=1024; // TODO
       }
       else if (!strcmp (type,"string_list")) {
@@ -3937,7 +4001,7 @@ void on_export_rfx_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
 void on_import_rfx_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
-  gshort status=(gshort)GPOINTER_TO_INT (user_data);
+  short status=(short)GPOINTER_TO_INT (user_data);
   gchar *rfx_script_to,*rfx_dir_to;
   gchar *com,*msg,*tmp,*tmp2,*tmpx;
   gchar basename[PATH_MAX];
@@ -4213,7 +4277,7 @@ gchar *prompt_for_script_name(const gchar *sname, lives_rfx_status_t status) {
 	  OK=FALSE;
 	}
 	else {
-	  gint ret;
+	  int ret;
 	  gchar *tmp;
 
 	  from_name=g_strdup(lives_entry_get_text (GTK_ENTRY (script_combo_entry)));
@@ -4290,7 +4354,7 @@ void on_script_status_changed (GtkComboBox *status_combo, gpointer user_data) {
 }
 
 
-GList *get_script_list (gshort status) {
+GList *get_script_list (short status) {
   GList *script_list=NULL;
 
   switch (status) {
@@ -4390,6 +4454,7 @@ void add_rfx_effects(void) {
   lives_menu_item_set_submenu (GTK_MENU_ITEM (mainw->run_test_rfx_submenu), mainw->run_test_rfx_menu);
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(mainw->run_test_rfx_menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_fg_color(mainw->run_test_rfx_menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
   }
   lives_widget_show(mainw->run_test_rfx_menu);
 
@@ -4397,6 +4462,7 @@ void add_rfx_effects(void) {
   lives_menu_item_set_submenu (GTK_MENU_ITEM (mainw->custom_effects_submenu), mainw->custom_effects_menu);
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(mainw->custom_effects_menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_fg_color(mainw->custom_effects_menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
   }
 
   mainw->custom_tools_menu=lives_menu_new();
@@ -4404,6 +4470,7 @@ void add_rfx_effects(void) {
   lives_menu_item_set_submenu (GTK_MENU_ITEM (mainw->custom_tools_submenu), mainw->custom_tools_menu);
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(mainw->custom_tools_menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_fg_color(mainw->custom_tools_menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
   }
 
 #ifdef IS_MINGW
@@ -4458,16 +4525,20 @@ void add_rfx_effects(void) {
   rendered_fx[0].source_type=LIVES_RFX_SOURCE_RFX;
 
   if (rfx_list_length) {
-    gchar *plugin_name;
     GList *define=NULL;
     GList *description=NULL;
     GList *props=NULL;
     GList *rfx_list=rfx_builtin_list;
-    gchar *type=g_strdup(PLUGIN_RENDERED_EFFECTS_BUILTIN);
+
     lives_rfx_status_t status=RFX_STATUS_BUILTIN;
-    gint offset=0;
+
+    gchar *type=g_strdup(PLUGIN_RENDERED_EFFECTS_BUILTIN);
+    gchar *plugin_name;
     gchar *def=NULL;
     gchar *tmp;
+
+    int offset=0;
+
 
     for (plugin_idx=0;plugin_idx<rfx_list_length;plugin_idx++) {
       threaded_dialog_spin();
@@ -4717,12 +4788,14 @@ void add_rfx_effects(void) {
   lives_menu_item_set_submenu (GTK_MENU_ITEM (mainw->utilities_submenu), mainw->utilities_menu);
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(mainw->utilities_menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_fg_color(mainw->utilities_menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
   }
 
   mainw->gens_menu=lives_menu_new();
   lives_menu_item_set_submenu (GTK_MENU_ITEM (mainw->gens_submenu), mainw->gens_menu);
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(mainw->gens_menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_fg_color(mainw->gens_menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
   }
 
 
@@ -4730,6 +4803,7 @@ void add_rfx_effects(void) {
   lives_menu_item_set_submenu (GTK_MENU_ITEM (mainw->custom_gens_submenu), mainw->custom_gens_menu);
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(mainw->custom_gens_menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_fg_color(mainw->custom_gens_menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
   }
 
   lives_container_add (LIVES_CONTAINER (mainw->gens_menu), mainw->custom_gens_submenu);
@@ -4742,6 +4816,7 @@ void add_rfx_effects(void) {
   lives_menu_item_set_submenu (GTK_MENU_ITEM (mainw->custom_utilities_submenu), mainw->custom_utilities_menu);
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(mainw->custom_utilities_menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+    lives_widget_set_fg_color(mainw->custom_utilities_menu, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
   }
 
   lives_container_add (LIVES_CONTAINER (mainw->custom_tools_menu), mainw->custom_utilities_separator);

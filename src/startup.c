@@ -413,7 +413,7 @@ boolean do_audio_choice_dialog(short startup_phase) {
 static void add_test(GtkWidget *table, gint row, gchar *ttext, boolean noskip) {
   GtkWidget *label=lives_standard_label_new(ttext);
 
-  lives_table_attach (GTK_TABLE (table), label, 0, 1, row, row+1, (GtkAttachOptions)0, (GtkAttachOptions)0, 10, 10);
+  lives_table_attach (LIVES_TABLE (table), label, 0, 1, row, row+1, (GtkAttachOptions)0, (GtkAttachOptions)0, 10, 10);
   lives_widget_show(label);
 
   if (!noskip) {
@@ -421,10 +421,10 @@ static void add_test(GtkWidget *table, gint row, gchar *ttext, boolean noskip) {
     // TRANSLATORS - as in "skipped test"
     label=lives_standard_label_new(_("Skipped"));
 
-    lives_table_attach (GTK_TABLE (table), label, 1, 2, row, row+1, (GtkAttachOptions)0, (GtkAttachOptions)0, 10, 10);
+    lives_table_attach (LIVES_TABLE (table), label, 1, 2, row, row+1, (GtkAttachOptions)0, (GtkAttachOptions)0, 10, 10);
     lives_widget_show(label);
 
-    lives_table_attach (GTK_TABLE (table), image, 2, 3, row, row+1, (GtkAttachOptions)0, (GtkAttachOptions)0, 0, 10);
+    lives_table_attach (LIVES_TABLE (table), image, 2, 3, row, row+1, (GtkAttachOptions)0, (GtkAttachOptions)0, 0, 10);
     lives_widget_show(image);
   }
 
@@ -437,10 +437,10 @@ static boolean pass_test(GtkWidget *table, gint row) {
   GtkWidget *label=lives_standard_label_new(_("Passed"));
   GtkWidget *image=lives_image_new_from_stock(GTK_STOCK_APPLY,LIVES_ICON_SIZE_LARGE_TOOLBAR);
 
-  lives_table_attach (GTK_TABLE (table), label, 1, 2, row, row+1, (GtkAttachOptions)0, (GtkAttachOptions)0, 10, 10);
+  lives_table_attach (LIVES_TABLE (table), label, 1, 2, row, row+1, (GtkAttachOptions)0, (GtkAttachOptions)0, 10, 10);
   lives_widget_show(label);
 
-  lives_table_attach (GTK_TABLE (table), image, 2, 3, row, row+1, (GtkAttachOptions)0, (GtkAttachOptions)0, 0, 10);
+  lives_table_attach (LIVES_TABLE (table), image, 2, 3, row, row+1, (GtkAttachOptions)0, (GtkAttachOptions)0, 0, 10);
   lives_widget_show(image);
 
   lives_widget_context_update();
@@ -454,16 +454,16 @@ static boolean fail_test(GtkWidget *table, gint row, gchar *ftext) {
 
   label=lives_standard_label_new(ftext);
 
-  lives_table_attach (GTK_TABLE (table), label, 3, 4, row, row+1, (GtkAttachOptions)0, (GtkAttachOptions)0, 10, 10);
+  lives_table_attach (LIVES_TABLE (table), label, 3, 4, row, row+1, (GtkAttachOptions)0, (GtkAttachOptions)0, 10, 10);
   lives_widget_show(label);
   
   // TRANSLATORS - as in "failed test"
   label=lives_standard_label_new(_("Failed"));
 
-  lives_table_attach (GTK_TABLE (table), label, 1, 2, row, row+1, (GtkAttachOptions)0, (GtkAttachOptions)0, 10, 10);
+  lives_table_attach (LIVES_TABLE (table), label, 1, 2, row, row+1, (GtkAttachOptions)0, (GtkAttachOptions)0, 10, 10);
   lives_widget_show(label);
 
-  lives_table_attach (GTK_TABLE (table), image, 2, 3, row, row+1, (GtkAttachOptions)0, (GtkAttachOptions)0, 0, 10);
+  lives_table_attach (LIVES_TABLE (table), image, 2, 3, row, row+1, (GtkAttachOptions)0, (GtkAttachOptions)0, 0, 10);
   lives_widget_show(image);
 
   lives_widget_context_update();
@@ -557,7 +557,7 @@ boolean do_startup_tests(boolean tshoot) {
   lives_widget_set_sensitive(okbutton,FALSE);
 
 
-  table = gtk_table_new (10, 4, FALSE);
+  table = lives_table_new (10, 4, FALSE);
   lives_container_add (LIVES_CONTAINER (dialog_vbox), table);
 
   lives_widget_show_all(dialog);

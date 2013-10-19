@@ -217,6 +217,7 @@ typedef struct {
   LiVESWidgetColor normal_fore;
 
   LiVESWidgetColor menu_and_bars;
+  LiVESWidgetColor menu_and_bars_fore;
   LiVESWidgetColor banner_fade_text;
   LiVESWidgetColor info_text;
   LiVESWidgetColor info_base;

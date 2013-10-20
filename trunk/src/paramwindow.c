@@ -2045,29 +2045,36 @@ after_param_value_changed           (GtkSpinButton   *spinbutton,
 }
 
 
-void update_weed_color_value(weed_plant_t *inst, int pnum, int c1, int c2, int c3, int c4) {
-  int error;
-  int cols[4]={c1,c2,c3,c4};
-  double colds[4];
+void update_weed_color_value(weed_plant_t *plant, int pnum, int c1, int c2, int c3, int c4) {
   weed_plant_t *ptmpl;
-  weed_plant_t *param=weed_inst_in_param(inst,pnum,FALSE,FALSE);
+  weed_plant_t *param=NULL;
+
+  int *maxs=NULL,*mins=NULL;
+  int cols[4]={c1,c2,c3,c4};
   int cspace;
   int rmax,rmin,gmax,gmin,bmax,bmin;
-  int *maxs=NULL,*mins=NULL;
-  double rmaxd,rmind,gmaxd,gmind,bmaxd,bmind;
-  double *maxds=NULL,*minds=NULL;
-  boolean is_default=(weed_get_int_value(param,"type",&error)==WEED_PLANT_PARAMETER_TEMPLATE);
+  int error;
 
+  boolean is_default=WEED_PLANT_IS_FILTER_CLASS(plant);
   boolean is_int;
+
+  double *maxds=NULL,*minds=NULL;
+  double colds[4];
+  double rmaxd,rmind,gmaxd,gmind,bmaxd,bmind;
+
+  if (!is_default) {
+    param=weed_inst_in_param(plant,pnum,FALSE,FALSE);
+    ptmpl=weed_get_plantptr_value(param,"template",&error);
+  }
+  else {
+    // called only from rte_set_defs_ok
+    ptmpl=weed_filter_in_paramtmpl(plant,pnum,FALSE);
+  }
 
   if (mainw->block_param_updates) return; // updates are blocked until all params are ready
 
-  if (is_default) ptmpl=param;  // called only from rte_set_defs_ok
-  else ptmpl=weed_get_plantptr_value(param,"template",&error);
-
   is_int=(weed_leaf_seed_type(ptmpl,"default")==WEED_SEED_INT);
   cspace=weed_get_int_value(ptmpl,"colorspace",&error);
-
 
   switch (cspace) {
     // TODO - other cspaces
@@ -2093,7 +2100,9 @@ void update_weed_color_value(weed_plant_t *inst, int pnum, int c1, int c2, int c
       cols[0]=rmin+(int)((double)cols[0]/255.*(double)(rmax-rmin));
       cols[1]=gmin+(int)((double)cols[1]/255.*(double)(gmax-gmin));
       cols[2]=bmin+(int)((double)cols[2]/255.*(double)(bmax-bmin));
-      if (is_default) weed_set_int_array(ptmpl,"host_default",3,cols);
+      if (is_default) {
+	weed_set_int_array(ptmpl,"host_default",3,cols);
+      }
       else {
 	int index=0,numvals;
 	int *valis;
@@ -2138,7 +2147,9 @@ void update_weed_color_value(weed_plant_t *inst, int pnum, int c1, int c2, int c
       colds[0]=rmind+(double)cols[0]/255.*(rmaxd-rmind);
       colds[1]=gmind+(double)cols[1]/255.*(gmaxd-gmind);
       colds[2]=bmind+(double)cols[2]/255.*(bmaxd-bmind);
-      if (is_default) weed_set_double_array(ptmpl,"host_default",3,colds);
+      if (is_default) {
+	weed_set_double_array(ptmpl,"host_default",3,colds);
+      }
       else {
 	int index=0,numvals;
 	double *valds;
@@ -2295,8 +2306,7 @@ void after_param_green_changed (GtkSpinButton *spinbutton, lives_rfx_t *rfx) {
     weed_plant_t *inst=(weed_plant_t *)rfx->source;
 
     if (inst!=NULL&&weed_get_int_value(inst,"type",&error)==WEED_PLANT_FILTER_INSTANCE) {
-      update_weed_color_value(weed_inst_in_param(inst,param_number,FALSE,FALSE),
-			      param_number,old_value.red,new_green,old_value.blue,0);
+      update_weed_color_value(inst,param_number,old_value.red,new_green,old_value.blue,0);
 
       copyto=set_copy_to(inst,param_number,TRUE);
 
@@ -2376,8 +2386,7 @@ void after_param_blue_changed (GtkSpinButton *spinbutton, lives_rfx_t *rfx) {
     weed_plant_t *inst=(weed_plant_t *)rfx->source;
 
     if (inst!=NULL&&weed_get_int_value(inst,"type",&error)==WEED_PLANT_FILTER_INSTANCE) {
-      update_weed_color_value(weed_inst_in_param(inst,param_number,FALSE,FALSE),param_number,
-			      old_value.red,old_value.green,new_blue,0);
+      update_weed_color_value(inst,param_number,old_value.red,old_value.green,new_blue,0);
       copyto=set_copy_to(inst,param_number,TRUE);
 
       if (mainw->record&&!mainw->record_paused&&mainw->playing_file>-1&&(prefs->rec_opts&REC_EFFECTS)) {

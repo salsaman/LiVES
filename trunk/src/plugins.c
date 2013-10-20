@@ -3336,7 +3336,9 @@ lives_param_t *weed_params_to_rfx(int npar, weed_plant_t *inst, boolean show_rei
 	rpar[i].def=g_malloc(3*sizint);
 
 	if (weed_leaf_seed_type(wtmpl,"default")==WEED_SEED_INT) {
-	  if (weed_plant_has_leaf(wtmpl,"host_default")) cols=weed_get_int_array(wtmpl,"host_default",&error); 
+	  if (weed_plant_has_leaf(wtmpl,"host_default")) {
+	    cols=weed_get_int_array(wtmpl,"host_default",&error);
+	  }
 	  else if (weed_leaf_num_elements(wtmpl,"default")>0) cols=weed_get_int_array(wtmpl,"default",&error);
 	  else cols=weed_get_int_array(wtmpl,"new_default",&error);
 	  if (weed_leaf_num_elements(wtmpl,"max")==1) {
@@ -3363,9 +3365,9 @@ lives_param_t *weed_params_to_rfx(int npar, weed_plant_t *inst, boolean show_rei
 	  if (cols[0]>red_max) cols[0]=red_max;
 	  if (cols[1]>green_max) cols[1]=green_max;
 	  if (cols[2]>blue_max) cols[2]=blue_max;
-	  cols[0]=(cols[0]-red_min)/(red_max-red_min)*255;
-	  cols[1]=(cols[1]-green_min)/(green_max-green_min)*255;
-	  cols[2]=(cols[2]-blue_min)/(blue_max-blue_min)*255;
+	  cols[0]=(double)(cols[0]-red_min)/(double)(red_max-red_min)*255.+.49999;
+	  cols[1]=(double)(cols[1]-green_min)/(double)(green_max-green_min)*255.+.49999;
+	  cols[2]=(double)(cols[2]-blue_min)/(double)(blue_max-blue_min)*255.+.49999;
 	  col_int=TRUE;
 	}
 	else {
@@ -3397,12 +3399,13 @@ lives_param_t *weed_params_to_rfx(int npar, weed_plant_t *inst, boolean show_rei
 	  if (colsd[1]>green_maxd) colsd[1]=green_maxd;
 	  if (colsd[2]>blue_maxd) colsd[2]=blue_maxd;
 	  cols=(int *)weed_malloc(3*sizshrt);
-	  cols[0]=(colsd[0]-red_mind)/(red_maxd-red_mind)*255.+.5;
-	  cols[1]=(colsd[1]-green_mind)/(green_maxd-green_mind)*255.+.5;
-	  cols[2]=(colsd[2]-blue_mind)/(blue_maxd-blue_mind)*255.+.5;
+	  cols[0]=(colsd[0]-red_mind)/(red_maxd-red_mind)*255.+.49999;
+	  cols[1]=(colsd[1]-green_mind)/(green_maxd-green_mind)*255.+.49999;
+	  cols[2]=(colsd[2]-blue_mind)/(blue_maxd-blue_mind)*255.+.49999;
 	  col_int=FALSE;
 	}
 	set_colRGB24_param(rpar[i].def,cols[0],cols[1],cols[2]);
+
 	if (col_int) {
 	  weed_free(cols);
 	  cols=weed_get_int_array(wpar,"value",&error);
@@ -3412,9 +3415,9 @@ lives_param_t *weed_params_to_rfx(int npar, weed_plant_t *inst, boolean show_rei
 	  if (cols[0]>red_max) cols[0]=red_max;
 	  if (cols[1]>green_max) cols[1]=green_max;
 	  if (cols[2]>blue_max) cols[2]=blue_max;
-	  cols[0]=(cols[0]-red_min)/(red_max-red_min)*255;
-	  cols[1]=(cols[1]-green_min)/(green_max-green_min)*255;
-	  cols[2]=(cols[2]-blue_min)/(blue_max-blue_min)*255;
+	  cols[0]=(double)(cols[0]-red_min)/(double)(red_max-red_min)*255.+.49999;
+	  cols[1]=(double)(cols[1]-green_min)/(double)(green_max-green_min)*255.+.49999;
+	  cols[2]=(double)(cols[2]-blue_min)/(double)(blue_max-blue_min)*255.+.49999;
 	}
 	else {
 	  colsd=weed_get_double_array(wpar,"value",&error);
@@ -3424,12 +3427,13 @@ lives_param_t *weed_params_to_rfx(int npar, weed_plant_t *inst, boolean show_rei
 	  if (colsd[0]>red_maxd) colsd[0]=red_maxd;
 	  if (colsd[1]>green_maxd) colsd[1]=green_maxd;
 	  if (colsd[2]>blue_maxd) colsd[2]=blue_maxd;
-	  cols[0]=(colsd[0]-red_mind)/(red_maxd-red_mind)*255.+.5;
-	  cols[1]=(colsd[1]-green_mind)/(green_maxd-green_mind)*255.+.5;
-	  cols[2]=(colsd[2]-blue_mind)/(blue_maxd-blue_mind)*255.+.5;
+	  cols[0]=(colsd[0]-red_mind)/(red_maxd-red_mind)*255.+.49999;
+	  cols[1]=(colsd[1]-green_mind)/(green_maxd-green_mind)*255.+.49999;
+	  cols[2]=(colsd[2]-blue_mind)/(blue_maxd-blue_mind)*255.+.49999;
 	}
 	set_colRGB24_param(rpar[i].value,(short)cols[0],(short)cols[1],(short)cols[2]);
 	weed_free(cols);
+
 	if (maxi!=NULL) weed_free(maxi);
 	if (mini!=NULL) weed_free(mini);
 	if (maxd!=NULL) weed_free(maxd);

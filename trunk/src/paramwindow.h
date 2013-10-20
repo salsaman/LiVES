@@ -57,13 +57,13 @@ GList *argv_to_marshalled_list (lives_rfx_t *, int argc, char **argv);
 ///
 /// (0 based, -ve for init onchanges)
 GList *do_onchange (GObject *object, lives_rfx_t *) WARN_UNUSED;
-GList *do_onchange_init(lives_rfx_t *rfx) WARN_UNUSED;
+GList *do_onchange_init(lives_rfx_t *) WARN_UNUSED;
 
 
 
-void update_weed_color_value(weed_plant_t *inst, int pnum, int c1, int c2, int c3, int c4);
+void update_weed_color_value(weed_plant_t *, int pnum, int c1, int c2, int c3, int c4);
 
-void update_visual_params(lives_rfx_t *rfx, boolean update_hidden);
+void update_visual_params(lives_rfx_t *r, boolean update_hidden);
 
 
 

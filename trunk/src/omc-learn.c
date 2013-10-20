@@ -960,7 +960,7 @@ static GtkWidget *create_omc_macro_combo(lives_omc_match_node_t *mnode, gint row
   }
 
   if (mnode->macro!=-1) {
-    lives_combo_set_active_index (GTK_COMBO_BOX(combo),mnode->macro);
+    lives_combo_set_active_index (LIVES_COMBO(combo),mnode->macro);
   }
 
   g_signal_connect_after (G_OBJECT (combo), "changed", G_CALLBACK (on_omc_combo_entry_changed), mnode);
@@ -1315,7 +1315,7 @@ static omclearn_w *create_omclearn_dialog(void) {
   
   omclw->dialog = lives_standard_dialog_new (_("LiVES: OMC learner"),FALSE);
   
-  omclw->top_vbox = lives_dialog_get_content_area(GTK_DIALOG(omclw->dialog));
+  omclw->top_vbox = lives_dialog_get_content_area(LIVES_DIALOG(omclw->dialog));
 
   omclw->table = lives_table_new (omclw->tbl_rows, 4, FALSE);
 
@@ -1379,12 +1379,12 @@ static omclearn_w *create_omclearn_dialog(void) {
 						    -lives_widget_get_allocation_width(omclw->dialog))/2;
     gint ycen=mainw->mgeom[prefs->gui_monitor-1].y+(mainw->mgeom[prefs->gui_monitor-1].height
 						    -lives_widget_get_allocation_height(omclw->dialog))/2;
-    gtk_window_set_screen(GTK_WINDOW(omclw->dialog),mainw->mgeom[prefs->gui_monitor-1].screen);
-    lives_window_move(GTK_WINDOW(omclw->dialog),xcen,ycen);
+    gtk_window_set_screen(LIVES_WINDOW(omclw->dialog),mainw->mgeom[prefs->gui_monitor-1].screen);
+    lives_window_move(LIVES_WINDOW(omclw->dialog),xcen,ycen);
   }
   
   if (prefs->open_maximised) {
-    lives_window_maximize (GTK_WINDOW(omclw->dialog));
+    lives_window_maximize (LIVES_WINDOW(omclw->dialog));
   }
 
   if (prefs->show_gui)

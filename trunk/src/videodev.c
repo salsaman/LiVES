@@ -502,7 +502,7 @@ void on_open_vdev_activate (GtkMenuItem *menuitem, gpointer user_data) {
   mainw->fx1_val=0;
   mainw->open_deint=FALSE;
   card_dialog=create_combo_dialog(1,(gpointer)devlist);
-  response=lives_dialog_run(GTK_DIALOG(card_dialog));
+  response=lives_dialog_run(LIVES_DIALOG(card_dialog));
   g_list_free(devlist);
 
   if (response==GTK_RESPONSE_CANCEL) {

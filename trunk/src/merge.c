@@ -85,13 +85,13 @@ void create_merge_dialog (void) {
   merge_opts->merge_dialog = lives_standard_dialog_new (_("LiVES: - Merge"),FALSE);
 
   accel_group = GTK_ACCEL_GROUP(lives_accel_group_new ());
-  gtk_window_add_accel_group (GTK_WINDOW (merge_opts->merge_dialog), accel_group);
+  gtk_window_add_accel_group (LIVES_WINDOW (merge_opts->merge_dialog), accel_group);
 
   if (prefs->show_gui) {
-    gtk_window_set_transient_for(GTK_WINDOW(merge_opts->merge_dialog),GTK_WINDOW(mainw->LiVES));
+    gtk_window_set_transient_for(LIVES_WINDOW(merge_opts->merge_dialog),GTK_WINDOW(mainw->LiVES));
   }
 
-  dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(merge_opts->merge_dialog));
+  dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(merge_opts->merge_dialog));
 
   vbox = lives_vbox_new (FALSE, 0);
   lives_box_pack_start (LIVES_BOX (dialog_vbox), vbox, TRUE, TRUE, 0);
@@ -150,7 +150,7 @@ void create_merge_dialog (void) {
        (int)((cfile->end-cfile->start+1)/cb_frames), 1., 10., 0, LIVES_BOX(hbox), NULL);
     
 
-    lives_spin_button_set_value (GTK_SPIN_BUTTON (merge_opts->spinbutton_loops),mainw->last_transition_loops);
+    lives_spin_button_set_value (LIVES_SPIN_BUTTON (merge_opts->spinbutton_loops),mainw->last_transition_loops);
     lives_widget_set_sensitive(merge_opts->spinbutton_loops,!mainw->last_transition_loop_to_fit);
 
     g_signal_connect_after (GTK_OBJECT (merge_opts->spinbutton_loops), "value_changed",
@@ -172,7 +172,7 @@ void create_merge_dialog (void) {
 
   transition_combo = lives_standard_combo_new (_("_Transition Method:"),TRUE,merge_opts->trans_list,LIVES_BOX(hbox),NULL);
 
-  lives_combo_set_active_index(GTK_COMBO_BOX(transition_combo),defstart);
+  lives_combo_set_active_index(LIVES_COMBO(transition_combo),defstart);
 
   mainw->last_transition_idx=merge_opts->list_to_rfx_index[defstart];
 
@@ -207,11 +207,11 @@ void create_merge_dialog (void) {
   gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area), GTK_BUTTONBOX_END);
 
   cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
-  lives_dialog_add_action_widget (GTK_DIALOG (merge_opts->merge_dialog), cancelbutton, GTK_RESPONSE_CANCEL);
+  lives_dialog_add_action_widget (LIVES_DIALOG (merge_opts->merge_dialog), cancelbutton, GTK_RESPONSE_CANCEL);
   lives_widget_set_can_focus (cancelbutton,TRUE);
 
   okbutton = gtk_button_new_from_stock ("gtk-ok");
-  lives_dialog_add_action_widget (GTK_DIALOG (merge_opts->merge_dialog), okbutton, GTK_RESPONSE_OK);
+  lives_dialog_add_action_widget (LIVES_DIALOG (merge_opts->merge_dialog), okbutton, GTK_RESPONSE_OK);
   lives_widget_set_can_focus_and_default (okbutton);
   gtk_widget_grab_default (okbutton);
 
@@ -313,7 +313,7 @@ on_merge_cancel_clicked                   (GtkButton       *button,
   lives_rfx_t *rfx=(lives_rfx_t *)user_data;
   on_paramwindow_cancel_clicked (NULL,rfx);
   if (merge_opts->spinbutton_loops!=NULL) 
-    mainw->last_transition_loops=lives_spin_button_get_value_as_int (GTK_SPIN_BUTTON (merge_opts->spinbutton_loops));
+    mainw->last_transition_loops=lives_spin_button_get_value_as_int (LIVES_SPIN_BUTTON (merge_opts->spinbutton_loops));
   lives_widget_destroy(merge_opts->merge_dialog);
   lives_widget_context_update();
   mainw->last_transition_loop_to_fit=merge_opts->loop_to_fit;
@@ -350,7 +350,7 @@ on_merge_ok_clicked                   (GtkButton       *button,
   lives_rfx_t *rfx;
 
   if (merge_opts->spinbutton_loops!=NULL) 
-    mainw->last_transition_loops=lives_spin_button_get_value_as_int (GTK_SPIN_BUTTON (merge_opts->spinbutton_loops));
+    mainw->last_transition_loops=lives_spin_button_get_value_as_int (LIVES_SPIN_BUTTON (merge_opts->spinbutton_loops));
 
   mainw->last_transition_loop_to_fit=merge_opts->loop_to_fit;
   mainw->last_transition_ins_frames=merge_opts->ins_frames;
@@ -371,7 +371,7 @@ on_merge_ok_clicked                   (GtkButton       *button,
   }
 
   if (merge_opts->spinbutton_loops!=NULL) 
-    times_to_loop=lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON(merge_opts->spinbutton_loops));
+    times_to_loop=lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(merge_opts->spinbutton_loops));
   else 
     times_to_loop=1;
 

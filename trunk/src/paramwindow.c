@@ -819,8 +819,8 @@ void on_fx_pre_activate (lives_rfx_t *rfx, int didx, LiVESWidget *pbox) {
   if (didx==0) {
     // activated from the menu for a rendered effect
     if (prefs->show_gui) {
-      if (mainw->multitrack==NULL) gtk_window_set_transient_for(GTK_WINDOW(fx_dialog[0]),GTK_WINDOW(mainw->LiVES));
-      else gtk_window_set_transient_for(GTK_WINDOW(fx_dialog[0]),GTK_WINDOW(mainw->multitrack->window));
+      if (mainw->multitrack==NULL) gtk_window_set_transient_for(LIVES_WINDOW(fx_dialog[0]),GTK_WINDOW(mainw->LiVES));
+      else gtk_window_set_transient_for(LIVES_WINDOW(fx_dialog[0]),GTK_WINDOW(mainw->multitrack->window));
     }
   }
 
@@ -877,13 +877,13 @@ void on_fx_pre_activate (lives_rfx_t *rfx, int didx, LiVESWidget *pbox) {
     cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
     
     fxw_accel_group = GTK_ACCEL_GROUP(lives_accel_group_new ());
-    gtk_window_add_accel_group (GTK_WINDOW (fx_dialog[didx]), fxw_accel_group);
+    gtk_window_add_accel_group (LIVES_WINDOW (fx_dialog[didx]), fxw_accel_group);
 
     dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (fx_dialog[didx]));
 
     if (!no_process||is_defaults||rfx->status==RFX_STATUS_SCRAP) {
       gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area), GTK_BUTTONBOX_END);
-      lives_dialog_add_action_widget (GTK_DIALOG (fx_dialog[didx]), cancelbutton, GTK_RESPONSE_CANCEL);
+      lives_dialog_add_action_widget (LIVES_DIALOG (fx_dialog[didx]), cancelbutton, GTK_RESPONSE_CANCEL);
       lives_widget_add_accelerator (cancelbutton, "activate", fxw_accel_group,
 				    LIVES_KEY_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
 
@@ -892,10 +892,10 @@ void on_fx_pre_activate (lives_rfx_t *rfx, int didx, LiVESWidget *pbox) {
 	if (!has_param) lives_widget_set_sensitive(okbutton,FALSE);
 	resetbutton = lives_button_new_with_mnemonic (_("Reset"));
 	if (!has_param) lives_widget_set_sensitive(resetbutton,FALSE);
-	lives_dialog_add_action_widget (GTK_DIALOG (fx_dialog[didx]), resetbutton, LIVES_RESET);
+	lives_dialog_add_action_widget (LIVES_DIALOG (fx_dialog[didx]), resetbutton, LIVES_RESET);
       }
       else okbutton = gtk_button_new_from_stock ("gtk-ok");
-      lives_dialog_add_action_widget (GTK_DIALOG (fx_dialog[didx]), okbutton, GTK_RESPONSE_OK);
+      lives_dialog_add_action_widget (LIVES_DIALOG (fx_dialog[didx]), okbutton, GTK_RESPONSE_OK);
     }
     else {
       okbutton = lives_button_new_with_mnemonic (_("Set as default"));
@@ -906,10 +906,10 @@ void on_fx_pre_activate (lives_rfx_t *rfx, int didx, LiVESWidget *pbox) {
       }
       if (rfx->status==RFX_STATUS_WEED) {
 	resetbutton = lives_button_new_with_mnemonic (_("Reset"));
-	lives_dialog_add_action_widget (GTK_DIALOG (fx_dialog[didx]), resetbutton, LIVES_RESET);
-	lives_dialog_add_action_widget (GTK_DIALOG (fx_dialog[didx]), okbutton, GTK_RESPONSE_OK);
+	lives_dialog_add_action_widget (LIVES_DIALOG (fx_dialog[didx]), resetbutton, LIVES_RESET);
+	lives_dialog_add_action_widget (LIVES_DIALOG (fx_dialog[didx]), okbutton, GTK_RESPONSE_OK);
       }
-      lives_dialog_add_action_widget (GTK_DIALOG (fx_dialog[didx]), cancelbutton, GTK_RESPONSE_CANCEL);
+      lives_dialog_add_action_widget (LIVES_DIALOG (fx_dialog[didx]), cancelbutton, GTK_RESPONSE_CANCEL);
       lives_widget_add_accelerator (cancelbutton, "activate", fxw_accel_group,
 				    LIVES_KEY_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
 
@@ -1397,7 +1397,7 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, int pnum, boolean add_s
   if (param->reinit) add_scalers=FALSE;
 
   if (LIVES_IS_HBOX(LIVES_WIDGET(box))) {
-    hbox=GTK_WIDGET(box);
+    hbox=LIVES_WIDGET(box);
   }
   else {
     hbox = lives_hbox_new (FALSE, 0);
@@ -1727,7 +1727,7 @@ boolean add_param_to_box (GtkBox *box, lives_rfx_t *rfx, int pnum, boolean add_s
 			    (gpointer) rfx);
 
     if (param->hidden) lives_widget_set_sensitive(param->widgets[0],FALSE);
-    if (use_mnemonic) gtk_label_set_mnemonic_widget (GTK_LABEL (label),param->widgets[0]);
+    if (use_mnemonic) gtk_label_set_mnemonic_widget (LIVES_LABEL (label),param->widgets[0]);
 
     g_free (txt);
 
@@ -1786,7 +1786,7 @@ void add_param_label_to_box (GtkBox *box, boolean do_trans, const gchar *text) {
     char *markup;
     markup=g_markup_printf_escaped("<span weight=\"bold\" style=\"italic\"> %s </span>",_(text));
     label = lives_standard_label_new(NULL);
-    gtk_label_set_markup_with_mnemonic (GTK_LABEL(label),markup);
+    gtk_label_set_markup_with_mnemonic (LIVES_LABEL(label),markup);
     g_free(markup);
   }
   else label = lives_standard_label_new_with_mnemonic (text,NULL);
@@ -1882,7 +1882,7 @@ after_boolean_param_toggled        (GtkToggleButton *togglebutton,
 
       disp_string=get_weed_display_string(inst,param_number);
       if (disp_string!=NULL) {
-	lives_label_set_text(GTK_LABEL(param->widgets[1]),disp_string);
+	lives_label_set_text(LIVES_LABEL(param->widgets[1]),disp_string);
 	weed_free(disp_string);
       }
       if (param->reinit||(copyto!=-1&&rfx->params[copyto].reinit)) {
@@ -2001,7 +2001,7 @@ after_param_value_changed           (GtkSpinButton   *spinbutton,
 
       disp_string=get_weed_display_string(inst,param_number);
       if (disp_string!=NULL) {
-	lives_label_set_text(GTK_LABEL(param->widgets[1]),disp_string);
+	lives_label_set_text(LIVES_LABEL(param->widgets[1]),disp_string);
 	weed_free(disp_string);
       }
       if (param->reinit||(copyto!=-1&&rfx->params[copyto].reinit)) {
@@ -2485,9 +2485,9 @@ boolean after_param_text_focus_changed (GtkWidget *hbox, GtkWidget *child, lives
 
   if (mainw->multitrack!=NULL) {
     if (child!=NULL)
-      gtk_window_remove_accel_group(GTK_WINDOW(mainw->multitrack->window),mainw->multitrack->accel_group);
+      gtk_window_remove_accel_group(LIVES_WINDOW(mainw->multitrack->window),mainw->multitrack->accel_group);
     else
-      gtk_window_add_accel_group(GTK_WINDOW(mainw->multitrack->window),mainw->multitrack->accel_group);
+      gtk_window_add_accel_group(LIVES_WINDOW(mainw->multitrack->window),mainw->multitrack->accel_group);
 
   }
   

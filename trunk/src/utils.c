@@ -2679,7 +2679,7 @@ void get_play_times(void) {
 	}
       }
     }
-    lives_label_set_text(GTK_LABEL(mainw->vidbar),tmpstr);
+    lives_label_set_text(LIVES_LABEL(mainw->vidbar),tmpstr);
     g_free(tmpstr);
     if (cfile->achans==0) {
       tmpstr=g_strdup (_ ("(No audio)"));
@@ -2702,7 +2702,7 @@ void get_play_times(void) {
 	}
       }
     }
-    lives_label_set_text(GTK_LABEL(mainw->laudbar),tmpstr);
+    lives_label_set_text(LIVES_LABEL(mainw->laudbar),tmpstr);
     g_free(tmpstr);
     if (cfile->achans>1) {
       if (cfile->opening_audio) {
@@ -2711,7 +2711,7 @@ void get_play_times(void) {
       else {
 	tmpstr=g_strdup_printf(_ ("Right Audio [%.2f sec]"),cfile->raudio_time);
       }
-      lives_label_set_text(GTK_LABEL(mainw->raudbar),tmpstr);
+      lives_label_set_text(LIVES_LABEL(mainw->raudbar),tmpstr);
       lives_widget_show (mainw->raudbar);
       g_free(tmpstr);
     }
@@ -2979,12 +2979,12 @@ minimise_aspect_delta (double aspect,int hblock,int vblock,int hsize,int vsize,i
 
 void zero_spinbuttons (void) {
   g_signal_handler_block(mainw->spinbutton_start,mainw->spin_start_func);
-  lives_spin_button_set_range(GTK_SPIN_BUTTON(mainw->spinbutton_start),0.,0.);
-  lives_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_start),0.);
+  lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->spinbutton_start),0.,0.);
+  lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start),0.);
   g_signal_handler_unblock(mainw->spinbutton_start,mainw->spin_start_func);
   g_signal_handler_block(mainw->spinbutton_end,mainw->spin_end_func);
-  lives_spin_button_set_range(GTK_SPIN_BUTTON(mainw->spinbutton_end),0.,0.);
-  lives_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_end),0.);
+  lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->spinbutton_end),0.,0.);
+  lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end),0.);
   g_signal_handler_unblock(mainw->spinbutton_end,mainw->spin_end_func);
 }
 
@@ -3444,10 +3444,10 @@ void set_menu_text(GtkWidget *menuitem, const char *text, boolean use_mnemonic) 
   if (GTK_IS_MENU_ITEM (menuitem)) {
     label=lives_bin_get_child(GTK_BIN(menuitem));
     if (use_mnemonic) {
-      lives_label_set_text_with_mnemonic(GTK_LABEL(label),text);
+      lives_label_set_text_with_mnemonic(LIVES_LABEL(label),text);
     }
     else {
-      lives_label_set_text(GTK_LABEL(label),text);
+      lives_label_set_text(LIVES_LABEL(label),text);
     }
   }
 }
@@ -3455,13 +3455,13 @@ void set_menu_text(GtkWidget *menuitem, const char *text, boolean use_mnemonic) 
 
 void get_menu_text(GtkWidget *menuitem, char *text) {
   GtkWidget *label=lives_bin_get_child(GTK_BIN(menuitem));
-  g_snprintf(text,255,"%s",gtk_label_get_text(GTK_LABEL(label)));
+  g_snprintf(text,255,"%s",gtk_label_get_text(LIVES_LABEL(label)));
 }
 
 void
 get_menu_text_long(GtkWidget *menuitem, char *text) {
   GtkWidget *label=lives_bin_get_child(GTK_BIN(menuitem));
-  g_snprintf(text,32768,"%s",gtk_label_get_text(GTK_LABEL(label)));
+  g_snprintf(text,32768,"%s",gtk_label_get_text(LIVES_LABEL(label)));
 }
 
 
@@ -3971,7 +3971,7 @@ set_sel_label (GtkWidget *sel_label) {
   char *sy,*sz;
 
   if (mainw->current_file==-1||!cfile->frames||mainw->multitrack!=NULL) {
-    lives_label_set_text(GTK_LABEL(sel_label),_ ("-------------Selection------------"));
+    lives_label_set_text(LIVES_LABEL(sel_label),_ ("-------------Selection------------"));
   }
   else {
     tstr=g_strdup_printf ("%.2f",calc_time_from_frame (mainw->current_file,cfile->end+1)-
@@ -3979,7 +3979,7 @@ set_sel_label (GtkWidget *sel_label) {
     frstr=g_strdup_printf ("%d",cfile->end-cfile->start+1);
 
     // TRANSLATORS: - try to keep the text of the middle part the same length, by deleting "-" if necessary
-    lives_label_set_text(GTK_LABEL(sel_label),(tmp=g_strconcat ("---------- [ ",tstr,(sy=(g_strdup(_(" sec ] ----------Selection---------- [ ")))),frstr,(sz=g_strdup(_(" frames ] ----------"))),NULL)));
+    lives_label_set_text(LIVES_LABEL(sel_label),(tmp=g_strconcat ("---------- [ ",tstr,(sy=(g_strdup(_(" sec ] ----------Selection---------- [ ")))),frstr,(sz=g_strdup(_(" frames ] ----------"))),NULL)));
     g_free(sy);
     g_free(sz);
 

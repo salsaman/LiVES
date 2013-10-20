@@ -1091,14 +1091,14 @@ static void lives_init(_ign_opts *ign_opts) {
 						      lives_widget_get_allocation_width(mainw->LiVES))/2;
       gint ycen=mainw->mgeom[prefs->gui_monitor-1].y+(mainw->mgeom[prefs->gui_monitor-1].height-
 						      lives_widget_get_allocation_height(mainw->LiVES))/2;
-      gtk_window_set_screen(GTK_WINDOW(mainw->LiVES),mainw->mgeom[prefs->gui_monitor-1].screen);
-      lives_window_move(GTK_WINDOW(mainw->LiVES),xcen,ycen);
+      gtk_window_set_screen(LIVES_WINDOW(mainw->LiVES),mainw->mgeom[prefs->gui_monitor-1].screen);
+      lives_window_move(LIVES_WINDOW(mainw->LiVES),xcen,ycen);
 
     }
 
 
     if (prefs->open_maximised&&prefs->show_gui) {
-      lives_window_maximize (GTK_WINDOW(mainw->LiVES));
+      lives_window_maximize (LIVES_WINDOW(mainw->LiVES));
     }
 
     prefs->default_fps=get_double_pref("default_fps");
@@ -3031,9 +3031,9 @@ void set_main_title(const gchar *file, gint untitled) {
     title=g_strdup_printf(_ ("LiVES-%s: <No File>"),LiVES_VERSION);
   }
 
-  lives_window_set_title (GTK_WINDOW (mainw->LiVES), title);
+  lives_window_set_title (LIVES_WINDOW (mainw->LiVES), title);
 
-  if (mainw->playing_file==-1&&mainw->play_window!=NULL) lives_window_set_title(GTK_WINDOW(mainw->play_window),title);
+  if (mainw->playing_file==-1&&mainw->play_window!=NULL) lives_window_set_title(LIVES_WINDOW(mainw->play_window),title);
 
   g_free(title);
 }
@@ -3170,13 +3170,13 @@ void sensitize(void) {
  
   if (mainw->current_file>0&&!(cfile->menuentry==NULL)) {
     g_signal_handler_block(mainw->spinbutton_end,mainw->spin_end_func);
-    lives_spin_button_set_range(GTK_SPIN_BUTTON(mainw->spinbutton_end),1,cfile->frames);
-    lives_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_end),cfile->end);
+    lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->spinbutton_end),1,cfile->frames);
+    lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end),cfile->end);
     g_signal_handler_unblock(mainw->spinbutton_end,mainw->spin_end_func);
     
     g_signal_handler_block(mainw->spinbutton_start,mainw->spin_start_func);
-    lives_spin_button_set_range(GTK_SPIN_BUTTON(mainw->spinbutton_start),1,cfile->frames);
-    lives_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_start),cfile->start);
+    lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->spinbutton_start),1,cfile->frames);
+    lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start),cfile->start);
     g_signal_handler_unblock(mainw->spinbutton_start,mainw->spin_start_func);
 
     lives_widget_set_sensitive(mainw->spinbutton_start,TRUE);
@@ -3326,12 +3326,12 @@ procw_desensitize(void) {
   // better to clamp the range than make insensitive, this way we stop
   // other widgets (like the video bar) updating it
   g_signal_handler_block(mainw->spinbutton_end,mainw->spin_end_func);
-  lives_spin_button_set_range(GTK_SPIN_BUTTON(mainw->spinbutton_end),cfile->end,cfile->end);
-  lives_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_end),cfile->end);
+  lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->spinbutton_end),cfile->end,cfile->end);
+  lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end),cfile->end);
   g_signal_handler_unblock(mainw->spinbutton_end,mainw->spin_end_func);
   g_signal_handler_block(mainw->spinbutton_start,mainw->spin_start_func);
-  lives_spin_button_set_range(GTK_SPIN_BUTTON(mainw->spinbutton_start),cfile->start,cfile->start);
-  lives_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_start),cfile->start);
+  lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->spinbutton_start),cfile->start,cfile->start);
+  lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start),cfile->start);
   g_signal_handler_unblock(mainw->spinbutton_start,mainw->spin_start_func);
 
   if (mainw->play_window!=NULL&&(mainw->prv_link==PRV_START||mainw->prv_link==PRV_END)) {
@@ -3734,8 +3734,8 @@ void load_preview_image(boolean update_always) {
     lives_object_unref(pixbuf);
     mainw->preview_frame=1;
     g_signal_handler_block(mainw->preview_spinbutton,mainw->preview_spin_func);
-    lives_spin_button_set_range(GTK_SPIN_BUTTON(mainw->preview_spinbutton),1,1);
-    lives_spin_button_set_value(GTK_SPIN_BUTTON(mainw->preview_spinbutton),1);
+    lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->preview_spinbutton),1,1);
+    lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->preview_spinbutton),1);
     g_signal_handler_unblock(mainw->preview_spinbutton,mainw->preview_spin_func);
     lives_widget_set_size_request(mainw->preview_image,mainw->pwidth,mainw->pheight);
 #if GTK_CHECK_VERSION(3,0,0)
@@ -3750,8 +3750,8 @@ void load_preview_image(boolean update_always) {
 
     mainw->preview_frame=0;
     g_signal_handler_block(mainw->preview_spinbutton,mainw->preview_spin_func);
-    lives_spin_button_set_range(GTK_SPIN_BUTTON(mainw->preview_spinbutton),0,0);
-    lives_spin_button_set_value(GTK_SPIN_BUTTON(mainw->preview_spinbutton),0);
+    lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->preview_spinbutton),0,0);
+    lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->preview_spinbutton),0);
     g_signal_handler_unblock(mainw->preview_spinbutton,mainw->preview_spin_func);
     if (mainw->imframe!=NULL) {
       lives_widget_set_size_request(mainw->preview_image,lives_pixbuf_get_width(mainw->imframe),lives_pixbuf_get_height(mainw->imframe));
@@ -3785,8 +3785,8 @@ void load_preview_image(boolean update_always) {
       }
 
       g_signal_handler_block(mainw->preview_spinbutton,mainw->preview_spin_func);
-      lives_spin_button_set_range(GTK_SPIN_BUTTON(mainw->preview_spinbutton),1,cfile->frames);
-      lives_spin_button_set_value(GTK_SPIN_BUTTON(mainw->preview_spinbutton),preview_frame);
+      lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->preview_spinbutton),1,cfile->frames);
+      lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->preview_spinbutton),preview_frame);
       g_signal_handler_unblock(mainw->preview_spinbutton,mainw->preview_spin_func);
 
       mainw->preview_frame=preview_frame;
@@ -3833,7 +3833,7 @@ void load_preview_image(boolean update_always) {
 	
     case PRV_START:
       if (cfile->start!=mainw->preview_frame) {
-	lives_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_start),mainw->preview_frame);
+	lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start),mainw->preview_frame);
 	get_play_times();
       }
       break;
@@ -3841,7 +3841,7 @@ void load_preview_image(boolean update_always) {
 
     case PRV_END:
       if (cfile->end!=mainw->preview_frame) {
-	lives_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_end),mainw->preview_frame);
+	lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end),mainw->preview_frame);
 	get_play_times();
       }
       break;
@@ -4815,7 +4815,7 @@ void load_frame_image(gint frame) {
       if ((!mainw->fs||prefs->play_monitor!=prefs->gui_monitor||
 	   (mainw->ext_playback&&!(mainw->vpp->capabilities&VPP_LOCAL_DISPLAY)))
 	  &&prefs->show_framecount) {
-	lives_entry_set_text(GTK_ENTRY(mainw->framecounter),framecount);
+	lives_entry_set_text(LIVES_ENTRY(mainw->framecounter),framecount);
       }
       g_free(framecount);
       framecount=NULL;
@@ -4849,7 +4849,7 @@ void load_frame_image(gint frame) {
 	  else {
 	    framecount=g_strdup_printf("%9d",frame);
 	  }
-	  lives_entry_set_text(GTK_ENTRY(mainw->framecounter),framecount);
+	  lives_entry_set_text(LIVES_ENTRY(mainw->framecounter),framecount);
 	  g_free(framecount);
 	  framecount=NULL;
 	}
@@ -5675,7 +5675,7 @@ void load_frame_image(gint frame) {
     lives_painter_t *cr = lives_painter_create_from_widget (mainw->playarea);
       
 
-    if (mainw->rec_vid_frames==-1) lives_entry_set_text(GTK_ENTRY(mainw->framecounter),(tmp=g_strdup_printf("%9d",frame)));
+    if (mainw->rec_vid_frames==-1) lives_entry_set_text(LIVES_ENTRY(mainw->framecounter),(tmp=g_strdup_printf("%9d",frame)));
     else {
       if (frame>mainw->rec_vid_frames) {
 	mainw->cancelled=CANCEL_KEEP;
@@ -5683,7 +5683,7 @@ void load_frame_image(gint frame) {
 	return;
       }
 
-      lives_entry_set_text(GTK_ENTRY(mainw->framecounter),(tmp=g_strdup_printf("%9d/%9d",frame,mainw->rec_vid_frames)));
+      lives_entry_set_text(LIVES_ENTRY(mainw->framecounter),(tmp=g_strdup_printf("%9d/%9d",frame,mainw->rec_vid_frames)));
       g_free(tmp);
     }
 
@@ -6089,9 +6089,9 @@ void close_current_file(gint file_to_switch_to) {
 
   set_sel_label(mainw->sel_label);
 
-  lives_label_set_text(GTK_LABEL(mainw->vidbar),_ ("Video"));
-  lives_label_set_text(GTK_LABEL(mainw->laudbar),_ ("Left Audio"));
-  lives_label_set_text(GTK_LABEL(mainw->raudbar),_ ("Right Audio"));
+  lives_label_set_text(LIVES_LABEL(mainw->vidbar),_ ("Video"));
+  lives_label_set_text(LIVES_LABEL(mainw->laudbar),_ ("Left Audio"));
+  lives_label_set_text(LIVES_LABEL(mainw->raudbar),_ ("Right Audio"));
     
   zero_spinbuttons();
   lives_widget_hide (mainw->hruler);
@@ -6154,8 +6154,8 @@ void switch_to_file(gint old_file, gint new_file) {
     mainw->play_end=cfile->frames;
 
     if (mainw->playing_file>-1) {
-      lives_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_pb_fps),cfile->pb_fps);
-      changed_fps_during_pb (GTK_SPIN_BUTTON(mainw->spinbutton_pb_fps), NULL);
+      lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps),cfile->pb_fps);
+      changed_fps_during_pb (LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), NULL);
     }
 
     if ((cfile->clip_type!=CLIP_TYPE_DISK&&cfile->clip_type!=CLIP_TYPE_FILE)||(mainw->event_list!=NULL&&!mainw->record)) 
@@ -6323,13 +6323,13 @@ void switch_to_file(gint old_file, gint new_file) {
       else {
 	if (!mainw->faded&&cfile->frames>0) {
 	  g_signal_handler_block(mainw->spinbutton_end,mainw->spin_end_func);
-	  lives_spin_button_set_range(GTK_SPIN_BUTTON(mainw->spinbutton_end),1,cfile->frames);
-	  lives_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_end),cfile->end);
+	  lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->spinbutton_end),1,cfile->frames);
+	  lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end),cfile->end);
 	  g_signal_handler_unblock(mainw->spinbutton_end,mainw->spin_end_func);
 	  
 	  g_signal_handler_block(mainw->spinbutton_start,mainw->spin_start_func);
-	  lives_spin_button_set_range(GTK_SPIN_BUTTON(mainw->spinbutton_start),1,cfile->frames);
-	  lives_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_start),cfile->start);
+	  lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->spinbutton_start),1,cfile->frames);
+	  lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start),cfile->start);
 	  g_signal_handler_unblock(mainw->spinbutton_start,mainw->spin_start_func);
           load_start_image(cfile->start);
           load_end_image(cfile->end);
@@ -6650,7 +6650,7 @@ void do_quick_switch (int new_file) {
 
   if (mainw->play_window!=NULL) {
     gchar *title=g_strdup(_("LiVES: - Play Window"));
-    lives_window_set_title (GTK_WINDOW (mainw->play_window), title);
+    lives_window_set_title (LIVES_WINDOW (mainw->play_window), title);
     g_free(title);
     if (mainw->double_size&&!mainw->fs&&(ohsize!=cfile->hsize||ovsize!=cfile->vsize)) {
       // for single size sepwin, we resize frames to fit the window
@@ -6668,8 +6668,8 @@ void do_quick_switch (int new_file) {
   // selection bounds)
   mainw->playing_sel=FALSE;
   
-  lives_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_pb_fps),cfile->pb_fps);
-  changed_fps_during_pb (GTK_SPIN_BUTTON(mainw->spinbutton_pb_fps), NULL);
+  lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps),cfile->pb_fps);
+  changed_fps_during_pb (LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), NULL);
 
   if (!cfile->frameno&&cfile->frames) cfile->frameno=1;
   cfile->last_frameno=cfile->frameno;
@@ -6803,8 +6803,8 @@ void resize (double scale) {
   lives_widget_set_size_request(mainw->LiVES,w,h);
 
   if (!mainw->foreign&&mainw->playing_file==-1&&mainw->current_file>0&&(!cfile->opening||cfile->clip_type==CLIP_TYPE_FILE)) {
-      lives_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_start),cfile->start);
-      lives_spin_button_set_value(GTK_SPIN_BUTTON(mainw->spinbutton_end),cfile->end);
+      lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start),cfile->start);
+      lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end),cfile->end);
       load_start_image(cfile->start);
       load_end_image(cfile->end);
   }

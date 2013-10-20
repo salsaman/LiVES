@@ -291,7 +291,7 @@ void create_LiVES (void) {
   g_object_ref(mainw->layout_textbuffer);
   mainw->affected_layouts_map=NULL;
 
-  mainw->LiVES = gtk_window_new (GTK_WINDOW_TOPLEVEL);
+  mainw->LiVES = gtk_window_new (LIVES_WINDOW_TOPLEVEL);
 
   if (prefs->present) 
     lives_window_present(LIVES_WINDOW(mainw->LiVES));
@@ -305,7 +305,7 @@ void create_LiVES (void) {
 		    NULL);
 
 
-  if (capable->smog_version_correct) gtk_window_set_decorated(GTK_WINDOW(mainw->LiVES),prefs->open_decorated);
+  if (capable->smog_version_correct) gtk_window_set_decorated(LIVES_WINDOW(mainw->LiVES),prefs->open_decorated);
 
   if (palette->style==STYLE_PLAIN) {
     // if gtk_widget_ensure_style is used, we can't grab external frames...
@@ -1784,13 +1784,13 @@ void create_LiVES (void) {
       gdk_pixbuf_saturate_and_pixelate(pixbuf,pixbuf,0.2,FALSE);
     }
 
-    mainw->m_sepwinbutton=GTK_WIDGET(gtk_tool_button_new(GTK_WIDGET(tmp_toolbar_icon),""));
+    mainw->m_sepwinbutton=LIVES_WIDGET(gtk_tool_button_new(GTK_WIDGET(tmp_toolbar_icon),""));
     gtk_toolbar_insert(GTK_TOOLBAR(mainw->btoolbar),GTK_TOOL_ITEM(mainw->m_sepwinbutton),0);
     lives_widget_set_tooltip_text(mainw->m_sepwinbutton,_("Show the play window (s)"));
     
     tmp_toolbar_icon = lives_image_new_from_stock ("gtk-media-rewind", gtk_toolbar_get_icon_size (GTK_TOOLBAR (mainw->btoolbar)));
     
-    mainw->m_rewindbutton=GTK_WIDGET(gtk_tool_button_new(GTK_WIDGET(tmp_toolbar_icon),""));
+    mainw->m_rewindbutton=LIVES_WIDGET(gtk_tool_button_new(GTK_WIDGET(tmp_toolbar_icon),""));
     gtk_toolbar_insert(GTK_TOOLBAR(mainw->btoolbar),GTK_TOOL_ITEM(mainw->m_rewindbutton),-1);
     lives_widget_set_tooltip_text(mainw->m_rewindbutton,_("Rewind to start (w)"));
     
@@ -1798,7 +1798,7 @@ void create_LiVES (void) {
     
     tmp_toolbar_icon = lives_image_new_from_stock ("gtk-media-play", gtk_toolbar_get_icon_size (GTK_TOOLBAR (mainw->btoolbar)));
     
-    mainw->m_playbutton=GTK_WIDGET(gtk_tool_button_new(GTK_WIDGET(tmp_toolbar_icon),""));
+    mainw->m_playbutton=LIVES_WIDGET(gtk_tool_button_new(GTK_WIDGET(tmp_toolbar_icon),""));
     gtk_toolbar_insert(GTK_TOOLBAR(mainw->btoolbar),GTK_TOOL_ITEM(mainw->m_playbutton),-1);
     lives_widget_set_tooltip_text(mainw->m_playbutton,_("Play all (p)"));
     lives_widget_set_sensitive(mainw->m_playbutton,FALSE);
@@ -1806,7 +1806,7 @@ void create_LiVES (void) {
 
     tmp_toolbar_icon = lives_image_new_from_stock ("gtk-media-stop", gtk_toolbar_get_icon_size (GTK_TOOLBAR (mainw->btoolbar)));
     
-    mainw->m_stopbutton=GTK_WIDGET(gtk_tool_button_new(GTK_WIDGET(tmp_toolbar_icon),""));
+    mainw->m_stopbutton=LIVES_WIDGET(gtk_tool_button_new(GTK_WIDGET(tmp_toolbar_icon),""));
     gtk_toolbar_insert(GTK_TOOLBAR(mainw->btoolbar),GTK_TOOL_ITEM(mainw->m_stopbutton),-1);
     lives_widget_set_tooltip_text(mainw->m_stopbutton,_("Stop playback (q)"));
     
@@ -1817,7 +1817,7 @@ void create_LiVES (void) {
     g_free(fnamex);
     tmp_toolbar_icon=lives_image_new_from_file (buff);
     
-    mainw->m_playselbutton=GTK_WIDGET(gtk_tool_button_new(GTK_WIDGET(tmp_toolbar_icon),""));
+    mainw->m_playselbutton=LIVES_WIDGET(gtk_tool_button_new(GTK_WIDGET(tmp_toolbar_icon),""));
     gtk_toolbar_insert(GTK_TOOLBAR(mainw->btoolbar),GTK_TOOL_ITEM(mainw->m_playselbutton),-1);
     lives_widget_set_tooltip_text(mainw->m_playselbutton,_("Play selection (y)"));
     
@@ -1833,7 +1833,7 @@ void create_LiVES (void) {
       gdk_pixbuf_saturate_and_pixelate(pixbuf,pixbuf,0.2,FALSE);
     }
     
-    mainw->m_loopbutton=GTK_WIDGET(gtk_tool_button_new(GTK_WIDGET(tmp_toolbar_icon),""));
+    mainw->m_loopbutton=LIVES_WIDGET(gtk_tool_button_new(GTK_WIDGET(tmp_toolbar_icon),""));
     gtk_toolbar_insert(GTK_TOOLBAR(mainw->btoolbar),GTK_TOOL_ITEM(mainw->m_loopbutton),-1);
     lives_widget_set_tooltip_text(mainw->m_loopbutton,_("Switch continuous looping on (o)"));
     
@@ -1846,7 +1846,7 @@ void create_LiVES (void) {
       gdk_pixbuf_saturate_and_pixelate(pixbuf,pixbuf,0.2,FALSE);
     }
     
-    mainw->m_mutebutton=GTK_WIDGET(gtk_tool_button_new(GTK_WIDGET(tmp_toolbar_icon),""));
+    mainw->m_mutebutton=LIVES_WIDGET(gtk_tool_button_new(GTK_WIDGET(tmp_toolbar_icon),""));
     gtk_toolbar_insert(GTK_TOOLBAR(mainw->btoolbar),GTK_TOOL_ITEM(mainw->m_mutebutton),-1);
     lives_widget_set_tooltip_text(mainw->m_mutebutton,_("Mute the audio (z)"));
 
@@ -1871,7 +1871,7 @@ void create_LiVES (void) {
 
   if (LIVES_IS_RANGE(mainw->volume_scale)) {
     if (capable->smog_version_correct) {
-      mainw->vol_label=GTK_WIDGET(gtk_tool_item_new());
+      mainw->vol_label=LIVES_WIDGET(gtk_tool_item_new());
       label=lives_label_new(_("Volume"));
       lives_container_add(LIVES_CONTAINER(mainw->vol_label),label);
       gtk_toolbar_insert(GTK_TOOLBAR(mainw->btoolbar),GTK_TOOL_ITEM(mainw->vol_label),-1);
@@ -1882,7 +1882,7 @@ void create_LiVES (void) {
 
   lives_widget_show(mainw->volume_scale);
 
-  mainw->vol_toolitem=GTK_WIDGET(gtk_tool_item_new());
+  mainw->vol_toolitem=LIVES_WIDGET(gtk_tool_item_new());
   gtk_tool_item_set_homogeneous(GTK_TOOL_ITEM(mainw->vol_toolitem),FALSE);
   gtk_tool_item_set_expand(GTK_TOOL_ITEM(mainw->vol_toolitem),TRUE);
 
@@ -1915,13 +1915,13 @@ void create_LiVES (void) {
   gtk_toolbar_set_icon_size (GTK_TOOLBAR(mainw->toolbar),LIVES_ICON_SIZE_SMALL_TOOLBAR);
   tmp_toolbar_icon = lives_image_new_from_stock ("gtk-stop", gtk_toolbar_get_icon_size (GTK_TOOLBAR (mainw->toolbar)));
   
-  mainw->t_stopbutton=GTK_WIDGET(gtk_tool_button_new(GTK_WIDGET(tmp_toolbar_icon),""));
+  mainw->t_stopbutton=LIVES_WIDGET(gtk_tool_button_new(GTK_WIDGET(tmp_toolbar_icon),""));
   gtk_toolbar_insert(GTK_TOOLBAR(mainw->toolbar),GTK_TOOL_ITEM(mainw->t_stopbutton),0);
   lives_widget_set_tooltip_text(mainw->t_stopbutton,_("Stop playback (q)"));
 
   tmp_toolbar_icon = lives_image_new_from_stock ("gtk-undo", gtk_toolbar_get_icon_size (GTK_TOOLBAR (mainw->toolbar)));
 
-  mainw->t_bckground=GTK_WIDGET(gtk_tool_button_new(GTK_WIDGET(tmp_toolbar_icon),""));
+  mainw->t_bckground=LIVES_WIDGET(gtk_tool_button_new(GTK_WIDGET(tmp_toolbar_icon),""));
   gtk_toolbar_insert(GTK_TOOLBAR(mainw->toolbar),GTK_TOOL_ITEM(mainw->t_bckground),1);
   lives_widget_set_tooltip_text(mainw->t_bckground,_("Unblank background (b)"));
 
@@ -1934,7 +1934,7 @@ void create_LiVES (void) {
     gdk_pixbuf_saturate_and_pixelate(pixbuf,pixbuf,0.2,FALSE);
   }
 
-  mainw->t_sepwin=GTK_WIDGET(gtk_tool_button_new(GTK_WIDGET(tmp_toolbar_icon),""));
+  mainw->t_sepwin=LIVES_WIDGET(gtk_tool_button_new(GTK_WIDGET(tmp_toolbar_icon),""));
   gtk_toolbar_insert(GTK_TOOLBAR(mainw->toolbar),GTK_TOOL_ITEM(mainw->t_sepwin),2);
   lives_widget_set_tooltip_text(mainw->t_sepwin,_("Play in separate window (s)"));
 
@@ -1946,7 +1946,7 @@ void create_LiVES (void) {
     pixbuf=lives_image_get_pixbuf(LIVES_IMAGE(tmp_toolbar_icon));
     gdk_pixbuf_saturate_and_pixelate(pixbuf,pixbuf,0.2,FALSE);
   }
-  mainw->t_double=GTK_WIDGET(gtk_tool_button_new(GTK_WIDGET(tmp_toolbar_icon),""));
+  mainw->t_double=LIVES_WIDGET(gtk_tool_button_new(GTK_WIDGET(tmp_toolbar_icon),""));
   lives_widget_set_tooltip_text(mainw->t_double,_("Double size (d)"));
 
   gtk_toolbar_insert(GTK_TOOLBAR(mainw->toolbar),GTK_TOOL_ITEM(mainw->t_double),3);
@@ -1960,45 +1960,45 @@ void create_LiVES (void) {
     gdk_pixbuf_saturate_and_pixelate(pixbuf,pixbuf,0.2,FALSE);
   }
 
-  mainw->t_fullscreen=GTK_WIDGET(gtk_tool_button_new(GTK_WIDGET(tmp_toolbar_icon),""));
+  mainw->t_fullscreen=LIVES_WIDGET(gtk_tool_button_new(GTK_WIDGET(tmp_toolbar_icon),""));
   gtk_toolbar_insert(GTK_TOOLBAR(mainw->toolbar),GTK_TOOL_ITEM(mainw->t_fullscreen),4);
   lives_widget_set_tooltip_text(mainw->t_fullscreen,_("Fullscreen playback (f)"));
 
   tmp_toolbar_icon = lives_image_new_from_stock ("gtk-remove", gtk_toolbar_get_icon_size (GTK_TOOLBAR (mainw->toolbar)));
 
 
-  mainw->t_slower=GTK_WIDGET(gtk_tool_button_new(GTK_WIDGET(tmp_toolbar_icon),""));
+  mainw->t_slower=LIVES_WIDGET(gtk_tool_button_new(GTK_WIDGET(tmp_toolbar_icon),""));
   gtk_toolbar_insert(GTK_TOOLBAR(mainw->toolbar),GTK_TOOL_ITEM(mainw->t_slower),5);
   lives_widget_set_tooltip_text(mainw->t_slower,_("Play slower (ctrl-down)"));
 
   tmp_toolbar_icon = lives_image_new_from_stock ("gtk-add", gtk_toolbar_get_icon_size (GTK_TOOLBAR (mainw->toolbar)));
 
-  mainw->t_faster=GTK_WIDGET(gtk_tool_button_new(GTK_WIDGET(tmp_toolbar_icon),""));
+  mainw->t_faster=LIVES_WIDGET(gtk_tool_button_new(GTK_WIDGET(tmp_toolbar_icon),""));
   gtk_toolbar_insert(GTK_TOOLBAR(mainw->toolbar),GTK_TOOL_ITEM(mainw->t_faster),6);
   lives_widget_set_tooltip_text(mainw->t_faster,_("Play faster (ctrl-up)"));
 
 
   tmp_toolbar_icon = lives_image_new_from_stock ("gtk-go-back", gtk_toolbar_get_icon_size (GTK_TOOLBAR (mainw->toolbar)));
 
-  mainw->t_back=GTK_WIDGET(gtk_tool_button_new(GTK_WIDGET(tmp_toolbar_icon),""));
+  mainw->t_back=LIVES_WIDGET(gtk_tool_button_new(GTK_WIDGET(tmp_toolbar_icon),""));
   gtk_toolbar_insert(GTK_TOOLBAR(mainw->toolbar),GTK_TOOL_ITEM(mainw->t_back),7);
   lives_widget_set_tooltip_text(mainw->t_back,_("Skip back (ctrl-left)"));
 
   tmp_toolbar_icon = lives_image_new_from_stock ("gtk-go-forward", gtk_toolbar_get_icon_size (GTK_TOOLBAR (mainw->toolbar)));
 
-  mainw->t_forward=GTK_WIDGET(gtk_tool_button_new(GTK_WIDGET(tmp_toolbar_icon),""));
+  mainw->t_forward=LIVES_WIDGET(gtk_tool_button_new(GTK_WIDGET(tmp_toolbar_icon),""));
   gtk_toolbar_insert(GTK_TOOLBAR(mainw->toolbar),GTK_TOOL_ITEM(mainw->t_forward),8);
   lives_widget_set_tooltip_text(mainw->t_forward,_("Skip forward (ctrl-right)"));
 
   tmp_toolbar_icon = lives_image_new_from_stock ("gtk-dialog-info", gtk_toolbar_get_icon_size (GTK_TOOLBAR (mainw->toolbar)));
 
-  mainw->t_infobutton=GTK_WIDGET(gtk_tool_button_new(GTK_WIDGET(tmp_toolbar_icon),""));
+  mainw->t_infobutton=LIVES_WIDGET(gtk_tool_button_new(GTK_WIDGET(tmp_toolbar_icon),""));
   gtk_toolbar_insert(GTK_TOOLBAR(mainw->toolbar),GTK_TOOL_ITEM(mainw->t_infobutton),9);
   lives_widget_set_tooltip_text(mainw->t_infobutton,_("Show clip info (i)"));
 
   tmp_toolbar_icon = lives_image_new_from_stock ("gtk-cancel", gtk_toolbar_get_icon_size (GTK_TOOLBAR (mainw->toolbar)));
 
-  mainw->t_hide=GTK_WIDGET(gtk_tool_button_new(GTK_WIDGET(tmp_toolbar_icon),""));
+  mainw->t_hide=LIVES_WIDGET(gtk_tool_button_new(GTK_WIDGET(tmp_toolbar_icon),""));
   gtk_toolbar_insert(GTK_TOOLBAR(mainw->toolbar),GTK_TOOL_ITEM(mainw->t_hide),10);
   lives_widget_set_tooltip_text(mainw->t_hide,_("Hide this toolbar"));
 
@@ -2070,8 +2070,8 @@ void create_LiVES (void) {
   lives_widget_show (mainw->framecounter);
   lives_box_pack_start (LIVES_BOX (mainw->framebar), mainw->framecounter, FALSE, TRUE, 0);
   lives_entry_set_editable (LIVES_ENTRY (mainw->framecounter), FALSE);
-  gtk_entry_set_has_frame (GTK_ENTRY (mainw->framecounter), FALSE);
-  lives_entry_set_width_chars (GTK_ENTRY (mainw->framecounter), 18);
+  gtk_entry_set_has_frame (LIVES_ENTRY (mainw->framecounter), FALSE);
+  lives_entry_set_width_chars (LIVES_ENTRY (mainw->framecounter), 18);
 
   lives_widget_set_can_focus (mainw->framecounter, FALSE);
 
@@ -2267,7 +2267,7 @@ void create_LiVES (void) {
     lives_widget_set_fg_color(mainw->arrow1, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
   }
 
-  lives_entry_set_width_chars (GTK_ENTRY (mainw->spinbutton_start),12);
+  lives_entry_set_width_chars (LIVES_ENTRY (mainw->spinbutton_start),12);
   mainw->sel_label = lives_standard_label_new(NULL);
 
   if (palette->style&STYLE_1) {
@@ -2298,7 +2298,7 @@ void create_LiVES (void) {
   lives_widget_show (mainw->spinbutton_end);
 
 
-  lives_entry_set_width_chars (GTK_ENTRY (mainw->spinbutton_end),12);
+  lives_entry_set_width_chars (LIVES_ENTRY (mainw->spinbutton_end),12);
 
   if (palette->style&STYLE_1&&palette->style&STYLE_2) {
 #if !GTK_CHECK_VERSION(3,0,0)
@@ -3087,7 +3087,7 @@ void create_LiVES (void) {
                       G_CALLBACK (frame_context),
                       GINT_TO_POINTER (2));
 
-  gtk_window_add_accel_group (GTK_WINDOW (mainw->LiVES), mainw->accel_group);
+  gtk_window_add_accel_group (LIVES_WINDOW (mainw->LiVES), mainw->accel_group);
   mainw->laudio_drawable=NULL;
   mainw->raudio_drawable=NULL;
   mainw->video_drawable=NULL;
@@ -3551,7 +3551,7 @@ void make_preview_box (void) {
 							      1., 10., 0,
 							      LIVES_BOX(hbox),_("Frame number to preview"));
 
-  mainw->preview_scale=lives_hscale_new(gtk_spin_button_get_adjustment(GTK_SPIN_BUTTON(mainw->preview_spinbutton)));
+  mainw->preview_scale=lives_hscale_new(gtk_spin_button_get_adjustment(LIVES_SPIN_BUTTON(mainw->preview_spinbutton)));
   gtk_scale_set_draw_value(GTK_SCALE(mainw->preview_scale),FALSE);
 
   if (palette->style&STYLE_1) {
@@ -3564,7 +3564,7 @@ void make_preview_box (void) {
   lives_box_pack_start (LIVES_BOX (mainw->preview_controls), mainw->preview_scale,FALSE, FALSE, 0);
   lives_box_pack_start (LIVES_BOX (mainw->preview_controls), hbox, FALSE, FALSE, 0);
 
-  lives_entry_set_width_chars (GTK_ENTRY (mainw->preview_spinbutton),8);
+  lives_entry_set_width_chars (LIVES_ENTRY (mainw->preview_spinbutton),8);
 
   radiobutton_free=lives_standard_radio_button_new((tmp=g_strdup(_ ("_Free"))),TRUE,radiobutton_group,LIVES_BOX(hbox),
 						   (tmp2=g_strdup(_("Free choice of frame number"))));
@@ -3748,7 +3748,7 @@ void play_window_set_title(void) {
     lives_window_set_title (LIVES_WINDOW (mainw->play_window), title);
   }
   else {
-    title=g_strdup_printf("%s%s",gtk_window_get_title(GTK_WINDOW
+    title=g_strdup_printf("%s%s",gtk_window_get_title(LIVES_WINDOW
 						      (mainw->multitrack==NULL?mainw->LiVES:
 						       mainw->multitrack->window)),xtrabit);
     lives_window_set_title(LIVES_WINDOW(mainw->play_window),title);
@@ -3812,15 +3812,15 @@ void make_play_window(void) {
     kill_play_window();
   } 
   
-  mainw->play_window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
+  mainw->play_window = gtk_window_new (LIVES_WINDOW_TOPLEVEL);
 
   gtk_widget_set_events (mainw->play_window, GDK_SCROLL_MASK);
 
   // cannot do this or it forces showing on the GUI monitor
-  //gtk_window_set_position(GTK_WINDOW(mainw->play_window),GTK_WIN_POS_CENTER_ALWAYS);
+  //gtk_window_set_position(LIVES_WINDOW(mainw->play_window),GTK_WIN_POS_CENTER_ALWAYS);
 
-  if (mainw->multitrack==NULL) gtk_window_add_accel_group (GTK_WINDOW (mainw->play_window), mainw->accel_group);
-  else gtk_window_add_accel_group (GTK_WINDOW (mainw->play_window), mainw->multitrack->accel_group);
+  if (mainw->multitrack==NULL) gtk_window_add_accel_group (LIVES_WINDOW (mainw->play_window), mainw->accel_group);
+  else gtk_window_add_accel_group (LIVES_WINDOW (mainw->play_window), mainw->multitrack->accel_group);
 
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color (mainw->play_window, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
@@ -4019,7 +4019,7 @@ void resize_play_window (void) {
 
       if (lives_widget_is_visible (mainw->play_window)) {
 	// store old postion of window
-	gtk_window_get_position (GTK_WINDOW (mainw->play_window),&opwx,&opwy);
+	gtk_window_get_position (LIVES_WINDOW (mainw->play_window),&opwx,&opwy);
 	if (opwx*opwy) {
 	  mainw->opwx=opwx;
 	  mainw->opwy=opwy;
@@ -4034,7 +4034,7 @@ void resize_play_window (void) {
 	else lives_window_move (LIVES_WINDOW (mainw->play_window), 0, 0);
       }
       else {
-	gtk_window_set_screen(GTK_WINDOW(mainw->play_window),mainw->mgeom[pmonitor-1].screen);
+	gtk_window_set_screen(LIVES_WINDOW(mainw->play_window),mainw->mgeom[pmonitor-1].screen);
 	if (mainw->vpp!=NULL&&mainw->vpp->fwidth>0) {
 	  lives_window_move (LIVES_WINDOW (mainw->play_window), mainw->mgeom[pmonitor-1].x+
 			   (mainw->mgeom[pmonitor-1].width-mainw->vpp->fwidth)/2,
@@ -4109,7 +4109,7 @@ void resize_play_window (void) {
 	    (*mainw->vpp->exit_screen)(mainw->ptr_x,mainw->ptr_y);
 	  }
 	  if (mainw->vpp->capabilities&VPP_LOCAL_DISPLAY&&pmonitor==0) 
-	    gtk_window_set_keep_below(GTK_WINDOW(mainw->play_window),FALSE);
+	    gtk_window_set_keep_below(LIVES_WINDOW(mainw->play_window),FALSE);
 	}
 
 #ifdef RT_AUDIO
@@ -4122,7 +4122,7 @@ void resize_play_window (void) {
 #endif
 
 	if (mainw->vpp->capabilities&VPP_LOCAL_DISPLAY&&pmonitor==0) 
-	  gtk_window_set_keep_below(GTK_WINDOW(mainw->play_window),TRUE);
+	  gtk_window_set_keep_below(LIVES_WINDOW(mainw->play_window),TRUE);
 
 	if ((mainw->vpp->init_screen==NULL)||((*mainw->vpp->init_screen)
 					      (mainw->pwidth,mainw->pheight*(fixed_size?1:prefs->virt_height),
@@ -4181,7 +4181,7 @@ void resize_play_window (void) {
       else {
 	gint xcen=mainw->mgeom[pmonitor-1].x+(mainw->mgeom[pmonitor-1].width-mainw->pwidth)/2;
 	gint ycen=mainw->mgeom[pmonitor-1].y+(mainw->mgeom[pmonitor-1].height-mainw->pheight)/2;
-	gtk_window_set_screen(GTK_WINDOW(mainw->play_window),mainw->mgeom[pmonitor-1].screen);
+	gtk_window_set_screen(LIVES_WINDOW(mainw->play_window),mainw->mgeom[pmonitor-1].screen);
 	lives_window_move (LIVES_WINDOW (mainw->play_window), xcen, ycen);
       }
     }
@@ -4198,7 +4198,7 @@ void resize_play_window (void) {
 
       if (mainw->opwx>=0&&mainw->opwy>=0) {
 	// move window back to its old position after play
-	if (pmonitor>0) gtk_window_set_screen(GTK_WINDOW(mainw->play_window),mainw->mgeom[pmonitor-1].screen);
+	if (pmonitor>0) gtk_window_set_screen(LIVES_WINDOW(mainw->play_window),mainw->mgeom[pmonitor-1].screen);
 	lives_window_move (LIVES_WINDOW (mainw->play_window), mainw->opwx, mainw->opwy);
       }
       else {
@@ -4206,7 +4206,7 @@ void resize_play_window (void) {
 					  (mainw->scr_height-mainw->pheight-mainw->sepwin_minheight*2)/2);
 	else {
 	  gint xcen=mainw->mgeom[pmonitor-1].x+(mainw->mgeom[pmonitor-1].width-mainw->pwidth)/2;
-	  gtk_window_set_screen(GTK_WINDOW(mainw->play_window),mainw->mgeom[pmonitor-1].screen);
+	  gtk_window_set_screen(LIVES_WINDOW(mainw->play_window),mainw->mgeom[pmonitor-1].screen);
 	  lives_window_move (LIVES_WINDOW (mainw->play_window), xcen, (mainw->mgeom[pmonitor-1].height-mainw->pheight-mainw->sepwin_minheight*2)/2);
 	}
       }
@@ -4216,7 +4216,7 @@ void resize_play_window (void) {
 					(mainw->scr_height-mainw->pheight-mainw->sepwin_minheight*2)/2);
       else {
 	gint xcen=mainw->mgeom[gmonitor-1].x+(mainw->mgeom[gmonitor-1].width-mainw->pwidth)/2;
-	gtk_window_set_screen(GTK_WINDOW(mainw->play_window),mainw->mgeom[gmonitor-1].screen);
+	gtk_window_set_screen(LIVES_WINDOW(mainw->play_window),mainw->mgeom[gmonitor-1].screen);
 	lives_window_move (LIVES_WINDOW (mainw->play_window), xcen, (mainw->mgeom[gmonitor-1].height-mainw->pheight-mainw->sepwin_minheight*2)/2);
       }
     }
@@ -4309,16 +4309,16 @@ void splash_init(void) {
 
   gtk_window_set_auto_startup_notification(FALSE);
 
-  mainw->splash_window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
+  mainw->splash_window = gtk_window_new (LIVES_WINDOW_TOPLEVEL);
 
-  if (gtk_widget_get_direction(GTK_WIDGET(mainw->splash_window))==GTK_TEXT_DIR_LTR) 
+  if (gtk_widget_get_direction(LIVES_WIDGET(mainw->splash_window))==GTK_TEXT_DIR_LTR) 
     widget_opts.default_justify=LIVES_JUSTIFY_LEFT;
   else 
     widget_opts.default_justify=LIVES_JUSTIFY_RIGHT;
 
   if (prefs->show_splash) {
 
-    gtk_window_set_type_hint(GTK_WINDOW(mainw->splash_window),GDK_WINDOW_TYPE_HINT_SPLASHSCREEN);
+    gtk_window_set_type_hint(LIVES_WINDOW(mainw->splash_window),GDK_WINDOW_TYPE_HINT_SPLASHSCREEN);
   
     if (palette->style&STYLE_1) {
       lives_widget_set_bg_color(mainw->splash_window, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
@@ -4360,7 +4360,7 @@ void splash_init(void) {
 
 
     if (prefs->gui_monitor>0) {
-      gtk_window_set_screen(GTK_WINDOW(mainw->splash_window),mainw->mgeom[prefs->gui_monitor-1].screen);
+      gtk_window_set_screen(LIVES_WINDOW(mainw->splash_window),mainw->mgeom[prefs->gui_monitor-1].screen);
     }
 
     lives_window_center(LIVES_WINDOW(mainw->splash_window));

@@ -64,7 +64,7 @@ static GtkWidget *add_deinterlace_checkbox(GtkBox *for_deint) {
 			  &mainw->open_deint);
   lives_widget_set_tooltip_text( checkbutton,_("If this is set, frames will be deinterlaced as they are imported."));
 
-  lives_widget_show_all(GTK_WIDGET(for_deint));
+  lives_widget_show_all(LIVES_WIDGET(for_deint));
 
   return hbox;
 }
@@ -180,14 +180,14 @@ xprocess * create_processing (const gchar *text) {
   procw->processing = lives_standard_dialog_new (_("LiVES: - Processing..."),FALSE);
   widget_opts.non_modal=FALSE;
 
-  gtk_window_add_accel_group (GTK_WINDOW (procw->processing), accel_group);
+  gtk_window_add_accel_group (LIVES_WINDOW (procw->processing), accel_group);
 
   if (prefs->show_gui) {
-    if (mainw->multitrack==NULL) gtk_window_set_transient_for(GTK_WINDOW(procw->processing),GTK_WINDOW(mainw->LiVES));
-    else gtk_window_set_transient_for(GTK_WINDOW(procw->processing),GTK_WINDOW(mainw->multitrack->window));
+    if (mainw->multitrack==NULL) gtk_window_set_transient_for(LIVES_WINDOW(procw->processing),GTK_WINDOW(mainw->LiVES));
+    else gtk_window_set_transient_for(LIVES_WINDOW(procw->processing),GTK_WINDOW(mainw->multitrack->window));
   }
 
-  dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(procw->processing));
+  dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(procw->processing));
   lives_widget_show (dialog_vbox);
 
   vbox2 = lives_vbox_new (FALSE, 0);
@@ -256,11 +256,11 @@ xprocess * create_processing (const gchar *text) {
   if (cfile->nokeep) procw->pause_button = lives_button_new_with_mnemonic (_ ("Paus_e"));
   else procw->pause_button = lives_button_new_with_mnemonic (_ ("Pause/_Enough"));
 
-  lives_dialog_add_action_widget (GTK_DIALOG (procw->processing), procw->preview_button, 1);
+  lives_dialog_add_action_widget (LIVES_DIALOG (procw->processing), procw->preview_button, 1);
   lives_widget_hide(procw->preview_button);
   lives_widget_set_can_focus_and_default (procw->preview_button);
     
-  lives_dialog_add_action_widget (GTK_DIALOG (procw->processing), procw->pause_button, 0);
+  lives_dialog_add_action_widget (LIVES_DIALOG (procw->processing), procw->pause_button, 0);
   lives_widget_hide(procw->pause_button);
   lives_widget_set_can_focus_and_default (procw->pause_button);
 
@@ -275,14 +275,14 @@ xprocess * create_processing (const gchar *text) {
 #endif
 	) {
       // the "enough" button for opening
-      lives_dialog_add_action_widget (GTK_DIALOG (procw->processing), procw->stop_button, 0);
+      lives_dialog_add_action_widget (LIVES_DIALOG (procw->processing), procw->stop_button, 0);
       lives_widget_show(procw->stop_button);
       lives_widget_set_can_focus_and_default (procw->stop_button);
     }
   }
   
   procw->cancel_button = lives_button_new_with_mnemonic (_ ("_Cancel"));
-  lives_dialog_add_action_widget (GTK_DIALOG (procw->processing), procw->cancel_button, GTK_RESPONSE_CANCEL);
+  lives_dialog_add_action_widget (LIVES_DIALOG (procw->processing), procw->cancel_button, GTK_RESPONSE_CANCEL);
   lives_widget_set_can_focus_and_default (procw->cancel_button);
 
   lives_widget_add_accelerator (procw->cancel_button, "activate", accel_group,
@@ -361,14 +361,14 @@ lives_clipinfo_t *create_clip_info_window (int audio_channels, boolean is_mt) {
   g_free(title);
 
   accel_group = GTK_ACCEL_GROUP(lives_accel_group_new ());
-  gtk_window_add_accel_group (GTK_WINDOW (filew->dialog), accel_group);
+  gtk_window_add_accel_group (LIVES_WINDOW (filew->dialog), accel_group);
 
   if (prefs->show_gui) {
-    if (mainw->multitrack==NULL) gtk_window_set_transient_for(GTK_WINDOW(filew->dialog),GTK_WINDOW(mainw->LiVES));
-    else gtk_window_set_transient_for(GTK_WINDOW(filew->dialog),GTK_WINDOW(mainw->multitrack->window));
+    if (mainw->multitrack==NULL) gtk_window_set_transient_for(LIVES_WINDOW(filew->dialog),GTK_WINDOW(mainw->LiVES));
+    else gtk_window_set_transient_for(LIVES_WINDOW(filew->dialog),GTK_WINDOW(mainw->multitrack->window));
   }
 
-  dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(filew->dialog));
+  dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(filew->dialog));
 
   if (cfile->frames>0||is_mt) {
     frame4 = gtk_frame_new (NULL);
@@ -568,7 +568,7 @@ lives_clipinfo_t *create_clip_info_window (int audio_channels, boolean is_mt) {
   gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area), GTK_BUTTONBOX_SPREAD);
 
   okbutton = gtk_button_new_from_stock ("gtk-ok");
-  lives_dialog_add_action_widget (GTK_DIALOG (filew->dialog), okbutton, GTK_RESPONSE_OK);
+  lives_dialog_add_action_widget (LIVES_DIALOG (filew->dialog), okbutton, GTK_RESPONSE_OK);
   lives_widget_set_can_focus_and_default (okbutton);
   gtk_widget_grab_default (okbutton);
 
@@ -579,7 +579,7 @@ lives_clipinfo_t *create_clip_info_window (int audio_channels, boolean is_mt) {
                       filew);
 
   accel_group = GTK_ACCEL_GROUP(lives_accel_group_new ());
-  gtk_window_add_accel_group (GTK_WINDOW (filew->dialog), accel_group);
+  gtk_window_add_accel_group (LIVES_WINDOW (filew->dialog), accel_group);
 
   lives_widget_add_accelerator (okbutton, "activate", accel_group,
                               LIVES_KEY_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
@@ -623,10 +623,10 @@ GtkWidget* create_encoder_prep_dialog (const gchar *text1, const gchar *text2, b
   dialog = lives_standard_dialog_new (_("LiVES: - Encoding options"),FALSE);
 
   if (prefs->show_gui) {
-    gtk_window_set_transient_for(GTK_WINDOW(dialog),GTK_WINDOW(mainw->LiVES));
+    gtk_window_set_transient_for(LIVES_WINDOW(dialog),GTK_WINDOW(mainw->LiVES));
   }
 
-  dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(dialog));
+  dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
 
   widget_opts.justify=LIVES_JUSTIFY_CENTER;
   label = lives_standard_label_new (text1);
@@ -696,10 +696,10 @@ GtkWidget* create_encoder_prep_dialog (const gchar *text1, const gchar *text2, b
     okbutton = lives_button_new_with_mnemonic (_("Use _recommended settings"));
   }
 
-  lives_dialog_add_action_widget (GTK_DIALOG (dialog), cancelbutton, GTK_RESPONSE_CANCEL);
+  lives_dialog_add_action_widget (LIVES_DIALOG (dialog), cancelbutton, GTK_RESPONSE_CANCEL);
   lives_widget_set_can_focus_and_default (cancelbutton);
 
-  lives_dialog_add_action_widget (GTK_DIALOG (dialog), okbutton, GTK_RESPONSE_OK);
+  lives_dialog_add_action_widget (LIVES_DIALOG (dialog), okbutton, GTK_RESPONSE_OK);
 
   lives_widget_set_can_focus_and_default (okbutton);
   gtk_widget_grab_default (okbutton);
@@ -734,21 +734,21 @@ GtkWidget* create_info_error_dialog (const gchar *text, boolean is_blocking, int
     dialog = gtk_message_dialog_new (NULL,(GtkDialogFlags)0,
 				     GTK_MESSAGE_INFO,GTK_BUTTONS_NONE,"%s","");
 
-  lives_window_set_title (GTK_WINDOW (dialog), _("LiVES"));
+  lives_window_set_title (LIVES_WINDOW (dialog), _("LiVES"));
   
-  gtk_window_set_deletable(GTK_WINDOW(dialog), FALSE);
-  gtk_window_set_resizable (GTK_WINDOW (dialog), FALSE);
+  gtk_window_set_deletable(LIVES_WINDOW(dialog), FALSE);
+  gtk_window_set_resizable (LIVES_WINDOW (dialog), FALSE);
 
   lives_container_set_border_width (LIVES_CONTAINER (dialog), widget_opts.border_width*2);
 
-  gtk_window_add_accel_group (GTK_WINDOW (dialog), accel_group);
+  gtk_window_add_accel_group (LIVES_WINDOW (dialog), accel_group);
 
   if (mainw!=NULL&&widget_opts.apply_theme&&palette->style&STYLE_1) {
-    lives_dialog_set_has_separator(GTK_DIALOG(dialog),FALSE);
+    lives_dialog_set_has_separator(LIVES_DIALOG(dialog),FALSE);
     lives_widget_set_bg_color(dialog, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
   }
 
-  dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(dialog));
+  dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
 
   textx=insert_newlines(text,MAX_MSG_WIDTH_CHARS);
 
@@ -760,7 +760,7 @@ GtkWidget* create_info_error_dialog (const gchar *text, boolean is_blocking, int
   g_free(form_text);
   g_free(textx);
 
-  gtk_label_set_selectable (GTK_LABEL (info_text), TRUE);
+  gtk_label_set_selectable (LIVES_LABEL (info_text), TRUE);
 
   hbox = lives_hbox_new (FALSE, 0);
   lives_box_pack_start (LIVES_BOX (dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
@@ -784,14 +784,14 @@ GtkWidget* create_info_error_dialog (const gchar *text, boolean is_blocking, int
 
   if (mainw->iochan!=NULL) {
     details_button = lives_button_new_with_mnemonic(_("Show _Details"));
-    lives_dialog_add_action_widget (GTK_DIALOG (dialog), details_button, GTK_RESPONSE_YES);
+    lives_dialog_add_action_widget (LIVES_DIALOG (dialog), details_button, GTK_RESPONSE_YES);
     g_signal_connect (GTK_OBJECT (details_button), "clicked",
 		      G_CALLBACK (on_details_button_clicked),
 		      NULL);
   }
   
   info_ok_button = gtk_button_new_from_stock ("gtk-ok");
-  lives_dialog_add_action_widget (GTK_DIALOG (dialog), info_ok_button, GTK_RESPONSE_OK);
+  lives_dialog_add_action_widget (LIVES_DIALOG (dialog), info_ok_button, GTK_RESPONSE_OK);
 
 
   if (mainw->iochan==NULL) {
@@ -810,10 +810,10 @@ GtkWidget* create_info_error_dialog (const gchar *text, boolean is_blocking, int
 
 
   lives_widget_show_all(dialog);
-  if (is_blocking) gtk_window_set_modal (GTK_WINDOW (dialog), TRUE);
+  if (is_blocking) gtk_window_set_modal (LIVES_WINDOW (dialog), TRUE);
 
   if (prefs->present) {
-    lives_window_present (GTK_WINDOW (dialog));
+    lives_window_present (LIVES_WINDOW (dialog));
     gdk_window_raise (lives_widget_get_xwindow(dialog));
   }
 
@@ -843,15 +843,15 @@ text_window *create_text_window (const gchar *title, const gchar *text, GtkTextB
   g_free(tmp);
 
   if (prefs->show_gui) {
-    gtk_window_set_transient_for(GTK_WINDOW(textwindow->dialog),mainw->multitrack==NULL?
-				 GTK_WINDOW(mainw->LiVES):GTK_WINDOW(mainw->multitrack->window));
+    gtk_window_set_transient_for(LIVES_WINDOW(textwindow->dialog),mainw->multitrack==NULL?
+				 LIVES_WINDOW(mainw->LiVES):GTK_WINDOW(mainw->multitrack->window));
   }
 
-  dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(textwindow->dialog));
+  dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(textwindow->dialog));
 
 
   if (mainw->iochan!=NULL) {
-    textwindow->textview=GTK_WIDGET(mainw->optextview);
+    textwindow->textview=LIVES_WIDGET(mainw->optextview);
   }
   else {
     if (textbuffer!=NULL) textwindow->textview = gtk_text_view_new_with_buffer(textbuffer);
@@ -886,8 +886,8 @@ text_window *create_text_window (const gchar *title, const gchar *text, GtkTextB
     okbutton = lives_button_new_with_mnemonic (_("_Close Window"));
 
     GtkWidget *savebutton = lives_button_new_with_mnemonic (_("_Save to file"));
-    lives_dialog_add_action_widget (GTK_DIALOG (textwindow->dialog), savebutton, GTK_RESPONSE_YES);
-    lives_dialog_add_action_widget (GTK_DIALOG (textwindow->dialog), okbutton, GTK_RESPONSE_OK);
+    lives_dialog_add_action_widget (LIVES_DIALOG (textwindow->dialog), savebutton, GTK_RESPONSE_YES);
+    lives_dialog_add_action_widget (LIVES_DIALOG (textwindow->dialog), okbutton, GTK_RESPONSE_OK);
     
     g_signal_connect (GTK_OBJECT (savebutton), "clicked",
 		      G_CALLBACK (on_save_textview_clicked),
@@ -983,13 +983,13 @@ _insertw* create_insert_dialog (void) {
 
   insertw->insert_dialog = lives_standard_dialog_new (_("LiVES: - Insert"),FALSE);
 
-  gtk_window_add_accel_group (GTK_WINDOW (insertw->insert_dialog), accel_group);
+  gtk_window_add_accel_group (LIVES_WINDOW (insertw->insert_dialog), accel_group);
 
   if (prefs->show_gui) {
-    gtk_window_set_transient_for(GTK_WINDOW(insertw->insert_dialog),GTK_WINDOW(mainw->LiVES));
+    gtk_window_set_transient_for(LIVES_WINDOW(insertw->insert_dialog),GTK_WINDOW(mainw->LiVES));
   }
 
-  dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(insertw->insert_dialog));
+  dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(insertw->insert_dialog));
 
   hbox1 = lives_hbox_new (FALSE, 0);
 
@@ -1009,7 +1009,7 @@ _insertw* create_insert_dialog (void) {
 
   insertw->fit_checkbutton = lives_standard_check_button_new (_("_Insert to fit audio"),TRUE,LIVES_BOX(hbox),NULL);
 
-  lives_widget_set_sensitive(GTK_WIDGET(insertw->fit_checkbutton),cfile->achans>0&&clipboard->achans==0);
+  lives_widget_set_sensitive(LIVES_WIDGET(insertw->fit_checkbutton),cfile->achans>0&&clipboard->achans==0);
 
   add_hsep_to_box (LIVES_BOX (dialog_vbox));
 
@@ -1093,10 +1093,10 @@ _insertw* create_insert_dialog (void) {
   gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area), GTK_BUTTONBOX_END);
 
   cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
-  lives_dialog_add_action_widget (GTK_DIALOG (insertw->insert_dialog), cancelbutton, GTK_RESPONSE_CANCEL);
+  lives_dialog_add_action_widget (LIVES_DIALOG (insertw->insert_dialog), cancelbutton, GTK_RESPONSE_CANCEL);
 
   okbutton = gtk_button_new_from_stock ("gtk-ok");
-  lives_dialog_add_action_widget (GTK_DIALOG (insertw->insert_dialog), okbutton, GTK_RESPONSE_OK);
+  lives_dialog_add_action_widget (LIVES_DIALOG (insertw->insert_dialog), okbutton, GTK_RESPONSE_OK);
   lives_widget_set_can_focus_and_default (okbutton);
   gtk_widget_grab_default(okbutton);
   lives_widget_grab_focus(okbutton);
@@ -1149,12 +1149,12 @@ GtkWidget *create_opensel_dialog (void) {
   opensel_dialog = lives_standard_dialog_new (_("LiVES: - Open Selection"),FALSE);
 
   if (prefs->show_gui) {
-    if (mainw->multitrack==NULL) gtk_window_set_transient_for(GTK_WINDOW(opensel_dialog),GTK_WINDOW(mainw->LiVES));
-    else gtk_window_set_transient_for(GTK_WINDOW(opensel_dialog),GTK_WINDOW(mainw->multitrack->window));
+    if (mainw->multitrack==NULL) gtk_window_set_transient_for(LIVES_WINDOW(opensel_dialog),GTK_WINDOW(mainw->LiVES));
+    else gtk_window_set_transient_for(LIVES_WINDOW(opensel_dialog),GTK_WINDOW(mainw->multitrack->window));
   }
 
 
-  dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(opensel_dialog));
+  dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(opensel_dialog));
  
   vbox = lives_vbox_new (FALSE, 0);
   lives_box_pack_start (LIVES_BOX (dialog_vbox), vbox, TRUE, TRUE, 0);
@@ -1201,10 +1201,10 @@ GtkWidget *create_opensel_dialog (void) {
   gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area), GTK_BUTTONBOX_END);
 
   cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
-  lives_dialog_add_action_widget (GTK_DIALOG (opensel_dialog), cancelbutton, GTK_RESPONSE_CANCEL);
+  lives_dialog_add_action_widget (LIVES_DIALOG (opensel_dialog), cancelbutton, GTK_RESPONSE_CANCEL);
 
   okbutton = gtk_button_new_from_stock ("gtk-ok");
-  lives_dialog_add_action_widget (GTK_DIALOG (opensel_dialog), okbutton, GTK_RESPONSE_OK);
+  lives_dialog_add_action_widget (LIVES_DIALOG (opensel_dialog), okbutton, GTK_RESPONSE_OK);
   lives_widget_set_can_focus_and_default (okbutton);
   gtk_widget_grab_default(okbutton);
 
@@ -1254,14 +1254,14 @@ _entryw* create_location_dialog (int type) {
 
   g_free(title);
 
-  gtk_window_add_accel_group (GTK_WINDOW (locw->dialog), accel_group);
+  gtk_window_add_accel_group (LIVES_WINDOW (locw->dialog), accel_group);
 
   if (prefs->show_gui) {
-    if (mainw->multitrack==NULL) gtk_window_set_transient_for(GTK_WINDOW(locw->dialog),GTK_WINDOW(mainw->LiVES));
-    else gtk_window_set_transient_for(GTK_WINDOW(locw->dialog),GTK_WINDOW(mainw->multitrack->window));
+    if (mainw->multitrack==NULL) gtk_window_set_transient_for(LIVES_WINDOW(locw->dialog),GTK_WINDOW(mainw->LiVES));
+    else gtk_window_set_transient_for(LIVES_WINDOW(locw->dialog),GTK_WINDOW(mainw->multitrack->window));
   }
 
-  dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(locw->dialog));
+  dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(locw->dialog));
 
   widget_opts.justify=LIVES_JUSTIFY_CENTER;
 
@@ -1315,11 +1315,11 @@ _entryw* create_location_dialog (int type) {
 						72.*widget_opts.scale,PATH_MAX,LIVES_BOX(hbox),NULL);
 
     lives_entry_set_editable(LIVES_ENTRY(locw->dir_entry),FALSE);
-    gtk_entry_set_max_length(GTK_ENTRY (locw->dir_entry),PATH_MAX);
+    gtk_entry_set_max_length(LIVES_ENTRY (locw->dir_entry),PATH_MAX);
 
     // add dir, with filechooser button
     buttond = lives_standard_file_button_new (TRUE,NULL);
-    gtk_label_set_mnemonic_widget (GTK_LABEL(widget_opts.last_label),buttond);
+    gtk_label_set_mnemonic_widget (LIVES_LABEL(widget_opts.last_label),buttond);
     lives_box_pack_start(LIVES_BOX(hbox),buttond,FALSE,FALSE,widget_opts.packing_width);
 
 
@@ -1347,12 +1347,12 @@ _entryw* create_location_dialog (int type) {
 
   cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
   lives_widget_show (cancelbutton);
-  lives_dialog_add_action_widget (GTK_DIALOG (locw->dialog), cancelbutton, GTK_RESPONSE_CANCEL);
+  lives_dialog_add_action_widget (LIVES_DIALOG (locw->dialog), cancelbutton, GTK_RESPONSE_CANCEL);
   lives_widget_set_can_focus_and_default (cancelbutton);
 
   okbutton = gtk_button_new_from_stock ("gtk-ok");
   lives_widget_show (okbutton);
-  lives_dialog_add_action_widget (GTK_DIALOG (locw->dialog), okbutton, GTK_RESPONSE_OK);
+  lives_dialog_add_action_widget (LIVES_DIALOG (locw->dialog), okbutton, GTK_RESPONSE_OK);
   lives_widget_set_can_focus_and_default (okbutton);
   gtk_widget_grab_default (okbutton);
 
@@ -1429,18 +1429,18 @@ _entryw* create_rename_dialog (int type) {
 
   renamew->dialog = lives_standard_dialog_new (title,FALSE);
 
-  gtk_window_add_accel_group (GTK_WINDOW (renamew->dialog), accel_group);
+  gtk_window_add_accel_group (LIVES_WINDOW (renamew->dialog), accel_group);
 
   if (prefs->show_gui) {
     if (mainw->multitrack==NULL) {
       if (mainw->is_ready) {
-	gtk_window_set_transient_for(GTK_WINDOW(renamew->dialog),GTK_WINDOW(mainw->LiVES));
+	gtk_window_set_transient_for(LIVES_WINDOW(renamew->dialog),GTK_WINDOW(mainw->LiVES));
       }
     }
-    else gtk_window_set_transient_for(GTK_WINDOW(renamew->dialog),GTK_WINDOW(mainw->multitrack->window));
+    else gtk_window_set_transient_for(LIVES_WINDOW(renamew->dialog),GTK_WINDOW(mainw->multitrack->window));
   }
 
-  dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(renamew->dialog));
+  dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(renamew->dialog));
 
   if (type==4) {
     label = lives_standard_label_new 
@@ -1507,7 +1507,7 @@ _entryw* create_rename_dialog (int type) {
 
     if (strlen(prefs->ar_clipset_name)) {
       // set default to our auto-reload clipset
-      lives_entry_set_text(GTK_ENTRY(renamew->entry),prefs->ar_clipset_name);
+      lives_entry_set_text(LIVES_ENTRY(renamew->entry),prefs->ar_clipset_name);
     }
 
     lives_box_pack_start (LIVES_BOX (hbox), set_combo, TRUE, TRUE, 0);
@@ -1529,21 +1529,21 @@ _entryw* create_rename_dialog (int type) {
     gtk_entry_completion_set_popup_set_width (completion, TRUE);
     gtk_entry_completion_set_popup_completion (completion, TRUE);
     gtk_entry_completion_set_popup_single_match(completion,FALSE);
-    gtk_entry_set_completion (GTK_ENTRY (renamew->entry), completion);
+    gtk_entry_set_completion (LIVES_ENTRY (renamew->entry), completion);
 
 
   }
   else {
     renamew->entry = gtk_entry_new();
-    gtk_entry_set_max_length (GTK_ENTRY(renamew->entry),type==6?PATH_MAX:type==7?16:128);
+    gtk_entry_set_max_length (LIVES_ENTRY(renamew->entry),type==6?PATH_MAX:type==7?16:128);
     if (type==2&&strlen (mainw->set_name)) {
-      lives_entry_set_text (GTK_ENTRY (renamew->entry),mainw->set_name);
+      lives_entry_set_text (LIVES_ENTRY (renamew->entry),mainw->set_name);
     }
     if (type==6) {
       gchar *tmpdir;
       if (prefs->startup_phase==-1) tmpdir=g_build_filename(capable->home_dir,LIVES_TMP_NAME,NULL);
       else tmpdir=g_strdup(prefs->tmpdir);
-      lives_entry_set_text (GTK_ENTRY (renamew->entry),tmpdir);
+      lives_entry_set_text (LIVES_ENTRY (renamew->entry),tmpdir);
       g_free(tmpdir);
     }
     lives_box_pack_start (LIVES_BOX (hbox), renamew->entry, TRUE, TRUE, 0);
@@ -1563,8 +1563,8 @@ _entryw* create_rename_dialog (int type) {
   }
 
 
-  gtk_entry_set_activates_default (GTK_ENTRY (renamew->entry), TRUE);
-  lives_entry_set_width_chars (GTK_ENTRY (renamew->entry),RW_ENTRY_DISPWIDTH);
+  gtk_entry_set_activates_default (LIVES_ENTRY (renamew->entry), TRUE);
+  lives_entry_set_width_chars (LIVES_ENTRY (renamew->entry),RW_ENTRY_DISPWIDTH);
 
   dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (renamew->dialog));
 
@@ -1572,7 +1572,7 @@ _entryw* create_rename_dialog (int type) {
 
   cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
 
-  lives_dialog_add_action_widget (GTK_DIALOG (renamew->dialog), cancelbutton, GTK_RESPONSE_CANCEL);
+  lives_dialog_add_action_widget (LIVES_DIALOG (renamew->dialog), cancelbutton, GTK_RESPONSE_CANCEL);
   lives_widget_set_can_focus_and_default (cancelbutton);
 
   lives_widget_add_accelerator (cancelbutton, "activate", accel_group,
@@ -1584,7 +1584,7 @@ _entryw* create_rename_dialog (int type) {
   }
   else okbutton = gtk_button_new_from_stock ("gtk-ok");
 
-  lives_dialog_add_action_widget (GTK_DIALOG (renamew->dialog), okbutton, GTK_RESPONSE_OK);
+  lives_dialog_add_action_widget (LIVES_DIALOG (renamew->dialog), okbutton, GTK_RESPONSE_OK);
   lives_widget_set_can_focus_and_default (okbutton);
   gtk_widget_grab_default (okbutton);
 
@@ -1629,7 +1629,7 @@ void on_liveinp_advanced_clicked (GtkButton *button, gpointer user_data) {
   }
   else {
     lives_button_set_label(GTK_BUTTON(tvcardw->advbutton),_("_Advanced"));
-    lives_window_resize(GTK_WINDOW(lives_widget_get_toplevel(tvcardw->adv_vbox)),4,40);
+    lives_window_resize(LIVES_WINDOW(lives_widget_get_toplevel(tvcardw->adv_vbox)),4,40);
     lives_widget_hide(tvcardw->adv_vbox);
   }
 
@@ -1687,14 +1687,14 @@ GtkWidget *create_combo_dialog (int type, gpointer user_data) {
 
   if (prefs->show_gui) {
     if (type==1) {
-      gtk_window_set_transient_for(GTK_WINDOW(combo_dialog),GTK_WINDOW(mainw->LiVES));
+      gtk_window_set_transient_for(LIVES_WINDOW(combo_dialog),GTK_WINDOW(mainw->LiVES));
     }
     else {
-      gtk_window_set_transient_for(GTK_WINDOW(combo_dialog),GTK_WINDOW(mainw->multitrack->window));
+      gtk_window_set_transient_for(LIVES_WINDOW(combo_dialog),GTK_WINDOW(mainw->multitrack->window));
     }
   }
 
-  dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(combo_dialog));
+  dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(combo_dialog));
 
   if (type==1) {
     label_text=g_strdup(_("Select input device:"));
@@ -1707,11 +1707,11 @@ GtkWidget *create_combo_dialog (int type, gpointer user_data) {
 
   combo = lives_combo_new();
 
-  lives_entry_set_width_chars (GTK_ENTRY (lives_combo_get_entry(LIVES_COMBO(combo))), 64);
+  lives_entry_set_width_chars (LIVES_ENTRY (lives_combo_get_entry(LIVES_COMBO(combo))), 64);
 
   lives_combo_populate(LIVES_COMBO(combo),list);
 
-  lives_combo_set_active_index(GTK_COMBO_BOX(combo), 0);
+  lives_combo_set_active_index(LIVES_COMBO(combo), 0);
 
   g_signal_connect_after (G_OBJECT (combo), "changed", G_CALLBACK (after_dialog_combo_changed), list);
 
@@ -1779,18 +1779,18 @@ GtkWidget* create_cdtrack_dialog (int type, gpointer user_data) {
   cd_dialog = lives_standard_dialog_new (title,FALSE);
   g_free(title);
 
-  //gtk_window_set_default_size (GTK_WINDOW (cd_dialog), 300, 240);
+  //gtk_window_set_default_size (LIVES_WINDOW (cd_dialog), 300, 240);
 
   if (prefs->show_gui) {
     if (type==0||type==1||type==2||type==4||type==5) {
-      gtk_window_set_transient_for(GTK_WINDOW(cd_dialog),GTK_WINDOW(mainw->LiVES));
+      gtk_window_set_transient_for(LIVES_WINDOW(cd_dialog),GTK_WINDOW(mainw->LiVES));
     }
     else {
-      gtk_window_set_transient_for(GTK_WINDOW(cd_dialog),GTK_WINDOW(mainw->multitrack->window));
+      gtk_window_set_transient_for(LIVES_WINDOW(cd_dialog),GTK_WINDOW(mainw->multitrack->window));
     }
   }
 
-  dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(cd_dialog));
+  dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(cd_dialog));
 
   hbox = lives_hbox_new (FALSE, widget_opts.packing_width*5);
   lives_box_pack_start (LIVES_BOX (dialog_vbox), hbox, TRUE, TRUE, widget_opts.packing_height);
@@ -1975,7 +1975,7 @@ GtkWidget* create_cdtrack_dialog (int type, gpointer user_data) {
     hbox = lives_hbox_new (FALSE, 0);
 
     tvcardw->combod = lives_standard_combo_new (_("_Driver"),TRUE,dlist,LIVES_BOX(hbox),NULL);
-    lives_combo_set_active_index(GTK_COMBO_BOX(tvcardw->combod), 0);
+    lives_combo_set_active_index(LIVES_COMBO(tvcardw->combod), 0);
 
     tvcardw->comboo = lives_standard_combo_new (_("_Output format"),TRUE,olist,LIVES_BOX(hbox),NULL);
 
@@ -1997,10 +1997,10 @@ GtkWidget* create_cdtrack_dialog (int type, gpointer user_data) {
   gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area), GTK_BUTTONBOX_END);
 
   cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
-  lives_dialog_add_action_widget (GTK_DIALOG (cd_dialog), cancelbutton, GTK_RESPONSE_CANCEL);
+  lives_dialog_add_action_widget (LIVES_DIALOG (cd_dialog), cancelbutton, GTK_RESPONSE_CANCEL);
 
   okbutton = gtk_button_new_from_stock ("gtk-ok");
-  lives_dialog_add_action_widget (GTK_DIALOG (cd_dialog), okbutton, GTK_RESPONSE_OK);
+  lives_dialog_add_action_widget (LIVES_DIALOG (cd_dialog), okbutton, GTK_RESPONSE_OK);
   lives_widget_set_can_focus_and_default (okbutton);
 
   gtk_widget_grab_default (okbutton);
@@ -2034,7 +2034,7 @@ GtkWidget* create_cdtrack_dialog (int type, gpointer user_data) {
 		      user_data);
   }
 
-  gtk_window_add_accel_group (GTK_WINDOW (cd_dialog), accel_group);
+  gtk_window_add_accel_group (LIVES_WINDOW (cd_dialog), accel_group);
 
   lives_widget_show_all(cd_dialog);
 
@@ -2083,10 +2083,10 @@ aud_dialog_t *create_audfade_dialog (gint type) {
   g_free(title);
 
   if (prefs->show_gui) {
-    gtk_window_set_transient_for(GTK_WINDOW(audd->dialog),GTK_WINDOW(mainw->LiVES));
+    gtk_window_set_transient_for(LIVES_WINDOW(audd->dialog),GTK_WINDOW(mainw->LiVES));
   }
 
-  dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(audd->dialog));
+  dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(audd->dialog));
 
   hbox = lives_hbox_new (FALSE, TB_HEIGHT_A);
   lives_box_pack_start (LIVES_BOX (dialog_vbox), hbox, TRUE, TRUE, widget_opts.packing_height);
@@ -2170,10 +2170,10 @@ _commentsw* create_comments_dialog (file *sfile, gchar *filename) {
   commentsw->comments_dialog = lives_standard_dialog_new (_("LiVES: - File Comments (optional)"),TRUE);
 
   if (prefs->show_gui) {
-    gtk_window_set_transient_for(GTK_WINDOW(commentsw->comments_dialog),GTK_WINDOW(mainw->LiVES));
+    gtk_window_set_transient_for(LIVES_WINDOW(commentsw->comments_dialog),GTK_WINDOW(mainw->LiVES));
   }
 
-  dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(commentsw->comments_dialog));
+  dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(commentsw->comments_dialog));
 
   table = lives_table_new (4, 2, FALSE);
   lives_container_set_border_width(LIVES_CONTAINER(table), widget_opts.border_width);
@@ -2279,7 +2279,7 @@ _commentsw* create_comments_dialog (file *sfile, gchar *filename) {
       default:
 	break;
       }
-      lives_entry_set_text(GTK_ENTRY(commentsw->subt_entry),osubfname);
+      lives_entry_set_text(LIVES_ENTRY(commentsw->subt_entry),osubfname);
       mainw->subt_save_file=osubfname; // assign instead of free
     }
   }
@@ -2343,12 +2343,12 @@ gchar *choose_file(gchar *dir, gchar *fname, gchar **filt, lives_file_chooser_ac
   else mytitle=g_strdup(title);
 
   if (act!=LIVES_FILE_CHOOSER_ACTION_SAVE) 
-    chooser=gtk_file_chooser_dialog_new(mytitle,GTK_WINDOW(mainw->LiVES),(GtkFileChooserAction)act,GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+    chooser=gtk_file_chooser_dialog_new(mytitle,LIVES_WINDOW(mainw->LiVES),(GtkFileChooserAction)act,GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
 					GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
 					NULL);
 
   else {
-    chooser=gtk_file_chooser_dialog_new(mytitle,GTK_WINDOW(mainw->LiVES),(GtkFileChooserAction)act,GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+    chooser=gtk_file_chooser_dialog_new(mytitle,LIVES_WINDOW(mainw->LiVES),(GtkFileChooserAction)act,GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
 					GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT,
 					NULL);
   }
@@ -2390,8 +2390,8 @@ gchar *choose_file(gchar *dir, gchar *fname, gchar **filt, lives_file_chooser_ac
   lives_container_set_border_width (LIVES_CONTAINER (chooser), widget_opts.border_width);
 
   if (prefs->show_gui) {
-    if (mainw->multitrack==NULL) gtk_window_set_transient_for(GTK_WINDOW(chooser),GTK_WINDOW(mainw->LiVES));
-    else gtk_window_set_transient_for(GTK_WINDOW(chooser),GTK_WINDOW(mainw->multitrack->window));
+    if (mainw->multitrack==NULL) gtk_window_set_transient_for(LIVES_WINDOW(chooser),GTK_WINDOW(mainw->LiVES));
+    else gtk_window_set_transient_for(LIVES_WINDOW(chooser),GTK_WINDOW(mainw->multitrack->window));
   }
 
   g_signal_connect (chooser, "current-folder-changed", G_CALLBACK (chooser_check_dir), NULL);
@@ -2402,7 +2402,7 @@ gchar *choose_file(gchar *dir, gchar *fname, gchar **filt, lives_file_chooser_ac
 
   lives_window_center(LIVES_WINDOW(chooser));
   
-  gtk_window_set_modal (GTK_WINDOW (chooser), TRUE);
+  gtk_window_set_modal (LIVES_WINDOW (chooser), TRUE);
 
   memset(last_good_folder,0,1);
 
@@ -2414,7 +2414,7 @@ gchar *choose_file(gchar *dir, gchar *fname, gchar **filt, lives_file_chooser_ac
 
  rundlg:
   
-  if ((response=lives_dialog_run(GTK_DIALOG(chooser)))!=GTK_RESPONSE_CANCEL) {
+  if ((response=lives_dialog_run(LIVES_DIALOG(chooser)))!=GTK_RESPONSE_CANCEL) {
     gchar *tmp;
     filename=g_filename_to_utf8((tmp=lives_file_chooser_get_filename(GTK_FILE_CHOOSER(chooser))),-1,NULL,NULL,NULL);
     g_free(tmp);
@@ -2459,7 +2459,7 @@ static void chooser_response(GtkDialog *dialog, gint response, gpointer user_dat
       break;
     }
   }
-  else on_cancel_button1_clicked(GTK_WIDGET(dialog),NULL);
+  else on_cancel_button1_clicked(LIVES_WIDGET(dialog),NULL);
 }
 
 
@@ -2484,8 +2484,8 @@ void choose_file_with_preview (gchar *dir, const gchar *title, int preview_type)
 		     preview_type==3?1:preview_type>3?2:preview_type);
 
   if (prefs->fileselmax) {
-    gtk_window_set_resizable (GTK_WINDOW(chooser),TRUE);
-    lives_window_maximize (GTK_WINDOW(chooser));
+    gtk_window_set_resizable (LIVES_WINDOW(chooser),TRUE);
+    lives_window_maximize (LIVES_WINDOW(chooser));
     lives_widget_queue_draw(chooser);
     lives_widget_context_update();
   }
@@ -2516,14 +2516,14 @@ _entryw* create_cds_dialog (gint type) {
   cdsw->dialog = lives_standard_dialog_new (_("LiVES: - Cancel/Discard/Save"),FALSE);
 
   accel_group = GTK_ACCEL_GROUP(lives_accel_group_new ());
-  gtk_window_add_accel_group (GTK_WINDOW (cdsw->dialog), accel_group);
+  gtk_window_add_accel_group (LIVES_WINDOW (cdsw->dialog), accel_group);
 
   if (prefs->show_gui) {
-    if (mainw->multitrack==NULL) gtk_window_set_transient_for(GTK_WINDOW(cdsw->dialog),GTK_WINDOW(mainw->LiVES));
-    else gtk_window_set_transient_for(GTK_WINDOW(cdsw->dialog),GTK_WINDOW(mainw->multitrack->window));
+    if (mainw->multitrack==NULL) gtk_window_set_transient_for(LIVES_WINDOW(cdsw->dialog),GTK_WINDOW(mainw->LiVES));
+    else gtk_window_set_transient_for(LIVES_WINDOW(cdsw->dialog),GTK_WINDOW(mainw->multitrack->window));
   }
 
-  dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(cdsw->dialog));
+  dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(cdsw->dialog));
 
   widget_opts.justify=LIVES_JUSTIFY_CENTER;
   if (type==0) {
@@ -2598,12 +2598,12 @@ _entryw* create_cds_dialog (gint type) {
   gtk_button_box_set_layout (GTK_BUTTON_BOX (dialog_action_area), GTK_BUTTONBOX_END);
 
   cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
-  lives_dialog_add_action_widget (GTK_DIALOG (cdsw->dialog), cancelbutton, 0);
+  lives_dialog_add_action_widget (LIVES_DIALOG (cdsw->dialog), cancelbutton, 0);
   lives_widget_add_accelerator (cancelbutton, "activate", accel_group,
                               LIVES_KEY_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
 
   discardbutton = gtk_button_new_from_stock ("gtk-delete");
-  lives_dialog_add_action_widget (GTK_DIALOG (cdsw->dialog), discardbutton, 1+(type==2));
+  lives_dialog_add_action_widget (LIVES_DIALOG (cdsw->dialog), discardbutton, 1+(type==2));
   gtk_button_set_use_stock(GTK_BUTTON(discardbutton),FALSE);
   gtk_button_set_use_underline(GTK_BUTTON(discardbutton),TRUE);
   if ((type==0&&strlen(mainw->multitrack->layout_name)==0)||type==3||type==4) lives_button_set_label(GTK_BUTTON(discardbutton),_("_Wipe layout"));
@@ -2617,7 +2617,7 @@ _entryw* create_cds_dialog (gint type) {
   if (type==0||type==3) lives_button_set_label(GTK_BUTTON(savebutton),_("_Save layout"));
   else if (type==1) lives_button_set_label(GTK_BUTTON(savebutton),_("_Save clip set"));
   else if (type==2) lives_button_set_label(GTK_BUTTON(savebutton),_("_Wipe layout"));
-  if (type!=4) lives_dialog_add_action_widget (GTK_DIALOG (cdsw->dialog), savebutton, 2-(type==2));
+  if (type!=4) lives_dialog_add_action_widget (LIVES_DIALOG (cdsw->dialog), savebutton, 2-(type==2));
   lives_widget_set_can_focus_and_default (savebutton);
   if (type==1||type==2)gtk_widget_grab_default(savebutton);
 
@@ -2639,13 +2639,13 @@ void do_layout_recover_dialog(void) {
 
   GtkWidget *mdialog=lives_standard_dialog_new (_("LiVES: recover layout ?"),FALSE);
 
-  gtk_window_add_accel_group (GTK_WINDOW (mdialog), accel_group);
+  gtk_window_add_accel_group (LIVES_WINDOW (mdialog), accel_group);
 
   if (prefs->show_gui) {
-    gtk_window_set_transient_for(GTK_WINDOW(mdialog),GTK_WINDOW(mainw->LiVES));
+    gtk_window_set_transient_for(LIVES_WINDOW(mdialog),GTK_WINDOW(mainw->LiVES));
   }
 
-  dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(mdialog));
+  dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(mdialog));
   
   widget_opts.justify=LIVES_JUSTIFY_CENTER;
   label = lives_standard_label_new 
@@ -2658,12 +2658,12 @@ void do_layout_recover_dialog(void) {
 
   cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
   lives_widget_show (cancelbutton);
-  lives_dialog_add_action_widget (GTK_DIALOG (mdialog), cancelbutton, GTK_RESPONSE_CANCEL);
+  lives_dialog_add_action_widget (LIVES_DIALOG (mdialog), cancelbutton, GTK_RESPONSE_CANCEL);
   lives_widget_set_can_focus_and_default (cancelbutton);
 
   okbutton = gtk_button_new_from_stock ("gtk-ok");
   lives_widget_show (okbutton);
-  lives_dialog_add_action_widget (GTK_DIALOG (mdialog), okbutton, GTK_RESPONSE_OK);
+  lives_dialog_add_action_widget (LIVES_DIALOG (mdialog), okbutton, GTK_RESPONSE_OK);
   lives_widget_set_can_focus_and_default (okbutton);
   gtk_widget_grab_default(okbutton);
   lives_widget_grab_focus(okbutton);
@@ -2700,11 +2700,11 @@ GtkWidget *create_cleardisk_advanced_dialog(void) {
   dialog = lives_standard_dialog_new (_("LiVES: - Disk Recovery Options"),FALSE);
 
   if (prefs->show_gui) {
-    if (mainw->multitrack==NULL) gtk_window_set_transient_for(GTK_WINDOW(dialog),GTK_WINDOW(mainw->LiVES));
-    else gtk_window_set_transient_for(GTK_WINDOW(dialog),GTK_WINDOW(mainw->multitrack->window));
+    if (mainw->multitrack==NULL) gtk_window_set_transient_for(LIVES_WINDOW(dialog),GTK_WINDOW(mainw->LiVES));
+    else gtk_window_set_transient_for(LIVES_WINDOW(dialog),GTK_WINDOW(mainw->multitrack->window));
   }
 
-  dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(dialog));
+  dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
 
   vbox = lives_vbox_new (FALSE, 0);
   lives_container_set_border_width (LIVES_CONTAINER (vbox), widget_opts.border_width*2);
@@ -2751,11 +2751,11 @@ GtkWidget *create_cleardisk_advanced_dialog(void) {
 			  GINT_TO_POINTER(LIVES_CDISK_REMOVE_ORPHAN_LAYOUTS));
 
   resetbutton = gtk_button_new_from_stock ("gtk-refresh");
-  lives_dialog_add_action_widget (GTK_DIALOG (dialog), resetbutton, LIVES_RETRY);
+  lives_dialog_add_action_widget (LIVES_DIALOG (dialog), resetbutton, LIVES_RETRY);
   lives_button_set_label(GTK_BUTTON(resetbutton),_("_Reset to Defaults"));
 
   okbutton = gtk_button_new_from_stock ("gtk-ok");
-  lives_dialog_add_action_widget (GTK_DIALOG (dialog), okbutton, GTK_RESPONSE_OK);
+  lives_dialog_add_action_widget (LIVES_DIALOG (dialog), okbutton, GTK_RESPONSE_OK);
 
   lives_widget_set_can_focus_and_default (okbutton);
   gtk_widget_grab_default (okbutton);

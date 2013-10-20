@@ -35,8 +35,8 @@ struct _dvgrabw *create_camwindow (s_cam *cam, gint type)
   lives_container_set_border_width (LIVES_CONTAINER (dvgrabw->dialog), widget_opts.border_width*2);
 
   if (prefs->show_gui) {
-    if (mainw->multitrack==NULL) gtk_window_set_transient_for(GTK_WINDOW(dvgrabw->dialog),GTK_WINDOW(mainw->LiVES));
-    else gtk_window_set_transient_for(GTK_WINDOW(dvgrabw->dialog),GTK_WINDOW(mainw->multitrack->window));
+    if (mainw->multitrack==NULL) gtk_window_set_transient_for(LIVES_WINDOW(dvgrabw->dialog),GTK_WINDOW(mainw->LiVES));
+    else gtk_window_set_transient_for(LIVES_WINDOW(dvgrabw->dialog),GTK_WINDOW(mainw->multitrack->window));
   }
 
   vbox=lives_dialog_get_content_area(LIVES_DIALOG(dvgrabw->dialog));
@@ -85,7 +85,7 @@ struct _dvgrabw *create_camwindow (s_cam *cam, gint type)
   dvgrabw->status_entry=gtk_entry_new();
 
   lives_box_pack_start(LIVES_BOX(vbox),dvgrabw->status_entry,FALSE,FALSE,widget_opts.packing_height);
-  lives_entry_set_text(GTK_ENTRY(dvgrabw->status_entry),_("Status: Ready"));
+  lives_entry_set_text(LIVES_ENTRY(dvgrabw->status_entry),_("Status: Ready"));
   gtk_editable_set_editable (GTK_EDITABLE(dvgrabw->status_entry),FALSE);
 
   add_hsep_to_box(LIVES_BOX(vbox));

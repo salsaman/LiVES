@@ -66,7 +66,7 @@ void type_label_set_text (int key, int mode) {
   gchar *type=rte_keymode_get_type(key+1,mode);
 
   if (strlen(type)) {
-    lives_label_set_text (GTK_LABEL(type_labels[idx]),g_strdup_printf(_("Type: %s"),type));
+    lives_label_set_text (LIVES_LABEL(type_labels[idx]),g_strdup_printf(_("Type: %s"),type));
     lives_widget_set_sensitive(info_buttons[idx],TRUE);
     lives_widget_set_sensitive(clear_buttons[idx],TRUE);
     lives_widget_set_sensitive(mode_radios[idx],TRUE);
@@ -94,7 +94,7 @@ boolean on_clear_all_clicked (GtkButton *button, gpointer user_data) {
   // prompt for "are you sure ?"
   if (user_data!=NULL) if (!do_warning_dialog_with_check_transient
 			   ((_("\n\nUnbind all effects from all keys/modes.\n\nAre you sure ?\n\n")),
-			    0,GTK_WINDOW(rte_window))) {
+			    0,LIVES_WINDOW(rte_window))) {
       ca_canc=TRUE;
       return FALSE;
     }
@@ -107,14 +107,14 @@ boolean on_clear_all_clicked (GtkButton *button, gpointer user_data) {
     for (j=modes-1;j>=0;j--) {
       weed_delete_effectkey (i+1,j);
       if (rte_window!=NULL) {
-	lives_entry_set_text (GTK_ENTRY(combo_entries[i*modes+j]),"");
+	lives_entry_set_text (LIVES_ENTRY(combo_entries[i*modes+j]),"");
 	type_label_set_text(i,j);
       }
     }
     if (mainw->ce_thumbs) ce_thumbs_reset_combo(i);
   }
 
-  if (button!=NULL) lives_widget_set_sensitive (GTK_WIDGET(button), FALSE);
+  if (button!=NULL) lives_widget_set_sensitive (LIVES_WIDGET(button), FALSE);
 
   return FALSE;
 }
@@ -135,7 +135,7 @@ static boolean save_keymap2_file(gchar *kfname) {
     retval=0;
     kfd=creat(kfname,S_IRUSR|S_IWUSR);
     if (kfd==-1) {
-      retval=do_write_failed_error_s_with_retry (kfname,g_strerror(errno),GTK_WINDOW(rte_window));
+      retval=do_write_failed_error_s_with_retry (kfname,g_strerror(errno),LIVES_WINDOW(rte_window));
     }
     else {
       mainw->write_failed=FALSE;
@@ -161,7 +161,7 @@ static boolean save_keymap2_file(gchar *kfname) {
       close(kfd);
       
       if (mainw->write_failed) {
-	retval=do_write_failed_error_s_with_retry(kfname,NULL,GTK_WINDOW(rte_window));
+	retval=do_write_failed_error_s_with_retry(kfname,NULL,LIVES_WINDOW(rte_window));
 	mainw->write_failed=FALSE;
       }
     }
@@ -192,7 +192,7 @@ static boolean save_keymap3_file(gchar *kfname) {
     retval=0;
     kfd=creat(kfname,S_IRUSR|S_IWUSR);
     if (kfd==-1) {
-      retval=do_write_failed_error_s_with_retry (kfname,g_strerror(errno),GTK_WINDOW(rte_window));
+      retval=do_write_failed_error_s_with_retry (kfname,g_strerror(errno),LIVES_WINDOW(rte_window));
     }
     else {
       mainw->write_failed=FALSE;
@@ -357,7 +357,7 @@ static boolean save_keymap3_file(gchar *kfname) {
       close(kfd);
       
       if (mainw->write_failed) {
-	retval=do_write_failed_error_s_with_retry(kfname,NULL,GTK_WINDOW(rte_window));
+	retval=do_write_failed_error_s_with_retry(kfname,NULL,LIVES_WINDOW(rte_window));
 	mainw->write_failed=FALSE;
       }
     }
@@ -404,7 +404,7 @@ static boolean on_save_keymap_clicked (GtkButton *button, gpointer user_data) {
  
   if (button!=NULL) {
     if (!do_warning_dialog_with_check_transient
-	((_("\n\nClick 'OK' to save this keymap as your default\n\n")),0,GTK_WINDOW(rte_window))) {
+	((_("\n\nClick 'OK' to save this keymap as your default\n\n")),0,LIVES_WINDOW(rte_window))) {
       g_free(keymap_file3);
       g_free(keymap_file2);
       g_free(keymap_file);
@@ -425,7 +425,7 @@ static boolean on_save_keymap_clicked (GtkButton *button, gpointer user_data) {
     retval=0;
     if (!(kfile=fopen(keymap_file,"w"))) {
       msg=g_strdup_printf (_("\n\nUnable to write keymap file\n%s\nError was %s\n"),keymap_file,g_strerror(errno));
-      retval=do_abort_cancel_retry_dialog (msg,GTK_WINDOW(rte_window));
+      retval=do_abort_cancel_retry_dialog (msg,LIVES_WINDOW(rte_window));
       g_free (msg);
     }
     else {
@@ -452,7 +452,7 @@ static boolean on_save_keymap_clicked (GtkButton *button, gpointer user_data) {
     }
 
     if (mainw->write_failed) {
-      retval=do_write_failed_error_s_with_retry(keymap_file,NULL,GTK_WINDOW(rte_window));
+      retval=do_write_failed_error_s_with_retry(keymap_file,NULL,LIVES_WINDOW(rte_window));
     }
   } while (retval==LIVES_RETRY);
 
@@ -514,7 +514,7 @@ void on_save_rte_defs_activate (GtkMenuItem *menuitem, gpointer user_data) {
     retval=0;
     if ((fd=open(prefs->fxdefsfile,O_WRONLY|O_CREAT|O_TRUNC,S_IRUSR|S_IWUSR))==-1) {
       msg=g_strdup_printf (_("\n\nUnable to write defaults file\n%s\nError code %d\n"),prefs->fxdefsfile,errno);
-      retval=do_abort_cancel_retry_dialog (msg,GTK_WINDOW(rte_window));
+      retval=do_abort_cancel_retry_dialog (msg,LIVES_WINDOW(rte_window));
       g_free (msg);
     }
     else {
@@ -527,13 +527,13 @@ void on_save_rte_defs_activate (GtkMenuItem *menuitem, gpointer user_data) {
       g_free(msg);
 
       if (mainw->write_failed) {
-	retval=do_write_failed_error_s_with_retry(prefs->fxdefsfile,NULL,GTK_WINDOW(rte_window));
+	retval=do_write_failed_error_s_with_retry(prefs->fxdefsfile,NULL,LIVES_WINDOW(rte_window));
       }
       else {
 	// break on file write error
 	for (i=0;i<numfx;i++) {
 	  if (!write_filter_defaults(fd,i)) {
-	    retval=do_write_failed_error_s_with_retry(prefs->fxdefsfile,NULL,GTK_WINDOW(rte_window));
+	    retval=do_write_failed_error_s_with_retry(prefs->fxdefsfile,NULL,LIVES_WINDOW(rte_window));
 	    break;
 	  }
 	}
@@ -548,7 +548,7 @@ void on_save_rte_defs_activate (GtkMenuItem *menuitem, gpointer user_data) {
   do {
     retval=0;
     if ((fd=open(prefs->fxsizesfile,O_WRONLY|O_CREAT|O_TRUNC,S_IRUSR|S_IWUSR))==-1) {
-      retval=do_write_failed_error_s_with_retry(prefs->fxsizesfile,g_strerror(errno),GTK_WINDOW(rte_window));
+      retval=do_write_failed_error_s_with_retry(prefs->fxsizesfile,g_strerror(errno),LIVES_WINDOW(rte_window));
       g_free (msg);
     }
     else {
@@ -560,12 +560,12 @@ void on_save_rte_defs_activate (GtkMenuItem *menuitem, gpointer user_data) {
       lives_write(fd,msg,strlen(msg),TRUE);
       g_free(msg);
       if (mainw->write_failed) {
-	retval=do_write_failed_error_s_with_retry(prefs->fxsizesfile,NULL,GTK_WINDOW(rte_window));
+	retval=do_write_failed_error_s_with_retry(prefs->fxsizesfile,NULL,LIVES_WINDOW(rte_window));
       }
       else {
 	for (i=0;i<numfx;i++) {
 	  if (!write_generator_sizes(fd,i)) {
-	    retval=do_write_failed_error_s_with_retry(prefs->fxsizesfile,NULL,GTK_WINDOW(rte_window));
+	    retval=do_write_failed_error_s_with_retry(prefs->fxsizesfile,NULL,LIVES_WINDOW(rte_window));
 	    break;
 	  }
 	}
@@ -704,7 +704,7 @@ static void check_clear_all_button (void) {
     }
   }
 
-  lives_widget_set_sensitive (GTK_WIDGET(clear_all_button), hasone);
+  lives_widget_set_sensitive (LIVES_WIDGET(clear_all_button), hasone);
 }
 
 
@@ -1308,7 +1308,7 @@ boolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
 
     if (has_error) {
       msg=g_strdup_printf (_("\n\nUnable to read from keymap file\n%s\nError code %d\n"),keymap_file,errno);
-      retval=do_abort_cancel_retry_dialog(msg,GTK_WINDOW(rte_window));
+      retval=do_abort_cancel_retry_dialog(msg,LIVES_WINDOW(rte_window));
       g_free (msg);
    
       if (retval==LIVES_CANCEL) {
@@ -1539,7 +1539,7 @@ boolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
       int idx=(key-1)*modes+mode;
       int fx_idx=rte_keymode_get_filter_idx(key,mode);
 
-      lives_entry_set_text (GTK_ENTRY(combo_entries[idx]),(tmp=rte_keymode_get_filter_name(key,mode)));
+      lives_entry_set_text (LIVES_ENTRY(combo_entries[idx]),(tmp=rte_keymode_get_filter_name(key,mode)));
       g_free(tmp);
 
       if (fx_idx!=-1) {
@@ -1591,7 +1591,7 @@ boolean on_load_keymap_clicked (GtkButton *button, gpointer user_data) {
     if (mainw->is_ready) {
       check_clear_all_button();
       if (notfound) do_warning_dialog_with_check_transient(_("\n\nSome effects could not be located.\n\n"),
-							   0,GTK_WINDOW(rte_window));
+							   0,LIVES_WINDOW(rte_window));
     }
     else load_rte_defs(); // file errors shown inside
 
@@ -1668,16 +1668,16 @@ void on_rte_info_clicked (GtkButton *button, gpointer user_data) {
 
   filter_version=weed_get_int_value(filter,"version",&weed_error);
 
-  rte_info_window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
-  lives_window_set_title (GTK_WINDOW (rte_info_window), g_strdup_printf(_("LiVES: Information for %s"),filter_name));
+  rte_info_window = gtk_window_new (LIVES_WINDOW_TOPLEVEL);
+  lives_window_set_title (LIVES_WINDOW (rte_info_window), g_strdup_printf(_("LiVES: Information for %s"),filter_name));
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(rte_info_window, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
   }
 
   lives_container_set_border_width (LIVES_CONTAINER (rte_info_window), widget_opts.border_width);
-  gtk_window_set_transient_for(GTK_WINDOW(rte_info_window),GTK_WINDOW(lives_widget_get_toplevel(GTK_WIDGET(button))));
+  gtk_window_set_transient_for(LIVES_WINDOW(rte_info_window),GTK_WINDOW(lives_widget_get_toplevel(LIVES_WIDGET(button))));
 
-  gtk_window_set_default_size (GTK_WINDOW (rte_info_window), RTE_INFO_WIDTH, RTE_INFO_HEIGHT);
+  gtk_window_set_default_size (LIVES_WINDOW (rte_info_window), RTE_INFO_WIDTH, RTE_INFO_HEIGHT);
 
   vbox = lives_vbox_new (FALSE, widget_opts.packing_height*2);
   lives_container_add (LIVES_CONTAINER (rte_info_window), vbox);
@@ -1789,7 +1789,7 @@ void on_clear_clicked (GtkButton *button, gpointer user_data) {
     int fx_idx=rte_keymode_get_filter_idx(key,mode);
 
     idx=key*modes+i;
-    lives_entry_set_text (GTK_ENTRY(combo_entries[idx]),lives_entry_get_text(GTK_ENTRY(combo_entries[idx+1])));
+    lives_entry_set_text (LIVES_ENTRY(combo_entries[idx]),lives_entry_get_text(GTK_ENTRY(combo_entries[idx+1])));
     type_label_set_text(key,i);
     pconx_remap_mode(key,i+1,i);
     cconx_remap_mode(key,i+1,i);
@@ -1805,7 +1805,7 @@ void on_clear_clicked (GtkButton *button, gpointer user_data) {
     
   }
   idx++;
-  lives_entry_set_text (GTK_ENTRY(combo_entries[idx]),"");
+  lives_entry_set_text (LIVES_ENTRY(combo_entries[idx]),"");
 
   g_object_set_data(G_OBJECT(combos[idx]),"hashname","");
 
@@ -1934,7 +1934,7 @@ static void on_rtew_ok_clicked (GtkButton *button, gpointer user_data) {
 static void do_mix_error(void) {
   do_error_dialog_with_check_transient(
 				       _("\n\nThis version of LiVES does not allowing mixing of generators and non-generators on the same key.\n\n"),
-				       FALSE,0,GTK_WINDOW(rte_window));
+				       FALSE,0,LIVES_WINDOW(rte_window));
   return;
 }
 
@@ -1992,7 +1992,7 @@ void fx_changed (GtkComboBox *combo, gpointer user_data) {
   lives_widget_grab_focus (combo_entries[key_mode]);
 
   if ((error=rte_switch_keymode (key+1, mode, hashname1))<0) {
-    lives_entry_set_text (GTK_ENTRY (combo_entries[key_mode]),(tmp=rte_keymode_get_filter_name(key+1,mode)));
+    lives_entry_set_text (LIVES_ENTRY (combo_entries[key_mode]),(tmp=rte_keymode_get_filter_name(key+1,mode)));
     g_free(tmp);
 
     if (error==-2) do_mix_error();
@@ -2008,7 +2008,7 @@ void fx_changed (GtkComboBox *combo, gpointer user_data) {
   model=lives_combo_get_model(combo);
 
   gtk_tree_model_get(model,&iter1,NAME_COLUMN,&txt,-1);
-  lives_entry_set_text (GTK_ENTRY (combo_entries[key_mode]),txt);
+  lives_entry_set_text (LIVES_ENTRY (combo_entries[key_mode]),txt);
   g_free(txt);
 
   g_object_set_data(G_OBJECT(combo),"hashname",hashname1);
@@ -2178,13 +2178,13 @@ GtkWidget * create_rte_window (void) {
   gr_fns=(gulong *)g_malloc((prefs->rte_keys_virtual)*sizeof(gulong));
   mode_ra_fns=(gulong *)g_malloc((prefs->rte_keys_virtual)*modes*sizeof(gulong));
 
-  rte_window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
+  rte_window = gtk_window_new (LIVES_WINDOW_TOPLEVEL);
   if (palette->style&STYLE_1) {
     lives_widget_set_bg_color(rte_window, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
     lives_widget_set_text_color(rte_window, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
   }
-  lives_window_set_title (GTK_WINDOW (rte_window), _("LiVES: Real time effect mapping"));
-  gtk_window_add_accel_group (GTK_WINDOW (rte_window), mainw->accel_group);
+  lives_window_set_title (LIVES_WINDOW (rte_window), _("LiVES: Real time effect mapping"));
+  gtk_window_add_accel_group (LIVES_WINDOW (rte_window), mainw->accel_group);
 
   table = lives_table_new (prefs->rte_keys_virtual, modes+1, FALSE);
 
@@ -2299,7 +2299,7 @@ GtkWidget * create_rte_window (void) {
 
       combo_entries[idx] = lives_combo_get_entry(LIVES_COMBO(combo));
       
-      lives_entry_set_text (GTK_ENTRY (combo_entries[idx]),(tmp=rte_keymode_get_filter_name(i+1,j)));
+      lives_entry_set_text (LIVES_ENTRY (combo_entries[idx]),(tmp=rte_keymode_get_filter_name(i+1,j)));
       g_free(tmp);
  
       lives_entry_set_editable (LIVES_ENTRY (combo_entries[idx]), FALSE);
@@ -2369,7 +2369,7 @@ GtkWidget * create_rte_window (void) {
 
 
   rtew_accel_group = GTK_ACCEL_GROUP(lives_accel_group_new ());
-  gtk_window_add_accel_group (GTK_WINDOW (rte_window), rtew_accel_group);
+  gtk_window_add_accel_group (LIVES_WINDOW (rte_window), rtew_accel_group);
 
   lives_widget_add_accelerator (ok_button, "activate", rtew_accel_group,
                               LIVES_KEY_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
@@ -2402,12 +2402,12 @@ GtkWidget * create_rte_window (void) {
 						    lives_widget_get_allocation_width(rte_window))/2;
     int ycen=mainw->mgeom[prefs->gui_monitor-1].y+(mainw->mgeom[prefs->gui_monitor-1].height-
 						    lives_widget_get_allocation_height(rte_window))/2;
-    gtk_window_set_screen(GTK_WINDOW(rte_window),mainw->mgeom[prefs->gui_monitor-1].screen);
-    lives_window_move(GTK_WINDOW(rte_window),xcen,ycen);
+    gtk_window_set_screen(LIVES_WINDOW(rte_window),mainw->mgeom[prefs->gui_monitor-1].screen);
+    lives_window_move(LIVES_WINDOW(rte_window),xcen,ycen);
   }
 
   if (prefs->open_maximised) {
-    lives_window_maximize (GTK_WINDOW(rte_window));
+    lives_window_maximize (LIVES_WINDOW(rte_window));
   }
   lives_set_cursor_style(LIVES_CURSOR_NORMAL,NULL);
   lives_set_cursor_style(LIVES_CURSOR_NORMAL,rte_window);
@@ -2485,7 +2485,7 @@ void redraw_pwindow (int key, int mode) {
     if (rfx->is_template||(key==keyw&&mode==modew)) {
       // rip out the contents
       if (mainw->invis==NULL) mainw->invis=lives_vbox_new(FALSE,0);
-      child_list=gtk_container_get_children(LIVES_CONTAINER(lives_dialog_get_content_area(GTK_DIALOG(fx_dialog[1]))));
+      child_list=gtk_container_get_children(LIVES_CONTAINER(lives_dialog_get_content_area(LIVES_DIALOG(fx_dialog[1]))));
       action_area=lives_dialog_get_action_area(LIVES_DIALOG(fx_dialog[1]));
       gtk_container_set_focus_child(LIVES_CONTAINER(action_area),NULL);
       for (i=0;i<g_list_length(child_list);i++) {
@@ -2508,8 +2508,8 @@ void redraw_pwindow (int key, int mode) {
 
 void restore_pwindow (lives_rfx_t *rfx) {
   if (fx_dialog[1]!=NULL) {
-    make_param_box(GTK_VBOX (lives_dialog_get_content_area(GTK_DIALOG(fx_dialog[1]))),rfx);
-    lives_widget_show_all (lives_dialog_get_content_area(GTK_DIALOG(fx_dialog[1])));
+    make_param_box(GTK_VBOX (lives_dialog_get_content_area(LIVES_DIALOG(fx_dialog[1]))),rfx);
+    lives_widget_show_all (lives_dialog_get_content_area(LIVES_DIALOG(fx_dialog[1])));
     lives_widget_queue_draw(fx_dialog[1]);
   }
 }
@@ -2726,13 +2726,13 @@ void rte_reset_defs_clicked (GtkButton *button, lives_rfx_t *rfx) {
   }
 
 
-  fxdialog=lives_widget_get_toplevel(GTK_WIDGET(button));
-  pbox=lives_dialog_get_content_area(GTK_DIALOG(fxdialog));
+  fxdialog=lives_widget_get_toplevel(LIVES_WIDGET(button));
+  pbox=lives_dialog_get_content_area(LIVES_DIALOG(fxdialog));
 
   // redraw the window
 
   if (mainw->invis==NULL) mainw->invis=lives_vbox_new(FALSE,0);
-  child_list=gtk_container_get_children(LIVES_CONTAINER(lives_dialog_get_content_area(GTK_DIALOG(fxdialog))));
+  child_list=gtk_container_get_children(LIVES_CONTAINER(lives_dialog_get_content_area(LIVES_DIALOG(fxdialog))));
 
   action_area=lives_dialog_get_action_area(LIVES_DIALOG (fxdialog));
 

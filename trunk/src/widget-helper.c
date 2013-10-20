@@ -583,9 +583,9 @@ LIVES_INLINE LiVESWidget *lives_dialog_get_content_area(LiVESDialog *dialog) {
 #ifdef GUI_GTK
 
 #if GTK_CHECK_VERSION(2,14,0)
-  return gtk_dialog_get_content_area(GTK_DIALOG(dialog));
+  return gtk_dialog_get_content_area(LIVES_DIALOG(dialog));
 #else
-  return GTK_DIALOG(dialog)->vbox;
+  return LIVES_DIALOG(dialog)->vbox;
 #endif
 
 #endif
@@ -597,9 +597,9 @@ LIVES_INLINE LiVESWidget *lives_dialog_get_action_area(LiVESDialog *dialog) {
 #ifdef GUI_GTK
 
 #if GTK_CHECK_VERSION(2,14,0)
-  return gtk_dialog_get_action_area(GTK_DIALOG(dialog));
+  return gtk_dialog_get_action_area(LIVES_DIALOG(dialog));
 #else
-  return GTK_DIALOG(dialog)->vbox;
+  return LIVES_DIALOG(dialog)->vbox;
 #endif
 
 #endif
@@ -1093,9 +1093,9 @@ LIVES_INLINE LiVESWidget *lives_label_new(const char *text) {
 
   label=gtk_label_new(text);
 
-  gtk_label_set_justify (GTK_LABEL (label), widget_opts.justify);
+  gtk_label_set_justify (LIVES_LABEL (label), widget_opts.justify);
 
-  gtk_label_set_line_wrap (GTK_LABEL (label), widget_opts.line_wrap);
+  gtk_label_set_line_wrap (LIVES_LABEL (label), widget_opts.line_wrap);
 #endif
 
   return label;
@@ -1170,7 +1170,7 @@ LIVES_INLINE void lives_combo_append_text(LiVESCombo *combo, const char *text) {
 #if GTK_CHECK_VERSION(2,24,0)
   gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(combo),text);
 #else
-  gtk_combo_box_append_text(GTK_COMBO_BOX(combo),text);
+  gtk_combo_box_append_text(GTK_COMBO(combo),text);
 #endif
 #endif
 }
@@ -1337,9 +1337,9 @@ LIVES_INLINE void lives_widget_set_can_focus(LiVESWidget *widget, boolean state)
   gtk_widget_set_can_focus(widget,state);
 #else
   if (state)
-    GTK_WIDGET_SET_FLAGS (widget, GTK_CAN_FOCUS);
+    LIVES_WIDGET_SET_FLAGS (widget, GTK_CAN_FOCUS);
   else
-    GTK_WIDGET_UNSET_FLAGS (widget, GTK_CAN_FOCUS);
+    LIVES_WIDGET_UNSET_FLAGS (widget, GTK_CAN_FOCUS);
 #endif
 #endif
 }
@@ -1351,9 +1351,9 @@ LIVES_INLINE void lives_widget_set_can_default(LiVESWidget *widget, boolean stat
   gtk_widget_set_can_default(widget,state);
 #else
   if (state)
-    GTK_WIDGET_SET_FLAGS (widget, GTK_CAN_DEFAULT);
+    LIVES_WIDGET_SET_FLAGS (widget, GTK_CAN_DEFAULT);
   else
-    GTK_WIDGET_UNSET_FLAGS (widget, GTK_CAN_DEFAULT);
+    LIVES_WIDGET_UNSET_FLAGS (widget, GTK_CAN_DEFAULT);
 #endif
 #endif
 }
@@ -1364,7 +1364,7 @@ LIVES_INLINE boolean lives_widget_is_sensitive(LiVESWidget *widget) {
 #if GTK_CHECK_VERSION(2,18,0)
   return gtk_widget_is_sensitive(widget);
 #else
-  return GTK_WIDGET_IS_SENSITIVE (widget);
+  return LIVES_WIDGET_IS_SENSITIVE (widget);
 #endif
 #endif
 }
@@ -1375,7 +1375,7 @@ LIVES_INLINE boolean lives_widget_is_visible(LiVESWidget *widget) {
 #if GTK_CHECK_VERSION(2,18,0)
   return gtk_widget_get_visible(widget);
 #else
-  return GTK_WIDGET_VISIBLE (widget);
+  return LIVES_WIDGET_VISIBLE (widget);
 #endif
 #endif
 }
@@ -1386,7 +1386,7 @@ LIVES_INLINE boolean lives_widget_is_realized(LiVESWidget *widget) {
 #if GTK_CHECK_VERSION(2,18,0)
   return gtk_widget_get_realized(widget);
 #else
-  return GTK_WIDGET_REALIZED (widget);
+  return LIVES_WIDGET_REALIZED (widget);
 #endif
 #endif
 }
@@ -1602,7 +1602,7 @@ LIVES_INLINE LiVESWidgetState lives_widget_get_state(LiVESWidget *widget) {
 #if GTK_CHECK_VERSION(2,18,0)
   return gtk_widget_get_state(widget);
 #else
-  return GTK_WIDGET_STATE(widget);
+  return LIVES_WIDGET_STATE(widget);
 #endif
 #endif
 #endif
@@ -2394,10 +2394,10 @@ LiVESWidget *lives_standard_label_new_with_mnemonic(const char *text, LiVESWidge
   if (widget_opts.apply_theme) {
     lives_widget_apply_theme(label, LIVES_WIDGET_STATE_NORMAL);
   }
-  gtk_label_set_justify (GTK_LABEL (label), widget_opts.justify);
-  gtk_label_set_line_wrap (GTK_LABEL (label), widget_opts.line_wrap);
+  gtk_label_set_justify (LIVES_LABEL (label), widget_opts.justify);
+  gtk_label_set_line_wrap (LIVES_LABEL (label), widget_opts.line_wrap);
 
-  if (mnemonic_widget!=NULL) gtk_label_set_mnemonic_widget (GTK_LABEL(label),mnemonic_widget);
+  if (mnemonic_widget!=NULL) gtk_label_set_mnemonic_widget (LIVES_LABEL(label),mnemonic_widget);
 #endif
 
   return label;
@@ -2444,7 +2444,7 @@ LiVESWidget *lives_standard_check_button_new(const char *labeltext, boolean use_
   }
   
   if (box!=NULL) {
-    if (LIVES_IS_HBOX(box)) hbox=GTK_WIDGET(box);
+    if (LIVES_IS_HBOX(box)) hbox=LIVES_WIDGET(box);
     else {
       hbox = lives_hbox_new (FALSE, 0);
       if (!widget_opts.no_gui) {
@@ -2528,7 +2528,7 @@ LiVESWidget *lives_standard_radio_button_new(const char *labeltext, boolean use_
 
 
   if (box!=NULL) {
-    if (LIVES_IS_HBOX(box)) hbox=GTK_WIDGET(box);
+    if (LIVES_IS_HBOX(box)) hbox=LIVES_WIDGET(box);
     else {
       hbox = lives_hbox_new (FALSE, 0);
       if (!widget_opts.no_gui) {
@@ -2601,11 +2601,11 @@ LiVESWidget *lives_standard_spin_button_new(const char *labeltext, boolean use_m
   if (tooltip!=NULL) lives_widget_set_tooltip_text(spinbutton, tooltip);
 
   maxlen=calc_spin_button_width(min,max,dp);
-  lives_entry_set_width_chars (GTK_ENTRY (spinbutton),maxlen);
+  lives_entry_set_width_chars (LIVES_ENTRY (spinbutton),maxlen);
 
-  gtk_entry_set_activates_default (GTK_ENTRY (spinbutton), TRUE);
-  gtk_spin_button_set_update_policy (GTK_SPIN_BUTTON (spinbutton),GTK_UPDATE_ALWAYS);
-  gtk_spin_button_set_numeric (GTK_SPIN_BUTTON (spinbutton),TRUE);
+  gtk_entry_set_activates_default (LIVES_ENTRY (spinbutton), TRUE);
+  gtk_spin_button_set_update_policy (LIVES_SPIN_BUTTON (spinbutton),GTK_UPDATE_ALWAYS);
+  gtk_spin_button_set_numeric (LIVES_SPIN_BUTTON (spinbutton),TRUE);
 
   widget_opts.last_label=NULL;
 
@@ -2627,7 +2627,7 @@ LiVESWidget *lives_standard_spin_button_new(const char *labeltext, boolean use_m
   }
 
   if (box!=NULL) {
-    if (LIVES_IS_HBOX(box)) hbox=GTK_WIDGET(box);
+    if (LIVES_IS_HBOX(box)) hbox=LIVES_WIDGET(box);
     else {
       hbox = lives_hbox_new (FALSE, 0);
       if (!widget_opts.no_gui) {
@@ -2712,7 +2712,7 @@ LiVESWidget *lives_standard_combo_new (const char *labeltext, boolean use_mnemon
   }
 
   if (box!=NULL) {
-    if (LIVES_IS_HBOX(box)) hbox=GTK_WIDGET(box);
+    if (LIVES_IS_HBOX(box)) hbox=LIVES_WIDGET(box);
     else {
       hbox = lives_hbox_new (FALSE, 0);
       lives_box_pack_start (LIVES_BOX (box), hbox, FALSE, FALSE, widget_opts.packing_height);
@@ -2782,12 +2782,12 @@ LiVESWidget *lives_standard_entry_new(const char *labeltext, boolean use_mnemoni
   if (tooltip!=NULL) lives_widget_set_tooltip_text(entry, tooltip);
 
   if (txt!=NULL)
-    lives_entry_set_text (GTK_ENTRY (entry),txt);
+    lives_entry_set_text (LIVES_ENTRY (entry),txt);
 
-  if (dispwidth!=-1) lives_entry_set_width_chars (GTK_ENTRY (entry),dispwidth);
-  if (maxchars!=-1) gtk_entry_set_max_length(GTK_ENTRY (entry),maxchars);
+  if (dispwidth!=-1) lives_entry_set_width_chars (LIVES_ENTRY (entry),dispwidth);
+  if (maxchars!=-1) gtk_entry_set_max_length(LIVES_ENTRY (entry),maxchars);
 
-  gtk_entry_set_activates_default (GTK_ENTRY (entry), TRUE);
+  gtk_entry_set_activates_default (LIVES_ENTRY (entry), TRUE);
 
   widget_opts.last_label=NULL;
 
@@ -2804,7 +2804,7 @@ LiVESWidget *lives_standard_entry_new(const char *labeltext, boolean use_mnemoni
 
 
   if (box!=NULL) {
-    if (LIVES_IS_HBOX(box)) hbox=GTK_WIDGET(box);
+    if (LIVES_IS_HBOX(box)) hbox=LIVES_WIDGET(box);
     else {
       hbox = lives_hbox_new (FALSE, 0);
       if (!widget_opts.no_gui) {
@@ -2851,10 +2851,10 @@ LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_button
   dialog = gtk_dialog_new ();
 
   if (title!=NULL)
-    lives_window_set_title (GTK_WINDOW (dialog), title);
+    lives_window_set_title (LIVES_WINDOW (dialog), title);
 
-  gtk_window_set_deletable(GTK_WINDOW(dialog), FALSE);
-  gtk_window_set_resizable (GTK_WINDOW (dialog), FALSE);
+  gtk_window_set_deletable(LIVES_WINDOW(dialog), FALSE);
+  gtk_window_set_resizable (LIVES_WINDOW (dialog), FALSE);
 
   lives_widget_set_hexpand(dialog,TRUE);
   lives_widget_set_vexpand(dialog,TRUE);
@@ -2865,28 +2865,28 @@ LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_button
     lives_widget_apply_theme(dialog, LIVES_WIDGET_STATE_NORMAL);
 
 #if !GTK_CHECK_VERSION(3,0,0)
-    lives_dialog_set_has_separator(GTK_DIALOG(dialog),FALSE);
+    lives_dialog_set_has_separator(LIVES_DIALOG(dialog),FALSE);
 #endif
   }
 
   // do this before widget_show(), then call lives_window_center() afterwards
-  gtk_window_set_position(GTK_WINDOW(dialog),GTK_WIN_POS_CENTER_ALWAYS);
+  gtk_window_set_position(LIVES_WINDOW(dialog),GTK_WIN_POS_CENTER_ALWAYS);
 
   if (add_std_buttons) {
     GtkAccelGroup *accel_group=GTK_ACCEL_GROUP(lives_accel_group_new ());
     GtkWidget *cancelbutton = gtk_button_new_from_stock ("gtk-cancel");
     GtkWidget *okbutton = gtk_button_new_from_stock ("gtk-ok");
 
-    gtk_window_add_accel_group (GTK_WINDOW (dialog), accel_group);
+    gtk_window_add_accel_group (LIVES_WINDOW (dialog), accel_group);
 
-    lives_dialog_add_action_widget (GTK_DIALOG (dialog), cancelbutton, GTK_RESPONSE_CANCEL);
+    lives_dialog_add_action_widget (LIVES_DIALOG (dialog), cancelbutton, GTK_RESPONSE_CANCEL);
 
     lives_widget_add_accelerator (cancelbutton, "activate", accel_group,
 				LIVES_KEY_Escape, (GdkModifierType)0, (GtkAccelFlags)0);
 
     lives_widget_set_can_focus_and_default(cancelbutton);
 
-    lives_dialog_add_action_widget (GTK_DIALOG (dialog), okbutton, GTK_RESPONSE_OK);
+    lives_dialog_add_action_widget (LIVES_DIALOG (dialog), okbutton, GTK_RESPONSE_OK);
 
     lives_widget_set_can_focus_and_default(okbutton);
     gtk_widget_grab_default (okbutton);
@@ -2903,7 +2903,7 @@ LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_button
   }
 
   if (!widget_opts.non_modal)
-    gtk_window_set_modal (GTK_WINDOW (dialog), TRUE);
+    gtk_window_set_modal (LIVES_WINDOW (dialog), TRUE);
 
 #endif
 
@@ -3138,7 +3138,7 @@ void lives_window_center(LiVESWindow *window) {
   if (prefs->show_gui) {
     if (prefs->gui_monitor>0) {
       int xcen,ycen;
-      gtk_window_set_screen(GTK_WINDOW(window),mainw->mgeom[prefs->gui_monitor-1].screen);
+      gtk_window_set_screen(LIVES_WINDOW(window),mainw->mgeom[prefs->gui_monitor-1].screen);
 
       xcen=mainw->mgeom[prefs->gui_monitor-1].x+(mainw->mgeom[prefs->gui_monitor-1].width-
 						 lives_widget_get_allocation_width(LIVES_WIDGET(window)))/2;
@@ -3146,7 +3146,7 @@ void lives_window_center(LiVESWindow *window) {
 						 lives_widget_get_allocation_height(LIVES_WIDGET(window)))/2;
       lives_window_move(LIVES_WINDOW(window),xcen,ycen);
     }
-    else gtk_window_set_position(GTK_WINDOW(window),GTK_WIN_POS_CENTER_ALWAYS);
+    else gtk_window_set_position(LIVES_WINDOW(window),GTK_WIN_POS_CENTER_ALWAYS);
   }
 }
 

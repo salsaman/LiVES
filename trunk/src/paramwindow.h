@@ -29,21 +29,21 @@ void on_fx_pre_activate (lives_rfx_t *, int didx, LiVESWidget *pbox);
 
 boolean make_param_box(GtkVBox *, lives_rfx_t *);
 
-boolean add_param_to_box (GtkBox *, lives_rfx_t *, gint param_number, boolean add_slider);
+boolean add_param_to_box (GtkBox *, lives_rfx_t *, int param_number, boolean add_slider);
 void add_param_label_to_box (GtkBox *, boolean do_trans, const gchar *text);
 
-GSList *add_usrgrp_to_livesgrp (GSList *u2l, GSList *rbgroup, gint usr_number);
-lives_widget_group_t *livesgrp_from_usrgrp (GSList *u2l, gint usrgrp);
+GSList *add_usrgrp_to_livesgrp (GSList *u2l, GSList *rbgroup, int usr_number);
+lives_widget_group_t *livesgrp_from_usrgrp (GSList *u2l, int usrgrp);
 
-void after_boolean_param_toggled (GtkToggleButton *, lives_rfx_t * rfx);
-void after_param_value_changed (GtkSpinButton *, lives_rfx_t * rfx);
-void after_param_red_changed (GtkSpinButton *, lives_rfx_t * rfx);
-void after_param_green_changed (GtkSpinButton *, lives_rfx_t * rfx);
-void after_param_blue_changed (GtkSpinButton *, lives_rfx_t * rfx);
-void after_param_alpha_changed (GtkSpinButton *, lives_rfx_t * rfx);
-boolean after_param_text_focus_changed (GtkWidget *, GtkWidget *, lives_rfx_t *rfx);
-void after_param_text_changed (GtkWidget *, lives_rfx_t *rfx);
-void after_string_list_changed (GtkComboBox *, lives_rfx_t *rfx);
+void after_boolean_param_toggled (GtkToggleButton *, lives_rfx_t *);
+void after_param_value_changed (GtkSpinButton *, lives_rfx_t *);
+void after_param_red_changed (GtkSpinButton *, lives_rfx_t *);
+void after_param_green_changed (GtkSpinButton *, lives_rfx_t *);
+void after_param_blue_changed (GtkSpinButton *, lives_rfx_t *);
+void after_param_alpha_changed (GtkSpinButton *, lives_rfx_t *);
+boolean after_param_text_focus_changed (GtkWidget *, GtkWidget *, lives_rfx_t *);
+void after_param_text_changed (GtkWidget *, lives_rfx_t *);
+void after_string_list_changed (GtkComboBox *, lives_rfx_t *);
 
 void on_pwcolsel (GtkButton *, lives_rfx_t *);
 

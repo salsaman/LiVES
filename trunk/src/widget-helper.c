@@ -2988,6 +2988,82 @@ LiVESWidget *lives_standard_expander_new(const char *ltext, boolean use_mnemonic
 }
 
 
+LiVESWidget *lives_color_button_new_with_color(const LiVESWidgetColor *color) {
+  LiVESWidget *cbutton=NULL;
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3,0,0)
+  cbutton=gtk_color_button_new_with_rgba(color);
+#else
+  cbutton=gtk_color_button_new_with_color(color);
+#endif
+#endif
+  return cbutton;
+}
+
+
+boolean lives_color_button_get_color(LiVESColorButton *button, LiVESWidgetColor *color) {
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3,4,0)
+  gtk_color_chooser_get_rgba((GtkColorChooser *)button,color);
+#else
+#if GTK_CHECK_VERSION(3,0,0)
+  gtk_color_button_get_rgba((GtkColorChooser *)button,color);
+#else
+  gtk_color_button_get_color(button,color);
+#endif
+#endif
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
+boolean lives_color_button_set_color(LiVESColorButton *button, const LiVESWidgetColor *color) {
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3,4,0)
+  gtk_color_chooser_set_rgba((GtkColorChooser *)button,color);
+#else
+#if GTK_CHECK_VERSION(3,0,0)
+  gtk_color_button_set_rgba((GtkColorChooser *)button,color);
+#else
+  gtk_color_button_set_color(button,color);
+#endif
+#endif
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
+boolean lives_color_button_set_title(LiVESColorButton *button, const char *title) {
+#ifdef GUI_GTK
+  gtk_color_button_set_title(button,title);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
+
+
+boolean lives_color_button_set_use_alpha(LiVESColorButton *button, boolean use_alpha) {
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3,4,0)
+  gtk_color_chooser_set_use_alpha((GtkColorChooser *)button,use_alpha);
+#else
+#if GTK_CHECK_VERSION(3,0,0)
+  gtk_color_button_set_use_alpha((GtkColorChooser *)button,use_alpha);
+#else
+  gtk_color_button_set_use_alpha(button,use_alpha);
+#endif
+#endif
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
+
 LiVESWidget *lives_standard_file_button_new(boolean is_dir, const char *def_dir) {
   LiVESWidget *fbutton=NULL;
 #ifdef GUI_GTK

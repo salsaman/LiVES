@@ -111,6 +111,7 @@ typedef GtkTextView                       LiVESTextView;
 typedef GtkEntry                          LiVESEntry;
 typedef GtkRadioButton                    LiVESRadioButton;
 typedef GtkSpinButton                     LiVESSpinButton;
+typedef GtkColorButton                    LiVESColorButton;
 typedef GtkLabel                          LiVESLabel;
 typedef GtkImage                          LiVESImage;
 typedef GtkFileChooser                    LiVESFileChooser;
@@ -302,6 +303,7 @@ typedef gpointer                          livespointer;
 #define LIVES_FILES_CHOOSER(widget) GTK_FILE_CHOOSER(widget)
 #define LIVES_RADIO_BUTTON(widget) GTK_RADIO_BUTTON(widget)
 #define LIVES_SPIN_BUTTON(widget) GTK_SPIN_BUTTON(widget)
+#define LIVES_COLOR_BUTTON(widget) GTK_COLOR_BUTTON(widget)
 
 #define LIVES_MENU(widget) GTK_MENU(widget)
 #define LIVES_MENU_ITEM(widget) GTK_MENU_ITEM(widget)
@@ -960,6 +962,14 @@ LiVESWidget *lives_standard_expander_new(const char *label, boolean use_mnemonic
 LiVESWidget *lives_volume_button_new(LiVESOrientation orientation, LiVESAdjustment *, double volume);
 
 LiVESWidget *lives_standard_file_button_new(boolean is_dir, const char *def_dir);
+
+
+LiVESWidget *lives_color_button_new_with_color(const LiVESWidgetColor *);
+boolean lives_color_button_get_color(LiVESColorButton *, LiVESWidgetColor *);
+boolean lives_color_button_set_color(LiVESColorButton *, const LiVESWidgetColor *);
+boolean lives_color_button_set_title(LiVESColorButton *, const char *title);
+boolean lives_color_button_set_use_alpha(LiVESColorButton *, boolean use_alpha);
+
 
 
 // util functions

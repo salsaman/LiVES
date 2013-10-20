@@ -4057,7 +4057,7 @@ void mt_init_start_end_spins(lives_mt *mt) {
   lives_box_pack_start (LIVES_BOX (hbox), mt->l_sel_arrow, FALSE, FALSE, 0);
   lives_widget_set_fg_color(mt->l_sel_arrow, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
 
-  gtk_entry_set_width_chars (GTK_ENTRY (mt->spinbutton_start),12);
+  lives_entry_set_width_chars (GTK_ENTRY (mt->spinbutton_start),12);
   mt->sel_label = lives_standard_label_new(NULL);
 
   set_sel_label(mt->sel_label);
@@ -4075,7 +4075,7 @@ void mt_init_start_end_spins(lives_mt *mt) {
   widget_opts.apply_theme=woat;
   widget_opts.packing_width=dpw;
 
-  gtk_entry_set_width_chars (GTK_ENTRY (mt->spinbutton_end),12);
+  lives_entry_set_width_chars (GTK_ENTRY (mt->spinbutton_end),12);
 
   lives_box_pack_start (LIVES_BOX (hbox), mt->spinbutton_end, TRUE, FALSE, MAIN_SPIN_SPACER);
 
@@ -12267,8 +12267,8 @@ void polymorph (lives_mt *mt, lives_mt_poly_state_t poly) {
     if (block==NULL) {
       lives_widget_hide(mt->checkbutton_start_anchored);
       lives_widget_hide(mt->checkbutton_end_anchored);
-      gtk_spin_button_set_digits(GTK_SPIN_BUTTON(mt->spinbutton_in),0);
-      gtk_spin_button_set_digits(GTK_SPIN_BUTTON(mt->spinbutton_out),0);
+      lives_spin_button_set_digits(GTK_SPIN_BUTTON(mt->spinbutton_in),0);
+      lives_spin_button_set_digits(GTK_SPIN_BUTTON(mt->spinbutton_out),0);
       lives_spin_button_configure(LIVES_SPIN_BUTTON(mt->spinbutton_in),mainw->files[filenum]->start,1.,
 				  mainw->files[filenum]->frames,1.,100.);
       lives_spin_button_configure(LIVES_SPIN_BUTTON(mt->spinbutton_out),mainw->files[filenum]->end,1.,
@@ -12279,8 +12279,8 @@ void polymorph (lives_mt *mt, lives_mt_poly_state_t poly) {
     else {
       lives_widget_show(mt->checkbutton_start_anchored);
       lives_widget_show(mt->checkbutton_end_anchored);
-      gtk_spin_button_set_digits(GTK_SPIN_BUTTON(mt->spinbutton_in),2);
-      gtk_spin_button_set_digits(GTK_SPIN_BUTTON(mt->spinbutton_out),2);
+      lives_spin_button_set_digits(GTK_SPIN_BUTTON(mt->spinbutton_in),2);
+      lives_spin_button_set_digits(GTK_SPIN_BUTTON(mt->spinbutton_out),2);
       lives_spin_button_configure(LIVES_SPIN_BUTTON(mt->spinbutton_in),0.,0.,0.,1./mt->fps,1.);
       lives_spin_button_configure(LIVES_SPIN_BUTTON(mt->spinbutton_out),0.,0.,0.,1./mt->fps,1.);
       lives_widget_hide(mt->start_in_label);

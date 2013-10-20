@@ -31,7 +31,7 @@ static boolean has_last_delta_ticks;
 static gchar *hdr=NULL;
 static boolean fps_can_change;
 
-static LIVES_INLINE G_GNUC_CONST gint64 abs64(gint64 a) {
+static LIVES_INLINE G_GNUC_CONST int64_t abs64(int64_t a) {
     return ((a>0)?a:-a);
 }
 
@@ -43,11 +43,14 @@ static volatile boolean buffering;
 
 void *streambuf (void *arg) {
   // read bytes from udp port and load into ringbuffer
+  lives_vstream_t *lstream=(lives_vstream_t *)arg;
+
   ssize_t res; 
   size_t btowrite;
-  guchar tmpbuf[STREAM_BUF_SIZE];
   size_t tmpbufoffs;
-  lives_vstream_t *lstream=(lives_vstream_t *)arg;
+
+  uint8_t tmpbuf[STREAM_BUF_SIZE];
+
 
   lstream->bufoffs=0;
 
@@ -92,12 +95,12 @@ static size_t l2l_rcv_packet(lives_vstream_t *lstream, size_t buflen, void *buf)
     if (lstream->reading) {
       if (buflen+bufoffs>STREAM_BUF_SIZE) {
 	btoread=STREAM_BUF_SIZE-bufoffs;
-	lives_memcpy(buf,(void *)((guchar *)lstream->buffer+bufoffs),btoread);
+	lives_memcpy(buf,(void *)((uint8_t *)lstream->buffer+bufoffs),btoread);
 	bufoffs=0;
 	buflen-=btoread;
-	buf=(void *)((guchar *)buf+btoread);
+	buf=(void *)((uint8_t *)buf+btoread);
       }
-      lives_memcpy(buf,(void *)((guchar *)lstream->buffer+bufoffs),buflen);
+      lives_memcpy(buf,(void *)((uint8_t *)lstream->buffer+bufoffs),buflen);
       bufoffs+=buflen;
       return buflen+btoread;
     }
@@ -114,7 +117,7 @@ static size_t l2l_rcv_packet(lives_vstream_t *lstream, size_t buflen, void *buf)
 }
 
 
-static boolean lives_stream_in_chunks(lives_vstream_t *lstream, size_t buflen, guchar *buf, int xx) {
+static boolean lives_stream_in_chunks(lives_vstream_t *lstream, size_t buflen, uint8_t *buf, int xx) {
   // read first from pckbuf, then from streambuf
   size_t copied=0;
   if (pckoffs<L2L_PACKET_LEN) {
@@ -127,7 +130,7 @@ static boolean lives_stream_in_chunks(lives_vstream_t *lstream, size_t buflen, g
     buflen-=copied;
     pckoffs+=copied;
   }
-  if (buflen>0) l2l_rcv_packet(lstream,buflen,(void *)((guchar *)buf+copied));
+  if (buflen>0) l2l_rcv_packet(lstream,buflen,(void *)((uint8_t *)buf+copied));
   return TRUE;
 }
 #else
@@ -153,7 +156,7 @@ static size_t l2l_rcv_packet(lives_vstream_t *lstream, size_t buflen, void *buf)
 }
 
 
-static boolean lives_stream_in_chunks(lives_vstream_t *lstream, size_t buflen, guchar *buf, int bfsize) {
+static boolean lives_stream_in_chunks(lives_vstream_t *lstream, size_t buflen, uint8_t *buf, int bfsize) {
   // return FALSE if we could not set socket buffer size
 
   size_t copied;
@@ -253,9 +256,11 @@ static void l2l_get_packet_sync(lives_vstream_t *lstream) {
 
 
 static gchar *l2l_get_packet_header(lives_vstream_t *lstream) {
-  gchar hdr_buf[1024];
-  boolean sync=FALSE;
   size_t hdrsize=0,csize;
+
+  gchar hdr_buf[1024];
+
+  boolean sync=FALSE;
 
   if (pckoffs==pcksize) {
     pcksize+=l2l_rcv_packet(lstream, L2L_PACKET_LEN, pckbuf+pckoffs);
@@ -372,9 +377,9 @@ static gchar *l2l_get_packet_header(lives_vstream_t *lstream) {
 }
 
 
-static boolean l2l_parse_packet_header(lives_vstream_t *lstream, gint strtype, gint strid) {
+static boolean l2l_parse_packet_header(lives_vstream_t *lstream, int strtype, int strid) {
   gchar **array=g_strsplit(hdr," ",-1);
-  gint pid=-1,ptype=-1;
+  int pid=-1,ptype=-1;
   
   if (hdr==NULL||array==NULL||array[0]==NULL||array[1]==NULL||array[2]==NULL||array[3]==NULL) {
     if (array!=NULL) g_strfreev(array);
@@ -421,8 +426,7 @@ static boolean l2l_parse_packet_header(lives_vstream_t *lstream, gint strtype, g
 
 void lives2lives_read_stream(const gchar *host, int port) {
   lives_vstream_t *lstream=(lives_vstream_t *)g_malloc(sizeof(lives_vstream_t));
-  boolean done=FALSE;
-  gint old_file=mainw->current_file,new_file;
+
   gchar *tmp,*tmp2;
   gchar *msg;
   gchar *hostname;
@@ -431,6 +435,10 @@ void lives2lives_read_stream(const gchar *host, int port) {
   pthread_t stthread;
   pthread_attr_t pattr;
 #endif
+
+  boolean done=FALSE;
+
+  int old_file=mainw->current_file,new_file;
 
   lives_widget_set_sensitive (mainw->open_lives2lives, FALSE);
 
@@ -524,7 +532,7 @@ void lives2lives_read_stream(const gchar *host, int port) {
     if (lstream->flags&LIVES_VSTREAM_FLAGS_IS_CONTINUATION) done=FALSE;
     if (!done) {
       // wrong packet type or id, or a continuation packet
-      guchar *tmpbuf=(guchar *)g_malloc(lstream->dsize);
+      uint8_t *tmpbuf=(uint8_t *)g_malloc(lstream->dsize);
       lives_stream_in_chunks(lstream,lstream->dsize,tmpbuf,lstream->dsize*4);
       // throw this packet away
       g_printerr("unrecognised packet in stream - dropping it.\n");
@@ -676,18 +684,22 @@ void lives2lives_read_stream(const gchar *host, int port) {
 
 
 
-void weed_layer_set_from_lives2lives(weed_plant_t *layer, gint clip, lives_vstream_t *lstream) {
+void weed_layer_set_from_lives2lives(weed_plant_t *layer, int clip, lives_vstream_t *lstream) {
   static int64_t last_delta_ticks=0;
   int64_t currticks;
-  boolean done;
-  int error;
+
   void **pixel_data;
-  int myflags=0;
+
   size_t framedataread=0;
-  boolean timeout=FALSE; // TODO
-  gint width=0;
-  gint height=0;
   size_t target_size;
+
+  boolean timeout=FALSE; // TODO
+  boolean done;
+
+  int myflags=0;
+  int error;
+  int width=0;
+  int height=0;
 
   while (!timeout) {
     // loop until we read all frame data, or we get a new frame
@@ -720,7 +732,7 @@ void weed_layer_set_from_lives2lives(weed_plant_t *layer, gint clip, lives_vstre
 
 	if (!done) {
 	  // wrong packet type or id, or a continuation of previous frame
-	  guchar *tmpbuf=(guchar *)g_malloc(lstream->dsize);
+	  uint8_t *tmpbuf=(uint8_t *)g_malloc(lstream->dsize);
 	  lives_stream_in_chunks(lstream,lstream->dsize,tmpbuf,lstream->dsize*4);
 	  // throw this packet away
 	  g_printerr("unrecognised packet in stream - dropping it.\n");
@@ -755,7 +767,7 @@ void weed_layer_set_from_lives2lives(weed_plant_t *layer, gint clip, lives_vstre
 	if (mainw->record&&!mainw->record_paused) {
 	  if (has_last_delta_ticks&&(abs64(currticks-lstream->timecode))<last_delta_ticks) {
 	    // drop this frame
-	    guchar *tmpbuf=(guchar *)g_malloc(lstream->dsize);
+	    uint8_t *tmpbuf=(uint8_t *)g_malloc(lstream->dsize);
 	    lives_stream_in_chunks(lstream,lstream->dsize,tmpbuf,lstream->dsize*4);
 	    // throw this packet away
 #ifdef DEBUG_STREAM_AGING
@@ -770,7 +782,7 @@ void weed_layer_set_from_lives2lives(weed_plant_t *layer, gint clip, lives_vstre
 	    }
 	  }
 	}
-	last_delta_ticks=((gint64)(last_delta_ticks>>1)+(gint64)((abs64(currticks-lstream->timecode))>>1));
+	last_delta_ticks=((int64_t)(last_delta_ticks>>1)+(int64_t)((abs64(currticks-lstream->timecode))>>1));
 #endif
 
       }
@@ -839,12 +851,12 @@ void weed_layer_set_from_lives2lives(weed_plant_t *layer, gint clip, lives_vstre
       target_size=lstream->hsize*lstream->vsize*3-framedataread;
 #ifdef USE_STRMBUF
       if (target_size>lstream->dsize) target_size=lstream->dsize;
-      lives_stream_in_chunks(lstream,target_size,(guchar *)pixel_data[0]+framedataread,0);
+      lives_stream_in_chunks(lstream,target_size,(uint8_t *)pixel_data[0]+framedataread,0);
       lstream->dsize-=target_size;
       framedataread+=target_size;
 #else
       if (target_size>=lstream->dsize) {
-	if (!lives_stream_in_chunks(lstream,target_size,(guchar *)pixel_data[0]+framedataread,lstream->dsize*12)) {
+	if (!lives_stream_in_chunks(lstream,target_size,(uint8_t *)pixel_data[0]+framedataread,lstream->dsize*12)) {
 	  do_rmem_max_error(lstream->dsize*12);
 	  mainw->cancelled=CANCEL_ERROR;
 	}
@@ -867,13 +879,13 @@ void weed_layer_set_from_lives2lives(weed_plant_t *layer, gint clip, lives_vstre
 	target_size=lstream->hsize*lstream->vsize-framedataread;
 #ifdef USE_STRMBUF
 	if (target_size>lstream->dsize) target_size=lstream->dsize;
-	lives_stream_in_chunks(lstream,target_size,(guchar *)pixel_data[0]+framedataread,0);
+	lives_stream_in_chunks(lstream,target_size,(uint8_t *)pixel_data[0]+framedataread,0);
 	lstream->dsize-=target_size;
 	framedataread+=target_size;
 #else
 	if (target_size>=lstream->dsize) {
 	  // packet contains data for single plane
-	  if (!lives_stream_in_chunks(lstream,lstream->dsize,(guchar *)pixel_data[0]+framedataread,lstream->dsize*9)) {
+	  if (!lives_stream_in_chunks(lstream,lstream->dsize,(uint8_t *)pixel_data[0]+framedataread,lstream->dsize*9)) {
 	    do_rmem_max_error(lstream->dsize*9);
 	    mainw->cancelled=CANCEL_ERROR;
 	  }
@@ -884,7 +896,7 @@ void weed_layer_set_from_lives2lives(weed_plant_t *layer, gint clip, lives_vstre
 	}
 	else {
 	  // this packet contains data for multiple planes
-	  guchar *fbuffer=(guchar *)g_malloc(lstream->dsize);
+	  uint8_t *fbuffer=(uint8_t *)g_malloc(lstream->dsize);
 	  size_t fbufoffs=0;
 	  size_t dsize=lstream->dsize;
 	  
@@ -897,14 +909,14 @@ void weed_layer_set_from_lives2lives(weed_plant_t *layer, gint clip, lives_vstre
 	    g_free(fbuffer);
 	    return;
 	  }
-	  lives_memcpy((guchar *)pixel_data[0]+framedataread,fbuffer,target_size);
+	  lives_memcpy((uint8_t *)pixel_data[0]+framedataread,fbuffer,target_size);
 	  dsize-=target_size;
 	  fbufoffs+=target_size;
 	  
 	  target_size=(lstream->hsize*lstream->vsize)>>2;
 	  if (target_size>dsize) target_size=dsize;
 	  
-	  if (target_size>0) lives_memcpy((guchar *)pixel_data[1],fbuffer+fbufoffs,target_size);
+	  if (target_size>0) lives_memcpy((uint8_t *)pixel_data[1],fbuffer+fbufoffs,target_size);
 	  
 	  dsize-=target_size;
 	  fbufoffs+=target_size;
@@ -912,7 +924,7 @@ void weed_layer_set_from_lives2lives(weed_plant_t *layer, gint clip, lives_vstre
 	  target_size=(lstream->hsize*lstream->vsize)>>2;
 	  if (target_size>dsize) target_size=dsize;
 	  
-	  if (target_size>0) lives_memcpy((guchar *)pixel_data[2],fbuffer+fbufoffs,target_size);
+	  if (target_size>0) lives_memcpy((uint8_t *)pixel_data[2],fbuffer+fbufoffs,target_size);
 	  
 	  g_free(fbuffer);
 	}
@@ -922,7 +934,7 @@ void weed_layer_set_from_lives2lives(weed_plant_t *layer, gint clip, lives_vstre
       if (framedataread<(lstream->hsize*lstream->vsize*5)>>2) {
 	target_size=((lstream->hsize*lstream->vsize*5)>>2)-framedataread;
 	if (target_size>lstream->dsize) target_size=lstream->dsize;
-	lives_stream_in_chunks(lstream,target_size,(guchar *)pixel_data[1]+framedataread-lstream->hsize*lstream->vsize,0);
+	lives_stream_in_chunks(lstream,target_size,(uint8_t *)pixel_data[1]+framedataread-lstream->hsize*lstream->vsize,0);
 	lstream->dsize-=target_size;
 	framedataread+=target_size;
 #else
@@ -930,7 +942,7 @@ void weed_layer_set_from_lives2lives(weed_plant_t *layer, gint clip, lives_vstre
 	  target_size=((lstream->hsize*lstream->vsize*5)>>2)-framedataread;
 	  if (target_size>=lstream->dsize) {
 	    lives_stream_in_chunks(lstream,lstream->dsize,
-				   (guchar *)(pixel_data[1]+framedataread-lstream->hsize*lstream->vsize),0);
+				   (uint8_t *)(pixel_data[1]+framedataread-lstream->hsize*lstream->vsize),0);
 	    if (mainw->cancelled) {
 	      weed_free(pixel_data);
 	      return;
@@ -938,7 +950,7 @@ void weed_layer_set_from_lives2lives(weed_plant_t *layer, gint clip, lives_vstre
 	  }
 	  else {
 	    // this packet contains data for multiple planes
-	    guchar *fbuffer=(guchar *)g_malloc(lstream->dsize);
+	    uint8_t *fbuffer=(uint8_t *)g_malloc(lstream->dsize);
 	    size_t fbufoffs=0;
 	    size_t dsize=lstream->dsize;
 	    
@@ -948,7 +960,7 @@ void weed_layer_set_from_lives2lives(weed_plant_t *layer, gint clip, lives_vstre
 	      g_free(fbuffer);
 	      return;
 	    }
-	    lives_memcpy((guchar *)pixel_data[1]+framedataread-lstream->hsize*lstream->vsize,fbuffer,target_size);
+	    lives_memcpy((uint8_t *)pixel_data[1]+framedataread-lstream->hsize*lstream->vsize,fbuffer,target_size);
 	    
 	    dsize-=target_size;
 	    fbufoffs+=target_size;
@@ -956,7 +968,7 @@ void weed_layer_set_from_lives2lives(weed_plant_t *layer, gint clip, lives_vstre
 	    target_size=(lstream->hsize*lstream->vsize)>>2;
 	    if (target_size>dsize) target_size=dsize;
 	    
-	    if (target_size>0) lives_memcpy((guchar *)pixel_data[2],fbuffer+fbufoffs,target_size);
+	    if (target_size>0) lives_memcpy((uint8_t *)pixel_data[2],fbuffer+fbufoffs,target_size);
 	    
 	    g_free(fbuffer);
 	  }
@@ -966,7 +978,7 @@ void weed_layer_set_from_lives2lives(weed_plant_t *layer, gint clip, lives_vstre
 	if (framedataread<(lstream->hsize*lstream->vsize*6)>>2) {
 	  target_size=((lstream->hsize*lstream->vsize)>>2)-framedataread+((lstream->hsize*lstream->vsize*5)>>2);
 	  if (target_size>lstream->dsize) target_size=lstream->dsize;
-	  lives_stream_in_chunks(lstream,target_size,(guchar *)pixel_data[2]+framedataread-
+	  lives_stream_in_chunks(lstream,target_size,(uint8_t *)pixel_data[2]+framedataread-
 				 ((lstream->hsize*lstream->vsize*5)>>2),0);
 	  lstream->dsize-=target_size;
 	  framedataread+=target_size;
@@ -976,7 +988,7 @@ void weed_layer_set_from_lives2lives(weed_plant_t *layer, gint clip, lives_vstre
 	  target_size=((lstream->hsize*lstream->vsize*3)>>1)-framedataread;
 	  if (target_size>=lstream->dsize) target_size=lstream->dsize;
 	  lives_stream_in_chunks(lstream,target_size,
-				 (guchar *)(pixel_data[2]+framedataread-((lstream->hsize*lstream->vsize*5)>>2)),0);
+				 (uint8_t *)(pixel_data[2]+framedataread-((lstream->hsize*lstream->vsize*5)>>2)),0);
 	  if (mainw->cancelled) {
 	    weed_free(pixel_data);
 	    return;
@@ -1004,8 +1016,10 @@ void weed_layer_set_from_lives2lives(weed_plant_t *layer, gint clip, lives_vstre
 
 void on_send_lives2lives_activate (GtkMenuItem *menuitem, gpointer user_data) {
   _vppaw *vppa;
+
   gchar *orig_name=g_strdup(mainw->string_constants[LIVES_STRING_CONSTANT_NONE]);
   gchar *tmp;
+
   int resp;
 
   if (mainw->vpp!=NULL) {
@@ -1017,7 +1031,7 @@ void on_send_lives2lives_activate (GtkMenuItem *menuitem, gpointer user_data) {
     g_snprintf(future_prefs->vpp_name,64,"lives2lives_stream");
   }
   vppa=on_vpp_advanced_clicked(NULL,NULL);
-  resp=lives_dialog_run(GTK_DIALOG(vppa->dialog));
+  resp=lives_dialog_run(LIVES_DIALOG(vppa->dialog));
 
   if (resp==GTK_RESPONSE_CANCEL) {
     g_free(orig_name);
@@ -1038,20 +1052,21 @@ void on_send_lives2lives_activate (GtkMenuItem *menuitem, gpointer user_data) {
 
 
 void on_open_lives2lives_activate (GtkMenuItem *menuitem, gpointer user_data) {
-  gchar *host=NULL;
-  gint port=0;
-
   lives_pandh_w *pandh=create_pandh_dialog(0);
-  gint response=lives_dialog_run (GTK_DIALOG (pandh->dialog));
+
+  gchar *host=NULL;
+
+  int port=0;
+  int response=lives_dialog_run (LIVES_DIALOG (pandh->dialog));
 
   if (response==GTK_RESPONSE_OK) {
     if (!lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(pandh->rb_anyhost))) {
-      host=g_strdup_printf("%s.%s.%s.%s",lives_entry_get_text(GTK_ENTRY(pandh->entry1)),
-			   lives_entry_get_text(GTK_ENTRY(pandh->entry2)),
-			   lives_entry_get_text(GTK_ENTRY(pandh->entry3)),gtk_entry_get_text(GTK_ENTRY(pandh->entry4)));
+      host=g_strdup_printf("%s.%s.%s.%s",lives_entry_get_text(LIVES_ENTRY(pandh->entry1)),
+			   lives_entry_get_text(LIVES_ENTRY(pandh->entry2)),
+			   lives_entry_get_text(LIVES_ENTRY(pandh->entry3)),lives_entry_get_text(LIVES_ENTRY(pandh->entry4)));
     }
     else host=g_strdup("INADDR_ANY");
-    port=lives_spin_button_get_value_as_int(GTK_SPIN_BUTTON(pandh->port_spin));
+    port=lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(pandh->port_spin));
   }
 
   lives_widget_destroy (pandh->dialog);
@@ -1089,7 +1104,7 @@ static void pandhw_anyhost_toggled(GtkToggleButton *tbut, gpointer user_data) {
 
 
 
-lives_pandh_w* create_pandh_dialog (gint type) {
+lives_pandh_w* create_pandh_dialog (int type) {
   // type = 0 lives2lives stream input
 
   GtkWidget *dialog_vbox;
@@ -1108,7 +1123,7 @@ lives_pandh_w* create_pandh_dialog (gint type) {
     gtk_window_set_transient_for(GTK_WINDOW(pandhw->dialog),GTK_WINDOW(mainw->LiVES));
   }
 
-  dialog_vbox = lives_dialog_get_content_area(GTK_DIALOG(pandhw->dialog));
+  dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(pandhw->dialog));
 
   label=lives_standard_label_new(_("You can receive streams from another copy of LiVES."));
   lives_box_pack_start (LIVES_BOX (dialog_vbox), label, FALSE, FALSE, widget_opts.packing_height);

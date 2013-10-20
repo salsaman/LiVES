@@ -9,8 +9,8 @@
 
 
 typedef struct {
-  guint32 stream_id;
-  guint32 flags;
+  uint32_t stream_id;
+  uint32_t flags;
 
   int64_t timecode;
   int hsize;

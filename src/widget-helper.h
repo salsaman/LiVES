@@ -686,6 +686,7 @@ LiVESWidget *lives_check_button_new(void);
 LiVESWidget *lives_check_button_new_with_label(const char *label);
 LiVESWidget *lives_spin_button_new(LiVESAdjustment *, double climb_rate, uint32_t digits);
 
+
 LiVESWidget *lives_window_new(lives_window_type_t wintype);
 
 int lives_dialog_run(LiVESDialog *);
@@ -809,12 +810,12 @@ int lives_spin_button_get_value_as_int(LiVESSpinButton *);
 
 LiVESAdjustment *lives_spin_button_get_adjustment(LiVESSpinButton *);
 
-void lives_spin_button_set_value(LiVESSpinButton *, double value);
-void lives_spin_button_set_range(LiVESSpinButton *, double min, double max);
+boolean lives_spin_button_set_value(LiVESSpinButton *, double value);
+boolean lives_spin_button_set_range(LiVESSpinButton *, double min, double max);
 
-void lives_spin_button_set_wrap(LiVESSpinButton *, boolean wrap);
+boolean lives_spin_button_set_wrap(LiVESSpinButton *, boolean wrap);
 
-void lives_spin_button_set_digits(LiVESSpinButton *, uint32_t digits);
+boolean lives_spin_button_set_digits(LiVESSpinButton *, uint32_t digits);
 
 void lives_spin_button_update(LiVESSpinButton *);
 
@@ -854,9 +855,10 @@ const char *lives_label_get_text(LiVESLabel *);
 void lives_label_set_text(LiVESLabel *, const char *text);
 void lives_label_set_text_with_mnemonic(LiVESLabel *, const char *text);
 
-void lives_entry_set_editable(LiVESEntry *, boolean editable);
+boolean lives_entry_set_editable(LiVESEntry *, boolean editable);
 const char *lives_entry_get_text(LiVESEntry *);
-void lives_entry_set_text(LiVESEntry *, const char *text);
+boolean lives_entry_set_text(LiVESEntry *, const char *text);
+boolean lives_entry_set_width_chars(LiVESEntry *, int nchars);
 
 double lives_scale_button_get_value(LiVESScaleButton *);
 

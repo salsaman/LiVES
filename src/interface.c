@@ -1564,7 +1564,7 @@ _entryw* create_rename_dialog (int type) {
 
 
   gtk_entry_set_activates_default (GTK_ENTRY (renamew->entry), TRUE);
-  gtk_entry_set_width_chars (GTK_ENTRY (renamew->entry),RW_ENTRY_DISPWIDTH);
+  lives_entry_set_width_chars (GTK_ENTRY (renamew->entry),RW_ENTRY_DISPWIDTH);
 
   dialog_action_area = lives_dialog_get_action_area(LIVES_DIALOG (renamew->dialog));
 
@@ -1707,7 +1707,7 @@ GtkWidget *create_combo_dialog (int type, gpointer user_data) {
 
   combo = lives_combo_new();
 
-  gtk_entry_set_width_chars (GTK_ENTRY (lives_combo_get_entry(LIVES_COMBO(combo))), 64);
+  lives_entry_set_width_chars (GTK_ENTRY (lives_combo_get_entry(LIVES_COMBO(combo))), 64);
 
   lives_combo_populate(LIVES_COMBO(combo),list);
 
